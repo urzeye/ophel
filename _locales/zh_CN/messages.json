@@ -1,0 +1,66 @@
+{
+  "extensionName": {
+    "message": "Chat Helper",
+    "description": "扩展名称"
+  },
+  "extensionDescription": {
+    "message": "AI 对话增强助手 - 多站点支持（Gemini/AI Studio/Grok/ChatGPT/Claude）",
+    "description": "扩展描述"
+  },
+  "panelTitle": {
+    "message": "Chat Helper",
+    "description": "面板标题"
+  },
+  "tabPrompts": {
+    "message": "提示词",
+    "description": "提示词标签页"
+  },
+  "tabOutline": {
+    "message": "大纲",
+    "description": "大纲标签页"
+  },
+  "tabConversations": {
+    "message": "会话",
+    "description": "会话标签页"
+  },
+  "tabSettings": {
+    "message": "设置",
+    "description": "设置标签页"
+  },
+  "scrollTop": {
+    "message": "顶部",
+    "description": "滚动到顶部"
+  },
+  "scrollBottom": {
+    "message": "底部",
+    "description": "滚动到底部"
+  },
+  "save": {
+    "message": "保存",
+    "description": "保存按钮"
+  },
+  "cancel": {
+    "message": "取消",
+    "description": "取消按钮"
+  },
+  "confirm": {
+    "message": "确定",
+    "description": "确定按钮"
+  },
+  "delete": {
+    "message": "删除",
+    "description": "删除按钮"
+  },
+  "edit": {
+    "message": "编辑",
+    "description": "编辑按钮"
+  },
+  "copy": {
+    "message": "复制",
+    "description": "复制按钮"
+  },
+  "copied": {
+    "message": "已复制到剪贴板",
+    "description": "复制成功提示"
+  }
+}

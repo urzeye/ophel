@@ -1,0 +1,541 @@
+import React, { useCallback, useEffect, useState } from "react"
+
+import { useStorage } from "@plasmohq/storage/hook"
+
+import type { ConversationManager } from "~core/conversation-manager"
+import type { OutlineManager } from "~core/outline-manager"
+import type { PromptManager } from "~core/prompt-manager"
+import type { Exporter } from "~utils/exporter"
+import { t } from "~utils/i18n"
+import { DEFAULT_SETTINGS, STORAGE_KEYS, type Prompt, type Settings } from "~utils/storage"
+
+import { ConversationsTab } from "./ConversationsTab"
+import { OutlineTab } from "./OutlineTab"
+import { PromptsTab } from "./PromptsTab"
+import { SettingsTab } from "./SettingsTab"
+
+interface MainPanelProps {
+  onClose: () => void
+  isOpen: boolean
+  promptManager: PromptManager
+  conversationManager: ConversationManager
+  outlineManager: OutlineManager
+  exporter?: Exporter | null
+  onThemeToggle?: () => void
+  themeMode?: "light" | "dark"
+  selectedPromptId?: string | null
+  onPromptSelect?: (prompt: Prompt | null) => void
+}
+
+export const MainPanel: React.FC<MainPanelProps> = ({
+  onClose,
+  isOpen,
+  promptManager,
+  conversationManager,
+  outlineManager,
+  exporter,
+  onThemeToggle,
+  themeMode,
+  selectedPromptId,
+  onPromptSelect,
+}) => {
+  const [settings] = useStorage<Settings>(STORAGE_KEYS.SETTINGS)
+  const currentSettings = settings || DEFAULT_SETTINGS
+  const { tabOrder } = currentSettings
+
+  // 获取排序后的首个 tab
+  // tabOrder 是 string[]，数组顺序就是显示顺序
+  const getFirstTab = (order: string[]) => {
+    if (order && order.length > 0) {
+      return order[0]
+    }
+    return "prompts"
+  }
+
+  // 初始化 activeTab（先用默认值，等 settings 加载后更新）
+  const [activeTab, setActiveTab] = useState("prompts")
+  const [isInitialized, setIsInitialized] = useState(false)
+
+  // settings 加载完成后，设置为用户设置的首个 tab
+  useEffect(() => {
+    if (settings && !isInitialized) {
+      setActiveTab(getFirstTab(settings.tabOrder))
+      setIsInitialized(true)
+    }
+  }, [settings, isInitialized])
+
+  // 当 tabOrder 变化时，如果当前 activeTab 不在列表中，则切换到首个 tab
+  useEffect(() => {
+    if (isInitialized && tabOrder && tabOrder.length > 0) {
+      if (!tabOrder.includes(activeTab)) {
+        setActiveTab(getFirstTab(tabOrder))
+      }
+    }
+  }, [tabOrder, isInitialized])
+
+  // 获取滚动容器（与 QuickButtons 保持一致）
+  const getScrollContainer = useCallback(() => {
+    const selectors = [
+      "infinite-scroller.chat-history",
+      ".chat-history",
+      ".chat-mode-scroller",
+      "main",
+      '[role="main"]',
+    ]
+    for (const selector of selectors) {
+      const el = document.querySelector(selector) as HTMLElement
+      if (el && el.scrollHeight > el.clientHeight) {
+        return el
+      }
+    }
+    return document.documentElement
+  }, [])
+
+  // === 锚点状态（双向跳转） ===
+  // previousAnchor: 上一个位置（跳转前）
+  // 实现类似 git switch - 的双位置交换
+  const [previousAnchor, setPreviousAnchor] = useState<number | null>(null)
+  const [currentAnchor, setCurrentAnchor] = useState<number | null>(null)
+
+  // 检查是否有锚点
+  const hasAnchor = previousAnchor !== null
+
+  // 设置锚点（跳转前调用，保存当前位置）
+  const setAnchor = useCallback(() => {
+    const container = getScrollContainer()
+    setPreviousAnchor(container.scrollTop)
+  }, [getScrollContainer])
+
+  // 滚动到顶部（自动记录当前位置为锚点）
+  const scrollToTop = useCallback(() => {
+    const container = getScrollContainer()
+    // 点击去顶部时，自动记录当前位置为锚点
+    setPreviousAnchor(container.scrollTop)
+    container.scrollTo({ top: 0, behavior: "smooth" })
+  }, [getScrollContainer])
+
+  // 滚动到底部（自动记录当前位置为锚点）
+  const scrollToBottom = useCallback(() => {
+    const container = getScrollContainer()
+    // 点击去底部时，自动记录当前位置为锚点
+    setPreviousAnchor(container.scrollTop)
+    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" })
+  }, [getScrollContainer])
+
+  // 跳转到锚点（实现位置交换，支持来回跳转）
+  const goToAnchor = useCallback(() => {
+    if (previousAnchor === null) return
+
+    const container = getScrollContainer()
+    // 1. 先保存当前位置（跳转后可以再跳回来）
+    const currentPos = container.scrollTop
+
+    // 2. 跳转到 previousAnchor
+    container.scrollTo({ top: previousAnchor, behavior: "instant" })
+
+    // 3. 交换位置：实现来回跳转
+    // 原来的 previousAnchor 变成 currentAnchor（备用）
+    // 刚才的位置变成新的 previousAnchor（下次跳回去）
+    setCurrentAnchor(previousAnchor)
+    setPreviousAnchor(currentPos)
+  }, [previousAnchor, getScrollContainer])
+
+  // 记录锚点位置（每次跳转大纲时调用）
+  const saveAnchor = useCallback(() => {
+    const container = getScrollContainer()
+    setPreviousAnchor(container.scrollTop)
+  }, [getScrollContainer])
+
+  if (!isOpen) return null
+
+  // 过滤出启用的 Tab（设置页通过 header 按钮进入，不在 tab 栏显示）
+  const visibleTabs = tabOrder.filter((tabId) => {
+    if (tabId === "settings") return false // 设置在 header 中
+    return true
+  })
+
+  // Tab 图标定义
+  const tabIcons: Record<string, string> = {
+    outline: "📑",
+    conversations: "💬",
+    prompts: "✏️",
+  }
+
+  // 获取主题图标
+  const getThemeIcon = () => {
+    if (themeMode === "dark") {
+      // 深色模式时显示太阳图标（点击切换到浅色）
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="20px"
+          viewBox="0 -960 960 960"
+          width="20px"
+          fill="#FFFFFF">
+          <path d="M480-280q-83 0-141.5-58.5T280-480q0-83 58.5-141.5T480-680q83 0 141.5 58.5T680-480q0 83-58.5 141.5T480-280ZM200-440H40v-80h160v80Zm720 0H760v-80h160v80ZM440-760v-160h80v160h-80Zm0 720v-160h80v160h-80ZM256-650l-101-97 57-59 96 100-52 56Zm492 496-97-101 53-55 101 97-57 59Zm-98-550 97-101 59 57-100 96-56-52ZM154-212l101-97 55 53-97 101-59-57Z" />
+        </svg>
+      )
+    }
+    // 浅色模式时显示月亮图标（点击切换到深色）
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        height="20px"
+        viewBox="0 -960 960 960"
+        width="20px"
+        fill="#FFFFFF">
+        <path d="M480-120q-150 0-255-105T120-480q0-150 105-255t255-105q14 0 27.5 1t26.5 3q-41 29-65.5 75.5T444-660q0 90 63 153t153 63q55 0 101-24.5t75-65.5q2 13 3 26.5t1 27.5q0 150-105 255T480-120Z" />
+      </svg>
+    )
+  }
+
+  return (
+    <div
+      className="gh-main-panel gh-interactive"
+      style={{
+        position: "fixed",
+        top: "50%",
+        right: "20px",
+        transform: "translateY(-50%)",
+        width: "320px",
+        height: "80vh",
+        minHeight: "500px",
+        backgroundColor: "var(--gh-bg-color, #ffffff)",
+        borderRadius: "12px",
+        boxShadow: "0 10px 40px rgba(0,0,0,0.15)",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        border: "1px solid var(--gh-border-color, #e5e7eb)",
+        zIndex: 9999,
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      }}>
+      {/* Header - 渐变背景（深色模式使用纯色） */}
+      <div
+        className="gh-panel-header"
+        style={{
+          padding: "12px 14px",
+          background:
+            themeMode === "dark" ? "#1e1e1e" : "linear-gradient(135deg, #4285f4 0%, #34a853 100%)",
+          color: "white",
+          borderRadius: "12px 12px 0 0",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          cursor: "move",
+          userSelect: "none",
+        }}>
+        {/* 左侧：图标 + 标题 */}
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span style={{ fontSize: "16px" }}>✨</span>
+          <span style={{ fontSize: "15px", fontWeight: 600 }}>{t("panelTitle")}</span>
+        </div>
+
+        {/* 右侧：按钮组 */}
+        <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+          {/* 主题切换按钮 */}
+          {onThemeToggle && (
+            <button
+              onClick={onThemeToggle}
+              title={t("toggleTheme")}
+              style={{
+                background: "rgba(255,255,255,0.2)",
+                border: "none",
+                color: "white",
+                width: "28px",
+                height: "28px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "14px",
+                transition: "all 0.2s",
+              }}>
+              {getThemeIcon()}
+            </button>
+          )}
+
+          {/* 新标签页按钮 */}
+          <button
+            onClick={() => window.open(window.location.origin, "_blank")}
+            title={t("newTabTooltip") || "新标签页打开"}
+            style={{
+              background: "rgba(255,255,255,0.2)",
+              border: "none",
+              color: "white",
+              width: "28px",
+              height: "28px",
+              borderRadius: "6px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "16px",
+              transition: "all 0.2s",
+            }}>
+            +
+          </button>
+
+          {/* 设置按钮 */}
+          <button
+            onClick={() => setActiveTab(activeTab === "settings" ? "prompts" : "settings")}
+            title={t("tabSettings")}
+            style={{
+              background:
+                activeTab === "settings" ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.2)",
+              border: "none",
+              color: "white",
+              width: "28px",
+              height: "28px",
+              borderRadius: "6px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "14px",
+              transition: "all 0.2s",
+            }}>
+            ⚙
+          </button>
+
+          {/* 刷新按钮 */}
+          <button
+            onClick={() => {
+              if (activeTab === "outline") outlineManager?.refresh()
+              // TODO: 添加 promptManager 和 conversationManager 的刷新方法
+            }}
+            title={t("refresh")}
+            style={{
+              background: "rgba(255,255,255,0.2)",
+              border: "none",
+              color: "white",
+              width: "28px",
+              height: "28px",
+              borderRadius: "6px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "14px",
+              transition: "all 0.2s",
+            }}>
+            ⟳
+          </button>
+
+          {/* 折叠按钮（收起面板） */}
+          <button
+            onClick={onClose}
+            title={t("collapse")}
+            style={{
+              background: "rgba(255,255,255,0.2)",
+              border: "none",
+              color: "white",
+              width: "28px",
+              height: "28px",
+              borderRadius: "6px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "18px",
+              fontWeight: 600,
+              transition: "all 0.2s",
+            }}>
+            −
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs - 标签栏 */}
+      <div
+        className="gh-panel-tabs"
+        style={{
+          display: "flex",
+          borderBottom: "1px solid var(--gh-border-color, #e5e7eb)",
+          padding: "0",
+          background: "var(--gh-bg-secondary, #f9fafb)",
+        }}>
+        {visibleTabs.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              flex: 1,
+              padding: "10px 8px",
+              border: "none",
+              background: "transparent",
+              borderBottom:
+                activeTab === tab
+                  ? "3px solid var(--gh-primary-color, #4285f4)"
+                  : "3px solid transparent",
+              color: activeTab === tab ? "var(--gh-primary-color, #4285f4)" : "#6b7280",
+              fontWeight: activeTab === tab ? 600 : 400,
+              cursor: "pointer",
+              fontSize: "13px",
+              whiteSpace: "nowrap",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "4px",
+              transition: "all 0.2s",
+            }}>
+            <span>{tabIcons[tab] || ""}</span>
+            <span>{t(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`)}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Content - 内容区 */}
+      <div
+        className="gh-panel-content"
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          padding: "0",
+          scrollbarWidth: "none", // Firefox
+          msOverflowStyle: "none", // IE/Edge
+        }}>
+        {activeTab === "prompts" && (
+          <PromptsTab
+            manager={promptManager}
+            selectedPromptId={selectedPromptId}
+            onPromptSelect={onPromptSelect}
+          />
+        )}
+        {activeTab === "conversations" && <ConversationsTab manager={conversationManager} />}
+        {activeTab === "outline" && (
+          <OutlineTab manager={outlineManager} onJumpBefore={saveAnchor} />
+        )}
+        {activeTab === "settings" && (
+          <div style={{ padding: "0" }}>
+            <SettingsTab />
+          </div>
+        )}
+      </div>
+
+      {/* Footer - 底部固定按钮 */}
+      <div
+        className="gh-panel-footer"
+        style={{
+          display: "flex",
+          justifyContent: "space-around",
+          alignItems: "center",
+          padding: "10px 16px",
+          borderTop: "1px solid var(--gh-border-color, #e5e7eb)",
+          background: "var(--gh-bg-secondary, #f9fafb)",
+        }}>
+        {/* 顶部按钮 */}
+        <button
+          className="gh-interactive scroll-nav-btn"
+          onClick={scrollToTop}
+          title={t("scrollTop")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "8px 16px",
+            background: "linear-gradient(135deg, #4285f4 0%, #34a853 100%)",
+            color: "white",
+            border: "none",
+            borderRadius: "20px",
+            cursor: "pointer",
+            fontSize: "13px",
+            fontWeight: 500,
+            transition: "transform 0.2s, box-shadow 0.2s",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-1px)"
+            e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)"
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)"
+            e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.15)"
+          }}>
+          <span>↑</span>
+          <span>{t("scrollTop")}</span>
+        </button>
+
+        {/* 锚点按钮（返回之前位置，双向跳转） */}
+        <button
+          className="gh-interactive scroll-nav-btn anchor-btn"
+          onClick={goToAnchor}
+          title={hasAnchor ? t("jumpToAnchor") : "暂无锚点"}
+          disabled={!hasAnchor}
+          style={{
+            width: "32px",
+            height: "32px",
+            background: hasAnchor ? "linear-gradient(135deg, #4285f4 0%, #34a853 100%)" : "#d1d5db",
+            color: "white",
+            border: "none",
+            borderRadius: "50%",
+            cursor: hasAnchor ? "pointer" : "default",
+            fontSize: "14px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "transform 0.2s, box-shadow 0.2s",
+            boxShadow: hasAnchor ? "0 2px 6px rgba(0,0,0,0.15)" : "none",
+            opacity: hasAnchor ? 1 : 0.4,
+          }}
+          onMouseEnter={(e) => {
+            if (hasAnchor) {
+              e.currentTarget.style.transform = "scale(1.1)"
+              e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)"
+              // 旋转特效
+              const span = e.currentTarget.querySelector("span")
+              if (span) span.style.transform = "rotate(360deg)"
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "scale(1)"
+            e.currentTarget.style.boxShadow = hasAnchor ? "0 2px 6px rgba(0,0,0,0.15)" : "none"
+            // 恢复旋转
+            const span = e.currentTarget.querySelector("span")
+            if (span) span.style.transform = "rotate(0deg)"
+          }}>
+          <span
+            style={{
+              display: "inline-block",
+              transition: "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            }}>
+            ⚓
+          </span>
+        </button>
+
+        {/* 底部按钮 */}
+        <button
+          className="gh-interactive scroll-nav-btn"
+          onClick={scrollToBottom}
+          title={t("scrollBottom")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "8px 16px",
+            background: "linear-gradient(135deg, #4285f4 0%, #34a853 100%)",
+            color: "white",
+            border: "none",
+            borderRadius: "20px",
+            cursor: "pointer",
+            fontSize: "13px",
+            fontWeight: 500,
+            transition: "transform 0.2s, box-shadow 0.2s",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-1px)"
+            e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)"
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)"
+            e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.15)"
+          }}>
+          <span>↓</span>
+          <span>{t("scrollBottom")}</span>
+        </button>
+      </div>
+    </div>
+  )
+}

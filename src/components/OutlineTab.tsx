@@ -1,0 +1,990 @@
+import React, { useCallback, useEffect, useRef, useState } from "react"
+
+import type { OutlineManager, OutlineNode } from "~core/outline-manager"
+import { t } from "~utils/i18n"
+
+interface OutlineTabProps {
+  manager: OutlineManager
+  onJumpBefore?: () => void
+}
+
+// 递归渲染大纲树节点 (Legacy 1:1 Parity)
+// 关键差异: 使用 outline-hidden 类而非条件渲染
+const OutlineNodeView: React.FC<{
+  node: OutlineNode
+  onToggle: (node: OutlineNode) => void
+  onClick: (node: OutlineNode) => void
+  onCopy: (e: React.MouseEvent, node: OutlineNode) => void
+  activeIndex: number | null
+  searchQuery: string
+  displayLevel: number
+  minRelativeLevel: number
+  parentCollapsed: boolean
+  parentForceExpanded: boolean
+  searchLevelManual: boolean
+  extractUserQueryText?: (element: Element) => string // 用于提取完整文本
+}> = ({
+  node,
+  onToggle,
+  onClick,
+  onCopy,
+  activeIndex,
+  searchQuery,
+  displayLevel,
+  minRelativeLevel,
+  parentCollapsed,
+  parentForceExpanded,
+  searchLevelManual,
+  extractUserQueryText,
+}) => {
+  const isActive = node.index === activeIndex
+  const hasChildren = node.children && node.children.length > 0
+  // Legacy: isExpanded 直接看 hasChildren 和 collapsed，不考虑搜索
+  // 箭头始终显示（只要有子节点），因为用户可能想手动展开查看不匹配的子节点
+  const isExpanded = hasChildren && !node.collapsed
+
+  // ===== Legacy shouldShow calculation =====
+  const isRootNode = node.relativeLevel === minRelativeLevel
+  const isLevelAllowed = node.relativeLevel <= displayLevel || parentForceExpanded
+
+  let shouldShow: boolean
+  if (isRootNode) {
+    // 顶层节点
+    if (searchQuery) {
+      shouldShow = node.isMatch || node.hasMatchedDescendant
+    } else {
+      shouldShow = true
+    }
+  } else {
+    // 非顶层节点
+    const isRelevant =
+      !searchQuery || node.isMatch || node.hasMatchedDescendant || parentForceExpanded
+
+    if (searchQuery && !searchLevelManual) {
+      // 纯搜索模式
+      shouldShow = isRelevant && !parentCollapsed
+    } else if (searchQuery && searchLevelManual) {
+      // 搜索+层级限制
+      shouldShow = isRelevant && isLevelAllowed && !parentCollapsed
+    } else {
+      // 普通模式
+      shouldShow = isLevelAllowed && !parentCollapsed
+    }
+  }
+  // 父级折叠则隐藏
+  if (parentCollapsed) shouldShow = false
+
+  // ⭐ 强制可见覆盖：定位时标记的节点始终显示
+  if (node.forceVisible) {
+    shouldShow = true
+  }
+
+  // ===== CSS 类名 (Legacy exact) =====
+  const itemClassName = [
+    "outline-item",
+    `outline-level-${node.relativeLevel}`,
+    node.isUserQuery ? "user-query-node" : "",
+    isActive ? "sync-highlight" : "",
+    !shouldShow ? "outline-hidden" : "",
+  ]
+    .filter(Boolean)
+    .join(" ")
+
+  // ===== 搜索高亮处理 (Legacy: regex split) =====
+  const renderTextWithHighlight = () => {
+    if (searchQuery && node.isMatch) {
+      try {
+        const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+        const regex = new RegExp(`(${escapedQuery})`, "gi")
+        const parts = node.text.split(regex)
+        return (
+          <>
+            {parts.map((part, i) =>
+              part.toLowerCase() === searchQuery.toLowerCase() ? (
+                <mark
+                  key={i}
+                  style={{
+                    backgroundColor: "rgba(255, 235, 59, 0.5)",
+                    color: "inherit",
+                    padding: 0,
+                    borderRadius: "2px",
+                  }}>
+                  {part}
+                </mark>
+              ) : (
+                part
+              ),
+            )}
+          </>
+        )
+      } catch {
+        return node.text
+      }
+    }
+    return node.text
+  }
+
+  // ===== 复制处理 (阻止冒泡) =====
+  const [copySuccess, setCopySuccess] = useState(false)
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+
+    // 智能获取文本：短文本直接用缓存，长文本（被截断）从 DOM 重新提取
+    let textToCopy = node.text
+    if (node.isTruncated && node.element && node.element.isConnected && extractUserQueryText) {
+      const fullText = extractUserQueryText(node.element)
+      if (fullText) {
+        textToCopy = fullText
+      }
+    }
+
+    try {
+      // 优先使用 Clipboard API
+      await navigator.clipboard.writeText(textToCopy)
+      setCopySuccess(true)
+      setTimeout(() => setCopySuccess(false), 1500)
+    } catch (err) {
+      console.error("[DEBUG] Clipboard API failed, trying fallback:", err)
+      // 备用方案：使用 execCommand
+      try {
+        const textArea = document.createElement("textarea")
+        textArea.value = textToCopy
+        textArea.style.position = "fixed"
+        textArea.style.left = "-9999px"
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand("copy")
+        document.body.removeChild(textArea)
+        setCopySuccess(true)
+        setTimeout(() => setCopySuccess(false), 1500)
+      } catch (fallbackErr) {
+        console.error("[DEBUG] Fallback copy also failed:", fallbackErr)
+      }
+    }
+  }
+
+  // ===== 子节点渲染 (始终渲染，使用 childParentCollapsed) =====
+  const childParentCollapsed = node.collapsed || parentCollapsed
+  const childParentForceExpanded = node.forceExpanded || parentForceExpanded
+
+  return (
+    <>
+      <div
+        className={itemClassName}
+        data-index={node.index}
+        data-level={node.relativeLevel}
+        onClick={() => onClick(node)}
+        title={node.text}>
+        {/* 折叠箭头 (Legacy: ▸) - 使用 hasChildren 显示箭头，允许手动展开 */}
+        <span
+          className={`outline-item-toggle ${hasChildren ? (isExpanded ? "expanded" : "") : "invisible"}`}
+          onClick={(e) => {
+            if (hasChildren) {
+              e.stopPropagation()
+              onToggle(node)
+            }
+          }}>
+          ▸
+        </span>
+
+        {/* 用户提问: 徽章 (图标+角标数字) */}
+        {node.isUserQuery && (
+          <span className="user-query-badge">
+            <span className="user-query-badge-icon">💬</span>
+            <span className="user-query-badge-number">{node.queryIndex}</span>
+          </span>
+        )}
+
+        {/* 文字 (带搜索高亮) */}
+        <span className="outline-item-text">{renderTextWithHighlight()}</span>
+
+        {/* 复制按钮 (用户提问显示) */}
+        {node.isUserQuery && (
+          <span className="outline-item-copy-btn" onClick={handleCopy} title={t("copy") || "复制"}>
+            {copySuccess ? (
+              // 成功对号图标
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#10b981"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            ) : (
+              // 复制图标
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+            )}
+          </span>
+        )}
+      </div>
+
+      {/* 子节点 (始终渲染，不根据 collapsed 条件渲染，而是传递 childParentCollapsed) */}
+      {hasChildren &&
+        node.children.map((child, idx) => (
+          <OutlineNodeView
+            key={`${child.level}-${child.text}-${idx}`}
+            node={child}
+            onToggle={onToggle}
+            onClick={onClick}
+            onCopy={onCopy}
+            activeIndex={activeIndex}
+            searchQuery={searchQuery}
+            displayLevel={displayLevel}
+            minRelativeLevel={minRelativeLevel}
+            parentCollapsed={childParentCollapsed}
+            parentForceExpanded={childParentForceExpanded}
+            searchLevelManual={searchLevelManual}
+            extractUserQueryText={extractUserQueryText}
+          />
+        ))}
+    </>
+  )
+}
+
+const ExpandIcon = () => (
+  <svg
+    viewBox="0 0 16 16"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    style={{ width: 14, height: 14 }}>
+    <circle cx="8" cy="8" r="6.5" />
+    <line x1="4" y1="8" x2="12" y2="8" />
+    <line x1="8" y1="4" x2="8" y2="12" />
+  </svg>
+)
+
+const CollapseIcon = () => (
+  <svg
+    viewBox="0 0 16 16"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    style={{ width: 14, height: 14 }}>
+    <circle cx="8" cy="8" r="6.5" />
+    <line x1="4" y1="8" x2="12" y2="8" />
+  </svg>
+)
+
+const LocateIcon = () => (
+  <svg
+    viewBox="0 0 18 18"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ width: 18, height: 18 }}>
+    <circle cx="9" cy="9" r="4.5" />
+    <line x1="9" y1="1" x2="9" y2="3.5" />
+    <line x1="9" y1="14.5" x2="9" y2="17" />
+    <line x1="1" y1="9" x2="3.5" y2="9" />
+    <line x1="14.5" y1="9" x2="17" y2="9" />
+  </svg>
+)
+
+export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore }) => {
+  // Initialize state from manager to prevent flicker
+  const initialState = manager.getState()
+
+  const [tree, setTree] = useState<OutlineNode[]>(initialState.tree)
+  const [activeIndex, setActiveIndex] = useState<number | null>(null) // manager doesn't track activeIndex
+  const [searchQuery, setSearchQuery] = useState(manager.getSearchQuery())
+  const [isAllExpanded, setIsAllExpanded] = useState(initialState.isAllExpanded)
+  const [showUserQueries, setShowUserQueries] = useState(initialState.includeUserQueries)
+  const [scrollState, setScrollState] = useState<"top" | "bottom">("bottom")
+  const [expandLevel, setExpandLevel] = useState(initialState.expandLevel ?? 6)
+  const [levelCounts, setLevelCounts] = useState<Record<number, number>>(initialState.levelCounts)
+  // New state for legacy parity
+  const [displayLevel, setDisplayLevel] = useState(initialState.displayLevel)
+  const [minRelativeLevel, setMinRelativeLevel] = useState(initialState.minRelativeLevel)
+  const [searchLevelManual, setSearchLevelManual] = useState(initialState.searchLevelManual)
+  const [matchCount, setMatchCount] = useState(initialState.matchCount)
+
+  const listRef = useRef<HTMLDivElement>(null)
+  const prevTreeLengthRef = useRef<number>(0) // ⭐ 用 ref 追踪上一次树长度
+  const shouldScrollToBottomRef = useRef<boolean>(false) // ⭐ 标记是否需要滚动
+
+  // ⭐ Tab 激活状态管理：挂载时激活，卸载时取消
+  useEffect(() => {
+    manager.setActive(true)
+    return () => {
+      manager.setActive(false)
+    }
+  }, [manager])
+
+  // 订阅 Manager 更新
+  useEffect(() => {
+    const update = () => {
+      const listEl = listRef.current
+
+      // ⭐ 智能滚动：检测用户是否已在底部附近（更新前）
+      let wasAtBottom = false
+      if (listEl) {
+        const { scrollTop, scrollHeight, clientHeight } = listEl
+        wasAtBottom = scrollTop + clientHeight >= scrollHeight - 50 // 50px 容差
+      }
+
+      const state = manager.getState()
+
+      // ⭐ 递归计算所有节点数量（包括子节点）
+      const countNodes = (nodes: OutlineNode[]): number => {
+        let count = 0
+        for (const node of nodes) {
+          count += 1
+          if (node.children && node.children.length > 0) {
+            count += countNodes(node.children)
+          }
+        }
+        return count
+      }
+
+      const newTotalNodes = countNodes(state.tree)
+      const prevTotalNodes = prevTreeLengthRef.current
+
+      // ⭐ 方案 C：如果新增的是用户提问，强制滚动到底部
+      // 因为用户发送消息后肯定关注最新对话
+      let hasNewUserQuery = false
+      if (state.tree.length > 0) {
+        // 检查最后一个顶层项是否是用户提问
+        const lastItem = state.tree[state.tree.length - 1]
+        // 如果节点数增加了且最后一个是用户提问
+        if (newTotalNodes > prevTotalNodes && lastItem && lastItem.isUserQuery) {
+          hasNewUserQuery = true
+        }
+      }
+
+      // 如果有新用户提问，或者用户在底部且有新增节点（包括子节点），标记需要滚动
+      if (hasNewUserQuery || (wasAtBottom && newTotalNodes > prevTotalNodes)) {
+        shouldScrollToBottomRef.current = true
+      }
+
+      setTree([...state.tree])
+      setSearchQuery(manager.getSearchQuery())
+
+      setIsAllExpanded(state.isAllExpanded)
+      setExpandLevel(state.expandLevel ?? 6)
+      setLevelCounts(state.levelCounts || {})
+      setShowUserQueries(state.includeUserQueries)
+      // New state sync
+      setDisplayLevel(state.displayLevel)
+      setMinRelativeLevel(state.minRelativeLevel)
+      setSearchLevelManual(state.searchLevelManual)
+      setMatchCount(state.matchCount)
+
+      // ⭐ 更新 ref 以供下次比较（现在是总节点数）
+      prevTreeLengthRef.current = newTotalNodes
+    }
+    update() // 初始加载
+    return manager.subscribe(update)
+  }, [manager])
+
+  // ⭐ 智能滚动：在 tree 渲染完成后执行滚动
+  useEffect(() => {
+    if (shouldScrollToBottomRef.current && listRef.current) {
+      const listEl = listRef.current
+      // 使用 requestAnimationFrame 确保 DOM 完全渲染
+      requestAnimationFrame(() => {
+        listEl.scrollTo({ top: listEl.scrollHeight, behavior: "smooth" })
+      })
+      shouldScrollToBottomRef.current = false
+    }
+  }, [tree]) // 依赖 tree，当 tree 变化（渲染完成）后执行
+
+  // 滚动同步高亮 - Legacy 完全复刻
+  // 包含父级回退逻辑：如果目标项被隐藏，向上找可见的父级
+  useEffect(() => {
+    let scrollContainer: HTMLElement | null = null
+    let retryCount = 0
+    let retryTimer: NodeJS.Timeout
+
+    const handleScroll = () => {
+      if (!scrollContainer) return
+
+      const viewportTop = scrollContainer.getBoundingClientRect().top
+      const viewportBottom = scrollContainer.getBoundingClientRect().bottom
+
+      // Legacy logic expected direct viewport coordinates, but findVisibleItemIndex uses getBoundingClientRect logic
+      // so passing 0/innerHeight is risky if container is not full viewport.
+      // Better to pass actual viewport bounds if manager expects absolute coords relative to viewport.
+      // Manager logic:
+      // item.element.getBoundingClientRect()
+      // if (rect.top >= viewportTop && rect.top < viewportBottom)
+      // So if we pass 0 and innerHeight, it checks if item is in window regardless of container.
+      // But if container is small, we should restrict to container bounds?
+      // Legacy passed containerRect.top/bottom. Let's inspect manager logic again.
+      // Yes logic is: const containerRect = scrollContainer.getBoundingClientRect(); viewportTop = containerRect.top...
+      // So we should pass container bounds!
+
+      const idx = manager.findVisibleItemIndex(viewportTop, viewportBottom)
+
+      if (idx === null) {
+        // Only clear active index if we really scrolled away?
+        // Or keep last active? Legacy kept last active sometimes but here we set to null.
+        // Let's keep it null for now to match current impl behavior.
+        setActiveIndex(null)
+        return
+      }
+
+      // 设置原始 activeIndex
+      setActiveIndex(idx)
+
+      // 延迟查找 DOM 并应用父级回退逻辑
+      requestAnimationFrame(() => {
+        const listContainer = listRef.current
+        if (!listContainer) return
+
+        // 移除旧的 sync-highlight-visible 类
+        const oldHighlight = listContainer.querySelector(".sync-highlight-visible")
+        if (oldHighlight) {
+          oldHighlight.classList.remove("sync-highlight-visible")
+        }
+
+        let outlineItem = listContainer.querySelector(`.outline-item[data-index="${idx}"]`)
+        if (!outlineItem) return
+
+        // Legacy: 如果目标项被隐藏（折叠），向上找可见的父级
+        if (outlineItem.classList.contains("outline-hidden")) {
+          let parent = outlineItem.previousElementSibling
+          while (parent) {
+            if (
+              parent.classList.contains("outline-item") &&
+              !parent.classList.contains("outline-hidden")
+            ) {
+              const parentLevel = parseInt((parent as HTMLElement).dataset.level || "0", 10)
+              const currentLevel = parseInt((outlineItem as HTMLElement).dataset.level || "0", 10)
+              if (parentLevel < currentLevel) {
+                outlineItem = parent
+                break
+              }
+            }
+            parent = parent.previousElementSibling
+          }
+          if (outlineItem.classList.contains("outline-hidden")) return
+        }
+
+        // 添加可见高亮类
+        outlineItem.classList.add("sync-highlight-visible")
+
+        // Legacy: 轻微滚动大纲面板使高亮项可见（如果超出视口）
+        const wrapperRect = listContainer.getBoundingClientRect()
+        const itemRect = outlineItem.getBoundingClientRect()
+        if (itemRect.top < wrapperRect.top || itemRect.bottom > wrapperRect.bottom) {
+          const scrollOffset =
+            itemRect.top - wrapperRect.top - wrapperRect.height / 2 + itemRect.height / 2
+          listContainer.scrollBy({ top: scrollOffset, behavior: "smooth" })
+        }
+      })
+    }
+
+    const initListener = () => {
+      const container = manager.getScrollContainer()
+      if (container) {
+        scrollContainer = container
+        scrollContainer.addEventListener("scroll", handleScroll, { passive: true })
+        // Initial check
+        handleScroll()
+      } else if (retryCount < 10) {
+        retryCount++
+        retryTimer = setTimeout(initListener, 300)
+      } else {
+        // Fallback to window only if desperate, but typically window scroll won't help if container is internal
+        // But for safety let's leave valid container check
+        console.warn("[OutlineTab] Failed to find scroll container after retries")
+      }
+    }
+
+    initListener()
+
+    return () => {
+      if (scrollContainer) {
+        scrollContainer.removeEventListener("scroll", handleScroll)
+      }
+      if (retryTimer) {
+        clearTimeout(retryTimer)
+      }
+    }
+  }, [manager])
+
+  // 大纲列表滚动监听 (Dynamic Scroll Button state)
+  useEffect(() => {
+    const el = listRef.current
+    if (!el) return
+    const checkScroll = () => {
+      const isAtBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 10
+      setScrollState(isAtBottom ? "top" : "bottom")
+    }
+    el.addEventListener("scroll", checkScroll)
+    // Initial check
+    checkScroll()
+    return () => el.removeEventListener("scroll", checkScroll)
+  }, []) // Empty dependency array as listRef strictly stable
+
+  const handleToggle = useCallback(
+    (node: OutlineNode) => {
+      manager.toggleNode(node)
+    },
+    [manager],
+  )
+
+  const handleClick = useCallback(
+    (node: OutlineNode) => {
+      let targetElement = node.element
+
+      // ⭐ 关键修复：元素失效时使用 siteAdapter 重新查找（支持 Shadow DOM）
+      if (!targetElement || !targetElement.isConnected) {
+        // 使用 manager.findElementByHeading 代理到 siteAdapter
+        // GeminiBusiness 会使用 DOMToolkit 穿透 Shadow DOM
+        const found = manager.findElementByHeading(node.level, node.text)
+        if (found) {
+          targetElement = found as HTMLElement
+          // 更新节点引用以便下次使用
+          node.element = targetElement
+        }
+      }
+
+      if (targetElement && targetElement.isConnected) {
+        if (onJumpBefore) {
+          onJumpBefore()
+        }
+        // 传入 __bypassLock: true 以绕过 ScrollLockManager 的拦截
+        targetElement.scrollIntoView({ behavior: "smooth", block: "start" })
+        // 高亮效果
+        targetElement.classList.add("outline-highlight")
+        setTimeout(() => targetElement?.classList.remove("outline-highlight"), 2000)
+      } else {
+        console.warn("[OutlineTab] Element lost and not found:", node.text)
+      }
+    },
+    [manager, onJumpBefore],
+  )
+
+  const handleCopy = useCallback((e: React.MouseEvent, node: OutlineNode) => {
+    e.stopPropagation()
+    const text = node.text
+    navigator.clipboard.writeText(text).then(() => {
+      console.log("Copied to clipboard:", text)
+    })
+  }, [])
+
+  // 用于提取完整用户提问文本（当显示被截断时）
+  const extractUserQueryText = useCallback(
+    (element: Element): string => manager.extractUserQueryText(element),
+    [manager],
+  )
+
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      manager.setSearchQuery(e.target.value)
+    },
+    [manager],
+  )
+
+  const handleSearchClear = useCallback(() => {
+    manager.setSearchQuery("")
+  }, [manager])
+
+  const handleExpandAll = useCallback(() => {
+    if (isAllExpanded) {
+      manager.collapseAll()
+    } else {
+      manager.expandAll()
+    }
+  }, [manager, isAllExpanded])
+
+  const handleGroupModeToggle = useCallback(() => {
+    manager.toggleGroupMode()
+  }, [manager])
+
+  const handleDynamicScroll = useCallback(() => {
+    const el = listRef.current
+    if (!el) return
+    if (scrollState === "bottom") {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" })
+    } else {
+      el.scrollTo({ top: 0, behavior: "smooth" })
+    }
+  }, [scrollState])
+
+  // Legacy: locateCurrentPosition 完全复刻
+  const handleLocateCurrent = useCallback(() => {
+    const scrollContainer = manager.getScrollContainer()
+    if (!scrollContainer) return
+
+    // 0. 如果在搜索模式，先清除搜索
+    if (searchQuery) {
+      manager.setSearchQuery("")
+      // 同步 UI 状态
+      setSearchQuery("")
+    }
+
+    // 1. 收集所有大纲项（展平树结构）
+    const flattenTree = (items: typeof tree): typeof tree => {
+      const result: typeof tree = []
+      items.forEach((item) => {
+        result.push(item)
+        if (item.children && item.children.length > 0) {
+          result.push(...flattenTree(item.children))
+        }
+      })
+      return result
+    }
+    const allItems = flattenTree(tree)
+
+    // 2. 找到当前可视区域中的第一个大纲元素
+    const containerRect = scrollContainer.getBoundingClientRect()
+    const viewportTop = containerRect.top
+    const viewportBottom = containerRect.bottom
+
+    let currentItem: (typeof tree)[0] | null = null
+    for (const item of allItems) {
+      if (!item.element || !item.element.isConnected) continue
+
+      const rect = item.element.getBoundingClientRect()
+      if (rect.top >= viewportTop && rect.top < viewportBottom) {
+        currentItem = item
+        break
+      }
+      if (rect.top < viewportTop && rect.bottom > viewportTop) {
+        currentItem = item
+        break
+      }
+    }
+
+    if (!currentItem) {
+      // 找最接近视口顶部的元素
+      let minDistance = Infinity
+      for (const item of allItems) {
+        if (!item.element || !item.element.isConnected) continue
+        const rect = item.element.getBoundingClientRect()
+        const distance = Math.abs(rect.top - viewportTop)
+        if (distance < minDistance) {
+          minDistance = distance
+          currentItem = item
+        }
+      }
+    }
+
+    if (!currentItem) return
+
+    // 3. 展开目标项的所有父级节点
+    manager.revealNode(currentItem.index)
+
+    // 4. 延迟滚动和高亮（等待 DOM 更新）
+    setTimeout(() => {
+      const listContainer = listRef.current
+      if (!listContainer) return
+
+      const outlineItem = listContainer.querySelector(
+        `.outline-item[data-index="${currentItem!.index}"]`,
+      )
+      if (!outlineItem) return
+
+      // 滚动大纲面板到该项（居中显示）
+      outlineItem.scrollIntoView({ behavior: "smooth", block: "center" })
+
+      // 高亮该大纲项（3秒后消失并清除 forceVisible）
+      outlineItem.classList.add("highlight")
+      setTimeout(() => {
+        outlineItem.classList.remove("highlight")
+        manager.clearForceVisible()
+      }, 3000)
+    }, 50)
+  }, [tree, searchQuery, manager])
+
+  const handleLevelClick = useCallback(
+    (level: number) => {
+      manager.setLevel(level)
+    },
+    [manager],
+  )
+
+  const handleRefresh = useCallback(() => {
+    manager.refresh()
+  }, [manager])
+
+  return (
+    <div
+      className="gh-outline-tab"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+      }}>
+      {/* Fixed Toolbar */}
+      <div
+        className="outline-fixed-toolbar"
+        style={{
+          padding: "8px",
+          borderBottom: "1px solid #e5e7eb",
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+          backgroundColor: "#fff",
+        }}>
+        {/* Row 1: Buttons & Search */}
+        <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "2px" }}>
+            {/* Group Mode */}
+            <button
+              onClick={handleGroupModeToggle}
+              title={
+                showUserQueries
+                  ? t("outlineOnlyUserQueries") || "仅显示提问"
+                  : t("outlineShowUserQueries") || "显示所有"
+              }
+              className={`outline-toolbar-btn ${showUserQueries ? "active" : ""}`}>
+              🙋
+            </button>
+
+            {/* Expand/Collapse */}
+            <button
+              onClick={handleExpandAll}
+              title={isAllExpanded ? t("outlineCollapseAll") : t("outlineExpandAll")}
+              style={{
+                width: "26px",
+                height: "26px",
+                padding: 0,
+                border: "1px solid #d1d5db",
+                borderRadius: "4px",
+                backgroundColor: "#fff",
+                color: "#374151",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}>
+              {isAllExpanded ? <CollapseIcon /> : <ExpandIcon />}
+            </button>
+
+            {/* Locate Current */}
+            <button
+              onClick={handleLocateCurrent}
+              title={t("outlineLocateCurrent") || "定位到当前位置"}
+              style={{
+                width: "26px",
+                height: "26px",
+                padding: 0,
+                border: "1px solid #d1d5db",
+                borderRadius: "4px",
+                backgroundColor: "#fff",
+                color: "#374151",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}>
+              <LocateIcon />
+            </button>
+
+            {/* Dynamic Scroll (Top/Bottom) */}
+            <button
+              onClick={handleDynamicScroll}
+              title={
+                scrollState === "bottom"
+                  ? t("outlineScrollBottom") || "滚动到底部"
+                  : t("outlineScrollTop") || "回到顶部"
+              }
+              style={{
+                width: "26px",
+                height: "26px",
+                padding: 0,
+                border: "1px solid #d1d5db",
+                borderRadius: "4px",
+                backgroundColor: "#fff",
+                color: "#374151",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "14px",
+              }}>
+              {scrollState === "bottom" ? "⬇" : "⬆"}
+            </button>
+          </div>
+
+          {/* Search Input */}
+          <div
+            className="outline-search-wrapper"
+            style={{
+              flex: 1,
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+            }}>
+            <input
+              type="text"
+              className="outline-search-input"
+              placeholder={t("outlineSearch") || "搜索..."}
+              value={searchQuery}
+              onChange={handleSearchChange}
+              style={{
+                width: "100%",
+                padding: "4px 24px 4px 8px",
+                borderRadius: "4px",
+                border: "1px solid #d1d5db",
+                fontSize: "12px",
+                boxSizing: "border-box",
+                height: "26px",
+              }}
+            />
+            {searchQuery && (
+              <button
+                className="outline-search-clear"
+                onClick={handleSearchClear}
+                style={{
+                  position: "absolute",
+                  right: "4px",
+                  background: "none",
+                  border: "none",
+                  color: "#9ca3af",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  padding: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}>
+                ×
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Row 2: Level Slider */}
+        <div className="outline-level-slider-container" style={{ padding: "0 4px" }}>
+          <div
+            className="outline-level-dots"
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              position: "relative",
+              padding: "6px 0",
+              alignItems: "center",
+            }}>
+            {/* Background Line */}
+            <div
+              className="outline-level-line-bg"
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "4px",
+                right: "4px",
+                height: "2px",
+                background: "#e5e7eb",
+                zIndex: 0,
+                transform: "translateY(-50%)",
+              }}></div>
+            {/* Progress Line */}
+            <div
+              className="outline-level-progress"
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "4px",
+                height: "2px",
+                background: "#3b82f6",
+                zIndex: 0,
+                transform: "translateY(-50%)",
+                width: `calc((${expandLevel} / 6) * (100% - 8px))`,
+                transition: "width 0.2s ease",
+              }}></div>
+
+            {/* Dots */}
+            {[0, 1, 2, 3, 4, 5, 6].map((lvl) => {
+              // Tooltip Text
+              let title = ""
+              if (lvl === 0) {
+                title = showUserQueries
+                  ? t("outlineOnlyUserQueries") || "仅显示提问"
+                  : t("outlineCollapseAll") || "折叠全部"
+              } else {
+                title = `H${lvl}: ${levelCounts[lvl] || 0}`
+              }
+
+              return (
+                <div
+                  key={lvl}
+                  className={`outline-level-dot ${lvl <= expandLevel ? "active" : ""}`}
+                  data-level={lvl}
+                  onClick={() => handleLevelClick(lvl)}
+                  title={title}
+                  style={{
+                    width: "10px",
+                    height: "10px",
+                    borderRadius: "50%",
+                    backgroundColor: lvl <= expandLevel ? "#3b82f6" : "#fff",
+                    border: `2px solid ${lvl <= expandLevel ? "#3b82f6" : "#d1d5db"}`,
+                    zIndex: 1,
+                    cursor: "pointer",
+                    position: "relative",
+                    transition: "all 0.2s ease",
+                    boxSizing: "border-box",
+                  }}
+                />
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* 大纲树 */}
+      <div
+        ref={listRef}
+        className="gh-outline-tree-container"
+        style={{ flex: 1, overflowY: "auto", padding: "8px" }}>
+        {/* 搜索结果条 */}
+        {searchQuery && matchCount > 0 && (
+          <div className="outline-result-bar">
+            {matchCount} {t("outlineSearchResult") || "个结果"}
+          </div>
+        )}
+
+        {tree.length === 0 ? (
+          <div
+            style={{
+              textAlign: "center",
+              color: "#9ca3af",
+              marginTop: "20px",
+              fontSize: "12px",
+            }}>
+            {t("outlineEmpty") || "暂无大纲内容"}
+          </div>
+        ) : (
+          <div className="outline-list">
+            {tree.map((node, idx) => (
+              <OutlineNodeView
+                key={`${node.level}-${node.text}-${idx}`}
+                node={node}
+                onToggle={handleToggle}
+                onClick={handleClick}
+                onCopy={handleCopy}
+                activeIndex={activeIndex}
+                searchQuery={searchQuery}
+                displayLevel={displayLevel}
+                minRelativeLevel={minRelativeLevel}
+                parentCollapsed={false}
+                parentForceExpanded={false}
+                searchLevelManual={searchLevelManual}
+                extractUserQueryText={extractUserQueryText}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

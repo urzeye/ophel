@@ -1,0 +1,66 @@
+{
+  "extensionName": {
+    "message": "Chat Helper",
+    "description": "Extension name"
+  },
+  "extensionDescription": {
+    "message": "AI Chat Enhancement - Multi-platform support (Gemini/AI Studio/Grok/ChatGPT/Claude)",
+    "description": "Extension description"
+  },
+  "panelTitle": {
+    "message": "Chat Helper",
+    "description": "Panel title"
+  },
+  "tabPrompts": {
+    "message": "Prompts",
+    "description": "Prompts tab"
+  },
+  "tabOutline": {
+    "message": "Outline",
+    "description": "Outline tab"
+  },
+  "tabConversations": {
+    "message": "Conversations",
+    "description": "Conversations tab"
+  },
+  "tabSettings": {
+    "message": "Settings",
+    "description": "Settings tab"
+  },
+  "scrollTop": {
+    "message": "Top",
+    "description": "Scroll to top"
+  },
+  "scrollBottom": {
+    "message": "Bottom",
+    "description": "Scroll to bottom"
+  },
+  "save": {
+    "message": "Save",
+    "description": "Save button"
+  },
+  "cancel": {
+    "message": "Cancel",
+    "description": "Cancel button"
+  },
+  "confirm": {
+    "message": "Confirm",
+    "description": "Confirm button"
+  },
+  "delete": {
+    "message": "Delete",
+    "description": "Delete button"
+  },
+  "edit": {
+    "message": "Edit",
+    "description": "Edit button"
+  },
+  "copy": {
+    "message": "Copy",
+    "description": "Copy button"
+  },
+  "copied": {
+    "message": "Copied to clipboard",
+    "description": "Copy success message"
+  }
+}

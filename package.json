@@ -1,0 +1,49 @@
+{
+  "name": "chat-helper",
+  "displayName": "Chat Helper",
+  "version": "2.0.0",
+  "description": "AI Chat Helper - 多站点 AI 对话增强（Gemini/AI Studio/Grok/ChatGPT/Claude）",
+  "author": "urzeye",
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "build:firefox": "plasmo build --target=firefox-mv3",
+    "package": "plasmo package"
+  },
+  "dependencies": {
+    "@plasmohq/storage": "^1.12.0",
+    "effect": "^3.19.13",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "plasmo": "0.90.5"
+  },
+  "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "4.1.1",
+    "@trivago/prettier-plugin-sort-imports": "^6.0.0",
+    "@types/chrome": "0.0.258",
+    "@types/node": "20.11.5",
+    "@types/react": "18.2.48",
+    "@types/react-dom": "18.2.18",
+    "prettier": "3.2.4",
+    "typescript": "5.3.3"
+  },
+  "manifest": {
+    "name": "Chat Helper",
+    "permissions": [
+      "storage",
+      "notifications",
+      "tabs"
+    ],
+    "host_permissions": [
+      "https://gemini.google.com/*",
+      "https://business.gemini.google/*",
+      "https://aistudio.google.com/*",
+      "https://grok.com/*",
+      "https://x.com/i/grok/*",
+      "https://chat.openai.com/*",
+      "https://chatgpt.com/*",
+      "https://claude.ai/*",
+      "https://*.googleusercontent.com/*"
+    ]
+  }
+}

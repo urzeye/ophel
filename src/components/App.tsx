@@ -1,0 +1,344 @@
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+
+import { useStorage } from "@plasmohq/storage/hook"
+
+import { getAdapter } from "~adapters/index"
+import { ConversationManager } from "~core/conversation-manager"
+import { OutlineManager } from "~core/outline-manager"
+import { PromptManager } from "~core/prompt-manager"
+import { ThemeManager } from "~core/theme-manager"
+import { Exporter } from "~utils/exporter"
+import { DEFAULT_SETTINGS, STORAGE_KEYS, type Prompt, type Settings } from "~utils/storage"
+
+import { FloatingBall } from "./FloatingBall"
+import { MainPanel } from "./MainPanel"
+import { QuickButtons } from "./QuickButtons"
+import { SelectedPromptBar } from "./SelectedPromptBar"
+
+export const App = () => {
+  // 读取设置
+  const [settings, setSettings] = useStorage<Settings>(STORAGE_KEYS.SETTINGS, (saved) =>
+    saved === undefined ? DEFAULT_SETTINGS : { ...DEFAULT_SETTINGS, ...saved },
+  )
+
+  // 面板状态
+  const [isPanelOpen, setIsPanelOpen] = useState(settings?.defaultPanelOpen ?? false)
+
+  // 主题状态 - 与 settings 同步 (不再支持 auto)
+  // 如果旧数据中有 auto，将其视为 light 处理，或者在初始化 ThemeManager 时会被强制转换
+  const [themeMode, setThemeMode] = useState<"light" | "dark">(
+    settings?.themeMode === "dark" ? "dark" : "light",
+  )
+
+  // 选中的提示词状态
+  const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null)
+
+  // 当设置中的主题变化时，同步更新本地状态
+  useEffect(() => {
+    if (settings?.themeMode && settings.themeMode !== themeMode) {
+      setThemeMode(settings.themeMode)
+    }
+  }, [settings?.themeMode])
+
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  // 单例实例
+  const adapter = useMemo(() => getAdapter(), [])
+
+  // 处理提示词选中
+  const handlePromptSelect = useCallback((prompt: Prompt | null) => {
+    setSelectedPrompt(prompt)
+  }, [])
+
+  // 清除选中的提示词
+  const handleClearSelectedPrompt = useCallback(() => {
+    setSelectedPrompt(null)
+    // 同时清空输入框（可选）
+    if (adapter) {
+      adapter.clearTextarea()
+    }
+  }, [adapter])
+
+  const promptManager = useMemo(() => {
+    return adapter ? new PromptManager(adapter) : null
+  }, [adapter])
+
+  const conversationManager = useMemo(() => {
+    return adapter ? new ConversationManager(adapter) : null
+  }, [adapter])
+
+  const outlineManager = useMemo(() => {
+    if (!adapter) return null
+
+    // ⭐ 使用函数式更新来避免闭包陷阱
+    const handleExpandLevelChange = (level: number) => {
+      setSettings((prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          outline: { ...prev.outline, expandLevel: level },
+        }
+      })
+    }
+
+    const handleShowUserQueriesChange = (show: boolean) => {
+      setSettings((prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          outline: { ...prev.outline, showUserQueries: show },
+        }
+      })
+    }
+
+    return new OutlineManager(
+      adapter,
+      settings?.outline ?? DEFAULT_SETTINGS.outline,
+      handleExpandLevelChange,
+      handleShowUserQueriesChange,
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在 adapter 变化时重新创建
+  }, [adapter, setSettings])
+
+  // ⭐ 单独用 useEffect 同步 settings 变化到 manager
+  useEffect(() => {
+    if (outlineManager && settings) {
+      outlineManager.updateSettings(settings.outline)
+    }
+  }, [outlineManager, settings])
+
+  const exporter = useMemo(() => {
+    return adapter ? new Exporter(adapter) : null
+  }, [adapter])
+
+  // 主题管理器 - 带监听回调
+  const themeManager = useMemo(() => {
+    // 创建主题变化回调，当页面主题变化时同步更新 React 状态
+    const handleThemeModeChange = (mode: "light" | "dark") => {
+      setThemeMode(mode)
+      // 同时保存到 storage
+      setSettings((prev) => (prev ? { ...prev, themeMode: mode } : prev))
+    }
+    return new ThemeManager(themeMode, handleThemeModeChange, adapter)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在初始化时创建
+  }, [])
+
+  // 主题切换（异步处理，支持 View Transitions API 动画）
+  const handleThemeToggle = useCallback(
+    async (event?: MouseEvent) => {
+      const newMode = await themeManager.toggle(event)
+      // 状态已在 ThemeManager 内部通过回调更新，这里仅作为备用
+      setThemeMode(newMode)
+      if (settings) {
+        setSettings({ ...settings, themeMode: newMode })
+      }
+    },
+    [themeManager, settings, setSettings],
+  )
+
+  // 应用主题并启动监听
+  useEffect(() => {
+    themeManager.updateMode(themeMode)
+    // 启动主题监听器，监听页面主题变化（浏览器自动切换等场景）
+    themeManager.monitorTheme()
+
+    return () => {
+      // 清理监听器
+      themeManager.stopMonitoring()
+    }
+  }, [themeMode, themeManager])
+
+  // 初始化
+  useEffect(() => {
+    if (promptManager) {
+      promptManager.init()
+    }
+    if (conversationManager) {
+      conversationManager.init()
+    }
+    if (outlineManager) {
+      outlineManager.refresh()
+      const refreshInterval = setInterval(() => {
+        outlineManager.refresh()
+      }, 2000)
+      return () => {
+        clearInterval(refreshInterval)
+        conversationManager?.destroy()
+      }
+    }
+  }, [promptManager, conversationManager, outlineManager])
+
+  // 自动隐藏面板 - 点击外部关闭
+  useEffect(() => {
+    if (!settings?.autoHidePanel || !isPanelOpen) return
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Element
+      // 检查点击是否在面板外部
+      if (panelRef.current && !panelRef.current.contains(target)) {
+        // 排除悬浮球本身和快捷按钮
+        if (!target.closest(".gh-floating-ball") && !target.closest(".gh-quick-buttons")) {
+          setIsPanelOpen(false)
+        }
+      }
+    }
+
+    // 延迟添加监听，避免立即触发
+    const timer = setTimeout(() => {
+      document.addEventListener("click", handleClickOutside, true)
+    }, 100)
+
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener("click", handleClickOutside, true)
+    }
+  }, [settings?.autoHidePanel, isPanelOpen])
+
+  // 发送消息后自动清除选中的提示词悬浮条（及可选的清空输入框修复中文输入）
+  useEffect(() => {
+    if (!adapter) return
+    // 只有选中提示词时才需要清除悬浮条，但修复中文输入功能可能需要一直监听
+    const shouldClearTextarea = settings?.clearTextareaOnSend ?? false
+    if (!selectedPrompt && !shouldClearTextarea) return
+
+    // 发送后执行清理
+    const handleSend = () => {
+      // 清除悬浮条
+      if (selectedPrompt) {
+        setSelectedPrompt(null)
+      }
+      // Gemini Business 专属：修复中文输入（插入零宽字符）
+      if (shouldClearTextarea) {
+        setTimeout(() => {
+          adapter.clearTextarea()
+        }, 200)
+      }
+    }
+
+    // 点击发送按钮时
+    const handleClick = (e: MouseEvent) => {
+      const selectors = adapter.getSubmitButtonSelectors()
+      if (selectors.length === 0) return
+
+      // 使用 composedPath 检查（兼容 Shadow DOM）
+      const path = e.composedPath()
+      for (const target of path) {
+        if (target === document || target === window) break
+        for (const selector of selectors) {
+          try {
+            if ((target as Element).matches?.(selector)) {
+              // 延迟清除，确保消息已发送
+              setTimeout(handleSend, 100)
+              return
+            }
+          } catch {
+            // 忽略无效选择器
+          }
+        }
+      }
+    }
+
+    // Enter 键发送时
+    const handleKeydown = (e: KeyboardEvent) => {
+      // 仅处理 Enter 键（不带 Shift 修饰符，避免干扰换行操作）
+      if (e.key !== "Enter" || e.shiftKey) return
+
+      // 使用 composedPath 检查事件源是否来自输入框（兼容 Shadow DOM）
+      const path = e.composedPath()
+      const isFromTextarea = path.some(
+        (element) => element instanceof Element && adapter.isValidTextarea(element as HTMLElement),
+      )
+
+      if (!isFromTextarea) return
+
+      // 延迟清除，确保消息已发送
+      setTimeout(handleSend, 100)
+    }
+
+    document.addEventListener("click", handleClick, true)
+    document.addEventListener("keydown", handleKeydown, true)
+
+    return () => {
+      document.removeEventListener("click", handleClick, true)
+      document.removeEventListener("keydown", handleKeydown, true)
+    }
+  }, [adapter, selectedPrompt, settings?.clearTextareaOnSend])
+
+  // 切换会话时自动清空选中的提示词悬浮条及输入框
+  useEffect(() => {
+    if (!selectedPrompt || !adapter) return
+
+    // 记录当前 URL
+    let currentUrl = window.location.href
+
+    // 清空悬浮条和输入框
+    const clearPromptAndTextarea = () => {
+      setSelectedPrompt(null)
+      // 同时清空输入框（adapter.clearTextarea 内部有校验，不会误选全页面）
+      adapter.clearTextarea()
+    }
+
+    // 使用 popstate 监听浏览器前进/后退
+    const handlePopState = () => {
+      if (window.location.href !== currentUrl) {
+        clearPromptAndTextarea()
+      }
+    }
+
+    // 使用定时器检测 URL 变化（SPA 路由）
+    // 因为 pushState/replaceState 不会触发 popstate
+    const checkUrlChange = () => {
+      if (window.location.href !== currentUrl) {
+        currentUrl = window.location.href
+        clearPromptAndTextarea()
+      }
+    }
+
+    // 每 500ms 检查一次 URL 变化
+    const intervalId = setInterval(checkUrlChange, 500)
+    window.addEventListener("popstate", handlePopState)
+
+    return () => {
+      clearInterval(intervalId)
+      window.removeEventListener("popstate", handlePopState)
+    }
+  }, [selectedPrompt, adapter])
+
+  if (!adapter || !promptManager || !conversationManager || !outlineManager) {
+    return null
+  }
+
+  return (
+    <div className="gh-root">
+      <div ref={panelRef}>
+        <MainPanel
+          isOpen={isPanelOpen}
+          onClose={() => setIsPanelOpen(false)}
+          promptManager={promptManager}
+          conversationManager={conversationManager}
+          outlineManager={outlineManager}
+          exporter={exporter}
+          onThemeToggle={handleThemeToggle}
+          themeMode={themeMode}
+          selectedPromptId={selectedPrompt?.id}
+          onPromptSelect={handlePromptSelect}
+        />
+      </div>
+      <FloatingBall isOpen={isPanelOpen} onClick={() => setIsPanelOpen(!isPanelOpen)} />
+      <QuickButtons
+        isPanelOpen={isPanelOpen}
+        onPanelToggle={() => setIsPanelOpen(!isPanelOpen)}
+        onThemeToggle={handleThemeToggle}
+        themeMode={themeMode}
+      />
+      {/* 选中提示词悬浮条 */}
+      {selectedPrompt && (
+        <SelectedPromptBar
+          title={selectedPrompt.title}
+          onClear={handleClearSelectedPrompt}
+          adapter={adapter}
+        />
+      )}
+    </div>
+  )
+}
