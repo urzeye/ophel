@@ -1,11 +1,17 @@
 /**
  * 主题管理器
- * 处理亮/暗模式切换 - 通过操作网页本身的主题类来实现
- * 支持自动监听浏览器/页面主题变化并同步到面板
+ * 处理亮/暗模式切换，支持主题预置系统
+ * 通过动态注入 CSS 变量实现 Shadow DOM 内的主题切换
  */
 
 import type { SiteAdapter } from "~adapters/base"
 import type { Settings } from "~utils/storage"
+import {
+  getPreset,
+  themeVariablesToCSS,
+  type ThemePreset,
+  type ThemeVariables,
+} from "~utils/themes"
 
 export type ThemeMode = "light" | "dark"
 
@@ -14,6 +20,8 @@ export type ThemeModeChangeCallback = (mode: ThemeMode) => void
 
 export class ThemeManager {
   private mode: ThemeMode
+  private lightPresetId: string
+  private darkPresetId: string
   private themeObserver: MutationObserver | null = null
   private onModeChange?: ThemeModeChangeCallback
   private adapter?: SiteAdapter | null
@@ -22,9 +30,12 @@ export class ThemeManager {
     mode: Settings["themeMode"],
     onModeChange?: ThemeModeChangeCallback,
     adapter?: SiteAdapter | null,
+    lightPresetId: string = "google-gradient",
+    darkPresetId: string = "classic-dark",
   ) {
-    // 强制转换为 light 或 dark，不再支持 auto
     this.mode = mode === "dark" ? "dark" : "light"
+    this.lightPresetId = lightPresetId
+    this.darkPresetId = darkPresetId
     this.onModeChange = onModeChange
     this.adapter = adapter
   }
@@ -101,19 +112,70 @@ export class ThemeManager {
   }
 
   /**
-   * 同步插件 UI 的主题状态（data-gh-mode 属性）
+   * 获取当前主题预置
+   */
+  private getCurrentPreset(): ThemePreset {
+    const presetId = this.mode === "dark" ? this.darkPresetId : this.lightPresetId
+    return getPreset(presetId, this.mode)
+  }
+
+  /**
+   * 更新主题预置 ID
+   */
+  setPresets(lightPresetId: string, darkPresetId: string) {
+    this.lightPresetId = lightPresetId
+    this.darkPresetId = darkPresetId
+    this.syncPluginUITheme()
+  }
+
+  /**
+   * 同步插件 UI 的主题状态
+   * 从主题预置读取 CSS 变量值，注入到 Shadow DOM
    */
   private syncPluginUITheme(mode?: ThemeMode) {
     const currentMode = mode || this.mode
+    const root = document.documentElement
+
+    // 从预置系统获取当前主题的 CSS 变量
+    const presetId = currentMode === "dark" ? this.darkPresetId : this.lightPresetId
+    const preset = getPreset(presetId, currentMode)
+    const vars = preset.variables
+
+    // 设置 body 属性
     if (currentMode === "dark") {
       document.body.dataset.ghMode = "dark"
-      // 同步 color-scheme，确保原生控件（如 checkbox）颜色一致
       document.body.style.colorScheme = "dark"
     } else {
       delete document.body.dataset.ghMode
-      // 同步 color-scheme，确保原生控件（如 checkbox）颜色一致
       document.body.style.colorScheme = "light"
     }
+
+    // 在 :root 上设置变量
+    for (const [key, value] of Object.entries(vars)) {
+      root.style.setProperty(key, value)
+    }
+
+    // 查找 Plasmo 的 Shadow Host 并在其上设置变量
+    const shadowHosts = document.querySelectorAll("plasmo-csui")
+    shadowHosts.forEach((host) => {
+      const shadowRoot = host.shadowRoot
+      if (shadowRoot) {
+        // 在 Shadow Root 内查找 style 标签或创建一个
+        let styleEl = shadowRoot.querySelector("#gh-theme-vars") as HTMLStyleElement
+        if (!styleEl) {
+          styleEl = document.createElement("style")
+          styleEl.id = "gh-theme-vars"
+        }
+        // 生成 :host 上的变量定义
+        const cssVars = themeVariablesToCSS(vars)
+        styleEl.textContent = `:host {\n  ${cssVars}\n}`
+        // 始终将样式标签移动/追加到 Shadow Root 末尾
+        // 这样可以覆盖 Plasmo 静态注入的默认浅色主题变量
+        shadowRoot.append(styleEl)
+      }
+    })
+
+    console.log(`[ThemeManager] 已应用主题预置: ${preset.name} (${currentMode})`)
   }
 
   /**
@@ -202,59 +264,24 @@ export class ThemeManager {
     document.documentElement.style.setProperty("--theme-y", `${y}%`)
 
     // 执行主题切换的核心逻辑
-    const doToggle = async () => {
+    const doToggle = () => {
       // 优先使用适配器的原生切换逻辑 (针对 Gemini Business)
       if (this.adapter && typeof this.adapter.toggleTheme === "function") {
-        try {
-          const success = await this.adapter.toggleTheme(nextMode)
-          if (!success) {
-            console.warn("[ThemeManager] 适配器切换主题失败，回退到手动切换")
-            this.apply(nextMode)
-          }
-        } catch (err) {
-          console.error("[ThemeManager] 适配器切换主题出错:", err)
-          this.apply(nextMode)
-        }
-      } else {
-        // 没有适配器或适配器不支持，直接应用
-        this.apply(nextMode)
+        this.adapter.toggleTheme(nextMode).catch(() => {})
       }
+      // 始终直接应用，确保切换生效
+      this.apply(nextMode)
+      console.log(
+        "[ThemeManager] 主题已切换到:",
+        nextMode,
+        "data-gh-mode:",
+        document.body.dataset.ghMode,
+      )
     }
 
-    // 使用 View Transitions API（如果浏览器支持）
-    if (typeof (document as any).startViewTransition === "function") {
-      const transition = (document as any).startViewTransition(() => {
-        doToggle()
-      })
-
-      try {
-        // 应用自定义动画
-        await transition.ready
-        document.documentElement.animate(
-          {
-            clipPath: isDark
-              ? [
-                  "circle(0% at var(--theme-x) var(--theme-y))",
-                  "circle(150% at var(--theme-x) var(--theme-y))",
-                ]
-              : [
-                  "circle(150% at var(--theme-x) var(--theme-y))",
-                  "circle(0% at var(--theme-x) var(--theme-y))",
-                ],
-          },
-          {
-            duration: 800,
-            easing: "ease-in-out",
-            pseudoElement: isDark ? "::view-transition-new(root)" : "::view-transition-old(root)",
-          },
-        )
-      } catch {
-        // 动画失败不影响切换
-      }
-    } else {
-      // 降级：直接切换
-      await doToggle()
-    }
+    // 暂时禁用 View Transitions API，先确保基础切换正常
+    // TODO: 后续重新启用动画
+    doToggle()
 
     // 更新内部状态
     this.mode = nextMode

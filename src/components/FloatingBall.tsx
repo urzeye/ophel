@@ -33,7 +33,7 @@ export const FloatingBall: React.FC<FloatingBallProps> = ({
         width: "48px",
         height: "48px",
         borderRadius: "50%",
-        backgroundColor: "var(--gh-primary-color, #4285f4)",
+        backgroundColor: "var(--gh-primary, #4285f4)",
         boxShadow: "0 4px 12px rgba(66, 133, 244, 0.4)",
         cursor: "pointer",
         display: "flex",

@@ -311,7 +311,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         <div
           onClick={(e) => e.stopPropagation()}
           style={{
-            background: "var(--gh-bg-color, white)",
+            background: "var(--gh-bg, white)",
             borderRadius: "12px",
             padding: "20px",
             minWidth: "280px",
@@ -323,7 +323,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               fontSize: "16px",
               fontWeight: 600,
               marginBottom: "12px",
-              color: "var(--gh-text-color, #1f2937)",
+              color: "var(--gh-text, #1f2937)",
             }}>
             {confirmState.title}
           </div>
@@ -341,9 +341,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               style={{
                 padding: "8px 16px",
                 borderRadius: "6px",
-                border: "1px solid var(--gh-border-color, #d1d5db)",
-                background: "var(--gh-bg-color, white)",
-                color: "var(--gh-text-color, #374151)",
+                border: "1px solid var(--gh-border, #d1d5db)",
+                background: "var(--gh-bg, white)",
+                color: "var(--gh-text, #374151)",
                 cursor: "pointer",
                 fontSize: "14px",
               }}>
@@ -395,7 +395,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         <div
           onClick={(e) => e.stopPropagation()}
           style={{
-            background: "var(--gh-bg-color, white)",
+            background: "var(--gh-bg, white)",
             borderRadius: "12px",
             padding: "20px",
             minWidth: "320px",
@@ -407,7 +407,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               fontSize: "16px",
               fontWeight: 600,
               marginBottom: "16px",
-              color: "var(--gh-text-color, #1f2937)",
+              color: "var(--gh-text, #1f2937)",
             }}>
             {promptInputState.title}
           </div>
@@ -425,13 +425,13 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             style={{
               width: "100%",
               padding: "10px 12px",
-              border: "1px solid var(--gh-border-color, #d1d5db)",
+              border: "1px solid var(--gh-border, #d1d5db)",
               borderRadius: "6px",
               fontSize: "14px",
               boxSizing: "border-box",
               marginBottom: "20px",
-              background: "var(--gh-bg-color, #ffffff)",
-              color: "var(--gh-text-color, #1f2937)",
+              background: "var(--gh-bg, #ffffff)",
+              color: "var(--gh-text, #1f2937)",
             }}
           />
           <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
@@ -440,9 +440,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               style={{
                 padding: "8px 16px",
                 borderRadius: "6px",
-                border: "1px solid var(--gh-border-color, #d1d5db)",
-                background: "var(--gh-bg-color, white)",
-                color: "var(--gh-text-color, #374151)",
+                border: "1px solid var(--gh-border, #d1d5db)",
+                background: "var(--gh-bg, white)",
+                color: "var(--gh-text, #374151)",
                 cursor: "pointer",
                 fontSize: "14px",
               }}>
@@ -501,7 +501,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           className="prompt-modal-content"
           onClick={(e) => e.stopPropagation()}
           style={{
-            background: "var(--gh-bg-color, white)",
+            background: "var(--gh-bg, white)",
             borderRadius: "12px",
             width: "90%",
             maxWidth: "500px",
@@ -514,7 +514,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               fontSize: "18px",
               fontWeight: 600,
               marginBottom: "20px",
-              color: "var(--gh-text-color, #1f2937)",
+              color: "var(--gh-text, #1f2937)",
             }}>
             {editingPrompt?.id ? t("editPrompt") : t("addNewPrompt")}
           </div>
@@ -526,7 +526,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 display: "block",
                 fontSize: "14px",
                 fontWeight: 500,
-                color: "var(--gh-text-color, #374151)",
+                color: "var(--gh-text, #374151)",
                 marginBottom: "6px",
               }}>
               {t("title")}
@@ -538,12 +538,12 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               style={{
                 width: "100%",
                 padding: "8px 12px",
-                border: "1px solid var(--gh-border-color, #d1d5db)",
+                border: "1px solid var(--gh-border, #d1d5db)",
                 borderRadius: "6px",
                 fontSize: "14px",
                 boxSizing: "border-box",
-                background: "var(--gh-bg-color, #ffffff)",
-                color: "var(--gh-text-color, #1f2937)",
+                background: "var(--gh-bg, #ffffff)",
+                color: "var(--gh-text, #1f2937)",
               }}
             />
           </div>
@@ -555,7 +555,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 display: "block",
                 fontSize: "14px",
                 fontWeight: 500,
-                color: "var(--gh-text-color, #374151)",
+                color: "var(--gh-text, #374151)",
                 marginBottom: "6px",
               }}>
               {t("category")}
@@ -568,12 +568,12 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               style={{
                 width: "100%",
                 padding: "8px 12px",
-                border: "1px solid var(--gh-border-color, #d1d5db)",
+                border: "1px solid var(--gh-border, #d1d5db)",
                 borderRadius: "6px",
                 fontSize: "14px",
                 boxSizing: "border-box",
-                background: "var(--gh-bg-color, #ffffff)",
-                color: "var(--gh-text-color, #1f2937)",
+                background: "var(--gh-bg, #ffffff)",
+                color: "var(--gh-text, #1f2937)",
               }}
             />
             {categories.length > 0 && (
@@ -587,7 +587,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       fontSize: "11px",
                       background:
                         editingPrompt?.category === cat
-                          ? "var(--gh-primary-color, #4285f4)"
+                          ? "var(--gh-primary, #4285f4)"
                           : "var(--gh-hover, #f3f4f6)",
                       color: editingPrompt?.category === cat ? "white" : "#6b7280",
                       borderRadius: "10px",
@@ -608,7 +608,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 display: "block",
                 fontSize: "14px",
                 fontWeight: 500,
-                color: "var(--gh-text-color, #374151)",
+                color: "var(--gh-text, #374151)",
                 marginBottom: "6px",
               }}>
               {t("content")}
@@ -620,14 +620,14 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 width: "100%",
                 minHeight: "120px",
                 padding: "8px 12px",
-                border: "1px solid var(--gh-border-color, #d1d5db)",
+                border: "1px solid var(--gh-border, #d1d5db)",
                 borderRadius: "6px",
                 fontSize: "14px",
                 resize: "vertical",
                 boxSizing: "border-box",
                 fontFamily: "inherit",
-                background: "var(--gh-bg-color, #ffffff)",
-                color: "var(--gh-text-color, #1f2937)",
+                background: "var(--gh-bg, #ffffff)",
+                color: "var(--gh-text, #1f2937)",
               }}
             />
           </div>
@@ -701,7 +701,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         <div
           onClick={(e) => e.stopPropagation()}
           style={{
-            background: "var(--gh-bg-color, white)",
+            background: "var(--gh-bg, white)",
             borderRadius: "12px",
             width: "90%",
             maxWidth: "400px",
@@ -714,7 +714,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               fontSize: "18px",
               fontWeight: 600,
               marginBottom: "20px",
-              color: "var(--gh-text-color, #1f2937)",
+              color: "var(--gh-text, #1f2937)",
             }}>
             {t("categoryManage") || "分类管理"}
           </div>
@@ -735,10 +735,10 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       alignItems: "center",
                       justifyContent: "space-between",
                       padding: "10px 0",
-                      borderBottom: "1px solid var(--gh-border-color, #e5e7eb)",
+                      borderBottom: "1px solid var(--gh-border, #e5e7eb)",
                     }}>
                     <div>
-                      <div style={{ fontWeight: 500, color: "var(--gh-text-color, #374151)" }}>
+                      <div style={{ fontWeight: 500, color: "var(--gh-text, #374151)" }}>
                         {cat}
                       </div>
                       <div style={{ fontSize: "12px", color: "#9ca3af" }}>{count} 个提示词</div>
@@ -753,7 +753,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                           borderRadius: "4px",
                           background: "white",
                           cursor: "pointer",
-                          color: "var(--gh-primary-color, #4285f4)",
+                          color: "var(--gh-primary, #4285f4)",
                         }}>
                         {t("rename") || "重命名"}
                       </button>
@@ -807,7 +807,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       <div
         style={{
           padding: "12px",
-          borderBottom: "1px solid var(--gh-border-color, #e5e7eb)",
+          borderBottom: "1px solid var(--gh-border, #e5e7eb)",
           background: "var(--gh-bg-secondary, #f9fafb)",
         }}>
         <input
@@ -818,12 +818,12 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           style={{
             width: "100%",
             padding: "8px 12px",
-            border: "1px solid var(--gh-border-color, #d1d5db)",
+            border: "1px solid var(--gh-border, #d1d5db)",
             borderRadius: "8px",
             fontSize: "14px",
             boxSizing: "border-box",
-            background: "var(--gh-bg-color, #ffffff)",
-            color: "var(--gh-text-color, #1f2937)",
+            background: "var(--gh-bg, #ffffff)",
+            color: "var(--gh-text, #1f2937)",
           }}
         />
       </div>
@@ -835,8 +835,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           display: "flex",
           gap: "6px",
           flexWrap: "wrap",
-          background: "var(--gh-bg-color, white)",
-          borderBottom: "1px solid var(--gh-border-color, #e5e7eb)",
+          background: "var(--gh-bg, white)",
+          borderBottom: "1px solid var(--gh-border, #e5e7eb)",
         }}>
         <span
           onClick={() => setSelectedCategory("all")}
@@ -844,7 +844,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             padding: "4px 10px",
             background:
               selectedCategory === "all"
-                ? "var(--gh-primary-color, #4285f4)"
+                ? "var(--gh-primary, #4285f4)"
                 : "var(--gh-hover, #f3f4f6)",
             borderRadius: "12px",
             fontSize: "12px",
@@ -852,7 +852,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             cursor: "pointer",
             border:
               selectedCategory === "all"
-                ? "1px solid var(--gh-primary-color, #4285f4)"
+                ? "1px solid var(--gh-primary, #4285f4)"
                 : "1px solid transparent",
           }}>
           {t("allCategory")}
@@ -866,7 +866,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               padding: "4px 10px",
               background:
                 selectedCategory === cat
-                  ? "var(--gh-primary-color, #4285f4)"
+                  ? "var(--gh-primary, #4285f4)"
                   : "var(--gh-hover, #f3f4f6)",
               borderRadius: "12px",
               fontSize: "12px",
@@ -874,7 +874,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               cursor: "pointer",
               border:
                 selectedCategory === cat
-                  ? "1px solid var(--gh-primary-color, #4285f4)"
+                  ? "1px solid var(--gh-primary, #4285f4)"
                   : "1px solid transparent",
               maxWidth: "80px",
               overflow: "hidden",
@@ -930,11 +930,11 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 background:
                   selectedPromptId === p.id
                     ? "linear-gradient(135deg, #e8f0fe 0%, #f1f8e9 100%)"
-                    : "var(--gh-bg-color, white)",
+                    : "var(--gh-bg, white)",
                 border:
                   selectedPromptId === p.id
-                    ? "1px solid var(--gh-primary-color, #4285f4)"
-                    : "1px solid var(--gh-border-color, #e5e7eb)",
+                    ? "1px solid var(--gh-primary, #4285f4)"
+                    : "1px solid var(--gh-border, #e5e7eb)",
                 borderRadius: "8px",
                 padding: "12px",
                 marginBottom: "8px",
@@ -955,7 +955,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                   style={{
                     fontWeight: 600,
                     fontSize: "14px",
-                    color: "var(--gh-text-color, #1f2937)",
+                    color: "var(--gh-text, #1f2937)",
                     flex: 1,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -1010,7 +1010,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     width: "24px",
                     height: "24px",
                     border: "none",
-                    background: "var(--gh-bg-color, white)",
+                    background: "var(--gh-bg, white)",
                     borderRadius: "4px",
                     cursor: "grab",
                     display: "flex",
@@ -1028,7 +1028,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     width: "24px",
                     height: "24px",
                     border: "none",
-                    background: "var(--gh-bg-color, white)",
+                    background: "var(--gh-bg, white)",
                     borderRadius: "4px",
                     cursor: "pointer",
                     display: "flex",
@@ -1050,7 +1050,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     width: "24px",
                     height: "24px",
                     border: "none",
-                    background: "var(--gh-bg-color, white)",
+                    background: "var(--gh-bg, white)",
                     borderRadius: "4px",
                     cursor: "pointer",
                     display: "flex",
@@ -1068,7 +1068,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     width: "24px",
                     height: "24px",
                     border: "none",
-                    background: "var(--gh-bg-color, white)",
+                    background: "var(--gh-bg, white)",
                     borderRadius: "4px",
                     cursor: "pointer",
                     display: "flex",

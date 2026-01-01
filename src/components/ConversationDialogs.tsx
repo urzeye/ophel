@@ -775,7 +775,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
           border: "1px solid #e5e7eb",
           borderRadius: "8px",
           marginBottom: "16px",
-          background: "#fafafa",
+          background: "var(--gh-bg-secondary, #fafafa)",
         }}>
         {/* 区域标题 */}
         <div
@@ -1003,10 +1003,10 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
               alignItems: "center",
               gap: "8px",
               padding: "8px 10px",
-              border: "1px solid #e5e7eb",
+              border: "1px solid var(--gh-border, #e5e7eb)",
               borderRadius: colorExpanded ? "8px 8px 0 0" : "8px",
               cursor: "pointer",
-              background: "#fafafa",
+              background: "var(--gh-bg-secondary, #fafafa)",
               transition: "border-radius 0.15s",
             }}
             onClick={() => setColorExpanded(!colorExpanded)}>
@@ -1039,11 +1039,11 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
           {colorExpanded && (
             <div
               style={{
-                border: "1px solid #e5e7eb",
+                border: "1px solid var(--gh-border, #e5e7eb)",
                 borderTop: "none",
                 borderRadius: "0 0 8px 8px",
                 padding: "10px",
-                background: "#fff",
+                background: "var(--gh-bg, #fff)",
               }}>
               {/* 30 色预设网格 - 紧凑模式 */}
               <div

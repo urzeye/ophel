@@ -142,7 +142,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     display: "flex",
     flexDirection: "row",
     gap: "4px",
-    background: "var(--gh-bg-color, white)",
+    background: "var(--gh-bg, white)",
     padding: "4px 8px",
     borderRadius: "20px",
     boxShadow: "0 2px 12px rgba(0,0,0,0.15)",

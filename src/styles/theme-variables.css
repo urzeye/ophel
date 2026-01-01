@@ -1,0 +1,162 @@
+/**
+ * 主题变量定义
+ * 
+ * 所有 CSS 变量在此统一定义，组件通过 var(--gh-*) 引用
+ * 支持浅色/深色两种模式，通过 body[data-gh-mode="dark"] 切换
+ * 
+ * 注意：同时定义在 :root 和 :host 上，确保 Shadow DOM 中也能访问
+ */
+
+/* ==================== 浅色模式（默认） ==================== */
+:root,
+:host {
+  /* === 基础背景色 === */
+  --gh-bg: #ffffff;
+  --gh-bg-secondary: #f9fafb;
+  --gh-bg-tertiary: #f3f4f6;
+
+  /* === 文字颜色 === */
+  --gh-text: #1f2937;
+  --gh-text-secondary: #6b7280;
+  --gh-text-tertiary: #9ca3af;
+  --gh-text-on-primary: #ffffff;
+
+  /* === 边框 === */
+  --gh-border: #e5e7eb;
+  --gh-border-active: #6366f1;
+
+  /* === 交互状态 === */
+  --gh-hover: #f3f4f6;
+  --gh-active-bg: #e5e7eb;
+
+  /* === 输入框 === */
+  --gh-input-bg: #ffffff;
+  --gh-input-border: #d1d5db;
+
+  /* === 阴影 === */
+  --gh-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  --gh-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --gh-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.3);
+
+  /* === 品牌色 === */
+  --gh-primary: #4285f4;
+  --gh-secondary: #34a853;
+  --gh-danger: #ef4444;
+
+  /* === 语义化组件变量 === */
+  --gh-header-bg: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+  --gh-tag-active-bg: #4285f4;
+  --gh-checkbox-bg: #4f46e5;
+
+  /* === 文件夹预设背景色 === */
+  --gh-folder-bg-default: #e0f2fe;
+  --gh-folder-bg-expanded: #c7d2fe;
+  --gh-folder-bg-0: #fef9e7;
+  --gh-folder-bg-1: #fdf2f8;
+  --gh-folder-bg-2: #eff6ff;
+  --gh-folder-bg-3: #ecfdf5;
+  --gh-folder-bg-4: #faf5ff;
+  --gh-folder-bg-5: #fefce8;
+  --gh-folder-bg-6: #ecfeff;
+  --gh-folder-bg-7: #fdf4ff;
+
+  /* === 大纲高亮色（翡翠绿） === */
+  --gh-outline-locate-bg: rgba(16, 185, 129, 0.25);
+  --gh-outline-locate-border: #10b981;
+  --gh-outline-locate-shadow: rgba(16, 185, 129, 0.5);
+  --gh-outline-sync-bg: rgba(52, 211, 153, 0.1);
+  --gh-outline-sync-border: #34d399;
+
+  /* === 用户提问节点 === */
+  --gh-user-query-bg: rgba(66, 133, 244, 0.08);
+  --gh-user-query-hover-bg: rgba(66, 133, 244, 0.15);
+
+  /* === 徽章样式 === */
+  --gh-badge-text: #4b5563;
+  --gh-badge-bg: #ffffff;
+  --gh-badge-border: #e5e7eb;
+  --gh-badge-shadow: #ffffff;
+
+  /* === 选中项渐变背景 === */
+  --gh-selected-gradient: linear-gradient(
+    135deg,
+    rgba(66, 133, 244, 0.1) 0%,
+    rgba(52, 211, 153, 0.1) 100%
+  );
+}
+
+/* ==================== 深色模式 ==================== */
+/* 
+ * 注意：由于 Shadow DOM 隔离，:host-context() 在部分浏览器中支持不佳。
+ * 实际的深色模式变量由 ThemeManager.syncPluginUITheme() 动态注入到 Shadow Root。
+ * 此处定义仅用于普通 DOM 元素和作为备用。
+ */
+body[data-gh-mode="dark"] {
+  /* === 基础背景色 === */
+  --gh-bg: #1e1e1e;
+  --gh-bg-secondary: #0b0b0b;
+  --gh-bg-tertiary: #262626;
+
+  /* === 文字颜色 === */
+  --gh-text: #e3e3e3;
+  --gh-text-secondary: #a0a0a0;
+  --gh-text-tertiary: #6b7280;
+
+  /* === 边框 === */
+  --gh-border: #333333;
+  --gh-border-active: #818cf8;
+
+  /* === 交互状态 === */
+  --gh-hover: #262626;
+  --gh-active-bg: #333333;
+
+  /* === 输入框 === */
+  --gh-input-bg: #262626;
+  --gh-input-border: #404040;
+
+  /* === 阴影 === */
+  --gh-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  --gh-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --gh-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.7);
+
+  /* === 语义化组件变量（深色模式覆盖） === */
+  --gh-header-bg: #1e1e1e;
+  --gh-tag-active-bg: rgba(66, 133, 244, 0.6);
+  --gh-checkbox-bg: #818cf8;
+
+  /* === 文件夹预设背景色（深色半透明） === */
+  --gh-folder-bg-default: rgba(66, 133, 244, 0.15);
+  --gh-folder-bg-expanded: rgba(66, 133, 244, 0.3);
+  --gh-folder-bg-0: rgba(253, 224, 71, 0.15);
+  --gh-folder-bg-1: rgba(244, 114, 182, 0.15);
+  --gh-folder-bg-2: rgba(96, 165, 250, 0.15);
+  --gh-folder-bg-3: rgba(52, 211, 153, 0.15);
+  --gh-folder-bg-4: rgba(167, 139, 250, 0.15);
+  --gh-folder-bg-5: rgba(253, 224, 71, 0.1);
+  --gh-folder-bg-6: rgba(34, 211, 238, 0.15);
+  --gh-folder-bg-7: rgba(232, 121, 249, 0.15);
+
+  /* === 大纲高亮色（深色模式） === */
+  --gh-outline-locate-bg: rgba(52, 211, 153, 0.3);
+  --gh-outline-locate-border: #34d399;
+  --gh-outline-locate-shadow: rgba(52, 211, 153, 0.6);
+  --gh-outline-sync-bg: rgba(16, 185, 129, 0.15);
+  --gh-outline-sync-border: #10b981;
+
+  /* === 用户提问节点（深色模式） === */
+  --gh-user-query-bg: rgba(66, 133, 244, 0.15);
+  --gh-user-query-hover-bg: rgba(66, 133, 244, 0.25);
+
+  /* === 徽章样式（深色模式） === */
+  --gh-badge-text: #e5e7eb;
+  --gh-badge-bg: #374151;
+  --gh-badge-border: #4b5563;
+  --gh-badge-shadow: #1f2937;
+
+  /* === 选中项渐变背景（深色模式） === */
+  --gh-selected-gradient: linear-gradient(
+    135deg,
+    rgba(66, 133, 244, 0.25) 0%,
+    rgba(52, 211, 153, 0.15) 100%
+  );
+}

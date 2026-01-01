@@ -200,24 +200,21 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         width: "320px",
         height: "80vh",
         minHeight: "500px",
-        backgroundColor: "var(--gh-bg-color, #ffffff)",
+        backgroundColor: "var(--gh-bg, #ffffff)",
         borderRadius: "12px",
-        boxShadow: "0 10px 40px rgba(0,0,0,0.15)",
+        boxShadow: "var(--gh-shadow, 0 10px 40px rgba(0,0,0,0.15))",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
-        border: "1px solid var(--gh-border-color, #e5e7eb)",
+        border: "1px solid var(--gh-border, #e5e7eb)",
         zIndex: 9999,
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       }}>
-      {/* Header - 渐变背景（深色模式使用纯色） */}
+      {/* Header - 背景由 CSS 类控制（亮色渐变/深色纯色） */}
       <div
         className="gh-panel-header"
         style={{
           padding: "12px 14px",
-          background:
-            themeMode === "dark" ? "#1e1e1e" : "linear-gradient(135deg, #4285f4 0%, #34a853 100%)",
-          color: "white",
           borderRadius: "12px 12px 0 0",
           display: "flex",
           alignItems: "center",
@@ -352,7 +349,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         className="gh-panel-tabs"
         style={{
           display: "flex",
-          borderBottom: "1px solid var(--gh-border-color, #e5e7eb)",
+          borderBottom: "1px solid var(--gh-border, #e5e7eb)",
           padding: "0",
           background: "var(--gh-bg-secondary, #f9fafb)",
         }}>
@@ -367,9 +364,12 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               background: "transparent",
               borderBottom:
                 activeTab === tab
-                  ? "3px solid var(--gh-primary-color, #4285f4)"
+                  ? "3px solid var(--gh-primary, #4285f4)"
                   : "3px solid transparent",
-              color: activeTab === tab ? "var(--gh-primary-color, #4285f4)" : "#6b7280",
+              color:
+                activeTab === tab
+                  ? "var(--gh-primary, #4285f4)"
+                  : "var(--gh-text-secondary, #6b7280)",
               fontWeight: activeTab === tab ? 600 : 400,
               cursor: "pointer",
               fontSize: "13px",
@@ -422,7 +422,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           justifyContent: "space-around",
           alignItems: "center",
           padding: "10px 16px",
-          borderTop: "1px solid var(--gh-border-color, #e5e7eb)",
+          borderTop: "1px solid var(--gh-border, #e5e7eb)",
           background: "var(--gh-bg-secondary, #f9fafb)",
         }}>
         {/* 顶部按钮 */}
