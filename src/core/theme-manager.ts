@@ -37,7 +37,34 @@ export class ThemeManager {
     this.lightPresetId = lightPresetId
     this.darkPresetId = darkPresetId
     this.onModeChange = onModeChange
+    this.onModeChange = onModeChange
     this.adapter = adapter
+
+    // 注入全局动画样式 (View Transitions 需要在主文档生效)
+    this.injectGlobalStyles()
+  }
+
+  /**
+   * 注入全局样式到主文档 head
+   * 主要是 View Transitions 相关的样式，因为它们必须在 document context 下才生效
+   */
+  private injectGlobalStyles() {
+    if (document.getElementById("gh-global-styles")) return
+
+    const style = document.createElement("style")
+    style.id = "gh-global-styles"
+    style.textContent = `
+      ::view-transition-old(root),
+      ::view-transition-new(root) {
+        animation: none;
+        mix-blend-mode: normal;
+      }
+      
+      ::view-transition-new(root) {
+        clip-path: circle(0px at var(--theme-x, 50%) var(--theme-y, 50%));
+      }
+    `
+    document.head.appendChild(style)
   }
 
   /**
@@ -279,9 +306,48 @@ export class ThemeManager {
       )
     }
 
-    // 暂时禁用 View Transitions API，先确保基础切换正常
-    // TODO: 后续重新启用动画
-    doToggle()
+    // 检查是否支持 View Transitions API
+    if (
+      !document.startViewTransition ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      doToggle()
+      this.mode = nextMode
+      return nextMode
+    }
+
+    // 执行动画切换
+    const transition = document.startViewTransition(() => {
+      doToggle()
+    })
+
+    // 等待伪元素创建后，执行自定义动画
+    transition.ready.then(() => {
+      // 获取点击位置距离最远角落的距离（作为圆的半径）
+      const right = window.innerWidth - (x / 100) * window.innerWidth
+      const bottom = window.innerHeight - (y / 100) * window.innerHeight
+      const maxRadius = Math.hypot(
+        Math.max((x / 100) * window.innerWidth, right),
+        Math.max((y / 100) * window.innerHeight, bottom),
+      )
+
+      // 定义圆形扩散动画
+      const clipPath = [`circle(0px at ${x}% ${y}%)`, `circle(${maxRadius}px at ${x}% ${y}%)`]
+
+      // 统一使用扩散动画：新视图从中点扩散覆盖旧视图
+      // 配合 CSS 中 ::view-transition-new(root) 的初始 clip-path: circle(0px) 设置
+      document.documentElement.animate(
+        {
+          clipPath: clipPath,
+        },
+        {
+          duration: 500,
+          easing: "ease-in",
+          pseudoElement: "::view-transition-new(root)",
+          fill: "forwards",
+        },
+      )
+    })
 
     // 更新内部状态
     this.mode = nextMode
