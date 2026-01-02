@@ -173,6 +173,14 @@ export const resources = {
     outlineIntervalUpdated: "间隔已设为 {val} 秒",
     outlineSyncScrollLabel: "同步滚动",
     outlineSyncScrollDesc: "页面滚动时自动高亮对应的大纲项",
+    // 大纲跟随模式
+    outlineFollowModeLabel: "大纲跟随模式",
+    outlineFollowCurrent: "跟随当前位置",
+    outlineFollowLatest: "跟随最新消息",
+    outlineFollowManual: "手动控制",
+    outlineFollowCurrentDesc: "滚动页面时高亮当前大纲项",
+    outlineFollowLatestDesc: "自动滚动到最新消息",
+    outlineFollowManualDesc: "不自动滚动，用户手动控制",
     // 页面显示设置
     pageDisplaySettings: "页面显示",
     // 其他设置
@@ -491,6 +499,14 @@ export const resources = {
     outlineIntervalUpdated: "間隔已設為 {val} 秒",
     outlineSyncScrollLabel: "同步滾動",
     outlineSyncScrollDesc: "頁面滾動時自動高亮對應的大綱項",
+    // 大綱跟隨模式
+    outlineFollowModeLabel: "大綱跟隨模式",
+    outlineFollowCurrent: "跟隨當前位置",
+    outlineFollowLatest: "跟隨最新訊息",
+    outlineFollowManual: "手動控制",
+    outlineFollowCurrentDesc: "滾動頁面時高亮當前大綱項",
+    outlineFollowLatestDesc: "自動滾動到最新訊息",
+    outlineFollowManualDesc: "不自動滾動，用戶手動控制",
     // 頁面顯示設置
     pageDisplaySettings: "頁面顯示",
     // 其他設置
@@ -809,6 +825,14 @@ export const resources = {
     outlineIntervalUpdated: "Interval set to {val} seconds",
     outlineSyncScrollLabel: "Sync scroll",
     outlineSyncScrollDesc: "Auto-highlight outline item when page scrolls",
+    // Outline Follow Mode
+    outlineFollowModeLabel: "Outline Follow Mode",
+    outlineFollowCurrent: "Follow Current Position",
+    outlineFollowLatest: "Follow Latest Message",
+    outlineFollowManual: "Manual Control",
+    outlineFollowCurrentDesc: "Highlight outline item when scrolling page",
+    outlineFollowLatestDesc: "Auto-scroll to latest message",
+    outlineFollowManualDesc: "No auto-scroll, user controls manually",
     // Page Display Settings
     pageDisplaySettings: "Page Display",
     // Other Settings

@@ -114,31 +114,55 @@ if (!(window as any).chatHelperInitialized) {
         readingHistoryManager.startRecording()
 
         if (settings.readingHistory.autoRestore) {
-          readingHistoryManager.restoreProgress().then((restored) => {
-            if (restored) {
-              console.log("[Chat Helper] Reading position restored")
-            }
-          })
+          // 使用 showToast 显示加载进度
+          const { showToast } = await import("~utils/toast")
+          readingHistoryManager
+            .restoreProgress((msg) => showToast(msg, 3000))
+            .then((restored) => {
+              if (restored) {
+                console.log("[Chat Helper] Reading position restored")
+                showToast("阅读进度已恢复", 2000)
+              }
+            })
         }
 
         readingHistoryManager.cleanup()
         console.log("[Chat Helper] ReadingHistoryManager started")
       }
 
-      // 8. 模型锁定
+      // 8. 模型锁定（始终创建以支持动态开关）
+      modelLocker = new ModelLocker(adapter, settings.modelLock || { enabled: false, keyword: "" })
       if (settings.modelLock?.enabled && settings.modelLock?.keyword) {
-        modelLocker = new ModelLocker(adapter, settings.modelLock)
         modelLocker.start()
         console.log("[Chat Helper] ModelLocker started")
       }
 
-      // 9. 滚动锁定
-      if (settings.preventAutoScroll) {
-        scrollLockManager = new ScrollLockManager(adapter, settings)
-        // ScrollLockManager listens to messages automatically in constructor for now
-        // or we can add a start() method if we want to be explicit
-        console.log("[Chat Helper] ScrollLockManager started")
-      }
+      // 监听设置变化以支持动态开关
+      const { syncStorage } = await import("~utils/storage")
+      syncStorage.watch({
+        [STORAGE_KEYS.SETTINGS]: (change) => {
+          if (change.newValue?.modelLock && modelLocker) {
+            modelLocker.updateSettings(change.newValue.modelLock)
+          }
+        },
+      })
+
+      // 9. 滚动锁定（始终创建以支持动态开关）
+      console.log(
+        "[Chat Helper] Creating ScrollLockManager, preventAutoScroll:",
+        settings.preventAutoScroll,
+      )
+      scrollLockManager = new ScrollLockManager(adapter, settings)
+      console.log("[Chat Helper] ScrollLockManager created")
+
+      // 将 ScrollLockManager 也加入监听（复用已有的 watch）
+      syncStorage.watch({
+        [STORAGE_KEYS.SETTINGS]: (change) => {
+          if (change.newValue && scrollLockManager) {
+            scrollLockManager.updateSettings(change.newValue)
+          }
+        },
+      })
 
       console.log("[Chat Helper] All modules initialized")
     })()

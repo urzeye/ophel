@@ -52,7 +52,7 @@ export interface Settings {
     autoUpdate: boolean
     updateInterval: number // 更新间隔(秒)
     showUserQueries: boolean
-    syncScroll: boolean
+    followMode: "current" | "latest" | "manual" // 大纲跟随模式
     expandLevel: number // 展开层级（持久化）
   }
   readingHistory: {
@@ -111,7 +111,7 @@ export const DEFAULT_SETTINGS: Settings = {
     autoUpdate: true,
     updateInterval: 2,
     showUserQueries: true,
-    syncScroll: true,
+    followMode: "current", // 默认跟随当前位置
     expandLevel: 6,
   },
   readingHistory: {

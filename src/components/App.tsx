@@ -20,14 +20,25 @@ export const App = () => {
     saved === undefined ? DEFAULT_SETTINGS : { ...DEFAULT_SETTINGS, ...saved },
   )
 
-  // 面板状态
-  const [isPanelOpen, setIsPanelOpen] = useState(settings?.defaultPanelOpen ?? false)
+  // 面板状态 - 初始值来自设置
+  const [isPanelOpen, setIsPanelOpen] = useState(false)
+  const hasInitializedPanel = useRef(false)
 
   // 主题状态 - 与 settings 同步 (不再支持 auto)
   // 如果旧数据中有 auto，将其视为 light 处理，或者在初始化 ThemeManager 时会被强制转换
   const [themeMode, setThemeMode] = useState<"light" | "dark">(
     settings?.themeMode === "dark" ? "dark" : "light",
   )
+
+  // 当设置加载完成后，同步面板初始状态（只执行一次）
+  useEffect(() => {
+    if (settings && !hasInitializedPanel.current) {
+      hasInitializedPanel.current = true
+      if (settings.defaultPanelOpen) {
+        setIsPanelOpen(true)
+      }
+    }
+  }, [settings])
 
   // 选中的提示词状态
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null)

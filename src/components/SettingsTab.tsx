@@ -490,14 +490,39 @@ export const SettingsTab = () => {
           />
         </div>
 
-        <ToggleRow
-          label={t("outlineSyncScrollLabel") || "同步滚动"}
-          desc={t("outlineSyncScrollDesc") || "滚动页面时高亮当前大纲项"}
-          checked={settings.outline?.syncScroll ?? true}
-          onChange={() =>
-            updateNestedSetting("outline", "syncScroll", !settings.outline?.syncScroll)
-          }
-        />
+        <div style={{ marginBottom: "12px" }}>
+          <label
+            style={{ display: "block", marginBottom: "4px", fontWeight: 500, fontSize: "13px" }}>
+            {t("outlineFollowModeLabel") || "大纲跟随模式"}
+          </label>
+          <select
+            value={settings.outline?.followMode || "current"}
+            onChange={(e) =>
+              updateNestedSetting(
+                "outline",
+                "followMode",
+                e.target.value as "current" | "latest" | "manual",
+              )
+            }
+            style={{
+              width: "100%",
+              padding: "6px 8px",
+              borderRadius: "4px",
+              border: "1px solid #d1d5db",
+              fontSize: "12px",
+            }}>
+            <option value="current">{t("outlineFollowCurrent") || "跟随当前位置"}</option>
+            <option value="latest">{t("outlineFollowLatest") || "跟随最新消息"}</option>
+            <option value="manual">{t("outlineFollowManual") || "手动控制"}</option>
+          </select>
+          <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "4px" }}>
+            {settings.outline?.followMode === "current"
+              ? t("outlineFollowCurrentDesc") || "滚动页面时高亮当前大纲项"
+              : settings.outline?.followMode === "latest"
+                ? t("outlineFollowLatestDesc") || "自动滚动到最新消息"
+                : t("outlineFollowManualDesc") || "不自动滚动，用户手动控制"}
+          </div>
+        </div>
       </CollapsibleSection>
 
       {/* ========== 会话设置 ========== */}

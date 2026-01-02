@@ -1,7 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
+import { useStorage } from "@plasmohq/storage/hook"
+
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
 import { t } from "~utils/i18n"
+import { DEFAULT_SETTINGS, STORAGE_KEYS, type Settings } from "~utils/storage"
 
 interface OutlineTabProps {
   manager: OutlineManager
@@ -297,6 +300,11 @@ const LocateIcon = () => (
 )
 
 export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore }) => {
+  // 获取设置
+  const [settings] = useStorage<Settings>(STORAGE_KEYS.SETTINGS, (saved) =>
+    saved === undefined ? DEFAULT_SETTINGS : { ...DEFAULT_SETTINGS, ...saved },
+  )
+
   // Initialize state from manager to prevent flicker
   const initialState = manager.getState()
 
@@ -355,20 +363,13 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       const newTotalNodes = countNodes(state.tree)
       const prevTotalNodes = prevTreeLengthRef.current
 
-      // ⭐ 方案 C：如果新增的是用户提问，强制滚动到底部
-      // 因为用户发送消息后肯定关注最新对话
-      let hasNewUserQuery = false
-      if (state.tree.length > 0) {
-        // 检查最后一个顶层项是否是用户提问
-        const lastItem = state.tree[state.tree.length - 1]
-        // 如果节点数增加了且最后一个是用户提问
-        if (newTotalNodes > prevTotalNodes && lastItem && lastItem.isUserQuery) {
-          hasNewUserQuery = true
-        }
-      }
+      // ⭐ 根据 followMode 决定是否自动滚动
+      // followMode === 'latest'：自动滚动到最新消息
+      // followMode === 'current' 或 'manual'：不自动滚动
+      const followMode = settings?.outline?.followMode || "current"
 
-      // 如果有新用户提问，或者用户在底部且有新增节点（包括子节点），标记需要滚动
-      if (hasNewUserQuery || (wasAtBottom && newTotalNodes > prevTotalNodes)) {
+      if (followMode === "latest" && newTotalNodes > prevTotalNodes) {
+        // 跟随最新消息模式：有新节点就滚动
         shouldScrollToBottomRef.current = true
       }
 

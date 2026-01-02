@@ -80,31 +80,120 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return document.documentElement
   }, [])
 
-  // 滚动到顶部（包含加载历史消息的特殊逻辑）
+  // 加载状态
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
+  const [loadingText, setLoadingText] = useState("")
+  const abortLoadingRef = useRef(false)
+
+  // 滚动到顶部（完全按照油猴脚本 HistoryLoader 实现）
   const scrollToTop = useCallback(async () => {
     const container = getScrollContainer()
 
     // 先保存当前位置作为锚点
-    setSavedAnchorTop(container.scrollTop)
+    const currentPos = container.scrollTop
+    setSavedAnchorTop(currentPos)
     setHasAnchor(true)
 
-    // 滚动到顶部
-    container.scrollTo({ top: 0, behavior: "smooth" })
+    // 配置参数（与油猴脚本一致）
+    const WAIT_MS = 800
+    const MAX_NO_CHANGE_ROUNDS = 3
+    const MAX_TOTAL_ROUNDS = 50
+    const OVERLAY_DELAY_MS = 1600
 
-    // 如果有适配器，尝试加载更多历史消息
-    if (adapter) {
-      // 等待滚动完成后检查是否需要加载更多
-      setTimeout(() => {
-        // 查找"加载更多"按钮并点击
-        const loadMoreBtn = document.querySelector(
-          '[data-test-id="load-earlier-messages"], .load-more-button, [aria-label*="earlier"]',
-        ) as HTMLElement
-        if (loadMoreBtn) {
-          loadMoreBtn.click()
+    abortLoadingRef.current = false
+
+    const initialHeight = container.scrollHeight
+    let lastHeight = initialHeight
+    let noChangeCount = 0
+    let loopCount = 0
+
+    // 快速检测：先跳到顶部
+    container.scrollTop = 0
+
+    // 延迟显示遮罩的定时器
+    let overlayTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+      if (!abortLoadingRef.current) {
+        setIsLoadingHistory(true)
+        setLoadingText(t("loadingHistory"))
+      }
+    }, OVERLAY_DELAY_MS)
+
+    const loadLoop = async (): Promise<void> => {
+      if (abortLoadingRef.current) {
+        finish(false)
+        return
+      }
+
+      loopCount++
+
+      // 超时保护
+      if (loopCount >= MAX_TOTAL_ROUNDS) {
+        finish(true)
+        return
+      }
+
+      // 跳到顶部并触发懒加载
+      container.scrollTop = 0
+      container.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true }))
+
+      await new Promise((resolve) => setTimeout(resolve, WAIT_MS))
+
+      if (abortLoadingRef.current) {
+        finish(false)
+        return
+      }
+
+      const currentHeight = container.scrollHeight
+
+      if (currentHeight > lastHeight) {
+        // 高度增加，继续加载
+        lastHeight = currentHeight
+        noChangeCount = 0
+        setLoadingText(`${t("loadingHistory")} (${Math.round(currentHeight / 1000)}k)`)
+        await loadLoop()
+      } else {
+        noChangeCount++
+        // 短对话优化：首轮无变化且已在顶部，快速完成
+        const isAtTop = container.scrollTop < 10
+        const isFirstRoundNoChange = loopCount === 1 && currentHeight === initialHeight
+
+        if (isFirstRoundNoChange && isAtTop) {
+          // 短对话，静默完成（不显示遮罩和 toast）
+          finish(false, true)
+        } else if (noChangeCount >= MAX_NO_CHANGE_ROUNDS) {
+          // 加载完成
+          finish(true)
+        } else {
+          // 继续确认
+          setLoadingText(`${t("loadingHistory")} (${noChangeCount}/${MAX_NO_CHANGE_ROUNDS})`)
+          await loadLoop()
         }
-      }, 500)
+      }
     }
-  }, [getScrollContainer, adapter])
+
+    const finish = (success: boolean, silent = false) => {
+      if (overlayTimer) {
+        clearTimeout(overlayTimer)
+        overlayTimer = null
+      }
+      setIsLoadingHistory(false)
+      setLoadingText("")
+
+      if (success && !silent) {
+        import("~utils/toast").then(({ showToast }) => {
+          showToast(t("historyLoaded"), 2000)
+        })
+      }
+    }
+
+    // 开始加载循环
+    await loadLoop()
+  }, [getScrollContainer])
+
+  // 停止加载
+  const stopLoading = useCallback(() => {
+    abortLoadingRef.current = true
+  }, [])
 
   // 滚动到底部
   const scrollToBottom = useCallback(() => {
@@ -357,21 +446,36 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   }, [])
 
   return (
-    <div
-      ref={groupRef}
-      className={`quick-btn-group gh-interactive ${!isPanelOpen ? "collapsed" : ""}`}
-      style={{
-        position: "fixed",
-        right: "16px",
-        top: "50%",
-        transform: "translateY(-50%)",
-        display: "flex",
-        flexDirection: "column",
-        gap: "8px",
-        zIndex: 9998,
-        transition: "opacity 0.3s",
-      }}>
-      {renderButtonGroup()}
-    </div>
+    <>
+      {/* 加载历史遮罩（与油猴脚本一致） */}
+      {isLoadingHistory && (
+        <div className="gh-loading-mask">
+          <div className="gh-loading-content">
+            <div className="gh-loading-spinner">⏳</div>
+            <div className="gh-loading-text">{loadingText || t("loadingHistory")}</div>
+            <div className="gh-loading-hint">{t("loadingHint")}</div>
+            <button className="gh-loading-stop-btn" onClick={stopLoading}>
+              {t("stopLoading")}
+            </button>
+          </div>
+        </div>
+      )}
+      <div
+        ref={groupRef}
+        className={`quick-btn-group gh-interactive ${!isPanelOpen ? "collapsed" : ""}`}
+        style={{
+          position: "fixed",
+          right: "16px",
+          top: "50%",
+          transform: "translateY(-50%)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+          zIndex: 9998,
+          transition: "opacity 0.3s",
+        }}>
+        {renderButtonGroup()}
+      </div>
+    </>
   )
 }

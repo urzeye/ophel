@@ -665,3 +665,69 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
+
+/* ============= 加载历史遮罩样式（与油猴脚本一致） ============= */
+.gh-loading-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  pointer-events: auto;
+}
+
+.gh-loading-content {
+  background: var(--gh-bg, #fff);
+  padding: 24px 32px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+}
+
+.gh-loading-spinner {
+  font-size: 32px;
+  animation: gh-spin 1s linear infinite;
+}
+
+.gh-loading-text {
+  color: var(--gh-text, #333);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.gh-loading-hint {
+  color: var(--gh-text-secondary, #9ca3af);
+  font-size: 12px;
+  text-align: center;
+}
+
+.gh-loading-stop-btn {
+  margin-top: 8px;
+  padding: 8px 20px;
+  background: var(--gh-primary, #4285f4);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.gh-loading-stop-btn:hover {
+  background: var(--gh-primary-hover, #3367d6);
+}
+
+@keyframes gh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

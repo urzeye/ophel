@@ -19,7 +19,14 @@ export class ModelLocker {
   }
 
   updateSettings(settings: Settings["modelLock"]) {
+    const wasEnabled = this.settings.enabled
     this.settings = settings
+
+    // 动态开关支持：从 false→true 时重置 isLocked 并尝试锁定
+    if (!wasEnabled && settings.enabled) {
+      this.isLocked = false
+      this.start()
+    }
   }
 
   start() {

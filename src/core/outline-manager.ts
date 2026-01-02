@@ -690,7 +690,8 @@ export class OutlineManager {
   // Sync Scroll Helper
   // Returns index of the item that should be highlighted
   findVisibleItemIndex(viewportTop: number, viewportBottom: number): number | null {
-    if (!this.settings.syncScroll) return null
+    // 只有 followMode === 'current' 时才启用同步高亮
+    if (this.settings.followMode !== "current") return null
 
     // ⭐ 使用内部方法进行搜索，支持重试
     const doSearch = (): { currentItem: OutlineNode | null; invalidCount: number } => {

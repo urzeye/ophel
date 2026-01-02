@@ -1,10 +1,12 @@
 /**
  * 滚动锁定管理器
  *
- * 功能：当 AI 正在生成内容时，如果用户手动向上滚动查看历史消息，
- * 则阻止页面自动滚动到底部，避免打断用户阅读。
+ * 功能：当功能开启时，阻止页面自动滚动到底部，方便用户阅读上文。
  *
- * 使用适配器的 isGenerating() 方法检测 AI 生成状态
+ * 核心策略：
+ * 1. 主世界脚本（scroll-lock-main.ts）负责 API 劫持
+ * 2. 本管理器通过 postMessage 控制主世界脚本的启用/禁用
+ * 3. 使用 MutationObserver + 定时器作为回滚保底机制
  */
 
 import type { SiteAdapter } from "~adapters/base"
@@ -13,13 +15,13 @@ import type { Settings } from "~utils/storage"
 export class ScrollLockManager {
   private adapter: SiteAdapter
   private settings: Settings
-  private userHasScrolledUp = false
-  private scrollContainer: HTMLElement | null = null
-  private checkInterval: NodeJS.Timeout | null = null
-  private originalScrollTo: typeof Element.prototype.scrollTo | null = null
+  private enabled = false
 
-  // 阈值：距离底部多少像素内被视为"在底部"
-  private static readonly BOTTOM_THRESHOLD = 100
+  // 回滚机制相关
+  private observer: MutationObserver | null = null
+  private cleanupInterval: ReturnType<typeof setInterval> | null = null
+  private onScrollHandler: (() => void) | null = null
+  private lastScrollTop = 0
 
   constructor(adapter: SiteAdapter, settings: Settings) {
     this.adapter = adapter
@@ -28,141 +30,220 @@ export class ScrollLockManager {
   }
 
   updateSettings(settings: Settings) {
+    const wasEnabled = this.settings.preventAutoScroll
     this.settings = settings
-    if (!settings.preventAutoScroll) {
-      this.stop()
+
+    // 动态开关支持
+    if (!wasEnabled && settings.preventAutoScroll) {
+      this.enable()
+    } else if (wasEnabled && !settings.preventAutoScroll) {
+      this.disable()
     }
   }
 
   private init() {
-    if (!this.settings.preventAutoScroll) return
+    console.log(
+      "[Chat Helper] ScrollLockManager.init(), preventAutoScroll:",
+      this.settings.preventAutoScroll,
+    )
+    if (!this.settings.preventAutoScroll) {
+      console.log("[Chat Helper] ScrollLockManager.init() - skipped (disabled)")
+      return
+    }
 
-    // 定时检测 AI 生成状态
-    this.checkInterval = setInterval(() => {
-      const isGenerating = this.adapter.isGenerating()
+    this.enable()
+  }
 
-      if (isGenerating && !this.scrollContainer) {
-        // AI 开始生成，初始化滚动检测
-        this.userHasScrolledUp = false
-        this.initScrollDetection()
-      } else if (!isGenerating && this.scrollContainer) {
-        // AI 生成完成，停止滚动检测
-        this.stopScrollDetection()
-      }
-    }, 500)
+  private enable() {
+    if (this.enabled) return
+    this.enabled = true
 
-    // 初始化滚动容器监听
-    this.initScrollDetection()
+    console.log("[Chat Helper] ScrollLockManager: Enabling...")
+
+    // 1. 通知主世界脚本启用 API 劫持
+    this.toggleMainWorldHijack(true)
+
+    // 2. 启动 scroll 事件监听器
+    this.startScrollListener()
+
+    // 3. 启动 MutationObserver 回滚机制
+    this.startObserver()
+
+    console.log("[Chat Helper] ScrollLockManager: Enabled")
+  }
+
+  private disable() {
+    if (!this.enabled) return
+    this.enabled = false
+
+    console.log("[Chat Helper] ScrollLockManager: Disabling...")
+
+    // 通知主世界脚本禁用 API 劫持
+    this.toggleMainWorldHijack(false)
+
+    // 停止各种监听器
+    this.stopScrollListener()
+    this.stopObserver()
+
+    console.log("[Chat Helper] ScrollLockManager: Disabled")
   }
 
   stop() {
-    if (this.checkInterval) {
-      clearInterval(this.checkInterval)
-      this.checkInterval = null
-    }
-    this.stopScrollDetection()
+    this.disable()
   }
 
-  private initScrollDetection() {
-    // 获取滚动容器
-    this.scrollContainer = this.findScrollContainer()
-
-    if (this.scrollContainer) {
-      this.scrollContainer.addEventListener("scroll", this.onScroll)
-      this.scrollContainer.addEventListener("wheel", this.onWheel, { passive: true })
-
-      // 覆盖 scrollTo 方法以阻止自动滚动
-      this.patchScrollTo()
-    }
+  /**
+   * 通过 postMessage 通知主世界脚本启用/禁用 API 劫持
+   */
+  private toggleMainWorldHijack(enabled: boolean) {
+    window.postMessage({ type: "CHAT_HELPER_SCROLL_LOCK_TOGGLE", enabled }, "*")
   }
 
-  private stopScrollDetection() {
-    if (this.scrollContainer) {
-      this.scrollContainer.removeEventListener("scroll", this.onScroll)
-      this.scrollContainer.removeEventListener("wheel", this.onWheel)
-      this.scrollContainer = null
-    }
-    this.restoreScrollTo()
-    this.userHasScrolledUp = false
+  /**
+   * 获取滚动容器
+   */
+  private getScrollContainer(): HTMLElement | null {
+    return this.adapter.getScrollContainer()
   }
 
-  private findScrollContainer(): HTMLElement {
-    // 常见的滚动容器选择器
-    const selectors = [
-      "infinite-scroller.chat-history",
-      ".chat-history",
-      ".chat-mode-scroller",
-      "main",
-      '[role="main"]',
-    ]
-
-    for (const sel of selectors) {
-      const el = document.querySelector(sel) as HTMLElement
-      if (el && el.scrollHeight > el.clientHeight) {
-        return el
-      }
+  /**
+   * 启动 scroll 事件监听器
+   * 记录用户最后滚动位置，用于自动修正
+   */
+  private startScrollListener() {
+    const container = this.getScrollContainer()
+    if (container) {
+      this.lastScrollTop = container.scrollTop
     }
-    return document.documentElement
-  }
 
-  private onScroll = () => {
-    if (!this.adapter.isGenerating() || !this.scrollContainer) return
-
-    const { scrollTop, scrollHeight, clientHeight } = this.scrollContainer
-    const distanceToBottom = scrollHeight - scrollTop - clientHeight
-
-    // 如果用户滚动到底部附近，重置锁定状态
-    if (distanceToBottom <= ScrollLockManager.BOTTOM_THRESHOLD) {
-      this.userHasScrolledUp = false
-    }
-  }
-
-  // 监听滚轮事件，判断用户意图
-  private onWheel = (e: WheelEvent) => {
-    if (e.deltaY < 0) {
-      // 用户向上滚动
-      this.userHasScrolledUp = true
-    }
-  }
-
-  // 覆盖 scrollTo 方法，阻止自动滚动到底部
-  private patchScrollTo() {
-    if (this.originalScrollTo) return
-
-    const self = this
-    this.originalScrollTo = Element.prototype.scrollTo
-
-    Element.prototype.scrollTo = function (this: Element, ...args: any[]) {
-      // 如果用户已向上滚动且 AI 正在生成，阻止滚动到底部
-      if (
-        self.userHasScrolledUp &&
-        self.adapter.isGenerating() &&
-        self.scrollContainer &&
-        this === self.scrollContainer
-      ) {
-        // 检查是否是滚动到底部的操作
-        const options = args[0] as ScrollToOptions | undefined
-        const targetTop = options?.top ?? args[0]
-        const scrollHeight = this.scrollHeight
-        const clientHeight = this.clientHeight
-
-        // 如果目标位置接近底部，阻止滚动
-        if (typeof targetTop === "number" && targetTop > scrollHeight - clientHeight - 100) {
-          console.log("[Chat Helper] Blocked auto scroll to bottom")
-          return
+    const onScroll = () => {
+      if (this.enabled) {
+        const container = this.getScrollContainer()
+        if (container) {
+          // 记录当前位置作为"合法"位置
+          this.lastScrollTop = container.scrollTop
         }
       }
+    }
 
-      // 正常执行原始的 scrollTo
-      self.originalScrollTo?.apply(this, args as any)
+    // 监听滚动容器的滚动事件
+    const scrollContainer = this.getScrollContainer()
+    if (scrollContainer) {
+      scrollContainer.addEventListener("scroll", onScroll, { passive: true })
+    }
+    // 同时监听 window 滚动
+    window.addEventListener("scroll", onScroll, { passive: true })
+    this.onScrollHandler = onScroll
+  }
+
+  /**
+   * 停止 scroll 事件监听器
+   */
+  private stopScrollListener() {
+    if (this.onScrollHandler) {
+      const scrollContainer = this.getScrollContainer()
+      if (scrollContainer) {
+        scrollContainer.removeEventListener("scroll", this.onScrollHandler)
+      }
+      window.removeEventListener("scroll", this.onScrollHandler)
+      this.onScrollHandler = null
     }
   }
 
-  // 恢复原始的 scrollTo
-  private restoreScrollTo() {
-    if (this.originalScrollTo) {
-      Element.prototype.scrollTo = this.originalScrollTo
-      this.originalScrollTo = null
+  /**
+   * 启动 MutationObserver
+   * 监听 DOM 变化，如果发现非用户意图的滚动跳变，强制回滚
+   */
+  private startObserver() {
+    const contentSelectors = this.adapter.getChatContentSelectors()
+
+    this.observer = new MutationObserver((mutations) => {
+      if (!this.enabled) return
+
+      let hasNewContent = false
+
+      // 检测是否有新内容
+      for (const mutation of mutations) {
+        if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+          for (const node of mutation.addedNodes) {
+            if (node.nodeType === 1) {
+              const element = node as Element
+              // 使用适配器提供的选择器判断
+              for (const sel of contentSelectors) {
+                if (
+                  (element.matches && element.matches(sel)) ||
+                  (element.querySelector && element.querySelector(sel))
+                ) {
+                  hasNewContent = true
+                  break
+                }
+              }
+            }
+            if (hasNewContent) break
+          }
+        }
+        if (hasNewContent) break
+      }
+
+      if (hasNewContent) {
+        // 如果有新内容插入，立刻检查滚动位置是否发生了非预期的改变
+        const container = this.getScrollContainer()
+        if (container) {
+          const currentScroll = container.scrollTop
+          // 阈值 100px
+          if (currentScroll > this.lastScrollTop + 100) {
+            console.log(
+              "[Chat Helper] Detected unblocked auto-scroll, rolling back. Current:",
+              currentScroll,
+              "Last:",
+              this.lastScrollTop,
+            )
+            container.scrollTop = this.lastScrollTop
+          }
+        }
+      }
+    })
+
+    this.observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    })
+
+    // 定时器保底：周期性检查滚动位置
+    this.cleanupInterval = setInterval(() => {
+      if (this.enabled) {
+        const container = this.getScrollContainer()
+        if (container) {
+          const current = container.scrollTop
+          if (current > this.lastScrollTop + 200) {
+            // 大幅跳变，回滚
+            console.log(
+              "[Chat Helper] Periodic check: rolling back auto-scroll. Current:",
+              current,
+              "Last:",
+              this.lastScrollTop,
+            )
+            container.scrollTop = this.lastScrollTop
+          } else {
+            // 小幅变动，认为是合法阅读，更新基准
+            this.lastScrollTop = current
+          }
+        }
+      }
+    }, 500)
+  }
+
+  /**
+   * 停止 MutationObserver
+   */
+  private stopObserver() {
+    if (this.observer) {
+      this.observer.disconnect()
+      this.observer = null
+    }
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval)
+      this.cleanupInterval = null
     }
   }
 }
