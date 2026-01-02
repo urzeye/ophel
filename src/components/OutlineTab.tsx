@@ -391,7 +391,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
     }
     update() // 初始加载
     return manager.subscribe(update)
-  }, [manager])
+  }, [manager, settings?.outline?.followMode]) // 添加 followMode 依赖
 
   // ⭐ 智能滚动：在 tree 渲染完成后执行滚动
   useEffect(() => {
