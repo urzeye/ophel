@@ -17,8 +17,93 @@ import {
 
 // 监听扩展安装/更新
 chrome.runtime.onInstalled.addListener(() => {
-  // 可在此处添加安装/更新后的初始化逻辑
+  setupDynamicRules()
 })
+
+// 设置动态规则以支持CORS + Credentials
+async function setupDynamicRules() {
+  const extensionOrigin = chrome.runtime.getURL("").slice(0, -1) // 移除末尾的 /
+
+  // 移除旧规则
+  const oldRules = await chrome.declarativeNetRequest.getDynamicRules()
+  const oldRuleIds = oldRules.map((rule) => rule.id)
+  await chrome.declarativeNetRequest.updateDynamicRules({
+    removeRuleIds: oldRuleIds,
+  })
+
+  // 定义Header修改动作
+  const headerActionHeaders = {
+    requestHeaders: [
+      {
+        header: "Referer",
+        operation: chrome.declarativeNetRequest.HeaderOperation.SET,
+        value: "https://gemini.google.com/",
+      },
+      {
+        header: "Origin",
+        operation: chrome.declarativeNetRequest.HeaderOperation.SET,
+        value: "https://gemini.google.com",
+      },
+    ],
+    responseHeaders: [
+      {
+        header: "Access-Control-Allow-Origin",
+        operation: chrome.declarativeNetRequest.HeaderOperation.SET,
+        value: extensionOrigin,
+      },
+      {
+        header: "Access-Control-Allow-Credentials",
+        operation: chrome.declarativeNetRequest.HeaderOperation.SET,
+        value: "true",
+      },
+    ],
+  }
+
+  // 添加新规则
+  await chrome.declarativeNetRequest.updateDynamicRules({
+    addRules: [
+      {
+        id: 1001,
+        priority: 2, // 高优先级
+        action: {
+          type: chrome.declarativeNetRequest.RuleActionType.MODIFY_HEADERS,
+          requestHeaders: headerActionHeaders.requestHeaders,
+          responseHeaders: headerActionHeaders.responseHeaders,
+        },
+        condition: {
+          // 排除页面本身发起的请求，主要针对扩展的后台请求
+          excludedInitiatorDomains: ["google.com", "gemini.google.com"],
+          urlFilter: "*://*.googleusercontent.com/*",
+          resourceTypes: [
+            chrome.declarativeNetRequest.ResourceType.XMLHTTPREQUEST,
+            chrome.declarativeNetRequest.ResourceType.IMAGE,
+            chrome.declarativeNetRequest.ResourceType.OTHER,
+          ],
+        },
+      },
+      {
+        id: 1002,
+        priority: 2,
+        action: {
+          type: chrome.declarativeNetRequest.RuleActionType.MODIFY_HEADERS,
+          requestHeaders: headerActionHeaders.requestHeaders,
+          responseHeaders: headerActionHeaders.responseHeaders,
+        },
+        condition: {
+          // 排除页面本身发起的请求
+          excludedInitiatorDomains: ["google.com", "gemini.google.com"],
+          urlFilter: "*://*.google.com/*",
+          resourceTypes: [
+            chrome.declarativeNetRequest.ResourceType.XMLHTTPREQUEST,
+            chrome.declarativeNetRequest.ResourceType.IMAGE,
+            chrome.declarativeNetRequest.ResourceType.OTHER,
+          ],
+        },
+      },
+    ],
+  })
+  console.log("Dynamic CORS rules set up specifically for extension origin:", extensionOrigin)
+}
 
 // 消息监听 - 与 Content Script 通信
 chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendResponse) => {
@@ -47,7 +132,22 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
     case MSG_PROXY_FETCH:
       ;(async () => {
         try {
-          const response = await fetch(message.url)
+          // 确保规则已设置
+          const rules = await chrome.declarativeNetRequest.getDynamicRules()
+          if (!rules || rules.length === 0 || !rules.find((r) => r.id === 1001)) {
+            await setupDynamicRules()
+          }
+
+          // 携带credentials以便访问需要认证的图片资源
+          // Dynamic Rules会自动处理 Referer/Origin 和 Access-Control-Allow-Origin
+          const response = await fetch(message.url, {
+            credentials: "include",
+          })
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`)
+          }
+
           const blob = await response.blob()
           const reader = new FileReader()
           reader.onloadend = () => {

@@ -14232,7 +14232,6 @@
         })
         downBtn.textContent = "⬇"
         downBtn.disabled = index === validOrder.length - 1
-
         ;[upBtn, downBtn].forEach((btn) => {
           if (btn.disabled) {
             btn.style.opacity = "0.4"
@@ -14756,7 +14755,6 @@
         })
         downBtn.textContent = "⬇"
         downBtn.disabled = index === currentBtnOrder.length - 1
-
         ;[upBtn, downBtn].forEach((btn) => {
           if (btn.disabled) {
             btn.style.opacity = "0.4"

@@ -10,6 +10,7 @@
 2. [Plasmo Shadow DOM 样式注入顺序与 CSS 优先级冲突](#2-plasmo-shadow-dom-样式注入顺序与-css-优先级冲突)
 3. [滚动锁定功能失效：隔离世界与 CSP 问题](#3-滚动锁定功能失效隔离世界与-csp-问题)
 4. [桌面通知不生效：document.hidden 始终返回 false](#4-桌面通知不生效documenthidden-始终返回-false)
+5. [图片去水印跨域 (CORS) 与 403 Forbidden 错误](#5-图片去水印跨域-cors-与-403-forbidden-错误)
 
 ---
 
@@ -652,3 +653,56 @@ const shouldNotify = wasGenerating && !this.userSawCompletion && (isAway || noti
 | `src/core/tab-manager.ts` | **修改** - 添加 `isUserAway()` 方法，添加 blur/focus 事件监听 |
 
 ---
+
+## 5. 图片去水印跨域 (CORS) 与 403 Forbidden 错误
+
+**日期**: 2026-01-02
+
+### 症状
+
+- 去水印功能对某些 Gemini 生成的图片失效，图片一直处于 "processing" 状态或直接报错。
+- 控制台报错：
+  1. `403 Forbidden`: 获取 `lh3.googleusercontent.com` 图片时。
+  2. CORS 错误: `No 'Access-Control-Allow-Origin' header is present`.
+  3. 重定向错误: `fetch` 请求 `googleusercontent.com` 被重定向到 `lh3.google.com`，导致 Origin 不匹配。
+
+### 背景
+
+Gemini 生成的图片通常托管在 `googleusercontent.com`，但也可能重定向到 `google.com` 子域。原油猴脚本通过 `GM_xmlhttpRequest` 伪造 `Referer` 和 `Origin` 来获取图片。迁移到扩展后，直接在 Content Script 中使用 `fetch` 遇到了浏览器严格的安全限制。
+
+### 根因
+
+1.  **需要认证**: 图片资源需要 Cookie 才能访问，普通 `fetch` 会报 403。
+2.  **CORS 限制**: 只有当请求头包含正确的 `Origin` / `Referer` (`https://gemini.google.com`) 时，服务器才允许访问。
+3.  **浏览器安全策略**: 带有 `credentials: 'include'` 的请求，浏览器要求服务器返回的 `Access-Control-Allow-Origin` 精确匹配请求源，不能是 `*`。
+4.  **重定向陷阱**: 请求 `*.googleusercontent.com` 时被重定向到 `*.google.com`。即使第一跳的规则设置正确，浏览器也会对重定向后的请求重新进行 CORS 检查，导致失败。
+
+### 尝试过的方案
+
+- **尝试 1 (直接 Fetch)**: 失败，因 CORS/CORB 阻止跨域图片数据读取。
+- **尝试 2 (后台代理 + 手动 Headers)**: 尝试在 `fetch` 中手动设置 `Referer`/`Origin`，失败，因为这些是“不安全请求头”，会被浏览器剥离。
+- **尝试 3 (DNR + 直接 Fetch)**: 使用 DNR 修改响应头。失败，因为重定向后的域名 (`lh3.google.com`) 未包含在 Host Permissions 或 DNR 规则中。
+
+### 最终解决方案 (Plan G)
+
+**策略**: 后台代理 (Background Proxy) + 动态 DNR 规则 (Dynamic Rules)
+
+1.  **权限**: 在 `package.json` 中添加 `https://*.google.com/*` 和 `https://*.googleusercontent.com/*` 到 `host_permissions`。
+2.  **后台代理**:
+    - Content Script 不直接 fetch，而是发送 `MSG_PROXY_FETCH` 消息给 Background Script。
+    - 由 Background Script 发起请求。
+3.  **动态规则 (DNR)**:
+    - 在 `background.ts` 中配置动态规则。
+    - **范围**: 仅针对扩展发起的请求 (`initiatorSchemes: ['chrome-extension']` 或通过 exclusion 排除页面请求)。
+    - **动作**:
+      - **欺骗服务器**: 强制设置请求头 `Origin` 和 `Referer` 为 `https://gemini.google.com`。
+      - **欺骗浏览器**: 强制设置响应头 `Access-Control-Allow-Origin` 为扩展的 Origin。
+      - **覆盖重定向**: 规则同时覆盖 `*.googleusercontent.com` 和 `*.google.com`，完美处理重定向链。
+
+### 经验总结
+
+| 教训                 | 说明                                                                                            |
+| :------------------- | :---------------------------------------------------------------------------------------------- |
+| **CORS 与重定向**    | 如果请求发生跨域重定向，CORS 检查会对每一跳进行，必须确保权限和规则覆盖重定向后的最终域名。     |
+| **Credentials 限制** | 携带凭证的请求对 `Access-Control-Allow-Origin` 要求极严，不能使用通配符 `*`。                   |
+| **扩展伪装**         | 通过 Background Script + DNR 修改 Headers，可以完美模拟同源请求，是解决复杂跨域问题的终极手段。 |

@@ -32,17 +32,16 @@
     "permissions": [
       "storage",
       "notifications",
-      "tabs"
+      "tabs",
+      "declarativeNetRequest"
     ],
     "host_permissions": [
       "https://gemini.google.com/*",
       "https://business.gemini.google/*",
+      "https://ai.google.dev/*",
       "https://aistudio.google.com/*",
-      "https://grok.com/*",
-      "https://x.com/i/grok/*",
-      "https://chat.openai.com/*",
-      "https://chatgpt.com/*",
-      "https://claude.ai/*",
+      "https://alkalimetal.google.com/*",
+      "https://*.google.com/*",
       "https://*.googleusercontent.com/*"
     ],
     "web_accessible_resources": [
@@ -54,6 +53,15 @@
           "<all_urls>"
         ]
       }
-    ]
+    ],
+    "declarative_net_request": {
+      "rule_resources": [
+        {
+          "id": "cors_rules",
+          "enabled": true,
+          "path": "~assets/rules.json"
+        }
+      ]
+    }
   }
 }

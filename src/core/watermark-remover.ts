@@ -169,57 +169,45 @@ export class WatermarkRemover {
   }
 
   private async processSingleImage(img: HTMLImageElement) {
-    if (this.processingQueue.has(img.src)) return
-    this.processingQueue.add(img.src)
+    const originalSrc = img.src
+    if (this.processingQueue.has(originalSrc)) return
+    this.processingQueue.add(originalSrc)
     img.dataset.watermarkProcessed = "processing"
 
     try {
-      // Logic:
-      // 1. Get image data (try direct fetch first, then background proxy)
-      let dataUrl: string
+      // 替换为原始尺寸URL（去除尺寸限制）
+      const normalSizeUrl = this.replaceWithNormalSize(originalSrc)
 
-      try {
-        if (img.crossOrigin !== "anonymous") {
-          img.crossOrigin = "anonymous"
-        }
-        const response = await fetch(img.src)
-        const blob = await response.blob()
-        dataUrl = await new Promise((resolve) => {
-          const reader = new FileReader()
-          reader.onloadend = () => resolve(reader.result as string)
-          reader.readAsDataURL(blob)
-        })
-      } catch (e) {
-        // Direct fetch failed (likely CORS), try proxy
-        console.warn("Direct fetch failed, trying proxy...", e)
-        const response = await sendToBackground({
-          type: MSG_PROXY_FETCH,
-          url: img.src,
-        })
-        if (response && response.success) {
-          dataUrl = response.data
-        } else {
-          throw new Error("Proxy fetch failed: " + (response?.error || "Unknown"))
-        }
+      // 使用后台代理获取图片 (Plan G)
+      // Background Script会自动处理 Referer/Origin 和 Access-Control-Allow-Origin
+      const response = await sendToBackground({
+        type: MSG_PROXY_FETCH,
+        url: normalSizeUrl,
+      })
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error || "Unknown proxy error")
       }
 
-      // Create bitmap from dataUrl
-      const imgBit = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const dataUrl = response.data
+
+      // 从dataUrl创建图片
+      const loadedImg = await new Promise<HTMLImageElement>((resolve, reject) => {
         const i = new Image()
         i.onload = () => resolve(i)
         i.onerror = reject
         i.src = dataUrl
       })
 
-      // Draw to canvas
+      // 绘制到canvas
       const canvas = document.createElement("canvas")
-      canvas.width = imgBit.width
-      canvas.height = imgBit.height
+      canvas.width = loadedImg.width
+      canvas.height = loadedImg.height
       const ctx = canvas.getContext("2d")
       if (!ctx) return
-      ctx.drawImage(imgBit, 0, 0)
+      ctx.drawImage(loadedImg, 0, 0)
 
-      // Remove
+      // 获取图片数据并移除水印
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
       const config = this.detectWatermarkConfig(canvas.width, canvas.height)
       const position = this.calculateWatermarkPosition(canvas.width, canvas.height, config)
@@ -231,11 +219,18 @@ export class WatermarkRemover {
       img.src = newUrl
       img.dataset.watermarkProcessed = "true"
     } catch (e) {
-      console.error("Failed to process image", e)
+      console.error("[Watermark Remover] Failed to process image", e)
       img.dataset.watermarkProcessed = "error"
     } finally {
-      this.processingQueue.delete(img.src)
+      this.processingQueue.delete(originalSrc)
     }
+  }
+
+  /**
+   * 替换为原始尺寸URL
+   */
+  private replaceWithNormalSize(src: string): string {
+    return src.replace(/=s\d+(?=[-?#]|$)/, "=s0")
   }
 
   private startObserver() {
