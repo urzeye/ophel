@@ -109,6 +109,125 @@ const CollapsibleSection: React.FC<{
   )
 }
 
+// 模型关键词输入组件 - 使用本地 state 避免输入被打断
+const ModelKeywordInput: React.FC<{
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  disabled?: boolean
+}> = ({ value, onChange, placeholder, disabled = false }) => {
+  const [localValue, setLocalValue] = useState(value)
+
+  // 当外部 value 变化时同步本地状态（但避免在输入过程中同步）
+  React.useEffect(() => {
+    setLocalValue(value)
+  }, [value])
+
+  return (
+    <input
+      type="text"
+      value={localValue}
+      onChange={(e) => setLocalValue(e.target.value)}
+      disabled={disabled}
+      onBlur={() => {
+        // 失焦时保存到 storage
+        if (localValue !== value) {
+          onChange(localValue)
+        }
+      }}
+      onKeyDown={(e) => {
+        // 按 Enter 时也保存
+        if (e.key === "Enter") {
+          onChange(localValue)
+        }
+      }}
+      placeholder={placeholder || t("modelKeywordExample") || "例如: 3 Pro"}
+      style={{
+        width: "80px",
+        padding: "4px 8px",
+        borderRadius: "4px",
+        border: "1px solid #d1d5db",
+        fontSize: "12px",
+        backgroundColor: disabled ? "#f3f4f6" : "white",
+        color: disabled ? "#9ca3af" : "inherit",
+        cursor: disabled ? "not-allowed" : "text",
+      }}
+    />
+  )
+}
+
+// 模型锁定站点行组件 - 显示单个站点的开关和输入框
+const ModelLockSiteRow: React.FC<{
+  siteId: string
+  siteName: string
+  config: { enabled: boolean; keyword: string }
+  onChange: (config: { enabled: boolean; keyword: string }) => void
+}> = ({ siteName, config, onChange }) => {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: "10px",
+        padding: "6px 0",
+      }}>
+      {/* 站点名称 */}
+      <span style={{ fontWeight: 500, fontSize: "13px", minWidth: "80px" }}>{siteName}</span>
+
+      {/* 开关 */}
+      <label
+        style={{
+          position: "relative",
+          display: "inline-block",
+          width: "36px",
+          height: "20px",
+          marginRight: "12px",
+        }}>
+        <input
+          type="checkbox"
+          checked={config.enabled}
+          onChange={() => onChange({ ...config, enabled: !config.enabled })}
+          style={{ opacity: 0, width: 0, height: 0 }}
+        />
+        <span
+          style={{
+            position: "absolute",
+            cursor: "pointer",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: config.enabled ? "#4285f4" : "#ccc",
+            borderRadius: "20px",
+            transition: "0.3s",
+          }}>
+          <span
+            style={{
+              position: "absolute",
+              height: "16px",
+              width: "16px",
+              left: config.enabled ? "18px" : "2px",
+              bottom: "2px",
+              backgroundColor: "white",
+              borderRadius: "50%",
+              transition: "0.3s",
+            }}
+          />
+        </span>
+      </label>
+
+      {/* 输入框 */}
+      <ModelKeywordInput
+        value={config.keyword}
+        onChange={(keyword) => onChange({ ...config, keyword })}
+        placeholder={t("modelKeywordExample") || "快速"}
+        disabled={!config.enabled}
+      />
+    </div>
+  )
+}
+
 // 可排序列表项
 const SortableItem: React.FC<{
   icon?: string
@@ -811,33 +930,36 @@ export const SettingsTab = () => {
 
       {/* ========== 模型锁定 ========== */}
       <CollapsibleSection title={t("modelLockTitle") || "模型锁定"} defaultExpanded={false}>
-        <ToggleRow
-          label={t("modelLockEnabledLabel") || "启用模型锁定"}
-          desc={t("modelLockEnabledDesc") || "自动切换到指定模型"}
-          checked={settings.modelLock?.enabled ?? false}
-          onChange={() => updateNestedSetting("modelLock", "enabled", !settings.modelLock?.enabled)}
+        {/* Enterprise / Gemini Business */}
+        <ModelLockSiteRow
+          siteId="gemini-business"
+          siteName="Enterprise"
+          config={settings.modelLockConfig?.["gemini-business"] || { enabled: false, keyword: "" }}
+          onChange={(config) => {
+            setSettings({
+              ...settings,
+              modelLockConfig: {
+                ...settings.modelLockConfig,
+                "gemini-business": config,
+              },
+            })
+          }}
         />
-        {settings.modelLock?.enabled && (
-          <div style={{ marginBottom: "12px" }}>
-            <label
-              style={{ display: "block", marginBottom: "4px", fontWeight: 500, fontSize: "13px" }}>
-              {t("modelKeywordPlaceholder") || "模型关键词"}
-            </label>
-            <input
-              type="text"
-              value={settings.modelLock?.keyword || ""}
-              onChange={(e) => updateNestedSetting("modelLock", "keyword", e.target.value)}
-              placeholder="例如: 2.0 Flash"
-              style={{
-                width: "100%",
-                padding: "4px 8px",
-                borderRadius: "4px",
-                border: "1px solid #d1d5db",
-                fontSize: "12px",
-              }}
-            />
-          </div>
-        )}
+        {/* Gemini */}
+        <ModelLockSiteRow
+          siteId="gemini"
+          siteName="Gemini"
+          config={settings.modelLockConfig?.["gemini"] || { enabled: false, keyword: "" }}
+          onChange={(config) => {
+            setSettings({
+              ...settings,
+              modelLockConfig: {
+                ...settings.modelLockConfig,
+                gemini: config,
+              },
+            })
+          }}
+        />
       </CollapsibleSection>
 
       {/* ========== 内容设置 ========== */}

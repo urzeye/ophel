@@ -42,10 +42,14 @@ export interface Settings {
   preventAutoScroll: boolean // 防止自动滚动
   watermarkRemoval: boolean // 水印移除
   pageWidth: { enabled: boolean; value: string; unit: string }
-  modelLock: {
-    enabled: boolean
-    keyword: string
-  }
+  // 模型锁定 - 按站点单独配置
+  modelLockConfig: Record<
+    string,
+    {
+      enabled: boolean
+      keyword: string
+    }
+  >
   outline: {
     enabled: boolean
     maxLevel: number
@@ -104,7 +108,10 @@ export const DEFAULT_SETTINGS: Settings = {
   preventAutoScroll: false,
   watermarkRemoval: true,
   pageWidth: { enabled: false, value: "100", unit: "%" },
-  modelLock: { enabled: false, keyword: "" },
+  modelLockConfig: {
+    gemini: { enabled: false, keyword: "" },
+    "gemini-business": { enabled: false, keyword: "" },
+  },
   outline: {
     enabled: true,
     maxLevel: 6,

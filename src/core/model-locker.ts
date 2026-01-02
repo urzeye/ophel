@@ -7,44 +7,50 @@
  */
 
 import type { SiteAdapter } from "~adapters/base"
-import type { Settings } from "~utils/storage"
+
+// 单站点的模型锁定配置
+export interface ModelLockSiteConfig {
+  enabled: boolean
+  keyword: string
+}
 
 export class ModelLocker {
   private adapter: SiteAdapter
-  private settings: Settings["modelLock"]
+  private config: ModelLockSiteConfig
   private isLocked = false
   private verifyTimer: ReturnType<typeof setInterval> | null = null
 
-  constructor(adapter: SiteAdapter, settings: Settings["modelLock"]) {
+  constructor(adapter: SiteAdapter, config: ModelLockSiteConfig) {
     this.adapter = adapter
-    this.settings = settings
+    this.config = config
   }
 
-  updateSettings(settings: Settings["modelLock"]) {
-    const wasEnabled = this.settings.enabled
-    this.settings = settings
+  updateConfig(config: ModelLockSiteConfig) {
+    const wasEnabled = this.config.enabled
+    const oldKeyword = this.config.keyword
+    this.config = config
 
-    // 动态开关支持：从 false→true 时重置 isLocked 并尝试锁定
-    if (!wasEnabled && settings.enabled) {
+    // 动态开关支持：从 false→true 或 关键词变化时，重置 isLocked 并立即锁定
+    if ((!wasEnabled && config.enabled) || (config.enabled && config.keyword !== oldKeyword)) {
       this.isLocked = false
-      this.start()
+      // 用户手动操作时，无需等待页面初始化，立即执行
+      this.start(50)
     }
   }
 
-  start() {
-    if (!this.settings.enabled || !this.settings.keyword) return
+  start(delay = 1500) {
+    if (!this.config.enabled || !this.config.keyword) return
     if (this.isLocked) return
 
-    // 延迟 2 秒后开始锁定，让页面自己的初始化逻辑先完成
-    // 这样可以避免锁定成功后被页面的默认模型初始化覆盖
+    // 延迟后开始锁定（初始化时需要延迟等待页面加载，手动触发时可直接执行）
     setTimeout(() => {
       if (this.isLocked) return // 再次检查，避免重复锁定
 
-      this.adapter.lockModel(this.settings.keyword, () => {
+      this.adapter.lockModel(this.config.keyword, () => {
         // 锁定成功后，启动持续监控（防止页面初始化后又改回默认值）
         this.startVerification()
       })
-    }, 1500)
+    }, delay)
   }
 
   /**
@@ -66,7 +72,7 @@ export class ModelLocker {
       verifyAttempts++
 
       // 检查当前模型是否仍然是目标模型
-      const config = this.adapter.getModelSwitcherConfig(this.settings.keyword)
+      const config = this.adapter.getModelSwitcherConfig(this.config.keyword)
       if (!config) {
         this.finishVerification()
         return
@@ -95,7 +101,7 @@ export class ModelLocker {
         if (verifyAttempts <= 2) {
           this.finishVerification()
           // 重新调用 lockModel
-          this.adapter.lockModel(this.settings.keyword, () => {
+          this.adapter.lockModel(this.config.keyword, () => {
             this.startVerification()
           })
         } else {

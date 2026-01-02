@@ -48,10 +48,13 @@ export const resources = {
     settingOff: "关",
     // 模型锁定
     modelLockTitle: "模型锁定",
+    modelLockEnabledLabel: "启用模型锁定",
+    modelLockEnabledDesc: "进入页面后自动切换到指定模型",
     modelLockLabel: "自动锁定模型",
     modelLockDesc: "进入页面后自动切换到指定模型",
     modelKeywordLabel: "模型关键字",
-    modelKeywordPlaceholder: "例如：3 Pro",
+    modelKeywordPlaceholder: "模型关键词",
+    modelKeywordExample: "例如: 3 Pro",
     modelKeywordDesc: "用于匹配目标模型名称",
     // 分类管理
     categoryManage: "分类管理",
@@ -383,10 +386,13 @@ export const resources = {
     settingOff: "關",
     // 模型鎖定
     modelLockTitle: "模型鎖定",
+    modelLockEnabledLabel: "啟用模型鎖定",
+    modelLockEnabledDesc: "進入頁面後自動切換到指定模型",
     modelLockLabel: "自動鎖定模型",
     modelLockDesc: "進入頁面後自動切換到指定模型",
     modelKeywordLabel: "模型關鍵字",
-    modelKeywordPlaceholder: "例如：3 Pro",
+    modelKeywordPlaceholder: "模型關鍵詞",
+    modelKeywordExample: "例如: 3 Pro",
     modelKeywordDesc: "用於匹配目標模型名稱",
     // 分類管理
     categoryManage: "分類管理",
@@ -709,10 +715,13 @@ export const resources = {
     settingOff: "OFF",
     // Model Lock
     modelLockTitle: "Model Lock",
+    modelLockEnabledLabel: "Enable Model Lock",
+    modelLockEnabledDesc: "Automatically switch to specified model upon entry",
     modelLockLabel: "Auto Lock Model",
     modelLockDesc: "Automatically switch to specified model upon entry",
     modelKeywordLabel: "Model Keyword",
-    modelKeywordPlaceholder: "e.g., 3 Pro",
+    modelKeywordPlaceholder: "Model Keyword",
+    modelKeywordExample: "e.g., 3 Pro",
     modelKeywordDesc: "Used to match target model name",
     // Category management
     categoryManage: "Category Management",

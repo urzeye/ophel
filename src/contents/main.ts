@@ -121,9 +121,11 @@ if (!(window as any).chatHelperInitialized) {
         readingHistoryManager.cleanup()
       }
 
-      // 8. 模型锁定（始终创建以支持动态开关）
-      modelLocker = new ModelLocker(adapter, settings.modelLock || { enabled: false, keyword: "" })
-      if (settings.modelLock?.enabled && settings.modelLock?.keyword) {
+      // 8. 模型锁定（按站点单独配置）
+      const siteId = adapter.getSiteId()
+      const siteModelConfig = settings.modelLockConfig?.[siteId] || { enabled: false, keyword: "" }
+      modelLocker = new ModelLocker(adapter, siteModelConfig)
+      if (siteModelConfig.enabled && siteModelConfig.keyword) {
         modelLocker.start()
       }
 
@@ -131,8 +133,9 @@ if (!(window as any).chatHelperInitialized) {
       const { syncStorage } = await import("~utils/storage")
       syncStorage.watch({
         [STORAGE_KEYS.SETTINGS]: (change) => {
-          if (change.newValue?.modelLock && modelLocker) {
-            modelLocker.updateSettings(change.newValue.modelLock)
+          const newSiteConfig = change.newValue?.modelLockConfig?.[siteId]
+          if (newSiteConfig && modelLocker) {
+            modelLocker.updateConfig(newSiteConfig)
           }
         },
       })
