@@ -243,6 +243,7 @@ export const resources = {
     conversationsSyncDeleteTitle: "同步删除",
     conversationsSyncDeleteMsg: "检测到 {count} 个会话已在云端删除，是否同步删除本地记录？",
     conversationsDeleted: "已移除",
+    conversationsSearchFolder: "搜索文件夹...",
     // 会话设置
     conversationsSettingsTitle: "会话设置",
     conversationsSyncUnpinLabel: "同步时更新取消置顶",

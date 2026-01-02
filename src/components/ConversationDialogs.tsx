@@ -97,6 +97,13 @@ const DIALOG_STYLES = `
     width: 0;
     height: 0;
   }
+  @keyframes gh-highlight-fade {
+    0% { background-color: rgba(59, 130, 246, 0.3); }
+    100% { background-color: transparent; }
+  }
+  .conversations-folder-select-highlight {
+    animation: gh-highlight-fade 2s ease-out;
+  }
 `
 
 // 样式注入状态
@@ -501,6 +508,7 @@ export const RenameDialog: React.FC<RenameDialogProps> = ({
 interface FolderSelectDialogProps {
   folders: Folder[]
   excludeFolderId?: string
+  activeFolderId?: string
   title?: string
   onSelect: (folderId: string) => void
   onCancel: () => void
@@ -510,6 +518,7 @@ interface FolderSelectDialogProps {
 export const FolderSelectDialog: React.FC<FolderSelectDialogProps> = ({
   folders,
   excludeFolderId,
+  activeFolderId,
   title,
   onSelect,
   onCancel,
@@ -521,6 +530,19 @@ export const FolderSelectDialog: React.FC<FolderSelectDialogProps> = ({
   useEffect(() => {
     inputRef.current?.focus()
   }, [])
+
+  // 自动滚动到激活的文件夹
+  useEffect(() => {
+    if (activeFolderId) {
+      setTimeout(() => {
+        const el = document.getElementById(`folder-select-${activeFolderId}`)
+        if (el) {
+          el.scrollIntoView({ block: "center", behavior: "smooth" })
+          el.classList.add("conversations-folder-select-highlight")
+        }
+      }, 150)
+    }
+  }, [activeFolderId])
 
   const filteredFolders = folders.filter((f) => {
     if (f.id === excludeFolderId) return false
@@ -564,6 +586,7 @@ export const FolderSelectDialog: React.FC<FolderSelectDialogProps> = ({
         {filteredFolders.map((folder) => (
           <div
             key={folder.id}
+            id={`folder-select-${folder.id}`}
             className="conversations-folder-select-item"
             onClick={() => onSelect(folder.id)}>
             {folder.icon} {folder.name.replace(folder.icon, "").trim()}

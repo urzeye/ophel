@@ -61,9 +61,18 @@ interface SearchResult {
 
 type DialogType =
   | { type: "confirm"; title: string; message: string; onConfirm: () => void; danger?: boolean }
-  | { type: "folder"; folder?: Folder }
+  | {
+      type: "folder"
+      folder?: Folder
+      returnToSelect?: { conv?: Conversation; convIds?: string[] }
+    }
   | { type: "rename"; conv: Conversation }
-  | { type: "folderSelect"; conv?: Conversation; convIds?: string[] }
+  | {
+      type: "folderSelect"
+      conv?: Conversation
+      convIds?: string[]
+      activeFolderId?: string
+    }
   | { type: "tagManager"; conv: Conversation }
   | null
 
@@ -842,13 +851,31 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ manager }) =
         <FolderDialog
           folder={dialog.folder}
           onConfirm={async (name, icon) => {
+            let newFolderId: string | null = null
             if (dialog.folder) {
+              // 更新
               await manager.updateFolder(dialog.folder.id, { name: `${icon} ${name}`, icon })
             } else {
-              await manager.createFolder(name, icon)
+              // 新建，假设 createFolder 返回新文件夹的 ID (需要确认 manager 实现，如果是 void 则需要其他方式)
+              // 暂时假设 createFolder 返回 void，我们需要通过名字查找或者 manager 修改
+              // 实际上 manager.createFolder 是 async 的，我们可以稍微修改 manager 使其返回 ID
+              // 但为了保险，这里先不依赖返回值，而是通过逻辑判断
+              const folder = await manager.createFolder(name, icon)
+              if (folder) newFolderId = folder.id
             }
             loadData()
-            setDialog(null)
+
+            // 如果是从"移动到..."跳转来的，则重新打开选择对话框
+            if (dialog.returnToSelect) {
+              setDialog({
+                type: "folderSelect",
+                conv: dialog.returnToSelect.conv,
+                convIds: dialog.returnToSelect.convIds,
+                activeFolderId: newFolderId || undefined,
+              })
+            } else {
+              setDialog(null)
+            }
           }}
           onCancel={() => setDialog(null)}
         />
@@ -869,6 +896,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ manager }) =
         <FolderSelectDialog
           folders={folders}
           excludeFolderId={dialog.conv?.folderId}
+          activeFolderId={dialog.activeFolderId}
           onSelect={async (folderId) => {
             if (dialog.conv) {
               await manager.moveConversation(dialog.conv.id, folderId)
@@ -882,7 +910,12 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({ manager }) =
             setDialog(null)
           }}
           onCancel={() => setDialog(null)}
-          onCreateFolder={() => setDialog({ type: "folder" })}
+          onCreateFolder={() =>
+            setDialog({
+              type: "folder",
+              returnToSelect: { conv: dialog.conv, convIds: dialog.convIds },
+            })
+          }
         />
       )}
       {dialog?.type === "tagManager" && (
