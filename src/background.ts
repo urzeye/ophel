@@ -29,6 +29,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
         iconUrl: chrome.runtime.getURL("assets/icon.png"),
         title: message.title || "Chat Helper",
         message: message.body || "",
+        silent: true, // 禁用系统默认通知声音，由扩展自行播放自定义声音
       })
       sendResponse({ success: true })
       break

@@ -48,6 +48,7 @@ export function sendToBackground<T extends ExtensionMessage>(message: T): Promis
 export const EVENT_MONITOR_INIT = "GH_MONITOR_INIT"
 export const EVENT_MONITOR_START = "GH_MONITOR_START"
 export const EVENT_MONITOR_COMPLETE = "GH_MONITOR_COMPLETE"
+export const EVENT_PRIVACY_TOGGLE = "GH_PRIVACY_TOGGLE"
 
 export interface MonitorConfigPayload {
   urlPatterns: string[]

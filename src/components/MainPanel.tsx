@@ -241,8 +241,14 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           cursor: isDragging ? "grabbing" : "grab",
           userSelect: "none",
         }}>
-        {/* 左侧：图标 + 标题 */}
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        {/* 左侧：图标 + 标题（双击切换隐私模式） */}
+        <div
+          style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}
+          onDoubleClick={() => {
+            // 发送隐私模式切换事件给 TabManager
+            window.postMessage({ type: "GH_PRIVACY_TOGGLE" }, "*")
+          }}
+          title={t("privacyModeDesc") || "双击切换隐私模式"}>
           <span style={{ fontSize: "16px" }}>✨</span>
           <span style={{ fontSize: "15px", fontWeight: 600 }}>{t("panelTitle")}</span>
         </div>

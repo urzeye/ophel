@@ -9,6 +9,7 @@
 1. [Plasmo CSUI Shadow DOM 样式隔离](#1-plasmo-csui-shadow-dom-样式隔离)
 2. [Plasmo Shadow DOM 样式注入顺序与 CSS 优先级冲突](#2-plasmo-shadow-dom-样式注入顺序与-css-优先级冲突)
 3. [滚动锁定功能失效：隔离世界与 CSP 问题](#3-滚动锁定功能失效隔离世界与-csp-问题)
+4. [桌面通知不生效：document.hidden 始终返回 false](#4-桌面通知不生效documenthidden-始终返回-false)
 
 ---
 
@@ -487,5 +488,167 @@ Element.prototype.scrollIntoView.toString()
 | ---------------------------------- | ------------------------------------------------- |
 | `src/contents/scroll-lock-main.ts` | **新增** - 主世界脚本，负责 API 劫持              |
 | `src/core/scroll-lock-manager.ts`  | **重写** - 简化为通过 postMessage 控制 + 回滚保底 |
+
+---
+
+## 4. 桌面通知不生效：document.hidden 始终返回 false
+
+**日期**: 2026-01-02
+
+### 症状
+
+- 开启通知功能后，当用户切换到其他标签页，AI 生成完成时桌面通知不显示
+- 排查发现 `document.hidden` 始终返回 `false`，即使用户已经切换到其他标签页
+- 通知声音和自动窗口置顶功能也受影响
+
+### 背景
+
+项目使用 `TabManager` 在 AI 任务完成时发送桌面通知。通知逻辑中使用 `document.hidden` 来判断用户是否在后台：
+
+```typescript
+const shouldNotify =
+  wasGenerating && !this.userSawCompletion && (document.hidden || notifyWhenFocused)
+```
+
+问题是 `document.hidden` 在某些浏览器配置下始终返回 `false`。
+
+### 调试过程
+
+#### 第一轮调试：排除 Shadow DOM 影响
+
+考虑到 Plasmo 使用 Shadow DOM 渲染 UI，怀疑 `document` 引用可能出问题。验证后发现：
+
+- `TabManager` 运行在 Content Script 中，访问的是宿主页面的 `document`
+- `plasmo-csui` 的 `shadowRoot.ownerDocument === document`，确认是同一个 document
+- `document.hidden` 属性是原生 getter，未被劫持
+
+```javascript
+// 验证 Shadow DOM 的 document 引用
+const csui = document.querySelector("plasmo-csui")
+csui.shadowRoot.ownerDocument === document // true
+csui.shadowRoot.ownerDocument.hidden // false (与全局 document 一致)
+```
+
+#### 第二轮调试：排除属性劫持
+
+检查 `document.hidden` 是否被 Gemini 页面或扩展代码劫持：
+
+```javascript
+// 检查属性描述符
+Object.getOwnPropertyDescriptor(Document.prototype, "hidden")
+// { get: [native code], configurable: true, enumerable: true }
+
+// 文档实例上没有自定义属性
+document.hasOwnProperty("hidden") // false
+```
+
+确认属性是原生的，未被修改。
+
+#### 第三轮调试：发现问题根源
+
+测试发现 `visibilitychange` 事件能正常触发，`TabManager` 也能正确响应：
+
+```
+[TabManager] visibilitychange 事件: {hidden: false, visibilityState: visible, aiState: idle}
+```
+
+但 `document.hidden` 在事件触发时仍然是 `false`。进一步测试发现：
+
+1. **在 Main World 修改 `document.hidden` 不影响 Isolated World**
+2. **窗口最小化但标签页在前台时，`document.hidden` 可能不变**
+3. **某些浏览器配置下（如多显示器、虚拟桌面），行为可能不一致**
+
+### 根因
+
+**`document.hidden` API 的局限性**：
+
+1. `document.hidden` 仅在标签页完全不可见时才返回 `true`
+2. 以下场景可能不会触发 `hidden = true`：
+   - 窗口被其他窗口遮挡
+   - 用户在同一窗口的不同标签页
+   - 窗口在另一个虚拟桌面 (macOS Spaces / Windows Virtual Desktop)
+   - 多显示器设置下窗口在非活动显示器
+3. 某些浏览器自动化环境下，页面可能始终被视为"可见"
+
+### 修复方案
+
+**使用 `document.hasFocus()` 作为补充检测方式**
+
+`document.hasFocus()` 检查文档是否获得焦点，比 `document.hidden` 更可靠地判断用户是否在与页面交互。
+
+#### 1. 添加 `isUserAway()` 辅助方法
+
+```typescript
+/**
+ * 判断用户是否「离开」当前页面
+ * 综合使用多种检测方式，因为 document.hidden 在某些情况下可能始终返回 false
+ */
+private isUserAway(): boolean {
+  // 方式1: document.hidden - 标准的 Page Visibility API
+  const hidden = document.hidden
+  // 方式2: document.hasFocus() - 检查文档是否获得焦点
+  const hasFocus = document.hasFocus()
+  // 方式3: document.visibilityState - 更详细的可见性状态
+  const notVisible = document.visibilityState !== "visible"
+
+  // 如果任一条件表明用户不在当前页面，则认为用户已离开
+  return hidden || !hasFocus || notVisible
+}
+```
+
+#### 2. 添加 `blur/focus` 事件监听
+
+作为 `visibilitychange` 的补充，这些事件在用户切换焦点时更可靠：
+
+```typescript
+window.addEventListener("focus", this.boundFocusHandler)
+window.addEventListener("blur", this.boundBlurHandler)
+```
+
+#### 3. 更新通知判断逻辑
+
+```typescript
+// 修改前
+const shouldNotify = wasGenerating && !this.userSawCompletion && (document.hidden || notifyWhenFocused)
+
+// 修改后
+const isAway = this.isUserAway()
+const shouldNotify = wasGenerating && !this.userSawCompletion && (isAway || notifyWhenFocused)
+```
+
+### 验证结果
+
+修改后的日志输出：
+
+```
+[TabManager] visibilitychange 事件: {
+  hidden: false,
+  hasFocus: false,      // 新增：更可靠的离开检测
+  visibilityState: visible,
+  isUserAway: true,     // 新增：综合判断结果
+  aiState: generating
+}
+
+[TabManager] onAiComplete: {
+  wasGenerating: true,
+  isUserAway: true,     // 即使 hidden=false，也能正确判断用户已离开
+  shouldNotify: true    // 通知将正确触发
+}
+```
+
+### 经验总结
+
+| 教训                         | 说明                                                                                       |
+| ---------------------------- | ------------------------------------------------------------------------------------------ |
+| **Page Visibility API 局限** | `document.hidden` 仅检测标签页可见性，不检测焦点状态，不适用于所有"用户离开"场景           |
+| **使用多种检测方式**         | 综合 `document.hidden`、`document.hasFocus()`、`document.visibilityState` 获得更可靠的判断 |
+| **添加 blur/focus 事件**     | 作为 `visibilitychange` 的补充，在用户切换窗口/应用时更可靠触发                            |
+| **Shadow DOM 无影响**        | 本问题与 Plasmo 的 Shadow DOM 无关，Content Script 访问的是正确的宿主 document             |
+
+### 文件变更
+
+| 文件                      | 变更                                                          |
+| ------------------------- | ------------------------------------------------------------- |
+| `src/core/tab-manager.ts` | **修改** - 添加 `isUserAway()` 方法，添加 blur/focus 事件监听 |
 
 ---

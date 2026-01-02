@@ -44,6 +44,16 @@
       "https://chatgpt.com/*",
       "https://claude.ai/*",
       "https://*.googleusercontent.com/*"
+    ],
+    "web_accessible_resources": [
+      {
+        "resources": [
+          "assets/*"
+        ],
+        "matches": [
+          "<all_urls>"
+        ]
+      }
     ]
   }
 }

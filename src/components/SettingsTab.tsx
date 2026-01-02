@@ -692,66 +692,78 @@ export const SettingsTab = () => {
             )
           }
         />
-        {settings.tabSettings?.autoRenameTab && (
-          <>
-            <div style={{ marginBottom: "12px" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "4px",
-                  fontWeight: 500,
-                  fontSize: "13px",
-                }}>
-                {t("renameIntervalLabel") || "检测频率 (秒)"}
-              </label>
-              <select
-                value={settings.tabSettings?.renameInterval || 3}
-                onChange={(e) =>
-                  updateNestedSetting("tabSettings", "renameInterval", parseInt(e.target.value))
-                }
-                style={{
-                  width: "100%",
-                  padding: "4px 8px",
-                  borderRadius: "4px",
-                  border: "1px solid #d1d5db",
-                  fontSize: "12px",
-                }}>
-                {[1, 3, 5, 10, 30, 60].map((v) => (
-                  <option key={v} value={v}>
-                    {v} 秒
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div style={{ marginBottom: "12px" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "4px",
-                  fontWeight: 500,
-                  fontSize: "13px",
-                }}>
-                {t("titleFormatLabel") || "标题格式"}
-              </label>
-              <input
-                type="text"
-                value={settings.tabSettings?.titleFormat || "{status}{title}"}
-                onChange={(e) => updateNestedSetting("tabSettings", "titleFormat", e.target.value)}
-                placeholder="{status}{title}"
-                style={{
-                  width: "100%",
-                  padding: "4px 8px",
-                  borderRadius: "4px",
-                  border: "1px solid #d1d5db",
-                  fontSize: "12px",
-                }}
-              />
-              <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "4px" }}>
-                {t("titleFormatDesc") || "可用变量: {status} {title}"}
-              </div>
-            </div>
-          </>
-        )}
+        {/* 检测频率 - 始终显示，未开启自动重命名时置灰 */}
+        <div
+          style={{
+            marginBottom: "12px",
+            opacity: settings.tabSettings?.autoRenameTab ? 1 : 0.5,
+            pointerEvents: settings.tabSettings?.autoRenameTab ? "auto" : "none",
+          }}>
+          <label
+            style={{
+              display: "block",
+              marginBottom: "4px",
+              fontWeight: 500,
+              fontSize: "13px",
+            }}>
+            {t("renameIntervalLabel") || "检测频率"}
+          </label>
+          <select
+            value={settings.tabSettings?.renameInterval || 3}
+            onChange={(e) =>
+              updateNestedSetting("tabSettings", "renameInterval", parseInt(e.target.value))
+            }
+            disabled={!settings.tabSettings?.autoRenameTab}
+            style={{
+              width: "100%",
+              padding: "4px 8px",
+              borderRadius: "4px",
+              border: "1px solid #d1d5db",
+              fontSize: "12px",
+              backgroundColor: settings.tabSettings?.autoRenameTab ? "white" : "#f3f4f6",
+            }}>
+            {[1, 3, 5, 10, 30, 60].map((v) => (
+              <option key={v} value={v}>
+                {v} 秒
+              </option>
+            ))}
+          </select>
+        </div>
+        {/* 标题格式 - 始终显示，未开启自动重命名时置灰 */}
+        <div
+          style={{
+            marginBottom: "12px",
+            opacity: settings.tabSettings?.autoRenameTab ? 1 : 0.5,
+            pointerEvents: settings.tabSettings?.autoRenameTab ? "auto" : "none",
+          }}>
+          <label
+            style={{
+              display: "block",
+              marginBottom: "4px",
+              fontWeight: 500,
+              fontSize: "13px",
+            }}>
+            {t("titleFormatLabel") || "标题格式"}
+          </label>
+          <input
+            type="text"
+            value={settings.tabSettings?.titleFormat || "{status}{title}"}
+            onChange={(e) => updateNestedSetting("tabSettings", "titleFormat", e.target.value)}
+            placeholder="{status}{title}"
+            disabled={!settings.tabSettings?.autoRenameTab}
+            style={{
+              width: "100%",
+              padding: "4px 8px",
+              borderRadius: "4px",
+              border: "1px solid #d1d5db",
+              fontSize: "12px",
+              backgroundColor: settings.tabSettings?.autoRenameTab ? "white" : "#f3f4f6",
+            }}
+          />
+          <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "4px" }}>
+            {t("titleFormatDesc") || "自定义标题格式，支持占位符：{status}、{title}、{model}"}
+          </div>
+        </div>
         <ToggleRow
           label={t("showStatusLabel") || "显示生成状态"}
           desc={t("showStatusDesc") || "在标签页标题中显示生成状态"}
@@ -772,71 +784,82 @@ export const SettingsTab = () => {
             )
           }
         />
-        {settings.tabSettings?.showNotification && (
-          <>
-            <ToggleRow
-              label={t("notificationSoundLabel") || "通知声音"}
-              desc={t("notificationSoundDesc") || "生成完成时播放提示音"}
-              checked={settings.tabSettings?.notificationSound ?? false}
-              onChange={() =>
-                updateNestedSetting(
-                  "tabSettings",
-                  "notificationSound",
-                  !settings.tabSettings?.notificationSound,
-                )
+        {/* 通知声音 - 始终显示，未开启通知时置灰 */}
+        <ToggleRow
+          label={t("notificationSoundLabel") || "通知声音"}
+          desc={t("notificationSoundDesc") || "生成完成时播放提示音"}
+          checked={settings.tabSettings?.notificationSound ?? false}
+          disabled={!settings.tabSettings?.showNotification}
+          onChange={() =>
+            updateNestedSetting(
+              "tabSettings",
+              "notificationSound",
+              !settings.tabSettings?.notificationSound,
+            )
+          }
+        />
+        {/* 声音音量 - 始终显示，未开启通知或声音时置灰 */}
+        <div
+          style={{
+            marginBottom: "12px",
+            opacity:
+              settings.tabSettings?.showNotification && settings.tabSettings?.notificationSound
+                ? 1
+                : 0.5,
+            pointerEvents:
+              settings.tabSettings?.showNotification && settings.tabSettings?.notificationSound
+                ? "auto"
+                : "none",
+          }}>
+          <label
+            style={{
+              display: "block",
+              marginBottom: "4px",
+              fontWeight: 500,
+              fontSize: "13px",
+            }}>
+            {t("notificationVolumeLabel") || "声音音量"}
+          </label>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <input
+              type="range"
+              min="0.1"
+              max="1.0"
+              step="0.1"
+              value={settings.tabSettings?.notificationVolume || 0.5}
+              onChange={(e) =>
+                updateNestedSetting("tabSettings", "notificationVolume", parseFloat(e.target.value))
               }
-            />
-            {settings.tabSettings?.notificationSound && (
-              <div style={{ marginBottom: "12px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontWeight: 500,
-                    fontSize: "13px",
-                  }}>
-                  {t("notificationVolumeLabel") || "音量"}
-                </label>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <input
-                    type="range"
-                    min="0.1"
-                    max="1.0"
-                    step="0.1"
-                    value={settings.tabSettings?.notificationVolume || 0.5}
-                    onChange={(e) =>
-                      updateNestedSetting(
-                        "tabSettings",
-                        "notificationVolume",
-                        parseFloat(e.target.value),
-                      )
-                    }
-                    style={{ flex: 1 }}
-                  />
-                  <span style={{ fontSize: "12px", minWidth: "36px" }}>
-                    {Math.round((settings.tabSettings?.notificationVolume || 0.5) * 100)}%
-                  </span>
-                </div>
-              </div>
-            )}
-            <ToggleRow
-              label={t("notifyWhenFocusedLabel") || "前台时也通知"}
-              desc={t("notifyWhenFocusedDesc") || "窗口在前台时也发送通知"}
-              checked={settings.tabSettings?.notifyWhenFocused ?? false}
-              onChange={() =>
-                updateNestedSetting(
-                  "tabSettings",
-                  "notifyWhenFocused",
-                  !settings.tabSettings?.notifyWhenFocused,
-                )
+              disabled={
+                !settings.tabSettings?.showNotification || !settings.tabSettings?.notificationSound
               }
+              style={{ flex: 1 }}
             />
-          </>
-        )}
+            <span style={{ fontSize: "12px", minWidth: "36px" }}>
+              {Math.round((settings.tabSettings?.notificationVolume || 0.5) * 100)}%
+            </span>
+          </div>
+        </div>
+        {/* 前台时也通知 - 始终显示，未开启通知时置灰 */}
+        <ToggleRow
+          label={t("notifyWhenFocusedLabel") || "前台时也通知"}
+          desc={t("notifyWhenFocusedDesc") || "窗口在前台时也发送通知"}
+          checked={settings.tabSettings?.notifyWhenFocused ?? false}
+          disabled={!settings.tabSettings?.showNotification}
+          onChange={() =>
+            updateNestedSetting(
+              "tabSettings",
+              "notifyWhenFocused",
+              !settings.tabSettings?.notifyWhenFocused,
+            )
+          }
+        />
+        {/* 自动窗口置顶 - 始终显示，未开启通知时置灰 */}
         <ToggleRow
           label={t("autoFocusLabel") || "自动窗口置顶"}
           desc={t("autoFocusDesc") || "生成完成后自动激活窗口"}
           checked={settings.tabSettings?.autoFocus ?? false}
+          disabled={!settings.tabSettings?.showNotification}
           onChange={() =>
             updateNestedSetting("tabSettings", "autoFocus", !settings.tabSettings?.autoFocus)
           }
@@ -849,27 +872,33 @@ export const SettingsTab = () => {
             updateNestedSetting("tabSettings", "privacyMode", !settings.tabSettings?.privacyMode)
           }
         />
-        {settings.tabSettings?.privacyMode && (
-          <div style={{ marginBottom: "12px" }}>
-            <label
-              style={{ display: "block", marginBottom: "4px", fontWeight: 500, fontSize: "13px" }}>
-              {t("privacyTitleLabel") || "伪装标题"}
-            </label>
-            <input
-              type="text"
-              value={settings.tabSettings?.privacyTitle || "Google"}
-              onChange={(e) => updateNestedSetting("tabSettings", "privacyTitle", e.target.value)}
-              placeholder="Google"
-              style={{
-                width: "100%",
-                padding: "4px 8px",
-                borderRadius: "4px",
-                border: "1px solid #d1d5db",
-                fontSize: "12px",
-              }}
-            />
-          </div>
-        )}
+        {/* 伪装标题 - 始终显示，未开启隐私模式时置灰 */}
+        <div
+          style={{
+            marginBottom: "12px",
+            opacity: settings.tabSettings?.privacyMode ? 1 : 0.5,
+            pointerEvents: settings.tabSettings?.privacyMode ? "auto" : "none",
+          }}>
+          <label
+            style={{ display: "block", marginBottom: "4px", fontWeight: 500, fontSize: "13px" }}>
+            {t("privacyTitleLabel") || "伪装标题"}
+          </label>
+          <input
+            type="text"
+            value={settings.tabSettings?.privacyTitle || "Google"}
+            onChange={(e) => updateNestedSetting("tabSettings", "privacyTitle", e.target.value)}
+            placeholder="Google"
+            disabled={!settings.tabSettings?.privacyMode}
+            style={{
+              width: "100%",
+              padding: "4px 8px",
+              borderRadius: "4px",
+              border: "1px solid #d1d5db",
+              fontSize: "12px",
+              backgroundColor: settings.tabSettings?.privacyMode ? "white" : "#f3f4f6",
+            }}
+          />
+        </div>
       </CollapsibleSection>
 
       {/* ========== 阅读历史 ========== */}
