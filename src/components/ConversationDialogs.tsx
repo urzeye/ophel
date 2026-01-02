@@ -1008,7 +1008,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
         />
 
         {/* 颜色选择 - 可折叠 */}
-        <div style={{ marginBottom: "12px" }}>
+        <div style={{ marginBottom: "12px", position: "relative" }}>
           {/* 颜色预览条（默认显示） */}
           <div
             style={{
@@ -1017,12 +1017,15 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
               gap: "8px",
               padding: "8px 10px",
               border: "1px solid var(--gh-border, #e5e7eb)",
-              borderRadius: colorExpanded ? "8px 8px 0 0" : "8px",
+              borderRadius: "8px",
               cursor: "pointer",
               background: "var(--gh-bg-secondary, #fafafa)",
-              transition: "border-radius 0.15s",
+              transition: "border-radius 0.15s, background-color 0.2s",
+              userSelect: "none",
             }}
-            onClick={() => setColorExpanded(!colorExpanded)}>
+            onClick={() => setColorExpanded(!colorExpanded)}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f3f4f6")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#fafafa")}>
             {/* 当前选中颜色预览 */}
             <div
               style={{
@@ -1037,42 +1040,55 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
             <span style={{ fontSize: "12px", color: "#666", flex: 1 }}>
               {colorExpanded ? "收起颜色" : "选择颜色"}
             </span>
-            <span
+            {/* SVG 箭头图标 */}
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              stroke="#9ca3af"
+              strokeWidth="2"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
               style={{
-                fontSize: "10px",
-                color: "#9ca3af",
                 transition: "transform 0.2s",
                 transform: colorExpanded ? "rotate(180deg)" : "rotate(0deg)",
               }}>
-              ▼
-            </span>
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
           </div>
 
-          {/* 展开的颜色网格 */}
+          {/* 展开的颜色网格 - 绝对定位悬浮 */}
           {colorExpanded && (
             <div
               style={{
+                position: "absolute",
+                top: "100%",
+                left: 0,
+                right: 0,
+                marginTop: "4px",
                 border: "1px solid var(--gh-border, #e5e7eb)",
-                borderTop: "none",
-                borderRadius: "0 0 8px 8px",
+                borderRadius: "8px",
                 padding: "10px",
-                background: "var(--gh-bg, #fff)",
+                background: "var(--gh-bg, #ffffff)",
+                zIndex: 10,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
               }}>
               {/* 30 色预设网格 - 紧凑模式 */}
               <div
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(10, 1fr)",
-                  gap: "4px",
-                  marginBottom: "10px",
+                  gap: "6px",
+                  marginBottom: "12px",
                 }}>
                 {TAG_COLORS.map((color) => (
                   <div
                     key={color}
                     style={{
                       width: "100%",
-                      height: "24px",
-                      borderRadius: "3px",
+                      aspectRatio: "1",
+                      borderRadius: "4px",
                       backgroundColor: color,
                       cursor: "pointer",
                       border:
@@ -1094,13 +1110,13 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
               </div>
 
               {/* 自定义颜色行 */}
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 {/* 彩虹按钮 */}
                 <div
                   style={{
                     position: "relative",
-                    width: "26px",
-                    height: "26px",
+                    width: "28px",
+                    height: "28px",
                     borderRadius: "50%",
                     overflow: "hidden",
                     cursor: "pointer",
@@ -1139,29 +1155,51 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                   />
                 </div>
 
-                {/* HEX 输入 */}
-                <span style={{ fontSize: "11px", color: "#666" }}>HEX:</span>
-                <input
-                  type="text"
-                  className="conversations-dialog-input"
-                  value={hexValue}
-                  onChange={(e) => handleHexInput(e.target.value)}
-                  onBlur={() => {
-                    if (hexError) {
-                      setHexValue(selectedColor)
-                      setHexError(false)
-                    }
-                  }}
-                  placeholder="#RRGGBB"
+                {/* HEX 输入 - 紧凑样式 */}
+                <div
                   style={{
+                    display: "flex",
+                    alignItems: "center",
                     flex: 1,
-                    fontFamily: "monospace",
-                    textTransform: "uppercase",
-                    borderColor: hexError ? "#ef4444" : undefined,
+                    background: "var(--gh-bg-secondary, #f3f4f6)",
+                    border: `1px solid ${hexError ? "#ef4444" : "var(--gh-border, #e5e7eb)"}`,
+                    borderRadius: "6px",
                     padding: "4px 8px",
-                    fontSize: "11px",
-                  }}
-                />
+                    height: "30px",
+                    boxSizing: "border-box",
+                  }}>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      color: "#6b7280",
+                      marginRight: "6px",
+                      fontFamily: "monospace",
+                      fontWeight: 600,
+                    }}>
+                    HEX
+                  </span>
+                  <input
+                    type="text"
+                    value={hexValue}
+                    onChange={(e) => handleHexInput(e.target.value)}
+                    onBlur={() => {
+                      if (hexError) {
+                        setHexValue(selectedColor)
+                        setHexError(false)
+                      }
+                    }}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      outline: "none",
+                      fontSize: "13px",
+                      fontFamily: "monospace",
+                      width: "100%",
+                      color: "var(--gh-text, #374151)",
+                      textTransform: "uppercase",
+                    }}
+                  />
+                </div>
               </div>
             </div>
           )}
