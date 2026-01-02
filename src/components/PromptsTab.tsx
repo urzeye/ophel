@@ -652,7 +652,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 cursor: "pointer",
                 border: "none",
                 background: "var(--gh-hover, #f3f4f6)",
-                color: "#4b5563",
+                color: "var(--gh-text-secondary, #4b5563)",
               }}>
               {t("cancel")}
             </button>
@@ -665,7 +665,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 fontWeight: 500,
                 cursor: "pointer",
                 border: "none",
-                background: "linear-gradient(135deg, #4285f4 0%, #34a853 100%)",
+                background:
+                  "var(--gh-brand-gradient, linear-gradient(135deg, #4285f4 0%, #34a853 100%))",
                 color: "white",
               }}>
               {editingPrompt?.id ? t("save") : t("add")}
