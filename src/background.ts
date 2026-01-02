@@ -15,21 +15,13 @@ import {
  * - 代理请求（图片 Base64 转换等）
  */
 
-console.log("[Chat Helper] Background service worker started")
-
 // 监听扩展安装/更新
-chrome.runtime.onInstalled.addListener((details) => {
-  if (details.reason === "install") {
-    console.log("[Chat Helper] Extension installed")
-  } else if (details.reason === "update") {
-    console.log("[Chat Helper] Extension updated to version:", chrome.runtime.getManifest().version)
-  }
+chrome.runtime.onInstalled.addListener(() => {
+  // 可在此处添加安装/更新后的初始化逻辑
 })
 
 // 消息监听 - 与 Content Script 通信
 chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendResponse) => {
-  console.log("[Chat Helper] Message received:", message.type)
-
   switch (message.type) {
     case MSG_SHOW_NOTIFICATION:
       chrome.notifications.create({

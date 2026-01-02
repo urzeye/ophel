@@ -201,8 +201,6 @@ export class ThemeManager {
         shadowRoot.append(styleEl)
       }
     })
-
-    console.log(`[ThemeManager] 已应用主题预置: ${preset.name} (${currentMode})`)
   }
 
   /**
@@ -298,12 +296,6 @@ export class ThemeManager {
       }
       // 始终直接应用，确保切换生效
       this.apply(nextMode)
-      console.log(
-        "[ThemeManager] 主题已切换到:",
-        nextMode,
-        "data-gh-mode:",
-        document.body.dataset.ghMode,
-      )
     }
 
     // 检查是否支持 View Transitions API

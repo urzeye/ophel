@@ -580,9 +580,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
   const handleCopy = useCallback((e: React.MouseEvent, node: OutlineNode) => {
     e.stopPropagation()
     const text = node.text
-    navigator.clipboard.writeText(text).then(() => {
-      console.log("Copied to clipboard:", text)
-    })
+    navigator.clipboard.writeText(text)
   }, [])
 
   // 用于提取完整用户提问文本（当显示被截断时）

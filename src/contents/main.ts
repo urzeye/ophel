@@ -65,20 +65,17 @@ if (!(window as any).chatHelperInitialized) {
       // 1. 主题管理 (优先应用)
       themeManager = new ThemeManager(settings.themeMode)
       themeManager.apply()
-      console.log("[Chat Helper] ThemeManager applied")
 
       // 2. Markdown 修复 (仅 Gemini 标准版)
       if (settings.markdownFix && adapter.getSiteId() === "gemini") {
         markdownFixer = new MarkdownFixer()
         markdownFixer.start()
-        console.log("[Chat Helper] MarkdownFixer started")
       }
 
       // 3. 页面宽度管理
       if (settings.pageWidth?.enabled) {
         layoutManager = new LayoutManager(adapter, settings.pageWidth)
         layoutManager.apply()
-        console.log("[Chat Helper] LayoutManager applied")
       }
 
       // 4. 复制功能 (公式/表格)
@@ -86,11 +83,9 @@ if (!(window as any).chatHelperInitialized) {
         copyManager = new CopyManager(settings.copy)
         if (settings.copy.formulaCopyEnabled) {
           copyManager.initFormulaCopy()
-          console.log("[Chat Helper] CopyManager (formula) started")
         }
         if (settings.copy.tableCopyEnabled) {
           copyManager.initTableCopy()
-          console.log("[Chat Helper] CopyManager (table) started")
         }
       }
 
@@ -98,14 +93,12 @@ if (!(window as any).chatHelperInitialized) {
       if (settings.tabSettings?.autoRenameTab || settings.tabSettings?.showNotification) {
         tabManager = new TabManager(adapter, settings.tabSettings)
         tabManager.start()
-        console.log("[Chat Helper] TabManager started")
       }
 
       // 6. 水印移除 (仅 Gemini)
       if (adapter.getSiteId() === "gemini" || adapter.getSiteId() === "gemini-business") {
         watermarkRemover = new WatermarkRemover()
         watermarkRemover.start()
-        console.log("[Chat Helper] WatermarkRemover started")
       }
 
       // 7. 阅读历史
@@ -120,21 +113,18 @@ if (!(window as any).chatHelperInitialized) {
             .restoreProgress((msg) => showToast(msg, 3000))
             .then((restored) => {
               if (restored) {
-                console.log("[Chat Helper] Reading position restored")
                 showToast("阅读进度已恢复", 2000)
               }
             })
         }
 
         readingHistoryManager.cleanup()
-        console.log("[Chat Helper] ReadingHistoryManager started")
       }
 
       // 8. 模型锁定（始终创建以支持动态开关）
       modelLocker = new ModelLocker(adapter, settings.modelLock || { enabled: false, keyword: "" })
       if (settings.modelLock?.enabled && settings.modelLock?.keyword) {
         modelLocker.start()
-        console.log("[Chat Helper] ModelLocker started")
       }
 
       // 监听设置变化以支持动态开关
@@ -148,12 +138,7 @@ if (!(window as any).chatHelperInitialized) {
       })
 
       // 9. 滚动锁定（始终创建以支持动态开关）
-      console.log(
-        "[Chat Helper] Creating ScrollLockManager, preventAutoScroll:",
-        settings.preventAutoScroll,
-      )
       scrollLockManager = new ScrollLockManager(adapter, settings)
-      console.log("[Chat Helper] ScrollLockManager created")
 
       // 将 ScrollLockManager 也加入监听（复用已有的 watch）
       syncStorage.watch({
@@ -163,8 +148,6 @@ if (!(window as any).chatHelperInitialized) {
           }
         },
       })
-
-      console.log("[Chat Helper] All modules initialized")
     })()
   } else {
     console.log("[Chat Helper] No adapter found for:", window.location.hostname)

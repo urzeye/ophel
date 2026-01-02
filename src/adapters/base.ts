@@ -466,7 +466,6 @@ export abstract class SiteAdapter {
     // 快捷键监听 (Ctrl + Shift + O)
     document.addEventListener("keydown", (e) => {
       if (e.ctrlKey && e.shiftKey && (e.key === "o" || e.key === "O")) {
-        console.log(`[${this.getName()}] New chat shortcut detected.`)
         setTimeout(callback, 500)
       }
     })
@@ -484,7 +483,6 @@ export abstract class SiteAdapter {
 
           for (const selector of selectors) {
             if ((target as Element).matches && (target as Element).matches(selector)) {
-              console.log(`[${this.getName()}] New chat button clicked.`)
               setTimeout(callback, 500)
               return
             }
@@ -541,7 +539,6 @@ export abstract class SiteAdapter {
 
       const currentText = selectorBtn.textContent || selectorBtn.innerText || ""
       if (normalize(currentText).includes(target)) {
-        console.log(`Chat Helper: Model is already locked to "${targetModelKeyword}"`)
         clearInterval(timer)
         if (onSuccess) onSuccess()
         return
@@ -562,7 +559,6 @@ export abstract class SiteAdapter {
               ;(item as HTMLElement).click()
               found = true
               clearInterval(timer)
-              console.log(`Chat Helper: Switched to model "${targetModelKeyword}"`)
               setTimeout(() => {
                 document.body.click()
                 if (onSuccess) onSuccess()
@@ -605,7 +601,6 @@ export abstract class SiteAdapter {
   ): void {
     const { modelLockConfig } = options
     if (modelLockConfig && modelLockConfig.enabled) {
-      console.log(`[${this.getName()}] Triggering auto model lock:`, modelLockConfig.keyword)
       this.lockModel(modelLockConfig.keyword)
     }
   }

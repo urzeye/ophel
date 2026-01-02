@@ -1054,8 +1054,6 @@ export class ConversationManager {
    * 使用 File System Access API (showSaveFilePicker) 让用户选择保存位置
    */
   private async downloadFile(content: string, filename: string, _mimeType: string) {
-    console.log("[ConversationManager] Downloading file:", filename)
-
     if (!("showSaveFilePicker" in window)) {
       console.error("[ConversationManager] showSaveFilePicker not supported")
       showToast("当前浏览器不支持文件保存功能")
@@ -1078,12 +1076,9 @@ export class ConversationManager {
       const writable = await handle.createWritable()
       await writable.write(content)
       await writable.close()
-
-      console.log("[ConversationManager] File saved:", filename)
     } catch (err: any) {
       // 用户取消了保存对话框
       if (err.name === "AbortError") {
-        console.log("[ConversationManager] User cancelled save dialog")
         return
       }
       console.error("[ConversationManager] Save failed:", err)

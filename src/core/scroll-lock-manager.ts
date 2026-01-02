@@ -42,12 +42,7 @@ export class ScrollLockManager {
   }
 
   private init() {
-    console.log(
-      "[Chat Helper] ScrollLockManager.init(), preventAutoScroll:",
-      this.settings.preventAutoScroll,
-    )
     if (!this.settings.preventAutoScroll) {
-      console.log("[Chat Helper] ScrollLockManager.init() - skipped (disabled)")
       return
     }
 
@@ -58,8 +53,6 @@ export class ScrollLockManager {
     if (this.enabled) return
     this.enabled = true
 
-    console.log("[Chat Helper] ScrollLockManager: Enabling...")
-
     // 1. 通知主世界脚本启用 API 劫持
     this.toggleMainWorldHijack(true)
 
@@ -68,15 +61,11 @@ export class ScrollLockManager {
 
     // 3. 启动 MutationObserver 回滚机制
     this.startObserver()
-
-    console.log("[Chat Helper] ScrollLockManager: Enabled")
   }
 
   private disable() {
     if (!this.enabled) return
     this.enabled = false
-
-    console.log("[Chat Helper] ScrollLockManager: Disabling...")
 
     // 通知主世界脚本禁用 API 劫持
     this.toggleMainWorldHijack(false)
@@ -84,8 +73,6 @@ export class ScrollLockManager {
     // 停止各种监听器
     this.stopScrollListener()
     this.stopObserver()
-
-    console.log("[Chat Helper] ScrollLockManager: Disabled")
   }
 
   stop() {
@@ -192,12 +179,6 @@ export class ScrollLockManager {
           const currentScroll = container.scrollTop
           // 阈值 100px
           if (currentScroll > this.lastScrollTop + 100) {
-            console.log(
-              "[Chat Helper] Detected unblocked auto-scroll, rolling back. Current:",
-              currentScroll,
-              "Last:",
-              this.lastScrollTop,
-            )
             container.scrollTop = this.lastScrollTop
           }
         }
@@ -217,12 +198,6 @@ export class ScrollLockManager {
           const current = container.scrollTop
           if (current > this.lastScrollTop + 200) {
             // 大幅跳变，回滚
-            console.log(
-              "[Chat Helper] Periodic check: rolling back auto-scroll. Current:",
-              current,
-              "Last:",
-              this.lastScrollTop,
-            )
             container.scrollTop = this.lastScrollTop
           } else {
             // 小幅变动，认为是合法阅读，更新基准

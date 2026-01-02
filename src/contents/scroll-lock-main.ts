@@ -44,7 +44,6 @@ if (!(window as any).__chatHelperScrollLockInitialized) {
     }
 
     if (!shouldBypass) {
-      console.log("[Chat Helper] Blocked scrollIntoView (Main World)")
       return
     }
 
@@ -68,12 +67,6 @@ if (!(window as any).__chatHelperScrollLockInitialized) {
 
     // 只有当向下大幅滚动时才拦截（防止系统自动拉到底）
     if (typeof targetY === "number" && targetY > window.scrollY + 50) {
-      console.log(
-        "[Chat Helper] Blocked window.scrollTo (Main World), targetY:",
-        targetY,
-        "currentY:",
-        window.scrollY,
-      )
       return
     }
 
@@ -100,12 +93,6 @@ if (!(window as any).__chatHelperScrollLockInitialized) {
 
         // 如果启用且是向下滚动超过 50px，阻止
         if (value > currentScrollTop + 50) {
-          console.log(
-            "[Chat Helper] Blocked scrollTop setter (Main World), value:",
-            value,
-            "current:",
-            currentScrollTop,
-          )
           return
         }
 
@@ -122,12 +109,6 @@ if (!(window as any).__chatHelperScrollLockInitialized) {
     if (event.source !== window) return
     if (event.data?.type === "CHAT_HELPER_SCROLL_LOCK_TOGGLE") {
       ;(window as any).__chatHelperScrollLockEnabled = event.data.enabled
-      console.log(
-        "[Chat Helper] ScrollLock Main World:",
-        event.data.enabled ? "enabled" : "disabled",
-      )
     }
   })
-
-  console.log("[Chat Helper] ScrollLock Main World: APIs hijacked, waiting for enable signal")
 }

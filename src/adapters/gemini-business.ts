@@ -748,10 +748,6 @@ export class GeminiBusinessAdapter extends SiteAdapter {
       // 等待会话加载
       await new Promise((r) => setTimeout(r, 300))
     }
-
-    if (expandedCount > 0) {
-      console.log(`[GeminiBusinessAdapter] 展开了 ${expandedCount} 个会话分组`)
-    }
   }
 
   // ==================== 模型锁定 ====================
@@ -778,8 +774,6 @@ export class GeminiBusinessAdapter extends SiteAdapter {
    * @param targetMode 目标主题模式
    */
   async toggleTheme(targetMode: "light" | "dark"): Promise<boolean> {
-    console.log(`[GeminiBusinessAdapter] Attempting to switch theme to: ${targetMode}`)
-
     // 1. 启动暴力隐身模式 (JS 每一帧强制隐藏)
     // CSS 注入可能因优先级或 Shadow DOM 隔离失效，JS 强制修改内联样式是最稳妥的
     let stopSuppression = false
@@ -865,7 +859,6 @@ export class GeminiBusinessAdapter extends SiteAdapter {
               shadow: true,
             }) as Element)
           if (icon && icon.textContent?.trim() === targetIcon) {
-            console.log(`[GeminiBusinessAdapter] Found target option: ${targetIcon}`)
             ;(tab as HTMLElement).click()
             return true
           }

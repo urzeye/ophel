@@ -149,14 +149,12 @@ export class OutlineManager {
       subtree: true,
       characterData: true,
     })
-    console.log("[OutlineManager] Auto-update started (MutationObserver)")
   }
 
   private stopAutoUpdate() {
     if (this.observer) {
       this.observer.disconnect()
       this.observer = null
-      console.log("[OutlineManager] Auto-update stopped")
     }
     if (this.updateDebounceTimer) {
       clearTimeout(this.updateDebounceTimer)

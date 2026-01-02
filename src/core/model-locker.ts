@@ -36,7 +36,6 @@ export class ModelLocker {
     // 直接调用适配器的 lockModel 方法
     this.adapter.lockModel(this.settings.keyword, () => {
       this.isLocked = true
-      console.log(`[Chat Helper] Model locked to keyword: ${this.settings.keyword}`)
     })
   }
 
