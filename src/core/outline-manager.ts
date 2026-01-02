@@ -521,6 +521,9 @@ export class OutlineManager {
     // 需要重新构建树
     this.refresh()
 
+    // 强制通知界面更新（修复 Bug：如果 tree 内容没变，refresh 会提前返回不通知，导致 UI 按钮状态不更新）
+    this.notify()
+
     // 通知父组件保存设置
     if (this.onShowUserQueriesChange) {
       this.onShowUserQueriesChange(show)
