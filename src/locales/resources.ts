@@ -337,6 +337,18 @@ export const resources = {
     tableCopyLabel: "表格复制 Markdown",
     tableCopyDesc: "在表格右上角添加复制按钮，直接复制 Markdown 格式",
     tableCopied: "表格已复制",
+    // 数据管理
+    dataManagementTitle: "数据管理",
+    dataManagementDesc: "导出或导入扩展的所有设置和数据",
+    exportDataBtn: "导出全部数据",
+    importDataBtn: "导入数据",
+    exportError: "导出失败：",
+    importConfirm: "确定要导入数据吗？这将覆盖当前所有设置和数据。",
+    importSuccess: "导入成功！页面将刷新以应用新设置。",
+    importError: "导入失败：",
+    invalidBackupFile: "无效的备份文件格式",
+    backupTime: "备份时间",
+    dataManagementNote: "提示：导出的文件包含所有设置、会话记录等数据。可用于备份或迁移到新设备。",
   },
   "zh-TW": {
     panelTitle: "Gemini 助手",
@@ -665,6 +677,18 @@ export const resources = {
     tableCopyLabel: "表格複製 Markdown",
     tableCopyDesc: "在表格右上角添加複製按鈕，直接複製 Markdown 格式",
     tableCopied: "表格已複製",
+    // 資料管理
+    dataManagementTitle: "資料管理",
+    dataManagementDesc: "匯出或匯入擴充功能的所有設定和資料",
+    exportDataBtn: "匯出全部資料",
+    importDataBtn: "匯入資料",
+    exportError: "匯出失敗：",
+    importConfirm: "確定要匯入資料嗎？這將覆蓋當前所有設定和資料。",
+    importSuccess: "匯入成功！頁面將重新整理以套用新設定。",
+    importError: "匯入失敗：",
+    invalidBackupFile: "無效的備份檔案格式",
+    backupTime: "備份時間",
+    dataManagementNote: "提示：匯出的檔案包含所有設定、對話記錄等資料。可用於備份或遷移到新裝置。",
   },
   en: {
     panelTitle: "Gemini Helper",
@@ -944,6 +968,20 @@ export const resources = {
     tableCopyLabel: "Table Copy Markdown",
     tableCopyDesc: "Add copy button to table top-right corner to copy Markdown",
     tableCopied: "Table copied",
+    // Data Management
+    dataManagementTitle: "Data Management",
+    dataManagementDesc: "Export or import all extension settings and data",
+    exportDataBtn: "Export All Data",
+    importDataBtn: "Import Data",
+    exportError: "Export failed: ",
+    importConfirm:
+      "Are you sure you want to import data? This will overwrite all current settings and data.",
+    importSuccess: "Import successful! The page will refresh to apply new settings.",
+    importError: "Import failed: ",
+    invalidBackupFile: "Invalid backup file format",
+    backupTime: "Backup time",
+    dataManagementNote:
+      "Note: The exported file contains all settings, conversation records, etc. Can be used for backup or migration to new devices.",
   },
 }
 

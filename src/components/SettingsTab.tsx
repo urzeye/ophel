@@ -1057,6 +1057,151 @@ export const SettingsTab = () => {
           }
         />
       </CollapsibleSection>
+
+      {/* ========== 数据管理 ========== */}
+      <CollapsibleSection title={t("dataManagementTitle") || "数据管理"} defaultExpanded={false}>
+        <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "12px" }}>
+          {t("dataManagementDesc") || "导出或导入扩展的所有设置和数据"}
+        </div>
+
+        {/* 导出数据 */}
+        <div style={{ marginBottom: "12px" }}>
+          <button
+            onClick={async () => {
+              try {
+                // 获取 local 和 sync 的所有数据
+                const [localData, syncData] = await Promise.all([
+                  new Promise<Record<string, any>>((resolve) =>
+                    chrome.storage.local.get(null, resolve),
+                  ),
+                  new Promise<Record<string, any>>((resolve) =>
+                    chrome.storage.sync.get(null, resolve),
+                  ),
+                ])
+
+                const exportData = {
+                  version: 1,
+                  timestamp: new Date().toISOString(),
+                  local: localData,
+                  sync: syncData,
+                }
+
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+                  type: "application/json",
+                })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement("a")
+                a.href = url
+                a.download = `chat-helper-backup-${new Date().toISOString().slice(0, 10)}.json`
+                a.click()
+                URL.revokeObjectURL(url)
+
+                alert(t("exportSuccess") || "导出成功！")
+              } catch (err) {
+                console.error("Export error:", err)
+                alert(t("exportError") || "导出失败：" + String(err))
+              }
+            }}
+            style={{
+              width: "100%",
+              padding: "10px 16px",
+              borderRadius: "6px",
+              border: "1px solid #d1d5db",
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              color: "white",
+              fontWeight: 500,
+              fontSize: "13px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+            }}>
+            <span>📤</span>
+            {t("exportDataBtn") || "导出全部数据"}
+          </button>
+        </div>
+
+        {/* 导入数据 */}
+        <div>
+          <input
+            type="file"
+            id="import-data-input"
+            accept=".json"
+            style={{ display: "none" }}
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+
+              try {
+                const text = await file.text()
+                const data = JSON.parse(text)
+
+                if (!data.version || !data.local || !data.sync) {
+                  throw new Error(t("invalidBackupFile") || "无效的备份文件格式")
+                }
+
+                const confirm = window.confirm(
+                  (t("importConfirm") || "确定要导入数据吗？这将覆盖当前所有设置和数据。") +
+                    `\n\n${t("backupTime") || "备份时间"}：${data.timestamp}`,
+                )
+
+                if (!confirm) {
+                  e.target.value = ""
+                  return
+                }
+
+                // 导入数据到 local 和 sync
+                await Promise.all([
+                  new Promise<void>((resolve, reject) =>
+                    chrome.storage.local.set(data.local, () =>
+                      chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
+                    ),
+                  ),
+                  new Promise<void>((resolve, reject) =>
+                    chrome.storage.sync.set(data.sync, () =>
+                      chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
+                    ),
+                  ),
+                ])
+
+                alert(t("importSuccess") || "导入成功！页面将刷新以应用新设置。")
+                window.location.reload()
+              } catch (err) {
+                console.error("Import error:", err)
+                alert(t("importError") || "导入失败：" + String(err))
+              } finally {
+                e.target.value = ""
+              }
+            }}
+          />
+          <button
+            onClick={() => document.getElementById("import-data-input")?.click()}
+            style={{
+              width: "100%",
+              padding: "10px 16px",
+              borderRadius: "6px",
+              border: "1px solid #d1d5db",
+              background: "#f9fafb",
+              color: "#374151",
+              fontWeight: 500,
+              fontSize: "13px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+            }}>
+            <span>📥</span>
+            {t("importDataBtn") || "导入数据"}
+          </button>
+        </div>
+
+        <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "12px" }}>
+          {t("dataManagementNote") ||
+            "提示：导出的文件包含所有设置、会话记录等数据。可用于备份或迁移到新设备。"}
+        </div>
+      </CollapsibleSection>
     </div>
   )
 }
