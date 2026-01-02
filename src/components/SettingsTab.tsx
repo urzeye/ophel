@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from "react"
 import { useStorage } from "@plasmohq/storage/hook"
 
 import { setLanguage, t } from "~utils/i18n"
-import { DEFAULT_SETTINGS, STORAGE_KEYS, type Settings } from "~utils/storage"
+import { DEFAULT_SETTINGS, STORAGE_KEYS, syncStorage, type Settings } from "~utils/storage"
 
 // 快捷按钮定义
 const COLLAPSED_BUTTON_DEFS: Record<string, { icon: string; label: string }> = {
@@ -376,8 +376,12 @@ const SortableItem: React.FC<{
 )
 
 export const SettingsTab = () => {
-  const [settings, setSettings] = useStorage<Settings>(STORAGE_KEYS.SETTINGS, (saved) =>
-    saved === undefined ? DEFAULT_SETTINGS : { ...DEFAULT_SETTINGS, ...saved },
+  const [settings, setSettings] = useStorage<Settings>(
+    {
+      key: STORAGE_KEYS.SETTINGS,
+      instance: syncStorage,
+    },
+    (saved) => (saved === undefined ? DEFAULT_SETTINGS : { ...DEFAULT_SETTINGS, ...saved }),
   )
 
   const updateNestedSetting = <K extends keyof Settings>(

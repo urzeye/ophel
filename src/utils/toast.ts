@@ -19,9 +19,9 @@ export function showToast(message: string, duration = 2000) {
         top: 32px !important;
         left: 50% !important;
         transform: translateX(-50%) !important;
-        background: var(--gh-bg, #ffffff);
-        color: var(--gh-text, #374151);
-        border: 1px solid var(--gh-border, #e5e7eb);
+        background: var(--gh-brand-gradient);
+        color: white;
+        border: none;
         padding: 10px 24px;
         border-radius: 9999px;
         font-size: 14px;
