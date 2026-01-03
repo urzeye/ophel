@@ -17,12 +17,13 @@ interface DragState {
 
 interface UseDraggableOptions {
   edgeSnapHide?: boolean
+  edgeSnapState?: "left" | "right" | null // 当前吸附状态
   onEdgeSnap?: (side: "left" | "right") => void
   onUnsnap?: () => void
 }
 
 export function useDraggable(options: UseDraggableOptions = {}) {
-  const { edgeSnapHide = false, onEdgeSnap, onUnsnap } = options
+  const { edgeSnapHide = false, edgeSnapState, onEdgeSnap, onUnsnap } = options
 
   const panelRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
@@ -33,76 +34,96 @@ export function useDraggable(options: UseDraggableOptions = {}) {
     position: null,
   })
 
+  // 当吸附状态变化时，重置拖拽位置状态
+  // 这样可以避免旧的位置数据干扰吸附状态下的 CSS 定位
+  useEffect(() => {
+    if (edgeSnapState) {
+      // 进入吸附状态时，清除位置状态，让 CSS 类完全控制位置
+      setDragState((prev) => ({
+        ...prev,
+        hasDragged: false,
+        position: null,
+      }))
+    }
+  }, [edgeSnapState])
+
   // 记录拖拽是否发生过实质性移动（避免点击触发吸附）
   const hasMovedRef = useRef(false)
+  // ⭐ 追踪是否真正在拖拽中（用于 handleMouseUp 的检查）
+  const isDraggingRef = useRef(false)
 
   // 拖拽偏移量（鼠标相对于面板左上角的偏移）
   const offsetRef = useRef({ x: 0, y: 0 })
 
   // 开始拖拽
-  const handleMouseDown = useCallback(
+  const handleMouseDown = useCallback((e: MouseEvent) => {
+    // 排除控制按钮区域
+    if ((e.target as Element).closest(".gh-panel-controls")) return
+
+    const panel = panelRef.current
+    if (!panel) return
+
+    e.preventDefault() // 阻止文本选中
+
+    // 读取面板当前的实际位置
+    const rect = panel.getBoundingClientRect()
+
+    // 计算鼠标相对于面板左上角的偏移
+    offsetRef.current = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    }
+
+    hasMovedRef.current = false // 重置移动标记
+    isDraggingRef.current = true // ⭐ 标记开始拖拽
+
+    // 只设置 isDragging=true，不设置 hasDragged 和 position
+    // 只有在 mousemove 检测到实际移动时才更新位置
+    setDragState((prev) => ({
+      ...prev,
+      isDragging: true,
+    }))
+
+    // 拖动时禁止全局文本选中
+    document.body.style.userSelect = "none"
+  }, [])
+
+  // 拖拽移动
+  const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      // 排除控制按钮区域
-      if ((e.target as Element).closest(".gh-panel-controls")) return
+      setDragState((prev) => {
+        if (!prev.isDragging) return prev
 
-      const panel = panelRef.current
-      if (!panel) return
+        e.preventDefault()
 
-      e.preventDefault() // 阻止文本选中
+        // 首次移动时取消吸附状态并标记已拖拽
+        if (!hasMovedRef.current) {
+          hasMovedRef.current = true
+          // 使用 setTimeout 避免在 setDragState 回调中直接调用外部状态更新
+          setTimeout(() => onUnsnap?.(), 0)
+        }
 
-      // 取消吸附状态（如果有）
-      onUnsnap?.()
-
-      // 读取面板当前的实际位置
-      const rect = panel.getBoundingClientRect()
-
-      // 计算鼠标相对于面板左上角的偏移
-      offsetRef.current = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      }
-
-      hasMovedRef.current = false // 重置移动标记
-
-      // 首次拖拽时，将 CSS 定位从 right+transform 切换为 left+top
-      setDragState({
-        isDragging: true,
-        hasDragged: true,
-        position: { left: rect.left, top: rect.top },
+        // 直接计算面板左上角位置 = 鼠标位置 - 初始偏移
+        return {
+          ...prev,
+          hasDragged: true, // 标记发生过拖拽
+          position: {
+            left: e.clientX - offsetRef.current.x,
+            top: e.clientY - offsetRef.current.y,
+          },
+        }
       })
-
-      // 拖动时禁止全局文本选中
-      document.body.style.userSelect = "none"
     },
     [onUnsnap],
   )
-
-  // 拖拽移动
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    setDragState((prev) => {
-      if (!prev.isDragging) return prev
-
-      e.preventDefault()
-
-      // 标记发生了移动
-      hasMovedRef.current = true
-
-      // 直接计算面板左上角位置 = 鼠标位置 - 初始偏移
-      return {
-        ...prev,
-        position: {
-          left: e.clientX - offsetRef.current.x,
-          top: e.clientY - offsetRef.current.y,
-        },
-      }
-    })
-  }, [])
 
   // 结束拖拽
   const handleMouseUp = useCallback(() => {
     // 先获取需要的状态
     const panel = panelRef.current
     const hasMoved = hasMovedRef.current
+    // ⭐ 使用 ref 获取实时的拖拽状态，这比 state 更新更及时且同步
+    const wasDragging = isDraggingRef.current
 
     setDragState((prev) => {
       if (!prev.isDragging) return prev
@@ -113,9 +134,13 @@ export function useDraggable(options: UseDraggableOptions = {}) {
       return { ...prev, isDragging: false }
     })
 
+    // 重置 ref 状态
+    isDraggingRef.current = false
+
     // 边缘吸附检测 (在 setDragState 之后执行，避免渲染期间状态更新警告)
-    // 使用 setTimeout 确保在 React 渲染完成后执行
-    if (edgeSnapHide && hasMoved && panel) {
+    // ⭐ 使用 wasDragging ref 值检查，确保只在真正拖拽结束时才检测
+    // 这样可以完美过滤掉点击按钮（如展开面板）产生的 mouseup 事件，因为点击按钮不会将 isDraggingRef 设为 true
+    if (edgeSnapHide && wasDragging && hasMoved && panel) {
       setTimeout(() => {
         const rect = panel.getBoundingClientRect()
         const snapThreshold = 30 // 距离边缘30px时触发吸附

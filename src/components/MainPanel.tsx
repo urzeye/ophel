@@ -61,6 +61,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   // 拖拽功能
   const { panelRef, headerRef, panelStyle, isDragging } = useDraggable({
     edgeSnapHide: currentSettings.edgeSnapHide,
+    edgeSnapState, // 传递当前吸附状态，让 hook 知道何时重置位置
     onEdgeSnap,
     onUnsnap,
   })
@@ -234,7 +235,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         border: "1px solid var(--gh-border, #e5e7eb)",
         zIndex: 9999,
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        ...panelStyle, // 应用拖拽位置样式
+        // 只有在非吸附状态时才应用拖拽位置，吸附状态由 CSS class 控制位置
+        ...(edgeSnapState ? {} : panelStyle),
       }}>
       {/* Header - 拖拽区域 */}
       <div
@@ -261,8 +263,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           <span style={{ fontSize: "15px", fontWeight: 600 }}>{t("panelTitle")}</span>
         </div>
 
-        {/* 右侧：按钮组 */}
-        <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+        {/* 右侧：按钮组 - 需要 gh-panel-controls 以排除拖拽 */}
+        <div
+          className="gh-panel-controls"
+          style={{ display: "flex", gap: "4px", alignItems: "center" }}>
           {/* 主题切换按钮 */}
           {onThemeToggle && (
             <button

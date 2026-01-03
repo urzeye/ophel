@@ -459,6 +459,11 @@ export const App = () => {
             clearTimeout(hideTimerRef.current)
             hideTimerRef.current = null
           }
+          // 当处于吸附状态时，鼠标进入面板应设置 isEdgePeeking = true
+          // 这样 onMouseLeave 时才能正确隐藏
+          if (edgeSnapState && settings?.edgeSnapHide && !isEdgePeeking) {
+            setIsEdgePeeking(true)
+          }
         }}
         onMouseLeave={() => {
           // 边缘吸附恢复逻辑：鼠标移出面板时结束 peek 状态
@@ -486,9 +491,14 @@ export const App = () => {
       <QuickButtons
         isPanelOpen={isPanelOpen}
         onPanelToggle={() => {
-          // 如果当前处于吸附状态且要展开面板，进入 peek 状态
-          if (!isPanelOpen && edgeSnapState && settings?.edgeSnapHide) {
-            setIsEdgePeeking(true)
+          if (!isPanelOpen) {
+            // 展开面板：如果处于吸附状态，进入 peek 模式
+            if (edgeSnapState && settings?.edgeSnapHide) {
+              setIsEdgePeeking(true)
+            }
+          } else {
+            // 关闭面板：重置 peek 状态
+            setIsEdgePeeking(false)
           }
           setIsPanelOpen(!isPanelOpen)
         }}
