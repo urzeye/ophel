@@ -12,6 +12,7 @@
 4. [桌面通知不生效：document.hidden 始终返回 false](#4-桌面通知不生效documenthidden-始终返回-false)
 5. [图片去水印跨域 (CORS) 与 403 Forbidden 错误](#5-图片去水印跨域-cors-与-403-forbidden-错误)
 6. [边缘吸附状态下打开菜单/对话框时面板意外隐藏](#6-边缘吸附状态下打开菜单对话框时面板意外隐藏)
+7. [Gemini Business 主题切换后面板不同步更新](#7-gemini-business-主题切换后面板不同步更新)
 
 ---
 
@@ -941,3 +942,176 @@ if (edgeSnapHide && hasMoved && panel) {
 | --------------------------- | -------------------------------------------------- |
 | `src/components/App.tsx`    | **修改** - 添加 MutationObserver，修复点击检测逻辑 |
 | `src/hooks/useDraggable.ts` | **修改** - 修复 React 渲染警告                     |
+
+---
+
+## 7. Gemini Business 主题切换后面板不同步更新
+
+**日期**: 2026-01-04
+
+### 症状
+
+- 在 Gemini Business 网页切换主题（浅色/深色）后，扩展面板没有跟随更新
+- 页面背景颜色已变化，但面板仍保持原来的主题样式
+- 该功能在油猴脚本版本中正常工作
+
+### 背景
+
+项目使用 `ThemeManager` 管理主题切换：
+
+1. 使用 `MutationObserver` 监听 `document.body` 的 `class`、`data-theme`、`style` 属性变化
+2. 通过 `detectCurrentTheme()` 检测当前页面主题（检查 `dark-theme` 类、`data-theme` 属性、`colorScheme` 样式）
+3. 通过 `syncPluginUITheme()` 将主题 CSS 变量注入到 Plasmo 的 Shadow DOM (`plasmo-csui`)
+
+面板使用 Plasmo 框架渲染，运行在 Shadow DOM 内，与页面样式隔离。
+
+### 调试过程
+
+#### 第一轮调试：验证主题检测
+
+在浏览器中进行实地测试，添加调试日志后确认：
+
+```
+[ThemeManager] body.class changed: dark-theme
+[ThemeManager] Theme changed: light -> dark
+```
+
+**发现**：`MutationObserver` 正确触发，主题变化被正确检测。
+
+#### 第二轮调试：验证样式同步
+
+继续测试发现：
+
+- `syncPluginUITheme()` 被正确调用
+- 但 Shadow DOM 内的样式没有更新
+- 面板按钮的计算样式显示仍使用浅色变量
+
+检查 Shadow Host：
+
+```javascript
+const host = document.querySelector("plasmo-csui")
+host.className // ""  - 没有任何类
+host.shadowRoot.querySelector("#gh-theme-vars") // 样式标签存在但未生效
+```
+
+### 根因
+
+**CSS 变量注入到 Shadow DOM 的机制不完整**：
+
+1. `syncPluginUITheme()` 正确创建了 `<style id="gh-theme-vars">` 标签
+2. 样式内容使用 `:host { --gh-bg: #1e1e1e; ... }` 格式
+3. 但 Shadow DOM 可能存在样式优先级问题，或 CSS 变量未正确继承
+4. 原实现没有设置 `color-scheme` 属性和 `data-theme` 属性，导致某些基于属性选择器的样式失效
+
+```
+问题分析：
+1. Plasmo 静态注入的样式在 Shadow DOM 中可能覆盖动态注入的变量
+2. 仅设置 CSS 变量不够，还需要设置 host 的 data-theme 属性
+3. 没有强制设置 color-scheme 导致浏览器默认样式不一致
+```
+
+### 修复方案
+
+**增强 `syncPluginUITheme()` 方法，添加 `data-theme` 属性和 `color-scheme` 样式**
+
+#### 修改 `src/core/theme-manager.ts`
+
+```typescript
+private syncPluginUITheme(mode?: ThemeMode) {
+  const currentMode = mode || this.mode
+  const root = document.documentElement
+
+  // 从预置系统获取当前主题的 CSS 变量
+  const presetId = currentMode === "dark" ? this.darkPresetId : this.lightPresetId
+  const preset = getPreset(presetId, currentMode)
+  const vars = preset.variables
+
+  // 设置 body 属性
+  if (currentMode === "dark") {
+    document.body.dataset.ghMode = "dark"
+    document.body.style.colorScheme = "dark"
+  } else {
+    delete document.body.dataset.ghMode
+    document.body.style.colorScheme = "light"
+  }
+
+  // 在 :root 上设置变量
+  for (const [key, value] of Object.entries(vars)) {
+    root.style.setProperty(key, value)
+  }
+
+  // 查找 Plasmo 的 Shadow Host 并在其上设置变量
+  const shadowHosts = document.querySelectorAll("plasmo-csui")
+
+  shadowHosts.forEach((host) => {
+    const shadowRoot = host.shadowRoot
+    if (shadowRoot) {
+      let styleEl = shadowRoot.querySelector("#gh-theme-vars") as HTMLStyleElement
+      if (!styleEl) {
+        styleEl = document.createElement("style")
+        styleEl.id = "gh-theme-vars"
+      }
+
+      const cssVars = themeVariablesToCSS(vars)
+
+      // ⭐ 关键修复：添加 color-scheme 和 data-theme 选择器
+      styleEl.textContent = `:host {
+  ${cssVars}
+  color-scheme: ${currentMode};
+}
+
+:host([data-theme="dark"]),
+:host .gh-root[data-theme="dark"] {
+  ${cssVars}
+}
+`
+      // ⭐ 关键修复：设置 host 元素的 data-theme 属性
+      ;(host as HTMLElement).dataset.theme = currentMode
+
+      // 将样式标签追加到 Shadow Root 末尾以获得最高优先级
+      shadowRoot.append(styleEl)
+    }
+  })
+}
+```
+
+关键变化：
+
+1. **设置 `data-theme` 属性**：在 Shadow Host (`plasmo-csui`) 上设置 `data-theme="light/dark"`
+2. **添加 `color-scheme`**：确保浏览器使用正确的默认颜色方案
+3. **增强 CSS 选择器**：添加 `:host([data-theme="dark"])` 选择器，确保样式在所有情况下生效
+4. **保持 `shadowRoot.append()`**：将动态样式放在最后以覆盖静态样式
+
+### 验证结果
+
+修复后的浏览器测试：
+
+```
+[页面切换到深色模式]
+- body.className: "dark-theme"
+- plasmo-csui[data-theme]: "dark"
+- 面板背景: 深蓝色/黑色 ✓
+
+[页面切换到浅色模式]
+- body.className: ""
+- plasmo-csui[data-theme]: "light"
+- 面板背景: 浅色 ✓
+```
+
+主题切换后面板在 1 秒内自动响应，与页面主题保持同步。
+
+### 经验总结
+
+| 教训                                   | 说明                                                                         |
+| -------------------------------------- | ---------------------------------------------------------------------------- |
+| **Shadow DOM 样式隔离**                | Shadow DOM 内的样式需要显式注入，不能依赖外部选择器（如 `body.dark-theme`）  |
+| **data-theme 属性的重要性**            | 某些 CSS 框架和组件依赖 `data-theme` 属性选择器，仅靠 CSS 变量可能不够       |
+| **color-scheme 属性**                  | 设置 `color-scheme` 可以影响浏览器默认 UI（如滚动条、输入框）的颜色          |
+| **MutationObserver 监听正确**          | 问题不在检测，而在同步机制——要区分\"检测到变化\"和\"应用变化\"两个阶段的问题 |
+| **Gemini Business 使用 dark-theme 类** | 不同于某些网站使用 `data-theme` 属性，Gemini Business 使用 body 的 CSS 类    |
+
+### 文件变更
+
+| 文件                        | 变更                                                 |
+| --------------------------- | ---------------------------------------------------- |
+| `src/core/theme-manager.ts` | **修改** - 增强 `syncPluginUITheme()` 方法的同步机制 |

@@ -37,7 +37,6 @@ export class ThemeManager {
     this.lightPresetId = lightPresetId
     this.darkPresetId = darkPresetId
     this.onModeChange = onModeChange
-    this.onModeChange = onModeChange
     this.adapter = adapter
 
     // 注入全局动画样式 (View Transitions 需要在主文档生效)
@@ -191,6 +190,7 @@ export class ThemeManager {
 
     // 查找 Plasmo 的 Shadow Host 并在其上设置变量
     const shadowHosts = document.querySelectorAll("plasmo-csui")
+
     shadowHosts.forEach((host) => {
       const shadowRoot = host.shadowRoot
       if (shadowRoot) {
@@ -200,9 +200,25 @@ export class ThemeManager {
           styleEl = document.createElement("style")
           styleEl.id = "gh-theme-vars"
         }
+
         // 生成 :host 上的变量定义
         const cssVars = themeVariablesToCSS(vars)
-        styleEl.textContent = `:host {\n  ${cssVars}\n}`
+
+        // 同时设置 data-theme 属性以便 CSS 选择器使用
+        // 并添加强制覆盖的样式
+        styleEl.textContent = `:host {
+  ${cssVars}
+  color-scheme: ${currentMode};
+}
+
+:host([data-theme="dark"]),
+:host .gh-root[data-theme="dark"] {
+  ${cssVars}
+}
+`
+        // 设置 host 元素的 data-theme 属性
+        ;(host as HTMLElement).dataset.theme = currentMode
+
         // 始终将样式标签移动/追加到 Shadow Root 末尾
         // 这样可以覆盖 Plasmo 静态注入的默认浅色主题变量
         shadowRoot.append(styleEl)
@@ -295,11 +311,8 @@ export class ThemeManager {
     document.documentElement.style.setProperty("--theme-x", `${x}%`)
     document.documentElement.style.setProperty("--theme-y", `${y}%`)
 
-    // ⭐ 暂停 MutationObserver，防止在 View Transition 期间触发额外的 DOM 修改
-    const hadObserver = !!this.themeObserver
-    if (this.themeObserver) {
-      this.themeObserver.disconnect()
-    }
+    // 暂停 MutationObserver，防止在 View Transition 期间触发额外的 DOM 修改
+    this.stopMonitoring()
 
     // 执行主题切换的核心逻辑
     const doToggle = () => {
@@ -318,10 +331,8 @@ export class ThemeManager {
     ) {
       doToggle()
       this.mode = nextMode
-      // 恢复 observer
-      if (hadObserver) {
-        this.monitorTheme()
-      }
+      // 无条件启动监听（确保网页主题变化能被检测）
+      this.monitorTheme()
       return nextMode
     }
 
@@ -358,13 +369,15 @@ export class ThemeManager {
       )
     })
 
-    // ⭐ 动画完成后恢复 MutationObserver
-    transition.finished.then(() => {
-      // 恢复 observer
-      if (hadObserver) {
+    // 使用 finally 确保 MutationObserver 一定会恢复（即使动画失败）
+    transition.finished
+      .catch(() => {
+        // 忽略动画错误
+      })
+      .finally(() => {
+        // 无条件启动监听（确保网页主题变化能被检测）
         this.monitorTheme()
-      }
-    })
+      })
 
     // 触发回调通知 React 更新状态
     if (this.onModeChange) {
