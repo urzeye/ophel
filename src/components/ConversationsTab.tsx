@@ -353,7 +353,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
       shadow: true,
     }) as HTMLElement | null
 
-    // 方法2: 遍历所有会话元素，通过菜单按钮 ID 匹配（Gemini Business）
+    // 方法2: 遍历所有会话元素，通过菜单按钮 ID 匹配（Gemini Enterprise）
     if (!sidebarItem) {
       const conversations = DOMToolkit.query(".conversation", {
         all: true,

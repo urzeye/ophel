@@ -114,7 +114,7 @@ export class ThemeManager {
       return "light"
     }
 
-    // 3. Style colorScheme (Gemini Business 使用这种方式)
+    // 3. Style colorScheme (Gemini Enterprise 使用这种方式)
     if (document.body.style.colorScheme === "dark") {
       return "dark"
     }
@@ -303,7 +303,7 @@ export class ThemeManager {
 
     // 执行主题切换的核心逻辑
     const doToggle = () => {
-      // 优先使用适配器的原生切换逻辑 (针对 Gemini Business)
+      // 优先使用适配器的原生切换逻辑 (针对 Gemini Enterprise)
       if (this.adapter && typeof this.adapter.toggleTheme === "function") {
         this.adapter.toggleTheme(nextMode).catch(() => {})
       }

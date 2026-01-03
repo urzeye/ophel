@@ -1428,17 +1428,19 @@ export const SettingsTab = () => {
 
       {/* ========== 模型锁定 ========== */}
       <CollapsibleSection title={t("modelLockTitle") || "模型锁定"} defaultExpanded={false}>
-        {/* Enterprise / Gemini Business */}
+        {/* Enterprise / Gemini Enterprise */}
         <ModelLockSiteRow
-          siteId="gemini-business"
-          siteName="Enterprise"
-          config={settings.modelLockConfig?.["gemini-business"] || { enabled: false, keyword: "" }}
+          siteId="gemini-enterprise"
+          siteName="Gemini Enterprise"
+          config={
+            settings.modelLockConfig?.["gemini-enterprise"] || { enabled: false, keyword: "" }
+          }
           onChange={(config) => {
             setSettings({
               ...settings,
               modelLockConfig: {
                 ...settings.modelLockConfig,
-                "gemini-business": config,
+                "gemini-enterprise": config,
               },
             })
           }}

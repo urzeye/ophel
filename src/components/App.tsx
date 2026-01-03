@@ -346,7 +346,7 @@ export const App = () => {
       if (selectedPrompt) {
         setSelectedPrompt(null)
       }
-      // Gemini Business 专属：修复中文输入（插入零宽字符）
+      // Gemini Enterprise 专属：修复中文输入（插入零宽字符）
       if (shouldClearTextarea) {
         setTimeout(() => {
           adapter.clearTextarea()

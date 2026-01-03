@@ -105,7 +105,7 @@ if (!(window as any).chatHelperInitialized) {
       }
 
       // 6. 水印移除 (仅 Gemini)
-      if (adapter.getSiteId() === "gemini" || adapter.getSiteId() === "gemini-business") {
+      if (adapter.getSiteId() === "gemini" || adapter.getSiteId() === "gemini-enterprise") {
         watermarkRemover = new WatermarkRemover()
         watermarkRemover.start()
       }
@@ -194,7 +194,7 @@ if (!(window as any).chatHelperInitialized) {
           // 6. Watermark Remover update
           if (
             newSettings &&
-            (adapter.getSiteId() === "gemini" || adapter.getSiteId() === "gemini-business")
+            (adapter.getSiteId() === "gemini" || adapter.getSiteId() === "gemini-enterprise")
           ) {
             if (newSettings.watermarkRemoval) {
               if (!watermarkRemover) {

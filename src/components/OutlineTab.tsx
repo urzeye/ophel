@@ -548,7 +548,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       // ⭐ 关键修复：元素失效时使用 siteAdapter 重新查找（支持 Shadow DOM）
       if (!targetElement || !targetElement.isConnected) {
         // 使用 manager.findElementByHeading 代理到 siteAdapter
-        // GeminiBusiness 会使用 DOMToolkit 穿透 Shadow DOM
+        // GeminiEnterprise 会使用 DOMToolkit 穿透 Shadow DOM
         const found = manager.findElementByHeading(node.level, node.text)
         if (found) {
           targetElement = found as HTMLElement

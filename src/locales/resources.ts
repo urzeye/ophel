@@ -44,7 +44,7 @@ export const resources = {
     settingsTitle: "通用设置",
     panelSettingsTitle: "面板设置",
     clearOnSendLabel: "发送后自动修复中文输入",
-    clearOnSendDesc: "发送消息后插入零宽字符，修复下次输入首字母问题（仅 Gemini Business）",
+    clearOnSendDesc: "发送消息后插入零宽字符，修复下次输入首字母问题（仅 Gemini Enterprise）",
     settingOn: "开",
     settingOff: "关",
     // 模型锁定
@@ -444,7 +444,7 @@ export const resources = {
     settingsTitle: "通用設置",
     panelSettingsTitle: "面板設置",
     clearOnSendLabel: "發送後自動修復中文輸入",
-    clearOnSendDesc: "發送訊息後插入零寬字元，修復下次輸入首字母問題（僅 Gemini Business）",
+    clearOnSendDesc: "發送訊息後插入零寬字元，修復下次輸入首字母問題（僅 Gemini Enterprise）",
     settingOn: "開",
     settingOff: "關",
     // 模型鎖定
@@ -834,7 +834,7 @@ export const resources = {
     panelSettingsTitle: "Panel Settings",
     clearOnSendLabel: "Auto-fix Chinese input after send",
     clearOnSendDesc:
-      "Insert zero-width char after send to fix first letter issue (Gemini Business only)",
+      "Insert zero-width char after send to fix first letter issue (Gemini Enterprise only)",
     settingOn: "ON",
     settingOff: "OFF",
     // Model Lock

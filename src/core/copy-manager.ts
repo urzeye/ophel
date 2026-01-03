@@ -198,13 +198,13 @@ export class CopyManager {
       btn.textContent = "📋"
       btn.title = t("tableCopyLabel")
 
-      // 检测是否在 Gemini Business 容器中（有原生按钮），调整位置避免遮挡
+      // 检测是否在 Gemini Enterprise 容器中（有原生按钮），调整位置避免遮挡
       const tagName = container.tagName?.toLowerCase()
-      const isGeminiBusiness =
+      const isGeminiEnterprise =
         tagName === "ucs-markdown-table" ||
         container.closest("ucs-markdown-table") ||
         container.classList.contains("gh-table-container")
-      const rightOffset = isGeminiBusiness ? "80px" : "4px"
+      const rightOffset = isGeminiEnterprise ? "80px" : "4px"
 
       // 使用内联样式确保定位正确
       Object.assign(btn.style, {

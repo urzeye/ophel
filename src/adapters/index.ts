@@ -6,7 +6,7 @@
 
 import { SiteAdapter } from "./base"
 import { GeminiAdapter } from "./gemini"
-import { GeminiBusinessAdapter } from "./gemini-business"
+import { GeminiEnterpriseAdapter } from "./gemini-enterprise"
 
 // import { AIStudioAdapter } from "./ai-studio"
 // import { GrokAdapter } from "./grok"
@@ -15,7 +15,7 @@ import { GeminiBusinessAdapter } from "./gemini-business"
 
 // 所有可用的适配器
 const adapters: SiteAdapter[] = [
-  new GeminiBusinessAdapter(),
+  new GeminiEnterpriseAdapter(),
   new GeminiAdapter(),
   // new AIStudioAdapter(),
   // new GrokAdapter(),
