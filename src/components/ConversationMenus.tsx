@@ -10,23 +10,24 @@ const MENU_STYLES = `
   .conversations-folder-menu {
     background: var(--gh-bg, white);
     border: 1px solid var(--gh-border, #e5e7eb);
-    border-radius: 8px;
+    border-radius: 6px;
     box-shadow: var(--gh-shadow, 0 4px 12px rgba(0,0,0,0.15));
     z-index: 10000000;
-    padding: 4px;
-    min-width: 120px;
+    padding: 3px;
+    min-width: 80px;
   }
   .conversations-folder-menu button {
     display: block;
     width: 100%;
-    padding: 8px 12px;
+    padding: 6px 10px;
     border: none;
     background: none;
     text-align: left;
-    font-size: 13px;
+    font-size: 12px;
     color: var(--gh-text, #374151);
     cursor: pointer;
     border-radius: 4px;
+    white-space: nowrap;
   }
   .conversations-folder-menu button:hover {
     background: var(--gh-hover, #f3f4f6);
@@ -58,6 +59,7 @@ interface MenuProps {
  */
 export const ContextMenu: React.FC<MenuProps> = ({ anchorEl, onClose, children }) => {
   const menuRef = useRef<HTMLDivElement>(null)
+  const [menuPosition, setMenuPosition] = useState<{ left: number; top: number } | null>(null)
 
   useEffect(() => {
     // 注入菜单样式
@@ -87,9 +89,44 @@ export const ContextMenu: React.FC<MenuProps> = ({ anchorEl, onClose, children }
     }
   }, [anchorEl, onClose])
 
-  if (!anchorEl) return null
+  // ⭐ 计算菜单位置，确保不超出屏幕边界
+  useEffect(() => {
+    if (!anchorEl || !menuRef.current) return
 
-  const rect = anchorEl.getBoundingClientRect()
+    const rect = anchorEl.getBoundingClientRect()
+    const menuRect = menuRef.current.getBoundingClientRect()
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+    const menuWidth = menuRect.width || 150 // 默认菜单宽度
+    const menuHeight = menuRect.height || 200 // 默认菜单高度
+
+    let left = rect.left
+    let top = rect.bottom + 4
+
+    // 检测是否超出右边界，如果超出则向左展开
+    if (left + menuWidth > viewportWidth - 10) {
+      left = rect.right - menuWidth
+    }
+
+    // 检测是否超出左边界
+    if (left < 10) {
+      left = 10
+    }
+
+    // 检测是否超出下边界，如果超出则向上展开
+    if (top + menuHeight > viewportHeight - 10) {
+      top = rect.top - menuHeight - 4
+    }
+
+    // 检测是否超出上边界
+    if (top < 10) {
+      top = 10
+    }
+
+    setMenuPosition({ left, top })
+  }, [anchorEl])
+
+  if (!anchorEl) return null
 
   // 使用 Portal 渲染到 document.body，避免 transform 影响 fixed 定位
   const menuContent = (
@@ -98,8 +135,8 @@ export const ContextMenu: React.FC<MenuProps> = ({ anchorEl, onClose, children }
       className="conversations-folder-menu"
       style={{
         position: "fixed",
-        top: `${rect.bottom + 4}px`,
-        left: `${rect.left}px`,
+        top: menuPosition ? `${menuPosition.top}px` : "-9999px",
+        left: menuPosition ? `${menuPosition.left}px` : "-9999px",
         zIndex: 2147483647, // 最大 z-index 值
         pointerEvents: "auto",
       }}>
