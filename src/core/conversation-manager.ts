@@ -347,10 +347,16 @@ export class ConversationManager {
   }
 
   getConversations(folderId?: string) {
+    // 按当前站点和团队过滤
+    const currentSiteId = this.siteAdapter.getSiteId()
+    const currentCid = this.siteAdapter.getCurrentCid?.() || null
+
+    let result = Object.values(this.conversations).filter((c) => this.matchesCid(c, currentCid))
+
     if (folderId) {
-      return Object.values(this.conversations).filter((c) => c.folderId === folderId)
+      result = result.filter((c) => c.folderId === folderId)
     }
-    return Object.values(this.conversations)
+    return result
   }
 
   async createFolder(name: string, icon: string) {
@@ -545,8 +551,19 @@ export class ConversationManager {
     return this.lastUsedFolderId
   }
 
+  /**
+   * 获取当前站点/团队的所有会话
+   */
   getAllConversations(): Record<string, Conversation> {
-    return this.conversations
+    const currentCid = this.siteAdapter.getCurrentCid?.() || null
+    const result: Record<string, Conversation> = {}
+
+    for (const [id, conv] of Object.entries(this.conversations)) {
+      if (this.matchesCid(conv, currentCid)) {
+        result[id] = conv
+      }
+    }
+    return result
   }
 
   // ================= Sync Logic =================

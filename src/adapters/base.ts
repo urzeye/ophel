@@ -132,6 +132,15 @@ export abstract class SiteAdapter {
     return false
   }
 
+  /**
+   * 获取当前团队 ID（用于会话隔离）
+   * 仅在支持多团队的站点（如 Gemini Enterprise）中实现
+   * @returns 团队 ID 或 null（无团队/默认团队）
+   */
+  getCurrentCid(): string | null {
+    return null
+  }
+
   /** 获取侧边栏会话列表 */
   getConversationList(): ConversationInfo[] {
     return []
