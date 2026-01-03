@@ -261,11 +261,13 @@ const ModelLockSiteRow: React.FC<{
         border: "1px solid var(--gh-card-border, #e5e7eb)",
         borderRadius: "8px",
       }}>
-      {/* 站点名称 */}
-      <span style={{ fontWeight: 500, fontSize: "13px", minWidth: "80px" }}>{siteName}</span>
+      {/* 站点名称 - 固定宽度确保开关对齐 */}
+      <span style={{ fontWeight: 500, fontSize: "13px", width: "120px", flexShrink: 0 }}>
+        {siteName}
+      </span>
 
       {/* 开关 */}
-      <div style={{ marginRight: "12px" }}>
+      <div style={{ marginRight: "12px", flexShrink: 0 }}>
         <Switch
           checked={config.enabled}
           onChange={(checked) => onChange({ ...config, enabled: checked })}
@@ -276,7 +278,7 @@ const ModelLockSiteRow: React.FC<{
       <ModelKeywordInput
         value={config.keyword}
         onChange={(keyword) => onChange({ ...config, keyword })}
-        placeholder={t("modelKeywordExample") || "快速"}
+        placeholder={t("modelKeywordExample") || "例如: 3 Pro"}
         disabled={!config.enabled}
       />
     </div>
