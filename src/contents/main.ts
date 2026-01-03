@@ -63,14 +63,17 @@ if (!(window as any).chatHelperInitialized) {
       const settings = await getSetting(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS)
 
       // 1. 主题管理 (优先应用)
+      // ⭐ 创建全局唯一的 ThemeManager 实例，挂载到 window 供 App.tsx 使用
       themeManager = new ThemeManager(
         settings.themeMode,
-        undefined, // onModeChange callback
+        undefined, // onModeChange callback - 由 App.tsx 动态注册
         adapter, // adapter 引用
         settings.themePresets?.lightPresetId || "google-gradient",
         settings.themePresets?.darkPresetId || "classic-dark",
       )
       themeManager.apply()
+      // 挂载到 window 对象，供 App.tsx 获取
+      ;(window as any).__ghThemeManager = themeManager
 
       // 2. Markdown 修复 (仅 Gemini 标准版)
       if (settings.markdownFix && adapter.getSiteId() === "gemini") {
@@ -144,16 +147,14 @@ if (!(window as any).chatHelperInitialized) {
         [STORAGE_KEYS.SETTINGS]: (change) => {
           const newSettings = change.newValue
 
-          // 1. Theme Manager (Always running)
-          if (newSettings && themeManager) {
-            themeManager.updateMode(newSettings.themeMode)
-            // 更新主题预置
-            if (newSettings.themePresets) {
-              themeManager.setPresets(
-                newSettings.themePresets.lightPresetId || "google-gradient",
-                newSettings.themePresets.darkPresetId || "classic-dark",
-              )
-            }
+          // 1. Theme Manager - 只更新主题预置，不处理 themeMode 变化
+          // ⭐ 不再调用 updateMode()，因为主题切换由 App.tsx 的 toggle() 统一处理
+          // 这样可以避免绕过 View Transition 动画直接应用主题
+          if (newSettings?.themePresets && themeManager) {
+            themeManager.setPresets(
+              newSettings.themePresets.lightPresetId || "google-gradient",
+              newSettings.themePresets.darkPresetId || "classic-dark",
+            )
           }
 
           // 2. Model Locker update

@@ -146,23 +146,39 @@ export const App = () => {
     return adapter ? new Exporter(adapter) : null
   }, [adapter])
 
-  // 主题管理器 - 带监听回调
+  // ⭐ 从 window 获取 main.ts 创建的全局 ThemeManager 实例
+  // 这样只有一个 ThemeManager 实例，避免竞争条件
   const themeManager = useMemo(() => {
-    // 创建主题变化回调，当页面主题变化时同步更新 React 状态
+    const globalTM = (window as any).__ghThemeManager as ThemeManager | undefined
+    if (globalTM) {
+      return globalTM
+    }
+    // 降级：如果 main.ts 还没创建，则临时创建一个（不应该发生）
+    console.warn("[App] Global ThemeManager not found, creating fallback instance")
+    return new ThemeManager(
+      themeMode,
+      undefined,
+      adapter,
+      settings?.themePresets?.lightPresetId || "google-gradient",
+      settings?.themePresets?.darkPresetId || "classic-dark",
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在初始化时获取
+  }, [])
+
+  // ⭐ 动态注册主题变化回调，当页面主题变化时同步更新 React 状态
+  useEffect(() => {
     const handleThemeModeChange = (mode: "light" | "dark") => {
       setThemeMode(mode)
       // 同时保存到 storage
       setSettings((prev) => (prev ? { ...prev, themeMode: mode } : prev))
     }
-    return new ThemeManager(
-      themeMode,
-      handleThemeModeChange,
-      adapter,
-      settings?.themePresets?.lightPresetId || "google-gradient",
-      settings?.themePresets?.darkPresetId || "classic-dark",
-    )
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在初始化时创建
-  }, [])
+    themeManager.setOnModeChange(handleThemeModeChange)
+
+    // 清理时移除回调
+    return () => {
+      themeManager.setOnModeChange(undefined)
+    }
+  }, [themeManager, setSettings])
 
   // 监听主题预置变化，动态更新 ThemeManager
   useEffect(() => {
@@ -175,29 +191,27 @@ export const App = () => {
   }, [settings?.themePresets?.lightPresetId, settings?.themePresets?.darkPresetId, themeManager])
 
   // 主题切换（异步处理，支持 View Transitions API 动画）
+  // ⭐ 不在这里更新 React 状态，由 ThemeManager 的 onModeChange 回调在动画完成后统一处理
   const handleThemeToggle = useCallback(
     async (event?: MouseEvent) => {
-      const newMode = await themeManager.toggle(event)
-      // 状态已在 ThemeManager 内部通过回调更新，这里仅作为备用
-      setThemeMode(newMode)
-      if (settings) {
-        setSettings({ ...settings, themeMode: newMode })
-      }
+      await themeManager.toggle(event)
+      // 状态更新由 onModeChange 回调处理，不在这里直接更新
+      // 这避免了动画完成前触发 React 重渲染导致的闪烁
     },
-    [themeManager, settings, setSettings],
+    [themeManager],
   )
 
-  // 应用主题并启动监听
+  // 启动主题监听器
   useEffect(() => {
-    themeManager.updateMode(themeMode)
-    // 启动主题监听器，监听页面主题变化（浏览器自动切换等场景）
+    // ⭐ 不再调用 updateMode，由 main.ts 负责初始应用
+    // 只启动监听器，监听页面主题变化（浏览器自动切换等场景）
     themeManager.monitorTheme()
 
     return () => {
       // 清理监听器
       themeManager.stopMonitoring()
     }
-  }, [themeMode, themeManager])
+  }, [themeManager])
 
   // 初始化
   useEffect(() => {

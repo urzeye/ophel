@@ -75,6 +75,14 @@ export class ThemeManager {
   }
 
   /**
+   * 动态设置主题变化回调（用于 React 组件动态注册）
+   * 这使得单一 ThemeManager 实例可以在 main.ts 创建后，由 App.tsx 动态注册回调
+   */
+  setOnModeChange(callback: ThemeModeChangeCallback | undefined) {
+    this.onModeChange = callback
+  }
+
+  /**
    * 更新模式并应用
    */
   updateMode(mode: Settings["themeMode"]) {
@@ -124,11 +132,10 @@ export class ThemeManager {
     if (mode === "dark") {
       document.body.classList.add("dark-theme")
       document.body.classList.remove("light-theme")
-      document.body.style.colorScheme = "dark" // 确保 Business 版本一致
+      document.body.style.colorScheme = "dark"
     } else {
       document.body.classList.remove("dark-theme")
-      document.body.style.colorScheme = "light" // 确保 Business 版本一致
-      // Gemini 标准版使用 light-theme 类，Business 版本使用空 class
+      document.body.style.colorScheme = "light"
       if (isGeminiStandard) {
         document.body.classList.add("light-theme")
       }
@@ -288,13 +295,19 @@ export class ThemeManager {
     document.documentElement.style.setProperty("--theme-x", `${x}%`)
     document.documentElement.style.setProperty("--theme-y", `${y}%`)
 
+    // ⭐ 暂停 MutationObserver，防止在 View Transition 期间触发额外的 DOM 修改
+    const hadObserver = !!this.themeObserver
+    if (this.themeObserver) {
+      this.themeObserver.disconnect()
+    }
+
     // 执行主题切换的核心逻辑
     const doToggle = () => {
       // 优先使用适配器的原生切换逻辑 (针对 Gemini Business)
       if (this.adapter && typeof this.adapter.toggleTheme === "function") {
         this.adapter.toggleTheme(nextMode).catch(() => {})
       }
-      // 始终直接应用，确保切换生效
+      // 同步应用主题（包括 Shadow DOM）
       this.apply(nextMode)
     }
 
@@ -305,6 +318,10 @@ export class ThemeManager {
     ) {
       doToggle()
       this.mode = nextMode
+      // 恢复 observer
+      if (hadObserver) {
+        this.monitorTheme()
+      }
       return nextMode
     }
 
@@ -340,6 +357,19 @@ export class ThemeManager {
         },
       )
     })
+
+    // ⭐ 动画完成后恢复 MutationObserver
+    transition.finished.then(() => {
+      // 恢复 observer
+      if (hadObserver) {
+        this.monitorTheme()
+      }
+    })
+
+    // 触发回调通知 React 更新状态
+    if (this.onModeChange) {
+      this.onModeChange(nextMode)
+    }
 
     // 更新内部状态
     this.mode = nextMode
