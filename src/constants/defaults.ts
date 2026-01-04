@@ -45,5 +45,5 @@ export const DEFAULT_WEBDAV_CONFIG: WebDAVConfig = {
   url: "",
   username: "",
   password: "",
-  remotePath: "/chat-helper/backup.json",
+  remotePath: "/ophel/backup.json",
 }
