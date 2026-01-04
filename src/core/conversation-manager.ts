@@ -74,7 +74,7 @@ export class ConversationManager {
   /**
    * 触发数据变更通知
    */
-  private notifyDataChange() {
+  notifyDataChange() {
     this.onChangeCallbacks.forEach((cb) => cb())
   }
 

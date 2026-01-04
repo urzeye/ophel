@@ -187,6 +187,11 @@ export const resources = {
     outlineSearch: "搜索大纲...",
     outlineSearchResult: "个结果",
     outlineLevelHint: "级标题",
+    // 刷新按钮提示
+    refreshPrompts: "刷新提示词",
+    refreshOutline: "刷新大纲",
+    refreshConversations: "刷新会话",
+    refreshSettings: "刷新设置",
     // Tab 顺序设置
     tabOrderSettings: "界面排版",
     tabOrderDesc: "调整面板 Tab 的显示顺序",

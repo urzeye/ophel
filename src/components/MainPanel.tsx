@@ -328,13 +328,32 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             ⚙
           </button>
 
-          {/* 刷新按钮 */}
+          {/* 刷新按钮 - 根据当前 Tab 智能刷新 */}
           <button
             onClick={() => {
-              if (activeTab === "outline") outlineManager?.refresh()
-              // TODO: 添加 promptManager 和 conversationManager 的刷新方法
+              // 根据当前 Tab 执行对应的刷新逻辑
+              if (activeTab === "outline") {
+                outlineManager?.refresh()
+              } else if (activeTab === "prompts") {
+                // 重新加载提示词数据
+                promptManager?.loadPrompts()
+              } else if (activeTab === "conversations") {
+                // 触发数据变更通知，刷新 UI
+                conversationManager?.notifyDataChange()
+              }
+              // settings 不需要刷新
             }}
-            title={t("refresh")}
+            title={
+              activeTab === "outline"
+                ? t("refreshOutline")
+                : activeTab === "prompts"
+                  ? t("refreshPrompts")
+                  : activeTab === "conversations"
+                    ? t("refreshConversations")
+                    : activeTab === "settings"
+                      ? t("refreshSettings")
+                      : t("refresh")
+            }
             style={{
               background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
               border: "none",
