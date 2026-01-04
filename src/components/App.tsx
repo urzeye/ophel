@@ -134,7 +134,7 @@ export const App = () => {
   // ⭐ 从 window 获取 main.ts 创建的全局 ThemeManager 实例
   // 这样只有一个 ThemeManager 实例，避免竞争条件
   const themeManager = useMemo(() => {
-    const globalTM = (window as any).__ghThemeManager as ThemeManager | undefined
+    const globalTM = window.__ghThemeManager
     if (globalTM) {
       return globalTM
     }

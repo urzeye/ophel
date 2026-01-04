@@ -46,8 +46,8 @@ let themeManager: ThemeManager | null = null
 let scrollLockManager: ScrollLockManager | null = null
 
 // 防止重复初始化
-if (!(window as any).chatHelperInitialized) {
-  ;(window as any).chatHelperInitialized = true
+if (!window.chatHelperInitialized) {
+  window.chatHelperInitialized = true
 
   const adapter = getAdapter()
 
@@ -73,7 +73,7 @@ if (!(window as any).chatHelperInitialized) {
       )
       themeManager.apply()
       // 挂载到 window 对象，供 App.tsx 获取
-      ;(window as any).__ghThemeManager = themeManager
+      window.__ghThemeManager = themeManager
 
       // ⭐ 同步页面原生主题与settings
       // 恢复备份后,面板主题会正确应用,但Gemini页面本身的主题可能不一致

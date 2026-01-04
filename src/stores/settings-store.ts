@@ -42,22 +42,28 @@ const chromeStorageAdapter: StateStorage = {
           }
         }
 
-        // ⭐ 检测存储格式
-        // Zustand 格式有 state 字段，原始格式直接是 settings 对象
+        // ⭐ 检测存储格式（更严格的判断）
+        // Zustand 格式: { state: { settings: {...} }, version: 0 }
+        // 原始格式: { themeMode: "...", language: "...", ... }
         if (parsed && typeof parsed === "object") {
-          if ("state" in parsed && "settings" in parsed.state) {
-            // Zustand persist 格式，直接返回序列化后的字符串
+          // 1. 先检查是否是完整的 Zustand persist 格式
+          if (parsed.state && typeof parsed.state === "object" && "settings" in parsed.state) {
             resolve(JSON.stringify(parsed))
-          } else if ("themeMode" in parsed || "language" in parsed) {
-            // 原始 settings 格式（来自 WebDAV 恢复或旧数据）
+          }
+          // 2. 再检查是否是原始 Settings 格式（排除残缺的 Zustand 格式）
+          else if (
+            ("themeMode" in parsed || "language" in parsed || "tabOrder" in parsed) &&
+            !("state" in parsed)
+          ) {
             // 转换为 Zustand persist 期望的格式
             const zustandFormat = {
               state: { settings: parsed },
               version: 0,
             }
             resolve(JSON.stringify(zustandFormat))
-          } else {
-            // 未知格式，尝试直接返回
+          }
+          // 3. 未知格式，尝试直接返回
+          else {
             resolve(JSON.stringify(parsed))
           }
         } else {
