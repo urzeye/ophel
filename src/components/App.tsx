@@ -333,25 +333,13 @@ export const App = () => {
     }
   }, [settings?.autoHidePanel, isPanelOpen])
 
-  // 发送消息后自动清除选中的提示词悬浮条（及可选的清空输入框修复中文输入）
+  // 发送消息后自动清除选中的提示词悬浮条
   useEffect(() => {
-    if (!adapter) return
-    // 只有选中提示词时才需要清除悬浮条，但修复中文输入功能可能需要一直监听
-    const shouldClearTextarea = settings?.clearTextareaOnSend ?? false
-    if (!selectedPrompt && !shouldClearTextarea) return
+    if (!adapter || !selectedPrompt) return
 
     // 发送后执行清理
     const handleSend = () => {
-      // 清除悬浮条
-      if (selectedPrompt) {
-        setSelectedPrompt(null)
-      }
-      // Gemini Enterprise 专属：修复中文输入（插入零宽字符）
-      if (shouldClearTextarea) {
-        setTimeout(() => {
-          adapter.clearTextarea()
-        }, 200)
-      }
+      setSelectedPrompt(null)
     }
 
     // 点击发送按钮时
@@ -384,9 +372,16 @@ export const App = () => {
 
       // 使用 composedPath 检查事件源是否来自输入框（兼容 Shadow DOM）
       const path = e.composedPath()
-      const isFromTextarea = path.some(
-        (element) => element instanceof Element && adapter.isValidTextarea(element as HTMLElement),
-      )
+      const isFromTextarea = path.some((element) => {
+        if (!(element instanceof HTMLElement)) return false
+        // 优先使用 adapter 的验证方法
+        if (adapter.isValidTextarea(element)) return true
+        // 备用检测：针对 Shadow DOM 场景，直接检查元素特征
+        const isContentEditable = element.getAttribute("contenteditable") === "true"
+        const isProseMirror = element.classList.contains("ProseMirror")
+        const isTextarea = element.tagName === "TEXTAREA"
+        return isContentEditable || isProseMirror || isTextarea
+      })
 
       if (!isFromTextarea) return
 
@@ -401,7 +396,7 @@ export const App = () => {
       document.removeEventListener("click", handleClick, true)
       document.removeEventListener("keydown", handleKeydown, true)
     }
-  }, [adapter, selectedPrompt, settings?.clearTextareaOnSend])
+  }, [adapter, selectedPrompt])
 
   // 切换会话时自动清空选中的提示词悬浮条及输入框
   useEffect(() => {

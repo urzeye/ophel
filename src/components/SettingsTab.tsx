@@ -1472,14 +1472,7 @@ export const SettingsTab = () => {
           checked={settings.markdownFix ?? true}
           onChange={() => setSettings({ ...settings, markdownFix: !settings.markdownFix })}
         />
-        <ToggleRow
-          label={t("clearOnSendLabel")}
-          desc={t("clearOnSendDesc")}
-          checked={settings.clearTextareaOnSend ?? false}
-          onChange={() =>
-            setSettings({ ...settings, clearTextareaOnSend: !settings.clearTextareaOnSend })
-          }
-        />
+        \r
         <ToggleRow
           label={t("watermarkRemovalLabel") || "水印移除"}
           desc={t("watermarkRemovalDesc") || "自动移除AI生成图片的水印"}

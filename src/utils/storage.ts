@@ -90,7 +90,6 @@ export interface Settings {
   }
   tabOrder: string[]
   collapsedButtonsOrder: Array<{ id: string; enabled: boolean }> // 快捷按钮组配置
-  clearTextareaOnSend: boolean // Gemini Enterprise 专属：发送后修复中文输入
   themePresets: {
     lightPresetId: string // 浅色模式预置 ID
     darkPresetId: string // 深色模式预置 ID
@@ -164,7 +163,6 @@ export const DEFAULT_SETTINGS: Settings = {
     { id: "manualAnchor", enabled: true },
     { id: "scrollBottom", enabled: true },
   ],
-  clearTextareaOnSend: false, // Gemini Enterprise 专属：发送后修复中文输入
   themePresets: {
     lightPresetId: "google-gradient", // 默认浅色主题：Google 渐变
     darkPresetId: "classic-dark", // 默认深色主题：经典深黑
