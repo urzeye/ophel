@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
-import { useStorage } from "@plasmohq/storage/hook"
-
 import { getAdapter } from "~adapters/index"
+import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import {
   getScrollInfo,
@@ -11,7 +10,7 @@ import {
   smartScrollToBottom,
   smartScrollToTop,
 } from "~utils/scroll-helper"
-import { DEFAULT_SETTINGS, STORAGE_KEYS, type Settings } from "~utils/storage"
+import { DEFAULT_SETTINGS, type Settings } from "~utils/storage"
 
 // 折叠面板按钮定义
 // isPanelOnly: true 表示仅在面板折叠时显示，false 表示常显
@@ -46,7 +45,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   onThemeToggle,
   themeMode = "light",
 }) => {
-  const [settings] = useStorage<Settings>(STORAGE_KEYS.SETTINGS)
+  const { settings } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
   const { collapsedButtonsOrder } = currentSettings
 

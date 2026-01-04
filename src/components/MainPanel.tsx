@@ -1,12 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
-import { useStorage } from "@plasmohq/storage/hook"
-
 import type { SiteAdapter } from "~adapters/base"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
 import type { PromptManager } from "~core/prompt-manager"
 import { useDraggable } from "~hooks/useDraggable"
+import { useSettingsStore } from "~stores/settings-store"
 import type { Exporter } from "~utils/exporter"
 import { t } from "~utils/i18n"
 import {
@@ -15,7 +14,7 @@ import {
   smartScrollToBottom,
   smartScrollToTop,
 } from "~utils/scroll-helper"
-import { DEFAULT_SETTINGS, STORAGE_KEYS, type Prompt, type Settings } from "~utils/storage"
+import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
 
 import { ConversationsTab } from "./ConversationsTab"
 import { OutlineTab } from "./OutlineTab"
@@ -63,7 +62,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   onMouseEnter,
   onMouseLeave,
 }) => {
-  const [settings] = useStorage<Settings>(STORAGE_KEYS.SETTINGS)
+  const { settings } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
   const { tabOrder } = currentSettings
 

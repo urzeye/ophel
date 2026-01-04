@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
-import { useStorage } from "@plasmohq/storage/hook"
-
 import { ConfirmDialog, Switch } from "~components/ui"
 import { Toast } from "~components/ui/Toast"
 import { getWebDAVSyncManager, type BackupFile } from "~core/webdav-sync"
+import { useSettingsStore } from "~stores/settings-store"
 import { setLanguage, t } from "~utils/i18n"
 import { DEFAULT_SETTINGS, localStorage, STORAGE_KEYS, type Settings } from "~utils/storage"
 import { darkPresets, getPreset, lightPresets } from "~utils/themes"
@@ -734,33 +733,13 @@ const RemoteBackupModal = ({
 }
 
 export const SettingsTab = () => {
-  // 使用与 App.tsx 相同的 storage 配置，确保状态同步
-  const [settings, setSettings] = useStorage<Settings>(STORAGE_KEYS.SETTINGS, (saved) =>
-    saved === undefined ? DEFAULT_SETTINGS : { ...DEFAULT_SETTINGS, ...saved },
-  )
-
-  const updateNestedSetting = <K extends keyof Settings>(
-    section: K,
-    key: keyof Settings[K],
-    value: any,
-  ) => {
-    if (!settings) return
-    const newSettings = {
-      ...settings,
-      [section]: {
-        ...(settings[section] as object),
-        [key]: value,
-      },
-    }
-    setSettings(newSettings)
-  }
+  // 使用 Zustand Store 管理 settings
+  const { settings, setSettings, updateNestedSetting } = useSettingsStore()
 
   const handleLanguageChange = (lang: string) => {
     setLanguage(lang)
     if (settings) {
-      const newSettings = { ...settings, language: lang }
-      // ... save
-      setSettings(newSettings)
+      setSettings({ language: lang })
     }
   }
 

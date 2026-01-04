@@ -1,25 +1,22 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-import { useStorage } from "@plasmohq/storage/hook"
-
 import { getAdapter } from "~adapters/index"
 import { ConversationManager } from "~core/conversation-manager"
 import { OutlineManager } from "~core/outline-manager"
 import { PromptManager } from "~core/prompt-manager"
 import { ThemeManager } from "~core/theme-manager"
+import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { Exporter } from "~utils/exporter"
-import { DEFAULT_SETTINGS, STORAGE_KEYS, type Prompt, type Settings } from "~utils/storage"
+import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
 
 import { MainPanel } from "./MainPanel"
 import { QuickButtons } from "./QuickButtons"
 import { SelectedPromptBar } from "./SelectedPromptBar"
 
 export const App = () => {
-  // 读取设置 - useStorage 返回 [value, setter, { isLoading }]
-  const [settings, setSettings, { isLoading: isSettingsLoading }] = useStorage<Settings>(
-    STORAGE_KEYS.SETTINGS,
-    (saved) => (saved === undefined ? DEFAULT_SETTINGS : { ...DEFAULT_SETTINGS, ...saved }),
-  )
+  // 读取设置 - 使用 Zustand Store
+  const { settings, setSettings, updateNestedSetting } = useSettingsStore()
+  const isSettingsHydrated = useSettingsHydrated()
 
   // 面板状态 - 初始值来自设置
   const [isPanelOpen, setIsPanelOpen] = useState(false)
@@ -33,15 +30,15 @@ export const App = () => {
 
   // 当设置加载完成后，同步面板初始状态（只执行一次）
   useEffect(() => {
-    // 只有当 storage 真正加载完成（isLoading = false）且尚未初始化时才执行
-    if (!isSettingsLoading && settings && !hasInitializedPanel.current) {
+    // 只有当 Zustand hydration 完成且尚未初始化时才执行
+    if (isSettingsHydrated && settings && !hasInitializedPanel.current) {
       hasInitializedPanel.current = true
       // 如果 defaultPanelOpen 为 true，打开面板
       if (settings.defaultPanelOpen) {
         setIsPanelOpen(true)
       }
     }
-  }, [isSettingsLoading, settings])
+  }, [isSettingsHydrated, settings])
 
   // 选中的提示词状态
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null)
@@ -61,12 +58,12 @@ export const App = () => {
 
   // 当设置中的语言变化时，同步更新 i18n
   useEffect(() => {
-    if (!isSettingsLoading && settings?.language) {
+    if (isSettingsHydrated && settings?.language) {
       // 这里的 setLanguage 是从 utils/i18n 导入的全局函数
       const { setLanguage } = require("~utils/i18n")
       setLanguage(settings.language)
     }
-  }, [settings?.language, isSettingsLoading])
+  }, [settings?.language, isSettingsHydrated])
 
   // 当设置中的主题变化时，同步更新本地状态
   useEffect(() => {
@@ -105,25 +102,13 @@ export const App = () => {
   const outlineManager = useMemo(() => {
     if (!adapter) return null
 
-    // ⭐ 使用函数式更新来避免闭包陷阱
+    // ⭐ 使用 Zustand 的 updateNestedSetting
     const handleExpandLevelChange = (level: number) => {
-      setSettings((prev) => {
-        if (!prev) return prev
-        return {
-          ...prev,
-          outline: { ...prev.outline, expandLevel: level },
-        }
-      })
+      updateNestedSetting("outline", "expandLevel", level)
     }
 
     const handleShowUserQueriesChange = (show: boolean) => {
-      setSettings((prev) => {
-        if (!prev) return prev
-        return {
-          ...prev,
-          outline: { ...prev.outline, showUserQueries: show },
-        }
-      })
+      updateNestedSetting("outline", "showUserQueries", show)
     }
 
     return new OutlineManager(
@@ -133,7 +118,7 @@ export const App = () => {
       handleShowUserQueriesChange,
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在 adapter 变化时重新创建
-  }, [adapter, setSettings])
+  }, [adapter, updateNestedSetting])
 
   // ⭐ 单独用 useEffect 同步 settings 变化到 manager
   useEffect(() => {
@@ -169,8 +154,8 @@ export const App = () => {
   useEffect(() => {
     const handleThemeModeChange = (mode: "light" | "dark") => {
       setThemeMode(mode)
-      // 同时保存到 storage
-      setSettings((prev) => (prev ? { ...prev, themeMode: mode } : prev))
+      // 同时保存到 Zustand Store
+      setSettings({ themeMode: mode })
     }
     themeManager.setOnModeChange(handleThemeModeChange)
 
@@ -181,35 +166,23 @@ export const App = () => {
   }, [themeManager, setSettings])
 
   // 监听主题预置变化，动态更新 ThemeManager
-  // ⭐ 跳过页面加载后一段时间内的调用,因为:
-  // 1. main.ts 已经用正确的 storage 值初始化了 ThemeManager
-  // 2. Plasmo useStorage 有缓存机制,页面刷新后可能先返回缓存的旧值
-  // 3. 只有在页面稳定后用户手动修改设置时才应该调用 setPresets
-  const pageLoadTime = useRef(Date.now())
-  const hasInitializedPresets = useRef(false)
+  // Zustand 不存在 Plasmo useStorage 的缓存问题，无需启动保护期
   useEffect(() => {
+    if (!isSettingsHydrated) return // 等待 hydration 完成
+
     const lightId = settings?.themePresets?.lightPresetId
     const darkId = settings?.themePresets?.darkPresetId
-    const timeSinceLoad = Date.now() - pageLoadTime.current
-
-    // 跳过页面加载后 3 秒内的所有调用（避免 useStorage 缓存值覆盖 main.ts 设置）
-    if (timeSinceLoad < 3000) {
-      console.log("[App] setPresets skipped: within 3s of page load")
-      hasInitializedPresets.current = true
-      return
-    }
-
-    if (!hasInitializedPresets.current) {
-      hasInitializedPresets.current = true
-      console.log("[App] setPresets skipped: first render after stabilization")
-      return
-    }
 
     if (lightId && darkId) {
       console.log("[App] setPresets called:", { lightId, darkId })
       themeManager.setPresets(lightId, darkId)
     }
-  }, [settings?.themePresets?.lightPresetId, settings?.themePresets?.darkPresetId, themeManager])
+  }, [
+    settings?.themePresets?.lightPresetId,
+    settings?.themePresets?.darkPresetId,
+    themeManager,
+    isSettingsHydrated,
+  ])
 
   // 主题切换（异步处理，支持 View Transitions API 动画）
   // ⭐ 不在这里更新 React 状态，由 ThemeManager 的 onModeChange 回调在动画完成后统一处理

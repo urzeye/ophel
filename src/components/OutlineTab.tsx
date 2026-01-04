@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
-import { useStorage } from "@plasmohq/storage/hook"
-
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
+import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
-import { DEFAULT_SETTINGS, STORAGE_KEYS, type Settings } from "~utils/storage"
+import { DEFAULT_SETTINGS, type Settings } from "~utils/storage"
 
 interface OutlineTabProps {
   manager: OutlineManager
@@ -300,10 +299,8 @@ const LocateIcon = () => (
 )
 
 export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore }) => {
-  // 获取设置
-  const [settings] = useStorage<Settings>(STORAGE_KEYS.SETTINGS, (saved) =>
-    saved === undefined ? DEFAULT_SETTINGS : { ...DEFAULT_SETTINGS, ...saved },
-  )
+  // 获取设置 - 使用 Zustand Store
+  const { settings } = useSettingsStore()
 
   // Initialize state from manager to prevent flicker
   const initialState = manager.getState()
