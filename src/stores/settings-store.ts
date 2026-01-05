@@ -75,14 +75,11 @@ const chromeStorageAdapter: StateStorage = {
 
   setItem: async (name: string, value: string): Promise<void> => {
     return new Promise((resolve) => {
-      // 尝试解析 JSON，如果成功则存储对象（保持与原有格式兼容）
-      let toStore: any = value
-      try {
-        toStore = JSON.parse(value)
-      } catch {
-        // 如果不是有效 JSON，直接存储字符串
-      }
-      chrome.storage.local.set({ [name]: toStore }, () => {
+      // ⭐ 直接存储 JSON 字符串，确保与 Plasmo storage.watch 兼容
+      // Plasmo 的 parseValue 会调用 JSON.parse，期望收到字符串
+      // 如果存储对象，watch 回调收到对象后 parseValue 会报错：
+      // SyntaxError: "[object Object]" is not valid JSON
+      chrome.storage.local.set({ [name]: value }, () => {
         resolve()
       })
     })

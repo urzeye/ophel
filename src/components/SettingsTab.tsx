@@ -2353,11 +2353,19 @@ export const SettingsTab = () => {
                     onConfirm: async () => {
                       setConfirmConfig((prev) => ({ ...prev, show: false }))
                       try {
-                        // 即使 Plasmo 以前用字符串存储，直接存对象也是兼容的（且更好）
-                        // 因此我们不再“脱水”（stringify），而是直接恢复对象结构。
-                        // 如果原先存储的是 JSON 字符串，现在也会变成对象，Plasmo 读取时支持对象。
+                        // ⭐ Dehydrate: 将对象序列化回 JSON 字符串
+                        // 与 WebDAV 恢复逻辑保持一致，确保 Plasmo storage.watch 能正确解析
+                        const dehydratedData = Object.fromEntries(
+                          Object.entries(data.data).map(([k, v]) => {
+                            if (v !== null && typeof v === "object") {
+                              return [k, JSON.stringify(v)]
+                            }
+                            return [k, v]
+                          }),
+                        )
+
                         await new Promise<void>((resolve, reject) =>
-                          chrome.storage.local.set(data.data, () =>
+                          chrome.storage.local.set(dehydratedData, () =>
                             chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
                           ),
                         )
