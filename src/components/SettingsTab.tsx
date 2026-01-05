@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import { ConfirmDialog, Switch } from "~components/ui"
-import { Toast } from "~components/ui/Toast"
 import { COLLAPSED_BUTTON_DEFS, TAB_DEFINITIONS } from "~constants"
 import { getWebDAVSyncManager, type BackupFile } from "~core/webdav-sync"
 import { useSettingsStore } from "~stores/settings-store"
 import { setLanguage, t } from "~utils/i18n"
 import { DEFAULT_SETTINGS, localStorage, STORAGE_KEYS, type Settings } from "~utils/storage"
 import { darkPresets, getPreset, lightPresets } from "~utils/themes"
+import { showToast as showDomToast } from "~utils/toast"
 
 // 通用开关组件
 const ToggleRow: React.FC<{
@@ -442,12 +442,6 @@ const RemoteBackupModal = ({
   const [loading, setLoading] = useState(true)
   const [manager] = useState(() => getWebDAVSyncManager())
 
-  // Internal Toast State
-  const [toast, setToast] = useState<{
-    message: string
-    type: "success" | "error" | "info"
-  } | null>(null)
-
   // Confirmation Dialog State
   const [confirmConfig, setConfirmConfig] = useState<{
     show: boolean
@@ -462,10 +456,6 @@ const RemoteBackupModal = ({
     onConfirm: () => {},
   })
 
-  const showToast = (message: string, type: "success" | "error" | "info" = "info") => {
-    setToast({ message, type })
-  }
-
   const loadBackups = async () => {
     setLoading(true)
     try {
@@ -473,7 +463,7 @@ const RemoteBackupModal = ({
       setBackups(list)
     } catch (e) {
       console.error(e)
-      showToast(String(e), "error")
+      showDomToast(String(e))
     } finally {
       setLoading(false)
     }
@@ -494,16 +484,16 @@ const RemoteBackupModal = ({
         try {
           const result = await manager.download(file.name)
           if (result.success) {
-            showToast("恢复成功，即将刷新页面...", "success")
+            showDomToast("恢复成功，即将刷新页面...")
             setTimeout(() => {
               onRestore() // Refresh data or UI
               onClose()
             }, 1000)
           } else {
-            showToast("恢复失败: " + result.messageKey, "error")
+            showDomToast("恢复失败: " + result.messageKey)
           }
         } catch (e) {
-          showToast("恢复失败: " + String(e), "error")
+          showDomToast("恢复失败: " + String(e))
         }
       },
     })
@@ -521,14 +511,14 @@ const RemoteBackupModal = ({
           setLoading(true)
           const result = await manager.deleteFile(file.name)
           if (result.success) {
-            showToast("删除成功", "success")
+            showDomToast("删除成功")
             await loadBackups()
           } else {
-            showToast("删除失败: " + result.messageKey, "error")
+            showDomToast("删除失败: " + result.messageKey)
             setLoading(false)
           }
         } catch (e) {
-          showToast("删除失败: " + String(e), "error")
+          showDomToast("删除失败: " + String(e))
           setLoading(false)
         }
       },
@@ -566,13 +556,7 @@ const RemoteBackupModal = ({
           display: "flex",
           flexDirection: "column",
           boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-          position: "relative", // For toast context if needed, but Toast uses portal
         }}>
-        {/* Toast inside modal context? No, Toast uses portal to body. */}
-        {toast && (
-          <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
-        )}
-
         {/* Confirmation Dialog */}
         {confirmConfig.show && (
           <ConfirmDialog
@@ -818,12 +802,6 @@ export const SettingsTab = () => {
   // ... inside SettingsTab component ...
   const [showRemoteBackups, setShowRemoteBackups] = useState(false)
 
-  // Internal Toast State for SettingsTab
-  const [toast, setToast] = useState<{
-    message: string
-    type: "success" | "error" | "info"
-  } | null>(null)
-
   // Confirmation Dialog State for SettingsTab
   const [confirmConfig, setConfirmConfig] = useState<{
     show: boolean
@@ -840,17 +818,10 @@ export const SettingsTab = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Helper to show toast
-  const showToast = (message: string, type: "success" | "error" | "info" = "info") => {
-    setToast({ message, type })
-  }
-
   if (!settings) return <div style={{ padding: "16px" }}>加载设置中...</div>
 
   return (
     <>
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
       {confirmConfig.show && (
         <ConfirmDialog
           title={confirmConfig.title}
@@ -2084,7 +2055,7 @@ export const SettingsTab = () => {
                   onClick={async () => {
                     const url = settings.webdav?.url
                     if (!url) {
-                      showToast(t("webdavConfigIncomplete") || "请填写完整的 WebDAV 配置", "error")
+                      showDomToast(t("webdavConfigIncomplete") || "请填写完整的 WebDAV 配置")
                       return
                     }
 
@@ -2127,10 +2098,11 @@ export const SettingsTab = () => {
 
                       const result = await manager.testConnection()
                       const msg = t(result.messageKey) || result.messageKey
-                      showToast(msg, result.success ? "success" : "error")
+                      // ⭐ 使用 DOM 版本的 showToast，避免 React Portal 和 Shadow DOM 问题
+                      showDomToast(msg)
                     } catch (err) {
                       console.error("[SettingsTab] Test Connection Error:", err)
-                      showToast("Error: " + String(err), "error")
+                      showDomToast("Error: " + String(err))
                     }
                   }}
                   style={{
@@ -2221,9 +2193,14 @@ export const SettingsTab = () => {
                     }
 
                     try {
-                      // ⭐ 备份前先将完整的 settings 写入 storage
+                      // ⭐ 备份前先将完整的 settings 写入 storage（使用 Zustand 兼容格式）
+                      // 注意：必须使用 Zustand persist 期望的格式，否则会触发 rehydration 导致 toast 状态丢失
+                      const zustandFormat = {
+                        state: { settings },
+                        version: 0,
+                      }
                       await new Promise<void>((resolve, reject) =>
-                        chrome.storage.local.set({ settings: JSON.stringify(settings) }, () =>
+                        chrome.storage.local.set({ settings: JSON.stringify(zustandFormat) }, () =>
                           chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
                         ),
                       )
@@ -2235,10 +2212,11 @@ export const SettingsTab = () => {
                       }
                       const result = await manager.upload()
                       const msg = t(result.messageKey) || result.messageKey
-                      showToast(msg, result.success ? "success" : "error")
+                      // ⭐ 使用 DOM 版本的 showToast，避免 React Portal 和 Shadow DOM 问题
+                      showDomToast(msg)
                     } catch (err) {
                       console.error("[SettingsTab] Backup Error:", err)
-                      showToast("Error: " + String(err), "error")
+                      showDomToast("Error: " + String(err))
                     }
                   }}
                   style={{
@@ -2312,9 +2290,9 @@ export const SettingsTab = () => {
                   a.download = `ophel-backup-${new Date().toISOString().slice(0, 10)}.json`
                   a.click()
                   URL.revokeObjectURL(url)
-                  showToast(t("exportSuccess") || "导出成功！", "success")
+                  showDomToast(t("exportSuccess") || "导出成功！")
                 } catch (err) {
-                  showToast(t("exportError") || "导出失败：" + String(err), "error")
+                  showDomToast(t("exportError") || "导出失败：" + String(err))
                 }
               }}
               style={{
@@ -2343,7 +2321,7 @@ export const SettingsTab = () => {
                   const text = await file.text()
                   const data = JSON.parse(text)
                   if (!data.version || !data.data) {
-                    showToast(t("invalidBackupFile") || "无效的格式", "error")
+                    showDomToast(t("invalidBackupFile") || "无效的格式")
                     return
                   }
 
@@ -2377,15 +2355,15 @@ export const SettingsTab = () => {
                             chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
                           ),
                         )
-                        showToast(t("importSuccess") || "导入成功", "success")
+                        showDomToast(t("importSuccess") || "导入成功")
                         setTimeout(() => window.location.reload(), 1000)
                       } catch (err) {
-                        showToast(t("importError") || "导入失败：" + String(err), "error")
+                        showDomToast(t("importError") || "导入失败：" + String(err))
                       }
                     },
                   })
                 } catch (err) {
-                  showToast(t("importError") || "导入失败：" + String(err), "error")
+                  showDomToast(t("importError") || "导入失败：" + String(err))
                 } finally {
                   if (fileInputRef.current) fileInputRef.current.value = ""
                 }
@@ -2430,10 +2408,10 @@ export const SettingsTab = () => {
                           ),
                         ),
                       ])
-                      showToast("所有数据已清除，即将刷新页面...", "success")
+                      showDomToast("所有数据已清除，即将刷新页面...")
                       setTimeout(() => window.location.reload(), 1000)
                     } catch (err) {
-                      showToast("清除失败：" + String(err), "error")
+                      showDomToast("清除失败：" + String(err))
                     }
                   },
                 })
@@ -2458,18 +2436,14 @@ export const SettingsTab = () => {
                 )
                 console.log("=== Settings Debug ===")
                 console.log("Settings type:", typeof data.settings)
-                console.log("Settings value:", data.settings)
                 if (typeof data.settings === "string") {
                   try {
                     const parsed = JSON.parse(data.settings)
-                    console.log("Parsed settings:", parsed)
-                    console.log("Language:", parsed.language)
-                    console.log("ThemeMode:", parsed.themeMode)
                   } catch (e) {
                     console.error("Parse error:", e)
                   }
                 }
-                showToast("查看控制台输出", "info")
+                showDomToast("查看控制台输出")
               }}
               style={{
                 width: "100%",
