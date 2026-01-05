@@ -14,18 +14,17 @@ import { SelectedPromptBar } from "./SelectedPromptBar"
 
 export const App = () => {
   // 读取设置 - 使用 Zustand Store
-  const { settings, setSettings, updateNestedSetting } = useSettingsStore()
+  const { settings, setSettings, updateNestedSetting, updateDeepSetting } = useSettingsStore()
   const isSettingsHydrated = useSettingsHydrated()
 
   // 面板状态 - 初始值来自设置
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const hasInitializedPanel = useRef(false)
 
-  // 主题状态 - 与 settings 同步 (不再支持 auto)
-  // 如果旧数据中有 auto，将其视为 light 处理，或者在初始化 ThemeManager 时会被强制转换
-  const [themeMode, setThemeMode] = useState<"light" | "dark">(
-    settings?.themeMode === "dark" ? "dark" : "light",
-  )
+  // 主题状态 - 与 settings 同步
+  // ⭐ 初始值使用 "light" 作为默认值，待 settings 加载后由 useEffect 同步
+  const [themeMode, setThemeMode] = useState<"light" | "dark">("light")
+  const hasInitializedTheme = useRef(false)
 
   // 当设置加载完成后，同步面板初始状态（只执行一次）
   useEffect(() => {
@@ -33,7 +32,7 @@ export const App = () => {
     if (isSettingsHydrated && settings && !hasInitializedPanel.current) {
       hasInitializedPanel.current = true
       // 如果 defaultPanelOpen 为 true，打开面板
-      if (settings.defaultPanelOpen) {
+      if (settings.panel?.defaultOpen) {
         setIsPanelOpen(true)
       }
     }
@@ -65,11 +64,31 @@ export const App = () => {
   }, [settings?.language, isSettingsHydrated])
 
   // 当设置中的主题变化时，同步更新本地状态
+  // ⭐ 重要：确保首次加载和后续变化都能正确同步 themeMode
   useEffect(() => {
-    if (settings?.themeMode && settings.themeMode !== themeMode) {
-      setThemeMode(settings.themeMode)
+    if (!isSettingsHydrated) return // 等待 settings 加载完成
+
+    const siteTheme = settings?.theme?.sites?._default || settings?.theme?.sites?.gemini
+    const savedMode = siteTheme?.mode
+
+    // 首次加载时，从 settings 同步主题模式
+    if (!hasInitializedTheme.current && savedMode) {
+      hasInitializedTheme.current = true
+      if (savedMode !== themeMode) {
+        setThemeMode(savedMode)
+      }
+      return
     }
-  }, [settings?.themeMode])
+
+    // 后续更新时，仅当 mode 真的变化时同步
+    if (savedMode && savedMode !== themeMode) {
+      setThemeMode(savedMode)
+    }
+  }, [
+    isSettingsHydrated,
+    settings?.theme?.sites?._default?.mode,
+    settings?.theme?.sites?.gemini?.mode,
+  ])
 
   const panelRef = useRef<HTMLDivElement>(null)
 
@@ -101,28 +120,28 @@ export const App = () => {
   const outlineManager = useMemo(() => {
     if (!adapter) return null
 
-    // ⭐ 使用 Zustand 的 updateNestedSetting
+    // ⭐ 使用 Zustand 的 updateDeepSetting
     const handleExpandLevelChange = (level: number) => {
-      updateNestedSetting("outline", "expandLevel", level)
+      updateDeepSetting("features", "outline", "expandLevel", level)
     }
 
     const handleShowUserQueriesChange = (show: boolean) => {
-      updateNestedSetting("outline", "showUserQueries", show)
+      updateDeepSetting("features", "outline", "showUserQueries", show)
     }
 
     return new OutlineManager(
       adapter,
-      settings?.outline ?? DEFAULT_SETTINGS.outline,
+      settings?.features?.outline ?? DEFAULT_SETTINGS.features.outline,
       handleExpandLevelChange,
       handleShowUserQueriesChange,
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在 adapter 变化时重新创建
-  }, [adapter, updateNestedSetting])
+  }, [adapter, updateDeepSetting])
 
   // ⭐ 单独用 useEffect 同步 settings 变化到 manager
   useEffect(() => {
     if (outlineManager && settings) {
-      outlineManager.updateSettings(settings.outline)
+      outlineManager.updateSettings(settings.features?.outline)
     }
   }, [outlineManager, settings])
 
@@ -135,12 +154,13 @@ export const App = () => {
     }
     // 降级：如果 main.ts 还没创建，则临时创建一个（不应该发生）
     console.warn("[App] Global ThemeManager not found, creating fallback instance")
+    const fallbackTheme = settings?.theme?.sites?._default || settings?.theme?.sites?.gemini
     return new ThemeManager(
       themeMode,
       undefined,
       adapter,
-      settings?.themePresets?.lightPresetId || "google-gradient",
-      settings?.themePresets?.darkPresetId || "classic-dark",
+      fallbackTheme?.lightPresetId || "google-gradient",
+      fallbackTheme?.darkPresetId || "classic-dark",
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在初始化时获取
   }, [])
@@ -149,8 +169,24 @@ export const App = () => {
   useEffect(() => {
     const handleThemeModeChange = (mode: "light" | "dark") => {
       setThemeMode(mode)
-      // 同时保存到 Zustand Store
-      setSettings({ themeMode: mode })
+      // 同时保存到 Zustand Store - 更新站点主题配置
+      const sites = settings?.theme?.sites || {}
+      const defaultSite = sites._default || sites.gemini || {}
+      setSettings({
+        theme: {
+          ...settings?.theme,
+          sites: {
+            ...sites,
+            _default: {
+              enabledStyleIds: [],
+              lightPresetId: "google-gradient",
+              darkPresetId: "classic-dark",
+              ...defaultSite,
+              mode,
+            },
+          },
+        },
+      })
     }
     themeManager.setOnModeChange(handleThemeModeChange)
 
@@ -158,25 +194,21 @@ export const App = () => {
     return () => {
       themeManager.setOnModeChange(undefined)
     }
-  }, [themeManager, setSettings])
+  }, [themeManager, setSettings, settings?.theme])
 
   // 监听主题预置变化，动态更新 ThemeManager
   // Zustand 不存在 Plasmo useStorage 的缓存问题，无需启动保护期
   useEffect(() => {
     if (!isSettingsHydrated) return // 等待 hydration 完成
 
-    const lightId = settings?.themePresets?.lightPresetId
-    const darkId = settings?.themePresets?.darkPresetId
+    const siteTheme = settings?.theme?.sites?._default || settings?.theme?.sites?.gemini
+    const lightId = siteTheme?.lightPresetId
+    const darkId = siteTheme?.darkPresetId
 
     if (lightId && darkId) {
       themeManager.setPresets(lightId, darkId)
     }
-  }, [
-    settings?.themePresets?.lightPresetId,
-    settings?.themePresets?.darkPresetId,
-    themeManager,
-    isSettingsHydrated,
-  ])
+  }, [settings?.theme?.sites, themeManager, isSettingsHydrated])
 
   // 主题切换（异步处理，支持 View Transitions API 动画）
   // ⭐ 不在这里更新 React 状态，由 ThemeManager 的 onModeChange 回调在动画完成后统一处理
@@ -224,7 +256,7 @@ export const App = () => {
   // 使用 MutationObserver 监听 Portal 元素（菜单/对话框）的存在
   // 当 Portal 元素存在时，强制设置 isEdgePeeking 为 true，防止 CSS :hover 失效导致面板隐藏
   useEffect(() => {
-    if (!edgeSnapState || !settings?.edgeSnapHide) return
+    if (!edgeSnapState || !settings?.panel?.edgeSnap) return
 
     const portalSelector =
       ".conversations-dialog-overlay, .conversations-folder-menu, .conversations-tag-filter-menu, .prompt-modal"
@@ -280,11 +312,11 @@ export const App = () => {
     return () => {
       observer.disconnect()
     }
-  }, [edgeSnapState, settings?.edgeSnapHide])
+  }, [edgeSnapState, settings?.panel?.edgeSnap])
 
   // 自动隐藏面板 - 点击外部关闭
   useEffect(() => {
-    if (!settings?.autoHidePanel || !isPanelOpen) return
+    if (!settings?.panel?.autoHide || !isPanelOpen) return
 
     const handleClickOutside = (e: MouseEvent) => {
       // 使用 composedPath() 支持 Shadow DOM
@@ -319,7 +351,7 @@ export const App = () => {
       clearTimeout(timer)
       document.removeEventListener("click", handleClickOutside, true)
     }
-  }, [settings?.autoHidePanel, isPanelOpen])
+  }, [settings?.panel?.autoHide, isPanelOpen])
 
   // 发送消息后自动清除选中的提示词悬浮条
   useEffect(() => {
@@ -458,7 +490,7 @@ export const App = () => {
           }
           // 当处于吸附状态时，鼠标进入面板应设置 isEdgePeeking = true
           // 这样 onMouseLeave 时才能正确隐藏
-          if (edgeSnapState && settings?.edgeSnapHide && !isEdgePeeking) {
+          if (edgeSnapState && settings?.panel?.edgeSnap && !isEdgePeeking) {
             setIsEdgePeeking(true)
           }
         }}
@@ -479,7 +511,7 @@ export const App = () => {
             if (interactionActive || hasPortal) return
 
             // 安全检查后隐藏面板
-            if (edgeSnapState && settings?.edgeSnapHide && isEdgePeeking) {
+            if (edgeSnapState && settings?.panel?.edgeSnap && isEdgePeeking) {
               setIsEdgePeeking(false)
             }
           }, 200)
@@ -490,7 +522,7 @@ export const App = () => {
         onPanelToggle={() => {
           if (!isPanelOpen) {
             // 展开面板：如果处于吸附状态，进入 peek 模式
-            if (edgeSnapState && settings?.edgeSnapHide) {
+            if (edgeSnapState && settings?.panel?.edgeSnap) {
               setIsEdgePeeking(true)
             }
           } else {

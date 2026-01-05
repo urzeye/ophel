@@ -28,7 +28,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 }) => {
   const { settings } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
-  const { collapsedButtonsOrder } = currentSettings
+  const collapsedButtonsOrder = currentSettings.collapsedButtons || []
 
   // 锚点状态
   const [hasAnchor, setHasAnchor] = useState(false)

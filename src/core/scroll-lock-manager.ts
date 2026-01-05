@@ -23,19 +23,19 @@ export class ScrollLockManager {
   }
 
   updateSettings(settings: Settings) {
-    const wasEnabled = this.settings.preventAutoScroll
+    const wasEnabled = this.settings.panel?.preventAutoScroll
     this.settings = settings
 
     // 动态开关支持
-    if (!wasEnabled && settings.preventAutoScroll) {
+    if (!wasEnabled && settings.panel?.preventAutoScroll) {
       this.enable()
-    } else if (wasEnabled && !settings.preventAutoScroll) {
+    } else if (wasEnabled && !settings.panel?.preventAutoScroll) {
       this.disable()
     }
   }
 
   private init() {
-    if (!this.settings.preventAutoScroll) {
+    if (!this.settings.panel?.preventAutoScroll) {
       return
     }
 

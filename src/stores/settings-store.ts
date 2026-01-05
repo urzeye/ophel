@@ -26,6 +26,7 @@ interface SettingsState {
     key: keyof Settings[K],
     value: any,
   ) => void
+  updateDeepSetting: (section: keyof Settings, subsection: string, key: string, value: any) => void
   replaceSettings: (settings: Settings) => void
   resetSettings: () => void
   setHasHydrated: (state: boolean) => void
@@ -49,7 +50,7 @@ export const useSettingsStore = create<SettingsState>()(
 
       /**
        * 更新嵌套设置项
-       * 例如: updateNestedSetting("outline", "enabled", true)
+       * 例如: updateNestedSetting("tab", "autoRename", true)
        */
       updateNestedSetting: (section, key, value) =>
         set((state) => ({
@@ -61,6 +62,28 @@ export const useSettingsStore = create<SettingsState>()(
             },
           },
         })),
+
+      /**
+       * 更新深层嵌套设置项（三层）
+       * 例如: updateDeepSetting("features", "outline", "enabled", true)
+       */
+      updateDeepSetting: (section, subsection, key, value) =>
+        set((state) => {
+          const sectionObj = state.settings[section] as Record<string, unknown>
+          const subsectionObj = (sectionObj?.[subsection] || {}) as Record<string, unknown>
+          return {
+            settings: {
+              ...state.settings,
+              [section]: {
+                ...sectionObj,
+                [subsection]: {
+                  ...subsectionObj,
+                  [key]: value,
+                },
+              },
+            },
+          }
+        }),
 
       /**
        * 完全替换 settings（用于 WebDAV 恢复等场景）

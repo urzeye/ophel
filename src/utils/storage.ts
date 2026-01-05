@@ -23,41 +23,99 @@ export const STORAGE_KEYS = {
 
 // ==================== 类型定义 ====================
 
+// 站点 ID 类型
+export type SiteId = "gemini" | "gemini-enterprise" | "_default"
+
+// 主题模式
+export type ThemeMode = "light" | "dark"
+
+// 站点主题配置
+export interface SiteThemeConfig {
+  mode: ThemeMode
+  lightPresetId: string
+  darkPresetId: string
+  enabledStyleIds: string[]
+}
+
+// 自定义样式
+export interface CustomStyle {
+  id: string
+  name: string
+  css: string
+}
+
+// 页面宽度配置
+export interface PageWidthConfig {
+  enabled: boolean
+  value: string
+  unit: string
+}
+
+// 模型锁定配置
+export interface ModelLockConfig {
+  enabled: boolean
+  keyword: string
+}
+
 export interface Settings {
   language: string
-  markdownFix: boolean
-  themeMode: "light" | "dark"
-  defaultPanelOpen: boolean
-  autoHidePanel: boolean
-  edgeSnapHide: boolean // 边缘吸附隐藏
-  preventAutoScroll: boolean // 防止自动滚动
-  watermarkRemoval: boolean // 水印移除
-  pageWidth: { enabled: boolean; value: string; unit: string }
-  // 模型锁定 - 按站点单独配置
-  modelLockConfig: Record<
-    string,
-    {
+
+  // 面板行为
+  panel: {
+    defaultOpen: boolean
+    autoHide: boolean
+    edgeSnap: boolean
+    preventAutoScroll: boolean
+  }
+
+  // 内容处理（含复制、导出）
+  content: {
+    markdownFix: boolean
+    watermarkRemoval: boolean
+    formulaCopy: boolean
+    formulaDelimiter: boolean
+    tableCopy: boolean
+    exportImagesToBase64: boolean
+  }
+
+  // 主题（按站点独立 + 共享样式）
+  theme: {
+    sites: Partial<Record<SiteId, SiteThemeConfig>>
+    customStyles: string // 自定义 CSS 字符串
+  }
+
+  // 页面宽度（按站点独立）
+  pageWidth: Record<SiteId, PageWidthConfig>
+
+  // 模型锁定（按站点独立）
+  modelLock: Record<string, ModelLockConfig>
+
+  // 功能模块配置
+  features: {
+    order: string[]
+    prompts: {
       enabled: boolean
-      keyword: string
     }
-  >
-  outline: {
-    enabled: boolean
-    maxLevel: number
-    autoUpdate: boolean
-    updateInterval: number // 更新间隔(秒)
-    showUserQueries: boolean
-    followMode: "current" | "latest" | "manual" // 大纲跟随模式
-    expandLevel: number // 展开层级（持久化）
+    conversations: {
+      enabled: boolean
+      syncUnpin: boolean
+      folderRainbow: boolean
+    }
+    outline: {
+      enabled: boolean
+      maxLevel: number
+      autoUpdate: boolean
+      updateInterval: number
+      showUserQueries: boolean
+      followMode: "current" | "latest" | "manual"
+      expandLevel: number
+    }
   }
-  readingHistory: {
-    persistence: boolean
-    autoRestore: boolean
-    cleanupDays: number
-  }
-  tabSettings: {
+
+  // 浏览器标签页行为
+  tab: {
     openInNewTab: boolean
-    autoRenameTab: boolean
+    autoRename: boolean
     renameInterval: number
     showStatus: boolean
     titleFormat: string
@@ -70,28 +128,18 @@ export interface Settings {
     privacyTitle: string
     customIcon: string
   }
-  conversations: {
-    enabled: boolean
-    syncUnpin: boolean
-    folderRainbow: boolean
-    exportImagesToBase64: boolean
+
+  // 阅读历史配置
+  readingHistory: {
+    persistence: boolean
+    autoRestore: boolean
+    cleanupDays: number
   }
-  prompts: {
-    enabled: boolean
-  }
-  tabOrder: string[]
-  collapsedButtonsOrder: Array<{ id: string; enabled: boolean }> // 快捷按钮组配置
-  themePresets: {
-    lightPresetId: string // 浅色模式预置 ID
-    darkPresetId: string // 深色模式预置 ID
-  }
-  copy: {
-    formulaCopyEnabled: boolean
-    formulaDelimiterEnabled: boolean
-    tableCopyEnabled: boolean
-  }
-  customCSS: string // 自定义 CSS
-  // WebDAV 同步配置
+
+  // 快捷按钮配置
+  collapsedButtons: Array<{ id: string; enabled: boolean }>
+
+  // WebDAV 同步
   webdav?: {
     enabled: boolean
     url: string
@@ -105,37 +153,84 @@ export interface Settings {
   }
 }
 
+// 默认站点主题配置
+const DEFAULT_SITE_THEME: SiteThemeConfig = {
+  mode: "light",
+  lightPresetId: "google-gradient",
+  darkPresetId: "classic-dark",
+  enabledStyleIds: [],
+}
+
+// 默认页面宽度配置
+const DEFAULT_PAGE_WIDTH: PageWidthConfig = {
+  enabled: false,
+  value: "81",
+  unit: "%",
+}
+
 export const DEFAULT_SETTINGS: Settings = {
   language: "auto",
-  markdownFix: true,
-  themeMode: "light",
-  defaultPanelOpen: true,
-  autoHidePanel: false,
-  edgeSnapHide: true,
-  preventAutoScroll: false,
-  watermarkRemoval: true,
-  pageWidth: { enabled: false, value: "81", unit: "%" },
-  modelLockConfig: {
+
+  panel: {
+    defaultOpen: true,
+    autoHide: false,
+    edgeSnap: true,
+    preventAutoScroll: false,
+  },
+
+  content: {
+    markdownFix: true,
+    watermarkRemoval: true,
+    formulaCopy: true,
+    formulaDelimiter: true,
+    tableCopy: true,
+    exportImagesToBase64: false,
+  },
+
+  theme: {
+    sites: {
+      gemini: { ...DEFAULT_SITE_THEME },
+      "gemini-enterprise": { ...DEFAULT_SITE_THEME },
+      _default: { ...DEFAULT_SITE_THEME },
+    },
+    customStyles: "",
+  },
+
+  pageWidth: {
+    gemini: { ...DEFAULT_PAGE_WIDTH },
+    "gemini-enterprise": { ...DEFAULT_PAGE_WIDTH },
+    _default: { ...DEFAULT_PAGE_WIDTH },
+  },
+
+  modelLock: {
     gemini: { enabled: false, keyword: "" },
     "gemini-enterprise": { enabled: false, keyword: "" },
   },
-  outline: {
-    enabled: true,
-    maxLevel: 6,
-    autoUpdate: true,
-    updateInterval: 2,
-    showUserQueries: true,
-    followMode: "current", // 默认跟随当前位置
-    expandLevel: 6,
+
+  features: {
+    order: ["prompts", "conversations", "outline"],
+    prompts: {
+      enabled: true,
+    },
+    conversations: {
+      enabled: true,
+      syncUnpin: false,
+      folderRainbow: true,
+    },
+    outline: {
+      enabled: true,
+      maxLevel: 6,
+      autoUpdate: true,
+      updateInterval: 2,
+      showUserQueries: true,
+      followMode: "current",
+      expandLevel: 6,
+    },
   },
-  readingHistory: {
-    persistence: true,
-    autoRestore: true,
-    cleanupDays: 30,
-  },
-  tabSettings: {
+
+  tab: {
     openInNewTab: true,
-    autoRenameTab: true,
+    autoRename: true,
     renameInterval: 3,
     showStatus: true,
     titleFormat: "{status}{title}->{model}",
@@ -148,17 +243,14 @@ export const DEFAULT_SETTINGS: Settings = {
     privacyTitle: "Google",
     customIcon: "default",
   },
-  conversations: {
-    enabled: true,
-    syncUnpin: false,
-    folderRainbow: true,
-    exportImagesToBase64: false,
+
+  readingHistory: {
+    persistence: true,
+    autoRestore: true,
+    cleanupDays: 30,
   },
-  prompts: {
-    enabled: true,
-  },
-  tabOrder: ["prompts", "conversations", "outline", "settings"],
-  collapsedButtonsOrder: [
+
+  collapsedButtons: [
     { id: "scrollTop", enabled: true },
     { id: "panel", enabled: true },
     { id: "anchor", enabled: true },
@@ -166,16 +258,7 @@ export const DEFAULT_SETTINGS: Settings = {
     { id: "manualAnchor", enabled: true },
     { id: "scrollBottom", enabled: true },
   ],
-  themePresets: {
-    lightPresetId: "google-gradient", // 默认浅色主题：Google 渐变
-    darkPresetId: "classic-dark", // 默认深色主题：经典深黑
-  },
-  copy: {
-    formulaCopyEnabled: true,
-    formulaDelimiterEnabled: true,
-    tableCopyEnabled: true,
-  },
-  customCSS: "",
+
   webdav: {
     enabled: false,
     url: "",
@@ -205,4 +288,29 @@ export interface Prompt {
   title: string
   content: string
   category: string
+}
+
+// ==================== 工具函数 ====================
+
+/**
+ * 获取站点配置，如果不存在则返回默认配置
+ */
+export function getSiteTheme(settings: Settings, siteId: string): SiteThemeConfig {
+  const sites = settings.theme?.sites
+  if (sites && siteId in sites) {
+    return sites[siteId as SiteId]
+  }
+  return sites?._default ?? DEFAULT_SITE_THEME
+}
+
+export function getSitePageWidth(settings: Settings, siteId: string): PageWidthConfig {
+  const pageWidth = settings.pageWidth
+  if (pageWidth && siteId in pageWidth) {
+    return pageWidth[siteId as SiteId]
+  }
+  return pageWidth?._default ?? DEFAULT_PAGE_WIDTH
+}
+
+export function getSiteModelLock(settings: Settings, siteId: string): ModelLockConfig {
+  return settings.modelLock?.[siteId] ?? { enabled: false, keyword: "" }
 }

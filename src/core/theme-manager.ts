@@ -15,6 +15,13 @@ import {
 
 export type ThemeMode = "light" | "dark"
 
+// Extend Document interface for View Transitions API
+declare global {
+  interface Document {
+    startViewTransition(callback?: any): any
+  }
+}
+
 // 主题变化回调类型
 export type ThemeModeChangeCallback = (mode: ThemeMode) => void
 
@@ -27,7 +34,7 @@ export class ThemeManager {
   private adapter?: SiteAdapter | null
 
   constructor(
-    mode: Settings["themeMode"],
+    mode: ThemeMode | string,
     onModeChange?: ThemeModeChangeCallback,
     adapter?: SiteAdapter | null,
     lightPresetId: string = "google-gradient",
@@ -84,7 +91,7 @@ export class ThemeManager {
   /**
    * 更新模式并应用
    */
-  updateMode(mode: Settings["themeMode"]) {
+  updateMode(mode: ThemeMode | string) {
     this.mode = mode === "dark" ? "dark" : "light"
     this.apply()
   }

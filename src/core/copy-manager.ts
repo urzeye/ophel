@@ -8,20 +8,20 @@ import { showToast } from "~utils/toast"
  * 负责公式双击复制和表格 Markdown 复制
  */
 export class CopyManager {
-  private settings: Settings["copy"]
+  private settings: Settings["content"]
   private formulaCopyInitialized = false
   private tableCopyInitialized = false
   private formulaDblClickHandler: ((e: MouseEvent) => void) | null = null
   private stopTableWatch: (() => void) | null = null
 
-  constructor(settings: Settings["copy"]) {
+  constructor(settings: Settings["content"]) {
     this.settings = settings
   }
 
-  updateSettings(settings: Settings["copy"]) {
+  updateSettings(settings: Settings["content"]) {
     // 动态启用/禁用公式复制
-    if (settings.formulaCopyEnabled !== this.settings.formulaCopyEnabled) {
-      if (settings.formulaCopyEnabled) {
+    if (settings.formulaCopy !== this.settings.formulaCopy) {
+      if (settings.formulaCopy) {
         // 先临时赋值以便 init 读取
         this.settings = settings
         this.initFormulaCopy()
@@ -31,8 +31,8 @@ export class CopyManager {
     }
 
     // 动态启用/禁用表格复制
-    if (settings.tableCopyEnabled !== this.settings.tableCopyEnabled) {
-      if (settings.tableCopyEnabled) {
+    if (settings.tableCopy !== this.settings.tableCopy) {
+      if (settings.tableCopy) {
         // 先临时赋值以便 init 读取
         this.settings = settings
         this.initTableCopy()
@@ -87,7 +87,7 @@ export class CopyManager {
       }
 
       let copyText = latex
-      if (this.settings.formulaDelimiterEnabled) {
+      if (this.settings.formulaDelimiter) {
         const isBlock = mathEl.classList.contains("math-block")
         copyText = isBlock ? `$$${latex}$$` : `$${latex}$`
       }
@@ -252,7 +252,7 @@ export class CopyManager {
 
     const getCellContent = (cell: HTMLTableCellElement) => {
       // 如果启用了公式复制，尝试处理公式
-      if (this.settings.formulaCopyEnabled) {
+      if (this.settings.formulaCopy) {
         const clone = cell.cloneNode(true) as HTMLElement
         const mathEls = clone.querySelectorAll(".math-block, .math-inline")
         mathEls.forEach((mathEl) => {
@@ -261,7 +261,7 @@ export class CopyManager {
           if (latex) {
             const isBlock = el.classList.contains("math-block")
             let replacement
-            if (this.settings.formulaDelimiterEnabled) {
+            if (this.settings.formulaDelimiter) {
               replacement = isBlock ? `$$${latex}$$` : `$${latex}$`
             } else {
               replacement = latex

@@ -178,20 +178,22 @@ export class WebDAVSyncManager {
       ]
 
       // Hydrate data：解析 JSON 字符串，并提取 Zustand persist 格式中的实际数据
+      // ⭐ 扁平化导出：移除 state 层，直接导出数据
       const hydratedData = Object.fromEntries(
         Object.entries(localData).map(([k, v]) => {
           try {
             let parsed = typeof v === "string" ? JSON.parse(v) : v
 
             // ⭐ 处理 Zustand persist 格式：提取 state 中的数据
+            // 格式: { state: { settings: {...} | prompts: [...] | conversations: {...} }, version: 0 }
             if (ZUSTAND_KEYS.includes(k) && parsed?.state) {
-              // Zustand persist 格式: { state: { [key]: ... }, version: 0 }
-              // 提取 state 中的第一个属性值
-              const stateKeys = Object.keys(parsed.state)
-              if (stateKeys.length === 1) {
-                parsed = parsed.state[stateKeys[0]]
-              } else if (stateKeys.length > 1) {
-                // 多个属性时，返回整个 state（如 conversations store）
+              // 直接提取 state 中与 key 同名的属性（主数据）
+              // 例如: prompts store 的 state 中有 prompts 数组
+              // 例如: conversations store 的 state 中有 conversations 对象
+              if (parsed.state[k] !== undefined) {
+                parsed = parsed.state[k]
+              } else {
+                // 如果没有同名属性，保留整个 state 内容
                 parsed = parsed.state
               }
             }
@@ -403,15 +405,18 @@ export class WebDAVSyncManager {
       // 1. 保存当前的WebDAV配置(避免被备份数据覆盖)
       const currentWebdavConfig = this.config
 
-      // Zustand stores 的 key 和对应的 state 属性名映射
-      const ZUSTAND_STORE_MAPPING: Record<string, string | string[]> = {
-        settings: "settings",
-        prompts: "prompts",
-        folders: "folders",
-        tags: "tags",
-        conversations: ["conversations", "lastUsedFolderId"], // 多个属性
-        readingHistory: ["history", "lastCleanupRun"], // 多个属性
-      }
+      // Zustand persist 使用的 storage keys
+      const ZUSTAND_KEYS = [
+        "settings",
+        "prompts",
+        "folders",
+        "tags",
+        "conversations",
+        "readingHistory",
+      ]
+
+      // ⭐ 导入时需要知道哪些 store 有多个属性
+      const MULTI_PROP_STORES = ["conversations", "readingHistory"]
 
       // 2. Dehydrate: 将对象序列化回 Zustand persist 格式
       const dehydratedData = Object.fromEntries(
@@ -421,16 +426,22 @@ export class WebDAVSyncManager {
           }
 
           // 处理 Zustand stores
-          const stateKey = ZUSTAND_STORE_MAPPING[k]
-          if (stateKey) {
+          if (ZUSTAND_KEYS.includes(k)) {
             let state: Record<string, any>
-            if (Array.isArray(stateKey)) {
-              // 多个属性的 store（如 conversations, readingHistory）
-              // v 应该已经是 { conversations: {...}, lastUsedFolderId: "..." } 格式
-              state = typeof v === "object" ? v : {}
+            if (MULTI_PROP_STORES.includes(k)) {
+              // 多属性 store（如 conversations, readingHistory）
+              // ⭐ 如果导入的数据已经是包含多个属性的对象，直接使用
+              // ⭐ 否则（扁平化格式），将其包装为 { [k]: v }
+              if (typeof v === "object" && !Array.isArray(v) && Object.keys(v).length > 1) {
+                // 旧格式：已经是 { conversations: {...}, lastUsedFolderId: "..." }
+                state = v
+              } else {
+                // 扁平化格式：v 直接是主数据（如 conversations 对象）
+                state = { [k]: v }
+              }
             } else {
-              // 单个属性的 store
-              state = { [stateKey]: v }
+              // 单属性 store
+              state = { [k]: v }
             }
             return [k, JSON.stringify({ state, version: 0 })]
           }

@@ -613,7 +613,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
               // 彩虹色 - 根据设置决定是否启用
               // 非彩虹色模式：只有收件箱有背景色，其他文件夹透明
               // 彩虹色模式：所有文件夹都有彩色背景
-              const useRainbow = settings?.conversations?.folderRainbow ?? false
+              const useRainbow = settings?.features?.conversations?.folderRainbow ?? false
               let bgVar = "transparent"
               if (folder.isDefault) {
                 bgVar = "var(--gh-folder-bg-default)"
@@ -667,8 +667,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                             title={t("moveUp") || "上移"}
                             disabled={index <= 1}
                             onClick={(e) => {
-                              e.stopPropagation()
-                              manager.moveFolder(folder.id, "up").then(loadData)
+                              manager.moveFolder(folder.id, "up")
+                              loadData()
                             }}>
                             ↑
                           </button>
@@ -677,8 +677,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                             title={t("moveDown") || "下移"}
                             disabled={index >= folders.length - 1}
                             onClick={(e) => {
-                              e.stopPropagation()
-                              manager.moveFolder(folder.id, "down").then(loadData)
+                              manager.moveFolder(folder.id, "down")
+                              loadData()
                             }}>
                             ↓
                           </button>

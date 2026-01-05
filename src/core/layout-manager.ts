@@ -1,6 +1,6 @@
 import type { SiteAdapter } from "~adapters/base"
 import { DOMToolkit } from "~utils/dom-toolkit"
-import type { Settings } from "~utils/storage"
+import type { PageWidthConfig } from "~utils/storage"
 
 /**
  * 页面宽度样式管理器
@@ -8,17 +8,17 @@ import type { Settings } from "~utils/storage"
  */
 export class LayoutManager {
   private siteAdapter: SiteAdapter
-  private widthConfig: Settings["pageWidth"]
+  private widthConfig: PageWidthConfig
   private styleElement: HTMLStyleElement | null = null
   private processedShadowRoots = new WeakSet<ShadowRoot>()
   private shadowCheckInterval: NodeJS.Timeout | null = null
 
-  constructor(siteAdapter: SiteAdapter, widthConfig: Settings["pageWidth"]) {
+  constructor(siteAdapter: SiteAdapter, widthConfig: PageWidthConfig) {
     this.siteAdapter = siteAdapter
     this.widthConfig = widthConfig
   }
 
-  updateConfig(widthConfig: Settings["pageWidth"]) {
+  updateConfig(widthConfig: PageWidthConfig) {
     this.widthConfig = widthConfig
     this.apply()
   }
@@ -52,22 +52,13 @@ export class LayoutManager {
     const selectors = this.siteAdapter.getWidthSelectors()
     return selectors
       .map((config: any) => {
-        const {
-          selector,
-          globalSelector,
-          property,
-          value,
-          extraCss,
-          noCenter
-        } = config
+        const { selector, globalSelector, property, value, extraCss, noCenter } = config
         const params = {
           finalWidth: value || globalWidth,
           targetSelector: globalSelector || selector, // 优先使用全局特定选择器
           property,
           extra: extraCss || "",
-          centerCss: noCenter
-            ? ""
-            : "margin-left: auto !important; margin-right: auto !important;"
+          centerCss: noCenter ? "" : "margin-left: auto !important; margin-right: auto !important;",
         }
         return `${params.targetSelector} { ${params.property}: ${params.finalWidth} !important; ${params.centerCss} ${params.extra} }`
       })
@@ -129,11 +120,7 @@ export class LayoutManager {
       }
 
       // 使用 DOMToolkit.cssToShadow 注入样式
-      DOMToolkit.cssToShadow(
-        shadowRoot,
-        css,
-        "gemini-helper-width-shadow-style"
-      )
+      DOMToolkit.cssToShadow(shadowRoot, css, "gemini-helper-width-shadow-style")
       processedShadowRoots.add(shadowRoot)
     })
   }
@@ -145,9 +132,7 @@ export class LayoutManager {
 
     // 使用 DOMToolkit.walkShadowRoots 遍历所有 Shadow Root
     DOMToolkit.walkShadowRoots((shadowRoot) => {
-      const style = shadowRoot.getElementById(
-        "gemini-helper-width-shadow-style"
-      )
+      const style = shadowRoot.getElementById("gemini-helper-width-shadow-style")
       if (style) style.remove()
       processedShadowRoots.delete(shadowRoot)
     })

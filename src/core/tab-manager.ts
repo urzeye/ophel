@@ -16,7 +16,7 @@ const NOTIFICATION_SOUND_PATH = "assets/streaming-complete-v2.mp3"
 
 export class TabManager {
   private adapter: SiteAdapter
-  private settings: Settings["tabSettings"]
+  private settings: Settings["tab"]
   private isRunning = false
   private intervalId: NodeJS.Timeout | null = null
 
@@ -39,7 +39,7 @@ export class TabManager {
   private boundFocusHandler: () => void
   private boundBlurHandler: () => void
 
-  constructor(adapter: SiteAdapter, settings: Settings["tabSettings"]) {
+  constructor(adapter: SiteAdapter, settings: Settings["tab"]) {
     this.adapter = adapter
     this.settings = settings
 
@@ -60,13 +60,13 @@ export class TabManager {
     window.addEventListener("blur", this.boundBlurHandler)
   }
 
-  updateSettings(settings: Settings["tabSettings"]) {
+  updateSettings(settings: Settings["tab"]) {
     const oldInterval = this.settings.renameInterval
     this.settings = settings
 
-    if (this.settings.autoRenameTab && !this.isRunning) {
+    if (this.settings.autoRename && !this.isRunning) {
       this.start()
-    } else if (!this.settings.autoRenameTab && this.isRunning) {
+    } else if (!this.settings.autoRename && this.isRunning) {
       this.stop()
     }
 
@@ -82,7 +82,7 @@ export class TabManager {
   }
 
   start() {
-    if (!this.settings.autoRenameTab) return
+    if (!this.settings.autoRename) return
     if (this.isRunning) return
 
     // 检查适配器是否支持标签页重命名

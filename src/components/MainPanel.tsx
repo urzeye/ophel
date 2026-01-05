@@ -62,11 +62,11 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 }) => {
   const { settings } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
-  const { tabOrder } = currentSettings
+  const tabOrder = currentSettings.features?.order || DEFAULT_SETTINGS.features.order
 
   // 拖拽功能（高性能版本：直接 DOM 操作，不触发 React 渲染）
   const { panelRef, headerRef } = useDraggable({
-    edgeSnapHide: currentSettings.edgeSnapHide,
+    edgeSnapHide: currentSettings.panel?.edgeSnap,
     edgeSnapState, // 传递当前吸附状态
     onEdgeSnap,
     onUnsnap,
@@ -88,7 +88,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   // settings 加载完成后，设置为用户设置的首个 tab
   useEffect(() => {
     if (settings && !isInitialized) {
-      setActiveTab(getFirstTab(settings.tabOrder))
+      setActiveTab(getFirstTab(settings.features?.order))
       setIsInitialized(true)
     }
   }, [settings, isInitialized])
@@ -157,10 +157,15 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const visibleTabs = tabOrder.filter((tabId) => {
     if (tabId === TAB_IDS.SETTINGS) return false // 设置在 header 中
     // 检查每个 Tab 的 enabled 状态
-    if (tabId === TAB_IDS.PROMPTS && currentSettings.prompts?.enabled === false) return false
-    if (tabId === TAB_IDS.CONVERSATIONS && currentSettings.conversations?.enabled === false)
+    if (tabId === TAB_IDS.PROMPTS && currentSettings.features?.prompts?.enabled === false)
       return false
-    if (tabId === TAB_IDS.OUTLINE && currentSettings.outline?.enabled === false) return false
+    if (
+      tabId === TAB_IDS.CONVERSATIONS &&
+      currentSettings.features?.conversations?.enabled === false
+    )
+      return false
+    if (tabId === TAB_IDS.OUTLINE && currentSettings.features?.outline?.enabled === false)
+      return false
     return true
   })
 
@@ -228,7 +233,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         // ⭐ 位置现在由 useDraggable 通过直接 DOM 操作控制，不再通过 React state
       }}>
       {/* 自定义 CSS 注入 */}
-      {settings.customCSS && <style>{settings.customCSS}</style>}
+      {settings.theme?.customStyles && <style>{settings.theme?.customStyles}</style>}
 
       {/* Header - 拖拽区域 */}
       <div
@@ -336,8 +341,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               if (activeTab === TAB_IDS.OUTLINE) {
                 outlineManager?.refresh()
               } else if (activeTab === TAB_IDS.PROMPTS) {
-                // 重新加载提示词数据
-                promptManager?.loadPrompts()
+                // 提示词由 Zustand store 管理，自动响应数据变化，无需手动刷新
+                // 触发 UI 重新获取数据
+                promptManager?.init()
               } else if (activeTab === TAB_IDS.CONVERSATIONS) {
                 // 触发数据变更通知，刷新 UI
                 conversationManager?.notifyDataChange()

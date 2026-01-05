@@ -1,0 +1,118 @@
+{
+  "language": "auto",
+
+  "panel": {
+    "defaultOpen": true,
+    "autoHide": false,
+    "edgeSnap": true,
+    "preventAutoScroll": false
+  },
+
+  "content": {
+    "markdownFix": true,
+    "watermarkRemoval": true,
+    "formulaCopy": true,
+    "formulaDelimiter": true,
+    "tableCopy": true,
+    "exportImagesToBase64": false
+  },
+
+  "theme": {
+    "sites": {
+      "gemini": {
+        "mode": "light",
+        "lightPresetId": "google-gradient",
+        "darkPresetId": "classic-dark",
+        "enabledStyleIds": []
+      },
+      "gemini-enterprise": {
+        "mode": "dark",
+        "lightPresetId": "google-gradient",
+        "darkPresetId": "classic-dark",
+        "enabledStyleIds": []
+      },
+      "_default": {
+        "mode": "light",
+        "lightPresetId": "google-gradient",
+        "darkPresetId": "classic-dark",
+        "enabledStyleIds": []
+      }
+    },
+    "customStyles": []
+  },
+
+  "pageWidth": {
+    "gemini": { "enabled": false, "value": "81", "unit": "%" },
+    "gemini-enterprise": { "enabled": false, "value": "81", "unit": "%" },
+    "_default": { "enabled": false, "value": "81", "unit": "%" }
+  },
+
+  "modelLock": {
+    "gemini": { "enabled": false, "keyword": "" },
+    "gemini-enterprise": { "enabled": false, "keyword": "" }
+  },
+
+  "features": {
+    "order": ["prompts", "conversations", "outline"],
+    "prompts": {
+      "enabled": true
+    },
+    "conversations": {
+      "enabled": true,
+      "syncUnpin": false,
+      "folderRainbow": true
+    },
+    "outline": {
+      "enabled": true,
+      "maxLevel": 6,
+      "autoUpdate": true,
+      "updateInterval": 2,
+      "showUserQueries": true,
+      "followMode": "current",
+      "expandLevel": 6
+    }
+  },
+
+  "tab": {
+    "openInNewTab": true,
+    "autoRename": true,
+    "renameInterval": 3,
+    "showStatus": true,
+    "titleFormat": "{status}{title}->{model}",
+    "showNotification": true,
+    "notificationSound": true,
+    "notificationVolume": 0.6,
+    "notifyWhenFocused": false,
+    "autoFocus": true,
+    "privacyMode": false,
+    "privacyTitle": "Google",
+    "customIcon": "default"
+  },
+
+  "readingHistory": {
+    "persistence": true,
+    "autoRestore": true,
+    "cleanupDays": 30
+  },
+
+  "collapsedButtons": [
+    { "id": "scrollTop", "enabled": true },
+    { "id": "panel", "enabled": true },
+    { "id": "anchor", "enabled": true },
+    { "id": "theme", "enabled": true },
+    { "id": "manualAnchor", "enabled": true },
+    { "id": "scrollBottom", "enabled": true }
+  ],
+
+  "webdav": {
+    "enabled": false,
+    "url": "",
+    "username": "",
+    "password": "",
+    "syncMode": "manual",
+    "syncInterval": 30,
+    "remoteDir": "ophel",
+    "lastSyncTime": null,
+    "lastSyncStatus": null
+  }
+}

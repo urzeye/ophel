@@ -21,7 +21,7 @@ interface TreeState {
 
 export class OutlineManager {
   private siteAdapter: SiteAdapter
-  private settings: Settings["outline"]
+  private settings: Settings["features"]["outline"]
 
   private tree: OutlineNode[] = []
   private flatItems: OutlineItem[] = []
@@ -63,7 +63,7 @@ export class OutlineManager {
 
   constructor(
     adapter: SiteAdapter,
-    settings: Settings["outline"],
+    settings: Settings["features"]["outline"],
     onExpandLevelChange?: (level: number) => void,
     onShowUserQueriesChange?: (show: boolean) => void,
   ) {
@@ -101,7 +101,7 @@ export class OutlineManager {
     // 否则保持当前状态不变
   }
 
-  updateSettings(newSettings: Settings["outline"]) {
+  updateSettings(newSettings: Settings["features"]["outline"]) {
     this.settings = newSettings
     // ⭐ 同步 expandLevel
     if (newSettings.expandLevel !== undefined) {

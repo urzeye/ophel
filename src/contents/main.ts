@@ -18,7 +18,13 @@ import { TabManager } from "~core/tab-manager"
 import { ThemeManager } from "~core/theme-manager"
 import { WatermarkRemover } from "~core/watermark-remover"
 import { getSettingsState, subscribeSettings, useSettingsStore } from "~stores/settings-store"
-import { DEFAULT_SETTINGS, type Settings } from "~utils/storage"
+import {
+  DEFAULT_SETTINGS,
+  getSiteModelLock,
+  getSitePageWidth,
+  getSiteTheme,
+  type Settings,
+} from "~utils/storage"
 
 // Content Script 配置 - 匹配所有支持的站点
 export const config: PlasmoCSConfig = {
@@ -76,15 +82,17 @@ if (!window.chatHelperInitialized) {
 
       // 获取用户设置（直接从 Zustand store 获取，无需处理格式）
       const settings = getSettingsState()
+      const siteId = adapter.getSiteId()
 
       // 1. 主题管理 (优先应用)
-      // ⭐ 创建全局唯一的 ThemeManager 实例，挂载到 window 供 App.tsx 使用
+      // ⭐ 获取站点主题配置
+      const siteTheme = getSiteTheme(settings, siteId)
       themeManager = new ThemeManager(
-        settings.themeMode,
+        siteTheme.mode,
         undefined, // onModeChange callback - 由 App.tsx 动态注册
         adapter, // adapter 引用
-        settings.themePresets?.lightPresetId || "google-gradient",
-        settings.themePresets?.darkPresetId || "classic-dark",
+        siteTheme.lightPresetId || "google-gradient",
+        siteTheme.darkPresetId || "classic-dark",
       )
       themeManager.apply()
       // 挂载到 window 对象，供 App.tsx 获取
@@ -94,7 +102,7 @@ if (!window.chatHelperInitialized) {
       // 恢复备份后,面板主题会正确应用,但Gemini页面本身的主题可能不一致
       // 需要检测当前页面主题,如果与settings不一致则同步
       const syncPageTheme = async () => {
-        const targetTheme = settings.themeMode === "dark" ? "dark" : "light"
+        const targetTheme = siteTheme.mode === "dark" ? "dark" : "light"
 
         // 检测页面实际的主题状态
         const bodyClass = document.body.className
@@ -126,36 +134,37 @@ if (!window.chatHelperInitialized) {
       setTimeout(syncPageTheme, 1000)
 
       // 2. Markdown 修复 (仅 Gemini 标准版)
-      if (settings.markdownFix && adapter.getSiteId() === "gemini") {
+      if (settings.content?.markdownFix && siteId === "gemini") {
         markdownFixer = new MarkdownFixer()
         markdownFixer.start()
       }
 
       // 3. 页面宽度管理
-      if (settings.pageWidth?.enabled) {
-        layoutManager = new LayoutManager(adapter, settings.pageWidth)
+      const sitePageWidth = getSitePageWidth(settings, siteId)
+      if (sitePageWidth?.enabled) {
+        layoutManager = new LayoutManager(adapter, sitePageWidth)
         layoutManager.apply()
       }
 
       // 4. 复制功能 (公式/表格)
-      if (settings.copy) {
-        copyManager = new CopyManager(settings.copy)
-        if (settings.copy.formulaCopyEnabled) {
+      if (settings.content) {
+        copyManager = new CopyManager(settings.content)
+        if (settings.content.formulaCopy) {
           copyManager.initFormulaCopy()
         }
-        if (settings.copy.tableCopyEnabled) {
+        if (settings.content.tableCopy) {
           copyManager.initTableCopy()
         }
       }
 
       // 5. 标签页管理
-      if (settings.tabSettings?.autoRenameTab || settings.tabSettings?.showNotification) {
-        tabManager = new TabManager(adapter, settings.tabSettings)
+      if (settings.tab?.autoRename || settings.tab?.showNotification) {
+        tabManager = new TabManager(adapter, settings.tab)
         tabManager.start()
       }
 
       // 6. 水印移除 (仅 Gemini)
-      if (adapter.getSiteId() === "gemini" || adapter.getSiteId() === "gemini-enterprise") {
+      if (siteId === "gemini" || siteId === "gemini-enterprise") {
         watermarkRemover = new WatermarkRemover()
         watermarkRemover.start()
       }
@@ -181,8 +190,7 @@ if (!window.chatHelperInitialized) {
       }
 
       // 8. 模型锁定（按站点单独配置）
-      const siteId = adapter.getSiteId()
-      const siteModelConfig = settings.modelLockConfig?.[siteId] || { enabled: false, keyword: "" }
+      const siteModelConfig = getSiteModelLock(settings, siteId)
       modelLocker = new ModelLocker(adapter, siteModelConfig)
       if (siteModelConfig.enabled && siteModelConfig.keyword) {
         modelLocker.start()
@@ -196,17 +204,18 @@ if (!window.chatHelperInitialized) {
       subscribeSettings((newSettings: Settings) => {
         // 1. Theme Manager - 只更新主题预置，不处理 themeMode 变化
         // ⭐ 不再调用 updateMode()，因为主题切换由 App.tsx 的 toggle() 统一处理
-        if (newSettings?.themePresets && themeManager) {
+        const newSiteTheme = getSiteTheme(newSettings, siteId)
+        if (newSiteTheme && themeManager) {
           themeManager.setPresets(
-            newSettings.themePresets.lightPresetId || "google-gradient",
-            newSettings.themePresets.darkPresetId || "classic-dark",
+            newSiteTheme.lightPresetId || "google-gradient",
+            newSiteTheme.darkPresetId || "classic-dark",
           )
         }
 
         // 2. Model Locker update
-        const newSiteConfig = newSettings?.modelLockConfig?.[siteId]
-        if (newSiteConfig && modelLocker) {
-          modelLocker.updateConfig(newSiteConfig)
+        const newModelConfig = getSiteModelLock(newSettings, siteId)
+        if (newModelConfig && modelLocker) {
+          modelLocker.updateConfig(newModelConfig)
         }
 
         // 3. Scroll Lock update
@@ -215,8 +224,8 @@ if (!window.chatHelperInitialized) {
         }
 
         // 4. Markdown Fix update
-        if (newSettings && adapter.getSiteId() === "gemini") {
-          if (newSettings.markdownFix) {
+        if (newSettings && siteId === "gemini") {
+          if (newSettings.content?.markdownFix) {
             if (!markdownFixer) {
               markdownFixer = new MarkdownFixer()
             }
@@ -227,22 +236,19 @@ if (!window.chatHelperInitialized) {
         }
 
         // 5. Layout Manager update
-        const newPageWidth = newSettings?.pageWidth
-        if (newPageWidth) {
+        const newSitePageWidth = getSitePageWidth(newSettings, siteId)
+        if (newSitePageWidth) {
           if (layoutManager) {
-            layoutManager.updateConfig(newPageWidth)
-          } else if (newPageWidth.enabled) {
-            layoutManager = new LayoutManager(adapter, newPageWidth)
+            layoutManager.updateConfig(newSitePageWidth)
+          } else if (newSitePageWidth.enabled) {
+            layoutManager = new LayoutManager(adapter, newSitePageWidth)
             layoutManager.apply()
           }
         }
 
         // 6. Watermark Remover update
-        if (
-          newSettings &&
-          (adapter.getSiteId() === "gemini" || adapter.getSiteId() === "gemini-enterprise")
-        ) {
-          if (newSettings.watermarkRemoval) {
+        if (newSettings && (siteId === "gemini" || siteId === "gemini-enterprise")) {
+          if (newSettings.content?.watermarkRemoval) {
             if (!watermarkRemover) {
               watermarkRemover = new WatermarkRemover()
             }
@@ -253,14 +259,11 @@ if (!window.chatHelperInitialized) {
         }
 
         // 7. Tab Manager update
-        if (newSettings?.tabSettings) {
+        if (newSettings?.tab) {
           if (tabManager) {
-            tabManager.updateSettings(newSettings.tabSettings)
-          } else if (
-            newSettings.tabSettings.autoRenameTab ||
-            newSettings.tabSettings.showNotification
-          ) {
-            tabManager = new TabManager(adapter, newSettings.tabSettings)
+            tabManager.updateSettings(newSettings.tab)
+          } else if (newSettings.tab.autoRename || newSettings.tab.showNotification) {
+            tabManager = new TabManager(adapter, newSettings.tab)
             tabManager.start()
           }
         }
@@ -276,13 +279,13 @@ if (!window.chatHelperInitialized) {
         }
 
         // 9. Copy Manager update
-        if (newSettings?.copy) {
+        if (newSettings?.content) {
           if (copyManager) {
-            copyManager.updateSettings(newSettings.copy)
+            copyManager.updateSettings(newSettings.content)
           } else {
-            copyManager = new CopyManager(newSettings.copy)
-            if (newSettings.copy.formulaCopyEnabled) copyManager.initFormulaCopy()
-            if (newSettings.copy.tableCopyEnabled) copyManager.initTableCopy()
+            copyManager = new CopyManager(newSettings.content)
+            if (newSettings.content.formulaCopy) copyManager.initFormulaCopy()
+            if (newSettings.content.tableCopy) copyManager.initTableCopy()
           }
         }
       })

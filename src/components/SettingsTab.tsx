@@ -702,7 +702,11 @@ const RemoteBackupModal = ({
 
 export const SettingsTab = () => {
   // 使用 Zustand Store 管理 settings
-  const { settings, setSettings, updateNestedSetting } = useSettingsStore()
+  const { settings, setSettings, updateNestedSetting, updateDeepSetting } = useSettingsStore()
+
+  // 辅助变量：获取默认站点的配置（Settings 面板中使用 _default）
+  const currentPageWidth = settings?.pageWidth?._default || settings?.pageWidth?.gemini
+  const currentTheme = settings?.theme?.sites?._default || settings?.theme?.sites?.gemini
 
   const handleLanguageChange = (lang: string) => {
     setLanguage(lang)
@@ -712,17 +716,17 @@ export const SettingsTab = () => {
   }
 
   // 页面宽度逻辑
-  const [tempWidth, setTempWidth] = useState(settings?.pageWidth?.value || "100")
+  const [tempWidth, setTempWidth] = useState(currentPageWidth?.value || "100")
 
   useEffect(() => {
-    if (settings?.pageWidth?.value) {
-      setTempWidth(settings.pageWidth.value)
+    if (currentPageWidth?.value) {
+      setTempWidth(currentPageWidth.value)
     }
-  }, [settings?.pageWidth?.value])
+  }, [currentPageWidth?.value])
 
   const handleWidthBlur = () => {
     let val = parseInt(tempWidth)
-    const unit = settings?.pageWidth?.unit || "%"
+    const unit = currentPageWidth?.unit || "%"
 
     if (isNaN(val)) {
       val = unit === "%" ? 81 : 1280
@@ -737,8 +741,9 @@ export const SettingsTab = () => {
 
     const finalVal = val.toString()
     setTempWidth(finalVal)
-    if (finalVal !== settings?.pageWidth?.value) {
-      updateNestedSetting("pageWidth", "value", finalVal)
+    if (finalVal !== currentPageWidth?.value) {
+      // 更新默认站点的 pageWidth
+      updateDeepSetting("pageWidth", "_default", "value", finalVal)
     }
   }
 
@@ -750,13 +755,16 @@ export const SettingsTab = () => {
     setTempWidth(newValue)
 
     if (settings) {
+      const newPageWidth = {
+        ...currentPageWidth,
+        unit: newUnit,
+        value: newValue,
+        enabled: currentPageWidth?.enabled ?? false,
+      }
       setSettings({
-        ...settings,
         pageWidth: {
           ...settings.pageWidth,
-          unit: newUnit,
-          value: newValue,
-          enabled: settings.pageWidth?.enabled ?? false,
+          _default: newPageWidth,
         },
       })
     }
@@ -765,25 +773,25 @@ export const SettingsTab = () => {
   const moveTab = useCallback(
     (index: number, direction: number) => {
       if (!settings) return
-      const newOrder = [...settings.tabOrder]
+      const newOrder = [...(settings.features?.order || [])]
       const newIndex = index + direction
       if (newIndex >= 0 && newIndex < newOrder.length) {
         ;[newOrder[index], newOrder[newIndex]] = [newOrder[newIndex], newOrder[index]]
-        setSettings({ ...settings, tabOrder: newOrder })
+        updateNestedSetting("features", "order", newOrder)
       }
     },
-    [settings, setSettings],
+    [settings, updateNestedSetting],
   )
 
   // 快捷按钮排序
   const moveButton = useCallback(
     (index: number, direction: number) => {
       if (!settings) return
-      const newOrder = [...settings.collapsedButtonsOrder]
+      const newOrder = [...(settings.collapsedButtons || [])]
       const newIndex = index + direction
       if (newIndex >= 0 && newIndex < newOrder.length) {
         ;[newOrder[index], newOrder[newIndex]] = [newOrder[newIndex], newOrder[index]]
-        setSettings({ ...settings, collapsedButtonsOrder: newOrder })
+        setSettings({ collapsedButtons: newOrder })
       }
     },
     [settings, setSettings],
@@ -792,9 +800,9 @@ export const SettingsTab = () => {
   const toggleButton = useCallback(
     (index: number) => {
       if (!settings) return
-      const newOrder = [...settings.collapsedButtonsOrder]
+      const newOrder = [...(settings.collapsedButtons || [])]
       newOrder[index] = { ...newOrder[index], enabled: !newOrder[index].enabled }
-      setSettings({ ...settings, collapsedButtonsOrder: newOrder })
+      setSettings({ collapsedButtons: newOrder })
     },
     [settings, setSettings],
   )
@@ -914,22 +922,22 @@ export const SettingsTab = () => {
           <ToggleRow
             label={t("defaultPanelStateLabel") || "默认显示面板"}
             desc={t("defaultPanelStateDesc") || "页面加载后自动展开面板"}
-            checked={settings.defaultPanelOpen ?? false}
+            checked={settings.panel?.defaultOpen ?? false}
             onChange={() =>
-              setSettings({ ...settings, defaultPanelOpen: !settings.defaultPanelOpen })
+              updateNestedSetting("panel", "defaultOpen", !settings.panel?.defaultOpen)
             }
           />
           <ToggleRow
             label={t("autoHidePanelLabel") || "自动隐藏面板"}
             desc={t("autoHidePanelDesc") || "点击面板外部时自动隐藏"}
-            checked={settings.autoHidePanel ?? false}
-            onChange={() => setSettings({ ...settings, autoHidePanel: !settings.autoHidePanel })}
+            checked={settings.panel?.autoHide ?? false}
+            onChange={() => updateNestedSetting("panel", "autoHide", !settings.panel?.autoHide)}
           />
           <ToggleRow
             label={t("edgeSnapHideLabel") || "边缘吸附隐藏"}
             desc={t("edgeSnapHideDesc") || "拖动面板到屏幕边缘时自动隐藏"}
-            checked={settings.edgeSnapHide ?? false}
-            onChange={() => setSettings({ ...settings, edgeSnapHide: !settings.edgeSnapHide })}
+            checked={settings.panel?.edgeSnap ?? false}
+            onChange={() => updateNestedSetting("panel", "edgeSnap", !settings.panel?.edgeSnap)}
           />
 
           {/* 快捷按钮组排序 */}
@@ -942,7 +950,7 @@ export const SettingsTab = () => {
             }}>
             {t("collapsedButtonsOrderDesc") || "快捷按钮组排序与启用"}
           </div>
-          {settings.collapsedButtonsOrder?.map((btn, index) => {
+          {settings.collapsedButtons?.map((btn, index) => {
             const def = COLLAPSED_BUTTON_DEFS[btn.id]
             if (!def) return null
             return (
@@ -951,7 +959,7 @@ export const SettingsTab = () => {
                 icon={def.icon}
                 label={t(def.labelKey) || btn.id}
                 index={index}
-                total={settings.collapsedButtonsOrder.length}
+                total={settings.collapsedButtons.length}
                 enabled={btn.enabled}
                 showToggle={["anchor", "theme", "manualAnchor"].includes(btn.id)}
                 onToggle={() => toggleButton(index)}
@@ -998,7 +1006,7 @@ export const SettingsTab = () => {
               <button
                 onClick={async () => {
                   // 当前已是浅色模式则跳过
-                  if (settings.themeMode === "light") return
+                  if (currentTheme?.mode === "light") return
                   const themeManager = window.__ghThemeManager
                   // 使用 toggle() 触发完整的主题切换流程（包括原网页切换和回调通知）
                   // toggle() 内部会通过 onModeChange 回调更新 settings
@@ -1009,18 +1017,18 @@ export const SettingsTab = () => {
                 style={{
                   padding: "6px 16px",
                   fontSize: "12px",
-                  fontWeight: settings.themeMode === "light" ? 600 : 500,
+                  fontWeight: currentTheme?.mode === "light" ? 600 : 500,
                   cursor: "pointer",
                   transition: "all 0.2s",
                   backgroundColor: "var(--gh-bg-secondary, #f9fafb)",
                   color: "var(--gh-text, #374151)",
                   // 使用边框和阴影突出选中状态，不依赖主题色
                   border:
-                    settings.themeMode === "light"
+                    currentTheme?.mode === "light"
                       ? "2px solid var(--gh-text, #374151)"
                       : "1px solid transparent",
-                  boxShadow: settings.themeMode === "light" ? "0 2px 8px rgba(0,0,0,0.15)" : "none",
-                  transform: settings.themeMode === "light" ? "scale(1.02)" : "scale(1)",
+                  boxShadow: currentTheme?.mode === "light" ? "0 2px 8px rgba(0,0,0,0.15)" : "none",
+                  transform: currentTheme?.mode === "light" ? "scale(1.02)" : "scale(1)",
                   borderRadius: "6px",
                 }}>
                 ☀️ {t("themeLight") || "浅色"}
@@ -1028,7 +1036,7 @@ export const SettingsTab = () => {
               <button
                 onClick={async () => {
                   // 当前已是深色模式则跳过
-                  if (settings.themeMode === "dark") return
+                  if (currentTheme?.mode === "dark") return
                   const themeManager = window.__ghThemeManager
                   // 使用 toggle() 触发完整的主题切换流程（包括原网页切换和回调通知）
                   // toggle() 内部会通过 onModeChange 回调更新 settings
@@ -1039,18 +1047,18 @@ export const SettingsTab = () => {
                 style={{
                   padding: "6px 16px",
                   fontSize: "12px",
-                  fontWeight: settings.themeMode === "dark" ? 600 : 500,
+                  fontWeight: currentTheme?.mode === "dark" ? 600 : 500,
                   cursor: "pointer",
                   transition: "all 0.2s",
                   backgroundColor: "var(--gh-bg-secondary, #f9fafb)",
                   color: "var(--gh-text, #374151)",
                   // 使用边框和阴影突出选中状态，不依赖主题色
                   border:
-                    settings.themeMode === "dark"
+                    currentTheme?.mode === "dark"
                       ? "2px solid var(--gh-text, #374151)"
                       : "1px solid transparent",
-                  boxShadow: settings.themeMode === "dark" ? "0 2px 8px rgba(0,0,0,0.15)" : "none",
-                  transform: settings.themeMode === "dark" ? "scale(1.02)" : "scale(1)",
+                  boxShadow: currentTheme?.mode === "dark" ? "0 2px 8px rgba(0,0,0,0.15)" : "none",
+                  transform: currentTheme?.mode === "dark" ? "scale(1.02)" : "scale(1)",
                   borderRadius: "6px",
                 }}>
                 🌙 {t("themeDark") || "深色"}
@@ -1085,11 +1093,27 @@ export const SettingsTab = () => {
                 <ThemeCard
                   key={preset.id}
                   preset={preset}
-                  isActive={
-                    (settings.themePresets?.lightPresetId || "google-gradient") === preset.id
-                  }
+                  isActive={(currentTheme?.lightPresetId || "google-gradient") === preset.id}
                   t={t}
-                  onClick={() => updateNestedSetting("themePresets", "lightPresetId", preset.id)}
+                  onClick={() => {
+                    const sites = settings?.theme?.sites || {}
+                    const defaultSite = sites._default || sites.gemini || {}
+                    setSettings({
+                      theme: {
+                        ...settings?.theme,
+                        sites: {
+                          ...settings?.theme?.sites,
+                          _default: {
+                            enabledStyleIds: [],
+                            darkPresetId: "classic-dark",
+                            mode: "light",
+                            ...defaultSite,
+                            lightPresetId: preset.id,
+                          },
+                        },
+                      },
+                    })
+                  }}
                 />
               ))}
             </div>
@@ -1122,9 +1146,27 @@ export const SettingsTab = () => {
                 <ThemeCard
                   key={preset.id}
                   preset={preset}
-                  isActive={(settings.themePresets?.darkPresetId || "classic-dark") === preset.id}
+                  isActive={(currentTheme?.darkPresetId || "classic-dark") === preset.id}
                   t={t}
-                  onClick={() => updateNestedSetting("themePresets", "darkPresetId", preset.id)}
+                  onClick={() => {
+                    const sites = settings?.theme?.sites || {}
+                    const defaultSite = sites._default || sites.gemini || {}
+                    setSettings({
+                      theme: {
+                        ...settings?.theme,
+                        sites: {
+                          ...settings?.theme?.sites,
+                          _default: {
+                            enabledStyleIds: [],
+                            lightPresetId: "google-gradient",
+                            mode: "light",
+                            ...defaultSite,
+                            darkPresetId: preset.id,
+                          },
+                        },
+                      },
+                    })
+                  }}
                 />
               ))}
             </div>
@@ -1168,18 +1210,26 @@ export const SettingsTab = () => {
                       ? "Overwrite current CSS with template?"
                       : "确认使用模板覆盖当前 CSS？"
 
-                  if (!settings.customCSS || settings.customCSS.trim() === "") {
-                    setSettings({ ...settings, customCSS: CSS_TEMPLATE })
+                  if (
+                    !settings?.theme?.customStyles ||
+                    (typeof settings.theme.customStyles === "string" &&
+                      settings.theme.customStyles.trim() === "")
+                  ) {
+                    setSettings({ theme: { ...settings?.theme, customStyles: CSS_TEMPLATE } })
                   } else if (confirm(confirmMsg)) {
-                    setSettings({ ...settings, customCSS: CSS_TEMPLATE })
+                    setSettings({ theme: { ...settings?.theme, customStyles: CSS_TEMPLATE } })
                   }
                 }}>
                 📝 {t("customCSSTemplate") || "Template"}
               </button>
             </div>
             <textarea
-              value={settings.customCSS || ""}
-              onChange={(e) => setSettings({ ...settings, customCSS: e.target.value })}
+              value={
+                typeof settings?.theme?.customStyles === "string" ? settings.theme.customStyles : ""
+              }
+              onChange={(e) =>
+                setSettings({ theme: { ...settings?.theme, customStyles: e.target.value } })
+              }
               placeholder="/* Enter custom CSS here / 在此输入自定义 CSS */"
               spellCheck={false}
               style={{
@@ -1217,32 +1267,33 @@ export const SettingsTab = () => {
             }}>
             {t("tabOrderDesc") || "调整面板标签页的显示顺序"}
           </div>
-          {settings.tabOrder
+          {settings.features?.order
             ?.filter((id) => TAB_DEFINITIONS[id])
             .map((tabId, index) => {
               const def = TAB_DEFINITIONS[tabId]
               const isEnabled =
                 tabId === "prompts"
-                  ? settings.prompts?.enabled !== false
+                  ? settings.features?.prompts?.enabled !== false
                   : tabId === "outline"
-                    ? settings.outline?.enabled !== false
+                    ? settings.features?.outline?.enabled !== false
                     : tabId === "conversations"
-                      ? settings.conversations?.enabled !== false
+                      ? settings.features?.conversations?.enabled !== false
                       : true
               return (
                 <SortableItem
                   key={tabId}
                   label={t(def.label) || tabId}
                   index={index}
-                  total={settings.tabOrder.filter((id) => TAB_DEFINITIONS[id]).length}
+                  total={settings.features?.order.filter((id) => TAB_DEFINITIONS[id]).length}
                   enabled={isEnabled}
                   showToggle
                   onToggle={() => {
-                    if (tabId === "prompts") updateNestedSetting("prompts", "enabled", !isEnabled)
+                    if (tabId === "prompts")
+                      updateDeepSetting("features", "prompts", "enabled", !isEnabled)
                     else if (tabId === "outline")
-                      updateNestedSetting("outline", "enabled", !isEnabled)
+                      updateDeepSetting("features", "outline", "enabled", !isEnabled)
                     else if (tabId === "conversations")
-                      updateNestedSetting("conversations", "enabled", !isEnabled)
+                      updateDeepSetting("features", "conversations", "enabled", !isEnabled)
                   }}
                   onMoveUp={() => moveTab(index, -1)}
                   onMoveDown={() => moveTab(index, 1)}
@@ -1255,9 +1306,9 @@ export const SettingsTab = () => {
         <CollapsibleSection title={t("pageDisplaySettings") || "页面显示"} defaultExpanded={false}>
           <ToggleRow
             label={t("enablePageWidth") || "启用页面宽度"}
-            checked={settings.pageWidth?.enabled ?? false}
+            checked={currentPageWidth?.enabled ?? false}
             onChange={() =>
-              updateNestedSetting("pageWidth", "enabled", !settings.pageWidth?.enabled)
+              updateDeepSetting("pageWidth", "_default", "enabled", !currentPageWidth?.enabled)
             }
           />
           <div
@@ -1270,8 +1321,8 @@ export const SettingsTab = () => {
               backgroundColor: "var(--gh-card-bg, #ffffff)",
               border: "1px solid var(--gh-card-border, #e5e7eb)",
               borderRadius: "8px",
-              opacity: settings.pageWidth?.enabled ? 1 : 0.5,
-              pointerEvents: settings.pageWidth?.enabled ? "auto" : "none",
+              opacity: currentPageWidth?.enabled ? 1 : 0.5,
+              pointerEvents: currentPageWidth?.enabled ? "auto" : "none",
             }}>
             <div style={{ fontWeight: 500, fontSize: "13px", color: "var(--gh-text, #374151)" }}>
               {t("pageWidthValueLabel") || "宽度值"}
@@ -1282,34 +1333,34 @@ export const SettingsTab = () => {
                 value={tempWidth}
                 onChange={(e) => setTempWidth(e.target.value.replace(/[^0-9]/g, ""))}
                 onBlur={handleWidthBlur}
-                disabled={!settings.pageWidth?.enabled}
+                disabled={!currentPageWidth?.enabled}
                 style={{
                   width: "60px",
                   padding: "4px 8px",
                   borderRadius: "4px",
                   border: "1px solid var(--gh-input-border, #d1d5db)",
                   fontSize: "12px",
-                  backgroundColor: settings.pageWidth?.enabled
+                  backgroundColor: currentPageWidth?.enabled
                     ? "var(--gh-input-bg, white)"
                     : "var(--gh-bg-tertiary, #f3f4f6)",
-                  color: settings.pageWidth?.enabled
+                  color: currentPageWidth?.enabled
                     ? "var(--gh-text, #374151)"
                     : "var(--gh-text-secondary, #9ca3af)",
                 }}
               />
               <select
-                value={settings.pageWidth?.unit || "%"}
+                value={currentPageWidth?.unit || "%"}
                 onChange={(e) => handleUnitChange(e.target.value)}
-                disabled={!settings.pageWidth?.enabled}
+                disabled={!currentPageWidth?.enabled}
                 style={{
                   padding: "4px 8px",
                   borderRadius: "4px",
                   border: "1px solid var(--gh-input-border, #d1d5db)",
                   fontSize: "12px",
-                  backgroundColor: settings.pageWidth?.enabled
+                  backgroundColor: currentPageWidth?.enabled
                     ? "var(--gh-input-bg, white)"
                     : "var(--gh-bg-tertiary, #f3f4f6)",
-                  color: settings.pageWidth?.enabled
+                  color: currentPageWidth?.enabled
                     ? "var(--gh-text, #374151)"
                     : "var(--gh-text-secondary, #9ca3af)",
                 }}>
@@ -1321,9 +1372,9 @@ export const SettingsTab = () => {
           <ToggleRow
             label={t("preventAutoScrollLabel") || "防止自动滚动"}
             desc={t("preventAutoScrollDesc") || "阻止页面自动滚动到底部"}
-            checked={settings.preventAutoScroll ?? false}
+            checked={settings.panel?.preventAutoScroll ?? false}
             onChange={() =>
-              setSettings({ ...settings, preventAutoScroll: !settings.preventAutoScroll })
+              updateNestedSetting("panel", "preventAutoScroll", !settings.panel?.preventAutoScroll)
             }
           />
         </CollapsibleSection>
@@ -1333,9 +1384,14 @@ export const SettingsTab = () => {
           <ToggleRow
             label={t("outlineAutoUpdateLabel") || "自动更新"}
             desc={t("outlineAutoUpdateDesc") || "在对话进行时自动刷新大纲"}
-            checked={settings.outline?.autoUpdate ?? true}
+            checked={settings.features?.outline?.autoUpdate ?? true}
             onChange={() =>
-              updateNestedSetting("outline", "autoUpdate", !settings.outline?.autoUpdate)
+              updateDeepSetting(
+                "features",
+                "outline",
+                "autoUpdate",
+                !settings.features?.outline?.autoUpdate,
+              )
             }
           />
           <div
@@ -1355,9 +1411,14 @@ export const SettingsTab = () => {
             <input
               type="number"
               min={1}
-              value={settings.outline?.updateInterval || 2}
+              value={settings.features?.outline?.updateInterval || 2}
               onChange={(e) =>
-                updateNestedSetting("outline", "updateInterval", parseInt(e.target.value) || 2)
+                updateDeepSetting(
+                  "features",
+                  "outline",
+                  "updateInterval",
+                  parseInt(e.target.value) || 2,
+                )
               }
               style={{
                 width: "60px",
@@ -1390,9 +1451,10 @@ export const SettingsTab = () => {
                 {t("outlineFollowModeLabel") || "大纲跟随模式"}
               </label>
               <select
-                value={settings.outline?.followMode || "current"}
+                value={settings.features?.outline?.followMode || "current"}
                 onChange={(e) =>
-                  updateNestedSetting(
+                  updateDeepSetting(
+                    "features",
                     "outline",
                     "followMode",
                     e.target.value as "current" | "latest" | "manual",
@@ -1418,9 +1480,9 @@ export const SettingsTab = () => {
                 color: "var(--gh-text-secondary, #9ca3af)",
                 marginTop: "4px",
               }}>
-              {settings.outline?.followMode === "current"
+              {settings.features?.outline?.followMode === "current"
                 ? t("outlineFollowCurrentDesc") || "滚动页面时自动定位高亮大纲项"
-                : settings.outline?.followMode === "latest"
+                : settings.features?.outline?.followMode === "latest"
                   ? t("outlineFollowLatestDesc") || "大纲始终自动滚动到底部"
                   : t("outlineFollowManualDesc") || "不自动滚动大纲"}
             </div>
@@ -1434,20 +1496,26 @@ export const SettingsTab = () => {
           <ToggleRow
             label={t("conversationsSyncUnpinLabel") || "同步时取消置顶"}
             desc={t("conversationsSyncUnpinDesc") || "同步会话时自动取消置顶"}
-            checked={settings.conversations?.syncUnpin ?? false}
+            checked={settings.features?.conversations?.syncUnpin ?? false}
             onChange={() =>
-              updateNestedSetting("conversations", "syncUnpin", !settings.conversations?.syncUnpin)
+              updateDeepSetting(
+                "features",
+                "conversations",
+                "syncUnpin",
+                !settings.features?.conversations?.syncUnpin,
+              )
             }
           />
           <ToggleRow
             label={t("folderRainbowLabel") || "文件夹彩虹色"}
             desc={t("folderRainbowDesc") || "为不同文件夹使用不同颜色"}
-            checked={settings.conversations?.folderRainbow ?? true}
+            checked={settings.features?.conversations?.folderRainbow ?? true}
             onChange={() =>
-              updateNestedSetting(
+              updateDeepSetting(
+                "features",
                 "conversations",
                 "folderRainbow",
-                !settings.conversations?.folderRainbow,
+                !settings.features?.conversations?.folderRainbow,
               )
             }
           />
@@ -1458,26 +1526,14 @@ export const SettingsTab = () => {
           <ToggleRow
             label={t("openNewTabLabel") || "新标签页打开"}
             desc={t("openNewTabDesc") || "在新标签页中打开新对话"}
-            checked={settings.tabSettings?.openInNewTab ?? true}
-            onChange={() =>
-              updateNestedSetting(
-                "tabSettings",
-                "openInNewTab",
-                !settings.tabSettings?.openInNewTab,
-              )
-            }
+            checked={settings.tab?.openInNewTab ?? true}
+            onChange={() => updateNestedSetting("tab", "openInNewTab", !settings.tab?.openInNewTab)}
           />
           <ToggleRow
             label={t("autoRenameTabLabel")}
             desc={t("autoRenameTabDesc")}
-            checked={settings.tabSettings?.autoRenameTab ?? false}
-            onChange={() =>
-              updateNestedSetting(
-                "tabSettings",
-                "autoRenameTab",
-                !settings.tabSettings?.autoRenameTab,
-              )
-            }
+            checked={settings.tab?.autoRename ?? false}
+            onChange={() => updateNestedSetting("tab", "autoRename", !settings.tab?.autoRename)}
           />
           {/* 检测频率 - 始终显示，未开启自动重命名时置灰 */}
           <div
@@ -1490,25 +1546,25 @@ export const SettingsTab = () => {
               backgroundColor: "var(--gh-card-bg, #ffffff)",
               border: "1px solid var(--gh-card-border, #e5e7eb)",
               borderRadius: "8px",
-              opacity: settings.tabSettings?.autoRenameTab ? 1 : 0.5,
-              pointerEvents: settings.tabSettings?.autoRenameTab ? "auto" : "none",
+              opacity: settings.tab?.autoRename ? 1 : 0.5,
+              pointerEvents: settings.tab?.autoRename ? "auto" : "none",
             }}>
             <label style={{ fontWeight: 500, fontSize: "13px", color: "var(--gh-text, #374151)" }}>
               {t("renameIntervalLabel") || "检测频率"}
             </label>
             <select
-              value={settings.tabSettings?.renameInterval || 3}
+              value={settings.tab?.renameInterval || 3}
               onChange={(e) =>
-                updateNestedSetting("tabSettings", "renameInterval", parseInt(e.target.value))
+                updateNestedSetting("tab", "renameInterval", parseInt(e.target.value))
               }
-              disabled={!settings.tabSettings?.autoRenameTab}
+              disabled={!settings.tab?.autoRename}
               style={{
                 width: "auto",
                 padding: "4px 8px",
                 borderRadius: "4px",
                 border: "1px solid var(--gh-input-border, #d1d5db)",
                 fontSize: "12px",
-                backgroundColor: settings.tabSettings?.autoRenameTab
+                backgroundColor: settings.tab?.autoRename
                   ? "var(--gh-input-bg, white)"
                   : "var(--gh-bg-tertiary, #f3f4f6)",
                 color: "var(--gh-text, #374151)",
@@ -1528,8 +1584,8 @@ export const SettingsTab = () => {
               backgroundColor: "var(--gh-card-bg, #ffffff)",
               border: "1px solid var(--gh-card-border, #e5e7eb)",
               borderRadius: "8px",
-              opacity: settings.tabSettings?.autoRenameTab ? 1 : 0.5,
-              pointerEvents: settings.tabSettings?.autoRenameTab ? "auto" : "none",
+              opacity: settings.tab?.autoRename ? 1 : 0.5,
+              pointerEvents: settings.tab?.autoRename ? "auto" : "none",
             }}>
             <div
               style={{
@@ -1549,10 +1605,10 @@ export const SettingsTab = () => {
               </label>
               <input
                 type="text"
-                value={settings.tabSettings?.titleFormat || "{status}{title}"}
-                onChange={(e) => updateNestedSetting("tabSettings", "titleFormat", e.target.value)}
+                value={settings.tab?.titleFormat || "{status}{title}"}
+                onChange={(e) => updateNestedSetting("tab", "titleFormat", e.target.value)}
                 placeholder="{status}{title}"
-                disabled={!settings.tabSettings?.autoRenameTab}
+                disabled={!settings.tab?.autoRename}
                 style={{
                   flex: 1,
                   maxWidth: "200px",
@@ -1560,7 +1616,7 @@ export const SettingsTab = () => {
                   borderRadius: "4px",
                   border: "1px solid var(--gh-input-border, #d1d5db)",
                   fontSize: "12px",
-                  backgroundColor: settings.tabSettings?.autoRenameTab
+                  backgroundColor: settings.tab?.autoRename
                     ? "var(--gh-input-bg, white)"
                     : "var(--gh-bg-tertiary, #f3f4f6)",
                   color: "var(--gh-text, #374151)",
@@ -1579,49 +1635,34 @@ export const SettingsTab = () => {
           <ToggleRow
             label={t("showStatusLabel") || "显示生成状态"}
             desc={t("showStatusDesc") || "在标签页标题中显示生成状态"}
-            checked={settings.tabSettings?.showStatus ?? true}
-            onChange={() =>
-              updateNestedSetting("tabSettings", "showStatus", !settings.tabSettings?.showStatus)
-            }
+            checked={settings.tab?.showStatus ?? true}
+            onChange={() => updateNestedSetting("tab", "showStatus", !settings.tab?.showStatus)}
           />
           <ToggleRow
             label={t("showNotificationLabel")}
             desc={t("showNotificationDesc")}
-            checked={settings.tabSettings?.showNotification ?? true}
+            checked={settings.tab?.showNotification ?? true}
             onChange={() =>
-              updateNestedSetting(
-                "tabSettings",
-                "showNotification",
-                !settings.tabSettings?.showNotification,
-              )
+              updateNestedSetting("tab", "showNotification", !settings.tab?.showNotification)
             }
           />
           {/* 通知声音 - 始终显示，未开启通知时置灰 */}
           <ToggleRow
             label={t("notificationSoundLabel") || "通知声音"}
             desc={t("notificationSoundDesc") || "生成完成时播放提示音"}
-            checked={settings.tabSettings?.notificationSound ?? false}
-            disabled={!settings.tabSettings?.showNotification}
+            checked={settings.tab?.notificationSound ?? false}
+            disabled={!settings.tab?.showNotification}
             onChange={() =>
-              updateNestedSetting(
-                "tabSettings",
-                "notificationSound",
-                !settings.tabSettings?.notificationSound,
-              )
+              updateNestedSetting("tab", "notificationSound", !settings.tab?.notificationSound)
             }
           />
           {/* 声音音量 - 始终显示，未开启通知或声音时置灰 */}
           <div
             style={{
               marginBottom: "12px",
-              opacity:
-                settings.tabSettings?.showNotification && settings.tabSettings?.notificationSound
-                  ? 1
-                  : 0.5,
+              opacity: settings.tab?.showNotification && settings.tab?.notificationSound ? 1 : 0.5,
               pointerEvents:
-                settings.tabSettings?.showNotification && settings.tabSettings?.notificationSound
-                  ? "auto"
-                  : "none",
+                settings.tab?.showNotification && settings.tab?.notificationSound ? "auto" : "none",
             }}>
             <label
               style={{
@@ -1638,22 +1679,15 @@ export const SettingsTab = () => {
                 min="0.1"
                 max="1.0"
                 step="0.1"
-                value={settings.tabSettings?.notificationVolume || 0.5}
+                value={settings.tab?.notificationVolume || 0.5}
                 onChange={(e) =>
-                  updateNestedSetting(
-                    "tabSettings",
-                    "notificationVolume",
-                    parseFloat(e.target.value),
-                  )
+                  updateNestedSetting("tab", "notificationVolume", parseFloat(e.target.value))
                 }
-                disabled={
-                  !settings.tabSettings?.showNotification ||
-                  !settings.tabSettings?.notificationSound
-                }
+                disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
                 style={{ flex: 1 }}
               />
               <span style={{ fontSize: "12px", minWidth: "36px" }}>
-                {Math.round((settings.tabSettings?.notificationVolume || 0.5) * 100)}%
+                {Math.round((settings.tab?.notificationVolume || 0.5) * 100)}%
               </span>
             </div>
           </div>
@@ -1661,33 +1695,25 @@ export const SettingsTab = () => {
           <ToggleRow
             label={t("notifyWhenFocusedLabel") || "前台时也通知"}
             desc={t("notifyWhenFocusedDesc") || "窗口在前台时也发送通知"}
-            checked={settings.tabSettings?.notifyWhenFocused ?? false}
-            disabled={!settings.tabSettings?.showNotification}
+            checked={settings.tab?.notifyWhenFocused ?? false}
+            disabled={!settings.tab?.showNotification}
             onChange={() =>
-              updateNestedSetting(
-                "tabSettings",
-                "notifyWhenFocused",
-                !settings.tabSettings?.notifyWhenFocused,
-              )
+              updateNestedSetting("tab", "notifyWhenFocused", !settings.tab?.notifyWhenFocused)
             }
           />
           {/* 自动窗口置顶 - 始终显示，未开启通知时置灰 */}
           <ToggleRow
             label={t("autoFocusLabel") || "自动窗口置顶"}
             desc={t("autoFocusDesc") || "生成完成后自动激活窗口"}
-            checked={settings.tabSettings?.autoFocus ?? false}
-            disabled={!settings.tabSettings?.showNotification}
-            onChange={() =>
-              updateNestedSetting("tabSettings", "autoFocus", !settings.tabSettings?.autoFocus)
-            }
+            checked={settings.tab?.autoFocus ?? false}
+            disabled={!settings.tab?.showNotification}
+            onChange={() => updateNestedSetting("tab", "autoFocus", !settings.tab?.autoFocus)}
           />
           <ToggleRow
             label={t("privacyModeLabel")}
             desc={t("privacyModeDesc")}
-            checked={settings.tabSettings?.privacyMode ?? false}
-            onChange={() =>
-              updateNestedSetting("tabSettings", "privacyMode", !settings.tabSettings?.privacyMode)
-            }
+            checked={settings.tab?.privacyMode ?? false}
+            onChange={() => updateNestedSetting("tab", "privacyMode", !settings.tab?.privacyMode)}
           />
           {/* 伪装标题 - 始终显示，未开启隐私模式时置灰 */}
           <div
@@ -1700,8 +1726,8 @@ export const SettingsTab = () => {
               backgroundColor: "var(--gh-card-bg, #ffffff)",
               border: "1px solid var(--gh-card-border, #e5e7eb)",
               borderRadius: "8px",
-              opacity: settings.tabSettings?.privacyMode ? 1 : 0.5,
-              pointerEvents: settings.tabSettings?.privacyMode ? "auto" : "none",
+              opacity: settings.tab?.privacyMode ? 1 : 0.5,
+              pointerEvents: settings.tab?.privacyMode ? "auto" : "none",
             }}>
             <label
               style={{
@@ -1715,10 +1741,10 @@ export const SettingsTab = () => {
             </label>
             <input
               type="text"
-              value={settings.tabSettings?.privacyTitle || "Google"}
-              onChange={(e) => updateNestedSetting("tabSettings", "privacyTitle", e.target.value)}
+              value={settings.tab?.privacyTitle || "Google"}
+              onChange={(e) => updateNestedSetting("tab", "privacyTitle", e.target.value)}
               placeholder="Google"
-              disabled={!settings.tabSettings?.privacyMode}
+              disabled={!settings.tab?.privacyMode}
               style={{
                 flex: 1,
                 maxWidth: "200px",
@@ -1727,7 +1753,7 @@ export const SettingsTab = () => {
 
                 border: "1px solid var(--gh-input-border, #d1d5db)",
                 fontSize: "12px",
-                backgroundColor: settings.tabSettings?.privacyMode
+                backgroundColor: settings.tab?.privacyMode
                   ? "var(--gh-input-bg, white)"
                   : "var(--gh-bg-tertiary, #f3f4f6)",
                 color: "var(--gh-text, #374151)",
@@ -1810,14 +1836,11 @@ export const SettingsTab = () => {
           <ModelLockSiteRow
             siteId="gemini-enterprise"
             siteName="Gemini Enterprise"
-            config={
-              settings.modelLockConfig?.["gemini-enterprise"] || { enabled: false, keyword: "" }
-            }
+            config={settings.modelLock?.["gemini-enterprise"] || { enabled: false, keyword: "" }}
             onChange={(config) => {
               setSettings({
-                ...settings,
-                modelLockConfig: {
-                  ...settings.modelLockConfig,
+                modelLock: {
+                  ...settings.modelLock,
                   "gemini-enterprise": config,
                 },
               })
@@ -1827,12 +1850,11 @@ export const SettingsTab = () => {
           <ModelLockSiteRow
             siteId="gemini"
             siteName="Gemini"
-            config={settings.modelLockConfig?.["gemini"] || { enabled: false, keyword: "" }}
+            config={settings.modelLock?.["gemini"] || { enabled: false, keyword: "" }}
             onChange={(config) => {
               setSettings({
-                ...settings,
-                modelLockConfig: {
-                  ...settings.modelLockConfig,
+                modelLock: {
+                  ...settings.modelLock,
                   gemini: config,
                 },
               })
@@ -1845,57 +1867,63 @@ export const SettingsTab = () => {
           <ToggleRow
             label={t("markdownFixLabel")}
             desc={t("markdownFixDesc")}
-            checked={settings.markdownFix ?? true}
-            onChange={() => setSettings({ ...settings, markdownFix: !settings.markdownFix })}
+            checked={settings.content?.markdownFix ?? true}
+            onChange={() =>
+              updateNestedSetting("content", "markdownFix", !settings.content?.markdownFix)
+            }
           />
-          \r
+
           <ToggleRow
             label={t("watermarkRemovalLabel") || "水印移除"}
             desc={t("watermarkRemovalDesc") || "自动移除AI生成图片的水印"}
-            checked={settings.watermarkRemoval ?? true}
+            checked={settings.content?.watermarkRemoval ?? true}
             onChange={() =>
-              setSettings({ ...settings, watermarkRemoval: !settings.watermarkRemoval })
+              updateNestedSetting(
+                "content",
+                "watermarkRemoval",
+                !settings.content?.watermarkRemoval,
+              )
             }
           />
           <ToggleRow
             label={t("exportImagesToBase64Label") || "导出时图片转Base64"}
             desc={t("exportImagesToBase64Desc") || "导出会话时将图片转为Base64嵌入"}
-            checked={settings.conversations?.exportImagesToBase64 ?? false}
+            checked={settings.content?.exportImagesToBase64 ?? false}
             onChange={() =>
               updateNestedSetting(
-                "conversations",
+                "content",
                 "exportImagesToBase64",
-                !settings.conversations?.exportImagesToBase64,
+                !settings.content?.exportImagesToBase64,
               )
             }
           />
           <ToggleRow
             label={t("formulaCopyLabel")}
             desc={t("formulaCopyDesc")}
-            checked={settings.copy?.formulaCopyEnabled ?? true}
+            checked={settings.content?.formulaCopy ?? true}
             onChange={() =>
-              updateNestedSetting("copy", "formulaCopyEnabled", !settings.copy?.formulaCopyEnabled)
+              updateNestedSetting("content", "formulaCopy", !settings.content?.formulaCopy)
             }
           />
           <ToggleRow
             label={t("formulaDelimiterLabel")}
             desc={t("formulaDelimiterDesc")}
-            checked={settings.copy?.formulaDelimiterEnabled ?? true}
-            disabled={!settings.copy?.formulaCopyEnabled}
+            checked={settings.content?.formulaDelimiter ?? true}
+            disabled={!settings.content?.formulaCopy}
             onChange={() =>
               updateNestedSetting(
-                "copy",
-                "formulaDelimiterEnabled",
-                !settings.copy?.formulaDelimiterEnabled,
+                "content",
+                "formulaDelimiter",
+                !settings.content?.formulaDelimiter,
               )
             }
           />
           <ToggleRow
             label={t("tableCopyLabel")}
             desc={t("tableCopyDesc")}
-            checked={settings.copy?.tableCopyEnabled ?? true}
+            checked={settings.content?.tableCopy ?? true}
             onChange={() =>
-              updateNestedSetting("copy", "tableCopyEnabled", !settings.copy?.tableCopyEnabled)
+              updateNestedSetting("content", "tableCopy", !settings.content?.tableCopy)
             }
           />
         </CollapsibleSection>
@@ -2271,17 +2299,22 @@ export const SettingsTab = () => {
                   ]
 
                   // Hydrate data：解析 JSON 字符串，并提取 Zustand persist 格式中的实际数据
+                  // ⭐ 扁平化导出：移除 state 层，直接导出数据
                   const hydratedData = Object.fromEntries(
                     Object.entries(localData).map(([k, v]) => {
                       try {
                         let parsed = typeof v === "string" ? JSON.parse(v) : v
 
                         // ⭐ 处理 Zustand persist 格式：提取 state 中的数据
+                        // 格式: { state: { settings: {...} | prompts: [...] | conversations: {...} }, version: 0 }
                         if (ZUSTAND_KEYS.includes(k) && parsed?.state) {
-                          const stateKeys = Object.keys(parsed.state)
-                          if (stateKeys.length === 1) {
-                            parsed = parsed.state[stateKeys[0]]
-                          } else if (stateKeys.length > 1) {
+                          // 直接提取 state 中与 key 同名的属性（主数据）
+                          // 例如: prompts store 的 state 中有 prompts 数组
+                          // 例如: conversations store 的 state 中有 conversations 对象
+                          if (parsed.state[k] !== undefined) {
+                            parsed = parsed.state[k]
+                          } else {
+                            // 如果没有同名属性，保留整个 state 内容
                             parsed = parsed.state
                           }
                         }
@@ -2352,15 +2385,18 @@ export const SettingsTab = () => {
                     onConfirm: async () => {
                       setConfirmConfig((prev) => ({ ...prev, show: false }))
                       try {
-                        // Zustand stores 的 key 和对应的 state 属性名映射
-                        const ZUSTAND_STORE_MAPPING: Record<string, string | string[]> = {
-                          settings: "settings",
-                          prompts: "prompts",
-                          folders: "folders",
-                          tags: "tags",
-                          conversations: ["conversations", "lastUsedFolderId"],
-                          readingHistory: ["history", "lastCleanupRun"],
-                        }
+                        // Zustand persist 使用的 storage keys
+                        const ZUSTAND_KEYS = [
+                          "settings",
+                          "prompts",
+                          "folders",
+                          "tags",
+                          "conversations",
+                          "readingHistory",
+                        ]
+
+                        // ⭐ 导入时需要知道哪些 store 有多个属性
+                        const MULTI_PROP_STORES = ["conversations", "readingHistory"]
 
                         // ⭐ Dehydrate: 将对象序列化回 Zustand persist 格式
                         const dehydratedData = Object.fromEntries(
@@ -2369,17 +2405,32 @@ export const SettingsTab = () => {
                               return [k, v]
                             }
 
-                            const stateKey = ZUSTAND_STORE_MAPPING[k]
-                            if (stateKey) {
+                            // 处理 Zustand stores
+                            if (ZUSTAND_KEYS.includes(k)) {
                               let state: Record<string, any>
-                              if (Array.isArray(stateKey)) {
-                                state = typeof v === "object" ? v : {}
+                              if (MULTI_PROP_STORES.includes(k)) {
+                                // 多属性 store（如 conversations, readingHistory）
+                                // ⭐ 如果导入的数据已经是包含多个属性的对象，直接使用
+                                // ⭐ 否则（扁平化格式），将其包装为 { [k]: v }
+                                if (
+                                  typeof v === "object" &&
+                                  !Array.isArray(v) &&
+                                  Object.keys(v as object).length > 1
+                                ) {
+                                  // 旧格式：已经是 { conversations: {...}, lastUsedFolderId: "..." }
+                                  state = v as Record<string, any>
+                                } else {
+                                  // 扁平化格式：v 直接是主数据（如 conversations 对象）
+                                  state = { [k]: v }
+                                }
                               } else {
-                                state = { [stateKey]: v }
+                                // 单属性 store
+                                state = { [k]: v }
                               }
                               return [k, JSON.stringify({ state, version: 0 })]
                             }
 
+                            // 非 Zustand stores，直接序列化
                             if (typeof v === "object") {
                               return [k, JSON.stringify(v)]
                             }

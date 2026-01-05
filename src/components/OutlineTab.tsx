@@ -363,7 +363,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       // ⭐ 根据 followMode 决定是否自动滚动
       // followMode === 'latest'：自动滚动到最新消息
       // followMode === 'current' 或 'manual'：不自动滚动
-      const followMode = settings?.outline?.followMode || "current"
+      const followMode = settings?.features?.outline?.followMode || "current"
 
       if (followMode === "latest" && newTotalNodes > prevTotalNodes) {
         // 跟随最新消息模式：有新节点就滚动
@@ -388,7 +388,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
     }
     update() // 初始加载
     return manager.subscribe(update)
-  }, [manager, settings?.outline?.followMode]) // 添加 followMode 依赖
+  }, [manager, settings?.features?.outline?.followMode]) // 添加 followMode 依赖
 
   // ⭐ 智能滚动：在 tree 渲染完成后执行滚动
   useEffect(() => {
