@@ -3,6 +3,7 @@
  * 支持将本地数据同步到 WebDAV 服务器（如坚果云、Nextcloud 等）
  */
 
+import { MULTI_PROP_STORES, ZUSTAND_KEYS } from "~constants/defaults"
 import { APP_NAME } from "~utils/config"
 import { MSG_WEBDAV_REQUEST } from "~utils/messaging"
 import { localStorage, STORAGE_KEYS, type Settings } from "~utils/storage"
@@ -167,15 +168,7 @@ export class WebDAVSyncManager {
         chrome.storage.local.get(null, resolve),
       )
 
-      // Zustand persist 使用的 storage keys
-      const ZUSTAND_KEYS = [
-        "settings",
-        "prompts",
-        "folders",
-        "tags",
-        "conversations",
-        "readingHistory",
-      ]
+      // Zustand persist 使用的 storage keys (从 constants/defaults.ts 导入)
 
       // Hydrate data：解析 JSON 字符串，并提取 Zustand persist 格式中的实际数据
       // ⭐ 扁平化导出：移除 state 层，直接导出数据
@@ -405,18 +398,7 @@ export class WebDAVSyncManager {
       // 1. 保存当前的WebDAV配置(避免被备份数据覆盖)
       const currentWebdavConfig = this.config
 
-      // Zustand persist 使用的 storage keys
-      const ZUSTAND_KEYS = [
-        "settings",
-        "prompts",
-        "folders",
-        "tags",
-        "conversations",
-        "readingHistory",
-      ]
-
-      // ⭐ 导入时需要知道哪些 store 有多个属性
-      const MULTI_PROP_STORES = ["conversations", "readingHistory"]
+      // Zustand persist 使用的 storage keys 和多属性 store (从 constants/defaults.ts 导入)
 
       // 2. Dehydrate: 将对象序列化回 Zustand persist 格式
       const dehydratedData = Object.fromEntries(

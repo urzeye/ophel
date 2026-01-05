@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import { ConfirmDialog, Switch } from "~components/ui"
 import { COLLAPSED_BUTTON_DEFS, TAB_DEFINITIONS } from "~constants"
+import { MULTI_PROP_STORES, ZUSTAND_KEYS } from "~constants/defaults"
 import { getWebDAVSyncManager, type BackupFile } from "~core/webdav-sync"
 import { useSettingsStore } from "~stores/settings-store"
 import { setLanguage, t } from "~utils/i18n"
@@ -2299,15 +2300,7 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
                     chrome.storage.local.get(null, resolve),
                   )
 
-                  // Zustand persist 使用的 storage keys
-                  const ZUSTAND_KEYS = [
-                    "settings",
-                    "prompts",
-                    "folders",
-                    "tags",
-                    "conversations",
-                    "readingHistory",
-                  ]
+                  // Zustand persist 使用的 storage keys (从 constants/defaults.ts 导入)
 
                   // Hydrate data：解析 JSON 字符串，并提取 Zustand persist 格式中的实际数据
                   // ⭐ 扁平化导出：移除 state 层，直接导出数据
@@ -2396,18 +2389,7 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
                     onConfirm: async () => {
                       setConfirmConfig((prev) => ({ ...prev, show: false }))
                       try {
-                        // Zustand persist 使用的 storage keys
-                        const ZUSTAND_KEYS = [
-                          "settings",
-                          "prompts",
-                          "folders",
-                          "tags",
-                          "conversations",
-                          "readingHistory",
-                        ]
-
-                        // ⭐ 导入时需要知道哪些 store 有多个属性
-                        const MULTI_PROP_STORES = ["conversations", "readingHistory"]
+                        // Zustand persist 使用的 storage keys 和多属性 store (从 constants/defaults.ts 导入)
 
                         // ⭐ Dehydrate: 将对象序列化回 Zustand persist 格式
                         const dehydratedData = Object.fromEntries(

@@ -16,7 +16,7 @@ export {
 export {
   DEFAULT_PROMPTS,
   DEFAULT_FOLDERS,
-  DEFAULT_WEBDAV_CONFIG,
+  ZUSTAND_KEYS,
+  MULTI_PROP_STORES,
   type Folder,
-  type WebDAVConfig,
 } from "./defaults"
