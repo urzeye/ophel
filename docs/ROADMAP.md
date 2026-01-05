@@ -21,10 +21,10 @@
   - 问题：在 Gemini Enterprise (business.gemini.google) 站点上滚动锁定功能无效
   - 优先级：中
 
-- [ ] **主题切换动画不同步**
+- [x] **主题切换动画不同步** ✅
   - 问题：切换深浅主题时，圆形扩散动画还没完成前，面板框架（header/footer）已变成目标主题颜色，但中间的提示词列表、会话文件夹列表、输入框等仍保持原主题样式，视觉不一致
-  - 期望：要么全部元素一起变化，要么全部等动画完成后一起变化
-  - 优先级：中
+  - 修复：将 `onModeChange` 回调延迟到 `transition.finished` 之后，确保 React 重渲染不干扰 View Transition 动画
+  - 文件：`src/core/theme-manager.ts`
 
 ---
 

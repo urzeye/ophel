@@ -404,19 +404,19 @@ ${cssVars}
     })
 
     // 使用 finally 确保 MutationObserver 一定会恢复（即使动画失败）
+    // ⭐ 将 React 状态更新延迟到动画完成后，确保视觉一致性
     transition.finished
       .catch(() => {
         // 忽略动画错误
       })
       .finally(() => {
+        // 触发回调通知 React 更新状态（动画完成后）
+        if (this.onModeChange) {
+          this.onModeChange(nextMode)
+        }
         // 无条件启动监听（确保网页主题变化能被检测）
         this.monitorTheme()
       })
-
-    // 触发回调通知 React 更新状态
-    if (this.onModeChange) {
-      this.onModeChange(nextMode)
-    }
 
     // 更新内部状态
     this.mode = nextMode
