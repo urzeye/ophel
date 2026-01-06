@@ -62,6 +62,34 @@
   - 兼容 Mac（⌘）和 Windows（Ctrl）
   - 提供专门的快捷键设置面板
 
+- [ ] **用户提问 Markdown 渲染**
+  - 场景：Gemini 把用户输入的 Markdown 按行拆分成 HTML，丢失了格式
+  - 方案：提取 `.query-text-line` 文本 → 合并 → 用 markdown-it 渲染
+  - 位置：内容设置 / 对话区域增强
+
+```typescript
+function extractMarkdownFromGeminiQuery(container: Element): string {
+  // 1. 获取所有行
+  const lines = container.querySelectorAll('.query-text-line')
+  
+  // 2. 提取文本并解码 HTML 实体
+  const textLines = Array.from(lines).map(line => {
+    // 检查是否是空行（只有 <br>）
+    if (line.querySelector('br') && line.textContent?.trim() === '') {
+      return ''
+    }
+    return line.textContent?.trim() || ''
+  })
+  
+  // 3. 合并成 Markdown 字符串
+  return textLines.join('\n')
+}
+
+// 4. 然后用现有的 renderMarkdown 渲染
+const markdown = extractMarkdownFromGeminiQuery(queryElement)
+const html = renderMarkdown(markdown)
+```
+
 ---
 
 ## 📝 更新日志
