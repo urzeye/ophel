@@ -287,6 +287,8 @@ export interface Prompt {
   title: string
   content: string
   category: string
+  pinned?: boolean // 是否置顶
+  lastUsedAt?: number // 最近使用时间戳
 }
 
 // ==================== 工具函数 ====================

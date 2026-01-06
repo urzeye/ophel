@@ -20,3 +20,6 @@ export {
   MULTI_PROP_STORES,
   type Folder,
 } from "./defaults"
+
+// 提示词模块
+export { VIRTUAL_CATEGORY, type VirtualCategoryType } from "./prompts"

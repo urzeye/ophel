@@ -7,7 +7,7 @@
 export const APP_NAME = "ophel"
 
 // 应用显示名称
-export const APP_DISPLAY_NAME = "Chat Helper"
+export const APP_DISPLAY_NAME = "Ophel"
 
 // 应用版本
-export const APP_VERSION = "2.0.0"
+export const APP_VERSION = "0.1.0"

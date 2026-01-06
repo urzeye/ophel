@@ -125,6 +125,15 @@
 
   /* === 滑块圆点颜色 === */
   --gh-slider-dot-bg: #d1d5db;
+
+  /* === 分类颜色（柔和背景色） === */
+  --gh-category-1: #fecaca; /* 红 */
+  --gh-category-2: #fed7aa; /* 橙 */
+  --gh-category-3: #fef08a; /* 黄 */
+  --gh-category-4: #bbf7d0; /* 绿 */
+  --gh-category-5: #a5f3fc; /* 青 */
+  --gh-category-6: #c7d2fe; /* 蓝紫 */
+  --gh-category-7: #f5d0fe; /* 粉紫 */
 }
 
 /* ==================== 深色模式 ==================== */
@@ -233,4 +242,13 @@ body[data-gh-mode="dark"] {
   /* === 设置卡片背景（深色模式） === */
   --gh-card-bg: #0b0b0b;
   --gh-card-border: #333333;
+
+  /* === 分类颜色（深色模式 - 半透明） === */
+  --gh-category-1: rgba(248, 113, 113, 0.3); /* 红 */
+  --gh-category-2: rgba(251, 146, 60, 0.3); /* 橙 */
+  --gh-category-3: rgba(250, 204, 21, 0.3); /* 黄 */
+  --gh-category-4: rgba(74, 222, 128, 0.3); /* 绿 */
+  --gh-category-5: rgba(34, 211, 238, 0.3); /* 青 */
+  --gh-category-6: rgba(129, 140, 248, 0.3); /* 蓝紫 */
+  --gh-category-7: rgba(232, 121, 249, 0.3); /* 粉紫 */
 }

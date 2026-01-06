@@ -2,8 +2,16 @@ import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
 import { Button, ConfirmDialog, InputDialog } from "~components/ui"
+import {
+  extractVariables,
+  replaceVariables,
+  VariableInputDialog,
+} from "~components/VariableInputDialog"
+import { VIRTUAL_CATEGORY } from "~constants"
 import type { PromptManager } from "~core/prompt-manager"
+import { APP_NAME } from "~utils/config"
 import { t } from "~utils/i18n"
+import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 import type { Prompt } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
@@ -29,6 +37,15 @@ interface PromptInputState {
   onConfirm: (value: string) => void
 }
 
+// ⭐ 根据分类名称哈希自动分配颜色索引 1-7
+const getCategoryColorIndex = (categoryName: string): number => {
+  let hash = 0
+  for (let i = 0; i < categoryName.length; i++) {
+    hash = categoryName.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  return (Math.abs(hash) % 7) + 1
+}
+
 export const PromptsTab: React.FC<PromptsTabProps> = ({
   manager,
   onPromptSelect,
@@ -36,7 +53,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 }) => {
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [categories, setCategories] = useState<string[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const [selectedCategory, setSelectedCategory] = useState<string>(VIRTUAL_CATEGORY.ALL)
   const [searchQuery, setSearchQuery] = useState("")
 
   // 模态弹窗状态
@@ -67,6 +84,28 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const dragNodeRef = useRef<HTMLDivElement | null>(null)
 
+  // ⭐ 变量输入弹窗状态
+  const [variableDialogState, setVariableDialogState] = useState<{
+    show: boolean
+    prompt: Prompt | null
+    variables: string[]
+  }>({ show: false, prompt: null, variables: [] })
+
+  // ⭐ 导入确认弹窗状态
+  const [importDialogState, setImportDialogState] = useState<{
+    show: boolean
+    prompts: Prompt[]
+  }>({ show: false, prompts: [] })
+
+  // ⭐ Markdown 预览开关
+  const [showPreview, setShowPreview] = useState(false)
+
+  // ⭐ 快捷预览弹窗状态
+  const [previewModal, setPreviewModal] = useState<{
+    show: boolean
+    prompt: Prompt | null
+  }>({ show: false, prompt: null })
+
   useEffect(() => {
     loadData()
   }, [])
@@ -79,18 +118,48 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
     // ⭐ 分类有效性检查：如果当前选中的分类不再存在或变空，回退到「全部」
     setSelectedCategory((prev) => {
-      if (prev === "all") return prev
+      if (prev === VIRTUAL_CATEGORY.ALL) return prev
       // 检查分类是否还存在
-      if (!allCategories.includes(prev)) return "all"
+      if (!allCategories.includes(prev)) return VIRTUAL_CATEGORY.ALL
       // 检查分类下是否还有提示词
       const hasPrompts = allPrompts.some((p) => p.category === prev)
-      if (!hasPrompts) return "all"
+      if (!hasPrompts) return VIRTUAL_CATEGORY.ALL
       return prev
     })
   }
 
   const getFilteredPrompts = () => {
-    return manager.filterPrompts(searchQuery, selectedCategory)
+    let filtered: Prompt[]
+
+    // ⭐ 最近使用筛选：显示有 lastUsedAt 的，按时间倒序
+    if (selectedCategory === VIRTUAL_CATEGORY.RECENT) {
+      filtered = manager
+        .getPrompts()
+        .filter((p) => p.lastUsedAt)
+        .sort((a, b) => (b.lastUsedAt || 0) - (a.lastUsedAt || 0))
+        .slice(0, 10) // 只显示最近 10 个
+
+      // 搜索过滤
+      if (searchQuery) {
+        const lower = searchQuery.toLowerCase()
+        filtered = filtered.filter(
+          (p) => p.title.toLowerCase().includes(lower) || p.content.toLowerCase().includes(lower),
+        )
+      }
+    } else {
+      filtered = manager.filterPrompts(searchQuery, selectedCategory)
+    }
+
+    // ⭐ 置顶的提示词优先显示（最近使用模式下不重排）
+    if (selectedCategory !== VIRTUAL_CATEGORY.RECENT) {
+      filtered = filtered.sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1
+        if (!a.pinned && b.pinned) return 1
+        return 0
+      })
+    }
+
+    return filtered
   }
 
   // 显示确认对话框
@@ -110,13 +179,147 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
   // 选中提示词并插入
   const handleSelect = async (prompt: Prompt) => {
-    const success = await manager.insertPrompt(prompt.content)
+    // ⭐ 检测是否有变量
+    const variables = extractVariables(prompt.content)
+
+    if (variables.length > 0) {
+      // 有变量，弹窗让用户填写
+      setVariableDialogState({
+        show: true,
+        prompt,
+        variables,
+      })
+    } else {
+      // 无变量，直接插入
+      await doInsert(prompt, prompt.content)
+    }
+  }
+
+  // ⭐ 执行插入（变量替换后）
+  const doInsert = async (prompt: Prompt, content: string) => {
+    const success = await manager.insertPrompt(content)
     if (success) {
+      manager.updateLastUsed(prompt.id)
       onPromptSelect?.(prompt)
       showToast(`${t("inserted") || "已插入"}: ${prompt.title}`)
     } else {
       showToast(t("insertFailed") || "未找到输入框，请点击输入框后重试")
     }
+  }
+
+  // ⭐ 变量填写完成后的回调
+  const handleVariableConfirm = async (values: Record<string, string>) => {
+    const { prompt } = variableDialogState
+    if (!prompt) return
+
+    const replacedContent = replaceVariables(prompt.content, values)
+    setVariableDialogState({ show: false, prompt: null, variables: [] })
+    await doInsert(prompt, replacedContent)
+  }
+
+  // ⭐ 切换置顶状态
+  const handleTogglePin = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    manager.togglePin(id)
+    loadData()
+  }
+
+  // ⭐ 导出提示词为 JSON 文件
+  const handleExport = () => {
+    const allPrompts = manager.getPrompts()
+    const json = JSON.stringify(allPrompts, null, 2)
+    const blob = new Blob([json], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `${APP_NAME}-prompts-${new Date().toISOString().split("T")[0]}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    showToast(t("promptExportSuccess") || "导出成功")
+  }
+
+  // ⭐ 导入提示词
+  const handleImport = () => {
+    const input = document.createElement("input")
+    input.type = "file"
+    input.accept = ".json"
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (!file) return
+
+      try {
+        const text = await file.text()
+        const imported = JSON.parse(text) as Prompt[]
+
+        if (!Array.isArray(imported)) {
+          showToast(t("promptImportFailed") || "导入失败：文件格式错误")
+          return
+        }
+
+        // 显示导入确认弹窗（支持覆盖/合并/取消）
+        setImportDialogState({ show: true, prompts: imported })
+      } catch {
+        showToast(t("promptImportFailed") || "导入失败：文件解析错误")
+      }
+    }
+    input.click()
+  }
+
+  // ⭐ 处理覆盖导入
+  const handleImportOverwrite = () => {
+    const imported = importDialogState.prompts
+    manager.setPrompts(imported)
+    loadData()
+    setImportDialogState({ show: false, prompts: [] })
+    showToast(
+      (t("promptImportSuccess") || "已导入 {count} 个提示词").replace(
+        "{count}",
+        imported.length.toString(),
+      ),
+    )
+  }
+
+  // ⭐ 处理合并导入（按 ID 合并）
+  const handleImportMerge = () => {
+    const imported = importDialogState.prompts
+    const existing = manager.getPrompts()
+    const existingIds = new Set(existing.map((p) => p.id))
+
+    // 分离：已存在的（更新）和 新的（追加）
+    const toUpdate = imported.filter((p) => existingIds.has(p.id))
+    const toAdd = imported.filter((p) => !existingIds.has(p.id))
+
+    // 更新已存在的
+    toUpdate.forEach((p) => {
+      manager.updatePrompt(p.id, {
+        title: p.title,
+        content: p.content,
+        category: p.category,
+        pinned: p.pinned,
+      })
+    })
+
+    // 追加新的
+    toAdd.forEach((p) => {
+      manager.addPrompt({
+        title: p.title,
+        content: p.content,
+        category: p.category,
+        pinned: p.pinned,
+      })
+    })
+
+    loadData()
+    setImportDialogState({ show: false, prompts: [] })
+    const msg = `已合并：更新 ${toUpdate.length} 个，新增 ${toAdd.length} 个`
+    showToast(
+      t("promptMergeSuccess")
+        ?.replace("{updated}", toUpdate.length.toString())
+        .replace("{added}", toAdd.length.toString()) || msg,
+    )
   }
 
   // 保存提示词（新增/编辑）
@@ -203,9 +406,12 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     if (prompt) {
       setEditingPrompt({ ...prompt })
     } else {
-      // ⭐ 新建时：如果当前选中了某个分类，默认使用该分类；否则使用「未分类」
-      const defaultCategory =
-        selectedCategory !== "all" ? selectedCategory : t("uncategorized") || "未分类"
+      // ⭐ 新建时：如果当前选中了真实分类，使用该分类；否则使用第一个真实分类或「未分类」
+      const isVirtualCategory =
+        selectedCategory === VIRTUAL_CATEGORY.ALL || selectedCategory === VIRTUAL_CATEGORY.RECENT
+      const defaultCategory = isVirtualCategory
+        ? categories[0] || t("uncategorized") || "未分类"
+        : selectedCategory
       setEditingPrompt({ title: "", content: "", category: defaultCategory })
     }
     setIsModalOpen(true)
@@ -249,7 +455,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         await manager.deleteCategory(name)
         showToast((t("categoryDeletedMsg") || "分类「{name}」已删除").replace("{name}", name))
         if (selectedCategory === name) {
-          setSelectedCategory("all")
+          setSelectedCategory(VIRTUAL_CATEGORY.ALL)
         }
         loadData()
       },
@@ -480,33 +686,95 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
           {/* 内容 */}
           <div style={{ marginBottom: "16px" }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: "14px",
-                fontWeight: 500,
-                color: "var(--gh-text, #374151)",
-                marginBottom: "6px",
-              }}>
-              {t("content")}
-            </label>
-            <textarea
-              value={editingPrompt?.content || ""}
-              onChange={(e) => setEditingPrompt({ ...editingPrompt, content: e.target.value })}
-              style={{
-                width: "100%",
-                minHeight: "120px",
-                padding: "8px 12px",
-                border: "1px solid var(--gh-border, #d1d5db)",
-                borderRadius: "6px",
-                fontSize: "14px",
-                resize: "vertical",
-                boxSizing: "border-box",
-                fontFamily: "inherit",
-                background: "var(--gh-bg, #ffffff)",
-                color: "var(--gh-text, #1f2937)",
-              }}
-            />
+            <div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "6px",
+                }}>
+                <label
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    color: "var(--gh-text, #374151)",
+                  }}>
+                  {t("content")}
+                </label>
+                {/* ⭐ 预览开关 */}
+                <button
+                  onClick={() => setShowPreview(!showPreview)}
+                  style={{
+                    padding: "2px 8px",
+                    fontSize: "12px",
+                    background: showPreview
+                      ? "var(--gh-primary, #4285f4)"
+                      : "var(--gh-hover, #f3f4f6)",
+                    color: showPreview ? "white" : "var(--gh-text-secondary, #6b7280)",
+                    border: "1px solid var(--gh-border, #d1d5db)",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  }}>
+                  {t("promptMarkdownPreview") || "预览"}
+                </button>
+              </div>
+              <textarea
+                value={editingPrompt?.content || ""}
+                onChange={(e) => setEditingPrompt({ ...editingPrompt, content: e.target.value })}
+                style={{
+                  width: "100%",
+                  minHeight: "120px",
+                  padding: "8px 12px",
+                  border: "1px solid var(--gh-border, #d1d5db)",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                  resize: "vertical",
+                  boxSizing: "border-box",
+                  fontFamily: "inherit",
+                  background: "var(--gh-bg, #ffffff)",
+                  color: "var(--gh-text, #1f2937)",
+                  display: showPreview ? "none" : "block",
+                }}
+              />
+              {/* ⭐ Markdown 预览区域 */}
+              {showPreview && (
+                <>
+                  <div
+                    className="gh-markdown-preview"
+                    style={{
+                      width: "100%",
+                      minHeight: "120px",
+                      maxHeight: "200px",
+                      padding: "8px 12px",
+                      border: "1px solid var(--gh-border, #d1d5db)",
+                      borderRadius: "6px",
+                      fontSize: "14px",
+                      boxSizing: "border-box",
+                      background: "var(--gh-bg-secondary, #f9fafb)",
+                      color: "var(--gh-text, #1f2937)",
+                      overflowY: "auto",
+                      lineHeight: 1.6,
+                    }}
+                    onClick={(e) => {
+                      // 事件委托处理复制按钮
+                      const target = e.target as HTMLElement
+                      if (target.dataset.copyCode === "true") {
+                        const code = target.nextElementSibling?.textContent || ""
+                        navigator.clipboard.writeText(code).then(() => {
+                          target.textContent = "✓"
+                          setTimeout(() => (target.textContent = "复制"), 1500)
+                        })
+                      }
+                    }}
+                    dangerouslySetInnerHTML={{
+                      __html: renderMarkdown(editingPrompt?.content || ""),
+                    }}
+                  />
+                  <style>{getHighlightStyles()}</style>
+                </>
+              )}
+            </div>
           </div>
 
           {/* 按钮 */}
@@ -644,16 +912,211 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     )
   }
 
+  // ⭐ 预览弹窗渲染
+  const renderPreviewModal = () => {
+    if (!previewModal.show || !previewModal.prompt) return null
+
+    return createPortal(
+      <div
+        className="prompt-preview-modal gh-interactive"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            setPreviewModal({ show: false, prompt: null })
+          }
+        }}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "var(--gh-overlay-bg, rgba(0, 0, 0, 0.5))",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 10001,
+          animation: "fadeIn 0.2s ease-out",
+        }}>
+        <div
+          style={{
+            width: "90%",
+            maxWidth: "600px",
+            maxHeight: "80vh",
+            background: "var(--gh-bg, white)",
+            borderRadius: "12px",
+            boxShadow: "var(--gh-shadow-lg)",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            animation: "slideUp 0.3s ease-out",
+          }}>
+          {/* 标题栏 */}
+          <div
+            style={{
+              padding: "16px 20px",
+              borderBottom: "1px solid var(--gh-border, #e5e7eb)",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}>
+            <div>
+              <div style={{ fontSize: "16px", fontWeight: 600, color: "var(--gh-text, #1f2937)" }}>
+                {previewModal.prompt.title}
+              </div>
+              <div
+                style={{
+                  fontSize: "12px",
+                  color: "var(--gh-text-secondary, #6b7280)",
+                  marginTop: "4px",
+                }}>
+                {previewModal.prompt.category}
+              </div>
+            </div>
+            <button
+              onClick={() => setPreviewModal({ show: false, prompt: null })}
+              style={{
+                width: "28px",
+                height: "28px",
+                border: "none",
+                background: "var(--gh-hover, #f3f4f6)",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "16px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}>
+              ✕
+            </button>
+          </div>
+          {/* 内容区域 */}
+          <div
+            className="gh-markdown-preview"
+            style={{
+              flex: 1,
+              padding: "20px",
+              overflowY: "auto",
+            }}
+            onClick={(e) => {
+              // 事件委托处理复制按钮
+              const target = e.target as HTMLElement
+              if (target.dataset.copyCode === "true") {
+                const code = target.nextElementSibling?.textContent || ""
+                navigator.clipboard.writeText(code).then(() => {
+                  target.textContent = "✓"
+                  setTimeout(() => (target.textContent = "复制"), 1500)
+                })
+              }
+            }}
+            dangerouslySetInnerHTML={{
+              __html: renderMarkdown(previewModal.prompt.content),
+            }}
+          />
+          {/* highlight.js 样式 */}
+          <style>{getHighlightStyles()}</style>
+        </div>
+      </div>,
+      document.body,
+    )
+  }
+
+  // ⭐ 导入确认弹窗渲染
+  const renderImportDialog = () => {
+    if (!importDialogState.show) return null
+
+    return createPortal(
+      <div
+        className="import-dialog gh-interactive"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            setImportDialogState({ show: false, prompts: [] })
+          }
+        }}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "var(--gh-overlay-bg, rgba(0, 0, 0, 0.5))",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 10001,
+        }}>
+        <div
+          style={{
+            width: "90%",
+            maxWidth: "400px",
+            background: "var(--gh-bg, white)",
+            borderRadius: "12px",
+            boxShadow: "var(--gh-shadow-lg)",
+            padding: "24px",
+          }}>
+          <div
+            style={{
+              fontSize: "16px",
+              fontWeight: 600,
+              marginBottom: "12px",
+              color: "var(--gh-text)",
+            }}>
+            {t("promptImportTitle") || "导入提示词"}
+          </div>
+          <div
+            style={{
+              fontSize: "14px",
+              color: "var(--gh-text-secondary)",
+              marginBottom: "20px",
+              lineHeight: 1.6,
+            }}>
+            {(t("promptImportMessage2") || "发现 {count} 个提示词，请选择导入方式：").replace(
+              "{count}",
+              importDialogState.prompts.length.toString(),
+            )}
+            <ul style={{ margin: "8px 0 0 0", paddingLeft: "20px" }}>
+              <li>{t("promptImportOverwriteDesc") || "覆盖：清空现有，使用导入的"}</li>
+              <li>{t("promptImportMergeDesc") || "合并：相同ID更新，新ID追加"}</li>
+            </ul>
+          </div>
+          <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+            <Button
+              variant="ghost"
+              onClick={() => setImportDialogState({ show: false, prompts: [] })}
+              style={{ background: "var(--gh-hover, #f3f4f6)" }}>
+              {t("cancel") || "取消"}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={handleImportMerge}
+              style={{
+                background: "var(--gh-primary-light, #e3f2fd)",
+                color: "var(--gh-primary, #4285f4)",
+              }}>
+              {t("promptMerge") || "合并"}
+            </Button>
+            <Button variant="primary" onClick={handleImportOverwrite}>
+              {t("promptOverwrite") || "覆盖"}
+            </Button>
+          </div>
+        </div>
+      </div>,
+      document.body,
+    )
+  }
+
   return (
     <div
       className="gh-prompts-tab"
       style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {/* 搜索栏 */}
+      {/* 搜索栏 + 导入导出按钮 */}
       <div
         style={{
           padding: "12px",
           borderBottom: "1px solid var(--gh-border, #e5e7eb)",
           background: "var(--gh-bg-secondary, #f9fafb)",
+          display: "flex",
+          gap: "8px",
+          alignItems: "center",
         }}>
         <input
           type="text"
@@ -661,7 +1124,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{
-            width: "100%",
+            flex: 1,
             padding: "8px 12px",
             border: "1px solid var(--gh-border, #d1d5db)",
             borderRadius: "8px",
@@ -671,6 +1134,44 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             color: "var(--gh-text, #1f2937)",
           }}
         />
+        {/* 导入按钮 */}
+        <button
+          title={t("promptImport") || "导入"}
+          onClick={handleImport}
+          style={{
+            width: "32px",
+            height: "32px",
+            border: "1px solid var(--gh-border, #d1d5db)",
+            background: "var(--gh-bg, white)",
+            borderRadius: "6px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "16px",
+            flexShrink: 0,
+          }}>
+          📥
+        </button>
+        {/* 导出按钮 */}
+        <button
+          title={t("promptExport") || "导出"}
+          onClick={handleExport}
+          style={{
+            width: "32px",
+            height: "32px",
+            border: "1px solid var(--gh-border, #d1d5db)",
+            background: "var(--gh-bg, white)",
+            borderRadius: "6px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "16px",
+            flexShrink: 0,
+          }}>
+          📤
+        </button>
       </div>
 
       {/* 分类标签栏 */}
@@ -685,52 +1186,77 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           userSelect: "none", // ⭐ 禁止文字选中
         }}>
         <span
-          onClick={() => setSelectedCategory("all")}
+          onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.ALL)}
           style={{
             padding: "4px 10px",
             background:
-              selectedCategory === "all"
+              selectedCategory === VIRTUAL_CATEGORY.ALL
                 ? "var(--gh-primary, #4285f4)"
                 : "var(--gh-hover, #f3f4f6)",
             borderRadius: "12px",
             fontSize: "12px",
-            color: selectedCategory === "all" ? "white" : "#4b5563",
+            color: selectedCategory === VIRTUAL_CATEGORY.ALL ? "white" : "#4b5563",
             cursor: "pointer",
             border:
-              selectedCategory === "all"
+              selectedCategory === VIRTUAL_CATEGORY.ALL
                 ? "1px solid var(--gh-primary, #4285f4)"
                 : "1px solid transparent",
           }}>
           {t("allCategory")}
         </span>
 
-        {categories.map((cat) => (
-          <span
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            style={{
-              padding: "4px 10px",
-              background:
-                selectedCategory === cat
-                  ? "var(--gh-primary, #4285f4)"
-                  : "var(--gh-hover, #f3f4f6)",
-              borderRadius: "12px",
-              fontSize: "12px",
-              color: selectedCategory === cat ? "white" : "#4b5563",
-              cursor: "pointer",
-              border:
-                selectedCategory === cat
-                  ? "1px solid var(--gh-primary, #4285f4)"
-                  : "1px solid transparent",
-              maxWidth: "80px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-            title={cat}>
-            {cat}
-          </span>
-        ))}
+        {categories.map((cat) => {
+          const colorIndex = getCategoryColorIndex(cat)
+          return (
+            <span
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              style={{
+                padding: "4px 10px",
+                background:
+                  selectedCategory === cat
+                    ? "var(--gh-primary, #4285f4)"
+                    : `var(--gh-category-${colorIndex})`,
+                borderRadius: "12px",
+                fontSize: "12px",
+                color: selectedCategory === cat ? "white" : "#4b5563",
+                cursor: "pointer",
+                border:
+                  selectedCategory === cat
+                    ? "1px solid var(--gh-primary, #4285f4)"
+                    : "1px solid transparent",
+                maxWidth: "80px",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+              title={cat}>
+              {cat}
+            </span>
+          )
+        })}
+
+        {/* ⭐ 最近使用（仅图标） */}
+        <span
+          title={t("promptRecentUsed") || "最近使用"}
+          onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.RECENT)}
+          style={{
+            padding: "4px 8px",
+            background:
+              selectedCategory === VIRTUAL_CATEGORY.RECENT
+                ? "var(--gh-primary, #4285f4)"
+                : "var(--gh-hover, #f3f4f6)",
+            borderRadius: "12px",
+            fontSize: "12px",
+            color: selectedCategory === VIRTUAL_CATEGORY.RECENT ? "white" : "#4b5563",
+            cursor: "pointer",
+            border:
+              selectedCategory === VIRTUAL_CATEGORY.RECENT
+                ? "1px solid var(--gh-primary, #4285f4)"
+                : "1px solid transparent",
+          }}>
+          🕐
+        </span>
 
         {categories.length > 0 && (
           <button
@@ -841,6 +1367,26 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               <div
                 className="prompt-item-actions"
                 style={{ position: "absolute", top: "8px", right: "8px", gap: "4px" }}>
+                {/* ⭐ 置顶按钮 */}
+                <button
+                  title={p.pinned ? t("promptUnpin") || "取消置顶" : t("promptPin") || "置顶"}
+                  onClick={(e) => handleTogglePin(p.id, e)}
+                  style={{
+                    width: "24px",
+                    height: "24px",
+                    border: "1px solid var(--gh-border, #e5e7eb)",
+                    background: p.pinned ? "var(--gh-primary, #4285f4)" : "var(--gh-bg, white)",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
+                    fontSize: "12px",
+                    color: p.pinned ? "white" : "var(--gh-text-secondary, #6b7280)",
+                  }}>
+                  📌
+                </button>
                 <button
                   title="拖动排序"
                   onMouseDown={(e) => {
@@ -866,6 +1412,29 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     fontSize: "12px",
                   }}>
                   ☰
+                </button>
+                {/* ⭐ 预览按钮 */}
+                <button
+                  title={t("promptMarkdownPreview") || "预览"}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    e.preventDefault()
+                    setPreviewModal({ show: true, prompt: p })
+                  }}
+                  style={{
+                    width: "24px",
+                    height: "24px",
+                    border: "1px solid var(--gh-border, #e5e7eb)",
+                    background: "var(--gh-bg, white)",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
+                    fontSize: "12px",
+                  }}>
+                  👁
                 </button>
                 <button
                   title={t("copy")}
@@ -960,6 +1529,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       {/* 弹窗 */}
       {renderEditModal()}
       {renderCategoryModal()}
+      {renderPreviewModal()}
+      {renderImportDialog()}
 
       {/* 公共对话框组件 */}
       {confirmState.show && (
@@ -986,7 +1557,14 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         />
       )}
 
-      {/* 样式 */}
+      {/* ⭐ 变量输入弹窗 */}
+      {variableDialogState.show && (
+        <VariableInputDialog
+          variables={variableDialogState.variables}
+          onConfirm={handleVariableConfirm}
+          onCancel={() => setVariableDialogState({ show: false, prompt: null, variables: [] })}
+        />
+      )}
       <style>{`
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

@@ -7,7 +7,7 @@
 import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
 
-import { DEFAULT_PROMPTS } from "~constants"
+import { DEFAULT_PROMPTS, VIRTUAL_CATEGORY } from "~constants"
 import type { Prompt } from "~utils/storage"
 
 import { chromeStorageAdapter } from "./chrome-adapter"
@@ -26,6 +26,9 @@ interface PromptsState {
   renameCategory: (oldName: string, newName: string) => void
   deleteCategory: (name: string, defaultCategory?: string) => void
   updateOrder: (newOrderIds: string[]) => void
+  togglePin: (id: string) => void // ⭐ 新增：切换置顶状态
+  updateLastUsed: (id: string) => void // ⭐ 新增：更新最近使用时间
+  setPrompts: (prompts: Prompt[]) => void // ⭐ 新增：批量设置提示词（用于导入）
   setHasHydrated: (state: boolean) => void
 }
 
@@ -87,6 +90,21 @@ export const usePromptsStore = create<PromptsState>()(
         }),
 
       setHasHydrated: (state) => set({ _hasHydrated: state }),
+
+      // ⭐ 切换置顶状态
+      togglePin: (id) =>
+        set((state) => ({
+          prompts: state.prompts.map((p) => (p.id === id ? { ...p, pinned: !p.pinned } : p)),
+        })),
+
+      // ⭐ 更新最近使用时间
+      updateLastUsed: (id) =>
+        set((state) => ({
+          prompts: state.prompts.map((p) => (p.id === id ? { ...p, lastUsedAt: Date.now() } : p)),
+        })),
+
+      // ⭐ 批量设置提示词（用于导入）
+      setPrompts: (prompts) => set({ prompts }),
     }),
     {
       name: "prompts", // chrome.storage key
@@ -120,9 +138,13 @@ export const getCategories = (): string[] => {
   return Array.from(categories)
 }
 
-export const filterPrompts = (filter: string = "", category: string = "all"): Prompt[] => {
+export const filterPrompts = (
+  filter: string = "",
+  category: string = VIRTUAL_CATEGORY.ALL,
+): Prompt[] => {
   let filtered = getPromptsState()
-  if (category !== "all") {
+  // 只在选择了真实分类时过滤
+  if (category !== VIRTUAL_CATEGORY.ALL && category !== VIRTUAL_CATEGORY.RECENT) {
     filtered = filtered.filter((p) => p.category === category)
   }
   if (filter) {

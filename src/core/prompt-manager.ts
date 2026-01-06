@@ -6,6 +6,7 @@
  */
 
 import type { SiteAdapter } from "~adapters/base"
+import { VIRTUAL_CATEGORY } from "~constants"
 import {
   filterPrompts,
   getCategories,
@@ -72,11 +73,24 @@ export class PromptManager {
     getPromptsStore().updateOrder(newOrderIds)
   }
 
-  filterPrompts(filter: string = "", category: string = "all"): Prompt[] {
+  filterPrompts(filter: string = "", category: string = VIRTUAL_CATEGORY.ALL): Prompt[] {
     return filterPrompts(filter, category)
   }
 
-  // ==================== DOM 操作 ====================
+  // ⭐ 切换置顶状态
+  togglePin(id: string) {
+    getPromptsStore().togglePin(id)
+  }
+
+  // ⭐ 更新最近使用时间
+  updateLastUsed(id: string) {
+    getPromptsStore().updateLastUsed(id)
+  }
+
+  // ⭐ 批量设置提示词（用于导入）
+  setPrompts(prompts: Prompt[]) {
+    getPromptsStore().setPrompts(prompts)
+  }
 
   /**
    * 插入提示词到输入框
