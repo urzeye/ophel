@@ -5,6 +5,7 @@ export const zhTW = {
   searchPlaceholder: "搜尋提示詞...",
   addPrompt: "新增提示詞",
   allCategory: "全部",
+  uncategorized: "未分類",
   manageCategory: "⚙ 管理",
   currentPrompt: "當前提示詞：",
   scrollTop: "頂部",

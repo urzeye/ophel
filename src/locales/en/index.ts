@@ -5,6 +5,7 @@ export const en = {
   searchPlaceholder: "Search prompts...",
   addPrompt: "Add New Prompt",
   allCategory: "All",
+  uncategorized: "Uncategorized",
   manageCategory: "⚙ Manage",
   currentPrompt: "Current: ",
   scrollTop: "Top",

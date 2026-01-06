@@ -73,8 +73,20 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
   const loadData = async () => {
     const allPrompts = manager.getPrompts()
+    const allCategories = manager.getCategories()
     setPrompts(allPrompts)
-    setCategories(manager.getCategories())
+    setCategories(allCategories)
+
+    // ⭐ 分类有效性检查：如果当前选中的分类不再存在或变空，回退到「全部」
+    setSelectedCategory((prev) => {
+      if (prev === "all") return prev
+      // 检查分类是否还存在
+      if (!allCategories.includes(prev)) return "all"
+      // 检查分类下是否还有提示词
+      const hasPrompts = allPrompts.some((p) => p.category === prev)
+      if (!hasPrompts) return "all"
+      return prev
+    })
   }
 
   const getFilteredPrompts = () => {
@@ -114,18 +126,41 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       return
     }
 
+    const newCategory = editingPrompt.category || t("uncategorized") || "未分类"
+    let shouldSwitchToNewCategory = false
+
     if (editingPrompt.id) {
+      // ⭐ 编辑时检查是否需要切换分类
+      const oldPrompt = prompts.find((p) => p.id === editingPrompt.id)
+      const oldCategory = oldPrompt?.category
+
+      // 如果分类发生变更，且当前选中的就是原分类
+      if (oldCategory && oldCategory !== newCategory && selectedCategory === oldCategory) {
+        // 检查编辑后原分类是否会变空
+        const otherPromptsInOldCategory = prompts.filter(
+          (p) => p.category === oldCategory && p.id !== editingPrompt.id,
+        )
+        if (otherPromptsInOldCategory.length === 0) {
+          shouldSwitchToNewCategory = true
+        }
+      }
+
       await manager.updatePrompt(editingPrompt.id, {
         title: editingPrompt.title,
         content: editingPrompt.content,
-        category: editingPrompt.category || "未分类",
+        category: newCategory,
       })
       showToast(t("promptUpdated") || "提示词已更新")
+
+      // ⭐ 切换到新分类
+      if (shouldSwitchToNewCategory) {
+        setSelectedCategory(newCategory)
+      }
     } else {
       await manager.addPrompt({
         title: editingPrompt.title!,
         content: editingPrompt.content!,
-        category: editingPrompt.category || "未分类",
+        category: newCategory,
       })
       showToast(t("promptAdded") || "提示词已添加")
     }
@@ -168,7 +203,10 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     if (prompt) {
       setEditingPrompt({ ...prompt })
     } else {
-      setEditingPrompt({ title: "", content: "", category: "未分类" })
+      // ⭐ 新建时：如果当前选中了某个分类，默认使用该分类；否则使用「未分类」
+      const defaultCategory =
+        selectedCategory !== "all" ? selectedCategory : t("uncategorized") || "未分类"
+      setEditingPrompt({ title: "", content: "", category: defaultCategory })
     }
     setIsModalOpen(true)
   }
@@ -406,7 +444,14 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               }}
             />
             {categories.length > 0 && (
-              <div style={{ marginTop: "6px", display: "flex", gap: "4px", flexWrap: "wrap" }}>
+              <div
+                style={{
+                  marginTop: "6px",
+                  display: "flex",
+                  gap: "4px",
+                  flexWrap: "wrap",
+                  userSelect: "none",
+                }}>
                 {categories.map((cat) => (
                   <span
                     key={cat}
@@ -637,6 +682,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           flexWrap: "wrap",
           background: "var(--gh-bg, white)",
           borderBottom: "1px solid var(--gh-border, #e5e7eb)",
+          userSelect: "none", // ⭐ 禁止文字选中
         }}>
         <span
           onClick={() => setSelectedCategory("all")}
@@ -773,7 +819,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     color: "var(--gh-text-secondary, #6b7280)",
                     flexShrink: 0,
                   }}>
-                  {p.category || "未分类"}
+                  {p.category || t("uncategorized") || "未分类"}
                 </span>
               </div>
 

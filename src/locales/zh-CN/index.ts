@@ -5,6 +5,7 @@ export const zhCN = {
   searchPlaceholder: "搜索提示词...",
   addPrompt: "添加提示词",
   allCategory: "全部",
+  uncategorized: "未分类",
   manageCategory: "⚙ 管理",
   currentPrompt: "当前提示词：",
   scrollTop: "顶部",
