@@ -2216,6 +2216,18 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
             }
           />
           <ToggleRow
+            label={t("userQueryMarkdownLabel") || "用户提问 Markdown 渲染"}
+            desc={t("userQueryMarkdownDesc") || "将用户提问中的 Markdown 语法渲染为格式化文本"}
+            checked={settings.content?.userQueryMarkdown ?? false}
+            onChange={() =>
+              updateNestedSetting(
+                "content",
+                "userQueryMarkdown",
+                !settings.content?.userQueryMarkdown,
+              )
+            }
+          />
+          <ToggleRow
             label={t("formulaCopyLabel")}
             desc={t("formulaCopyDesc")}
             checked={settings.content?.formulaCopy ?? true}

@@ -14,7 +14,8 @@
     "formulaCopy": true,
     "formulaDelimiter": true,
     "tableCopy": true,
-    "exportImagesToBase64": false
+    "exportImagesToBase64": false,
+    "userQueryMarkdown": false
   },
 
   "theme": {

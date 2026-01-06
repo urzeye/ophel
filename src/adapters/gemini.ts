@@ -270,6 +270,54 @@ export class GeminiAdapter extends SiteAdapter {
     return element.textContent?.trim() || ""
   }
 
+  /**
+   * 从用户提问元素中提取原始 Markdown 文本
+   * Gemini 标准版：将按行拆分的 .query-text-line 合并为完整 Markdown
+   */
+  extractUserQueryMarkdown(element: Element): string {
+    const lines = element.querySelectorAll(".query-text-line")
+    if (lines.length === 0) {
+      // 回退：使用 extractUserQueryText
+      return this.extractUserQueryText(element)
+    }
+
+    const textLines = Array.from(lines).map((line) => {
+      // 空行（只有 <br>）
+      if (line.querySelector("br") && line.textContent?.trim() === "") {
+        return ""
+      }
+      return line.textContent?.trim() || ""
+    })
+
+    return textLines.join("\n")
+  }
+
+  /**
+   * 将渲染后的 HTML 替换到用户提问元素中
+   * Gemini 标准版：隐藏 .query-text 并插入渲染容器
+   */
+  replaceUserQueryContent(element: Element, html: string): boolean {
+    const textContainer = element.querySelector(".query-text")
+    if (!textContainer) return false
+
+    // 检查是否已经处理过
+    if (textContainer.nextElementSibling?.classList.contains("gh-user-query-markdown")) {
+      return false
+    }
+
+    // 隐藏原内容
+    ;(textContainer as HTMLElement).style.display = "none"
+
+    // 创建渲染容器
+    const rendered = document.createElement("div")
+    rendered.className = "gh-user-query-markdown gh-markdown-preview"
+    rendered.innerHTML = html
+
+    // 插入到原容器后面
+    textContainer.after(rendered)
+    return true
+  }
+
   getExportConfig(): ExportConfig {
     return {
       userQuerySelector: "user-query",
@@ -292,6 +340,9 @@ export class GeminiAdapter extends SiteAdapter {
 
       const headings = container.querySelectorAll(headingSelectors.join(", "))
       headings.forEach((heading) => {
+        // 排除用户提问渲染容器内的标题
+        if (this.isInRenderedMarkdownContainer(heading)) return
+
         const level = parseInt(heading.tagName.charAt(1), 10)
         if (level <= maxLevel) {
           outline.push({
@@ -333,6 +384,9 @@ export class GeminiAdapter extends SiteAdapter {
           isTruncated,
         })
       } else if (/^h[1-6]$/.test(tagName)) {
+        // 排除用户提问渲染容器内的标题
+        if (this.isInRenderedMarkdownContainer(element)) return
+
         const level = parseInt(tagName.charAt(1), 10)
         if (level <= maxLevel) {
           outline.push({

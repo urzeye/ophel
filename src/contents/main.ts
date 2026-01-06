@@ -16,6 +16,7 @@ import { ReadingHistoryManager } from "~core/reading-history"
 import { ScrollLockManager } from "~core/scroll-lock-manager"
 import { TabManager } from "~core/tab-manager"
 import { ThemeManager } from "~core/theme-manager"
+import { UserQueryMarkdownRenderer } from "~core/user-query-markdown"
 import { WatermarkRemover } from "~core/watermark-remover"
 import { getSettingsState, subscribeSettings, useSettingsStore } from "~stores/settings-store"
 import {
@@ -51,6 +52,7 @@ let readingHistoryManager: ReadingHistoryManager | null = null
 let modelLocker: ModelLocker | null = null
 let themeManager: ThemeManager | null = null
 let scrollLockManager: ScrollLockManager | null = null
+let userQueryMarkdownRenderer: UserQueryMarkdownRenderer | null = null
 
 // 防止重复初始化
 if (!window.ophelInitialized) {
@@ -199,6 +201,12 @@ if (!window.ophelInitialized) {
       // 9. 滚动锁定（始终创建以支持动态开关）
       scrollLockManager = new ScrollLockManager(adapter, settings)
 
+      // 10. 用户提问 Markdown 渲染（始终创建以支持动态开关）
+      userQueryMarkdownRenderer = new UserQueryMarkdownRenderer(
+        adapter,
+        settings.content?.userQueryMarkdown ?? false,
+      )
+
       // ⭐ 订阅 Zustand store 变化（替代 localStorage.watch）
       // 直接获取干净的 settings，无需处理 state.settings 格式
       subscribeSettings((newSettings: Settings) => {
@@ -286,6 +294,17 @@ if (!window.ophelInitialized) {
             copyManager = new CopyManager(newSettings.content)
             if (newSettings.content.formulaCopy) copyManager.initFormulaCopy()
             if (newSettings.content.tableCopy) copyManager.initTableCopy()
+          }
+
+          // 10. User Query Markdown Renderer update
+          if (newSettings.content.userQueryMarkdown) {
+            if (userQueryMarkdownRenderer) {
+              userQueryMarkdownRenderer.updateSettings(true)
+            } else {
+              userQueryMarkdownRenderer = new UserQueryMarkdownRenderer(adapter, true)
+            }
+          } else {
+            userQueryMarkdownRenderer?.updateSettings(false)
           }
         }
       })

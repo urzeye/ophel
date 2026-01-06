@@ -183,15 +183,26 @@ export class CopyManager {
     if (table.dataset.ghTableCopy) return
     table.dataset.ghTableCopy = "true"
 
+    // 检查是否在用户提问或提示词预览区域
+    const isInMarkdownPreview =
+      table.closest(".gh-user-query-markdown") || table.closest(".gh-markdown-preview")
+
     try {
       // 尝试找到原生表格容器
-      let container = table.closest("table-block, ucs-markdown-table") as HTMLElement
-      if (!container) {
-        container = table.parentNode as HTMLElement
-        if (!container) return
-        container.classList.add("gh-table-container")
+      let container: HTMLElement
+      if (isInMarkdownPreview) {
+        // Markdown 预览区域：直接用表格作为容器
+        container = table
+        table.style.position = "relative"
+      } else {
+        container = table.closest("table-block, ucs-markdown-table") as HTMLElement
+        if (!container) {
+          container = table.parentNode as HTMLElement
+          if (!container) return
+          container.classList.add("gh-table-container")
+        }
+        container.style.position = "relative"
       }
-      container.style.position = "relative"
 
       const btn = document.createElement("button")
       btn.className = "gh-table-copy-btn"

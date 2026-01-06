@@ -58,44 +58,34 @@
 ### P1 - 待实现
 
 - [ ] **快捷键设置**
+
   - 支持用户自定义任意快捷键
   - 兼容 Mac（⌘）和 Windows（Ctrl）
   - 提供专门的快捷键设置面板
 
-- [ ] **用户提问 Markdown 渲染**
+- [x] **用户提问 Markdown 渲染** ✅
   - 场景：Gemini 把用户输入的 Markdown 按行拆分成 HTML，丢失了格式
-  - 方案：提取 `.query-text-line` 文本 → 合并 → 用 markdown-it 渲染
-  - 位置：内容设置 / 对话区域增强
+  - 方案：提取文本 → 合并 → 用 markdown-it 渲染
+  - 支持 Gemini 普通版和 Enterprise 版（Shadow DOM）
+  - 包含代码块复制按钮、滚动条美化、深色模式适配
 
-```typescript
-function extractMarkdownFromGeminiQuery(container: Element): string {
-  // 1. 获取所有行
-  const lines = container.querySelectorAll('.query-text-line')
-  
-  // 2. 提取文本并解码 HTML 实体
-  const textLines = Array.from(lines).map(line => {
-    // 检查是否是空行（只有 <br>）
-    if (line.querySelector('br') && line.textContent?.trim() === '') {
-      return ''
-    }
-    return line.textContent?.trim() || ''
-  })
-  
-  // 3. 合并成 Markdown 字符串
-  return textLines.join('\n')
-}
+### P2 - 待实现
 
-// 4. 然后用现有的 renderMarkdown 渲染
-const markdown = extractMarkdownFromGeminiQuery(queryElement)
-const html = renderMarkdown(markdown)
-```
+- [ ] **用户提问容器宽度调整**
+
+  - 支持调整用户提问渲染区域的宽度
+
+- [ ] **Gemini Enterprise 表格复制按钮**
+  - 问题：表格复制按钮在 Gemini Enterprise 不显示
+  - 原因：Shadow DOM 隔离导致 DOMToolkit.each 无法检测到表格
 
 ---
 
 ## 📝 更新日志
 
-| 日期       | 内容              |
-| ---------- | ----------------- |
+| 日期       | 内容                                       |
+| ---------- | ------------------------------------------ |
+| 2026-01-07 | 完成用户提问 Markdown 渲染功能             |
 | 2026-01-06 | 更新提示词功能完成状态，添加快捷键设置规划 |
-| 2026-01-06 | 添加提示词功能规划 |
-| 2026-01-06 | 创建 Roadmap 文档 |
+| 2026-01-06 | 添加提示词功能规划                         |
+| 2026-01-06 | 创建 Roadmap 文档                          |

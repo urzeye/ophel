@@ -171,6 +171,8 @@ export const en = {
   exportImagesToBase64Label: "Export Images to Base64",
   exportImagesToBase64Desc:
     "Convert images to Base64 when exporting conversations for offline viewing",
+  userQueryMarkdownLabel: "User Query Markdown Render",
+  userQueryMarkdownDesc: "Render Markdown syntax in user queries as formatted text",
   watermarkRemovalLabel: "Remove Image Watermark",
   watermarkRemovalDesc: "Automatically remove NanoBanana watermark from AI generated images",
   refreshPrompts: "Refresh Prompts",

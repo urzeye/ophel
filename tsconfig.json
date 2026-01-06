@@ -1,5 +1,5 @@
 {
-	"extends": "./node_modules/plasmo/templates/tsconfig.base.json",
+	"extends": "plasmo/templates/tsconfig.base.json",
 	"exclude": [
 		"node_modules"
 	],

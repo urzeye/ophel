@@ -116,7 +116,7 @@ export const renderMarkdown = (content: string, highlightVariables = true): stri
   // 在代码块中添加复制按钮（使用 data 属性标记，事件由组件委托处理）
   html = html.replace(
     /<pre><code/g,
-    '<pre><button class="gh-code-copy-btn" data-copy-code="true">复制</button><code',
+    '<pre><button class="gh-code-copy-btn" data-copy-code="true">📄</button><code',
   )
 
   return html

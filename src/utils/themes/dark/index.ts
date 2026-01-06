@@ -71,6 +71,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "rgba(129, 140, 248, 0.3)",
       "--gh-highlight-pulse": "rgba(129, 140, 248, 0.4)",
       "--gh-slider-dot-bg": "#4b5563",
+      "--gh-code-bg": "rgba(255, 255, 255, 0.08)",
     },
   },
   {
@@ -143,6 +144,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "rgba(96, 165, 250, 0.3)",
       "--gh-highlight-pulse": "rgba(96, 165, 250, 0.4)",
       "--gh-slider-dot-bg": "#475569",
+      "--gh-code-bg": "rgba(96, 165, 250, 0.12)",
     },
   },
   {
@@ -215,6 +217,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "rgba(52, 211, 153, 0.3)",
       "--gh-highlight-pulse": "rgba(52, 211, 153, 0.4)",
       "--gh-slider-dot-bg": "#2a5a3d",
+      "--gh-code-bg": "rgba(52, 211, 153, 0.12)",
     },
   },
   {
@@ -287,6 +290,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "rgba(244, 114, 182, 0.3)",
       "--gh-highlight-pulse": "rgba(34, 211, 238, 0.4)",
       "--gh-slider-dot-bg": "#555555",
+      "--gh-code-bg": "rgba(244, 114, 182, 0.1)",
     },
   },
   {
@@ -359,6 +363,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "rgba(212, 163, 115, 0.25)",
       "--gh-highlight-pulse": "rgba(212, 163, 115, 0.3)",
       "--gh-slider-dot-bg": "#78716c",
+      "--gh-code-bg": "rgba(212, 163, 115, 0.12)",
     },
   },
   {
@@ -431,6 +436,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "rgba(139, 92, 246, 0.3)",
       "--gh-highlight-pulse": "rgba(249, 115, 22, 0.4)",
       "--gh-slider-dot-bg": "#a78bfa",
+      "--gh-code-bg": "rgba(139, 92, 246, 0.12)",
     },
   },
   {
@@ -503,6 +509,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "rgba(189, 147, 249, 0.3)",
       "--gh-highlight-pulse": "rgba(255, 121, 198, 0.4)",
       "--gh-slider-dot-bg": "#6272a4",
+      "--gh-code-bg": "rgba(189, 147, 249, 0.12)",
     },
   },
   {
@@ -575,6 +582,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "rgba(45, 212, 191, 0.25)",
       "--gh-highlight-pulse": "rgba(45, 212, 191, 0.3)",
       "--gh-slider-dot-bg": "#334155",
+      "--gh-code-bg": "rgba(45, 212, 191, 0.1)",
       // 深海波纹纹理
       "--gh-bg-image": `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.02' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.15'/%3E%3C/svg%3E")`,
     },
@@ -649,6 +657,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "rgba(239, 68, 68, 0.25)",
       "--gh-highlight-pulse": "rgba(239, 68, 68, 0.3)",
       "--gh-slider-dot-bg": "#f87171",
+      "--gh-code-bg": "rgba(239, 68, 68, 0.12)",
     },
   },
   {
@@ -720,6 +729,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "rgba(34, 197, 94, 0.2)",
       "--gh-highlight-pulse": "rgba(34, 197, 94, 0.5)",
       "--gh-slider-dot-bg": "#14532d",
+      "--gh-code-bg": "rgba(34, 197, 94, 0.15)",
       // CRT 扫描线纹理 (微弱的绿色扫描线)
       "--gh-bg-image":
         "repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(34, 197, 94, 0.05) 2px, rgba(34, 197, 94, 0.05) 4px)",
@@ -796,6 +806,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "rgba(163, 230, 53, 0.3)",
       "--gh-highlight-pulse": "rgba(163, 230, 53, 0.4)",
       "--gh-slider-dot-bg": "#4b5563",
+      "--gh-code-bg": "rgba(163, 230, 53, 0.12)",
     },
   },
   {
@@ -868,6 +879,7 @@ export const darkPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "rgba(56, 189, 248, 0.25)",
       "--gh-highlight-pulse": "rgba(56, 189, 248, 0.3)",
       "--gh-slider-dot-bg": "#7dd3fc",
+      "--gh-code-bg": "rgba(56, 189, 248, 0.12)",
     },
   },
 ]

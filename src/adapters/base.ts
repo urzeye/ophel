@@ -227,7 +227,7 @@ export abstract class SiteAdapter {
   findTextarea(): HTMLElement | null {
     for (const selector of this.getTextareaSelectors()) {
       const elements = document.querySelectorAll(selector)
-      for (const element of elements) {
+      for (const element of Array.from(elements)) {
         if (this.isValidTextarea(element as HTMLElement)) {
           this.textarea = element as HTMLElement
           return element as HTMLElement
@@ -296,7 +296,7 @@ export abstract class SiteAdapter {
 
     // 尝试在 iframe 中查找（Gemini 图文并茂模式）
     const iframes = document.querySelectorAll('iframe[sandbox*="allow-same-origin"]')
-    for (const iframe of iframes) {
+    for (const iframe of Array.from(iframes)) {
       try {
         const iframeDoc =
           (iframe as HTMLIFrameElement).contentDocument ||
@@ -430,6 +430,41 @@ export abstract class SiteAdapter {
     return element.textContent?.trim() || ""
   }
 
+  /**
+   * 从用户提问元素中提取原始 Markdown 文本
+   * 子类可重写以处理特殊的 DOM 结构（如按行拆分、Shadow DOM 等）
+   * 默认实现：调用 extractUserQueryText
+   */
+  extractUserQueryMarkdown(element: Element): string {
+    return this.extractUserQueryText(element)
+  }
+
+  /**
+   * 将渲染后的 HTML 替换到用户提问元素中
+   * 子类可重写以处理特殊的 DOM 结构
+   * @returns 是否成功替换
+   */
+  replaceUserQueryContent(element: Element, html: string): boolean {
+    // 默认实现：不支持替换
+    return false
+  }
+
+  /**
+   * 检查元素是否在渲染的 Markdown 容器内
+   * 用于大纲抽取时排除用户提问渲染容器中的标题
+   */
+  isInRenderedMarkdownContainer(element: Element): boolean {
+    return element.closest(".gh-user-query-markdown") !== null
+  }
+
+  /**
+   * 是否使用 Shadow DOM 渲染用户提问
+   * 用于决定是否需要延迟处理（等待 Shadow DOM 渲染）
+   */
+  usesShadowDOM(): boolean {
+    return false
+  }
+
   /** 从页面提取大纲 */
   extractOutline(maxLevel = 6, includeUserQueries = false): OutlineItem[] {
     return []
@@ -445,7 +480,7 @@ export abstract class SiteAdapter {
   findElementByHeading(level: number, text: string): Element | null {
     // 默认实现：使用 document.querySelectorAll（子类可覆盖以支持 Shadow DOM）
     const headings = document.querySelectorAll(`h${level}`)
-    for (const h of headings) {
+    for (const h of Array.from(headings)) {
       if (h.textContent?.trim() === text) {
         return h
       }

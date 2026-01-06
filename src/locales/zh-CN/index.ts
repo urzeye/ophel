@@ -252,6 +252,8 @@ export const zhCN = {
   markdownFixDesc: "修复 Gemini 响应中未正确渲染的 **加粗** 语法",
   exportImagesToBase64Label: "导出时图片转Base64",
   exportImagesToBase64Desc: "导出会话时将图片转为Base64嵌入",
+  userQueryMarkdownLabel: "用户提问 Markdown 渲染",
+  userQueryMarkdownDesc: "将用户提问中的 Markdown 语法渲染为格式化文本",
   watermarkRemovalLabel: "移除图片水印",
   watermarkRemovalDesc: "自动移除 Gemini AI 生成图像中的 NanoBanana 水印",
   // 大纲高级设置

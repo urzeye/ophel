@@ -413,6 +413,67 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   }
 
   /**
+   * 从用户提问元素中提取原始 Markdown 文本
+   * Gemini Enterprise：.markdown-document 内部每行是一个 <p> 标签
+   * 需要按段落提取并用换行符连接还原原始 Markdown
+   */
+  extractUserQueryMarkdown(element: Element): string {
+    const markdown = element.querySelector("ucs-fast-markdown")
+    if (!markdown || !markdown.shadowRoot) {
+      return element.textContent?.trimEnd() || ""
+    }
+
+    const markdownDoc = markdown.shadowRoot.querySelector(".markdown-document")
+    if (!markdownDoc) {
+      return element.textContent?.trimEnd() || ""
+    }
+
+    // 按段落（p 标签）提取，用换行符连接
+    const paragraphs = markdownDoc.querySelectorAll("p")
+    if (paragraphs.length === 0) {
+      return markdownDoc.textContent?.trimEnd() || ""
+    }
+
+    const lines = Array.from(paragraphs).map((p) => p.textContent || "")
+    return lines.join("\n").trimEnd()
+  }
+
+  /**
+   * 将渲染后的 HTML 替换到用户提问元素中
+   * Gemini Enterprise：在 Shadow DOM 中隐藏原内容并插入渲染容器
+   */
+  replaceUserQueryContent(element: Element, html: string): boolean {
+    const markdown = element.querySelector("ucs-fast-markdown")
+    if (!markdown || !markdown.shadowRoot) return false
+
+    const markdownDoc = markdown.shadowRoot.querySelector(".markdown-document")
+    if (!markdownDoc) return false
+
+    // 检查是否已经处理过
+    if (markdownDoc.nextElementSibling?.classList.contains("gh-user-query-markdown")) {
+      return false
+    }
+
+    // 隐藏原内容
+    ;(markdownDoc as HTMLElement).style.display = "none"
+
+    // 创建渲染容器并插入到 Shadow DOM 中
+    const rendered = document.createElement("div")
+    rendered.className = "gh-user-query-markdown gh-markdown-preview"
+    rendered.innerHTML = html
+
+    markdownDoc.after(rendered)
+    return true
+  }
+
+  /**
+   * Gemini Enterprise 使用 Shadow DOM 渲染用户提问
+   */
+  usesShadowDOM(): boolean {
+    return true
+  }
+
+  /**
    * 从 ucs-summary 元素中提取可用于 htmlToMarkdown 的 DOM 元素
    * Gemini Enterprise 使用多层 Shadow DOM，需要递归查找
    */
@@ -432,7 +493,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
       // 递归搜索子元素的 Shadow DOM
       const elements = "querySelectorAll" in searchRoot ? searchRoot.querySelectorAll("*") : []
-      for (const el of elements) {
+      for (const el of Array.from(elements)) {
         if (el.shadowRoot) {
           const found = findMarkdownDocument(el.shadowRoot, depth + 1)
           if (found) return found
@@ -466,6 +527,9 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       try {
         const headings = root.querySelectorAll(headingSelector)
         headings.forEach((heading) => {
+          // 排除用户提问渲染容器内的标题
+          if (this.isInRenderedMarkdownContainer(heading)) return
+
           // 只匹配包含 data-markdown-start-index 的标题（排除 logo 等非 AI 回复内容）
           const spans = heading.querySelectorAll("span[data-markdown-start-index]")
           if (spans.length > 0) {
@@ -486,7 +550,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     // 递归查找 Shadow DOM
     if ("querySelectorAll" in root) {
       const allElements = root.querySelectorAll("*")
-      for (const el of allElements) {
+      for (const el of Array.from(allElements)) {
         if (el.shadowRoot) {
           this.findHeadingsInShadowDOM(el.shadowRoot, outline, maxLevel, depth + 1)
         }
@@ -612,7 +676,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
       // 递归搜索 Shadow DOM
       const elements = root.querySelectorAll("*")
-      for (const el of elements) {
+      for (const el of Array.from(elements)) {
         if (el.shadowRoot) {
           if (findInShadow(el.shadowRoot, depth + 1)) {
             return true
@@ -656,7 +720,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
       // 递归搜索 Shadow DOM
       const elements = root.querySelectorAll("*")
-      for (const el of elements) {
+      for (const el of Array.from(elements)) {
         if (el.shadowRoot) {
           const result = findInShadow(el.shadowRoot, depth + 1)
           if (result) return result

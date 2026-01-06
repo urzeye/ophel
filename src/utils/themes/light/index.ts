@@ -71,6 +71,7 @@ export const lightPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "#dbeafe",
       "--gh-highlight-pulse": "rgba(59, 130, 246, 0.3)",
       "--gh-slider-dot-bg": "#d1d5db",
+      "--gh-code-bg": "rgba(0, 0, 0, 0.05)",
     },
   },
   {
@@ -143,6 +144,7 @@ export const lightPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "#f3e8ff",
       "--gh-highlight-pulse": "rgba(139, 92, 246, 0.3)",
       "--gh-slider-dot-bg": "#d8b4fe",
+      "--gh-code-bg": "rgba(139, 92, 246, 0.08)",
     },
   },
   {
@@ -215,6 +217,7 @@ export const lightPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "#e0f2fe",
       "--gh-highlight-pulse": "rgba(14, 165, 233, 0.3)",
       "--gh-slider-dot-bg": "#7dd3fc",
+      "--gh-code-bg": "rgba(14, 165, 233, 0.08)",
     },
   },
   {
@@ -287,6 +290,7 @@ export const lightPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "#ffe4e6",
       "--gh-highlight-pulse": "rgba(251, 113, 133, 0.3)",
       "--gh-slider-dot-bg": "#fda4af",
+      "--gh-code-bg": "rgba(251, 113, 133, 0.08)",
     },
   },
   {
@@ -359,6 +363,7 @@ export const lightPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "#ccfbf1",
       "--gh-highlight-pulse": "rgba(45, 212, 191, 0.3)",
       "--gh-slider-dot-bg": "#5eead4",
+      "--gh-code-bg": "rgba(45, 212, 191, 0.1)",
     },
   },
   {
@@ -431,6 +436,7 @@ export const lightPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "#e2e8f0",
       "--gh-highlight-pulse": "rgba(100, 116, 139, 0.25)",
       "--gh-slider-dot-bg": "#94a3b8",
+      "--gh-code-bg": "rgba(100, 116, 139, 0.06)",
     },
   },
   {
@@ -503,6 +509,7 @@ export const lightPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "#fde047",
       "--gh-highlight-pulse": "rgba(234, 179, 8, 0.3)",
       "--gh-slider-dot-bg": "#d4d4d8",
+      "--gh-code-bg": "rgba(234, 179, 8, 0.1)",
     },
   },
   {
@@ -575,6 +582,7 @@ export const lightPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "#fde68a",
       "--gh-highlight-pulse": "rgba(217, 119, 6, 0.3)",
       "--gh-slider-dot-bg": "#d6d3d1",
+      "--gh-code-bg": "rgba(217, 119, 6, 0.08)",
       // 羊皮纸噪点纹理
       "--gh-bg-image": `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.12'/%3E%3C/svg%3E")`,
     },
@@ -649,6 +657,7 @@ export const lightPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "#e4e4e7",
       "--gh-highlight-pulse": "rgba(24, 24, 27, 0.2)",
       "--gh-slider-dot-bg": "#a1a1aa",
+      "--gh-code-bg": "rgba(24, 24, 27, 0.05)",
     },
   },
   {
@@ -723,6 +732,7 @@ export const lightPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "#dbeafe",
       "--gh-highlight-pulse": "rgba(30, 78, 121, 0.2)",
       "--gh-slider-dot-bg": "#94a3b8",
+      "--gh-code-bg": "rgba(30, 78, 121, 0.06)",
       // 冰裂纹/釉面纹理
       "--gh-bg-image": `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.1'/%3E%3C/svg%3E")`,
     },
@@ -797,6 +807,7 @@ export const lightPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "#d6d3d1",
       "--gh-highlight-pulse": "rgba(120, 113, 108, 0.3)",
       "--gh-slider-dot-bg": "#d6d3d1",
+      "--gh-code-bg": "rgba(120, 113, 108, 0.08)",
       // 饼干颗粒纹理
       "--gh-bg-image": `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.15'/%3E%3C/svg%3E")`,
     },
@@ -871,6 +882,7 @@ export const lightPresets: ThemePreset[] = [
       "--gh-emoji-selected-bg": "#e9d5ff",
       "--gh-highlight-pulse": "rgba(244, 114, 182, 0.3)",
       "--gh-slider-dot-bg": "#e2e8f0",
+      "--gh-code-bg": "rgba(167, 139, 250, 0.1)",
       // 梦幻云雾纹理
       "--gh-bg-image": `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.01' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.4'/%3E%3C/svg%3E")`,
       "--gh-bg-animation": "gh-mist-drift 20s linear infinite alternate",

@@ -763,7 +763,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                         const code = target.nextElementSibling?.textContent || ""
                         navigator.clipboard.writeText(code).then(() => {
                           target.textContent = "✓"
-                          setTimeout(() => (target.textContent = "复制"), 1500)
+                          setTimeout(() => (target.textContent = "📄"), 1500)
                         })
                       }
                     }}
@@ -1004,7 +1004,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 const code = target.nextElementSibling?.textContent || ""
                 navigator.clipboard.writeText(code).then(() => {
                   target.textContent = "✓"
-                  setTimeout(() => (target.textContent = "复制"), 1500)
+                  setTimeout(() => (target.textContent = "📄"), 1500)
                 })
               }
             }}

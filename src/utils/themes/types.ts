@@ -114,6 +114,9 @@ export interface ThemeVariables {
   // 滑块圆点颜色
   "--gh-slider-dot-bg": string
 
+  // 代码块背景色
+  "--gh-code-bg": string
+
   // 背景纹理图 (可选)
   "--gh-bg-image"?: string
   // 背景动画 (可选)

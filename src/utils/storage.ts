@@ -76,6 +76,7 @@ export interface Settings {
     formulaDelimiter: boolean
     tableCopy: boolean
     exportImagesToBase64: boolean
+    userQueryMarkdown: boolean // 用户提问 Markdown 渲染
   }
 
   // 主题（按站点独立 + 共享自定义样式）
@@ -184,6 +185,7 @@ export const DEFAULT_SETTINGS: Settings = {
     formulaDelimiter: true,
     tableCopy: true,
     exportImagesToBase64: false,
+    userQueryMarkdown: false, // 默认关闭
   },
 
   theme: {

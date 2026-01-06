@@ -1,0 +1,24 @@
+{
+	// TypeScript：使用项目本地版本
+	"typescript.tsdk": "node_modules/typescript/lib",
+	// 格式化：保存时自动格式化
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	// TypeScript/JavaScript 设置
+	"[typescript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[typescriptreact]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	// 搜索排除
+	"search.exclude": {
+		"**/node_modules": true,
+		"**/build": true,
+		"**/.plasmo": true
+	},
+	// 文件排除（资源管理器中隐藏）
+	"files.exclude": {
+		"**/.plasmo": true
+	}
+}

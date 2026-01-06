@@ -402,6 +402,8 @@ export const zhTW = {
   contentExportSettingsTitle: "內容設置",
   exportImagesToBase64Label: "匯出時圖片轉 Base64",
   exportImagesToBase64Desc: "將對話中的圖片轉換為 Base64 編碼嵌入 Markdown，方便離線查看",
+  userQueryMarkdownLabel: "用戶提問 Markdown 渲染",
+  userQueryMarkdownDesc: "將用戶提問中的 Markdown 語法渲染為格式化文字",
   formulaCopyLabel: "雙擊複製公式",
   formulaCopyDesc: "雙擊數學公式可複製 LaTeX 原始碼（僅 Gemini 標準版）",
   formulaCopied: "公式已複製",
