@@ -1,3 +1,4 @@
+import { nanoid } from "nanoid"
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import { ConfirmDialog, Switch } from "~components/ui"
@@ -6,7 +7,13 @@ import { MULTI_PROP_STORES, ZUSTAND_KEYS } from "~constants/defaults"
 import { getWebDAVSyncManager, type BackupFile } from "~core/webdav-sync"
 import { useSettingsStore } from "~stores/settings-store"
 import { setLanguage, t } from "~utils/i18n"
-import { DEFAULT_SETTINGS, localStorage, STORAGE_KEYS, type Settings } from "~utils/storage"
+import {
+  DEFAULT_SETTINGS,
+  localStorage,
+  STORAGE_KEYS,
+  type CustomStyle,
+  type Settings,
+} from "~utils/storage"
 import { darkPresets, getPreset, lightPresets } from "~utils/themes"
 import { showToast as showDomToast } from "~utils/toast"
 
@@ -725,6 +732,10 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
     }
   }
 
+  // 自定义样式编辑器状态
+  const [showStyleEditor, setShowStyleEditor] = useState(false)
+  const [editingStyle, setEditingStyle] = useState<CustomStyle | null>(null)
+
   // 页面宽度逻辑
   const [tempWidth, setTempWidth] = useState(currentPageWidth?.value || "100")
 
@@ -855,6 +866,249 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
           onClose={() => setShowRemoteBackups(false)}
           onRestore={() => window.location.reload()}
         />
+      )}
+
+      {/* 样式编辑器模态框 */}
+      {showStyleEditor && editingStyle && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 10000,
+          }}>
+          <div
+            style={{
+              background: "var(--gh-bg, white)",
+              borderRadius: "12px",
+              width: "500px",
+              maxWidth: "90%",
+              maxHeight: "80vh",
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+            }}>
+            {/* 模态框头部 */}
+            <div
+              style={{
+                padding: "16px",
+                borderBottom: "1px solid var(--gh-border, #e5e7eb)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}>
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: "16px",
+                  fontWeight: 600,
+                  color: "var(--gh-text, #374151)",
+                }}>
+                {editingStyle.id ? "编辑样式" : "新建样式"}
+              </h3>
+              <button
+                onClick={() => setShowStyleEditor(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "18px",
+                  color: "var(--gh-text-secondary, #9ca3af)",
+                }}>
+                ✕
+              </button>
+            </div>
+
+            {/* 模态框内容 */}
+            <div style={{ padding: "16px", overflowY: "auto", flex: 1 }}>
+              {/* 样式名称 */}
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    color: "var(--gh-text, #374151)",
+                    marginBottom: "6px",
+                    display: "block",
+                  }}>
+                  样式名称
+                </label>
+                <input
+                  type="text"
+                  value={editingStyle.name}
+                  onChange={(e) => setEditingStyle({ ...editingStyle, name: e.target.value })}
+                  placeholder="输入样式名称"
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid var(--gh-input-border, #d1d5db)",
+                    fontSize: "13px",
+                    outline: "none",
+                  }}
+                />
+              </div>
+
+              {/* 模式选择 */}
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    color: "var(--gh-text, #374151)",
+                    marginBottom: "6px",
+                    display: "block",
+                  }}>
+                  适用模式
+                </label>
+                <div style={{ display: "flex", gap: "12px" }}>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      cursor: "pointer",
+                    }}>
+                    <input
+                      type="radio"
+                      name="styleMode"
+                      checked={editingStyle.mode === "light"}
+                      onChange={() => setEditingStyle({ ...editingStyle, mode: "light" })}
+                    />
+                    <span style={{ fontSize: "13px", color: "var(--gh-text, #374151)" }}>
+                      ☀️ 浅色模式
+                    </span>
+                  </label>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      cursor: "pointer",
+                    }}>
+                    <input
+                      type="radio"
+                      name="styleMode"
+                      checked={editingStyle.mode === "dark"}
+                      onChange={() => setEditingStyle({ ...editingStyle, mode: "dark" })}
+                    />
+                    <span style={{ fontSize: "13px", color: "var(--gh-text, #374151)" }}>
+                      🌙 深色模式
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* CSS 内容 */}
+              <div>
+                <label
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    color: "var(--gh-text, #374151)",
+                    marginBottom: "6px",
+                    display: "block",
+                  }}>
+                  CSS 代码
+                </label>
+                <textarea
+                  value={editingStyle.css}
+                  onChange={(e) => setEditingStyle({ ...editingStyle, css: e.target.value })}
+                  placeholder="/* 输入自定义 CSS */"
+                  spellCheck={false}
+                  style={{
+                    width: "100%",
+                    height: "200px",
+                    padding: "10px",
+                    borderRadius: "6px",
+                    border: "1px solid var(--gh-input-border, #d1d5db)",
+                    backgroundColor: "var(--gh-bg-secondary, #f9fafb)",
+                    color: "var(--gh-text, #374151)",
+                    fontFamily: "Menlo, Monaco, Consolas, 'Courier New', monospace",
+                    fontSize: "12px",
+                    resize: "vertical",
+                    outline: "none",
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* 模态框底部 */}
+            <div
+              style={{
+                padding: "16px",
+                borderTop: "1px solid var(--gh-border, #e5e7eb)",
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "8px",
+              }}>
+              <button
+                onClick={() => setShowStyleEditor(false)}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  border: "1px solid var(--gh-border, #e5e7eb)",
+                  background: "var(--gh-bg, white)",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  color: "var(--gh-text, #374151)",
+                }}>
+                取消
+              </button>
+              <button
+                onClick={() => {
+                  if (!editingStyle.name.trim()) {
+                    showDomToast("请输入样式名称")
+                    return
+                  }
+
+                  const existingStyles = settings?.theme?.customStyles || []
+                  let newStyles: CustomStyle[]
+
+                  if (editingStyle.id) {
+                    // 编辑现有样式
+                    newStyles = existingStyles.map((s) =>
+                      s.id === editingStyle.id ? editingStyle : s,
+                    )
+                  } else {
+                    // 新建样式
+                    const newStyle: CustomStyle = {
+                      ...editingStyle,
+                      id: nanoid(),
+                    }
+                    newStyles = [...existingStyles, newStyle]
+                  }
+
+                  setSettings({
+                    theme: {
+                      ...settings?.theme,
+                      customStyles: newStyles,
+                    },
+                  })
+                  setShowStyleEditor(false)
+                  showDomToast(editingStyle.id ? "样式已更新" : "样式已创建")
+                }}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  border: "none",
+                  background: "var(--gh-primary, #4285f4)",
+                  color: "white",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                }}>
+                {editingStyle.id ? "保存" : "创建"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <div
@@ -1103,7 +1357,7 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
                 <ThemeCard
                   key={preset.id}
                   preset={preset}
-                  isActive={(currentTheme?.lightPresetId || "google-gradient") === preset.id}
+                  isActive={(currentTheme?.lightStyleId || "google-gradient") === preset.id}
                   t={t}
                   onClick={() => {
                     const sites = settings?.theme?.sites || {}
@@ -1115,11 +1369,10 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
                         sites: {
                           ...settings?.theme?.sites,
                           [siteId]: {
-                            enabledStyleIds: [],
-                            darkPresetId: "classic-dark",
+                            darkStyleId: "classic-dark",
                             mode: "light",
                             ...currentSite,
-                            lightPresetId: preset.id,
+                            lightStyleId: preset.id,
                           },
                         },
                       },
@@ -1157,7 +1410,7 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
                 <ThemeCard
                   key={preset.id}
                   preset={preset}
-                  isActive={(currentTheme?.darkPresetId || "classic-dark") === preset.id}
+                  isActive={(currentTheme?.darkStyleId || "classic-dark") === preset.id}
                   t={t}
                   onClick={() => {
                     const sites = settings?.theme?.sites || {}
@@ -1169,11 +1422,10 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
                         sites: {
                           ...settings?.theme?.sites,
                           [siteId]: {
-                            enabledStyleIds: [],
-                            lightPresetId: "google-gradient",
+                            lightStyleId: "google-gradient",
                             mode: "light",
                             ...currentSite,
-                            darkPresetId: preset.id,
+                            darkStyleId: preset.id,
                           },
                         },
                       },
@@ -1184,7 +1436,7 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
             </div>
           </div>
 
-          {/* 自定义 CSS */}
+          {/* 自定义样式管理 */}
           <div
             style={{
               marginTop: "24px",
@@ -1196,12 +1448,12 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: "8px",
+                marginBottom: "12px",
               }}>
               <div>
                 <div
                   style={{ fontWeight: 500, fontSize: "13px", color: "var(--gh-text, #374151)" }}>
-                  {t("customCSS") || "自定义 CSS"}
+                  {t("customCSS") || "自定义样式"}
                 </div>
                 <div
                   style={{
@@ -1209,63 +1461,117 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
                     color: "var(--gh-text-secondary, #6b7280)",
                     marginTop: "2px",
                   }}>
-                  {t("customCSSDesc") || "输入标准 CSS 代码覆盖当前主题样式"}
+                  {t("customCSSDesc") || "创建自定义 CSS 样式，可在主题选择器中使用"}
                 </div>
               </div>
               <button
                 className="outline-toolbar-btn"
-                style={{ width: "auto", padding: "0 8px", fontSize: "12px", height: "24px" }}
-                title={t("customCSSTemplate") || "Insert Template"}
+                style={{ width: "auto", padding: "0 10px", fontSize: "12px", height: "28px" }}
+                title={t("addCustomStyle") || "添加样式"}
                 onClick={() => {
-                  const confirmMsg =
-                    t("language") === "en"
-                      ? "Overwrite current CSS with template?"
-                      : "确认使用模板覆盖当前 CSS？"
-
-                  if (
-                    !settings?.theme?.customStyles ||
-                    (typeof settings.theme.customStyles === "string" &&
-                      settings.theme.customStyles.trim() === "")
-                  ) {
-                    setSettings({ theme: { ...settings?.theme, customStyles: CSS_TEMPLATE } })
-                  } else if (confirm(confirmMsg)) {
-                    setSettings({ theme: { ...settings?.theme, customStyles: CSS_TEMPLATE } })
-                  }
+                  // 显示添加样式模态框
+                  setEditingStyle({
+                    id: "",
+                    name: "",
+                    css: CSS_TEMPLATE,
+                    mode: "light",
+                  })
+                  setShowStyleEditor(true)
                 }}>
-                📝 {t("customCSSTemplate") || "Template"}
+                ➕ {t("addCustomStyle") || "添加"}
               </button>
             </div>
-            <textarea
-              value={
-                typeof settings?.theme?.customStyles === "string" ? settings.theme.customStyles : ""
-              }
-              onChange={(e) =>
-                setSettings({ theme: { ...settings?.theme, customStyles: e.target.value } })
-              }
-              placeholder="/* Enter custom CSS here / 在此输入自定义 CSS */"
-              spellCheck={false}
-              style={{
-                width: "100%",
-                height: "120px",
-                padding: "8px",
-                borderRadius: "6px",
-                border: "1px solid var(--gh-input-border, #d1d5db)",
-                backgroundColor: "var(--gh-bg-secondary, #f9fafb)",
-                color: "var(--gh-text, #374151)",
-                fontFamily: "Menlo, Monaco, Consolas, 'Courier New', monospace",
-                fontSize: "12px",
-                resize: "vertical",
-                outline: "none",
-              }}
-            />
-            <div
-              style={{
-                fontSize: "11px",
-                color: "var(--gh-text-secondary, #9ca3af)",
-                marginTop: "4px",
-              }}>
-              {t("customCSSDesc") || "CSS 将自动应用。请谨慎使用。Changes apply automatically."}
-            </div>
+
+            {/* 样式列表 */}
+            {(settings?.theme?.customStyles || []).length === 0 ? (
+              <div
+                style={{
+                  padding: "20px",
+                  textAlign: "center",
+                  color: "var(--gh-text-secondary, #9ca3af)",
+                  fontSize: "12px",
+                  border: "1px dashed var(--gh-border, #e5e7eb)",
+                  borderRadius: "8px",
+                }}>
+                {t("noCustomStyles") || "暂无自定义样式，点击上方「添加」按钮创建"}
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {(settings?.theme?.customStyles || []).map((style) => (
+                  <div
+                    key={style.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "10px 12px",
+                      backgroundColor: "var(--gh-card-bg, #ffffff)",
+                      border: "1px solid var(--gh-card-border, #e5e7eb)",
+                      borderRadius: "8px",
+                    }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1 }}>
+                      {/* 模式标签 */}
+                      <span
+                        style={{
+                          fontSize: "10px",
+                          padding: "2px 6px",
+                          borderRadius: "4px",
+                          backgroundColor:
+                            style.mode === "light"
+                              ? "rgba(251, 191, 36, 0.2)"
+                              : "rgba(99, 102, 241, 0.2)",
+                          color: style.mode === "light" ? "#b45309" : "#4338ca",
+                        }}>
+                        {style.mode === "light" ? "☀️ 浅色" : "🌙 深色"}
+                      </span>
+                      {/* 样式名称 */}
+                      <span
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: 500,
+                          color: "var(--gh-text, #374151)",
+                        }}>
+                        {style.name || "未命名样式"}
+                      </span>
+                    </div>
+                    {/* 操作按钮 */}
+                    <div style={{ display: "flex", gap: "4px" }}>
+                      <button
+                        className="outline-toolbar-btn"
+                        style={{ width: "28px", height: "28px", fontSize: "12px" }}
+                        title={t("editStyle") || "编辑"}
+                        onClick={() => {
+                          setEditingStyle(style)
+                          setShowStyleEditor(true)
+                        }}>
+                        ✏️
+                      </button>
+                      <button
+                        className="outline-toolbar-btn"
+                        style={{ width: "28px", height: "28px", fontSize: "12px" }}
+                        title={t("deleteStyle") || "删除"}
+                        onClick={() => {
+                          const confirmMsg =
+                            t("confirmDeleteStyle") || `确认删除样式「${style.name}」？`
+                          if (confirm(confirmMsg)) {
+                            const newStyles = (settings?.theme?.customStyles || []).filter(
+                              (s) => s.id !== style.id,
+                            )
+                            setSettings({
+                              theme: {
+                                ...settings?.theme,
+                                customStyles: newStyles,
+                              },
+                            })
+                          }
+                        }}>
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </CollapsibleSection>
 

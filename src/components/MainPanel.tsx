@@ -232,8 +232,25 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         // ⭐ 位置现在由 useDraggable 通过直接 DOM 操作控制，不再通过 React state
       }}>
-      {/* 自定义 CSS 注入 */}
-      {settings.theme?.customStyles && <style>{settings.theme?.customStyles}</style>}
+      {/* 自定义 CSS 注入：根据当前站点的样式 ID 查找自定义样式 */}
+      {(() => {
+        const siteId = adapter?.getSiteId() || "_default"
+        const siteTheme =
+          settings.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
+          settings.theme?.sites?._default
+        const currentMode = siteTheme?.mode || "light"
+        const styleId = currentMode === "light" ? siteTheme?.lightStyleId : siteTheme?.darkStyleId
+
+        // 在自定义样式中查找（确保 customStyles 是数组）
+        const customStyles = settings.theme?.customStyles
+        if (Array.isArray(customStyles)) {
+          const customStyle = customStyles.find((s) => s.id === styleId)
+          if (customStyle) {
+            return <style>{customStyle.css}</style>
+          }
+        }
+        return null
+      })()}
 
       {/* Header - 拖拽区域 */}
       <div

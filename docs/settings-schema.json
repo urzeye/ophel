@@ -21,24 +21,28 @@
     "sites": {
       "gemini": {
         "mode": "light",
-        "lightPresetId": "google-gradient",
-        "darkPresetId": "classic-dark",
-        "enabledStyleIds": []
+        "lightStyleId": "google-gradient",
+        "darkStyleId": "classic-dark"
       },
       "gemini-enterprise": {
         "mode": "dark",
-        "lightPresetId": "google-gradient",
-        "darkPresetId": "classic-dark",
-        "enabledStyleIds": []
+        "lightStyleId": "google-gradient",
+        "darkStyleId": "classic-dark"
       },
       "_default": {
         "mode": "light",
-        "lightPresetId": "google-gradient",
-        "darkPresetId": "classic-dark",
-        "enabledStyleIds": []
+        "lightStyleId": "google-gradient",
+        "darkStyleId": "classic-dark"
       }
     },
-    "customStyles": []
+    "customStyles": [
+      {
+        "id": "example-custom-style",
+        "name": "示例自定义样式",
+        "css": "/* 用户自定义 CSS */",
+        "mode": "light"
+      }
+    ]
   },
 
   "pageWidth": {

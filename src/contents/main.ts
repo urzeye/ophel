@@ -91,8 +91,8 @@ if (!window.chatHelperInitialized) {
         siteTheme.mode,
         undefined, // onModeChange callback - 由 App.tsx 动态注册
         adapter, // adapter 引用
-        siteTheme.lightPresetId || "google-gradient",
-        siteTheme.darkPresetId || "classic-dark",
+        siteTheme.lightStyleId || "google-gradient",
+        siteTheme.darkStyleId || "classic-dark",
       )
       themeManager.apply()
       // 挂载到 window 对象，供 App.tsx 获取
@@ -207,8 +207,8 @@ if (!window.chatHelperInitialized) {
         const newSiteTheme = getSiteTheme(newSettings, siteId)
         if (newSiteTheme && themeManager) {
           themeManager.setPresets(
-            newSiteTheme.lightPresetId || "google-gradient",
-            newSiteTheme.darkPresetId || "classic-dark",
+            newSiteTheme.lightStyleId || "google-gradient",
+            newSiteTheme.darkStyleId || "classic-dark",
           )
         }
 

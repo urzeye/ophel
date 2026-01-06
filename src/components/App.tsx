@@ -171,8 +171,8 @@ export const App = () => {
       themeMode,
       undefined,
       adapter,
-      fallbackTheme?.lightPresetId || "google-gradient",
-      fallbackTheme?.darkPresetId || "classic-dark",
+      fallbackTheme?.lightStyleId || "google-gradient",
+      fallbackTheme?.darkStyleId || "classic-dark",
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在初始化时获取
   }, [])
@@ -192,9 +192,8 @@ export const App = () => {
       // ⭐ 确保站点配置有完整的默认值，但优先使用已有配置
       const existingSite = sites[siteId as keyof typeof sites] || sites._default
       const siteConfig = {
-        enabledStyleIds: [] as string[],
-        lightPresetId: "google-gradient",
-        darkPresetId: "classic-dark",
+        lightStyleId: "google-gradient",
+        darkStyleId: "classic-dark",
         mode: "light" as const,
         ...existingSite, // 已有配置覆盖默认值
       }
@@ -232,8 +231,8 @@ export const App = () => {
     const siteTheme =
       settings?.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
       settings?.theme?.sites?._default
-    const lightId = siteTheme?.lightPresetId
-    const darkId = siteTheme?.darkPresetId
+    const lightId = siteTheme?.lightStyleId
+    const darkId = siteTheme?.darkStyleId
 
     if (lightId && darkId) {
       themeManager.setPresets(lightId, darkId)

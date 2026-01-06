@@ -32,16 +32,16 @@ export type ThemeMode = "light" | "dark"
 // 站点主题配置
 export interface SiteThemeConfig {
   mode: ThemeMode
-  lightPresetId: string
-  darkPresetId: string
-  enabledStyleIds: string[]
+  lightStyleId: string // 浅色模式样式 ID（内置预设或自定义样式）
+  darkStyleId: string // 深色模式样式 ID
 }
 
 // 自定义样式
 export interface CustomStyle {
-  id: string
-  name: string
-  css: string
+  id: string // 唯一 ID（nanoid 生成）
+  name: string // 用户自定义名称
+  css: string // CSS 内容
+  mode: "light" | "dark" // 适用的主题模式
 }
 
 // 页面宽度配置
@@ -78,10 +78,10 @@ export interface Settings {
     exportImagesToBase64: boolean
   }
 
-  // 主题（按站点独立 + 共享样式）
+  // 主题（按站点独立 + 共享自定义样式）
   theme: {
     sites: Partial<Record<SiteId, SiteThemeConfig>>
-    customStyles: string // 自定义 CSS 字符串
+    customStyles: CustomStyle[] // 自定义样式列表
   }
 
   // 页面宽度（按站点独立）
@@ -156,9 +156,8 @@ export interface Settings {
 // 默认站点主题配置
 const DEFAULT_SITE_THEME: SiteThemeConfig = {
   mode: "light",
-  lightPresetId: "google-gradient",
-  darkPresetId: "classic-dark",
-  enabledStyleIds: [],
+  lightStyleId: "google-gradient",
+  darkStyleId: "classic-dark",
 }
 
 // 默认页面宽度配置
@@ -193,7 +192,7 @@ export const DEFAULT_SETTINGS: Settings = {
       "gemini-enterprise": { ...DEFAULT_SITE_THEME },
       _default: { ...DEFAULT_SITE_THEME },
     },
-    customStyles: "",
+    customStyles: [], // 空数组，用户可以添加自定义样式
   },
 
   pageWidth: {
