@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
+import { CHECK_ICON_POINTS, COPY_ICON_PATH, COPY_ICON_RECT } from "~utils/icons"
 import { DEFAULT_SETTINGS, type Settings } from "~utils/storage"
 
 interface OutlineTabProps {
@@ -214,7 +215,7 @@ const OutlineNodeView: React.FC<{
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
+                <polyline points={CHECK_ICON_POINTS} />
               </svg>
             ) : (
               // 复制图标
@@ -225,8 +226,8 @@ const OutlineNodeView: React.FC<{
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                <rect {...COPY_ICON_RECT} />
+                <path d={COPY_ICON_PATH} />
               </svg>
             )}
           </span>

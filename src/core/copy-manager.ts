@@ -1,6 +1,7 @@
 import type { SiteAdapter } from "~adapters/base"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
+import { createCopyIcon, showCopySuccess } from "~utils/icons"
 import type { Settings } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
@@ -249,7 +250,7 @@ export class CopyManager {
 
       const btn = document.createElement("button")
       btn.className = "gh-table-copy-btn"
-      btn.textContent = "📄"
+      btn.appendChild(createCopyIcon({ size: 14, color: "#6b7280" }))
       btn.title = t("tableCopyLabel")
 
       // 检测是否在 Gemini Enterprise 容器中（有原生按钮），调整位置避免遮挡
@@ -302,11 +303,7 @@ export class CopyManager {
           .writeText(markdown)
           .then(() => {
             showToast(t("tableCopied"))
-            const originalText = btn.textContent
-            btn.textContent = "✓"
-            setTimeout(() => {
-              btn.textContent = originalText
-            }, 1000)
+            showCopySuccess(btn, { size: 14 })
           })
           .catch((err) => {
             console.error("[TableCopy] Copy failed:", err)

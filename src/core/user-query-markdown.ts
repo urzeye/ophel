@@ -7,6 +7,7 @@
 
 import type { SiteAdapter } from "~adapters/base"
 import { DOMToolkit } from "~utils/dom-toolkit"
+import { initCopyButtons, showCopySuccess } from "~utils/icons"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 
 // Markdown 语法检测规则
@@ -300,20 +301,17 @@ export class UserQueryMarkdownRenderer {
    */
   private handleCodeCopy(e: Event) {
     const target = e.target as HTMLElement
-    if (
-      target.classList.contains("gh-code-copy-btn") &&
-      target.closest(".gh-user-query-markdown")
-    ) {
+    // 支持点击 SVG 内部元素
+    const btn = target.closest(".gh-code-copy-btn") as HTMLElement
+    if (btn && btn.closest(".gh-user-query-markdown")) {
       e.preventDefault()
       e.stopPropagation()
 
-      const code = target.nextElementSibling?.textContent || ""
+      const code = btn.nextElementSibling?.textContent || ""
       navigator.clipboard
         .writeText(code)
         .then(() => {
-          const originalText = target.textContent
-          target.textContent = "✓"
-          setTimeout(() => (target.textContent = originalText), 1500)
+          showCopySuccess(btn, { size: 14 })
         })
         .catch((err) => {
           console.error("[UserQueryMarkdownRenderer] Copy failed:", err)
@@ -390,6 +388,19 @@ export class UserQueryMarkdownRenderer {
 
     // 5. 使用适配器替换内容
     this.adapter.replaceUserQueryContent(element, html)
+
+    // 6. 初始化复制按钮的 SVG 图标
+    // 先尝试在主文档中查找，再在 Shadow DOM 中查找
+    let container = element.querySelector(".gh-user-query-markdown")
+    if (!container && this.adapter.usesShadowDOM()) {
+      const markdown = element.querySelector("ucs-fast-markdown")
+      if (markdown?.shadowRoot) {
+        container = markdown.shadowRoot.querySelector(".gh-user-query-markdown")
+      }
+    }
+    if (container) {
+      initCopyButtons(container, { size: 14, color: "#6b7280" })
+    }
   }
 
   /**

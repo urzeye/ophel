@@ -11,6 +11,7 @@ import { VIRTUAL_CATEGORY } from "~constants"
 import type { PromptManager } from "~core/prompt-manager"
 import { APP_NAME } from "~utils/config"
 import { t } from "~utils/i18n"
+import { initCopyButtons, showCopySuccess } from "~utils/icons"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 import type { Prompt } from "~utils/storage"
 import { showToast } from "~utils/toast"
@@ -106,9 +107,27 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     prompt: Prompt | null
   }>({ show: false, prompt: null })
 
+  // ⭐ 预览容器 refs（用于初始化 SVG 图标）
+  const editPreviewRef = useRef<HTMLDivElement>(null)
+  const modalPreviewRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     loadData()
   }, [])
+
+  // ⭐ 编辑模态框预览渲染后初始化复制按钮
+  useEffect(() => {
+    if (showPreview && editPreviewRef.current) {
+      initCopyButtons(editPreviewRef.current, { size: 14, color: "#6b7280" })
+    }
+  }, [showPreview, editingPrompt?.content])
+
+  // ⭐ 快捷预览模态框渲染后初始化复制按钮
+  useEffect(() => {
+    if (previewModal.show && modalPreviewRef.current) {
+      initCopyButtons(modalPreviewRef.current, { size: 14, color: "#6b7280" })
+    }
+  }, [previewModal.show, previewModal.prompt])
 
   const loadData = async () => {
     const allPrompts = manager.getPrompts()
@@ -756,14 +775,15 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       overflowY: "auto",
                       lineHeight: 1.6,
                     }}
+                    ref={editPreviewRef}
                     onClick={(e) => {
-                      // 事件委托处理复制按钮
+                      // 事件委托处理复制按钮（支持点击 SVG 内部）
                       const target = e.target as HTMLElement
-                      if (target.dataset.copyCode === "true") {
-                        const code = target.nextElementSibling?.textContent || ""
+                      const btn = target.closest(".gh-code-copy-btn") as HTMLElement
+                      if (btn) {
+                        const code = btn.nextElementSibling?.textContent || ""
                         navigator.clipboard.writeText(code).then(() => {
-                          target.textContent = "✓"
-                          setTimeout(() => (target.textContent = "📄"), 1500)
+                          showCopySuccess(btn, { size: 14 })
                         })
                       }
                     }}
@@ -997,14 +1017,15 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               padding: "20px",
               overflowY: "auto",
             }}
+            ref={modalPreviewRef}
             onClick={(e) => {
-              // 事件委托处理复制按钮
+              // 事件委托处理复制按钮（支持点击 SVG 内部）
               const target = e.target as HTMLElement
-              if (target.dataset.copyCode === "true") {
-                const code = target.nextElementSibling?.textContent || ""
+              const btn = target.closest(".gh-code-copy-btn") as HTMLElement
+              if (btn) {
+                const code = btn.nextElementSibling?.textContent || ""
                 navigator.clipboard.writeText(code).then(() => {
-                  target.textContent = "✓"
-                  setTimeout(() => (target.textContent = "📄"), 1500)
+                  showCopySuccess(btn, { size: 14 })
                 })
               }
             }}
