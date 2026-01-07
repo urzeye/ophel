@@ -153,7 +153,7 @@ if (!window.ophelInitialized) {
 
       // 4. 复制功能 (公式/表格)
       if (settings.content) {
-        copyManager = new CopyManager(settings.content)
+        copyManager = new CopyManager(settings.content, adapter)
         if (settings.content.formulaCopy) {
           copyManager.initFormulaCopy()
         }

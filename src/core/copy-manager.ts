@@ -1,7 +1,11 @@
+import type { SiteAdapter } from "~adapters/base"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 import type { Settings } from "~utils/storage"
 import { showToast } from "~utils/toast"
+
+// 表格扫描间隔（毫秒）
+const TABLE_RESCAN_INTERVAL = 1000
 
 /**
  * 复制功能管理器
@@ -9,13 +13,16 @@ import { showToast } from "~utils/toast"
  */
 export class CopyManager {
   private settings: Settings["content"]
+  private siteAdapter: SiteAdapter | null = null
   private formulaCopyInitialized = false
   private tableCopyInitialized = false
   private formulaDblClickHandler: ((e: MouseEvent) => void) | null = null
   private stopTableWatch: (() => void) | null = null
+  private rescanTimer: ReturnType<typeof setInterval> | null = null
 
-  constructor(settings: Settings["content"]) {
+  constructor(settings: Settings["content"], siteAdapter?: SiteAdapter) {
     this.settings = settings
+    this.siteAdapter = siteAdapter || null
   }
 
   updateSettings(settings: Settings["content"]) {
@@ -131,12 +138,9 @@ export class CopyManager {
     if (this.tableCopyInitialized) return
     this.tableCopyInitialized = true
 
-    // 注入 CSS
+    // 注入 CSS 到主文档
     const styleId = "gh-table-copy-style"
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement("style")
-      style.id = styleId
-      style.textContent = `
+    const css = `
         .gh-table-copy-btn {
             position: absolute;
             top: 4px;
@@ -158,25 +162,64 @@ export class CopyManager {
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         .gh-table-container:hover .gh-table-copy-btn,
-        table-block:hover .gh-table-copy-btn {
+        table-block:hover .gh-table-copy-btn,
+        ucs-markdown-table:hover .gh-table-copy-btn {
             opacity: 1;
         }
         .gh-table-copy-btn:hover {
             background: #4285f4;
             color: white;
         }
-      `
+    `
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement("style")
+      style.id = styleId
+      style.textContent = css
       document.head.appendChild(style)
     }
 
-    // 使用 DOMToolkit.each 持续监听表格（支持 Shadow DOM 穿透）
-    this.stopTableWatch = DOMToolkit.each(
-      "table",
-      (table) => {
-        this.injectTableButton(table as HTMLTableElement)
-      },
-      { shadow: true },
-    )
+    const usesShadowDOM = this.siteAdapter?.usesShadowDOM() ?? false
+
+    if (usesShadowDOM) {
+      // Shadow DOM 站点：使用定时扫描
+      // 因为 DOMToolkit.each 的 MutationObserver 无法检测 Shadow DOM 内部的变化
+      this.startRescanTimer()
+    } else {
+      // 普通站点：使用 DOMToolkit.each 持续监听
+      this.stopTableWatch = DOMToolkit.each(
+        "table",
+        (table) => {
+          this.injectTableButton(table as HTMLTableElement)
+        },
+        { shadow: true },
+      )
+    }
+  }
+
+  /**
+   * 启动定时扫描（用于 Shadow DOM 站点）
+   */
+  private startRescanTimer() {
+    // 先做一次初始扫描
+    this.rescanTables()
+
+    // 启动定时器
+    this.rescanTimer = setInterval(() => {
+      this.rescanTables()
+    }, TABLE_RESCAN_INTERVAL)
+  }
+
+  /**
+   * 扫描页面上的表格元素
+   */
+  private rescanTables() {
+    // 页面不可见时暂停扫描
+    if (document.hidden) return
+
+    const tables = DOMToolkit.query("table", { all: true, shadow: true }) as Element[]
+    for (const table of tables) {
+      this.injectTableButton(table as HTMLTableElement)
+    }
   }
 
   private injectTableButton(table: HTMLTableElement) {
@@ -206,7 +249,7 @@ export class CopyManager {
 
       const btn = document.createElement("button")
       btn.className = "gh-table-copy-btn"
-      btn.textContent = "📋"
+      btn.textContent = "📄"
       btn.title = t("tableCopyLabel")
 
       // 检测是否在 Gemini Enterprise 容器中（有原生按钮），调整位置避免遮挡
@@ -217,11 +260,37 @@ export class CopyManager {
         container.classList.contains("gh-table-container")
       const rightOffset = isGeminiEnterprise ? "80px" : "4px"
 
-      // 使用内联样式确保定位正确
+      // 使用内联样式确保定位正确（CSS 可能无法穿透 Shadow DOM）
       Object.assign(btn.style, {
         position: "absolute",
         top: "4px",
         right: rightOffset,
+        width: "28px",
+        height: "28px",
+        border: "none",
+        borderRadius: "6px",
+        background: "rgba(255,255,255,0.9)",
+        color: "#374151",
+        cursor: "pointer",
+        fontSize: "14px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        opacity: "0.6",
+        transition: "opacity 0.2s, background 0.2s, transform 0.2s",
+        zIndex: "10",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+        pointerEvents: "auto",
+      })
+
+      // hover 效果（因为 CSS :hover 无法穿透 Shadow DOM）
+      btn.addEventListener("mouseenter", () => {
+        btn.style.opacity = "1"
+        btn.style.transform = "scale(1.1)"
+      })
+      btn.addEventListener("mouseleave", () => {
+        btn.style.opacity = "0.6"
+        btn.style.transform = "scale(1)"
       })
 
       btn.addEventListener("click", (e) => {
@@ -312,10 +381,16 @@ export class CopyManager {
   destroyTableCopy() {
     this.tableCopyInitialized = false
 
-    // 停止监听
+    // 停止 DOMToolkit.each 监听
     if (this.stopTableWatch) {
       this.stopTableWatch()
       this.stopTableWatch = null
+    }
+
+    // 停止定时扫描
+    if (this.rescanTimer) {
+      clearInterval(this.rescanTimer)
+      this.rescanTimer = null
     }
 
     const style = document.getElementById("gh-table-copy-style")

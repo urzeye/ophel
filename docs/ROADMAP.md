@@ -27,6 +27,11 @@
   - 修复：将 `onModeChange` 回调延迟到 `transition.finished` 之后，确保 React 重渲染不干扰 View Transition 动画
   - 文件：`src/core/theme-manager.ts`
 
+- [x] **Gemini Enterprise 表格复制按钮** ✅
+  - 问题：表格复制按钮在 Gemini Enterprise 不显示、点击无效果
+  - 方案：为 Shadow DOM 站点添加定时扫描机制，使用内联样式和 JS 事件处理
+  - 文件：`copy-manager.ts`, `main.ts`
+
 ---
 
 ## 🔧 重构
@@ -86,18 +91,13 @@
   - 兼容 Mac（⌘）和 Windows（Ctrl）
   - 提供专门的快捷键设置面板
 
-### P2 - 待实现
-
-- [ ] **Gemini Enterprise 表格复制按钮**
-  - 问题：表格复制按钮在 Gemini Enterprise 不显示
-  - 原因：Shadow DOM 隔离导致 DOMToolkit.each 无法检测到表格
-
 ---
 
 ## 📝 更新日志
 
 | 日期       | 内容                                       |
 | ---------- | ------------------------------------------ |
+| 2026-01-07 | 修复 Gemini Enterprise 表格复制按钮问题    |
 | 2026-01-07 | 完成用户问题宽度调整功能                   |
 | 2026-01-07 | 重构：布局设置统一到 layout 命名空间       |
 | 2026-01-07 | 完成用户提问 Markdown 渲染功能             |
