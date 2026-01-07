@@ -44,8 +44,6 @@
 
 ## 💡 提示词功能规划
 
-> 详见 [PROMPTS_ROADMAP.md](./PROMPTS_ROADMAP.md)
-
 ### ✅ 已完成
 
 - [x] **变量占位符** - 支持 `{{topic}}` 格式，插入时弹窗填写变量值
@@ -54,7 +52,12 @@
 - [x] **最近使用记录** - 自动记录并支持筛选
 - [x] **分类颜色** - 根据分类名自动哈希生成颜色
 - [x] **Markdown 预览** - 集成 markdown-it + highlight.js
-
+- [x] **用户提问 Markdown 渲染** ✅
+  - 场景：Gemini 把用户输入的 Markdown 按行拆分成 HTML，丢失了格式
+  - 方案：提取文本 → 合并 → 用 markdown-it 渲染
+  - 支持 Gemini 普通版和 Enterprise 版（Shadow DOM）
+  - 包含代码块复制按钮、滚动条美化、深色模式适配
+  
 ### P1 - 待实现
 
 - [ ] **快捷键设置**
@@ -62,12 +65,6 @@
   - 支持用户自定义任意快捷键
   - 兼容 Mac（⌘）和 Windows（Ctrl）
   - 提供专门的快捷键设置面板
-
-- [x] **用户提问 Markdown 渲染** ✅
-  - 场景：Gemini 把用户输入的 Markdown 按行拆分成 HTML，丢失了格式
-  - 方案：提取文本 → 合并 → 用 markdown-it 渲染
-  - 支持 Gemini 普通版和 Enterprise 版（Shadow DOM）
-  - 包含代码块复制按钮、滚动条美化、深色模式适配
 
 ### P2 - 待实现
 

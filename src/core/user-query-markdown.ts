@@ -7,7 +7,7 @@
 
 import type { SiteAdapter } from "~adapters/base"
 import { DOMToolkit } from "~utils/dom-toolkit"
-import { renderMarkdown } from "~utils/markdown"
+import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 
 // Markdown 语法检测规则
 const MARKDOWN_PATTERNS = [
@@ -27,6 +27,7 @@ const INITIAL_DELAY = 1000 // 首次扫描延迟
 const STYLE_ID = "gh-user-query-markdown-style"
 
 // 用户提问 Markdown 渲染样式（注入到页面 document.head）
+// 如果把 CSS 抽离到单独的 .css 文件：需要使用 data-text: 导入为字符串，然后仍然需要在 JS 中拼接并手动注入
 const USER_QUERY_MARKDOWN_CSS = `
 /* ============= 用户提问 Markdown 渲染样式 ============= */
 .gh-user-query-markdown {
@@ -38,7 +39,7 @@ const USER_QUERY_MARKDOWN_CSS = `
 .gh-user-query-markdown pre {
   margin: 0.5em 0;
   padding: 0.75em;
-  padding-right: 2.5em;
+  padding-right: 0.5em;
   background: rgba(0, 0, 0, 0.05);
   border-radius: 6px;
   font-size: 0.95em;
@@ -69,6 +70,7 @@ const USER_QUERY_MARKDOWN_CSS = `
   white-space: pre-wrap;
   word-wrap: break-word;
   word-break: break-all;
+  overflow: visible; /* 覆盖 .hljs 的 overflow-x: auto，让 pre 控制滚动 */
 }
 
 /* 行内代码 */
@@ -272,7 +274,7 @@ export class UserQueryMarkdownRenderer {
 
     const style = document.createElement("style")
     style.id = STYLE_ID
-    style.textContent = USER_QUERY_MARKDOWN_CSS
+    style.textContent = getHighlightStyles() + "\n" + USER_QUERY_MARKDOWN_CSS
     document.head.appendChild(style)
   }
 
@@ -285,7 +287,7 @@ export class UserQueryMarkdownRenderer {
 
     const style = document.createElement("style")
     style.id = STYLE_ID
-    style.textContent = USER_QUERY_MARKDOWN_CSS
+    style.textContent = getHighlightStyles() + "\n" + USER_QUERY_MARKDOWN_CSS
     shadowRoot.prepend(style)
     this.injectedShadowRoots.add(shadowRoot)
 
