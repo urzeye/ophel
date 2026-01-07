@@ -284,43 +284,25 @@ export function formatToTXT(metadata: ExportMetadata, messages: ExportMessage[])
 
 /**
  * 下载文件
- * 使用 File System Access API 让用户选择保存位置
+ * 使用 Blob + createObjectURL 直接下载到默认下载目录
  */
 export async function downloadFile(
   content: string,
   filename: string,
-  _mimeType?: string,
+  mimeType: string = "text/plain;charset=utf-8",
 ): Promise<boolean> {
-  if (!("showSaveFilePicker" in window)) {
-    console.error("[Exporter] showSaveFilePicker not supported")
-    showToast("当前浏览器不支持文件保存功能")
-    return false
-  }
-
   try {
-    const handle = await (window as any).showSaveFilePicker({
-      suggestedName: filename,
-      types: [
-        {
-          description: "Text files",
-          accept: {
-            "text/plain": [".txt", ".md", ".json"],
-          },
-        },
-      ],
-    })
-
-    const writable = await handle.createWritable()
-    await writable.write(content)
-    await writable.close()
+    const blob = new Blob([content], { type: mimeType })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
     return true
   } catch (err: any) {
-    // 用户取消了保存对话框
-    if (err.name === "AbortError") {
-      return false
-    }
-    console.error("[Exporter] Save failed:", err)
-    showToast("保存失败: " + err.message)
+    console.error("[Exporter] Download failed:", err)
+    showToast("下载失败: " + err.message)
     return false
   }
 }
