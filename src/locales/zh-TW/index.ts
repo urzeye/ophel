@@ -163,6 +163,11 @@ export const zhTW = {
   widthUnit: "單位",
   unitPx: "像素 (px)",
   unitPercent: "百分比 (%)",
+
+  // 使用者問題寬度設置
+  enableUserQueryWidth: "啟用使用者問題加寬",
+  enableUserQueryWidthDesc: "調整使用者問題氣泡容器的最大寬度",
+  userQueryWidthValueLabel: "問題寬度",
   // 標籤頁設置
   tabSettingsTitle: "標籤頁設置",
   openNewTabLabel: "新分頁開啟新對話",

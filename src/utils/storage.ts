@@ -88,6 +88,11 @@ export interface Settings {
   // 页面宽度（按站点独立）
   pageWidth: Record<SiteId, PageWidthConfig>
 
+  // 布局设置（用户问题宽度等）
+  layout: {
+    userQueryWidth: Record<SiteId, PageWidthConfig>
+  }
+
   // 模型锁定（按站点独立）
   modelLock: Record<string, ModelLockConfig>
 
@@ -168,6 +173,13 @@ const DEFAULT_PAGE_WIDTH: PageWidthConfig = {
   unit: "%",
 }
 
+// 默认用户问题宽度配置（使用 px 防止随页面宽度缩放）
+const DEFAULT_USER_QUERY_WIDTH: PageWidthConfig = {
+  enabled: false,
+  value: "600",
+  unit: "px",
+}
+
 export const DEFAULT_SETTINGS: Settings = {
   language: "auto",
 
@@ -201,6 +213,14 @@ export const DEFAULT_SETTINGS: Settings = {
     gemini: { ...DEFAULT_PAGE_WIDTH },
     "gemini-enterprise": { ...DEFAULT_PAGE_WIDTH },
     _default: { ...DEFAULT_PAGE_WIDTH },
+  },
+
+  layout: {
+    userQueryWidth: {
+      gemini: { ...DEFAULT_USER_QUERY_WIDTH },
+      "gemini-enterprise": { ...DEFAULT_USER_QUERY_WIDTH },
+      _default: { ...DEFAULT_USER_QUERY_WIDTH },
+    },
   },
 
   modelLock: {
@@ -316,4 +336,12 @@ export function getSitePageWidth(settings: Settings, siteId: string): PageWidthC
 
 export function getSiteModelLock(settings: Settings, siteId: string): ModelLockConfig {
   return settings.modelLock?.[siteId] ?? { enabled: false, keyword: "" }
+}
+
+export function getSiteUserQueryWidth(settings: Settings, siteId: string): PageWidthConfig {
+  const userQueryWidth = settings.layout?.userQueryWidth
+  if (userQueryWidth && siteId in userQueryWidth) {
+    return userQueryWidth[siteId as SiteId]
+  }
+  return userQueryWidth?._default ?? DEFAULT_USER_QUERY_WIDTH
 }

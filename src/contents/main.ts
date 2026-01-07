@@ -24,6 +24,7 @@ import {
   getSiteModelLock,
   getSitePageWidth,
   getSiteTheme,
+  getSiteUserQueryWidth,
   type Settings,
 } from "~utils/storage"
 
@@ -143,9 +144,11 @@ if (!window.ophelInitialized) {
 
       // 3. 页面宽度管理
       const sitePageWidth = getSitePageWidth(settings, siteId)
-      if (sitePageWidth?.enabled) {
+      const siteUserQueryWidth = getSiteUserQueryWidth(settings, siteId)
+      if (sitePageWidth?.enabled || siteUserQueryWidth?.enabled) {
         layoutManager = new LayoutManager(adapter, sitePageWidth)
-        layoutManager.apply()
+        if (sitePageWidth?.enabled) layoutManager.apply()
+        if (siteUserQueryWidth?.enabled) layoutManager.updateUserQueryConfig(siteUserQueryWidth)
       }
 
       // 4. 复制功能 (公式/表格)
@@ -243,15 +246,17 @@ if (!window.ophelInitialized) {
           }
         }
 
-        // 5. Layout Manager update
+        // 5. Layout Manager update (页面宽度 + 用户问题宽度)
         const newSitePageWidth = getSitePageWidth(newSettings, siteId)
-        if (newSitePageWidth) {
-          if (layoutManager) {
-            layoutManager.updateConfig(newSitePageWidth)
-          } else if (newSitePageWidth.enabled) {
-            layoutManager = new LayoutManager(adapter, newSitePageWidth)
-            layoutManager.apply()
-          }
+        const newUserQueryWidth = getSiteUserQueryWidth(newSettings, siteId)
+
+        if (layoutManager) {
+          layoutManager.updateConfig(newSitePageWidth)
+          layoutManager.updateUserQueryConfig(newUserQueryWidth)
+        } else if (newSitePageWidth?.enabled || newUserQueryWidth?.enabled) {
+          layoutManager = new LayoutManager(adapter, newSitePageWidth)
+          if (newSitePageWidth?.enabled) layoutManager.apply()
+          if (newUserQueryWidth?.enabled) layoutManager.updateUserQueryConfig(newUserQueryWidth)
         }
 
         // 6. Watermark Remover update

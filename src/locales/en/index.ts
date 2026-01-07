@@ -186,6 +186,11 @@ export const en = {
   widthUnit: "Unit",
   unitPx: "Pixels (px)",
   unitPercent: "Percentage (%)",
+
+  // User Query Width Settings
+  enableUserQueryWidth: "Enable User Query Widening",
+  enableUserQueryWidthDesc: "Adjust the max-width of user query bubble containers",
+  userQueryWidthValueLabel: "Query Width",
   // Tab Settings
   tabSettingsTitle: "Tab Settings",
   openNewTabLabel: "Open New Chat in New Tab",

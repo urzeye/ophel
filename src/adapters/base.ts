@@ -216,6 +216,11 @@ export abstract class SiteAdapter {
     return []
   }
 
+  /** 返回用户问题宽度调整的 CSS 选择器列表 */
+  getUserQueryWidthSelectors(): Array<{ selector: string; property: string }> {
+    return []
+  }
+
   // ==================== 输入框操作 ====================
 
   /** 获取提交按钮选择器 */

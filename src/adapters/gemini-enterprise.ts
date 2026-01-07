@@ -225,6 +225,18 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     ]
   }
 
+  /** 用户问题宽度选择器（Shadow DOM 内部，需要高优先级覆盖 :host([spk2])）*/
+  getUserQueryWidthSelectors() {
+    return [
+      {
+        // 使用与原始样式相同的 :host([spk2]) 模式以获得相同优先级
+        selector: ".question-block .question-wrapper",
+        property: "max-width",
+        noCenter: true,
+      },
+    ]
+  }
+
   // ==================== 输入框操作 ====================
 
   getTextareaSelectors(): string[] {

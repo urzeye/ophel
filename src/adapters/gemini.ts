@@ -156,6 +156,17 @@ export class GeminiAdapter extends SiteAdapter {
     ]
   }
 
+  /** 用户问题宽度选择器 */
+  getUserQueryWidthSelectors() {
+    return [
+      {
+        selector: ".user-query-bubble-with-background:not(.edit-mode)",
+        property: "max-width",
+        noCenter: true, // 用户问题不需要居中
+      },
+    ]
+  }
+
   // ==================== 输入框操作 ====================
 
   getTextareaSelectors(): string[] {

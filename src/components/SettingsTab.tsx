@@ -721,6 +721,9 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
   const currentPageWidth =
     settings?.pageWidth?.[siteId as keyof typeof settings.pageWidth] ||
     settings?.pageWidth?._default
+  const currentUserQueryWidth =
+    settings?.layout?.userQueryWidth?.[siteId as keyof typeof settings.layout.userQueryWidth] ||
+    settings?.layout?.userQueryWidth?._default
   const currentTheme =
     settings?.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
     settings?.theme?.sites?._default
@@ -786,6 +789,65 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
         pageWidth: {
           ...settings.pageWidth,
           [siteId]: newPageWidth,
+        },
+      })
+    }
+  }
+
+  // 用户问题宽度逻辑（与页面宽度相同的交互模式）
+  const [tempUserQueryWidth, setTempUserQueryWidth] = useState(
+    currentUserQueryWidth?.value || "600",
+  )
+
+  useEffect(() => {
+    if (currentUserQueryWidth?.value) {
+      setTempUserQueryWidth(currentUserQueryWidth.value)
+    }
+  }, [currentUserQueryWidth?.value])
+
+  const handleUserQueryWidthBlur = () => {
+    let val = parseInt(tempUserQueryWidth)
+    const unit = currentUserQueryWidth?.unit || "px"
+
+    if (isNaN(val)) {
+      val = unit === "%" ? 81 : 600
+    }
+
+    if (unit === "%") {
+      if (val < 40) val = 40
+      if (val > 100) val = 100
+    } else {
+      if (val <= 0) val = 600
+    }
+
+    const finalVal = val.toString()
+    setTempUserQueryWidth(finalVal)
+    if (finalVal !== currentUserQueryWidth?.value && settings) {
+      const current = currentUserQueryWidth || { enabled: true, value: finalVal, unit: "px" }
+      setSettings({
+        layout: {
+          ...settings.layout,
+          userQueryWidth: {
+            ...settings.layout?.userQueryWidth,
+            [siteId]: { ...current, value: finalVal },
+          },
+        },
+      })
+    }
+  }
+
+  const handleUserQueryUnitChange = (newUnit: string) => {
+    const newValue = newUnit === "px" ? "600" : "81"
+    setTempUserQueryWidth(newValue)
+    if (settings) {
+      const current = currentUserQueryWidth || { enabled: false, value: newValue, unit: newUnit }
+      setSettings({
+        layout: {
+          ...settings.layout,
+          userQueryWidth: {
+            ...settings.layout?.userQueryWidth,
+            [siteId]: { ...current, unit: newUnit, value: newValue },
+          },
         },
       })
     }
@@ -1687,6 +1749,84 @@ export const SettingsTab = ({ siteId = "_default" }: SettingsTabProps) => {
               </select>
             </div>
           </div>
+
+          {/* 用户问题宽度设置 */}
+          <ToggleRow
+            label={t("enableUserQueryWidth") || "启用用户问题加宽"}
+            desc={t("enableUserQueryWidthDesc") || "调整用户问题气泡的最大宽度"}
+            checked={currentUserQueryWidth?.enabled ?? false}
+            onChange={() => {
+              const current = currentUserQueryWidth || { enabled: false, value: "81", unit: "%" }
+              setSettings({
+                layout: {
+                  ...settings?.layout,
+                  userQueryWidth: {
+                    ...settings?.layout?.userQueryWidth,
+                    [siteId]: { ...current, enabled: !current.enabled },
+                  },
+                },
+              })
+            }}
+          />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "10px",
+              padding: "14px 16px",
+              backgroundColor: "var(--gh-card-bg, #ffffff)",
+              border: "1px solid var(--gh-card-border, #e5e7eb)",
+              borderRadius: "8px",
+              opacity: currentUserQueryWidth?.enabled ? 1 : 0.5,
+              pointerEvents: currentUserQueryWidth?.enabled ? "auto" : "none",
+            }}>
+            <div style={{ fontWeight: 500, fontSize: "13px", color: "var(--gh-text, #374151)" }}>
+              {t("userQueryWidthValueLabel") || "问题宽度"}
+            </div>
+            <div style={{ display: "flex", gap: "6px" }}>
+              <input
+                type="text"
+                value={tempUserQueryWidth}
+                onChange={(e) => setTempUserQueryWidth(e.target.value.replace(/[^0-9]/g, ""))}
+                onBlur={handleUserQueryWidthBlur}
+                disabled={!currentUserQueryWidth?.enabled}
+                style={{
+                  width: "60px",
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  border: "1px solid var(--gh-input-border, #d1d5db)",
+                  fontSize: "12px",
+                  backgroundColor: currentUserQueryWidth?.enabled
+                    ? "var(--gh-input-bg, white)"
+                    : "var(--gh-bg-tertiary, #f3f4f6)",
+                  color: currentUserQueryWidth?.enabled
+                    ? "var(--gh-text, #374151)"
+                    : "var(--gh-text-secondary, #9ca3af)",
+                }}
+              />
+              <select
+                value={currentUserQueryWidth?.unit || "px"}
+                onChange={(e) => handleUserQueryUnitChange(e.target.value)}
+                disabled={!currentUserQueryWidth?.enabled}
+                style={{
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  border: "1px solid var(--gh-input-border, #d1d5db)",
+                  fontSize: "12px",
+                  backgroundColor: currentUserQueryWidth?.enabled
+                    ? "var(--gh-input-bg, white)"
+                    : "var(--gh-bg-tertiary, #f3f4f6)",
+                  color: currentUserQueryWidth?.enabled
+                    ? "var(--gh-text, #374151)"
+                    : "var(--gh-text-secondary, #9ca3af)",
+                }}>
+                <option value="px">px</option>
+                <option value="%">%</option>
+              </select>
+            </div>
+          </div>
+
           <ToggleRow
             label={t("preventAutoScrollLabel") || "防止自动滚动"}
             desc={t("preventAutoScrollDesc") || "阻止页面自动滚动到底部"}

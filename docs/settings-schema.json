@@ -52,6 +52,21 @@
     "_default": { "enabled": false, "value": "81", "unit": "%" }
   },
 
+  "layout": {
+    "userQueryWidth": {
+      "gemini": { "enabled": false, "value": "81", "unit": "%" },
+      "gemini-enterprise": { "enabled": false, "value": "81", "unit": "%" },
+      "_default": { "enabled": false, "value": "81", "unit": "%" }
+    }
+  },
+
+  "appearance": {
+    "codeBlock": { "beautify": false, "collapsible": false, "maxHeight": 300 },
+    "blockquote": { "beautify": false },
+    "typography": { "fontReplace": false, "fontFamily": "system" },
+    "shadow": { "enabled": false, "intensity": "medium" }
+  },
+
   "modelLock": {
     "gemini": { "enabled": false, "keyword": "" },
     "gemini-enterprise": { "enabled": false, "keyword": "" }

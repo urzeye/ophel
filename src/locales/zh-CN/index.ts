@@ -161,6 +161,11 @@ export const zhCN = {
   widthUnit: "单位",
   unitPx: "像素 (px)",
   unitPercent: "百分比 (%)",
+
+  // 用户问题宽度设置
+  enableUserQueryWidth: "启用用户问题加宽",
+  enableUserQueryWidthDesc: "调整用户问题气泡容器的最大宽度",
+  userQueryWidthValueLabel: "问题宽度",
   // 标签页设置
   tabSettingsTitle: "标签页设置",
   openNewTabLabel: "新标签页打开新对话",
