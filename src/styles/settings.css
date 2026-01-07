@@ -444,3 +444,87 @@
   opacity: 0.3;
   cursor: not-allowed;
 }
+
+/* ==================== 模态框 ==================== */
+
+.settings-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000000;
+  animation: settings-modal-fade-in 0.2s ease;
+  pointer-events: auto; /* 覆盖父容器 .gh-root 的 pointer-events: none */
+}
+
+@keyframes settings-modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.settings-modal-container {
+  display: flex;
+  width: 90%;
+  max-width: 1000px;
+  height: 85vh;
+  max-height: 700px;
+  background: var(--gh-bg, #f9fafb);
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  position: relative;
+  animation: settings-modal-slide-in 0.25s ease;
+}
+
+@keyframes settings-modal-slide-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.settings-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: var(--gh-bg-secondary, #f3f4f6);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  z-index: 10;
+}
+
+.settings-modal-close:hover {
+  background: var(--gh-hover, #e5e7eb);
+  color: var(--gh-text, #374151);
+}
+
+/* 模态框内的布局微调 */
+.settings-modal-container .settings-sidebar {
+  border-radius: 16px 0 0 16px;
+}
+
+.settings-modal-container .settings-content {
+  padding-right: 48px; /* 为关闭按钮留出空间 */
+}

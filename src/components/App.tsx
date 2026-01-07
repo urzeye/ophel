@@ -11,6 +11,7 @@ import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
 import { MainPanel } from "./MainPanel"
 import { QuickButtons } from "./QuickButtons"
 import { SelectedPromptBar } from "./SelectedPromptBar"
+import { SettingsModal } from "./SettingsModal"
 
 export const App = () => {
   // 读取设置 - 使用 Zustand Store
@@ -51,6 +52,9 @@ export const App = () => {
 
   // 选中的提示词状态
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null)
+
+  // ⭐ 设置模态框状态
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   // 边缘吸附状态
   const [edgeSnapState, setEdgeSnapState] = useState<"left" | "right" | null>(null)
@@ -517,6 +521,7 @@ export const App = () => {
           setIsEdgePeeking(false)
         }}
         onInteractionStateChange={handleInteractionChange}
+        onOpenSettings={() => setIsSettingsOpen(true)}
         onMouseEnter={() => {
           if (hideTimerRef.current) {
             clearTimeout(hideTimerRef.current)
@@ -576,6 +581,12 @@ export const App = () => {
           adapter={adapter}
         />
       )}
+      {/* 设置模态框 */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        siteId={adapter.getSiteId()}
+      />
     </div>
   )
 }

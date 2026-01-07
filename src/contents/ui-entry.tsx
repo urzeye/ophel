@@ -1,5 +1,6 @@
 import cssText from "data-text:~style.css"
 import conversationsCssText from "data-text:~styles/conversations.css"
+import settingsCssText from "data-text:~styles/settings.css"
 import type { PlasmoCSConfig } from "plasmo"
 import React from "react"
 
@@ -21,7 +22,7 @@ export const config: PlasmoCSConfig = {
 export const getStyle = () => {
   const style = document.createElement("style")
   // 合并所有 CSS 样式
-  style.textContent = cssText + "\n" + conversationsCssText
+  style.textContent = cssText + "\n" + conversationsCssText + "\n" + settingsCssText
   return style
 }
 

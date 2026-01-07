@@ -38,6 +38,7 @@ interface MainPanelProps {
   onEdgeSnap?: (side: "left" | "right") => void
   onUnsnap?: () => void
   onInteractionStateChange?: (isActive: boolean) => void
+  onOpenSettings?: () => void
   onMouseEnter?: React.MouseEventHandler<HTMLDivElement>
   onMouseLeave?: React.MouseEventHandler<HTMLDivElement>
 }
@@ -58,6 +59,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   onEdgeSnap,
   onUnsnap,
   onInteractionStateChange,
+  onOpenSettings,
   onMouseEnter,
   onMouseLeave,
 }) => {
@@ -326,11 +328,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             +
           </button>
 
-          {/* 设置按钮 - 打开独立的 Options 页面 */}
+          {/* 设置按钮 - 打开设置模态框 */}
           <button
             onClick={() => {
-              // 通过 Background Script 打开独立的 Options 页面
-              chrome.runtime.sendMessage({ type: "OPEN_OPTIONS_PAGE" })
+              onOpenSettings?.()
             }}
             title={t("tabSettings")}
             style={{
