@@ -17,10 +17,11 @@
   - 问题：阅读历史恢复功能不准确
   - 优先级：中
 
-- [ ] **Gemini Enterprise 滚动锁定无效**
+- [x] **Gemini Enterprise 滚动锁定无效** ✅
 
   - 问题：在 Gemini Enterprise (business.gemini.google) 站点上滚动锁定功能无效
-  - 优先级：中
+  - 原因：主世界脚本缺少对 `Element.prototype.scrollTo/scroll/scrollBy` 的劫持
+  - 修复：在 `scroll-lock-main.ts` 中补充三个元素级滚动 API 的劫持
 
 - [x] **主题切换动画不同步** ✅
   - 问题：切换深浅主题时，圆形扩散动画还没完成前，面板框架（header/footer）已变成目标主题颜色，但中间的提示词列表、会话文件夹列表、输入框等仍保持原主题样式，视觉不一致
@@ -97,6 +98,7 @@
 
 | 日期       | 内容                                       |
 | ---------- | ------------------------------------------ |
+| 2026-01-07 | 修复 Gemini Enterprise 滚动锁定失效问题    |
 | 2026-01-07 | 修复 Gemini Enterprise 表格复制按钮问题    |
 | 2026-01-07 | 完成用户问题宽度调整功能                   |
 | 2026-01-07 | 重构：布局设置统一到 layout 命名空间       |

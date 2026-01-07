@@ -104,6 +104,96 @@ if (!(window as any).__ophelScrollLockInitialized) {
     })
   }
 
+  // 4. 劫持 Element.prototype.scrollTo（元素级滚动方法）
+  const originalElementScrollTo = Element.prototype.scrollTo
+  Element.prototype.scrollTo = function (
+    this: Element,
+    optionsOrX?: ScrollToOptions | number,
+    y?: number,
+  ) {
+    // 如果劫持未启用，直接调用原始 API
+    if (!(window as any).__ophelScrollLockEnabled) {
+      return originalElementScrollTo.apply(this, arguments as any)
+    }
+
+    // 解析目标 Y 位置
+    let targetY: number | undefined
+    if (typeof optionsOrX === "object" && optionsOrX !== null) {
+      targetY = optionsOrX.top
+    } else if (typeof y === "number") {
+      targetY = y
+    }
+
+    // 获取当前滚动位置
+    const currentScrollTop = this.scrollTop || 0
+
+    // 只有当向下大幅滚动时才拦截
+    if (typeof targetY === "number" && targetY > currentScrollTop + 50) {
+      return
+    }
+
+    return originalElementScrollTo.apply(this, arguments as any)
+  }
+
+  // 5. 劫持 Element.prototype.scroll（scrollTo 的别名）
+  const originalElementScroll = Element.prototype.scroll
+  Element.prototype.scroll = function (
+    this: Element,
+    optionsOrX?: ScrollToOptions | number,
+    y?: number,
+  ) {
+    // 如果劫持未启用，直接调用原始 API
+    if (!(window as any).__ophelScrollLockEnabled) {
+      return originalElementScroll.apply(this, arguments as any)
+    }
+
+    // 解析目标 Y 位置
+    let targetY: number | undefined
+    if (typeof optionsOrX === "object" && optionsOrX !== null) {
+      targetY = optionsOrX.top
+    } else if (typeof y === "number") {
+      targetY = y
+    }
+
+    // 获取当前滚动位置
+    const currentScrollTop = this.scrollTop || 0
+
+    // 只有当向下大幅滚动时才拦截
+    if (typeof targetY === "number" && targetY > currentScrollTop + 50) {
+      return
+    }
+
+    return originalElementScroll.apply(this, arguments as any)
+  }
+
+  // 6. 劫持 Element.prototype.scrollBy（相对滚动方法）
+  const originalElementScrollBy = Element.prototype.scrollBy
+  Element.prototype.scrollBy = function (
+    this: Element,
+    optionsOrX?: ScrollToOptions | number,
+    y?: number,
+  ) {
+    // 如果劫持未启用，直接调用原始 API
+    if (!(window as any).__ophelScrollLockEnabled) {
+      return originalElementScrollBy.apply(this, arguments as any)
+    }
+
+    // 解析 Y 偏移量
+    let deltaY: number | undefined
+    if (typeof optionsOrX === "object" && optionsOrX !== null) {
+      deltaY = optionsOrX.top
+    } else if (typeof y === "number") {
+      deltaY = y
+    }
+
+    // 只有当向下大幅滚动时才拦截（scrollBy 是相对偏移）
+    if (typeof deltaY === "number" && deltaY > 50) {
+      return
+    }
+
+    return originalElementScrollBy.apply(this, arguments as any)
+  }
+
   // 监听来自 Content Script 的消息（启用/禁用劫持）
   window.addEventListener("message", (event) => {
     if (event.source !== window) return
