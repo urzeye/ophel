@@ -8,6 +8,7 @@ export const en = {
   navAppearance: "Appearance",
   navPageContent: "Page & Content",
   navFeatures: "Features",
+  navPermissions: "Permissions",
   navBackup: "Backup & Sync",
   navAbout: "About",
 
@@ -16,8 +17,36 @@ export const en = {
   appearancePageDesc: "Customize visual styles and themes",
   pageContentPageDesc: "Adjust page layout and content display",
   featuresPageDesc: "Configure extension feature modules",
+  permissionsPageDesc: "View and manage extension permissions.",
   backupPageDesc: "Manage data backup and cloud sync",
   aboutPageDesc: "Extension information and links",
+
+  // ======== Permissions Page ========
+  optionalPermissions: "Optional Permissions",
+  optionalPermissionsDesc: "These permissions can be granted or revoked as needed",
+  requiredPermissions: "Required Permissions",
+  requiredPermissionsDesc: "These permissions are required for the extension to function properly",
+  permissionsSyncHint:
+    "Permission status syncs with browser. Click refresh if modified outside this page.",
+  refreshStatus: "Refresh Status",
+  granted: "Granted",
+  notGranted: "Not Granted",
+  revoke: "Revoke",
+  grant: "Grant",
+  allowRecommended: "Allow (Recommended)",
+  required: "Required",
+  // Optional permissions
+  permissionAllUrls: "All Sites Access",
+  permissionAllUrlsDesc: "Allow the extension to run on all websites to support more AI platforms.",
+  // Required permissions
+  permissionStorage: "Storage",
+  permissionStorageDesc: "Used to save extension settings, prompts, and conversation data.",
+  permissionNotifications: "Notifications",
+  permissionNotificationsDesc: "Used to send desktop notifications when AI responses are complete.",
+  permissionTabs: "Tabs",
+  permissionTabsDesc: "Used to detect current tab status and manage sessions.",
+  permissionDNR: "Network Request Rules",
+  permissionDNRDesc: "Used to modify request headers for features like image watermark removal.",
 
   // ======== General / Tab Settings Tab ========
   generalTab: "General",

@@ -428,10 +428,15 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId }) => {
       })
 
       if (!checkResult.hasPermission) {
-        if (window.confirm("需要权限访问 WebDAV 服务器。是否打开权限页面？")) {
+        if (
+          window.confirm(
+            t("webdavPermissionConfirm") ||
+              "需要权限访问 WebDAV 服务器。是否打开权限窗口进行授权？",
+          )
+        ) {
           await chrome.runtime.sendMessage({
-            type: "OPEN_PERMISSION_PAGE",
-            origin,
+            type: "REQUEST_PERMISSIONS",
+            origins: [origin],
           })
         }
         return
@@ -464,10 +469,15 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId }) => {
           origin,
         })
         if (!checkResult.hasPermission) {
-          if (window.confirm("需要权限访问 WebDAV 服务器。是否打开权限页面？")) {
+          if (
+            window.confirm(
+              t("webdavPermissionConfirm") ||
+                "需要权限访问 WebDAV 服务器。是否打开权限窗口进行授权？",
+            )
+          ) {
             await chrome.runtime.sendMessage({
-              type: "OPEN_PERMISSION_PAGE",
-              origin,
+              type: "REQUEST_PERMISSIONS",
+              origins: [origin],
             })
           }
           return
@@ -661,10 +671,15 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId }) => {
                         origin,
                       })
                       if (!checkResult.hasPermission) {
-                        if (window.confirm("需要权限访问 WebDAV 服务器。是否打开权限页面？")) {
+                        if (
+                          window.confirm(
+                            t("webdavPermissionConfirm") ||
+                              "需要权限访问 WebDAV 服务器。是否打开权限窗口进行授权？",
+                          )
+                        ) {
                           await chrome.runtime.sendMessage({
-                            type: "OPEN_PERMISSION_PAGE",
-                            origin,
+                            type: "REQUEST_PERMISSIONS",
+                            origins: [origin],
                           })
                         }
                         return

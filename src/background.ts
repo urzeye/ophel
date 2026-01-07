@@ -1,10 +1,12 @@
 import { APP_DISPLAY_NAME } from "~utils/config"
 import {
   MSG_CHECK_PERMISSION,
+  MSG_CHECK_PERMISSIONS,
   MSG_FOCUS_TAB,
   MSG_OPEN_OPTIONS_PAGE,
-  MSG_OPEN_PERMISSION_PAGE,
   MSG_PROXY_FETCH,
+  MSG_REQUEST_PERMISSIONS,
+  MSG_REVOKE_PERMISSIONS,
   MSG_SHOW_NOTIFICATION,
   MSG_WEBDAV_REQUEST,
   type ExtensionMessage,
@@ -219,17 +221,61 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
       })()
       break
 
-    case MSG_OPEN_PERMISSION_PAGE:
+    // 检查多个权限
+    case MSG_CHECK_PERMISSIONS:
       ;(async () => {
         try {
-          const { origin } = message as any
-          const url = chrome.runtime.getURL(
-            `tabs/permission.html?origin=${encodeURIComponent(origin)}`,
-          )
-          await chrome.tabs.create({ url })
+          const { origins, permissions } = message as any
+          const hasPermission = await chrome.permissions.contains({
+            origins,
+            permissions,
+          })
+          sendResponse({ success: true, hasPermission })
+        } catch (err) {
+          console.error("Permissions check failed:", err)
+          sendResponse({ success: false, error: (err as Error).message })
+        }
+      })()
+      break
+
+    // 撤销权限
+    case MSG_REVOKE_PERMISSIONS:
+      ;(async () => {
+        try {
+          const { origins, permissions } = message as any
+          const removed = await chrome.permissions.remove({
+            origins,
+            permissions,
+          })
+          sendResponse({ success: true, removed })
+        } catch (err) {
+          console.error("Permissions revoke failed:", err)
+          sendResponse({ success: false, error: (err as Error).message })
+        }
+      })()
+      break
+
+    // 请求权限相关：注意 chrome.permissions.request 不能在 Service Worker 中调用
+    // 这里如果收到请求，应该打开一个专门的权限申请页面作为弹窗
+    case MSG_REQUEST_PERMISSIONS:
+      ;(async () => {
+        try {
+          // 打开 options 页面并定位到权限部分
+          // 使用 query param ?page=permissions
+          const url = chrome.runtime.getURL("tabs/options.html?page=permissions&auto_request=true")
+
+          // 使用 popup 类型的窗口，体验更像一个独立的弹窗，而不是新标签页
+          await chrome.windows.create({
+            url,
+            type: "popup",
+            width: 600,
+            height: 700,
+            focused: true,
+          })
+
           sendResponse({ success: true })
         } catch (err) {
-          console.error("Open permission page failed:", err)
+          console.error("Request permissions flow failed:", err)
           sendResponse({ success: false, error: (err as Error).message })
         }
       })()

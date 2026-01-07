@@ -8,6 +8,7 @@ export const zhCN = {
   navAppearance: "外观主题",
   navPageContent: "页面与内容",
   navFeatures: "功能模块",
+  navPermissions: "权限管理",
   navBackup: "备份与同步",
   navAbout: "关于",
 
@@ -16,8 +17,35 @@ export const zhCN = {
   appearancePageDesc: "自定义扩展的视觉样式和主题",
   pageContentPageDesc: "调整页面布局和内容显示样式",
   featuresPageDesc: "配置扩展的各项功能模块",
+  permissionsPageDesc: "查看和管理扩展的权限。",
   backupPageDesc: "管理数据备份和云端同步",
   aboutPageDesc: "扩展信息和相关链接",
+
+  // ======== 权限管理页面 ========
+  optionalPermissions: "可选权限",
+  optionalPermissionsDesc: "这些权限可以按需授予或撤销",
+  requiredPermissions: "必需权限",
+  requiredPermissionsDesc: "这些权限是扩展正常运行所必需的，无法关闭",
+  permissionsSyncHint: "权限状态与浏览器同步，如在此页面外修改请点击刷新。",
+  refreshStatus: "刷新状态",
+  granted: "已授予",
+  notGranted: "未授予",
+  revoke: "撤销",
+  grant: "授予",
+  allowRecommended: "允许（推荐）",
+  required: "必需",
+  // 可选权限
+  permissionAllUrls: "所有网站访问权限",
+  permissionAllUrlsDesc: "允许扩展在所有网站上运行，用于支持更多 AI 平台。",
+  // 必需权限
+  permissionStorage: "存储",
+  permissionStorageDesc: "用于保存扩展设置、提示词和会话数据。",
+  permissionNotifications: "通知",
+  permissionNotificationsDesc: "用于在 AI 回复完成时发送桌面通知提醒。",
+  permissionTabs: "标签页",
+  permissionTabsDesc: "用于检测当前标签页状态和管理会话。",
+  permissionDNR: "网络请求规则",
+  permissionDNRDesc: "用于修改请求头以移除图片水印等功能。",
 
   // ======== 通用 / 标签页 Tab ========
   generalTab: "通用",

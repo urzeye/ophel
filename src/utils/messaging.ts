@@ -58,15 +58,40 @@ export interface CheckPermissionMessage extends CheckPermissionPayload {
   type: typeof MSG_CHECK_PERMISSION
 }
 
-// 打开权限申请页
-export const MSG_OPEN_PERMISSION_PAGE = "OPEN_PERMISSION_PAGE"
+// 检查多个权限（用于权限管理页面）
+export const MSG_CHECK_PERMISSIONS = "CHECK_PERMISSIONS"
 
-export interface OpenPermissionPagePayload {
-  origin: string
+export interface CheckPermissionsPayload {
+  origins?: string[]
+  permissions?: string[]
 }
 
-export interface OpenPermissionPageMessage extends OpenPermissionPagePayload {
-  type: typeof MSG_OPEN_PERMISSION_PAGE
+export interface CheckPermissionsMessage extends CheckPermissionsPayload {
+  type: typeof MSG_CHECK_PERMISSIONS
+}
+
+// 请求权限
+export const MSG_REQUEST_PERMISSIONS = "REQUEST_PERMISSIONS"
+
+export interface RequestPermissionsPayload {
+  origins?: string[]
+  permissions?: string[]
+}
+
+export interface RequestPermissionsMessage extends RequestPermissionsPayload {
+  type: typeof MSG_REQUEST_PERMISSIONS
+}
+
+// 撤销权限
+export const MSG_REVOKE_PERMISSIONS = "REVOKE_PERMISSIONS"
+
+export interface RevokePermissionsPayload {
+  origins?: string[]
+  permissions?: string[]
+}
+
+export interface RevokePermissionsMessage extends RevokePermissionsPayload {
+  type: typeof MSG_REVOKE_PERMISSIONS
 }
 
 // 打开 Options 页面
@@ -82,7 +107,9 @@ export type ExtensionMessage =
   | ProxyFetchMessage
   | WebDAVRequestMessage
   | CheckPermissionMessage
-  | OpenPermissionPageMessage
+  | CheckPermissionsMessage
+  | RequestPermissionsMessage
+  | RevokePermissionsMessage
   | OpenOptionsPageMessage
 
 /**

@@ -7,8 +7,8 @@ import React from "react"
 import { Switch } from "~components/ui"
 
 export interface SettingRowProps {
-  /** 标签文本 */
-  label: string
+  /** 标签文本或元素 */
+  label: React.ReactNode
   /** 描述文本 */
   description?: string
   /** 右侧控件 */

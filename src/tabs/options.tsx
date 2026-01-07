@@ -15,6 +15,7 @@ import FeaturesPage from "./options/pages/FeaturesPage"
 // 页面组件
 import GeneralPage from "./options/pages/GeneralPage"
 import PageContentPage from "./options/pages/PageContentPage"
+import PermissionsPage from "./options/pages/PermissionsPage"
 // 样式
 import "./options.css"
 
@@ -25,11 +26,23 @@ const NAV_ITEMS = [
   { id: "pageContent", icon: "📄", labelKey: "navPageContent", label: "页面与内容" },
   { id: "features", icon: "📑", labelKey: "navFeatures", label: "功能模块" },
   { id: "backup", icon: "☁️", labelKey: "navBackup", label: "备份与同步" },
+  { id: "permissions", icon: "🔐", labelKey: "navPermissions", label: "权限管理" },
   { id: "about", icon: "ℹ️", labelKey: "navAbout", label: "关于" },
 ]
 
 const OptionsPage = () => {
   const [activePage, setActivePage] = useState("general")
+
+  // 初始化时检查 URL search params
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search)
+      const page = params.get("page")
+      if (page && NAV_ITEMS.some((item) => item.id === page)) {
+        setActivePage(page)
+      }
+    }
+  }, [])
   const { settings } = useSettingsStore()
   const isHydrated = useSettingsHydrated()
 
@@ -69,6 +82,8 @@ const OptionsPage = () => {
         return <PageContentPage siteId={siteId} />
       case "features":
         return <FeaturesPage siteId={siteId} />
+      case "permissions":
+        return <PermissionsPage siteId={siteId} />
       case "backup":
         return <BackupPage siteId={siteId} />
       case "about":
