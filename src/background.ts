@@ -2,6 +2,7 @@ import { APP_DISPLAY_NAME } from "~utils/config"
 import {
   MSG_CHECK_PERMISSION,
   MSG_FOCUS_TAB,
+  MSG_OPEN_OPTIONS_PAGE,
   MSG_OPEN_PERMISSION_PAGE,
   MSG_PROXY_FETCH,
   MSG_SHOW_NOTIFICATION,
@@ -229,6 +230,41 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           sendResponse({ success: true })
         } catch (err) {
           console.error("Open permission page failed:", err)
+          sendResponse({ success: false, error: (err as Error).message })
+        }
+      })()
+      break
+
+    case MSG_OPEN_OPTIONS_PAGE:
+      ;(async () => {
+        try {
+          const optionsUrl = chrome.runtime.getURL("tabs/options.html")
+
+          // 检查是否已有 options 标签页打开
+          const allTabs = await chrome.tabs.query({})
+          for (const tab of allTabs) {
+            if (tab.url?.startsWith(optionsUrl)) {
+              // 已有标签页，聚焦到该标签页
+              if (tab.id) {
+                await chrome.tabs.update(tab.id, { active: true })
+              }
+              // 聚焦到该窗口
+              if (tab.windowId) {
+                await chrome.windows.update(tab.windowId, { focused: true })
+              }
+              sendResponse({ success: true, alreadyOpen: true })
+              return
+            }
+          }
+
+          // 没有找到，在当前窗口创建新标签页
+          await chrome.tabs.create({
+            url: optionsUrl,
+            active: true,
+          })
+          sendResponse({ success: true })
+        } catch (err) {
+          console.error("Open options page failed:", err)
           sendResponse({ success: false, error: (err as Error).message })
         }
       })()

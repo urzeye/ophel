@@ -1,0 +1,32 @@
+/**
+ * Options Page 样式入口
+ * 导入所有需要的样式
+ */
+@import url("../styles/theme-variables.css");
+@import url("../styles/settings.css");
+
+/* 页面基础样式 */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+}
+
+/* 确保输入框可选中文本 */
+input,
+textarea,
+select {
+  user-select: text !important;
+  cursor: text !important;
+}
+
+button,
+[role="button"] {
+  cursor: pointer !important;
+}

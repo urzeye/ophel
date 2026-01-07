@@ -2,6 +2,94 @@ export const en = {
   panelTitle: "Gemini Helper",
   tabPrompts: "Prompts",
   tabSettings: "Settings",
+
+  // ======== Options Page Navigation ========
+  navGeneral: "General",
+  navAppearance: "Appearance",
+  navPageContent: "Page & Content",
+  navFeatures: "Features",
+  navBackup: "Backup & Sync",
+  navAbout: "About",
+
+  // ======== Options Page Titles & Descriptions ========
+  generalPageDesc: "Configure extension behavior and interface",
+  appearancePageDesc: "Customize visual styles and themes",
+  pageContentPageDesc: "Adjust page layout and content display",
+  featuresPageDesc: "Configure extension feature modules",
+  backupPageDesc: "Manage data backup and cloud sync",
+  aboutPageDesc: "Extension information and links",
+
+  // ======== General / Tab Settings Tab ========
+  generalTab: "General",
+  tabSettingsTab: "Tab Settings",
+  generalSettings: "General Settings",
+
+  // ======== Appearance Page ========
+  themePresetsTab: "Theme Presets",
+  customStylesTab: "Custom Styles",
+  pleaseEnterStyleName: "Please enter style name",
+  enterStyleName: "Enter style name",
+  lightMode: "Light Mode",
+  darkMode: "Dark Mode",
+  code: "Code",
+  create: "Create",
+  unnamedStyle: "Unnamed Style",
+
+  // ======== Page & Content ========
+  layoutTab: "Page Layout",
+  contentStyleTab: "Content Style",
+  pageWidthSettings: "Page Width",
+  enablePageWidthDesc: "Adjust the maximum width of the chat page",
+  userQueryWidthSettings: "User Query Width",
+  scrollSettings: "Scroll Settings",
+  contentProcessing: "Content Processing",
+  contentProcessingDesc: "Configure how AI responses are processed",
+  interactionEnhance: "Interaction Enhancements",
+  interactionEnhanceDesc: "Enhance formula and table interactions",
+  exportSettings: "Export Settings",
+
+  // ======== Features ========
+  outlineSettingsDesc: "Configure outline generation and follow behavior",
+  outlineUpdateIntervalDesc: "Auto-update interval for outline (seconds)",
+  conversationsSettingsDesc: "Configure conversation sync and display",
+  readingHistoryDesc: "Track and restore conversation reading positions",
+  day: "day",
+  days: "days",
+  forever: "Forever",
+
+  // ======== Backup Page ========
+  localBackupTab: "Local Backup",
+  webdavTab: "WebDAV Sync",
+  localBackupDesc: "Export data as JSON file to local",
+  webdavServerDesc: "Configure WebDAV server for cloud backup",
+  backupManagementDesc: "Test connection, upload backup or restore from cloud",
+  clearAllData: "Clear All Data",
+  clearAllDataConfirm: "Are you sure you want to clear all data? This action is irreversible!",
+  allDataCleared: "All data cleared, refreshing page...",
+  clearError: "Clear failed",
+  webdavBackupList: "WebDAV Backup List",
+  noBackupsFound: "No backup files found",
+  loading: "Loading...",
+
+  // ======== About Page ========
+  version: "Version",
+  aboutDescription:
+    "Ophel is a browser extension that enhances Gemini with features like conversation management, prompt library, outline navigation, and theme customization.",
+  reportIssue: "Report Issue",
+  changelog: "Changelog",
+  techStack: "Tech Stack",
+  privacyStatement: "Privacy Statement",
+  privacyText:
+    "All data in this extension is stored locally in your browser and is not uploaded to any remote server. WebDAV sync is handled by your own configured server.",
+  license: "License",
+
+  // ======== Common Buttons/Labels ========
+  tabBehaviorTitle: "Tab Behavior",
+  notificationSettings: "Notification Settings",
+  privacyModeTitle: "Privacy Mode",
+  collapsedButtonsOrderTitle: "Quick Buttons",
+
+  // ======== Continue existing translations ========
   searchPlaceholder: "Search prompts...",
   addPrompt: "Add New Prompt",
   allCategory: "All",

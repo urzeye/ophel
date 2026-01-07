@@ -2,6 +2,95 @@ export const zhCN = {
   panelTitle: "Gemini 助手",
   tabPrompts: "提示词",
   tabSettings: "设置",
+
+  // ======== Options 页面导航 ========
+  navGeneral: "基本设置",
+  navAppearance: "外观主题",
+  navPageContent: "页面与内容",
+  navFeatures: "功能模块",
+  navBackup: "备份与同步",
+  navAbout: "关于",
+
+  // ======== Options 页面标题与描述 ========
+  generalPageDesc: "配置扩展的基本行为和界面",
+  appearancePageDesc: "自定义扩展的视觉样式和主题",
+  pageContentPageDesc: "调整页面布局和内容显示样式",
+  featuresPageDesc: "配置扩展的各项功能模块",
+  backupPageDesc: "管理数据备份和云端同步",
+  aboutPageDesc: "扩展信息和相关链接",
+
+  // ======== 通用 / 标签页 Tab ========
+  generalTab: "通用",
+  tabSettingsTab: "标签页",
+  generalSettings: "通用设置",
+
+  // ======== 外观页面 ========
+  themePresetsTab: "主题预置",
+  customStylesTab: "自定义样式",
+  pleaseEnterStyleName: "请输入样式名称",
+  enterStyleName: "输入样式名称",
+  lightMode: "浅色模式",
+  darkMode: "深色模式",
+  code: "代码",
+  create: "创建",
+  unnamedStyle: "未命名样式",
+
+  // ======== 页面与内容 ========
+  layoutTab: "页面布局",
+  contentStyleTab: "内容样式",
+  pageWidthSettings: "页面宽度",
+  enablePageWidthDesc: "调整聊天页面的最大宽度",
+  userQueryWidthSettings: "用户问题宽度",
+  scrollSettings: "滚动设置",
+  contentProcessing: "内容处理",
+  contentProcessingDesc: "配置 AI 回复内容的处理方式",
+  interactionEnhance: "交互增强",
+  interactionEnhanceDesc: "增强公式和表格的交互功能",
+  exportSettings: "导出设置",
+
+  // ======== 功能模块 ========
+  outlineSettingsDesc: "配置大纲生成和跟随行为",
+  outlineUpdateIntervalDesc: "大纲自动更新的时间间隔（秒）",
+  conversationsSettingsDesc: "配置会话同步和显示行为",
+  readingHistoryDesc: "记录和恢复会话阅读位置",
+  day: "天",
+  days: "天",
+  forever: "永久",
+
+  // ======== 备份页面 ========
+  localBackupTab: "本地备份",
+  webdavTab: "WebDAV 同步",
+  localBackupDesc: "将数据导出为 JSON 文件保存到本地",
+  webdavServerDesc: "配置 WebDAV 服务器用于云端备份",
+  backupManagementDesc: "测试连接、上传备份或从云端恢复",
+  clearAllData: "清除全部数据",
+  clearAllDataConfirm:
+    "确定要清除所有数据吗？此操作不可逆，所有设置、提示词、会话等数据都将被删除！",
+  allDataCleared: "所有数据已清除，即将刷新页面...",
+  clearError: "清除失败",
+  webdavBackupList: "WebDAV 备份列表",
+  noBackupsFound: "未找到备份文件",
+  loading: "加载中...",
+
+  // ======== 关于页面 ========
+  version: "版本",
+  aboutDescription:
+    "Ophel 是一个浏览器扩展，为 Gemini 提供增强功能，包括会话管理、提示词库、大纲导航、主题定制等。",
+  reportIssue: "报告问题",
+  changelog: "更新日志",
+  techStack: "技术栈",
+  privacyStatement: "隐私声明",
+  privacyText:
+    "本扩展的所有数据均存储在您的浏览器本地，不会上传到任何远程服务器。WebDAV 同步功能由您自行配置的服务器处理，扩展不会收集或存储您的任何个人信息。",
+  license: "开源协议",
+
+  // ======== 通用按钮/标签 ========
+  tabBehaviorTitle: "标签页行为",
+  notificationSettings: "通知设置",
+  privacyModeTitle: "隐私模式",
+  collapsedButtonsOrderTitle: "快捷按钮组",
+
+  // ======== 继续原有翻译 ========
   searchPlaceholder: "搜索提示词...",
   addPrompt: "添加提示词",
   allCategory: "全部",

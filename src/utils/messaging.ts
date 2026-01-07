@@ -69,6 +69,13 @@ export interface OpenPermissionPageMessage extends OpenPermissionPagePayload {
   type: typeof MSG_OPEN_PERMISSION_PAGE
 }
 
+// 打开 Options 页面
+export const MSG_OPEN_OPTIONS_PAGE = "OPEN_OPTIONS_PAGE"
+
+export interface OpenOptionsPageMessage {
+  type: typeof MSG_OPEN_OPTIONS_PAGE
+}
+
 export type ExtensionMessage =
   | ShowNotificationMessage
   | FocusTabMessage
@@ -76,6 +83,7 @@ export type ExtensionMessage =
   | WebDAVRequestMessage
   | CheckPermissionMessage
   | OpenPermissionPageMessage
+  | OpenOptionsPageMessage
 
 /**
  * Send a message to the background service worker with type safety

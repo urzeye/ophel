@@ -1,0 +1,446 @@
+/**
+ * 设置页面 (Options Page) 专用样式
+ * 
+ * 此文件用于独立的 Options 页面，采用侧边栏导航 + 顶部标签页布局
+ */
+
+/* ==================== 布局结构 ==================== */
+
+.settings-layout {
+  display: flex;
+  height: 100vh;
+  background: var(--gh-bg, #f9fafb);
+  color: var(--gh-text, #374151);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+}
+
+/* 侧边栏 */
+.settings-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--gh-bg, #ffffff);
+  border-right: 1px solid var(--gh-border, #e5e7eb);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.settings-sidebar-header {
+  padding: 20px 16px;
+  border-bottom: 1px solid var(--gh-border, #e5e7eb);
+}
+
+.settings-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--gh-text, #1f2937);
+}
+
+.settings-sidebar-logo img {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+.settings-sidebar-nav {
+  flex: 1;
+  padding: 12px 8px;
+}
+
+.settings-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 14px;
+  color: var(--gh-text-secondary, #6b7280);
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+
+.settings-nav-item:hover {
+  background: var(--gh-hover, #f3f4f6);
+  color: var(--gh-text, #374151);
+}
+
+.settings-nav-item.active {
+  background: var(--gh-active-bg, #e0e7ff);
+  color: var(--gh-primary, #4285f4);
+  font-weight: 500;
+}
+
+.settings-nav-item-icon {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+}
+
+/* 内容区 */
+.settings-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 32px;
+}
+
+.settings-page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--gh-text, #1f2937);
+  margin-bottom: 8px;
+}
+
+.settings-page-desc {
+  font-size: 14px;
+  color: var(--gh-text-secondary, #6b7280);
+  margin-bottom: 24px;
+}
+
+/* ==================== 顶部标签组 ==================== */
+
+.settings-tab-group {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--gh-bg-secondary, #f3f4f6);
+  border-radius: 10px;
+  margin-bottom: 24px;
+}
+
+.settings-tab-item {
+  flex: 1;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+  background: transparent;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-tab-item:hover {
+  color: var(--gh-text, #374151);
+}
+
+.settings-tab-item.active {
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text, #374151);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ==================== 设置卡片 ==================== */
+
+.settings-card {
+  background: var(--gh-card-bg, #ffffff);
+  border: 1px solid var(--gh-card-border, #e5e7eb);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.settings-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gh-text, #374151);
+  margin-bottom: 4px;
+}
+
+.settings-card-desc {
+  font-size: 13px;
+  color: var(--gh-text-secondary, #6b7280);
+  margin-bottom: 16px;
+}
+
+/* ==================== 设置行 ==================== */
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--gh-border, #f3f4f6);
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.settings-row:first-child {
+  padding-top: 0;
+}
+
+.settings-row-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-row-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gh-text, #374151);
+  margin-bottom: 2px;
+}
+
+.settings-row-desc {
+  font-size: 12px;
+  color: var(--gh-text-secondary, #9ca3af);
+}
+
+.settings-row-control {
+  flex-shrink: 0;
+  margin-left: 16px;
+}
+
+.settings-row.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ==================== 表单控件 ==================== */
+
+.settings-select {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--gh-input-border, #d1d5db);
+  font-size: 13px;
+  background: var(--gh-input-bg, #ffffff);
+  color: var(--gh-text, #374151);
+  min-width: 120px;
+  cursor: pointer;
+}
+
+.settings-select:focus {
+  outline: none;
+  border-color: var(--gh-primary, #4285f4);
+}
+
+.settings-input {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--gh-input-border, #d1d5db);
+  font-size: 13px;
+  background: var(--gh-input-bg, #ffffff);
+  color: var(--gh-text, #374151);
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: var(--gh-primary, #4285f4);
+}
+
+.settings-textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--gh-input-border, #d1d5db);
+  font-size: 13px;
+  font-family: "Menlo", "Monaco", "Consolas", monospace;
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text, #374151);
+  resize: vertical;
+  min-height: 150px;
+}
+
+.settings-textarea:focus {
+  outline: none;
+  border-color: var(--gh-primary, #4285f4);
+}
+
+/* ==================== 按钮 ==================== */
+
+.settings-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+}
+
+.settings-btn-primary {
+  background: var(--gh-primary, #4285f4);
+  color: #ffffff;
+}
+
+.settings-btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.settings-btn-secondary {
+  background: var(--gh-bg, #ffffff);
+  border: 1px solid var(--gh-border, #d1d5db);
+  color: var(--gh-text, #374151);
+}
+
+.settings-btn-secondary:hover {
+  background: var(--gh-hover, #f3f4f6);
+}
+
+.settings-btn-danger {
+  background: var(--gh-text-danger, #ef4444);
+  color: #ffffff;
+}
+
+.settings-btn-danger:hover {
+  filter: brightness(1.1);
+}
+
+.settings-btn-success {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.settings-btn-success:hover {
+  filter: brightness(1.1);
+}
+
+/* ==================== 主题卡片网格 ==================== */
+
+.settings-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.settings-theme-card {
+  padding: 12px;
+  border-radius: 10px;
+  border: 2px solid var(--gh-border, #e5e7eb);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.settings-theme-card:hover {
+  border-color: var(--gh-primary, #4285f4);
+}
+
+.settings-theme-card.active {
+  border-color: var(--gh-primary, #4285f4);
+  background: rgba(66, 133, 244, 0.05);
+}
+
+.settings-theme-preview {
+  height: 60px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.settings-theme-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gh-text, #374151);
+}
+
+/* ==================== 关于页面 ==================== */
+
+.settings-about-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.settings-about-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+}
+
+.settings-about-name {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--gh-text, #1f2937);
+}
+
+.settings-about-version {
+  font-size: 14px;
+  color: var(--gh-text-secondary, #6b7280);
+  margin-top: 4px;
+}
+
+.settings-about-links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.settings-about-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--gh-primary, #4285f4);
+  background: var(--gh-bg-secondary, #f3f4f6);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.settings-about-link:hover {
+  background: var(--gh-hover, #e5e7eb);
+}
+
+/* ==================== 可排序列表 ==================== */
+
+.settings-sortable-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+
+.settings-sortable-item-icon {
+  font-size: 18px;
+}
+
+.settings-sortable-item-label {
+  flex: 1;
+  font-size: 14px;
+  color: var(--gh-text, #374151);
+}
+
+.settings-sortable-item-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.settings-sortable-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text-secondary, #9ca3af);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.settings-sortable-btn:hover {
+  color: var(--gh-text, #374151);
+  background: var(--gh-hover, #e5e7eb);
+}
+
+.settings-sortable-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}

@@ -18,6 +18,7 @@ interface SettingsState {
   // 状态
   settings: Settings
   _hasHydrated: boolean
+  _syncVersion: number // 跨上下文同步版本号，每次同步时递增，用于强制 React 重渲染
 
   // Actions
   setSettings: (settings: Partial<Settings>) => void
@@ -39,6 +40,7 @@ export const useSettingsStore = create<SettingsState>()(
     (set, get) => ({
       settings: DEFAULT_SETTINGS,
       _hasHydrated: false,
+      _syncVersion: 0,
 
       /**
        * 合并更新 settings
@@ -152,3 +154,54 @@ export const setSettingsState = (settings: Partial<Settings>) =>
  */
 export const subscribeSettings = (listener: (settings: Settings) => void) =>
   useSettingsStore.subscribe((state) => listener(state.settings))
+
+// ==================== 跨上下文实时同步 ====================
+
+/**
+ * 监听 chrome.storage.onChanged 事件
+ * 当其他上下文（如 Options 页面）更新 settings 时，自动同步到当前 store
+ * 实现设置的实时生效
+ */
+if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== "local") return
+    if (!changes.settings) return
+
+    const newValue = changes.settings.newValue
+    if (!newValue) return
+
+    try {
+      // 解析 Zustand persist 格式的数据
+      const parsed = typeof newValue === "string" ? JSON.parse(newValue) : newValue
+      const newSettings = parsed?.state?.settings
+
+      if (newSettings) {
+        const currentState = useSettingsStore.getState()
+        const currentSettings = currentState.settings
+        // 仅当设置确实发生变化时更新（避免循环更新）
+        if (JSON.stringify(currentSettings) !== JSON.stringify(newSettings)) {
+          // ⭐ 同时更新 settings 和递增 _syncVersion
+          // _syncVersion 变化会强制触发所有订阅它的 React 组件重渲染
+          useSettingsStore.setState({
+            settings: newSettings,
+            _syncVersion: currentState._syncVersion + 1,
+          })
+
+          // 同步更新 i18n 模块的语言设置
+          if (newSettings.language && newSettings.language !== currentSettings.language) {
+            try {
+              const { setLanguage } = require("~utils/i18n")
+              setLanguage(newSettings.language)
+            } catch (e) {
+              // ignore
+            }
+          }
+
+          console.log("[SettingsStore] 跨上下文同步完成, version:", currentState._syncVersion + 1)
+        }
+      }
+    } catch (err) {
+      console.error("[SettingsStore] 解析跨上下文设置变更失败:", err)
+    }
+  })
+}

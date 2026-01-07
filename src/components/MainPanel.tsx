@@ -19,7 +19,8 @@ import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
 import { ConversationsTab } from "./ConversationsTab"
 import { OutlineTab } from "./OutlineTab"
 import { PromptsTab } from "./PromptsTab"
-import { SettingsTab } from "./SettingsTab"
+
+// SettingsTab 已移至独立的 Options 页面
 
 interface MainPanelProps {
   onClose: () => void
@@ -325,17 +326,15 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             +
           </button>
 
-          {/* 设置按钮 */}
+          {/* 设置按钮 - 打开独立的 Options 页面 */}
           <button
-            onClick={() =>
-              setActiveTab(activeTab === TAB_IDS.SETTINGS ? TAB_IDS.PROMPTS : TAB_IDS.SETTINGS)
-            }
+            onClick={() => {
+              // 通过 Background Script 打开独立的 Options 页面
+              chrome.runtime.sendMessage({ type: "OPEN_OPTIONS_PAGE" })
+            }}
             title={t("tabSettings")}
             style={{
-              background:
-                activeTab === "settings"
-                  ? "var(--gh-glass-bg-hover, rgba(255,255,255,0.4))"
-                  : "var(--gh-glass-bg, rgba(255,255,255,0.2))",
+              background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
               border: "none",
               color: "var(--gh-glass-text, white)",
               width: "28px",
@@ -374,9 +373,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                   ? t("refreshPrompts")
                   : activeTab === TAB_IDS.CONVERSATIONS
                     ? t("refreshConversations")
-                    : activeTab === TAB_IDS.SETTINGS
-                      ? t("refreshSettings")
-                      : t("refresh")
+                    : t("refresh")
             }
             style={{
               background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
@@ -487,11 +484,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         {activeTab === TAB_IDS.OUTLINE && (
           <OutlineTab manager={outlineManager} onJumpBefore={saveAnchor} />
         )}
-        {activeTab === TAB_IDS.SETTINGS && (
-          <div style={{ padding: "0" }}>
-            <SettingsTab siteId={adapter?.getSiteId()} />
-          </div>
-        )}
+        {/* Settings 已移至独立的 Options 页面窗口 */}
       </div>
 
       {/* Footer - 底部固定按钮 */}
