@@ -28,6 +28,8 @@ export const zhCN = {
   requiredPermissionsDesc: "这些权限是扩展正常运行所必需的，无法关闭",
   permissionsSyncHint: "权限状态与浏览器同步，如在此页面外修改请点击刷新。",
   refreshStatus: "刷新状态",
+  refreshing: "刷新中...",
+  permissionsRefreshed: "权限状态已刷新",
   granted: "已授予",
   notGranted: "未授予",
   revoke: "撤销",
@@ -37,8 +39,9 @@ export const zhCN = {
   // 可选权限
   // permissionAllUrls: "所有网站访问权限", // Deprecated
   // permissionAllUrlsDesc: "允许扩展在所有网站上运行，用于支持更多 AI 平台。", // Deprecated
-  permissionWebdavAccess: "WebDAV 访问权限",
-  permissionWebdavAccessDesc: "允许连接 WebDAV 服务器（如坚果云），用于数据的云端备份和同步。",
+  permissionWebdavAccess: "高级功能访问权限",
+  permissionWebdavAccessDesc:
+    "允许连接所有网站。用于 WebDAV 云端备份同步以及移除 AI 图片水印等高级功能。",
 
   // 必需权限
   permissionStorage: "存储",
@@ -603,13 +606,16 @@ export const zhCN = {
 
   // ======== 权限请求弹窗 ========
   permAllUrlsTitle: "需要所有网站访问权限",
-  permAllUrlsDesc: "此权限用于 WebDAV 云端备份和同步功能，以及支持更多 AI 平台的集成。",
+  permAllUrlsDesc: "此权限用于 WebDAV 云端备份和同步功能，以及移除 AI 生成图片的水印。",
+  permWebdavTitle: "需要网络访问权限",
+  permWebdavDesc: "WebDAV 同步需要访问您配置的服务器。授权后可进行云端备份和恢复。",
   permTabsTitle: "需要标签页权限",
   permTabsDesc: "标签页重命名和隐私模式需要此权限，用于读取和修改标签页标题。",
   permNotifyTitle: "需要通知权限",
   permNotifyDesc: "启用桌面通知后，当 AI 生成完成时会收到提醒。",
   permDNRTitle: "需要网络请求规则权限",
   permDNRDesc: "此权限用于移除 AI 生成图片的水印等功能。",
+  permissionRequestToast: "请在弹出的窗口中授予权限",
   permissionDialogAllow: "允许并继续",
   permissionGranted: "授权成功",
   permissionDenied: "授权已取消",

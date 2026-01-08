@@ -6,6 +6,8 @@ import React, { useEffect, useState } from "react"
 
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
+import { MSG_CHECK_PERMISSIONS, MSG_REQUEST_PERMISSIONS, sendToBackground } from "~utils/messaging"
+import { showToast } from "~utils/toast"
 
 import { SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
 
@@ -308,14 +310,30 @@ const PageContentPage: React.FC<PageContentPageProps> = ({ siteId }) => {
             <ToggleRow
               label={t("watermarkRemovalLabel") || "图片水印移除"}
               description={t("watermarkRemovalDesc") || "自动移除 AI 生成图片的水印"}
-              checked={settings.content?.watermarkRemoval ?? true}
-              onChange={() =>
-                updateNestedSetting(
-                  "content",
-                  "watermarkRemoval",
-                  !settings.content?.watermarkRemoval,
-                )
-              }
+              checked={settings.content?.watermarkRemoval ?? false}
+              onChange={async () => {
+                const checked = settings.content?.watermarkRemoval
+                if (!checked) {
+                  // 1. 检查是否已有权限
+                  const response = await sendToBackground({
+                    type: MSG_CHECK_PERMISSIONS,
+                    origins: ["<all_urls>"],
+                  })
+
+                  if (response.success && response.hasPermission) {
+                    updateNestedSetting("content", "watermarkRemoval", true)
+                  } else {
+                    // 2. 请求权限 (打开独立窗口)
+                    await sendToBackground({
+                      type: MSG_REQUEST_PERMISSIONS,
+                      permType: "allUrls",
+                    })
+                    showToast(t("permissionRequestToast") || "请在弹出的窗口中授予权限", 3000)
+                  }
+                } else {
+                  updateNestedSetting("content", "watermarkRemoval", false)
+                }
+              }}
             />
           </SettingCard>
 

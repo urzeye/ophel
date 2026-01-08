@@ -11,6 +11,7 @@ import {
   MSG_REVOKE_PERMISSIONS,
   sendToBackground,
 } from "~utils/messaging"
+import { showToast } from "~utils/toast"
 
 import { SettingCard, SettingRow } from "../components"
 
@@ -28,28 +29,12 @@ const REQUIRED_PERMISSIONS = [
 // 可选权限（非主机权限）
 const OPTIONAL_PERMISSIONS = [
   {
-    id: "tabs",
-    name: "标签页",
-    nameKey: "permissionTabs",
-    description: "permissionTabsDesc",
-    icon: "📑",
-    permissions: ["tabs"],
-  },
-  {
     id: "notifications",
     name: "通知",
     nameKey: "permissionNotifications",
     description: "permissionNotificationsDesc",
     icon: "🔔",
     permissions: ["notifications"],
-  },
-  {
-    id: "watermark",
-    name: "网络请求规则",
-    nameKey: "permissionDNR",
-    description: "permissionDNRDesc",
-    icon: "🌐",
-    permissions: ["declarativeNetRequest"],
   },
 ]
 
@@ -183,6 +168,8 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
           origins: perm.origins,
           permissions: perm.permissions,
         })
+        // 延迟后自动刷新权限状态（给用户操作弹窗的时间）
+        setTimeout(() => checkOptionalPermissions(), 2000)
       }
     } catch (e) {
       console.error(`请求权限 ${perm.id} 失败:`, e)
@@ -245,14 +232,15 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
           </span>
           <button
             className="settings-btn settings-btn-secondary"
-            onClick={(e) => {
+            onClick={async (e) => {
               e.preventDefault()
               e.stopPropagation()
-              checkOptionalPermissions()
+              await checkOptionalPermissions()
+              showToast(t("permissionsRefreshed") || "权限状态已刷新", 1500)
             }}
             disabled={loading}
             style={{ fontSize: "12px", padding: "4px 12px", flexShrink: 0 }}>
-            {t("refreshStatus") || "刷新状态"}
+            {loading ? t("refreshing") || "刷新中..." : t("refreshStatus") || "刷新状态"}
           </button>
         </div>
 

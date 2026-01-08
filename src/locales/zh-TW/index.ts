@@ -472,6 +472,8 @@ export const zhTW = {
   optionalPermissionsDesc: "這些權限可以按需授予或撤銷",
   permissionsSyncHint: "權限狀態與瀏覽器同步，如在此頁面外修改請點擊刷新。",
   refreshStatus: "刷新狀態",
+  refreshing: "刷新中...",
+  permissionsRefreshed: "權限狀態已刷新",
   granted: "已授予",
   notGranted: "未授予",
   revoke: "撤銷",
@@ -480,8 +482,9 @@ export const zhTW = {
   required: "必需",
 
   // 可選權限
-  permissionWebdavAccess: "WebDAV 存取權限",
-  permissionWebdavAccessDesc: "允許連接 WebDAV 伺服器（如堅果雲），用於資料的雲端備份和同步。",
+  permissionWebdavAccess: "進階功能存取權限",
+  permissionWebdavAccessDesc:
+    "允許連接所有網站。用於 WebDAV 雲端備份同步以及移除 AI 圖片浮水印等進階功能。",
 
   // 必需權限
   permissionStorage: "儲存",
@@ -495,13 +498,16 @@ export const zhTW = {
 
   // ======== 權限請求彈窗 ========
   permAllUrlsTitle: "需要所有網站存取權限",
-  permAllUrlsDesc: "此權限用於 WebDAV 雲端備份和同步，以及支援更多 AI 平台的整合。",
+  permAllUrlsDesc: "此權限用於 WebDAV 雲端備份和同步，以及移除 AI 生成圖片的浮水印。",
+  permWebdavTitle: "需要網路存取權限",
+  permWebdavDesc: "WebDAV 同步需要存取您設定的伺服器。授權後可進行雲端備份和回復。",
   permTabsTitle: "需要標籤頁權限",
   permTabsDesc: "標籤頁重新命名和隱私模式需要此權限，用於讀取和修改標籤頁標題。",
   permNotifyTitle: "需要通知權限",
   permNotifyDesc: "啟用桌面通知後，當 AI 生成完成時會收到提醒。",
   permDNRTitle: "需要網路請求規則權限",
   permDNRDesc: "用於移除 AI 生成圖片的浮水印。",
+  permissionRequestToast: "請在彈出的視窗中授予權限",
   permissionDialogAllow: "允許並繼續",
   permissionGranted: "授權成功",
   permissionDenied: "授權已取消",

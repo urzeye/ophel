@@ -29,6 +29,8 @@ export const en = {
   permissionsSyncHint:
     "Permission status syncs with browser. Click refresh if modified outside this page.",
   refreshStatus: "Refresh Status",
+  refreshing: "Refreshing...",
+  permissionsRefreshed: "Permission status refreshed",
   granted: "Granted",
   notGranted: "Not Granted",
   revoke: "Revoke",
@@ -38,9 +40,9 @@ export const en = {
   // Optional permissions
   // permissionAllUrls: "All Sites Access", // Deprecated
   // permissionAllUrlsDesc: "Allow the extension to run on all websites to support more AI platforms.", // Deprecated
-  permissionWebdavAccess: "WebDAV Access",
+  permissionWebdavAccess: "Advanced Features Access",
   permissionWebdavAccessDesc:
-    "Allows connecting to WebDAV servers (e.g. Nutstore) for cloud backup and synchronization.",
+    "Access to all websites. Required for WebDAV sync and AI image watermark removal.",
 
   // Required permissions
   permissionStorage: "Storage",
@@ -581,13 +583,17 @@ export const en = {
 
   // ======== Permission Request Dialog ========
   permAllUrlsTitle: "All Sites Access Required",
-  permAllUrlsDesc: "Required for WebDAV sync and supporting more AI platforms.",
+  permAllUrlsDesc: "Required for WebDAV sync and removing AI image watermarks.",
+  permWebdavTitle: "Network Access Required",
+  permWebdavDesc:
+    "WebDAV sync needs access to your server. Backup and restore will be available after authorization.",
   permTabsTitle: "Tab Permission Required",
   permTabsDesc: "Required for tab rename and privacy mode features.",
   permNotifyTitle: "Notification Permission Required",
   permNotifyDesc: "Send desktop notifications when AI generation completes.",
   permDNRTitle: "Network Request Rules Permission Required",
   permDNRDesc: "Required for removing AI image watermarks.",
+  permissionRequestToast: "Please grant permission in the popup window",
   permissionDialogAllow: "Allow & Continue",
   permissionGranted: "Permission Granted",
   permissionDenied: "Permission Denied",

@@ -11,6 +11,7 @@ import {
   MSG_WEBDAV_REQUEST,
   type ExtensionMessage,
 } from "~utils/messaging"
+import { localStorage, type Settings } from "~utils/storage"
 
 /**
  * Ophel - Background Service Worker
@@ -27,8 +28,24 @@ chrome.runtime.onInstalled.addListener(() => {
   setupDynamicRules()
 })
 
-// 设置动态规则以支持CORS + Credentials
+// 监听权限移除
+chrome.permissions.onRemoved.addListener(async (removed) => {
+  if (removed.origins && removed.origins.includes("<all_urls>")) {
+    // 获取当前设置
+    const settings = await localStorage.get<Settings>("settings")
+    if (settings && settings.content?.watermarkRemoval) {
+      // 关闭去水印
+      settings.content.watermarkRemoval = false
+      await localStorage.set("settings", settings)
+    }
+  }
+})
+
+// 设置动态规则以支持CORS + Credentials（去水印功能）
+// 使用 declarativeNetRequestWithHostAccess 权限 + 必需 host_permissions (*.googleusercontent.com)
 async function setupDynamicRules() {
+  // *.googleusercontent.com 已在 manifest host_permissions 中声明，无需额外权限检查
+
   const extensionOrigin = chrome.runtime.getURL("").slice(0, -1) // 移除末尾的 /
 
   // 移除旧规则
@@ -109,7 +126,6 @@ async function setupDynamicRules() {
       },
     ],
   })
-  console.log("Dynamic CORS rules set up specifically for extension origin:", extensionOrigin)
 }
 
 // 消息监听 - 与 Content Script 通信
@@ -293,25 +309,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
       ;(async () => {
         try {
           const optionsUrl = chrome.runtime.getURL("tabs/options.html")
-
-          // 检查是否已有 options 标签页打开
-          const allTabs = await chrome.tabs.query({})
-          for (const tab of allTabs) {
-            if (tab.url?.startsWith(optionsUrl)) {
-              // 已有标签页，聚焦到该标签页
-              if (tab.id) {
-                await chrome.tabs.update(tab.id, { active: true })
-              }
-              // 聚焦到该窗口
-              if (tab.windowId) {
-                await chrome.windows.update(tab.windowId, { focused: true })
-              }
-              sendResponse({ success: true, alreadyOpen: true })
-              return
-            }
-          }
-
-          // 没有找到，在当前窗口创建新标签页
+          // 直接创建新标签页（不需要 tabs 权限）
           await chrome.tabs.create({
             url: optionsUrl,
             active: true,

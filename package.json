@@ -41,20 +41,16 @@
     "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsJowQmpKyS01b4pfhlparq0/v91FghHdCHc+JwBC7wopldw06dsbktfY2yeYnIsQ8DJQ5lwmcGUl0XiUzrVnFL6Btr7cGBQJHoq0HMMsa7LXYp5p7RYNcG8BLjZ6tTOs1vR2rBGpp0eBVpanPuPXilclCxJ1dfshCloPuN3j8lj7F7FZErUOynGwNbFn4XK2KW086kYz5eskM5L/PvIyyIevWdDdEHHMShRYzOiZukUF+Nv/wVvJiFLjXoOvw1Y0kb5zfR/LfsQS3H2pVSDrEWOul2/tzrZak/c9FWH/7inZrhz7E66wZb5ByQ+ER8g6W2X7ChDU/ui/jO0LilmKVQIDAQAB",
     "name": "Ophel",
     "permissions": [
-      "storage"
+      "storage",
+      "declarativeNetRequestWithHostAccess"
     ],
     "optional_permissions": [
-      "tabs",
-      "notifications",
-      "declarativeNetRequest"
+      "notifications"
     ],
     "host_permissions": [
       "https://gemini.google.com/*",
       "https://business.gemini.google/*",
-      "https://ai.google.dev/*",
       "https://aistudio.google.com/*",
-      "https://alkalimetal.google.com/*",
-      "https://*.google.com/*",
       "https://*.googleusercontent.com/*"
     ],
     "optional_host_permissions": [

@@ -190,7 +190,7 @@ export const DEFAULT_SETTINGS: Settings = {
 
   content: {
     markdownFix: true,
-    watermarkRemoval: true,
+    watermarkRemoval: false, // 默认关闭，需要授权 <all_urls> 权限
     formulaCopy: true,
     formulaDelimiter: true,
     tableCopy: true,

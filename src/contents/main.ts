@@ -168,8 +168,11 @@ if (!window.ophelInitialized) {
         tabManager.start()
       }
 
-      // 6. 水印移除 (仅 Gemini)
-      if (siteId === "gemini" || siteId === "gemini-enterprise") {
+      // 6. 水印移除 (仅 Gemini，需开启设置)
+      if (
+        (siteId === "gemini" || siteId === "gemini-enterprise") &&
+        settings.content?.watermarkRemoval
+      ) {
         watermarkRemover = new WatermarkRemover()
         watermarkRemover.start()
       }

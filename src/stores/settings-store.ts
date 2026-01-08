@@ -6,11 +6,25 @@
  */
 
 import { create } from "zustand"
-import { createJSONStorage, persist } from "zustand/middleware"
+import { createJSONStorage, persist, type StateStorage } from "zustand/middleware"
 
 import { DEFAULT_SETTINGS, type Settings } from "~utils/storage"
 
 import { chromeStorageAdapter } from "./chrome-adapter"
+
+let isUpdatingFromStorage = false
+
+// 包装 adapter 以支持防循环写入
+const storageAdapter: StateStorage = {
+  ...chromeStorageAdapter,
+  setItem: async (name, value) => {
+    if (isUpdatingFromStorage) {
+      // console.log("[SettingsStore] Skipping storage write due to sync update")
+      return
+    }
+    return chromeStorageAdapter.setItem(name, value)
+  },
+}
 
 // ==================== Store 类型定义 ====================
 
@@ -110,7 +124,7 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: "settings", // chrome.storage key
-      storage: createJSONStorage(() => chromeStorageAdapter),
+      storage: createJSONStorage(() => storageAdapter),
       // 只持久化 settings，不持久化 _hasHydrated
       partialize: (state) => ({ settings: state.settings }),
       // Hydration 完成回调
@@ -179,13 +193,37 @@ if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
         const currentState = useSettingsStore.getState()
         const currentSettings = currentState.settings
         // 仅当设置确实发生变化时更新（避免循环更新）
-        if (JSON.stringify(currentSettings) !== JSON.stringify(newSettings)) {
-          // ⭐ 同时更新 settings 和递增 _syncVersion
-          // _syncVersion 变化会强制触发所有订阅它的 React 组件重渲染
-          useSettingsStore.setState({
-            settings: newSettings,
-            _syncVersion: currentState._syncVersion + 1,
-          })
+        // 使用 sortedStringify 进行稳定比较
+        const sortedStringify = (obj: any): string => {
+          if (typeof obj !== "object" || obj === null) return JSON.stringify(obj)
+          if (Array.isArray(obj)) return JSON.stringify(obj.map(sortedStringify))
+          return JSON.stringify(
+            Object.keys(obj)
+              .sort()
+              .reduce((result: any, key) => {
+                result[key] = sortedStringify(obj[key])
+                return result
+              }, {}),
+          )
+        }
+
+        if (sortedStringify(currentSettings) !== sortedStringify(newSettings)) {
+          // ⭐ 标记为来自 Storage 的更新，防止回写导致死循环
+          isUpdatingFromStorage = true
+
+          try {
+            // ⭐ 同时更新 settings 和递增 _syncVersion
+            // _syncVersion 变化会强制触发所有订阅它的 React 组件重渲染
+            useSettingsStore.setState({
+              settings: newSettings,
+              _syncVersion: currentState._syncVersion + 1,
+            })
+          } finally {
+            // 恢复标记 (setTimeout 确保在 persist 异步写入之后)
+            setTimeout(() => {
+              isUpdatingFromStorage = false
+            }, 100)
+          }
 
           // 同步更新 i18n 模块的语言设置
           if (newSettings.language && newSettings.language !== currentSettings.language) {

@@ -21,7 +21,6 @@ function initTrustedTypesPolicy(): boolean {
       htmlPolicy = tt.createPolicy("ophel-markdown-fixer", {
         createHTML: (s: string) => s,
       })
-      console.log("[MarkdownFixer] Trusted Types policy created")
       return true
     } catch (e) {
       console.warn("[MarkdownFixer] Failed to create Trusted Types policy:", e)
