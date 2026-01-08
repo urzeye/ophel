@@ -464,4 +464,47 @@ export const zhTW = {
   localBackup: "本地備份",
   exportToFile: "匯出為檔案",
   importBackupFile: "備份檔案匯入",
+
+  // ======== 權限管理頁面 ========
+  navPermissions: "權限管理",
+  permissionsPageDesc: "查看和管理擴充功能的權限。",
+  optionalPermissions: "可選權限",
+  optionalPermissionsDesc: "這些權限可以按需授予或撤銷",
+  permissionsSyncHint: "權限狀態與瀏覽器同步，如在此頁面外修改請點擊刷新。",
+  refreshStatus: "刷新狀態",
+  granted: "已授予",
+  notGranted: "未授予",
+  revoke: "撤銷",
+  grant: "授予",
+  allowRecommended: "允許（推薦）",
+  required: "必需",
+
+  // 可選權限
+  permissionWebdavAccess: "WebDAV 存取權限",
+  permissionWebdavAccessDesc: "允許連接 WebDAV 伺服器（如堅果雲），用於資料的雲端備份和同步。",
+
+  // 必需權限
+  permissionStorage: "儲存",
+  permissionStorageDesc: "用於儲存擴充功能設定、提示詞和對話資料。",
+  permissionNotifications: "通知",
+  permissionNotificationsDesc: "可選權限。用於在 AI 回覆完成時發送桌面通知提醒。",
+  permissionTabs: "標籤頁",
+  permissionTabsDesc: "可選權限。用於檢測當前標籤頁狀態和管理對話。",
+  permissionDNR: "網路請求規則",
+  permissionDNRDesc: "可選權限。用於修改請求標頭以移除圖片浮水印等功能。",
+
+  // ======== 權限請求彈窗 ========
+  permAllUrlsTitle: "需要所有網站存取權限",
+  permAllUrlsDesc: "此權限用於 WebDAV 雲端備份和同步，以及支援更多 AI 平台的整合。",
+  permTabsTitle: "需要標籤頁權限",
+  permTabsDesc: "標籤頁重新命名和隱私模式需要此權限，用於讀取和修改標籤頁標題。",
+  permNotifyTitle: "需要通知權限",
+  permNotifyDesc: "啟用桌面通知後，當 AI 生成完成時會收到提醒。",
+  permDNRTitle: "需要網路請求規則權限",
+  permDNRDesc: "用於移除 AI 生成圖片的浮水印。",
+  permissionDialogAllow: "允許並繼續",
+  permissionGranted: "授權成功",
+  permissionDenied: "授權已取消",
+  windowClosing: "視窗即將關閉...",
+  allow: "允許",
 }

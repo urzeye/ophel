@@ -23,37 +23,44 @@ const REQUIRED_PERMISSIONS = [
     description: "permissionStorageDesc",
     icon: "💾",
   },
-  {
-    id: "notifications",
-    name: "通知",
-    nameKey: "permissionNotifications",
-    description: "permissionNotificationsDesc",
-    icon: "🔔",
-  },
+]
+
+// 可选权限（非主机权限）
+const OPTIONAL_PERMISSIONS = [
   {
     id: "tabs",
     name: "标签页",
     nameKey: "permissionTabs",
     description: "permissionTabsDesc",
     icon: "📑",
+    permissions: ["tabs"],
   },
   {
-    id: "declarativeNetRequest",
+    id: "notifications",
+    name: "通知",
+    nameKey: "permissionNotifications",
+    description: "permissionNotificationsDesc",
+    icon: "🔔",
+    permissions: ["notifications"],
+  },
+  {
+    id: "watermark",
     name: "网络请求规则",
     nameKey: "permissionDNR",
     description: "permissionDNRDesc",
     icon: "🌐",
+    permissions: ["declarativeNetRequest"],
   },
 ]
 
 // 可选主机权限
 const OPTIONAL_HOST_PERMISSIONS = [
   {
-    id: "allUrls",
-    name: "所有网站访问权限",
-    nameKey: "permissionAllUrls",
-    description: "permissionAllUrlsDesc",
-    icon: "🌍",
+    id: "webdav",
+    name: "WebDAV 访问权限",
+    nameKey: "permissionWebdavAccess",
+    description: "permissionWebdavAccessDesc",
+    icon: "☁️",
     origins: ["<all_urls>"],
   },
 ]
@@ -78,24 +85,45 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
     setLoading(true)
     const status: Record<string, boolean> = {}
 
+    // 检查可选非主机权限
+    for (const perm of OPTIONAL_PERMISSIONS) {
+      try {
+        let result = false
+        if (isExtensionPage) {
+          result = await chrome.permissions.contains({
+            permissions: perm.permissions || [],
+          })
+        } else {
+          const response = await sendToBackground({
+            type: MSG_CHECK_PERMISSIONS,
+            permissions: perm.permissions || [],
+          })
+          if (response && response.success) {
+            result = response.hasPermission
+          }
+        }
+        status[perm.id] = result
+      } catch (e) {
+        console.error(`检查权限 ${perm.id} 失败:`, e)
+        status[perm.id] = false
+      }
+    }
+
+    // 检查可选主机权限
     for (const perm of OPTIONAL_HOST_PERMISSIONS) {
       try {
         let result = false
         if (isExtensionPage) {
-          // 扩展页面直接调用
           result = await chrome.permissions.contains({
             origins: perm.origins || [],
           })
         } else {
-          // Content script 发送消息到后台检查
           const response = await sendToBackground({
             type: MSG_CHECK_PERMISSIONS,
             origins: perm.origins || [],
           })
           if (response && response.success) {
             result = response.hasPermission
-          } else {
-            console.warn(`检查权限 ${perm.id} 消息返回失败:`, response)
           }
         }
         status[perm.id] = result
@@ -131,48 +159,54 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
     }
   }, [])
 
-  // 请求可选权限
-  const requestPermission = async (perm: (typeof OPTIONAL_HOST_PERMISSIONS)[0]) => {
+  // 请求可选权限（通用函数）
+  const requestPermission = async (perm: {
+    id: string
+    origins?: string[]
+    permissions?: string[]
+  }) => {
     try {
       if (isExtensionPage) {
-        // 扩展页面直接请求（需要用户手势）
         const granted = await chrome.permissions.request({
-          origins: perm.origins || [],
+          origins: perm.origins?.length ? perm.origins : undefined,
+          permissions: perm.permissions?.length ? perm.permissions : undefined,
         })
 
         if (granted) {
           setOptionalPermissionStatus((prev) => ({ ...prev, [perm.id]: true }))
         }
       } else {
-        // Content Script 无法请求权限，通知后台打开扩展页面进行请求
-        // 这将打开一个新的标签页（Options 页）进行授权
+        // Content Script 发送消息请求
         await sendToBackground({
           type: MSG_REQUEST_PERMISSIONS,
-          origins: perm.origins || [],
+          permType: perm.id,
+          origins: perm.origins,
+          permissions: perm.permissions,
         })
-        // 不立即更新状态，因为是在新页面授权
-        // 用户回来后点击刷新即可
       }
     } catch (e) {
       console.error(`请求权限 ${perm.id} 失败:`, e)
     }
   }
 
-  // 撤销可选权限
-  const revokePermission = async (perm: (typeof OPTIONAL_HOST_PERMISSIONS)[0]) => {
+  // 撤销可选权限（通用函数）
+  const revokePermission = async (perm: {
+    id: string
+    origins?: string[]
+    permissions?: string[]
+  }) => {
     try {
       let removed = false
       if (isExtensionPage) {
-        // 扩展页面直接撤销
         removed = await chrome.permissions.remove({
-          origins: perm.origins || [],
+          origins: perm.origins?.length ? perm.origins : undefined,
+          permissions: perm.permissions?.length ? perm.permissions : undefined,
         })
       } else {
-        // Content Script 发送消息撤销
-        // 撤销权限不要求用户手势，后台可以直接处理
         const response = await sendToBackground({
           type: MSG_REVOKE_PERMISSIONS,
-          origins: perm.origins || [],
+          origins: perm.origins,
+          permissions: perm.permissions,
         })
         if (response && response.success) {
           removed = response.removed
@@ -222,7 +256,7 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
           </button>
         </div>
 
-        {OPTIONAL_HOST_PERMISSIONS.map((perm, index) => (
+        {[...OPTIONAL_PERMISSIONS, ...OPTIONAL_HOST_PERMISSIONS].map((perm, index, arr) => (
           <SettingRow
             key={perm.id}
             label={
@@ -232,7 +266,7 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
               </span>
             }
             description={t(perm.description) || perm.description}
-            style={index === OPTIONAL_HOST_PERMISSIONS.length - 1 ? { borderBottom: "none" } : {}}>
+            style={index === arr.length - 1 ? { borderBottom: "none" } : {}}>
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
               {optionalPermissionStatus[perm.id] ? (
                 <>

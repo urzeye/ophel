@@ -35,17 +35,20 @@ export const zhCN = {
   allowRecommended: "允许（推荐）",
   required: "必需",
   // 可选权限
-  permissionAllUrls: "所有网站访问权限",
-  permissionAllUrlsDesc: "允许扩展在所有网站上运行，用于支持更多 AI 平台。",
+  // permissionAllUrls: "所有网站访问权限", // Deprecated
+  // permissionAllUrlsDesc: "允许扩展在所有网站上运行，用于支持更多 AI 平台。", // Deprecated
+  permissionWebdavAccess: "WebDAV 访问权限",
+  permissionWebdavAccessDesc: "允许连接 WebDAV 服务器（如坚果云），用于数据的云端备份和同步。",
+
   // 必需权限
   permissionStorage: "存储",
   permissionStorageDesc: "用于保存扩展设置、提示词和会话数据。",
   permissionNotifications: "通知",
-  permissionNotificationsDesc: "用于在 AI 回复完成时发送桌面通知提醒。",
+  permissionNotificationsDesc: "可选权限。用于在 AI 回复完成时发送桌面通知提醒。",
   permissionTabs: "标签页",
-  permissionTabsDesc: "用于检测当前标签页状态和管理会话。",
+  permissionTabsDesc: "可选权限。用于检测当前标签页状态和管理会话。",
   permissionDNR: "网络请求规则",
-  permissionDNRDesc: "用于修改请求头以移除图片水印等功能。",
+  permissionDNRDesc: "可选权限。用于修改请求头以移除图片水印等功能。",
 
   // ======== 通用 / 标签页 Tab ========
   generalTab: "通用",
@@ -597,4 +600,19 @@ export const zhCN = {
   localBackup: "本地备份",
   exportToFile: "导出为文件",
   importBackupFile: "备份文件导入",
+
+  // ======== 权限请求弹窗 ========
+  permAllUrlsTitle: "需要所有网站访问权限",
+  permAllUrlsDesc: "此权限用于 WebDAV 云端备份和同步功能，以及支持更多 AI 平台的集成。",
+  permTabsTitle: "需要标签页权限",
+  permTabsDesc: "标签页重命名和隐私模式需要此权限，用于读取和修改标签页标题。",
+  permNotifyTitle: "需要通知权限",
+  permNotifyDesc: "启用桌面通知后，当 AI 生成完成时会收到提醒。",
+  permDNRTitle: "需要网络请求规则权限",
+  permDNRDesc: "此权限用于移除 AI 生成图片的水印等功能。",
+  permissionDialogAllow: "允许并继续",
+  permissionGranted: "授权成功",
+  permissionDenied: "授权已取消",
+  windowClosing: "窗口即将关闭...",
+  allow: "允许",
 }

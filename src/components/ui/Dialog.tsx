@@ -141,6 +141,11 @@ export interface ConfirmDialogProps {
   danger?: boolean
   onConfirm: () => void
   onCancel: () => void
+  /** 额外的操作链接，显示在按钮左侧 */
+  extraAction?: {
+    text: string
+    onClick: () => void
+  }
 }
 
 /**
@@ -154,20 +159,38 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   danger = false,
   onConfirm,
   onCancel,
+  extraAction,
 }) => {
   return (
     <DialogOverlay onClose={onCancel}>
       <div className="gh-dialog-title">{title}</div>
       <div className="gh-dialog-message">{message}</div>
-      <div className="gh-dialog-buttons">
-        <button className="gh-dialog-btn gh-dialog-btn-secondary" onClick={onCancel}>
-          {cancelText || t("cancel") || "取消"}
-        </button>
-        <button
-          className={`gh-dialog-btn ${danger ? "gh-dialog-btn-danger" : "gh-dialog-btn-primary"}`}
-          onClick={onConfirm}>
-          {confirmText || t("confirm") || "确定"}
-        </button>
+      <div
+        className="gh-dialog-buttons"
+        style={{ justifyContent: extraAction ? "space-between" : "flex-end" }}>
+        {extraAction && (
+          <button
+            className="gh-dialog-btn"
+            style={{
+              background: "transparent",
+              color: "var(--gh-primary, #4285f4)",
+              padding: "8px 12px",
+              textDecoration: "underline",
+            }}
+            onClick={extraAction.onClick}>
+            ↗ {extraAction.text}
+          </button>
+        )}
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button className="gh-dialog-btn gh-dialog-btn-secondary" onClick={onCancel}>
+            {cancelText || t("cancel") || "取消"}
+          </button>
+          <button
+            className={`gh-dialog-btn ${danger ? "gh-dialog-btn-danger" : "gh-dialog-btn-primary"}`}
+            onClick={onConfirm}>
+            {confirmText || t("confirm") || "确定"}
+          </button>
+        </div>
       </div>
     </DialogOverlay>
   )

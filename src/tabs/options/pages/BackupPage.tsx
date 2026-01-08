@@ -16,6 +16,8 @@ import { SettingCard, SettingRow, TabGroup } from "../components"
 
 interface BackupPageProps {
   siteId: string
+  /** 导航到其他页面的回调 */
+  onNavigate?: (page: string) => void
 }
 
 // 远程备份列表模态框
@@ -236,7 +238,7 @@ const RemoteBackupModal: React.FC<{
   )
 }
 
-const BackupPage: React.FC<BackupPageProps> = ({ siteId }) => {
+const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate }) => {
   const [activeTab, setActiveTab] = useState("local")
   const { settings, setSettings } = useSettingsStore()
   const [showRemoteBackups, setShowRemoteBackups] = useState(false)
@@ -253,6 +255,52 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId }) => {
     message: "",
     onConfirm: () => {},
   })
+
+  // 权限确认对话框状态
+  const [permissionConfirm, setPermissionConfirm] = useState<{
+    show: boolean
+    onConfirm: () => void
+  }>({
+    show: false,
+    onConfirm: () => {},
+  })
+
+  // 检查并请求 WebDAV 权限（通用函数）
+  const checkAndRequestWebDAVPermission = async (onGranted: () => void): Promise<boolean> => {
+    const url = settings?.webdav?.url
+    if (!url) {
+      showDomToast(t("webdavConfigIncomplete") || "请填写完整的 WebDAV 配置")
+      return false
+    }
+
+    try {
+      const urlObj = new URL(url)
+      const origin = urlObj.origin + "/*"
+      const checkResult: any = await chrome.runtime.sendMessage({
+        type: "CHECK_PERMISSION",
+        origin,
+      })
+
+      if (!checkResult.hasPermission) {
+        // 显示确认对话框
+        setPermissionConfirm({
+          show: true,
+          onConfirm: async () => {
+            setPermissionConfirm((prev) => ({ ...prev, show: false }))
+            await chrome.runtime.sendMessage({
+              type: "REQUEST_PERMISSIONS",
+              permType: "allUrls",
+            })
+          },
+        })
+        return false
+      }
+      return true
+    } catch (e) {
+      console.error("Permission check failed:", e)
+      return true // 检查失败时继续尝试
+    }
+  }
 
   if (!settings) return null
 
@@ -412,38 +460,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId }) => {
 
   // WebDAV 测试连接
   const testWebDAVConnection = async () => {
-    const url = settings.webdav?.url
-    if (!url) {
-      showDomToast(t("webdavConfigIncomplete") || "请填写完整的 WebDAV 配置")
-      return
-    }
-
-    try {
-      const urlObj = new URL(url)
-      const origin = urlObj.origin + "/*"
-
-      const checkResult: any = await chrome.runtime.sendMessage({
-        type: "CHECK_PERMISSION",
-        origin,
-      })
-
-      if (!checkResult.hasPermission) {
-        if (
-          window.confirm(
-            t("webdavPermissionConfirm") ||
-              "需要权限访问 WebDAV 服务器。是否打开权限窗口进行授权？",
-          )
-        ) {
-          await chrome.runtime.sendMessage({
-            type: "REQUEST_PERMISSIONS",
-            origins: [origin],
-          })
-        }
-        return
-      }
-    } catch (e) {
-      console.error("Permission check failed:", e)
-    }
+    const hasPermission = await checkAndRequestWebDAVPermission(testWebDAVConnection)
+    if (!hasPermission) return
 
     try {
       const manager = getWebDAVSyncManager()
@@ -459,33 +477,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId }) => {
 
   // WebDAV 备份
   const uploadToWebDAV = async () => {
-    const url = settings.webdav?.url
-    if (url) {
-      try {
-        const urlObj = new URL(url)
-        const origin = urlObj.origin + "/*"
-        const checkResult: any = await chrome.runtime.sendMessage({
-          type: "CHECK_PERMISSION",
-          origin,
-        })
-        if (!checkResult.hasPermission) {
-          if (
-            window.confirm(
-              t("webdavPermissionConfirm") ||
-                "需要权限访问 WebDAV 服务器。是否打开权限窗口进行授权？",
-            )
-          ) {
-            await chrome.runtime.sendMessage({
-              type: "REQUEST_PERMISSIONS",
-              origins: [origin],
-            })
-          }
-          return
-        }
-      } catch (e) {
-        console.error("Permission check failed:", e)
-      }
-    }
+    const hasPermission = await checkAndRequestWebDAVPermission(uploadToWebDAV)
+    if (!hasPermission) return
 
     try {
       const zustandFormat = {
@@ -521,6 +514,36 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId }) => {
           danger={confirmConfig.danger}
           onConfirm={confirmConfig.onConfirm}
           onCancel={() => setConfirmConfig((prev) => ({ ...prev, show: false }))}
+        />
+      )}
+
+      {/* 权限确认对话框 */}
+      {permissionConfirm.show && (
+        <ConfirmDialog
+          title={t("permWebdavTitle") || "需要网络访问权限"}
+          message={
+            t("permWebdavDesc") || "WebDAV 同步需要访问您配置的服务器。授权后可进行云端备份和恢复。"
+          }
+          confirmText={t("permissionDialogAllow") || "允许并继续"}
+          onConfirm={permissionConfirm.onConfirm}
+          onCancel={() => setPermissionConfirm((prev) => ({ ...prev, show: false }))}
+          extraAction={{
+            text: t("navPermissions") || "权限管理",
+            onClick: () => {
+              console.log(
+                "[BackupPage] extraAction clicked, onNavigate:",
+                typeof onNavigate,
+                onNavigate,
+              )
+              setPermissionConfirm((prev) => ({ ...prev, show: false }))
+              if (onNavigate) {
+                console.log("[BackupPage] Calling onNavigate('permissions')")
+                onNavigate("permissions")
+              } else {
+                console.log("[BackupPage] onNavigate is not available")
+              }
+            },
+          }}
         />
       )}
 
@@ -661,33 +684,14 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId }) => {
               <button
                 className="settings-btn settings-btn-secondary"
                 onClick={async () => {
-                  const url = settings.webdav?.url
-                  if (url) {
-                    try {
-                      const urlObj = new URL(url)
-                      const origin = urlObj.origin + "/*"
-                      const checkResult: any = await chrome.runtime.sendMessage({
-                        type: "CHECK_PERMISSION",
-                        origin,
-                      })
-                      if (!checkResult.hasPermission) {
-                        if (
-                          window.confirm(
-                            t("webdavPermissionConfirm") ||
-                              "需要权限访问 WebDAV 服务器。是否打开权限窗口进行授权？",
-                          )
-                        ) {
-                          await chrome.runtime.sendMessage({
-                            type: "REQUEST_PERMISSIONS",
-                            origins: [origin],
-                          })
-                        }
-                        return
-                      }
-                    } catch (e) {
-                      console.error("Permission check failed:", e)
+                  const hasPermission = await checkAndRequestWebDAVPermission(async () => {
+                    const manager = getWebDAVSyncManager()
+                    if (settings.webdav) {
+                      await manager.saveConfig(settings.webdav)
                     }
-                  }
+                    setShowRemoteBackups(true)
+                  })
+                  if (!hasPermission) return
 
                   const manager = getWebDAVSyncManager()
                   if (settings.webdav) {

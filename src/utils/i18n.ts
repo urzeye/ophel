@@ -1,6 +1,6 @@
 import { resources, type LocaleKey } from "~locales/resources"
 
-let currentLang: string = "zh-CN"
+let currentLang: string = "en"
 
 export function setLanguage(lang: string) {
   if (lang === "auto") {
@@ -18,7 +18,6 @@ export function setLanguage(lang: string) {
 }
 
 export function t(key: string): string {
-  const langResources =
-    resources[currentLang as keyof typeof resources] || resources["zh-CN"]
+  const langResources = resources[currentLang as keyof typeof resources] || resources["en"]
   return (langResources[key as keyof typeof langResources] as string) || key
 }

@@ -255,21 +255,29 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
       })()
       break
 
-    // 请求权限相关：注意 chrome.permissions.request 不能在 Service Worker 中调用
-    // 这里如果收到请求，应该打开一个专门的权限申请页面作为弹窗
+    // 请求权限：打开最小化权限请求页面
     case MSG_REQUEST_PERMISSIONS:
       ;(async () => {
         try {
-          // 打开 options 页面并定位到权限部分
-          // 使用 query param ?page=permissions
-          const url = chrome.runtime.getURL("tabs/options.html?page=permissions&auto_request=true")
+          // 从消息中获取权限类型，默认为 allUrls
+          const permType = (message as any).permType || "allUrls"
+          const url = chrome.runtime.getURL(`tabs/perm-request.html?type=${permType}`)
 
-          // 使用 popup 类型的窗口，体验更像一个独立的弹窗，而不是新标签页
+          // 获取当前窗口信息以计算居中位置
+          const currentWindow = await chrome.windows.getCurrent()
+          const width = 450
+          const height = 380
+          const left = currentWindow.left! + Math.round((currentWindow.width! - width) / 2)
+          const top = currentWindow.top! + Math.round((currentWindow.height! - height) / 2)
+
+          // 最小化弹窗，居中显示
           await chrome.windows.create({
             url,
             type: "popup",
-            width: 600,
-            height: 700,
+            width,
+            height,
+            left,
+            top,
             focused: true,
           })
 

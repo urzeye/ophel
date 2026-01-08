@@ -85,7 +85,7 @@ const OptionsPage = () => {
       case "permissions":
         return <PermissionsPage siteId={siteId} />
       case "backup":
-        return <BackupPage siteId={siteId} />
+        return <BackupPage siteId={siteId} onNavigate={setActivePage} />
       case "about":
         return <AboutPage />
       default:

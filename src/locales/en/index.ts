@@ -36,17 +36,23 @@ export const en = {
   allowRecommended: "Allow (Recommended)",
   required: "Required",
   // Optional permissions
-  permissionAllUrls: "All Sites Access",
-  permissionAllUrlsDesc: "Allow the extension to run on all websites to support more AI platforms.",
+  // permissionAllUrls: "All Sites Access", // Deprecated
+  // permissionAllUrlsDesc: "Allow the extension to run on all websites to support more AI platforms.", // Deprecated
+  permissionWebdavAccess: "WebDAV Access",
+  permissionWebdavAccessDesc:
+    "Allows connecting to WebDAV servers (e.g. Nutstore) for cloud backup and synchronization.",
+
   // Required permissions
   permissionStorage: "Storage",
   permissionStorageDesc: "Used to save extension settings, prompts, and conversation data.",
   permissionNotifications: "Notifications",
-  permissionNotificationsDesc: "Used to send desktop notifications when AI responses are complete.",
+  permissionNotificationsDesc:
+    "Optional. Used to send desktop notifications when AI responses are complete.",
   permissionTabs: "Tabs",
-  permissionTabsDesc: "Used to detect current tab status and manage sessions.",
+  permissionTabsDesc: "Optional. Used to detect current tab status and manage sessions.",
   permissionDNR: "Network Request Rules",
-  permissionDNRDesc: "Used to modify request headers for features like image watermark removal.",
+  permissionDNRDesc:
+    "Optional. Used to modify request headers for features like image watermark removal.",
 
   // ======== General / Tab Settings Tab ========
   generalTab: "General",
@@ -572,4 +578,19 @@ export const en = {
   localBackup: "Local Backup",
   exportToFile: "Export to File",
   importBackupFile: "Import Backup File",
+
+  // ======== Permission Request Dialog ========
+  permAllUrlsTitle: "All Sites Access Required",
+  permAllUrlsDesc: "Required for WebDAV sync and supporting more AI platforms.",
+  permTabsTitle: "Tab Permission Required",
+  permTabsDesc: "Required for tab rename and privacy mode features.",
+  permNotifyTitle: "Notification Permission Required",
+  permNotifyDesc: "Send desktop notifications when AI generation completes.",
+  permDNRTitle: "Network Request Rules Permission Required",
+  permDNRDesc: "Required for removing AI image watermarks.",
+  permissionDialogAllow: "Allow & Continue",
+  permissionGranted: "Permission Granted",
+  permissionDenied: "Permission Denied",
+  windowClosing: "Window closing...",
+  allow: "Allow",
 }
