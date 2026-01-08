@@ -302,17 +302,17 @@ const openOptionsPage = () => {
 
 为了符合 Chrome 扩展安全规范并提供良好的用户体验，采用了 **"混合环境处理"** 策略：
 
-1.  **权限展示**：
+1. **权限展示**：
     - **必需权限** (`storage`, `notifications` 等)：只读展示，不可撤销。
     - **可选权限** (`<all_urls>` 等)：提供授予/撤销按钮。
-2.  **API 调用限制与解决方案**：
+2. **API 调用限制与解决方案**：
     - **问题**：Content Script 环境（模态框所在环境）**无法直接调用** `chrome.permissions.request` API（Chrome 安全限制）。
     - **方案**：
-      1.  用户点击“授予”按钮。
-      2.  模态框发送 `MSG_REQUEST_PERMISSIONS` 消息给 Background Script。
-      3.  Background Script 打开一个 **popup 类型** 的独立小窗口（加载 Options 页面并带上 `?page=permissions&auto_request=true` 参数）。
-      4.  Options 页面加载后自动触发 Chrome 原生权限请求弹窗。
-      5.  用户授权后，Options 页面状态更新；用户手动关闭小窗口回到原页面，刷新状态即可看到变更。
+      1. 用户点击“授予”按钮。
+      2. 模态框发送 `MSG_REQUEST_PERMISSIONS` 消息给 Background Script。
+      3. Background Script 打开一个 **popup 类型** 的独立小窗口（加载 Options 页面并带上 `?page=permissions&auto_request=true` 参数）。
+      4. Options 页面加载后自动触发 Chrome 原生权限请求弹窗。
+      5. 用户授权后，Options 页面状态更新；用户手动关闭小窗口回到原页面，刷新状态即可看到变更。
 
 ### 4.3 跨环境通信 (Messaging)
 
@@ -328,3 +328,15 @@ const openOptionsPage = () => {
   - `settings-store.ts` 监听 `chrome.storage.onChanged` 事件。
   - 当 Options 页面修改设置时，Content Script 中的 Store 会自动捕获变更。
   - 引入 `_syncVersion` 状态，强制触发 React 组件重渲染，确保 UI（如主题、界面语言）在多窗口间毫秒级同步。
+- **防循环机制**：
+  - 问题：`setState` 触发 `persist` 写回 storage，进而再次触发 `onChanged`，形成无限循环。
+  - 方案：引入 `isUpdatingFromStorage` 标记，包装 `chromeStorageAdapter.setItem`，在同步更新时跳过写入。
+  - 使用 `sortedStringify` 进行稳定对象比较，避免键顺序差异导致的虚假变更。
+
+### 4.5 权限撤销处理
+
+当用户在 Chrome 扩展管理页面手动撤销 `<all_urls>` 权限时：
+
+1. `background.ts` 监听 `chrome.permissions.onRemoved` 事件。
+2. 检测到 `<all_urls>` 被撤销后，自动将依赖该权限的功能（如 `watermarkRemoval`）关闭。
+3. 立即更新 storage，通过 `onChanged` 同步到所有上下文。
