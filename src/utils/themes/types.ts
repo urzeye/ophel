@@ -121,6 +121,8 @@ export interface ThemeVariables {
   "--gh-bg-image"?: string
   // 背景动画 (可选)
   "--gh-bg-animation"?: string
+  // 更高优先级的底栏文字颜色 (可选)
+  "--gh-footer-text"?: string
 }
 
 // 主题预置定义
