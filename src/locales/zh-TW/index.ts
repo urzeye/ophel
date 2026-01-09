@@ -18,7 +18,7 @@ export const zhTW = {
   pageContentPageDesc: "調整頁面排版和內容顯示樣式",
   featuresPageDesc: "配置擴充功能的各項功能模組",
   backupPageDesc: "管理資料備份和雲端同步",
-  aboutPageDesc: "✨ AI 之益，觸手可及 ✨",
+  aboutPageDesc: "AI 之益，觸手可及",
   tsPlasmoDesc: "瀏覽器擴充功能框架",
   tsReactDesc: "使用者介面函式庫",
   tsTypescriptDesc: "強型別 JavaScript",
@@ -154,6 +154,10 @@ export const zhTW = {
   generalTab: "通用",
   tabSettingsTab: "標籤頁",
   generalSettings: "通用設定",
+  panelTab: "面板",
+  tabOrderTab: "介面排版",
+  shortcutsTab: "快捷按鈕",
+  panelSettings: "面板設定",
   settingsTitle: "通用設定",
   panelSettingsTitle: "面板設定",
   settingOn: "開",
@@ -322,6 +326,7 @@ export const zhTW = {
   readingHistoryDesc: "記錄和恢復會話閱讀位置",
   readingHistoryAutoRestoreLabel: "自動恢復位置",
   readingHistoryAutoRestoreDesc: "打開頁面時自動跳轉到上次閱讀位置",
+  readingHistoryPersistenceLabel: "啟用閱讀歷史",
   enableOutline: "啟用大綱",
   outlineMaxLevel: "顯示標題級別",
   outlineLevelAll: "全部 (1-6級)",
@@ -398,6 +403,11 @@ export const zhTW = {
   disableOutline: "禁用大綱",
   togglePrompts: "啟用/禁用提示詞",
   toggleConversations: "啟用/禁用會話",
+
+  // ======== 通用按鈕/標籤 ========
+  tabBehaviorTitle: "標籤頁行為",
+  notificationSettings: "完成提醒",
+  privacyModeTitle: "隱私模式",
   // 介面排版開關
   collapsedButtonsOrderTitle: "快捷按鈕組",
   tabConversations: "會話",
@@ -646,6 +656,13 @@ export const zhTW = {
   permissionDialogAllow: "允許並繼續",
   permissionGranted: "授權成功",
   permissionDenied: "授權已取消",
+
+  revokeConfirmDefault: "確定要撤銷此權限嗎？撤銷後，依賴該權限的功能將會自動關閉。",
+  revokeConfirmNotifications:
+    "確定要撤銷通知權限嗎？\n\n撤銷後，【桌面通知】功能將自動關閉。如需再次使用，需重新授權。",
+  revokeConfirmWebdav:
+    "確定要撤銷進階存取權限嗎？\n\n撤銷後，【浮水印移除】和【WebDAV 同步】功能將自動關閉。如需再次使用，需重新授權。",
+  warning: "警告",
   windowClosing: "視窗即將關閉...",
   allow: "允許",
 

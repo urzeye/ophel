@@ -9,7 +9,7 @@ export const en = {
   navPageContent: "Page & Content",
   navFeatures: "Features",
   navPermissions: "Permissions",
-  navBackup: "Backup & Sync",
+  navBackup: "Data Management",
   navAbout: "About",
 
   // ======== Options Page Titles & Descriptions ========
@@ -19,7 +19,7 @@ export const en = {
   featuresPageDesc: "Configure extension feature modules",
   permissionsPageDesc: "View and manage extension permissions.",
   backupPageDesc: "Manage data backup and cloud sync",
-  aboutPageDesc: "✨ AI's Benefit, Within Reach. ✨",
+  aboutPageDesc: "AI's Benefit, Within Reach.",
   tsPlasmoDesc: "Browser Extension Framework",
   tsReactDesc: "User Interface Library",
   tsTypescriptDesc: "Typed JavaScript",

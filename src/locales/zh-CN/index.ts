@@ -9,7 +9,7 @@ export const zhCN = {
   navPageContent: "页面与内容",
   navFeatures: "功能模块",
   navPermissions: "权限管理",
-  navBackup: "备份与同步",
+  navBackup: "数据管理",
   navAbout: "关于",
 
   // ======== Options 页面标题与描述 ========
@@ -19,7 +19,7 @@ export const zhCN = {
   featuresPageDesc: "配置扩展的各项功能模块",
   permissionsPageDesc: "查看和管理扩展的权限。",
   backupPageDesc: "管理数据备份和云端同步",
-  aboutPageDesc: "✨ AI 之益，触手可及 ✨",
+  aboutPageDesc: "AI 之益，触手可及",
   tsPlasmoDesc: "浏览器扩展框架",
   tsReactDesc: "用户界面库",
   tsTypescriptDesc: "强类型 JavaScript",

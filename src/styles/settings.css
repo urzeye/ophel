@@ -1017,3 +1017,15 @@ html[data-theme="dark"] .about-privacy-banner {
   opacity: 0.9;
   line-height: 1.5;
 }
+
+/* 渐变色 Slogan */
+.about-slogan {
+  font-size: 18px;
+  font-weight: 700;
+  /* margin-bottom: 24px; Handled by parent container */
+  background: var(--gh-brand-gradient, linear-gradient(135deg, #4285f4 0%, #a855f7 100%));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+}

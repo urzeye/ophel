@@ -21,9 +21,18 @@ const AboutPage: React.FC = () => {
   return (
     <div>
       <PageTitle title={t("navAbout") || "关于"} Icon={AboutIcon} />
-      <p className="settings-page-desc">
-        {t("aboutPageDesc") || "统一管理第三方中转站与自建站点的账号与余额"}
-      </p>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          marginBottom: 24,
+        }}>
+        <span style={{ fontSize: 18 }}>✨</span>
+        <div className="about-slogan">{t("aboutPageDesc") || "AI 之益，触手可及"}</div>
+        <span style={{ fontSize: 18 }}>✨</span>
+      </div>
 
       {/* Hero Card */}
       <div className="about-hero-card">

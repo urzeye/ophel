@@ -2,7 +2,7 @@
  * 设置模态框组件
  * 在当前页面弹出设置页面，无需跳转到新标签页
  */
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 
 import {
   AboutIcon,
@@ -58,6 +58,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
   const [activePage, setActivePage] = useState("general")
   const { settings } = useSettingsStore()
   const isHydrated = useSettingsHydrated()
+  const contentRef = useRef<HTMLDivElement>(null)
 
   // 初始化语言
   useEffect(() => {
@@ -65,6 +66,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
       setLanguage(settings.language)
     }
   }, [isHydrated, settings?.language])
+
+  // 切换 Tab 时重置滚动条
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0
+    }
+  }, [activePage])
 
   // 按 ESC 关闭模态框
   useEffect(() => {
@@ -154,7 +162,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
         </aside>
 
         {/* 内容区 */}
-        <main className="settings-content">{renderPage()}</main>
+        <main className="settings-content" ref={contentRef}>
+          {renderPage()}
+        </main>
       </div>
     </div>
   )
