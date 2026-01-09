@@ -66,6 +66,9 @@ export interface Settings {
     autoHide: boolean
     edgeSnap: boolean
     preventAutoScroll: boolean
+    defaultPosition: "left" | "right" // 默认位置
+    defaultEdgeDistance: number // 默认边距 (0-200, 默认 40)
+    edgeSnapThreshold: number // 吸附触发距离 (10-100, 默认 30)
   }
 
   // 内容处理（含复制、导出）
@@ -186,6 +189,9 @@ export const DEFAULT_SETTINGS: Settings = {
     autoHide: false,
     edgeSnap: true,
     preventAutoScroll: false,
+    defaultPosition: "right",
+    defaultEdgeDistance: 20,
+    edgeSnapThreshold: 30,
   },
 
   content: {

@@ -3,7 +3,7 @@ import React, { useSyncExternalStore } from "react"
 import { ThemeDarkIcon, ThemeLightIcon } from "~components/icons"
 import type { ThemeManager } from "~core/theme-manager"
 import { useSettingsStore } from "~stores/settings-store"
-import { setLanguage, t } from "~utils/i18n"
+import { getEffectiveLanguage, setLanguage, t } from "~utils/i18n"
 
 export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
   const { settings, setSettings } = useSettingsStore()
@@ -62,7 +62,9 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
     setLanguage(lang)
   }
 
-  const currentLang = settings?.language || "auto"
+  // 获取设置中的语言值和实际生效的语言
+  const settingLang = settings?.language || "auto"
+  const effectiveLang = getEffectiveLanguage(settingLang)
 
   return (
     <div className="settings-sidebar-footer">
@@ -89,21 +91,22 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
       </div>
 
       {/* 语言切换 - 极简文字链风格 */}
+      {/* 使用 effectiveLang 判断高亮，这样当设置为 auto 时也能正确显示当前语言 */}
       <div className="settings-lang-inline">
         <button
-          className={`lang-link ${currentLang === "en" ? "active" : ""}`}
+          className={`lang-link ${effectiveLang === "en" ? "active" : ""}`}
           onClick={() => handleLanguageChange("en")}>
           EN
         </button>
         <span className="lang-divider">/</span>
         <button
-          className={`lang-link ${currentLang === "zh-CN" ? "active" : ""}`}
+          className={`lang-link ${effectiveLang === "zh-CN" ? "active" : ""}`}
           onClick={() => handleLanguageChange("zh-CN")}>
           简
         </button>
         <span className="lang-divider">/</span>
         <button
-          className={`lang-link ${currentLang === "zh-TW" ? "active" : ""}`}
+          className={`lang-link ${effectiveLang === "zh-TW" ? "active" : ""}`}
           onClick={() => handleLanguageChange("zh-TW")}>
           繁
         </button>

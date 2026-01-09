@@ -620,7 +620,7 @@ export const App = () => {
 
           // 检测面板位置
           const rect = panel.getBoundingClientRect()
-          const snapThreshold = 30 // 距离边缘30px时触发吸附
+          const snapThreshold = currentSettings?.panel?.edgeSnapThreshold ?? 30
 
           if (rect.left < snapThreshold) {
             setEdgeSnapState("left")

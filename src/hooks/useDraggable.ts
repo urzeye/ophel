@@ -15,12 +15,13 @@ import { useCallback, useEffect, useRef } from "react"
 interface UseDraggableOptions {
   edgeSnapHide?: boolean
   edgeSnapState?: "left" | "right" | null // 当前吸附状态
+  snapThreshold?: number // 吸附触发距离，默认 30
   onEdgeSnap?: (side: "left" | "right") => void
   onUnsnap?: () => void
 }
 
 export function useDraggable(options: UseDraggableOptions = {}) {
-  const { edgeSnapHide = false, edgeSnapState, onEdgeSnap, onUnsnap } = options
+  const { edgeSnapHide = false, edgeSnapState, snapThreshold = 30, onEdgeSnap, onUnsnap } = options
 
   const panelRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
@@ -107,7 +108,7 @@ export function useDraggable(options: UseDraggableOptions = {}) {
     // 边缘吸附检测
     if (edgeSnapHide && hasMoved && panel) {
       const rect = panel.getBoundingClientRect()
-      const snapThreshold = 30 // 距离边缘30px时触发吸附
+      // 使用传入的 snapThreshold 参数
 
       if (rect.left < snapThreshold) {
         onEdgeSnap?.("left")

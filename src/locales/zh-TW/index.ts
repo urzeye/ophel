@@ -509,6 +509,15 @@ export const zhTW = {
   // 邊緣吸附
   edgeSnapHideLabel: "邊緣吸附隱藏",
   edgeSnapHideDesc: "拖動面板到螢幕邊緣時自動隱藏，懸停顯示",
+  edgeSnapThresholdLabel: "吸附觸發距離",
+  edgeSnapThresholdDesc: "拖曳面板到邊緣多近時觸發吸附",
+  // 面板位置設定
+  defaultPositionLabel: "預設位置",
+  defaultPositionDesc: "頁面重新整理後面板顯示在哪一側",
+  defaultPositionLeft: "左側",
+  defaultPositionRight: "右側",
+  defaultEdgeDistanceLabel: "預設邊距",
+  defaultEdgeDistanceDesc: "面板距離螢幕邊緣的初始距離",
   // 手動錨點
   setAnchor: "設置錨點",
   setAnchorToast: "已設置錨點",

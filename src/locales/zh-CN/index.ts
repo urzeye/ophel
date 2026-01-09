@@ -593,6 +593,15 @@ export const zhCN = {
   // 边缘吸附
   edgeSnapHideLabel: "边缘吸附隐藏",
   edgeSnapHideDesc: "拖动面板到屏幕边缘时自动隐藏，悬停显示",
+  edgeSnapThresholdLabel: "吸附触发距离",
+  edgeSnapThresholdDesc: "拖拽面板到边缘多近时触发吸附",
+  // 面板位置设置
+  defaultPositionLabel: "默认位置",
+  defaultPositionDesc: "页面刷新后面板显示在哪一侧",
+  defaultPositionLeft: "左侧",
+  defaultPositionRight: "右侧",
+  defaultEdgeDistanceLabel: "默认边距",
+  defaultEdgeDistanceDesc: "面板距离屏幕边缘的初始距离",
   // 手动锚点
   setAnchor: "设置锚点",
   setAnchorToast: "已设置锚点",

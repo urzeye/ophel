@@ -168,21 +168,6 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
         <>
           {/* 通用设置卡片 */}
           <SettingCard title={t("generalSettings") || "通用设置"}>
-            {/* 语言 */}
-            <SettingRow
-              label={t("languageLabel") || "语言"}
-              description={t("languageDesc") || "设置面板显示语言，即时生效"}>
-              <select
-                className="settings-select"
-                value={settings.language || "auto"}
-                onChange={(e) => handleLanguageChange(e.target.value)}>
-                <option value="auto">{t("languageAuto") || "自动"}</option>
-                <option value="zh-CN">{t("languageZhCN") || "简体中文"}</option>
-                <option value="zh-TW">{t("languageZhTW") || "繁体中文"}</option>
-                <option value="en">{t("languageEn") || "English"}</option>
-              </select>
-            </SettingRow>
-
             <ToggleRow
               label={t("defaultPanelStateLabel") || "默认显示面板"}
               description={t("defaultPanelStateDesc") || "页面加载后自动展开面板"}
@@ -199,12 +184,111 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
               onChange={() => updateNestedSetting("panel", "autoHide", !settings.panel?.autoHide)}
             />
 
+            {/* 默认位置 */}
+            <SettingRow
+              label={t("defaultPositionLabel") || "默认位置"}
+              description={t("defaultPositionDesc") || "页面刷新后面板显示在哪一侧"}>
+              <div
+                style={{
+                  display: "inline-flex",
+                  borderRadius: "6px",
+                  overflow: "hidden",
+                  border: "1px solid var(--gh-border, #e5e7eb)",
+                }}>
+                <button
+                  onClick={() => updateNestedSetting("panel", "defaultPosition", "left")}
+                  style={{
+                    padding: "4px 12px",
+                    fontSize: "13px",
+                    border: "none",
+                    cursor: "pointer",
+                    background:
+                      (settings.panel?.defaultPosition || "right") === "left"
+                        ? "var(--gh-primary, #4285f4)"
+                        : "var(--gh-bg, #fff)",
+                    color:
+                      (settings.panel?.defaultPosition || "right") === "left"
+                        ? "#fff"
+                        : "var(--gh-text-secondary, #6b7280)",
+                    transition: "all 0.2s",
+                  }}>
+                  {t("defaultPositionLeft") || "左侧"}
+                </button>
+                <button
+                  onClick={() => updateNestedSetting("panel", "defaultPosition", "right")}
+                  style={{
+                    padding: "4px 12px",
+                    fontSize: "13px",
+                    border: "none",
+                    borderLeft: "1px solid var(--gh-border, #e5e7eb)",
+                    cursor: "pointer",
+                    background:
+                      (settings.panel?.defaultPosition || "right") === "right"
+                        ? "var(--gh-primary, #4285f4)"
+                        : "var(--gh-bg, #fff)",
+                    color:
+                      (settings.panel?.defaultPosition || "right") === "right"
+                        ? "#fff"
+                        : "var(--gh-text-secondary, #6b7280)",
+                    transition: "all 0.2s",
+                  }}>
+                  {t("defaultPositionRight") || "右侧"}
+                </button>
+              </div>
+            </SettingRow>
+
+            {/* 默认边距 */}
+            <SettingRow
+              label={t("defaultEdgeDistanceLabel") || "默认边距"}
+              description={t("defaultEdgeDistanceDesc") || "面板距离屏幕边缘的初始距离"}>
+              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                <input
+                  type="number"
+                  className="settings-input"
+                  value={settings.panel?.defaultEdgeDistance ?? 20}
+                  min={0}
+                  max={200}
+                  style={{ width: "70px" }}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 0
+                    const clamped = Math.max(0, Math.min(200, val))
+                    updateNestedSetting("panel", "defaultEdgeDistance", clamped)
+                  }}
+                />
+                <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
+              </div>
+            </SettingRow>
+
             <ToggleRow
               label={t("edgeSnapHideLabel") || "边缘吸附隐藏"}
               description={t("edgeSnapHideDesc") || "拖动面板到屏幕边缘时自动隐藏"}
               checked={settings.panel?.edgeSnap ?? false}
               onChange={() => updateNestedSetting("panel", "edgeSnap", !settings.panel?.edgeSnap)}
             />
+
+            {/* 吸附触发距离 */}
+            <SettingRow
+              label={t("edgeSnapThresholdLabel") || "吸附触发距离"}
+              description={t("edgeSnapThresholdDesc") || "拖拽面板到边缘多近时触发吸附"}
+              disabled={!settings.panel?.edgeSnap}>
+              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                <input
+                  type="number"
+                  className="settings-input"
+                  value={settings.panel?.edgeSnapThreshold ?? 30}
+                  min={10}
+                  max={100}
+                  disabled={!settings.panel?.edgeSnap}
+                  style={{ width: "70px" }}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 30
+                    const clamped = Math.max(10, Math.min(100, val))
+                    updateNestedSetting("panel", "edgeSnapThreshold", clamped)
+                  }}
+                />
+                <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
+              </div>
+            </SettingRow>
           </SettingCard>
 
           {/* 界面排版卡片 */}

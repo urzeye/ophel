@@ -19,6 +19,14 @@ export function setLanguage(lang: string) {
   }
 }
 
+// 获取当前实际生效的语言（用于 UI 高亮显示）
+export function getEffectiveLanguage(settingLang: string): string {
+  if (settingLang === "auto") {
+    return getBrowserLang()
+  }
+  return settingLang
+}
+
 export function t(key: string): string {
   const langResources = resources[currentLang as keyof typeof resources] || resources["en"]
   return (langResources[key as keyof typeof langResources] as string) || key

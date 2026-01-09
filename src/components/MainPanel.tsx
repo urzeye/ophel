@@ -85,9 +85,14 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const { panelRef, headerRef } = useDraggable({
     edgeSnapHide: currentSettings.panel?.edgeSnap,
     edgeSnapState, // 传递当前吸附状态
+    snapThreshold: currentSettings.panel?.edgeSnapThreshold ?? 30,
     onEdgeSnap,
     onUnsnap,
   })
+
+  // 计算默认位置样式
+  const defaultPosition = currentSettings.panel?.defaultPosition ?? "right"
+  const defaultEdgeDistance = currentSettings.panel?.defaultEdgeDistance ?? 40
 
   // 获取排序后的首个 tab
   // tabOrder 是 string[]，数组顺序就是显示顺序
@@ -205,7 +210,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       style={{
         position: "fixed",
         top: "50%",
-        right: "20px",
+        // 根据默认位置设置 left 或 right
+        ...(defaultPosition === "left"
+          ? { left: `${defaultEdgeDistance}px`, right: "auto" }
+          : { right: `${defaultEdgeDistance}px`, left: "auto" }),
         transform: "translateY(-50%)",
         width: "320px",
         height: "80vh",

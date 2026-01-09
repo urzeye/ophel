@@ -441,6 +441,18 @@ export const en = {
   defaultPanelStateDesc: "Keep panel expanded after page refresh",
   autoHidePanelLabel: "Auto-hide Panel",
   autoHidePanelDesc: "Hide panel when clicking outside (sidebar, chat area, input box)",
+  // Edge Snap
+  edgeSnapHideLabel: "Edge Snap Hide",
+  edgeSnapHideDesc: "Automatically hide panel when dragged to screen edge, show on hover",
+  edgeSnapThresholdLabel: "Snap Threshold",
+  edgeSnapThresholdDesc: "How close to edge triggers snap when dragging",
+  // Panel Position Settings
+  defaultPositionLabel: "Default Position",
+  defaultPositionDesc: "Which side the panel appears after page refresh",
+  defaultPositionLeft: "Left",
+  defaultPositionRight: "Right",
+  defaultEdgeDistanceLabel: "Default Margin",
+  defaultEdgeDistanceDesc: "Initial distance from screen edge",
   // Interface Toggle
   disableOutline: "Disable Outline",
   togglePrompts: "Toggle Prompts",
