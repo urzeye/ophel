@@ -1,17 +1,19 @@
 import { resources, type LocaleKey } from "~locales/resources"
 
-let currentLang: string = "en"
+// 初始化根据浏览器语言设置
+const getBrowserLang = () => {
+  if (typeof navigator === "undefined") return "en"
+  const lang = navigator.language
+  if (lang.startsWith("zh-TW") || lang.startsWith("zh-HK")) return "zh-TW"
+  if (lang.startsWith("zh")) return "zh-CN"
+  return "en"
+}
+
+let currentLang: string = getBrowserLang()
 
 export function setLanguage(lang: string) {
   if (lang === "auto") {
-    const browserLang = navigator.language
-    if (browserLang.startsWith("zh-TW") || browserLang.startsWith("zh-HK")) {
-      currentLang = "zh-TW"
-    } else if (browserLang.startsWith("zh")) {
-      currentLang = "zh-CN"
-    } else {
-      currentLang = "en"
-    }
+    currentLang = getBrowserLang()
   } else {
     currentLang = lang
   }

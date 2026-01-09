@@ -679,4 +679,32 @@ export const zhCN = {
   permissionDenied: "授权已取消",
   windowClosing: "窗口即将关闭...",
   allow: "允许",
+
+  // ======== 默认提示词 ========
+  defaultPromptTranslateTitle: "翻译助手",
+  defaultPromptTranslateCategory: "翻译",
+  defaultPromptTranslateContent: `你是一位拥有 20 年经验的专业翻译家。请遵循我的要求将待翻译文本翻译成 {{target_language}}。
+
+具体要求：
+准确性：忠实于原意，不要遗漏任何信息。
+流畅性：翻译后的语言应符合 {{target_language}} 的表达习惯，避免"翻译腔"。
+风格一致：保持原有的语气（如：专业、幽默、严肃）。
+
+待翻译文本为： {{text}}`,
+
+  defaultPromptCodeOptTitle: "代码优化",
+  defaultPromptCodeOptCategory: "编程",
+  defaultPromptCodeOptContent: `你是 {{language}} 专家。请审阅以下代码，并应用 Clean Code 原则进行重构。
+
+**原始代码**:
+{{code}}
+
+**要求**:
+1. 消除冗余逻辑。
+2. 改进命名，使其符合 {{language}} 的社区规范。
+3. 增加必要的错误处理机制。
+4. 重点关注代码的【可读性】、【健壮性】和【可扩展性】。
+5. 如果可能，使用 {{version}} (如 ES6+/Java 21) 的现代语法特性。
+
+请直接输出优化后的代码块，并在后面附带简短的优化点总结。`,
 }

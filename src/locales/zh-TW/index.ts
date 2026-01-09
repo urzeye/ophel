@@ -639,4 +639,32 @@ export const zhTW = {
   permissionDenied: "授權已取消",
   windowClosing: "視窗即將關閉...",
   allow: "允許",
+
+  // ======== 預設提示詞 ========
+  defaultPromptTranslateTitle: "翻譯助手",
+  defaultPromptTranslateCategory: "翻譯",
+  defaultPromptTranslateContent: `你是一位擁有 20 年經驗的專業翻譯家。請遵循我的要求將待翻譯文本翻譯成 {{target_language}}。
+
+具體要求：
+準確性：忠實於原意，不要遺漏任何資訊。
+流暢性：翻譯後的語言應符合 {{target_language}} 的表達習慣，避免「翻譯腔」。
+風格一致：保持原有的語氣（如：專業、幽默、嚴肅）。
+
+待翻譯文本為： {{text}}`,
+
+  defaultPromptCodeOptTitle: "程式碼優化",
+  defaultPromptCodeOptCategory: "程式設計",
+  defaultPromptCodeOptContent: `你是 {{language}} 專家。請審閱以下程式碼，並運用 Clean Code 原則進行重構。
+
+**原始程式碼**:
+{{code}}
+
+**要求**:
+1. 消除冗餘邏輯。
+2. 改進命名，使其符合 {{language}} 的社群規範。
+3. 增加必要的錯誤處理機制。
+4. 重點關注程式碼的【可讀性】、【健壯性】和【可擴展性】。
+5. 如果可能，使用 {{version}} (如 ES6+/Java 21) 的現代語法特性。
+
+請直接輸出優化後的程式碼區塊，並在後面附帶簡短的優化點總結。`,
 }

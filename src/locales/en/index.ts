@@ -658,4 +658,32 @@ export const en = {
   permissionDenied: "Permission Denied",
   windowClosing: "Window closing...",
   allow: "Allow",
+
+  // ======== Default Prompts ========
+  defaultPromptTranslateTitle: "Translation Assistant",
+  defaultPromptTranslateCategory: "Translation",
+  defaultPromptTranslateContent: `You are a professional translator with 20 years of experience. Please translate the following text into {{target_language}} according to my requirements.
+
+Requirements:
+Accuracy: Be faithful to the original meaning without omitting any information.
+Fluency: The translation should conform to {{target_language}} expression habits, avoiding "translationese."
+Style Consistency: Maintain the original tone (e.g., professional, humorous, serious).
+
+Text to translate: {{text}}`,
+
+  defaultPromptCodeOptTitle: "Code Optimization",
+  defaultPromptCodeOptCategory: "Programming",
+  defaultPromptCodeOptContent: `You are a {{language}} expert. Please review the following code and refactor it using Clean Code principles.
+
+**Original Code**:
+{{code}}
+
+**Requirements**:
+1. Eliminate redundant logic.
+2. Improve naming to conform to {{language}} community conventions.
+3. Add necessary error handling mechanisms.
+4. Focus on code [readability], [robustness], and [extensibility].
+5. If possible, use modern {{version}} (e.g., ES6+/Java 21) syntax features.
+
+Please output the optimized code block directly, followed by a brief summary of improvements.`,
 }

@@ -7,7 +7,7 @@
 import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
 
-import { DEFAULT_PROMPTS, VIRTUAL_CATEGORY } from "~constants"
+import { getDefaultPrompts, VIRTUAL_CATEGORY } from "~constants"
 import type { Prompt } from "~utils/storage"
 
 import { chromeStorageAdapter } from "./chrome-adapter"
@@ -37,7 +37,7 @@ interface PromptsState {
 export const usePromptsStore = create<PromptsState>()(
   persist(
     (set, get) => ({
-      prompts: DEFAULT_PROMPTS,
+      prompts: getDefaultPrompts(), // 使用国际化后的默认提示词
       _hasHydrated: false,
 
       addPrompt: (data) => {

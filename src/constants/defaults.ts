@@ -2,6 +2,7 @@
  * 默认值常量
  */
 
+import { t } from "~utils/i18n"
 import type { Prompt } from "~utils/storage"
 
 // ==================== Zustand Store Keys ====================
@@ -20,18 +21,20 @@ export const ZUSTAND_KEYS: string[] = [
 export const MULTI_PROP_STORES: string[] = ["conversations", "readingHistory"]
 
 // ==================== 默认提示词 ====================
-export const DEFAULT_PROMPTS: Prompt[] = [
+// 返回国际化后的默认提示词
+export const getDefaultPrompts = (): Prompt[] => [
   {
     id: "default_1",
-    title: "代码优化",
-    content: "请帮我优化以下代码，提高性能和可读性：\n\n",
-    category: "编程",
+    title: t("defaultPromptCodeOptTitle") || "代码优化",
+    content: t("defaultPromptCodeOptContent") || "请帮我优化以下代码，提高性能和可读性：\n\n",
+    category: t("defaultPromptCodeOptCategory") || "编程",
   },
   {
     id: "default_2",
-    title: "翻译助手",
-    content: "请将以下内容翻译成中文，保持专业术语的准确性：\n\n",
-    category: "翻译",
+    title: t("defaultPromptTranslateTitle") || "翻译助手",
+    content:
+      t("defaultPromptTranslateContent") || "请将以下内容翻译成中文，保持专业术语的准确性：\n\n",
+    category: t("defaultPromptTranslateCategory") || "翻译",
   },
 ]
 

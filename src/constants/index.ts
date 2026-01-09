@@ -14,7 +14,7 @@ export {
 
 // 默认值
 export {
-  DEFAULT_PROMPTS,
+  getDefaultPrompts,
   DEFAULT_FOLDERS,
   ZUSTAND_KEYS,
   MULTI_PROP_STORES,
