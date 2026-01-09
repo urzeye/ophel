@@ -100,6 +100,14 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
     currentUserQueryWidth?.value || "600",
   )
 
+  // 面板设置本地状态 (优化输入体验)
+  const [tempEdgeDistance, setTempEdgeDistance] = useState(
+    settings.panel?.defaultEdgeDistance?.toString() ?? "20",
+  )
+  const [tempSnapThreshold, setTempSnapThreshold] = useState(
+    settings.panel?.edgeSnapThreshold?.toString() ?? "30",
+  )
+
   useEffect(() => {
     if (currentPageWidth?.value) {
       setTempWidth(currentPageWidth.value)
@@ -111,6 +119,36 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
       setTempUserQueryWidth(currentUserQueryWidth.value)
     }
   }, [currentUserQueryWidth?.value])
+
+  // 同步 Store 设置到本地状态
+  useEffect(() => {
+    if (settings.panel?.defaultEdgeDistance !== undefined) {
+      setTempEdgeDistance(settings.panel?.defaultEdgeDistance.toString())
+    }
+  }, [settings.panel?.defaultEdgeDistance])
+
+  useEffect(() => {
+    if (settings.panel?.edgeSnapThreshold !== undefined) {
+      setTempSnapThreshold(settings.panel?.edgeSnapThreshold.toString())
+    }
+  }, [settings.panel?.edgeSnapThreshold])
+
+  // 面板设置处理函数
+  const handleEdgeDistanceBlur = () => {
+    let val = parseInt(tempEdgeDistance)
+    if (isNaN(val)) val = 20
+    const clamped = Math.max(0, Math.min(200, val))
+    setTempEdgeDistance(clamped.toString())
+    updateNestedSetting("panel", "defaultEdgeDistance", clamped)
+  }
+
+  const handleSnapThresholdBlur = () => {
+    let val = parseInt(tempSnapThreshold)
+    if (isNaN(val)) val = 30
+    const clamped = Math.max(10, Math.min(100, val))
+    setTempSnapThreshold(clamped.toString())
+    updateNestedSetting("panel", "edgeSnapThreshold", clamped)
+  }
 
   // 页面宽度更新
   const handleWidthBlur = () => {
@@ -364,15 +402,12 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
               <input
                 type="number"
                 className="settings-input"
-                value={settings.panel?.defaultEdgeDistance ?? 20}
+                value={tempEdgeDistance}
                 min={0}
                 max={200}
                 style={{ width: "70px" }}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value) || 0
-                  const clamped = Math.max(0, Math.min(200, val))
-                  updateNestedSetting("panel", "defaultEdgeDistance", clamped)
-                }}
+                onChange={(e) => setTempEdgeDistance(e.target.value)}
+                onBlur={handleEdgeDistanceBlur}
               />
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
             </div>
@@ -394,16 +429,13 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
               <input
                 type="number"
                 className="settings-input"
-                value={settings.panel?.edgeSnapThreshold ?? 30}
+                value={tempSnapThreshold}
                 min={10}
                 max={100}
                 disabled={!settings.panel?.edgeSnap}
                 style={{ width: "70px" }}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value) || 30
-                  const clamped = Math.max(10, Math.min(100, val))
-                  updateNestedSetting("panel", "edgeSnapThreshold", clamped)
-                }}
+                onChange={(e) => setTempSnapThreshold(e.target.value)}
+                onBlur={handleSnapThresholdBlur}
               />
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
             </div>
