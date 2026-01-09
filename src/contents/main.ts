@@ -320,6 +320,7 @@ if (!window.ophelInitialized) {
       // ⭐ SPA 导航监听：URL 变化时重新初始化相关模块
       // 参考油猴脚本 initUrlChangeObserver (15845行)
       let lastUrl = window.location.href
+      let readingHistoryRestoreTimeoutId: ReturnType<typeof setTimeout> | null = null
 
       const handleUrlChange = async () => {
         const currentUrl = window.location.href
@@ -328,9 +329,16 @@ if (!window.ophelInitialized) {
           console.log("[Ophel] URL changed, reinitializing modules...")
 
           // 1. 阅读历史：停止录制 → 延迟恢复并重启
+          // 取消之前的延迟恢复，避免快速切换时竞态条件
+          if (readingHistoryRestoreTimeoutId) {
+            clearTimeout(readingHistoryRestoreTimeoutId)
+            readingHistoryRestoreTimeoutId = null
+          }
+
           if (readingHistoryManager) {
             readingHistoryManager.stopRecording()
-            setTimeout(async () => {
+            readingHistoryRestoreTimeoutId = setTimeout(async () => {
+              readingHistoryRestoreTimeoutId = null
               const { showToast } = await import("~utils/toast")
               const restored = await readingHistoryManager?.restoreProgress((msg) =>
                 showToast(msg, 3000),

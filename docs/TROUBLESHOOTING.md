@@ -15,6 +15,7 @@
 7. [Gemini Business 主题切换后面板不同步更新](#7-gemini-business-主题切换后面板不同步更新)
 8. [WebDAV 恢复后主题同步失效与数据覆盖问题](#8-webdav-恢复后主题同步失效与数据覆盖问题)
 9. [操作其他设置后主题意外重置为默认值](#9-操作其他设置后主题意外重置为默认值)
+10. [阅读记录恢复异常与性能优化排查](#10-阅读记录恢复异常与性能优化排查)
 
 ---
 
@@ -1349,3 +1350,116 @@ const siteTheme = settings?.theme?.sites?.[siteId as keyof typeof sites] || sett
 | `src/components/MainPanel.tsx`   | **修改** - 传递 `siteId` prop 给 SettingsTab                                    |
 | `src/components/SettingsTab.tsx` | **修改** - 接收 `siteId` prop，所有读写配置使用动态 siteId                      |
 | `src/core/theme-manager.ts`      | **修改** - `syncPluginUITheme` 暂停/恢复 MutationObserver 防止循环触发          |
+
+---
+
+## 10. 阅读记录恢复异常与性能优化排查
+
+**日期**: 2026-01-10
+
+### 症状
+
+- **状态锁死**：恢复完成后，系统仍提示“跳过保存：正在恢复中”，导致新的阅读进度无法保存。
+- **数据污染**：滚动侧边栏（会话列表）也会触发主内容的阅读位置保存。
+- **性能低下**：即使阅读位置在最新的消息附近，系统仍会尝试加载所有历史记录，导致不必要的等待。
+- **恢复不准**：自动恢复的位置经常被 Gemini 的原生滚动逻辑修正或覆盖。
+
+### 背景
+
+`ReadingHistoryManager` 负责监听滚动事件并保存阅读位置，`HistoryLoader` 负责在恢复时懒加载历史消息。
+
+### 根因分析
+
+1.  **状态锁死 (Deadlock)**:
+
+    - `isRestoring = false` 重置逻辑被放置在 `restoreProgress` 的内部 `try...finally` 块中。
+    - 当触发 "Fast Path"（快速路径）或 "Anchor Restoration"（精确恢复）时，代码直接 `return`，跳过了包含重置逻辑的内部 `finally` 块（如果它们不在同一个控制流中）。
+    - 结果：`isRestoring` 标志位永久保持为 `true`。
+
+2.  **事件冒泡 (Event Bubbling)**:
+
+    - 滚动监听器绑定在 `window` 上且开启了 `capture: true`。
+    - `handleScroll` 中缺少对 `event.target` 的过滤，导致侧边栏等非主容器的滚动事件也触发了保存逻辑。
+
+3.  **性能 (Fast Path)**:
+
+    - 原有逻辑总是尝试调用 `loadHistoryUntil`，即使目标位置（Saved Top）就在当前已加载内容的范围内。
+
+4.  **SPA 切换数据错乱**:
+    - SPA 页面切换时，旧的 `ReadingHistoryManager` 实例可能仍在监听滚动事件，将新页面的初始滚动（通常为 0）保存到了旧会话的记录中。
+
+### 修复方案
+
+#### 1. 修复状态锁死
+
+将清理逻辑（重置 `isRestoring`、启动 `PositionKeeper`）移至 **最外层** 的 `finally` 块，确保无论函数通过何种路径退出（成功、失败、异常），清理逻辑始终执行。
+
+```typescript
+async restoreProgress() {
+  this.isRestoring = true;
+  try {
+    // ... 各种恢复尝试 ...
+    if (fastPath) return true;
+    if (fullLoad) return true;
+  } finally {
+    // 移至此处，确保必然执行
+    setTimeout(() => {
+      this.isRestoring = false;
+      this.startPositionKeeper(...);
+    }, 1000);
+  }
+}
+```
+
+#### 2. 事件源过滤
+
+在 `handleScroll` 中增加严格的 Target 检查：
+
+```typescript
+private handleScroll(e: Event) {
+  if (e.type === "scroll") {
+    const container = this.adapter.getScrollContainer();
+    const target = e.target;
+    // 仅处理主容器、document 或 window 的滚动
+    if (target !== container && target !== document && target !== window) {
+      return; // 忽略侧边栏滚动
+    }
+  }
+  // ...
+}
+```
+
+#### 3. 实现 Fast Path (底部偏移策略)
+
+利用底部偏移量（Offset from Bottom）来判断内容是否已存在：
+
+```typescript
+const savedOffsetFromBottom = data.scrollHeight - data.top;
+// 如果当前内容高度足以容纳这个偏移量，说明目标内容已在视口中
+if (container.scrollHeight >= savedOffsetFromBottom) {
+  const fastTop = container.scrollHeight - savedOffsetFromBottom;
+  await smartScrollTo(this.adapter, fastTop);
+  // 跳过 loadHistoryUntil，直接完成
+  return true;
+}
+```
+
+#### 4. 增强位置强制保持 (Position Keeper)
+
+Gemini 页面在加载后会有多次自动滚动行为。引入 `PositionKeeper`，利用 `requestAnimationFrame` 在 3 秒内持续强制将滚动位置重置为目标值，直到用户产生交互。
+
+### 经验总结
+
+| 教训                     | 说明                                                                                                        |
+| :----------------------- | :---------------------------------------------------------------------------------------------------------- |
+| **Finally 块的作用域**   | 在具有多个 `return` 出口的异步函数中，关键的状态清理必须放在最外层的 `finally` 块，否则极易导致死锁。       |
+| **全局事件的过滤**       | 在 `window` 上监听通用事件（如 `scroll`, `click`）时，必须检查 `target`，防止处理无关元素的事件。           |
+| **相对坐标 vs 绝对坐标** | 在动态加载内容的场景下，**相对于底部的偏移量**往往比绝对的 `scrollTop` 更可靠，且能作为快速恢复的依据。     |
+| **对抗原生行为**         | 当宿主页面有强烈的原生自动滚动行为时，简单的 `scrollTo` 往往无效，需要使用 `RAF` 循环进行短时间的强制锁定。 |
+
+### 文件变更
+
+| 文件                          | 变更                                                          |
+| :---------------------------- | :------------------------------------------------------------ |
+| `src/core/reading-history.ts` | **重构** - 修复死锁、添加事件过滤、Fast Path、Position Keeper |
+| `src/utils/history-loader.ts` | **优化** - 修复日志冗余，优化加载结束条件                     |

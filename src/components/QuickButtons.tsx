@@ -2,8 +2,10 @@ import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import { getAdapter } from "~adapters/index"
 import { ClearIcon, ReturnIcon, ThemeDarkIcon, ThemeLightIcon } from "~components/icons"
+import { LoadingOverlay } from "~components/LoadingOverlay"
 import { COLLAPSED_BUTTON_DEFS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
+import { loadHistoryUntil } from "~utils/history-loader"
 import { t } from "~utils/i18n"
 import {
   getScrollInfo,
@@ -13,6 +15,7 @@ import {
   smartScrollToTop,
 } from "~utils/scroll-helper"
 import { DEFAULT_SETTINGS, type Settings } from "~utils/storage"
+import { showToast } from "~utils/toast"
 
 interface QuickButtonsProps {
   isPanelOpen: boolean
@@ -52,34 +55,18 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   // 滚动到顶部（支持图文并茂模式）
   const scrollToTop = useCallback(async () => {
-    // 使用智能滚动函数，自动处理 Flutter iframe
-    const { previousScrollTop, scrollHeight, container } = await smartScrollToTop(adapter)
-
-    // 保存当前位置作为锚点
-    setSavedAnchorTop(previousScrollTop)
-    setHasAnchor(true)
-
-    // 检测是否处于 Flutter 模式
-    const flutterMode = isFlutterProxy(container)
-    setIsFlutterMode(flutterMode)
-
-    // 如果是 Flutter 模式，滚动已由 Main World 处理，直接返回
-    if (flutterMode) {
-      return
-    }
-
-    // 配置参数
-    const WAIT_MS = 800
-    const MAX_NO_CHANGE_ROUNDS = 3
-    const MAX_TOTAL_ROUNDS = 50
+    // 遮罩延迟显示
     const OVERLAY_DELAY_MS = 1600
-
     abortLoadingRef.current = false
 
-    const initialHeight = scrollHeight
-    let lastHeight = initialHeight
-    let noChangeCount = 0
-    let loopCount = 0
+    // 创建 AbortController 用于中断
+    const abortController = new AbortController()
+    const checkAbort = () => {
+      if (abortLoadingRef.current) {
+        abortController.abort()
+      }
+    }
+    const abortCheckInterval = setInterval(checkAbort, 100)
 
     // 延迟显示遮罩的定时器
     let overlayTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
@@ -89,60 +76,23 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       }
     }, OVERLAY_DELAY_MS)
 
-    const loadLoop = async (): Promise<void> => {
-      if (abortLoadingRef.current) {
-        finish(false)
-        return
-      }
+    try {
+      // 使用公共 HistoryLoader
+      const result = await loadHistoryUntil({
+        adapter,
+        loadAll: true,
+        signal: abortController.signal,
+        onProgress: (msg) => {
+          setLoadingText(`${t("loadingHistory")} ${msg}`)
+        },
+      })
 
-      loopCount++
+      // 保存锚点
+      setSavedAnchorTop(result.previousScrollTop)
+      setHasAnchor(true)
+      setIsFlutterMode(result.isFlutterMode)
 
-      // 超时保护
-      if (loopCount >= MAX_TOTAL_ROUNDS) {
-        finish(true)
-        return
-      }
-
-      // 跳到顶部并触发懒加载
-      container.scrollTop = 0
-      container.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true }))
-
-      await new Promise((resolve) => setTimeout(resolve, WAIT_MS))
-
-      if (abortLoadingRef.current) {
-        finish(false)
-        return
-      }
-
-      const currentHeight = container.scrollHeight
-
-      if (currentHeight > lastHeight) {
-        // 高度增加，继续加载
-        lastHeight = currentHeight
-        noChangeCount = 0
-        setLoadingText(`${t("loadingHistory")} (${Math.round(currentHeight / 1000)}k)`)
-        await loadLoop()
-      } else {
-        noChangeCount++
-        // 短对话优化：首轮无变化且已在顶部，快速完成
-        const isAtTop = container.scrollTop < 10
-        const isFirstRoundNoChange = loopCount === 1 && currentHeight === initialHeight
-
-        if (isFirstRoundNoChange && isAtTop) {
-          // 短对话，静默完成（不显示遮罩和 toast）
-          finish(false, true)
-        } else if (noChangeCount >= MAX_NO_CHANGE_ROUNDS) {
-          // 加载完成
-          finish(true)
-        } else {
-          // 继续确认
-          setLoadingText(`${t("loadingHistory")} (${noChangeCount}/${MAX_NO_CHANGE_ROUNDS})`)
-          await loadLoop()
-        }
-      }
-    }
-
-    const finish = (success: boolean, silent = false) => {
+      // 清理遮罩
       if (overlayTimer) {
         clearTimeout(overlayTimer)
         overlayTimer = null
@@ -150,15 +100,16 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       setIsLoadingHistory(false)
       setLoadingText("")
 
-      if (success && !silent) {
-        import("~utils/toast").then(({ showToast }) => {
-          showToast(t("historyLoaded"), 2000)
-        })
+      // 显示完成提示（静默模式不显示）
+      if (result.success && !result.silent) {
+        showToast(t("historyLoaded"), 2000)
+      }
+    } finally {
+      clearInterval(abortCheckInterval)
+      if (overlayTimer) {
+        clearTimeout(overlayTimer)
       }
     }
-
-    // 开始加载循环
-    await loadLoop()
   }, [adapter])
 
   // 停止加载
@@ -421,18 +372,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   return (
     <>
       {/* 加载历史遮罩 */}
-      {isLoadingHistory && (
-        <div className="gh-loading-mask">
-          <div className="gh-loading-content">
-            <div className="gh-loading-spinner">⏳</div>
-            <div className="gh-loading-text">{loadingText || t("loadingHistory")}</div>
-            <div className="gh-loading-hint">{t("loadingHint")}</div>
-            <button className="gh-loading-stop-btn" onClick={stopLoading}>
-              {t("stopLoading")}
-            </button>
-          </div>
-        </div>
-      )}
+      <LoadingOverlay isVisible={isLoadingHistory} text={loadingText} onStop={stopLoading} />
       <div
         ref={groupRef}
         className={`quick-btn-group gh-interactive ${!isPanelOpen ? "collapsed" : ""}`}

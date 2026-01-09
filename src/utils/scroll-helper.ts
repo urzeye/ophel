@@ -80,7 +80,6 @@ export async function smartScrollToTop(adapter: SiteAdapter | null): Promise<{
     const previousScrollTop = infoResult.scrollTop || 0
     const scrollHeight = infoResult.scrollHeight || 0
     await sendScrollRequest("scrollToTop")
-    // 返回一个代理容器对象用于后续操作
     return { container: createFlutterScrollProxy(), previousScrollTop, scrollHeight }
   }
 
@@ -88,10 +87,9 @@ export async function smartScrollToTop(adapter: SiteAdapter | null): Promise<{
   const container = adapter?.getScrollContainer()
 
   if (container && container.scrollHeight > container.clientHeight) {
-    // 普通容器，直接滚动
     const previousScrollTop = container.scrollTop
     const scrollHeight = container.scrollHeight
-    container.scrollTop = 0
+    container.scrollTo({ top: 0, behavior: "smooth" })
     return { container, previousScrollTop, scrollHeight }
   }
 

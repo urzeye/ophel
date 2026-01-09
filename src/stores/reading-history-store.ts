@@ -19,6 +19,7 @@ export interface ReadingPosition {
   textSignature?: string
   index?: number
   offset?: number
+  scrollHeight?: number // 保存时的容器高度
 }
 
 // ==================== Store 类型定义 ====================
