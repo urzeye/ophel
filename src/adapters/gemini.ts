@@ -130,6 +130,22 @@ export class GeminiAdapter extends SiteAdapter {
     ]
   }
 
+  getLatestReplyText(): string | null {
+    const container = document.querySelector(this.getResponseContainerSelector())
+    if (!container) return null
+
+    // 查找所有的 model-response
+    const responses = container.querySelectorAll("model-response")
+    if (responses.length === 0) return null
+
+    const lastResponse = responses[responses.length - 1]
+
+    // 尝试获取文本容器，避免包含无关 UI
+    const textContainer = lastResponse.querySelector(".model-response-text") || lastResponse
+
+    return this.extractTextWithLineBreaks(textContainer)
+  }
+
   // ==================== 页面宽度 ====================
 
   // ==================== 页面宽度控制 ====================

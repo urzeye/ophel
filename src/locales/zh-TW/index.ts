@@ -9,7 +9,7 @@ export const zhTW = {
   navPageContent: "頁面與內容",
   navFeatures: "功能模組",
   navPermissions: "權限管理",
-  navBackup: "備份與同步",
+  navBackup: "資料管理",
   navAbout: "關於",
 
   // ======== Options 頁面標題與描述 ========
@@ -397,8 +397,8 @@ export const zhTW = {
   // 介面排版開關
   defaultPanelStateLabel: "默認顯示面板",
   defaultPanelStateDesc: "刷新頁面後面板默認保持展開狀態",
-  autoHidePanelLabel: "自動隱藏面板",
-  autoHidePanelDesc: "點擊面板外部（如左側側邊欄、聊天區、輸入框）時自動隱藏",
+  autoHidePanelLabel: "點擊外部最小化",
+  autoHidePanelDesc: "點擊面板外部區域時自動最小化面板",
   // 介面排版開關
   disableOutline: "禁用大綱",
   togglePrompts: "啟用/禁用提示詞",
@@ -415,6 +415,7 @@ export const zhTW = {
   conversationsEmptyHint: "點擊上方同步按鈕從側邊欄匯入會話",
   conversationsSync: "同步會話",
   conversationsSyncing: "正在同步...",
+  syncingConversations: "正在同步會話列表...",
   conversationsSynced: "同步完成",
   conversationsAddFolder: "新建資料夾",
   conversationsRename: "重新命名",
@@ -693,4 +694,70 @@ export const zhTW = {
 5. 如果可能，使用 {{version}} (如 ES6+/Java 21) 的現代語法特性。
 
 請直接輸出優化後的程式碼區塊，並在後面附帶簡短的優化點總結。`,
+
+  // ======== 快捷鍵設置頁面 ========
+  navShortcuts: "鍵位設置",
+  shortcutsPageDesc: "配置鍵盤快捷鍵以快速執行操作",
+  shortcutsGlobalSettings: "快捷鍵設置",
+  enableShortcuts: "啟用快捷鍵",
+  enableShortcutsDesc: "啟用或禁用所有鍵盤快捷鍵",
+  globalShortcutUrl: "全域快捷鍵開啟的 URL",
+  globalShortcutUrlDesc: "按下全域快捷鍵 Alt+G 時開啟的網址",
+  resetShortcuts: "恢復預設快捷鍵",
+  resetShortcutsConfirm: "確定要恢復所有快捷鍵為預設值嗎？",
+  pressAnyKey: "請按下快捷鍵...",
+  shortcutConflictWith: "與",
+  shortcutConflict: "衝突",
+  globalShortcutsTitle: "全域快捷鍵",
+  globalShortcutsDesc: "在瀏覽器任何頁面都可使用，需要在瀏覽器擴充功能設置頁面配置。",
+  openBrowserShortcuts: "開啟瀏覽器快捷鍵設置",
+
+  // 快捷鍵分類
+  shortcutCategoryNavigation: "導航",
+  shortcutCategoryPanel: "面板",
+  shortcutCategoryOutline: "大綱",
+  shortcutCategoryConversation: "會話",
+  shortcutCategoryEdit: "編輯",
+
+  // 快捷鍵功能名稱
+  shortcutScrollTop: "去頂部",
+  shortcutScrollBottom: "去底部",
+  shortcutGoToAnchor: "返回錨點",
+  shortcutTogglePanel: "切換面板",
+  shortcutToggleTheme: "切換主題",
+  shortcutOpenSettings: "開啟設置",
+  shortcutSwitchTab1: "切換到第 1 個標籤",
+  shortcutSwitchTab2: "切換到第 2 個標籤",
+  shortcutSwitchTab3: "切換到第 3 個標籤",
+  shortcutRefreshOutline: "刷新大綱",
+  shortcutToggleOutlineExpand: "展開/折疊全部",
+  shortcutExpandLevel1: "展開到 1 級",
+  shortcutExpandLevel2: "展開到 2 級",
+  shortcutExpandLevel3: "展開到 3 級",
+  shortcutToggleUserQueries: "顯示用戶問題",
+  shortcutPrevHeading: "上一個標題",
+  shortcutNextHeading: "下一個標題",
+  shortcutLocateOutline: "定位大綱",
+  shortcutSearchOutline: "搜尋大綱",
+  shortcutNewConversation: "新會話",
+  shortcutRefreshConversations: "刷新會話列表",
+  shortcutLocateConversation: "定位當前會話",
+  shortcutExportConversation: "匯出對話",
+  shortcutCopyLatestReply: "複製最新回覆",
+  shortcutToggleScrollLock: "鎖定滾動",
+
+  // 快捷鍵操作提示
+  scrolledToTop: "已滾動到頂部",
+  scrolledToBottom: "已滾動到底部",
+  outlineRefreshed: "大綱已刷新",
+  conversationsRefreshed: "會話列表已刷新",
+  locatingOutline: "正在定位大綱位置...",
+  locatingConversation: "正在定位當前會話...",
+  outlineDisabled: "大綱功能已禁用",
+  conversationsDisabled: "會話功能已禁用",
+  exportStarted: "開始匯出對話...",
+  replyCopied: "已複製最新回覆",
+  noReplyToCopy: "無可複製內容",
+  scrollLockToggled: "滾動鎖定已切換",
+  browserNotSupported: "當前瀏覽器不支援自訂擴充功能快捷鍵",
 }

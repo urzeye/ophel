@@ -606,6 +606,11 @@ export abstract class SiteAdapter {
 
   // ==================== 新对话监听 ====================
 
+  /** 获取最新回复的文本内容（用于复制功能） */
+  getLatestReplyText(): string | null {
+    return null
+  }
+
   /** 获取"新对话"按钮的选择器列表 */
   getNewChatButtonSelectors(): string[] {
     return []

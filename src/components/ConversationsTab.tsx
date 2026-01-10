@@ -211,7 +211,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   }
 
   // 同步
-  const handleSync = async () => {
+  const handleSync = useCallback(async () => {
     setSyncing(true)
     try {
       await manager.siteAdapter?.loadAllConversations?.()
@@ -220,10 +220,10 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     } finally {
       setSyncing(false)
     }
-  }
+  }, [manager, lastUsedFolderId, loadData])
 
   // 定位当前对话
-  const handleLocate = () => {
+  const handleLocate = useCallback(() => {
     const sessionId = manager.siteAdapter?.getSessionId?.()
     if (!sessionId || sessionId === "default" || sessionId === "app") return
 
@@ -245,7 +245,41 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         setTimeout(() => item.classList.remove("locate-highlight"), 2000)
       }
     }, 100)
-  }
+  }, [manager, handleSync])
+
+  // 监听快捷键触发的定位事件
+  useEffect(() => {
+    const handleLocateEvent = () => {
+      // 清除全局标记
+      ;(window as any).__ophelPendingLocateConversation = false
+      handleLocate()
+    }
+
+    // 检查挂载时是否有待处理的定位请求
+    if ((window as any).__ophelPendingLocateConversation) {
+      // 延迟执行，确保组件完全渲染
+      setTimeout(() => {
+        handleLocateEvent()
+      }, 100)
+    }
+
+    window.addEventListener("ophel:locateConversation", handleLocateEvent)
+    return () => {
+      window.removeEventListener("ophel:locateConversation", handleLocateEvent)
+    }
+  }, [handleLocate])
+
+  // 监听快捷键触发的刷新事件
+  useEffect(() => {
+    const handleRefreshEvent = () => {
+      handleSync()
+    }
+
+    window.addEventListener("ophel:refreshConversations", handleRefreshEvent)
+    return () => {
+      window.removeEventListener("ophel:refreshConversations", handleRefreshEvent)
+    }
+  }, [handleSync])
 
   // 批量模式
   const toggleBatchMode = () => {

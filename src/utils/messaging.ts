@@ -101,6 +101,17 @@ export interface OpenOptionsPageMessage {
   type: typeof MSG_OPEN_OPTIONS_PAGE
 }
 
+// 打开 URL（用于 chrome:// 等特殊协议）
+export const MSG_OPEN_URL = "OPEN_URL"
+
+export interface OpenUrlPayload {
+  url: string
+}
+
+export interface OpenUrlMessage extends OpenUrlPayload {
+  type: typeof MSG_OPEN_URL
+}
+
 export type ExtensionMessage =
   | ShowNotificationMessage
   | FocusTabMessage
@@ -111,6 +122,7 @@ export type ExtensionMessage =
   | RequestPermissionsMessage
   | RevokePermissionsMessage
   | OpenOptionsPageMessage
+  | OpenUrlMessage
 
 /**
  * Send a message to the background service worker with type safety

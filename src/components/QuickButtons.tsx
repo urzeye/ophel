@@ -38,6 +38,20 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const [hasAnchor, setHasAnchor] = useState(false)
   const [savedAnchorTop, setSavedAnchorTop] = useState<number | null>(null)
 
+  // 监听快捷键触发的锚点设置事件
+  useEffect(() => {
+    const handleAnchorSet = (e: Event) => {
+      const customEvent = e as CustomEvent<{ position: number }>
+      setSavedAnchorTop(customEvent.detail.position)
+      setHasAnchor(true)
+    }
+
+    window.addEventListener("ophel:anchorSet", handleAnchorSet)
+    return () => {
+      window.removeEventListener("ophel:anchorSet", handleAnchorSet)
+    }
+  }, [])
+
   // 悬浮隐藏状态
   const [isHovered, setIsHovered] = useState(false)
   const groupRef = useRef<HTMLDivElement>(null)

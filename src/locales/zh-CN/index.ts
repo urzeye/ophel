@@ -418,6 +418,7 @@ export const zhCN = {
   refreshPrompts: "刷新提示词",
   refreshOutline: "刷新大纲",
   refreshConversations: "刷新会话",
+  syncingConversations: "正在同步会话列表...",
   refreshSettings: "刷新设置",
   // Tab 顺序设置
   tabOrderSettings: "界面排版",
@@ -480,8 +481,8 @@ export const zhCN = {
   // 界面排版开关
   defaultPanelStateLabel: "默认显示面板",
   defaultPanelStateDesc: "刷新页面后面板默认保持展开状态",
-  autoHidePanelLabel: "自动隐藏面板",
-  autoHidePanelDesc: "点击面板外部（如左侧侧边栏、聊天区、输入框）时自动隐藏",
+  autoHidePanelLabel: "点击外部最小化",
+  autoHidePanelDesc: "点击面板外部区域时自动最小化面板",
 
   // 界面排版开关
   disableOutline: "禁用大纲",
@@ -728,4 +729,70 @@ export const zhCN = {
 5. 如果可能，使用 {{version}} (如 ES6+/Java 21) 的现代语法特性。
 
 请直接输出优化后的代码块，并在后面附带简短的优化点总结。`,
+
+  // ======== 快捷键设置页面 ========
+  navShortcuts: "键位设置",
+  shortcutsPageDesc: "配置键盘快捷键以快速执行操作",
+  shortcutsGlobalSettings: "快捷键设置",
+  enableShortcuts: "启用快捷键",
+  enableShortcutsDesc: "启用或禁用所有键盘快捷键",
+  globalShortcutUrl: "全局快捷键打开的 URL",
+  globalShortcutUrlDesc: "按下全局快捷键 Alt+G 时打开的网址",
+  resetShortcuts: "恢复默认快捷键",
+  resetShortcutsConfirm: "确定要恢复所有快捷键为默认值吗？",
+  pressAnyKey: "请按下快捷键...",
+  shortcutConflictWith: "与",
+  shortcutConflict: "冲突",
+  globalShortcutsTitle: "全局快捷键",
+  globalShortcutsDesc: "在浏览器任何页面都可使用，需要在浏览器扩展设置页面配置。",
+  openBrowserShortcuts: "打开浏览器快捷键设置",
+
+  // 快捷键分类
+  shortcutCategoryNavigation: "导航",
+  shortcutCategoryPanel: "面板",
+  shortcutCategoryOutline: "大纲",
+  shortcutCategoryConversation: "会话",
+  shortcutCategoryEdit: "编辑",
+
+  // 快捷键功能名称
+  shortcutScrollTop: "去顶部",
+  shortcutScrollBottom: "去底部",
+  shortcutGoToAnchor: "返回锚点",
+  shortcutTogglePanel: "切换面板",
+  shortcutToggleTheme: "切换主题",
+  shortcutOpenSettings: "开放设置",
+  shortcutSwitchTab1: "切换到第 1 个标签",
+  shortcutSwitchTab2: "切换到第 2 个标签",
+  shortcutSwitchTab3: "切换到第 3 个标签",
+  shortcutRefreshOutline: "刷新大纲",
+  shortcutToggleOutlineExpand: "展开/折叠全部",
+  shortcutExpandLevel1: "展开到 1 级",
+  shortcutExpandLevel2: "展开到 2 级",
+  shortcutExpandLevel3: "展开到 3 级",
+  shortcutToggleUserQueries: "显示用户问题",
+  shortcutPrevHeading: "上一个标题",
+  shortcutNextHeading: "下一个标题",
+  shortcutLocateOutline: "定位大纲",
+  shortcutSearchOutline: "搜索大纲",
+  shortcutNewConversation: "新会话",
+  shortcutRefreshConversations: "刷新会话列表",
+  shortcutLocateConversation: "定位当前会话",
+  shortcutExportConversation: "导出对话",
+  shortcutCopyLatestReply: "复制最新回复",
+  shortcutToggleScrollLock: "锁定滚动",
+
+  // 快捷键操作提示
+  scrolledToTop: "已滚动到顶部",
+  scrolledToBottom: "已滚动到底部",
+  outlineRefreshed: "大纲已刷新",
+  conversationsRefreshed: "会话列表已刷新",
+  locatingOutline: "正在定位大纲位置...",
+  locatingConversation: "正在定位当前会话...",
+  outlineDisabled: "大纲功能已禁用",
+  conversationsDisabled: "会话功能已禁用",
+  exportStarted: "开始导出对话...",
+  replyCopied: "已复制最新回复",
+  noReplyToCopy: "无可复制内容",
+  scrollLockToggled: "滚动锁定已切换",
+  browserNotSupported: "当前浏览器不支持自定义扩展快捷键",
 }

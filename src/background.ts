@@ -4,6 +4,7 @@ import {
   MSG_CHECK_PERMISSIONS,
   MSG_FOCUS_TAB,
   MSG_OPEN_OPTIONS_PAGE,
+  MSG_OPEN_URL,
   MSG_PROXY_FETCH,
   MSG_REQUEST_PERMISSIONS,
   MSG_REVOKE_PERMISSIONS,
@@ -38,6 +39,15 @@ chrome.permissions.onRemoved.addListener(async (removed) => {
       settings.content.watermarkRemoval = false
       await localStorage.set("settings", settings)
     }
+  }
+})
+
+// 监听全局快捷键命令
+chrome.commands.onCommand.addListener(async (command) => {
+  if (command === "open-global-url") {
+    const settings = await localStorage.get<Settings>("settings")
+    const url = settings?.shortcuts?.globalUrl || "https://gemini.google.com"
+    chrome.tabs.create({ url, active: true })
   }
 })
 
@@ -317,6 +327,22 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           sendResponse({ success: true })
         } catch (err) {
           console.error("Open options page failed:", err)
+          sendResponse({ success: false, error: (err as Error).message })
+        }
+      })()
+      break
+
+    case MSG_OPEN_URL:
+      ;(async () => {
+        try {
+          const { url } = message as any
+          await chrome.tabs.create({
+            url,
+            active: true,
+          })
+          sendResponse({ success: true })
+        } catch (err) {
+          console.error("Open URL failed:", err)
           sendResponse({ success: false, error: (err as Error).message })
         }
       })()

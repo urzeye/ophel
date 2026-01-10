@@ -6,6 +6,8 @@
 
 import { Storage } from "@plasmohq/storage"
 
+import { DEFAULT_SHORTCUTS_SETTINGS, type ShortcutsSettings } from "~constants/shortcuts"
+
 // 本地存储 - 用于非 Zustand 管理的数据
 export const localStorage = new Storage({ area: "local" })
 
@@ -158,6 +160,9 @@ export interface Settings {
     lastSyncTime?: number
     lastSyncStatus?: "success" | "failed" | "syncing"
   }
+
+  // 快捷键设置
+  shortcuts: ShortcutsSettings
 }
 
 // 默认站点主题配置
@@ -187,7 +192,7 @@ export const DEFAULT_SETTINGS: Settings = {
   panel: {
     defaultOpen: true,
     autoHide: false,
-    edgeSnap: true,
+    edgeSnap: false,
     preventAutoScroll: false,
     defaultPosition: "right",
     defaultEdgeDistance: 20,
@@ -292,6 +297,8 @@ export const DEFAULT_SETTINGS: Settings = {
     syncInterval: 30,
     remoteDir: "ophel",
   },
+
+  shortcuts: DEFAULT_SHORTCUTS_SETTINGS,
 }
 
 export interface Folder {

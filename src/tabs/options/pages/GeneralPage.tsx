@@ -334,13 +334,6 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
             }
           />
 
-          <ToggleRow
-            label={t("autoHidePanelLabel") || "自动隐藏面板"}
-            description={t("autoHidePanelDesc") || "点击面板外部时自动隐藏"}
-            checked={settings.panel?.autoHide ?? false}
-            onChange={() => updateNestedSetting("panel", "autoHide", !settings.panel?.autoHide)}
-          />
-
           {/* 默认位置 */}
           <SettingRow
             label={t("defaultPositionLabel") || "默认位置"}
@@ -412,6 +405,13 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
             </div>
           </SettingRow>
+
+          <ToggleRow
+            label={t("autoHidePanelLabel") || "自动隐藏面板"}
+            description={t("autoHidePanelDesc") || "点击面板外部时自动隐藏"}
+            checked={settings.panel?.autoHide ?? false}
+            onChange={() => updateNestedSetting("panel", "autoHide", !settings.panel?.autoHide)}
+          />
 
           <ToggleRow
             label={t("edgeSnapHideLabel") || "边缘吸附隐藏"}

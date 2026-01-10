@@ -66,6 +66,15 @@
           "<all_urls>"
         ]
       }
-    ]
+    ],
+    "commands": {
+      "open-global-url": {
+        "suggested_key": {
+          "default": "Alt+G",
+          "mac": "Alt+G"
+        },
+        "description": "Open Global URL"
+      }
+    }
   }
 }

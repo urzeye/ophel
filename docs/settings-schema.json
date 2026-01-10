@@ -126,6 +126,38 @@
     { "id": "scrollBottom", "enabled": true }
   ],
 
+  "shortcuts": {
+    "enabled": true,
+    "globalUrl": "https://gemini.google.com",
+    "keybindings": {
+      "scrollTop": { "key": "t", "alt": true },
+      "scrollBottom": { "key": "b", "alt": true },
+      "goToAnchor": { "key": "z", "alt": true },
+      "togglePanel": { "key": "p", "alt": true },
+      "toggleTheme": { "key": "d", "alt": true },
+      "openSettings": { "key": ",", "alt": true },
+      "switchTab1": { "key": "1", "alt": true },
+      "switchTab2": { "key": "2", "alt": true },
+      "switchTab3": { "key": "3", "alt": true },
+      "refreshOutline": { "key": "r", "alt": true },
+      "toggleOutlineExpand": { "key": "e", "alt": true },
+      "expandLevel1": { "key": "1", "alt": true, "shift": true },
+      "expandLevel2": { "key": "2", "alt": true, "shift": true },
+      "expandLevel3": { "key": "3", "alt": true, "shift": true },
+      "toggleUserQueries": { "key": "q", "alt": true },
+      "prevHeading": { "key": "ArrowUp", "alt": true },
+      "nextHeading": { "key": "ArrowDown", "alt": true },
+      "locateOutline": { "key": "l", "alt": true },
+      "searchOutline": { "key": "f", "alt": true },
+      "newConversation": { "key": "o", "ctrl": true, "shift": true },
+      "refreshConversations": { "key": "r", "alt": true, "shift": true },
+      "locateConversation": { "key": "l", "alt": true, "shift": true },
+      "exportConversation": { "key": "e", "ctrl": true, "shift": true },
+      "copyLatestReply": { "key": "c", "ctrl": true, "shift": true },
+      "toggleScrollLock": { "key": "s", "alt": true }
+    }
+  },
+
   "webdav": {
     "enabled": false,
     "url": "",

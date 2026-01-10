@@ -122,6 +122,35 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     }
   }, [tabOrder, isInitialized])
 
+  // 监听快捷键触发的 tab 切换事件
+  useEffect(() => {
+    const handleSwitchToOutline = () => {
+      setActiveTab(TAB_IDS.OUTLINE)
+    }
+    const handleSwitchToConversations = () => {
+      setActiveTab(TAB_IDS.CONVERSATIONS)
+    }
+
+    const handleSwitchTab = (e: CustomEvent<{ index: number }>) => {
+      const idx = e.detail?.index
+      if (typeof idx === "number" && tabOrder[idx]) {
+        setActiveTab(tabOrder[idx])
+      }
+    }
+
+    window.addEventListener("ophel:locateOutline", handleSwitchToOutline)
+    window.addEventListener("ophel:searchOutline", handleSwitchToOutline)
+    window.addEventListener("ophel:locateConversation", handleSwitchToConversations)
+    window.addEventListener("ophel:switchTab", handleSwitchTab as EventListener)
+
+    return () => {
+      window.removeEventListener("ophel:locateOutline", handleSwitchToOutline)
+      window.removeEventListener("ophel:searchOutline", handleSwitchToOutline)
+      window.removeEventListener("ophel:locateConversation", handleSwitchToConversations)
+      window.removeEventListener("ophel:switchTab", handleSwitchTab as EventListener)
+    }
+  }, [tabOrder])
+
   // === 锚点状态（双向跳转） ===
   // previousAnchor: 上一个位置（跳转前）
   // 实现类似 git switch - 的双位置交换
@@ -141,6 +170,19 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     const scrollInfo = await getScrollInfo(adapter || null)
     setPreviousAnchor(scrollInfo.scrollTop)
   }, [adapter])
+
+  // 监听快捷键触发的锚点设置事件
+  useEffect(() => {
+    const handleAnchorSet = (e: Event) => {
+      const customEvent = e as CustomEvent<{ position: number }>
+      setPreviousAnchor(customEvent.detail.position)
+    }
+
+    window.addEventListener("ophel:anchorSet", handleAnchorSet)
+    return () => {
+      window.removeEventListener("ophel:anchorSet", handleAnchorSet)
+    }
+  }, [])
 
   // 滚动到顶部（自动记录当前位置为锚点，使用 HistoryLoader 加载全部历史）
   const scrollToTop = useCallback(async () => {

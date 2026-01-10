@@ -147,6 +147,36 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       .filter((c): c is NonNullable<typeof c> => c !== null) as ConversationInfo[]
   }
 
+  getLatestReplyText(): string | null {
+    // 1. 找到 ucs-conversation 元素
+    const ucsConversation = DOMToolkit.query("ucs-conversation", { shadow: true }) as Element | null
+    if (!ucsConversation || !ucsConversation.shadowRoot) return null
+
+    // 2. 在 Shadow Root 中查找 .main
+    const main = ucsConversation.shadowRoot.querySelector(".main")
+    if (!main) return null
+
+    // 3. 查找所有轮次
+    const turns = main.querySelectorAll(".turn")
+    if (turns.length === 0) return null
+
+    // 4. 获取最后一个轮次
+    const lastTurn = turns[turns.length - 1]
+
+    // 5. 查找 AI 回复容器 (ucs-summary)
+    const ucsSummary = lastTurn.querySelector("ucs-summary")
+    if (!ucsSummary) return null
+
+    // 6. 提取 Markdown 文档元素
+    const markdownDoc = this.extractSummaryContent(ucsSummary)
+    if (!markdownDoc) {
+      // 降级：直接提取文本
+      return this.extractTextWithLineBreaks(ucsSummary)
+    }
+
+    return this.extractTextWithLineBreaks(markdownDoc)
+  }
+
   getSidebarScrollContainer(): Element | null {
     return (
       (DOMToolkit.query(".conversation-list", { shadow: true }) as Element) ||

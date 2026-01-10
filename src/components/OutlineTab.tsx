@@ -286,6 +286,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
   const [matchCount, setMatchCount] = useState(initialState.matchCount)
 
   const listRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const prevTreeLengthRef = useRef<number>(0) // ⭐ 用 ref 追踪上一次树长度
   const shouldScrollToBottomRef = useRef<boolean>(false) // ⭐ 标记是否需要滚动
 
@@ -296,6 +297,29 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       manager.setActive(false)
     }
   }, [manager])
+
+  // 监听并执行搜索聚焦
+  useEffect(() => {
+    const handleSearchOutline = () => {
+      if (inputRef.current) {
+        inputRef.current.focus()
+        inputRef.current.select()
+      }
+    }
+
+    window.addEventListener("ophel:searchOutline", handleSearchOutline)
+
+    // 检查是否有待处理的搜索请求
+    if ((window as any).__ophelPendingSearchOutline) {
+      delete (window as any).__ophelPendingSearchOutline
+      // 延迟确保渲染完成
+      setTimeout(handleSearchOutline, 100)
+    }
+
+    return () => {
+      window.removeEventListener("ophel:searchOutline", handleSearchOutline)
+    }
+  }, [])
 
   // 订阅 Manager 更新
   useEffect(() => {
@@ -690,6 +714,28 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
     manager.refresh()
   }, [manager])
 
+  // 监听快捷键触发的定位事件
+  useEffect(() => {
+    const handleLocateEvent = () => {
+      // 清除全局标记
+      ;(window as any).__ophelPendingLocateOutline = false
+      handleLocateCurrent()
+    }
+
+    // 检查挂载时是否有待处理的定位请求
+    if ((window as any).__ophelPendingLocateOutline) {
+      // 延迟执行，确保组件完全渲染
+      setTimeout(() => {
+        handleLocateEvent()
+      }, 100)
+    }
+
+    window.addEventListener("ophel:locateOutline", handleLocateEvent)
+    return () => {
+      window.removeEventListener("ophel:locateOutline", handleLocateEvent)
+    }
+  }, [handleLocateCurrent])
+
   return (
     <div
       className="gh-outline-tab"
@@ -804,6 +850,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
               alignItems: "center",
             }}>
             <input
+              ref={inputRef}
               type="text"
               className="outline-search-input"
               placeholder={t("outlineSearch") || "搜索..."}

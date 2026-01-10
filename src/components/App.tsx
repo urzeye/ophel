@@ -12,8 +12,10 @@ import { ConversationManager } from "~core/conversation-manager"
 import { OutlineManager } from "~core/outline-manager"
 import { PromptManager } from "~core/prompt-manager"
 import { ThemeManager } from "~core/theme-manager"
+import { useShortcuts } from "~hooks/useShortcuts"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
+import { showToast } from "~utils/toast"
 
 import { MainPanel } from "./MainPanel"
 import { QuickButtons } from "./QuickButtons"
@@ -66,8 +68,18 @@ export const App = () => {
   // 使用 useRef 避免闭包陷阱和不必要的重渲染
   const isInteractionActiveRef = useRef(false)
   const hideTimerRef = useRef<NodeJS.Timeout | null>(null)
+  // ⭐ 快捷键触发的面板显示延迟缩回计时器
+  const shortcutPeekTimerRef = useRef<NodeJS.Timeout | null>(null)
   // ⭐ 使用 ref 跟踪设置模态框状态，避免闭包捕获过期值
   const isSettingsOpenRef = useRef(false)
+
+  // 取消快捷键触发的延迟缩回计时器
+  const cancelShortcutPeekTimer = useCallback(() => {
+    if (shortcutPeekTimerRef.current) {
+      clearTimeout(shortcutPeekTimerRef.current)
+      shortcutPeekTimerRef.current = null
+    }
+  }, [])
 
   const handleInteractionChange = useCallback((isActive: boolean) => {
     isInteractionActiveRef.current = isActive
@@ -274,6 +286,48 @@ export const App = () => {
       }
     }
   }, [promptManager, conversationManager, outlineManager])
+
+  // 滚动锁定切换
+  const handleToggleScrollLock = useCallback(() => {
+    const current = settingsRef.current
+    if (!current) return
+    const newState = !current.panel?.preventAutoScroll
+
+    setSettings({
+      panel: {
+        ...current.panel,
+        preventAutoScroll: newState,
+      },
+    })
+
+    // 简单的提示，实际文案建议放在 useShortcuts 或统一管理
+    // 这里暂时使用硬编码中文，后续可优化
+    showToast(newState ? "滚动锁定已开启" : "滚动锁定已关闭")
+  }, [setSettings])
+
+  // ⭐ 快捷键管理
+  useShortcuts({
+    settings,
+    adapter,
+    outlineManager,
+    conversationManager,
+    onPanelToggle: () => setIsPanelOpen((prev) => !prev),
+    onThemeToggle: handleThemeToggle,
+    onOpenSettings: () => setIsSettingsOpen(true),
+    isPanelVisible: isPanelOpen,
+    isSnapped: !!edgeSnapState && !isEdgePeeking, // 吸附且未显示
+    onShowSnappedPanel: () => {
+      // 强制显示吸附的面板
+      setIsEdgePeeking(true)
+      // 启动 3 秒延迟缩回计时器
+      cancelShortcutPeekTimer()
+      shortcutPeekTimerRef.current = setTimeout(() => {
+        setIsEdgePeeking(false)
+        shortcutPeekTimerRef.current = null
+      }, 3000)
+    },
+    onToggleScrollLock: handleToggleScrollLock,
+  })
 
   // 当自动吸附设置变化时的处理：关闭自动吸附时立即重置吸附状态
   // 开启自动吸附的处理在 SettingsModal onClose 回调中
@@ -529,6 +583,8 @@ export const App = () => {
             clearTimeout(hideTimerRef.current)
             hideTimerRef.current = null
           }
+          // 取消快捷键触发的延迟缩回计时器
+          cancelShortcutPeekTimer()
           // 当处于吸附状态时，鼠标进入面板应设置 isEdgePeeking = true
           // 这样 onMouseLeave 时才能正确隐藏
           if (edgeSnapState && settings?.panel?.edgeSnap && !isEdgePeeking) {
