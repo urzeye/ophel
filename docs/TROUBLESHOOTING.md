@@ -16,6 +16,7 @@
 8. [WebDAV 恢复后主题同步失效与数据覆盖问题](#8-webdav-恢复后主题同步失效与数据覆盖问题)
 9. [操作其他设置后主题意外重置为默认值](#9-操作其他设置后主题意外重置为默认值)
 10. [阅读记录恢复异常与性能优化排查](#10-阅读记录恢复异常与性能优化排查)
+11. [首次安装会话同步不全问题](#11-首次安装会话同步不全问题)
 
 ---
 
@@ -1463,3 +1464,182 @@ Gemini 页面在加载后会有多次自动滚动行为。引入 `PositionKeeper
 | :---------------------------- | :------------------------------------------------------------ |
 | `src/core/reading-history.ts` | **重构** - 修复死锁、添加事件过滤、Fast Path、Position Keeper |
 | `src/utils/history-loader.ts` | **优化** - 修复日志冗余，优化加载结束条件                     |
+
+---
+
+### 10.3 短对话去顶部显示加载遮罩问题
+
+**日期**: 2026-01-10
+
+#### 症状
+
+- 用户在一个非常短的对话（如：用户问题一行，AI 回复五行）点击"去顶部"按钮
+- 本应立即完成的操作却显示了"正在加载历史记录..."遮罩
+- 遮罩显示约 12 秒（10 次循环 × 1.2 秒/轮）后才消失
+
+#### 背景
+
+去顶部功能的实现流程：
+
+1. `QuickButtons` / `MainPanel` 调用 `loadHistoryUntil({ loadAll: true })`
+2. 函数内部通过循环不断滚动到顶部，等待 Gemini 懒加载历史内容
+3. 当检测到内容高度不再变化时，认为加载完成
+4. 如果加载时间超过 1.6 秒，显示遮罩
+
+#### 根因
+
+**问题 1：阈值判断不可靠**
+
+最初尝试用 `scrollHeight - clientHeight` 的差值来判断是否是短对话：
+
+```typescript
+// 尝试 1：差值 < 50px 视为短对话
+const isShortConversation = container.scrollHeight <= container.clientHeight + 50
+```
+
+问题是不同对话的差值各不相同（16px、79px 等），无法覆盖所有情况。
+
+**问题 2：刷新页面时首轮高度不稳定**
+
+刷新页面时，Gemini 内容还在加载中，首轮获取的 `scrollHeight` 是一个不稳定的值，导致"首轮无变化"判断失败。
+
+#### 修复方案
+
+**1. 使用"首轮无变化"作为判断标准**
+
+移除阈值判断，改用更可靠的逻辑：如果第一轮循环后高度没有增加（`currentHeight === initialHeight`），说明没有更多历史可加载，直接结束。
+
+```typescript
+const isFirstRoundNoChange = loopCount === 1 && currentHeight === initialHeight
+
+// 用户主动点击去顶部时：首轮无变化 = 没有更多历史可加载
+if (isFirstRoundNoChange && allowShortCircuit) {
+  return { success: true, silent: true, ... }
+}
+```
+
+**2. 区分用户主动点击和阅读恢复场景**
+
+添加 `allowShortCircuit` 参数：
+
+- **用户点击去顶部**：`allowShortCircuit: true`，首轮无变化时直接结束
+- **阅读历史恢复**：`allowShortCircuit: false`，需要等待内容加载完成
+
+```typescript
+// QuickButtons.tsx / MainPanel.tsx
+const result = await loadHistoryUntil({
+  adapter,
+  loadAll: true,
+  allowShortCircuit: true, // 用户主动点击，启用短路
+})
+```
+
+#### 已知限制
+
+**刷新页面时短对话仍需等待多轮**：
+
+- SPA 切换时内容已渲染完毕，首轮 `currentHeight === initialHeight` 成立，直接短路
+- 刷新页面时 Gemini 内容还在懒加载，首轮高度不稳定，需要等待多轮
+
+这是预期行为，因为刷新页面时确实需要等待 Gemini 渲染完成。
+
+#### 经验总结
+
+| 教训                   | 说明                                                                     |
+| :--------------------- | :----------------------------------------------------------------------- |
+| **避免魔数阈值**       | 用固定阈值判断"短对话"不可靠，不同对话的高度差异各不相同                 |
+| **首轮无变化原则**     | "高度没有变化"是判断"内容已完全加载"的最可靠标准                         |
+| **场景区分**           | 用户主动操作和自动恢复需要不同的容错策略，通过参数区分                   |
+| **接受合理的等待时间** | 刷新页面时内容还在加载，等待几秒是合理的；但内容已加载完成时应该立即响应 |
+
+#### 文件变更
+
+| 文件                              | 变更                                               |
+| :-------------------------------- | :------------------------------------------------- |
+| `src/utils/history-loader.ts`     | **重构** - 添加 `allowShortCircuit` 参数和短路逻辑 |
+| `src/components/QuickButtons.tsx` | **修改** - 调用时传递 `allowShortCircuit: true`    |
+| `src/components/MainPanel.tsx`    | **修改** - 调用时传递 `allowShortCircuit: true`    |
+
+---
+
+## 11. 首次安装会话同步不全问题
+
+**日期**: 2026-01-10
+
+### 症状
+
+- 新用户首次安装插件或老用户清除数据后，自动同步只获取了约 19 条会话
+- 手动点击刷新按钮后，能正确获取所有 100+ 条会话
+
+### 背景
+
+会话同步有两种方式：
+
+1. **自动同步**：`ConversationManager.startSidebarObserver()` 监听侧边栏 DOM 变化
+2. **手动同步**：点击刷新按钮，调用 `loadAllConversations()` + `syncConversations()`
+
+### 根因
+
+**Gemini 侧边栏默认只显示最近 ~20 个会话**
+
+用户需要点击"展开更多"按钮才能加载全部会话到 DOM 中。
+
+- **手动同步**调用 `loadAllConversations()`，会自动点击所有"展开更多"按钮
+- **自动同步**只监听当前 DOM 中已存在的会话，不会触发展开操作
+
+### 修复方案
+
+在 `ConversationManager.init()` 中添加首次同步逻辑：
+
+```typescript
+async init() {
+  await this.waitForHydration()
+
+  // 首次安装或数据为空时，自动加载全部会话
+  const existingCount = Object.keys(this.conversations).length
+  if (existingCount === 0 && this.siteAdapter.loadAllConversations) {
+    try {
+      // 等待侧边栏容器加载（最多 10 秒）
+      let sidebarFound = false
+      for (let i = 0; i < 20; i++) {
+        if (this.siteAdapter.getSidebarScrollContainer()) {
+          sidebarFound = true
+          break
+        }
+        await new Promise((r) => setTimeout(r, 500))
+      }
+
+      if (sidebarFound) {
+        await this.siteAdapter.loadAllConversations()
+        await new Promise((r) => setTimeout(r, 500))
+        this.syncConversations(null, true)
+      }
+    } catch (e) {
+      // 静默处理错误
+    }
+  }
+
+  this.startSidebarObserver()
+}
+```
+
+**关键点**：
+
+1. **只在数据为空时执行**：避免重复加载
+2. **等待侧边栏容器**：确保 DOM 已就绪
+3. **检测容器而非会话列表**：兼容新用户无任何对话的情况
+
+### 经验总结
+
+| 教训                 | 说明                                                       |
+| :------------------- | :--------------------------------------------------------- |
+| **理解原生限制**     | Gemini 侧边栏默认只加载部分会话，需要主动触发"展开更多"    |
+| **首次安装特殊处理** | 首次安装时需要执行额外的初始化步骤，不能完全依赖自动监听   |
+| **等待 DOM 就绪**    | 扩展初始化时页面可能还没加载完，需要等待目标元素出现       |
+| **容器 vs 内容**     | 检测"容器存在"比检测"内容存在"更可靠，前者兼容空列表的情况 |
+
+### 文件变更
+
+| 文件                               | 变更                        |
+| :--------------------------------- | :-------------------------- |
+| `src/core/conversation/manager.ts` | **修改** - 添加首次同步逻辑 |
