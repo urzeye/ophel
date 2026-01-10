@@ -26,6 +26,8 @@ export interface LoadHistoryOptions {
   onProgress?: (msg: string) => void
   /** 中断信号 */
   signal?: AbortSignal
+  /** 允许短对话短路（仅用户主动点击时启用） */
+  allowShortCircuit?: boolean
 }
 
 export interface LoadHistoryResult {
@@ -65,7 +67,14 @@ const CONFIG = {
  * @returns 加载结果
  */
 export async function loadHistoryUntil(options: LoadHistoryOptions): Promise<LoadHistoryResult> {
-  const { adapter, targetHeight, loadAll = false, onProgress, signal } = options
+  const {
+    adapter,
+    targetHeight,
+    loadAll = false,
+    onProgress,
+    signal,
+    allowShortCircuit = false,
+  } = options
 
   // 获取初始滚动信息并滚动到顶部
   let { previousScrollTop, container } = await smartScrollToTop(adapter)
@@ -180,21 +189,31 @@ export async function loadHistoryUntil(options: LoadHistoryOptions): Promise<Loa
     } else {
       noChangeCount++
 
-      // 快速完成检查：首轮无变化 = 直接结束
-      // 这意味着：1) 加载完成后再次点击  2) 所有内容已加载
-      // 前提：内容必须已经渲染（高度大于视口高度）
+      // 快速完成检查
       const isContentReady = container.scrollHeight > container.clientHeight + 100
-      const isFirstRoundNoChange =
-        isContentReady && loopCount === 1 && currentHeight === initialHeight
+      const isFirstRoundNoChange = loopCount === 1 && currentHeight === initialHeight
 
-      if (isFirstRoundNoChange) {
+      // 用户主动点击去顶部时：首轮无变化 = 没有更多历史可加载，直接结束
+      if (isFirstRoundNoChange && allowShortCircuit) {
         return {
           success: true,
           finalHeight: currentHeight,
           heightAdded: 0,
           previousScrollTop,
           isFlutterMode: false,
-          silent: true, // 静默完成
+          silent: true,
+        }
+      }
+
+      // 阅读恢复场景：首轮无变化且内容已就绪
+      if (isFirstRoundNoChange && isContentReady) {
+        return {
+          success: true,
+          finalHeight: currentHeight,
+          heightAdded: 0,
+          previousScrollTop,
+          isFlutterMode: false,
+          silent: true,
         }
       }
 

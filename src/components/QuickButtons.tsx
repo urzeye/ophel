@@ -82,6 +82,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         adapter,
         loadAll: true,
         signal: abortController.signal,
+        allowShortCircuit: true, // 用户主动点击，启用短对话短路
         onProgress: (msg) => {
           setLoadingText(`${t("loadingHistory")} ${msg}`)
         },

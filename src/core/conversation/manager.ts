@@ -79,6 +79,32 @@ export class ConversationManager {
   async init() {
     // 等待所有 stores hydration 完成
     await this.waitForHydration()
+
+    // 首次安装或数据为空时，自动加载全部会话
+    // Gemini 侧边栏默认只显示最近 ~20 个会话，需要点击"展开更多"才能加载全部
+    const existingCount = Object.keys(this.conversations).length
+    if (existingCount === 0 && this.siteAdapter.loadAllConversations) {
+      try {
+        // 等待侧边栏容器加载（最多 10 秒）
+        let sidebarFound = false
+        for (let i = 0; i < 20; i++) {
+          if (this.siteAdapter.getSidebarScrollContainer()) {
+            sidebarFound = true
+            break
+          }
+          await new Promise((r) => setTimeout(r, 500))
+        }
+
+        if (sidebarFound) {
+          await this.siteAdapter.loadAllConversations()
+          await new Promise((r) => setTimeout(r, 500))
+          this.syncConversations(null, true)
+        }
+      } catch (e) {
+        // 静默处理错误
+      }
+    }
+
     this.startSidebarObserver()
   }
 
