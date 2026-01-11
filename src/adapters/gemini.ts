@@ -502,4 +502,47 @@ export class GeminiAdapter extends SiteAdapter {
       menuRenderDelay: 300,
     }
   }
+
+  // ==================== 主题切换 ====================
+
+  /**
+   * 切换 Gemini 主题
+   * 直接修改 localStorage + body.className 实现即时无感切换
+   * @param targetMode 目标主题模式
+   */
+  async toggleTheme(targetMode: "light" | "dark"): Promise<boolean> {
+    try {
+      // Gemini 使用 "Bard-Color-Theme" 键存储主题
+      // 值域：Bard-Light-Theme / Bard-Dark-Theme
+      // 当设置为跟随系统时，localStorage 里没有这个变量
+      const themeValue = targetMode === "dark" ? "Bard-Dark-Theme" : "Bard-Light-Theme"
+      localStorage.setItem("Bard-Color-Theme", themeValue)
+
+      // 同时更新 body.className（Gemini 使用 body.dark-theme / body.light-theme）
+      if (targetMode === "dark") {
+        document.body.classList.add("dark-theme")
+        document.body.classList.remove("light-theme")
+      } else {
+        document.body.classList.remove("dark-theme")
+        document.body.classList.add("light-theme")
+      }
+
+      // 更新 colorScheme
+      document.body.style.colorScheme = targetMode
+
+      // 触发 storage 事件
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "Bard-Color-Theme",
+          newValue: themeValue,
+          storageArea: localStorage,
+        }),
+      )
+
+      return true
+    } catch (error) {
+      console.error("[GeminiAdapter] toggleTheme error:", error)
+      return false
+    }
+  }
 }
