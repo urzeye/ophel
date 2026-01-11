@@ -9,7 +9,16 @@ import type { PlasmoCSConfig } from "plasmo"
 
 // 配置为主世界运行
 export const config: PlasmoCSConfig = {
-  matches: ["https://gemini.google.com/*", "https://business.gemini.google/*"],
+  matches: [
+    "https://gemini.google.com/*",
+    "https://business.gemini.google/*",
+    "https://aistudio.google.com/*",
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "https://grok.com/*",
+    "https://x.com/i/grok/*",
+    "https://claude.ai/*",
+  ],
   world: "MAIN",
   run_at: "document_start", // 尽早运行以劫持 API
 }
@@ -17,6 +26,8 @@ export const config: PlasmoCSConfig = {
 // 防止重复初始化
 if (!(window as any).__ophelScrollLockInitialized) {
   ;(window as any).__ophelScrollLockInitialized = true
+
+  console.log("[Ophel ScrollLock Main] Script loaded on:", window.location.hostname)
 
   // 保存原始 API
   const originalApis = {
@@ -198,6 +209,7 @@ if (!(window as any).__ophelScrollLockInitialized) {
   window.addEventListener("message", (event) => {
     if (event.source !== window) return
     if (event.data?.type === "CHAT_HELPER_SCROLL_LOCK_TOGGLE") {
+      console.log("[Ophel ScrollLock Main] Received toggle:", event.data.enabled)
       ;(window as any).__ophelScrollLockEnabled = event.data.enabled
     }
   })

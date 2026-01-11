@@ -52,7 +52,12 @@
       "https://gemini.google.com/*",
       "https://business.gemini.google/*",
       "https://aistudio.google.com/*",
-      "https://*.googleusercontent.com/*"
+      "https://*.googleusercontent.com/*",
+      "https://chatgpt.com/*",
+      "https://chat.openai.com/*",
+      "https://grok.com/*",
+      "https://x.com/i/grok/*",
+      "https://claude.ai/*"
     ],
     "optional_host_permissions": [
       "<all_urls>"

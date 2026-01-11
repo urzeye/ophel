@@ -4,11 +4,11 @@ import {
   EVENT_MONITOR_COMPLETE,
   EVENT_MONITOR_INIT,
   EVENT_MONITOR_START,
-  type MonitorEventPayload
+  type MonitorEventPayload,
 } from "~utils/messaging"
 
 export const config: PlasmoCSConfig = {
-  world: "MAIN"
+  world: "MAIN",
 }
 
 interface NetworkMonitorOptions {
@@ -86,16 +86,13 @@ class NetworkMonitor {
     const ctx = {
       activeCount: this._activeCount,
       lastUrl: this._lastUrl,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
 
     if (this.domValidation) {
       try {
         if (!this.domValidation(ctx)) {
-          this._silenceTimer = setTimeout(
-            () => this._tryTriggerComplete(),
-            1000
-          )
+          this._silenceTimer = setTimeout(() => this._tryTriggerComplete(), 1000)
           return
         }
       } catch (e) {
@@ -115,7 +112,7 @@ class NetworkMonitor {
     const url = args[0] ? args[0].toString() : ""
 
     if (!this._isTargetUrl(url)) {
-      return this._originalFetch(...args)
+      return this._originalFetch.call(window, ...args)
     }
 
     this._activeCount++
@@ -134,7 +131,7 @@ class NetworkMonitor {
     }
 
     try {
-      const response = await this._originalFetch(...args)
+      const response = await this._originalFetch.call(window, ...args)
       const clone = response.clone()
       this._readStream(clone).catch(() => {})
       return response
@@ -163,10 +160,7 @@ class NetworkMonitor {
     if (this._silenceTimer) {
       clearTimeout(this._silenceTimer)
     }
-    this._silenceTimer = setTimeout(
-      () => this._tryTriggerComplete(),
-      this.silenceThreshold
-    )
+    this._silenceTimer = setTimeout(() => this._tryTriggerComplete(), this.silenceThreshold)
   }
 
   private _hookXHR() {
@@ -175,11 +169,7 @@ class NetworkMonitor {
     this._originalXhrSend = XMLHttpRequest.prototype.send
 
     // @ts-ignore
-    XMLHttpRequest.prototype.open = function (
-      method: string,
-      url: string | URL,
-      ...rest: any[]
-    ) {
+    XMLHttpRequest.prototype.open = function (method: string, url: string | URL, ...rest: any[]) {
       // @ts-ignore
       this._networkMonitorUrl = url ? url.toString() : ""
       // @ts-ignore
@@ -245,10 +235,9 @@ window.addEventListener("message", (event) => {
     monitor = new NetworkMonitor({
       urlPatterns: payload.urlPatterns,
       silenceThreshold: payload.silenceThreshold,
-      onStart: (info) =>
-        window.postMessage({ type: EVENT_MONITOR_START, payload: info }, "*"),
+      onStart: (info) => window.postMessage({ type: EVENT_MONITOR_START, payload: info }, "*"),
       onComplete: (info) =>
-        window.postMessage({ type: EVENT_MONITOR_COMPLETE, payload: info }, "*")
+        window.postMessage({ type: EVENT_MONITOR_COMPLETE, payload: info }, "*"),
     })
     monitor.start()
   }

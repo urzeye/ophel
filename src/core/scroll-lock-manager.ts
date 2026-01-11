@@ -66,6 +66,7 @@ export class ScrollLockManager {
    * 通过 postMessage 通知主世界脚本启用/禁用 API 劫持
    */
   private toggleMainWorldHijack(enabled: boolean) {
+    console.log("[Ophel ScrollLock] Sending toggle message:", enabled)
     window.postMessage({ type: "CHAT_HELPER_SCROLL_LOCK_TOGGLE", enabled }, "*")
   }
 }
