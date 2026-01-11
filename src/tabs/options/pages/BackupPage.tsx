@@ -403,8 +403,14 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate }) => {
   const processImport = async (jsonString: string) => {
     try {
       const data = JSON.parse(jsonString)
-      if (!data.version || !data.data) {
-        showDomToast(t("invalidBackupFile") || "无效的格式")
+
+      // 导入校验函数进行数据格式验证
+      const { validateBackupData } = await import("~utils/backup-validator")
+      const validation = validateBackupData(data)
+      if (!validation.valid) {
+        const errorMsgs = validation.errorKeys.map((key) => t(key) || key).join(", ")
+        console.error("Backup validation failed:", validation.errorKeys)
+        showDomToast(t("invalidBackupFile") || "无效的格式: " + errorMsgs)
         return
       }
 

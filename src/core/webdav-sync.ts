@@ -404,7 +404,11 @@ export class WebDAVSyncManager {
       const text = await response.text()
       const backupData = JSON.parse(text)
 
-      if (!backupData.version || !backupData.data) {
+      // 基础格式和数据类型校验
+      const { validateBackupData } = await import("~utils/backup-validator")
+      const validation = validateBackupData(backupData)
+      if (!validation.valid) {
+        console.error("Backup validation failed:", validation.errorKeys)
         await this.saveConfig({ lastSyncStatus: "failed" })
         return { success: false, messageKey: "webdavInvalidFormat" }
       }
