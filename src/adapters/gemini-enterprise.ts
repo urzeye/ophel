@@ -41,6 +41,12 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     return !window.location.pathname.includes("/session/")
   }
 
+  /** 检测是否为分享页面 - Gemini Enterprise 特殊路径 */
+  isSharePage(): boolean {
+    // Gemini Enterprise 分享链接格式：/home/cid/{cid}/r/share/{id}
+    return window.location.pathname.includes("/r/share/")
+  }
+
   supportsTabRename(): boolean {
     return true
   }

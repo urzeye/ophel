@@ -549,6 +549,15 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
             setSettings={setSettings}
             placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
           />
+
+          {/* Grok */}
+          <ModelLockRow
+            label="Grok"
+            siteKey="grok"
+            settings={settings}
+            setSettings={setSettings}
+            placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
+          />
         </SettingCard>
       )}
 

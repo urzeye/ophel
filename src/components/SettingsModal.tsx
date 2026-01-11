@@ -33,15 +33,15 @@ const NAV_ITEMS = [
     labelKey: "navGeneral",
     label: "基本设置",
   },
+  { id: "features", Icon: FeaturesIcon, labelKey: "navFeatures", label: "功能模块" },
   {
     id: "appearance",
     Icon: AppearanceIcon,
     labelKey: "navAppearance",
     label: "外观主题",
   },
-  { id: "features", Icon: FeaturesIcon, labelKey: "navFeatures", label: "功能模块" },
   { id: "shortcuts", Icon: KeyboardIcon, labelKey: "navShortcuts", label: "键位设置" },
-  { id: "backup", Icon: BackupIcon, labelKey: "navBackup", label: "备份与同步" },
+  { id: "backup", Icon: BackupIcon, labelKey: "navBackup", label: "数据管理" },
   {
     id: "permissions",
     Icon: PermissionsIcon,
@@ -103,10 +103,53 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
       window.removeEventListener("ophel:navigateSettingsPage", handleNavigate as EventListener)
   }, [])
 
-  // 禁止背景滚动
+  // 禁止背景滚动并保护键盘输入不被外部抢占
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden"
+
+      // 拦截键盘事件，阻止 Grok 等页面抢占焦点
+      // Grok 会在 keydown 时把焦点抢到自己的输入框
+      const handleKeyDown = (e: KeyboardEvent) => {
+        const target = e.target as HTMLElement
+        const container = document.querySelector(".settings-modal-container")
+
+        // 如果按键发生在模态框内的输入元素，正常处理
+        if (container && container.contains(target)) {
+          // 允许 ESC 键关闭模态框（已在其他地方处理）
+          // 允许模态框内的正常输入
+          return
+        }
+
+        // 如果按键目标不是模态框内的元素（如 PLASMO-CSUI），
+        // 阻止事件传播，防止 Grok 抢占焦点
+        if (
+          target.tagName === "PLASMO-CSUI" ||
+          target.closest("plasmo-csui") ||
+          !container?.contains(target)
+        ) {
+          // 查找模态框内正在编辑的输入框
+          const activeInput = container?.querySelector(
+            "input, textarea, select, [contenteditable='true']",
+          ) as HTMLElement
+          if (activeInput && document.activeElement !== activeInput) {
+            // 阻止事件继续传播到页面
+            e.stopPropagation()
+            // 把焦点拉回模态框内的输入框
+            activeInput.focus()
+          }
+        }
+      }
+
+      // 使用捕获阶段，优先于其他事件处理器
+      document.addEventListener("keydown", handleKeyDown, true)
+      document.addEventListener("keypress", handleKeyDown, true)
+
+      return () => {
+        document.body.style.overflow = ""
+        document.removeEventListener("keydown", handleKeyDown, true)
+        document.removeEventListener("keypress", handleKeyDown, true)
+      }
     } else {
       document.body.style.overflow = ""
     }

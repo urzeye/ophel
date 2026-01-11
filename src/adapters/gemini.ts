@@ -52,11 +52,6 @@ export class GeminiAdapter extends SiteAdapter {
     return false
   }
 
-  /** 检测是否为分享页面（只读） */
-  isSharePage(): boolean {
-    return window.location.pathname.startsWith("/share/")
-  }
-
   // ==================== 会话管理 ====================
 
   getConversationList(): ConversationInfo[] {

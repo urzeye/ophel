@@ -8,9 +8,9 @@ import { SiteAdapter } from "./base"
 import { ChatGPTAdapter } from "./chatgpt"
 import { GeminiAdapter } from "./gemini"
 import { GeminiEnterpriseAdapter } from "./gemini-enterprise"
+import { GrokAdapter } from "./grok"
 
 // import { AIStudioAdapter } from "./ai-studio"
-// import { GrokAdapter } from "./grok"
 // import { ClaudeAdapter } from "./claude"
 
 // 所有可用的适配器
@@ -18,8 +18,8 @@ const adapters: SiteAdapter[] = [
   new GeminiEnterpriseAdapter(),
   new GeminiAdapter(),
   new ChatGPTAdapter(),
+  new GrokAdapter(),
   // new AIStudioAdapter(),
-  // new GrokAdapter(),
   // new ClaudeAdapter(),
 ]
 

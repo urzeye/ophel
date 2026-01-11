@@ -56,7 +56,6 @@
       "https://chatgpt.com/*",
       "https://chat.openai.com/*",
       "https://grok.com/*",
-      "https://x.com/i/grok/*",
       "https://claude.ai/*"
     ],
     "optional_host_permissions": [

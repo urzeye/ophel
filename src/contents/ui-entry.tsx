@@ -12,7 +12,6 @@ export const config: PlasmoCSConfig = {
     "https://business.gemini.google/*",
     "https://aistudio.google.com/*",
     "https://grok.com/*",
-    "https://x.com/i/grok/*",
     "https://chat.openai.com/*",
     "https://chatgpt.com/*",
     "https://claude.ai/*",
@@ -30,13 +29,16 @@ export const getStyle = () => {
  * 自定义 Shadow Host 挂载位置
  *
  * 默认挂载到 document.body（大多数站点）
- * ChatGPT 特殊处理：延迟挂载 + MutationObserver 监控重挂载
- * 因为 ChatGPT 的 React Hydration 会清除 body 下的非预期元素
+ * ChatGPT / Grok 特殊处理：延迟挂载 + MutationObserver 监控重挂载
+ * 因为这些站点的 React Hydration 会清除 body 下的非预期元素
  */
 export const mountShadowHost: PlasmoMountShadowHost = ({ shadowHost, anchor, mountState }) => {
-  const isChatGPT =
-    window.location.hostname.includes("chatgpt.com") ||
-    window.location.hostname.includes("chat.openai.com")
+  const hostname = window.location.hostname
+  // ChatGPT 和 Grok 都是 Next.js 应用，需要延迟挂载
+  const needsDelayedMount =
+    hostname.includes("chatgpt.com") ||
+    hostname.includes("chat.openai.com") ||
+    hostname.includes("grok.com")
 
   const doMount = () => {
     if (!shadowHost.parentElement) {
@@ -44,8 +46,8 @@ export const mountShadowHost: PlasmoMountShadowHost = ({ shadowHost, anchor, mou
     }
   }
 
-  if (isChatGPT) {
-    // ChatGPT 需要延迟挂载，等待 React Hydration 完成
+  if (needsDelayedMount) {
+    // Next.js 站点需要延迟挂载，等待 React Hydration 完成
     // 使用多次延迟尝试，确保挂载成功
     const delays = [500, 1000, 2000, 3000]
     delays.forEach((delay) => {

@@ -376,6 +376,12 @@ export function useShortcuts({
       return
     }
 
+    // 分享页面或新对话页面不执行定位
+    if (adapter?.isSharePage() || adapter?.isNewConversation()) {
+      showToast(t("noConversationToLocate") || "当前无会话可定位")
+      return
+    }
+
     // 如果面板未打开，先打开面板
     const needOpenPanel = !isPanelVisible
     if (needOpenPanel) {
@@ -390,7 +396,7 @@ export function useShortcuts({
     window.dispatchEvent(new CustomEvent("ophel:locateConversation"))
 
     showToast(t("locatingConversation") || "正在定位当前会话...")
-  }, [settings, isPanelVisible, isSnapped, onPanelToggle, onShowSnappedPanel])
+  }, [adapter, settings, isPanelVisible, isSnapped, onPanelToggle, onShowSnappedPanel])
 
   // 新会话（触发 Ctrl+Shift+O）
   const newConversation = useCallback(() => {
@@ -541,21 +547,11 @@ export function useShortcuts({
   // 显示模型选择菜单 (Alt+/)
   const showModelSelector = useCallback(() => {
     if (!adapter) return
-    // 使用适配器的模型切换配置获取按钮选择器
-    const config = adapter.getModelSwitcherConfig("")
-    if (!config || !config.selectorButtonSelectors) {
+    // 使用适配器的 clickModelSelector 方法，确保使用正确的点击模拟
+    const success = adapter.clickModelSelector()
+    if (!success) {
       showToast(t("modelSelectorNotFound") || "未找到模型选择器")
-      return
     }
-    // 遍历选择器尝试找到模型选择按钮
-    for (const selector of config.selectorButtonSelectors) {
-      const btn = document.querySelector(selector) as HTMLElement
-      if (btn && btn.offsetParent !== null) {
-        btn.click()
-        return
-      }
-    }
-    showToast(t("modelSelectorNotFound") || "未找到模型选择器")
   }, [adapter])
 
   // 更新设置

@@ -132,6 +132,12 @@ export abstract class SiteAdapter {
     return false
   }
 
+  /** 检测是否为分享页面（只读） */
+  isSharePage(): boolean {
+    // 大多数站点的分享链接格式：/share/{id}
+    return window.location.pathname.startsWith("/share/")
+  }
+
   /**
    * 获取当前团队 ID（用于会话隔离）
    * 仅在支持多团队的站点（如 Gemini Enterprise）中实现
@@ -682,6 +688,27 @@ export abstract class SiteAdapter {
    */
   protected simulateClick(element: HTMLElement): void {
     element.click()
+  }
+
+  /**
+   * 点击模型选择器按钮（公开方法，供外部调用）
+   * 使用 simulateClick 确保在 Radix UI 等框架中也能正常工作
+   * @returns 是否成功点击
+   */
+  clickModelSelector(): boolean {
+    const config = this.getModelSwitcherConfig("")
+    if (!config || !config.selectorButtonSelectors) {
+      return false
+    }
+
+    for (const selector of config.selectorButtonSelectors) {
+      const btn = document.querySelector(selector) as HTMLElement
+      if (btn && btn.offsetParent !== null) {
+        this.simulateClick(btn)
+        return true
+      }
+    }
+    return false
   }
 
   /** 通用模型锁定实现 */

@@ -39,12 +39,6 @@ export class ChatGPTAdapter extends SiteAdapter {
     return path === "/" || path === ""
   }
 
-  /** 检测是否为分享页面（只读） */
-  isSharePage(): boolean {
-    // ChatGPT 分享链接格式: /share/e/{id}
-    return window.location.pathname.startsWith("/share/")
-  }
-
   /**
    * 获取当前账户标识（用于会话隔离）
    * ChatGPT 通过 localStorage._account 区分不同账户/团队

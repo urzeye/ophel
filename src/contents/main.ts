@@ -35,7 +35,6 @@ export const config: PlasmoCSConfig = {
     "https://business.gemini.google/*",
     "https://aistudio.google.com/*",
     "https://grok.com/*",
-    "https://x.com/i/grok/*",
     "https://chat.openai.com/*",
     "https://chatgpt.com/*",
     "https://claude.ai/*",
