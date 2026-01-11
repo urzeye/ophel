@@ -91,6 +91,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
     return () => document.removeEventListener("keydown", handleKeyDown)
   }, [isOpen, onClose])
 
+  // 监听外部导航请求
+  useEffect(() => {
+    const handleNavigate = (e: CustomEvent<{ page: string }>) => {
+      if (e.detail?.page && NAV_ITEMS.some((item) => item.id === e.detail.page)) {
+        setActivePage(e.detail.page)
+      }
+    }
+    window.addEventListener("ophel:navigateSettingsPage", handleNavigate as EventListener)
+    return () =>
+      window.removeEventListener("ophel:navigateSettingsPage", handleNavigate as EventListener)
+  }, [])
+
   // 禁止背景滚动
   useEffect(() => {
     if (isOpen) {

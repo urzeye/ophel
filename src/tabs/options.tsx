@@ -38,13 +38,13 @@ const NAV_ITEMS = [
     labelKey: "navGeneral",
     label: "基本设置",
   },
+  { id: "features", Icon: FeaturesIcon, labelKey: "navFeatures", label: "功能模块" },
   {
     id: "appearance",
     Icon: AppearanceIcon,
     labelKey: "navAppearance",
     label: "外观主题",
   },
-  { id: "features", Icon: FeaturesIcon, labelKey: "navFeatures", label: "功能模块" },
   { id: "backup", Icon: BackupIcon, labelKey: "navBackup", label: "备份与同步" },
   {
     id: "permissions",

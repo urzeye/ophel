@@ -22,6 +22,48 @@ import {
 import type { Settings } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
+/**
+ * 辅助函数：导航到上/下一个会话
+ */
+function navigateConversation(
+  conversationManager: ConversationManager,
+  adapter: SiteAdapter | null,
+  direction: "prev" | "next",
+) {
+  if (!adapter) return
+
+  // 获取当前会话 ID 和会话列表
+  const currentSessionId = adapter.getSessionId()
+  const conversations = conversationManager.getConversations()
+
+  if (conversations.length === 0) {
+    showToast(t("noConversations") || "暂无会话")
+    return
+  }
+
+  // 按更新时间排序
+  const sorted = [...conversations].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+
+  // 找到当前会话的位置
+  const currentIndex = sorted.findIndex((c) => c.id === currentSessionId)
+
+  let targetIndex: number
+  if (currentIndex === -1) {
+    // 当前会话不在列表中，跳转到第一个
+    targetIndex = 0
+  } else if (direction === "prev") {
+    targetIndex = currentIndex > 0 ? currentIndex - 1 : sorted.length - 1
+  } else {
+    targetIndex = currentIndex < sorted.length - 1 ? currentIndex + 1 : 0
+  }
+
+  const target = sorted[targetIndex]
+  if (target) {
+    adapter.navigateToConversation(target.id, target.url)
+    showToast(target.title || t("untitledConversation") || "未命名会话")
+  }
+}
+
 interface UseShortcutsOptions {
   settings: Settings | undefined
   adapter: SiteAdapter | null
@@ -30,6 +72,7 @@ interface UseShortcutsOptions {
   onPanelToggle: () => void
   onThemeToggle: () => void
   onOpenSettings: () => void
+  onShowShortcuts?: () => void // 显示快捷键一览
   isPanelVisible?: boolean
   isSnapped?: boolean // 面板是否处于吸附状态
   onShowSnappedPanel?: () => void // 强制显示吸附的面板
@@ -44,6 +87,7 @@ export function useShortcuts({
   onPanelToggle,
   onThemeToggle,
   onOpenSettings,
+  onShowShortcuts,
   isPanelVisible,
   isSnapped,
   onShowSnappedPanel,
@@ -410,6 +454,110 @@ export function useShortcuts({
     }
   }, [onToggleScrollLock])
 
+  // 聚焦输入框 (Alt+I)
+  const focusInput = useCallback(() => {
+    if (!adapter) return
+    const textarea = adapter.findTextarea()
+    if (textarea) {
+      textarea.focus()
+      showToast(t("inputFocused") || "已聚焦输入框")
+    } else {
+      showToast(t("noTextarea") || "未找到输入框")
+    }
+  }, [adapter])
+
+  // 停止生成 (Alt+K)
+  const stopGeneration = useCallback(() => {
+    if (!adapter) return
+    // 查找停止按钮并点击
+    const stopSelectors = [
+      '[data-testid="stop-button"]',
+      'button[aria-label*="Stop"]',
+      'button[aria-label*="停止"]',
+      ".stop-button",
+      'md-icon-button[aria-label*="Stop"]',
+    ]
+    for (const selector of stopSelectors) {
+      const btn = document.querySelector(selector) as HTMLElement
+      if (btn && btn.offsetParent !== null) {
+        btn.click()
+        showToast(t("generationStopped") || "已停止生成")
+        return
+      }
+    }
+    showToast(t("notGenerating") || "当前未在生成")
+  }, [adapter])
+
+  // 上一个会话 (Alt+[)
+  const prevConversation = useCallback(() => {
+    if (!conversationManager) return
+    navigateConversation(conversationManager, adapter, "prev")
+  }, [conversationManager, adapter])
+
+  // 下一个会话 (Alt+])
+  const nextConversation = useCallback(() => {
+    if (!conversationManager) return
+    navigateConversation(conversationManager, adapter, "next")
+  }, [conversationManager, adapter])
+
+  // 复制最后代码块 (Alt+;)
+  const copyLastCodeBlock = useCallback(async () => {
+    // 查找页面中所有代码块
+    const codeBlocks = document.querySelectorAll("pre code, pre.code-block, .code-block code")
+    if (codeBlocks.length === 0) {
+      showToast(t("noCodeBlock") || "未找到代码块")
+      return
+    }
+    const lastCodeBlock = codeBlocks[codeBlocks.length - 1]
+    const code = lastCodeBlock.textContent || ""
+    if (!code.trim()) {
+      showToast(t("noCodeBlock") || "未找到代码块")
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(code)
+      showToast(t("codeBlockCopied") || "代码块已复制")
+    } catch (e) {
+      showToast(t("copyFailed") || "复制失败")
+    }
+  }, [])
+
+  // 快捷键一览 (Alt+\)
+  const showShortcuts = useCallback(() => {
+    if (onShowShortcuts) {
+      onShowShortcuts()
+    } else {
+      // 打开设置面板并导航到键位设置页
+      openSettings()
+      // 延迟发送导航事件，确保设置面板已打开
+      setTimeout(() => {
+        window.dispatchEvent(
+          new CustomEvent("ophel:navigateSettingsPage", { detail: { page: "shortcuts" } }),
+        )
+      }, 100)
+    }
+  }, [onShowShortcuts, openSettings])
+
+  // 显示模型选择菜单 (Alt+/)
+  const showModelSelector = useCallback(() => {
+    if (!adapter) return
+    // 使用适配器的模型切换配置获取按钮选择器
+    const config = adapter.getModelSwitcherConfig("")
+    if (!config || !config.selectorButtonSelectors) {
+      showToast(t("modelSelectorNotFound") || "未找到模型选择器")
+      return
+    }
+    // 遍历选择器尝试找到模型选择按钮
+    for (const selector of config.selectorButtonSelectors) {
+      const btn = document.querySelector(selector) as HTMLElement
+      if (btn && btn.offsetParent !== null) {
+        btn.click()
+        return
+      }
+    }
+    showToast(t("modelSelectorNotFound") || "未找到模型选择器")
+  }, [adapter])
+
   // 更新设置
   useEffect(() => {
     shortcutManager.updateSettings(settings?.shortcuts)
@@ -440,9 +588,16 @@ export function useShortcuts({
       [SHORTCUT_ACTIONS.NEW_CONVERSATION]: newConversation,
       [SHORTCUT_ACTIONS.REFRESH_CONVERSATIONS]: refreshConversations,
       [SHORTCUT_ACTIONS.LOCATE_CONVERSATION]: locateConversation,
+      [SHORTCUT_ACTIONS.PREV_CONVERSATION]: prevConversation,
+      [SHORTCUT_ACTIONS.NEXT_CONVERSATION]: nextConversation,
       [SHORTCUT_ACTIONS.EXPORT_CONVERSATION]: exportConversation,
       [SHORTCUT_ACTIONS.COPY_LATEST_REPLY]: copyLatestReply,
+      [SHORTCUT_ACTIONS.COPY_LAST_CODE_BLOCK]: copyLastCodeBlock,
       [SHORTCUT_ACTIONS.TOGGLE_SCROLL_LOCK]: toggleScrollLock,
+      [SHORTCUT_ACTIONS.FOCUS_INPUT]: focusInput,
+      [SHORTCUT_ACTIONS.STOP_GENERATION]: stopGeneration,
+      [SHORTCUT_ACTIONS.SHOW_SHORTCUTS]: showShortcuts,
+      [SHORTCUT_ACTIONS.SHOW_MODEL_SELECTOR]: showModelSelector,
     }
 
     shortcutManager.registerAll(handlers)
@@ -470,12 +625,20 @@ export function useShortcuts({
     prevHeading,
     nextHeading,
     locateOutline,
+    searchOutline,
     newConversation,
     refreshConversations,
     locateConversation,
+    prevConversation,
+    nextConversation,
     exportConversation,
     copyLatestReply,
+    copyLastCodeBlock,
     toggleScrollLock,
+    focusInput,
+    stopGeneration,
+    showShortcuts,
+    showModelSelector,
   ])
 
   return shortcutManager

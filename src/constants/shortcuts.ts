@@ -49,11 +49,20 @@ export const SHORTCUT_ACTIONS = {
   NEW_CONVERSATION: "newConversation",
   REFRESH_CONVERSATIONS: "refreshConversations",
   LOCATE_CONVERSATION: "locateConversation",
+  PREV_CONVERSATION: "prevConversation",
+  NEXT_CONVERSATION: "nextConversation",
 
   // 编辑类
   EXPORT_CONVERSATION: "exportConversation",
   COPY_LATEST_REPLY: "copyLatestReply",
+  COPY_LAST_CODE_BLOCK: "copyLastCodeBlock",
   TOGGLE_SCROLL_LOCK: "toggleScrollLock",
+  FOCUS_INPUT: "focusInput",
+  STOP_GENERATION: "stopGeneration",
+
+  // 帮助类
+  SHOW_SHORTCUTS: "showShortcuts",
+  SHOW_MODEL_SELECTOR: "showModelSelector",
 } as const
 
 export type ShortcutActionId = (typeof SHORTCUT_ACTIONS)[keyof typeof SHORTCUT_ACTIONS]
@@ -120,6 +129,16 @@ export const SHORTCUT_META: Record<
     label: "定位当前会话",
     category: "conversation",
   },
+  prevConversation: {
+    labelKey: "shortcutPrevConversation",
+    label: "上一个会话",
+    category: "conversation",
+  },
+  nextConversation: {
+    labelKey: "shortcutNextConversation",
+    label: "下一个会话",
+    category: "conversation",
+  },
 
   // 编辑类
   exportConversation: {
@@ -132,10 +151,37 @@ export const SHORTCUT_META: Record<
     label: "复制最新回复",
     category: "edit",
   },
+  copyLastCodeBlock: {
+    labelKey: "shortcutCopyLastCodeBlock",
+    label: "复制最后代码块",
+    category: "edit",
+  },
   toggleScrollLock: {
     labelKey: "shortcutToggleScrollLock",
     label: "锁定滚动",
     category: "edit",
+  },
+  focusInput: {
+    labelKey: "shortcutFocusInput",
+    label: "聚焦输入框",
+    category: "edit",
+  },
+  stopGeneration: {
+    labelKey: "shortcutStopGeneration",
+    label: "停止生成",
+    category: "edit",
+  },
+
+  // 帮助类
+  showShortcuts: {
+    labelKey: "shortcutShowShortcuts",
+    label: "快捷键一览",
+    category: "help",
+  },
+  showModelSelector: {
+    labelKey: "shortcutShowModelSelector",
+    label: "模型选择菜单",
+    category: "help",
   },
 }
 
@@ -146,6 +192,7 @@ export const SHORTCUT_CATEGORIES = {
   outline: { labelKey: "shortcutCategoryOutline", label: "大纲" },
   conversation: { labelKey: "shortcutCategoryConversation", label: "会话" },
   edit: { labelKey: "shortcutCategoryEdit", label: "编辑" },
+  help: { labelKey: "shortcutCategoryHelp", label: "帮助" },
 }
 
 // 默认快捷键配置
@@ -179,11 +226,20 @@ export const DEFAULT_KEYBINDINGS: Record<ShortcutActionId, ShortcutBinding> = {
   newConversation: { key: "o", ctrl: true, shift: true },
   refreshConversations: { key: "r", alt: true, shift: true },
   locateConversation: { key: "l", alt: true, shift: true },
+  prevConversation: { key: "[", alt: true },
+  nextConversation: { key: "]", alt: true },
 
   // 编辑类
   exportConversation: { key: "e", ctrl: true, shift: true },
   copyLatestReply: { key: "c", ctrl: true, shift: true },
+  copyLastCodeBlock: { key: ";", alt: true },
   toggleScrollLock: { key: "s", alt: true },
+  focusInput: { key: "i", alt: true },
+  stopGeneration: { key: "k", alt: true },
+
+  // 帮助类
+  showShortcuts: { key: "\\", alt: true },
+  showModelSelector: { key: "/", alt: true },
 }
 
 // 默认快捷键设置
