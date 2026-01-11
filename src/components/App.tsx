@@ -421,6 +421,12 @@ export const App = () => {
         target.getAttribute("contenteditable") === "true"
 
       if (isInputElement) {
+        // ⭐ 排除设置模态框内的输入框
+        // 设置模态框有自己的状态管理（isSettingsOpenRef），不需要在这里处理
+        if (target.closest(".settings-modal-overlay, .settings-modal")) {
+          return
+        }
+
         isInputFocusedRef.current = true
         // 确保面板保持显示状态
         setIsEdgePeeking(true)
@@ -440,6 +446,11 @@ export const App = () => {
         target.getAttribute("contenteditable") === "true"
 
       if (isInputElement) {
+        // ⭐ 排除设置模态框内的输入框
+        if (target.closest(".settings-modal-overlay, .settings-modal")) {
+          return
+        }
+
         isInputFocusedRef.current = false
         // 延迟检查是否需要隐藏
         // 给用户一点时间可能重新聚焦到其他输入框
