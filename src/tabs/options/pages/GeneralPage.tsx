@@ -107,6 +107,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
   const [tempSnapThreshold, setTempSnapThreshold] = useState(
     settings.panel?.edgeSnapThreshold?.toString() ?? "30",
   )
+  const [tempHeight, setTempHeight] = useState(settings.panel?.height?.toString() ?? "80")
 
   useEffect(() => {
     if (currentPageWidth?.value) {
@@ -133,6 +134,12 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
     }
   }, [settings.panel?.edgeSnapThreshold])
 
+  useEffect(() => {
+    if (settings.panel?.height !== undefined) {
+      setTempHeight(settings.panel?.height.toString())
+    }
+  }, [settings.panel?.height])
+
   // 面板设置处理函数
   const handleEdgeDistanceBlur = () => {
     let val = parseInt(tempEdgeDistance)
@@ -148,6 +155,14 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
     const clamped = Math.max(10, Math.min(100, val))
     setTempSnapThreshold(clamped.toString())
     updateNestedSetting("panel", "edgeSnapThreshold", clamped)
+  }
+
+  const handleHeightBlur = () => {
+    let val = parseInt(tempHeight)
+    if (isNaN(val)) val = 80
+    const clamped = Math.max(50, Math.min(100, val))
+    setTempHeight(clamped.toString())
+    updateNestedSetting("panel", "height", clamped)
   }
 
   // 页面宽度更新
@@ -403,6 +418,28 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
                 onBlur={handleEdgeDistanceBlur}
               />
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
+            </div>
+          </SettingRow>
+
+          {/* 面板高度 */}
+          <SettingRow
+            label={t("panelHeightLabel") || "面板高度"}
+            description={t("panelHeightDesc") || "面板占用屏幕高度的百分比"}>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <input
+                type="number"
+                className="settings-input"
+                value={tempHeight}
+                min={50}
+                max={100}
+                style={{ width: "70px" }}
+                onChange={(e) => setTempHeight(e.target.value)}
+                onBlur={handleHeightBlur}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleHeightBlur()
+                }}
+              />
+              <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>vh</span>
             </div>
           </SettingRow>
 

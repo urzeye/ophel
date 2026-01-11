@@ -460,6 +460,8 @@ export const en = {
   defaultPositionRight: "Right",
   defaultEdgeDistanceLabel: "Default Margin",
   defaultEdgeDistanceDesc: "Initial distance from screen edge",
+  panelHeightLabel: "Panel Height",
+  panelHeightDesc: "Percentage of screen height the panel occupies",
   // Interface Toggle
   disableOutline: "Disable Outline",
   togglePrompts: "Toggle Prompts",

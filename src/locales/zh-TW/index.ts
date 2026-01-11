@@ -529,6 +529,8 @@ export const zhTW = {
   defaultPositionRight: "右側",
   defaultEdgeDistanceLabel: "預設邊距",
   defaultEdgeDistanceDesc: "面板距離螢幕邊緣的初始距離",
+  panelHeightLabel: "面板高度",
+  panelHeightDesc: "面板佔用螢幕高度的百分比",
   // 手動錨點
   setAnchor: "設置錨點",
   setAnchorToast: "已設置錨點",

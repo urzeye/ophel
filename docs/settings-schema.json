@@ -8,6 +8,7 @@
     "defaultPosition": "right",
     "defaultEdgeDistance": 20,
     "edgeSnapThreshold": 30,
+    "height": 80,
     "preventAutoScroll": false
   },
 

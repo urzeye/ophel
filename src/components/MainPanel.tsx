@@ -318,7 +318,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             : { right: `${defaultEdgeDistance}px`, left: "auto" }),
           transform: "translateY(-50%)",
           width: "320px",
-          height: "80vh",
+          height: `${currentSettings.panel?.height ?? 80}vh`,
           minHeight: "500px",
           backgroundColor: "var(--gh-bg, #ffffff)",
           backgroundImage: "var(--gh-bg-image, none)",
