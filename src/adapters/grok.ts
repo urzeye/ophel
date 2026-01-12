@@ -372,13 +372,25 @@ export class GrokAdapter extends SiteAdapter {
   // ==================== 页面宽度控制 ====================
 
   getWidthSelectors() {
-    // Grok 使用 Tailwind 的 max-w-* 类控制宽度，且通常是响应式的
-    // 目前没有发现简单的 CSS 变量可以像 ChatGPT 那样控制
-    return []
+    // Grok 使用 CSS 变量 --content-max-width 控制主内容区域宽度
+    // 该变量定义在包含响应式断点的容器上
+    return [
+      {
+        selector: '[class*="--content-max-width"]',
+        property: "--content-max-width",
+      },
+    ]
   }
 
   getUserQueryWidthSelectors() {
-    return []
+    // Grok 用户消息气泡使用 .message-bubble.rounded-br-lg 类
+    // 默认有 max-w-[100%] 和响应式 @sm/mainview:max-w-[90%]
+    return [
+      {
+        selector: ".message-bubble.rounded-br-lg",
+        property: "max-width",
+      },
+    ]
   }
 
   // ==================== 输入框操作 ====================

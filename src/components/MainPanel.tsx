@@ -151,6 +151,45 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     }
   }, [tabOrder])
 
+  // 防止 Grok 在 keydown 时抢占焦点
+  // 只在 Grok 站点生效
+  useEffect(() => {
+    const siteId = adapter?.getSiteId()
+
+    if (isOpen && siteId === "grok") {
+      const panel = panelRef.current
+      if (!panel) {
+        return
+      }
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        const target = e.target as HTMLElement
+
+        const isInputElement =
+          target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.getAttribute("contenteditable") === "true"
+
+        if (!isInputElement) return
+
+        // 阻止事件传播到 Grok 的监听器
+        e.stopPropagation()
+        e.stopImmediatePropagation()
+      }
+
+      // 直接在面板元素上监听，而不是 document
+      // 这样可以在 Shadow DOM 内部捕获事件
+      panel.addEventListener("keydown", handleKeyDown, true)
+      panel.addEventListener("keypress", handleKeyDown, true)
+
+      return () => {
+        panel.removeEventListener("keydown", handleKeyDown, true)
+        panel.removeEventListener("keypress", handleKeyDown, true)
+      }
+    }
+  }, [isOpen, adapter])
+
   // === 锚点状态（双向跳转） ===
   // previousAnchor: 上一个位置（跳转前）
   // 实现类似 git switch - 的双位置交换

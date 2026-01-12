@@ -38,6 +38,12 @@
   - 方案：为 Shadow DOM 站点添加定时扫描机制，使用内联样式和 JS 事件处理
   - 文件：`copy-manager.ts`, `main.ts`
 
+- [x] **Grok 页面输入框焦点被强制抢占** ✅
+  - 问题：在 Grok.com 的扩展输入框中输入时，焦点被 Grok 页面强制抢走
+  - 原因：Plasmo Shadow DOM 事件隔离，在 document 上监听无法捕获内部事件
+  - 修复：在组件根元素（panelRef / containerRef）上监听 keydown，使用 stopImmediatePropagation 阻止传播
+  - 文件：`MainPanel.tsx`, `SettingsModal.tsx`
+
 ---
 
 ## 🔧 重构

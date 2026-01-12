@@ -1372,22 +1372,22 @@ const siteTheme = settings?.theme?.sites?.[siteId as keyof typeof sites] || sett
 
 ### 根因分析
 
-1.  **状态锁死 (Deadlock)**:
+1. **状态锁死 (Deadlock)**:
 
     - `isRestoring = false` 重置逻辑被放置在 `restoreProgress` 的内部 `try...finally` 块中。
     - 当触发 "Fast Path"（快速路径）或 "Anchor Restoration"（精确恢复）时，代码直接 `return`，跳过了包含重置逻辑的内部 `finally` 块（如果它们不在同一个控制流中）。
     - 结果：`isRestoring` 标志位永久保持为 `true`。
 
-2.  **事件冒泡 (Event Bubbling)**:
+2. **事件冒泡 (Event Bubbling)**:
 
     - 滚动监听器绑定在 `window` 上且开启了 `capture: true`。
     - `handleScroll` 中缺少对 `event.target` 的过滤，导致侧边栏等非主容器的滚动事件也触发了保存逻辑。
 
-3.  **性能 (Fast Path)**:
+3. **性能 (Fast Path)**:
 
     - 原有逻辑总是尝试调用 `loadHistoryUntil`，即使目标位置（Saved Top）就在当前已加载内容的范围内。
 
-4.  **SPA 切换数据错乱**:
+4. **SPA 切换数据错乱**:
     - SPA 页面切换时，旧的 `ReadingHistoryManager` 实例可能仍在监听滚动事件，将新页面的初始滚动（通常为 0）保存到了旧会话的记录中。
 
 ### 修复方案
@@ -1913,3 +1913,178 @@ export const mountShadowHost: PlasmoMountShadowHost = ({ shadowHost }) => {
 | 文件                        | 变更                                    |
 | --------------------------- | --------------------------------------- |
 | `src/contents/ui-entry.tsx` | **修改** - body 挂载 + ChatGPT 延迟监控 |
+
+---
+
+## 13. Grok 页面输入框焦点被强制抢占
+
+**日期**: 2026-01-12
+
+### 症状
+
+- 在 Grok.com 页面的扩展输入框（主面板、设置模态框）中输入时，焦点被 Grok 页面强制抢走
+- 输入的内容同时出现在扩展输入框和 Grok 的输入框中
+- 无法正常在扩展输入框中输入
+
+### 背景
+
+Grok.com 使用 tiptap 富文本编辑器，在 document 上注册了 27 个 keydown 监听器，会主动捕获页面上的输入事件。
+
+### 调试过程
+
+#### 第一轮：尝试用 stopPropagation 阻止事件传播
+
+最初尝试在 document 上监听 keydown 事件并调用 `stopPropagation()`：
+
+```typescript
+// ❌ 无效
+document.addEventListener("keydown", (e) => {
+  e.stopPropagation()
+}, true)
+```
+
+**发现**：完全没有日志输出，监听器没被触发。
+
+**原因**：Plasmo 使用 Shadow DOM，在 document 上监听无法捕获 Shadow DOM 内部的事件。
+
+#### 第二轮：尝试重写 HTMLElement.prototype.focus
+
+怀疑 Grok 调用 `element.focus()` 抢焦点，尝试重写全局 focus 方法：
+
+```typescript
+// ❌ 无效
+HTMLElement.prototype.focus = function(...args) {
+  if (当前焦点在扩展输入框 && 试图让 Grok 输入框获得焦点) {
+    return // 阻止
+  }
+  return originalFocus.apply(this, args)
+}
+```
+
+**发现**：没有拦截日志，focus() 没被调用。
+
+**原因**：Grok 不是通过 focus() 抢焦点的。
+
+#### 第三轮：尝试 blur 事件夺回焦点
+
+尝试监听 blur 事件，当焦点被抢走时立即夺回：
+
+```typescript
+// ❌ 无效
+document.addEventListener("blur", (e) => {
+  if (焦点被 Grok 抢走) {
+    setTimeout(() => target.focus(), 0)
+  }
+}, true)
+```
+
+**发现**：同样没有日志，监听器没触发。
+
+**原因**：仍然是 Shadow DOM 隔离问题。
+
+#### 第四轮：发现 Shadow DOM 事件隔离
+
+通过调试发现：
+
+- 在 `document` 上监听事件完全无效
+- Plasmo 的组件渲染在 Shadow DOM 内
+- Shadow DOM 内的事件不会冒泡到外部的 document
+
+### 根因
+
+**Shadow DOM 事件隔离**：
+
+```
+┌───────────────────────────────────────────────┐
+│               Document (Main DOM)              │
+│  document.addEventListener(...) ❌ 无法捕获    │
+│                                                │
+│  ┌──────────────────────────────────────────┐ │
+│  │           Shadow DOM (Plasmo)             │ │
+│  │                                           │ │
+│  │  ┌─────────────┐                         │ │
+│  │  │ Input  ←────┼─ keydown 事件在此      │ │
+│  │  └─────────────┘                         │ │
+│  │        ↓ 事件冒泡                        │ │
+│  │   Shadow Root ❌ 不会再向外冒泡          │ │
+│  └──────────────────────────────────────────┘ │
+└───────────────────────────────────────────────┘
+```
+
+### 最终解决方案
+
+**在组件根元素上监听，而不是在 document 上**：
+
+#### MainPanel.tsx
+
+```typescript
+useEffect(() => {
+  const siteId = adapter?.getSiteId()
+  if (isOpen && siteId === "grok") {
+    const panel = panelRef.current  // ✅ 使用组件 ref
+    if (!panel) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+      
+      const isInputElement =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT" ||
+        target.getAttribute("contenteditable") === "true"
+      
+      if (!isInputElement) return
+      
+      // ✅ 阻止事件传播到 Grok 的监听器
+      e.stopPropagation()
+      e.stopImmediatePropagation()
+    }
+    
+    // ✅ 直接在面板元素上监听
+    panel.addEventListener("keydown", handleKeyDown, true)
+    panel.addEventListener("keypress", handleKeyDown, true)
+    
+    return () => {
+      panel.removeEventListener("keydown", handleKeyDown, true)
+      panel.removeEventListener("keypress", handleKeyDown, true)
+    }
+  }
+}, [isOpen, adapter])
+```
+
+#### SettingsModal.tsx
+
+```typescript
+// 添加容器 ref
+const containerRef = useRef<HTMLDivElement>(null)
+
+// JSX 中绑定
+<div ref={containerRef} className="settings-modal-container">
+
+// useEffect 监听（与 MainPanel 相同逻辑）
+```
+
+### 验证结果
+
+```
+✅ 焦点完全稳定
+✅ 输入正常，不会被 Grok 抢走
+✅ 只在 Grok 站点生效
+```
+
+### 经验总结
+
+| 教训 | 说明 |
+| ---- | ---- |
+| **Shadow DOM 事件隔离** | Shadow DOM 内的事件不会冒泡到外部 document，必须在 Shadow Root 内部监听 |
+| **在组件根元素监听** | 使用 `panelRef.current.addEventListener` 而不是 `document.addEventListener` |
+| **stopImmediatePropagation** | 阻止同一元素上的其他监听器执行，比 stopPropagation 更彻底 |
+| **捕获阶段优先** | 使用 `addEventListener(..., true)` 在捕获阶段拦截，优先级最高 |
+| **站点特定保护** | 只在 Grok 站点启用，避免影响其他站点 |
+
+### 文件变更
+
+| 文件 | 变更 |
+| ---- | ---- |
+| `src/components/MainPanel.tsx` | **修改** - 添加焦点保护逻辑 |
+| `src/components/SettingsModal.tsx` | **修改** - 添加 containerRef 和焦点保护逻辑 |
