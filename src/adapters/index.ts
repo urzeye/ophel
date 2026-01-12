@@ -6,12 +6,11 @@
 
 import { SiteAdapter } from "./base"
 import { ChatGPTAdapter } from "./chatgpt"
+// import { AIStudioAdapter } from "./ai-studio"
+import { ClaudeAdapter } from "./claude"
 import { GeminiAdapter } from "./gemini"
 import { GeminiEnterpriseAdapter } from "./gemini-enterprise"
 import { GrokAdapter } from "./grok"
-
-// import { AIStudioAdapter } from "./ai-studio"
-// import { ClaudeAdapter } from "./claude"
 
 // 所有可用的适配器
 const adapters: SiteAdapter[] = [
@@ -20,7 +19,7 @@ const adapters: SiteAdapter[] = [
   new ChatGPTAdapter(),
   new GrokAdapter(),
   // new AIStudioAdapter(),
-  // new ClaudeAdapter(),
+  new ClaudeAdapter(),
 ]
 
 /**

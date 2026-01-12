@@ -371,6 +371,15 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId }) => {
             placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
           />
 
+          {/* Claude */}
+          <ModelLockRow
+            label="Claude"
+            siteKey="claude"
+            settings={settings}
+            setSettings={setSettings}
+            placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
+          />
+
           {/* Grok */}
           <ModelLockRow
             label="Grok"

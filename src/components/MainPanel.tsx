@@ -151,12 +151,12 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     }
   }, [tabOrder])
 
-  // 防止 Grok 在 keydown 时抢占焦点
-  // 只在 Grok 站点生效
+  // 防止 Grok 和 Claude 在 keydown 时抢占焦点
+  // 只在 Grok 和 Claude 站点生效
   useEffect(() => {
     const siteId = adapter?.getSiteId()
 
-    if (isOpen && siteId === "grok") {
+    if (isOpen && (siteId === "grok" || siteId === "claude")) {
       const panel = panelRef.current
       if (!panel) {
         return

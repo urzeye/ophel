@@ -34,11 +34,12 @@ export const getStyle = () => {
  */
 export const mountShadowHost: PlasmoMountShadowHost = ({ shadowHost, anchor, mountState }) => {
   const hostname = window.location.hostname
-  // ChatGPT 和 Grok 都是 Next.js 应用，需要延迟挂载
+  // ChatGPT、Claude 和 Grok 都是 Next.js 应用，需要延迟挂载
   const needsDelayedMount =
     hostname.includes("chatgpt.com") ||
     hostname.includes("chat.openai.com") ||
-    hostname.includes("grok.com")
+    hostname.includes("grok.com") ||
+    hostname.includes("claude.ai")
 
   const doMount = () => {
     if (!shadowHost.parentElement) {

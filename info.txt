@@ -1,0 +1,155 @@
+claude.ai新会话的 url是：https://claude.ai/new
+已有对话的url是：https://claude.ai/chat/c44e44c0-913a-4fbe-b4f8-d346fd0b7eff
+
+
+
+模型选择按钮：<div class="overflow-hidden shrink-0 p-1 -m-1" type="button" id="radix-_r_4o_" aria-haspopup="menu" aria-expanded="false" data-state="closed" style="opacity: 1; transform: none;"><button class="inline-flex
+  items-center
+  justify-center
+  relative
+  shrink-0
+  can-focus
+  select-none
+  disabled:pointer-events-none
+  disabled:opacity-50
+  disabled:shadow-none
+  disabled:drop-shadow-none border-transparent
+          transition
+          font-base
+          duration-300
+          ease-[cubic-bezier(0.165,0.85,0.45,1)] h-8 rounded-md px-3 min-w-[4rem] active:scale-[0.985] whitespace-nowrap !text-xs pl-2.5 pr-2 gap-1 hover:!bg-bg-200 Button_ghost__BUAoh" type="button" data-testid="model-selector-dropdown"><div class="font-ui inline-flex gap-[3px] text-[14px] h-[14px] leading-none items-baseline"><div class="flex items-center gap-[4px]"><div class="whitespace-nowrap select-none"> Sonnet 4.5</div></div></div><div class="flex items-center justify-center opacity-75" style="width: 20px; height: 20px;"><svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="shrink-0 opacity-75" aria-hidden="true"><path d="M14.128 7.16482C14.3126 6.95983 14.6298 6.94336 14.835 7.12771C15.0402 7.31242 15.0567 7.62952 14.8721 7.83477L10.372 12.835L10.2939 12.9053C10.2093 12.9667 10.1063 13 9.99995 13C9.85833 12.9999 9.72264 12.9402 9.62788 12.835L5.12778 7.83477L5.0682 7.75273C4.95072 7.55225 4.98544 7.28926 5.16489 7.12771C5.34445 6.96617 5.60969 6.95939 5.79674 7.09744L5.87193 7.16482L9.99995 11.7519L14.128 7.16482Z"></path></svg></div></button></div>
+模型选择菜单：
+<div data-side="bottom" data-align="end" role="menu" aria-orientation="vertical" data-state="open" data-radix-menu-content="" dir="ltr" id="radix-_r_4p_" aria-labelledby="radix-_r_4o_" class="p-1.5 z-dropdown bg-bg-000 border-0.5 border-border-200 backdrop-blur-xl rounded-xl min-w-[8rem] text-text-300 shadow-[0px_2px_8px_0px_hsl(var(--always-black)/8%)] dark:shadow-[0px_2px_8px_0px_hsl(var(--always-black)/24%)] max-h-[min(var(--radix-select-content-available-height,var(--radix-dropdown-menu-content-available-height)),var(--dropdown-max-height,24rem))] overflow-y-auto overflow-x-hidden relative" tabindex="-1" data-orientation="vertical" style="outline: none; --radix-dropdown-menu-content-transform-origin: var(--radix-popper-transform-origin); --radix-dropdown-menu-content-available-width: var(--radix-popper-available-width); --radix-dropdown-menu-content-available-height: var(--radix-popper-available-height); --radix-dropdown-menu-trigger-width: var(--radix-popper-anchor-width); --radix-dropdown-menu-trigger-height: var(--radix-popper-anchor-height); pointer-events: auto;"><div data-state="closed"><div role="menuitem" class="font-base min-h-8 px-2 py-1.5 rounded-lg cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis grid grid-cols-[minmax(0,_1fr)_auto] gap-2 items-center outline-none select-none [&amp;[data-highlighted]]:bg-bg-200 [&amp;[data-highlighted]]:text-text-000 group pr-1 cursor-pointer" tabindex="-1" data-orientation="vertical" data-radix-collection-item=""><div><div class="flex items-center"><div class="flex-1 text-sm"><div class="flex items-center gap-1.5"><div class="font-ui">Opus 4.5</div></div></div><button class="border-0.5 border-border-400 text-accent-secondary-000 px-1.5 py-px rounded-3xl font-small cursor-pointer hover:border-border-300 transition-colors mt-0.3 ml-2 -mr-1 flex-shrink-0">Upgrade</button></div><div class="text-text-500 pr-4 text-xs mt-1">Most capable for complex work</div></div></div></div><div data-state="closed"><div role="menuitem" class="font-base min-h-8 px-2 py-1.5 rounded-lg cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis grid grid-cols-[minmax(0,_1fr)_auto] gap-2 items-center outline-none select-none [&amp;[data-highlighted]]:bg-bg-200 [&amp;[data-highlighted]]:text-text-000 group pr-1" tabindex="-1" data-orientation="vertical" data-radix-collection-item=""><div><div class="flex items-center"><div class="flex-1 text-sm"><div class="flex items-center gap-1.5"><div class="font-ui">Sonnet 4.5</div></div></div></div><div class="text-text-500 pr-4 text-xs mt-1">Best for everyday tasks</div></div><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256" class="text-accent-secondary-100 mb-1 mr-1.5"><path d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"></path></svg></div></div><div data-state="closed"><div role="menuitem" class="font-base min-h-8 px-2 py-1.5 rounded-lg cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis grid grid-cols-[minmax(0,_1fr)_auto] gap-2 items-center outline-none select-none [&amp;[data-highlighted]]:bg-bg-200 [&amp;[data-highlighted]]:text-text-000 group pr-1" tabindex="-1" data-orientation="vertical" data-radix-collection-item=""><div><div class="flex items-center"><div class="flex-1 text-sm"><div class="flex items-center gap-1.5"><div class="font-ui">Haiku 4.5</div></div></div></div><div class="text-text-500 pr-4 text-xs mt-1">Fastest for quick answers</div></div></div></div><div role="separator" aria-orientation="horizontal" class="h-[0.5px] bg-border-300 my-1.5 mx-2"></div><div role="menuitem" id="radix-_r_7c_" aria-haspopup="menu" aria-expanded="false" aria-controls="radix-_r_7b_" data-state="closed" class="font-base min-h-8 px-2 py-1.5 rounded-lg cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis grid grid-cols-[minmax(0,_1fr)_auto] gap-2 items-center outline-none select-none [&amp;[data-highlighted]]:bg-bg-200 [&amp;[data-highlighted]]:text-text-300 [&amp;[data-state=&quot;open&quot;]:not([data-highlighted])]:bg-bg-100 [&amp;[data-state=&quot;open&quot;]:not([data-highlighted])]:text-text-300 pl-2 py-1.5 gap-2 min-h-8" tabindex="-1" data-orientation="vertical" data-radix-collection-item=""><div class="group-hover:text-text-100  text-sm">More models</div><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256" class="text-text-500 group-hover:text-text-300 mr-1"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path></svg></div></div>
+
+更多模型按钮：
+<div role="menuitem" id="radix-_r_84_" aria-haspopup="menu" aria-expanded="true" aria-controls="radix-_r_83_" data-state="open" class="font-base min-h-8 px-2 py-1.5 rounded-lg cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis grid grid-cols-[minmax(0,_1fr)_auto] gap-2 items-center outline-none select-none [&amp;[data-highlighted]]:bg-bg-200 [&amp;[data-highlighted]]:text-text-300 [&amp;[data-state=&quot;open&quot;]:not([data-highlighted])]:bg-bg-100 [&amp;[data-state=&quot;open&quot;]:not([data-highlighted])]:text-text-300 pl-2 py-1.5 gap-2 min-h-8" tabindex="-1" data-orientation="vertical" data-radix-collection-item=""><div class="group-hover:text-text-100  text-sm">More models</div><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256" class="text-text-500 group-hover:text-text-300 mr-1"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path></svg></div>
+
+更多模型菜单：
+<div data-side="right" data-align="start" role="menu" aria-orientation="vertical" data-state="open" data-radix-menu-content="" dir="ltr" id="radix-_r_83_" aria-labelledby="radix-_r_84_" class="p-1.5 z-dropdown bg-bg-000 border-0.5 border-border-200 backdrop-blur-xl rounded-xl min-w-[8rem] text-text-300 shadow-[0px_2px_8px_0px_hsl(var(--always-black)/8%)] dark:shadow-[0px_2px_8px_0px_hsl(var(--always-black)/24%)] max-h-[calc(100vh-16px)] overflow-y-auto overflow-x-hidden" tabindex="-1" data-orientation="vertical" style="outline: none; pointer-events: auto; --radix-dropdown-menu-content-transform-origin: var(--radix-popper-transform-origin); --radix-dropdown-menu-content-available-width: var(--radix-popper-available-width); --radix-dropdown-menu-content-available-height: var(--radix-popper-available-height); --radix-dropdown-menu-trigger-width: var(--radix-popper-anchor-width); --radix-dropdown-menu-trigger-height: var(--radix-popper-anchor-height);"><div data-state="closed"><div role="menuitem" class="font-base min-h-8 px-2 py-1.5 rounded-lg cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis grid grid-cols-[minmax(0,_1fr)_auto] gap-2 items-center outline-none select-none [&amp;[data-highlighted]]:bg-bg-200 [&amp;[data-highlighted]]:text-text-000 group pr-1 cursor-pointer" tabindex="-1" data-orientation="vertical" data-radix-collection-item=""><div><div class="flex items-center"><div class="flex-1 text-sm"><div class="flex items-center gap-1.5"><div class="font-ui">Opus 4.1</div></div></div><button class="border-0.5 border-border-400 text-accent-secondary-000 px-1.5 py-px rounded-3xl font-small cursor-pointer hover:border-border-300 transition-colors mt-0.3 ml-2 -mr-1 flex-shrink-0">Upgrade</button></div></div></div></div><div data-state="closed"><div role="menuitem" class="font-base min-h-8 px-2 py-1.5 rounded-lg cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis grid grid-cols-[minmax(0,_1fr)_auto] gap-2 items-center outline-none select-none [&amp;[data-highlighted]]:bg-bg-200 [&amp;[data-highlighted]]:text-text-000 group pr-1 cursor-pointer" tabindex="-1" data-orientation="vertical" data-radix-collection-item=""><div><div class="flex items-center"><div class="flex-1 text-sm"><div class="flex items-center gap-1.5"><div class="font-ui">Opus 4</div></div></div><button class="border-0.5 border-border-400 text-accent-secondary-000 px-1.5 py-px rounded-3xl font-small cursor-pointer hover:border-border-300 transition-colors mt-0.3 ml-2 -mr-1 flex-shrink-0">Upgrade</button></div></div></div></div><div data-state="closed"><div role="menuitem" class="font-base min-h-8 px-2 py-1.5 rounded-lg cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis grid grid-cols-[minmax(0,_1fr)_auto] gap-2 items-center outline-none select-none [&amp;[data-highlighted]]:bg-bg-200 [&amp;[data-highlighted]]:text-text-000 group pr-1 cursor-pointer" tabindex="-1" data-orientation="vertical" data-radix-collection-item=""><div><div class="flex items-center"><div class="flex-1 text-sm"><div class="flex items-center gap-1.5"><div class="font-ui">Sonnet 4</div></div></div><button class="border-0.5 border-border-400 text-accent-secondary-000 px-1.5 py-px rounded-3xl font-small cursor-pointer hover:border-border-300 transition-colors mt-0.3 ml-2 -mr-1 flex-shrink-0">Upgrade</button></div></div></div></div><div data-state="closed"><div role="menuitem" class="font-base min-h-8 px-2 py-1.5 rounded-lg cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis grid grid-cols-[minmax(0,_1fr)_auto] gap-2 items-center outline-none select-none [&amp;[data-highlighted]]:bg-bg-200 [&amp;[data-highlighted]]:text-text-000 group pr-1 cursor-pointer" tabindex="-1" data-orientation="vertical" data-radix-collection-item=""><div><div class="flex items-center"><div class="flex-1 text-sm"><div class="flex items-center gap-1.5"><div class="font-ui">Opus 3</div></div></div><button class="border-0.5 border-border-400 text-accent-secondary-000 px-1.5 py-px rounded-3xl font-small cursor-pointer hover:border-border-300 transition-colors mt-0.3 ml-2 -mr-1 flex-shrink-0">Upgrade</button></div></div></div></div><div data-state="closed"><div role="menuitem" class="font-base min-h-8 px-2 py-1.5 rounded-lg cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis grid grid-cols-[minmax(0,_1fr)_auto] gap-2 items-center outline-none select-none [&amp;[data-highlighted]]:bg-bg-200 [&amp;[data-highlighted]]:text-text-000 group pr-1 cursor-pointer" tabindex="-1" data-orientation="vertical" data-radix-collection-item=""><div><div class="flex items-center"><div class="flex-1 text-sm"><div class="flex items-center gap-1.5"><div class="font-ui">Haiku 3.5</div></div></div><button class="border-0.5 border-border-400 text-accent-secondary-000 px-1.5 py-px rounded-3xl font-small cursor-pointer hover:border-border-300 transition-colors mt-0.3 ml-2 -mr-1 flex-shrink-0">Upgrade</button></div></div></div></div></div>
+
+选择模型的步骤和chatgpt很像，有两步弹窗。
+
+
+聊天时发的请求：
+curl 'https://claude.ai/api/organizations/c66e2dca-0908-4711-8cf8-2530545bbb6d/chat_conversations/c44e44c0-913a-4fbe-b4f8-d346fd0b7eff/completion' \
+  -H 'accept: text/event-stream, text/event-stream' \
+  -H 'accept-language: zh-CN,zh;q=0.9,en;q=0.8' \
+  -H 'anthropic-client-platform: web_claude_ai' \
+  -H 'anthropic-device-id: c01ffbe9-c43f-4023-9ca3-627674ecd8c2' \
+  -H 'baggage: sentry-environment=production,sentry-release=081527cd6a07e93e7bc1cbd953ee6268fdd4aaca,sentry-public_key=58e9b9d0fc244061a1b54fe288b0e483,sentry-trace_id=caa729393c4c4c96b11f345abbb87799,sentry-org_id=1158394' \
+  -H 'cache-control: no-cache' \
+  -H 'content-type: application/json' \
+  -b 'activitySessionId=4dbf79a1-6ca0-47f6-9c22-0f5f2d42cc36; anthropic-device-id=c01ffbe9-c43f-4023-9ca3-627674ecd8c2; anthropic-consent-preferences=%7B%22analytics%22%3Afalse%2C%22marketing%22%3Afalse%7D; __ssid=6a900a050e8fbb031a26271826c7169; g_state={"i_l":0,"i_ll":1768228138397,"i_b":"0FDjE+d3Xx37rwMLKlEZW9SCi3uCLSsMJ16UeWnfljE","i_e":{"enable_itp_optimization":0}}; legal-acceptances=%5B%7B%22document_id%22%3A%227251e1b0-37ff-49eb-9fb7-7d7c5a92ac84%22%2C%22accepted_via_checkbox%22%3Afalse%7D%5D; return-to=%2Fnew%3F; sessionKey=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; lastActiveOrg=c66e2dca-0908-4711-8cf8-2530545bbb6d; intercom-device-id-lupk8zyo=f09675f6-23ba-4c33-b0b5-9cfb5af3987b; user-sidebar-pinned=true; CH-prefers-color-scheme=light; user-sidebar-visible-on-load=true; __cf_bm=E7cHAOXp_zbSPqsmdcHZRVPsOBsDOQeWwm25FBwakXY-1768229041-1.0.1.1-4K3_R6OTQFwg5QswCeUz_m404guBP5w1yoRiiKFJkP_RmsBhwANmbuWkS_HR.iB9mus1nVr6jfQ7CBPPlLkq9cLTLQSjSILXVH1LWV8Vuj4; cf_clearance=wlhMdn0RBoNkctcQy.hKa2HJMUDoya_z11mXTPPNj_Q-1768229119-1.2.1.1-o8NR9DqSL..R4C2adehU3aWiVgOClsRpJhQ27pyYnxPSmuqoTH82CQfy_0NfJ66qSTi42UAcYzE2A9bkyH4QZC69uslQm4s2.VaVxORYuvdiKFYdX6C5lA0IfO2B6VZwJeHyPyTSPQayiKzYsYMxtjKpV4Cg3GXtjpZzQfeKdExbzyKxULGe1LV.aoqzCqmqRvG97.uipgkgljOOWxBBrJ3jHHmQMtxhq2DTuCAIAg0; intercom-session-lupk8zyo=NUk0QVRHTEhHT0o1bGw0d2ZvMFRFUkFERWJhbnhCQWRhYTlPN291YUMvU2ZMNjJ6dUJ3QWN1M3R4Yk9BcFVIOVJ5TzlWbTJ4QXptYkM2OE1Bbk1uZUJGTlRTZE5XZjRJVUxCeEFaOEN0aDg9LS04WXZVWUJSTFFIaEduMEdEK0h2bVhnPT0=--e50590a24acd03d81ae323dcd8e3ba752453e04c' \
+  -H 'dnt: 1' \
+  -H 'origin: https://claude.ai' \
+  -H 'pragma: no-cache' \
+  -H 'priority: u=1, i' \
+  -H 'referer: https://claude.ai/chat/c44e44c0-913a-4fbe-b4f8-d346fd0b7eff' \
+  -H 'sec-ch-ua: "Google Chrome";v="143", "Chromium";v="143", "Not A(Brand";v="24"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Windows"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-origin' \
+  -H 'sec-gpc: 1' \
+  -H 'sentry-trace: caa729393c4c4c96b11f345abbb87799-8a2140ec9700ea1e' \
+  -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36' \
+  --data-raw '{"prompt":"你好 ，更给我一些latex的数学公式和markdown表格吗，还有一些代码块，要渲染好的","parent_message_uuid":"00000000-0000-4000-8000-000000000000","timezone":"Asia/Shanghai","personalized_styles":[{"type":"default","key":"Default","name":"Normal","nameKey":"normal_style_name","prompt":"Normal\n","summary":"Default responses from Claude","summaryKey":"normal_style_summary","isDefault":true}],"locale":"en-US","model":"claude-haiku-4-5-20251001","tools":[{"type":"web_search_v0","name":"web_search"},{"type":"artifacts_v0","name":"artifacts"}],"attachments":[],"files":[],"sync_sources":[],"rendering_mode":"messages"}'
+
+  响应：
+  event: message_start
+data: {"type":"message_start","message":{"id":"chatcompl_0153i8w18b6Ck1fKbuqJgkxt","type":"message","role":"assistant","model":"","parent_uuid":"019bb2ac-2a80-73ba-9e40-20601f7c194c","uuid":"019bb2ac-2a80-73ba-9e40-20615cf87cbb","content":[],"stop_reason":null,"stop_sequence":null,"trace_id":"ff80e7676d463de9b3b4c344f4064c21","request_id":"req_011CX3fYhppY3G9xnrDjkr9u"}           }
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"start_timestamp":"2026-01-12T14:46:27.096540Z","stop_timestamp":null,"flags":null,"type":"text","text":"","citations":[]}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" 你"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"好！我很乐意为"}               }
+
+省略了一些
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"型的代"}               }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"码，随"}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"时告诉我！"}        }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":3,"stop_timestamp":"2026-01-12T14:46:40.330031Z" }
+
+event: message_delta
+data: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null}    }
+
+event: message_limit
+data: {"type":"message_limit","message_limit":{"type":"within_limit","resetsAt":null,"remaining":null,"perModelLimit":null,"representativeClaim":"five_hour","overageDisabledReason":"overage_not_provisioned","overageInUse":false,"windows":{"5h":{"status":"within_limit","resets_at":1768244400,"utilization":0.04248}}}              }
+
+event: message_stop
+data: {"type":"message_stop"               }
+
+
+会话标题生成接口：
+curl 'https://claude.ai/api/organizations/c66e2dca-0908-4711-8cf8-2530545bbb6d/chat_conversations/c44e44c0-913a-4fbe-b4f8-d346fd0b7eff/title' \
+  -H 'accept: */*' \
+  -H 'accept-language: zh-CN,zh;q=0.9,en;q=0.8' \
+  -H 'anthropic-anonymous-id: claudeai.v1.585d6242-0948-4096-bc19-2fa3ee12d9b8' \
+  -H 'anthropic-client-platform: web_claude_ai' \
+  -H 'anthropic-client-sha: 081527cd6a07e93e7bc1cbd953ee6268fdd4aaca' \
+  -H 'anthropic-client-version: 1.0.0' \
+  -H 'anthropic-device-id: c01ffbe9-c43f-4023-9ca3-627674ecd8c2' \
+  -H 'baggage: sentry-environment=production,sentry-release=081527cd6a07e93e7bc1cbd953ee6268fdd4aaca,sentry-public_key=58e9b9d0fc244061a1b54fe288b0e483,sentry-trace_id=caa729393c4c4c96b11f345abbb87799,sentry-org_id=1158394' \
+  -H 'cache-control: no-cache' \
+  -H 'content-type: application/json' \
+  -b 'activitySessionId=4dbf79a1-6ca0-47f6-9c22-0f5f2d42cc36; anthropic-device-id=c01ffbe9-c43f-4023-9ca3-627674ecd8c2; anthropic-consent-preferences=%7B%22analytics%22%3Afalse%2C%22marketing%22%3Afalse%7D; __ssid=6a900a050e8fbb031a26271826c7169; g_state={"i_l":0,"i_ll":1768228138397,"i_b":"0FDjE+d3Xx37rwMLKlEZW9SCi3uCLSsMJ16UeWnfljE","i_e":{"enable_itp_optimization":0}}; legal-acceptances=%5B%7B%22document_id%22%3A%227251e1b0-37ff-49eb-9fb7-7d7c5a92ac84%22%2C%22accepted_via_checkbox%22%3Afalse%7D%5D; return-to=%2Fnew%3F; sessionKey=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; lastActiveOrg=c66e2dca-0908-4711-8cf8-2530545bbb6d; intercom-device-id-lupk8zyo=f09675f6-23ba-4c33-b0b5-9cfb5af3987b; user-sidebar-pinned=true; CH-prefers-color-scheme=light; user-sidebar-visible-on-load=true; __cf_bm=E7cHAOXp_zbSPqsmdcHZRVPsOBsDOQeWwm25FBwakXY-1768229041-1.0.1.1-4K3_R6OTQFwg5QswCeUz_m404guBP5w1yoRiiKFJkP_RmsBhwANmbuWkS_HR.iB9mus1nVr6jfQ7CBPPlLkq9cLTLQSjSILXVH1LWV8Vuj4; cf_clearance=wlhMdn0RBoNkctcQy.hKa2HJMUDoya_z11mXTPPNj_Q-1768229119-1.2.1.1-o8NR9DqSL..R4C2adehU3aWiVgOClsRpJhQ27pyYnxPSmuqoTH82CQfy_0NfJ66qSTi42UAcYzE2A9bkyH4QZC69uslQm4s2.VaVxORYuvdiKFYdX6C5lA0IfO2B6VZwJeHyPyTSPQayiKzYsYMxtjKpV4Cg3GXtjpZzQfeKdExbzyKxULGe1LV.aoqzCqmqRvG97.uipgkgljOOWxBBrJ3jHHmQMtxhq2DTuCAIAg0; intercom-session-lupk8zyo=NUk0QVRHTEhHT0o1bGw0d2ZvMFRFUkFERWJhbnhCQWRhYTlPN291YUMvU2ZMNjJ6dUJ3QWN1M3R4Yk9BcFVIOVJ5TzlWbTJ4QXptYkM2OE1Bbk1uZUJGTlRTZE5XZjRJVUxCeEFaOEN0aDg9LS04WXZVWUJSTFFIaEduMEdEK0h2bVhnPT0=--e50590a24acd03d81ae323dcd8e3ba752453e04c' \
+  -H 'dnt: 1' \
+  -H 'origin: https://claude.ai' \
+  -H 'pragma: no-cache' \
+  -H 'priority: u=1, i' \
+  -H 'referer: https://claude.ai/chat/c44e44c0-913a-4fbe-b4f8-d346fd0b7eff' \
+  -H 'sec-ch-ua: "Google Chrome";v="143", "Chromium";v="143", "Not A(Brand";v="24"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Windows"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-origin' \
+  -H 'sec-gpc: 1' \
+  -H 'sentry-trace: caa729393c4c4c96b11f345abbb87799-8796e59ba5546a46' \
+  -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36' \
+  --data-raw '{"message_content":"你好 ，更给我一些latex的数学公式和markdown表格吗，还有一些代码块，要渲染好的","recent_titles":[]}'
+响应：{"title":"LaTeX公式、Markdown表格和代码块渲染"}
+
+生成会话id的接口：
+curl 'https://claude.ai/api/organizations/c66e2dca-0908-4711-8cf8-2530545bbb6d/chat_conversations' \
+  -H 'accept: */*' \
+  -H 'accept-language: zh-CN,zh;q=0.9,en;q=0.8' \
+  -H 'anthropic-anonymous-id: claudeai.v1.585d6242-0948-4096-bc19-2fa3ee12d9b8' \
+  -H 'anthropic-client-platform: web_claude_ai' \
+  -H 'anthropic-client-sha: 081527cd6a07e93e7bc1cbd953ee6268fdd4aaca' \
+  -H 'anthropic-client-version: 1.0.0' \
+  -H 'anthropic-device-id: c01ffbe9-c43f-4023-9ca3-627674ecd8c2' \
+  -H 'baggage: sentry-environment=production,sentry-release=081527cd6a07e93e7bc1cbd953ee6268fdd4aaca,sentry-public_key=58e9b9d0fc244061a1b54fe288b0e483,sentry-trace_id=10b4f1feae6f4144a4f9431f2fa7d19f,sentry-org_id=1158394' \
+  -H 'cache-control: no-cache' \
+  -H 'content-type: application/json' \
+  -b 'activitySessionId=4dbf79a1-6ca0-47f6-9c22-0f5f2d42cc36; anthropic-device-id=c01ffbe9-c43f-4023-9ca3-627674ecd8c2; anthropic-consent-preferences=%7B%22analytics%22%3Afalse%2C%22marketing%22%3Afalse%7D; __ssid=6a900a050e8fbb031a26271826c7169; g_state={"i_l":0,"i_ll":1768228138397,"i_b":"0FDjE+d3Xx37rwMLKlEZW9SCi3uCLSsMJ16UeWnfljE","i_e":{"enable_itp_optimization":0}}; legal-acceptances=%5B%7B%22document_id%22%3A%227251e1b0-37ff-49eb-9fb7-7d7c5a92ac84%22%2C%22accepted_via_checkbox%22%3Afalse%7D%5D; return-to=%2Fnew%3F; sessionKey=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; lastActiveOrg=c66e2dca-0908-4711-8cf8-2530545bbb6d; intercom-device-id-lupk8zyo=f09675f6-23ba-4c33-b0b5-9cfb5af3987b; user-sidebar-pinned=true; CH-prefers-color-scheme=light; user-sidebar-visible-on-load=true; __cf_bm=E7cHAOXp_zbSPqsmdcHZRVPsOBsDOQeWwm25FBwakXY-1768229041-1.0.1.1-4K3_R6OTQFwg5QswCeUz_m404guBP5w1yoRiiKFJkP_RmsBhwANmbuWkS_HR.iB9mus1nVr6jfQ7CBPPlLkq9cLTLQSjSILXVH1LWV8Vuj4; cf_clearance=wlhMdn0RBoNkctcQy.hKa2HJMUDoya_z11mXTPPNj_Q-1768229119-1.2.1.1-o8NR9DqSL..R4C2adehU3aWiVgOClsRpJhQ27pyYnxPSmuqoTH82CQfy_0NfJ66qSTi42UAcYzE2A9bkyH4QZC69uslQm4s2.VaVxORYuvdiKFYdX6C5lA0IfO2B6VZwJeHyPyTSPQayiKzYsYMxtjKpV4Cg3GXtjpZzQfeKdExbzyKxULGe1LV.aoqzCqmqRvG97.uipgkgljOOWxBBrJ3jHHmQMtxhq2DTuCAIAg0; intercom-session-lupk8zyo=NUk0QVRHTEhHT0o1bGw0d2ZvMFRFUkFERWJhbnhCQWRhYTlPN291YUMvU2ZMNjJ6dUJ3QWN1M3R4Yk9BcFVIOVJ5TzlWbTJ4QXptYkM2OE1Bbk1uZUJGTlRTZE5XZjRJVUxCeEFaOEN0aDg9LS04WXZVWUJSTFFIaEduMEdEK0h2bVhnPT0=--e50590a24acd03d81ae323dcd8e3ba752453e04c' \
+  -H 'dnt: 1' \
+  -H 'origin: https://claude.ai' \
+  -H 'pragma: no-cache' \
+  -H 'priority: u=1, i' \
+  -H 'referer: https://claude.ai/new' \
+  -H 'sec-ch-ua: "Google Chrome";v="143", "Chromium";v="143", "Not A(Brand";v="24"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Windows"' \
+  -H 'sec-fetch-dest: empty' \
+  -H 'sec-fetch-mode: cors' \
+  -H 'sec-fetch-site: same-origin' \
+  -H 'sec-gpc: 1' \
+  -H 'sentry-trace: 10b4f1feae6f4144a4f9431f2fa7d19f-b3e14d8bbb9dc943' \
+  -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36' \
+  --data-raw '{"uuid":"c44e44c0-913a-4fbe-b4f8-d346fd0b7eff","name":"","model":"claude-haiku-4-5-20251001","include_conversation_preferences":true,"is_temporary":false}'
+
+  
