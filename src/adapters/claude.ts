@@ -221,4 +221,320 @@ export class ClaudeAdapter extends SiteAdapter {
   getNewChatButtonSelectors(): string[] {
     return ['a[data-dd-action-name="sidebar-new-item"]', 'a[href="/new"]']
   }
+
+  getDefaultLockSettings(): { enabled: boolean; keyword: string } {
+    return { enabled: false, keyword: "sonnet" }
+  }
+
+  // ==================== 大纲功能 ====================
+
+  extractOutline(maxLevel = 6, includeUserQueries = false): OutlineItem[] {
+    const outline: OutlineItem[] = []
+    const scrollContainer = this.getScrollContainer()
+    if (!scrollContainer) return outline
+
+    // Claude 的标题在 AI 回复中，有 text-text-100 class
+    // 排除侧边栏的 H3 (RecentsHide 等)
+    const headings = scrollContainer.querySelectorAll("h1, h2, h3, h4, h5, h6")
+
+    headings.forEach((h) => {
+      const level = parseInt(h.tagName[1])
+      if (level > maxLevel) return
+
+      // 跳过侧边栏分组标题
+      if (h.classList.contains("pointer-events-none")) return
+
+      const text = h.textContent?.trim() || ""
+      if (!text) return
+
+      outline.push({
+        level,
+        text: text.length > 80 ? text.slice(0, 77) + "..." : text,
+        element: h,
+        isUserQuery: false,
+        isTruncated: text.length > 80,
+      })
+    })
+
+    // 可选：包含用户问题
+    if (includeUserQueries) {
+      const userQueries = scrollContainer.querySelectorAll('[data-testid="user-message"]')
+      userQueries.forEach((el) => {
+        const text = el.textContent?.trim() || ""
+        if (!text) return
+
+        outline.push({
+          level: 0,
+          text: text.length > 60 ? text.slice(0, 57) + "..." : text,
+          element: el,
+          isUserQuery: true,
+          isTruncated: text.length > 60,
+        })
+      })
+
+      // 按 DOM 顺序排序
+      outline.sort((a, b) => {
+        if (!a.element || !b.element) return 0
+        const pos = a.element.compareDocumentPosition(b.element)
+        return pos & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
+      })
+    }
+
+    return outline
+  }
+
+  // ==================== 生成状态 ====================
+
+  isGenerating(): boolean {
+    // 方法1: 检查 Stop 按钮 (aria-label="Stop response")
+    const stopBtn = document.querySelector('button[aria-label="Stop response"]')
+    if (stopBtn) return true
+
+    // 方法2: 检查流式输出指示器
+    const streaming = document.querySelector('[class*="streaming"], [class*="typing"]')
+    if (streaming) return true
+
+    return false
+  }
+
+  getNetworkMonitorConfig(): NetworkMonitorConfig {
+    return {
+      // Claude API 请求模式
+      // 主要是 /api/organizations/.../completion
+      urlPatterns: ["/api/", "/completion"],
+      silenceThreshold: 500,
+    }
+  }
+
+  // ==================== 导出功能 ====================
+
+  getExportConfig(): ExportConfig {
+    return {
+      userQuerySelector: '[data-testid="user-message"]',
+      assistantResponseSelector: ".font-claude-response",
+      turnSelector: null, // Claude 不使用 turn 容器
+      useShadowDOM: false,
+    }
+  }
+
+  getLatestReplyText(): string | null {
+    const responses = document.querySelectorAll(".font-claude-response")
+    if (responses.length === 0) return null
+
+    const lastResponse = responses[responses.length - 1]
+    return lastResponse.textContent?.trim() || null
+  }
+
+  getResponseContainerSelector(): string {
+    return ".font-claude-response"
+  }
+
+  // ==================== 用户问题处理 ====================
+
+  getUserQuerySelector(): string {
+    return '[data-testid="user-message"]'
+  }
+
+  extractUserQueryText(element: Element): string {
+    return element.textContent?.trim() || ""
+  }
+
+  extractUserQueryMarkdown(element: Element): string {
+    // Claude 对用户输入已经部分渲染了 Markdown（blockquote, ul, pre）
+    // 但标题和加粗没有渲染，仍然是纯文本在 <p class="whitespace-pre-wrap"> 中
+    // 我们需要提取需要增强的 <p> 元素的文本
+
+    // 检查是否有包含未渲染 Markdown 的 <p> 元素
+    const textParagraphs = element.querySelectorAll("p.whitespace-pre-wrap")
+    if (textParagraphs.length === 0) {
+      return ""
+    }
+
+    // 收集需要渲染的段落内容
+    const paragraphsToRender: string[] = []
+    textParagraphs.forEach((p) => {
+      const text = p.textContent || ""
+      // 检查是否包含未渲染的 Markdown：标题、加粗、斜体
+      const hasUnrendered =
+        /^#{1,6}\s/m.test(text) || // 标题
+        /\*\*[^*]+\*\*/.test(text) || // 加粗
+        /\*[^*]+\*/.test(text) // 斜体
+
+      if (hasUnrendered) {
+        paragraphsToRender.push(text)
+      }
+    })
+
+    // 如果没有需要渲染的段落，返回空
+    if (paragraphsToRender.length === 0) {
+      return ""
+    }
+
+    // 返回一个能通过 looksLikeMarkdown 检查的字符串
+    // looksLikeMarkdown 需要：包含换行 + 命中 Markdown 模式
+    // 实际渲染逻辑在 replaceUserQueryContent 中处理
+    return "# CLAUDE_INCREMENTAL\nplaceholder"
+  }
+
+  replaceUserQueryContent(element: Element, _html: string): boolean {
+    // Claude 增量增强策略：
+    // 只替换 <p class="whitespace-pre-wrap"> 中未渲染的 Markdown
+    // 保留 Claude 已渲染的 <blockquote>, <ul>, <pre> 等
+
+    // 检查是否已经处理过
+    if (element.querySelector(".gh-claude-enhanced")) {
+      return false
+    }
+
+    const textParagraphs = element.querySelectorAll("p.whitespace-pre-wrap")
+    if (textParagraphs.length === 0) return false
+
+    let hasChanges = false
+
+    textParagraphs.forEach((p) => {
+      const text = p.textContent || ""
+
+      // 检查是否包含未渲染的 Markdown
+      const hasHeaders = /^#{1,6}\s/m.test(text)
+      const hasBold = /\*\*[^*]+\*\*/.test(text)
+      const hasItalic = /(?<!\*)\*(?!\*)[^*]+\*(?!\*)/.test(text)
+
+      if (!hasHeaders && !hasBold && !hasItalic) {
+        return // 这个段落不需要处理
+      }
+
+      // 渲染这个段落的 Markdown
+      let html = text
+
+      // 处理标题（多行情况）
+      html = html.replace(/^(#{1,6})\s+(.+)$/gm, (_, hashes, content) => {
+        const level = hashes.length
+        // 使用 Claude 的标题样式
+        const sizeClass =
+          level === 1 ? "text-[1.375rem]" : level === 2 ? "text-[1.125rem]" : "text-base"
+        return `<h${level} class="text-text-100 mt-2 -mb-1 ${sizeClass} font-bold">${content}</h${level}>`
+      })
+
+      // 处理加粗
+      html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+
+      // 处理斜体（注意不要匹配加粗）
+      html = html.replace(/(?<!\*)\*(?!\*)([^*]+)\*(?!\*)/g, "<em>$1</em>")
+
+      // 处理换行（保持 whitespace-pre-wrap 行为）
+      // 将连续的换行转为 <br>，单个换行保留
+      html = html
+        .split("\n")
+        .map((line) => {
+          // 如果这行已经是 HTML 标签开头，不加 br
+          if (line.startsWith("<h") || line.trim() === "") return line
+          return line
+        })
+        .join("<br>")
+
+      // 创建替换元素
+      const rendered = document.createElement("div")
+      rendered.className = "gh-claude-enhanced whitespace-pre-wrap break-words"
+      rendered.innerHTML = html
+
+      // 替换原始 <p> 元素
+      p.replaceWith(rendered)
+      hasChanges = true
+    })
+
+    return hasChanges
+  }
+
+  // ==================== 会话观察器 ====================
+
+  getConversationObserverConfig(): ConversationObserverConfig {
+    return {
+      selector: 'a[data-dd-action-name="sidebar-chat-item"]',
+      shadow: false,
+      extractInfo: (el: Element): ConversationInfo | null => {
+        const href = el.getAttribute("href") || ""
+        const idMatch = href.match(/\/chat\/([a-f0-9-]+)/)
+        const id = idMatch ? idMatch[1] : ""
+        if (!id) return null
+
+        const titleSpan = el.querySelector("span.truncate")
+        const title = titleSpan?.textContent?.trim() || ""
+
+        return {
+          id,
+          title,
+          url: `https://claude.ai${href}`,
+          isActive: window.location.href.includes(id),
+        }
+      },
+      getTitleElement: (el: Element): Element | null => {
+        return el.querySelector("span.truncate")
+      },
+    }
+  }
+
+  navigateToConversation(id: string, url?: string): boolean {
+    const targetUrl = url || `https://claude.ai/chat/${id}`
+    const link = document.querySelector(`a[href*="${id}"]`) as HTMLAnchorElement
+    if (link) {
+      link.click()
+      return true
+    }
+    // 降级：直接跳转
+    window.location.href = targetUrl
+    return true
+  }
+
+  getSessionName(): string | null {
+    return this.getConversationTitle()
+  }
+
+  // ==================== 页面宽度 ====================
+
+  getWidthSelectors() {
+    return [
+      // Claude 的主内容区域
+      { selector: "#main-content .max-w-3xl", property: "max-width" },
+      { selector: "#main-content .max-w-4xl", property: "max-width" },
+    ]
+  }
+
+  getUserQueryWidthSelectors() {
+    return [{ selector: '[data-testid="user-message"]', property: "max-width" }]
+  }
+
+  // ==================== 主题切换 ====================
+
+  async toggleTheme(targetMode: "light" | "dark"): Promise<boolean> {
+    try {
+      // Claude 使用 localStorage.LSS-userThemeMode 存储主题
+      // 格式: {"value":"dark","tabId":"xxx","timestamp":xxx}
+      const themeData = {
+        value: targetMode,
+        tabId: crypto.randomUUID(),
+        timestamp: Date.now(),
+      }
+      localStorage.setItem("LSS-userThemeMode", JSON.stringify(themeData))
+
+      // 触发 storage 事件通知其他组件
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "LSS-userThemeMode",
+          newValue: JSON.stringify(themeData),
+        }),
+      )
+
+      // 等待一下看是否生效，如果不行则尝试刷新页面
+      await new Promise((r) => setTimeout(r, 300))
+
+      // 如果页面没变化，尝试强制刷新
+      // （Claude 可能需要刷新才能应用主题）
+      console.log(`[ClaudeAdapter] Theme set to ${targetMode} in localStorage`)
+
+      return true
+    } catch (error) {
+      console.error("[ClaudeAdapter] toggleTheme error:", error)
+      return false
+    }
+  }
 }
