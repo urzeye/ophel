@@ -65,14 +65,35 @@ export class ClaudeAdapter extends SiteAdapter {
         const titleSpan = el.querySelector("span.truncate")
         const title = titleSpan?.textContent?.trim() || ""
 
-        // 激活状态: 检查是否有激活样式或aria-current (需验证，暂时简单判断URL)
+        // 激活状态: 检查是否有激活样式或aria-current (需验证,暂时简单判断URL)
         const isActive = window.location.href.includes(id)
+
+        // 判断是否收藏(Starred):
+        // 核心特征:
+        // 1. Starred分组的h3没有role="button"(不可折叠)
+        // 2. Starred分组的ul有-mx-1.5类
+        // 通过语义化属性判断,比纯样式类更稳定,不依赖文字内容,支持国际化
+        let isPinned = false
+        const groupContainer = el.closest("div.flex.flex-col")
+        if (groupContainer) {
+          // 检查1: h3是否没有role属性(Starred不可折叠,Recents有role="button")
+          const h3 = groupContainer.querySelector("h3")
+          const isNonCollapsible = h3 && !h3.hasAttribute("role")
+
+          // 检查2: ul是否有Starred特有的-mx-1.5类
+          const ul = groupContainer.querySelector("ul")
+          const hasStarredClass = ul?.classList.contains("-mx-1.5")
+
+          // 任一条件满足即为收藏会话
+          isPinned = isNonCollapsible || hasStarredClass
+        }
 
         return {
           id,
           title,
           url: href.startsWith("http") ? href : `https://claude.ai${href}`,
           isActive,
+          isPinned,
         }
       })
       .filter((c) => c.id)
@@ -460,11 +481,23 @@ export class ClaudeAdapter extends SiteAdapter {
         const titleSpan = el.querySelector("span.truncate")
         const title = titleSpan?.textContent?.trim() || ""
 
+        // 判断是否收藏(与getConversationList逻辑一致)
+        let isPinned = false
+        const groupContainer = el.closest("div.flex.flex-col")
+        if (groupContainer) {
+          const h3 = groupContainer.querySelector("h3")
+          const isNonCollapsible = h3 && !h3.hasAttribute("role")
+          const ul = groupContainer.querySelector("ul")
+          const hasStarredClass = ul?.classList.contains("-mx-1.5")
+          isPinned = isNonCollapsible || hasStarredClass
+        }
+
         return {
           id,
           title,
           url: `https://claude.ai${href}`,
           isActive: window.location.href.includes(id),
+          isPinned,
         }
       },
       getTitleElement: (el: Element): Element | null => {

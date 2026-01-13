@@ -149,6 +149,15 @@ export const App = () => {
     }
   }, [outlineManager, settings])
 
+  // ⭐ 同步 ConversationManager 设置
+  useEffect(() => {
+    if (conversationManager && settings) {
+      conversationManager.updateSettings({
+        syncUnpin: settings.features?.conversations?.syncUnpin ?? false,
+      })
+    }
+  }, [conversationManager, settings])
+
   // ⭐ 从 window 获取 main.ts 创建的全局 ThemeManager 实例
   // 这样只有一个 ThemeManager 实例，避免竞争条件
   const themeManager = useMemo(() => {
@@ -276,6 +285,10 @@ export const App = () => {
     }
     if (conversationManager) {
       conversationManager.init()
+      // 初始化 syncUnpin 设置
+      conversationManager.updateSettings({
+        syncUnpin: settings?.features?.conversations?.syncUnpin ?? false,
+      })
     }
     if (outlineManager) {
       outlineManager.refresh()
