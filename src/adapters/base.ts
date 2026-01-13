@@ -543,6 +543,14 @@ export abstract class SiteAdapter {
   }
 
   /**
+   * 从AI回复元素中提取文本（保留换行）
+   * 默认实现：直接提取文本,子类可重写以处理特殊结构(如Claude Artifacts)
+   */
+  extractAssistantResponseText(element: Element): string {
+    return this.extractTextWithLineBreaks(element)
+  }
+
+  /**
    * 检查元素是否在渲染的 Markdown 容器内
    * 用于大纲抽取时排除用户提问渲染容器中的标题
    */

@@ -703,9 +703,14 @@ export class ConversationManager {
         messages.push({ role: "user", content: userContent })
       }
       if (aiMessages[i]) {
+        // 使用适配器方法提取AI回复(Claude会过滤Artifacts并标注)
+        const aiContent = this.siteAdapter.extractAssistantResponseText
+          ? this.siteAdapter.extractAssistantResponseText(aiMessages[i])
+          : htmlToMarkdown(aiMessages[i]) || aiMessages[i].textContent?.trim() || ""
+
         messages.push({
           role: "assistant",
-          content: htmlToMarkdown(aiMessages[i]) || aiMessages[i].textContent?.trim() || "",
+          content: aiContent,
         })
       }
     }

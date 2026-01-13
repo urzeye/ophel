@@ -343,6 +343,14 @@ export class ClaudeAdapter extends SiteAdapter {
     if (responses.length === 0) return null
 
     const lastResponse = responses[responses.length - 1]
+
+    // 过滤掉Artifact卡片,只提取.standard-markdown或.progressive-markdown
+    const markdownContent = lastResponse.querySelector(".standard-markdown, .progressive-markdown")
+    if (markdownContent) {
+      return markdownContent.textContent?.trim() || null
+    }
+
+    // 降级:如果没有markdown容器,返回整个内容(兼容旧版本)
     return lastResponse.textContent?.trim() || null
   }
 
@@ -464,6 +472,48 @@ export class ClaudeAdapter extends SiteAdapter {
     })
 
     return hasChanges
+  }
+
+  /**
+   * 提取AI回复文本,过滤Artifact卡片但标注其存在
+   * Claude特有:Artifacts以卡片形式嵌入在回复中,需要特殊处理
+   */
+  extractAssistantResponseText(element: Element): string {
+    let result = ""
+
+    // 检查是否有Artifacts卡片
+    const artifacts = element.querySelectorAll(".artifact-block-cell")
+    if (artifacts.length > 0) {
+      artifacts.forEach((artifact) => {
+        // 提取标题
+        const titleElem = artifact.querySelector(".line-clamp-1")
+        const title = titleElem?.textContent?.trim() || "Untitled"
+
+        // 提取版本信息
+        const versionElem = artifact.querySelector(".text-text-400")
+        const version = versionElem?.textContent?.trim()
+
+        // 尝试查找下载链接(可能在同级或父级元素的菜单中)
+        // 下载菜单通常需要点击才会出现,所以可能找不到
+        const downloadLink = element.querySelector('a[download][href^="blob:"]')
+        const link = downloadLink?.getAttribute("href")
+
+        // 构建Artifact标注
+        if (link) {
+          result += `\n[Artifact: ${title}${version ? ` - ${version}` : ""} | Download: ${link}]\n\n`
+        } else {
+          result += `\n[Artifact: ${title}${version ? ` - ${version}` : ""}]\n\n`
+        }
+      })
+    }
+
+    // 提取正常回复内容(在.standard-markdown或.progressive-markdown中)
+    const markdownContent = element.querySelector(".standard-markdown, .progressive-markdown")
+    if (markdownContent) {
+      result += markdownContent.textContent?.trim() || ""
+    }
+
+    return result.trim()
   }
 
   // ==================== 会话观察器 ====================
