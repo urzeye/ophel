@@ -59,6 +59,8 @@ export const en = {
   permissionNotifications: "Notifications",
   permissionNotificationsDesc:
     "Optional. Used to send desktop notifications when AI responses are complete.",
+  permissionCookies: "Cookie Management",
+  permissionCookiesDesc: "Manage Claude site cookies for quick SessionKey switching",
   permissionTabs: "Tabs",
   permissionTabsDesc: "Optional. Used to detect current tab status and manage sessions.",
   permissionDNR: "Network Request Rules",
@@ -688,9 +690,12 @@ export const en = {
   permTabsTitle: "Tab Permission Required",
   permTabsDesc: "Required for tab rename and privacy mode features.",
   permNotifyTitle: "Notification Permission Required",
-  permNotifyDesc: "Send desktop notifications when AI generation completes.",
+  permNotifyDesc: "Enable desktop notifications to receive alerts when AI generation is complete.",
+  permCookiesTitle: "Cookie Management Permission Required",
+  permCookiesDesc:
+    "This permission is used to quickly switch Claude SessionKeys. After authorization, you can manage claude.ai cookies.",
   permDNRTitle: "Network Request Rules Permission Required",
-  permDNRDesc: "Required for removing AI image watermarks.",
+  permDNRDesc: "Used to remove watermarks from AI-generated images.",
   permissionRequestToast: "Please grant permission in the popup window",
   permissionDialogAllow: "Allow & Continue",
   permissionGranted: "Permission Granted",

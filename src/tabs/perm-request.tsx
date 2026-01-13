@@ -36,6 +36,12 @@ const PERMISSION_CONFIGS = {
     origins: [] as string[],
     permissions: ["notifications"],
   },
+  cookies: {
+    titleKey: "permCookiesTitle",
+    descKey: "permCookiesDesc",
+    origins: [] as string[],
+    permissions: ["cookies"],
+  },
 }
 
 type PermissionType = keyof typeof PERMISSION_CONFIGS

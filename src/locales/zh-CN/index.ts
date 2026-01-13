@@ -54,9 +54,11 @@ export const zhCN = {
 
   // 必需权限
   permissionStorage: "存储",
-  permissionStorageDesc: "用于保存扩展设置、提示词和会话数据。",
+  permissionStorageDesc: "存储用户设置和数据",
   permissionNotifications: "通知",
-  permissionNotificationsDesc: "可选权限。用于在 AI 回复完成时发送桌面通知提醒。",
+  permissionNotificationsDesc: "显示桌面通知",
+  permissionCookies: "Cookie管理",
+  permissionCookiesDesc: "管理Claude站点Cookie，用于快速切换SessionKey",
   permissionTabs: "标签页",
   permissionTabsDesc: "可选权限。用于检测当前标签页状态和管理会话。",
   permissionDNR: "网络请求规则",
@@ -705,6 +707,8 @@ export const zhCN = {
   permTabsDesc: "标签页重命名和隐私模式需要此权限，用于读取和修改标签页标题。",
   permNotifyTitle: "需要通知权限",
   permNotifyDesc: "启用桌面通知后，当 AI 生成完成时会收到提醒。",
+  permCookiesTitle: "需要Cookie管理权限",
+  permCookiesDesc: "此权限用于快速切换Claude SessionKey。授权后可以管理claude.ai的Cookie。",
   permDNRTitle: "需要网络请求规则权限",
   permDNRDesc: "此权限用于移除 AI 生成图片的水印等功能。",
   permissionRequestToast: "请在弹出的窗口中授予权限",

@@ -14,6 +14,7 @@ import type { Settings } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
 import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
+import ClaudeSettings from "./ClaudeSettings"
 
 interface SiteSettingsPageProps {
   siteId: string
@@ -229,6 +230,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId }) => {
     { id: "layout", label: t("layoutTab") || "页面布局" },
     { id: "modelLock", label: t("modelLockTitle") || "模型锁定" },
     { id: "content", label: t("contentStyleTab") || "内容处理" },
+    { id: "claude", label: "Claude 专属" },
   ]
 
   return (
@@ -488,6 +490,9 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId }) => {
           </SettingCard>
         </>
       )}
+
+      {/* ========== Claude 专属 Tab ========== */}
+      {activeTab === "claude" && <ClaudeSettings siteId={siteId} />}
     </div>
   )
 }

@@ -650,11 +650,13 @@ export const zhTW = {
   permissionWebdavAccessDesc:
     "允許連接所有網站。用於 WebDAV 雲端備份同步以及移除 AI 圖片浮水印等進階功能。",
 
-  // 必需權限
+  // 權限管理
   permissionStorage: "儲存",
-  permissionStorageDesc: "用於儲存擴充功能設定、提示詞和對話資料。",
+  permissionStorageDesc: "儲存用戶設定和資料",
   permissionNotifications: "通知",
-  permissionNotificationsDesc: "可選權限。用於在 AI 回覆完成時發送桌面通知提醒。",
+  permissionNotificationsDesc: "顯示桌面通知",
+  permissionCookies: "Cookie管理",
+  permissionCookiesDesc: "管理Claude站點Cookie,用於快速切換SessionKey",
   permissionTabs: "標籤頁",
   permissionTabsDesc: "可選權限。用於檢測當前標籤頁狀態和管理對話。",
   permissionDNR: "網路請求規則",
@@ -669,6 +671,8 @@ export const zhTW = {
   permTabsDesc: "標籤頁重新命名和隱私模式需要此權限，用於讀取和修改標籤頁標題。",
   permNotifyTitle: "需要通知權限",
   permNotifyDesc: "啟用桌面通知後，當 AI 生成完成時會收到提醒。",
+  permCookiesTitle: "需要Cookie管理權限",
+  permCookiesDesc: "此權限用於快速切換Claude SessionKey。授權後可以管理claude.ai的Cookie。",
   permDNRTitle: "需要網路請求規則權限",
   permDNRDesc: "用於移除 AI 生成圖片的浮水印。",
   permissionRequestToast: "請在彈出的視窗中授予權限",
