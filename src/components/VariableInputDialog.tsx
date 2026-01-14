@@ -129,18 +129,17 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
             <div
               key={variable.name}
               style={{
-                marginBottom: "12px",
+                marginBottom: "16px",
                 display: "flex",
-                alignItems: "center",
-                gap: "12px",
+                flexDirection: "column",
+                gap: "6px",
               }}>
               <label
                 style={{
                   fontSize: "14px",
                   fontWeight: 500,
                   color: "var(--gh-text, #374151)",
-                  whiteSpace: "nowrap",
-                  minWidth: "80px",
+                  wordBreak: "break-all",
                 }}>
                 {variable.name}
               </label>
@@ -151,7 +150,7 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
                 onChange={(e) => updateValue(index, e.target.value)}
                 placeholder={t("promptVariablePlaceholder") || "请输入"}
                 style={{
-                  flex: 1,
+                  width: "100%",
                   padding: "8px 12px",
                   borderRadius: "6px",
                   border: "1px solid var(--gh-input-border, #d1d5db)",
@@ -160,6 +159,15 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
                   background: "var(--gh-input-bg, white)",
                   color: "var(--gh-text, #374151)",
                   boxSizing: "border-box",
+                  transition: "border-color 0.2s, box-shadow 0.2s",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "var(--gh-primary, #4285f4)"
+                  e.target.style.boxShadow = "0 0 0 2px rgba(66, 133, 244, 0.1)"
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "var(--gh-input-border, #d1d5db)"
+                  e.target.style.boxShadow = "none"
                 }}
               />
             </div>
