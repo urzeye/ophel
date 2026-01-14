@@ -1,9 +1,11 @@
 import React, { useSyncExternalStore } from "react"
 
-import { ThemeDarkIcon, ThemeLightIcon } from "~components/icons"
+import { MoreHorizontalIcon, ThemeDarkIcon, ThemeLightIcon } from "~components/icons"
 import type { ThemeManager } from "~core/theme-manager"
 import { useSettingsStore } from "~stores/settings-store"
 import { getEffectiveLanguage, setLanguage, t } from "~utils/i18n"
+
+import { LanguageMenu } from "./LanguageMenu"
 
 export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
   const { settings, setSettings } = useSettingsStore()
@@ -66,6 +68,32 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
   const settingLang = settings?.language || "auto"
   const effectiveLang = getEffectiveLanguage(settingLang)
 
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false)
+  const moreBtnRef = React.useRef<HTMLButtonElement>(null)
+
+  const SHORT_LANG_MAP: Record<string, string> = {
+    en: "EN",
+    "zh-CN": "简",
+    "zh-TW": "繁",
+    ja: "JP",
+    ko: "KR",
+    fr: "FR",
+    de: "DE",
+    ru: "RU",
+    es: "ES",
+    pt: "PT",
+  }
+
+  // 动态槽位逻辑：
+  // 1. 固定显示 zh-CN 和 EN
+  // 2. 如果当前语言不是 zh-CN/EN，则第三个槽位显示当前语言
+  // 3. 如果当前语言是 zh-CN/EN，则第三个槽位显示推荐语言 (默认 es，或者可以记录上次使用的其他语言)
+  const fixedSlots = ["zh-CN", "en"]
+  const dynamicSlot = fixedSlots.includes(effectiveLang) ? "es" : effectiveLang
+
+  // 去重（虽然逻辑上 dynamicSlot 应该不会和 fixed 重复，除非有效语言列表只有2个）
+  const visibleSlots = Array.from(new Set([...fixedSlots, dynamicSlot]))
+
   return (
     <div className="settings-sidebar-footer">
       {/* 主题切换 - 分段控制器风格 */}
@@ -90,27 +118,71 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
         </button>
       </div>
 
-      {/* 语言切换 - 极简文字链风格 */}
-      {/* 使用 effectiveLang 判断高亮，这样当设置为 auto 时也能正确显示当前语言 */}
-      <div className="settings-lang-inline">
+      {/* 语言切换 - 极简文字链 + 更多菜单 */}
+      <div className="settings-lang-inline" style={{ position: "relative" }}>
+        {visibleSlots.map((lang, index) => (
+          <React.Fragment key={lang}>
+            <button
+              className={`lang-link ${effectiveLang === lang ? "active" : ""}`}
+              onClick={() => handleLanguageChange(lang)}>
+              {SHORT_LANG_MAP[lang] || lang}
+            </button>
+            {index < visibleSlots.length - 1 && <span className="lang-divider">/</span>}
+          </React.Fragment>
+        ))}
+
+        <span className="lang-divider" style={{ opacity: 0.3 }}>
+          |
+        </span>
+
         <button
-          className={`lang-link ${effectiveLang === "en" ? "active" : ""}`}
-          onClick={() => handleLanguageChange("en")}>
-          EN
+          ref={moreBtnRef}
+          className={`lang-more-btn ${isMenuOpen ? "active" : ""}`}
+          onClick={(e) => {
+            e.stopPropagation()
+            setIsMenuOpen(!isMenuOpen)
+          }}
+          title={t("moreLanguages") || "More Languages"}>
+          <MoreHorizontalIcon size={16} />
         </button>
-        <span className="lang-divider">/</span>
-        <button
-          className={`lang-link ${effectiveLang === "zh-CN" ? "active" : ""}`}
-          onClick={() => handleLanguageChange("zh-CN")}>
-          简
-        </button>
-        <span className="lang-divider">/</span>
-        <button
-          className={`lang-link ${effectiveLang === "zh-TW" ? "active" : ""}`}
-          onClick={() => handleLanguageChange("zh-TW")}>
-          繁
-        </button>
+
+        {isMenuOpen && (
+          <LanguageMenu
+            currentLang={effectiveLang}
+            themeMode={currentThemeMode}
+            onSelect={(lang) => {
+              handleLanguageChange(lang)
+              setIsMenuOpen(false)
+            }}
+            onClose={() => setIsMenuOpen(false)}
+            triggerRef={moreBtnRef}
+          />
+        )}
       </div>
+
+      <style>{`
+        .lang-more-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: transparent;
+          border: none;
+          color: var(--gh-text-secondary, #9ca3af);
+          cursor: pointer;
+          padding: 2px;
+          border-radius: 4px;
+          transition: all 0.2s;
+          margin-left: 4px;
+        }
+        .lang-more-btn:hover, .lang-more-btn.active {
+          color: var(--gh-text, #374151);
+          background: var(--gh-bg-hover, #f3f4f6);
+        }
+        :host-context([data-gh-mode="dark"]) .lang-more-btn:hover {
+           color: #e5e7eb;
+           background: #374151;
+        }
+      `}</style>
     </div>
   )
 }

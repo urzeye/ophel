@@ -1,5 +1,5 @@
 export const en = {
-  panelTitle: "Gemini Helper",
+  panelTitle: "Ophel",
 
   // Disclaimer Modal
   welcomeSlogan: "AI's Benefit, Within Reach",

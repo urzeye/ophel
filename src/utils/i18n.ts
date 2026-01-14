@@ -6,6 +6,13 @@ const getBrowserLang = () => {
   const lang = navigator.language
   if (lang.startsWith("zh-TW") || lang.startsWith("zh-HK")) return "zh-TW"
   if (lang.startsWith("zh")) return "zh-CN"
+  if (lang.startsWith("ja")) return "ja"
+  if (lang.startsWith("ko")) return "ko"
+  if (lang.startsWith("fr")) return "fr"
+  if (lang.startsWith("de")) return "de"
+  if (lang.startsWith("ru")) return "ru"
+  if (lang.startsWith("es")) return "es"
+  if (lang.startsWith("pt")) return "pt"
   return "en"
 }
 

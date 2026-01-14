@@ -99,6 +99,7 @@ export const zhCN = {
   contentStyleTab: "内容处理",
   claudeSettingsTab: "Claude 专属",
   pageWidthSettings: "页面宽度",
+  moreLanguages: "更多语言",
   layoutSettingsTitle: "页面宽度控制",
   tabLayout: "页面布局",
   tabModelLock: "模型锁定",
