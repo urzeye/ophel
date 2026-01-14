@@ -20,11 +20,6 @@ interface FeaturesPageProps {
 }
 
 const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
-  const [activeTab, setActiveTab] = useState("tab")
-  const { settings, setSettings, updateDeepSetting, updateNestedSetting } = useSettingsStore()
-
-  if (!settings) return null
-
   const tabs = [
     { id: "outline", label: t("tabOutline") || "大纲" },
     { id: "conversations", label: t("tabConversations") || "会话" },
@@ -32,6 +27,11 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
     { id: "content", label: t("navContent") || "内容交互" },
     { id: "readingHistory", label: t("readingHistoryTitle") || "阅读历史" },
   ]
+
+  const [activeTab, setActiveTab] = useState(tabs[0].id)
+  const { settings, setSettings, updateDeepSetting, updateNestedSetting } = useSettingsStore()
+
+  if (!settings) return null
 
   return (
     <div>

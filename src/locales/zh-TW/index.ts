@@ -566,7 +566,7 @@ export const zhTW = {
   userQueryMarkdownLabel: "用戶提問 Markdown 渲染",
   userQueryMarkdownDesc: "將用戶提問中的 Markdown 語法渲染為格式化文字",
   formulaCopyLabel: "雙擊複製公式",
-  formulaCopyDesc: "雙擊數學公式可複製 LaTeX 原始碼（僅 Gemini 標準版）",
+  formulaCopyDesc: "雙擊數學公式可複製 LaTeX 原始碼（部分站點不支持）",
   formulaCopied: "公式已複製",
   formulaDelimiterLabel: "複製時添加分隔符",
   formulaDelimiterDesc: "根據公式類型自動添加 $ 或 $$ 分隔符",

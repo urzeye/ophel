@@ -585,7 +585,7 @@ export const en = {
   conversationsClearAll: "Clear All Filters",
   conversationsBatchMode: "Batch Mode",
   formulaCopyLabel: "Double-click to copy formula",
-  formulaCopyDesc: "Double-click math formula to copy LaTeX source (Gemini Standard only)",
+  formulaCopyDesc: "Double-click math formula to copy LaTeX source (Not supported on some sites)",
   formulaCopied: "Formula copied",
   formulaDelimiterLabel: "Add delimiter when copying",
   formulaDelimiterDesc: "Automatically add $ or $$ delimiter based on formula type",
