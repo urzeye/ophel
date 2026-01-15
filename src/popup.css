@@ -1,0 +1,341 @@
+/* Popup Styles */
+:root {
+  --popup-bg: #ffffff;
+  --popup-text: #1a1a1a;
+  --popup-text-secondary: #6b7280;
+  --popup-border: #e5e7eb;
+  --popup-accent: #3b5998;
+  --popup-accent-hover: #2d4373;
+  --popup-card-bg: #f9fafb;
+  --popup-success: #10b981;
+  --popup-warning: #f59e0b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --popup-bg: #1f2937;
+    --popup-text: #f3f4f6;
+    --popup-text-secondary: #9ca3af;
+    --popup-border: #374151;
+    --popup-accent: #60a5fa;
+    --popup-accent-hover: #3b82f6;
+    --popup-card-bg: #111827;
+    --popup-success: #34d399;
+    --popup-warning: #fbbf24;
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--popup-bg);
+  color: var(--popup-text);
+  width: 320px;
+  min-height: 200px;
+}
+
+.popup-container {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Header */
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.popup-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.popup-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.popup-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.popup-settings-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: var(--popup-text-secondary);
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+
+.popup-settings-btn:hover {
+  background: var(--popup-card-bg);
+  color: var(--popup-text);
+}
+
+/* Site Status */
+.popup-site-status {
+  padding: 12px;
+  background: var(--popup-card-bg);
+  border-radius: 8px;
+  border: 1px solid var(--popup-border);
+}
+
+.popup-site-label {
+  font-size: 11px;
+  color: var(--popup-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.popup-site-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.popup-site-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.popup-status-badge {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.popup-status-badge.supported {
+  background: var(--popup-success);
+  color: white;
+}
+
+.popup-status-badge.unsupported {
+  background: var(--popup-warning);
+  color: white;
+}
+
+/* Quick Actions */
+.popup-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.popup-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  background: var(--popup-card-bg);
+  border: 1px solid var(--popup-border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--popup-text);
+  transition: all 0.2s;
+}
+
+.popup-action-btn:hover {
+  background: var(--popup-accent);
+  color: white;
+  border-color: var(--popup-accent);
+}
+
+.popup-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.popup-action-btn:disabled:hover {
+  background: var(--popup-card-bg);
+  color: var(--popup-text);
+  border-color: var(--popup-border);
+}
+
+.popup-actions-single {
+  grid-template-columns: 1fr;
+}
+
+/* Recent Prompts */
+.popup-section-title {
+  font-size: 12px;
+  color: var(--popup-text-secondary);
+  margin-bottom: 6px;
+}
+
+.popup-prompts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.popup-prompt-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--popup-card-bg);
+  border: 1px solid var(--popup-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.popup-prompt-item:hover {
+  border-color: var(--popup-accent);
+}
+
+.popup-prompt-title {
+  font-size: 13px;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.popup-prompt-copy {
+  font-size: 11px;
+  color: var(--popup-text-secondary);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.popup-prompt-item:hover .popup-prompt-copy {
+  opacity: 1;
+}
+
+.popup-no-prompts {
+  font-size: 12px;
+  color: var(--popup-text-secondary);
+  text-align: center;
+  padding: 12px;
+}
+
+/* Sites Grid (for unsupported sites) */
+.popup-sites-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.popup-site-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  background: var(--popup-card-bg);
+  border: 1px solid var(--popup-border);
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--popup-text);
+  font-size: 10px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.popup-site-link:hover {
+  border-color: var(--popup-accent);
+  background: var(--popup-accent);
+  color: white;
+}
+
+/* Footer */
+.popup-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--popup-text-secondary);
+  padding-top: 8px;
+  border-top: 1px solid var(--popup-border);
+}
+
+.popup-footer a {
+  color: var(--popup-accent);
+  text-decoration: none;
+}
+
+.popup-footer a:hover {
+  text-decoration: underline;
+}
+
+.popup-star-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1px solid var(--popup-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: var(--popup-text-secondary);
+  font-size: 11px;
+  transition: all 0.2s;
+}
+
+.popup-star-btn:hover {
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
+
+/* Toast */
+.popup-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--popup-text-secondary);
+  padding-top: 8px;
+  border-top: 1px solid var(--popup-border);
+}
+
+.popup-footer a {
+  color: var(--popup-accent);
+  text-decoration: none;
+}
+
+.popup-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Toast */
+.popup-toast {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--popup-text);
+  color: var(--popup-bg);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.popup-toast.show {
+  opacity: 1;
+}

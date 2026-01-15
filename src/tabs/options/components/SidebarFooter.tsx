@@ -10,6 +10,10 @@ import { LanguageMenu } from "./LanguageMenu"
 export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
   const { settings, setSettings } = useSettingsStore()
 
+  // ⭐ 检测是否在独立 Options 页面（非 content script 环境）
+  // 如果是独立页面，不显示主题切换（因为主题是按站点配置的）
+  const isStandalonePage = !(window as any).__ophelThemeManager
+
   // ⭐ 从全局 ThemeManager 订阅当前主题模式（Single Source of Truth）
   const themeManager = (window as any).__ophelThemeManager as ThemeManager | undefined
   const currentThemeMode = useSyncExternalStore(
@@ -96,27 +100,29 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
 
   return (
     <div className="settings-sidebar-footer">
-      {/* 主题切换 - 分段控制器风格 */}
-      <div className="settings-theme-segmented">
-        <button
-          className={`settings-theme-segment ${currentThemeMode === "light" ? "active" : ""}`}
-          onClick={() => handleThemeModeToggle("light")}
-          title={t("themeLight") || "浅色"}>
-          <span className="segment-icon">
-            <ThemeLightIcon size={16} />
-          </span>
-          <span className="segment-label">{t("themeLight") || "浅色"}</span>
-        </button>
-        <button
-          className={`settings-theme-segment ${currentThemeMode === "dark" ? "active" : ""}`}
-          onClick={() => handleThemeModeToggle("dark")}
-          title={t("themeDark") || "深色"}>
-          <span className="segment-icon">
-            <ThemeDarkIcon size={16} />
-          </span>
-          <span className="segment-label">{t("themeDark") || "深色"}</span>
-        </button>
-      </div>
+      {/* 主题切换 - 仅在 content script 环境显示（站点内） */}
+      {!isStandalonePage && (
+        <div className="settings-theme-segmented">
+          <button
+            className={`settings-theme-segment ${currentThemeMode === "light" ? "active" : ""}`}
+            onClick={() => handleThemeModeToggle("light")}
+            title={t("themeLight") || "浅色"}>
+            <span className="segment-icon">
+              <ThemeLightIcon size={16} />
+            </span>
+            <span className="segment-label">{t("themeLight") || "浅色"}</span>
+          </button>
+          <button
+            className={`settings-theme-segment ${currentThemeMode === "dark" ? "active" : ""}`}
+            onClick={() => handleThemeModeToggle("dark")}
+            title={t("themeDark") || "深色"}>
+            <span className="segment-icon">
+              <ThemeDarkIcon size={16} />
+            </span>
+            <span className="segment-label">{t("themeDark") || "深色"}</span>
+          </button>
+        </div>
+      )}
 
       {/* 语言切换 - 极简文字链 + 更多菜单 */}
       <div className="settings-lang-inline">

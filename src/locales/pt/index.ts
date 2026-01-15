@@ -926,4 +926,17 @@ Dê o código e depois um resumo de melhorias.`,
   exportCustomUserNameDesc: "Nome de exibição do usuário para exportações (Padrão: User)",
   exportCustomModelName: "Nome da IA",
   exportCustomModelNameDesc: "Nome de exibição da IA para exportações (Padrão: Nome do site)",
+
+  // ======== Popup ========
+  popupCurrentSite: "Site Atual",
+  popupSupported: "Ativo",
+  popupUnsupported: "Não suportado",
+  popupNewChat: "Nova Conversa",
+  popupQuickAccess: "Acesso Rápido",
+  popupRecentUsed: "Recentes",
+  popupNoRecentPrompts: "Sem prompts recentes",
+  popupCopied: "Copiado",
+  popupCopyFailed: "Falha ao copiar",
+  popupFeedback: "Feedback",
+  popupSettings: "Ajustes",
 }

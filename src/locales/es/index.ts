@@ -929,4 +929,17 @@ Dame el código y luego un resumen de mejoras.`,
   exportCustomUserNameDesc: "Nombre para mostrar en exportaciones (Predeterminado: User)",
   exportCustomModelName: "Nombre de IA",
   exportCustomModelNameDesc: "Nombre para mostrar de IA en exportaciones (Predeterminado: Sitio)",
+
+  // ======== Popup ========
+  popupCurrentSite: "Sitio Actual",
+  popupSupported: "Activo",
+  popupUnsupported: "No soportado",
+  popupNewChat: "Nueva Conversación",
+  popupQuickAccess: "Acceso Rápido",
+  popupRecentUsed: "Recientes",
+  popupNoRecentPrompts: "Sin prompts recientes",
+  popupCopied: "Copiado",
+  popupCopyFailed: "Fallo al copiar",
+  popupFeedback: "Comentarios",
+  popupSettings: "Ajustes",
 }

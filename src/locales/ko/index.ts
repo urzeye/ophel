@@ -936,4 +936,17 @@ export const ko = {
   exportCustomUserNameDesc: "내보내기 시 표시될 사용자 이름 (기본값: User)",
   exportCustomModelName: "사용자 지정 AI 이름",
   exportCustomModelNameDesc: "내보내기 시 표시될 AI 이름 (기본값: 사이트 이름)",
+
+  // ======== Popup ========
+  popupCurrentSite: "현재 사이트",
+  popupSupported: "활성화됨",
+  popupUnsupported: "미지원",
+  popupNewChat: "새 대화",
+  popupQuickAccess: "빠른 액세스",
+  popupRecentUsed: "최근 사용",
+  popupNoRecentPrompts: "최근 사용한 프롬프트가 없습니다",
+  popupCopied: "복사됨",
+  popupCopyFailed: "복사 실패",
+  popupFeedback: "피드백",
+  popupSettings: "설정",
 }

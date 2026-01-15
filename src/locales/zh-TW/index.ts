@@ -919,4 +919,17 @@ export const zhTW = {
   exportCustomUserNameDesc: "匯出時使用的使用者顯示名稱 (預設: User)",
   exportCustomModelName: "自訂 AI 名稱",
   exportCustomModelNameDesc: "匯出時使用的 AI 顯示名稱 (預設: 網站名稱)",
+
+  // ======== Popup 頁面 ========
+  popupCurrentSite: "目前站點",
+  popupSupported: "已啟用",
+  popupUnsupported: "不支援",
+  popupNewChat: "新對話",
+  popupQuickAccess: "快速存取",
+  popupRecentUsed: "最近使用",
+  popupNoRecentPrompts: "暫無最近使用的提示詞",
+  popupCopied: "已複製",
+  popupCopyFailed: "複製失敗",
+  popupFeedback: "反饋",
+  popupSettings: "設定",
 }

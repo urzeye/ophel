@@ -955,4 +955,17 @@ export const zhCN = {
   aistudioModelsFetched: "模型列表已更新",
   aistudioNoTabError: "请先打开 AI Studio 页面",
   aistudioModelsError: "获取模型列表失败",
+
+  // ======== Popup 页面 ========
+  popupCurrentSite: "当前站点",
+  popupSupported: "已激活",
+  popupUnsupported: "不支持",
+  popupNewChat: "新对话",
+  popupQuickAccess: "快速访问",
+  popupRecentUsed: "最近使用",
+  popupNoRecentPrompts: "暂无最近使用的提示词",
+  popupCopied: "已复制",
+  popupCopyFailed: "复制失败",
+  popupFeedback: "反馈",
+  popupSettings: "设置",
 }

@@ -926,4 +926,17 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   exportCustomUserNameDesc: "Anzeigename des Benutzers für den Export (Standard: User)",
   exportCustomModelName: "Benutzerdefinierter AI-Name",
   exportCustomModelNameDesc: "Anzeigename der AI für den Export (Standard: Website-Name)",
+
+  // ======== Popup ========
+  popupCurrentSite: "Aktuelle Seite",
+  popupSupported: "Aktiv",
+  popupUnsupported: "Nicht unterstützt",
+  popupNewChat: "Neuer Chat",
+  popupQuickAccess: "Schnellzugriff",
+  popupRecentUsed: "Kürzlich",
+  popupNoRecentPrompts: "Keine kürzlichen Prompts",
+  popupCopied: "Kopiert",
+  popupCopyFailed: "Kopie fehlgeschlagen",
+  popupFeedback: "Feedback",
+  popupSettings: "Einstellungen",
 }

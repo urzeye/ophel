@@ -133,6 +133,15 @@ const OptionsPage = () => {
     }
   }
 
+  // ⭐ 检测是否在独立 Options 页面（非 content script 环境）
+  // 如果是独立页面，不显示外观主题菜单（因为主题是按站点配置的）
+  const isStandalonePage = !(window as any).__ophelThemeManager
+
+  // 在独立页面中过滤掉 appearance 导航项
+  const filteredNavItems = isStandalonePage
+    ? NAV_ITEMS.filter((item) => item.id !== "appearance")
+    : NAV_ITEMS
+
   return (
     <div className="settings-layout">
       {/* 侧边栏 */}
@@ -144,7 +153,7 @@ const OptionsPage = () => {
           </div>
         </div>
         <nav className="settings-sidebar-nav">
-          {NAV_ITEMS.map((item) => (
+          {filteredNavItems.map((item) => (
             <button
               key={item.id}
               className={`settings-nav-item ${activePage === item.id ? "active" : ""}`}

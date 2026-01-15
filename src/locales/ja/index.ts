@@ -938,4 +938,17 @@ export const ja = {
   exportCustomUserNameDesc: "エクスポート時のユーザー表示名（デフォルト: User）",
   exportCustomModelName: "カスタムAI名",
   exportCustomModelNameDesc: "エクスポート時のAI表示名（デフォルト: サイト名）",
+
+  // ======== Popup ========
+  popupCurrentSite: "現在のサイト",
+  popupSupported: "有効",
+  popupUnsupported: "非対応",
+  popupNewChat: "新規チャット",
+  popupQuickAccess: "クイックアクセス",
+  popupRecentUsed: "最近使用",
+  popupNoRecentPrompts: "最近使用したプロンプトはありません",
+  popupCopied: "コピーしました",
+  popupCopyFailed: "コピー失敗",
+  popupFeedback: "フィードバック",
+  popupSettings: "設定",
 }

@@ -932,4 +932,17 @@ Donnez le code puis un résumé des améliorations.`,
     "Nom d'affichage de l'utilisateur pour les exportations (Défaut : User)",
   exportCustomModelName: "Nom de l'IA personnalisé",
   exportCustomModelNameDesc: "Nom d'affichage de l'IA pour les exportations (Défaut : Nom du site)",
+
+  // ======== Popup ========
+  popupCurrentSite: "Site Actuel",
+  popupSupported: "Actif",
+  popupUnsupported: "Non supporté",
+  popupNewChat: "Nouvelle Conversation",
+  popupQuickAccess: "Accès Rapide",
+  popupRecentUsed: "Récents",
+  popupNoRecentPrompts: "Aucun prompt récent",
+  popupCopied: "Copié",
+  popupCopyFailed: "Échec copie",
+  popupFeedback: "Feedback",
+  popupSettings: "Réglages",
 }

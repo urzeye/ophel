@@ -926,4 +926,17 @@ export const ru = {
   exportCustomUserNameDesc: "Отображаемое имя при экспорте (По умолчанию: User)",
   exportCustomModelName: "Имя ИИ",
   exportCustomModelNameDesc: "Отображаемое имя ИИ при экспорте (По умолчанию: Имя сайта)",
+
+  // ======== Popup ========
+  popupCurrentSite: "Текущий сайт",
+  popupSupported: "Активен",
+  popupUnsupported: "Не поддерж.",
+  popupNewChat: "Новый чат",
+  popupQuickAccess: "Быстрый доступ",
+  popupRecentUsed: "Недавние",
+  popupNoRecentPrompts: "Нет недавних промптов",
+  popupCopied: "Скопировано",
+  popupCopyFailed: "Ошибка копии",
+  popupFeedback: "Обратная связь",
+  popupSettings: "Настройки",
 }
