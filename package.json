@@ -1,7 +1,7 @@
 {
   "name": "ophel",
   "displayName": "Ophel",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Ophel - AI 对话增强助手（Gemini/AI Studio/Grok/ChatGPT/Claude）",
   "author": "urzeye",
   "license": "CC-BY-NC-SA-4.0",
