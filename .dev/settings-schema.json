@@ -1,0 +1,173 @@
+{
+  "language": "auto",
+
+  "panel": {
+    "defaultOpen": true,
+    "autoHide": false,
+    "edgeSnap": true,
+    "defaultPosition": "right",
+    "defaultEdgeDistance": 20,
+    "edgeSnapThreshold": 30,
+    "height": 80,
+    "preventAutoScroll": false
+  },
+
+  "content": {
+    "markdownFix": true,
+    "watermarkRemoval": true,
+    "formulaCopy": true,
+    "formulaDelimiter": true,
+    "tableCopy": true,
+    "exportImagesToBase64": false,
+    "userQueryMarkdown": false
+  },
+
+  "theme": {
+    "sites": {
+      "gemini": {
+        "mode": "light",
+        "lightStyleId": "google-gradient",
+        "darkStyleId": "classic-dark"
+      },
+      "gemini-enterprise": {
+        "mode": "dark",
+        "lightStyleId": "google-gradient",
+        "darkStyleId": "classic-dark"
+      },
+      "_default": {
+        "mode": "light",
+        "lightStyleId": "google-gradient",
+        "darkStyleId": "classic-dark"
+      }
+    },
+    "customStyles": [
+      {
+        "id": "example-custom-style",
+        "name": "示例自定义样式",
+        "css": "/* 用户自定义 CSS */",
+        "mode": "light"
+      }
+    ]
+  },
+
+  "layout": {
+    "pageWidth": {
+      "gemini": { "enabled": false, "value": "81", "unit": "%" },
+      "gemini-enterprise": { "enabled": false, "value": "81", "unit": "%" },
+      "_default": { "enabled": false, "value": "81", "unit": "%" }
+    },
+    "userQueryWidth": {
+      "gemini": { "enabled": false, "value": "600", "unit": "px" },
+      "gemini-enterprise": { "enabled": false, "value": "600", "unit": "px" },
+      "_default": { "enabled": false, "value": "600", "unit": "px" }
+    }
+  },
+
+  "appearance": {
+    "codeBlock": { "beautify": false, "collapsible": false, "maxHeight": 300 },
+    "blockquote": { "beautify": false },
+    "typography": { "fontReplace": false, "fontFamily": "system" },
+    "shadow": { "enabled": false, "intensity": "medium" }
+  },
+
+  "modelLock": {
+    "gemini": { "enabled": false, "keyword": "" },
+    "gemini-enterprise": { "enabled": false, "keyword": "" }
+  },
+
+  "features": {
+    "order": ["prompts", "conversations", "outline"],
+    "prompts": {
+      "enabled": true
+    },
+    "conversations": {
+      "enabled": true,
+      "syncUnpin": false,
+      "folderRainbow": true
+    },
+    "outline": {
+      "enabled": true,
+      "maxLevel": 6,
+      "autoUpdate": true,
+      "updateInterval": 2,
+      "showUserQueries": true,
+      "followMode": "current",
+      "expandLevel": 6
+    }
+  },
+
+  "tab": {
+    "openInNewTab": true,
+    "autoRename": true,
+    "renameInterval": 3,
+    "showStatus": true,
+    "titleFormat": "{status}{title}->{model}",
+    "showNotification": true,
+    "notificationSound": true,
+    "notificationVolume": 0.6,
+    "notifyWhenFocused": false,
+    "autoFocus": true,
+    "privacyMode": false,
+    "privacyTitle": "Google",
+    "customIcon": "default"
+  },
+
+  "readingHistory": {
+    "persistence": true,
+    "autoRestore": true,
+    "cleanupDays": 30
+  },
+
+  "collapsedButtons": [
+    { "id": "scrollTop", "enabled": true },
+    { "id": "panel", "enabled": true },
+    { "id": "anchor", "enabled": true },
+    { "id": "theme", "enabled": true },
+    { "id": "manualAnchor", "enabled": true },
+    { "id": "scrollBottom", "enabled": true }
+  ],
+
+  "shortcuts": {
+    "enabled": true,
+    "globalUrl": "https://gemini.google.com",
+    "keybindings": {
+      "scrollTop": { "key": "t", "alt": true },
+      "scrollBottom": { "key": "b", "alt": true },
+      "goToAnchor": { "key": "z", "alt": true },
+      "togglePanel": { "key": "p", "alt": true },
+      "toggleTheme": { "key": "d", "alt": true },
+      "openSettings": { "key": ",", "alt": true },
+      "switchTab1": { "key": "1", "alt": true },
+      "switchTab2": { "key": "2", "alt": true },
+      "switchTab3": { "key": "3", "alt": true },
+      "refreshOutline": { "key": "r", "alt": true },
+      "toggleOutlineExpand": { "key": "e", "alt": true },
+      "expandLevel1": { "key": "1", "alt": true, "shift": true },
+      "expandLevel2": { "key": "2", "alt": true, "shift": true },
+      "expandLevel3": { "key": "3", "alt": true, "shift": true },
+      "toggleUserQueries": { "key": "q", "alt": true },
+      "prevHeading": { "key": "ArrowUp", "alt": true },
+      "nextHeading": { "key": "ArrowDown", "alt": true },
+      "locateOutline": { "key": "l", "alt": true },
+      "searchOutline": { "key": "f", "alt": true },
+      "newConversation": { "key": "o", "ctrl": true, "shift": true },
+      "refreshConversations": { "key": "r", "alt": true, "shift": true },
+      "locateConversation": { "key": "l", "alt": true, "shift": true },
+      "exportConversation": { "key": "e", "ctrl": true, "shift": true },
+      "copyLatestReply": { "key": "c", "ctrl": true, "shift": true },
+      "toggleScrollLock": { "key": "s", "alt": true }
+    }
+  },
+
+  "webdav": {
+    "enabled": false,
+    "url": "",
+    "username": "",
+    "password": "",
+    "syncMode": "manual",
+    "syncInterval": 30,
+    "remoteDir": "ophel",
+    "lastSyncTime": null,
+    "lastSyncStatus": null
+  }
+}
