@@ -4,6 +4,7 @@
   "version": "0.1.1",
   "description": "Ophel - AI 对话增强助手（Gemini/AI Studio/Grok/ChatGPT/Claude）",
   "author": "urzeye",
+  "license": "CC-BY-NC-SA-4.0",
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",

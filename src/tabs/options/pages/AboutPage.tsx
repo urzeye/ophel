@@ -151,7 +151,7 @@ const AboutPage: React.FC = () => {
           <Badge text="Privacy First" />
         </div>
         <div style={{ marginTop: 16, fontSize: "12px", color: "var(--gh-text-secondary)" }}>
-          MIT License © {new Date().getFullYear()} {APP_DISPLAY_NAME}
+          CC BY-NC-SA 4.0 © {new Date().getFullYear()} {APP_DISPLAY_NAME}
         </div>
       </div>
 
