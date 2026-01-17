@@ -32,8 +32,6 @@ import { LoadingOverlay } from "./LoadingOverlay"
 import { OutlineTab } from "./OutlineTab"
 import { PromptsTab } from "./PromptsTab"
 
-// SettingsTab 已移至独立的 Options 页面
-
 interface MainPanelProps {
   onClose: () => void
   isOpen: boolean
@@ -371,7 +369,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           border: "1px solid var(--gh-border, #e5e7eb)",
           zIndex: 9999,
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          // ⭐ 位置现在由 useDraggable 通过直接 DOM 操作控制，不再通过 React state
+          // 位置现在由 useDraggable 通过直接 DOM 操作控制，不再通过 React state
         }}>
         {/* 自定义 CSS 注入：根据当前站点的样式 ID 查找自定义样式 */}
         {(() => {
@@ -403,7 +401,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            // ⭐ cursor 由 CSS (.gh-panel-header) 统一控制为 pointer
+            // cursor 由 CSS (.gh-panel-header) 统一控制为 pointer
             userSelect: "none",
           }}>
           {/* 左侧：图标 + 标题（双击切换隐私模式） */}
@@ -632,7 +630,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           {activeTab === TAB_IDS.OUTLINE && (
             <OutlineTab manager={outlineManager} onJumpBefore={saveAnchor} />
           )}
-          {/* Settings 已移至独立的 Options 页面窗口 */}
         </div>
 
         {/* Footer - 底部固定按钮 */}

@@ -25,7 +25,7 @@ export const getPreset = (presetId: string, mode: "light" | "dark"): ThemePreset
 }
 
 // 将主题变量转换为 CSS 字符串
-// ⭐ 使用 !important 确保动态注入的变量优先于静态定义的变量
+// 使用 !important 确保动态注入的变量优先于静态定义的变量
 export const themeVariablesToCSS = (variables: ThemeVariables): string => {
   return Object.entries(variables)
     .map(([key, value]) => `${key}: ${value} !important;`)

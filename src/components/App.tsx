@@ -28,7 +28,7 @@ export const App = () => {
   const { settings, setSettings, updateNestedSetting, updateDeepSetting } = useSettingsStore()
   const isSettingsHydrated = useSettingsHydrated()
 
-  // ⭐ 订阅 _syncVersion 以在跨上下文同步时强制触发重渲染
+  // 订阅 _syncVersion 以在跨上下文同步时强制触发重渲染
   // 当 Options 页面更新设置时，_syncVersion 递增，这会使整个组件重渲染
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _syncVersion = useSettingsStore((s) => s._syncVersion)
@@ -37,7 +37,7 @@ export const App = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const hasInitializedPanel = useRef(false)
 
-  // ⭐ 使用 ref 保持 settings 的最新引用，避免闭包捕获过期值
+  // 使用 ref 保持 settings 的最新引用，避免闭包捕获过期值
   const settingsRef = useRef(settings)
   useEffect(() => {
     settingsRef.current = settings
@@ -58,7 +58,7 @@ export const App = () => {
   // 选中的提示词状态
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null)
 
-  // ⭐ 设置模态框状态
+  // 设置模态框状态
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   // 边缘吸附状态
@@ -69,11 +69,11 @@ export const App = () => {
   // 使用 useRef 避免闭包陷阱和不必要的重渲染
   const isInteractionActiveRef = useRef(false)
   const hideTimerRef = useRef<NodeJS.Timeout | null>(null)
-  // ⭐ 快捷键触发的面板显示延迟缩回计时器
+  // 快捷键触发的面板显示延迟缩回计时器
   const shortcutPeekTimerRef = useRef<NodeJS.Timeout | null>(null)
-  // ⭐ 使用 ref 跟踪设置模态框状态，避免闭包捕获过期值
+  // 使用 ref 跟踪设置模态框状态，避免闭包捕获过期值
   const isSettingsOpenRef = useRef(false)
-  // ⭐ 追踪面板内输入框是否聚焦（解决 IME 输入法弹出时 CSS :hover 失效的问题）
+  // 追踪面板内输入框是否聚焦（解决 IME 输入法弹出时 CSS :hover 失效的问题）
   const isInputFocusedRef = useRef(false)
 
   // 取消快捷键触发的延迟缩回计时器
@@ -125,7 +125,7 @@ export const App = () => {
   const outlineManager = useMemo(() => {
     if (!adapter) return null
 
-    // ⭐ 使用 Zustand 的 updateDeepSetting
+    // 使用 Zustand 的 updateDeepSetting
     const handleExpandLevelChange = (level: number) => {
       updateDeepSetting("features", "outline", "expandLevel", level)
     }
@@ -143,14 +143,14 @@ export const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在 adapter 变化时重新创建
   }, [adapter, updateDeepSetting])
 
-  // ⭐ 单独用 useEffect 同步 settings 变化到 manager
+  // 单独用 useEffect 同步 settings 变化到 manager
   useEffect(() => {
     if (outlineManager && settings) {
       outlineManager.updateSettings(settings.features?.outline)
     }
   }, [outlineManager, settings])
 
-  // ⭐ 同步 ConversationManager 设置
+  // 同步 ConversationManager 设置
   useEffect(() => {
     if (conversationManager && settings) {
       conversationManager.updateSettings({
@@ -159,7 +159,7 @@ export const App = () => {
     }
   }, [conversationManager, settings])
 
-  // ⭐ 从 window 获取 main.ts 创建的全局 ThemeManager 实例
+  // 从 window 获取 main.ts 创建的全局 ThemeManager 实例
   // 这样只有一个 ThemeManager 实例，避免竞争条件
   const themeManager = useMemo(() => {
     const globalTM = window.__ophelThemeManager
@@ -168,7 +168,7 @@ export const App = () => {
     }
     // 降级：如果 main.ts 还没创建，则临时创建一个（不应该发生）
     console.warn("[App] Global ThemeManager not found, creating fallback instance")
-    // ⭐ 使用当前站点的配置
+    // 使用当前站点的配置
     const currentAdapter = getAdapter()
     const siteId = currentAdapter?.getSiteId() || "_default"
     const fallbackTheme =
@@ -184,23 +184,23 @@ export const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在初始化时获取
   }, [])
 
-  // ⭐ 使用 useSyncExternalStore 订阅 ThemeManager 的主题模式
+  // 使用 useSyncExternalStore 订阅 ThemeManager 的主题模式
   // 这让 ThemeManager 成为唯一的主题状态源，避免双重状态导致的同步问题
   const themeMode = useSyncExternalStore(themeManager.subscribe, themeManager.getSnapshot)
 
-  // ⭐ 动态注册主题变化回调，当页面主题变化时同步更新 settings
+  // 动态注册主题变化回调，当页面主题变化时同步更新 settings
   // 注意：themeMode 由 useSyncExternalStore 自动订阅更新，不需要手动 setThemeMode
   useEffect(() => {
     const handleThemeModeChange = (mode: "light" | "dark") => {
-      // ⭐ 使用 ref 获取最新 settings，避免闭包捕获过期值
+      // 使用 ref 获取最新 settings，避免闭包捕获过期值
       const currentSettings = settingsRef.current
       const sites = currentSettings?.theme?.sites || {}
 
-      // ⭐ 获取当前站点 ID
+      // 获取当前站点 ID
       const currentAdapter = getAdapter()
       const siteId = currentAdapter?.getSiteId() || "_default"
 
-      // ⭐ 确保站点配置有完整的默认值，但优先使用已有配置
+      // 确保站点配置有完整的默认值，但优先使用已有配置
       const existingSite = sites[siteId as keyof typeof sites] || sites._default
       const siteConfig = {
         lightStyleId: "google-gradient",
@@ -209,7 +209,7 @@ export const App = () => {
         ...existingSite, // 已有配置覆盖默认值
       }
 
-      // ⭐ 只更新 mode 字段，保留用户已有的主题配置
+      // 只更新 mode 字段，保留用户已有的主题配置
       setSettings({
         theme: {
           ...currentSettings?.theme,
@@ -229,14 +229,14 @@ export const App = () => {
     return () => {
       themeManager.setOnModeChange(undefined)
     }
-  }, [themeManager, setSettings]) // ⭐ 移除 settings?.theme 依赖，通过 ref 访问最新值
+  }, [themeManager, setSettings]) // 移除 settings?.theme 依赖，通过 ref 访问最新值
 
   // 监听主题预置变化，动态更新 ThemeManager
   // Zustand 不存在 Plasmo useStorage 的缓存问题，无需启动保护期
   useEffect(() => {
     if (!isSettingsHydrated) return // 等待 hydration 完成
 
-    // ⭐ 使用当前站点的配置而非 _default
+    // 使用当前站点的配置而非 _default
     const currentAdapter = getAdapter()
     const siteId = currentAdapter?.getSiteId() || "_default"
     const siteTheme =
@@ -257,7 +257,7 @@ export const App = () => {
   }, [settings?.theme?.customStyles, themeManager, isSettingsHydrated])
 
   // 主题切换（异步处理，支持 View Transitions API 动画）
-  // ⭐ 不在这里更新 React 状态，由 ThemeManager 的 onModeChange 回调在动画完成后统一处理
+  // 不在这里更新 React 状态，由 ThemeManager 的 onModeChange 回调在动画完成后统一处理
   const handleThemeToggle = useCallback(
     async (event?: MouseEvent) => {
       await themeManager.toggle(event)
@@ -269,7 +269,7 @@ export const App = () => {
 
   // 启动主题监听器
   useEffect(() => {
-    // ⭐ 不再调用 updateMode，由 main.ts 负责初始应用
+    // 不再调用 updateMode，由 main.ts 负责初始应用
     // 只启动监听器，监听页面主题变化（浏览器自动切换等场景）
     themeManager.monitorTheme()
 
@@ -321,7 +321,7 @@ export const App = () => {
     showToast(newState ? "滚动锁定已开启" : "滚动锁定已关闭")
   }, [setSettings])
 
-  // ⭐ 快捷键管理
+  // 快捷键管理
   useShortcuts({
     settings,
     adapter,
@@ -415,7 +415,7 @@ export const App = () => {
     }
   }, [edgeSnapState, settings?.panel?.edgeSnap])
 
-  // ⭐ 监听面板内输入框的聚焦状态
+  // 监听面板内输入框的聚焦状态
   // 解决问题：当用户在输入框中打字时，IME 输入法弹出会导致浏览器丢失 CSS :hover 状态
   // 方案：在输入框聚焦时主动设置 isEdgePeeking = true，不依赖纯 CSS :hover
   useEffect(() => {
@@ -435,7 +435,7 @@ export const App = () => {
         target.getAttribute("contenteditable") === "true"
 
       if (isInputElement) {
-        // ⭐ 排除设置模态框内的输入框
+        // 排除设置模态框内的输入框
         // 设置模态框有自己的状态管理（isSettingsOpenRef），不需要在这里处理
         if (target.closest(".settings-modal-overlay, .settings-modal")) {
           return
@@ -460,7 +460,7 @@ export const App = () => {
         target.getAttribute("contenteditable") === "true"
 
       if (isInputElement) {
-        // ⭐ 排除设置模态框内的输入框
+        // 排除设置模态框内的输入框
         if (target.closest(".settings-modal-overlay, .settings-modal")) {
           return
         }
@@ -683,7 +683,7 @@ export const App = () => {
         }}
         onInteractionStateChange={handleInteractionChange}
         onOpenSettings={() => {
-          // ⭐ 打开设置模态框时，立即更新 ref 并锁定 peeking 状态
+          // 打开设置模态框时，立即更新 ref 并锁定 peeking 状态
           // 使用 ref 确保 onMouseLeave 回调能立即读取到最新状态
           isSettingsOpenRef.current = true
           if (edgeSnapState && settings?.panel?.edgeSnap) {
@@ -710,10 +710,10 @@ export const App = () => {
           if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
 
           hideTimerRef.current = setTimeout(() => {
-            // ⭐ 优先检查设置模态框状态（使用 ref 确保读取最新值）
+            // 优先检查设置模态框状态（使用 ref 确保读取最新值）
             if (isSettingsOpenRef.current) return
 
-            // ⭐ 检查是否有输入框正在聚焦（防止 IME 输入法弹出时隐藏）
+            // 检查是否有输入框正在聚焦（防止 IME 输入法弹出时隐藏）
             if (isInputFocusedRef.current) return
 
             // 检查是否有任何菜单/对话框/弹窗处于打开状态
@@ -765,7 +765,7 @@ export const App = () => {
           isSettingsOpenRef.current = false
           setIsSettingsOpen(false)
 
-          // ⭐ 关闭设置模态框后，检测面板位置，如果在边缘且自动吸附已开启则自动吸附
+          // 关闭设置模态框后，检测面板位置，如果在边缘且自动吸附已开启则自动吸附
           // 使用 settingsRef 确保读取到最新的设置值
           const currentSettings = settingsRef.current
           if (!currentSettings?.panel?.edgeSnap) return

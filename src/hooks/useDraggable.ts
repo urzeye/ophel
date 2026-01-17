@@ -26,7 +26,7 @@ export function useDraggable(options: UseDraggableOptions = {}) {
   const panelRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
 
-  // ⭐ 使用 Ref 存储实时状态，避免触发 React 渲染
+  // 使用 Ref 存储实时状态，避免触发 React 渲染
   const isDraggingRef = useRef(false)
   const hasMovedRef = useRef(false)
   const offsetRef = useRef({ x: 0, y: 0 })
@@ -56,7 +56,7 @@ export function useDraggable(options: UseDraggableOptions = {}) {
         y: e.clientY - rect.top,
       }
 
-      // ⭐ 首次拖拽时，将 CSS 定位从 right+transform 切换为 left+top
+      // 首次拖拽时，将 CSS 定位从 right+transform 切换为 left+top
       // 这样后续拖拽就不会有跳动问题
       panel.style.left = rect.left + "px"
       panel.style.top = rect.top + "px"
@@ -66,7 +66,7 @@ export function useDraggable(options: UseDraggableOptions = {}) {
       hasMovedRef.current = false
       isDraggingRef.current = true
 
-      // ⭐ 添加 dragging 类，通过 CSS !important 确保拖拽时 left/top 定位不会被 React 重渲染覆盖
+      // 添加 dragging 类，通过 CSS !important 确保拖拽时 left/top 定位不会被 React 重渲染覆盖
       panel.classList.add("dragging")
 
       // 拖动时禁止全局文本选中
@@ -75,7 +75,7 @@ export function useDraggable(options: UseDraggableOptions = {}) {
     [edgeSnapState, onUnsnap],
   )
 
-  // ⭐ 拖拽移动 - 直接操作 DOM，不触发 React 渲染
+  // 拖拽移动 - 直接操作 DOM，不触发 React 渲染
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDraggingRef.current) return
 
@@ -85,7 +85,7 @@ export function useDraggable(options: UseDraggableOptions = {}) {
     e.preventDefault()
     hasMovedRef.current = true
 
-    // ⭐ 核心优化：直接操作 DOM 样式，绕过 React 更新
+    // 核心优化：直接操作 DOM 样式，绕过 React 更新
     panel.style.left = e.clientX - offsetRef.current.x + "px"
     panel.style.top = e.clientY - offsetRef.current.y + "px"
   }, [])
@@ -102,7 +102,7 @@ export function useDraggable(options: UseDraggableOptions = {}) {
     // 恢复文本选中
     document.body.style.userSelect = ""
 
-    // ⭐ 移除 dragging 类（但保持 left/top 样式，面板会停留在当前位置）
+    // 移除 dragging 类（但保持 left/top 样式，面板会停留在当前位置）
     panel?.classList.remove("dragging")
 
     // 边缘吸附检测

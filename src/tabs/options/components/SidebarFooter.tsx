@@ -10,11 +10,11 @@ import { LanguageMenu } from "./LanguageMenu"
 export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
   const { settings, setSettings } = useSettingsStore()
 
-  // ⭐ 检测是否在独立 Options 页面（非 content script 环境）
+  // 检测是否在独立 Options 页面（非 content script 环境）
   // 如果是独立页面，不显示主题切换（因为主题是按站点配置的）
   const isStandalonePage = !(window as any).__ophelThemeManager
 
-  // ⭐ 从全局 ThemeManager 订阅当前主题模式（Single Source of Truth）
+  // 从全局 ThemeManager 订阅当前主题模式（Single Source of Truth）
   const themeManager = (window as any).__ophelThemeManager as ThemeManager | undefined
   const currentThemeMode = useSyncExternalStore(
     themeManager?.subscribe ?? (() => () => {}),

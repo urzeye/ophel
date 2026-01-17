@@ -45,16 +45,16 @@ export class OutlineManager {
   private searchLevelManual: boolean = false
   private matchCount: number = 0
 
-  // ⭐ 生成状态追踪（用于检测生成完成后刷新）
+  // 生成状态追踪（用于检测生成完成后刷新）
   private wasGenerating: boolean = false
   private postGenerationScheduled: boolean = false // 防止重复触发
 
-  // ⭐ 兜底方案：基于内容变化检测
+  // 兜底方案：基于内容变化检测
   private lastTreeChangeTime: number = 0
   private fallbackRefreshTimer: NodeJS.Timeout | null = null
   private static readonly FALLBACK_DELAY = 3000 // 3秒无变化后触发强制刷新
 
-  // ⭐ Tab 激活状态（只有激活时才监听）
+  // Tab 激活状态（只有激活时才监听）
   private isActive: boolean = false
 
   // 设置变更回调
@@ -78,21 +78,21 @@ export class OutlineManager {
     // Listen to monitor messages
     window.addEventListener("message", this.handleMessage.bind(this))
 
-    // ⭐ 不在构造函数中启动 auto-update，由 setActive 控制
+    // 不在构造函数中启动 auto-update，由 setActive 控制
   }
 
-  // ⭐ 设置 Tab 激活状态（由 OutlineTab 调用）
+  // 设置 Tab 激活状态（由 OutlineTab 调用）
   setActive(active: boolean) {
     this.isActive = active
     this.updateAutoUpdateState()
   }
 
-  // ⭐ 根据条件启动/停止自动更新
+  // 根据条件启动/停止自动更新
   private updateAutoUpdateState() {
     // 只有当：大纲功能开启 AND 自动更新开启 AND Tab 处于激活状态 时才启用 Observer
     const shouldEnable = this.settings.enabled && this.settings.autoUpdate && this.isActive
 
-    // ⭐ 避免不必要的 start/stop：只有状态需要变化时才操作
+    // 避免不必要的 start/stop：只有状态需要变化时才操作
     if (shouldEnable && !this.isAutoUpdating) {
       this.startAutoUpdate()
     } else if (!shouldEnable && this.isAutoUpdating) {
@@ -103,7 +103,7 @@ export class OutlineManager {
 
   updateSettings(newSettings: Settings["features"]["outline"]) {
     this.settings = newSettings
-    // ⭐ 同步 expandLevel
+    // 同步 expandLevel
     if (newSettings.expandLevel !== undefined) {
       this.expandLevel = newSettings.expandLevel
     }
@@ -180,7 +180,7 @@ export class OutlineManager {
       this.updateDebounceTimer = null
     }
 
-    // ⭐ 检测生成状态变化
+    // 检测生成状态变化
     const isGenerating = this.siteAdapter.isGenerating()
 
     // 如果之前在生成，现在不生成了 = 生成刚完成（防止重复触发）
@@ -189,7 +189,7 @@ export class OutlineManager {
       // 生成完成后延迟 500ms 再刷新，确保 DOM 稳定
       setTimeout(() => {
         this.postGenerationScheduled = false
-        // ⭐ 清空 treeKey 强制重建树，获取新的 DOM 元素引用
+        // 清空 treeKey 强制重建树，获取新的 DOM 元素引用
         this.treeKey = ""
         this.refresh()
       }, 500)
@@ -201,7 +201,7 @@ export class OutlineManager {
     const oldTreeKey = this.treeKey
     this.refresh()
 
-    // ⭐ 兆底方案：检测内容变化
+    // 兆底方案：检测内容变化
     if (this.treeKey !== oldTreeKey) {
       // 有新内容，记录时间并重置计时器
       this.lastTreeChangeTime = Date.now()
@@ -360,7 +360,7 @@ export class OutlineManager {
       this.performSearch(this.searchQuery)
     }
 
-    // ⭐ 关键修复：计算 isAllExpanded 状态，确保按钮初始状态正确
+    // 关键修复：计算 isAllExpanded 状态，确保按钮初始状态正确
     const maxActualLevel = Math.max(...Object.keys(this.levelCounts).map(Number), 1)
     this.isAllExpanded = this.expandLevel >= maxActualLevel
 
@@ -652,7 +652,7 @@ export class OutlineManager {
         this.preSearchExpandLevel = this.expandLevel // 保存搜索前的层级
       }
 
-      // ⭐ 关键修复：每次搜索词变化都要重置折叠状态
+      // 关键修复：每次搜索词变化都要重置折叠状态
       // 这样当用户逐字输入时，之前展开的节点会被正确收起
       if (this.tree.length > 0) {
         this.clearForceExpandedState(this.tree, 0)
@@ -704,7 +704,7 @@ export class OutlineManager {
     // 只有 followMode === 'current' 时才启用同步高亮
     if (this.settings.followMode !== "current") return null
 
-    // ⭐ 使用内部方法进行搜索，支持重试
+    // 使用内部方法进行搜索，支持重试
     const doSearch = (): { currentItem: OutlineNode | null; invalidCount: number } => {
       // Flatten tree first (in order)
       const flatten = (nodes: OutlineNode[]): OutlineNode[] => {
@@ -726,7 +726,7 @@ export class OutlineManager {
       for (const item of allItems) {
         let element = item.element
 
-        // ⭐ 元素失效时使用 siteAdapter 重新查找（支持 Shadow DOM）
+        // 元素失效时使用 siteAdapter 重新查找（支持 Shadow DOM）
         if (!element || !element.isConnected) {
           const found = this.siteAdapter.findElementByHeading(item.level, item.text)
           if (found) {
@@ -758,7 +758,7 @@ export class OutlineManager {
 
     let result = doSearch()
 
-    // ⭐ 如果有失效元素且没找到匹配项，立即刷新并重试一次
+    // 如果有失效元素且没找到匹配项，立即刷新并重试一次
     if (result.invalidCount > 0 && !result.currentItem) {
       this.refresh() // 立即同步刷新
       result = doSearch() // 重试搜索

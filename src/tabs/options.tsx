@@ -86,11 +86,11 @@ const OptionsPage = () => {
   const { settings } = useSettingsStore()
   const isHydrated = useSettingsHydrated()
 
-  // ⭐ 语言初始化状态
+  // 语言初始化状态
   // 确保在语言设置完成后才渲染内容，避免首次渲染显示默认语言
   const [languageReady, setLanguageReady] = useState(false)
 
-  // ⭐ 初始化 i18n 语言设置
+  // 初始化 i18n 语言设置
   // 当 settings 加载完成后，根据 settings.language 设置界面语言
   useEffect(() => {
     if (isHydrated && settings?.language) {
@@ -133,7 +133,7 @@ const OptionsPage = () => {
     }
   }
 
-  // ⭐ 检测是否在独立 Options 页面（非 content script 环境）
+  // 检测是否在独立 Options 页面（非 content script 环境）
   // 如果是独立页面，不显示外观主题菜单（因为主题是按站点配置的）
   const isStandalonePage = !(window as any).__ophelThemeManager
 

@@ -84,7 +84,7 @@ const OutlineNodeView: React.FC<{
   // 父级折叠则隐藏
   if (parentCollapsed) shouldShow = false
 
-  // ⭐ 强制可见覆盖：定位时标记的节点始终显示
+  // 强制可见覆盖：定位时标记的节点始终显示
   if (node.forceVisible) {
     shouldShow = true
   }
@@ -287,10 +287,10 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
 
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const prevTreeLengthRef = useRef<number>(0) // ⭐ 用 ref 追踪上一次树长度
-  const shouldScrollToBottomRef = useRef<boolean>(false) // ⭐ 标记是否需要滚动
+  const prevTreeLengthRef = useRef<number>(0) // 用 ref 追踪上一次树长度
+  const shouldScrollToBottomRef = useRef<boolean>(false) // 标记是否需要滚动
 
-  // ⭐ Tab 激活状态管理：挂载时激活，卸载时取消
+  // Tab 激活状态管理：挂载时激活，卸载时取消
   useEffect(() => {
     manager.setActive(true)
     return () => {
@@ -326,7 +326,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
     const update = () => {
       const listEl = listRef.current
 
-      // ⭐ 智能滚动：检测用户是否已在底部附近（更新前）
+      // 智能滚动：检测用户是否已在底部附近（更新前）
       let wasAtBottom = false
       if (listEl) {
         const { scrollTop, scrollHeight, clientHeight } = listEl
@@ -335,7 +335,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
 
       const state = manager.getState()
 
-      // ⭐ 递归计算所有节点数量（包括子节点）
+      // 递归计算所有节点数量（包括子节点）
       const countNodes = (nodes: OutlineNode[]): number => {
         let count = 0
         for (const node of nodes) {
@@ -350,7 +350,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       const newTotalNodes = countNodes(state.tree)
       const prevTotalNodes = prevTreeLengthRef.current
 
-      // ⭐ 根据 followMode 决定是否自动滚动
+      // 根据 followMode 决定是否自动滚动
       // followMode === 'latest'：自动滚动到最新消息
       // followMode === 'current' 或 'manual'：不自动滚动
       const followMode = settings?.features?.outline?.followMode || "current"
@@ -373,14 +373,14 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       setSearchLevelManual(state.searchLevelManual)
       setMatchCount(state.matchCount)
 
-      // ⭐ 更新 ref 以供下次比较（现在是总节点数）
+      // 更新 ref 以供下次比较（现在是总节点数）
       prevTreeLengthRef.current = newTotalNodes
     }
     update() // 初始加载
     return manager.subscribe(update)
   }, [manager, settings?.features?.outline?.followMode]) // 添加 followMode 依赖
 
-  // ⭐ 智能滚动：在 tree 渲染完成后执行滚动
+  // 智能滚动：在 tree 渲染完成后执行滚动
   useEffect(() => {
     if (shouldScrollToBottomRef.current && listRef.current) {
       const listEl = listRef.current
@@ -532,7 +532,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
     (node: OutlineNode) => {
       let targetElement = node.element
 
-      // ⭐ 关键修复：元素失效时重新查找
+      // 关键修复：元素失效时重新查找
       if (!targetElement || !targetElement.isConnected) {
         // 用户提问节点（level=0）需要使用专门的查找逻辑
         if (node.isUserQuery && node.level === 0) {

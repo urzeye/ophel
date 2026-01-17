@@ -69,7 +69,7 @@ if (!window.ophelInitialized) {
 
     // 异步初始化所有功能模块
     ;(async () => {
-      // ⭐ 等待 Zustand hydration 完成
+      // 等待 Zustand hydration 完成
       await new Promise<void>((resolve) => {
         if (useSettingsStore.getState()._hasHydrated) {
           resolve()
@@ -88,7 +88,7 @@ if (!window.ophelInitialized) {
       const siteId = adapter.getSiteId()
 
       // 1. 主题管理 (优先应用)
-      // ⭐ 获取站点主题配置
+      // 获取站点主题配置
       const siteTheme = getSiteTheme(settings, siteId)
       themeManager = new ThemeManager(
         siteTheme.mode,
@@ -101,7 +101,7 @@ if (!window.ophelInitialized) {
       // 挂载到 window 对象，供 App.tsx 获取
       window.__ophelThemeManager = themeManager
 
-      // ⭐ 同步页面原生主题与settings
+      // 同步页面原生主题与settings
       // 恢复备份后,面板主题会正确应用,但页面本身的主题可能不一致
       // 需要检测当前页面主题,如果与settings不一致则同步
       const syncPageTheme = async () => {
@@ -212,7 +212,7 @@ if (!window.ophelInitialized) {
         modelLocker.start()
       }
 
-      // ⭐ AI Studio 设置由 aistudio-preload.ts 在 document_start 阶段处理
+      // AI Studio 设置由 aistudio-preload.ts 在 document_start 阶段处理
       // 不再在此处调用 applySettings，避免时机过晚导致设置不生效
 
       // 9. 滚动锁定（始终创建以支持动态开关）
@@ -224,11 +224,11 @@ if (!window.ophelInitialized) {
         settings.content?.userQueryMarkdown ?? false,
       )
 
-      // ⭐ 订阅 Zustand store 变化（替代 localStorage.watch）
+      // 订阅 Zustand store 变化（替代 localStorage.watch）
       // 直接获取干净的 settings，无需处理 state.settings 格式
       subscribeSettings((newSettings: Settings) => {
         // 1. Theme Manager - 只更新主题预置，不处理 themeMode 变化
-        // ⭐ 不再调用 updateMode()，因为主题切换由 App.tsx 的 toggle() 统一处理
+        // 不再调用 updateMode()，因为主题切换由 App.tsx 的 toggle() 统一处理
         const newSiteTheme = getSiteTheme(newSettings, siteId)
         if (newSiteTheme && themeManager) {
           themeManager.setPresets(
@@ -328,7 +328,7 @@ if (!window.ophelInitialized) {
         }
       })
 
-      // ⭐ SPA 导航监听：URL 变化时重新初始化相关模块
+      // SPA 导航监听：URL 变化时重新初始化相关模块
       // 参考油猴脚本 initUrlChangeObserver (15845行)
       // 注意：只比较 pathname，忽略 hash 变化（如 #settings）
       let lastPathname = window.location.pathname
@@ -396,7 +396,7 @@ if (!window.ophelInitialized) {
       // 兜底定时器（防止某些框架绕过 history API）
       setInterval(handleUrlChange, 1000)
 
-      // ⭐ 监听来自 background 的消息（用于跨页面检测生成状态）
+      // 监听来自 background 的消息（用于跨页面检测生成状态）
       chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         if (message.type === "CHECK_IS_GENERATING") {
           // 使用 adapter 的 isGenerating 方法检测当前页面是否正在生成

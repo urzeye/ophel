@@ -77,17 +77,17 @@ export class PromptManager {
     return filterPrompts(filter, category)
   }
 
-  // ⭐ 切换置顶状态
+  // 切换置顶状态
   togglePin(id: string) {
     getPromptsStore().togglePin(id)
   }
 
-  // ⭐ 更新最近使用时间
+  // 更新最近使用时间
   updateLastUsed(id: string) {
     getPromptsStore().updateLastUsed(id)
   }
 
-  // ⭐ 批量设置提示词（用于导入）
+  // 批量设置提示词（用于导入）
   setPrompts(prompts: Prompt[]) {
     getPromptsStore().setPrompts(prompts)
   }

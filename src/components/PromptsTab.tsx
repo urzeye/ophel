@@ -39,7 +39,7 @@ interface PromptInputState {
   onConfirm: (value: string) => void
 }
 
-// ⭐ 根据分类名称哈希自动分配颜色索引 1-7
+// 根据分类名称哈希自动分配颜色索引 1-7
 const getCategoryColorIndex = (categoryName: string): number => {
   let hash = 0
   for (let i = 0; i < categoryName.length; i++) {
@@ -86,29 +86,29 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const dragNodeRef = useRef<HTMLDivElement | null>(null)
 
-  // ⭐ 变量输入弹窗状态
+  // 变量输入弹窗状态
   const [variableDialogState, setVariableDialogState] = useState<{
     show: boolean
     prompt: Prompt | null
     variables: string[]
   }>({ show: false, prompt: null, variables: [] })
 
-  // ⭐ 导入确认弹窗状态
+  // 导入确认弹窗状态
   const [importDialogState, setImportDialogState] = useState<{
     show: boolean
     prompts: Prompt[]
   }>({ show: false, prompts: [] })
 
-  // ⭐ Markdown 预览开关
+  // Markdown 预览开关
   const [showPreview, setShowPreview] = useState(false)
 
-  // ⭐ 快捷预览弹窗状态
+  // 快捷预览弹窗状态
   const [previewModal, setPreviewModal] = useState<{
     show: boolean
     prompt: Prompt | null
   }>({ show: false, prompt: null })
 
-  // ⭐ 预览容器 refs（用于初始化 SVG 图标）
+  // 预览容器 refs（用于初始化 SVG 图标）
   const editPreviewRef = useRef<HTMLDivElement>(null)
   const modalPreviewRef = useRef<HTMLDivElement>(null)
 
@@ -116,14 +116,14 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     loadData()
   }, [])
 
-  // ⭐ 编辑模态框预览渲染后初始化复制按钮
+  // 编辑模态框预览渲染后初始化复制按钮
   useEffect(() => {
     if (showPreview && editPreviewRef.current) {
       initCopyButtons(editPreviewRef.current, { size: 14, color: "#6b7280" })
     }
   }, [showPreview, editingPrompt?.content])
 
-  // ⭐ 快捷预览模态框渲染后初始化复制按钮
+  // 快捷预览模态框渲染后初始化复制按钮
   useEffect(() => {
     if (previewModal.show && modalPreviewRef.current) {
       initCopyButtons(modalPreviewRef.current, { size: 14, color: "#6b7280" })
@@ -136,7 +136,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     setPrompts(allPrompts)
     setCategories(allCategories)
 
-    // ⭐ 分类有效性检查：如果当前选中的分类不再存在或变空，回退到「全部」
+    // 分类有效性检查：如果当前选中的分类不再存在或变空，回退到「全部」
     setSelectedCategory((prev) => {
       if (prev === VIRTUAL_CATEGORY.ALL) return prev
       // 检查分类是否还存在
@@ -151,7 +151,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const getFilteredPrompts = () => {
     let filtered: Prompt[]
 
-    // ⭐ 最近使用筛选：显示有 lastUsedAt 的，按时间倒序
+    // 最近使用筛选：显示有 lastUsedAt 的，按时间倒序
     if (selectedCategory === VIRTUAL_CATEGORY.RECENT) {
       filtered = manager
         .getPrompts()
@@ -170,7 +170,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       filtered = manager.filterPrompts(searchQuery, selectedCategory)
     }
 
-    // ⭐ 置顶的提示词优先显示（最近使用模式下不重排）
+    // 置顶的提示词优先显示（最近使用模式下不重排）
     if (selectedCategory !== VIRTUAL_CATEGORY.RECENT) {
       filtered = filtered.sort((a, b) => {
         if (a.pinned && !b.pinned) return -1
@@ -199,7 +199,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
   // 选中提示词并插入
   const handleSelect = async (prompt: Prompt) => {
-    // ⭐ 检测是否有变量
+    // 检测是否有变量
     const variables = extractVariables(prompt.content)
 
     if (variables.length > 0) {
@@ -215,7 +215,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     }
   }
 
-  // ⭐ 执行插入（变量替换后）
+  // 执行插入（变量替换后）
   const doInsert = async (prompt: Prompt, content: string) => {
     const success = await manager.insertPrompt(content)
     if (success) {
@@ -227,7 +227,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     }
   }
 
-  // ⭐ 变量填写完成后的回调
+  // 变量填写完成后的回调
   const handleVariableConfirm = async (values: Record<string, string>) => {
     const { prompt } = variableDialogState
     if (!prompt) return
@@ -237,7 +237,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     await doInsert(prompt, replacedContent)
   }
 
-  // ⭐ 切换置顶状态
+  // 切换置顶状态
   const handleTogglePin = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
@@ -245,7 +245,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     loadData()
   }
 
-  // ⭐ 导出提示词为 JSON 文件
+  // 导出提示词为 JSON 文件
   const handleExport = () => {
     const allPrompts = manager.getPrompts()
     const json = JSON.stringify(allPrompts, null, 2)
@@ -261,7 +261,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     showToast(t("promptExportSuccess") || "导出成功")
   }
 
-  // ⭐ 导入提示词
+  // 导入提示词
   const handleImport = () => {
     const input = document.createElement("input")
     input.type = "file"
@@ -288,7 +288,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     input.click()
   }
 
-  // ⭐ 处理覆盖导入
+  // 处理覆盖导入
   const handleImportOverwrite = () => {
     const imported = importDialogState.prompts
     manager.setPrompts(imported)
@@ -302,7 +302,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     )
   }
 
-  // ⭐ 处理合并导入（按 ID 合并）
+  // 处理合并导入（按 ID 合并）
   const handleImportMerge = () => {
     const imported = importDialogState.prompts
     const existing = manager.getPrompts()
@@ -353,7 +353,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     let shouldSwitchToNewCategory = false
 
     if (editingPrompt.id) {
-      // ⭐ 编辑时检查是否需要切换分类
+      // 编辑时检查是否需要切换分类
       const oldPrompt = prompts.find((p) => p.id === editingPrompt.id)
       const oldCategory = oldPrompt?.category
 
@@ -375,7 +375,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       })
       showToast(t("promptUpdated") || "提示词已更新")
 
-      // ⭐ 切换到新分类
+      // 切换到新分类
       if (shouldSwitchToNewCategory) {
         setSelectedCategory(newCategory)
       }
@@ -426,7 +426,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     if (prompt) {
       setEditingPrompt({ ...prompt })
     } else {
-      // ⭐ 新建时：如果当前选中了真实分类，使用该分类；否则使用第一个真实分类或「未分类」
+      // 新建时：如果当前选中了真实分类，使用该分类；否则使用第一个真实分类或「未分类」
       const isVirtualCategory =
         selectedCategory === VIRTUAL_CATEGORY.ALL || selectedCategory === VIRTUAL_CATEGORY.RECENT
       const defaultCategory = isVirtualCategory
@@ -453,7 +453,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               newName.trim(),
             ),
           )
-          // ⭐ 如果当前选中的分类被重命名，同步更新选中状态
+          // 如果当前选中的分类被重命名，同步更新选中状态
           if (selectedCategory === oldName) {
             setSelectedCategory(newName.trim())
           }
@@ -933,7 +933,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     )
   }
 
-  // ⭐ 预览弹窗渲染
+  // 预览弹窗渲染
   const renderPreviewModal = () => {
     if (!previewModal.show || !previewModal.prompt) return null
 
@@ -1042,7 +1042,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     )
   }
 
-  // ⭐ 导入确认弹窗渲染
+  // 导入确认弹窗渲染
   const renderImportDialog = () => {
     if (!importDialogState.show) return null
 
@@ -1205,7 +1205,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           flexWrap: "wrap",
           background: "var(--gh-bg, white)",
           borderBottom: "1px solid var(--gh-border, #e5e7eb)",
-          userSelect: "none", // ⭐ 禁止文字选中
+          userSelect: "none", // 禁止文字选中
         }}>
         <span
           onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.ALL)}

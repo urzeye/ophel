@@ -1059,7 +1059,7 @@ private syncPluginUITheme(mode?: ThemeMode) {
 
       const cssVars = themeVariablesToCSS(vars)
 
-      // ⭐ 关键修复：添加 color-scheme 和 data-theme 选择器
+      // 关键修复：添加 color-scheme 和 data-theme 选择器
       styleEl.textContent = `:host {
   ${cssVars}
   color-scheme: ${currentMode};
@@ -1070,7 +1070,7 @@ private syncPluginUITheme(mode?: ThemeMode) {
   ${cssVars}
 }
 `
-      // ⭐ 关键修复：设置 host 元素的 data-theme 属性
+      // 关键修复：设置 host 元素的 data-theme 属性
       ;(host as HTMLElement).dataset.theme = currentMode
 
       // 将样式标签追加到 Shadow Root 末尾以获得最高优先级
@@ -1374,21 +1374,21 @@ const siteTheme = settings?.theme?.sites?.[siteId as keyof typeof sites] || sett
 
 1. **状态锁死 (Deadlock)**:
 
-    - `isRestoring = false` 重置逻辑被放置在 `restoreProgress` 的内部 `try...finally` 块中。
-    - 当触发 "Fast Path"（快速路径）或 "Anchor Restoration"（精确恢复）时，代码直接 `return`，跳过了包含重置逻辑的内部 `finally` 块（如果它们不在同一个控制流中）。
-    - 结果：`isRestoring` 标志位永久保持为 `true`。
+   - `isRestoring = false` 重置逻辑被放置在 `restoreProgress` 的内部 `try...finally` 块中。
+   - 当触发 "Fast Path"（快速路径）或 "Anchor Restoration"（精确恢复）时，代码直接 `return`，跳过了包含重置逻辑的内部 `finally` 块（如果它们不在同一个控制流中）。
+   - 结果：`isRestoring` 标志位永久保持为 `true`。
 
 2. **事件冒泡 (Event Bubbling)**:
 
-    - 滚动监听器绑定在 `window` 上且开启了 `capture: true`。
-    - `handleScroll` 中缺少对 `event.target` 的过滤，导致侧边栏等非主容器的滚动事件也触发了保存逻辑。
+   - 滚动监听器绑定在 `window` 上且开启了 `capture: true`。
+   - `handleScroll` 中缺少对 `event.target` 的过滤，导致侧边栏等非主容器的滚动事件也触发了保存逻辑。
 
 3. **性能 (Fast Path)**:
 
-    - 原有逻辑总是尝试调用 `loadHistoryUntil`，即使目标位置（Saved Top）就在当前已加载内容的范围内。
+   - 原有逻辑总是尝试调用 `loadHistoryUntil`，即使目标位置（Saved Top）就在当前已加载内容的范围内。
 
 4. **SPA 切换数据错乱**:
-    - SPA 页面切换时，旧的 `ReadingHistoryManager` 实例可能仍在监听滚动事件，将新页面的初始滚动（通常为 0）保存到了旧会话的记录中。
+   - SPA 页面切换时，旧的 `ReadingHistoryManager` 实例可能仍在监听滚动事件，将新页面的初始滚动（通常为 0）保存到了旧会话的记录中。
 
 ### 修复方案
 
@@ -1787,7 +1787,7 @@ onMouseLeave={() => {
   hideTimerRef.current = setTimeout(() => {
     if (isSettingsOpenRef.current) return
 
-    // ⭐ 新增：检查是否有输入框正在聚焦
+    // 新增：检查是否有输入框正在聚焦
     if (isInputFocusedRef.current) return
 
     // ... 其他检查 ...
@@ -1938,9 +1938,13 @@ Grok.com 使用 tiptap 富文本编辑器，在 document 上注册了 27 个 key
 
 ```typescript
 // ❌ 无效
-document.addEventListener("keydown", (e) => {
-  e.stopPropagation()
-}, true)
+document.addEventListener(
+  "keydown",
+  (e) => {
+    e.stopPropagation()
+  },
+  true,
+)
 ```
 
 **发现**：完全没有日志输出，监听器没被触发。
@@ -2021,29 +2025,29 @@ document.addEventListener("blur", (e) => {
 useEffect(() => {
   const siteId = adapter?.getSiteId()
   if (isOpen && siteId === "grok") {
-    const panel = panelRef.current  // ✅ 使用组件 ref
+    const panel = panelRef.current // ✅ 使用组件 ref
     if (!panel) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement
-      
+
       const isInputElement =
         target.tagName === "INPUT" ||
         target.tagName === "TEXTAREA" ||
         target.tagName === "SELECT" ||
         target.getAttribute("contenteditable") === "true"
-      
+
       if (!isInputElement) return
-      
+
       // ✅ 阻止事件传播到 Grok 的监听器
       e.stopPropagation()
       e.stopImmediatePropagation()
     }
-    
+
     // ✅ 直接在面板元素上监听
     panel.addEventListener("keydown", handleKeyDown, true)
     panel.addEventListener("keypress", handleKeyDown, true)
-    
+
     return () => {
       panel.removeEventListener("keydown", handleKeyDown, true)
       panel.removeEventListener("keypress", handleKeyDown, true)
@@ -2074,17 +2078,17 @@ const containerRef = useRef<HTMLDivElement>(null)
 
 ### 经验总结
 
-| 教训 | 说明 |
-| ---- | ---- |
-| **Shadow DOM 事件隔离** | Shadow DOM 内的事件不会冒泡到外部 document，必须在 Shadow Root 内部监听 |
-| **在组件根元素监听** | 使用 `panelRef.current.addEventListener` 而不是 `document.addEventListener` |
-| **stopImmediatePropagation** | 阻止同一元素上的其他监听器执行，比 stopPropagation 更彻底 |
-| **捕获阶段优先** | 使用 `addEventListener(..., true)` 在捕获阶段拦截，优先级最高 |
-| **站点特定保护** | 只在 Grok 站点启用，避免影响其他站点 |
+| 教训                         | 说明                                                                        |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| **Shadow DOM 事件隔离**      | Shadow DOM 内的事件不会冒泡到外部 document，必须在 Shadow Root 内部监听     |
+| **在组件根元素监听**         | 使用 `panelRef.current.addEventListener` 而不是 `document.addEventListener` |
+| **stopImmediatePropagation** | 阻止同一元素上的其他监听器执行，比 stopPropagation 更彻底                   |
+| **捕获阶段优先**             | 使用 `addEventListener(..., true)` 在捕获阶段拦截，优先级最高               |
+| **站点特定保护**             | 只在 Grok 站点启用，避免影响其他站点                                        |
 
 ### 文件变更
 
-| 文件 | 变更 |
-| ---- | ---- |
-| `src/components/MainPanel.tsx` | **修改** - 添加焦点保护逻辑 |
+| 文件                               | 变更                                        |
+| ---------------------------------- | ------------------------------------------- |
+| `src/components/MainPanel.tsx`     | **修改** - 添加焦点保护逻辑                 |
 | `src/components/SettingsModal.tsx` | **修改** - 添加 containerRef 和焦点保护逻辑 |

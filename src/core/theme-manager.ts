@@ -226,7 +226,7 @@ export class ThemeManager {
       }
     }
 
-    // ⭐ 暂时断开 MutationObserver，避免循环触发
+    // 暂时断开 MutationObserver，避免循环触发
     // 因为下面的 DOM 修改会触发 observer，导致 onModeChange 被意外调用
     const wasObserving = this.themeObserver !== null
     if (wasObserving) {
@@ -292,7 +292,7 @@ ${cssVars}
       }
     })
 
-    // ⭐ 恢复 MutationObserver
+    // 恢复 MutationObserver
     if (wasObserving && this.themeObserver) {
       // 重新观察 body 和 html 元素
       this.themeObserver.observe(document.body, {
@@ -458,7 +458,7 @@ ${cssVars}
     })
 
     // 使用 finally 确保 MutationObserver 一定会恢复（即使动画失败）
-    // ⭐ 等待动画完成后再返回，确保调用方等待动画真正完成
+    // 等待动画完成后再返回，确保调用方等待动画真正完成
     await transition.finished.catch(() => {
       // 忽略动画错误
     })

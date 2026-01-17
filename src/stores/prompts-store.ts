@@ -26,9 +26,9 @@ interface PromptsState {
   renameCategory: (oldName: string, newName: string) => void
   deleteCategory: (name: string, defaultCategory?: string) => void
   updateOrder: (newOrderIds: string[]) => void
-  togglePin: (id: string) => void // ⭐ 新增：切换置顶状态
-  updateLastUsed: (id: string) => void // ⭐ 新增：更新最近使用时间
-  setPrompts: (prompts: Prompt[]) => void // ⭐ 新增：批量设置提示词（用于导入）
+  togglePin: (id: string) => void // 新增：切换置顶状态
+  updateLastUsed: (id: string) => void // 新增：更新最近使用时间
+  setPrompts: (prompts: Prompt[]) => void // 新增：批量设置提示词（用于导入）
   setHasHydrated: (state: boolean) => void
 }
 
@@ -91,19 +91,19 @@ export const usePromptsStore = create<PromptsState>()(
 
       setHasHydrated: (state) => set({ _hasHydrated: state }),
 
-      // ⭐ 切换置顶状态
+      // 切换置顶状态
       togglePin: (id) =>
         set((state) => ({
           prompts: state.prompts.map((p) => (p.id === id ? { ...p, pinned: !p.pinned } : p)),
         })),
 
-      // ⭐ 更新最近使用时间
+      // 更新最近使用时间
       updateLastUsed: (id) =>
         set((state) => ({
           prompts: state.prompts.map((p) => (p.id === id ? { ...p, lastUsedAt: Date.now() } : p)),
         })),
 
-      // ⭐ 批量设置提示词（用于导入）
+      // 批量设置提示词（用于导入）
       setPrompts: (prompts) => set({ prompts }),
     }),
     {

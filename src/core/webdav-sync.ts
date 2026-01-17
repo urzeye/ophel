@@ -185,13 +185,13 @@ export class WebDAVSyncManager {
       // Zustand persist 使用的 storage keys (从 constants/defaults.ts 导入)
 
       // Hydrate data：解析 JSON 字符串，并提取 Zustand persist 格式中的实际数据
-      // ⭐ 扁平化导出：移除 state 层，直接导出数据
+      // 扁平化导出：移除 state 层，直接导出数据
       const hydratedData = Object.fromEntries(
         Object.entries(localData).map(([k, v]) => {
           try {
             let parsed = typeof v === "string" ? JSON.parse(v) : v
 
-            // ⭐ 处理 Zustand persist 格式：提取 state 中的数据
+            // 处理 Zustand persist 格式：提取 state 中的数据
             // 格式: { state: { settings: {...} | prompts: [...] | conversations: {...} }, version: 0 }
             if (ZUSTAND_KEYS.includes(k) && parsed?.state) {
               // 直接提取 state 中与 key 同名的属性（主数据）
@@ -430,8 +430,8 @@ export class WebDAVSyncManager {
             let state: Record<string, any>
             if (MULTI_PROP_STORES.includes(k)) {
               // 多属性 store（如 conversations, readingHistory）
-              // ⭐ 如果导入的数据已经是包含多个属性的对象，直接使用
-              // ⭐ 否则（扁平化格式），将其包装为 { [k]: v }
+              // 如果导入的数据已经是包含多个属性的对象，直接使用
+              // 否则（扁平化格式），将其包装为 { [k]: v }
               if (typeof v === "object" && !Array.isArray(v) && Object.keys(v).length > 1) {
                 // 旧格式：已经是 { conversations: {...}, lastUsedFolderId: "..." }
                 state = v
@@ -461,7 +461,7 @@ export class WebDAVSyncManager {
       )
 
       // 3. 恢复当前 WebDAV 配置（保持用户当前的 WebDAV 设置）
-      // ⭐ 直接操作 storage 而非 setSettings()，避免触发 Zustand persist
+      // 直接操作 storage 而非 setSettings()，避免触发 Zustand persist
       await new Promise<void>((resolve, reject) => {
         chrome.storage.local.get("settings", (result) => {
           if (chrome.runtime.lastError) {

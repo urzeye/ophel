@@ -208,11 +208,11 @@ if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
         }
 
         if (sortedStringify(currentSettings) !== sortedStringify(newSettings)) {
-          // ⭐ 标记为来自 Storage 的更新，防止回写导致死循环
+          // 标记为来自 Storage 的更新，防止回写导致死循环
           isUpdatingFromStorage = true
 
           try {
-            // ⭐ 同时更新 settings 和递增 _syncVersion
+            // 同时更新 settings 和递增 _syncVersion
             // _syncVersion 变化会强制触发所有订阅它的 React 组件重渲染
             useSettingsStore.setState({
               settings: newSettings,

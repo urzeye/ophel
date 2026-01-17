@@ -89,7 +89,7 @@ export const ContextMenu: React.FC<MenuProps> = ({ anchorEl, onClose, children }
     }
   }, [anchorEl, onClose])
 
-  // ⭐ 计算菜单位置，确保不超出屏幕边界
+  // 计算菜单位置，确保不超出屏幕边界
   useEffect(() => {
     if (!anchorEl || !menuRef.current) return
 
