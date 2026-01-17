@@ -36,3 +36,6 @@ tsconfig.tsbuildinfo
 # VitePress
 docs/.vitepress/cache
 docs/.vitepress/dist
+
+# docs
+PUBLISHING.md
