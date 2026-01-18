@@ -39,25 +39,20 @@
 - 🔧 **UI Optimization** — Widescreen mode, page & bubble width control, sidebar layout
 - 📖 **Reading Experience** — Scroll lock, reading history restore, Markdown fixes
 - ⚡ **Productivity Tools** — Shortcuts, model lock, tab auto-rename, notifications
-- 🔐 **Claude Enhancement** — Session Key management, multi-account switching
+- 🎭 **Claude Enhancement** — Session Key management, multi-account switching
 - 🔒 **Privacy First** — Local storage, WebDAV sync, no data collection
 
 ## 🚀 Quick Start
 
 ### Web Store
 
-🚧 **Under Review...**
-
-- [Chrome Web Store](#) (Coming Soon)
-- [Edge Add-ons](#) (Coming Soon)
-- [Firefox Add-ons](#) (Coming Soon)
+🚧 Under Review... ([Chrome](#) | [Edge](#) | [Firefox](#))
 
 ### Manual Installation
 
-1. Download the latest package from [Releases](https://github.com/urzeye/ophel/releases)
-2. Unzip to a local folder
-3. Open browser extensions page, enable **Developer mode**
-4. Click **Load unpacked** and select the unzipped folder
+1. Download & unzip from [Releases](https://github.com/urzeye/ophel/releases)
+2. Open browser extensions page, enable **Developer mode**
+3. Click **Load unpacked** and select the unzipped folder
 
 ### Local Build
 

@@ -39,25 +39,20 @@
 - 🔧 **界面优化** — 宽屏模式、页面与用户问题宽度调整、侧边栏布局控制
 - 📖 **阅读体验** — 滚动锁定、阅读历史恢复、Markdown 渲染优化
 - ⚡ **效率工具** — 快捷键、模型锁定、标签页自动命名、完成通知
-- 🔐 **Claude 增强** — Session Key 管理、多账号切换
+- 🎭 **Claude 增强** — Session Key 管理、多账号切换
 - 🔒 **隐私优先** — 本地存储、WebDAV 同步、无数据收集
 
-## � 快速开始
+## 🚀 快速开始
 
 ### 应用商店
 
-🚧 **审核中...**
-
-- [Chrome Web Store](#) (Coming Soon)
-- [Edge Add-ons](#) (Coming Soon)
-- [Firefox Add-ons](#) (Coming Soon)
+🚧 审核中... ([Chrome](#) | [Edge](#) | [Firefox](#))
 
 ### 手动安装
 
-1. 前往 [Releases](https://github.com/urzeye/ophel/releases) 下载最新安装包
-2. 解压到本地文件夹
-3. 打开浏览器扩展管理页面，开启 **开发者模式**
-4. 点击 **加载已解压的扩展程序**，选择解压的文件夹
+1. 从 [Releases](https://github.com/urzeye/ophel/releases) 下载并解压安装包
+2. 打开浏览器扩展管理页面，开启 **开发者模式**
+3. 点击 **加载已解压的扩展程序**，选择解压的文件夹
 
 ### 本地构建
 
