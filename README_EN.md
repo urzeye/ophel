@@ -177,6 +177,22 @@ Build outputs are located in the `build/` directory.
  </picture>
 </a>
 
+## 💖 Support
+
+<p align="center">
+  <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
+</p>
+
+If Ophel helps you, consider supporting the project:
+
+<a href="https://opencollective.com/urzeye-oss">
+  <img src="https://opencollective.com/urzeye-oss/donate/button@2x.png?color=blue" width="200" alt="Donate to Open Collective">
+</a>
+
+<p align="center">
+  Made with ❤️ by <a href="https://github.com/urzeye">urzeye</a>
+</p>
+
 ## 📜 License
 
 This project is licensed under the **CC BY-NC-SA 4.0** (Attribution-NonCommercial-ShareAlike 4.0 International) license.
@@ -184,13 +200,3 @@ See the [LICENSE](./LICENSE) file for details.
 
 > ⚠️ **Commercial packaging, resale, or unauthorized integration is strictly prohibited.**
 > For commercial licensing, please contact: **<igodu.love@gmail.com>**
-
----
-
-<p align="center">
-  <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
-</p>
-
-<p align="center">
-  Made with ❤️ by <a href="https://github.com/urzeye">urzeye</a>
-</p>

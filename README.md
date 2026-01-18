@@ -179,6 +179,22 @@ pnpm package:firefox    # Firefox
  </picture>
 </a>
 
+## 💖 支持项目
+
+<p align="center">
+  <em>"一个人可以走得很快，但一群人可以走得更远。"</em>
+</p>
+
+如果 Ophel 对你有帮助，欢迎支持：
+
+<a href="https://opencollective.com/urzeye-oss">
+  <img src="https://opencollective.com/urzeye-oss/donate/button@2x.png?color=blue" width="200" alt="Donate to Open Collective">
+</a>
+
+<p align="center">
+  Made with ❤️ by <a href="https://github.com/urzeye">urzeye</a>
+</p>
+
 ## 📜 许可证
 
 本项目采用 **CC BY-NC-SA 4.0** (署名-非商业性使用-相同方式共享 4.0 国际) 协议进行许可。
@@ -186,13 +202,3 @@ pnpm package:firefox    # Firefox
 
 > ⚠️ **禁止任何形式的商业打包、倒卖、或未经授权的集成。**
 > 若需商业授权，请联系：**<igodu.love@gmail.com>**
-
----
-
-<p align="center">
-  <em>"一个人可以走得很快，但一群人可以走得更远。"</em>
-</p>
-
-<p align="center">
-  Made with ❤️ by <a href="https://github.com/urzeye">urzeye</a>
-</p>
