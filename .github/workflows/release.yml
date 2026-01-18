@@ -85,7 +85,7 @@ jobs:
             3. 点击「临时载入附加组件」选择 zip 文件
 
             ---
-            *完整更新日志请查看 [ROADMAP.md](https://github.com/urzeye/ophel/blob/main/docs/ROADMAP.md)*
+            *完整更新日志请查看 [CHANGELOG.md](https://github.com/urzeye/ophel/blob/main/CHANGELOG.md)*
           files: |
             build/ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip
             build/ophel-${{ steps.get_version.outputs.VERSION }}-edge.zip

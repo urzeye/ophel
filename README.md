@@ -136,6 +136,39 @@
 - **State**: [Zustand](https://github.com/pmndrs/zustand)
 - **Build**: [Vite](https://vitejs.dev/)
 
+## 🔧 本地构建
+
+### 环境要求
+
+| 工具    | 版本要求 |
+| ------- | -------- |
+| Node.js | >= 20.x  |
+| pnpm    | >= 10.x  |
+
+### 构建步骤
+
+```bash
+# 1. 克隆仓库
+git clone https://github.com/urzeye/ophel.git
+cd ophel
+
+# 2. 安装依赖
+pnpm install
+
+# 3. 开发模式（热重载）
+pnpm dev
+
+# 4. 生产构建
+pnpm build              # Chrome/Edge
+pnpm build:firefox      # Firefox
+
+# 5. 打包为 zip
+pnpm package            # Chrome/Edge
+pnpm package:firefox    # Firefox
+```
+
+构建产物位于 `build/` 目录。
+
 ## ⭐ Star History
 
 <a href="https://star-history.com/#urzeye/ophel&Date">

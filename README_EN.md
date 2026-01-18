@@ -134,6 +134,39 @@ This project is built with a modern frontend tech stack:
 - **State**: [Zustand](https://github.com/pmndrs/zustand)
 - **Build**: [Vite](https://vitejs.dev/)
 
+## 🔧 Local Build
+
+### Prerequisites
+
+| Tool    | Version |
+| ------- | ------- |
+| Node.js | >= 20.x |
+| pnpm    | >= 10.x |
+
+### Build Steps
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/urzeye/ophel.git
+cd ophel
+
+# 2. Install dependencies
+pnpm install
+
+# 3. Development mode (hot reload)
+pnpm dev
+
+# 4. Production build
+pnpm build              # Chrome/Edge
+pnpm build:firefox      # Firefox
+
+# 5. Package as zip
+pnpm package            # Chrome/Edge
+pnpm package:firefox    # Firefox
+```
+
+Build outputs are located in the `build/` directory.
+
 ## ⭐ Star History
 
 <a href="https://star-history.com/#urzeye/ophel&Date">
