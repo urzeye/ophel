@@ -47,7 +47,9 @@
     "vitepress": "^1.6.4"
   },
   "manifest": {
-    "name": "Ophel - AI 对话增强工具",
+    "name": "__MSG_extensionName__",
+    "description": "__MSG_extensionDescription__",
+    "default_locale": "en",
     "browser_specific_settings": {
       "gecko": {
         "id": "igodu.love@gmail.com",

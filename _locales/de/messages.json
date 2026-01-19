@@ -1,0 +1,10 @@
+{
+  "extensionName": {
+    "message": "Ophel - KI-Chat-Verbesserungstool",
+    "description": "Erweiterungsname"
+  },
+  "extensionDescription": {
+    "message": "Verbessern Sie Gemini/ChatGPT/Claude/Grok/AI Studio mit intelligenten Gliederungen, Konversationsverwaltung, Prompt-Bibliothek, Tastenkürzel, Benachrichtigungen, Theme-Anpassung, Leseverlauf-Wiederherstellung, WebDAV-Synchronisierung und mehr!",
+    "description": "Erweiterungsbeschreibung"
+  }
+}

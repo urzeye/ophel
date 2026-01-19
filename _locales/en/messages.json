@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel",
+    "message": "Ophel - AI Chat Enhancement Toolkit",
     "description": "Extension name"
   },
   "extensionDescription": {
-    "message": "AI Chat Enhancement - Multi-platform support (Gemini/AI Studio/Grok/ChatGPT/Claude)",
+    "message": "Enhance Gemini/ChatGPT/Claude/Grok/AI Studio with smart outlines, conversation management, prompt library, shortcuts, completion notifications, theme customization, reading history restoration, WebDAV sync and more!",
     "description": "Extension description"
   }
 }

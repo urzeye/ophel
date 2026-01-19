@@ -1,0 +1,10 @@
+{
+  "extensionName": {
+    "message": "Ophel - AI 채팅 향상 도구",
+    "description": "확장 프로그램 이름"
+  },
+  "extensionDescription": {
+    "message": "Gemini/ChatGPT/Claude/Grok/AI Studio용 스마트 아웃라인, 대화 관리, 프롬프트 라이브러리, 단축키, 완료 알림, 테마 커스터마이징, 읽기 기록 복원, WebDAV 동기화 등 다양한 기능을 제공합니다!",
+    "description": "확장 프로그램 설명"
+  }
+}
