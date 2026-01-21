@@ -22,6 +22,9 @@ export const COPY_ICON_PATH = "M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1
 /** 成功勾选图标 - 折线点 */
 export const CHECK_ICON_POINTS = "20 6 9 17 4 12"
 
+/** 侧边栏图标路径 (placeholder - 当前未使用，仅为类型兼容) */
+export const SIDEBAR_ICONS: Record<string, string> = {}
+
 /**
  * 创建 SVG 元素的辅助函数
  */

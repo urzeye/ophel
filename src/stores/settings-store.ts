@@ -169,14 +169,20 @@ export const setSettingsState = (settings: Partial<Settings>) =>
 export const subscribeSettings = (listener: (settings: Settings) => void) =>
   useSettingsStore.subscribe((state) => listener(state.settings))
 
-// ==================== 跨上下文实时同步 ====================
+// 构建时注入的平台标识
+declare const __PLATFORM__: "extension" | "userscript"
 
 /**
- * 监听 chrome.storage.onChanged 事件
+ * 监听 chrome.storage.onChanged 事件（仅浏览器扩展环境）
  * 当其他上下文（如 Options 页面）更新 settings 时，自动同步到当前 store
  * 实现设置的实时生效
  */
-if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
+const isExtension =
+  (typeof __PLATFORM__ === "undefined" || __PLATFORM__ !== "userscript") &&
+  typeof chrome !== "undefined" &&
+  chrome.storage?.onChanged
+
+if (isExtension) {
   chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== "local") return
     if (!changes.settings) return
@@ -227,12 +233,13 @@ if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
 
           // 同步更新 i18n 模块的语言设置
           if (newSettings.language && newSettings.language !== currentSettings.language) {
-            try {
-              const { setLanguage } = require("~utils/i18n")
-              setLanguage(newSettings.language)
-            } catch (e) {
-              // ignore
-            }
+            import("~utils/i18n")
+              .then(({ setLanguage }) => {
+                setLanguage(newSettings.language)
+              })
+              .catch(() => {
+                // ignore
+              })
           }
 
           console.log("[SettingsStore] 跨上下文同步完成, version:", currentState._syncVersion + 1)
