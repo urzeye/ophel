@@ -6,44 +6,7 @@
  */
 
 import { DOMToolkit } from "~utils/dom-toolkit"
-
-// Trusted Types 策略（浏览器 API，TypeScript 无内置类型）
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let htmlPolicy: any = null
-
-// 初始化 Trusted Types 策略
-function initTrustedTypesPolicy(): boolean {
-  if (htmlPolicy) return true
-
-  const tt = (window as any).trustedTypes
-  if (tt?.createPolicy) {
-    try {
-      htmlPolicy = tt.createPolicy("ophel-markdown-fixer", {
-        createHTML: (s: string) => s,
-      })
-      return true
-    } catch (e) {
-      console.warn("[MarkdownFixer] Failed to create Trusted Types policy:", e)
-      return false
-    }
-  }
-  return false
-}
-
-// 安全设置 innerHTML
-function setSafeHTML(element: HTMLElement, html: string): boolean {
-  try {
-    if (htmlPolicy) {
-      element.innerHTML = (htmlPolicy as any).createHTML(html)
-    } else {
-      element.innerHTML = html
-    }
-    return true
-  } catch (e) {
-    console.warn("[MarkdownFixer] Failed to set innerHTML:", e)
-    return false
-  }
-}
+import { setSafeHTML } from "~utils/trusted-types"
 
 // 预编译正则
 const REGEX_CODE_BLOCK = /<code\b[^>]*>[\s\S]*?<\/code>/gi
@@ -77,7 +40,6 @@ export class MarkdownFixer {
   private processedNodes = new WeakSet<HTMLElement>()
   private stopObserver: (() => void) | null = null
   private enabled = false
-  private policyReady = false
   private config: MarkdownFixerConfig
 
   constructor(config: MarkdownFixerConfig = GEMINI_MARKDOWN_FIXER_CONFIG) {
@@ -90,13 +52,6 @@ export class MarkdownFixer {
   start() {
     if (this.enabled) return
     this.enabled = true
-
-    // 初始化 Trusted Types 策略
-    this.policyReady = initTrustedTypesPolicy()
-    if (!this.policyReady) {
-      console.warn("[MarkdownFixer] Trusted Types not available, fixer disabled")
-      return
-    }
 
     // 修复所有已存在的段落
     this.fixAllParagraphs()
@@ -136,7 +91,6 @@ export class MarkdownFixer {
    * 修复单个段落
    */
   fixParagraph(p: HTMLElement) {
-    if (!this.policyReady) return
     if (this.processedNodes.has(p)) return
 
     const currentHtml = p.innerHTML

@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useState } from "react"
 import { PageContentIcon as LayoutIcon, RefreshIcon } from "~components/icons"
 import { Switch } from "~components/ui"
 import { LAYOUT_CONFIG, SITE_IDS, SITE_SETTINGS_TAB_IDS } from "~constants"
+import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import {
@@ -573,6 +574,11 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
             onChange={async () => {
               const checked = settings.content?.watermarkRemoval
               if (!checked) {
+                // 油猴脚本环境：直接启用（不需要检查权限，GM_xmlhttpRequest 已通过 @grant 声明）
+                if (!platform.hasCapability("permissions")) {
+                  updateNestedSetting("content", "watermarkRemoval", true)
+                  return
+                }
                 // 1. 检查是否已有权限
                 const response = await sendToBackground({
                   type: MSG_CHECK_PERMISSIONS,

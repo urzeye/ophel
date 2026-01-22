@@ -39,3 +39,5 @@ docs/.vitepress/dist
 
 # docs
 PUBLISHING.md
+
+.spec-workflow/

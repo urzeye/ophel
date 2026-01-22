@@ -8,6 +8,12 @@ import { Storage } from "@plasmohq/storage"
 
 import { DEFAULT_SHORTCUTS_SETTINGS, type ShortcutsSettings } from "~constants/shortcuts"
 
+// 构建时注入的平台标识
+declare const __PLATFORM__: "extension" | "userscript" | undefined
+
+// 油猴脚本环境标识（用于设置默认值）
+const isUserscript = typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
+
 // 本地存储 - 用于非 Zustand 管理的数据
 export const localStorage = new Storage({ area: "local" })
 
@@ -41,7 +47,7 @@ export interface SiteThemeConfig {
 
 // 自定义样式
 export interface CustomStyle {
-  id: string // 唯一 ID（nanoid 生成）
+  id: string // 唯一 ID（crypto.randomUUID 生成）
   name: string // 用户自定义名称
   css: string // CSS 内容
   mode: "light" | "dark" // 适用的主题模式
@@ -246,7 +252,8 @@ export const DEFAULT_SETTINGS: Settings = {
 
   content: {
     markdownFix: true,
-    watermarkRemoval: false, // 默认关闭，需要授权 <all_urls> 权限
+    // 油猴脚本环境默认开启（GM_xmlhttpRequest 已通过 @grant 声明）
+    watermarkRemoval: isUserscript,
     formulaCopy: true,
     formulaDelimiter: true,
     tableCopy: true,
@@ -315,7 +322,8 @@ export const DEFAULT_SETTINGS: Settings = {
     renameInterval: 3,
     showStatus: true,
     titleFormat: "{status}{title}->{model}",
-    showNotification: false,
+    // 油猴脚本环境默认开启（GM_notification 已通过 @grant 声明）
+    showNotification: isUserscript,
     notificationSound: true,
     notificationVolume: 0.6,
     notifyWhenFocused: false,
@@ -363,9 +371,10 @@ export const DEFAULT_SETTINGS: Settings = {
     collapseTools: false,
     collapseAdvanced: false,
     enableSearch: true,
-    markdownFix: false, // 默认关闭
     defaultModel: "", // 空表示不覆盖
-    removeWatermark: false,
+    // 油猴脚本环境默认开启
+    markdownFix: isUserscript,
+    removeWatermark: isUserscript,
   },
 }
 
@@ -393,7 +402,7 @@ export interface Prompt {
 
 // Claude SessionKey 管理
 export interface ClaudeSessionKey {
-  id: string // nanoid
+  id: string // crypto.randomUUID
   name: string // 用户自定义名称
   key: string // sk-ant-sid01-...
   accountType?: "Free" | "Pro(5x)" | "Pro(20x)" | "API" | "Unknown"

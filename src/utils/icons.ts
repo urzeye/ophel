@@ -22,6 +22,9 @@ export const COPY_ICON_PATH = "M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1
 /** 成功勾选图标 - 折线点 */
 export const CHECK_ICON_POINTS = "20 6 9 17 4 12"
 
+/** 侧边栏图标路径 (placeholder - 当前未使用，仅为类型兼容) */
+export const SIDEBAR_ICONS: Record<string, string> = {}
+
 /**
  * 创建 SVG 元素的辅助函数
  */
@@ -103,18 +106,22 @@ export function createCheckIcon(options: IconOptions = {}): SVGSVGElement {
 
 /**
  * 更新按钮内部的图标（复制 -> 勾选 -> 复制）
+ * 使用 DOM API 避免 innerHTML（CSP Trusted Types 兼容）
  */
 export function showCopySuccess(button: HTMLElement, options: IconOptions = {}): void {
-  // 保存原始内容
-  const originalContent = button.innerHTML
+  // 清空内容（避免 innerHTML，使用 replaceChildren）
+  while (button.firstChild) {
+    button.removeChild(button.firstChild)
+  }
 
-  // 清空并添加勾选图标
-  button.innerHTML = ""
+  // 添加勾选图标
   button.appendChild(createCheckIcon({ ...options, color: "#22c55e" }))
 
   // 1.5 秒后恢复
   setTimeout(() => {
-    button.innerHTML = ""
+    while (button.firstChild) {
+      button.removeChild(button.firstChild)
+    }
     // 重新创建复制图标
     button.appendChild(createCopyIcon(options))
   }, 1500)

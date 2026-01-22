@@ -1,5 +1,49 @@
 import { MSG_PROXY_FETCH, sendToBackground } from "~utils/messaging"
 
+// 平台检测
+declare const __PLATFORM__: "extension" | "userscript" | undefined
+const isUserscript = typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
+
+// 油猴脚本的 GM_xmlhttpRequest 声明
+declare function GM_xmlhttpRequest(details: {
+  method: string
+  url: string
+  headers?: Record<string, string>
+  responseType?: string
+  onload?: (response: any) => void
+  onerror?: (error: any) => void
+}): void
+
+/**
+ * 使用 GM_xmlhttpRequest 获取图片并转为 Data URL
+ * 仅在油猴脚本环境下使用
+ */
+async function fetchImageAsDataUrl(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    GM_xmlhttpRequest({
+      method: "GET",
+      url,
+      headers: {
+        Referer: "https://gemini.google.com/",
+        Origin: "https://gemini.google.com",
+      },
+      responseType: "blob",
+      onload: (response) => {
+        if (response.status >= 200 && response.status < 300) {
+          const blob = response.response as Blob
+          const reader = new FileReader()
+          reader.onloadend = () => resolve(reader.result as string)
+          reader.onerror = reject
+          reader.readAsDataURL(blob)
+        } else {
+          reject(new Error(`HTTP ${response.status}`))
+        }
+      },
+      onerror: (error) => reject(new Error(error?.message || "GM_xmlhttpRequest failed")),
+    })
+  })
+}
+
 /**
  * Watermark Remover
  * 原理参考: https://greasyfork.org/scripts/559574
@@ -178,18 +222,24 @@ export class WatermarkRemover {
       // 替换为原始尺寸URL（去除尺寸限制）
       const normalSizeUrl = this.replaceWithNormalSize(originalSrc)
 
-      // 使用后台代理获取图片 (Plan G)
-      // Background Script会自动处理 Referer/Origin 和 Access-Control-Allow-Origin
-      const response = await sendToBackground({
-        type: MSG_PROXY_FETCH,
-        url: normalSizeUrl,
-      })
+      let dataUrl: string
 
-      if (!response.success || !response.data) {
-        throw new Error(response.error || "Unknown proxy error")
+      if (isUserscript) {
+        // 油猴脚本：使用 GM_xmlhttpRequest 获取图片
+        dataUrl = await fetchImageAsDataUrl(normalSizeUrl)
+      } else {
+        // 浏览器扩展：使用后台代理获取图片
+        const response = await sendToBackground({
+          type: MSG_PROXY_FETCH,
+          url: normalSizeUrl,
+        })
+
+        if (!response.success || !response.data) {
+          throw new Error(response.error || "Unknown proxy error")
+        }
+
+        dataUrl = response.data
       }
-
-      const dataUrl = response.data
 
       // 从dataUrl创建图片
       const loadedImg = await new Promise<HTMLImageElement>((resolve, reject) => {

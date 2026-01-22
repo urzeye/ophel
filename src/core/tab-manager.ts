@@ -92,16 +92,6 @@ export class TabManager {
 
     this.isRunning = true
 
-    // 重新注册事件监听器（可能在 stop() 中被移除）
-    window.removeEventListener("message", this.boundHandleMessage) // 先移除防止重复
-    document.removeEventListener("visibilitychange", this.boundVisibilityHandler)
-    window.removeEventListener("focus", this.boundFocusHandler)
-    window.removeEventListener("blur", this.boundBlurHandler)
-    window.addEventListener("message", this.boundHandleMessage)
-    document.addEventListener("visibilitychange", this.boundVisibilityHandler)
-    window.addEventListener("focus", this.boundFocusHandler)
-    window.addEventListener("blur", this.boundBlurHandler)
-
     this.updateTabName()
 
     // 定时更新标签页标题（使用可配置的检测频率）
@@ -135,8 +125,13 @@ export class TabManager {
       clearInterval(this.intervalId)
       this.intervalId = null
     }
+  }
 
-    // 移除事件监听
+  /**
+   * 销毁管理器，移除所有监听器
+   */
+  destroy() {
+    this.stop()
     window.removeEventListener("message", this.boundHandleMessage)
     document.removeEventListener("visibilitychange", this.boundVisibilityHandler)
     window.removeEventListener("focus", this.boundFocusHandler)
@@ -280,7 +275,11 @@ export class TabManager {
   }
 
   private handleMessage(event: MessageEvent) {
-    if (event.source !== window) return
+    // 兼容性与安全性平衡：
+    // 1. 移除 event.source === window 检查（油猴脚本中 source 可能不一致）
+    // 2. 增加 origin 检查，防止跨域 iframe 干扰
+    if (event.origin !== window.location.origin) return
+
     const { type } = event.data || {}
 
     if (type === EVENT_MONITOR_START) {

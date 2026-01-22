@@ -4,7 +4,6 @@
  * 管理Claude SessionKey列表和当前使用的Token
  */
 
-import { nanoid } from "nanoid"
 import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
 
@@ -38,7 +37,7 @@ export const useClaudeSessionKeysStore = create<SessionKeysStore>()(
 
       addKey: (data) => {
         const newKey: ClaudeSessionKey = {
-          id: nanoid(),
+          id: crypto.randomUUID(),
           ...data,
           createdAt: Date.now(),
         }

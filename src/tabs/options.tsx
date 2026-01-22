@@ -13,6 +13,7 @@ import {
   PageContentIcon,
   PermissionsIcon,
 } from "~components/icons"
+import { platform } from "~platform"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { APP_DISPLAY_NAME, APP_ICON_URL } from "~utils/config"
 import { setLanguage, t } from "~utils/i18n"
@@ -138,9 +139,12 @@ const OptionsPage = () => {
   const isStandalonePage = !(window as any).__ophelThemeManager
 
   // 在独立页面中过滤掉 appearance 导航项
-  const filteredNavItems = isStandalonePage
-    ? NAV_ITEMS.filter((item) => item.id !== "appearance")
-    : NAV_ITEMS
+  // 在油猴脚本环境中过滤掉 permissions 导航项（因为没有权限 API）
+  const filteredNavItems = NAV_ITEMS.filter((item) => {
+    if (isStandalonePage && item.id === "appearance") return false
+    if (!platform.hasCapability("permissions") && item.id === "permissions") return false
+    return true
+  })
 
   return (
     <div className="settings-layout">

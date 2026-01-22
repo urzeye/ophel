@@ -2092,3 +2092,122 @@ const containerRef = useRef<HTMLDivElement>(null)
 | ---------------------------------- | ------------------------------------------- |
 | `src/components/MainPanel.tsx`     | **修改** - 添加焦点保护逻辑                 |
 | `src/components/SettingsModal.tsx` | **修改** - 添加 containerRef 和焦点保护逻辑 |
+
+---
+
+## 13. 油猴脚本设置持久化失效：异步 Hydration 竞态问题
+
+**日期**: 2026-01-22
+
+### 症状
+
+- 油猴脚本版本中，用户修改的所有设置（如主题、免责声明同意状态）在刷新页面后全部重置为默认值。
+- 控制台日志显示 `getItem` 成功读取了之前保存的值，但紧接着被初始默认状态覆盖。
+- 浏览器扩展版本功能正常，不受影响。
+
+### 背景
+
+项目使用 Zustand 进行状态管理，并使用 `persist` 中间件实现持久化。为了兼容油猴脚本，实现了一个 `userscriptStorageAdapter`，封装了 `GM_getValue` / `GM_setValue` API。
+
+```typescript
+// 问题代码
+const userscriptStorageAdapter: StateStorage = {
+  getItem: (name: string): Promise<string | null> => {
+    const value = GM_getValue(name)
+    return Promise.resolve(value)  // ❌ 返回 Promise
+  },
+  setItem: (name: string, value: string): Promise<void> => {
+    GM_setValue(name, value)
+    return Promise.resolve()
+  },
+}
+```
+
+### 根因
+
+**Zustand persist 根据 `getItem` 的返回值类型决定 hydration 模式**：
+
+- 返回 `string | null` → **同步 hydration**（立即完成）
+- 返回 `Promise<string | null>` → **异步 hydration**（延迟完成）
+
+问题代码返回 `Promise.resolve(value)`，导致 Zustand 执行异步 hydration。虽然 GM_getValue 是同步 API，但包装成 Promise 后：
+
+1. Zustand 将其视为异步存储
+2. 在异步 hydration 完成之前，Store 使用默认状态初始化
+3. React 组件渲染，可能触发状态更新
+4. 异步 hydration 完成时，时序已经混乱
+
+```
+问题时序：
+┌─────────────────────────────────────────────────────────────┐
+│  Store 创建                                                  │
+│    ↓                                                        │
+│  getItem() 返回 Promise.resolve(data)                       │
+│    ↓                                                        │
+│  Zustand 看到 Promise → 触发 **异步** hydration             │
+│    ↓                                                        │
+│  Store 使用默认状态初始化（hydration 尚未完成）              │
+│    ↓                                                        │
+│  React 组件渲染，读取默认状态                                │
+│    ↓                                                        │
+│  Promise.resolve 在微任务中完成                              │
+│    ↓                                                        │
+│  异步 hydration 完成 → 但状态已被污染                        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 修复方案
+
+**让 `getItem` 直接返回 `string | null`（非 Promise），触发同步 hydration**
+
+```typescript
+// chrome-adapter.ts
+const userscriptStorageAdapter: StateStorage = {
+  getItem: (name: string): string | null => {  // ✅ 直接返回
+    const value = GM_getValue(name)
+    if (value === undefined || value === null) {
+      return null
+    }
+    return typeof value === "string" ? value : JSON.stringify(value)
+  },
+
+  setItem: (name: string, value: string): void => {  // ✅ 同步写入
+    GM_setValue(name, value)
+  },
+
+  removeItem: (name: string): void => {
+    GM_deleteValue(name)
+  },
+}
+```
+
+**关键点**：Zustand 的 `StateStorage` 接口允许 `getItem` 返回 `string | null | Promise<string | null>`。当返回非 Promise 值时，Zustand 会在 Store 创建时**同步**完成 hydration，彻底消除竞态条件。
+
+```
+修复后时序：
+┌─────────────────────────────────────────────────────────────┐
+│  Store 创建                                                  │
+│    ↓                                                        │
+│  getItem() 返回 string | null（同步）                        │
+│    ↓                                                        │
+│  Zustand 看到非 Promise → 触发 **同步** hydration            │
+│    ↓                                                        │
+│  Store 立即使用存储数据初始化 ✓                              │
+│    ↓                                                        │
+│  React 组件渲染，读取正确状态 ✓                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 经验总结
+
+| 教训 | 说明 |
+| :--- | :--- |
+| **同步 API 不要包装成 Promise** | GM_* 是同步 API，直接返回值即可让 Zustand 执行同步 hydration，无需 Promise 包装 |
+| **理解框架的 hydration 机制** | Zustand persist 根据返回类型决定同步/异步 hydration，这是设计而非 Bug |
+| **简单胜于复杂** | 之前尝试用 setTimeout、hydrationComplete 标志等复杂方案，都不如直接返回同步值简洁有效 |
+
+### 文件变更
+
+| 文件                               | 变更                                        |
+| ---------------------------------- | ------------------------------------------- |
+| `src/stores/chrome-adapter.ts`     | **修改** - `getItem` 改为直接返回 `string \| null` |

@@ -13,6 +13,8 @@
     "package": "plasmo package",
     "package:firefox": "plasmo package --target=firefox-mv3",
     "package:all": "plasmo package && plasmo package --target=firefox-mv3",
+    "dev:userscript": "vite --config vite.userscript.config.ts",
+    "build:userscript": "vite build --config vite.userscript.config.ts",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"
@@ -27,7 +29,6 @@
     "markdown-it-emoji": "^3.0.0",
     "markdown-it-mark": "^4.0.0",
     "markdown-it-task-lists": "^2.1.1",
-    "nanoid": "^5.1.6",
     "plasmo": "0.90.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -42,8 +43,13 @@
     "@types/node": "20.11.5",
     "@types/react": "18.2.48",
     "@types/react-dom": "18.2.18",
+    "@vitejs/plugin-react": "^5.1.2",
     "prettier": "3.2.4",
+    "terser": "^5.46.0",
     "typescript": "5.3.3",
+    "vite": "^7.3.1",
+    "vite-plugin-monkey": "^7.1.8",
+    "vite-tsconfig-paths": "^6.0.4",
     "vitepress": "^1.6.4"
   },
   "manifest": {

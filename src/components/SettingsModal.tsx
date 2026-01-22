@@ -17,6 +17,7 @@ import {
   RestoreIcon,
 } from "~components/icons"
 import { NAV_IDS, SITE_IDS } from "~constants"
+import { platform } from "~platform"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { SidebarFooter } from "~tabs/options/components/SidebarFooter"
 import AboutPage from "~tabs/options/pages/AboutPage"
@@ -235,7 +236,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
             </div>
           </div>
           <nav className="settings-sidebar-nav">
-            {NAV_ITEMS.map((item) => (
+            {NAV_ITEMS.filter((item) => {
+              // 油猴脚本环境中过滤掉 permissions 导航项
+              if (!platform.hasCapability("permissions") && item.id === NAV_IDS.PERMISSIONS)
+                return false
+              return true
+            }).map((item) => (
               <button
                 key={item.id}
                 className={`settings-nav-item ${activePage === item.id ? "active" : ""}`}

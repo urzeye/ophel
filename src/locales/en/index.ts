@@ -141,7 +141,7 @@ export const en = {
   // ======== About Page ========
   version: "Version",
   aboutDescription:
-    "Ophel is a browser extension designed for AI platforms like Gemini, ChatGPT, and Claude. It empowers your workflow with conversation management, smart outlines, and a prompt library, while offering utilities like reading history restoration, bidirectional anchors, watermark removal, formatting fixes, and model locking. With comprehensive customization options for themes and UI, Ophel ensures a smoother and more efficient AI interaction experience.",
+    "Ophel is a browser extension designed for AI platforms like Gemini, ChatGPT, Claude, AI Studio, and Grok. It empowers your workflow with conversation management, smart outlines, and a prompt library, while offering utilities like reading history restoration, bidirectional anchors, watermark removal, formatting fixes, and model locking. With comprehensive customization options for themes and UI, Ophel ensures a smoother and more efficient AI interaction experience.",
   projectLinks: "Project Links",
   communityAndSupport: "Community & Support",
   githubDesc: "View source code, report issues, or contribute",

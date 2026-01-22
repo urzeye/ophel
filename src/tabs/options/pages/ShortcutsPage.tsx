@@ -16,6 +16,7 @@ import {
   type ShortcutActionId,
   type ShortcutBinding,
 } from "~constants/shortcuts"
+import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { MSG_OPEN_URL, sendToBackground } from "~utils/messaging"
@@ -271,71 +272,76 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId }) => {
           }
         />
 
-        <SettingRow
-          label={t("globalShortcutUrl") || "全局快捷键打开的 URL"}
-          description={t("globalShortcutUrlDesc") || "按下全局快捷键 Alt+G 时打开的网址"}>
-          <input
-            type="text"
-            className="settings-input"
-            value={shortcuts?.globalUrl || "https://gemini.google.com"}
-            onChange={(e) =>
-              setSettings({
-                shortcuts: {
-                  ...shortcuts,
-                  enabled: shortcuts?.enabled ?? true,
-                  globalUrl: e.target.value,
-                  keybindings: shortcuts?.keybindings ?? DEFAULT_KEYBINDINGS,
-                },
-              })
-            }
-            style={{ width: "280px" }}
-            placeholder="https://gemini.google.com"
-          />
-        </SettingRow>
+        {platform.hasCapability("commands") && (
+          <>
+            <SettingRow
+              label={t("globalShortcutUrl") || "全局快捷键打开的 URL"}
+              description={t("globalShortcutUrlDesc") || "按下全局快捷键 Alt+G 时打开的网址"}>
+              <input
+                type="text"
+                className="settings-input"
+                value={shortcuts?.globalUrl || "https://gemini.google.com"}
+                onChange={(e) =>
+                  setSettings({
+                    shortcuts: {
+                      ...shortcuts,
+                      enabled: shortcuts?.enabled ?? true,
+                      globalUrl: e.target.value,
+                      keybindings: shortcuts?.keybindings ?? DEFAULT_KEYBINDINGS,
+                    },
+                  })
+                }
+                style={{ width: "280px" }}
+                placeholder="https://gemini.google.com"
+              />
+            </SettingRow>
 
-        <SettingRow
-          label={t("globalShortcutsTitle") || "全局快捷键"}
-          description={
-            t("globalShortcutsDesc") || "在浏览器任何页面都可使用，需要在浏览器扩展设置页面配置。"
-          }>
-          {(() => {
-            const ua = navigator.userAgent
-            const isChrome = ua.includes("Chrome") && !ua.includes("Edg/")
-            const isEdge = ua.includes("Edg/")
-            const isFirefox = ua.includes("Firefox")
+            <SettingRow
+              label={t("globalShortcutsTitle") || "全局快捷键"}
+              description={
+                t("globalShortcutsDesc") ||
+                "在浏览器任何页面都可使用，需要在浏览器扩展设置页面配置。"
+              }>
+              {(() => {
+                const ua = navigator.userAgent
+                const isChrome = ua.includes("Chrome") && !ua.includes("Edg/")
+                const isEdge = ua.includes("Edg/")
+                const isFirefox = ua.includes("Firefox")
 
-            const isSupported = isChrome || isEdge || isFirefox
+                const isSupported = isChrome || isEdge || isFirefox
 
-            if (!isSupported) {
-              return (
-                <span style={{ fontSize: "13px", color: "var(--gh-text-tertiary)" }}>
-                  {t("browserNotSupported") || "当前浏览器不支持自定义扩展快捷键"}
-                </span>
-              )
-            }
+                if (!isSupported) {
+                  return (
+                    <span style={{ fontSize: "13px", color: "var(--gh-text-tertiary)" }}>
+                      {t("browserNotSupported") || "当前浏览器不支持自定义扩展快捷键"}
+                    </span>
+                  )
+                }
 
-            let url = "chrome://extensions/shortcuts"
-            if (isEdge) url = "edge://extensions/shortcuts"
-            else if (isFirefox) url = "about:addons"
+                let url = "chrome://extensions/shortcuts"
+                if (isEdge) url = "edge://extensions/shortcuts"
+                else if (isFirefox) url = "about:addons"
 
-            return (
-              <button
-                onClick={() => sendToBackground({ type: MSG_OPEN_URL, url })}
-                style={{
-                  padding: "6px 12px",
-                  fontSize: "13px",
-                  border: "none",
-                  borderRadius: "6px",
-                  background: "var(--gh-primary)",
-                  color: "#fff",
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                }}>
-                {t("openBrowserShortcuts") || "打开浏览器快捷键设置"}
-              </button>
-            )
-          })()}
-        </SettingRow>
+                return (
+                  <button
+                    onClick={() => sendToBackground({ type: MSG_OPEN_URL, url })}
+                    style={{
+                      padding: "6px 12px",
+                      fontSize: "13px",
+                      border: "none",
+                      borderRadius: "6px",
+                      background: "var(--gh-primary)",
+                      color: "#fff",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}>
+                    {t("openBrowserShortcuts") || "打开浏览器快捷键设置"}
+                  </button>
+                )
+              })()}
+            </SettingRow>
+          </>
+        )}
 
         {/* 恢复默认按钮 */}
         <div

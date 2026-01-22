@@ -16,6 +16,7 @@ import { initCopyButtons, showCopySuccess } from "~utils/icons"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 import type { Prompt } from "~utils/storage"
 import { showToast } from "~utils/toast"
+import { createSafeHTML } from "~utils/trusted-types"
 
 interface PromptsTabProps {
   manager: PromptManager
@@ -789,7 +790,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       }
                     }}
                     dangerouslySetInnerHTML={{
-                      __html: renderMarkdown(editingPrompt?.content || ""),
+                      __html: createSafeHTML(renderMarkdown(editingPrompt?.content || "")),
                     }}
                   />
                   <style>{getHighlightStyles()}</style>
@@ -1031,7 +1032,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               }
             }}
             dangerouslySetInnerHTML={{
-              __html: renderMarkdown(previewModal.prompt.content),
+              __html: createSafeHTML(renderMarkdown(previewModal.prompt.content)),
             }}
           />
           {/* highlight.js 样式 */}

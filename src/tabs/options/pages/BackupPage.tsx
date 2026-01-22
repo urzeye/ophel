@@ -8,6 +8,7 @@ import { BackupIcon, CloudIcon } from "~components/icons"
 import { ConfirmDialog } from "~components/ui"
 import { MULTI_PROP_STORES, ZUSTAND_KEYS } from "~constants/defaults"
 import { getWebDAVSyncManager, type BackupFile } from "~core/webdav-sync"
+import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { DEFAULT_SETTINGS } from "~utils/storage"
@@ -550,17 +551,16 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate }) => {
       showDomToast(t("webdavConfigIncomplete") || "请填写完整的 WebDAV 配置")
       return false
     }
-    // ... (保持原有权限检查逻辑) ...
+
+    // 油猴脚本环境：直接执行，无需权限检查（GM_xmlhttpRequest 已通过 @grant 声明）
+    if (!platform.hasCapability("permissions")) {
+      await onGranted()
+      return true
+    }
+
     try {
       const urlObj = new URL(url)
       const origin = urlObj.origin + "/*"
-
-      // 模拟权限检查 (因为 chrome.runtime 在 content script 环境受限，这里假设总是尝试请求或直接作为 Options 页面运行)
-      // 实际上 Options 页面可以直接请求 host_permissions
-
-      // 简化逻辑：这里直接调用回调，后续如果报错再处理
-      // 或者依赖原逻辑
-      // 由于重写，我需要还原原逻辑
       const checkResult: any = await chrome.runtime.sendMessage({
         type: "CHECK_PERMISSION",
         origin,

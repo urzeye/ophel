@@ -91,9 +91,14 @@ export const App = () => {
   // 当设置中的语言变化时，同步更新 i18n
   useEffect(() => {
     if (isSettingsHydrated && settings?.language) {
-      // 这里的 setLanguage 是从 utils/i18n 导入的全局函数
-      const { setLanguage } = require("~utils/i18n")
-      setLanguage(settings.language)
+      // 使用动态 import 加载 i18n 模块
+      import("~utils/i18n")
+        .then(({ setLanguage }) => {
+          setLanguage(settings.language)
+        })
+        .catch(() => {
+          // ignore
+        })
     }
   }, [settings?.language, isSettingsHydrated])
 
@@ -422,7 +427,7 @@ export const App = () => {
     if (!edgeSnapState || !settings?.panel?.edgeSnap) return
 
     // 获取 Shadow DOM 根节点
-    const shadowHost = document.querySelector("plasmo-csui")
+    const shadowHost = document.querySelector("plasmo-csui, #ophel-userscript-root")
     const shadowRoot = shadowHost?.shadowRoot
     if (!shadowRoot) return
 
@@ -773,7 +778,7 @@ export const App = () => {
           // 查询面板元素（在 Plasmo Shadow DOM 内部）
           // 先尝试在 Shadow DOM 内查找，再尝试普通 DOM
           let panel: HTMLElement | null = null
-          const shadowHost = document.querySelector("plasmo-csui")
+          const shadowHost = document.querySelector("plasmo-csui, #ophel-userscript-root")
           if (shadowHost?.shadowRoot) {
             panel = shadowHost.shadowRoot.querySelector(".gh-main-panel") as HTMLElement
           }

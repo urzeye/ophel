@@ -8,6 +8,7 @@ import React, { useCallback, useState } from "react"
 import { FeaturesIcon } from "~components/icons"
 import { Switch } from "~components/ui"
 import { FEATURES_TAB_IDS } from "~constants"
+import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { MSG_CHECK_PERMISSIONS, MSG_REQUEST_PERMISSIONS, sendToBackground } from "~utils/messaging"
@@ -112,6 +113,11 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
               onChange={async () => {
                 const checked = settings.tab?.showNotification
                 if (!checked) {
+                  // 油猴脚本环境：直接启用（不需要检查权限，GM_notification 已通过 @grant 声明）
+                  if (!platform.hasCapability("permissions")) {
+                    updateNestedSetting("tab", "showNotification", true)
+                    return
+                  }
                   // 1. 检查是否已有权限
                   const response = await sendToBackground({
                     type: MSG_CHECK_PERMISSIONS,

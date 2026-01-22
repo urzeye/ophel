@@ -136,7 +136,7 @@ export const es = {
   // ======== About Page ========
   version: "Versión",
   aboutDescription:
-    "Ophel es una extensión diseñada para Gemini, ChatGPT y Claude. Mejora tu flujo de trabajo con gestión de chats, índices inteligentes y biblioteca de prompts, ofreciendo utilidades como historial de lectura, anclajes, eliminación de marcas de agua, avisos de finalización y bloqueo de modelo. Con amplias opciones de personalización, Ophel asegura una experiencia de IA más fluida.",
+    "Ophel es una extensión diseñada para Gemini, ChatGPT, Claude, AI Studio y Grok. Mejora tu flujo de trabajo con gestión de chats, índices inteligentes y biblioteca de prompts, ofreciendo utilidades como historial de lectura, anclajes, eliminación de marcas de agua, avisos de finalización y bloqueo de modelo. Con amplias opciones de personalización, Ophel asegura una experiencia de IA más fluida.",
   projectLinks: "Enlaces del Proyecto",
   githubDesc: "Código fuente, reportes o contribuir",
   giveStar: "Dar Estrella en GitHub",

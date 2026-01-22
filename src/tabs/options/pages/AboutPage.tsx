@@ -51,7 +51,7 @@ const AboutPage: React.FC = () => {
           </div>
           <div className="about-hero-desc">
             {t("aboutDescription") ||
-              "Ophel 是一款面向 Gemini、ChatGPT、Claude 等 AI 平台的浏览器增强扩展。它集中展示账号与余额、提供智能排序和当前站点识别，并提供自动刷新与临口防火墙绕过等自动化能力；支持数据导入导出工具。"}
+              "Ophel 是一款面向 Gemini、ChatGPT、Claude、AI Studio、Grok 等 AI 平台的浏览器增强扩展。它集中展示账号与余额、提供智能排序和当前站点识别，并提供自动刷新与临口防火墙绕过等自动化能力；支持数据导入导出工具。"}
           </div>
         </div>
       </div>

@@ -250,8 +250,8 @@ export class ThemeManager {
       }
     }
 
-    // 查找 Plasmo 的 Shadow Host 并在其上设置变量
-    const shadowHosts = document.querySelectorAll("plasmo-csui")
+    // 查找 Shadow Host：支持 Plasmo 扩展 (plasmo-csui) 和油猴脚本 (#ophel-userscript-root)
+    const shadowHosts = document.querySelectorAll("plasmo-csui, #ophel-userscript-root")
 
     shadowHosts.forEach((host) => {
       const shadowRoot = host.shadowRoot
