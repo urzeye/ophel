@@ -4,6 +4,8 @@
  * 油猴脚本平台实现，使用 GM_* API
  */
 
+import { t } from "~utils/i18n"
+
 import type {
   FetchOptions,
   FetchResponse,
@@ -165,5 +167,99 @@ export const platform: Platform = {
       "commands",
     ]
     return !unsupported.includes(cap)
+  },
+
+  async getClaudeSessionKey() {
+    // 检查是否在 claude.ai 域名
+    if (!location.hostname.endsWith("claude.ai")) {
+      return { success: false, error: t("claudeNotOnSiteHint") }
+    }
+
+    // 从 document.cookie 解析 sessionKey
+    const match = document.cookie.match(/sessionKey=([^;]+)/)
+    if (match && match[1]) {
+      return { success: true, sessionKey: decodeURIComponent(match[1]) }
+    }
+
+    return { success: false, error: t("claudeNoCookieFound") }
+  },
+
+  async testClaudeSessionKey(sessionKey: string) {
+    return new Promise((resolve) => {
+      GM_xmlhttpRequest({
+        url: "https://claude.ai/api/organizations",
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Cookie: `sessionKey=${sessionKey}`,
+        },
+        onload(response) {
+          try {
+            if (response.status !== 200) {
+              resolve({ success: true, isValid: false, error: `HTTP ${response.status}` })
+              return
+            }
+
+            const text = response.responseText
+            if (text.toLowerCase().includes("unauthorized")) {
+              resolve({ success: true, isValid: false, error: "Unauthorized" })
+              return
+            }
+
+            const orgs = JSON.parse(text)
+            if (!Array.isArray(orgs) || orgs.length === 0) {
+              resolve({ success: true, isValid: false, error: "No organizations" })
+              return
+            }
+
+            // 识别账号类型
+            const org = orgs[0]
+            const tier = org?.rate_limit_tier
+            const capabilities = org?.capabilities || []
+            const apiDisabledReason = org?.api_disabled_reason
+
+            let accountType = "Unknown"
+            if (tier === "default_claude_max_5x") {
+              accountType = "Max(5x)"
+            } else if (tier === "default_claude_max_20x") {
+              accountType = "Max(20x)"
+            } else if (tier === "default_claude_ai") {
+              accountType = "Free"
+            } else if (tier === "auto_api_evaluation") {
+              accountType = apiDisabledReason === "out_of_credits" ? "API(无额度)" : "API"
+            } else if (capabilities.includes("claude_max")) {
+              accountType = "Max"
+            } else if (capabilities.includes("api")) {
+              accountType = "API"
+            } else if (capabilities.includes("chat")) {
+              accountType = "Free"
+            }
+
+            resolve({ success: true, isValid: true, accountType })
+          } catch (e) {
+            resolve({ success: true, isValid: false, error: "Parse error" })
+          }
+        },
+        onerror() {
+          resolve({ success: false, isValid: false, error: "Request failed" })
+        },
+      })
+    })
+  },
+
+  async setClaudeSessionKey(sessionKey: string) {
+    // 检查是否在 claude.ai 域名
+    if (!location.hostname.endsWith("claude.ai")) {
+      return { success: false, error: t("claudeNotOnSiteHint") }
+    }
+
+    // 设置 cookie
+    const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString()
+    document.cookie = `sessionKey=${encodeURIComponent(sessionKey)}; domain=.claude.ai; path=/; expires=${expires}; secure; samesite=lax`
+
+    // 刷新页面
+    location.href = "https://claude.ai/"
+
+    return { success: true }
   },
 }

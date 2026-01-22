@@ -66,6 +66,25 @@ export interface NotifyOptions {
 }
 
 /**
+ * Claude Session Key 获取结果
+ */
+export interface ClaudeKeyResult {
+  success: boolean
+  sessionKey?: string
+  error?: string
+}
+
+/**
+ * Claude Session Key 测试结果
+ */
+export interface ClaudeTestResult {
+  success: boolean
+  isValid: boolean
+  accountType?: string
+  error?: string
+}
+
+/**
  * 平台能力接口
  */
 export interface Platform {
@@ -103,6 +122,21 @@ export interface Platform {
    * 检查是否有某个可选能力
    */
   hasCapability(cap: PlatformCapability): boolean
+
+  /**
+   * 获取 Claude Session Key（从浏览器 Cookie）
+   */
+  getClaudeSessionKey(): Promise<ClaudeKeyResult>
+
+  /**
+   * 测试 Claude Session Key 有效性
+   */
+  testClaudeSessionKey(sessionKey: string): Promise<ClaudeTestResult>
+
+  /**
+   * 设置 Claude Session Key（写入 Cookie 并刷新页面）
+   */
+  setClaudeSessionKey(sessionKey: string): Promise<{ success: boolean; error?: string }>
 }
 
 /**

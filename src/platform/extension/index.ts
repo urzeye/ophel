@@ -107,4 +107,16 @@ export const platform: Platform = {
     // 扩展版支持所有能力
     return true
   },
+
+  async getClaudeSessionKey() {
+    return chrome.runtime.sendMessage({ type: "GET_CLAUDE_SESSION_KEY" })
+  },
+
+  async testClaudeSessionKey(sessionKey: string) {
+    return chrome.runtime.sendMessage({ type: "TEST_CLAUDE_TOKEN", sessionKey })
+  },
+
+  async setClaudeSessionKey(sessionKey: string) {
+    return chrome.runtime.sendMessage({ type: "SET_CLAUDE_SESSION_KEY", key: sessionKey })
+  },
 }

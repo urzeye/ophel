@@ -105,12 +105,9 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
       }
     }
 
-    // 2. 设置cookie
+    // 2. 设置cookie（使用平台抽象）
     const key = keyId ? keys.find((k) => k.id === keyId)?.key : ""
-    await sendToBackground({
-      type: MSG_SET_CLAUDE_SESSION_KEY,
-      key: key || "",
-    })
+    await platform.setClaudeSessionKey(key || "")
 
     // 3. 更新当前选中
     setCurrentKey(keyId)
@@ -124,26 +121,26 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
     keyValue: string,
     showToastMsg: boolean = true,
   ) => {
-    // 安全检测：如果正在生成则拒绝测试
-    try {
-      const checkResult = await sendToBackground({
-        type: MSG_CHECK_CLAUDE_GENERATING,
-      })
-      if (checkResult.isGenerating) {
-        if (showToastMsg) showToast(t("claudeGenerating"), TOAST_DURATION.LONG)
-        return false // 不能测试
+    // 安全检测：如果正在生成则拒绝测试（仅扩展环境）
+    if (platform.hasCapability("tabs")) {
+      try {
+        const checkResult = await sendToBackground({
+          type: MSG_CHECK_CLAUDE_GENERATING,
+        })
+        if (checkResult.isGenerating) {
+          if (showToastMsg) showToast(t("claudeGenerating"), TOAST_DURATION.LONG)
+          return false // 不能测试
+        }
+      } catch {
+        // 检测失败时允许继续
       }
-    } catch {
-      // 检测失败时允许继续
     }
 
     setTesting((prev) => ({ ...prev, [id]: true }))
 
     try {
-      const result = await sendToBackground({
-        type: MSG_TEST_CLAUDE_TOKEN,
-        sessionKey: keyValue,
-      })
+      // 使用平台抽象测试 key
+      const result = await platform.testClaudeSessionKey(keyValue)
 
       if (result.isValid) {
         testKey(id, { isValid: true, accountType: result.accountType })
@@ -220,6 +217,7 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
   // 从浏览器导入当前Cookie
   const handleImportFromBrowser = async () => {
     try {
+      // 权限检查仅在扩展环境
       if (platform.hasCapability("permissions")) {
         const checkResult = await sendToBackground({
           type: MSG_CHECK_PERMISSIONS,
@@ -236,9 +234,8 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
         }
       }
 
-      const result = await sendToBackground({
-        type: MSG_GET_CLAUDE_SESSION_KEY,
-      })
+      // 使用平台抽象获取 session key
+      const result = await platform.getClaudeSessionKey()
 
       if (!result.success) {
         showToast(result.error || t("claudeNoCookieFound"), TOAST_DURATION.MEDIUM)
@@ -253,7 +250,7 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
 
       setDialog({
         type: "import-name",
-        sessionKey: result.sessionKey,
+        sessionKey: result.sessionKey!,
       })
     } catch (error) {
       showToast(t("claudeKeyCopyFailed") + ": " + (error as Error).message, TOAST_DURATION.LONG)
@@ -572,23 +569,26 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
             )}
           </button>
 
-          <button
-            className="settings-btn settings-btn-secondary"
-            onClick={handleImportFromBrowser}
-            disabled={!isClaudeSite || isBatchTesting}
-            title={!isClaudeSite ? t("claudeNotOnSiteHint") : ""}
-            style={{
-              justifyContent: "center",
-              padding: "8px 12px",
-              flex: "1 1 auto",
-              opacity: !isClaudeSite || isBatchTesting ? 0.6 : 1,
-              backgroundColor: isClaudeSite ? "var(--gh-bg)" : "var(--gh-bg-secondary)",
-              color: isClaudeSite ? "var(--gh-primary)" : "var(--gh-text-secondary)",
-              borderColor: isClaudeSite ? "var(--gh-primary)" : "var(--gh-border)",
-              whiteSpace: "nowrap",
-            }}>
-            🌐 {t("claudeImportFromBrowser")}
-          </button>
+          {/* 从浏览器导入按钮仅在扩展环境显示（油猴脚本无法读取 HttpOnly cookie） */}
+          {platform.hasCapability("cookies") && (
+            <button
+              className="settings-btn settings-btn-secondary"
+              onClick={handleImportFromBrowser}
+              disabled={!isClaudeSite || isBatchTesting}
+              title={!isClaudeSite ? t("claudeNotOnSiteHint") : ""}
+              style={{
+                justifyContent: "center",
+                padding: "8px 12px",
+                flex: "1 1 auto",
+                opacity: !isClaudeSite || isBatchTesting ? 0.6 : 1,
+                backgroundColor: isClaudeSite ? "var(--gh-bg)" : "var(--gh-bg-secondary)",
+                color: isClaudeSite ? "var(--gh-primary)" : "var(--gh-text-secondary)",
+                borderColor: isClaudeSite ? "var(--gh-primary)" : "var(--gh-border)",
+                whiteSpace: "nowrap",
+              }}>
+              🌐 {t("claudeImportFromBrowser")}
+            </button>
+          )}
           <button
             className="settings-btn settings-btn-secondary"
             onClick={handleImportTokens}

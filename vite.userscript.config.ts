@@ -61,7 +61,7 @@ export default defineConfig({
           "GM_cookie",
           "window.focus",
         ],
-        connect: ["*"],
+        connect: ["*", "api.claude.ai"],
         "run-at": "document-idle",
         noframes: true,
         homepageURL: "https://github.com/urzeye/ophel",
