@@ -29,7 +29,6 @@
     "markdown-it-emoji": "^3.0.0",
     "markdown-it-mark": "^4.0.0",
     "markdown-it-task-lists": "^2.1.1",
-    "nanoid": "^5.1.6",
     "plasmo": "0.90.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",

@@ -4,7 +4,6 @@
  */
 import hljs from "highlight.js/lib/core"
 import css from "highlight.js/lib/languages/css"
-import { nanoid } from "nanoid"
 import React, { useState } from "react"
 
 import { AppearanceIcon } from "~components/icons"
@@ -168,7 +167,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
       // 新建样式
       const newStyle: CustomStyle = {
         ...editingStyle,
-        id: nanoid(),
+        id: crypto.randomUUID(),
       }
       newStyles = [...existingStyles, newStyle]
     }

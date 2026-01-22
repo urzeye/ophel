@@ -47,7 +47,7 @@ export interface SiteThemeConfig {
 
 // 自定义样式
 export interface CustomStyle {
-  id: string // 唯一 ID（nanoid 生成）
+  id: string // 唯一 ID（crypto.randomUUID 生成）
   name: string // 用户自定义名称
   css: string // CSS 内容
   mode: "light" | "dark" // 适用的主题模式
@@ -402,7 +402,7 @@ export interface Prompt {
 
 // Claude SessionKey 管理
 export interface ClaudeSessionKey {
-  id: string // nanoid
+  id: string // crypto.randomUUID
   name: string // 用户自定义名称
   key: string // sk-ant-sid01-...
   accountType?: "Free" | "Pro(5x)" | "Pro(20x)" | "API" | "Unknown"
