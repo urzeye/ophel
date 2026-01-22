@@ -42,17 +42,29 @@
 - 🎭 **Claude 增强** — Session Key 管理、多账号切换
 - 🔒 **隐私优先** — 本地存储、WebDAV 同步、无数据收集
 
+> **推荐使用浏览器扩展（Extension）版本**，功能更全、体验更佳、兼容性更好。油猴脚本（Userscript）版本功能受限（如无法读取 Cookie、无独立弹窗等）。
+
 ## 🚀 快速开始
 
 ### 应用商店
 
-🚧 审核中... ([Chrome](#) | [Edge](#) | [Firefox](#))
+### 应用商店
+
+([Chrome](https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd) | [Firefox](https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer) | [Greasy Fork](https://greasyfork.org/zh-CN/scripts/563646-ophel))
 
 ### 手动安装
+
+#### 浏览器扩展
 
 1. 从 [Releases](https://github.com/urzeye/ophel/releases) 下载并解压安装包
 2. 打开浏览器扩展管理页面，开启 **开发者模式**
 3. 点击 **加载已解压的扩展程序**，选择解压的文件夹
+
+#### 油猴脚本
+
+1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 插件
+2. 从 [Releases](https://github.com/urzeye/ophel/releases) 下载 `.user.js` 文件
+3. 拖入浏览器或点击链接即可安装
 
 ### 本地构建
 
@@ -68,6 +80,7 @@ pnpm install
 pnpm dev              # 开发模式
 pnpm build            # Chrome/Edge 生产构建
 pnpm build:firefox    # Firefox 生产构建
+pnpm build:userscript # 油猴脚本生产构建
 ```
 
 **技术栈**：[Plasmo](https://docs.plasmo.com/) + [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) + [Zustand](https://github.com/pmndrs/zustand)

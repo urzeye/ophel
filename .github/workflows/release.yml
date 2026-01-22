@@ -38,6 +38,9 @@ jobs:
       - name: Build all platforms
         run: pnpm build:all
 
+      - name: Build Userscript
+        run: pnpm build:userscript
+
       - name: Package all platforms
         run: pnpm package:all
 
@@ -55,6 +58,7 @@ jobs:
           cp build/chrome-mv3-prod.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip
           cp build/chrome-mv3-prod.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-edge.zip
           cp build/firefox-mv3-prod.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-firefox.zip
+          cp build/userscript/ophel.user.js build/ophel-${{ steps.get_version.outputs.VERSION }}.user.js
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
@@ -63,33 +67,40 @@ jobs:
           body: |
             ## Ophel ${{ steps.get_version.outputs.VERSION }}
 
-            ### 下载说明
+            ### 📥 Download / 下载
 
-            | 浏览器 | 下载文件 | 说明 |
-            |--------|----------|------|
-            | Chrome | `ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip` | Chrome Web Store 或开发者模式加载 |
-            | Edge | `ophel-${{ steps.get_version.outputs.VERSION }}-edge.zip` | Edge Add-ons 或开发者模式加载 |
-            | Firefox | `ophel-${{ steps.get_version.outputs.VERSION }}-firefox.zip` | Firefox Add-ons 或临时加载 |
+            | Platform / 平台 | File / 文件 | Note / 说明 |
+            |-----------------|-------------|-------------|
+            | **Chrome** | `ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip` | Chrome Web Store or Load Unpacked / 开发者模式加载 |
+            | **Edge** | `ophel-${{ steps.get_version.outputs.VERSION }}-edge.zip` | Edge Add-ons or Load Unpacked / 开发者模式加载 |
+            | **Firefox** | `ophel-${{ steps.get_version.outputs.VERSION }}-firefox.zip` | Firefox Add-ons or Temporary Load / 临时加载 |
+            | **Userscript / 油猴脚本** | `ophel-${{ steps.get_version.outputs.VERSION }}.user.js` | Requires Tampermonkey / 需要安装 Tampermonkey |
 
-            ### 安装方法
+            ### 🔧 Installation / 安装方法
 
-            **Chrome / Edge:**
-            1. 下载对应的 zip 文件并解压
-            2. 打开 `chrome://extensions/`（Chrome）或 `edge://extensions/`（Edge）
-            3. 启用「开发者模式」
-            4. 点击「加载已解压的扩展程序」选择解压目录
+            #### Chrome / Edge
+            1. Download and extract the zip file. / 下载并解压 zip 文件。
+            2. Open `chrome://extensions/` or `edge://extensions/`. / 打开扩展管理页面。
+            3. Enable "Developer mode". / 启用“开发者模式”。
+            4. Click "Load unpacked" and select the extracted folder. / 点击“加载已解压的扩展程序”选择文件夹。
 
-            **Firefox:**
-            1. 下载 Firefox 版本的 zip 文件
-            2. 打开 `about:debugging#/runtime/this-firefox`
-            3. 点击「临时载入附加组件」选择 zip 文件
+            #### Firefox
+            1. Download the Firefox zip file. / 下载 Firefox 版本 zip 文件。
+            2. Go to `about:debugging#/runtime/this-firefox`. / 打开调试页面。
+            3. Click "Load Temporary Add-on" and select the zip file. / 点击“临时载入附加组件”选择 zip 文件。
+
+            #### Userscript (Tampermonkey) / 油猴脚本
+            1. Install [Tampermonkey](https://www.tampermonkey.net/). / 安装 Tampermonkey 插件。
+            2. Click the `.user.js` file link or drag it into the browser. / 点击 `.user.js` 文件或将其拖入浏览器。
+            3. Click "Install" in the Tampermonkey tab. / 在弹出的标签页点击“安装”。
 
             ---
-            *完整更新日志请查看 [CHANGELOG.md](https://github.com/urzeye/ophel/blob/main/CHANGELOG.md)*
+            *Full Changelog / 完整更新日志: [CHANGELOG.md](https://github.com/urzeye/ophel/blob/main/CHANGELOG.md)*
           files: |
             build/ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip
             build/ophel-${{ steps.get_version.outputs.VERSION }}-edge.zip
             build/ophel-${{ steps.get_version.outputs.VERSION }}-firefox.zip
+            build/ophel-${{ steps.get_version.outputs.VERSION }}.user.js
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
         env:

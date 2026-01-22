@@ -42,17 +42,29 @@
 - 🎭 **Claude Enhancement** — Session Key management, multi-account switching
 - 🔒 **Privacy First** — Local storage, WebDAV sync, no data collection
 
+> **We highly recommend using the Browser Extension version** for a more complete feature set, better experience, and higher compatibility. The Userscript version has limitations (e.g., cannot read cookies, no independent popup).
+
 ## 🚀 Quick Start
 
 ### Web Store
 
-🚧 Under Review... ([Chrome](#) | [Edge](#) | [Firefox](#))
+### Web Store
+
+([Chrome](https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd) | [Firefox](https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer) | [Greasy Fork](https://greasyfork.org/zh-CN/scripts/563646-ophel))
 
 ### Manual Installation
+
+#### Browser Extension
 
 1. Download & unzip from [Releases](https://github.com/urzeye/ophel/releases)
 2. Open browser extensions page, enable **Developer mode**
 3. Click **Load unpacked** and select the unzipped folder
+
+#### Userscript
+
+1. Install [Tampermonkey](https://www.tampermonkey.net/)
+2. Download `.user.js` file from [Releases](https://github.com/urzeye/ophel/releases)
+3. Drag into browser or click the link to install
 
 ### Local Build
 
@@ -68,6 +80,7 @@ pnpm install
 pnpm dev              # Development mode
 pnpm build            # Chrome/Edge production build
 pnpm build:firefox    # Firefox production build
+pnpm build:userscript # Userscript production build
 ```
 
 **Tech Stack**: [Plasmo](https://docs.plasmo.com/) + [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) + [Zustand](https://github.com/pmndrs/zustand)
