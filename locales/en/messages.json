@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extensionDescription": {
-    "message": "Enhance Gemini/ChatGPT/Claude/Grok/AI Studio with smart outlines, conversation management, prompt library, shortcuts, completion notifications, theme customization, reading history restoration, WebDAV sync and more!",
+    "message": "Enhance Gemini/ChatGPT/Claude/Grok/AI Studio with smart outlines, conversation management, prompts, WebDAV sync and more.",
     "description": "Extension description"
   }
 }

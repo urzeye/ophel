@@ -4,7 +4,7 @@
     "description": "Erweiterungsname"
   },
   "extensionDescription": {
-    "message": "Verbessern Sie Gemini/ChatGPT/Claude/Grok/AI Studio mit intelligenten Gliederungen, Konversationsverwaltung, Prompt-Bibliothek, Tastenkürzel, Benachrichtigungen, Theme-Anpassung, Leseverlauf-Wiederherstellung, WebDAV-Synchronisierung und mehr!",
+    "message": "Erweitert Gemini/ChatGPT/Claude/Grok/AI Studio um Gliederungen, Chats, Prompts, Shortcuts, WebDAV-Sync und mehr.",
     "description": "Erweiterungsbeschreibung"
   }
 }

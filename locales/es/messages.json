@@ -4,7 +4,7 @@
     "description": "Nombre de la extensión"
   },
   "extensionDescription": {
-    "message": "Mejore Gemini/ChatGPT/Claude/Grok/AI Studio con esquemas inteligentes, gestión de conversaciones, biblioteca de prompts, atajos, notificaciones, personalización de temas, restauración del historial, sincronización WebDAV y más!",
+    "message": "Mejora Gemini/ChatGPT/Claude/Grok/AI Studio con esquemas, gestión de chats, prompts, atajos, WebDAV y más.",
     "description": "Descripción de la extensión"
   }
 }
