@@ -1,12 +1,11 @@
 import { type SiteAdapter } from "~adapters/base"
+import { platform } from "~platform"
+import { t } from "~utils/i18n"
 import {
   EVENT_MONITOR_COMPLETE,
   EVENT_MONITOR_INIT,
   EVENT_MONITOR_START,
   EVENT_PRIVACY_TOGGLE,
-  MSG_FOCUS_TAB,
-  MSG_SHOW_NOTIFICATION,
-  sendToBackground,
 } from "~utils/messaging"
 import { type Settings } from "~utils/storage"
 import { showToast } from "~utils/toast"
@@ -380,13 +379,18 @@ export class TabManager {
    * 发送完成通知
    */
   private sendCompletionNotification() {
-    // 发送桌面通知
+    // 发送桌面通知（使用平台抽象层，支持扩展和油猴脚本）
     if (this.settings.showNotification) {
-      sendToBackground({
-        type: MSG_SHOW_NOTIFICATION,
-        title: `✅ ${this.adapter.getName()} 生成完成`,
-        body: this.lastSessionName || this.adapter.getConversationTitle?.() || "任务完成",
-      }).catch((e) => console.error("[TabManager] 通知发送失败:", e))
+      try {
+        const siteName = this.adapter.getName()
+        // 使用国际化翻译，支持10种语言
+        const title = t("notificationTitle").replace("{site}", siteName)
+        const message =
+          this.lastSessionName || this.adapter.getConversationTitle?.() || t("notificationBody")
+        platform.notify({ title, message })
+      } catch (e) {
+        console.error("[TabManager] 通知发送失败:", e)
+      }
     }
 
     // 播放通知声音（独立于桌面通知）
@@ -394,9 +398,9 @@ export class TabManager {
       this.playNotificationSound()
     }
 
-    // 自动窗口置顶（通过 background script 使用 chrome.tabs API）
+    // 自动窗口置顶（使用平台抽象层）
     if (this.settings.autoFocus) {
-      sendToBackground({ type: MSG_FOCUS_TAB }).catch(() => {})
+      platform.focusWindow()
     }
   }
 
