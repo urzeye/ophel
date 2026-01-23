@@ -1,4 +1,4 @@
-name: "Submit to Web Store"
+name: "🏪 Submit to Web Store"
 on:
   workflow_dispatch:
 

@@ -1,4 +1,4 @@
-name: Deploy Docs
+name: 📚 Deploy Documentation
 
 on:
   push:
@@ -30,7 +30,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 9
+          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
