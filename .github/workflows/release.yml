@@ -53,6 +53,32 @@ jobs:
             echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           fi
 
+      - name: Extract Changelog
+        id: extract_changelog
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          VERSION_NO_V=${VERSION#v}
+
+          # 使用 awk 提取对应版本的更新日志
+          # 匹配 "## [1.0.1]" 开头，到下一个 "## [" 之前的内容
+          awk -v ver="\\[${VERSION_NO_V}\\]" '
+            /^## \[/ { 
+              if (p) exit; 
+              if ($0 ~ ver) { p=1; next } 
+            } 
+            p
+          ' CHANGELOG.md > RELEASE_NOTE.md
+
+          # 如果没有找到对应版本的日志，使用占位符
+          if [ ! -s RELEASE_NOTE.md ]; then
+            echo "详见 CHANGELOG.md" > RELEASE_NOTE.md
+          fi
+
+          # 输出到 GITHUB_OUTPUT (支持多行)
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          cat RELEASE_NOTE.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Rename artifacts for release
         run: |
           cp build/chrome-mv3-prod.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip
@@ -67,7 +93,9 @@ jobs:
           body: |
             ## Ophel ${{ steps.get_version.outputs.VERSION }}
 
-            ### 📥 Download / 下载
+            ${{ steps.extract_changelog.outputs.notes }}
+
+            ---
 
             | Platform / 平台 | File / 文件 | Note / 说明 |
             |-----------------|-------------|-------------|
@@ -108,9 +136,11 @@ jobs:
 
       - name: Copy README for Userscript
         run: |
-          cp README*.md build/userscript/
-          mkdir -p build/userscript/docs/i18n
-          cp docs/i18n/README*.md build/userscript/docs/i18n/ 2>/dev/null || true
+          mkdir -p build/userscript/assets
+          cp assets/icon.png build/userscript/assets/
+          mkdir -p build/userscript/docs
+          cp README*.md build/userscript/docs/
+          cp docs/i18n/README*.md build/userscript/docs/ 2>/dev/null || true
 
       - name: Deploy Userscript to release branch
         uses: peaceiris/actions-gh-pages@v3
