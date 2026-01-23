@@ -19,7 +19,6 @@ const storageAdapter: StateStorage = {
   ...chromeStorageAdapter,
   setItem: async (name, value) => {
     if (isUpdatingFromStorage) {
-      // console.log("[SettingsStore] Skipping storage write due to sync update")
       return
     }
     return chromeStorageAdapter.setItem(name, value)

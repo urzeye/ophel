@@ -946,4 +946,13 @@ Dame el código y luego un resumen de mejoras.`,
   popupCopyFailed: "Fallo al copiar",
   popupFeedback: "Comentarios",
   popupSettings: "Ajustes",
+
+  // Policy Retry
+  policyRetryLabel: "Reintento automático por política",
+  policyRetryDesc:
+    "Reenviar automáticamente el mensaje cuando sea bloqueado por la política empresarial",
+  maxRetriesLabel: "Máx. Reintentos",
+  retryCountSuffix: "veces (misma pregunta)",
+  policyRetryActive: "Bloqueo de política, reintentando ({current}/{max})",
+  policyRetryLimitReached: "Límite de reintentos alcanzado",
 }

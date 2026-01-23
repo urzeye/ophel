@@ -610,11 +610,6 @@ export class ClaudeAdapter extends SiteAdapter {
 
       // 等待一下看是否生效，如果不行则尝试刷新页面
       await new Promise((r) => setTimeout(r, 300))
-
-      // 如果页面没变化，尝试强制刷新
-      // （Claude 可能需要刷新才能应用主题）
-      console.log(`[ClaudeAdapter] Theme set to ${targetMode} in localStorage`)
-
       return true
     } catch (error) {
       console.error("[ClaudeAdapter] toggleTheme error:", error)

@@ -112,14 +112,6 @@ export const config: PlasmoCSConfig = {
     // 仅当有变化时写入 localStorage
     if (hasChanges) {
       localStorage.setItem("aiStudioUserPreference", JSON.stringify(pref))
-      console.log("[Ophel] AI Studio settings preloaded:", {
-        collapseNavbar: aistudioSettings.collapseNavbar,
-        collapseRunSettings: aistudioSettings.collapseRunSettings,
-        collapseTools: aistudioSettings.collapseTools,
-        collapseAdvanced: aistudioSettings.collapseAdvanced,
-        enableSearch: aistudioSettings.enableSearch,
-        defaultModel: aistudioSettings.defaultModel,
-      })
     }
 
     // 检查是否开启了模型锁定
@@ -219,7 +211,6 @@ function waitForButtonAndClick(selector: string) {
     // 超时清理（30秒后停止监听）
     setTimeout(() => {
       if (!hasClicked) {
-        console.log("[Ophel] Timeout waiting for run settings button")
         cleanup()
       }
     }, 30000)

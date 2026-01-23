@@ -955,4 +955,12 @@ export const ja = {
   popupCopyFailed: "コピー失敗",
   popupFeedback: "フィードバック",
   popupSettings: "設定",
+
+  // Policy Retry
+  policyRetryLabel: "ポリシー遮断時の自動再試行",
+  policyRetryDesc: "企業のポリシーによりメッセージが遮断された場合、自動的に再送信を試みる",
+  maxRetriesLabel: "最大再試行回数",
+  retryCountSuffix: "回 (同じ質問)",
+  policyRetryActive: "ポリシーによる遮断、再試行中 ({current}/{max})",
+  policyRetryLimitReached: "再試行回数の上限に達しました",
 }

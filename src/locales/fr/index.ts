@@ -949,4 +949,13 @@ Donnez le code puis un résumé des améliorations.`,
   popupCopyFailed: "Échec copie",
   popupFeedback: "Feedback",
   popupSettings: "Réglages",
+
+  // Policy Retry
+  policyRetryLabel: "Réessai auto après blocage politique",
+  policyRetryDesc:
+    "Renvoyer automatiquement le message s'il est bloqué par la politique de l'entreprise",
+  maxRetriesLabel: "Max Réessais",
+  retryCountSuffix: "fois (même question)",
+  policyRetryActive: "Politique bloquée, nouvel essai ({current}/{max})",
+  policyRetryLimitReached: "Limite de réessais atteinte",
 }

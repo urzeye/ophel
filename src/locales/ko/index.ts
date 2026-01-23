@@ -953,4 +953,12 @@ export const ko = {
   popupCopyFailed: "복사 실패",
   popupFeedback: "피드백",
   popupSettings: "설정",
+
+  // Policy Retry
+  policyRetryLabel: "정책 차단 시 자동 재시도",
+  policyRetryDesc: "기업 정책에 의해 메시지가 차단될 경우 자동으로 메시지를 다시 보냅니다.",
+  maxRetriesLabel: "최대 재시도 횟수",
+  retryCountSuffix: "회 (동일 질문)",
+  policyRetryActive: "정책 차단됨, 재시도 중 ({current}/{max})",
+  policyRetryLimitReached: "재시도 횟수 초과",
 }

@@ -5,6 +5,8 @@ import { getAdapter } from "~adapters"
 import { App } from "~components/App"
 import { platform } from "~platform"
 
+// 显式导入 NetworkMonitor 初始化函数（避免被 tree-shaking 移除）
+import { initNetworkMonitor } from "../../contents/monitor"
 // 导入样式为内联字符串（用于注入到 Shadow DOM）
 // 使用相对路径避免别名解析问题
 import mainStyle from "../../style.css?inline"
@@ -223,7 +225,9 @@ async function init() {
 
   // 初始化所有模块
   await initCoreModules(ctx)
-  console.log("[Ophel Userscript] Core modules initialized")
+
+  // 初始化 NetworkMonitor 消息监听器（必须显式调用以避免 tree-shaking）
+  initNetworkMonitor()
 
   // 订阅设置变化
   subscribeModuleUpdates(ctx)

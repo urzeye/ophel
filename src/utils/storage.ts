@@ -110,6 +110,14 @@ export interface Settings {
     height: number // 面板高度 (50-100, 默认 80, 单位 vh)
   }
 
+  // Gemini Enterprise 专属设置
+  geminiEnterprise?: {
+    policyRetry: {
+      enabled: boolean
+      maxRetries: number
+    }
+  }
+
   // 内容处理（含复制、导出）
   content: {
     markdownFix: boolean
@@ -248,6 +256,13 @@ export const DEFAULT_SETTINGS: Settings = {
     defaultEdgeDistance: 20,
     edgeSnapThreshold: 30,
     height: 80,
+  },
+
+  geminiEnterprise: {
+    policyRetry: {
+      enabled: false,
+      maxRetries: 3,
+    },
   },
 
   content: {

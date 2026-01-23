@@ -4,6 +4,7 @@
  * 每个支持的站点（Gemini/ChatGPT/Claude 等）需要继承此类并实现抽象方法
  */
 
+import { SITE_IDS } from "~constants/defaults"
 import { DOMToolkit } from "~utils/dom-toolkit"
 
 // ==================== 类型定义 ====================
@@ -337,7 +338,7 @@ export abstract class SiteAdapter {
 
     // 尝试在 iframe 中查找（Gemini 图文并茂模式专用）
     // 只在 Gemini 普通版站点遍历 iframe，其他站点跳过以避免跨域警告
-    if (this.getSiteId() === "gemini") {
+    if (this.getSiteId() === SITE_IDS.GEMINI) {
       const iframes = document.querySelectorAll('iframe[sandbox*="allow-same-origin"]')
       for (const iframe of Array.from(iframes)) {
         try {

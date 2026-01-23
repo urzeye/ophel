@@ -943,4 +943,12 @@ Dê o código e depois um resumo de melhorias.`,
   popupCopyFailed: "Falha ao copiar",
   popupFeedback: "Feedback",
   popupSettings: "Ajustes",
+
+  // Policy Retry
+  policyRetryLabel: "Auto-repetição por Política",
+  policyRetryDesc: "Reenviar mensagem automaticamente quando bloqueada pela política empresarial",
+  maxRetriesLabel: "Máx. Tentativas",
+  retryCountSuffix: "vezes (mesma pergunta)",
+  policyRetryActive: "Bloqueio de política, tentando novamente ({current}/{max})",
+  policyRetryLimitReached: "Limite de tentativas alcançado",
 }

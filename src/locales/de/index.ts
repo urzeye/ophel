@@ -943,4 +943,13 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   popupCopyFailed: "Kopie fehlgeschlagen",
   popupFeedback: "Feedback",
   popupSettings: "Einstellungen",
+
+  // Policy Retry
+  policyRetryLabel: "Autom. Wiederholung bei Richtlinienblockierung",
+  policyRetryDesc:
+    "Nachricht automatisch erneut senden, wenn sie durch Unternehmensrichtlinien blockiert wurde",
+  maxRetriesLabel: "Max. Wiederholungen",
+  retryCountSuffix: "Mal (gleiche Frage)",
+  policyRetryActive: "Richtlinienblockierung, erneuter versuch ({current}/{max})",
+  policyRetryLimitReached: "Wiederholungslimit erreicht",
 }

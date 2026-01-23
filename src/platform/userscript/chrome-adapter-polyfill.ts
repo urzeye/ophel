@@ -13,7 +13,6 @@ declare function GM_setValue(key: string, value: unknown): void
 declare function GM_deleteValue(key: string): void
 
 // 确认 polyfill 被加载
-console.log("[Polyfill] chrome-adapter-polyfill.ts loaded")
 
 /**
  * 油猴脚本存储适配器
@@ -22,7 +21,6 @@ console.log("[Polyfill] chrome-adapter-polyfill.ts loaded")
 export const chromeStorageAdapter: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {
     const value = GM_getValue(name)
-    console.log("[Polyfill] getItem:", name, "->", value)
     if (value === undefined || value === null) {
       return null
     }
@@ -32,13 +30,11 @@ export const chromeStorageAdapter: StateStorage = {
   },
 
   setItem: async (name: string, value: string): Promise<void> => {
-    console.log("[Polyfill] setItem:", name, "->", value?.substring(0, 200) + "...")
     // Zustand persist 传入的是 JSON 字符串，直接存储
     GM_setValue(name, value)
   },
 
   removeItem: async (name: string): Promise<void> => {
-    console.log("[Polyfill] removeItem:", name)
     GM_deleteValue(name)
   },
 }

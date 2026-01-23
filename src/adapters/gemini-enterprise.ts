@@ -807,7 +807,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
   getNetworkMonitorConfig(): NetworkMonitorConfig {
     return {
-      urlPatterns: ["BardFrontendService", "StreamGenerate"],
+      urlPatterns: ["widgetStreamAssist"],
       silenceThreshold: 3000,
     }
   }

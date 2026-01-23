@@ -5,7 +5,8 @@
  */
 
 import type { SiteAdapter } from "~adapters/base"
-import type { CustomStyle, Settings } from "~utils/storage"
+import { SITE_IDS } from "~constants/defaults"
+import type { CustomStyle } from "~utils/storage"
 import {
   getPreset,
   themeVariablesToCSS,
@@ -146,7 +147,7 @@ export class ThemeManager {
    */
   apply(targetMode?: ThemeMode) {
     const mode = targetMode || this.mode
-    const isGeminiStandard = window.location.host === "gemini.google.com"
+    const isGeminiStandard = this.adapter.getSiteId() === SITE_IDS.GEMINI
 
     if (mode === "dark") {
       document.body.classList.add("dark-theme")

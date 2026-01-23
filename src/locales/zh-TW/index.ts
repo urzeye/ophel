@@ -936,4 +936,12 @@ export const zhTW = {
   popupCopyFailed: "複製失敗",
   popupFeedback: "反饋",
   popupSettings: "設定",
+
+  // Policy Retry
+  policyRetryLabel: "策略攔截自動重發",
+  policyRetryDesc: "當回覆被企業策略攔截時，嘗試自動重新發送訊息",
+  maxRetriesLabel: "最大重試次數",
+  retryCountSuffix: "次 (同一問題)",
+  policyRetryActive: "策略攔截，自動重試 ({current}/{max})",
+  policyRetryLimitReached: "重試次數已達上限",
 }

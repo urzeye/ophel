@@ -15,6 +15,7 @@ import {
   MarkdownFixer,
 } from "~core/markdown-fixer"
 import { ModelLocker } from "~core/model-locker"
+import { PolicyRetryManager } from "~core/policy-retry-manager"
 import { ReadingHistoryManager } from "~core/reading-history"
 import { ScrollLockManager } from "~core/scroll-lock-manager"
 import { TabManager } from "~core/tab-manager"
@@ -53,6 +54,7 @@ export interface ModuleInstances {
   modelLocker: ModelLocker | null
   scrollLockManager: ScrollLockManager | null
   userQueryMarkdownRenderer: UserQueryMarkdownRenderer | null
+  policyRetryManager: PolicyRetryManager | null
 }
 
 // 全局模块实例（用于设置变更时的热更新）
@@ -67,6 +69,7 @@ let modules: ModuleInstances = {
   modelLocker: null,
   scrollLockManager: null,
   userQueryMarkdownRenderer: null,
+  policyRetryManager: null,
 }
 
 /**
@@ -299,7 +302,23 @@ export async function initCoreModules(ctx: ModulesContext): Promise<ModuleInstan
   // 10. 用户提问 Markdown 渲染
   initUserQueryMarkdownRenderer(ctx)
 
+  // 11. Policy Retry Manager
+  initPolicyRetryManager(ctx)
+
   return modules
+}
+
+/**
+ * 初始化 Policy Retry Manager
+ */
+export function initPolicyRetryManager(ctx: ModulesContext): void {
+  const { adapter, settings, siteId } = ctx
+  if (siteId === SITE_IDS.GEMINI_ENTERPRISE) {
+    modules.policyRetryManager = new PolicyRetryManager(
+      adapter,
+      settings.geminiEnterprise?.policyRetry || { enabled: false, maxRetries: 3 },
+    )
+  }
 }
 
 /**
@@ -418,6 +437,17 @@ export function subscribeModuleUpdates(ctx: ModulesContext): void {
       } else {
         modules.userQueryMarkdownRenderer?.updateSettings(false)
       }
+    }
+
+    // 11. Policy Retry Manager update
+    if (
+      newSettings?.geminiEnterprise &&
+      siteId === SITE_IDS.GEMINI_ENTERPRISE &&
+      modules.policyRetryManager
+    ) {
+      modules.policyRetryManager.updateSettings(
+        newSettings.geminiEnterprise?.policyRetry || { enabled: false, maxRetries: 3 },
+      )
     }
   })
 }

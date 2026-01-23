@@ -600,6 +600,70 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
               }
             }}
           />
+
+          {/* Gemini Enterprise 专属内容 */}
+          <div
+            className="setting-subsection"
+            style={{
+              marginTop: "24px",
+              paddingTop: "16px",
+              borderTop: "1px solid var(--gh-border-color)",
+            }}>
+            <h3 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px" }}>
+              Gemini Enterprise
+            </h3>
+            <ToggleRow
+              label={t("policyRetryLabel")}
+              description={t("policyRetryDesc")}
+              checked={settings.geminiEnterprise?.policyRetry?.enabled ?? false}
+              onChange={() => {
+                const current = settings.geminiEnterprise?.policyRetry || {
+                  enabled: false,
+                  maxRetries: 3,
+                }
+                setSettings({
+                  geminiEnterprise: {
+                    ...settings.geminiEnterprise,
+                    policyRetry: {
+                      ...current,
+                      enabled: !current.enabled,
+                    },
+                  },
+                })
+              }}
+            />
+            {settings.geminiEnterprise?.policyRetry?.enabled && (
+              <SettingRow label={t("maxRetriesLabel")}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    className="settings-input"
+                    value={settings.geminiEnterprise?.policyRetry?.maxRetries ?? 3}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value)
+                      if (!isNaN(val) && val >= 1 && val <= 10) {
+                        setSettings({
+                          geminiEnterprise: {
+                            ...settings.geminiEnterprise,
+                            policyRetry: {
+                              ...settings.geminiEnterprise?.policyRetry!,
+                              maxRetries: val,
+                            },
+                          },
+                        })
+                      }
+                    }}
+                    style={{ width: "60px" }}
+                  />
+                  <span style={{ fontSize: "12px", color: "var(--gh-text-secondary)" }}>
+                    {t("retryCountSuffix")}
+                  </span>
+                </div>
+              </SettingRow>
+            )}
+          </div>
         </SettingCard>
       )}
 

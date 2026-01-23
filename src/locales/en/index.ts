@@ -961,4 +961,12 @@ Please output the optimized code block directly, followed by a brief summary of 
   popupCopyFailed: "Copy failed",
   popupFeedback: "Feedback",
   popupSettings: "Settings",
+
+  // Policy Retry
+  policyRetryLabel: "Auto-retry on Policy Block",
+  policyRetryDesc: "Automatically resend message when blocked by enterprise policy",
+  maxRetriesLabel: "Max Retries",
+  retryCountSuffix: "times (same question)",
+  policyRetryActive: "Policy blocked, retrying ({current}/{max})",
+  policyRetryLimitReached: "Retry limit reached",
 }

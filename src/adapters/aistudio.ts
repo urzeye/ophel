@@ -384,7 +384,6 @@ export class AIStudioAdapter extends SiteAdapter {
         ) as HTMLElement
         if (toggleBtn) {
           // 此时不要关闭 interval，点击后等待下一次检查
-          console.log("[AIStudioAdapter] Run settings panel is collapsed, expanding...")
           toggleBtn.click()
           // 重置尝试次数，给予更多时间让面板加载
           attempts = Math.max(0, attempts - 2)
@@ -407,9 +406,6 @@ export class AIStudioAdapter extends SiteAdapter {
         'button[aria-label="Toggle run settings panel"]',
       ) as HTMLElement
       if (toggleBtn) {
-        console.log(
-          "[AIStudioAdapter] Run settings panel is collapsed, expanding for model list...",
-        )
         wasCollapsed = true
         toggleBtn.click()
 
@@ -1125,13 +1121,6 @@ export class AIStudioAdapter extends SiteAdapter {
       // 仅当有变化时写入 localStorage
       if (hasChanges) {
         localStorage.setItem("aiStudioUserPreference", JSON.stringify(pref))
-        console.log("[AIStudioAdapter] Settings applied:", {
-          collapseNavbar: settings.collapseNavbar,
-          collapseTools: settings.collapseTools,
-          collapseAdvanced: settings.collapseAdvanced,
-          enableSearch: settings.enableSearch,
-          defaultModel: settings.defaultModel,
-        })
 
         // 触发 storage 事件，让 Angular 感知变化
         window.dispatchEvent(

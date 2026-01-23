@@ -5,9 +5,10 @@ import { defineConfig } from "vite"
 import monkey from "vite-plugin-monkey"
 
 // ========== Dynamic Metadata Loading ==========
-// Read version from package.json
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, "package.json"), "utf-8"))
+const author: string = pkg.author
 const version: string = pkg.version
+const license: string = pkg.license
 
 // Locale directory to userscript locale code mapping
 const localeMapping: Record<string, string> = {
@@ -64,9 +65,10 @@ export default defineConfig({
       userscript: {
         name: localizedName,
         description: localizedDescription,
-        version,
-
-        license: "CC-BY-NC-SA-4.0",
+        version: version,
+        author: author,
+        namespace: "https://github.com/urzeye/ophel",
+        license: license,
         icon: "https://raw.githubusercontent.com/urzeye/ophel/main/assets/icon.png",
         match: [
           "https://gemini.google.com/*",

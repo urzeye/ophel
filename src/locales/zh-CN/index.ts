@@ -972,4 +972,12 @@ export const zhCN = {
   popupCopyFailed: "复制失败",
   popupFeedback: "反馈",
   popupSettings: "设置",
+
+  // Policy Retry
+  policyRetryLabel: "策略拦截自动重发",
+  policyRetryDesc: "当回复被企业策略拦截时，尝试自动重新发送消息",
+  maxRetriesLabel: "最大重试次数",
+  retryCountSuffix: "次 (同一问题)",
+  policyRetryActive: "策略拦截，自动重试 ({current}/{max})",
+  policyRetryLimitReached: "重试次数已达上限",
 }
