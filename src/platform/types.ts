@@ -137,6 +137,12 @@ export interface Platform {
    * 设置 Claude Session Key（写入 Cookie 并刷新页面）
    */
   setClaudeSessionKey(sessionKey: string): Promise<{ success: boolean; error?: string }>
+
+  /**
+   * 切换到下一个 Claude Session Key
+   * 在已保存的 Keys 列表中循环切换（Pro 优先）
+   */
+  switchNextClaudeKey(): Promise<{ success: boolean; keyName?: string; error?: string }>
 }
 
 /**

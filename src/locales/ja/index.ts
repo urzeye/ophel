@@ -906,6 +906,8 @@ export const ja = {
   claudeBatchTestDone: "一括テスト完了。有効: {valid}, 無効: {invalid}",
   claudeBatchTestFailed: "一括テストが中断されました",
   claudeOnlyOneKeyTip: "キーが一つしかなく、かつ既に使用中です",
+  noClaudeKeys: "Session Key が設定されていません",
+  restoreSuccess: "復元成功、ページを更新します...",
 
   // ======== AI Studio 設定 ========
   aistudioSettingsTitle: "AI Studio 設定",

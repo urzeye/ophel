@@ -934,6 +934,8 @@ export const zhCN = {
   claudeBatchTestDone: "批量检测完成。{valid} 个有效，{invalid} 个失效。",
   claudeBatchTestFailed: "批量检测被中断",
   claudeOnlyOneKeyTip: "当前只有一个可用 Key，且正在使用中",
+  noClaudeKeys: "未配置任何 Session Key",
+  restoreSuccess: "恢复成功，即将刷新页面...",
 
   // ======== AI Studio 设置 ========
   aistudioSettingsTitle: "AI Studio 设置",

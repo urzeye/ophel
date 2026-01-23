@@ -600,20 +600,27 @@ export function useShortcuts({
     }
 
     try {
-      // 需要先引入 MSG_SWITCH_NEXT_CLAUDE_KEY
-      const { MSG_SWITCH_NEXT_CLAUDE_KEY, sendToBackground } = await import("~utils/messaging")
+      // 使用平台抽象层，支持扩展版和油猴脚本版
+      const { platform } = await import("~platform")
 
-      const result = await sendToBackground({
-        type: MSG_SWITCH_NEXT_CLAUDE_KEY,
-      })
+      const result = await platform.switchNextClaudeKey()
 
       if (result.success) {
         showToast((t("claudeKeySwitched") || "Session Key 已切换") + `: ${result.keyName}`, 2000)
       } else {
         if (result.error === "claudeOnlyOneKey") {
           showToast(t("claudeOnlyOneKeyTip") || "当前只有一个可用 Key，且正在使用中", 2000)
+        } else if (result.error === "noClaudeKeys") {
+          showToast(t("noClaudeKeys") || "未配置任何 Session Key", 2000)
         } else {
-          showToast(result.error || "切换失败", 2000)
+          // 尝试翻译错误信息，如果没有翻译则显示原始错误
+          const translatedError = t(result.error as any)
+          showToast(
+            translatedError !== result.error
+              ? translatedError
+              : result.error || t("operationFailed"),
+            2000,
+          )
         }
       }
     } catch (e) {

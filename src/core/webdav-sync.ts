@@ -544,7 +544,9 @@ export class WebDAVSyncManager {
   }
 
   /**
-   * 发送 WebDAV 请求（通过 background service worker 绕过 CORS）
+   * 发送 WebDAV 请求
+   * - 扩展版：通过 background service worker 绕过 CORS
+   * - 油猴版：使用 GM_xmlhttpRequest 绕过 CORS
    */
   private async request(
     method: string,
@@ -554,7 +556,83 @@ export class WebDAVSyncManager {
   ): Promise<Response> {
     const url = this.buildUrl(path)
 
-    // 通过 background 代理请求以绕过 CORS
+    // 检测是否为油猴脚本环境
+    // @ts-ignore - __PLATFORM__ 是构建时注入的全局变量
+    const isUserscript = typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
+
+    if (isUserscript) {
+      // 油猴脚本：使用 GM_xmlhttpRequest
+      return this.requestViaGM(method, url, body, headers)
+    } else {
+      // 浏览器扩展：通过 background 代理请求以绕过 CORS
+      return this.requestViaBackground(method, url, body, headers)
+    }
+  }
+
+  /**
+   * 油猴脚本环境：使用 GM_xmlhttpRequest 发送请求
+   */
+  private requestViaGM(
+    method: string,
+    url: string,
+    body?: string | null,
+    headers?: Record<string, string>,
+  ): Promise<Response> {
+    return new Promise((resolve, reject) => {
+      // 构建请求头，添加 Basic Auth
+      const requestHeaders: Record<string, string> = { ...headers }
+      if (this.config.username && this.config.password) {
+        const credentials = btoa(`${this.config.username}:${this.config.password}`)
+        requestHeaders["Authorization"] = `Basic ${credentials}`
+      }
+
+      // @ts-ignore - GM_xmlhttpRequest 是油猴脚本 API
+      GM_xmlhttpRequest({
+        method,
+        url,
+        headers: requestHeaders,
+        data: body || undefined,
+        onload: (response: any) => {
+          // 构造一个类 Response 对象返回
+          resolve({
+            ok: response.status >= 200 && response.status < 300,
+            status: response.status,
+            statusText: response.statusText,
+            text: async () => response.responseText,
+            headers: {
+              get: (name: string) => {
+                // 解析响应头
+                const headerLines = response.responseHeaders?.split("\r\n") || []
+                for (const line of headerLines) {
+                  const [key, ...valueParts] = line.split(":")
+                  if (key?.toLowerCase() === name.toLowerCase()) {
+                    return valueParts.join(":").trim()
+                  }
+                }
+                return null
+              },
+            },
+          } as unknown as Response)
+        },
+        onerror: (error: any) => {
+          reject(new Error(error.statusText || "GM_xmlhttpRequest failed"))
+        },
+        ontimeout: () => {
+          reject(new Error("Request timeout"))
+        },
+      })
+    })
+  }
+
+  /**
+   * 浏览器扩展环境：通过 background service worker 发送请求
+   */
+  private async requestViaBackground(
+    method: string,
+    url: string,
+    body?: string | null,
+    headers?: Record<string, string>,
+  ): Promise<Response> {
     const response = await chrome.runtime.sendMessage({
       type: MSG_WEBDAV_REQUEST,
       method,

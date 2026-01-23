@@ -119,4 +119,8 @@ export const platform: Platform = {
   async setClaudeSessionKey(sessionKey: string) {
     return chrome.runtime.sendMessage({ type: "SET_CLAUDE_SESSION_KEY", key: sessionKey })
   },
+
+  async switchNextClaudeKey() {
+    return chrome.runtime.sendMessage({ type: "SWITCH_NEXT_CLAUDE_KEY" })
+  },
 }

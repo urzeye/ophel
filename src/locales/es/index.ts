@@ -894,6 +894,8 @@ Dame el código y luego un resumen de mejoras.`,
   claudeBatchTestDone: "Hecho. {valid} OK, {invalid} mal.",
   claudeBatchTestFailed: "Parado",
   claudeOnlyOneKeyTip: "Solo tienes esta y ya la usas",
+  noClaudeKeys: "No hay Session Keys configuradas",
+  restoreSuccess: "Restauración exitosa, la página se actualizará...",
 
   // ======== Configuración de AI Studio ========
   aistudioSettingsTitle: "Configuración de AI Studio",

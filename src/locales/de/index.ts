@@ -893,6 +893,8 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   claudeBatchTestDone: "Fertig. {valid} OK, {invalid} Fehler.",
   claudeBatchTestFailed: "Abgebrochen",
   claudeOnlyOneKeyTip: "Ihre einzige Option hier.",
+  noClaudeKeys: "Keine Session Keys konfiguriert",
+  restoreSuccess: "Wiederherstellung erfolgreich, Seite wird aktualisiert...",
 
   // ======== AI Studio Einstellungen ========
   aistudioSettingsTitle: "AI Studio Einstellungen",

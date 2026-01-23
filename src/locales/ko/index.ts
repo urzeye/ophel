@@ -905,6 +905,8 @@ export const ko = {
   claudeBatchTestDone: "일괄 체크 완료. 유효: {valid}, 유효하지 않음: {invalid}",
   claudeBatchTestFailed: "일괄 체크가 중단되었습니다",
   claudeOnlyOneKeyTip: "제공된 키가 하나뿐이며 이미 사용 중입니다",
+  noClaudeKeys: "구성된 Session Key가 없습니다",
+  restoreSuccess: "복원 성공, 페이지가 새로 고침됩니다...",
 
   // ======== AI Studio 설정 ========
   aistudioSettingsTitle: "AI Studio 설정",

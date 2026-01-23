@@ -889,6 +889,8 @@ export const zhTW = {
   claudeBatchTestDone: "批量檢測完成。{valid} 個有效，{invalid} 個失效。",
   claudeBatchTestFailed: "批量檢測被中斷",
   claudeOnlyOneKeyTip: "當前只有一個可用 Key，且正在使用中",
+  noClaudeKeys: "未配置任何 Session Key",
+  restoreSuccess: "恢復成功，即將重新整理頁面...",
 
   // ======== AI Studio 設定 ========
   aistudioSettingsTitle: "AI Studio 設定",

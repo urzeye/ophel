@@ -892,6 +892,8 @@ export const ru = {
   claudeBatchTestDone: "Готово. {valid} Ок, {invalid} Брак.",
   claudeBatchTestFailed: "Сбой",
   claudeOnlyOneKeyTip: "Ваш единственный вариант.",
+  noClaudeKeys: "Нет настроенных Session Key",
+  restoreSuccess: "Восстановление успешно, страница обновится...",
 
   // ======== Настройки AI Studio ========
   aistudioSettingsTitle: "Настройки AI Studio",

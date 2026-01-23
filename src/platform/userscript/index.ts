@@ -262,4 +262,78 @@ export const platform: Platform = {
 
     return { success: true }
   },
+
+  async switchNextClaudeKey() {
+    // 检查是否在 claude.ai 域名
+    if (!location.hostname.endsWith("claude.ai")) {
+      return { success: false, error: t("claudeNotOnSiteHint") }
+    }
+
+    try {
+      // 1. 从 GM 存储读取 claudeSessionKeys
+      // Zustand persist 存储结构: { state: { keys: [], currentKeyId: "" }, version: 0 }
+      const storageData = GM_getValue("claudeSessionKeys") as any
+      const rawKeys = storageData?.state?.keys || []
+
+      if (rawKeys.length === 0) {
+        return { success: false, error: "noClaudeKeys" }
+      }
+
+      const currentId = storageData?.state?.currentKeyId
+
+      // 2. 筛选可用 Keys 并排序 (Pro 优先)
+      let availableKeys = rawKeys.filter((k: any) => k.isValid !== false)
+
+      // 如果没有可用 Key，尝试使用所有 Key
+      if (availableKeys.length === 0) {
+        availableKeys = [...rawKeys]
+      }
+
+      // 排序: Pro 优先，然后是名称
+      availableKeys.sort((a: any, b: any) => {
+        const isAPro = a.accountType?.toLowerCase()?.includes("pro")
+        const isBPro = b.accountType?.toLowerCase()?.includes("pro")
+        if (isAPro && !isBPro) return -1
+        if (!isAPro && isBPro) return 1
+        return a.name.localeCompare(b.name)
+      })
+
+      // 3. 找到下一个 Key
+      const currentIndex = availableKeys.findIndex((k: any) => k.id === currentId)
+
+      // 如果只有一个 Key 且当前正在使用它，则不执行切换
+      if (availableKeys.length === 1 && currentIndex !== -1) {
+        return { success: false, error: "claudeOnlyOneKey" }
+      }
+
+      let nextIndex = 0
+      if (currentIndex !== -1) {
+        nextIndex = (currentIndex + 1) % availableKeys.length
+      }
+
+      const nextKey = availableKeys[nextIndex]
+      if (!nextKey) {
+        return { success: false, error: "nextKeyNotFound" }
+      }
+
+      // 4. 设置 Cookie
+      if (nextKey.key) {
+        const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString()
+        document.cookie = `sessionKey=${encodeURIComponent(nextKey.key)}; domain=.claude.ai; path=/; expires=${expires}; secure; samesite=lax`
+      }
+
+      // 5. 更新存储中的当前 Key ID
+      if (storageData?.state) {
+        storageData.state.currentKeyId = nextKey.id
+        GM_setValue("claudeSessionKeys", storageData)
+      }
+
+      // 6. 跳转到首页
+      location.href = "https://claude.ai/"
+
+      return { success: true, keyName: nextKey.name }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  },
 }

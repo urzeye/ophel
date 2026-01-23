@@ -895,6 +895,8 @@ Donnez le code puis un résumé des améliorations.`,
   claudeBatchTestDone: "Finit. {valid} OK, {invalid} échecs.",
   claudeBatchTestFailed: "Stoppé",
   claudeOnlyOneKeyTip: "Sensation de déjà vu ? C'est votre seule clé.",
+  noClaudeKeys: "Aucune Session Key configurée",
+  restoreSuccess: "Restauration réussie, la page va se rafraîchir...",
 
   // ======== Paramètres AI Studio ========
   aistudioSettingsTitle: "Paramètres AI Studio",

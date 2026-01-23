@@ -923,6 +923,8 @@ Please output the optimized code block directly, followed by a brief summary of 
   claudeBatchTestDone: "Batch check completed. {valid} valid, {invalid} invalid.",
   claudeBatchTestFailed: "Batch check interrupted",
   claudeOnlyOneKeyTip: "Only one key available and it is currently in use",
+  noClaudeKeys: "No Session Keys configured",
+  restoreSuccess: "Restore successful, page will refresh...",
 
   // ======== AI Studio Settings ========
   aistudioSettingsTitle: "AI Studio Settings",
