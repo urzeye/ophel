@@ -153,6 +153,9 @@ export default defineConfig({
   head: [["link", { rel: "icon", href: "/ophel/logo.png" }]],
   base: "/ophel/",
 
+  // 排除非文档文件（多语言 README 放在 i18n 目录下）
+  srcExclude: ["**/i18n/**"],
+
   locales: {
     zh: zhConfig,
     en: enConfig,
