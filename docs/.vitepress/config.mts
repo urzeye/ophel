@@ -159,11 +159,6 @@ export default defineConfig({
   locales: {
     zh: zhConfig,
     en: enConfig,
-    root: {
-      label: "简体中文",
-      lang: "zh-CN",
-      link: "/",
-    },
   },
 
   themeConfig: {
