@@ -56,6 +56,7 @@
     "name": "__MSG_extensionName__",
     "description": "__MSG_extensionDescription__",
     "default_locale": "en",
+    "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvAcJdUSu6L/pUzQoiycrhoVxXuB0urO8sVre1hOyEQ+SNbblsQ/b1E5IHiXTP4WglmvqM6Fe0CgNJBi6YxtHlWOmXv+rZ7xEMoCQAw4RdEBbm9Vf+bCwBeI9k1Pps9CcMWEE3bdBCC/z8/BcME37id56KIhSPDhifm2XM7W2AkgFRUo49nwlkNXaCkUZFSt/EMjCY30XrQ/rnltBcBZckbFxIJpIIbF8K7OScjagWaVa8MVWK/wiSJfN+sfh2La52yjhobDqHq9lLZLu6YBa8MS5MambmmpF0FnXnT6jdGiBxxwYUjg4Yy8k9fIhq8NwVshEPbWBANu7fCdV+9Ii2wIDAQAB",
     "browser_specific_settings": {
       "gecko": {
         "id": "igodu.love@gmail.com",

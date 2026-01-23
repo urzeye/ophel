@@ -79,12 +79,32 @@ jobs:
           cat RELEASE_NOTE.md >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+      - name: Package for Chrome Web Store
+        run: |
+          # 创建临时目录并复制构建产物
+          cp -r build/chrome-mv3-prod build/chrome-mv3-cws
+
+          # 从 manifest.json 中彻底删除 key 字段
+          node -e "
+            const fs = require('fs');
+            const manifestPath = 'build/chrome-mv3-cws/manifest.json';
+            const pkg = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+            if (pkg.key) { delete pkg.key; }
+            fs.writeFileSync(manifestPath, JSON.stringify(pkg, null, 2));
+          "
+
+          # 打包为 zip
+          cd build/chrome-mv3-cws
+          zip -r ../ophel-cws-upload.zip .
+          cd ../..
+
       - name: Rename artifacts for release
         run: |
           cp build/chrome-mv3-prod.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip
           cp build/chrome-mv3-prod.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-edge.zip
           cp build/firefox-mv3-prod.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-firefox.zip
           cp build/userscript/ophel.user.js build/ophel-${{ steps.get_version.outputs.VERSION }}.user.js
+          cp build/ophel-cws-upload.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
@@ -99,28 +119,24 @@ jobs:
 
             | Platform / 平台 | File / 文件 | Note / 说明 |
             |-----------------|-------------|-------------|
-            | **Chrome** | `ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip` | Chrome Web Store or Load Unpacked / 开发者模式加载 |
-            | **Edge** | `ophel-${{ steps.get_version.outputs.VERSION }}-edge.zip` | Edge Add-ons or Load Unpacked / 开发者模式加载 |
-            | **Firefox** | `ophel-${{ steps.get_version.outputs.VERSION }}-firefox.zip` | Firefox Add-ons or Temporary Load / 临时加载 |
-            | **Userscript / 油猴脚本** | `ophel-${{ steps.get_version.outputs.VERSION }}.user.js` | Requires Tampermonkey / 需要安装 Tampermonkey |
+            | **Chrome** | `ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip` | **Recommended / 推荐** (Consistent ID / ID 一致) |
+            | **Edge** | `ophel-${{ steps.get_version.outputs.VERSION }}-edge.zip` | Edge Add-ons or Load Unpacked |
+            | **Firefox** | `ophel-${{ steps.get_version.outputs.VERSION }}-firefox.zip` | Firefox Add-ons |
+            | **Userscript** | `ophel-${{ steps.get_version.outputs.VERSION }}.user.js` | Tampermonkey script |
+            | **CWS Upload** | `ophel-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip` | **For Store Upload Only / 仅供商店上传** (No Key) |
 
             ### 🔧 Installation / 安装方法
 
-            #### Chrome / Edge
-            1. Download and extract the zip file. / 下载并解压 zip 文件。
-            2. Open `chrome://extensions/` or `edge://extensions/`. / 打开扩展管理页面。
-            3. Enable "Developer mode". / 启用“开发者模式”。
-            4. Click "Load unpacked" and select the extracted folder. / 点击“加载已解压的扩展程序”选择文件夹。
+            #### Chrome / Edge (Recommended)
+            1. Download `ophel-...-chrome.zip`. / 下载 Chrome 版本压缩包。
+            2. Unzip and load unpacked in Developer Mode. / 解压并在开发者模式下加载已解压的扩展。
 
-            #### Firefox
-            1. Download the Firefox zip file. / 下载 Firefox 版本 zip 文件。
-            2. Go to `about:debugging#/runtime/this-firefox`. / 打开调试页面。
-            3. Click "Load Temporary Add-on" and select the zip file. / 点击“临时载入附加组件”选择 zip 文件。
+            > **Note:** This version includes the public key, ensuring your Extension ID matches the Chrome Web Store version.
+            > **注意：** 此版本包含公钥，确保您的扩展 ID 与 Chrome 商店版本一致，以保证数据互通。
 
             #### Userscript (Tampermonkey) / 油猴脚本
             1. Install [Tampermonkey](https://www.tampermonkey.net/). / 安装 Tampermonkey 插件。
-            2. Click the `.user.js` file link or drag it into the browser. / 点击 `.user.js` 文件或将其拖入浏览器。
-            3. Click "Install" in the Tampermonkey tab. / 在弹出的标签页点击“安装”。
+            2. Click the `.user.js` file link. / 点击 `.user.js` 文件链接即可安装。
 
             ---
             *Full Changelog / 完整更新日志: [CHANGELOG.md](https://github.com/urzeye/ophel/blob/main/CHANGELOG.md)*
@@ -129,6 +145,7 @@ jobs:
             build/ophel-${{ steps.get_version.outputs.VERSION }}-edge.zip
             build/ophel-${{ steps.get_version.outputs.VERSION }}-firefox.zip
             build/ophel-${{ steps.get_version.outputs.VERSION }}.user.js
+            build/ophel-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
         env:
