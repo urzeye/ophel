@@ -1,15 +1,9 @@
-import type { PlasmoCSConfig } from "plasmo"
-
 import {
   EVENT_MONITOR_COMPLETE,
   EVENT_MONITOR_INIT,
   EVENT_MONITOR_START,
   type MonitorEventPayload,
 } from "~utils/messaging"
-
-export const config: PlasmoCSConfig = {
-  world: "MAIN",
-}
 
 // 油猴脚本环境需要使用 unsafeWindow 才能访问页面的原生 fetch/XMLHttpRequest
 declare const unsafeWindow: Window | undefined
@@ -267,9 +261,9 @@ export function initNetworkMonitor(): void {
 
     // 在油猴脚本中，event.source 可能与 window 或 unsafeWindow 不完全相等
     // 或者由于沙箱机制，window.postMessage 发送的消息 source 可能是 proxy
-    // 这里我们主要依赖消息类型进行验证
+    // 主要依赖消息类型进行验证
     if (event.source !== window) {
-      // 尝试放宽检查：如果是我们关心的消息类型，则允许通过
+      // 放宽检查：如果是我们关心的消息类型，则允许通过
       if (
         type !== EVENT_MONITOR_INIT &&
         type !== EVENT_MONITOR_COMPLETE &&

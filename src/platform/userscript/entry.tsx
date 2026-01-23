@@ -6,7 +6,7 @@ import { App } from "~components/App"
 import { platform } from "~platform"
 
 // 显式导入 NetworkMonitor 初始化函数（避免被 tree-shaking 移除）
-import { initNetworkMonitor } from "../../contents/monitor"
+import { initNetworkMonitor } from "../../core/network-monitor"
 // 导入样式为内联字符串（用于注入到 Shadow DOM）
 // 使用相对路径避免别名解析问题
 import mainStyle from "../../style.css?inline"
