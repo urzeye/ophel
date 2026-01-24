@@ -1,5 +1,6 @@
-import fs from "fs"
-import path from "path"
+// @ts-nocheck
+import * as fs from "fs"
+import * as path from "path"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import monkey from "vite-plugin-monkey"
@@ -91,7 +92,7 @@ export default defineConfig({
           "unsafeWindow",
           "window.focus",
         ],
-        connect: ["*", "api.claude.ai"],
+        connect: ["*"],
         "run-at": "document-idle",
         noframes: true,
         homepageURL: "https://github.com/urzeye/ophel",
