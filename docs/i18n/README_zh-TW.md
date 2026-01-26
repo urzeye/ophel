@@ -30,7 +30,7 @@
 
 ---
 
-👋 **Ophel** 是一款瀏覽器擴充功能，為 **Gemini**、**ChatGPT**、**Claude**、**Grok**、**AI Studio** 等主流 AI 平台提供統一的增強體驗。
+👋 **Ophel** 是一款同時支持 **瀏覽器擴充功能** 和 **油猴腳本** 的 AI 聊天頁面增強工具，為 **Gemini**、**ChatGPT**、**Claude**、**Grok**、**AI Studio** 等主流 AI 平台提供統一的互動體驗。
 
 ## 📹 功能展示
 

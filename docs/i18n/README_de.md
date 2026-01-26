@@ -30,7 +30,7 @@
 
 ---
 
-👋 **Ophel** ist eine Browsererweiterung, die ein verbessertes und einheitliches Erlebnis für führende KI-Plattformen wie **Gemini**, **ChatGPT**, **Claude**, **Grok** und **AI Studio** bietet.
+👋 **Ophel** ist ein Verbesserungstool für KI-Chat-Seiten, das sowohl **Browser-Erweiterungen** als auch **Userscripts** unterstützt und ein einheitliches interaktives Erlebnis für Mainstream-KI-Plattformen wie **Gemini**, **ChatGPT**, **Claude**, **Grok** und **AI Studio** bietet.
 
 ## 📹 Demo
 

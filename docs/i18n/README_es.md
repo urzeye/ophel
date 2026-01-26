@@ -30,7 +30,7 @@
 
 ---
 
-👋 **Ophel** es una extensión de navegador que ofrece una experiencia mejorada y unificada para las principales plataformas de IA como **Gemini**, **ChatGPT**, **Claude**, **Grok** y **AI Studio**.
+👋 **Ophel** es una herramienta de mejora de páginas de chat de IA que admite tanto **extensiones de navegador** como **userscripts**, proporcionando una experiencia interactiva unificada para las principales plataformas de IA como **Gemini**, **ChatGPT**, **Claude**, **Grok** y **AI Studio**.
 
 ## 📹 Demo
 

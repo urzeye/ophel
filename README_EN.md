@@ -30,7 +30,7 @@
 
 ---
 
-👋 **Ophel** is a browser extension that enhances your AI experience across **Gemini**, **ChatGPT**, **Claude**, **Grok**, and **AI Studio**.
+👋 **Ophel** is an AI chat page enhancer that supports both **Browser Extension** and **Userscript**, providing a unified interactive experience for mainstream AI platforms like **Gemini**, **ChatGPT**, **Claude**, **Grok**, and **AI Studio**.
 
 ## 📹 Demo
 
