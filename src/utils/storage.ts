@@ -211,7 +211,7 @@ export interface Settings {
     syncInterval: number
     remoteDir: string
     dataSources?: Array<"settings" | "conversations" | "prompts" | "claudeSessionKeys"> // 可备份的数据源
-    lastSyncTime?: Record<string, number> // 每个数据源的最后同步时间
+    lastSyncTime?: number // 上次同步时间戳
     lastSyncStatus?: "success" | "failed" | "syncing"
   }
 
@@ -376,7 +376,6 @@ export const DEFAULT_SETTINGS: Settings = {
     syncInterval: 30,
     remoteDir: "ophel",
     dataSources: ["settings", "conversations", "prompts", "claudeSessionKeys"], // 默认包括所有数据
-    lastSyncTime: {},
   },
 
   shortcuts: DEFAULT_SHORTCUTS_SETTINGS,
