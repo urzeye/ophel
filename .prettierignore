@@ -24,3 +24,4 @@ public/
 vite.userscript.config.ts
 config.mts
 .vscode/
+.husky/

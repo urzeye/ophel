@@ -27,11 +27,11 @@
 - [ ] Unit Tests / 单元测试
 
 **Test Environment / 测试环境**:
+
 - **OS**: <!-- e.g. Windows 11 / macOS 14 -->
 - **Browser**: <!-- e.g. Chrome 120 / Edge 120 -->
 - **Userscript Manager**: <!-- e.g. Tampermonkey 5.0 (If applicable / 如适用) -->
 - **AI Platform**: <!-- e.g. Gemini / Claude / All (If applicable / 如适用) -->
-
 
 ## Visual Changes / 视觉变化
 
