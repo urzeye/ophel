@@ -3,8 +3,26 @@ name: "🛡️ CI / Automated Audit"
 on:
   push:
     branches: ["main"]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".vscode/**"
+      - ".idea/**"
+      - ".github/**"
+      - "!.github/workflows/ci.yml"
+      - "LICENSE"
+      - ".gitignore"
   pull_request:
     branches: ["main"]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".vscode/**"
+      - ".idea/**"
+      - ".github/**"
+      - "!.github/workflows/ci.yml"
+      - "LICENSE"
+      - ".gitignore"
 
 jobs:
   audit:
