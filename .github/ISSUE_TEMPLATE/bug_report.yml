@@ -20,10 +20,25 @@ body:
     validations:
       required: true
 
+  - type: dropdown
+    id: userscript_manager
+    attributes:
+      label: Userscript Manager / 脚本管理器
+      description: Required if using Userscript / 如果使用油猴脚本，请选择
+      options:
+        - Tampermonkey
+        - Violentmonkey
+        - Greasemonkey
+        - Userscripts (Safari)
+        - Stay
+        - Other
+    validations:
+      required: false
+
   - type: input
     id: version
     attributes:
-      label: Ophel Version / 防止版本
+      label: Ophel Version / 应用版本
       description: Check in extension manager or script manager / 请在扩展管理或脚本管理器中查看
       placeholder: e.g. v1.0.0
     validations:
@@ -36,11 +51,11 @@ body:
       description: Which platform is having issues? / 出问题的平台是哪个？
       options:
         - Gemini (gemini.google.com)
+        - Gemini Enterprise (business.gemini.google)
         - ChatGPT (chatgpt.com)
         - Claude (claude.ai)
         - Grok (grok.com)
         - AI Studio (aistudio.google.com)
-        - DeepSeek (deepseek.com)
         - All Platforms / 所有平台
         - Other / 其他
     validations:
