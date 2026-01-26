@@ -9,11 +9,7 @@
     "type": "git",
     "url": "https://github.com/urzeye/ophel.git"
   },
-  "packageManager": "pnpm@10.0.0",
-  "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=10.0.0"
-  },
+  "packageManager": "pnpm@9.15.0",
   "scripts": {
     "dev": "plasmo dev",
     "lint": "prettier --check .",
