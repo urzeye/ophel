@@ -107,7 +107,7 @@ jobs:
           cp build/ophel-cws-upload.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           name: Ophel ${{ steps.get_version.outputs.VERSION }}
           body: |
