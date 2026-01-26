@@ -23,12 +23,21 @@ body:
     validations:
       required: true
 
+  - type: input
+    id: ai-service
+    attributes:
+      label: Target AI Service / 目标 AI 服务
+      description: Which AI service is this related to? (e.g. ChatGPT, DeepSeek) / 这个想法与哪个 AI 服务相关？
+      placeholder: Optional / 选填
+    validations:
+      required: false
+
   - type: dropdown
     id: specific-platform
     attributes:
-      label: Platform / 平台
+      label: Installation Type / 安装方式
       options:
-        - All Platforms (所有平台)
+        - All Types (所有方式)
         - Browser Extension (浏览器扩展)
         - Userscript (油猴脚本)
     validations:

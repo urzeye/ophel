@@ -30,6 +30,7 @@ Which AI platform(s) would this feature apply to?
 - [ ] Claude
 - [ ] Grok
 - [ ] AI Studio
+- [ ] Other (please specify) / 其他（请注）
 - [ ] All platforms (所有平台)
 
 ## Problem / Use Case / 问题或场景
