@@ -27,11 +27,11 @@ body:
       options:
         - All Platforms (所有平台)
         - Gemini
+        - Gemini Enterprise
         - ChatGPT
         - Claude
         - Grok
         - AI Studio
-        - DeepSeek
         - Other
     validations:
       required: true
