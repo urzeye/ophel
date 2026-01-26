@@ -13,6 +13,7 @@
   "scripts": {
     "dev": "plasmo dev",
     "lint": "prettier --check .",
+    "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "build": "plasmo build",
     "build:firefox": "plasmo build --target=firefox-mv3",
