@@ -1,0 +1,77 @@
+name: Issue Welcome
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Welcome & Star Reminder
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const username = context.actor;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issueTitle = context.payload.issue.title || "";
+
+            // 1. Language Detection (Title based)
+            // Check if title contains Chinese characters.
+            const isChinese = /[\u4e00-\u9fa5]/.test(issueTitle);
+
+            console.log(`User: ${username}, Language detected: ${isChinese ? 'Chinese' : 'English'}`);
+
+            // 2. Check if user has starred the repo
+            let hasStarred = false;
+            try {
+              // https://docs.github.com/en/rest/activity/starring?apiVersion=2022-11-28#check-if-a-repository-is-starred-by-a-user
+              await github.rest.activity.checkRepoIsStarredByUser({
+                owner,
+                repo,
+                username
+              });
+              hasStarred = true;
+            } catch (error) {
+              if (error.status === 404) {
+                hasStarred = false;
+              } else {
+                console.log("Error checking star status:", error);
+                // In case of error, assume not starred or just proceed without specific 'starred' ack,
+                // but for safety/politeness, we might default to the standard request or just say thanks.
+                // Let's stick to 'false' (treat as not starred) so they get the reminder,
+                // or we could skip the reminder if unsure.
+                // Given the goal is to encourage stars, defaulting to false is acceptable unless it's an API error.
+              }
+            }
+
+            console.log(`User ${username} star status: ${hasStarred}`);
+
+            // 3. Construct Comment
+            let body = "";
+
+            if (isChinese) {
+              if (hasStarred) {
+                body = `👋 感谢您提交 Issue！\n\n我们会尽快查看。感谢您的支持！`;
+              } else {
+                body = `👋 感谢您提交 Issue！\n\n我们会尽快查看。如果您觉得 **Ophel** 对您有帮助，请考虑给项目点个 Star 🌟，这对我们非常重要！`;
+              }
+            } else {
+              // English
+              if (hasStarred) {
+                 body = `👋 Thanks for opening an issue!\n\nWe will look into it soon. Thanks for your support!`;
+              } else {
+                 body = `👋 Thanks for opening an issue!\n\nWe will look into it soon. If **Ophel** is helpful to you, please consider giving the repo a Star 🌟. It means a lot!`;
+              }
+            }
+
+            // 4. Post Comment
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: context.issue.number,
+              body: body
+            });
