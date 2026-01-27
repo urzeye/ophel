@@ -25,7 +25,7 @@
 </p>
 
 <p align="center">
-  🌐 <a href="./README_EN.md">English</a> | <strong>简体中文</strong> | <a href="./docs/i18n/README_zh-TW.md">繁體中文</a> | <a href="./docs/i18n/README_ja.md">日本語</a> | <a href="./docs/i18n/README_ko.md">한국어</a> | <a href="./docs/i18n/README_de.md">Deutsch</a> | <a href="./docs/i18n/README_fr.md">Français</a> | <a href="./docs/i18n/README_es.md">Español</a> | <a href="./docs/i18n/README_pt.md">Português</a> | <a href="./docs/i18n/README_ru.md">Русский</a>
+  🌐 <a href="./README_EN.md">English</a> | <strong>简体中文</strong> | <a href="./.github/i18n-readmes/README_zh-TW.md">繁體中文</a> | <a href="./.github/i18n-readmes/README_ja.md">日本語</a> | <a href="./.github/i18n-readmes/README_ko.md">한국어</a> | <a href="./.github/i18n-readmes/README_de.md">Deutsch</a> | <a href="./.github/i18n-readmes/README_fr.md">Français</a> | <a href="./.github/i18n-readmes/README_es.md">Español</a> | <a href="./.github/i18n-readmes/README_pt.md">Português</a> | <a href="./.github/i18n-readmes/README_ru.md">Русский</a>
 </p>
 
 ---
