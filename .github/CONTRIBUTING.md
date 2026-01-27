@@ -16,8 +16,20 @@ All types of contributions are encouraged and valued. See the [Table of Contents
 - [Contributing to Ophel](#contributing-to-ophel)
   - [Table of Contents](#table-of-contents)
   - [I Have a Question](#i-have-a-question)
-  - [I Want To Contribute](#i-want-to-contribute) - [Reporting Bugs](#reporting-bugs) - [Before Submitting a Bug Report](#before-submitting-a-bug-report) - [How Do I Submit a Good Bug Report?](#how-do-i-submit-a-good-bug-report) - [Suggesting Enhancements](#suggesting-enhancements) - [Before Submitting an Enhancement](#before-submitting-an-enhancement) - [How Do I Submit a Good Enhancement Suggestion?](#how-do-i-submit-a-good-enhancement-suggestion) - [Your First Code Contribution](#your-first-code-contribution) - [Setup](#setup) - [Development](#development) - [Verification](#verification)
-  - [Styleguides](#styleguides) - [Commit Messages](#commit-messages)
+  - [I Want To Contribute](#i-want-to-contribute)
+    - [Reporting Bugs](#reporting-bugs)
+      - [Before Submitting a Bug Report](#before-submitting-a-bug-report)
+      - [How Do I Submit a Good Bug Report?](#how-do-i-submit-a-good-bug-report)
+    - [Labels](#labels)
+    - [Suggesting Enhancements](#suggesting-enhancements)
+      - [Before Submitting an Enhancement](#before-submitting-an-enhancement)
+      - [How Do I Submit a Good Enhancement Suggestion?](#how-do-i-submit-a-good-enhancement-suggestion)
+    - [Your First Code Contribution](#your-first-code-contribution)
+      - [Setup](#setup)
+      - [Development](#development)
+      - [Verification](#verification)
+  - [Styleguides](#styleguides)
+    - [Commit Messages](#commit-messages)
 
 ## I Have a Question
 
@@ -66,8 +78,28 @@ We use GitHub issues to track bugs and errors. If you run into an issue with the
 Once it's filed:
 
 - The project team will label the issue accordingly.
-- A team member will try to reproduce the issue with your provided steps. If there are no reproduction steps or no obvious way to reproduce the issue, the team will ask you for those steps and mark the issue as `needs-repro`. Bugs with the `needs-repro` tag will not be addressed until they are reproduced.
-- If the team is able to reproduce the issue, it will be marked `needs-fix`, as well as possibly other tags (such as `critical`), and the issue will be left to be [implemented by someone](#your-first-code-contribution).
+- A team member will try to reproduce the issue with your provided steps. If there are no reproduction steps or no obvious way to reproduce the issue, the team will ask you for those steps and mark the issue as `question` or `feedback-wanted`.
+- If the team is able to reproduce the issue, it will be marked `bug`, as well as possibly other tags (such as `good first issue` if it's suitable for new contributors).
+
+### Labels
+
+Here is an overview of the labels we use to organize issues and pull requests:
+
+| Label | Description |
+| :--- | :--- |
+| `bug` | Something isn't working |
+| `enhancement` | Feature request or functional improvement |
+| `documentation` | Improvements or additions to documentation |
+| `good first issue` | Good for newcomers |
+| `help wanted` | Extra attention is needed |
+| `question` | Further information is requested |
+| `wontfix` | This will not be worked on |
+| `duplicate` | This issue or pull request already exists |
+| `invalid` | This doesn't seem right |
+| `design` | Design discussion or architecture exploration |
+| `dependencies` | Pull requests that update a dependency file |
+| `github_actions` | Pull requests that update GitHub Actions code |
+| `roadmap` | Considered for future planning |
 
 ### Suggesting Enhancements
 
@@ -137,7 +169,12 @@ We use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) co
 - `refactor`: A code change that neither fixes a bug nor adds a feature
 - `perf`: A code change that improves performance
 - `test`: Adding missing tests or correcting existing tests
+- `build`: Changes that affect the build system or external dependencies
+- `ci`: Changes to our CI configuration files and scripts
 - `chore`: Changes to the build process or auxiliary tools and libraries such as documentation generation
+- `revert`: Reverts a previous commit
+- `deps`: Updates to dependencies (e.g. package.json, pnpm-lock.yaml)
+- `ux`: Changes that improve user experience / usability
 
 Example:
 
