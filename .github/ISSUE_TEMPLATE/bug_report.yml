@@ -1,19 +1,31 @@
-name: 🐛 Bug Report / Bug 反馈
-description: Report a bug to help us improve Ophel / 报告脚本中的问题或异常行为
+name: 🐞 反馈缺陷 Bug Report
+description: 反馈问题缺陷或异常行为 | Report a bug
 title: "[Bug]: "
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report! / 感谢您花时间填写此 Bug 报告！
-        Please provide as much detail as possible. / 请尽可能详细地描述问题，这将帮助我们更快地定位和修复。
+        感谢您花时间填写此 Bug 报告！
+        Thanks for taking the time to fill out this bug report!
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 前置检查 | Essential Checklist
+      options:
+        - label: 我已在 Issue 中搜索过类似问题，确认这不是一个重复问题 | I have searched for existing issues and confirmed this is not a duplicate
+          required: true
+        - label: 我理解如果未提供清晰的复现步骤或环境信息，Issue 可能会被关闭 | I understand that the issue may be closed if missing reproduction steps or environment info
+          required: true
+        - label: 我确认使用的是插件的最新版本 | I confirm I am using the latest version of the extension
+          required: true
 
   - type: dropdown
     id: installation_type
     attributes:
-      label: Installation Type / 安装方式
-      description: How did you install Ophel? / 您是如何安装 Ophel 的？
+      label: 安装方式 | Installation Type
+      description: 您是如何安装 Ophel 的？ | How did you install Ophel?
       options:
         - Browser Extension (浏览器扩展)
         - Userscript (油猴脚本)
@@ -23,8 +35,8 @@ body:
   - type: dropdown
     id: userscript_manager
     attributes:
-      label: Userscript Manager / 脚本管理器
-      description: Required if using Userscript / 如果使用油猴脚本，请选择
+      label: 脚本管理器 | Userscript Manager
+      description: 如果使用油猴脚本，请选择 | Required if using Userscript
       options:
         - Tampermonkey
         - Violentmonkey
@@ -38,17 +50,17 @@ body:
   - type: input
     id: version
     attributes:
-      label: Ophel Version / 应用版本
-      description: Check in extension manager or script manager / 请在扩展管理或脚本管理器中查看
-      placeholder: e.g. v1.0.0
+      label: 扩展版本 | Extension Version
+      description: 请在扩展管理中查看 (e.g. v1.0.0) | Check in extension manager
+      placeholder: v1.0.0
     validations:
       required: true
 
   - type: dropdown
     id: ai_platform
     attributes:
-      label: AI Platform / AI 平台
-      description: Which platform is having issues? / 出问题的平台是哪个？
+      label: AI 平台 | AI Platform
+      description: 出问题的平台是哪个？ | Which platform is having issues?
       options:
         - Gemini (gemini.google.com)
         - Gemini Enterprise (business.gemini.google)
@@ -56,19 +68,19 @@ body:
         - Claude (claude.ai)
         - Grok (grok.com)
         - AI Studio (aistudio.google.com)
-        - All Platforms / 所有平台
-        - Other / 其他
+        - All Platforms (所有平台)
+        - Other (其他)
     validations:
       required: true
 
   - type: dropdown
     id: browser
     attributes:
-      label: Browser / 浏览器
+      label: 浏览器 | Browser
       options:
-        - Google Chrome
-        - Microsoft Edge
-        - Mozilla Firefox
+        - Chrome
+        - Edge
+        - Firefox
         - Safari
         - Other
     validations:
@@ -77,7 +89,7 @@ body:
   - type: input
     id: browser_version
     attributes:
-      label: Browser Version / 浏览器版本
+      label: 浏览器版本 | Browser Version
       placeholder: e.g. 120.0.6099.130
     validations:
       required: false
@@ -85,12 +97,13 @@ body:
   - type: dropdown
     id: os
     attributes:
-      label: Operating System / 操作系统
+      label: 系统环境 | Operating System
       options:
-        - Windows 11
-        - Windows 10
+        - Windows
         - macOS
         - Linux
+        - Android
+        - iOS
         - Other
     validations:
       required: true
@@ -98,17 +111,17 @@ body:
   - type: textarea
     id: bug_description
     attributes:
-      label: Bug Description / 问题描述
-      description: A clear and concise description of what the bug is. / 请清晰、简洁地描述遇到的问题。
-      placeholder: Describe the bug... / 描述你遇到的 Bug 是什么...
+      label: 问题描述 | Bug Description
+      description: 请清晰描述遇到的问题 | A clear and concise description of what the bug is.
+      placeholder: Describe what happened...
     validations:
       required: true
 
   - type: textarea
     id: steps_to_reproduce
     attributes:
-      label: Steps to Reproduce / 复现步骤
-      description: Steps to reproduce the behavior. / 请提供详细的复现步骤。
+      label: 复现步骤 | Steps to Reproduce
+      description: 请提供详细的复现步骤 | Steps to reproduce the behavior.
       placeholder: |
         1. Go to '...'
         2. Click on '...'
@@ -120,8 +133,8 @@ body:
   - type: textarea
     id: expected_vs_actual
     attributes:
-      label: Expected vs Actual Behavior / 预期与实际行为
-      description: What did you expect vs what happened? / 您期望发生什么 vs 实际发生了什么？
+      label: 预期与实际行为 | Expected vs Actual Behavior
+      description: 您期望发生什么 vs 实际发生了什么？ | What did you expect vs what happened?
       placeholder: |
         Expected: ...
         Actual: ...
@@ -131,26 +144,16 @@ body:
   - type: textarea
     id: screenshots
     attributes:
-      label: Screenshots / 截图
-      description: Drop images here. / 拖拽或粘贴图片到这里。
+      label: 截图 | Screenshots
+      description: 拖拽可上传图片 | Drop images here to help explain your problem.
     validations:
       required: false
 
   - type: textarea
     id: console_errors
     attributes:
-      label: Console Errors / 控制台报错
-      description: Paste any errors from DevTools Console (F12). / 粘贴控制台(F12)中的红色报错信息。
+      label: 控制台报错 | Console Errors
+      description: 请粘贴 F12 控制台的红色报错 | Paste any errors from DevTools Console (F12).
       render: shell
     validations:
       required: false
-
-  - type: checkboxes
-    id: checklist
-    attributes:
-      label: Checklist / 检查清单
-      options:
-        - label: I have searched for existing issues / 我已搜索过现有 Issues
-          required: true
-        - label: I am using the latest version / 我使用的是最新版本
-          required: true

@@ -1,33 +1,33 @@
-title: "[Q&A] "
+title: "[Q&A]: "
 body:
   - type: markdown
     attributes:
       value: |
-        ## Question / 问题
-        Please assist us by answering the following questions.
+        ## 问题 | Question
         请回答以下问题以协助我们。
+        Please assist us by answering the following questions.
 
   - type: textarea
     id: problem
     attributes:
-      label: Problem Description / 问题描述
-      description: Describe your question clearly. / 请清晰描述您的问题。
-      placeholder: I am trying to do X but Y happened... / 我想做 X 但发生了 Y...
+      label: 问题描述 | Problem Description
+      description: 请清晰描述您的问题 | Describe your question clearly.
+      placeholder: 我想做 X 但发生了 Y... | I am trying to do X but Y happened...
     validations:
       required: true
 
   - type: textarea
     id: context
     attributes:
-      label: Context / 上下文
-      description: Provide relevant code snippets or screenshots. / 提供相关的代码片段或截图。
+      label: 上下文 | Context
+      description: 提供相关的代码片段或截图 | Provide relevant code snippets or screenshots.
     validations:
       required: false
 
   - type: textarea
     id: tried
     attributes:
-      label: What have you tried? / 您尝试过什么？
-      description: Mention any solutions you've already attempted. / 请列出您已经尝试过的解决方案。
+      label: 您尝试过什么？ | What have you tried?
+      description: 请列出您已经尝试过的解决方案 | Mention any solutions you've already attempted.
     validations:
       required: false

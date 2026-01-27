@@ -1,52 +1,52 @@
-title: "[Idea] "
+title: "[Idea]: "
 body:
   - type: markdown
     attributes:
       value: |
-        ## Idea / 想法
-        Share your brilliant ideas with the community!
+        ## 想法 | Idea
         与社区分享您的绝妙想法！
+        Share your brilliant ideas with the community!
 
   - type: textarea
     id: description
     attributes:
-      label: Idea Description / 想法描述
-      description: What do you want to add or improve? / 您希望增加或改进什么？
+      label: 想法描述 | Idea Description
+      description: 您希望增加或改进什么？ | What do you want to add or improve?
     validations:
       required: true
 
   - type: textarea
     id: usecase
     attributes:
-      label: Use Case / 使用场景
-      description: How would this solve a problem? / 这将如何解决问题？
+      label: 使用场景 | Use Case
+      description: 这将如何解决问题？ | How would this solve a problem?
     validations:
       required: true
 
   - type: input
     id: ai-service
     attributes:
-      label: Target AI Service / 目标 AI 服务
-      description: Which AI service is this related to? (e.g. ChatGPT, DeepSeek) / 这个想法与哪个 AI 服务相关？
-      placeholder: Optional / 选填
+      label: 目标 AI 服务 | Target AI Service
+      description: 这个想法与哪个 AI 服务相关？(e.g. ChatGPT, DeepSeek) | Which AI service is this related to?
+      placeholder: 选填 | Optional
     validations:
       required: false
 
   - type: dropdown
     id: specific-platform
     attributes:
-      label: Installation Type / 安装方式
+      label: 安装方式 | Installation Type
       options:
-        - All Types (所有方式)
-        - Browser Extension (浏览器扩展)
-        - Userscript (油猴脚本)
+        - All Types
+        - Browser Extension
+        - Userscript
     validations:
       required: true
 
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternative Solutions / 替代方案
-      description: Have you considered other ways? / 您是否考虑过其他方法？
+      label: 替代方案 | Alternative Solutions
+      description: 您是否考虑过其他方法？ | Have you considered other ways?
     validations:
       required: false

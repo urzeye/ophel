@@ -1,18 +1,18 @@
-name: ✨ Feature Request / 功能请求
-description: Suggest a new feature or improvement / 提出新功能或改进建议
+name: ✨ 功能需求 Feature Request
+description: 提出新功能需求或改进建议 | Suggest an feature or improvement
 title: "[Feature]: "
 labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for your suggestion! / 感谢您的建议！
-        Your feedback helps us make Ophel better. / 您的想法对项目发展非常重要。
+        感谢您的建议！
+        Thanks for your suggestion!
 
   - type: dropdown
     id: installation_type
     attributes:
-      label: Target Environment / 适用环境
+      label: 适用环境 | Target Environment
       options:
         - All Environments (所有环境)
         - Browser Extension (浏览器扩展)
@@ -23,9 +23,9 @@ body:
   - type: dropdown
     id: ai_platform
     attributes:
-      label: Target AI Platform / 适用 AI 平台
+      label: 适用 AI 平台 | Target AI Platform
       options:
-        - All Platforms (所有平台)
+        - All Platforms
         - Gemini
         - Gemini Enterprise
         - ChatGPT
@@ -39,41 +39,39 @@ body:
   - type: textarea
     id: summary
     attributes:
-      label: Feature Summary / 功能简述
-      description: One sentence summary. / 一句话描述该功能。
+      label: 功能简述 | Feature Summary
+      description: 一句话描述该功能 | One sentence summary of the feature.
     validations:
       required: true
 
   - type: textarea
     id: problem
     attributes:
-      label: Problem or Use Case / 问题背景或使用场景
-      description: What problem are you trying to solve? / 您希望解决什么问题或痛点？
-      placeholder: |
-        I'm always frustrated when... / 我在使用...功能时，经常遇到...的问题
+      label: 问题背景 | Problem or Use Case
+      description: 您希望解决什么问题？ | What problem are you trying to solve?
+      placeholder: 我在使用...功能时，经常遇到...的问题 | I'm always frustrated when...
     validations:
       required: true
 
   - type: textarea
     id: solution
     attributes:
-      label: Proposed Solution / 期望的解决方案
-      description: How should it work? / 请清晰地描述您希望实现的功能。
-      placeholder: |
-        I want to be able to... / 我希望能够...
+      label: 解决方案 | Proposed Solution
+      description: 应该如何工作？ | How should it work?
+      placeholder: 我希望能够... | I want to be able to...
     validations:
       required: true
 
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternatives Considered / 备选方案
-      description: Any other ways? / 您是否考虑过其他替代方案？
+      label: 备选方案 | Alternatives Considered
+      description: 是否考虑过其他方案？ | Any other ways you've considered?
     validations:
       required: false
 
   - type: textarea
     id: additional_context
     attributes:
-      label: Additional Context / 其他信息
-      description: Mockups, screenshots, or extra details. / 设计草图、截图或其他补充信息。
+      label: 其他信息 | Additional Context
+      description: 设计图、截图或其他细节 | Mockups, screenshots, or extra details.
