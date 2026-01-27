@@ -7,6 +7,16 @@
 
 ---
 
+## Unreleased
+
+### 🚀 新增功能
+
+### 🔧 功能优化
+
+- support gemini multi-account `/u/<n>` URLs (keep single-user `/app` style) / 支持 gemini 多账户 `/u/<n>` URL（保留单用户 `/app` 风格） #16 by @lanvent
+
+### 🐛 问题修复
+
 ## [1.0.1] - 2026-01-23
 
 ### 🚀 新增功能
