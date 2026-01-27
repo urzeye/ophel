@@ -1,3 +1,8 @@
+> [!WARNING]
+>
+> We strictly reject low-quality code that has not been reviewed by a human. PRs containing such code will be closed directly.
+> 我们严厉拒绝低质量且未经真人审核的代码。包含此类代码的 PR 将会被直接关闭。
+
 ## 描述 Description
 
 <!-- A clear and concise description of what this PR does.
@@ -28,7 +33,6 @@
 
 - [ ] **Browser Extension** 构建与测试 (Build & Test)
 - [ ] **Userscript** 构建与测试 (Build & Test)
-- [ ] 单元测试 (Unit Tests)
 
 **测试环境 Test Environment**:
 
