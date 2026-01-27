@@ -19,9 +19,13 @@ yarn.lock
 # 其他不需要格式化的资源
 assets/
 public/
-.dev/
+
 .prettierrc.mjs
 vite.userscript.config.ts
+commitlint.config.mjs
+eslint.config.mjs
 config.mts
 .vscode/
 .husky/
+.github/
+

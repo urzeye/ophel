@@ -154,11 +154,11 @@ jobs:
       - name: Copy README for Userscript
         run: |
           cp README*.md build/userscript/
-          mkdir -p build/userscript/docs/i18n
-          cp docs/i18n/README*.md build/userscript/docs/i18n/ 2>/dev/null || true
+          mkdir -p build/userscript/.github/readmes
+          cp .github/readmes/README*.md build/userscript/.github/readmes/ 2>/dev/null || true
           # 替换本地图片路径为网络 URL（油猴脚本 release 分支需要）
           sed -i 's|./assets/icon.png|https://gist.github.com/user-attachments/assets/cdd08324-3962-4270-87a3-474b5d240f03|g' build/userscript/README*.md
-          sed -i 's|../../assets/icon.png|https://gist.github.com/user-attachments/assets/cdd08324-3962-4270-87a3-474b5d240f03|g' build/userscript/docs/i18n/README*.md
+          sed -i 's|../../assets/icon.png|https://gist.github.com/user-attachments/assets/cdd08324-3962-4270-87a3-474b5d240f03|g' build/userscript/.github/readmes/README*.md
 
       - name: Deploy Userscript to release branch
         uses: peaceiris/actions-gh-pages@v3
