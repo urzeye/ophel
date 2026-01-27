@@ -27,3 +27,5 @@ eslint.config.mjs
 config.mts
 .vscode/
 .husky/
+.github/
+
