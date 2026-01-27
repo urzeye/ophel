@@ -6,8 +6,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        感谢您花时间填写此 Bug 报告！
-        Thanks for taking the time to fill out this bug report!
+        感谢您花时间填写此 Bug 报告！如果您觉得 Ophel 对您有帮助，请给项目点个 Star 🌟
+        Thanks for taking the time to fill out this bug report! If Ophel helps you, please give it a Star 🌟
 
   - type: checkboxes
     id: checklist
@@ -20,6 +20,8 @@ body:
           required: true
         - label: 我确认使用的是插件的最新版本 | I confirm I am using the latest version of the extension
           required: true
+        - label: 我已为项目点了 Star 🌟（Star helps support the project）
+          required: false
 
   - type: dropdown
     id: installation_type
