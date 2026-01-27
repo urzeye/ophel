@@ -15,6 +15,22 @@ import {
 } from "./base"
 
 export class GeminiAdapter extends SiteAdapter {
+  private getUserPathPrefix(): string {
+    // Gemini 多账号路径格式：/u/2/app/...
+    const match = window.location.pathname.match(/^\/u\/(\d+)(?:\/|$)/)
+    // - 若当前 URL 本身没有 /u/ 前缀：保持空前缀（生成 /app/...）
+    // - 若带 /u/n ：使用 /u/n
+    if (!match) return ""
+    const idx = match[1]
+    return `/u/${idx}`
+  }
+
+  getCurrentCid(): string {
+    // gemini 使用 /u/<n> 作为账号隔离标识；无 /u/ 前缀时视为主账号 /u/0。
+    const match = window.location.pathname.match(/^\/u\/(\d+)(?:\/|$)/)
+    return match ? match[1] : "0"
+  }
+
   match(): boolean {
     return (
       window.location.hostname.includes("gemini.google") &&
@@ -35,11 +51,11 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   getNewTabUrl(): string {
-    return "https://gemini.google.com/app"
+    return `https://gemini.google.com${this.getUserPathPrefix()}/app`
   }
 
   isNewConversation(): boolean {
-    const path = window.location.pathname
+    const path = window.location.pathname.replace(/^\/u\/\d+/, "")
     // 普通新对话
     if (path === "/app" || path === "/app/") return true
     // Gem 相关页面：创建、编辑、使用 gem 新对话
@@ -57,6 +73,8 @@ export class GeminiAdapter extends SiteAdapter {
 
   getConversationList(): ConversationInfo[] {
     const items = (DOMToolkit.query(".conversation", { all: true }) as Element[]) || []
+    const cid = this.getCurrentCid()
+    const prefix = this.getUserPathPrefix()
     return Array.from(items)
       .map((el) => {
         const jslog = el.getAttribute("jslog") || ""
@@ -67,8 +85,9 @@ export class GeminiAdapter extends SiteAdapter {
 
         return {
           id,
+          cid,
           title,
-          url: id ? `https://gemini.google.com/app/${id}` : "",
+          url: id ? `https://gemini.google.com${prefix}/app/${id}` : "",
           isActive: el.classList.contains("selected"),
           isPinned,
         }
@@ -94,10 +113,13 @@ export class GeminiAdapter extends SiteAdapter {
         if (!id) return null
         const title = el.querySelector(".conversation-title")?.textContent?.trim() || ""
         const isPinned = !!el.querySelector('mat-icon[fonticon="push_pin"]')
+        const cid = this.getCurrentCid()
+        const prefix = this.getUserPathPrefix()
         return {
           id,
+          cid,
           title,
-          url: `https://gemini.google.com/app/${id}`,
+          url: `https://gemini.google.com${prefix}/app/${id}`,
           isPinned,
         }
       },
