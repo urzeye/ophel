@@ -50,7 +50,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: 🎨 Check Code Style (Prettier)
+      - name: 🎨 Check Code Format (Prettier)
+        run: pnpm exec prettier --check .
+
+      - name: 🔍 Lint Code (ESLint)
         run: pnpm lint
 
       - name: 📐 Type Check (TypeScript)
