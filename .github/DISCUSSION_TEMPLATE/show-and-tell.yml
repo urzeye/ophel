@@ -1,25 +1,25 @@
-title: "[Showcase] "
+title: "[Showcase]: "
 body:
   - type: markdown
     attributes:
       value: |
-        ## Showcase / 作品展示
-        Show off what you've built with Ophel!
+        ## 作品展示 | Showcase
         展示您使用 Ophel 制作的成果！
+        Show off what you've built with Ophel!
 
   - type: textarea
     id: description
     attributes:
-      label: Description / 描述
-      description: What did you build or how are you using Ophel? / 您做了什么，或者您是如何使用 Ophel 的？
+      label: 描述 | Description
+      description: 您做了什么，或者您是如何使用 Ophel 的？ | What did you build or how are you using Ophel?
     validations:
       required: true
 
   - type: input
     id: link
     attributes:
-      label: Link / 链接
-      description: URL to your repo, script, or demo. / 您的仓库、脚本或演示链接。
+      label: 链接 | Link
+      description: 您的仓库、脚本或演示链接 | URL to your repo, script, or demo.
       placeholder: https://...
     validations:
       required: false
@@ -27,7 +27,7 @@ body:
   - type: textarea
     id: screenshots
     attributes:
-      label: Screenshots / 截图
-      description: Drag and drop images here to show off your work. / 请将图片拖拽至此以展示您的成果。
+      label: 截图 | Screenshots
+      description: 请将图片拖拽至此以展示您的成果 | Drag and drop images here to show off your work.
     validations:
       required: false
