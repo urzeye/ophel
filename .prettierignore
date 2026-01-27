@@ -22,6 +22,8 @@ public/
 
 .prettierrc.mjs
 vite.userscript.config.ts
+commitlint.config.mjs
+eslint.config.mjs
 config.mts
 .vscode/
 .husky/

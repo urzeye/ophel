@@ -30,7 +30,6 @@ export const App = () => {
 
   // 订阅 _syncVersion 以在跨上下文同步时强制触发重渲染
   // 当 Options 页面更新设置时，_syncVersion 递增，这会使整个组件重渲染
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _syncVersion = useSettingsStore((s) => s._syncVersion)
 
   // 面板状态 - 初始值来自设置
