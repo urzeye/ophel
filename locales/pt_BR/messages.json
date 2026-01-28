@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel - Ferramenta de melhoria de chat IA",
+    "message": "Ophel: Gemini/ChatGPT/Claude/Grok Assistente",
     "description": "Nome da extensão"
   },
   "extensionDescription": {
-    "message": "Melhore Gemini/ChatGPT/Claude/Grok/AI Studio com esboços, gestão de chats, prompts, atalhos, WebDAV e mais.",
+    "message": "Para Gemini/ChatGPT/Claude/Grok/AI Studio. Recursos: Sumário, Barra lateral, Tela ampla, WebDAV Sync, Exportação Markdown, Prompts.",
     "description": "Descrição da extensão"
   }
 }
