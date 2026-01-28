@@ -400,8 +400,8 @@ export const DEFAULT_SETTINGS: Settings = {
   },
 
   chatgpt: {
-    // 油猴脚本环境默认开启
-    markdownFix: isUserscript,
+    // 默认开启
+    markdownFix: true,
   },
 }
 
