@@ -17,6 +17,13 @@ jobs:
             const username = context.actor;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
+
+            // 0. Check if owner
+            if (username === owner) {
+              console.log(`Issue opened by owner (${username}), skipping welcome message.`);
+              return;
+            }
+
             const issueTitle = context.payload.issue.title || "";
 
             // 1. Language Detection (Title based)
