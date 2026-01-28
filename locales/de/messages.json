@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel - KI-Chat-Verbesserungstool",
+    "message": "Ophel: Gemini/ChatGPT/Claude/Grok Assistent",
     "description": "Erweiterungsname"
   },
   "extensionDescription": {
-    "message": "Erweitert Gemini/ChatGPT/Claude/Grok/AI Studio um Gliederungen, Chats, Prompts, Shortcuts, WebDAV-Sync und mehr.",
+    "message": "Für Gemini/ChatGPT/Claude/Grok/AI Studio. Features: Gliederung, Sidebar-Manager, Breitbild, WebDAV, Export, Prompts.",
     "description": "Erweiterungsbeschreibung"
   }
 }

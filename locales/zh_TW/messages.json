@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel - AI 對話增強工具",
+    "message": "Ophel: Gemini/ChatGPT/Claude/AI Studio/Grok助手",
     "description": "擴充功能名稱"
   },
   "extensionDescription": {
-    "message": "為 Gemini/ChatGPT/Claude/Grok/AI Studio 等提供智能大綱、會話管理、提示詞庫、快捷鍵、完成通知、主題佈局定制、閱讀記錄恢復、WebDAV 同步等增強功能，全面提升您的交互體驗！",
+    "message": "支援Gemini/ChatGPT/Claude/Grok/AI Studio。功能：智能大綱目錄、侧边栏管理歷史對話、Markdown匯出、自動寬螢幕、WebDAV同步、提示詞庫。打造極致AI體驗！",
     "description": "擴充功能描述"
   }
 }
