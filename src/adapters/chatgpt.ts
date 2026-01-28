@@ -9,6 +9,7 @@ import {
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportConfig,
+  type MarkdownFixerConfig,
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
@@ -207,6 +208,13 @@ export class ChatGPTAdapter extends SiteAdapter {
         noCenter: true,
       },
     ]
+  }
+
+  getMarkdownFixerConfig(): MarkdownFixerConfig {
+    return {
+      selector: '[data-message-author-role="assistant"] p',
+      fixSpanContent: false,
+    }
   }
 
   // ==================== 输入框操作 ====================

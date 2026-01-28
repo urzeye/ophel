@@ -19,6 +19,7 @@ import {
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportConfig,
+  type MarkdownFixerConfig,
   type OutlineItem,
 } from "./base"
 
@@ -298,6 +299,13 @@ export class AIStudioAdapter extends SiteAdapter {
       // 每个对话轮次容器
       { selector: ".chat-turn-container", property: "max-width" },
     ]
+  }
+
+  getMarkdownFixerConfig(): MarkdownFixerConfig {
+    return {
+      selector: "ms-cmark-node span.ng-star-inserted",
+      fixSpanContent: true,
+    }
   }
 
   // ==================== 模型列表抓取 ====================

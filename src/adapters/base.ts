@@ -66,6 +66,13 @@ export interface AnchorData {
   textSignature?: string
 }
 
+export interface MarkdownFixerConfig {
+  /** 查找段落的选择器，如 "message-content p" */
+  selector: string
+  /** 是否修复 <span> 内部的内容（AI Studio 需要） */
+  fixSpanContent?: boolean
+}
+
 // ==================== SiteAdapter 基类 ====================
 
 export abstract class SiteAdapter {
@@ -246,6 +253,11 @@ export abstract class SiteAdapter {
   /** 返回用户问题宽度调整的 CSS 选择器列表 */
   getUserQueryWidthSelectors(): Array<{ selector: string; property: string }> {
     return []
+  }
+
+  /** 获取 Markdown 修复器配置（子类可覆盖） */
+  getMarkdownFixerConfig(): MarkdownFixerConfig | null {
+    return null
   }
 
   // ==================== 输入框操作 ====================
