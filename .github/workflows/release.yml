@@ -113,9 +113,18 @@ jobs:
           cp build/userscript/ophel.user.js build/ophel-${{ steps.get_version.outputs.VERSION }}.user.js
           cp build/ophel-cws-upload.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip
 
+      - name: Create tag for workflow_dispatch
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag ${{ steps.get_version.outputs.VERSION }}
+          git push origin ${{ steps.get_version.outputs.VERSION }}
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
           name: Ophel ${{ steps.get_version.outputs.VERSION }}
           body: |
             ## Ophel ${{ steps.get_version.outputs.VERSION }}
