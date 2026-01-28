@@ -11,6 +11,7 @@ import { CopyManager } from "~core/copy-manager"
 import { LayoutManager } from "~core/layout-manager"
 import {
   AISTUDIO_MARKDOWN_FIXER_CONFIG,
+  CHATGPT_MARKDOWN_FIXER_CONFIG,
   GEMINI_MARKDOWN_FIXER_CONFIG,
   MarkdownFixer,
 } from "~core/markdown-fixer"
@@ -145,6 +146,10 @@ export function initMarkdownFixer(ctx: ModulesContext): void {
     modules.markdownFixer = new MarkdownFixer(AISTUDIO_MARKDOWN_FIXER_CONFIG)
     modules.markdownFixer.start()
     console.log("[Ophel] MarkdownFixer started for AI Studio")
+  } else if (siteId === SITE_IDS.CHATGPT && settings.chatgpt?.markdownFix) {
+    modules.markdownFixer = new MarkdownFixer(CHATGPT_MARKDOWN_FIXER_CONFIG)
+    modules.markdownFixer.start()
+    console.log("[Ophel] MarkdownFixer started for ChatGPT")
   }
 }
 
@@ -362,6 +367,15 @@ export function subscribeModuleUpdates(ctx: ModulesContext): void {
       if (newSettings.aistudio?.markdownFix) {
         if (!modules.markdownFixer) {
           modules.markdownFixer = new MarkdownFixer(AISTUDIO_MARKDOWN_FIXER_CONFIG)
+        }
+        modules.markdownFixer.start()
+      } else {
+        modules.markdownFixer?.stop()
+      }
+    } else if (newSettings && siteId === SITE_IDS.CHATGPT) {
+      if (newSettings.chatgpt?.markdownFix) {
+        if (!modules.markdownFixer) {
+          modules.markdownFixer = new MarkdownFixer(CHATGPT_MARKDOWN_FIXER_CONFIG)
         }
         modules.markdownFixer.start()
       } else {

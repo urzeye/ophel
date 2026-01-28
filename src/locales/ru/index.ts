@@ -919,6 +919,12 @@ export const ru = {
   aistudioNoTabError: "Сначала откройте страницу AI Studio",
   aistudioModelsError: "Ошибка получения списка моделей",
 
+  // ======== Настройки ChatGPT ========
+  chatgptSettingsTitle: "Настройки ChatGPT",
+  chatgptSettingsDesc: "Настроить поведение по умолчанию для страницы ChatGPT",
+  chatgptMarkdownFixLabel: "Исправление жирного Markdown",
+  chatgptMarkdownFixDesc: "Исправить нерендеренный **жирный** текст в ответах ChatGPT",
+
   aistudioRemoveWatermark: "Удалить водяной знак",
   aistudioRemoveWatermarkDesc:
     "Удалить водяной знак с изображений AI Studio (Требуется обновление)",

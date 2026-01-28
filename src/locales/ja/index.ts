@@ -931,6 +931,12 @@ export const ja = {
   aistudioNoTabError: "先にAI Studioページを開いてください",
   aistudioModelsError: "モデルリストの取得に失敗しました",
 
+  // ======== ChatGPT 設定 ========
+  chatgptSettingsTitle: "ChatGPT 設定",
+  chatgptSettingsDesc: "ChatGPT ページのデフォルト動作を構成",
+  chatgptMarkdownFixLabel: "Markdown 太字修正",
+  chatgptMarkdownFixDesc: "ChatGPT の回答でレンダリングされない **太字** テキストを修正します",
+
   aistudioRemoveWatermark: "画像の透かしを削除",
   aistudioRemoveWatermarkDesc:
     "AI Studioで生成された画像から透かしを削除します（ページの更新が必要です）",

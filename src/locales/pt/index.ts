@@ -919,6 +919,12 @@ Dê o código e depois um resumo de melhorias.`,
   aistudioNoTabError: "Abra a página do AI Studio primeiro",
   aistudioModelsError: "Falha ao obter a lista de modelos",
 
+  // ======== Configurações do ChatGPT ========
+  chatgptSettingsTitle: "Configurações do ChatGPT",
+  chatgptSettingsDesc: "Configurar comportamento padrão da página ChatGPT",
+  chatgptMarkdownFixLabel: "Correção de Negrito Markdown",
+  chatgptMarkdownFixDesc: "Corrigir texto **negrito** não renderizado nas respostas do ChatGPT",
+
   aistudioRemoveWatermark: "Remover marca d'água",
   aistudioRemoveWatermarkDesc:
     "Remover a marca d'água de imagens do AI Studio (Requer atualização)",

@@ -387,6 +387,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
     { id: SITE_SETTINGS_TAB_IDS.MODEL_LOCK, label: t("tabModelLock") || "模型锁定" },
     { id: SITE_IDS.GEMINI, label: t("tabGemini") || "Gemini" },
     { id: SITE_IDS.AISTUDIO, label: "AI Studio" },
+    { id: SITE_IDS.CHATGPT, label: "ChatGPT" },
     { id: SITE_IDS.CLAUDE, label: "Claude" },
   ]
 
@@ -785,6 +786,27 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
 
       {/* ========== Claude 专属 Tab ========== */}
       {activeTab === "claude" && <ClaudeSettings siteId={siteId} />}
+
+      {/* ========== ChatGPT 专属 Tab ========== */}
+      {activeTab === SITE_IDS.CHATGPT && (
+        <SettingCard
+          title={t("chatgptSettingsTitle") || "ChatGPT 设置"}
+          description={t("chatgptSettingsDesc") || "配置 ChatGPT 页面的默认行为"}>
+          <ToggleRow
+            label={t("chatgptMarkdownFixLabel") || "Markdown 加粗修复"}
+            description={t("chatgptMarkdownFixDesc") || "修复 ChatGPT 响应中未渲染的 **加粗** 文本"}
+            checked={settings.chatgpt?.markdownFix ?? false}
+            onChange={() =>
+              setSettings({
+                chatgpt: {
+                  ...settings.chatgpt,
+                  markdownFix: !settings.chatgpt?.markdownFix,
+                },
+              })
+            }
+          />
+        </SettingCard>
+      )}
     </div>
   )
 }

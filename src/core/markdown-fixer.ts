@@ -36,6 +36,12 @@ export const AISTUDIO_MARKDOWN_FIXER_CONFIG: MarkdownFixerConfig = {
   fixSpanContent: true,
 }
 
+/** ChatGPT 默认配置 */
+export const CHATGPT_MARKDOWN_FIXER_CONFIG: MarkdownFixerConfig = {
+  selector: '[data-message-author-role="assistant"] p',
+  fixSpanContent: false,
+}
+
 export class MarkdownFixer {
   private processedNodes = new WeakSet<HTMLElement>()
   private stopObserver: (() => void) | null = null

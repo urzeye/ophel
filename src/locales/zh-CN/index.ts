@@ -960,6 +960,12 @@ export const zhCN = {
   aistudioNoTabError: "请先打开 AI Studio 页面",
   aistudioModelsError: "获取模型列表失败",
 
+  // ======== ChatGPT 设置 ========
+  chatgptSettingsTitle: "ChatGPT 设置",
+  chatgptSettingsDesc: "配置 ChatGPT 页面的默认行为",
+  chatgptMarkdownFixLabel: "Markdown 加粗修复",
+  chatgptMarkdownFixDesc: "修复 ChatGPT 响应中未渲染的 **加粗** 文本",
+
   // ======== Popup 页面 ========
   popupCurrentSite: "当前站点",
   popupSupported: "已激活",

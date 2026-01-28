@@ -924,6 +924,12 @@ Donnez le code puis un résumé des améliorations.`,
   aistudioNoTabError: "Veuillez d'abord ouvrir la page AI Studio",
   aistudioModelsError: "Échec de la récupération de la liste des modèles",
 
+  // ======== Paramètres ChatGPT ========
+  chatgptSettingsTitle: "Paramètres ChatGPT",
+  chatgptSettingsDesc: "Configurer le comportement par défaut de la page ChatGPT",
+  chatgptMarkdownFixLabel: "Correction du Gras Markdown",
+  chatgptMarkdownFixDesc: "Corriger le texte **gras** non rendu dans les réponses ChatGPT",
+
   aistudioRemoveWatermark: "Supprimer le filigrane",
   aistudioRemoveWatermarkDesc:
     "Supprimer le filigrane des images générées par AI Studio (Nécessite une actualisation)",

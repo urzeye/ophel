@@ -949,6 +949,12 @@ Please output the optimized code block directly, followed by a brief summary of 
   aistudioNoTabError: "Please open AI Studio page first",
   aistudioModelsError: "Failed to fetch model list",
 
+  // ======== ChatGPT Settings ========
+  chatgptSettingsTitle: "ChatGPT Settings",
+  chatgptSettingsDesc: "Configure default behavior for ChatGPT page",
+  chatgptMarkdownFixLabel: "Markdown Bold Fix",
+  chatgptMarkdownFixDesc: "Fix unrendered **bold** text in ChatGPT responses",
+
   // ======== Popup ========
   popupCurrentSite: "Current Site",
   popupSupported: "Active",
