@@ -12,8 +12,22 @@
 <p align="center">
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-lightgrey.svg" alt="License"></a>
   <img src="https://img.shields.io/github/package-json/v/urzeye/ophel?color=blue" alt="Version">
+  <img src="https://img.shields.io/github/last-commit/urzeye/ophel" alt="Last Commit">
+  <a href="https://github.com/urzeye/ophel/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/urzeye/ophel/ci.yml?label=Build&logo=github" alt="Build Status"></a>
+  <br/>
   <a href="https://github.com/urzeye/ophel/stargazers"><img src="https://img.shields.io/github/stars/urzeye/ophel?style=social" alt="Stars"></a>
-  <a href="https://opencollective.com/urzeye-oss"><img src="https://img.shields.io/badge/Sponsor-Open%20Collective-blue?logo=opencollective" alt="Sponsor"></a>
+  <a href="https://github.com/urzeye/ophel/network/members"><img src="https://img.shields.io/github/forks/urzeye/ophel?style=social" alt="Forks"></a>
+  <a href="https://github.com/urzeye/ophel/issues"><img src="https://img.shields.io/github/issues/urzeye/ophel?style=social" alt="Issues"></a>
+  <br/>
+  <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=" alt="Chrome Users"></a>
+  <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=" alt="Chrome Users"></a>
+  <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=" alt="Firefox Users"></a>
+  <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=" alt="GreasyFork Installs"></a>
+</p>
+
+<!-- Promo Link -->
+<p align="center">
+  <strong>📢 <a href="https://github.com/urzeye/ophel/issues/30">Help promote Ophel / 帮忙宣传 Ophel</a></strong>
 </p>
 
 <p align="center">
