@@ -53,6 +53,13 @@ jobs:
             echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           fi
 
+          # 获取上一个版本号（用于 changelog 比较链接）
+          PREV_TAG=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed -n '2p')
+          if [ -z "$PREV_TAG" ]; then
+            PREV_TAG="v1.0.0"
+          fi
+          echo "PREV_VERSION=$PREV_TAG" >> $GITHUB_OUTPUT
+
       - name: Extract Changelog
         id: extract_changelog
         run: |
@@ -140,9 +147,9 @@ jobs:
 
             ---
 
-            [Full Changelog](https://github.com/urzeye/ophel/compare/v...${{ steps.get_version.outputs.VERSION }})
+            [Full Changelog](https://github.com/urzeye/ophel/compare/${{ steps.get_version.outputs.PREV_VERSION }}...${{ steps.get_version.outputs.VERSION }})
 
-            *Full Changelog File: [CHANGELOG.md](https://github.com/urzeye/ophel/blob/main/CHANGELOG.md)*
+            *Changelog File: [CHANGELOG.md](https://github.com/urzeye/ophel/blob/main/CHANGELOG.md)*
           files: |
             build/ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip
             build/ophel-${{ steps.get_version.outputs.VERSION }}-edge.zip

@@ -19,16 +19,17 @@
 
 ### 🚀 新增功能
 
-- **ChatGPT Markdown 修复**：新增 ChatGPT 加粗文本渲染修复功能，解决 Markdown `**加粗**` 未正确渲染的问题。
+- **ChatGPT Markdown 修复**：新增 ChatGPT 加粗文本渲染修复功能，解决 Markdown `**加粗**` 未正确渲染的问题 by @urzeye
 
 ### 🐛 问题修复
 
 - support gemini multi-account `/u/<n>` URLs (keep single-user `/app` style) / 支持 gemini 多账户 `/u/<n>` URL（保留单用户 `/app` 风格） #16 by @lanvent
-- **ChatGPT 登录问题**：修复了 ChatGPT 无法正常登录的问题。
+- **ChatGPT 登录问题**：修复了 ChatGPT 无法正常登录的问题 by @urzeye
+- **Release 工作流**：修复了 GitHub Release 中 Full Changelog 比较链接缺少上一个版本号的问题 by @urzeye
 
 ### 🔧 功能优化
 
-- **适配器重构**：将 Markdown 修复配置迁移到适配器模式，提升代码可维护性。
+- **适配器重构**：将 Markdown 修复配置迁移到适配器模式，提升代码可维护性 by @urzeye
 
 ## [1.0.1] - 2026-01-23
 
