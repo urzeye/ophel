@@ -1,7 +1,7 @@
 {
   "name": "ophel",
   "displayName": "Ophel - AI 对话增强工具",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "为 Gemini/ChatGPT/Claude/Grok/AI Studio 等提供智能大纲、会话管理、提示词库、快捷键、完成通知、主题布局定制、阅读记录恢复、WebDAV 同步等增强功能，全提升您的交互体验！",
   "author": "urzeye",
   "license": "CC-BY-NC-SA-4.0",
