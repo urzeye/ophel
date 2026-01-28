@@ -4,7 +4,7 @@
     "description": "拡張機能名"
   },
   "extensionDescription": {
-    "message": "Gemini/ChatGPT/Claude/Grok/AI Studioを強化。機能：スマートアウトライン、サイドバーでの履歴管理、自動ワイドスクリーン、WebDAV同期、Markdownエクスポート、プロンプト管理。",
+    "message": "Gemini/ChatGPT/Claude/Grok/AI Studio対応：アウトライン、会話管理・エクスポート、プロンプト、UI最適化、テーマ、通知、履歴復元、スクロールロック、透かし除去、ショートカット、WebDAV同期など多機能で極上のAI体験を！",
     "description": "拡張機能の説明"
   }
 }

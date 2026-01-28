@@ -4,7 +4,7 @@
     "description": "확장 프로그램 이름"
   },
   "extensionDescription": {
-    "message": "Gemini/ChatGPT/Claude/Grok/AI Studio 지원. 기능: 스마트 개요, 사이드바 채팅 관리, 자동 와이드스크린, WebDAV 동기화, Markdown 내보내기, 프롬프트 라이브러리.",
+    "message": "Gemini/ChatGPT/Claude/Grok/AI Studio: 스마트 개요, 대화 관리·내보내기, 프롬프트, UI 최적화, 테마, 완료 알림, 기록 복원, 스크롤 잠금, 워터마크 제거, 단축키, WebDAV 동기화 등 다양한 기능으로 최고의 AI 경험을!",
     "description": "확장 프로그램 설명"
   }
 }
