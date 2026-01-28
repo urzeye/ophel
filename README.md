@@ -1,36 +1,32 @@
-# Ophel 🚀
+# Ophel —— 为长 AI 对话而生的智能导航与管理工具 🚀
+
+> 👉 **像读文档一样，导航、定位、继续你的 AI 对话**
+> 专为 **长 AI 对话** 设计的浏览器扩展 & 油猴脚本
+> 支持 _ChatGPT / Gemini / Claude / Grok / AI Studio_ 及更多 AI 平台
+
+[gif占位]
+
+### 🧭 自动生成对话大纲，像读文档一样浏览 AI 长对话
 
 <p align="center">
   <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo">
 </p>
 
 <p align="center">
+  <strong>✨ 您的个人 AI 助手 ✨</strong><br/>
+  <em>不仅仅是 AI 聊天页面增强工具，更是您的高效生产力伴侣。</em>
+</p>
+
+<!-- <p align="center">
   <strong>✨ AI 之益，触手可及 ✨</strong><br/>
   <em>AI's Benefit, Within Reach.</em>
-</p>
+</p> -->
 
 <p align="center">
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-lightgrey.svg" alt="License"></a>
   <img src="https://img.shields.io/github/package-json/v/urzeye/ophel?color=blue" alt="Version">
-  <img src="https://img.shields.io/github/last-commit/urzeye/ophel" alt="Last Commit">
-  <a href="https://github.com/urzeye/ophel/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/urzeye/ophel/ci.yml?label=Build&logo=github" alt="Build Status"></a>
-  <br/>
   <a href="https://github.com/urzeye/ophel/stargazers"><img src="https://img.shields.io/github/stars/urzeye/ophel?style=social" alt="Stars"></a>
-  <a href="https://github.com/urzeye/ophel/network/members"><img src="https://img.shields.io/github/forks/urzeye/ophel?style=social" alt="Forks"></a>
-  <a href="https://github.com/urzeye/ophel/issues"><img src="https://img.shields.io/github/issues/urzeye/ophel?style=social" alt="Issues"></a>
-  <br/>
-  <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=" alt="Chrome Users"></a>
-  <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=" alt="Firefox Users"></a>
-  <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=" alt="GreasyFork Installs"></a>
-</p>
-
-<!-- Promo Link -->
-<p align="center">
-  <strong>📢 <a href="https://github.com/urzeye/ophel/issues/30">Help promote Ophel / 帮忙宣传 Ophel</a></strong>
-</p>
-
-<p align="center">
-  <a href="https://www.producthunt.com/products/ophel?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-ophel" target="_blank" rel="noopener noreferrer"><img alt="Ophel - Enhance AI chat with outline, conversations, prompts & more. | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1068867&theme=light&t=1769514514380"></a>
+  <a href="https://opencollective.com/urzeye-oss"><img src="https://img.shields.io/badge/Sponsor-Open%20Collective-blue?logo=opencollective" alt="Sponsor"></a>
 </p>
 
 <p align="center">
@@ -42,7 +38,7 @@
 </p>
 
 <p align="center">
-  🌐 <a href="./README_EN.md">English</a> | <strong>简体中文</strong> | <a href="./.github/i18n-readmes/README_zh-TW.md">繁體中文</a> | <a href="./.github/i18n-readmes/README_ja.md">日本語</a> | <a href="./.github/i18n-readmes/README_ko.md">한국어</a> | <a href="./.github/i18n-readmes/README_de.md">Deutsch</a> | <a href="./.github/i18n-readmes/README_fr.md">Français</a> | <a href="./.github/i18n-readmes/README_es.md">Español</a> | <a href="./.github/i18n-readmes/README_pt.md">Português</a> | <a href="./.github/i18n-readmes/README_ru.md">Русский</a>
+  🌐 <a href="./README_EN.md">English</a> | <strong>简体中文</strong> | <a href="./docs/i18n/README_zh-TW.md">繁體中文</a> | <a href="./docs/i18n/README_ja.md">日本語</a> | <a href="./docs/i18n/README_ko.md">한국어</a> | <a href="./docs/i18n/README_de.md">Deutsch</a> | <a href="./docs/i18n/README_fr.md">Français</a> | <a href="./docs/i18n/README_es.md">Español</a> | <a href="./docs/i18n/README_pt.md">Português</a> | <a href="./docs/i18n/README_ru.md">Русский</a>
 </p>
 
 ---
