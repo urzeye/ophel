@@ -121,11 +121,13 @@ class NetworkMonitor {
   }
 
   private async _hookedFetch(...args: any[]) {
+    // 获取正确的页面上下文（油猴脚本环境使用 unsafeWindow）
+    const pageWindow = getPageWindow()
     const url = args[0] ? args[0].toString() : ""
     const isTarget = this._isTargetUrl(url)
 
     if (!isTarget) {
-      return this._originalFetch.call(window, ...args)
+      return this._originalFetch.call(pageWindow, ...args)
     }
 
     this._activeCount++
@@ -144,7 +146,7 @@ class NetworkMonitor {
     }
 
     try {
-      const response = await this._originalFetch.call(window, ...args)
+      const response = await this._originalFetch.call(pageWindow, ...args)
       const clone = response.clone()
       this._readStream(clone).catch(() => {})
       return response
