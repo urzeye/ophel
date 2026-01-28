@@ -4,7 +4,7 @@
     "description": "Nome da extensão"
   },
   "extensionDescription": {
-    "message": "Para Gemini/ChatGPT/Claude/Grok/AI Studio. Recursos: Sumário, Barra lateral, Tela ampla, WebDAV Sync, Exportação Markdown, Prompts.",
+    "message": "Para Gemini/ChatGPT/Claude/Grok/AI Studio: Sumário, exportação sessões, prompts, UI, temas, atalhos, sincronização WebDAV e mais!",
     "description": "Descrição da extensão"
   }
 }

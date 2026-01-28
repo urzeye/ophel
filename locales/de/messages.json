@@ -4,7 +4,7 @@
     "description": "Erweiterungsname"
   },
   "extensionDescription": {
-    "message": "Für Gemini/ChatGPT/Claude/Grok/AI Studio. Features: Gliederung, Sidebar-Manager, Breitbild, WebDAV, Export, Prompts.",
+    "message": "Für Gemini/ChatGPT/Claude/Grok/AI Studio: Gliederung, Sitzungsexport, Prompts, UI, Themes, Shortcuts, WebDAV-Sync und mehr!",
     "description": "Erweiterungsbeschreibung"
   }
 }

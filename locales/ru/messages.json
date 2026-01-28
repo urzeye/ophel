@@ -4,7 +4,7 @@
     "description": "Название расширения"
   },
   "extensionDescription": {
-    "message": "Для Gemini/ChatGPT/Claude/Grok/AI Studio. Функции: Оглавление, Боковая панель, Широкий экран, WebDAV, Экспорт, Промпты.",
+    "message": "Для Gemini/ChatGPT/Claude/Grok/AI Studio: Оглавление, экспорт сессий, промпты, UI, темы, клавиши, синхро WebDAV и более!",
     "description": "Описание расширения"
   }
 }

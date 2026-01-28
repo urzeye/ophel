@@ -4,7 +4,7 @@
     "description": "擴充功能名稱"
   },
   "extensionDescription": {
-    "message": "支援Gemini/ChatGPT/Claude/Grok/AI Studio。功能：智能大綱目錄、侧边栏管理歷史對話、Markdown匯出、自動寬螢幕、WebDAV同步、提示詞庫。打造極致AI體驗！",
+    "message": "支援Gemini/ChatGPT/Claude/Grok/AI Studio：智能大綱導航、會話管理與匯出、提示詞庫、介面優化、主題定制、完成通知、閱讀歷史恢復、滾動鎖定、去浮水印、自訂快速鍵、WebDAV同步等超多個人化功能，打造極致AI體驗！",
     "description": "擴充功能描述"
   }
 }
