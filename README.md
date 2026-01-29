@@ -1,29 +1,21 @@
 # Ophel —— 将 AI 聊天变成结构化工作空间 🚀
 
-> 👉 **像读文档一样阅读、导航和管理你的 AI 对话**  
+> 👉 **像读文档一样阅读、导航和管理你的 AI 对话**
 > 面向长对话场景设计的浏览器扩展 & 油猴脚本  
 > 支持 _ChatGPT / Gemini / Claude / Grok / AI Studio_ 等多种 AI 平台
 
+<div align="center">
+  <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
+
+  <p>不只是聊天增强工具，更是将零散、冗长的 AI 对话转化为 <strong>可阅读、可导航、可管理、可复用</strong> 的结构化内容的个人知识管理终极方案。</p>
+  <p>Navigate long conversations with live outlines, organize chats into folders, and reuse prompts effortlessly. Ophel brings structure, clarity, and control to your AI conversations.</p>
+</div>
+
 ![Ophel Demo](./assets/demo/outline.gif)
 
-<p align="center">
-  🧭 <strong>自动生成对话大纲，并与滚动实时同步</strong><br/>
-  <em>Ophel turns long AI conversations into structured, navigable documents.</em>
-</p>
-
-不只是“聊天增强工具”，更是将零散、冗长的 AI 对话转化为 **可阅读、可导航、可管理、可复用** 的结构化内容的个人知识管理终极方案。
-
-Navigate long conversations with live outlines, organize chats into folders, and reuse prompts effortlessly.
-Ophel brings structure, clarity, and control to your AI conversations.
-
-<p align="center">
-  <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo">
-</p>
-
-<p align="center">
-  <strong>✨ 您的个人 AI 助手 ✨</strong><br/>
-  <em>不仅仅是 AI 聊天页面增强工具，更是您的高效生产力伴侣。</em>
-</p>
+<small>
+自动生成对话大纲，像读文档一样浏览 AI 长对话
+</small>
 
 <!-- <p align="center">
   <strong>✨ AI 之益，触手可及 ✨</strong><br/>
@@ -31,10 +23,27 @@ Ophel brings structure, clarity, and control to your AI conversations.
 </p> -->
 
 <p align="center">
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-lightgrey.svg" alt="License"></a>
   <img src="https://img.shields.io/github/package-json/v/urzeye/ophel?color=blue" alt="Version">
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-lightgrey.svg" alt="License"></a>
+  <img src="https://img.shields.io/github/last-commit/urzeye/ophel" alt="Last Commit">
+  <a href="https://github.com/urzeye/ophel/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/urzeye/ophel/ci.yml?label=Build&logo=github" alt="Build Status"></a>
+  <br/>
   <a href="https://github.com/urzeye/ophel/stargazers"><img src="https://img.shields.io/github/stars/urzeye/ophel?style=social" alt="Stars"></a>
-  <a href="https://opencollective.com/urzeye-oss"><img src="https://img.shields.io/badge/Sponsor-Open%20Collective-blue?logo=opencollective" alt="Sponsor"></a>
+  <a href="https://github.com/urzeye/ophel/network/members"><img src="https://img.shields.io/github/forks/urzeye/ophel?style=social" alt="Forks"></a>
+  <a href="https://github.com/urzeye/ophel/issues"><img src="https://img.shields.io/github/issues/urzeye/ophel?style=social" alt="Issues"></a>
+  <br/>
+  <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=" alt="Chrome Users"></a>
+  <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=" alt="Firefox Users"></a>
+  <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=" alt="GreasyFork Installs"></a>
+</p>
+
+<!-- Promo Link -->
+<p align="center">
+  <strong>📢 <a href="https://github.com/urzeye/ophel/issues/30">Help promote Ophel / 帮忙宣传 Ophel</a></strong>
+</p>
+
+<p align="center">
+  <a href="https://www.producthunt.com/products/ophel?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-ophel" target="_blank" rel="noopener noreferrer"><img alt="Ophel - Enhance AI chat with outline, conversations, prompts & more. | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1068867&theme=light&t=1769514514380"></a>
 </p>
 
 <p align="center">
@@ -70,6 +79,50 @@ Ophel brings structure, clarity, and control to your AI conversations.
 - ⚡ **效率工具** — 快捷键、模型锁定、标签页自动命名、完成通知
 - 🎭 **Claude 增强** — Session Key 管理、多账号切换
 - 🔒 **隐私优先** — 本地存储、WebDAV 同步、无数据收集
+
+## 🚀 快速开始
+
+> [!tip]
+>
+> **推荐使用浏览器扩展（Extension）版本**，功能更全、体验更佳、兼容性更好。油猴脚本（Userscript）版本功能受限（如无法读取 Cookie、无独立弹窗等）。
+
+### 应用商店
+
+[Chrome](https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd) | [Firefox](https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer) | [Greasy Fork](https://greasyfork.org/zh-CN/scripts/563646-ophel)
+
+### 手动安装
+
+#### 浏览器扩展
+
+1. 从 [Releases](https://github.com/urzeye/ophel/releases) 下载并解压安装包
+2. 打开浏览器扩展管理页面，开启 **开发者模式**
+3. 点击 **加载已解压的扩展程序**，选择解压的文件夹
+
+#### 油猴脚本
+
+1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 插件
+2. 从 [Releases](https://github.com/urzeye/ophel/releases) 下载 `.user.js` 文件
+3. 拖入浏览器或点击链接即可安装
+
+### 本地构建
+
+<details>
+<summary>展开查看构建步骤</summary>
+
+**环境要求**：Node.js >= 20.x, pnpm >= 9.x
+
+```bash
+git clone https://github.com/urzeye/ophel.git
+cd ophel
+
+pnpm install
+pnpm dev              # 开发模式
+pnpm build            # Chrome/Edge 生产构建
+pnpm build:firefox    # Firefox 生产构建
+pnpm build:userscript # 油猴脚本生产构建
+```
+
+</details>
 
 ## 🏗️ 技术架构
 
@@ -169,50 +222,6 @@ flowchart TB
     class ZS,CS,GM state
     class APP,MP,SM,TABS ui
     class SD,TV,TH css
-```
-
-</details>
-
-## 🚀 快速开始
-
-> [!tip]
->
-> **推荐使用浏览器扩展（Extension）版本**，功能更全、体验更佳、兼容性更好。油猴脚本（Userscript）版本功能受限（如无法读取 Cookie、无独立弹窗等）。
-
-### 应用商店
-
-[Chrome](https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd) | [Firefox](https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer) | [Greasy Fork](https://greasyfork.org/zh-CN/scripts/563646-ophel)
-
-### 手动安装
-
-#### 浏览器扩展
-
-1. 从 [Releases](https://github.com/urzeye/ophel/releases) 下载并解压安装包
-2. 打开浏览器扩展管理页面，开启 **开发者模式**
-3. 点击 **加载已解压的扩展程序**，选择解压的文件夹
-
-#### 油猴脚本
-
-1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 插件
-2. 从 [Releases](https://github.com/urzeye/ophel/releases) 下载 `.user.js` 文件
-3. 拖入浏览器或点击链接即可安装
-
-### 本地构建
-
-<details>
-<summary>展开查看构建步骤</summary>
-
-**环境要求**：Node.js >= 20.x, pnpm >= 9.x
-
-```bash
-git clone https://github.com/urzeye/ophel.git
-cd ophel
-
-pnpm install
-pnpm dev              # 开发模式
-pnpm build            # Chrome/Edge 生产构建
-pnpm build:firefox    # Firefox 生产构建
-pnpm build:userscript # 油猴脚本生产构建
 ```
 
 </details>

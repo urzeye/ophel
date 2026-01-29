@@ -1,5 +1,10 @@
 # Ophel —— Turn AI Chats into a Structured Workspace 🚀
 
+Navigate long conversations with live outlines, organize chats into folders, and reuse prompts effortlessly.
+Ophel brings structure, clarity, and control to your AI conversations.
+
+  <em>Ophel turns long AI conversations into structured, navigable documents.</em>
+
 <p align="center">
   <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo">
 </p>
