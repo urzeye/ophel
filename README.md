@@ -1,16 +1,27 @@
 # Ophel 🚀
 
-> 将 AI 聊天变成结构化工作空间
+> 将冗长的 AI 对话，变成像文档一样可阅读、可导航、可复用的内容
 
 <div align="center">
   <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
 
-  <h3>像读文档一样阅读、导航和管理你的 AI 对话</h3>
-  <p>面向长对话场景设计的浏览器扩展 & 油猴脚本</p>
-  <p>支持 _ChatGPT / Gemini / Claude / Grok / AI Studio_ 等多种 AI 平台</p>
-
-  <p>不只是聊天增强工具，更是将零散、冗长的 AI 对话转化为 <strong>可阅读、可导航、可管理、可复用</strong> 的结构化内容的个人知识管理终极方案。</p>
-  <p>Navigate long conversations with live outlines, organize chats into folders, and reuse prompts effortlessly. Ophel brings structure, clarity, and control to your AI conversations.</p>
+  <h3>✨ 把对话变成知识，而不是历史</h3>
+  
+  <p>
+    告别无限滚动带来的信息迷航。<br/>
+    用大纲厘清脉络，用文件夹构筑体系，用词库沉淀经验，让那些闪光的思考在秩序中自由流动。
+  </p>
+  
+  <p>
+    <strong><em>它是 AI 对话页缺失的最后一块拼图</em></strong>
+  </p>
+  
+  <p>
+    <small>
+      支持 ChatGPT / Gemini / Claude / Grok / AI Studio<br/>
+      提供 <strong>浏览器扩展</strong> 与 <strong>油猴脚本</strong> 双重支持
+    </small>
+  </p>
 </div>
 
 <p align="center">
