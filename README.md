@@ -33,11 +33,12 @@
   支持以下 AI 平台：
   </small>
   <p>
-    <a href="https://chat.openai.com/">ChatGPT</a>
-    <a href="https://console.gemini.com/">Gemini</a>
-    <a href="https://claude.ai/">Claude</a>
-    <a href="https://grok.ai/">Grok</a>
-    <a href="https://ai.studio/">AI Studio</a>
+    <a href="https://chatgpt.com"><img src="https://img.shields.io/badge/ChatGPT-74aa9c?logo=openai&logoColor=white" alt="ChatGPT"/></a>
+    <a href="https://gemini.google.com"><img src="https://img.shields.io/badge/Gemini-8E75B2?logo=google%20gemini&logoColor=white" alt="Gemini"/></a>
+    <a href="https://business.gemini.google/"><img src="https://img.shields.io/badge/Gemini%20Enterprise-8E75B2?logo=google&logoColor=white" alt="Gemini Enterprise"/></a>
+    <a href="https://claude.ai"><img src="https://img.shields.io/badge/Claude-D97757?logo=anthropic&logoColor=white" alt="Claude"/></a>
+    <a href="https://grok.com"><img src="https://img.shields.io/badge/Grok-000000?logo=x&logoColor=white" alt="Grok"/></a>
+    <a href="https://aistudio.google.com"><img src="https://img.shields.io/badge/AI%20Studio-4285F4?logo=google&logoColor=white" alt="AI Studio"/></a>
   </p>
 
 </div>
