@@ -26,8 +26,8 @@
     <strong><em>它让 AI 对话第一次成为可组织的工作流</em></strong><br/>
   </p>
 
-  <small style="opacity: 0.5;">
-   原生支持多 AI 平台（可同时使用）
+  <small style="opacity: 0.6;">
+  无论你使用哪个平台，都可以以同一种方式，获得一致、可组织且可重用的体验
   </small>
   <p>
     <a href="https://chatgpt.com"><img src="https://img.shields.io/badge/ChatGPT-74aa9c?logo=openai&logoColor=white" alt="ChatGPT"/></a>
@@ -97,13 +97,15 @@
 
 ### 应用商店
 
-[Chrome](https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd) | [Firefox](https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer) | [Greasy Fork](https://greasyfork.org/zh-CN/scripts/563646-ophel)
+<a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=Chrome%20Web%20Store&color=4285F4" alt="Chrome Web Store"></a>
+<a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=Firefox%20Add-ons&color=FF7139" alt="Firefox Add-ons"></a>
+<a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=Greasy%20Fork&color=black" alt="Greasy Fork"></a>
 
 ### 手动安装
 
 #### 浏览器扩展
 
-1. 从 [Releases](https://github.com/urzeye/ophel/releases) 下载并解压安装包
+1. 从 [Releases](https://github.com/urzeye/ophel/releases/latest) 下载并解压安装包
 2. 打开浏览器扩展管理页面，开启 **开发者模式**
 3. 点击 **加载已解压的扩展程序**，选择解压的文件夹
 
@@ -256,10 +258,7 @@ flowchart TB
 </p>
 
 <p align="center">
-  如果 Ophel 对你有帮助，欢迎支持：<br/><br/>
-  <a href="https://opencollective.com/urzeye-oss">
-    <img src="https://opencollective.com/urzeye-oss/donate/button@2x.png?color=blue" width="200" alt="Donate to Open Collective">
-  </a>
+  如果这款工具对你的工作/学习流程带来提升，欢迎以 Star、Sponsor 或 donative 的方式支持我们，让 Ophel 变得更好。
 </p>
 
 <p align="center">
