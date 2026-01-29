@@ -1,6 +1,6 @@
 # Ophel 🚀
 
-> 把 AI 对话变成文档般可阅读、导航、复用
+> 让 AI 对话如文档般可阅读、导航、复用
 
 <div align="center">
   <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
@@ -19,23 +19,23 @@
     让那些闪光的思考在秩序中自由流动
   </p>
   
-  <small style="opacity: 0.6;">👇 Demo: 从“无限滚动的聊天记录”，到“可导航的 AI 文档”</small>
+  <sub>👇 Demo: 从“无限滚动的聊天记录”，到“可导航的 AI 文档”</sub>
   ![Ophel Demo](./assets/demo/outline.gif)
   
   <p>
     <strong><em>它让 AI 对话第一次成为可组织的工作流</em></strong><br/>
   </p>
 
-  <small style="opacity: 0.85;">
+  <small style="opacity: 0.6;">
   支持以下 AI 平台：
   </small>
   <p>
     <a href="https://chatgpt.com"><img src="https://img.shields.io/badge/ChatGPT-74aa9c?logo=openai&logoColor=white" alt="ChatGPT"/></a>
-    <a href="https://gemini.google.com/app"><img src="https://img.shields.io/badge/Gemini-8E75B2?logo=google%20gemini&logoColor=white" alt="Gemini"/></a>
+    <a href="https://gemini.google.com"><img src="https://img.shields.io/badge/Gemini-4285F4?logo=google%20gemini&logoColor=white&labelColor=4285F4&color=34A853" alt="Gemini"/></a>
     <a href="https://grok.com"><img src="https://img.shields.io/badge/Grok-000000?logo=x&logoColor=white" alt="Grok"/></a>
     <a href="https://claude.ai"><img src="https://img.shields.io/badge/Claude-D97757?logo=anthropic&logoColor=white" alt="Claude"/></a>
     <a href="https://aistudio.google.com"><img src="https://img.shields.io/badge/AI%20Studio-4285F4?logo=google&logoColor=white" alt="AI Studio"/></a>
-    <a href="https://business.gemini.google/"><img src="https://img.shields.io/badge/Gemini%20Enterprise-4285F4?logo=google&logoColor=white" alt="Gemini Enterprise"/></a>
+    <a href="https://business.gemini.google/"><img src="https://img.shields.io/badge/Gemini%20Enterprise-9334E6?logo=google&logoColor=white" alt="Gemini Enterprise"/></a>
   </p>
   <p>
     <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=" alt="Chrome Users"></a>
