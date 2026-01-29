@@ -3,9 +3,9 @@
 > 把 AI 对话变成文档般可阅读、导航、复用
 
 <div align="center">
-  <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
+  <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo" style="display: block; margin: 0 auto 4px;"/>
 
-  <h3 style="margin-top: 0;">✨ 把对话变成知识，而不是历史 ✨</h3>
+  <h3 style="margin-top: -2px;">✨ 把对话变成知识，而不是历史 ✨</h3>
   
   <p>
     告别无限滚动带来的信息迷航
