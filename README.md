@@ -27,7 +27,7 @@
   </p>
 
   <small style="opacity: 0.5;">
-   原生支持多 AI 平台（可同时使用）：
+   原生支持多 AI 平台（可同时使用）
   </small>
   <p>
     <a href="https://chatgpt.com"><img src="https://img.shields.io/badge/ChatGPT-74aa9c?logo=openai&logoColor=white" alt="ChatGPT"/></a>
@@ -37,44 +37,45 @@
     <a href="https://aistudio.google.com"><img src="https://img.shields.io/badge/AI%20Studio-4285F4?logo=google&logoColor=white" alt="AI Studio"/></a>
     <a href="https://business.gemini.google/"><img src="https://img.shields.io/badge/Gemini%20Enterprise-9334E6?logo=google&logoColor=white" alt="Gemini Enterprise"/></a>
     <a href="https://github.com/urzeye/ophel/issues"><img src="https://img.shields.io/badge/More_coming_soon...-lightgrey" alt="More coming soon"/></a>
-  </p>
-  <p>
+    </br>
     <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=" alt="Chrome Users"></a>
   <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=" alt="Firefox Users"></a>
   <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=" alt="GreasyFork Installs"></a>
-  </p>
-
-</div>
-
-<p align="center">
+  </br>
   <img src="https://img.shields.io/github/package-json/v/urzeye/ophel?color=blue" alt="Version">
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-lightgrey.svg" alt="License"></a>
   <a href="https://github.com/urzeye/ophel/stargazers"><img src="https://img.shields.io/github/stars/urzeye/ophel?style=social" alt="Stars"></a>
   <a href="https://github.com/urzeye/ophel/network/members"><img src="https://img.shields.io/github/forks/urzeye/ophel?style=social" alt="Forks"></a>
-  <br/>
-  
-</p>
+  </p>
+
+</div>
 
 <!-- Promo Link -->
 <p align="center">
-  <strong>📢 <a href="https://github.com/urzeye/ophel/issues/30">Help promote Ophel / 帮忙宣传 Ophel</a></strong>
-</p>
-
-<p align="center">
+  📣 <a href="https://github.com/urzeye/ophel/issues/30">
+    <strong>Help promote Ophel / 帮忙宣传 Ophel</strong>
+  </a>
+  <br/>
   <a href="https://www.producthunt.com/products/ophel?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-ophel" target="_blank" rel="noopener noreferrer"><img alt="Ophel - Enhance AI chat with outline, conversations, prompts & more. | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1068867&theme=light&t=1769514514380"></a>
 </p>
 
 <p align="center">
   <a href="#-功能演示">功能演示</a> •
   <a href="#-核心功能">核心功能</a> •
-  <a href="#%EF%B8%8F-技术架构">技术架构</a> •
   <a href="#-快速开始">快速开始</a> •
+  <a href="#%EF%B8%8F-技术架构">技术架构</a> •
   <a href="#-支持项目">支持项目</a>
 </p>
 
 <p align="center">
   🌐 <a href="./README_EN.md">English</a> | <strong>简体中文</strong> | <a href="./docs/i18n/README_zh-TW.md">繁體中文</a> | <a href="./docs/i18n/README_ja.md">日本語</a> | <a href="./docs/i18n/README_ko.md">한국어</a> | <a href="./docs/i18n/README_de.md">Deutsch</a> | <a href="./docs/i18n/README_fr.md">Français</a> | <a href="./docs/i18n/README_es.md">Español</a> | <a href="./docs/i18n/README_pt.md">Português</a> | <a href="./docs/i18n/README_ru.md">Русский</a>
 </p>
+
+## 📹 功能演示
+
+|                                                        大纲 Outline                                                        |                                                     会话 Conversations                                                     |                                                       功能 Features                                                        |
+| :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
+| <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
 ## ✨ 核心功能
 
@@ -87,12 +88,6 @@
 - ⚡ **效率工具** — 快捷键、模型锁定、标签页自动命名、完成通知
 - 🎭 **Claude 增强** — Session Key 管理、多账号切换
 - 🔒 **隐私优先** — 本地存储、WebDAV 同步、无数据收集
-
-## 📹 功能演示
-
-|                                                        大纲 Outline                                                        |                                                     会话 Conversations                                                     |                                                       功能 Features                                                        |
-| :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
-| <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
 ## 🚀 快速开始
 
