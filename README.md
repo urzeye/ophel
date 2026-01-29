@@ -5,7 +5,7 @@
 <div align="center">
   <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
 
-  <h3>✨ 把对话变成知识，而不是历史 ✨</h3>
+  <h3 style="margin-top: 0;">✨ 把对话变成知识，而不是历史 ✨</h3>
   
   <p>
     告别无限滚动带来的信息迷航
@@ -19,12 +19,14 @@
     让那些闪光的思考在秩序中自由流动
   </p>
   
-  <small>👇 从“无限滚动的聊天记录”，到“可导航的 AI 文档”</small>
+  <small>👇 Demo: 从“无限滚动的聊天记录”，到“可导航的 AI 文档”</small>
   ![Ophel Demo](./assets/demo/outline.gif)
   
   <p>
     <strong><em>它让 AI 对话第一次成为可组织的工作流</em></strong><br/>
-    <sub>支持 ChatGPT / Gemini / Claude / Grok / AI Studio</sub>
+    <sub>支持 ChatGPT / Gemini / Claude / Grok / AI Studio <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=" alt="Chrome Users"></a>
+  <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=" alt="Firefox Users"></a>
+  <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=" alt="GreasyFork Installs"></a></sub>
   </p>
 </div>
 
