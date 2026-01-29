@@ -262,7 +262,7 @@ flowchart TB
 </p>
 
 <p align="center">
-  如果这款工具对你的工作/学习流程带来提升，欢迎以 Star、Sponsor 或 donative 的方式支持我们，让 Ophel 变得更好。
+  如果这款工具对你的工作/学习流程带来提升，欢迎以 Star、Sponsor 的方式支持我们，让 Ophel 变得更好。
 </p>
 
 <p align="center">
