@@ -3,7 +3,7 @@
 > 把 AI 对话变成文档般可阅读、导航、复用
 
 <div align="center">
-  <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo" style="display: block; margin: 0 auto 4px;"/>
+  <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
 
   <h3 style="margin-top: -2px;">✨ 把对话变成知识，而不是历史 ✨</h3>
   
@@ -19,7 +19,7 @@
     让那些闪光的思考在秩序中自由流动
   </p>
   
-  <small style="opacity: 0.7;">👇 Demo: 从“无限滚动的聊天记录”，到“可导航的 AI 文档”</small>
+  <small style="opacity: 0.6;">👇 Demo: 从“无限滚动的聊天记录”，到“可导航的 AI 文档”</small>
   ![Ophel Demo](./assets/demo/outline.gif)
   
   <p>
@@ -37,6 +37,11 @@
     <a href="https://grok.com"><img src="https://img.shields.io/badge/Grok-000000?logo=x&logoColor=white" alt="Grok"/></a>
     <a href="https://aistudio.google.com"><img src="https://img.shields.io/badge/AI%20Studio-4285F4?logo=google&logoColor=white" alt="AI Studio"/></a>
   </p>
+  <p>
+    <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=" alt="Chrome Users"></a>
+  <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=" alt="Firefox Users"></a>
+  <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=" alt="GreasyFork Installs"></a>
+  </p>
 
 </div>
 
@@ -50,9 +55,7 @@
   <a href="https://github.com/urzeye/ophel/network/members"><img src="https://img.shields.io/github/forks/urzeye/ophel?style=social" alt="Forks"></a>
   <a href="https://github.com/urzeye/ophel/issues"><img src="https://img.shields.io/github/issues/urzeye/ophel?style=social" alt="Issues"></a>
   <br/>
-  <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=" alt="Chrome Users"></a>
-  <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=" alt="Firefox Users"></a>
-  <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=" alt="GreasyFork Installs"></a>
+  
 </p>
 
 <!-- Promo Link -->
