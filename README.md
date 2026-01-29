@@ -1,12 +1,15 @@
 # Ophel —— 为长 AI 对话而生的智能导航与管理工具 🚀
 
-> 👉 **像读文档一样，导航、定位、继续你的 AI 对话**
-> 专为 **长 AI 对话** 设计的浏览器扩展 & 油猴脚本
+> 👉 **像读文档一样，导航、定位、继续你的 AI 对话**  
+> 专为 **长 AI 对话** 设计的浏览器扩展 & 油猴脚本  
 > 支持 _ChatGPT / Gemini / Claude / Grok / AI Studio_ 及更多 AI 平台
 
-[gif占位]
+![Ophel Demo](./assets/demo/outline.gif)
 
-### 🧭 自动生成对话大纲，像读文档一样浏览 AI 长对话
+<p align="center">
+  🧭 <strong>自动生成对话大纲，并与滚动实时同步</strong><br/>
+  <em>Ophel turns long AI conversations into structured, navigable documents.</em>
+</p>
 
 <p align="center">
   <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo">
