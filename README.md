@@ -32,10 +32,10 @@
   <p>
     <a href="https://chatgpt.com"><img src="https://img.shields.io/badge/ChatGPT-74aa9c?logo=openai&logoColor=white" alt="ChatGPT"/></a>
     <a href="https://gemini.google.com/app"><img src="https://img.shields.io/badge/Gemini-8E75B2?logo=google%20gemini&logoColor=white" alt="Gemini"/></a>
-    <a href="https://business.gemini.google/"><img src="https://img.shields.io/badge/Gemini%20Enterprise-4285F4?logo=google&logoColor=white" alt="Gemini Enterprise"/></a>
-    <a href="https://claude.ai"><img src="https://img.shields.io/badge/Claude-D97757?logo=anthropic&logoColor=white" alt="Claude"/></a>
     <a href="https://grok.com"><img src="https://img.shields.io/badge/Grok-000000?logo=x&logoColor=white" alt="Grok"/></a>
+    <a href="https://claude.ai"><img src="https://img.shields.io/badge/Claude-D97757?logo=anthropic&logoColor=white" alt="Claude"/></a>
     <a href="https://aistudio.google.com"><img src="https://img.shields.io/badge/AI%20Studio-4285F4?logo=google&logoColor=white" alt="AI Studio"/></a>
+    <a href="https://business.gemini.google/"><img src="https://img.shields.io/badge/Gemini%20Enterprise-4285F4?logo=google&logoColor=white" alt="Gemini Enterprise"/></a>
   </p>
   <p>
     <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=" alt="Chrome Users"></a>
@@ -48,12 +48,8 @@
 <p align="center">
   <img src="https://img.shields.io/github/package-json/v/urzeye/ophel?color=blue" alt="Version">
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-lightgrey.svg" alt="License"></a>
-  <img src="https://img.shields.io/github/last-commit/urzeye/ophel" alt="Last Commit">
-  <a href="https://github.com/urzeye/ophel/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/urzeye/ophel/ci.yml?label=Build&logo=github" alt="Build Status"></a>
-  <br/>
   <a href="https://github.com/urzeye/ophel/stargazers"><img src="https://img.shields.io/github/stars/urzeye/ophel?style=social" alt="Stars"></a>
   <a href="https://github.com/urzeye/ophel/network/members"><img src="https://img.shields.io/github/forks/urzeye/ophel?style=social" alt="Forks"></a>
-  <a href="https://github.com/urzeye/ophel/issues"><img src="https://img.shields.io/github/issues/urzeye/ophel?style=social" alt="Issues"></a>
   <br/>
   
 </p>
