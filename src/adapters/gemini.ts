@@ -9,6 +9,7 @@ import {
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportConfig,
+  type MarkdownFixerConfig,
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
@@ -225,6 +226,13 @@ export class GeminiAdapter extends SiteAdapter {
         noCenter: true, // 用户问题不需要居中
       },
     ]
+  }
+
+  getMarkdownFixerConfig(): MarkdownFixerConfig {
+    return {
+      selector: "message-content p",
+      fixSpanContent: false,
+    }
   }
 
   // ==================== 输入框操作 ====================

@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # 获取完整历史和所有 tags
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
@@ -52,6 +54,13 @@ jobs:
           else
             echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           fi
+
+          # 获取上一个版本号（用于 changelog 比较链接）
+          PREV_TAG=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed -n '2p')
+          if [ -z "$PREV_TAG" ]; then
+            PREV_TAG="v1.0.0"
+          fi
+          echo "PREV_VERSION=$PREV_TAG" >> $GITHUB_OUTPUT
 
       - name: Extract Changelog
         id: extract_changelog
@@ -109,6 +118,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          target_commitish: ${{ github.sha }}
           name: Ophel ${{ steps.get_version.outputs.VERSION }}
           body: |
             ## Ophel ${{ steps.get_version.outputs.VERSION }}
@@ -140,9 +151,9 @@ jobs:
 
             ---
 
-            [Full Changelog](https://github.com/urzeye/ophel/compare/v...${{ steps.get_version.outputs.VERSION }})
+            [Full Changelog](https://github.com/urzeye/ophel/compare/${{ steps.get_version.outputs.PREV_VERSION }}...${{ steps.get_version.outputs.VERSION }})
 
-            *Full Changelog File: [CHANGELOG.md](https://github.com/urzeye/ophel/blob/main/CHANGELOG.md)*
+            *Changelog File: [CHANGELOG.md](https://github.com/urzeye/ophel/blob/main/CHANGELOG.md)*
           files: |
             build/ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip
             build/ophel-${{ steps.get_version.outputs.VERSION }}-edge.zip
@@ -161,7 +172,7 @@ jobs:
           cp .github/readmes/README*.md build/userscript/.github/readmes/ 2>/dev/null || true
           # 替换本地图片路径为网络 URL（油猴脚本 release 分支需要）
           sed -i 's|./assets/icon.png|https://gist.github.com/user-attachments/assets/cdd08324-3962-4270-87a3-474b5d240f03|g' build/userscript/README*.md
-          sed -i 's|../../assets/icon.png|https://gist.github.com/user-attachments/assets/cdd08324-3962-4270-87a3-474b5d240f03|g' build/userscript/.github/readmes/README*.md
+          sed -i 's|../../assets/icon.png|https://gist.github.com/user-attachments/assets/cdd08324-3962-4270-87a3-474b5d240f03|g' build/userscript/.github/readmes/README*.md 2>/dev/null || true
 
       - name: Deploy Userscript to release branch
         uses: peaceiris/actions-gh-pages@v3
@@ -173,3 +184,4 @@ jobs:
           user_email: "github-actions[bot]@users.noreply.github.com"
           commit_message: "Deploy userscript ${{ steps.get_version.outputs.VERSION }} [skip ci]"
           force_orphan: true
+          exclude_assets: ''  # 禁用默认排除，包含 .github 目录

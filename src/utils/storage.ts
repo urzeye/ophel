@@ -94,6 +94,11 @@ export interface AIStudioSettings {
   removeWatermark?: boolean
 }
 
+// ChatGPT 设置
+export interface ChatGPTSettings {
+  markdownFix?: boolean // 修复响应中未渲染的加粗文本
+}
+
 export interface Settings {
   language: string
   hasAgreedToTerms: boolean // 用户是否同意免责声明
@@ -220,6 +225,9 @@ export interface Settings {
 
   // AI Studio 专属设置
   aistudio?: AIStudioSettings
+
+  // ChatGPT 专属设置
+  chatgpt?: ChatGPTSettings
 }
 
 // 默认站点主题配置
@@ -389,6 +397,11 @@ export const DEFAULT_SETTINGS: Settings = {
     // 油猴脚本环境默认开启
     markdownFix: isUserscript,
     removeWatermark: isUserscript,
+  },
+
+  chatgpt: {
+    // 默认开启
+    markdownFix: true,
   },
 }
 

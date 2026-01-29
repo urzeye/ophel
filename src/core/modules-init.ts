@@ -9,11 +9,7 @@ import type { SiteAdapter } from "~adapters/base"
 import { SITE_IDS } from "~constants"
 import { CopyManager } from "~core/copy-manager"
 import { LayoutManager } from "~core/layout-manager"
-import {
-  AISTUDIO_MARKDOWN_FIXER_CONFIG,
-  GEMINI_MARKDOWN_FIXER_CONFIG,
-  MarkdownFixer,
-} from "~core/markdown-fixer"
+import { MarkdownFixer } from "~core/markdown-fixer"
 import { ModelLocker } from "~core/model-locker"
 import { PolicyRetryManager } from "~core/policy-retry-manager"
 import { ReadingHistoryManager } from "~core/reading-history"
@@ -132,19 +128,33 @@ export async function syncPageTheme(ctx: ModulesContext): Promise<void> {
 }
 
 /**
+ * 获取站点的 Markdown 修复开关状态
+ */
+function getSiteMarkdownFix(settings: Settings, siteId: string): boolean {
+  switch (siteId) {
+    case SITE_IDS.GEMINI:
+      return settings.content?.markdownFix ?? false
+    case SITE_IDS.AISTUDIO:
+      return settings.aistudio?.markdownFix ?? false
+    case SITE_IDS.CHATGPT:
+      return settings.chatgpt?.markdownFix ?? false
+    default:
+      return false
+  }
+}
+
+/**
  * 初始化 Markdown 修复器
  */
 export function initMarkdownFixer(ctx: ModulesContext): void {
-  const { settings, siteId } = ctx
+  const { adapter, settings, siteId } = ctx
+  const config = adapter.getMarkdownFixerConfig()
+  const enabled = getSiteMarkdownFix(settings, siteId)
 
-  if (siteId === SITE_IDS.GEMINI && settings.content?.markdownFix) {
-    modules.markdownFixer = new MarkdownFixer(GEMINI_MARKDOWN_FIXER_CONFIG)
+  if (config && enabled) {
+    modules.markdownFixer = new MarkdownFixer(config)
     modules.markdownFixer.start()
-    console.log("[Ophel] MarkdownFixer started for Gemini")
-  } else if (siteId === SITE_IDS.AISTUDIO && settings.aistudio?.markdownFix) {
-    modules.markdownFixer = new MarkdownFixer(AISTUDIO_MARKDOWN_FIXER_CONFIG)
-    modules.markdownFixer.start()
-    console.log("[Ophel] MarkdownFixer started for AI Studio")
+    console.log(`[Ophel] MarkdownFixer started for ${adapter.getName()}`)
   }
 }
 
@@ -349,24 +359,16 @@ export function subscribeModuleUpdates(ctx: ModulesContext): void {
     }
 
     // 4. Markdown Fix update
-    if (newSettings && siteId === SITE_IDS.GEMINI) {
-      if (newSettings.content?.markdownFix) {
-        if (!modules.markdownFixer) {
-          modules.markdownFixer = new MarkdownFixer(GEMINI_MARKDOWN_FIXER_CONFIG)
-        }
-        modules.markdownFixer.start()
-      } else {
-        modules.markdownFixer?.stop()
+    const config = adapter.getMarkdownFixerConfig()
+    const markdownFixEnabled = getSiteMarkdownFix(newSettings, siteId)
+
+    if (config && markdownFixEnabled) {
+      if (!modules.markdownFixer) {
+        modules.markdownFixer = new MarkdownFixer(config)
       }
-    } else if (newSettings && siteId === SITE_IDS.AISTUDIO) {
-      if (newSettings.aistudio?.markdownFix) {
-        if (!modules.markdownFixer) {
-          modules.markdownFixer = new MarkdownFixer(AISTUDIO_MARKDOWN_FIXER_CONFIG)
-        }
-        modules.markdownFixer.start()
-      } else {
-        modules.markdownFixer?.stop()
-      }
+      modules.markdownFixer.start()
+    } else {
+      modules.markdownFixer?.stop()
     }
 
     // 5. Layout Manager update

@@ -913,6 +913,12 @@ export const zhTW = {
   aistudioNoTabError: "請先開啟 AI Studio 頁面",
   aistudioModelsError: "獲取模型列表失敗",
 
+  // ======== ChatGPT 設定 ========
+  chatgptSettingsTitle: "ChatGPT 設定",
+  chatgptSettingsDesc: "配置 ChatGPT 頁面的預設行為",
+  chatgptMarkdownFixLabel: "Markdown 加粗修復",
+  chatgptMarkdownFixDesc: "修復 ChatGPT 回應中未渲染的 **加粗** 文字",
+
   aistudioRemoveWatermark: "移除圖片浮水印",
   aistudioRemoveWatermarkDesc: "移除 AI Studio 生成圖片的浮水印（需重新整理頁面生效）",
   aistudioMarkdownFixLabel: "Markdown 加粗修復",

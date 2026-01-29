@@ -24,25 +24,13 @@ export interface MarkdownFixerConfig {
   fixSpanContent?: boolean
 }
 
-/** Gemini 默认配置 */
-export const GEMINI_MARKDOWN_FIXER_CONFIG: MarkdownFixerConfig = {
-  selector: "message-content p",
-  fixSpanContent: false,
-}
-
-/** AI Studio 默认配置 */
-export const AISTUDIO_MARKDOWN_FIXER_CONFIG: MarkdownFixerConfig = {
-  selector: "ms-cmark-node span.ng-star-inserted",
-  fixSpanContent: true,
-}
-
 export class MarkdownFixer {
   private processedNodes = new WeakSet<HTMLElement>()
   private stopObserver: (() => void) | null = null
   private enabled = false
   private config: MarkdownFixerConfig
 
-  constructor(config: MarkdownFixerConfig = GEMINI_MARKDOWN_FIXER_CONFIG) {
+  constructor(config: MarkdownFixerConfig) {
     this.config = config
   }
 

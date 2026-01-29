@@ -929,6 +929,12 @@ export const ko = {
   aistudioNoTabError: "먼저 AI Studio 페이지를 열어주세요",
   aistudioModelsError: "모델 목록을 가져오지 못했습니다",
 
+  // ======== ChatGPT 설정 ========
+  chatgptSettingsTitle: "ChatGPT 설정",
+  chatgptSettingsDesc: "ChatGPT 페이지의 기본 동작 구성",
+  chatgptMarkdownFixLabel: "Markdown 굵게 수정",
+  chatgptMarkdownFixDesc: "ChatGPT 응답에서 렌더링되지 않은 **굵게** 텍스트를 수정합니다",
+
   aistudioRemoveWatermark: "이미지 워터마크 제거",
   aistudioRemoveWatermarkDesc:
     "AI Studio에서 생성된 이미지의 워터마크를 제거합니다 (페이지 새로고침 필요)",

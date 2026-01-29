@@ -241,7 +241,7 @@ if (isExtension) {
               })
           }
 
-          console.log("[SettingsStore] 跨上下文同步完成, version:", currentState._syncVersion + 1)
+          // console.log("[SettingsStore] 跨上下文同步完成, version:", currentState._syncVersion + 1)
         }
       }
     } catch (err) {

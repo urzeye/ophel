@@ -919,6 +919,12 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   aistudioNoTabError: "Bitte öffnen Sie zuerst die AI Studio-Seite",
   aistudioModelsError: "Fehler beim Abrufen der Modellliste",
 
+  // ======== ChatGPT Einstellungen ========
+  chatgptSettingsTitle: "ChatGPT Einstellungen",
+  chatgptSettingsDesc: "Standardverhalten für die ChatGPT-Seite konfigurieren",
+  chatgptMarkdownFixLabel: "Markdown Fettschrift-Fix",
+  chatgptMarkdownFixDesc: "Nicht gerenderten **fetten** Text in ChatGPT-Antworten reparieren",
+
   aistudioRemoveWatermark: "Wasserzeichen entfernen",
   aistudioRemoveWatermarkDesc:
     "Entfernen Sie das Wasserzeichen von in AI Studio generierten Bildern (Seite neu laden)",
