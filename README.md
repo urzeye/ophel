@@ -1,6 +1,6 @@
 # Ophel 🚀
 
-> 把 AI 对话变成像文档一样可阅读、导航、复用
+> 把AI对话变成像文档一样可阅读、导航、复用
 
 <div align="center">
   <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
@@ -8,9 +8,12 @@
   <h3>✨ 把对话变成知识，而不是历史 ✨</h3>
   
   <p>
-    告别无限滚动带来的信息迷航。用实时大纲厘清脉络，用会话文件夹构筑体系，用Prompt词库沉淀经验，让那些闪光的思考在秩序中自由流动。
+    告别无限滚动带来的信息迷航。
+    </br>
+    用实时大纲厘清脉络，用会话文件夹构筑体系，用Prompt词库沉淀经验，让那些闪光的思考在秩序中自由流动。
   </p>
   
+![Ophel Demo](./assets/demo/outline.gif)
   <p>
     <strong><em>它是构建结构化 AI 工作流，不可或缺的一块拼图</em></strong><br/>
     <sub>支持 ChatGPT / Gemini / Claude / Grok / AI Studio</sub>
@@ -54,8 +57,6 @@
 </p>
 
 ## ✨ 核心功能
-
-![Ophel Demo](./assets/demo/outline.gif)
 
 - 🧠 **智能大纲** — 自动解析用户问题与 AI 回复，生成可导航的目录结构
 - 💬 **会话管理** — 文件夹分类、标签、搜索、批量操作
