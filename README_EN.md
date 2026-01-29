@@ -1,4 +1,4 @@
-# Ophel 🚀
+# Ophel —— Turn AI Chats into a Structured Workspace 🚀
 
 <p align="center">
   <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo">
