@@ -28,7 +28,7 @@
   </p>
 
   <small style="opacity: 0.6;">
-  Consistent, organizeable, and reusable experience across all supported platforms
+  No matter which of these platforms you use, Ophel lets you organize conversations into reusable workflows with a consistent, unified experience.
   </small>
   <p>
     <a href="https://chatgpt.com"><img src="https://img.shields.io/badge/ChatGPT-74aa9c?logo=openai&logoColor=white" alt="ChatGPT"/></a>
@@ -81,7 +81,7 @@
 
 ## ✨ Core Features
 
-- 🧠 **Smart Outline** — Auto-parse user queries & AI responses into navigable structure
+- 🧠 **Smart Outline** — Auto-parse user queries & AI responses into rich structured outlines
 - 💬 **Conversation Manager** — Folders, tags, search, batch operations
 - ⌨️ **Prompt Library** — Variables, Markdown preview, categories, one-click insert
 - 🎨 **Theme Customization** — 20+ dark/light themes, custom CSS
