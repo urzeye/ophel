@@ -8,15 +8,7 @@
   <h3 style="margin-top: -2px;">✨ Turn Conversations into Knowledge, Not Just History ✨</h3>
   
   <p>
-    No more getting lost in endless scroll
-    </br>
-    Clarify context with real-time Outlines,
-    </br>
-    Build your system with Conversation Folders,
-    </br>
-    Refine experience with the Prompt Library,
-    </br>
-    Let sparkling thoughts flow freely in order
+    No more getting lost in endless scroll. Clarify context with real-time Outlines, Build your system with Conversation Folders, Refine experience with the Prompt Library, Let sparkling thoughts flow freely in order.
   </p>
   
   <sub>👇 Demo: From "Infinite Scroll" to "Navigable AI Documents"</sub>
