@@ -19,7 +19,7 @@
     让那些闪光的思考在秩序中自由流动
   </p>
   
-  <small>👇 Demo: 从“无限滚动的聊天记录”，到“可导航的 AI 文档”</small>
+  <small style="opacity: 0.7;">👇 Demo: 从“无限滚动的聊天记录”，到“可导航的 AI 文档”</small>
   ![Ophel Demo](./assets/demo/outline.gif)
   
   <p>
@@ -28,6 +28,18 @@
   <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=" alt="Firefox Users"></a>
   <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=" alt="GreasyFork Installs"></a></sub>
   </p>
+
+  <small style="opacity: 0.85;">
+  支持以下 AI 平台：
+  </small>
+  <p>
+    <a href="https://chat.openai.com/">ChatGPT</a>
+    <a href="https://console.gemini.com/">Gemini</a>
+    <a href="https://claude.ai/">Claude</a>
+    <a href="https://grok.ai/">Grok</a>
+    <a href="https://ai.studio/">AI Studio</a>
+  </p>
+
 </div>
 
 <p align="center">
