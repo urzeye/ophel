@@ -1,53 +1,68 @@
 # Ophel 🚀
 
-<p align="center">
-  <img src="../../assets/icon.png" width="120" height="120" alt="Ophel Logo">
-</p>
+> Machen Sie AI-Chats zu Dokumenten, die Sie lesen, navigieren und wiederverwenden können
 
-<p align="center">
-  <strong>✨ KI-Vorteile, zum Greifen nah ✨</strong><br/>
-  <em>AI's Benefit, Within Reach.</em>
-</p>
+<div align="center">
+  <img src="../../assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
 
-<p align="center">
-  <a href="../../LICENSE"><img src="https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-lightgrey.svg" alt="License"></a>
-  <img src="https://img.shields.io/github/package-json/v/urzeye/ophel?color=blue" alt="Version">
-  <img src="https://img.shields.io/github/last-commit/urzeye/ophel" alt="Last Commit">
-  <a href="https://github.com/urzeye/ophel/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/urzeye/ophel/ci.yml?label=Build&logo=github" alt="Build Status"></a>
-  <br/>
-  <a href="https://github.com/urzeye/ophel/stargazers"><img src="https://img.shields.io/github/stars/urzeye/ophel?style=social" alt="Stars"></a>
-  <a href="https://github.com/urzeye/ophel/network/members"><img src="https://img.shields.io/github/forks/urzeye/ophel?style=social" alt="Forks"></a>
-  <a href="https://github.com/urzeye/ophel/issues"><img src="https://img.shields.io/github/issues/urzeye/ophel?style=social" alt="Issues"></a>
-  <br/>
-  <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=" alt="Chrome Users"></a>
-  <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=" alt="Firefox Users"></a>
-  <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=" alt="GreasyFork Installs"></a>
-</p>
+  <h3 style="margin-top: -2px;">✨ Machen Sie aus Gesprächen Wissen, nicht nur Geschichte ✨</h3>
+  
+  <p>
+    Schluss mit dem Verlieren im endlosen Scrollen. Klären Sie den Kontext mit Echtzeit-Gliederungen, bauen Sie Ihr System mit Gesprächsordnern auf, verfeinern Sie die Erfahrung mit der Prompt-Bibliothek und lassen Sie funkelnde Gedanken in geordneten Bahnen fließen.
+  </p>
+  
+  <p align="center" style="font-size: 12px; color: #555;">👇 Demo: Von "Unendlichem Scrollen" zu "Navigierbaren AI-Dokumenten"</p>
+  ![Ophel Demo](../../assets/demo/outline.gif)
+  
+  <p>
+    <strong><em>Macht den AI-Chat zum ersten Mal zu einem wirklich organisierbaren Workflow</em></strong><br/>
+  </p>
+
+  <small style="opacity: 0.6;">
+  Egal welche Plattform Sie nutzen, Ophel ermöglicht es Ihnen, Gespräche in wiederverwendbare Workflows mit einer konsistenten, einheitlichen Erfahrung zu organisieren.
+  </small>
+  <p>
+    <a href="https://chatgpt.com"><img src="https://img.shields.io/badge/ChatGPT-74aa9c?logo=openai&logoColor=white" alt="ChatGPT"/></a>
+    <a href="https://gemini.google.com"><img src="https://img.shields.io/badge/Gemini-4285F4?logo=google%20gemini&logoColor=white&labelColor=4285F4&color=34A853" alt="Gemini"/></a>
+    <a href="https://grok.com"><img src="https://img.shields.io/badge/Grok-000000?logo=x&logoColor=white" alt="Grok"/></a>
+    <a href="https://claude.ai"><img src="https://img.shields.io/badge/Claude-D97757?logo=anthropic&logoColor=white" alt="Claude"/></a>
+    <a href="https://aistudio.google.com"><img src="https://img.shields.io/badge/AI%20Studio-4285F4?logo=google&logoColor=white" alt="AI Studio"/></a>
+    <a href="https://business.gemini.google/"><img src="https://img.shields.io/badge/Gemini%20Enterprise-9334E6?logo=google&logoColor=white" alt="Gemini Enterprise"/></a>
+    <a href="https://github.com/urzeye/ophel/issues"><img src="https://img.shields.io/badge/More_coming_soon...-lightgrey" alt="More coming soon"/></a>
+    </br>
+    <img src="https://img.shields.io/github/package-json/v/urzeye/ophel?color=blue" alt="Version">
+    <a href="../../LICENSE"><img src="https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-lightgrey.svg" alt="License"></a>
+    <img src="https://img.shields.io/github/last-commit/urzeye/ophel" alt="Last Commit">
+    <a href="https://github.com/urzeye/ophel/stargazers"><img src="https://img.shields.io/github/stars/urzeye/ophel?style=social" alt="Stars"></a>
+    <a href="https://github.com/urzeye/ophel/network/members"><img src="https://img.shields.io/github/forks/urzeye/ophel?style=social" alt="Forks"></a>
+    </br>
+    <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=Chrome%20Web%20Store&color=4285F4&labelColor=4285F4" alt="Chrome Web Store"></a>
+    <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=Firefox%20Add-ons&color=FF7139&labelColor=FF7139" alt="Firefox Add-ons"></a>
+    <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=Greasy%20Fork&color=black&labelColor=black" alt="Greasy Fork"></a>
+  </p>
+
+</div>
 
 <!-- Promo Link -->
 <p align="center">
-  <strong>📢 <a href="https://github.com/urzeye/ophel/issues/30">Help promote Ophel / 帮忙宣传 Ophel</a></strong>
-</p>
-
-<p align="center">
+  📣 <a href="https://github.com/urzeye/ophel/issues/30">
+    <strong>Help promote Ophel</strong>
+  </a>
+  <br/>
   <a href="https://www.producthunt.com/products/ophel?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-ophel" target="_blank" rel="noopener noreferrer"><img alt="Ophel - Enhance AI chat with outline, conversations, prompts & more. | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1068867&theme=light&t=1769514514380"></a>
 </p>
 
 <p align="center">
   <a href="#-demo">Demo</a> •
   <a href="#-kernfunktionen">Kernfunktionen</a> •
-  <a href="#%EF%B8%8F-technische-architektur">Technische Architektur</a> •
   <a href="#-schnellstart">Schnellstart</a> •
-  <a href="#-projekt-unterstützen">Projekt unterstützen</a>
+  <a href="#%EF%B8%8F-architektur">Architektur</a> •
+  <a href="#-unterstützung">Unterstützung</a>
 </p>
 
 <p align="center">
   🌐 <a href="../../README_EN.md">English</a> | <a href="../../README.md">简体中文</a> | <a href="./README_zh-TW.md">繁體中文</a> | <a href="./README_ja.md">日本語</a> | <a href="./README_ko.md">한국어</a> | <strong>Deutsch</strong> | <a href="./README_fr.md">Français</a> | <a href="./README_es.md">Español</a> | <a href="./README_pt.md">Português</a> | <a href="./README_ru.md">Русский</a>
 </p>
-
----
-
-👋 **Ophel** ist ein Verbesserungstool für KI-Chat-Seiten, das sowohl **Browser-Erweiterungen** als auch **Userscripts** unterstützt und ein einheitliches interaktives Erlebnis für Mainstream-KI-Plattformen wie **Gemini**, **ChatGPT**, **Claude**, **Grok** und **AI Studio** bietet.
 
 ## 📹 Demo
 
@@ -57,33 +72,79 @@
 
 ## ✨ Kernfunktionen
 
-- 🧠 **Smart Outline** — Automatische Analyse von Benutzeranfragen und KI-Antworten zur Erstellung einer navigierbaren Inhaltsstruktur
-- 💬 **Konversationsmanagement** — Ordnerorganisation, Tags, Suche, Stapelverarbeitung
-- ⌨️ **Prompt-Bibliothek** — Variablenunterstützung, Markdown-Vorschau, Kategorienverwaltung, Ein-Klick-Ausfüllen
-- 🎨 **Theme-Anpassung** — Über 20 helle/dunkle Themes, eigenes CSS
-- 🔧 **Schnittstellenoptimierung** — Breitbildmodus, Breitenanpassung, Seitenleistensteuerung
-- 📖 **Leseerlebnis** — Scroll-Sperre, Wiederherstellung des Leseverlaufs, Markdown-Rendering-Optimierung
-- ⚡ **Produktivitätswerkzeuge** — Tastaturkürzel, Modellsperre, automatische Tab-Umbenennung, Benachrichtigungen
-- 🎭 **Claude-Erweiterung** — Session-Key-Verwaltung, Multi-Account-Wechsel
-- 🔒 **Datenschutz first** — Lokale Speicherung, WebDAV-Synchronisierung, keine Datensammlung
+- 🧠 **Smart Outline** — Automatische Analyse von Benutzeranfragen und AI-Antworten in eine navigierbare Struktur
+- 💬 **Conversation Manager** — Ordner, Tags, Suche, Stapelverarbeitung
+- ⌨️ **Prompt Library** — Variablen, Markdown-Vorschau, Kategorien, Einfügen mit einem Klick
+- 🎨 **Theme Anpassung** — 20+ dunkle/helle Themes, benutzerdefiniertes CSS
+- 🔧 **UI Optimierung** — Widescreen-Modus, Breitensteuerung, Seitenleisten-Layout
+- 📖 **Leseerlebnis** — Scroll-Sperre, Wiederherstellung des Lesefortschritts, Markdown-Fixes
+- ⚡ **Produktivitätstools** — Shortcuts, Modellsperre, automatische Tab-Benennung, Benachrichtigungen
+- 🎭 **Claude Erweiterung** — Session Key Management, Multi-Account-Switching
+- 🔒 **Datenschutz First** — Lokaler Speicher, WebDAV-Sync, keine Datensammlung
 
-## 🏗️ Technische Architektur
+## 🚀 Schnellstart
+
+> [!tip]
+>
+> **Wir empfehlen dringend die Verwendung der Browser-Erweiterungsversion** für einen vollständigeren Funktionsumfang, eine bessere Erfahrung und höhere Kompatibilität. Die Userscript-Version hat Einschränkungen.
+
+### Web Store
+
+<a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=Chrome%20Web%20Store&color=4285F4&labelColor=4285F4" alt="Chrome Web Store"></a>
+<a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=Firefox%20Add-ons&color=FF7139&labelColor=FF7139" alt="Firefox Add-ons"></a>
+<a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=Greasy%20Fork&color=black&labelColor=black" alt="Greasy Fork"></a>
+
+### Manuelle Installation
+
+#### Browser Erweiterung
+
+1. Laden Sie das Installationspaket von [Releases](https://github.com/urzeye/ophel/releases/latest) herunter und entpacken Sie es
+2. Öffnen Sie die Seite zur Verwaltung von Browsererweiterungen und aktivieren Sie den **Entwicklermodus**
+3. Klicken Sie auf **Entpackte Erweiterung laden** und wählen Sie den entpackten Ordner aus
+
+#### Userscript
+
+1. Installieren Sie [Tampermonkey](https://www.tampermonkey.net/)
+2. Laden Sie die `.user.js` Datei von [Releases](https://github.com/urzeye/ophel/releases) herunter
+3. Ziehen Sie sie in den Browser oder klicken Sie auf den Link zur Installation
+
+### Lokaler Build
+
+<details>
+<summary>Klicken Sie hier, um die Build-Schritte zu erweitern</summary>
+
+**Anforderungen**: Node.js >= 20.x, pnpm >= 9.x
+
+```bash
+git clone https://github.com/urzeye/ophel.git
+cd ophel
+
+pnpm install
+pnpm dev              # Entwicklungsmodus
+pnpm build            # Chrome/Edge Produktions-Build
+pnpm build:firefox    # Firefox Produktions-Build
+pnpm build:userscript # Userscript Produktions-Build
+```
+
+</details>
+
+## 🏗️ Architektur
 
 **Tech Stack**: [Plasmo](https://docs.plasmo.com/) + [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) + [Zustand](https://github.com/pmndrs/zustand)
 
 <details>
-<summary>📐 Architektur-Diagramm (klicken zum Aufklappen)</summary>
+<summary>📐 Architekturdiagramm (zum Erweitern klicken)</summary>
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#6366f1', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4f46e5', 'lineColor': '#94a3b8', 'secondaryColor': '#f1f5f9', 'tertiaryColor': '#e2e8f0', 'background': '#ffffff'}}}%%
 flowchart TB
-    subgraph Platforms["🚀 Dual-Plattform-Build"]
+    subgraph Platforms["🚀 Dual Platform Build"]
         direction LR
-        EXT["🧩 Browser-Erweiterung<br/><small>Plasmo + Manifest V3</small>"]
+        EXT["🧩 Browser Extension<br/><small>Plasmo + Manifest V3</small>"]
         US["🛢️ Userscript<br/><small>Vite + vite-plugin-monkey</small>"]
     end
 
-    subgraph Entry["📦 Einstiegsschicht"]
+    subgraph Entry["📦 Entry Layer"]
         direction LR
         CE["Content Script<br/><small>ui-entry.tsx</small>"]
         BG["Background<br/><small>background.ts</small>"]
@@ -91,7 +152,7 @@ flowchart TB
         USE["Userscript Entry<br/><small>platform/userscript/entry.tsx</small>"]
     end
 
-    subgraph Adapters["🔌 Website-Adapter"]
+    subgraph Adapters["🔌 Site Adapters"]
         direction LR
         GEM["Gemini"]
         GPT["ChatGPT"]
@@ -101,49 +162,55 @@ flowchart TB
         GEE["Gemini<br/>Enterprise"]
     end
 
-    subgraph Core["⚙️ Kernmodule"]
+    subgraph Core["⚙️ Core Modules"]
         direction TB
-        TM["🎨 Theme Manager<br/><small>Theme-Wechsel · View Transitions</small>"]
-        OM["📑 Outline Manager<br/><small>Gliederungserstellung · Navigation</small>"]
-        RH["📖 Reading History<br/><small>Leseposition wiederherstellen</small>"]
-        ML["🔒 Model Lock<br/><small>Modellsperre</small>"]
-        NM["📡 Network Monitor<br/><small>Request-Abfangen · Statuserkennung</small>"]
+        TM["🎨 Theme Manager<br/><small>Theme Switch · View Transitions</small>"]
+        OM["📑 Outline Manager<br/><small>Outline Generation · Navigation</small>"]
+        RH["📖 Reading History<br/><small>Position Restore</small>"]
+        ML["🔒 Model Lock<br/><small>Model Locking</small>"]
+        NM["📡 Network Monitor<br/><small>Request Interception · Status Detection</small>"]
     end
 
-    subgraph State["💾 Zustandsverwaltung"]
+    subgraph State["💾 State Management"]
         direction LR
         ZS["Zustand Stores<br/><small>settings · prompts · conversations</small>"]
         CS["Chrome Storage<br/><small>local · sync</small>"]
         GM["GM_* Storage<br/><small>Userscript API</small>"]
     end
 
-    subgraph UI["🎯 UI-Komponenten"]
+    subgraph UI["🎯 UI Components"]
         direction TB
         APP["App.tsx"]
-        MP["MainPanel<br/><small>Seitenleiste</small>"]
-        SM["SettingsModal<br/><small>Einstellungsdialog</small>"]
-        TABS["Tabs<br/><small>Gliederung · Gespräche · Prompts</small>"]
+        MP["MainPanel<br/><small>Side Panel</small>"]
+        SM["SettingsModal<br/><small>Settings Dialog</small>"]
+        TABS["Tabs<br/><small>Outline · Conversations · Prompts</small>"]
     end
 
-    subgraph CSS["🎨 Styling-System"]
+    subgraph CSS["🎨 Styling System"]
         direction LR
-        SD["Shadow DOM<br/><small>Stilisolierung</small>"]
-        TV["CSS Variables<br/><small>Theme-Variablen</small>"]
-        TH["Theme Presets<br/><small>20+ Preset-Themes</small>"]
+        SD["Shadow DOM<br/><small>Style Isolation</small>"]
+        TV["CSS Variables<br/><small>Theme Variables</small>"]
+        TH["Theme Presets<br/><small>20+ Preset Themes</small>"]
     end
 
+    %% Connections
     EXT --> CE & BG & OPT
     US --> USE
+
     CE --> Adapters
     USE --> Adapters
+
     Adapters --> Core
     Core --> State
+
     CE --> UI
     USE --> UI
     UI --> CSS
+
     ZS <--> CS
     ZS <-.-> GM
 
+    %% Styles
     classDef platform fill:#818cf8,stroke:#6366f1,color:#fff
     classDef entry fill:#34d399,stroke:#10b981,color:#fff
     classDef adapter fill:#fbbf24,stroke:#f59e0b,color:#1f2937
@@ -163,54 +230,9 @@ flowchart TB
 
 </details>
 
-## 🚀 Schnellstart
+### 🐛 Bug-Bericht
 
-> [!tip]
->
-> **Es wird empfohlen, die Browsererweiterung (Extension) zu verwenden.** Sie bietet mehr Funktionen, ein besseres Erlebnis und eine bessere Kompatibilität. Die Userscript-Version (Tampermonkey) ist in ihrer Funktionalität eingeschränkt (z. B. kein Zugriff auf Cookies, keine unabhängigen Popups).
-
-### App Stores
-
-[Chrome](https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd) | [Firefox](https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer) | [Greasy Fork](https://greasyfork.org/zh-CN/scripts/563646-ophel)
-
-### Manuelle Installation
-
-#### Browsererweiterung
-
-1. Laden Sie das Installationspaket von [Releases](https://github.com/urzeye/ophel/releases) herunter und entpacken Sie es.
-2. Öffnen Sie die Erweiterungsverwaltungsseite Ihres Browsers und aktivieren Sie den **Entwicklermodus**.
-3. Klicken Sie auf **Entpackte Erweiterung laden** und wählen Sie den entpackten Ordner aus.
-
-#### Userscript
-
-1. Installieren Sie das [Tampermonkey](https://www.tampermonkey.net/) Plugin.
-2. Laden Sie die `.user.js` Datei von [Releases](https://github.com/urzeye/ophel/releases) herunter.
-3. Ziehen Sie sie in den Browser oder klicken Sie auf den Link zur Installation.
-
-### Lokaler Build
-
-<details>
-<summary>Click to expand build steps</summary>
-
-**Requirements**: Node.js >= 20.x, pnpm >= 9.x
-
-```bash
-git clone https://github.com/urzeye/ophel.git
-cd ophel
-pnpm install
-pnpm dev              # Development mode
-pnpm build            # Chrome/Edge production build
-pnpm build:firefox    # Firefox production build
-pnpm build:userscript # Userscript production build
-```
-
-**Tech Stack**: [Plasmo](https://docs.plasmo.com/) + [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) + [Zustand](https://github.com/pmndrs/zustand)
-
-</details>
-
-### 🐛 Feedback
-
-Bei Fragen oder Anregungen freuen wir uns über Feedback in den [GitHub Issues](https://github.com/urzeye/ophel/issues).
+Bei Problemen oder Vorschlägen besuchen Sie bitte [GitHub Issues](https://github.com/urzeye/ophel/issues).
 
 ## ⭐ Star History
 
@@ -222,17 +244,14 @@ Bei Fragen oder Anregungen freuen wir uns über Feedback in den [GitHub Issues](
  </picture>
 </a>
 
-## 💖 Projekt unterstützen
+## 💖 Unterstützung
 
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
 </p>
 
 <p align="center">
-  If Ophel helps you, consider supporting:<br/><br/>
-  <a href="https://opencollective.com/urzeye-oss">
-    <img src="https://opencollective.com/urzeye-oss/donate/button@2x.png?color=blue" width="200" alt="Donate to Open Collective">
-  </a>
+  Wenn Ophel Ihren Arbeitsablauf oder Ihr Lernen verbessert, ziehen Sie bitte eine Unterstützung durch Star oder Sponsor in Betracht, damit wir weiter kommen.
 </p>
 
 <p align="center">
@@ -241,6 +260,6 @@ Bei Fragen oder Anregungen freuen wir uns über Feedback in den [GitHub Issues](
 
 ## 📜 Lizenz
 
-This project is licensed under **CC BY-NC-SA 4.0**. See [LICENSE](../../LICENSE) for details.
+Dieses Projekt ist unter **CC BY-NC-SA 4.0** lizenziert. Siehe [LICENSE](../../LICENSE) für Details.
 
-> ⚠️ **Commercial packaging, resale, or unauthorized integration is prohibited.** For commercial licensing: **<igodu.love@gmail.com>**
+> ⚠️ **Kommerzielle Verpackung, Weiterverkauf oder unbefugte Integration ist untersagt.** Für kommerzielle Lizenzierung: **<igodu.love@gmail.com>**
