@@ -1,26 +1,19 @@
 # Ophel 🚀
 
-> 将冗长的 AI 对话，变成像文档一样可阅读、可导航、可复用的内容
+> 把 AI 对话变成像文档一样可阅读、导航、复用
 
 <div align="center">
   <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
 
-  <h3>✨ 把对话变成知识，而不是历史</h3>
+  <h3>✨ 把对话变成知识，而不是历史 ✨</h3>
   
   <p>
-    告别无限滚动带来的信息迷航。<br/>
-    用大纲厘清脉络，用文件夹构筑体系，用词库沉淀经验，让那些闪光的思考在秩序中自由流动。
+    告别无限滚动带来的信息迷航。用实时大纲厘清脉络，用会话文件夹构筑体系，用Prompt词库沉淀经验，让那些闪光的思考在秩序中自由流动。
   </p>
   
   <p>
-    <strong><em>它是 AI 对话页缺失的最后一块拼图</em></strong>
-  </p>
-  
-  <p>
-    <small>
-      支持 ChatGPT / Gemini / Claude / Grok / AI Studio<br/>
-      提供 <strong>浏览器扩展</strong> 与 <strong>油猴脚本</strong> 双重支持
-    </small>
+    <strong><em>它是构建结构化 AI 工作流，不可或缺的一块拼图</em></strong><br/>
+    <sub>支持 ChatGPT / Gemini / Claude / Grok / AI Studio</sub>
   </p>
 </div>
 
