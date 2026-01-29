@@ -173,6 +173,8 @@ jobs:
           # 替换本地图片路径为网络 URL（油猴脚本 release 分支需要）
           sed -i 's|./assets/icon.png|https://gist.github.com/user-attachments/assets/cdd08324-3962-4270-87a3-474b5d240f03|g' build/userscript/README*.md
           sed -i 's|../../assets/icon.png|https://gist.github.com/user-attachments/assets/cdd08324-3962-4270-87a3-474b5d240f03|g' build/userscript/.github/readmes/README*.md 2>/dev/null || true
+          sed -i 's|./assets/demo/outline.gif|https://github.com/user-attachments/assets/7161a37b-5fb3-4799-a6a9-25521e1a514f|g' build/userscript/README*.md
+          sed -i 's|../../assets/demo/outline.gif|https://github.com/user-attachments/assets/7161a37b-5fb3-4799-a6a9-25521e1a514f|g' build/userscript/.github/readmes/README*.md 2>/dev/null || true
 
       - name: Deploy Userscript to release branch
         uses: peaceiris/actions-gh-pages@v3
