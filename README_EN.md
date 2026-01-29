@@ -19,7 +19,7 @@
     Let sparkling thoughts flow freely in order
   </p>
   
-  <p align="center" style="font-size: 12px; color: #555;">👇 Demo: From "Infinite Scroll" to "Navigable AI Documents"</p>
+  <sub>👇 Demo: From "Infinite Scroll" to "Navigable AI Documents"</sub>
   
   ![Ophel Demo](./assets/demo/outline.gif)
   
