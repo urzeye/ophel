@@ -4,7 +4,7 @@
     "description": "Erweiterungsname"
   },
   "extensionDescription": {
-    "message": "Für Gemini/ChatGPT/Claude/Grok/AI Studio: Gliederung, Sitzungsexport, Prompts, UI, Themes, Shortcuts, WebDAV-Sync und mehr!",
+    "message": "Wandelt lange KI-Chats in strukturierte Workflows um und macht Gespräche mit ChatGPT, Gemini, Claude und Grok wiederverwendbar.",
     "description": "Erweiterungsbeschreibung"
   }
 }

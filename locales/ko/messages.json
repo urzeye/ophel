@@ -4,7 +4,7 @@
     "description": "확장 프로그램 이름"
   },
   "extensionDescription": {
-    "message": "Gemini/ChatGPT/Claude/Grok/AI Studio: 스마트 개요, 대화 관리·내보내기, 프롬프트, UI 최적화, 테마, 완료 알림, 기록 복원, 스크롤 잠금, 워터마크 제거, 단축키, WebDAV 동기화 등 다양한 기능으로 최고의 AI 경험을!",
+    "message": "길어진 AI 대화를 읽고 탐색하며 재사용 가능한 구조화된 워크플로로 변환해 ChatGPT, Gemini, Claude, Grok 대화를 장기적으로 활용할 수 있는 지식 자산으로 축적, 정리·회고·재활용까지 지원합니다",
     "description": "확장 프로그램 설명"
   }
 }

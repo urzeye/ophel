@@ -4,7 +4,7 @@
     "description": "拡張機能名"
   },
   "extensionDescription": {
-    "message": "Gemini/ChatGPT/Claude/Grok/AI Studio対応：アウトライン、会話管理・エクスポート、プロンプト、UI最適化、テーマ、通知、履歴復元、スクロールロック、透かし除去、ショートカット、WebDAV同期など多機能で極上のAI体験を！",
+    "message": "長いAIチャットを読みやすく、整理・再利用可能な構造化ワークフローに変換し、ChatGPT、Gemini、Claude、Grokの対話を単なる履歴ではなく、長期的に活用できる知識資産として蓄積し、整理・検索・再利用を継続的に行えます。",
     "description": "拡張機能の説明"
   }
 }

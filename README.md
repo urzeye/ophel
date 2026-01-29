@@ -1,53 +1,79 @@
 # Ophel 🚀
 
-<p align="center">
-  <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo">
-</p>
+> 让 AI 对话如文档般可阅读、导航、复用
 
-<p align="center">
-  <strong>✨ AI 之益，触手可及 ✨</strong><br/>
-  <em>AI's Benefit, Within Reach.</em>
-</p>
+<div align="center">
+  <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
 
-<p align="center">
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-lightgrey.svg" alt="License"></a>
-  <img src="https://img.shields.io/github/package-json/v/urzeye/ophel?color=blue" alt="Version">
-  <img src="https://img.shields.io/github/last-commit/urzeye/ophel" alt="Last Commit">
-  <a href="https://github.com/urzeye/ophel/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/urzeye/ophel/ci.yml?label=Build&logo=github" alt="Build Status"></a>
-  <br/>
-  <a href="https://github.com/urzeye/ophel/stargazers"><img src="https://img.shields.io/github/stars/urzeye/ophel?style=social" alt="Stars"></a>
-  <a href="https://github.com/urzeye/ophel/network/members"><img src="https://img.shields.io/github/forks/urzeye/ophel?style=social" alt="Forks"></a>
-  <a href="https://github.com/urzeye/ophel/issues"><img src="https://img.shields.io/github/issues/urzeye/ophel?style=social" alt="Issues"></a>
-  <br/>
-  <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=" alt="Chrome Users"></a>
-  <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=" alt="Firefox Users"></a>
-  <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=" alt="GreasyFork Installs"></a>
-</p>
+  <h3 style="margin-top: -2px;">✨ 把对话变成知识，而不是历史 ✨</h3>
+  
+  <p>
+    告别无限滚动带来的信息迷航
+    </br>
+    用实时大纲厘清脉络，
+    </br>
+    用会话文件夹构筑体系，
+    </br>
+    用 Prompt 词库沉淀经验，
+    </br>
+    让那些闪光的思考在秩序中自由流动
+  </p>
+  
+  <sub>👇 Demo: 从“无限滚动的聊天记录”，到“可导航的 AI 文档”</sub>
+  ![Ophel Demo](./assets/demo/outline.gif)
+  
+  <p>
+    <strong><em>它让 AI 对话第一次成为可组织的工作流</em></strong><br/>
+  </p>
+
+  <small style="opacity: 0.6;">
+  无论你使用哪个平台，都可以以同一种方式，获得一致、可组织且可重用的体验
+  </small>
+  <p>
+    <a href="https://chatgpt.com"><img src="https://img.shields.io/badge/ChatGPT-74aa9c?logo=openai&logoColor=white" alt="ChatGPT"/></a>
+    <a href="https://gemini.google.com"><img src="https://img.shields.io/badge/Gemini-4285F4?logo=google%20gemini&logoColor=white&labelColor=4285F4&color=34A853" alt="Gemini"/></a>
+    <a href="https://grok.com"><img src="https://img.shields.io/badge/Grok-000000?logo=x&logoColor=white" alt="Grok"/></a>
+    <a href="https://claude.ai"><img src="https://img.shields.io/badge/Claude-D97757?logo=anthropic&logoColor=white" alt="Claude"/></a>
+    <a href="https://aistudio.google.com"><img src="https://img.shields.io/badge/AI%20Studio-4285F4?logo=google&logoColor=white" alt="AI Studio"/></a>
+    <a href="https://business.gemini.google/"><img src="https://img.shields.io/badge/Gemini%20Enterprise-9334E6?logo=google&logoColor=white" alt="Gemini Enterprise"/></a>
+    <a href="https://github.com/urzeye/ophel/issues"><img src="https://img.shields.io/badge/More_coming_soon...-lightgrey" alt="More coming soon"/></a>
+    </br>
+    <img src="https://img.shields.io/github/package-json/v/urzeye/ophel?color=blue" alt="Version">
+    <a href="./LICENSE"><img src="https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-lightgrey.svg" alt="License"></a>
+    <img src="https://img.shields.io/github/last-commit/urzeye/ophel" alt="Last Commit">
+    <a href="https://github.com/urzeye/ophel/stargazers"><img src="https://img.shields.io/github/stars/urzeye/ophel?style=social" alt="Stars"></a>
+    <a href="https://github.com/urzeye/ophel/network/members"><img src="https://img.shields.io/github/forks/urzeye/ophel?style=social" alt="Forks"></a>
+    </br>
+    <!-- <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=" alt="Chrome Users"></a>
+    <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=" alt="Firefox Users"></a>
+    <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=" alt="GreasyFork Installs"></a> -->
+    <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=Chrome%20Web%20Store&color=4285F4&labelColor=4285F4" alt="Chrome Web Store"></a>
+    <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=Firefox%20Add-ons&color=FF7139&labelColor=FF7139" alt="Firefox Add-ons"></a>
+    <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=Greasy%20Fork&color=black&labelColor=black" alt="Greasy Fork"></a>
+  </p>
+
+</div>
 
 <!-- Promo Link -->
 <p align="center">
-  <strong>📢 <a href="https://github.com/urzeye/ophel/issues/30">Help promote Ophel / 帮忙宣传 Ophel</a></strong>
-</p>
-
-<p align="center">
+  📣 <a href="https://github.com/urzeye/ophel/issues/30">
+    <strong>Help promote Ophel / 帮忙宣传 Ophel</strong>
+  </a>
+  <br/>
   <a href="https://www.producthunt.com/products/ophel?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-ophel" target="_blank" rel="noopener noreferrer"><img alt="Ophel - Enhance AI chat with outline, conversations, prompts & more. | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1068867&theme=light&t=1769514514380"></a>
 </p>
 
 <p align="center">
   <a href="#-功能演示">功能演示</a> •
   <a href="#-核心功能">核心功能</a> •
-  <a href="#%EF%B8%8F-技术架构">技术架构</a> •
   <a href="#-快速开始">快速开始</a> •
+  <a href="#%EF%B8%8F-技术架构">技术架构</a> •
   <a href="#-支持项目">支持项目</a>
 </p>
 
 <p align="center">
-  🌐 <a href="./README_EN.md">English</a> | <strong>简体中文</strong> | <a href="./.github/i18n-readmes/README_zh-TW.md">繁體中文</a> | <a href="./.github/i18n-readmes/README_ja.md">日本語</a> | <a href="./.github/i18n-readmes/README_ko.md">한국어</a> | <a href="./.github/i18n-readmes/README_de.md">Deutsch</a> | <a href="./.github/i18n-readmes/README_fr.md">Français</a> | <a href="./.github/i18n-readmes/README_es.md">Español</a> | <a href="./.github/i18n-readmes/README_pt.md">Português</a> | <a href="./.github/i18n-readmes/README_ru.md">Русский</a>
+  🌐 <a href="./README_EN.md">English</a> | <strong>简体中文</strong> | <a href="./docs/i18n/README_zh-TW.md">繁體中文</a> | <a href="./docs/i18n/README_ja.md">日本語</a> | <a href="./docs/i18n/README_ko.md">한국어</a> | <a href="./docs/i18n/README_de.md">Deutsch</a> | <a href="./docs/i18n/README_fr.md">Français</a> | <a href="./docs/i18n/README_es.md">Español</a> | <a href="./docs/i18n/README_pt.md">Português</a> | <a href="./docs/i18n/README_ru.md">Русский</a>
 </p>
-
----
-
-👋 **Ophel** 是一款同时支持 **浏览器扩展** 和 **油猴脚本** 的 AI 聊天页面增强工具，为 **Gemini**、**ChatGPT**、**Claude**、**Grok**、**AI Studio** 等主流 AI 平台提供统一的交互体验。
 
 ## 📹 功能演示
 
@@ -66,6 +92,52 @@
 - ⚡ **效率工具** — 快捷键、模型锁定、标签页自动命名、完成通知
 - 🎭 **Claude 增强** — Session Key 管理、多账号切换
 - 🔒 **隐私优先** — 本地存储、WebDAV 同步、无数据收集
+
+## 🚀 快速开始
+
+> [!tip]
+>
+> **推荐使用浏览器扩展（Extension）版本**，功能更全、体验更佳、兼容性更好，油猴脚本版本功能受限。
+
+### 应用商店
+
+<a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=Chrome%20Web%20Store&color=4285F4&labelColor=4285F4" alt="Chrome Web Store"></a>
+<a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=Firefox%20Add-ons&color=FF7139&labelColor=FF7139" alt="Firefox Add-ons"></a>
+<a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=Greasy%20Fork&color=black&labelColor=black" alt="Greasy Fork"></a>
+
+### 手动安装
+
+#### 浏览器扩展
+
+1. 从 [Releases](https://github.com/urzeye/ophel/releases/latest) 下载并解压安装包
+2. 打开浏览器扩展管理页面，开启 **开发者模式**
+3. 点击 **加载已解压的扩展程序**，选择解压的文件夹
+
+#### 油猴脚本
+
+1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 插件
+2. 从 [Releases](https://github.com/urzeye/ophel/releases) 下载 `.user.js` 文件
+3. 拖入浏览器或点击链接即可安装
+
+### 本地构建
+
+<details>
+<summary>展开查看构建步骤</summary>
+
+**环境要求**：Node.js >= 20.x, pnpm >= 9.x
+
+```bash
+git clone https://github.com/urzeye/ophel.git
+cd ophel
+
+pnpm install
+pnpm dev              # 开发模式
+pnpm build            # Chrome/Edge 生产构建
+pnpm build:firefox    # Firefox 生产构建
+pnpm build:userscript # 油猴脚本生产构建
+```
+
+</details>
 
 ## 🏗️ 技术架构
 
@@ -169,50 +241,6 @@ flowchart TB
 
 </details>
 
-## 🚀 快速开始
-
-> [!tip]
->
-> **推荐使用浏览器扩展（Extension）版本**，功能更全、体验更佳、兼容性更好。油猴脚本（Userscript）版本功能受限（如无法读取 Cookie、无独立弹窗等）。
-
-### 应用商店
-
-[Chrome](https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd) | [Firefox](https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer) | [Greasy Fork](https://greasyfork.org/zh-CN/scripts/563646-ophel)
-
-### 手动安装
-
-#### 浏览器扩展
-
-1. 从 [Releases](https://github.com/urzeye/ophel/releases) 下载并解压安装包
-2. 打开浏览器扩展管理页面，开启 **开发者模式**
-3. 点击 **加载已解压的扩展程序**，选择解压的文件夹
-
-#### 油猴脚本
-
-1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 插件
-2. 从 [Releases](https://github.com/urzeye/ophel/releases) 下载 `.user.js` 文件
-3. 拖入浏览器或点击链接即可安装
-
-### 本地构建
-
-<details>
-<summary>展开查看构建步骤</summary>
-
-**环境要求**：Node.js >= 20.x, pnpm >= 9.x
-
-```bash
-git clone https://github.com/urzeye/ophel.git
-cd ophel
-
-pnpm install
-pnpm dev              # 开发模式
-pnpm build            # Chrome/Edge 生产构建
-pnpm build:firefox    # Firefox 生产构建
-pnpm build:userscript # 油猴脚本生产构建
-```
-
-</details>
-
 ### 🐛问题反馈
 
 如有问题或建议，欢迎在 [GitHub Issues](https://github.com/urzeye/ophel/issues) 反馈。
@@ -234,10 +262,7 @@ pnpm build:userscript # 油猴脚本生产构建
 </p>
 
 <p align="center">
-  如果 Ophel 对你有帮助，欢迎支持：<br/><br/>
-  <a href="https://opencollective.com/urzeye-oss">
-    <img src="https://opencollective.com/urzeye-oss/donate/button@2x.png?color=blue" width="200" alt="Donate to Open Collective">
-  </a>
+  如果这款工具对你的工作/学习流程带来提升，欢迎以 Star、Sponsor 的方式支持我们，让 Ophel 变得更好。
 </p>
 
 <p align="center">
