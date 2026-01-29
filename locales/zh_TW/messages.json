@@ -4,7 +4,7 @@
     "description": "擴充功能名稱"
   },
   "extensionDescription": {
-    "message": "支援Gemini/ChatGPT/Claude/Grok/AI Studio：智能大綱導航、會話管理與匯出、提示詞庫、介面優化、主題定制、完成通知、閱讀歷史恢復、滾動鎖定、去浮水印、自訂快速鍵、WebDAV同步等超多個人化功能，打造極致AI體驗！",
+    "message": "將冗長的AI對話整理為可閱讀、可導航、可重用的結構化工作流程，讓ChatGPT、Gemini、Claude、Grok等網頁AI對話不再只是聊天紀錄，而是真正沉澱為可長期使用的知識資產，支援長期分類、搜尋與跨對話整合，建立穩定的個人AI工作流體系化中。",
     "description": "擴充功能描述"
   }
 }

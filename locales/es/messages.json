@@ -4,7 +4,7 @@
     "description": "Nombre de la extensión"
   },
   "extensionDescription": {
-    "message": "Para Gemini/ChatGPT/Claude/Grok/AI Studio: Índice, exportación sesiones, prompts, UI, temas, atajos, sincro WebDAV y más!",
+    "message": "Convierte chats con IA en flujos de trabajo estructurados, reutilizando conversaciones de ChatGPT, Gemini, Claude y Grok.",
     "description": "Descripción de la extensión"
   }
 }

@@ -4,7 +4,7 @@
     "description": "Extension name"
   },
   "extensionDescription": {
-    "message": "For Gemini/ChatGPT/Claude/Grok/AI Studio: Smart outline, session export, prompts, UI tweaks, themes, shortcuts, WebDAV sync & more!",
+    "message": "Turn long AI chats into structured workflows, making ChatGPT, Gemini, Claude and Grok conversations reusable knowledge.",
     "description": "Extension description"
   }
 }

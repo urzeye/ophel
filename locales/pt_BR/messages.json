@@ -4,7 +4,7 @@
     "description": "Nome da extensão"
   },
   "extensionDescription": {
-    "message": "Para Gemini/ChatGPT/Claude/Grok/AI Studio: Sumário, exportação sessões, prompts, UI, temas, atalhos, sincronização WebDAV e mais!",
+    "message": "Transforma conversas longas com IA em fluxos de trabalho estruturados; chats do ChatGPT, Gemini, Claude e Grok reutilizáveis.",
     "description": "Descrição da extensão"
   }
 }

@@ -4,7 +4,7 @@
     "description": "Название расширения"
   },
   "extensionDescription": {
-    "message": "Для Gemini/ChatGPT/Claude/Grok/AI Studio: Оглавление, экспорт сессий, промпты, UI, темы, клавиши, синхро WebDAV и более!",
+    "message": "Преобразует диалоги с ИИ в структурированные рабочие процессы, превращая чаты ChatGPT, Gemini, Claude и Grok в знания для работы.",
     "description": "Описание расширения"
   }
 }
