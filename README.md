@@ -10,12 +10,20 @@
   <p>
     告别无限滚动带来的信息迷航
     </br>
-    用实时大纲厘清脉络，用会话文件夹构筑体系，用Prompt词库沉淀经验，让那些闪光的思考在秩序中自由流动
+    用实时大纲厘清脉络，
+    </br>
+    用会话文件夹构筑体系，
+    </br>
+    用 Prompt 词库沉淀经验，
+    </br>
+    让那些闪光的思考在秩序中自由流动
   </p>
   
+  <small>👇 从“无限滚动的聊天记录”，到“可导航的 AI 文档”</small>
   ![Ophel Demo](./assets/demo/outline.gif)
+  
   <p>
-    <strong><em>它是结构化 AI 工作流中不可或缺的一块拼图</em></strong><br/>
+    <strong><em>它让 AI 对话第一次成为可组织的工作流</em></strong><br/>
     <sub>支持 ChatGPT / Gemini / Claude / Grok / AI Studio</sub>
   </p>
 </div>
