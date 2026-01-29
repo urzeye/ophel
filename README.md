@@ -26,8 +26,8 @@
     <strong><em>它让 AI 对话第一次成为可组织的工作流</em></strong><br/>
   </p>
 
-  <small style="opacity: 0.6;">
-  支持以下 AI 平台：
+  <small style="opacity: 0.5;">
+   原生支持多 AI 平台（可同时使用）：
   </small>
   <p>
     <a href="https://chatgpt.com"><img src="https://img.shields.io/badge/ChatGPT-74aa9c?logo=openai&logoColor=white" alt="ChatGPT"/></a>
@@ -36,6 +36,7 @@
     <a href="https://claude.ai"><img src="https://img.shields.io/badge/Claude-D97757?logo=anthropic&logoColor=white" alt="Claude"/></a>
     <a href="https://aistudio.google.com"><img src="https://img.shields.io/badge/AI%20Studio-4285F4?logo=google&logoColor=white" alt="AI Studio"/></a>
     <a href="https://business.gemini.google/"><img src="https://img.shields.io/badge/Gemini%20Enterprise-9334E6?logo=google&logoColor=white" alt="Gemini Enterprise"/></a>
+    <a href="https://github.com/urzeye/ophel/issues"><img src="https://img.shields.io/badge/More_coming_soon...-lightgrey" alt="More coming soon"/></a>
   </p>
   <p>
     <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=" alt="Chrome Users"></a>
