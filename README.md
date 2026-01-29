@@ -1,26 +1,17 @@
-# Ophel —— 将 AI 聊天变成结构化工作空间 🚀
+# Ophel 🚀
 
-> 👉 **像读文档一样阅读、导航和管理你的 AI 对话**
-> 面向长对话场景设计的浏览器扩展 & 油猴脚本  
-> 支持 _ChatGPT / Gemini / Claude / Grok / AI Studio_ 等多种 AI 平台
+> 将 AI 聊天变成结构化工作空间
 
 <div align="center">
   <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
 
+  <h3>像读文档一样阅读、导航和管理你的 AI 对话</h3>
+  <p>面向长对话场景设计的浏览器扩展 & 油猴脚本</p>
+  <p>支持 _ChatGPT / Gemini / Claude / Grok / AI Studio_ 等多种 AI 平台</p>
+
   <p>不只是聊天增强工具，更是将零散、冗长的 AI 对话转化为 <strong>可阅读、可导航、可管理、可复用</strong> 的结构化内容的个人知识管理终极方案。</p>
   <p>Navigate long conversations with live outlines, organize chats into folders, and reuse prompts effortlessly. Ophel brings structure, clarity, and control to your AI conversations.</p>
 </div>
-
-![Ophel Demo](./assets/demo/outline.gif)
-
-<small>
-自动生成对话大纲，像读文档一样浏览 AI 长对话
-</small>
-
-<!-- <p align="center">
-  <strong>✨ AI 之益，触手可及 ✨</strong><br/>
-  <em>AI's Benefit, Within Reach.</em>
-</p> -->
 
 <p align="center">
   <img src="https://img.shields.io/github/package-json/v/urzeye/ophel?color=blue" alt="Version">
@@ -58,17 +49,9 @@
   🌐 <a href="./README_EN.md">English</a> | <strong>简体中文</strong> | <a href="./docs/i18n/README_zh-TW.md">繁體中文</a> | <a href="./docs/i18n/README_ja.md">日本語</a> | <a href="./docs/i18n/README_ko.md">한국어</a> | <a href="./docs/i18n/README_de.md">Deutsch</a> | <a href="./docs/i18n/README_fr.md">Français</a> | <a href="./docs/i18n/README_es.md">Español</a> | <a href="./docs/i18n/README_pt.md">Português</a> | <a href="./docs/i18n/README_ru.md">Русский</a>
 </p>
 
----
-
-👋 **Ophel** 是一款同时支持 **浏览器扩展** 和 **油猴脚本** 的 AI 聊天页面增强工具，为 **Gemini**、**ChatGPT**、**Claude**、**Grok**、**AI Studio** 等主流 AI 平台提供统一的交互体验。
-
-## 📹 功能演示
-
-|                                                        大纲 Outline                                                        |                                                     会话 Conversations                                                     |                                                       功能 Features                                                        |
-| :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
-| <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
-
 ## ✨ 核心功能
+
+![Ophel Demo](./assets/demo/outline.gif)
 
 - 🧠 **智能大纲** — 自动解析用户问题与 AI 回复，生成可导航的目录结构
 - 💬 **会话管理** — 文件夹分类、标签、搜索、批量操作
@@ -80,11 +63,17 @@
 - 🎭 **Claude 增强** — Session Key 管理、多账号切换
 - 🔒 **隐私优先** — 本地存储、WebDAV 同步、无数据收集
 
+## 📹 功能演示
+
+|                                                        大纲 Outline                                                        |                                                     会话 Conversations                                                     |                                                       功能 Features                                                        |
+| :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
+| <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
+
 ## 🚀 快速开始
 
 > [!tip]
 >
-> **推荐使用浏览器扩展（Extension）版本**，功能更全、体验更佳、兼容性更好。油猴脚本（Userscript）版本功能受限（如无法读取 Cookie、无独立弹窗等）。
+> **推荐使用浏览器扩展（Extension）版本**，功能更全、体验更佳、兼容性更好，油猴脚本版本功能受限。
 
 ### 应用商店
 
