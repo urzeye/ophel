@@ -529,7 +529,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
   )
 
   const handleClick = useCallback(
-    (node: OutlineNode) => {
+    async (node: OutlineNode) => {
       let targetElement = node.element
 
       // 关键修复：元素失效时重新查找
@@ -553,8 +553,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       }
 
       if (targetElement && targetElement.isConnected) {
+        // 关键修复：等待锚点保存完成后再跳转（instant 模式必须）
         if (onJumpBefore) {
-          onJumpBefore()
+          await onJumpBefore()
         }
         // 传入 __bypassLock: true 以绕过 ScrollLockManager 的拦截
         targetElement.scrollIntoView({
