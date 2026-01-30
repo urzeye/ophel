@@ -11,7 +11,8 @@ import { setSafeHTML } from "~utils/trusted-types"
 // 预编译正则
 const REGEX_CODE_BLOCK = /<code\b[^>]*>[\s\S]*?<\/code>/gi
 const REGEX_BOLD_TAG = /<b\b[^>]*>([\s\S]*?)<\/b>/gi
-const REGEX_MD_BOLD = /\*\*([\s\S]+?)\*\*/g
+const REGEX_STRONG_TAG = /<strong\b[^>]*>([\s\S]*?)<\/strong>/gi
+const REGEX_MD_BOLD = /\*\*([^*]+(?:\*(?!\*)[^*]*)*)\*\*/g
 const REGEX_PLACEHOLDER = /###OPHEL_CODE_(\d+)###/g
 
 /**
@@ -104,8 +105,10 @@ export class MarkdownFixer {
       return `###OPHEL_CODE_${codeBlocks.length - 1}###`
     })
 
-    // 步骤 2: 将 <b> 统一转为 **（标准化）
-    let processedHtml = protectedHtml.replace(REGEX_BOLD_TAG, "**$1**")
+    // 步骤 2: 将 <strong> 和 <b> 统一转为 **（标准化）
+    // 注意：必须先处理 <strong>，再处理 <b>，因为 ChatGPT 可能混用这两种标签
+    let processedHtml = protectedHtml.replace(REGEX_STRONG_TAG, "**$1**")
+    processedHtml = processedHtml.replace(REGEX_BOLD_TAG, "**$1**")
 
     // 步骤 3: 将 ** 转为 <strong>
     let hasChanges = false
