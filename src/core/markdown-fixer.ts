@@ -11,7 +11,8 @@ import { setSafeHTML } from "~utils/trusted-types"
 // 预编译正则
 const REGEX_CODE_BLOCK = /<code\b[^>]*>[\s\S]*?<\/code>/gi
 const REGEX_BOLD_TAG = /<b\b[^>]*>([\s\S]*?)<\/b>/gi
-const REGEX_MD_BOLD = /\*\*([\s\S]+?)\*\*/g
+const REGEX_STRONG_TAG = /<strong\b[^>]*>([\s\S]*?)<\/strong>/gi
+const REGEX_MD_BOLD = /\*\*([^*]+(?:\*(?!\*)[^*]*)*)\*\*/g
 const REGEX_PLACEHOLDER = /###OPHEL_CODE_(\d+)###/g
 
 /**
@@ -25,7 +26,6 @@ export interface MarkdownFixerConfig {
 }
 
 export class MarkdownFixer {
-  private processedNodes = new WeakSet<HTMLElement>()
   private stopObserver: (() => void) | null = null
   private enabled = false
   private config: MarkdownFixerConfig
@@ -79,8 +79,6 @@ export class MarkdownFixer {
    * 修复单个段落
    */
   fixParagraph(p: HTMLElement) {
-    if (this.processedNodes.has(p)) return
-
     const currentHtml = p.innerHTML
 
     // 使用长度作为 hash 检查是否已处理
@@ -88,10 +86,13 @@ export class MarkdownFixer {
       return
     }
 
-    // 快速检查：如果既没有 <b> 也没有 **，跳过
-    if (!currentHtml.includes("<b") && !currentHtml.includes("**")) {
+    // 快速检查：如果既没有 <b>、<strong> 也没有 **，跳过
+    if (
+      !currentHtml.includes("<b") &&
+      !currentHtml.includes("<strong") &&
+      !currentHtml.includes("**")
+    ) {
       p.dataset.mdFixerHash = String(currentHtml.length)
-      this.processedNodes.add(p)
       return
     }
 
@@ -104,8 +105,10 @@ export class MarkdownFixer {
       return `###OPHEL_CODE_${codeBlocks.length - 1}###`
     })
 
-    // 步骤 2: 将 <b> 统一转为 **（标准化）
-    let processedHtml = protectedHtml.replace(REGEX_BOLD_TAG, "**$1**")
+    // 步骤 2: 将 <strong> 和 <b> 统一转为 **（标准化）
+    // 注意：必须先处理 <strong>，再处理 <b>，因为 ChatGPT 可能混用这两种标签
+    let processedHtml = protectedHtml.replace(REGEX_STRONG_TAG, "**$1**")
+    processedHtml = processedHtml.replace(REGEX_BOLD_TAG, "**$1**")
 
     // 步骤 3: 将 ** 转为 <strong>
     let hasChanges = false
@@ -129,6 +132,5 @@ export class MarkdownFixer {
 
     // 更新 hash 标记
     p.dataset.mdFixerHash = String(p.innerHTML.length)
-    this.processedNodes.add(p)
   }
 }
