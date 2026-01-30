@@ -173,7 +173,7 @@ export async function smartScrollToTop(adapter: SiteAdapter | null): Promise<{
   if (container && container.scrollHeight > container.clientHeight) {
     const previousScrollTop = container.scrollTop
     const scrollHeight = container.scrollHeight
-    container.scrollTo({ top: 0, behavior: "smooth" })
+    container.scrollTo({ top: 0, behavior: "instant" })
     return { container, previousScrollTop, scrollHeight }
   }
 
@@ -207,7 +207,7 @@ export async function smartScrollToBottom(adapter: SiteAdapter | null): Promise<
 
   if (container && container.scrollHeight > container.clientHeight) {
     const previousScrollTop = container.scrollTop
-    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" })
+    container.scrollTo({ top: container.scrollHeight, behavior: "instant" })
     return { container, previousScrollTop }
   }
 

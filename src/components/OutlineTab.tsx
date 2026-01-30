@@ -473,7 +473,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         if (itemRect.top < wrapperRect.top || itemRect.bottom > wrapperRect.bottom) {
           const scrollOffset =
             itemRect.top - wrapperRect.top - wrapperRect.height / 2 + itemRect.height / 2
-          listContainer.scrollBy({ top: scrollOffset, behavior: "smooth" })
+          listContainer.scrollBy({ top: scrollOffset, behavior: "instant" })
         }
       })
     }
@@ -485,7 +485,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         scrollContainer.addEventListener("scroll", handleScroll, { passive: true })
         // Initial check
         handleScroll()
-      } else if (retryCount < 10) {
+      } else if (retryCount < 20) {
         retryCount++
         retryTimer = setTimeout(initListener, 300)
       } else {
@@ -505,7 +505,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         clearTimeout(retryTimer)
       }
     }
-  }, [manager])
+  }, [manager, tree.length])
 
   // 大纲列表滚动监听 (Dynamic Scroll Button state)
   useEffect(() => {
@@ -529,7 +529,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
   )
 
   const handleClick = useCallback(
-    (node: OutlineNode) => {
+    async (node: OutlineNode) => {
       let targetElement = node.element
 
       // 关键修复：元素失效时重新查找
@@ -553,12 +553,13 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       }
 
       if (targetElement && targetElement.isConnected) {
+        // 关键修复：等待锚点保存完成后再跳转（instant 模式必须）
         if (onJumpBefore) {
-          onJumpBefore()
+          await onJumpBefore()
         }
         // 传入 __bypassLock: true 以绕过 ScrollLockManager 的拦截
         targetElement.scrollIntoView({
-          behavior: "smooth",
+          behavior: "instant",
           block: "start",
           __bypassLock: true,
         } as any)
@@ -692,7 +693,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       if (!outlineItem) return
 
       // 滚动大纲面板到该项（居中显示）
-      outlineItem.scrollIntoView({ behavior: "smooth", block: "center" })
+      outlineItem.scrollIntoView({ behavior: "instant", block: "center" })
 
       // 高亮该大纲项（3秒后消失并清除 forceVisible）
       outlineItem.classList.add("highlight")
