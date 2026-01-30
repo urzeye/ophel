@@ -485,7 +485,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         scrollContainer.addEventListener("scroll", handleScroll, { passive: true })
         // Initial check
         handleScroll()
-      } else if (retryCount < 10) {
+      } else if (retryCount < 20) {
         retryCount++
         retryTimer = setTimeout(initListener, 300)
       } else {
@@ -505,7 +505,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         clearTimeout(retryTimer)
       }
     }
-  }, [manager])
+  }, [manager, tree.length])
 
   // 大纲列表滚动监听 (Dynamic Scroll Button state)
   useEffect(() => {
