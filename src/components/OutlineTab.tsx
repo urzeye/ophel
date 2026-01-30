@@ -473,7 +473,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         if (itemRect.top < wrapperRect.top || itemRect.bottom > wrapperRect.bottom) {
           const scrollOffset =
             itemRect.top - wrapperRect.top - wrapperRect.height / 2 + itemRect.height / 2
-          listContainer.scrollBy({ top: scrollOffset, behavior: "smooth" })
+          listContainer.scrollBy({ top: scrollOffset, behavior: "instant" })
         }
       })
     }
@@ -558,7 +558,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         }
         // 传入 __bypassLock: true 以绕过 ScrollLockManager 的拦截
         targetElement.scrollIntoView({
-          behavior: "smooth",
+          behavior: "instant",
           block: "start",
           __bypassLock: true,
         } as any)
@@ -692,7 +692,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       if (!outlineItem) return
 
       // 滚动大纲面板到该项（居中显示）
-      outlineItem.scrollIntoView({ behavior: "smooth", block: "center" })
+      outlineItem.scrollIntoView({ behavior: "instant", block: "center" })
 
       // 高亮该大纲项（3秒后消失并清除 forceVisible）
       outlineItem.classList.add("highlight")
