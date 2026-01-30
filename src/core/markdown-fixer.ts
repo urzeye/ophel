@@ -26,7 +26,6 @@ export interface MarkdownFixerConfig {
 }
 
 export class MarkdownFixer {
-  private processedNodes = new WeakSet<HTMLElement>()
   private stopObserver: (() => void) | null = null
   private enabled = false
   private config: MarkdownFixerConfig
@@ -80,8 +79,6 @@ export class MarkdownFixer {
    * 修复单个段落
    */
   fixParagraph(p: HTMLElement) {
-    if (this.processedNodes.has(p)) return
-
     const currentHtml = p.innerHTML
 
     // 使用长度作为 hash 检查是否已处理
@@ -89,10 +86,13 @@ export class MarkdownFixer {
       return
     }
 
-    // 快速检查：如果既没有 <b> 也没有 **，跳过
-    if (!currentHtml.includes("<b") && !currentHtml.includes("**")) {
+    // 快速检查：如果既没有 <b>、<strong> 也没有 **，跳过
+    if (
+      !currentHtml.includes("<b") &&
+      !currentHtml.includes("<strong") &&
+      !currentHtml.includes("**")
+    ) {
       p.dataset.mdFixerHash = String(currentHtml.length)
-      this.processedNodes.add(p)
       return
     }
 
@@ -132,6 +132,5 @@ export class MarkdownFixer {
 
     // 更新 hash 标记
     p.dataset.mdFixerHash = String(p.innerHTML.length)
-    this.processedNodes.add(p)
   }
 }
