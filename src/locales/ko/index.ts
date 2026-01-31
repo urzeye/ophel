@@ -472,11 +472,12 @@ export const ko = {
   // Panel Settings
   defaultPanelStateLabel: "기본으로 패널 표시",
   defaultPanelStateDesc: "페이지 새로고침 후 패널 펼침 상태 유지",
-  autoHidePanelLabel: "패널 밖 클릭 시 최소화",
-  autoHidePanelDesc: "패널 영역 외부를 클릭하면 패널을 최소화",
+  autoHidePanelLabel: "패널 밖 클릭 시 접기",
+  autoHidePanelDesc: "패널 영역 외부를 클릭하면 플로팅 볼로 최소화",
+  autoHidePanelDescEdgeSnap: "패널 영역 외부를 클릭하면 가장자리로 스냅",
   // Edge Snap
-  edgeSnapHideLabel: "가장자리 스냅 숨기기",
-  edgeSnapHideDesc: "패널을 화면 가장자리로 드래그하면 자동으로 숨기고 호버 시 표시",
+  edgeSnapHideLabel: "가장자리 자동 스냅",
+  edgeSnapHideDesc: "패널을 화면 가장자리로 드래그하면 자동으로 스냅하고 호버 시 표시",
   edgeSnapThresholdLabel: "스냅 임계값",
   edgeSnapThresholdDesc: "드래그 시 가장자리에 얼마나 가까워지면 스냅되는지",
   // Panel Position Settings

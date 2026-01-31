@@ -470,13 +470,14 @@ export const ja = {
   preventAutoScrollLabel: "自動スクロールを防止",
   preventAutoScrollDesc: "AIの生成中に、ページが勝手に一番下へ移動するのを防ぎます",
   // Panel Settings
-  defaultPanelStateLabel: "デフォルトで表示",
+  defaultPanelStateLabel: "デフォルトで展開",
   defaultPanelStateDesc: "ページ読み込み時にパネルを展開した状態にします",
-  autoHidePanelLabel: "外側クリックで閉じる",
-  autoHidePanelDesc: "パネル以外の場所をクリックしたときにパネルを最小化します",
+  autoHidePanelLabel: "外部クリックで折りたたむ",
+  autoHidePanelDesc: "外部をクリックするとフローティングボールに折りたたみます",
+  autoHidePanelDescEdgeSnap: "外部をクリックすると端に格納します",
   // Edge Snap
-  edgeSnapHideLabel: "画面端に吸着",
-  edgeSnapHideDesc: "パネルを画面端にドラッグしたとき自動的に隠し、ホバーで表示します",
+  edgeSnapHideLabel: "エッジ自動スナップ",
+  edgeSnapHideDesc: "画面端にドラッグすると自動吸着し、ホバーで表示します",
   edgeSnapThresholdLabel: "吸着感度",
   edgeSnapThresholdDesc: "ドラッグ時にどれくらい端に近づけば吸着するか",
   // Panel Position Settings

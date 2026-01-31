@@ -469,7 +469,8 @@ export const es = {
   defaultPanelStateLabel: "Abierto por Defecto",
   defaultPanelStateDesc: "Panel desplegado al cargar",
   autoHidePanelLabel: "Cerrar al Clic Fuera",
-  autoHidePanelDesc: "Minimiza si tocas fuera",
+  autoHidePanelDesc: "Minimizar en bola flotante al hacer clic fuera",
+  autoHidePanelDescEdgeSnap: "Retraer al borde al hacer clic fuera",
   // Edge Snap
   edgeSnapHideLabel: "Imán en los Bordes",
   edgeSnapHideDesc: "Se esconde al borde y sale al pasar el ratón",

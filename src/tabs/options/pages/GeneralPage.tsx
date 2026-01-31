@@ -288,15 +288,8 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
           </SettingRow>
 
           <ToggleRow
-            label={t("autoHidePanelLabel") || "自动隐藏面板"}
-            description={t("autoHidePanelDesc") || "点击面板外部时自动隐藏"}
-            checked={settings.panel?.autoHide ?? false}
-            onChange={() => updateNestedSetting("panel", "autoHide", !settings.panel?.autoHide)}
-          />
-
-          <ToggleRow
-            label={t("edgeSnapHideLabel") || "边缘吸附隐藏"}
-            description={t("edgeSnapHideDesc") || "拖动面板到屏幕边缘时自动隐藏"}
+            label={t("edgeSnapHideLabel") || "边缘自动吸附"}
+            description={t("edgeSnapHideDesc") || "拖动面板到屏幕边缘时自动吸附，悬停显示"}
             checked={settings.panel?.edgeSnap ?? false}
             onChange={() => updateNestedSetting("panel", "edgeSnap", !settings.panel?.edgeSnap)}
           />
@@ -319,6 +312,17 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
             </div>
           </SettingRow>
+
+          <ToggleRow
+            label={t("autoHidePanelLabel") || "点击外部收起"}
+            description={
+              settings.panel?.edgeSnap
+                ? t("autoHidePanelDescEdgeSnap") || "点击面板外部区域时自动缩回边缘"
+                : t("autoHidePanelDesc") || "点击面板外部区域时自动收起为悬浮球"
+            }
+            checked={settings.panel?.autoHide ?? false}
+            onChange={() => updateNestedSetting("panel", "autoHide", !settings.panel?.autoHide)}
+          />
         </SettingCard>
       )}
 

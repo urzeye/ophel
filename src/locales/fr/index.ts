@@ -469,10 +469,11 @@ export const fr = {
   defaultPanelStateLabel: "Ouvert par Défaut",
   defaultPanelStateDesc: "Panneau déployé au chargement",
   autoHidePanelLabel: "Fermer au Clic Extérieur",
-  autoHidePanelDesc: "Réduit si vous touchez en dehors",
+  autoHidePanelDesc: "Réduit en bulle flottante si vous cliquez en dehors",
+  autoHidePanelDescEdgeSnap: "Se rétracte sur le bord si vous cliquez en dehors",
   // Edge Snap
   edgeSnapHideLabel: "Aimant sur les Bords",
-  edgeSnapHideDesc: "Se cache au bord et sort au survol de la souris",
+  edgeSnapHideDesc: "Se colle au bord et sort au survol de la souris",
   edgeSnapThresholdLabel: "Sensibilité",
   edgeSnapThresholdDesc: "Distance pour déclencher l'aimant",
   // Panel Position Settings

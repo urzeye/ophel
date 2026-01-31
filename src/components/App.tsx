@@ -34,7 +34,6 @@ export const App = () => {
 
   // 面板状态 - 初始值来自设置
   const [isPanelOpen, setIsPanelOpen] = useState(false)
-  const hasInitializedPanel = useRef(false)
 
   // 使用 ref 保持 settings 的最新引用，避免闭包捕获过期值
   const settingsRef = useRef(settings)
@@ -42,13 +41,23 @@ export const App = () => {
     settingsRef.current = settings
   }, [settings])
 
-  // 当设置加载完成后，同步面板初始状态（只执行一次）
+  // 初始化面板状态
   useEffect(() => {
-    // 只有当 Zustand hydration 完成且尚未初始化时才执行
-    if (isSettingsHydrated && settings && !hasInitializedPanel.current) {
-      hasInitializedPanel.current = true
+    // 确保仅在 hydration 完成且 settings 加载后执行一次初始化
+    if (isSettingsHydrated && settings && !isInitializedRef.current) {
+      isInitializedRef.current = true
       // 如果 defaultPanelOpen 为 true，打开面板
       if (settings.panel?.defaultOpen) {
+        // 如果开启了边缘吸附，且初始边距小于吸附阈值，则直接初始化为吸附状态
+        const {
+          edgeSnap,
+          defaultEdgeDistance = 25,
+          edgeSnapThreshold = 18,
+          defaultPosition = "right",
+        } = settings.panel
+        if (edgeSnap && defaultEdgeDistance <= edgeSnapThreshold) {
+          setEdgeSnapState(defaultPosition)
+        }
         setIsPanelOpen(true)
       }
     }
@@ -74,6 +83,8 @@ export const App = () => {
   const isSettingsOpenRef = useRef(false)
   // 追踪面板内输入框是否聚焦（解决 IME 输入法弹出时 CSS :hover 失效的问题）
   const isInputFocusedRef = useRef(false)
+  // 追踪是否已完成初始化，防止重复执行
+  const isInitializedRef = useRef(false)
 
   // 取消快捷键触发的延迟缩回计时器
   const cancelShortcutPeekTimer = useCallback(() => {
@@ -524,7 +535,10 @@ export const App = () => {
   }, [edgeSnapState, settings?.panel?.edgeSnap])
 
   useEffect(() => {
-    if (!settings?.panel?.autoHide || !isPanelOpen) return
+    // 只有在开启自动隐藏时，才监听点击外部
+    // 如果没有开启自动隐藏，无论是否吸附，点击外部都不应有反应
+    const shouldHandle = settings?.panel?.autoHide
+    if (!shouldHandle || !isPanelOpen) return
 
     const handleClickOutside = (e: MouseEvent) => {
       // 使用 composedPath() 支持 Shadow DOM
@@ -547,7 +561,17 @@ export const App = () => {
       })
 
       if (!isInsidePanelOrPortal) {
-        setIsPanelOpen(false)
+        // 如果开启了边缘吸附，点击外部应触发吸附（缩回边缘），而不是完全关闭
+        if (settings?.panel?.edgeSnap) {
+          if (!edgeSnapState) {
+            setEdgeSnapState(settings.panel.defaultPosition || "right")
+            setIsEdgePeeking(false)
+          }
+          // 如果已经是吸附状态，点击外部不做处理（保持吸附）
+        } else {
+          // 普通模式：点击外部关闭面板
+          setIsPanelOpen(false)
+        }
       }
     }
 
@@ -560,7 +584,13 @@ export const App = () => {
       clearTimeout(timer)
       document.removeEventListener("click", handleClickOutside, true)
     }
-  }, [settings?.panel?.autoHide, isPanelOpen])
+  }, [
+    settings?.panel?.autoHide,
+    settings?.panel?.edgeSnap,
+    isPanelOpen,
+    edgeSnapState,
+    settings?.panel?.defaultPosition,
+  ])
 
   // 发送消息后自动清除选中的提示词悬浮条
   useEffect(() => {
