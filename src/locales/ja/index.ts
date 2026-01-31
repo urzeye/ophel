@@ -486,6 +486,8 @@ export const ja = {
   defaultPositionRight: "右側",
   defaultEdgeDistanceLabel: "基本マージン",
   defaultEdgeDistanceDesc: "画面端からの初期距離",
+  panelWidthLabel: "パネルの幅",
+  panelWidthDesc: "パネルの幅 (px)",
   panelHeightLabel: "パネルの高さ",
   panelHeightDesc: "画面高に対するパネルの割合",
   // Interface Toggle

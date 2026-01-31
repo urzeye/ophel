@@ -480,6 +480,8 @@ export const ru = {
   defaultPositionRight: "Справа",
   defaultEdgeDistanceLabel: "Отступ",
   defaultEdgeDistanceDesc: "Расстояние от края",
+  panelWidthLabel: "Ширина панели",
+  panelWidthDesc: "Ширина панели (px)",
   panelHeightLabel: "Высота",
   panelHeightDesc: "% экрана",
   // Interface Toggle

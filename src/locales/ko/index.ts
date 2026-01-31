@@ -486,6 +486,8 @@ export const ko = {
   defaultPositionRight: "오른쪽",
   defaultEdgeDistanceLabel: "기본 여백",
   defaultEdgeDistanceDesc: "화면 가장자리에서의 초기 거리",
+  panelWidthLabel: "패널 너비",
+  panelWidthDesc: "패널의 너비 (px)",
   panelHeightLabel: "패널 높이",
   panelHeightDesc: "패널이 차지하는 화면 높이의 백분율",
   // Interface Toggle

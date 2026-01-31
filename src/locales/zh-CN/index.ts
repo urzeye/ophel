@@ -647,6 +647,8 @@ export const zhCN = {
   defaultPositionRight: "右侧",
   defaultEdgeDistanceLabel: "默认边距",
   defaultEdgeDistanceDesc: "面板距离屏幕边缘的初始距离",
+  panelWidthLabel: "面板宽度",
+  panelWidthDesc: "面板的宽度 (px)",
   panelHeightLabel: "面板高度",
   panelHeightDesc: "面板占用屏幕高度的百分比",
   // 手动锚点

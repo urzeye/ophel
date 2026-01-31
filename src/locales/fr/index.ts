@@ -482,6 +482,8 @@ export const fr = {
   defaultPositionRight: "Droite",
   defaultEdgeDistanceLabel: "Marge",
   defaultEdgeDistanceDesc: "Distance du bord",
+  panelWidthLabel: "Largeur du panneau",
+  panelWidthDesc: "Largeur du panneau (px)",
   panelHeightLabel: "Hauteur",
   panelHeightDesc: "% de l'écran",
   // Interface Toggle

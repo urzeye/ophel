@@ -481,6 +481,8 @@ export const pt = {
   defaultPositionRight: "Direita",
   defaultEdgeDistanceLabel: "Margem",
   defaultEdgeDistanceDesc: "Distância da borda",
+  panelWidthLabel: "Largura do painel",
+  panelWidthDesc: "Largura do painel (px)",
   panelHeightLabel: "Altura",
   panelHeightDesc: "% da tela",
   // Interface Toggle

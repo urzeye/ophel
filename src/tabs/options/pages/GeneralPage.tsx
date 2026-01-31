@@ -100,6 +100,10 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
     updateNestedSetting("panel", "height", val)
   }
 
+  const handleWidthChange = (val: number) => {
+    updateNestedSetting("panel", "width", val)
+  }
+
   // 处理拖拽开始
   const handleDragStart = (e: React.DragEvent, type: "tab" | "button", index: number) => {
     setDraggedItem({ type, index })
@@ -241,8 +245,25 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
                 value={settings.panel?.defaultEdgeDistance ?? 25}
                 onChange={handleEdgeDistanceChange}
                 min={0}
-                max={200}
+                max={400}
                 defaultValue={25}
+                style={{ width: "70px" }}
+              />
+              <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
+            </div>
+          </SettingRow>
+
+          {/* 面板宽度 */}
+          <SettingRow
+            label={t("panelWidthLabel") || "面板宽度"}
+            description={t("panelWidthDesc") || "面板的宽度 (px)"}>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <NumberInput
+                value={settings.panel?.width ?? 320}
+                onChange={handleWidthChange}
+                min={200}
+                max={600}
+                defaultValue={320}
                 style={{ width: "70px" }}
               />
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
@@ -255,11 +276,11 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
             description={t("panelHeightDesc") || "面板占用屏幕高度的百分比"}>
             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
               <NumberInput
-                value={settings.panel?.height ?? 80}
+                value={settings.panel?.height ?? 85}
                 onChange={handleHeightChange}
                 min={50}
                 max={100}
-                defaultValue={80}
+                defaultValue={85}
                 style={{ width: "70px" }}
               />
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>vh</span>

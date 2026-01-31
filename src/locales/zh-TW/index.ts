@@ -557,6 +557,8 @@ export const zhTW = {
   defaultPositionRight: "右側",
   defaultEdgeDistanceLabel: "預設邊距",
   defaultEdgeDistanceDesc: "面板距離螢幕邊緣的初始距離",
+  panelWidthLabel: "面板寬度",
+  panelWidthDesc: "面板的寬度 (px)",
   panelHeightLabel: "面板高度",
   panelHeightDesc: "面板佔用螢幕高度的百分比",
   // 手動錨點
