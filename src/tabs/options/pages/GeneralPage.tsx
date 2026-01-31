@@ -247,7 +247,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
                 min={0}
                 max={400}
                 defaultValue={25}
-                style={{ width: "70px" }}
+                style={{ width: "85px" }}
               />
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
             </div>
@@ -264,7 +264,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
                 min={200}
                 max={600}
                 defaultValue={320}
-                style={{ width: "70px" }}
+                style={{ width: "85px" }}
               />
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
             </div>
@@ -281,7 +281,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
                 min={50}
                 max={100}
                 defaultValue={85}
-                style={{ width: "70px" }}
+                style={{ width: "85px" }}
               />
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>vh</span>
             </div>
@@ -314,7 +314,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
                 max={400}
                 defaultValue={18}
                 disabled={!settings.panel?.edgeSnap}
-                style={{ width: "70px" }}
+                style={{ width: "85px" }}
               />
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
             </div>
