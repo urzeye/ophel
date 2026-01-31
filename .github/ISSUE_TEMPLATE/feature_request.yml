@@ -9,11 +9,20 @@ body:
         感谢您的建议！如果您觉得 Ophel 对您有帮助，请给项目点个 Star 🌟（Star 可以帮助项目被更多人看到）
         Thanks for your suggestion! If Ophel helps you, please give it a Star 🌟（Star helps support the project）
 
+        > [!NOTE]
+        > - ⚠️ 本项目由个人维护，**功能请求不等于一定会实现**。
+        > - ⚠️ 功能优先级会综合评估项目整体情况。
+        > - ⚠️ **情绪化或命令式表达**不会提高需求优先级。
+        >
+        > 请确认你理解以上说明后再提交 Issue。
+
   - type: checkboxes
     id: checklist
     attributes:
       label: 前置检查 | Essential Checklist
       options:
+        - label: 我已阅读并理解项目的功能请求与边界说明 | I have read and understood the project's instructions
+          required: true
         - label: 我已在 Issue 中搜索过类似需求，确认这不是一个重复提议 | I have searched for existing requests and confirmed this is not a duplicate
           required: true
         - label: 我已为项目点了 Star 🌟（Star helps support the project）
