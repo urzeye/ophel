@@ -71,6 +71,8 @@ export interface MarkdownFixerConfig {
   selector: string
   /** 是否修复 <span> 内部的内容（AI Studio 需要） */
   fixSpanContent?: boolean
+  /** 判断是否应跳过当前元素的修复（例如正在流式生成时） */
+  shouldSkip?: (element: HTMLElement) => boolean
 }
 
 // ==================== SiteAdapter 基类 ====================

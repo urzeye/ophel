@@ -214,6 +214,23 @@ export class ChatGPTAdapter extends SiteAdapter {
     return {
       selector: '[data-message-author-role="assistant"] p',
       fixSpanContent: false,
+      shouldSkip: (element) => {
+        if (!this.isGenerating()) return false
+
+        // 查找当前元素所属的消息容器
+        const messageContainer = element.closest('[data-message-author-role="assistant"]')
+        if (!messageContainer) return false
+
+        // 查找页面上最后一个 AI 消息容器（即正在生成的那个）
+        const allMessages = document.querySelectorAll(
+          this.getChatContentSelectors().find((s) => s.includes("assistant")) ||
+            '[data-message-author-role="assistant"]',
+        )
+        const lastMessage = allMessages[allMessages.length - 1]
+
+        // 如果当前元素位于正在生成的消息中，强制跳过（等待生成结束后通过重试机制修复）
+        return messageContainer === lastMessage
+      },
     }
   }
 
