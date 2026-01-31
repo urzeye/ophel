@@ -238,11 +238,11 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
             description={t("defaultEdgeDistanceDesc") || "面板距离屏幕边缘的初始距离"}>
             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
               <NumberInput
-                value={settings.panel?.defaultEdgeDistance ?? 20}
+                value={settings.panel?.defaultEdgeDistance ?? 25}
                 onChange={handleEdgeDistanceChange}
                 min={0}
                 max={200}
-                defaultValue={20}
+                defaultValue={25}
                 style={{ width: "70px" }}
               />
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
@@ -287,11 +287,11 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
             disabled={!settings.panel?.edgeSnap}>
             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
               <NumberInput
-                value={settings.panel?.edgeSnapThreshold ?? 30}
+                value={settings.panel?.edgeSnapThreshold ?? 18}
                 onChange={handleSnapThresholdChange}
-                min={10}
-                max={100}
-                defaultValue={30}
+                min={0}
+                max={400}
+                defaultValue={18}
                 disabled={!settings.panel?.edgeSnap}
                 style={{ width: "70px" }}
               />
