@@ -532,7 +532,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
     async (node: OutlineNode) => {
       let targetElement = node.element
 
-      // 关键修复：元素失效时重新查找
+      // 元素失效时重新查找
       if (!targetElement || !targetElement.isConnected) {
         // 用户提问节点（level=0）需要使用专门的查找逻辑
         if (node.isUserQuery && node.level === 0) {
@@ -553,7 +553,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       }
 
       if (targetElement && targetElement.isConnected) {
-        // 关键修复：等待锚点保存完成后再跳转（instant 模式必须）
+        // 等待锚点保存完成后再跳转（instant 模式必须）
         if (onJumpBefore) {
           await onJumpBefore()
         }

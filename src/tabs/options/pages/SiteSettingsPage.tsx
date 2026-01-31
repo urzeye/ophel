@@ -3,10 +3,10 @@
  * 包含：页面布局、模型锁定、内容处理
  * 这些设置与具体站点相关，按站点存储配置
  */
-import React, { useCallback, useEffect, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import { PageContentIcon as LayoutIcon, RefreshIcon } from "~components/icons"
-import { Switch } from "~components/ui"
+import { NumberInput, Switch } from "~components/ui"
 import { LAYOUT_CONFIG, SITE_IDS, SITE_SETTINGS_TAB_IDS } from "~constants"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
@@ -250,20 +250,37 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
     currentUserQueryWidth?.value || LAYOUT_CONFIG.USER_QUERY_WIDTH.DEFAULT_PX,
   )
 
+  // 焦点状态追踪，防止 Store 同步覆盖用户输入
+  const [focusedInput, setFocusedInput] = useState<string | null>(null)
+
+  // 防抖定时器和输入框引用
+  const widthBlurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const userQueryWidthBlurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const widthInputRef = useRef<HTMLInputElement>(null)
+  const userQueryWidthInputRef = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
-    if (currentPageWidth?.value) {
+    if (currentPageWidth?.value && focusedInput !== "pageWidth") {
       setTempWidth(currentPageWidth.value)
     }
-  }, [currentPageWidth?.value])
+  }, [currentPageWidth?.value, focusedInput])
 
   useEffect(() => {
-    if (currentUserQueryWidth?.value) {
+    if (currentUserQueryWidth?.value && focusedInput !== "userQueryWidth") {
       setTempUserQueryWidth(currentUserQueryWidth.value)
     }
-  }, [currentUserQueryWidth?.value])
+  }, [currentUserQueryWidth?.value, focusedInput])
+
+  // 清理防抖定时器
+  useEffect(() => {
+    return () => {
+      if (widthBlurTimerRef.current) clearTimeout(widthBlurTimerRef.current)
+      if (userQueryWidthBlurTimerRef.current) clearTimeout(userQueryWidthBlurTimerRef.current)
+    }
+  }, [])
 
   // 页面宽度更新
-  const handleWidthBlur = () => {
+  const commitWidth = useCallback(() => {
     let val = parseInt(tempWidth)
     const unit = currentPageWidth?.unit || "%"
 
@@ -295,6 +312,23 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
         },
       })
     }
+  }, [tempWidth, currentPageWidth, settings, siteId, setSettings])
+
+  const handleWidthFocus = () => {
+    if (widthBlurTimerRef.current) {
+      clearTimeout(widthBlurTimerRef.current)
+      widthBlurTimerRef.current = null
+    }
+    setFocusedInput("pageWidth")
+  }
+
+  const handleWidthBlur = () => {
+    widthBlurTimerRef.current = setTimeout(() => {
+      if (document.activeElement !== widthInputRef.current) {
+        setFocusedInput(null)
+        commitWidth()
+      }
+    }, 100)
   }
 
   const handleUnitChange = (newUnit: string) => {
@@ -324,7 +358,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
   }
 
   // 用户问题宽度更新
-  const handleUserQueryWidthBlur = () => {
+  const commitUserQueryWidth = useCallback(() => {
     let val = parseInt(tempUserQueryWidth)
     const unit = currentUserQueryWidth?.unit || "px"
 
@@ -358,6 +392,23 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
         },
       })
     }
+  }, [tempUserQueryWidth, currentUserQueryWidth, settings, siteId, setSettings])
+
+  const handleUserQueryWidthFocus = () => {
+    if (userQueryWidthBlurTimerRef.current) {
+      clearTimeout(userQueryWidthBlurTimerRef.current)
+      userQueryWidthBlurTimerRef.current = null
+    }
+    setFocusedInput("userQueryWidth")
+  }
+
+  const handleUserQueryWidthBlur = () => {
+    userQueryWidthBlurTimerRef.current = setTimeout(() => {
+      if (document.activeElement !== userQueryWidthInputRef.current) {
+        setFocusedInput(null)
+        commitUserQueryWidth()
+      }
+    }, 100)
   }
 
   const handleUserQueryUnitChange = (newUnit: string) => {
@@ -428,11 +479,19 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
               disabled={!currentPageWidth?.enabled}>
               <div style={{ display: "flex", gap: "8px" }}>
                 <input
+                  ref={widthInputRef}
                   type="text"
                   className="settings-input"
                   value={tempWidth}
+                  onFocus={handleWidthFocus}
                   onChange={(e) => setTempWidth(e.target.value.replace(/[^0-9]/g, ""))}
                   onBlur={handleWidthBlur}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      commitWidth()
+                      widthInputRef.current?.blur()
+                    }
+                  }}
                   disabled={!currentPageWidth?.enabled}
                   style={{ width: "80px" }}
                 />
@@ -477,11 +536,19 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
               disabled={!currentUserQueryWidth?.enabled}>
               <div style={{ display: "flex", gap: "8px" }}>
                 <input
+                  ref={userQueryWidthInputRef}
                   type="text"
                   className="settings-input"
                   value={tempUserQueryWidth}
+                  onFocus={handleUserQueryWidthFocus}
                   onChange={(e) => setTempUserQueryWidth(e.target.value.replace(/[^0-9]/g, ""))}
                   onBlur={handleUserQueryWidthBlur}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      commitUserQueryWidth()
+                      userQueryWidthInputRef.current?.blur()
+                    }
+                  }}
                   disabled={!currentUserQueryWidth?.enabled}
                   style={{ width: "80px" }}
                 />
@@ -636,26 +703,22 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
             {settings.geminiEnterprise?.policyRetry?.enabled && (
               <SettingRow label={t("maxRetriesLabel")}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <input
-                    type="number"
-                    min="1"
-                    max="10"
-                    className="settings-input"
+                  <NumberInput
                     value={settings.geminiEnterprise?.policyRetry?.maxRetries ?? 3}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value)
-                      if (!isNaN(val) && val >= 1 && val <= 10) {
-                        setSettings({
-                          geminiEnterprise: {
-                            ...settings.geminiEnterprise,
-                            policyRetry: {
-                              ...settings.geminiEnterprise?.policyRetry!,
-                              maxRetries: val,
-                            },
+                    onChange={(val) =>
+                      setSettings({
+                        geminiEnterprise: {
+                          ...settings.geminiEnterprise,
+                          policyRetry: {
+                            ...settings.geminiEnterprise?.policyRetry!,
+                            maxRetries: val,
                           },
-                        })
-                      }
-                    }}
+                        },
+                      })
+                    }
+                    min={1}
+                    max={10}
+                    defaultValue={3}
                     style={{ width: "60px" }}
                   />
                   <span style={{ fontSize: "12px", color: "var(--gh-text-secondary)" }}>

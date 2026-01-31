@@ -6,7 +6,7 @@
 import React, { useCallback, useState } from "react"
 
 import { FeaturesIcon } from "~components/icons"
-import { Switch } from "~components/ui"
+import { NumberInput, Switch } from "~components/ui"
 import { FEATURES_TAB_IDS } from "~constants"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
@@ -240,19 +240,12 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
             <SettingRow
               label={t("outlineUpdateIntervalLabel") || "更新检测间隔"}
               description={t("outlineUpdateIntervalDesc") || "大纲自动更新的时间间隔（秒）"}>
-              <input
-                type="number"
-                className="settings-input"
+              <NumberInput
+                value={settings.features?.outline?.updateInterval ?? 2}
+                onChange={(val) => updateDeepSetting("features", "outline", "updateInterval", val)}
                 min={1}
-                value={settings.features?.outline?.updateInterval || 2}
-                onChange={(e) =>
-                  updateDeepSetting(
-                    "features",
-                    "outline",
-                    "updateInterval",
-                    parseInt(e.target.value) || 2,
-                  )
-                }
+                max={60}
+                defaultValue={2}
                 style={{ width: "80px" }}
               />
             </SettingRow>

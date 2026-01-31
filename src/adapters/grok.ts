@@ -108,7 +108,7 @@ export class GrokAdapter extends SiteAdapter {
         }
       }
 
-      // 关键修复：在关闭弹窗之前，缓存弹窗中的所有会话
+      // 在关闭弹窗之前，缓存弹窗中的所有会话
       // 这样 getConversationList 在弹窗关闭后仍然可以返回这些数据
       this.cacheDialogConversations()
 

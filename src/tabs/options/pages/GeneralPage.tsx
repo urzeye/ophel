@@ -2,10 +2,10 @@
  * 基本设置页面
  * 包含：面板 | 界面排版 | 快捷按钮 | 宽度布局
  */
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 
 import { DragIcon, GeneralIcon } from "~components/icons"
-import { Switch } from "~components/ui"
+import { NumberInput, Switch } from "~components/ui"
 import { COLLAPSED_BUTTON_DEFS, TAB_DEFINITIONS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
@@ -87,59 +87,17 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
     null,
   )
 
-  // 宽度布局相关状态
-
-  // 面板设置本地状态 (优化输入体验)
-  const [tempEdgeDistance, setTempEdgeDistance] = useState(
-    settings.panel?.defaultEdgeDistance?.toString() ?? "20",
-  )
-  const [tempSnapThreshold, setTempSnapThreshold] = useState(
-    settings.panel?.edgeSnapThreshold?.toString() ?? "30",
-  )
-  const [tempHeight, setTempHeight] = useState(settings.panel?.height?.toString() ?? "80")
-
-  // 同步 Store 设置到本地状态
-  useEffect(() => {
-    if (settings.panel?.defaultEdgeDistance !== undefined) {
-      setTempEdgeDistance(settings.panel?.defaultEdgeDistance.toString())
-    }
-  }, [settings.panel?.defaultEdgeDistance])
-
-  useEffect(() => {
-    if (settings.panel?.edgeSnapThreshold !== undefined) {
-      setTempSnapThreshold(settings.panel?.edgeSnapThreshold.toString())
-    }
-  }, [settings.panel?.edgeSnapThreshold])
-
-  useEffect(() => {
-    if (settings.panel?.height !== undefined) {
-      setTempHeight(settings.panel?.height.toString())
-    }
-  }, [settings.panel?.height])
-
-  // 面板设置处理函数
-  const handleEdgeDistanceBlur = () => {
-    let val = parseInt(tempEdgeDistance)
-    if (isNaN(val)) val = 20
-    const clamped = Math.max(0, Math.min(200, val))
-    setTempEdgeDistance(clamped.toString())
-    updateNestedSetting("panel", "defaultEdgeDistance", clamped)
+  // 面板设置更新函数
+  const handleEdgeDistanceChange = (val: number) => {
+    updateNestedSetting("panel", "defaultEdgeDistance", val)
   }
 
-  const handleSnapThresholdBlur = () => {
-    let val = parseInt(tempSnapThreshold)
-    if (isNaN(val)) val = 30
-    const clamped = Math.max(10, Math.min(100, val))
-    setTempSnapThreshold(clamped.toString())
-    updateNestedSetting("panel", "edgeSnapThreshold", clamped)
+  const handleSnapThresholdChange = (val: number) => {
+    updateNestedSetting("panel", "edgeSnapThreshold", val)
   }
 
-  const handleHeightBlur = () => {
-    let val = parseInt(tempHeight)
-    if (isNaN(val)) val = 80
-    const clamped = Math.max(50, Math.min(100, val))
-    setTempHeight(clamped.toString())
-    updateNestedSetting("panel", "height", clamped)
+  const handleHeightChange = (val: number) => {
+    updateNestedSetting("panel", "height", val)
   }
 
   // 处理拖拽开始
@@ -279,15 +237,13 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
             label={t("defaultEdgeDistanceLabel") || "默认边距"}
             description={t("defaultEdgeDistanceDesc") || "面板距离屏幕边缘的初始距离"}>
             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <input
-                type="number"
-                className="settings-input"
-                value={tempEdgeDistance}
+              <NumberInput
+                value={settings.panel?.defaultEdgeDistance ?? 20}
+                onChange={handleEdgeDistanceChange}
                 min={0}
                 max={200}
+                defaultValue={20}
                 style={{ width: "70px" }}
-                onChange={(e) => setTempEdgeDistance(e.target.value)}
-                onBlur={handleEdgeDistanceBlur}
               />
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
             </div>
@@ -298,18 +254,13 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
             label={t("panelHeightLabel") || "面板高度"}
             description={t("panelHeightDesc") || "面板占用屏幕高度的百分比"}>
             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <input
-                type="number"
-                className="settings-input"
-                value={tempHeight}
+              <NumberInput
+                value={settings.panel?.height ?? 80}
+                onChange={handleHeightChange}
                 min={50}
                 max={100}
+                defaultValue={80}
                 style={{ width: "70px" }}
-                onChange={(e) => setTempHeight(e.target.value)}
-                onBlur={handleHeightBlur}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleHeightBlur()
-                }}
               />
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>vh</span>
             </div>
@@ -335,16 +286,14 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
             description={t("edgeSnapThresholdDesc") || "拖拽面板到边缘多近时触发吸附"}
             disabled={!settings.panel?.edgeSnap}>
             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <input
-                type="number"
-                className="settings-input"
-                value={tempSnapThreshold}
+              <NumberInput
+                value={settings.panel?.edgeSnapThreshold ?? 30}
+                onChange={handleSnapThresholdChange}
                 min={10}
                 max={100}
+                defaultValue={30}
                 disabled={!settings.panel?.edgeSnap}
                 style={{ width: "70px" }}
-                onChange={(e) => setTempSnapThreshold(e.target.value)}
-                onBlur={handleSnapThresholdBlur}
               />
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
             </div>
