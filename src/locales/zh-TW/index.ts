@@ -422,10 +422,11 @@ export const zhTW = {
   preventAutoScrollDesc: "當 AI 生成長內容時，阻止頁面自動滾動到底部，方便閱讀上文",
 
   // 介面排版開關
-  defaultPanelStateLabel: "默認顯示面板",
-  defaultPanelStateDesc: "刷新頁面後面板默認保持展開狀態",
-  autoHidePanelLabel: "點擊外部最小化",
-  autoHidePanelDesc: "點擊面板外部區域時自動最小化面板",
+  defaultPanelStateLabel: "預設展開面板",
+  defaultPanelStateDesc: "刷新頁面後面板預設保持展開狀態",
+  autoHidePanelLabel: "點擊外部收起",
+  autoHidePanelDesc: "點擊面板外部區域時自動收起為懸浮球",
+  autoHidePanelDescEdgeSnap: "點擊面板外部區域時自動縮回邊緣",
   // 介面排版開關
   disableOutline: "禁用大綱",
   togglePrompts: "啟用/禁用提示詞",
@@ -546,8 +547,8 @@ export const zhTW = {
   stopLoading: "停止載入",
   loadingHint: "保持頁面靜止，完成後將自動停留在頂部",
   // 邊緣吸附
-  edgeSnapHideLabel: "邊緣吸附隱藏",
-  edgeSnapHideDesc: "拖動面板到螢幕邊緣時自動隱藏，懸停顯示",
+  edgeSnapHideLabel: "邊緣自動吸附",
+  edgeSnapHideDesc: "拖動面板到螢幕邊緣時自動吸附，懸停顯示",
   edgeSnapThresholdLabel: "吸附觸發距離",
   edgeSnapThresholdDesc: "拖曳面板到邊緣多近時觸發吸附",
   // 面板位置設定
@@ -557,6 +558,8 @@ export const zhTW = {
   defaultPositionRight: "右側",
   defaultEdgeDistanceLabel: "預設邊距",
   defaultEdgeDistanceDesc: "面板距離螢幕邊緣的初始距離",
+  panelWidthLabel: "面板寬度",
+  panelWidthDesc: "面板的寬度 (px)",
   panelHeightLabel: "面板高度",
   panelHeightDesc: "面板佔用螢幕高度的百分比",
   // 手動錨點

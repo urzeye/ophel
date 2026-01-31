@@ -100,6 +100,10 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
     updateNestedSetting("panel", "height", val)
   }
 
+  const handleWidthChange = (val: number) => {
+    updateNestedSetting("panel", "width", val)
+  }
+
   // 处理拖拽开始
   const handleDragStart = (e: React.DragEvent, type: "tab" | "button", index: number) => {
     setDraggedItem({ type, index })
@@ -238,12 +242,29 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
             description={t("defaultEdgeDistanceDesc") || "面板距离屏幕边缘的初始距离"}>
             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
               <NumberInput
-                value={settings.panel?.defaultEdgeDistance ?? 20}
+                value={settings.panel?.defaultEdgeDistance ?? 25}
                 onChange={handleEdgeDistanceChange}
                 min={0}
-                max={200}
-                defaultValue={20}
-                style={{ width: "70px" }}
+                max={400}
+                defaultValue={25}
+                style={{ width: "85px" }}
+              />
+              <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
+            </div>
+          </SettingRow>
+
+          {/* 面板宽度 */}
+          <SettingRow
+            label={t("panelWidthLabel") || "面板宽度"}
+            description={t("panelWidthDesc") || "面板的宽度 (px)"}>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <NumberInput
+                value={settings.panel?.width ?? 320}
+                onChange={handleWidthChange}
+                min={200}
+                max={600}
+                defaultValue={320}
+                style={{ width: "85px" }}
               />
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
             </div>
@@ -255,27 +276,20 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
             description={t("panelHeightDesc") || "面板占用屏幕高度的百分比"}>
             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
               <NumberInput
-                value={settings.panel?.height ?? 80}
+                value={settings.panel?.height ?? 85}
                 onChange={handleHeightChange}
                 min={50}
                 max={100}
-                defaultValue={80}
-                style={{ width: "70px" }}
+                defaultValue={85}
+                style={{ width: "85px" }}
               />
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>vh</span>
             </div>
           </SettingRow>
 
           <ToggleRow
-            label={t("autoHidePanelLabel") || "自动隐藏面板"}
-            description={t("autoHidePanelDesc") || "点击面板外部时自动隐藏"}
-            checked={settings.panel?.autoHide ?? false}
-            onChange={() => updateNestedSetting("panel", "autoHide", !settings.panel?.autoHide)}
-          />
-
-          <ToggleRow
-            label={t("edgeSnapHideLabel") || "边缘吸附隐藏"}
-            description={t("edgeSnapHideDesc") || "拖动面板到屏幕边缘时自动隐藏"}
+            label={t("edgeSnapHideLabel") || "边缘自动吸附"}
+            description={t("edgeSnapHideDesc") || "拖动面板到屏幕边缘时自动吸附，悬停显示"}
             checked={settings.panel?.edgeSnap ?? false}
             onChange={() => updateNestedSetting("panel", "edgeSnap", !settings.panel?.edgeSnap)}
           />
@@ -287,17 +301,28 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
             disabled={!settings.panel?.edgeSnap}>
             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
               <NumberInput
-                value={settings.panel?.edgeSnapThreshold ?? 30}
+                value={settings.panel?.edgeSnapThreshold ?? 18}
                 onChange={handleSnapThresholdChange}
-                min={10}
-                max={100}
-                defaultValue={30}
+                min={0}
+                max={400}
+                defaultValue={18}
                 disabled={!settings.panel?.edgeSnap}
-                style={{ width: "70px" }}
+                style={{ width: "85px" }}
               />
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
             </div>
           </SettingRow>
+
+          <ToggleRow
+            label={t("autoHidePanelLabel") || "点击外部收起"}
+            description={
+              settings.panel?.edgeSnap
+                ? t("autoHidePanelDescEdgeSnap") || "点击面板外部区域时自动缩回边缘"
+                : t("autoHidePanelDesc") || "点击面板外部区域时自动收起为悬浮球"
+            }
+            checked={settings.panel?.autoHide ?? false}
+            onChange={() => updateNestedSetting("panel", "autoHide", !settings.panel?.autoHide)}
+          />
         </SettingCard>
       )}
 

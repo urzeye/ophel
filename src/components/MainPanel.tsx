@@ -354,8 +354,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             ? { left: `${defaultEdgeDistance}px`, right: "auto" }
             : { right: `${defaultEdgeDistance}px`, left: "auto" }),
           transform: "translateY(-50%)",
-          width: "320px",
-          height: `${currentSettings.panel?.height ?? 80}vh`,
+          width: `${currentSettings.panel?.width ?? 320}px`,
+          height: `${currentSettings.panel?.height ?? 85}vh`,
+          // @ts-ignore - 注入 CSS 变量供吸附计算使用
+          "--panel-width": `${currentSettings.panel?.width ?? 320}px`,
           minHeight: "500px",
           backgroundColor: "var(--gh-bg, #ffffff)",
           backgroundImage: "var(--gh-bg-image, none)",
