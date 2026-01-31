@@ -358,6 +358,28 @@ export const App = () => {
     }
   }, [settings?.panel?.edgeSnap, edgeSnapState])
 
+  // 监听默认位置变化，重置吸附状态
+  // 当用户切换默认位置（如从左到右）时，如果是吸附状态，需要重置以便面板能跳转到新位置
+  const prevDefaultPosition = useRef(settings?.panel?.defaultPosition)
+  useEffect(() => {
+    const currentPos = settings?.panel?.defaultPosition
+    // 初始化 ref
+    if (prevDefaultPosition.current === undefined && currentPos) {
+      prevDefaultPosition.current = currentPos
+      return
+    }
+
+    if (currentPos && prevDefaultPosition.current !== currentPos) {
+      prevDefaultPosition.current = currentPos
+      // 只有在当前有吸附状态时才需要重置
+      if (edgeSnapState) {
+        // 保持吸附状态，但切换方向
+        setEdgeSnapState(currentPos)
+        setIsEdgePeeking(false)
+      }
+    }
+  }, [settings?.panel?.defaultPosition, edgeSnapState])
+
   // 使用 MutationObserver 监听 Portal 元素（菜单/对话框/设置模态框）的存在
   // 当 Portal 元素存在时，强制设置 isEdgePeeking 为 true，防止 CSS :hover 失效导致面板隐藏
   useEffect(() => {
