@@ -1059,7 +1059,7 @@ private syncPluginUITheme(mode?: ThemeMode) {
 
       const cssVars = themeVariablesToCSS(vars)
 
-      // 关键修复：添加 color-scheme 和 data-theme 选择器
+      // 添加 color-scheme 和 data-theme 选择器
       styleEl.textContent = `:host {
   ${cssVars}
   color-scheme: ${currentMode};
@@ -1070,7 +1070,7 @@ private syncPluginUITheme(mode?: ThemeMode) {
   ${cssVars}
 }
 `
-      // 关键修复：设置 host 元素的 data-theme 属性
+      // 设置 host 元素的 data-theme 属性
       ;(host as HTMLElement).dataset.theme = currentMode
 
       // 将样式标签追加到 Shadow Root 末尾以获得最高优先级
@@ -1176,7 +1176,7 @@ const hasInitializedPresets = useRef(false)
 useEffect(() => {
   const timeSinceLoad = Date.now() - pageLoadTime.current
 
-  // 关键修复：跳过页面加载后 3 秒内的所有 setPresets 调用
+  // 跳过页面加载后 3 秒内的所有 setPresets 调用
   // 1. main.ts 已经在启动时同步读取 Storage 并应用了正确主题
   // 2. 避免 Plasmo useStorage 在初始化阶段用缓存的旧值覆盖正确设置
   if (timeSinceLoad < 3000) {

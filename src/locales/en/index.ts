@@ -487,13 +487,14 @@ export const en = {
   preventAutoScrollLabel: "Prevent auto-scroll",
   preventAutoScrollDesc: "Stop page from auto-scrolling to bottom during AI generation",
   // Panel Settings
-  defaultPanelStateLabel: "Show Panel by Default",
+  defaultPanelStateLabel: "Default Expand Panel",
   defaultPanelStateDesc: "Keep panel expanded after page refresh",
-  autoHidePanelLabel: "Click Outside to Minimize",
+  autoHidePanelLabel: "Collapse on Click Outside",
   autoHidePanelDesc: "Minimize panel when clicking outside the panel area",
+  autoHidePanelDescEdgeSnap: "Automatically retract to edge when clicking outside panel",
   // Edge Snap
-  edgeSnapHideLabel: "Edge Snap Hide",
-  edgeSnapHideDesc: "Automatically hide panel when dragged to screen edge, show on hover",
+  edgeSnapHideLabel: "Edge Auto Snap",
+  edgeSnapHideDesc: "Automatically snap to edge when dragged to screen edge, peek on hover",
   edgeSnapThresholdLabel: "Snap Threshold",
   edgeSnapThresholdDesc: "How close to edge triggers snap when dragging",
   // Panel Position Settings
@@ -503,6 +504,8 @@ export const en = {
   defaultPositionRight: "Right",
   defaultEdgeDistanceLabel: "Default Margin",
   defaultEdgeDistanceDesc: "Initial distance from screen edge",
+  panelWidthLabel: "Panel Width",
+  panelWidthDesc: "Width of the panel (px)",
   panelHeightLabel: "Panel Height",
   panelHeightDesc: "Percentage of screen height the panel occupies",
   // Interface Toggle

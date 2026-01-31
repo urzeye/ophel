@@ -519,10 +519,11 @@ export const zhCN = {
   preventAutoScrollDesc: "当 AI 生成长内容时，阻止页面自动滚动到底部，方便阅读上文",
 
   // 界面排版开关
-  defaultPanelStateLabel: "默认显示面板",
+  defaultPanelStateLabel: "默认展开面板",
   defaultPanelStateDesc: "刷新页面后面板默认保持展开状态",
-  autoHidePanelLabel: "点击外部最小化",
-  autoHidePanelDesc: "点击面板外部区域时自动最小化面板",
+  autoHidePanelLabel: "点击外部收起",
+  autoHidePanelDesc: "点击面板外部区域时自动收起为悬浮球",
+  autoHidePanelDescEdgeSnap: "点击面板外部区域时自动缩回边缘",
 
   // 界面排版开关
   disableOutline: "禁用大纲",
@@ -636,8 +637,8 @@ export const zhCN = {
   stopLoading: "停止加载",
   loadingHint: "保持页面静止，完成后将自动停留在顶部",
   // 边缘吸附
-  edgeSnapHideLabel: "边缘吸附隐藏",
-  edgeSnapHideDesc: "拖动面板到屏幕边缘时自动隐藏，悬停显示",
+  edgeSnapHideLabel: "边缘自动吸附",
+  edgeSnapHideDesc: "拖动面板到屏幕边缘时自动吸附，悬停显示",
   edgeSnapThresholdLabel: "吸附触发距离",
   edgeSnapThresholdDesc: "拖拽面板到边缘多近时触发吸附",
   // 面板位置设置
@@ -647,6 +648,8 @@ export const zhCN = {
   defaultPositionRight: "右侧",
   defaultEdgeDistanceLabel: "默认边距",
   defaultEdgeDistanceDesc: "面板距离屏幕边缘的初始距离",
+  panelWidthLabel: "面板宽度",
+  panelWidthDesc: "面板的宽度 (px)",
   panelHeightLabel: "面板高度",
   panelHeightDesc: "面板占用屏幕高度的百分比",
   // 手动锚点

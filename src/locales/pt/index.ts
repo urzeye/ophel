@@ -468,7 +468,8 @@ export const pt = {
   defaultPanelStateLabel: "Aberto por Padrão",
   defaultPanelStateDesc: "Painel expandido ao carregar",
   autoHidePanelLabel: "Minimizar ao Clicar Fora",
-  autoHidePanelDesc: "Recolhe se tocar fora",
+  autoHidePanelDesc: "Minimizar para botão flutuante ao clicar fora",
+  autoHidePanelDescEdgeSnap: "Recolher para a borda ao clicar fora",
   // Edge Snap
   edgeSnapHideLabel: "Ímã nas Bordas",
   edgeSnapHideDesc: "Esconde na borda e aparece ao passar o mouse",
@@ -481,6 +482,8 @@ export const pt = {
   defaultPositionRight: "Direita",
   defaultEdgeDistanceLabel: "Margem",
   defaultEdgeDistanceDesc: "Distância da borda",
+  panelWidthLabel: "Largura do painel",
+  panelWidthDesc: "Largura do painel (px)",
   panelHeightLabel: "Altura",
   panelHeightDesc: "% da tela",
   // Interface Toggle

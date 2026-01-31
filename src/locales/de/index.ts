@@ -468,7 +468,8 @@ export const de = {
   defaultPanelStateLabel: "Standardmäßig offen",
   defaultPanelStateDesc: "Panel beim Laden ausgeklappt",
   autoHidePanelLabel: "Bei Klick außen schließen",
-  autoHidePanelDesc: "Minimiert, wenn man daneben klickt",
+  autoHidePanelDesc: "Minimiert zum schwebenden Ball, wenn man daneben klickt",
+  autoHidePanelDescEdgeSnap: "Zieht sich bei Klick außen an den Rand zurück",
   // Edge Snap
   edgeSnapHideLabel: "Rand-Magnet",
   edgeSnapHideDesc: "Versteckt sich am Rand, erscheint bei Mouseover",
@@ -481,6 +482,8 @@ export const de = {
   defaultPositionRight: "Rechts",
   defaultEdgeDistanceLabel: "Abstand",
   defaultEdgeDistanceDesc: "Abstand zum Rand",
+  panelWidthLabel: "Panelbreite",
+  panelWidthDesc: "Breite des Panels (px)",
   panelHeightLabel: "Höhe",
   panelHeightDesc: "% des Bildschirms",
   // Interface Toggle

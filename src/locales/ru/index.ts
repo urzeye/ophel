@@ -467,7 +467,8 @@ export const ru = {
   defaultPanelStateLabel: "Открыта всегда",
   defaultPanelStateDesc: "Развернута при загрузке",
   autoHidePanelLabel: "Скрывать кликом вне",
-  autoHidePanelDesc: "Сворачивать, если ткнули мимо",
+  autoHidePanelDesc: "Сворачивать в плавающий шар при клике вне",
+  autoHidePanelDescEdgeSnap: "Сворачивать к краю при клике вне",
   // Edge Snap
   edgeSnapHideLabel: "Магнит к краям",
   edgeSnapHideDesc: "Прячется у края, вылезает при наведении",
@@ -480,6 +481,8 @@ export const ru = {
   defaultPositionRight: "Справа",
   defaultEdgeDistanceLabel: "Отступ",
   defaultEdgeDistanceDesc: "Расстояние от края",
+  panelWidthLabel: "Ширина панели",
+  panelWidthDesc: "Ширина панели (px)",
   panelHeightLabel: "Высота",
   panelHeightDesc: "% экрана",
   // Interface Toggle

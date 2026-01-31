@@ -360,7 +360,7 @@ export class OutlineManager {
       this.performSearch(this.searchQuery)
     }
 
-    // 关键修复：计算 isAllExpanded 状态，确保按钮初始状态正确
+    // 计算 isAllExpanded 状态，确保按钮初始状态正确
     const maxActualLevel = Math.max(...Object.keys(this.levelCounts).map(Number), 1)
     this.isAllExpanded = this.expandLevel >= maxActualLevel
 
@@ -652,7 +652,7 @@ export class OutlineManager {
         this.preSearchExpandLevel = this.expandLevel // 保存搜索前的层级
       }
 
-      // 关键修复：每次搜索词变化都要重置折叠状态
+      // 每次搜索词变化都要重置折叠状态
       // 这样当用户逐字输入时，之前展开的节点会被正确收起
       if (this.tree.length > 0) {
         this.clearForceExpandedState(this.tree, 0)

@@ -110,9 +110,10 @@ export interface Settings {
     edgeSnap: boolean
     preventAutoScroll: boolean
     defaultPosition: "left" | "right" // 默认位置
-    defaultEdgeDistance: number // 默认边距 (0-200, 默认 40)
-    edgeSnapThreshold: number // 吸附触发距离 (10-100, 默认 30)
-    height: number // 面板高度 (50-100, 默认 80, 单位 vh)
+    defaultEdgeDistance: number // 默认边距 (0-400, 默认 25)
+    edgeSnapThreshold: number // 吸附触发距离 (10-100, 默认 18)
+    height: number // 面板高度 (50-100, 默认 85, 单位 vh)
+    width: number // 面板宽度 (200-600, 默认 320, 单位 px)
   }
 
   // Gemini Enterprise 专属设置
@@ -261,9 +262,10 @@ export const DEFAULT_SETTINGS: Settings = {
     edgeSnap: true,
     preventAutoScroll: false,
     defaultPosition: "right",
-    defaultEdgeDistance: 20,
-    edgeSnapThreshold: 30,
-    height: 80,
+    defaultEdgeDistance: 25,
+    edgeSnapThreshold: 18,
+    height: 85,
+    width: 320,
   },
 
   geminiEnterprise: {

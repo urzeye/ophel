@@ -39,7 +39,7 @@
   display: inline-flex !important;
 }
 
-/* 
+/*
  * 注意：深色模式的样式覆盖已移除。
  * 由于所有组件都使用 CSS 变量（如 var(--gh-bg)），
  * 当 ThemeManager 切换主题时会动态更新这些变量的值，
@@ -348,7 +348,7 @@
 
 /* 面板吸附到左边缘时隐藏 */
 .gh-main-panel.edge-snapped-left {
-  left: -310px !important;
+  left: calc(10px - var(--panel-width, 320px)) !important;
   right: auto !important;
   transition:
     left 0.3s ease,
@@ -362,7 +362,7 @@
 
 /* 面板吸附到右边缘时隐藏 */
 .gh-main-panel.edge-snapped-right {
-  right: -310px !important;
+  right: calc(10px - var(--panel-width, 320px)) !important;
   left: auto !important;
   transition:
     right 0.3s ease,
@@ -648,7 +648,7 @@
   }
 }
 
-/* 
+/*
  * 深色模式适配样式已改为使用 CSS 变量
  * 当 ThemeManager 切换主题时会自动更新变量值
  */
