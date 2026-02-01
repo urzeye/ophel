@@ -433,6 +433,8 @@ export const en = {
   bookmarkSettingsDesc: "Bookmark related settings",
   inlineBookmarkModeLabel: "Inline Bookmark Icons",
   inlineBookmarkModeDesc: "Control visibility of bookmark icons next to page headings",
+  panelBookmarkModeLabel: "Panel Bookmark Icons",
+  panelBookmarkModeDesc: "Control visibility of bookmark icons in outline panel",
   inlineBookmarkModeAlways: "Always Visible",
   inlineBookmarkModeHover: "Hover Only",
   inlineBookmarkModeHidden: "Hidden",

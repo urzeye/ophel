@@ -358,6 +358,8 @@ export const zhTW = {
   bookmarkSettingsDesc: "收藏相關設置",
   inlineBookmarkModeLabel: "頁內收藏圖示",
   inlineBookmarkModeDesc: "控制頁面標題旁的收藏圖示顯示方式",
+  panelBookmarkModeLabel: "面板收藏圖示",
+  panelBookmarkModeDesc: "控制大綱面板中的收藏圖示顯示方式",
   inlineBookmarkModeAlways: "固定顯示",
   inlineBookmarkModeHover: "懸浮顯示",
   inlineBookmarkModeHidden: "隱藏",

@@ -410,6 +410,8 @@ export const ru = {
   bookmarkSettingsDesc: "Настройки, связанные с закладками",
   inlineBookmarkModeLabel: "Значки закладок",
   inlineBookmarkModeDesc: "Отображение значков рядом с заголовками",
+  panelBookmarkModeLabel: "Значки в панели",
+  panelBookmarkModeDesc: "Отображение значков закладок в панели",
   inlineBookmarkModeAlways: "Всегда показывать",
   inlineBookmarkModeHover: "При наведении",
   inlineBookmarkModeHidden: "Скрыто",

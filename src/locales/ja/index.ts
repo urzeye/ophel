@@ -416,6 +416,8 @@ export const ja = {
   bookmarkSettingsDesc: "ブックマーク関連の設定",
   inlineBookmarkModeLabel: "ブックマークアイコン",
   inlineBookmarkModeDesc: "見出し横のアイコン表示方法を設定",
+  panelBookmarkModeLabel: "パネルのブックマーク",
+  panelBookmarkModeDesc: "アウトラインパネルでのアイコン表示方法を設定",
   inlineBookmarkModeAlways: "常に表示",
   inlineBookmarkModeHover: "ホバー時のみ",
   inlineBookmarkModeHidden: "非表示",

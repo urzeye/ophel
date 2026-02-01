@@ -412,6 +412,8 @@ export const fr = {
   bookmarkSettingsDesc: "Paramètres liés aux favoris",
   inlineBookmarkModeLabel: "Icônes de favoris",
   inlineBookmarkModeDesc: "Contrôler la visibilité à côté des titres",
+  panelBookmarkModeLabel: "Icônes du panneau",
+  panelBookmarkModeDesc: "Contrôler la visibilité des favoris dans le panneau",
   inlineBookmarkModeAlways: "Toujours visible",
   inlineBookmarkModeHover: "Au survol uniquement",
   inlineBookmarkModeHidden: "Masqué",

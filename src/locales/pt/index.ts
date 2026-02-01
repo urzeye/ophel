@@ -411,6 +411,8 @@ export const pt = {
   bookmarkSettingsDesc: "Configurações relacionadas a favoritos",
   inlineBookmarkModeLabel: "Ícones de favoritos",
   inlineBookmarkModeDesc: "Controlar visibilidade ao lado dos títulos",
+  panelBookmarkModeLabel: "Ícones do painel",
+  panelBookmarkModeDesc: "Controlar visibilidade no painel de índice",
   inlineBookmarkModeAlways: "Sempre visível",
   inlineBookmarkModeHover: "Ao passar o mouse",
   inlineBookmarkModeHidden: "Oculto",

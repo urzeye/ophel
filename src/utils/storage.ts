@@ -172,7 +172,8 @@ export interface Settings {
       showUserQueries: boolean
       followMode: "current" | "latest" | "manual"
       expandLevel: number
-      inlineBookmarkMode: "always" | "hover" | "hidden"
+      inlineBookmarkMode: "always" | "hover" | "hidden" // 页内收藏图标显示模式
+      panelBookmarkMode: "always" | "hover" | "hidden" // 面板收藏图标显示模式
     }
   }
 
@@ -340,6 +341,7 @@ export const DEFAULT_SETTINGS: Settings = {
       followMode: "current",
       expandLevel: 6,
       inlineBookmarkMode: "always",
+      panelBookmarkMode: "always", // 默认保持原有行为 (Always Dimmed)
     },
   },
 

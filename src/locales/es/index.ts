@@ -412,6 +412,8 @@ export const es = {
   bookmarkSettingsDesc: "Configuración relacionada con marcadores",
   inlineBookmarkModeLabel: "Iconos de marcadores",
   inlineBookmarkModeDesc: "Controlar visibilidad junto a los encabezados",
+  panelBookmarkModeLabel: "Iconos del panel",
+  panelBookmarkModeDesc: "Controlar visibilidad de marcadores en el panel",
   inlineBookmarkModeAlways: "Siempre visible",
   inlineBookmarkModeHover: "Al pasar el cursor",
   inlineBookmarkModeHidden: "Oculto",

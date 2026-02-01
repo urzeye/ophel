@@ -447,6 +447,26 @@
   transform: translateY(-50%) scale(1.1);
 }
 
+/* ============= 面板收藏图标显示模式 (Panel Bookmark Mode) ============= */
+
+/* Mode: Always (Default) - 保持原有样式，默认 opacity 0.25 */
+
+/* Mode: Hover - 未收藏的图标平时隐藏，Hover 时显示 */
+.gh-panel-bookmark-mode-hover .outline-item-bookmark-btn:not(.active) {
+  opacity: 0;
+  pointer-events: none; /* 防止误触不可见按钮 */
+}
+
+/* Mode: Hidden - 未收藏的图标完全隐藏 (不占位，display none) */
+.gh-panel-bookmark-mode-hidden .outline-item-bookmark-btn:not(.active) {
+  display: none !important;
+}
+
+/* 适配：Hidden 模式下移除 hover 的渐变遮罩，否则会有奇怪的空白遮罩 */
+.gh-panel-bookmark-mode-hidden .outline-item:hover .outline-item-bookmark-btn:not(.active)::before {
+  display: none !important;
+}
+
 /* Ghost 节点样式（收藏内容不存在时） */
 .ghost-node {
   opacity: 0.6;

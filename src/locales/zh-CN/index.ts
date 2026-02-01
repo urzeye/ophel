@@ -429,6 +429,8 @@ export const zhCN = {
   bookmarkSettingsDesc: "收藏相关设置",
   inlineBookmarkModeLabel: "页内收藏图标",
   inlineBookmarkModeDesc: "控制页面标题旁的收藏图标显示方式",
+  panelBookmarkModeLabel: "面板收藏图标",
+  panelBookmarkModeDesc: "控制大纲面板中的收藏图标显示方式",
   inlineBookmarkModeAlways: "固定显示",
   inlineBookmarkModeHover: "悬浮显示",
   inlineBookmarkModeHidden: "隐藏",

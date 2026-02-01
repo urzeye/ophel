@@ -416,6 +416,8 @@ export const ko = {
   bookmarkSettingsDesc: "북마크 관련 설정",
   inlineBookmarkModeLabel: "북마크 아이콘",
   inlineBookmarkModeDesc: "제목 옆 아이콘 표시 방식 제어",
+  panelBookmarkModeLabel: "패널 북마크 아이콘",
+  panelBookmarkModeDesc: "개요 패널의 북마크 아이콘 표시 방식 제어",
   inlineBookmarkModeAlways: "항상 표시",
   inlineBookmarkModeHover: "마우스 오버 시",
   inlineBookmarkModeHidden: "숨기기",

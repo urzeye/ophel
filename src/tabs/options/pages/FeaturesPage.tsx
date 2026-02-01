@@ -300,6 +300,26 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
                 <option value="hidden">{t("inlineBookmarkModeHidden") || "隐藏"}</option>
               </select>
             </SettingRow>
+
+            <SettingRow
+              label={t("panelBookmarkModeLabel") || "面板收藏图标"}
+              description={t("panelBookmarkModeDesc") || "控制大纲面板中的收藏图标显示方式"}>
+              <select
+                className="settings-select"
+                value={settings.features?.outline?.panelBookmarkMode || "always"}
+                onChange={(e) =>
+                  updateDeepSetting(
+                    "features",
+                    "outline",
+                    "panelBookmarkMode",
+                    e.target.value as "always" | "hover" | "hidden",
+                  )
+                }>
+                <option value="always">{t("inlineBookmarkModeAlways") || "固定显示"}</option>
+                <option value="hover">{t("inlineBookmarkModeHover") || "悬浮显示"}</option>
+                <option value="hidden">{t("inlineBookmarkModeHidden") || "隐藏"}</option>
+              </select>
+            </SettingRow>
           </SettingCard>
 
           {/* 滚动设置卡片 */}

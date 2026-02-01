@@ -411,6 +411,8 @@ export const de = {
   bookmarkSettingsDesc: "Einstellungen für Lesezeichen",
   inlineBookmarkModeLabel: "Lesezeichen-Symbole",
   inlineBookmarkModeDesc: "Sichtbarkeit der Symbole neben Überschriften steuern",
+  panelBookmarkModeLabel: "Panel-Lesezeichen-Symbole",
+  panelBookmarkModeDesc: "Sichtbarkeit der Lesezeichen-Symbole im Bedienfeld steuern",
   inlineBookmarkModeAlways: "Immer anzeigen",
   inlineBookmarkModeHover: "Nur bei Mouseover",
   inlineBookmarkModeHidden: "Versteckt",

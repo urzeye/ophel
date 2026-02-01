@@ -1143,7 +1143,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       {/* 大纲树 */}
       <div
         ref={listRef}
-        className="gh-outline-tree-container"
+        className={`gh-outline-tree-container gh-panel-bookmark-mode-${settings?.features?.outline?.panelBookmarkMode || "always"}`}
         style={{
           flex: 1,
           overflowY: "auto",
