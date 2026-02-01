@@ -263,24 +263,26 @@ const OutlineNodeView: React.FC<{
           </span>
 
           {/* Bookmark Button (Hover or Bookmarked) */}
-          <Tooltip
-            content={
-              node.isBookmarked
-                ? t("removeBookmark") || "Remove Bookmark"
-                : t("addBookmark") || "Add Bookmark"
-            }>
-            <span
-              className={`outline-item-bookmark-btn ${node.isBookmarked ? "active" : ""}`}
-              onClick={(e) => onToggleBookmark(e, node)}
-              onMouseEnter={() => setIsHoveringAction(true)}
-              onMouseLeave={() => setIsHoveringAction(false)}>
-              <StarIcon
-                size={14}
-                filled={node.isBookmarked}
-                color={node.isBookmarked ? "#f59e0b" : "currentColor"}
-              />
-            </span>
-          </Tooltip>
+          <span className={`outline-item-bookmark-wrapper ${node.isBookmarked ? "active" : ""}`}>
+            <Tooltip
+              content={
+                node.isBookmarked
+                  ? t("removeBookmark") || "Remove Bookmark"
+                  : t("addBookmark") || "Add Bookmark"
+              }>
+              <span
+                className={`outline-item-bookmark-btn ${node.isBookmarked ? "active" : ""}`}
+                onClick={(e) => onToggleBookmark(e, node)}
+                onMouseEnter={() => setIsHoveringAction(true)}
+                onMouseLeave={() => setIsHoveringAction(false)}>
+                <StarIcon
+                  size={14}
+                  filled={node.isBookmarked}
+                  color={node.isBookmarked ? "#f59e0b" : "currentColor"}
+                />
+              </span>
+            </Tooltip>
+          </span>
 
           {/* 复制按钮 (所有节点显示) */}
           {true && (
