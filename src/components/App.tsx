@@ -321,14 +321,15 @@ export const App = () => {
 
   // 初始化页面内收藏图标
   useEffect(() => {
-    if (!outlineManager || !adapter) return
+    if (!outlineManager || !adapter || !settings) return
 
-    const inlineBookmarkManager = new InlineBookmarkManager(outlineManager, adapter, "always")
+    const mode = settings.features?.outline?.inlineBookmarkMode || "always"
+    const inlineBookmarkManager = new InlineBookmarkManager(outlineManager, adapter, mode)
 
     return () => {
       inlineBookmarkManager.cleanup()
     }
-  }, [outlineManager, adapter])
+  }, [outlineManager, adapter, settings?.features?.outline?.inlineBookmarkMode])
 
   // 滚动锁定切换
   const handleToggleScrollLock = useCallback(() => {

@@ -1,6 +1,6 @@
 import type { OutlineItem, SiteAdapter } from "~adapters/base"
 import type { Settings } from "~utils/storage"
-import { useBookmarkStore, type Bookmark } from "~stores/bookmarks-store"
+import { useBookmarkStore } from "~stores/bookmarks-store"
 
 export interface OutlineNode extends OutlineItem {
   children: OutlineNode[]
@@ -67,6 +67,9 @@ export class OutlineManager {
   // Tab 激活状态（只有激活时才监听）
   private isActive: boolean = false
 
+  // Bookmark store subscription
+  private unsubscribeBookmarks: (() => void) | null = null
+
   // 设置变更回调
   private onExpandLevelChange?: (level: number) => void
   private onShowUserQueriesChange?: (show: boolean) => void
@@ -87,6 +90,14 @@ export class OutlineManager {
 
     // Listen to monitor messages
     window.addEventListener("message", this.handleMessage.bind(this))
+
+    // 订阅 bookmarks-store，当书签变化时刷新大纲
+    this.unsubscribeBookmarks = useBookmarkStore.subscribe(() => {
+      // 只有在激活状态下才刷新，避免不必要的计算
+      if (this.isActive) {
+        this.refresh()
+      }
+    })
 
     // 不在构造函数中启动 auto-update，由 setActive 控制
   }

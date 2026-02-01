@@ -277,6 +277,31 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
             </SettingRow>
           </SettingCard>
 
+          {/* 收藏图标设置卡片 */}
+          <SettingCard
+            title={t("bookmarkSettings") || "收藏"}
+            description={t("bookmarkSettingsDesc") || "配置页内收藏功能"}>
+            <SettingRow
+              label={t("inlineBookmarkModeLabel") || "页内收藏图标"}
+              description={t("inlineBookmarkModeDesc") || "控制页面标题旁的收藏图标显示方式"}>
+              <select
+                className="settings-select"
+                value={settings.features?.outline?.inlineBookmarkMode || "always"}
+                onChange={(e) =>
+                  updateDeepSetting(
+                    "features",
+                    "outline",
+                    "inlineBookmarkMode",
+                    e.target.value as "always" | "hover" | "hidden",
+                  )
+                }>
+                <option value="always">{t("inlineBookmarkModeAlways") || "固定显示"}</option>
+                <option value="hover">{t("inlineBookmarkModeHover") || "悬浮显示"}</option>
+                <option value="hidden">{t("inlineBookmarkModeHidden") || "隐藏"}</option>
+              </select>
+            </SettingRow>
+          </SettingCard>
+
           {/* 滚动设置卡片 */}
           <SettingCard title={t("scrollSettings") || "滚动设置"}>
             <ToggleRow

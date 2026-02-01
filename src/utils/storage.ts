@@ -172,6 +172,7 @@ export interface Settings {
       showUserQueries: boolean
       followMode: "current" | "latest" | "manual"
       expandLevel: number
+      inlineBookmarkMode: "always" | "hover" | "hidden"
     }
   }
 
@@ -338,6 +339,7 @@ export const DEFAULT_SETTINGS: Settings = {
       showUserQueries: true,
       followMode: "current",
       expandLevel: 6,
+      inlineBookmarkMode: "always",
     },
   },
 

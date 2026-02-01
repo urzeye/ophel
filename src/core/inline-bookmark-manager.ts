@@ -48,6 +48,8 @@ export class InlineBookmarkManager {
 
     // 初始注入
     this.injectBookmarkIcons()
+    // 设置初始显示模式
+    this.setDisplayMode(displayMode)
   }
 
   /**
@@ -86,22 +88,26 @@ export class InlineBookmarkManager {
         opacity: 1;
       }
 
-      /* 悬浮显示模式 */
-      .gh-inline-bookmark-hover .${ICON_CLASS}:not(.${ICON_BOOKMARKED_CLASS}) {
+      /* 悬浮显示模式: body 有 gh-inline-bookmark-mode-hover 类 */
+      /* 默认隐藏未收藏的图标 */
+      body.gh-inline-bookmark-mode-hover .gh-has-inline-bookmark .${ICON_CLASS}:not(.${ICON_BOOKMARKED_CLASS}) {
         opacity: 0;
       }
 
-      .gh-inline-bookmark-hover:hover .${ICON_CLASS} {
+      /* 鼠标悬停在标题上时，显示图标（半透明） */
+      body.gh-inline-bookmark-mode-hover .gh-has-inline-bookmark:hover .${ICON_CLASS} {
         opacity: 0.5;
       }
 
-      .gh-inline-bookmark-hover .${ICON_CLASS}:hover {
+      /* 鼠标悬停在图标上时，完全不透明 */
+      body.gh-inline-bookmark-mode-hover .gh-has-inline-bookmark .${ICON_CLASS}:hover {
         opacity: 1;
       }
 
-      /* 隐藏模式 */
-      .gh-inline-bookmark-hidden .${ICON_CLASS}:not(.${ICON_BOOKMARKED_CLASS}) {
-        display: none;
+      /* 隐藏模式: body 有 gh-inline-bookmark-mode-hidden 类 */
+      /* 完全隐藏所有图标（包括已收藏的） */
+      body.gh-inline-bookmark-mode-hidden .${ICON_CLASS} {
+        display: none !important;
       }
 
       /* 确保标题有 position: relative */
@@ -113,16 +119,26 @@ export class InlineBookmarkManager {
   }
 
   /**
+   * 设置显示模式
+   */
+  setDisplayMode(mode: InlineBookmarkDisplayMode) {
+    this.displayMode = mode
+    document.body.classList.remove(
+      "gh-inline-bookmark-mode-always",
+      "gh-inline-bookmark-mode-hover",
+      "gh-inline-bookmark-mode-hidden",
+    )
+    document.body.classList.add(`gh-inline-bookmark-mode-${mode}`)
+  }
+
+  /**
    * 注入收藏图标到所有标题元素
    */
   injectBookmarkIcons() {
-    if (this.displayMode === "hidden") return
-
+    // 即使是 hidden 模式也要注入，因为 css 会控制隐藏，这样切换模式时响应更快
     const flatItems = this.outlineManager.getFlatItems()
 
     const sessionId = this.adapter.getSessionId()
-    const siteId = this.adapter.getSiteId()
-    const cid = this.adapter.getCurrentCid() || ""
     const bookmarkStore = useBookmarkStore.getState()
 
     for (const item of flatItems) {
@@ -158,7 +174,7 @@ export class InlineBookmarkManager {
       iconWrapper.addEventListener("click", (e) => {
         e.stopPropagation()
         e.preventDefault()
-        this.handleBookmarkClick(item, signature, iconWrapper)
+        this.handleBookmarkClick(item, signature, iconWrapper) // Removed iconWrapper from arguments in definition below, wait, no, actually I'll use it for optimistic update? No, let's keep it simple.
       })
 
       // 插入到元素中（作为第一个子元素）
@@ -185,74 +201,47 @@ export class InlineBookmarkManager {
   }
 
   /**
-   * 处理收藏点击
+   * 处理书签点击
    */
-  private async handleBookmarkClick(
-    item: OutlineItem,
-    signature: string,
-    iconWrapper: HTMLElement,
-  ) {
+  private handleBookmarkClick(item: OutlineItem, signature: string, _iconWrapper: HTMLElement) {
+    const bookmarkStore = useBookmarkStore.getState()
     const sessionId = this.adapter.getSessionId()
     const siteId = this.adapter.getSiteId()
     const cid = this.adapter.getCurrentCid() || ""
 
-    // 获取当前滚动位置
-    const scrollContainer = this.adapter.getScrollContainer()
-    const scrollTop = scrollContainer?.scrollTop || 0
+    const scrollContainer = this.outlineManager.getScrollContainer()
+    const scrollTop = (item.element as HTMLElement).offsetTop + (scrollContainer?.scrollTop || 0)
 
-    // 切换收藏状态
-    useBookmarkStore.getState().toggleBookmark(sessionId, siteId, cid, item, signature, scrollTop)
+    bookmarkStore.toggleBookmark(sessionId, siteId, cid, item, signature, scrollTop)
 
-    // 更新图标状态
-    const isNowBookmarked = useBookmarkStore.getState().getBookmarkId(sessionId, signature) !== null
-    this.updateIconState(iconWrapper, isNowBookmarked)
+    // UI update is handled by updateAllIconStates subscription
   }
 
   /**
-   * 更新单个图标状态
+   * 更新所有图标状态（当 store 变化时）
    */
-  private updateIconState(iconWrapper: HTMLElement, isBookmarked: boolean) {
-    if (isBookmarked) {
-      iconWrapper.classList.add(ICON_BOOKMARKED_CLASS)
-    } else {
-      iconWrapper.classList.remove(ICON_BOOKMARKED_CLASS)
-    }
-    iconWrapper.innerHTML = this.createStarSvg(isBookmarked)
-  }
-
-  /**
-   * 更新所有图标状态
-   */
-  private updateAllIconStates() {
-    const sessionId = this.adapter.getSessionId()
+  updateAllIconStates() {
     const bookmarkStore = useBookmarkStore.getState()
+    const sessionId = this.adapter.getSessionId()
 
-    const icons = document.querySelectorAll(`.${ICON_CLASS}`)
-    for (const icon of Array.from(icons)) {
-      const signature = (icon as HTMLElement).dataset.signature
-      if (!signature) continue
+    document.querySelectorAll(`.${ICON_CLASS}`).forEach((iconWrapper) => {
+      const wrapper = iconWrapper as HTMLElement
+      const signature = wrapper.dataset.signature
+      if (!signature) return
 
       const isBookmarked = bookmarkStore.getBookmarkId(sessionId, signature) !== null
-      this.updateIconState(icon as HTMLElement, isBookmarked)
-    }
-  }
+      const hasClass = wrapper.classList.contains(ICON_BOOKMARKED_CLASS)
 
-  /**
-   * 设置显示模式
-   */
-  setDisplayMode(mode: InlineBookmarkDisplayMode) {
-    this.displayMode = mode
-
-    // 更新 body class 以应用不同的 CSS 规则
-    document.body.classList.remove("gh-inline-bookmark-hover", "gh-inline-bookmark-hidden")
-
-    if (mode === "hover") {
-      document.body.classList.add("gh-inline-bookmark-hover")
-    } else if (mode === "hidden") {
-      document.body.classList.add("gh-inline-bookmark-hidden")
-      // 隐藏模式时移除所有图标
-      this.cleanup()
-    }
+      if (isBookmarked !== hasClass) {
+        if (isBookmarked) {
+          wrapper.classList.add(ICON_BOOKMARKED_CLASS)
+          wrapper.innerHTML = this.createStarSvg(true)
+        } else {
+          wrapper.classList.remove(ICON_BOOKMARKED_CLASS)
+          wrapper.innerHTML = this.createStarSvg(false)
+        }
+      }
+    })
   }
 
   /**
@@ -263,24 +252,20 @@ export class InlineBookmarkManager {
       this.unsubscribe()
       this.unsubscribe = null
     }
-
     if (this.unsubscribeBookmarks) {
       this.unsubscribeBookmarks()
       this.unsubscribeBookmarks = null
     }
-
-    // 移除所有注入的图标
-    const icons = document.querySelectorAll(`.${ICON_CLASS}`)
-    for (const icon of Array.from(icons)) {
-      icon.remove()
-    }
-
-    // 移除添加的 class
-    const elements = document.querySelectorAll(".gh-has-inline-bookmark")
-    for (const el of Array.from(elements)) {
+    document.getElementById("gh-inline-bookmark-styles")?.remove()
+    document.querySelectorAll(`.${ICON_CLASS}`).forEach((el) => el.remove())
+    document.querySelectorAll(".gh-has-inline-bookmark").forEach((el) => {
       el.classList.remove("gh-has-inline-bookmark")
-    }
-
+    })
+    document.body.classList.remove(
+      "gh-inline-bookmark-mode-always",
+      "gh-inline-bookmark-mode-hover",
+      "gh-inline-bookmark-mode-hidden",
+    )
     this.injectedElements = new WeakSet()
   }
 }
