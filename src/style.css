@@ -399,11 +399,21 @@
 }
 
 /* 收藏按钮 */
-.outline-item-bookmark-btn {
+.outline-item-bookmark-wrapper {
   position: absolute;
   right: 4px;
   top: 50%;
   transform: translateY(-50%);
+  z-index: 5;
+  opacity: 0.25;
+  transition: all 0.2s ease;
+}
+
+.outline-item:hover .outline-item-bookmark-wrapper {
+  opacity: 1;
+}
+
+.outline-item-bookmark-btn {
   width: 24px;
   height: 24px;
   display: flex;
@@ -412,9 +422,15 @@
   color: var(--gh-text-secondary, #6b7280);
   cursor: pointer;
   border-radius: 4px;
-  opacity: 0.25; /* 默认透明度 */
-  transition: all 0.2s ease;
-  z-index: 5; /* Ensure it's above text */
+}
+
+/* 激活状态 */
+.outline-item-bookmark-wrapper.active {
+  opacity: 1;
+}
+
+.outline-item-bookmark-btn.active {
+  color: #f59e0b;
 }
 
 /* 激活状态（已收藏）始终显示 */
@@ -424,14 +440,13 @@
 }
 
 /* 悬停行时显示按钮 */
-.outline-item:hover .outline-item-bookmark-btn {
+/* 悬停行时显示按钮 */
+.outline-item:hover .outline-item-bookmark-wrapper {
   opacity: 1;
-  /* 悬停时给予背景色遮挡文字 */
-  background: var(--gh-hover, #f3f4f6);
 }
 
-/* 渐变遮罩：在按钮左侧添加淡出效果 */
-.outline-item:hover .outline-item-bookmark-btn::before {
+/* 渐变遮罩：在 wrapper 左侧添加 */
+.outline-item:hover .outline-item-bookmark-wrapper::before {
   content: "";
   position: absolute;
   left: -20px;
@@ -452,18 +467,21 @@
 /* Mode: Always (Default) - 保持原有样式，默认 opacity 0.25 */
 
 /* Mode: Hover - 未收藏的图标平时隐藏，Hover 时显示 */
-.gh-panel-bookmark-mode-hover .outline-item-bookmark-btn:not(.active) {
+.gh-panel-bookmark-mode-hover .outline-item-bookmark-wrapper:not(.active) {
   opacity: 0;
-  pointer-events: none; /* 防止误触不可见按钮 */
+  pointer-events: none;
 }
 
-.gh-panel-bookmark-mode-hover .outline-item:hover .outline-item-bookmark-btn {
+.gh-panel-bookmark-mode-hover .outline-item:hover .outline-item-bookmark-wrapper {
   opacity: 1 !important;
   pointer-events: auto !important;
 }
 
-/* Mode: Hidden - 所有收藏图标完全隐藏 (与页内收藏图标行为一致) */
-.gh-panel-bookmark-mode-hidden .outline-item-bookmark-btn {
+.gh-panel-bookmark-mode-hidden .outline-item-bookmark-wrapper {
+  display: none !important;
+}
+
+.gh-panel-bookmark-mode-hidden .outline-item:hover .outline-item-bookmark-wrapper::before {
   display: none !important;
 }
 
