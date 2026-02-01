@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 
 import type { SiteAdapter } from "~adapters/base"
+import { Tooltip } from "~components/ui/Tooltip"
 import { t } from "~utils/i18n"
 
 interface SelectedPromptBarProps {
@@ -148,52 +149,54 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
         }}>
         {t("currentPrompt") || "当前提示词"}:
       </span>
-      <span
-        className="selected-prompt-text"
-        style={{
-          fontSize: "13px",
-          fontWeight: 500,
-          color: "var(--gh-text-on-primary, white)",
-          maxWidth: "300px",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          userSelect: "none",
-        }}
-        title={title}>
-        {title}
-      </span>
-      <button
-        className="clear-prompt-btn"
-        onClick={onClear}
-        title={t("clear") || "清除"}
-        style={{
-          background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
-          border: "none",
-          color: "var(--gh-text-on-primary, white)",
-          width: "20px",
-          height: "20px",
-          borderRadius: "50%",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "14px",
-          lineHeight: "1",
-          padding: 0,
-          marginLeft: "4px",
-          transition: "all 0.2s",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = "var(--gh-glass-bg-hover, rgba(255,255,255,0.3))"
-          e.currentTarget.style.transform = "scale(1.1)"
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "var(--gh-glass-bg, rgba(255,255,255,0.2))"
-          e.currentTarget.style.transform = "scale(1)"
-        }}>
-        ×
-      </button>
+      <Tooltip content={title}>
+        <span
+          className="selected-prompt-text"
+          style={{
+            fontSize: "13px",
+            fontWeight: 500,
+            color: "var(--gh-text-on-primary, white)",
+            maxWidth: "300px",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            userSelect: "none",
+          }}>
+          {title}
+        </span>
+      </Tooltip>
+      <Tooltip content={t("clear") || "清除"}>
+        <button
+          className="clear-prompt-btn"
+          onClick={onClear}
+          style={{
+            background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
+            border: "none",
+            color: "var(--gh-text-on-primary, white)",
+            width: "20px",
+            height: "20px",
+            borderRadius: "50%",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "14px",
+            lineHeight: "1",
+            padding: 0,
+            marginLeft: "4px",
+            transition: "all 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "var(--gh-glass-bg-hover, rgba(255,255,255,0.3))"
+            e.currentTarget.style.transform = "scale(1.1)"
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "var(--gh-glass-bg, rgba(255,255,255,0.2))"
+            e.currentTarget.style.transform = "scale(1)"
+          }}>
+          ×
+        </button>
+      </Tooltip>
     </div>
   )
 }

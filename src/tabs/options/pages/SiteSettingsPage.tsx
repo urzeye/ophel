@@ -6,7 +6,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import { PageContentIcon as LayoutIcon, RefreshIcon } from "~components/icons"
-import { NumberInput, Switch } from "~components/ui"
+import { NumberInput, Switch, Tooltip } from "~components/ui"
 import { LAYOUT_CONFIG, SITE_IDS, SITE_SETTINGS_TAB_IDS } from "~constants"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
@@ -185,24 +185,25 @@ const AIStudioModelLockRow: React.FC<{
       }}>
       <span style={{ fontSize: "14px", fontWeight: 500, flex: 1 }}>AI Studio</span>
       {/* 刷新按钮 */}
-      <button
-        className="icon-button"
-        onClick={handleRefresh}
-        disabled={isLoading}
-        title="点击在 AI Studio 页面刷新模型列表"
-        style={{
-          padding: "4px",
-          opacity: isLoading ? 0.5 : 1,
-          cursor: isLoading ? "not-allowed" : "pointer",
-          background: "transparent",
-          border: "none",
-          borderRadius: "4px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}>
-        <RefreshIcon size={16} />
-      </button>
+      <Tooltip content="点击在 AI Studio 页面刷新模型列表">
+        <button
+          className="icon-button"
+          onClick={handleRefresh}
+          disabled={isLoading}
+          style={{
+            padding: "4px",
+            opacity: isLoading ? 0.5 : 1,
+            cursor: isLoading ? "not-allowed" : "pointer",
+            background: "transparent",
+            border: "none",
+            borderRadius: "4px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}>
+          <RefreshIcon size={16} />
+        </button>
+      </Tooltip>
       {/* 模型选择下拉框 */}
       <select
         className="settings-select"

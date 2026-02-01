@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react"
 import { getAdapter } from "~adapters/index"
 import { ClearIcon, ReturnIcon, ThemeDarkIcon, ThemeLightIcon } from "~components/icons"
 import { LoadingOverlay } from "~components/LoadingOverlay"
+import { Tooltip } from "~components/ui/Tooltip"
 import { COLLAPSED_BUTTON_DEFS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import { loadHistoryUntil } from "~utils/history-loader"
@@ -232,18 +233,18 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     const anchorDisabled = isAnchorBtn && !hasAnchor
 
     return (
-      <button
-        key={id}
-        className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""}`}
-        onClick={(e) => buttonActions[id]?.(e)}
-        title={t(def.labelKey) || def.labelKey}
-        style={{
-          opacity: anchorDisabled ? 0.4 : 1,
-          cursor: anchorDisabled ? "default" : "pointer",
-        }}
-        disabled={anchorDisabled}>
-        {icon}
-      </button>
+      <Tooltip key={id} content={t(def.labelKey) || def.labelKey}>
+        <button
+          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""}`}
+          onClick={(e) => buttonActions[id]?.(e)}
+          style={{
+            opacity: anchorDisabled ? 0.4 : 1,
+            cursor: anchorDisabled ? "default" : "pointer",
+          }}
+          disabled={anchorDisabled}>
+          {icon}
+        </button>
+      </Tooltip>
     )
   }
 
@@ -258,36 +259,40 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return (
       <React.Fragment key="manualAnchor">
         {/* 设置锚点 */}
-        <button
-          className="quick-prompt-btn manual-anchor-btn set-btn gh-interactive"
-          onClick={setAnchorManually}
-          title={t("setAnchor") || "设置锚点"}>
-          {AnchorIcon ? <AnchorIcon size={18} /> : "📍"}
-        </button>
+        <Tooltip content={t("setAnchor") || "设置锚点"}>
+          <button
+            className="quick-prompt-btn manual-anchor-btn set-btn gh-interactive"
+            onClick={setAnchorManually}>
+            {AnchorIcon ? <AnchorIcon size={18} /> : "📍"}
+          </button>
+        </Tooltip>
         {/* 返回锚点 */}
-        <button
-          className={`quick-prompt-btn manual-anchor-btn back-btn gh-interactive ${hasManualAnchor ? "has-anchor" : ""}`}
-          onClick={backToManualAnchor}
-          title={hasManualAnchor ? t("goToAnchor") || "返回锚点" : t("noAnchor") || "暂无锚点"}
-          style={{
-            opacity: hasManualAnchor ? 1 : 0.4,
-            cursor: hasManualAnchor ? "pointer" : "default",
-          }}
-          disabled={!hasManualAnchor}>
-          <ReturnIcon size={18} />
-        </button>
+        <Tooltip
+          content={hasManualAnchor ? t("goToAnchor") || "返回锚点" : t("noAnchor") || "暂无锚点"}>
+          <button
+            className={`quick-prompt-btn manual-anchor-btn back-btn gh-interactive ${hasManualAnchor ? "has-anchor" : ""}`}
+            onClick={backToManualAnchor}
+            style={{
+              opacity: hasManualAnchor ? 1 : 0.4,
+              cursor: hasManualAnchor ? "pointer" : "default",
+            }}
+            disabled={!hasManualAnchor}>
+            <ReturnIcon size={18} />
+          </button>
+        </Tooltip>
         {/* 清除锚点 */}
-        <button
-          className="quick-prompt-btn manual-anchor-btn clear-btn gh-interactive"
-          onClick={clearAnchorManually}
-          title={t("clearAnchor") || "清除锚点"}
-          style={{
-            opacity: hasManualAnchor ? 1 : 0.4,
-            cursor: hasManualAnchor ? "pointer" : "default",
-          }}
-          disabled={!hasManualAnchor}>
-          <ClearIcon size={18} />
-        </button>
+        <Tooltip content={t("clearAnchor") || "清除锚点"}>
+          <button
+            className="quick-prompt-btn manual-anchor-btn clear-btn gh-interactive"
+            onClick={clearAnchorManually}
+            style={{
+              opacity: hasManualAnchor ? 1 : 0.4,
+              cursor: hasManualAnchor ? "pointer" : "default",
+            }}
+            disabled={!hasManualAnchor}>
+            <ClearIcon size={18} />
+          </button>
+        </Tooltip>
       </React.Fragment>
     )
   }

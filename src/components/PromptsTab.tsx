@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
 import { ExportIcon, ImportIcon } from "~components/icons"
-import { Button, ConfirmDialog, InputDialog } from "~components/ui"
+import { Button, ConfirmDialog, InputDialog, Tooltip } from "~components/ui"
 import {
   extractVariables,
   replaceVariables,
@@ -897,22 +897,26 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       </div>
                     </div>
                     <div style={{ display: "flex", gap: "8px" }}>
-                      <Button
-                        size="sm"
-                        onClick={(e) => handleRenameCategory(cat, e)}
-                        style={{ color: "var(--gh-primary, #4285f4)" }}>
-                        {t("rename") || "重命名"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={(e) => handleDeleteCategory(cat, e)}
-                        style={{
-                          border: "1px solid var(--gh-border-danger, #fecaca)",
-                          background: "var(--gh-bg-danger, #fef2f2)",
-                          color: "var(--gh-text-danger, #ef4444)",
-                        }}>
-                        {t("delete") || "删除"}
-                      </Button>
+                      <Tooltip content={t("rename") || "重命名"}>
+                        <Button
+                          size="sm"
+                          onClick={(e) => handleRenameCategory(cat, e)}
+                          style={{ color: "var(--gh-primary, #4285f4)" }}>
+                          {t("rename") || "重命名"}
+                        </Button>
+                      </Tooltip>
+                      <Tooltip content={t("delete") || "删除"}>
+                        <Button
+                          size="sm"
+                          onClick={(e) => handleDeleteCategory(cat, e)}
+                          style={{
+                            border: "1px solid var(--gh-border-danger, #fecaca)",
+                            background: "var(--gh-bg-danger, #fef2f2)",
+                            color: "var(--gh-text-danger, #ef4444)",
+                          }}>
+                          {t("delete") || "删除"}
+                        </Button>
+                      </Tooltip>
                     </div>
                   </div>
                 )
@@ -1158,43 +1162,45 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           }}
         />
         {/* 导入按钮 */}
-        <button
-          title={t("promptImport") || "导入"}
-          onClick={handleImport}
-          style={{
-            width: "32px",
-            height: "32px",
-            border: "1px solid var(--gh-border, #d1d5db)",
-            background: "var(--gh-bg, white)",
-            borderRadius: "6px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "16px",
-            flexShrink: 0,
-          }}>
-          <ImportIcon size={16} />
-        </button>
+        <Tooltip content={t("promptImport") || "导入"}>
+          <button
+            onClick={handleImport}
+            style={{
+              width: "32px",
+              height: "32px",
+              border: "1px solid var(--gh-border, #d1d5db)",
+              background: "var(--gh-bg, white)",
+              borderRadius: "6px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "16px",
+              flexShrink: 0,
+            }}>
+            <ImportIcon size={16} />
+          </button>
+        </Tooltip>
         {/* 导出按钮 */}
-        <button
-          title={t("promptExport") || "导出"}
-          onClick={handleExport}
-          style={{
-            width: "32px",
-            height: "32px",
-            border: "1px solid var(--gh-border, #d1d5db)",
-            background: "var(--gh-bg, white)",
-            borderRadius: "6px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "16px",
-            flexShrink: 0,
-          }}>
-          <ExportIcon size={16} />
-        </button>
+        <Tooltip content={t("promptExport") || "导出"}>
+          <button
+            onClick={handleExport}
+            style={{
+              width: "32px",
+              height: "32px",
+              border: "1px solid var(--gh-border, #d1d5db)",
+              background: "var(--gh-bg, white)",
+              borderRadius: "6px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "16px",
+              flexShrink: 0,
+            }}>
+            <ExportIcon size={16} />
+          </button>
+        </Tooltip>
       </div>
 
       {/* 分类标签栏 */}
@@ -1231,55 +1237,56 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         {categories.map((cat) => {
           const colorIndex = getCategoryColorIndex(cat)
           return (
-            <span
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              style={{
-                padding: "4px 10px",
-                background:
-                  selectedCategory === cat
-                    ? "var(--gh-primary, #4285f4)"
-                    : `var(--gh-category-${colorIndex})`,
-                borderRadius: "12px",
-                fontSize: "12px",
-                color: selectedCategory === cat ? "white" : "#4b5563",
-                cursor: "pointer",
-                border:
-                  selectedCategory === cat
-                    ? "1px solid var(--gh-primary, #4285f4)"
-                    : "1px solid transparent",
-                maxWidth: "80px",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-              title={cat}>
-              {cat}
-            </span>
+            <Tooltip key={cat} content={cat}>
+              <span
+                onClick={() => setSelectedCategory(cat)}
+                style={{
+                  padding: "4px 10px",
+                  background:
+                    selectedCategory === cat
+                      ? "var(--gh-primary, #4285f4)"
+                      : `var(--gh-category-${colorIndex})`,
+                  borderRadius: "12px",
+                  fontSize: "12px",
+                  color: selectedCategory === cat ? "white" : "#4b5563",
+                  cursor: "pointer",
+                  border:
+                    selectedCategory === cat
+                      ? "1px solid var(--gh-primary, #4285f4)"
+                      : "1px solid transparent",
+                  maxWidth: "80px",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}>
+                {cat}
+              </span>
+            </Tooltip>
           )
         })}
 
         {/* ⭐ 最近使用（仅图标） */}
-        <span
-          title={t("promptRecentUsed") || "最近使用"}
-          onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.RECENT)}
-          style={{
-            padding: "4px 8px",
-            background:
-              selectedCategory === VIRTUAL_CATEGORY.RECENT
-                ? "var(--gh-primary, #4285f4)"
-                : "var(--gh-hover, #f3f4f6)",
-            borderRadius: "12px",
-            fontSize: "12px",
-            color: selectedCategory === VIRTUAL_CATEGORY.RECENT ? "white" : "#4b5563",
-            cursor: "pointer",
-            border:
-              selectedCategory === VIRTUAL_CATEGORY.RECENT
-                ? "1px solid var(--gh-primary, #4285f4)"
-                : "1px solid transparent",
-          }}>
-          🕐
-        </span>
+        <Tooltip content={t("promptRecentUsed") || "最近使用"}>
+          <span
+            onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.RECENT)}
+            style={{
+              padding: "4px 8px",
+              background:
+                selectedCategory === VIRTUAL_CATEGORY.RECENT
+                  ? "var(--gh-primary, #4285f4)"
+                  : "var(--gh-hover, #f3f4f6)",
+              borderRadius: "12px",
+              fontSize: "12px",
+              color: selectedCategory === VIRTUAL_CATEGORY.RECENT ? "white" : "#4b5563",
+              cursor: "pointer",
+              border:
+                selectedCategory === VIRTUAL_CATEGORY.RECENT
+                  ? "1px solid var(--gh-primary, #4285f4)"
+                  : "1px solid transparent",
+            }}>
+            🕐
+          </span>
+        </Tooltip>
 
         {categories.length > 0 && (
           <button
@@ -1391,133 +1398,140 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 className="prompt-item-actions"
                 style={{ position: "absolute", top: "8px", right: "8px", gap: "4px" }}>
                 {/* ⭐ 置顶按钮 */}
-                <button
-                  title={p.pinned ? t("promptUnpin") || "取消置顶" : t("promptPin") || "置顶"}
-                  onClick={(e) => handleTogglePin(p.id, e)}
-                  style={{
-                    width: "24px",
-                    height: "24px",
-                    border: "1px solid var(--gh-border, #e5e7eb)",
-                    background: p.pinned ? "var(--gh-primary, #4285f4)" : "var(--gh-bg, white)",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
-                    fontSize: "12px",
-                    color: p.pinned ? "white" : "var(--gh-text-secondary, #6b7280)",
-                  }}>
-                  📌
-                </button>
-                <button
-                  title="拖动排序"
-                  onMouseDown={(e) => {
-                    e.stopPropagation()
-                    const item = e.currentTarget.closest(".prompt-item") as HTMLDivElement
-                    if (item) item.draggable = true
-                  }}
-                  onMouseUp={(e) => {
-                    const item = e.currentTarget.closest(".prompt-item") as HTMLDivElement
-                    if (item) item.draggable = false
-                  }}
-                  style={{
-                    width: "24px",
-                    height: "24px",
-                    border: "1px solid var(--gh-border, #e5e7eb)",
-                    background: "var(--gh-bg, white)",
-                    borderRadius: "4px",
-                    cursor: "grab",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
-                    fontSize: "12px",
-                  }}>
-                  ☰
-                </button>
+                <Tooltip
+                  content={p.pinned ? t("promptUnpin") || "取消置顶" : t("promptPin") || "置顶"}>
+                  <button
+                    onClick={(e) => handleTogglePin(p.id, e)}
+                    style={{
+                      width: "24px",
+                      height: "24px",
+                      border: "1px solid var(--gh-border, #e5e7eb)",
+                      background: p.pinned ? "var(--gh-primary, #4285f4)" : "var(--gh-bg, white)",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
+                      fontSize: "12px",
+                      color: p.pinned ? "white" : "var(--gh-text-secondary, #6b7280)",
+                    }}>
+                    📌
+                  </button>
+                </Tooltip>
+                <Tooltip content="拖动排序">
+                  <button
+                    onMouseDown={(e) => {
+                      e.stopPropagation()
+                      const item = e.currentTarget.closest(".prompt-item") as HTMLDivElement
+                      if (item) item.draggable = true
+                    }}
+                    onMouseUp={(e) => {
+                      const item = e.currentTarget.closest(".prompt-item") as HTMLDivElement
+                      if (item) item.draggable = false
+                    }}
+                    style={{
+                      width: "24px",
+                      height: "24px",
+                      border: "1px solid var(--gh-border, #e5e7eb)",
+                      background: "var(--gh-bg, white)",
+                      borderRadius: "4px",
+                      cursor: "grab",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
+                      fontSize: "12px",
+                    }}>
+                    ☰
+                  </button>
+                </Tooltip>
                 {/* ⭐ 预览按钮 */}
-                <button
-                  title={t("promptMarkdownPreview") || "预览"}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    e.preventDefault()
-                    setPreviewModal({ show: true, prompt: p })
-                  }}
-                  style={{
-                    width: "24px",
-                    height: "24px",
-                    border: "1px solid var(--gh-border, #e5e7eb)",
-                    background: "var(--gh-bg, white)",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
-                    fontSize: "12px",
-                  }}>
-                  👁
-                </button>
-                <button
-                  title={t("copy")}
-                  onClick={(e) => handleCopy(p.content, e)}
-                  style={{
-                    width: "24px",
-                    height: "24px",
-                    border: "1px solid var(--gh-border, #e5e7eb)",
-                    background: "var(--gh-bg, white)",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
-                    fontSize: "12px",
-                  }}>
-                  📋
-                </button>
-                <button
-                  title={t("edit")}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    e.preventDefault()
-                    openEditModal(p)
-                  }}
-                  style={{
-                    width: "24px",
-                    height: "24px",
-                    border: "1px solid var(--gh-border, #e5e7eb)",
-                    background: "var(--gh-bg, white)",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
-                    fontSize: "12px",
-                  }}>
-                  ✏
-                </button>
-                <button
-                  title={t("delete")}
-                  onClick={(e) => handleDelete(p.id, e)}
-                  style={{
-                    width: "24px",
-                    height: "24px",
-                    border: "1px solid var(--gh-border, #e5e7eb)",
-                    background: "var(--gh-bg, white)",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
-                    fontSize: "12px",
-                    color: "var(--gh-text-danger, #ef4444)",
-                  }}>
-                  🗑
-                </button>
+                <Tooltip content={t("promptMarkdownPreview") || "预览"}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      e.preventDefault()
+                      setPreviewModal({ show: true, prompt: p })
+                    }}
+                    style={{
+                      width: "24px",
+                      height: "24px",
+                      border: "1px solid var(--gh-border, #e5e7eb)",
+                      background: "var(--gh-bg, white)",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
+                      fontSize: "12px",
+                    }}>
+                    👁
+                  </button>
+                </Tooltip>
+                <Tooltip content={t("copy")}>
+                  <button
+                    onClick={(e) => handleCopy(p.content, e)}
+                    style={{
+                      width: "24px",
+                      height: "24px",
+                      border: "1px solid var(--gh-border, #e5e7eb)",
+                      background: "var(--gh-bg, white)",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
+                      fontSize: "12px",
+                    }}>
+                    📋
+                  </button>
+                </Tooltip>
+                <Tooltip content={t("edit")}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      e.preventDefault()
+                      openEditModal(p)
+                    }}
+                    style={{
+                      width: "24px",
+                      height: "24px",
+                      border: "1px solid var(--gh-border, #e5e7eb)",
+                      background: "var(--gh-bg, white)",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
+                      fontSize: "12px",
+                    }}>
+                    ✏
+                  </button>
+                </Tooltip>
+                <Tooltip content={t("delete")}>
+                  <button
+                    onClick={(e) => handleDelete(p.id, e)}
+                    style={{
+                      width: "24px",
+                      height: "24px",
+                      border: "1px solid var(--gh-border, #e5e7eb)",
+                      background: "var(--gh-bg, white)",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
+                      fontSize: "12px",
+                      color: "var(--gh-text-danger, #ef4444)",
+                    }}>
+                    🗑
+                  </button>
+                </Tooltip>
               </div>
             </div>
           ))

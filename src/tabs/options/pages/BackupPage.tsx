@@ -1,11 +1,11 @@
 /**
- * 备份与同步页面 (重构版)
+ * 备份与同步页面
  * 包含：本地备份导出/导入 (支持部分导出) | WebDAV 同步配置与管理
  */
 import React, { useEffect, useRef, useState } from "react"
 
 import { BackupIcon, CloudIcon } from "~components/icons"
-import { ConfirmDialog } from "~components/ui"
+import { ConfirmDialog, Tooltip } from "~components/ui"
 import { MULTI_PROP_STORES, ZUSTAND_KEYS } from "~constants/defaults"
 import { getWebDAVSyncManager, type BackupFile } from "~core/webdav-sync"
 import { platform } from "~platform"
@@ -171,13 +171,14 @@ const RemoteBackupModal: React.FC<{
             {t("webdavBackupList") || "WebDAV 备份列表"}
           </div>
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <button
-              onClick={loadBackups}
-              className="settings-btn settings-btn-secondary"
-              style={{ padding: "6px" }}
-              title={t("refresh") || "刷新"}>
-              🔄
-            </button>
+            <Tooltip content={t("refresh") || "刷新"}>
+              <button
+                onClick={loadBackups}
+                className="settings-btn settings-btn-secondary"
+                style={{ padding: "6px" }}>
+                🔄
+              </button>
+            </Tooltip>
             <button
               onClick={onClose}
               className="settings-btn settings-btn-secondary"

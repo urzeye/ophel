@@ -1,6 +1,7 @@
 import React, { useSyncExternalStore } from "react"
 
 import { EarthIcon, ThemeDarkIcon, ThemeLightIcon, TranslateIcon } from "~components/icons"
+import { Tooltip } from "~components/ui/Tooltip"
 import type { ThemeManager } from "~core/theme-manager"
 import { useSettingsStore } from "~stores/settings-store"
 import { getEffectiveLanguage, setLanguage, t } from "~utils/i18n"
@@ -103,24 +104,26 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
       {/* 主题切换 - 仅在 content script 环境显示（站点内） */}
       {!isStandalonePage && (
         <div className="settings-theme-segmented">
-          <button
-            className={`settings-theme-segment ${currentThemeMode === "light" ? "active" : ""}`}
-            onClick={() => handleThemeModeToggle("light")}
-            title={t("themeLight") || "浅色"}>
-            <span className="segment-icon">
-              <ThemeLightIcon size={16} />
-            </span>
-            <span className="segment-label">{t("themeLight") || "浅色"}</span>
-          </button>
-          <button
-            className={`settings-theme-segment ${currentThemeMode === "dark" ? "active" : ""}`}
-            onClick={() => handleThemeModeToggle("dark")}
-            title={t("themeDark") || "深色"}>
-            <span className="segment-icon">
-              <ThemeDarkIcon size={16} />
-            </span>
-            <span className="segment-label">{t("themeDark") || "深色"}</span>
-          </button>
+          <Tooltip content={t("themeLight") || "浅色"}>
+            <button
+              className={`settings-theme-segment ${currentThemeMode === "light" ? "active" : ""}`}
+              onClick={() => handleThemeModeToggle("light")}>
+              <span className="segment-icon">
+                <ThemeLightIcon size={16} />
+              </span>
+              <span className="segment-label">{t("themeLight") || "浅色"}</span>
+            </button>
+          </Tooltip>
+          <Tooltip content={t("themeDark") || "深色"}>
+            <button
+              className={`settings-theme-segment ${currentThemeMode === "dark" ? "active" : ""}`}
+              onClick={() => handleThemeModeToggle("dark")}>
+              <span className="segment-icon">
+                <ThemeDarkIcon size={16} />
+              </span>
+              <span className="segment-label">{t("themeDark") || "深色"}</span>
+            </button>
+          </Tooltip>
         </div>
       )}
 
@@ -155,16 +158,17 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
         </span>
 
         {/* 右侧更多语言 */}
-        <button
-          ref={moreBtnRef}
-          className={`lang-more-btn ${isMenuOpen ? "active" : ""}`}
-          onClick={(e) => {
-            e.stopPropagation()
-            setIsMenuOpen(!isMenuOpen)
-          }}
-          title={t("moreLanguages") || "More Languages"}>
-          <TranslateIcon size={18} />
-        </button>
+        <Tooltip content={t("moreLanguages") || "More Languages"}>
+          <button
+            ref={moreBtnRef}
+            className={`lang-more-btn ${isMenuOpen ? "active" : ""}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsMenuOpen(!isMenuOpen)
+            }}>
+            <TranslateIcon size={18} />
+          </button>
+        </Tooltip>
 
         {isMenuOpen && (
           <LanguageMenu
@@ -191,7 +195,7 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
           margin-top: 4px; /* Reduced gap */
           height: 32px;
         }
-        
+
         :host-context([data-gh-mode="dark"]) .settings-lang-inline {
           background: rgba(255, 255, 255, 0.08); /* 匹配深色模式下的 segmented */
         }
@@ -208,11 +212,11 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
            cursor: pointer;
            transition: color 0.2s;
         }
-        
+
         .lang-icon:hover {
           color: var(--gh-text, #374151);
         }
-        
+
         :host-context([data-gh-mode="dark"]) .lang-icon:hover {
            color: #e5e7eb;
         }
@@ -252,7 +256,7 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
           color: var(--gh-text, #111827);
           font-weight: 600;
         }
-        
+
         :host-context([data-gh-mode="dark"]) .lang-link.active {
            color: #f9fafb;
         }

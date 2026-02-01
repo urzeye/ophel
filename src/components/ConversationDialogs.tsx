@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
-import { Button } from "~components/ui"
+import { Button, Tooltip } from "~components/ui"
 import { PRESET_EMOJIS, TAG_COLORS } from "~constants"
 import type { Conversation, Folder, Tag } from "~core/conversation-manager"
 import { t } from "~utils/i18n"
@@ -85,6 +85,35 @@ const DIALOG_STYLES = `
   }
   .conversations-folder-select-highlight {
     animation: gh-highlight-fade 2s ease-out;
+  }
+
+  /* Tooltip Styles (Injected globally for Dialogs) */
+  .ophel-tooltip {
+    background-color: rgba(30, 30, 35, 0.95);
+    color: #ffffff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    z-index: 2147483647;
+    pointer-events: none;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(4px);
+    animation: tooltip-fade-in 0.15s ease-out;
+  }
+
+  @keyframes tooltip-fade-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 `
 
@@ -657,24 +686,25 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
         className="conversations-dialog-title"
         style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span>{t("conversationsManageTags") || "管理标签"}</span>
-        <span
-          style={{
-            cursor: "pointer",
-            padding: "4px",
-            fontSize: "20px",
-            color: "var(--gh-text-secondary, #9ca3af)",
-            lineHeight: 1,
-            width: "24px",
-            height: "24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: "4px",
-          }}
-          onClick={onCancel}
-          title={t("close") || "关闭"}>
-          ×
-        </span>
+        <Tooltip content={t("close") || "关闭"}>
+          <span
+            style={{
+              cursor: "pointer",
+              padding: "4px",
+              fontSize: "20px",
+              color: "var(--gh-text-secondary, #9ca3af)",
+              lineHeight: 1,
+              width: "24px",
+              height: "24px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "4px",
+            }}
+            onClick={onCancel}>
+            ×
+          </span>
+        </Tooltip>
       </div>
 
       {/* === 标签列表区域 === */}
@@ -795,62 +825,64 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
 
                   {/* 右侧：操作按钮 - 常驻显示 */}
                   <div style={{ display: "flex", gap: "2px" }}>
-                    <button
-                      style={{
-                        background: isEditing ? "#fed7aa" : "transparent",
-                        border: "none",
-                        color: isEditing ? "#ea580c" : "#9ca3af",
-                        cursor: "pointer",
-                        padding: "6px",
-                        fontSize: "14px",
-                        borderRadius: "4px",
-                        transition: "all 0.15s",
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleEdit(tag)
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isEditing) {
-                          e.currentTarget.style.background = "#e0f2fe"
-                          e.currentTarget.style.color = "#0284c7"
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isEditing) {
+                    <Tooltip content={t("edit") || "编辑"}>
+                      <button
+                        style={{
+                          background: isEditing ? "#fed7aa" : "transparent",
+                          border: "none",
+                          color: isEditing ? "#ea580c" : "#9ca3af",
+                          cursor: "pointer",
+                          padding: "6px",
+                          fontSize: "14px",
+                          borderRadius: "4px",
+                          transition: "all 0.15s",
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleEdit(tag)
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isEditing) {
+                            e.currentTarget.style.background = "#e0f2fe"
+                            e.currentTarget.style.color = "#0284c7"
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isEditing) {
+                            e.currentTarget.style.background = "transparent"
+                            e.currentTarget.style.color = "#9ca3af"
+                          }
+                        }}>
+                        ✎
+                      </button>
+                    </Tooltip>
+                    <Tooltip content={t("delete") || "删除"}>
+                      <button
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: "var(--gh-text-tertiary, #9ca3af)",
+                          cursor: "pointer",
+                          padding: "6px",
+                          fontSize: "14px",
+                          borderRadius: "4px",
+                          transition: "all 0.15s",
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteClick(tag.id)
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "#fee2e2"
+                          e.currentTarget.style.color = "#dc2626"
+                        }}
+                        onMouseLeave={(e) => {
                           e.currentTarget.style.background = "transparent"
                           e.currentTarget.style.color = "#9ca3af"
-                        }
-                      }}
-                      title={t("edit") || "编辑"}>
-                      ✎
-                    </button>
-                    <button
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        color: "var(--gh-text-tertiary, #9ca3af)",
-                        cursor: "pointer",
-                        padding: "6px",
-                        fontSize: "14px",
-                        borderRadius: "4px",
-                        transition: "all 0.15s",
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDeleteClick(tag.id)
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "#fee2e2"
-                        e.currentTarget.style.color = "#dc2626"
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "transparent"
-                        e.currentTarget.style.color = "#9ca3af"
-                      }}
-                      title={t("delete") || "删除"}>
-                      ×
-                    </button>
+                        }}>
+                        ×
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
               )
@@ -1003,29 +1035,29 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                   marginBottom: "12px",
                 }}>
                 {TAG_COLORS.map((color) => (
-                  <div
-                    key={color}
-                    style={{
-                      width: "100%",
-                      aspectRatio: "1",
-                      borderRadius: "4px",
-                      backgroundColor: color,
-                      cursor: "pointer",
-                      border:
-                        selectedColor.toLowerCase() === color.toLowerCase()
-                          ? "2px solid #333"
-                          : "1px solid rgba(0,0,0,0.05)",
-                      transition: "transform 0.1s",
-                      boxSizing: "border-box",
-                    }}
-                    onClick={() => {
-                      updateColorSelection(color)
-                      setColorExpanded(false) // 选择后收起
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.15)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-                    title={color}
-                  />
+                  <Tooltip key={color} content={color}>
+                    <div
+                      style={{
+                        width: "100%",
+                        aspectRatio: "1",
+                        borderRadius: "4px",
+                        backgroundColor: color,
+                        cursor: "pointer",
+                        border:
+                          selectedColor.toLowerCase() === color.toLowerCase()
+                            ? "2px solid #333"
+                            : "1px solid rgba(0,0,0,0.05)",
+                        transition: "transform 0.1s",
+                        boxSizing: "border-box",
+                      }}
+                      onClick={() => {
+                        updateColorSelection(color)
+                        setColorExpanded(false) // 选择后收起
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.15)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                    />
+                  </Tooltip>
                 ))}
               </div>
 

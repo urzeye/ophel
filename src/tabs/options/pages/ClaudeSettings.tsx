@@ -5,7 +5,7 @@
 import React, { useState } from "react"
 
 import { CopyIcon } from "~components/icons"
-import { ConfirmDialog, DialogOverlay, InputDialog } from "~components/ui"
+import { ConfirmDialog, DialogOverlay, InputDialog, Tooltip } from "~components/ui"
 import {
   BATCH_TEST_CONFIG,
   SITE_IDS,
@@ -483,33 +483,37 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
               </div>
             )}
             {/* 快捷切换下拉 */}
-            <select
-              className="settings-select"
-              value={currentKeyId}
-              onChange={(e) => handleSwitchToken(e.target.value)}
-              disabled={!isClaudeSite || keys.length === 0 || isBatchTesting}
-              title={!isClaudeSite ? t("claudeNotOnSiteHint") || "请在 Claude 站点使用此功能" : ""}
-              style={{
-                minWidth: "200px",
-                padding: "8px 12px",
-                fontSize: "13px",
-                borderRadius: "8px",
-                opacity: !isClaudeSite || keys.length === 0 || isBatchTesting ? 0.6 : 1,
-                cursor: !isClaudeSite || isBatchTesting ? "not-allowed" : "pointer",
-                backgroundColor: "var(--gh-bg)",
-                border: "1px solid var(--gh-border)",
-                color: "var(--gh-text)",
-              }}>
-              {keys.length === 0 ? (
-                <option value="">{t("claudePleaseAddKey")}</option>
-              ) : (
-                keys.map((k) => (
-                  <option key={k.id} value={k.id}>
-                    🔑 {k.name} {k.accountType ? `(${k.accountType})` : ""}
-                  </option>
-                ))
-              )}
-            </select>
+            <Tooltip
+              content={
+                !isClaudeSite ? t("claudeNotOnSiteHint") || "请在 Claude 站点使用此功能" : ""
+              }>
+              <select
+                className="settings-select"
+                value={currentKeyId}
+                onChange={(e) => handleSwitchToken(e.target.value)}
+                disabled={!isClaudeSite || keys.length === 0 || isBatchTesting}
+                style={{
+                  minWidth: "200px",
+                  padding: "8px 12px",
+                  fontSize: "13px",
+                  borderRadius: "8px",
+                  opacity: !isClaudeSite || keys.length === 0 || isBatchTesting ? 0.6 : 1,
+                  cursor: !isClaudeSite || isBatchTesting ? "not-allowed" : "pointer",
+                  backgroundColor: "var(--gh-bg)",
+                  border: "1px solid var(--gh-border)",
+                  color: "var(--gh-text)",
+                }}>
+                {keys.length === 0 ? (
+                  <option value="">{t("claudePleaseAddKey")}</option>
+                ) : (
+                  keys.map((k) => (
+                    <option key={k.id} value={k.id}>
+                      🔑 {k.name} {k.accountType ? `(${k.accountType})` : ""}
+                    </option>
+                  ))
+                )}
+              </select>
+            </Tooltip>
           </div>
         </div>
 
@@ -571,23 +575,24 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
 
           {/* 从浏览器导入按钮仅在扩展环境显示（油猴脚本无法读取 HttpOnly cookie） */}
           {platform.hasCapability("cookies") && (
-            <button
-              className="settings-btn settings-btn-secondary"
-              onClick={handleImportFromBrowser}
-              disabled={!isClaudeSite || isBatchTesting}
-              title={!isClaudeSite ? t("claudeNotOnSiteHint") : ""}
-              style={{
-                justifyContent: "center",
-                padding: "8px 12px",
-                flex: "1 1 auto",
-                opacity: !isClaudeSite || isBatchTesting ? 0.6 : 1,
-                backgroundColor: isClaudeSite ? "var(--gh-bg)" : "var(--gh-bg-secondary)",
-                color: isClaudeSite ? "var(--gh-primary)" : "var(--gh-text-secondary)",
-                borderColor: isClaudeSite ? "var(--gh-primary)" : "var(--gh-border)",
-                whiteSpace: "nowrap",
-              }}>
-              🌐 {t("claudeImportFromBrowser")}
-            </button>
+            <Tooltip content={!isClaudeSite ? t("claudeNotOnSiteHint") : ""}>
+              <button
+                className="settings-btn settings-btn-secondary"
+                onClick={handleImportFromBrowser}
+                disabled={!isClaudeSite || isBatchTesting}
+                style={{
+                  justifyContent: "center",
+                  padding: "8px 12px",
+                  flex: "1 1 auto",
+                  opacity: !isClaudeSite || isBatchTesting ? 0.6 : 1,
+                  backgroundColor: isClaudeSite ? "var(--gh-bg)" : "var(--gh-bg-secondary)",
+                  color: isClaudeSite ? "var(--gh-primary)" : "var(--gh-text-secondary)",
+                  borderColor: isClaudeSite ? "var(--gh-primary)" : "var(--gh-border)",
+                  whiteSpace: "nowrap",
+                }}>
+                🌐 {t("claudeImportFromBrowser")}
+              </button>
+            </Tooltip>
           )}
           <button
             className="settings-btn settings-btn-secondary"
@@ -699,44 +704,47 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
 
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       {/* Session Key Preview */}
-                      <code
-                        onDoubleClick={() => handleCopyKey(key.id, key.key)}
-                        title={t("claudeKeyDoubleTapCopy")}
-                        style={{
-                          fontSize: "12px",
-                          fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-                          color: "var(--gh-text-secondary)",
-                          backgroundColor: "var(--gh-bg-tertiary)",
-                          padding: "2px 6px",
-                          borderRadius: "4px",
-                          cursor: "pointer",
-                          maxWidth: "300px",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}>
-                        {key.key.substring(0, 32)}...
-                      </code>
-                      {(isHovered || copiedKeyId === key.id) && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleCopyKey(key.id, key.key)
-                          }}
+                      <Tooltip content={t("claudeKeyDoubleTapCopy")}>
+                        <code
+                          onDoubleClick={() => handleCopyKey(key.id, key.key)}
                           style={{
-                            background: "none",
-                            border: "none",
-                            cursor: copiedKeyId === key.id ? "default" : "pointer",
                             fontSize: "12px",
-                            padding: "2px",
-                            color:
-                              copiedKeyId === key.id
-                                ? "var(--gh-secondary)"
-                                : "var(--gh-text-tertiary)",
-                          }}
-                          title={copiedKeyId === key.id ? t("claudeCopied") : t("claudeCopyKey")}>
-                          {copiedKeyId === key.id ? "✓" : <CopyIcon size={14} />}
-                        </button>
+                            fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                            color: "var(--gh-text-secondary)",
+                            backgroundColor: "var(--gh-bg-tertiary)",
+                            padding: "2px 6px",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            maxWidth: "300px",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}>
+                          {key.key.substring(0, 32)}...
+                        </code>
+                      </Tooltip>
+                      {(isHovered || copiedKeyId === key.id) && (
+                        <Tooltip
+                          content={copiedKeyId === key.id ? t("claudeCopied") : t("claudeCopyKey")}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleCopyKey(key.id, key.key)
+                            }}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              cursor: copiedKeyId === key.id ? "default" : "pointer",
+                              fontSize: "12px",
+                              padding: "2px",
+                              color:
+                                copiedKeyId === key.id
+                                  ? "var(--gh-secondary)"
+                                  : "var(--gh-text-tertiary)",
+                            }}>
+                            {copiedKeyId === key.id ? "✓" : <CopyIcon size={14} />}
+                          </button>
+                        </Tooltip>
                       )}
                     </div>
                   </div>
@@ -750,25 +758,27 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
 
                     {/* 操作按钮组 */}
                     <div style={{ display: "flex", gap: "8px" }}>
-                      <button
-                        className="settings-btn settings-btn-secondary"
-                        onClick={() => handleSwitchToken(key.id)}
-                        disabled={!isClaudeSite || isCurrent}
-                        title={
+                      <Tooltip
+                        content={
                           isCurrent
                             ? t("claudeAlreadyUsing")
                             : !isClaudeSite
                               ? t("claudeNotOnSiteHint")
                               : t("claudeKeyUse")
-                        }
-                        style={{
-                          padding: "6px 12px",
-                          fontSize: "13px",
-                          opacity: !isClaudeSite || isCurrent ? 0.5 : 1,
-                          cursor: !isClaudeSite || isCurrent ? "not-allowed" : "pointer",
-                        }}>
-                        {isCurrent ? t("claudeKeyUsing") : t("claudeKeyUse")}
-                      </button>
+                        }>
+                        <button
+                          className="settings-btn settings-btn-secondary"
+                          onClick={() => handleSwitchToken(key.id)}
+                          disabled={!isClaudeSite || isCurrent}
+                          style={{
+                            padding: "6px 12px",
+                            fontSize: "13px",
+                            opacity: !isClaudeSite || isCurrent ? 0.5 : 1,
+                            cursor: !isClaudeSite || isCurrent ? "not-allowed" : "pointer",
+                          }}>
+                          {isCurrent ? t("claudeKeyUsing") : t("claudeKeyUse")}
+                        </button>
+                      </Tooltip>
                       <button
                         className="settings-btn settings-btn-secondary"
                         style={{

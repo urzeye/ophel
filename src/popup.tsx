@@ -8,6 +8,7 @@ import { useEffect, useState } from "react"
 
 import { SettingsIcon } from "~components/icons/SettingsIcon"
 import { StarIcon } from "~components/icons/StarIcon"
+import { Tooltip } from "~components/ui/Tooltip"
 import { setLanguage, t } from "~utils/i18n"
 
 import "./popup.css"
@@ -152,9 +153,11 @@ function IndexPopup() {
           <img src={chrome.runtime.getURL("assets/icon.png")} alt="Ophel" className="popup-logo" />
           <span className="popup-title">Ophel</span>
         </div>
-        <button className="popup-settings-btn" onClick={openOptionsPage} title={t("popupSettings")}>
-          <SettingsIcon size={18} />
-        </button>
+        <Tooltip content={t("popupSettings")}>
+          <button className="popup-settings-btn" onClick={openOptionsPage}>
+            <SettingsIcon size={18} />
+          </button>
+        </Tooltip>
       </div>
 
       {/* Site Status */}
@@ -183,14 +186,12 @@ function IndexPopup() {
           <div className="popup-section-title">{t("popupQuickAccess")}</div>
           <div className="popup-sites-grid">
             {SUPPORTED_SITES.slice(0, 6).map((site) => (
-              <button
-                key={site.name}
-                className="popup-site-link"
-                onClick={() => openUrl(site.url)}
-                title={site.name}>
-                <span>{site.icon}</span>
-                <span>{site.name}</span>
-              </button>
+              <Tooltip key={site.name} content={site.name}>
+                <button className="popup-site-link" onClick={() => openUrl(site.url)}>
+                  <span>{site.icon}</span>
+                  <span>{site.name}</span>
+                </button>
+              </Tooltip>
             ))}
           </div>
         </>

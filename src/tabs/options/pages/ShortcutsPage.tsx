@@ -5,7 +5,7 @@
 import React, { useCallback, useState } from "react"
 
 import { KeyboardIcon } from "~components/icons"
-import { ConfirmDialog } from "~components/ui"
+import { ConfirmDialog, Tooltip } from "~components/ui"
 import {
   DEFAULT_KEYBINDINGS,
   formatShortcut,
@@ -130,21 +130,22 @@ const ShortcutInput: React.FC<{
       </button>
       {/* 移除按钮 */}
       {binding && (
-        <button
-          onClick={onRemove}
-          title={t("shortcutRemove") || "移除"}
-          style={{
-            padding: "4px 8px",
-            fontSize: "12px",
-            border: "1px solid var(--gh-border)",
-            borderRadius: "4px",
-            background: "var(--gh-bg)",
-            color: "var(--gh-text-secondary)",
-            cursor: "pointer",
-            transition: "all 0.2s",
-          }}>
-          ✕
-        </button>
+        <Tooltip content={t("shortcutRemove") || "移除"}>
+          <button
+            onClick={onRemove}
+            style={{
+              padding: "4px 8px",
+              fontSize: "12px",
+              border: "1px solid var(--gh-border)",
+              borderRadius: "4px",
+              background: "var(--gh-bg)",
+              color: "var(--gh-text-secondary)",
+              cursor: "pointer",
+              transition: "all 0.2s",
+            }}>
+            ✕
+          </button>
+        </Tooltip>
       )}
       {conflictWarning && (
         <span style={{ fontSize: "12px", color: "var(--gh-error, #ef4444)" }}>

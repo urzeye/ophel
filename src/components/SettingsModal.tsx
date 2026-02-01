@@ -16,6 +16,7 @@ import {
   PermissionsIcon,
   RestoreIcon,
 } from "~components/icons"
+import { Tooltip } from "~components/ui/Tooltip"
 import { NAV_IDS, SITE_IDS } from "~constants"
 import { platform } from "~platform"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
@@ -213,18 +214,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
         onClick={(e) => e.stopPropagation()}>
         {/* 关闭按钮 */}
         <div className="settings-modal-actions">
-          <button
-            className="settings-modal-action-btn"
-            onClick={() => setIsMaximized(!isMaximized)}
-            title={isMaximized ? t("restore") || "还原" : t("maximize") || "最大化"}>
-            {isMaximized ? <RestoreIcon size={16} /> : <MaximizeIcon size={16} />}
-          </button>
-          <button
-            className="settings-modal-action-btn close"
-            onClick={onClose}
-            title={t("close") || "关闭"}>
-            ✕
-          </button>
+          <Tooltip content={isMaximized ? t("restore") || "还原" : t("maximize") || "最大化"}>
+            <button
+              className="settings-modal-action-btn"
+              onClick={() => setIsMaximized(!isMaximized)}>
+              {isMaximized ? <RestoreIcon size={16} /> : <MaximizeIcon size={16} />}
+            </button>
+          </Tooltip>
+          <Tooltip content={t("close") || "关闭"}>
+            <button className="settings-modal-action-btn close" onClick={onClose}>
+              ✕
+            </button>
+          </Tooltip>
         </div>
 
         {/* 侧边栏 */}

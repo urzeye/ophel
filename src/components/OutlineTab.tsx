@@ -8,6 +8,7 @@ import {
   ScrollTopIcon,
   StarIcon,
 } from "~components/icons"
+import { Tooltip } from "~components/ui/Tooltip"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
 import { useBookmarkStore } from "~stores/bookmarks-store"
 import { useSettingsStore } from "~stores/settings-store"
@@ -217,89 +218,108 @@ const OutlineNodeView: React.FC<{
     }
   }
 
+  // ===== 状态控制：鼠标悬停在操作按钮时不显示主 Tooltip =====
+  const [isHoveringAction, setIsHoveringAction] = useState(false)
+
   // ===== 子节点渲染 (始终渲染，使用 childParentCollapsed) =====
   const childParentCollapsed = node.collapsed || parentCollapsed
   const childParentForceExpanded = node.forceExpanded || parentForceExpanded
 
   return (
     <>
-      <div
-        className={itemClassName}
-        data-index={node.index}
-        data-level={node.relativeLevel}
-        onClick={() => onClick(node)}
-        title={node.text}>
-        {/* 折叠箭头 (Legacy: ▸) - 使用 hasChildren 显示箭头，允许手动展开 */}
-        <span
-          className={`outline-item-toggle ${hasChildren ? (isExpanded ? "expanded" : "") : "invisible"}`}
-          onClick={(e) => {
-            if (hasChildren) {
-              e.stopPropagation()
-              onToggle(node)
-            }
-          }}>
-          ▸
-        </span>
-
-        {/* 用户提问: 徽章 (图标+角标数字) */}
-        {node.isUserQuery && (
-          <span className="user-query-badge">
-            <span className="user-query-badge-icon">💬</span>
-            <span className="user-query-badge-number">{node.queryIndex}</span>
+      <Tooltip
+        content={node.text}
+        disabled={isHoveringAction}
+        triggerStyle={{ width: "100%", display: "block" }}
+        triggerClassName={!shouldShow ? "outline-hidden" : ""}
+        delay={500}>
+        <div
+          className={itemClassName}
+          data-index={node.index}
+          data-level={node.relativeLevel}
+          onClick={() => onClick(node)}>
+          {/* 折叠箭头 (Legacy: ▸) - 使用 hasChildren 显示箭头，允许手动展开 */}
+          <span
+            className={`outline-item-toggle ${hasChildren ? (isExpanded ? "expanded" : "") : "invisible"}`}
+            onClick={(e) => {
+              if (hasChildren) {
+                e.stopPropagation()
+                onToggle(node)
+              }
+            }}>
+            ▸
           </span>
-        )}
 
-        {/* 文字 (带搜索高亮) */}
-        <span className={`outline-item-text ${node.isGhost ? "ghost-text" : ""}`}>
-          {renderTextWithHighlight()}
-        </span>
+          {/* 用户提问: 徽章 (图标+角标数字) */}
+          {node.isUserQuery && (
+            <span className="user-query-badge">
+              <span className="user-query-badge-icon">💬</span>
+              <span className="user-query-badge-number">{node.queryIndex}</span>
+            </span>
+          )}
 
-        {/* Bookmark Button (Hover or Bookmarked) */}
-        <span
-          className={`outline-item-bookmark-btn ${node.isBookmarked ? "active" : ""}`}
-          onClick={(e) => onToggleBookmark(e, node)}
-          title={
-            node.isBookmarked
-              ? t("removeBookmark") || "Remove Bookmark"
-              : t("addBookmark") || "Add Bookmark"
-          }>
-          <StarIcon
-            size={14}
-            filled={node.isBookmarked}
-            color={node.isBookmarked ? "#f59e0b" : "currentColor"}
-          />
-        </span>
-
-        {/* 复制按钮 (所有节点显示) */}
-        {true && (
-          <span className="outline-item-copy-btn" onClick={handleCopy} title={t("copy") || "复制"}>
-            {copySuccess ? (
-              // 成功对号图标
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#10b981"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round">
-                <polyline points={CHECK_ICON_POINTS} />
-              </svg>
-            ) : (
-              // 复制图标
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round">
-                <rect {...COPY_ICON_RECT} />
-                <path d={COPY_ICON_PATH} />
-              </svg>
-            )}
+          {/* 文字 (带搜索高亮) */}
+          <span className={`outline-item-text ${node.isGhost ? "ghost-text" : ""}`}>
+            {renderTextWithHighlight()}
           </span>
-        )}
-      </div>
+
+          {/* Bookmark Button (Hover or Bookmarked) */}
+          <Tooltip
+            content={
+              node.isBookmarked
+                ? t("removeBookmark") || "Remove Bookmark"
+                : t("addBookmark") || "Add Bookmark"
+            }>
+            <span
+              className={`outline-item-bookmark-btn ${node.isBookmarked ? "active" : ""}`}
+              onClick={(e) => onToggleBookmark(e, node)}
+              onMouseEnter={() => setIsHoveringAction(true)}
+              onMouseLeave={() => setIsHoveringAction(false)}>
+              <StarIcon
+                size={14}
+                filled={node.isBookmarked}
+                color={node.isBookmarked ? "#f59e0b" : "currentColor"}
+              />
+            </span>
+          </Tooltip>
+
+          {/* 复制按钮 (所有节点显示) */}
+          {true && (
+            <Tooltip content={t("copy") || "复制"}>
+              <span
+                className="outline-item-copy-btn"
+                onClick={handleCopy}
+                onMouseEnter={() => setIsHoveringAction(true)}
+                onMouseLeave={() => setIsHoveringAction(false)}>
+                {copySuccess ? (
+                  // 成功对号图标
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#10b981"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round">
+                    <polyline points={CHECK_ICON_POINTS} />
+                  </svg>
+                ) : (
+                  // 复制图标
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round">
+                    <rect {...COPY_ICON_RECT} />
+                    <path d={COPY_ICON_PATH} />
+                  </svg>
+                )}
+              </span>
+            </Tooltip>
+          )}
+        </div>
+      </Tooltip>
 
       {/* 子节点 (始终渲染，不根据 collapsed 条件渲染，而是传递 childParentCollapsed) */}
       {hasChildren &&
@@ -849,103 +869,111 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
           <div style={{ display: "flex", gap: "2px" }}>
             {/* Group Mode */}
-            <button
-              onClick={handleGroupModeToggle}
-              title={
+            <Tooltip
+              content={
                 showUserQueries
                   ? t("outlineOnlyUserQueries") || "仅显示提问"
                   : t("outlineShowUserQueries") || "显示所有"
-              }
-              className={`outline-toolbar-btn ${showUserQueries ? "active-subtle" : ""}`}>
-              🙋
-            </button>
+              }>
+              <button
+                onClick={handleGroupModeToggle}
+                className={`outline-toolbar-btn ${showUserQueries ? "active-subtle" : ""}`}>
+                🙋
+              </button>
+            </Tooltip>
 
             {/* Bookmark Mode Toggle */}
-            <button
-              onClick={handleToggleBookmarkMode}
-              title={t("bookmarkMode") || "收藏"}
-              className={`outline-toolbar-btn ${bookmarkMode ? "active-subtle" : ""}`}>
-              <StarIcon size={16} filled={bookmarkMode} color="currentColor" />
-            </button>
+            <Tooltip content={t("bookmarkMode") || "收藏"}>
+              <button
+                onClick={handleToggleBookmarkMode}
+                className={`outline-toolbar-btn ${bookmarkMode ? "active-subtle" : ""}`}>
+                <StarIcon size={16} filled={bookmarkMode} color="currentColor" />
+              </button>
+            </Tooltip>
 
             {/* Expand/Collapse */}
-            <button
-              onClick={bookmarkMode ? undefined : handleExpandAll}
-              title={
+            <Tooltip
+              content={
                 bookmarkMode
                   ? t("bookmarkModeDisabled") || "收藏模式下不可用"
                   : isAllExpanded
                     ? t("outlineCollapseAll")
                     : t("outlineExpandAll")
-              }
-              disabled={bookmarkMode}
-              style={{
-                width: "26px",
-                height: "26px",
-                padding: 0,
-                border: "1px solid var(--gh-input-border, #d1d5db)",
-                borderRadius: "4px",
-                backgroundColor: "var(--gh-bg, #fff)",
-                color: bookmarkMode
-                  ? "var(--gh-text-disabled, #9ca3af)"
-                  : "var(--gh-text, #374151)",
-                cursor: bookmarkMode ? "not-allowed" : "pointer",
-                opacity: bookmarkMode ? 0.5 : 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}>
-              {isAllExpanded ? <CollapseAllIcon size={16} /> : <ExpandAllIcon size={16} />}
-            </button>
+              }>
+              <button
+                onClick={bookmarkMode ? undefined : handleExpandAll}
+                disabled={bookmarkMode}
+                style={{
+                  width: "26px",
+                  height: "26px",
+                  padding: 0,
+                  border: "1px solid var(--gh-input-border, #d1d5db)",
+                  borderRadius: "4px",
+                  backgroundColor: "var(--gh-bg, #fff)",
+                  color: bookmarkMode
+                    ? "var(--gh-text-disabled, #9ca3af)"
+                    : "var(--gh-text, #374151)",
+                  cursor: bookmarkMode ? "not-allowed" : "pointer",
+                  opacity: bookmarkMode ? 0.5 : 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}>
+                {isAllExpanded ? <CollapseAllIcon size={16} /> : <ExpandAllIcon size={16} />}
+              </button>
+            </Tooltip>
 
             {/* Locate Current */}
-            <button
-              onClick={handleLocateCurrent}
-              title={t("outlineLocateCurrent") || "定位到当前位置"}
-              style={{
-                width: "26px",
-                height: "26px",
-                padding: 0,
-                border: "1px solid var(--gh-input-border, #d1d5db)",
-                borderRadius: "4px",
-                backgroundColor: "var(--gh-bg, #fff)",
-                color: "var(--gh-text, #374151)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}>
-              <LocateIcon size={16} />
-            </button>
+            <Tooltip content={t("outlineLocateCurrent") || "定位到当前位置"}>
+              <button
+                onClick={handleLocateCurrent}
+                style={{
+                  width: "26px",
+                  height: "26px",
+                  padding: 0,
+                  border: "1px solid var(--gh-input-border, #d1d5db)",
+                  borderRadius: "4px",
+                  backgroundColor: "var(--gh-bg, #fff)",
+                  color: "var(--gh-text, #374151)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}>
+                <LocateIcon size={16} />
+              </button>
+            </Tooltip>
 
             {/* Dynamic Scroll (Top/Bottom) */}
-            <button
-              onClick={handleDynamicScroll}
-              title={
+            <Tooltip
+              content={
                 scrollState === "bottom"
                   ? t("outlineScrollBottom") || "滚动到底部"
                   : t("outlineScrollTop") || "回到顶部"
-              }
-              style={{
-                width: "26px",
-                height: "26px",
-                padding: 0,
-                border: "1px solid var(--gh-input-border, #d1d5db)",
-                borderRadius: "4px",
-                backgroundColor: "var(--gh-bg, #fff)",
-                color: "var(--gh-text, #374151)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "14px",
-              }}>
-              {scrollState === "bottom" ? (
-                <ScrollBottomIcon size={16} />
-              ) : (
-                <ScrollTopIcon size={16} />
-              )}
-            </button>
+              }>
+              <button
+                onClick={handleDynamicScroll}
+                style={{
+                  width: "26px",
+                  height: "26px",
+                  padding: 0,
+                  border: "1px solid var(--gh-input-border, #d1d5db)",
+                  borderRadius: "4px",
+                  backgroundColor: "var(--gh-bg, #fff)",
+                  color: "var(--gh-text, #374151)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "14px",
+                }}>
+                {scrollState === "bottom" ? (
+                  <ScrollBottomIcon size={16} />
+                ) : (
+                  <ScrollTopIcon size={16} />
+                )}
+              </button>
+            </Tooltip>
           </div>
 
           {/* Search Input */}
@@ -1059,35 +1087,35 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
 
               const isActive = lvl <= expandLevel
               return (
-                <div
-                  key={lvl}
-                  className={`outline-level-dot ${isActive ? "active" : ""} ${bookmarkMode ? "disabled" : ""}`}
-                  data-level={lvl}
-                  onClick={bookmarkMode ? undefined : () => handleLevelClick(lvl)}
-                  title={title}
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    borderRadius: "50%",
-                    backgroundColor: isActive
-                      ? bookmarkMode
-                        ? "var(--gh-text-disabled, #9ca3af)"
-                        : "var(--gh-primary, #3b82f6)"
-                      : "var(--gh-slider-dot-bg, #d1d5db)",
-                    border: isActive ? "2px solid var(--gh-bg, #fff)" : "none",
-                    zIndex: 1,
-                    cursor: bookmarkMode ? "not-allowed" : "pointer",
-                    position: "relative",
-                    transition: "all 0.2s ease",
-                    boxSizing: "border-box",
-                    boxShadow: isActive
-                      ? bookmarkMode
-                        ? "0 0 0 1px var(--gh-text-disabled, #9ca3af)"
-                        : "0 0 0 1px var(--gh-primary, #3b82f6)"
-                      : "none",
-                    opacity: bookmarkMode ? 0.5 : 1,
-                  }}
-                />
+                <Tooltip key={lvl} content={title}>
+                  <div
+                    className={`outline-level-dot ${isActive ? "active" : ""} ${bookmarkMode ? "disabled" : ""}`}
+                    data-level={lvl}
+                    onClick={bookmarkMode ? undefined : () => handleLevelClick(lvl)}
+                    style={{
+                      width: "14px",
+                      height: "14px",
+                      borderRadius: "50%",
+                      backgroundColor: isActive
+                        ? bookmarkMode
+                          ? "var(--gh-text-disabled, #9ca3af)"
+                          : "var(--gh-primary, #3b82f6)"
+                        : "var(--gh-slider-dot-bg, #d1d5db)",
+                      border: isActive ? "2px solid var(--gh-bg, #fff)" : "none",
+                      zIndex: 1,
+                      cursor: bookmarkMode ? "not-allowed" : "pointer",
+                      position: "relative",
+                      transition: "all 0.2s ease",
+                      boxSizing: "border-box",
+                      boxShadow: isActive
+                        ? bookmarkMode
+                          ? "0 0 0 1px var(--gh-text-disabled, #9ca3af)"
+                          : "0 0 0 1px var(--gh-primary, #3b82f6)"
+                        : "none",
+                      opacity: bookmarkMode ? 0.5 : 1,
+                    }}
+                  />
+                </Tooltip>
               )
             })}
           </div>

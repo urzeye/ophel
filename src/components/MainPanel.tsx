@@ -31,6 +31,7 @@ import { ConversationsTab } from "./ConversationsTab"
 import { LoadingOverlay } from "./LoadingOverlay"
 import { OutlineTab } from "./OutlineTab"
 import { PromptsTab } from "./PromptsTab"
+import { Tooltip } from "~components/ui/Tooltip"
 
 interface MainPanelProps {
   onClose: () => void
@@ -407,16 +408,17 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             userSelect: "none",
           }}>
           {/* 左侧：图标 + 标题（双击切换隐私模式） */}
-          <div
-            style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}
-            onDoubleClick={() => {
-              // 发送隐私模式切换事件给 TabManager
-              window.postMessage({ type: "GH_PRIVACY_TOGGLE" }, "*")
-            }}
-            title={t("aboutPageDesc")}>
-            <span style={{ fontSize: "16px" }}>✨</span>
-            <span style={{ fontSize: "15px", fontWeight: 600 }}>{t("panelTitle")}</span>
-          </div>
+          <Tooltip content={t("aboutPageDesc")}>
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}
+              onDoubleClick={() => {
+                // 发送隐私模式切换事件给 TabManager
+                window.postMessage({ type: "GH_PRIVACY_TOGGLE" }, "*")
+              }}>
+              <span style={{ fontSize: "16px" }}>✨</span>
+              <span style={{ fontSize: "15px", fontWeight: 600 }}>{t("panelTitle")}</span>
+            </div>
+          </Tooltip>
 
           {/* 右侧：按钮组 - 需要 gh-panel-controls 以排除拖拽 */}
           <div
@@ -424,9 +426,56 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             style={{ display: "flex", gap: "4px", alignItems: "center" }}>
             {/* 主题切换按钮 */}
             {onThemeToggle && (
+              <Tooltip content={t("toggleTheme")}>
+                <button
+                  onClick={onThemeToggle}
+                  style={{
+                    background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
+                    border: "none",
+                    color: "var(--gh-glass-text, white)",
+                    width: "24px",
+                    height: "24px",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "14px",
+                    transition: "all 0.2s",
+                  }}>
+                  {getThemeIcon()}
+                </button>
+              </Tooltip>
+            )}
+
+            {/* 新标签页按钮 */}
+            <Tooltip content={t("newTabTooltip") || "新标签页打开"}>
               <button
-                onClick={onThemeToggle}
-                title={t("toggleTheme")}
+                onClick={() => window.open(window.location.origin, "_blank")}
+                style={{
+                  background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
+                  border: "none",
+                  color: "var(--gh-glass-text, white)",
+                  width: "24px",
+                  height: "24px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "16px",
+                  transition: "all 0.2s",
+                }}>
+                <NewTabIcon size={14} />
+              </button>
+            </Tooltip>
+
+            {/* 设置按钮 - 打开设置模态框 */}
+            <Tooltip content={t("tabSettings")}>
+              <button
+                onClick={() => {
+                  onOpenSettings?.()
+                }}
                 style={{
                   background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
                   border: "none",
@@ -441,71 +490,13 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                   fontSize: "14px",
                   transition: "all 0.2s",
                 }}>
-                {getThemeIcon()}
+                <SettingsIcon size={14} />
               </button>
-            )}
-
-            {/* 新标签页按钮 */}
-            <button
-              onClick={() => window.open(window.location.origin, "_blank")}
-              title={t("newTabTooltip") || "新标签页打开"}
-              style={{
-                background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
-                border: "none",
-                color: "var(--gh-glass-text, white)",
-                width: "24px",
-                height: "24px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "16px",
-                transition: "all 0.2s",
-              }}>
-              <NewTabIcon size={14} />
-            </button>
-
-            {/* 设置按钮 - 打开设置模态框 */}
-            <button
-              onClick={() => {
-                onOpenSettings?.()
-              }}
-              title={t("tabSettings")}
-              style={{
-                background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
-                border: "none",
-                color: "var(--gh-glass-text, white)",
-                width: "24px",
-                height: "24px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "14px",
-                transition: "all 0.2s",
-              }}>
-              <SettingsIcon size={14} />
-            </button>
+            </Tooltip>
 
             {/* 刷新按钮 - 根据当前 Tab 智能刷新 */}
-            <button
-              onClick={() => {
-                // 根据当前 Tab 执行对应的刷新逻辑
-                if (activeTab === TAB_IDS.OUTLINE) {
-                  outlineManager?.refresh()
-                } else if (activeTab === TAB_IDS.PROMPTS) {
-                  // 提示词由 Zustand store 管理，自动响应数据变化，无需手动刷新
-                  // 触发 UI 重新获取数据
-                  promptManager?.init()
-                } else if (activeTab === TAB_IDS.CONVERSATIONS) {
-                  // 触发数据变更通知，刷新 UI
-                  conversationManager?.notifyDataChange()
-                }
-                // settings 不需要刷新
-              }}
-              title={
+            <Tooltip
+              content={
                 activeTab === TAB_IDS.OUTLINE
                   ? t("refreshOutline")
                   : activeTab === TAB_IDS.PROMPTS
@@ -513,45 +504,62 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                     : activeTab === TAB_IDS.CONVERSATIONS
                       ? t("refreshConversations")
                       : t("refresh")
-              }
-              style={{
-                background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
-                border: "none",
-                color: "var(--gh-glass-text, white)",
-                width: "24px",
-                height: "24px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "14px",
-                transition: "all 0.2s",
-              }}>
-              <RefreshIcon size={14} />
-            </button>
+              }>
+              <button
+                onClick={() => {
+                  // 根据当前 Tab 执行对应的刷新逻辑
+                  if (activeTab === TAB_IDS.OUTLINE) {
+                    outlineManager?.refresh()
+                  } else if (activeTab === TAB_IDS.PROMPTS) {
+                    // 提示词由 Zustand store 管理，自动响应数据变化，无需手动刷新
+                    // 触发 UI 重新获取数据
+                    promptManager?.init()
+                  } else if (activeTab === TAB_IDS.CONVERSATIONS) {
+                    // 触发数据变更通知，刷新 UI
+                    conversationManager?.notifyDataChange()
+                  }
+                  // settings 不需要刷新
+                }}
+                style={{
+                  background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
+                  border: "none",
+                  color: "var(--gh-glass-text, white)",
+                  width: "24px",
+                  height: "24px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "14px",
+                  transition: "all 0.2s",
+                }}>
+                <RefreshIcon size={14} />
+              </button>
+            </Tooltip>
 
             {/* 折叠按钮（收起面板） */}
-            <button
-              onClick={onClose}
-              title={t("collapse")}
-              style={{
-                background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
-                border: "none",
-                color: "var(--gh-glass-text, white)",
-                width: "24px",
-                height: "24px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "18px",
-                fontWeight: 600,
-                transition: "all 0.2s",
-              }}>
-              <MinimizeIcon size={14} />
-            </button>
+            <Tooltip content={t("collapse")}>
+              <button
+                onClick={onClose}
+                style={{
+                  background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
+                  border: "none",
+                  color: "var(--gh-glass-text, white)",
+                  width: "24px",
+                  height: "24px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "18px",
+                  fontWeight: 600,
+                  transition: "all 0.2s",
+                }}>
+                <MinimizeIcon size={14} />
+              </button>
+            </Tooltip>
           </div>
         </div>
 
@@ -646,123 +654,125 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             background: "var(--gh-bg-secondary, #f9fafb)",
           }}>
           {/* 顶部按钮 */}
-          <button
-            className="gh-interactive scroll-nav-btn"
-            onClick={scrollToTop}
-            title={t("scrollTop")}
-            style={{
-              flex: 1,
-              maxWidth: "120px",
-              height: "32px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "4px",
-              background: "var(--gh-header-bg)",
-              color: "var(--gh-footer-text, var(--gh-text-on-primary, white))",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontSize: "14px",
-              transition: "transform 0.2s, box-shadow 0.2s",
-              boxShadow: "var(--gh-btn-shadow)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-1px)"
-              e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)"
-              e.currentTarget.style.boxShadow = "var(--gh-btn-shadow)"
-            }}>
-            <ScrollTopIcon size={14} />
-            <span>{t("scrollTop")}</span>
-          </button>
-
-          {/* 锚点按钮（返回之前位置，双向跳转） */}
-          <button
-            className="gh-interactive scroll-nav-btn anchor-btn"
-            onClick={goToAnchor}
-            title={hasAnchor ? t("jumpToAnchor") : "暂无锚点"}
-            disabled={!hasAnchor}
-            style={{
-              flex: "0 0 32px",
-              width: "32px",
-              height: "32px",
-              background: "var(--gh-header-bg)",
-              color: "var(--gh-footer-text, var(--gh-text-on-primary, white))",
-              border: "none",
-              borderRadius: "50%",
-              padding: 0,
-              cursor: hasAnchor ? "pointer" : "default",
-              fontSize: "14px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "transform 0.2s, box-shadow 0.2s",
-              boxShadow: "var(--gh-btn-shadow)",
-              opacity: hasAnchor ? 1 : 0.4,
-            }}
-            onMouseEnter={(e) => {
-              if (hasAnchor) {
-                e.currentTarget.style.transform = "scale(1.1)"
-                e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
-                // 旋转特效
-                const div = e.currentTarget.querySelector("div")
-                if (div) div.style.transform = "rotate(360deg)"
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)"
-              e.currentTarget.style.boxShadow = hasAnchor ? "var(--gh-btn-shadow)" : "none"
-              // 恢复旋转
-              const div = e.currentTarget.querySelector("div")
-              if (div) div.style.transform = "rotate(0deg)"
-            }}>
-            <div
+          <Tooltip content={t("scrollTop")} triggerStyle={{ flex: 1, maxWidth: "120px" }}>
+            <button
+              className="gh-interactive scroll-nav-btn"
+              onClick={scrollToTop}
               style={{
+                width: "100%",
+                height: "32px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                transition: "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                gap: "4px",
+                background: "var(--gh-header-bg)",
+                color: "var(--gh-footer-text, var(--gh-text-on-primary, white))",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+                fontSize: "14px",
+                transition: "transform 0.2s, box-shadow 0.2s",
+                boxShadow: "var(--gh-btn-shadow)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-1px)"
+                e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)"
+                e.currentTarget.style.boxShadow = "var(--gh-btn-shadow)"
               }}>
-              <AnchorIcon size={14} />
-            </div>
-          </button>
+              <ScrollTopIcon size={14} />
+              <span>{t("scrollTop")}</span>
+            </button>
+          </Tooltip>
+
+          {/* 锚点按钮（返回之前位置，双向跳转） */}
+          <Tooltip
+            content={hasAnchor ? t("jumpToAnchor") : "暂无锚点"}
+            triggerStyle={{ flex: "0 0 32px" }}>
+            <button
+              className="gh-interactive scroll-nav-btn anchor-btn"
+              onClick={goToAnchor}
+              disabled={!hasAnchor}
+              style={{
+                width: "32px",
+                height: "32px",
+                background: "var(--gh-header-bg)",
+                color: "var(--gh-footer-text, var(--gh-text-on-primary, white))",
+                border: "none",
+                borderRadius: "50%",
+                padding: 0,
+                cursor: hasAnchor ? "pointer" : "default",
+                fontSize: "14px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "transform 0.2s, box-shadow 0.2s",
+                boxShadow: "var(--gh-btn-shadow)",
+                opacity: hasAnchor ? 1 : 0.4,
+              }}
+              onMouseEnter={(e) => {
+                if (hasAnchor) {
+                  e.currentTarget.style.transform = "scale(1.1)"
+                  e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
+                  // 旋转特效
+                  const div = e.currentTarget.querySelector("div")
+                  if (div) div.style.transform = "rotate(360deg)"
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "scale(1)"
+                e.currentTarget.style.boxShadow = hasAnchor ? "var(--gh-btn-shadow)" : "none"
+                // 恢复旋转
+                const div = e.currentTarget.querySelector("div")
+                if (div) div.style.transform = "rotate(0deg)"
+              }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                }}>
+                <AnchorIcon size={14} />
+              </div>
+            </button>
+          </Tooltip>
 
           {/* 底部按钮 */}
-          <button
-            className="gh-interactive scroll-nav-btn"
-            onClick={scrollToBottom}
-            title={t("scrollBottom")}
-            style={{
-              flex: 1,
-              maxWidth: "120px",
-              height: "32px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "4px",
-              background: "var(--gh-header-bg)",
-              color: "var(--gh-footer-text, var(--gh-text-on-primary, white))",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontSize: "14px",
-              transition: "transform 0.2s, box-shadow 0.2s",
-              boxShadow: "var(--gh-btn-shadow)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-1px)"
-              e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)"
-              e.currentTarget.style.boxShadow = "var(--gh-btn-shadow)"
-            }}>
-            <ScrollBottomIcon size={14} />
-            <span>{t("scrollBottom")}</span>
-          </button>
+          <Tooltip content={t("scrollBottom")} triggerStyle={{ flex: 1, maxWidth: "120px" }}>
+            <button
+              className="gh-interactive scroll-nav-btn"
+              onClick={scrollToBottom}
+              style={{
+                width: "100%",
+                height: "32px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "4px",
+                background: "var(--gh-header-bg)",
+                color: "var(--gh-footer-text, var(--gh-text-on-primary, white))",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+                fontSize: "14px",
+                transition: "transform 0.2s, box-shadow 0.2s",
+                boxShadow: "var(--gh-btn-shadow)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-1px)"
+                e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)"
+                e.currentTarget.style.boxShadow = "var(--gh-btn-shadow)"
+              }}>
+              <ScrollBottomIcon size={14} />
+              <span>{t("scrollBottom")}</span>
+            </button>
+          </Tooltip>
         </div>
       </div>
     </>

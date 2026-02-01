@@ -339,3 +339,35 @@ body {
 .popup-toast.show {
   opacity: 1;
 }
+
+/* ============= Tooltip Styles ============= */
+.ophel-tooltip {
+  /* Universal Dark Theme */
+  background-color: rgba(30, 30, 35, 0.95);
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  /* Maximum z-index to escape any stacking context */
+  z-index: 2147483647;
+  pointer-events: none; /* Don't block mouse */
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+  /* Animation */
+  animation: tooltip-fade-in 0.15s ease-out;
+}
+
+@keyframes tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

@@ -23,6 +23,7 @@ import { ConversationMenu, ExportMenu, FolderMenu } from "./ConversationMenus"
 import "~styles/conversations.css"
 
 import { BatchIcon, FolderPlusIcon, HourglassIcon, LocateIcon, SyncIcon } from "~components/icons"
+import { Tooltip } from "~components/ui/Tooltip"
 
 const LOCATE_PATH =
   "M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"
@@ -425,60 +426,65 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         {/* 工具栏 */}
         <div className="conversations-toolbar">
           {/* 1. 同步目标选择 */}
-          <select
-            className="conversations-folder-select"
-            value={lastUsedFolderId}
-            onChange={(e) => {
-              setLastUsedFolderId(e.target.value)
-              manager.setLastUsedFolder(e.target.value)
-            }}
-            title={t("conversationsSelectFolder") || "选择文件夹"}>
-            {folders.map((folder) => {
-              const truncatedName =
-                folder.name.length > 20 ? folder.name.slice(0, 20) + "..." : folder.name
-              return (
-                <option key={folder.id} value={folder.id} title={folder.name}>
-                  {truncatedName}
-                </option>
-              )
-            })}
-          </select>
+          <Tooltip
+            content={t("conversationsSelectFolder") || "选择文件夹"}
+            triggerStyle={{ flex: 1, minWidth: 0 }}>
+            <select
+              className="conversations-folder-select"
+              value={lastUsedFolderId}
+              onChange={(e) => {
+                setLastUsedFolderId(e.target.value)
+                manager.setLastUsedFolder(e.target.value)
+              }}>
+              {folders.map((folder) => {
+                const truncatedName =
+                  folder.name.length > 20 ? folder.name.slice(0, 20) + "..." : folder.name
+                return (
+                  <option key={folder.id} value={folder.id} title={folder.name}>
+                    {truncatedName}
+                  </option>
+                )
+              })}
+            </select>
+          </Tooltip>
 
           {/* 2. 同步按钮 */}
-          <button
-            className="conversations-toolbar-btn sync"
-            title={t("conversationsSync") || "同步"}
-            disabled={syncing}
-            onClick={handleSync}>
-            {syncing ? <HourglassIcon size={18} /> : <SyncIcon size={18} />}
-          </button>
+          <Tooltip content={t("conversationsSync") || "同步"}>
+            <button
+              className="conversations-toolbar-btn sync"
+              disabled={syncing}
+              onClick={handleSync}>
+              {syncing ? <HourglassIcon size={18} /> : <SyncIcon size={18} />}
+            </button>
+          </Tooltip>
 
           {/* 3. 定位按钮 */}
-          <button
-            className="conversations-toolbar-btn locate"
-            title={t("conversationsLocate") || "定位当前对话"}
-            onClick={handleLocate}>
-            <LocateIcon size={18} />
-          </button>
+          <Tooltip content={t("conversationsLocate") || "定位当前对话"}>
+            <button className="conversations-toolbar-btn locate" onClick={handleLocate}>
+              <LocateIcon size={18} />
+            </button>
+          </Tooltip>
 
           {/* 4. 批量模式 */}
-          <button
-            className={`conversations-toolbar-btn batch-mode ${batchMode ? "active" : ""}`}
-            title={t("conversationsBatchMode") || "批量操作"}
-            onClick={toggleBatchMode}>
-            <BatchIcon size={18} />
-          </button>
+          <Tooltip content={t("conversationsBatchMode") || "批量操作"}>
+            <button
+              className={`conversations-toolbar-btn batch-mode ${batchMode ? "active" : ""}`}
+              onClick={toggleBatchMode}>
+              <BatchIcon size={18} />
+            </button>
+          </Tooltip>
 
           {/* 5. 新建文件夹 */}
-          <button
-            className="conversations-toolbar-btn add-folder"
-            title={t("conversationsAddFolder") || "新建文件夹"}
-            onClick={() => {
-              onInteractionStateChange?.(true)
-              setDialog({ type: "folder" })
-            }}>
-            <FolderPlusIcon size={18} />
-          </button>
+          <Tooltip content={t("conversationsAddFolder") || "新建文件夹"}>
+            <button
+              className="conversations-toolbar-btn add-folder"
+              onClick={() => {
+                onInteractionStateChange?.(true)
+                setDialog({ type: "folder" })
+              }}>
+              <FolderPlusIcon size={18} />
+            </button>
+          </Tooltip>
         </div>
 
         {/* 搜索栏 */}
@@ -496,27 +502,29 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             </div>
 
             {/* 置顶筛选 */}
-            <div
-              className={`conversations-pin-filter-btn ${filterPinned ? "active" : ""}`}
-              title={t("conversationsFilterPinned") || "筛选置顶"}
-              style={{ userSelect: "none" }}
-              onClick={() => setFilterPinned(!filterPinned)}>
-              📌
-            </div>
+            <Tooltip content={t("conversationsFilterPinned") || "筛选置顶"}>
+              <div
+                className={`conversations-pin-filter-btn ${filterPinned ? "active" : ""}`}
+                style={{ userSelect: "none" }}
+                onClick={() => setFilterPinned(!filterPinned)}>
+                📌
+              </div>
+            </Tooltip>
 
             {/* 标签筛选 */}
-            <div
-              ref={tagFilterBtnRef}
-              className={`conversations-tag-search-btn ${filterTagIds.size > 0 ? "active" : ""}`}
-              title={t("conversationsFilterByTags") || "按标签筛选"}
-              style={{ userSelect: "none" }}
-              onClick={() => {
-                const newState = !showTagFilterMenu
-                if (newState) onInteractionStateChange?.(true)
-                setShowTagFilterMenu(newState)
-              }}>
-              🏷️
-            </div>
+            <Tooltip content={t("conversationsFilterByTags") || "按标签筛选"}>
+              <div
+                ref={tagFilterBtnRef}
+                className={`conversations-tag-search-btn ${filterTagIds.size > 0 ? "active" : ""}`}
+                style={{ userSelect: "none" }}
+                onClick={() => {
+                  const newState = !showTagFilterMenu
+                  if (newState) onInteractionStateChange?.(true)
+                  setShowTagFilterMenu(newState)
+                }}>
+                🏷️
+              </div>
+            </Tooltip>
 
             {/* 标签筛选菜单 */}
             {showTagFilterMenu && (
@@ -566,12 +574,13 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             )}
 
             {/* 清除按钮 */}
-            <div
-              className={`conversations-search-clear ${!hasFilters ? "disabled" : ""}`}
-              title={t("conversationsClearAll") || "清除所有筛选"}
-              onClick={hasFilters ? clearFilters : undefined}>
-              ×
-            </div>
+            <Tooltip content={t("conversationsClearAll") || "清除所有筛选"}>
+              <div
+                className={`conversations-search-clear ${!hasFilters ? "disabled" : ""}`}
+                onClick={hasFilters ? clearFilters : undefined}>
+                ×
+              </div>
+            </Tooltip>
           </div>
 
           {/* 搜索结果计数 */}
@@ -637,11 +646,13 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                         {folder.icon}
                       </span>
 
-                      <span className="conversations-folder-name" title={folderName}>
-                        {searchQuery && searchResult?.folderMatches.has(folder.id)
-                          ? highlightText(folderName, searchQuery)
-                          : folderName}
-                      </span>
+                      <Tooltip content={folderName}>
+                        <span className="conversations-folder-name">
+                          {searchQuery && searchResult?.folderMatches.has(folder.id)
+                            ? highlightText(folderName, searchQuery)
+                            : folderName}
+                        </span>
+                      </Tooltip>
 
                       {/* 排序按钮 */}
                       {!folder.isDefault && (
@@ -724,15 +735,16 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                                 }}
                               />
                             )}
-                            <span
-                              className="conversations-item-title"
-                              title={conv.title}
-                              style={{ userSelect: "none" }}>
-                              {conv.pinned && "📌 "}
-                              {searchQuery && searchResult?.conversationMatches.has(conv.id)
-                                ? highlightText(conv.title || "无标题", searchQuery)
-                                : conv.title || "无标题"}
-                            </span>
+                            <Tooltip content={conv.title}>
+                              <span
+                                className="conversations-item-title"
+                                style={{ userSelect: "none" }}>
+                                {conv.pinned && "📌 "}
+                                {searchQuery && searchResult?.conversationMatches.has(conv.id)
+                                  ? highlightText(conv.title || "无标题", searchQuery)
+                                  : conv.title || "无标题"}
+                              </span>
+                            </Tooltip>
 
                             {/* 标签 */}
                             {conv.tagIds && conv.tagIds.length > 0 && (
@@ -783,66 +795,71 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
               {(t("batchSelected") || "已选 {n} 个").replace("{n}", String(selectedIds.size))}
             </span>
             <div className="conversations-batch-btns">
-              <button
-                className="conversations-batch-btn"
-                title={t("exportToClipboard") || "复制 Markdown"}
-                style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
-                onClick={async () => {
-                  const convId = Array.from(selectedIds)[0]
-                  await manager.exportConversation(convId, "clipboard")
-                }}>
-                📋
-              </button>
-              <button
-                className="conversations-batch-btn"
-                title={t("batchExport") || "导出"}
-                style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
-                onClick={(e) => {
-                  onInteractionStateChange?.(true)
-                  setMenu({ type: "export", anchorEl: e.currentTarget })
-                }}>
-                📤
-              </button>
-              <button
-                className="conversations-batch-btn"
-                title={t("batchMove") || "移动"}
-                style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
-                onClick={() => {
-                  onInteractionStateChange?.(true)
-                  setDialog({ type: "folderSelect", convIds: Array.from(selectedIds) })
-                }}>
-                📂
-              </button>
-              <button
-                className="conversations-batch-btn danger"
-                title={t("batchDelete") || "删除"}
-                style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
-                onClick={() => {
-                  onInteractionStateChange?.(true)
-                  setDialog({
-                    type: "confirm",
-                    title: t("batchDelete") || "批量删除",
-                    message: `确定删除选中的 ${selectedIds.size} 个会话吗？`,
-                    danger: true,
-                    onConfirm: async () => {
-                      for (const id of selectedIds) {
-                        await manager.deleteConversation(id)
-                      }
-                      clearSelection()
-                      loadData()
-                      setDialog(null)
-                    },
-                  })
-                }}>
-                🗑️
-              </button>
-              <button
-                className="conversations-batch-btn cancel"
-                title={t("batchExit") || "退出"}
-                style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
-                onClick={clearSelection}>
-                ❌
-              </button>
+              <Tooltip content={t("exportToClipboard") || "复制 Markdown"}>
+                <button
+                  className="conversations-batch-btn"
+                  style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
+                  onClick={async () => {
+                    const convId = Array.from(selectedIds)[0]
+                    await manager.exportConversation(convId, "clipboard")
+                  }}>
+                  📋
+                </button>
+              </Tooltip>
+              <Tooltip content={t("batchExport") || "导出"}>
+                <button
+                  className="conversations-batch-btn"
+                  style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
+                  onClick={(e) => {
+                    onInteractionStateChange?.(true)
+                    setMenu({ type: "export", anchorEl: e.currentTarget })
+                  }}>
+                  📤
+                </button>
+              </Tooltip>
+              <Tooltip content={t("batchMove") || "移动"}>
+                <button
+                  className="conversations-batch-btn"
+                  style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
+                  onClick={() => {
+                    onInteractionStateChange?.(true)
+                    setDialog({ type: "folderSelect", convIds: Array.from(selectedIds) })
+                  }}>
+                  📂
+                </button>
+              </Tooltip>
+              <Tooltip content={t("batchDelete") || "删除"}>
+                <button
+                  className="conversations-batch-btn danger"
+                  style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
+                  onClick={() => {
+                    onInteractionStateChange?.(true)
+                    setDialog({
+                      type: "confirm",
+                      title: t("batchDelete") || "批量删除",
+                      message: `确定删除选中的 ${selectedIds.size} 个会话吗？`,
+                      danger: true,
+                      onConfirm: async () => {
+                        for (const id of selectedIds) {
+                          await manager.deleteConversation(id)
+                        }
+                        clearSelection()
+                        loadData()
+                        setDialog(null)
+                      },
+                    })
+                  }}>
+                  🗑️
+                </button>
+              </Tooltip>
+              <Tooltip content={t("batchExit") || "退出"}>
+                <button
+                  className="conversations-batch-btn cancel"
+                  style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
+                  onClick={clearSelection}>
+                  ❌
+                </button>
+              </Tooltip>
             </div>
           </div>
         )}
