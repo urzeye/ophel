@@ -11,6 +11,7 @@ import { SHORTCUT_ACTIONS, type ShortcutActionId } from "~constants/shortcuts"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
 import { getShortcutManager } from "~core/shortcut-manager"
+import { anchorStore } from "~stores/anchor-store"
 import { loadHistoryUntil } from "~utils/history-loader"
 import { t } from "~utils/i18n"
 import {
@@ -95,21 +96,13 @@ export function useShortcuts({
 }: UseShortcutsOptions) {
   const shortcutManager = useMemo(() => getShortcutManager(), [])
 
-  // 锚点状态（用于返回锚点功能）
-  const anchorPositionRef = useRef<number | null>(null)
-
   // 去顶部
   const scrollToTop = useCallback(async () => {
     if (!adapter) return
 
-    // 保存锚点
+    // 保存锚点到全局存储
     const scrollInfo = await getScrollInfo(adapter)
-    anchorPositionRef.current = scrollInfo.scrollTop
-
-    // 通知 MainPanel 更新锚点状态
-    window.dispatchEvent(
-      new CustomEvent("ophel:anchorSet", { detail: { position: scrollInfo.scrollTop } }),
-    )
+    anchorStore.set(scrollInfo.scrollTop)
 
     await loadHistoryUntil({
       adapter,
@@ -125,14 +118,9 @@ export function useShortcuts({
   const scrollToBottom = useCallback(async () => {
     if (!adapter) return
 
-    // 保存锚点
+    // 保存锚点到全局存储
     const scrollInfo = await getScrollInfo(adapter)
-    anchorPositionRef.current = scrollInfo.scrollTop
-
-    // 通知 MainPanel 更新锚点状态
-    window.dispatchEvent(
-      new CustomEvent("ophel:anchorSet", { detail: { position: scrollInfo.scrollTop } }),
-    )
+    anchorStore.set(scrollInfo.scrollTop)
 
     await smartScrollToBottom(adapter)
 
@@ -142,7 +130,8 @@ export function useShortcuts({
   // 返回锚点
   const goToAnchor = useCallback(async () => {
     if (!adapter) return
-    if (anchorPositionRef.current === null) {
+    const savedAnchor = anchorStore.get()
+    if (savedAnchor === null) {
       showToast(t("noAnchor") || "无可用锚点")
       return
     }
@@ -152,10 +141,10 @@ export function useShortcuts({
     const currentPos = scrollInfo.scrollTop
 
     // 跳转到锚点
-    await smartScrollTo(adapter, anchorPositionRef.current)
+    await smartScrollTo(adapter, savedAnchor)
 
     // 交换位置（双向跳转）
-    anchorPositionRef.current = currentPos
+    anchorStore.set(currentPos)
   }, [adapter])
 
   // 刷新大纲

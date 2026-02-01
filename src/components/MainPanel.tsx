@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react"
 
 import type { SiteAdapter } from "~adapters/base"
 import {
@@ -26,6 +26,7 @@ import { t } from "~utils/i18n"
 import { getScrollInfo, smartScrollTo, smartScrollToBottom } from "~utils/scroll-helper"
 import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
 import { showToast } from "~utils/toast"
+import { anchorStore } from "~stores/anchor-store"
 
 import { ConversationsTab } from "./ConversationsTab"
 import { LoadingOverlay } from "./LoadingOverlay"
@@ -189,38 +190,14 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     }
   }, [isOpen, adapter])
 
-  // === 锚点状态（双向跳转） ===
-  // previousAnchor: 上一个位置（跳转前）
-  // 实现类似 git switch - 的双位置交换
-  const [previousAnchor, setPreviousAnchor] = useState<number | null>(null)
-  const [currentAnchor, setCurrentAnchor] = useState<number | null>(null)
+  // === 锚点状态（使用全局存储） ===
+  const anchorPosition = useSyncExternalStore(anchorStore.subscribe, anchorStore.getSnapshot)
+  const hasAnchor = anchorPosition !== null
 
   // === 加载状态（遮罩） ===
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const [loadingText, setLoadingText] = useState("")
   const abortLoadingRef = useRef(false)
-
-  // 检查是否有锚点
-  const hasAnchor = previousAnchor !== null
-
-  // 设置锚点（跳转前调用，保存当前位置）
-  const setAnchor = useCallback(async () => {
-    const scrollInfo = await getScrollInfo(adapter || null)
-    setPreviousAnchor(scrollInfo.scrollTop)
-  }, [adapter])
-
-  // 监听快捷键触发的锚点设置事件
-  useEffect(() => {
-    const handleAnchorSet = (e: Event) => {
-      const customEvent = e as CustomEvent<{ position: number }>
-      setPreviousAnchor(customEvent.detail.position)
-    }
-
-    window.addEventListener("ophel:anchorSet", handleAnchorSet)
-    return () => {
-      window.removeEventListener("ophel:anchorSet", handleAnchorSet)
-    }
-  }, [])
 
   // 滚动到顶部（自动记录当前位置为锚点，使用 HistoryLoader 加载全部历史）
   const scrollToTop = useCallback(async () => {
@@ -255,7 +232,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           setLoadingText(`${t("loadingHistory")} ${msg}`)
         },
       })
-      setPreviousAnchor(result.previousScrollTop)
+      anchorStore.set(result.previousScrollTop)
 
       // 清理遮罩
       if (overlayTimer) {
@@ -285,29 +262,29 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   // 滚动到底部（自动记录当前位置为锚点）
   const scrollToBottom = useCallback(async () => {
     const { previousScrollTop } = await smartScrollToBottom(adapter || null)
-    setPreviousAnchor(previousScrollTop)
+    anchorStore.set(previousScrollTop)
   }, [adapter])
 
   // 跳转到锚点（实现位置交换，支持来回跳转）
   const goToAnchor = useCallback(async () => {
-    if (previousAnchor === null) return
+    const savedAnchor = anchorStore.get()
+    if (savedAnchor === null) return
 
     // 获取当前位置
     const scrollInfo = await getScrollInfo(adapter || null)
     const currentPos = scrollInfo.scrollTop
 
-    // 跳转到 previousAnchor
-    await smartScrollTo(adapter || null, previousAnchor)
+    // 跳转到锚点
+    await smartScrollTo(adapter || null, savedAnchor)
 
     // 交换位置
-    setCurrentAnchor(previousAnchor)
-    setPreviousAnchor(currentPos)
-  }, [previousAnchor, adapter])
+    anchorStore.set(currentPos)
+  }, [adapter])
 
   // 记录锚点位置（每次跳转大纲时调用）
   const saveAnchor = useCallback(async () => {
     const scrollInfo = await getScrollInfo(adapter || null)
-    setPreviousAnchor(scrollInfo.scrollTop)
+    anchorStore.set(scrollInfo.scrollTop)
   }, [adapter])
 
   if (!isOpen) return null

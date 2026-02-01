@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react"
 
 import { getAdapter } from "~adapters/index"
 import { ClearIcon, ReturnIcon, ThemeDarkIcon, ThemeLightIcon } from "~components/icons"
@@ -17,6 +17,7 @@ import {
 } from "~utils/scroll-helper"
 import { DEFAULT_SETTINGS, type Settings } from "~utils/storage"
 import { showToast } from "~utils/toast"
+import { anchorStore } from "~stores/anchor-store"
 
 interface QuickButtonsProps {
   isPanelOpen: boolean
@@ -35,23 +36,9 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const currentSettings = settings || DEFAULT_SETTINGS
   const collapsedButtonsOrder = currentSettings.collapsedButtons || []
 
-  // 锚点状态
-  const [hasAnchor, setHasAnchor] = useState(false)
-  const [savedAnchorTop, setSavedAnchorTop] = useState<number | null>(null)
-
-  // 监听快捷键触发的锚点设置事件
-  useEffect(() => {
-    const handleAnchorSet = (e: Event) => {
-      const customEvent = e as CustomEvent<{ position: number }>
-      setSavedAnchorTop(customEvent.detail.position)
-      setHasAnchor(true)
-    }
-
-    window.addEventListener("ophel:anchorSet", handleAnchorSet)
-    return () => {
-      window.removeEventListener("ophel:anchorSet", handleAnchorSet)
-    }
-  }, [])
+  // 锚点状态（使用全局存储）
+  const anchorPosition = useSyncExternalStore(anchorStore.subscribe, anchorStore.getSnapshot)
+  const hasAnchor = anchorPosition !== null
 
   // 悬浮隐藏状态
   const [isHovered, setIsHovered] = useState(false)
@@ -103,9 +90,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         },
       })
 
-      // 保存锚点
-      setSavedAnchorTop(result.previousScrollTop)
-      setHasAnchor(true)
+      // 保存锚点到全局存储
+      anchorStore.set(result.previousScrollTop)
       setIsFlutterMode(result.isFlutterMode)
 
       // 清理遮罩
@@ -137,9 +123,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const scrollToBottom = useCallback(async () => {
     const { previousScrollTop, container } = await smartScrollToBottom(adapter)
 
-    // 保存当前位置作为锚点
-    setSavedAnchorTop(previousScrollTop)
-    setHasAnchor(true)
+    // 保存锚点到全局存储
+    anchorStore.set(previousScrollTop)
 
     // 检测是否处于 Flutter 模式
     setIsFlutterMode(isFlutterProxy(container))
@@ -147,42 +132,42 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   // 锚点跳转（双向，支持图文并茂模式）
   const handleAnchorClick = useCallback(async () => {
-    if (savedAnchorTop === null) return
+    const savedAnchor = anchorStore.get()
+    if (savedAnchor === null) return
 
     // 获取当前位置
     const scrollInfo = await getScrollInfo(adapter)
     const currentPos = scrollInfo.scrollTop
 
     // 跳转到锚点
-    await smartScrollTo(adapter, savedAnchorTop)
+    await smartScrollTo(adapter, savedAnchor)
 
     // 交换位置
-    setSavedAnchorTop(currentPos)
-  }, [savedAnchorTop, adapter])
+    anchorStore.set(currentPos)
+  }, [adapter])
 
   // 手动锚点：设置（支持图文并茂模式）
   const setAnchorManually = useCallback(async () => {
     const scrollInfo = await getScrollInfo(adapter)
-    setSavedAnchorTop(scrollInfo.scrollTop)
-    setHasAnchor(true)
+    anchorStore.set(scrollInfo.scrollTop)
     setIsFlutterMode(scrollInfo.isFlutterMode)
   }, [adapter])
 
   // 手动锚点：返回（支持图文并茂模式）
   const backToManualAnchor = useCallback(async () => {
-    if (savedAnchorTop === null) return
+    const savedAnchor = anchorStore.get()
+    if (savedAnchor === null) return
 
     const scrollInfo = await getScrollInfo(adapter)
     const currentPos = scrollInfo.scrollTop
 
-    await smartScrollTo(adapter, savedAnchorTop)
-    setSavedAnchorTop(currentPos)
-  }, [savedAnchorTop, adapter])
+    await smartScrollTo(adapter, savedAnchor)
+    anchorStore.set(currentPos)
+  }, [adapter])
 
   // 手动锚点：清除
   const clearAnchorManually = useCallback(() => {
-    setSavedAnchorTop(null)
-    setHasAnchor(false)
+    anchorStore.clear()
   }, [])
 
   // 获取主题图标
@@ -252,7 +237,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const renderManualAnchorGroup = (enabled: boolean) => {
     if (!enabled) return null
 
-    const hasManualAnchor = savedAnchorTop !== null
     const anchorDef = COLLAPSED_BUTTON_DEFS.manualAnchor
     const AnchorIcon = anchorDef?.IconComponent
 
@@ -267,16 +251,15 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
           </button>
         </Tooltip>
         {/* 返回锚点 */}
-        <Tooltip
-          content={hasManualAnchor ? t("goToAnchor") || "返回锚点" : t("noAnchor") || "暂无锚点"}>
+        <Tooltip content={hasAnchor ? t("goToAnchor") || "返回锚点" : t("noAnchor") || "暂无锚点"}>
           <button
-            className={`quick-prompt-btn manual-anchor-btn back-btn gh-interactive ${hasManualAnchor ? "has-anchor" : ""}`}
+            className={`quick-prompt-btn manual-anchor-btn back-btn gh-interactive ${hasAnchor ? "has-anchor" : ""}`}
             onClick={backToManualAnchor}
             style={{
-              opacity: hasManualAnchor ? 1 : 0.4,
-              cursor: hasManualAnchor ? "pointer" : "default",
+              opacity: hasAnchor ? 1 : 0.4,
+              cursor: hasAnchor ? "pointer" : "default",
             }}
-            disabled={!hasManualAnchor}>
+            disabled={!hasAnchor}>
             <ReturnIcon size={18} />
           </button>
         </Tooltip>
@@ -286,10 +269,10 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
             className="quick-prompt-btn manual-anchor-btn clear-btn gh-interactive"
             onClick={clearAnchorManually}
             style={{
-              opacity: hasManualAnchor ? 1 : 0.4,
-              cursor: hasManualAnchor ? "pointer" : "default",
+              opacity: hasAnchor ? 1 : 0.4,
+              cursor: hasAnchor ? "pointer" : "default",
             }}
-            disabled={!hasManualAnchor}>
+            disabled={!hasAnchor}>
             <ClearIcon size={18} />
           </button>
         </Tooltip>
