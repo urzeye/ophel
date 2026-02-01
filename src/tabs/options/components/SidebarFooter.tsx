@@ -104,7 +104,7 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
       {/* 主题切换 - 仅在 content script 环境显示（站点内） */}
       {!isStandalonePage && (
         <div className="settings-theme-segmented">
-          <Tooltip content={t("themeLight") || "浅色"}>
+          <Tooltip content={t("themeLight") || "浅色"} triggerStyle={{ flex: 1 }}>
             <button
               className={`settings-theme-segment ${currentThemeMode === "light" ? "active" : ""}`}
               onClick={() => handleThemeModeToggle("light")}>
@@ -114,7 +114,7 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
               <span className="segment-label">{t("themeLight") || "浅色"}</span>
             </button>
           </Tooltip>
-          <Tooltip content={t("themeDark") || "深色"}>
+          <Tooltip content={t("themeDark") || "深色"} triggerStyle={{ flex: 1 }}>
             <button
               className={`settings-theme-segment ${currentThemeMode === "dark" ? "active" : ""}`}
               onClick={() => handleThemeModeToggle("dark")}>

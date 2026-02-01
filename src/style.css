@@ -457,13 +457,18 @@
   pointer-events: none; /* 防止误触不可见按钮 */
 }
 
-/* Mode: Hidden - 未收藏的图标完全隐藏 (不占位，display none) */
-.gh-panel-bookmark-mode-hidden .outline-item-bookmark-btn:not(.active) {
+.gh-panel-bookmark-mode-hover .outline-item:hover .outline-item-bookmark-btn {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Mode: Hidden - 所有收藏图标完全隐藏 (与页内收藏图标行为一致) */
+.gh-panel-bookmark-mode-hidden .outline-item-bookmark-btn {
   display: none !important;
 }
 
-/* 适配：Hidden 模式下移除 hover 的渐变遮罩，否则会有奇怪的空白遮罩 */
-.gh-panel-bookmark-mode-hidden .outline-item:hover .outline-item-bookmark-btn:not(.active)::before {
+/* 适配：Hidden 模式下移除 hover 的渐变遮罩 */
+.gh-panel-bookmark-mode-hidden .outline-item:hover .outline-item-bookmark-btn::before {
   display: none !important;
 }
 

@@ -735,7 +735,14 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                                 }}
                               />
                             )}
-                            <Tooltip content={conv.title}>
+                            <Tooltip
+                              content={conv.title}
+                              triggerStyle={{
+                                flex: 1,
+                                minWidth: 0,
+                                overflow: "hidden",
+                                display: "block",
+                              }}>
                               <span
                                 className="conversations-item-title"
                                 style={{ userSelect: "none" }}>
