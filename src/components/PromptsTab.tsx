@@ -1147,6 +1147,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         }}>
         <input
           type="text"
+          className="prompt-search-input"
           placeholder={t("searchPlaceholder")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}

@@ -32,8 +32,10 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const triggerRef = useRef<HTMLDivElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<NodeJS.Timeout>()
+  const isHoveringRef = useRef(false)
 
   const handleMouseEnter = () => {
+    isHoveringRef.current = true
     if (disabled) return
     timerRef.current = setTimeout(() => {
       setIsVisible(true)
@@ -42,6 +44,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   }
 
   const handleMouseLeave = () => {
+    isHoveringRef.current = false
     if (timerRef.current) {
       clearTimeout(timerRef.current)
     }
@@ -109,6 +112,21 @@ export const Tooltip: React.FC<TooltipProps> = ({
       if (timerRef.current) clearTimeout(timerRef.current)
     }
   }, [])
+
+  // React to disabled prop change
+  useEffect(() => {
+    if (disabled) {
+      if (timerRef.current) clearTimeout(timerRef.current)
+      setIsVisible(false)
+      setIsMeasuring(false)
+    } else if (isHoveringRef.current) {
+      // Re-trigger show if enabled while still hovering
+      timerRef.current = setTimeout(() => {
+        setIsVisible(true)
+        setIsMeasuring(true)
+      }, delay)
+    }
+  }, [disabled, delay])
 
   return (
     <div

@@ -134,6 +134,23 @@
   }
 }
 
+/* ============= 搜索输入框聚焦样式 ============= */
+.outline-search-input,
+.prompt-search-input,
+.conversations-dialog-input {
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.outline-search-input:focus,
+.prompt-search-input:focus,
+.conversations-dialog-input:focus {
+  border-color: var(--gh-primary, #4285f4) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 20%, transparent);
+}
+
 .gh-outline-tree-container::-webkit-scrollbar {
   display: none; /* Chrome/Safari/Opera */
 }
