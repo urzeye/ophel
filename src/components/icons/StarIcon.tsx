@@ -1,6 +1,6 @@
 /**
  * SVG 图标组件 - 星星 (收藏/评分)
- * 风格：Outline (stroke-based)
+ * 风格：Fill-based
  */
 import React from "react"
 
@@ -29,7 +29,7 @@ export const StarIcon: React.FC<IconProps & { filled?: boolean }> = ({
     strokeLinejoin="round"
     className={className}
     style={{ display: "block", ...style }}>
-    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
   </svg>
 )
 

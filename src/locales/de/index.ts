@@ -179,6 +179,8 @@ export const de = {
   removeBookmark: "Aus Favoriten entfernen",
   bookmarkContentMissing: "Favoriteninhalt fehlt",
   bookmarkMode: "Favoriten",
+  outlineNoBookmarks: "Keine Favoriten",
+  outlineAddBookmarkHint: "Klicken Sie auf den Stern, um Favoriten hinzuzufügen",
   bookmarkModeDisabled: "Im Favoritenmodus nicht verfügbar",
   drag: "Ziehen",
   save: "Speichern",

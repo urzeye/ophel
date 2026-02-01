@@ -186,6 +186,8 @@ export const en = {
   removeBookmark: "Remove from Favorites",
   bookmarkContentMissing: "Favorite content is missing/collapsed",
   bookmarkMode: "Favorites",
+  outlineNoBookmarks: "No Favorites",
+  outlineAddBookmarkHint: "Click the star icon to add a favorite",
   bookmarkModeDisabled: "Not available in Favorites mode",
   drag: "Drag",
   save: "Save",

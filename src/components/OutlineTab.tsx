@@ -9,10 +9,10 @@ import {
   StarIcon,
 } from "~components/icons"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
+import { useBookmarkStore } from "~stores/bookmarks-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { CHECK_ICON_POINTS, COPY_ICON_PATH, COPY_ICON_RECT } from "~utils/icons"
-import { DEFAULT_SETTINGS, type Settings } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
 interface OutlineTabProps {
@@ -21,7 +21,7 @@ interface OutlineTabProps {
 }
 
 // 递归渲染大纲树节点
-// 关键差异: 使用 outline-hidden 类而非条件渲染
+// 使用 outline-hidden 类而非条件渲染
 const OutlineNodeView: React.FC<{
   node: OutlineNode
   onToggle: (node: OutlineNode) => void
@@ -351,6 +351,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
   const [searchLevelManual, setSearchLevelManual] = useState(initialState.searchLevelManual)
   const [matchCount, setMatchCount] = useState(initialState.matchCount)
   const [bookmarkMode, setBookmarkMode] = useState(initialState.bookmarkMode)
+
+  const { bookmarks } = useBookmarkStore()
 
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -854,7 +856,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                   ? t("outlineOnlyUserQueries") || "仅显示提问"
                   : t("outlineShowUserQueries") || "显示所有"
               }
-              className={`outline-toolbar-btn ${showUserQueries ? "active" : ""}`}>
+              className={`outline-toolbar-btn ${showUserQueries ? "active-subtle" : ""}`}>
               🙋
             </button>
 
@@ -862,26 +864,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
             <button
               onClick={handleToggleBookmarkMode}
               title={t("bookmarkMode") || "收藏"}
-              style={{
-                width: "26px",
-                height: "26px",
-                padding: 0,
-                border: bookmarkMode
-                  ? "1px solid #f59e0b"
-                  : "1px solid var(--gh-input-border, #d1d5db)",
-                borderRadius: "4px",
-                backgroundColor: bookmarkMode ? "rgba(245, 158, 11, 0.1)" : "var(--gh-bg, #fff)",
-                color: bookmarkMode ? "#f59e0b" : "var(--gh-text, #374151)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}>
-              <StarIcon
-                size={14}
-                filled={bookmarkMode}
-                color={bookmarkMode ? "#f59e0b" : "currentColor"}
-              />
+              className={`outline-toolbar-btn ${bookmarkMode ? "active-subtle" : ""}`}>
+              <StarIcon size={16} filled={bookmarkMode} color="currentColor" />
             </button>
 
             {/* Expand/Collapse */}
@@ -1150,6 +1134,38 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
               fontSize: "12px",
             }}>
             {t("outlineEmpty") || "暂无大纲内容"}
+          </div>
+        ) : bookmarkMode && bookmarks.length === 0 ? (
+          <div
+            style={{
+              textAlign: "center",
+              color: "var(--gh-text-tertiary, #9ca3af)",
+              marginTop: "40px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "8px",
+            }}>
+            <div
+              style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                background: "rgba(245, 158, 11, 0.1)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#f59e0b",
+                marginBottom: "8px",
+              }}>
+              <StarIcon size={20} filled={true} color="#f59e0b" />
+            </div>
+            <div style={{ fontSize: "14px", fontWeight: 500, color: "var(--gh-text, #374151)" }}>
+              {t("outlineNoBookmarks") || "暂无收藏"}
+            </div>
+            <div style={{ fontSize: "12px", opacity: 0.7 }}>
+              {t("outlineAddBookmarkHint") || "点击条目右侧的星号添加收藏"}
+            </div>
           </div>
         ) : (
           <div className="outline-list">

@@ -182,6 +182,8 @@ export const ko = {
   removeBookmark: "즐겨찾기 삭제",
   bookmarkContentMissing: "즐겨찾기 내용이 없습니다",
   bookmarkMode: "즐겨찾기",
+  outlineNoBookmarks: "즐겨찾기 없음",
+  outlineAddBookmarkHint: "별 아이콘을 클릭하여 즐겨찾기에 추가",
   bookmarkModeDisabled: "즐겨찾기 모드에서는 사용할 수 없습니다",
   drag: "드래그",
   save: "저장",

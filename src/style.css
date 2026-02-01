@@ -76,6 +76,16 @@
   background: var(--gh-primary, #4285f4);
 }
 
+/* 微光风格选中状态 (Tinted Style) - Theme Adapted */
+.outline-toolbar-btn.active-subtle {
+  border-color: var(--gh-primary, #4285f4);
+  color: var(--gh-primary, #4285f4);
+  /* Use color-mix to create a stronger tint (18%) for better visibility on low-res screens */
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
+  /* Optional: Add a subtle box-shadow for depth */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
 /* 大纲列表 */
 .outline-list {
   display: flex;
@@ -350,7 +360,7 @@
   color: var(--gh-text-secondary, #6b7280);
   cursor: pointer;
   border-radius: 4px;
-  opacity: 0.15; /* 默认透明度 */
+  opacity: 0.25; /* 默认透明度 */
   transition: all 0.2s ease;
   z-index: 5; /* Ensure it's above text */
 }

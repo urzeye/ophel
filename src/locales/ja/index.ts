@@ -181,6 +181,8 @@ export const ja = {
   removeBookmark: "お気に入りから削除",
   bookmarkContentMissing: "お気に入りの内容が見つかりません",
   bookmarkMode: "お気に入り",
+  outlineNoBookmarks: "お気に入りはまだありません",
+  outlineAddBookmarkHint: "星アイコンをクリックしてお気に入りに追加",
   bookmarkModeDisabled: "お気に入りモードでは利用できません",
   drag: "ドラッグ",
   save: "保存",

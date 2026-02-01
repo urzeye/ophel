@@ -180,6 +180,8 @@ export const es = {
   removeBookmark: "Eliminar de favoritos",
   bookmarkContentMissing: "Falta contenido favorito",
   bookmarkMode: "Favoritos",
+  outlineNoBookmarks: "No hay favoritos",
+  outlineAddBookmarkHint: "Haz clic en la estrella para añadir a favoritos",
   bookmarkModeDisabled: "No disponible en modo favoritos",
   drag: "Arrastrar",
   save: "Guardar",
