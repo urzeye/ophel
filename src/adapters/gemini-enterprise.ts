@@ -671,8 +671,8 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       if (questionBlock) {
         let queryText = this.extractUserQueryText(questionBlock)
         let isTruncated = false
-        if (queryText.length > 30) {
-          queryText = queryText.substring(0, 30) + "..."
+        if (queryText.length > 200) {
+          queryText = queryText.substring(0, 200)
           isTruncated = true
         }
         outline.push({

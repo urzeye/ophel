@@ -512,8 +512,8 @@ export class ChatGPTAdapter extends SiteAdapter {
       if (isUserQuery) {
         let queryText = this.extractUserQueryText(element)
         let isTruncated = false
-        if (queryText.length > 30) {
-          queryText = queryText.substring(0, 30) + "..."
+        if (queryText.length > 200) {
+          queryText = queryText.substring(0, 200)
           isTruncated = true
         }
 

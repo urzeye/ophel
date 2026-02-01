@@ -176,12 +176,19 @@ const OutlineNodeView: React.FC<{
     e.stopPropagation()
     e.preventDefault()
 
-    // 智能获取文本：短文本直接用缓存，长文本（被截断）从 DOM 重新提取
+    // 智能获取文本
     let textToCopy = node.text
-    if (node.isTruncated && node.element && node.element.isConnected && extractUserQueryText) {
-      const fullText = extractUserQueryText(node.element)
-      if (fullText) {
-        textToCopy = fullText
+
+    // 尝试从 DOM 获取完整文本
+    if (node.element && node.element.isConnected) {
+      if (node.isUserQuery && extractUserQueryText) {
+        // 用户提问：使用专门提取逻辑 (处理 <br> 等)
+        const fullText = extractUserQueryText(node.element)
+        if (fullText) textToCopy = fullText
+      } else {
+        // 普通标题：直接取 textContent
+        const fullText = node.element.textContent
+        if (fullText) textToCopy = fullText.trim()
       }
     }
 
@@ -263,8 +270,8 @@ const OutlineNodeView: React.FC<{
           />
         </span>
 
-        {/* 复制按钮 (用户提问显示) */}
-        {node.isUserQuery && (
+        {/* 复制按钮 (所有节点显示) */}
+        {true && (
           <span className="outline-item-copy-btn" onClick={handleCopy} title={t("copy") || "复制"}>
             {copySuccess ? (
               // 成功对号图标

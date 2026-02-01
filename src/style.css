@@ -293,7 +293,7 @@
 /* 复制按钮 */
 .outline-item-copy-btn {
   position: absolute;
-  right: 4px;
+  right: 28px;
   top: 50%;
   transform: translateY(-50%);
   width: 24px;
@@ -306,16 +306,29 @@
   border-radius: 4px;
   opacity: 0;
   transition: all 0.2s ease;
-  background: var(--gh-bg, white);
+  z-index: 5;
 }
 
 .outline-item:hover .outline-item-copy-btn {
   opacity: 1;
+  background: var(--gh-hover, #f3f4f6);
+}
+
+/* 复制按钮的渐变遮罩 */
+.outline-item:hover .outline-item-copy-btn::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 0;
+  width: 10px;
+  height: 100%;
+  background: linear-gradient(to right, transparent, var(--gh-hover, #f3f4f6));
+  pointer-events: none;
 }
 
 .outline-item-copy-btn:hover {
   color: var(--gh-border-active);
-  background: var(--gh-hover, #f3f4f6);
+  transform: translateY(-50%) scale(1.1);
 }
 
 .outline-item-copy-btn svg {
@@ -326,33 +339,50 @@
 /* 收藏按钮 */
 .outline-item-bookmark-btn {
   position: absolute;
-  right: 28px;
+  right: 4px;
   top: 50%;
   transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--gh-text-secondary, #6b7280);
   cursor: pointer;
   border-radius: 4px;
-  opacity: 0.25; /* 默认略微可见，让用户能发现功能 */
+  opacity: 0.15; /* 默认透明度 */
   transition: all 0.2s ease;
+  z-index: 5; /* Ensure it's above text */
 }
 
-.outline-item:hover .outline-item-bookmark-btn {
-  opacity: 0.7;
-}
-
-.outline-item-bookmark-btn:hover {
-  opacity: 1 !important;
-  color: #f59e0b;
-}
-
+/* 激活状态（已收藏）始终显示 */
 .outline-item-bookmark-btn.active {
   opacity: 1;
   color: #f59e0b;
+}
+
+/* 悬停行时显示按钮 */
+.outline-item:hover .outline-item-bookmark-btn {
+  opacity: 1;
+  /* 悬停时给予背景色遮挡文字 */
+  background: var(--gh-hover, #f3f4f6);
+}
+
+/* 渐变遮罩：在按钮左侧添加淡出效果 */
+.outline-item:hover .outline-item-bookmark-btn::before {
+  content: "";
+  position: absolute;
+  left: -20px;
+  top: 0;
+  width: 20px;
+  height: 100%;
+  background: linear-gradient(to right, transparent, var(--gh-hover, #f3f4f6));
+  pointer-events: none;
+}
+
+.outline-item-bookmark-btn:hover {
+  color: #f59e0b;
+  transform: translateY(-50%) scale(1.1);
 }
 
 /* Ghost 节点样式（收藏内容不存在时） */

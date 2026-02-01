@@ -271,7 +271,7 @@ export class ClaudeAdapter extends SiteAdapter {
 
       outline.push({
         level,
-        text: text.length > 80 ? text.slice(0, 77) + "..." : text,
+        text: text.length > 200 ? text.slice(0, 200) : text,
         element: h,
         isUserQuery: false,
         isTruncated: text.length > 80,
@@ -287,7 +287,7 @@ export class ClaudeAdapter extends SiteAdapter {
 
         outline.push({
           level: 0,
-          text: text.length > 60 ? text.slice(0, 57) + "..." : text,
+          text: text.length > 200 ? text.slice(0, 200) : text,
           element: el,
           isUserQuery: true,
           isTruncated: text.length > 60,
