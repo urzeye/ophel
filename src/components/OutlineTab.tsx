@@ -891,6 +891,14 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
               </button>
             </Tooltip>
 
+            {/* Bookmark Mode Toggle */}
+            <button
+              onClick={handleToggleBookmarkMode}
+              title={t("bookmarkMode") || "收藏"}
+              className={`outline-toolbar-btn ${bookmarkMode ? "active-subtle" : ""}`}>
+              <StarIcon size={16} filled={bookmarkMode} color="currentColor" />
+            </button>
+
             {/* Expand/Collapse */}
             <Tooltip
               content={
