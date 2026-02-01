@@ -135,6 +135,7 @@ export function useShortcuts({
     )
 
     await smartScrollToBottom(adapter)
+
     showToast(t("scrolledToBottom") || "已滚动到底部")
   }, [adapter])
 
@@ -200,6 +201,8 @@ export function useShortcuts({
   }, [outlineManager])
 
   // 上一个/下一个标题
+  // 追踪上次导航的目标索引，避免重复依赖视口判定
+  const lastNavigatedIndexRef = useRef<number | null>(null)
   const navigateHeading = useCallback(
     (direction: "prev" | "next") => {
       if (!outlineManager) return
@@ -223,18 +226,52 @@ export function useShortcuts({
       const flatItems = flattenTree(tree)
       if (flatItems.length === 0) return
 
-      // 尝试找到当前可见项的索引
+      // 确定当前起始位置：
+      // 1. 优先使用上次导航的目标（如果它还在视口附近）
+      // 2. 如果上次目标不存在或离视口太远，从视口判断
       let currentFlatIndex = -1
-      const scrollContainer = outlineManager.getScrollContainer()
 
-      if (scrollContainer) {
-        const rect = scrollContainer.getBoundingClientRect()
-        // 使用 OutlineManager 的逻辑查找当前可见项
-        const visibleItemIndex = outlineManager.findVisibleItemIndex(rect.top, rect.bottom)
+      // 尝试使用上次导航的目标
+      if (lastNavigatedIndexRef.current !== null) {
+        const idx = flatItems.findIndex((item) => item.index === lastNavigatedIndexRef.current)
+        if (idx !== -1) {
+          // 检查该项的元素是否在视口附近（±2屏以内）
+          const targetItem = flatItems[idx]
+          let element = targetItem.element
+          if (!element || !element.isConnected) {
+            // 尝试重新查找元素
+            if (targetItem.isUserQuery && targetItem.level === 0) {
+              element = outlineManager.findUserQueryElement(
+                targetItem.queryIndex!,
+                targetItem.text,
+              ) as HTMLElement
+            } else {
+              element = outlineManager.findElementByHeading(
+                targetItem.level,
+                targetItem.text,
+              ) as HTMLElement
+            }
+          }
+          if (element && element.isConnected) {
+            const rect = element.getBoundingClientRect()
+            const viewportHeight = window.innerHeight
+            // 如果距离视口中心超过 2 屏，认为用户手动滚动了
+            if (Math.abs(rect.top - viewportHeight / 2) < viewportHeight * 2) {
+              currentFlatIndex = idx
+            }
+          }
+        }
+      }
 
-        if (visibleItemIndex !== null) {
-          // 在扁平列表中找到对应项
-          currentFlatIndex = flatItems.findIndex((item) => item.index === visibleItemIndex)
+      // 回退到视口判断
+      if (currentFlatIndex === -1) {
+        const scrollContainer = outlineManager.getScrollContainer()
+        if (scrollContainer) {
+          const rect = scrollContainer.getBoundingClientRect()
+          const visibleItemIndex = outlineManager.findVisibleItemIndex(rect.top, rect.bottom)
+          if (visibleItemIndex !== null) {
+            currentFlatIndex = flatItems.findIndex((item) => item.index === visibleItemIndex)
+          }
         }
       }
 
@@ -253,6 +290,9 @@ export function useShortcuts({
 
       const targetItem = flatItems[targetFlatIndex]
       if (targetItem) {
+        // 更新追踪的索引
+        lastNavigatedIndexRef.current = targetItem.index
+
         // 1. 在大纲中揭示并高亮
         outlineManager.revealNode(targetItem.index)
 
