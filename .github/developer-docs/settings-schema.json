@@ -169,5 +169,19 @@
     "remoteDir": "ophel",
     "lastSyncTime": null,
     "lastSyncStatus": null
-  }
+  },
+
+  "bookmarks": [
+    {
+      "id": "example-bookmark-id",
+      "sessionId": "conversation-id",
+      "siteId": "gemini",
+      "cid": "account-or-team-id",
+      "title": "标题示例",
+      "level": 2,
+      "signature": "标题示例::后续内容的前50字符",
+      "scrollTop": 1000,
+      "timestamp": 1700000000000
+    }
+  ]
 }

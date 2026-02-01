@@ -11,17 +11,18 @@ interface IconProps {
   style?: React.CSSProperties
 }
 
-export const StarIcon: React.FC<IconProps> = ({
+export const StarIcon: React.FC<IconProps & { filled?: boolean }> = ({
   size = 20,
   color = "currentColor",
   className = "",
   style,
+  filled = false,
 }) => (
   <svg
     viewBox="0 0 24 24"
     width={size}
     height={size}
-    fill="none"
+    fill={filled ? color : "none"}
     stroke={color}
     strokeWidth="2"
     strokeLinecap="round"

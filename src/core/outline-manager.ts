@@ -1,5 +1,6 @@
 import type { OutlineItem, SiteAdapter } from "~adapters/base"
 import type { Settings } from "~utils/storage"
+import { useBookmarkStore, type Bookmark } from "~stores/bookmarks-store"
 
 export interface OutlineNode extends OutlineItem {
   children: OutlineNode[]
@@ -11,6 +12,11 @@ export interface OutlineNode extends OutlineItem {
   isMatch?: boolean
   hasMatchedDescendant?: boolean
   queryIndex?: number
+  // Bookmark props
+  isBookmarked?: boolean
+  isGhost?: boolean
+  bookmarkId?: string
+  scrollTop?: number
 }
 
 interface TreeState {
@@ -44,6 +50,10 @@ export class OutlineManager {
   private preSearchExpandLevel: number | null = null // 保存搜索前的层级
   private searchLevelManual: boolean = false
   private matchCount: number = 0
+
+  // Bookmark Filter Mode
+  private bookmarkMode: boolean = false
+  private preBookmarkModeState: Record<string, boolean> | null = null // 保存书签模式前的折叠状态
 
   // 生成状态追踪（用于检测生成完成后刷新）
   private wasGenerating: boolean = false
@@ -243,6 +253,99 @@ export class OutlineManager {
     return this.siteAdapter.getScrollContainer()
   }
 
+  // 书签模式
+  setBookmarkMode(enabled: boolean) {
+    if (enabled && !this.bookmarkMode) {
+      // 开启书签模式：保存当前折叠状态
+      this.preBookmarkModeState = this.saveTreeCollapsedState(this.tree)
+      // 先全部折叠
+      this.collapseAllExpandedState(this.tree)
+      // 再展开书签路径
+      this.expandBookmarkPaths(this.tree)
+    } else if (!enabled && this.bookmarkMode) {
+      // 关闭书签模式：恢复之前的折叠状态
+      if (this.preBookmarkModeState) {
+        this.restoreTreeCollapsedState(this.tree, this.preBookmarkModeState)
+        this.preBookmarkModeState = null
+      }
+    }
+    this.bookmarkMode = enabled
+    this.notify()
+  }
+
+  toggleBookmarkMode() {
+    this.setBookmarkMode(!this.bookmarkMode)
+  }
+
+  getBookmarkMode() {
+    return this.bookmarkMode
+  }
+
+  /**
+   * 保存树的折叠状态
+   */
+  private saveTreeCollapsedState(nodes: OutlineNode[]): Record<string, boolean> {
+    const state: Record<string, boolean> = {}
+    const saveNode = (node: OutlineNode, path: string) => {
+      const key = `${path}/${node.level}-${node.text}`
+      state[key] = node.collapsed
+      node.children.forEach((child, idx) => saveNode(child, `${key}/${idx}`))
+    }
+    nodes.forEach((n, idx) => saveNode(n, `root/${idx}`))
+    return state
+  }
+
+  /**
+   * 恢复树的折叠状态
+   */
+  private restoreTreeCollapsedState(nodes: OutlineNode[], state: Record<string, boolean>) {
+    const restoreNode = (node: OutlineNode, path: string) => {
+      const key = `${path}/${node.level}-${node.text}`
+      if (key in state) {
+        node.collapsed = state[key]
+      }
+      node.children.forEach((child, idx) => restoreNode(child, `${key}/${idx}`))
+    }
+    nodes.forEach((n, idx) => restoreNode(n, `root/${idx}`))
+  }
+
+  /**
+   * 递归折叠所有节点（仅修改 collapsed 状态）
+   */
+  private collapseAllExpandedState(nodes: OutlineNode[]) {
+    nodes.forEach((node) => {
+      node.collapsed = true
+      if (node.children.length > 0) {
+        this.collapseAllExpandedState(node.children)
+      }
+    })
+  }
+
+  /**
+   * 展开包含书签的所有路径
+   * 递归遍历树，如果节点本身是书签或其后代有书签，则展开该节点
+   */
+  private expandBookmarkPaths(nodes: OutlineNode[]): boolean {
+    let hasBookmark = false
+    nodes.forEach((node) => {
+      let childHasBookmark = false
+      if (node.children.length > 0) {
+        childHasBookmark = this.expandBookmarkPaths(node.children)
+      }
+
+      if (childHasBookmark) {
+        // 只有当后代有书签时才展开（作为路径）
+        // 如果仅仅是自己有书签（叶子书签），保持折叠（因为 collapseAll 已经设为 true 了）
+        node.collapsed = false
+      }
+
+      if (node.isBookmarked || childHasBookmark) {
+        hasBookmark = true
+      }
+    })
+    return hasBookmark
+  }
+
   extractUserQueryText(element: Element): string {
     return this.siteAdapter.extractUserQueryText(element)
   }
@@ -292,19 +395,129 @@ export class OutlineManager {
       displayLevel,
       searchLevelManual: this.searchLevelManual,
       matchCount: this.matchCount,
+      bookmarkMode: this.bookmarkMode,
     }
+  }
+
+  // --- Bookmark Logic ---
+
+  private generateSignature(item: OutlineItem): string {
+    if (!item.element) return item.text
+    // Signature: Title + First 50 chars of next sibling text content
+    let context = ""
+    try {
+      if (item.element.nextElementSibling) {
+        context = (item.element.nextElementSibling.textContent || "").trim().substring(0, 50)
+      } else if (item.element instanceof HTMLElement) {
+        // Fallback: try parent's next sibling if current is effectively a wrapper
+        // context = item.element.parentElement?.nextElementSibling?...
+      }
+    } catch (e) {
+      // Ignore
+    }
+    return `${item.text}::${context}`
+  }
+
+  // Helper public method for UI
+  toggleBookmark(node: OutlineNode) {
+    const sessionId = this.siteAdapter.getSessionId()
+    const siteId = this.siteAdapter.getSiteId() // 站点标识
+    const cid = this.siteAdapter.getCurrentCid() || "" // 账号 ID
+    const signature = this.generateSignature(node)
+    // Use node.element.offsetTop if available, or current scroll position?
+    // Best is element.offsetTop usually.
+    let scrollTop = 0
+    if (node.element instanceof HTMLElement) {
+      scrollTop = node.element.offsetTop
+    } else if (node.scrollTop !== undefined) {
+      scrollTop = node.scrollTop // If it's a ghost node or already has it
+    }
+
+    // 切换书签状态
+    const store = useBookmarkStore.getState()
+    const existingId = store.getBookmarkId(sessionId, signature)
+
+    if (existingId) {
+      // 移除书签
+      store.removeBookmark(existingId)
+      node.isBookmarked = false
+      node.bookmarkId = undefined
+    } else {
+      // 添加书签
+      store.addBookmark(sessionId, siteId, cid, node, signature, scrollTop)
+      node.isBookmarked = true
+      node.bookmarkId = store.getBookmarkId(sessionId, signature) || undefined
+    }
+
+    // 直接通知 UI 更新，不重建树（避免折叠状态被重置）
+    this.notify()
   }
 
   // Adjusted refresh signature
   refresh(overrideLevel?: number) {
     if (!this.settings.enabled) return
 
-    const outlineData = this.siteAdapter.extractOutline(
+    let outlineData = this.siteAdapter.extractOutline(
       this.settings.maxLevel,
       this.settings.showUserQueries,
     )
 
-    // ... (rest of logic) ...
+    // --- Merge Bookmarks ---
+    const sessionId = this.siteAdapter.getSessionId()
+    const bookmarks = useBookmarkStore.getState().getBookmarksBySession(sessionId)
+
+    if (bookmarks.length > 0) {
+      // 1. Mark matched nodes
+      // Create a map for fast lookup? No, signature might collision if simple.
+      // Signatures are unique enough.
+
+      const unmatchedBookmarkIds = new Set(bookmarks.map((b) => b.id))
+
+      outlineData.forEach((item) => {
+        const signature = this.generateSignature(item)
+        // Find matching bookmark
+        const bookmark = bookmarks.find((b) => b.signature === signature && b.title === item.text)
+
+        if (bookmark) {
+          ;(item as OutlineNode).isBookmarked = true
+          ;(item as OutlineNode).bookmarkId = bookmark.id
+          unmatchedBookmarkIds.delete(bookmark.id)
+        }
+      })
+
+      // 2. Insert Ghost Nodes
+      const ghosts: OutlineItem[] = []
+      unmatchedBookmarkIds.forEach((bid) => {
+        const bookmark = bookmarks.find((b) => b.id === bid)
+        if (bookmark) {
+          ghosts.push({
+            level: bookmark.level,
+            text: bookmark.title,
+            element: null, // Ghost nodes have no element
+            isUserQuery: false, // Assume false for now, or store type in bookmark
+            // Custom props
+            isBookmarked: true,
+            isGhost: true,
+            bookmarkId: bookmark.id,
+            // Helper for sorting
+            scrollTop: bookmark.scrollTop,
+          } as any)
+        }
+      })
+
+      if (ghosts.length > 0) {
+        // Calculate offsets for real items to sort
+        const container = this.siteAdapter.getScrollContainer()
+        const getTop = (item: any) => {
+          if (item.isGhost) return item.scrollTop
+          if (item.element instanceof HTMLElement) return item.element.offsetTop
+          return 0
+        }
+
+        // Merge and sort
+        outlineData = [...outlineData, ...ghosts].sort((a, b) => getTop(a) - getTop(b))
+      }
+    }
 
     if (outlineData.length === 0) {
       // ... existing clear logic
@@ -326,7 +539,7 @@ export class OutlineManager {
     this.minLevel = headingLevels.length > 0 ? Math.min(...headingLevels) : 1
 
     // Check if tree changed
-    const outlineKey = outlineData.map((i) => i.text).join("|")
+    const outlineKey = outlineData.map((i) => `${i.text}:${(i as any).isBookmarked}`).join("|")
     const currentStateMap: Record<string, TreeState> = {}
     if (this.tree.length > 0) {
       this.captureTreeState(this.tree, currentStateMap)
@@ -360,11 +573,31 @@ export class OutlineManager {
       this.performSearch(this.searchQuery)
     }
 
+    // 书签模式不再强制显示，由 UI 层根据 bookmarkMode 状态过滤
+
     // 计算 isAllExpanded 状态，确保按钮初始状态正确
     const maxActualLevel = Math.max(...Object.keys(this.levelCounts).map(Number), 1)
     this.isAllExpanded = this.expandLevel >= maxActualLevel
 
     this.notify()
+  }
+
+  // New helper: Ensure bookmarks are always visible (without changing collapse state)
+  private forceBookmarksVisible(nodes: OutlineNode[]): boolean {
+    let hasBookmark = false
+    nodes.forEach((node) => {
+      let childHasBookmark = false
+      if (node.children.length > 0) {
+        childHasBookmark = this.forceBookmarksVisible(node.children)
+      }
+
+      if (node.isBookmarked || childHasBookmark) {
+        // 只设置 forceVisible 标记，不改变折叠状态
+        node.forceVisible = true
+        hasBookmark = true
+      }
+    })
+    return hasBookmark
   }
 
   // Build tree from flat list
@@ -390,6 +623,10 @@ export class OutlineManager {
         children: [],
         collapsed: false,
       }
+      // Inherit bookmark props from merged item
+      if ((item as any).isBookmarked) node.isBookmarked = true
+      if ((item as any).isGhost) node.isGhost = true
+      if ((item as any).bookmarkId) node.bookmarkId = (item as any).bookmarkId
 
       while (stack.length > 0 && stack[stack.length - 1].relativeLevel >= relativeLevel) {
         stack.pop()
@@ -614,6 +851,8 @@ export class OutlineManager {
       })
     }
     clear(this.tree)
+    // Re-apply bookmark visibility logic
+    this.forceBookmarksVisible(this.tree)
     this.notify()
   }
 
@@ -674,6 +913,7 @@ export class OutlineManager {
       let hasAnyMatch = false
       nodes.forEach((node) => {
         const isMatch = normalize(node.text).includes(normalizedQuery)
+        // Ensure bookmarks are also searchable
         node.isMatch = isMatch
         if (isMatch) matchCount++
 
@@ -724,6 +964,9 @@ export class OutlineManager {
       let invalidCount = 0
 
       for (const item of allItems) {
+        // Skip ghost nodes for scroll tracking
+        if (item.isGhost) continue
+
         let element = item.element
 
         // 元素失效时使用 siteAdapter 重新查找（支持 Shadow DOM）
