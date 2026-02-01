@@ -245,6 +245,22 @@ export class OutlineManager {
     return this.tree
   }
 
+  /**
+   * 获取扁平化的大纲项列表
+   * 供 InlineBookmarkManager 使用
+   */
+  getFlatItems(): OutlineItem[] {
+    return this.flatItems
+  }
+
+  /**
+   * 获取大纲项的签名（用于书签标识）
+   * 供 InlineBookmarkManager 使用
+   */
+  getSignature(item: OutlineItem): string {
+    return this.generateSignature(item)
+  }
+
   getSearchQuery() {
     return this.searchQuery
   }
@@ -555,6 +571,8 @@ export class OutlineManager {
     if (this.treeKey !== outlineKey || this.tree.length === 0 || overrideLevel !== undefined) {
       this.tree = this.buildTree(outlineData, this.minLevel)
       this.treeKey = outlineKey
+      // 保存扁平化数据供 InlineBookmarkManager 使用
+      this.flatItems = outlineData
     } else {
       return
     }
