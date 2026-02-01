@@ -270,6 +270,12 @@ export class OutlineManager {
       }
     }
     this.bookmarkMode = enabled
+
+    // 如果当前有搜索，重新执行搜索以更新结果计数和高亮状态（应用新的过滤逻辑）
+    if (this.searchQuery) {
+      this.performSearch(this.searchQuery)
+    }
+
     this.notify()
   }
 
@@ -915,10 +921,52 @@ export class OutlineManager {
         const isMatch = normalize(node.text).includes(normalizedQuery)
         // Ensure bookmarks are also searchable
         node.isMatch = isMatch
-        if (isMatch) matchCount++
+
+        // 统计逻辑：如果有书签模式，只统计书签相关的匹配项
+        if (isMatch) {
+          if (this.bookmarkMode) {
+            // 重新计算 hasBookmarkDescendant
+            const hasBookmarkDescendant = (n: OutlineNode): boolean => {
+              if (n.isBookmarked) return true
+              return n.children?.some(hasBookmarkDescendant) || false
+            }
+
+            // 只有当节点自身是书签，或者它是通往书签的路径时，才算有效结果
+            if (node.isBookmarked || hasBookmarkDescendant(node)) {
+              matchCount++
+            }
+          } else {
+            matchCount++
+          }
+        }
 
         if (node.children.length > 0) {
-          node.hasMatchedDescendant = traverse(node.children)
+          // 默认继续向下搜索
+          let shouldTraverseChildren = true
+
+          // 特殊策略：书签模式下，如果当前节点本身是书签，但没有后续书签路径
+          // （即它是叶子书签，此时它的 children 纯粹是上下文内容）
+          // 不应对这些子内容进行搜索
+          if (this.bookmarkMode) {
+            const hasBookmarkDescendant = (n: OutlineNode): boolean => {
+              if (n.isBookmarked) return true
+              return n.children?.some(hasBookmarkDescendant) || false
+            }
+
+            // 如果节点是书签，且后代没有书签 -> 它是叶子书签 -> 停止搜索子级
+            if (node.isBookmarked && !node.children.some(hasBookmarkDescendant)) {
+              shouldTraverseChildren = false
+            }
+
+            // 如果节点不是书签，也没后代书签 -> 它是无关节点 -> 停止搜索（其实外层UI已经过滤了）
+            // 但为了性能，这里也可以停。不过我们主要关注上面那个逻辑。
+          }
+
+          if (shouldTraverseChildren) {
+            node.hasMatchedDescendant = traverse(node.children)
+          } else {
+            node.hasMatchedDescendant = false
+          }
         } else {
           node.hasMatchedDescendant = false
         }

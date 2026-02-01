@@ -78,7 +78,9 @@ const OutlineNodeView: React.FC<{
     // 书签模式逻辑
     if (isBookmarkRelevant) {
       // shouldShow 计算：书签模式下统一使用 !parentCollapsed
-      shouldShow = !parentCollapsed
+      // 叠加搜索过滤：如果有搜索词，必须匹配搜索
+      const isSearchMatch = !searchQuery || node.isMatch || node.hasMatchedDescendant
+      shouldShow = !parentCollapsed && isSearchMatch
     } else {
       shouldShow = false
     }
@@ -1101,27 +1103,36 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         </div>
       </div>
 
+      {/* 搜索结果条 (Sticky) */}
+      {searchQuery && (
+        <div
+          className="outline-result-bar"
+          style={{
+            textAlign: "center",
+            padding: "6px 8px", //稍微增加横向padding
+            margin: "0 8px 0 8px", // 去除底部外边距，由下方容器 padding 控制
+            color: "var(--gh-border-active)",
+            fontSize: "13px",
+            background: matchCount > 0 ? "var(--gh-folder-bg-default)" : "transparent",
+            borderRadius: "4px",
+            border: matchCount === 0 ? "1px dashed var(--gh-border, #e5e7eb)" : "none",
+            flexShrink: 0, // 防止被压缩
+          }}>
+          {matchCount} {t("outlineSearchResult") || "个结果"}
+        </div>
+      )}
+
       {/* 大纲树 */}
       <div
         ref={listRef}
         className="gh-outline-tree-container"
-        style={{ flex: 1, overflowY: "auto", padding: "8px" }}>
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          padding: searchQuery ? "0 8px 8px 8px" : "8px", // 搜索时顶部 padding 为 0 (依赖 ResultBar 的视觉分隔或紧凑布局)
+        }}>
         {/* 搜索结果条 */}
-        {searchQuery && matchCount > 0 && (
-          <div
-            className="outline-result-bar"
-            style={{
-              textAlign: "center",
-              padding: "6px",
-              color: "var(--gh-border-active)",
-              fontSize: "13px",
-              background: "var(--gh-folder-bg-default)",
-              borderRadius: "4px",
-              marginBottom: "8px",
-            }}>
-            {matchCount} {t("outlineSearchResult") || "个结果"}
-          </div>
-        )}
+        {/* 搜索结果条 */}
 
         {tree.length === 0 ? (
           <div
