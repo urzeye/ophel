@@ -141,7 +141,8 @@ export class InlineBookmarkManager {
     const sessionId = this.adapter.getSessionId()
     const bookmarkStore = useBookmarkStore.getState()
 
-    for (const item of flatItems) {
+    for (let idx = 0; idx < flatItems.length; idx++) {
+      const item = flatItems[idx]
       if (!item.element || !item.element.isConnected) continue
       if (this.injectedElements.has(item.element)) continue
 
@@ -155,7 +156,7 @@ export class InlineBookmarkManager {
       iconWrapper.className = ICON_CLASS
 
       // 生成签名和检查是否已收藏
-      const signature = this.outlineManager.getSignature(item)
+      const signature = this.outlineManager.getSignature(item, idx)
       const isBookmarked = bookmarkStore.getBookmarkId(sessionId, signature) !== null
 
       if (isBookmarked) {

@@ -270,8 +270,8 @@ export class OutlineManager {
    * 获取大纲项的签名（用于书签标识）
    * 供 InlineBookmarkManager 使用
    */
-  getSignature(item: OutlineItem): string {
-    return this.generateSignature(item)
+  getSignature(item: OutlineItem, index: number): string {
+    return this.generateSignature(item, index)
   }
 
   getSearchQuery() {
@@ -436,21 +436,18 @@ export class OutlineManager {
 
   // --- Bookmark Logic ---
 
-  private generateSignature(item: OutlineItem): string {
-    if (!item.element) return item.text
-    // Signature: Title + First 50 chars of next sibling text content
+  private generateSignature(item: OutlineItem, index: number): string {
     let context = ""
+
     try {
-      if (item.element.nextElementSibling) {
+      if (item.element?.nextElementSibling) {
         context = (item.element.nextElementSibling.textContent || "").trim().substring(0, 50)
-      } else if (item.element instanceof HTMLElement) {
-        // Fallback: try parent's next sibling if current is effectively a wrapper
-        // context = item.element.parentElement?.nextElementSibling?...
       }
     } catch (e) {
       // Ignore
     }
-    return `${item.text}::${context}`
+
+    return `${item.text}::${index}::${context}`
   }
 
   // Helper public method for UI
@@ -458,7 +455,7 @@ export class OutlineManager {
     const sessionId = this.siteAdapter.getSessionId()
     const siteId = this.siteAdapter.getSiteId() // 站点标识
     const cid = this.siteAdapter.getCurrentCid() || "" // 账号 ID
-    const signature = this.generateSignature(node)
+    const signature = this.generateSignature(node, node.index)
     // Use node.element.offsetTop if available, or current scroll position?
     // Best is element.offsetTop usually.
     let scrollTop = 0
@@ -508,8 +505,8 @@ export class OutlineManager {
 
       const unmatchedBookmarkIds = new Set(bookmarks.map((b) => b.id))
 
-      outlineData.forEach((item) => {
-        const signature = this.generateSignature(item)
+      outlineData.forEach((item, idx) => {
+        const signature = this.generateSignature(item, idx)
         // Find matching bookmark
         const bookmark = bookmarks.find((b) => b.signature === signature && b.title === item.text)
 
