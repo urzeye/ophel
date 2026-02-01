@@ -588,24 +588,6 @@ export class OutlineManager {
     this.notify()
   }
 
-  // New helper: Ensure bookmarks are always visible (without changing collapse state)
-  private forceBookmarksVisible(nodes: OutlineNode[]): boolean {
-    let hasBookmark = false
-    nodes.forEach((node) => {
-      let childHasBookmark = false
-      if (node.children.length > 0) {
-        childHasBookmark = this.forceBookmarksVisible(node.children)
-      }
-
-      if (node.isBookmarked || childHasBookmark) {
-        // 只设置 forceVisible 标记，不改变折叠状态
-        node.forceVisible = true
-        hasBookmark = true
-      }
-    })
-    return hasBookmark
-  }
-
   // Build tree from flat list
   private buildTree(outline: OutlineItem[], minLevel: number): OutlineNode[] {
     const tree: OutlineNode[] = []
@@ -857,8 +839,7 @@ export class OutlineManager {
       })
     }
     clear(this.tree)
-    // Re-apply bookmark visibility logic
-    this.forceBookmarksVisible(this.tree)
+
     this.notify()
   }
 
