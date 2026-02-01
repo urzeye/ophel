@@ -408,6 +408,7 @@ export const es = {
   outlineRefresh: "Recargar",
   outlineSettings: "Ajustes de Índice",
   bookmarkSettings: "Ajustes de Marcadores",
+  bookmarkModeDisableLevel: "No se pueden ajustar los niveles en el modo marcadores",
   bookmarkSettingsDesc: "Configuración relacionada con marcadores",
   inlineBookmarkModeLabel: "Iconos de marcadores",
   inlineBookmarkModeDesc: "Controlar visibilidad junto a los encabezados",

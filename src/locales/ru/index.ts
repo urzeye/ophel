@@ -406,6 +406,7 @@ export const ru = {
   outlineRefresh: "Перезагрузить",
   outlineSettings: "Настройки содержания",
   bookmarkSettings: "Настройки закладок",
+  bookmarkModeDisableLevel: "Невозможно настроить уровни в режиме закладок",
   bookmarkSettingsDesc: "Настройки, связанные с закладками",
   inlineBookmarkModeLabel: "Значки закладок",
   inlineBookmarkModeDesc: "Отображение значков рядом с заголовками",

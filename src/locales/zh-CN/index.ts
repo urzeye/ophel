@@ -425,6 +425,7 @@ export const zhCN = {
   outlineRefresh: "刷新",
   outlineSettings: "大纲设置",
   bookmarkSettings: "收藏设置",
+  bookmarkModeDisableLevel: "收藏模式下无法调整层级",
   bookmarkSettingsDesc: "收藏相关设置",
   inlineBookmarkModeLabel: "页内收藏图标",
   inlineBookmarkModeDesc: "控制页面标题旁的收藏图标显示方式",

@@ -412,6 +412,7 @@ export const ko = {
   outlineRefresh: "새로고침",
   outlineSettings: "개요 설정",
   bookmarkSettings: "북마크 설정",
+  bookmarkModeDisableLevel: "북마크 모드에서는 레벨을 조정할 수 없습니다",
   bookmarkSettingsDesc: "북마크 관련 설정",
   inlineBookmarkModeLabel: "북마크 아이콘",
   inlineBookmarkModeDesc: "제목 옆 아이콘 표시 방식 제어",

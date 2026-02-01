@@ -407,6 +407,7 @@ export const pt = {
   outlineRefresh: "Recarregar",
   outlineSettings: "Ajustes de Índice",
   bookmarkSettings: "Configurações de Favoritos",
+  bookmarkModeDisableLevel: "Não é possível ajustar níveis no modo favoritos",
   bookmarkSettingsDesc: "Configurações relacionadas a favoritos",
   inlineBookmarkModeLabel: "Ícones de favoritos",
   inlineBookmarkModeDesc: "Controlar visibilidade ao lado dos títulos",

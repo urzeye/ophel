@@ -1,6 +1,8 @@
 import type { OutlineItem, SiteAdapter } from "~adapters/base"
 import type { Settings } from "~utils/storage"
 import { useBookmarkStore } from "~stores/bookmarks-store"
+import { showToast } from "~utils/toast"
+import { t } from "~utils/i18n"
 
 export interface OutlineNode extends OutlineItem {
   children: OutlineNode[]
@@ -523,11 +525,15 @@ export class OutlineManager {
       unmatchedBookmarkIds.forEach((bid) => {
         const bookmark = bookmarks.find((b) => b.id === bid)
         if (bookmark) {
+          // 过滤：如果是 0 级节点（用户提问）且不展示用户提问，跳过
+          if (bookmark.level === 0 && !this.settings.showUserQueries) {
+            return
+          }
           ghosts.push({
             level: bookmark.level,
             text: bookmark.title,
             element: null, // Ghost nodes have no element
-            isUserQuery: false, // Assume false for now, or store type in bookmark
+            isUserQuery: bookmark.level === 0, // 0 级节点即用户提问
             // Custom props
             isBookmarked: true,
             isGhost: true,
@@ -753,6 +759,12 @@ export class OutlineManager {
 
   // 设置展开层级 (Legacy: setLevel 完全复刻)
   setLevel(level: number) {
+    // 收藏模式下禁用层级调整
+    if (this.bookmarkMode) {
+      showToast(t("bookmarkModeDisableLevel"))
+      return
+    }
+
     this.expandLevel = level
 
     // Legacy: clearForceExpandedState 已经正确设置了 collapsed 状态

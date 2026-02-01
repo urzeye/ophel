@@ -354,6 +354,7 @@ export const zhTW = {
   outlineRefresh: "刷新",
   outlineSettings: "大綱設置",
   bookmarkSettings: "收藏設置",
+  bookmarkModeDisableLevel: "收藏模式下無法調整層級",
   bookmarkSettingsDesc: "收藏相關設置",
   inlineBookmarkModeLabel: "頁內收藏圖示",
   inlineBookmarkModeDesc: "控制頁面標題旁的收藏圖示顯示方式",

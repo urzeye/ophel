@@ -407,6 +407,7 @@ export const de = {
   outlineRefresh: "Neu laden",
   outlineSettings: "Verzeichnis-Optionen",
   bookmarkSettings: "Lesezeichen-Einstellungen",
+  bookmarkModeDisableLevel: "Ebenen können im Lesezeichen-Modus nicht angepasst werden",
   bookmarkSettingsDesc: "Einstellungen für Lesezeichen",
   inlineBookmarkModeLabel: "Lesezeichen-Symbole",
   inlineBookmarkModeDesc: "Sichtbarkeit der Symbole neben Überschriften steuern",

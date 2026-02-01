@@ -412,6 +412,7 @@ export const ja = {
   outlineRefresh: "リロード",
   outlineSettings: "目次設定",
   bookmarkSettings: "ブックマーク設定",
+  bookmarkModeDisableLevel: "ブックマークモードではレベルを調整できません",
   bookmarkSettingsDesc: "ブックマーク関連の設定",
   inlineBookmarkModeLabel: "ブックマークアイコン",
   inlineBookmarkModeDesc: "見出し横のアイコン表示方法を設定",

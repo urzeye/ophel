@@ -429,6 +429,7 @@ export const en = {
   outlineRefresh: "Refresh",
   outlineSettings: "Outline Settings",
   bookmarkSettings: "Bookmark Settings",
+  bookmarkModeDisableLevel: "Cannot adjust levels in bookmark mode",
   bookmarkSettingsDesc: "Bookmark related settings",
   inlineBookmarkModeLabel: "Inline Bookmark Icons",
   inlineBookmarkModeDesc: "Control visibility of bookmark icons next to page headings",
