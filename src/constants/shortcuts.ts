@@ -34,16 +34,21 @@ export const SHORTCUT_ACTIONS = {
   SWITCH_TAB_3: "switchTab3",
 
   // 大纲类
+  TOGGLE_USER_QUERIES: "toggleUserQueries",
+  ONLY_USER_QUERIES: "onlyUserQueries",
+  TOGGLE_BOOKMARKS: "toggleBookmarks",
+  LOCATE_OUTLINE: "locateOutline",
+  SEARCH_OUTLINE: "searchOutline",
   REFRESH_OUTLINE: "refreshOutline",
+  PREV_HEADING: "prevHeading",
+  NEXT_HEADING: "nextHeading",
   TOGGLE_OUTLINE_EXPAND: "toggleOutlineExpand",
   EXPAND_LEVEL_1: "expandLevel1",
   EXPAND_LEVEL_2: "expandLevel2",
   EXPAND_LEVEL_3: "expandLevel3",
-  TOGGLE_USER_QUERIES: "toggleUserQueries",
-  PREV_HEADING: "prevHeading",
-  NEXT_HEADING: "nextHeading",
-  LOCATE_OUTLINE: "locateOutline",
-  SEARCH_OUTLINE: "searchOutline",
+  EXPAND_LEVEL_4: "expandLevel4",
+  EXPAND_LEVEL_5: "expandLevel5",
+  EXPAND_LEVEL_6: "expandLevel6",
 
   // 会话类
   NEW_CONVERSATION: "newConversation",
@@ -85,29 +90,28 @@ export const SHORTCUT_META: Record<
   goToAnchor: { labelKey: "shortcutGoToAnchor", label: "返回锚点", category: "navigation" },
 
   // 面板类
-  togglePanel: { labelKey: "shortcutTogglePanel", label: "切换面板", category: "panel" },
+  togglePanel: { labelKey: "shortcutTogglePanel", label: "展开/收起面板", category: "panel" },
   toggleTheme: { labelKey: "shortcutToggleTheme", label: "切换主题", category: "panel" },
   switchTab1: { labelKey: "shortcutSwitchTab1", label: "切换到第 1 个标签", category: "panel" },
   switchTab2: { labelKey: "shortcutSwitchTab2", label: "切换到第 2 个标签", category: "panel" },
   switchTab3: { labelKey: "shortcutSwitchTab3", label: "切换到第 3 个标签", category: "panel" },
 
   // 大纲类
-  refreshOutline: { labelKey: "shortcutRefreshOutline", label: "刷新大纲", category: "outline" },
-  toggleOutlineExpand: {
-    labelKey: "shortcutToggleOutlineExpand",
-    label: "展开/折叠全部",
-    category: "outline",
-  },
-  expandLevel1: { labelKey: "shortcutExpandLevel1", label: "展开到 1 级", category: "outline" },
-  expandLevel2: { labelKey: "shortcutExpandLevel2", label: "展开到 2 级", category: "outline" },
-  expandLevel3: { labelKey: "shortcutExpandLevel3", label: "展开到 3 级", category: "outline" },
   toggleUserQueries: {
     labelKey: "shortcutToggleUserQueries",
     label: "显示用户问题",
     category: "outline",
   },
-  prevHeading: { labelKey: "shortcutPrevHeading", label: "上一个标题", category: "outline" },
-  nextHeading: { labelKey: "shortcutNextHeading", label: "下一个标题", category: "outline" },
+  onlyUserQueries: {
+    labelKey: "shortcutOnlyUserQueries",
+    label: "只显示用户问题",
+    category: "outline",
+  },
+  toggleBookmarks: {
+    labelKey: "shortcutToggleBookmarks",
+    label: "显示用户收藏",
+    category: "outline",
+  },
   locateOutline: {
     labelKey: "shortcutLocateOutline",
     label: "定位大纲",
@@ -118,6 +122,20 @@ export const SHORTCUT_META: Record<
     label: "搜索大纲",
     category: "outline",
   },
+  prevHeading: { labelKey: "shortcutPrevHeading", label: "上一个标题", category: "outline" },
+  nextHeading: { labelKey: "shortcutNextHeading", label: "下一个标题", category: "outline" },
+  refreshOutline: { labelKey: "shortcutRefreshOutline", label: "刷新大纲", category: "outline" },
+  toggleOutlineExpand: {
+    labelKey: "shortcutToggleOutlineExpand",
+    label: "展开/折叠全部",
+    category: "outline",
+  },
+  expandLevel1: { labelKey: "shortcutExpandLevel1", label: "展开到 1 级", category: "outline" },
+  expandLevel2: { labelKey: "shortcutExpandLevel2", label: "展开到 2 级", category: "outline" },
+  expandLevel3: { labelKey: "shortcutExpandLevel3", label: "展开到 3 级", category: "outline" },
+  expandLevel4: { labelKey: "shortcutExpandLevel4", label: "展开到 4 级", category: "outline" },
+  expandLevel5: { labelKey: "shortcutExpandLevel5", label: "展开到 5 级", category: "outline" },
+  expandLevel6: { labelKey: "shortcutExpandLevel6", label: "展开到 6 级", category: "outline" },
 
   // 会话类
   newConversation: {
@@ -252,7 +270,12 @@ export const DEFAULT_KEYBINDINGS: Record<ShortcutActionId, ShortcutBinding> = {
   expandLevel1: { key: "1", alt: true, shift: true },
   expandLevel2: { key: "2", alt: true, shift: true },
   expandLevel3: { key: "3", alt: true, shift: true },
+  expandLevel4: { key: "4", alt: true, shift: true },
+  expandLevel5: { key: "5", alt: true, shift: true },
+  expandLevel6: { key: "6", alt: true, shift: true },
   toggleUserQueries: { key: "q", alt: true },
+  toggleBookmarks: { key: "c", alt: true },
+  onlyUserQueries: { key: "q", alt: true, shift: true },
   prevHeading: { key: "ArrowUp", alt: true },
   nextHeading: { key: "ArrowDown", alt: true },
   locateOutline: { key: "l", alt: true },

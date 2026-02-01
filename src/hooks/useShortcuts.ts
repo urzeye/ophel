@@ -188,6 +188,17 @@ export function useShortcuts({
     outlineManager?.toggleGroupMode()
   }, [outlineManager])
 
+  // 切换显示用户收藏
+  const toggleBookmarks = useCallback(() => {
+    outlineManager?.toggleBookmarkMode()
+  }, [outlineManager])
+
+  // 只显示用户问题
+  const onlyUserQueries = useCallback(() => {
+    outlineManager?.setShowUserQueries(true)
+    outlineManager?.setLevel(0)
+  }, [outlineManager])
+
   // 上一个/下一个标题
   const navigateHeading = useCallback(
     (direction: "prev" | "next") => {
@@ -650,7 +661,12 @@ export function useShortcuts({
       [SHORTCUT_ACTIONS.EXPAND_LEVEL_1]: () => expandToLevel(1),
       [SHORTCUT_ACTIONS.EXPAND_LEVEL_2]: () => expandToLevel(2),
       [SHORTCUT_ACTIONS.EXPAND_LEVEL_3]: () => expandToLevel(3),
+      [SHORTCUT_ACTIONS.EXPAND_LEVEL_4]: () => expandToLevel(4),
+      [SHORTCUT_ACTIONS.EXPAND_LEVEL_5]: () => expandToLevel(5),
+      [SHORTCUT_ACTIONS.EXPAND_LEVEL_6]: () => expandToLevel(6),
       [SHORTCUT_ACTIONS.TOGGLE_USER_QUERIES]: toggleUserQueries,
+      [SHORTCUT_ACTIONS.TOGGLE_BOOKMARKS]: toggleBookmarks,
+      [SHORTCUT_ACTIONS.ONLY_USER_QUERIES]: onlyUserQueries,
       [SHORTCUT_ACTIONS.PREV_HEADING]: prevHeading,
       [SHORTCUT_ACTIONS.NEXT_HEADING]: nextHeading,
       [SHORTCUT_ACTIONS.LOCATE_OUTLINE]: locateOutline,
@@ -699,6 +715,8 @@ export function useShortcuts({
     toggleOutlineExpand,
     expandToLevel,
     toggleUserQueries,
+    toggleBookmarks,
+    onlyUserQueries,
     prevHeading,
     nextHeading,
     locateOutline,
