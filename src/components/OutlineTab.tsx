@@ -76,11 +76,11 @@ const OutlineNodeView: React.FC<{
   let shouldShow: boolean
 
   if (bookmarkMode) {
-    // 收藏模式逻辑：收藏相关节点忽略折叠状态，始终显示
+    // shouldShow 计算：收藏模式下统一使用 !parentCollapsed
     if (isBookmarkRelevant) {
       // 叠加搜索过滤：如果有搜索词，必须匹配搜索
       const isSearchMatch = !searchQuery || node.isMatch || node.hasMatchedDescendant
-      shouldShow = isSearchMatch // 收藏模式下忽略 parentCollapsed
+      shouldShow = !parentCollapsed && isSearchMatch
     } else {
       shouldShow = false
     }
