@@ -53,7 +53,7 @@ export class OutlineManager {
 
   // Bookmark Filter Mode
   private bookmarkMode: boolean = false
-  private preBookmarkModeState: Record<string, boolean> | null = null // 保存书签模式前的折叠状态
+  private preBookmarkModeState: Record<string, boolean> | null = null // 保存收藏模式前的折叠状态
 
   // 生成状态追踪（用于检测生成完成后刷新）
   private wasGenerating: boolean = false
@@ -253,17 +253,17 @@ export class OutlineManager {
     return this.siteAdapter.getScrollContainer()
   }
 
-  // 书签模式
+  // 收藏模式
   setBookmarkMode(enabled: boolean) {
     if (enabled && !this.bookmarkMode) {
-      // 开启书签模式：保存当前折叠状态
+      // 开启收藏模式：保存当前折叠状态
       this.preBookmarkModeState = this.saveTreeCollapsedState(this.tree)
       // 先全部折叠
       this.collapseAllExpandedState(this.tree)
-      // 再展开书签路径
+      // 再展开收藏路径
       this.expandBookmarkPaths(this.tree)
     } else if (!enabled && this.bookmarkMode) {
-      // 关闭书签模式：恢复之前的折叠状态
+      // 关闭收藏模式：恢复之前的折叠状态
       if (this.preBookmarkModeState) {
         this.restoreTreeCollapsedState(this.tree, this.preBookmarkModeState)
         this.preBookmarkModeState = null
@@ -328,8 +328,8 @@ export class OutlineManager {
   }
 
   /**
-   * 展开包含书签的所有路径
-   * 递归遍历树，如果节点本身是书签或其后代有书签，则展开该节点
+   * 展开包含收藏的所有路径
+   * 递归遍历树，如果节点本身是收藏或其后代有收藏，则展开该节点
    */
   private expandBookmarkPaths(nodes: OutlineNode[]): boolean {
     let hasBookmark = false
@@ -340,8 +340,8 @@ export class OutlineManager {
       }
 
       if (childHasBookmark) {
-        // 只有当后代有书签时才展开（作为路径）
-        // 如果仅仅是自己有书签（叶子书签），保持折叠（因为 collapseAll 已经设为 true 了）
+        // 只有当后代有收藏时才展开（作为路径）
+        // 如果仅仅是自己有收藏（叶子收藏），保持折叠（因为 collapseAll 已经设为 true 了）
         node.collapsed = false
       }
 
@@ -439,17 +439,17 @@ export class OutlineManager {
       scrollTop = node.scrollTop // If it's a ghost node or already has it
     }
 
-    // 切换书签状态
+    // 切换收藏状态
     const store = useBookmarkStore.getState()
     const existingId = store.getBookmarkId(sessionId, signature)
 
     if (existingId) {
-      // 移除书签
+      // 移除收藏
       store.removeBookmark(existingId)
       node.isBookmarked = false
       node.bookmarkId = undefined
     } else {
-      // 添加书签
+      // 添加收藏
       store.addBookmark(sessionId, siteId, cid, node, signature, scrollTop)
       node.isBookmarked = true
       node.bookmarkId = store.getBookmarkId(sessionId, signature) || undefined
@@ -579,7 +579,7 @@ export class OutlineManager {
       this.performSearch(this.searchQuery)
     }
 
-    // 书签模式不再强制显示，由 UI 层根据 bookmarkMode 状态过滤
+    // 收藏模式不再强制显示，由 UI 层根据 bookmarkMode 状态过滤
 
     // 计算 isAllExpanded 状态，确保按钮初始状态正确
     const maxActualLevel = Math.max(...Object.keys(this.levelCounts).map(Number), 1)

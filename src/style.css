@@ -323,7 +323,7 @@
   height: 14px;
 }
 
-/* 书签按钮 */
+/* 收藏按钮 */
 .outline-item-bookmark-btn {
   position: absolute;
   right: 28px;
@@ -355,7 +355,7 @@
   color: #f59e0b;
 }
 
-/* Ghost 节点样式（书签内容不存在时） */
+/* Ghost 节点样式（收藏内容不存在时） */
 .ghost-node {
   opacity: 0.6;
 }

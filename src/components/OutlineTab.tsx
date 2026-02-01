@@ -36,8 +36,8 @@ const OutlineNodeView: React.FC<{
   parentForceExpanded: boolean
   searchLevelManual: boolean
   extractUserQueryText?: (element: Element) => string // 用于提取完整文本
-  bookmarkMode?: boolean // 书签过滤模式
-  ancestorHasBookmark?: boolean // 祖先节点中是否有书签（用于书签模式下显示子内容）
+  bookmarkMode?: boolean // 收藏过滤模式
+  ancestorHasBookmark?: boolean // 祖先节点中是否有收藏（用于收藏模式下显示子内容）
 }> = ({
   node,
   onToggle,
@@ -61,23 +61,23 @@ const OutlineNodeView: React.FC<{
   // 箭头始终显示（只要有子节点），因为用户可能想手动展开查看不匹配的子节点
   const isExpanded = hasChildren && !node.collapsed
 
-  // ===== 书签模式：计算节点是否与书签相关 =====
-  // 核心逻辑：区分“路径书签”（用于导航到深层书签）和“叶子书签”（用户可能想看上下文）
+  // ===== 收藏模式：计算节点是否与收藏相关 =====
+  // 核心逻辑：区分“路径收藏”（用于导航到深层收藏）和“叶子收藏”（用户可能想看上下文）
   const hasBookmarkDescendant = (n: OutlineNode): boolean => {
     if (n.isBookmarked) return true
     return n.children?.some(hasBookmarkDescendant) || false
   }
   const nodeHasBookmark = node.isBookmarked || hasBookmarkDescendant(node)
-  // 书签相关性：节点本身是书签 OR 有书签后代 OR 祖先是书签（显示上下文）
+  // 收藏相关性：节点本身是收藏 OR 有收藏后代 OR 祖先是收藏（显示上下文）
   const isBookmarkRelevant = nodeHasBookmark || ancestorHasBookmark
 
   // ===== shouldShow 计算 =====
   let shouldShow: boolean
 
   if (bookmarkMode) {
-    // 书签模式逻辑
+    // 收藏模式逻辑
     if (isBookmarkRelevant) {
-      // shouldShow 计算：书签模式下统一使用 !parentCollapsed
+      // shouldShow 计算：收藏模式下统一使用 !parentCollapsed
       // 叠加搜索过滤：如果有搜索词，必须匹配搜索
       const isSearchMatch = !searchQuery || node.isMatch || node.hasMatchedDescendant
       shouldShow = !parentCollapsed && isSearchMatch
@@ -628,14 +628,14 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         targetElement.classList.add("outline-highlight")
         setTimeout(() => targetElement?.classList.remove("outline-highlight"), 2000)
       } else if (node.isGhost && node.scrollTop !== undefined) {
-        // Ghost 节点（书签对应内容不存在）：使用保存的 scrollTop 回退
+        // Ghost 节点（收藏对应内容不存在）：使用保存的 scrollTop 回退
         const scrollContainer = manager.getScrollContainer()
         if (scrollContainer) {
           scrollContainer.scrollTo({ top: node.scrollTop, behavior: "smooth" })
-          showToast(t("bookmarkContentMissing") || "书签内容不存在，已跳转到保存位置", 3000)
+          showToast(t("bookmarkContentMissing") || "收藏内容不存在，已跳转到保存位置", 3000)
         }
       } else {
-        showToast(t("bookmarkContentMissing") || "内容已被删除或折叠", 2000)
+        showToast(t("bookmarkContentMissing") || "收藏内容已被删除或折叠", 2000)
       }
     },
     [manager, onJumpBefore],
@@ -854,7 +854,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
             {/* Bookmark Mode Toggle */}
             <button
               onClick={handleToggleBookmarkMode}
-              title={t("bookmarkMode") || "只显示书签"}
+              title={t("bookmarkMode") || "收藏"}
               style={{
                 width: "26px",
                 height: "26px",
@@ -882,7 +882,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
               onClick={bookmarkMode ? undefined : handleExpandAll}
               title={
                 bookmarkMode
-                  ? t("bookmarkModeDisabled") || "书签模式下不可用"
+                  ? t("bookmarkModeDisabled") || "收藏模式下不可用"
                   : isAllExpanded
                     ? t("outlineCollapseAll")
                     : t("outlineExpandAll")
@@ -1057,7 +1057,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
               // Tooltip Text
               let title = ""
               if (bookmarkMode) {
-                title = t("bookmarkModeDisabled") || "书签模式下不可用"
+                title = t("bookmarkModeDisabled") || "收藏模式下不可用"
               } else if (lvl === 0) {
                 title = showUserQueries
                   ? t("outlineOnlyUserQueries") || "仅显示提问"
