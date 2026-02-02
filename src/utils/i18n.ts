@@ -1,4 +1,4 @@
-import { resources, type LocaleKey } from "~locales/resources"
+import { resources } from "~locales/resources"
 
 // 初始化根据浏览器语言设置
 const getBrowserLang = () => {
@@ -37,4 +37,8 @@ export function getEffectiveLanguage(settingLang: string): string {
 export function t(key: string): string {
   const langResources = resources[currentLang as keyof typeof resources] || resources["en"]
   return (langResources[key as keyof typeof langResources] as string) || key
+}
+
+export function getCurrentLang(): string {
+  return currentLang
 }
