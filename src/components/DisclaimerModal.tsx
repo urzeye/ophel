@@ -1,6 +1,7 @@
 import { GithubIcon, ShieldCheckIcon } from "~components/icons"
 import { useSettingsStore } from "~stores/settings-store"
 import { APP_ICON_URL } from "~utils/config"
+import { getStoreInfo } from "~utils/getStoreInfo"
 import { t } from "~utils/i18n"
 
 export const DisclaimerModal: React.FC = () => {
@@ -55,14 +56,25 @@ export const DisclaimerModal: React.FC = () => {
               {t("communityMotto") || "一个人可以走的更快，但一群人可以走得更远。"}
             </p>
 
-            <a
-              href="https://github.com/urzeye/ophel"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="star-btn">
-              <GithubIcon size={18} />
-              <span>{t("giveStar") || "点个 Star"}</span>
-            </a>
+            <div className="action-row">
+              <a
+                href="https://github.com/urzeye/ophel"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="star-btn">
+                <GithubIcon size={18} />
+                <span>{t("giveStar") || "点个 Star"}</span>
+              </a>
+
+              <a
+                href={getStoreInfo().url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="star-btn review-btn">
+                {getStoreInfo().icon}
+                <span>{getStoreInfo().label}</span>
+              </a>
+            </div>
 
             <div className="secondary-links">
               <a
@@ -137,7 +149,7 @@ export const DisclaimerModal: React.FC = () => {
           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
           transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
           /* Ensure centering if parent is flex or block */
-          display: inline-block; 
+          display: inline-block;
         }
 
         .disclaimer-icon-img:hover {
@@ -253,6 +265,14 @@ export const DisclaimerModal: React.FC = () => {
            font-style: italic;
         }
 
+        .action-row {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+
         .star-btn {
           display: flex;
           align-items: center;
@@ -277,17 +297,33 @@ export const DisclaimerModal: React.FC = () => {
           color: white;
         }
 
+        .review-btn {
+          background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        }
+
+        .review-btn:hover {
+          background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+        }
+
         .star-btn:active {
           transform: scale(0.96);
         }
 
         :host-context([data-gh-mode="dark"]) .star-btn {
-          background: #3b82f6; 
+          background: #3b82f6;
           border: none;
         }
-        
+
         :host-context([data-gh-mode="dark"]) .star-btn:hover {
           background: #2563eb;
+        }
+
+        :host-context([data-gh-mode="dark"]) .review-btn {
+          background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        }
+
+        :host-context([data-gh-mode="dark"]) .review-btn:hover {
+           background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
         }
 
         .secondary-links {
