@@ -225,7 +225,7 @@ export class InlineBookmarkManager {
       iconWrapper.className = ICON_CLASS
 
       // 生成签名和检查是否已收藏
-      const signature = this.outlineManager.getSignature(item, idx)
+      const signature = this.outlineManager.getSignature(item)
       const isBookmarked = bookmarkStore.getBookmarkId(sessionId, signature) !== null
 
       if (isBookmarked) {

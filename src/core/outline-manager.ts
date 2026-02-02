@@ -273,8 +273,8 @@ export class OutlineManager {
    * 获取大纲项的签名（用于书签标识）
    * 供 InlineBookmarkManager 使用
    */
-  getSignature(item: OutlineItem, index: number): string {
-    return this.generateSignature(item, index)
+  getSignature(item: OutlineItem): string {
+    return this.generateSignature(item)
   }
 
   getSearchQuery() {
@@ -439,13 +439,13 @@ export class OutlineManager {
 
   // --- Bookmark Logic ---
 
-  private generateSignature(item: OutlineItem, index: number): string {
+  private generateSignature(item: OutlineItem): string {
     // 1. 优先使用稳定 ID (message-id)
     if (item.id) {
       return item.id
     }
 
-    // 2. 回退方案 (text::index::context)
+    // 2. 回退方案 (text::context)
     let context = ""
 
     try {
@@ -456,7 +456,7 @@ export class OutlineManager {
       // Ignore
     }
 
-    return `${item.text}::${index}::${context}`
+    return `${item.text}::${context}`
   }
 
   // Helper public method for UI
@@ -464,7 +464,7 @@ export class OutlineManager {
     const sessionId = this.siteAdapter.getSessionId()
     const siteId = this.siteAdapter.getSiteId() // 站点标识
     const cid = this.siteAdapter.getCurrentCid() || "" // 账号 ID
-    const signature = this.generateSignature(node, node.index)
+    const signature = this.generateSignature(node)
     // Use node.element.offsetTop if available, or current scroll position?
     // Best is element.offsetTop usually.
     let scrollTop = 0
@@ -524,7 +524,7 @@ export class OutlineManager {
       const unmatchedBookmarkIds = new Set(bookmarks.map((b) => b.id))
 
       outlineData.forEach((item, idx) => {
-        const signature = this.generateSignature(item, idx)
+        const signature = this.generateSignature(item)
         // Find matching bookmark
         const bookmark = bookmarks.find((b) => b.signature === signature && b.title === item.text)
 
@@ -574,7 +574,7 @@ export class OutlineManager {
           const targetItem = targets[0]
 
           // 计算新的签名（这是它现在的“合法身份”）
-          const newSignature = this.generateSignature(targetItem, (targetItem as any).index ?? 0) //注意：这里index可能不准，但generateSignature内部如果是ID模式则不依赖index
+          const newSignature = this.generateSignature(targetItem)
 
           // 更新数据库：把旧书签的签名改为新的
           // 注意：这里需要确保 updateBookmark 存在且支持只更新 signature
