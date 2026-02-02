@@ -593,6 +593,26 @@ export class GrokAdapter extends SiteAdapter {
     const container = document.querySelector(this.getResponseContainerSelector())
     if (!container) return outline
 
+    // 辅助：获取消息 ID (Response ID)
+    const getResponseId = (el: Element): string | null => {
+      // 往上找 id 以 response- 开头的 div
+      const responseDiv = el.closest('[id^="response-"]')
+      if (responseDiv) {
+        return responseDiv.id
+      }
+      return null
+    }
+
+    // 辅助：生成标题 ID
+    const msgHeaderCounts: Record<string, Record<string, number>> = {}
+    const generateHeaderId = (msgId: string, tagName: string, text: string): string => {
+      if (!msgHeaderCounts[msgId]) msgHeaderCounts[msgId] = {}
+      const key = `${tagName}-${text}`
+      const count = msgHeaderCounts[msgId][key] || 0
+      msgHeaderCounts[msgId][key] = count + 1
+      return `${msgId}::${key}::${count}`
+    }
+
     // 不包含用户提问时，只提取标题
     if (!includeUserQueries) {
       const headingSelectors: string[] = []
@@ -605,11 +625,20 @@ export class GrokAdapter extends SiteAdapter {
         if (this.isInRenderedMarkdownContainer(heading)) return
         const level = parseInt(heading.tagName.charAt(1), 10)
         if (level <= maxLevel) {
-          outline.push({
+          const item: OutlineItem = {
             level,
             text: heading.textContent?.trim() || "",
             element: heading,
-          })
+          }
+
+          // Stable ID for Headings
+          const msgId = getResponseId(heading)
+          if (msgId) {
+            const tagName = heading.tagName.toLowerCase()
+            item.id = generateHeaderId(msgId, tagName, item.text)
+          }
+
+          outline.push(item)
         }
       })
       return outline
@@ -637,22 +666,38 @@ export class GrokAdapter extends SiteAdapter {
           isTruncated = true
         }
 
-        outline.push({
+        const item: OutlineItem = {
           level: 0,
           text: queryText,
           element,
           isUserQuery: true,
           isTruncated,
-        })
+        }
+
+        // Stable ID for User Query
+        const msgId = getResponseId(element)
+        if (msgId) {
+          item.id = msgId
+        }
+
+        outline.push(item)
       } else if (/^h[1-6]$/.test(tagName)) {
         if (this.isInRenderedMarkdownContainer(element)) return
         const level = parseInt(tagName.charAt(1), 10)
         if (level <= maxLevel) {
-          outline.push({
+          const item: OutlineItem = {
             level,
             text: element.textContent?.trim() || "",
             element,
-          })
+          }
+
+          // Stable ID for Headings
+          const msgId = getResponseId(element)
+          if (msgId) {
+            item.id = generateHeaderId(msgId, tagName, item.text)
+          }
+
+          outline.push(item)
         }
       }
     })
