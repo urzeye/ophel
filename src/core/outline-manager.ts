@@ -685,6 +685,15 @@ export class OutlineManager {
       this.performSearch(this.searchQuery)
     }
 
+    // 收藏模式逻辑：如果当前处于收藏模式，需要确保树的折叠状态符合收藏模式的要求
+    // 折叠所有非路径节点，展开收藏路径
+    if (this.bookmarkMode) {
+      // this.collapseAllExpandedState(this.tree)
+
+      // 再展开收藏路径 (Re-apply traversal)
+      this.expandBookmarkPaths(this.tree)
+    }
+
     // 收藏模式不再强制显示，由 UI 层根据 bookmarkMode 状态过滤
 
     // 计算 isAllExpanded 状态，确保按钮初始状态正确
