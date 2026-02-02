@@ -257,25 +257,26 @@ function IndexPopup() {
         <span className="popup-version">v{version}</span>
         <div className="popup-footer-actions">
           <button
-            className="popup-star-btn"
+            className="popup-action-pill review-btn"
             onClick={() => openUrl(storeInfo.url)}
             title={t("rateAndReview") || "Rate"}>
             {storeInfo.icon}
             <span>{storeInfo.label}</span>
           </button>
           <button
-            className="popup-star-btn"
+            className="popup-action-pill star-btn"
             onClick={() => openUrl("https://github.com/urzeye/ophel")}>
             <StarIcon size={14} />
             <span>Star</span>
           </button>
-          <a
-            href="https://github.com/urzeye/ophel/issues"
-            target="_blank"
-            rel="noopener noreferrer">
-            {t("popupFeedback") || "反馈"}
-          </a>
         </div>
+        <a
+          href="https://github.com/urzeye/ophel/issues"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="popup-feedback-link">
+          {t("popupFeedback") || "反馈"}
+        </a>
       </div>
 
       {/* Toast */}

@@ -264,66 +264,80 @@ body {
 /* Footer */
 .popup-footer {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 11px;
-  color: var(--popup-text-secondary);
-  padding-top: 8px;
+  justify-content: space-between;
+  padding-top: 12px;
   border-top: 1px solid var(--popup-border);
+  margin-top: 4px;
+}
+
+.popup-version {
+  font-size: 10px;
+  color: var(--popup-text-secondary);
+  opacity: 0.7;
+  width: 40px; /* Fixed width to help centering actions */
 }
 
 .popup-footer-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
+  justify-content: center;
 }
 
-.popup-footer a {
-  color: var(--popup-accent);
-  text-decoration: none;
-}
-
-.popup-footer a:hover {
-  text-decoration: underline;
-}
-
-.popup-star-btn {
+.popup-action-pill {
   display: flex;
   align-items: center;
-  gap: 4px;
-  background: none;
-  border: 1px solid var(--popup-border);
-  border-radius: 4px;
-  padding: 4px 8px;
+  gap: 6px;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 16px;
   cursor: pointer;
-  color: var(--popup-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.popup-action-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.popup-action-pill:active {
+  transform: translateY(0);
+}
+
+/* Specific button styles */
+.review-btn {
+  /* Blue/Purple Gradient for Store Review */
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+}
+
+.star-btn {
+  /* Orange/Yellow Gradient for Github Star */
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+}
+
+/* Feedback Link */
+.popup-feedback-link {
   font-size: 11px;
-  transition: all 0.2s;
-}
-
-.popup-star-btn:hover {
-  border-color: #f59e0b;
-  color: #f59e0b;
-}
-
-/* Toast */
-.popup-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 11px;
   color: var(--popup-text-secondary);
-  padding-top: 8px;
-  border-top: 1px solid var(--popup-border);
-}
-
-.popup-footer a {
-  color: var(--popup-accent);
   text-decoration: none;
+  transition: color 0.2s;
+  width: 40px; /* Fixed width matching version for balance */
+  text-align: right;
+  opacity: 0.7;
 }
 
-.popup-footer a:hover {
+.popup-feedback-link:hover {
   text-decoration: underline;
+  color: var(--popup-accent);
+  opacity: 1;
 }
 
 /* Toast */
