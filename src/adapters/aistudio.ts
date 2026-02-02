@@ -904,15 +904,19 @@ export class AIStudioAdapter extends SiteAdapter {
           break // 遇到下一个用户提问的容器，结束
         }
 
-        // 查找 AI 回复内容：在 .model 容器中查找 ms-cmark-node 或 .markdown 内容
+        // 查找 AI 回复内容：在 .model 容器中查找 ms-cmark-node（排除思维链）
         const modelContainer = current.querySelector(
           ".chat-turn-container.model, .chat-turn-container:not(.user)",
         )
         if (modelContainer) {
           // AI Studio 使用 ms-cmark-node 渲染 Markdown
-          const markdownContent = modelContainer.querySelector("ms-cmark-node")
-          if (markdownContent) {
-            const textLength = markdownContent.textContent?.trim().length || 0
+          // 需要排除 ms-thought-chunk 内的思维链内容
+          const allMarkdownNodes = modelContainer.querySelectorAll("ms-cmark-node")
+          for (const node of Array.from(allMarkdownNodes)) {
+            // 跳过思维链内的内容
+            if (node.closest("ms-thought-chunk")) continue
+
+            const textLength = node.textContent?.trim().length || 0
             if (textLength > 0) {
               foundContent = true
               totalLength += textLength
