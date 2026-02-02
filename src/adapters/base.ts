@@ -16,6 +16,7 @@ export interface OutlineItem {
   isUserQuery?: boolean
   isTruncated?: boolean
   id?: string
+  context?: string
 }
 
 export interface ConversationInfo {

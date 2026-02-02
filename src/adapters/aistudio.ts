@@ -135,7 +135,27 @@ export class AIStudioAdapter extends SiteAdapter {
         return id
       }
     }
+
     return ""
+  }
+
+  /**
+   * 从侧边栏 (ms-prompt-scrollbar) 获取文本
+   * 利用 aria-controls="turn-ID" 关联
+   */
+  private getTextFromScrollbar(turnId: string): string | null {
+    // 查找侧边栏中控制该 turn 的按钮
+    // Selector: ms-prompt-scrollbar button[aria-controls="turn-ID"]
+    const selector = `ms-prompt-scrollbar button[aria-controls="${turnId}"]`
+    const btn = document.querySelector(selector)
+
+    if (btn) {
+      const label = btn.getAttribute("aria-label")
+      if (label) {
+        return label.trim()
+      }
+    }
+    return null
   }
 
   getSessionName(): string | null {
@@ -788,6 +808,16 @@ export class AIStudioAdapter extends SiteAdapter {
       }
     }
 
+    // --- Side-Channel Hydration (Using Scrollbar) ---
+    // 如果 DOM 提取文本失败（懒加载/Shadow DOM/渲染延迟），尝试从侧边栏获取
+    // 侧边栏按钮通常包含 aria-control="turn-ID" 和 aria-label="Full Text"
+    if (!extractedText && turnId) {
+      const scrollbarText = this.getTextFromScrollbar(turnId)
+      if (scrollbarText) {
+        extractedText = scrollbarText
+      }
+    }
+
     // 缓存逻辑
     if (extractedText) {
       // 如果成功提取到了文本，更新缓存
@@ -914,10 +944,16 @@ export class AIStudioAdapter extends SiteAdapter {
           isTruncated,
         }
 
-        // 用户提问直接使用 Turn ID
-        const turnId = getTurnId(element)
-        if (turnId) {
-          item.id = turnId
+        // Context Injection: 预取下一个 AI 回复作为上下文 (解决重复提问无法区分的问题)
+        // 查找下一个 ms-chat-turn
+        const currentTurn = element.closest("ms-chat-turn")
+        const nextTurn = currentTurn?.nextElementSibling
+        if (nextTurn && nextTurn.tagName.toLowerCase() === "ms-chat-turn") {
+          // 尝试提取 AI 回复文本预览 (前50字符)
+          const responseText = this.extractTextWithLineBreaks(nextTurn).trim().substring(0, 50)
+          if (responseText) {
+            item.context = responseText
+          }
         }
 
         outline.push(item)
@@ -932,13 +968,6 @@ export class AIStudioAdapter extends SiteAdapter {
             level,
             text: element.textContent?.trim() || "",
             element,
-          }
-
-          // 稳定 ID 生成
-          const turnId = getTurnId(element)
-          if (turnId) {
-            const tagName = element.tagName.toLowerCase()
-            item.id = generateHeaderId(turnId, tagName, item.text)
           }
 
           outline.push(item)

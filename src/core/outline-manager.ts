@@ -448,12 +448,18 @@ export class OutlineManager {
     // 2. 回退方案 (text::context)
     let context = ""
 
-    try {
-      if (item.element?.nextElementSibling) {
-        context = (item.element.nextElementSibling.textContent || "").trim().substring(0, 50)
+    // 优先使用 Adapter 显式提供的上下文 (例如 AI Studio 的 Next Turn Preview)
+    if (item.context) {
+      context = item.context
+    } else {
+      // 否则尝试从 DOM 获取下一个兄弟节点的文本
+      try {
+        if (item.element?.nextElementSibling) {
+          context = (item.element.nextElementSibling.textContent || "").trim().substring(0, 50)
+        }
+      } catch (e) {
+        // Ignore
       }
-    } catch (e) {
-      // Ignore
     }
 
     return `${item.text}::${context}`
