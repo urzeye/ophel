@@ -144,6 +144,12 @@ export const ja = {
   projectWebsite: "公式サイト",
   websiteDesc: "ドキュメントやガイドなどを確認",
   visitWebsite: "サイトを訪問",
+  rateAndReview: "Ophelを応援",
+  rateDesc:
+    "Ophelを気に入っていただけましたら、ストアで5つ星評価をお願いします！開発の励みになります。",
+  chromeStore: "Chrome ストア",
+  firefoxAddons: "Firefox アドオン",
+  greasyFork: "Greasy Fork",
   credits: "クレジット",
   devAndMaintain: "開発・メンテナンス",
   creditsDesc:

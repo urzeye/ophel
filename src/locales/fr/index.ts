@@ -143,6 +143,12 @@ export const fr = {
   projectWebsite: "Site Officiel",
   websiteDesc: "Documentation et guides",
   visitWebsite: "Visiter le Web",
+  rateAndReview: "Vous aimez Ophel ?",
+  rateDesc:
+    "Si vous appréciez Ophel, merci de nous donner 5 étoiles sur le store ! Cela nous aide beaucoup.",
+  chromeStore: "Chrome Store",
+  firefoxAddons: "Extension Firefox",
+  greasyFork: "Greasy Fork",
   credits: "Crédits",
   devAndMaintain: "Développement et maintenance",
   creditsDesc:

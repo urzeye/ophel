@@ -6,8 +6,11 @@ import React from "react"
 
 import {
   AboutIcon,
+  ChromeIcon,
+  FirefoxIcon,
   GithubIcon,
   GlobeIcon,
+  GreasyForkIcon,
   HeartIcon,
   ShieldCheckIcon,
   StarIcon,
@@ -54,6 +57,56 @@ const AboutPage: React.FC = () => {
               "Ophel 是一款面向 Gemini、ChatGPT、Claude、AI Studio、Grok 等 AI 平台的浏览器增强扩展。它集中展示账号与余额、提供智能排序和当前站点识别，并提供自动刷新与临口防火墙绕过等自动化能力；支持数据导入导出工具。"}
           </div>
         </div>
+      </div>
+
+      <div className="about-section-title">{t("rateAndReview") || "好评鼓励"}</div>
+      <div
+        className="about-links-grid"
+        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
+        {/* Chrome Store */}
+        <a
+          href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="about-link-card">
+          <div className="about-link-header">
+            <ChromeIcon size={24} color="#4285F4" />
+            {t("chromeStore") || "Chrome 商店"}
+          </div>
+          <button className="about-link-btn" style={{ marginTop: "auto" }}>
+            Review
+          </button>
+        </a>
+
+        {/* Firefox Add-on */}
+        <a
+          href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="about-link-card">
+          <div className="about-link-header">
+            <FirefoxIcon size={24} color="#FF7139" />
+            {t("firefoxAddons") || "Firefox 扩展"}
+          </div>
+          <button className="about-link-btn" style={{ marginTop: "auto", background: "#FF7139" }}>
+            Review
+          </button>
+        </a>
+
+        {/* GreasyFork */}
+        <a
+          href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="about-link-card">
+          <div className="about-link-header">
+            <GreasyForkIcon size={24} color="#000000" />
+            {t("greasyFork") || "Greasy Fork"}
+          </div>
+          <button className="about-link-btn" style={{ marginTop: "auto", background: "#333" }}>
+            Review
+          </button>
+        </a>
       </div>
 
       <div className="about-section-title">{t("communityAndSupport") || "社区与支持"}</div>

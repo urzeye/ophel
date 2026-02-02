@@ -272,6 +272,12 @@ body {
   border-top: 1px solid var(--popup-border);
 }
 
+.popup-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .popup-footer a {
   color: var(--popup-accent);
   text-decoration: none;

@@ -145,6 +145,11 @@ export const ko = {
   projectWebsite: "공식 웹사이트",
   websiteDesc: "문서, 가이드 등 확인",
   visitWebsite: "웹사이트 방문",
+  rateAndReview: "Ophel 응원하기",
+  rateDesc: "Ophel이 마음에 드신다면 스토어에서 별 5개 평가를 부탁드립니다! 개발에 큰 힘이 됩니다.",
+  chromeStore: "Chrome 스토어",
+  firefoxAddons: "Firefox 애드온",
+  greasyFork: "Greasy Fork",
   credits: "크레딧",
   devAndMaintain: "개발 및 유지 관리",
   creditsDesc:
