@@ -596,7 +596,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
         (root as Element).shadowRoot!,
         outline,
         maxLevel,
-        depth,
+        depth + 1,
         turnId,
         messageHeaderCounts,
       )

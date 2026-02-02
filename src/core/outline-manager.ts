@@ -69,6 +69,9 @@ export class OutlineManager {
   // Tab 激活状态（只有激活时才监听）
   private isActive: boolean = false
 
+  // 防止 refresh 期间书签更新触发循环调用
+  private isRefreshing: boolean = false
+
   // Bookmark store subscription
   private unsubscribeBookmarks: (() => void) | null = null
 
@@ -493,8 +496,17 @@ export class OutlineManager {
 
   // Adjusted refresh signature
   refresh(overrideLevel?: number) {
-    if (!this.settings.enabled) return
+    if (!this.settings.enabled || this.isRefreshing) return
 
+    this.isRefreshing = true
+    try {
+      this._doRefresh(overrideLevel)
+    } finally {
+      this.isRefreshing = false
+    }
+  }
+
+  private _doRefresh(overrideLevel?: number) {
     let outlineData = this.siteAdapter.extractOutline(
       this.settings.maxLevel,
       this.settings.showUserQueries,
