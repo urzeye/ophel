@@ -182,7 +182,7 @@ export const ja = {
   bookmarkContentMissing: "お気に入りの内容が見つかりません",
   bookmarkMode: "お気に入り",
   outlineNoBookmarks: "お気に入りはまだありません",
-  outlineAddBookmarkHint: "星アイコンをクリックしてお気に入りに追加",
+  outlineAddBookmarkHint: "アイテムの横にある星アイコンをクリックしてブックマーク",
   bookmarkModeDisabled: "お気に入りモードでは利用できません",
   drag: "ドラッグ",
   save: "保存",

@@ -180,7 +180,7 @@ export const de = {
   bookmarkContentMissing: "Favoriteninhalt fehlt",
   bookmarkMode: "Favoriten",
   outlineNoBookmarks: "Keine Favoriten",
-  outlineAddBookmarkHint: "Klicken Sie auf den Stern, um Favoriten hinzuzufügen",
+  outlineAddBookmarkHint: "Klicken Sie auf den Stern neben dem Element, um es hinzuzufügen",
   bookmarkModeDisabled: "Im Favoritenmodus nicht verfügbar",
   drag: "Ziehen",
   save: "Speichern",

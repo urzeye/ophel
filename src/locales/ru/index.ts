@@ -179,7 +179,7 @@ export const ru = {
   bookmarkContentMissing: "Содержимое избранного отсутствует",
   bookmarkMode: "Избранное",
   outlineNoBookmarks: "Нет избранного",
-  outlineAddBookmarkHint: "Нажмите на звездочку, чтобы добавить в избранное",
+  outlineAddBookmarkHint: "Нажмите на звездочку рядом с элементом, чтобы добавить в закладки",
   bookmarkModeDisabled: "Недоступно в режиме избранного",
   drag: "Тянуть",
   save: "Сохр.",

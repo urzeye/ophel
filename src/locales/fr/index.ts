@@ -181,7 +181,7 @@ export const fr = {
   bookmarkContentMissing: "Contenu favori manquant",
   bookmarkMode: "Favoris",
   outlineNoBookmarks: "Aucun favori",
-  outlineAddBookmarkHint: "Cliquez sur l'étoile pour ajouter un favori",
+  outlineAddBookmarkHint: "Cliquez sur l'étoile à côté de l'élément pour ajouter un favori",
   bookmarkModeDisabled: "Non disponible en mode favoris",
   drag: "Glisser",
   save: "Enregistrer",

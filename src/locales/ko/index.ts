@@ -183,7 +183,7 @@ export const ko = {
   bookmarkContentMissing: "즐겨찾기 내용이 없습니다",
   bookmarkMode: "즐겨찾기",
   outlineNoBookmarks: "즐겨찾기 없음",
-  outlineAddBookmarkHint: "별 아이콘을 클릭하여 즐겨찾기에 추가",
+  outlineAddBookmarkHint: "항목 옆의 별표를 클릭하여 북마크",
   bookmarkModeDisabled: "즐겨찾기 모드에서는 사용할 수 없습니다",
   drag: "드래그",
   save: "저장",

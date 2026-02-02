@@ -232,7 +232,7 @@ export const zhCN = {
   bookmarkContentMissing: "收藏内容已被删除或折叠",
   bookmarkMode: "收藏",
   outlineNoBookmarks: "暂无收藏",
-  outlineAddBookmarkHint: "点击条目右侧的星号添加收藏",
+  outlineAddBookmarkHint: "点击条目旁的星号添加收藏",
   bookmarkModeDisabled: "收藏模式下不可用",
   close: "关闭",
   add: "添加",

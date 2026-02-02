@@ -128,7 +128,7 @@ export const zhTW = {
   bookmarkContentMissing: "收藏內容已被刪除或折疊",
   bookmarkMode: "收藏",
   outlineNoBookmarks: "暫無收藏",
-  outlineAddBookmarkHint: "點擊條目右側的星號添加收藏",
+  outlineAddBookmarkHint: "點擊條目旁的星號添加收藏",
   bookmarkModeDisabled: "收藏模式下不可用",
   drag: "拖動",
   close: "關閉",

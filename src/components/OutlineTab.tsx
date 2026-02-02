@@ -10,7 +10,7 @@ import {
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
-import { useBookmarkStore } from "~stores/bookmarks-store"
+// import { useBookmarkStore } from "~stores/bookmarks-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { CHECK_ICON_POINTS, COPY_ICON_PATH, COPY_ICON_RECT } from "~utils/icons"
@@ -373,7 +373,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
   const [matchCount, setMatchCount] = useState(initialState.matchCount)
   const [bookmarkMode, setBookmarkMode] = useState(initialState.bookmarkMode)
 
-  const { bookmarks } = useBookmarkStore()
+  // const { bookmarks } = useBookmarkStore() // Removed unused bookmarks
 
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -821,10 +821,6 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
     [manager],
   )
 
-  const handleRefresh = useCallback(() => {
-    manager.refresh()
-  }, [manager])
-
   // 监听快捷键触发的定位事件
   useEffect(() => {
     const handleLocateEvent = () => {
@@ -1152,74 +1148,95 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
           padding: searchQuery ? "0 8px 8px 8px" : "8px", // 搜索时顶部 padding 为 0 (依赖 ResultBar 的视觉分隔或紧凑布局)
         }}>
         {/* 搜索结果条 */}
-        {/* 搜索结果条 */}
 
-        {tree.length === 0 ? (
-          <div
-            style={{
-              textAlign: "center",
-              color: "var(--gh-text-tertiary, #9ca3af)",
-              marginTop: "20px",
-              fontSize: "12px",
-            }}>
-            {t("outlineEmpty") || "暂无大纲内容"}
-          </div>
-        ) : bookmarkMode && bookmarks.length === 0 ? (
-          <div
-            style={{
-              textAlign: "center",
-              color: "var(--gh-text-tertiary, #9ca3af)",
-              marginTop: "40px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "8px",
-            }}>
-            <div
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "50%",
-                background: "rgba(245, 158, 11, 0.1)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#f59e0b",
-                marginBottom: "8px",
-              }}>
-              <StarIcon size={20} filled={true} color="#f59e0b" />
+        {(() => {
+          // Helper: recursively check if node has bookmark
+          const hasBookmarkedNode = (nodes: OutlineNode[]): boolean => {
+            return nodes.some(
+              (node) =>
+                node.isBookmarked ||
+                (node.children && node.children.length > 0 && hasBookmarkedNode(node.children)),
+            )
+          }
+          const hasVisibleBookmarks = hasBookmarkedNode(tree)
+          const isTreeEmpty = tree.length === 0
+
+          if (bookmarkMode && !hasVisibleBookmarks && !searchQuery) {
+            return (
+              <div
+                style={{
+                  textAlign: "center",
+                  color: "var(--gh-text-tertiary, #9ca3af)",
+                  marginTop: "40px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "8px",
+                }}>
+                <div
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "50%",
+                    background: "rgba(245, 158, 11, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#f59e0b",
+                    marginBottom: "8px",
+                  }}>
+                  <StarIcon size={20} filled={true} color="#f59e0b" />
+                </div>
+                <div
+                  style={{ fontSize: "14px", fontWeight: 500, color: "var(--gh-text, #374151)" }}>
+                  {t("outlineNoBookmarks") || "暂无收藏"}
+                </div>
+                <div style={{ fontSize: "12px", opacity: 0.7 }}>
+                  {t("outlineAddBookmarkHint") || "点击条目旁的星号添加收藏"}
+                </div>
+              </div>
+            )
+          }
+
+          if (isTreeEmpty) {
+            return (
+              <div
+                style={{
+                  textAlign: "center",
+                  color: "var(--gh-text-tertiary, #9ca3af)",
+                  marginTop: "20px",
+                  fontSize: "12px",
+                }}>
+                {t("outlineEmpty") || "暂无大纲内容"}
+              </div>
+            )
+          }
+
+          return (
+            <div className="outline-list">
+              {tree.map((node, idx) => (
+                <OutlineNodeView
+                  key={`${node.level}-${node.text}-${idx}`}
+                  node={node}
+                  onToggle={handleToggle}
+                  onClick={handleClick}
+                  onCopy={handleCopy}
+                  onToggleBookmark={handleToggleBookmark}
+                  activeIndex={activeIndex}
+                  searchQuery={searchQuery}
+                  displayLevel={displayLevel}
+                  minRelativeLevel={minRelativeLevel}
+                  parentCollapsed={false} // Root nodes are never collapsed by parent
+                  parentForceExpanded={false}
+                  searchLevelManual={searchLevelManual}
+                  extractUserQueryText={extractUserQueryText}
+                  bookmarkMode={bookmarkMode}
+                  ancestorHasBookmark={false}
+                />
+              ))}
             </div>
-            <div style={{ fontSize: "14px", fontWeight: 500, color: "var(--gh-text, #374151)" }}>
-              {t("outlineNoBookmarks") || "暂无收藏"}
-            </div>
-            <div style={{ fontSize: "12px", opacity: 0.7 }}>
-              {t("outlineAddBookmarkHint") || "点击条目右侧的星号添加收藏"}
-            </div>
-          </div>
-        ) : (
-          <div className="outline-list">
-            {tree.map((node, idx) => (
-              <OutlineNodeView
-                key={`${node.level}-${node.text}-${idx}`}
-                node={node}
-                onToggle={handleToggle}
-                onClick={handleClick}
-                onCopy={handleCopy}
-                onToggleBookmark={handleToggleBookmark}
-                activeIndex={activeIndex}
-                searchQuery={searchQuery}
-                displayLevel={displayLevel}
-                minRelativeLevel={minRelativeLevel}
-                parentCollapsed={false}
-                parentForceExpanded={false}
-                searchLevelManual={searchLevelManual}
-                extractUserQueryText={extractUserQueryText}
-                bookmarkMode={bookmarkMode}
-                ancestorHasBookmark={false}
-              />
-            ))}
-          </div>
-        )}
+          )
+        })()}
       </div>
     </div>
   )
