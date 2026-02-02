@@ -8,6 +8,7 @@
 import type { OutlineItem, SiteAdapter } from "~adapters/base"
 import type { OutlineManager } from "~core/outline-manager"
 import { useBookmarkStore } from "~stores/bookmarks-store"
+import { DOMToolkit } from "~utils/dom-toolkit"
 
 // 显示模式
 export type InlineBookmarkDisplayMode = "always" | "hover" | "hidden"
@@ -16,6 +17,10 @@ export type InlineBookmarkDisplayMode = "always" | "hover" | "hidden"
 const ICON_CLASS = "gh-inline-bookmark"
 const ICON_BOOKMARKED_CLASS = "gh-inline-bookmark--bookmarked"
 
+// Style IDs
+const GLOBAL_STYLE_ID = "gh-inline-bookmark-global-styles"
+const SCOPED_STYLE_ID = "gh-inline-bookmark-scoped-styles"
+
 export class InlineBookmarkManager {
   private outlineManager: OutlineManager
   private adapter: SiteAdapter
@@ -23,6 +28,7 @@ export class InlineBookmarkManager {
   private unsubscribe: (() => void) | null = null
   private unsubscribeBookmarks: (() => void) | null = null
   private injectedElements = new WeakSet<Element>()
+  private injectedRoots = new WeakSet<Node>()
 
   constructor(
     outlineManager: OutlineManager,
@@ -33,8 +39,8 @@ export class InlineBookmarkManager {
     this.adapter = adapter
     this.displayMode = displayMode
 
-    // 注入 CSS 样式（只注入一次）
-    this.injectStyles()
+    // 1. 注入全局 CSS 变量定义（Head）
+    this.injectGlobalStyles()
 
     // 订阅大纲变化
     this.unsubscribe = outlineManager.subscribe(() => {
@@ -53,69 +59,121 @@ export class InlineBookmarkManager {
   }
 
   /**
-   * 注入 CSS 样式
+   * 1. 注入全局 CSS 变量 (Inheritable)
+   * 控制不同模式下的 Opacity 和 Display
    */
-  private injectStyles() {
-    const styleId = "gh-inline-bookmark-styles"
-    if (document.getElementById(styleId)) return
+  private injectGlobalStyles() {
+    if (document.getElementById(GLOBAL_STYLE_ID)) return
 
     const style = document.createElement("style")
-    style.id = styleId
+    style.id = GLOBAL_STYLE_ID
+    style.textContent = `
+      :root {
+        --gh-icon-display: flex;
+        --gh-icon-opacity-default: 0.3;
+        --gh-icon-opacity-parent-hover: 0.5;
+      }
+
+      body.gh-inline-bookmark-mode-always {
+        --gh-icon-display: flex;
+        --gh-icon-opacity-default: 0.3;
+        --gh-icon-opacity-parent-hover: 0.3;
+      }
+
+      body.gh-inline-bookmark-mode-hover {
+        --gh-icon-display: flex;
+        --gh-icon-opacity-default: 0; /* 默认隐藏 */
+        --gh-icon-opacity-parent-hover: 0.5; /* 父元素悬停时显示 */
+      }
+
+      body.gh-inline-bookmark-mode-hidden {
+        --gh-icon-display: none;
+        --gh-icon-opacity-default: 0;
+      }
+    `
+    document.head.appendChild(style)
+  }
+
+  /**
+   * 2. 注入 Scoped CSS (Into Shadow Root or Document)
+   * 包含具体的布局和交互样式，使用全局变量
+   */
+  private injectScopedStyles(root: Node) {
+    if (this.injectedRoots.has(root)) return
+
+    // 如果是 Document，检查是否已存在（避免重复）
+    // 如果是 ShadowRoot，需要在该 Root 下查找
+    const parent = root instanceof Document ? document.head : root
+
+    // 检查是否存在
+    if (root instanceof Document) {
+      // Global styles handled separately, but scoped styles for main doc also needed?
+      // Actually injectGlobalStyles handles body classes.
+      // We need similar .gh-inline-bookmark rules in main document too if not shadow.
+      // Let's use a specific ID check for the root
+      if (document.getElementById(SCOPED_STYLE_ID)) {
+        this.injectedRoots.add(root)
+        return
+      }
+    } else {
+      // Check inside shadow root
+      if ((root as ParentNode).querySelector(`#${SCOPED_STYLE_ID}`)) {
+        this.injectedRoots.add(root)
+        return
+      }
+    }
+
+    const style = document.createElement("style")
+    style.id = SCOPED_STYLE_ID
     style.textContent = `
       .${ICON_CLASS} {
         position: absolute;
-        left: -24px;
+        left: var(--gh-icon-left, -24px); /* 支持通过 CSS 变量调整位置 */
         top: 50%;
         transform: translateY(-50%);
         cursor: pointer;
-        opacity: 0.3;
         transition: opacity 0.2s, transform 0.2s;
-        display: flex;
         align-items: center;
         justify-content: center;
         width: 20px;
         height: 20px;
         z-index: 10;
         color: var(--gh-primary, #f59e0b);
+
+        /* 使用 CSS 变量控制显示 */
+        display: var(--gh-icon-display, flex);
+        opacity: var(--gh-icon-opacity-default, 0.3);
       }
 
+      /* Hover Effects depend on local structure, so must be in scoped css */
       .${ICON_CLASS}:hover {
-        opacity: 1;
+        opacity: 1 !important;
         transform: translateY(-50%) scale(1.1);
       }
 
       .${ICON_CLASS}.${ICON_BOOKMARKED_CLASS} {
-        opacity: 1;
+        opacity: 1 !important;
       }
 
-      /* 悬浮显示模式: body 有 gh-inline-bookmark-mode-hover 类 */
-      /* 默认隐藏未收藏的图标 */
-      body.gh-inline-bookmark-mode-hover .gh-has-inline-bookmark .${ICON_CLASS}:not(.${ICON_BOOKMARKED_CLASS}) {
-        opacity: 0;
+      /* Parent Hover Effect */
+      .gh-has-inline-bookmark:hover .${ICON_CLASS}:not(.${ICON_BOOKMARKED_CLASS}) {
+        opacity: var(--gh-icon-opacity-parent-hover, 0.5);
       }
 
-      /* 鼠标悬停在标题上时，显示图标（半透明） */
-      body.gh-inline-bookmark-mode-hover .gh-has-inline-bookmark:hover .${ICON_CLASS} {
-        opacity: 0.5;
-      }
-
-      /* 鼠标悬停在图标上时，完全不透明 */
-      body.gh-inline-bookmark-mode-hover .gh-has-inline-bookmark .${ICON_CLASS}:hover {
-        opacity: 1;
-      }
-
-      /* 隐藏模式: body 有 gh-inline-bookmark-mode-hidden 类 */
-      /* 完全隐藏所有图标（包括已收藏的） */
-      body.gh-inline-bookmark-mode-hidden .${ICON_CLASS} {
-        display: none !important;
-      }
-
-      /* 确保标题有 position: relative */
+      /* Ensure parent relative positioning */
       .gh-has-inline-bookmark {
         position: relative !important;
       }
     `
-    document.head.appendChild(style)
+
+    // Append to appropriate place
+    if (root instanceof Document) {
+      document.head.appendChild(style)
+    } else {
+      ;(root as ShadowRoot).appendChild(style)
+    }
+
+    this.injectedRoots.add(root)
   }
 
   /**
@@ -128,6 +186,7 @@ export class InlineBookmarkManager {
       "gh-inline-bookmark-mode-hover",
       "gh-inline-bookmark-mode-hidden",
     )
+    // 这会触发全局 CSS 变量的更新，进而通过继承影响所有 Shadow DOM 内的图标
     document.body.classList.add(`gh-inline-bookmark-mode-${mode}`)
   }
 
@@ -135,18 +194,28 @@ export class InlineBookmarkManager {
    * 注入收藏图标到所有标题元素
    */
   injectBookmarkIcons() {
-    // 即使是 hidden 模式也要注入，因为 css 会控制隐藏，这样切换模式时响应更快
     const flatItems = this.outlineManager.getFlatItems()
-
     const sessionId = this.adapter.getSessionId()
     const bookmarkStore = useBookmarkStore.getState()
 
     for (let idx = 0; idx < flatItems.length; idx++) {
       const item = flatItems[idx]
       if (!item.element || !item.element.isConnected) continue
-      if (this.injectedElements.has(item.element)) continue
 
       const element = item.element as HTMLElement
+
+      // 1. 确保该元素所在的 Root (Document 或 ShadowRoot) 注入了 Scoped CSS
+      const root = element.getRootNode()
+      if (root) {
+        this.injectScopedStyles(root)
+      }
+
+      // 2. 注入图标 (同前，防止重复)
+      if (this.injectedElements.has(element)) continue
+      if (element.querySelector(`.${ICON_CLASS}`)) {
+        this.injectedElements.add(element)
+        continue
+      }
 
       // 确保元素有 position: relative
       element.classList.add("gh-has-inline-bookmark")
@@ -163,24 +232,21 @@ export class InlineBookmarkManager {
         iconWrapper.classList.add(ICON_BOOKMARKED_CLASS)
       }
 
-      // 创建 SVG 图标（内联，避免依赖 React）
       iconWrapper.innerHTML = this.createStarSvg(isBookmarked)
 
-      // 存储必要信息
+      // 数据与事件
       iconWrapper.dataset.signature = signature
       iconWrapper.dataset.level = String(item.level)
       iconWrapper.dataset.text = item.text
 
-      // 点击事件
       iconWrapper.addEventListener("click", (e) => {
         e.stopPropagation()
         e.preventDefault()
-        this.handleBookmarkClick(item, signature, iconWrapper) // Removed iconWrapper from arguments in definition below, wait, no, actually I'll use it for optimistic update? No, let's keep it simple.
+        this.handleBookmarkClick(item, signature, iconWrapper)
       })
 
-      // 插入到元素中（作为第一个子元素）
       element.insertBefore(iconWrapper, element.firstChild)
-      this.injectedElements.add(item.element)
+      this.injectedElements.add(element)
     }
   }
 
@@ -188,7 +254,6 @@ export class InlineBookmarkManager {
    * 创建星星 SVG
    */
   private createStarSvg(filled: boolean): string {
-    // 已收藏时使用黄色实心，未收藏时使用灰色空心
     const fillColor = filled ? "#f59e0b" : "none"
     const strokeColor = filled ? "#f59e0b" : "currentColor"
     return `
@@ -214,18 +279,21 @@ export class InlineBookmarkManager {
     const scrollTop = (item.element as HTMLElement).offsetTop + (scrollContainer?.scrollTop || 0)
 
     bookmarkStore.toggleBookmark(sessionId, siteId, cid, item, signature, scrollTop)
-
-    // UI update is handled by updateAllIconStates subscription
   }
 
   /**
-   * 更新所有图标状态（当 store 变化时）
+   * 更新所有图标状态
    */
   updateAllIconStates() {
     const bookmarkStore = useBookmarkStore.getState()
     const sessionId = this.adapter.getSessionId()
 
-    document.querySelectorAll(`.${ICON_CLASS}`).forEach((iconWrapper) => {
+    const icons = DOMToolkit.query(`.${ICON_CLASS}`, {
+      all: true,
+      shadow: true,
+    }) as Element[]
+
+    icons.forEach((iconWrapper) => {
       const wrapper = iconWrapper as HTMLElement
       const signature = wrapper.dataset.signature
       if (!signature) return
@@ -257,16 +325,39 @@ export class InlineBookmarkManager {
       this.unsubscribeBookmarks()
       this.unsubscribeBookmarks = null
     }
-    document.getElementById("gh-inline-bookmark-styles")?.remove()
-    document.querySelectorAll(`.${ICON_CLASS}`).forEach((el) => el.remove())
-    document.querySelectorAll(".gh-has-inline-bookmark").forEach((el) => {
+
+    // 清理全局样式
+    document.getElementById(GLOBAL_STYLE_ID)?.remove()
+    document.getElementById(SCOPED_STYLE_ID)?.remove() // 清理 Doc 上的 Scoped
+
+    // 清理 Shadow DOM 中的 Styles 和 Icons
+    // 注意：我们也需要清理 Shadow Root 里的 style 标签
+    const scopedStyles = DOMToolkit.query(`#${SCOPED_STYLE_ID}`, {
+      all: true,
+      shadow: true,
+    }) as Element[]
+    scopedStyles.forEach((el) => el.remove())
+
+    const icons = DOMToolkit.query(`.${ICON_CLASS}`, {
+      all: true,
+      shadow: true,
+    }) as Element[]
+    icons.forEach((el) => el.remove())
+
+    const containers = DOMToolkit.query(".gh-has-inline-bookmark", {
+      all: true,
+      shadow: true,
+    }) as Element[]
+    containers.forEach((el) => {
       el.classList.remove("gh-has-inline-bookmark")
     })
+
     document.body.classList.remove(
       "gh-inline-bookmark-mode-always",
       "gh-inline-bookmark-mode-hover",
       "gh-inline-bookmark-mode-hidden",
     )
     this.injectedElements = new WeakSet()
+    this.injectedRoots = new WeakSet()
   }
 }
