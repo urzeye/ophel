@@ -437,6 +437,12 @@ export class OutlineManager {
   // --- Bookmark Logic ---
 
   private generateSignature(item: OutlineItem, index: number): string {
+    // 1. 优先使用稳定 ID (message-id)
+    if (item.id) {
+      return item.id
+    }
+
+    // 2. 回退方案 (text::index::context)
     let context = ""
 
     try {

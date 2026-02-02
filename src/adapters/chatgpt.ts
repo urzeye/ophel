@@ -471,6 +471,31 @@ export class ChatGPTAdapter extends SiteAdapter {
     const container = document.querySelector(this.getResponseContainerSelector())
     if (!container) return outline
 
+    // 辅助函数：查找最近的消息容器并获取 message-id
+    const getMessageId = (el: Element): string | null => {
+      const msgContainer = el.closest("[data-message-id]")
+      if (msgContainer) {
+        return msgContainer.getAttribute("data-message-id")
+      }
+      return null
+    }
+
+    // 辅助函数：生成标题的稳定 ID
+    // 格式: msgId::h2-标题文本-0
+    // 需要在遍历过程中维护计数器
+    const messageHeaderCounts: Record<string, Record<string, number>> = {}
+    const generateHeaderId = (msgId: string, tagName: string, text: string): string => {
+      if (!messageHeaderCounts[msgId]) {
+        messageHeaderCounts[msgId] = {}
+      }
+
+      const key = `${tagName}-${text}`
+      const count = messageHeaderCounts[msgId][key] || 0
+      messageHeaderCounts[msgId][key] = count + 1
+
+      return `${msgId}::${key}::${count}`
+    }
+
     if (!includeUserQueries) {
       const headingSelectors: string[] = []
       for (let i = 1; i <= maxLevel; i++) {
@@ -483,12 +508,22 @@ export class ChatGPTAdapter extends SiteAdapter {
         if (this.shouldSkipElement(heading)) return
         if (this.isInRenderedMarkdownContainer(heading)) return
         const level = parseInt(heading.tagName.charAt(1), 10)
+
         if (level <= maxLevel) {
-          outline.push({
+          const item: OutlineItem = {
             level,
             text: heading.textContent?.trim() || "",
             element: heading,
-          })
+          }
+
+          // 尝试生成稳定 ID
+          const msgId = getMessageId(heading)
+          if (msgId) {
+            const tagName = heading.tagName.toLowerCase()
+            item.id = generateHeaderId(msgId, tagName, item.text)
+          }
+
+          outline.push(item)
         }
       })
       return outline
@@ -516,24 +551,40 @@ export class ChatGPTAdapter extends SiteAdapter {
           isTruncated = true
         }
 
-        outline.push({
+        const item: OutlineItem = {
           level: 0,
           text: queryText,
           element,
           isUserQuery: true,
           isTruncated,
-        })
+        }
+
+        // 用户提问直接使用 message-id
+        const msgId = getMessageId(element)
+        if (msgId) {
+          item.id = msgId
+        }
+
+        outline.push(item)
       } else if (/^h[1-6]$/.test(tagName)) {
         // 跳过 .sr-only 元素
         if (this.shouldSkipElement(element)) return
         if (this.isInRenderedMarkdownContainer(element)) return
         const level = parseInt(tagName.charAt(1), 10)
         if (level <= maxLevel) {
-          outline.push({
+          const item: OutlineItem = {
             level,
             text: element.textContent?.trim() || "",
             element,
-          })
+          }
+
+          // 尝试生成稳定 ID
+          const msgId = getMessageId(element)
+          if (msgId) {
+            item.id = generateHeaderId(msgId, tagName, item.text)
+          }
+
+          outline.push(item)
         }
       }
     })
