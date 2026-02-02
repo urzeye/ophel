@@ -28,7 +28,7 @@ export const SIDEBAR_ICONS: Record<string, string> = {}
 /**
  * 创建 SVG 元素的辅助函数
  */
-function createSVGElement(tag: string, attrs: Record<string, string> = {}): SVGElement {
+export function createSVGElement(tag: string, attrs: Record<string, string> = {}): SVGElement {
   const el = document.createElementNS(SVG_NS, tag)
   for (const [key, value] of Object.entries(attrs)) {
     el.setAttribute(key, value)

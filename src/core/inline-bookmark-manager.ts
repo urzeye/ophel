@@ -8,7 +8,9 @@
 import type { OutlineItem, SiteAdapter } from "~adapters/base"
 import type { OutlineManager } from "~core/outline-manager"
 import { useBookmarkStore } from "~stores/bookmarks-store"
+
 import { DOMToolkit } from "~utils/dom-toolkit"
+import { createSVGElement } from "~utils/icons"
 
 // 显示模式
 export type InlineBookmarkDisplayMode = "always" | "hover" | "hidden"
@@ -103,7 +105,7 @@ export class InlineBookmarkManager {
 
     // 如果是 Document，检查是否已存在（避免重复）
     // 如果是 ShadowRoot，需要在该 Root 下查找
-    const parent = root instanceof Document ? document.head : root
+    // const parent = root instanceof Document ? document.head : root
 
     // 检查是否存在
     if (root instanceof Document) {
@@ -232,7 +234,7 @@ export class InlineBookmarkManager {
         iconWrapper.classList.add(ICON_BOOKMARKED_CLASS)
       }
 
-      iconWrapper.innerHTML = this.createStarSvg(isBookmarked)
+      iconWrapper.replaceChildren(this.createStarSvgElement(isBookmarked))
 
       // 数据与事件
       iconWrapper.dataset.signature = signature
@@ -253,17 +255,33 @@ export class InlineBookmarkManager {
   /**
    * 创建星星 SVG
    */
-  private createStarSvg(filled: boolean): string {
+  /**
+   * 创建星星 SVG (DOM API)
+   */
+  private createStarSvgElement(filled: boolean): SVGElement {
     const fillColor = filled ? "#f59e0b" : "none"
     const strokeColor = filled ? "#f59e0b" : "currentColor"
-    return `
-      <svg viewBox="0 0 24 24" width="16" height="16"
-           fill="${fillColor}"
-           stroke="${strokeColor}" stroke-width="2"
-           stroke-linecap="round" stroke-linejoin="round">
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-      </svg>
-    `
+
+    // 1. 创建 SVG 容器
+    const svg = createSVGElement("svg", {
+      viewBox: "0 0 24 24",
+      width: "16",
+      height: "16",
+      fill: fillColor,
+      stroke: strokeColor,
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    })
+
+    // 2. 创建 Polygon
+    const polygon = createSVGElement("polygon", {
+      points:
+        "12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2",
+    })
+
+    svg.appendChild(polygon)
+    return svg
   }
 
   /**
@@ -304,10 +322,10 @@ export class InlineBookmarkManager {
       if (isBookmarked !== hasClass) {
         if (isBookmarked) {
           wrapper.classList.add(ICON_BOOKMARKED_CLASS)
-          wrapper.innerHTML = this.createStarSvg(true)
+          wrapper.replaceChildren(this.createStarSvgElement(true))
         } else {
           wrapper.classList.remove(ICON_BOOKMARKED_CLASS)
-          wrapper.innerHTML = this.createStarSvg(false)
+          wrapper.replaceChildren(this.createStarSvgElement(false))
         }
       }
     })
