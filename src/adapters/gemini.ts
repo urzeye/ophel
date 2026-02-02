@@ -409,6 +409,44 @@ export class GeminiAdapter extends SiteAdapter {
     const container = document.querySelector(this.getResponseContainerSelector())
     if (!container) return outline
 
+    // 辅助函数：提取 AI 回复的消息 ID
+    // 从 <message-content id="message-content-id-r_xxxx"> 中提取 r_xxxx
+    const getMessageId = (el: Element): string | null => {
+      const msgContent = el.closest("message-content")
+      if (msgContent && msgContent.id) {
+        const match = msgContent.id.match(/(r_[a-f0-9]+)/)
+        if (match) return match[1]
+      }
+      return null
+    }
+
+    // 辅助函数：提取用户提问的消息 ID
+    // 从 <button jslog="...;BardVeMetadataKey:[['r_xxxx',...]]"> 中提取 r_xxxx
+    const getUserQueryId = (el: Element): string | null => {
+      // 在 user-query 内部查找带有 jslog 的 button
+      const btn = el.querySelector('button[jslog*="BardVeMetadataKey"]')
+      if (btn) {
+        const jslog = btn.getAttribute("jslog") || ""
+        const match = jslog.match(/BardVeMetadataKey.*?["'](r_[a-f0-9]+)["']/)
+        if (match) return match[1]
+      }
+      return null
+    }
+
+    // 辅助函数：生成标题的稳定 ID
+    const messageHeaderCounts: Record<string, Record<string, number>> = {}
+    const generateHeaderId = (msgId: string, tagName: string, text: string): string => {
+      if (!messageHeaderCounts[msgId]) {
+        messageHeaderCounts[msgId] = {}
+      }
+
+      const key = `${tagName}-${text}`
+      const count = messageHeaderCounts[msgId][key] || 0
+      messageHeaderCounts[msgId][key] = count + 1
+
+      return `${msgId}::${key}::${count}`
+    }
+
     if (!includeUserQueries) {
       const headingSelectors: string[] = []
       for (let i = 1; i <= maxLevel; i++) {
@@ -422,11 +460,20 @@ export class GeminiAdapter extends SiteAdapter {
 
         const level = parseInt(heading.tagName.charAt(1), 10)
         if (level <= maxLevel) {
-          outline.push({
+          const item: OutlineItem = {
             level,
             text: heading.textContent?.trim() || "",
             element: heading,
-          })
+          }
+
+          // 尝试生成稳定 ID
+          const msgId = getMessageId(heading)
+          if (msgId) {
+            const tagName = heading.tagName.toLowerCase()
+            item.id = generateHeaderId(msgId, tagName, item.text)
+          }
+
+          outline.push(item)
         }
       })
       return outline
@@ -453,24 +500,41 @@ export class GeminiAdapter extends SiteAdapter {
           isTruncated = true
         }
 
-        outline.push({
+        const item: OutlineItem = {
           level: 0,
           text: queryText,
           element,
           isUserQuery: true,
           isTruncated,
-        })
+        }
+
+        // 尝试提取用户提问 ID
+        const msgId = getUserQueryId(element)
+        if (msgId) {
+          item.id = msgId
+        }
+
+        outline.push(item)
       } else if (/^h[1-6]$/.test(tagName)) {
         // 排除用户提问渲染容器内的标题
         if (this.isInRenderedMarkdownContainer(element)) return
 
         const level = parseInt(tagName.charAt(1), 10)
         if (level <= maxLevel) {
-          outline.push({
+          const item: OutlineItem = {
             level,
             text: element.textContent?.trim() || "",
             element,
-          })
+          }
+
+          // 尝试生成稳定 ID
+          const msgId = getMessageId(element)
+          if (msgId) {
+            const tagName = element.tagName.toLowerCase()
+            item.id = generateHeaderId(msgId, tagName, item.text)
+          }
+
+          outline.push(item)
         }
       }
     })
