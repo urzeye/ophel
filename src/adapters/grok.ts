@@ -588,7 +588,7 @@ export class GrokAdapter extends SiteAdapter {
     }
   }
 
-  extractOutline(maxLevel = 6, includeUserQueries = false): OutlineItem[] {
+  extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const outline: OutlineItem[] = []
     const container = document.querySelector(this.getResponseContainerSelector())
     if (!container) return outline
@@ -613,6 +613,65 @@ export class GrokAdapter extends SiteAdapter {
       return `${msgId}::${key}::${count}`
     }
 
+    // 计算用户提问的字数（统计后续 AI 回复）
+    const userQuerySelector = this.getUserQuerySelector()
+    const calculateUserQueryWordCount = (startEl: Element): number => {
+      // Grok 结构：用户消息和 AI 消息各自在独立的 #response-{id} 容器中
+      // 需要先找到父容器，然后遍历父容器的 siblings
+      const parentContainer = startEl.closest('[id^="response-"]')
+      if (!parentContainer) return 0
+
+      let current = parentContainer.nextElementSibling
+      let totalLength = 0
+
+      while (current) {
+        // 检查是否是下一个用户消息的容器
+        const userQueryInThis = current.querySelector(userQuerySelector)
+        if (userQueryInThis) {
+          break // 遇到下一个用户提问的容器，结束
+        }
+
+        // 查找 AI 回复内容：没有 rounded-br-lg 的 message-bubble
+        const aiMessage = current.querySelector(".message-bubble:not(.rounded-br-lg)")
+        if (aiMessage) {
+          const markdownContent = aiMessage.querySelector(".response-content-markdown")
+          if (markdownContent) {
+            totalLength += markdownContent.textContent?.trim().length || 0
+          }
+        }
+
+        current = current.nextElementSibling
+      }
+
+      // Fallback：如果没有找到任何内容（可能是最后一条消息正在生成中）
+      // 尝试从整个 container 中查找跟在当前用户消息之后的 AI 回复
+      if (totalLength === 0) {
+        const allAiMessages = container.querySelectorAll(".message-bubble:not(.rounded-br-lg)")
+        for (const aiMsg of Array.from(allAiMessages)) {
+          // 检查这个 AI 消息是否在 startEl 之后
+          const positionToStart = startEl.compareDocumentPosition(aiMsg)
+          const isAfterStart = positionToStart & Node.DOCUMENT_POSITION_FOLLOWING
+          if (!isAfterStart) continue
+
+          // 检查是否在下一个用户消息之前
+          const nextUserQuery =
+            startEl.parentElement?.nextElementSibling?.querySelector(userQuerySelector)
+          if (nextUserQuery) {
+            const positionToEnd = nextUserQuery.compareDocumentPosition(aiMsg)
+            const isBeforeEnd = positionToEnd & Node.DOCUMENT_POSITION_PRECEDING
+            if (!isBeforeEnd) continue
+          }
+
+          const markdownContent = aiMsg.querySelector(".response-content-markdown")
+          if (markdownContent) {
+            totalLength += markdownContent.textContent?.trim().length || 0
+          }
+        }
+      }
+
+      return totalLength
+    }
+
     // 不包含用户提问时，只提取标题
     if (!includeUserQueries) {
       const headingSelectors: string[] = []
@@ -620,8 +679,8 @@ export class GrokAdapter extends SiteAdapter {
         headingSelectors.push(`h${i}`)
       }
 
-      const headings = container.querySelectorAll(headingSelectors.join(", "))
-      headings.forEach((heading) => {
+      const headings = Array.from(container.querySelectorAll(headingSelectors.join(", ")))
+      headings.forEach((heading, index) => {
         if (this.isInRenderedMarkdownContainer(heading)) return
         const level = parseInt(heading.tagName.charAt(1), 10)
         if (level <= maxLevel) {
@@ -638,6 +697,26 @@ export class GrokAdapter extends SiteAdapter {
             item.id = generateHeaderId(msgId, tagName, item.text)
           }
 
+          // 字数统计
+          if (showWordCount) {
+            let nextBoundaryEl: Element | null = null
+            for (let i = index + 1; i < headings.length; i++) {
+              const candidate = headings[i]
+              const candidateLevel = parseInt(candidate.tagName.charAt(1), 10)
+              if (candidateLevel <= level) {
+                nextBoundaryEl = candidate
+                break
+              }
+            }
+            // 查找所属的 response container
+            const responseContainer = heading.closest('[id^="response-"]')
+            item.wordCount = this.calculateRangeWordCount(
+              heading,
+              nextBoundaryEl,
+              responseContainer || container,
+            )
+          }
+
           outline.push(item)
         }
       })
@@ -645,16 +724,15 @@ export class GrokAdapter extends SiteAdapter {
     }
 
     // 包含用户提问的模式：按 DOM 顺序遍历用户提问和标题
-    const userQuerySelector = this.getUserQuerySelector()
     const headingSelectors: string[] = []
     for (let i = 1; i <= maxLevel; i++) {
       headingSelectors.push(`h${i}`)
     }
 
     const combinedSelector = `${userQuerySelector}, ${headingSelectors.join(", ")}`
-    const allElements = container.querySelectorAll(combinedSelector)
+    const allElements = Array.from(container.querySelectorAll(combinedSelector))
 
-    allElements.forEach((element) => {
+    allElements.forEach((element, index) => {
       const tagName = element.tagName.toLowerCase()
       const isUserQuery = element.matches(userQuerySelector)
 
@@ -680,6 +758,10 @@ export class GrokAdapter extends SiteAdapter {
           item.id = msgId
         }
 
+        if (showWordCount) {
+          item.wordCount = calculateUserQueryWordCount(element)
+        }
+
         outline.push(item)
       } else if (/^h[1-6]$/.test(tagName)) {
         if (this.isInRenderedMarkdownContainer(element)) return
@@ -695,6 +777,34 @@ export class GrokAdapter extends SiteAdapter {
           const msgId = getResponseId(element)
           if (msgId) {
             item.id = generateHeaderId(msgId, tagName, item.text)
+          }
+
+          if (showWordCount) {
+            let nextBoundaryEl: Element | null = null
+            for (let i = index + 1; i < allElements.length; i++) {
+              const candidate = allElements[i]
+              const candidateTagName = candidate.tagName.toLowerCase()
+
+              if (candidate.matches(userQuerySelector)) {
+                nextBoundaryEl = candidate
+                break
+              }
+
+              if (/^h[1-6]$/.test(candidateTagName)) {
+                const candidateLevel = parseInt(candidateTagName.charAt(1), 10)
+                if (candidateLevel <= item.level) {
+                  nextBoundaryEl = candidate
+                  break
+                }
+              }
+            }
+
+            const responseContainer = element.closest('[id^="response-"]')
+            item.wordCount = this.calculateRangeWordCount(
+              element,
+              nextBoundaryEl,
+              responseContainer || container,
+            )
           }
 
           outline.push(item)
