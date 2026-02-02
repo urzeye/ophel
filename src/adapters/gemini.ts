@@ -469,10 +469,14 @@ export class GeminiAdapter extends SiteAdapter {
             }
 
             if (tagName === "model-response") {
-              // 获取 markdown 内容
+              // 获取 markdown 内容（排除思维链 model-thoughts）
               const markdownContent = current.querySelector(".model-response-text, message-content")
               if (markdownContent) {
-                totalLength += markdownContent.textContent?.trim().length || 0
+                // 计算文本长度时排除思维链内容
+                const thoughts = current.querySelector("model-thoughts")
+                const thoughtsLength = thoughts?.textContent?.trim().length || 0
+                const totalText = markdownContent.textContent?.trim().length || 0
+                totalLength += Math.max(0, totalText - thoughtsLength)
               }
             }
 
