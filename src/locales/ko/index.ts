@@ -482,6 +482,9 @@ export const ko = {
   outlineFollowCurrentDesc: "페이지 스크롤 시 개요 항목 강조 표시",
   outlineFollowLatestDesc: "최신 메시지로 자동 스크롤",
   outlineFollowManualDesc: "자동 스크롤 없음, 사용자가 수동으로 제어",
+  outlineShowWordCountLabel: "단어 수 표시",
+  outlineShowWordCountDesc: "개요 툴팁에 각 섹션의 단어 수를 표시합니다",
+  words: "단어",
   // Page Display Settings
   pageDisplaySettings: "페이지 표시",
   // Other Settings

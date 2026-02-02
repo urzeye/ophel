@@ -17,6 +17,7 @@ export interface OutlineItem {
   isTruncated?: boolean
   id?: string
   context?: string
+  wordCount?: number
 }
 
 export interface ConversationInfo {
@@ -597,7 +598,11 @@ export abstract class SiteAdapter {
   }
 
   /** 从页面提取大纲 */
-  extractOutline(_maxLevel = 6, _includeUserQueries = false): OutlineItem[] {
+  extractOutline(
+    _maxLevel = 6,
+    _includeUserQueries = false,
+    _showWordCount = false,
+  ): OutlineItem[] {
     return []
   }
 

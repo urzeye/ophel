@@ -478,6 +478,9 @@ export const pt = {
   outlineFollowCurrentDesc: "Realçar onde você está lendo",
   outlineFollowLatestDesc: "Rolar apenas com mensagens novas",
   outlineFollowManualDesc: "Sem auto-rolagem, você decide",
+  outlineShowWordCountLabel: "Mostrar Contagem de Palavras",
+  outlineShowWordCountDesc: "Exibir contagem de palavras para cada seção no esboço",
+  words: "palavras",
   // Page Display Settings
   pageDisplaySettings: "Exibição",
   // Other Settings

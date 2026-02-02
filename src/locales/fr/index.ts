@@ -479,6 +479,9 @@ export const fr = {
   outlineFollowCurrentDesc: "Surligner où vous lisez",
   outlineFollowLatestDesc: "Descendre avec les nouveaux messages",
   outlineFollowManualDesc: "Sans auto-descente, vous décidez",
+  outlineShowWordCountLabel: "Afficher le nombre de mots",
+  outlineShowWordCountDesc: "Afficher le nombre de mots pour chaque section dans le sommaire",
+  words: "mots",
   // Page Display Settings
   pageDisplaySettings: "Affichage",
   // Other Settings

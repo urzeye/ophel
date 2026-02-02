@@ -476,6 +476,9 @@ export const ru = {
   outlineFollowCurrentDesc: "Подсвечивать, где вы читаете",
   outlineFollowLatestDesc: "Скроллить вниз вместе с ИИ",
   outlineFollowManualDesc: "Без авто-скролла",
+  outlineShowWordCountLabel: "Показать количество слов",
+  outlineShowWordCountDesc: "Отображать количество слов для каждого раздела в оглавлении",
+  words: "слов",
   // Page Display Settings
   pageDisplaySettings: "Отображение",
   // Other Settings

@@ -530,6 +530,9 @@ export const zhCN = {
   outlineFollowCurrentDesc: "滚动页面时高亮当前大纲项",
   outlineFollowLatestDesc: "自动滚动到最新消息",
   outlineFollowManualDesc: "不自动滚动，用户手动控制",
+  outlineShowWordCountLabel: "悬浮显示字数",
+  outlineShowWordCountDesc: "大纲悬浮提示中显示该章节的字数",
+  words: "字",
   // 页面显示设置
   pageDisplaySettings: "页面显示",
   // 其他设置

@@ -433,6 +433,9 @@ export const zhTW = {
   outlineFollowCurrentDesc: "滾動頁面時高亮當前大綱項",
   outlineFollowLatestDesc: "自動滾動到最新訊息",
   outlineFollowManualDesc: "不自動滾動，用戶手動控制",
+  outlineShowWordCountLabel: "顯示字數",
+  outlineShowWordCountDesc: "在工具提示中顯示每個段落的字數統計",
+  words: "字",
   // 頁面顯示設置
   pageDisplaySettings: "頁面顯示",
   // 其他設置

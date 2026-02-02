@@ -478,6 +478,9 @@ export const de = {
   outlineFollowCurrentDesc: "Hervorheben, wo Sie lesen",
   outlineFollowLatestDesc: "Nur bei neuen Nachrichten scrollen",
   outlineFollowManualDesc: "Kein Auto-Scroll, Sie steuern",
+  outlineShowWordCountLabel: "Wortzahl anzeigen",
+  outlineShowWordCountDesc: "Wortzahl für jeden Abschnitt im Verzeichnis-Tooltip anzeigen",
+  words: "Wörter",
   // Page Display Settings
   pageDisplaySettings: "Anzeige",
   // Other Settings

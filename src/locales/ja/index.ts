@@ -483,6 +483,9 @@ export const ja = {
   outlineFollowCurrentDesc: "スクロールに合わせて目次を動かします",
   outlineFollowLatestDesc: "新しいメッセージが来たら自動スクロールします",
   outlineFollowManualDesc: "自動スクロールせず、手動で操作します",
+  outlineShowWordCountLabel: "文字数を表示",
+  outlineShowWordCountDesc: "ツールチップで各セクションの文字数を表示します",
+  words: "文字",
   // Page Display Settings
   pageDisplaySettings: "表示設定",
   // Other Settings

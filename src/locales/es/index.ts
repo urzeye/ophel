@@ -478,6 +478,9 @@ export const es = {
   outlineFollowCurrentDesc: "Resaltar donde estás leyendo",
   outlineFollowLatestDesc: "Bajar solo con mensajes nuevos",
   outlineFollowManualDesc: "Sin auto-bajada, tú mandas",
+  outlineShowWordCountLabel: "Mostrar recuento",
+  outlineShowWordCountDesc: "Mostrar número de palabras por sección en el tooltip",
+  words: "palabras",
   // Page Display Settings
   pageDisplaySettings: "Visualización",
   // Other Settings

@@ -466,7 +466,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     }
   }
 
-  extractOutline(maxLevel = 6, includeUserQueries = false): OutlineItem[] {
+  extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const outline: OutlineItem[] = []
     const container = document.querySelector(this.getResponseContainerSelector())
     if (!container) return outline
@@ -496,40 +496,36 @@ export class ChatGPTAdapter extends SiteAdapter {
       return `${msgId}::${key}::${count}`
     }
 
-    if (!includeUserQueries) {
-      const headingSelectors: string[] = []
-      for (let i = 1; i <= maxLevel; i++) {
-        headingSelectors.push(`h${i}`)
-      }
+    // 优化的字数统计 helper
+    const calculateWordCount = (startEl: Element, nextEl: Element | null): number => {
+      if (!startEl) return 0
+      try {
+        const range = document.createRange()
+        // 设置起点：当前标题之后
+        range.setStartAfter(startEl)
 
-      const headings = container.querySelectorAll(headingSelectors.join(", "))
-      headings.forEach((heading) => {
-        // 跳过 .sr-only 元素
-        if (this.shouldSkipElement(heading)) return
-        if (this.isInRenderedMarkdownContainer(heading)) return
-        const level = parseInt(heading.tagName.charAt(1), 10)
-
-        if (level <= maxLevel) {
-          const item: OutlineItem = {
-            level,
-            text: heading.textContent?.trim() || "",
-            element: heading,
+        // 设置终点
+        if (nextEl) {
+          // 如果有下一个元素，终点在下一个元素之前
+          range.setEndBefore(nextEl)
+        } else {
+          // 如果没有下一个元素，终点在父容器末尾
+          // 注意：startEl 所在的父容器可能是 container，也可能是 message 内容容器
+          // 为了稳妥，我们尝试使用 startEl 的父节点的末尾
+          if (startEl.parentNode) {
+            range.setEndAfter(startEl.parentNode.lastChild || startEl.parentNode)
+          } else {
+            return 0
           }
-
-          // 尝试生成稳定 ID
-          const msgId = getMessageId(heading)
-          if (msgId) {
-            const tagName = heading.tagName.toLowerCase()
-            item.id = generateHeaderId(msgId, tagName, item.text)
-          }
-
-          outline.push(item)
         }
-      })
-      return outline
+        return range.toString().trim().length
+      } catch (e) {
+        console.warn("[Outline] Word count calculation failed:", e)
+        return 0
+      }
     }
 
-    // 包含用户提问的模式
+    // 统一处理逻辑：按照文档顺序收集所有相关元素（UserQuery 和 Headings）
     const userQuerySelector = this.getUserQuerySelector()
     const headingSelectors: string[] = []
     for (let i = 1; i <= maxLevel; i++) {
@@ -537,55 +533,95 @@ export class ChatGPTAdapter extends SiteAdapter {
     }
 
     const combinedSelector = `${userQuerySelector}, ${headingSelectors.join(", ")}`
-    const allElements = container.querySelectorAll(combinedSelector)
+    // 获取所有潜在的节点（按文档顺序）
+    const allElements = Array.from(container.querySelectorAll(combinedSelector))
 
-    allElements.forEach((element) => {
+    allElements.forEach((element, index) => {
       const tagName = element.tagName.toLowerCase()
       const isUserQuery = element.matches(userQuerySelector)
+      const isHeading = /^h[1-6]$/.test(tagName)
 
-      if (isUserQuery) {
-        let queryText = this.extractUserQueryText(element)
-        let isTruncated = false
-        if (queryText.length > 200) {
-          queryText = queryText.substring(0, 200)
-          isTruncated = true
+      // 决定是否收集到大纲中
+      let shouldCollect = false
+      if (includeUserQueries && isUserQuery) shouldCollect = true
+      if (isHeading) {
+        // 过滤不可见/无效 heading
+        if (!this.shouldSkipElement(element) && !this.isInRenderedMarkdownContainer(element)) {
+          const level = parseInt(tagName.charAt(1), 10)
+          if (level <= maxLevel) shouldCollect = true
         }
+      }
 
-        const item: OutlineItem = {
-          level: 0,
-          text: queryText,
-          element,
-          isUserQuery: true,
-          isTruncated,
-        }
+      if (shouldCollect) {
+        let item: OutlineItem
 
-        // 用户提问直接使用 message-id
-        const msgId = getMessageId(element)
-        if (msgId) {
-          item.id = msgId
-        }
-
-        outline.push(item)
-      } else if (/^h[1-6]$/.test(tagName)) {
-        // 跳过 .sr-only 元素
-        if (this.shouldSkipElement(element)) return
-        if (this.isInRenderedMarkdownContainer(element)) return
-        const level = parseInt(tagName.charAt(1), 10)
-        if (level <= maxLevel) {
-          const item: OutlineItem = {
+        if (isUserQuery) {
+          let queryText = this.extractUserQueryText(element)
+          let isTruncated = false
+          if (queryText.length > 200) {
+            queryText = queryText.substring(0, 200)
+            isTruncated = true
+          }
+          item = {
+            level: 0,
+            text: queryText,
+            element,
+            isUserQuery: true,
+            isTruncated,
+          }
+        } else {
+          // Heading
+          const level = parseInt(tagName.charAt(1), 10)
+          item = {
             level,
             text: element.textContent?.trim() || "",
             element,
+            isUserQuery: false,
           }
+        }
 
-          // 尝试生成稳定 ID
-          const msgId = getMessageId(element)
-          if (msgId) {
+        // 添加 ID
+        const msgId = getMessageId(element)
+        if (msgId) {
+          if (isUserQuery) {
+            item.id = msgId
+          } else {
             item.id = generateHeaderId(msgId, tagName, item.text)
           }
-
-          outline.push(item)
         }
+
+        // --- 字数统计逻辑 ---
+        if (showWordCount) {
+          // 重新寻找结束节点 (End Node)
+          let nextBoundaryEl: Element | null = null
+
+          // 从当前位置向后找
+          for (let i = index + 1; i < allElements.length; i++) {
+            const candidate = allElements[i]
+            const candidateIsUserQuery = candidate.matches(userQuerySelector)
+
+            if (candidateIsUserQuery) {
+              // 遇到用户提问，绝对边界（对话结束）
+              nextBoundaryEl = candidate
+              break
+            }
+
+            const candidateTagName = candidate.tagName.toLowerCase()
+            if (/^h[1-6]$/.test(candidateTagName)) {
+              const candidateLevel = parseInt(candidateTagName.charAt(1), 10)
+              // 如果是同级或更高级 (Level 数值更小或相等)，则是边界
+              if (candidateLevel <= item.level) {
+                nextBoundaryEl = candidate
+                break
+              }
+            }
+          }
+
+          // 计算
+          item.wordCount = calculateWordCount(element, nextBoundaryEl)
+        }
+
+        outline.push(item)
       }
     })
 

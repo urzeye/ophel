@@ -174,6 +174,7 @@ export interface Settings {
       expandLevel: number
       inlineBookmarkMode: "always" | "hover" | "hidden" // 页内收藏图标显示模式
       panelBookmarkMode: "always" | "hover" | "hidden" // 面板收藏图标显示模式
+      showWordCount: boolean
     }
   }
 
@@ -342,6 +343,7 @@ export const DEFAULT_SETTINGS: Settings = {
       expandLevel: 6,
       inlineBookmarkMode: "always",
       panelBookmarkMode: "always", // 默认保持原有行为 (Always Dimmed)
+      showWordCount: false,
     },
   },
 

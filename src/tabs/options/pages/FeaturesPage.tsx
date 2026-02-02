@@ -3,16 +3,15 @@
  * 包含：标签页、内容处理、大纲、会话、模型锁定、阅读历史
  * 使用顶部 Tab 切换
  */
-import React, { useCallback, useState } from "react"
+import React, { useState } from "react"
 
 import { FeaturesIcon } from "~components/icons"
-import { NumberInput, Switch } from "~components/ui"
+import { NumberInput } from "~components/ui"
 import { FEATURES_TAB_IDS } from "~constants"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { MSG_CHECK_PERMISSIONS, MSG_REQUEST_PERMISSIONS, sendToBackground } from "~utils/messaging"
-import type { Settings } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
 import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
@@ -21,7 +20,7 @@ interface FeaturesPageProps {
   siteId: string
 }
 
-const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
+const FeaturesPage: React.FC<FeaturesPageProps> = () => {
   const tabs = [
     { id: FEATURES_TAB_IDS.OUTLINE, label: t("tabOutline") || "大纲" },
     { id: FEATURES_TAB_IDS.CONVERSATIONS, label: t("tabConversations") || "会话" },
@@ -31,7 +30,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
   ]
 
   const [activeTab, setActiveTab] = useState<string>(tabs[0].id)
-  const { settings, setSettings, updateDeepSetting, updateNestedSetting } = useSettingsStore()
+  const { settings, updateDeepSetting, updateNestedSetting } = useSettingsStore()
 
   if (!settings) return null
 
@@ -275,6 +274,20 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId }) => {
                 <option value="manual">{t("outlineFollowManual") || "手动控制"}</option>
               </select>
             </SettingRow>
+
+            <ToggleRow
+              label={t("outlineShowWordCountLabel") || "悬浮显示字数"}
+              description={t("outlineShowWordCountDesc") || "在大纲悬浮提示中显示该章节的字数"}
+              checked={settings.features?.outline?.showWordCount ?? false}
+              onChange={() =>
+                updateDeepSetting(
+                  "features",
+                  "outline",
+                  "showWordCount",
+                  !settings.features?.outline?.showWordCount,
+                )
+              }
+            />
           </SettingCard>
 
           {/* 收藏图标设置卡片 */}

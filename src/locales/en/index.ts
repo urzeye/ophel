@@ -499,6 +499,9 @@ export const en = {
   outlineFollowCurrentDesc: "Highlight outline item when scrolling page",
   outlineFollowLatestDesc: "Auto-scroll to latest message",
   outlineFollowManualDesc: "No auto-scroll, user controls manually",
+  outlineShowWordCountLabel: "Show Word Count",
+  outlineShowWordCountDesc: "Display word count for each section in outline tooltip",
+  words: "words",
   // Page Display Settings
   pageDisplaySettings: "Page Display",
   // Other Settings

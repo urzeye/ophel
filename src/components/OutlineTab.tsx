@@ -227,7 +227,11 @@ const OutlineNodeView: React.FC<{
   return (
     <>
       <Tooltip
-        content={node.text}
+        content={
+          node.wordCount && node.wordCount > 0
+            ? `${node.text} (${node.wordCount} ${t("words") || "words"})`
+            : node.text
+        }
         disabled={isHoveringAction}
         triggerStyle={{ width: "100%", display: "block" }}
         triggerClassName={!shouldShow ? "outline-hidden" : ""}
@@ -414,14 +418,14 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
   // 订阅 Manager 更新
   useEffect(() => {
     const update = () => {
-      const listEl = listRef.current
-
       // 智能滚动：检测用户是否已在底部附近（更新前）
+      /*
       let wasAtBottom = false
-      if (listEl) {
-        const { scrollTop, scrollHeight, clientHeight } = listEl
+      if (listRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = listRef.current
         wasAtBottom = scrollTop + clientHeight >= scrollHeight - 50 // 50px 容差
       }
+      */
 
       const state = manager.getState()
 
