@@ -698,9 +698,9 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       // 3.0 提取轮次 ID (Turn ID)
       // jslog="257629;track:impressionasVeMetadata:[null,null,null,&quot;7038012297388346599_5593580960293487735&quot;];"
       const jslog = turn.getAttribute("jslog") || ""
-      // 提取 &quot;xxxxx&quot; 之间的内容，或者是直接的字符串
-      // 匹配 &quot;...&quot; 或 "..." 中的长数字字符串 (通常是 19位_19位)
-      const idMatch = jslog.match(/&quot;(\d+_\d+)&quot;/) || jslog.match(/\"(\d+_\d+)\"/)
+      // 提取 ID: 匹配连续的 digits_digits 格式
+      // 简化正则以兼容 HTML 实体编码 (&quot;) 和普通引号
+      const idMatch = jslog.match(/(\d+_\d+)/)
       const turnId = idMatch ? idMatch[1] : undefined
 
       // 3.1 在轮次中查找用户提问 (.question-block)
