@@ -323,7 +323,7 @@ export const DEFAULT_SETTINGS: Settings = {
   },
 
   features: {
-    order: ["prompts", "conversations", "outline"],
+    order: ["outline", "conversations", "prompts"],
     prompts: {
       enabled: true,
     },
