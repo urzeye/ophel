@@ -150,6 +150,8 @@ export const ko = {
   chromeStore: "Chrome 스토어",
   firefoxAddons: "Firefox 애드온",
   greasyFork: "Greasy Fork",
+  reviewBtn: "평가",
+  starBtn: "스타",
   credits: "크레딧",
   devAndMaintain: "개발 및 유지 관리",
   creditsDesc:

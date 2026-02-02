@@ -150,6 +150,8 @@ export const ja = {
   chromeStore: "Chrome ストア",
   firefoxAddons: "Firefox アドオン",
   greasyFork: "Greasy Fork",
+  reviewBtn: "レビュー",
+  starBtn: "スター",
   credits: "クレジット",
   devAndMaintain: "開発・メンテナンス",
   creditsDesc:

@@ -149,6 +149,8 @@ export const de = {
   chromeStore: "Chrome Store",
   firefoxAddons: "Firefox Add-on",
   greasyFork: "Greasy Fork",
+  reviewBtn: "Bewerten",
+  starBtn: "Star",
   credits: "Credits",
   devAndMaintain: "Entwicklung und Wartung",
   creditsDesc: "Danke an alle Mitwirkenden. Ophel basiert auf exzellenten Open-Source-Projekten.",

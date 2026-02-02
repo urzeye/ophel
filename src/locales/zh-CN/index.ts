@@ -186,6 +186,8 @@ export const zhCN = {
   chromeStore: "Chrome 商店",
   firefoxAddons: "Firefox 扩展",
   greasyFork: "Greasy Fork",
+  reviewBtn: "评分",
+  starBtn: "Star",
   credits: "版权与致谢",
   devAndMaintain: "开发与维护",
   creditsDesc: "感谢所有为开源社区做出贡献的开发者们，本插件的开发得益于这些优秀的开源项目和工具。",

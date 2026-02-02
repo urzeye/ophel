@@ -91,7 +91,9 @@ export const zhTW = {
   chromeStore: "Chrome 商店",
   firefoxAddons: "Firefox 擴充功能",
   greasyFork: "Greasy Fork",
-  techStack: "技術堆疊",
+  reviewBtn: "評分",
+  starBtn: "Star",
+  credits: "版權與致謝",
   credits: "版權與致謝",
   devAndMaintain: "開發與維護",
   creditsDesc:

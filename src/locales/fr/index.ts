@@ -149,6 +149,8 @@ export const fr = {
   chromeStore: "Chrome Store",
   firefoxAddons: "Extension Firefox",
   greasyFork: "Greasy Fork",
+  reviewBtn: "Noter",
+  starBtn: "Star",
   credits: "Crédits",
   devAndMaintain: "Développement et maintenance",
   creditsDesc:

@@ -147,7 +147,7 @@ function IndexPopup() {
       return {
         url: "https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer",
         icon: <GreasyForkIcon size={14} />,
-        label: "Review",
+        label: t("reviewBtn") || "Review",
       }
     }
 
@@ -157,14 +157,14 @@ function IndexPopup() {
       return {
         url: "https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/",
         icon: <FirefoxIcon size={14} />,
-        label: "Review",
+        label: t("reviewBtn") || "Review",
       }
     } else {
       // Default to Chrome (includes Edge, Brave etc)
       return {
         url: "https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd",
         icon: <ChromeIcon size={14} />,
-        label: "Review",
+        label: t("reviewBtn") || "Review",
       }
     }
   }
@@ -221,7 +221,11 @@ function IndexPopup() {
           <div className="popup-section-title">{t("popupQuickAccess")}</div>
           <div className="popup-sites-grid">
             {SUPPORTED_SITES.slice(0, 6).map((site) => (
-              <Tooltip key={site.name} content={site.name}>
+              <Tooltip
+                key={site.name}
+                content={site.name}
+                triggerStyle={{ width: "100%", display: "flex" }}
+                triggerClassName="popup-tooltip-trigger">
                 <button className="popup-site-link" onClick={() => openUrl(site.url)}>
                   <span>{site.icon}</span>
                   <span>{site.name}</span>
@@ -256,19 +260,21 @@ function IndexPopup() {
       <div className="popup-footer">
         <span className="popup-version">v{version}</span>
         <div className="popup-footer-actions">
-          <button
-            className="popup-action-pill review-btn"
-            onClick={() => openUrl(storeInfo.url)}
-            title={t("rateAndReview") || "Rate"}>
-            {storeInfo.icon}
-            <span>{storeInfo.label}</span>
-          </button>
-          <button
-            className="popup-action-pill star-btn"
-            onClick={() => openUrl("https://github.com/urzeye/ophel")}>
-            <StarIcon size={14} />
-            <span>Star</span>
-          </button>
+          <Tooltip content={t("rateAndReview") || "Love Ophel?"}>
+            <button className="popup-action-pill review-btn" onClick={() => openUrl(storeInfo.url)}>
+              {storeInfo.icon}
+              <span>{storeInfo.label}</span>
+            </button>
+          </Tooltip>
+
+          <Tooltip content={t("giveStar") || "Star on GitHub"}>
+            <button
+              className="popup-action-pill star-btn"
+              onClick={() => openUrl("https://github.com/urzeye/ophel")}>
+              <StarIcon size={14} />
+              <span>{t("starBtn") || "Star"}</span>
+            </button>
+          </Tooltip>
         </div>
         <a
           href="https://github.com/urzeye/ophel/issues"

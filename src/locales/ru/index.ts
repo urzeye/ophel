@@ -147,6 +147,8 @@ export const ru = {
   chromeStore: "Интернет-магазин Chrome",
   firefoxAddons: "Дополнение Firefox",
   greasyFork: "Greasy Fork",
+  reviewBtn: "Оценить",
+  starBtn: "Star",
   credits: "Благодарности",
   devAndMaintain: "Разработка и поддержка",
   creditsDesc: "Спасибо всем участникам. Ophel использует отличные open-source проекты.",
