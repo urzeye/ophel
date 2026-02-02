@@ -817,10 +817,37 @@ export class AIStudioAdapter extends SiteAdapter {
 
   extractOutline(maxLevel = 6, includeUserQueries = false): OutlineItem[] {
     const outline: OutlineItem[] = []
-    const container = document.querySelector(this.getResponseContainerSelector())
+
+    // AI Studio 整个 main 区域都可能是滚动容器，或者 .chat-container
+    const container = document.querySelector(".chat-container") || document.querySelector("main")
     if (!container) return outline
 
-    // 不包含用户提问时，只提取标题
+    // 辅助函数：提取 ms-chat-turn 的 ID
+    // 格式: turn-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+    // 返回 UUID 部分
+    const getTurnId = (el: Element): string | null => {
+      const turn = el.closest("ms-chat-turn")
+      if (turn && turn.id) {
+        // 移除 "turn-" 前缀
+        return turn.id.replace(/^turn-/, "")
+      }
+      return null
+    }
+
+    // 辅助函数：生成标题的稳定 ID
+    const turnHeaderCounts: Record<string, Record<string, number>> = {}
+    const generateHeaderId = (turnId: string, tagName: string, text: string): string => {
+      if (!turnHeaderCounts[turnId]) {
+        turnHeaderCounts[turnId] = {}
+      }
+
+      const key = `${tagName}-${text}`
+      const count = turnHeaderCounts[turnId][key] || 0
+      turnHeaderCounts[turnId][key] = count + 1
+
+      return `${turnId}::${key}::${count}`
+    }
+
     if (!includeUserQueries) {
       const headingSelectors: string[] = []
       for (let i = 1; i <= maxLevel; i++) {
@@ -829,21 +856,33 @@ export class AIStudioAdapter extends SiteAdapter {
 
       const headings = container.querySelectorAll(headingSelectors.join(", "))
       headings.forEach((heading) => {
+        // AI Studio 可能把 input 内的 h1 也选出来，需要过滤
+        if (heading.closest("textarea") || heading.closest(".user-prompt-container")) return
         if (this.isInRenderedMarkdownContainer(heading)) return
+
         const level = parseInt(heading.tagName.charAt(1), 10)
         if (level <= maxLevel) {
-          outline.push({
+          const item: OutlineItem = {
             level,
             text: heading.textContent?.trim() || "",
             element: heading,
-          })
+          }
+
+          // 稳定 ID 生成
+          const turnId = getTurnId(heading)
+          if (turnId) {
+            const tagName = heading.tagName.toLowerCase()
+            item.id = generateHeaderId(turnId, tagName, item.text)
+          }
+
+          outline.push(item)
         }
       })
       return outline
     }
 
     // 包含用户提问的模式
-    const userQuerySelector = this.getUserQuerySelector()
+    const userQuerySelector = this.getUserQuerySelector() // .chat-turn-container.user
     const headingSelectors: string[] = []
     for (let i = 1; i <= maxLevel; i++) {
       headingSelectors.push(`h${i}`)
@@ -854,7 +893,10 @@ export class AIStudioAdapter extends SiteAdapter {
 
     allElements.forEach((element) => {
       const tagName = element.tagName.toLowerCase()
-      const isUserQuery = element.matches(userQuerySelector)
+      // 注意：.chat-turn-container.user 是个 div
+      // 所以我们通过 class 来判断是否是 User Query
+      const isUserQuery =
+        element.classList.contains("user") && element.classList.contains("chat-turn-container")
 
       if (isUserQuery) {
         let queryText = this.extractUserQueryText(element)
@@ -864,22 +906,42 @@ export class AIStudioAdapter extends SiteAdapter {
           isTruncated = true
         }
 
-        outline.push({
+        const item: OutlineItem = {
           level: 0,
           text: queryText,
           element,
           isUserQuery: true,
           isTruncated,
-        })
+        }
+
+        // 用户提问直接使用 Turn ID
+        const turnId = getTurnId(element)
+        if (turnId) {
+          item.id = turnId
+        }
+
+        outline.push(item)
       } else if (/^h[1-6]$/.test(tagName)) {
+        // 过滤：避免提取到用户提问里的标题（虽然上面已经针对 .user 容器做了处理，但双重保险）
+        if (element.closest(".user-prompt-container") || element.closest("textarea")) return
         if (this.isInRenderedMarkdownContainer(element)) return
+
         const level = parseInt(tagName.charAt(1), 10)
         if (level <= maxLevel) {
-          outline.push({
+          const item: OutlineItem = {
             level,
             text: element.textContent?.trim() || "",
             element,
-          })
+          }
+
+          // 稳定 ID 生成
+          const turnId = getTurnId(element)
+          if (turnId) {
+            const tagName = element.tagName.toLowerCase()
+            item.id = generateHeaderId(turnId, tagName, item.text)
+          }
+
+          outline.push(item)
         }
       }
     })
