@@ -544,61 +544,40 @@ export class ChatGPTAdapter extends SiteAdapter {
         }
 
         // 对于标题（Heading），使用 Range 方式
-        const range = document.createRange()
-        // 设置起点：当前标题之后
-        range.setStartAfter(startEl)
-
-        // 设置终点
+        // 当 nextEl 存在时，直接使用基类方法
         if (nextEl) {
-          // 如果有下一个元素，终点在下一个元素之前
-          range.setEndBefore(nextEl)
-        } else {
-          // 如果没有下一个边界元素，需要找到正确的终点
-          // 策略：从 startEl 在 DOM 中向后遍历，找到下一个用户提问元素
-          const allUserQueries = container.querySelectorAll(userQuerySelector)
-          let foundCurrent = false
-          let nextUserQuery: Element | null = null
+          return this.calculateRangeWordCount(startEl, nextEl, container)
+        }
 
-          for (const uq of Array.from(allUserQueries)) {
-            if (foundCurrent) {
-              nextUserQuery = uq
-              break
-            }
-            if (uq === startEl || uq.contains(startEl) || startEl.contains(uq)) {
-              foundCurrent = true
-            }
+        // 如果没有下一个边界元素，需要找到正确的终点
+        // 策略：从 startEl 在 DOM 中向后遍历，找到下一个用户提问元素
+        const allUserQueries = container.querySelectorAll(userQuerySelector)
+        let foundCurrent = false
+        let nextUserQuery: Element | null = null
+
+        for (const uq of Array.from(allUserQueries)) {
+          if (foundCurrent) {
+            nextUserQuery = uq
+            break
           }
-
-          if (nextUserQuery) {
-            // 找到了下一个用户提问，使用它作为边界
-            range.setEndBefore(nextUserQuery)
-          } else {
-            // 真正的最后一个用户提问，找对应的 AI 回复容器末尾
-            // ChatGPT 的 AI 回复在 [data-message-author-role="assistant"]
-            const allAssistants = container.querySelectorAll(
-              '[data-message-author-role="assistant"]',
-            )
-            if (allAssistants.length > 0) {
-              const lastAssistant = allAssistants[allAssistants.length - 1]
-              range.setEndAfter(lastAssistant)
-            } else if (container.lastChild) {
-              // 回退
-              range.setEndAfter(container.lastChild)
-            } else {
-              return 0
-            }
+          if (uq === startEl || uq.contains(startEl) || startEl.contains(uq)) {
+            foundCurrent = true
           }
         }
-        const text = range.toString().trim()
-        console.log(
-          "[Outline Debug] Word count text:",
-          JSON.stringify(text.substring(0, 50)),
-          "length:",
-          text.length,
-        )
-        return text.length
-      } catch (e) {
-        console.warn("[Outline] Word count calculation failed:", e)
+
+        if (nextUserQuery) {
+          // 找到了下一个用户提问，使用它作为边界
+          return this.calculateRangeWordCount(startEl, nextUserQuery, container)
+        }
+
+        // 真正的最后一个用户提问，找对应的 AI 回复容器末尾
+        const allAssistants = container.querySelectorAll('[data-message-author-role="assistant"]')
+        if (allAssistants.length > 0) {
+          const lastAssistant = allAssistants[allAssistants.length - 1]
+          return this.calculateRangeWordCount(startEl, null, lastAssistant)
+        }
+        return this.calculateRangeWordCount(startEl, null, container)
+      } catch {
         return 0
       }
     }

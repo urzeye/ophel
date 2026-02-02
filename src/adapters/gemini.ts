@@ -404,13 +404,12 @@ export class GeminiAdapter extends SiteAdapter {
     }
   }
 
-  extractOutline(maxLevel = 6, includeUserQueries = false): OutlineItem[] {
+  extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const outline: OutlineItem[] = []
     const container = document.querySelector(this.getResponseContainerSelector())
     if (!container) return outline
 
     // 辅助函数：提取 AI 回复的消息 ID
-    // 从 <message-content id="message-content-id-r_xxxx"> 中提取 r_xxxx
     const getMessageId = (el: Element): string | null => {
       const msgContent = el.closest("message-content")
       if (msgContent && msgContent.id) {
@@ -421,9 +420,7 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     // 辅助函数：提取用户提问的消息 ID
-    // 从 <button jslog="...;BardVeMetadataKey:[['r_xxxx',...]]"> 中提取 r_xxxx
     const getUserQueryId = (el: Element): string | null => {
-      // 在 user-query 内部查找带有 jslog 的 button
       const btn = el.querySelector('button[jslog*="BardVeMetadataKey"]')
       if (btn) {
         const jslog = btn.getAttribute("jslog") || ""
@@ -447,14 +444,66 @@ export class GeminiAdapter extends SiteAdapter {
       return `${msgId}::${key}::${count}`
     }
 
+    // 辅助函数：计算字数
+    const userQuerySelector = this.getUserQuerySelector()
+    const calculateWordCount = (
+      startEl: Element,
+      nextEl: Element | null,
+      isUserQueryItem: boolean,
+    ): number => {
+      if (!startEl) return 0
+      try {
+        if (isUserQueryItem) {
+          // 对于用户提问，Gemini 的结构是：
+          // <user-query>...</user-query>
+          // <model-response>...</model-response> (AI 回复)
+          // 它们是 siblings。为了兼容可能存在的多个回复块（例如工具调用、引用等）
+          // 我们收集直到下一个 user-query 之前的所有内容
+          let current = startEl.nextElementSibling
+          let totalLength = 0
+
+          while (current) {
+            const tagName = current.tagName.toLowerCase()
+            if (tagName === "user-query") {
+              break // 遇到下一个用户提问，结束
+            }
+
+            if (tagName === "model-response") {
+              // 获取 markdown 内容
+              const markdownContent = current.querySelector(".model-response-text, message-content")
+              if (markdownContent) {
+                totalLength += markdownContent.textContent?.trim().length || 0
+              }
+            }
+
+            current = current.nextElementSibling
+          }
+          return totalLength
+        }
+
+        // 对于标题（Heading），使用基类的 Range 工具方法
+        const messageContent = startEl.closest("message-content")
+        return this.calculateRangeWordCount(startEl, nextEl, messageContent || container)
+      } catch {
+        return 0
+      }
+    }
+
+    // 统一收集逻辑：为了正确处理边界，即使不包含 userQueries，我们也最好获取它们作为边界参考
+    // 但为了保持原有逻辑简单，我们分别处理
+    // 实际上，如果不包含 userQueries，我们只需要在 Heading 之间计算
+    // 用户提问本身就是一个自然的分割线，通常 Heading 不会跨越 User Query (因为是新的回复)
+    // 所以如果不包含 UserQuery，boundary 只需要是下一个 Heading
+
     if (!includeUserQueries) {
       const headingSelectors: string[] = []
       for (let i = 1; i <= maxLevel; i++) {
         headingSelectors.push(`h${i}`)
       }
 
-      const headings = container.querySelectorAll(headingSelectors.join(", "))
-      headings.forEach((heading) => {
+      const headings = Array.from(container.querySelectorAll(headingSelectors.join(", ")))
+
+      headings.forEach((heading, index) => {
         // 排除用户提问渲染容器内的标题
         if (this.isInRenderedMarkdownContainer(heading)) return
 
@@ -473,6 +522,21 @@ export class GeminiAdapter extends SiteAdapter {
             item.id = generateHeaderId(msgId, tagName, item.text)
           }
 
+          // 字数统计
+          if (showWordCount) {
+            let nextBoundaryEl: Element | null = null
+            // 寻找下一个边界
+            for (let i = index + 1; i < headings.length; i++) {
+              const candidate = headings[i]
+              const candidateLevel = parseInt(candidate.tagName.charAt(1), 10)
+              if (candidateLevel <= level) {
+                nextBoundaryEl = candidate
+                break
+              }
+            }
+            item.wordCount = calculateWordCount(heading, nextBoundaryEl, false)
+          }
+
           outline.push(item)
         }
       })
@@ -480,16 +544,15 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     // 包含用户提问的模式
-    const userQuerySelector = this.getUserQuerySelector()
     const headingSelectors: string[] = []
     for (let i = 1; i <= maxLevel; i++) {
       headingSelectors.push(`h${i}`)
     }
 
     const combinedSelector = `${userQuerySelector}, ${headingSelectors.join(", ")}`
-    const allElements = container.querySelectorAll(combinedSelector)
+    const allElements = Array.from(container.querySelectorAll(combinedSelector))
 
-    allElements.forEach((element) => {
+    allElements.forEach((element, index) => {
       const tagName = element.tagName.toLowerCase()
 
       if (tagName === "user-query") {
@@ -508,15 +571,19 @@ export class GeminiAdapter extends SiteAdapter {
           isTruncated,
         }
 
-        // 尝试提取用户提问 ID
         const msgId = getUserQueryId(element)
         if (msgId) {
           item.id = msgId
         }
 
+        if (showWordCount) {
+          // 用户提问的 nextBoundary 实际上对于 calculateWordCount(isUserQuery=true) 不重要
+          // 但我们可以传 null
+          item.wordCount = calculateWordCount(element, null, true)
+        }
+
         outline.push(item)
       } else if (/^h[1-6]$/.test(tagName)) {
-        // 排除用户提问渲染容器内的标题
         if (this.isInRenderedMarkdownContainer(element)) return
 
         const level = parseInt(tagName.charAt(1), 10)
@@ -527,11 +594,32 @@ export class GeminiAdapter extends SiteAdapter {
             element,
           }
 
-          // 尝试生成稳定 ID
           const msgId = getMessageId(element)
           if (msgId) {
             const tagName = element.tagName.toLowerCase()
             item.id = generateHeaderId(msgId, tagName, item.text)
+          }
+
+          if (showWordCount) {
+            let nextBoundaryEl: Element | null = null
+            for (let i = index + 1; i < allElements.length; i++) {
+              const candidate = allElements[i]
+              const candidateTagName = candidate.tagName.toLowerCase()
+
+              if (candidateTagName === "user-query") {
+                nextBoundaryEl = candidate
+                break
+              }
+
+              if (/^h[1-6]$/.test(candidateTagName)) {
+                const candidateLevel = parseInt(candidateTagName.charAt(1), 10)
+                if (candidateLevel <= item.level) {
+                  nextBoundaryEl = candidate
+                  break
+                }
+              }
+            }
+            item.wordCount = calculateWordCount(element, nextBoundaryEl, false)
           }
 
           outline.push(item)
