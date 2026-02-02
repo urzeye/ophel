@@ -20,6 +20,7 @@
   </p>
   
   <p align="center" style="font-size: 12px; color: #555;">👇 데모: "무한 스크롤 채팅 기록"에서 "탐색 가능한 AI 문서"로</p>
+
   ![Ophel Demo](../../assets/demo/outline.gif)
   
   <p>

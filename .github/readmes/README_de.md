@@ -12,6 +12,7 @@
   </p>
   
   <p align="center" style="font-size: 12px; color: #555;">👇 Demo: Von "Unendlichem Scrollen" zu "Navigierbaren AI-Dokumenten"</p>
+
   ![Ophel Demo](../../assets/demo/outline.gif)
   
   <p>

@@ -20,6 +20,7 @@
   </p>
   
   <p align="center" style="font-size: 12px; color: #555;">👇 デモ：「無限スクロールのチャット履歴」から「ナビ可能なAIドキュメント」へ</p>
+
   ![Ophel Demo](../../assets/demo/outline.gif)
   
   <p>

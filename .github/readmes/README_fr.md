@@ -12,6 +12,7 @@
   </p>
   
   <p align="center" style="font-size: 12px; color: #555;">👇 Démo : De "l'historique de chat à défilement infini" aux "documents IA navigables"</p>
+
   ![Ophel Demo](../../assets/demo/outline.gif)
   
   <p>

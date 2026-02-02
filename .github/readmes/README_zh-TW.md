@@ -20,6 +20,7 @@
   </p>
   
   <p align="center" style="font-size: 12px; color: #555;">👇 Demo: 從“無限滾動的聊天記錄”，到“可導航的 AI 文檔”</p>
+
   ![Ophel Demo](../../assets/demo/outline.gif)
   
   <p>
