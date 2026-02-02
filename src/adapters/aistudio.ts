@@ -845,7 +845,7 @@ export class AIStudioAdapter extends SiteAdapter {
     }
   }
 
-  extractOutline(maxLevel = 6, includeUserQueries = false): OutlineItem[] {
+  extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const outline: OutlineItem[] = []
 
     // AI Studio 整个 main 区域都可能是滚动容器，或者 .chat-container
@@ -878,14 +878,49 @@ export class AIStudioAdapter extends SiteAdapter {
       return `${turnId}::${key}::${count}`
     }
 
+    // 辅助函数：计算用户提问的字数（统计后续 AI 回复）
+    const userQuerySelector = this.getUserQuerySelector()
+    const calculateUserQueryWordCount = (startEl: Element): number => {
+      // AI Studio 结构：每个对话轮次在 ms-chat-turn 中
+      // 用户消息和 AI 回复各自在不同的 ms-chat-turn 中
+      const currentTurn = startEl.closest("ms-chat-turn")
+      if (!currentTurn) return 0
+
+      let current = currentTurn.nextElementSibling
+      let totalLength = 0
+
+      while (current) {
+        // 检查是否是下一个用户消息的容器
+        const userQueryInThis = current.querySelector(userQuerySelector)
+        if (userQueryInThis) {
+          break // 遇到下一个用户提问的容器，结束
+        }
+
+        // 查找 AI 回复内容：在 .model 容器中查找 ms-cmark-node 或 .markdown 内容
+        const modelContainer = current.querySelector(
+          ".chat-turn-container.model, .chat-turn-container:not(.user)",
+        )
+        if (modelContainer) {
+          // AI Studio 使用 ms-cmark-node 渲染 Markdown
+          const markdownContent = modelContainer.querySelector("ms-cmark-node")
+          if (markdownContent) {
+            totalLength += markdownContent.textContent?.trim().length || 0
+          }
+        }
+
+        current = current.nextElementSibling
+      }
+      return totalLength
+    }
+
     if (!includeUserQueries) {
       const headingSelectors: string[] = []
       for (let i = 1; i <= maxLevel; i++) {
         headingSelectors.push(`h${i}`)
       }
 
-      const headings = container.querySelectorAll(headingSelectors.join(", "))
-      headings.forEach((heading) => {
+      const headings = Array.from(container.querySelectorAll(headingSelectors.join(", ")))
+      headings.forEach((heading, index) => {
         // AI Studio 可能把 input 内的 h1 也选出来，需要过滤
         if (heading.closest("textarea") || heading.closest(".user-prompt-container")) return
         if (this.isInRenderedMarkdownContainer(heading)) return
@@ -905,6 +940,26 @@ export class AIStudioAdapter extends SiteAdapter {
             item.id = generateHeaderId(turnId, tagName, item.text)
           }
 
+          // 字数统计
+          if (showWordCount) {
+            let nextBoundaryEl: Element | null = null
+            for (let i = index + 1; i < headings.length; i++) {
+              const candidate = headings[i]
+              const candidateLevel = parseInt(candidate.tagName.charAt(1), 10)
+              if (candidateLevel <= level) {
+                nextBoundaryEl = candidate
+                break
+              }
+            }
+            // 查找所属的 ms-chat-turn
+            const turnContainer = heading.closest("ms-chat-turn")
+            item.wordCount = this.calculateRangeWordCount(
+              heading,
+              nextBoundaryEl,
+              turnContainer || container,
+            )
+          }
+
           outline.push(item)
         }
       })
@@ -912,16 +967,15 @@ export class AIStudioAdapter extends SiteAdapter {
     }
 
     // 包含用户提问的模式
-    const userQuerySelector = this.getUserQuerySelector() // .chat-turn-container.user
     const headingSelectors: string[] = []
     for (let i = 1; i <= maxLevel; i++) {
       headingSelectors.push(`h${i}`)
     }
 
     const combinedSelector = `${userQuerySelector}, ${headingSelectors.join(", ")}`
-    const allElements = container.querySelectorAll(combinedSelector)
+    const allElements = Array.from(container.querySelectorAll(combinedSelector))
 
-    allElements.forEach((element) => {
+    allElements.forEach((element, index) => {
       const tagName = element.tagName.toLowerCase()
       // 注意：.chat-turn-container.user 是个 div
       // 所以我们通过 class 来判断是否是 User Query
@@ -956,6 +1010,10 @@ export class AIStudioAdapter extends SiteAdapter {
           }
         }
 
+        if (showWordCount) {
+          item.wordCount = calculateUserQueryWordCount(element)
+        }
+
         outline.push(item)
       } else if (/^h[1-6]$/.test(tagName)) {
         // 过滤：避免提取到用户提问里的标题（虽然上面已经针对 .user 容器做了处理，但双重保险）
@@ -968,6 +1026,38 @@ export class AIStudioAdapter extends SiteAdapter {
             level,
             text: element.textContent?.trim() || "",
             element,
+          }
+
+          if (showWordCount) {
+            let nextBoundaryEl: Element | null = null
+            for (let i = index + 1; i < allElements.length; i++) {
+              const candidate = allElements[i]
+              const candidateTagName = candidate.tagName.toLowerCase()
+
+              // 遇到用户提问时停止
+              if (
+                candidate.classList.contains("user") &&
+                candidate.classList.contains("chat-turn-container")
+              ) {
+                nextBoundaryEl = candidate
+                break
+              }
+
+              if (/^h[1-6]$/.test(candidateTagName)) {
+                const candidateLevel = parseInt(candidateTagName.charAt(1), 10)
+                if (candidateLevel <= item.level) {
+                  nextBoundaryEl = candidate
+                  break
+                }
+              }
+            }
+
+            const turnContainer = element.closest("ms-chat-turn")
+            item.wordCount = this.calculateRangeWordCount(
+              element,
+              nextBoundaryEl,
+              turnContainer || container,
+            )
           }
 
           outline.push(item)
