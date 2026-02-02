@@ -761,6 +761,8 @@ export class AIStudioAdapter extends SiteAdapter {
 
   // 用户文本缓存（解决虚拟滚动导致的文本丢失）
   private textCache = new Map<string, string>()
+  // 字数缓存（解决虚拟滚动导致的字数统计丢失）
+  private wordCountCache = new Map<string, number>()
   private lastSessionIdForCache: string | null = null
 
   extractUserQueryText(element: Element): string {
@@ -768,6 +770,7 @@ export class AIStudioAdapter extends SiteAdapter {
     const currentSessionId = this.getSessionId()
     if (this.lastSessionIdForCache !== currentSessionId) {
       this.textCache.clear()
+      this.wordCountCache.clear()
       this.lastSessionIdForCache = currentSessionId
     }
 
@@ -878,7 +881,8 @@ export class AIStudioAdapter extends SiteAdapter {
       return `${turnId}::${key}::${count}`
     }
 
-    // 辅助函数：计算用户提问的字数（统计后续 AI 回复）
+    // 计算用户提问的字数（统计后续 AI 回复）
+    // 使用缓存以应对虚拟滚动导致的 DOM 内容丢失
     const userQuerySelector = this.getUserQuerySelector()
     const calculateUserQueryWordCount = (startEl: Element): number => {
       // AI Studio 结构：每个对话轮次在 ms-chat-turn 中
@@ -886,8 +890,12 @@ export class AIStudioAdapter extends SiteAdapter {
       const currentTurn = startEl.closest("ms-chat-turn")
       if (!currentTurn) return 0
 
+      // 使用 turn ID 作为缓存键
+      const turnId = currentTurn.id
+
       let current = currentTurn.nextElementSibling
       let totalLength = 0
+      let foundContent = false
 
       while (current) {
         // 检查是否是下一个用户消息的容器
@@ -904,12 +912,27 @@ export class AIStudioAdapter extends SiteAdapter {
           // AI Studio 使用 ms-cmark-node 渲染 Markdown
           const markdownContent = modelContainer.querySelector("ms-cmark-node")
           if (markdownContent) {
-            totalLength += markdownContent.textContent?.trim().length || 0
+            const textLength = markdownContent.textContent?.trim().length || 0
+            if (textLength > 0) {
+              foundContent = true
+              totalLength += textLength
+            }
           }
         }
 
         current = current.nextElementSibling
       }
+
+      // 如果找到内容，更新缓存
+      if (foundContent && turnId) {
+        this.wordCountCache.set(turnId, totalLength)
+      }
+
+      // 如果没找到内容（可能被虚拟化），尝试使用缓存
+      if (totalLength === 0 && turnId && this.wordCountCache.has(turnId)) {
+        return this.wordCountCache.get(turnId)!
+      }
+
       return totalLength
     }
 
