@@ -523,6 +523,62 @@ export class OutlineManager {
         }
       })
 
+      // --- Ghost Reclamation (保守修复策略) ---
+      // 尝试将无法匹配的幽灵书签（unmatchedBookmarkIds）自动“过继”给当前未收藏的新条目
+      // 仅当满足 "Unique-to-Unique" 条件时执行：
+      // 即：该文本在幽灵列表中只有 1 个，且在当前未收藏列表中也只有 1 个
+
+      // 1. 收集候选者
+      const ghostCandidates: Record<string, string[]> = {} // text -> [bookmarkId]
+      const targetCandidates: Record<string, OutlineItem[]> = {} // text -> [Item]
+
+      // 收集幽灵
+      unmatchedBookmarkIds.forEach((bid) => {
+        const bookmark = bookmarks.find((b) => b.id === bid)
+        if (bookmark) {
+          if (!ghostCandidates[bookmark.title]) ghostCandidates[bookmark.title] = []
+          ghostCandidates[bookmark.title].push(bookmark.id)
+        }
+      })
+
+      // 收集目标（未被收藏的条目）
+      outlineData.forEach((item) => {
+        if (!(item as OutlineNode).isBookmarked) {
+          if (!targetCandidates[item.text]) targetCandidates[item.text] = []
+          targetCandidates[item.text].push(item)
+        }
+      })
+
+      // 2. 执行匹配与修复
+      const store = useBookmarkStore.getState()
+
+      Object.keys(ghostCandidates).forEach((text) => {
+        const ghosts = ghostCandidates[text]
+        const targets = targetCandidates[text]
+
+        // 仅当 1 对 1 时才进行修复
+        if (ghosts && targets && ghosts.length === 1 && targets.length === 1) {
+          const bookmarkId = ghosts[0]
+          const targetItem = targets[0]
+
+          // 计算新的签名（这是它现在的“合法身份”）
+          const newSignature = this.generateSignature(targetItem, (targetItem as any).index ?? 0) //注意：这里index可能不准，但generateSignature内部如果是ID模式则不依赖index
+
+          // 更新数据库：把旧书签的签名改为新的
+          // 注意：这里需要确保 updateBookmark 存在且支持只更新 signature
+          // 假设 store.updateBookmark(id, { signature: ... })
+          store.updateBookmark(bookmarkId, { signature: newSignature })
+
+          // 标记当前条目为已收藏
+          ;(targetItem as OutlineNode).isBookmarked = true
+          ;(targetItem as OutlineNode).bookmarkId = bookmarkId
+
+          // 从幽灵名单中剔除
+          unmatchedBookmarkIds.delete(bookmarkId)
+        }
+      })
+      // -----------------------------------
+
       // 2. Insert Ghost Nodes
       const ghosts: OutlineItem[] = []
       unmatchedBookmarkIds.forEach((bid) => {

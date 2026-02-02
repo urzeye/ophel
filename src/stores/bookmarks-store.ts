@@ -37,6 +37,7 @@ interface BookmarkStore {
     signature: string,
     scrollTop: number,
   ) => void
+  updateBookmark: (id: string, updates: Partial<Omit<Bookmark, "id">>) => void
   getBookmarksBySession: (sessionId: string) => Bookmark[]
   getBookmarkId: (sessionId: string, signature: string) => string | null
   clearSessionBookmarks: (sessionId: string) => void
@@ -88,6 +89,12 @@ export const useBookmarkStore = create<BookmarkStore>()(
       removeBookmark: (id) => {
         set((state) => ({
           bookmarks: state.bookmarks.filter((b) => b.id !== id),
+        }))
+      },
+
+      updateBookmark: (id, updates) => {
+        set((state) => ({
+          bookmarks: state.bookmarks.map((b) => (b.id === id ? { ...b, ...updates } : b)),
         }))
       },
 
