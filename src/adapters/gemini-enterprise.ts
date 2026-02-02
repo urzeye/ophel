@@ -663,12 +663,43 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   /**
    * 从页面提取大纲（使用递归 Shadow DOM 搜索）
    */
-  extractOutline(maxLevel = 6, includeUserQueries = false): OutlineItem[] {
+  extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const outline: OutlineItem[] = []
+
+    // 辅助函数：从 ucs-summary 元素中提取文本字数（穿透 Shadow DOM）
+    const extractSummaryWordCount = (ucsSummary: Element): number => {
+      const markdownDoc = this.extractSummaryContent(ucsSummary)
+      if (markdownDoc) {
+        return markdownDoc.textContent?.trim().length || 0
+      }
+      return ucsSummary.textContent?.trim().length || 0
+    }
 
     if (!includeUserQueries) {
       // 原有逻辑：只提取标题（使用递归 Shadow DOM 搜索）
       this.findHeadingsInShadowDOM(document, outline, maxLevel, 0)
+
+      // 如果需要字数统计，遍历 outline 并为每个标题计算字数
+      if (showWordCount) {
+        outline.forEach((item, index) => {
+          if (!item.element) return
+
+          // 找到标题所在的 .markdown-document 容器
+          const markdownDoc = item.element.closest(".markdown-document")
+          if (markdownDoc) {
+            // 找到下一个同级或更高级别的标题作为边界
+            let nextBoundaryEl: Element | null = null
+            for (let i = index + 1; i < outline.length; i++) {
+              if (outline[i].level <= item.level) {
+                nextBoundaryEl = outline[i].element || null
+                break
+              }
+            }
+            item.wordCount = this.calculateRangeWordCount(item.element, nextBoundaryEl, markdownDoc)
+          }
+        })
+      }
+
       return outline
     }
 
@@ -705,6 +736,8 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
       // 3.1 在轮次中查找用户提问 (.question-block)
       const questionBlock = turn.querySelector(".question-block")
+      const ucsSummary = turn.querySelector("ucs-summary")
+
       if (questionBlock) {
         let queryText = this.extractUserQueryText(questionBlock)
         let isTruncated = false
@@ -712,22 +745,53 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
           queryText = queryText.substring(0, 200)
           isTruncated = true
         }
-        outline.push({
+
+        const item: OutlineItem = {
           level: 0,
           text: queryText,
           element: questionBlock,
           isUserQuery: true,
           isTruncated,
           id: turnId, // Assign Turn ID to User Query
-        })
+        }
+
+        // 计算字数：统计此轮次的 AI 回复
+        if (showWordCount && ucsSummary) {
+          item.wordCount = extractSummaryWordCount(ucsSummary)
+        }
+
+        outline.push(item)
       }
 
       // 3.2 在轮次的 ucs-summary 中查找标题（递归进入 Shadow DOM）
-      const ucsSummary = turn.querySelector("ucs-summary")
       if (ucsSummary) {
         const turnHeadings: OutlineItem[] = []
         // Pass Turn ID as context for generating heading IDs
         this.findHeadingsInShadowDOM(ucsSummary, turnHeadings, maxLevel, 0, turnId)
+
+        // 为标题计算字数
+        if (showWordCount) {
+          const markdownDoc = this.extractSummaryContent(ucsSummary)
+          turnHeadings.forEach((h, index) => {
+            if (!h.element) return
+
+            // 找到下一个边界
+            let nextBoundaryEl: Element | null = null
+            for (let i = index + 1; i < turnHeadings.length; i++) {
+              if (turnHeadings[i].level <= h.level) {
+                nextBoundaryEl = turnHeadings[i].element || null
+                break
+              }
+            }
+
+            h.wordCount = this.calculateRangeWordCount(
+              h.element,
+              nextBoundaryEl,
+              markdownDoc || ucsSummary,
+            )
+          })
+        }
+
         turnHeadings.forEach((h) => outline.push(h))
       }
     })
