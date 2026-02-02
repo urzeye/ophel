@@ -492,14 +492,58 @@ export class ChatGPTAdapter extends SiteAdapter {
       const key = `${tagName}-${text}`
       const count = messageHeaderCounts[msgId][key] || 0
       messageHeaderCounts[msgId][key] = count + 1
-
       return `${msgId}::${key}::${count}`
     }
 
-    // 优化的字数统计 helper
-    const calculateWordCount = (startEl: Element, nextEl: Element | null): number => {
+    // container 参数用于处理最后一个元素（没有 nextEl 时）
+    // isUserQuery 参数用于用户提问的特殊处理（直接获取 AI 回复内容，跳过标签）
+    const calculateWordCount = (
+      startEl: Element,
+      nextEl: Element | null,
+      isUserQueryItem: boolean,
+    ): number => {
       if (!startEl) return 0
       try {
+        // 对于用户提问，直接获取后续 AI 回复的 markdown 内容
+        // 这样可以跳过 "ChatGPT 说：" 等标签
+        if (isUserQueryItem) {
+          // 查找 startEl 与 nextEl 之间的所有 AI 回复内容容器
+          const allAssistants = container.querySelectorAll('[data-message-author-role="assistant"]')
+          let totalText = ""
+
+          for (const assistant of Array.from(allAssistants)) {
+            // 检查这个 AI 回复是否在 startEl 之后
+            const positionToStart = startEl.compareDocumentPosition(assistant)
+            const isAfterStart = positionToStart & Node.DOCUMENT_POSITION_FOLLOWING
+
+            if (!isAfterStart) continue
+
+            // 检查是否在 nextEl 之前（如果有 nextEl）
+            if (nextEl) {
+              const positionToEnd = nextEl.compareDocumentPosition(assistant)
+              const isBeforeEnd = positionToEnd & Node.DOCUMENT_POSITION_PRECEDING
+              if (!isBeforeEnd) continue
+            }
+
+            // 获取 markdown 内容容器
+            const markdownContent = assistant.querySelector(".markdown, .prose, [class*='prose']")
+            if (markdownContent) {
+              totalText += markdownContent.textContent || ""
+            } else {
+              // 回退：获取整个 assistant 的文本，但排除可能的标题
+              const clone = assistant.cloneNode(true) as Element
+              // 移除可能的发言人标签
+              const srOnly = clone.querySelectorAll(".sr-only, [class*='sr-only']")
+              srOnly.forEach((el) => el.remove())
+              totalText += clone.textContent || ""
+            }
+          }
+
+          const text = totalText.trim()
+          return text.length
+        }
+
+        // 对于标题（Heading），使用 Range 方式
         const range = document.createRange()
         // 设置起点：当前标题之后
         range.setStartAfter(startEl)
@@ -509,16 +553,50 @@ export class ChatGPTAdapter extends SiteAdapter {
           // 如果有下一个元素，终点在下一个元素之前
           range.setEndBefore(nextEl)
         } else {
-          // 如果没有下一个元素，终点在父容器末尾
-          // 注意：startEl 所在的父容器可能是 container，也可能是 message 内容容器
-          // 为了稳妥，我们尝试使用 startEl 的父节点的末尾
-          if (startEl.parentNode) {
-            range.setEndAfter(startEl.parentNode.lastChild || startEl.parentNode)
+          // 如果没有下一个边界元素，需要找到正确的终点
+          // 策略：从 startEl 在 DOM 中向后遍历，找到下一个用户提问元素
+          const allUserQueries = container.querySelectorAll(userQuerySelector)
+          let foundCurrent = false
+          let nextUserQuery: Element | null = null
+
+          for (const uq of Array.from(allUserQueries)) {
+            if (foundCurrent) {
+              nextUserQuery = uq
+              break
+            }
+            if (uq === startEl || uq.contains(startEl) || startEl.contains(uq)) {
+              foundCurrent = true
+            }
+          }
+
+          if (nextUserQuery) {
+            // 找到了下一个用户提问，使用它作为边界
+            range.setEndBefore(nextUserQuery)
           } else {
-            return 0
+            // 真正的最后一个用户提问，找对应的 AI 回复容器末尾
+            // ChatGPT 的 AI 回复在 [data-message-author-role="assistant"]
+            const allAssistants = container.querySelectorAll(
+              '[data-message-author-role="assistant"]',
+            )
+            if (allAssistants.length > 0) {
+              const lastAssistant = allAssistants[allAssistants.length - 1]
+              range.setEndAfter(lastAssistant)
+            } else if (container.lastChild) {
+              // 回退
+              range.setEndAfter(container.lastChild)
+            } else {
+              return 0
+            }
           }
         }
-        return range.toString().trim().length
+        const text = range.toString().trim()
+        console.log(
+          "[Outline Debug] Word count text:",
+          JSON.stringify(text.substring(0, 50)),
+          "length:",
+          text.length,
+        )
+        return text.length
       } catch (e) {
         console.warn("[Outline] Word count calculation failed:", e)
         return 0
@@ -618,7 +696,7 @@ export class ChatGPTAdapter extends SiteAdapter {
           }
 
           // 计算
-          item.wordCount = calculateWordCount(element, nextBoundaryEl)
+          item.wordCount = calculateWordCount(element, nextBoundaryEl, isUserQuery)
         }
 
         outline.push(item)
