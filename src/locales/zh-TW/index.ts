@@ -94,7 +94,7 @@ export const zhTW = {
   reviewBtn: "評分",
   starBtn: "Star",
   credits: "版權與致謝",
-  credits: "版權與致謝",
+
   devAndMaintain: "開發與維護",
   creditsDesc:
     "感謝所有為開源社群做出貢獻的開發者們，本擴充功能的開發得益於這些優秀的開源專案和工具。",

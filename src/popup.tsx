@@ -6,7 +6,6 @@
 
 import { useEffect, useState } from "react"
 
-import { GithubIcon } from "~components/icons"
 import { SettingsIcon } from "~components/icons/SettingsIcon"
 import { StarIcon } from "~components/icons/StarIcon"
 import { Tooltip } from "~components/ui/Tooltip"
