@@ -585,12 +585,21 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     outline: OutlineItem[],
     maxLevel: number,
     depth: number,
+    turnId?: string,
+    messageHeaderCounts: Record<string, number> = {},
   ): void {
     if (depth > 15) return
 
     // 如果传入的是一个有 shadowRoot 的元素，先进入其 Shadow Root
     if ("shadowRoot" in root && (root as Element).shadowRoot) {
-      this.findHeadingsInShadowDOM((root as Element).shadowRoot!, outline, maxLevel, depth)
+      this.findHeadingsInShadowDOM(
+        (root as Element).shadowRoot!,
+        outline,
+        maxLevel,
+        depth,
+        turnId,
+        messageHeaderCounts,
+      )
       return
     }
 
@@ -611,7 +620,20 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
               .map((s) => s.textContent?.trim())
               .join("")
             if (text) {
-              outline.push({ level, text, element: heading })
+              const item: OutlineItem = { level, text, element: heading }
+
+              // 如果有 Turn ID，生成稳定 ID
+              if (turnId) {
+                const tagName = heading.tagName.toLowerCase()
+                // ID 格式: TurnID::tagName-text-count
+                // e.g. 7038_5593::h3-标题内容-0
+                const key = `${tagName}-${text}`
+                const count = messageHeaderCounts[key] || 0
+                messageHeaderCounts[key] = count + 1
+                item.id = `${turnId}::${key}::${count}`
+              }
+
+              outline.push(item)
             }
           }
         })
@@ -625,7 +647,14 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       const allElements = root.querySelectorAll("*")
       for (const el of Array.from(allElements)) {
         if (el.shadowRoot) {
-          this.findHeadingsInShadowDOM(el.shadowRoot, outline, maxLevel, depth + 1)
+          this.findHeadingsInShadowDOM(
+            el.shadowRoot,
+            outline,
+            maxLevel,
+            depth + 1,
+            turnId,
+            messageHeaderCounts,
+          )
         }
       }
     }
@@ -666,6 +695,14 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
     // 3. 遍历每个轮次
     turnContainers.forEach((turn) => {
+      // 3.0 提取轮次 ID (Turn ID)
+      // jslog="257629;track:impressionasVeMetadata:[null,null,null,&quot;7038012297388346599_5593580960293487735&quot;];"
+      const jslog = turn.getAttribute("jslog") || ""
+      // 提取 &quot;xxxxx&quot; 之间的内容，或者是直接的字符串
+      // 匹配 &quot;...&quot; 或 "..." 中的长数字字符串 (通常是 19位_19位)
+      const idMatch = jslog.match(/&quot;(\d+_\d+)&quot;/) || jslog.match(/\"(\d+_\d+)\"/)
+      const turnId = idMatch ? idMatch[1] : undefined
+
       // 3.1 在轮次中查找用户提问 (.question-block)
       const questionBlock = turn.querySelector(".question-block")
       if (questionBlock) {
@@ -681,6 +718,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
           element: questionBlock,
           isUserQuery: true,
           isTruncated,
+          id: turnId, // Assign Turn ID to User Query
         })
       }
 
@@ -688,7 +726,8 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       const ucsSummary = turn.querySelector("ucs-summary")
       if (ucsSummary) {
         const turnHeadings: OutlineItem[] = []
-        this.findHeadingsInShadowDOM(ucsSummary, turnHeadings, maxLevel, 0)
+        // Pass Turn ID as context for generating heading IDs
+        this.findHeadingsInShadowDOM(ucsSummary, turnHeadings, maxLevel, 0, turnId)
         turnHeadings.forEach((h) => outline.push(h))
       }
     })
