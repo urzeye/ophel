@@ -1,6 +1,7 @@
 import type { OutlineItem, SiteAdapter } from "~adapters/base"
 import type { Settings } from "~utils/storage"
 import { useBookmarkStore } from "~stores/bookmarks-store"
+import { useSettingsStore } from "~stores/settings-store"
 import { showToast } from "~utils/toast"
 import { t } from "~utils/i18n"
 
@@ -520,10 +521,14 @@ export class OutlineManager {
   }
 
   private _doRefresh(overrideLevel?: number) {
+    // Read showWordCount from live settings store to pick up changes without page refresh
+    const liveSettings = useSettingsStore.getState().settings
+    const showWordCount = liveSettings?.features?.outline?.showWordCount ?? false
+
     let outlineData = this.siteAdapter.extractOutline(
       this.settings.maxLevel,
       this.settings.showUserQueries,
-      this.settings.showWordCount,
+      showWordCount,
     )
 
     // --- Merge Bookmarks ---
@@ -662,9 +667,11 @@ export class OutlineManager {
     this.minLevel = headingLevels.length > 0 ? Math.min(...headingLevels) : 1
 
     // Check if tree changed
-    const outlineKey = outlineData
-      .map((i) => `${i.text}:${(i as ExtendedOutlineItem).isBookmarked}`)
-      .join("|")
+    const showWordCountFlag = showWordCount ? "wc:1" : "wc:0"
+    const outlineKey =
+      showWordCountFlag +
+      "|" +
+      outlineData.map((i) => `${i.text}:${(i as ExtendedOutlineItem).isBookmarked}`).join("|")
     const currentStateMap: Record<string, TreeState> = {}
     if (this.tree.length > 0) {
       this.captureTreeState(this.tree, currentStateMap)
