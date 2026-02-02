@@ -250,16 +250,61 @@ export class ClaudeAdapter extends SiteAdapter {
 
   // ==================== 大纲功能 ====================
 
-  extractOutline(maxLevel = 6, includeUserQueries = false): OutlineItem[] {
+  extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const outline: OutlineItem[] = []
     const scrollContainer = this.getScrollContainer()
     if (!scrollContainer) return outline
 
+    // 辅助函数：从文本中移除思维链内容
+    const removeThinkingContent = (text: string): string => {
+      // Claude 的 extended thinking 是纯文本 <thinking>...</thinking> 标签
+      // 可能跨越多行
+      return text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "").trim()
+    }
+
+    // 辅助函数：计算用户提问的字数（统计后续AI回复）
+    const userQuerySelector = this.getUserQuerySelector()
+    const calculateUserQueryWordCount = (startEl: Element): number => {
+      // Claude 结构：用户消息和AI回复在同一滚动容器中，不是严格的siblings
+      // 需要向下遍历找到下一个用户消息之前的所有AI回复
+      const allUserQueries = Array.from(scrollContainer!.querySelectorAll(userQuerySelector))
+      const allResponses = Array.from(scrollContainer!.querySelectorAll(".font-claude-response"))
+
+      const startIndex = allUserQueries.indexOf(startEl)
+      if (startIndex === -1) return 0
+
+      // 找到下一个用户消息的位置（用于确定边界）
+      const nextUserQuery = allUserQueries[startIndex + 1]
+
+      let totalLength = 0
+      for (const response of allResponses) {
+        // 检查这个回复是否在当前用户消息之后
+        const pos = startEl.compareDocumentPosition(response)
+        if (!(pos & Node.DOCUMENT_POSITION_FOLLOWING)) continue
+
+        // 如果有下一个用户消息，检查这个回复是否在它之前
+        if (nextUserQuery) {
+          const posToNext = nextUserQuery.compareDocumentPosition(response)
+          if (posToNext & Node.DOCUMENT_POSITION_FOLLOWING) continue
+        }
+
+        // 获取 markdown 内容（排除思维链）
+        const markdownContent = response.querySelector(".standard-markdown, .progressive-markdown")
+        if (markdownContent) {
+          const rawText = markdownContent.textContent?.trim() || ""
+          const textWithoutThinking = removeThinkingContent(rawText)
+          totalLength += textWithoutThinking.length
+        }
+      }
+
+      return totalLength
+    }
+
     // Claude 的标题在 AI 回复中，有 text-text-100 class
     // 排除侧边栏的 H3 (RecentsHide 等)
-    const headings = scrollContainer.querySelectorAll("h1, h2, h3, h4, h5, h6")
+    const headings = Array.from(scrollContainer.querySelectorAll("h1, h2, h3, h4, h5, h6"))
 
-    headings.forEach((h) => {
+    headings.forEach((h, index) => {
       const level = parseInt(h.tagName[1])
       if (level > maxLevel) return
 
@@ -269,13 +314,37 @@ export class ClaudeAdapter extends SiteAdapter {
       const text = h.textContent?.trim() || ""
       if (!text) return
 
-      outline.push({
+      const item: OutlineItem = {
         level,
         text: text.length > 200 ? text.slice(0, 200) : text,
         element: h,
         isUserQuery: false,
         isTruncated: text.length > 80,
-      })
+      }
+
+      // 字数统计
+      if (showWordCount) {
+        let nextBoundaryEl: Element | null = null
+        for (let i = index + 1; i < headings.length; i++) {
+          const candidate = headings[i]
+          const candidateLevel = parseInt(candidate.tagName[1])
+          if (candidateLevel <= level) {
+            nextBoundaryEl = candidate
+            break
+          }
+        }
+
+        // 使用 Range 方法计算字数（排除思维链）
+        const responseContainer = h.closest(".font-claude-response")
+        if (responseContainer) {
+          const rawCount = this.calculateRangeWordCount(h, nextBoundaryEl, responseContainer)
+          // Range 方法返回的是包含思维链的字数，这里暂时接受
+          // 因为思维链不太可能在标题下方的范围内
+          item.wordCount = rawCount
+        }
+      }
+
+      outline.push(item)
     })
 
     // 可选：包含用户问题
@@ -285,13 +354,19 @@ export class ClaudeAdapter extends SiteAdapter {
         const text = el.textContent?.trim() || ""
         if (!text) return
 
-        outline.push({
+        const item: OutlineItem = {
           level: 0,
           text: text.length > 200 ? text.slice(0, 200) : text,
           element: el,
           isUserQuery: true,
           isTruncated: text.length > 60,
-        })
+        }
+
+        if (showWordCount) {
+          item.wordCount = calculateUserQueryWordCount(el)
+        }
+
+        outline.push(item)
       })
 
       // 按 DOM 顺序排序
