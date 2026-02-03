@@ -31,6 +31,8 @@ const OutlineNodeView: React.FC<{
   onCopy: (e: React.MouseEvent, node: OutlineNode) => void
   onToggleBookmark: (e: React.MouseEvent, node: OutlineNode) => void
   activeIndex: number | null
+  visibleHighlightIndex: number | null
+  setItemRef: (index: number, el: HTMLElement | null) => void
   searchQuery: string
   displayLevel: number
   minRelativeLevel: number
@@ -47,6 +49,8 @@ const OutlineNodeView: React.FC<{
   onCopy,
   onToggleBookmark,
   activeIndex,
+  visibleHighlightIndex,
+  setItemRef,
   searchQuery,
   displayLevel,
   minRelativeLevel,
@@ -58,6 +62,7 @@ const OutlineNodeView: React.FC<{
   ancestorHasBookmark = false,
 }) => {
   const isActive = node.index === activeIndex
+  const isVisibleHighlight = node.index === visibleHighlightIndex
   const hasChildren = node.children && node.children.length > 0
   // Legacy: isExpanded 直接看 hasChildren 和 collapsed，不考虑搜索
   // 箭头始终显示（只要有子节点），因为用户可能想手动展开查看不匹配的子节点
@@ -131,6 +136,7 @@ const OutlineNodeView: React.FC<{
     node.isUserQuery ? "user-query-node" : "",
     node.isGhost ? "ghost-node" : "", // Add ghost styling class
     isActive ? "sync-highlight" : "",
+    isVisibleHighlight ? "sync-highlight-visible" : "",
     !shouldShow ? "outline-hidden" : "",
   ]
     .filter(Boolean)
@@ -248,6 +254,7 @@ const OutlineNodeView: React.FC<{
           className={itemClassName}
           data-index={node.index}
           data-level={node.relativeLevel}
+          ref={(el) => setItemRef(node.index, el)}
           onClick={() => onClick(node)}>
           {/* 折叠箭头 (Legacy: ▸) - 使用 hasChildren 显示箭头，允许手动展开 */}
           <span
@@ -345,6 +352,8 @@ const OutlineNodeView: React.FC<{
             onCopy={onCopy}
             onToggleBookmark={onToggleBookmark}
             activeIndex={activeIndex}
+            visibleHighlightIndex={visibleHighlightIndex}
+            setItemRef={setItemRef}
             searchQuery={searchQuery}
             displayLevel={displayLevel}
             minRelativeLevel={minRelativeLevel}
@@ -372,6 +381,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
 
   const [tree, setTree] = useState<OutlineNode[]>(initialState.tree)
   const [activeIndex, setActiveIndex] = useState<number | null>(null) // manager doesn't track activeIndex
+  const [visibleHighlightIndex, setVisibleHighlightIndex] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState(manager.getSearchQuery())
   const [isAllExpanded, setIsAllExpanded] = useState(initialState.isAllExpanded)
   const [showUserQueries, setShowUserQueries] = useState(initialState.includeUserQueries)
@@ -391,6 +401,14 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
   const inputRef = useRef<HTMLInputElement>(null)
   const prevTreeLengthRef = useRef<number>(0) // 用 ref 追踪上一次树长度
   const shouldScrollToBottomRef = useRef<boolean>(false) // 标记是否需要滚动
+  const activeIndexRef = useRef<number | null>(null)
+  const visibleHighlightRef = useRef<number | null>(null)
+  const itemRefMap = useRef<Map<number, HTMLElement>>(new Map())
+  const visibilityMapsRef = useRef<{
+    parentMap: Record<number, number | null>
+    visibleMap: Record<number, boolean>
+    hasData: boolean
+  }>({ parentMap: {}, visibleMap: {}, hasData: false })
 
   // Tab 激活状态管理：挂载时激活，卸载时取消
   useEffect(() => {
@@ -495,8 +513,158 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
     }
   }, [tree]) // 依赖 tree，当 tree 变化（渲染完成）后执行
 
-  // 滚动同步高亮 - Legacy 完全复刻
-  // 包含父级回退逻辑：如果目标项被隐藏，向上找可见的父级
+  const updateActiveIndex = useCallback((idx: number | null) => {
+    if (activeIndexRef.current !== idx) {
+      activeIndexRef.current = idx
+      setActiveIndex(idx)
+    }
+  }, [])
+
+  const updateVisibleHighlightIndex = useCallback((idx: number | null) => {
+    if (visibleHighlightRef.current !== idx) {
+      visibleHighlightRef.current = idx
+      setVisibleHighlightIndex(idx)
+    }
+  }, [])
+
+  const setItemRef = useCallback((index: number, el: HTMLElement | null) => {
+    const map = itemRefMap.current
+    if (el) {
+      map.set(index, el)
+    } else {
+      map.delete(index)
+    }
+  }, [])
+
+  const getVisibleHighlightIndex = useCallback((idx: number | null): number | null => {
+    if (idx === null) return null
+    const { parentMap, visibleMap, hasData } = visibilityMapsRef.current
+    if (!hasData) return idx
+    let current: number | null | undefined = idx
+    while (current !== null && current !== undefined) {
+      if (visibleMap[current]) return current
+      current = parentMap[current]
+    }
+    return null
+  }, [])
+
+  // 基于数据树计算可见性映射，避免滚动时依赖 DOM
+  useEffect(() => {
+    const parentMap: Record<number, number | null> = {}
+    const visibleMap: Record<number, boolean> = {}
+    const bookmarkMemo = new Map<number, boolean>()
+
+    const hasBookmarkInSubtree = (node: OutlineNode): boolean => {
+      const cached = bookmarkMemo.get(node.index)
+      if (cached !== undefined) return cached
+      let has = !!node.isBookmarked
+      if (!has && node.children && node.children.length > 0) {
+        for (const child of node.children) {
+          if (hasBookmarkInSubtree(child)) {
+            has = true
+            break
+          }
+        }
+      }
+      bookmarkMemo.set(node.index, has)
+      return has
+    }
+
+    const hasBookmarkInDescendants = (node: OutlineNode): boolean => {
+      if (!node.children || node.children.length === 0) return false
+      return node.children.some(hasBookmarkInSubtree)
+    }
+
+    const traverse = (
+      node: OutlineNode,
+      parentIndex: number | null,
+      parentCollapsed: boolean,
+      parentForceExpanded: boolean,
+      ancestorHasBookmark: boolean,
+    ) => {
+      parentMap[node.index] = parentIndex
+
+      const nodeHasBookmark = hasBookmarkInSubtree(node)
+      const isBookmarkRelevant = nodeHasBookmark || ancestorHasBookmark
+
+      let shouldShow: boolean
+      if (bookmarkMode) {
+        if (isBookmarkRelevant) {
+          const isSearchMatch = !searchQuery || node.isMatch || node.hasMatchedDescendant
+          shouldShow = !parentCollapsed && isSearchMatch
+        } else {
+          shouldShow = false
+        }
+      } else {
+        const isRootNode = node.relativeLevel === minRelativeLevel
+        const isLevelAllowed = node.relativeLevel <= displayLevel || parentForceExpanded
+
+        if (isRootNode) {
+          if (searchQuery) {
+            shouldShow = node.isMatch || node.hasMatchedDescendant
+          } else {
+            shouldShow = true
+          }
+        } else {
+          const isRelevant =
+            !searchQuery || node.isMatch || node.hasMatchedDescendant || parentForceExpanded
+
+          if (searchQuery && !searchLevelManual) {
+            shouldShow = isRelevant && !parentCollapsed
+          } else if (searchQuery && searchLevelManual) {
+            shouldShow = isRelevant && isLevelAllowed && !parentCollapsed
+          } else {
+            shouldShow = isLevelAllowed && !parentCollapsed
+          }
+        }
+
+        if (parentCollapsed) {
+          shouldShow = false
+        }
+      }
+
+      if (node.forceVisible) {
+        shouldShow = true
+      }
+
+      visibleMap[node.index] = shouldShow
+
+      const childParentCollapsed = node.collapsed || parentCollapsed
+      const childParentForceExpanded = node.forceExpanded || parentForceExpanded
+      const childAncestorHasBookmark =
+        ancestorHasBookmark || (node.isBookmarked && !hasBookmarkInDescendants(node))
+
+      if (node.children && node.children.length > 0) {
+        node.children.forEach((child) =>
+          traverse(
+            child,
+            node.index,
+            childParentCollapsed,
+            childParentForceExpanded,
+            childAncestorHasBookmark,
+          ),
+        )
+      }
+    }
+
+    tree.forEach((root) => traverse(root, null, false, false, false))
+    visibilityMapsRef.current = { parentMap, visibleMap, hasData: tree.length > 0 }
+
+    const nextVisible = getVisibleHighlightIndex(activeIndexRef.current)
+    updateVisibleHighlightIndex(nextVisible)
+  }, [
+    tree,
+    displayLevel,
+    minRelativeLevel,
+    searchQuery,
+    searchLevelManual,
+    bookmarkMode,
+    getVisibleHighlightIndex,
+    updateVisibleHighlightIndex,
+  ])
+
+  // 滚动同步高亮（基于数据树）
+  // 目标项在面板不可见时回退到最近的可见父级
   useEffect(() => {
     let scrollContainer: HTMLElement | null = null
     let retryCount = 0
@@ -505,72 +673,29 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
     const handleScroll = () => {
       if (!scrollContainer) return
 
-      const viewportTop = scrollContainer.getBoundingClientRect().top
-      const viewportBottom = scrollContainer.getBoundingClientRect().bottom
-
-      // Legacy logic expected direct viewport coordinates, but findVisibleItemIndex uses getBoundingClientRect logic
-      // so passing 0/innerHeight is risky if container is not full viewport.
-      // Better to pass actual viewport bounds if manager expects absolute coords relative to viewport.
-      // Manager logic:
-      // item.element.getBoundingClientRect()
-      // if (rect.top >= viewportTop && rect.top < viewportBottom)
-      // So if we pass 0 and innerHeight, it checks if item is in window regardless of container.
-      // But if container is small, we should restrict to container bounds?
-      // Legacy passed containerRect.top/bottom. Let's inspect manager logic again.
-      // Yes logic is: const containerRect = scrollContainer.getBoundingClientRect(); viewportTop = containerRect.top...
-      // So we should pass container bounds!
-
-      const idx = manager.findVisibleItemIndex(viewportTop, viewportBottom)
+      const scrollTop = scrollContainer.scrollTop
+      const viewportHeight = scrollContainer.clientHeight
+      const idx = manager.findVisibleItemIndex(scrollTop, viewportHeight)
 
       if (idx === null) {
-        // Only clear active index if we really scrolled away?
-        // Or keep last active? Legacy kept last active sometimes but here we set to null.
-        // Let's keep it null for now to match current impl behavior.
-        setActiveIndex(null)
+        updateActiveIndex(null)
+        updateVisibleHighlightIndex(null)
         return
       }
 
-      // 设置原始 activeIndex
-      setActiveIndex(idx)
+      updateActiveIndex(idx)
+      const visibleIdx = getVisibleHighlightIndex(idx)
+      updateVisibleHighlightIndex(visibleIdx)
 
-      // 延迟查找 DOM 并应用父级回退逻辑
+      if (visibleIdx === null) return
+
       requestAnimationFrame(() => {
         const listContainer = listRef.current
         if (!listContainer) return
 
-        // 移除旧的 sync-highlight-visible 类
-        const oldHighlight = listContainer.querySelector(".sync-highlight-visible")
-        if (oldHighlight) {
-          oldHighlight.classList.remove("sync-highlight-visible")
-        }
-
-        let outlineItem = listContainer.querySelector(`.outline-item[data-index="${idx}"]`)
+        const outlineItem = itemRefMap.current.get(visibleIdx) || null
         if (!outlineItem) return
 
-        // Legacy: 如果目标项被隐藏（折叠），向上找可见的父级
-        if (outlineItem.classList.contains("outline-hidden")) {
-          let parent = outlineItem.previousElementSibling
-          while (parent) {
-            if (
-              parent.classList.contains("outline-item") &&
-              !parent.classList.contains("outline-hidden")
-            ) {
-              const parentLevel = parseInt((parent as HTMLElement).dataset.level || "0", 10)
-              const currentLevel = parseInt((outlineItem as HTMLElement).dataset.level || "0", 10)
-              if (parentLevel < currentLevel) {
-                outlineItem = parent
-                break
-              }
-            }
-            parent = parent.previousElementSibling
-          }
-          if (outlineItem.classList.contains("outline-hidden")) return
-        }
-
-        // 添加可见高亮类
-        outlineItem.classList.add("sync-highlight-visible")
-
-        // Legacy: 轻微滚动大纲面板使高亮项可见（如果超出视口）
         const wrapperRect = listContainer.getBoundingClientRect()
         const itemRect = outlineItem.getBoundingClientRect()
         if (itemRect.top < wrapperRect.top || itemRect.bottom > wrapperRect.bottom) {
@@ -580,6 +705,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         }
       })
     }
+
 
     const initListener = () => {
       const container = manager.getScrollContainer()
@@ -608,7 +734,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         clearTimeout(retryTimer)
       }
     }
-  }, [manager, tree.length])
+  }, [manager, tree.length, getVisibleHighlightIndex, updateActiveIndex, updateVisibleHighlightIndex])
 
   // 大纲列表滚动监听 (Dynamic Scroll Button state)
   useEffect(() => {
@@ -1235,6 +1361,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                   onCopy={handleCopy}
                   onToggleBookmark={handleToggleBookmark}
                   activeIndex={activeIndex}
+                  visibleHighlightIndex={visibleHighlightIndex}
+                  setItemRef={setItemRef}
                   searchQuery={searchQuery}
                   displayLevel={displayLevel}
                   minRelativeLevel={minRelativeLevel}
