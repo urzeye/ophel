@@ -10,10 +10,10 @@ import {
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
-// import { useBookmarkStore } from "~stores/bookmarks-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { t, getCurrentLang } from "~utils/i18n"
-import { formatWordCount } from "~utils/format" // New import
+import { DOMToolkit } from "~utils/dom-toolkit"
+import { formatWordCount } from "~utils/format"
 import { CHECK_ICON_POINTS, COPY_ICON_PATH, COPY_ICON_RECT } from "~utils/icons"
 import { showToast } from "~utils/toast"
 
@@ -86,7 +86,8 @@ const buildVisibilityMaps = (
           shouldShow = true
         }
       } else {
-        const isRelevant = !searchQuery || node.isMatch || node.hasMatchedDescendant || parentForceExpanded
+        const isRelevant =
+          !searchQuery || node.isMatch || node.hasMatchedDescendant || parentForceExpanded
 
         if (searchQuery && !searchLevelManual) {
           shouldShow = isRelevant && !parentCollapsed
@@ -595,18 +596,78 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
     updateVisibleHighlightIndex(nextVisible)
   }, [parentMap, visibleMap, tree.length, getVisibleHighlightIndex, updateVisibleHighlightIndex])
 
-
   // Scroll sync highlight (data-driven)
   // Falls back to nearest visible ancestor when the target is hidden
   useEffect(() => {
+    const followMode = settings?.features?.outline?.followMode || "current"
+    if (followMode !== "current") {
+      updateActiveIndex(null)
+      updateVisibleHighlightIndex(null)
+      return
+    }
+
     let scrollContainer: HTMLElement | null = null
     let retryCount = 0
     let retryTimer: NodeJS.Timeout
     let lastScrollHeight = 0
     let resizeObserver: ResizeObserver | null = null
+    let staleTimer: NodeJS.Timeout | null = null
+    const mutationObservers = new Map<Node, MutationObserver>()
 
     const handleResize = () => {
       manager.markScrollPositionsStale()
+    }
+
+    const scheduleStaleMark = () => {
+      if (staleTimer) return
+      staleTimer = setTimeout(() => {
+        staleTimer = null
+        manager.markScrollPositionsStale()
+      }, 120)
+    }
+
+    const observeRoot = (root: Node) => {
+      if (mutationObservers.has(root)) return
+
+      const observer = new MutationObserver((mutations) => {
+        scheduleStaleMark()
+        for (const mutation of mutations) {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType !== 1) return
+            const element = node as Element
+            if ((element as HTMLElement).shadowRoot) {
+              observeRoot((element as HTMLElement).shadowRoot!)
+            }
+            if ((element as ParentNode).querySelectorAll) {
+              const descendants = (element as ParentNode).querySelectorAll("*")
+              descendants.forEach((child) => {
+                const shadowRoot = (child as HTMLElement).shadowRoot
+                if (shadowRoot) observeRoot(shadowRoot)
+              })
+            }
+          })
+        }
+      })
+
+      observer.observe(root, { childList: true, subtree: true, characterData: true })
+      mutationObservers.set(root, observer)
+    }
+
+    const attachMutationObservers = (container: HTMLElement) => {
+      try {
+        observeRoot(container)
+        if (container.shadowRoot) {
+          observeRoot(container.shadowRoot)
+        }
+        DOMToolkit.walkShadowRoots(
+          (shadowRoot) => {
+            observeRoot(shadowRoot)
+          },
+          { root: container },
+        )
+      } catch (e) {
+        console.warn("[OutlineTab] Failed to attach MutationObserver:", e)
+      }
     }
 
     const handleScroll = () => {
@@ -650,7 +711,6 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       })
     }
 
-
     const initListener = () => {
       const container = manager.getScrollContainer()
       if (container) {
@@ -658,6 +718,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         lastScrollHeight = container.scrollHeight
         scrollContainer.addEventListener("scroll", handleScroll, { passive: true })
         window.addEventListener("resize", handleResize, { passive: true })
+        attachMutationObservers(container)
         if (typeof ResizeObserver !== "undefined") {
           resizeObserver = new ResizeObserver(() => {
             lastScrollHeight = scrollContainer?.scrollHeight || 0
@@ -684,6 +745,11 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         scrollContainer.removeEventListener("scroll", handleScroll)
       }
       window.removeEventListener("resize", handleResize)
+      if (staleTimer) {
+        clearTimeout(staleTimer)
+      }
+      mutationObservers.forEach((observer) => observer.disconnect())
+      mutationObservers.clear()
       if (resizeObserver) {
         resizeObserver.disconnect()
         resizeObserver = null
@@ -692,7 +758,14 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         clearTimeout(retryTimer)
       }
     }
-  }, [manager, tree.length, getVisibleHighlightIndex, updateActiveIndex, updateVisibleHighlightIndex])
+  }, [
+    manager,
+    tree.length,
+    settings?.features?.outline?.followMode,
+    getVisibleHighlightIndex,
+    updateActiveIndex,
+    updateVisibleHighlightIndex,
+  ])
 
   // 大纲列表滚动监听 (Dynamic Scroll Button state)
   useEffect(() => {
