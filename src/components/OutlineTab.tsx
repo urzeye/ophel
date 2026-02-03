@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import {
   CollapseAllIcon,
@@ -22,6 +22,115 @@ interface OutlineTabProps {
   onJumpBefore?: () => void
 }
 
+const buildVisibilityMaps = (
+  tree: OutlineNode[],
+  displayLevel: number,
+  minRelativeLevel: number,
+  searchQuery: string,
+  searchLevelManual: boolean,
+  bookmarkMode: boolean,
+) => {
+  const parentMap: Record<number, number | null> = {}
+  const visibleMap: Record<number, boolean> = {}
+  const bookmarkMemo = new Map<number, boolean>()
+
+  const hasBookmarkInSubtree = (node: OutlineNode): boolean => {
+    const cached = bookmarkMemo.get(node.index)
+    if (cached !== undefined) return cached
+    let has = !!node.isBookmarked
+    if (!has && node.children && node.children.length > 0) {
+      for (const child of node.children) {
+        if (hasBookmarkInSubtree(child)) {
+          has = true
+          break
+        }
+      }
+    }
+    bookmarkMemo.set(node.index, has)
+    return has
+  }
+
+  const hasBookmarkInDescendants = (node: OutlineNode): boolean => {
+    if (!node.children || node.children.length === 0) return false
+    return node.children.some(hasBookmarkInSubtree)
+  }
+
+  const traverse = (
+    node: OutlineNode,
+    parentIndex: number | null,
+    parentCollapsed: boolean,
+    parentForceExpanded: boolean,
+    ancestorHasBookmark: boolean,
+  ) => {
+    parentMap[node.index] = parentIndex
+
+    const nodeHasBookmark = hasBookmarkInSubtree(node)
+    const isBookmarkRelevant = nodeHasBookmark || ancestorHasBookmark
+
+    let shouldShow: boolean
+    if (bookmarkMode) {
+      if (isBookmarkRelevant) {
+        const isSearchMatch = !searchQuery || node.isMatch || node.hasMatchedDescendant
+        shouldShow = !parentCollapsed && isSearchMatch
+      } else {
+        shouldShow = false
+      }
+    } else {
+      const isRootNode = node.relativeLevel === minRelativeLevel
+      const isLevelAllowed = node.relativeLevel <= displayLevel || parentForceExpanded
+
+      if (isRootNode) {
+        if (searchQuery) {
+          shouldShow = node.isMatch || node.hasMatchedDescendant
+        } else {
+          shouldShow = true
+        }
+      } else {
+        const isRelevant = !searchQuery || node.isMatch || node.hasMatchedDescendant || parentForceExpanded
+
+        if (searchQuery && !searchLevelManual) {
+          shouldShow = isRelevant && !parentCollapsed
+        } else if (searchQuery && searchLevelManual) {
+          shouldShow = isRelevant && isLevelAllowed && !parentCollapsed
+        } else {
+          shouldShow = isLevelAllowed && !parentCollapsed
+        }
+      }
+
+      if (parentCollapsed) {
+        shouldShow = false
+      }
+    }
+
+    if (node.forceVisible) {
+      shouldShow = true
+    }
+
+    visibleMap[node.index] = shouldShow
+
+    const childParentCollapsed = node.collapsed || parentCollapsed
+    const childParentForceExpanded = node.forceExpanded || parentForceExpanded
+    const childAncestorHasBookmark =
+      ancestorHasBookmark || (node.isBookmarked && !hasBookmarkInDescendants(node))
+
+    if (node.children && node.children.length > 0) {
+      node.children.forEach((child) =>
+        traverse(
+          child,
+          node.index,
+          childParentCollapsed,
+          childParentForceExpanded,
+          childAncestorHasBookmark,
+        ),
+      )
+    }
+  }
+
+  tree.forEach((root) => traverse(root, null, false, false, false))
+
+  return { parentMap, visibleMap }
+}
+
 // 递归渲染大纲树节点
 // 使用 outline-hidden 类而非条件渲染
 const OutlineNodeView: React.FC<{
@@ -33,15 +142,9 @@ const OutlineNodeView: React.FC<{
   activeIndex: number | null
   visibleHighlightIndex: number | null
   setItemRef: (index: number, el: HTMLElement | null) => void
+  visibleMap: Record<number, boolean>
   searchQuery: string
-  displayLevel: number
-  minRelativeLevel: number
-  parentCollapsed: boolean
-  parentForceExpanded: boolean
-  searchLevelManual: boolean
-  extractUserQueryText?: (element: Element) => string // 用于提取完整文本
-  bookmarkMode?: boolean // 收藏过滤模式
-  ancestorHasBookmark?: boolean // 祖先节点中是否有收藏（用于收藏模式下显示子内容）
+  extractUserQueryText?: (element: Element) => string // Used for full text extraction
 }> = ({
   node,
   onToggle,
@@ -51,15 +154,9 @@ const OutlineNodeView: React.FC<{
   activeIndex,
   visibleHighlightIndex,
   setItemRef,
+  visibleMap,
   searchQuery,
-  displayLevel,
-  minRelativeLevel,
-  parentCollapsed,
-  parentForceExpanded,
-  searchLevelManual,
   extractUserQueryText,
-  bookmarkMode = false,
-  ancestorHasBookmark = false,
 }) => {
   const isActive = node.index === activeIndex
   const isVisibleHighlight = node.index === visibleHighlightIndex
@@ -68,66 +165,7 @@ const OutlineNodeView: React.FC<{
   // 箭头始终显示（只要有子节点），因为用户可能想手动展开查看不匹配的子节点
   const isExpanded = hasChildren && !node.collapsed
 
-  // ===== 收藏模式：计算节点是否与收藏相关 =====
-  // 核心逻辑：区分“路径收藏”（用于导航到深层收藏）和“叶子收藏”（用户可能想看上下文）
-  const hasBookmarkDescendant = (n: OutlineNode): boolean => {
-    if (n.isBookmarked) return true
-    return n.children?.some(hasBookmarkDescendant) || false
-  }
-  const nodeHasBookmark = node.isBookmarked || hasBookmarkDescendant(node)
-  // 收藏相关性：节点本身是收藏 OR 有收藏后代 OR 祖先是收藏（显示上下文）
-  const isBookmarkRelevant = nodeHasBookmark || ancestorHasBookmark
-
-  // ===== shouldShow 计算 =====
-  let shouldShow: boolean
-
-  if (bookmarkMode) {
-    // shouldShow 计算：收藏模式下统一使用 !parentCollapsed
-    if (isBookmarkRelevant) {
-      // 叠加搜索过滤：如果有搜索词，必须匹配搜索
-      const isSearchMatch = !searchQuery || node.isMatch || node.hasMatchedDescendant
-      shouldShow = !parentCollapsed && isSearchMatch
-    } else {
-      shouldShow = false
-    }
-  } else {
-    // 普通模式：原有逻辑
-    const isRootNode = node.relativeLevel === minRelativeLevel
-    const isLevelAllowed = node.relativeLevel <= displayLevel || parentForceExpanded
-
-    if (isRootNode) {
-      // 顶层节点
-      if (searchQuery) {
-        shouldShow = node.isMatch || node.hasMatchedDescendant
-      } else {
-        shouldShow = true
-      }
-    } else {
-      // 非顶层节点
-      const isRelevant =
-        !searchQuery || node.isMatch || node.hasMatchedDescendant || parentForceExpanded
-
-      if (searchQuery && !searchLevelManual) {
-        // 纯搜索模式
-        shouldShow = isRelevant && !parentCollapsed
-      } else if (searchQuery && searchLevelManual) {
-        // 搜索+层级限制
-        shouldShow = isRelevant && isLevelAllowed && !parentCollapsed
-      } else {
-        // 普通模式
-        shouldShow = isLevelAllowed && !parentCollapsed
-      }
-    }
-    // 父级折叠则隐藏
-    if (parentCollapsed) {
-      shouldShow = false
-    }
-  }
-
-  // 强制可见覆盖：定位时标记的节点始终显示
-  if (node.forceVisible) {
-    shouldShow = true
-  }
+  const shouldShow = visibleMap[node.index] ?? true
 
   // ===== CSS 类名 (Legacy exact) =====
   const itemClassName = [
@@ -226,10 +264,6 @@ const OutlineNodeView: React.FC<{
 
   // ===== 状态控制：鼠标悬停在操作按钮时不显示主 Tooltip =====
   const [isHoveringAction, setIsHoveringAction] = useState(false)
-
-  // ===== 子节点渲染 (始终渲染，使用 childParentCollapsed) =====
-  const childParentCollapsed = node.collapsed || parentCollapsed
-  const childParentForceExpanded = node.forceExpanded || parentForceExpanded
 
   return (
     <>
@@ -341,7 +375,7 @@ const OutlineNodeView: React.FC<{
         </div>
       </Tooltip>
 
-      {/* 子节点 (始终渲染，不根据 collapsed 条件渲染，而是传递 childParentCollapsed) */}
+      {/* 子节点 (始终渲染) */}
       {hasChildren &&
         node.children.map((child, idx) => (
           <OutlineNodeView
@@ -354,18 +388,9 @@ const OutlineNodeView: React.FC<{
             activeIndex={activeIndex}
             visibleHighlightIndex={visibleHighlightIndex}
             setItemRef={setItemRef}
+            visibleMap={visibleMap}
             searchQuery={searchQuery}
-            displayLevel={displayLevel}
-            minRelativeLevel={minRelativeLevel}
-            parentCollapsed={childParentCollapsed}
-            parentForceExpanded={childParentForceExpanded}
-            searchLevelManual={searchLevelManual}
             extractUserQueryText={extractUserQueryText}
-            bookmarkMode={bookmarkMode}
-            ancestorHasBookmark={
-              ancestorHasBookmark ||
-              (node.isBookmarked && !node.children?.some(hasBookmarkDescendant))
-            }
           />
         ))}
     </>
@@ -548,133 +573,52 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
     return null
   }, [])
 
-  // 基于数据树计算可见性映射，避免滚动时依赖 DOM
+  const visibilityMaps = useMemo(
+    () =>
+      buildVisibilityMaps(
+        tree,
+        displayLevel,
+        minRelativeLevel,
+        searchQuery,
+        searchLevelManual,
+        bookmarkMode,
+      ),
+    [tree, displayLevel, minRelativeLevel, searchQuery, searchLevelManual, bookmarkMode],
+  )
+
+  const { parentMap, visibleMap } = visibilityMaps
+
+  visibilityMapsRef.current = { parentMap, visibleMap, hasData: tree.length > 0 }
+
   useEffect(() => {
-    const parentMap: Record<number, number | null> = {}
-    const visibleMap: Record<number, boolean> = {}
-    const bookmarkMemo = new Map<number, boolean>()
-
-    const hasBookmarkInSubtree = (node: OutlineNode): boolean => {
-      const cached = bookmarkMemo.get(node.index)
-      if (cached !== undefined) return cached
-      let has = !!node.isBookmarked
-      if (!has && node.children && node.children.length > 0) {
-        for (const child of node.children) {
-          if (hasBookmarkInSubtree(child)) {
-            has = true
-            break
-          }
-        }
-      }
-      bookmarkMemo.set(node.index, has)
-      return has
-    }
-
-    const hasBookmarkInDescendants = (node: OutlineNode): boolean => {
-      if (!node.children || node.children.length === 0) return false
-      return node.children.some(hasBookmarkInSubtree)
-    }
-
-    const traverse = (
-      node: OutlineNode,
-      parentIndex: number | null,
-      parentCollapsed: boolean,
-      parentForceExpanded: boolean,
-      ancestorHasBookmark: boolean,
-    ) => {
-      parentMap[node.index] = parentIndex
-
-      const nodeHasBookmark = hasBookmarkInSubtree(node)
-      const isBookmarkRelevant = nodeHasBookmark || ancestorHasBookmark
-
-      let shouldShow: boolean
-      if (bookmarkMode) {
-        if (isBookmarkRelevant) {
-          const isSearchMatch = !searchQuery || node.isMatch || node.hasMatchedDescendant
-          shouldShow = !parentCollapsed && isSearchMatch
-        } else {
-          shouldShow = false
-        }
-      } else {
-        const isRootNode = node.relativeLevel === minRelativeLevel
-        const isLevelAllowed = node.relativeLevel <= displayLevel || parentForceExpanded
-
-        if (isRootNode) {
-          if (searchQuery) {
-            shouldShow = node.isMatch || node.hasMatchedDescendant
-          } else {
-            shouldShow = true
-          }
-        } else {
-          const isRelevant =
-            !searchQuery || node.isMatch || node.hasMatchedDescendant || parentForceExpanded
-
-          if (searchQuery && !searchLevelManual) {
-            shouldShow = isRelevant && !parentCollapsed
-          } else if (searchQuery && searchLevelManual) {
-            shouldShow = isRelevant && isLevelAllowed && !parentCollapsed
-          } else {
-            shouldShow = isLevelAllowed && !parentCollapsed
-          }
-        }
-
-        if (parentCollapsed) {
-          shouldShow = false
-        }
-      }
-
-      if (node.forceVisible) {
-        shouldShow = true
-      }
-
-      visibleMap[node.index] = shouldShow
-
-      const childParentCollapsed = node.collapsed || parentCollapsed
-      const childParentForceExpanded = node.forceExpanded || parentForceExpanded
-      const childAncestorHasBookmark =
-        ancestorHasBookmark || (node.isBookmarked && !hasBookmarkInDescendants(node))
-
-      if (node.children && node.children.length > 0) {
-        node.children.forEach((child) =>
-          traverse(
-            child,
-            node.index,
-            childParentCollapsed,
-            childParentForceExpanded,
-            childAncestorHasBookmark,
-          ),
-        )
-      }
-    }
-
-    tree.forEach((root) => traverse(root, null, false, false, false))
-    visibilityMapsRef.current = { parentMap, visibleMap, hasData: tree.length > 0 }
-
     const nextVisible = getVisibleHighlightIndex(activeIndexRef.current)
     updateVisibleHighlightIndex(nextVisible)
-  }, [
-    tree,
-    displayLevel,
-    minRelativeLevel,
-    searchQuery,
-    searchLevelManual,
-    bookmarkMode,
-    getVisibleHighlightIndex,
-    updateVisibleHighlightIndex,
-  ])
+  }, [parentMap, visibleMap, tree.length, getVisibleHighlightIndex, updateVisibleHighlightIndex])
 
-  // 滚动同步高亮（基于数据树）
-  // 目标项在面板不可见时回退到最近的可见父级
+
+  // Scroll sync highlight (data-driven)
+  // Falls back to nearest visible ancestor when the target is hidden
   useEffect(() => {
     let scrollContainer: HTMLElement | null = null
     let retryCount = 0
     let retryTimer: NodeJS.Timeout
+    let lastScrollHeight = 0
+    let resizeObserver: ResizeObserver | null = null
+
+    const handleResize = () => {
+      manager.markScrollPositionsStale()
+    }
 
     const handleScroll = () => {
       if (!scrollContainer) return
 
       const scrollTop = scrollContainer.scrollTop
       const viewportHeight = scrollContainer.clientHeight
+      const nextScrollHeight = scrollContainer.scrollHeight
+      if (nextScrollHeight !== lastScrollHeight) {
+        lastScrollHeight = nextScrollHeight
+        manager.markScrollPositionsStale()
+      }
       const idx = manager.findVisibleItemIndex(scrollTop, viewportHeight)
 
       if (idx === null) {
@@ -711,7 +655,16 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       const container = manager.getScrollContainer()
       if (container) {
         scrollContainer = container
+        lastScrollHeight = container.scrollHeight
         scrollContainer.addEventListener("scroll", handleScroll, { passive: true })
+        window.addEventListener("resize", handleResize, { passive: true })
+        if (typeof ResizeObserver !== "undefined") {
+          resizeObserver = new ResizeObserver(() => {
+            lastScrollHeight = scrollContainer?.scrollHeight || 0
+            manager.markScrollPositionsStale()
+          })
+          resizeObserver.observe(scrollContainer)
+        }
         // Initial check
         handleScroll()
       } else if (retryCount < 20) {
@@ -729,6 +682,11 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
     return () => {
       if (scrollContainer) {
         scrollContainer.removeEventListener("scroll", handleScroll)
+      }
+      window.removeEventListener("resize", handleResize)
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+        resizeObserver = null
       }
       if (retryTimer) {
         clearTimeout(retryTimer)
@@ -1363,15 +1321,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                   activeIndex={activeIndex}
                   visibleHighlightIndex={visibleHighlightIndex}
                   setItemRef={setItemRef}
+                  visibleMap={visibleMap}
                   searchQuery={searchQuery}
-                  displayLevel={displayLevel}
-                  minRelativeLevel={minRelativeLevel}
-                  parentCollapsed={false} // Root nodes are never collapsed by parent
-                  parentForceExpanded={false}
-                  searchLevelManual={searchLevelManual}
                   extractUserQueryText={extractUserQueryText}
-                  bookmarkMode={bookmarkMode}
-                  ancestorHasBookmark={false}
                 />
               ))}
             </div>

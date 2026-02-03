@@ -299,6 +299,10 @@ export class OutlineManager {
     return this.siteAdapter.getScrollContainer()
   }
 
+  markScrollPositionsStale() {
+    this.scrollPositionsStale = true
+  }
+
   // 收藏模式
   setBookmarkMode(enabled: boolean) {
     if (enabled && !this.bookmarkMode) {
