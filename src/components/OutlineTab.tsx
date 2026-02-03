@@ -12,7 +12,6 @@ import { Tooltip } from "~components/ui/Tooltip"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
 import { useSettingsStore } from "~stores/settings-store"
 import { t, getCurrentLang } from "~utils/i18n"
-import { DOMToolkit } from "~utils/dom-toolkit"
 import { formatWordCount } from "~utils/format"
 import { CHECK_ICON_POINTS, COPY_ICON_PATH, COPY_ICON_RECT } from "~utils/icons"
 import { showToast } from "~utils/toast"
@@ -612,6 +611,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
     let lastScrollHeight = 0
     let resizeObserver: ResizeObserver | null = null
     let staleTimer: NodeJS.Timeout | null = null
+    let idleHandle: number | null = null
+    const staleDebounceMs = 300
+    const staleIdleTimeoutMs = 500
     const mutationObservers = new Map<Node, MutationObserver>()
 
     const handleResize = () => {
@@ -622,31 +624,39 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       if (staleTimer) return
       staleTimer = setTimeout(() => {
         staleTimer = null
-        manager.markScrollPositionsStale()
-      }, 120)
+
+        const requestIdle =
+          typeof window !== "undefined"
+            ? (
+                window as Window & {
+                  requestIdleCallback?: (
+                    callback: IdleRequestCallback,
+                    options?: IdleRequestOptions,
+                  ) => number
+                }
+              ).requestIdleCallback
+            : undefined
+
+        if (requestIdle) {
+          if (idleHandle !== null) return
+          idleHandle = requestIdle(
+            () => {
+              idleHandle = null
+              manager.markScrollPositionsStale()
+            },
+            { timeout: staleIdleTimeoutMs },
+          )
+        } else {
+          manager.markScrollPositionsStale()
+        }
+      }, staleDebounceMs)
     }
 
     const observeRoot = (root: Node) => {
       if (mutationObservers.has(root)) return
 
-      const observer = new MutationObserver((mutations) => {
+      const observer = new MutationObserver(() => {
         scheduleStaleMark()
-        for (const mutation of mutations) {
-          mutation.addedNodes.forEach((node) => {
-            if (node.nodeType !== 1) return
-            const element = node as Element
-            if ((element as HTMLElement).shadowRoot) {
-              observeRoot((element as HTMLElement).shadowRoot!)
-            }
-            if ((element as ParentNode).querySelectorAll) {
-              const descendants = (element as ParentNode).querySelectorAll("*")
-              descendants.forEach((child) => {
-                const shadowRoot = (child as HTMLElement).shadowRoot
-                if (shadowRoot) observeRoot(shadowRoot)
-              })
-            }
-          })
-        }
       })
 
       observer.observe(root, { childList: true, subtree: true, characterData: true })
@@ -656,15 +666,6 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
     const attachMutationObservers = (container: HTMLElement) => {
       try {
         observeRoot(container)
-        if (container.shadowRoot) {
-          observeRoot(container.shadowRoot)
-        }
-        DOMToolkit.walkShadowRoots(
-          (shadowRoot) => {
-            observeRoot(shadowRoot)
-          },
-          { root: container },
-        )
       } catch (e) {
         console.warn("[OutlineTab] Failed to attach MutationObserver:", e)
       }
@@ -747,6 +748,17 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       window.removeEventListener("resize", handleResize)
       if (staleTimer) {
         clearTimeout(staleTimer)
+      }
+      if (idleHandle !== null) {
+        const cancelIdle =
+          typeof window !== "undefined"
+            ? (window as Window & { cancelIdleCallback?: (handle: number) => void })
+                .cancelIdleCallback
+            : undefined
+        if (cancelIdle) {
+          cancelIdle(idleHandle)
+        }
+        idleHandle = null
       }
       mutationObservers.forEach((observer) => observer.disconnect())
       mutationObservers.clear()

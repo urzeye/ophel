@@ -815,6 +815,8 @@ export class OutlineManager {
     const containerRect = container.getBoundingClientRect()
     const containerTop = containerRect.top
     const containerScrollTop = container.scrollTop
+    const entries: Array<{ node: OutlineNode; top: number; height: number; order: number }> = []
+    let order = 0
 
     this.flatNodes.forEach((node) => {
       if (node.isGhost) return
@@ -833,14 +835,43 @@ export class OutlineManager {
 
       if (!element || !element.isConnected) return
 
+      const clientRects = element.getClientRects()
+      if (clientRects.length === 0) return
+
       const rect = element.getBoundingClientRect()
       const top = rect.top - containerTop + containerScrollTop
+      const height = rect.height || clientRects[0]?.height || 0
       node.scrollTop = top
-      node.scrollHeight = rect.height
+      node.scrollHeight = height
 
-      this.scrollNodes.push(node)
-      this.scrollPositions.push(top)
-      this.scrollHeights.push(rect.height)
+      entries.push({ node, top, height, order })
+      order += 1
+    })
+
+    if (entries.length === 0) {
+      this.scrollPositionsStale = false
+      return
+    }
+
+    let isSorted = true
+    for (let i = 1; i < entries.length; i += 1) {
+      if (entries[i].top < entries[i - 1].top) {
+        isSorted = false
+        break
+      }
+    }
+
+    if (!isSorted) {
+      entries.sort((a, b) => {
+        if (a.top === b.top) return a.order - b.order
+        return a.top - b.top
+      })
+    }
+
+    entries.forEach((entry) => {
+      this.scrollNodes.push(entry.node)
+      this.scrollPositions.push(entry.top)
+      this.scrollHeights.push(entry.height)
     })
 
     this.scrollPositionsStale = false
