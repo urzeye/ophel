@@ -1,4 +1,4 @@
-# Ophel Extension 疑难杂症排查手册
+# Ophel Atlas Extension 疑难杂症排查手册
 
 > 记录浏览器扩展开发过程中遇到的问题及其解决方案，供后续参考。
 

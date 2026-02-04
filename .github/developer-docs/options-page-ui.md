@@ -1,4 +1,4 @@
-# Ophel 独立设置页 (Options Page) 设计方案
+# Ophel Atlas 独立设置页 (Options Page) 设计方案
 
 本文档详细描述了 Ophel 扩展独立设置页面（Options Page）的 UI 布局、功能规划及技术实现方案。
 

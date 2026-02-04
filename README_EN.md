@@ -1,4 +1,4 @@
-# Ophel 🚀
+# Ophel Atlas 🚀
 
 > Turn AI chats into documents you can read, navigate, and reuse
 
@@ -47,7 +47,7 @@
 <!-- Promo Link -->
 <p align="center">
   📣 <a href="https://github.com/urzeye/ophel/issues/30">
-    <strong>Help promote Ophel</strong>
+    <strong>Help promote Ophel Atlas</strong>
   </a>
   <br/>
   <a href="https://www.producthunt.com/products/ophel?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-ophel" target="_blank" rel="noopener noreferrer"><img alt="Ophel - Enhance AI chat with outline, conversations, prompts & more. | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1068867&theme=light&t=1769514514380"></a>

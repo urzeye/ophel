@@ -1,4 +1,4 @@
-# Ophel Extension CSS 架构指南
+# Ophel Atlas Extension CSS 架构指南
 
 > 本文档详细说明项目中 CSS 的使用方法、注入机制和约束条件。
 > 供开发者和 AI 分析问题时参考。

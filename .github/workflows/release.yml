@@ -102,25 +102,25 @@ jobs:
 
           # 打包为 zip
           cd build/chrome-mv3-cws
-          zip -r ../ophel-cws-upload.zip .
+          zip -r ../ophel-atlas-cws-upload.zip .
           cd ../..
 
       - name: Rename artifacts for release
         run: |
-          cp build/chrome-mv3-prod.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip
-          cp build/chrome-mv3-prod.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-edge.zip
-          cp build/firefox-mv3-prod.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-firefox.zip
-          cp build/userscript/ophel.user.js build/ophel-${{ steps.get_version.outputs.VERSION }}.user.js
-          cp build/ophel-cws-upload.zip build/ophel-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip
+          cp build/chrome-mv3-prod.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-chrome.zip
+          cp build/chrome-mv3-prod.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-edge.zip
+          cp build/firefox-mv3-prod.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-firefox.zip
+          cp build/userscript/ophel.user.js build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}.user.js
+          cp build/ophel-atlas-cws-upload.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.get_version.outputs.VERSION }}
           target_commitish: ${{ github.sha }}
-          name: Ophel ${{ steps.get_version.outputs.VERSION }}
+          name: Ophel Atlas ${{ steps.get_version.outputs.VERSION }}
           body: |
-            ## Ophel ${{ steps.get_version.outputs.VERSION }}
+            ## Ophel Atlas ${{ steps.get_version.outputs.VERSION }}
 
             ${{ steps.extract_changelog.outputs.notes }}
 
@@ -128,16 +128,16 @@ jobs:
 
             | Platform | File | Note |
             |----------|------|------|
-            | **Chrome** | `ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip` | **Recommended** (Consistent ID) |
-            | **Edge** | `ophel-${{ steps.get_version.outputs.VERSION }}-edge.zip` | Edge Add-ons or Load Unpacked |
-            | **Firefox** | `ophel-${{ steps.get_version.outputs.VERSION }}-firefox.zip` | Firefox Add-ons |
-            | **Userscript** | `ophel-${{ steps.get_version.outputs.VERSION }}.user.js` | Tampermonkey script |
-            | **CWS Upload** | `ophel-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip` | **For Store Upload Only** (No Key) |
+            | **Chrome** | `ophel-atlas-${{ steps.get_version.outputs.VERSION }}-chrome.zip` | **Recommended** (Consistent ID) |
+            | **Edge** | `ophel-atlas-${{ steps.get_version.outputs.VERSION }}-edge.zip` | Edge Add-ons or Load Unpacked |
+            | **Firefox** | `ophel-atlas-${{ steps.get_version.outputs.VERSION }}-firefox.zip` | Firefox Add-ons |
+            | **Userscript** | `ophel-atlas-${{ steps.get_version.outputs.VERSION }}.user.js` | Tampermonkey script |
+            | **CWS Upload** | `ophel-atlas-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip` | **For Store Upload Only** (No Key) |
 
             ### 🔧 Installation | 安装方法
 
             #### Chrome / Edge (Recommended)
-            1. Download `ophel-...-chrome.zip` | 下载 Chrome 版本压缩包
+            1. Download `ophel-atlas-...-chrome.zip` | 下载 Chrome 版本压缩包
             2. Unzip and load unpacked in Developer Mode | 解压并在开发者模式下加载已解压的扩展
 
             > **Note:** This version includes the public key, ensuring your Extension ID matches the Chrome Web Store version.
@@ -153,11 +153,11 @@ jobs:
 
             *Changelog File: [CHANGELOG.md](https://github.com/urzeye/ophel/blob/main/CHANGELOG.md)*
           files: |
-            build/ophel-${{ steps.get_version.outputs.VERSION }}-chrome.zip
-            build/ophel-${{ steps.get_version.outputs.VERSION }}-edge.zip
-            build/ophel-${{ steps.get_version.outputs.VERSION }}-firefox.zip
-            build/ophel-${{ steps.get_version.outputs.VERSION }}.user.js
-            build/ophel-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip
+            build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-chrome.zip
+            build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-edge.zip
+            build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-firefox.zip
+            build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}.user.js
+            build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
         env:

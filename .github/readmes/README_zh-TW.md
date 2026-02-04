@@ -1,4 +1,4 @@
-# Ophel 🚀
+# Ophel Atlas 🚀
 
 > 讓 AI 對話如文檔般可閱讀、導航、複用
 
