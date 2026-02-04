@@ -96,12 +96,17 @@ export const COLLAPSED_BUTTON_DEFS: Record<
   panel: { icon: "✨", labelKey: "panelTitle", canToggle: false, isPanelOnly: true },
   anchor: {
     icon: "⚓",
-    labelKey: "showCollapsedAnchorLabel",
     canToggle: true,
-    isPanelOnly: true,
+    labelKey: "showCollapsedAnchorLabel",
+    isPanelOnly: false,
     IconComponent: AnchorIcon,
   },
-  theme: { icon: "☀", labelKey: "showCollapsedThemeLabel", canToggle: true, isPanelOnly: true },
+  theme: {
+    icon: "☀",
+    labelKey: "showCollapsedThemeLabel",
+    canToggle: true,
+    isPanelOnly: false,
+  },
   manualAnchor: {
     icon: "📍",
     labelKey: "manualAnchorLabel",
