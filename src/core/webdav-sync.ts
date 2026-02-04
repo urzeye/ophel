@@ -6,12 +6,11 @@
 import { MULTI_PROP_STORES, ZUSTAND_KEYS } from "~constants/defaults"
 import { APP_NAME } from "~utils/config"
 import { MSG_WEBDAV_REQUEST } from "~utils/messaging"
-import { localStorage, STORAGE_KEYS, type Settings } from "~utils/storage"
 
 function safeDecodeURIComponent(str: string) {
   try {
     return decodeURIComponent(str)
-  } catch (e) {
+  } catch {
     return str
   }
 }
@@ -226,9 +225,9 @@ export class WebDAVSyncManager {
       if (this.config.remoteDir) {
         try {
           // 尝试创建目录，如果已存在通常会返回 405
-          const mkcolResponse = await this.request("MKCOL", this.config.remoteDir)
+          await this.request("MKCOL", this.config.remoteDir)
           // 201 Created
-        } catch (e) {
+        } catch {
           // 忽略创建目录失败（可能是已存在 405，或无权限等，后续 PUT 会再次验证）
           // 实际上 405 会被 request 视为失败抛出 error，这里 catch 住即可
         }

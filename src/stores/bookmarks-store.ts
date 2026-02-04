@@ -46,19 +46,19 @@ interface BookmarkStore {
 
 // 扁平化 storage adapter：直接存储 bookmarks 数组到根节点
 const flatBookmarkStorage = {
-  getItem: async (name: string) => {
+  getItem: async (_name: string) => {
     const data = await chromeStorageAdapter.getItem("bookmarks")
     if (data) {
       return JSON.stringify({ state: { bookmarks: JSON.parse(data) }, version: 0 })
     }
     return null
   },
-  setItem: async (name: string, value: string) => {
+  setItem: async (_name: string, value: string) => {
     const parsed = JSON.parse(value)
     const bookmarks = parsed.state?.bookmarks || []
     await chromeStorageAdapter.setItem("bookmarks", JSON.stringify(bookmarks))
   },
-  removeItem: async (name: string) => {
+  removeItem: async (_name: string) => {
     await chromeStorageAdapter.removeItem("bookmarks")
   },
 }

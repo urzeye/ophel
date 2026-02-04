@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import type { SiteAdapter } from "~adapters/base"
 import { Tooltip } from "~components/ui/Tooltip"
@@ -20,7 +20,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
   const observedElementRef = useRef<Element | null>(null)
 
   // 查找输入框容器（向上遍历找到有圆角边框的容器）
-  const findInputContainer = (textarea: HTMLElement): Element => {
+  const findInputContainer = useCallback((textarea: HTMLElement): Element => {
     let inputContainer: Element = textarea
     let parent = textarea.parentElement
     for (let i = 0; i < 10 && parent && parent !== document.body; i++) {
@@ -32,10 +32,10 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
       parent = parent.parentElement
     }
     return inputContainer
-  }
+  }, [])
 
   // 动态更新悬浮条位置（基于输入框容器位置）
-  const updatePosition = () => {
+  const updatePosition = useCallback(() => {
     const textarea = adapter?.getTextareaElement()
 
     // 如果没有输入框引用或输入框不在 DOM 中，使用默认位置
@@ -63,7 +63,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
       resizeObserverRef.current.observe(inputContainer)
       observedElementRef.current = inputContainer
     }
-  }
+  }, [adapter, findInputContainer])
 
   useEffect(() => {
     if (!title) return
@@ -101,7 +101,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
       }
       observedElementRef.current = null
     }
-  }, [title, adapter])
+  }, [title, adapter, findInputContainer, updatePosition])
 
   if (!title) return null
 

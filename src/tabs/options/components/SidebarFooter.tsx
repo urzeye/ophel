@@ -8,7 +8,7 @@ import { getEffectiveLanguage, setLanguage, t } from "~utils/i18n"
 
 import { LanguageMenu } from "./LanguageMenu"
 
-export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
+export const SidebarFooter = ({ siteId: _siteId = "_default" }: { siteId?: string }) => {
   const { settings, setSettings } = useSettingsStore()
 
   // 检测是否在独立 Options 页面（非 content script 环境）

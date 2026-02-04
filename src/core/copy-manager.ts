@@ -106,7 +106,6 @@ export class CopyManager {
         const annotation = katexEl.querySelector('annotation[encoding="application/x-tex"]')
         if (annotation?.textContent) {
           // 检测是否为 display 模式（块级公式）
-          const mathEl = katexEl.closest(".katex-display") || katexEl.querySelector(".katex-html")
           const isBlock = !!katexEl.closest(".katex-display")
           this.copyLatex(annotation.textContent, isBlock)
           e.preventDefault()

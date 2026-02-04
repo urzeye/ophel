@@ -34,7 +34,7 @@ const SortableItem: React.FC<{
   iconNode,
   label,
   index,
-  total,
+  total: _total,
   enabled = true,
   showToggle = false,
   onToggle,
@@ -78,7 +78,7 @@ const SortableItem: React.FC<{
   </div>
 )
 
-const GeneralPage: React.FC<GeneralPageProps> = ({ siteId }) => {
+const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId }) => {
   const [activeTab, setActiveTab] = useState("panel")
   const { settings, setSettings, updateNestedSetting, updateDeepSetting } = useSettingsStore()
 

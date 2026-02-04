@@ -3,7 +3,7 @@
  * 包含：页面布局、模型锁定、内容处理
  * 这些设置与具体站点相关，按站点存储配置
  */
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { PageContentIcon as LayoutIcon, RefreshIcon } from "~components/icons"
 import { NumberInput, Switch, Tooltip } from "~components/ui"
@@ -18,7 +18,7 @@ import {
   sendToBackground,
   type AIStudioModelInfo,
 } from "~utils/messaging"
-import type { AIStudioSettings, Settings } from "~utils/storage"
+import type { Settings } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
 import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
@@ -37,7 +37,10 @@ const ModelLockRow: React.FC<{
   setSettings: (settings: Partial<Settings>) => void
   placeholder: string
 }> = ({ label, siteKey, settings, setSettings, placeholder }) => {
-  const currentConfig = settings.modelLock?.[siteKey] || { enabled: false, keyword: "" }
+  const currentConfig = useMemo(
+    () => settings.modelLock?.[siteKey] || { enabled: false, keyword: "" },
+    [settings.modelLock, siteKey],
+  )
   const [localKeyword, setLocalKeyword] = useState(currentConfig.keyword)
 
   // 同步外部值变化

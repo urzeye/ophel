@@ -26,7 +26,7 @@ import { SettingsModal } from "./SettingsModal"
 
 export const App = () => {
   // 读取设置 - 使用 Zustand Store
-  const { settings, setSettings, updateNestedSetting, updateDeepSetting } = useSettingsStore()
+  const { settings, setSettings, updateDeepSetting } = useSettingsStore()
   const isSettingsHydrated = useSettingsHydrated()
 
   // 订阅 _syncVersion 以在跨上下文同步时强制触发重渲染
@@ -247,6 +247,11 @@ export const App = () => {
     }
   }, [themeManager, setSettings]) // 移除 settings?.theme 依赖，通过 ref 访问最新值
 
+  const themeSites = settings?.theme?.sites
+  const syncUnpin = settings?.features?.conversations?.syncUnpin
+  const inlineBookmarkMode = settings?.features?.outline?.inlineBookmarkMode
+  const hasSettings = Boolean(settings)
+
   // 监听主题预置变化，动态更新 ThemeManager
   // Zustand 不存在 Plasmo useStorage 的缓存问题，无需启动保护期
   useEffect(() => {
@@ -255,16 +260,14 @@ export const App = () => {
     // 使用当前站点的配置而非 _default
     const currentAdapter = getAdapter()
     const siteId = currentAdapter?.getSiteId() || "_default"
-    const siteTheme =
-      settings?.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
-      settings?.theme?.sites?._default
+    const siteTheme = themeSites?.[siteId as keyof typeof themeSites] || themeSites?._default
     const lightId = siteTheme?.lightStyleId
     const darkId = siteTheme?.darkStyleId
 
     if (lightId && darkId) {
       themeManager.setPresets(lightId, darkId)
     }
-  }, [settings?.theme?.sites, themeManager, isSettingsHydrated])
+  }, [themeSites, themeManager, isSettingsHydrated])
 
   // 监听自定义样式变化，同步到 ThemeManager
   useEffect(() => {
@@ -302,10 +305,6 @@ export const App = () => {
     }
     if (conversationManager) {
       conversationManager.init()
-      // 初始化 syncUnpin 设置
-      conversationManager.updateSettings({
-        syncUnpin: settings?.features?.conversations?.syncUnpin ?? false,
-      })
     }
     if (outlineManager) {
       outlineManager.refresh()
@@ -319,17 +318,24 @@ export const App = () => {
     }
   }, [promptManager, conversationManager, outlineManager])
 
+  useEffect(() => {
+    if (!conversationManager) return
+    conversationManager.updateSettings({
+      syncUnpin: syncUnpin ?? false,
+    })
+  }, [conversationManager, syncUnpin])
+
   // 初始化页面内收藏图标
   useEffect(() => {
-    if (!outlineManager || !adapter || !settings) return
+    if (!outlineManager || !adapter || !hasSettings) return
 
-    const mode = settings.features?.outline?.inlineBookmarkMode || "always"
+    const mode = inlineBookmarkMode || "always"
     const inlineBookmarkManager = new InlineBookmarkManager(outlineManager, adapter, mode)
 
     return () => {
       inlineBookmarkManager.cleanup()
     }
-  }, [outlineManager, adapter, settings?.features?.outline?.inlineBookmarkMode])
+  }, [outlineManager, adapter, inlineBookmarkMode, hasSettings])
 
   // 滚动锁定切换
   const handleToggleScrollLock = useCallback(() => {

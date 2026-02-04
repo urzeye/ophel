@@ -7,9 +7,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import type { Conversation, ConversationManager, Folder, Tag } from "~core/conversation-manager"
 import { useSettingsStore } from "~stores/settings-store"
-import { DOMToolkit } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
-import { localStorage } from "~utils/storage"
 
 import {
   ConfirmDialog,
@@ -24,9 +22,6 @@ import "~styles/conversations.css"
 
 import { BatchIcon, FolderPlusIcon, HourglassIcon, LocateIcon, SyncIcon } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
-
-const LOCATE_PATH =
-  "M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"
 
 // ==================== 类型定义 ====================
 
@@ -663,7 +658,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                             className="conversations-folder-order-btn"
                             title={t("moveUp") || "上移"}
                             disabled={index <= 1}
-                            onClick={(e) => {
+                            onClick={() => {
                               manager.moveFolder(folder.id, "up")
                               loadData()
                             }}>
@@ -673,7 +668,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                             className="conversations-folder-order-btn"
                             title={t("moveDown") || "下移"}
                             disabled={index >= folders.length - 1}
-                            onClick={(e) => {
+                            onClick={() => {
                               manager.moveFolder(folder.id, "down")
                               loadData()
                             }}>

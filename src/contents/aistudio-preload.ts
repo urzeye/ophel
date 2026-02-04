@@ -51,7 +51,7 @@ export const config: PlasmoCSConfig = {
       try {
         ;(document.head || document.documentElement).appendChild(script)
         script.remove()
-        console.log("[Ophel] Watermark blocker injected")
+        console.warn("[Ophel] Watermark blocker injected")
       } catch (e) {
         console.error("[Ophel] Failed to inject watermark blocker:", e)
       }
@@ -165,7 +165,7 @@ function waitForButtonAndClick(selector: string) {
             const event = new MouseEvent("click", { bubbles: true, cancelable: true })
             button.dispatchEvent(event)
             hasClicked = true
-            console.log("[Ophel] Run settings panel closed")
+            console.warn("[Ophel] Run settings panel closed")
             cleanup()
           } catch (e) {
             console.error("[Ophel] Failed to click button:", e)

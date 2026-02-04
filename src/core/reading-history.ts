@@ -207,7 +207,7 @@ export class ReadingHistoryManager {
       if (this.adapter.getVisibleAnchorElement) {
         anchorInfo = this.adapter.getVisibleAnchorElement() || {}
       }
-    } catch (e) {
+    } catch {
       // 静默处理锚点获取错误
     }
 
@@ -256,7 +256,7 @@ export class ReadingHistoryManager {
             this.restoredTop = (scrollContainer as HTMLElement).scrollTop || window.scrollY
             restoredSuccessfully = true
           }
-        } catch (e) {
+        } catch {
           // 精确恢复失败，继续尝试位置恢复
         }
       }
@@ -289,7 +289,7 @@ export class ReadingHistoryManager {
           await smartScrollTo(this.adapter, newScrollTop)
           this.restoredTop = newScrollTop
           restoredSuccessfully = true
-        } catch (e) {
+        } catch {
           // 恢复失败
           return false
         }

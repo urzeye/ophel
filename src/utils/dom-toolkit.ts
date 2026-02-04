@@ -110,7 +110,7 @@ const Utils = {
         tasks.forEach((task) => {
           try {
             task()
-          } catch (e) {
+          } catch {
             console.error("[DOMToolkit] Cleanup error:", e)
           }
         })
@@ -218,7 +218,7 @@ class SharedObserverManager {
               callbacks.forEach((cb) => {
                 try {
                   cb(addedNode, mutation)
-                } catch (e) {
+                } catch {
                   console.error("[DOMToolkit] Observer callback error:", e)
                 }
               })
@@ -329,7 +329,7 @@ class DOMToolkitClass {
             }
           }
         }
-      } catch (e) {
+      } catch {
         // 选择器无效，跳过
       }
     }
@@ -364,7 +364,7 @@ class DOMToolkitClass {
               return el
             }
           }
-        } catch (e) {}
+        } catch {}
       }
     }
 
@@ -399,7 +399,7 @@ class DOMToolkitClass {
             results.push(el)
           }
         }
-      } catch (e) {}
+      } catch {}
     }
 
     const elements = (root as ParentNode).querySelectorAll
@@ -483,7 +483,7 @@ class DOMToolkitClass {
                 }
               }
             }
-          } catch (e) {}
+          } catch {}
         }
       }
 
@@ -522,7 +522,7 @@ class DOMToolkitClass {
         if (callback(node, isNew) === false) {
           stop()
         }
-      } catch (e) {
+      } catch {
         console.error("[DOMToolkit] each callback error:", e)
         stop()
       }
@@ -552,7 +552,7 @@ class DOMToolkitClass {
             .querySelectorAll(selector)
             .forEach((node) => processNode(node, true))
         }
-      } catch (e) {}
+      } catch {}
     }
 
     observerHandle.addCallback(observerCallback)
@@ -597,14 +597,14 @@ class DOMToolkitClass {
         timeoutId = setTimeout(() => {
           try {
             callback(mutations, observer)
-          } catch (e) {
+          } catch {
             console.error("[DOMToolkit] watch callback error:", e)
           }
         }, debounce)
       } else {
         try {
           callback(mutations, observer)
-        } catch (e) {
+        } catch {
           console.error("[DOMToolkit] watch callback error:", e)
         }
       }
@@ -646,7 +646,7 @@ class DOMToolkitClass {
         if (cb) {
           try {
             cb(el)
-          } catch (e) {
+          } catch {
             console.error("[DOMToolkit] watchMultiple callback error:", e)
           }
         }
@@ -719,7 +719,7 @@ class DOMToolkitClass {
             callback(event, target as Element)
             return
           }
-        } catch (e) {}
+        } catch {}
       }
 
       // 回退：使用 closest
@@ -728,7 +728,7 @@ class DOMToolkitClass {
         if (target && parent.contains(target)) {
           callback(event, target)
         }
-      } catch (e) {}
+      } catch {}
     }
 
     parent.addEventListener(eventName, handler, capture)
@@ -854,7 +854,7 @@ class DOMToolkitClass {
       style.textContent = cssText
       shadowRoot.appendChild(style)
       return style
-    } catch (e) {
+    } catch {
       // Closed shadow root
       return null
     }
@@ -883,13 +883,13 @@ class DOMToolkitClass {
           try {
             this.cssToShadow((node as Element).shadowRoot!, cssText, id)
             count++
-          } catch (e) {}
+          } catch {}
         }
 
         // 递归遍历 Shadow DOM 内部
         try {
           walk((node as Element).shadowRoot!)
-        } catch (e) {}
+        } catch {}
       }
 
       // 遍历子节点
@@ -924,12 +924,12 @@ class DOMToolkitClass {
       if ((node as Element).shadowRoot) {
         try {
           callback((node as Element).shadowRoot!, node as Element)
-        } catch (e) {
+        } catch {
           console.error("[DOMToolkit] walkShadowRoots callback error:", e)
         }
         try {
           walk((node as Element).shadowRoot!, depth + 1)
-        } catch (e) {}
+        } catch {}
       }
 
       const children = node.childNodes

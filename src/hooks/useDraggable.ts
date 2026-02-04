@@ -116,7 +116,7 @@ export function useDraggable(options: UseDraggableOptions = {}) {
         onEdgeSnap?.("right")
       }
     }
-  }, [edgeSnapHide, onEdgeSnap])
+  }, [edgeSnapHide, onEdgeSnap, snapThreshold])
 
   // 边界检测：确保面板在视口内可见
   const clampToViewport = useCallback(() => {

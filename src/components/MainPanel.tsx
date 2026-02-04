@@ -15,7 +15,7 @@ import {
   ThemeDarkIcon,
   ThemeLightIcon,
 } from "~components/icons"
-import { SITE_IDS, TAB_IDS, type TabId } from "~constants"
+import { SITE_IDS, TAB_IDS } from "~constants"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
 import type { PromptManager } from "~core/prompt-manager"
@@ -120,7 +120,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         setActiveTab(getFirstTab(tabOrder))
       }
     }
-  }, [tabOrder, isInitialized])
+  }, [tabOrder, isInitialized, activeTab])
 
   // 监听快捷键触发的 tab 切换事件
   useEffect(() => {
@@ -188,7 +188,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         panel.removeEventListener("keypress", handleKeyDown, true)
       }
     }
-  }, [isOpen, adapter])
+  }, [isOpen, adapter, panelRef])
 
   // === 锚点状态（使用全局存储） ===
   const anchorPosition = useSyncExternalStore(anchorStore.subscribe, anchorStore.getSnapshot)

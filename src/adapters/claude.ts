@@ -2,7 +2,6 @@
  * Claude.ai 适配器
  */
 import { SITE_IDS } from "~constants"
-import { DOMToolkit } from "~utils/dom-toolkit"
 
 import {
   SiteAdapter,
@@ -140,7 +139,7 @@ export class ClaudeAdapter extends SiteAdapter {
       if (!document.execCommand("insertText", false, content)) {
         throw new Error("execCommand failed")
       }
-    } catch (e) {
+    } catch {
       // 降级: 直接 DOM 操作
       editor.textContent = content
       editor.dispatchEvent(new Event("input", { bubbles: true }))
@@ -157,7 +156,7 @@ export class ClaudeAdapter extends SiteAdapter {
     try {
       document.execCommand("selectAll", false, undefined)
       document.execCommand("delete", false, undefined)
-    } catch (e) {
+    } catch {
       editor.textContent = ""
     }
     // 触发 input 事件通知 React/框架

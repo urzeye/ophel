@@ -7,7 +7,6 @@
 import {
   DEFAULT_KEYBINDINGS,
   isMacOS,
-  SHORTCUT_ACTIONS,
   type ShortcutActionId,
   type ShortcutBinding,
   type ShortcutsSettings,

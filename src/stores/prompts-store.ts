@@ -36,7 +36,7 @@ interface PromptsState {
 
 export const usePromptsStore = create<PromptsState>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       prompts: getDefaultPrompts(), // 使用国际化后的默认提示词
       _hasHydrated: false,
 

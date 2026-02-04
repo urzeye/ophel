@@ -13,7 +13,6 @@
  * - document.documentElement.style.colorScheme 同步
  */
 import { SITE_IDS } from "~constants"
-import { DOMToolkit } from "~utils/dom-toolkit"
 
 import {
   SiteAdapter,

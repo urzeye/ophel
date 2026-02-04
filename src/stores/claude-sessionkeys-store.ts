@@ -30,7 +30,7 @@ interface SessionKeysStore extends ClaudeSessionKeysState {
 
 export const useClaudeSessionKeysStore = create<SessionKeysStore>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       keys: [],
       currentKeyId: "", // 空字符串表示使用浏览器默认cookie
       _hasHydrated: false,

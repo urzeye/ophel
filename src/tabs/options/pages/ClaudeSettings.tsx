@@ -15,15 +15,11 @@ import {
 } from "~constants"
 import { platform } from "~platform"
 import { useClaudeSessionKeysStore } from "~stores/claude-sessionkeys-store"
-import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import {
   MSG_CHECK_CLAUDE_GENERATING,
   MSG_CHECK_PERMISSIONS,
-  MSG_GET_CLAUDE_SESSION_KEY,
   MSG_REQUEST_PERMISSIONS,
-  MSG_SET_CLAUDE_SESSION_KEY,
-  MSG_TEST_CLAUDE_TOKEN,
   sendToBackground,
 } from "~utils/messaging"
 import { showToast } from "~utils/toast"
@@ -42,9 +38,8 @@ type DialogState =
   | { type: "delete"; id: string; name: string }
 
 const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
-  const { keys, currentKeyId, addKey, deleteKey, setCurrentKey, testKey, setKeys, updateKey } =
+  const { keys, currentKeyId, addKey, deleteKey, setCurrentKey, testKey, setKeys } =
     useClaudeSessionKeysStore()
-  const { settings } = useSettingsStore()
   const [testing, setTesting] = useState<Record<string, boolean>>({})
   const [dialog, setDialog] = useState<DialogState>({ type: "none" })
   const [hoveredKeyId, setHoveredKeyId] = useState<string | null>(null)
@@ -151,7 +146,7 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
         if (showToastMsg) showToast(`${keyName}: ${t("claudeKeyInvalid")}`, TOAST_DURATION.MEDIUM)
         return false
       }
-    } catch (error) {
+    } catch {
       testKey(id, { isValid: false })
       if (showToastMsg)
         showToast(
@@ -206,7 +201,7 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
           .replace("{invalid}", String(invalidCount)),
         TOAST_DURATION.LONG,
       )
-    } catch (e) {
+    } catch {
       showToast(t("claudeBatchTestFailed"), TOAST_DURATION.MEDIUM)
     } finally {
       setIsBatchTesting(false)

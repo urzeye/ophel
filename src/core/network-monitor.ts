@@ -1,9 +1,4 @@
-import {
-  EVENT_MONITOR_COMPLETE,
-  EVENT_MONITOR_INIT,
-  EVENT_MONITOR_START,
-  type MonitorEventPayload,
-} from "~utils/messaging"
+import { EVENT_MONITOR_COMPLETE, EVENT_MONITOR_INIT, EVENT_MONITOR_START } from "~utils/messaging"
 
 // 油猴脚本环境需要使用 unsafeWindow 才能访问页面的原生 fetch/XMLHttpRequest
 declare const unsafeWindow: Window | undefined
@@ -142,7 +137,7 @@ class NetworkMonitor {
       this._hasTriggeredStart = true
       try {
         this.onStart({ url, timestamp: Date.now(), type: "fetch" })
-      } catch (e) {}
+      } catch {}
     }
 
     try {
@@ -164,7 +159,7 @@ class NetworkMonitor {
         const { done } = await reader.read()
         if (done) break
       }
-    } catch (err) {
+    } catch {
     } finally {
       this._decrementAndSchedule()
     }
@@ -214,7 +209,7 @@ class NetworkMonitor {
         self._hasTriggeredStart = true
         try {
           self.onStart({ url, timestamp: Date.now(), type: "xhr" })
-        } catch (e) {}
+        } catch {}
       }
 
       const onComplete = () => {

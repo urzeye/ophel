@@ -10,7 +10,6 @@ import {
   DEFAULT_KEYBINDINGS,
   formatShortcut,
   isMacOS,
-  SHORTCUT_ACTIONS,
   SHORTCUT_CATEGORIES,
   SHORTCUT_META,
   type ShortcutActionId,
@@ -156,10 +155,9 @@ const ShortcutInput: React.FC<{
   )
 }
 
-const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId }) => {
+const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
   const { settings, setSettings } = useSettingsStore()
   const shortcuts = settings?.shortcuts
-  const isMac = isMacOS()
 
   // 检测快捷键冲突
   const checkConflict = useCallback(

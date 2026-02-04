@@ -154,7 +154,7 @@ export function initMarkdownFixer(ctx: ModulesContext): void {
   if (config && enabled) {
     modules.markdownFixer = new MarkdownFixer(config)
     modules.markdownFixer.start()
-    console.log(`[Ophel] MarkdownFixer started for ${adapter.getName()}`)
+    console.warn(`[Ophel] MarkdownFixer started for ${adapter.getName()}`)
   }
 }
 
@@ -467,7 +467,7 @@ export function initUrlChangeObserver(ctx: ModulesContext): void {
     const currentPathname = window.location.pathname
     if (currentPathname !== lastPathname) {
       lastPathname = currentPathname
-      console.log("[Ophel] URL changed, reinitializing modules...")
+      console.warn("[Ophel] URL changed, reinitializing modules...")
 
       // 1. 阅读历史：停止录制 → 延迟恢复并重启
       if (readingHistoryRestoreTimeoutId) {

@@ -2,7 +2,7 @@
  * 权限管理页面
  * 显示和管理扩展的权限
  */
-import React, { useEffect, useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 
 import { PermissionsIcon } from "~components/icons"
 import { ConfirmDialog } from "~components/ui"
@@ -89,7 +89,7 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
   const isExtensionPage = typeof chrome.permissions !== "undefined"
 
   // 检查可选权限状态
-  const checkOptionalPermissions = async () => {
+  const checkOptionalPermissions = useCallback(async () => {
     setLoading(true)
     const status: Record<string, boolean> = {}
 
@@ -143,7 +143,38 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
 
     setOptionalPermissionStatus(status)
     setLoading(false)
-  }
+  }, [isExtensionPage])
+
+  // 请求可选权限（通用函数）
+  const requestPermission = useCallback(
+    async (perm: { id: string; origins?: string[]; permissions?: string[] }) => {
+      try {
+        if (isExtensionPage) {
+          const granted = await chrome.permissions.request({
+            origins: perm.origins?.length ? perm.origins : undefined,
+            permissions: perm.permissions?.length ? perm.permissions : undefined,
+          })
+
+          if (granted) {
+            setOptionalPermissionStatus((prev) => ({ ...prev, [perm.id]: true }))
+          }
+        } else {
+          // Content Script 发送消息请求
+          await sendToBackground({
+            type: MSG_REQUEST_PERMISSIONS,
+            permType: perm.id,
+            origins: perm.origins,
+            permissions: perm.permissions,
+          })
+          // 延迟后自动刷新权限状态（给用户操作弹窗的时间）
+          setTimeout(() => checkOptionalPermissions(), 2000)
+        }
+      } catch (e) {
+        console.error(`请求权限 ${perm.id} 失败:`, e)
+      }
+    },
+    [isExtensionPage, checkOptionalPermissions],
+  )
 
   // 初始化时检查权限
   useEffect(() => {
@@ -165,39 +196,7 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
         }, 500)
       }
     }
-  }, [])
-
-  // 请求可选权限（通用函数）
-  const requestPermission = async (perm: {
-    id: string
-    origins?: string[]
-    permissions?: string[]
-  }) => {
-    try {
-      if (isExtensionPage) {
-        const granted = await chrome.permissions.request({
-          origins: perm.origins?.length ? perm.origins : undefined,
-          permissions: perm.permissions?.length ? perm.permissions : undefined,
-        })
-
-        if (granted) {
-          setOptionalPermissionStatus((prev) => ({ ...prev, [perm.id]: true }))
-        }
-      } else {
-        // Content Script 发送消息请求
-        await sendToBackground({
-          type: MSG_REQUEST_PERMISSIONS,
-          permType: perm.id,
-          origins: perm.origins,
-          permissions: perm.permissions,
-        })
-        // 延迟后自动刷新权限状态（给用户操作弹窗的时间）
-        setTimeout(() => checkOptionalPermissions(), 2000)
-      }
-    } catch (e) {
-      console.error(`请求权限 ${perm.id} 失败:`, e)
-    }
-  }
+  }, [checkOptionalPermissions, isExtensionPage, requestPermission])
 
   // 执行撤销逻辑
   const executeRevoke = async (perm: {

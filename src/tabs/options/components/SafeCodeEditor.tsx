@@ -1,8 +1,6 @@
 import React, { Component, type ReactNode } from "react"
 import Editor from "react-simple-code-editor"
 
-import { t } from "~utils/i18n"
-
 type BaseEditorProps = React.ComponentProps<typeof Editor>
 
 interface SafeCodeEditorProps extends Partial<BaseEditorProps> {
@@ -30,7 +28,7 @@ export class SafeCodeEditor extends Component<SafeCodeEditorProps, SafeCodeEdito
     try {
       const testDiv = document.createElement("div")
       testDiv.innerHTML = ""
-    } catch (e) {
+    } catch {
       isBlocked = true
     }
 

@@ -64,8 +64,6 @@ const NAV_ITEMS = [
   { id: NAV_IDS.ABOUT, Icon: AboutIcon, labelKey: "navAbout", label: "关于" },
 ]
 
-type NavId = (typeof NAV_IDS)[keyof typeof NAV_IDS]
-
 interface SettingsModalProps {
   isOpen: boolean
   onClose: () => void

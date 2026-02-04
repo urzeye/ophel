@@ -32,7 +32,11 @@ export const getStyle = () => {
  * ChatGPT / Grok 特殊处理：延迟挂载 + MutationObserver 监控重挂载
  * 因为这些站点的 React Hydration 会清除 body 下的非预期元素
  */
-export const mountShadowHost: PlasmoMountShadowHost = ({ shadowHost, anchor, mountState }) => {
+export const mountShadowHost: PlasmoMountShadowHost = ({
+  shadowHost,
+  anchor: _anchor,
+  mountState: _mountState,
+}) => {
   const hostname = window.location.hostname
   // ChatGPT、Claude 和 Grok 都是 Next.js 应用，需要延迟挂载
   const needsDelayedMount =

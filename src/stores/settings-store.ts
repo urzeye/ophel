@@ -50,7 +50,7 @@ interface SettingsState {
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       settings: DEFAULT_SETTINGS,
       _hasHydrated: false,
       _syncVersion: 0,

@@ -70,7 +70,7 @@ export async function loadHistoryUntil(options: LoadHistoryOptions): Promise<Loa
   const {
     adapter,
     targetHeight,
-    loadAll = false,
+    loadAll: _loadAll = false,
     onProgress,
     signal,
     allowShortCircuit = false,

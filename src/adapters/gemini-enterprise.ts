@@ -406,7 +406,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       const success = document.execCommand("insertText", false, content)
       if (!success) throw new Error("execCommand returned false")
       return true
-    } catch (e) {
+    } catch {
       // 降级方案: 直接操作 DOM
       let p = editor.querySelector("p")
       if (!p) {
@@ -637,7 +637,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
             }
           }
         })
-      } catch (e) {
+      } catch {
         // 忽略选择器错误
       }
     }
@@ -952,7 +952,6 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
   /** 覆盖基类：通过点击“展开”按钮加载更多会话 */
   async loadAllConversations(): Promise<void> {
-    let expandedCount = 0
     const maxIterations = 20 // 防止无限循环
 
     for (let i = 0; i < maxIterations; i++) {
@@ -974,7 +973,6 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       // 点击所有展开按钮
       for (const btn of expandBtns) {
         ;(btn as HTMLElement).click()
-        expandedCount++
       }
 
       // 等待会话加载
@@ -1030,7 +1028,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
             htmlEl.style.setProperty("pointer-events", "none", "important")
           }
         })
-      } catch (e) {
+      } catch {
         // Ignore errors during suppression
       }
 

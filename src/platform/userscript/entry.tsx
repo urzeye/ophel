@@ -3,7 +3,6 @@ import ReactDOM from "react-dom/client"
 
 import { getAdapter } from "~adapters"
 import { App } from "~components/App"
-import { platform } from "~platform"
 
 // 显式导入 NetworkMonitor 初始化函数（避免被 tree-shaking 移除）
 import { initNetworkMonitor } from "../../core/network-monitor"
@@ -27,8 +26,6 @@ declare function GM_setValue(key: string, value: unknown): void
 declare function GM_deleteValue(key: string): void
 
 if (typeof chrome === "undefined" || !chrome.storage) {
-  const storageData: Record<string, unknown> = {}
-
   // 创建 chrome.storage.local polyfill
   // 定义所有已知的 storage keys（用于 get(null) 时获取全部数据）
   const KNOWN_STORAGE_KEYS = [

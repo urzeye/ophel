@@ -174,7 +174,7 @@ interface FolderMenuProps {
 }
 
 export const FolderMenu: React.FC<FolderMenuProps> = ({
-  folder,
+  folder: _folder,
   anchorEl,
   onClose,
   onRename,

@@ -15,13 +15,6 @@ import type {
   PlatformStorage,
 } from "../types"
 
-// GM API 扩展声明
-declare const GM_info: {
-  script: {
-    version: string
-  }
-}
-
 // GM API 类型声明
 declare function GM_getValue<T>(key: string, defaultValue?: T): T
 declare function GM_setValue(key: string, value: unknown): void
@@ -236,7 +229,7 @@ export const platform: Platform = {
             }
 
             resolve({ success: true, isValid: true, accountType })
-          } catch (e) {
+          } catch {
             resolve({ success: true, isValid: false, error: "Parse error" })
           }
         },

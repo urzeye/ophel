@@ -73,7 +73,7 @@ export const platform: Platform = {
       async text() {
         return typeof data === "string" ? data : JSON.stringify(data)
       },
-      async json<T>() {
+      async json() {
         return typeof data === "string" ? JSON.parse(data) : data
       },
       async blob() {
@@ -103,7 +103,7 @@ export const platform: Platform = {
     chrome.runtime.sendMessage({ type: "OPEN_URL", url })
   },
 
-  hasCapability(cap: PlatformCapability): boolean {
+  hasCapability(_cap: PlatformCapability): boolean {
     // 扩展版支持所有能力
     return true
   },

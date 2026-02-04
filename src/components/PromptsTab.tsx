@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
 import { ExportIcon, ImportIcon } from "~components/icons"
@@ -81,8 +81,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     defaultValue: "",
     onConfirm: () => {},
   })
-  const [inputValue, setInputValue] = useState("")
-
   // 拖拽状态
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const dragNodeRef = useRef<HTMLDivElement | null>(null)
@@ -113,25 +111,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const editPreviewRef = useRef<HTMLDivElement>(null)
   const modalPreviewRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  // 编辑模态框预览渲染后初始化复制按钮
-  useEffect(() => {
-    if (showPreview && editPreviewRef.current) {
-      initCopyButtons(editPreviewRef.current, { size: 14, color: "#6b7280" })
-    }
-  }, [showPreview, editingPrompt?.content])
-
-  // 快捷预览模态框渲染后初始化复制按钮
-  useEffect(() => {
-    if (previewModal.show && modalPreviewRef.current) {
-      initCopyButtons(modalPreviewRef.current, { size: 14, color: "#6b7280" })
-    }
-  }, [previewModal.show, previewModal.prompt])
-
-  const loadData = async () => {
+  const loadData = useCallback(() => {
     const allPrompts = manager.getPrompts()
     const allCategories = manager.getCategories()
     setPrompts(allPrompts)
@@ -147,7 +127,25 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       if (!hasPrompts) return VIRTUAL_CATEGORY.ALL
       return prev
     })
-  }
+  }, [manager])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  // 编辑模态框预览渲染后初始化复制按钮
+  useEffect(() => {
+    if (showPreview && editPreviewRef.current) {
+      initCopyButtons(editPreviewRef.current, { size: 14, color: "#6b7280" })
+    }
+  }, [showPreview, editingPrompt?.content])
+
+  // 快捷预览模态框渲染后初始化复制按钮
+  useEffect(() => {
+    if (previewModal.show && modalPreviewRef.current) {
+      initCopyButtons(modalPreviewRef.current, { size: 14, color: "#6b7280" })
+    }
+  }, [previewModal.show, previewModal.prompt])
 
   const getFilteredPrompts = () => {
     let filtered: Prompt[]
@@ -194,7 +192,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     defaultValue: string,
     onConfirm: (value: string) => void,
   ) => {
-    setInputValue(defaultValue)
     setPromptInputState({ show: true, title, defaultValue, onConfirm })
   }
 

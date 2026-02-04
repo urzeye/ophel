@@ -66,7 +66,6 @@ const NAV_ITEMS = [
 ]
 
 const OptionsPage = () => {
-  console.log("Options Page Rendered", NAV_ITEMS)
   const [activePage, setActivePage] = useState("general")
   const [initialSubTab, setInitialSubTab] = useState<string | undefined>(undefined)
 

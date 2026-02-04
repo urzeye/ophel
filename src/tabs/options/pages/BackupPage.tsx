@@ -4,7 +4,7 @@
  */
 import React, { useEffect, useRef, useState } from "react"
 
-import { BackupIcon, CloudIcon } from "~components/icons"
+import { CloudIcon } from "~components/icons"
 import { ConfirmDialog, Tooltip } from "~components/ui"
 import { MULTI_PROP_STORES, ZUSTAND_KEYS } from "~constants/defaults"
 import { getWebDAVSyncManager, type BackupFile } from "~core/webdav-sync"
@@ -14,7 +14,7 @@ import { t } from "~utils/i18n"
 import { DEFAULT_SETTINGS } from "~utils/storage"
 import { showToast as showDomToast } from "~utils/toast"
 
-import { Icon, PageTitle, SettingCard, SettingRow } from "../components"
+import { PageTitle, SettingCard, SettingRow } from "../components"
 
 interface BackupPageProps {
   siteId: string
@@ -243,7 +243,7 @@ const RemoteBackupModal: React.FC<{
 }
 
 // ==================== 主页面组件 ====================
-const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate }) => {
+const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _onNavigate }) => {
   const { settings, setSettings } = useSettingsStore()
 
   // 状态管理
@@ -600,7 +600,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate }) => {
   }
 
   const testWebDAVConnection = async () => {
-    const success = await checkAndRequestWebDAVPermission(async () => {
+    await checkAndRequestWebDAVPermission(async () => {
       const manager = getWebDAVSyncManager()
       // 临时应用配置（不持久化）
       await manager.setConfig(webdavForm, false)
@@ -616,33 +616,6 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate }) => {
       const manager = getWebDAVSyncManager()
       // 临时应用配置（不持久化）
       await manager.setConfig(webdavForm, false)
-
-      // 构造完整备份数据用于上传
-      // 复用 handleExport 'full' 的逻辑，但这里需要直接获取对象
-      const localData = await new Promise<Record<string, any>>((resolve) =>
-        chrome.storage.local.get(null, resolve),
-      )
-      // ... (数据清洗逻辑) ...
-      const hydratedData = Object.fromEntries(
-        Object.entries(localData).map(([k, v]) => {
-          try {
-            let parsed = typeof v === "string" ? JSON.parse(v) : v
-            if (ZUSTAND_KEYS.includes(k) && parsed?.state) {
-              if (parsed.state[k] !== undefined) parsed = parsed.state[k]
-              else parsed = parsed.state
-            }
-            return [k, parsed]
-          } catch {
-            return [k, v]
-          }
-        }),
-      )
-      const backupData = {
-        version: 3,
-        timestamp: new Date().toISOString(),
-        type: "full",
-        data: hydratedData,
-      }
 
       const res = await manager.upload()
       if (res.success) showDomToast(t("webdavUploadSuccess") || "备份上传成功")
@@ -931,7 +904,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate }) => {
           <button
             className="settings-btn settings-btn-secondary"
             onClick={async () => {
-              const hasPermission = await checkAndRequestWebDAVPermission(async () => {
+              await checkAndRequestWebDAVPermission(async () => {
                 // 临时应用配置
                 const manager = getWebDAVSyncManager()
                 await manager.setConfig(webdavForm, false)

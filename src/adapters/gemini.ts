@@ -282,7 +282,7 @@ export class GeminiAdapter extends SiteAdapter {
       document.execCommand("selectAll", false, undefined)
       const success = document.execCommand("insertText", false, content)
       if (!success) throw new Error("execCommand returned false")
-    } catch (e) {
+    } catch {
       editor.textContent = content
       editor.dispatchEvent(new Event("input", { bubbles: true }))
       editor.dispatchEvent(new Event("change", { bubbles: true }))

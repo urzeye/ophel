@@ -13,9 +13,8 @@ import {
   isFlutterProxy,
   smartScrollTo,
   smartScrollToBottom,
-  smartScrollToTop,
 } from "~utils/scroll-helper"
-import { DEFAULT_SETTINGS, type Settings } from "~utils/storage"
+import { DEFAULT_SETTINGS } from "~utils/storage"
 import { showToast } from "~utils/toast"
 import { anchorStore } from "~stores/anchor-store"
 
@@ -41,14 +40,14 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const hasAnchor = anchorPosition !== null
 
   // 悬浮隐藏状态
-  const [isHovered, setIsHovered] = useState(false)
+  const [_isHovered, setIsHovered] = useState(false)
   const groupRef = useRef<HTMLDivElement>(null)
 
   // 获取适配器
   const adapter = getAdapter()
 
   // 跟踪是否处于 Flutter 模式（图文并茂）
-  const [isFlutterMode, setIsFlutterMode] = useState(false)
+  const [_isFlutterMode, setIsFlutterMode] = useState(false)
 
   // 加载状态
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)

@@ -41,7 +41,7 @@ if (!(window as any).__ophelIframeScrollInitialized) {
             return scrollContainer
           }
         }
-      } catch (e) {
+      } catch {
         // 跨域 iframe 会抛出错误，忽略
       }
     }

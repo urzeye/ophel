@@ -12,7 +12,6 @@ import {
   formatToMarkdown,
   formatToTXT,
   htmlToMarkdown,
-  type ExportFormat,
 } from "~utils/exporter"
 import { t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
@@ -101,7 +100,7 @@ export class ConversationManager {
           await new Promise((r) => setTimeout(r, 500))
           this.syncConversations(null, true)
         }
-      } catch (e) {
+      } catch {
         // 静默处理错误
       }
     }
@@ -354,7 +353,6 @@ export class ConversationManager {
 
   getConversations(folderId?: string) {
     // 按当前站点和团队过滤
-    const currentSiteId = this.siteAdapter.getSiteId()
     const currentCid = this.siteAdapter.getCurrentCid?.() || null
 
     let result = Object.values(this.conversations).filter((c) => this.matchesCid(c, currentCid))
@@ -464,7 +462,7 @@ export class ConversationManager {
    */
   syncConversations(
     targetFolderId: string | null = null,
-    silent = false,
+    _silent = false,
   ): { newCount: number; updatedCount: number } {
     const sidebarItems = this.siteAdapter.getConversationList()
 

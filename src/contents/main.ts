@@ -38,7 +38,7 @@ if (!window.ophelInitialized) {
   const adapter = getAdapter()
 
   if (adapter) {
-    console.log(`[Ophel] Loaded ${adapter.getName()} adapter on:`, window.location.hostname)
+    console.warn(`[Ophel] Loaded ${adapter.getName()} adapter on:`, window.location.hostname)
 
     // 初始化适配器
     adapter.afterPropertiesSet({})
@@ -108,6 +108,6 @@ if (!window.ophelInitialized) {
       })
     })()
   } else {
-    console.log("[Ophel] No adapter found for:", window.location.hostname)
+    console.warn("[Ophel] No adapter found for:", window.location.hostname)
   }
 }

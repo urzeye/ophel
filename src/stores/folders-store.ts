@@ -30,7 +30,7 @@ interface FoldersState {
 
 export const useFoldersStore = create<FoldersState>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       folders: DEFAULT_FOLDERS,
       _hasHydrated: false,
 

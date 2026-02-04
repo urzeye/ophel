@@ -90,14 +90,6 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
     { id: "custom", label: t("customStylesTab") || "自定义样式" },
   ]
 
-  // 切换主题
-  const handleThemeToggle = async () => {
-    const themeManager = (window as any).__ophelThemeManager
-    if (themeManager) {
-      await themeManager.toggle()
-    }
-  }
-
   // 选择浅色主题预置
   const selectLightPreset = async (presetId: string) => {
     const themeManager = (window as any).__ophelThemeManager

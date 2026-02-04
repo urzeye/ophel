@@ -54,7 +54,7 @@ const PermissionRequestPage: React.FC = () => {
     const type = params.get("type") as PermissionType
     return type && type in PERMISSION_CONFIGS ? type : "allUrls"
   })
-  const [langReady, setLangReady] = useState(false)
+  const [_langReady, setLangReady] = useState(false)
   const { settings } = useSettingsStore()
   const isHydrated = useSettingsHydrated()
 
@@ -93,7 +93,7 @@ const PermissionRequestPage: React.FC = () => {
   // 请求权限
   const handleRequest = async () => {
     try {
-      console.log("[PermRequest] Requesting permissions:", {
+      console.warn("[PermRequest] Requesting permissions:", {
         origins: config.origins,
         permissions: config.permissions,
       })
@@ -102,7 +102,7 @@ const PermissionRequestPage: React.FC = () => {
         permissions: config.permissions.length > 0 ? config.permissions : undefined,
       })
 
-      console.log("[PermRequest] Permission granted:", granted)
+      console.warn("[PermRequest] Permission granted:", granted)
       if (granted) {
         setStatus("granted")
         // 延迟关闭窗口
