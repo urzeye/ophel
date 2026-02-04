@@ -138,7 +138,7 @@ export const ko = {
   // ======== About Page ========
   version: "버전",
   aboutDescription:
-    "Ophel은 Gemini, ChatGPT, Claude, AI Studio, Grok과 같은 AI 플랫폼을 위해 설계된 브라우저 확장 프로그램입니다. 대화 관리, 스마트 개요, 프롬프트 라이브러리로 워크플로우를 강화하며 읽기 기록 복원, 양방향 앵커, 워터마크 제거, 형식 수정, 모델 잠금과 같은 유틸리티를 제공합니다. 테마 및 UI에 대한 포괄적인 사용자 정의 옵션을 통해 Ophel은 더욱 부드럽고 효율적인 AI 상호작용 환경을 보장합니다.",
+    "{appName}은 Gemini, ChatGPT, Claude, AI Studio, Grok과 같은 AI 플랫폼을 위해 설계된 브라우저 확장 프로그램입니다. 대화 관리, 스마트 개요, 프롬프트 라이브러리로 워크플로우를 강화하며 읽기 기록 복원, 양방향 앵커, 워터마크 제거, 형식 수정, 모델 잠금과 같은 유틸리티를 제공합니다. 테마 및 UI에 대한 포괄적인 사용자 정의 옵션을 통해 {appName}은 더욱 부드럽고 효율적인 AI 상호작용 환경을 보장합니다.",
   projectLinks: "프로젝트 링크",
   githubDesc: "소스 코드 확인, 문제 보고 또는 기여",
   giveStar: "GitHub에서 스타 주기",

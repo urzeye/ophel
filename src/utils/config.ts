@@ -7,7 +7,7 @@
 export const APP_NAME = "ophel"
 
 // 应用显示名称
-export const APP_DISPLAY_NAME = "Ophel"
+export const APP_DISPLAY_NAME = "Ophel Atlas"
 
 // 应用版本 - 从 manifest 自动获取，与 package.json 保持同步
 // 应用版本 - 根据平台获取

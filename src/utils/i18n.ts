@@ -34,9 +34,17 @@ export function getEffectiveLanguage(settingLang: string): string {
   return settingLang
 }
 
-export function t(key: string): string {
+export function t(key: string, params?: Record<string, string>): string {
   const langResources = resources[currentLang as keyof typeof resources] || resources["en"]
-  return (langResources[key as keyof typeof langResources] as string) || key
+  let text = (langResources[key as keyof typeof langResources] as string) || key
+
+  if (params) {
+    Object.keys(params).forEach((paramKey) => {
+      text = text.replace(new RegExp(`{${paramKey}}`, "g"), params[paramKey])
+    })
+  }
+
+  return text
 }
 
 export function getCurrentLang(): string {
