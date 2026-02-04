@@ -110,8 +110,8 @@ const Utils = {
         tasks.forEach((task) => {
           try {
             task()
-          } catch {
-            console.error("[DOMToolkit] Cleanup error:", e)
+          } catch (error) {
+            console.error("[DOMToolkit] Cleanup error:", error)
           }
         })
         tasks.clear()
@@ -218,8 +218,8 @@ class SharedObserverManager {
               callbacks.forEach((cb) => {
                 try {
                   cb(addedNode, mutation)
-                } catch {
-                  console.error("[DOMToolkit] Observer callback error:", e)
+                } catch (error) {
+                  console.error("[DOMToolkit] Observer callback error:", error)
                 }
               })
             }
@@ -522,8 +522,8 @@ class DOMToolkitClass {
         if (callback(node, isNew) === false) {
           stop()
         }
-      } catch {
-        console.error("[DOMToolkit] each callback error:", e)
+      } catch (error) {
+        console.error("[DOMToolkit] each callback error:", error)
         stop()
       }
     }
@@ -597,15 +597,15 @@ class DOMToolkitClass {
         timeoutId = setTimeout(() => {
           try {
             callback(mutations, observer)
-          } catch {
-            console.error("[DOMToolkit] watch callback error:", e)
+          } catch (error) {
+            console.error("[DOMToolkit] watch callback error:", error)
           }
         }, debounce)
       } else {
         try {
           callback(mutations, observer)
-        } catch {
-          console.error("[DOMToolkit] watch callback error:", e)
+        } catch (error) {
+          console.error("[DOMToolkit] watch callback error:", error)
         }
       }
     }
@@ -646,8 +646,8 @@ class DOMToolkitClass {
         if (cb) {
           try {
             cb(el)
-          } catch {
-            console.error("[DOMToolkit] watchMultiple callback error:", e)
+          } catch (error) {
+            console.error("[DOMToolkit] watchMultiple callback error:", error)
           }
         }
       })
@@ -924,8 +924,8 @@ class DOMToolkitClass {
       if ((node as Element).shadowRoot) {
         try {
           callback((node as Element).shadowRoot!, node as Element)
-        } catch {
-          console.error("[DOMToolkit] walkShadowRoots callback error:", e)
+        } catch (error) {
+          console.error("[DOMToolkit] walkShadowRoots callback error:", error)
         }
         try {
           walk((node as Element).shadowRoot!, depth + 1)

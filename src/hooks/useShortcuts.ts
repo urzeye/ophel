@@ -468,8 +468,8 @@ export function useShortcuts({
       // 默认导出为 Markdown 文件
       await conversationManager.exportConversation(sessionId, "markdown")
       showToast(t("exportSuccess") || "导出成功")
-    } catch {
-      console.error("Export failed:", e)
+    } catch (error) {
+      console.error("Export failed:", error)
       showToast(t("exportFailed") || "导出失败")
     }
   }, [conversationManager, adapter])
@@ -665,8 +665,8 @@ export function useShortcuts({
           )
         }
       }
-    } catch {
-      showToast("切换失败: " + (e as Error).message, 2000)
+    } catch (error) {
+      showToast("切换失败: " + (error as Error).message, 2000)
     }
   }, [])
 
