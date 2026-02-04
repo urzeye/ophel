@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel Atlas — Diálogos de IA estructurados",
+    "message": "Ophel Atlas - Organizador de Chats de IA",
     "description": "Nombre de la extensión"
   },
   "extensionDescription": {
-    "message": "Convierte diálogos con IA en conocimiento legible y navegable mediante esquemas, carpetas y bibliotecas de prompts, sin desplazamiento infinito.",
+    "message": "Transforma chats de IA en conocimiento útil. Usa esquemas, carpetas y prompts para organizar tu trabajo y evitar el scroll infinito.",
     "description": "Descripción de la extensión"
   }
 }

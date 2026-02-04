@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel Atlas — AI 대화 구조화",
+    "message": "Ophel Atlas - AI 채팅 정리 및 탐색 도구",
     "description": "확장 프로그램 이름"
   },
   "extensionDescription": {
-    "message": "AI 대화를 읽고 탐색할 수 있는 지식으로 전환합니다. 개요, 대화 폴더, 프롬프트 라이브러리로 무한 스크롤을 제거합니다.",
+    "message": "AI 채팅을 읽기 쉽고 탐색 가능한 지식으로 변환하세요. 개요, 폴더, 프롬프트로 워크플로우를 정리하여 무한 스크롤에서 해방되세요.",
     "description": "확장 프로그램 설명"
   }
 }

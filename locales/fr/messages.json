@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel Atlas — Conversations IA structurées",
+    "message": "Ophel Atlas - Organisateur de Chat IA",
     "description": "Nom de l'extension"
   },
   "extensionDescription": {
-    "message": "Transformez les conversations IA en connaissances lisibles et navigables grâce aux plans, dossiers et bibliothèques de prompts, sans défilement infini.",
+    "message": "Convertissez les chats IA en savoir lisible. Plans, dossiers et prompts pour organiser votre travail et éviter le défilement.",
     "description": "Description de l'extension"
   }
 }

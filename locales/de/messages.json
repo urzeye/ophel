@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel Atlas — KI-Dialoge strukturieren",
+    "message": "Ophel Atlas - KI-Chat-Organizer & Navigator",
     "description": "Erweiterungsname"
   },
   "extensionDescription": {
-    "message": "Verwandeln Sie KI-Gespräche in lesbares, navigierbares Wissen. Mit Gliederungen, Ordnern und Prompt-Bibliotheken wird endloses Scrollen vermieden.",
+    "message": "Machen Sie KI-Chats zu lesbarem Wissen. Nutzen Sie Gliederungen, Ordner und Prompts für einen besseren Workflow ohne Scrollen.",
     "description": "Erweiterungsbeschreibung"
   }
 }
