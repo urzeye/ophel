@@ -1,4 +1,5 @@
-import type { ConversationInfo, ConversationObserverConfig, SiteAdapter } from "~adapters/base"
+import { SiteAdapter } from "~adapters/base"
+import type { ConversationInfo, ConversationObserverConfig } from "~adapters/base"
 import { type Folder } from "~constants"
 import { getConversationsStore, useConversationsStore } from "~stores/conversations-store"
 import { getFoldersStore, useFoldersStore } from "~stores/folders-store"
@@ -717,10 +718,16 @@ export class ConversationManager {
         messages.push({ role: "user", content: userContent })
       }
       if (aiMessages[i]) {
-        // 使用适配器方法提取AI回复(Claude会过滤Artifacts并标注)
-        const aiContent = this.siteAdapter.extractAssistantResponseText
-          ? this.siteAdapter.extractAssistantResponseText(aiMessages[i])
-          : htmlToMarkdown(aiMessages[i]) || aiMessages[i].textContent?.trim() || ""
+        // 优先使用适配器的自定义提取逻辑；未覆盖时回退到 HTML->Markdown
+        const adapterExtract = this.siteAdapter.extractAssistantResponseText
+        const baseExtract = SiteAdapter.prototype.extractAssistantResponseText
+        let aiContent = ""
+        if (adapterExtract && adapterExtract !== baseExtract) {
+          aiContent = adapterExtract.call(this.siteAdapter, aiMessages[i])
+        }
+        if (!aiContent) {
+          aiContent = htmlToMarkdown(aiMessages[i]) || aiMessages[i].textContent?.trim() || ""
+        }
 
         messages.push({
           role: "assistant",

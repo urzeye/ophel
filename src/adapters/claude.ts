@@ -2,6 +2,7 @@
  * Claude.ai 适配器
  */
 import { SITE_IDS } from "~constants"
+import { htmlToMarkdown } from "~utils/exporter"
 
 import {
   SiteAdapter,
@@ -585,7 +586,8 @@ export class ClaudeAdapter extends SiteAdapter {
     // 提取正常回复内容(在.standard-markdown或.progressive-markdown中)
     const markdownContent = element.querySelector(".standard-markdown, .progressive-markdown")
     if (markdownContent) {
-      result += markdownContent.textContent?.trim() || ""
+      const markdown = htmlToMarkdown(markdownContent)
+      result += markdown || markdownContent.textContent?.trim() || ""
     }
 
     return result.trim()
