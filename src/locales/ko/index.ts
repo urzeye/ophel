@@ -210,6 +210,7 @@ export const ko = {
   dangerZoneDesc: "파괴적인 작업 (되돌릴 수 없음)",
   anchorPoint: "앵커",
   updateAnchor: "앵커 업데이트",
+  goToAnchor: "앵커로 돌아가기",
   title: "제목",
   category: "카테고리",
   categoryPlaceholder: "예: 코딩, 번역",

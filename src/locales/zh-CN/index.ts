@@ -683,6 +683,7 @@ export const zhCN = {
   setAnchor: "设置锚点",
   setAnchorToast: "已设置锚点",
   backToAnchor: "返回锚点",
+  goToAnchor: "返回锚点",
   noAnchor: "暂无锚点",
   clearAnchor: "清除锚点",
   clearAnchorToast: "已清除锚点",

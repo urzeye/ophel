@@ -208,6 +208,7 @@ export const fr = {
   dangerZoneDesc: "Actions irréversibles",
   anchorPoint: "Ancre",
   updateAnchor: "Mettre à jour l'Ancre",
+  goToAnchor: "Revenir à l'ancre",
   title: "Titre",
   category: "Catégorie",
   categoryPlaceholder: "Ex : Code, Traduction",

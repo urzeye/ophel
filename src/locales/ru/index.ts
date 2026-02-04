@@ -205,6 +205,7 @@ export const ru = {
   dangerZoneDesc: "Необратимые действия",
   anchorPoint: "Якорь",
   updateAnchor: "Обновить якорь",
+  goToAnchor: "Вернуться к якорю",
   title: "Заголовок",
   category: "Категория",
   categoryPlaceholder: "Напр.: Код, Перевод",

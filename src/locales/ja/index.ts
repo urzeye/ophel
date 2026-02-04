@@ -210,6 +210,7 @@ export const ja = {
   dangerZoneDesc: "破壊的な操作（取り消し不可）",
   anchorPoint: "アンカー",
   updateAnchor: "アンカーを更新",
+  goToAnchor: "アンカーへ戻る",
   title: "タイトル",
   category: "カテゴリ",
   categoryPlaceholder: "例: コーディング、翻訳",

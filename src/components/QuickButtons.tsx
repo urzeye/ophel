@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react"
 
 import { getAdapter } from "~adapters/index"
-import { ClearIcon, ReturnIcon, ThemeDarkIcon, ThemeLightIcon } from "~components/icons"
+import { ThemeDarkIcon, ThemeLightIcon } from "~components/icons"
 import { LoadingOverlay } from "~components/LoadingOverlay"
 import { Tooltip } from "~components/ui/Tooltip"
 import { COLLAPSED_BUTTON_DEFS } from "~constants"
@@ -152,23 +152,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     setIsFlutterMode(scrollInfo.isFlutterMode)
   }, [adapter])
 
-  // 手动锚点：返回（支持图文并茂模式）
-  const backToManualAnchor = useCallback(async () => {
-    const savedAnchor = anchorStore.get()
-    if (savedAnchor === null) return
-
-    const scrollInfo = await getScrollInfo(adapter)
-    const currentPos = scrollInfo.scrollTop
-
-    await smartScrollTo(adapter, savedAnchor)
-    anchorStore.set(currentPos)
-  }, [adapter])
-
-  // 手动锚点：清除
-  const clearAnchorManually = useCallback(() => {
-    anchorStore.clear()
-  }, [])
-
   // 获取主题图标
   const getThemeIcon = () => {
     const isDark = themeMode === "dark"
@@ -216,8 +199,14 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     const isAnchorBtn = id === "anchor"
     const anchorDisabled = isAnchorBtn && !hasAnchor
 
+    const tooltipContent = isAnchorBtn
+      ? hasAnchor
+        ? t("goToAnchor") || "返回锚点"
+        : t("noAnchor") || "暂无锚点"
+      : t(def.labelKey) || def.labelKey
+
     return (
-      <Tooltip key={id} content={t(def.labelKey) || def.labelKey}>
+      <Tooltip key={id} content={tooltipContent}>
         <button
           className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""}`}
           onClick={(e) => buttonActions[id]?.(e)}
@@ -241,38 +230,12 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
     return (
       <React.Fragment key="manualAnchor">
-        {/* 设置锚点 */}
+        {/* 设置锚点（手动） */}
         <Tooltip content={t("setAnchor") || "设置锚点"}>
           <button
             className="quick-prompt-btn manual-anchor-btn set-btn gh-interactive"
             onClick={setAnchorManually}>
             {AnchorIcon ? <AnchorIcon size={18} /> : "📍"}
-          </button>
-        </Tooltip>
-        {/* 返回锚点 */}
-        <Tooltip content={hasAnchor ? t("goToAnchor") || "返回锚点" : t("noAnchor") || "暂无锚点"}>
-          <button
-            className={`quick-prompt-btn manual-anchor-btn back-btn gh-interactive ${hasAnchor ? "has-anchor" : ""}`}
-            onClick={backToManualAnchor}
-            style={{
-              opacity: hasAnchor ? 1 : 0.4,
-              cursor: hasAnchor ? "pointer" : "default",
-            }}
-            disabled={!hasAnchor}>
-            <ReturnIcon size={18} />
-          </button>
-        </Tooltip>
-        {/* 清除锚点 */}
-        <Tooltip content={t("clearAnchor") || "清除锚点"}>
-          <button
-            className="quick-prompt-btn manual-anchor-btn clear-btn gh-interactive"
-            onClick={clearAnchorManually}
-            style={{
-              opacity: hasAnchor ? 1 : 0.4,
-              cursor: hasAnchor ? "pointer" : "default",
-            }}
-            disabled={!hasAnchor}>
-            <ClearIcon size={18} />
           </button>
         </Tooltip>
       </React.Fragment>
@@ -289,53 +252,49 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   // 构建按钮列表（包含智能分隔线逻辑）
   const renderButtonGroup = () => {
     const elements: React.ReactNode[] = []
-    let prevRenderedType: "panelOnly" | "always" | null = null
-    let prevRenderedId: string | null = null
-    let isFirstRendered = true
+    const navigations = new Set(["scrollTop", "scrollBottom", "anchor", "manualAnchor"])
 
-    collapsedButtonsOrder.forEach((btnConfig, index) => {
-      const def = COLLAPSED_BUTTON_DEFS[btnConfig.id]
-      if (!def) return
+    const renderable = collapsedButtonsOrder
+      .map((btnConfig) => {
+        const def = COLLAPSED_BUTTON_DEFS[btnConfig.id]
+        if (!def) return null
 
-      const isEnabled = def.canToggle ? btnConfig.enabled : true
-      const currentType = def.isPanelOnly ? "panelOnly" : "always"
+        const isEnabled = def.canToggle ? btnConfig.enabled : true
+        if (!isEnabled) return null
 
-      // 禁用的按钮跳过（不渲染，不更新状态）
-      if (!isEnabled) return
+        if (def.isPanelOnly && isPanelOpen) return null
 
-      // panel-only 按钮在面板展开时也跳过
-      if (def.isPanelOnly && isPanelOpen) return
-
-      // === 智能分隔线插入 ===
-      if (!isFirstRendered && prevRenderedType !== null) {
-        // manualAnchor 上方需要分隔线
-        if (btnConfig.id === "manualAnchor") {
-          elements.push(renderDivider(false, `divider-before-${btnConfig.id}`))
+        return {
+          id: btnConfig.id,
+          def,
+          enabled: isEnabled,
+          group: navigations.has(btnConfig.id) ? "navigation" : "tools",
         }
-        // 上一个是 manualAnchor，需要分隔线
-        else if (prevRenderedId === "manualAnchor") {
-          elements.push(
-            renderDivider(currentType === "panelOnly", `divider-after-manualAnchor-${index}`),
-          )
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+
+    let index = 0
+    while (index < renderable.length) {
+      const { group } = renderable[index]
+      let nextIndex = index
+
+      while (nextIndex < renderable.length && renderable[nextIndex].group === group) {
+        const item = renderable[nextIndex]
+        if (item.id === "manualAnchor") {
+          elements.push(renderManualAnchorGroup(item.enabled))
+        } else {
+          elements.push(renderButton(item.id, item.def, item.enabled))
         }
-        // 类型切换时插入分隔线
-        else if (prevRenderedType !== currentType) {
-          elements.push(renderDivider(currentType === "panelOnly", `divider-type-switch-${index}`))
-        }
+        nextIndex++
       }
 
-      // === 创建按钮 ===
-      if (btnConfig.id === "manualAnchor") {
-        elements.push(renderManualAnchorGroup(isEnabled))
-      } else {
-        elements.push(renderButton(btnConfig.id, def, isEnabled))
+      const runLength = nextIndex - index
+      if (runLength >= 2 && nextIndex < renderable.length) {
+        elements.push(renderDivider(false, `divider-group-${index}`))
       }
 
-      // 更新状态
-      prevRenderedType = currentType
-      prevRenderedId = btnConfig.id
-      isFirstRendered = false
-    })
+      index = nextIndex
+    }
 
     return elements
   }

@@ -593,6 +593,7 @@ export const zhTW = {
   setAnchor: "設置錨點",
   setAnchorToast: "已設置錨點",
   backToAnchor: "返回錨點",
+  goToAnchor: "返回錨點",
   noAnchor: "暫無錨點",
   clearAnchor: "清除錨點",
   clearAnchorToast: "已清除錨點",

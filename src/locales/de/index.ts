@@ -207,6 +207,7 @@ export const de = {
   dangerZoneDesc: "Irreversible Aktionen",
   anchorPoint: "Anker",
   updateAnchor: "Anker aktualisieren",
+  goToAnchor: "Zum Anker zurück",
   title: "Titel",
   category: "Kategorie",
   categoryPlaceholder: "Z. B. Code, Übersetzung",

@@ -207,6 +207,7 @@ export const es = {
   dangerZoneDesc: "Acciones irreversibles",
   anchorPoint: "Anclaje",
   updateAnchor: "Actualizar Anclaje",
+  goToAnchor: "Volver al anclaje",
   title: "Título",
   category: "Categoría",
   categoryPlaceholder: "Ej: Código, Traducción",

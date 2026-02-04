@@ -214,6 +214,7 @@ export const en = {
   dangerZoneDesc: "Destructive operations (Irreversible)",
   anchorPoint: "Anchor",
   updateAnchor: "Update Anchor",
+  goToAnchor: "Return to Anchor",
   title: "Title",
   category: "Category",
   categoryPlaceholder: "e.g., Coding, Translation",
