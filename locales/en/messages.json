@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel Atlas — AI Conversation Navigation",
+    "message": "Ophel Atlas - AI Chat Organizer & Navigator",
     "description": "Extension name"
   },
   "extensionDescription": {
-    "message": "Turn AI conversations into readable, navigable, reusable knowledge using outlines, folders, and prompt libraries—no endless scrolling.",
+    "message": "Turn AI chats into readable, navigable knowledge. Use outlines, folders, and prompts to organize your workflow and stop scrolling.",
     "description": "Extension description"
   }
 }

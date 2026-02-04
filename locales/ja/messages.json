@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel Atlas — AI対話の構造化ナビ",
+    "message": "Ophel Atlas - AI対話の構造化とナビゲーションツール",
     "description": "拡張機能名"
   },
   "extensionDescription": {
-    "message": "AI対話を読みやすく、ナビゲート可能な知識へ変換。アウトラインや会話フォルダ、プロンプト集で無限スクロールを解消します。",
+    "message": "AIチャットを読みやすく、ナビゲート可能な知識へ変換。アウトライン、会話フォルダ、プロンプト集で無限スクロールを解消。整理・蓄積可能なワークフローを実現し、AIを活用する学習や業務に最適です。",
     "description": "拡張機能の説明"
   }
 }
