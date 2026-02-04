@@ -375,7 +375,7 @@ export const DEFAULT_SETTINGS: Settings = {
     { id: "panel", enabled: true },
     { id: "anchor", enabled: true },
     { id: "theme", enabled: true },
-    { id: "manualAnchor", enabled: true },
+    { id: "manualAnchor", enabled: false },
     { id: "scrollBottom", enabled: true },
   ],
 
