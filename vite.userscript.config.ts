@@ -30,9 +30,12 @@ function loadLocalizedMetadata(): {
   name: Record<string, string>
   description: Record<string, string>
 } {
-  const name: Record<string, string> = { "": "Ophel - AI Chat Page Enhancer" } // Default fallback
+  const seoKeywordsCN = " | 支持: Gemini, ChatGPT, Claude, Grok, AI Studio | 功能: 实时大纲导航, 会话管理(文件夹/置顶/导出), 提示词库, 沉浸式宽屏/全屏/滚动锁定, 主题切换, Markdown渲染修复, LaTeX公式/表格复制, WebDAV同步, 隐私模式, 快捷键, 标签页重命名, 阅读历史恢复, Banana去水印"
+  const seoKeywordsEN = " | Support: Gemini, ChatGPT, Claude, Grok, AI Studio | Features: Real-time Outline, Conversation Manager (Folders/Pin/Export), Prompt Library, Immersion/Widescreen/Scroll Lock, Theme Switcher, Markdown Fix, LaTeX/Table Copy, WebDAV Sync, Privacy, Shortcuts, Tab Renamer, History Restore, Watermark Remover"
+
+  const name: Record<string, string> = { "": "Ophel Atlas - AI Chat Organizer & Navigator" } // Default fallback
   const description: Record<string, string> = {
-    "": "Optimize Gemini, ChatGPT, Claude, Grok & AI Studio. Features: Smart Outline (H1-H6/User Qs), Conversation Manager (Pin/Folder/Tag/Search/Export), Prompt Library (Variables), Widescreen, Scroll Lock, History Restore, Markdown/Watermark Fix, Copy Tables/Latex, Shortcuts, Claude Session Keys, WebDAV Sync & Privacy. | 增强 Gemini/ChatGPT/Claude/Grok/AI Studio。含智能大纲（层级/跳转）、会话管理（置顶/分组/标签/搜索/导出）、提示词库（变量）、宽屏沉浸/滚动锁定/历史恢复/界面优化、Markdown渲染/修复/去水印、表格公式一键复制、快捷键、Claude Session 切换、WebDAV 同步与隐私模式。高效！",
+    "": "Turn AI chats into readable, navigable knowledge. Use outlines, folders, and prompts to organize your workflow and stop scrolling." + seoKeywordsEN + " | " + "将 AI 对话转化为可阅读、可导航、可复用的知识内容。通过实时大纲、会话文件夹与 Prompt 词库，让对话告别无限滚动，成为可组织、可沉淀的工作流，适用于高频使用 AI 的学习与工作场景。" + seoKeywordsCN,
   }
 
   const localesDir = path.resolve(__dirname, "locales")
@@ -45,7 +48,14 @@ function loadLocalizedMetadata(): {
           name[localeCode] = messages.extensionName.message
         }
         if (messages.extensionDescription?.message) {
-          description[localeCode] = messages.extensionDescription.message
+          let desc = messages.extensionDescription.message
+          // Append SEO keywords: zh_CN gets CN version, everyone else gets EN version
+          if (dirName === "zh_CN") {
+            desc += seoKeywordsCN
+          } else {
+            desc += seoKeywordsEN
+          }
+          description[localeCode] = desc
         }
       } catch {
         console.warn(`Failed to parse ${messagesPath}`)
