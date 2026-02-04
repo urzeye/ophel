@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel: Gemini/ChatGPT/Claude/Grok Assistant",
+    "message": "Ophel Atlas — AI Conversation Navigation",
     "description": "Extension name"
   },
   "extensionDescription": {
-    "message": "Turn long AI chats into structured workflows, making ChatGPT, Gemini, Claude and Grok conversations reusable knowledge.",
+    "message": "Turn AI conversations into readable, navigable, reusable knowledge using outlines, folders, and prompt libraries—no endless scrolling.",
     "description": "Extension description"
   }
 }

@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel: Gemini/ChatGPT/Claude/Grok Помощник",
+    "message": "Ophel Atlas — Структура AI-диалогов",
     "description": "Название расширения"
   },
   "extensionDescription": {
-    "message": "Преобразует диалоги с ИИ в структурированные рабочие процессы, превращая чаты ChatGPT, Gemini, Claude и Grok в знания для работы.",
+    "message": "Преобразуйте AI-диалоги в читаемое и навигируемое знание с помощью структуры, папок и библиотек промптов без бесконечной прокрутки.",
     "description": "Описание расширения"
   }
 }

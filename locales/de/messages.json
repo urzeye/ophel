@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel: Gemini/ChatGPT/Claude/Grok Assistent",
+    "message": "Ophel Atlas — KI-Dialoge strukturieren",
     "description": "Erweiterungsname"
   },
   "extensionDescription": {
-    "message": "Wandelt lange KI-Chats in strukturierte Workflows um und macht Gespräche mit ChatGPT, Gemini, Claude und Grok wiederverwendbar.",
+    "message": "Verwandeln Sie KI-Gespräche in lesbares, navigierbares Wissen. Mit Gliederungen, Ordnern und Prompt-Bibliotheken wird endloses Scrollen vermieden.",
     "description": "Erweiterungsbeschreibung"
   }
 }

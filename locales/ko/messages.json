@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel: Gemini/ChatGPT/Claude/Grok AI 비서",
+    "message": "Ophel Atlas — AI 대화 구조화",
     "description": "확장 프로그램 이름"
   },
   "extensionDescription": {
-    "message": "길어진 AI 대화를 읽고 탐색하며 재사용 가능한 구조화된 워크플로로 변환해 ChatGPT, Gemini, Claude, Grok 대화를 장기적으로 활용할 수 있는 지식 자산으로 축적, 정리·회고·재활용까지 지원합니다",
+    "message": "AI 대화를 읽고 탐색할 수 있는 지식으로 전환합니다. 개요, 대화 폴더, 프롬프트 라이브러리로 무한 스크롤을 제거합니다.",
     "description": "확장 프로그램 설명"
   }
 }
