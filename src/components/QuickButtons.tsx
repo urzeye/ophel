@@ -34,6 +34,11 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const { settings } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
   const collapsedButtonsOrder = currentSettings.collapsedButtons || []
+  const quickButtonsSide = currentSettings.panel?.defaultPosition ?? "right"
+  const quickButtonsPositionStyle =
+    quickButtonsSide === "left"
+      ? { left: "16px", right: "auto" }
+      : { right: "16px", left: "auto" }
 
   // 锚点状态（使用全局存储）
   const anchorPosition = useSyncExternalStore(anchorStore.subscribe, anchorStore.getSnapshot)
@@ -339,7 +344,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         className={`quick-btn-group gh-interactive ${!isPanelOpen ? "collapsed" : ""}`}
         style={{
           position: "fixed",
-          right: "16px",
           top: "50%",
           transform: "translateY(-50%)",
           display: "flex",
@@ -347,6 +351,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
           gap: "8px",
           zIndex: 9998,
           transition: "opacity 0.3s",
+          ...quickButtonsPositionStyle,
         }}>
         {renderButtonGroup()}
       </div>
