@@ -309,7 +309,11 @@ export function useShortcuts({
 
         if (element && element.isConnected) {
           element.scrollIntoView({ behavior: "smooth", block: "start" })
-          showToast(targetItem.text, 1000) // 显示跳转提示
+          const toastText =
+            targetItem.text?.replace(/\s+/g, " ").trim() ||
+            t("locatingOutline") ||
+            "正在定位大纲位置..."
+          showToast(toastText, 1000, { className: "gh-toast--outline-nav", maxWidth: 360 })
         }
       }
     },

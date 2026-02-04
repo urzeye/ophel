@@ -2,7 +2,12 @@
  * 显示 Toast 提示
  * 从用户脚本迁移的轻量级提示组件
  */
-export function showToast(message: string, duration = 2000) {
+type ToastOptions = {
+  className?: string
+  maxWidth?: number
+}
+
+export function showToast(message: string, duration = 2000, options: ToastOptions = {}) {
   // 移除现有的 toast
   const existing = document.getElementById("gh-toast")
   if (existing) {
@@ -36,6 +41,12 @@ export function showToast(message: string, duration = 2000) {
       .gh-toast.show {
         opacity: 1;
       }
+      .gh-toast--outline-nav {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 360px;
+      }
     `
     document.head.appendChild(style)
   }
@@ -43,6 +54,12 @@ export function showToast(message: string, duration = 2000) {
   const toast = document.createElement("div")
   toast.id = "gh-toast"
   toast.className = "gh-toast"
+  if (options.className) {
+    toast.classList.add(options.className)
+  }
+  if (options.maxWidth && Number.isFinite(options.maxWidth)) {
+    toast.style.maxWidth = `${options.maxWidth}px`
+  }
   toast.textContent = message
 
   document.body.appendChild(toast)
