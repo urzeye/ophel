@@ -10,6 +10,10 @@ import { showToast } from "~utils/toast"
 
 // ==================== 类型定义 ====================
 
+const EMOJI_EXPORT = "\u{1F4E4}"
+const EMOJI_USER = "\u{1F64B}"
+const EMOJI_ASSISTANT = "\u{1F916}"
+
 export interface ExportMessage {
   role: "user" | "assistant" | string
   content: string
@@ -197,6 +201,14 @@ export function htmlToMarkdown(el: Element): string {
 // ==================== 格式化函数 ====================
 
 /**
+ * 为 UTF-8 文本添加 BOM，提升 Windows 记事本等工具的编码识别
+ */
+export function ensureUtf8Bom(content: string): string {
+  if (!content) return "\ufeff"
+  return content.startsWith("\ufeff") ? content : `\ufeff${content}`
+}
+
+/**
  * 格式化为 Markdown
  */
 export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessage[]): string {
@@ -204,7 +216,7 @@ export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessa
 
   // 元数据头
   lines.push("---")
-  lines.push(`# 📤 ${t("exportMetaTitle")}`)
+  lines.push(`# ${EMOJI_EXPORT} ${t("exportMetaTitle")}`)
   lines.push(`- **${t("exportMetaConvTitle")}**: ${metadata.title}`)
   lines.push(`- **${t("exportMetaTime")}**: ${metadata.exportTime}`)
   lines.push(`- **${t("exportMetaSource")}**: ${metadata.source}`)
@@ -216,7 +228,7 @@ export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessa
   messages.forEach((msg) => {
     if (msg.role === "user") {
       const userLabel = metadata.customUserName || t("exportUserLabel")
-      lines.push(`## 🙋 ${userLabel}`)
+      lines.push(`## ${EMOJI_USER} ${userLabel}`)
       lines.push("")
       lines.push(msg.content)
       lines.push("")
@@ -224,7 +236,7 @@ export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessa
       lines.push("")
     } else {
       const modelLabel = metadata.customModelName || metadata.source
-      lines.push(`## 🤖 ${modelLabel}`)
+      lines.push(`## ${EMOJI_ASSISTANT} ${modelLabel}`)
       lines.push("")
       lines.push(msg.content)
       lines.push("")
