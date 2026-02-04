@@ -326,6 +326,15 @@
   pointer-events: none;
 }
 
+.settings-row.disabled.disabled-clickable {
+  pointer-events: auto;
+  cursor: not-allowed;
+}
+
+.settings-row.disabled.disabled-clickable .settings-row-control {
+  pointer-events: none;
+}
+
 /* ==================== 表单控件 ==================== */
 
 .settings-select {

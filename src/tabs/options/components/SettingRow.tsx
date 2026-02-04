@@ -15,6 +15,8 @@ export interface SettingRowProps {
   children?: React.ReactNode
   /** 是否禁用 */
   disabled?: boolean
+  /** 禁用时点击回调 */
+  onDisabledClick?: () => void
   /** 自定义样式 */
   style?: React.CSSProperties
 }
@@ -27,10 +29,21 @@ export const SettingRow: React.FC<SettingRowProps> = ({
   description,
   children,
   disabled = false,
+  onDisabledClick,
   style,
 }) => {
+  const isDisabledClickable = disabled && !!onDisabledClick
   return (
-    <div className={`settings-row ${disabled ? "disabled" : ""}`} style={style}>
+    <div
+      className={`settings-row ${disabled ? "disabled" : ""} ${
+        isDisabledClickable ? "disabled-clickable" : ""
+      }`}
+      style={style}
+      onClick={() => {
+        if (isDisabledClickable) {
+          onDisabledClick?.()
+        }
+      }}>
       <div className="settings-row-info">
         <div className="settings-row-label">{label}</div>
         {description && <div className="settings-row-desc">{description}</div>}
@@ -49,6 +62,7 @@ export interface ToggleRowProps {
   checked: boolean
   onChange: () => void
   disabled?: boolean
+  onDisabledClick?: () => void
 }
 
 export const ToggleRow: React.FC<ToggleRowProps> = ({
@@ -57,9 +71,14 @@ export const ToggleRow: React.FC<ToggleRowProps> = ({
   checked,
   onChange,
   disabled = false,
+  onDisabledClick,
 }) => {
   return (
-    <SettingRow label={label} description={description} disabled={disabled}>
+    <SettingRow
+      label={label}
+      description={description}
+      disabled={disabled}
+      onDisabledClick={onDisabledClick}>
       <Switch checked={checked} onChange={onChange} disabled={disabled} />
     </SettingRow>
   )

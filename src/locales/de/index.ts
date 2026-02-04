@@ -166,6 +166,7 @@ export const de = {
   // ======== Common Buttons/Labels ========
   tabBehaviorTitle: "Verhalten",
   notificationSettings: "Aktionen nach Abschluss",
+  enablePrerequisiteToast: "Bitte zuerst \"{setting}\" aktivieren",
   privacyModeTitle: "Privatmodus",
   collapsedButtonsOrderTitle: "Schnelltasten",
 

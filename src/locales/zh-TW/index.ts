@@ -462,6 +462,7 @@ export const zhTW = {
   // ======== 通用按鈕/標籤 ========
   tabBehaviorTitle: "標籤頁行為",
   notificationSettings: "完成後操作",
+  enablePrerequisiteToast: "請先開啟「{setting}」",
   privacyModeTitle: "隱私模式",
   // 介面排版開關
   collapsedButtonsOrderTitle: "快捷按鈕組",

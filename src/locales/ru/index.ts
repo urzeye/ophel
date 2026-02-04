@@ -164,6 +164,7 @@ export const ru = {
   // ======== Common Buttons/Labels ========
   tabBehaviorTitle: "Поведение",
   notificationSettings: "Действия после завершения",
+  enablePrerequisiteToast: "Сначала включите «{setting}»",
   privacyModeTitle: "Приватность",
   collapsedButtonsOrderTitle: "Кнопки",
 

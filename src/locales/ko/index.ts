@@ -168,6 +168,7 @@ export const ko = {
   // ======== Common Buttons/Labels ========
   tabBehaviorTitle: "탭 동작",
   notificationSettings: "완료 후 동작",
+  enablePrerequisiteToast: "먼저 \"{setting}\"을(를) 켜 주세요",
   privacyModeTitle: "개인정보 보호 모드",
   collapsedButtonsOrderTitle: "퀵 버튼",
 

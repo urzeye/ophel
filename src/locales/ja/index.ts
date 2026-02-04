@@ -168,6 +168,7 @@ export const ja = {
   // ======== Common Buttons/Labels ========
   tabBehaviorTitle: "タブの動作",
   notificationSettings: "完了後の操作",
+  enablePrerequisiteToast: "先に「{setting}」を有効にしてください",
   privacyModeTitle: "プライバシーモード",
   collapsedButtonsOrderTitle: "クイックボタン",
 

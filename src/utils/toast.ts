@@ -7,6 +7,8 @@ type ToastOptions = {
   maxWidth?: number
 }
 
+const toastCooldowns = new Map<string, number>()
+
 export function showToast(message: string, duration = 2000, options: ToastOptions = {}) {
   // 移除现有的 toast
   const existing = document.getElementById("gh-toast")
@@ -77,4 +79,18 @@ export function showToast(message: string, duration = 2000, options: ToastOption
       }
     }, 300)
   }, duration)
+}
+
+export function showToastThrottled(
+  message: string,
+  duration = 2000,
+  options: ToastOptions = {},
+  cooldown = 1500,
+  key: string = message,
+) {
+  const now = Date.now()
+  const last = toastCooldowns.get(key) || 0
+  if (now - last < cooldown) return
+  toastCooldowns.set(key, now)
+  showToast(message, duration, options)
 }

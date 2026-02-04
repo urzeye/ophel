@@ -9,6 +9,7 @@ import { NumberInput, Switch } from "~components/ui"
 import { COLLAPSED_BUTTON_DEFS, TAB_DEFINITIONS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
+import { showToastThrottled } from "~utils/toast"
 
 import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
 
@@ -81,6 +82,11 @@ const SortableItem: React.FC<{
 const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId }) => {
   const [activeTab, setActiveTab] = useState("panel")
   const { settings, setSettings, updateNestedSetting, updateDeepSetting } = useSettingsStore()
+
+  const prerequisiteToastTemplate = t("enablePrerequisiteToast") || "请先开启「{setting}」"
+  const showPrerequisiteToast = (label: string) =>
+    showToastThrottled(prerequisiteToastTemplate.replace("{setting}", label), 2000, {}, 1500, label)
+  const edgeSnapLabel = t("edgeSnapHideLabel") || "边缘自动吸附"
 
   // 拖拽状态
   const [draggedItem, setDraggedItem] = useState<{ type: "tab" | "button"; index: number } | null>(
@@ -298,7 +304,8 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId }) => {
           <SettingRow
             label={t("edgeSnapThresholdLabel") || "吸附触发距离"}
             description={t("edgeSnapThresholdDesc") || "拖拽面板到边缘多近时触发吸附"}
-            disabled={!settings.panel?.edgeSnap}>
+            disabled={!settings.panel?.edgeSnap}
+            onDisabledClick={() => showPrerequisiteToast(edgeSnapLabel)}>
             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
               <NumberInput
                 value={settings.panel?.edgeSnapThreshold ?? 18}

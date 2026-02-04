@@ -203,6 +203,7 @@ export const zhCN = {
   // ======== 通用按钮/标签 ========
   tabBehaviorTitle: "标签页行为",
   notificationSettings: "完成后操作",
+  enablePrerequisiteToast: "请先开启「{setting}」",
   privacyModeTitle: "隐私模式",
   collapsedButtonsOrderTitle: "快捷按钮组",
 

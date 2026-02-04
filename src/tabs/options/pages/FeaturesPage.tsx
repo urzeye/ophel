@@ -12,7 +12,7 @@ import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { MSG_CHECK_PERMISSIONS, MSG_REQUEST_PERMISSIONS, sendToBackground } from "~utils/messaging"
-import { showToast } from "~utils/toast"
+import { showToast, showToastThrottled } from "~utils/toast"
 
 import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
 
@@ -33,6 +33,15 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
   const { settings, updateDeepSetting, updateNestedSetting } = useSettingsStore()
 
   if (!settings) return null
+
+  const prerequisiteToastTemplate = t("enablePrerequisiteToast") || "请先开启「{setting}」"
+  const showPrerequisiteToast = (label: string) =>
+    showToastThrottled(prerequisiteToastTemplate.replace("{setting}", label), 2000, {}, 1500, label)
+  const autoRenameLabel = t("autoRenameTabLabel") || "自动重命名"
+  const showNotificationLabel = t("showNotificationLabel") || "桌面通知"
+  const privacyModeLabel = t("privacyModeLabel") || "隐私模式"
+  const readingHistoryLabel = t("readingHistoryPersistenceLabel") || "启用阅读历史"
+  const formulaCopyLabel = t("formulaCopyLabel") || "双击复制公式"
 
   return (
     <div>
@@ -64,7 +73,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
 
             <SettingRow
               label={t("renameIntervalLabel") || "检测频率"}
-              disabled={!settings.tab?.autoRename}>
+              disabled={!settings.tab?.autoRename}
+              onDisabledClick={() => showPrerequisiteToast(autoRenameLabel)}>
               <select
                 className="settings-select"
                 value={settings.tab?.renameInterval || 3}
@@ -83,7 +93,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             <SettingRow
               label={t("titleFormatLabel") || "标题格式"}
               description={t("titleFormatDesc") || "支持占位符：{status}、{title}、{model}"}
-              disabled={!settings.tab?.autoRename}>
+              disabled={!settings.tab?.autoRename}
+              onDisabledClick={() => showPrerequisiteToast(autoRenameLabel)}>
               <input
                 type="text"
                 className="settings-input"
@@ -144,6 +155,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
               description={t("notificationSoundDesc") || "生成完成时播放提示音"}
               checked={settings.tab?.notificationSound ?? false}
               disabled={!settings.tab?.showNotification}
+              onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}
               onChange={() =>
                 updateNestedSetting("tab", "notificationSound", !settings.tab?.notificationSound)
               }
@@ -151,7 +163,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
 
             <SettingRow
               label={t("notificationVolumeLabel") || "声音音量"}
-              disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}>
+              disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
+              onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <input
                   type="range"
@@ -176,6 +189,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
               description={t("notifyWhenFocusedDesc") || "窗口在前台时也发送通知"}
               checked={settings.tab?.notifyWhenFocused ?? false}
               disabled={!settings.tab?.showNotification}
+              onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}
               onChange={() =>
                 updateNestedSetting("tab", "notifyWhenFocused", !settings.tab?.notifyWhenFocused)
               }
@@ -200,7 +214,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
 
             <SettingRow
               label={t("privacyTitleLabel") || "伪装标题"}
-              disabled={!settings.tab?.privacyMode}>
+              disabled={!settings.tab?.privacyMode}
+              onDisabledClick={() => showPrerequisiteToast(privacyModeLabel)}>
               <input
                 type="text"
                 className="settings-input"
@@ -458,6 +473,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             description={t("readingHistoryAutoRestoreDesc") || "打开会话时自动跳转到上次阅读位置"}
             checked={settings.readingHistory?.autoRestore ?? true}
             disabled={!settings.readingHistory?.persistence}
+            onDisabledClick={() => showPrerequisiteToast(readingHistoryLabel)}
             onChange={() =>
               updateNestedSetting(
                 "readingHistory",
@@ -469,7 +485,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
 
           <SettingRow
             label={t("readingHistoryCleanup") || "历史保留时间"}
-            disabled={!settings.readingHistory?.persistence}>
+            disabled={!settings.readingHistory?.persistence}
+            onDisabledClick={() => showPrerequisiteToast(readingHistoryLabel)}>
             <select
               className="settings-select"
               value={settings.readingHistory?.cleanupDays || 30}
@@ -520,6 +537,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             description={t("formulaDelimiterDesc") || "复制时将括号分隔符转为美元符号"}
             checked={settings.content?.formulaDelimiter ?? true}
             disabled={!settings.content?.formulaCopy}
+            onDisabledClick={() => showPrerequisiteToast(formulaCopyLabel)}
             onChange={() =>
               updateNestedSetting(
                 "content",

@@ -19,7 +19,7 @@ import {
   type AIStudioModelInfo,
 } from "~utils/messaging"
 import type { Settings } from "~utils/storage"
-import { showToast } from "~utils/toast"
+import { showToast, showToastThrottled } from "~utils/toast"
 
 import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
 import ClaudeSettings from "./ClaudeSettings"
@@ -36,7 +36,8 @@ const ModelLockRow: React.FC<{
   settings: Settings
   setSettings: (settings: Partial<Settings>) => void
   placeholder: string
-}> = ({ label, siteKey, settings, setSettings, placeholder }) => {
+  onDisabledClick?: () => void
+}> = ({ label, siteKey, settings, setSettings, placeholder, onDisabledClick }) => {
   const currentConfig = useMemo(
     () => settings.modelLock?.[siteKey] || { enabled: false, keyword: "" },
     [settings.modelLock, siteKey],
@@ -77,27 +78,45 @@ const ModelLockRow: React.FC<{
         alignItems: "center",
         gap: "12px",
         marginBottom: "12px",
+        cursor: currentConfig.enabled ? "default" : "not-allowed",
       }}>
-      <span style={{ fontSize: "14px", fontWeight: 500, flex: 1 }}>{label}</span>
-      <input
-        type="text"
-        className="settings-input"
-        value={localKeyword}
-        onChange={(e) => setLocalKeyword(e.target.value)}
-        onBlur={saveKeyword}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            saveKeyword()
-            ;(e.target as HTMLInputElement).blur()
-          }
-        }}
-        placeholder={placeholder}
-        disabled={!currentConfig.enabled}
+      <span
         style={{
-          width: "200px",
-          opacity: currentConfig.enabled ? 1 : 0.5,
-        }}
-      />
+          fontSize: "14px",
+          fontWeight: 500,
+          flex: 1,
+          color: currentConfig.enabled ? "var(--gh-text, #374151)" : "var(--gh-text-secondary, #9ca3af)",
+        }}>
+        {label}
+      </span>
+      <div
+        onMouseDown={(e) => {
+          if (!currentConfig.enabled) {
+            e.preventDefault()
+            onDisabledClick?.()
+          }
+        }}>
+        <input
+          type="text"
+          className="settings-input"
+          value={localKeyword}
+          onChange={(e) => setLocalKeyword(e.target.value)}
+          onBlur={saveKeyword}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              saveKeyword()
+              ;(e.target as HTMLInputElement).blur()
+            }
+          }}
+          placeholder={placeholder}
+          disabled={!currentConfig.enabled}
+          style={{
+            width: "200px",
+            opacity: currentConfig.enabled ? 1 : 0.5,
+            pointerEvents: currentConfig.enabled ? "auto" : "none",
+          }}
+        />
+      </div>
       <Switch checked={currentConfig.enabled} onChange={toggleEnabled} />
     </div>
   )
@@ -107,7 +126,8 @@ const ModelLockRow: React.FC<{
 const AIStudioModelLockRow: React.FC<{
   settings: Settings
   setSettings: (settings: Partial<Settings>) => void
-}> = ({ settings, setSettings }) => {
+  onDisabledClick?: () => void
+}> = ({ settings, setSettings, onDisabledClick }) => {
   const siteKey = "aistudio"
   const currentConfig = settings.modelLock?.[siteKey] || { enabled: false, keyword: "" }
 
@@ -185,8 +205,17 @@ const AIStudioModelLockRow: React.FC<{
         alignItems: "center",
         gap: "12px",
         marginBottom: "12px",
+        cursor: currentConfig.enabled ? "default" : "not-allowed",
       }}>
-      <span style={{ fontSize: "14px", fontWeight: 500, flex: 1 }}>AI Studio</span>
+      <span
+        style={{
+          fontSize: "14px",
+          fontWeight: 500,
+          flex: 1,
+          color: currentConfig.enabled ? "var(--gh-text, #374151)" : "var(--gh-text-secondary, #9ca3af)",
+        }}>
+        AI Studio
+      </span>
       {/* 刷新按钮 */}
       <Tooltip content="点击在 AI Studio 页面刷新模型列表">
         <button
@@ -208,22 +237,31 @@ const AIStudioModelLockRow: React.FC<{
         </button>
       </Tooltip>
       {/* 模型选择下拉框 */}
-      <select
-        className="settings-select"
-        value={currentConfig.keyword || ""}
-        onChange={(e) => handleModelChange(e.target.value)}
-        disabled={!currentConfig.enabled || modelList.length === 0}
-        style={{
-          width: "200px",
-          opacity: currentConfig.enabled ? 1 : 0.5,
+      <div
+        onMouseDown={(e) => {
+          if (!currentConfig.enabled) {
+            e.preventDefault()
+            onDisabledClick?.()
+          }
         }}>
-        {modelList.length === 0 && <option value="">请先刷新模型列表</option>}
-        {modelList.map((model) => (
-          <option key={model.id} value={model.id}>
-            {model.name}
-          </option>
-        ))}
-      </select>
+        <select
+          className="settings-select"
+          value={currentConfig.keyword || ""}
+          onChange={(e) => handleModelChange(e.target.value)}
+          disabled={!currentConfig.enabled || modelList.length === 0}
+          style={{
+            width: "200px",
+            opacity: currentConfig.enabled ? 1 : 0.5,
+            pointerEvents: currentConfig.enabled ? "auto" : "none",
+          }}>
+          {modelList.length === 0 && <option value="">请先刷新模型列表</option>}
+          {modelList.map((model) => (
+            <option key={model.id} value={model.id}>
+              {model.name}
+            </option>
+          ))}
+        </select>
+      </div>
       <Switch checked={currentConfig.enabled} onChange={toggleEnabled} />
     </div>
   )
@@ -238,6 +276,12 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
     }
   }, [initialTab])
   const { settings, setSettings, updateNestedSetting } = useSettingsStore()
+  const prerequisiteToastTemplate = t("enablePrerequisiteToast") || "请先开启「{setting}」"
+  const showPrerequisiteToast = (label: string) =>
+    showToastThrottled(prerequisiteToastTemplate.replace("{setting}", label), 2000, {}, 1500, label)
+  const enablePageWidthLabel = t("enablePageWidth") || "启用页面宽度"
+  const enableUserQueryWidthLabel = t("enableUserQueryWidth") || "启用用户问题加宽"
+  const modelLockLabel = t("modelLockTitle") || "模型切换锁定"
 
   // 宽度布局相关状态
   const currentPageWidth =
@@ -480,7 +524,8 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
 
             <SettingRow
               label={t("pageWidthValueLabel") || "宽度值"}
-              disabled={!currentPageWidth?.enabled}>
+              disabled={!currentPageWidth?.enabled}
+              onDisabledClick={() => showPrerequisiteToast(enablePageWidthLabel)}>
               <div style={{ display: "flex", gap: "8px" }}>
                 <input
                   ref={widthInputRef}
@@ -537,7 +582,8 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
 
             <SettingRow
               label={t("userQueryWidthValueLabel") || "问题宽度"}
-              disabled={!currentUserQueryWidth?.enabled}>
+              disabled={!currentUserQueryWidth?.enabled}
+              onDisabledClick={() => showPrerequisiteToast(enableUserQueryWidthLabel)}>
               <div style={{ display: "flex", gap: "8px" }}>
                 <input
                   ref={userQueryWidthInputRef}
@@ -582,6 +628,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
             settings={settings}
             setSettings={setSettings}
             placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
+            onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
           />
 
           {/* Gemini Enterprise */}
@@ -591,10 +638,15 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
             settings={settings}
             setSettings={setSettings}
             placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
+            onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
           />
 
           {/* AI Studio - 使用下拉选择器 */}
-          <AIStudioModelLockRow settings={settings} setSettings={setSettings} />
+          <AIStudioModelLockRow
+            settings={settings}
+            setSettings={setSettings}
+            onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
+          />
 
           {/* ChatGPT */}
           <ModelLockRow
@@ -603,6 +655,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
             settings={settings}
             setSettings={setSettings}
             placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
+            onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
           />
 
           {/* Claude */}
@@ -612,6 +665,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
             settings={settings}
             setSettings={setSettings}
             placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
+            onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
           />
 
           {/* Grok */}
@@ -621,6 +675,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
             settings={settings}
             setSettings={setSettings}
             placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
+            onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
           />
         </SettingCard>
       )}
