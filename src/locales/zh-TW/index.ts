@@ -345,7 +345,7 @@ export const zhTW = {
   notificationVolumeLabel: "聲音音量",
   notifyWhenFocusedLabel: "前台時也通知",
   notifyWhenFocusedDesc: "當前頁面可見時也發送通知，而不僅在後台時",
-  autoFocusLabel: "自動視窗置頂",
+  autoFocusLabel: "自動置頂視窗",
   autoFocusDesc: "生成完成時自動將視窗帶回前台",
   privacyModeLabel: "隱私模式",
   privacyModeDesc: "隱藏真實對話標題，顯示偽裝標題（雙擊面板標題可快速切換）",
@@ -461,7 +461,7 @@ export const zhTW = {
 
   // ======== 通用按鈕/標籤 ========
   tabBehaviorTitle: "標籤頁行為",
-  notificationSettings: "完成提醒",
+  notificationSettings: "完成後操作",
   privacyModeTitle: "隱私模式",
   // 介面排版開關
   collapsedButtonsOrderTitle: "快捷按鈕組",

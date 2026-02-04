@@ -103,8 +103,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             />
           </SettingCard>
 
-          {/* 完成提醒卡片 */}
-          <SettingCard title={t("notificationSettings") || "完成提醒"}>
+          {/* 完成后操作卡片 */}
+          <SettingCard title={t("notificationSettings") || "完成后操作"}>
             <ToggleRow
               label={t("showNotificationLabel") || "桌面通知"}
               description={t("showNotificationDesc") || "生成完成时发送桌面通知"}
@@ -182,10 +182,9 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             />
 
             <ToggleRow
-              label={t("autoFocusLabel") || "自动窗口置顶"}
+              label={t("autoFocusLabel") || "自动置顶窗口"}
               description={t("autoFocusDesc") || "生成完成后自动激活窗口"}
               checked={settings.tab?.autoFocus ?? false}
-              disabled={!settings.tab?.showNotification}
               onChange={() => updateNestedSetting("tab", "autoFocus", !settings.tab?.autoFocus)}
             />
           </SettingCard>

@@ -358,7 +358,7 @@ export const DEFAULT_SETTINGS: Settings = {
     notificationSound: true,
     notificationVolume: 0.6,
     notifyWhenFocused: false,
-    autoFocus: true,
+    autoFocus: false,
     privacyMode: false,
     privacyTitle: "Google",
     customIcon: "default",

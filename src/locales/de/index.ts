@@ -165,7 +165,7 @@ export const de = {
 
   // ======== Common Buttons/Labels ========
   tabBehaviorTitle: "Verhalten",
-  notificationSettings: "Abschluss-Benachrichtigung",
+  notificationSettings: "Aktionen nach Abschluss",
   privacyModeTitle: "Privatmodus",
   collapsedButtonsOrderTitle: "Schnelltasten",
 
@@ -401,7 +401,7 @@ export const de = {
   notificationVolumeLabel: "Lautstärke",
   notifyWhenFocusedLabel: "Auch bei Fokus melden",
   notifyWhenFocusedDesc: "Meldung senden, auch wenn die Seite offen ist",
-  autoFocusLabel: "Fenster fokussieren",
+  autoFocusLabel: "Fenster automatisch fokussieren",
   autoFocusDesc: "Fenster bei Fertigstellung in den Vordergrund holen",
   privacyModeLabel: "Privatmodus",
   privacyModeDesc: "Scheintitel (Doppelklick oben)",

@@ -163,7 +163,7 @@ export const ru = {
 
   // ======== Common Buttons/Labels ========
   tabBehaviorTitle: "Поведение",
-  notificationSettings: "Уведомления",
+  notificationSettings: "Действия после завершения",
   privacyModeTitle: "Приватность",
   collapsedButtonsOrderTitle: "Кнопки",
 
@@ -399,7 +399,7 @@ export const ru = {
   notificationVolumeLabel: "Громкость",
   notifyWhenFocusedLabel: "Звук даже в фокусе",
   notifyWhenFocusedDesc: "Пищать, даже если страница открыта",
-  autoFocusLabel: "Авто-фокус окна",
+  autoFocusLabel: "Авто-вывод окна вперед",
   autoFocusDesc: "Выводить окно вперед в конце",
   privacyModeLabel: "Приватный режим",
   privacyModeDesc: "Фальшивый заголовок (двойной клик сверху)",

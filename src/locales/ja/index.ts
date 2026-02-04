@@ -167,7 +167,7 @@ export const ja = {
 
   // ======== Common Buttons/Labels ========
   tabBehaviorTitle: "タブの動作",
-  notificationSettings: "回答完了通知",
+  notificationSettings: "完了後の操作",
   privacyModeTitle: "プライバシーモード",
   collapsedButtonsOrderTitle: "クイックボタン",
 
@@ -405,7 +405,7 @@ export const ja = {
   notificationVolumeLabel: "音量",
   notifyWhenFocusedLabel: "フォーカス時も通知",
   notifyWhenFocusedDesc: "該当ページがアクティブな場合でも通知を送信します",
-  autoFocusLabel: "ウィンドウを最前面へ",
+  autoFocusLabel: "自動でウィンドウを最前面に",
   autoFocusDesc: "回答完了時にブラウザのウィンドウをアクティブにします",
   privacyModeLabel: "プライバシーモード",
   privacyModeDesc:

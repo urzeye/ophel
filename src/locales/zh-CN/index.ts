@@ -202,7 +202,7 @@ export const zhCN = {
 
   // ======== 通用按钮/标签 ========
   tabBehaviorTitle: "标签页行为",
-  notificationSettings: "完成提醒",
+  notificationSettings: "完成后操作",
   privacyModeTitle: "隐私模式",
   collapsedButtonsOrderTitle: "快捷按钮组",
 
@@ -416,7 +416,7 @@ export const zhCN = {
   notificationVolumeLabel: "声音音量",
   notifyWhenFocusedLabel: "前台时也通知",
   notifyWhenFocusedDesc: "当前页面可见时也发送通知，而不仅在后台时",
-  autoFocusLabel: "自动窗口置顶",
+  autoFocusLabel: "自动置顶窗口",
   autoFocusDesc: "生成完成时自动将窗口带回前台",
   privacyModeLabel: "隐私模式",
   privacyModeDesc: "隐藏真实对话标题，显示伪装标题（双击面板标题可快速切换）",

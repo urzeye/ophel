@@ -166,7 +166,7 @@ export const fr = {
 
   // ======== Common Buttons/Labels ========
   tabBehaviorTitle: "Comportement",
-  notificationSettings: "Alertes de Fin",
+  notificationSettings: "Actions Après la Fin",
   privacyModeTitle: "Mode Privé",
   collapsedButtonsOrderTitle: "Boutons Rapides",
 
@@ -402,7 +402,7 @@ export const fr = {
   notificationVolumeLabel: "Volume",
   notifyWhenFocusedLabel: "Alerter Même Avec Focus",
   notifyWhenFocusedDesc: "Envoyer l'alerte même si vous voyez la page",
-  autoFocusLabel: "Auto Focus Fenêtre",
+  autoFocusLabel: "Auto Mettre la Fenêtre au Premier Plan",
   autoFocusDesc: "Ramener au premier plan à la fin",
   privacyModeLabel: "Mode Privé",
   privacyModeDesc: "Titre leurre (double-clic en haut)",

@@ -167,7 +167,7 @@ export const ko = {
 
   // ======== Common Buttons/Labels ========
   tabBehaviorTitle: "탭 동작",
-  notificationSettings: "완료 알림",
+  notificationSettings: "완료 후 동작",
   privacyModeTitle: "개인정보 보호 모드",
   collapsedButtonsOrderTitle: "퀵 버튼",
 
@@ -405,7 +405,7 @@ export const ko = {
   notificationVolumeLabel: "소리 크기",
   notifyWhenFocusedLabel: "포커스 시에도 알림",
   notifyWhenFocusedDesc: "현재 페이지가 표시 중일 때도 알림 전송",
-  autoFocusLabel: "창 자동 포커스",
+  autoFocusLabel: "창 자동 전면 표시",
   autoFocusDesc: "생성이 완료되면 창을 맨 앞으로 가져옴",
   privacyModeLabel: "개인정보 보호 모드",
   privacyModeDesc: "실제 대화 제목을 숨기고 가짜 제목 표시 (패널 헤더를 더블 클릭하여 전환)",
