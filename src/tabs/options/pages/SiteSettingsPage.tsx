@@ -85,7 +85,9 @@ const ModelLockRow: React.FC<{
           fontSize: "14px",
           fontWeight: 500,
           flex: 1,
-          color: currentConfig.enabled ? "var(--gh-text, #374151)" : "var(--gh-text-secondary, #9ca3af)",
+          color: currentConfig.enabled
+            ? "var(--gh-text, #374151)"
+            : "var(--gh-text-secondary, #9ca3af)",
         }}>
         {label}
       </span>
@@ -212,7 +214,9 @@ const AIStudioModelLockRow: React.FC<{
           fontSize: "14px",
           fontWeight: 500,
           flex: 1,
-          color: currentConfig.enabled ? "var(--gh-text, #374151)" : "var(--gh-text-secondary, #9ca3af)",
+          color: currentConfig.enabled
+            ? "var(--gh-text, #374151)"
+            : "var(--gh-text-secondary, #9ca3af)",
         }}>
         AI Studio
       </span>

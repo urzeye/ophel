@@ -172,7 +172,7 @@ export const en = {
   // ======== Common Buttons/Labels ========
   tabBehaviorTitle: "Tab Behavior",
   notificationSettings: "Post-Completion Actions",
-  enablePrerequisiteToast: "Please enable \"{setting}\" first",
+  enablePrerequisiteToast: 'Please enable "{setting}" first',
   privacyModeTitle: "Privacy Mode",
   collapsedButtonsOrderTitle: "Quick Buttons",
 
