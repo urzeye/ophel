@@ -36,9 +36,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const collapsedButtonsOrder = currentSettings.collapsedButtons || []
   const quickButtonsSide = currentSettings.panel?.defaultPosition ?? "right"
   const quickButtonsPositionStyle =
-    quickButtonsSide === "left"
-      ? { left: "16px", right: "auto" }
-      : { right: "16px", left: "auto" }
+    quickButtonsSide === "left" ? { left: "16px", right: "auto" } : { right: "16px", left: "auto" }
 
   // 锚点状态（使用全局存储）
   const anchorPosition = useSyncExternalStore(anchorStore.subscribe, anchorStore.getSnapshot)
