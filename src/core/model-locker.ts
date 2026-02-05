@@ -64,6 +64,18 @@ export class ModelLocker {
   }
 
   /**
+   * 路由切换后重新锁定
+   */
+  relock(delay = 300) {
+    if (!this.config.enabled || !this.config.keyword) return
+
+    // 清理旧的定时器与状态，避免旧页面残留影响新页面
+    this.stop()
+    this.isLocked = false
+    this.start(delay)
+  }
+
+  /**
    * 持续监控：锁定成功后继续检查 3 次（共 4.5 秒）
    * 如果连续 2 次检测到目标模型，提前结束
    * 如果发现模型被改回去，重新尝试锁定

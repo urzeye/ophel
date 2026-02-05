@@ -83,15 +83,15 @@ export class ShortcutManager {
    * 检查是否应该忽略快捷键（如在输入框中）
    */
   private shouldIgnoreEvent(e: KeyboardEvent): boolean {
-    const target = e.target as HTMLElement
-    if (!target) return false
+    const target = e.target
+    if (!target || !(target instanceof Element)) return false
 
     // 在输入框、文本区域、可编辑元素中时忽略快捷键
     // 但允许带有 Ctrl/Cmd/Alt 修饰键的组合
     const isEditable =
       target.tagName === "INPUT" ||
       target.tagName === "TEXTAREA" ||
-      target.isContentEditable ||
+      (target as HTMLElement).isContentEditable ||
       target.getAttribute("contenteditable") === "true" ||
       target.classList.contains("ProseMirror")
 
@@ -158,6 +158,9 @@ export class ShortcutManager {
    * 键盘事件处理器
    */
   private handleKeyDown = (e: KeyboardEvent) => {
+    // 忽略脚本合成事件，避免递归触发
+    if (e.isTrusted === false) return
+
     // 检查快捷键是否启用
     if (!this.settings?.enabled) return
 

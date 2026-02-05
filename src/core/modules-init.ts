@@ -533,6 +533,9 @@ export function initUrlChangeObserver(ctx: ModulesContext): void {
 
       // 4. Textarea 重新查找
       adapter.findTextarea()
+
+      // 5. 模型锁定重新触发（新对话/新页面可能重置模型）
+      modules.modelLocker?.relock(300)
     }
   }
 
