@@ -219,6 +219,8 @@ export abstract class SiteAdapter {
         stableRounds = 0
       }
     }
+
+    container.scrollTop = 0
   }
 
   // ==================== 生成状态检测 ====================
