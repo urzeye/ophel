@@ -6,7 +6,12 @@ import React, { useEffect, useRef, useState } from "react"
 
 import { CloudIcon } from "~components/icons"
 import { ConfirmDialog, Tooltip } from "~components/ui"
-import { DEFAULT_FOLDERS, MULTI_PROP_STORES, ZUSTAND_KEYS, getDefaultPrompts } from "~constants/defaults"
+import {
+  DEFAULT_FOLDERS,
+  MULTI_PROP_STORES,
+  ZUSTAND_KEYS,
+  getDefaultPrompts,
+} from "~constants/defaults"
 import { getWebDAVSyncManager, type BackupFile } from "~core/webdav-sync"
 import { platform } from "~platform"
 import { useConversationsStore } from "~stores/conversations-store"

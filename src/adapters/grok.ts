@@ -122,9 +122,7 @@ export class GrokAdapter extends SiteAdapter {
         view: window,
       })
       const dispatchTarget =
-        (document.activeElement as HTMLElement | null) ||
-        document.body ||
-        document.documentElement
+        (document.activeElement as HTMLElement | null) || document.body || document.documentElement
       dispatchTarget?.dispatchEvent(escEvent)
 
       // 5 秒后清除缓存，确保后续调用使用实时数据

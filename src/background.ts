@@ -372,9 +372,11 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
             tabs
               .filter((tab) => tab.id)
               .map((tab) =>
-                chrome.tabs.sendMessage(tab.id as number, { type: MSG_CLEAR_ALL_DATA }).catch(() => {
-                  // 忽略未注入内容脚本的页面
-                }),
+                chrome.tabs
+                  .sendMessage(tab.id as number, { type: MSG_CLEAR_ALL_DATA })
+                  .catch(() => {
+                    // 忽略未注入内容脚本的页面
+                  }),
               ),
           )
           sendResponse({ success: true, tabs: tabs.length })
