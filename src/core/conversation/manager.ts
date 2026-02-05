@@ -82,28 +82,14 @@ export class ConversationManager {
     // 等待所有 stores hydration 完成
     await this.waitForHydration()
 
-    // 首次安装或数据为空时，自动加载全部会话
-    // Gemini 侧边栏默认只显示最近 ~20 个会话，需要点击"展开更多"才能加载全部
+    // 首次安装或当前站点数据为空时，自动加载全部会话
     const existingCount = Object.keys(this.conversations).length
-    if (existingCount === 0 && this.siteAdapter.loadAllConversations) {
+    const currentSiteCount = Object.keys(this.getAllConversations()).length
+    if (currentSiteCount === 0 && this.siteAdapter.loadAllConversations) {
       try {
-        // 等待侧边栏容器加载（最多 10 秒）
-        let sidebarFound = false
-        for (let i = 0; i < 20; i++) {
-          if (this.siteAdapter.getSidebarScrollContainer()) {
-            sidebarFound = true
-            break
-          }
-          await new Promise((r) => setTimeout(r, 500))
-        }
-
-        if (sidebarFound) {
-          await this.siteAdapter.loadAllConversations()
-          await new Promise((r) => setTimeout(r, 500))
-          const { newCount, updatedCount } = this.syncConversations(null, true)
-          if (newCount > 0 || updatedCount > 0) {
-            this.notifyDataChange()
-          }
+        const sidebarReady = await this.waitForSidebarReady()
+        if (sidebarReady) {
+          await this.autoFullSync()
         }
       } catch {
         // 静默处理错误
@@ -133,6 +119,54 @@ export class ConversationManager {
           }),
       ),
     )
+  }
+
+  private async waitForSidebarReady(timeoutMs = 10000): Promise<boolean> {
+    const start = Date.now()
+    while (Date.now() - start < timeoutMs) {
+      if (this.siteAdapter.getSidebarScrollContainer()) return true
+      await new Promise((r) => setTimeout(r, 250))
+    }
+    return false
+  }
+
+  private async autoFullSync(): Promise<void> {
+    await this.siteAdapter.loadAllConversations()
+    await new Promise((r) => setTimeout(r, 400))
+
+    const maxRounds = 10
+    const maxStableRounds = 2
+    let stableRounds = 0
+    let lastListCount = this.siteAdapter.getConversationList().length
+
+    for (let i = 0; i < maxRounds; i++) {
+      if (i > 0) {
+        const container = this.siteAdapter.getSidebarScrollContainer()
+        if (!container) break
+
+        const el = container as HTMLElement
+        el.scrollTop = el.scrollHeight
+        await new Promise((r) => setTimeout(r, 400))
+      }
+
+      const { newCount, updatedCount } = this.syncConversations(null, true)
+      if (newCount > 0 || updatedCount > 0) {
+        this.notifyDataChange()
+      }
+
+      await new Promise((r) => setTimeout(r, 300))
+
+      const currentListCount = this.siteAdapter.getConversationList().length
+      const hasProgress = newCount > 0 || currentListCount > lastListCount
+      if (hasProgress) {
+        lastListCount = Math.max(lastListCount, currentListCount)
+        stableRounds = 0
+      } else {
+        stableRounds++
+      }
+
+      if (stableRounds >= maxStableRounds) break
+    }
   }
 
   destroy() {

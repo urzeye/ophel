@@ -111,18 +111,21 @@ export class GrokAdapter extends SiteAdapter {
       // 这样 getConversationList 在弹窗关闭后仍然可以返回这些数据
       this.cacheDialogConversations()
 
-      // 自动关闭弹窗：模拟按下 ESC 键
-      document.dispatchEvent(
-        new KeyboardEvent("keydown", {
-          key: "Escape",
-          code: "Escape",
-          keyCode: 27,
-          which: 27,
-          bubbles: true,
-          cancelable: true,
-          view: window,
-        }),
-      )
+      // 自动关闭弹窗：模拟按下 ESC 键（避免 target 不是元素导致快捷键处理报错）
+      const escEvent = new KeyboardEvent("keydown", {
+        key: "Escape",
+        code: "Escape",
+        keyCode: 27,
+        which: 27,
+        bubbles: true,
+        cancelable: true,
+        view: window,
+      })
+      const dispatchTarget =
+        (document.activeElement as HTMLElement | null) ||
+        document.body ||
+        document.documentElement
+      dispatchTarget?.dispatchEvent(escEvent)
 
       // 5 秒后清除缓存，确保后续调用使用实时数据
       setTimeout(() => {

@@ -1,7 +1,7 @@
 {
   "name": "ophel",
   "displayName": "Ophel Atlas - AI 对话结构化与导航工具",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "将 AI 对话转化为可阅读、可导航、可复用的知识内容。通过实时大纲、会话文件夹与 Prompt 词库，让对话告别无限滚动，成为可组织、可沉淀的工作流，适用于高频使用 AI 的学习与工作场景。",
   "author": "urzeye",
   "license": "CC-BY-NC-SA-4.0",
