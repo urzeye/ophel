@@ -71,6 +71,14 @@
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
+## Use Cases
+
+- Learning & research: long-form reasoning, organize knowledge, review conclusions, extract notes
+- Daily work: requirements breakdown, solution drafting, competitive analysis, meeting notes, consulting & management workflows
+- Development & technical writing: long code discussions, bug triage, architecture exploration, docs/blog writing
+- Content creation: iterate on scripts/outlines/polish, jump back to key passages, export for reuse
+- Power users of AI: need structure, order, and reuse — not just ad-hoc chats
+
 ## ✨ Core Features
 
 - 🧠 **Smart Outline** — Auto-parse user queries & AI responses into rich structured outlines
@@ -82,6 +90,21 @@
 - ⚡ **Productivity Tools** — Shortcuts, model lock, tab auto-rename, notifications
 - 🎭 **Claude Enhancement** — Session Key management, multi-account switching
 - 🔒 **Privacy First** — Local storage, WebDAV sync, no data collection
+
+<details>
+<summary>Privacy & Data (expand)</summary>
+
+**Ophel Atlas** puts privacy first: local by default, your data stays in your control.
+
+- **Local by default:** settings, prompts, and conversation management data are stored in your browser
+- **No account required:** use it without signing up
+- **Permissions on demand:** optional permissions are requested only when needed and can be revoked anytime (see the Permissions page in the extension)
+- **Optional WebDAV sync:** use your own WebDAV for multi-device consistency (controllable, portable)
+- **Export & backup:** export and migrate to avoid lock-in
+
+</details>
+
+> Note: Support for specific AI sites depends on site matching and page structure changes.
 
 ## 🚀 Quick Start
 

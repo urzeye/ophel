@@ -71,6 +71,14 @@
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
+## Cas d’usage
+
+- Apprentissage et recherche : raisonnement sur longues conversations, organiser les connaissances, relire les conclusions, extraire des notes
+- Travail au quotidien : découpage des besoins, rédaction de solutions, analyse concurrentielle, comptes rendus de réunion, workflows de conseil et de management
+- Développement et rédaction technique : longues discussions de code, triage de bugs, exploration d’architecture, documentation/blog
+- Création de contenu : itérer scripts/plans/révisions, revenir vite aux passages clés et exporter pour retravailler
+- Utilisateurs intensifs d’IA : besoin de structure, d’ordre et de réutilisation, pas seulement de chats ponctuels
+
 ## ✨ Fonctionnalités Clés
 
 - 🧠 **Smart Outline** — Analyse automatique des requêtes utilisateur et réponses IA en structure navigable
@@ -82,6 +90,21 @@
 - ⚡ **Outils de Productivité** — Raccourcis, verrouillage de modèle, renommage automatique, notifications
 - 🎭 **Amélioration Claude** — Gestion de clé de session, changement multi-compte
 - 🔒 **Confidentialité d'Abord** — Stockage local, sync WebDAV, aucune collecte de données
+
+<details>
+<summary>Confidentialité & données (déplier)</summary>
+
+**Ophel Atlas** place la confidentialité au premier plan : stockage local par défaut, vos données restent sous votre contrôle.
+
+- **Stockage local par défaut :** réglages, prompts et données de gestion des conversations sont stockés dans le navigateur
+- **Sans compte :** aucune inscription nécessaire
+- **Permissions à la demande :** permissions optionnelles demandées uniquement si nécessaire, révocables à tout moment (voir la page Permissions de l’extension)
+- **Synchronisation WebDAV optionnelle :** utilisez votre propre WebDAV pour plusieurs appareils (contrôlable, portable)
+- **Export & sauvegarde :** export et migration pour éviter le verrouillage
+
+</details>
+
+> Note : la prise en charge de sites d’IA spécifiques dépend du matching du site et des changements de structure des pages.
 
 ## 🚀 Démarrage Rapide
 

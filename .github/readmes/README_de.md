@@ -71,6 +71,14 @@
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
+## Anwendungsfälle
+
+- Lernen & Forschung: lange Dialoge, Wissen ordnen, Erkenntnisse reflektieren, Notizen extrahieren
+- Alltag & Arbeit: Anforderungen zerlegen, Konzepte ausarbeiten, Wettbewerbsanalyse, Meeting-Notizen, Beratungs- und Management-Workflows
+- Entwicklung & technisches Schreiben: längere Code-Diskussionen, Bug-Analyse, Architektur-Exploration, Dokumentation/Blog
+- Content-Erstellung: Skripte/Gliederungen/Feinschliff iterieren, schnell zu Schlüsselstellen springen und exportieren
+- Vielnutzer von KI: brauchen Struktur, Ordnung und Wiederverwendung – nicht nur flüchtige Chats
+
 ## ✨ Kernfunktionen
 
 - 🧠 **Smart Outline** — Automatische Analyse von Benutzeranfragen und AI-Antworten in eine navigierbare Struktur
@@ -82,6 +90,21 @@
 - ⚡ **Produktivitätstools** — Shortcuts, Modellsperre, automatische Tab-Benennung, Benachrichtigungen
 - 🎭 **Claude Erweiterung** — Session Key Management, Multi-Account-Switching
 - 🔒 **Datenschutz First** — Lokaler Speicher, WebDAV-Sync, keine Datensammlung
+
+<details>
+<summary>Datenschutz & Daten (aufklappen)</summary>
+
+**Ophel Atlas** stellt Datenschutz an erste Stelle: Standardmäßig lokal gespeichert, deine Daten bleiben unter deiner Kontrolle.
+
+- **Standardmäßig lokal gespeichert:** Einstellungen, Prompts und Gesprächsverwaltung liegen im Browser
+- **Kein Konto erforderlich:** Nutzung ohne Registrierung
+- **Berechtigungen nach Bedarf:** optionale Berechtigungen nur bei Bedarf, jederzeit widerrufbar (siehe Permissions-Seite in der Erweiterung)
+- **Optionaler WebDAV-Sync:** Multi-Device-Sync über deinen eigenen WebDAV-Server (kontrollierbar, portabel)
+- **Export & Backup:** Export und Migration, kein Lock-in
+
+</details>
+
+> Hinweis: Die Unterstützung einzelner KI-Websites hängt vom Site-Matching und von Änderungen der Seitenstruktur ab.
 
 ## 🚀 Schnellstart
 

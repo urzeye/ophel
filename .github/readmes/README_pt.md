@@ -71,6 +71,14 @@
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
+## Casos de uso
+
+- Aprendizado e pesquisa: raciocínio em conversas longas, organizar conhecimento, revisar conclusões, extrair notas
+- Trabalho diário: decomposição de requisitos, elaboração de propostas, análise competitiva, atas de reunião, fluxos de consultoria e gestão
+- Desenvolvimento e escrita técnica: discussões longas de código, investigação de bugs, exploração de arquitetura, docs/blog
+- Criação de conteúdo: iterar scripts/esboços/revisões, voltar rápido a trechos-chave e exportar para retrabalhar
+- Usuários intensivos de IA: precisam de estrutura, ordem e reutilização — não apenas chats pontuais
+
 ## ✨ Recursos Principais
 
 - 🧠 **Smart Outline** — Analisa automaticamente consultas e respostas de IA em estrutura navegável
@@ -82,6 +90,21 @@
 - ⚡ **Produtividade** — Atalhos, bloqueio de modelo, renomeação automática, notificações
 - 🎭 **Melhoria Claude** — Gestão de chave de sessão, troca multi-conta
 - 🔒 **Privacidade Primeiro** — Armazenamento local, sincronização WebDAV, sem coleta de dados
+
+<details>
+<summary>Privacidade e dados (expandir)</summary>
+
+**Ophel Atlas** prioriza a privacidade: por padrão é tudo local e seus dados ficam sob seu controle.
+
+- **Armazenamento local por padrão:** configurações, prompts e dados de gestão de conversas ficam no navegador
+- **Sem conta:** não é necessário registro
+- **Permissões sob demanda:** permissões opcionais só quando necessário, revogáveis (ver página Permissions na extensão)
+- **Sincronização WebDAV opcional:** use seu próprio WebDAV para múltiplos dispositivos (controlável, portátil)
+- **Exportar e fazer backup:** exportação e migração para evitar lock-in
+
+</details>
+
+> Nota: o suporte a sites de IA específicos depende do matching do site e de mudanças na estrutura da página.
 
 ## 🚀 Início Rápido
 
