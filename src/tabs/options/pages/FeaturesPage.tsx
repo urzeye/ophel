@@ -400,6 +400,22 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
                 )
               }
             />
+
+            <ToggleRow
+              label={t("conversationsAutoSyncWhenEmptyLabel") || "会话为空时自动同步"}
+              description={
+                t("conversationsAutoSyncWhenEmptyDesc") || "会话列表为空时自动同步站点会话"
+              }
+              checked={settings.features?.conversations?.autoSyncWhenEmpty ?? true}
+              onChange={() =>
+                updateDeepSetting(
+                  "features",
+                  "conversations",
+                  "autoSyncWhenEmpty",
+                  !settings.features?.conversations?.autoSyncWhenEmpty,
+                )
+              }
+            />
           </SettingCard>
 
           {/* 导出设置卡片 */}

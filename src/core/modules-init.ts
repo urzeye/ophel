@@ -18,12 +18,14 @@ import { TabManager } from "~core/tab-manager"
 import { ThemeManager } from "~core/theme-manager"
 import { UserQueryMarkdownRenderer } from "~core/user-query-markdown"
 import { WatermarkRemover } from "~core/watermark-remover"
-import { subscribeSettings } from "~stores/settings-store"
+import { getSettingsState, subscribeSettings } from "~stores/settings-store"
 import {
   getSiteModelLock,
   getSitePageWidth,
   getSiteTheme,
   getSiteUserQueryWidth,
+  consumeClearAllFlag,
+  CLEAR_ALL_FLAG_TTL_MS,
   type Settings,
 } from "~utils/storage"
 
@@ -67,6 +69,8 @@ let modules: ModuleInstances = {
   userQueryMarkdownRenderer: null,
   policyRetryManager: null,
 }
+
+let readingHistoryAutoStartTimer: NodeJS.Timeout | null = null
 
 /**
  * 初始化主题管理器
@@ -225,8 +229,34 @@ export async function initReadingHistoryManager(ctx: ModulesContext): Promise<vo
   const { adapter, settings } = ctx
 
   if (settings.readingHistory?.persistence) {
-    modules.readingHistoryManager = new ReadingHistoryManager(adapter, settings.readingHistory)
-    modules.readingHistoryManager.startRecording()
+    if (readingHistoryAutoStartTimer) {
+      clearTimeout(readingHistoryAutoStartTimer)
+      readingHistoryAutoStartTimer = null
+    }
+
+    const startRecording = (currentSettings: Settings) => {
+      if (modules.readingHistoryManager) return
+      modules.readingHistoryManager = new ReadingHistoryManager(
+        adapter,
+        currentSettings.readingHistory,
+      )
+      modules.readingHistoryManager.startRecording()
+      modules.readingHistoryManager.cleanup()
+    }
+
+    const skipAutoRestore = await consumeClearAllFlag()
+    if (skipAutoRestore) {
+      readingHistoryAutoStartTimer = setTimeout(() => {
+        readingHistoryAutoStartTimer = null
+        const currentSettings = getSettingsState()
+        if (currentSettings.readingHistory?.persistence && !modules.readingHistoryManager) {
+          startRecording(currentSettings)
+        }
+      }, CLEAR_ALL_FLAG_TTL_MS)
+      return
+    }
+
+    startRecording(settings)
 
     if (settings.readingHistory.autoRestore) {
       const { showToast } = await import("~utils/toast")
@@ -523,6 +553,20 @@ export function initUrlChangeObserver(ctx: ModulesContext): void {
 
   // 兜底定时器
   setInterval(handleUrlChange, 1000)
+}
+
+/**
+ * 清除全部数据时的模块清理
+ */
+export function handleClearAllData(): void {
+  if (readingHistoryAutoStartTimer) {
+    clearTimeout(readingHistoryAutoStartTimer)
+    readingHistoryAutoStartTimer = null
+  }
+  if (modules.readingHistoryManager) {
+    modules.readingHistoryManager.stopRecording()
+    modules.readingHistoryManager = null
+  }
 }
 
 /**

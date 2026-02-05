@@ -16,6 +16,7 @@ import { ThemeManager } from "~core/theme-manager"
 import { useShortcuts } from "~hooks/useShortcuts"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
+import { MSG_CLEAR_ALL_DATA } from "~utils/messaging"
 import { showToast } from "~utils/toast"
 
 import { DisclaimerModal } from "./DisclaimerModal"
@@ -171,6 +172,7 @@ export const App = () => {
     if (conversationManager && settings) {
       conversationManager.updateSettings({
         syncUnpin: settings.features?.conversations?.syncUnpin ?? false,
+        autoSyncWhenEmpty: settings.features?.conversations?.autoSyncWhenEmpty ?? true,
       })
     }
   }, [conversationManager, settings])
@@ -249,6 +251,7 @@ export const App = () => {
 
   const themeSites = settings?.theme?.sites
   const syncUnpin = settings?.features?.conversations?.syncUnpin
+  const autoSyncWhenEmpty = settings?.features?.conversations?.autoSyncWhenEmpty
   const inlineBookmarkMode = settings?.features?.outline?.inlineBookmarkMode
   const hasSettings = Boolean(settings)
 
@@ -319,11 +322,30 @@ export const App = () => {
   }, [promptManager, conversationManager, outlineManager])
 
   useEffect(() => {
+    if (!conversationManager || typeof chrome === "undefined") return
+
+    const handler = (message: any, _sender: any, sendResponse: any) => {
+      if (message?.type === MSG_CLEAR_ALL_DATA) {
+        conversationManager.destroy()
+        sendResponse({ success: true })
+        return true
+      }
+      return false
+    }
+
+    chrome.runtime.onMessage.addListener(handler)
+    return () => {
+      chrome.runtime.onMessage.removeListener(handler)
+    }
+  }, [conversationManager])
+
+  useEffect(() => {
     if (!conversationManager) return
     conversationManager.updateSettings({
       syncUnpin: syncUnpin ?? false,
+      autoSyncWhenEmpty: autoSyncWhenEmpty ?? true,
     })
-  }, [conversationManager, syncUnpin])
+  }, [conversationManager, syncUnpin, autoSyncWhenEmpty])
 
   // 初始化页面内收藏图标
   useEffect(() => {

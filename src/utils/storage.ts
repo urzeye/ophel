@@ -30,6 +30,10 @@ export const STORAGE_KEYS = {
   CLAUDE_SESSION_KEYS: "claudeSessionKeys", // Claude SessionKey管理
 } as const
 
+// 清除全部数据标记（用于跳过首次自动恢复/自动同步）
+export const CLEAR_ALL_FLAG_KEY = "ophel:clearAllFlag"
+export const CLEAR_ALL_FLAG_TTL_MS = 5 * 1000
+
 // ==================== 类型定义 ====================
 
 // 站点 ID 类型
@@ -163,6 +167,7 @@ export interface Settings {
       enabled: boolean
       syncUnpin: boolean
       folderRainbow: boolean
+      autoSyncWhenEmpty: boolean
     }
     outline: {
       enabled: boolean
@@ -332,6 +337,7 @@ export const DEFAULT_SETTINGS: Settings = {
       enabled: true,
       syncUnpin: false,
       folderRainbow: true,
+      autoSyncWhenEmpty: true,
     },
     outline: {
       enabled: true,
@@ -482,4 +488,49 @@ export function getSiteUserQueryWidth(settings: Settings, siteId: string): PageW
     return userQueryWidth[siteId as SiteId]
   }
   return userQueryWidth?._default ?? DEFAULT_USER_QUERY_WIDTH
+}
+
+let clearAllFlagPromise: Promise<boolean> | null = null
+
+/**
+ * 消费“清除全部数据”标记（仅首次返回 true）
+ * - 用于在清除后首次加载时跳过自动恢复/自动同步
+ * - 多处调用将共享结果，避免竞态
+ */
+export function consumeClearAllFlag(): Promise<boolean> {
+  if (clearAllFlagPromise) {
+    return clearAllFlagPromise
+  }
+
+  clearAllFlagPromise = new Promise((resolve) => {
+    if (typeof chrome === "undefined" || !chrome.storage?.local) {
+      resolve(false)
+      return
+    }
+
+    chrome.storage.local.get(CLEAR_ALL_FLAG_KEY, (result) => {
+      const rawValue = result?.[CLEAR_ALL_FLAG_KEY]
+      const hasFlag = rawValue !== undefined
+      if (!hasFlag) {
+        resolve(false)
+        return
+      }
+
+      const ts = typeof rawValue === "number" ? rawValue : Number(rawValue)
+      if (!Number.isFinite(ts)) {
+        resolve(true)
+        return
+      }
+
+      const age = Date.now() - ts
+      if (age <= CLEAR_ALL_FLAG_TTL_MS) {
+        resolve(true)
+        return
+      }
+
+      chrome.storage.local.remove(CLEAR_ALL_FLAG_KEY, () => resolve(false))
+    })
+  })
+
+  return clearAllFlagPromise
 }

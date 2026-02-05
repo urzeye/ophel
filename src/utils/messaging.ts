@@ -112,6 +112,13 @@ export interface OpenUrlMessage extends OpenUrlPayload {
   type: typeof MSG_OPEN_URL
 }
 
+// 清除全部数据（通知各上下文重置内存态）
+export const MSG_CLEAR_ALL_DATA = "CLEAR_ALL_DATA"
+
+export interface ClearAllDataMessage {
+  type: typeof MSG_CLEAR_ALL_DATA
+}
+
 // 设置Claude SessionKey Cookie
 export const MSG_SET_CLAUDE_SESSION_KEY = "SET_CLAUDE_SESSION_KEY"
 
@@ -159,6 +166,7 @@ export type ExtensionMessage =
   | RevokePermissionsMessage
   | OpenOptionsPageMessage
   | OpenUrlMessage
+  | ClearAllDataMessage
   | SetClaudeSessionKeyMessage
   | TestClaudeTokenMessage
   | GetClaudeSessionKeyMessage

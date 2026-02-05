@@ -6,12 +6,18 @@ import React, { useEffect, useRef, useState } from "react"
 
 import { CloudIcon } from "~components/icons"
 import { ConfirmDialog, Tooltip } from "~components/ui"
-import { MULTI_PROP_STORES, ZUSTAND_KEYS } from "~constants/defaults"
+import { DEFAULT_FOLDERS, MULTI_PROP_STORES, ZUSTAND_KEYS, getDefaultPrompts } from "~constants/defaults"
 import { getWebDAVSyncManager, type BackupFile } from "~core/webdav-sync"
 import { platform } from "~platform"
+import { useConversationsStore } from "~stores/conversations-store"
+import { useFoldersStore } from "~stores/folders-store"
+import { usePromptsStore } from "~stores/prompts-store"
+import { useReadingHistoryStore } from "~stores/reading-history-store"
 import { useSettingsStore } from "~stores/settings-store"
+import { useTagsStore } from "~stores/tags-store"
 import { t } from "~utils/i18n"
-import { DEFAULT_SETTINGS } from "~utils/storage"
+import { MSG_CLEAR_ALL_DATA } from "~utils/messaging"
+import { CLEAR_ALL_FLAG_KEY, DEFAULT_SETTINGS } from "~utils/storage"
 import { showToast as showDomToast } from "~utils/toast"
 
 import { PageTitle, SettingCard, SettingRow } from "../components"
@@ -244,7 +250,7 @@ const RemoteBackupModal: React.FC<{
 
 // ==================== 主页面组件 ====================
 const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _onNavigate }) => {
-  const { settings, setSettings } = useSettingsStore()
+  const { settings, setSettings, resetSettings } = useSettingsStore()
 
   // 状态管理
   const [showRemoteBackups, setShowRemoteBackups] = useState(false)
@@ -511,6 +517,15 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _o
     processImport(pasteContent)
   }
 
+  const resetLocalStores = () => {
+    resetSettings()
+    usePromptsStore.getState().setPrompts(getDefaultPrompts())
+    useFoldersStore.setState({ folders: DEFAULT_FOLDERS })
+    useTagsStore.setState({ tags: [] })
+    useConversationsStore.setState({ conversations: {}, lastUsedFolderId: "inbox" })
+    useReadingHistoryStore.setState({ history: {}, lastCleanupRun: 0 })
+  }
+
   // 清除数据
   const handleClearAll = () => {
     setConfirmConfig({
@@ -523,6 +538,14 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _o
       onConfirm: async () => {
         setConfirmConfig((prev) => ({ ...prev, show: false }))
         try {
+          if (platform.type === "extension" && typeof chrome !== "undefined") {
+            try {
+              await chrome.runtime.sendMessage({ type: MSG_CLEAR_ALL_DATA })
+            } catch {
+              // 忽略消息发送失败
+            }
+          }
+
           await Promise.all([
             new Promise<void>((resolve, reject) =>
               chrome.storage.local.clear(() =>
@@ -535,6 +558,12 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _o
               ),
             ),
           ])
+          await new Promise<void>((resolve, reject) =>
+            chrome.storage.local.set({ [CLEAR_ALL_FLAG_KEY]: Date.now() }, () =>
+              chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
+            ),
+          )
+          resetLocalStores()
           showDomToast(t("clearSuccess") || "数据已清除，即将刷新...")
           setTimeout(() => window.location.reload(), 1500)
         } catch (err) {

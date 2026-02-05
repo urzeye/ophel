@@ -581,6 +581,8 @@ export const en = {
   conversationsSettingsTitle: "Conversation Settings",
   conversationsSyncUnpinLabel: "Sync Unpin Status",
   conversationsSyncUnpinDesc: "Unpin local conversation if unpinned in cloud during sync",
+  conversationsAutoSyncWhenEmptyLabel: "Auto Sync When Empty",
+  conversationsAutoSyncWhenEmptyDesc: "Auto sync conversations when the list is empty",
   folderRainbowLabel: "Folder Rainbow Colors",
   folderRainbowDesc: "Assign different background colors to folders",
   conversationsSyncDeleteLabel: "Sync Delete Cloud",

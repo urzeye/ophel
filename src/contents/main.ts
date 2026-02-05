@@ -8,14 +8,30 @@
 import type { PlasmoCSConfig } from "plasmo"
 
 import { getAdapter } from "~adapters"
-import { SITE_IDS } from "~constants"
+import { DEFAULT_FOLDERS, SITE_IDS, getDefaultPrompts } from "~constants"
 import {
   initCoreModules,
   initUrlChangeObserver,
+  handleClearAllData,
   subscribeModuleUpdates,
   type ModulesContext,
 } from "~core/modules-init"
+import { useConversationsStore } from "~stores/conversations-store"
+import { useFoldersStore } from "~stores/folders-store"
+import { usePromptsStore } from "~stores/prompts-store"
+import { useReadingHistoryStore } from "~stores/reading-history-store"
 import { getSettingsState, useSettingsStore } from "~stores/settings-store"
+import { useTagsStore } from "~stores/tags-store"
+import { MSG_CLEAR_ALL_DATA } from "~utils/messaging"
+
+const resetAllStores = () => {
+  useSettingsStore.getState().resetSettings()
+  usePromptsStore.getState().setPrompts(getDefaultPrompts())
+  useFoldersStore.setState({ folders: DEFAULT_FOLDERS })
+  useTagsStore.setState({ tags: [] })
+  useConversationsStore.setState({ conversations: {}, lastUsedFolderId: "inbox" })
+  useReadingHistoryStore.setState({ history: {}, lastCleanupRun: 0 })
+}
 
 // Content Script 配置 - 匹配所有支持的站点
 export const config: PlasmoCSConfig = {
@@ -77,6 +93,13 @@ if (!window.ophelInitialized) {
 
       // 监听来自 background 的消息（用于跨页面检测生成状态）
       chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+        if (message.type === MSG_CLEAR_ALL_DATA) {
+          handleClearAllData()
+          resetAllStores()
+          sendResponse({ success: true })
+          return true
+        }
+
         if (message.type === "CHECK_IS_GENERATING") {
           // 使用 adapter 的 isGenerating 方法检测当前页面是否正在生成
           const isGenerating = adapter.isGenerating?.() ?? false
