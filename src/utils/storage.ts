@@ -167,7 +167,6 @@ export interface Settings {
       enabled: boolean
       syncUnpin: boolean
       folderRainbow: boolean
-      autoSyncWhenEmpty: boolean
     }
     outline: {
       enabled: boolean
@@ -337,7 +336,6 @@ export const DEFAULT_SETTINGS: Settings = {
       enabled: true,
       syncUnpin: false,
       folderRainbow: true,
-      autoSyncWhenEmpty: true,
     },
     outline: {
       enabled: true,

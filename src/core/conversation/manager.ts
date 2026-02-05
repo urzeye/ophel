@@ -34,7 +34,6 @@ export class ConversationManager {
 
   // Settings
   private syncUnpin: boolean = false
-  private autoSyncWhenEmpty: boolean = true
 
   // 数据变更回调（用于通知 UI 刷新）
   private onChangeCallbacks: Array<() => void> = []
@@ -86,11 +85,7 @@ export class ConversationManager {
     // 首次安装或数据为空时，自动加载全部会话
     // Gemini 侧边栏默认只显示最近 ~20 个会话，需要点击"展开更多"才能加载全部
     const existingCount = Object.keys(this.conversations).length
-    const settings = useSettingsStore.getState().settings
-    const shouldAutoSyncWhenEmpty =
-      settings.features?.conversations?.autoSyncWhenEmpty ?? this.autoSyncWhenEmpty
-
-    if (existingCount === 0 && shouldAutoSyncWhenEmpty && this.siteAdapter.loadAllConversations) {
+    if (existingCount === 0 && this.siteAdapter.loadAllConversations) {
       try {
         // 等待侧边栏容器加载（最多 10 秒）
         let sidebarFound = false
@@ -141,9 +136,8 @@ export class ConversationManager {
     this.stopSidebarObserver()
   }
 
-  updateSettings(settings: { syncUnpin: boolean; autoSyncWhenEmpty: boolean }) {
+  updateSettings(settings: { syncUnpin: boolean }) {
     this.syncUnpin = settings.syncUnpin
-    this.autoSyncWhenEmpty = settings.autoSyncWhenEmpty
   }
 
   // ================= Data Loading（已迁移到 Zustand stores）=================

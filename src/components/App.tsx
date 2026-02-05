@@ -172,7 +172,6 @@ export const App = () => {
     if (conversationManager && settings) {
       conversationManager.updateSettings({
         syncUnpin: settings.features?.conversations?.syncUnpin ?? false,
-        autoSyncWhenEmpty: settings.features?.conversations?.autoSyncWhenEmpty ?? true,
       })
     }
   }, [conversationManager, settings])
@@ -251,7 +250,6 @@ export const App = () => {
 
   const themeSites = settings?.theme?.sites
   const syncUnpin = settings?.features?.conversations?.syncUnpin
-  const autoSyncWhenEmpty = settings?.features?.conversations?.autoSyncWhenEmpty
   const inlineBookmarkMode = settings?.features?.outline?.inlineBookmarkMode
   const hasSettings = Boolean(settings)
 
@@ -343,9 +341,8 @@ export const App = () => {
     if (!conversationManager) return
     conversationManager.updateSettings({
       syncUnpin: syncUnpin ?? false,
-      autoSyncWhenEmpty: autoSyncWhenEmpty ?? true,
     })
-  }, [conversationManager, syncUnpin, autoSyncWhenEmpty])
+  }, [conversationManager, syncUnpin])
 
   // 初始化页面内收藏图标
   useEffect(() => {

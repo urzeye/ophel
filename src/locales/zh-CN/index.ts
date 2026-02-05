@@ -597,8 +597,6 @@ export const zhCN = {
   conversationsSettingsTitle: "会话设置",
   conversationsSyncUnpinLabel: "同步时更新取消置顶",
   conversationsSyncUnpinDesc: "同步时，将云端未置顶的会话在本地也取消置顶",
-  conversationsAutoSyncWhenEmptyLabel: "会话为空时自动同步",
-  conversationsAutoSyncWhenEmptyDesc: "会话列表为空时自动同步站点会话",
   folderRainbowLabel: "文件夹彩虹色",
   folderRainbowDesc: "为每个文件夹分配不同的背景颜色，关闭后使用统一纯色",
   conversationsSyncDeleteLabel: "删除时同步删除云端",
