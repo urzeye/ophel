@@ -454,6 +454,11 @@
   opacity: 1;
 }
 
+/* 收藏按钮在行 hover 时增加浅底，与复制按钮一致 */
+.outline-item:hover .outline-item-bookmark-btn {
+  background: var(--gh-hover, #f3f4f6);
+}
+
 /* 渐变遮罩：在 wrapper 左侧添加 */
 .outline-item:hover .outline-item-bookmark-wrapper::before {
   content: "";
