@@ -71,7 +71,7 @@
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
-## Anwendungsfälle
+## 🎯 Anwendungsfälle
 
 - Lernen & Forschung: lange Dialoge, Wissen ordnen, Erkenntnisse reflektieren, Notizen extrahieren
 - Alltag & Arbeit: Anforderungen zerlegen, Konzepte ausarbeiten, Wettbewerbsanalyse, Meeting-Notizen, Beratungs- und Management-Workflows

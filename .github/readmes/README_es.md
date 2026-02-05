@@ -71,7 +71,7 @@
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
-## Casos de uso
+## 🎯 Casos de uso
 
 - Aprendizaje e investigación: razonamiento en conversaciones largas, organizar conocimiento, revisar conclusiones, extraer notas
 - Trabajo diario: desglose de requisitos, redacción de propuestas, análisis competitivo, actas de reunión, flujos de consultoría y gestión
