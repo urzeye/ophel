@@ -100,7 +100,10 @@ export class ConversationManager {
         if (sidebarFound) {
           await this.siteAdapter.loadAllConversations()
           await new Promise((r) => setTimeout(r, 500))
-          this.syncConversations(null, true)
+          const { newCount, updatedCount } = this.syncConversations(null, true)
+          if (newCount > 0 || updatedCount > 0) {
+            this.notifyDataChange()
+          }
         }
       } catch {
         // 静默处理错误
