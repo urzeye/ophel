@@ -31,13 +31,14 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   onThemeToggle,
   themeMode = "light",
 }) => {
-  const { settings } = useSettingsStore()
+  const { settings, setSettings } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
   const collapsedButtonsOrder = currentSettings.collapsedButtons || []
   const quickButtonsSide = currentSettings.panel?.defaultPosition ?? "right"
   const quickButtonsPositionStyle =
     quickButtonsSide === "left" ? { left: "16px", right: "auto" } : { right: "16px", left: "auto" }
   const quickButtonsOpacity = Math.min(Math.max(currentSettings.quickButtonsOpacity ?? 1, 0.4), 1)
+  const isFloatingToolbarOpen = currentSettings.floatingToolbar?.open ?? true
 
   const DRAG_LONG_PRESS_MS = 150
   const DRAG_THRESHOLD_PX = 6
@@ -204,6 +205,16 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       e?.stopPropagation()
       onThemeToggle?.()
     },
+    floatingToolbar: (e) => {
+      e?.stopPropagation()
+      const nextOpen = !(currentSettings.floatingToolbar?.open ?? true)
+      setSettings({
+        floatingToolbar: {
+          ...currentSettings.floatingToolbar,
+          open: nextOpen,
+        },
+      })
+    },
   }
 
   // 渲染单个按钮
@@ -214,6 +225,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   ) => {
     const isPanelOnly = def.isPanelOnly
     const isDisabled = !enabled
+    const isFloatingToolbarBtn = id === "floatingToolbar"
+    const isActive = isFloatingToolbarBtn && isFloatingToolbarOpen
 
     // panel-only 按钮：面板展开时隐藏
     // 禁用的按钮：永远隐藏
@@ -243,7 +256,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return (
       <Tooltip key={id} content={tooltipContent}>
         <button
-          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""}`}
+          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isActive ? "active" : ""}`}
           onClick={(e) => buttonActions[id]?.(e)}
           style={{
             opacity: anchorDisabled ? 0.4 : 1,

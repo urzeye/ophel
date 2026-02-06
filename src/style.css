@@ -632,6 +632,12 @@
   transform: scale(1.1);
 }
 
+.quick-prompt-btn.active {
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.6),
+    0 6px 16px rgba(66, 133, 244, 0.45);
+}
+
 /* 快捷按钮组容器 */
 .quick-btn-group {
   position: fixed;
@@ -777,6 +783,76 @@
 
 .quick-btn-group.collapsed .divider.panel-only {
   display: block;
+}
+
+/* ============= 浮动工具栏 ============= */
+.floating-toolbar {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--gh-bg, #ffffff);
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 999px;
+  box-shadow: var(--gh-shadow, 0 6px 18px rgba(0, 0, 0, 0.12));
+  z-index: 999999;
+}
+
+.floating-toolbar-btn {
+  border: none;
+  background: transparent;
+  color: var(--gh-text, #374151);
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.floating-toolbar-btn:hover {
+  background: var(--gh-hover, #f3f4f6);
+}
+
+.floating-toolbar-btn.active {
+  background: var(--gh-primary, #4285f4);
+  color: #ffffff;
+}
+
+.floating-toolbar-btn.danger {
+  color: #ef4444;
+}
+
+.floating-toolbar-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.floating-toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--gh-border, #e5e7eb);
+  margin: 0 2px;
+}
+
+.floating-toolbar-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 8px;
+  background: var(--gh-bg, #ffffff);
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: var(--gh-shadow, 0 8px 24px rgba(0, 0, 0, 0.18));
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 180px;
 }
 
 /* ============= 底栏滚动按钮样式 (Footer Scroll Buttons) ============= */

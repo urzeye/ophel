@@ -497,6 +497,12 @@ export const ja = {
   showCollapsedAnchorLabel: "アンカー",
   showCollapsedAnchorDesc: "パネルを閉じたとき、サイドバーにアンカーボタンを表示",
   showCollapsedThemeLabel: "テーマ",
+  floatingToolbarLabel: "フローティングツールバー",
+  floatingToolbarMore: "その他",
+  floatingToolbarClearGhost: "ゴーストブックマークを削除",
+  floatingToolbarClearGhostConfirm:
+    "このセッションのゴーストブックマーク {count} 件を削除しますか？",
+  floatingToolbarClearGhostEmpty: "削除するゴーストブックマークはありません。",
   showCollapsedThemeDesc: "パネルを閉じたとき、サイドバーにテーマ切り替えを表示",
   collapsedButtonsOrderDesc: "サイドバーに表示されるボタンの順序を調整",
   preventAutoScrollLabel: "自動スクロールを防止",

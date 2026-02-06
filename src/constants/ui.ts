@@ -6,6 +6,7 @@ import type React from "react"
 import {
   AnchorIcon,
   ConversationIcon,
+  FloatingToolbarIcon,
   ManualAnchorIcon,
   OutlineIcon,
   PromptIcon,
@@ -94,6 +95,13 @@ export const COLLAPSED_BUTTON_DEFS: Record<
     IconComponent: ScrollTopIcon,
   },
   panel: { icon: "✨", labelKey: "panelTitle", canToggle: false, isPanelOnly: true },
+  floatingToolbar: {
+    icon: "🧰",
+    labelKey: "floatingToolbarLabel",
+    canToggle: true,
+    isPanelOnly: false,
+    IconComponent: FloatingToolbarIcon,
+  },
   anchor: {
     icon: "⚓",
     canToggle: true,

@@ -406,7 +406,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId }) => {
                 index={index}
                 total={settings.collapsedButtons.length}
                 enabled={btn.enabled}
-                showToggle={["anchor", "theme", "manualAnchor"].includes(btn.id)}
+                showToggle={def.canToggle}
                 onToggle={() => toggleButton(index)}
                 onDragStart={(e) => handleDragStart(e, "button", index)}
                 onDragOver={handleDragOver}

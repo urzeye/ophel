@@ -492,6 +492,12 @@ export const de = {
   showCollapsedAnchorLabel: "Anker",
   showCollapsedAnchorDesc: "Anker-Button in Sidebar",
   showCollapsedThemeLabel: "Theme",
+  floatingToolbarLabel: "Schwebende Werkzeugleiste",
+  floatingToolbarMore: "Mehr",
+  floatingToolbarClearGhost: "Geister-Lesezeichen löschen",
+  floatingToolbarClearGhostConfirm:
+    "Sollen {count} Geister-Lesezeichen in dieser Sitzung gelöscht werden?",
+  floatingToolbarClearGhostEmpty: "Keine Geister-Lesezeichen zum Löschen.",
   showCollapsedThemeDesc: "Theme-Wechsel in Sidebar",
   collapsedButtonsOrderDesc: "Button-Reihenfolge in Sidebar",
   preventAutoScrollLabel: "Auto-Scroll verhindern",

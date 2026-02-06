@@ -70,6 +70,7 @@ export class OutlineManager {
   // Bookmark Filter Mode
   private bookmarkMode: boolean = false
   private preBookmarkModeState: Record<string, boolean> | null = null // 保存收藏模式前的折叠状态
+  private ghostBookmarkIds: Set<string> = new Set()
 
   // 生成状态追踪（用于检测生成完成后刷新）
   private wasGenerating: boolean = false
@@ -455,6 +456,20 @@ export class OutlineManager {
     }
   }
 
+  getGhostBookmarkIds(): string[] {
+    return Array.from(this.ghostBookmarkIds)
+  }
+
+  clearGhostBookmarks(): number {
+    const ids = this.getGhostBookmarkIds()
+    if (ids.length === 0) return 0
+    const store = useBookmarkStore.getState()
+    ids.forEach((id) => store.removeBookmark(id))
+    this.ghostBookmarkIds.clear()
+    this.refresh()
+    return ids.length
+  }
+
   // --- Bookmark Logic ---
 
   private generateSignature(item: OutlineItem): string {
@@ -544,6 +559,7 @@ export class OutlineManager {
     // --- Merge Bookmarks ---
     const sessionId = this.siteAdapter.getSessionId()
     const bookmarks = useBookmarkStore.getState().getBookmarksBySession(sessionId)
+    this.ghostBookmarkIds = new Set()
 
     if (bookmarks.length > 0) {
       // 1. Mark matched nodes
@@ -619,6 +635,7 @@ export class OutlineManager {
         }
       })
       // -----------------------------------
+      this.ghostBookmarkIds = new Set(unmatchedBookmarkIds)
 
       // 2. Insert Ghost Nodes
       const ghosts: OutlineItem[] = []
