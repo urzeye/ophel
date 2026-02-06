@@ -643,6 +643,52 @@
   gap: 8px;
   z-index: 999997;
   transition: opacity 0.3s;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.quick-btn-group.dragging {
+  cursor: grabbing;
+}
+
+.quick-btn-group .quick-btn-drag-handle {
+  width: 28px;
+  height: 14px;
+  margin: 0 auto 2px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gh-text) 14%, var(--gh-bg) 86%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--gh-shadow-sm);
+  opacity: 0.6;
+  transition:
+    opacity 0.2s ease,
+    background 0.2s ease;
+}
+
+.quick-btn-group .quick-btn-drag-handle::before {
+  content: "";
+  width: 14px;
+  height: 2px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gh-text) 70%, transparent);
+  box-shadow:
+    0 -4px 0 color-mix(in srgb, var(--gh-text) 70%, transparent),
+    0 4px 0 color-mix(in srgb, var(--gh-text) 70%, transparent);
+}
+
+.quick-btn-group:hover .quick-btn-drag-handle {
+  opacity: 1;
+}
+
+.quick-btn-group.dragging .quick-btn-drag-handle {
+  background: color-mix(in srgb, var(--gh-text) 22%, var(--gh-bg) 78%);
+}
+
+.quick-btn-group.dragging .quick-prompt-btn {
+  pointer-events: none;
 }
 
 .quick-btn-group .quick-prompt-btn {

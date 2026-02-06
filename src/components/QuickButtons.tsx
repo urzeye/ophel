@@ -38,6 +38,20 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const quickButtonsPositionStyle =
     quickButtonsSide === "left" ? { left: "16px", right: "auto" } : { right: "16px", left: "auto" }
 
+  const DRAG_LONG_PRESS_MS = 150
+  const DRAG_THRESHOLD_PX = 6
+  const DRAG_PADDING_PX = 8
+
+  const [groupPosition, setGroupPosition] = useState<{ x: number; y: number } | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+
+  const dragTimerRef = useRef<number | null>(null)
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null)
+  const dragOffsetRef = useRef<{ x: number; y: number } | null>(null)
+  const draggingRef = useRef(false)
+  const pointerIdRef = useRef<number | null>(null)
+  const suppressClickRef = useRef(false)
+
   // 锚点状态（使用全局存储）
   const anchorPosition = useSyncExternalStore(anchorStore.subscribe, anchorStore.getSnapshot)
   const hasAnchor = anchorPosition !== null
@@ -73,7 +87,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     const abortCheckInterval = setInterval(checkAbort, 100)
 
     // 延迟显示遮罩的定时器
-    let overlayTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+    let overlayTimer: ReturnType<typeof window.setTimeout> | null = setTimeout(() => {
       if (!abortLoadingRef.current) {
         setIsLoadingHistory(true)
         setLoadingText(t("loadingHistory"))
@@ -98,7 +112,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
       // 清理遮罩
       if (overlayTimer) {
-        clearTimeout(overlayTimer)
+        window.clearTimeout(overlayTimer)
         overlayTimer = null
       }
       setIsLoadingHistory(false)
@@ -111,7 +125,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     } finally {
       clearInterval(abortCheckInterval)
       if (overlayTimer) {
-        clearTimeout(overlayTimer)
+        window.clearTimeout(overlayTimer)
       }
     }
   }, [adapter])
@@ -161,6 +175,22 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     // 深色模式显示太阳（点击切换到浅色），浅色模式显示月亮（点击切换到深色）
     return isDark ? <ThemeLightIcon size={20} /> : <ThemeDarkIcon size={20} />
   }
+
+  const clampGroupPosition = useCallback(
+    (x: number, y: number) => {
+      const rect = groupRef.current?.getBoundingClientRect()
+      if (!rect) return { x, y }
+
+      const maxX = Math.max(DRAG_PADDING_PX, window.innerWidth - rect.width - DRAG_PADDING_PX)
+      const maxY = Math.max(DRAG_PADDING_PX, window.innerHeight - rect.height - DRAG_PADDING_PX)
+
+      return {
+        x: Math.min(Math.max(x, DRAG_PADDING_PX), maxX),
+        y: Math.min(Math.max(y, DRAG_PADDING_PX), maxY),
+      }
+    },
+    [DRAG_PADDING_PX],
+  )
 
   // 按钮点击处理器
   const buttonActions: Record<string, (e?: React.MouseEvent) => void> = {
@@ -333,24 +363,122 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     }
   }, [])
 
+  useEffect(() => {
+    setGroupPosition(null)
+  }, [quickButtonsSide])
+
+  const clearDragTimer = () => {
+    if (dragTimerRef.current) {
+      window.clearTimeout(dragTimerRef.current)
+      dragTimerRef.current = null
+    }
+  }
+
+  const endDragging = () => {
+    clearDragTimer()
+    dragStartRef.current = null
+    dragOffsetRef.current = null
+
+    if (draggingRef.current) {
+      draggingRef.current = false
+      setIsDragging(false)
+    }
+
+    if (groupRef.current && pointerIdRef.current !== null) {
+      if (groupRef.current.hasPointerCapture(pointerIdRef.current)) {
+        groupRef.current.releasePointerCapture(pointerIdRef.current)
+      }
+    }
+    pointerIdRef.current = null
+  }
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return
+    if (!groupRef.current) return
+
+    pointerIdRef.current = e.pointerId
+    dragStartRef.current = { x: e.clientX, y: e.clientY }
+    suppressClickRef.current = false
+
+    const rect = groupRef.current.getBoundingClientRect()
+    dragOffsetRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
+
+    clearDragTimer()
+    dragTimerRef.current = window.setTimeout(() => {
+      if (!groupRef.current || pointerIdRef.current === null) return
+
+      groupRef.current.setPointerCapture(pointerIdRef.current)
+      draggingRef.current = true
+      suppressClickRef.current = true
+      setIsDragging(true)
+    }, DRAG_LONG_PRESS_MS)
+  }
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragStartRef.current) return
+
+    if (!draggingRef.current) {
+      const dx = e.clientX - dragStartRef.current.x
+      const dy = e.clientY - dragStartRef.current.y
+      if (Math.hypot(dx, dy) > DRAG_THRESHOLD_PX) {
+        clearDragTimer()
+      }
+      return
+    }
+
+    e.preventDefault()
+
+    const offset = dragOffsetRef.current || { x: 0, y: 0 }
+    const nextX = e.clientX - offset.x
+    const nextY = e.clientY - offset.y
+    setGroupPosition(clampGroupPosition(nextX, nextY))
+  }
+
+  const handlePointerUp = () => {
+    endDragging()
+  }
+
+  const handlePointerLeave = () => {
+    if (draggingRef.current) return
+    clearDragTimer()
+    dragStartRef.current = null
+    dragOffsetRef.current = null
+    pointerIdRef.current = null
+  }
+
+  const handleClickCapture = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!suppressClickRef.current) return
+    e.preventDefault()
+    e.stopPropagation()
+    suppressClickRef.current = false
+  }
+
   return (
     <>
       {/* 加载历史遮罩 */}
       <LoadingOverlay isVisible={isLoadingHistory} text={loadingText} onStop={stopLoading} />
       <div
         ref={groupRef}
-        className={`quick-btn-group gh-interactive ${!isPanelOpen ? "collapsed" : ""}`}
+        className={`quick-btn-group gh-interactive ${!isPanelOpen ? "collapsed" : ""} ${isDragging ? "dragging" : ""}`}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onPointerLeave={handlePointerLeave}
+        onClickCapture={handleClickCapture}
         style={{
           position: "fixed",
-          top: "50%",
-          transform: "translateY(-50%)",
+          top: groupPosition ? `${groupPosition.y}px` : "50%",
+          left: groupPosition ? `${groupPosition.x}px` : quickButtonsPositionStyle.left,
+          right: groupPosition ? "auto" : quickButtonsPositionStyle.right,
+          transform: groupPosition ? "none" : "translateY(-50%)",
           display: "flex",
           flexDirection: "column",
           gap: "8px",
           zIndex: 9998,
           transition: "opacity 0.3s",
-          ...quickButtonsPositionStyle,
         }}>
+        <div className="quick-btn-drag-handle" aria-hidden="true" />
         {renderButtonGroup()}
       </div>
     </>
