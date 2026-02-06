@@ -466,6 +466,8 @@ export const zhTW = {
   privacyModeTitle: "隱私模式",
   // 介面排版開關
   collapsedButtonsOrderTitle: "快捷按鈕組",
+  quickButtonsOpacityLabel: "快捷按鈕透明度",
+  quickButtonsOpacityDesc: "調整快捷按鈕組整體透明度",
   tabConversations: "會話",
   conversationsEmpty: "暫無會話數據",
   conversationsEmptyHint: "點擊上方同步按鈕從側邊欄匯入會話",

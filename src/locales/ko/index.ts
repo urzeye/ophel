@@ -171,6 +171,8 @@ export const ko = {
   enablePrerequisiteToast: '먼저 "{setting}"을(를) 켜 주세요',
   privacyModeTitle: "개인정보 보호 모드",
   collapsedButtonsOrderTitle: "퀵 버튼",
+  quickButtonsOpacityLabel: "Quick buttons opacity",
+  quickButtonsOpacityDesc: "Adjust overall opacity of the quick buttons",
 
   // ======== Continue existing translations ========
   searchPlaceholder: "프롬프트 검색...",

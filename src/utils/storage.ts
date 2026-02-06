@@ -208,6 +208,7 @@ export interface Settings {
 
   // 快捷按钮配置
   collapsedButtons: Array<{ id: string; enabled: boolean }>
+  quickButtonsOpacity: number
 
   // Claude 专属设置
   claude?: {
@@ -382,6 +383,7 @@ export const DEFAULT_SETTINGS: Settings = {
     { id: "manualAnchor", enabled: false },
     { id: "scrollBottom", enabled: true },
   ],
+  quickButtonsOpacity: 1,
 
   claude: {
     currentKeyId: "", // 空字符串表示使用浏览器默认cookie

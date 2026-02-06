@@ -416,6 +416,26 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId }) => {
               />
             )
           })}
+          <SettingRow
+            label={t("quickButtonsOpacityLabel") || "快捷按钮透明度"}
+            description={t("quickButtonsOpacityDesc") || "调整快捷按钮组整体透明度"}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <input
+                type="range"
+                min="0.4"
+                max="1"
+                step="0.05"
+                value={settings.quickButtonsOpacity ?? 1}
+                onChange={(e) =>
+                  setSettings({ quickButtonsOpacity: parseFloat(e.target.value) })
+                }
+                style={{ width: "120px" }}
+              />
+              <span style={{ fontSize: "12px", minWidth: "36px" }}>
+                {Math.round((settings.quickButtonsOpacity ?? 1) * 100)}%
+              </span>
+            </div>
+          </SettingRow>
         </SettingCard>
       )}
     </div>

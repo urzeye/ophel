@@ -169,6 +169,8 @@ export const pt = {
   enablePrerequisiteToast: 'Ative primeiro "{setting}"',
   privacyModeTitle: "Modo Privado",
   collapsedButtonsOrderTitle: "Botões Rápidos",
+  quickButtonsOpacityLabel: "Quick buttons opacity",
+  quickButtonsOpacityDesc: "Adjust overall opacity of the quick buttons",
 
   // ======== Continue existing translations ========
   searchPlaceholder: "Buscar prompts...",

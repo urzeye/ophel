@@ -206,6 +206,8 @@ export const zhCN = {
   enablePrerequisiteToast: "请先开启「{setting}」",
   privacyModeTitle: "隐私模式",
   collapsedButtonsOrderTitle: "快捷按钮组",
+  quickButtonsOpacityLabel: "快捷按钮透明度",
+  quickButtonsOpacityDesc: "调整快捷按钮组整体透明度",
 
   // ======== 继续原有翻译 ========
   searchPlaceholder: "搜索提示词...",

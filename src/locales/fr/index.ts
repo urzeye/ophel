@@ -170,6 +170,8 @@ export const fr = {
   enablePrerequisiteToast: 'Veuillez d\'abord activer "{setting}"',
   privacyModeTitle: "Mode Privé",
   collapsedButtonsOrderTitle: "Boutons Rapides",
+  quickButtonsOpacityLabel: "Quick buttons opacity",
+  quickButtonsOpacityDesc: "Adjust overall opacity of the quick buttons",
 
   // ======== Continue existing translations ========
   searchPlaceholder: "Chercher des prompts...",

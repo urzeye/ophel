@@ -175,6 +175,8 @@ export const en = {
   enablePrerequisiteToast: 'Please enable "{setting}" first',
   privacyModeTitle: "Privacy Mode",
   collapsedButtonsOrderTitle: "Quick Buttons",
+  quickButtonsOpacityLabel: "Quick buttons opacity",
+  quickButtonsOpacityDesc: "Adjust overall opacity of the quick buttons",
 
   // ======== Continue existing translations ========
   searchPlaceholder: "Search prompts...",

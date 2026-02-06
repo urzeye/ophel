@@ -171,6 +171,8 @@ export const ja = {
   enablePrerequisiteToast: "先に「{setting}」を有効にしてください",
   privacyModeTitle: "プライバシーモード",
   collapsedButtonsOrderTitle: "クイックボタン",
+  quickButtonsOpacityLabel: "Quick buttons opacity",
+  quickButtonsOpacityDesc: "Adjust overall opacity of the quick buttons",
 
   // ======== Continue existing translations ========
   searchPlaceholder: "プロンプトを検索...",

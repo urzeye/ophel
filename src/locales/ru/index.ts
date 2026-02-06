@@ -167,6 +167,8 @@ export const ru = {
   enablePrerequisiteToast: "Сначала включите «{setting}»",
   privacyModeTitle: "Приватность",
   collapsedButtonsOrderTitle: "Кнопки",
+  quickButtonsOpacityLabel: "Quick buttons opacity",
+  quickButtonsOpacityDesc: "Adjust overall opacity of the quick buttons",
 
   // ======== Continue existing translations ========
   searchPlaceholder: "Поиск промптов...",
