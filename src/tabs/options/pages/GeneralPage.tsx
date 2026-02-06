@@ -426,9 +426,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId }) => {
                 max="1"
                 step="0.05"
                 value={settings.quickButtonsOpacity ?? 1}
-                onChange={(e) =>
-                  setSettings({ quickButtonsOpacity: parseFloat(e.target.value) })
-                }
+                onChange={(e) => setSettings({ quickButtonsOpacity: parseFloat(e.target.value) })}
                 style={{ width: "120px" }}
               />
               <span style={{ fontSize: "12px", minWidth: "36px" }}>

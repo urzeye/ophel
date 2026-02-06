@@ -37,10 +37,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const quickButtonsSide = currentSettings.panel?.defaultPosition ?? "right"
   const quickButtonsPositionStyle =
     quickButtonsSide === "left" ? { left: "16px", right: "auto" } : { right: "16px", left: "auto" }
-  const quickButtonsOpacity = Math.min(
-    Math.max(currentSettings.quickButtonsOpacity ?? 1, 0.4),
-    1,
-  )
+  const quickButtonsOpacity = Math.min(Math.max(currentSettings.quickButtonsOpacity ?? 1, 0.4), 1)
 
   const DRAG_LONG_PRESS_MS = 150
   const DRAG_THRESHOLD_PX = 6
