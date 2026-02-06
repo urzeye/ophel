@@ -663,6 +663,8 @@
   justify-content: center;
   box-shadow: var(--gh-shadow-sm);
   opacity: 0.6;
+  position: relative;
+  overflow: hidden;
   transition:
     opacity 0.2s ease,
     background 0.2s ease;
@@ -677,6 +679,28 @@
   box-shadow:
     0 -4px 0 color-mix(in srgb, var(--gh-text) 70%, transparent),
     0 4px 0 color-mix(in srgb, var(--gh-text) 70%, transparent);
+  position: relative;
+  z-index: 1;
+}
+
+.quick-btn-group .quick-btn-drag-handle::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0;
+  background: color-mix(in srgb, var(--gh-primary) 45%, transparent);
+  opacity: 0.9;
+  z-index: 0;
+}
+
+.quick-btn-group.pressing .quick-btn-drag-handle::after {
+  animation: quick-btn-hold-fill var(--quick-btn-press-duration, 150ms) linear forwards;
+}
+
+.quick-btn-group.dragging .quick-btn-drag-handle::after {
+  width: 100%;
 }
 
 .quick-btn-group:hover .quick-btn-drag-handle {
@@ -685,6 +709,15 @@
 
 .quick-btn-group.dragging .quick-btn-drag-handle {
   background: color-mix(in srgb, var(--gh-text) 22%, var(--gh-bg) 78%);
+}
+
+@keyframes quick-btn-hold-fill {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
 }
 
 .quick-btn-group.dragging .quick-prompt-btn {

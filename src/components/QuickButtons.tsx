@@ -44,6 +44,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   const [groupPosition, setGroupPosition] = useState<{ x: number; y: number } | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [isPressing, setIsPressing] = useState(false)
 
   const dragTimerRef = useRef<number | null>(null)
   const dragStartRef = useRef<{ x: number; y: number } | null>(null)
@@ -375,6 +376,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   }
 
   const endDragging = () => {
+    setIsPressing(false)
     clearDragTimer()
     dragStartRef.current = null
     dragOffsetRef.current = null
@@ -399,6 +401,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     pointerIdRef.current = e.pointerId
     dragStartRef.current = { x: e.clientX, y: e.clientY }
     suppressClickRef.current = false
+    setIsPressing(true)
 
     const rect = groupRef.current.getBoundingClientRect()
     dragOffsetRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
@@ -408,6 +411,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       if (!groupRef.current || pointerIdRef.current === null) return
 
       groupRef.current.setPointerCapture(pointerIdRef.current)
+      setIsPressing(false)
       draggingRef.current = true
       suppressClickRef.current = true
       setIsDragging(true)
@@ -422,6 +426,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       const dy = e.clientY - dragStartRef.current.y
       if (Math.hypot(dx, dy) > DRAG_THRESHOLD_PX) {
         clearDragTimer()
+        setIsPressing(false)
       }
       return
     }
@@ -441,6 +446,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const handlePointerLeave = () => {
     if (draggingRef.current) return
     clearDragTimer()
+    setIsPressing(false)
     dragStartRef.current = null
     dragOffsetRef.current = null
     pointerIdRef.current = null
@@ -459,7 +465,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       <LoadingOverlay isVisible={isLoadingHistory} text={loadingText} onStop={stopLoading} />
       <div
         ref={groupRef}
-        className={`quick-btn-group gh-interactive ${!isPanelOpen ? "collapsed" : ""} ${isDragging ? "dragging" : ""}`}
+        className={`quick-btn-group gh-interactive ${!isPanelOpen ? "collapsed" : ""} ${isDragging ? "dragging" : ""} ${isPressing ? "pressing" : ""}`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -478,7 +484,11 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
           zIndex: 9998,
           transition: "opacity 0.3s",
         }}>
-        <div className="quick-btn-drag-handle" aria-hidden="true" />
+        <div
+          className="quick-btn-drag-handle"
+          style={{ "--quick-btn-press-duration": `${DRAG_LONG_PRESS_MS}ms` } as React.CSSProperties}
+          aria-hidden="true"
+        />
         {renderButtonGroup()}
       </div>
     </>
