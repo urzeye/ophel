@@ -1019,4 +1019,9 @@ export const ja = {
   policyRetryLimitReached: "再試行回数の上限に達しました",
   preventAutoScrollEnabled: "スクロールロックが有効になりました",
   preventAutoScrollDisabled: "スクロールロックが無効になりました",
+
+  // ツールボックスメニュー
+  toolboxMenu: "ツールボックス",
+  toolboxMenuTitle: "ツールボックスメニュー",
+  toolboxMenuDesc: "ツールボックスのポップアップメニューに表示する機能を設定",
 }

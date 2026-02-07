@@ -998,4 +998,9 @@ export const zhTW = {
   policyRetryLimitReached: "重試次數已達上限",
   preventAutoScrollEnabled: "滾動鎖定已開啟",
   preventAutoScrollDisabled: "滾動鎖定已關閉",
+
+  // 工具箱選單
+  toolboxMenu: "工具箱",
+  toolboxMenuTitle: "工具箱選單",
+  toolboxMenuDesc: "設定工具箱彈出選單中顯示的功能",
 }

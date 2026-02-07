@@ -1010,4 +1010,10 @@ Dame el código y luego un resumen de mejoras.`,
   policyRetryLimitReached: "Límite de reintentos alcanzado",
   preventAutoScrollEnabled: "Bloqueo de desplazamiento activado",
   preventAutoScrollDisabled: "Bloqueo de desplazamiento desactivado",
+
+  // Menú de Caja de herramientas
+  toolboxMenu: "Caja de herramientas",
+  toolboxMenuTitle: "Menú de Caja de herramientas",
+  toolboxMenuDesc:
+    "Configurar las funciones mostradas en el menú emergente de la caja de herramientas",
 }

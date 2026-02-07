@@ -1014,4 +1014,10 @@ Donnez le code puis un résumé des améliorations.`,
   policyRetryLimitReached: "Limite de réessais atteinte",
   preventAutoScrollEnabled: "Verrouillage du défilement activé",
   preventAutoScrollDisabled: "Verrouillage du défilement désactivé",
+
+  // Menu Boîte à outils
+  toolboxMenu: "Boîte à outils",
+  toolboxMenuTitle: "Menu Boîte à outils",
+  toolboxMenuDesc:
+    "Configurer les fonctions affichées dans le menu contextuel de la boîte à outils",
 }

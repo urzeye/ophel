@@ -1007,4 +1007,9 @@ export const ru = {
   policyRetryLimitReached: "Достигнут лимит попыток",
   preventAutoScrollEnabled: "Блокировка прокрутки включена",
   preventAutoScrollDisabled: "Блокировка прокрутки выключена",
+
+  // Меню инструментов
+  toolboxMenu: "Инструменты",
+  toolboxMenuTitle: "Меню инструментов",
+  toolboxMenuDesc: "Настройка функций, отображаемых во всплывающем меню инструментов",
 }

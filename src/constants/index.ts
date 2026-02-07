@@ -39,3 +39,12 @@ export {
 
 // 提示词模块
 export { VIRTUAL_CATEGORY, type VirtualCategoryType } from "./prompts"
+
+// 工具箱菜单
+export {
+  TOOLS_MENU_IDS,
+  TOOLS_MENU_ITEMS,
+  getDefaultToolsMenuIds,
+  type ToolsMenuItem,
+  type ToolsMenuId,
+} from "./tools-menu"

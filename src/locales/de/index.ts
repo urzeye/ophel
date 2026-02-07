@@ -1009,4 +1009,9 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   policyRetryLimitReached: "Wiederholungslimit erreicht",
   preventAutoScrollEnabled: "Scroll-Sperre aktiviert",
   preventAutoScrollDisabled: "Scroll-Sperre deaktiviert",
+
+  // Werkzeugkasten-Menü
+  toolboxMenu: "Werkzeugkasten",
+  toolboxMenuTitle: "Werkzeugkasten-Menü",
+  toolboxMenuDesc: "Konfigurieren Sie, welche Funktionen im Werkzeugkasten-Popup erscheinen",
 }

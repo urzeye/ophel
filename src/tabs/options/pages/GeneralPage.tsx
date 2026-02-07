@@ -1,12 +1,17 @@
 /**
  * 基本设置页面
- * 包含：面板 | 界面排版 | 快捷按钮 | 宽度布局
+ * 包含：面板 | 界面排版 | 快捷按钮 | 工具箱菜单
  */
 import React, { useState } from "react"
 
 import { DragIcon, GeneralIcon } from "~components/icons"
 import { NumberInput, Switch } from "~components/ui"
-import { COLLAPSED_BUTTON_DEFS, TAB_DEFINITIONS } from "~constants"
+import {
+  COLLAPSED_BUTTON_DEFS,
+  TAB_DEFINITIONS,
+  TOOLS_MENU_IDS,
+  TOOLS_MENU_ITEMS,
+} from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { showToastThrottled } from "~utils/toast"
@@ -168,6 +173,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId }) => {
     { id: "panel", label: t("panelTab") || "面板" },
     { id: "tabOrder", label: t("tabOrderTab") || "界面排版" },
     { id: "shortcuts", label: t("shortcutsTab") || "快捷按钮" },
+    { id: "toolsMenu", label: t("toolboxMenu") || "工具箱" },
   ]
 
   return (
@@ -434,6 +440,32 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId }) => {
               </span>
             </div>
           </SettingRow>
+        </SettingCard>
+      )}
+
+      {/* ========== 工具箱菜单 Tab ========== */}
+      {activeTab === "toolsMenu" && (
+        <SettingCard
+          title={t("toolboxMenuTitle") || "工具箱菜单"}
+          description={t("toolboxMenuDesc") || "配置工具箱弹出菜单中显示的功能"}>
+          {TOOLS_MENU_ITEMS.filter((item) => item.id !== TOOLS_MENU_IDS.SETTINGS).map((item) => {
+            const enabledIds = settings.toolsMenu ?? TOOLS_MENU_ITEMS.map((i) => i.id)
+            const isEnabled = enabledIds.includes(item.id)
+            return (
+              <ToggleRow
+                key={item.id}
+                label={t(item.labelKey) || item.defaultLabel}
+                checked={isEnabled}
+                onChange={() => {
+                  const currentIds = settings.toolsMenu ?? TOOLS_MENU_ITEMS.map((i) => i.id)
+                  const newIds = isEnabled
+                    ? currentIds.filter((id) => id !== item.id)
+                    : [...currentIds, item.id]
+                  setSettings({ toolsMenu: newIds })
+                }}
+              />
+            )
+          })}
         </SettingCard>
       )}
     </div>

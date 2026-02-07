@@ -1007,4 +1007,9 @@ Dê o código e depois um resumo de melhorias.`,
   policyRetryLimitReached: "Limite de tentativas alcançado",
   preventAutoScrollEnabled: "Bloqueio de rolagem ativado",
   preventAutoScrollDisabled: "Bloqueio de rolagem desativado",
+
+  // Menu da Caixa de ferramentas
+  toolboxMenu: "Caixa de ferramentas",
+  toolboxMenuTitle: "Menu da Caixa de ferramentas",
+  toolboxMenuDesc: "Configurar as funções exibidas no menu pop-up da caixa de ferramentas",
 }

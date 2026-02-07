@@ -1026,4 +1026,9 @@ Please output the optimized code block directly, followed by a brief summary of 
   policyRetryLimitReached: "Retry limit reached",
   preventAutoScrollEnabled: "Scroll lock enabled",
   preventAutoScrollDisabled: "Scroll lock disabled",
+
+  // Toolbox Menu
+  toolboxMenu: "Toolbox",
+  toolboxMenuTitle: "Toolbox Menu",
+  toolboxMenuDesc: "Configure which features appear in the toolbox popup menu",
 }

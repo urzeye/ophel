@@ -44,6 +44,7 @@ export const FEATURES_TAB_IDS = {
   TAB_SETTINGS: "tab",
   CONTENT: "content",
   READING_HISTORY: "readingHistory",
+  TOOLBOX: "toolbox",
 } as const
 
 // ==================== Site Settings Page Tab IDs ====================

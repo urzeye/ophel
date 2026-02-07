@@ -209,6 +209,10 @@ export interface Settings {
   // 快捷按钮配置
   collapsedButtons: Array<{ id: string; enabled: boolean }>
   quickButtonsOpacity: number
+
+  // 工具箱菜单配置 (启用的菜单项 ID 列表，undefined 表示全部显示)
+  toolsMenu?: string[]
+
   floatingToolbar: {
     open: boolean
   }

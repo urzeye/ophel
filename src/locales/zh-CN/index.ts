@@ -1040,4 +1040,9 @@ export const zhCN = {
   policyRetryLimitReached: "重试次数已达上限",
   preventAutoScrollEnabled: "滚动锁定已开启",
   preventAutoScrollDisabled: "滚动锁定已关闭",
+
+  // 工具箱菜单
+  toolboxMenu: "工具箱",
+  toolboxMenuTitle: "工具箱菜单",
+  toolboxMenuDesc: "配置工具箱弹出菜单中显示的功能",
 }

@@ -1016,4 +1016,9 @@ export const ko = {
   policyRetryLimitReached: "재시도 횟수 초과",
   preventAutoScrollEnabled: "스크롤 잠금이 활성화되었습니다",
   preventAutoScrollDisabled: "스크롤 잠금이 비활성화되었습니다",
+
+  // 도구함 메뉴
+  toolboxMenu: "도구함",
+  toolboxMenuTitle: "도구함 메뉴",
+  toolboxMenuDesc: "도구함 팝업 메뉴에 표시할 기능 설정",
 }
