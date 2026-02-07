@@ -2,10 +2,14 @@ import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore }
 
 import { getAdapter } from "~adapters/index"
 import {
-  AnchorIcon,
   CleanupIcon,
+  CopyIcon,
   ExportIcon,
-  FolderPlusIcon,
+  FolderMoveIcon,
+  ModelLockIcon,
+  ScrollLockIcon,
+  SettingsIcon,
+  TagIcon,
   ThemeDarkIcon,
   ThemeLightIcon,
 } from "~components/icons"
@@ -33,9 +37,15 @@ interface QuickButtonsProps {
   // 工具栏功能
   onExport?: () => void
   onMove?: () => void
+  onSetTag?: () => void
   onScrollLock?: (locked: boolean) => void
+  onSettings?: () => void
   onCleanup?: () => void
   scrollLocked?: boolean
+  // 新增功能
+  onCopyMarkdown?: () => void
+  onModelLockToggle?: () => void
+  isModelLocked?: boolean
 }
 
 export const QuickButtons: React.FC<QuickButtonsProps> = ({
@@ -45,9 +55,14 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   themeMode,
   onExport,
   onMove,
+  onSetTag,
   onScrollLock,
+  onSettings,
   onCleanup,
   scrollLocked,
+  onCopyMarkdown,
+  onModelLockToggle,
+  isModelLocked,
 }) => {
   const { settings } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
@@ -56,7 +71,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const quickButtonsPositionStyle =
     quickButtonsSide === "left" ? { left: "16px", right: "auto" } : { right: "16px", left: "auto" }
   const quickButtonsOpacity = Math.min(Math.max(currentSettings.quickButtonsOpacity ?? 1, 0.4), 1)
-  const isFloatingToolbarOpen = currentSettings.floatingToolbar?.open ?? true
 
   const DRAG_LONG_PRESS_MS = 150
   const DRAG_THRESHOLD_PX = 6
@@ -70,16 +84,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   useEffect(() => {
     if (!isToolsMenuOpen) return
     const handleClickOutside = (e: MouseEvent) => {
-      // Log for debugging
       const target = e.target as Node
-      const param = {
-        inGroup: groupRef.current?.contains(target),
-        target: target,
-      }
-      console.log("QuickButtons: handleClickOutside", param)
-
       if (groupRef.current && !groupRef.current.contains(target)) {
-        console.log("QuickButtons: Closing menu due to outside click")
         setIsToolsMenuOpen(false)
       }
     }
@@ -264,7 +270,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     const isPanelOnly = def.isPanelOnly
     const isDisabled = !enabled
     const isFloatingToolbarBtn = id === "floatingToolbar"
-    const isActive = isFloatingToolbarBtn && isFloatingToolbarOpen
+    // Animation: Active state for floatingToolbar button is controlled by isToolsMenuOpen
+    const isActive = isFloatingToolbarBtn ? isToolsMenuOpen : false
 
     // panel-only 按钮：面板展开时隐藏
     // 禁用的按钮：永远隐藏
@@ -294,7 +301,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return (
       <Tooltip key={id} content={tooltipContent}>
         <button
-          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isActive ? "active" : ""}`}
+          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isActive ? "active" : ""} ${isFloatingToolbarBtn ? "tools-trigger-btn" : ""}`}
           onClick={(e) => buttonActions[id]?.(e)}
           style={{
             opacity: anchorDisabled ? 0.4 : 1,
@@ -554,7 +561,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
             <Tooltip content={t("export") || "Export"}>
               <button
                 className="quick-menu-btn"
-                onClick={(e) => {
+                onClick={() => {
                   onExport?.()
                   setIsToolsMenuOpen(false)
                 }}>
@@ -562,25 +569,58 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
               </button>
             </Tooltip>
 
+            <Tooltip content={t("exportToClipboard") || "Copy Markdown"}>
+              <button
+                className="quick-menu-btn"
+                onClick={() => {
+                  onCopyMarkdown?.()
+                  setIsToolsMenuOpen(false)
+                }}>
+                <CopyIcon size={18} />
+              </button>
+            </Tooltip>
+
             <Tooltip content={t("conversationsMoveTo") || "Move"}>
               <button
                 className="quick-menu-btn"
-                onClick={(e) => {
+                onClick={() => {
                   onMove?.()
                   setIsToolsMenuOpen(false)
                 }}>
-                <FolderPlusIcon size={18} />
+                <FolderMoveIcon size={18} />
+              </button>
+            </Tooltip>
+
+            <Tooltip content={t("conversationsSetTag") || "Set Tag"}>
+              <button
+                className="quick-menu-btn"
+                onClick={() => {
+                  onSetTag?.()
+                  setIsToolsMenuOpen(false)
+                }}>
+                <TagIcon size={18} />
               </button>
             </Tooltip>
 
             <Tooltip content={t("shortcutToggleScrollLock") || "Scroll Lock"}>
               <button
                 className={`quick-menu-btn ${scrollLocked ? "active" : ""}`}
-                onClick={(e) => {
+                onClick={() => {
                   onScrollLock?.(!scrollLocked)
                   setIsToolsMenuOpen(false)
                 }}>
-                <AnchorIcon size={18} />
+                <ScrollLockIcon size={18} />
+              </button>
+            </Tooltip>
+
+            <Tooltip content={t("modelLockTitle") || "Model Lock"}>
+              <button
+                className={`quick-menu-btn ${isModelLocked ? "active" : ""}`}
+                onClick={() => {
+                  onModelLockToggle?.()
+                  setIsToolsMenuOpen(false)
+                }}>
+                <ModelLockIcon size={18} />
               </button>
             </Tooltip>
 
@@ -589,11 +629,24 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
             <Tooltip content={t("cleanup") || "Cleanup"}>
               <button
                 className="quick-menu-btn danger"
-                onClick={(e) => {
+                onClick={() => {
                   onCleanup?.()
                   setIsToolsMenuOpen(false)
                 }}>
                 <CleanupIcon size={18} />
+              </button>
+            </Tooltip>
+
+            <div className="menu-divider" />
+
+            <Tooltip content={t("tabSettings") || "Settings"}>
+              <button
+                className="quick-menu-btn"
+                onClick={() => {
+                  onSettings?.()
+                  setIsToolsMenuOpen(false)
+                }}>
+                <SettingsIcon size={18} />
               </button>
             </Tooltip>
           </div>

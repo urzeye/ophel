@@ -20,12 +20,13 @@ import { MSG_CLEAR_ALL_DATA } from "~utils/messaging"
 import { showToast } from "~utils/toast"
 import { t } from "~utils/i18n"
 
-import { ConfirmDialog, FolderSelectDialog } from "./ConversationDialogs"
+import { ConfirmDialog, FolderSelectDialog, TagManagerDialog } from "./ConversationDialogs"
 import { DisclaimerModal } from "./DisclaimerModal"
 import { MainPanel } from "./MainPanel"
 import { QuickButtons } from "./QuickButtons"
 import { SelectedPromptBar } from "./SelectedPromptBar"
 import { SettingsModal } from "./SettingsModal"
+import { useTagsStore } from "~stores/tags-store"
 
 export const App = () => {
   // 读取设置 - 使用 Zustand Store
@@ -459,8 +460,64 @@ export const App = () => {
       showToast(t("floatingToolbarClearGhostEmpty") || "没有需要清理的幽灵收藏")
       return
     }
-    showToast(`${t("cleared") || "???"} (${cleared})`)
+    showToast(`${t("cleared") || "已清理"} (${cleared})`)
   }, [outlineManager])
+
+  // 复制为 Markdown 处理器
+  const handleCopyMarkdown = useCallback(async () => {
+    if (!conversationManager || !adapter) return
+    const sessionId = adapter.getSessionId()
+    if (!sessionId) {
+      showToast(t("exportNeedOpenFirst") || "请先打开要导出的会话")
+      return
+    }
+    showToast(t("exportLoading") || "正在加载...")
+    const success = await conversationManager.exportConversation(sessionId, "clipboard")
+    if (!success) {
+      showToast(t("exportFailed") || "导出失败")
+    }
+  }, [conversationManager, adapter])
+
+  // 模型锁定切换处理器 (按站点)
+  const handleModelLockToggle = useCallback(() => {
+    if (!adapter) return
+    const siteId = adapter.getSiteId()
+    const current = settingsRef.current
+    if (!current) return
+
+    const modelLockConfig = current.modelLock?.[siteId] || { enabled: false, keyword: "" }
+
+    // 如果没有配置关键词，提示用户先配置
+    if (!modelLockConfig.keyword) {
+      showToast(t("modelLockNoKeyword") || "请先在设置中配置模型关键词")
+      return
+    }
+
+    const newEnabled = !modelLockConfig.enabled
+
+    setSettings({
+      modelLock: {
+        ...current.modelLock,
+        [siteId]: {
+          ...modelLockConfig,
+          enabled: newEnabled,
+        },
+      },
+    })
+
+    showToast(
+      newEnabled
+        ? t("modelLockEnabled") || "模型锁定已开启"
+        : t("modelLockDisabled") || "模型锁定已关闭",
+    )
+  }, [adapter, setSettings])
+
+  // 获取当前站点的模型锁定状态
+  const isModelLocked = useMemo(() => {
+    if (!adapter || !settings) return false
+    const siteId = adapter.getSiteId()
+    return settings.modelLock?.[siteId]?.enabled || false
+  }, [adapter, settings])
 
   // 快捷键管理
   useShortcuts({
@@ -839,6 +896,25 @@ export const App = () => {
     }
   }, [selectedPrompt, adapter])
 
+  // 浮动工具栏设置标签状态
+  const [floatingToolbarTagState, setFloatingToolbarTagState] = useState<{
+    convId: string
+  } | null>(null)
+
+  const handleFloatingToolbarSetTag = useCallback(() => {
+    if (!conversationManager || !adapter) return
+    const sessionId = adapter.getSessionId()
+    if (!sessionId) {
+      showToast(t("noConversationToLocate") || "未找到当前会话")
+      return
+    }
+    setFloatingToolbarTagState({
+      convId: sessionId,
+    })
+  }, [conversationManager, adapter])
+
+  const { tags, addTag, updateTag, deleteTag } = useTagsStore()
+
   if (!adapter || !promptManager || !conversationManager || !outlineManager) {
     return null
   }
@@ -892,7 +968,7 @@ export const App = () => {
           if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
 
           hideTimerRef.current = setTimeout(() => {
-            // 优先检查设置模态框状态（使用 ref 确保读取最新值）
+            // 优先检查设置模态框状态（使用 ref 确保读取到最新的值）
             if (isSettingsOpenRef.current) return
 
             // 检查是否有输入框正在聚焦（防止 IME 输入法弹出时隐藏）
@@ -934,7 +1010,12 @@ export const App = () => {
         themeMode={themeMode}
         onExport={handleFloatingToolbarExport}
         onMove={handleFloatingToolbarMoveToFolder}
+        onSetTag={handleFloatingToolbarSetTag}
         onScrollLock={() => handleToggleScrollLock()}
+        onSettings={() => {
+          isSettingsOpenRef.current = true
+          setIsSettingsOpen(true)
+        }}
         scrollLocked={isScrollLockActive}
         onCleanup={() => {
           if (ghostBookmarkCount === 0) {
@@ -943,6 +1024,9 @@ export const App = () => {
           }
           setIsFloatingToolbarClearOpen(true)
         }}
+        onCopyMarkdown={handleCopyMarkdown}
+        onModelLockToggle={handleModelLockToggle}
+        isModelLocked={isModelLocked}
       />
       {/* 选中提示词悬浮条 */}
       {selectedPrompt && (
@@ -1010,13 +1094,34 @@ export const App = () => {
           onCancel={() => setFloatingToolbarMoveState(null)}
         />
       )}
+      {floatingToolbarTagState && (
+        <TagManagerDialog
+          tags={tags}
+          conv={conversationManager.getConversation(floatingToolbarTagState.convId)}
+          onCancel={() => setFloatingToolbarTagState(null)}
+          onCreateTag={async (name, color) => {
+            return addTag(name, color)
+          }}
+          onUpdateTag={async (tagId, name, color) => {
+            return updateTag(tagId, name, color)
+          }}
+          onDeleteTag={async (tagId) => {
+            deleteTag(tagId)
+          }}
+          onSetConversationTags={async (convId, tagIds) => {
+            await conversationManager.updateConversation(convId, { tagIds })
+          }}
+          onRefresh={() => {
+            // 强制刷新会话列表 ? conversationManager 会触发 onChange
+          }}
+        />
+      )}
       {isFloatingToolbarClearOpen && (
         <ConfirmDialog
-          title={t("floatingToolbarClearGhost") || "??????"}
-          message={(t("floatingToolbarClearGhostConfirm") || "?????????? {count} ???????").replace(
-            "{count}",
-            String(ghostBookmarkCount),
-          )}
+          title={t("floatingToolbarClearGhost") || "清除幽灵收藏"}
+          message={(
+            t("floatingToolbarClearGhostConfirm") || "是否清除本会话中的 {count} 个幽灵收藏？"
+          ).replace("{count}", String(ghostBookmarkCount))}
           danger
           onConfirm={() => {
             setIsFloatingToolbarClearOpen(false)

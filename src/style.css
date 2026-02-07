@@ -638,6 +638,33 @@
     0 6px 16px rgba(66, 133, 244, 0.45);
 }
 
+/* 工具箱按钮动画：旋转 + 高亮 (Rotation + Glow) */
+.quick-prompt-btn.tools-trigger-btn {
+  transition:
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s ease,
+    background-color 0.3s ease;
+}
+
+.quick-prompt-btn.tools-trigger-btn.active {
+  /* 增强的高亮光晕 */
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.6),
+    0 0 20px rgba(66, 133, 244, 0.6);
+  background: var(--gh-primary);
+  /* 持续旋转动画 */
+  animation: tools-spin 3s linear infinite;
+}
+
+@keyframes tools-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* 快捷按钮组容器 */
 .quick-btn-group {
   position: fixed;

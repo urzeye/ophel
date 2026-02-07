@@ -27,10 +27,36 @@ export const ToolsIcon: React.FC<IconProps> = ({
     strokeLinejoin="round"
     className={className}
     style={{ display: "block" }}>
-    <rect x="3" y="3" width="7" height="7" rx="2" ry="2" />
-    <rect x="14" y="3" width="7" height="7" rx="2" ry="2" />
-    <rect x="14" y="14" width="7" height="7" rx="2" ry="2" />
-    <rect x="3" y="14" width="7" height="7" rx="2" ry="2" />
+    {/* Symmetrical Atom: 3 Orbits at 0, 60, 120 degrees */}
+    <ellipse
+      cx="12"
+      cy="12"
+      rx="10"
+      ry="4"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      transform="rotate(0 12 12)"
+    />
+    <ellipse
+      cx="12"
+      cy="12"
+      rx="10"
+      ry="4"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      transform="rotate(60 12 12)"
+    />
+    <ellipse
+      cx="12"
+      cy="12"
+      rx="10"
+      ry="4"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      transform="rotate(120 12 12)"
+    />
+    {/* Nucleus */}
+    <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" />
   </svg>
 )
 

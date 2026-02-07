@@ -473,6 +473,10 @@ export class ConversationManager {
     }
   }
 
+  updateConversation(convId: string, updates: Partial<Conversation>) {
+    getConversationsStore().updateConversation(convId, updates)
+  }
+
   getConversation(convId: string): Conversation | undefined {
     return this.conversations[convId]
   }
