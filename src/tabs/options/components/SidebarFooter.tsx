@@ -72,6 +72,11 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
 
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
   const moreBtnRef = React.useRef<HTMLButtonElement>(null)
+  const themeSegmentRef = React.useRef<HTMLDivElement>(null)
+  const [themeSegmentState, setThemeSegmentState] = React.useState<"normal" | "compact" | "icon">(
+    "normal",
+  )
+  const themeSegmentStateRef = React.useRef<"normal" | "compact" | "icon">("normal")
 
   const SHORT_LANG_MAP: Record<string, string> = {
     en: "EN",
@@ -96,11 +101,67 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
   // 去重（虽然逻辑上 dynamicSlot 应该不会和 fixed 重复，除非有效语言列表只有2个）
   const visibleSlots = Array.from(new Set([...fixedSlots, dynamicSlot]))
 
+  React.useEffect(() => {
+    themeSegmentStateRef.current = themeSegmentState
+  }, [themeSegmentState])
+
+  React.useEffect(() => {
+    const container = themeSegmentRef.current
+    if (!container) return
+
+    const applyStateClass = (state: "normal" | "compact" | "icon") => {
+      container.classList.toggle("is-compact", state === "compact")
+      container.classList.toggle("is-icon", state === "icon")
+    }
+
+    const fitsContainer = (state: "normal" | "compact" | "icon") => {
+      applyStateClass(state)
+      return container.scrollWidth <= container.clientWidth + 1
+    }
+
+    const measureState = () => {
+      const prevState = themeSegmentStateRef.current
+
+      const normalFits = fitsContainer("normal")
+      let nextState: "normal" | "compact" | "icon" = "normal"
+      if (!normalFits) {
+        const compactFits = fitsContainer("compact")
+        nextState = compactFits ? "compact" : "icon"
+      }
+
+      applyStateClass(prevState)
+      if (nextState !== themeSegmentStateRef.current) {
+        setThemeSegmentState(nextState)
+      }
+    }
+
+    const scheduleMeasure = () => {
+      if (typeof requestAnimationFrame === "function") {
+        requestAnimationFrame(measureState)
+        return
+      }
+      measureState()
+    }
+
+    scheduleMeasure()
+
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(() => scheduleMeasure())
+      observer.observe(container)
+      return () => observer.disconnect()
+    }
+
+    window.addEventListener("resize", scheduleMeasure)
+    return () => window.removeEventListener("resize", scheduleMeasure)
+  }, [effectiveLang])
+
   return (
     <div className="settings-sidebar-footer">
       {/* 主题切换 - 仅在 content script 环境显示（站点内） */}
       {!isStandalonePage && (
-        <div className="settings-theme-segmented">
+        <div
+          ref={themeSegmentRef}
+          className={`settings-theme-segmented ${themeSegmentState === "compact" ? "is-compact" : ""} ${themeSegmentState === "icon" ? "is-icon" : ""}`}>
           <Tooltip content={t("themeLight") || "浅色"} triggerStyle={{ flex: 1 }}>
             <button
               className={`settings-theme-segment ${currentThemePreference === "light" ? "active" : ""}`}

@@ -73,15 +73,19 @@
   padding: 4px;
   border-radius: 10px;
   gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .settings-theme-segment {
-  flex: 1;
+  flex: 1 1 0;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   padding: 6px 4px;
+  min-width: 0;
   border-radius: 8px;
   border: none;
   background: transparent;
@@ -89,6 +93,32 @@
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.settings-theme-segment .segment-label {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-theme-segmented.is-compact .settings-theme-segment {
+  gap: 4px;
+  padding: 4px 2px;
+  font-size: 12px;
+}
+
+.settings-theme-segmented.is-icon .settings-theme-segment {
+  gap: 0;
+  padding: 6px 0;
+}
+
+.settings-theme-segmented.is-icon .segment-label {
+  display: none;
 }
 
 .settings-theme-segment:hover {
