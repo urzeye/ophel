@@ -8,11 +8,11 @@
 import { t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
 
-// ==================== 类型定义 ====================
-
-const EMOJI_EXPORT = "\u{1F4E4}"
-const EMOJI_USER = "\u{1F64B}"
-const EMOJI_ASSISTANT = "\u{1F916}"
+// 使用 String.fromCodePoint 在运行时生成 emoji
+// 避免构建工具将 Unicode 转义序列转换为 UTF-16 代理对字符串
+const EMOJI_EXPORT = String.fromCodePoint(0x1f4e4) // 📤
+const EMOJI_USER = String.fromCodePoint(0x1f64b) // 🙋
+const EMOJI_ASSISTANT = String.fromCodePoint(0x1f916) // 🤖
 
 export interface ExportMessage {
   role: "user" | "assistant" | string
