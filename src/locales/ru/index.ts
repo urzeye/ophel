@@ -348,10 +348,11 @@ export const ru = {
   outlineLevel3: "До 3 уровня",
   // Reading History (ru)
   readingHistorySettings: "История чтения",
-  readingHistoryPersistence: "Включить историю",
+  readingHistoryTitle: "История чтения",
+  readingHistoryPersistenceLabel: "Включить историю",
   readingHistoryPersistenceDesc: "Запомнить место и вернуться при открытии",
-  autoRestore: "Авто-возврат",
-  autoRestoreDesc: "Сразу прыгать к месту при загрузке",
+  readingHistoryAutoRestoreLabel: "Авто-возврат",
+  readingHistoryAutoRestoreDesc: "Сразу прыгать к месту при загрузке",
   readingHistoryCleanup: "Хранение",
   readingHistoryCleanupDesc: "Сколько хранить прогресс (-1 навсегда)",
   daysSuffix: " Дн.",
@@ -1041,4 +1042,6 @@ export const ru = {
   watermarkProcessed: "Водяной знак удален",
   watermarkFailed: "Ошибка удаления",
   shortcutToggleModelLock: "Переключить блокировку модели",
+  exportFilenameTimestamp: "Add Timestamp to Filename",
+  exportFilenameTimestampDesc: "Add a timestamp to the end of the exported filename",
 }

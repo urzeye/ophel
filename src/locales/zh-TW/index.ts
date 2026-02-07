@@ -422,10 +422,10 @@ export const zhTW = {
   // 閱讀導航設置
   readingNavigationSettings: "閱讀導航",
   readingHistorySettings: "閱讀歷史",
-  readingHistoryPersistence: "啟用閱讀歷史",
+  readingHistoryPersistenceLabel: "啟用閱讀歷史",
   readingHistoryPersistenceDesc: "自動記錄閱讀位置，下次打開時恢復",
-  autoRestore: "自動跳轉",
-  autoRestoreDesc: "打開頁面時自動跳轉到上次位置",
+  readingHistoryAutoRestoreLabel: "自動跳轉",
+  readingHistoryAutoRestoreDesc: "打開頁面時自動跳轉到上次位置",
   readingHistoryCleanup: "歷史保留時間",
   readingHistoryCleanupDesc: "只保留最近幾天的閱讀進度 (-1 為永久)",
   day: "天",
@@ -1011,6 +1011,8 @@ export const zhTW = {
   exportCustomUserNameDesc: "匯出時使用的使用者顯示名稱 (預設: User)",
   exportCustomModelName: "自訂 AI 名稱",
   exportCustomModelNameDesc: "匯出時使用的 AI 顯示名稱 (預設: 網站名稱)",
+  exportFilenameTimestamp: "導出文件名包含時間戳",
+  exportFilenameTimestampDesc: "在導出文件名末尾添加時間戳",
 
   // ======== Popup 頁面 ========
   popupCurrentSite: "目前站點",

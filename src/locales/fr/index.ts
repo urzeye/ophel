@@ -351,10 +351,11 @@ export const fr = {
   outlineLevel3: "Jusqu'au Niveau 3",
   // Reading History (fr)
   readingHistorySettings: "Historique de Lecture",
-  readingHistoryPersistence: "Activer l'Historique",
+  readingHistoryTitle: "Historique de Lecture",
+  readingHistoryPersistenceLabel: "Activer l'Historique",
   readingHistoryPersistenceDesc: "Enregistrer la position et y revenir au chargement",
-  autoRestore: "Auto Restauration",
-  autoRestoreDesc: "Sauter à la dernière position à l'ouverture",
+  readingHistoryAutoRestoreLabel: "Auto Restauration",
+  readingHistoryAutoRestoreDesc: "Sauter à la dernière position à l'ouverture",
   readingHistoryCleanup: "Rétention",
   readingHistoryCleanupDesc: "Combien de temps garder la progression (-1 pour toujours)",
   daysSuffix: " Jours",
@@ -991,6 +992,8 @@ Donnez le code puis un résumé des améliorations.`,
     "Nom d'affichage de l'utilisateur pour les exportations (Défaut : User)",
   exportCustomModelName: "Nom de l'IA personnalisé",
   exportCustomModelNameDesc: "Nom d'affichage de l'IA pour les exportations (Défaut : Nom du site)",
+  exportFilenameTimestamp: "Add Timestamp to Filename",
+  exportFilenameTimestampDesc: "Add a timestamp to the end of the exported filename",
 
   // ======== Popup ========
   popupCurrentSite: "Site Actuel",

@@ -350,10 +350,11 @@ export const de = {
   outlineLevel3: "Bis Ebene 3",
   // Reading History (de)
   readingHistorySettings: "Lesehistorie",
-  readingHistoryPersistence: "Historie aktivieren",
+  readingHistoryTitle: "Lesehistorie",
+  readingHistoryPersistenceLabel: "Historie aktivieren",
   readingHistoryPersistenceDesc: "Position merken und beim Laden dorthin springen",
-  autoRestore: "Auto-Wiederherstellung",
-  autoRestoreDesc: "Beim Öffnen zur letzten Position springen",
+  readingHistoryAutoRestoreLabel: "Auto-Wiederherstellung",
+  readingHistoryAutoRestoreDesc: "Beim Öffnen zur letzten Position springen",
   readingHistoryCleanup: "Aufbewahrungsdauer",
   readingHistoryCleanupDesc: "Wie lange der Fortschritt gespeichert bleibt (-1 für immer)",
   daysSuffix: " Tage",
@@ -986,6 +987,8 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   exportCustomUserNameDesc: "Anzeigename des Benutzers für den Export (Standard: User)",
   exportCustomModelName: "Benutzerdefinierter AI-Name",
   exportCustomModelNameDesc: "Anzeigename der AI für den Export (Standard: Website-Name)",
+  exportFilenameTimestamp: "Add Timestamp to Filename",
+  exportFilenameTimestampDesc: "Add a timestamp to the end of the exported filename",
 
   // ======== Popup ========
   popupCurrentSite: "Aktuelle Seite",

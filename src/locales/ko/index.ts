@@ -354,10 +354,11 @@ export const ko = {
   outlineLevel3: "레벨 3까지",
   // Reading History (ko)
   readingHistorySettings: "읽기 기록",
-  readingHistoryPersistence: "읽기 기록 활성화",
+  readingHistoryTitle: "읽기 기록",
+  readingHistoryPersistenceLabel: "읽기 기록 활성화",
   readingHistoryPersistenceDesc: "읽기 위치를 자동으로 기록하고 다음 방문 시 복원",
-  autoRestore: "자동 위치 복원",
-  autoRestoreDesc: "페이지를 열 때 마지막 읽기 위치로 자동으로 점프",
+  readingHistoryAutoRestoreLabel: "자동 위치 복원",
+  readingHistoryAutoRestoreDesc: "페이지를 열 때 마지막 읽기 위치로 자동으로 점프",
   readingHistoryCleanup: "보관 기간",
   readingHistoryCleanupDesc: "진행 상황이 저장되는 기간 (-1은 영구)",
   daysSuffix: " 일",
@@ -994,6 +995,8 @@ export const ko = {
   exportCustomUserNameDesc: "내보내기 시 표시될 사용자 이름 (기본값: User)",
   exportCustomModelName: "사용자 지정 AI 이름",
   exportCustomModelNameDesc: "내보내기 시 표시될 AI 이름 (기본값: 사이트 이름)",
+  exportFilenameTimestamp: "Add Timestamp to Filename",
+  exportFilenameTimestampDesc: "Add a timestamp to the end of the exported filename",
 
   // ======== Popup ========
   popupCurrentSite: "현재 사이트",

@@ -186,8 +186,8 @@ export function htmlToMarkdown(el: Element): string {
         return `\n${children}`
       default:
         // 处理 Shadow DOM
-        if ((element as any).shadowRoot) {
-          return Array.from((element as any).shadowRoot.childNodes)
+        if ((element as HTMLElement).shadowRoot) {
+          return Array.from((element as HTMLElement).shadowRoot!.childNodes)
             .map(processNode)
             .join("")
         }
@@ -321,9 +321,10 @@ export async function downloadFile(
     a.click()
     URL.revokeObjectURL(url)
     return true
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[Exporter] Download failed:", err)
-    showToast("下载失败: " + err.message)
+    const errorMessage = err instanceof Error ? err.message : String(err)
+    showToast("下载失败: " + errorMessage)
     return false
   }
 }

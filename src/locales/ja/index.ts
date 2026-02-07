@@ -363,11 +363,12 @@ export const ja = {
   outlineLevel3: "レベル3まで",
   // Reading History (ja)
   readingHistorySettings: "閲覧履歴",
+  readingHistoryTitle: "閲覧履歴",
   readingNavigationSettings: "閲覧ナビゲーション",
-  readingHistoryPersistence: "閲覧履歴を有効化",
+  readingHistoryPersistenceLabel: "閲覧履歴を有効化",
   readingHistoryPersistenceDesc: "読み進めた位置を自動記録し、次回訪問時に案内します",
-  autoRestore: "自動復元",
-  autoRestoreDesc: "ページを開いたときに前回の位置へジャンプ",
+  readingHistoryAutoRestoreLabel: "自動復元",
+  readingHistoryAutoRestoreDesc: "ページを開いたときに前回の位置へジャンプ",
   readingHistoryCleanup: "保存期間",
   readingHistoryCleanupDesc: "閲覧履歴の保持期間 (-1で無期限)",
   daysSuffix: " 日間",
@@ -1030,6 +1031,8 @@ export const ja = {
   exportCustomUserNameDesc: "エクスポート時のユーザー表示名（デフォルト: User）",
   exportCustomModelName: "カスタムAI名",
   exportCustomModelNameDesc: "エクスポート時のAI表示名（デフォルト: サイト名）",
+  exportFilenameTimestamp: "Add Timestamp to Filename",
+  exportFilenameTimestampDesc: "Add a timestamp to the end of the exported filename",
 
   // ======== Popup ========
   popupCurrentSite: "現在のサイト",

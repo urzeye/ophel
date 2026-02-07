@@ -20,6 +20,55 @@ interface FeaturesPageProps {
   siteId: string
 }
 
+interface LazyInputProps {
+  value: string
+  onChange: (val: string) => void
+  placeholder?: string
+  className?: string
+  style?: React.CSSProperties
+}
+
+const LazyInput: React.FC<LazyInputProps> = ({
+  value,
+  onChange,
+  placeholder,
+  className,
+  style,
+}) => {
+  const [localValue, setLocalValue] = useState(value)
+
+  // 当外部 value 变化时（如重置），同步到 localValue
+  React.useEffect(() => {
+    setLocalValue(value)
+  }, [value])
+
+  const handleBlur = () => {
+    if (localValue !== value) {
+      onChange(localValue)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleBlur()
+      ;(e.target as HTMLInputElement).blur()
+    }
+  }
+
+  return (
+    <input
+      type="text"
+      className={className}
+      value={localValue}
+      onChange={(e) => setLocalValue(e.target.value)}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      placeholder={placeholder}
+      style={style}
+    />
+  )
+}
+
 const FeaturesPage: React.FC<FeaturesPageProps> = () => {
   const tabs = [
     { id: FEATURES_TAB_IDS.OUTLINE, label: t("tabOutline") || "大纲" },
@@ -404,29 +453,15 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
 
           {/* 导出设置卡片 */}
           <SettingCard title={t("exportSettings") || "导出设置"}>
-            <ToggleRow
-              label={t("exportImagesToBase64Label") || "导出时图片转 Base64"}
-              description={t("exportImagesToBase64Desc") || "导出会话时将图片转为 Base64 嵌入"}
-              checked={settings.content?.exportImagesToBase64 ?? false}
-              onChange={() =>
-                updateNestedSetting(
-                  "content",
-                  "exportImagesToBase64",
-                  !settings.content?.exportImagesToBase64,
-                )
-              }
-            />
-
             <SettingRow
               label={t("exportCustomUserName") || "自定义用户名称"}
               description={
                 t("exportCustomUserNameDesc") || "导出时使用的用户显示名称 (默认: User)"
               }>
-              <input
-                type="text"
+              <LazyInput
                 className="settings-input"
                 value={settings.export?.customUserName || ""}
-                onChange={(e) => updateNestedSetting("export", "customUserName", e.target.value)}
+                onChange={(val) => updateNestedSetting("export", "customUserName", val)}
                 placeholder="User"
                 style={{ width: "180px" }}
               />
@@ -437,11 +472,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
               description={
                 t("exportCustomModelNameDesc") || "导出时使用的 AI 显示名称 (默认: 站点名称)"
               }>
-              <input
-                type="text"
+              <LazyInput
                 className="settings-input"
                 value={settings.export?.customModelName || ""}
-                onChange={(e) => updateNestedSetting("export", "customModelName", e.target.value)}
+                onChange={(val) => updateNestedSetting("export", "customModelName", val)}
                 placeholder="Site Name"
                 style={{ width: "180px" }}
               />
@@ -456,6 +490,19 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
                   "export",
                   "exportFilenameTimestamp",
                   !settings.export?.exportFilenameTimestamp,
+                )
+              }
+            />
+
+            <ToggleRow
+              label={t("exportImagesToBase64Label") || "导出时图片转 Base64"}
+              description={t("exportImagesToBase64Desc") || "导出会话时将图片转为 Base64 嵌入"}
+              checked={settings.content?.exportImagesToBase64 ?? false}
+              onChange={() =>
+                updateNestedSetting(
+                  "content",
+                  "exportImagesToBase64",
+                  !settings.content?.exportImagesToBase64,
                 )
               }
             />

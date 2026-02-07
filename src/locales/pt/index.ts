@@ -350,10 +350,11 @@ export const pt = {
   outlineLevel3: "Até Nível 3",
   // Reading History (pt)
   readingHistorySettings: "Histórico de Leitura",
-  readingHistoryPersistence: "Ativar Histórico",
+  readingHistoryTitle: "Histórico de Leitura",
+  readingHistoryPersistenceLabel: "Ativar Histórico",
   readingHistoryPersistenceDesc: "Gravar posição e voltar ao carregar",
-  autoRestore: "Auto Restaurar",
-  autoRestoreDesc: "Pular para a última posição ao abrir",
+  readingHistoryAutoRestoreLabel: "Auto Restaurar",
+  readingHistoryAutoRestoreDesc: "Pular para a última posição ao abrir",
   readingHistoryCleanup: "Retenção",
   readingHistoryCleanupDesc: "Tempo de retenção do progresso (-1 para sempre)",
   daysSuffix: " Dias",
@@ -1012,6 +1013,8 @@ Dê o código e depois um resumo de melhorias.`,
   exportCustomUserNameDesc: "Nome de exibição do usuário para exportações (Padrão: User)",
   exportCustomModelName: "Nome da IA",
   exportCustomModelNameDesc: "Nome de exibição da IA para exportações (Padrão: Nome do site)",
+  exportFilenameTimestamp: "Add Timestamp to Filename",
+  exportFilenameTimestampDesc: "Add a timestamp to the end of the exported filename",
 
   // ======== Popup ========
   popupCurrentSite: "Site Atual",
