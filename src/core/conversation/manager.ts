@@ -695,6 +695,22 @@ export class ConversationManager {
       let filename: string
       let mimeType: string
 
+      let timestampSuffix = ""
+      if (settings.export?.exportFilenameTimestamp) {
+        const now = new Date()
+        const year = now.getFullYear()
+        const month = String(now.getMonth() + 1).padStart(2, "0")
+        const day = String(now.getDate()).padStart(2, "0")
+        const hours = String(now.getHours()).padStart(2, "0")
+        const minutes = String(now.getMinutes()).padStart(2, "0")
+        const seconds = String(now.getSeconds()).padStart(2, "0")
+        timestampSuffix = `_${year}${month}${day}_${hours}${minutes}${seconds}`
+      }
+
+      const siteName = this.siteAdapter.getName()
+      const safeSiteName = siteName.replace(/[<>:"/\\|?*]/g, "_")
+      const filenamePrefix = `${safeSiteName} - `
+
       if (format === "clipboard") {
         content = formatToMarkdown(metadata, messages)
         await navigator.clipboard.writeText(content)
@@ -702,15 +718,15 @@ export class ConversationManager {
         return true
       } else if (format === "markdown") {
         content = ensureUtf8Bom(formatToMarkdown(metadata, messages))
-        filename = `${safeTitle}.md`
+        filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.md`
         mimeType = "text/markdown;charset=utf-8"
       } else if (format === "json") {
         content = formatToJSON(metadata, messages)
-        filename = `${safeTitle}.json`
+        filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.json`
         mimeType = "application/json;charset=utf-8"
       } else {
         content = formatToTXT(metadata, messages)
-        filename = `${safeTitle}.txt`
+        filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.txt`
         mimeType = "text/plain;charset=utf-8"
       }
 

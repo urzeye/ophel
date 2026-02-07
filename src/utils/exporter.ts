@@ -215,8 +215,10 @@ export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessa
   const lines: string[] = []
 
   // 元数据头
+  lines.push(`# ${metadata.title}`)
+  lines.push("")
   lines.push("---")
-  lines.push(`# ${EMOJI_EXPORT} ${t("exportMetaTitle")}`)
+  lines.push(`## ${EMOJI_EXPORT} ${t("exportMetaTitle")}`)
   lines.push(`- **${t("exportMetaConvTitle")}**: ${metadata.title}`)
   lines.push(`- **${t("exportMetaTime")}**: ${metadata.exportTime}`)
   lines.push(`- **${t("exportMetaSource")}**: ${metadata.source}`)

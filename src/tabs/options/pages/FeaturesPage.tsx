@@ -446,6 +446,19 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
                 style={{ width: "180px" }}
               />
             </SettingRow>
+
+            <ToggleRow
+              label={t("exportFilenameTimestamp") || "导出文件名包含时间戳"}
+              description={t("exportFilenameTimestampDesc") || "在导出文件名末尾添加时间戳"}
+              checked={settings.export?.exportFilenameTimestamp ?? false}
+              onChange={() =>
+                updateNestedSetting(
+                  "export",
+                  "exportFilenameTimestamp",
+                  !settings.export?.exportFilenameTimestamp,
+                )
+              }
+            />
           </SettingCard>
         </>
       )}

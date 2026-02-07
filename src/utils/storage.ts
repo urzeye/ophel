@@ -74,6 +74,7 @@ export interface ModelLockConfig {
 export interface ExportSettings {
   customUserName?: string // 自定义用户名称
   customModelName?: string // 自定义 AI 名称
+  exportFilenameTimestamp?: boolean // 导出文件名包含时间戳
 }
 
 // AI Studio 设置
@@ -304,6 +305,7 @@ export const DEFAULT_SETTINGS: Settings = {
   export: {
     customUserName: "",
     customModelName: "",
+    exportFilenameTimestamp: false,
   },
 
   theme: {
