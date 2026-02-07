@@ -303,6 +303,7 @@ export const fr = {
   currentThemeMode: "Mode actuel",
   themeSettingsDesc: "Choisir des styles clair/sombre",
   themeLight: "Clair",
+  themeSystem: "Système",
   customCSS: "Styles CSS",
   customCSSDesc: "Vos propres styles CSS",
   customCSSTemplate: "Insérer un Modèle",

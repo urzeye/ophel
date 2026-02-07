@@ -315,6 +315,7 @@ export const ja = {
   currentThemeMode: "現在のモード",
   themeSettingsDesc: "ライトモードとダークモードのプリセットを選択",
   themeLight: "ライト",
+  themeSystem: "システム",
   customCSS: "カスタムスタイル",
   customCSSDesc: "独自のCSSスタイルを作成してテーマで使用します",
   customCSSTemplate: "テンプレート挿入",

@@ -244,6 +244,7 @@ export const zhTW = {
   themeLabel: "主題模式",
   themeAuto: "跟隨系統",
   themeLight: "淺色",
+  themeSystem: "系統",
   themeDark: "深色",
   themeSettings: "主題設置",
   currentThemeMode: "當前模式",

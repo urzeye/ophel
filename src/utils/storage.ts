@@ -40,7 +40,7 @@ export const CLEAR_ALL_FLAG_TTL_MS = 5 * 1000
 export type SiteId = "gemini" | "gemini-enterprise" | "aistudio" | "_default"
 
 // 主题模式
-export type ThemeMode = "light" | "dark"
+export type ThemeMode = "light" | "dark" | "system"
 
 // 站点主题配置
 export interface SiteThemeConfig {

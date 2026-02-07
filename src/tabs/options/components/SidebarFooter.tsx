@@ -8,7 +8,7 @@ import { getEffectiveLanguage, setLanguage, t } from "~utils/i18n"
 
 import { LanguageMenu } from "./LanguageMenu"
 
-export const SidebarFooter = ({ siteId: _siteId = "_default" }: { siteId?: string }) => {
+export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
   const { settings, setSettings } = useSettingsStore()
 
   // 检测是否在独立 Options 页面（非 content script 环境）
@@ -21,14 +21,20 @@ export const SidebarFooter = ({ siteId: _siteId = "_default" }: { siteId?: strin
     themeManager?.subscribe ?? (() => () => {}),
     themeManager?.getSnapshot ?? (() => "light" as const),
   )
+  const themeSites = settings?.theme?.sites
+  const siteTheme =
+    themeSites && siteId in themeSites
+      ? themeSites[siteId as keyof typeof themeSites]
+      : themeSites?._default
+  const currentThemePreference = siteTheme?.mode || "light"
 
   // 切换主题模式
-  const handleThemeModeToggle = async (mode: "light" | "dark") => {
-    if (currentThemeMode === mode) return
+  const handleThemeModeToggle = async (mode: "light" | "dark" | "system") => {
+    if (currentThemePreference === mode) return
 
     const themeManager = (window as any).__ophelThemeManager
-    if (themeManager) {
-      await themeManager.toggle()
+    if (themeManager?.setMode) {
+      await themeManager.setMode(mode)
     } else {
       // Fallback if themeManager is not available (e.g. in standalone options page without content script logic)
       // options page 应该也有 themeManager，因为我们在 options.tsx 里没有看到 ThemeManager 初始化
@@ -42,20 +48,19 @@ export const SidebarFooter = ({ siteId: _siteId = "_default" }: { siteId?: strin
       // 这里我们需要兼容两种情况
 
       // 尝试调用 themeManager，如果失败则手动更新 settings
-      const newMode = mode
       const sites = settings?.theme?.sites || {}
-      const currentSite = sites._default || {}
+      const currentSite = sites[siteId as keyof typeof sites] || sites._default || {}
 
       setSettings({
         theme: {
           ...settings?.theme,
           sites: {
             ...sites,
-            _default: {
+            [siteId]: {
               lightStyleId: "google-gradient",
               darkStyleId: "classic-dark",
               ...currentSite,
-              mode: newMode,
+              mode,
             },
           },
         },
@@ -106,7 +111,7 @@ export const SidebarFooter = ({ siteId: _siteId = "_default" }: { siteId?: strin
         <div className="settings-theme-segmented">
           <Tooltip content={t("themeLight") || "浅色"} triggerStyle={{ flex: 1 }}>
             <button
-              className={`settings-theme-segment ${currentThemeMode === "light" ? "active" : ""}`}
+              className={`settings-theme-segment ${currentThemePreference === "light" ? "active" : ""}`}
               onClick={() => handleThemeModeToggle("light")}>
               <span className="segment-icon">
                 <ThemeLightIcon size={16} />
@@ -116,12 +121,20 @@ export const SidebarFooter = ({ siteId: _siteId = "_default" }: { siteId?: strin
           </Tooltip>
           <Tooltip content={t("themeDark") || "深色"} triggerStyle={{ flex: 1 }}>
             <button
-              className={`settings-theme-segment ${currentThemeMode === "dark" ? "active" : ""}`}
+              className={`settings-theme-segment ${currentThemePreference === "dark" ? "active" : ""}`}
               onClick={() => handleThemeModeToggle("dark")}>
               <span className="segment-icon">
                 <ThemeDarkIcon size={16} />
               </span>
               <span className="segment-label">{t("themeDark") || "深色"}</span>
+            </button>
+          </Tooltip>
+          <Tooltip content={t("themeSystem") || "系统"} triggerStyle={{ flex: 1 }}>
+            <button
+              className={`settings-theme-segment ${currentThemePreference === "system" ? "active" : ""}`}
+              onClick={() => handleThemeModeToggle("system")}>
+              <span className="segment-icon">A</span>
+              <span className="segment-label">{t("themeSystem") || "系统"}</span>
             </button>
           </Tooltip>
         </div>

@@ -302,6 +302,7 @@ export const es = {
   currentThemeMode: "Modo actual",
   themeSettingsDesc: "Elegir estilos claro/oscuro",
   themeLight: "Claro",
+  themeSystem: "Sistema",
   customCSS: "Estilos CSS",
   customCSSDesc: "Tus propios estilos CSS",
   customCSSTemplate: "Insertar Plantilla",

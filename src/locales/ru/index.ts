@@ -300,6 +300,7 @@ export const ru = {
   currentThemeMode: "Режим",
   themeSettingsDesc: "Темы для светлого/темного режимов",
   themeLight: "Светлая",
+  themeSystem: "Система",
   customCSS: "CSS-стили",
   customCSSDesc: "Ваш CSS",
   customCSSTemplate: "Вставить шаблон",

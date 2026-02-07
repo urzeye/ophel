@@ -245,7 +245,11 @@ export const App = () => {
   // 动态注册主题变化回调，当页面主题变化时同步更新 settings
   // 注意：themeMode 由 useSyncExternalStore 自动订阅更新，不需要手动 setThemeMode
   useEffect(() => {
-    const handleThemeModeChange = (mode: "light" | "dark") => {
+    const handleThemeModeChange = (
+      mode: "light" | "dark",
+      preference?: "light" | "dark" | "system",
+    ) => {
+      const nextPreference = preference || mode
       // 使用 ref 获取最新 settings，避免闭包捕获过期值
       const currentSettings = settingsRef.current
       const sites = currentSettings?.theme?.sites || {}
@@ -271,7 +275,7 @@ export const App = () => {
             ...sites,
             [siteId]: {
               ...siteConfig,
-              mode, // 最后更新 mode，确保生效
+              mode: nextPreference, // 最后更新 mode，确保生效
             },
           },
         },

@@ -93,7 +93,8 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
   // 选择浅色主题预置
   const selectLightPreset = async (presetId: string) => {
     const themeManager = (window as any).__ophelThemeManager
-    if (themeManager?.setMode) {
+    const isSystemMode = currentTheme?.mode === "system"
+    if (!isSystemMode && themeManager?.setMode) {
       // setMode 会等待动画完成后才返回
       await themeManager.setMode("light")
     }
@@ -108,6 +109,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
           ...settings?.theme?.sites,
           [siteId]: {
             ...currentSite,
+            ...(isSystemMode ? {} : { mode: "light" }),
             lightStyleId: presetId,
           },
         },
@@ -118,7 +120,8 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
   // 选择深色主题预置
   const selectDarkPreset = async (presetId: string) => {
     const themeManager = (window as any).__ophelThemeManager
-    if (themeManager?.setMode) {
+    const isSystemMode = currentTheme?.mode === "system"
+    if (!isSystemMode && themeManager?.setMode) {
       // setMode 会等待动画完成后才返回
       await themeManager.setMode("dark")
     }
@@ -133,6 +136,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
           ...settings?.theme?.sites,
           [siteId]: {
             ...currentSite,
+            ...(isSystemMode ? {} : { mode: "dark" }),
             darkStyleId: presetId,
           },
         },

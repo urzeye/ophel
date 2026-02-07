@@ -302,6 +302,7 @@ export const pt = {
   currentThemeMode: "Modo atual",
   themeSettingsDesc: "Escolher estilos claro/escuro",
   themeLight: "Claro",
+  themeSystem: "Sistema",
   customCSS: "Estilos CSS",
   customCSSDesc: "Seus próprios estilos CSS",
   customCSSTemplate: "Inserir Modelo",

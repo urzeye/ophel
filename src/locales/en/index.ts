@@ -315,6 +315,7 @@ export const en = {
   currentThemeMode: "Current Mode",
   themeSettingsDesc: "Choose presets for light and dark mode",
   themeLight: "Light",
+  themeSystem: "System",
   customCSS: "Custom Styles",
   customCSSDesc: "Create custom CSS styles for use in theme selector",
   customCSSTemplate: "Insert Template",

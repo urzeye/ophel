@@ -338,6 +338,7 @@ export const zhCN = {
   themeLabel: "主题模式",
   themeAuto: "跟随系统",
   themeLight: "浅色",
+  themeSystem: "系统",
   themeDark: "深色",
   themeSettings: "主题设置",
   currentThemeMode: "当前模式",

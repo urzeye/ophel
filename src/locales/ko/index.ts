@@ -306,6 +306,7 @@ export const ko = {
   currentThemeMode: "현재 모드",
   themeSettingsDesc: "라이트 및 다크 모드용 프리셋 선택",
   themeLight: "라이트",
+  themeSystem: "시스템",
   customCSS: "사용자 정의 스타일",
   customCSSDesc: "테마 선택기에서 사용할 사용자 정의 CSS 스타일 생성",
   customCSSTemplate: "템플릿 삽입",

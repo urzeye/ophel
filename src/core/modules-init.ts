@@ -102,7 +102,14 @@ export function initThemeManager(ctx: ModulesContext): ThemeManager {
 export async function syncPageTheme(ctx: ModulesContext): Promise<void> {
   const { adapter, settings, siteId } = ctx
   const siteTheme = getSiteTheme(settings, siteId)
-  const targetTheme = siteTheme.mode === "dark" ? "dark" : "light"
+  const targetTheme =
+    siteTheme.mode === "system"
+      ? window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light"
+      : siteTheme.mode === "dark"
+        ? "dark"
+        : "light"
 
   // 检测页面实际的主题状态
   const htmlClass = document.documentElement.className

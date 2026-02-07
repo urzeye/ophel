@@ -15,6 +15,7 @@ import {
 } from "~utils/themes"
 
 export type ThemeMode = "light" | "dark"
+export type ThemePreference = "light" | "dark" | "system"
 
 // Extend Document interface for View Transitions API
 declare global {
@@ -24,13 +25,14 @@ declare global {
 }
 
 // 主题变化回调类型
-export type ThemeModeChangeCallback = (mode: ThemeMode) => void
+export type ThemeModeChangeCallback = (mode: ThemeMode, preference: ThemePreference) => void
 
 // 订阅者类型
 type Listener = () => void
 
 export class ThemeManager {
   private mode: ThemeMode
+  private preference: ThemePreference
   private lightPresetId: string
   private darkPresetId: string
   private cleanPresetId: string // Purely for debugging or tracking
@@ -40,15 +42,30 @@ export class ThemeManager {
   private customStyles: CustomStyle[] = [] // 存储自定义样式列表
   private skipNextDetection = false // 标志：跳过下一次主题检测（用于 toggle 后避免被 monitorTheme 反悔）
   private listeners: Set<Listener> = new Set() // 订阅者集合
+  private systemMediaQuery: MediaQueryList | null = null
+  private handleSystemChange = (event: MediaQueryListEvent) => {
+    if (this.preference !== "system") return
+    const nextMode: ThemeMode = event.matches ? "dark" : "light"
+    if (this.mode === nextMode) return
+    this.mode = nextMode
+    this.emitChange()
+    this.syncPageTheme(nextMode)
+    if (this.onModeChange) {
+      this.onModeChange(nextMode, this.preference)
+    }
+  }
 
   constructor(
-    mode: ThemeMode | string,
+    mode: ThemePreference | string,
     onModeChange?: ThemeModeChangeCallback,
     adapter?: SiteAdapter | null,
     lightPresetId: string = "google-gradient",
     darkPresetId: string = "classic-dark",
   ) {
-    this.mode = mode === "dark" ? "dark" : "light"
+    const normalizedPreference: ThemePreference =
+      mode === "system" ? "system" : mode === "dark" ? "dark" : "light"
+    this.preference = normalizedPreference
+    this.mode = this.resolveMode(normalizedPreference)
     this.lightPresetId = lightPresetId
     this.darkPresetId = darkPresetId
     this.onModeChange = onModeChange
@@ -56,6 +73,40 @@ export class ThemeManager {
 
     // 注入全局动画样式 (View Transitions 需要在主文档生效)
     this.injectGlobalStyles()
+    this.ensureSystemListener()
+  }
+
+  private ensureSystemListener() {
+    if (this.systemMediaQuery || typeof window === "undefined" || !window.matchMedia) {
+      return
+    }
+    this.systemMediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
+    if (typeof this.systemMediaQuery.addEventListener === "function") {
+      this.systemMediaQuery.addEventListener("change", this.handleSystemChange)
+    } else if (typeof this.systemMediaQuery.addListener === "function") {
+      this.systemMediaQuery.addListener(this.handleSystemChange)
+    }
+  }
+
+  private getSystemMode(): ThemeMode {
+    if (typeof window === "undefined" || !window.matchMedia) {
+      return "light"
+    }
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+  }
+
+  private resolveMode(preference: ThemePreference): ThemeMode {
+    if (preference === "system") {
+      return this.getSystemMode()
+    }
+    return preference
+  }
+
+  private syncPageTheme(targetMode: ThemeMode) {
+    if (this.adapter && typeof this.adapter.toggleTheme === "function") {
+      this.adapter.toggleTheme(targetMode).catch(() => {})
+    }
+    this.apply(targetMode)
   }
 
   /**
@@ -99,10 +150,17 @@ export class ThemeManager {
   /**
    * 更新模式并应用
    */
-  updateMode(mode: ThemeMode | string) {
-    this.mode = mode === "dark" ? "dark" : "light"
+  updateMode(mode: ThemePreference | string) {
+    const normalizedPreference: ThemePreference =
+      mode === "system" ? "system" : mode === "dark" ? "dark" : "light"
+    this.preference = normalizedPreference
+    this.mode = this.resolveMode(normalizedPreference)
     this.emitChange()
-    this.apply()
+    if (this.preference === "system") {
+      this.syncPageTheme(this.mode)
+      return
+    }
+    this.apply(this.mode)
   }
 
   /**
@@ -320,6 +378,24 @@ ${cssVars}
         return
       }
 
+      if (this.preference === "system") {
+        const systemMode = this.getSystemMode()
+        const detectedMode = this.detectCurrentTheme()
+        if (this.mode !== systemMode) {
+          this.mode = systemMode
+          this.emitChange()
+          this.syncPageTheme(systemMode)
+          if (this.onModeChange) {
+            this.onModeChange(systemMode, this.preference)
+          }
+          return
+        }
+        if (detectedMode !== systemMode) {
+          this.syncPageTheme(systemMode)
+        }
+        return
+      }
+
       const detectedMode = this.detectCurrentTheme()
 
       // 同步到插件 UI (ghMode)
@@ -328,10 +404,11 @@ ${cssVars}
       // 如果检测到的模式与当前模式不同，更新并触发回调
       if (this.mode !== detectedMode) {
         this.mode = detectedMode
+        this.preference = detectedMode
         this.emitChange()
         // 触发变化回调，通知 React 组件更新
         if (this.onModeChange) {
-          this.onModeChange(detectedMode)
+          this.onModeChange(detectedMode, this.preference)
         }
       }
     }
@@ -375,8 +452,9 @@ ${cssVars}
    */
   async toggle(event?: MouseEvent): Promise<ThemeMode> {
     // 使用 detectCurrentTheme 统一检测当前主题
-    const currentMode = this.detectCurrentTheme()
+    const currentMode = this.preference === "system" ? this.mode : this.detectCurrentTheme()
     const nextMode: ThemeMode = currentMode === "dark" ? "light" : "dark"
+    this.preference = nextMode
 
     // 计算动画起点坐标（从点击位置或默认右上角）
     let x = 95
@@ -468,7 +546,7 @@ ${cssVars}
     this.skipNextDetection = true
     // 触发回调通知 React 更新状态（动画完成后）
     if (this.onModeChange) {
-      this.onModeChange(nextMode)
+      this.onModeChange(nextMode, this.preference)
     }
     // 无条件启动监听（确保网页主题变化能被检测）
     this.monitorTheme()
@@ -488,16 +566,37 @@ ${cssVars}
    * @returns 包含最终模式和是否触发了动画
    */
   async setMode(
-    targetMode: ThemeMode,
+    targetMode: ThemePreference,
     event?: MouseEvent,
   ): Promise<{ mode: ThemeMode; animated: boolean }> {
+    const normalizedPreference: ThemePreference =
+      targetMode === "system" ? "system" : targetMode === "dark" ? "dark" : "light"
+
+    if (normalizedPreference === "system") {
+      this.preference = "system"
+      this.ensureSystemListener()
+      const resolved = this.getSystemMode()
+      const modeChanged = this.mode !== resolved
+      this.mode = resolved
+      this.syncPageTheme(resolved)
+      if (modeChanged) this.emitChange()
+      if (this.onModeChange) {
+        this.onModeChange(resolved, this.preference)
+      }
+      return { mode: resolved, animated: false }
+    }
+
     const currentMode = this.detectCurrentTheme()
 
-    // 如果已经是目标模式，不做任何操作
-    if (currentMode === targetMode) {
+    // 如果已经是目标模式，仅更新偏好
+    if (currentMode === normalizedPreference) {
+      this.preference = normalizedPreference
       // 仍然需要同步插件 UI 主题（确保样式变量正确应用）
-      this.syncPluginUITheme(targetMode)
-      return { mode: targetMode, animated: false }
+      this.syncPluginUITheme(normalizedPreference)
+      if (this.onModeChange) {
+        this.onModeChange(normalizedPreference, this.preference)
+      }
+      return { mode: normalizedPreference, animated: false }
     }
 
     // 否则执行切换动画

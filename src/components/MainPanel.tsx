@@ -357,8 +357,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           const siteTheme =
             settings.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
             settings.theme?.sites?._default
-          const currentMode = siteTheme?.mode || "light"
-          const styleId = currentMode === "light" ? siteTheme?.lightStyleId : siteTheme?.darkStyleId
+          const resolvedMode = themeMode || (siteTheme?.mode === "dark" ? "dark" : "light")
+          const styleId =
+            resolvedMode === "light" ? siteTheme?.lightStyleId : siteTheme?.darkStyleId
 
           // 在自定义样式中查找（确保 customStyles 是数组）
           const customStyles = settings.theme?.customStyles

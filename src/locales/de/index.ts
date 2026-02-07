@@ -302,6 +302,7 @@ export const de = {
   currentThemeMode: "Modus",
   themeSettingsDesc: "Designs für Hell/Dunkel wählen",
   themeLight: "Hell",
+  themeSystem: "System",
   customCSS: "CSS-Stile",
   customCSSDesc: "Eigene CSS-Stile",
   customCSSTemplate: "Vorlage einfügen",
