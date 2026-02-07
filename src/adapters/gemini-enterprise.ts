@@ -1003,7 +1003,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
    * 模拟点击原生设置切换主题 (针对 Gemini Enterprise)
    * @param targetMode 目标主题模式
    */
-  async toggleTheme(targetMode: "light" | "dark"): Promise<boolean> {
+  async toggleTheme(targetMode: "light" | "dark" | "system"): Promise<boolean> {
     // 1. 启动暴力隐身模式 (JS 每一帧强制隐藏)
     // CSS 注入可能因优先级或 Shadow DOM 隔离失效，JS 强制修改内联样式是最稳妥的
     let stopSuppression = false
@@ -1076,7 +1076,8 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       // 3. 等待菜单弹出并点击目标
       let attempts = 0
       const findAndClickOption = (): boolean => {
-        const targetIcon = targetMode === "dark" ? "dark_mode" : "light_mode"
+        const targetIcon =
+          targetMode === "system" ? "computer" : targetMode === "dark" ? "dark_mode" : "light_mode"
 
         // Query all md-primary-tab in the document
         const tabs = DOMToolkit.query("md-primary-tab", { all: true, shadow: true }) as Element[]

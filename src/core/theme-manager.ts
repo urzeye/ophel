@@ -6,6 +6,7 @@
 
 import type { SiteAdapter } from "~adapters/base"
 import { SITE_IDS } from "~constants/defaults"
+import { DOMToolkit } from "~utils/dom-toolkit"
 import type { CustomStyle } from "~utils/storage"
 import {
   getPreset,
@@ -216,6 +217,19 @@ export class ThemeManager {
           )
           return true
         }
+        case SITE_IDS.GEMINI_ENTERPRISE: {
+          if (this.adapter && typeof this.adapter.toggleTheme === "function") {
+            ;(
+              this.adapter as SiteAdapter & {
+                toggleTheme: (targetMode: "light" | "dark" | "system") => Promise<boolean>
+              }
+            )
+              .toggleTheme("system")
+              .catch(() => {})
+            return true
+          }
+          return false
+        }
         default:
           return false
       }
@@ -363,6 +377,32 @@ export class ThemeManager {
           if (value === "auto" || value === "system") return "system"
           if (value === "dark" || value === "light") return value
           return null
+        }
+        case SITE_IDS.GEMINI_ENTERPRISE: {
+          const tabs = DOMToolkit.query("md-primary-tab", { all: true, shadow: true }) as Element[]
+          if (!tabs || tabs.length === 0) return null
+          type Candidate = { icon: "computer" | "light_mode" | "dark_mode"; selected: boolean }
+          const candidates: Candidate[] = []
+          for (const tab of tabs) {
+            let iconEl = tab.querySelector("md-icon")
+            if (!iconEl) {
+              iconEl = DOMToolkit.query("md-icon", { parent: tab, shadow: true }) as Element | null
+            }
+            const icon = iconEl?.textContent?.trim()
+            if (icon !== "computer" && icon !== "light_mode" && icon !== "dark_mode") {
+              continue
+            }
+            const tabElement = tab as HTMLElement & { selected?: boolean; active?: boolean }
+            const selected = Boolean(
+              tabElement.selected || tabElement.active || tabElement.tabIndex === 0,
+            )
+            candidates.push({ icon, selected } as Candidate)
+          }
+          const selected = candidates.find((item) => item.selected)
+          if (!selected) return null
+          if (selected.icon === "computer") return "system"
+          if (selected.icon === "dark_mode") return "dark"
+          return "light"
         }
         default:
           return null
