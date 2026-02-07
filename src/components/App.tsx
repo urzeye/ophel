@@ -68,7 +68,6 @@ export const App = () => {
     }
   }, [isSettingsHydrated, settings])
 
-  // ????????????????????????
   useEffect(() => {
     if (!isSettingsHydrated || !settings) return
 
@@ -429,13 +428,13 @@ export const App = () => {
     if (!conversationManager || !adapter) return
     const sessionId = adapter.getSessionId()
     if (!sessionId) {
-      showToast(t("exportNeedOpenFirst") || "??????????")
+      showToast(t("exportNeedOpenFirst") || "请先打开要导出的会话")
       return
     }
-    showToast(t("exportStarted") || "??????...")
+    showToast(t("exportStarted") || "开始导出...")
     const success = await conversationManager.exportConversation(sessionId, "markdown")
     if (!success) {
-      showToast(t("exportFailed") || "????")
+      showToast(t("exportFailed") || "导出失败")
     }
   }, [conversationManager, adapter])
 
@@ -443,7 +442,7 @@ export const App = () => {
     if (!conversationManager || !adapter) return
     const sessionId = adapter.getSessionId()
     if (!sessionId) {
-      showToast(t("noConversationToLocate") || "????????")
+      showToast(t("noConversationToLocate") || "未找到会话")
       return
     }
     const conv = conversationManager.getConversation(sessionId)
