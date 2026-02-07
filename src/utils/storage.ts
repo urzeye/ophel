@@ -385,12 +385,12 @@ export const DEFAULT_SETTINGS: Settings = {
   },
 
   collapsedButtons: [
-    { id: "scrollTop", enabled: true },
     { id: "panel", enabled: true },
     { id: "floatingToolbar", enabled: true },
-    { id: "anchor", enabled: true },
     { id: "theme", enabled: true },
+    { id: "scrollTop", enabled: true },
     { id: "manualAnchor", enabled: false },
+    { id: "anchor", enabled: true },
     { id: "scrollBottom", enabled: true },
   ],
   quickButtonsOpacity: 1,
