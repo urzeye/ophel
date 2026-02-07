@@ -148,6 +148,22 @@ if (typeof chrome === "undefined" || !chrome.storage) {
   }
 }
 
+const chromeStorage = (window as any).chrome?.storage
+if (chromeStorage && !chromeStorage.onChanged) {
+  chromeStorage.onChanged = {
+    addListener: () => {},
+    removeListener: () => {},
+  }
+}
+
+const chromeRuntime = (window as any).chrome?.runtime
+if (chromeRuntime && !chromeRuntime.onMessage) {
+  chromeRuntime.onMessage = {
+    addListener: () => {},
+    removeListener: () => {},
+  }
+}
+
 // 防止在 iframe 中执行
 if (window.top !== window.self) {
   throw new Error("Ophel: Running in iframe, skipping initialization")

@@ -333,11 +333,7 @@ export function useShortcuts({
   // 打开设置（Alt+,）
   const openSettings = useCallback(() => {
     onOpenSettings()
-    // 如果面板未打开，自动打开
-    if (!isPanelVisible) {
-      onPanelToggle()
-    }
-  }, [onOpenSettings, isPanelVisible, onPanelToggle])
+  }, [onOpenSettings])
 
   // 切换 Tab 辅助函数
   const switchTab = useCallback(
