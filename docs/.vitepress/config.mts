@@ -151,7 +151,16 @@ export default defineConfig({
   title: "Ophel",
   description: "AI Conversation Enhancement - Gemini / AI Studio / Grok / ChatGPT / Claude",
 
-  head: [["link", { rel: "icon", href: "/ophel/logo.png" }]],
+  head: [
+    ["link", { rel: "icon", href: "/ophel/logo.png" }],
+    [
+      "meta",
+      {
+        name: "google-site-verification",
+        content: "kZpWtKdWmStJ_vaL2dPQR9S3knmmRGCSy11w6fTyQ5g",
+      },
+    ],
+  ],
   base: "/ophel/",
 
   // 排除非文档文件（多语言 README 放在 i18n 目录下）
