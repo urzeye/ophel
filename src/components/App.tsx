@@ -487,9 +487,41 @@ export const App = () => {
 
     const modelLockConfig = current.modelLock?.[siteId] || { enabled: false, keyword: "" }
 
-    // 如果没有配置关键词，提示用户先配置
+    // 如果没有配置关键词
     if (!modelLockConfig.keyword) {
-      showToast(t("modelLockNoKeyword") || "请先在设置中配置模型关键词")
+      if (modelLockConfig.enabled) {
+        // 用户意图是关闭 → 直接关闭，不跳转设置
+        setSettings({
+          modelLock: {
+            ...current.modelLock,
+            [siteId]: {
+              ...modelLockConfig,
+              enabled: false,
+            },
+          },
+        })
+        showToast(t("modelLockDisabled") || "模型锁定已关闭")
+      } else {
+        // 用户意图是开启 → 自动开启开关 + 跳转设置让用户配置
+        showToast(t("modelLockNoKeyword") || "请先在设置中配置模型关键词")
+        setSettings({
+          modelLock: {
+            ...current.modelLock,
+            [siteId]: {
+              ...modelLockConfig,
+              enabled: true,
+            },
+          },
+        })
+        setIsSettingsOpen(true)
+        setTimeout(() => {
+          window.dispatchEvent(
+            new CustomEvent("ophel:navigateSettingsPage", {
+              detail: { page: "siteSettings", subTab: "modelLock" },
+            }),
+          )
+        }, 100)
+      }
       return
     }
 
