@@ -456,7 +456,7 @@ export const App = () => {
     if (!outlineManager) return
     const cleared = outlineManager.clearGhostBookmarks()
     if (cleared === 0) {
-      showToast(t("floatingToolbarClearGhostEmpty") || "没有需要清理的幽灵收藏")
+      showToast(t("floatingToolbarClearGhostEmpty") || "没有需要清理的无效收藏")
       return
     }
     showToast(`${t("cleared") || "已清理"} (${cleared})`)
@@ -1059,7 +1059,7 @@ export const App = () => {
         scrollLocked={isScrollLockActive}
         onCleanup={() => {
           if (ghostBookmarkCount === 0) {
-            showToast(t("floatingToolbarClearGhostEmpty") || "没有需要清理的幽灵收藏")
+            showToast(t("floatingToolbarClearGhostEmpty") || "没有需要清理的无效收藏")
             return
           }
           setIsFloatingToolbarClearOpen(true)
@@ -1158,9 +1158,9 @@ export const App = () => {
       )}
       {isFloatingToolbarClearOpen && (
         <ConfirmDialog
-          title={t("floatingToolbarClearGhost") || "清除幽灵收藏"}
+          title={t("floatingToolbarClearGhost") || "清除无效收藏"}
           message={(
-            t("floatingToolbarClearGhostConfirm") || "是否清除本会话中的 {count} 个幽灵收藏？"
+            t("floatingToolbarClearGhostConfirm") || "是否清除本会话中的 {count} 个无效收藏？"
           ).replace("{count}", String(ghostBookmarkCount))}
           danger
           onConfirm={() => {
