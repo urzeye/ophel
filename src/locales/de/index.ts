@@ -199,7 +199,7 @@ export const de = {
   close: "Schließen",
   add: "Hinzufügen",
   confirm: "Bestätigen",
-  export: "Exportieren",
+  export: "Markdown exportieren",
   browse: "Durchsuchen...",
   clearAllData: "Alles löschen",
   clearAllDataDesc: "Vorsicht: Alle Einstellungen und Daten gehen verloren.",

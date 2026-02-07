@@ -117,7 +117,7 @@ export const zhTW = {
   save: "儲存",
   delete: "刪除",
   edit: "編輯",
-  export: "匯出",
+  export: "匯出 Markdown",
   browse: "瀏覽...",
   clearAllData: "清除全部資料",
   clearAllDataDesc: "慎重操作：這將清除本地所有設定、提示詞和對話資料",

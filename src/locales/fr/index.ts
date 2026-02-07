@@ -200,7 +200,7 @@ export const fr = {
   close: "Fermer",
   add: "Ajouter",
   confirm: "Confirmer",
-  export: "Exporter",
+  export: "Exporter Markdown",
   browse: "Parcourir...",
   clearAllData: "Tout Effacer",
   clearAllDataDesc: "Attention : Tous les réglages et données seront perdus.",

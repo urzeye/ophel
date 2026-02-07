@@ -205,7 +205,7 @@ export const en = {
   close: "Close",
   add: "Add",
   confirm: "Confirm",
-  export: "Export",
+  export: "Export Markdown",
   browse: "Browse...",
   clearAllData: "Clear All Data",
   clearAllDataDesc: "Caution: This will remove all local settings, prompts and conversations.",

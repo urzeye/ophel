@@ -201,7 +201,7 @@ export const ja = {
   close: "閉じる",
   add: "追加",
   confirm: "確定",
-  export: "出力",
+  export: "Markdown出力",
   browse: "参照...",
   clearAllData: "すべてのデータを消去",
   clearAllDataDesc: "注意：すべてのローカル設定、プロンプト、会話データが削除されます。",

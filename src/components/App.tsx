@@ -1045,8 +1045,17 @@ export const App = () => {
         onSetTag={handleFloatingToolbarSetTag}
         onScrollLock={() => handleToggleScrollLock()}
         onSettings={() => {
+          // 打开 SettingsModal 并跳转到工具箱设置 Tab
           isSettingsOpenRef.current = true
           setIsSettingsOpen(true)
+          // 延迟发送导航事件，确保 Modal 已挂载
+          setTimeout(() => {
+            window.dispatchEvent(
+              new CustomEvent("ophel:navigateSettingsPage", {
+                detail: { page: "general", subTab: "toolsMenu" },
+              }),
+            )
+          }, 50)
         }}
         scrollLocked={isScrollLockActive}
         onCleanup={() => {

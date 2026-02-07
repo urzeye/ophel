@@ -197,7 +197,7 @@ export const ru = {
   close: "Закрыть",
   add: "Добавить",
   confirm: "ОК",
-  export: "Экспорт",
+  export: "Экспорт Markdown",
   browse: "Обзор...",
   clearAllData: "Удалить все",
   clearAllDataDesc: "Внимание: Все настройки и данные будут стерты.",

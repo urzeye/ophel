@@ -223,7 +223,7 @@ export const zhCN = {
   save: "保存",
   delete: "删除",
   edit: "编辑",
-  export: "导出",
+  export: "导出 Markdown",
   browse: "浏览...",
   clearAllData: "清除全部数据",
   clearAllDataDesc: "慎重操作：这将清除本地所有设置、提示词和会话数据",

@@ -184,7 +184,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
 
     switch (activePage) {
       case NAV_IDS.GENERAL:
-        return <GeneralPage siteId={siteId} />
+        return <GeneralPage siteId={siteId} initialTab={initialSubTab} />
       case NAV_IDS.SITE_SETTINGS:
         return <SiteSettingsPage siteId={siteId} initialTab={initialSubTab} />
       case NAV_IDS.APPEARANCE:

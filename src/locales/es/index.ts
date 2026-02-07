@@ -199,7 +199,7 @@ export const es = {
   close: "Cerrar",
   add: "Añadir",
   confirm: "Confirmar",
-  export: "Exportar",
+  export: "Exportar Markdown",
   browse: "Buscar...",
   clearAllData: "Borrar Todo",
   clearAllDataDesc: "Cuidado: Se perderán todos los datos y ajustes.",

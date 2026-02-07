@@ -115,7 +115,7 @@ const OptionsPage = () => {
   const renderPage = () => {
     switch (activePage) {
       case "general":
-        return <GeneralPage siteId={siteId} />
+        return <GeneralPage siteId={siteId} initialTab={initialSubTab} />
       case "appearance":
         return <AppearancePage siteId={siteId} />
       case "siteSettings":

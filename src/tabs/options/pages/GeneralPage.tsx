@@ -20,6 +20,7 @@ import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../comp
 
 interface GeneralPageProps {
   siteId: string
+  initialTab?: string
 }
 
 // 可排序项目组件
@@ -84,8 +85,8 @@ const SortableItem: React.FC<{
   </div>
 )
 
-const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId }) => {
-  const [activeTab, setActiveTab] = useState("panel")
+const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }) => {
+  const [activeTab, setActiveTab] = useState(initialTab || "panel")
   const { settings, setSettings, updateNestedSetting, updateDeepSetting } = useSettingsStore()
 
   const prerequisiteToastTemplate = t("enablePrerequisiteToast") || "请先开启「{setting}」"

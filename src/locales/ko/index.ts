@@ -201,7 +201,7 @@ export const ko = {
   close: "닫기",
   add: "추가",
   confirm: "확인",
-  export: "내보내기",
+  export: "Markdown 내보내기",
   browse: "찾아보기...",
   clearAllData: "모든 데이터 지우기",
   clearAllDataDesc: "주의: 모든 로컬 설정, 프롬프트 및 대화가 삭제됩니다.",
