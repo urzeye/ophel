@@ -1019,4 +1019,6 @@ Please output the optimized code block directly, followed by a brief summary of 
   retryCountSuffix: "times (same question)",
   policyRetryActive: "Policy blocked, retrying ({current}/{max})",
   policyRetryLimitReached: "Retry limit reached",
+  preventAutoScrollEnabled: "Scroll lock enabled",
+  preventAutoScrollDisabled: "Scroll lock disabled",
 }

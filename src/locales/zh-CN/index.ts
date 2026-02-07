@@ -544,6 +544,8 @@ export const zhCN = {
   showCollapsedAnchorDesc: "当面板收起时，在侧边浮动条中显示锚点按钮",
   showCollapsedThemeLabel: "主题",
   floatingToolbarLabel: "浮动工具栏",
+  tools: "工具箱",
+  cleanup: "清理无效收藏",
   floatingToolbarMore: "更多",
   floatingToolbarClearGhost: "清除幽灵收藏",
   floatingToolbarClearGhostConfirm: "是否清除当前会话中 {count} 条幽灵收藏？",
@@ -1030,4 +1032,6 @@ export const zhCN = {
   retryCountSuffix: "次 (同一问题)",
   policyRetryActive: "策略拦截，自动重试 ({current}/{max})",
   policyRetryLimitReached: "重试次数已达上限",
+  preventAutoScrollEnabled: "滚动锁定已开启",
+  preventAutoScrollDisabled: "滚动锁定已关闭",
 }

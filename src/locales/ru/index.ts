@@ -1002,4 +1002,6 @@ export const ru = {
   retryCountSuffix: "раз (тот же вопрос)",
   policyRetryActive: "Блокировка политикой, повторная попытка ({current}/{max})",
   policyRetryLimitReached: "Достигнут лимит попыток",
+  preventAutoScrollEnabled: "Блокировка прокрутки включена",
+  preventAutoScrollDisabled: "Блокировка прокрутки выключена",
 }

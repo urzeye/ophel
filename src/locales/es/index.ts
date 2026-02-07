@@ -1005,4 +1005,6 @@ Dame el código y luego un resumen de mejoras.`,
   retryCountSuffix: "veces (misma pregunta)",
   policyRetryActive: "Bloqueo de política, reintentando ({current}/{max})",
   policyRetryLimitReached: "Límite de reintentos alcanzado",
+  preventAutoScrollEnabled: "Bloqueo de desplazamiento activado",
+  preventAutoScrollDisabled: "Bloqueo de desplazamiento desactivado",
 }

@@ -785,74 +785,123 @@
   display: block;
 }
 
-/* ============= 浮动工具栏 ============= */
-.floating-toolbar {
-  position: fixed;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  background: var(--gh-bg, #ffffff);
-  border: 1px solid var(--gh-border, #e5e7eb);
-  border-radius: 999px;
-  box-shadow: var(--gh-shadow, 0 6px 18px rgba(0, 0, 0, 0.12));
-  z-index: 999999;
-}
-
-.floating-toolbar-btn {
-  border: none;
-  background: transparent;
-  color: var(--gh-text, #374151);
-  font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease;
-}
-
-.floating-toolbar-btn:hover {
-  background: var(--gh-hover, #f3f4f6);
-}
-
-.floating-toolbar-btn.active {
-  background: var(--gh-primary, #4285f4);
-  color: #ffffff;
-}
-
-.floating-toolbar-btn.danger {
-  color: #ef4444;
-}
-
-.floating-toolbar-btn.danger:hover {
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.floating-toolbar-divider {
-  width: 1px;
-  height: 18px;
-  background: var(--gh-border, #e5e7eb);
-  margin: 0 2px;
-}
-
-.floating-toolbar-menu {
+/* ============= 快捷菜单 (工具箱) ============= */
+.quick-menu-popover {
   position: absolute;
-  top: calc(100% + 8px);
-  right: 8px;
-  background: var(--gh-bg, #ffffff);
-  border: 1px solid var(--gh-border, #e5e7eb);
-  border-radius: 10px;
-  padding: 6px;
-  box-shadow: var(--gh-shadow, 0 8px 24px rgba(0, 0, 0, 0.18));
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 180px;
+  gap: 8px;
+  padding: 8px 6px;
+  background: var(--gh-bg, #ffffff);
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 12px;
+  box-shadow: var(--gh-shadow, 0 6px 16px rgba(0, 0, 0, 0.1));
+  z-index: 999999;
+  animation: quick-menu-enter 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Side Positioning */
+.quick-menu-popover.side-left {
+  right: 100%;
+  margin-right: 14px;
+  transform-origin: right center;
+}
+
+.quick-menu-popover.side-right {
+  left: 100%;
+  margin-left: 14px;
+  transform-origin: left center;
+}
+
+/* Menu Buttons */
+.quick-menu-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--gh-text-secondary, #6b7280);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.quick-menu-btn:hover {
+  background: color-mix(in srgb, var(--gh-text) 6%, transparent);
+  color: var(--gh-text, #111827);
+  transform: scale(1.05);
+}
+
+.quick-menu-btn.active {
+  background: color-mix(in srgb, var(--gh-primary) 10%, transparent);
+  color: var(--gh-primary, #10b981);
+}
+
+.quick-menu-btn.danger {
+  color: var(--gh-error, #ef4444);
+}
+
+.quick-menu-btn.danger:hover {
+  background: color-mix(in srgb, var(--gh-error) 10%, transparent);
+  color: var(--gh-error, #ef4444);
+}
+
+/* Divider */
+.menu-divider {
+  height: 1px;
+  width: 80%;
+  background: var(--gh-border, #e5e7eb);
+  margin: 2px auto;
+  opacity: 0.8;
+}
+
+/* Arrow/Tooltip-style tail */
+.quick-menu-popover::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  background: var(--gh-bg, #ffffff);
+  border: 1px solid var(--gh-border, #e5e7eb);
+  transform: translateY(-50%) rotate(45deg);
+  z-index: -1;
+  border-radius: 2px;
+}
+
+.quick-menu-popover.side-left::before {
+  right: -5px;
+  border-left: none;
+  border-bottom: none;
+}
+
+.quick-menu-popover.side-right::before {
+  left: -5px;
+  border-right: none;
+  border-top: none;
+}
+
+@keyframes quick-menu-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.9) translateX(var(--enter-translate-x, 0));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) scale(1) translateX(0);
+  }
+}
+
+.quick-menu-popover.side-left {
+  --enter-translate-x: 10px;
+}
+.quick-menu-popover.side-right {
+  --enter-translate-x: -10px;
 }
 
 /* ============= 底栏滚动按钮样式 (Footer Scroll Buttons) ============= */

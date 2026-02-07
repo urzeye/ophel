@@ -101,7 +101,7 @@ export const App = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   // 浮动工具栏
-  const [isFloatingToolbarMenuOpen, setIsFloatingToolbarMenuOpen] = useState(false)
+
   const [floatingToolbarMoveState, setFloatingToolbarMoveState] = useState<{
     convId: string
     activeFolderId?: string
@@ -298,7 +298,6 @@ export const App = () => {
 
   useEffect(() => {
     if (!floatingToolbarEnabled || !floatingToolbarOpen) {
-      setIsFloatingToolbarMenuOpen(false)
       setFloatingToolbarMoveState(null)
       setIsFloatingToolbarClearOpen(false)
     }
@@ -420,27 +419,10 @@ export const App = () => {
       },
     })
 
-    // 简单的提示，实际文案建议放在 useShortcuts 或统一管理
+    // 简单的提示，实际文案建议放在 useShortcuts或统一管理
     // 这里暂时使用硬编码中文，后续可优化
-    showToast(newState ? "滚动锁定已开启" : "滚动锁定已关闭")
+    showToast(newState ? t("preventAutoScrollEnabled") : t("preventAutoScrollDisabled"))
   }, [setSettings])
-
-  const updateFloatingToolbarOpen = useCallback(
-    (nextOpen: boolean) => {
-      const current = settingsRef.current
-      if (!current) return
-      setSettings({
-        floatingToolbar: {
-          ...current.floatingToolbar,
-          open: nextOpen,
-        },
-      })
-      if (!nextOpen) {
-        setIsFloatingToolbarMenuOpen(false)
-      }
-    },
-    [setSettings],
-  )
 
   const handleFloatingToolbarExport = useCallback(async () => {
     if (!conversationManager || !adapter) return
@@ -933,47 +915,7 @@ export const App = () => {
           }, 200)
         }}
       />
-      {floatingToolbarEnabled && floatingToolbarOpen && (
-        <div className="floating-toolbar gh-interactive">
-          <button className="floating-toolbar-btn" onClick={handleFloatingToolbarExport}>
-            {t("export") || "??"}
-          </button>
-          <button className="floating-toolbar-btn" onClick={handleFloatingToolbarMoveToFolder}>
-            {t("conversationsMoveTo") || "??????"}
-          </button>
-          <button
-            className={`floating-toolbar-btn ${isScrollLockActive ? "active" : ""}`}
-            onClick={handleToggleScrollLock}>
-            {t("shortcutToggleScrollLock") || "????"}
-          </button>
-          <div className="floating-toolbar-divider" />
-          <button
-            className="floating-toolbar-btn"
-            onClick={() => setIsFloatingToolbarMenuOpen((prev) => !prev)}>
-            {t("floatingToolbarMore") || "??"}
-          </button>
-          <button className="floating-toolbar-btn" onClick={() => updateFloatingToolbarOpen(false)}>
-            {t("collapse") || "??"}
-          </button>
-          {isFloatingToolbarMenuOpen && (
-            <div className="floating-toolbar-menu">
-              <button
-                className="floating-toolbar-btn danger"
-                onClick={() => {
-                  if (ghostBookmarkCount === 0) {
-                    setIsFloatingToolbarMenuOpen(false)
-                    showToast(t("floatingToolbarClearGhostEmpty") || "没有需要清理的幽灵收藏")
-                    return
-                  }
-                  setIsFloatingToolbarMenuOpen(false)
-                  setIsFloatingToolbarClearOpen(true)
-                }}>
-                {t("floatingToolbarClearGhost") || "??????"}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+
       <QuickButtons
         isPanelOpen={isPanelOpen}
         onPanelToggle={() => {
@@ -990,6 +932,17 @@ export const App = () => {
         }}
         onThemeToggle={handleThemeToggle}
         themeMode={themeMode}
+        onExport={handleFloatingToolbarExport}
+        onMove={handleFloatingToolbarMoveToFolder}
+        onScrollLock={() => handleToggleScrollLock()}
+        scrollLocked={isScrollLockActive}
+        onCleanup={() => {
+          if (ghostBookmarkCount === 0) {
+            showToast(t("floatingToolbarClearGhostEmpty") || "没有需要清理的幽灵收藏")
+            return
+          }
+          setIsFloatingToolbarClearOpen(true)
+        }}
       />
       {/* 选中提示词悬浮条 */}
       {selectedPrompt && (

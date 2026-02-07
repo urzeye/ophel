@@ -994,4 +994,6 @@ export const zhTW = {
   retryCountSuffix: "次 (同一問題)",
   policyRetryActive: "策略攔截，自動重試 ({current}/{max})",
   policyRetryLimitReached: "重試次數已達上限",
+  preventAutoScrollEnabled: "滾動鎖定已開啟",
+  preventAutoScrollDisabled: "滾動鎖定已關閉",
 }

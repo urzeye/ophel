@@ -1009,4 +1009,6 @@ Donnez le code puis un résumé des améliorations.`,
   retryCountSuffix: "fois (même question)",
   policyRetryActive: "Politique bloquée, nouvel essai ({current}/{max})",
   policyRetryLimitReached: "Limite de réessais atteinte",
+  preventAutoScrollEnabled: "Verrouillage du défilement activé",
+  preventAutoScrollDisabled: "Verrouillage du défilement désactivé",
 }

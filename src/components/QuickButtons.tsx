@@ -1,7 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react"
 
 import { getAdapter } from "~adapters/index"
-import { ThemeDarkIcon, ThemeLightIcon } from "~components/icons"
+import {
+  AnchorIcon,
+  CleanupIcon,
+  ExportIcon,
+  FolderPlusIcon,
+  ThemeDarkIcon,
+  ThemeLightIcon,
+} from "~components/icons"
 import { LoadingOverlay } from "~components/LoadingOverlay"
 import { Tooltip } from "~components/ui/Tooltip"
 import { COLLAPSED_BUTTON_DEFS } from "~constants"
@@ -23,15 +30,26 @@ interface QuickButtonsProps {
   onPanelToggle: () => void
   onThemeToggle?: () => void
   themeMode?: "light" | "dark"
+  // 工具栏功能
+  onExport?: () => void
+  onMove?: () => void
+  onScrollLock?: (locked: boolean) => void
+  onCleanup?: () => void
+  scrollLocked?: boolean
 }
 
 export const QuickButtons: React.FC<QuickButtonsProps> = ({
   isPanelOpen,
   onPanelToggle,
   onThemeToggle,
-  themeMode = "light",
+  themeMode,
+  onExport,
+  onMove,
+  onScrollLock,
+  onCleanup,
+  scrollLocked,
 }) => {
-  const { settings, setSettings } = useSettingsStore()
+  const { settings } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
   const collapsedButtonsOrder = currentSettings.collapsedButtons || []
   const quickButtonsSide = currentSettings.panel?.defaultPosition ?? "right"
@@ -43,6 +61,31 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const DRAG_LONG_PRESS_MS = 150
   const DRAG_THRESHOLD_PX = 6
   const DRAG_PADDING_PX = 8
+
+  // 工具菜单状态
+  const groupRef = useRef<HTMLDivElement>(null)
+  const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false)
+
+  // 点击外部关闭菜单
+  useEffect(() => {
+    if (!isToolsMenuOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      // Log for debugging
+      const target = e.target as Node
+      const param = {
+        inGroup: groupRef.current?.contains(target),
+        target: target,
+      }
+      console.log("QuickButtons: handleClickOutside", param)
+
+      if (groupRef.current && !groupRef.current.contains(target)) {
+        console.log("QuickButtons: Closing menu due to outside click")
+        setIsToolsMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [isToolsMenuOpen])
 
   const [groupPosition, setGroupPosition] = useState<{ x: number; y: number } | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -61,7 +104,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   // 悬浮隐藏状态
   const [_isHovered, setIsHovered] = useState(false)
-  const groupRef = useRef<HTMLDivElement>(null)
+  // groupRef moved to top
 
   // 获取适配器
   const adapter = getAdapter()
@@ -207,13 +250,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     },
     floatingToolbar: (e) => {
       e?.stopPropagation()
-      const nextOpen = !(currentSettings.floatingToolbar?.open ?? true)
-      setSettings({
-        floatingToolbar: {
-          ...currentSettings.floatingToolbar,
-          open: nextOpen,
-        },
-      })
+      // Toggle local menu state instead of settings
+      setIsToolsMenuOpen((prev) => !prev)
     },
   }
 
@@ -505,6 +543,61 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
           aria-hidden="true"
         />
         {renderButtonGroup()}
+
+        {/* 工具菜单 Popover */}
+        {isToolsMenuOpen && (
+          <div
+            className={`quick-menu-popover ${quickButtonsSide === "left" ? "side-right" : "side-left"}`}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}>
+            <Tooltip content={t("export") || "Export"}>
+              <button
+                className="quick-menu-btn"
+                onClick={(e) => {
+                  onExport?.()
+                  setIsToolsMenuOpen(false)
+                }}>
+                <ExportIcon size={18} />
+              </button>
+            </Tooltip>
+
+            <Tooltip content={t("conversationsMoveTo") || "Move"}>
+              <button
+                className="quick-menu-btn"
+                onClick={(e) => {
+                  onMove?.()
+                  setIsToolsMenuOpen(false)
+                }}>
+                <FolderPlusIcon size={18} />
+              </button>
+            </Tooltip>
+
+            <Tooltip content={t("shortcutToggleScrollLock") || "Scroll Lock"}>
+              <button
+                className={`quick-menu-btn ${scrollLocked ? "active" : ""}`}
+                onClick={(e) => {
+                  onScrollLock?.(!scrollLocked)
+                  setIsToolsMenuOpen(false)
+                }}>
+                <AnchorIcon size={18} />
+              </button>
+            </Tooltip>
+
+            <div className="menu-divider" />
+
+            <Tooltip content={t("cleanup") || "Cleanup"}>
+              <button
+                className="quick-menu-btn danger"
+                onClick={(e) => {
+                  onCleanup?.()
+                  setIsToolsMenuOpen(false)
+                }}>
+                <CleanupIcon size={18} />
+              </button>
+            </Tooltip>
+          </div>
+        )}
       </div>
     </>
   )

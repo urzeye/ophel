@@ -1015,4 +1015,6 @@ export const ja = {
   retryCountSuffix: "回 (同じ質問)",
   policyRetryActive: "ポリシーによる遮断、再試行中 ({current}/{max})",
   policyRetryLimitReached: "再試行回数の上限に達しました",
+  preventAutoScrollEnabled: "スクロールロックが有効になりました",
+  preventAutoScrollDisabled: "スクロールロックが無効になりました",
 }

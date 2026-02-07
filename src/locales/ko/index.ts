@@ -1011,4 +1011,6 @@ export const ko = {
   retryCountSuffix: "회 (동일 질문)",
   policyRetryActive: "정책 차단됨, 재시도 중 ({current}/{max})",
   policyRetryLimitReached: "재시도 횟수 초과",
+  preventAutoScrollEnabled: "스크롤 잠금이 활성화되었습니다",
+  preventAutoScrollDisabled: "스크롤 잠금이 비활성화되었습니다",
 }

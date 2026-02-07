@@ -1002,4 +1002,6 @@ Dê o código e depois um resumo de melhorias.`,
   retryCountSuffix: "vezes (mesma pergunta)",
   policyRetryActive: "Bloqueio de política, tentando novamente ({current}/{max})",
   policyRetryLimitReached: "Limite de tentativas alcançado",
+  preventAutoScrollEnabled: "Bloqueio de rolagem ativado",
+  preventAutoScrollDisabled: "Bloqueio de rolagem desativado",
 }

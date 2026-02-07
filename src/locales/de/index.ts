@@ -1004,4 +1004,6 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   retryCountSuffix: "Mal (gleiche Frage)",
   policyRetryActive: "Richtlinienblockierung, erneuter versuch ({current}/{max})",
   policyRetryLimitReached: "Wiederholungslimit erreicht",
+  preventAutoScrollEnabled: "Scroll-Sperre aktiviert",
+  preventAutoScrollDisabled: "Scroll-Sperre deaktiviert",
 }

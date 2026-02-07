@@ -6,12 +6,12 @@ import type React from "react"
 import {
   AnchorIcon,
   ConversationIcon,
-  FloatingToolbarIcon,
   ManualAnchorIcon,
   OutlineIcon,
   PromptIcon,
   ScrollBottomIcon,
   ScrollTopIcon,
+  ToolsIcon,
 } from "~components/icons"
 
 // ==================== Tab ID 常量 ====================
@@ -97,10 +97,10 @@ export const COLLAPSED_BUTTON_DEFS: Record<
   panel: { icon: "✨", labelKey: "panelTitle", canToggle: false, isPanelOnly: true },
   floatingToolbar: {
     icon: "🧰",
-    labelKey: "floatingToolbarLabel",
-    canToggle: true,
+    labelKey: "tools", // Changed from floatingToolbarLabel
+    canToggle: true, // This toggle will now open the menu
     isPanelOnly: false,
-    IconComponent: FloatingToolbarIcon,
+    IconComponent: ToolsIcon,
   },
   anchor: {
     icon: "⚓",
