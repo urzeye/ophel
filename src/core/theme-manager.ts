@@ -652,6 +652,85 @@ ${cssVars}
     }
   }
 
+  private getTransitionOrigin(event?: MouseEvent) {
+    let x = 95
+    let y = 5
+    if (event && event.clientX !== undefined) {
+      x = (event.clientX / window.innerWidth) * 100
+      y = (event.clientY / window.innerHeight) * 100
+      return { x, y }
+    }
+
+    const themeBtn =
+      document.getElementById("theme-toggle-btn") || document.getElementById("quick-theme-btn")
+    if (themeBtn) {
+      const rect = themeBtn.getBoundingClientRect()
+      x = ((rect.left + rect.width / 2) / window.innerWidth) * 100
+      y = ((rect.top + rect.height / 2) / window.innerHeight) * 100
+    }
+    return { x, y }
+  }
+
+  private async applyWithTransition(action: () => void, event?: MouseEvent): Promise<boolean> {
+    const { x, y } = this.getTransitionOrigin(event)
+
+    document.documentElement.style.setProperty("--theme-x", `${x}%`)
+    document.documentElement.style.setProperty("--theme-y", `${y}%`)
+
+    this.stopMonitoring()
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    if (!document.startViewTransition || prefersReducedMotion) {
+      try {
+        action()
+      } finally {
+        this.monitorTheme()
+      }
+      return false
+    }
+
+    try {
+      const transition = document.startViewTransition(() => {
+        action()
+      })
+
+      transition.ready.then(() => {
+        const right = window.innerWidth - (x / 100) * window.innerWidth
+        const bottom = window.innerHeight - (y / 100) * window.innerHeight
+        const maxRadius = Math.hypot(
+          Math.max((x / 100) * window.innerWidth, right),
+          Math.max((y / 100) * window.innerHeight, bottom),
+        )
+
+        const clipPath = [`circle(0px at ${x}% ${y}%)`, `circle(${maxRadius}px at ${x}% ${y}%)`]
+
+        document.documentElement.animate(
+          {
+            clipPath: clipPath,
+          },
+          {
+            duration: 500,
+            easing: "ease-in",
+            pseudoElement: "::view-transition-new(root)",
+            fill: "forwards",
+          },
+        )
+      })
+
+      await transition.finished.catch(() => {
+        // 忽略动画错误
+      })
+    } catch {
+      action()
+      this.monitorTheme()
+      return false
+    }
+
+    this.skipNextDetection = true
+    this.monitorTheme()
+    return true
+  }
+
   /**
    * 切换主题（User Action）- 带圆形扩散动画
    * @param event 可选的鼠标事件，用于确定动画中心
@@ -783,13 +862,23 @@ ${cssVars}
       this.ensureSystemListener()
       const resolved = this.getSystemMode()
       const modeChanged = this.mode !== resolved
-      this.mode = resolved
-      this.syncPageTheme(resolved, "system")
-      if (modeChanged) this.emitChange()
+      const shouldAnimate = Boolean(event) && modeChanged
+      let animated = false
+      if (shouldAnimate) {
+        animated = await this.applyWithTransition(() => {
+          this.syncPageTheme(resolved, "system")
+        }, event)
+      } else {
+        this.syncPageTheme(resolved, "system")
+      }
+      if (modeChanged) {
+        this.mode = resolved
+        this.emitChange()
+      }
       if (this.onModeChange) {
         this.onModeChange(resolved, this.preference)
       }
-      return { mode: resolved, animated: false }
+      return { mode: resolved, animated }
     }
 
     const currentMode = this.detectCurrentTheme()
