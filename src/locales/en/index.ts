@@ -104,6 +104,8 @@ export const en = {
   contentStyleTab: "Content Processing",
   claudeSettingsTab: "Claude Settings",
   pageWidthSettings: "Page Width",
+  moreLanguages: "More Languages",
+
   layoutSettingsTitle: "Page Width Control",
   tabLayout: "Page Layout",
   tabModelLock: "Model Lock",
@@ -359,15 +361,7 @@ export const en = {
   outlineLevel1: "Level 1 Only",
   outlineLevel2: "Up to Level 2",
   outlineLevel3: "Up to Level 3",
-  // Reading History (en)
-  readingHistoryTitle: "Reading History",
-  readingHistoryPersistenceLabel: "Enable Reading History",
-  readingHistoryPersistenceDesc: "Automatically record reading position and restore on next visit",
-  readingHistoryAutoRestoreLabel: "Auto Restore Position",
-  readingHistoryAutoRestoreDesc: "Automatically jump to last reading position when opening page",
-  readingHistoryCleanup: "Retention Period",
-  daysSuffix: " Days",
-  cleanupInfinite: "Forever",
+
   // Missing Content Settings (en)
   contentExportSettingsTitle: "Content Settings",
   markdownFixLabel: "Markdown Bold Fix",
@@ -419,6 +413,8 @@ export const en = {
   renameIntervalDesc: "Interval for detecting conversation name changes",
   secondsSuffix: "s",
   showStatusLabel: "Show Status",
+  toggleTheme: "Toggle Light/Dark Theme",
+
   showStatusDesc: "Display generation status icon in tab title (⏳/✅)",
   showNotificationLabel: "Desktop Notification",
   showNotificationDesc: "Send system notification when generation completes",
@@ -442,7 +438,11 @@ export const en = {
   outlineEmpty: "No outline content",
   outlineRefresh: "Refresh",
   outlineSettings: "Outline Settings",
+  outlineSettingsTitle: "Outline Settings",
+  outlineEnabledLabel: "Enable Outline View",
+  outlineShowUserQueriesLabel: "Show User Queries",
   bookmarkSettings: "Bookmark Settings",
+
   bookmarkModeDisableLevel: "Cannot adjust levels in bookmark mode",
   bookmarkSettingsDesc: "Bookmark related settings",
   inlineBookmarkModeLabel: "Inline Bookmark Icons",
@@ -458,7 +458,9 @@ export const en = {
   refreshOutline: "Refresh Outline",
   refreshSettings: "Refresh Settings",
   jumpToAnchor: "Go back to previous position",
+  anchorUpdated: "Anchor updated",
   // Outline advanced toolbar
+
   outlineScrollBottom: "Scroll to bottom",
   outlineScrollTop: "Scroll to top",
   outlineExpandAll: "Expand all",
@@ -478,15 +480,19 @@ export const en = {
   moveDown: "Move Down",
   // Reading Navigation Settings
   readingNavigationSettings: "Reading Navigation",
-  anchorSettings: "Reading History",
-  anchorPersistence: "Enable Reading History",
-  anchorPersistenceDesc: "Automatically remember reading position",
-  anchorAutoRestore: "Auto-Resume",
-  anchorAutoRestoreDesc: "Jump to last position on load",
-  anchorCleanup: "Retention Period",
-  anchorCleanupDesc: "Keep reading progress for days (-1 for infinite)",
+  readingHistorySettings: "Reading History",
+  readingHistoryPersistence: "Enable Reading History",
+  readingHistoryPersistenceDesc: "Automatically remember reading position",
+  autoRestore: "Auto-Resume",
+  autoRestoreDesc: "Jump to last position on load",
+  readingHistoryCleanup: "Retention Period",
+  readingHistoryCleanupDesc: "Keep reading progress for days (-1 for infinite)",
+  daysSuffix: " Days",
+  cleanupInfinite: "Forever",
+  readingHistoryTitle: "Reading History",
 
   restoredPosition: "Resumed last position",
+
   cleanupDone: "Expired data cleaned",
   // Outline Advanced Settings
   outlineAutoUpdateLabel: "Auto-update outline during conversation",
@@ -517,7 +523,9 @@ export const en = {
   showCollapsedAnchorDesc: "Display anchor button in sidebar when panel is collapsed",
   showCollapsedThemeLabel: "Theme",
   floatingToolbarLabel: "Floating toolbar",
+  tools: "Toolbox",
   floatingToolbarMore: "More",
+
   floatingToolbarClearGhost: "Clear invalid bookmarks",
   floatingToolbarClearGhostConfirm: "Clear {count} invalid bookmarks in this session?",
   floatingToolbarClearGhostEmpty: "No invalid bookmarks to clear.",
@@ -547,7 +555,17 @@ export const en = {
   panelWidthDesc: "Width of the panel (px)",
   panelHeightLabel: "Panel Height",
   panelHeightDesc: "Percentage of screen height the panel occupies",
+  // Manual Anchor
+  setAnchor: "Set Anchor",
+  setAnchorToast: "Anchor set",
+  backToAnchor: "Back to Anchor",
+  noAnchor: "No anchor set",
+  clearAnchor: "Clear Anchor",
+  clearAnchorToast: "Anchor cleared",
+  manualAnchorLabel: "Manual Anchor",
+  manualAnchorDesc: "Show manual anchor button in floating toolbar",
   // Interface Toggle
+
   disableOutline: "Disable Outline",
   togglePrompts: "Toggle Prompts",
   toggleConversations: "Toggle Conversations",
@@ -655,7 +673,13 @@ export const en = {
   conversationsFilterPinned: "Filter Pinned",
   conversationsClearAll: "Clear All Filters",
   conversationsBatchMode: "Batch Mode",
+  // History Loading
+  loadingHistory: "Loading history...",
+  historyLoaded: "History loaded",
+  stopLoading: "Stop loading",
+  loadingHint: "Keep page still, auto-scroll to top when done",
   formulaCopyLabel: "Double-click to copy formula",
+
   formulaCopyDesc: "Double-click math formula to copy LaTeX source (Not supported on some sites)",
   formulaCopied: "Formula copied",
   formulaDelimiterLabel: "Add delimiter when copying",
@@ -711,7 +735,12 @@ export const en = {
   webdavDownloadFailed: "Download failed",
   webdavFileNotFound: "Remote file not found",
   webdavInvalidFormat: "Invalid backup file format",
+  // Watermark
+  watermarkProcessing: "Processing image...",
+  watermarkProcessed: "Watermark removed",
+  watermarkFailed: "Failed to process",
   // ======== Backup Redesign ========
+
   exportData: "Export Data",
   exportDataDesc: "Export data as JSON file for backup",
   importData: "Import Data",
@@ -874,7 +903,9 @@ Please output the optimized code block directly, followed by a brief summary of 
   shortcutCopyLatestReply: "Copy Latest Reply",
   shortcutCopyLastCodeBlock: "Copy Last Code Block",
   shortcutToggleScrollLock: "Prevent auto-scroll to bottom",
+  shortcutToggleModelLock: "Toggle Model Lock",
   shortcutFocusInput: "Focus Input",
+
   shortcutStopGeneration: "Stop Generation",
   shortcutShowShortcuts: "Show Shortcuts",
   shortcutShowModelSelector: "Model Selector",

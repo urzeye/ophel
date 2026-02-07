@@ -450,11 +450,7 @@ export const zhCN = {
   outlineSettingsTitle: "大纲设置",
   outlineEnabledLabel: "启用大纲视图",
   outlineShowUserQueriesLabel: "显示用户提问",
-  // 阅读历史 (SettingsTab)
-  readingHistoryTitle: "阅读历史",
-  readingHistoryPersistenceLabel: "启用阅读历史",
-  readingHistoryAutoRestoreLabel: "自动恢复位置",
-  readingHistoryAutoRestoreDesc: "打开页面时自动跳转到上次阅读位置",
+
   outlineMaxLevel: "显示标题级别",
   outlineLevelAll: "全部 (1-6级)",
   outlineLevel1: "仅 1 级",

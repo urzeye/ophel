@@ -100,6 +100,8 @@ export const ja = {
   contentStyleTab: "コンテンツ処理",
   claudeSettingsTab: "Claude専用設定",
   pageWidthSettings: "ページ幅",
+  moreLanguages: "その他の言語",
+
   layoutSettingsTitle: "ページ幅制御",
   tabLayout: "レイアウト",
   tabModelLock: "モデルロック",
@@ -147,6 +149,8 @@ export const ja = {
   rateAndReview: "Ophelを応援",
   rateDesc:
     "Ophelを気に入っていただけましたら、ストアで5つ星評価をお願いします！開発の励みになります。",
+  communityAndSupport: "コミュニティとサポート",
+
   chromeStore: "Chrome ストア",
   firefoxAddons: "Firefox アドオン",
   greasyFork: "Greasy Fork",
@@ -269,6 +273,9 @@ export const ja = {
   modelLockFailedNoButton: "モデル切り替えボタンが見つかりません",
   modelLockFailedMenuEmpty: "モデルメニューの読み込みに失敗しました",
   modelLockFailedNotFound: 'モデル "{model}" が見つかりませんでした',
+  modelLockEnabled: "モデルロック有効",
+  modelLockDisabled: "モデルロック無効",
+  modelLockNoKeyword: "モデルロック: キーワード未設定",
 
   userQueryWidthDesc: "ユーザーの発言バブルの最大幅を調整（サイトごとに設定）",
   // Category management
@@ -293,6 +300,8 @@ export const ja = {
   languageEn: "English",
   // Theme settings
   themeLabel: "テーマ",
+  toggleTheme: "テーマ切り替え",
+
   themeAuto: "自動",
   themeSettings: "テーマ設定",
   currentThemeMode: "現在のモード",
@@ -353,14 +362,17 @@ export const ja = {
   outlineLevel2: "レベル2まで",
   outlineLevel3: "レベル3まで",
   // Reading History (ja)
-  readingHistoryTitle: "閲覧履歴",
-  readingHistoryPersistenceLabel: "履歴記録を有効化",
+  readingHistorySettings: "閲覧履歴",
+  readingNavigationSettings: "閲覧ナビゲーション",
+  readingHistoryPersistence: "閲覧履歴を有効化",
   readingHistoryPersistenceDesc: "読み進めた位置を自動記録し、次回訪問時に案内します",
-  readingHistoryAutoRestoreLabel: "自動位置復元",
-  readingHistoryAutoRestoreDesc: "ページを開いた際、最後に読んでいた位置へ自動スクロールします",
+  autoRestore: "自動復元",
+  autoRestoreDesc: "ページを開いたときに前回の位置へジャンプ",
   readingHistoryCleanup: "保存期間",
+  readingHistoryCleanupDesc: "閲覧履歴の保持期間 (-1で無期限)",
   daysSuffix: " 日間",
   cleanupInfinite: "永久",
+
   // Missing Content Settings (ja)
   contentExportSettingsTitle: "コンテンツ設定",
   markdownFixLabel: "Markdown 太字修正",
@@ -423,6 +435,10 @@ export const ja = {
   outlineEmpty: "目次データがありません",
   outlineRefresh: "リロード",
   outlineSettings: "目次設定",
+  outlineSettingsTitle: "アウトライン設定",
+  outlineEnabledLabel: "アウトライン表示を有効化",
+  outlineShowUserQueriesLabel: "ユーザーの質問を表示",
+
   bookmarkSettings: "ブックマーク設定",
   bookmarkModeDisableLevel: "ブックマークモードではレベルを調整できません",
   bookmarkSettingsDesc: "ブックマーク関連の設定",
@@ -439,6 +455,8 @@ export const ja = {
   refreshOutline: "目次を更新",
   refreshSettings: "更新設定",
   jumpToAnchor: "前の位置へ戻る",
+  anchorUpdated: "アンカーを更新しました",
+
   // Outline advanced toolbar
   outlineScrollBottom: "一番下へ",
   outlineScrollTop: "一番上へ",
@@ -458,14 +476,6 @@ export const ja = {
   moveUp: "上へ",
   moveDown: "下へ",
   // Reading Navigation Settings
-  readingNavigationSettings: "閲覧ナビゲーション",
-  anchorSettings: "閲覧履歴",
-  anchorPersistence: "履歴記録を有効化",
-  anchorPersistenceDesc: "読み進めた位置を自動的に記憶します",
-  anchorAutoRestore: "自動位置復元",
-  anchorAutoRestoreDesc: "読み込み時に最後に読んでいた位置へ移動します",
-  anchorCleanup: "保存期間",
-  anchorCleanupDesc: "閲覧進捗を保持する期間（日、-1で永久）",
 
   restoredPosition: "前回の位置を復元しました",
   cleanupDone: "期限切れデータを整理しました",
@@ -530,6 +540,16 @@ export const ja = {
   panelWidthDesc: "パネルの幅 (px)",
   panelHeightLabel: "パネルの高さ",
   panelHeightDesc: "画面高に対するパネルの割合",
+  // Manual Anchor
+  setAnchor: "アンカーを設定",
+  setAnchorToast: "アンカーを設定しました",
+  backToAnchor: "アンカーに戻る",
+  noAnchor: "アンカーがありません",
+  clearAnchor: "アンカーをクリア",
+  clearAnchorToast: "アンカーをクリアしました",
+  manualAnchorLabel: "手動アンカー",
+  manualAnchorDesc: "フローティングツールバーにアンカーボタンを表示",
+
   // Interface Toggle
   disableOutline: "目次を無効化",
   togglePrompts: "プロンプトを表示",
@@ -567,6 +587,8 @@ export const ja = {
   conversationsSelectFolder: "同期先フォルダを選択",
   conversationsMoveTo: "会話を移動",
   shortcutToggleScrollLock: "AI生成時の自動スクロールを防止",
+  shortcutToggleModelLock: "モデルロック切り替え",
+
   conversationsMoved: "移動しました: ",
   conversationsSyncDeleteTitle: "同期削除",
   conversationsSyncDeleteMsg:
@@ -614,6 +636,8 @@ export const ja = {
   conversationsSearchResult: " 件の結果",
   conversationsNoSearchResult: "一致する会話はありません",
   conversationsSetTags: "タグを設定",
+  conversationsSetTag: "タグを設定",
+
   conversationsNewTag: "新規タグ",
   conversationsTagName: "タグ名",
   conversationsTagColor: "タグカラー",
@@ -640,6 +664,11 @@ export const ja = {
   conversationsFilterPinned: "ピン留めのみ表示",
   conversationsClearAll: "全フィルター解除",
   conversationsBatchMode: "一括操作モード",
+  loadingHistory: "履歴を読み込んでいます...",
+  historyLoaded: "履歴を読み込みました",
+  stopLoading: "停止",
+  loadingHint: "完了後、自動的にトップへスクロールします",
+
   formulaCopyLabel: "ダブルクリックで数式をコピー",
   formulaCopyDesc: "数式をダブルクリックしてLaTeXソースをコピー（一部サイト不可）",
   formulaCopied: "数式をコピーしました",
@@ -695,6 +724,11 @@ export const ja = {
   webdavDownloadFailed: "ダウンロード失敗",
   webdavFileNotFound: "リモートファイルが見つかりません",
   webdavInvalidFormat: "バックアップファイルの形式が不正です",
+  // Watermark
+  watermarkProcessing: "画像を処理中...",
+  watermarkProcessed: "透かしを削除しました",
+  watermarkFailed: "処理に失敗しました",
+
   // ======== Backup Redesign ========
   exportData: "データのエクスポート",
   exportDataDesc: "バックアップ用JSONファイルを書き出します",

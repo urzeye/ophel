@@ -88,6 +88,8 @@ export const zhTW = {
   visitWebsite: "前往官網",
   rateAndReview: "好評鼓勵",
   rateDesc: "如果您喜歡 Ophel，請在應用商店給我們一個五星好評，這是我們更新的最大動力！",
+  communityAndSupport: "社群與支援",
+
   chromeStore: "Chrome 商店",
   firefoxAddons: "Firefox 擴充功能",
   greasyFork: "Greasy Fork",
@@ -99,6 +101,8 @@ export const zhTW = {
   creditsDesc:
     "感謝所有為開源社群做出貢獻的開發者們，本擴充功能的開發得益於這些優秀的開源專案和工具。",
   privacyTitle: "隱私保護",
+  techStack: "技術棧",
+  privacyStatement: "隱私聲明",
   privacyText:
     "本擴充功能所有資料均儲存在本地瀏覽器中，不會主動上傳到任何伺服器。您的帳號資訊和使用資料完全由您自己掌控，確保隱私安全。",
   reportIssue: "回報問題",
@@ -204,6 +208,9 @@ export const zhTW = {
   modelLockFailedNoButton: "模型選擇器未找到",
   modelLockFailedMenuEmpty: "模型選單載入失敗",
   modelLockFailedNotFound: '未找到模型 "{model}"',
+  modelLockEnabled: "模型鎖定已開啟",
+  modelLockDisabled: "模型鎖定已關閉",
+  modelLockNoKeyword: "模型鎖定：未設定關鍵字",
 
   userQueryWidthDesc: "調整使用者問題氣泡容器的最大寬度（每個站點獨立配置）",
   // 分類管理
@@ -235,6 +242,10 @@ export const zhTW = {
   themeSettingsDesc: "選擇淺色和深色模式下使用的主題預設",
   themePresetsTab: "主題預設",
   customStylesTab: "自定義樣式",
+  pleaseEnterStyleName: "請輸入樣式名稱",
+  code: "代碼",
+  unnamedStyle: "未命名樣式",
+
   lightMode: "淺色模式",
   darkMode: "深色模式",
   enterStyleName: "輸入樣式名稱",
@@ -291,12 +302,16 @@ export const zhTW = {
   "themePreset_eva-unit-01": "代號：暴走",
   themePreset_aurora: "極光行者",
   toggleTheme: "切换主题",
+  anchorUpdated: "錨點已更新",
   jumpToAnchor: "返回之前位置",
+
   // 頁面寬度設置
   layoutTab: "頁面排版",
   contentStyleTab: "內容處理",
   claudeSettingsTab: "Claude 專屬",
   pageWidthSettings: "頁面寬度",
+  moreLanguages: "更多語言",
+
   layoutSettingsTitle: "頁面寬度控制",
   tabLayout: "頁面佈局",
   tabModelLock: "模型鎖定",
@@ -360,6 +375,10 @@ export const zhTW = {
   outlineEmpty: "暫無大綱內容",
   outlineRefresh: "刷新",
   outlineSettings: "大綱設置",
+  outlineSettingsTitle: "大綱設置",
+  outlineEnabledLabel: "啟用大綱視圖",
+  outlineShowUserQueriesLabel: "顯示用戶提問",
+
   bookmarkSettings: "收藏設置",
   bookmarkModeDisableLevel: "收藏模式下無法調整層級",
   bookmarkSettingsDesc: "收藏相關設置",
@@ -375,9 +394,7 @@ export const zhTW = {
   conversationsSettingsDesc: "配置會話同步和顯示行為",
   readingHistoryTitle: "閱讀歷史",
   readingHistoryDesc: "記錄和恢復會話閱讀位置",
-  readingHistoryAutoRestoreLabel: "自動恢復位置",
-  readingHistoryAutoRestoreDesc: "打開頁面時自動跳轉到上次閱讀位置",
-  readingHistoryPersistenceLabel: "啟用閱讀歷史",
+
   enableOutline: "啟用大綱",
   outlineMaxLevel: "顯示標題級別",
   outlineLevelAll: "全部 (1-6級)",
@@ -411,6 +428,10 @@ export const zhTW = {
   autoRestoreDesc: "打開頁面時自動跳轉到上次位置",
   readingHistoryCleanup: "歷史保留時間",
   readingHistoryCleanupDesc: "只保留最近幾天的閱讀進度 (-1 為永久)",
+  day: "天",
+  days: "天",
+  forever: "永久",
+
   daysSuffix: "天",
   cleanupInfinite: "永久",
   restoredPosition: "已恢復上次閱讀位置",
@@ -547,12 +568,19 @@ export const zhTW = {
   exportUntitled: "未命名",
   exportToClipboard: "複製 Markdown",
   conversationsRefresh: "刷新會話列表",
+  refreshConversations: "刷新會話",
+
   conversationsSearchPlaceholder: "搜尋會話...",
   conversationsSearchResult: "個結果",
   conversationsNoSearchResult: "未找到匹配結果",
   shortcutToggleScrollLock: "AI生成時禁止自動滾動到底部",
+  shortcutToggleModelLock: "切換模型鎖定狀態",
+
   conversationsNewTag: "新建標籤",
+  conversationsSetTag: "設置標籤",
+  conversationsSetTags: "批量設置標籤",
   conversationsTagName: "標籤名稱",
+
   conversationsTagColor: "標籤顏色",
   conversationsFilterByTags: "按標籤篩選",
   conversationsClearTags: "清除篩選",
@@ -666,6 +694,12 @@ export const zhTW = {
   webdavConnectionSuccess: "連接成功",
   webdavUploadSuccess: "上傳成功",
   webdavDownloadSuccess: "下載成功，即將重新整理頁面",
+  allDataCleared: "所有資料已清除，頁面即將刷新...",
+  clearError: "清除失敗",
+  webdavBackupList: "WebDAV 備份列表",
+  noBackupsFound: "未找到備份檔案",
+  loading: "載入中...",
+
   webdavConfigIncomplete: "請填寫完整的 WebDAV 配置",
   webdavAuthFailed: "認證失敗，請檢查用戶名和密碼",
   webdavConnectionFailed: "連接失敗",
@@ -740,6 +774,8 @@ export const zhTW = {
   permissionDialogAllow: "允許並繼續",
   permissionGranted: "授權成功",
   permissionDenied: "授權已取消",
+  permissionRequired: "需要權限",
+  webdavPermissionDesc: "WebDAV 備份需要伺服器存取權限。",
 
   revokeConfirmDefault: "確定要撤銷此權限嗎？撤銷後，依賴該權限的功能將會自動關閉。",
   revokeConfirmNotifications:
