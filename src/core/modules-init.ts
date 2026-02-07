@@ -102,6 +102,10 @@ export function initThemeManager(ctx: ModulesContext): ThemeManager {
 export async function syncPageTheme(ctx: ModulesContext): Promise<void> {
   const { adapter, settings, siteId } = ctx
   const siteTheme = getSiteTheme(settings, siteId)
+  if (siteTheme.mode === "system" && modules.themeManager) {
+    await modules.themeManager.setMode("system")
+    return
+  }
   const targetTheme =
     siteTheme.mode === "system"
       ? window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches

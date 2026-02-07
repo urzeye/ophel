@@ -49,7 +49,7 @@ export class ThemeManager {
     if (this.mode === nextMode) return
     this.mode = nextMode
     this.emitChange()
-    this.syncPageTheme(nextMode)
+    this.syncPageTheme(nextMode, "system")
     if (this.onModeChange) {
       this.onModeChange(nextMode, this.preference)
     }
@@ -102,11 +102,126 @@ export class ThemeManager {
     return preference
   }
 
-  private syncPageTheme(targetMode: ThemeMode) {
-    if (this.adapter && typeof this.adapter.toggleTheme === "function") {
-      this.adapter.toggleTheme(targetMode).catch(() => {})
+  private syncPageTheme(targetMode: ThemeMode, preference: ThemePreference = targetMode) {
+    if (preference === "system") {
+      const handled = this.applySystemPreference(targetMode)
+      if (!handled && this.adapter && typeof this.adapter.toggleTheme === "function") {
+        this.adapter.toggleTheme(targetMode).catch(() => {})
+      }
+    } else if (this.adapter && typeof this.adapter.toggleTheme === "function") {
+      this.adapter.toggleTheme(preference).catch(() => {})
     }
     this.apply(targetMode)
+  }
+
+  private applySystemPreference(targetMode: ThemeMode): boolean {
+    if (!this.adapter) return false
+    const siteId = this.adapter.getSiteId()
+    try {
+      switch (siteId) {
+        case SITE_IDS.CHATGPT: {
+          localStorage.setItem("theme", "system")
+          document.documentElement.className = targetMode
+          window.dispatchEvent(
+            new StorageEvent("storage", {
+              key: "theme",
+              newValue: "system",
+              storageArea: localStorage,
+            }),
+          )
+          return true
+        }
+        case SITE_IDS.GROK: {
+          localStorage.setItem("theme", "system")
+          document.documentElement.classList.remove("light", "dark")
+          document.documentElement.classList.add(targetMode)
+          document.documentElement.style.colorScheme = targetMode
+          window.dispatchEvent(
+            new StorageEvent("storage", {
+              key: "theme",
+              newValue: "system",
+              storageArea: localStorage,
+            }),
+          )
+          return true
+        }
+        case SITE_IDS.AISTUDIO: {
+          const prefStr = localStorage.getItem("aiStudioUserPreference") || "{}"
+          let pref: Record<string, unknown> = {}
+          try {
+            pref = JSON.parse(prefStr)
+          } catch {
+            pref = {}
+          }
+          pref.theme = "system"
+          const nextValue = JSON.stringify(pref)
+          localStorage.setItem("aiStudioUserPreference", nextValue)
+
+          const body = document.body
+          if (targetMode === "dark") {
+            body.classList.add("dark-theme")
+            body.classList.remove("light-theme")
+          } else {
+            body.classList.remove("dark-theme")
+            body.classList.add("light-theme")
+          }
+          body.style.colorScheme = targetMode
+
+          window.dispatchEvent(
+            new StorageEvent("storage", {
+              key: "aiStudioUserPreference",
+              newValue: nextValue,
+              storageArea: localStorage,
+            }),
+          )
+
+          const appRoot = document.querySelector("app-root, ms-app, body")
+          if (appRoot) {
+            appRoot.dispatchEvent(new CustomEvent("themechange", { detail: { theme: targetMode } }))
+          }
+          return true
+        }
+        case SITE_IDS.GEMINI: {
+          localStorage.removeItem("Bard-Color-Theme")
+          if (targetMode === "dark") {
+            document.body.classList.add("dark-theme")
+            document.body.classList.remove("light-theme")
+          } else {
+            document.body.classList.remove("dark-theme")
+            document.body.classList.add("light-theme")
+          }
+          document.body.style.colorScheme = targetMode
+          window.dispatchEvent(
+            new StorageEvent("storage", {
+              key: "Bard-Color-Theme",
+              newValue: null,
+              storageArea: localStorage,
+            }),
+          )
+          return true
+        }
+        case SITE_IDS.CLAUDE: {
+          const themeData = {
+            value: "auto",
+            tabId: crypto.randomUUID(),
+            timestamp: Date.now(),
+          }
+          const nextValue = JSON.stringify(themeData)
+          localStorage.setItem("LSS-userThemeMode", nextValue)
+          window.dispatchEvent(
+            new StorageEvent("storage", {
+              key: "LSS-userThemeMode",
+              newValue: nextValue,
+            }),
+          )
+          return true
+        }
+        default:
+          return false
+      }
+    } catch {
+      return false
+    }
   }
 
   /**
@@ -157,7 +272,7 @@ export class ThemeManager {
     this.mode = this.resolveMode(normalizedPreference)
     this.emitChange()
     if (this.preference === "system") {
-      this.syncPageTheme(this.mode)
+      this.syncPageTheme(this.mode, "system")
       return
     }
     this.apply(this.mode)
@@ -198,6 +313,63 @@ export class ThemeManager {
     }
 
     return "light"
+  }
+
+  private detectThemePreference(): ThemePreference | null {
+    if (!this.adapter) return null
+    const siteId = this.adapter.getSiteId()
+    try {
+      switch (siteId) {
+        case SITE_IDS.CHATGPT:
+        case SITE_IDS.GROK: {
+          const storedTheme = localStorage.getItem("theme")
+          if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system") {
+            return storedTheme
+          }
+          return null
+        }
+        case SITE_IDS.AISTUDIO: {
+          const prefStr = localStorage.getItem("aiStudioUserPreference")
+          if (!prefStr) return null
+          let pref: Record<string, unknown> = {}
+          try {
+            pref = JSON.parse(prefStr)
+          } catch {
+            pref = {}
+          }
+          const theme = pref.theme
+          if (theme === "light" || theme === "dark" || theme === "system") {
+            return theme
+          }
+          return null
+        }
+        case SITE_IDS.GEMINI: {
+          const storedTheme = localStorage.getItem("Bard-Color-Theme")
+          if (!storedTheme) return "system"
+          if (/dark/i.test(storedTheme)) return "dark"
+          if (/light/i.test(storedTheme)) return "light"
+          return null
+        }
+        case SITE_IDS.CLAUDE: {
+          const raw = localStorage.getItem("LSS-userThemeMode")
+          if (!raw) return null
+          let data: Record<string, unknown> = {}
+          try {
+            data = JSON.parse(raw)
+          } catch {
+            data = {}
+          }
+          const value = data.value
+          if (value === "auto" || value === "system") return "system"
+          if (value === "dark" || value === "light") return value
+          return null
+        }
+        default:
+          return null
+      }
+    } catch {
+      return null
+    }
   }
 
   /**
@@ -378,37 +550,31 @@ ${cssVars}
         return
       }
 
-      if (this.preference === "system") {
-        const systemMode = this.getSystemMode()
-        const detectedMode = this.detectCurrentTheme()
-        if (this.mode !== systemMode) {
-          this.mode = systemMode
-          this.emitChange()
-          this.syncPageTheme(systemMode)
-          if (this.onModeChange) {
-            this.onModeChange(systemMode, this.preference)
-          }
-          return
+      const detectedMode = this.detectCurrentTheme()
+      const detectedPreference = this.detectThemePreference()
+      const nextPreference: ThemePreference = detectedPreference ?? detectedMode
+      const nextMode: ThemeMode =
+        nextPreference === "system" ? this.getSystemMode() : nextPreference
+
+      if (nextPreference === "system") {
+        this.ensureSystemListener()
+        if (detectedMode !== nextMode) {
+          this.syncPageTheme(nextMode, "system")
+        } else {
+          this.syncPluginUITheme(nextMode)
         }
-        if (detectedMode !== systemMode) {
-          this.syncPageTheme(systemMode)
-        }
-        return
+      } else {
+        // 同步到插件 UI (ghMode)
+        this.syncPluginUITheme(nextMode)
       }
 
-      const detectedMode = this.detectCurrentTheme()
-
-      // 同步到插件 UI (ghMode)
-      this.syncPluginUITheme(detectedMode)
-
-      // 如果检测到的模式与当前模式不同，更新并触发回调
-      if (this.mode !== detectedMode) {
-        this.mode = detectedMode
-        this.preference = detectedMode
+      // 如果检测到的模式或偏好发生变化，更新并触发回调
+      if (this.mode !== nextMode || this.preference !== nextPreference) {
+        this.mode = nextMode
+        this.preference = nextPreference
         this.emitChange()
-        // 触发变化回调，通知 React 组件更新
         if (this.onModeChange) {
-          this.onModeChange(detectedMode, this.preference)
+          this.onModeChange(nextMode, nextPreference)
         }
       }
     }
@@ -578,7 +744,7 @@ ${cssVars}
       const resolved = this.getSystemMode()
       const modeChanged = this.mode !== resolved
       this.mode = resolved
-      this.syncPageTheme(resolved)
+      this.syncPageTheme(resolved, "system")
       if (modeChanged) this.emitChange()
       if (this.onModeChange) {
         this.onModeChange(resolved, this.preference)
@@ -591,8 +757,7 @@ ${cssVars}
     // 如果已经是目标模式，仅更新偏好
     if (currentMode === normalizedPreference) {
       this.preference = normalizedPreference
-      // 仍然需要同步插件 UI 主题（确保样式变量正确应用）
-      this.syncPluginUITheme(normalizedPreference)
+      this.syncPageTheme(normalizedPreference, normalizedPreference)
       if (this.onModeChange) {
         this.onModeChange(normalizedPreference, this.preference)
       }
