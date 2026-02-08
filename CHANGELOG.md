@@ -21,6 +21,8 @@
 
 - **大纲高亮修正**：修复了 AI 回复标题在手动定位（Locate）模式下右侧边框显示为直角（由同步样式覆盖导致）的视觉 Bug，现在所有高亮状态均保持完美的圆角矩形。
 
+## [1.0.6] - 2026-02-07
+
 ### 🚀 新增功能
 
 - **系统主题模式**：新增跟随系统主题，面板与网页主题保持同步（含 Gemini Enterprise 的系统主题检测与切换）。
@@ -258,6 +260,8 @@
 
 ---
 
+[1.0.7]: https://github.com/urzeye/ophel/releases/tag/v1.0.7
+[1.0.6]: https://github.com/urzeye/ophel/releases/tag/v1.0.6
 [1.0.5]: https://github.com/urzeye/ophel/releases/tag/v1.0.5
 [1.0.4]: https://github.com/urzeye/ophel/releases/tag/v1.0.4
 [1.0.3]: https://github.com/urzeye/ophel/releases/tag/v1.0.3
