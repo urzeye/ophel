@@ -130,10 +130,29 @@ export class PromptManager {
     return element.getAttribute("data-disabled") === "true"
   }
 
+  private async waitForEnabledSubmitButton(
+    submitSelectors: string[],
+    timeoutMs: number = 500,
+  ): Promise<HTMLElement | null> {
+    const deadline = Date.now() + timeoutMs
+    let submitButton = DOMToolkit.query(submitSelectors, { shadow: true }) as HTMLElement | null
+
+    while (submitButton && this.isElementDisabled(submitButton) && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      submitButton = DOMToolkit.query(submitSelectors, { shadow: true }) as HTMLElement | null
+    }
+
+    if (!submitButton || this.isElementDisabled(submitButton)) {
+      return null
+    }
+
+    return submitButton
+  }
+
   private async waitForSubmitConfirmation(
     initialContent: string,
     submitSelectors: string[],
-    initialButton: HTMLElement | null,
+    buttonState: { button: HTMLElement | null; clicked: boolean; wasDisabled: boolean },
   ): Promise<boolean> {
     const deadline = Date.now() + 1500
     const hadContent = initialContent.trim().length > 0
@@ -146,14 +165,16 @@ export class PromptManager {
         return true
       }
 
-      if (submitSelectors.length > 0) {
+      if (buttonState.clicked && submitSelectors.length > 0) {
         const currentButton = DOMToolkit.query(submitSelectors, {
           shadow: true,
         }) as HTMLElement | null
-        if (currentButton && this.isElementDisabled(currentButton)) {
+
+        if (!currentButton && buttonState.button && !buttonState.button.isConnected) {
           return true
         }
-        if (!currentButton && initialButton && !initialButton.isConnected) {
+
+        if (currentButton && !buttonState.wasDisabled && this.isElementDisabled(currentButton)) {
           return true
         }
       }
@@ -171,9 +192,23 @@ export class PromptManager {
 
     let triggered = false
     let clickedButton: HTMLElement | null = null
+    let initialButton: HTMLElement | null = null
+    let initialButtonWasDisabled = false
 
     if (submitSelectors.length > 0) {
-      const submitButton = DOMToolkit.query(submitSelectors, { shadow: true }) as HTMLElement | null
+      initialButton = DOMToolkit.query(submitSelectors, { shadow: true }) as HTMLElement | null
+      initialButtonWasDisabled = this.isElementDisabled(initialButton)
+
+      let submitButton = initialButton
+      if (submitButton && initialButtonWasDisabled) {
+        const enabledButton = await this.waitForEnabledSubmitButton(submitSelectors)
+        if (enabledButton) {
+          submitButton = enabledButton
+          initialButton = enabledButton
+          initialButtonWasDisabled = false
+        }
+      }
+
       if (submitButton && !this.isElementDisabled(submitButton)) {
         submitButton.click()
         clickedButton = submitButton
@@ -210,6 +245,10 @@ export class PromptManager {
 
     if (!triggered) return false
 
-    return this.waitForSubmitConfirmation(initialContent, submitSelectors, clickedButton)
+    return this.waitForSubmitConfirmation(initialContent, submitSelectors, {
+      button: clickedButton || initialButton,
+      clicked: !!clickedButton,
+      wasDisabled: initialButtonWasDisabled,
+    })
   }
 }
