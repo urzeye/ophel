@@ -189,12 +189,12 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   getSubmitButtonSelectors(): string[] {
-    // Run 按钮
+    // Use the submit button inside ms-run-button to avoid matching unrelated primary buttons
     return [
-      'button[aria-label="Run"]',
-      'button:has-text("Run")',
-      ".ms-button-primary",
-      'button[class*="run"]',
+      'ms-run-button button[type="submit"]',
+      'ms-run-button.supports-add-instead-of-run button[type="submit"]',
+      'button[ms-button][type="submit"]',
+      'button.ms-button-primary[type="submit"]',
     ]
   }
 

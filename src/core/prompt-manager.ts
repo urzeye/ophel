@@ -130,23 +130,101 @@ export class PromptManager {
     return element.getAttribute("data-disabled") === "true"
   }
 
+  private isElementVisible(element: HTMLElement | null): boolean {
+    if (!element || !element.isConnected) return false
+    if (element.closest(".gh-main-panel")) return false
+
+    const style = window.getComputedStyle(element)
+    if (
+      style.display === "none" ||
+      style.visibility === "hidden" ||
+      parseFloat(style.opacity || "1") === 0
+    ) {
+      return false
+    }
+
+    const rect = element.getBoundingClientRect()
+    return rect.width > 0 && rect.height > 0
+  }
+
+  private collectSubmitButtons(submitSelectors: string[]): HTMLElement[] {
+    const result: HTMLElement[] = []
+    const seen = new Set<HTMLElement>()
+
+    for (const selector of submitSelectors) {
+      const matched = DOMToolkit.query(selector, { all: true, shadow: true }) as Element[] | null
+      if (!matched || !Array.isArray(matched)) continue
+
+      for (const element of matched) {
+        if (element instanceof HTMLElement && !seen.has(element)) {
+          seen.add(element)
+          result.push(element)
+        }
+      }
+    }
+
+    return result
+  }
+
+  private getRectDistance(a: DOMRect, b: DOMRect): number {
+    const dx = Math.max(a.left - b.right, b.left - a.right, 0)
+    const dy = Math.max(a.top - b.bottom, b.top - a.bottom, 0)
+    return Math.sqrt(dx * dx + dy * dy)
+  }
+
+  private findBestSubmitButton(
+    submitSelectors: string[],
+    editor: HTMLElement | null,
+  ): HTMLElement | null {
+    const candidates = this.collectSubmitButtons(submitSelectors).filter((button) =>
+      this.isElementVisible(button),
+    )
+
+    if (candidates.length === 0) return null
+    if (!editor || !editor.isConnected) return candidates[0]
+
+    const editorForm = editor.closest("form")
+    if (editorForm) {
+      const sameFormCandidates = candidates.filter(
+        (button) => button.closest("form") === editorForm,
+      )
+      if (sameFormCandidates.length > 0) {
+        const enabledSameForm = sameFormCandidates.find((button) => !this.isElementDisabled(button))
+        return enabledSameForm || sameFormCandidates[0]
+      }
+    }
+
+    const editorRect = editor.getBoundingClientRect()
+    let bestButton = candidates[0]
+    let bestDistance = Number.POSITIVE_INFINITY
+
+    for (const button of candidates) {
+      const distance = this.getRectDistance(editorRect, button.getBoundingClientRect())
+      if (distance < bestDistance) {
+        bestDistance = distance
+        bestButton = button
+      }
+    }
+
+    return bestButton
+  }
+
   private async waitForEnabledSubmitButton(
     submitSelectors: string[],
+    editor: HTMLElement | null,
     timeoutMs: number = 500,
   ): Promise<HTMLElement | null> {
     const deadline = Date.now() + timeoutMs
-    let submitButton = DOMToolkit.query(submitSelectors, { shadow: true }) as HTMLElement | null
 
-    while (submitButton && this.isElementDisabled(submitButton) && Date.now() < deadline) {
+    while (Date.now() < deadline) {
+      const submitButton = this.findBestSubmitButton(submitSelectors, editor)
+      if (submitButton && !this.isElementDisabled(submitButton)) {
+        return submitButton
+      }
       await new Promise((resolve) => setTimeout(resolve, 50))
-      submitButton = DOMToolkit.query(submitSelectors, { shadow: true }) as HTMLElement | null
     }
 
-    if (!submitButton || this.isElementDisabled(submitButton)) {
-      return null
-    }
-
-    return submitButton
+    return null
   }
 
   private async waitForSubmitConfirmation(
@@ -166,9 +244,7 @@ export class PromptManager {
       }
 
       if (buttonState.clicked && submitSelectors.length > 0) {
-        const currentButton = DOMToolkit.query(submitSelectors, {
-          shadow: true,
-        }) as HTMLElement | null
+        const currentButton = this.findBestSubmitButton(submitSelectors, currentEditor)
 
         if (!currentButton && buttonState.button && !buttonState.button.isConnected) {
           return true
@@ -193,15 +269,15 @@ export class PromptManager {
     let triggered = false
     let clickedButton: HTMLElement | null = null
     let initialButton: HTMLElement | null = null
-    let initialButtonWasDisabled = false
+    let initialButtonWasDisabled = true
 
     if (submitSelectors.length > 0) {
-      initialButton = DOMToolkit.query(submitSelectors, { shadow: true }) as HTMLElement | null
+      initialButton = this.findBestSubmitButton(submitSelectors, editor)
       initialButtonWasDisabled = this.isElementDisabled(initialButton)
 
       let submitButton = initialButton
-      if (submitButton && initialButtonWasDisabled) {
-        const enabledButton = await this.waitForEnabledSubmitButton(submitSelectors)
+      if (initialButtonWasDisabled) {
+        const enabledButton = await this.waitForEnabledSubmitButton(submitSelectors, editor)
         if (enabledButton) {
           submitButton = enabledButton
           initialButton = enabledButton
@@ -224,6 +300,7 @@ export class PromptManager {
       activeEditor.focus()
       const keyConfig = this.adapter.getSubmitKeyConfig()
       const needModifier = keyConfig.key === "Ctrl+Enter"
+      const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform)
       const eventInit: KeyboardEventInit = {
         key: "Enter",
         code: "Enter",
@@ -232,8 +309,8 @@ export class PromptManager {
         bubbles: true,
         cancelable: true,
         composed: true,
-        ctrlKey: needModifier,
-        metaKey: needModifier,
+        ctrlKey: needModifier && !isMac,
+        metaKey: needModifier && isMac,
         shiftKey: false,
       }
 
