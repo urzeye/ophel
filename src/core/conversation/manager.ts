@@ -83,7 +83,6 @@ export class ConversationManager {
     await this.waitForHydration()
 
     // 首次安装或当前站点数据为空时，自动加载全部会话
-    // 首次安装或当前站点数据为空时，自动加载全部会话
     const currentSiteCount = Object.keys(this.getAllConversations()).length
     if (currentSiteCount === 0 && this.siteAdapter.loadAllConversations) {
       try {

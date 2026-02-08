@@ -73,6 +73,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
   const tabs = [
     { id: FEATURES_TAB_IDS.OUTLINE, label: t("tabOutline") || "大纲" },
     { id: FEATURES_TAB_IDS.CONVERSATIONS, label: t("tabConversations") || "会话" },
+    { id: FEATURES_TAB_IDS.PROMPTS, label: t("tabPrompts") || "Prompts" },
     { id: FEATURES_TAB_IDS.TAB_SETTINGS, label: t("tabSettingsTab") || "标签页" },
     { id: FEATURES_TAB_IDS.CONTENT, label: t("navContent") || "内容交互" },
     { id: FEATURES_TAB_IDS.READING_HISTORY, label: t("readingHistoryTitle") || "阅读历史" },
@@ -509,8 +510,31 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
           </SettingCard>
         </>
       )}
+      {/* ========== Prompt Tab ========== */}
+      {activeTab === FEATURES_TAB_IDS.PROMPTS && (
+        <SettingCard
+          title={t("promptSettingsTitle") || "Prompts Settings"}
+          description={t("promptSettingsDesc") || "Configure interactions in the prompts tab"}>
+          <ToggleRow
+            label={t("promptDoubleClickSendLabel") || "Double-click to send prompt"}
+            description={
+              t("promptDoubleClickSendDesc") ||
+              "When enabled, double-click sends the prompt directly. Prompts with variables are sent after confirmation."
+            }
+            checked={settings.features?.prompts?.doubleClickToSend ?? false}
+            onChange={() =>
+              updateDeepSetting(
+                "features",
+                "prompts",
+                "doubleClickToSend",
+                !settings.features?.prompts?.doubleClickToSend,
+              )
+            }
+          />
+        </SettingCard>
+      )}
 
-      {/* ========== 阅读历史 Tab ========== */}
+      {/* ========== Reading History Tab ========== */}
       {activeTab === FEATURES_TAB_IDS.READING_HISTORY && (
         <SettingCard
           title={t("readingHistoryTitle") || "阅读历史"}

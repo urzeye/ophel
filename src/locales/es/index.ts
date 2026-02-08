@@ -248,6 +248,13 @@ export const es = {
   promptMerge: "Combinar",
   promptOverwrite: "Sobrescribir",
   promptMergeSuccess: "Combinado: {updated} actualizados, {added} nuevos",
+  promptSettingsTitle: "Configuración de prompts",
+  promptSettingsDesc: "Configura las interacciones en la pestaña de prompts",
+  promptDoubleClickSendLabel: "Enviar prompt con doble clic",
+  promptDoubleClickSendDesc:
+    "Si está activado, al hacer doble clic se envía el prompt directamente. Los prompts con variables se envían tras confirmar.",
+  promptSent: "Prompt enviado",
+  promptSendFailed: "No se pudo enviar; el prompt permanece en el cuadro de entrada",
   copied: "Copiado al portapapeles",
   cleared: "Limpio",
   refreshed: "Actualizado",

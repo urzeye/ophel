@@ -248,6 +248,13 @@ export const de = {
   promptMerge: "Zusammenführen",
   promptOverwrite: "Ersetzen",
   promptMergeSuccess: "Fertig: {updated} aktualisiert, {added} neu",
+  promptSettingsTitle: "Prompt-Einstellungen",
+  promptSettingsDesc: "Interaktionen im Prompt-Tab konfigurieren",
+  promptDoubleClickSendLabel: "Prompt per Doppelklick senden",
+  promptDoubleClickSendDesc:
+    "Wenn aktiviert, sendet ein Doppelklick den Prompt direkt. Prompts mit Variablen werden nach dem Bestätigen gesendet.",
+  promptSent: "Prompt gesendet",
+  promptSendFailed: "Senden fehlgeschlagen, Prompt bleibt im Eingabefeld",
   copied: "In Zwischenablage kopiert",
   cleared: "Geleert",
   refreshed: "Aktualisiert",

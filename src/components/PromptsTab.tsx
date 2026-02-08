@@ -10,6 +10,7 @@ import {
 } from "~components/VariableInputDialog"
 import { VIRTUAL_CATEGORY } from "~constants"
 import type { PromptManager } from "~core/prompt-manager"
+import { useSettingsStore } from "~stores/settings-store"
 import { APP_NAME } from "~utils/config"
 import { t } from "~utils/i18n"
 import { initCopyButtons, showCopySuccess } from "~utils/icons"
@@ -54,6 +55,10 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   onPromptSelect,
   selectedPromptId,
 }) => {
+  const doubleClickToSend = useSettingsStore(
+    (state) => state.settings.features?.prompts?.doubleClickToSend ?? false,
+  )
+
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>(VIRTUAL_CATEGORY.ALL)
@@ -90,7 +95,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     show: boolean
     prompt: Prompt | null
     variables: string[]
-  }>({ show: false, prompt: null, variables: [] })
+    submitAfterInsert: boolean
+  }>({ show: false, prompt: null, variables: [], submitAfterInsert: false })
 
   // 导入确认弹窗状态
   const [importDialogState, setImportDialogState] = useState<{
@@ -106,6 +112,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     show: boolean
     prompt: Prompt | null
   }>({ show: false, prompt: null })
+
+  const clickTimerRef = useRef<number | null>(null)
 
   // 预览容器 refs（用于初始化 SVG 图标）
   const editPreviewRef = useRef<HTMLDivElement>(null)
@@ -132,6 +140,14 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  useEffect(() => {
+    return () => {
+      if (clickTimerRef.current !== null) {
+        window.clearTimeout(clickTimerRef.current)
+      }
+    }
+  }, [])
 
   // 编辑模态框预览渲染后初始化复制按钮
   useEffect(() => {
@@ -196,46 +212,92 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }
 
   // 选中提示词并插入
-  const handleSelect = async (prompt: Prompt) => {
-    // 检测是否有变量
+  const handleSelect = async (prompt: Prompt, submitAfterInsert = false) => {
+    // Extract variables from the selected prompt
     const variables = extractVariables(prompt.content)
 
     if (variables.length > 0) {
-      // 有变量，弹窗让用户填写
+      // Prompt includes variables; open the variable dialog first
       setVariableDialogState({
         show: true,
         prompt,
         variables,
+        submitAfterInsert,
       })
     } else {
-      // 无变量，直接插入
-      await doInsert(prompt, prompt.content)
+      // No variables; insert (and optionally submit) directly
+      await doInsert(prompt, prompt.content, submitAfterInsert)
     }
   }
 
-  // 执行插入（变量替换后）
-  const doInsert = async (prompt: Prompt, content: string) => {
+  const doInsert = async (prompt: Prompt, content: string, submitAfterInsert = false) => {
     const success = await manager.insertPrompt(content)
     if (success) {
+      let submitSuccess = true
+      if (submitAfterInsert) {
+        submitSuccess = await manager.submitPrompt()
+        if (!submitSuccess) {
+          showToast(t("promptSendFailed") || "发送失败，提示词已保留在输入框中")
+        }
+      }
+
       manager.updateLastUsed(prompt.id)
-      onPromptSelect?.(prompt)
-      showToast(`${t("inserted") || "已插入"}: ${prompt.title}`)
+      if (submitAfterInsert) {
+        onPromptSelect?.(submitSuccess ? null : prompt)
+      } else {
+        onPromptSelect?.(prompt)
+      }
+
+      if (submitAfterInsert) {
+        if (submitSuccess) {
+          showToast(`${t("promptSent") || "已发送"}: ${prompt.title}`)
+        }
+      } else {
+        showToast(`${t("inserted") || "已插入"}: ${prompt.title}`)
+      }
     } else {
       showToast(t("insertFailed") || "未找到输入框，请点击输入框后重试")
     }
   }
 
-  // 变量填写完成后的回调
   const handleVariableConfirm = async (values: Record<string, string>) => {
-    const { prompt } = variableDialogState
+    const { prompt, submitAfterInsert } = variableDialogState
     if (!prompt) return
 
     const replacedContent = replaceVariables(prompt.content, values)
-    setVariableDialogState({ show: false, prompt: null, variables: [] })
-    await doInsert(prompt, replacedContent)
+    setVariableDialogState({ show: false, prompt: null, variables: [], submitAfterInsert: false })
+    await doInsert(prompt, replacedContent, submitAfterInsert)
   }
 
-  // 切换置顶状态
+  const handlePromptClick = (prompt: Prompt) => {
+    if (!doubleClickToSend) {
+      void handleSelect(prompt)
+      return
+    }
+
+    if (clickTimerRef.current !== null) {
+      window.clearTimeout(clickTimerRef.current)
+      clickTimerRef.current = null
+    }
+
+    clickTimerRef.current = window.setTimeout(() => {
+      clickTimerRef.current = null
+      void handleSelect(prompt)
+    }, 220)
+  }
+
+  const handlePromptDoubleClick = (prompt: Prompt) => {
+    if (clickTimerRef.current !== null) {
+      window.clearTimeout(clickTimerRef.current)
+      clickTimerRef.current = null
+    }
+
+    if (doubleClickToSend) {
+      void handleSelect(prompt, true)
+    }
+  }
+
+  // Toggle pin state
   const handleTogglePin = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
@@ -1320,7 +1382,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             <div
               key={p.id}
               className={`prompt-item ${selectedPromptId === p.id ? "selected" : ""} ${draggedId === p.id ? "dragging" : ""}`}
-              onClick={() => handleSelect(p)}
+              onClick={() => handlePromptClick(p)}
+              onDoubleClick={() => handlePromptDoubleClick(p)}
               draggable={false}
               onDragStart={(e) => handleDragStart(e, p.id, e.currentTarget as HTMLDivElement)}
               onDragOver={(e) => handleDragOver(e, p.id)}
@@ -1606,7 +1669,14 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         <VariableInputDialog
           variables={variableDialogState.variables}
           onConfirm={handleVariableConfirm}
-          onCancel={() => setVariableDialogState({ show: false, prompt: null, variables: [] })}
+          onCancel={() =>
+            setVariableDialogState({
+              show: false,
+              prompt: null,
+              variables: [],
+              submitAfterInsert: false,
+            })
+          }
         />
       )}
       <style>{`

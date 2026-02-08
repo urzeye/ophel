@@ -257,6 +257,13 @@ export const en = {
   promptMerge: "Merge",
   promptOverwrite: "Overwrite",
   promptMergeSuccess: "Merged: {updated} updated, {added} added",
+  promptSettingsTitle: "Prompts Settings",
+  promptSettingsDesc: "Configure interactions in the prompts tab",
+  promptDoubleClickSendLabel: "Double-click to send prompt",
+  promptDoubleClickSendDesc:
+    "When enabled, double-click sends the prompt directly. Prompts with variables are sent after confirmation.",
+  promptSent: "Prompt sent",
+  promptSendFailed: "Send failed, prompt remains in input",
   copied: "Copied to clipboard",
   cleared: "Content cleared",
   refreshed: "Refreshed",

@@ -7,6 +7,7 @@
 
 import type { SiteAdapter } from "~adapters/base"
 import { VIRTUAL_CATEGORY } from "~constants"
+import { DOMToolkit } from "~utils/dom-toolkit"
 import {
   filterPrompts,
   getCategories,
@@ -96,17 +97,119 @@ export class PromptManager {
    * 插入提示词到输入框
    */
   async insertPrompt(content: string): Promise<boolean> {
-    // 首次尝试插入
     let result = this.adapter.insertPrompt(content)
 
-    // 如果失败，尝试重新查找输入框后再次插入
     if (!result) {
       this.adapter.findTextarea()
-      // 短暂延迟后重试
       await new Promise((resolve) => setTimeout(resolve, 100))
       result = this.adapter.insertPrompt(content)
     }
 
     return result
+  }
+
+  private getEditorContent(editor: HTMLElement | null): string {
+    if (!editor) return ""
+
+    if (editor instanceof HTMLTextAreaElement || editor instanceof HTMLInputElement) {
+      return editor.value || ""
+    }
+
+    return editor.textContent || ""
+  }
+
+  private isElementDisabled(element: HTMLElement | null): boolean {
+    if (!element) return true
+
+    if (element instanceof HTMLButtonElement && element.disabled) return true
+    if (element.hasAttribute("disabled")) return true
+
+    const ariaDisabled = element.getAttribute("aria-disabled")
+    if (ariaDisabled === "true") return true
+
+    return element.getAttribute("data-disabled") === "true"
+  }
+
+  private async waitForSubmitConfirmation(
+    initialContent: string,
+    submitSelectors: string[],
+    initialButton: HTMLElement | null,
+  ): Promise<boolean> {
+    const deadline = Date.now() + 1500
+    const hadContent = initialContent.trim().length > 0
+
+    while (Date.now() < deadline) {
+      const currentEditor = this.adapter.getTextareaElement() || this.adapter.findTextarea()
+      const currentContent = this.getEditorContent(currentEditor)
+
+      if (hadContent && currentContent.trim().length === 0) {
+        return true
+      }
+
+      if (submitSelectors.length > 0) {
+        const currentButton = DOMToolkit.query(submitSelectors, {
+          shadow: true,
+        }) as HTMLElement | null
+        if (currentButton && this.isElementDisabled(currentButton)) {
+          return true
+        }
+        if (!currentButton && initialButton && !initialButton.isConnected) {
+          return true
+        }
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 60))
+    }
+
+    return false
+  }
+
+  async submitPrompt(): Promise<boolean> {
+    const submitSelectors = this.adapter.getSubmitButtonSelectors()
+    const editor = this.adapter.getTextareaElement() || this.adapter.findTextarea()
+    const initialContent = this.getEditorContent(editor)
+
+    let triggered = false
+    let clickedButton: HTMLElement | null = null
+
+    if (submitSelectors.length > 0) {
+      const submitButton = DOMToolkit.query(submitSelectors, { shadow: true }) as HTMLElement | null
+      if (submitButton && !this.isElementDisabled(submitButton)) {
+        submitButton.click()
+        clickedButton = submitButton
+        triggered = true
+      }
+    }
+
+    if (!triggered) {
+      const activeEditor =
+        editor || this.adapter.getTextareaElement() || this.adapter.findTextarea()
+      if (!activeEditor) return false
+
+      activeEditor.focus()
+      const keyConfig = this.adapter.getSubmitKeyConfig()
+      const needModifier = keyConfig.key === "Ctrl+Enter"
+      const eventInit: KeyboardEventInit = {
+        key: "Enter",
+        code: "Enter",
+        keyCode: 13,
+        which: 13,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        ctrlKey: needModifier,
+        metaKey: needModifier,
+        shiftKey: false,
+      }
+
+      activeEditor.dispatchEvent(new KeyboardEvent("keydown", eventInit))
+      activeEditor.dispatchEvent(new KeyboardEvent("keypress", eventInit))
+      activeEditor.dispatchEvent(new KeyboardEvent("keyup", eventInit))
+      triggered = true
+    }
+
+    if (!triggered) return false
+
+    return this.waitForSubmitConfirmation(initialContent, submitSelectors, clickedButton)
   }
 }

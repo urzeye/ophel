@@ -41,6 +41,7 @@ export const NAV_IDS = {
 export const FEATURES_TAB_IDS = {
   OUTLINE: "outline",
   CONVERSATIONS: "conversations",
+  PROMPTS: "prompts",
   TAB_SETTINGS: "tab",
   CONTENT: "content",
   READING_HISTORY: "readingHistory",

@@ -249,6 +249,13 @@ export const fr = {
   promptMerge: "Fusionner",
   promptOverwrite: "Remplacer",
   promptMergeSuccess: "Fusionné : {updated} mis à jour, {added} nouveaux",
+  promptSettingsTitle: "Paramètres des prompts",
+  promptSettingsDesc: "Configurer les interactions dans l'onglet des prompts",
+  promptDoubleClickSendLabel: "Envoyer le prompt en double-cliquant",
+  promptDoubleClickSendDesc:
+    "Une fois activé, un double-clic envoie directement le prompt. Les prompts avec variables sont envoyés après confirmation.",
+  promptSent: "Prompt envoyé",
+  promptSendFailed: "Échec de l'envoi, le prompt reste dans le champ de saisie",
   copied: "Copié dans le presse-papiers",
   cleared: "Effacé",
   refreshed: "Actualisé",

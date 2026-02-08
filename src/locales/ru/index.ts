@@ -246,6 +246,13 @@ export const ru = {
   promptMerge: "Слияние",
   promptOverwrite: "Замена",
   promptMergeSuccess: "Готово: {updated} обновлено, {added} новых",
+  promptSettingsTitle: "Настройки промптов",
+  promptSettingsDesc: "Настройка взаимодействия во вкладке промптов",
+  promptDoubleClickSendLabel: "Отправлять промпт двойным кликом",
+  promptDoubleClickSendDesc:
+    "Если включено, двойной клик сразу отправляет промпт. Промпты с переменными отправляются после подтверждения.",
+  promptSent: "Промпт отправлен",
+  promptSendFailed: "Не удалось отправить, промпт сохранен в поле ввода",
   copied: "Скопировано",
   cleared: "Очищено",
   refreshed: "Обновлено",

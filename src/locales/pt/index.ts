@@ -248,6 +248,13 @@ export const pt = {
   promptMerge: "Mesclar",
   promptOverwrite: "Substituir",
   promptMergeSuccess: "Mesclado: {updated} atualizados, {added} novos",
+  promptSettingsTitle: "Configurações de prompts",
+  promptSettingsDesc: "Configure as interações na aba de prompts",
+  promptDoubleClickSendLabel: "Enviar prompt com clique duplo",
+  promptDoubleClickSendDesc:
+    "Quando ativado, um clique duplo envia o prompt diretamente. Prompts com variáveis são enviados após a confirmação.",
+  promptSent: "Prompt enviado",
+  promptSendFailed: "Falha ao enviar, o prompt permanece na caixa de entrada",
   copied: "Copiado para a área de transferência",
   cleared: "Limpo",
   refreshed: "Atualizado",

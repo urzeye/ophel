@@ -251,6 +251,13 @@ export const ko = {
   promptMerge: "병합",
   promptOverwrite: "덮어쓰기",
   promptMergeSuccess: "병합됨: {updated}개 업데이트, {added}개 추가",
+  promptSettingsTitle: "프롬프트 설정",
+  promptSettingsDesc: "프롬프트 탭의 상호작용을 설정합니다",
+  promptDoubleClickSendLabel: "더블클릭으로 프롬프트 전송",
+  promptDoubleClickSendDesc:
+    "활성화하면 프롬프트를 더블클릭해 바로 전송합니다. 변수가 있는 프롬프트는 확인 후 전송됩니다.",
+  promptSent: "프롬프트 전송됨",
+  promptSendFailed: "전송에 실패했습니다. 프롬프트는 입력창에 유지됩니다",
   copied: "클립보드에 복사됨",
   cleared: "내용이 지워짐",
   refreshed: "새로고침됨",

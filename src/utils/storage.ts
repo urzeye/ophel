@@ -163,6 +163,7 @@ export interface Settings {
     order: string[]
     prompts: {
       enabled: boolean
+      doubleClickToSend: boolean
     }
     conversations: {
       enabled: boolean
@@ -341,6 +342,7 @@ export const DEFAULT_SETTINGS: Settings = {
     order: ["outline", "conversations", "prompts"],
     prompts: {
       enabled: true,
+      doubleClickToSend: false,
     },
     conversations: {
       enabled: true,

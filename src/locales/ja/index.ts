@@ -255,6 +255,13 @@ export const ja = {
   promptMerge: "統合",
   promptOverwrite: "上書き",
   promptMergeSuccess: "統合完了：{updated} 更新、{added} 追加",
+  promptSettingsTitle: "プロンプト設定",
+  promptSettingsDesc: "プロンプトタブの操作を設定",
+  promptDoubleClickSendLabel: "ダブルクリックでプロンプト送信",
+  promptDoubleClickSendDesc:
+    "有効にすると、ダブルクリックでプロンプトを直接送信します。変数付きプロンプトは確認後に送信されます。",
+  promptSent: "プロンプトを送信しました",
+  promptSendFailed: "送信に失敗しました。プロンプトは入力欄に残りました",
   copied: "クリップボードにコピーしました",
   cleared: "内容を消去しました",
   refreshed: "更新しました",
