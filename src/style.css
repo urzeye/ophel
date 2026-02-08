@@ -189,20 +189,37 @@
 }
 
 /* 定位高亮效果 (Locate Current) - EMERALD GREEN */
+/* 定位高亮效果 (Locate Current) - EMERALD GREEN */
 .outline-item.highlight {
+  /* 背景与边框 */
   background: var(--gh-outline-locate-bg) !important;
   border: 2px solid var(--gh-outline-locate-border) !important;
+
+  /* 强制圆角一致，覆盖 sync-highlight 的直角样式 */
+  border-radius: 6px !important;
+
+  /* 视觉效果 */
   box-shadow: inset 0 0 8px var(--gh-outline-locate-shadow);
   animation: outlineLocatePulse 0.6s ease-in-out 2;
+
+  /* 确保右侧边框宽度一致 (防止 sync-highlight 的 3px 覆盖) */
+  border-right-width: 2px !important;
+  border-right-style: solid !important;
+  border-right-color: var(--gh-outline-locate-border) !important;
 }
 
 @keyframes outlineLocatePulse {
   0%,
   100% {
     transform: scale(1);
+    box-shadow: inset 0 0 8px var(--gh-outline-locate-shadow);
   }
   50% {
     transform: scale(1.02);
+    /* 呼吸时增强光晕 */
+    box-shadow:
+      inset 0 0 12px var(--gh-outline-locate-shadow),
+      0 0 8px var(--gh-outline-locate-shadow);
   }
 }
 
@@ -298,21 +315,102 @@
 }
 
 /* ============= 用户提问节点样式 ============= */
+/* ============= 用户提问节点样式 (Focus Card - Theme Adaptive) ============= */
 .outline-item.user-query-node {
-  background: var(--user-query-bg, rgba(66, 133, 244, 0.08));
-  border-left: 3px solid var(--gh-border-active);
-  font-weight: 500;
-  padding-left: 8px !important;
-  margin-top: 8px;
+  /* 背景适配：使用 var(--gh-bg) 混合，确保亮暗模式都自然 */
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, var(--gh-bg));
+
+  /* 边框适配：混合主色与文字颜色，增强深色模式可见度 */
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 30%, transparent);
+  border-left: none;
+
+  /* 阴影：移除硬编码的白色内发光, 使用通用阴影变量 */
+  box-shadow: var(--gh-shadow-sm);
+
+  /* 字体与排版 */
+  font-weight: 600;
+  padding-left: 14px !important;
+  margin-top: 14px;
+  margin-bottom: 4px;
+  border-radius: 8px !important; /* 强制圆角，防止被通用高亮样式变成直角 */
+
+  position: relative;
+  overflow: visible;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* 视觉锚点 */
+.outline-item.user-query-node::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 18px;
   border-radius: 4px;
+  background-color: var(--gh-primary, #4285f4);
+  /* 使用透明度阴影，适应深色背景 */
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--gh-primary, #4285f4) 40%, transparent);
+  transition: all 0.2s ease;
 }
 
 .outline-item.user-query-node:first-child {
   margin-top: 0;
 }
 
+/* Hover 状态 */
 .outline-item.user-query-node:hover {
-  background: var(--user-query-hover-bg, rgba(66, 133, 244, 0.15));
+  /* Hover 时进一步加深混合比例 */
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 18%, var(--gh-bg));
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 50%, transparent);
+  /* 悬浮阴影 */
+  box-shadow: var(--gh-shadow-brand);
+  transform: translateY(-1px);
+}
+
+/* Hover 时指示器 */
+.outline-item.user-query-node:hover::before {
+  height: 22px;
+  background-color: var(--gh-primary, #4285f4);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--gh-primary, #4285f4) 60%, transparent);
+}
+
+/* ============= 状态覆盖：同步高亮 (Sync) ============= */
+/* 必须使用 !important 覆盖通用的 .outline-item.sync-highlight 样式 */
+.outline-item.user-query-node.sync-highlight,
+.outline-item.user-query-node.sync-highlight-visible {
+  /* 去除原来的右侧竖条和直角 */
+  border-right: none !important;
+  border-radius: 8px !important;
+
+  /* 卡片式高亮：边框变色 + 呼吸光晕 */
+  border: 1px solid var(--gh-outline-sync-border) !important;
+  box-shadow:
+    0 0 0 1px var(--gh-outline-sync-border),
+    var(--gh-shadow-sm) !important;
+
+  /* 背景稍微加深，混合同步色 */
+  background: color-mix(in srgb, var(--gh-outline-sync-bg) 40%, var(--gh-bg)) !important;
+}
+
+/* ============= 状态覆盖：定位高亮 (Locate) ============= */
+.outline-item.user-query-node.highlight {
+  /* 去除可能的冲突样式 */
+  border-right: none !important;
+  border-radius: 8px !important;
+
+  /* 强烈的定位高亮：双层边框光晕 */
+  border: 2px solid var(--gh-outline-locate-border) !important;
+  box-shadow:
+    0 0 0 2px var(--gh-outline-locate-shadow),
+    var(--gh-shadow-lg) !important;
+
+  /* 背景混合定位色 */
+  background: color-mix(in srgb, var(--gh-outline-locate-bg) 50%, var(--gh-bg)) !important;
+
+  /* 保持动画 */
+  animation: outlineLocatePulse 0.6s ease-in-out 2;
 }
 
 /* 用户问题徽章 */
