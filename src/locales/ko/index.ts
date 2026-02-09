@@ -821,7 +821,7 @@ export const ko = {
   shortcutsPageDesc: "빠른 작업을 위한 키보드 단축키 구성",
   shortcutsInteractionGroup: "독립 설정",
   shortcutsInteractionGroupDesc:
-    "이 그룹의 설정은 항상 적용되며 \"사용자 정의 단축키 활성화\" 토글의 영향을 받지 않습니다",
+    '이 그룹의 설정은 항상 적용되며 "사용자 정의 단축키 활성화" 토글의 영향을 받지 않습니다',
   shortcutsGlobalSettings: "단축키 설정",
   enableShortcuts: "사용자 정의 단축키 활성화",
   enableShortcutsDesc: "모든 사용자 정의 키보드 단축키를 활성화 또는 비활성화",

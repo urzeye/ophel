@@ -365,8 +365,7 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
       <SettingCard
         title={t("shortcutsInteractionGroup") || "独立设置"}
         description={
-          t("shortcutsInteractionGroupDesc") ||
-          "此分组设置始终生效，不受“启用自定义快捷键”开关影响"
+          t("shortcutsInteractionGroupDesc") || "此分组设置始终生效，不受“启用自定义快捷键”开关影响"
         }>
         <SettingRow
           label={
