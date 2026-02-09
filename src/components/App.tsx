@@ -12,7 +12,7 @@ import { SITE_IDS } from "~constants/defaults"
 import { ConversationManager } from "~core/conversation-manager"
 import { InlineBookmarkManager } from "~core/inline-bookmark-manager"
 import { OutlineManager } from "~core/outline-manager"
-import { PromptManager } from "~core/prompt-manager"
+import { AI_STUDIO_SHORTCUT_SYNC_EVENT, PromptManager } from "~core/prompt-manager"
 import { ThemeManager } from "~core/theme-manager"
 import { useShortcuts } from "~hooks/useShortcuts"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
@@ -812,25 +812,55 @@ export const App = () => {
     settings?.panel?.defaultPosition,
   ])
 
+  const showAiStudioSubmitShortcutSyncToast = useCallback(
+    (submitShortcut: "enter" | "ctrlEnter") => {
+      if (!adapter || adapter.getSiteId() !== SITE_IDS.AISTUDIO) return
+
+      const markerKey = "ophel:aistudio-submit-shortcut-sync-toast"
+      const markerValue = `synced:${submitShortcut}`
+      let shouldShow = true
+
+      try {
+        if (sessionStorage.getItem(markerKey) === markerValue) {
+          shouldShow = false
+        } else {
+          sessionStorage.setItem(markerKey, markerValue)
+        }
+      } catch {
+        // ignore sessionStorage errors
+      }
+
+      if (!shouldShow) return
+
+      const shortcutLabel = submitShortcut === "ctrlEnter" ? "Ctrl + Enter" : "Enter"
+      showToast(`AI Studio ${t("promptSubmitShortcutLabel")}: ${shortcutLabel}`)
+    },
+    [adapter],
+  )
+
   // Submit shortcut behaviors
-  // Sync AI Studio local submit-key behavior with extension setting
   useEffect(() => {
     if (!adapter || adapter.getSiteId() !== SITE_IDS.AISTUDIO) return
 
-    try {
-      const prefRaw = localStorage.getItem("aiStudioUserPreference")
-      const pref = prefRaw ? JSON.parse(prefRaw) : {}
-      const expected = promptSubmitShortcut === "ctrlEnter" ? 2 : 1
-      if (pref.enterKeyBehavior !== expected) {
-        localStorage.setItem(
-          "aiStudioUserPreference",
-          JSON.stringify({ ...pref, enterKeyBehavior: expected }),
-        )
+    const handleShortcutSync = (event: Event) => {
+      const detail = (event as CustomEvent<{ submitShortcut?: "enter" | "ctrlEnter" }>).detail
+      const submitShortcut = detail?.submitShortcut
+      if (submitShortcut === "enter" || submitShortcut === "ctrlEnter") {
+        showAiStudioSubmitShortcutSyncToast(submitShortcut)
       }
-    } catch {
-      // ignore malformed localStorage data
     }
-  }, [adapter, promptSubmitShortcut])
+
+    window.addEventListener(AI_STUDIO_SHORTCUT_SYNC_EVENT, handleShortcutSync as EventListener)
+    return () => {
+      window.removeEventListener(AI_STUDIO_SHORTCUT_SYNC_EVENT, handleShortcutSync as EventListener)
+    }
+  }, [adapter, showAiStudioSubmitShortcutSyncToast])
+
+  // Keep AI Studio local submit-key behavior in sync with extension setting
+  useEffect(() => {
+    if (!adapter || !promptManager || adapter.getSiteId() !== SITE_IDS.AISTUDIO) return
+    promptManager.syncAiStudioSubmitShortcut(promptSubmitShortcut)
+  }, [adapter, promptManager, promptSubmitShortcut])
 
   // Manual send: trigger only when focused element is the chat input
   useEffect(() => {
@@ -898,6 +928,7 @@ export const App = () => {
         e.stopImmediatePropagation()
 
         void (async () => {
+          promptManager.syncAiStudioSubmitShortcut(promptSubmitShortcut)
           const success = await promptManager.submitPrompt(promptSubmitShortcut)
           if (success) {
             setSelectedPrompt(null)

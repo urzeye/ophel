@@ -258,14 +258,15 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
             <div
               style={{
                 display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                flexWrap: "wrap",
+                flexDirection: "column",
+                gap: "4px",
               }}>
               <span>{t("promptSubmitShortcutLabel") || "Send shortcut"}</span>
               <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>
-                {t("promptSubmitShortcutDesc") ||
-                  "Applies to both manual send and prompt auto-send."}
+                {(
+                  t("promptSubmitShortcutDesc") ||
+                  "Applies to both manual send and prompt auto-send"
+                ).replace(/[\u3002.]$/, "")}
               </span>
             </div>
           }>
