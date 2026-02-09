@@ -250,6 +250,10 @@ export const pt = {
   promptMergeSuccess: "Mesclado: {updated} atualizados, {added} novos",
   promptSettingsTitle: "Configurações de prompts",
   promptSettingsDesc: "Configure as interações na aba de prompts",
+  promptSubmitShortcutLabel: "Atalho de envio",
+  promptSubmitShortcutDesc: "Aplica-se ao envio manual e ao envio automático de prompts.",
+  promptSubmitShortcutEnter: "Enter para enviar / Shift+Enter para nova linha",
+  promptSubmitShortcutCtrlEnter: "Ctrl+Enter para enviar / Enter para nova linha",
   promptDoubleClickSendLabel: "Enviar prompt com clique duplo",
   promptDoubleClickSendDesc:
     "Quando ativado, um clique duplo envia o prompt diretamente. Prompts com variáveis são enviados após a confirmação.",

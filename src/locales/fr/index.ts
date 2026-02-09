@@ -251,6 +251,10 @@ export const fr = {
   promptMergeSuccess: "Fusionné : {updated} mis à jour, {added} nouveaux",
   promptSettingsTitle: "Paramètres des prompts",
   promptSettingsDesc: "Configurer les interactions dans l'onglet des prompts",
+  promptSubmitShortcutLabel: "Raccourci d'envoi",
+  promptSubmitShortcutDesc: "S'applique à l'envoi manuel et à l'envoi automatique des prompts.",
+  promptSubmitShortcutEnter: "Entrée pour envoyer / Maj+Entrée pour nouvelle ligne",
+  promptSubmitShortcutCtrlEnter: "Ctrl+Entrée pour envoyer / Entrée pour nouvelle ligne",
   promptDoubleClickSendLabel: "Envoyer le prompt en double-cliquant",
   promptDoubleClickSendDesc:
     "Une fois activé, un double-clic envoie directement le prompt. Les prompts avec variables sont envoyés après confirmation.",

@@ -58,6 +58,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const doubleClickToSend = useSettingsStore(
     (state) => state.settings.features?.prompts?.doubleClickToSend ?? false,
   )
+  const submitShortcut = useSettingsStore(
+    (state) => state.settings.features?.prompts?.submitShortcut ?? "enter",
+  )
 
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [categories, setCategories] = useState<string[]>([])
@@ -235,7 +238,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     if (success) {
       let submitSuccess = true
       if (submitAfterInsert) {
-        submitSuccess = await manager.submitPrompt()
+        submitSuccess = await manager.submitPrompt(submitShortcut)
         if (!submitSuccess) {
           showToast(t("promptSendFailed") || "发送失败，提示词已保留在输入框中")
         }

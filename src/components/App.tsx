@@ -8,6 +8,7 @@ import React, {
 } from "react"
 
 import { getAdapter } from "~adapters/index"
+import { SITE_IDS } from "~constants/defaults"
 import { ConversationManager } from "~core/conversation-manager"
 import { InlineBookmarkManager } from "~core/inline-bookmark-manager"
 import { OutlineManager } from "~core/outline-manager"
@@ -32,6 +33,7 @@ export const App = () => {
   // 读取设置 - 使用 Zustand Store
   const { settings, setSettings, updateDeepSetting } = useSettingsStore()
   const isSettingsHydrated = useSettingsHydrated()
+  const promptSubmitShortcut = settings?.features?.prompts?.submitShortcut ?? "enter"
 
   // 订阅 _syncVersion 以在跨上下文同步时强制触发重渲染
   // 当 Options 页面更新设置时，_syncVersion 递增，这会使整个组件重渲染
@@ -810,84 +812,127 @@ export const App = () => {
     settings?.panel?.defaultPosition,
   ])
 
-  // 发送消息后自动清除选中的提示词悬浮条
+  // Submit shortcut behaviors
+  // Sync AI Studio local submit-key behavior with extension setting
+  useEffect(() => {
+    if (!adapter || adapter.getSiteId() !== SITE_IDS.AISTUDIO) return
+
+    try {
+      const prefRaw = localStorage.getItem("aiStudioUserPreference")
+      const pref = prefRaw ? JSON.parse(prefRaw) : {}
+      const expected = promptSubmitShortcut === "ctrlEnter" ? 2 : 1
+      if (pref.enterKeyBehavior !== expected) {
+        localStorage.setItem(
+          "aiStudioUserPreference",
+          JSON.stringify({ ...pref, enterKeyBehavior: expected }),
+        )
+      }
+    } catch {
+      // ignore malformed localStorage data
+    }
+  }, [adapter, promptSubmitShortcut])
+
+  // Manual send: trigger only when focused element is the chat input
+  useEffect(() => {
+    if (!adapter || !promptManager) return
+
+    const insertNewLine = (editor: HTMLElement) => {
+      if (editor instanceof HTMLTextAreaElement) {
+        const start = editor.selectionStart ?? editor.value.length
+        const end = editor.selectionEnd ?? editor.value.length
+        editor.setRangeText("\n", start, end, "end")
+        editor.dispatchEvent(new Event("input", { bubbles: true }))
+        return
+      }
+
+      if (editor.getAttribute("contenteditable") === "true") {
+        editor.focus()
+        if (!document.execCommand("insertLineBreak")) {
+          document.execCommand("insertText", false, "\n")
+        }
+        editor.dispatchEvent(new Event("input", { bubbles: true }))
+      }
+    }
+
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (!e.isTrusted) return
+      if (e.key !== "Enter") return
+      if (e.isComposing || e.keyCode === 229) return
+
+      const path = e.composedPath()
+      const editor = path.find(
+        (element) => element instanceof HTMLElement && adapter.isValidTextarea(element),
+      ) as HTMLElement | undefined
+
+      if (!editor) return
+
+      const hasModifier = e.ctrlKey || e.metaKey
+      const isSubmitKey =
+        promptSubmitShortcut === "ctrlEnter"
+          ? hasModifier && !e.shiftKey
+          : !hasModifier && !e.shiftKey
+
+      if (isSubmitKey) {
+        e.preventDefault()
+        e.stopPropagation()
+        e.stopImmediatePropagation()
+
+        void (async () => {
+          const success = await promptManager.submitPrompt(promptSubmitShortcut)
+          if (success) {
+            setSelectedPrompt(null)
+          }
+        })()
+        return
+      }
+
+      // In Ctrl+Enter mode, block plain Enter to avoid accidental native submit
+      if (promptSubmitShortcut === "ctrlEnter" && !hasModifier && !e.shiftKey) {
+        e.preventDefault()
+        e.stopPropagation()
+        e.stopImmediatePropagation()
+        insertNewLine(editor)
+      }
+    }
+
+    document.addEventListener("keydown", handleKeydown, true)
+    return () => {
+      document.removeEventListener("keydown", handleKeydown, true)
+    }
+  }, [adapter, promptManager, promptSubmitShortcut])
+
+  // Clear selected prompt tag after clicking native send button
   useEffect(() => {
     if (!adapter || !selectedPrompt) return
 
-    // 发送后执行清理
     const handleSend = () => {
       setSelectedPrompt(null)
     }
 
-    // 点击发送按钮时
     const handleClick = (e: MouseEvent) => {
       const selectors = adapter.getSubmitButtonSelectors()
       if (selectors.length === 0) return
 
-      // 使用 composedPath 检查（兼容 Shadow DOM）
       const path = e.composedPath()
       for (const target of path) {
         if (target === document || target === window) break
         for (const selector of selectors) {
           try {
             if ((target as Element).matches?.(selector)) {
-              // 延迟清除，确保消息已发送
               setTimeout(handleSend, 100)
               return
             }
           } catch {
-            // 忽略无效选择器
+            // ignore invalid selectors
           }
         }
       }
     }
 
-    // Enter 键发送时
-    const handleKeydown = (e: KeyboardEvent) => {
-      if (e.key !== "Enter") return
-
-      // 获取当前适配器的发送键配置
-      const keyConfig = adapter.getSubmitKeyConfig()
-
-      // 根据配置判断是否为发送按键
-      // Mac 兼容：同时检测 Ctrl 和 Cmd (metaKey)
-      let isSubmitKey = false
-      if (keyConfig.key === "Ctrl+Enter") {
-        // Ctrl+Enter 模式：需要 Ctrl 或 Cmd 键，不能有 Shift 键
-        const hasModifier = e.ctrlKey || e.metaKey
-        isSubmitKey = hasModifier && !e.shiftKey
-      } else {
-        // Enter 模式：不能有 Ctrl、Cmd 或 Shift 键
-        isSubmitKey = !e.ctrlKey && !e.metaKey && !e.shiftKey
-      }
-
-      if (!isSubmitKey) return
-
-      // 使用 composedPath 检查事件源是否来自输入框（兼容 Shadow DOM）
-      const path = e.composedPath()
-      const isFromTextarea = path.some((element) => {
-        if (!(element instanceof HTMLElement)) return false
-        // 优先使用 adapter 的验证方法
-        if (adapter.isValidTextarea(element)) return true
-        // 备用检测：针对 Shadow DOM 场景，直接检查元素特征
-        const isContentEditable = element.getAttribute("contenteditable") === "true"
-        const isProseMirror = element.classList.contains("ProseMirror")
-        const isTextarea = element.tagName === "TEXTAREA"
-        return isContentEditable || isProseMirror || isTextarea
-      })
-
-      if (!isFromTextarea) return
-
-      // 延迟清除，确保消息已发送
-      setTimeout(handleSend, 100)
-    }
-
     document.addEventListener("click", handleClick, true)
-    document.addEventListener("keydown", handleKeydown, true)
 
     return () => {
       document.removeEventListener("click", handleClick, true)
-      document.removeEventListener("keydown", handleKeydown, true)
     }
   }, [adapter, selectedPrompt])
 

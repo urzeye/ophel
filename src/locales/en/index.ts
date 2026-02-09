@@ -259,6 +259,10 @@ export const en = {
   promptMergeSuccess: "Merged: {updated} updated, {added} added",
   promptSettingsTitle: "Prompts Settings",
   promptSettingsDesc: "Configure interactions in the prompts tab",
+  promptSubmitShortcutLabel: "Send shortcut",
+  promptSubmitShortcutDesc: "Applies to both manual send and prompt auto-send.",
+  promptSubmitShortcutEnter: "Enter to send / Shift+Enter newline",
+  promptSubmitShortcutCtrlEnter: "Ctrl+Enter to send / Enter newline",
   promptDoubleClickSendLabel: "Double-click to send prompt",
   promptDoubleClickSendDesc:
     "When enabled, double-click sends the prompt directly. Prompts with variables are sent after confirmation.",

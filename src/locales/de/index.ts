@@ -250,6 +250,11 @@ export const de = {
   promptMergeSuccess: "Fertig: {updated} aktualisiert, {added} neu",
   promptSettingsTitle: "Prompt-Einstellungen",
   promptSettingsDesc: "Interaktionen im Prompt-Tab konfigurieren",
+  promptSubmitShortcutLabel: "Sende-Tastenkürzel",
+  promptSubmitShortcutDesc:
+    "Gilt sowohl für manuelles Senden als auch für automatisches Senden von Prompts.",
+  promptSubmitShortcutEnter: "Enter senden / Shift+Enter Zeilenumbruch",
+  promptSubmitShortcutCtrlEnter: "Ctrl+Enter senden / Enter Zeilenumbruch",
   promptDoubleClickSendLabel: "Prompt per Doppelklick senden",
   promptDoubleClickSendDesc:
     "Wenn aktiviert, sendet ein Doppelklick den Prompt direkt. Prompts mit Variablen werden nach dem Bestätigen gesendet.",

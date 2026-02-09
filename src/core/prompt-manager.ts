@@ -261,7 +261,7 @@ export class PromptManager {
     return false
   }
 
-  async submitPrompt(): Promise<boolean> {
+  async submitPrompt(submitShortcut?: "enter" | "ctrlEnter"): Promise<boolean> {
     const submitSelectors = this.adapter.getSubmitButtonSelectors()
     const editor = this.adapter.getTextareaElement() || this.adapter.findTextarea()
     const initialContent = this.getEditorContent(editor)
@@ -298,7 +298,12 @@ export class PromptManager {
       if (!activeEditor) return false
 
       activeEditor.focus()
-      const keyConfig = this.adapter.getSubmitKeyConfig()
+      const keyConfig =
+        submitShortcut === "ctrlEnter"
+          ? { key: "Ctrl+Enter" as const }
+          : submitShortcut === "enter"
+            ? { key: "Enter" as const }
+            : this.adapter.getSubmitKeyConfig()
       const needModifier = keyConfig.key === "Ctrl+Enter"
       const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform)
       const eventInit: KeyboardEventInit = {
