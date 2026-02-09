@@ -809,9 +809,12 @@ Dê o código e depois um resumo de melhorias.`,
   // ======== Shortcuts Settings Page ========
   navShortcuts: "Atalhos de Teclado",
   shortcutsPageDesc: "Atalhos para ir mais rápido",
+  shortcutsInteractionGroup: "Configurações independentes",
+  shortcutsInteractionGroupDesc:
+    "As configurações deste grupo estão sempre ativas e não são afetadas pela opção Ativar atalhos personalizados",
   shortcutsGlobalSettings: "Ajustes de Atalhos",
-  enableShortcuts: "Ativar Atalhos",
-  enableShortcutsDesc: "Ligar ou desligar todos",
+  enableShortcuts: "Ativar atalhos personalizados",
+  enableShortcutsDesc: "Ativar ou desativar todos os atalhos de teclado personalizados",
   globalShortcutUrl: "URL Atalho Global",
   globalShortcutUrlDesc: "O que abrir ao apertar Alt+G",
   resetShortcuts: "Pôr Padrão",
@@ -857,7 +860,7 @@ Dê o código e depois um resumo de melhorias.`,
   shortcutCategoryPanel: "Painel",
   shortcutCategoryOutline: "Índice",
   shortcutCategoryConversation: "Chats",
-  shortcutCategoryEdit: "Editar",
+  shortcutCategoryEdit: "Controle de interação",
 
   // Shortcut Names
   shortcutScrollTop: "Subir tudo",

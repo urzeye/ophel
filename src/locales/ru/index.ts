@@ -807,9 +807,12 @@ export const ru = {
   // ======== Shortcuts Settings Page ========
   navShortcuts: "Горячие клавиши",
   shortcutsPageDesc: "Ускорение работы кнопками",
+  shortcutsInteractionGroup: "Независимые настройки",
+  shortcutsInteractionGroupDesc:
+    "Настройки этой группы всегда активны и не зависят от переключателя «Включить пользовательские сочетания»",
   shortcutsGlobalSettings: "Настройки клавиш",
-  enableShortcuts: "Включить кнопки",
-  enableShortcutsDesc: "Всё сразу",
+  enableShortcuts: "Включить пользовательские сочетания",
+  enableShortcutsDesc: "Включить или отключить все пользовательские клавиатурные сочетания",
   globalShortcutUrl: "Глобальная ссылка",
   globalShortcutUrlDesc: "Что открывать через Alt+G",
   resetShortcuts: "Сброс в ноль",
@@ -828,7 +831,7 @@ export const ru = {
   shortcutCategoryPanel: "Панель",
   shortcutCategoryOutline: "Содержание",
   shortcutCategoryConversation: "Чаты",
-  shortcutCategoryEdit: "Правка",
+  shortcutCategoryEdit: "Управление взаимодействием",
 
   // Shortcut Names
   shortcutScrollTop: "В самый верх",

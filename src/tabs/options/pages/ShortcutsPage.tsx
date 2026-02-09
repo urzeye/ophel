@@ -253,48 +253,9 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
       </p>
 
       <SettingCard title={t("shortcutsGlobalSettings") || "快捷键设置"}>
-        <SettingRow
-          label={
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "4px",
-              }}>
-              <span>{t("promptSubmitShortcutLabel") || "Send shortcut"}</span>
-              <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>
-                {(
-                  t("promptSubmitShortcutDesc") ||
-                  "Applies to both manual send and prompt auto-send"
-                ).replace(/[\u3002.]$/, "")}
-              </span>
-            </div>
-          }>
-          <select
-            className="settings-select"
-            value={settings.features?.prompts?.submitShortcut ?? "enter"}
-            onChange={(e) =>
-              setSettings({
-                features: {
-                  ...settings.features,
-                  prompts: {
-                    enabled: settings.features?.prompts?.enabled ?? true,
-                    doubleClickToSend: settings.features?.prompts?.doubleClickToSend ?? false,
-                    submitShortcut: e.target.value as "enter" | "ctrlEnter",
-                  },
-                },
-              })
-            }>
-            <option value="enter">{t("promptSubmitShortcutEnter") || "Enter"}</option>
-            <option value="ctrlEnter">
-              {t("promptSubmitShortcutCtrlEnter") || "Ctrl + Enter"}
-            </option>
-          </select>
-        </SettingRow>
-
         <ToggleRow
-          label={t("enableShortcuts") || "启用快捷键"}
-          description={t("enableShortcutsDesc") || "启用或禁用所有键盘快捷键"}
+          label={t("enableShortcuts") || "启用自定义快捷键"}
+          description={t("enableShortcutsDesc") || "启用或禁用所有自定义键盘快捷键"}
           checked={shortcuts?.enabled ?? true}
           onChange={() =>
             setSettings({
@@ -399,6 +360,52 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
             {t("resetShortcuts") || "恢复默认快捷键"}
           </button>
         </div>
+      </SettingCard>
+
+      <SettingCard
+        title={t("shortcutsInteractionGroup") || "独立设置"}
+        description={
+          t("shortcutsInteractionGroupDesc") ||
+          "此分组设置始终生效，不受“启用自定义快捷键”开关影响"
+        }>
+        <SettingRow
+          label={
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px",
+              }}>
+              <span>{t("promptSubmitShortcutLabel") || "Send shortcut"}</span>
+              <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>
+                {(
+                  t("promptSubmitShortcutDesc") ||
+                  "Applies to both manual send and prompt auto-send"
+                ).replace(/[\u3002.]$/, "")}
+              </span>
+            </div>
+          }>
+          <select
+            className="settings-select"
+            value={settings.features?.prompts?.submitShortcut ?? "enter"}
+            onChange={(e) =>
+              setSettings({
+                features: {
+                  ...settings.features,
+                  prompts: {
+                    enabled: settings.features?.prompts?.enabled ?? true,
+                    doubleClickToSend: settings.features?.prompts?.doubleClickToSend ?? false,
+                    submitShortcut: e.target.value as "enter" | "ctrlEnter",
+                  },
+                },
+              })
+            }>
+            <option value="enter">{t("promptSubmitShortcutEnter") || "Enter"}</option>
+            <option value="ctrlEnter">
+              {t("promptSubmitShortcutCtrlEnter") || "Ctrl + Enter"}
+            </option>
+          </select>
+        </SettingRow>
       </SettingCard>
 
       {groupedActions.map(({ categoryId, categoryMeta, actions }) => (

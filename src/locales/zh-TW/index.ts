@@ -836,9 +836,11 @@ export const zhTW = {
   // ======== 快捷鍵設置頁面 ========
   navShortcuts: "快捷鍵位",
   shortcutsPageDesc: "配置鍵盤快捷鍵以快速執行操作",
+  shortcutsInteractionGroup: "獨立設定",
+  shortcutsInteractionGroupDesc: "此分組設定會持續生效，不受「啟用自訂快捷鍵」開關影響",
   shortcutsGlobalSettings: "快捷鍵設置",
-  enableShortcuts: "啟用快捷鍵",
-  enableShortcutsDesc: "啟用或禁用所有鍵盤快捷鍵",
+  enableShortcuts: "啟用自訂快捷鍵",
+  enableShortcutsDesc: "啟用或禁用所有自訂鍵盤快捷鍵",
   globalShortcutUrl: "全域快捷鍵開啟的 URL",
   globalShortcutUrlDesc: "按下全域快捷鍵 Alt+G 時開啟的網址",
   resetShortcuts: "恢復預設快捷鍵",
@@ -857,7 +859,7 @@ export const zhTW = {
   shortcutCategoryPanel: "面板",
   shortcutCategoryOutline: "大綱",
   shortcutCategoryConversation: "會話",
-  shortcutCategoryEdit: "編輯",
+  shortcutCategoryEdit: "互動控制",
 
   // 快捷鍵功能名稱
   shortcutScrollTop: "去頂部",

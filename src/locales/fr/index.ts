@@ -811,9 +811,12 @@ Donnez le code puis un résumé des améliorations.`,
   // ======== Shortcuts Settings Page ========
   navShortcuts: "Raccourcis Clavier",
   shortcutsPageDesc: "Raccourcis pour aller plus vite",
+  shortcutsInteractionGroup: "Réglages indépendants",
+  shortcutsInteractionGroupDesc:
+    "Les réglages de ce groupe sont toujours actifs et ne sont pas affectés par l'option Activer les raccourcis personnalisés",
   shortcutsGlobalSettings: "Réglages Raccourcis",
-  enableShortcuts: "Activer Raccourcis",
-  enableShortcutsDesc: "Allumer ou éteindre tout",
+  enableShortcuts: "Activer les raccourcis personnalisés",
+  enableShortcutsDesc: "Activer ou désactiver tous les raccourcis clavier personnalisés",
   globalShortcutUrl: "URL Raccourci Global",
   globalShortcutUrlDesc: "Quoi ouvrir avec Alt+G",
   resetShortcuts: "Réglages d'usine",
@@ -832,7 +835,7 @@ Donnez le code puis un résumé des améliorations.`,
   shortcutCategoryPanel: "Panneau",
   shortcutCategoryOutline: "Sommaire",
   shortcutCategoryConversation: "Chats",
-  shortcutCategoryEdit: "Modifier",
+  shortcutCategoryEdit: "Contrôle des interactions",
 
   // Shortcut Names
   shortcutScrollTop: "Tout en haut",

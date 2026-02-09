@@ -809,9 +809,12 @@ Dame el código y luego un resumen de mejoras.`,
   // ======== Shortcuts Settings Page ========
   navShortcuts: "Atajos de Teclado",
   shortcutsPageDesc: "Atajos para ir más rápido",
+  shortcutsInteractionGroup: "Ajustes independientes",
+  shortcutsInteractionGroupDesc:
+    "Los ajustes de este grupo están siempre activos y no se ven afectados por la opción Activar atajos personalizados",
   shortcutsGlobalSettings: "Ajustes de Atajos",
-  enableShortcuts: "Activar Atajos",
-  enableShortcutsDesc: "Encender o apagar todos",
+  enableShortcuts: "Activar atajos personalizados",
+  enableShortcutsDesc: "Activar o desactivar todos los atajos de teclado personalizados",
   globalShortcutUrl: "URL Atajo Global",
   globalShortcutUrlDesc: "Qué abrir al pulsar Alt+G",
   resetShortcuts: "Poner Defecto",
@@ -830,7 +833,7 @@ Dame el código y luego un resumen de mejoras.`,
   shortcutCategoryPanel: "Panel",
   shortcutCategoryOutline: "Índice",
   shortcutCategoryConversation: "Chats",
-  shortcutCategoryEdit: "Editar",
+  shortcutCategoryEdit: "Control de interacción",
 
   // Shortcut Names
   shortcutScrollTop: "Subir del todo",

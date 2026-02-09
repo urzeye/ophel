@@ -246,7 +246,7 @@ export const SHORTCUT_CATEGORIES = {
   panel: { labelKey: "shortcutCategoryPanel", label: "面板" },
   outline: { labelKey: "shortcutCategoryOutline", label: "大纲" },
   conversation: { labelKey: "shortcutCategoryConversation", label: "会话" },
-  edit: { labelKey: "shortcutCategoryEdit", label: "编辑" },
+  edit: { labelKey: "shortcutCategoryEdit", label: "交互控制" },
   settings: { labelKey: "shortcutCategorySettings", label: "设置" },
 }
 

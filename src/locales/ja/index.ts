@@ -855,9 +855,12 @@ export const ja = {
   // ======== Shortcuts Settings Page ========
   navShortcuts: "ショートカット設定",
   shortcutsPageDesc: "クイック操作のためのキーボードショートカットを設定",
+  shortcutsInteractionGroup: "独立設定",
+  shortcutsInteractionGroupDesc:
+    "このグループの設定は常に有効で、「カスタムショートカットを有効化」トグルの影響を受けません",
   shortcutsGlobalSettings: "全般ショートカット設定",
-  enableShortcuts: "ショートカットを有効化",
-  enableShortcutsDesc: "すべてのキーボードショートカットを有効または無効にします",
+  enableShortcuts: "カスタムショートカットを有効化",
+  enableShortcutsDesc: "すべてのカスタムキーボードショートカットを有効または無効にします",
   globalShortcutUrl: "グローバルショートカットURL",
   globalShortcutUrlDesc: "グローバルショートカット Alt+G を押したときに開くURL",
   resetShortcuts: "デフォルトに戻す",
@@ -876,7 +879,7 @@ export const ja = {
   shortcutCategoryPanel: "パネル操作",
   shortcutCategoryOutline: "目次操作",
   shortcutCategoryConversation: "会話操作",
-  shortcutCategoryEdit: "編集操作",
+  shortcutCategoryEdit: "インタラクション制御",
 
   // Shortcut Names
   shortcutScrollTop: "一番上へ",

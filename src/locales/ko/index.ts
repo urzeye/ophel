@@ -819,9 +819,12 @@ export const ko = {
   // ======== Shortcuts Settings Page ========
   navShortcuts: "키보드 단축키",
   shortcutsPageDesc: "빠른 작업을 위한 키보드 단축키 구성",
+  shortcutsInteractionGroup: "독립 설정",
+  shortcutsInteractionGroupDesc:
+    "이 그룹의 설정은 항상 적용되며 \"사용자 정의 단축키 활성화\" 토글의 영향을 받지 않습니다",
   shortcutsGlobalSettings: "단축키 설정",
-  enableShortcuts: "단축키 활성화",
-  enableShortcutsDesc: "모든 키보드 단축키를 활성화 또는 비활성화",
+  enableShortcuts: "사용자 정의 단축키 활성화",
+  enableShortcutsDesc: "모든 사용자 정의 키보드 단축키를 활성화 또는 비활성화",
   globalShortcutUrl: "글로벌 단축키 URL",
   globalShortcutUrlDesc: "글로벌 단축키 Alt+G를 누를 때 열리는 URL",
   resetShortcuts: "기본값으로 재설정",
@@ -841,7 +844,7 @@ export const ko = {
   shortcutCategoryPanel: "패널",
   shortcutCategoryOutline: "개요",
   shortcutCategoryConversation: "대화",
-  shortcutCategoryEdit: "편집",
+  shortcutCategoryEdit: "상호작용 제어",
 
   // Shortcut Names
   shortcutScrollTop: "맨 위로 스크롤",
