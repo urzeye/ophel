@@ -6,24 +6,17 @@ import {
   ClearIcon,
   CollapseAllIcon,
   CopyIcon,
-  DeleteIcon,
-  EditIcon,
   ExpandAllIcon,
-  EyeIcon,
   LocateIcon,
-  MoreHorizontalIcon,
-  PinIcon,
   ScrollBottomIcon,
   ScrollTopIcon,
   StarIcon,
-  TimeIcon,
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
 import { useSettingsStore } from "~stores/settings-store"
 import { t, getCurrentLang } from "~utils/i18n"
 import { formatWordCount } from "~utils/format"
-import { CHECK_ICON_POINTS, COPY_ICON_PATH, COPY_ICON_RECT } from "~utils/icons"
 import { showToast } from "~utils/toast"
 
 interface OutlineTabProps {
@@ -315,9 +308,7 @@ const OutlineNodeView: React.FC<{
           {/* 用户提问: 徽章 (图标+角标数字) */}
           {node.isUserQuery && (
             <span className="user-query-badge">
-              <span className="user-query-badge-icon">
-                <ConversationIcon size={14} />
-              </span>
+              <span className="user-query-badge-icon">💬</span>
               <span className="user-query-badge-number">{node.queryIndex}</span>
             </span>
           )}
@@ -1051,7 +1042,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
               <button
                 onClick={handleGroupModeToggle}
                 className={`outline-toolbar-btn ${showUserQueries ? "active-subtle" : ""}`}>
-                <ConversationIcon size={16} />
+                🙋
               </button>
             </Tooltip>
 

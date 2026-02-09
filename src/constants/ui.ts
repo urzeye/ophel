@@ -11,7 +11,6 @@ import {
   PromptIcon,
   ScrollBottomIcon,
   ScrollTopIcon,
-  SparklesIcon,
   ToolsIcon,
 } from "~components/icons"
 
@@ -102,7 +101,6 @@ export const COLLAPSED_BUTTON_DEFS: Record<
     labelKey: "panelTitle",
     canToggle: false,
     isPanelOnly: true,
-    IconComponent: SparklesIcon,
   },
   floatingToolbar: {
     icon: "🧰",

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
-import { CopyIcon, PageContentIcon, PinIcon } from "~components/icons"
+import { CopyIcon, PageContentIcon } from "~components/icons"
 import type { Conversation, Folder } from "~core/conversation-manager"
 import { t } from "~utils/i18n"
 
@@ -239,14 +239,9 @@ export const ConversationMenu: React.FC<ConversationMenuProps> = ({
           onClose()
           onTogglePin()
         }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <PinIcon size={14} filled={conversation.pinned} />
-          <span>
-            {conversation.pinned
-              ? t("conversationsUnpin") || "取消置顶"
-              : t("conversationsPin") || "置顶"}
-          </span>
-        </div>
+        {conversation.pinned
+          ? t("conversationsUnpin") || "取消置顶"
+          : t("conversationsPin") || "置顶"}
       </MenuButton>
       <MenuButton
         onClick={() => {

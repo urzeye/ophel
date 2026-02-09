@@ -10,7 +10,6 @@ import {
   ExportIcon,
   EyeIcon,
   ImportIcon,
-  MoreHorizontalIcon,
   PinIcon,
   TimeIcon,
 } from "~components/icons"
@@ -1343,6 +1342,10 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.RECENT)}
             style={{
               padding: "4px 8px",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              lineHeight: 1,
               background:
                 selectedCategory === VIRTUAL_CATEGORY.RECENT
                   ? "var(--gh-primary, #4285f4)"
