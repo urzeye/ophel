@@ -55,6 +55,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   onPromptSelect,
   selectedPromptId,
 }) => {
+  const DOUBLE_CLICK_DELAY_MS = 340
+
   const doubleClickToSend = useSettingsStore(
     (state) => state.settings.features?.prompts?.doubleClickToSend ?? false,
   )
@@ -286,7 +288,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     clickTimerRef.current = window.setTimeout(() => {
       clickTimerRef.current = null
       void handleSelect(prompt)
-    }, 220)
+    }, DOUBLE_CLICK_DELAY_MS)
   }
 
   const handlePromptDoubleClick = (prompt: Prompt) => {

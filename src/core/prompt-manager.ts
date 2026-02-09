@@ -250,10 +250,14 @@ export class PromptManager {
 
     if (pref["enterKeyBehavior"] === expectedBehavior) return false
 
-    localStorage.setItem(
-      "aiStudioUserPreference",
-      JSON.stringify({ ...pref, enterKeyBehavior: expectedBehavior }),
-    )
+    try {
+      localStorage.setItem(
+        "aiStudioUserPreference",
+        JSON.stringify({ ...pref, enterKeyBehavior: expectedBehavior }),
+      )
+    } catch {
+      return false
+    }
 
     window.dispatchEvent(
       new CustomEvent(AI_STUDIO_SHORTCUT_SYNC_EVENT, {

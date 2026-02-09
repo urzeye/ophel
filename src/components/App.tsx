@@ -916,11 +916,12 @@ export const App = () => {
 
       if (!editor) return
 
-      const hasModifier = e.ctrlKey || e.metaKey
+      const hasPrimaryModifier = e.ctrlKey || e.metaKey
+      const hasAnyModifier = hasPrimaryModifier || e.altKey
       const isSubmitKey =
         promptSubmitShortcut === "ctrlEnter"
-          ? hasModifier && !e.shiftKey
-          : !hasModifier && !e.shiftKey
+          ? hasPrimaryModifier && !e.altKey && !e.shiftKey
+          : !hasAnyModifier && !e.shiftKey
 
       if (isSubmitKey) {
         e.preventDefault()
@@ -938,7 +939,7 @@ export const App = () => {
       }
 
       // In Ctrl+Enter mode, block plain Enter to avoid accidental native submit
-      if (promptSubmitShortcut === "ctrlEnter" && !hasModifier && !e.shiftKey) {
+      if (promptSubmitShortcut === "ctrlEnter" && !hasAnyModifier && !e.shiftKey) {
         e.preventDefault()
         e.stopPropagation()
         e.stopImmediatePropagation()

@@ -126,6 +126,17 @@ export class ClaudeAdapter extends SiteAdapter {
     ]
   }
 
+  isValidTextarea(element: HTMLElement): boolean {
+    if (element.offsetParent === null) return false
+    if (element.closest(".gh-main-panel")) return false
+
+    const isContentEditable = element.getAttribute("contenteditable") === "true"
+    const isProseMirror = element.classList.contains("ProseMirror")
+    const isTextbox = element.getAttribute("role") === "textbox"
+
+    return isContentEditable || isProseMirror || isTextbox
+  }
+
   insertPrompt(content: string): boolean {
     const editor = this.getTextareaElement()
     if (!editor) return false
