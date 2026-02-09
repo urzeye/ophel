@@ -515,31 +515,6 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
         <SettingCard
           title={t("promptSettingsTitle") || "Prompts Settings"}
           description={t("promptSettingsDesc") || "Configure interactions in the prompts tab"}>
-          <SettingRow
-            label={t("promptSubmitShortcutLabel") || "Send shortcut"}
-            description={
-              t("promptSubmitShortcutDesc") || "Applies to both manual send and prompt auto-send."
-            }>
-            <select
-              className="settings-select"
-              value={settings.features?.prompts?.submitShortcut ?? "enter"}
-              onChange={(e) =>
-                updateDeepSetting(
-                  "features",
-                  "prompts",
-                  "submitShortcut",
-                  e.target.value as "enter" | "ctrlEnter",
-                )
-              }>
-              <option value="enter">
-                {t("promptSubmitShortcutEnter") || "Enter to send / Shift+Enter newline"}
-              </option>
-              <option value="ctrlEnter">
-                {t("promptSubmitShortcutCtrlEnter") || "Ctrl+Enter to send / Enter newline"}
-              </option>
-            </select>
-          </SettingRow>
-
           <ToggleRow
             label={t("promptDoubleClickSendLabel") || "Double-click to send prompt"}
             description={

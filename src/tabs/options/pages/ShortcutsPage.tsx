@@ -255,6 +255,29 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
 
       {/* 总开关 */}
       <SettingCard title={t("shortcutsGlobalSettings") || "快捷键设置"}>
+        <SettingRow label={t("promptSubmitShortcutLabel") || "Send shortcut"}>
+          <select
+            className="settings-select"
+            value={settings.features?.prompts?.submitShortcut ?? "enter"}
+            onChange={(e) =>
+              setSettings({
+                features: {
+                  ...settings.features,
+                  prompts: {
+                    enabled: settings.features?.prompts?.enabled ?? true,
+                    doubleClickToSend: settings.features?.prompts?.doubleClickToSend ?? false,
+                    submitShortcut: e.target.value as "enter" | "ctrlEnter",
+                  },
+                },
+              })
+            }>
+            <option value="enter">{t("promptSubmitShortcutEnter") || "Enter"}</option>
+            <option value="ctrlEnter">
+              {t("promptSubmitShortcutCtrlEnter") || "Ctrl + Enter"}
+            </option>
+          </select>
+        </SettingRow>
+
         <ToggleRow
           label={t("enableShortcuts") || "启用快捷键"}
           description={t("enableShortcutsDesc") || "启用或禁用所有键盘快捷键"}

@@ -250,8 +250,8 @@ export const ru = {
   promptSettingsDesc: "Настройка взаимодействия во вкладке промптов",
   promptSubmitShortcutLabel: "Горячая клавиша отправки",
   promptSubmitShortcutDesc: "Применяется и к ручной отправке, и к автоотправке промптов.",
-  promptSubmitShortcutEnter: "Enter — отправить / Shift+Enter — новая строка",
-  promptSubmitShortcutCtrlEnter: "Ctrl+Enter — отправить / Enter — новая строка",
+  promptSubmitShortcutEnter: "Enter",
+  promptSubmitShortcutCtrlEnter: "Ctrl + Enter",
   promptDoubleClickSendLabel: "Отправлять промпт двойным кликом",
   promptDoubleClickSendDesc:
     "Если включено, двойной клик сразу отправляет промпт. Промпты с переменными отправляются после подтверждения.",

@@ -259,8 +259,8 @@ export const ja = {
   promptSettingsDesc: "プロンプトタブの操作を設定",
   promptSubmitShortcutLabel: "送信ショートカット",
   promptSubmitShortcutDesc: "手動送信とプロンプト自動送信の両方に適用されます。",
-  promptSubmitShortcutEnter: "Enterで送信 / Shift+Enterで改行",
-  promptSubmitShortcutCtrlEnter: "Ctrl+Enterで送信 / Enterで改行",
+  promptSubmitShortcutEnter: "Enter",
+  promptSubmitShortcutCtrlEnter: "Ctrl + Enter",
   promptDoubleClickSendLabel: "ダブルクリックでプロンプト送信",
   promptDoubleClickSendDesc:
     "有効にすると、ダブルクリックでプロンプトを直接送信します。変数付きプロンプトは確認後に送信されます。",

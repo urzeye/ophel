@@ -253,8 +253,8 @@ export const de = {
   promptSubmitShortcutLabel: "Sende-Tastenkürzel",
   promptSubmitShortcutDesc:
     "Gilt sowohl für manuelles Senden als auch für automatisches Senden von Prompts.",
-  promptSubmitShortcutEnter: "Enter senden / Shift+Enter Zeilenumbruch",
-  promptSubmitShortcutCtrlEnter: "Ctrl+Enter senden / Enter Zeilenumbruch",
+  promptSubmitShortcutEnter: "Enter",
+  promptSubmitShortcutCtrlEnter: "Ctrl + Enter",
   promptDoubleClickSendLabel: "Prompt per Doppelklick senden",
   promptDoubleClickSendDesc:
     "Wenn aktiviert, sendet ein Doppelklick den Prompt direkt. Prompts mit Variablen werden nach dem Bestätigen gesendet.",

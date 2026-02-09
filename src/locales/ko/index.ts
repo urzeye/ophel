@@ -255,8 +255,8 @@ export const ko = {
   promptSettingsDesc: "프롬프트 탭의 상호작용을 설정합니다",
   promptSubmitShortcutLabel: "전송 단축키",
   promptSubmitShortcutDesc: "수동 전송과 프롬프트 자동 전송 모두에 적용됩니다.",
-  promptSubmitShortcutEnter: "Enter 전송 / Shift+Enter 줄바꿈",
-  promptSubmitShortcutCtrlEnter: "Ctrl+Enter 전송 / Enter 줄바꿈",
+  promptSubmitShortcutEnter: "Enter",
+  promptSubmitShortcutCtrlEnter: "Ctrl + Enter",
   promptDoubleClickSendLabel: "더블클릭으로 프롬프트 전송",
   promptDoubleClickSendDesc:
     "활성화하면 프롬프트를 더블클릭해 바로 전송합니다. 변수가 있는 프롬프트는 확인 후 전송됩니다.",

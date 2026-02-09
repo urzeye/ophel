@@ -845,10 +845,30 @@ export const App = () => {
         return
       }
 
-      if (editor.getAttribute("contenteditable") === "true") {
-        editor.focus()
+      if (editor.getAttribute("contenteditable") !== "true") return
+
+      editor.focus()
+
+      const shiftEnterEvent: KeyboardEventInit = {
+        key: "Enter",
+        code: "Enter",
+        keyCode: 13,
+        which: 13,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        shiftKey: true,
+      }
+
+      const beforeHTML = editor.innerHTML
+      editor.dispatchEvent(new KeyboardEvent("keydown", shiftEnterEvent))
+      editor.dispatchEvent(new KeyboardEvent("keypress", shiftEnterEvent))
+      editor.dispatchEvent(new KeyboardEvent("keyup", shiftEnterEvent))
+
+      // Fallback for editors that ignore synthetic keyboard events.
+      if (editor.innerHTML === beforeHTML) {
         if (!document.execCommand("insertLineBreak")) {
-          document.execCommand("insertText", false, "\n")
+          document.execCommand("insertParagraph")
         }
         editor.dispatchEvent(new Event("input", { bubbles: true }))
       }
