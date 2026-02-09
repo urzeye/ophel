@@ -32,7 +32,7 @@
     <a href="https://github.com/urzeye/ophel/issues"><img src="https://img.shields.io/badge/More_coming_soon...-lightgrey" alt="More coming soon"/></a>
     </br>
     <img src="https://img.shields.io/github/package-json/v/urzeye/ophel?color=blue" alt="Version">
-    <a href="../../LICENSE"><img src="https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-lightgrey.svg" alt="License"></a>
+    <a href="../../LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License"></a>
     <img src="https://img.shields.io/github/last-commit/urzeye/ophel" alt="Last Commit">
     <a href="https://github.com/urzeye/ophel/stargazers"><img src="https://img.shields.io/github/stars/urzeye/ophel?style=social" alt="Stars"></a>
     <a href="https://github.com/urzeye/ophel/network/members"><img src="https://img.shields.io/github/forks/urzeye/ophel?style=social" alt="Forks"></a>
@@ -284,6 +284,5 @@ Bei Problemen oder Vorschlägen besuchen Sie bitte [GitHub Issues](https://githu
 
 ## 📜 Lizenz
 
-Dieses Projekt ist unter **CC BY-NC-SA 4.0** lizenziert. Siehe [LICENSE](../../LICENSE) für Details.
+Dieses Projekt ist unter **GNU GPLv3** lizenziert. Siehe [LICENSE](../../LICENSE) für Details.
 
-> ⚠️ **Kommerzielle Verpackung, Weiterverkauf oder unbefugte Integration ist untersagt.** Für kommerzielle Lizenzierung: **<igodu.love@gmail.com>**

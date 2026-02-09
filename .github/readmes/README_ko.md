@@ -40,7 +40,7 @@
     <a href="https://github.com/urzeye/ophel/issues"><img src="https://img.shields.io/badge/More_coming_soon...-lightgrey" alt="More coming soon"/></a>
     </br>
     <img src="https://img.shields.io/github/package-json/v/urzeye/ophel?color=blue" alt="Version">
-    <a href="../../LICENSE"><img src="https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-lightgrey.svg" alt="License"></a>
+    <a href="../../LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License"></a>
     <img src="https://img.shields.io/github/last-commit/urzeye/ophel" alt="Last Commit">
     <a href="https://github.com/urzeye/ophel/stargazers"><img src="https://img.shields.io/github/stars/urzeye/ophel?style=social" alt="Stars"></a>
     <a href="https://github.com/urzeye/ophel/network/members"><img src="https://img.shields.io/github/forks/urzeye/ophel?style=social" alt="Forks"></a>
@@ -292,6 +292,5 @@ flowchart TB
 
 ## 📜 라이선스
 
-이 프로젝트는 **CC BY-NC-SA 4.0** 라이선스를 따릅니다. 자세한 내용은 [LICENSE](../../LICENSE) 를 참조하세요.
+이 프로젝트는 **GNU GPLv3** 라이선스를 따릅니다. 자세한 내용은 [LICENSE](../../LICENSE) 를 참조하세요.
 
-> ⚠️ **상업적 패키징, 재판매 또는 무단 통합은 금지됩니다.** 상업용 라이선스 문의: **<igodu.love@gmail.com>**
