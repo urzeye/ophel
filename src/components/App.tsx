@@ -922,6 +922,8 @@ export const App = () => {
         promptSubmitShortcut === "ctrlEnter"
           ? hasPrimaryModifier && !e.altKey && !e.shiftKey
           : !hasAnyModifier && !e.shiftKey
+      const shouldInsertNewlineInCtrlEnterMode =
+        promptSubmitShortcut === "ctrlEnter" && !hasAnyModifier && !e.shiftKey
 
       if (isSubmitKey) {
         e.preventDefault()
@@ -939,7 +941,7 @@ export const App = () => {
       }
 
       // In Ctrl+Enter mode, block plain Enter to avoid accidental native submit
-      if (promptSubmitShortcut === "ctrlEnter" && !hasAnyModifier && !e.shiftKey) {
+      if (shouldInsertNewlineInCtrlEnterMode) {
         e.preventDefault()
         e.stopPropagation()
         e.stopImmediatePropagation()
@@ -947,6 +949,18 @@ export const App = () => {
       }
     }
 
+    // Claude 特殊处理：在部分页面中，站点自身会较早消费 Enter，
+    // document 捕获阶段可能已来不及拦截（表现为 Ctrl+Enter 模式下 Enter 仍触发发送）。
+    // 因此 Claude 使用 window 捕获监听以提前拦截。
+    // 注意：这里 return 后不会再注册 document 监听，不会双重挂载。
+    if (adapter.getSiteId() === SITE_IDS.CLAUDE) {
+      window.addEventListener("keydown", handleKeydown, true)
+      return () => {
+        window.removeEventListener("keydown", handleKeydown, true)
+      }
+    }
+
+    // 其他站点保持原有 document 捕获监听，避免扩大行为影响面。
     document.addEventListener("keydown", handleKeydown, true)
     return () => {
       document.removeEventListener("keydown", handleKeydown, true)
