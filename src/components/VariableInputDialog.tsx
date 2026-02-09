@@ -7,6 +7,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
+import { ClearIcon } from "~components/icons"
 import { t } from "~utils/i18n"
 
 interface Variable {
@@ -119,7 +120,7 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
               fontSize: "18px",
               color: "var(--gh-text-secondary, #9ca3af)",
             }}>
-            ✕
+            <ClearIcon size={18} />
           </button>
         </div>
 

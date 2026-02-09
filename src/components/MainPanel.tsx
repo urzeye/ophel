@@ -12,6 +12,7 @@ import {
   ScrollBottomIcon,
   ScrollTopIcon,
   SettingsIcon,
+  SparklesIcon,
   ThemeDarkIcon,
   ThemeLightIcon,
 } from "~components/icons"
@@ -393,7 +394,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                 // 发送隐私模式切换事件给 TabManager
                 window.postMessage({ type: "GH_PRIVACY_TOGGLE" }, "*")
               }}>
-              <span style={{ fontSize: "16px" }}>✨</span>
+              <SparklesIcon size={16} />
               <span style={{ fontSize: "15px", fontWeight: 600 }}>{t("panelTitle")}</span>
             </div>
           </Tooltip>

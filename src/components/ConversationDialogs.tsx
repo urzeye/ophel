@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
+import { ArrowDownIcon, ChevronDownIcon, ClearIcon, EditIcon } from "~components/icons"
 import { Button, Tooltip } from "~components/ui"
 import { PRESET_EMOJIS, TAG_COLORS } from "~constants"
 import type { Conversation, Folder, Tag } from "~core/conversation-manager"
@@ -702,7 +703,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
               borderRadius: "4px",
             }}
             onClick={onCancel}>
-            ×
+            <ClearIcon size={18} />
           </span>
         </Tooltip>
       </div>
@@ -819,7 +820,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                           : "none",
                       }}>
                       {tag.name}
-                      {isEditing && <span style={{ fontSize: "10px" }}>✎</span>}
+                      {isEditing && <EditIcon size={10} />}
                     </span>
                   </div>
 
@@ -853,7 +854,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                             e.currentTarget.style.color = "#9ca3af"
                           }
                         }}>
-                        ✎
+                        <EditIcon size={14} />
                       </button>
                     </Tooltip>
                     <Tooltip content={t("delete") || "删除"}>
@@ -880,7 +881,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                           e.currentTarget.style.background = "transparent"
                           e.currentTarget.style.color = "#9ca3af"
                         }}>
-                        ×
+                        <ClearIcon size={18} />
                       </button>
                     </Tooltip>
                   </div>
@@ -993,21 +994,14 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                 : t("conversationsSelectColor") || "选择颜色"}
             </span>
             {/* SVG 箭头图标 */}
-            <svg
-              viewBox="0 0 24 24"
-              width="16"
-              height="16"
-              stroke="#9ca3af"
-              strokeWidth="2"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            <ChevronDownIcon
+              size={16}
+              color="#9ca3af"
               style={{
                 transition: "transform 0.2s",
                 transform: colorExpanded ? "rotate(180deg)" : "rotate(0deg)",
-              }}>
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
+              }}
+            />
           </div>
 
           {/* 展开的颜色网格 - 绝对定位悬浮 */}

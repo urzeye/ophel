@@ -20,7 +20,24 @@ import { ConversationMenu, ExportMenu, FolderMenu } from "./ConversationMenus"
 
 import "~styles/conversations.css"
 
-import { BatchIcon, FolderPlusIcon, HourglassIcon, LocateIcon, SyncIcon } from "~components/icons"
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  BatchIcon,
+  ClearIcon,
+  CopyIcon,
+  DeleteIcon,
+  ExportIcon,
+  FolderIcon,
+  FolderMoveIcon,
+  FolderPlusIcon,
+  HourglassIcon,
+  LocateIcon,
+  MoreHorizontalIcon,
+  PinIcon,
+  SyncIcon,
+  TagIcon,
+} from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
 
 // ==================== 类型定义 ====================
@@ -502,7 +519,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                 className={`conversations-pin-filter-btn ${filterPinned ? "active" : ""}`}
                 style={{ userSelect: "none" }}
                 onClick={() => setFilterPinned(!filterPinned)}>
-                📌
+                <PinIcon size={14} />
               </div>
             </Tooltip>
 
@@ -517,7 +534,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                   if (newState) onInteractionStateChange?.(true)
                   setShowTagFilterMenu(newState)
                 }}>
-                🏷️
+                <TagIcon size={14} />
               </div>
             </Tooltip>
 
@@ -573,7 +590,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
               <div
                 className={`conversations-search-clear ${!hasFilters ? "disabled" : ""}`}
                 onClick={hasFilters ? clearFilters : undefined}>
-                ×
+                <ClearIcon size={14} />
               </div>
             </Tooltip>
           </div>
@@ -662,7 +679,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                               manager.moveFolder(folder.id, "up")
                               loadData()
                             }}>
-                            ↑
+                            <ArrowUpIcon size={12} />
                           </button>
                           <button
                             className="conversations-folder-order-btn"
@@ -672,7 +689,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                               manager.moveFolder(folder.id, "down")
                               loadData()
                             }}>
-                            ↓
+                            <ArrowDownIcon size={12} />
                           </button>
                         </div>
                       )}
@@ -692,7 +709,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                           onInteractionStateChange?.(true)
                           setMenu({ type: "folder", folder, anchorEl: e.currentTarget })
                         }}>
-                        ⋯
+                        <MoreHorizontalIcon size={16} />
                       </button>
                     </div>
                   </div>
@@ -741,7 +758,17 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                               <span
                                 className="conversations-item-title"
                                 style={{ userSelect: "none" }}>
-                                {conv.pinned && "📌 "}
+                                {conv.pinned && (
+                                  <PinIcon
+                                    size={12}
+                                    filled
+                                    style={{
+                                      display: "inline-block",
+                                      marginRight: "4px",
+                                      verticalAlign: "middle",
+                                    }}
+                                  />
+                                )}
                                 {searchQuery && searchResult?.conversationMatches.has(conv.id)
                                   ? highlightText(conv.title || "无标题", searchQuery)
                                   : conv.title || "无标题"}
@@ -776,7 +803,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                                   onInteractionStateChange?.(true)
                                   setMenu({ type: "conversation", conv, anchorEl: e.currentTarget })
                                 }}>
-                                ⋯
+                                <MoreHorizontalIcon size={16} />
                               </button>
                             </div>
                           </div>
@@ -805,7 +832,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                     const convId = Array.from(selectedIds)[0]
                     await manager.exportConversation(convId, "clipboard")
                   }}>
-                  📋
+                  <CopyIcon size={16} />
                 </button>
               </Tooltip>
               <Tooltip content={t("batchExport") || "导出"}>
@@ -816,7 +843,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                     onInteractionStateChange?.(true)
                     setMenu({ type: "export", anchorEl: e.currentTarget })
                   }}>
-                  📤
+                  <ExportIcon size={16} />
                 </button>
               </Tooltip>
               <Tooltip content={t("batchMove") || "移动"}>
@@ -827,7 +854,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                     onInteractionStateChange?.(true)
                     setDialog({ type: "folderSelect", convIds: Array.from(selectedIds) })
                   }}>
-                  📂
+                  <FolderMoveIcon size={16} />
                 </button>
               </Tooltip>
               <Tooltip content={t("batchDelete") || "删除"}>
@@ -851,7 +878,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                       },
                     })
                   }}>
-                  🗑️
+                  <DeleteIcon size={16} />
                 </button>
               </Tooltip>
               <Tooltip content={t("batchExit") || "退出"}>
@@ -859,7 +886,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                   className="conversations-batch-btn cancel"
                   style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
                   onClick={clearSelection}>
-                  ❌
+                  <ClearIcon size={16} />
                 </button>
               </Tooltip>
             </div>

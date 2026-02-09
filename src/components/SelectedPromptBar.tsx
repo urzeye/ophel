@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import type { SiteAdapter } from "~adapters/base"
+import { ClearIcon } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
 import { t } from "~utils/i18n"
 
@@ -194,7 +195,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
             e.currentTarget.style.background = "var(--gh-glass-bg, rgba(255,255,255,0.2))"
             e.currentTarget.style.transform = "scale(1)"
           }}>
-          ×
+          <ClearIcon size={14} />
         </button>
       </Tooltip>
     </div>

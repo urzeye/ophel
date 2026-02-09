@@ -1,12 +1,22 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import {
+  CheckIcon,
+  ChevronDownIcon,
+  ClearIcon,
   CollapseAllIcon,
+  CopyIcon,
+  DeleteIcon,
+  EditIcon,
   ExpandAllIcon,
+  EyeIcon,
   LocateIcon,
+  MoreHorizontalIcon,
+  PinIcon,
   ScrollBottomIcon,
   ScrollTopIcon,
   StarIcon,
+  TimeIcon,
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
@@ -299,13 +309,15 @@ const OutlineNodeView: React.FC<{
                 onToggle(node)
               }
             }}>
-            ▸
+            <ChevronDownIcon size={16} style={{ transform: "rotate(-90deg)" }} />
           </span>
 
           {/* 用户提问: 徽章 (图标+角标数字) */}
           {node.isUserQuery && (
             <span className="user-query-badge">
-              <span className="user-query-badge-icon">💬</span>
+              <span className="user-query-badge-icon">
+                <ConversationIcon size={14} />
+              </span>
               <span className="user-query-badge-number">{node.queryIndex}</span>
             </span>
           )}
@@ -347,27 +359,10 @@ const OutlineNodeView: React.FC<{
                 onMouseLeave={() => setIsHoveringAction(false)}>
                 {copySuccess ? (
                   // 成功对号图标
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#10b981"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round">
-                    <polyline points={CHECK_ICON_POINTS} />
-                  </svg>
+                  <CheckIcon size={14} color="#10b981" />
                 ) : (
                   // 复制图标
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round">
-                    <rect {...COPY_ICON_RECT} />
-                    <path d={COPY_ICON_PATH} />
-                  </svg>
+                  <CopyIcon size={14} />
                 )}
               </span>
             </Tooltip>
@@ -1056,7 +1051,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
               <button
                 onClick={handleGroupModeToggle}
                 className={`outline-toolbar-btn ${showUserQueries ? "active-subtle" : ""}`}>
-                🙋
+                <ConversationIcon size={16} />
               </button>
             </Tooltip>
 
@@ -1199,7 +1194,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                   alignItems: "center",
                   justifyContent: "center",
                 }}>
-                ×
+                <ClearIcon size={14} />
               </button>
             )}
           </div>

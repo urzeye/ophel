@@ -8,6 +8,7 @@ import {
   AboutIcon,
   AppearanceIcon,
   BackupIcon,
+  ClearIcon,
   FeaturesIcon,
   GeneralIcon,
   KeyboardIcon,
@@ -221,7 +222,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
           </Tooltip>
           <Tooltip content={t("close") || "关闭"}>
             <button className="settings-modal-action-btn close" onClick={onClose}>
-              ✕
+              <ClearIcon size={16} />
             </button>
           </Tooltip>
         </div>

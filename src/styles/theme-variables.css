@@ -33,6 +33,11 @@
   --gh-input-bg: #ffffff;
   --gh-input-border: #d1d5db;
 
+  /* === 图标 === */
+  --gh-icon: var(--gh-text-secondary);
+  --gh-icon-active: var(--gh-primary);
+  --gh-icon-hover: var(--gh-text);
+
   /* === 阴影 === */
   --gh-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
   --gh-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -163,6 +168,11 @@ html[data-theme="dark"] {
   /* === 输入框 === */
   --gh-input-bg: #262626;
   --gh-input-border: #404040;
+
+  /* === 图标（深色模式） === */
+  --gh-icon: var(--gh-text-secondary);
+  --gh-icon-active: var(--gh-border-active);
+  --gh-icon-hover: var(--gh-text);
 
   /* === 阴影 === */
   --gh-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);

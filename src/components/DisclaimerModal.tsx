@@ -1,4 +1,4 @@
-import { GithubIcon, ShieldCheckIcon } from "~components/icons"
+import { GithubIcon, ShieldCheckIcon, SparklesIcon } from "~components/icons"
 import { useSettingsStore } from "~stores/settings-store"
 import { APP_ICON_URL } from "~utils/config"
 import { getStoreInfo } from "~utils/getStoreInfo"
@@ -22,9 +22,9 @@ export const DisclaimerModal: React.FC = () => {
         <div className="disclaimer-header">
           <img src={APP_ICON_URL} alt="Ophel" className="disclaimer-icon-img" />
           <div className="disclaimer-slogan-container">
-            <span className="sparkle">✨</span>
+            <SparklesIcon size={18} className="sparkle" />
             <h2 className="disclaimer-title">{t("welcomeSlogan") || "AI 之益，触手可及"}</h2>
-            <span className="sparkle">✨</span>
+            <SparklesIcon size={18} className="sparkle" />
           </div>
         </div>
 
