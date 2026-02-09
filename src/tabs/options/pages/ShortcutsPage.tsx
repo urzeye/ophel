@@ -127,7 +127,6 @@ const ShortcutInput: React.FC<{
         }}>
         {displayText}
       </button>
-      {/* 移除按钮 */}
       {binding && (
         <Tooltip content={t("shortcutRemove") || "移除"}>
           <button
@@ -253,9 +252,12 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
         {t("shortcutsPageDesc") || "配置键盘快捷键以快速执行操作"}
       </p>
 
-      {/* 总开关 */}
-      <SettingCard title={t("shortcutsGlobalSettings") || "快捷键设置"}>
-        <SettingRow label={t("promptSubmitShortcutLabel") || "Send shortcut"}>
+      <SettingCard
+        title={t("promptSubmitShortcutLabel") || "Send shortcut"}
+        description={
+          t("promptSubmitShortcutDesc") || "Applies to both manual send and prompt auto-send."
+        }>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <select
             className="settings-select"
             value={settings.features?.prompts?.submitShortcut ?? "enter"}
@@ -276,8 +278,10 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
               {t("promptSubmitShortcutCtrlEnter") || "Ctrl + Enter"}
             </option>
           </select>
-        </SettingRow>
+        </div>
+      </SettingCard>
 
+      <SettingCard title={t("shortcutsGlobalSettings") || "快捷键设置"}>
         <ToggleRow
           label={t("enableShortcuts") || "启用快捷键"}
           description={t("enableShortcutsDesc") || "启用或禁用所有键盘快捷键"}
@@ -365,7 +369,6 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
           </>
         )}
 
-        {/* 恢复默认按钮 */}
         <div
           style={{
             marginTop: "16px",
@@ -388,7 +391,6 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
         </div>
       </SettingCard>
 
-      {/* 各分类的快捷键 */}
       {groupedActions.map(({ categoryId, categoryMeta, actions }) => (
         <SettingCard key={categoryId} title={t(categoryMeta.labelKey) || categoryMeta.label}>
           {actions.map(([actionId, meta]) => {
@@ -415,7 +417,6 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
         </SettingCard>
       ))}
 
-      {/* 恢复默认确认弹窗 */}
       {showResetConfirm && (
         <ConfirmDialog
           title={t("resetShortcuts") || "恢复默认快捷键"}
