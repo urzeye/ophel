@@ -405,7 +405,10 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
   return (
     <div>
       {/* Session Key 管理（合并后的卡片） */}
-      <SettingCard title={t("claudeSessionKeyTitle")} description={t("claudeSessionKeyDesc")}>
+      <SettingCard
+        title={t("claudeSessionKeyTitle")}
+        description={t("claudeSessionKeyDesc")}
+        settingId="claude-session-keys">
         {/* 当前使用状态栏 */}
         <div
           style={{

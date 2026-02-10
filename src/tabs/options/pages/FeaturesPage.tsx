@@ -3,7 +3,7 @@
  * 包含：标签页、内容处理、大纲、会话、模型锁定、阅读历史
  * 使用顶部 Tab 切换
  */
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 
 import { FeaturesIcon } from "~components/icons"
 import { NumberInput } from "~components/ui"
@@ -18,6 +18,7 @@ import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../comp
 
 interface FeaturesPageProps {
   siteId: string
+  initialTab?: string
 }
 
 interface LazyInputProps {
@@ -69,7 +70,7 @@ const LazyInput: React.FC<LazyInputProps> = ({
   )
 }
 
-const FeaturesPage: React.FC<FeaturesPageProps> = () => {
+const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId: _siteId, initialTab }) => {
   const tabs = [
     { id: FEATURES_TAB_IDS.OUTLINE, label: t("tabOutline") || "大纲" },
     { id: FEATURES_TAB_IDS.CONVERSATIONS, label: t("tabConversations") || "会话" },
@@ -79,8 +80,14 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
     { id: FEATURES_TAB_IDS.READING_HISTORY, label: t("readingHistoryTitle") || "阅读历史" },
   ]
 
-  const [activeTab, setActiveTab] = useState<string>(tabs[0].id)
+  const [activeTab, setActiveTab] = useState<string>(initialTab || tabs[0].id)
   const { settings, updateDeepSetting, updateNestedSetting } = useSettingsStore()
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab)
+    }
+  }, [initialTab])
 
   if (!settings) return null
 
@@ -108,6 +115,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             <ToggleRow
               label={t("openNewTabLabel") || "新标签页打开"}
               description={t("openNewTabDesc") || "在新标签页中打开新对话"}
+              settingId="tab-open-new"
               checked={settings.tab?.openInNewTab ?? true}
               onChange={() =>
                 updateNestedSetting("tab", "openInNewTab", !settings.tab?.openInNewTab)
@@ -117,12 +125,14 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             <ToggleRow
               label={t("autoRenameTabLabel") || "自动重命名"}
               description={t("autoRenameTabDesc") || "根据对话内容自动更新标签页标题"}
+              settingId="tab-auto-rename"
               checked={settings.tab?.autoRename ?? false}
               onChange={() => updateNestedSetting("tab", "autoRename", !settings.tab?.autoRename)}
             />
 
             <SettingRow
               label={t("renameIntervalLabel") || "检测频率"}
+              settingId="tab-rename-interval"
               disabled={!settings.tab?.autoRename}
               onDisabledClick={() => showPrerequisiteToast(autoRenameLabel)}>
               <select
@@ -143,6 +153,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             <SettingRow
               label={t("titleFormatLabel") || "标题格式"}
               description={t("titleFormatDesc") || "支持占位符：{status}、{title}、{model}"}
+              settingId="tab-title-format"
               disabled={!settings.tab?.autoRename}
               onDisabledClick={() => showPrerequisiteToast(autoRenameLabel)}>
               <input
@@ -159,6 +170,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             <ToggleRow
               label={t("showStatusLabel") || "显示生成状态"}
               description={t("showStatusDesc") || "在标签页标题中显示生成状态"}
+              settingId="tab-show-status"
               checked={settings.tab?.showStatus ?? true}
               onChange={() => updateNestedSetting("tab", "showStatus", !settings.tab?.showStatus)}
             />
@@ -169,6 +181,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             <ToggleRow
               label={t("showNotificationLabel") || "桌面通知"}
               description={t("showNotificationDesc") || "生成完成时发送桌面通知"}
+              settingId="tab-show-notification"
               checked={settings.tab?.showNotification ?? false}
               onChange={async () => {
                 const checked = settings.tab?.showNotification
@@ -203,6 +216,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             <ToggleRow
               label={t("notificationSoundLabel") || "通知声音"}
               description={t("notificationSoundDesc") || "生成完成时播放提示音"}
+              settingId="tab-notification-sound"
               checked={settings.tab?.notificationSound ?? false}
               disabled={!settings.tab?.showNotification}
               onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}
@@ -213,6 +227,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
 
             <SettingRow
               label={t("notificationVolumeLabel") || "声音音量"}
+              settingId="tab-notification-volume"
               disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
               onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -237,6 +252,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             <ToggleRow
               label={t("notifyWhenFocusedLabel") || "前台时也通知"}
               description={t("notifyWhenFocusedDesc") || "窗口在前台时也发送通知"}
+              settingId="tab-notify-when-focused"
               checked={settings.tab?.notifyWhenFocused ?? false}
               disabled={!settings.tab?.showNotification}
               onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}
@@ -248,6 +264,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             <ToggleRow
               label={t("autoFocusLabel") || "自动置顶窗口"}
               description={t("autoFocusDesc") || "生成完成后自动激活窗口"}
+              settingId="tab-auto-focus"
               checked={settings.tab?.autoFocus ?? false}
               onChange={() => updateNestedSetting("tab", "autoFocus", !settings.tab?.autoFocus)}
             />
@@ -258,12 +275,14 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             <ToggleRow
               label={t("privacyModeLabel") || "启用隐私模式"}
               description={t("privacyModeDesc") || "使用伪装标题隐藏真实内容"}
+              settingId="tab-privacy-mode"
               checked={settings.tab?.privacyMode ?? false}
               onChange={() => updateNestedSetting("tab", "privacyMode", !settings.tab?.privacyMode)}
             />
 
             <SettingRow
               label={t("privacyTitleLabel") || "伪装标题"}
+              settingId="tab-privacy-title"
               disabled={!settings.tab?.privacyMode}
               onDisabledClick={() => showPrerequisiteToast(privacyModeLabel)}>
               <input
@@ -289,6 +308,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             <ToggleRow
               label={t("outlineAutoUpdateLabel") || "自动更新"}
               description={t("outlineAutoUpdateDesc") || "在对话进行时自动刷新大纲"}
+              settingId="outline-auto-update"
               checked={settings.features?.outline?.autoUpdate ?? true}
               onChange={() =>
                 updateDeepSetting(
@@ -302,7 +322,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
 
             <SettingRow
               label={t("outlineUpdateIntervalLabel") || "更新检测间隔"}
-              description={t("outlineUpdateIntervalDesc") || "大纲自动更新的时间间隔（秒）"}>
+              description={t("outlineUpdateIntervalDesc") || "大纲自动更新的时间间隔（秒）"}
+              settingId="outline-update-interval">
               <NumberInput
                 value={settings.features?.outline?.updateInterval ?? 2}
                 onChange={(val) => updateDeepSetting("features", "outline", "updateInterval", val)}
@@ -321,7 +342,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
                   : settings.features?.outline?.followMode === "latest"
                     ? t("outlineFollowLatestDesc") || "大纲始终自动滚动到底部"
                     : t("outlineFollowManualDesc") || "不自动滚动大纲"
-              }>
+              }
+              settingId="outline-follow-mode">
               <select
                 className="settings-select"
                 value={settings.features?.outline?.followMode || "current"}
@@ -342,6 +364,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             <ToggleRow
               label={t("outlineShowWordCountLabel") || "悬浮显示字数"}
               description={t("outlineShowWordCountDesc") || "在大纲悬浮提示中显示该章节的字数"}
+              settingId="outline-show-word-count"
               checked={settings.features?.outline?.showWordCount ?? false}
               onChange={() =>
                 updateDeepSetting(
@@ -360,7 +383,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             description={t("bookmarkSettingsDesc") || "配置页内收藏功能"}>
             <SettingRow
               label={t("inlineBookmarkModeLabel") || "页内收藏图标"}
-              description={t("inlineBookmarkModeDesc") || "控制页面标题旁的收藏图标显示方式"}>
+              description={t("inlineBookmarkModeDesc") || "控制页面标题旁的收藏图标显示方式"}
+              settingId="outline-inline-bookmark-mode">
               <select
                 className="settings-select"
                 value={settings.features?.outline?.inlineBookmarkMode || "always"}
@@ -380,7 +404,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
 
             <SettingRow
               label={t("panelBookmarkModeLabel") || "面板收藏图标"}
-              description={t("panelBookmarkModeDesc") || "控制大纲面板中的收藏图标显示方式"}>
+              description={t("panelBookmarkModeDesc") || "控制大纲面板中的收藏图标显示方式"}
+              settingId="outline-panel-bookmark-mode">
               <select
                 className="settings-select"
                 value={settings.features?.outline?.panelBookmarkMode || "always"}
@@ -404,6 +429,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             <ToggleRow
               label={t("preventAutoScrollLabel") || "防止自动滚动"}
               description={t("preventAutoScrollDesc") || "阻止页面自动滚动到底部"}
+              settingId="outline-prevent-auto-scroll"
               checked={settings.panel?.preventAutoScroll ?? false}
               onChange={() =>
                 updateNestedSetting(
@@ -426,6 +452,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             <ToggleRow
               label={t("folderRainbowLabel") || "文件夹彩虹色"}
               description={t("folderRainbowDesc") || "为不同文件夹使用不同颜色"}
+              settingId="conversation-folder-rainbow"
               checked={settings.features?.conversations?.folderRainbow ?? true}
               onChange={() =>
                 updateDeepSetting(
@@ -440,6 +467,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             <ToggleRow
               label={t("conversationsSyncUnpinLabel") || "同步时取消置顶"}
               description={t("conversationsSyncUnpinDesc") || "同步会话时自动取消置顶"}
+              settingId="conversation-sync-unpin"
               checked={settings.features?.conversations?.syncUnpin ?? false}
               onChange={() =>
                 updateDeepSetting(
@@ -456,9 +484,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
           <SettingCard title={t("exportSettings") || "导出设置"}>
             <SettingRow
               label={t("exportCustomUserName") || "自定义用户名称"}
-              description={
-                t("exportCustomUserNameDesc") || "导出时使用的用户显示名称 (默认: User)"
-              }>
+              description={t("exportCustomUserNameDesc") || "导出时使用的用户显示名称 (默认: User)"}
+              settingId="export-custom-user-name">
               <LazyInput
                 className="settings-input"
                 value={settings.export?.customUserName || ""}
@@ -472,7 +499,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
               label={t("exportCustomModelName") || "自定义 AI 名称"}
               description={
                 t("exportCustomModelNameDesc") || "导出时使用的 AI 显示名称 (默认: 站点名称)"
-              }>
+              }
+              settingId="export-custom-model-name">
               <LazyInput
                 className="settings-input"
                 value={settings.export?.customModelName || ""}
@@ -485,6 +513,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             <ToggleRow
               label={t("exportFilenameTimestamp") || "导出文件名包含时间戳"}
               description={t("exportFilenameTimestampDesc") || "在导出文件名末尾添加时间戳"}
+              settingId="export-filename-timestamp"
               checked={settings.export?.exportFilenameTimestamp ?? false}
               onChange={() =>
                 updateNestedSetting(
@@ -498,6 +527,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
             <ToggleRow
               label={t("exportImagesToBase64Label") || "导出时图片转 Base64"}
               description={t("exportImagesToBase64Desc") || "导出会话时将图片转为 Base64 嵌入"}
+              settingId="export-images-base64"
               checked={settings.content?.exportImagesToBase64 ?? false}
               onChange={() =>
                 updateNestedSetting(
@@ -521,6 +551,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
               t("promptDoubleClickSendDesc") ||
               "When enabled, double-click sends the prompt directly. Prompts with variables are sent after confirmation."
             }
+            settingId="prompt-double-click-send"
             checked={settings.features?.prompts?.doubleClickToSend ?? false}
             onChange={() =>
               updateDeepSetting(
@@ -542,6 +573,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
           <ToggleRow
             label={t("readingHistoryPersistenceLabel") || "启用阅读历史"}
             description={t("readingHistoryPersistenceDesc") || "记录每个会话的阅读位置"}
+            settingId="reading-history-persistence"
             checked={settings.readingHistory?.persistence ?? true}
             onChange={() =>
               updateNestedSetting(
@@ -555,6 +587,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
           <ToggleRow
             label={t("readingHistoryAutoRestoreLabel") || "自动恢复位置"}
             description={t("readingHistoryAutoRestoreDesc") || "打开会话时自动跳转到上次阅读位置"}
+            settingId="reading-history-auto-restore"
             checked={settings.readingHistory?.autoRestore ?? true}
             disabled={!settings.readingHistory?.persistence}
             onDisabledClick={() => showPrerequisiteToast(readingHistoryLabel)}
@@ -569,6 +602,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
 
           <SettingRow
             label={t("readingHistoryCleanup") || "历史保留时间"}
+            settingId="reading-history-cleanup-days"
             disabled={!settings.readingHistory?.persistence}
             onDisabledClick={() => showPrerequisiteToast(readingHistoryLabel)}>
             <select
@@ -597,6 +631,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
           <ToggleRow
             label={t("userQueryMarkdownLabel") || "用户问题 Markdown 渲染"}
             description={t("userQueryMarkdownDesc") || "将用户输入的 Markdown 渲染为富文本"}
+            settingId="content-user-query-markdown"
             checked={settings.content?.userQueryMarkdown ?? false}
             onChange={() =>
               updateNestedSetting(
@@ -610,6 +645,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
           <ToggleRow
             label={t("formulaCopyLabel") || "双击复制公式"}
             description={t("formulaCopyDesc") || "双击数学公式即可复制其 LaTeX 源码"}
+            settingId="content-formula-copy"
             checked={settings.content?.formulaCopy ?? true}
             onChange={() =>
               updateNestedSetting("content", "formulaCopy", !settings.content?.formulaCopy)
@@ -619,6 +655,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
           <ToggleRow
             label={t("formulaDelimiterLabel") || "公式分隔符转换"}
             description={t("formulaDelimiterDesc") || "复制时将括号分隔符转为美元符号"}
+            settingId="content-formula-delimiter"
             checked={settings.content?.formulaDelimiter ?? true}
             disabled={!settings.content?.formulaCopy}
             onDisabledClick={() => showPrerequisiteToast(formulaCopyLabel)}
@@ -634,6 +671,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = () => {
           <ToggleRow
             label={t("tableCopyLabel") || "表格复制 Markdown"}
             description={t("tableCopyDesc") || "表格右上角添加复制按钮"}
+            settingId="content-table-copy"
             checked={settings.content?.tableCopy ?? true}
             onChange={() =>
               updateNestedSetting("content", "tableCopy", !settings.content?.tableCopy)

@@ -48,12 +48,193 @@ export const FEATURES_TAB_IDS = {
   TOOLBOX: "toolbox",
 } as const
 
+// ==================== Appearance Page Tab IDs ====================
+export const APPEARANCE_TAB_IDS = {
+  PRESETS: "presets",
+  CUSTOM: "custom",
+} as const
+
 // ==================== Site Settings Page Tab IDs ====================
 export const SITE_SETTINGS_TAB_IDS = {
   LAYOUT: "layout",
   MODEL_LOCK: "modelLock",
   // 站点专属 Tab ID 直接使用 SITE_IDS
 } as const
+
+// ==================== Settings Deep Link ====================
+export interface SettingsNavigateDetail {
+  page?: string
+  subTab?: string
+  settingId?: string
+}
+
+interface SettingRoute {
+  page: string
+  subTab?: string
+}
+
+interface SettingRouteRule {
+  prefix: string
+  route: SettingRoute
+}
+
+export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
+  "appearance-preset-light": {
+    page: NAV_IDS.APPEARANCE,
+    subTab: APPEARANCE_TAB_IDS.PRESETS,
+  },
+  "appearance-preset-dark": {
+    page: NAV_IDS.APPEARANCE,
+    subTab: APPEARANCE_TAB_IDS.PRESETS,
+  },
+  "appearance-custom-styles": {
+    page: NAV_IDS.APPEARANCE,
+    subTab: APPEARANCE_TAB_IDS.CUSTOM,
+  },
+} as const
+
+const SETTING_ID_ROUTE_RULES: SettingRouteRule[] = [
+  { prefix: "panel-", route: { page: NAV_IDS.GENERAL, subTab: "panel" } },
+  { prefix: "quick-buttons-", route: { page: NAV_IDS.GENERAL, subTab: "shortcuts" } },
+  { prefix: "tools-menu-", route: { page: NAV_IDS.GENERAL, subTab: "toolsMenu" } },
+  {
+    prefix: "layout-",
+    route: { page: NAV_IDS.SITE_SETTINGS, subTab: SITE_SETTINGS_TAB_IDS.LAYOUT },
+  },
+  {
+    prefix: "model-lock-",
+    route: { page: NAV_IDS.SITE_SETTINGS, subTab: SITE_SETTINGS_TAB_IDS.MODEL_LOCK },
+  },
+  {
+    prefix: "gemini-",
+    route: { page: NAV_IDS.SITE_SETTINGS, subTab: "gemini" },
+  },
+  {
+    prefix: "aistudio-",
+    route: { page: NAV_IDS.SITE_SETTINGS, subTab: "aistudio" },
+  },
+  {
+    prefix: "chatgpt-",
+    route: { page: NAV_IDS.SITE_SETTINGS, subTab: "chatgpt" },
+  },
+  {
+    prefix: "claude-",
+    route: { page: NAV_IDS.SITE_SETTINGS, subTab: "claude" },
+  },
+  {
+    prefix: "tab-",
+    route: { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.TAB_SETTINGS },
+  },
+  {
+    prefix: "outline-",
+    route: { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.OUTLINE },
+  },
+  {
+    prefix: "conversation-",
+    route: { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.CONVERSATIONS },
+  },
+  {
+    prefix: "export-",
+    route: { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.CONVERSATIONS },
+  },
+  {
+    prefix: "prompt-",
+    route: { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.PROMPTS },
+  },
+  {
+    prefix: "reading-history-",
+    route: { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.READING_HISTORY },
+  },
+  {
+    prefix: "content-",
+    route: { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.CONTENT },
+  },
+  {
+    prefix: "appearance-preset-",
+    route: { page: NAV_IDS.APPEARANCE, subTab: APPEARANCE_TAB_IDS.PRESETS },
+  },
+  {
+    prefix: "appearance-custom-",
+    route: { page: NAV_IDS.APPEARANCE, subTab: APPEARANCE_TAB_IDS.CUSTOM },
+  },
+]
+
+export const SETTING_ID_ALIASES: Record<string, string> = {
+  "general.panel.defaultOpen": "panel-default-open",
+  "general.panel.defaultPosition": "panel-default-position",
+  "general.panel.defaultEdgeDistance": "panel-edge-distance",
+  "general.panel.width": "panel-width",
+  "general.panel.height": "panel-height",
+  "general.panel.edgeSnap": "panel-edge-snap",
+  "general.panel.edgeSnapThreshold": "panel-edge-snap-threshold",
+  "general.panel.autoHide": "panel-auto-hide",
+  "general.shortcuts.quickButtonsOpacity": "quick-buttons-opacity",
+  "general.toolsMenu": "tools-menu-scrollTop",
+  "siteSettings.layout.pageWidth.enabled": "layout-page-width-enabled",
+  "siteSettings.layout.pageWidth.value": "layout-page-width-value",
+  "siteSettings.layout.userQueryWidth.enabled": "layout-user-query-width-enabled",
+  "siteSettings.layout.userQueryWidth.value": "layout-user-query-width-value",
+  "siteSettings.modelLock": "model-lock-gemini",
+  "features.tab.openInNewTab": "tab-open-new",
+  "features.tab.autoRename": "tab-auto-rename",
+  "features.outline.autoUpdate": "outline-auto-update",
+  "features.outline.inlineBookmarkMode": "outline-inline-bookmark-mode",
+  "features.outline.panelBookmarkMode": "outline-panel-bookmark-mode",
+  "features.outline.preventAutoScroll": "outline-prevent-auto-scroll",
+  "features.readingHistory.persistence": "reading-history-persistence",
+  "features.content.formulaCopy": "content-formula-copy",
+  "panel.preventAutoScroll": "outline-prevent-auto-scroll",
+  "content.markdownFix": "gemini-markdown-fix",
+  "content.watermarkRemoval": "gemini-watermark-removal",
+  "geminiEnterprise.policyRetry.enabled": "gemini-policy-retry",
+  "geminiEnterprise.policyRetry.maxRetries": "gemini-policy-max-retries",
+  "aistudio.collapseNavbar": "aistudio-collapse-navbar",
+  "aistudio.collapseRunSettings": "aistudio-collapse-run-settings",
+  "aistudio.collapseTools": "aistudio-collapse-tools",
+  "aistudio.collapseAdvanced": "aistudio-collapse-advanced",
+  "aistudio.enableSearch": "aistudio-enable-search",
+  "aistudio.removeWatermark": "aistudio-remove-watermark",
+  "aistudio.markdownFix": "aistudio-markdown-fix",
+  "chatgpt.markdownFix": "chatgpt-markdown-fix",
+  "claude.sessionKeys": "claude-session-keys",
+  "appearance.presets.light": "appearance-preset-light",
+  "appearance.presets.dark": "appearance-preset-dark",
+  "appearance.custom.styles": "appearance-custom-styles",
+}
+
+export const resolveSettingId = (settingId?: string): string | undefined => {
+  const normalized = settingId?.trim()
+  if (!normalized) return undefined
+  return SETTING_ID_ALIASES[normalized] ?? normalized
+}
+
+export const resolveSettingRoute = (settingId?: string): SettingRoute | undefined => {
+  const resolvedSettingId = resolveSettingId(settingId)
+  if (!resolvedSettingId) return undefined
+
+  if (SETTING_ID_ROUTE_MAP[resolvedSettingId]) {
+    return SETTING_ID_ROUTE_MAP[resolvedSettingId]
+  }
+
+  return SETTING_ID_ROUTE_RULES.find((rule) => resolvedSettingId.startsWith(rule.prefix))?.route
+}
+
+export const resolveSettingsNavigateDetail = (
+  detail: SettingsNavigateDetail,
+): SettingsNavigateDetail => {
+  const resolvedSettingId = resolveSettingId(detail.settingId)
+  const route = resolveSettingRoute(resolvedSettingId)
+
+  const resolvedPage = detail.page ?? route?.page
+  const resolvedSubTab =
+    detail.subTab ?? (detail.page && detail.page !== route?.page ? undefined : route?.subTab)
+
+  return {
+    page: resolvedPage,
+    subTab: resolvedSubTab,
+    settingId: resolvedSettingId,
+  }
+}
 
 // ==================== Tab 定义 ====================
 // Tab 标签的显示配置

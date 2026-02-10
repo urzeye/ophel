@@ -127,6 +127,31 @@ export const App = () => {
   // 追踪是否已完成初始化，防止重复执行
   const isInitializedRef = useRef(false)
 
+  // 接收到设置导航事件时，自动打开设置弹窗
+  useEffect(() => {
+    const handleNavigateSettings = (
+      _e: CustomEvent<{ page?: string; subTab?: string; settingId?: string }>,
+    ) => {
+      if (!isSettingsOpenRef.current) {
+        isSettingsOpenRef.current = true
+
+        if (edgeSnapState && settingsRef.current?.panel?.edgeSnap) {
+          setIsEdgePeeking(true)
+        }
+
+        setIsSettingsOpen(true)
+      }
+    }
+
+    window.addEventListener("ophel:navigateSettingsPage", handleNavigateSettings as EventListener)
+
+    return () =>
+      window.removeEventListener(
+        "ophel:navigateSettingsPage",
+        handleNavigateSettings as EventListener,
+      )
+  }, [edgeSnapState])
+
   // 取消快捷键触发的延迟缩回计时器
   const cancelShortcutPeekTimer = useCallback(() => {
     if (shortcutPeekTimerRef.current) {

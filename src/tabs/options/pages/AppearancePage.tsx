@@ -4,9 +4,10 @@
  */
 import hljs from "highlight.js/lib/core"
 import css from "highlight.js/lib/languages/css"
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 
 import { AppearanceIcon } from "~components/icons"
+import { APPEARANCE_TAB_IDS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import type { CustomStyle } from "~utils/storage"
@@ -28,6 +29,7 @@ hljs.registerLanguage("css", css)
 
 interface AppearancePageProps {
   siteId: string
+  initialTab?: string
 }
 
 // CSS 模板
@@ -70,9 +72,15 @@ const ThemeCard: React.FC<{
   )
 }
 
-const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
-  const [activeTab, setActiveTab] = useState("presets")
+const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) => {
+  const [activeTab, setActiveTab] = useState(initialTab || APPEARANCE_TAB_IDS.PRESETS)
   const { settings, setSettings } = useSettingsStore()
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab)
+    }
+  }, [initialTab])
 
   // 自定义样式编辑器状态
   const [showStyleEditor, setShowStyleEditor] = useState(false)
@@ -86,8 +94,8 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
   if (!settings) return null
 
   const tabs = [
-    { id: "presets", label: t("themePresetsTab") || "主题预置" },
-    { id: "custom", label: t("customStylesTab") || "自定义样式" },
+    { id: APPEARANCE_TAB_IDS.PRESETS, label: t("themePresetsTab") || "主题预置" },
+    { id: APPEARANCE_TAB_IDS.CUSTOM, label: t("customStylesTab") || "自定义样式" },
   ]
 
   // 选择浅色主题预置
@@ -240,12 +248,13 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
 
       <TabGroup tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {activeTab === "presets" && (
+      {activeTab === APPEARANCE_TAB_IDS.PRESETS && (
         <>
           {/* 浅色模式预置 */}
           <SettingCard
             title={t("lightModePreset") || "浅色模式预置"}
-            description={t("lightModePresetDesc") || "仅在浅色模式生效"}>
+            description={t("lightModePresetDesc") || "仅在浅色模式生效"}
+            settingId="appearance-preset-light">
             <div className="settings-theme-grid">
               {displayLightPresets.map((preset) => (
                 <ThemeCard
@@ -261,7 +270,8 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
           {/* 深色模式预置 */}
           <SettingCard
             title={t("darkModePreset") || "深色模式预置"}
-            description={t("darkModePresetDesc") || "仅在深色模式生效"}>
+            description={t("darkModePresetDesc") || "仅在深色模式生效"}
+            settingId="appearance-preset-dark">
             <div className="settings-theme-grid">
               {displayDarkPresets.map((preset) => (
                 <ThemeCard
@@ -276,11 +286,12 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId }) => {
         </>
       )}
 
-      {activeTab === "custom" && (
+      {activeTab === APPEARANCE_TAB_IDS.CUSTOM && (
         <>
           <SettingCard
             title={t("customCSS") || "自定义样式"}
-            description={t("customCSSDesc") || "创建自定义 CSS 样式，可在主题选择器中使用"}>
+            description={t("customCSSDesc") || "创建自定义 CSS 样式，可在主题选择器中使用"}
+            settingId="appearance-custom-styles">
             <button
               className="settings-btn settings-btn-primary"
               onClick={() => {

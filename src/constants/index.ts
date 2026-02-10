@@ -9,11 +9,18 @@ export {
   COLLAPSED_BUTTON_DEFS,
   NAV_IDS,
   FEATURES_TAB_IDS,
+  APPEARANCE_TAB_IDS,
   SITE_SETTINGS_TAB_IDS,
+  SETTING_ID_ROUTE_MAP,
+  SETTING_ID_ALIASES,
+  resolveSettingId,
+  resolveSettingRoute,
+  resolveSettingsNavigateDetail,
   PRESET_EMOJIS,
   TAG_COLORS,
   TOAST_DURATION,
   STATUS_COLORS,
+  type SettingsNavigateDetail,
   type TabId,
 } from "./ui"
 

@@ -196,6 +196,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
           <ToggleRow
             label={t("defaultPanelStateLabel") || "默认显示面板"}
             description={t("defaultPanelStateDesc") || "页面加载后自动展开面板"}
+            settingId="panel-default-open"
             checked={settings.panel?.defaultOpen ?? false}
             onChange={() =>
               updateNestedSetting("panel", "defaultOpen", !settings.panel?.defaultOpen)
@@ -205,7 +206,8 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
           {/* 默认位置 */}
           <SettingRow
             label={t("defaultPositionLabel") || "默认位置"}
-            description={t("defaultPositionDesc") || "页面刷新后面板显示在哪一侧"}>
+            description={t("defaultPositionDesc") || "页面刷新后面板显示在哪一侧"}
+            settingId="panel-default-position">
             <div
               style={{
                 display: "inline-flex",
@@ -258,7 +260,8 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
           {/* 默认边距 */}
           <SettingRow
             label={t("defaultEdgeDistanceLabel") || "默认边距"}
-            description={t("defaultEdgeDistanceDesc") || "面板距离屏幕边缘的初始距离"}>
+            description={t("defaultEdgeDistanceDesc") || "面板距离屏幕边缘的初始距离"}
+            settingId="panel-edge-distance">
             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
               <NumberInput
                 value={settings.panel?.defaultEdgeDistance ?? 25}
@@ -275,7 +278,8 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
           {/* 面板宽度 */}
           <SettingRow
             label={t("panelWidthLabel") || "面板宽度"}
-            description={t("panelWidthDesc") || "面板的宽度 (px)"}>
+            description={t("panelWidthDesc") || "面板的宽度 (px)"}
+            settingId="panel-width">
             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
               <NumberInput
                 value={settings.panel?.width ?? 320}
@@ -292,7 +296,8 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
           {/* 面板高度 */}
           <SettingRow
             label={t("panelHeightLabel") || "面板高度"}
-            description={t("panelHeightDesc") || "面板占用屏幕高度的百分比"}>
+            description={t("panelHeightDesc") || "面板占用屏幕高度的百分比"}
+            settingId="panel-height">
             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
               <NumberInput
                 value={settings.panel?.height ?? 85}
@@ -309,6 +314,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
           <ToggleRow
             label={t("edgeSnapHideLabel") || "边缘自动吸附"}
             description={t("edgeSnapHideDesc") || "拖动面板到屏幕边缘时自动吸附，悬停显示"}
+            settingId="panel-edge-snap"
             checked={settings.panel?.edgeSnap ?? false}
             onChange={() => updateNestedSetting("panel", "edgeSnap", !settings.panel?.edgeSnap)}
           />
@@ -317,6 +323,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
           <SettingRow
             label={t("edgeSnapThresholdLabel") || "吸附触发距离"}
             description={t("edgeSnapThresholdDesc") || "拖拽面板到边缘多近时触发吸附"}
+            settingId="panel-edge-snap-threshold"
             disabled={!settings.panel?.edgeSnap}
             onDisabledClick={() => showPrerequisiteToast(edgeSnapLabel)}>
             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
@@ -340,6 +347,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
                 ? t("autoHidePanelDescEdgeSnap") || "点击面板外部区域时自动缩回边缘"
                 : t("autoHidePanelDesc") || "点击面板外部区域时自动收起为悬浮球"
             }
+            settingId="panel-auto-hide"
             checked={settings.panel?.autoHide ?? false}
             onChange={() => updateNestedSetting("panel", "autoHide", !settings.panel?.autoHide)}
           />
@@ -431,7 +439,8 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
           })}
           <SettingRow
             label={t("quickButtonsOpacityLabel") || "快捷按钮透明度"}
-            description={t("quickButtonsOpacityDesc") || "调整快捷按钮组整体透明度"}>
+            description={t("quickButtonsOpacityDesc") || "调整快捷按钮组整体透明度"}
+            settingId="quick-buttons-opacity">
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <input
                 type="range"
@@ -462,6 +471,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
               <ToggleRow
                 key={item.id}
                 label={t(item.labelKey) || item.defaultLabel}
+                settingId={`tools-menu-${item.id}`}
                 checked={isEnabled}
                 onChange={() => {
                   const currentIds = settings.toolsMenu ?? TOOLS_MENU_ITEMS.map((i) => i.id)

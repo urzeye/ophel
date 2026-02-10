@@ -2,7 +2,7 @@
  * Options Page 入口
  * 独立的设置页面，通过 chrome.windows.create 打开
  */
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 
 import {
   AboutIcon,
@@ -13,6 +13,7 @@ import {
   PageContentIcon,
   PermissionsIcon,
 } from "~components/icons"
+import { resolveSettingsNavigateDetail } from "~constants"
 import { platform } from "~platform"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { APP_DISPLAY_NAME, APP_ICON_URL } from "~utils/config"
@@ -68,18 +69,116 @@ const NAV_ITEMS = [
 const OptionsPage = () => {
   const [activePage, setActivePage] = useState("general")
   const [initialSubTab, setInitialSubTab] = useState<string | undefined>(undefined)
+  const [locateRequest, setLocateRequest] = useState<{ settingId: string; token: number } | null>(
+    null,
+  )
+  const contentRef = useRef<HTMLElement>(null)
+  const highlightTimerRef = useRef<number | undefined>(undefined)
+  const highlightedElementRef = useRef<HTMLElement | null>(null)
 
   // 初始化时检查 URL search params
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search)
-      const page = params.get("page")
-      const subTab = params.get("subTab")
-      if (page && NAV_ITEMS.some((item) => item.id === page)) {
-        setActivePage(page)
+      const resolved = resolveSettingsNavigateDetail({
+        page: params.get("page") || undefined,
+        subTab: params.get("subTab") || undefined,
+        settingId: params.get("settingId") || undefined,
+      })
+
+      if (resolved.page && NAV_ITEMS.some((item) => item.id === resolved.page)) {
+        setActivePage(resolved.page)
       }
-      if (subTab) {
-        setInitialSubTab(subTab)
+
+      setInitialSubTab(resolved.subTab)
+
+      if (resolved.settingId) {
+        setLocateRequest({ settingId: resolved.settingId, token: Date.now() })
+      }
+    }
+  }, [])
+
+  // URL 深链定位并高亮目标设置项
+  useEffect(() => {
+    if (!locateRequest?.settingId) return
+
+    let cancelled = false
+    let retryTimer: number | undefined
+    let rafId: number | undefined
+
+    const escapedSettingId =
+      typeof CSS !== "undefined" && typeof CSS.escape === "function"
+        ? CSS.escape(locateRequest.settingId)
+        : JSON.stringify(locateRequest.settingId).slice(1, -1)
+    const selector = `[data-setting-id="${escapedSettingId}"]`
+
+    const tryLocate = (attempt: number) => {
+      if (cancelled) return
+
+      const target = contentRef.current?.querySelector<HTMLElement>(selector)
+      if (target) {
+        if (highlightTimerRef.current !== undefined) {
+          window.clearTimeout(highlightTimerRef.current)
+          highlightTimerRef.current = undefined
+        }
+
+        if (highlightedElementRef.current && highlightedElementRef.current !== target) {
+          highlightedElementRef.current.classList.remove("setting-locate-highlight")
+        }
+
+        target.scrollIntoView({ behavior: "smooth", block: "center" })
+        target.classList.remove("setting-locate-highlight")
+        void target.offsetWidth
+        target.classList.add("setting-locate-highlight")
+
+        highlightedElementRef.current = target
+
+        highlightTimerRef.current = window.setTimeout(() => {
+          target.classList.remove("setting-locate-highlight")
+          if (highlightedElementRef.current === target) {
+            highlightedElementRef.current = null
+          }
+          highlightTimerRef.current = undefined
+        }, 2200)
+
+        setLocateRequest(null)
+        return
+      }
+
+      if (attempt >= 12) {
+        console.warn(`[Ophel] Failed to locate setting in options page: ${locateRequest.settingId}`)
+        setLocateRequest(null)
+        return
+      }
+
+      retryTimer = window.setTimeout(() => tryLocate(attempt + 1), 100)
+    }
+
+    rafId = window.requestAnimationFrame(() => tryLocate(0))
+
+    return () => {
+      cancelled = true
+
+      if (rafId !== undefined) {
+        window.cancelAnimationFrame(rafId)
+      }
+
+      if (retryTimer !== undefined) {
+        window.clearTimeout(retryTimer)
+      }
+    }
+  }, [activePage, initialSubTab, locateRequest])
+
+  // 卸载时清理高亮状态
+  useEffect(() => {
+    return () => {
+      if (highlightTimerRef.current !== undefined) {
+        window.clearTimeout(highlightTimerRef.current)
+      }
+
+      if (highlightedElementRef.current) {
+        highlightedElementRef.current.classList.remove("setting-locate-highlight")
+        highlightedElementRef.current = null
       }
     }
   }, [])
@@ -117,11 +216,11 @@ const OptionsPage = () => {
       case "general":
         return <GeneralPage siteId={siteId} initialTab={initialSubTab} />
       case "appearance":
-        return <AppearancePage siteId={siteId} />
+        return <AppearancePage siteId={siteId} initialTab={initialSubTab} />
       case "siteSettings":
         return <SiteSettingsPage siteId={siteId} initialTab={initialSubTab} />
       case "features":
-        return <FeaturesPage siteId={siteId} />
+        return <FeaturesPage siteId={siteId} initialTab={initialSubTab} />
       case "permissions":
         return <PermissionsPage siteId={siteId} />
       case "backup":
@@ -129,7 +228,7 @@ const OptionsPage = () => {
       case "about":
         return <AboutPage />
       default:
-        return <GeneralPage siteId={siteId} />
+        return <GeneralPage siteId={siteId} initialTab={initialSubTab} />
     }
   }
 
@@ -160,7 +259,11 @@ const OptionsPage = () => {
             <button
               key={item.id}
               className={`settings-nav-item ${activePage === item.id ? "active" : ""}`}
-              onClick={() => setActivePage(item.id)}>
+              onClick={() => {
+                setActivePage(item.id)
+                setInitialSubTab(undefined)
+                setLocateRequest(null)
+              }}>
               <span className="settings-nav-item-icon">
                 <item.Icon size={22} />
               </span>
@@ -174,7 +277,9 @@ const OptionsPage = () => {
       </aside>
 
       {/* 内容区 */}
-      <main className="settings-content">{renderPage()}</main>
+      <main className="settings-content" ref={contentRef}>
+        {renderPage()}
+      </main>
     </div>
   )
 }

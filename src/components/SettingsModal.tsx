@@ -18,7 +18,12 @@ import {
   RestoreIcon,
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
-import { NAV_IDS, SITE_IDS } from "~constants"
+import {
+  NAV_IDS,
+  SITE_IDS,
+  resolveSettingsNavigateDetail,
+  type SettingsNavigateDetail,
+} from "~constants"
 import { platform } from "~platform"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { SidebarFooter } from "~tabs/options/components/SidebarFooter"
@@ -74,11 +79,16 @@ interface SettingsModalProps {
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, siteId }) => {
   const [activePage, setActivePage] = useState<string>(NAV_IDS.GENERAL)
   const [initialSubTab, setInitialSubTab] = useState<string | undefined>(undefined)
+  const [locateRequest, setLocateRequest] = useState<{ settingId: string; token: number } | null>(
+    null,
+  )
   const [isMaximized, setIsMaximized] = useState(false)
   const { settings } = useSettingsStore()
   const isHydrated = useSettingsHydrated()
   const contentRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null) // 容器引用
+  const highlightTimerRef = useRef<number | undefined>(undefined)
+  const highlightedElementRef = useRef<HTMLElement | null>(null)
 
   // 初始化语言
   useEffect(() => {
@@ -110,17 +120,109 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
 
   // 监听外部导航请求
   useEffect(() => {
-    const handleNavigate = (e: CustomEvent<{ page: string; subTab?: string }>) => {
-      if (e.detail?.page && NAV_ITEMS.some((item) => item.id === e.detail.page)) {
-        setActivePage(e.detail.page)
-        if (e.detail.subTab) {
-          setInitialSubTab(e.detail.subTab)
-        }
+    const handleNavigate = (e: CustomEvent<SettingsNavigateDetail>) => {
+      const resolved = resolveSettingsNavigateDetail(e.detail || {})
+
+      if (resolved.page && NAV_ITEMS.some((item) => item.id === resolved.page)) {
+        setActivePage(resolved.page)
+      }
+
+      setInitialSubTab(resolved.subTab)
+
+      if (resolved.settingId) {
+        setLocateRequest({ settingId: resolved.settingId, token: Date.now() })
+      } else {
+        setLocateRequest(null)
       }
     }
     window.addEventListener("ophel:navigateSettingsPage", handleNavigate as EventListener)
     return () =>
       window.removeEventListener("ophel:navigateSettingsPage", handleNavigate as EventListener)
+  }, [])
+
+  // 定位并高亮目标设置项
+  useEffect(() => {
+    if (!isOpen || !locateRequest?.settingId) return
+
+    let cancelled = false
+    let retryTimer: number | undefined
+    let rafId: number | undefined
+
+    const escapedSettingId =
+      typeof CSS !== "undefined" && typeof CSS.escape === "function"
+        ? CSS.escape(locateRequest.settingId)
+        : JSON.stringify(locateRequest.settingId).slice(1, -1)
+    const selector = `[data-setting-id="${escapedSettingId}"]`
+
+    const tryLocate = (attempt: number) => {
+      if (cancelled) return
+
+      const target = contentRef.current?.querySelector<HTMLElement>(selector)
+      if (target) {
+        if (highlightTimerRef.current !== undefined) {
+          window.clearTimeout(highlightTimerRef.current)
+          highlightTimerRef.current = undefined
+        }
+
+        if (highlightedElementRef.current && highlightedElementRef.current !== target) {
+          highlightedElementRef.current.classList.remove("setting-locate-highlight")
+        }
+
+        target.scrollIntoView({ behavior: "smooth", block: "center" })
+        target.classList.remove("setting-locate-highlight")
+        void target.offsetWidth
+        target.classList.add("setting-locate-highlight")
+
+        highlightedElementRef.current = target
+
+        highlightTimerRef.current = window.setTimeout(() => {
+          target.classList.remove("setting-locate-highlight")
+          if (highlightedElementRef.current === target) {
+            highlightedElementRef.current = null
+          }
+          highlightTimerRef.current = undefined
+        }, 2200)
+
+        setLocateRequest(null)
+        return
+      }
+
+      if (attempt >= 12) {
+        console.warn(`[Ophel] Failed to locate setting: ${locateRequest.settingId}`)
+        setLocateRequest(null)
+        return
+      }
+
+      retryTimer = window.setTimeout(() => tryLocate(attempt + 1), 100)
+    }
+
+    rafId = window.requestAnimationFrame(() => tryLocate(0))
+
+    return () => {
+      cancelled = true
+
+      if (rafId !== undefined) {
+        window.cancelAnimationFrame(rafId)
+      }
+
+      if (retryTimer !== undefined) {
+        window.clearTimeout(retryTimer)
+      }
+    }
+  }, [isOpen, activePage, initialSubTab, locateRequest])
+
+  // 卸载时清理高亮状态
+  useEffect(() => {
+    return () => {
+      if (highlightTimerRef.current !== undefined) {
+        window.clearTimeout(highlightTimerRef.current)
+      }
+
+      if (highlightedElementRef.current) {
+        highlightedElementRef.current.classList.remove("setting-locate-highlight")
+        highlightedElementRef.current = null
+      }
+    }
   }, [])
 
   // 防止 Grok 和 Claude 在 keydown 时抢占焦点
@@ -189,9 +291,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
       case NAV_IDS.SITE_SETTINGS:
         return <SiteSettingsPage siteId={siteId} initialTab={initialSubTab} />
       case NAV_IDS.APPEARANCE:
-        return <AppearancePage siteId={siteId} />
+        return <AppearancePage siteId={siteId} initialTab={initialSubTab} />
       case NAV_IDS.FEATURES:
-        return <FeaturesPage siteId={siteId} />
+        return <FeaturesPage siteId={siteId} initialTab={initialSubTab} />
       case NAV_IDS.SHORTCUTS:
         return <ShortcutsPage siteId={siteId} />
       case NAV_IDS.PERMISSIONS:
@@ -201,7 +303,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
       case NAV_IDS.ABOUT:
         return <AboutPage />
       default:
-        return <GeneralPage siteId={siteId} />
+        return <GeneralPage siteId={siteId} initialTab={initialSubTab} />
     }
   }
 
@@ -245,7 +347,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
               <button
                 key={item.id}
                 className={`settings-nav-item ${activePage === item.id ? "active" : ""}`}
-                onClick={() => setActivePage(item.id)}>
+                onClick={() => {
+                  setActivePage(item.id)
+                  setInitialSubTab(undefined)
+                  setLocateRequest(null)
+                }}>
                 <span className="settings-nav-item-icon">
                   <item.Icon size={22} />
                 </span>

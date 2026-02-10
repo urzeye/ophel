@@ -15,6 +15,8 @@ export interface SettingCardProps {
   className?: string
   /** 自定义样式 */
   style?: React.CSSProperties
+  /** 稳定 setting id（用于定位/高亮） */
+  settingId?: string
 }
 
 export const SettingCard: React.FC<SettingCardProps> = ({
@@ -23,9 +25,10 @@ export const SettingCard: React.FC<SettingCardProps> = ({
   children,
   className = "",
   style,
+  settingId,
 }) => {
   return (
-    <div className={`settings-card ${className}`} style={style}>
+    <div className={`settings-card ${className}`} style={style} data-setting-id={settingId}>
       {title && <div className="settings-card-title">{title}</div>}
       {description && <div className="settings-card-desc">{description}</div>}
       {children}

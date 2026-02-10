@@ -19,6 +19,8 @@ export interface SettingRowProps {
   onDisabledClick?: () => void
   /** 自定义样式 */
   style?: React.CSSProperties
+  /** 稳定 setting id（用于定位/高亮） */
+  settingId?: string
 }
 
 /**
@@ -31,6 +33,7 @@ export const SettingRow: React.FC<SettingRowProps> = ({
   disabled = false,
   onDisabledClick,
   style,
+  settingId,
 }) => {
   const isDisabledClickable = disabled && !!onDisabledClick
   return (
@@ -38,6 +41,7 @@ export const SettingRow: React.FC<SettingRowProps> = ({
       className={`settings-row ${disabled ? "disabled" : ""} ${
         isDisabledClickable ? "disabled-clickable" : ""
       }`}
+      data-setting-id={settingId}
       style={style}
       onClick={() => {
         if (isDisabledClickable) {
@@ -63,6 +67,7 @@ export interface ToggleRowProps {
   onChange: () => void
   disabled?: boolean
   onDisabledClick?: () => void
+  settingId?: string
 }
 
 export const ToggleRow: React.FC<ToggleRowProps> = ({
@@ -72,13 +77,15 @@ export const ToggleRow: React.FC<ToggleRowProps> = ({
   onChange,
   disabled = false,
   onDisabledClick,
+  settingId,
 }) => {
   return (
     <SettingRow
       label={label}
       description={description}
       disabled={disabled}
-      onDisabledClick={onDisabledClick}>
+      onDisabledClick={onDisabledClick}
+      settingId={settingId}>
       <Switch checked={checked} onChange={onChange} disabled={disabled} />
     </SettingRow>
   )
