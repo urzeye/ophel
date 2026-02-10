@@ -19,7 +19,7 @@ import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { DEFAULT_SETTINGS, type Prompt, type Settings } from "~utils/storage"
 import { MSG_CLEAR_ALL_DATA } from "~utils/messaging"
 import { showToast } from "~utils/toast"
-import { t } from "~utils/i18n"
+import { setLanguage, t } from "~utils/i18n"
 
 import { ConfirmDialog, FolderSelectDialog, TagManagerDialog } from "./ConversationDialogs"
 import { DisclaimerModal } from "./DisclaimerModal"
@@ -40,37 +40,48 @@ import {
   type SettingsSearchItem,
 } from "~constants"
 
-const SETTINGS_PAGE_LABELS: Record<string, string> = {
-  [NAV_IDS.GENERAL]: "基本设置",
-  [NAV_IDS.FEATURES]: "功能模块",
-  [NAV_IDS.SITE_SETTINGS]: "站点配置",
-  [NAV_IDS.APPEARANCE]: "外观主题",
-  [NAV_IDS.SHORTCUTS]: "快捷键位",
-  [NAV_IDS.BACKUP]: "数据管理",
-  [NAV_IDS.PERMISSIONS]: "权限管理",
-  [NAV_IDS.ABOUT]: "关于",
+interface LocalizedLabelDefinition {
+  key: string
+  fallback: string
 }
 
-const SETTINGS_SUB_TAB_LABELS: Record<string, string> = {
-  panel: "面板",
-  tabOrder: "界面排版",
-  shortcuts: "快捷按钮",
-  toolsMenu: "工具箱",
-  [FEATURES_TAB_IDS.TAB_SETTINGS]: "标签页",
-  [FEATURES_TAB_IDS.OUTLINE]: "大纲",
-  [FEATURES_TAB_IDS.CONVERSATIONS]: "会话",
-  [FEATURES_TAB_IDS.PROMPTS]: "提示词",
-  [FEATURES_TAB_IDS.READING_HISTORY]: "阅读记录",
-  [FEATURES_TAB_IDS.CONTENT]: "页面内容",
-  [FEATURES_TAB_IDS.TOOLBOX]: "工具箱",
-  [SITE_SETTINGS_TAB_IDS.LAYOUT]: "布局",
-  [SITE_SETTINGS_TAB_IDS.MODEL_LOCK]: "模型锁定",
-  gemini: "Gemini",
-  aistudio: "AI Studio",
-  chatgpt: "ChatGPT",
-  claude: "Claude",
-  [APPEARANCE_TAB_IDS.PRESETS]: "主题预设",
-  [APPEARANCE_TAB_IDS.CUSTOM]: "自定义样式",
+const SETTINGS_PAGE_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinition> = {
+  [NAV_IDS.GENERAL]: { key: "navGeneral", fallback: "General" },
+  [NAV_IDS.FEATURES]: { key: "navFeatures", fallback: "Features" },
+  [NAV_IDS.SITE_SETTINGS]: { key: "navSiteSettings", fallback: "Site Config" },
+  [NAV_IDS.APPEARANCE]: { key: "navAppearance", fallback: "Appearance" },
+  [NAV_IDS.SHORTCUTS]: { key: "navShortcuts", fallback: "Keyboard Shortcuts" },
+  [NAV_IDS.BACKUP]: { key: "navBackup", fallback: "Data Management" },
+  [NAV_IDS.PERMISSIONS]: { key: "navPermissions", fallback: "Permissions" },
+  [NAV_IDS.ABOUT]: { key: "navAbout", fallback: "About" },
+}
+
+const SETTINGS_SUB_TAB_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinition> = {
+  panel: { key: "panelTab", fallback: "Panel" },
+  tabOrder: { key: "tabOrderTab", fallback: "Tab Order" },
+  shortcuts: { key: "shortcutsTab", fallback: "Quick Buttons" },
+  toolsMenu: { key: "toolboxMenu", fallback: "Toolbox" },
+  [FEATURES_TAB_IDS.TAB_SETTINGS]: { key: "tabSettingsTab", fallback: "Tab Settings" },
+  [FEATURES_TAB_IDS.OUTLINE]: { key: "outlineSettingsTitle", fallback: "Outline" },
+  [FEATURES_TAB_IDS.CONVERSATIONS]: {
+    key: "conversationsSettingsTitle",
+    fallback: "Conversations",
+  },
+  [FEATURES_TAB_IDS.PROMPTS]: { key: "promptSettingsTitle", fallback: "Prompts" },
+  [FEATURES_TAB_IDS.READING_HISTORY]: {
+    key: "readingHistorySettings",
+    fallback: "Reading History",
+  },
+  [FEATURES_TAB_IDS.CONTENT]: { key: "contentProcessing", fallback: "Content" },
+  [FEATURES_TAB_IDS.TOOLBOX]: { key: "toolboxMenu", fallback: "Toolbox" },
+  [SITE_SETTINGS_TAB_IDS.LAYOUT]: { key: "layoutTab", fallback: "Layout" },
+  [SITE_SETTINGS_TAB_IDS.MODEL_LOCK]: { key: "tabModelLock", fallback: "Model Lock" },
+  gemini: { key: "geminiSettingsTab", fallback: "Gemini" },
+  aistudio: { key: "aistudioSettingsTitle", fallback: "AI Studio" },
+  chatgpt: { key: "chatgptSettingsTitle", fallback: "ChatGPT" },
+  claude: { key: "claudeSettingsTab", fallback: "Claude" },
+  [APPEARANCE_TAB_IDS.PRESETS]: { key: "themePresetsTab", fallback: "Theme Presets" },
+  [APPEARANCE_TAB_IDS.CUSTOM]: { key: "customStylesTab", fallback: "Custom Styles" },
 }
 
 const isEditableTarget = (target: EventTarget | null): boolean => {
@@ -94,18 +105,187 @@ const isLikelyMac = () => {
   return navigator.platform.toLowerCase().includes("mac")
 }
 
-const getSettingsBreadcrumb = (settingId: string): string => {
-  const route = resolveSettingRoute(settingId)
-  if (!route) return "设置"
+type GlobalSearchCategoryId =
+  | "all"
+  | "outline"
+  | "conversations"
+  | "prompts"
+  | "settings"
+  | "folders"
+  | "tags"
 
-  const pageLabel = SETTINGS_PAGE_LABELS[route.page] || route.page
-  if (!route.subTab) {
-    return pageLabel
-  }
+type GlobalSearchResultCategory = Exclude<GlobalSearchCategoryId, "all">
 
-  const subTabLabel = SETTINGS_SUB_TAB_LABELS[route.subTab] || route.subTab
-  return `${pageLabel} / ${subTabLabel}`
+interface GlobalSearchCategoryDefinition {
+  id: GlobalSearchCategoryId
+  label: LocalizedLabelDefinition
+  placeholder: LocalizedLabelDefinition
+  emptyText: LocalizedLabelDefinition
 }
+
+interface GlobalSearchResultItem {
+  id: string
+  title: string
+  breadcrumb: string
+  code: string
+  category: GlobalSearchResultCategory
+  settingId?: string
+}
+
+const GLOBAL_SEARCH_CATEGORY_DEFINITIONS: GlobalSearchCategoryDefinition[] = [
+  {
+    id: "all",
+    label: { key: "globalSearchCategoryAll", fallback: "All" },
+    placeholder: { key: "globalSearchPlaceholderAll", fallback: "Search all" },
+    emptyText: { key: "globalSearchEmptyAll", fallback: "No matching results" },
+  },
+  {
+    id: "outline",
+    label: { key: "globalSearchCategoryOutline", fallback: "Outline" },
+    placeholder: { key: "globalSearchPlaceholderOutline", fallback: "Search outline" },
+    emptyText: { key: "globalSearchEmptyOutline", fallback: "No outline results" },
+  },
+  {
+    id: "conversations",
+    label: { key: "globalSearchCategoryConversations", fallback: "Conversations" },
+    placeholder: {
+      key: "globalSearchPlaceholderConversations",
+      fallback: "Search conversations on current site",
+    },
+    emptyText: {
+      key: "globalSearchEmptyConversations",
+      fallback: "No conversation results",
+    },
+  },
+  {
+    id: "prompts",
+    label: { key: "globalSearchCategoryPrompts", fallback: "Prompts" },
+    placeholder: { key: "globalSearchPlaceholderPrompts", fallback: "Search prompts" },
+    emptyText: { key: "globalSearchEmptyPrompts", fallback: "No prompt results" },
+  },
+  {
+    id: "settings",
+    label: { key: "globalSearchCategorySettings", fallback: "Settings" },
+    placeholder: { key: "globalSearchPlaceholderSettings", fallback: "Search settings" },
+    emptyText: { key: "globalSearchEmptySettings", fallback: "No matching settings" },
+  },
+  {
+    id: "folders",
+    label: { key: "globalSearchCategoryFolders", fallback: "Folders" },
+    placeholder: { key: "globalSearchPlaceholderFolders", fallback: "Search folders" },
+    emptyText: { key: "globalSearchEmptyFolders", fallback: "No folder results" },
+  },
+  {
+    id: "tags",
+    label: { key: "globalSearchCategoryTags", fallback: "Tags" },
+    placeholder: { key: "globalSearchPlaceholderTags", fallback: "Search tags" },
+    emptyText: { key: "globalSearchEmptyTags", fallback: "No tag results" },
+  },
+]
+
+const GLOBAL_SEARCH_RESULT_CATEGORY_LABELS: Record<
+  GlobalSearchResultCategory,
+  LocalizedLabelDefinition
+> = {
+  outline: { key: "globalSearchCategoryOutline", fallback: "Outline" },
+  settings: { key: "globalSearchCategorySettings", fallback: "Settings" },
+  conversations: { key: "globalSearchCategoryConversations", fallback: "Conversations" },
+  folders: { key: "globalSearchCategoryFolders", fallback: "Folders" },
+  tags: { key: "globalSearchCategoryTags", fallback: "Tags" },
+  prompts: { key: "globalSearchCategoryPrompts", fallback: "Prompts" },
+}
+
+const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
+  "aistudio-collapse-advanced": "aistudioCollapseAdvanced",
+  "aistudio-collapse-navbar": "aistudioCollapseNavbar",
+  "aistudio-collapse-run-settings": "aistudioCollapseRunSettings",
+  "aistudio-collapse-tools": "aistudioCollapseTools",
+  "aistudio-enable-search": "aistudioEnableSearch",
+  "aistudio-markdown-fix": "aistudioMarkdownFixLabel",
+  "aistudio-remove-watermark": "aistudioRemoveWatermark",
+  "appearance-custom-styles": "customCSS",
+  "appearance-preset-dark": "darkModePreset",
+  "appearance-preset-light": "lightModePreset",
+  "chatgpt-markdown-fix": "chatgptMarkdownFixLabel",
+  "claude-session-keys": "claudeSessionKeyTitle",
+  "content-formula-copy": "formulaCopyLabel",
+  "content-formula-delimiter": "formulaDelimiterLabel",
+  "content-table-copy": "tableCopyLabel",
+  "content-user-query-markdown": "userQueryMarkdownLabel",
+  "conversation-folder-rainbow": "folderRainbowLabel",
+  "conversation-sync-unpin": "conversationsSyncUnpinLabel",
+  "export-custom-model-name": "exportCustomModelName",
+  "export-custom-user-name": "exportCustomUserName",
+  "export-filename-timestamp": "exportFilenameTimestamp",
+  "export-images-base64": "exportImagesToBase64Label",
+  "gemini-markdown-fix": "markdownFixLabel",
+  "gemini-policy-max-retries": "maxRetriesLabel",
+  "gemini-policy-retry": "policyRetryLabel",
+  "gemini-watermark-removal": "watermarkRemovalLabel",
+  "layout-page-width-enabled": "enablePageWidth",
+  "layout-page-width-value": "pageWidthValueLabel",
+  "layout-user-query-width-enabled": "enableUserQueryWidth",
+  "layout-user-query-width-value": "userQueryWidthValueLabel",
+  "outline-auto-update": "outlineAutoUpdateLabel",
+  "outline-follow-mode": "outlineFollowModeLabel",
+  "outline-inline-bookmark-mode": "inlineBookmarkModeLabel",
+  "outline-panel-bookmark-mode": "panelBookmarkModeLabel",
+  "outline-prevent-auto-scroll": "preventAutoScrollLabel",
+  "outline-show-word-count": "outlineShowWordCountLabel",
+  "outline-update-interval": "outlineUpdateIntervalLabel",
+  "panel-auto-hide": "autoHidePanelLabel",
+  "panel-default-open": "defaultPanelStateLabel",
+  "panel-default-position": "defaultPositionLabel",
+  "panel-edge-distance": "defaultEdgeDistanceLabel",
+  "panel-edge-snap": "edgeSnapHideLabel",
+  "panel-edge-snap-threshold": "edgeSnapThresholdLabel",
+  "panel-height": "panelHeightLabel",
+  "panel-width": "panelWidthLabel",
+  "prompt-double-click-send": "promptDoubleClickSendLabel",
+  "quick-buttons-opacity": "quickButtonsOpacityLabel",
+  "reading-history-auto-restore": "readingHistoryAutoRestoreLabel",
+  "reading-history-cleanup-days": "readingHistoryCleanup",
+  "reading-history-persistence": "readingHistoryPersistenceLabel",
+  "tab-auto-focus": "autoFocusLabel",
+  "tab-auto-rename": "autoRenameTabLabel",
+  "tab-notification-sound": "notificationSoundLabel",
+  "tab-notification-volume": "notificationVolumeLabel",
+  "tab-notify-when-focused": "notifyWhenFocusedLabel",
+  "tab-open-new": "openNewTabLabel",
+  "tab-privacy-mode": "privacyModeLabel",
+  "tab-privacy-title": "privacyTitleLabel",
+  "tab-rename-interval": "renameIntervalLabel",
+  "tab-show-notification": "showNotificationLabel",
+  "tab-show-status": "showStatusLabel",
+  "tab-title-format": "titleFormatLabel",
+  "tools-menu-export": "export",
+  "tools-menu-copyMarkdown": "exportToClipboard",
+  "tools-menu-move": "conversationsMoveTo",
+  "tools-menu-setTag": "conversationsSetTag",
+  "tools-menu-scrollLock": "shortcutToggleScrollLock",
+  "tools-menu-modelLock": "modelLockTitle",
+  "tools-menu-cleanup": "cleanup",
+  "tools-menu-settings": "tabSettings",
+}
+
+const MODEL_LOCK_SITE_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinition> = {
+  gemini: { key: "globalSearchSiteGemini", fallback: "Gemini" },
+  "gemini-enterprise": {
+    key: "globalSearchSiteGeminiEnterprise",
+    fallback: "Gemini Enterprise",
+  },
+  aistudio: { key: "globalSearchSiteAIStudio", fallback: "AI Studio" },
+  chatgpt: { key: "globalSearchSiteChatGPT", fallback: "ChatGPT" },
+  claude: { key: "globalSearchSiteClaude", fallback: "Claude" },
+  grok: { key: "globalSearchSiteGrok", fallback: "Grok" },
+}
+
+const toSearchTitleFallback = (settingId: string): string =>
+  settingId
+    .replace(/[-_]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b([a-z])/g, (_matched, first) => first.toUpperCase())
 
 export const App = () => {
   // 读取设置 - 使用 Zustand Store
@@ -116,6 +296,77 @@ export const App = () => {
   // 订阅 _syncVersion 以在跨上下文同步时强制触发重渲染
   // 当 Options 页面更新设置时，_syncVersion 递增，这会使整个组件重渲染
   const _syncVersion = useSettingsStore((s) => s._syncVersion)
+  const [i18nRenderTick, setI18nRenderTick] = useState(0)
+
+  const getLocalizedText = useCallback(
+    (definition: LocalizedLabelDefinition) => {
+      void i18nRenderTick
+      const translated = t(definition.key)
+      return translated === definition.key ? definition.fallback : translated
+    },
+    [i18nRenderTick],
+  )
+
+  const getPageLabel = useCallback(
+    (page: string) => {
+      const definition = SETTINGS_PAGE_LABEL_DEFINITIONS[page]
+      if (!definition) return page
+      return getLocalizedText(definition)
+    },
+    [getLocalizedText],
+  )
+
+  const getSubTabLabel = useCallback(
+    (subTab: string) => {
+      const definition = SETTINGS_SUB_TAB_LABEL_DEFINITIONS[subTab]
+      if (!definition) return subTab
+      return getLocalizedText(definition)
+    },
+    [getLocalizedText],
+  )
+
+  const resolveSettingSearchTitle = useCallback(
+    (item: SettingsSearchItem): string => {
+      const titleKey = SETTING_SEARCH_TITLE_KEY_MAP[item.settingId]
+      if (titleKey) {
+        return getLocalizedText({
+          key: titleKey,
+          fallback: toSearchTitleFallback(item.settingId),
+        })
+      }
+
+      if (item.settingId.startsWith("model-lock-")) {
+        const siteKey = item.settingId.slice("model-lock-".length)
+        const siteLabelDefinition = MODEL_LOCK_SITE_LABEL_DEFINITIONS[siteKey]
+        if (siteLabelDefinition) {
+          const modelLockLabel = getLocalizedText({ key: "tabModelLock", fallback: "Model Lock" })
+          const siteLabel = getLocalizedText(siteLabelDefinition)
+          return `${modelLockLabel}: ${siteLabel}`
+        }
+      }
+
+      return toSearchTitleFallback(item.settingId)
+    },
+    [getLocalizedText],
+  )
+
+  const getSettingsBreadcrumb = useCallback(
+    (settingId: string): string => {
+      const route = resolveSettingRoute(settingId)
+      if (!route) {
+        return getLocalizedText({ key: "globalSearchCategorySettings", fallback: "Settings" })
+      }
+
+      const pageLabel = getPageLabel(route.page)
+      if (!route.subTab) {
+        return pageLabel
+      }
+
+      const subTabLabel = getSubTabLabel(route.subTab)
+      return `${pageLabel} / ${subTabLabel}`
+    },
+    [getLocalizedText, getPageLabel, getSubTabLabel],
+  )
 
   // 面板状态 - 初始值来自设置
   const [isPanelOpen, setIsPanelOpen] = useState(false)
@@ -180,9 +431,13 @@ export const App = () => {
   // 设置模态框状态
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isGlobalSettingsSearchOpen, setIsGlobalSettingsSearchOpen] = useState(false)
+  const [activeGlobalSearchCategory, setActiveGlobalSearchCategory] =
+    useState<GlobalSearchCategoryId>("all")
   const [settingsSearchQuery, setSettingsSearchQuery] = useState("")
   const [settingsSearchActiveIndex, setSettingsSearchActiveIndex] = useState(0)
+  const [settingsSearchHoverLocked, setSettingsSearchHoverLocked] = useState(false)
   const settingsSearchInputRef = useRef<HTMLInputElement | null>(null)
+  const settingsSearchResultsRef = useRef<HTMLDivElement | null>(null)
   const lastShiftPressedAtRef = useRef(0)
   const isMacLike = useMemo(() => isLikelyMac(), [])
 
@@ -241,26 +496,152 @@ export const App = () => {
     [settingsSearchQuery],
   )
 
+  const normalizedGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(
+    () =>
+      settingsSearchResults.map((item) => ({
+        id: `settings:${item.settingId}`,
+        title: resolveSettingSearchTitle(item),
+        breadcrumb: getSettingsBreadcrumb(item.settingId),
+        code: item.settingId,
+        category: "settings",
+        settingId: item.settingId,
+      })),
+    [getSettingsBreadcrumb, resolveSettingSearchTitle, settingsSearchResults],
+  )
+
+  const globalSearchResultCounts = useMemo(() => {
+    const counts = GLOBAL_SEARCH_CATEGORY_DEFINITIONS.reduce(
+      (collector, category) => {
+        collector[category.id] = 0
+        return collector
+      },
+      {} as Record<GlobalSearchCategoryId, number>,
+    )
+
+    normalizedGlobalSearchResults.forEach((item) => {
+      counts[item.category] += 1
+      counts["all"] += 1
+    })
+
+    return counts
+  }, [normalizedGlobalSearchResults])
+
+  const visibleGlobalSearchResults = useMemo(() => {
+    if (activeGlobalSearchCategory !== "all") {
+      return normalizedGlobalSearchResults.filter(
+        (item) => item.category === activeGlobalSearchCategory,
+      )
+    }
+
+    return GLOBAL_SEARCH_CATEGORY_DEFINITIONS.filter((category) => category.id !== "all").flatMap(
+      (category) =>
+        normalizedGlobalSearchResults.filter(
+          (item) => item.category === (category.id as GlobalSearchResultCategory),
+        ),
+    )
+  }, [activeGlobalSearchCategory, normalizedGlobalSearchResults])
+
+  const groupedGlobalSearchResults = useMemo(() => {
+    if (activeGlobalSearchCategory !== "all") {
+      return [] as { category: GlobalSearchResultCategory; items: GlobalSearchResultItem[] }[]
+    }
+
+    const orderedCategories = GLOBAL_SEARCH_CATEGORY_DEFINITIONS.filter(
+      (category) => category.id !== "all",
+    ).map((category) => category.id as GlobalSearchResultCategory)
+
+    return orderedCategories
+      .map((category) => ({
+        category,
+        items: visibleGlobalSearchResults.filter((item) => item.category === category),
+      }))
+      .filter((group) => group.items.length > 0)
+  }, [activeGlobalSearchCategory, visibleGlobalSearchResults])
+
+  const visibleSearchResultIndexMap = useMemo(() => {
+    const map = new Map<string, number>()
+    visibleGlobalSearchResults.forEach((item, index) => {
+      map.set(item.id, index)
+    })
+    return map
+  }, [visibleGlobalSearchResults])
+
+  const activeGlobalSearchCategoryDefinition = useMemo(
+    () =>
+      GLOBAL_SEARCH_CATEGORY_DEFINITIONS.find(
+        (category) => category.id === activeGlobalSearchCategory,
+      ) || GLOBAL_SEARCH_CATEGORY_DEFINITIONS[0],
+    [activeGlobalSearchCategory],
+  )
+
+  const resolvedActiveGlobalSearchCategoryText = useMemo(
+    () => ({
+      label: getLocalizedText(activeGlobalSearchCategoryDefinition.label),
+      placeholder: getLocalizedText(activeGlobalSearchCategoryDefinition.placeholder),
+      emptyText: getLocalizedText(activeGlobalSearchCategoryDefinition.emptyText),
+    }),
+    [activeGlobalSearchCategoryDefinition, getLocalizedText],
+  )
+
+  const resolvedGlobalSearchCategoryLabels = useMemo(
+    () =>
+      GLOBAL_SEARCH_CATEGORY_DEFINITIONS.reduce(
+        (collector, category) => {
+          collector[category.id] = getLocalizedText(category.label)
+          return collector
+        },
+        {} as Record<GlobalSearchCategoryId, string>,
+      ),
+    [getLocalizedText],
+  )
+
+  const resolvedGlobalSearchResultCategoryLabels = useMemo(
+    () =>
+      (
+        Object.entries(GLOBAL_SEARCH_RESULT_CATEGORY_LABELS) as [
+          GlobalSearchResultCategory,
+          LocalizedLabelDefinition,
+        ][]
+      ).reduce(
+        (collector, [category, definition]) => {
+          collector[category] = getLocalizedText(definition)
+          return collector
+        },
+        {} as Record<GlobalSearchResultCategory, string>,
+      ),
+    [getLocalizedText],
+  )
+
   const openGlobalSettingsSearch = useCallback(() => {
     if (edgeSnapState && settingsRef.current?.panel?.edgeSnap) {
       setIsEdgePeeking(true)
     }
 
     setSettingsSearchQuery("")
+    setActiveGlobalSearchCategory("all")
     setSettingsSearchActiveIndex(0)
+    setSettingsSearchHoverLocked(false)
     setIsGlobalSettingsSearchOpen(true)
   }, [edgeSnapState])
 
   const closeGlobalSettingsSearch = useCallback(() => {
     setIsGlobalSettingsSearchOpen(false)
+    setActiveGlobalSearchCategory("all")
     setSettingsSearchQuery("")
     setSettingsSearchActiveIndex(0)
+    setSettingsSearchHoverLocked(false)
   }, [])
 
-  const navigateToSettingFromSearch = useCallback((item: SettingsSearchItem) => {
+  const navigateToSearchResult = useCallback((item: GlobalSearchResultItem) => {
     setIsGlobalSettingsSearchOpen(false)
+    setActiveGlobalSearchCategory("all")
     setSettingsSearchQuery("")
     setSettingsSearchActiveIndex(0)
+    setSettingsSearchHoverLocked(false)
+
+    if (item.category !== "settings" || !item.settingId) {
+      return
+    }
 
     window.dispatchEvent(
       new CustomEvent("ophel:navigateSettingsPage", {
@@ -353,12 +734,39 @@ export const App = () => {
         return
       }
 
+      if (event.key === "Tab") {
+        event.preventDefault()
+        event.stopPropagation()
+
+        const currentIndex = GLOBAL_SEARCH_CATEGORY_DEFINITIONS.findIndex(
+          (category) => category.id === activeGlobalSearchCategory,
+        )
+
+        if (currentIndex < 0) {
+          setActiveGlobalSearchCategory("all")
+          setSettingsSearchActiveIndex(0)
+          setSettingsSearchHoverLocked(false)
+          return
+        }
+
+        const categoriesLength = GLOBAL_SEARCH_CATEGORY_DEFINITIONS.length
+        const nextIndex = event.shiftKey
+          ? (currentIndex - 1 + categoriesLength) % categoriesLength
+          : (currentIndex + 1) % categoriesLength
+
+        setActiveGlobalSearchCategory(GLOBAL_SEARCH_CATEGORY_DEFINITIONS[nextIndex].id)
+        setSettingsSearchActiveIndex(0)
+        setSettingsSearchHoverLocked(false)
+        return
+      }
+
       if (event.key === "ArrowDown") {
         event.preventDefault()
         event.stopPropagation()
+        setSettingsSearchHoverLocked(true)
         setSettingsSearchActiveIndex((prev) => {
-          if (settingsSearchResults.length === 0) return 0
-          return (prev + 1) % settingsSearchResults.length
+          if (visibleGlobalSearchResults.length === 0) return 0
+          return (prev + 1) % visibleGlobalSearchResults.length
         })
         return
       }
@@ -366,22 +774,23 @@ export const App = () => {
       if (event.key === "ArrowUp") {
         event.preventDefault()
         event.stopPropagation()
+        setSettingsSearchHoverLocked(true)
         setSettingsSearchActiveIndex((prev) => {
-          if (settingsSearchResults.length === 0) return 0
-          return (prev - 1 + settingsSearchResults.length) % settingsSearchResults.length
+          if (visibleGlobalSearchResults.length === 0) return 0
+          return (prev - 1 + visibleGlobalSearchResults.length) % visibleGlobalSearchResults.length
         })
         return
       }
 
       if (event.key === "Enter") {
-        if (settingsSearchResults.length === 0) return
+        if (visibleGlobalSearchResults.length === 0) return
 
-        const selected = settingsSearchResults[settingsSearchActiveIndex]
+        const selected = visibleGlobalSearchResults[settingsSearchActiveIndex]
         if (!selected) return
 
         event.preventDefault()
         event.stopPropagation()
-        navigateToSettingFromSearch(selected)
+        navigateToSearchResult(selected)
       }
     }
 
@@ -390,25 +799,62 @@ export const App = () => {
       window.removeEventListener("keydown", handleSearchNavigation, true)
     }
   }, [
+    activeGlobalSearchCategory,
     closeGlobalSettingsSearch,
     isGlobalSettingsSearchOpen,
-    navigateToSettingFromSearch,
+    navigateToSearchResult,
     settingsSearchActiveIndex,
-    settingsSearchResults,
+    visibleGlobalSearchResults,
   ])
 
   useEffect(() => {
-    if (settingsSearchResults.length === 0) {
+    if (visibleGlobalSearchResults.length === 0) {
       if (settingsSearchActiveIndex !== 0) {
         setSettingsSearchActiveIndex(0)
       }
       return
     }
 
-    if (settingsSearchActiveIndex >= settingsSearchResults.length) {
+    if (settingsSearchActiveIndex >= visibleGlobalSearchResults.length) {
       setSettingsSearchActiveIndex(0)
     }
-  }, [settingsSearchActiveIndex, settingsSearchResults.length])
+  }, [settingsSearchActiveIndex, visibleGlobalSearchResults.length])
+
+  useEffect(() => {
+    setSettingsSearchActiveIndex(0)
+    setSettingsSearchHoverLocked(false)
+  }, [activeGlobalSearchCategory, settingsSearchQuery])
+
+  useEffect(() => {
+    if (!isGlobalSettingsSearchOpen) {
+      return
+    }
+
+    const container = settingsSearchResultsRef.current
+    if (!container) {
+      return
+    }
+
+    const activeItem = container.querySelector<HTMLElement>(
+      `[data-global-search-index=\"${settingsSearchActiveIndex}\"]`,
+    )
+    if (!activeItem) {
+      return
+    }
+
+    const currentScrollTop = container.scrollTop
+    activeItem.scrollIntoView({ block: "nearest" })
+    if (container.scrollTop === currentScrollTop) {
+      const containerRect = container.getBoundingClientRect()
+      const activeRect = activeItem.getBoundingClientRect()
+      const nextTop =
+        activeRect.top -
+        containerRect.top +
+        currentScrollTop -
+        (container.clientHeight / 2 - activeRect.height / 2)
+      container.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" })
+    }
+  }, [isGlobalSettingsSearchOpen, settingsSearchActiveIndex, visibleGlobalSearchResults])
 
   // 取消快捷键触发的延迟缩回计时器
   const cancelShortcutPeekTimer = useCallback(() => {
@@ -425,14 +871,8 @@ export const App = () => {
   // 当设置中的语言变化时，同步更新 i18n
   useEffect(() => {
     if (isSettingsHydrated && settings?.language) {
-      // 使用动态 import 加载 i18n 模块
-      import("~utils/i18n")
-        .then(({ setLanguage }) => {
-          setLanguage(settings.language)
-        })
-        .catch(() => {
-          // ignore
-        })
+      setLanguage(settings.language)
+      setI18nRenderTick((prev) => prev + 1)
     }
   }, [settings?.language, isSettingsHydrated])
 
@@ -1347,6 +1787,28 @@ export const App = () => {
 
   const { tags, addTag, updateTag, deleteTag } = useTagsStore()
 
+  const renderSearchResultItem = (item: GlobalSearchResultItem, index: number) => (
+    <button
+      key={item.id}
+      type="button"
+      data-global-search-index={index}
+      className={`settings-search-item ${index === settingsSearchActiveIndex ? "active" : ""}`}
+      onMouseMove={() => {
+        if (settingsSearchHoverLocked) {
+          setSettingsSearchHoverLocked(false)
+          return
+        }
+        setSettingsSearchActiveIndex(index)
+      }}
+      onClick={() => navigateToSearchResult(item)}>
+      <div className="settings-search-item-title">{item.title}</div>
+      <div className="settings-search-item-meta">
+        <span>{item.breadcrumb}</span>
+        <code>{item.code}</code>
+      </div>
+    </button>
+  )
+
   if (!adapter || !promptManager || !conversationManager || !outlineManager) {
     return null
   }
@@ -1537,35 +1999,68 @@ export const App = () => {
                   setSettingsSearchQuery(event.target.value)
                   setSettingsSearchActiveIndex(0)
                 }}
-                placeholder="搜索设置项（例如：自动吸附 / model lock）"
+                placeholder={resolvedActiveGlobalSearchCategoryText.placeholder}
               />
               <span className="settings-search-hotkey">
                 {isMacLike ? "⌘K / ⇧⇧" : "Ctrl+K / Shift Shift"}
               </span>
             </div>
 
-            <div className="settings-search-results">
-              {settingsSearchResults.length === 0 ? (
-                <div className="settings-search-empty">未找到匹配的设置项</div>
-              ) : (
-                settingsSearchResults.map((item, index) => (
-                  <button
-                    key={item.settingId}
-                    type="button"
-                    className={`settings-search-item ${index === settingsSearchActiveIndex ? "active" : ""}`}
-                    onMouseEnter={() => setSettingsSearchActiveIndex(index)}
-                    onClick={() => navigateToSettingFromSearch(item)}>
-                    <div className="settings-search-item-title">{item.title}</div>
-                    <div className="settings-search-item-meta">
-                      <span>{getSettingsBreadcrumb(item.settingId)}</span>
-                      <code>{item.settingId}</code>
+            <div
+              className="settings-search-categories"
+              role="tablist"
+              aria-label={getLocalizedText({
+                key: "globalSearchCategoriesLabel",
+                fallback: "Global search categories",
+              })}>
+              {GLOBAL_SEARCH_CATEGORY_DEFINITIONS.map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeGlobalSearchCategory === category.id}
+                  className={`settings-search-category ${
+                    activeGlobalSearchCategory === category.id ? "active" : ""
+                  }`}
+                  onClick={() => {
+                    setActiveGlobalSearchCategory(category.id)
+                    setSettingsSearchActiveIndex(0)
+                  }}>
+                  <span>{resolvedGlobalSearchCategoryLabels[category.id]}</span>
+                  <span className="settings-search-category-count">
+                    {globalSearchResultCounts[category.id]}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="settings-search-results" ref={settingsSearchResultsRef}>
+              {visibleGlobalSearchResults.length === 0 ? (
+                <div className="settings-search-empty">
+                  {resolvedActiveGlobalSearchCategoryText.emptyText}
+                </div>
+              ) : activeGlobalSearchCategory === "all" ? (
+                groupedGlobalSearchResults.map((group) => (
+                  <section key={group.category} className="settings-search-group">
+                    <div className="settings-search-group-title">
+                      {resolvedGlobalSearchResultCategoryLabels[group.category]}
                     </div>
-                  </button>
+                    {group.items.map((item) =>
+                      renderSearchResultItem(item, visibleSearchResultIndexMap.get(item.id) ?? 0),
+                    )}
+                  </section>
                 ))
+              ) : (
+                visibleGlobalSearchResults.map((item, index) => renderSearchResultItem(item, index))
               )}
             </div>
 
-            <div className="settings-search-footer">Enter 跳转 · ↑↓ 选择 · Esc 关闭</div>
+            <div className="settings-search-footer">
+              {getLocalizedText({
+                key: "globalSearchFooterTips",
+                fallback: "Enter to jump · ↑↓ to select · Tab category · Esc to close",
+              })}
+            </div>
           </div>
         </div>
       )}

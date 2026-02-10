@@ -1139,7 +1139,7 @@ html[data-theme="dark"] .about-slogan {
 }
 
 .settings-search-modal {
-  width: min(760px, calc(100vw - 40px));
+  width: min(980px, calc(100vw - 32px));
   max-height: min(74vh, 700px);
   border: 1px solid var(--gh-border, #e5e7eb);
   border-radius: 14px;
@@ -1179,6 +1179,54 @@ html[data-theme="dark"] .about-slogan {
   line-height: 1.6;
 }
 
+.settings-search-categories {
+  display: flex;
+  align-items: center;
+  min-height: 50px;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--gh-border, #e5e7eb);
+  background: var(--gh-bg-secondary, #f9fafb);
+  overflow-x: hidden;
+  flex-wrap: wrap;
+}
+
+.settings-search-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--gh-text-secondary, #6b7280);
+  padding: 4px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  white-space: nowrap;
+}
+
+.settings-search-category:hover {
+  background: var(--gh-hover, #f3f4f6);
+  color: var(--gh-text, #374151);
+}
+
+.settings-search-category.active {
+  background: var(--gh-active-bg, #e0e7ff);
+  border-color: var(--gh-primary, #4285f4);
+  color: var(--gh-primary, #4285f4);
+}
+
+.settings-search-category-count {
+  min-width: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--gh-bg, #ffffff);
+  border: 1px solid var(--gh-border, #e5e7eb);
+  text-align: center;
+}
+
 .settings-search-results {
   flex: 1;
   overflow: auto;
@@ -1186,6 +1234,30 @@ html[data-theme="dark"] .about-slogan {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.settings-search-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-search-group + .settings-search-group {
+  margin-top: 8px;
+}
+
+.settings-search-group-title {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 -8px;
+  padding: 6px 12px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .settings-search-item {
