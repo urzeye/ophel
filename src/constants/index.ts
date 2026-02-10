@@ -13,14 +13,17 @@ export {
   SITE_SETTINGS_TAB_IDS,
   SETTING_ID_ROUTE_MAP,
   SETTING_ID_ALIASES,
+  SETTINGS_SEARCH_ITEMS,
   resolveSettingId,
   resolveSettingRoute,
   resolveSettingsNavigateDetail,
+  searchSettingsItems,
   PRESET_EMOJIS,
   TAG_COLORS,
   TOAST_DURATION,
   STATUS_COLORS,
   type SettingsNavigateDetail,
+  type SettingsSearchItem,
   type TabId,
 } from "./ui"
 

@@ -29,6 +29,84 @@ import { SelectedPromptBar } from "./SelectedPromptBar"
 import { SettingsModal } from "./SettingsModal"
 import { useTagsStore } from "~stores/tags-store"
 
+import { SearchIcon } from "~components/icons"
+import {
+  APPEARANCE_TAB_IDS,
+  FEATURES_TAB_IDS,
+  NAV_IDS,
+  SITE_SETTINGS_TAB_IDS,
+  resolveSettingRoute,
+  searchSettingsItems,
+  type SettingsSearchItem,
+} from "~constants"
+
+const SETTINGS_PAGE_LABELS: Record<string, string> = {
+  [NAV_IDS.GENERAL]: "基本设置",
+  [NAV_IDS.FEATURES]: "功能模块",
+  [NAV_IDS.SITE_SETTINGS]: "站点配置",
+  [NAV_IDS.APPEARANCE]: "外观主题",
+  [NAV_IDS.SHORTCUTS]: "快捷键位",
+  [NAV_IDS.BACKUP]: "数据管理",
+  [NAV_IDS.PERMISSIONS]: "权限管理",
+  [NAV_IDS.ABOUT]: "关于",
+}
+
+const SETTINGS_SUB_TAB_LABELS: Record<string, string> = {
+  panel: "面板",
+  tabOrder: "界面排版",
+  shortcuts: "快捷按钮",
+  toolsMenu: "工具箱",
+  [FEATURES_TAB_IDS.TAB_SETTINGS]: "标签页",
+  [FEATURES_TAB_IDS.OUTLINE]: "大纲",
+  [FEATURES_TAB_IDS.CONVERSATIONS]: "会话",
+  [FEATURES_TAB_IDS.PROMPTS]: "提示词",
+  [FEATURES_TAB_IDS.READING_HISTORY]: "阅读记录",
+  [FEATURES_TAB_IDS.CONTENT]: "页面内容",
+  [FEATURES_TAB_IDS.TOOLBOX]: "工具箱",
+  [SITE_SETTINGS_TAB_IDS.LAYOUT]: "布局",
+  [SITE_SETTINGS_TAB_IDS.MODEL_LOCK]: "模型锁定",
+  gemini: "Gemini",
+  aistudio: "AI Studio",
+  chatgpt: "ChatGPT",
+  claude: "Claude",
+  [APPEARANCE_TAB_IDS.PRESETS]: "主题预设",
+  [APPEARANCE_TAB_IDS.CUSTOM]: "自定义样式",
+}
+
+const isEditableTarget = (target: EventTarget | null): boolean => {
+  const element = target as HTMLElement | null
+  if (!element) return false
+
+  const tagName = element.tagName
+  if (tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT") {
+    return true
+  }
+
+  if (element.getAttribute("contenteditable") === "true") {
+    return true
+  }
+
+  return !!element.closest("[contenteditable=true], input, textarea, select")
+}
+
+const isLikelyMac = () => {
+  if (typeof navigator === "undefined") return false
+  return navigator.platform.toLowerCase().includes("mac")
+}
+
+const getSettingsBreadcrumb = (settingId: string): string => {
+  const route = resolveSettingRoute(settingId)
+  if (!route) return "设置"
+
+  const pageLabel = SETTINGS_PAGE_LABELS[route.page] || route.page
+  if (!route.subTab) {
+    return pageLabel
+  }
+
+  const subTabLabel = SETTINGS_SUB_TAB_LABELS[route.subTab] || route.subTab
+  return `${pageLabel} / ${subTabLabel}`
+}
+
 export const App = () => {
   // 读取设置 - 使用 Zustand Store
   const { settings, setSettings, updateDeepSetting } = useSettingsStore()
@@ -101,6 +179,12 @@ export const App = () => {
 
   // 设置模态框状态
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isGlobalSettingsSearchOpen, setIsGlobalSettingsSearchOpen] = useState(false)
+  const [settingsSearchQuery, setSettingsSearchQuery] = useState("")
+  const [settingsSearchActiveIndex, setSettingsSearchActiveIndex] = useState(0)
+  const settingsSearchInputRef = useRef<HTMLInputElement | null>(null)
+  const lastShiftPressedAtRef = useRef(0)
+  const isMacLike = useMemo(() => isLikelyMac(), [])
 
   // 浮动工具栏
 
@@ -151,6 +235,180 @@ export const App = () => {
         handleNavigateSettings as EventListener,
       )
   }, [edgeSnapState])
+
+  const settingsSearchResults = useMemo(
+    () => searchSettingsItems(settingsSearchQuery, 24),
+    [settingsSearchQuery],
+  )
+
+  const openGlobalSettingsSearch = useCallback(() => {
+    if (edgeSnapState && settingsRef.current?.panel?.edgeSnap) {
+      setIsEdgePeeking(true)
+    }
+
+    setSettingsSearchQuery("")
+    setSettingsSearchActiveIndex(0)
+    setIsGlobalSettingsSearchOpen(true)
+  }, [edgeSnapState])
+
+  const closeGlobalSettingsSearch = useCallback(() => {
+    setIsGlobalSettingsSearchOpen(false)
+    setSettingsSearchQuery("")
+    setSettingsSearchActiveIndex(0)
+  }, [])
+
+  const navigateToSettingFromSearch = useCallback((item: SettingsSearchItem) => {
+    setIsGlobalSettingsSearchOpen(false)
+    setSettingsSearchQuery("")
+    setSettingsSearchActiveIndex(0)
+
+    window.dispatchEvent(
+      new CustomEvent("ophel:navigateSettingsPage", {
+        detail: { settingId: item.settingId },
+      }),
+    )
+  }, [])
+
+  useEffect(() => {
+    if (!isGlobalSettingsSearchOpen) {
+      return
+    }
+
+    settingsSearchInputRef.current?.focus()
+    settingsSearchInputRef.current?.select()
+  }, [isGlobalSettingsSearchOpen])
+
+  useEffect(() => {
+    const handleOpenSearchShortcut = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || isGlobalSettingsSearchOpen) {
+        return
+      }
+
+      const targetIsEditable = isEditableTarget(event.target)
+      const isSearchHotkey =
+        (event.ctrlKey || event.metaKey) &&
+        !event.altKey &&
+        !event.shiftKey &&
+        event.key.toLowerCase() === "k"
+
+      if (isSearchHotkey) {
+        if (targetIsEditable) return
+
+        event.preventDefault()
+        event.stopPropagation()
+        openGlobalSettingsSearch()
+        return
+      }
+
+      if (
+        event.key !== "Shift" ||
+        event.repeat ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        targetIsEditable
+      ) {
+        return
+      }
+
+      const now = Date.now()
+      if (now - lastShiftPressedAtRef.current <= 360) {
+        event.preventDefault()
+        event.stopPropagation()
+        lastShiftPressedAtRef.current = 0
+        openGlobalSettingsSearch()
+        return
+      }
+
+      lastShiftPressedAtRef.current = now
+    }
+
+    window.addEventListener("keydown", handleOpenSearchShortcut, true)
+    return () => {
+      window.removeEventListener("keydown", handleOpenSearchShortcut, true)
+    }
+  }, [isGlobalSettingsSearchOpen, openGlobalSettingsSearch])
+
+  useEffect(() => {
+    const handleOpenSearchEvent = () => {
+      openGlobalSettingsSearch()
+    }
+
+    window.addEventListener("ophel:openSettingsSearch", handleOpenSearchEvent)
+    return () => {
+      window.removeEventListener("ophel:openSettingsSearch", handleOpenSearchEvent)
+    }
+  }, [openGlobalSettingsSearch])
+
+  useEffect(() => {
+    if (!isGlobalSettingsSearchOpen) {
+      return
+    }
+
+    const handleSearchNavigation = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault()
+        event.stopPropagation()
+        closeGlobalSettingsSearch()
+        return
+      }
+
+      if (event.key === "ArrowDown") {
+        event.preventDefault()
+        event.stopPropagation()
+        setSettingsSearchActiveIndex((prev) => {
+          if (settingsSearchResults.length === 0) return 0
+          return (prev + 1) % settingsSearchResults.length
+        })
+        return
+      }
+
+      if (event.key === "ArrowUp") {
+        event.preventDefault()
+        event.stopPropagation()
+        setSettingsSearchActiveIndex((prev) => {
+          if (settingsSearchResults.length === 0) return 0
+          return (prev - 1 + settingsSearchResults.length) % settingsSearchResults.length
+        })
+        return
+      }
+
+      if (event.key === "Enter") {
+        if (settingsSearchResults.length === 0) return
+
+        const selected = settingsSearchResults[settingsSearchActiveIndex]
+        if (!selected) return
+
+        event.preventDefault()
+        event.stopPropagation()
+        navigateToSettingFromSearch(selected)
+      }
+    }
+
+    window.addEventListener("keydown", handleSearchNavigation, true)
+    return () => {
+      window.removeEventListener("keydown", handleSearchNavigation, true)
+    }
+  }, [
+    closeGlobalSettingsSearch,
+    isGlobalSettingsSearchOpen,
+    navigateToSettingFromSearch,
+    settingsSearchActiveIndex,
+    settingsSearchResults,
+  ])
+
+  useEffect(() => {
+    if (settingsSearchResults.length === 0) {
+      if (settingsSearchActiveIndex !== 0) {
+        setSettingsSearchActiveIndex(0)
+      }
+      return
+    }
+
+    if (settingsSearchActiveIndex >= settingsSearchResults.length) {
+      setSettingsSearchActiveIndex(0)
+    }
+  }, [settingsSearchActiveIndex, settingsSearchResults.length])
 
   // 取消快捷键触发的延迟缩回计时器
   const cancelShortcutPeekTimer = useCallback(() => {
@@ -647,7 +905,8 @@ export const App = () => {
     // 检查当前是否有 Portal 元素存在
     const checkPortalExists = () => {
       const portals = document.body.querySelectorAll(portalSelector)
-      return portals.length > 0
+      const searchOverlays = document.body.querySelectorAll(".settings-search-overlay")
+      return portals.length > 0 || searchOverlays.length > 0
     }
 
     // 追踪之前的 Portal 状态，用于检测 Portal 关闭
@@ -761,7 +1020,8 @@ export const App = () => {
             const portalElements = document.body.querySelectorAll(
               ".conversations-dialog-overlay, .conversations-folder-menu, .conversations-tag-filter-menu, .prompt-modal, .settings-modal-overlay",
             )
-            if (portalElements.length === 0) {
+            const searchOverlays = document.body.querySelectorAll(".settings-search-overlay")
+            if (portalElements.length === 0 && searchOverlays.length === 0) {
               setIsEdgePeeking(false)
             }
           }
@@ -802,6 +1062,7 @@ export const App = () => {
         if (el.closest?.(".conversations-tag-filter-menu")) return true
         if (el.closest?.(".prompt-modal")) return true
         if (el.closest?.(".settings-modal-overlay")) return true
+        if (el.closest?.(".settings-search-overlay")) return true
         return false
       })
 
@@ -1150,7 +1411,8 @@ export const App = () => {
             const portalElements = document.body.querySelectorAll(
               ".conversations-dialog-overlay, .conversations-folder-menu, .conversations-tag-filter-menu, .prompt-modal, .settings-modal-overlay",
             )
-            const hasPortal = portalElements.length > 0
+            const searchOverlays = document.body.querySelectorAll(".settings-search-overlay")
+            const hasPortal = portalElements.length > 0 || searchOverlays.length > 0
 
             // 如果有活跃交互或 Portal 元素，不隐藏面板
             if (interactionActive || hasPortal) return
@@ -1260,6 +1522,53 @@ export const App = () => {
         }}
         siteId={adapter.getSiteId()}
       />
+      {isGlobalSettingsSearchOpen && (
+        <div
+          className="settings-search-overlay gh-interactive"
+          onClick={() => closeGlobalSettingsSearch()}>
+          <div className="settings-search-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="settings-search-input-wrap">
+              <SearchIcon size={16} />
+              <input
+                ref={settingsSearchInputRef}
+                className="settings-search-input"
+                value={settingsSearchQuery}
+                onChange={(event) => {
+                  setSettingsSearchQuery(event.target.value)
+                  setSettingsSearchActiveIndex(0)
+                }}
+                placeholder="搜索设置项（例如：自动吸附 / model lock）"
+              />
+              <span className="settings-search-hotkey">
+                {isMacLike ? "⌘K / ⇧⇧" : "Ctrl+K / Shift Shift"}
+              </span>
+            </div>
+
+            <div className="settings-search-results">
+              {settingsSearchResults.length === 0 ? (
+                <div className="settings-search-empty">未找到匹配的设置项</div>
+              ) : (
+                settingsSearchResults.map((item, index) => (
+                  <button
+                    key={item.settingId}
+                    type="button"
+                    className={`settings-search-item ${index === settingsSearchActiveIndex ? "active" : ""}`}
+                    onMouseEnter={() => setSettingsSearchActiveIndex(index)}
+                    onClick={() => navigateToSettingFromSearch(item)}>
+                    <div className="settings-search-item-title">{item.title}</div>
+                    <div className="settings-search-item-meta">
+                      <span>{getSettingsBreadcrumb(item.settingId)}</span>
+                      <code>{item.settingId}</code>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+
+            <div className="settings-search-footer">Enter 跳转 · ↑↓ 选择 · Esc 关闭</div>
+          </div>
+        </div>
+      )}
       {floatingToolbarMoveState && (
         <FolderSelectDialog
           folders={conversationManager.getFolders()}

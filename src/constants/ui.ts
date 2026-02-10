@@ -68,6 +68,12 @@ export interface SettingsNavigateDetail {
   settingId?: string
 }
 
+export interface SettingsSearchItem {
+  settingId: string
+  title: string
+  keywords?: string[]
+}
+
 interface SettingRoute {
   page: string
   subTab?: string
@@ -234,6 +240,457 @@ export const resolveSettingsNavigateDetail = (
     subTab: resolvedSubTab,
     settingId: resolvedSettingId,
   }
+}
+
+export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
+  {
+    settingId: "panel-default-open",
+    title: "默认显示面板",
+    keywords: ["panel", "default open", "默认打开"],
+  },
+  {
+    settingId: "panel-default-position",
+    title: "默认位置",
+    keywords: ["panel", "left", "right", "默认侧边"],
+  },
+  {
+    settingId: "panel-edge-distance",
+    title: "默认边距",
+    keywords: ["panel", "edge distance", "margin"],
+  },
+  {
+    settingId: "panel-width",
+    title: "面板宽度",
+    keywords: ["panel width", "宽度"],
+  },
+  {
+    settingId: "panel-height",
+    title: "面板高度",
+    keywords: ["panel height", "高度"],
+  },
+  {
+    settingId: "panel-edge-snap",
+    title: "边缘自动吸附",
+    keywords: ["snap", "edge", "吸附"],
+  },
+  {
+    settingId: "panel-edge-snap-threshold",
+    title: "边缘吸附阈值",
+    keywords: ["snap threshold", "edge snap", "吸附阈值"],
+  },
+  {
+    settingId: "panel-auto-hide",
+    title: "自动隐藏面板",
+    keywords: ["auto hide", "panel"],
+  },
+  {
+    settingId: "quick-buttons-opacity",
+    title: "快捷按钮透明度",
+    keywords: ["quick buttons", "opacity", "透明度"],
+  },
+  {
+    settingId: "tools-menu-export",
+    title: "工具箱：显示导出按钮",
+    keywords: ["tools menu", "export", "工具箱", "导出"],
+  },
+  {
+    settingId: "tools-menu-copyMarkdown",
+    title: "工具箱：显示复制 Markdown",
+    keywords: ["tools menu", "copy", "markdown", "工具箱"],
+  },
+  {
+    settingId: "tools-menu-move",
+    title: "工具箱：显示移动按钮",
+    keywords: ["tools menu", "move", "folder", "工具箱"],
+  },
+  {
+    settingId: "tools-menu-setTag",
+    title: "工具箱：显示标签按钮",
+    keywords: ["tools menu", "tag", "标签", "工具箱"],
+  },
+  {
+    settingId: "tools-menu-scrollLock",
+    title: "工具箱：显示滚动锁定",
+    keywords: ["tools menu", "scroll lock", "锁定滚动", "工具箱"],
+  },
+  {
+    settingId: "tools-menu-modelLock",
+    title: "工具箱：显示模型锁定",
+    keywords: ["tools menu", "model lock", "模型锁定", "工具箱"],
+  },
+  {
+    settingId: "tools-menu-cleanup",
+    title: "工具箱：显示清理按钮",
+    keywords: ["tools menu", "cleanup", "清理", "工具箱"],
+  },
+  {
+    settingId: "tools-menu-settings",
+    title: "工具箱：显示设置按钮",
+    keywords: ["tools menu", "settings", "设置", "工具箱"],
+  },
+  {
+    settingId: "tab-open-new",
+    title: "新会话打开方式",
+    keywords: ["tab", "new conversation", "open in new tab", "新标签页"],
+  },
+  {
+    settingId: "tab-auto-rename",
+    title: "自动重命名标签页",
+    keywords: ["tab", "auto rename", "自动命名"],
+  },
+  {
+    settingId: "tab-rename-interval",
+    title: "标签页重命名间隔",
+    keywords: ["tab", "rename interval", "重命名间隔"],
+  },
+  {
+    settingId: "tab-title-format",
+    title: "标签页标题格式",
+    keywords: ["tab", "title format", "标题模板"],
+  },
+  {
+    settingId: "tab-show-status",
+    title: "显示状态图标",
+    keywords: ["tab", "status", "状态图标"],
+  },
+  {
+    settingId: "tab-show-notification",
+    title: "启用新消息通知",
+    keywords: ["tab", "notification", "消息提醒"],
+  },
+  {
+    settingId: "tab-notification-sound",
+    title: "通知音效",
+    keywords: ["tab", "notification sound", "声音提醒"],
+  },
+  {
+    settingId: "tab-notification-volume",
+    title: "通知音量",
+    keywords: ["tab", "notification volume", "音量"],
+  },
+  {
+    settingId: "tab-notify-when-focused",
+    title: "标签页聚焦时也提醒",
+    keywords: ["tab", "focused", "notify", "聚焦提醒"],
+  },
+  {
+    settingId: "tab-auto-focus",
+    title: "自动聚焦到对话页",
+    keywords: ["tab", "auto focus", "自动聚焦"],
+  },
+  {
+    settingId: "tab-privacy-mode",
+    title: "隐私模式",
+    keywords: ["tab", "privacy", "隐私"],
+  },
+  {
+    settingId: "tab-privacy-title",
+    title: "隐私模式标题",
+    keywords: ["tab", "privacy title", "隐私标题"],
+  },
+  {
+    settingId: "outline-auto-update",
+    title: "自动更新大纲",
+    keywords: ["outline", "auto update", "自动刷新"],
+  },
+  {
+    settingId: "outline-update-interval",
+    title: "大纲更新间隔",
+    keywords: ["outline", "interval", "刷新频率"],
+  },
+  {
+    settingId: "outline-follow-mode",
+    title: "自动跟随浏览位置",
+    keywords: ["outline", "follow", "自动跟随"],
+  },
+  {
+    settingId: "outline-show-word-count",
+    title: "显示字数统计",
+    keywords: ["outline", "word count", "字数"],
+  },
+  {
+    settingId: "outline-inline-bookmark-mode",
+    title: "内联收藏模式",
+    keywords: ["outline", "bookmark", "收藏", "inline"],
+  },
+  {
+    settingId: "outline-panel-bookmark-mode",
+    title: "面板收藏模式",
+    keywords: ["outline", "bookmark", "收藏", "panel"],
+  },
+  {
+    settingId: "outline-prevent-auto-scroll",
+    title: "阻止自动滚动页面",
+    keywords: ["outline", "auto scroll", "禁止滚动"],
+  },
+  {
+    settingId: "conversation-folder-rainbow",
+    title: "会话文件夹彩虹色",
+    keywords: ["conversation", "folder", "rainbow", "文件夹颜色"],
+  },
+  {
+    settingId: "conversation-sync-unpin",
+    title: "同步时自动取消置顶",
+    keywords: ["conversation", "sync", "unpin", "置顶"],
+  },
+  {
+    settingId: "export-custom-user-name",
+    title: "导出：自定义用户名称",
+    keywords: ["export", "user name", "导出用户名"],
+  },
+  {
+    settingId: "export-custom-model-name",
+    title: "导出：自定义模型名称",
+    keywords: ["export", "model name", "导出模型名"],
+  },
+  {
+    settingId: "export-filename-timestamp",
+    title: "导出文件名包含时间戳",
+    keywords: ["export", "filename", "timestamp", "时间戳"],
+  },
+  {
+    settingId: "export-images-base64",
+    title: "导出时将图片转 Base64",
+    keywords: ["export", "image", "base64", "图片"],
+  },
+  {
+    settingId: "prompt-double-click-send",
+    title: "提示词双击发送",
+    keywords: ["prompt", "double click", "send", "双击发送"],
+  },
+  {
+    settingId: "reading-history-persistence",
+    title: "阅读记录持久化",
+    keywords: ["reading history", "persistence", "持久化"],
+  },
+  {
+    settingId: "reading-history-auto-restore",
+    title: "自动恢复阅读位置",
+    keywords: ["reading history", "restore", "恢复位置"],
+  },
+  {
+    settingId: "reading-history-cleanup-days",
+    title: "阅读记录清理天数",
+    keywords: ["reading history", "cleanup", "days", "清理周期"],
+  },
+  {
+    settingId: "content-user-query-markdown",
+    title: "用户问题复制为 Markdown",
+    keywords: ["content", "markdown", "user query", "用户问题"],
+  },
+  {
+    settingId: "content-formula-copy",
+    title: "公式复制增强",
+    keywords: ["content", "formula", "copy", "数学公式"],
+  },
+  {
+    settingId: "content-formula-delimiter",
+    title: "公式分隔符",
+    keywords: ["content", "formula delimiter", "分隔符"],
+  },
+  {
+    settingId: "content-table-copy",
+    title: "表格复制增强",
+    keywords: ["content", "table copy", "复制表格"],
+  },
+  {
+    settingId: "layout-page-width-enabled",
+    title: "页面宽度覆盖",
+    keywords: ["layout", "page width", "页面宽度"],
+  },
+  {
+    settingId: "layout-page-width-value",
+    title: "页面宽度值",
+    keywords: ["layout", "page width value", "页面宽度值"],
+  },
+  {
+    settingId: "layout-user-query-width-enabled",
+    title: "用户问题宽度覆盖",
+    keywords: ["layout", "user query width", "提问宽度"],
+  },
+  {
+    settingId: "layout-user-query-width-value",
+    title: "用户问题宽度值",
+    keywords: ["layout", "user query width value", "提问宽度值"],
+  },
+  {
+    settingId: "model-lock-gemini",
+    title: "模型锁定：Gemini",
+    keywords: ["model lock", "gemini", "模型锁定"],
+  },
+  {
+    settingId: "model-lock-gemini-enterprise",
+    title: "模型锁定：Gemini Enterprise",
+    keywords: ["model lock", "gemini enterprise", "模型锁定"],
+  },
+  {
+    settingId: "model-lock-aistudio",
+    title: "模型锁定：AI Studio",
+    keywords: ["model lock", "aistudio", "模型锁定"],
+  },
+  {
+    settingId: "model-lock-chatgpt",
+    title: "模型锁定：ChatGPT",
+    keywords: ["model lock", "chatgpt", "模型锁定"],
+  },
+  {
+    settingId: "model-lock-claude",
+    title: "模型锁定：Claude",
+    keywords: ["model lock", "claude", "模型锁定"],
+  },
+  {
+    settingId: "model-lock-grok",
+    title: "模型锁定：Grok",
+    keywords: ["model lock", "grok", "模型锁定"],
+  },
+  {
+    settingId: "gemini-markdown-fix",
+    title: "Gemini：Markdown 修复",
+    keywords: ["gemini", "markdown", "fix", "修复"],
+  },
+  {
+    settingId: "gemini-watermark-removal",
+    title: "Gemini：去水印",
+    keywords: ["gemini", "watermark", "去水印"],
+  },
+  {
+    settingId: "gemini-policy-retry",
+    title: "Gemini：策略重试",
+    keywords: ["gemini", "policy retry", "策略重试"],
+  },
+  {
+    settingId: "gemini-policy-max-retries",
+    title: "Gemini：最大重试次数",
+    keywords: ["gemini", "max retries", "最大重试"],
+  },
+  {
+    settingId: "aistudio-collapse-navbar",
+    title: "AI Studio：折叠左侧导航",
+    keywords: ["aistudio", "collapse navbar", "折叠导航"],
+  },
+  {
+    settingId: "aistudio-collapse-run-settings",
+    title: "AI Studio：折叠 Run settings",
+    keywords: ["aistudio", "run settings", "折叠运行设置"],
+  },
+  {
+    settingId: "aistudio-collapse-tools",
+    title: "AI Studio：折叠 Tools",
+    keywords: ["aistudio", "tools", "折叠工具"],
+  },
+  {
+    settingId: "aistudio-collapse-advanced",
+    title: "AI Studio：折叠 Advanced",
+    keywords: ["aistudio", "advanced", "折叠高级选项"],
+  },
+  {
+    settingId: "aistudio-enable-search",
+    title: "AI Studio：启用搜索",
+    keywords: ["aistudio", "search", "启用搜索"],
+  },
+  {
+    settingId: "aistudio-remove-watermark",
+    title: "AI Studio：去水印",
+    keywords: ["aistudio", "watermark", "去水印"],
+  },
+  {
+    settingId: "aistudio-markdown-fix",
+    title: "AI Studio：Markdown 修复",
+    keywords: ["aistudio", "markdown", "fix", "修复"],
+  },
+  {
+    settingId: "chatgpt-markdown-fix",
+    title: "ChatGPT：Markdown 修复",
+    keywords: ["chatgpt", "markdown", "fix", "修复"],
+  },
+  {
+    settingId: "claude-session-keys",
+    title: "Claude：Session Keys",
+    keywords: ["claude", "session key", "token", "密钥"],
+  },
+  {
+    settingId: "appearance-preset-light",
+    title: "浅色主题预设",
+    keywords: ["appearance", "theme", "light", "浅色"],
+  },
+  {
+    settingId: "appearance-preset-dark",
+    title: "深色主题预设",
+    keywords: ["appearance", "theme", "dark", "深色"],
+  },
+  {
+    settingId: "appearance-custom-styles",
+    title: "自定义主题样式",
+    keywords: ["appearance", "custom style", "主题样式", "css"],
+  },
+]
+
+const SETTING_ID_ALIAS_SEARCH_MAP = Object.entries(SETTING_ID_ALIASES).reduce(
+  (collector, [aliasId, targetSettingId]) => {
+    if (!collector[targetSettingId]) {
+      collector[targetSettingId] = []
+    }
+    collector[targetSettingId].push(aliasId)
+    return collector
+  },
+  {} as Record<string, string[]>,
+)
+
+const normalizeSearchValue = (value: string): string => value.trim().toLowerCase()
+const toSearchTokens = (query: string): string[] =>
+  normalizeSearchValue(query)
+    .split(" ")
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0)
+
+export const searchSettingsItems = (query: string, limit = 24): SettingsSearchItem[] => {
+  const normalizedQuery = normalizeSearchValue(query)
+  const tokens = toSearchTokens(normalizedQuery)
+
+  const scoredItems = SETTINGS_SEARCH_ITEMS.map((item, index) => {
+    const normalizedTitle = normalizeSearchValue(item.title)
+    const normalizedKeywords = normalizeSearchValue((item.keywords || []).join(" "))
+    const normalizedSettingId = normalizeSearchValue(item.settingId)
+    const normalizedAliasKeywords = normalizeSearchValue(
+      (SETTING_ID_ALIAS_SEARCH_MAP[item.settingId] || []).join(" "),
+    )
+    const searchableText = `${normalizedTitle} ${normalizedKeywords} ${normalizedSettingId} ${normalizedAliasKeywords}`
+
+    if (tokens.some((token) => !searchableText.includes(token))) {
+      return null
+    }
+
+    let score = 0
+    if (!normalizedQuery) {
+      score = 1000 - index
+    } else {
+      if (normalizedTitle === normalizedQuery) score += 200
+      if (normalizedTitle.startsWith(normalizedQuery)) score += 120
+      if (normalizedTitle.includes(normalizedQuery)) score += 80
+      if (normalizedKeywords.includes(normalizedQuery)) score += 70
+      if (normalizedSettingId.includes(normalizedQuery)) score += 60
+      if (normalizedAliasKeywords.includes(normalizedQuery)) score += 50
+
+      tokens.forEach((token) => {
+        if (normalizedTitle.startsWith(token)) score += 16
+        if (normalizedTitle.includes(token)) score += 8
+        if (normalizedKeywords.includes(token)) score += 6
+        if (normalizedSettingId.includes(token)) score += 5
+        if (normalizedAliasKeywords.includes(token)) score += 4
+      })
+
+      score += Math.max(0, 24 - Math.min(24, normalizedTitle.length))
+    }
+
+    return { item, score, index }
+  })
+    .filter((entry): entry is { item: SettingsSearchItem; score: number; index: number } => !!entry)
+    .sort((left, right) => {
+      if (right.score !== left.score) return right.score - left.score
+      return left.index - right.index
+    })
+
+  return scoredItems.slice(0, limit).map(({ item }) => item)
 }
 
 // ==================== Tab 定义 ====================

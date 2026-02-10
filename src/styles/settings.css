@@ -1123,3 +1123,128 @@ html[data-theme="dark"] .about-slogan {
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+/* ==================== Global Settings Search ==================== */
+
+.settings-search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: max(10vh, 56px);
+  background: rgba(15, 23, 42, 0.34);
+  backdrop-filter: blur(6px);
+}
+
+.settings-search-modal {
+  width: min(760px, calc(100vw - 40px));
+  max-height: min(74vh, 700px);
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 14px;
+  background: var(--gh-bg, #ffffff);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--gh-border, #e5e7eb);
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+  color: var(--gh-text, #1f2937);
+}
+
+.settings-search-hotkey {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.settings-search-results {
+  flex: 1;
+  overflow: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-search-item {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  color: var(--gh-text, #1f2937);
+  transition: background-color 0.16s ease;
+}
+
+.settings-search-item:hover {
+  background: var(--gh-hover, #f3f4f6);
+}
+
+.settings-search-item.active {
+  background: var(--gh-active-bg, #e0e7ff);
+}
+
+.settings-search-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.settings-search-item-meta {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+}
+
+.settings-search-item-meta code {
+  background: var(--gh-bg-secondary, #f9fafb);
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  color: var(--gh-text-secondary, #4b5563);
+  white-space: nowrap;
+}
+
+.settings-search-empty {
+  padding: 18px 14px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 13px;
+}
+
+.settings-search-footer {
+  border-top: 1px solid var(--gh-border, #e5e7eb);
+  padding: 9px 12px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+  background: var(--gh-bg-secondary, #f9fafb);
+}
