@@ -436,8 +436,12 @@ export const App = () => {
   const [settingsSearchQuery, setSettingsSearchQuery] = useState("")
   const [settingsSearchActiveIndex, setSettingsSearchActiveIndex] = useState(0)
   const [settingsSearchHoverLocked, setSettingsSearchHoverLocked] = useState(false)
+  const [settingsSearchNavigationMode, setSettingsSearchNavigationMode] = useState<
+    "keyboard" | "pointer"
+  >("pointer")
   const settingsSearchInputRef = useRef<HTMLInputElement | null>(null)
   const settingsSearchResultsRef = useRef<HTMLDivElement | null>(null)
+  const settingsSearchWheelFreezeUntilRef = useRef(0)
   const lastShiftPressedAtRef = useRef(0)
   const isMacLike = useMemo(() => isLikelyMac(), [])
 
@@ -621,6 +625,8 @@ export const App = () => {
     setActiveGlobalSearchCategory("all")
     setSettingsSearchActiveIndex(0)
     setSettingsSearchHoverLocked(false)
+    setSettingsSearchNavigationMode("pointer")
+    settingsSearchWheelFreezeUntilRef.current = 0
     setIsGlobalSettingsSearchOpen(true)
   }, [edgeSnapState])
 
@@ -630,6 +636,8 @@ export const App = () => {
     setSettingsSearchQuery("")
     setSettingsSearchActiveIndex(0)
     setSettingsSearchHoverLocked(false)
+    setSettingsSearchNavigationMode("pointer")
+    settingsSearchWheelFreezeUntilRef.current = 0
   }, [])
 
   const navigateToSearchResult = useCallback((item: GlobalSearchResultItem) => {
@@ -638,6 +646,8 @@ export const App = () => {
     setSettingsSearchQuery("")
     setSettingsSearchActiveIndex(0)
     setSettingsSearchHoverLocked(false)
+    setSettingsSearchNavigationMode("pointer")
+    settingsSearchWheelFreezeUntilRef.current = 0
 
     if (item.category !== "settings" || !item.settingId) {
       return
@@ -746,6 +756,7 @@ export const App = () => {
           setActiveGlobalSearchCategory("all")
           setSettingsSearchActiveIndex(0)
           setSettingsSearchHoverLocked(false)
+          setSettingsSearchNavigationMode("keyboard")
           return
         }
 
@@ -757,6 +768,7 @@ export const App = () => {
         setActiveGlobalSearchCategory(GLOBAL_SEARCH_CATEGORY_DEFINITIONS[nextIndex].id)
         setSettingsSearchActiveIndex(0)
         setSettingsSearchHoverLocked(false)
+        setSettingsSearchNavigationMode("keyboard")
         return
       }
 
@@ -764,6 +776,7 @@ export const App = () => {
         event.preventDefault()
         event.stopPropagation()
         setSettingsSearchHoverLocked(true)
+        setSettingsSearchNavigationMode("keyboard")
         setSettingsSearchActiveIndex((prev) => {
           if (visibleGlobalSearchResults.length === 0) return 0
           return (prev + 1) % visibleGlobalSearchResults.length
@@ -775,6 +788,7 @@ export const App = () => {
         event.preventDefault()
         event.stopPropagation()
         setSettingsSearchHoverLocked(true)
+        setSettingsSearchNavigationMode("keyboard")
         setSettingsSearchActiveIndex((prev) => {
           if (visibleGlobalSearchResults.length === 0) return 0
           return (prev - 1 + visibleGlobalSearchResults.length) % visibleGlobalSearchResults.length
@@ -823,10 +837,16 @@ export const App = () => {
   useEffect(() => {
     setSettingsSearchActiveIndex(0)
     setSettingsSearchHoverLocked(false)
+    setSettingsSearchNavigationMode("pointer")
+    settingsSearchWheelFreezeUntilRef.current = 0
   }, [activeGlobalSearchCategory, settingsSearchQuery])
 
   useEffect(() => {
     if (!isGlobalSettingsSearchOpen) {
+      return
+    }
+
+    if (settingsSearchNavigationMode !== "keyboard") {
       return
     }
 
@@ -842,19 +862,13 @@ export const App = () => {
       return
     }
 
-    const currentScrollTop = container.scrollTop
-    activeItem.scrollIntoView({ block: "nearest" })
-    if (container.scrollTop === currentScrollTop) {
-      const containerRect = container.getBoundingClientRect()
-      const activeRect = activeItem.getBoundingClientRect()
-      const nextTop =
-        activeRect.top -
-        containerRect.top +
-        currentScrollTop -
-        (container.clientHeight / 2 - activeRect.height / 2)
-      container.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" })
-    }
-  }, [isGlobalSettingsSearchOpen, settingsSearchActiveIndex, visibleGlobalSearchResults])
+    activeItem.scrollIntoView({ block: "nearest", inline: "nearest" })
+  }, [
+    isGlobalSettingsSearchOpen,
+    settingsSearchActiveIndex,
+    settingsSearchNavigationMode,
+    visibleGlobalSearchResults,
+  ])
 
   // 取消快捷键触发的延迟缩回计时器
   const cancelShortcutPeekTimer = useCallback(() => {
@@ -1794,6 +1808,12 @@ export const App = () => {
       data-global-search-index={index}
       className={`settings-search-item ${index === settingsSearchActiveIndex ? "active" : ""}`}
       onMouseMove={() => {
+        setSettingsSearchNavigationMode("pointer")
+
+        if (Date.now() < settingsSearchWheelFreezeUntilRef.current) {
+          return
+        }
+
         if (settingsSearchHoverLocked) {
           setSettingsSearchHoverLocked(false)
           return
@@ -2034,7 +2054,13 @@ export const App = () => {
               ))}
             </div>
 
-            <div className="settings-search-results" ref={settingsSearchResultsRef}>
+            <div
+              className="settings-search-results"
+              ref={settingsSearchResultsRef}
+              onWheel={() => {
+                setSettingsSearchNavigationMode("pointer")
+                settingsSearchWheelFreezeUntilRef.current = Date.now() + 200
+              }}>
               {visibleGlobalSearchResults.length === 0 ? (
                 <div className="settings-search-empty">
                   {resolvedActiveGlobalSearchCategoryText.emptyText}
