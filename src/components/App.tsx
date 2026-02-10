@@ -16,6 +16,8 @@ import { AI_STUDIO_SHORTCUT_SYNC_EVENT, PromptManager } from "~core/prompt-manag
 import { ThemeManager } from "~core/theme-manager"
 import { useShortcuts } from "~hooks/useShortcuts"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
+import { useConversationsStore } from "~stores/conversations-store"
+import { useFoldersStore } from "~stores/folders-store"
 import { DEFAULT_SETTINGS, type Prompt, type Settings } from "~utils/storage"
 import { MSG_CLEAR_ALL_DATA } from "~utils/messaging"
 import { showToast } from "~utils/toast"
@@ -123,13 +125,22 @@ interface GlobalSearchCategoryDefinition {
   emptyText: LocalizedLabelDefinition
 }
 
+interface GlobalSearchTagBadge {
+  id: string
+  name: string
+  color: string
+}
+
 interface GlobalSearchResultItem {
   id: string
   title: string
   breadcrumb: string
-  code: string
+  code?: string
   category: GlobalSearchResultCategory
   settingId?: string
+  conversationId?: string
+  conversationUrl?: string
+  tagBadges?: GlobalSearchTagBadge[]
 }
 
 const GLOBAL_SEARCH_CATEGORY_DEFINITIONS: GlobalSearchCategoryDefinition[] = [
@@ -287,6 +298,14 @@ const toSearchTitleFallback = (settingId: string): string =>
     .trim()
     .replace(/\b([a-z])/g, (_matched, first) => first.toUpperCase())
 
+const normalizeGlobalSearchValue = (value: string): string => value.trim().toLowerCase()
+
+const toGlobalSearchTokens = (query: string): string[] =>
+  normalizeGlobalSearchValue(query)
+    .split(" ")
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0)
+
 export const App = () => {
   // 读取设置 - 使用 Zustand Store
   const { settings, setSettings, updateDeepSetting } = useSettingsStore()
@@ -367,6 +386,38 @@ export const App = () => {
     },
     [getLocalizedText, getPageLabel, getSubTabLabel],
   )
+
+  // 单例实例
+  const adapter = useMemo(() => getAdapter(), [])
+
+  const promptManager = useMemo(() => {
+    return adapter ? new PromptManager(adapter) : null
+  }, [adapter])
+
+  const conversationManager = useMemo(() => {
+    return adapter ? new ConversationManager(adapter) : null
+  }, [adapter])
+
+  const outlineManager = useMemo(() => {
+    if (!adapter) return null
+
+    // 使用 Zustand 的 updateDeepSetting
+    const handleExpandLevelChange = (level: number) => {
+      updateDeepSetting("features", "outline", "expandLevel", level)
+    }
+
+    const handleShowUserQueriesChange = (show: boolean) => {
+      updateDeepSetting("features", "outline", "showUserQueries", show)
+    }
+
+    return new OutlineManager(
+      adapter,
+      settings?.features?.outline ?? DEFAULT_SETTINGS.features.outline,
+      handleExpandLevelChange,
+      handleShowUserQueriesChange,
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在 adapter 变化时重新创建
+  }, [adapter, updateDeepSetting])
 
   // 面板状态 - 初始值来自设置
   const [isPanelOpen, setIsPanelOpen] = useState(false)
@@ -495,12 +546,16 @@ export const App = () => {
       )
   }, [edgeSnapState])
 
+  const conversationsSnapshot = useConversationsStore((state) => state.conversations)
+  const foldersSnapshot = useFoldersStore((state) => state.folders)
+  const tagsSnapshot = useTagsStore((state) => state.tags)
+
   const settingsSearchResults = useMemo(
     () => searchSettingsItems(settingsSearchQuery, 24),
     [settingsSearchQuery],
   )
 
-  const normalizedGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(
+  const settingsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(
     () =>
       settingsSearchResults.map((item) => ({
         id: `settings:${item.settingId}`,
@@ -511,6 +566,123 @@ export const App = () => {
         settingId: item.settingId,
       })),
     [getSettingsBreadcrumb, resolveSettingSearchTitle, settingsSearchResults],
+  )
+
+  const conversationGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
+    if (!conversationManager) {
+      return []
+    }
+
+    void conversationsSnapshot
+    void foldersSnapshot
+    void tagsSnapshot
+
+    const conversations = conversationManager.getConversations()
+    const folders = conversationManager.getFolders()
+    const tags = conversationManager.getTags()
+
+    const folderMap = new Map(folders.map((folder) => [folder.id, folder]))
+    const tagMap = new Map(tags.map((tag) => [tag.id, tag]))
+
+    const normalizedQuery = normalizeGlobalSearchValue(settingsSearchQuery)
+    const tokens = toGlobalSearchTokens(settingsSearchQuery)
+    const untitledConversation = getLocalizedText({
+      key: "untitledConversation",
+      fallback: "Untitled conversation",
+    })
+
+    const scoredItems = conversations
+      .map((conversation, index) => {
+        const title = conversation.title?.trim() || untitledConversation
+        const folder = folderMap.get(conversation.folderId)
+        const folderLabel = folder
+          ? `${folder.icon ? `${folder.icon} ` : ""}${folder.name}`.trim()
+          : conversation.folderId
+        const tagBadges = (conversation.tagIds || [])
+          .map((tagId) => {
+            const tag = tagMap.get(tagId)
+            if (!tag) return null
+            return {
+              id: tag.id,
+              name: tag.name,
+              color: tag.color,
+            }
+          })
+          .filter((tag): tag is GlobalSearchTagBadge => Boolean(tag))
+
+        const normalizedTitle = normalizeGlobalSearchValue(title)
+        const normalizedFolder = normalizeGlobalSearchValue(folderLabel)
+        const normalizedTags = normalizeGlobalSearchValue(
+          tagBadges.map((tag) => tag.name).join(" "),
+        )
+        const normalizedConversationId = normalizeGlobalSearchValue(conversation.id)
+        const searchableText = `${normalizedTitle} ${normalizedFolder} ${normalizedTags} ${normalizedConversationId}`
+
+        if (tokens.some((token) => !searchableText.includes(token))) {
+          return null
+        }
+
+        let score = 0
+        if (!normalizedQuery) {
+          score = 1000 - index
+        } else {
+          if (normalizedTitle === normalizedQuery) score += 220
+          if (normalizedTitle.startsWith(normalizedQuery)) score += 140
+          if (normalizedTitle.includes(normalizedQuery)) score += 100
+          if (normalizedFolder.includes(normalizedQuery)) score += 72
+          if (normalizedTags.includes(normalizedQuery)) score += 64
+          if (normalizedConversationId.includes(normalizedQuery)) score += 32
+
+          tokens.forEach((token) => {
+            if (normalizedTitle.startsWith(token)) score += 24
+            if (normalizedTitle.includes(token)) score += 12
+            if (normalizedFolder.includes(token)) score += 8
+            if (normalizedTags.includes(token)) score += 8
+            if (normalizedConversationId.includes(token)) score += 4
+          })
+        }
+
+        if (conversation.pinned) {
+          score += 6
+        }
+
+        const breadcrumb = folderLabel
+
+        return {
+          item: {
+            id: `conversations:${conversation.id}`,
+            title,
+            breadcrumb,
+            category: "conversations" as const,
+            conversationId: conversation.id,
+            conversationUrl: conversation.url,
+            tagBadges,
+          },
+          score,
+          index,
+          updatedAt: conversation.updatedAt || 0,
+        }
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+      .sort((left, right) => {
+        if (right.score !== left.score) return right.score - left.score
+        if (right.updatedAt !== left.updatedAt) return right.updatedAt - left.updatedAt
+        return left.index - right.index
+      })
+
+    return scoredItems.map(({ item }) => item)
+  }, [
+    conversationManager,
+    conversationsSnapshot,
+    foldersSnapshot,
+    tagsSnapshot,
+    getLocalizedText,
+    settingsSearchQuery,
+  ])
+
+  const normalizedGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(
+    () => [...settingsGlobalSearchResults, ...conversationGlobalSearchResults],
+    [conversationGlobalSearchResults, settingsGlobalSearchResults],
   )
 
   const globalSearchResultCounts = useMemo(() => {
@@ -640,25 +812,31 @@ export const App = () => {
     settingsSearchWheelFreezeUntilRef.current = 0
   }, [])
 
-  const navigateToSearchResult = useCallback((item: GlobalSearchResultItem) => {
-    setIsGlobalSettingsSearchOpen(false)
-    setActiveGlobalSearchCategory("all")
-    setSettingsSearchQuery("")
-    setSettingsSearchActiveIndex(0)
-    setSettingsSearchHoverLocked(false)
-    setSettingsSearchNavigationMode("pointer")
-    settingsSearchWheelFreezeUntilRef.current = 0
+  const navigateToSearchResult = useCallback(
+    (item: GlobalSearchResultItem) => {
+      setIsGlobalSettingsSearchOpen(false)
+      setActiveGlobalSearchCategory("all")
+      setSettingsSearchQuery("")
+      setSettingsSearchActiveIndex(0)
+      setSettingsSearchHoverLocked(false)
+      setSettingsSearchNavigationMode("pointer")
+      settingsSearchWheelFreezeUntilRef.current = 0
 
-    if (item.category !== "settings" || !item.settingId) {
-      return
-    }
+      if (item.category === "settings" && item.settingId) {
+        window.dispatchEvent(
+          new CustomEvent("ophel:navigateSettingsPage", {
+            detail: { settingId: item.settingId },
+          }),
+        )
+        return
+      }
 
-    window.dispatchEvent(
-      new CustomEvent("ophel:navigateSettingsPage", {
-        detail: { settingId: item.settingId },
-      }),
-    )
-  }, [])
+      if (item.category === "conversations" && item.conversationId) {
+        adapter?.navigateToConversation(item.conversationId, item.conversationUrl)
+      }
+    },
+    [adapter],
+  )
 
   useEffect(() => {
     if (!isGlobalSettingsSearchOpen) {
@@ -890,9 +1068,6 @@ export const App = () => {
     }
   }, [settings?.language, isSettingsHydrated])
 
-  // 单例实例
-  const adapter = useMemo(() => getAdapter(), [])
-
   // 处理提示词选中
   const handlePromptSelect = useCallback((prompt: Prompt | null) => {
     setSelectedPrompt(prompt)
@@ -906,35 +1081,6 @@ export const App = () => {
       adapter.clearTextarea()
     }
   }, [adapter])
-
-  const promptManager = useMemo(() => {
-    return adapter ? new PromptManager(adapter) : null
-  }, [adapter])
-
-  const conversationManager = useMemo(() => {
-    return adapter ? new ConversationManager(adapter) : null
-  }, [adapter])
-
-  const outlineManager = useMemo(() => {
-    if (!adapter) return null
-
-    // 使用 Zustand 的 updateDeepSetting
-    const handleExpandLevelChange = (level: number) => {
-      updateDeepSetting("features", "outline", "expandLevel", level)
-    }
-
-    const handleShowUserQueriesChange = (show: boolean) => {
-      updateDeepSetting("features", "outline", "showUserQueries", show)
-    }
-
-    return new OutlineManager(
-      adapter,
-      settings?.features?.outline ?? DEFAULT_SETTINGS.features.outline,
-      handleExpandLevelChange,
-      handleShowUserQueriesChange,
-    )
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在 adapter 变化时重新创建
-  }, [adapter, updateDeepSetting])
 
   // 单独用 useEffect 同步 settings 变化到 manager
   useEffect(() => {
@@ -1822,9 +1968,23 @@ export const App = () => {
       }}
       onClick={() => navigateToSearchResult(item)}>
       <div className="settings-search-item-title">{item.title}</div>
-      <div className="settings-search-item-meta">
-        <span>{item.breadcrumb}</span>
-        <code>{item.code}</code>
+      <div className={`settings-search-item-meta ${item.code ? "" : "no-code"}`.trim()}>
+        <div className="settings-search-item-meta-left">
+          <span className="settings-search-item-breadcrumb">{item.breadcrumb}</span>
+          {item.category === "conversations" && item.tagBadges && item.tagBadges.length > 0 ? (
+            <div className="settings-search-tag-list">
+              {item.tagBadges.map((tag) => (
+                <span
+                  key={tag.id}
+                  className="settings-search-tag"
+                  style={{ backgroundColor: tag.color }}>
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+        {item.code ? <code>{item.code}</code> : null}
       </div>
     </button>
   )

@@ -1296,6 +1296,45 @@ html[data-theme="dark"] .about-slogan {
   font-size: 12px;
 }
 
+.settings-search-item-meta-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.settings-search-item-breadcrumb {
+  white-space: nowrap;
+}
+
+.settings-search-tag-list {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.settings-search-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 18px;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-search-item-meta.no-code {
+  justify-content: flex-start;
+}
+
 .settings-search-item-meta code {
   background: var(--gh-bg-secondary, #f9fafb);
   border: 1px solid var(--gh-border, #e5e7eb);
