@@ -1461,6 +1461,37 @@ html[data-theme="dark"] .about-slogan {
   word-break: normal;
 }
 
+.settings-search-item.conversation-item .settings-search-item-meta-left {
+  width: 100%;
+  flex-wrap: nowrap;
+  align-items: center;
+  overflow: hidden;
+}
+
+.settings-search-item.conversation-item .settings-search-item-breadcrumb {
+  display: inline-block;
+  min-width: 0;
+  flex: 0 1 auto;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: normal;
+}
+
+.settings-search-item.conversation-item .settings-search-tag-list {
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: nowrap;
+  max-height: none;
+  overflow: hidden;
+}
+
+.settings-search-item.conversation-item .settings-search-tag {
+  flex-shrink: 0;
+  max-width: 120px;
+}
+
 .settings-search-tag-list {
   display: inline-flex;
   align-items: center;

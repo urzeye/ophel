@@ -2706,6 +2706,7 @@ export const App = () => {
 
   const renderSearchResultItem = (item: GlobalSearchResultItem, index: number) => {
     const isOutlineItem = item.category === "outline" && Boolean(item.outlineTarget)
+    const isConversationItem = item.category === "conversations"
     const isOutlineQuery = isOutlineItem && Boolean(item.outlineTarget?.isUserQuery)
     const outlineRoleLabel = isOutlineQuery ? outlineRoleLabels.query : outlineRoleLabels.reply
     const showCodeOnMeta = Boolean(item.code) && !isOutlineItem
@@ -2721,7 +2722,7 @@ export const App = () => {
               ? "outline-item outline-query"
               : "outline-item outline-reply"
             : ""
-        }`.trim()}
+        } ${isConversationItem ? "conversation-item" : ""}`.trim()}
         onMouseMove={() => {
           setSettingsSearchNavigationMode("pointer")
 
@@ -2772,7 +2773,7 @@ export const App = () => {
                     className="settings-search-tag"
                     style={{ backgroundColor: tag.color }}
                     title={tag.name}>
-                    {renderSearchHighlightedParts(tag.name, "tag")}
+                    {renderSearchHighlightedParts(tag.name)}
                   </span>
                 ))}
               </div>
