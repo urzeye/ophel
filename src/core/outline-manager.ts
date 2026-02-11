@@ -700,7 +700,12 @@ export class OutlineManager {
 
     // Check if tree changed
     const showWordCountFlag = showWordCount ? "wc:1" : "wc:0"
+    const sessionIdForKey = this.siteAdapter.getSessionId() || "no-session"
+    const pathname = typeof window !== "undefined" ? window.location.pathname : ""
+    const sessionScopeKey = `${this.siteAdapter.getSiteId()}:${sessionIdForKey}:${pathname}`
     const outlineKey =
+      sessionScopeKey +
+      "|" +
       showWordCountFlag +
       "|" +
       outlineData.map((i) => `${i.text}:${(i as ExtendedOutlineItem).isBookmarked}`).join("|")

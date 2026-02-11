@@ -621,6 +621,7 @@ export const App = () => {
   const settingsSearchResultsRef = useRef<HTMLDivElement | null>(null)
   const settingsSearchWheelFreezeUntilRef = useRef(0)
   const lastShiftPressedAtRef = useRef(0)
+  const [outlineSearchVersion, setOutlineSearchVersion] = useState(0)
   const settingsSearchRestoreFocusRef = useRef<HTMLElement | null>(null)
   const isMacLike = useMemo(() => isLikelyMac(), [])
 
@@ -678,6 +679,18 @@ export const App = () => {
   const foldersSnapshot = useFoldersStore((state) => state.folders)
   const tagsSnapshot = useTagsStore((state) => state.tags)
   const promptsSnapshot = usePromptsStore((state) => state.prompts)
+
+  useEffect(() => {
+    if (!outlineManager || !isGlobalSettingsSearchOpen) {
+      return
+    }
+
+    outlineManager.refresh()
+
+    return outlineManager.subscribe(() => {
+      setOutlineSearchVersion((previousVersion) => previousVersion + 1)
+    })
+  }, [isGlobalSettingsSearchOpen, outlineManager])
 
   const settingsSearchResults = useMemo(
     () => searchSettingsItems(settingsSearchQuery),
@@ -933,6 +946,8 @@ export const App = () => {
       return []
     }
 
+    void outlineSearchVersion
+
     const flattenOutlineNodes = (nodes: OutlineNode[]): OutlineNode[] => {
       const collector: OutlineNode[] = []
 
@@ -1044,7 +1059,7 @@ export const App = () => {
       })
 
     return scoredItems.map(({ item }) => item)
-  }, [outlineManager, getLocalizedText, settingsSearchQuery])
+  }, [outlineManager, getLocalizedText, outlineSearchVersion, settingsSearchQuery])
 
   const normalizedGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(
     () => [
