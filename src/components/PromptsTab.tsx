@@ -590,10 +590,43 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       })
       showToast(t("promptAdded") || "提示词已添加")
     }
-    setIsModalOpen(false)
-    setEditingPrompt(null)
+    closeEditModal()
     loadData()
   }
+
+  const closeEditModal = useCallback(() => {
+    setIsModalOpen(false)
+    setEditingPrompt(null)
+  }, [])
+
+  const closeCategoryModal = useCallback(() => {
+    setIsCategoryModalOpen(false)
+  }, [])
+
+  const closeConfirmDialog = useCallback(() => {
+    setConfirmState((prev) => ({ ...prev, show: false }))
+  }, [])
+
+  const closePromptInputDialog = useCallback(() => {
+    setPromptInputState((prev) => ({ ...prev, show: false }))
+  }, [])
+
+  const closePreviewModal = useCallback(() => {
+    setPreviewModal({ show: false, prompt: null })
+  }, [])
+
+  const closeImportDialog = useCallback(() => {
+    setImportDialogState({ show: false, prompts: [] })
+  }, [])
+
+  const closeVariableDialog = useCallback(() => {
+    setVariableDialogState({
+      show: false,
+      prompt: null,
+      variables: [],
+      submitAfterInsert: false,
+    })
+  }, [])
 
   // 删除提示词
   const handleDelete = (id: string, e: React.MouseEvent) => {
@@ -768,6 +801,85 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const filtered = getFilteredPrompts()
 
   useEffect(() => {
+    const hasPromptDialogs =
+      promptInputState.show ||
+      confirmState.show ||
+      isCategoryModalOpen ||
+      isModalOpen ||
+      previewModal.show ||
+      importDialogState.show ||
+      variableDialogState.show
+
+    if (!hasPromptDialogs) {
+      return
+    }
+
+    const handleEscapeForPromptDialogs = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") {
+        return
+      }
+
+      e.preventDefault()
+      e.stopPropagation()
+      e.stopImmediatePropagation?.()
+
+      if (promptInputState.show) {
+        closePromptInputDialog()
+        return
+      }
+
+      if (confirmState.show) {
+        closeConfirmDialog()
+        return
+      }
+
+      if (variableDialogState.show) {
+        closeVariableDialog()
+        return
+      }
+
+      if (isCategoryModalOpen) {
+        closeCategoryModal()
+        return
+      }
+
+      if (isModalOpen) {
+        closeEditModal()
+        return
+      }
+
+      if (previewModal.show) {
+        closePreviewModal()
+        return
+      }
+
+      if (importDialogState.show) {
+        closeImportDialog()
+      }
+    }
+
+    document.addEventListener("keydown", handleEscapeForPromptDialogs, true)
+    return () => {
+      document.removeEventListener("keydown", handleEscapeForPromptDialogs, true)
+    }
+  }, [
+    closeCategoryModal,
+    closeConfirmDialog,
+    closeEditModal,
+    closeImportDialog,
+    closePreviewModal,
+    closePromptInputDialog,
+    closeVariableDialog,
+    confirmState.show,
+    importDialogState.show,
+    isCategoryModalOpen,
+    isModalOpen,
+    previewModal.show,
+    promptInputState.show,
+    variableDialogState.show,
+  ])
+
+  useEffect(() => {
     if (!locatedPromptId) {
       return
     }
@@ -808,12 +920,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     return createPortal(
       <div
         className="prompt-modal gh-interactive"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) {
-            setIsModalOpen(false)
-            setEditingPrompt(null)
-          }
-        }}
         style={{
           position: "fixed",
           top: 0,
@@ -1040,10 +1146,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "24px" }}>
             <Button
               variant="ghost"
-              onClick={() => {
-                setIsModalOpen(false)
-                setEditingPrompt(null)
-              }}
+              onClick={closeEditModal}
               style={{ background: "var(--gh-hover, #f3f4f6)" }}>
               {t("cancel")}
             </Button>
@@ -1064,11 +1167,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     return createPortal(
       <div
         className="prompt-modal gh-interactive"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) {
-            setIsCategoryModalOpen(false)
-          }
-        }}
         style={{
           position: "fixed",
           top: 0,
@@ -1163,7 +1261,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           <div style={{ marginTop: "20px", display: "flex", justifyContent: "flex-end" }}>
             <Button
               variant="ghost"
-              onClick={() => setIsCategoryModalOpen(false)}
+              onClick={closeCategoryModal}
               style={{ background: "var(--gh-hover, #f3f4f6)" }}>
               {t("close") || "关闭"}
             </Button>
@@ -1183,7 +1281,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         className="prompt-preview-modal gh-interactive"
         onClick={(e) => {
           if (e.target === e.currentTarget) {
-            setPreviewModal({ show: false, prompt: null })
+            closePreviewModal()
           }
         }}
         style={{
@@ -1235,7 +1333,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               </div>
             </div>
             <button
-              onClick={() => setPreviewModal({ show: false, prompt: null })}
+              onClick={closePreviewModal}
               style={{
                 width: "28px",
                 height: "28px",
@@ -1292,7 +1390,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         className="import-dialog gh-interactive"
         onClick={(e) => {
           if (e.target === e.currentTarget) {
-            setImportDialogState({ show: false, prompts: [] })
+            closeImportDialog()
           }
         }}
         style={{
@@ -1344,7 +1442,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
             <Button
               variant="ghost"
-              onClick={() => setImportDialogState({ show: false, prompts: [] })}
+              onClick={closeImportDialog}
               style={{ background: "var(--gh-hover, #f3f4f6)" }}>
               {t("cancel") || "取消"}
             </Button>
@@ -1833,22 +1931,24 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           title={confirmState.title}
           message={confirmState.message}
           danger
+          closeOnOverlayClick={false}
           onConfirm={() => {
-            setConfirmState({ ...confirmState, show: false })
+            closeConfirmDialog()
             confirmState.onConfirm()
           }}
-          onCancel={() => setConfirmState({ ...confirmState, show: false })}
+          onCancel={closeConfirmDialog}
         />
       )}
       {promptInputState.show && (
         <InputDialog
           title={promptInputState.title}
           defaultValue={promptInputState.defaultValue}
+          closeOnOverlayClick={false}
           onConfirm={(value) => {
-            setPromptInputState({ ...promptInputState, show: false })
+            closePromptInputDialog()
             promptInputState.onConfirm(value)
           }}
-          onCancel={() => setPromptInputState({ ...promptInputState, show: false })}
+          onCancel={closePromptInputDialog}
         />
       )}
 
@@ -1857,14 +1957,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         <VariableInputDialog
           variables={variableDialogState.variables}
           onConfirm={handleVariableConfirm}
-          onCancel={() =>
-            setVariableDialogState({
-              show: false,
-              prompt: null,
-              variables: [],
-              submitAfterInsert: false,
-            })
-          }
+          onCancel={closeVariableDialog}
         />
       )}
       <style>{`

@@ -101,12 +101,21 @@ const injectDialogStyles = () => {
 export interface DialogOverlayProps {
   children: React.ReactNode
   onClose: () => void
+  closeOnOverlayClick?: boolean
+  dialogClassName?: string
+  dialogStyle?: React.CSSProperties
 }
 
 /**
  * 对话框覆盖层 - 使用 Portal 渲染到 document.body
  */
-export const DialogOverlay: React.FC<DialogOverlayProps> = ({ children, onClose }) => {
+export const DialogOverlay: React.FC<DialogOverlayProps> = ({
+  children,
+  onClose,
+  closeOnOverlayClick = true,
+  dialogClassName,
+  dialogStyle,
+}) => {
   useEffect(() => {
     injectDialogStyles()
 
@@ -118,8 +127,13 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({ children, onClose 
   }, [onClose])
 
   const dialogContent = (
-    <div className="gh-dialog-overlay gh-interactive" onClick={onClose}>
-      <div className="gh-dialog" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="gh-dialog-overlay gh-interactive"
+      onClick={closeOnOverlayClick ? onClose : undefined}>
+      <div
+        className={dialogClassName ? `gh-dialog ${dialogClassName}` : "gh-dialog"}
+        style={dialogStyle}
+        onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
     </div>
@@ -136,6 +150,7 @@ export interface ConfirmDialogProps {
   confirmText?: string
   cancelText?: string
   danger?: boolean
+  closeOnOverlayClick?: boolean
   onConfirm: () => void
   onCancel: () => void
   /** 额外的操作链接，显示在按钮左侧 */
@@ -154,12 +169,13 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   confirmText,
   cancelText,
   danger = false,
+  closeOnOverlayClick = true,
   onConfirm,
   onCancel,
   extraAction,
 }) => {
   return (
-    <DialogOverlay onClose={onCancel}>
+    <DialogOverlay onClose={onCancel} closeOnOverlayClick={closeOnOverlayClick}>
       <div className="gh-dialog-title">{title}</div>
       <div className="gh-dialog-message">{message}</div>
       <div
@@ -201,6 +217,7 @@ export interface InputDialogProps {
   placeholder?: string
   confirmText?: string
   cancelText?: string
+  closeOnOverlayClick?: boolean
   onConfirm: (value: string) => void
   onCancel: () => void
 }
@@ -214,6 +231,7 @@ export const InputDialog: React.FC<InputDialogProps> = ({
   placeholder,
   confirmText,
   cancelText,
+  closeOnOverlayClick = true,
   onConfirm,
   onCancel,
 }) => {
@@ -230,7 +248,7 @@ export const InputDialog: React.FC<InputDialogProps> = ({
   }
 
   return (
-    <DialogOverlay onClose={onCancel}>
+    <DialogOverlay onClose={onCancel} closeOnOverlayClick={closeOnOverlayClick}>
       <div className="gh-dialog-title">{title}</div>
       <input
         ref={inputRef}

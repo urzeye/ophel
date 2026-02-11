@@ -2228,7 +2228,7 @@ export const App = () => {
     if (!edgeSnapState || !settings?.panel?.edgeSnap) return
 
     const portalSelector =
-      ".conversations-dialog-overlay, .conversations-folder-menu, .conversations-tag-filter-menu, .prompt-modal, .settings-modal-overlay"
+      ".conversations-dialog-overlay, .conversations-folder-menu, .conversations-tag-filter-menu, .prompt-modal, .gh-dialog-overlay, .settings-modal-overlay"
 
     // 检查当前是否有 Portal 元素存在
     const checkPortalExists = () => {
@@ -2346,7 +2346,7 @@ export const App = () => {
             !isInteractionActiveRef.current
           ) {
             const portalElements = document.body.querySelectorAll(
-              ".conversations-dialog-overlay, .conversations-folder-menu, .conversations-tag-filter-menu, .prompt-modal, .settings-modal-overlay",
+              ".conversations-dialog-overlay, .conversations-folder-menu, .conversations-tag-filter-menu, .prompt-modal, .gh-dialog-overlay, .settings-modal-overlay",
             )
             const searchOverlays = document.body.querySelectorAll(".settings-search-overlay")
             if (portalElements.length === 0 && searchOverlays.length === 0) {
@@ -2389,6 +2389,7 @@ export const App = () => {
         if (el.closest?.(".conversations-folder-menu")) return true
         if (el.closest?.(".conversations-tag-filter-menu")) return true
         if (el.closest?.(".prompt-modal")) return true
+        if (el.closest?.(".gh-dialog-overlay")) return true
         if (el.closest?.(".settings-modal-overlay")) return true
         if (el.closest?.(".settings-search-overlay")) return true
         return false
@@ -2857,7 +2858,7 @@ export const App = () => {
             // 检查是否有任何菜单/对话框/弹窗处于打开状态
             const interactionActive = isInteractionActiveRef.current
             const portalElements = document.body.querySelectorAll(
-              ".conversations-dialog-overlay, .conversations-folder-menu, .conversations-tag-filter-menu, .prompt-modal, .settings-modal-overlay",
+              ".conversations-dialog-overlay, .conversations-folder-menu, .conversations-tag-filter-menu, .prompt-modal, .gh-dialog-overlay, .settings-modal-overlay",
             )
             const searchOverlays = document.body.querySelectorAll(".settings-search-overlay")
             const hasPortal = portalElements.length > 0 || searchOverlays.length > 0

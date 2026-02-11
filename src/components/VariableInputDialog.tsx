@@ -5,9 +5,9 @@
  */
 
 import React, { useEffect, useRef, useState } from "react"
-import { createPortal } from "react-dom"
 
 import { ClearIcon } from "~components/icons"
+import { DialogOverlay } from "~components/ui"
 import { t } from "~utils/i18n"
 
 interface Variable {
@@ -50,6 +50,8 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
       handleSubmit()
     }
     if (e.key === "Escape") {
+      e.preventDefault()
+      e.stopPropagation()
       onCancel()
     }
   }
@@ -62,37 +64,24 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
     })
   }
 
-  return createPortal(
-    <div
-      className="prompt-modal"
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: "rgba(0, 0, 0, 0.5)",
+  return (
+    <DialogOverlay
+      onClose={onCancel}
+      closeOnOverlayClick={false}
+      dialogClassName="prompt-modal-content"
+      dialogStyle={{
+        width: "400px",
+        maxWidth: "90%",
+        maxHeight: "80vh",
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 10000,
-      }}
-      onClick={onCancel}>
+        flexDirection: "column",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+        animation: "slideUp 0.2s ease-out",
+        padding: 0,
+      }}>
       <div
-        className="prompt-modal-content"
-        onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
-        style={{
-          background: "var(--gh-bg, white)",
-          borderRadius: "12px",
-          width: "400px",
-          maxWidth: "90%",
-          maxHeight: "80vh",
-          display: "flex",
-          flexDirection: "column",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
-          animation: "slideUp 0.2s ease-out",
-        }}>
+        style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
         {/* 标题 */}
         <div
           style={{
@@ -213,8 +202,7 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
           </button>
         </div>
       </div>
-    </div>,
-    document.body,
+    </DialogOverlay>
   )
 }
 

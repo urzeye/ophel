@@ -7,6 +7,20 @@
 
 ---
 
+## [1.0.9] - 2026-02-11
+
+### ✨ 功能优化
+
+- 创建/编辑提示词弹窗禁止点击遮罩关闭，保留按钮关闭与 `Esc` 关闭，避免文本选中后在弹窗外释放鼠标导致误关闭。
+- 分类管理弹窗与“修改分类名称”输入弹窗统一为禁止遮罩关闭，交互行为保持一致。
+- `ConfirmDialog` 与 `InputDialog` 新增 `closeOnOverlayClick` 配置项，可按场景控制是否允许点击遮罩关闭。
+- `VariableInputDialog` 接入通用 `DialogOverlay`，统一 Portal、键盘关闭与遮罩交互行为。
+- 修复多层弹窗的 `Esc` 关闭顺序，改为始终优先关闭当前最上层弹窗。
+
+### 🐛 兼容性修复（油猴）
+
+- 在面板自动隐藏与 Portal 活跃检测中加入 `.gh-dialog-overlay` 识别，避免 Tampermonkey 环境下弹窗打开时面板被误判收起。
+
 ## [1.0.8] - 2026-02-11
 
 ### 🚀 新增功能
@@ -307,6 +321,7 @@
 
 ---
 
+[1.0.9]: https://github.com/urzeye/ophel/releases/tag/v1.0.9
 [1.0.8]: https://github.com/urzeye/ophel/releases/tag/v1.0.8
 [1.0.7]: https://github.com/urzeye/ophel/releases/tag/v1.0.7
 [1.0.6]: https://github.com/urzeye/ophel/releases/tag/v1.0.6
