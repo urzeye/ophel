@@ -1150,6 +1150,51 @@ html[data-theme="dark"] .about-slogan {
   flex-direction: column;
 }
 
+.settings-search-prompt-preview-float {
+  position: fixed;
+  z-index: 10002;
+  width: min(420px, calc(100vw - 32px));
+  max-height: min(56vh, 420px);
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 10px;
+  background: var(--gh-bg, #ffffff);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+}
+
+.settings-search-prompt-preview-float::-webkit-scrollbar {
+  width: 8px;
+}
+
+.settings-search-prompt-preview-float::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.settings-search-prompt-preview-float::-webkit-scrollbar-thumb {
+  background: var(--gh-border, #d1d5db);
+  border-radius: 999px;
+}
+
+.settings-search-prompt-preview-float h1:first-child,
+.settings-search-prompt-preview-float h2:first-child,
+.settings-search-prompt-preview-float h3:first-child,
+.settings-search-prompt-preview-float p:first-child {
+  margin-top: 0;
+}
+
+.settings-search-prompt-preview-float h1:last-child,
+.settings-search-prompt-preview-float h2:last-child,
+.settings-search-prompt-preview-float h3:last-child,
+.settings-search-prompt-preview-float p:last-child,
+.settings-search-prompt-preview-float ul:last-child,
+.settings-search-prompt-preview-float ol:last-child,
+.settings-search-prompt-preview-float pre:last-child,
+.settings-search-prompt-preview-float blockquote:last-child {
+  margin-bottom: 0;
+}
+
 .settings-search-input-wrap {
   display: flex;
   align-items: center;
@@ -1342,6 +1387,12 @@ html[data-theme="dark"] .about-slogan {
 
 .settings-search-results::-webkit-scrollbar-corner {
   background: transparent;
+}
+
+.settings-search-results .gh-code-copy-btn svg {
+  display: block;
+  width: 14px;
+  height: 14px;
 }
 
 .settings-search-group {

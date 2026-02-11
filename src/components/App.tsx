@@ -23,6 +23,9 @@ import { DEFAULT_SETTINGS, type Prompt, type Settings } from "~utils/storage"
 import { MSG_CLEAR_ALL_DATA } from "~utils/messaging"
 import { showToast } from "~utils/toast"
 import { setLanguage, t } from "~utils/i18n"
+import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
+import { createSafeHTML } from "~utils/trusted-types"
+import { initCopyButtons, showCopySuccess } from "~utils/icons"
 
 import { ConfirmDialog, FolderSelectDialog, TagManagerDialog } from "./ConversationDialogs"
 import { DisclaimerModal } from "./DisclaimerModal"
@@ -140,9 +143,16 @@ interface GlobalSearchResultItem {
   conversationId?: string
   conversationUrl?: string
   promptId?: string
+  promptContent?: string
   tagBadges?: GlobalSearchTagBadge[]
   matchReasons?: GlobalSearchMatchReason[]
   outlineTarget?: GlobalSearchOutlineTarget
+}
+
+interface GlobalSearchPromptPreviewState {
+  itemId: string
+  content: string
+  anchorRect: DOMRect
 }
 
 interface GlobalSearchGroupedResult {
@@ -246,6 +256,9 @@ const GLOBAL_SEARCH_SHORTCUT_NUDGE_MAX_SHOWS = 3
 const GLOBAL_SEARCH_SHORTCUT_NUDGE_MIN_INTERVAL = 24 * 60 * 60 * 1000
 const GLOBAL_SEARCH_SHORTCUT_NUDGE_AUTO_HIDE_MS = 6000
 const GLOBAL_SEARCH_SHORTCUT_NUDGE_AUTO_DISMISS_SHORTCUT_COUNT = 2
+const GLOBAL_SEARCH_PROMPT_PREVIEW_POINTER_DELAY_MS = 450
+const GLOBAL_SEARCH_PROMPT_PREVIEW_KEYBOARD_DELAY_MS = 700
+const GLOBAL_SEARCH_PROMPT_PREVIEW_HIDE_DELAY_MS = 220
 
 const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "aistudio-collapse-advanced": "aistudioCollapseAdvanced",
@@ -789,6 +802,160 @@ export const App = () => {
     }
   }, [])
 
+  const clearPromptPreviewTimer = useCallback(() => {
+    if (promptPreviewTimerRef.current) {
+      clearTimeout(promptPreviewTimerRef.current)
+      promptPreviewTimerRef.current = null
+    }
+  }, [])
+
+  const clearPromptPreviewHideTimer = useCallback(() => {
+    if (promptPreviewHideTimerRef.current) {
+      clearTimeout(promptPreviewHideTimerRef.current)
+      promptPreviewHideTimerRef.current = null
+    }
+  }, [])
+
+  const getGlobalSearchPromptAnchorElement = useCallback((itemId: string) => {
+    const container = settingsSearchResultsRef.current
+    if (!container) {
+      return null
+    }
+
+    const candidates = container.querySelectorAll<HTMLElement>("[data-global-search-item-id]")
+    for (const candidate of candidates) {
+      if (candidate.dataset.globalSearchItemId === itemId) {
+        return candidate
+      }
+    }
+
+    return null
+  }, [])
+
+  const hideGlobalSearchPromptPreview = useCallback(() => {
+    clearPromptPreviewTimer()
+    clearPromptPreviewHideTimer()
+    keyboardPreviewTargetRef.current = null
+    setGlobalSearchPromptPreview(null)
+  }, [clearPromptPreviewHideTimer, clearPromptPreviewTimer])
+
+  const scheduleHideGlobalSearchPromptPreview = useCallback(
+    (delay = GLOBAL_SEARCH_PROMPT_PREVIEW_HIDE_DELAY_MS) => {
+      clearPromptPreviewHideTimer()
+      promptPreviewHideTimerRef.current = setTimeout(() => {
+        hideGlobalSearchPromptPreview()
+        promptPreviewHideTimerRef.current = null
+      }, delay)
+    },
+    [clearPromptPreviewHideTimer, hideGlobalSearchPromptPreview],
+  )
+
+  const scheduleGlobalSearchPromptPreview = useCallback(
+    ({
+      item,
+      anchorElement,
+      delay,
+      source,
+    }: {
+      item: GlobalSearchResultItem
+      anchorElement: HTMLElement
+      delay: number
+      source: "pointer" | "keyboard"
+    }) => {
+      if (
+        item.category !== "prompts" ||
+        !item.promptId ||
+        !item.promptContent ||
+        !item.promptContent.trim()
+      ) {
+        return
+      }
+
+      clearPromptPreviewTimer()
+      clearPromptPreviewHideTimer()
+
+      if (source === "keyboard") {
+        keyboardPreviewTargetRef.current = item.id
+      }
+
+      promptPreviewTimerRef.current = setTimeout(() => {
+        if (source === "keyboard" && keyboardPreviewTargetRef.current !== item.id) {
+          return
+        }
+
+        setGlobalSearchPromptPreview({
+          itemId: item.id,
+          content: item.promptContent!,
+          anchorRect: anchorElement.getBoundingClientRect(),
+        })
+
+        promptPreviewTimerRef.current = null
+      }, delay)
+    },
+    [clearPromptPreviewHideTimer, clearPromptPreviewTimer],
+  )
+
+  const refreshGlobalSearchPromptPreviewAnchorRect = useCallback(() => {
+    setGlobalSearchPromptPreview((current) => {
+      if (!current) {
+        return current
+      }
+
+      const anchorElement = getGlobalSearchPromptAnchorElement(current.itemId)
+      if (!anchorElement) {
+        return null
+      }
+
+      const nextRect = anchorElement.getBoundingClientRect()
+      const isSameRect =
+        Math.abs(nextRect.top - current.anchorRect.top) < 0.5 &&
+        Math.abs(nextRect.left - current.anchorRect.left) < 0.5 &&
+        Math.abs(nextRect.right - current.anchorRect.right) < 0.5 &&
+        Math.abs(nextRect.bottom - current.anchorRect.bottom) < 0.5
+
+      if (isSameRect) {
+        return current
+      }
+
+      return {
+        ...current,
+        anchorRect: nextRect,
+      }
+    })
+  }, [getGlobalSearchPromptAnchorElement])
+
+  const handleGlobalSearchPromptPreviewClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      event.stopPropagation()
+
+      const target = event.target as HTMLElement
+      const copyButton = target.closest(".gh-code-copy-btn") as HTMLElement | null
+      if (!copyButton) {
+        return
+      }
+
+      const code = copyButton.nextElementSibling?.textContent || ""
+      if (!code) {
+        return
+      }
+
+      if (!navigator.clipboard?.writeText) {
+        showToast(getLocalizedText({ key: "copyFailed", fallback: "Copy failed" }))
+        return
+      }
+
+      void navigator.clipboard
+        .writeText(code)
+        .then(() => {
+          showCopySuccess(copyButton, { size: 14 })
+        })
+        .catch(() => {
+          showToast(getLocalizedText({ key: "copyFailed", fallback: "Copy failed" }))
+        })
+    },
+    [getLocalizedText],
+  )
+
   const hideGlobalSearchShortcutNudge = useCallback(() => {
     clearGlobalSearchNudgeHideTimer()
     setShowGlobalSearchShortcutNudge(false)
@@ -1059,9 +1226,15 @@ export const App = () => {
   >({})
   const [showGlobalSearchShortcutNudge, setShowGlobalSearchShortcutNudge] = useState(false)
   const [globalSearchShortcutNudgeMessage, setGlobalSearchShortcutNudgeMessage] = useState("")
+  const [globalSearchPromptPreview, setGlobalSearchPromptPreview] =
+    useState<GlobalSearchPromptPreviewState | null>(null)
   const settingsSearchInputRef = useRef<HTMLInputElement | null>(null)
   const settingsSearchResultsRef = useRef<HTMLDivElement | null>(null)
+  const promptPreviewContainerRef = useRef<HTMLDivElement | null>(null)
   const settingsSearchWheelFreezeUntilRef = useRef(0)
+  const promptPreviewTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const promptPreviewHideTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const keyboardPreviewTargetRef = useRef<string | null>(null)
   const globalSearchNudgeHideTimerRef = useRef<NodeJS.Timeout | null>(null)
   const globalSearchOpenSourceRef = useRef<GlobalSearchOpenSource>("ui")
   const lastShiftPressedAtRef = useRef(0)
@@ -1447,6 +1620,7 @@ export const App = () => {
             snippet,
             category: "prompts" as const,
             promptId: prompt.id,
+            promptContent: prompt.content,
             matchReasons: finalScoreMeta.matchReasons,
           },
           scoreMeta: finalScoreMeta,
@@ -1765,6 +1939,40 @@ export const App = () => {
       }),
     [getLocalizedText],
   )
+
+  const globalSearchPromptPreviewPosition = useMemo(() => {
+    if (!globalSearchPromptPreview || typeof window === "undefined") {
+      return null
+    }
+
+    const viewportPadding = 16
+    const gap = 12
+    const previewWidth = Math.max(280, Math.min(420, window.innerWidth - viewportPadding * 2))
+    const previewEstimatedHeight = Math.max(
+      220,
+      Math.min(420, window.innerHeight - viewportPadding * 2),
+    )
+
+    let left = globalSearchPromptPreview.anchorRect.right + gap
+    if (left + previewWidth > window.innerWidth - viewportPadding) {
+      left = globalSearchPromptPreview.anchorRect.left - previewWidth - gap
+    }
+
+    left = Math.max(
+      viewportPadding,
+      Math.min(left, window.innerWidth - previewWidth - viewportPadding),
+    )
+
+    const top = Math.max(
+      viewportPadding,
+      Math.min(
+        globalSearchPromptPreview.anchorRect.top,
+        window.innerHeight - viewportPadding - previewEstimatedHeight,
+      ),
+    )
+
+    return { top, left }
+  }, [globalSearchPromptPreview])
 
   const activeGlobalSearchContext = useMemo(() => {
     if (activeVisibleGlobalSearchIndex < 0) {
@@ -2351,12 +2559,103 @@ export const App = () => {
   }, [settingsSearchActiveIndex, visibleGlobalSearchResults.length])
 
   useEffect(() => {
+    if (!isGlobalSettingsSearchOpen) {
+      hideGlobalSearchPromptPreview()
+      return
+    }
+
+    if (settingsSearchNavigationMode !== "keyboard") {
+      return
+    }
+
+    const activeItem = visibleGlobalSearchResults[settingsSearchActiveIndex]
+    if (!activeItem || activeItem.category !== "prompts") {
+      hideGlobalSearchPromptPreview()
+      return
+    }
+
+    const container = settingsSearchResultsRef.current
+    if (!container) {
+      return
+    }
+
+    const anchorElement = container.querySelector<HTMLElement>(
+      `[data-global-search-index=\"${settingsSearchActiveIndex}\"]`,
+    )
+
+    if (!anchorElement) {
+      return
+    }
+
+    scheduleGlobalSearchPromptPreview({
+      item: activeItem,
+      anchorElement,
+      delay: GLOBAL_SEARCH_PROMPT_PREVIEW_KEYBOARD_DELAY_MS,
+      source: "keyboard",
+    })
+  }, [
+    hideGlobalSearchPromptPreview,
+    isGlobalSettingsSearchOpen,
+    scheduleGlobalSearchPromptPreview,
+    settingsSearchActiveIndex,
+    settingsSearchNavigationMode,
+    visibleGlobalSearchResults,
+  ])
+
+  useEffect(() => {
     setSettingsSearchActiveIndex(0)
     setSettingsSearchHoverLocked(false)
     setSettingsSearchNavigationMode("pointer")
     setExpandedGlobalSearchCategories({})
     settingsSearchWheelFreezeUntilRef.current = 0
-  }, [activeGlobalSearchCategory, settingsSearchQuery])
+    hideGlobalSearchPromptPreview()
+  }, [activeGlobalSearchCategory, hideGlobalSearchPromptPreview, settingsSearchQuery])
+
+  useEffect(() => {
+    if (!isGlobalSettingsSearchOpen) {
+      hideGlobalSearchPromptPreview()
+    }
+  }, [hideGlobalSearchPromptPreview, isGlobalSettingsSearchOpen])
+
+  useEffect(() => {
+    if (!globalSearchPromptPreview || !promptPreviewContainerRef.current) {
+      return
+    }
+
+    initCopyButtons(promptPreviewContainerRef.current, { size: 14 })
+  }, [globalSearchPromptPreview])
+
+  useEffect(() => {
+    if (!isGlobalSettingsSearchOpen || !globalSearchPromptPreview) {
+      return
+    }
+
+    const handlePositionUpdate = () => {
+      refreshGlobalSearchPromptPreviewAnchorRect()
+    }
+
+    const resultContainer = settingsSearchResultsRef.current
+    window.addEventListener("resize", handlePositionUpdate)
+    window.addEventListener("scroll", handlePositionUpdate, true)
+    resultContainer?.addEventListener("scroll", handlePositionUpdate)
+
+    return () => {
+      window.removeEventListener("resize", handlePositionUpdate)
+      window.removeEventListener("scroll", handlePositionUpdate, true)
+      resultContainer?.removeEventListener("scroll", handlePositionUpdate)
+    }
+  }, [
+    globalSearchPromptPreview,
+    isGlobalSettingsSearchOpen,
+    refreshGlobalSearchPromptPreviewAnchorRect,
+  ])
+
+  useEffect(() => {
+    return () => {
+      clearPromptPreviewTimer()
+      clearPromptPreviewHideTimer()
+    }
+  }, [clearPromptPreviewHideTimer, clearPromptPreviewTimer])
 
   const ensureGlobalSearchItemVisible = useCallback(
     (container: HTMLDivElement, activeItem: HTMLElement) => {
@@ -3356,6 +3655,7 @@ export const App = () => {
   const renderSearchResultItem = (item: GlobalSearchResultItem, index: number) => {
     const isOutlineItem = item.category === "outline" && Boolean(item.outlineTarget)
     const isConversationItem = item.category === "conversations"
+    const isPromptItem = item.category === "prompts"
     const isOutlineQuery = isOutlineItem && Boolean(item.outlineTarget?.isUserQuery)
     const outlineRoleLabel = isOutlineQuery ? outlineRoleLabels.query : outlineRoleLabels.reply
     const showCodeOnMeta = Boolean(item.code) && !isOutlineItem
@@ -3379,6 +3679,7 @@ export const App = () => {
         aria-selected={index === settingsSearchActiveIndex}
         tabIndex={-1}
         data-global-search-index={index}
+        data-global-search-item-id={item.id}
         className={`settings-search-item ${index === settingsSearchActiveIndex ? "active" : ""} ${
           isOutlineItem
             ? isOutlineQuery
@@ -3398,6 +3699,27 @@ export const App = () => {
             return
           }
           setSettingsSearchActiveIndex(index)
+        }}
+        onMouseEnter={(event) => {
+          if (!isPromptItem) {
+            return
+          }
+
+          keyboardPreviewTargetRef.current = null
+          setSettingsSearchNavigationMode("pointer")
+          scheduleGlobalSearchPromptPreview({
+            item,
+            anchorElement: event.currentTarget,
+            delay: GLOBAL_SEARCH_PROMPT_PREVIEW_POINTER_DELAY_MS,
+            source: "pointer",
+          })
+        }}
+        onMouseLeave={() => {
+          if (!isPromptItem) {
+            return
+          }
+
+          scheduleHideGlobalSearchPromptPreview()
         }}
         onClick={() => navigateToSearchResult(item)}>
         <div className="settings-search-item-title" title={item.title}>
@@ -3641,7 +3963,10 @@ export const App = () => {
       {isGlobalSettingsSearchOpen && (
         <div
           className="settings-search-overlay gh-interactive"
-          onClick={() => closeGlobalSettingsSearch()}>
+          onClick={() => {
+            hideGlobalSearchPromptPreview()
+            closeGlobalSettingsSearch()
+          }}>
           <div className="settings-search-modal" onClick={(event) => event.stopPropagation()}>
             <div className="settings-search-input-wrap">
               <SearchIcon size={16} />
@@ -3735,6 +4060,7 @@ export const App = () => {
               onWheel={() => {
                 setSettingsSearchNavigationMode("pointer")
                 settingsSearchWheelFreezeUntilRef.current = Date.now() + 200
+                hideGlobalSearchPromptPreview()
               }}>
               {visibleGlobalSearchResults.length === 0 ? (
                 <div className="settings-search-empty">
@@ -3780,6 +4106,30 @@ export const App = () => {
               })}
             </div>
           </div>
+          {globalSearchPromptPreview && globalSearchPromptPreviewPosition ? (
+            <>
+              <div
+                ref={promptPreviewContainerRef}
+                className="settings-search-prompt-preview-float gh-markdown-preview"
+                style={{
+                  top: globalSearchPromptPreviewPosition.top,
+                  left: globalSearchPromptPreviewPosition.left,
+                }}
+                onMouseEnter={() => {
+                  clearPromptPreviewTimer()
+                  clearPromptPreviewHideTimer()
+                }}
+                onMouseLeave={() => {
+                  scheduleHideGlobalSearchPromptPreview()
+                }}
+                onClick={handleGlobalSearchPromptPreviewClick}
+                dangerouslySetInnerHTML={{
+                  __html: createSafeHTML(renderMarkdown(globalSearchPromptPreview.content, false)),
+                }}
+              />
+              <style>{getHighlightStyles()}</style>
+            </>
+          ) : null}
         </div>
       )}
       {floatingToolbarMoveState && (

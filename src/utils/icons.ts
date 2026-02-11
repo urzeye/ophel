@@ -134,8 +134,16 @@ export function initCopyButtons(
   container: Element | Document | ShadowRoot,
   options: IconOptions = {},
 ): void {
-  const buttons = container.querySelectorAll(".gh-code-copy-btn:empty, .gh-table-copy-btn:empty")
+  const buttons = container.querySelectorAll(".gh-code-copy-btn, .gh-table-copy-btn")
   buttons.forEach((btn) => {
+    if (btn.querySelector("svg")) {
+      return
+    }
+
+    while (btn.firstChild) {
+      btn.removeChild(btn.firstChild)
+    }
+
     btn.appendChild(createCopyIcon(options))
   })
 }
