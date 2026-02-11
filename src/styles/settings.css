@@ -1259,13 +1259,56 @@ html[data-theme="dark"] .about-slogan {
 
 .settings-search-results {
   flex: 1;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 8px;
   display: flex;
   flex-direction: column;
   gap: 4px;
   scroll-padding-top: 8px;
   scroll-padding-bottom: 12px;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gh-border, #d1d5db) transparent;
+}
+
+.settings-search-results::-webkit-scrollbar {
+  width: 10px;
+}
+
+.settings-search-results::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 6px 0;
+}
+
+.settings-search-results::-webkit-scrollbar-thumb {
+  background: var(--gh-border, #d1d5db);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  min-height: 36px;
+}
+
+.settings-search-results::-webkit-scrollbar-thumb:hover {
+  background: var(--gh-text-secondary, #9ca3af);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+.settings-search-results::-webkit-scrollbar-thumb:active {
+  background: var(--gh-primary, #4285f4);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+.settings-search-results::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.settings-search-results::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .settings-search-group {
@@ -1331,6 +1374,7 @@ html[data-theme="dark"] .about-slogan {
   text-align: left;
   background: transparent;
   border: none;
+  box-sizing: border-box;
   border-radius: 10px;
   padding: 10px 12px;
   cursor: pointer;
