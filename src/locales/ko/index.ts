@@ -1100,6 +1100,16 @@ export const ko = {
   globalSearchContextCurrentItem: "{current}번째 항목",
   globalSearchContextShownProgress: "표시됨 {shown}/{total}",
   globalSearchContextTotalItems: "총 {total}개",
+  globalSearchMatchReasonTitle: "제목 일치",
+  globalSearchMatchReasonFolder: "폴더 일치",
+  globalSearchMatchReasonTag: "태그 일치",
+  globalSearchMatchReasonType: "유형 일치",
+  globalSearchMatchReasonCode: "코드 일치",
+  globalSearchMatchReasonCategory: "분류 일치",
+  globalSearchMatchReasonContent: "내용 일치",
+  globalSearchMatchReasonId: "ID 일치",
+  globalSearchMatchReasonKeyword: "키워드 일치",
+  globalSearchMatchReasonAlias: "별칭 일치",
 
   // Missing Keys
   moreLanguages: "More Languages",

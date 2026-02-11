@@ -37,6 +37,7 @@ import {
   APPEARANCE_TAB_IDS,
   FEATURES_TAB_IDS,
   NAV_IDS,
+  SETTING_ID_ALIASES,
   SITE_SETTINGS_TAB_IDS,
   TAB_IDS,
   resolveSettingRoute,
@@ -106,6 +107,18 @@ interface GlobalSearchTagBadge {
   color: string
 }
 
+type GlobalSearchMatchReason =
+  | "title"
+  | "folder"
+  | "tag"
+  | "type"
+  | "code"
+  | "category"
+  | "content"
+  | "id"
+  | "keyword"
+  | "alias"
+
 interface GlobalSearchOutlineTarget {
   index: number
   level: number
@@ -120,6 +133,7 @@ interface GlobalSearchResultItem {
   id: string
   title: string
   breadcrumb: string
+  snippet?: string
   code?: string
   category: GlobalSearchResultCategory
   settingId?: string
@@ -127,6 +141,7 @@ interface GlobalSearchResultItem {
   conversationUrl?: string
   promptId?: string
   tagBadges?: GlobalSearchTagBadge[]
+  matchReasons?: GlobalSearchMatchReason[]
   outlineTarget?: GlobalSearchOutlineTarget
 }
 
@@ -202,6 +217,22 @@ const GLOBAL_SEARCH_RESULT_CATEGORY_LABELS: Record<
   settings: { key: "globalSearchCategorySettings", fallback: "Settings" },
   conversations: { key: "globalSearchCategoryConversations", fallback: "Conversations" },
   prompts: { key: "globalSearchCategoryPrompts", fallback: "Prompts" },
+}
+
+const GLOBAL_SEARCH_MATCH_REASON_LABEL_DEFINITIONS: Record<
+  GlobalSearchMatchReason,
+  LocalizedLabelDefinition
+> = {
+  title: { key: "globalSearchMatchReasonTitle", fallback: "Title match" },
+  folder: { key: "globalSearchMatchReasonFolder", fallback: "Folder match" },
+  tag: { key: "globalSearchMatchReasonTag", fallback: "Tag match" },
+  type: { key: "globalSearchMatchReasonType", fallback: "Type match" },
+  code: { key: "globalSearchMatchReasonCode", fallback: "Code match" },
+  category: { key: "globalSearchMatchReasonCategory", fallback: "Category match" },
+  content: { key: "globalSearchMatchReasonContent", fallback: "Content match" },
+  id: { key: "globalSearchMatchReasonId", fallback: "ID match" },
+  keyword: { key: "globalSearchMatchReasonKeyword", fallback: "Keyword match" },
+  alias: { key: "globalSearchMatchReasonAlias", fallback: "Alias match" },
 }
 
 const GLOBAL_SEARCH_ALL_CATEGORY_ITEM_LIMIT = 12
@@ -317,6 +348,52 @@ const toGlobalSearchTokens = (query: string): string[] =>
     .map((token) => token.trim())
     .filter((token) => token.length > 0)
 
+const buildGlobalSearchSnippet = ({
+  content,
+  normalizedQuery,
+  tokens,
+  maxLength = 84,
+}: {
+  content: string
+  normalizedQuery: string
+  tokens: string[]
+  maxLength?: number
+}): string => {
+  const normalizedContent = content.replace(/\s+/g, " ").trim()
+  if (!normalizedContent) return ""
+
+  const candidates = Array.from(new Set([normalizedQuery, ...tokens])).filter(Boolean)
+  const lowerContent = normalizedContent.toLowerCase()
+
+  let firstHitIndex = -1
+  candidates.forEach((candidate) => {
+    const hitIndex = lowerContent.indexOf(candidate)
+    if (hitIndex === -1) return
+    if (firstHitIndex === -1 || hitIndex < firstHitIndex) {
+      firstHitIndex = hitIndex
+    }
+  })
+
+  if (firstHitIndex < 0) {
+    return normalizedContent.length > maxLength
+      ? `${normalizedContent.slice(0, maxLength).trim()}…`
+      : normalizedContent
+  }
+
+  let start = Math.max(0, firstHitIndex - Math.floor(maxLength * 0.25))
+  let end = Math.min(normalizedContent.length, start + maxLength)
+
+  if (end >= normalizedContent.length) {
+    start = Math.max(0, normalizedContent.length - maxLength)
+  }
+
+  const snippet = normalizedContent.slice(start, end).trim()
+  const prefix = start > 0 ? "…" : ""
+  const suffix = end < normalizedContent.length ? "…" : ""
+
+  return `${prefix}${snippet}${suffix}`
+}
+
 const hasPromptVariables = (content: string): boolean => /\{\{(\w+)\}\}/.test(content)
 
 const getFolderDisplayName = (folder: { name: string; icon?: string }): string => {
@@ -424,7 +501,32 @@ interface GlobalSearchScoreField {
   includes: number
   tokenPrefix: number
   tokenIncludes: number
+  matchReason?: GlobalSearchMatchReason
 }
+
+interface GlobalSearchScoreResult {
+  score: number
+  matchLevel: number
+  exactHitCount: number
+  prefixHitCount: number
+  includesHitCount: number
+  matchReasons: GlobalSearchMatchReason[]
+}
+
+const buildSettingAliasMap = (): Record<string, string[]> => {
+  return Object.entries(SETTING_ID_ALIASES).reduce(
+    (collector, [aliasId, targetSettingId]) => {
+      if (!collector[targetSettingId]) {
+        collector[targetSettingId] = []
+      }
+      collector[targetSettingId].push(aliasId)
+      return collector
+    },
+    {} as Record<string, string[]>,
+  )
+}
+
+const GLOBAL_SEARCH_SETTING_ALIAS_MAP = buildSettingAliasMap()
 
 const getGlobalSearchScore = ({
   normalizedQuery,
@@ -438,7 +540,7 @@ const getGlobalSearchScore = ({
   index: number
   fields: GlobalSearchScoreField[]
   baseScoreWhenEmpty?: number
-}): number | null => {
+}): GlobalSearchScoreResult | null => {
   const searchableText = fields.map((field) => field.value).join(" ")
 
   if (tokens.some((token) => !searchableText.includes(token))) {
@@ -446,10 +548,22 @@ const getGlobalSearchScore = ({
   }
 
   if (!normalizedQuery) {
-    return baseScoreWhenEmpty - index
+    return {
+      score: baseScoreWhenEmpty - index,
+      matchLevel: 0,
+      exactHitCount: 0,
+      prefixHitCount: 0,
+      includesHitCount: 0,
+      matchReasons: [],
+    }
   }
 
   let score = 0
+  let matchLevel = 0
+  let exactHitCount = 0
+  let prefixHitCount = 0
+  let includesHitCount = 0
+  const matchReasons = new Set<GlobalSearchMatchReason>()
 
   fields.forEach((field) => {
     const normalizedValue = field.value
@@ -457,17 +571,101 @@ const getGlobalSearchScore = ({
       return
     }
 
-    if (normalizedValue === normalizedQuery) score += field.exact
-    if (normalizedValue.startsWith(normalizedQuery)) score += field.prefix
-    if (normalizedValue.includes(normalizedQuery)) score += field.includes
+    let fieldMatchLevel = 0
+    let tokenMatchedByPrefix = false
+    let tokenMatchedByIncludes = false
+
+    if (normalizedValue === normalizedQuery) {
+      score += field.exact
+      fieldMatchLevel = 3
+      exactHitCount += 1
+    } else if (normalizedValue.startsWith(normalizedQuery)) {
+      score += field.prefix
+      fieldMatchLevel = 2
+      prefixHitCount += 1
+    } else if (normalizedValue.includes(normalizedQuery)) {
+      score += field.includes
+      fieldMatchLevel = 1
+      includesHitCount += 1
+    }
+
+    matchLevel = Math.max(matchLevel, fieldMatchLevel)
+
+    if (fieldMatchLevel > 0 && field.matchReason) {
+      matchReasons.add(field.matchReason)
+    }
 
     tokens.forEach((token) => {
-      if (normalizedValue.startsWith(token)) score += field.tokenPrefix
-      if (normalizedValue.includes(token)) score += field.tokenIncludes
+      if (normalizedValue.startsWith(token)) {
+        score += field.tokenPrefix
+        tokenMatchedByPrefix = true
+      }
+      if (normalizedValue.includes(token)) {
+        score += field.tokenIncludes
+        tokenMatchedByIncludes = true
+      }
     })
+
+    if (fieldMatchLevel === 0) {
+      if (tokenMatchedByPrefix) {
+        matchLevel = Math.max(matchLevel, 2)
+        prefixHitCount += 1
+        if (field.matchReason) {
+          matchReasons.add(field.matchReason)
+        }
+      } else if (tokenMatchedByIncludes) {
+        matchLevel = Math.max(matchLevel, 1)
+        includesHitCount += 1
+        if (field.matchReason) {
+          matchReasons.add(field.matchReason)
+        }
+      }
+    } else {
+      matchLevel = Math.max(matchLevel, fieldMatchLevel)
+    }
   })
 
-  return score
+  return {
+    score,
+    matchLevel,
+    exactHitCount,
+    prefixHitCount,
+    includesHitCount,
+    matchReasons: Array.from(matchReasons),
+  }
+}
+
+const compareGlobalSearchRankedItems = (
+  left: { scoreMeta: GlobalSearchScoreResult; index: number; recency?: number },
+  right: { scoreMeta: GlobalSearchScoreResult; index: number; recency?: number },
+): number => {
+  if (right.scoreMeta.matchLevel !== left.scoreMeta.matchLevel) {
+    return right.scoreMeta.matchLevel - left.scoreMeta.matchLevel
+  }
+
+  if (right.scoreMeta.exactHitCount !== left.scoreMeta.exactHitCount) {
+    return right.scoreMeta.exactHitCount - left.scoreMeta.exactHitCount
+  }
+
+  if (right.scoreMeta.prefixHitCount !== left.scoreMeta.prefixHitCount) {
+    return right.scoreMeta.prefixHitCount - left.scoreMeta.prefixHitCount
+  }
+
+  if (right.scoreMeta.includesHitCount !== left.scoreMeta.includesHitCount) {
+    return right.scoreMeta.includesHitCount - left.scoreMeta.includesHitCount
+  }
+
+  if (right.scoreMeta.score !== left.scoreMeta.score) {
+    return right.scoreMeta.score - left.scoreMeta.score
+  }
+
+  const leftRecency = left.recency || 0
+  const rightRecency = right.recency || 0
+  if (rightRecency !== leftRecency) {
+    return rightRecency - leftRecency
+  }
+
+  return left.index - right.index
 }
 
 export const App = () => {
@@ -979,18 +1177,58 @@ export const App = () => {
     [settingsSearchQuery],
   )
 
-  const settingsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(
-    () =>
-      settingsSearchResults.map((item) => ({
+  const settingsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
+    const normalizedQuery = normalizeGlobalSearchValue(settingsSearchQuery)
+    const tokens = toGlobalSearchTokens(settingsSearchQuery)
+
+    return settingsSearchResults.map((item) => {
+      const title = resolveSettingSearchTitle(item)
+      const normalizedTitle = normalizeGlobalSearchValue(title)
+      const normalizedKeywords = normalizeGlobalSearchValue((item.keywords || []).join(" "))
+      const normalizedSettingId = normalizeGlobalSearchValue(item.settingId)
+      const normalizedAliasKeywords = normalizeGlobalSearchValue(
+        (GLOBAL_SEARCH_SETTING_ALIAS_MAP[item.settingId] || []).join(" "),
+      )
+
+      const matchReasons = new Set<GlobalSearchMatchReason>()
+
+      const markReason = (reason: GlobalSearchMatchReason, value: string) => {
+        if (!value) return
+
+        if (normalizedQuery) {
+          if (
+            value === normalizedQuery ||
+            value.startsWith(normalizedQuery) ||
+            value.includes(normalizedQuery)
+          ) {
+            matchReasons.add(reason)
+            return
+          }
+        }
+
+        if (tokens.length > 0) {
+          if (tokens.some((token) => value.startsWith(token) || value.includes(token))) {
+            matchReasons.add(reason)
+          }
+        }
+      }
+
+      markReason("title", normalizedTitle)
+      markReason("keyword", normalizedKeywords)
+      markReason("id", normalizedSettingId)
+      markReason("alias", normalizedAliasKeywords)
+
+      return {
         id: `settings:${item.settingId}`,
-        title: resolveSettingSearchTitle(item),
+        title,
         breadcrumb: getSettingsBreadcrumb(item.settingId),
         code: item.settingId,
         category: "settings",
         settingId: item.settingId,
-      })),
-    [getSettingsBreadcrumb, resolveSettingSearchTitle, settingsSearchResults],
-  )
+        matchReasons: Array.from(matchReasons),
+      }
+    })
+  }, [getSettingsBreadcrumb, resolveSettingSearchTitle, settingsSearchQuery, settingsSearchResults])
 
   const conversationGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
     if (!conversationManager) {
@@ -1039,7 +1277,7 @@ export const App = () => {
         const normalizedTags = normalizeGlobalSearchValue(
           tagBadges.map((tag) => tag.name).join(" "),
         )
-        const score = getGlobalSearchScore({
+        const scoreMeta = getGlobalSearchScore({
           normalizedQuery,
           tokens,
           index,
@@ -1051,6 +1289,7 @@ export const App = () => {
               includes: 100,
               tokenPrefix: 24,
               tokenIncludes: 12,
+              matchReason: "title",
             },
             {
               value: normalizedFolder,
@@ -1059,6 +1298,7 @@ export const App = () => {
               includes: 72,
               tokenPrefix: 0,
               tokenIncludes: 8,
+              matchReason: "folder",
             },
             {
               value: normalizedTags,
@@ -1067,15 +1307,19 @@ export const App = () => {
               includes: 64,
               tokenPrefix: 0,
               tokenIncludes: 8,
+              matchReason: "tag",
             },
           ],
         })
 
-        if (score === null) {
+        if (scoreMeta === null) {
           return null
         }
 
-        const finalScore = score + (conversation.pinned ? 6 : 0)
+        const finalScoreMeta = {
+          ...scoreMeta,
+          score: scoreMeta.score + (conversation.pinned ? 6 : 0),
+        }
 
         const breadcrumb = folderLabel
 
@@ -1088,18 +1332,15 @@ export const App = () => {
             conversationId: conversation.id,
             conversationUrl: conversation.url,
             tagBadges,
+            matchReasons: finalScoreMeta.matchReasons,
           },
-          score: finalScore,
+          scoreMeta: finalScoreMeta,
           index,
-          updatedAt: conversation.updatedAt || 0,
+          recency: conversation.updatedAt || 0,
         }
       })
       .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
-      .sort((left, right) => {
-        if (right.score !== left.score) return right.score - left.score
-        if (right.updatedAt !== left.updatedAt) return right.updatedAt - left.updatedAt
-        return left.index - right.index
-      })
+      .sort(compareGlobalSearchRankedItems)
 
     return scoredItems.map(({ item }) => item)
   }, [
@@ -1137,7 +1378,7 @@ export const App = () => {
         const normalizedContent = normalizeGlobalSearchValue(content)
         const normalizedCategory = normalizeGlobalSearchValue(categoryLabel)
         const normalizedPromptId = normalizeGlobalSearchValue(prompt.id)
-        const score = getGlobalSearchScore({
+        const scoreMeta = getGlobalSearchScore({
           normalizedQuery,
           tokens,
           index,
@@ -1149,6 +1390,7 @@ export const App = () => {
               includes: 100,
               tokenPrefix: 24,
               tokenIncludes: 12,
+              matchReason: "title",
             },
             {
               value: normalizedCategory,
@@ -1157,6 +1399,7 @@ export const App = () => {
               includes: 70,
               tokenPrefix: 0,
               tokenIncludes: 8,
+              matchReason: "category",
             },
             {
               value: normalizedContent,
@@ -1165,6 +1408,7 @@ export const App = () => {
               includes: 60,
               tokenPrefix: 0,
               tokenIncludes: 6,
+              matchReason: "content",
             },
             {
               value: normalizedPromptId,
@@ -1173,35 +1417,45 @@ export const App = () => {
               includes: 20,
               tokenPrefix: 0,
               tokenIncludes: 4,
+              matchReason: "id",
             },
           ],
         })
 
-        if (score === null) {
+        if (scoreMeta === null) {
           return null
         }
 
-        const finalScore = score + (prompt.pinned ? 6 : 0)
+        const finalScoreMeta = {
+          ...scoreMeta,
+          score: scoreMeta.score + (prompt.pinned ? 6 : 0),
+        }
+
+        const snippet = finalScoreMeta.matchReasons.includes("content")
+          ? buildGlobalSearchSnippet({
+              content,
+              normalizedQuery,
+              tokens,
+            })
+          : ""
 
         return {
           item: {
             id: `prompts:${prompt.id}`,
             title,
             breadcrumb,
+            snippet,
             category: "prompts" as const,
             promptId: prompt.id,
+            matchReasons: finalScoreMeta.matchReasons,
           },
-          score: finalScore,
+          scoreMeta: finalScoreMeta,
           index,
-          lastUsedAt: prompt.lastUsedAt || 0,
+          recency: prompt.lastUsedAt || 0,
         }
       })
       .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
-      .sort((left, right) => {
-        if (right.score !== left.score) return right.score - left.score
-        if (right.lastUsedAt !== left.lastUsedAt) return right.lastUsedAt - left.lastUsedAt
-        return left.index - right.index
-      })
+      .sort(compareGlobalSearchRankedItems)
 
     return scoredItems.map(({ item }) => item)
   }, [getLocalizedText, promptsSnapshot, settingsSearchQuery])
@@ -1263,7 +1517,7 @@ export const App = () => {
           node.isUserQuery ? roleLabel : `${roleLabel} h${node.level}`,
         )
         const normalizedCode = normalizeGlobalSearchValue(code)
-        const score = getGlobalSearchScore({
+        const scoreMeta = getGlobalSearchScore({
           normalizedQuery,
           tokens,
           index,
@@ -1275,6 +1529,7 @@ export const App = () => {
               includes: 90,
               tokenPrefix: 16,
               tokenIncludes: 10,
+              matchReason: "title",
             },
             {
               value: normalizedType,
@@ -1283,6 +1538,7 @@ export const App = () => {
               includes: 48,
               tokenPrefix: 0,
               tokenIncludes: 6,
+              matchReason: "type",
             },
             {
               value: normalizedCode,
@@ -1291,15 +1547,19 @@ export const App = () => {
               includes: 36,
               tokenPrefix: 0,
               tokenIncludes: 4,
+              matchReason: "code",
             },
           ],
         })
 
-        if (score === null) {
+        if (scoreMeta === null) {
           return null
         }
 
-        const finalScore = score + (node.isBookmarked ? 4 : 0)
+        const finalScoreMeta = {
+          ...scoreMeta,
+          score: scoreMeta.score + (node.isBookmarked ? 4 : 0),
+        }
 
         return {
           item: {
@@ -1308,6 +1568,7 @@ export const App = () => {
             breadcrumb,
             code,
             category: "outline" as const,
+            matchReasons: finalScoreMeta.matchReasons,
             outlineTarget: {
               index: node.index,
               level: node.level,
@@ -1318,15 +1579,12 @@ export const App = () => {
               scrollTop: node.scrollTop,
             },
           },
-          score: finalScore,
+          scoreMeta: finalScoreMeta,
           index,
         }
       })
       .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
-      .sort((left, right) => {
-        if (right.score !== left.score) return right.score - left.score
-        return left.index - right.index
-      })
+      .sort(compareGlobalSearchRankedItems)
 
     return scoredItems.map(({ item }) => item)
   }, [outlineManager, getLocalizedText, outlineSearchVersion, settingsSearchQuery])
@@ -1478,6 +1736,23 @@ export const App = () => {
           return collector
         },
         {} as Record<GlobalSearchResultCategory, string>,
+      ),
+    [getLocalizedText],
+  )
+
+  const resolvedGlobalSearchMatchReasonLabels = useMemo(
+    () =>
+      (
+        Object.entries(GLOBAL_SEARCH_MATCH_REASON_LABEL_DEFINITIONS) as [
+          GlobalSearchMatchReason,
+          LocalizedLabelDefinition,
+        ][]
+      ).reduce(
+        (collector, [reason, definition]) => {
+          collector[reason] = getLocalizedText(definition)
+          return collector
+        },
+        {} as Record<GlobalSearchMatchReason, string>,
       ),
     [getLocalizedText],
   )
@@ -3084,6 +3359,17 @@ export const App = () => {
     const isOutlineQuery = isOutlineItem && Boolean(item.outlineTarget?.isUserQuery)
     const outlineRoleLabel = isOutlineQuery ? outlineRoleLabels.query : outlineRoleLabels.reply
     const showCodeOnMeta = Boolean(item.code) && !isOutlineItem
+    const promptSnippetPrefix =
+      item.category === "prompts" && item.matchReasons?.includes("content")
+        ? `${resolvedGlobalSearchMatchReasonLabels.content}：`
+        : ""
+    const matchReasonBadges =
+      item.matchReasons && item.matchReasons.length > 0
+        ? item.matchReasons.map((reason) => ({
+            reason,
+            label: resolvedGlobalSearchMatchReasonLabels[reason],
+          }))
+        : []
 
     return (
       <div
@@ -3137,6 +3423,16 @@ export const App = () => {
             </span>
           )}
         </div>
+        {item.snippet ? (
+          <div
+            className="settings-search-item-snippet"
+            title={`${promptSnippetPrefix}${item.snippet}`}>
+            {promptSnippetPrefix ? (
+              <span className="settings-search-item-snippet-prefix">{promptSnippetPrefix}</span>
+            ) : null}
+            {renderSearchHighlightedParts(item.snippet)}
+          </div>
+        ) : null}
         <div className={`settings-search-item-meta ${showCodeOnMeta ? "" : "no-code"}`.trim()}>
           <div className="settings-search-item-meta-left">
             <span className="settings-search-item-breadcrumb" title={item.breadcrumb}>
@@ -3151,6 +3447,15 @@ export const App = () => {
                     style={{ backgroundColor: tag.color }}
                     title={tag.name}>
                     {renderSearchHighlightedParts(tag.name)}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+            {matchReasonBadges.length > 0 ? (
+              <div className="settings-search-match-reason-list">
+                {matchReasonBadges.map((reasonBadge) => (
+                  <span key={reasonBadge.reason} className="settings-search-match-reason-badge">
+                    {reasonBadge.label}
                   </span>
                 ))}
               </div>

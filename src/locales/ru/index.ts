@@ -1088,6 +1088,16 @@ export const ru = {
   globalSearchContextCurrentItem: "Элемент {current}",
   globalSearchContextShownProgress: "Показано {shown}/{total}",
   globalSearchContextTotalItems: "Всего {total}",
+  globalSearchMatchReasonTitle: "Совпадение в названии",
+  globalSearchMatchReasonFolder: "Совпадение в папке",
+  globalSearchMatchReasonTag: "Совпадение в теге",
+  globalSearchMatchReasonType: "Совпадение по типу",
+  globalSearchMatchReasonCode: "Совпадение по коду",
+  globalSearchMatchReasonCategory: "Совпадение по категории",
+  globalSearchMatchReasonContent: "Совпадение по содержимому",
+  globalSearchMatchReasonId: "Совпадение по ID",
+  globalSearchMatchReasonKeyword: "Совпадение по ключевому слову",
+  globalSearchMatchReasonAlias: "Совпадение по алиасу",
 
   // Missing Keys
   moreLanguages: "Больше языков",
