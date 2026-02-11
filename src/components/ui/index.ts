@@ -14,3 +14,8 @@ export { Input, type InputProps } from "./Input"
 export { Button, type ButtonProps } from "./Button"
 export { NumberInput, type NumberInputProps } from "./NumberInput"
 export { Tooltip, type TooltipProps } from "./Tooltip"
+export {
+  SelectDropdown,
+  type SelectDropdownProps,
+  type SelectDropdownOption,
+} from "./SelectDropdown"

@@ -119,6 +119,10 @@
   cursor: wait;
 }
 
+.conversations-folder-select-dropdown {
+  width: 100%;
+}
+
 .conversations-folder-select {
   padding: 5px 8px;
   border: 1px solid var(--gh-input-border, #d1d5db);
@@ -127,14 +131,35 @@
   font-size: 13px;
   color: var(--gh-text, #374151);
   cursor: pointer;
-  flex: 1;
   min-width: 80px;
   height: 32px;
+  width: 100%;
+  line-height: 1;
+  font-family: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.conversations-folder-select:hover {
+  background: var(--gh-hover, #f3f4f6);
 }
 
 .conversations-folder-select:focus {
   outline: none;
   border-color: var(--gh-border-active);
+}
+
+.conversations-folder-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.conversations-folder-select-menu {
+  scrollbar-width: thin;
+}
+
+.conversations-folder-select-option {
+  font-family: inherit;
 }
 
 .conversations-folder-list {

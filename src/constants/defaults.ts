@@ -48,7 +48,7 @@ export interface Folder {
 }
 
 export const DEFAULT_FOLDERS: Folder[] = [
-  { id: "inbox", name: "📥 收件箱", icon: "📥", isDefault: true },
+  { id: "inbox", name: "收件箱", icon: "📥", isDefault: true },
 ]
 
 // ==================== 布局配置默认值 ====================

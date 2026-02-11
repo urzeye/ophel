@@ -298,6 +298,21 @@ const toGlobalSearchTokens = (query: string): string[] =>
 
 const hasPromptVariables = (content: string): boolean => /\{\{(\w+)\}\}/.test(content)
 
+const getFolderDisplayName = (folder: { name: string; icon?: string }): string => {
+  const trimmedName = (folder.name || "").trim()
+  const trimmedIcon = (folder.icon || "").trim()
+
+  if (!trimmedIcon) {
+    return trimmedName
+  }
+
+  if (trimmedName.startsWith(trimmedIcon)) {
+    return trimmedName.slice(trimmedIcon.length).trim()
+  }
+
+  return trimmedName
+}
+
 const getGlobalSearchHighlightRanges = (
   value: string,
   tokens: string[],
@@ -779,7 +794,7 @@ export const App = () => {
         const title = conversation.title?.trim() || untitledConversation
         const folder = folderMap.get(conversation.folderId)
         const folderLabel = folder
-          ? `${folder.icon ? `${folder.icon} ` : ""}${folder.name}`.trim()
+          ? `${folder.icon ? `${folder.icon} ` : ""}${getFolderDisplayName(folder)}`.trim()
           : conversation.folderId
         const tagBadges = (conversation.tagIds || [])
           .map((tagId) => {

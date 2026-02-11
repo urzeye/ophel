@@ -3,7 +3,7 @@
  * 从油猴脚本 geminiHelper.user.js 5874~6606 行原封不动移植
  */
 
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { Conversation, ConversationManager, Folder, Tag } from "~core/conversation-manager"
 import { useSettingsStore } from "~stores/settings-store"
@@ -28,7 +28,6 @@ import {
   CopyIcon,
   DeleteIcon,
   ExportIcon,
-  FolderIcon,
   FolderMoveIcon,
   FolderPlusIcon,
   HourglassIcon,
@@ -38,7 +37,7 @@ import {
   SyncIcon,
   TagIcon,
 } from "~components/icons"
-import { Tooltip } from "~components/ui/Tooltip"
+import { SelectDropdown, Tooltip } from "~components/ui"
 
 // ==================== 类型定义 ====================
 
@@ -77,6 +76,21 @@ type MenuType =
   | { type: "export"; anchorEl: HTMLElement }
   | null
 
+const getFolderDisplayName = (folder: Pick<Folder, "name" | "icon">): string => {
+  const trimmedName = (folder.name || "").trim()
+  const trimmedIcon = (folder.icon || "").trim()
+
+  if (!trimmedIcon) {
+    return trimmedName
+  }
+
+  if (trimmedName.startsWith(trimmedIcon)) {
+    return trimmedName.slice(trimmedIcon.length).trim()
+  }
+
+  return trimmedName
+}
+
 // ==================== 主组件 ====================
 
 export const ConversationsTab: React.FC<ConversationsTabProps> = ({
@@ -104,6 +118,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const [filterTagIds, setFilterTagIds] = useState<Set<string>>(new Set())
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null)
   const [showTagFilterMenu, setShowTagFilterMenu] = useState(false)
+  const [isFolderSelectOpen, setIsFolderSelectOpen] = useState(false)
 
   // 对话框和菜单
   const [dialog, setDialog] = useState<DialogType>(null)
@@ -150,7 +165,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
       const lowerQuery = query.toLowerCase()
 
       folders.forEach((folder) => {
-        if (query && folder.name.toLowerCase().includes(lowerQuery)) {
+        if (query && getFolderDisplayName(folder).toLowerCase().includes(lowerQuery)) {
           folderMatches.add(folder.id)
         }
       })
@@ -212,9 +227,9 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
   // 监听所有弹窗状态，向上汇报交互状态
   useEffect(() => {
-    const isInteracting = !!(menu || dialog || showTagFilterMenu || batchMode)
+    const isInteracting = !!(menu || dialog || showTagFilterMenu || isFolderSelectOpen || batchMode)
     onInteractionStateChange?.(isInteracting)
-  }, [menu, dialog, showTagFilterMenu, batchMode, onInteractionStateChange])
+  }, [menu, dialog, showTagFilterMenu, isFolderSelectOpen, batchMode, onInteractionStateChange])
 
   // 防抖搜索
   const handleSearchInput = (value: string) => {
@@ -422,6 +437,28 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     return expandedFolderId === folderId
   }
 
+  const folderSelectOptions = useMemo(
+    () =>
+      folders.map((folder) => {
+        const folderName = getFolderDisplayName(folder)
+        const optionLabel = `${folder.icon ? `${folder.icon} ` : ""}${folderName}`.trim()
+
+        return {
+          value: folder.id,
+          title: optionLabel,
+          label: (
+            <>
+              {folder.icon && <span style={{ flexShrink: 0 }}>{folder.icon}</span>}
+              <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
+                {folderName}
+              </span>
+            </>
+          ),
+        }
+      }),
+    [folders],
+  )
+
   // ==================== 渲染 ====================
 
   return (
@@ -441,23 +478,20 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           <Tooltip
             content={t("conversationsSelectFolder") || "选择文件夹"}
             triggerStyle={{ flex: 1, minWidth: 0 }}>
-            <select
-              className="conversations-folder-select"
+            <SelectDropdown
+              className="conversations-folder-select-dropdown"
+              buttonClassName="conversations-folder-select"
+              menuClassName="conversations-folder-select-menu"
+              optionClassName="conversations-folder-select-option"
+              options={folderSelectOptions}
               value={lastUsedFolderId}
-              onChange={(e) => {
-                setLastUsedFolderId(e.target.value)
-                manager.setLastUsedFolder(e.target.value)
-              }}>
-              {folders.map((folder) => {
-                const truncatedName =
-                  folder.name.length > 20 ? folder.name.slice(0, 20) + "..." : folder.name
-                return (
-                  <option key={folder.id} value={folder.id} title={folder.name}>
-                    {truncatedName}
-                  </option>
-                )
-              })}
-            </select>
+              ariaLabel={t("conversationsSelectFolder") || "选择文件夹"}
+              onOpenChange={setIsFolderSelectOpen}
+              onChange={(selectedFolderId) => {
+                setLastUsedFolderId(selectedFolderId)
+                manager.setLastUsedFolder(selectedFolderId)
+              }}
+            />
           </Tooltip>
 
           {/* 2. 同步按钮 */}
@@ -615,7 +649,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             folders.filter(shouldShowFolder).map((folder, index) => {
               const isExpanded = shouldExpandFolder(folder.id)
               const count = getFolderCount(folder.id)
-              const folderName = folder.name.replace(folder.icon, "").trim()
+              const folderName = getFolderDisplayName(folder)
 
               // 彩虹色 - 根据设置决定是否启用
               // 非彩虹色模式：只有收件箱有背景色，其他文件夹透明
@@ -911,7 +945,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             let newFolderId: string | null = null
             if (dialog.folder) {
               // 更新
-              await manager.updateFolder(dialog.folder.id, { name: `${icon} ${name}`, icon })
+              await manager.updateFolder(dialog.folder.id, { name, icon })
             } else {
               // 新建，假设 createFolder 返回新文件夹的 ID (需要确认 manager 实现，如果是 void 则需要其他方式)
               // 暂时假设 createFolder 返回 void，我们需要通过名字查找或者 manager 修改
@@ -1005,7 +1039,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             setDialog({
               type: "confirm",
               title: t("conversationsDelete") || "删除",
-              message: `确定删除文件夹 "${menu.folder.name}" 吗？其中的会话将移至收件箱。`,
+              message: `确定删除文件夹 "${getFolderDisplayName(menu.folder)}" 吗？其中的会话将移至收件箱。`,
               danger: true,
               onConfirm: async () => {
                 await manager.deleteFolder(menu.folder.id)

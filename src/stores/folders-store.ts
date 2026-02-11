@@ -11,6 +11,28 @@ import { DEFAULT_FOLDERS, type Folder } from "~constants"
 
 import { chromeStorageAdapter } from "./chrome-adapter"
 
+const normalizeFolderName = (name: string, icon: string): string => {
+  const trimmedName = (name || "").trim()
+  const trimmedIcon = (icon || "").trim()
+
+  if (!trimmedIcon) {
+    return trimmedName
+  }
+
+  if (trimmedName.startsWith(trimmedIcon)) {
+    return trimmedName.slice(trimmedIcon.length).trim()
+  }
+
+  return trimmedName
+}
+
+const normalizeFolder = (folder: Folder): Folder => ({
+  ...folder,
+  name: normalizeFolderName(folder.name, folder.icon),
+})
+
+const normalizeFolders = (folders: Folder[]): Folder[] => folders.map(normalizeFolder)
+
 // ==================== Store 类型定义 ====================
 
 interface FoldersState {
@@ -37,7 +59,7 @@ export const useFoldersStore = create<FoldersState>()(
       addFolder: (name, icon) => {
         const newFolder: Folder = {
           id: "folder_" + Date.now(),
-          name,
+          name: normalizeFolderName(name, icon),
           icon,
         }
         set((state) => ({
@@ -48,7 +70,17 @@ export const useFoldersStore = create<FoldersState>()(
 
       updateFolder: (id, updates) =>
         set((state) => ({
-          folders: state.folders.map((f) => (f.id === id ? { ...f, ...updates } : f)),
+          folders: state.folders.map((folder) => {
+            if (folder.id !== id) {
+              return folder
+            }
+
+            const nextFolder = { ...folder, ...updates }
+            return {
+              ...nextFolder,
+              name: normalizeFolderName(nextFolder.name, nextFolder.icon),
+            }
+          }),
         })),
 
       deleteFolder: (id) => {
@@ -78,6 +110,19 @@ export const useFoldersStore = create<FoldersState>()(
       name: "folders", // chrome.storage key
       storage: createJSONStorage(() => chromeStorageAdapter),
       partialize: (state) => ({ folders: state.folders }),
+      merge: (persistedState, currentState) => {
+        const typedState = persistedState as Partial<FoldersState> | undefined
+
+        if (!typedState?.folders) {
+          return currentState
+        }
+
+        return {
+          ...currentState,
+          ...typedState,
+          folders: normalizeFolders(typedState.folders),
+        }
+      },
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true)
       },
