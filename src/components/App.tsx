@@ -798,7 +798,6 @@ export const App = () => {
         const normalizedTags = normalizeGlobalSearchValue(
           tagBadges.map((tag) => tag.name).join(" "),
         )
-        const normalizedConversationId = normalizeGlobalSearchValue(conversation.id)
         const score = getGlobalSearchScore({
           normalizedQuery,
           tokens,
@@ -827,14 +826,6 @@ export const App = () => {
               includes: 64,
               tokenPrefix: 0,
               tokenIncludes: 8,
-            },
-            {
-              value: normalizedConversationId,
-              exact: 0,
-              prefix: 0,
-              includes: 32,
-              tokenPrefix: 0,
-              tokenIncludes: 4,
             },
           ],
         })
