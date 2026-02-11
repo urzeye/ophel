@@ -148,6 +148,13 @@ interface GlobalSearchShortcutNudgeState {
   shortcutUsedCount: number
 }
 
+const isLikelyMacPlatform = () => {
+  if (typeof navigator === "undefined") return false
+  const platform = navigator.platform?.toLowerCase?.() || ""
+  const userAgent = navigator.userAgent?.toLowerCase?.() || ""
+  return platform.includes("mac") || userAgent.includes("mac os")
+}
+
 const GLOBAL_SEARCH_CATEGORY_DEFINITIONS: GlobalSearchCategoryDefinition[] = [
   {
     id: "all",
@@ -203,8 +210,6 @@ const GLOBAL_SEARCH_RESULTS_LISTBOX_ID = "settings-search-results-listbox"
 const GLOBAL_SEARCH_OPTION_ID_PREFIX = "settings-search-option"
 const GLOBAL_SEARCH_KEYBOARD_SAFE_TOP = 8
 const GLOBAL_SEARCH_KEYBOARD_SAFE_BOTTOM = 12
-const GLOBAL_SEARCH_SHORTCUT_HINT_PRIMARY = "Ctrl+K"
-const GLOBAL_SEARCH_SHORTCUT_HINT_FULL = "Ctrl+K / double shift"
 const GLOBAL_SEARCH_SHORTCUT_NUDGE_STORAGE_KEY = "ophel:global-search-shortcut-nudge:v1"
 const GLOBAL_SEARCH_SHORTCUT_NUDGE_MAX_SHOWS = 3
 const GLOBAL_SEARCH_SHORTCUT_NUDGE_MIN_INTERVAL = 24 * 60 * 60 * 1000
@@ -498,6 +503,10 @@ export const App = () => {
     [getLocalizedText],
   )
 
+  const isMacLike = useMemo(() => isLikelyMacPlatform(), [])
+  const globalSearchPrimaryShortcutLabel = isMacLike ? "⌘K" : "Ctrl+K"
+  const globalSearchShortcutHintLabel = `${globalSearchPrimaryShortcutLabel} / double shift`
+
   const globalSearchShortcutNudgeText = useMemo(
     () =>
       formatLocalizedText(
@@ -506,10 +515,10 @@ export const App = () => {
           fallback: "下次可按 {shortcut} 快速打开",
         },
         {
-          shortcut: GLOBAL_SEARCH_SHORTCUT_HINT_FULL,
+          shortcut: globalSearchShortcutHintLabel,
         },
       ),
-    [formatLocalizedText],
+    [formatLocalizedText, globalSearchShortcutHintLabel],
   )
 
   const getGlobalSearchShortcutNudgeState = useCallback((): GlobalSearchShortcutNudgeState => {
@@ -3345,9 +3354,9 @@ export const App = () => {
                   setSettingsSearchQuery(event.target.value)
                   setSettingsSearchActiveIndex(0)
                 }}
-                placeholder={`${resolvedActiveGlobalSearchCategoryText.placeholder}（${GLOBAL_SEARCH_SHORTCUT_HINT_PRIMARY}）`}
+                placeholder={`${resolvedActiveGlobalSearchCategoryText.placeholder}（${globalSearchPrimaryShortcutLabel}）`}
               />
-              <span className="settings-search-hotkey">⌨ {GLOBAL_SEARCH_SHORTCUT_HINT_FULL}</span>
+              <span className="settings-search-hotkey">⌨ {globalSearchShortcutHintLabel}</span>
             </div>
 
             {showGlobalSearchShortcutNudge && globalSearchShortcutNudgeMessage ? (
