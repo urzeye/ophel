@@ -1014,6 +1014,10 @@ export const App = () => {
       key: "outlineOnlyUserQueries",
       fallback: "Queries",
     })
+    const outlineReplyLabel = getLocalizedText({
+      key: "globalSearchOutlineReplies",
+      fallback: "Replies",
+    })
 
     const scoredItems = outlineNodes
       .map((node, index) => {
@@ -1023,13 +1027,14 @@ export const App = () => {
         }
 
         const code = node.isUserQuery ? `Q${node.queryIndex ?? index + 1}` : `H${node.level}`
+        const roleLabel = node.isUserQuery ? outlineQueryLabel : outlineReplyLabel
         const breadcrumb = node.isUserQuery
-          ? `${outlineLabel} / ${outlineQueryLabel}`
-          : `${outlineLabel} / H${node.level}`
+          ? `${outlineLabel} / ${roleLabel}`
+          : `${outlineLabel} / ${roleLabel} / H${node.level}`
 
         const normalizedTitle = normalizeGlobalSearchValue(title)
         const normalizedType = normalizeGlobalSearchValue(
-          node.isUserQuery ? outlineQueryLabel : `h${node.level}`,
+          node.isUserQuery ? roleLabel : `${roleLabel} h${node.level}`,
         )
         const normalizedCode = normalizeGlobalSearchValue(code)
         const score = getGlobalSearchScore({
@@ -2691,54 +2696,95 @@ export const App = () => {
     [settingsSearchHighlightTokens],
   )
 
-  const renderSearchResultItem = (item: GlobalSearchResultItem, index: number) => (
-    <button
-      key={item.id}
-      type="button"
-      data-global-search-index={index}
-      className={`settings-search-item ${index === settingsSearchActiveIndex ? "active" : ""}`}
-      onMouseMove={() => {
-        setSettingsSearchNavigationMode("pointer")
+  const outlineRoleLabels = useMemo(
+    () => ({
+      query: getLocalizedText({ key: "outlineOnlyUserQueries", fallback: "Query" }),
+      reply: getLocalizedText({ key: "globalSearchOutlineReplies", fallback: "Replies" }),
+    }),
+    [getLocalizedText],
+  )
 
-        if (Date.now() < settingsSearchWheelFreezeUntilRef.current) {
-          return
-        }
+  const renderSearchResultItem = (item: GlobalSearchResultItem, index: number) => {
+    const isOutlineItem = item.category === "outline" && Boolean(item.outlineTarget)
+    const isOutlineQuery = isOutlineItem && Boolean(item.outlineTarget?.isUserQuery)
+    const outlineRoleLabel = isOutlineQuery ? outlineRoleLabels.query : outlineRoleLabels.reply
+    const showCodeOnMeta = Boolean(item.code) && !isOutlineItem
 
-        if (settingsSearchHoverLocked) {
-          setSettingsSearchHoverLocked(false)
-          return
-        }
-        setSettingsSearchActiveIndex(index)
-      }}
-      onClick={() => navigateToSearchResult(item)}>
-      <div className="settings-search-item-title" title={item.title}>
-        {renderSearchHighlightedParts(item.title)}
-      </div>
-      <div className={`settings-search-item-meta ${item.code ? "" : "no-code"}`.trim()}>
-        <div className="settings-search-item-meta-left">
-          <span className="settings-search-item-breadcrumb" title={item.breadcrumb}>
-            {renderSearchHighlightedParts(item.breadcrumb)}
-          </span>
-          {item.category === "conversations" && item.tagBadges && item.tagBadges.length > 0 ? (
-            <div className="settings-search-tag-list">
-              {item.tagBadges.map((tag) => (
-                <span
-                  key={tag.id}
-                  className="settings-search-tag"
-                  style={{ backgroundColor: tag.color }}
-                  title={tag.name}>
-                  {renderSearchHighlightedParts(tag.name, "tag")}
+    return (
+      <button
+        key={item.id}
+        type="button"
+        data-global-search-index={index}
+        className={`settings-search-item ${index === settingsSearchActiveIndex ? "active" : ""} ${
+          isOutlineItem
+            ? isOutlineQuery
+              ? "outline-item outline-query"
+              : "outline-item outline-reply"
+            : ""
+        }`.trim()}
+        onMouseMove={() => {
+          setSettingsSearchNavigationMode("pointer")
+
+          if (Date.now() < settingsSearchWheelFreezeUntilRef.current) {
+            return
+          }
+
+          if (settingsSearchHoverLocked) {
+            setSettingsSearchHoverLocked(false)
+            return
+          }
+          setSettingsSearchActiveIndex(index)
+        }}
+        onClick={() => navigateToSearchResult(item)}>
+        <div className="settings-search-item-title" title={item.title}>
+          {isOutlineItem ? (
+            <div className="settings-search-outline-head">
+              <span
+                className={`settings-search-outline-role ${isOutlineQuery ? "query" : "reply"}`}
+                title={outlineRoleLabel}>
+                {outlineRoleLabel}
+              </span>
+              {item.code ? (
+                <span className="settings-search-outline-code" title={item.code}>
+                  {renderSearchHighlightedParts(item.code, "code")}
                 </span>
-              ))}
+              ) : null}
+              <span className="settings-search-item-title-text">
+                {renderSearchHighlightedParts(item.title)}
+              </span>
             </div>
+          ) : (
+            <span className="settings-search-item-title-text">
+              {renderSearchHighlightedParts(item.title)}
+            </span>
+          )}
+        </div>
+        <div className={`settings-search-item-meta ${showCodeOnMeta ? "" : "no-code"}`.trim()}>
+          <div className="settings-search-item-meta-left">
+            <span className="settings-search-item-breadcrumb" title={item.breadcrumb}>
+              {renderSearchHighlightedParts(item.breadcrumb)}
+            </span>
+            {item.category === "conversations" && item.tagBadges && item.tagBadges.length > 0 ? (
+              <div className="settings-search-tag-list">
+                {item.tagBadges.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="settings-search-tag"
+                    style={{ backgroundColor: tag.color }}
+                    title={tag.name}>
+                    {renderSearchHighlightedParts(tag.name, "tag")}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          {showCodeOnMeta ? (
+            <code title={item.code}>{renderSearchHighlightedParts(item.code!, "code")}</code>
           ) : null}
         </div>
-        {item.code ? (
-          <code title={item.code}>{renderSearchHighlightedParts(item.code, "code")}</code>
-        ) : null}
-      </div>
-    </button>
-  )
+      </button>
+    )
+  }
 
   if (!adapter || !promptManager || !conversationManager || !outlineManager) {
     return null

@@ -508,6 +508,7 @@ export const ja = {
   outlineShowUserQueries: "ユーザーの発言を含める",
   outlineShowUserQueriesTooltip: "ユーザーの質問を見出しとして表示",
   outlineOnlyUserQueries: "質問のみ",
+  globalSearchOutlineReplies: "回答",
   outlineIntervalUpdated: "間隔を {val} 秒に設定しました",
   outlineSyncScrollLabel: "スクロール同期",
   outlineSyncScrollDesc: "ページスクロールに合わせて目次の該当箇所をハイライトします",

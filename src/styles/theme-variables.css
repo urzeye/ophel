@@ -78,6 +78,16 @@
   --gh-user-query-bg: rgba(66, 133, 244, 0.08);
   --gh-user-query-hover-bg: rgba(66, 133, 244, 0.15);
 
+  /* === 全局搜索大纲角色样式（浅色模式） === */
+  --gh-search-outline-query-accent: #3b82f6;
+  --gh-search-outline-query-bg: rgba(59, 130, 246, 0.14);
+  --gh-search-outline-query-text: #1d4ed8;
+  --gh-search-outline-query-border: rgba(59, 130, 246, 0.32);
+  --gh-search-outline-reply-accent: #8b5cf6;
+  --gh-search-outline-reply-bg: rgba(139, 92, 246, 0.14);
+  --gh-search-outline-reply-text: #7c3aed;
+  --gh-search-outline-reply-border: rgba(139, 92, 246, 0.3);
+
   /* === 徽章样式 === */
   --gh-badge-text: #4b5563;
   --gh-badge-bg: #ffffff;
@@ -206,6 +216,16 @@ html[data-theme="dark"] {
   /* === 用户提问节点（深色模式） === */
   --gh-user-query-bg: rgba(66, 133, 244, 0.15);
   --gh-user-query-hover-bg: rgba(66, 133, 244, 0.25);
+
+  /* === 全局搜索大纲角色样式（深色模式） === */
+  --gh-search-outline-query-accent: #60a5fa;
+  --gh-search-outline-query-bg: rgba(96, 165, 250, 0.25);
+  --gh-search-outline-query-text: #bfdbfe;
+  --gh-search-outline-query-border: rgba(96, 165, 250, 0.42);
+  --gh-search-outline-reply-accent: #a78bfa;
+  --gh-search-outline-reply-bg: rgba(167, 139, 250, 0.24);
+  --gh-search-outline-reply-text: #ddd6fe;
+  --gh-search-outline-reply-border: rgba(167, 139, 250, 0.4);
 
   /* === 徽章样式（深色模式） === */
   --gh-badge-text: #e5e7eb;

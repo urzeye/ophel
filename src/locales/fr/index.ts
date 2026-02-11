@@ -495,6 +495,7 @@ export const fr = {
   outlineShowUserQueries: "Voir mes questions",
   outlineShowUserQueriesTooltip: "Voir mes questions",
   outlineOnlyUserQueries: "Questions",
+  globalSearchOutlineReplies: "Réponses",
   outlineIntervalUpdated: "Ajusté à {val}s",
   outlineSyncScrollLabel: "Synchro du Scroll",
   outlineSyncScrollDesc: "Surligner le sommaire selon le défilement",

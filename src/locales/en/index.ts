@@ -524,6 +524,7 @@ export const en = {
   outlineShowUserQueries: "Show user queries",
   outlineShowUserQueriesTooltip: "Show user queries",
   outlineOnlyUserQueries: "Queries",
+  globalSearchOutlineReplies: "Replies",
   outlineIntervalUpdated: "Interval set to {val} seconds",
   outlineSyncScrollLabel: "Sync scroll",
   outlineSyncScrollDesc: "Auto-highlight outline item when page scrolls",

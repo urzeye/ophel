@@ -544,6 +544,7 @@ export const zhCN = {
   outlineShowUserQueries: "展示用户提问",
   outlineShowUserQueriesTooltip: "展示用户提问",
   outlineOnlyUserQueries: "提问",
+  globalSearchOutlineReplies: "回复",
   outlineIntervalUpdated: "间隔已设为 {val} 秒",
   outlineSyncScrollLabel: "同步滚动",
   outlineSyncScrollDesc: "页面滚动时自动高亮对应的大纲项",

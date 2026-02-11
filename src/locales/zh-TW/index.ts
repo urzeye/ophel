@@ -463,6 +463,7 @@ export const zhTW = {
   outlineShowUserQueries: "展示用戶提問",
   outlineShowUserQueriesTooltip: "展示用戶提問",
   outlineOnlyUserQueries: "提問",
+  globalSearchOutlineReplies: "回覆",
   outlineIntervalUpdated: "間隔已設為 {val} 秒",
   outlineSyncScrollLabel: "同步滾動",
   outlineSyncScrollDesc: "頁面滾動時自動高亮對應的大綱項",

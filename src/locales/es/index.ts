@@ -494,6 +494,7 @@ export const es = {
   outlineShowUserQueries: "Ver dudas usuario",
   outlineShowUserQueriesTooltip: "Ver dudas usuario",
   outlineOnlyUserQueries: "Solo dudas",
+  globalSearchOutlineReplies: "Respuestas",
   outlineIntervalUpdated: "Ajustado a {val}s",
   outlineSyncScrollLabel: "Sincro de Scroll",
   outlineSyncScrollDesc: "Resaltar índice según bajas por página",

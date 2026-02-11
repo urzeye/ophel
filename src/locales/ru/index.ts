@@ -492,6 +492,7 @@ export const ru = {
   outlineShowUserQueries: "Мои вопросы",
   outlineShowUserQueriesTooltip: "Видеть мои вопросы",
   outlineOnlyUserQueries: "Вопросы",
+  globalSearchOutlineReplies: "Ответы",
   outlineIntervalUpdated: "Сет: {val}с",
   outlineSyncScrollLabel: "Синхро-скролл",
   outlineSyncScrollDesc: "Подсветка содержания при прокрутке",
