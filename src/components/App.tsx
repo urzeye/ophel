@@ -107,14 +107,7 @@ const isLikelyMac = () => {
   return navigator.platform.toLowerCase().includes("mac")
 }
 
-type GlobalSearchCategoryId =
-  | "all"
-  | "outline"
-  | "conversations"
-  | "prompts"
-  | "settings"
-  | "folders"
-  | "tags"
+type GlobalSearchCategoryId = "all" | "outline" | "conversations" | "prompts" | "settings"
 
 type GlobalSearchResultCategory = Exclude<GlobalSearchCategoryId, "all">
 
@@ -180,18 +173,6 @@ const GLOBAL_SEARCH_CATEGORY_DEFINITIONS: GlobalSearchCategoryDefinition[] = [
     placeholder: { key: "globalSearchPlaceholderSettings", fallback: "Search settings" },
     emptyText: { key: "globalSearchEmptySettings", fallback: "No matching settings" },
   },
-  {
-    id: "folders",
-    label: { key: "globalSearchCategoryFolders", fallback: "Folders" },
-    placeholder: { key: "globalSearchPlaceholderFolders", fallback: "Search folders" },
-    emptyText: { key: "globalSearchEmptyFolders", fallback: "No folder results" },
-  },
-  {
-    id: "tags",
-    label: { key: "globalSearchCategoryTags", fallback: "Tags" },
-    placeholder: { key: "globalSearchPlaceholderTags", fallback: "Search tags" },
-    emptyText: { key: "globalSearchEmptyTags", fallback: "No tag results" },
-  },
 ]
 
 const GLOBAL_SEARCH_RESULT_CATEGORY_LABELS: Record<
@@ -201,8 +182,6 @@ const GLOBAL_SEARCH_RESULT_CATEGORY_LABELS: Record<
   outline: { key: "globalSearchCategoryOutline", fallback: "Outline" },
   settings: { key: "globalSearchCategorySettings", fallback: "Settings" },
   conversations: { key: "globalSearchCategoryConversations", fallback: "Conversations" },
-  folders: { key: "globalSearchCategoryFolders", fallback: "Folders" },
-  tags: { key: "globalSearchCategoryTags", fallback: "Tags" },
   prompts: { key: "globalSearchCategoryPrompts", fallback: "Prompts" },
 }
 
