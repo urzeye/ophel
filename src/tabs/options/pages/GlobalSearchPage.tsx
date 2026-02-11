@@ -28,10 +28,13 @@ const GlobalSearchPage: React.FC<GlobalSearchPageProps> = ({ siteId: _siteId }) 
     <div>
       <PageTitle title={getLocalizedText("navGlobalSearch", "Global Search")} Icon={SearchIcon} />
       <p className="settings-page-desc">
-        {getLocalizedText(
+        {`${getLocalizedText(
           "globalSearchPageDesc",
           "Configure Search Everywhere behavior and interaction details",
-        )}
+        )} · ${getLocalizedText(
+          "globalSearchTriggerHint",
+          "Trigger: double-press Shift or Ctrl/Cmd + K",
+        )}`}
       </p>
 
       <SettingCard

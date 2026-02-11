@@ -1116,6 +1116,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   globalSearchEmptyCurrentSession: "No results in current session",
   globalSearchCategoriesLabel: "Global search categories",
   globalSearchPageDesc: "Configure Search Everywhere behavior and interaction details",
+  globalSearchTriggerHint: "Trigger: double-press Shift or Ctrl/Cmd + K",
   globalSearchPromptSettingsTitle: "Prompt Behavior",
   globalSearchPromptSettingsDesc:
     "Choose what happens when pressing Enter on a prompt result in Search Everywhere",

@@ -649,6 +649,8 @@ export const App = () => {
   const shortcutPeekTimerRef = useRef<NodeJS.Timeout | null>(null)
   // 使用 ref 跟踪设置模态框状态，避免闭包捕获过期值
   const isSettingsOpenRef = useRef(false)
+  // 标记全局搜索是否由设置页切换而来（用于 Esc 返回）
+  const searchOpenedFromSettingsRef = useRef(false)
   // 追踪面板内输入框是否聚焦（解决 IME 输入法弹出时 CSS :hover 失效的问题）
   const isInputFocusedRef = useRef(false)
   // 追踪是否已完成初始化，防止重复执行
@@ -659,6 +661,19 @@ export const App = () => {
     const handleNavigateSettings = (
       _e: CustomEvent<{ page?: string; subTab?: string; settingId?: string }>,
     ) => {
+      if (isGlobalSettingsSearchOpen) {
+        searchOpenedFromSettingsRef.current = false
+        settingsSearchRestoreFocusRef.current = null
+        setIsGlobalSettingsSearchOpen(false)
+        setActiveGlobalSearchCategory("all")
+        setSettingsSearchQuery("")
+        setSettingsSearchActiveIndex(0)
+        setSettingsSearchHoverLocked(false)
+        setSettingsSearchNavigationMode("pointer")
+        setExpandedGlobalSearchCategories({})
+        settingsSearchWheelFreezeUntilRef.current = 0
+      }
+
       if (!isSettingsOpenRef.current) {
         isSettingsOpenRef.current = true
 
@@ -677,7 +692,7 @@ export const App = () => {
         "ophel:navigateSettingsPage",
         handleNavigateSettings as EventListener,
       )
-  }, [edgeSnapState])
+  }, [edgeSnapState, isGlobalSettingsSearchOpen])
 
   const conversationsSnapshot = useConversationsStore((state) => state.conversations)
   const foldersSnapshot = useFoldersStore((state) => state.folders)
@@ -1203,7 +1218,48 @@ export const App = () => {
     [getLocalizedText],
   )
 
+  const closeSettingsModal = useCallback(() => {
+    isSettingsOpenRef.current = false
+    setIsSettingsOpen(false)
+
+    const currentSettings = settingsRef.current
+    if (!currentSettings?.panel?.edgeSnap) return
+
+    let panel: HTMLElement | null = null
+    const shadowHost = document.querySelector("plasmo-csui, #ophel-userscript-root")
+    if (shadowHost?.shadowRoot) {
+      panel = shadowHost.shadowRoot.querySelector(".gh-main-panel") as HTMLElement
+    }
+    if (!panel) {
+      panel = document.querySelector(".gh-main-panel") as HTMLElement
+    }
+
+    if (!panel) return
+
+    const isAlreadySnapped =
+      panel.classList.contains("edge-snapped-left") ||
+      panel.classList.contains("edge-snapped-right")
+
+    if (isAlreadySnapped) return
+
+    const rect = panel.getBoundingClientRect()
+    const snapThreshold = currentSettings?.panel?.edgeSnapThreshold ?? 30
+
+    if (rect.left < snapThreshold) {
+      setEdgeSnapState("left")
+    } else if (window.innerWidth - rect.right < snapThreshold) {
+      setEdgeSnapState("right")
+    }
+  }, [])
+
   const openGlobalSettingsSearch = useCallback(() => {
+    if (isSettingsOpenRef.current) {
+      searchOpenedFromSettingsRef.current = true
+      closeSettingsModal()
+    } else {
+      searchOpenedFromSettingsRef.current = false
+    }
+
     if (edgeSnapState && settingsRef.current?.panel?.edgeSnap) {
       setIsEdgePeeking(true)
     }
@@ -1223,38 +1279,69 @@ export const App = () => {
     setExpandedGlobalSearchCategories({})
     settingsSearchWheelFreezeUntilRef.current = 0
     setIsGlobalSettingsSearchOpen(true)
-  }, [edgeSnapState])
+  }, [closeSettingsModal, edgeSnapState])
 
-  const closeGlobalSettingsSearch = useCallback((options?: { restoreFocus?: boolean }) => {
-    const shouldRestoreFocus = options?.restoreFocus ?? true
-    const restoreElement = settingsSearchRestoreFocusRef.current
-    settingsSearchRestoreFocusRef.current = null
+  const closeGlobalSettingsSearch = useCallback(
+    (options?: { restoreFocus?: boolean; reopenSettings?: boolean }) => {
+      const shouldRestoreFocus = options?.restoreFocus ?? true
+      const shouldReopenSettings = options?.reopenSettings ?? false
+      const restoreElement = settingsSearchRestoreFocusRef.current
+      settingsSearchRestoreFocusRef.current = null
+      searchOpenedFromSettingsRef.current = false
 
-    setIsGlobalSettingsSearchOpen(false)
-    setActiveGlobalSearchCategory("all")
-    setSettingsSearchQuery("")
-    setSettingsSearchActiveIndex(0)
-    setSettingsSearchHoverLocked(false)
-    setSettingsSearchNavigationMode("pointer")
-    setExpandedGlobalSearchCategories({})
-    settingsSearchWheelFreezeUntilRef.current = 0
+      setIsGlobalSettingsSearchOpen(false)
+      setActiveGlobalSearchCategory("all")
+      setSettingsSearchQuery("")
+      setSettingsSearchActiveIndex(0)
+      setSettingsSearchHoverLocked(false)
+      setSettingsSearchNavigationMode("pointer")
+      setExpandedGlobalSearchCategories({})
+      settingsSearchWheelFreezeUntilRef.current = 0
 
-    if (!shouldRestoreFocus || !restoreElement || !restoreElement.isConnected) {
-      return
-    }
+      if (shouldReopenSettings) {
+        isSettingsOpenRef.current = true
 
-    window.requestAnimationFrame(() => {
-      if (!restoreElement.isConnected) {
+        if (edgeSnapState && settingsRef.current?.panel?.edgeSnap) {
+          setIsEdgePeeking(true)
+        }
+
+        setIsSettingsOpen(true)
         return
       }
 
-      try {
-        restoreElement.focus({ preventScroll: true })
-      } catch {
-        restoreElement.focus()
+      if (!shouldRestoreFocus || !restoreElement || !restoreElement.isConnected) {
+        return
       }
-    })
-  }, [])
+
+      window.requestAnimationFrame(() => {
+        if (!restoreElement.isConnected) {
+          return
+        }
+
+        try {
+          restoreElement.focus({ preventScroll: true })
+        } catch {
+          restoreElement.focus()
+        }
+      })
+    },
+    [edgeSnapState],
+  )
+
+  const openSettingsModal = useCallback(() => {
+    if (isGlobalSettingsSearchOpen) {
+      closeGlobalSettingsSearch({ restoreFocus: false })
+    }
+
+    searchOpenedFromSettingsRef.current = false
+    isSettingsOpenRef.current = true
+
+    if (edgeSnapState && settingsRef.current?.panel?.edgeSnap) {
+      setIsEdgePeeking(true)
+    }
+
+    setIsSettingsOpen(true)
+  }, [closeGlobalSettingsSearch, edgeSnapState, isGlobalSettingsSearchOpen])
 
   const navigateToSearchResult = useCallback(
     (item: GlobalSearchResultItem) => {
@@ -1509,7 +1596,12 @@ export const App = () => {
       if (event.key === "Escape") {
         event.preventDefault()
         event.stopPropagation()
-        closeGlobalSettingsSearch()
+
+        const shouldReturnToSettings = searchOpenedFromSettingsRef.current
+        closeGlobalSettingsSearch({
+          restoreFocus: !shouldReturnToSettings,
+          reopenSettings: shouldReturnToSettings,
+        })
         return
       }
 
@@ -1998,7 +2090,7 @@ export const App = () => {
             },
           },
         })
-        setIsSettingsOpen(true)
+        openSettingsModal()
         setTimeout(() => {
           window.dispatchEvent(
             new CustomEvent("ophel:navigateSettingsPage", {
@@ -2027,7 +2119,7 @@ export const App = () => {
         ? t("modelLockEnabled") || "模型锁定已开启"
         : t("modelLockDisabled") || "模型锁定已关闭",
     )
-  }, [adapter, setSettings])
+  }, [adapter, openSettingsModal, setSettings])
 
   // 获取当前站点的模型锁定状态
   const isModelLocked = useMemo(() => {
@@ -2044,7 +2136,7 @@ export const App = () => {
     conversationManager,
     onPanelToggle: () => setIsPanelOpen((prev) => !prev),
     onThemeToggle: handleThemeToggle,
-    onOpenSettings: () => setIsSettingsOpen(true),
+    onOpenSettings: openSettingsModal,
     isPanelVisible: isPanelOpen,
     isSnapped: !!edgeSnapState && !isEdgePeeking, // 吸附且未显示
     onShowSnappedPanel: () => {
@@ -2654,13 +2746,7 @@ export const App = () => {
         }}
         onInteractionStateChange={handleInteractionChange}
         onOpenSettings={() => {
-          // 打开设置模态框时，立即更新 ref 并锁定 peeking 状态
-          // 使用 ref 确保 onMouseLeave 回调能立即读取到最新状态
-          isSettingsOpenRef.current = true
-          if (edgeSnapState && settings?.panel?.edgeSnap) {
-            setIsEdgePeeking(true)
-          }
-          setIsSettingsOpen(true)
+          openSettingsModal()
         }}
         onMouseEnter={() => {
           if (hideTimerRef.current) {
@@ -2728,8 +2814,7 @@ export const App = () => {
         onScrollLock={() => handleToggleScrollLock()}
         onSettings={() => {
           // 打开 SettingsModal 并跳转到工具箱设置 Tab
-          isSettingsOpenRef.current = true
-          setIsSettingsOpen(true)
+          openSettingsModal()
           // 延迟发送导航事件，确保 Modal 已挂载
           setTimeout(() => {
             window.dispatchEvent(

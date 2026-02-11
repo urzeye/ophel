@@ -1094,6 +1094,7 @@ export const zhCN = {
   globalSearchEmptyCurrentSession: "暂无当前会话搜索结果",
   globalSearchCategoriesLabel: "全局搜索分类",
   globalSearchPageDesc: "配置 Search Everywhere 的搜索行为与交互细节",
+  globalSearchTriggerHint: "触发方式：双击 Shift 或 Ctrl/Cmd + K",
   globalSearchPromptSettingsTitle: "提示词行为",
   globalSearchPromptSettingsDesc: "配置在全局搜索中选中提示词后按 Enter 的行为",
   globalSearchPromptEnterBehaviorLabel: "全局搜索提示词回车行为",
