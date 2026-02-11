@@ -31,6 +31,7 @@ export const NAV_IDS = {
   APPEARANCE: "appearance",
   FEATURES: "features",
   SITE_SETTINGS: "siteSettings",
+  GLOBAL_SEARCH: "globalSearch",
   SHORTCUTS: "shortcuts",
   BACKUP: "backup",
   PERMISSIONS: "permissions",
@@ -128,6 +129,10 @@ const SETTING_ID_ROUTE_RULES: SettingRouteRule[] = [
     route: { page: NAV_IDS.SITE_SETTINGS, subTab: "claude" },
   },
   {
+    prefix: "global-search-",
+    route: { page: NAV_IDS.GLOBAL_SEARCH },
+  },
+  {
     prefix: "tab-",
     route: { page: NAV_IDS.FEATURES, subTab: FEATURES_TAB_IDS.TAB_SETTINGS },
   },
@@ -181,6 +186,7 @@ export const SETTING_ID_ALIASES: Record<string, string> = {
   "siteSettings.layout.userQueryWidth.enabled": "layout-user-query-width-enabled",
   "siteSettings.layout.userQueryWidth.value": "layout-user-query-width-value",
   "siteSettings.modelLock": "model-lock-gemini",
+  "globalSearch.promptEnterBehavior": "global-search-prompt-enter-behavior",
   "features.tab.openInNewTab": "tab-open-new",
   "features.tab.autoRename": "tab-auto-rename",
   "features.outline.autoUpdate": "outline-auto-update",
@@ -607,6 +613,11 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     settingId: "claude-session-keys",
     title: "Claude：Session Keys",
     keywords: ["claude", "session key", "token", "密钥"],
+  },
+  {
+    settingId: "global-search-prompt-enter-behavior",
+    title: "全局搜索：提示词回车行为",
+    keywords: ["global search", "prompt", "enter", "全局搜索", "提示词", "回车"],
   },
   {
     settingId: "appearance-preset-light",

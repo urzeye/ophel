@@ -18,6 +18,7 @@ export const en = {
   // ======== Options Page Navigation ========
   navGeneral: "General",
   navSiteSettings: "Site Config",
+  navGlobalSearch: "Global Search",
   navAppearance: "Appearance",
   navPageContent: "Page & Content",
   navFeatures: "Features",
@@ -1114,5 +1115,14 @@ Please output the optimized code block directly, followed by a brief summary of 
   globalSearchEmptyPrompts: "No prompt results",
   globalSearchEmptyCurrentSession: "No results in current session",
   globalSearchCategoriesLabel: "Global search categories",
+  globalSearchPageDesc: "Configure Search Everywhere behavior and interaction details",
+  globalSearchPromptSettingsTitle: "Prompt Behavior",
+  globalSearchPromptSettingsDesc:
+    "Choose what happens when pressing Enter on a prompt result in Search Everywhere",
+  globalSearchPromptEnterBehaviorLabel: "Search Everywhere prompt Enter behavior",
+  globalSearchPromptEnterBehaviorDesc:
+    "Smart: insert directly when no variable, open variable dialog when needed; Locate only: switch to Prompts and locate the item.",
+  globalSearchPromptEnterBehaviorSmart: "Smart (Recommended)",
+  globalSearchPromptEnterBehaviorLocate: "Locate Only",
   globalSearchFooterTips: "Enter to jump · ↑↓ to select · Tab category · Esc to close",
 }

@@ -53,6 +53,7 @@ const SETTINGS_PAGE_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinition> 
   [NAV_IDS.GENERAL]: { key: "navGeneral", fallback: "General" },
   [NAV_IDS.FEATURES]: { key: "navFeatures", fallback: "Features" },
   [NAV_IDS.SITE_SETTINGS]: { key: "navSiteSettings", fallback: "Site Config" },
+  [NAV_IDS.GLOBAL_SEARCH]: { key: "navGlobalSearch", fallback: "Global Search" },
   [NAV_IDS.APPEARANCE]: { key: "navAppearance", fallback: "Appearance" },
   [NAV_IDS.SHORTCUTS]: { key: "navShortcuts", fallback: "Keyboard Shortcuts" },
   [NAV_IDS.BACKUP]: { key: "navBackup", fallback: "Data Management" },
@@ -206,6 +207,7 @@ const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "appearance-preset-dark": "darkModePreset",
   "appearance-preset-light": "lightModePreset",
   "chatgpt-markdown-fix": "chatgptMarkdownFixLabel",
+  "global-search-prompt-enter-behavior": "globalSearchPromptEnterBehaviorLabel",
   "claude-session-keys": "claudeSessionKeyTitle",
   "content-formula-copy": "formulaCopyLabel",
   "content-formula-delimiter": "formulaDelimiterLabel",
@@ -293,6 +295,8 @@ const toGlobalSearchTokens = (query: string): string[] =>
     .split(" ")
     .map((token) => token.trim())
     .filter((token) => token.length > 0)
+
+const hasPromptVariables = (content: string): boolean => /\{\{(\w+)\}\}/.test(content)
 
 const getGlobalSearchHighlightRanges = (
   value: string,
@@ -1341,18 +1345,84 @@ export const App = () => {
           return
         }
 
-        setIsPanelOpen(true)
-        setSelectedPrompt(targetPrompt)
+        const openPromptsTab = () => {
+          setIsPanelOpen(true)
 
-        const tabOrder = settings?.features?.order || DEFAULT_SETTINGS.features.order
-        const promptsTabIndex = tabOrder.indexOf(TAB_IDS.PROMPTS)
-        if (promptsTabIndex >= 0) {
+          const tabOrder = settings?.features?.order || DEFAULT_SETTINGS.features.order
+          const promptsTabIndex = tabOrder.indexOf(TAB_IDS.PROMPTS)
+          if (promptsTabIndex >= 0) {
+            window.dispatchEvent(
+              new CustomEvent("ophel:switchTab", {
+                detail: { index: promptsTabIndex },
+              }),
+            )
+          }
+        }
+
+        const locatePrompt = () => {
+          setSelectedPrompt(null)
+          openPromptsTab()
+
+          const pendingDetail = {
+            promptId: targetPrompt.id,
+          }
+          const ophelWindow = window as Window & {
+            __ophelPendingLocatePrompt?: typeof pendingDetail | null
+          }
+          ophelWindow.__ophelPendingLocatePrompt = pendingDetail
+
           window.dispatchEvent(
-            new CustomEvent("ophel:switchTab", {
-              detail: { index: promptsTabIndex },
+            new CustomEvent("ophel:locatePrompt", {
+              detail: pendingDetail,
             }),
           )
         }
+
+        const promptEnterBehavior = settings?.globalSearch?.promptEnterBehavior ?? "smart"
+        if (promptEnterBehavior === "locate") {
+          locatePrompt()
+          return
+        }
+
+        if (!promptManager) {
+          openPromptsTab()
+          return
+        }
+
+        if (hasPromptVariables(targetPrompt.content)) {
+          setSelectedPrompt(null)
+          openPromptsTab()
+
+          const pendingDetail = {
+            promptId: targetPrompt.id,
+            submitAfterInsert: false,
+          }
+          const ophelWindow = window as Window & {
+            __ophelPendingPromptVariableDialog?: typeof pendingDetail | null
+          }
+          ophelWindow.__ophelPendingPromptVariableDialog = pendingDetail
+
+          window.dispatchEvent(
+            new CustomEvent("ophel:openPromptVariableDialog", {
+              detail: pendingDetail,
+            }),
+          )
+          return
+        }
+
+        void (async () => {
+          const inserted = await promptManager.insertPrompt(targetPrompt.content)
+          if (inserted) {
+            promptManager.updateLastUsed(targetPrompt.id)
+            setSelectedPrompt(targetPrompt)
+            showToast(`${t("inserted") || "已插入"}: ${targetPrompt.title}`)
+            return
+          }
+
+          locatePrompt()
+          showToast(t("insertFailed") || "未找到输入框，请点击输入框后重试")
+        })()
+
         return
       }
 
@@ -1360,7 +1430,7 @@ export const App = () => {
         adapter?.navigateToConversation(item.conversationId, item.conversationUrl)
       }
     },
-    [adapter, closeGlobalSettingsSearch, outlineManager, promptsSnapshot, settings],
+    [adapter, closeGlobalSettingsSearch, outlineManager, promptManager, promptsSnapshot, settings],
   )
 
   useEffect(() => {

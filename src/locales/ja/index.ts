@@ -18,6 +18,7 @@ export const ja = {
   // ======== Options Page Navigation ========
   navGeneral: "基本設定",
   navSiteSettings: "サイト設定",
+  navGlobalSearch: "グローバル検索",
   navAppearance: "外観",
   navPageContent: "ページと内容",
   navFeatures: "機能",

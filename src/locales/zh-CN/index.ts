@@ -16,6 +16,7 @@ export const zhCN = {
   // ======== Options 页面导航 ========
   navGeneral: "基本设置",
   navSiteSettings: "站点配置",
+  navGlobalSearch: "全局搜索",
   navAppearance: "外观主题",
   navPageContent: "页面与内容",
   navFeatures: "功能模块",
@@ -1092,5 +1093,13 @@ export const zhCN = {
   globalSearchEmptyPrompts: "暂无提示词搜索结果",
   globalSearchEmptyCurrentSession: "暂无当前会话搜索结果",
   globalSearchCategoriesLabel: "全局搜索分类",
+  globalSearchPageDesc: "配置 Search Everywhere 的搜索行为与交互细节",
+  globalSearchPromptSettingsTitle: "提示词行为",
+  globalSearchPromptSettingsDesc: "配置在全局搜索中选中提示词后按 Enter 的行为",
+  globalSearchPromptEnterBehaviorLabel: "全局搜索提示词回车行为",
+  globalSearchPromptEnterBehaviorDesc:
+    "智能：无变量直接插入，含变量打开填写弹窗；仅定位：切换到提示词列表并定位。",
+  globalSearchPromptEnterBehaviorSmart: "智能（推荐）",
+  globalSearchPromptEnterBehaviorLocate: "仅定位",
   globalSearchFooterTips: "Enter 跳转 · ↑↓ 选择 · Tab 分类 · Esc 关闭",
 }

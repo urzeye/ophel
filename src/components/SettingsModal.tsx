@@ -16,6 +16,7 @@ import {
   PageContentIcon,
   PermissionsIcon,
   RestoreIcon,
+  SearchIcon,
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
 import {
@@ -31,12 +32,18 @@ import AboutPage from "~tabs/options/pages/AboutPage"
 import AppearancePage from "~tabs/options/pages/AppearancePage"
 import BackupPage from "~tabs/options/pages/BackupPage"
 import FeaturesPage from "~tabs/options/pages/FeaturesPage"
+import GlobalSearchPage from "~tabs/options/pages/GlobalSearchPage"
 import GeneralPage from "~tabs/options/pages/GeneralPage"
 import PermissionsPage from "~tabs/options/pages/PermissionsPage"
 import ShortcutsPage from "~tabs/options/pages/ShortcutsPage"
 import SiteSettingsPage from "~tabs/options/pages/SiteSettingsPage"
 import { APP_DISPLAY_NAME, APP_ICON_URL } from "~utils/config"
 import { setLanguage, t } from "~utils/i18n"
+
+const getLocalizedLabel = (labelKey: string, fallback: string): string => {
+  const localized = t(labelKey)
+  return localized === labelKey ? fallback : localized
+}
 
 // 导航菜单定义
 const NAV_ITEMS = [
@@ -58,6 +65,12 @@ const NAV_ITEMS = [
     Icon: PageContentIcon,
     labelKey: "navSiteSettings",
     label: "站点配置",
+  },
+  {
+    id: NAV_IDS.GLOBAL_SEARCH,
+    Icon: SearchIcon,
+    labelKey: "navGlobalSearch",
+    label: "全局搜索",
   },
   { id: NAV_IDS.SHORTCUTS, Icon: KeyboardIcon, labelKey: "navShortcuts", label: "快捷键位" },
   { id: NAV_IDS.BACKUP, Icon: BackupIcon, labelKey: "navBackup", label: "数据管理" },
@@ -294,6 +307,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
         return <AppearancePage siteId={siteId} initialTab={initialSubTab} />
       case NAV_IDS.FEATURES:
         return <FeaturesPage siteId={siteId} initialTab={initialSubTab} />
+      case NAV_IDS.GLOBAL_SEARCH:
+        return <GlobalSearchPage siteId={siteId} />
       case NAV_IDS.SHORTCUTS:
         return <ShortcutsPage siteId={siteId} />
       case NAV_IDS.PERMISSIONS:
@@ -355,7 +370,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
                 <span className="settings-nav-item-icon">
                   <item.Icon size={22} />
                 </span>
-                <span>{t(item.labelKey) || item.label}</span>
+                <span>{getLocalizedLabel(item.labelKey, item.label)}</span>
               </button>
             ))}
           </nav>

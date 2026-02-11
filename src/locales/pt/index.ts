@@ -18,6 +18,7 @@ export const pt = {
   // ======== Options Page Navigation ========
   navGeneral: "Geral",
   navSiteSettings: "Sites",
+  navGlobalSearch: "Busca Global",
   navAppearance: "Aparência",
   navPageContent: "Conteúdo",
   navFeatures: "Funções",

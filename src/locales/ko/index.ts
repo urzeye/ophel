@@ -18,6 +18,7 @@ export const ko = {
   // ======== Options Page Navigation ========
   navGeneral: "일반 설정",
   navSiteSettings: "사이트 설정",
+  navGlobalSearch: "전체 검색",
   navAppearance: "모양",
   navPageContent: "페이지 및 콘텐츠",
   navFeatures: "기능",

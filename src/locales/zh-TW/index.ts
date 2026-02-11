@@ -17,6 +17,7 @@ export const zhTW = {
   // ======== Options 頁面導航 ========
   navGeneral: "基本設定",
   navSiteSettings: "站點配置",
+  navGlobalSearch: "全域搜尋",
   navAppearance: "外觀主題",
   navPageContent: "頁面與內容",
   navFeatures: "功能模組",
@@ -1089,5 +1090,13 @@ export const zhTW = {
   globalSearchEmptyPrompts: "暫無提示詞搜尋結果",
   globalSearchEmptyCurrentSession: "暫無當前會話搜尋結果",
   globalSearchCategoriesLabel: "全域搜尋分類",
+  globalSearchPageDesc: "設定 Search Everywhere 的搜尋行為與互動細節",
+  globalSearchPromptSettingsTitle: "提示詞行為",
+  globalSearchPromptSettingsDesc: "設定在全域搜尋中選中提示詞後按 Enter 的行為",
+  globalSearchPromptEnterBehaviorLabel: "全域搜尋提示詞 Enter 行為",
+  globalSearchPromptEnterBehaviorDesc:
+    "智慧：無變數直接插入，含變數開啟填寫彈窗；僅定位：切換到提示詞列表並定位。",
+  globalSearchPromptEnterBehaviorSmart: "智慧（推薦）",
+  globalSearchPromptEnterBehaviorLocate: "僅定位",
   globalSearchFooterTips: "Enter 跳轉 · ↑↓ 選擇 · Tab 分類 · Esc 關閉",
 }

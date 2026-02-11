@@ -18,6 +18,7 @@ export const fr = {
   // ======== Options Page Navigation ========
   navGeneral: "Général",
   navSiteSettings: "Sites",
+  navGlobalSearch: "Recherche Globale",
   navAppearance: "Apparence",
   navPageContent: "Contenu",
   navFeatures: "Fonctions",

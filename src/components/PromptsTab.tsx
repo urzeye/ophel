@@ -52,6 +52,15 @@ interface PromptInputState {
   onConfirm: (value: string) => void
 }
 
+interface OpenPromptVariableDialogDetail {
+  promptId?: string
+  submitAfterInsert?: boolean
+}
+
+interface LocatePromptDetail {
+  promptId?: string
+}
+
 // 根据分类名称哈希自动分配颜色索引 1-7
 const getCategoryColorIndex = (categoryName: string): number => {
   let hash = 0
@@ -130,6 +139,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }>({ show: false, prompt: null })
 
   const clickTimerRef = useRef<number | null>(null)
+  const locateHighlightTimerRef = useRef<number | null>(null)
+  const promptListRef = useRef<HTMLDivElement | null>(null)
+  const [locatedPromptId, setLocatedPromptId] = useState<string | null>(null)
 
   // 预览容器 refs（用于初始化 SVG 图标）
   const editPreviewRef = useRef<HTMLDivElement>(null)
@@ -153,6 +165,116 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     })
   }, [manager])
 
+  const openVariableDialogByPromptId = useCallback(
+    (promptId: string, submitAfterInsert = false) => {
+      const targetPrompt = manager.getPrompts().find((prompt) => prompt.id === promptId)
+      if (!targetPrompt) {
+        return false
+      }
+
+      const variables = extractVariables(targetPrompt.content)
+      if (variables.length === 0) {
+        return false
+      }
+
+      setVariableDialogState({
+        show: true,
+        prompt: targetPrompt,
+        variables,
+        submitAfterInsert,
+      })
+      return true
+    },
+    [manager],
+  )
+
+  const locatePromptById = useCallback(
+    (promptId: string) => {
+      const targetPrompt = manager.getPrompts().find((prompt) => prompt.id === promptId)
+      if (!targetPrompt) {
+        return false
+      }
+
+      setSelectedCategory(VIRTUAL_CATEGORY.ALL)
+      setSearchQuery("")
+      onPromptSelect?.(null)
+      setLocatedPromptId(targetPrompt.id)
+      return true
+    },
+    [manager, onPromptSelect],
+  )
+
+  useEffect(() => {
+    const ophelWindow = window as Window & {
+      __ophelPendingPromptVariableDialog?: OpenPromptVariableDialogDetail | null
+    }
+
+    const handleOpenPromptVariableDialog = (event: Event) => {
+      const detail = (event as CustomEvent<OpenPromptVariableDialogDetail>).detail
+      const promptId = detail?.promptId
+      if (!promptId) {
+        return
+      }
+
+      const opened = openVariableDialogByPromptId(promptId, Boolean(detail?.submitAfterInsert))
+      if (opened) {
+        onPromptSelect?.(null)
+        ophelWindow.__ophelPendingPromptVariableDialog = null
+      }
+    }
+
+    window.addEventListener("ophel:openPromptVariableDialog", handleOpenPromptVariableDialog)
+
+    const pending = ophelWindow.__ophelPendingPromptVariableDialog
+    if (pending?.promptId) {
+      const opened = openVariableDialogByPromptId(
+        pending.promptId,
+        Boolean(pending.submitAfterInsert),
+      )
+      if (opened) {
+        onPromptSelect?.(null)
+        ophelWindow.__ophelPendingPromptVariableDialog = null
+      }
+    }
+
+    return () => {
+      window.removeEventListener("ophel:openPromptVariableDialog", handleOpenPromptVariableDialog)
+    }
+  }, [onPromptSelect, openVariableDialogByPromptId])
+
+  useEffect(() => {
+    const ophelWindow = window as Window & {
+      __ophelPendingLocatePrompt?: LocatePromptDetail | null
+    }
+
+    const handleLocatePrompt = (event: Event) => {
+      const detail = (event as CustomEvent<LocatePromptDetail>).detail
+      const promptId = detail?.promptId
+      if (!promptId) {
+        return
+      }
+
+      const located = locatePromptById(promptId)
+      if (located) {
+        ophelWindow.__ophelPendingLocatePrompt = null
+      }
+    }
+
+    window.addEventListener("ophel:locatePrompt", handleLocatePrompt)
+
+    const pending = ophelWindow.__ophelPendingLocatePrompt
+    if (pending?.promptId) {
+      const located = locatePromptById(pending.promptId)
+      if (located) {
+        ophelWindow.__ophelPendingLocatePrompt = null
+      }
+    }
+
+    return () => {
+      window.removeEventListener("ophel:locatePrompt", handleLocatePrompt)
+    }
+  }, [locatePromptById])
+
   useEffect(() => {
     loadData()
   }, [loadData])
@@ -161,6 +283,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     return () => {
       if (clickTimerRef.current !== null) {
         window.clearTimeout(clickTimerRef.current)
+      }
+      if (locateHighlightTimerRef.current !== null) {
+        window.clearTimeout(locateHighlightTimerRef.current)
       }
     }
   }, [])
@@ -286,6 +411,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }
 
   const handlePromptClick = (prompt: Prompt) => {
+    setLocatedPromptId(null)
+
     if (!doubleClickToSend) {
       void handleSelect(prompt)
       return
@@ -639,6 +766,40 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }
 
   const filtered = getFilteredPrompts()
+
+  useEffect(() => {
+    if (!locatedPromptId) {
+      return
+    }
+
+    const container = promptListRef.current
+    if (!container) {
+      return
+    }
+
+    const escapedPromptId =
+      typeof CSS !== "undefined" && typeof CSS.escape === "function"
+        ? CSS.escape(locatedPromptId)
+        : locatedPromptId.replace(/["\\]/g, "\\$&")
+
+    const target = container.querySelector<HTMLElement>(
+      `.prompt-item[data-prompt-id="${escapedPromptId}"]`,
+    )
+    if (!target) {
+      return
+    }
+
+    target.scrollIntoView({ behavior: "smooth", block: "center" })
+
+    if (locateHighlightTimerRef.current !== null) {
+      window.clearTimeout(locateHighlightTimerRef.current)
+    }
+
+    locateHighlightTimerRef.current = window.setTimeout(() => {
+      setLocatedPromptId((current) => (current === locatedPromptId ? null : current))
+      locateHighlightTimerRef.current = null
+    }, 2200)
+  }, [locatedPromptId, prompts, searchQuery, selectedCategory])
 
   // 编辑/新增弹窗
   const renderEditModal = () => {
@@ -1386,7 +1547,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       </div>
 
       {/* 提示词列表 */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "8px", scrollbarWidth: "none" }}>
+      <div
+        ref={promptListRef}
+        style={{ flex: 1, overflowY: "auto", padding: "8px", scrollbarWidth: "none" }}>
         {filtered.length === 0 ? (
           <div
             style={{
@@ -1398,224 +1561,229 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             暂无提示词
           </div>
         ) : (
-          filtered.map((p) => (
-            <div
-              key={p.id}
-              className={`prompt-item ${selectedPromptId === p.id ? "selected" : ""} ${draggedId === p.id ? "dragging" : ""}`}
-              onClick={() => handlePromptClick(p)}
-              onDoubleClick={() => handlePromptDoubleClick(p)}
-              draggable={false}
-              onDragStart={(e) => handleDragStart(e, p.id, e.currentTarget as HTMLDivElement)}
-              onDragOver={(e) => handleDragOver(e, p.id)}
-              onDragEnd={handleDragEnd}
-              onDrop={(e) => handleDrop(e, p.id)}
-              style={{
-                background:
-                  selectedPromptId === p.id
+          filtered.map((p) => {
+            const isSelected = selectedPromptId === p.id
+            const isLocated = locatedPromptId === p.id
+            const isHighlighted = isSelected || isLocated
+
+            return (
+              <div
+                key={p.id}
+                data-prompt-id={p.id}
+                className={`prompt-item ${isHighlighted ? "selected" : ""} ${isLocated ? "located" : ""} ${draggedId === p.id ? "dragging" : ""}`}
+                onClick={() => handlePromptClick(p)}
+                onDoubleClick={() => handlePromptDoubleClick(p)}
+                draggable={false}
+                onDragStart={(e) => handleDragStart(e, p.id, e.currentTarget as HTMLDivElement)}
+                onDragOver={(e) => handleDragOver(e, p.id)}
+                onDragEnd={handleDragEnd}
+                onDrop={(e) => handleDrop(e, p.id)}
+                style={{
+                  background: isHighlighted
                     ? "linear-gradient(135deg, #e8f0fe 0%, #f1f8e9 100%)"
                     : "var(--gh-bg, white)",
-                border:
-                  selectedPromptId === p.id
+                  border: isHighlighted
                     ? "1px solid var(--gh-primary, #4285f4)"
                     : "1px solid var(--gh-border, #e5e7eb)",
-                borderRadius: "8px",
-                padding: "12px",
-                marginBottom: "8px",
-                cursor: "pointer",
-                transition: "all 0.2s",
-                position: "relative",
-                userSelect: "none",
-              }}>
-              {/* 头部 */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
+                  borderRadius: "8px",
+                  padding: "12px",
                   marginBottom: "8px",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  position: "relative",
+                  userSelect: "none",
                 }}>
+                {/* 头部 */}
                 <div
                   style={{
-                    fontWeight: 600,
-                    fontSize: "14px",
-                    color: "var(--gh-text, #1f2937)",
-                    flex: 1,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    paddingRight: "8px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    marginBottom: "8px",
                   }}>
-                  {p.title}
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      fontSize: "14px",
+                      color: "var(--gh-text, #1f2937)",
+                      flex: 1,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      paddingRight: "8px",
+                    }}>
+                    {p.title}
+                  </div>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      padding: "2px 6px",
+                      background: "var(--gh-hover, #f3f4f6)",
+                      borderRadius: "4px",
+                      color: "var(--gh-text-secondary, #6b7280)",
+                      flexShrink: 0,
+                    }}>
+                    {p.category || t("uncategorized") || "未分类"}
+                  </span>
                 </div>
-                <span
+
+                {/* 内容预览 */}
+                <div
                   style={{
-                    fontSize: "11px",
-                    padding: "2px 6px",
-                    background: "var(--gh-hover, #f3f4f6)",
-                    borderRadius: "4px",
+                    fontSize: "13px",
                     color: "var(--gh-text-secondary, #6b7280)",
-                    flexShrink: 0,
+                    lineHeight: 1.4,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
                   }}>
-                  {p.category || t("uncategorized") || "未分类"}
-                </span>
-              </div>
+                  {p.content}
+                </div>
 
-              {/* 内容预览 */}
-              <div
-                style={{
-                  fontSize: "13px",
-                  color: "var(--gh-text-secondary, #6b7280)",
-                  lineHeight: 1.4,
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                }}>
-                {p.content}
+                {/* 悬浮操作按钮 */}
+                <div
+                  className="prompt-item-actions"
+                  style={{ position: "absolute", top: "8px", right: "8px", gap: "4px" }}>
+                  {/* ⭐ 置顶按钮 */}
+                  <Tooltip
+                    content={p.pinned ? t("promptUnpin") || "取消置顶" : t("promptPin") || "置顶"}>
+                    <button
+                      onClick={(e) => handleTogglePin(p.id, e)}
+                      style={{
+                        width: "24px",
+                        height: "24px",
+                        border: "1px solid var(--gh-border, #e5e7eb)",
+                        background: p.pinned ? "var(--gh-primary, #4285f4)" : "var(--gh-bg, white)",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
+                        fontSize: "12px",
+                        color: p.pinned ? "white" : "var(--gh-text-secondary, #6b7280)",
+                      }}>
+                      <PinIcon size={12} filled={p.pinned} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content="拖动排序">
+                    <button
+                      onMouseDown={(e) => {
+                        e.stopPropagation()
+                        const item = e.currentTarget.closest(".prompt-item") as HTMLDivElement
+                        if (item) item.draggable = true
+                      }}
+                      onMouseUp={(e) => {
+                        const item = e.currentTarget.closest(".prompt-item") as HTMLDivElement
+                        if (item) item.draggable = false
+                      }}
+                      style={{
+                        width: "24px",
+                        height: "24px",
+                        border: "1px solid var(--gh-border, #e5e7eb)",
+                        background: "var(--gh-bg, white)",
+                        borderRadius: "4px",
+                        cursor: "grab",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
+                        fontSize: "12px",
+                      }}>
+                      <DragIcon size={14} />
+                    </button>
+                  </Tooltip>
+                  {/* ⭐ 预览按钮 */}
+                  <Tooltip content={t("promptMarkdownPreview") || "预览"}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        e.preventDefault()
+                        setPreviewModal({ show: true, prompt: p })
+                      }}
+                      style={{
+                        width: "24px",
+                        height: "24px",
+                        border: "1px solid var(--gh-border, #e5e7eb)",
+                        background: "var(--gh-bg, white)",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
+                        fontSize: "12px",
+                      }}>
+                      <EyeIcon size={14} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content={t("copy")}>
+                    <button
+                      onClick={(e) => handleCopy(p.content, e)}
+                      style={{
+                        width: "24px",
+                        height: "24px",
+                        border: "1px solid var(--gh-border, #e5e7eb)",
+                        background: "var(--gh-bg, white)",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
+                        fontSize: "12px",
+                      }}>
+                      <CopyIcon size={14} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content={t("edit")}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        e.preventDefault()
+                        openEditModal(p)
+                      }}
+                      style={{
+                        width: "24px",
+                        height: "24px",
+                        border: "1px solid var(--gh-border, #e5e7eb)",
+                        background: "var(--gh-bg, white)",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
+                        fontSize: "12px",
+                      }}>
+                      <EditIcon size={14} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content={t("delete")}>
+                    <button
+                      onClick={(e) => handleDelete(p.id, e)}
+                      style={{
+                        width: "24px",
+                        height: "24px",
+                        border: "1px solid var(--gh-border, #e5e7eb)",
+                        background: "var(--gh-bg, white)",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
+                        fontSize: "12px",
+                        color: "var(--gh-text-danger, #ef4444)",
+                      }}>
+                      <DeleteIcon size={14} />
+                    </button>
+                  </Tooltip>
+                </div>
               </div>
-
-              {/* 悬浮操作按钮 */}
-              <div
-                className="prompt-item-actions"
-                style={{ position: "absolute", top: "8px", right: "8px", gap: "4px" }}>
-                {/* ⭐ 置顶按钮 */}
-                <Tooltip
-                  content={p.pinned ? t("promptUnpin") || "取消置顶" : t("promptPin") || "置顶"}>
-                  <button
-                    onClick={(e) => handleTogglePin(p.id, e)}
-                    style={{
-                      width: "24px",
-                      height: "24px",
-                      border: "1px solid var(--gh-border, #e5e7eb)",
-                      background: p.pinned ? "var(--gh-primary, #4285f4)" : "var(--gh-bg, white)",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
-                      fontSize: "12px",
-                      color: p.pinned ? "white" : "var(--gh-text-secondary, #6b7280)",
-                    }}>
-                    <PinIcon size={12} filled={p.pinned} />
-                  </button>
-                </Tooltip>
-                <Tooltip content="拖动排序">
-                  <button
-                    onMouseDown={(e) => {
-                      e.stopPropagation()
-                      const item = e.currentTarget.closest(".prompt-item") as HTMLDivElement
-                      if (item) item.draggable = true
-                    }}
-                    onMouseUp={(e) => {
-                      const item = e.currentTarget.closest(".prompt-item") as HTMLDivElement
-                      if (item) item.draggable = false
-                    }}
-                    style={{
-                      width: "24px",
-                      height: "24px",
-                      border: "1px solid var(--gh-border, #e5e7eb)",
-                      background: "var(--gh-bg, white)",
-                      borderRadius: "4px",
-                      cursor: "grab",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
-                      fontSize: "12px",
-                    }}>
-                    <DragIcon size={14} />
-                  </button>
-                </Tooltip>
-                {/* ⭐ 预览按钮 */}
-                <Tooltip content={t("promptMarkdownPreview") || "预览"}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      e.preventDefault()
-                      setPreviewModal({ show: true, prompt: p })
-                    }}
-                    style={{
-                      width: "24px",
-                      height: "24px",
-                      border: "1px solid var(--gh-border, #e5e7eb)",
-                      background: "var(--gh-bg, white)",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
-                      fontSize: "12px",
-                    }}>
-                    <EyeIcon size={14} />
-                  </button>
-                </Tooltip>
-                <Tooltip content={t("copy")}>
-                  <button
-                    onClick={(e) => handleCopy(p.content, e)}
-                    style={{
-                      width: "24px",
-                      height: "24px",
-                      border: "1px solid var(--gh-border, #e5e7eb)",
-                      background: "var(--gh-bg, white)",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
-                      fontSize: "12px",
-                    }}>
-                    <CopyIcon size={14} />
-                  </button>
-                </Tooltip>
-                <Tooltip content={t("edit")}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      e.preventDefault()
-                      openEditModal(p)
-                    }}
-                    style={{
-                      width: "24px",
-                      height: "24px",
-                      border: "1px solid var(--gh-border, #e5e7eb)",
-                      background: "var(--gh-bg, white)",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
-                      fontSize: "12px",
-                    }}>
-                    <EditIcon size={14} />
-                  </button>
-                </Tooltip>
-                <Tooltip content={t("delete")}>
-                  <button
-                    onClick={(e) => handleDelete(p.id, e)}
-                    style={{
-                      width: "24px",
-                      height: "24px",
-                      border: "1px solid var(--gh-border, #e5e7eb)",
-                      background: "var(--gh-bg, white)",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
-                      fontSize: "12px",
-                      color: "var(--gh-text-danger, #ef4444)",
-                    }}>
-                    <DeleteIcon size={14} />
-                  </button>
-                </Tooltip>
-              </div>
-            </div>
-          ))
+            )
+          })
         )}
       </div>
 

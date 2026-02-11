@@ -158,6 +158,11 @@ export interface Settings {
   // 模型锁定（按站点独立）
   modelLock: Record<string, ModelLockConfig>
 
+  // 全局搜索配置
+  globalSearch: {
+    promptEnterBehavior: "smart" | "locate"
+  }
+
   // 功能模块配置
   features: {
     order: string[]
@@ -337,6 +342,10 @@ export const DEFAULT_SETTINGS: Settings = {
   modelLock: {
     gemini: { enabled: false, keyword: "" },
     "gemini-enterprise": { enabled: false, keyword: "" },
+  },
+
+  globalSearch: {
+    promptEnterBehavior: "smart",
   },
 
   features: {

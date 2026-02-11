@@ -18,6 +18,7 @@ export const ru = {
   // ======== Options Page Navigation ========
   navGeneral: "Общие",
   navSiteSettings: "Сайты",
+  navGlobalSearch: "Глобальный поиск",
   navAppearance: "Вид",
   navPageContent: "Контент",
   navFeatures: "Функции",
