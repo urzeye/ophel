@@ -1129,4 +1129,9 @@ export const ja = {
   globalSearchPromptEnterBehaviorSmart: "スマート（推奨）",
   globalSearchPromptEnterBehaviorLocate: "位置のみ",
   globalSearchFooterTips: "Enter で移動 · ↑↓ で選択 · Tab でカテゴリ切替 · Esc で閉じる",
+  globalSearchShortcutNudge: "次回からは {shortcut} ですばやく開けます",
+  globalSearchShortcutNudgeDismiss: "今後は表示しない",
+  globalSearchContextCurrentItem: "{current}件目",
+  globalSearchContextShownProgress: "表示済み {shown}/{total}",
+  globalSearchContextTotalItems: "合計 {total}件",
 }

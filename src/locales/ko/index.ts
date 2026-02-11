@@ -1094,6 +1094,12 @@ export const ko = {
   globalSearchPromptEnterBehaviorSmart: "스마트(권장)",
   globalSearchPromptEnterBehaviorLocate: "위치만",
   globalSearchFooterTips: "Enter 이동 · ↑↓ 선택 · Tab 카테고리 · Esc 닫기",
+  globalSearchShortcutNudge: "다음부터는 {shortcut}로 빠르게 열 수 있어요",
+  globalSearchShortcutNudgeDismiss: "다시 알리지 않기",
+
+  globalSearchContextCurrentItem: "{current}번째 항목",
+  globalSearchContextShownProgress: "표시됨 {shown}/{total}",
+  globalSearchContextTotalItems: "총 {total}개",
 
   // Missing Keys
   moreLanguages: "More Languages",

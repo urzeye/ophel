@@ -89,11 +89,6 @@ const SETTINGS_SUB_TAB_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinitio
   [APPEARANCE_TAB_IDS.CUSTOM]: { key: "customStylesTab", fallback: "Custom Styles" },
 }
 
-const isLikelyMac = () => {
-  if (typeof navigator === "undefined") return false
-  return navigator.platform.toLowerCase().includes("mac")
-}
-
 type GlobalSearchCategoryId = "all" | "outline" | "conversations" | "prompts" | "settings"
 
 type GlobalSearchResultCategory = Exclude<GlobalSearchCategoryId, "all">
@@ -142,6 +137,15 @@ interface GlobalSearchGroupedResult {
   hasMore: boolean
   isExpanded: boolean
   remainingCount: number
+}
+
+type GlobalSearchOpenSource = "shortcut" | "ui" | "event"
+
+interface GlobalSearchShortcutNudgeState {
+  shownCount: number
+  lastShownAt: number
+  dismissed: boolean
+  shortcutUsedCount: number
 }
 
 const GLOBAL_SEARCH_CATEGORY_DEFINITIONS: GlobalSearchCategoryDefinition[] = [
@@ -199,6 +203,13 @@ const GLOBAL_SEARCH_RESULTS_LISTBOX_ID = "settings-search-results-listbox"
 const GLOBAL_SEARCH_OPTION_ID_PREFIX = "settings-search-option"
 const GLOBAL_SEARCH_KEYBOARD_SAFE_TOP = 8
 const GLOBAL_SEARCH_KEYBOARD_SAFE_BOTTOM = 12
+const GLOBAL_SEARCH_SHORTCUT_HINT_PRIMARY = "Ctrl+K"
+const GLOBAL_SEARCH_SHORTCUT_HINT_FULL = "Ctrl+K / double shift"
+const GLOBAL_SEARCH_SHORTCUT_NUDGE_STORAGE_KEY = "ophel:global-search-shortcut-nudge:v1"
+const GLOBAL_SEARCH_SHORTCUT_NUDGE_MAX_SHOWS = 3
+const GLOBAL_SEARCH_SHORTCUT_NUDGE_MIN_INTERVAL = 24 * 60 * 60 * 1000
+const GLOBAL_SEARCH_SHORTCUT_NUDGE_AUTO_HIDE_MS = 6000
+const GLOBAL_SEARCH_SHORTCUT_NUDGE_AUTO_DISMISS_SHORTCUT_COUNT = 2
 
 const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "aistudio-collapse-advanced": "aistudioCollapseAdvanced",
@@ -474,6 +485,190 @@ export const App = () => {
     [i18nRenderTick],
   )
 
+  const formatLocalizedText = useCallback(
+    (definition: LocalizedLabelDefinition, params: Record<string, string>) => {
+      let text = getLocalizedText(definition)
+
+      Object.keys(params).forEach((paramKey) => {
+        text = text.replace(new RegExp(`{${paramKey}}`, "g"), params[paramKey])
+      })
+
+      return text
+    },
+    [getLocalizedText],
+  )
+
+  const globalSearchShortcutNudgeText = useMemo(
+    () =>
+      formatLocalizedText(
+        {
+          key: "globalSearchShortcutNudge",
+          fallback: "下次可按 {shortcut} 快速打开",
+        },
+        {
+          shortcut: GLOBAL_SEARCH_SHORTCUT_HINT_FULL,
+        },
+      ),
+    [formatLocalizedText],
+  )
+
+  const getGlobalSearchShortcutNudgeState = useCallback((): GlobalSearchShortcutNudgeState => {
+    if (typeof window === "undefined") {
+      return {
+        shownCount: 0,
+        lastShownAt: 0,
+        dismissed: false,
+        shortcutUsedCount: 0,
+      }
+    }
+
+    try {
+      const rawValue = window.localStorage.getItem(GLOBAL_SEARCH_SHORTCUT_NUDGE_STORAGE_KEY)
+      if (!rawValue) {
+        return {
+          shownCount: 0,
+          lastShownAt: 0,
+          dismissed: false,
+          shortcutUsedCount: 0,
+        }
+      }
+
+      const parsedValue = JSON.parse(rawValue) as Partial<GlobalSearchShortcutNudgeState>
+
+      return {
+        shownCount: Number.isFinite(parsedValue.shownCount)
+          ? Math.max(0, Number(parsedValue.shownCount))
+          : 0,
+        lastShownAt: Number.isFinite(parsedValue.lastShownAt)
+          ? Math.max(0, Number(parsedValue.lastShownAt))
+          : 0,
+        dismissed: Boolean(parsedValue.dismissed),
+        shortcutUsedCount: Number.isFinite(parsedValue.shortcutUsedCount)
+          ? Math.max(0, Number(parsedValue.shortcutUsedCount))
+          : 0,
+      }
+    } catch {
+      return {
+        shownCount: 0,
+        lastShownAt: 0,
+        dismissed: false,
+        shortcutUsedCount: 0,
+      }
+    }
+  }, [])
+
+  const saveGlobalSearchShortcutNudgeState = useCallback(
+    (nextState: GlobalSearchShortcutNudgeState) => {
+      if (typeof window === "undefined") {
+        return
+      }
+
+      try {
+        window.localStorage.setItem(
+          GLOBAL_SEARCH_SHORTCUT_NUDGE_STORAGE_KEY,
+          JSON.stringify(nextState),
+        )
+      } catch {
+        // ignore storage errors
+      }
+    },
+    [],
+  )
+
+  const clearGlobalSearchNudgeHideTimer = useCallback(() => {
+    if (globalSearchNudgeHideTimerRef.current) {
+      clearTimeout(globalSearchNudgeHideTimerRef.current)
+      globalSearchNudgeHideTimerRef.current = null
+    }
+  }, [])
+
+  const hideGlobalSearchShortcutNudge = useCallback(() => {
+    clearGlobalSearchNudgeHideTimer()
+    setShowGlobalSearchShortcutNudge(false)
+    setGlobalSearchShortcutNudgeMessage("")
+  }, [clearGlobalSearchNudgeHideTimer])
+
+  const dismissGlobalSearchShortcutNudgeForever = useCallback(() => {
+    const currentState = getGlobalSearchShortcutNudgeState()
+    saveGlobalSearchShortcutNudgeState({
+      ...currentState,
+      dismissed: true,
+    })
+    hideGlobalSearchShortcutNudge()
+  }, [
+    getGlobalSearchShortcutNudgeState,
+    hideGlobalSearchShortcutNudge,
+    saveGlobalSearchShortcutNudgeState,
+  ])
+
+  const markGlobalSearchShortcutUsed = useCallback(() => {
+    const currentState = getGlobalSearchShortcutNudgeState()
+    const nextShortcutUsedCount = currentState.shortcutUsedCount + 1
+
+    saveGlobalSearchShortcutNudgeState({
+      ...currentState,
+      shortcutUsedCount: nextShortcutUsedCount,
+      dismissed:
+        currentState.dismissed ||
+        nextShortcutUsedCount >= GLOBAL_SEARCH_SHORTCUT_NUDGE_AUTO_DISMISS_SHORTCUT_COUNT,
+    })
+
+    hideGlobalSearchShortcutNudge()
+  }, [
+    getGlobalSearchShortcutNudgeState,
+    hideGlobalSearchShortcutNudge,
+    saveGlobalSearchShortcutNudgeState,
+  ])
+
+  const tryShowGlobalSearchShortcutNudge = useCallback(() => {
+    const currentState = getGlobalSearchShortcutNudgeState()
+    if (currentState.dismissed) {
+      return
+    }
+
+    if (
+      currentState.shortcutUsedCount >= GLOBAL_SEARCH_SHORTCUT_NUDGE_AUTO_DISMISS_SHORTCUT_COUNT
+    ) {
+      saveGlobalSearchShortcutNudgeState({
+        ...currentState,
+        dismissed: true,
+      })
+      return
+    }
+
+    if (currentState.shownCount >= GLOBAL_SEARCH_SHORTCUT_NUDGE_MAX_SHOWS) {
+      return
+    }
+
+    const now = Date.now()
+    if (
+      currentState.lastShownAt > 0 &&
+      now - currentState.lastShownAt < GLOBAL_SEARCH_SHORTCUT_NUDGE_MIN_INTERVAL
+    ) {
+      return
+    }
+
+    saveGlobalSearchShortcutNudgeState({
+      ...currentState,
+      shownCount: currentState.shownCount + 1,
+      lastShownAt: now,
+    })
+
+    setGlobalSearchShortcutNudgeMessage(globalSearchShortcutNudgeText)
+    setShowGlobalSearchShortcutNudge(true)
+    clearGlobalSearchNudgeHideTimer()
+    globalSearchNudgeHideTimerRef.current = setTimeout(() => {
+      setShowGlobalSearchShortcutNudge(false)
+      setGlobalSearchShortcutNudgeMessage("")
+      globalSearchNudgeHideTimerRef.current = null
+    }, GLOBAL_SEARCH_SHORTCUT_NUDGE_AUTO_HIDE_MS)
+  }, [
+    clearGlobalSearchNudgeHideTimer,
+    getGlobalSearchShortcutNudgeState,
+    globalSearchShortcutNudgeText,
+    saveGlobalSearchShortcutNudgeState,
+  ])
+
   const getPageLabel = useCallback(
     (page: string) => {
       const definition = SETTINGS_PAGE_LABEL_DEFINITIONS[page]
@@ -655,13 +850,16 @@ export const App = () => {
   const [expandedGlobalSearchCategories, setExpandedGlobalSearchCategories] = useState<
     Partial<Record<GlobalSearchResultCategory, boolean>>
   >({})
+  const [showGlobalSearchShortcutNudge, setShowGlobalSearchShortcutNudge] = useState(false)
+  const [globalSearchShortcutNudgeMessage, setGlobalSearchShortcutNudgeMessage] = useState("")
   const settingsSearchInputRef = useRef<HTMLInputElement | null>(null)
   const settingsSearchResultsRef = useRef<HTMLDivElement | null>(null)
   const settingsSearchWheelFreezeUntilRef = useRef(0)
+  const globalSearchNudgeHideTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const globalSearchOpenSourceRef = useRef<GlobalSearchOpenSource>("ui")
   const lastShiftPressedAtRef = useRef(0)
   const [outlineSearchVersion, setOutlineSearchVersion] = useState(0)
   const settingsSearchRestoreFocusRef = useRef<HTMLElement | null>(null)
-  const isMacLike = useMemo(() => isLikelyMac(), [])
 
   // 浮动工具栏
 
@@ -1295,11 +1493,28 @@ export const App = () => {
     }
 
     const label = resolvedGlobalSearchResultCategoryLabels[activeItem.category]
+    const currentItemText = formatLocalizedText(
+      {
+        key: "globalSearchContextCurrentItem",
+        fallback: "第 {current} 项",
+      },
+      {
+        current: String(activeVisibleGlobalSearchIndex + 1),
+      },
+    )
 
     if (activeGlobalSearchCategory !== "all") {
       return {
         label,
-        meta: `${activeVisibleGlobalSearchIndex + 1}/${visibleGlobalSearchResults.length}`,
+        meta: `${currentItemText} · ${formatLocalizedText(
+          {
+            key: "globalSearchContextTotalItems",
+            fallback: "共 {total} 项",
+          },
+          {
+            total: String(visibleGlobalSearchResults.length),
+          },
+        )}`,
       }
     }
 
@@ -1310,30 +1525,35 @@ export const App = () => {
     if (!activeGroup) {
       return {
         label,
-        meta: `${activeVisibleGlobalSearchIndex + 1}/${visibleGlobalSearchResults.length}`,
+        meta: `${currentItemText} · ${formatLocalizedText(
+          {
+            key: "globalSearchContextTotalItems",
+            fallback: "共 {total} 项",
+          },
+          {
+            total: String(visibleGlobalSearchResults.length),
+          },
+        )}`,
       }
     }
 
-    const activeIndexInGroup = activeGroup.items.findIndex((item) => item.id === activeItem.id)
-    const metaParts: string[] = []
-
-    if (activeIndexInGroup >= 0) {
-      metaParts.push(`${activeIndexInGroup + 1}/${activeGroup.items.length}`)
-    }
-
-    metaParts.push(
-      activeGroup.totalCount > activeGroup.items.length
-        ? `${activeGroup.items.length}/${activeGroup.totalCount}`
-        : `${activeGroup.totalCount}`,
-    )
-
     return {
       label,
-      meta: metaParts.join(" · "),
+      meta: `${currentItemText} · ${formatLocalizedText(
+        {
+          key: "globalSearchContextShownProgress",
+          fallback: "已显示 {shown}/{total}",
+        },
+        {
+          shown: String(activeGroup.items.length),
+          total: String(activeGroup.totalCount),
+        },
+      )}`,
     }
   }, [
     activeGlobalSearchCategory,
     activeVisibleGlobalSearchIndex,
+    formatLocalizedText,
     groupedGlobalSearchResults,
     resolvedGlobalSearchResultCategoryLabels,
     visibleGlobalSearchResults,
@@ -1373,34 +1593,39 @@ export const App = () => {
     }
   }, [])
 
-  const openGlobalSettingsSearch = useCallback(() => {
-    if (isSettingsOpenRef.current) {
-      searchOpenedFromSettingsRef.current = true
-      closeSettingsModal()
-    } else {
-      searchOpenedFromSettingsRef.current = false
-    }
+  const openGlobalSettingsSearch = useCallback(
+    (source: GlobalSearchOpenSource = "ui") => {
+      globalSearchOpenSourceRef.current = source
 
-    if (edgeSnapState && settingsRef.current?.panel?.edgeSnap) {
-      setIsEdgePeeking(true)
-    }
+      if (isSettingsOpenRef.current) {
+        searchOpenedFromSettingsRef.current = true
+        closeSettingsModal()
+      } else {
+        searchOpenedFromSettingsRef.current = false
+      }
 
-    const activeElement = document.activeElement
-    if (activeElement instanceof HTMLElement && activeElement !== document.body) {
-      settingsSearchRestoreFocusRef.current = activeElement
-    } else {
-      settingsSearchRestoreFocusRef.current = null
-    }
+      if (edgeSnapState && settingsRef.current?.panel?.edgeSnap) {
+        setIsEdgePeeking(true)
+      }
 
-    setSettingsSearchQuery("")
-    setActiveGlobalSearchCategory("all")
-    setSettingsSearchActiveIndex(0)
-    setSettingsSearchHoverLocked(false)
-    setSettingsSearchNavigationMode("pointer")
-    setExpandedGlobalSearchCategories({})
-    settingsSearchWheelFreezeUntilRef.current = 0
-    setIsGlobalSettingsSearchOpen(true)
-  }, [closeSettingsModal, edgeSnapState])
+      const activeElement = document.activeElement
+      if (activeElement instanceof HTMLElement && activeElement !== document.body) {
+        settingsSearchRestoreFocusRef.current = activeElement
+      } else {
+        settingsSearchRestoreFocusRef.current = null
+      }
+
+      setSettingsSearchQuery("")
+      setActiveGlobalSearchCategory("all")
+      setSettingsSearchActiveIndex(0)
+      setSettingsSearchHoverLocked(false)
+      setSettingsSearchNavigationMode("pointer")
+      setExpandedGlobalSearchCategories({})
+      settingsSearchWheelFreezeUntilRef.current = 0
+      setIsGlobalSettingsSearchOpen(true)
+    },
+    [closeSettingsModal, edgeSnapState],
+  )
 
   const closeGlobalSettingsSearch = useCallback(
     (options?: { restoreFocus?: boolean; reopenSettings?: boolean }) => {
@@ -1651,6 +1876,24 @@ export const App = () => {
   }, [isGlobalSettingsSearchOpen])
 
   useEffect(() => {
+    if (!isGlobalSettingsSearchOpen) {
+      return
+    }
+
+    if (globalSearchOpenSourceRef.current !== "ui") {
+      return
+    }
+
+    tryShowGlobalSearchShortcutNudge()
+  }, [isGlobalSettingsSearchOpen, tryShowGlobalSearchShortcutNudge])
+
+  useEffect(() => {
+    return () => {
+      clearGlobalSearchNudgeHideTimer()
+    }
+  }, [clearGlobalSearchNudgeHideTimer])
+
+  useEffect(() => {
     const handleOpenSearchShortcut = (event: KeyboardEvent) => {
       if (isGlobalSettingsSearchOpen) {
         return
@@ -1671,7 +1914,8 @@ export const App = () => {
         event.preventDefault()
         event.stopPropagation()
         event.stopImmediatePropagation()
-        openGlobalSettingsSearch()
+        markGlobalSearchShortcutUsed()
+        openGlobalSettingsSearch("shortcut")
         return
       }
 
@@ -1684,7 +1928,8 @@ export const App = () => {
         event.preventDefault()
         event.stopPropagation()
         lastShiftPressedAtRef.current = 0
-        openGlobalSettingsSearch()
+        markGlobalSearchShortcutUsed()
+        openGlobalSettingsSearch("shortcut")
         return
       }
 
@@ -1695,11 +1940,11 @@ export const App = () => {
     return () => {
       window.removeEventListener("keydown", handleOpenSearchShortcut, true)
     }
-  }, [isGlobalSettingsSearchOpen, openGlobalSettingsSearch])
+  }, [isGlobalSettingsSearchOpen, markGlobalSearchShortcutUsed, openGlobalSettingsSearch])
 
   useEffect(() => {
     const handleOpenSearchEvent = () => {
-      openGlobalSettingsSearch()
+      openGlobalSettingsSearch("event")
     }
 
     window.addEventListener("ophel:openSettingsSearch", handleOpenSearchEvent)
@@ -3100,12 +3345,33 @@ export const App = () => {
                   setSettingsSearchQuery(event.target.value)
                   setSettingsSearchActiveIndex(0)
                 }}
-                placeholder={resolvedActiveGlobalSearchCategoryText.placeholder}
+                placeholder={`${resolvedActiveGlobalSearchCategoryText.placeholder}（${GLOBAL_SEARCH_SHORTCUT_HINT_PRIMARY}）`}
               />
-              <span className="settings-search-hotkey">
-                {isMacLike ? "⌘K / ⇧⇧" : "Ctrl+K / Shift Shift"}
-              </span>
+              <span className="settings-search-hotkey">⌨ {GLOBAL_SEARCH_SHORTCUT_HINT_FULL}</span>
             </div>
+
+            {showGlobalSearchShortcutNudge && globalSearchShortcutNudgeMessage ? (
+              <div className="settings-search-shortcut-nudge" role="status" aria-live="polite">
+                <span className="settings-search-shortcut-nudge-text">
+                  {globalSearchShortcutNudgeMessage}
+                </span>
+                <button
+                  type="button"
+                  className="settings-search-shortcut-nudge-action"
+                  onClick={hideGlobalSearchShortcutNudge}>
+                  {getLocalizedText({ key: "close", fallback: "Close" })}
+                </button>
+                <button
+                  type="button"
+                  className="settings-search-shortcut-nudge-action"
+                  onClick={dismissGlobalSearchShortcutNudgeForever}>
+                  {getLocalizedText({
+                    key: "globalSearchShortcutNudgeDismiss",
+                    fallback: "Don’t remind me",
+                  })}
+                </button>
+              </div>
+            ) : null}
 
             <div
               className="settings-search-categories"

@@ -1179,6 +1179,39 @@ html[data-theme="dark"] .about-slogan {
   line-height: 1.6;
 }
 
+.settings-search-shortcut-nudge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--gh-border, #e5e7eb);
+  background: var(--gh-bg-secondary, #f9fafb);
+}
+
+.settings-search-shortcut-nudge-text {
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+  min-width: 0;
+}
+
+.settings-search-shortcut-nudge-action {
+  border: 1px solid var(--gh-border, #e5e7eb);
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text-secondary, #6b7280);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.settings-search-shortcut-nudge-action:hover {
+  background: var(--gh-hover, #f3f4f6);
+  color: var(--gh-text, #374151);
+}
+
 .settings-search-categories {
   display: flex;
   align-items: center;

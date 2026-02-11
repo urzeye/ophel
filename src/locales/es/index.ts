@@ -1091,6 +1091,11 @@ Dame el código y luego un resumen de mejoras.`,
   globalSearchPromptEnterBehaviorLocate: "Solo localizar",
   globalSearchFooterTips:
     "Enter para saltar · ↑↓ para seleccionar · Tab para categorías · Esc para cerrar",
+  globalSearchShortcutNudge: "La próxima vez, usa {shortcut} para abrir más rápido",
+  globalSearchShortcutNudgeDismiss: "No volver a recordar",
+  globalSearchContextCurrentItem: "Elemento {current}",
+  globalSearchContextShownProgress: "Mostrados {shown}/{total}",
+  globalSearchContextTotalItems: "Total {total}",
 
   // Missing Keys
   moreLanguages: "More Languages",

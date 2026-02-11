@@ -1083,6 +1083,11 @@ export const ru = {
   globalSearchPromptEnterBehaviorSmart: "Умный (рекомендуется)",
   globalSearchPromptEnterBehaviorLocate: "Только перейти",
   globalSearchFooterTips: "Enter — перейти · ↑↓ — выбрать · Tab — категории · Esc — закрыть",
+  globalSearchShortcutNudge: "В следующий раз используйте {shortcut}, чтобы открыть быстрее",
+  globalSearchShortcutNudgeDismiss: "Больше не напоминать",
+  globalSearchContextCurrentItem: "Элемент {current}",
+  globalSearchContextShownProgress: "Показано {shown}/{total}",
+  globalSearchContextTotalItems: "Всего {total}",
 
   // Missing Keys
   moreLanguages: "Больше языков",

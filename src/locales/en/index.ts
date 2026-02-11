@@ -1133,4 +1133,9 @@ Please output the optimized code block directly, followed by a brief summary of 
   globalSearchPromptEnterBehaviorSmart: "Smart (Recommended)",
   globalSearchPromptEnterBehaviorLocate: "Locate Only",
   globalSearchFooterTips: "Enter to jump · ↑↓ to select · Tab category · Esc to close",
+  globalSearchShortcutNudge: "Next time, press {shortcut} to open quickly",
+  globalSearchShortcutNudgeDismiss: "Don’t remind me",
+  globalSearchContextCurrentItem: "Item {current}",
+  globalSearchContextShownProgress: "Shown {shown}/{total}",
+  globalSearchContextTotalItems: "Total {total}",
 }

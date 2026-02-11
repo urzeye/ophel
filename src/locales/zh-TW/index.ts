@@ -1107,4 +1107,9 @@ export const zhTW = {
   globalSearchPromptEnterBehaviorSmart: "智慧（推薦）",
   globalSearchPromptEnterBehaviorLocate: "僅定位",
   globalSearchFooterTips: "Enter 跳轉 · ↑↓ 選擇 · Tab 分類 · Esc 關閉",
+  globalSearchShortcutNudge: "下次可按 {shortcut} 快速開啟",
+  globalSearchShortcutNudgeDismiss: "不再提示",
+  globalSearchContextCurrentItem: "第 {current} 項",
+  globalSearchContextShownProgress: "已顯示 {shown}/{total}",
+  globalSearchContextTotalItems: "共 {total} 項",
 }

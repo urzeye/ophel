@@ -1110,4 +1110,9 @@ export const zhCN = {
   globalSearchPromptEnterBehaviorSmart: "智能（推荐）",
   globalSearchPromptEnterBehaviorLocate: "仅定位",
   globalSearchFooterTips: "Enter 跳转 · ↑↓ 选择 · Tab 分类 · Esc 关闭",
+  globalSearchShortcutNudge: "下次可按 {shortcut} 快速打开",
+  globalSearchShortcutNudgeDismiss: "不再提示",
+  globalSearchContextCurrentItem: "第 {current} 项",
+  globalSearchContextShownProgress: "已显示 {shown}/{total}",
+  globalSearchContextTotalItems: "共 {total} 项",
 }
