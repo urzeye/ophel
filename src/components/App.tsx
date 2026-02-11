@@ -195,6 +195,11 @@ const GLOBAL_SEARCH_RESULT_CATEGORY_LABELS: Record<
 
 const GLOBAL_SEARCH_ALL_CATEGORY_ITEM_LIMIT = 12
 
+const GLOBAL_SEARCH_RESULTS_LISTBOX_ID = "settings-search-results-listbox"
+const GLOBAL_SEARCH_OPTION_ID_PREFIX = "settings-search-option"
+const GLOBAL_SEARCH_KEYBOARD_SAFE_TOP = 8
+const GLOBAL_SEARCH_KEYBOARD_SAFE_BOTTOM = 12
+
 const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "aistudio-collapse-advanced": "aistudioCollapseAdvanced",
   "aistudio-collapse-navbar": "aistudioCollapseNavbar",
@@ -1211,6 +1216,19 @@ export const App = () => {
     return map
   }, [visibleGlobalSearchResults])
 
+  const activeVisibleGlobalSearchIndex = useMemo(() => {
+    if (visibleGlobalSearchResults.length === 0) {
+      return -1
+    }
+
+    return Math.min(settingsSearchActiveIndex, visibleGlobalSearchResults.length - 1)
+  }, [settingsSearchActiveIndex, visibleGlobalSearchResults.length])
+
+  const activeGlobalSearchOptionId =
+    activeVisibleGlobalSearchIndex >= 0
+      ? `${GLOBAL_SEARCH_OPTION_ID_PREFIX}-${activeVisibleGlobalSearchIndex}`
+      : undefined
+
   const activeGlobalSearchCategoryDefinition = useMemo(
     () =>
       GLOBAL_SEARCH_CATEGORY_DEFINITIONS.find(
@@ -1256,6 +1274,70 @@ export const App = () => {
       ),
     [getLocalizedText],
   )
+
+  const globalSearchListboxLabel = useMemo(
+    () =>
+      getLocalizedText({
+        key: "globalSearchResultsLabel",
+        fallback: "Global search results",
+      }),
+    [getLocalizedText],
+  )
+
+  const activeGlobalSearchContext = useMemo(() => {
+    if (activeVisibleGlobalSearchIndex < 0) {
+      return null
+    }
+
+    const activeItem = visibleGlobalSearchResults[activeVisibleGlobalSearchIndex]
+    if (!activeItem) {
+      return null
+    }
+
+    const label = resolvedGlobalSearchResultCategoryLabels[activeItem.category]
+
+    if (activeGlobalSearchCategory !== "all") {
+      return {
+        label,
+        meta: `${activeVisibleGlobalSearchIndex + 1}/${visibleGlobalSearchResults.length}`,
+      }
+    }
+
+    const activeGroup = groupedGlobalSearchResults.find(
+      (group) => group.category === activeItem.category,
+    )
+
+    if (!activeGroup) {
+      return {
+        label,
+        meta: `${activeVisibleGlobalSearchIndex + 1}/${visibleGlobalSearchResults.length}`,
+      }
+    }
+
+    const activeIndexInGroup = activeGroup.items.findIndex((item) => item.id === activeItem.id)
+    const metaParts: string[] = []
+
+    if (activeIndexInGroup >= 0) {
+      metaParts.push(`${activeIndexInGroup + 1}/${activeGroup.items.length}`)
+    }
+
+    metaParts.push(
+      activeGroup.totalCount > activeGroup.items.length
+        ? `${activeGroup.items.length}/${activeGroup.totalCount}`
+        : `${activeGroup.totalCount}`,
+    )
+
+    return {
+      label,
+      meta: metaParts.join(" · "),
+    }
+  }, [
+    activeGlobalSearchCategory,
+    activeVisibleGlobalSearchIndex,
+    groupedGlobalSearchResults,
+    resolvedGlobalSearchResultCategoryLabels,
+    visibleGlobalSearchResults,
+  ])
 
   const closeSettingsModal = useCallback(() => {
     isSettingsOpenRef.current = false
@@ -1747,6 +1829,28 @@ export const App = () => {
     settingsSearchWheelFreezeUntilRef.current = 0
   }, [activeGlobalSearchCategory, settingsSearchQuery])
 
+  const ensureGlobalSearchItemVisible = useCallback(
+    (container: HTMLDivElement, activeItem: HTMLElement) => {
+      const containerRect = container.getBoundingClientRect()
+      const activeRect = activeItem.getBoundingClientRect()
+      const safeTopBoundary = containerRect.top + GLOBAL_SEARCH_KEYBOARD_SAFE_TOP
+      const safeBottomBoundary = containerRect.bottom - GLOBAL_SEARCH_KEYBOARD_SAFE_BOTTOM
+
+      if (activeRect.top < safeTopBoundary) {
+        const delta = activeRect.top - safeTopBoundary
+        container.scrollTop = Math.max(0, container.scrollTop + delta)
+        return
+      }
+
+      if (activeRect.bottom > safeBottomBoundary) {
+        const delta = activeRect.bottom - safeBottomBoundary
+        const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight)
+        container.scrollTop = Math.min(maxScrollTop, container.scrollTop + delta)
+      }
+    },
+    [],
+  )
+
   useEffect(() => {
     if (!isGlobalSettingsSearchOpen) {
       return
@@ -1768,8 +1872,9 @@ export const App = () => {
       return
     }
 
-    activeItem.scrollIntoView({ block: "nearest", inline: "nearest" })
+    ensureGlobalSearchItemVisible(container, activeItem)
   }, [
+    ensureGlobalSearchItemVisible,
     isGlobalSettingsSearchOpen,
     settingsSearchActiveIndex,
     settingsSearchNavigationMode,
@@ -2727,9 +2832,12 @@ export const App = () => {
     const showCodeOnMeta = Boolean(item.code) && !isOutlineItem
 
     return (
-      <button
+      <div
         key={item.id}
-        type="button"
+        id={`${GLOBAL_SEARCH_OPTION_ID_PREFIX}-${index}`}
+        role="option"
+        aria-selected={index === settingsSearchActiveIndex}
+        tabIndex={-1}
         data-global-search-index={index}
         className={`settings-search-item ${index === settingsSearchActiveIndex ? "active" : ""} ${
           isOutlineItem
@@ -2798,7 +2906,7 @@ export const App = () => {
             <code title={item.code}>{renderSearchHighlightedParts(item.code!, "code")}</code>
           ) : null}
         </div>
-      </button>
+      </div>
     )
   }
 
@@ -2981,6 +3089,12 @@ export const App = () => {
               <input
                 ref={settingsSearchInputRef}
                 className="settings-search-input"
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={true}
+                aria-haspopup="listbox"
+                aria-controls={GLOBAL_SEARCH_RESULTS_LISTBOX_ID}
+                aria-activedescendant={activeGlobalSearchOptionId}
                 value={settingsSearchQuery}
                 onChange={(event) => {
                   setSettingsSearchQuery(event.target.value)
@@ -3021,8 +3135,22 @@ export const App = () => {
               ))}
             </div>
 
+            {activeGlobalSearchContext ? (
+              <div className="settings-search-context-bar">
+                <span className="settings-search-context-label">
+                  {activeGlobalSearchContext.label}
+                </span>
+                <span className="settings-search-context-meta">
+                  {activeGlobalSearchContext.meta}
+                </span>
+              </div>
+            ) : null}
+
             <div
+              id={GLOBAL_SEARCH_RESULTS_LISTBOX_ID}
               className="settings-search-results"
+              role="listbox"
+              aria-label={globalSearchListboxLabel}
               ref={settingsSearchResultsRef}
               onWheel={() => {
                 setSettingsSearchNavigationMode("pointer")

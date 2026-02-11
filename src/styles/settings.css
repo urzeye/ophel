@@ -1227,6 +1227,36 @@ html[data-theme="dark"] .about-slogan {
   text-align: center;
 }
 
+.settings-search-context-bar {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--gh-border, #e5e7eb);
+  background: var(--gh-bg, #ffffff);
+}
+
+.settings-search-context-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gh-text-secondary, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-search-context-meta {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--gh-text-secondary, #6b7280);
+  opacity: 0.86;
+}
+
 .settings-search-results {
   flex: 1;
   overflow: auto;
@@ -1234,6 +1264,8 @@ html[data-theme="dark"] .about-slogan {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  scroll-padding-top: 8px;
+  scroll-padding-bottom: 12px;
 }
 
 .settings-search-group {
@@ -1247,12 +1279,9 @@ html[data-theme="dark"] .about-slogan {
 }
 
 .settings-search-group-title {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  margin: 0 -8px;
-  padding: 6px 12px;
-  background: var(--gh-bg, #ffffff);
+  margin: 2px 0 0;
+  padding: 4px 2px;
+  background: transparent;
   color: var(--gh-text-secondary, #6b7280);
   font-size: 11px;
   font-weight: 600;
@@ -1307,6 +1336,8 @@ html[data-theme="dark"] .about-slogan {
   cursor: pointer;
   color: var(--gh-text, #1f2937);
   transition: background-color 0.16s ease;
+  scroll-margin-top: 8px;
+  scroll-margin-bottom: 12px;
 }
 
 .settings-search-item:hover {
