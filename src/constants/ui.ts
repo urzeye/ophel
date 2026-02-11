@@ -11,6 +11,7 @@ import {
   PromptIcon,
   ScrollBottomIcon,
   ScrollTopIcon,
+  SearchIcon,
   ToolsIcon,
 } from "~components/icons"
 
@@ -763,6 +764,13 @@ export const COLLAPSED_BUTTON_DEFS: Record<
     canToggle: true, // This toggle will now open the menu
     isPanelOnly: false,
     IconComponent: ToolsIcon,
+  },
+  globalSearch: {
+    icon: "🔎",
+    labelKey: "navGlobalSearch",
+    canToggle: true,
+    isPanelOnly: false,
+    IconComponent: SearchIcon,
   },
   anchor: {
     icon: "⚓",

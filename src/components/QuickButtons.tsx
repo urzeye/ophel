@@ -30,6 +30,7 @@ interface QuickButtonsProps {
   onScrollLock?: (locked: boolean) => void
   onSettings?: () => void
   onCleanup?: () => void
+  onGlobalSearch?: () => void
   scrollLocked?: boolean
   // 新增功能
   onCopyMarkdown?: () => void
@@ -48,6 +49,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   onScrollLock,
   onSettings,
   onCleanup,
+  onGlobalSearch,
   scrollLocked,
   onCopyMarkdown,
   onModelLockToggle,
@@ -247,6 +249,11 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       e?.stopPropagation()
       // Toggle local menu state instead of settings
       setIsToolsMenuOpen((prev) => !prev)
+    },
+    globalSearch: (e) => {
+      e?.stopPropagation()
+      setIsToolsMenuOpen(false)
+      onGlobalSearch?.()
     },
   }
 

@@ -400,6 +400,7 @@ export const DEFAULT_SETTINGS: Settings = {
   collapsedButtons: [
     { id: "panel", enabled: true },
     { id: "floatingToolbar", enabled: true },
+    { id: "globalSearch", enabled: true },
     { id: "theme", enabled: true },
     { id: "scrollTop", enabled: true },
     { id: "manualAnchor", enabled: false },

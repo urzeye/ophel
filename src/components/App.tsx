@@ -599,14 +599,28 @@ export const App = () => {
     let needsUpdate = false
     const nextSettings: Partial<Settings> = {}
     const buttons = settings.collapsedButtons || []
+    let nextButtons = buttons
 
-    if (!buttons.some((btn) => btn.id === "floatingToolbar")) {
-      const nextButtons = [...buttons]
+    if (!nextButtons.some((btn) => btn.id === "floatingToolbar")) {
+      nextButtons = [...nextButtons]
       const panelIndex = nextButtons.findIndex((btn) => btn.id === "panel")
       const insertIndex = panelIndex >= 0 ? panelIndex + 1 : nextButtons.length
       nextButtons.splice(insertIndex, 0, { id: "floatingToolbar", enabled: true })
-      nextSettings.collapsedButtons = nextButtons
       needsUpdate = true
+    }
+
+    if (!nextButtons.some((btn) => btn.id === "globalSearch")) {
+      if (nextButtons === buttons) {
+        nextButtons = [...nextButtons]
+      }
+      const toolboxIndex = nextButtons.findIndex((btn) => btn.id === "floatingToolbar")
+      const insertIndex = toolboxIndex >= 0 ? toolboxIndex + 1 : nextButtons.length
+      nextButtons.splice(insertIndex, 0, { id: "globalSearch", enabled: true })
+      needsUpdate = true
+    }
+
+    if (nextButtons !== buttons) {
+      nextSettings.collapsedButtons = nextButtons
     }
 
     if (!settings.floatingToolbar) {
@@ -2899,6 +2913,7 @@ export const App = () => {
           }
           setIsFloatingToolbarClearOpen(true)
         }}
+        onGlobalSearch={openGlobalSettingsSearch}
         onCopyMarkdown={handleCopyMarkdown}
         onModelLockToggle={handleModelLockToggle}
         isModelLocked={isModelLocked}
