@@ -1050,6 +1050,53 @@ Donnez le code puis un résumé des améliorations.`,
   toolboxMenuDesc:
     "Configurer les fonctions affichées dans le menu contextuel de la boîte à outils",
 
+  // Global Settings Search
+  globalSearchCategoryAll: "Tout",
+  globalSearchCategoryOutline: "Plan",
+  globalSearchCategorySettings: "Paramètres",
+  globalSearchCategoryConversations: "Conversations",
+  globalSearchCategoryFolders: "Dossiers",
+  globalSearchCategoryTags: "Étiquettes",
+  globalSearchCategoryPrompts: "Prompts",
+  globalSearchCategoryCurrentSession: "Session actuelle",
+  globalSearchSiteGemini: "Gemini",
+  globalSearchSiteGeminiEnterprise: "Gemini Enterprise",
+  globalSearchSiteAIStudio: "AI Studio",
+  globalSearchSiteChatGPT: "ChatGPT",
+  globalSearchSiteClaude: "Claude",
+  globalSearchSiteGrok: "Grok",
+  globalSearchPlaceholderAll: "Rechercher partout",
+  globalSearchPlaceholderOutline: "Rechercher dans le plan",
+  globalSearchPlaceholderSettings: "Rechercher dans les paramètres",
+  globalSearchPlaceholderConversations: "Rechercher les conversations du site actuel",
+  globalSearchPlaceholderFolders: "Rechercher des dossiers",
+  globalSearchPlaceholderTags: "Rechercher des étiquettes",
+  globalSearchPlaceholderPrompts: "Rechercher des prompts",
+  globalSearchPlaceholderCurrentSession:
+    "Rechercher les questions et le plan de la session actuelle",
+  globalSearchEmptyAll: "Aucun résultat correspondant",
+  globalSearchEmptyOutline: "Aucun résultat de plan",
+  globalSearchEmptySettings: "Aucun paramètre correspondant",
+  globalSearchEmptyConversations: "Aucun résultat de conversation",
+  globalSearchEmptyFolders: "Aucun résultat de dossier",
+  globalSearchEmptyTags: "Aucun résultat d'étiquette",
+  globalSearchEmptyPrompts: "Aucun résultat de prompt",
+  globalSearchEmptyCurrentSession: "Aucun résultat dans la session actuelle",
+  globalSearchCategoriesLabel: "Catégories de recherche globale",
+  globalSearchPageDesc:
+    "Configurer le comportement et les détails d'interaction de Search Everywhere",
+  globalSearchTriggerHint: "Déclenchement : double appui sur Shift ou Ctrl/Cmd + K",
+  globalSearchPromptSettingsTitle: "Comportement des prompts",
+  globalSearchPromptSettingsDesc:
+    "Choisissez ce qui se passe lorsque vous appuyez sur Enter sur un résultat de prompt dans Search Everywhere",
+  globalSearchPromptEnterBehaviorLabel: "Comportement de Enter pour les prompts Search Everywhere",
+  globalSearchPromptEnterBehaviorDesc:
+    "Intelligent : insertion directe sans variables et ouverture du dialogue si nécessaire ; Localiser uniquement : bascule vers Prompts et localise l'élément.",
+  globalSearchPromptEnterBehaviorSmart: "Intelligent (Recommandé)",
+  globalSearchPromptEnterBehaviorLocate: "Localiser uniquement",
+  globalSearchFooterTips:
+    "Entrée pour ouvrir · ↑↓ pour sélectionner · Tab pour les catégories · Esc pour fermer",
+
   // Missing Keys
   moreLanguages: "Plus de langues",
   communityAndSupport: "Communauté & Support",
