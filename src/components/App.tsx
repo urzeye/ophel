@@ -88,22 +88,6 @@ const SETTINGS_SUB_TAB_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinitio
   [APPEARANCE_TAB_IDS.CUSTOM]: { key: "customStylesTab", fallback: "Custom Styles" },
 }
 
-const isEditableTarget = (target: EventTarget | null): boolean => {
-  const element = target as HTMLElement | null
-  if (!element) return false
-
-  const tagName = element.tagName
-  if (tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT") {
-    return true
-  }
-
-  if (element.getAttribute("contenteditable") === "true") {
-    return true
-  }
-
-  return !!element.closest("[contenteditable=true], input, textarea, select")
-}
-
 const isLikelyMac = () => {
   if (typeof navigator === "undefined") return false
   return navigator.platform.toLowerCase().includes("mac")
@@ -637,6 +621,7 @@ export const App = () => {
   const settingsSearchResultsRef = useRef<HTMLDivElement | null>(null)
   const settingsSearchWheelFreezeUntilRef = useRef(0)
   const lastShiftPressedAtRef = useRef(0)
+  const settingsSearchRestoreFocusRef = useRef<HTMLElement | null>(null)
   const isMacLike = useMemo(() => isLikelyMac(), [])
 
   // 浮动工具栏
@@ -1204,6 +1189,13 @@ export const App = () => {
       setIsEdgePeeking(true)
     }
 
+    const activeElement = document.activeElement
+    if (activeElement instanceof HTMLElement && activeElement !== document.body) {
+      settingsSearchRestoreFocusRef.current = activeElement
+    } else {
+      settingsSearchRestoreFocusRef.current = null
+    }
+
     setSettingsSearchQuery("")
     setActiveGlobalSearchCategory("all")
     setSettingsSearchActiveIndex(0)
@@ -1214,7 +1206,11 @@ export const App = () => {
     setIsGlobalSettingsSearchOpen(true)
   }, [edgeSnapState])
 
-  const closeGlobalSettingsSearch = useCallback(() => {
+  const closeGlobalSettingsSearch = useCallback((options?: { restoreFocus?: boolean }) => {
+    const shouldRestoreFocus = options?.restoreFocus ?? true
+    const restoreElement = settingsSearchRestoreFocusRef.current
+    settingsSearchRestoreFocusRef.current = null
+
     setIsGlobalSettingsSearchOpen(false)
     setActiveGlobalSearchCategory("all")
     setSettingsSearchQuery("")
@@ -1223,18 +1219,27 @@ export const App = () => {
     setSettingsSearchNavigationMode("pointer")
     setExpandedGlobalSearchCategories({})
     settingsSearchWheelFreezeUntilRef.current = 0
+
+    if (!shouldRestoreFocus || !restoreElement || !restoreElement.isConnected) {
+      return
+    }
+
+    window.requestAnimationFrame(() => {
+      if (!restoreElement.isConnected) {
+        return
+      }
+
+      try {
+        restoreElement.focus({ preventScroll: true })
+      } catch {
+        restoreElement.focus()
+      }
+    })
   }, [])
 
   const navigateToSearchResult = useCallback(
     (item: GlobalSearchResultItem) => {
-      setIsGlobalSettingsSearchOpen(false)
-      setActiveGlobalSearchCategory("all")
-      setSettingsSearchQuery("")
-      setSettingsSearchActiveIndex(0)
-      setSettingsSearchHoverLocked(false)
-      setSettingsSearchNavigationMode("pointer")
-      setExpandedGlobalSearchCategories({})
-      settingsSearchWheelFreezeUntilRef.current = 0
+      closeGlobalSettingsSearch({ restoreFocus: false })
 
       if (item.category === "settings" && item.settingId) {
         window.dispatchEvent(
@@ -1340,7 +1345,7 @@ export const App = () => {
         adapter?.navigateToConversation(item.conversationId, item.conversationUrl)
       }
     },
-    [adapter, outlineManager, promptsSnapshot, settings],
+    [adapter, closeGlobalSettingsSearch, outlineManager, promptsSnapshot, settings],
   )
 
   useEffect(() => {
@@ -1354,11 +1359,15 @@ export const App = () => {
 
   useEffect(() => {
     const handleOpenSearchShortcut = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || isGlobalSettingsSearchOpen) {
+      if (isGlobalSettingsSearchOpen) {
         return
       }
 
-      const targetIsEditable = isEditableTarget(event.target)
+      // 非 Shift 按键会中断双击 Shift 检测，防止输入时误触
+      if (event.key !== "Shift") {
+        lastShiftPressedAtRef.current = 0
+      }
+
       const isSearchHotkey =
         (event.ctrlKey || event.metaKey) &&
         !event.altKey &&
@@ -1366,22 +1375,14 @@ export const App = () => {
         event.key.toLowerCase() === "k"
 
       if (isSearchHotkey) {
-        if (targetIsEditable) return
-
         event.preventDefault()
         event.stopPropagation()
+        event.stopImmediatePropagation()
         openGlobalSettingsSearch()
         return
       }
 
-      if (
-        event.key !== "Shift" ||
-        event.repeat ||
-        event.ctrlKey ||
-        event.metaKey ||
-        event.altKey ||
-        targetIsEditable
-      ) {
+      if (event.key !== "Shift" || event.repeat || event.ctrlKey || event.metaKey || event.altKey) {
         return
       }
 

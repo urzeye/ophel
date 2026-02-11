@@ -670,6 +670,28 @@ export function useShortcuts({
     }
   }, [])
 
+  // 页面刷新后兜底恢复焦点，减少首次快捷键需点击页面的问题
+  useEffect(() => {
+    const ensurePageFocus = () => {
+      if (document.visibilityState !== "visible") return
+      if (document.hasFocus()) return
+
+      try {
+        window.focus()
+      } catch {
+        // ignore
+      }
+    }
+
+    const timerId = window.setTimeout(ensurePageFocus, 150)
+    window.addEventListener("pageshow", ensurePageFocus)
+
+    return () => {
+      window.clearTimeout(timerId)
+      window.removeEventListener("pageshow", ensurePageFocus)
+    }
+  }, [])
+
   // 更新设置
   useEffect(() => {
     shortcutManager.updateSettings(settings?.shortcuts)

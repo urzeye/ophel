@@ -19,6 +19,7 @@ export class ShortcutManager {
   private settings: ShortcutsSettings | null = null
   private isMac: boolean = isMacOS()
   private isListening: boolean = false
+  private processedEvents: WeakSet<KeyboardEvent> = new WeakSet()
 
   /**
    * 更新快捷键设置
@@ -65,6 +66,7 @@ export class ShortcutManager {
   startListening() {
     if (this.isListening) return
 
+    window.addEventListener("keydown", this.handleKeyDown, true)
     document.addEventListener("keydown", this.handleKeyDown, true)
     this.isListening = true
   }
@@ -75,6 +77,7 @@ export class ShortcutManager {
   stopListening() {
     if (!this.isListening) return
 
+    window.removeEventListener("keydown", this.handleKeyDown, true)
     document.removeEventListener("keydown", this.handleKeyDown, true)
     this.isListening = false
   }
@@ -158,6 +161,9 @@ export class ShortcutManager {
    * 键盘事件处理器
    */
   private handleKeyDown = (e: KeyboardEvent) => {
+    if (this.processedEvents.has(e)) return
+    this.processedEvents.add(e)
+
     // 忽略脚本合成事件，避免递归触发
     if (e.isTrusted === false) return
 
