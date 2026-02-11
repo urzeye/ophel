@@ -643,7 +643,7 @@ const toSearchTokens = (query: string): string[] =>
     .map((token) => token.trim())
     .filter((token) => token.length > 0)
 
-export const searchSettingsItems = (query: string, limit = 24): SettingsSearchItem[] => {
+export const searchSettingsItems = (query: string, limit?: number): SettingsSearchItem[] => {
   const normalizedQuery = normalizeSearchValue(query)
   const tokens = toSearchTokens(normalizedQuery)
 
@@ -690,7 +690,13 @@ export const searchSettingsItems = (query: string, limit = 24): SettingsSearchIt
       return left.index - right.index
     })
 
-  return scoredItems.slice(0, limit).map(({ item }) => item)
+  const items = scoredItems.map(({ item }) => item)
+
+  if (typeof limit === "number" && Number.isFinite(limit)) {
+    return items.slice(0, Math.max(0, limit))
+  }
+
+  return items
 }
 
 // ==================== Tab 定义 ====================

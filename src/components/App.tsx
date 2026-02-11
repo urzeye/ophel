@@ -11,13 +11,14 @@ import { getAdapter } from "~adapters/index"
 import { SITE_IDS } from "~constants/defaults"
 import { ConversationManager } from "~core/conversation-manager"
 import { InlineBookmarkManager } from "~core/inline-bookmark-manager"
-import { OutlineManager } from "~core/outline-manager"
+import { OutlineManager, type OutlineNode } from "~core/outline-manager"
 import { AI_STUDIO_SHORTCUT_SYNC_EVENT, PromptManager } from "~core/prompt-manager"
 import { ThemeManager } from "~core/theme-manager"
 import { useShortcuts } from "~hooks/useShortcuts"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
+import { usePromptsStore } from "~stores/prompts-store"
 import { DEFAULT_SETTINGS, type Prompt, type Settings } from "~utils/storage"
 import { MSG_CLEAR_ALL_DATA } from "~utils/messaging"
 import { showToast } from "~utils/toast"
@@ -37,6 +38,7 @@ import {
   FEATURES_TAB_IDS,
   NAV_IDS,
   SITE_SETTINGS_TAB_IDS,
+  TAB_IDS,
   resolveSettingRoute,
   searchSettingsItems,
   type SettingsSearchItem,
@@ -124,6 +126,16 @@ interface GlobalSearchTagBadge {
   color: string
 }
 
+interface GlobalSearchOutlineTarget {
+  index: number
+  level: number
+  text: string
+  isUserQuery: boolean
+  queryIndex?: number
+  isGhost?: boolean
+  scrollTop?: number
+}
+
 interface GlobalSearchResultItem {
   id: string
   title: string
@@ -133,7 +145,18 @@ interface GlobalSearchResultItem {
   settingId?: string
   conversationId?: string
   conversationUrl?: string
+  promptId?: string
   tagBadges?: GlobalSearchTagBadge[]
+  outlineTarget?: GlobalSearchOutlineTarget
+}
+
+interface GlobalSearchGroupedResult {
+  category: GlobalSearchResultCategory
+  items: GlobalSearchResultItem[]
+  totalCount: number
+  hasMore: boolean
+  isExpanded: boolean
+  remainingCount: number
 }
 
 const GLOBAL_SEARCH_CATEGORY_DEFINITIONS: GlobalSearchCategoryDefinition[] = [
@@ -184,6 +207,8 @@ const GLOBAL_SEARCH_RESULT_CATEGORY_LABELS: Record<
   conversations: { key: "globalSearchCategoryConversations", fallback: "Conversations" },
   prompts: { key: "globalSearchCategoryPrompts", fallback: "Prompts" },
 }
+
+const GLOBAL_SEARCH_ALL_CATEGORY_ITEM_LIMIT = 12
 
 const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "aistudio-collapse-advanced": "aistudioCollapseAdvanced",
@@ -284,6 +309,142 @@ const toGlobalSearchTokens = (query: string): string[] =>
     .split(" ")
     .map((token) => token.trim())
     .filter((token) => token.length > 0)
+
+const getGlobalSearchHighlightRanges = (
+  value: string,
+  tokens: string[],
+): Array<{ start: number; end: number }> => {
+  if (!value || tokens.length === 0) {
+    return []
+  }
+
+  const normalizedValue = value.toLowerCase()
+  const ranges: Array<{ start: number; end: number }> = []
+
+  tokens.forEach((token) => {
+    if (!token) return
+
+    let fromIndex = 0
+    while (fromIndex < normalizedValue.length) {
+      const hitIndex = normalizedValue.indexOf(token, fromIndex)
+      if (hitIndex < 0) {
+        break
+      }
+
+      ranges.push({ start: hitIndex, end: hitIndex + token.length })
+      fromIndex = hitIndex + token.length
+    }
+  })
+
+  if (ranges.length === 0) {
+    return []
+  }
+
+  ranges.sort((left, right) => {
+    if (left.start !== right.start) return left.start - right.start
+    return left.end - right.end
+  })
+
+  const mergedRanges: Array<{ start: number; end: number }> = []
+  ranges.forEach((range) => {
+    const lastRange = mergedRanges[mergedRanges.length - 1]
+    if (!lastRange || range.start > lastRange.end) {
+      mergedRanges.push({ ...range })
+      return
+    }
+
+    if (range.end > lastRange.end) {
+      lastRange.end = range.end
+    }
+  })
+
+  return mergedRanges
+}
+
+const splitGlobalSearchHighlightSegments = (
+  value: string,
+  tokens: string[],
+): Array<{ text: string; highlighted: boolean }> => {
+  if (!value) {
+    return []
+  }
+
+  const ranges = getGlobalSearchHighlightRanges(value, tokens)
+  if (ranges.length === 0) {
+    return [{ text: value, highlighted: false }]
+  }
+
+  const segments: Array<{ text: string; highlighted: boolean }> = []
+  let cursor = 0
+
+  ranges.forEach((range) => {
+    if (range.start > cursor) {
+      segments.push({ text: value.slice(cursor, range.start), highlighted: false })
+    }
+
+    segments.push({ text: value.slice(range.start, range.end), highlighted: true })
+    cursor = range.end
+  })
+
+  if (cursor < value.length) {
+    segments.push({ text: value.slice(cursor), highlighted: false })
+  }
+
+  return segments.filter((segment) => segment.text.length > 0)
+}
+
+interface GlobalSearchScoreField {
+  value: string
+  exact: number
+  prefix: number
+  includes: number
+  tokenPrefix: number
+  tokenIncludes: number
+}
+
+const getGlobalSearchScore = ({
+  normalizedQuery,
+  tokens,
+  index,
+  fields,
+  baseScoreWhenEmpty = 1000,
+}: {
+  normalizedQuery: string
+  tokens: string[]
+  index: number
+  fields: GlobalSearchScoreField[]
+  baseScoreWhenEmpty?: number
+}): number | null => {
+  const searchableText = fields.map((field) => field.value).join(" ")
+
+  if (tokens.some((token) => !searchableText.includes(token))) {
+    return null
+  }
+
+  if (!normalizedQuery) {
+    return baseScoreWhenEmpty - index
+  }
+
+  let score = 0
+
+  fields.forEach((field) => {
+    const normalizedValue = field.value
+    if (!normalizedValue) {
+      return
+    }
+
+    if (normalizedValue === normalizedQuery) score += field.exact
+    if (normalizedValue.startsWith(normalizedQuery)) score += field.prefix
+    if (normalizedValue.includes(normalizedQuery)) score += field.includes
+
+    tokens.forEach((token) => {
+      if (normalizedValue.startsWith(token)) score += field.tokenPrefix
+      if (normalizedValue.includes(token)) score += field.tokenIncludes
+    })
+  })
+
+  return score
+}
 
 export const App = () => {
   // 读取设置 - 使用 Zustand Store
@@ -469,6 +630,9 @@ export const App = () => {
   const [settingsSearchNavigationMode, setSettingsSearchNavigationMode] = useState<
     "keyboard" | "pointer"
   >("pointer")
+  const [expandedGlobalSearchCategories, setExpandedGlobalSearchCategories] = useState<
+    Partial<Record<GlobalSearchResultCategory, boolean>>
+  >({})
   const settingsSearchInputRef = useRef<HTMLInputElement | null>(null)
   const settingsSearchResultsRef = useRef<HTMLDivElement | null>(null)
   const settingsSearchWheelFreezeUntilRef = useRef(0)
@@ -528,9 +692,18 @@ export const App = () => {
   const conversationsSnapshot = useConversationsStore((state) => state.conversations)
   const foldersSnapshot = useFoldersStore((state) => state.folders)
   const tagsSnapshot = useTagsStore((state) => state.tags)
+  const promptsSnapshot = usePromptsStore((state) => state.prompts)
 
   const settingsSearchResults = useMemo(
-    () => searchSettingsItems(settingsSearchQuery, 24),
+    () => searchSettingsItems(settingsSearchQuery),
+    [settingsSearchQuery],
+  )
+
+  const settingsSearchHighlightTokens = useMemo(
+    () =>
+      Array.from(new Set(toGlobalSearchTokens(settingsSearchQuery))).sort(
+        (left, right) => right.length - left.length,
+      ),
     [settingsSearchQuery],
   )
 
@@ -595,35 +768,51 @@ export const App = () => {
           tagBadges.map((tag) => tag.name).join(" "),
         )
         const normalizedConversationId = normalizeGlobalSearchValue(conversation.id)
-        const searchableText = `${normalizedTitle} ${normalizedFolder} ${normalizedTags} ${normalizedConversationId}`
+        const score = getGlobalSearchScore({
+          normalizedQuery,
+          tokens,
+          index,
+          fields: [
+            {
+              value: normalizedTitle,
+              exact: 220,
+              prefix: 140,
+              includes: 100,
+              tokenPrefix: 24,
+              tokenIncludes: 12,
+            },
+            {
+              value: normalizedFolder,
+              exact: 0,
+              prefix: 0,
+              includes: 72,
+              tokenPrefix: 0,
+              tokenIncludes: 8,
+            },
+            {
+              value: normalizedTags,
+              exact: 0,
+              prefix: 0,
+              includes: 64,
+              tokenPrefix: 0,
+              tokenIncludes: 8,
+            },
+            {
+              value: normalizedConversationId,
+              exact: 0,
+              prefix: 0,
+              includes: 32,
+              tokenPrefix: 0,
+              tokenIncludes: 4,
+            },
+          ],
+        })
 
-        if (tokens.some((token) => !searchableText.includes(token))) {
+        if (score === null) {
           return null
         }
 
-        let score = 0
-        if (!normalizedQuery) {
-          score = 1000 - index
-        } else {
-          if (normalizedTitle === normalizedQuery) score += 220
-          if (normalizedTitle.startsWith(normalizedQuery)) score += 140
-          if (normalizedTitle.includes(normalizedQuery)) score += 100
-          if (normalizedFolder.includes(normalizedQuery)) score += 72
-          if (normalizedTags.includes(normalizedQuery)) score += 64
-          if (normalizedConversationId.includes(normalizedQuery)) score += 32
-
-          tokens.forEach((token) => {
-            if (normalizedTitle.startsWith(token)) score += 24
-            if (normalizedTitle.includes(token)) score += 12
-            if (normalizedFolder.includes(token)) score += 8
-            if (normalizedTags.includes(token)) score += 8
-            if (normalizedConversationId.includes(token)) score += 4
-          })
-        }
-
-        if (conversation.pinned) {
-          score += 6
-        }
+        const finalScore = score + (conversation.pinned ? 6 : 0)
 
         const breadcrumb = folderLabel
 
@@ -637,7 +826,7 @@ export const App = () => {
             conversationUrl: conversation.url,
             tagBadges,
           },
-          score,
+          score: finalScore,
           index,
           updatedAt: conversation.updatedAt || 0,
         }
@@ -659,9 +848,232 @@ export const App = () => {
     settingsSearchQuery,
   ])
 
+  const promptsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
+    const normalizedQuery = normalizeGlobalSearchValue(settingsSearchQuery)
+    const tokens = toGlobalSearchTokens(settingsSearchQuery)
+    const promptsLabel = getLocalizedText({
+      key: "globalSearchCategoryPrompts",
+      fallback: "Prompts",
+    })
+    const uncategorizedLabel = getLocalizedText({
+      key: "uncategorized",
+      fallback: "Uncategorized",
+    })
+
+    const scoredItems = promptsSnapshot
+      .map((prompt, index) => {
+        const title =
+          prompt.title?.trim() ||
+          prompt.content?.trim().split("\n")[0] ||
+          `${promptsLabel} #${index + 1}`
+        const content = prompt.content?.trim() || ""
+        const categoryLabel = prompt.category?.trim() || uncategorizedLabel
+        const breadcrumb = `${promptsLabel} / ${categoryLabel}`
+
+        const normalizedTitle = normalizeGlobalSearchValue(title)
+        const normalizedContent = normalizeGlobalSearchValue(content)
+        const normalizedCategory = normalizeGlobalSearchValue(categoryLabel)
+        const normalizedPromptId = normalizeGlobalSearchValue(prompt.id)
+        const score = getGlobalSearchScore({
+          normalizedQuery,
+          tokens,
+          index,
+          fields: [
+            {
+              value: normalizedTitle,
+              exact: 220,
+              prefix: 140,
+              includes: 100,
+              tokenPrefix: 24,
+              tokenIncludes: 12,
+            },
+            {
+              value: normalizedCategory,
+              exact: 0,
+              prefix: 0,
+              includes: 70,
+              tokenPrefix: 0,
+              tokenIncludes: 8,
+            },
+            {
+              value: normalizedContent,
+              exact: 0,
+              prefix: 0,
+              includes: 60,
+              tokenPrefix: 0,
+              tokenIncludes: 6,
+            },
+            {
+              value: normalizedPromptId,
+              exact: 0,
+              prefix: 0,
+              includes: 20,
+              tokenPrefix: 0,
+              tokenIncludes: 4,
+            },
+          ],
+        })
+
+        if (score === null) {
+          return null
+        }
+
+        const finalScore = score + (prompt.pinned ? 6 : 0)
+
+        return {
+          item: {
+            id: `prompts:${prompt.id}`,
+            title,
+            breadcrumb,
+            category: "prompts" as const,
+            promptId: prompt.id,
+          },
+          score: finalScore,
+          index,
+          lastUsedAt: prompt.lastUsedAt || 0,
+        }
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+      .sort((left, right) => {
+        if (right.score !== left.score) return right.score - left.score
+        if (right.lastUsedAt !== left.lastUsedAt) return right.lastUsedAt - left.lastUsedAt
+        return left.index - right.index
+      })
+
+    return scoredItems.map(({ item }) => item)
+  }, [getLocalizedText, promptsSnapshot, settingsSearchQuery])
+
+  const outlineGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
+    if (!outlineManager) {
+      return []
+    }
+
+    const flattenOutlineNodes = (nodes: OutlineNode[]): OutlineNode[] => {
+      const collector: OutlineNode[] = []
+
+      const traverse = (items: OutlineNode[]) => {
+        items.forEach((node) => {
+          collector.push(node)
+          if (node.children && node.children.length > 0) {
+            traverse(node.children)
+          }
+        })
+      }
+
+      traverse(nodes)
+      return collector
+    }
+
+    const outlineNodes = flattenOutlineNodes(outlineManager.getTree())
+    const normalizedQuery = normalizeGlobalSearchValue(settingsSearchQuery)
+    const tokens = toGlobalSearchTokens(settingsSearchQuery)
+    const outlineLabel = getLocalizedText({
+      key: "globalSearchCategoryOutline",
+      fallback: "Outline",
+    })
+    const outlineQueryLabel = getLocalizedText({
+      key: "outlineOnlyUserQueries",
+      fallback: "Queries",
+    })
+
+    const scoredItems = outlineNodes
+      .map((node, index) => {
+        const title = node.text?.trim()
+        if (!title) {
+          return null
+        }
+
+        const code = node.isUserQuery ? `Q${node.queryIndex ?? index + 1}` : `H${node.level}`
+        const breadcrumb = node.isUserQuery
+          ? `${outlineLabel} / ${outlineQueryLabel}`
+          : `${outlineLabel} / H${node.level}`
+
+        const normalizedTitle = normalizeGlobalSearchValue(title)
+        const normalizedType = normalizeGlobalSearchValue(
+          node.isUserQuery ? outlineQueryLabel : `h${node.level}`,
+        )
+        const normalizedCode = normalizeGlobalSearchValue(code)
+        const score = getGlobalSearchScore({
+          normalizedQuery,
+          tokens,
+          index,
+          fields: [
+            {
+              value: normalizedTitle,
+              exact: 200,
+              prefix: 120,
+              includes: 90,
+              tokenPrefix: 16,
+              tokenIncludes: 10,
+            },
+            {
+              value: normalizedType,
+              exact: 0,
+              prefix: 0,
+              includes: 48,
+              tokenPrefix: 0,
+              tokenIncludes: 6,
+            },
+            {
+              value: normalizedCode,
+              exact: 0,
+              prefix: 0,
+              includes: 36,
+              tokenPrefix: 0,
+              tokenIncludes: 4,
+            },
+          ],
+        })
+
+        if (score === null) {
+          return null
+        }
+
+        const finalScore = score + (node.isBookmarked ? 4 : 0)
+
+        return {
+          item: {
+            id: `outline:${node.index}`,
+            title,
+            breadcrumb,
+            code,
+            category: "outline" as const,
+            outlineTarget: {
+              index: node.index,
+              level: node.level,
+              text: title,
+              isUserQuery: Boolean(node.isUserQuery),
+              queryIndex: node.queryIndex,
+              isGhost: Boolean(node.isGhost),
+              scrollTop: node.scrollTop,
+            },
+          },
+          score: finalScore,
+          index,
+        }
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+      .sort((left, right) => {
+        if (right.score !== left.score) return right.score - left.score
+        return left.index - right.index
+      })
+
+    return scoredItems.map(({ item }) => item)
+  }, [outlineManager, getLocalizedText, settingsSearchQuery])
+
   const normalizedGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(
-    () => [...settingsGlobalSearchResults, ...conversationGlobalSearchResults],
-    [conversationGlobalSearchResults, settingsGlobalSearchResults],
+    () => [
+      ...settingsGlobalSearchResults,
+      ...conversationGlobalSearchResults,
+      ...outlineGlobalSearchResults,
+      ...promptsGlobalSearchResults,
+    ],
+    [
+      conversationGlobalSearchResults,
+      outlineGlobalSearchResults,
+      promptsGlobalSearchResults,
+      settingsGlobalSearchResults,
+    ],
   )
 
   const globalSearchResultCounts = useMemo(() => {
@@ -681,6 +1093,48 @@ export const App = () => {
     return counts
   }, [normalizedGlobalSearchResults])
 
+  const orderedGlobalSearchCategories = useMemo(
+    () =>
+      GLOBAL_SEARCH_CATEGORY_DEFINITIONS.filter((category) => category.id !== "all").map(
+        (category) => category.id as GlobalSearchResultCategory,
+      ),
+    [],
+  )
+
+  const groupedGlobalSearchResults = useMemo<GlobalSearchGroupedResult[]>(() => {
+    if (activeGlobalSearchCategory !== "all") {
+      return []
+    }
+
+    return orderedGlobalSearchCategories
+      .map((category) => {
+        const categoryItems = normalizedGlobalSearchResults.filter(
+          (item) => item.category === category,
+        )
+        const isExpanded = Boolean(expandedGlobalSearchCategories[category])
+        const visibleCount = isExpanded
+          ? categoryItems.length
+          : GLOBAL_SEARCH_ALL_CATEGORY_ITEM_LIMIT
+        const items = categoryItems.slice(0, visibleCount)
+        const remainingCount = Math.max(0, categoryItems.length - items.length)
+
+        return {
+          category,
+          items,
+          totalCount: categoryItems.length,
+          hasMore: remainingCount > 0,
+          isExpanded,
+          remainingCount,
+        }
+      })
+      .filter((group) => group.items.length > 0)
+  }, [
+    activeGlobalSearchCategory,
+    expandedGlobalSearchCategories,
+    normalizedGlobalSearchResults,
+    orderedGlobalSearchCategories,
+  ])
+
   const visibleGlobalSearchResults = useMemo(() => {
     if (activeGlobalSearchCategory !== "all") {
       return normalizedGlobalSearchResults.filter(
@@ -688,30 +1142,8 @@ export const App = () => {
       )
     }
 
-    return GLOBAL_SEARCH_CATEGORY_DEFINITIONS.filter((category) => category.id !== "all").flatMap(
-      (category) =>
-        normalizedGlobalSearchResults.filter(
-          (item) => item.category === (category.id as GlobalSearchResultCategory),
-        ),
-    )
-  }, [activeGlobalSearchCategory, normalizedGlobalSearchResults])
-
-  const groupedGlobalSearchResults = useMemo(() => {
-    if (activeGlobalSearchCategory !== "all") {
-      return [] as { category: GlobalSearchResultCategory; items: GlobalSearchResultItem[] }[]
-    }
-
-    const orderedCategories = GLOBAL_SEARCH_CATEGORY_DEFINITIONS.filter(
-      (category) => category.id !== "all",
-    ).map((category) => category.id as GlobalSearchResultCategory)
-
-    return orderedCategories
-      .map((category) => ({
-        category,
-        items: visibleGlobalSearchResults.filter((item) => item.category === category),
-      }))
-      .filter((group) => group.items.length > 0)
-  }, [activeGlobalSearchCategory, visibleGlobalSearchResults])
+    return groupedGlobalSearchResults.flatMap((group) => group.items)
+  }, [activeGlobalSearchCategory, groupedGlobalSearchResults, normalizedGlobalSearchResults])
 
   const visibleSearchResultIndexMap = useMemo(() => {
     const map = new Map<string, number>()
@@ -777,6 +1209,7 @@ export const App = () => {
     setSettingsSearchActiveIndex(0)
     setSettingsSearchHoverLocked(false)
     setSettingsSearchNavigationMode("pointer")
+    setExpandedGlobalSearchCategories({})
     settingsSearchWheelFreezeUntilRef.current = 0
     setIsGlobalSettingsSearchOpen(true)
   }, [edgeSnapState])
@@ -788,6 +1221,7 @@ export const App = () => {
     setSettingsSearchActiveIndex(0)
     setSettingsSearchHoverLocked(false)
     setSettingsSearchNavigationMode("pointer")
+    setExpandedGlobalSearchCategories({})
     settingsSearchWheelFreezeUntilRef.current = 0
   }, [])
 
@@ -799,6 +1233,7 @@ export const App = () => {
       setSettingsSearchActiveIndex(0)
       setSettingsSearchHoverLocked(false)
       setSettingsSearchNavigationMode("pointer")
+      setExpandedGlobalSearchCategories({})
       settingsSearchWheelFreezeUntilRef.current = 0
 
       if (item.category === "settings" && item.settingId) {
@@ -810,11 +1245,102 @@ export const App = () => {
         return
       }
 
+      if (item.category === "outline" && item.outlineTarget && outlineManager) {
+        const findOutlineNodeByIndex = (
+          nodes: OutlineNode[],
+          targetIndex: number,
+        ): OutlineNode | null => {
+          for (const node of nodes) {
+            if (node.index === targetIndex) {
+              return node
+            }
+            if (node.children && node.children.length > 0) {
+              const found = findOutlineNodeByIndex(node.children, targetIndex)
+              if (found) return found
+            }
+          }
+          return null
+        }
+
+        const targetNode = findOutlineNodeByIndex(
+          outlineManager.getTree(),
+          item.outlineTarget.index,
+        )
+        let targetElement = targetNode?.element || null
+
+        if (!targetElement || !targetElement.isConnected) {
+          if (item.outlineTarget.isUserQuery && item.outlineTarget.queryIndex) {
+            const found = outlineManager.findUserQueryElement(
+              item.outlineTarget.queryIndex,
+              item.outlineTarget.text,
+            )
+            if (found) {
+              targetElement = found
+            }
+          } else {
+            const found = outlineManager.findElementByHeading(
+              item.outlineTarget.level,
+              item.outlineTarget.text,
+            )
+            if (found) {
+              targetElement = found
+            }
+          }
+        }
+
+        if (targetElement && targetElement.isConnected) {
+          targetElement.scrollIntoView({
+            behavior: "instant",
+            block: "start",
+            __bypassLock: true,
+          } as ScrollIntoViewOptions & { __bypassLock?: boolean })
+          targetElement.classList.add("outline-highlight")
+          setTimeout(() => targetElement?.classList.remove("outline-highlight"), 2000)
+          return
+        }
+
+        if (item.outlineTarget.isGhost && item.outlineTarget.scrollTop !== undefined) {
+          const scrollContainer = outlineManager.getScrollContainer()
+          if (scrollContainer) {
+            scrollContainer.scrollTo({
+              top: item.outlineTarget.scrollTop,
+              behavior: "smooth",
+            })
+            showToast(t("bookmarkContentMissing") || "收藏内容不存在，已跳转到保存位置", 3000)
+            return
+          }
+        }
+
+        showToast(t("bookmarkContentMissing") || "收藏内容已被删除或折叠", 2000)
+        return
+      }
+
+      if (item.category === "prompts" && item.promptId) {
+        const targetPrompt = promptsSnapshot.find((prompt) => prompt.id === item.promptId)
+        if (!targetPrompt) {
+          return
+        }
+
+        setIsPanelOpen(true)
+        setSelectedPrompt(targetPrompt)
+
+        const tabOrder = settings?.features?.order || DEFAULT_SETTINGS.features.order
+        const promptsTabIndex = tabOrder.indexOf(TAB_IDS.PROMPTS)
+        if (promptsTabIndex >= 0) {
+          window.dispatchEvent(
+            new CustomEvent("ophel:switchTab", {
+              detail: { index: promptsTabIndex },
+            }),
+          )
+        }
+        return
+      }
+
       if (item.category === "conversations" && item.conversationId) {
         adapter?.navigateToConversation(item.conversationId, item.conversationUrl)
       }
     },
-    [adapter],
+    [adapter, outlineManager, promptsSnapshot, settings],
   )
 
   useEffect(() => {
@@ -956,8 +1482,13 @@ export const App = () => {
       if (event.key === "Enter") {
         if (visibleGlobalSearchResults.length === 0) return
 
-        const selected = visibleGlobalSearchResults[settingsSearchActiveIndex]
+        const selected =
+          visibleGlobalSearchResults[settingsSearchActiveIndex] || visibleGlobalSearchResults[0]
         if (!selected) return
+
+        if (!visibleGlobalSearchResults[settingsSearchActiveIndex]) {
+          setSettingsSearchActiveIndex(0)
+        }
 
         event.preventDefault()
         event.stopPropagation()
@@ -995,6 +1526,7 @@ export const App = () => {
     setSettingsSearchActiveIndex(0)
     setSettingsSearchHoverLocked(false)
     setSettingsSearchNavigationMode("pointer")
+    setExpandedGlobalSearchCategories({})
     settingsSearchWheelFreezeUntilRef.current = 0
   }, [activeGlobalSearchCategory, settingsSearchQuery])
 
@@ -1926,6 +2458,41 @@ export const App = () => {
 
   const { tags, addTag, updateTag, deleteTag } = useTagsStore()
 
+  const handleToggleGlobalSearchGroup = useCallback((category: GlobalSearchResultCategory) => {
+    setSettingsSearchNavigationMode("pointer")
+    setExpandedGlobalSearchCategories((prev) => ({
+      ...prev,
+      [category]: !prev[category],
+    }))
+  }, [])
+
+  const renderSearchHighlightedParts = useCallback(
+    (value: string, variant: "default" | "tag" | "code" = "default") => {
+      const segments = splitGlobalSearchHighlightSegments(value, settingsSearchHighlightTokens)
+
+      return segments.map((segment, index) =>
+        segment.highlighted ? (
+          <mark
+            key={`highlight-${index}-${segment.text.length}`}
+            className={`settings-search-highlight ${
+              variant === "tag"
+                ? "settings-search-highlight-tag"
+                : variant === "code"
+                  ? "settings-search-highlight-code"
+                  : ""
+            }`.trim()}>
+            {segment.text}
+          </mark>
+        ) : (
+          <React.Fragment key={`plain-${index}-${segment.text.length}`}>
+            {segment.text}
+          </React.Fragment>
+        ),
+      )
+    },
+    [settingsSearchHighlightTokens],
+  )
+
   const renderSearchResultItem = (item: GlobalSearchResultItem, index: number) => (
     <button
       key={item.id}
@@ -1946,24 +2513,31 @@ export const App = () => {
         setSettingsSearchActiveIndex(index)
       }}
       onClick={() => navigateToSearchResult(item)}>
-      <div className="settings-search-item-title">{item.title}</div>
+      <div className="settings-search-item-title" title={item.title}>
+        {renderSearchHighlightedParts(item.title)}
+      </div>
       <div className={`settings-search-item-meta ${item.code ? "" : "no-code"}`.trim()}>
         <div className="settings-search-item-meta-left">
-          <span className="settings-search-item-breadcrumb">{item.breadcrumb}</span>
+          <span className="settings-search-item-breadcrumb" title={item.breadcrumb}>
+            {renderSearchHighlightedParts(item.breadcrumb)}
+          </span>
           {item.category === "conversations" && item.tagBadges && item.tagBadges.length > 0 ? (
             <div className="settings-search-tag-list">
               {item.tagBadges.map((tag) => (
                 <span
                   key={tag.id}
                   className="settings-search-tag"
-                  style={{ backgroundColor: tag.color }}>
-                  {tag.name}
+                  style={{ backgroundColor: tag.color }}
+                  title={tag.name}>
+                  {renderSearchHighlightedParts(tag.name, "tag")}
                 </span>
               ))}
             </div>
           ) : null}
         </div>
-        {item.code ? <code>{item.code}</code> : null}
+        {item.code ? (
+          <code title={item.code}>{renderSearchHighlightedParts(item.code, "code")}</code>
+        ) : null}
       </div>
     </button>
   )
@@ -2208,11 +2782,28 @@ export const App = () => {
                 groupedGlobalSearchResults.map((group) => (
                   <section key={group.category} className="settings-search-group">
                     <div className="settings-search-group-title">
-                      {resolvedGlobalSearchResultCategoryLabels[group.category]}
+                      <span>{resolvedGlobalSearchResultCategoryLabels[group.category]}</span>
+                      {group.totalCount > GLOBAL_SEARCH_ALL_CATEGORY_ITEM_LIMIT ? (
+                        <span className="settings-search-group-count">
+                          {group.items.length}/{group.totalCount}
+                        </span>
+                      ) : null}
                     </div>
                     {group.items.map((item) =>
                       renderSearchResultItem(item, visibleSearchResultIndexMap.get(item.id) ?? 0),
                     )}
+                    {group.hasMore || group.isExpanded ? (
+                      <button
+                        type="button"
+                        className="settings-search-group-more"
+                        onClick={() => handleToggleGlobalSearchGroup(group.category)}>
+                        {group.isExpanded
+                          ? getLocalizedText({ key: "collapse", fallback: "Collapse" })
+                          : `${getLocalizedText({ key: "floatingToolbarMore", fallback: "More" })} (+${
+                              group.remainingCount
+                            })`}
+                      </button>
+                    ) : null}
                   </section>
                 ))
               ) : (

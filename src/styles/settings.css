@@ -1258,6 +1258,43 @@ html[data-theme="dark"] .about-slogan {
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.settings-search-group-count {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--gh-text-secondary, #6b7280);
+  opacity: 0.8;
+}
+
+.settings-search-group-more {
+  margin: 6px 0 2px;
+  padding: 6px 10px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text-secondary, #4b5563);
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.settings-search-group-more:hover {
+  background: var(--gh-hover, #f3f4f6);
+  border-color: var(--gh-active-bg, #c7d2fe);
+}
+
+.settings-search-group-more:focus-visible {
+  outline: 2px solid var(--gh-active-bg, #c7d2fe);
+  outline-offset: 1px;
 }
 
 .settings-search-item {
@@ -1280,16 +1317,38 @@ html[data-theme="dark"] .about-slogan {
   background: var(--gh-active-bg, #e0e7ff);
 }
 
+.settings-search-highlight {
+  background: rgba(99, 102, 241, 0.2);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
+.settings-search-highlight-tag {
+  background: rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+}
+
+.settings-search-highlight-code {
+  background: rgba(99, 102, 241, 0.22);
+  color: inherit;
+}
+
 .settings-search-item-title {
   font-size: 14px;
   font-weight: 600;
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  word-break: break-word;
 }
 
 .settings-search-item-meta {
   margin-top: 4px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   color: var(--gh-text-secondary, #6b7280);
@@ -1305,7 +1364,11 @@ html[data-theme="dark"] .about-slogan {
 }
 
 .settings-search-item-breadcrumb {
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  word-break: break-word;
 }
 
 .settings-search-tag-list {
@@ -1313,6 +1376,8 @@ html[data-theme="dark"] .about-slogan {
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+  max-height: 42px;
+  overflow: hidden;
 }
 
 .settings-search-tag {
@@ -1344,6 +1409,10 @@ html[data-theme="dark"] .about-slogan {
     "Courier New", monospace;
   color: var(--gh-text-secondary, #4b5563);
   white-space: nowrap;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
 }
 
 .settings-search-empty {
