@@ -407,6 +407,13 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
     const replacedContent = replaceVariables(prompt.content, values)
     setVariableDialogState({ show: false, prompt: null, variables: [], submitAfterInsert: false })
+
+    await new Promise<void>((resolve) => {
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => resolve())
+      })
+    })
+
     await doInsert(prompt, replacedContent, submitAfterInsert)
   }
 

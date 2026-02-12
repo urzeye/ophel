@@ -100,15 +100,22 @@ export class PromptManager {
    * 插入提示词到输入框
    */
   async insertPrompt(content: string): Promise<boolean> {
-    let result = this.adapter.insertPrompt(content)
+    const retryDelays = [0, 80, 120, 180, 240]
 
-    if (!result) {
+    for (let index = 0; index < retryDelays.length; index++) {
+      if (index > 0) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelays[index]))
+      }
+
       this.adapter.findTextarea()
-      await new Promise((resolve) => setTimeout(resolve, 100))
-      result = this.adapter.insertPrompt(content)
+
+      const result = this.adapter.insertPrompt(content)
+      if (result) {
+        return true
+      }
     }
 
-    return result
+    return false
   }
 
   private getEditorContent(editor: HTMLElement | null): string {
