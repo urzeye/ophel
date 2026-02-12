@@ -148,6 +148,7 @@ interface GlobalSearchResultItem {
   folderName?: string
   tagNames?: string[]
   isPinned?: boolean
+  searchTimestamp?: number
   matchReasons?: GlobalSearchMatchReason[]
   outlineTarget?: GlobalSearchOutlineTarget
 }
@@ -158,7 +159,17 @@ interface GlobalSearchPromptPreviewState {
   anchorRect: DOMRect
 }
 
-type GlobalSearchSyntaxOperator = "type" | "folder" | "tag" | "is"
+type GlobalSearchSyntaxOperator = "type" | "folder" | "tag" | "is" | "level" | "date"
+
+type GlobalSearchSyntaxDiagnosticCode = "unknownOperator" | "invalidValue" | "conflict"
+
+interface GlobalSearchSyntaxDiagnostic {
+  id: string
+  code: GlobalSearchSyntaxDiagnosticCode
+  operator: string
+  value?: string
+  suggestion?: string
+}
 
 interface GlobalSearchSyntaxFilter {
   id: string
@@ -171,6 +182,7 @@ interface ParsedGlobalSearchQuery {
   rawQuery: string
   plainQuery: string
   filters: GlobalSearchSyntaxFilter[]
+  diagnostics: GlobalSearchSyntaxDiagnostic[]
 }
 
 interface GlobalSearchSyntaxSuggestionItem {
@@ -286,7 +298,14 @@ const GLOBAL_SEARCH_PROMPT_PREVIEW_KEYBOARD_DELAY_MS = 700
 const GLOBAL_SEARCH_PROMPT_PREVIEW_HIDE_DELAY_MS = 220
 const GLOBAL_SEARCH_INPUT_DEBOUNCE_MS = 140
 const GLOBAL_SEARCH_SYNTAX_SUGGESTION_LIMIT = 8
-const GLOBAL_SEARCH_SYNTAX_OPERATORS: GlobalSearchSyntaxOperator[] = ["type", "folder", "tag", "is"]
+const GLOBAL_SEARCH_SYNTAX_OPERATORS: GlobalSearchSyntaxOperator[] = [
+  "type",
+  "folder",
+  "tag",
+  "is",
+  "level",
+  "date",
+]
 const GLOBAL_SEARCH_FILTER_CHIP_MAX_COUNT = 4
 const GLOBAL_SEARCH_TYPE_FILTER_VALUES: GlobalSearchResultCategory[] = [
   "outline",
@@ -294,6 +313,10 @@ const GLOBAL_SEARCH_TYPE_FILTER_VALUES: GlobalSearchResultCategory[] = [
   "prompts",
   "settings",
 ]
+const GLOBAL_SEARCH_IS_FILTER_VALUES = ["pinned", "unpinned"] as const
+const GLOBAL_SEARCH_LEVEL_FILTER_VALUES = ["0", "1", "2", "3", "4", "5", "6"] as const
+const GLOBAL_SEARCH_DATE_FILTER_SHORTCUT_VALUES = ["7d", "30d"] as const
+const GLOBAL_SEARCH_DAY_MS = 24 * 60 * 60 * 1000
 
 const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "aistudio-collapse-advanced": "aistudioCollapseAdvanced",
@@ -396,37 +419,238 @@ const toGlobalSearchTokens = (query: string): string[] =>
     .map((token) => token.trim())
     .filter((token) => token.length > 0)
 
+const normalizeGlobalSearchRawToken = (rawToken: string): string => {
+  if (!rawToken) {
+    return ""
+  }
+
+  return rawToken.replace(/^"|"$/g, "").replace(/\\([\\"\s:])/g, "$1").trim()
+}
+
+const tryParseGlobalSearchDateDays = (value: string): number | null => {
+  const match = value.trim().toLowerCase().match(/^(\d{1,3})d$/)
+  if (!match) {
+    return null
+  }
+
+  const days = Number(match[1])
+  if (!Number.isFinite(days) || days <= 0) {
+    return null
+  }
+
+  return days
+}
+
+const shouldTreatGlobalSearchFilterAsConflict = (
+  filter: GlobalSearchSyntaxFilter,
+  existingFilters: GlobalSearchSyntaxFilter[],
+): boolean => {
+  const normalizedValue = filter.normalizedValue
+
+  if (filter.key === "type") {
+    return existingFilters.some(
+      (existingFilter) =>
+        existingFilter.key === "type" && existingFilter.normalizedValue !== normalizedValue,
+    )
+  }
+
+  if (filter.key === "is") {
+    return existingFilters.some(
+      (existingFilter) =>
+        existingFilter.key === "is" && existingFilter.normalizedValue !== normalizedValue,
+    )
+  }
+
+  if (filter.key === "level") {
+    return existingFilters.some(
+      (existingFilter) =>
+        existingFilter.key === "level" && existingFilter.normalizedValue !== normalizedValue,
+    )
+  }
+
+  if (filter.key === "date") {
+    return existingFilters.some(
+      (existingFilter) =>
+        existingFilter.key === "date" && existingFilter.normalizedValue !== normalizedValue,
+    )
+  }
+
+  return false
+}
+
+const isValidGlobalSearchFilterValue = (
+  operator: GlobalSearchSyntaxOperator,
+  normalizedValue: string,
+): boolean => {
+  if (!normalizedValue) {
+    return false
+  }
+
+  if (operator === "type") {
+    return GLOBAL_SEARCH_TYPE_FILTER_VALUES.includes(normalizedValue as GlobalSearchResultCategory)
+  }
+
+  if (operator === "is") {
+    return GLOBAL_SEARCH_IS_FILTER_VALUES.includes(
+      normalizedValue as (typeof GLOBAL_SEARCH_IS_FILTER_VALUES)[number],
+    )
+  }
+
+  if (operator === "level") {
+    return GLOBAL_SEARCH_LEVEL_FILTER_VALUES.includes(
+      normalizedValue as (typeof GLOBAL_SEARCH_LEVEL_FILTER_VALUES)[number],
+    )
+  }
+
+  if (operator === "date") {
+    return tryParseGlobalSearchDateDays(normalizedValue) !== null
+  }
+
+  return true
+}
+
+const getGlobalSearchFilterValueSuggestion = (
+  operator: GlobalSearchSyntaxOperator,
+): string | undefined => {
+  if (operator === "type") {
+    return "outline | conversations | prompts | settings"
+  }
+
+  if (operator === "is") {
+    return "pinned | unpinned"
+  }
+
+  if (operator === "level") {
+    return "0 ~ 6"
+  }
+
+  if (operator === "date") {
+    return "Nd (e.g. 7d, 30d)"
+  }
+
+  return undefined
+}
+
+const createGlobalSearchFilterId = (
+  operator: GlobalSearchSyntaxOperator,
+  normalizedValue: string,
+  sequence: number,
+): string => `${operator}:${normalizedValue}:${sequence}`
+
+const getClosestGlobalSearchOperator = (operator: string): GlobalSearchSyntaxOperator | null => {
+  const normalizedOperator = operator.trim().toLowerCase()
+  if (!normalizedOperator) {
+    return null
+  }
+
+  const prefixMatchedOperator = GLOBAL_SEARCH_SYNTAX_OPERATORS.find((candidate) =>
+    candidate.startsWith(normalizedOperator),
+  )
+  if (prefixMatchedOperator) {
+    return prefixMatchedOperator
+  }
+
+  const containsMatchedOperator = GLOBAL_SEARCH_SYNTAX_OPERATORS.find((candidate) =>
+    normalizedOperator.startsWith(candidate),
+  )
+  if (containsMatchedOperator) {
+    return containsMatchedOperator
+  }
+
+  return null
+}
+
 const parseGlobalSearchQuery = (query: string): ParsedGlobalSearchQuery => {
-  const pattern = /(^|\s)(type|folder|tag|is):("[^"]+"|[^\s]+)/gi
+  const pattern = /(^|\s)([a-z]+):((?:"(?:\\.|[^"])+")|(?:\\.|[^\s])+)/gi
   const filters: GlobalSearchSyntaxFilter[] = []
+  const diagnostics: GlobalSearchSyntaxDiagnostic[] = []
   const consumedRanges: Array<{ start: number; end: number }> = []
+  const seenFilterCounts: Partial<Record<GlobalSearchSyntaxOperator, number>> = {}
 
   let match = pattern.exec(query)
   while (match) {
-    const operator = (match[2] || "").toLowerCase() as GlobalSearchSyntaxOperator
-    if (!GLOBAL_SEARCH_SYNTAX_OPERATORS.includes(operator)) {
-      match = pattern.exec(query)
-      continue
-    }
-
+    const rawOperator = (match[2] || "").toLowerCase()
     const rawToken = match[3] || ""
-    const value = rawToken.replace(/^"|"$/g, "").trim()
-    if (!value) {
+    const tokenStart = (match.index || 0) + (match[1]?.length || 0)
+    const tokenEnd = tokenStart + `${rawOperator}:${rawToken}`.length
+    const hasUnclosedQuote = rawToken.startsWith('"') !== rawToken.endsWith('"')
+    const suggestionOperator = getClosestGlobalSearchOperator(rawOperator)
+    const value = normalizeGlobalSearchRawToken(rawToken)
+    const normalizedValue = normalizeGlobalSearchValue(value)
+
+    if (!GLOBAL_SEARCH_SYNTAX_OPERATORS.includes(rawOperator as GlobalSearchSyntaxOperator)) {
+      diagnostics.push({
+        id: `unknown:${rawOperator}:${match.index || 0}`,
+        code: "unknownOperator",
+        operator: rawOperator,
+        suggestion: suggestionOperator || undefined,
+      })
       match = pattern.exec(query)
       continue
     }
 
-    const start = (match.index || 0) + (match[1]?.length || 0)
-    const fullToken = `${operator}:${rawToken}`
-    const end = start + fullToken.length
+    const operator = rawOperator as GlobalSearchSyntaxOperator
 
-    consumedRanges.push({ start, end })
-    filters.push({
-      id: `${operator}:${value.toLowerCase()}`,
+    if (hasUnclosedQuote) {
+      diagnostics.push({
+        id: `invalid:${operator}:quote:${match.index || 0}`,
+        code: "invalidValue",
+        operator,
+        value: rawToken,
+      })
+      consumedRanges.push({ start: tokenStart, end: tokenEnd })
+      match = pattern.exec(query)
+      continue
+    }
+
+    if (!value) {
+      diagnostics.push({
+        id: `invalid:${operator}:empty:${match.index || 0}`,
+        code: "invalidValue",
+        operator,
+      })
+      consumedRanges.push({ start: tokenStart, end: tokenEnd })
+      match = pattern.exec(query)
+      continue
+    }
+
+    if (!isValidGlobalSearchFilterValue(operator, normalizedValue)) {
+      diagnostics.push({
+        id: `invalid:${operator}:${normalizedValue}:${match.index || 0}`,
+        code: "invalidValue",
+        operator,
+        value,
+        suggestion: getGlobalSearchFilterValueSuggestion(operator),
+      })
+      consumedRanges.push({ start: tokenStart, end: tokenEnd })
+      match = pattern.exec(query)
+      continue
+    }
+
+    const currentSequence = (seenFilterCounts[operator] || 0) + 1
+    seenFilterCounts[operator] = currentSequence
+
+    const nextFilter: GlobalSearchSyntaxFilter = {
+      id: createGlobalSearchFilterId(operator, normalizedValue, currentSequence),
       key: operator,
       value,
-      normalizedValue: value.toLowerCase(),
-    })
+      normalizedValue,
+    }
+
+    if (shouldTreatGlobalSearchFilterAsConflict(nextFilter, filters)) {
+      diagnostics.push({
+        id: `conflict:${operator}:${normalizedValue}:${match.index || 0}`,
+        code: "conflict",
+        operator,
+        value,
+      })
+      consumedRanges.push({ start: tokenStart, end: tokenEnd })
+      match = pattern.exec(query)
+      continue
+    }
+
+    consumedRanges.push({ start: tokenStart, end: tokenEnd })
+    filters.push(nextFilter)
 
     match = pattern.exec(query)
   }
@@ -436,6 +660,7 @@ const parseGlobalSearchQuery = (query: string): ParsedGlobalSearchQuery => {
       rawQuery: query,
       plainQuery: query.trim(),
       filters,
+      diagnostics,
     }
   }
 
@@ -458,6 +683,7 @@ const parseGlobalSearchQuery = (query: string): ParsedGlobalSearchQuery => {
     rawQuery: query,
     plainQuery: plainQuery.replace(/\s+/g, " ").trim(),
     filters,
+    diagnostics,
   }
 }
 
@@ -470,8 +696,9 @@ const stringifyGlobalSearchQuery = ({
 }): string => {
   const filterText = filters
     .map((filter) => {
+      const escapedValue = filter.value.replace(/([\\"])/g, "\\$1")
       const needsQuote = /\s/.test(filter.value)
-      const safeValue = needsQuote ? `"${filter.value}"` : filter.value
+      const safeValue = needsQuote ? `"${escapedValue}"` : escapedValue
       return `${filter.key}:${safeValue}`
     })
     .join(" ")
@@ -508,7 +735,37 @@ const matchGlobalSearchSyntaxFilters = (
       if (value === "pinned") {
         return Boolean(item.isPinned)
       }
+      if (value === "unpinned") {
+        return !item.isPinned
+      }
       return false
+    }
+
+    if (filter.key === "level") {
+      if (item.category !== "outline") {
+        return false
+      }
+
+      return String(item.outlineTarget?.level ?? "") === value
+    }
+
+    if (filter.key === "date") {
+      if (item.category !== "conversations" && item.category !== "prompts") {
+        return false
+      }
+
+      const days = tryParseGlobalSearchDateDays(value)
+      if (days === null) {
+        return false
+      }
+
+      const timestamp = item.searchTimestamp || 0
+      if (timestamp <= 0) {
+        return false
+      }
+
+      const now = Date.now()
+      return now - timestamp <= days * GLOBAL_SEARCH_DAY_MS
     }
 
     return true
@@ -1531,6 +1788,11 @@ export const App = () => {
     [parsedGlobalSearchQuery.filters],
   )
 
+  const activeGlobalSearchSyntaxDiagnostics = useMemo(
+    () => parsedGlobalSearchQuery.diagnostics,
+    [parsedGlobalSearchQuery.diagnostics],
+  )
+
   const activeGlobalSearchPlainQuery = useMemo(
     () => parsedGlobalSearchQuery.plainQuery,
     [parsedGlobalSearchQuery.plainQuery],
@@ -1738,6 +2000,7 @@ export const App = () => {
             folderName: folderLabel,
             tagNames: tagBadges.map((tag) => tag.name),
             isPinned: Boolean(conversation.pinned),
+            searchTimestamp: conversation.updatedAt || 0,
             matchReasons: finalScoreMeta.matchReasons,
           },
           scoreMeta: finalScoreMeta,
@@ -1856,6 +2119,7 @@ export const App = () => {
             promptContent: prompt.content,
             folderName: categoryLabel,
             isPinned: Boolean(prompt.pinned),
+            searchTimestamp: prompt.lastUsedAt || 0,
             matchReasons: finalScoreMeta.matchReasons,
           },
           scoreMeta: finalScoreMeta,
@@ -2180,6 +2444,8 @@ export const App = () => {
       folder: getLocalizedText({ key: "globalSearchSyntaxOperatorFolder", fallback: "Folder" }),
       tag: getLocalizedText({ key: "globalSearchSyntaxOperatorTag", fallback: "Tag" }),
       is: getLocalizedText({ key: "globalSearchSyntaxOperatorIs", fallback: "State" }),
+      level: getLocalizedText({ key: "globalSearchSyntaxOperatorLevel", fallback: "Level" }),
+      date: getLocalizedText({ key: "globalSearchSyntaxOperatorDate", fallback: "Date" }),
     }),
     [getLocalizedText],
   )
@@ -2190,33 +2456,26 @@ export const App = () => {
       folder: getLocalizedText({ key: "globalSearchSyntaxOperatorFolder", fallback: "Folder" }),
       tag: getLocalizedText({ key: "globalSearchSyntaxOperatorTag", fallback: "Tag" }),
       is: getLocalizedText({ key: "globalSearchSyntaxOperatorIs", fallback: "State" }),
+      level: getLocalizedText({ key: "globalSearchSyntaxOperatorLevel", fallback: "Level" }),
+      date: getLocalizedText({ key: "globalSearchSyntaxOperatorDate", fallback: "Date" }),
     }),
     [getLocalizedText],
   )
 
-  const globalSearchSuggestionTypeLabels = useMemo(
-    () => ({
-      outline: getLocalizedText({ key: "globalSearchCategoryOutline", fallback: "Outline" }),
-      conversations: getLocalizedText({
-        key: "globalSearchCategoryConversations",
-        fallback: "Conversations",
-      }),
-      prompts: getLocalizedText({ key: "globalSearchCategoryPrompts", fallback: "Prompts" }),
-      settings: getLocalizedText({ key: "globalSearchCategorySettings", fallback: "Settings" }),
-    }),
-    [getLocalizedText],
-  )
-
-  const globalSearchSuggestionPinnedLabel = useMemo(
-    () => getLocalizedText({ key: "globalSearchSyntaxPinned", fallback: "Pinned" }),
-    [getLocalizedText],
-  )
-
-  const globalSearchSuggestionPinnedDescription = useMemo(
+  const globalSearchSuggestionLevelDescription = useMemo(
     () =>
       getLocalizedText({
-        key: "globalSearchSyntaxSuggestionPinnedDesc",
-        fallback: "Only pinned results",
+        key: "globalSearchSyntaxSuggestionLevelDesc",
+        fallback: "Filter outline level (0 = user query)",
+      }),
+    [getLocalizedText],
+  )
+
+  const globalSearchSuggestionDateDescription = useMemo(
+    () =>
+      getLocalizedText({
+        key: "globalSearchSyntaxSuggestionDateDesc",
+        fallback: "Filter by recent days (conversations and prompts only)",
       }),
     [getLocalizedText],
   )
@@ -2238,6 +2497,53 @@ export const App = () => {
       is: getLocalizedText({
         key: "globalSearchSyntaxSuggestionIsDesc",
         fallback: "Filter by status",
+      }),
+      level: getLocalizedText({
+        key: "globalSearchSyntaxSuggestionLevelDesc",
+        fallback: "Filter outline level (0 = user query)",
+      }),
+      date: getLocalizedText({
+        key: "globalSearchSyntaxSuggestionDateDesc",
+        fallback: "Filter by recent days (conversations and prompts only)",
+      }),
+    }),
+    [getLocalizedText],
+  )
+
+  const globalSearchSuggestionTypeDescriptions = useMemo(
+    () => ({
+      outline: getLocalizedText({ key: "globalSearchCategoryOutline", fallback: "Outline" }),
+      conversations: getLocalizedText({
+        key: "globalSearchCategoryConversations",
+        fallback: "Conversations",
+      }),
+      prompts: getLocalizedText({ key: "globalSearchCategoryPrompts", fallback: "Prompts" }),
+      settings: getLocalizedText({ key: "globalSearchCategorySettings", fallback: "Settings" }),
+    }),
+    [getLocalizedText],
+  )
+
+  const globalSearchSuggestionIsDescriptions = useMemo(
+    () => ({
+      pinned: getLocalizedText({ key: "globalSearchSyntaxPinned", fallback: "Pinned" }),
+      unpinned: getLocalizedText({ key: "globalSearchSyntaxUnpinned", fallback: "Unpinned" }),
+    }),
+    [getLocalizedText],
+  )
+
+  const globalSearchSyntaxDiagnosticMessages = useMemo(
+    () => ({
+      unknownOperator: getLocalizedText({
+        key: "globalSearchSyntaxDiagnosticUnknownOperator",
+        fallback: "Unknown operator",
+      }),
+      invalidValue: getLocalizedText({
+        key: "globalSearchSyntaxDiagnosticInvalidValue",
+        fallback: "Invalid filter value",
+      }),
+      conflict: getLocalizedText({
+        key: "globalSearchSyntaxDiagnosticConflict",
+        fallback: "Conflicting filters removed",
       }),
     }),
     [getLocalizedText],
@@ -2338,7 +2644,7 @@ export const App = () => {
           appendSuggestion({
             id: `type:${value}`,
             token: `type:${value}`,
-            label: `type:${globalSearchSuggestionTypeLabels[value]}`,
+            label: `type:${value} · ${globalSearchSuggestionTypeDescriptions[value]}`,
             description: globalSearchSuggestionOperatorDescriptions.type,
           })
         })
@@ -2348,10 +2654,69 @@ export const App = () => {
           appendSuggestion({
             id: "is:pinned",
             token: "is:pinned",
-            label: `is:${globalSearchSuggestionPinnedLabel}`,
-            description: globalSearchSuggestionPinnedDescription,
+            label: `is:pinned · ${globalSearchSuggestionIsDescriptions.pinned}`,
+            description: globalSearchSuggestionOperatorDescriptions.is,
           })
         }
+
+        const unpinnedValue = "unpinned"
+        if (!rawValue || unpinnedValue.startsWith(normalizedRawValue)) {
+          appendSuggestion({
+            id: "is:unpinned",
+            token: "is:unpinned",
+            label: `is:unpinned · ${globalSearchSuggestionIsDescriptions.unpinned}`,
+            description: globalSearchSuggestionOperatorDescriptions.is,
+          })
+        }
+      } else if (operator === "level") {
+        GLOBAL_SEARCH_LEVEL_FILTER_VALUES.forEach((value) => {
+          if (rawValue && !value.startsWith(normalizedRawValue)) {
+            return
+          }
+
+          const isQueryLevel = value === "0"
+          appendSuggestion({
+            id: `level:${value}`,
+            token: `level:${value}`,
+            label: `level:${value}`,
+            description: isQueryLevel
+              ? getLocalizedText({
+                  key: "globalSearchSyntaxSuggestionLevelQueryDesc",
+                  fallback: "Outline user query",
+                })
+              : globalSearchSuggestionLevelDescription,
+          })
+        })
+      } else if (operator === "date") {
+        const dynamicDayMatch = normalizedRawValue.match(/^(\d{0,3})d?$/)
+        if (dynamicDayMatch) {
+          const dayValue = dynamicDayMatch[1]
+          if (dayValue) {
+            const dynamicToken = `${dayValue}d`
+            const dynamicDays = Number(dayValue)
+            if (dynamicDays > 0) {
+              appendSuggestion({
+                id: `date:${dynamicToken}`,
+                token: `date:${dynamicToken}`,
+                label: `date:${dynamicToken}`,
+                description: globalSearchSuggestionDateDescription,
+              })
+            }
+          }
+        }
+
+        GLOBAL_SEARCH_DATE_FILTER_SHORTCUT_VALUES.forEach((value) => {
+          if (rawValue && !value.startsWith(normalizedRawValue)) {
+            return
+          }
+
+          appendSuggestion({
+            id: `date:${value}`,
+            token: `date:${value}`,
+            label: `date:${value}`,
+            description: globalSearchSuggestionDateDescription,
+          })
+        })
       }
 
       if (operator === "folder") {
@@ -2439,9 +2804,11 @@ export const App = () => {
     filteredGlobalSearchResults,
     globalSearchSuggestionOperatorDescriptions,
     globalSearchSuggestionOperatorLabels,
-    globalSearchSuggestionPinnedDescription,
-    globalSearchSuggestionPinnedLabel,
-    globalSearchSuggestionTypeLabels,
+    globalSearchSuggestionDateDescription,
+    globalSearchSuggestionIsDescriptions,
+    globalSearchSuggestionLevelDescription,
+    globalSearchSuggestionTypeDescriptions,
+    getLocalizedText,
     isGlobalSettingsSearchOpen,
     settingsSearchInputValue,
   ])
@@ -2453,9 +2820,11 @@ export const App = () => {
   const applyGlobalSearchSyntaxSuggestion = useCallback(
     (suggestion: GlobalSearchSyntaxSuggestionItem) => {
       const trailingTokenInfo = getGlobalSearchTrailingTokenInfo(settingsSearchInputValue)
+      const shouldAppendTrailingSpace = !suggestion.token.endsWith(":")
+      const nextToken = `${suggestion.token}${shouldAppendTrailingSpace ? " " : ""}`
       const nextValue = trailingTokenInfo
-        ? `${settingsSearchInputValue.slice(0, trailingTokenInfo.start)}${suggestion.token} `
-        : `${settingsSearchInputValue}${settingsSearchInputValue.endsWith(" ") ? "" : " "}${suggestion.token} `
+        ? `${settingsSearchInputValue.slice(0, trailingTokenInfo.start)}${nextToken}`
+        : `${settingsSearchInputValue}${settingsSearchInputValue.endsWith(" ") ? "" : " "}${nextToken}`
 
       syncSettingsSearchInputAndQuery(nextValue)
       setActiveSearchSyntaxSuggestionIndex(-1)
@@ -4666,6 +5035,27 @@ export const App = () => {
               </div>
             ) : null}
 
+            {activeGlobalSearchSyntaxDiagnostics.length > 0 ? (
+              <div className="settings-search-syntax-diagnostics" role="status" aria-live="polite">
+                {activeGlobalSearchSyntaxDiagnostics.map((diagnostic) => {
+                  const diagnosticTitle =
+                    globalSearchSyntaxDiagnosticMessages[diagnostic.code] ||
+                    globalSearchSyntaxDiagnosticMessages.invalidValue
+
+                  return (
+                    <div key={diagnostic.id} className="settings-search-syntax-diagnostic">
+                      <span className="settings-search-syntax-diagnostic-title">{diagnosticTitle}</span>
+                      <span className="settings-search-syntax-diagnostic-detail">
+                        {diagnostic.operator}
+                        {diagnostic.value ? `:${diagnostic.value}` : ""}
+                        {diagnostic.suggestion ? ` → ${diagnostic.suggestion}:` : ""}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : null}
+
             {showGlobalSearchShortcutNudge && globalSearchShortcutNudgeMessage ? (
               <div className="settings-search-shortcut-nudge" role="status" aria-live="polite">
                 <span className="settings-search-shortcut-nudge-text">
@@ -4778,6 +5168,18 @@ export const App = () => {
                       className="settings-search-empty-guide-example"
                       onClick={() => syncSettingsSearchInputAndQuery("tag:work ")}>
                       tag:work
+                    </button>
+                    <button
+                      type="button"
+                      className="settings-search-empty-guide-example"
+                      onClick={() => syncSettingsSearchInputAndQuery("level:0 ")}>
+                      level:0
+                    </button>
+                    <button
+                      type="button"
+                      className="settings-search-empty-guide-example"
+                      onClick={() => syncSettingsSearchInputAndQuery("date:7d ")}>
+                      date:7d
                     </button>
                   </div>
                 </div>

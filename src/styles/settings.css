@@ -1329,6 +1329,38 @@ html[data-theme="dark"] .about-slogan {
   white-space: nowrap;
 }
 
+.settings-search-syntax-diagnostics {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--gh-border, #e5e7eb);
+  background: color-mix(in srgb, var(--gh-bg-secondary, #f8fafc) 78%, #fff4e5 22%);
+}
+
+.settings-search-syntax-diagnostic {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.settings-search-syntax-diagnostic-title {
+  color: #b45309;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.settings-search-syntax-diagnostic-detail {
+  color: var(--gh-text-secondary, #6b7280);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
 .settings-search-shortcut-nudge {
   display: flex;
   align-items: center;
