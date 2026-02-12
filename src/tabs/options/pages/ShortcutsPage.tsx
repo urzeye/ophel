@@ -344,7 +344,6 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
           style={{
             marginTop: "16px",
             paddingTop: "16px",
-            borderTop: "1px solid var(--gh-border)",
           }}>
           <button
             onClick={() => setShowResetConfirm(true)}
