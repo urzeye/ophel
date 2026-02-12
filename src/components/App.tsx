@@ -34,7 +34,7 @@ import { QuickButtons } from "./QuickButtons"
 import { SelectedPromptBar } from "./SelectedPromptBar"
 import { SettingsModal } from "./SettingsModal"
 import { GlobalSearchOverlay } from "./global-search/GlobalSearchOverlay"
-import { splitGlobalSearchHighlightSegments } from "./global-search/highlight"
+import { GlobalSearchResultItemView } from "./global-search/GlobalSearchResultItemView"
 import type {
   GlobalSearchCategoryId,
   GlobalSearchGroupedResult,
@@ -3470,33 +3470,6 @@ export const App = () => {
     }))
   }, [])
 
-  const renderSearchHighlightedParts = useCallback(
-    (value: string, variant: "default" | "tag" | "code" = "default") => {
-      const segments = splitGlobalSearchHighlightSegments(value, settingsSearchHighlightTokens)
-
-      return segments.map((segment, index) =>
-        segment.highlighted ? (
-          <mark
-            key={`highlight-${index}-${segment.text.length}`}
-            className={`settings-search-highlight ${
-              variant === "tag"
-                ? "settings-search-highlight-tag"
-                : variant === "code"
-                  ? "settings-search-highlight-code"
-                  : ""
-            }`.trim()}>
-            {segment.text}
-          </mark>
-        ) : (
-          <React.Fragment key={`plain-${index}-${segment.text.length}`}>
-            {segment.text}
-          </React.Fragment>
-        ),
-      )
-    },
-    [settingsSearchHighlightTokens],
-  )
-
   const outlineRoleLabels = useMemo(
     () => ({
       query: getLocalizedText({ key: "outlineOnlyUserQueries", fallback: "Query" }),
@@ -3505,144 +3478,45 @@ export const App = () => {
     [getLocalizedText],
   )
 
-  const renderSearchResultItem = (item: GlobalSearchResultItem, index: number) => {
-    const isOutlineItem = item.category === "outline" && Boolean(item.outlineTarget)
-    const isConversationItem = item.category === "conversations"
-    const isPromptItem = item.category === "prompts"
-    const isOutlineQuery = isOutlineItem && Boolean(item.outlineTarget?.isUserQuery)
-    const outlineRoleLabel = isOutlineQuery ? outlineRoleLabels.query : outlineRoleLabels.reply
-    const showCodeOnMeta = Boolean(item.code) && !isOutlineItem
-    const promptSnippetPrefix =
-      item.category === "prompts" && item.matchReasons?.includes("content")
-        ? `${resolvedGlobalSearchMatchReasonLabels.content}：`
-        : ""
-    const matchReasonBadges =
-      item.matchReasons && item.matchReasons.length > 0
-        ? item.matchReasons.map((reason) => ({
-            reason,
-            label: resolvedGlobalSearchMatchReasonLabels[reason],
-          }))
-        : []
+  const renderSearchResultItem = (item: GlobalSearchResultItem, index: number) => (
+    <GlobalSearchResultItemView
+      key={item.id}
+      item={item}
+      index={index}
+      optionIdPrefix={GLOBAL_SEARCH_OPTION_ID_PREFIX}
+      isActive={index === settingsSearchActiveIndex}
+      highlightTokens={settingsSearchHighlightTokens}
+      outlineRoleLabels={outlineRoleLabels}
+      matchReasonLabels={resolvedGlobalSearchMatchReasonLabels}
+      onMouseMove={() => {
+        setSettingsSearchNavigationMode("pointer")
 
-    return (
-      <div
-        key={item.id}
-        id={`${GLOBAL_SEARCH_OPTION_ID_PREFIX}-${index}`}
-        role="option"
-        aria-selected={index === settingsSearchActiveIndex}
-        tabIndex={-1}
-        data-global-search-index={index}
-        data-global-search-item-id={item.id}
-        className={`settings-search-item ${index === settingsSearchActiveIndex ? "active" : ""} ${
-          isOutlineItem
-            ? isOutlineQuery
-              ? "outline-item outline-query"
-              : "outline-item outline-reply"
-            : ""
-        } ${isConversationItem ? "conversation-item" : ""}`.trim()}
-        onMouseMove={() => {
-          setSettingsSearchNavigationMode("pointer")
+        if (Date.now() < settingsSearchWheelFreezeUntilRef.current) {
+          return
+        }
 
-          if (Date.now() < settingsSearchWheelFreezeUntilRef.current) {
-            return
-          }
-
-          if (settingsSearchHoverLocked) {
-            setSettingsSearchHoverLocked(false)
-            return
-          }
-          setSettingsSearchActiveIndex(index)
-        }}
-        onMouseEnter={(event) => {
-          if (!isPromptItem) {
-            return
-          }
-
-          keyboardPreviewTargetRef.current = null
-          setSettingsSearchNavigationMode("pointer")
-          scheduleGlobalSearchPromptPreview({
-            item,
-            anchorElement: event.currentTarget,
-            delay: GLOBAL_SEARCH_PROMPT_PREVIEW_POINTER_DELAY_MS,
-            source: "pointer",
-          })
-        }}
-        onMouseLeave={() => {
-          if (!isPromptItem) {
-            return
-          }
-
-          scheduleHideGlobalSearchPromptPreview()
-        }}
-        onClick={() => navigateToSearchResult(item)}>
-        <div className="settings-search-item-title" title={item.title}>
-          {isOutlineItem ? (
-            <div className="settings-search-outline-head">
-              <span
-                className={`settings-search-outline-role ${isOutlineQuery ? "query" : "reply"}`}
-                title={outlineRoleLabel}>
-                {outlineRoleLabel}
-              </span>
-              {item.code ? (
-                <span className="settings-search-outline-code" title={item.code}>
-                  {renderSearchHighlightedParts(item.code, "code")}
-                </span>
-              ) : null}
-              <span className="settings-search-item-title-text">
-                {renderSearchHighlightedParts(item.title)}
-              </span>
-            </div>
-          ) : (
-            <span className="settings-search-item-title-text">
-              {renderSearchHighlightedParts(item.title)}
-            </span>
-          )}
-        </div>
-        {item.snippet ? (
-          <div
-            className="settings-search-item-snippet"
-            title={`${promptSnippetPrefix}${item.snippet}`}>
-            {promptSnippetPrefix ? (
-              <span className="settings-search-item-snippet-prefix">{promptSnippetPrefix}</span>
-            ) : null}
-            {renderSearchHighlightedParts(item.snippet)}
-          </div>
-        ) : null}
-        <div className={`settings-search-item-meta ${showCodeOnMeta ? "" : "no-code"}`.trim()}>
-          <div className="settings-search-item-meta-left">
-            <span className="settings-search-item-breadcrumb" title={item.breadcrumb}>
-              {renderSearchHighlightedParts(item.breadcrumb)}
-            </span>
-            {item.category === "conversations" && item.tagBadges && item.tagBadges.length > 0 ? (
-              <div className="settings-search-tag-list">
-                {item.tagBadges.map((tag) => (
-                  <span
-                    key={tag.id}
-                    className="settings-search-tag"
-                    style={{ backgroundColor: tag.color }}
-                    title={tag.name}>
-                    {renderSearchHighlightedParts(tag.name)}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-            {matchReasonBadges.length > 0 ? (
-              <div className="settings-search-match-reason-list">
-                {matchReasonBadges.map((reasonBadge) => (
-                  <span key={reasonBadge.reason} className="settings-search-match-reason-badge">
-                    {reasonBadge.label}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-          </div>
-          {showCodeOnMeta ? (
-            <code title={item.code}>{renderSearchHighlightedParts(item.code!, "code")}</code>
-          ) : null}
-        </div>
-      </div>
-    )
-  }
+        if (settingsSearchHoverLocked) {
+          setSettingsSearchHoverLocked(false)
+          return
+        }
+        setSettingsSearchActiveIndex(index)
+      }}
+      onMouseEnter={(event) => {
+        keyboardPreviewTargetRef.current = null
+        setSettingsSearchNavigationMode("pointer")
+        scheduleGlobalSearchPromptPreview({
+          item,
+          anchorElement: event.currentTarget,
+          delay: GLOBAL_SEARCH_PROMPT_PREVIEW_POINTER_DELAY_MS,
+          source: "pointer",
+        })
+      }}
+      onMouseLeave={() => {
+        scheduleHideGlobalSearchPromptPreview()
+      }}
+      onClick={() => navigateToSearchResult(item)}
+    />
+  )
 
   if (!adapter || !promptManager || !conversationManager || !outlineManager) {
     return null
