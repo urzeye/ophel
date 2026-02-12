@@ -2,6 +2,8 @@ import React from "react"
 
 import { SearchIcon } from "~components/icons"
 
+import type { GlobalSearchSyntaxSuggestionItem } from "./types"
+
 interface GlobalSearchFilterChipItem {
   id: string
   label: string
@@ -10,12 +12,6 @@ interface GlobalSearchFilterChipItem {
 interface GlobalSearchSyntaxHelpItem {
   id: string
   token: string
-  description: string
-}
-
-interface GlobalSearchSyntaxSuggestionItem {
-  id: string
-  label: string
   description: string
 }
 

@@ -59,3 +59,10 @@ export interface GlobalSearchGroupedResult {
   isExpanded: boolean
   remainingCount: number
 }
+
+export interface GlobalSearchSyntaxSuggestionItem {
+  id: string
+  token: string
+  label: string
+  description: string
+}
