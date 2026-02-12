@@ -1284,8 +1284,31 @@ html[data-theme="dark"] .about-slogan {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: 260px;
+  max-height: min(360px, 46vh);
   overflow-y: auto;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 45%, transparent)
+    transparent;
+}
+
+.settings-search-help-items::-webkit-scrollbar {
+  width: 8px;
+}
+
+.settings-search-help-items::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.settings-search-help-items::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  background: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 45%, transparent);
+}
+
+.settings-search-help-items::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 62%, transparent);
 }
 
 .settings-search-help-item {

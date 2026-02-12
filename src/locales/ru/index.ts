@@ -475,13 +475,6 @@ export const ru = {
   moveDown: "Ниже",
   // Reading Navigation Settings
   readingNavigationSettings: "Навигация",
-  anchorSettings: "Чтение",
-  anchorPersistence: "Включить историю",
-  anchorPersistenceDesc: "Помнить, где остановились",
-  anchorAutoRestore: "Авто-возврат",
-  anchorAutoRestoreDesc: "Прыгать к месту при загрузке",
-  anchorCleanup: "Хранение",
-  anchorCleanupDesc: "Дней хранения прогресса (-1 всегда)",
 
   restoredPosition: "Позиция восстановлена",
   cleanupDone: "Старые данные очищены",
@@ -1102,17 +1095,29 @@ export const ru = {
   globalSearchSyntaxOperatorFolder: "Папка",
   globalSearchSyntaxOperatorTag: "Тег",
   globalSearchSyntaxOperatorIs: "Состояние",
+  globalSearchSyntaxOperatorLevel: "Уровень",
+  globalSearchSyntaxOperatorDate: "Дата",
   globalSearchSyntaxPinned: "Закреплено",
   globalSearchSyntaxSuggestionTypeDesc: "Фильтр по типу результата",
   globalSearchSyntaxSuggestionFolderDesc: "Фильтр по папке или категории",
   globalSearchSyntaxSuggestionTagDesc: "Фильтр по названию тега",
   globalSearchSyntaxSuggestionIsDesc: "Фильтр по состоянию",
   globalSearchSyntaxSuggestionPinnedDesc: "Только закреплённые результаты",
+  globalSearchSyntaxSuggestionLevelDesc: "Фильтр по уровню структуры (0 = вопрос пользователя)",
+  globalSearchSyntaxSuggestionLevelQueryDesc: "Только вопросы пользователя",
+  globalSearchSyntaxSuggestionDateDesc: "Фильтр по последним дням",
+  globalSearchSyntaxDiagnosticUnknownOperator: "Неизвестный оператор",
+  globalSearchSyntaxDiagnosticInvalidValue: "Недопустимое значение фильтра",
+  globalSearchSyntaxDiagnosticConflict: "Конфликтующие фильтры проигнорированы",
   globalSearchSyntaxChipRemove: "Нажмите, чтобы удалить фильтр",
   globalSearchSyntaxChipOverflow: "+ещё {count}",
   globalSearchSyntaxEmptyGuideTitle: "Попробуйте поисковые фильтры",
   globalSearchSyntaxEmptyGuideDesc:
     "Используйте синтаксис фильтров, чтобы быстрее сузить результаты",
+  globalSearchSyntaxHelpTitle: "Примеры синтаксиса поиска",
+  globalSearchSyntaxHelpDesc:
+    "Нажмите, чтобы вставить. Ключевые слова поддерживаются только на английском.",
+  globalSearchSyntaxHelpTriggerAria: "Открыть справку по синтаксису поиска",
 
   // Missing Keys
   moreLanguages: "Больше языков",
