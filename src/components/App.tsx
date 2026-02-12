@@ -35,6 +35,7 @@ import { SelectedPromptBar } from "./SelectedPromptBar"
 import { SettingsModal } from "./SettingsModal"
 import { GlobalSearchOverlay } from "./global-search/GlobalSearchOverlay"
 import { GlobalSearchResultItemView } from "./global-search/GlobalSearchResultItemView"
+import { useGlobalSearchPreview } from "./global-search/useGlobalSearchPreview"
 import { useGlobalSearchSyntax } from "./global-search/useGlobalSearchSyntax"
 import type {
   GlobalSearchCategoryId,
@@ -114,12 +115,6 @@ interface GlobalSearchCategoryDefinition {
   label: LocalizedLabelDefinition
   placeholder: LocalizedLabelDefinition
   emptyText: LocalizedLabelDefinition
-}
-
-interface GlobalSearchPromptPreviewState {
-  itemId: string
-  content: string
-  anchorRect: DOMRect
 }
 
 type GlobalSearchOpenSource = "shortcut" | "ui" | "event"
@@ -436,128 +431,6 @@ export const App = () => {
       globalSearchNudgeHideTimerRef.current = null
     }
   }, [])
-
-  const clearPromptPreviewTimer = useCallback(() => {
-    if (promptPreviewTimerRef.current) {
-      clearTimeout(promptPreviewTimerRef.current)
-      promptPreviewTimerRef.current = null
-    }
-  }, [])
-
-  const clearPromptPreviewHideTimer = useCallback(() => {
-    if (promptPreviewHideTimerRef.current) {
-      clearTimeout(promptPreviewHideTimerRef.current)
-      promptPreviewHideTimerRef.current = null
-    }
-  }, [])
-
-  const getGlobalSearchPromptAnchorElement = useCallback((itemId: string) => {
-    const container = settingsSearchResultsRef.current
-    if (!container) {
-      return null
-    }
-
-    const candidates = container.querySelectorAll<HTMLElement>("[data-global-search-item-id]")
-    for (const candidate of candidates) {
-      if (candidate.dataset.globalSearchItemId === itemId) {
-        return candidate
-      }
-    }
-
-    return null
-  }, [])
-
-  const hideGlobalSearchPromptPreview = useCallback(() => {
-    clearPromptPreviewTimer()
-    clearPromptPreviewHideTimer()
-    keyboardPreviewTargetRef.current = null
-    setGlobalSearchPromptPreview(null)
-  }, [clearPromptPreviewHideTimer, clearPromptPreviewTimer])
-
-  const scheduleHideGlobalSearchPromptPreview = useCallback(
-    (delay = GLOBAL_SEARCH_PROMPT_PREVIEW_HIDE_DELAY_MS) => {
-      clearPromptPreviewHideTimer()
-      promptPreviewHideTimerRef.current = setTimeout(() => {
-        hideGlobalSearchPromptPreview()
-        promptPreviewHideTimerRef.current = null
-      }, delay)
-    },
-    [clearPromptPreviewHideTimer, hideGlobalSearchPromptPreview],
-  )
-
-  const scheduleGlobalSearchPromptPreview = useCallback(
-    ({
-      item,
-      anchorElement,
-      delay,
-      source,
-    }: {
-      item: GlobalSearchResultItem
-      anchorElement: HTMLElement
-      delay: number
-      source: "pointer" | "keyboard"
-    }) => {
-      if (
-        item.category !== "prompts" ||
-        !item.promptId ||
-        !item.promptContent ||
-        !item.promptContent.trim()
-      ) {
-        return
-      }
-
-      clearPromptPreviewTimer()
-      clearPromptPreviewHideTimer()
-
-      if (source === "keyboard") {
-        keyboardPreviewTargetRef.current = item.id
-      }
-
-      promptPreviewTimerRef.current = setTimeout(() => {
-        if (source === "keyboard" && keyboardPreviewTargetRef.current !== item.id) {
-          return
-        }
-
-        setGlobalSearchPromptPreview({
-          itemId: item.id,
-          content: item.promptContent!,
-          anchorRect: anchorElement.getBoundingClientRect(),
-        })
-
-        promptPreviewTimerRef.current = null
-      }, delay)
-    },
-    [clearPromptPreviewHideTimer, clearPromptPreviewTimer],
-  )
-
-  const refreshGlobalSearchPromptPreviewAnchorRect = useCallback(() => {
-    setGlobalSearchPromptPreview((current) => {
-      if (!current) {
-        return current
-      }
-
-      const anchorElement = getGlobalSearchPromptAnchorElement(current.itemId)
-      if (!anchorElement) {
-        return null
-      }
-
-      const nextRect = anchorElement.getBoundingClientRect()
-      const isSameRect =
-        Math.abs(nextRect.top - current.anchorRect.top) < 0.5 &&
-        Math.abs(nextRect.left - current.anchorRect.left) < 0.5 &&
-        Math.abs(nextRect.right - current.anchorRect.right) < 0.5 &&
-        Math.abs(nextRect.bottom - current.anchorRect.bottom) < 0.5
-
-      if (isSameRect) {
-        return current
-      }
-
-      return {
-        ...current,
-        anchorRect: nextRect,
-      }
-    })
-  }, [getGlobalSearchPromptAnchorElement])
 
   const handleGlobalSearchPromptPreviewClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -894,8 +767,6 @@ export const App = () => {
   const [showGlobalSearchShortcutNudge, setShowGlobalSearchShortcutNudge] = useState(false)
   const [globalSearchShortcutNudgeMessage, setGlobalSearchShortcutNudgeMessage] = useState("")
   const [showGlobalSearchSyntaxHelp, setShowGlobalSearchSyntaxHelp] = useState(false)
-  const [globalSearchPromptPreview, setGlobalSearchPromptPreview] =
-    useState<GlobalSearchPromptPreviewState | null>(null)
   const [activeSearchSyntaxSuggestionIndex, setActiveSearchSyntaxSuggestionIndex] = useState(-1)
   const settingsSearchInputRef = useRef<HTMLInputElement | null>(null)
   const globalSearchSyntaxHelpTriggerRef = useRef<HTMLButtonElement | null>(null)
@@ -904,14 +775,27 @@ export const App = () => {
   const promptPreviewContainerRef = useRef<HTMLDivElement | null>(null)
   const searchInputDebounceTimerRef = useRef<NodeJS.Timeout | null>(null)
   const settingsSearchWheelFreezeUntilRef = useRef(0)
-  const promptPreviewTimerRef = useRef<NodeJS.Timeout | null>(null)
-  const promptPreviewHideTimerRef = useRef<NodeJS.Timeout | null>(null)
-  const keyboardPreviewTargetRef = useRef<string | null>(null)
   const globalSearchNudgeHideTimerRef = useRef<NodeJS.Timeout | null>(null)
   const globalSearchOpenSourceRef = useRef<GlobalSearchOpenSource>("ui")
   const lastShiftPressedAtRef = useRef(0)
   const [outlineSearchVersion, setOutlineSearchVersion] = useState(0)
   const settingsSearchRestoreFocusRef = useRef<HTMLElement | null>(null)
+
+  const {
+    globalSearchPromptPreview,
+    globalSearchPromptPreviewPosition,
+    clearPromptPreviewTimer,
+    clearPromptPreviewHideTimer,
+    hideGlobalSearchPromptPreview,
+    scheduleHideGlobalSearchPromptPreview,
+    scheduleGlobalSearchPromptPreview,
+    scheduleGlobalSearchPointerPreview,
+    refreshGlobalSearchPromptPreviewAnchorRect,
+  } = useGlobalSearchPreview({
+    settingsSearchResultsRef,
+    pointerDelayMs: GLOBAL_SEARCH_PROMPT_PREVIEW_POINTER_DELAY_MS,
+    hideDelayMs: GLOBAL_SEARCH_PROMPT_PREVIEW_HIDE_DELAY_MS,
+  })
 
   // 浮动工具栏
 
@@ -1180,40 +1064,6 @@ export const App = () => {
       }),
     [getLocalizedText],
   )
-
-  const globalSearchPromptPreviewPosition = useMemo(() => {
-    if (!globalSearchPromptPreview || typeof window === "undefined") {
-      return null
-    }
-
-    const viewportPadding = 16
-    const gap = 12
-    const previewWidth = Math.max(280, Math.min(420, window.innerWidth - viewportPadding * 2))
-    const previewEstimatedHeight = Math.max(
-      220,
-      Math.min(420, window.innerHeight - viewportPadding * 2),
-    )
-
-    let left = globalSearchPromptPreview.anchorRect.right + gap
-    if (left + previewWidth > window.innerWidth - viewportPadding) {
-      left = globalSearchPromptPreview.anchorRect.left - previewWidth - gap
-    }
-
-    left = Math.max(
-      viewportPadding,
-      Math.min(left, window.innerWidth - previewWidth - viewportPadding),
-    )
-
-    const top = Math.max(
-      viewportPadding,
-      Math.min(
-        globalSearchPromptPreview.anchorRect.top,
-        window.innerHeight - viewportPadding - previewEstimatedHeight,
-      ),
-    )
-
-    return { top, left }
-  }, [globalSearchPromptPreview])
 
   const applyGlobalSearchSyntaxSuggestion = useCallback(
     (suggestion: GlobalSearchSyntaxSuggestionItem) => {
@@ -3070,13 +2920,10 @@ export const App = () => {
         setSettingsSearchActiveIndex(index)
       }}
       onMouseEnter={(event) => {
-        keyboardPreviewTargetRef.current = null
         setSettingsSearchNavigationMode("pointer")
-        scheduleGlobalSearchPromptPreview({
+        scheduleGlobalSearchPointerPreview({
           item,
           anchorElement: event.currentTarget,
-          delay: GLOBAL_SEARCH_PROMPT_PREVIEW_POINTER_DELAY_MS,
-          source: "pointer",
         })
       }}
       onMouseLeave={() => {

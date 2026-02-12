@@ -60,6 +60,12 @@ export interface GlobalSearchGroupedResult {
   remainingCount: number
 }
 
+export interface GlobalSearchPromptPreviewState {
+  itemId: string
+  content: string
+  anchorRect: DOMRect
+}
+
 export interface GlobalSearchSyntaxSuggestionItem {
   id: string
   token: string
