@@ -33,9 +33,23 @@ import { MainPanel } from "./MainPanel"
 import { QuickButtons } from "./QuickButtons"
 import { SelectedPromptBar } from "./SelectedPromptBar"
 import { SettingsModal } from "./SettingsModal"
+import { GlobalSearchOverlay } from "./global-search/GlobalSearchOverlay"
+import {
+  GLOBAL_SEARCH_DATE_FILTER_SHORTCUT_VALUES,
+  GLOBAL_SEARCH_IS_FILTER_VALUES,
+  GLOBAL_SEARCH_LEVEL_FILTER_VALUES,
+  GLOBAL_SEARCH_SYNTAX_OPERATORS,
+  GLOBAL_SEARCH_TYPE_FILTER_VALUES,
+  getGlobalSearchTrailingTokenInfo,
+  matchGlobalSearchSyntaxFilters,
+  normalizeGlobalSearchValue,
+  parseGlobalSearchQuery,
+  stringifyGlobalSearchQuery,
+  toGlobalSearchTokens,
+  type GlobalSearchSyntaxFilter,
+  type GlobalSearchSyntaxOperator,
+} from "./global-search/syntax"
 import { useTagsStore } from "~stores/tags-store"
-
-import { SearchIcon } from "~components/icons"
 import {
   APPEARANCE_TAB_IDS,
   FEATURES_TAB_IDS,
@@ -159,32 +173,6 @@ interface GlobalSearchPromptPreviewState {
   anchorRect: DOMRect
 }
 
-type GlobalSearchSyntaxOperator = "type" | "folder" | "tag" | "is" | "level" | "date"
-
-type GlobalSearchSyntaxDiagnosticCode = "unknownOperator" | "invalidValue" | "conflict"
-
-interface GlobalSearchSyntaxDiagnostic {
-  id: string
-  code: GlobalSearchSyntaxDiagnosticCode
-  operator: string
-  value?: string
-  suggestion?: string
-}
-
-interface GlobalSearchSyntaxFilter {
-  id: string
-  key: GlobalSearchSyntaxOperator
-  value: string
-  normalizedValue: string
-}
-
-interface ParsedGlobalSearchQuery {
-  rawQuery: string
-  plainQuery: string
-  filters: GlobalSearchSyntaxFilter[]
-  diagnostics: GlobalSearchSyntaxDiagnostic[]
-}
-
 interface GlobalSearchSyntaxSuggestionItem {
   id: string
   token: string
@@ -298,25 +286,7 @@ const GLOBAL_SEARCH_PROMPT_PREVIEW_KEYBOARD_DELAY_MS = 700
 const GLOBAL_SEARCH_PROMPT_PREVIEW_HIDE_DELAY_MS = 220
 const GLOBAL_SEARCH_INPUT_DEBOUNCE_MS = 140
 const GLOBAL_SEARCH_SYNTAX_SUGGESTION_LIMIT = 8
-const GLOBAL_SEARCH_SYNTAX_OPERATORS: GlobalSearchSyntaxOperator[] = [
-  "type",
-  "folder",
-  "tag",
-  "is",
-  "level",
-  "date",
-]
 const GLOBAL_SEARCH_FILTER_CHIP_MAX_COUNT = 4
-const GLOBAL_SEARCH_TYPE_FILTER_VALUES: GlobalSearchResultCategory[] = [
-  "outline",
-  "conversations",
-  "prompts",
-  "settings",
-]
-const GLOBAL_SEARCH_IS_FILTER_VALUES = ["pinned", "unpinned"] as const
-const GLOBAL_SEARCH_LEVEL_FILTER_VALUES = ["0", "1", "2", "3", "4", "5", "6"] as const
-const GLOBAL_SEARCH_DATE_FILTER_SHORTCUT_VALUES = ["7d", "30d"] as const
-const GLOBAL_SEARCH_DAY_MS = 24 * 60 * 60 * 1000
 
 const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "aistudio-collapse-advanced": "aistudioCollapseAdvanced",
@@ -410,392 +380,6 @@ const toSearchTitleFallback = (settingId: string): string =>
     .replace(/\s+/g, " ")
     .trim()
     .replace(/\b([a-z])/g, (_matched, first) => first.toUpperCase())
-
-const normalizeGlobalSearchValue = (value: string): string => value.trim().toLowerCase()
-
-const toGlobalSearchTokens = (query: string): string[] =>
-  normalizeGlobalSearchValue(query)
-    .split(" ")
-    .map((token) => token.trim())
-    .filter((token) => token.length > 0)
-
-const normalizeGlobalSearchRawToken = (rawToken: string): string => {
-  if (!rawToken) {
-    return ""
-  }
-
-  return rawToken
-    .replace(/^"|"$/g, "")
-    .replace(/\\([\\"\s:])/g, "$1")
-    .trim()
-}
-
-const tryParseGlobalSearchDateDays = (value: string): number | null => {
-  const match = value
-    .trim()
-    .toLowerCase()
-    .match(/^(\d{1,3})d$/)
-  if (!match) {
-    return null
-  }
-
-  const days = Number(match[1])
-  if (!Number.isFinite(days) || days <= 0) {
-    return null
-  }
-
-  return days
-}
-
-const shouldTreatGlobalSearchFilterAsConflict = (
-  filter: GlobalSearchSyntaxFilter,
-  existingFilters: GlobalSearchSyntaxFilter[],
-): boolean => {
-  const normalizedValue = filter.normalizedValue
-
-  if (filter.key === "type") {
-    return existingFilters.some(
-      (existingFilter) =>
-        existingFilter.key === "type" && existingFilter.normalizedValue !== normalizedValue,
-    )
-  }
-
-  if (filter.key === "is") {
-    return existingFilters.some(
-      (existingFilter) =>
-        existingFilter.key === "is" && existingFilter.normalizedValue !== normalizedValue,
-    )
-  }
-
-  if (filter.key === "level") {
-    return existingFilters.some(
-      (existingFilter) =>
-        existingFilter.key === "level" && existingFilter.normalizedValue !== normalizedValue,
-    )
-  }
-
-  if (filter.key === "date") {
-    return existingFilters.some(
-      (existingFilter) =>
-        existingFilter.key === "date" && existingFilter.normalizedValue !== normalizedValue,
-    )
-  }
-
-  return false
-}
-
-const isValidGlobalSearchFilterValue = (
-  operator: GlobalSearchSyntaxOperator,
-  normalizedValue: string,
-): boolean => {
-  if (!normalizedValue) {
-    return false
-  }
-
-  if (operator === "type") {
-    return GLOBAL_SEARCH_TYPE_FILTER_VALUES.includes(normalizedValue as GlobalSearchResultCategory)
-  }
-
-  if (operator === "is") {
-    return GLOBAL_SEARCH_IS_FILTER_VALUES.includes(
-      normalizedValue as (typeof GLOBAL_SEARCH_IS_FILTER_VALUES)[number],
-    )
-  }
-
-  if (operator === "level") {
-    return GLOBAL_SEARCH_LEVEL_FILTER_VALUES.includes(
-      normalizedValue as (typeof GLOBAL_SEARCH_LEVEL_FILTER_VALUES)[number],
-    )
-  }
-
-  if (operator === "date") {
-    return tryParseGlobalSearchDateDays(normalizedValue) !== null
-  }
-
-  return true
-}
-
-const getGlobalSearchFilterValueSuggestion = (
-  operator: GlobalSearchSyntaxOperator,
-): string | undefined => {
-  if (operator === "type") {
-    return "outline | conversations | prompts | settings"
-  }
-
-  if (operator === "is") {
-    return "pinned | unpinned"
-  }
-
-  if (operator === "level") {
-    return "0 ~ 6"
-  }
-
-  if (operator === "date") {
-    return "Nd (e.g. 7d, 30d)"
-  }
-
-  return undefined
-}
-
-const createGlobalSearchFilterId = (
-  operator: GlobalSearchSyntaxOperator,
-  normalizedValue: string,
-  sequence: number,
-): string => `${operator}:${normalizedValue}:${sequence}`
-
-const getClosestGlobalSearchOperator = (operator: string): GlobalSearchSyntaxOperator | null => {
-  const normalizedOperator = operator.trim().toLowerCase()
-  if (!normalizedOperator) {
-    return null
-  }
-
-  const prefixMatchedOperator = GLOBAL_SEARCH_SYNTAX_OPERATORS.find((candidate) =>
-    candidate.startsWith(normalizedOperator),
-  )
-  if (prefixMatchedOperator) {
-    return prefixMatchedOperator
-  }
-
-  const containsMatchedOperator = GLOBAL_SEARCH_SYNTAX_OPERATORS.find((candidate) =>
-    normalizedOperator.startsWith(candidate),
-  )
-  if (containsMatchedOperator) {
-    return containsMatchedOperator
-  }
-
-  return null
-}
-
-const parseGlobalSearchQuery = (query: string): ParsedGlobalSearchQuery => {
-  const pattern = /(^|\s)([a-z]+):((?:"(?:\\.|[^"])+")|(?:\\.|[^\s])+)/gi
-  const filters: GlobalSearchSyntaxFilter[] = []
-  const diagnostics: GlobalSearchSyntaxDiagnostic[] = []
-  const consumedRanges: Array<{ start: number; end: number }> = []
-  const seenFilterCounts: Partial<Record<GlobalSearchSyntaxOperator, number>> = {}
-
-  let match = pattern.exec(query)
-  while (match) {
-    const rawOperator = (match[2] || "").toLowerCase()
-    const rawToken = match[3] || ""
-    const tokenStart = (match.index || 0) + (match[1]?.length || 0)
-    const tokenEnd = tokenStart + `${rawOperator}:${rawToken}`.length
-    const hasUnclosedQuote = rawToken.startsWith('"') !== rawToken.endsWith('"')
-    const suggestionOperator = getClosestGlobalSearchOperator(rawOperator)
-    const value = normalizeGlobalSearchRawToken(rawToken)
-    const normalizedValue = normalizeGlobalSearchValue(value)
-
-    if (!GLOBAL_SEARCH_SYNTAX_OPERATORS.includes(rawOperator as GlobalSearchSyntaxOperator)) {
-      diagnostics.push({
-        id: `unknown:${rawOperator}:${match.index || 0}`,
-        code: "unknownOperator",
-        operator: rawOperator,
-        suggestion: suggestionOperator || undefined,
-      })
-      match = pattern.exec(query)
-      continue
-    }
-
-    const operator = rawOperator as GlobalSearchSyntaxOperator
-
-    if (hasUnclosedQuote) {
-      diagnostics.push({
-        id: `invalid:${operator}:quote:${match.index || 0}`,
-        code: "invalidValue",
-        operator,
-        value: rawToken,
-      })
-      consumedRanges.push({ start: tokenStart, end: tokenEnd })
-      match = pattern.exec(query)
-      continue
-    }
-
-    if (!value) {
-      diagnostics.push({
-        id: `invalid:${operator}:empty:${match.index || 0}`,
-        code: "invalidValue",
-        operator,
-      })
-      consumedRanges.push({ start: tokenStart, end: tokenEnd })
-      match = pattern.exec(query)
-      continue
-    }
-
-    if (!isValidGlobalSearchFilterValue(operator, normalizedValue)) {
-      diagnostics.push({
-        id: `invalid:${operator}:${normalizedValue}:${match.index || 0}`,
-        code: "invalidValue",
-        operator,
-        value,
-        suggestion: getGlobalSearchFilterValueSuggestion(operator),
-      })
-      consumedRanges.push({ start: tokenStart, end: tokenEnd })
-      match = pattern.exec(query)
-      continue
-    }
-
-    const currentSequence = (seenFilterCounts[operator] || 0) + 1
-    seenFilterCounts[operator] = currentSequence
-
-    const nextFilter: GlobalSearchSyntaxFilter = {
-      id: createGlobalSearchFilterId(operator, normalizedValue, currentSequence),
-      key: operator,
-      value,
-      normalizedValue,
-    }
-
-    if (shouldTreatGlobalSearchFilterAsConflict(nextFilter, filters)) {
-      diagnostics.push({
-        id: `conflict:${operator}:${normalizedValue}:${match.index || 0}`,
-        code: "conflict",
-        operator,
-        value,
-      })
-      consumedRanges.push({ start: tokenStart, end: tokenEnd })
-      match = pattern.exec(query)
-      continue
-    }
-
-    consumedRanges.push({ start: tokenStart, end: tokenEnd })
-    filters.push(nextFilter)
-
-    match = pattern.exec(query)
-  }
-
-  if (consumedRanges.length === 0) {
-    return {
-      rawQuery: query,
-      plainQuery: query.trim(),
-      filters,
-      diagnostics,
-    }
-  }
-
-  consumedRanges.sort((left, right) => left.start - right.start)
-
-  let plainQuery = ""
-  let cursor = 0
-  consumedRanges.forEach((range) => {
-    if (cursor < range.start) {
-      plainQuery += `${query.slice(cursor, range.start)} `
-    }
-    cursor = range.end
-  })
-
-  if (cursor < query.length) {
-    plainQuery += query.slice(cursor)
-  }
-
-  return {
-    rawQuery: query,
-    plainQuery: plainQuery.replace(/\s+/g, " ").trim(),
-    filters,
-    diagnostics,
-  }
-}
-
-const stringifyGlobalSearchQuery = ({
-  plainQuery,
-  filters,
-}: {
-  plainQuery: string
-  filters: GlobalSearchSyntaxFilter[]
-}): string => {
-  const filterText = filters
-    .map((filter) => {
-      const escapedValue = filter.value.replace(/([\\"])/g, "\\$1")
-      const needsQuote = /\s/.test(filter.value)
-      const safeValue = needsQuote ? `"${escapedValue}"` : escapedValue
-      return `${filter.key}:${safeValue}`
-    })
-    .join(" ")
-
-  return `${plainQuery} ${filterText}`.replace(/\s+/g, " ").trim()
-}
-
-const matchGlobalSearchSyntaxFilters = (
-  item: GlobalSearchResultItem,
-  filters: GlobalSearchSyntaxFilter[],
-): boolean => {
-  if (filters.length === 0) {
-    return true
-  }
-
-  return filters.every((filter) => {
-    const value = filter.normalizedValue
-
-    if (filter.key === "type") {
-      return item.category.toLowerCase().includes(value)
-    }
-
-    if (filter.key === "folder") {
-      const folderValue = (item.folderName || item.breadcrumb || "").toLowerCase()
-      return folderValue.includes(value)
-    }
-
-    if (filter.key === "tag") {
-      const tags = item.tagNames || item.tagBadges?.map((tag) => tag.name) || []
-      return tags.some((tagName) => tagName.toLowerCase().includes(value))
-    }
-
-    if (filter.key === "is") {
-      if (value === "pinned") {
-        return Boolean(item.isPinned)
-      }
-      if (value === "unpinned") {
-        return !item.isPinned
-      }
-      return false
-    }
-
-    if (filter.key === "level") {
-      if (item.category !== "outline") {
-        return false
-      }
-
-      return String(item.outlineTarget?.level ?? "") === value
-    }
-
-    if (filter.key === "date") {
-      if (item.category !== "conversations" && item.category !== "prompts") {
-        return false
-      }
-
-      const days = tryParseGlobalSearchDateDays(value)
-      if (days === null) {
-        return false
-      }
-
-      const timestamp = item.searchTimestamp || 0
-      if (timestamp <= 0) {
-        return false
-      }
-
-      const now = Date.now()
-      return now - timestamp <= days * GLOBAL_SEARCH_DAY_MS
-    }
-
-    return true
-  })
-}
-
-const getGlobalSearchTrailingTokenInfo = (
-  inputValue: string,
-): { token: string; start: number; end: number } | null => {
-  const match = inputValue.match(/(^|\s)([^\s]*)$/)
-  if (!match) {
-    return null
-  }
-
-  const token = match[2] || ""
-  const end = inputValue.length
-  const start = end - token.length
-
-  return {
-    token,
-    start,
-    end,
-  }
-}
 
 const buildGlobalSearchSnippet = ({
   content,
@@ -5096,334 +4680,156 @@ export const App = () => {
         }}
         siteId={adapter.getSiteId()}
       />
-      {isGlobalSettingsSearchOpen && (
-        <div
-          className="settings-search-overlay gh-interactive"
-          onClick={() => {
-            hideGlobalSearchPromptPreview()
-            closeGlobalSettingsSearch()
-          }}>
-          <div className="settings-search-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="settings-search-input-wrap">
-              <SearchIcon size={16} />
-              <input
-                ref={settingsSearchInputRef}
-                className="settings-search-input"
-                role="combobox"
-                aria-autocomplete="list"
-                aria-expanded={true}
-                aria-haspopup="listbox"
-                aria-controls={GLOBAL_SEARCH_RESULTS_LISTBOX_ID}
-                aria-activedescendant={activeGlobalSearchOptionId}
-                value={settingsSearchInputValue}
-                onChange={(event) => {
-                  commitSettingsSearchInputValue(event.target.value)
-                  setActiveSearchSyntaxSuggestionIndex(-1)
-                  setSettingsSearchActiveIndex(0)
-                }}
-                placeholder={`${resolvedActiveGlobalSearchCategoryText.placeholder}（${globalSearchPrimaryShortcutLabel}）`}
-              />
-              <span className="settings-search-hotkey">⌨ {globalSearchShortcutHintLabel}</span>
-              <div className="settings-search-help">
-                <button
-                  ref={globalSearchSyntaxHelpTriggerRef}
-                  type="button"
-                  className={`settings-search-help-trigger ${
-                    showGlobalSearchSyntaxHelp ? "active" : ""
-                  }`}
-                  aria-expanded={showGlobalSearchSyntaxHelp}
-                  aria-label={getLocalizedText({
-                    key: "globalSearchSyntaxHelpTriggerAria",
-                    fallback: "Open search syntax help",
-                  })}
-                  onClick={() => setShowGlobalSearchSyntaxHelp((previous) => !previous)}>
-                  ?
-                </button>
-                {showGlobalSearchSyntaxHelp ? (
-                  <div
-                    ref={globalSearchSyntaxHelpPopoverRef}
-                    className="settings-search-help-popover"
-                    role="dialog"
-                    aria-label={globalSearchSyntaxHelpTitle}>
-                    <div className="settings-search-help-title">{globalSearchSyntaxHelpTitle}</div>
-                    <div className="settings-search-help-tip">
-                      {globalSearchSyntaxHelpDescription}
-                    </div>
-                    <div className="settings-search-help-items">
-                      {globalSearchSyntaxHelpItems.map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          className="settings-search-help-item"
-                          onClick={() => applyGlobalSearchSyntaxHelpItem(item)}>
-                          <span className="settings-search-help-token">{item.token}</span>
-                          <span className="settings-search-help-desc">{item.description}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            {activeGlobalSearchFilterChips.length > 0 ? (
-              <div className="settings-search-filter-chips" aria-label="active search filters">
-                {activeGlobalSearchFilterChips.map((chip) => (
-                  <button
-                    key={chip.id}
-                    type="button"
-                    className="settings-search-filter-chip"
-                    onClick={() => handleRemoveGlobalSearchFilterChip(chip.id)}
-                    title={getLocalizedText({
-                      key: "globalSearchSyntaxChipRemove",
-                      fallback: "Click to remove filter",
-                    })}>
-                    <span className="settings-search-filter-chip-label">{chip.label}</span>
-                    <span className="settings-search-filter-chip-close" aria-hidden>
-                      ×
-                    </span>
-                  </button>
-                ))}
-                {hasOverflowGlobalSearchFilterChips ? (
-                  <span className="settings-search-filter-chip-overflow">
-                    {formatLocalizedText(
-                      {
-                        key: "globalSearchSyntaxChipOverflow",
-                        fallback: "+{count} more",
-                      },
-                      {
-                        count: String(
-                          activeGlobalSearchSyntaxFilters.length -
-                            GLOBAL_SEARCH_FILTER_CHIP_MAX_COUNT,
-                        ),
-                      },
-                    )}
-                  </span>
-                ) : null}
-                <button
-                  type="button"
-                  className="settings-search-filter-chip-clear-all"
-                  onClick={clearAllGlobalSearchSyntaxFilters}>
-                  {getLocalizedText({ key: "clear", fallback: "Clear" })}
-                </button>
-              </div>
-            ) : null}
-
-            {shouldShowGlobalSearchSyntaxSuggestions ? (
-              <div className="settings-search-syntax-suggestions" role="listbox">
-                {globalSearchSyntaxSuggestions.map((suggestion, index) => (
-                  <button
-                    key={suggestion.id}
-                    type="button"
-                    role="option"
-                    aria-selected={activeSearchSyntaxSuggestionIndex === index}
-                    className={`settings-search-syntax-suggestion ${
-                      activeSearchSyntaxSuggestionIndex === index ? "active" : ""
-                    }`}
-                    onMouseEnter={() => setActiveSearchSyntaxSuggestionIndex(index)}
-                    onClick={() => applyGlobalSearchSyntaxSuggestion(suggestion)}>
-                    <span className="settings-search-syntax-suggestion-token">
-                      {suggestion.label}
-                    </span>
-                    <span className="settings-search-syntax-suggestion-desc">
-                      {suggestion.description}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ) : null}
-
-            {activeGlobalSearchSyntaxDiagnostics.length > 0 ? (
-              <div className="settings-search-syntax-diagnostics" role="status" aria-live="polite">
-                {activeGlobalSearchSyntaxDiagnostics.map((diagnostic) => {
-                  const diagnosticTitle =
-                    globalSearchSyntaxDiagnosticMessages[diagnostic.code] ||
-                    globalSearchSyntaxDiagnosticMessages.invalidValue
-
-                  return (
-                    <div key={diagnostic.id} className="settings-search-syntax-diagnostic">
-                      <span className="settings-search-syntax-diagnostic-title">
-                        {diagnosticTitle}
-                      </span>
-                      <span className="settings-search-syntax-diagnostic-detail">
-                        {diagnostic.operator}
-                        {diagnostic.value ? `:${diagnostic.value}` : ""}
-                        {diagnostic.suggestion ? ` → ${diagnostic.suggestion}:` : ""}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            ) : null}
-
-            {showGlobalSearchShortcutNudge && globalSearchShortcutNudgeMessage ? (
-              <div className="settings-search-shortcut-nudge" role="status" aria-live="polite">
-                <span className="settings-search-shortcut-nudge-text">
-                  {globalSearchShortcutNudgeMessage}
-                </span>
-                <button
-                  type="button"
-                  className="settings-search-shortcut-nudge-action"
-                  onClick={hideGlobalSearchShortcutNudge}>
-                  {getLocalizedText({ key: "close", fallback: "Close" })}
-                </button>
-                <button
-                  type="button"
-                  className="settings-search-shortcut-nudge-action"
-                  onClick={dismissGlobalSearchShortcutNudgeForever}>
-                  {getLocalizedText({
-                    key: "globalSearchShortcutNudgeDismiss",
-                    fallback: "Don’t remind me",
-                  })}
-                </button>
-              </div>
-            ) : null}
-
-            <div
-              className="settings-search-categories"
-              role="tablist"
-              aria-label={getLocalizedText({
-                key: "globalSearchCategoriesLabel",
-                fallback: "Global search categories",
-              })}>
-              {GLOBAL_SEARCH_CATEGORY_DEFINITIONS.map((category) => (
-                <button
-                  key={category.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeGlobalSearchCategory === category.id}
-                  className={`settings-search-category ${
-                    activeGlobalSearchCategory === category.id ? "active" : ""
-                  }`}
-                  onClick={() => {
-                    setActiveGlobalSearchCategory(category.id)
-                    setSettingsSearchActiveIndex(0)
-                  }}>
-                  <span>{resolvedGlobalSearchCategoryLabels[category.id]}</span>
-                  <span className="settings-search-category-count">
-                    {globalSearchResultCounts[category.id]}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {activeGlobalSearchContext ? (
-              <div className="settings-search-context-bar">
-                <span className="settings-search-context-label">
-                  {activeGlobalSearchContext.label}
-                </span>
-                <span className="settings-search-context-meta">
-                  {activeGlobalSearchContext.meta}
-                </span>
-              </div>
-            ) : null}
-
-            <div
-              id={GLOBAL_SEARCH_RESULTS_LISTBOX_ID}
-              className="settings-search-results"
-              role="listbox"
-              aria-label={globalSearchListboxLabel}
-              ref={settingsSearchResultsRef}
-              onWheel={() => {
-                setSettingsSearchNavigationMode("pointer")
-                settingsSearchWheelFreezeUntilRef.current = Date.now() + 200
-                hideGlobalSearchPromptPreview()
-              }}>
-              {visibleGlobalSearchResults.length === 0 ? (
-                <div className="settings-search-empty">
-                  <div>{resolvedActiveGlobalSearchCategoryText.emptyText}</div>
-                  <div className="settings-search-empty-guide-title">
-                    {getLocalizedText({
-                      key: "globalSearchSyntaxEmptyGuideTitle",
-                      fallback: "Try search filters",
-                    })}
-                  </div>
-                  <div className="settings-search-empty-guide-desc">
-                    {getLocalizedText({
-                      key: "globalSearchSyntaxEmptyGuideDesc",
-                      fallback: "Use filter syntax to narrow results quickly",
-                    })}
-                  </div>
-                  <div className="settings-search-empty-guide-examples">
-                    <button
-                      type="button"
-                      className="settings-search-empty-guide-example"
-                      onClick={() => syncSettingsSearchInputAndQuery("type:prompts ")}>
-                      type:prompts
-                    </button>
-                    <button
-                      type="button"
-                      className="settings-search-empty-guide-example"
-                      onClick={() => syncSettingsSearchInputAndQuery("is:pinned ")}>
-                      is:pinned
-                    </button>
-                    <button
-                      type="button"
-                      className="settings-search-empty-guide-example"
-                      onClick={() => syncSettingsSearchInputAndQuery("folder:inbox ")}>
-                      folder:inbox
-                    </button>
-                    <button
-                      type="button"
-                      className="settings-search-empty-guide-example"
-                      onClick={() => syncSettingsSearchInputAndQuery("tag:work ")}>
-                      tag:work
-                    </button>
-                    <button
-                      type="button"
-                      className="settings-search-empty-guide-example"
-                      onClick={() => syncSettingsSearchInputAndQuery("level:0 ")}>
-                      level:0
-                    </button>
-                    <button
-                      type="button"
-                      className="settings-search-empty-guide-example"
-                      onClick={() => syncSettingsSearchInputAndQuery("date:7d ")}>
-                      date:7d
-                    </button>
-                  </div>
-                </div>
-              ) : activeGlobalSearchCategory === "all" ? (
-                groupedGlobalSearchResults.map((group) => (
-                  <section key={group.category} className="settings-search-group">
-                    <div className="settings-search-group-title">
-                      <span>{resolvedGlobalSearchResultCategoryLabels[group.category]}</span>
-                      {group.totalCount > GLOBAL_SEARCH_ALL_CATEGORY_ITEM_LIMIT ? (
-                        <span className="settings-search-group-count">
-                          {group.items.length}/{group.totalCount}
-                        </span>
-                      ) : null}
-                    </div>
-                    {group.items.map((item) =>
-                      renderSearchResultItem(item, visibleSearchResultIndexMap.get(item.id) ?? 0),
-                    )}
-                    {group.hasMore || group.isExpanded ? (
-                      <button
-                        type="button"
-                        className="settings-search-group-more"
-                        onClick={() => handleToggleGlobalSearchGroup(group.category)}>
-                        {group.isExpanded
-                          ? getLocalizedText({ key: "collapse", fallback: "Collapse" })
-                          : `${getLocalizedText({ key: "floatingToolbarMore", fallback: "More" })} (+${
-                              group.remainingCount
-                            })`}
-                      </button>
-                    ) : null}
-                  </section>
-                ))
-              ) : (
-                visibleGlobalSearchResults.map((item, index) => renderSearchResultItem(item, index))
-              )}
-            </div>
-
-            <div className="settings-search-footer">
-              {getLocalizedText({
-                key: "globalSearchFooterTips",
-                fallback: "Enter to jump · ↑↓ to select · Tab category · Esc to close",
-              })}
-            </div>
-          </div>
-          {globalSearchPromptPreview && globalSearchPromptPreviewPosition ? (
+      <GlobalSearchOverlay
+        isOpen={isGlobalSettingsSearchOpen}
+        onClose={() => {
+          hideGlobalSearchPromptPreview()
+          closeGlobalSettingsSearch()
+        }}
+        inputRef={settingsSearchInputRef}
+        resultsRef={settingsSearchResultsRef}
+        activeOptionId={activeGlobalSearchOptionId}
+        inputValue={settingsSearchInputValue}
+        inputPlaceholder={`${resolvedActiveGlobalSearchCategoryText.placeholder}（${globalSearchPrimaryShortcutLabel}）`}
+        onInputChange={(nextValue) => {
+          commitSettingsSearchInputValue(nextValue)
+          setActiveSearchSyntaxSuggestionIndex(-1)
+          setSettingsSearchActiveIndex(0)
+        }}
+        hotkeyLabel={globalSearchShortcutHintLabel}
+        syntaxHelpTriggerRef={globalSearchSyntaxHelpTriggerRef}
+        syntaxHelpPopoverRef={globalSearchSyntaxHelpPopoverRef}
+        showSyntaxHelp={showGlobalSearchSyntaxHelp}
+        onToggleSyntaxHelp={() => setShowGlobalSearchSyntaxHelp((previous) => !previous)}
+        syntaxHelpTriggerAriaLabel={getLocalizedText({
+          key: "globalSearchSyntaxHelpTriggerAria",
+          fallback: "Open search syntax help",
+        })}
+        syntaxHelpTitle={globalSearchSyntaxHelpTitle}
+        syntaxHelpDescription={globalSearchSyntaxHelpDescription}
+        syntaxHelpItems={globalSearchSyntaxHelpItems}
+        onApplySyntaxHelpItem={applyGlobalSearchSyntaxHelpItem}
+        activeFilterChips={activeGlobalSearchFilterChips}
+        hasOverflowFilterChips={hasOverflowGlobalSearchFilterChips}
+        overflowFilterChipText={formatLocalizedText(
+          {
+            key: "globalSearchSyntaxChipOverflow",
+            fallback: "+{count} more",
+          },
+          {
+            count: String(
+              activeGlobalSearchSyntaxFilters.length - GLOBAL_SEARCH_FILTER_CHIP_MAX_COUNT,
+            ),
+          },
+        )}
+        filterChipRemoveTitle={getLocalizedText({
+          key: "globalSearchSyntaxChipRemove",
+          fallback: "Click to remove filter",
+        })}
+        clearFiltersLabel={getLocalizedText({ key: "clear", fallback: "Clear" })}
+        onRemoveFilterChip={handleRemoveGlobalSearchFilterChip}
+        onClearAllFilterChips={clearAllGlobalSearchSyntaxFilters}
+        shouldShowSyntaxSuggestions={shouldShowGlobalSearchSyntaxSuggestions}
+        syntaxSuggestions={globalSearchSyntaxSuggestions}
+        activeSyntaxSuggestionIndex={activeSearchSyntaxSuggestionIndex}
+        onHoverSyntaxSuggestion={setActiveSearchSyntaxSuggestionIndex}
+        onApplySyntaxSuggestion={applyGlobalSearchSyntaxSuggestion}
+        syntaxDiagnostics={activeGlobalSearchSyntaxDiagnostics}
+        resolveSyntaxDiagnosticTitle={(code) =>
+          globalSearchSyntaxDiagnosticMessages[
+            code as keyof typeof globalSearchSyntaxDiagnosticMessages
+          ] || globalSearchSyntaxDiagnosticMessages.invalidValue
+        }
+        showShortcutNudge={showGlobalSearchShortcutNudge}
+        shortcutNudgeMessage={globalSearchShortcutNudgeMessage}
+        closeLabel={getLocalizedText({ key: "close", fallback: "Close" })}
+        dismissShortcutNudgeLabel={getLocalizedText({
+          key: "globalSearchShortcutNudgeDismiss",
+          fallback: "Don’t remind me",
+        })}
+        onHideShortcutNudge={hideGlobalSearchShortcutNudge}
+        onDismissShortcutNudgeForever={dismissGlobalSearchShortcutNudgeForever}
+        categoriesLabel={getLocalizedText({
+          key: "globalSearchCategoriesLabel",
+          fallback: "Global search categories",
+        })}
+        categories={GLOBAL_SEARCH_CATEGORY_DEFINITIONS.map((category) => ({
+          id: category.id,
+          label: resolvedGlobalSearchCategoryLabels[category.id],
+          count: globalSearchResultCounts[category.id],
+        }))}
+        activeCategoryId={activeGlobalSearchCategory}
+        onSelectCategory={(categoryId) => {
+          setActiveGlobalSearchCategory(categoryId)
+          setSettingsSearchActiveIndex(0)
+        }}
+        activeContext={activeGlobalSearchContext}
+        listboxId={GLOBAL_SEARCH_RESULTS_LISTBOX_ID}
+        listboxLabel={globalSearchListboxLabel}
+        onResultsWheel={() => {
+          setSettingsSearchNavigationMode("pointer")
+          settingsSearchWheelFreezeUntilRef.current = Date.now() + 200
+          hideGlobalSearchPromptPreview()
+        }}
+        visibleResults={visibleGlobalSearchResults}
+        groupedResults={groupedGlobalSearchResults}
+        getGroupLabel={(categoryId) => resolvedGlobalSearchResultCategoryLabels[categoryId]}
+        allCategoryItemLimit={GLOBAL_SEARCH_ALL_CATEGORY_ITEM_LIMIT}
+        isAllCategory={activeGlobalSearchCategory === "all"}
+        emptyText={resolvedActiveGlobalSearchCategoryText.emptyText}
+        emptyGuideTitle={getLocalizedText({
+          key: "globalSearchSyntaxEmptyGuideTitle",
+          fallback: "Try search filters",
+        })}
+        emptyGuideDescription={getLocalizedText({
+          key: "globalSearchSyntaxEmptyGuideDesc",
+          fallback: "Use filter syntax to narrow results quickly",
+        })}
+        emptyGuideExamples={[
+          {
+            id: "example:type-prompts",
+            token: "type:prompts",
+            onClick: () => syncSettingsSearchInputAndQuery("type:prompts "),
+          },
+          {
+            id: "example:is-pinned",
+            token: "is:pinned",
+            onClick: () => syncSettingsSearchInputAndQuery("is:pinned "),
+          },
+          {
+            id: "example:folder-inbox",
+            token: "folder:inbox",
+            onClick: () => syncSettingsSearchInputAndQuery("folder:inbox "),
+          },
+          {
+            id: "example:tag-work",
+            token: "tag:work",
+            onClick: () => syncSettingsSearchInputAndQuery("tag:work "),
+          },
+          {
+            id: "example:level-0",
+            token: "level:0",
+            onClick: () => syncSettingsSearchInputAndQuery("level:0 "),
+          },
+          {
+            id: "example:date-7d",
+            token: "date:7d",
+            onClick: () => syncSettingsSearchInputAndQuery("date:7d "),
+          },
+        ]}
+        renderSearchResultItem={renderSearchResultItem}
+        resolveVisibleResultIndex={(item, fallbackIndex) =>
+          visibleSearchResultIndexMap.get(item.id) ?? fallbackIndex
+        }
+        collapseLabel={getLocalizedText({ key: "collapse", fallback: "Collapse" })}
+        moreLabel={getLocalizedText({ key: "floatingToolbarMore", fallback: "More" })}
+        onToggleCategoryGroup={handleToggleGlobalSearchGroup}
+        footerTips={getLocalizedText({
+          key: "globalSearchFooterTips",
+          fallback: "Enter to jump · ↑↓ to select · Tab category · Esc to close",
+        })}
+        promptPreview={
+          globalSearchPromptPreview && globalSearchPromptPreviewPosition ? (
             <>
               <div
                 ref={promptPreviewContainerRef}
@@ -5446,9 +4852,9 @@ export const App = () => {
               />
               <style>{getHighlightStyles()}</style>
             </>
-          ) : null}
-        </div>
-      )}
+          ) : undefined
+        }
+      />
       {floatingToolbarMoveState && (
         <FolderSelectDialog
           folders={conversationManager.getFolders()}
