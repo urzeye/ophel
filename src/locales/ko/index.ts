@@ -443,6 +443,9 @@ export const ko = {
   notificationBody: "클릭하여 결과 보기",
   tabOutline: "개요",
   outlineEmpty: "개요 내용 없음",
+  outlineEmptyDescDefault: "대화가 진행되면 개요 항목이 자동으로 표시됩니다.",
+  outlineEmptyDescUserQueryOnly:
+    "현재 사용자 질문만 표시 중입니다. 메시지를 보내면 개요 항목이 생성됩니다.",
   outlineRefresh: "새로고침",
   outlineSettings: "개요 설정",
   bookmarkSettings: "북마크 설정",

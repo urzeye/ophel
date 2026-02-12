@@ -439,6 +439,9 @@ export const pt = {
   notificationBody: "Clique para ver o resultado",
   tabOutline: "Índice",
   outlineEmpty: "Sem conteúdo",
+  outlineEmptyDescDefault: "Os itens do índice aparecerão automaticamente conforme a conversa avança.",
+  outlineEmptyDescUserQueryOnly:
+    "No momento, apenas as perguntas do usuário são exibidas. Envie uma mensagem para gerar itens no índice.",
   outlineRefresh: "Recarregar",
   outlineSettings: "Ajustes de Índice",
   bookmarkSettings: "Configurações de Favoritos",

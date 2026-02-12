@@ -455,6 +455,9 @@ export const ja = {
   notificationBody: "クリックして結果を確認してください",
   tabOutline: "目次",
   outlineEmpty: "目次データがありません",
+  outlineEmptyDescDefault: "会話が進むと目次項目が自動で表示されます。",
+  outlineEmptyDescUserQueryOnly:
+    "現在はユーザーの質問のみ表示中です。メッセージ送信後に目次項目が表示されます。",
   outlineRefresh: "リロード",
   outlineSettings: "目次設定",
   outlineSettingsTitle: "アウトライン設定",

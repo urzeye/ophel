@@ -8,6 +8,7 @@ import {
   CopyIcon,
   ExpandAllIcon,
   LocateIcon,
+  OutlineIcon,
   ScrollBottomIcon,
   ScrollTopIcon,
   StarIcon,
@@ -573,6 +574,22 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
   )
 
   const { parentMap, visibleMap } = visibilityMaps
+
+  const hasVisibleNodes = useMemo(() => {
+    const checkVisible = (nodes: OutlineNode[]): boolean => {
+      for (const node of nodes) {
+        if (visibleMap[node.index]) {
+          return true
+        }
+        if (node.children && node.children.length > 0 && checkVisible(node.children)) {
+          return true
+        }
+      }
+      return false
+    }
+
+    return checkVisible(tree)
+  }, [tree, visibleMap])
 
   visibilityMapsRef.current = { parentMap, visibleMap, hasData: tree.length > 0 }
 
@@ -1327,6 +1344,26 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
           }
           const hasVisibleBookmarks = hasBookmarkedNode(tree)
           const isTreeEmpty = tree.length === 0
+          const isOutlineVisuallyEmpty = !searchQuery && (isTreeEmpty || !hasVisibleNodes)
+          const emptyDescription =
+            showUserQueries && displayLevel === 0
+              ? t("outlineEmptyDescUserQueryOnly") ||
+                "Only user queries are shown. Send a message to build the outline."
+              : t("outlineEmptyDescDefault") ||
+                "Outline items will appear as the conversation grows."
+          const zhCommaIndex = emptyDescription.indexOf("，")
+          const enCommaIndex = emptyDescription.indexOf(",")
+          let splitIndex = -1
+          if (zhCommaIndex >= 0 && enCommaIndex >= 0) {
+            splitIndex = Math.min(zhCommaIndex, enCommaIndex)
+          } else {
+            splitIndex = Math.max(zhCommaIndex, enCommaIndex)
+          }
+
+          const emptyDescriptionFirstLine =
+            splitIndex >= 0 ? emptyDescription.slice(0, splitIndex).trim() : emptyDescription
+          const emptyDescriptionSecondLine =
+            splitIndex >= 0 ? emptyDescription.slice(splitIndex + 1).trim() : ""
 
           if (bookmarkMode && !hasVisibleBookmarks && !searchQuery) {
             return (
@@ -1365,16 +1402,21 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
             )
           }
 
-          if (isTreeEmpty) {
+          if (isOutlineVisuallyEmpty) {
             return (
-              <div
-                style={{
-                  textAlign: "center",
-                  color: "var(--gh-text-tertiary, #9ca3af)",
-                  marginTop: "20px",
-                  fontSize: "12px",
-                }}>
-                {t("outlineEmpty") || "暂无大纲内容"}
+              <div className="outline-empty-state">
+                <div className="outline-empty-state-icon" aria-hidden="true">
+                  <OutlineIcon size={18} color="currentColor" />
+                </div>
+                <div className="outline-empty-state-title">
+                  {t("outlineEmpty") || "暂无大纲内容"}
+                </div>
+                <div className="outline-empty-state-desc">
+                  <span className="outline-empty-state-desc-line">{emptyDescriptionFirstLine}</span>
+                  {emptyDescriptionSecondLine && (
+                    <span className="outline-empty-state-desc-line">{emptyDescriptionSecondLine}</span>
+                  )}
+                </div>
               </div>
             )
           }

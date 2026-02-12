@@ -440,6 +440,9 @@ export const de = {
   notificationBody: "Klicken zum Ansehen",
   tabOutline: "Verzeichnis",
   outlineEmpty: "Kein Inhalt",
+  outlineEmptyDescDefault: "Verzeichnispunkte erscheinen automatisch, sobald das Gespräch wächst.",
+  outlineEmptyDescUserQueryOnly:
+    "Derzeit werden nur Nutzerfragen angezeigt. Senden Sie eine Nachricht, um Verzeichnispunkte zu erzeugen.",
   outlineRefresh: "Neu laden",
   outlineSettings: "Verzeichnis-Optionen",
   bookmarkSettings: "Lesezeichen-Einstellungen",

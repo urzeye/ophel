@@ -459,6 +459,9 @@ export const en = {
   notificationBody: "Click to view results",
   tabOutline: "Outline",
   outlineEmpty: "No outline content",
+  outlineEmptyDescDefault: "Outline items will appear as the conversation grows.",
+  outlineEmptyDescUserQueryOnly:
+    "Only user queries are shown right now. Send a message to generate outline items.",
   outlineRefresh: "Refresh",
   outlineSettings: "Outline Settings",
   outlineSettingsTitle: "Outline Settings",

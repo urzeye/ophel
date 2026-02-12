@@ -440,6 +440,9 @@ export const fr = {
   notificationBody: "Cliquez pour voir le résultat",
   tabOutline: "Sommaire",
   outlineEmpty: "Aucun contenu",
+  outlineEmptyDescDefault: "Les éléments du sommaire apparaîtront au fil de la conversation.",
+  outlineEmptyDescUserQueryOnly:
+    "Seules les questions utilisateur sont affichées pour le moment. Envoyez un message pour générer le sommaire.",
   outlineRefresh: "Recharger",
   outlineSettings: "Réglages de Sommaire",
   bookmarkSettings: "Paramètres des Favoris",

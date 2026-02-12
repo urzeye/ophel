@@ -437,6 +437,9 @@ export const ru = {
   notificationBody: "Нажмите, чтобы увидеть",
   tabOutline: "Содержание",
   outlineEmpty: "Пусто",
+  outlineEmptyDescDefault: "Пункты содержания появятся автоматически по мере развития диалога.",
+  outlineEmptyDescUserQueryOnly:
+    "Сейчас отображаются только вопросы пользователя. Отправьте сообщение, чтобы появились пункты содержания.",
   outlineRefresh: "Перезагрузить",
   outlineSettings: "Настройки содержания",
   bookmarkSettings: "Настройки закладок",

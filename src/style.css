@@ -96,6 +96,46 @@
   gap: 2px;
 }
 
+.outline-empty-state {
+  min-height: 140px;
+  padding: 26px 12px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.outline-empty-state-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gh-text-tertiary, #9ca3af);
+  background: color-mix(in srgb, var(--gh-border, #e5e7eb) 22%, transparent);
+}
+
+.outline-empty-state-title {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 700;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.outline-empty-state-desc {
+  max-width: min(280px, calc(100% - 20px));
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--gh-text-tertiary, #9ca3af);
+}
+
+.outline-empty-state-desc-line {
+  display: block;
+}
+
 /* 大纲树容器 - 隐藏滚动条 */
 .gh-outline-tree-container {
   scrollbar-width: none; /* Firefox */

@@ -393,6 +393,8 @@ export const zhTW = {
   // 大綱功能
   tabOutline: "大綱",
   outlineEmpty: "暫無大綱內容",
+  outlineEmptyDescDefault: "開始對話後將自動生成大綱",
+  outlineEmptyDescUserQueryOnly: "目前僅顯示用戶提問，發送訊息後將出現大綱內容",
   outlineRefresh: "刷新",
   outlineSettings: "大綱設置",
   outlineSettingsTitle: "大綱設置",
