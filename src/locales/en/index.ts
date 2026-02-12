@@ -1170,4 +1170,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   globalSearchSyntaxChipOverflow: "+{count} more",
   globalSearchSyntaxEmptyGuideTitle: "Try search filters",
   globalSearchSyntaxEmptyGuideDesc: "Use filter syntax to narrow results quickly",
+  globalSearchSyntaxHelpTitle: "Search syntax examples",
+  globalSearchSyntaxHelpDesc: "Click to insert. Keywords are English-only.",
+  globalSearchSyntaxHelpTriggerAria: "Open search syntax help",
 }

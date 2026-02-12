@@ -1147,4 +1147,7 @@ export const zhCN = {
   globalSearchSyntaxChipOverflow: "还有 {count} 个",
   globalSearchSyntaxEmptyGuideTitle: "试试这些筛选语法",
   globalSearchSyntaxEmptyGuideDesc: "使用语法筛选可以更快缩小结果范围",
+  globalSearchSyntaxHelpTitle: "搜索语法示例",
+  globalSearchSyntaxHelpDesc: "点击可直接插入，关键词仅支持英文",
+  globalSearchSyntaxHelpTriggerAria: "打开搜索语法帮助",
 }

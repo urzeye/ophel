@@ -1694,10 +1694,13 @@ export const App = () => {
   >({})
   const [showGlobalSearchShortcutNudge, setShowGlobalSearchShortcutNudge] = useState(false)
   const [globalSearchShortcutNudgeMessage, setGlobalSearchShortcutNudgeMessage] = useState("")
+  const [showGlobalSearchSyntaxHelp, setShowGlobalSearchSyntaxHelp] = useState(false)
   const [globalSearchPromptPreview, setGlobalSearchPromptPreview] =
     useState<GlobalSearchPromptPreviewState | null>(null)
   const [activeSearchSyntaxSuggestionIndex, setActiveSearchSyntaxSuggestionIndex] = useState(-1)
   const settingsSearchInputRef = useRef<HTMLInputElement | null>(null)
+  const globalSearchSyntaxHelpTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const globalSearchSyntaxHelpPopoverRef = useRef<HTMLDivElement | null>(null)
   const settingsSearchResultsRef = useRef<HTMLDivElement | null>(null)
   const promptPreviewContainerRef = useRef<HTMLDivElement | null>(null)
   const searchInputDebounceTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -2555,6 +2558,110 @@ export const App = () => {
     [getLocalizedText],
   )
 
+  const globalSearchSyntaxHelpTitle = useMemo(
+    () =>
+      getLocalizedText({
+        key: "globalSearchSyntaxHelpTitle",
+        fallback: "Search syntax examples",
+      }),
+    [getLocalizedText],
+  )
+
+  const globalSearchSyntaxHelpDescription = useMemo(
+    () =>
+      getLocalizedText({
+        key: "globalSearchSyntaxHelpDesc",
+        fallback: "Click to insert. Keywords are English-only.",
+      }),
+    [getLocalizedText],
+  )
+
+  const globalSearchSyntaxHelpItems = useMemo<GlobalSearchSyntaxSuggestionItem[]>(
+    () => [
+      {
+        id: "help:type:outline",
+        token: "type:outline",
+        label: "type:outline",
+        description: globalSearchSuggestionTypeDescriptions.outline,
+      },
+      {
+        id: "help:type:conversations",
+        token: "type:conversations",
+        label: "type:conversations",
+        description: globalSearchSuggestionTypeDescriptions.conversations,
+      },
+      {
+        id: "help:type:prompts",
+        token: "type:prompts",
+        label: "type:prompts",
+        description: globalSearchSuggestionTypeDescriptions.prompts,
+      },
+      {
+        id: "help:type:settings",
+        token: "type:settings",
+        label: "type:settings",
+        description: globalSearchSuggestionTypeDescriptions.settings,
+      },
+      {
+        id: "help:is:pinned",
+        token: "is:pinned",
+        label: "is:pinned",
+        description: globalSearchSuggestionIsDescriptions.pinned,
+      },
+      {
+        id: "help:is:unpinned",
+        token: "is:unpinned",
+        label: "is:unpinned",
+        description: globalSearchSuggestionIsDescriptions.unpinned,
+      },
+      {
+        id: "help:level:0",
+        token: "level:0",
+        label: "level:0",
+        description: getLocalizedText({
+          key: "globalSearchSyntaxSuggestionLevelQueryDesc",
+          fallback: "Outline user query",
+        }),
+      },
+      {
+        id: "help:date:7d",
+        token: "date:7d",
+        label: "date:7d",
+        description: globalSearchSuggestionDateDescription,
+      },
+      {
+        id: "help:date:30d",
+        token: "date:30d",
+        label: "date:30d",
+        description: globalSearchSuggestionDateDescription,
+      },
+      {
+        id: "help:folder:inbox",
+        token: "folder:inbox",
+        label: "folder:inbox",
+        description: globalSearchSuggestionOperatorDescriptions.folder,
+      },
+      {
+        id: "help:tag:work",
+        token: "tag:work",
+        label: "tag:work",
+        description: globalSearchSuggestionOperatorDescriptions.tag,
+      },
+    ],
+    [
+      getLocalizedText,
+      globalSearchSuggestionDateDescription,
+      globalSearchSuggestionIsDescriptions.pinned,
+      globalSearchSuggestionIsDescriptions.unpinned,
+      globalSearchSuggestionOperatorDescriptions.folder,
+      globalSearchSuggestionOperatorDescriptions.tag,
+      globalSearchSuggestionTypeDescriptions.conversations,
+      globalSearchSuggestionTypeDescriptions.outline,
+      globalSearchSuggestionTypeDescriptions.prompts,
+      globalSearchSuggestionTypeDescriptions.settings,
+    ],
+  )
+
   const globalSearchListboxLabel = useMemo(
     () =>
       getLocalizedText({
@@ -2850,6 +2957,14 @@ export const App = () => {
     [settingsSearchInputValue, syncSettingsSearchInputAndQuery],
   )
 
+  const applyGlobalSearchSyntaxHelpItem = useCallback(
+    (item: GlobalSearchSyntaxSuggestionItem) => {
+      applyGlobalSearchSyntaxSuggestion(item)
+      setShowGlobalSearchSyntaxHelp(false)
+    },
+    [applyGlobalSearchSyntaxSuggestion],
+  )
+
   const handleRemoveGlobalSearchFilterChip = useCallback(
     (chipId: string) => {
       const nextFilters = activeGlobalSearchSyntaxFilters.filter((filter) => filter.id !== chipId)
@@ -3011,6 +3126,7 @@ export const App = () => {
       clearSettingsSearchInputDebounceTimer()
       setSettingsSearchInputValue("")
       setSettingsSearchQuery("")
+      setShowGlobalSearchSyntaxHelp(false)
       setActiveSearchSyntaxSuggestionIndex(-1)
       setActiveGlobalSearchCategory("all")
       setSettingsSearchActiveIndex(0)
@@ -3036,6 +3152,7 @@ export const App = () => {
       setActiveGlobalSearchCategory("all")
       setSettingsSearchInputValue("")
       setSettingsSearchQuery("")
+      setShowGlobalSearchSyntaxHelp(false)
       setActiveSearchSyntaxSuggestionIndex(-1)
       setSettingsSearchActiveIndex(0)
       setSettingsSearchHoverLocked(false)
@@ -3362,6 +3479,11 @@ export const App = () => {
         event.preventDefault()
         event.stopPropagation()
 
+        if (showGlobalSearchSyntaxHelp) {
+          setShowGlobalSearchSyntaxHelp(false)
+          return
+        }
+
         const shouldReturnToSettings = searchOpenedFromSettingsRef.current
         closeGlobalSettingsSearch({
           restoreFocus: !shouldReturnToSettings,
@@ -3496,6 +3618,7 @@ export const App = () => {
     activeGlobalSearchCategory,
     activeSearchSyntaxSuggestionIndex,
     applyGlobalSearchSyntaxSuggestion,
+    showGlobalSearchSyntaxHelp,
     closeGlobalSettingsSearch,
     globalSearchSyntaxSuggestions,
     isGlobalSettingsSearchOpen,
@@ -3541,6 +3664,35 @@ export const App = () => {
     },
     [clearSettingsSearchInputDebounceTimer],
   )
+
+  useEffect(() => {
+    if (!isGlobalSettingsSearchOpen || !showGlobalSearchSyntaxHelp) {
+      return
+    }
+
+    const handleOutsidePress = (event: MouseEvent) => {
+      const target = event.target as Node | null
+      if (!target) {
+        return
+      }
+
+      if (globalSearchSyntaxHelpTriggerRef.current?.contains(target)) {
+        return
+      }
+
+      if (globalSearchSyntaxHelpPopoverRef.current?.contains(target)) {
+        return
+      }
+
+      setShowGlobalSearchSyntaxHelp(false)
+    }
+
+    document.addEventListener("mousedown", handleOutsidePress, true)
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsidePress, true)
+    }
+  }, [isGlobalSettingsSearchOpen, showGlobalSearchSyntaxHelp])
 
   useEffect(() => {
     if (!isGlobalSettingsSearchOpen) {
@@ -4972,6 +5124,46 @@ export const App = () => {
                 placeholder={`${resolvedActiveGlobalSearchCategoryText.placeholder}（${globalSearchPrimaryShortcutLabel}）`}
               />
               <span className="settings-search-hotkey">⌨ {globalSearchShortcutHintLabel}</span>
+              <div className="settings-search-help">
+                <button
+                  ref={globalSearchSyntaxHelpTriggerRef}
+                  type="button"
+                  className={`settings-search-help-trigger ${
+                    showGlobalSearchSyntaxHelp ? "active" : ""
+                  }`}
+                  aria-expanded={showGlobalSearchSyntaxHelp}
+                  aria-label={getLocalizedText({
+                    key: "globalSearchSyntaxHelpTriggerAria",
+                    fallback: "Open search syntax help",
+                  })}
+                  onClick={() => setShowGlobalSearchSyntaxHelp((previous) => !previous)}>
+                  ?
+                </button>
+                {showGlobalSearchSyntaxHelp ? (
+                  <div
+                    ref={globalSearchSyntaxHelpPopoverRef}
+                    className="settings-search-help-popover"
+                    role="dialog"
+                    aria-label={globalSearchSyntaxHelpTitle}>
+                    <div className="settings-search-help-title">{globalSearchSyntaxHelpTitle}</div>
+                    <div className="settings-search-help-tip">
+                      {globalSearchSyntaxHelpDescription}
+                    </div>
+                    <div className="settings-search-help-items">
+                      {globalSearchSyntaxHelpItems.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className="settings-search-help-item"
+                          onClick={() => applyGlobalSearchSyntaxHelpItem(item)}>
+                          <span className="settings-search-help-token">{item.token}</span>
+                          <span className="settings-search-help-desc">{item.description}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             {activeGlobalSearchFilterChips.length > 0 ? (
