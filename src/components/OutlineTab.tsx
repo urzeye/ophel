@@ -1414,7 +1414,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                 <div className="outline-empty-state-desc">
                   <span className="outline-empty-state-desc-line">{emptyDescriptionFirstLine}</span>
                   {emptyDescriptionSecondLine && (
-                    <span className="outline-empty-state-desc-line">{emptyDescriptionSecondLine}</span>
+                    <span className="outline-empty-state-desc-line">
+                      {emptyDescriptionSecondLine}
+                    </span>
                   )}
                 </div>
               </div>

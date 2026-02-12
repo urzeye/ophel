@@ -439,7 +439,8 @@ export const es = {
   notificationBody: "Clic para ver resultado",
   tabOutline: "Índice",
   outlineEmpty: "Sin contenido",
-  outlineEmptyDescDefault: "Los elementos del índice aparecerán automáticamente a medida que avance la conversación.",
+  outlineEmptyDescDefault:
+    "Los elementos del índice aparecerán automáticamente a medida que avance la conversación.",
   outlineEmptyDescUserQueryOnly:
     "Por ahora solo se muestran las preguntas del usuario. Envía un mensaje para generar elementos del índice.",
   outlineRefresh: "Recargar",
