@@ -1224,6 +1224,111 @@ html[data-theme="dark"] .about-slogan {
   line-height: 1.6;
 }
 
+.settings-search-filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--gh-border, #e5e7eb);
+  background: var(--gh-bg, #ffffff);
+  flex-wrap: wrap;
+}
+
+.settings-search-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: min(260px, 100%);
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 999px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.settings-search-filter-chip:hover {
+  background: var(--gh-hover, #f3f4f6);
+  color: var(--gh-text, #374151);
+}
+
+.settings-search-filter-chip-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-search-filter-chip-close {
+  font-size: 14px;
+  line-height: 1;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-search-filter-chip-overflow {
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-search-filter-chip-clear-all {
+  border: none;
+  background: transparent;
+  color: var(--gh-primary, #2563eb);
+  font-size: 12px;
+  line-height: 1.2;
+  cursor: pointer;
+  padding: 0;
+}
+
+.settings-search-filter-chip-clear-all:hover {
+  text-decoration: underline;
+}
+
+.settings-search-syntax-suggestions {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--gh-border, #e5e7eb);
+  background: var(--gh-bg-secondary, #f8fafc);
+  padding: 6px;
+  gap: 4px;
+}
+
+.settings-search-syntax-suggestion {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  padding: 7px 10px;
+  text-align: left;
+}
+
+.settings-search-syntax-suggestion:hover,
+.settings-search-syntax-suggestion.active {
+  border-color: rgba(37, 99, 235, 0.16);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.settings-search-syntax-suggestion-token {
+  font-size: 12px;
+  color: var(--gh-text, #1f2937);
+  white-space: nowrap;
+}
+
+.settings-search-syntax-suggestion-desc {
+  font-size: 11px;
+  color: var(--gh-text-secondary, #6b7280);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .settings-search-shortcut-nudge {
   display: flex;
   align-items: center;
@@ -1740,6 +1845,41 @@ html[data-theme="dark"] .about-slogan {
   padding: 18px 14px;
   color: var(--gh-text-secondary, #6b7280);
   font-size: 13px;
+}
+
+.settings-search-empty-guide-title {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--gh-text, #374151);
+  font-weight: 600;
+}
+
+.settings-search-empty-guide-desc {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.settings-search-empty-guide-examples {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.settings-search-empty-guide-example {
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text-secondary, #4b5563);
+  font-size: 12px;
+  line-height: 1.2;
+  cursor: pointer;
+  padding: 5px 8px;
+}
+
+.settings-search-empty-guide-example:hover {
+  background: var(--gh-hover, #f3f4f6);
 }
 
 .settings-search-footer {

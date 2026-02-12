@@ -145,6 +145,9 @@ interface GlobalSearchResultItem {
   promptId?: string
   promptContent?: string
   tagBadges?: GlobalSearchTagBadge[]
+  folderName?: string
+  tagNames?: string[]
+  isPinned?: boolean
   matchReasons?: GlobalSearchMatchReason[]
   outlineTarget?: GlobalSearchOutlineTarget
 }
@@ -153,6 +156,28 @@ interface GlobalSearchPromptPreviewState {
   itemId: string
   content: string
   anchorRect: DOMRect
+}
+
+type GlobalSearchSyntaxOperator = "type" | "folder" | "tag" | "is"
+
+interface GlobalSearchSyntaxFilter {
+  id: string
+  key: GlobalSearchSyntaxOperator
+  value: string
+  normalizedValue: string
+}
+
+interface ParsedGlobalSearchQuery {
+  rawQuery: string
+  plainQuery: string
+  filters: GlobalSearchSyntaxFilter[]
+}
+
+interface GlobalSearchSyntaxSuggestionItem {
+  id: string
+  token: string
+  label: string
+  description: string
 }
 
 interface GlobalSearchGroupedResult {
@@ -259,6 +284,16 @@ const GLOBAL_SEARCH_SHORTCUT_NUDGE_AUTO_DISMISS_SHORTCUT_COUNT = 2
 const GLOBAL_SEARCH_PROMPT_PREVIEW_POINTER_DELAY_MS = 450
 const GLOBAL_SEARCH_PROMPT_PREVIEW_KEYBOARD_DELAY_MS = 700
 const GLOBAL_SEARCH_PROMPT_PREVIEW_HIDE_DELAY_MS = 220
+const GLOBAL_SEARCH_INPUT_DEBOUNCE_MS = 140
+const GLOBAL_SEARCH_SYNTAX_SUGGESTION_LIMIT = 8
+const GLOBAL_SEARCH_SYNTAX_OPERATORS: GlobalSearchSyntaxOperator[] = ["type", "folder", "tag", "is"]
+const GLOBAL_SEARCH_FILTER_CHIP_MAX_COUNT = 4
+const GLOBAL_SEARCH_TYPE_FILTER_VALUES: GlobalSearchResultCategory[] = [
+  "outline",
+  "conversations",
+  "prompts",
+  "settings",
+]
 
 const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "aistudio-collapse-advanced": "aistudioCollapseAdvanced",
@@ -360,6 +395,144 @@ const toGlobalSearchTokens = (query: string): string[] =>
     .split(" ")
     .map((token) => token.trim())
     .filter((token) => token.length > 0)
+
+const parseGlobalSearchQuery = (query: string): ParsedGlobalSearchQuery => {
+  const pattern = /(^|\s)(type|folder|tag|is):("[^"]+"|[^\s]+)/gi
+  const filters: GlobalSearchSyntaxFilter[] = []
+  const consumedRanges: Array<{ start: number; end: number }> = []
+
+  let match = pattern.exec(query)
+  while (match) {
+    const operator = (match[2] || "").toLowerCase() as GlobalSearchSyntaxOperator
+    if (!GLOBAL_SEARCH_SYNTAX_OPERATORS.includes(operator)) {
+      match = pattern.exec(query)
+      continue
+    }
+
+    const rawToken = match[3] || ""
+    const value = rawToken.replace(/^"|"$/g, "").trim()
+    if (!value) {
+      match = pattern.exec(query)
+      continue
+    }
+
+    const start = (match.index || 0) + (match[1]?.length || 0)
+    const fullToken = `${operator}:${rawToken}`
+    const end = start + fullToken.length
+
+    consumedRanges.push({ start, end })
+    filters.push({
+      id: `${operator}:${value.toLowerCase()}`,
+      key: operator,
+      value,
+      normalizedValue: value.toLowerCase(),
+    })
+
+    match = pattern.exec(query)
+  }
+
+  if (consumedRanges.length === 0) {
+    return {
+      rawQuery: query,
+      plainQuery: query.trim(),
+      filters,
+    }
+  }
+
+  consumedRanges.sort((left, right) => left.start - right.start)
+
+  let plainQuery = ""
+  let cursor = 0
+  consumedRanges.forEach((range) => {
+    if (cursor < range.start) {
+      plainQuery += `${query.slice(cursor, range.start)} `
+    }
+    cursor = range.end
+  })
+
+  if (cursor < query.length) {
+    plainQuery += query.slice(cursor)
+  }
+
+  return {
+    rawQuery: query,
+    plainQuery: plainQuery.replace(/\s+/g, " ").trim(),
+    filters,
+  }
+}
+
+const stringifyGlobalSearchQuery = ({
+  plainQuery,
+  filters,
+}: {
+  plainQuery: string
+  filters: GlobalSearchSyntaxFilter[]
+}): string => {
+  const filterText = filters
+    .map((filter) => {
+      const needsQuote = /\s/.test(filter.value)
+      const safeValue = needsQuote ? `"${filter.value}"` : filter.value
+      return `${filter.key}:${safeValue}`
+    })
+    .join(" ")
+
+  return `${plainQuery} ${filterText}`.replace(/\s+/g, " ").trim()
+}
+
+const matchGlobalSearchSyntaxFilters = (
+  item: GlobalSearchResultItem,
+  filters: GlobalSearchSyntaxFilter[],
+): boolean => {
+  if (filters.length === 0) {
+    return true
+  }
+
+  return filters.every((filter) => {
+    const value = filter.normalizedValue
+
+    if (filter.key === "type") {
+      return item.category.toLowerCase().includes(value)
+    }
+
+    if (filter.key === "folder") {
+      const folderValue = (item.folderName || item.breadcrumb || "").toLowerCase()
+      return folderValue.includes(value)
+    }
+
+    if (filter.key === "tag") {
+      const tags = item.tagNames || item.tagBadges?.map((tag) => tag.name) || []
+      return tags.some((tagName) => tagName.toLowerCase().includes(value))
+    }
+
+    if (filter.key === "is") {
+      if (value === "pinned") {
+        return Boolean(item.isPinned)
+      }
+      return false
+    }
+
+    return true
+  })
+}
+
+const getGlobalSearchTrailingTokenInfo = (
+  inputValue: string,
+): { token: string; start: number; end: number } | null => {
+  const match = inputValue.match(/(^|\s)([^\s]*)$/)
+  if (!match) {
+    return null
+  }
+
+  const token = match[2] || ""
+  const end = inputValue.length
+  const start = end - token.length
+
+  return {
+    token,
+    start,
+    end,
+  }
+}
 
 const buildGlobalSearchSnippet = ({
   content,
@@ -956,6 +1129,37 @@ export const App = () => {
     [getLocalizedText],
   )
 
+  const clearSettingsSearchInputDebounceTimer = useCallback(() => {
+    if (!searchInputDebounceTimerRef.current) {
+      return
+    }
+
+    clearTimeout(searchInputDebounceTimerRef.current)
+    searchInputDebounceTimerRef.current = null
+  }, [])
+
+  const syncSettingsSearchInputAndQuery = useCallback(
+    (nextValue: string) => {
+      clearSettingsSearchInputDebounceTimer()
+      setSettingsSearchInputValue(nextValue)
+      setSettingsSearchQuery(nextValue)
+    },
+    [clearSettingsSearchInputDebounceTimer],
+  )
+
+  const commitSettingsSearchInputValue = useCallback(
+    (nextValue: string) => {
+      setSettingsSearchInputValue(nextValue)
+      clearSettingsSearchInputDebounceTimer()
+
+      searchInputDebounceTimerRef.current = setTimeout(() => {
+        setSettingsSearchQuery(nextValue)
+        searchInputDebounceTimerRef.current = null
+      }, GLOBAL_SEARCH_INPUT_DEBOUNCE_MS)
+    },
+    [clearSettingsSearchInputDebounceTimer],
+  )
+
   const hideGlobalSearchShortcutNudge = useCallback(() => {
     clearGlobalSearchNudgeHideTimer()
     setShowGlobalSearchShortcutNudge(false)
@@ -1215,6 +1419,7 @@ export const App = () => {
   const [isGlobalSettingsSearchOpen, setIsGlobalSettingsSearchOpen] = useState(false)
   const [activeGlobalSearchCategory, setActiveGlobalSearchCategory] =
     useState<GlobalSearchCategoryId>("all")
+  const [settingsSearchInputValue, setSettingsSearchInputValue] = useState("")
   const [settingsSearchQuery, setSettingsSearchQuery] = useState("")
   const [settingsSearchActiveIndex, setSettingsSearchActiveIndex] = useState(0)
   const [settingsSearchHoverLocked, setSettingsSearchHoverLocked] = useState(false)
@@ -1228,9 +1433,11 @@ export const App = () => {
   const [globalSearchShortcutNudgeMessage, setGlobalSearchShortcutNudgeMessage] = useState("")
   const [globalSearchPromptPreview, setGlobalSearchPromptPreview] =
     useState<GlobalSearchPromptPreviewState | null>(null)
+  const [activeSearchSyntaxSuggestionIndex, setActiveSearchSyntaxSuggestionIndex] = useState(-1)
   const settingsSearchInputRef = useRef<HTMLInputElement | null>(null)
   const settingsSearchResultsRef = useRef<HTMLDivElement | null>(null)
   const promptPreviewContainerRef = useRef<HTMLDivElement | null>(null)
+  const searchInputDebounceTimerRef = useRef<NodeJS.Timeout | null>(null)
   const settingsSearchWheelFreezeUntilRef = useRef(0)
   const promptPreviewTimerRef = useRef<NodeJS.Timeout | null>(null)
   const promptPreviewHideTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -1276,9 +1483,12 @@ export const App = () => {
       if (isGlobalSettingsSearchOpen) {
         searchOpenedFromSettingsRef.current = false
         settingsSearchRestoreFocusRef.current = null
+        clearSettingsSearchInputDebounceTimer()
         setIsGlobalSettingsSearchOpen(false)
         setActiveGlobalSearchCategory("all")
+        setSettingsSearchInputValue("")
         setSettingsSearchQuery("")
+        setActiveSearchSyntaxSuggestionIndex(-1)
         setSettingsSearchActiveIndex(0)
         setSettingsSearchHoverLocked(false)
         setSettingsSearchNavigationMode("pointer")
@@ -1304,12 +1514,32 @@ export const App = () => {
         "ophel:navigateSettingsPage",
         handleNavigateSettings as EventListener,
       )
-  }, [edgeSnapState, isGlobalSettingsSearchOpen])
+  }, [clearSettingsSearchInputDebounceTimer, edgeSnapState, isGlobalSettingsSearchOpen])
 
   const conversationsSnapshot = useConversationsStore((state) => state.conversations)
   const foldersSnapshot = useFoldersStore((state) => state.folders)
   const tagsSnapshot = useTagsStore((state) => state.tags)
   const promptsSnapshot = usePromptsStore((state) => state.prompts)
+
+  const parsedGlobalSearchQuery = useMemo(
+    () => parseGlobalSearchQuery(settingsSearchQuery),
+    [settingsSearchQuery],
+  )
+
+  const activeGlobalSearchSyntaxFilters = useMemo(
+    () => parsedGlobalSearchQuery.filters,
+    [parsedGlobalSearchQuery.filters],
+  )
+
+  const activeGlobalSearchPlainQuery = useMemo(
+    () => parsedGlobalSearchQuery.plainQuery,
+    [parsedGlobalSearchQuery.plainQuery],
+  )
+
+  const settingsSearchResults = useMemo(
+    () => searchSettingsItems(activeGlobalSearchPlainQuery),
+    [activeGlobalSearchPlainQuery],
+  )
 
   useEffect(() => {
     if (!outlineManager || !isGlobalSettingsSearchOpen) {
@@ -1337,22 +1567,17 @@ export const App = () => {
     }
   }, [isGlobalSettingsSearchOpen, outlineManager])
 
-  const settingsSearchResults = useMemo(
-    () => searchSettingsItems(settingsSearchQuery),
-    [settingsSearchQuery],
-  )
-
   const settingsSearchHighlightTokens = useMemo(
     () =>
-      Array.from(new Set(toGlobalSearchTokens(settingsSearchQuery))).sort(
+      Array.from(new Set(toGlobalSearchTokens(activeGlobalSearchPlainQuery))).sort(
         (left, right) => right.length - left.length,
       ),
-    [settingsSearchQuery],
+    [activeGlobalSearchPlainQuery],
   )
 
   const settingsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
-    const normalizedQuery = normalizeGlobalSearchValue(settingsSearchQuery)
-    const tokens = toGlobalSearchTokens(settingsSearchQuery)
+    const normalizedQuery = normalizeGlobalSearchValue(activeGlobalSearchPlainQuery)
+    const tokens = toGlobalSearchTokens(activeGlobalSearchPlainQuery)
 
     return settingsSearchResults.map((item) => {
       const title = resolveSettingSearchTitle(item)
@@ -1401,7 +1626,12 @@ export const App = () => {
         matchReasons: Array.from(matchReasons),
       }
     })
-  }, [getSettingsBreadcrumb, resolveSettingSearchTitle, settingsSearchQuery, settingsSearchResults])
+  }, [
+    activeGlobalSearchPlainQuery,
+    getSettingsBreadcrumb,
+    resolveSettingSearchTitle,
+    settingsSearchResults,
+  ])
 
   const conversationGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
     if (!conversationManager) {
@@ -1419,8 +1649,8 @@ export const App = () => {
     const folderMap = new Map(folders.map((folder) => [folder.id, folder]))
     const tagMap = new Map(tags.map((tag) => [tag.id, tag]))
 
-    const normalizedQuery = normalizeGlobalSearchValue(settingsSearchQuery)
-    const tokens = toGlobalSearchTokens(settingsSearchQuery)
+    const normalizedQuery = normalizeGlobalSearchValue(activeGlobalSearchPlainQuery)
+    const tokens = toGlobalSearchTokens(activeGlobalSearchPlainQuery)
     const untitledConversation = getLocalizedText({
       key: "untitledConversation",
       fallback: "Untitled conversation",
@@ -1505,6 +1735,9 @@ export const App = () => {
             conversationId: conversation.id,
             conversationUrl: conversation.url,
             tagBadges,
+            folderName: folderLabel,
+            tagNames: tagBadges.map((tag) => tag.name),
+            isPinned: Boolean(conversation.pinned),
             matchReasons: finalScoreMeta.matchReasons,
           },
           scoreMeta: finalScoreMeta,
@@ -1522,12 +1755,12 @@ export const App = () => {
     foldersSnapshot,
     tagsSnapshot,
     getLocalizedText,
-    settingsSearchQuery,
+    activeGlobalSearchPlainQuery,
   ])
 
   const promptsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
-    const normalizedQuery = normalizeGlobalSearchValue(settingsSearchQuery)
-    const tokens = toGlobalSearchTokens(settingsSearchQuery)
+    const normalizedQuery = normalizeGlobalSearchValue(activeGlobalSearchPlainQuery)
+    const tokens = toGlobalSearchTokens(activeGlobalSearchPlainQuery)
     const promptsLabel = getLocalizedText({
       key: "globalSearchCategoryPrompts",
       fallback: "Prompts",
@@ -1621,6 +1854,8 @@ export const App = () => {
             category: "prompts" as const,
             promptId: prompt.id,
             promptContent: prompt.content,
+            folderName: categoryLabel,
+            isPinned: Boolean(prompt.pinned),
             matchReasons: finalScoreMeta.matchReasons,
           },
           scoreMeta: finalScoreMeta,
@@ -1632,7 +1867,7 @@ export const App = () => {
       .sort(compareGlobalSearchRankedItems)
 
     return scoredItems.map(({ item }) => item)
-  }, [getLocalizedText, promptsSnapshot, settingsSearchQuery])
+  }, [activeGlobalSearchPlainQuery, getLocalizedText, promptsSnapshot])
 
   const outlineGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
     if (!outlineManager) {
@@ -1658,8 +1893,8 @@ export const App = () => {
     }
 
     const outlineNodes = flattenOutlineNodes(outlineManager.getTree())
-    const normalizedQuery = normalizeGlobalSearchValue(settingsSearchQuery)
-    const tokens = toGlobalSearchTokens(settingsSearchQuery)
+    const normalizedQuery = normalizeGlobalSearchValue(activeGlobalSearchPlainQuery)
+    const tokens = toGlobalSearchTokens(activeGlobalSearchPlainQuery)
     const outlineLabel = getLocalizedText({
       key: "globalSearchCategoryOutline",
       fallback: "Outline",
@@ -1761,7 +1996,7 @@ export const App = () => {
       .sort(compareGlobalSearchRankedItems)
 
     return scoredItems.map(({ item }) => item)
-  }, [outlineManager, getLocalizedText, outlineSearchVersion, settingsSearchQuery])
+  }, [activeGlobalSearchPlainQuery, outlineManager, getLocalizedText, outlineSearchVersion])
 
   const normalizedGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(
     () => [
@@ -1778,6 +2013,14 @@ export const App = () => {
     ],
   )
 
+  const filteredGlobalSearchResults = useMemo(
+    () =>
+      normalizedGlobalSearchResults.filter((item) =>
+        matchGlobalSearchSyntaxFilters(item, activeGlobalSearchSyntaxFilters),
+      ),
+    [activeGlobalSearchSyntaxFilters, normalizedGlobalSearchResults],
+  )
+
   const globalSearchResultCounts = useMemo(() => {
     const counts = GLOBAL_SEARCH_CATEGORY_DEFINITIONS.reduce(
       (collector, category) => {
@@ -1787,13 +2030,13 @@ export const App = () => {
       {} as Record<GlobalSearchCategoryId, number>,
     )
 
-    normalizedGlobalSearchResults.forEach((item) => {
+    filteredGlobalSearchResults.forEach((item) => {
       counts[item.category] += 1
       counts["all"] += 1
     })
 
     return counts
-  }, [normalizedGlobalSearchResults])
+  }, [filteredGlobalSearchResults])
 
   const orderedGlobalSearchCategories = useMemo(
     () =>
@@ -1810,7 +2053,7 @@ export const App = () => {
 
     return orderedGlobalSearchCategories
       .map((category) => {
-        const categoryItems = normalizedGlobalSearchResults.filter(
+        const categoryItems = filteredGlobalSearchResults.filter(
           (item) => item.category === category,
         )
         const isExpanded = Boolean(expandedGlobalSearchCategories[category])
@@ -1833,19 +2076,19 @@ export const App = () => {
   }, [
     activeGlobalSearchCategory,
     expandedGlobalSearchCategories,
-    normalizedGlobalSearchResults,
+    filteredGlobalSearchResults,
     orderedGlobalSearchCategories,
   ])
 
   const visibleGlobalSearchResults = useMemo(() => {
     if (activeGlobalSearchCategory !== "all") {
-      return normalizedGlobalSearchResults.filter(
+      return filteredGlobalSearchResults.filter(
         (item) => item.category === activeGlobalSearchCategory,
       )
     }
 
     return groupedGlobalSearchResults.flatMap((group) => group.items)
-  }, [activeGlobalSearchCategory, groupedGlobalSearchResults, normalizedGlobalSearchResults])
+  }, [activeGlobalSearchCategory, filteredGlobalSearchResults, groupedGlobalSearchResults])
 
   const visibleSearchResultIndexMap = useMemo(() => {
     const map = new Map<string, number>()
@@ -1931,6 +2174,75 @@ export const App = () => {
     [getLocalizedText],
   )
 
+  const globalSearchFilterChipLabelPrefixMap = useMemo(
+    () => ({
+      type: getLocalizedText({ key: "globalSearchSyntaxOperatorType", fallback: "Type" }),
+      folder: getLocalizedText({ key: "globalSearchSyntaxOperatorFolder", fallback: "Folder" }),
+      tag: getLocalizedText({ key: "globalSearchSyntaxOperatorTag", fallback: "Tag" }),
+      is: getLocalizedText({ key: "globalSearchSyntaxOperatorIs", fallback: "State" }),
+    }),
+    [getLocalizedText],
+  )
+
+  const globalSearchSuggestionOperatorLabels = useMemo(
+    () => ({
+      type: getLocalizedText({ key: "globalSearchSyntaxOperatorType", fallback: "Type" }),
+      folder: getLocalizedText({ key: "globalSearchSyntaxOperatorFolder", fallback: "Folder" }),
+      tag: getLocalizedText({ key: "globalSearchSyntaxOperatorTag", fallback: "Tag" }),
+      is: getLocalizedText({ key: "globalSearchSyntaxOperatorIs", fallback: "State" }),
+    }),
+    [getLocalizedText],
+  )
+
+  const globalSearchSuggestionTypeLabels = useMemo(
+    () => ({
+      outline: getLocalizedText({ key: "globalSearchCategoryOutline", fallback: "Outline" }),
+      conversations: getLocalizedText({
+        key: "globalSearchCategoryConversations",
+        fallback: "Conversations",
+      }),
+      prompts: getLocalizedText({ key: "globalSearchCategoryPrompts", fallback: "Prompts" }),
+      settings: getLocalizedText({ key: "globalSearchCategorySettings", fallback: "Settings" }),
+    }),
+    [getLocalizedText],
+  )
+
+  const globalSearchSuggestionPinnedLabel = useMemo(
+    () => getLocalizedText({ key: "globalSearchSyntaxPinned", fallback: "Pinned" }),
+    [getLocalizedText],
+  )
+
+  const globalSearchSuggestionPinnedDescription = useMemo(
+    () =>
+      getLocalizedText({
+        key: "globalSearchSyntaxSuggestionPinnedDesc",
+        fallback: "Only pinned results",
+      }),
+    [getLocalizedText],
+  )
+
+  const globalSearchSuggestionOperatorDescriptions = useMemo(
+    () => ({
+      type: getLocalizedText({
+        key: "globalSearchSyntaxSuggestionTypeDesc",
+        fallback: "Filter by result type",
+      }),
+      folder: getLocalizedText({
+        key: "globalSearchSyntaxSuggestionFolderDesc",
+        fallback: "Filter by folder or category",
+      }),
+      tag: getLocalizedText({
+        key: "globalSearchSyntaxSuggestionTagDesc",
+        fallback: "Filter by tag name",
+      }),
+      is: getLocalizedText({
+        key: "globalSearchSyntaxSuggestionIsDesc",
+        fallback: "Filter by status",
+      }),
+    }),
+    [getLocalizedText],
+  )
+
   const globalSearchListboxLabel = useMemo(
     () =>
       getLocalizedText({
@@ -1973,6 +2285,220 @@ export const App = () => {
 
     return { top, left }
   }, [globalSearchPromptPreview])
+
+  const activeGlobalSearchFilterChips = useMemo(
+    () =>
+      activeGlobalSearchSyntaxFilters
+        .slice(0, GLOBAL_SEARCH_FILTER_CHIP_MAX_COUNT)
+        .map((filter) => ({
+          id: filter.id,
+          key: filter.key,
+          value: filter.value,
+          label: `${globalSearchFilterChipLabelPrefixMap[filter.key]}: ${filter.value}`,
+        })),
+    [activeGlobalSearchSyntaxFilters, globalSearchFilterChipLabelPrefixMap],
+  )
+
+  const hasOverflowGlobalSearchFilterChips =
+    activeGlobalSearchSyntaxFilters.length > GLOBAL_SEARCH_FILTER_CHIP_MAX_COUNT
+
+  const globalSearchSyntaxSuggestions = useMemo<GlobalSearchSyntaxSuggestionItem[]>(() => {
+    if (!isGlobalSettingsSearchOpen) {
+      return []
+    }
+
+    const trailingTokenInfo = getGlobalSearchTrailingTokenInfo(settingsSearchInputValue)
+    const trailingToken = trailingTokenInfo?.token || ""
+    const hasTrailingToken = trailingToken.length > 0
+    const normalizedTrailingToken = trailingToken.toLowerCase()
+    const trailingTokenOperatorMatch = trailingToken.match(/^([a-z]+):(.*)$/i)
+
+    if (trailingTokenOperatorMatch) {
+      const operator = trailingTokenOperatorMatch[1].toLowerCase() as GlobalSearchSyntaxOperator
+      if (!GLOBAL_SEARCH_SYNTAX_OPERATORS.includes(operator)) {
+        return []
+      }
+
+      const rawValue = trailingTokenOperatorMatch[2] || ""
+      const normalizedRawValue = rawValue.toLowerCase()
+      const suggestions: GlobalSearchSyntaxSuggestionItem[] = []
+      const appendSuggestion = (candidate: GlobalSearchSyntaxSuggestionItem) => {
+        if (suggestions.some((item) => item.id === candidate.id)) {
+          return
+        }
+        suggestions.push(candidate)
+      }
+
+      if (operator === "type") {
+        GLOBAL_SEARCH_TYPE_FILTER_VALUES.forEach((value) => {
+          if (rawValue && !value.toLowerCase().startsWith(normalizedRawValue)) {
+            return
+          }
+
+          appendSuggestion({
+            id: `type:${value}`,
+            token: `type:${value}`,
+            label: `type:${globalSearchSuggestionTypeLabels[value]}`,
+            description: globalSearchSuggestionOperatorDescriptions.type,
+          })
+        })
+      } else if (operator === "is") {
+        const value = "pinned"
+        if (!rawValue || value.startsWith(normalizedRawValue)) {
+          appendSuggestion({
+            id: "is:pinned",
+            token: "is:pinned",
+            label: `is:${globalSearchSuggestionPinnedLabel}`,
+            description: globalSearchSuggestionPinnedDescription,
+          })
+        }
+      }
+
+      if (operator === "folder") {
+        const folderCandidates = new Map<string, string>()
+        filteredGlobalSearchResults.forEach((item) => {
+          const candidate = (item.folderName || "").trim()
+          if (!candidate) {
+            return
+          }
+
+          const normalizedCandidate = candidate.toLowerCase()
+          if (rawValue && !normalizedCandidate.includes(normalizedRawValue)) {
+            return
+          }
+
+          folderCandidates.set(normalizedCandidate, candidate)
+        })
+
+        Array.from(folderCandidates.values())
+          .slice(0, GLOBAL_SEARCH_SYNTAX_SUGGESTION_LIMIT)
+          .forEach((candidate) => {
+            const needsQuote = /\s/.test(candidate)
+            const filterToken = needsQuote ? `folder:"${candidate}"` : `folder:${candidate}`
+
+            appendSuggestion({
+              id: `folder:${candidate.toLowerCase()}`,
+              token: filterToken,
+              label: `folder:${candidate}`,
+              description: globalSearchSuggestionOperatorDescriptions.folder,
+            })
+          })
+      }
+
+      if (operator === "tag") {
+        const tagCandidates = new Map<string, string>()
+        filteredGlobalSearchResults.forEach((item) => {
+          const candidateTags = item.tagNames || item.tagBadges?.map((tag) => tag.name) || []
+          candidateTags.forEach((tagName) => {
+            const candidate = tagName.trim()
+            if (!candidate) {
+              return
+            }
+
+            const normalizedCandidate = candidate.toLowerCase()
+            if (rawValue && !normalizedCandidate.includes(normalizedRawValue)) {
+              return
+            }
+
+            tagCandidates.set(normalizedCandidate, candidate)
+          })
+        })
+
+        Array.from(tagCandidates.values())
+          .slice(0, GLOBAL_SEARCH_SYNTAX_SUGGESTION_LIMIT)
+          .forEach((candidate) => {
+            const needsQuote = /\s/.test(candidate)
+            const filterToken = needsQuote ? `tag:"${candidate}"` : `tag:${candidate}`
+
+            appendSuggestion({
+              id: `tag:${candidate.toLowerCase()}`,
+              token: filterToken,
+              label: `tag:${candidate}`,
+              description: globalSearchSuggestionOperatorDescriptions.tag,
+            })
+          })
+      }
+
+      return suggestions.slice(0, GLOBAL_SEARCH_SYNTAX_SUGGESTION_LIMIT)
+    }
+
+    const operatorSuggestions = GLOBAL_SEARCH_SYNTAX_OPERATORS.filter((operator) => {
+      if (!hasTrailingToken) {
+        return true
+      }
+      return operator.startsWith(normalizedTrailingToken)
+    }).map((operator) => ({
+      id: `operator:${operator}`,
+      token: `${operator}:`,
+      label: `${operator}: ${globalSearchSuggestionOperatorLabels[operator]}`,
+      description: globalSearchSuggestionOperatorDescriptions[operator],
+    }))
+
+    return operatorSuggestions.slice(0, GLOBAL_SEARCH_SYNTAX_SUGGESTION_LIMIT)
+  }, [
+    filteredGlobalSearchResults,
+    globalSearchSuggestionOperatorDescriptions,
+    globalSearchSuggestionOperatorLabels,
+    globalSearchSuggestionPinnedDescription,
+    globalSearchSuggestionPinnedLabel,
+    globalSearchSuggestionTypeLabels,
+    isGlobalSettingsSearchOpen,
+    settingsSearchInputValue,
+  ])
+
+  const shouldShowGlobalSearchSyntaxSuggestions =
+    globalSearchSyntaxSuggestions.length > 0 &&
+    Boolean(getGlobalSearchTrailingTokenInfo(settingsSearchInputValue)?.token)
+
+  const applyGlobalSearchSyntaxSuggestion = useCallback(
+    (suggestion: GlobalSearchSyntaxSuggestionItem) => {
+      const trailingTokenInfo = getGlobalSearchTrailingTokenInfo(settingsSearchInputValue)
+      const nextValue = trailingTokenInfo
+        ? `${settingsSearchInputValue.slice(0, trailingTokenInfo.start)}${suggestion.token} `
+        : `${settingsSearchInputValue}${settingsSearchInputValue.endsWith(" ") ? "" : " "}${suggestion.token} `
+
+      syncSettingsSearchInputAndQuery(nextValue)
+      setActiveSearchSyntaxSuggestionIndex(-1)
+      setSettingsSearchActiveIndex(0)
+
+      window.requestAnimationFrame(() => {
+        const inputElement = settingsSearchInputRef.current
+        if (!inputElement) {
+          return
+        }
+
+        const cursorPosition = nextValue.length
+        inputElement.focus({ preventScroll: true })
+        inputElement.setSelectionRange(cursorPosition, cursorPosition)
+      })
+    },
+    [settingsSearchInputValue, syncSettingsSearchInputAndQuery],
+  )
+
+  const handleRemoveGlobalSearchFilterChip = useCallback(
+    (chipId: string) => {
+      const nextFilters = activeGlobalSearchSyntaxFilters.filter((filter) => filter.id !== chipId)
+      const nextQuery = stringifyGlobalSearchQuery({
+        plainQuery: activeGlobalSearchPlainQuery,
+        filters: nextFilters,
+      })
+
+      syncSettingsSearchInputAndQuery(nextQuery)
+      setActiveSearchSyntaxSuggestionIndex(-1)
+      setSettingsSearchActiveIndex(0)
+    },
+    [
+      activeGlobalSearchPlainQuery,
+      activeGlobalSearchSyntaxFilters,
+      syncSettingsSearchInputAndQuery,
+    ],
+  )
+
+  const clearAllGlobalSearchSyntaxFilters = useCallback(() => {
+    syncSettingsSearchInputAndQuery(activeGlobalSearchPlainQuery)
+    setActiveSearchSyntaxSuggestionIndex(-1)
+    setSettingsSearchActiveIndex(0)
+  }, [activeGlobalSearchPlainQuery, syncSettingsSearchInputAndQuery])
 
   const activeGlobalSearchContext = useMemo(() => {
     if (activeVisibleGlobalSearchIndex < 0) {
@@ -2107,7 +2633,10 @@ export const App = () => {
         settingsSearchRestoreFocusRef.current = null
       }
 
+      clearSettingsSearchInputDebounceTimer()
+      setSettingsSearchInputValue("")
       setSettingsSearchQuery("")
+      setActiveSearchSyntaxSuggestionIndex(-1)
       setActiveGlobalSearchCategory("all")
       setSettingsSearchActiveIndex(0)
       setSettingsSearchHoverLocked(false)
@@ -2116,7 +2645,7 @@ export const App = () => {
       settingsSearchWheelFreezeUntilRef.current = 0
       setIsGlobalSettingsSearchOpen(true)
     },
-    [closeSettingsModal, edgeSnapState],
+    [clearSettingsSearchInputDebounceTimer, closeSettingsModal, edgeSnapState],
   )
 
   const closeGlobalSettingsSearch = useCallback(
@@ -2127,9 +2656,12 @@ export const App = () => {
       settingsSearchRestoreFocusRef.current = null
       searchOpenedFromSettingsRef.current = false
 
+      clearSettingsSearchInputDebounceTimer()
       setIsGlobalSettingsSearchOpen(false)
       setActiveGlobalSearchCategory("all")
+      setSettingsSearchInputValue("")
       setSettingsSearchQuery("")
+      setActiveSearchSyntaxSuggestionIndex(-1)
       setSettingsSearchActiveIndex(0)
       setSettingsSearchHoverLocked(false)
       setSettingsSearchNavigationMode("pointer")
@@ -2163,7 +2695,7 @@ export const App = () => {
         }
       })
     },
-    [edgeSnapState],
+    [clearSettingsSearchInputDebounceTimer, edgeSnapState],
   )
 
   const openSettingsModal = useCallback(() => {
@@ -2491,6 +3023,55 @@ export const App = () => {
         return
       }
 
+      if (shouldShowGlobalSearchSyntaxSuggestions) {
+        if (event.key === "ArrowDown") {
+          event.preventDefault()
+          event.stopPropagation()
+          setActiveSearchSyntaxSuggestionIndex((previousIndex) => {
+            if (globalSearchSyntaxSuggestions.length === 0) {
+              return -1
+            }
+
+            const nextIndex = previousIndex + 1
+            if (nextIndex >= globalSearchSyntaxSuggestions.length) {
+              return 0
+            }
+            return nextIndex
+          })
+          return
+        }
+
+        if (event.key === "ArrowUp") {
+          event.preventDefault()
+          event.stopPropagation()
+          setActiveSearchSyntaxSuggestionIndex((previousIndex) => {
+            if (globalSearchSyntaxSuggestions.length === 0) {
+              return -1
+            }
+
+            const nextIndex = previousIndex - 1
+            if (nextIndex < 0) {
+              return globalSearchSyntaxSuggestions.length - 1
+            }
+            return nextIndex
+          })
+          return
+        }
+
+        if (event.key === "Enter" && activeSearchSyntaxSuggestionIndex >= 0) {
+          const selectedSuggestion =
+            globalSearchSyntaxSuggestions[activeSearchSyntaxSuggestionIndex]
+          if (!selectedSuggestion) {
+            return
+          }
+
+          event.preventDefault()
+          event.stopPropagation()
+          applyGlobalSearchSyntaxSuggestion(selectedSuggestion)
+          return
+        }
+      }
+
       if (event.key === "ArrowDown") {
         event.preventDefault()
         event.stopPropagation()
@@ -2538,10 +3119,14 @@ export const App = () => {
     }
   }, [
     activeGlobalSearchCategory,
+    activeSearchSyntaxSuggestionIndex,
+    applyGlobalSearchSyntaxSuggestion,
     closeGlobalSettingsSearch,
+    globalSearchSyntaxSuggestions,
     isGlobalSettingsSearchOpen,
     navigateToSearchResult,
     settingsSearchActiveIndex,
+    shouldShowGlobalSearchSyntaxSuggestions,
     visibleGlobalSearchResults,
   ])
 
@@ -2557,6 +3142,30 @@ export const App = () => {
       setSettingsSearchActiveIndex(0)
     }
   }, [settingsSearchActiveIndex, visibleGlobalSearchResults.length])
+
+  useEffect(() => {
+    if (!shouldShowGlobalSearchSyntaxSuggestions) {
+      if (activeSearchSyntaxSuggestionIndex !== -1) {
+        setActiveSearchSyntaxSuggestionIndex(-1)
+      }
+      return
+    }
+
+    if (activeSearchSyntaxSuggestionIndex >= globalSearchSyntaxSuggestions.length) {
+      setActiveSearchSyntaxSuggestionIndex(globalSearchSyntaxSuggestions.length - 1)
+    }
+  }, [
+    activeSearchSyntaxSuggestionIndex,
+    globalSearchSyntaxSuggestions.length,
+    shouldShowGlobalSearchSyntaxSuggestions,
+  ])
+
+  useEffect(
+    () => () => {
+      clearSettingsSearchInputDebounceTimer()
+    },
+    [clearSettingsSearchInputDebounceTimer],
+  )
 
   useEffect(() => {
     if (!isGlobalSettingsSearchOpen) {
@@ -3979,15 +4588,83 @@ export const App = () => {
                 aria-haspopup="listbox"
                 aria-controls={GLOBAL_SEARCH_RESULTS_LISTBOX_ID}
                 aria-activedescendant={activeGlobalSearchOptionId}
-                value={settingsSearchQuery}
+                value={settingsSearchInputValue}
                 onChange={(event) => {
-                  setSettingsSearchQuery(event.target.value)
+                  commitSettingsSearchInputValue(event.target.value)
+                  setActiveSearchSyntaxSuggestionIndex(-1)
                   setSettingsSearchActiveIndex(0)
                 }}
                 placeholder={`${resolvedActiveGlobalSearchCategoryText.placeholder}（${globalSearchPrimaryShortcutLabel}）`}
               />
               <span className="settings-search-hotkey">⌨ {globalSearchShortcutHintLabel}</span>
             </div>
+
+            {activeGlobalSearchFilterChips.length > 0 ? (
+              <div className="settings-search-filter-chips" aria-label="active search filters">
+                {activeGlobalSearchFilterChips.map((chip) => (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    className="settings-search-filter-chip"
+                    onClick={() => handleRemoveGlobalSearchFilterChip(chip.id)}
+                    title={getLocalizedText({
+                      key: "globalSearchSyntaxChipRemove",
+                      fallback: "Click to remove filter",
+                    })}>
+                    <span className="settings-search-filter-chip-label">{chip.label}</span>
+                    <span className="settings-search-filter-chip-close" aria-hidden>
+                      ×
+                    </span>
+                  </button>
+                ))}
+                {hasOverflowGlobalSearchFilterChips ? (
+                  <span className="settings-search-filter-chip-overflow">
+                    {formatLocalizedText(
+                      {
+                        key: "globalSearchSyntaxChipOverflow",
+                        fallback: "+{count} more",
+                      },
+                      {
+                        count: String(
+                          activeGlobalSearchSyntaxFilters.length -
+                            GLOBAL_SEARCH_FILTER_CHIP_MAX_COUNT,
+                        ),
+                      },
+                    )}
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  className="settings-search-filter-chip-clear-all"
+                  onClick={clearAllGlobalSearchSyntaxFilters}>
+                  {getLocalizedText({ key: "clear", fallback: "Clear" })}
+                </button>
+              </div>
+            ) : null}
+
+            {shouldShowGlobalSearchSyntaxSuggestions ? (
+              <div className="settings-search-syntax-suggestions" role="listbox">
+                {globalSearchSyntaxSuggestions.map((suggestion, index) => (
+                  <button
+                    key={suggestion.id}
+                    type="button"
+                    role="option"
+                    aria-selected={activeSearchSyntaxSuggestionIndex === index}
+                    className={`settings-search-syntax-suggestion ${
+                      activeSearchSyntaxSuggestionIndex === index ? "active" : ""
+                    }`}
+                    onMouseEnter={() => setActiveSearchSyntaxSuggestionIndex(index)}
+                    onClick={() => applyGlobalSearchSyntaxSuggestion(suggestion)}>
+                    <span className="settings-search-syntax-suggestion-token">
+                      {suggestion.label}
+                    </span>
+                    <span className="settings-search-syntax-suggestion-desc">
+                      {suggestion.description}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
 
             {showGlobalSearchShortcutNudge && globalSearchShortcutNudgeMessage ? (
               <div className="settings-search-shortcut-nudge" role="status" aria-live="polite">
@@ -4064,7 +4741,45 @@ export const App = () => {
               }}>
               {visibleGlobalSearchResults.length === 0 ? (
                 <div className="settings-search-empty">
-                  {resolvedActiveGlobalSearchCategoryText.emptyText}
+                  <div>{resolvedActiveGlobalSearchCategoryText.emptyText}</div>
+                  <div className="settings-search-empty-guide-title">
+                    {getLocalizedText({
+                      key: "globalSearchSyntaxEmptyGuideTitle",
+                      fallback: "Try search filters",
+                    })}
+                  </div>
+                  <div className="settings-search-empty-guide-desc">
+                    {getLocalizedText({
+                      key: "globalSearchSyntaxEmptyGuideDesc",
+                      fallback: "Use filter syntax to narrow results quickly",
+                    })}
+                  </div>
+                  <div className="settings-search-empty-guide-examples">
+                    <button
+                      type="button"
+                      className="settings-search-empty-guide-example"
+                      onClick={() => syncSettingsSearchInputAndQuery("type:prompts ")}>
+                      type:prompts
+                    </button>
+                    <button
+                      type="button"
+                      className="settings-search-empty-guide-example"
+                      onClick={() => syncSettingsSearchInputAndQuery("is:pinned ")}>
+                      is:pinned
+                    </button>
+                    <button
+                      type="button"
+                      className="settings-search-empty-guide-example"
+                      onClick={() => syncSettingsSearchInputAndQuery("folder:inbox ")}>
+                      folder:inbox
+                    </button>
+                    <button
+                      type="button"
+                      className="settings-search-empty-guide-example"
+                      onClick={() => syncSettingsSearchInputAndQuery("tag:work ")}>
+                      tag:work
+                    </button>
+                  </div>
                 </div>
               ) : activeGlobalSearchCategory === "all" ? (
                 groupedGlobalSearchResults.map((group) => (

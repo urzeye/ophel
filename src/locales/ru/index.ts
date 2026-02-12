@@ -1098,6 +1098,21 @@ export const ru = {
   globalSearchMatchReasonId: "Совпадение по ID",
   globalSearchMatchReasonKeyword: "Совпадение по ключевому слову",
   globalSearchMatchReasonAlias: "Совпадение по алиасу",
+  globalSearchSyntaxOperatorType: "Тип",
+  globalSearchSyntaxOperatorFolder: "Папка",
+  globalSearchSyntaxOperatorTag: "Тег",
+  globalSearchSyntaxOperatorIs: "Состояние",
+  globalSearchSyntaxPinned: "Закреплено",
+  globalSearchSyntaxSuggestionTypeDesc: "Фильтр по типу результата",
+  globalSearchSyntaxSuggestionFolderDesc: "Фильтр по папке или категории",
+  globalSearchSyntaxSuggestionTagDesc: "Фильтр по названию тега",
+  globalSearchSyntaxSuggestionIsDesc: "Фильтр по состоянию",
+  globalSearchSyntaxSuggestionPinnedDesc: "Только закреплённые результаты",
+  globalSearchSyntaxChipRemove: "Нажмите, чтобы удалить фильтр",
+  globalSearchSyntaxChipOverflow: "+ещё {count}",
+  globalSearchSyntaxEmptyGuideTitle: "Попробуйте поисковые фильтры",
+  globalSearchSyntaxEmptyGuideDesc:
+    "Используйте синтаксис фильтров, чтобы быстрее сузить результаты",
 
   // Missing Keys
   moreLanguages: "Больше языков",
