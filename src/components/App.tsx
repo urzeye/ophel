@@ -35,6 +35,7 @@ import { SelectedPromptBar } from "./SelectedPromptBar"
 import { SettingsModal } from "./SettingsModal"
 import { GlobalSearchOverlay } from "./global-search/GlobalSearchOverlay"
 import { GlobalSearchResultItemView } from "./global-search/GlobalSearchResultItemView"
+import { useGlobalSearchKeyboard } from "./global-search/useGlobalSearchKeyboard"
 import { useGlobalSearchPreview } from "./global-search/useGlobalSearchPreview"
 import { useGlobalSearchSyntax } from "./global-search/useGlobalSearchSyntax"
 import type {
@@ -1604,195 +1605,6 @@ export const App = () => {
     }
   }, [openGlobalSettingsSearch])
 
-  useEffect(() => {
-    if (!isGlobalSettingsSearchOpen) {
-      return
-    }
-
-    const handleSearchNavigation = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault()
-        event.stopPropagation()
-
-        if (showGlobalSearchSyntaxHelp) {
-          setShowGlobalSearchSyntaxHelp(false)
-          return
-        }
-
-        const shouldReturnToSettings = searchOpenedFromSettingsRef.current
-        closeGlobalSettingsSearch({
-          restoreFocus: !shouldReturnToSettings,
-          reopenSettings: shouldReturnToSettings,
-        })
-        return
-      }
-
-      if (event.key === "Tab") {
-        event.preventDefault()
-        event.stopPropagation()
-
-        const currentIndex = GLOBAL_SEARCH_CATEGORY_DEFINITIONS.findIndex(
-          (category) => category.id === activeGlobalSearchCategory,
-        )
-
-        if (currentIndex < 0) {
-          setActiveGlobalSearchCategory("all")
-          setSettingsSearchActiveIndex(0)
-          setSettingsSearchHoverLocked(false)
-          setSettingsSearchNavigationMode("keyboard")
-          return
-        }
-
-        const categoriesLength = GLOBAL_SEARCH_CATEGORY_DEFINITIONS.length
-        const nextIndex = event.shiftKey
-          ? (currentIndex - 1 + categoriesLength) % categoriesLength
-          : (currentIndex + 1) % categoriesLength
-
-        setActiveGlobalSearchCategory(GLOBAL_SEARCH_CATEGORY_DEFINITIONS[nextIndex].id)
-        setSettingsSearchActiveIndex(0)
-        setSettingsSearchHoverLocked(false)
-        setSettingsSearchNavigationMode("keyboard")
-        return
-      }
-
-      if (shouldShowGlobalSearchSyntaxSuggestions) {
-        if (event.key === "ArrowDown") {
-          event.preventDefault()
-          event.stopPropagation()
-          setActiveSearchSyntaxSuggestionIndex((previousIndex) => {
-            if (globalSearchSyntaxSuggestions.length === 0) {
-              return -1
-            }
-
-            const nextIndex = previousIndex + 1
-            if (nextIndex >= globalSearchSyntaxSuggestions.length) {
-              return 0
-            }
-            return nextIndex
-          })
-          return
-        }
-
-        if (event.key === "ArrowUp") {
-          event.preventDefault()
-          event.stopPropagation()
-          setActiveSearchSyntaxSuggestionIndex((previousIndex) => {
-            if (globalSearchSyntaxSuggestions.length === 0) {
-              return -1
-            }
-
-            const nextIndex = previousIndex - 1
-            if (nextIndex < 0) {
-              return globalSearchSyntaxSuggestions.length - 1
-            }
-            return nextIndex
-          })
-          return
-        }
-
-        if (event.key === "Enter" && activeSearchSyntaxSuggestionIndex >= 0) {
-          const selectedSuggestion =
-            globalSearchSyntaxSuggestions[activeSearchSyntaxSuggestionIndex]
-          if (!selectedSuggestion) {
-            return
-          }
-
-          event.preventDefault()
-          event.stopPropagation()
-          applyGlobalSearchSyntaxSuggestion(selectedSuggestion)
-          return
-        }
-      }
-
-      if (event.key === "ArrowDown") {
-        event.preventDefault()
-        event.stopPropagation()
-        setSettingsSearchHoverLocked(true)
-        setSettingsSearchNavigationMode("keyboard")
-        setSettingsSearchActiveIndex((prev) => {
-          if (visibleGlobalSearchResults.length === 0) return 0
-          return (prev + 1) % visibleGlobalSearchResults.length
-        })
-        return
-      }
-
-      if (event.key === "ArrowUp") {
-        event.preventDefault()
-        event.stopPropagation()
-        setSettingsSearchHoverLocked(true)
-        setSettingsSearchNavigationMode("keyboard")
-        setSettingsSearchActiveIndex((prev) => {
-          if (visibleGlobalSearchResults.length === 0) return 0
-          return (prev - 1 + visibleGlobalSearchResults.length) % visibleGlobalSearchResults.length
-        })
-        return
-      }
-
-      if (event.key === "Enter") {
-        if (visibleGlobalSearchResults.length === 0) return
-
-        const selected =
-          visibleGlobalSearchResults[settingsSearchActiveIndex] || visibleGlobalSearchResults[0]
-        if (!selected) return
-
-        if (!visibleGlobalSearchResults[settingsSearchActiveIndex]) {
-          setSettingsSearchActiveIndex(0)
-        }
-
-        event.preventDefault()
-        event.stopPropagation()
-        navigateToSearchResult(selected)
-      }
-    }
-
-    window.addEventListener("keydown", handleSearchNavigation, true)
-    return () => {
-      window.removeEventListener("keydown", handleSearchNavigation, true)
-    }
-  }, [
-    activeGlobalSearchCategory,
-    activeSearchSyntaxSuggestionIndex,
-    applyGlobalSearchSyntaxSuggestion,
-    showGlobalSearchSyntaxHelp,
-    closeGlobalSettingsSearch,
-    globalSearchSyntaxSuggestions,
-    isGlobalSettingsSearchOpen,
-    navigateToSearchResult,
-    settingsSearchActiveIndex,
-    shouldShowGlobalSearchSyntaxSuggestions,
-    visibleGlobalSearchResults,
-  ])
-
-  useEffect(() => {
-    if (visibleGlobalSearchResults.length === 0) {
-      if (settingsSearchActiveIndex !== 0) {
-        setSettingsSearchActiveIndex(0)
-      }
-      return
-    }
-
-    if (settingsSearchActiveIndex >= visibleGlobalSearchResults.length) {
-      setSettingsSearchActiveIndex(0)
-    }
-  }, [settingsSearchActiveIndex, visibleGlobalSearchResults.length])
-
-  useEffect(() => {
-    if (!shouldShowGlobalSearchSyntaxSuggestions) {
-      if (activeSearchSyntaxSuggestionIndex !== -1) {
-        setActiveSearchSyntaxSuggestionIndex(-1)
-      }
-      return
-    }
-
-    if (activeSearchSyntaxSuggestionIndex >= globalSearchSyntaxSuggestions.length) {
-      setActiveSearchSyntaxSuggestionIndex(globalSearchSyntaxSuggestions.length - 1)
-    }
-  }, [
-    activeSearchSyntaxSuggestionIndex,
-    globalSearchSyntaxSuggestions.length,
-    shouldShowGlobalSearchSyntaxSuggestions,
-  ])
-
   useEffect(
     () => () => {
       clearSettingsSearchInputDebounceTimer()
@@ -1928,57 +1740,31 @@ export const App = () => {
     }
   }, [clearPromptPreviewHideTimer, clearPromptPreviewTimer])
 
-  const ensureGlobalSearchItemVisible = useCallback(
-    (container: HTMLDivElement, activeItem: HTMLElement) => {
-      const containerRect = container.getBoundingClientRect()
-      const activeRect = activeItem.getBoundingClientRect()
-      const safeTopBoundary = containerRect.top + GLOBAL_SEARCH_KEYBOARD_SAFE_TOP
-      const safeBottomBoundary = containerRect.bottom - GLOBAL_SEARCH_KEYBOARD_SAFE_BOTTOM
-
-      if (activeRect.top < safeTopBoundary) {
-        const delta = activeRect.top - safeTopBoundary
-        container.scrollTop = Math.max(0, container.scrollTop + delta)
-        return
-      }
-
-      if (activeRect.bottom > safeBottomBoundary) {
-        const delta = activeRect.bottom - safeBottomBoundary
-        const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight)
-        container.scrollTop = Math.min(maxScrollTop, container.scrollTop + delta)
-      }
-    },
-    [],
-  )
-
-  useEffect(() => {
-    if (!isGlobalSettingsSearchOpen) {
-      return
-    }
-
-    if (settingsSearchNavigationMode !== "keyboard") {
-      return
-    }
-
-    const container = settingsSearchResultsRef.current
-    if (!container) {
-      return
-    }
-
-    const activeItem = container.querySelector<HTMLElement>(
-      `[data-global-search-index=\"${settingsSearchActiveIndex}\"]`,
-    )
-    if (!activeItem) {
-      return
-    }
-
-    ensureGlobalSearchItemVisible(container, activeItem)
-  }, [
-    ensureGlobalSearchItemVisible,
+  useGlobalSearchKeyboard({
     isGlobalSettingsSearchOpen,
+    showGlobalSearchSyntaxHelp,
+    setShowGlobalSearchSyntaxHelp,
+    activeGlobalSearchCategory,
+    categoryIds: GLOBAL_SEARCH_CATEGORY_DEFINITIONS.map((category) => category.id),
+    setActiveGlobalSearchCategory,
     settingsSearchActiveIndex,
+    setSettingsSearchActiveIndex,
     settingsSearchNavigationMode,
+    setSettingsSearchNavigationMode,
+    setSettingsSearchHoverLocked,
+    shouldShowGlobalSearchSyntaxSuggestions,
+    globalSearchSyntaxSuggestions,
+    activeSearchSyntaxSuggestionIndex,
+    setActiveSearchSyntaxSuggestionIndex,
+    applyGlobalSearchSyntaxSuggestion,
     visibleGlobalSearchResults,
-  ])
+    navigateToSearchResult,
+    closeGlobalSettingsSearch,
+    getShouldReturnToSettingsOnEscape: () => searchOpenedFromSettingsRef.current,
+    settingsSearchResultsRef,
+    keyboardSafeTop: GLOBAL_SEARCH_KEYBOARD_SAFE_TOP,
+    keyboardSafeBottom: GLOBAL_SEARCH_KEYBOARD_SAFE_BOTTOM,
+  })
 
   // 取消快捷键触发的延迟缩回计时器
   const cancelShortcutPeekTimer = useCallback(() => {
