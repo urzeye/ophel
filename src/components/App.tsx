@@ -34,6 +34,14 @@ import { QuickButtons } from "./QuickButtons"
 import { SelectedPromptBar } from "./SelectedPromptBar"
 import { SettingsModal } from "./SettingsModal"
 import { GlobalSearchOverlay } from "./global-search/GlobalSearchOverlay"
+import { splitGlobalSearchHighlightSegments } from "./global-search/highlight"
+import type {
+  GlobalSearchCategoryId,
+  GlobalSearchGroupedResult,
+  GlobalSearchMatchReason,
+  GlobalSearchResultCategory,
+  GlobalSearchResultItem,
+} from "./global-search/types"
 import { useGlobalSearchData } from "./global-search/useGlobalSearchData"
 import {
   GLOBAL_SEARCH_DATE_FILTER_SHORTCUT_VALUES,
@@ -105,64 +113,11 @@ const SETTINGS_SUB_TAB_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinitio
   [APPEARANCE_TAB_IDS.CUSTOM]: { key: "customStylesTab", fallback: "Custom Styles" },
 }
 
-type GlobalSearchCategoryId = "all" | "outline" | "conversations" | "prompts" | "settings"
-
-type GlobalSearchResultCategory = Exclude<GlobalSearchCategoryId, "all">
-
 interface GlobalSearchCategoryDefinition {
   id: GlobalSearchCategoryId
   label: LocalizedLabelDefinition
   placeholder: LocalizedLabelDefinition
   emptyText: LocalizedLabelDefinition
-}
-
-interface GlobalSearchTagBadge {
-  id: string
-  name: string
-  color: string
-}
-
-type GlobalSearchMatchReason =
-  | "title"
-  | "folder"
-  | "tag"
-  | "type"
-  | "code"
-  | "category"
-  | "content"
-  | "id"
-  | "keyword"
-  | "alias"
-
-interface GlobalSearchOutlineTarget {
-  index: number
-  level: number
-  text: string
-  isUserQuery: boolean
-  queryIndex?: number
-  isGhost?: boolean
-  scrollTop?: number
-}
-
-interface GlobalSearchResultItem {
-  id: string
-  title: string
-  breadcrumb: string
-  snippet?: string
-  code?: string
-  category: GlobalSearchResultCategory
-  settingId?: string
-  conversationId?: string
-  conversationUrl?: string
-  promptId?: string
-  promptContent?: string
-  tagBadges?: GlobalSearchTagBadge[]
-  folderName?: string
-  tagNames?: string[]
-  isPinned?: boolean
-  searchTimestamp?: number
-  matchReasons?: GlobalSearchMatchReason[]
-  outlineTarget?: GlobalSearchOutlineTarget
 }
 
 interface GlobalSearchPromptPreviewState {
@@ -176,15 +131,6 @@ interface GlobalSearchSyntaxSuggestionItem {
   token: string
   label: string
   description: string
-}
-
-interface GlobalSearchGroupedResult {
-  category: GlobalSearchResultCategory
-  items: GlobalSearchResultItem[]
-  totalCount: number
-  hasMore: boolean
-  isExpanded: boolean
-  remainingCount: number
 }
 
 type GlobalSearchOpenSource = "shortcut" | "ui" | "event"
@@ -380,89 +326,6 @@ const toSearchTitleFallback = (settingId: string): string =>
     .replace(/\b([a-z])/g, (_matched, first) => first.toUpperCase())
 
 const hasPromptVariables = (content: string): boolean => /\{\{(\w+)\}\}/.test(content)
-
-const getGlobalSearchHighlightRanges = (
-  value: string,
-  tokens: string[],
-): Array<{ start: number; end: number }> => {
-  if (!value || tokens.length === 0) {
-    return []
-  }
-
-  const normalizedValue = value.toLowerCase()
-  const ranges: Array<{ start: number; end: number }> = []
-
-  tokens.forEach((token) => {
-    if (!token) return
-
-    let fromIndex = 0
-    while (fromIndex < normalizedValue.length) {
-      const hitIndex = normalizedValue.indexOf(token, fromIndex)
-      if (hitIndex < 0) {
-        break
-      }
-
-      ranges.push({ start: hitIndex, end: hitIndex + token.length })
-      fromIndex = hitIndex + token.length
-    }
-  })
-
-  if (ranges.length === 0) {
-    return []
-  }
-
-  ranges.sort((left, right) => {
-    if (left.start !== right.start) return left.start - right.start
-    return left.end - right.end
-  })
-
-  const mergedRanges: Array<{ start: number; end: number }> = []
-  ranges.forEach((range) => {
-    const lastRange = mergedRanges[mergedRanges.length - 1]
-    if (!lastRange || range.start > lastRange.end) {
-      mergedRanges.push({ ...range })
-      return
-    }
-
-    if (range.end > lastRange.end) {
-      lastRange.end = range.end
-    }
-  })
-
-  return mergedRanges
-}
-
-const splitGlobalSearchHighlightSegments = (
-  value: string,
-  tokens: string[],
-): Array<{ text: string; highlighted: boolean }> => {
-  if (!value) {
-    return []
-  }
-
-  const ranges = getGlobalSearchHighlightRanges(value, tokens)
-  if (ranges.length === 0) {
-    return [{ text: value, highlighted: false }]
-  }
-
-  const segments: Array<{ text: string; highlighted: boolean }> = []
-  let cursor = 0
-
-  ranges.forEach((range) => {
-    if (range.start > cursor) {
-      segments.push({ text: value.slice(cursor, range.start), highlighted: false })
-    }
-
-    segments.push({ text: value.slice(range.start, range.end), highlighted: true })
-    cursor = range.end
-  })
-
-  if (cursor < value.length) {
-    segments.push({ text: value.slice(cursor), highlighted: false })
-  }
-
-  return segments.filter((segment) => segment.text.length > 0)
-}
 
 export const App = () => {
   // 读取设置 - 使用 Zustand Store

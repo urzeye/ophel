@@ -11,68 +11,14 @@ import {
   toGlobalSearchTokens,
   type GlobalSearchSyntaxFilter,
 } from "./syntax"
-
-type GlobalSearchCategoryId = "all" | "outline" | "conversations" | "prompts" | "settings"
-
-type GlobalSearchResultCategory = Exclude<GlobalSearchCategoryId, "all">
-
-type GlobalSearchMatchReason =
-  | "title"
-  | "folder"
-  | "tag"
-  | "type"
-  | "code"
-  | "category"
-  | "content"
-  | "id"
-  | "keyword"
-  | "alias"
-
-interface GlobalSearchTagBadge {
-  id: string
-  name: string
-  color: string
-}
-
-interface GlobalSearchOutlineTarget {
-  index: number
-  level: number
-  text: string
-  isUserQuery: boolean
-  queryIndex?: number
-  isGhost?: boolean
-  scrollTop?: number
-}
-
-export interface GlobalSearchResultItem {
-  id: string
-  title: string
-  breadcrumb: string
-  snippet?: string
-  code?: string
-  category: GlobalSearchResultCategory
-  settingId?: string
-  conversationId?: string
-  conversationUrl?: string
-  promptId?: string
-  promptContent?: string
-  tagBadges?: GlobalSearchTagBadge[]
-  folderName?: string
-  tagNames?: string[]
-  isPinned?: boolean
-  searchTimestamp?: number
-  matchReasons?: GlobalSearchMatchReason[]
-  outlineTarget?: GlobalSearchOutlineTarget
-}
-
-export interface GlobalSearchGroupedResult {
-  category: GlobalSearchResultCategory
-  items: GlobalSearchResultItem[]
-  totalCount: number
-  hasMore: boolean
-  isExpanded: boolean
-  remainingCount: number
-}
+import type {
+  GlobalSearchCategoryId,
+  GlobalSearchGroupedResult,
+  GlobalSearchMatchReason,
+  GlobalSearchResultCategory,
+  GlobalSearchResultItem,
+  GlobalSearchTagBadge,
+} from "./types"
 
 interface GlobalSearchScoreField {
   value: string
