@@ -424,11 +424,17 @@ const normalizeGlobalSearchRawToken = (rawToken: string): string => {
     return ""
   }
 
-  return rawToken.replace(/^"|"$/g, "").replace(/\\([\\"\s:])/g, "$1").trim()
+  return rawToken
+    .replace(/^"|"$/g, "")
+    .replace(/\\([\\"\s:])/g, "$1")
+    .trim()
 }
 
 const tryParseGlobalSearchDateDays = (value: string): number | null => {
-  const match = value.trim().toLowerCase().match(/^(\d{1,3})d$/)
+  const match = value
+    .trim()
+    .toLowerCase()
+    .match(/^(\d{1,3})d$/)
   if (!match) {
     return null
   }
@@ -5044,7 +5050,9 @@ export const App = () => {
 
                   return (
                     <div key={diagnostic.id} className="settings-search-syntax-diagnostic">
-                      <span className="settings-search-syntax-diagnostic-title">{diagnosticTitle}</span>
+                      <span className="settings-search-syntax-diagnostic-title">
+                        {diagnosticTitle}
+                      </span>
                       <span className="settings-search-syntax-diagnostic-detail">
                         {diagnostic.operator}
                         {diagnostic.value ? `:${diagnostic.value}` : ""}
