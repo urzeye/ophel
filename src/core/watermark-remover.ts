@@ -590,9 +590,7 @@ export class WatermarkRemover {
     }
 
     if (source.startsWith("blob:")) {
-      const blobResponse = await fetch(source)
-      const blob = await blobResponse.blob()
-      return this.processImageBlobToDataUrl(blob)
+      return this.processImageSourceToDataUrl(source)
     }
 
     return this.getProcessedDataUrl(source)
@@ -812,8 +810,27 @@ export class WatermarkRemover {
   }
 
   private async dataUrlToBlob(dataUrl: string): Promise<Blob> {
-    const response = await fetch(dataUrl)
-    return response.blob()
+    const parsed = dataUrl.match(/^data:([^;,]+)?(?:;charset=[^;,]+)?(;base64)?,([\s\S]*)$/i)
+    if (!parsed) {
+      throw new Error("Invalid data URL")
+    }
+
+    const mimeType = parsed[1] || "application/octet-stream"
+    const isBase64 = !!parsed[2]
+    const payload = parsed[3] || ""
+
+    if (!isBase64) {
+      return new Blob([decodeURIComponent(payload)], { type: mimeType })
+    }
+
+    const normalizedPayload = payload.replace(/\s+/g, "")
+    const binary = atob(normalizedPayload)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i)
+    }
+
+    return new Blob([bytes], { type: mimeType })
   }
 
   private buildRemoteFetchCandidates(url: string): string[] {
@@ -941,26 +958,34 @@ export class WatermarkRemover {
     throw lastError instanceof Error ? lastError : new Error("Failed to fetch original image")
   }
 
+  private async processLoadedImageToDataUrl(loadedImg: HTMLImageElement): Promise<string> {
+    const canvas = document.createElement("canvas")
+    canvas.width = loadedImg.width
+    canvas.height = loadedImg.height
+    const ctx = canvas.getContext("2d")
+    if (!ctx) throw new Error("Could not get canvas context")
+
+    ctx.drawImage(loadedImg, 0, 0)
+
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    const config = this.detectWatermarkConfig(canvas.width, canvas.height)
+    const position = this.calculateWatermarkPosition(canvas.width, canvas.height, config)
+    const alphaMap = await this.getAlphaMap(config.logoSize)
+    this.removeWatermark(imageData, alphaMap, position)
+    ctx.putImageData(imageData, 0, 0)
+
+    return canvas.toDataURL("image/png")
+  }
+
+  private async processImageSourceToDataUrl(source: string): Promise<string> {
+    const loadedImg = await this.loadImageFromSource(source)
+    return this.processLoadedImageToDataUrl(loadedImg)
+  }
+
   private async processImageBlobToDataUrl(blob: Blob): Promise<string> {
     const blobUrl = URL.createObjectURL(blob)
     try {
-      const loadedImg = await this.loadImageFromSource(blobUrl)
-      const canvas = document.createElement("canvas")
-      canvas.width = loadedImg.width
-      canvas.height = loadedImg.height
-      const ctx = canvas.getContext("2d")
-      if (!ctx) throw new Error("Could not get canvas context")
-
-      ctx.drawImage(loadedImg, 0, 0)
-
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-      const config = this.detectWatermarkConfig(canvas.width, canvas.height)
-      const position = this.calculateWatermarkPosition(canvas.width, canvas.height, config)
-      const alphaMap = await this.getAlphaMap(config.logoSize)
-      this.removeWatermark(imageData, alphaMap, position)
-      ctx.putImageData(imageData, 0, 0)
-
-      return canvas.toDataURL("image/png")
+      return await this.processImageSourceToDataUrl(blobUrl)
     } finally {
       URL.revokeObjectURL(blobUrl)
     }
