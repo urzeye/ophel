@@ -49,33 +49,95 @@ const getGlobalSearchHighlightRanges = (
   return mergedRanges
 }
 
+const getGlobalSearchHighlightRangesFromIndexes = (
+  value: string,
+  indexes?: number[],
+): Array<{ start: number; end: number }> => {
+  if (!value || !indexes || indexes.length === 0) {
+    return []
+  }
+
+  const normalizedIndexes = Array.from(
+    new Set(
+      indexes
+        .map((index) => Number(index))
+        .filter((index) => Number.isInteger(index) && index >= 0 && index < value.length),
+    ),
+  ).sort((left, right) => left - right)
+
+  if (normalizedIndexes.length === 0) {
+    return []
+  }
+
+  const ranges: Array<{ start: number; end: number }> = []
+  let rangeStart = normalizedIndexes[0]
+  let previousIndex = normalizedIndexes[0]
+
+  for (let index = 1; index < normalizedIndexes.length; index += 1) {
+    const currentIndex = normalizedIndexes[index]
+    if (currentIndex === previousIndex + 1) {
+      previousIndex = currentIndex
+      continue
+    }
+
+    ranges.push({ start: rangeStart, end: previousIndex + 1 })
+    rangeStart = currentIndex
+    previousIndex = currentIndex
+  }
+
+  ranges.push({ start: rangeStart, end: previousIndex + 1 })
+  return ranges
+}
+
+export type GlobalSearchHighlightMatchType = "none" | "exact" | "fuzzy"
+
 export const splitGlobalSearchHighlightSegments = (
   value: string,
   tokens: string[],
-): Array<{ text: string; highlighted: boolean }> => {
+  fuzzyIndexes?: number[],
+): Array<{ text: string; matchType: GlobalSearchHighlightMatchType }> => {
   if (!value) {
     return []
   }
 
-  const ranges = getGlobalSearchHighlightRanges(value, tokens)
-  if (ranges.length === 0) {
-    return [{ text: value, highlighted: false }]
+  const exactRanges = getGlobalSearchHighlightRanges(value, tokens)
+  const fuzzyRanges = getGlobalSearchHighlightRangesFromIndexes(value, fuzzyIndexes)
+
+  if (exactRanges.length === 0 && fuzzyRanges.length === 0) {
+    return [{ text: value, matchType: "none" }]
   }
 
-  const segments: Array<{ text: string; highlighted: boolean }> = []
-  let cursor = 0
+  const markers = new Array<GlobalSearchHighlightMatchType>(value.length).fill("none")
 
-  ranges.forEach((range) => {
-    if (range.start > cursor) {
-      segments.push({ text: value.slice(cursor, range.start), highlighted: false })
+  fuzzyRanges.forEach((range) => {
+    for (let index = range.start; index < range.end; index += 1) {
+      markers[index] = "fuzzy"
     }
-
-    segments.push({ text: value.slice(range.start, range.end), highlighted: true })
-    cursor = range.end
   })
 
-  if (cursor < value.length) {
-    segments.push({ text: value.slice(cursor), highlighted: false })
+  exactRanges.forEach((range) => {
+    for (let index = range.start; index < range.end; index += 1) {
+      markers[index] = "exact"
+    }
+  })
+
+  const segments: Array<{ text: string; matchType: GlobalSearchHighlightMatchType }> = []
+  let cursor = 0
+  let currentMatchType = markers[0] || "none"
+
+  for (let index = 1; index <= value.length; index += 1) {
+    const nextMatchType = index < value.length ? markers[index] : null
+    if (nextMatchType === currentMatchType) {
+      continue
+    }
+
+    segments.push({
+      text: value.slice(cursor, index),
+      matchType: currentMatchType,
+    })
+
+    cursor = index
+    currentMatchType = (nextMatchType || "none") as GlobalSearchHighlightMatchType
   }
 
   return segments.filter((segment) => segment.text.length > 0)

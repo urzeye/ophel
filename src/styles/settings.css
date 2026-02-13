@@ -1224,6 +1224,31 @@ html[data-theme="dark"] .about-slogan {
   line-height: 1.6;
 }
 
+.settings-search-fuzzy-toggle {
+  flex-shrink: 0;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.settings-search-fuzzy-toggle:hover,
+.settings-search-fuzzy-toggle.active {
+  color: var(--gh-primary, #2563eb);
+  border-color: rgba(37, 99, 235, 0.28);
+  background: rgba(37, 99, 235, 0.08);
+}
+
 .settings-search-help {
   position: relative;
   flex-shrink: 0;
@@ -1771,6 +1796,20 @@ html[data-theme="dark"] .about-slogan {
 .settings-search-highlight-code {
   background: rgba(99, 102, 241, 0.22);
   color: inherit;
+}
+
+.settings-search-highlight-fuzzy {
+  background: rgba(245, 158, 11, 0.2);
+  box-shadow: inset 0 -1px 0 rgba(217, 119, 6, 0.45);
+}
+
+.settings-search-highlight-tag.settings-search-highlight-fuzzy {
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.settings-search-highlight-code.settings-search-highlight-fuzzy {
+  background: rgba(245, 158, 11, 0.24);
 }
 
 .settings-search-item-title {

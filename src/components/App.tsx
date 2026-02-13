@@ -197,6 +197,7 @@ const GLOBAL_SEARCH_MATCH_REASON_LABEL_DEFINITIONS: Record<
   id: { key: "globalSearchMatchReasonId", fallback: "ID match" },
   keyword: { key: "globalSearchMatchReasonKeyword", fallback: "Keyword match" },
   alias: { key: "globalSearchMatchReasonAlias", fallback: "Alias match" },
+  fuzzy: { key: "globalSearchMatchReasonFuzzy", fallback: "Fuzzy match" },
 }
 
 const GLOBAL_SEARCH_ALL_CATEGORY_ITEM_LIMIT = 12
@@ -229,6 +230,7 @@ const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "appearance-preset-dark": "darkModePreset",
   "appearance-preset-light": "lightModePreset",
   "chatgpt-markdown-fix": "chatgptMarkdownFixLabel",
+  "global-search-fuzzy-search": "globalSearchEnableFuzzySearchLabel",
   "global-search-prompt-enter-behavior": "globalSearchPromptEnterBehaviorLabel",
   "claude-session-keys": "claudeSessionKeyTitle",
   "content-formula-copy": "formulaCopyLabel",
@@ -348,6 +350,8 @@ export const App = () => {
   const isMacLike = useMemo(() => isLikelyMacPlatform(), [])
   const globalSearchPrimaryShortcutLabel = isMacLike ? "⌘K" : "Ctrl+K"
   const globalSearchShortcutHintLabel = `${globalSearchPrimaryShortcutLabel} / double shift`
+  const isGlobalSearchFuzzySearchEnabled =
+    settings?.globalSearch?.enableFuzzySearch ?? DEFAULT_SETTINGS.globalSearch.enableFuzzySearch
 
   const globalSearchShortcutNudgeText = useMemo(
     () =>
@@ -482,6 +486,16 @@ export const App = () => {
     },
     [clearSettingsSearchInputDebounceTimer],
   )
+
+  const toggleGlobalSearchFuzzySearch = useCallback(() => {
+    setSettings({
+      globalSearch: {
+        ...DEFAULT_SETTINGS.globalSearch,
+        ...(settings?.globalSearch || {}),
+        enableFuzzySearch: !isGlobalSearchFuzzySearchEnabled,
+      },
+    })
+  }, [isGlobalSearchFuzzySearchEnabled, setSettings, settings?.globalSearch])
 
   const commitSettingsSearchInputValue = useCallback(
     (nextValue: string) => {
@@ -892,8 +906,8 @@ export const App = () => {
   )
 
   const settingsSearchResults = useMemo(
-    () => searchSettingsItems(activeGlobalSearchPlainQuery),
-    [activeGlobalSearchPlainQuery],
+    () => searchSettingsItems(isGlobalSearchFuzzySearchEnabled ? "" : activeGlobalSearchPlainQuery),
+    [activeGlobalSearchPlainQuery, isGlobalSearchFuzzySearchEnabled],
   )
 
   useEffect(() => {
@@ -937,6 +951,7 @@ export const App = () => {
     visibleGlobalSearchResults,
   } = useGlobalSearchData({
     activeGlobalSearchPlainQuery,
+    enableFuzzySearch: isGlobalSearchFuzzySearchEnabled,
     activeGlobalSearchSyntaxFilters,
     settingsSearchResults,
     resolveSettingSearchTitle,
@@ -2905,6 +2920,16 @@ export const App = () => {
           setSettingsSearchActiveIndex(0)
         }}
         hotkeyLabel={globalSearchShortcutHintLabel}
+        fuzzySearchToggleLabel={getLocalizedText({
+          key: "globalSearchFuzzySearchToggle",
+          fallback: "Fuzzy",
+        })}
+        fuzzySearchToggleAriaLabel={getLocalizedText({
+          key: "globalSearchFuzzySearchToggleAria",
+          fallback: "Toggle fuzzy search",
+        })}
+        isFuzzySearchEnabled={isGlobalSearchFuzzySearchEnabled}
+        onToggleFuzzySearch={toggleGlobalSearchFuzzySearch}
         syntaxHelpTriggerRef={globalSearchSyntaxHelpTriggerRef}
         syntaxHelpPopoverRef={globalSearchSyntaxHelpPopoverRef}
         showSyntaxHelp={showGlobalSearchSyntaxHelp}

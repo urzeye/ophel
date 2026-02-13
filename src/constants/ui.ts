@@ -188,6 +188,7 @@ export const SETTING_ID_ALIASES: Record<string, string> = {
   "siteSettings.layout.userQueryWidth.value": "layout-user-query-width-value",
   "siteSettings.modelLock": "model-lock-gemini",
   "globalSearch.promptEnterBehavior": "global-search-prompt-enter-behavior",
+  "globalSearch.enableFuzzySearch": "global-search-fuzzy-search",
   "features.tab.openInNewTab": "tab-open-new",
   "features.tab.autoRename": "tab-auto-rename",
   "features.outline.autoUpdate": "outline-auto-update",
@@ -619,6 +620,11 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     settingId: "global-search-prompt-enter-behavior",
     title: "全局搜索：提示词回车行为",
     keywords: ["global search", "prompt", "enter", "全局搜索", "提示词", "回车"],
+  },
+  {
+    settingId: "global-search-fuzzy-search",
+    title: "Global Search: Enable fuzzy search",
+    keywords: ["global search", "fuzzy", "search everywhere", "matching"],
   },
   {
     settingId: "appearance-preset-light",

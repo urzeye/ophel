@@ -120,6 +120,7 @@ export default defineConfig({
         noframes: true,
         homepageURL: "https://github.com/urzeye/ophel",
         supportURL: "https://github.com/urzeye/ophel/issues",
+        require: ["https://cdn.jsdelivr.net/npm/fuzzysort@3.1.0/fuzzysort.min.js"],
       },
       build: {
         // CSS 自动注入到 head
@@ -132,6 +133,7 @@ export default defineConfig({
       // ========== Userscript Polyfills ==========
       // 替换 @plasmohq/storage 为 GM_* 实现
       "@plasmohq/storage": path.resolve(__dirname, "src/platform/userscript/storage-polyfill.ts"),
+      fuzzysort: path.resolve(__dirname, "src/platform/userscript/fuzzysort-global.ts"),
       // 注意：chrome-adapter.ts 已内置跨平台支持（通过 __PLATFORM__ 判断），无需 alias 替换
 
       // ========== 路径别名（与 Plasmo 的 ~ 别名一致）==========

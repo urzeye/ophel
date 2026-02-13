@@ -1,4 +1,5 @@
 import { useMemo } from "react"
+import fuzzysort from "fuzzysort"
 
 import { SETTING_ID_ALIASES, type SettingsSearchItem } from "~constants"
 import type { ConversationManager } from "~core/conversation-manager"
@@ -13,7 +14,9 @@ import {
 } from "./syntax"
 import type {
   GlobalSearchCategoryId,
+  GlobalSearchFuzzyMatchMeta,
   GlobalSearchGroupedResult,
+  GlobalSearchHighlightField,
   GlobalSearchMatchReason,
   GlobalSearchResultCategory,
   GlobalSearchResultItem,
@@ -28,6 +31,7 @@ interface GlobalSearchScoreField {
   tokenPrefix: number
   tokenIncludes: number
   matchReason?: GlobalSearchMatchReason
+  highlightField?: GlobalSearchHighlightField
 }
 
 interface GlobalSearchScoreResult {
@@ -37,6 +41,7 @@ interface GlobalSearchScoreResult {
   prefixHitCount: number
   includesHitCount: number
   matchReasons: GlobalSearchMatchReason[]
+  fuzzyMatch?: GlobalSearchFuzzyMatchMeta
 }
 
 interface LocalizedLabelDefinition {
@@ -46,6 +51,7 @@ interface LocalizedLabelDefinition {
 
 interface UseGlobalSearchDataParams {
   activeGlobalSearchPlainQuery: string
+  enableFuzzySearch: boolean
   activeGlobalSearchSyntaxFilters: GlobalSearchSyntaxFilter[]
   settingsSearchResults: SettingsSearchItem[]
   resolveSettingSearchTitle: (item: SettingsSearchItem) => string
@@ -162,22 +168,207 @@ const flattenOutlineNodes = (nodes: OutlineNode[]): OutlineNode[] => {
   return collector
 }
 
+const GLOBAL_SEARCH_FUZZY_THRESHOLD = 0.24
+const GLOBAL_SEARCH_FUZZY_SCORE_MULTIPLIER = 64
+const GLOBAL_SEARCH_TYPO_MIN_QUERY_LENGTH = 4
+const GLOBAL_SEARCH_TYPO_MAX_DISTANCE_SHORT = 1
+const GLOBAL_SEARCH_TYPO_MAX_DISTANCE_LONG = 2
+
+interface GlobalSearchFuzzyMatchResult {
+  score: number
+  matchReason?: GlobalSearchMatchReason
+  highlightField?: GlobalSearchHighlightField
+  indexes?: number[]
+  isTypoFallback?: boolean
+}
+
+const toGlobalSearchFuzzyWords = (value: string): string[] => {
+  if (!value) {
+    return []
+  }
+
+  return value
+    .split(/[^a-z0-9\u4e00-\u9fff]+/gi)
+    .map((word) => word.trim())
+    .filter((word) => word.length > 0)
+}
+
+const getBoundedDamerauLevenshteinDistance = (
+  source: string,
+  target: string,
+  maxDistance: number,
+): number => {
+  const sourceLength = source.length
+  const targetLength = target.length
+
+  if (source === target) {
+    return 0
+  }
+
+  if (Math.abs(sourceLength - targetLength) > maxDistance) {
+    return maxDistance + 1
+  }
+
+  const prevPrevRow = new Array(targetLength + 1).fill(0)
+  const prevRow = new Array(targetLength + 1)
+  const currentRow = new Array(targetLength + 1)
+
+  for (let columnIndex = 0; columnIndex <= targetLength; columnIndex += 1) {
+    prevRow[columnIndex] = columnIndex
+  }
+
+  for (let rowIndex = 1; rowIndex <= sourceLength; rowIndex += 1) {
+    currentRow[0] = rowIndex
+    let rowBest = currentRow[0]
+
+    for (let columnIndex = 1; columnIndex <= targetLength; columnIndex += 1) {
+      const cost = source[rowIndex - 1] === target[columnIndex - 1] ? 0 : 1
+
+      let value = Math.min(
+        prevRow[columnIndex] + 1,
+        currentRow[columnIndex - 1] + 1,
+        prevRow[columnIndex - 1] + cost,
+      )
+
+      if (
+        rowIndex > 1 &&
+        columnIndex > 1 &&
+        source[rowIndex - 1] === target[columnIndex - 2] &&
+        source[rowIndex - 2] === target[columnIndex - 1]
+      ) {
+        value = Math.min(value, prevPrevRow[columnIndex - 2] + 1)
+      }
+
+      currentRow[columnIndex] = value
+      if (value < rowBest) {
+        rowBest = value
+      }
+    }
+
+    if (rowBest > maxDistance) {
+      return maxDistance + 1
+    }
+
+    for (let columnIndex = 0; columnIndex <= targetLength; columnIndex += 1) {
+      prevPrevRow[columnIndex] = prevRow[columnIndex]
+      prevRow[columnIndex] = currentRow[columnIndex]
+    }
+  }
+
+  return prevRow[targetLength]
+}
+
+const getGlobalSearchFuzzyMatch = ({
+  normalizedQuery,
+  fields,
+}: {
+  normalizedQuery: string
+  fields: GlobalSearchScoreField[]
+}): GlobalSearchFuzzyMatchResult | null => {
+  if (!normalizedQuery) {
+    return null
+  }
+
+  let bestMatch: GlobalSearchFuzzyMatchResult | null = null
+  const typoMaxDistance =
+    normalizedQuery.length >= 8
+      ? GLOBAL_SEARCH_TYPO_MAX_DISTANCE_LONG
+      : GLOBAL_SEARCH_TYPO_MAX_DISTANCE_SHORT
+
+  fields.forEach((field) => {
+    if (!field.value) {
+      return
+    }
+
+    const fuzzyResult = fuzzysort.single(normalizedQuery, field.value)
+    if (!fuzzyResult || fuzzyResult.score < GLOBAL_SEARCH_FUZZY_THRESHOLD) {
+      return
+    }
+
+    if (!bestMatch || fuzzyResult.score > bestMatch.score) {
+      bestMatch = {
+        score: fuzzyResult.score,
+        matchReason: field.matchReason,
+        highlightField: field.highlightField,
+        indexes: Array.from(fuzzyResult.indexes || []),
+        isTypoFallback: false,
+      }
+    }
+
+    return
+  })
+
+  if (bestMatch) {
+    return bestMatch
+  }
+
+  if (normalizedQuery.length < GLOBAL_SEARCH_TYPO_MIN_QUERY_LENGTH) {
+    return null
+  }
+
+  fields.forEach((field) => {
+    if (!field.value) {
+      return
+    }
+
+    const words = toGlobalSearchFuzzyWords(field.value)
+    words.forEach((word) => {
+      if (Math.abs(word.length - normalizedQuery.length) > typoMaxDistance) {
+        return
+      }
+
+      const distance = getBoundedDamerauLevenshteinDistance(normalizedQuery, word, typoMaxDistance)
+
+      if (distance > typoMaxDistance) {
+        return
+      }
+
+      const typoScore = Math.max(
+        GLOBAL_SEARCH_FUZZY_THRESHOLD,
+        0.58 - distance * 0.14 - Math.abs(word.length - normalizedQuery.length) * 0.03,
+      )
+
+      if (!bestMatch || typoScore > bestMatch.score) {
+        bestMatch = {
+          score: typoScore,
+          matchReason: field.matchReason,
+          highlightField: field.highlightField,
+          indexes: undefined,
+          isTypoFallback: true,
+        }
+      }
+    })
+  })
+
+  return bestMatch
+}
+
 const getGlobalSearchScore = ({
   normalizedQuery,
   tokens,
   index,
   fields,
+  enableFuzzySearch,
   baseScoreWhenEmpty = 1000,
 }: {
   normalizedQuery: string
   tokens: string[]
   index: number
   fields: GlobalSearchScoreField[]
+  enableFuzzySearch: boolean
   baseScoreWhenEmpty?: number
 }): GlobalSearchScoreResult | null => {
   const searchableText = fields.map((field) => field.value).join(" ")
+  const hasAllTokenMatches = tokens.every((token) => searchableText.includes(token))
+  const fuzzyMatch =
+    enableFuzzySearch && normalizedQuery
+      ? getGlobalSearchFuzzyMatch({
+          normalizedQuery,
+          fields,
+        })
+      : null
 
-  if (tokens.some((token) => !searchableText.includes(token))) {
+  if (!hasAllTokenMatches && !fuzzyMatch) {
     return null
   }
 
@@ -259,6 +450,22 @@ const getGlobalSearchScore = ({
     }
   })
 
+  const shouldUseFuzzyFallback = Boolean(fuzzyMatch && matchLevel === 0)
+
+  if (shouldUseFuzzyFallback && fuzzyMatch) {
+    const normalizedFuzzyScore = Math.round(fuzzyMatch.score * GLOBAL_SEARCH_FUZZY_SCORE_MULTIPLIER)
+    score += normalizedFuzzyScore + 16
+    matchReasons.add("fuzzy")
+
+    if (fuzzyMatch.matchReason) {
+      matchReasons.add(fuzzyMatch.matchReason)
+    }
+  }
+
+  if (matchLevel === 0 && !fuzzyMatch) {
+    return null
+  }
+
   return {
     score,
     matchLevel,
@@ -266,6 +473,13 @@ const getGlobalSearchScore = ({
     prefixHitCount,
     includesHitCount,
     matchReasons: Array.from(matchReasons),
+    fuzzyMatch: shouldUseFuzzyFallback
+      ? {
+          field: fuzzyMatch?.highlightField,
+          indexes: fuzzyMatch?.indexes,
+          isTypoFallback: fuzzyMatch?.isTypoFallback,
+        }
+      : undefined,
   }
 }
 
@@ -304,6 +518,7 @@ const compareGlobalSearchRankedItems = (
 
 export const useGlobalSearchData = ({
   activeGlobalSearchPlainQuery,
+  enableFuzzySearch,
   activeGlobalSearchSyntaxFilters,
   settingsSearchResults,
   resolveSettingSearchTitle,
@@ -324,55 +539,88 @@ export const useGlobalSearchData = ({
     const normalizedQuery = normalizeGlobalSearchValue(activeGlobalSearchPlainQuery)
     const tokens = toGlobalSearchTokens(activeGlobalSearchPlainQuery)
 
-    return settingsSearchResults.map((item) => {
-      const title = resolveSettingSearchTitle(item)
-      const normalizedTitle = normalizeGlobalSearchValue(title)
-      const normalizedKeywords = normalizeGlobalSearchValue((item.keywords || []).join(" "))
-      const normalizedSettingId = normalizeGlobalSearchValue(item.settingId)
-      const normalizedAliasKeywords = normalizeGlobalSearchValue(
-        (GLOBAL_SEARCH_SETTING_ALIAS_MAP[item.settingId] || []).join(" "),
-      )
+    const scoredItems = settingsSearchResults
+      .map((item, index) => {
+        const title = resolveSettingSearchTitle(item)
+        const normalizedTitle = normalizeGlobalSearchValue(title)
+        const normalizedKeywords = normalizeGlobalSearchValue((item.keywords || []).join(" "))
+        const normalizedSettingId = normalizeGlobalSearchValue(item.settingId)
+        const normalizedAliasKeywords = normalizeGlobalSearchValue(
+          (GLOBAL_SEARCH_SETTING_ALIAS_MAP[item.settingId] || []).join(" "),
+        )
+        const scoreMeta = getGlobalSearchScore({
+          normalizedQuery,
+          tokens,
+          index,
+          enableFuzzySearch,
+          fields: [
+            {
+              value: normalizedTitle,
+              exact: 220,
+              prefix: 140,
+              includes: 100,
+              tokenPrefix: 24,
+              tokenIncludes: 12,
+              matchReason: "title",
+              highlightField: "title",
+            },
+            {
+              value: normalizedKeywords,
+              exact: 0,
+              prefix: 0,
+              includes: 68,
+              tokenPrefix: 0,
+              tokenIncludes: 8,
+              matchReason: "keyword",
+            },
+            {
+              value: normalizedSettingId,
+              exact: 0,
+              prefix: 0,
+              includes: 48,
+              tokenPrefix: 0,
+              tokenIncludes: 6,
+              matchReason: "id",
+              highlightField: "code",
+            },
+            {
+              value: normalizedAliasKeywords,
+              exact: 0,
+              prefix: 0,
+              includes: 44,
+              tokenPrefix: 0,
+              tokenIncludes: 6,
+              matchReason: "alias",
+            },
+          ],
+        })
 
-      const matchReasons = new Set<GlobalSearchMatchReason>()
-
-      const markReason = (reason: GlobalSearchMatchReason, value: string) => {
-        if (!value) return
-
-        if (normalizedQuery) {
-          if (
-            value === normalizedQuery ||
-            value.startsWith(normalizedQuery) ||
-            value.includes(normalizedQuery)
-          ) {
-            matchReasons.add(reason)
-            return
-          }
+        if (scoreMeta === null) {
+          return null
         }
 
-        if (tokens.length > 0) {
-          if (tokens.some((token) => value.startsWith(token) || value.includes(token))) {
-            matchReasons.add(reason)
-          }
+        return {
+          item: {
+            id: `settings:${item.settingId}`,
+            title,
+            breadcrumb: getSettingsBreadcrumb(item.settingId),
+            code: item.settingId,
+            category: "settings" as const,
+            settingId: item.settingId,
+            matchReasons: scoreMeta.matchReasons,
+            fuzzyMatch: scoreMeta.fuzzyMatch,
+          },
+          scoreMeta,
+          index,
         }
-      }
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+      .sort(compareGlobalSearchRankedItems)
 
-      markReason("title", normalizedTitle)
-      markReason("keyword", normalizedKeywords)
-      markReason("id", normalizedSettingId)
-      markReason("alias", normalizedAliasKeywords)
-
-      return {
-        id: `settings:${item.settingId}`,
-        title,
-        breadcrumb: getSettingsBreadcrumb(item.settingId),
-        code: item.settingId,
-        category: "settings",
-        settingId: item.settingId,
-        matchReasons: Array.from(matchReasons),
-      }
-    })
+    return scoredItems.map(({ item }) => item)
   }, [
     activeGlobalSearchPlainQuery,
+    enableFuzzySearch,
     getSettingsBreadcrumb,
     resolveSettingSearchTitle,
     settingsSearchResults,
@@ -429,6 +677,7 @@ export const useGlobalSearchData = ({
           normalizedQuery,
           tokens,
           index,
+          enableFuzzySearch,
           fields: [
             {
               value: normalizedTitle,
@@ -438,6 +687,7 @@ export const useGlobalSearchData = ({
               tokenPrefix: 24,
               tokenIncludes: 12,
               matchReason: "title",
+              highlightField: "title",
             },
             {
               value: normalizedFolder,
@@ -447,6 +697,7 @@ export const useGlobalSearchData = ({
               tokenPrefix: 0,
               tokenIncludes: 8,
               matchReason: "folder",
+              highlightField: "breadcrumb",
             },
             {
               value: normalizedTags,
@@ -483,6 +734,7 @@ export const useGlobalSearchData = ({
             isPinned: Boolean(conversation.pinned),
             searchTimestamp: conversation.updatedAt || 0,
             matchReasons: finalScoreMeta.matchReasons,
+            fuzzyMatch: finalScoreMeta.fuzzyMatch,
           },
           scoreMeta: finalScoreMeta,
           index,
@@ -500,6 +752,7 @@ export const useGlobalSearchData = ({
     tagsSnapshot,
     getLocalizedText,
     activeGlobalSearchPlainQuery,
+    enableFuzzySearch,
   ])
 
   const promptsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
@@ -532,6 +785,7 @@ export const useGlobalSearchData = ({
           normalizedQuery,
           tokens,
           index,
+          enableFuzzySearch,
           fields: [
             {
               value: normalizedTitle,
@@ -541,6 +795,7 @@ export const useGlobalSearchData = ({
               tokenPrefix: 24,
               tokenIncludes: 12,
               matchReason: "title",
+              highlightField: "title",
             },
             {
               value: normalizedCategory,
@@ -550,6 +805,7 @@ export const useGlobalSearchData = ({
               tokenPrefix: 0,
               tokenIncludes: 8,
               matchReason: "category",
+              highlightField: "breadcrumb",
             },
             {
               value: normalizedContent,
@@ -559,6 +815,7 @@ export const useGlobalSearchData = ({
               tokenPrefix: 0,
               tokenIncludes: 6,
               matchReason: "content",
+              highlightField: "snippet",
             },
             {
               value: normalizedPromptId,
@@ -568,6 +825,7 @@ export const useGlobalSearchData = ({
               tokenPrefix: 0,
               tokenIncludes: 4,
               matchReason: "id",
+              highlightField: "code",
             },
           ],
         })
@@ -602,6 +860,7 @@ export const useGlobalSearchData = ({
             isPinned: Boolean(prompt.pinned),
             searchTimestamp: prompt.lastUsedAt || 0,
             matchReasons: finalScoreMeta.matchReasons,
+            fuzzyMatch: finalScoreMeta.fuzzyMatch,
           },
           scoreMeta: finalScoreMeta,
           index,
@@ -612,7 +871,7 @@ export const useGlobalSearchData = ({
       .sort(compareGlobalSearchRankedItems)
 
     return scoredItems.map(({ item }) => item)
-  }, [activeGlobalSearchPlainQuery, getLocalizedText, promptsSnapshot])
+  }, [activeGlobalSearchPlainQuery, enableFuzzySearch, getLocalizedText, promptsSnapshot])
 
   const outlineGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
     if (!outlineManager) {
@@ -659,6 +918,7 @@ export const useGlobalSearchData = ({
           normalizedQuery,
           tokens,
           index,
+          enableFuzzySearch,
           fields: [
             {
               value: normalizedTitle,
@@ -668,6 +928,7 @@ export const useGlobalSearchData = ({
               tokenPrefix: 16,
               tokenIncludes: 10,
               matchReason: "title",
+              highlightField: "title",
             },
             {
               value: normalizedType,
@@ -677,6 +938,7 @@ export const useGlobalSearchData = ({
               tokenPrefix: 0,
               tokenIncludes: 6,
               matchReason: "type",
+              highlightField: "breadcrumb",
             },
             {
               value: normalizedCode,
@@ -686,6 +948,7 @@ export const useGlobalSearchData = ({
               tokenPrefix: 0,
               tokenIncludes: 4,
               matchReason: "code",
+              highlightField: "code",
             },
           ],
         })
@@ -707,6 +970,7 @@ export const useGlobalSearchData = ({
             code,
             category: "outline" as const,
             matchReasons: finalScoreMeta.matchReasons,
+            fuzzyMatch: finalScoreMeta.fuzzyMatch,
             outlineTarget: {
               index: node.index,
               level: node.level,
@@ -725,7 +989,13 @@ export const useGlobalSearchData = ({
       .sort(compareGlobalSearchRankedItems)
 
     return scoredItems.map(({ item }) => item)
-  }, [activeGlobalSearchPlainQuery, outlineManager, getLocalizedText, outlineSearchVersion])
+  }, [
+    activeGlobalSearchPlainQuery,
+    enableFuzzySearch,
+    outlineManager,
+    getLocalizedText,
+    outlineSearchVersion,
+  ])
 
   const normalizedGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(
     () => [

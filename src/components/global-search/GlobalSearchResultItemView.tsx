@@ -36,28 +36,36 @@ export const GlobalSearchResultItemView = ({
   const renderSearchHighlightedParts = (
     value: string,
     variant: "default" | "tag" | "code" = "default",
+    fuzzyIndexes?: number[],
   ) => {
-    const segments = splitGlobalSearchHighlightSegments(value, highlightTokens)
+    const segments = splitGlobalSearchHighlightSegments(value, highlightTokens, fuzzyIndexes)
 
-    return segments.map((segment, segmentIndex) =>
-      segment.highlighted ? (
+    return segments.map((segment, segmentIndex) => {
+      if (segment.matchType === "none") {
+        return (
+          <React.Fragment key={`plain-${segmentIndex}-${segment.text.length}`}>
+            {segment.text}
+          </React.Fragment>
+        )
+      }
+
+      const highlightClassName = [
+        "settings-search-highlight",
+        variant === "tag" ? "settings-search-highlight-tag" : "",
+        variant === "code" ? "settings-search-highlight-code" : "",
+        segment.matchType === "fuzzy" ? "settings-search-highlight-fuzzy" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")
+
+      return (
         <mark
           key={`highlight-${segmentIndex}-${segment.text.length}`}
-          className={`settings-search-highlight ${
-            variant === "tag"
-              ? "settings-search-highlight-tag"
-              : variant === "code"
-                ? "settings-search-highlight-code"
-                : ""
-          }`.trim()}>
+          className={highlightClassName}>
           {segment.text}
         </mark>
-      ) : (
-        <React.Fragment key={`plain-${segmentIndex}-${segment.text.length}`}>
-          {segment.text}
-        </React.Fragment>
-      ),
-    )
+      )
+    })
   }
 
   const isOutlineItem = item.category === "outline" && Boolean(item.outlineTarget)
@@ -66,9 +74,15 @@ export const GlobalSearchResultItemView = ({
   const isOutlineQuery = isOutlineItem && Boolean(item.outlineTarget?.isUserQuery)
   const outlineRoleLabel = isOutlineQuery ? outlineRoleLabels.query : outlineRoleLabels.reply
   const showCodeOnMeta = Boolean(item.code) && !isOutlineItem
+  const fuzzyMatchField = item.fuzzyMatch?.field
+  const fuzzyTitleIndexes = fuzzyMatchField === "title" ? item.fuzzyMatch?.indexes : undefined
+  const fuzzyBreadcrumbIndexes =
+    fuzzyMatchField === "breadcrumb" ? item.fuzzyMatch?.indexes : undefined
+  const fuzzySnippetIndexes = fuzzyMatchField === "snippet" ? item.fuzzyMatch?.indexes : undefined
+  const fuzzyCodeIndexes = fuzzyMatchField === "code" ? item.fuzzyMatch?.indexes : undefined
   const promptSnippetPrefix =
     item.category === "prompts" && item.matchReasons?.includes("content")
-      ? `${matchReasonLabels.content}：`
+      ? `${matchReasonLabels.content}: `
       : ""
   const matchReasonBadges =
     item.matchReasons && item.matchReasons.length > 0
@@ -119,16 +133,16 @@ export const GlobalSearchResultItemView = ({
             </span>
             {item.code ? (
               <span className="settings-search-outline-code" title={item.code}>
-                {renderSearchHighlightedParts(item.code, "code")}
+                {renderSearchHighlightedParts(item.code, "code", fuzzyCodeIndexes)}
               </span>
             ) : null}
             <span className="settings-search-item-title-text">
-              {renderSearchHighlightedParts(item.title)}
+              {renderSearchHighlightedParts(item.title, "default", fuzzyTitleIndexes)}
             </span>
           </div>
         ) : (
           <span className="settings-search-item-title-text">
-            {renderSearchHighlightedParts(item.title)}
+            {renderSearchHighlightedParts(item.title, "default", fuzzyTitleIndexes)}
           </span>
         )}
       </div>
@@ -139,13 +153,13 @@ export const GlobalSearchResultItemView = ({
           {promptSnippetPrefix ? (
             <span className="settings-search-item-snippet-prefix">{promptSnippetPrefix}</span>
           ) : null}
-          {renderSearchHighlightedParts(item.snippet)}
+          {renderSearchHighlightedParts(item.snippet, "default", fuzzySnippetIndexes)}
         </div>
       ) : null}
       <div className={`settings-search-item-meta ${showCodeOnMeta ? "" : "no-code"}`.trim()}>
         <div className="settings-search-item-meta-left">
           <span className="settings-search-item-breadcrumb" title={item.breadcrumb}>
-            {renderSearchHighlightedParts(item.breadcrumb)}
+            {renderSearchHighlightedParts(item.breadcrumb, "default", fuzzyBreadcrumbIndexes)}
           </span>
           {item.category === "conversations" && item.tagBadges && item.tagBadges.length > 0 ? (
             <div className="settings-search-tag-list">
@@ -171,7 +185,9 @@ export const GlobalSearchResultItemView = ({
           ) : null}
         </div>
         {showCodeOnMeta ? (
-          <code title={item.code}>{renderSearchHighlightedParts(item.code!, "code")}</code>
+          <code title={item.code}>
+            {renderSearchHighlightedParts(item.code!, "code", fuzzyCodeIndexes)}
+          </code>
         ) : null}
       </div>
     </div>

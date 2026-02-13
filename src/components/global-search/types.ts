@@ -13,6 +13,15 @@ export type GlobalSearchMatchReason =
   | "id"
   | "keyword"
   | "alias"
+  | "fuzzy"
+
+export type GlobalSearchHighlightField = "title" | "breadcrumb" | "snippet" | "code"
+
+export interface GlobalSearchFuzzyMatchMeta {
+  field?: GlobalSearchHighlightField
+  indexes?: number[]
+  isTypoFallback?: boolean
+}
 
 export interface GlobalSearchTagBadge {
   id: string
@@ -48,6 +57,7 @@ export interface GlobalSearchResultItem {
   isPinned?: boolean
   searchTimestamp?: number
   matchReasons?: GlobalSearchMatchReason[]
+  fuzzyMatch?: GlobalSearchFuzzyMatchMeta
   outlineTarget?: GlobalSearchOutlineTarget
 }
 

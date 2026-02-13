@@ -59,6 +59,10 @@ interface GlobalSearchOverlayProps<TItem, TCategoryId extends string> {
   inputPlaceholder: string
   onInputChange: (nextValue: string) => void
   hotkeyLabel: string
+  fuzzySearchToggleLabel: string
+  fuzzySearchToggleAriaLabel: string
+  isFuzzySearchEnabled: boolean
+  onToggleFuzzySearch: () => void
   syntaxHelpTriggerRef: React.RefObject<HTMLButtonElement>
   syntaxHelpPopoverRef: React.RefObject<HTMLDivElement>
   showSyntaxHelp: boolean
@@ -127,6 +131,10 @@ export const GlobalSearchOverlay = <TItem, TCategoryId extends string>(
     inputPlaceholder,
     onInputChange,
     hotkeyLabel,
+    fuzzySearchToggleLabel,
+    fuzzySearchToggleAriaLabel,
+    isFuzzySearchEnabled,
+    onToggleFuzzySearch,
     syntaxHelpTriggerRef,
     syntaxHelpPopoverRef,
     showSyntaxHelp,
@@ -191,6 +199,14 @@ export const GlobalSearchOverlay = <TItem, TCategoryId extends string>(
       <div className="settings-search-modal" onClick={(event) => event.stopPropagation()}>
         <div className="settings-search-input-wrap">
           <SearchIcon size={16} />
+          <button
+            type="button"
+            className={`settings-search-fuzzy-toggle ${isFuzzySearchEnabled ? "active" : ""}`}
+            aria-pressed={isFuzzySearchEnabled}
+            aria-label={fuzzySearchToggleAriaLabel}
+            onClick={onToggleFuzzySearch}>
+            {fuzzySearchToggleLabel}
+          </button>
           <input
             ref={inputRef}
             className="settings-search-input"
