@@ -11,6 +11,11 @@ const OPHEL_WATERMARK_PROCESS_RESPONSE = "OPHEL_WATERMARK_PROCESS_RESPONSE"
 const GEMINI_GOOGLEUSERCONTENT_HOST_PATTERN = /^https:\/\/lh3\.googleusercontent\.com\//i
 
 type GeminiImageAction = "copy" | "download"
+type WatermarkConfig = {
+  logoSize: 48 | 96
+  marginRight: number
+  marginBottom: number
+}
 
 // 油猴脚本的 GM_xmlhttpRequest 声明
 declare function GM_xmlhttpRequest(details: {
@@ -82,13 +87,17 @@ export class WatermarkRemover {
   start() {
     if (this.enabled) return
     this.enabled = true
-    this.setupMainWorldBridge()
-    this.toggleMainWorldFetchInterception(true)
+
+    if (!isUserscript) {
+      this.setupMainWorldBridge()
+      this.toggleMainWorldFetchInterception(true)
+      this.setupActionButtonInterception()
+    }
+
     if (isUserscript) {
       this.enableUserscriptFetchInterception()
     }
-    this.setupActionButtonInterception()
-    document.documentElement.setAttribute("data-ophel-wm-enabled", "1")
+
     this.processExistingImages()
     this.startObserver()
   }
@@ -96,15 +105,17 @@ export class WatermarkRemover {
   stop() {
     if (!this.enabled) return
     this.enabled = false
-    this.toggleMainWorldFetchInterception(false)
-    this.teardownMainWorldBridge()
+
+    if (!isUserscript) {
+      this.toggleMainWorldFetchInterception(false)
+      this.teardownMainWorldBridge()
+    }
+
     this.disableUserscriptFetchInterception()
     this.teardownActionButtonInterception()
     this.processingMap.clear()
     this.processingQueue.clear()
-    document.documentElement.removeAttribute("data-ophel-wm-enabled")
-    document.documentElement.removeAttribute("data-ophel-wm-last-action")
-    document.documentElement.removeAttribute("data-ophel-wm-last-error")
+
     if (this.stopObserver) {
       this.stopObserver()
       this.stopObserver = null
@@ -142,14 +153,6 @@ export class WatermarkRemover {
       source.startsWith("data:image/") ||
       source.startsWith("blob:")
     )
-  }
-
-  private setLastError(reason: string) {
-    document.documentElement.setAttribute("data-ophel-wm-last-error", reason)
-  }
-
-  private clearLastError() {
-    document.documentElement.removeAttribute("data-ophel-wm-last-error")
   }
 
   private getImageSourceForAction(img: HTMLImageElement): string {
@@ -296,7 +299,6 @@ export class WatermarkRemover {
     sourceMimeType?: string,
   ) {
     if (!this.enabled || !this.shouldInterceptGeminiImageUrl(sourceUrl)) {
-      this.setLastError("bridge-disabled")
       this.postMainWorldProcessResponse({
         requestId,
         success: false,
@@ -314,14 +316,12 @@ export class WatermarkRemover {
         ? await this.processImageBlobToDataUrl(sourceBlob)
         : await this.getProcessedDataUrl(sourceUrl)
 
-      this.clearLastError()
       this.postMainWorldProcessResponse({
         requestId,
         success: true,
         dataUrl,
       })
     } catch (error) {
-      this.setLastError("bridge-process-failed")
       this.postMainWorldProcessResponse({
         requestId,
         success: false,
@@ -375,7 +375,7 @@ export class WatermarkRemover {
   }
 
   private setupActionButtonInterception() {
-    if (this.actionButtonListener || !this.isGeminiStandardSite()) return
+    if (isUserscript || this.actionButtonListener || !this.isGeminiStandardSite()) return
 
     this.actionButtonListener = (event: MouseEvent) => {
       this.handleActionButtonClick(event)
@@ -621,27 +621,55 @@ export class WatermarkRemover {
     link.remove()
   }
 
+  private shouldUseNativeGeminiAction(): boolean {
+    if (isUserscript) {
+      return this.userscriptOriginalFetch !== null
+    }
+
+    return (
+      document.documentElement.getAttribute("data-ophel-wm-main") === "1" &&
+      document.documentElement.getAttribute("data-ophel-wm-main-fetch-enabled") === "1"
+    )
+  }
+
+  private async resolveProcessedDataUrlForAction(
+    source: string,
+    action: GeminiImageAction,
+  ): Promise<string> {
+    if (source.startsWith("data:image/")) {
+      return source
+    }
+
+    if (source.startsWith("blob:")) {
+      return this.resolveActionDataUrl(source)
+    }
+
+    try {
+      return await this.getProcessedDataUrl(source, {
+        bypassCache: true,
+        requireNonPreviewSource: true,
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : ""
+      if (action === "copy" && message === "fullsize-source-unavailable") {
+        return this.getProcessedDataUrl(source, {
+          bypassCache: true,
+          requireNonPreviewSource: false,
+        })
+      }
+      throw error
+    }
+  }
+
   private async handleActionButtonClick(event: MouseEvent) {
     if (!this.enabled || !this.isGeminiStandardSite()) return
 
     const actionInfo = this.findImageAction(event)
     if (!actionInfo) return
 
-    if (!isUserscript) {
-      const mainReady = document.documentElement.getAttribute("data-ophel-wm-main") === "1"
-      const mainFetchEnabled =
-        document.documentElement.getAttribute("data-ophel-wm-main-fetch-enabled") === "1"
-
-      if (mainReady && mainFetchEnabled) {
-        document.documentElement.setAttribute(
-          "data-ophel-wm-last-mode",
-          actionInfo.action === "copy" ? "native-copy" : "native-download",
-        )
-        return
-      }
+    if (this.shouldUseNativeGeminiAction()) {
+      return
     }
-
-    document.documentElement.setAttribute("data-ophel-wm-last-action", actionInfo.action)
 
     const relatedImage =
       this.findRelatedGeminiImageFromEvent(event) ||
@@ -653,12 +681,10 @@ export class WatermarkRemover {
       (relatedImage ? this.getImageSourceForAction(relatedImage) : "")
 
     if (!source) {
-      this.setLastError("no-related-image")
       return
     }
 
     if (!this.isSupportedGeminiImageSource(source)) {
-      this.setLastError("src-not-intercept")
       return
     }
 
@@ -667,35 +693,12 @@ export class WatermarkRemover {
     event.stopImmediatePropagation()
 
     try {
-      const requireNonPreviewSource =
-        actionInfo.action === "download" || actionInfo.action === "copy"
-
-      let processedDataUrl: string
-      if (source.startsWith("data:image/")) {
-        processedDataUrl = source
-      } else if (source.startsWith("blob:")) {
-        processedDataUrl = await this.resolveActionDataUrl(source)
-      } else {
-        try {
-          processedDataUrl = await this.getProcessedDataUrl(source, {
-            bypassCache: true,
-            requireNonPreviewSource,
-          })
-        } catch (error) {
-          const message = error instanceof Error ? error.message : ""
-          if (actionInfo.action === "copy" && message === "fullsize-source-unavailable") {
-            processedDataUrl = await this.getProcessedDataUrl(source, {
-              bypassCache: true,
-              requireNonPreviewSource: false,
-            })
-          } else {
-            throw error
-          }
-        }
-      }
+      const processedDataUrl = await this.resolveProcessedDataUrlForAction(
+        source,
+        actionInfo.action,
+      )
 
       if (!processedDataUrl) {
-        this.setLastError("process-failed")
         return
       }
 
@@ -703,21 +706,13 @@ export class WatermarkRemover {
         relatedImage.setAttribute("data-ophel-wm-processed", "1")
       }
 
-      this.clearLastError()
-
       if (actionInfo.action === "copy") {
         await this.writeImageToClipboard(processedDataUrl)
       } else {
         this.triggerDownloadFromDataUrl(processedDataUrl)
       }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : ""
-      if (message === "fullsize-source-unavailable") {
-        this.setLastError("fullsize-unavailable")
-      } else {
-        this.setLastError("process-failed")
-      }
-      console.error("[Watermark Remover] Action interception failed", error)
+    } catch {
+      return
     }
   }
 
@@ -758,14 +753,18 @@ export class WatermarkRemover {
     }
   }
 
-  private detectWatermarkConfig(imageWidth: number, imageHeight: number) {
+  private detectWatermarkConfig(imageWidth: number, imageHeight: number): WatermarkConfig {
     if (imageWidth > 1024 && imageHeight > 1024) {
       return { logoSize: 96, marginRight: 64, marginBottom: 64 }
     }
     return { logoSize: 48, marginRight: 32, marginBottom: 32 }
   }
 
-  private calculateWatermarkPosition(imageWidth: number, imageHeight: number, config: any) {
+  private calculateWatermarkPosition(
+    imageWidth: number,
+    imageHeight: number,
+    config: WatermarkConfig,
+  ) {
     const { logoSize, marginRight, marginBottom } = config
     return {
       x: imageWidth - marginRight - logoSize,
@@ -1058,8 +1057,7 @@ export class WatermarkRemover {
       img.dataset.watermarkProcessed = "true"
       img.setAttribute("data-ophel-wm-source", sourceForProcessing)
       img.setAttribute("data-ophel-wm-processed", "1")
-    } catch (e) {
-      console.error("[Watermark Remover] Failed to process image", e)
+    } catch {
       img.dataset.watermarkProcessed = "error"
       img.removeAttribute("data-ophel-wm-processed")
     } finally {

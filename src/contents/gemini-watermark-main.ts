@@ -158,7 +158,7 @@ if (!(window as any).__ophelGeminiWatermarkMainInitialized) {
           "Content-Type": processedBlob.type || "image/png",
         }),
       })
-    } catch (error) {
+    } catch {
       if (originalResponse && originalBlob) {
         return new Response(originalBlob, {
           status: originalResponse.status,
