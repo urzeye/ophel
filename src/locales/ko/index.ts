@@ -1081,6 +1081,8 @@ export const ko = {
   globalSearchCategoriesLabel: "전체 검색 카테고리",
   globalSearchPageDesc: "Search Everywhere의 검색 동작과 인터랙션 세부 항목을 설정합니다",
   globalSearchTriggerHint: "실행: Shift 두 번 또는 Ctrl/Cmd + K",
+  globalSearchMatchingSettingsTitle: "검색 매칭",
+  globalSearchMatchingSettingsDesc: "Search Everywhere가 검색 결과를 매칭하는 방식을 설정합니다",
   globalSearchPromptSettingsTitle: "프롬프트 동작",
   globalSearchPromptSettingsDesc:
     "Search Everywhere에서 프롬프트 결과에 Enter를 눌렀을 때의 동작을 선택합니다",

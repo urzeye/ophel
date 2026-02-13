@@ -855,6 +855,9 @@ Dê o código e depois um resumo de melhorias.`,
   globalSearchCategoriesLabel: "Categorias da busca global",
   globalSearchPageDesc: "Configure o comportamento e os detalhes de interação do Search Everywhere",
   globalSearchTriggerHint: "Atalho: pressione Shift duas vezes ou Ctrl/Cmd + K",
+  globalSearchMatchingSettingsTitle: "Correspondência de busca",
+  globalSearchMatchingSettingsDesc:
+    "Configure como o Search Everywhere corresponde os resultados de busca.",
   globalSearchPromptSettingsTitle: "Comportamento de Prompt",
   globalSearchPromptSettingsDesc:
     "Escolha o que acontece ao pressionar Enter em um resultado de prompt no Search Everywhere",

@@ -39,10 +39,10 @@ const GlobalSearchPage: React.FC<GlobalSearchPageProps> = ({ siteId: _siteId }) 
       </p>
 
       <SettingCard
-        title={getLocalizedText("globalSearchPromptSettingsTitle", "Prompt Behavior")}
+        title={getLocalizedText("globalSearchMatchingSettingsTitle", "Search Matching")}
         description={getLocalizedText(
-          "globalSearchPromptSettingsDesc",
-          "Choose what happens when pressing Enter on a prompt result in Search Everywhere",
+          "globalSearchMatchingSettingsDesc",
+          "Configure how Search Everywhere matches search results",
         )}>
         <ToggleRow
           label={getLocalizedText("globalSearchEnableFuzzySearchLabel", "Enable fuzzy search")}
@@ -56,7 +56,14 @@ const GlobalSearchPage: React.FC<GlobalSearchPageProps> = ({ siteId: _siteId }) 
           }
           settingId="global-search-fuzzy-search"
         />
+      </SettingCard>
 
+      <SettingCard
+        title={getLocalizedText("globalSearchPromptSettingsTitle", "Prompt Behavior")}
+        description={getLocalizedText(
+          "globalSearchPromptSettingsDesc",
+          "Choose what happens when pressing Enter on a prompt result in Search Everywhere",
+        )}>
         <SettingRow
           label={getLocalizedText(
             "globalSearchPromptEnterBehaviorLabel",

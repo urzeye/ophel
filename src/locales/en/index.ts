@@ -1127,6 +1127,8 @@ Please output the optimized code block directly, followed by a brief summary of 
   globalSearchCategoriesLabel: "Global search categories",
   globalSearchPageDesc: "Configure Search Everywhere behavior and interaction details",
   globalSearchTriggerHint: "Trigger: double-press Shift or Ctrl/Cmd + K",
+  globalSearchMatchingSettingsTitle: "Search Matching",
+  globalSearchMatchingSettingsDesc: "Configure how Search Everywhere matches search results",
   globalSearchPromptSettingsTitle: "Prompt Behavior",
   globalSearchPromptSettingsDesc:
     "Choose what happens when pressing Enter on a prompt result in Search Everywhere",

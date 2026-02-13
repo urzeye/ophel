@@ -1075,6 +1075,8 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   globalSearchCategoriesLabel: "Kategorien der globalen Suche",
   globalSearchPageDesc: "Search Everywhere: Suchverhalten und Interaktionsdetails konfigurieren",
   globalSearchTriggerHint: "Auslösung: Shift zweimal drücken oder Strg/Cmd + K",
+  globalSearchMatchingSettingsTitle: "Suchabgleich",
+  globalSearchMatchingSettingsDesc: "Legt fest, wie Search Everywhere Suchergebnisse abgleicht.",
   globalSearchPromptSettingsTitle: "Prompt-Verhalten",
   globalSearchPromptSettingsDesc:
     "Festlegen, was beim Drücken von Enter auf einem Prompt-Ergebnis in Search Everywhere passiert",

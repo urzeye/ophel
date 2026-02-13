@@ -1082,6 +1082,9 @@ Donnez le code puis un résumé des améliorations.`,
   globalSearchPageDesc:
     "Configurer le comportement et les détails d'interaction de Search Everywhere",
   globalSearchTriggerHint: "Déclenchement : double appui sur Shift ou Ctrl/Cmd + K",
+  globalSearchMatchingSettingsTitle: "Correspondance de recherche",
+  globalSearchMatchingSettingsDesc:
+    "Configure la façon dont Search Everywhere met en correspondance les résultats.",
   globalSearchPromptSettingsTitle: "Comportement des prompts",
   globalSearchPromptSettingsDesc:
     "Choisissez ce qui se passe lorsque vous appuyez sur Enter sur un résultat de prompt dans Search Everywhere",

@@ -1101,6 +1101,8 @@ export const zhTW = {
   globalSearchCategoriesLabel: "全域搜尋分類",
   globalSearchPageDesc: "設定 Search Everywhere 的搜尋行為與互動細節",
   globalSearchTriggerHint: "觸發方式：雙擊 Shift 或 Ctrl/Cmd + K",
+  globalSearchMatchingSettingsTitle: "搜尋匹配",
+  globalSearchMatchingSettingsDesc: "設定全域搜尋如何匹配搜尋結果",
   globalSearchPromptSettingsTitle: "提示詞行為",
   globalSearchPromptSettingsDesc: "設定在全域搜尋中選中提示詞後按 Enter 的行為",
   globalSearchPromptEnterBehaviorLabel: "全域搜尋提示詞 Enter 行為",

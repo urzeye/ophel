@@ -1070,6 +1070,9 @@ export const ru = {
   globalSearchCategoriesLabel: "Категории глобального поиска",
   globalSearchPageDesc: "Настройка поведения и взаимодействия Search Everywhere",
   globalSearchTriggerHint: "Запуск: двойное нажатие Shift или Ctrl/Cmd + K",
+  globalSearchMatchingSettingsTitle: "Сопоставление поиска",
+  globalSearchMatchingSettingsDesc:
+    "Настройте, как Search Everywhere сопоставляет результаты поиска.",
   globalSearchPromptSettingsTitle: "Поведение промптов",
   globalSearchPromptSettingsDesc:
     "Выберите действие при нажатии Enter на результате промпта в Search Everywhere",
