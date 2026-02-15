@@ -1591,7 +1591,9 @@ export const App = () => {
       }
 
       const now = Date.now()
-      if (now - lastShiftPressedAtRef.current <= 360) {
+      // 检查双击 Shift 开启搜索是否启用
+      const isDoubleShiftEnabled = settings?.globalSearch?.doubleShift ?? true
+      if (isDoubleShiftEnabled && now - lastShiftPressedAtRef.current <= 360) {
         event.preventDefault()
         event.stopPropagation()
         lastShiftPressedAtRef.current = 0

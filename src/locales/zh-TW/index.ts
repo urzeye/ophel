@@ -1116,7 +1116,10 @@ export const zhTW = {
   globalSearchFuzzySearchToggle: "模糊",
   globalSearchFuzzySearchToggleAria: "切換模糊搜尋",
   globalSearchFooterTips: "Enter 跳轉 · ↑↓ 選擇 · Tab 分類 · Esc 關閉",
-  globalSearchShortcutNudge: "下次可按 {shortcut} 快速開啟",
+  globalSearchShortcutNudge: "下次可按 {shortcut} 快速打開",
+  doubleShiftToSearch: "雙擊 Shift 開啟全局搜索",
+  doubleShiftToSearchDesc: "快速按下兩次 Shift 鍵以打開全局搜索",
+  // 快捷键
   globalSearchShortcutNudgeDismiss: "不再提示",
   globalSearchContextCurrentItem: "第 {current} 項",
   globalSearchContextShownProgress: "已顯示 {shown}/{total}",
