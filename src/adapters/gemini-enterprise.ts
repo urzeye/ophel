@@ -6,17 +6,51 @@ import { DOMToolkit } from "~utils/dom-toolkit"
 
 import {
   SiteAdapter,
+  type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportConfig,
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type SiteDeleteConversationResult,
 } from "./base"
+
+const GEMINI_ENTERPRISE_DELETE_REASON = {
+  UI_FAILED: "delete_ui_failed",
+  BATCH_ABORTED_AFTER_UI_FAILURE: "delete_batch_aborted_after_ui_failure",
+} as const
+
+const GEMINI_ENTERPRISE_DELETE_KEYWORDS = [
+  "delete",
+  "remove",
+  "删除",
+  "删掉",
+  "移除",
+  "supprimer",
+  "eliminar",
+  "löschen",
+  "삭제",
+  "削除",
+  "hapus",
+  "удал",
+]
+
+const GEMINI_ENTERPRISE_CANCEL_KEYWORDS = [
+  "cancel",
+  "取消",
+  "annuler",
+  "abbrechen",
+  "취소",
+  "キャンセル",
+  "batal",
+  "отмен",
+]
 
 export class GeminiEnterpriseAdapter extends SiteAdapter {
   // 存储 clearOnInit 配置
   private clearOnInit = false
+  private reloadScheduled = false
 
   match(): boolean {
     return window.location.hostname.includes("business.gemini.google")
@@ -246,6 +280,470 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     }
     // 降级：页面刷新
     return super.navigateToConversation(id, url)
+  }
+
+  async deleteConversationOnSite(
+    target: ConversationDeleteTarget,
+  ): Promise<SiteDeleteConversationResult> {
+    const result = await this.deleteConversationOnSiteInternal(target)
+    if (result.success) {
+      this.scheduleFullReloadAfterDelete([target.id])
+    }
+    return result
+  }
+
+  async deleteConversationsOnSite(
+    targets: ConversationDeleteTarget[],
+  ): Promise<SiteDeleteConversationResult[]> {
+    const results: SiteDeleteConversationResult[] = []
+    const deletedIds: string[] = []
+
+    for (let index = 0; index < targets.length; index++) {
+      const result = await this.deleteConversationOnSiteInternal(targets[index])
+      results.push(result)
+
+      if (result.success) {
+        deletedIds.push(targets[index].id)
+      }
+
+      // Stop the remaining batch when UI deletion fails once,
+      // to prevent accidental wrong-item deletions.
+      if (!result.success && result.reason === GEMINI_ENTERPRISE_DELETE_REASON.UI_FAILED) {
+        for (let i = index + 1; i < targets.length; i++) {
+          results.push({
+            id: targets[i].id,
+            success: false,
+            method: "none",
+            reason: GEMINI_ENTERPRISE_DELETE_REASON.BATCH_ABORTED_AFTER_UI_FAILURE,
+          })
+        }
+        break
+      }
+    }
+
+    if (deletedIds.length > 0) {
+      this.scheduleFullReloadAfterDelete(deletedIds)
+    }
+
+    return results
+  }
+
+  private async deleteConversationOnSiteInternal(
+    target: ConversationDeleteTarget,
+  ): Promise<SiteDeleteConversationResult> {
+    const uiSuccess = await this.deleteConversationViaUi(target.id)
+    return {
+      id: target.id,
+      success: uiSuccess,
+      method: uiSuccess ? "ui" : "none",
+      reason: uiSuccess ? undefined : GEMINI_ENTERPRISE_DELETE_REASON.UI_FAILED,
+    }
+  }
+
+  private async deleteConversationViaUi(id: string): Promise<boolean> {
+    const row = await this.findConversationRowWithRetry(id)
+    if (!row) return false
+
+    row.scrollIntoView({ block: "center", behavior: "auto" })
+    this.revealConversationActions(row)
+
+    const menuButton = await this.findConversationMenuButton(row)
+    if (!menuButton) return false
+
+    const menuRoot = await this.openConversationMenu(row, menuButton)
+    if (!menuRoot) return false
+
+    const deleteItem = await this.waitForDeleteMenuItem(menuButton, 2500, menuRoot)
+    if (!deleteItem) {
+      document.body.click()
+      return false
+    }
+    this.simulateClick(deleteItem)
+
+    // Optimistically remove current row from DOM to prevent observer from re-adding
+    // the just-deleted item back into local store before remote UI finishes syncing.
+    this.removeConversationRowElement(row, id)
+
+    // Gemini Enterprise deletes immediately after clicking delete (no second confirm dialog).
+    const removed = await this.waitForConversationRemoved(id, 5200)
+    const menuClosed = await this.waitForMenuClosed(1200)
+    const success = removed || menuClosed
+    if (success) {
+      this.syncConversationListAfterDelete(id)
+    }
+    return success
+  }
+
+  private async openConversationMenu(
+    row: HTMLElement,
+    initialTrigger: HTMLElement,
+  ): Promise<HTMLElement | null> {
+    let trigger: HTMLElement | null = initialTrigger
+
+    for (let attempt = 0; attempt < 4; attempt++) {
+      document.body.click()
+      await this.sleep(60)
+      this.revealConversationActions(row)
+
+      if (!trigger || !trigger.isConnected) {
+        trigger = await this.findConversationMenuButton(row)
+      }
+      if (!trigger) return null
+
+      this.simulateClick(trigger)
+      const menu = await this.waitForMenuOpen(trigger, 900)
+      if (menu) return menu
+    }
+
+    return null
+  }
+
+  private async waitForMenuOpen(trigger: HTMLElement, timeout = 900): Promise<HTMLElement | null> {
+    const start = Date.now()
+    while (Date.now() - start < timeout) {
+      const controlled = this.getMenuContainerFromTrigger(trigger)
+      if (controlled && this.isVisible(controlled)) return controlled
+
+      const fallback = this.findVisibleMenuContainer()
+      if (fallback) return fallback
+
+      await this.sleep(80)
+    }
+    return null
+  }
+
+  private async findConversationRowWithRetry(id: string): Promise<HTMLElement | null> {
+    const firstTry = this.findConversationRow(id)
+    if (firstTry) return firstTry
+
+    await this.loadAllConversations()
+    await this.sleep(250)
+    return this.findConversationRow(id)
+  }
+
+  private findConversationRow(id: string): HTMLElement | null {
+    const expected = id.trim()
+    const rows = this.findAllElementsBySelector(".conversation") as HTMLElement[]
+    for (const row of rows) {
+      const rowId = this.extractConversationIdFromElement(row)
+      if (rowId && rowId === expected) {
+        return row
+      }
+    }
+
+    const hrefCandidates = [
+      `a[href*="/session/${expected}"]`,
+      `a[href$="/session/${expected}"]`,
+      `a[href*="/r/session/${expected}"]`,
+      `a[href$="/r/session/${expected}"]`,
+    ]
+
+    for (const selector of hrefCandidates) {
+      const anchor = DOMToolkit.query(selector, { shadow: true }) as HTMLElement | null
+      if (!anchor) continue
+      const container = (anchor.closest(".conversation") ||
+        anchor.closest("li") ||
+        anchor.parentElement) as HTMLElement | null
+      if (container) return container
+    }
+
+    return null
+  }
+
+  private extractConversationIdFromElement(element: Element | null): string {
+    if (!element) return ""
+
+    const menuBtn = element.querySelector(
+      '.conversation-action-menu-button[id^="menu-"], button[id^="menu-"]',
+    ) as HTMLElement | null
+    if (!menuBtn?.id?.startsWith("menu-")) return ""
+
+    const id = menuBtn.id.replace("menu-", "")
+    return /^\d+$/.test(id) ? id : ""
+  }
+
+  private async findConversationMenuButton(row: HTMLElement): Promise<HTMLElement | null> {
+    const actionSelectors = [
+      ".conversation-action-menu-button",
+      'button[id^="menu-"]',
+      'button[aria-haspopup="menu"]',
+      'button[aria-label*="More"]',
+      'button[aria-label*="more"]',
+      'button[aria-label*="更多"]',
+      'button[title*="More"]',
+      'button[title*="more"]',
+      "button",
+    ].join(", ")
+
+    const rowId = this.extractConversationIdFromElement(row)
+
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const scopes = this.getMenuSearchScopes(row)
+      scopes.forEach((scope) => this.revealConversationActions(scope))
+
+      const allCandidates = scopes.flatMap(
+        (scope) => Array.from(scope.querySelectorAll(actionSelectors)) as HTMLElement[],
+      )
+      const candidates = allCandidates.filter((candidate) => {
+        if (candidate instanceof HTMLButtonElement && candidate.disabled) return false
+        return true
+      })
+
+      if (candidates.length > 0) {
+        if (rowId) {
+          const exact = candidates.find((candidate) => candidate.id === `menu-${rowId}`)
+          if (exact) return exact
+        }
+
+        const menuIconCandidate = candidates.find((candidate) => {
+          return (
+            candidate.querySelector(
+              'mat-icon[fonticon="more_vert"], mat-icon[fonticon="more_horiz"], md-icon',
+            ) !== null
+          )
+        })
+        if (menuIconCandidate) return menuIconCandidate
+
+        const fallbackVisible = candidates
+          .filter((candidate) => this.isVisible(candidate))
+          .sort((a, b) => b.getBoundingClientRect().right - a.getBoundingClientRect().right)[0]
+        if (fallbackVisible) return fallbackVisible
+      }
+
+      await this.sleep(90)
+    }
+
+    return null
+  }
+
+  private getMenuSearchScopes(row: HTMLElement): HTMLElement[] {
+    const scopes = [
+      row,
+      row.parentElement,
+      row.parentElement?.parentElement,
+      row.closest("li"),
+    ].filter((item): item is HTMLElement => item instanceof HTMLElement)
+
+    const unique = new Set<HTMLElement>()
+    const deduplicated: HTMLElement[] = []
+    for (const scope of scopes) {
+      if (unique.has(scope)) continue
+      unique.add(scope)
+      deduplicated.push(scope)
+    }
+    return deduplicated
+  }
+
+  private revealConversationActions(scope: HTMLElement): void {
+    const events: Array<keyof GlobalEventHandlersEventMap> = [
+      "mouseenter",
+      "mouseover",
+      "mousemove",
+    ]
+
+    for (const eventName of events) {
+      scope.dispatchEvent(
+        new MouseEvent(eventName, {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+        }),
+      )
+    }
+  }
+
+  private async waitForDeleteMenuItem(
+    trigger: HTMLElement,
+    timeout = 2500,
+    menuRoot?: HTMLElement | null,
+  ): Promise<HTMLElement | null> {
+    const start = Date.now()
+    let lastVisibleItems: HTMLElement[] = []
+
+    while (Date.now() - start < timeout) {
+      const candidates = this.getMenuActionCandidates(trigger, menuRoot || null)
+      for (const item of candidates) {
+        if (!this.isVisible(item)) continue
+
+        const text = this.getSignalText(item)
+        if (!this.hasKeyword(text, GEMINI_ENTERPRISE_DELETE_KEYWORDS)) continue
+        if (this.hasKeyword(text, GEMINI_ENTERPRISE_CANCEL_KEYWORDS)) continue
+        return item
+      }
+
+      const visibleItems = candidates.filter((item) => this.isVisible(item))
+      if (visibleItems.length > 0) {
+        lastVisibleItems = visibleItems
+      }
+
+      await this.sleep(80)
+    }
+
+    if (lastVisibleItems.length > 0) {
+      const fallback = lastVisibleItems[lastVisibleItems.length - 1]
+      const text = this.getSignalText(fallback)
+      if (!this.hasKeyword(text, GEMINI_ENTERPRISE_CANCEL_KEYWORDS)) {
+        return fallback
+      }
+    }
+
+    return null
+  }
+
+  private getMenuActionCandidates(
+    trigger: HTMLElement,
+    menuRoot?: HTMLElement | null,
+  ): HTMLElement[] {
+    const selectors =
+      'md-menu-item, [role="menuitem"], [role="menu"] button, .mat-mdc-menu-panel button'
+    const results: HTMLElement[] = []
+
+    if (menuRoot) {
+      results.push(...(Array.from(menuRoot.querySelectorAll(selectors)) as HTMLElement[]))
+    }
+
+    const controlled = this.getMenuContainerFromTrigger(trigger)
+    if (controlled) {
+      results.push(...(Array.from(controlled.querySelectorAll(selectors)) as HTMLElement[]))
+    }
+
+    const visibleMenu = this.findVisibleMenuContainer()
+    if (visibleMenu) {
+      results.push(...(Array.from(visibleMenu.querySelectorAll(selectors)) as HTMLElement[]))
+    }
+
+    results.push(...(this.findAllElementsBySelector(selectors) as HTMLElement[]))
+
+    const unique = new Set<HTMLElement>()
+    const deduplicated: HTMLElement[] = []
+    for (const item of results) {
+      if (unique.has(item)) continue
+      unique.add(item)
+      deduplicated.push(item)
+    }
+
+    return deduplicated
+  }
+
+  private getMenuContainerFromTrigger(trigger: HTMLElement): HTMLElement | null {
+    const controlledId = trigger.getAttribute("aria-controls") || trigger.getAttribute("aria-owns")
+    if (!controlledId) return null
+
+    const safeId =
+      typeof CSS !== "undefined" && typeof CSS.escape === "function"
+        ? CSS.escape(controlledId)
+        : controlledId
+    return (DOMToolkit.query(`#${safeId}`, { shadow: true }) as HTMLElement | null) || null
+  }
+
+  private findVisibleMenuContainer(): HTMLElement | null {
+    const menus = this.findAllElementsBySelector(
+      'md-menu-surface, .menu[popover], .mat-mdc-menu-panel, [role="menu"]',
+    ) as HTMLElement[]
+    const visible = menus.filter((menu) => this.isVisible(menu))
+    if (visible.length === 0) return null
+    return visible[visible.length - 1]
+  }
+
+  private async waitForMenuClosed(timeout = 1200): Promise<boolean> {
+    const start = Date.now()
+    while (Date.now() - start < timeout) {
+      if (!this.findVisibleMenuContainer()) return true
+      await this.sleep(80)
+    }
+    return false
+  }
+
+  private removeConversationRowElement(row: HTMLElement, id: string): void {
+    const candidates = [
+      row,
+      row.closest("li") as HTMLElement | null,
+      this.findConversationRow(id),
+    ].filter((item): item is HTMLElement => item instanceof HTMLElement)
+
+    const unique = new Set<HTMLElement>()
+    for (const candidate of candidates) {
+      if (unique.has(candidate)) continue
+      unique.add(candidate)
+      if (candidate.isConnected) {
+        candidate.remove()
+      }
+    }
+  }
+
+  private async waitForConversationRemoved(id: string, timeout = 5200): Promise<boolean> {
+    const start = Date.now()
+    while (Date.now() - start < timeout) {
+      if (!this.findConversationRow(id)) return true
+      await this.sleep(90)
+    }
+    return false
+  }
+
+  private syncConversationListAfterDelete(id: string): void {
+    const row = this.findConversationRow(id)
+    if (!row) return
+    row.remove()
+  }
+
+  private scheduleFullReloadAfterDelete(deletedIds: string[]): void {
+    if (this.reloadScheduled || deletedIds.length === 0) return
+
+    const currentId = this.getCurrentConversationIdFromPath()
+    if (currentId && deletedIds.includes(currentId)) {
+      const cid = this.getCurrentCid()
+      const fallback = cid ? `/home/cid/${cid}/r` : "/"
+      try {
+        window.history.replaceState(window.history.state, "", fallback)
+      } catch {
+        // ignore route state failures
+      }
+    }
+
+    this.reloadScheduled = true
+    window.setTimeout(() => {
+      window.location.reload()
+    }, 120)
+  }
+
+  private getCurrentConversationIdFromPath(): string | null {
+    const match = window.location.pathname.match(/\/session\/([^/?#]+)/)
+    return match?.[1] || null
+  }
+
+  private getSignalText(element: HTMLElement): string {
+    return [
+      element.textContent || "",
+      element.getAttribute("aria-label") || "",
+      element.getAttribute("title") || "",
+      element.getAttribute("data-test-id") || "",
+      element.getAttribute("data-testid") || "",
+      element.className || "",
+    ]
+      .join(" ")
+      .toLowerCase()
+  }
+
+  private hasKeyword(text: string, keywords: string[]): boolean {
+    const normalized = text.toLowerCase()
+    return keywords.some((keyword) => normalized.includes(keyword.toLowerCase()))
+  }
+
+  private isVisible(element: Element | null): element is HTMLElement {
+    if (!(element instanceof HTMLElement)) return false
+    if (!element.isConnected) return false
+
+    const style = window.getComputedStyle(element)
+    if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) {
+      return false
+    }
+
+    const rect = element.getBoundingClientRect()
+    return rect.width > 0 && rect.height > 0
+  }
+
+  private async sleep(ms: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, ms))
   }
 
   getNewChatButtonSelectors(): string[] {
