@@ -1,5 +1,10 @@
 import { SiteAdapter } from "~adapters/base"
-import type { ConversationInfo, ConversationObserverConfig } from "~adapters/base"
+import type {
+  ConversationDeleteTarget,
+  ConversationInfo,
+  ConversationObserverConfig,
+  SiteDeleteConversationResult,
+} from "~adapters/base"
 import { type Folder } from "~constants"
 import { getConversationsStore, useConversationsStore } from "~stores/conversations-store"
 import { getFoldersStore, useFoldersStore } from "~stores/folders-store"
@@ -22,6 +27,26 @@ import type { Conversation, ConversationData, Tag } from "./types"
 
 export type { Conversation, ConversationData, Folder, Tag }
 
+export interface ConversationDeleteResult {
+  id: string
+  localDeleted: boolean
+  remoteEnabled: boolean
+  remoteAttempted: boolean
+  remoteSuccess: boolean
+  remoteMethod: "api" | "ui" | "none"
+  reason?: string
+}
+
+export interface ConversationBatchDeleteResult {
+  total: number
+  localDeletedCount: number
+  remoteAttemptedCount: number
+  remoteSuccessCount: number
+  remoteFailedCount: number
+  failedIds: string[]
+  results: ConversationDeleteResult[]
+}
+
 export class ConversationManager {
   public readonly siteAdapter: SiteAdapter
 
@@ -34,6 +59,7 @@ export class ConversationManager {
 
   // Settings
   private syncUnpin: boolean = false
+  private syncDelete: boolean = true
 
   // 数据变更回调（用于通知 UI 刷新）
   private onChangeCallbacks: Array<() => void> = []
@@ -172,8 +198,11 @@ export class ConversationManager {
     this.stopSidebarObserver()
   }
 
-  updateSettings(settings: { syncUnpin: boolean }) {
+  updateSettings(settings: { syncUnpin: boolean; syncDelete?: boolean }) {
     this.syncUnpin = settings.syncUnpin
+    if (typeof settings.syncDelete === "boolean") {
+      this.syncDelete = settings.syncDelete
+    }
   }
 
   // ================= Data Loading（已迁移到 Zustand stores）=================
@@ -424,8 +453,122 @@ export class ConversationManager {
 
   // ================= Conversation Operations =================
 
-  deleteConversation(id: string) {
-    getConversationsStore().deleteConversation(id)
+  async deleteConversation(id: string): Promise<ConversationDeleteResult> {
+    const result = await this.deleteConversations([id])
+    if (result.results.length > 0) {
+      return result.results[0]
+    }
+    return {
+      id,
+      localDeleted: false,
+      remoteEnabled: this.syncDelete,
+      remoteAttempted: false,
+      remoteSuccess: false,
+      remoteMethod: "none",
+      reason: "not_found",
+    }
+  }
+
+  async deleteConversations(ids: string[]): Promise<ConversationBatchDeleteResult> {
+    const uniqueIds = Array.from(new Set(ids.filter(Boolean)))
+    if (uniqueIds.length === 0) {
+      return {
+        total: 0,
+        localDeletedCount: 0,
+        remoteAttemptedCount: 0,
+        remoteSuccessCount: 0,
+        remoteFailedCount: 0,
+        failedIds: [],
+        results: [],
+      }
+    }
+
+    const targets = uniqueIds
+      .map((id): ConversationDeleteTarget | null => {
+        const conv = this.conversations[id]
+        if (!conv) return null
+        if (conv.siteId && conv.siteId !== this.siteAdapter.getSiteId()) return null
+        return {
+          id: conv.id,
+          title: conv.title,
+          url: conv.url,
+        }
+      })
+      .filter((target): target is ConversationDeleteTarget => Boolean(target))
+
+    const remoteResultMap = new Map<string, SiteDeleteConversationResult>()
+    if (this.syncDelete && targets.length > 0) {
+      try {
+        const remoteResults = await this.siteAdapter.deleteConversationsOnSite(targets)
+        remoteResults.forEach((item) => {
+          remoteResultMap.set(item.id, item)
+        })
+      } catch (error) {
+        const reason =
+          error instanceof Error ? error.message || "remote_delete_failed" : "remote_delete_failed"
+        targets.forEach((target) => {
+          remoteResultMap.set(target.id, {
+            id: target.id,
+            success: false,
+            method: "api",
+            reason,
+          })
+        })
+      }
+    }
+
+    let localDeletedCount = 0
+    let remoteAttemptedCount = 0
+    let remoteSuccessCount = 0
+    let remoteFailedCount = 0
+    const results: ConversationDeleteResult[] = []
+
+    uniqueIds.forEach((id) => {
+      const exists = Boolean(this.conversations[id])
+      const remoteEnabled = this.syncDelete
+      const remoteItem = remoteResultMap.get(id)
+      const remoteMethod = remoteItem?.method || "none"
+      const remoteAttempted = remoteEnabled && remoteResultMap.has(id) && remoteMethod !== "none"
+      const remoteSuccess = remoteAttempted && (remoteItem?.success || false)
+
+      if (remoteAttempted) {
+        remoteAttemptedCount++
+        if (remoteSuccess) {
+          remoteSuccessCount++
+        } else {
+          remoteFailedCount++
+        }
+      }
+
+      if (exists) {
+        getConversationsStore().deleteConversation(id)
+        localDeletedCount++
+      }
+
+      results.push({
+        id,
+        localDeleted: exists,
+        remoteEnabled,
+        remoteAttempted,
+        remoteSuccess,
+        remoteMethod,
+        reason: remoteItem?.reason || (exists ? undefined : "not_found"),
+      })
+    })
+
+    if (localDeletedCount > 0) {
+      this.notifyDataChange()
+    }
+
+    return {
+      total: uniqueIds.length,
+      localDeletedCount,
+      remoteAttemptedCount,
+      remoteSuccessCount,
+      remoteFailedCount,
+      failedIds: results.filter((item) => !item.localDeleted).map((item) => item.id),
+      results,
+    }
   }
 
   moveConversation(id: string, targetFolderId: string) {
