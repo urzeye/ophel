@@ -1560,9 +1560,16 @@ export const App = () => {
     }
   }, [clearGlobalSearchNudgeHideTimer])
 
+  // Create a ref for isGlobalSettingsSearchOpen to access it in the event listener without re-binding
+  const isGlobalSettingsSearchOpenRef = useRef(isGlobalSettingsSearchOpen)
+  useEffect(() => {
+    isGlobalSettingsSearchOpenRef.current = isGlobalSettingsSearchOpen
+  }, [isGlobalSettingsSearchOpen])
+
   useEffect(() => {
     const handleOpenSearchShortcut = (event: KeyboardEvent) => {
-      if (isGlobalSettingsSearchOpen) {
+      // Use ref to check if search is already open
+      if (isGlobalSettingsSearchOpenRef.current) {
         return
       }
 
@@ -1581,6 +1588,8 @@ export const App = () => {
         event.preventDefault()
         event.stopPropagation()
         event.stopImmediatePropagation()
+        // Ensure double-shift state is reset when opening via hotkey
+        lastShiftPressedAtRef.current = 0
         markGlobalSearchShortcutUsed()
         openGlobalSettingsSearch("shortcut")
         return
@@ -1591,8 +1600,9 @@ export const App = () => {
       }
 
       const now = Date.now()
-      // 检查双击 Shift 开启搜索是否启用
-      const isDoubleShiftEnabled = settings?.globalSearch?.doubleShift ?? true
+      // Use settingsRef to get the latest settings without re-binding listener
+      const isDoubleShiftEnabled = settingsRef.current?.globalSearch?.doubleShift ?? true
+
       if (isDoubleShiftEnabled && now - lastShiftPressedAtRef.current <= 360) {
         event.preventDefault()
         event.stopPropagation()
@@ -1609,7 +1619,7 @@ export const App = () => {
     return () => {
       window.removeEventListener("keydown", handleOpenSearchShortcut, true)
     }
-  }, [isGlobalSettingsSearchOpen, markGlobalSearchShortcutUsed, openGlobalSettingsSearch])
+  }, [markGlobalSearchShortcutUsed, openGlobalSettingsSearch])
 
   useEffect(() => {
     const handleOpenSearchEvent = () => {
