@@ -7,6 +7,26 @@
 
 ---
 
+## [1.0.10] - 2026-02-15
+
+### 新增功能
+
+- 会话管理新增“云端同步删除”能力，支持在会话 Tab 批量触发后同步删除站点云端会话。
+- 设置页同步删除文案与能力描述统一为跨站点模型，便于后续扩展更多站点。
+
+### 功能优化
+
+- ChatGPT 同步删除链路精简并标准化原因码，减少冗余逻辑与调试分支。
+- Claude 组织 ID 解析改为按运行环境分流，并保留 API 兜底，提高插件与脚本环境兼容性。
+- Grok 新增 API/UI 双通道删除策略，云端同步开启时删除后自动刷新页面以保持列表一致。
+
+### 问题修复
+
+- 修复会话批量删除统计中远端失败计数不准确的问题。
+- 修复 Gemini / Gemini Enterprise UI 删除流程稳定性问题，覆盖菜单触发、删除点击与完成态判定。
+- 修复 Gemini Enterprise 云端删除成功后本地会话未及时移除的问题。
+- 修复 AI Studio 云端删除 API 不稳定导致的回滚问题，改为稳定的 UI 删除路径。
+
 ## [1.0.9] - 2026-02-11
 
 ### 🚀 新增功能
@@ -343,6 +363,7 @@
 
 ---
 
+[1.0.10]: https://github.com/urzeye/ophel/releases/tag/v1.0.10
 [1.0.9]: https://github.com/urzeye/ophel/releases/tag/v1.0.9
 [1.0.8]: https://github.com/urzeye/ophel/releases/tag/v1.0.8
 [1.0.7]: https://github.com/urzeye/ophel/releases/tag/v1.0.7
