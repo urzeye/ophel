@@ -6,15 +6,59 @@ import { htmlToMarkdown } from "~utils/exporter"
 
 import {
   SiteAdapter,
+  type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportConfig,
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type SiteDeleteConversationResult,
 } from "./base"
 
+const CLAUDE_DELETE_REASON = {
+  UI_FAILED: "delete_ui_failed",
+  BATCH_ABORTED_AFTER_UI_FAILURE: "delete_batch_aborted_after_ui_failure",
+  API_ORG_MISSING: "delete_api_org_missing",
+  API_REQUEST_FAILED: "delete_api_request_failed",
+  API_NOT_FOUND_BUT_VISIBLE: "delete_api_not_found_but_visible",
+} as const
+
+const CLAUDE_DELETE_KEYWORDS = [
+  "delete",
+  "remove",
+  "删除",
+  "刪除",
+  "削除",
+  "삭제",
+  "supprimer",
+  "eliminar",
+  "elimina",
+  "löschen",
+  "excluir",
+  "hapus",
+  "हट",
+  "मिट",
+]
+
+const CLAUDE_CANCEL_KEYWORDS = [
+  "cancel",
+  "取消",
+  "annuler",
+  "abbrechen",
+  "annulla",
+  "キャンセル",
+  "취소",
+  "batal",
+  "cancelar",
+]
+
+const ORG_ID_REGEX = /^[a-f0-9-]{36}$/i
+
 export class ClaudeAdapter extends SiteAdapter {
+  private activeOrganizationId: string | null = null
+  private activeOrganizationIdExpiresAt = 0
+
   match(): boolean {
     return (
       window.location.hostname.includes("claude.ai") ||
@@ -110,6 +154,619 @@ export class ClaudeAdapter extends SiteAdapter {
       return scrollable || nav
     }
     return null
+  }
+
+  async deleteConversationOnSite(
+    target: ConversationDeleteTarget,
+  ): Promise<SiteDeleteConversationResult> {
+    return this.deleteConversationOnSiteInternal(target)
+  }
+
+  async deleteConversationsOnSite(
+    targets: ConversationDeleteTarget[],
+  ): Promise<SiteDeleteConversationResult[]> {
+    const results: SiteDeleteConversationResult[] = []
+
+    for (let index = 0; index < targets.length; index++) {
+      const result = await this.deleteConversationOnSiteInternal(targets[index])
+      results.push(result)
+
+      // UI 兜底失败时中止剩余批量，防止误删。
+      if (!result.success && result.reason === CLAUDE_DELETE_REASON.UI_FAILED) {
+        for (let i = index + 1; i < targets.length; i++) {
+          results.push({
+            id: targets[i].id,
+            success: false,
+            method: "none",
+            reason: CLAUDE_DELETE_REASON.BATCH_ABORTED_AFTER_UI_FAILURE,
+          })
+        }
+        break
+      }
+    }
+
+    return results
+  }
+
+  private async deleteConversationOnSiteInternal(
+    target: ConversationDeleteTarget,
+  ): Promise<SiteDeleteConversationResult> {
+    const apiResult = await this.tryDeleteViaNativeApi(target)
+    if (apiResult.success) {
+      return apiResult
+    }
+
+    const uiSuccess = await this.deleteConversationViaUi(target.id)
+    return {
+      id: target.id,
+      success: uiSuccess,
+      method: uiSuccess ? "ui" : "none",
+      reason: uiSuccess ? undefined : apiResult.reason || CLAUDE_DELETE_REASON.UI_FAILED,
+    }
+  }
+
+  private async tryDeleteViaNativeApi(
+    target: ConversationDeleteTarget,
+  ): Promise<SiteDeleteConversationResult> {
+    const orgId = await this.getActiveOrganizationId()
+    if (!orgId) {
+      return {
+        id: target.id,
+        success: false,
+        method: "none",
+        reason: CLAUDE_DELETE_REASON.API_ORG_MISSING,
+      }
+    }
+
+    const endpoint = `/api/organizations/${encodeURIComponent(orgId)}/chat_conversations/${encodeURIComponent(target.id)}`
+    const bodies: Array<string | undefined> = [
+      undefined,
+      JSON.stringify({
+        uuid: target.id,
+        name: target.title || "",
+      }),
+    ]
+
+    try {
+      let lastStatus = 0
+
+      for (const body of bodies) {
+        const response = await fetch(endpoint, {
+          method: "DELETE",
+          headers: this.buildNativeDeleteHeaders(Boolean(body)),
+          body,
+          credentials: "include",
+        })
+        lastStatus = response.status
+
+        if (response.ok) {
+          this.syncSidebarAfterRemoteDelete(target.id)
+          return { id: target.id, success: true, method: "api" }
+        }
+
+        if (response.status === 404) {
+          if (!(await this.isConversationStillVisible(target.id))) {
+            this.syncSidebarAfterRemoteDelete(target.id)
+            return { id: target.id, success: true, method: "api" }
+          }
+          continue
+        }
+
+        if (response.status === 400 && !body) {
+          continue
+        }
+
+        return {
+          id: target.id,
+          success: false,
+          method: "api",
+          reason: this.toDeleteApiHttpReason(response.status),
+        }
+      }
+
+      return {
+        id: target.id,
+        success: false,
+        method: "api",
+        reason:
+          lastStatus === 404
+            ? CLAUDE_DELETE_REASON.API_NOT_FOUND_BUT_VISIBLE
+            : this.toDeleteApiHttpReason(lastStatus || 0),
+      }
+    } catch {
+      return {
+        id: target.id,
+        success: false,
+        method: "api",
+        reason: CLAUDE_DELETE_REASON.API_REQUEST_FAILED,
+      }
+    }
+  }
+
+  private buildNativeDeleteHeaders(withBody: boolean): Record<string, string> {
+    const headers: Record<string, string> = {
+      accept: "*/*",
+      "anthropic-client-platform": "web_claude_ai",
+      "anthropic-client-version": "1.0.0",
+    }
+
+    if (withBody) {
+      headers["content-type"] = "application/json"
+    }
+
+    const anonymousId = this.readAnthropicAnonymousId()
+    if (anonymousId) {
+      headers["anthropic-anonymous-id"] = anonymousId
+    }
+
+    const deviceId = this.readAnthropicDeviceId()
+    if (deviceId) {
+      headers["anthropic-device-id"] = deviceId
+    }
+
+    const clientSha = this.readAnthropicClientSha()
+    if (clientSha) {
+      headers["anthropic-client-sha"] = clientSha
+    }
+
+    return headers
+  }
+
+  private toDeleteApiHttpReason(status: number): string {
+    switch (status) {
+      case 401:
+      case 403:
+        return "delete_api_unauthorized"
+      case 429:
+        return "delete_api_rate_limited"
+      default:
+        return `delete_api_http_${status}`
+    }
+  }
+
+  private async getActiveOrganizationId(forceRefresh = false): Promise<string | null> {
+    const now = Date.now()
+    if (
+      !forceRefresh &&
+      this.activeOrganizationId &&
+      this.activeOrganizationIdExpiresAt > now + 5 * 1000
+    ) {
+      return this.activeOrganizationId
+    }
+
+    if (this.isUserscriptRuntime()) {
+      const fromApi = await this.fetchOrganizationIdFromApi()
+      if (fromApi) {
+        this.activeOrganizationId = fromApi
+        this.activeOrganizationIdExpiresAt = now + 10 * 60 * 1000
+        return fromApi
+      }
+
+      const fromStorage = this.getOrganizationIdFromStorage()
+      if (fromStorage) {
+        this.activeOrganizationId = fromStorage
+        this.activeOrganizationIdExpiresAt = now + 10 * 60 * 1000
+        return fromStorage
+      }
+
+      const fromCookie = this.getCookieValue("lastActiveOrg")
+      if (this.isValidOrganizationId(fromCookie)) {
+        this.activeOrganizationId = fromCookie
+        this.activeOrganizationIdExpiresAt = now + 10 * 60 * 1000
+        return fromCookie
+      }
+
+      return null
+    }
+
+    const fromCookie = this.getCookieValue("lastActiveOrg")
+    if (this.isValidOrganizationId(fromCookie)) {
+      this.activeOrganizationId = fromCookie
+      this.activeOrganizationIdExpiresAt = now + 10 * 60 * 1000
+      return fromCookie
+    }
+
+    const fromStorage = this.getOrganizationIdFromStorage()
+    if (fromStorage) {
+      this.activeOrganizationId = fromStorage
+      this.activeOrganizationIdExpiresAt = now + 10 * 60 * 1000
+      return fromStorage
+    }
+
+    const fromApi = await this.fetchOrganizationIdFromApi()
+    if (fromApi) {
+      this.activeOrganizationId = fromApi
+      this.activeOrganizationIdExpiresAt = now + 10 * 60 * 1000
+      return fromApi
+    }
+
+    return null
+  }
+
+  private isUserscriptRuntime(): boolean {
+    return typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
+  }
+
+  private async fetchOrganizationIdFromApi(): Promise<string | null> {
+    try {
+      const response = await fetch("/api/organizations", {
+        method: "GET",
+        headers: { accept: "application/json, text/plain, */*" },
+        credentials: "include",
+      })
+      if (!response.ok) return null
+
+      const payload = (await response.json()) as unknown
+      return this.extractOrganizationId(payload)
+    } catch {
+      return null
+    }
+  }
+
+  private getOrganizationIdFromStorage(): string | null {
+    const directKeys = [
+      "lastActiveOrg",
+      "activeOrg",
+      "organizationId",
+      "lastActiveOrganization",
+      "LSS-lastActiveOrg",
+    ]
+
+    for (const key of directKeys) {
+      const raw = localStorage.getItem(key)
+      const orgId = this.extractOrganizationId(raw)
+      if (orgId) return orgId
+    }
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (!key || !key.toLowerCase().includes("org")) continue
+      const raw = localStorage.getItem(key)
+      const orgId = this.extractOrganizationId(raw)
+      if (orgId) return orgId
+    }
+
+    return null
+  }
+
+  private extractOrganizationId(payload: unknown): string | null {
+    if (!payload) return null
+
+    if (typeof payload === "string") {
+      const trimmed = payload.trim().replace(/^"(.*)"$/, "$1")
+      if (this.isValidOrganizationId(trimmed)) return trimmed
+
+      if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+        try {
+          return this.extractOrganizationId(JSON.parse(trimmed))
+        } catch {
+          return null
+        }
+      }
+
+      const match = trimmed.match(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/i)
+      return match ? match[0] : null
+    }
+
+    if (Array.isArray(payload)) {
+      for (const item of payload) {
+        const id = this.extractOrganizationId(item)
+        if (id) return id
+      }
+      return null
+    }
+
+    if (typeof payload === "object") {
+      const record = payload as Record<string, unknown>
+      const candidateKeys = [
+        "uuid",
+        "id",
+        "organization_uuid",
+        "organization_id",
+        "organizationId",
+        "org_uuid",
+      ]
+
+      for (const key of candidateKeys) {
+        const value = record[key]
+        if (typeof value === "string" && this.isValidOrganizationId(value)) {
+          return value
+        }
+      }
+
+      for (const nestedKey of [
+        "organizations",
+        "organization",
+        "activeOrganization",
+        "currentOrganization",
+      ]) {
+        const nested = record[nestedKey]
+        const id = this.extractOrganizationId(nested)
+        if (id) return id
+      }
+    }
+
+    return null
+  }
+
+  private isValidOrganizationId(value: string | null | undefined): boolean {
+    return typeof value === "string" && ORG_ID_REGEX.test(value)
+  }
+
+  private readAnthropicDeviceId(): string | null {
+    return this.getCookieValue("anthropic-device-id")
+  }
+
+  private readAnthropicAnonymousId(): string | null {
+    return (
+      this.getCookieValue("anthropic-anonymous-id") ||
+      localStorage.getItem("anthropic-anonymous-id") ||
+      localStorage.getItem("anthropicAnonymousId")
+    )
+  }
+
+  private readAnthropicClientSha(): string | null {
+    const fromMeta = document
+      .querySelector('meta[name="sentry-release"], meta[name="anthropic-client-sha"]')
+      ?.getAttribute("content")
+    if (fromMeta) return fromMeta
+
+    const fromGlobal = (window as unknown as Record<string, unknown>).__SENTRY_RELEASE__
+    if (typeof fromGlobal === "string" && fromGlobal.length > 0) {
+      return fromGlobal
+    }
+
+    return null
+  }
+
+  private getCookieValue(name: string): string | null {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`))
+    if (!match) return null
+
+    try {
+      return decodeURIComponent(match[1])
+    } catch {
+      return match[1]
+    }
+  }
+
+  private syncSidebarAfterRemoteDelete(id: string): void {
+    const row = this.findConversationRow(id)
+    if (!row) return
+
+    const container = (row.closest("li") || row) as HTMLElement
+    container.remove()
+  }
+
+  private async deleteConversationViaUi(id: string): Promise<boolean> {
+    const row = await this.findConversationRowWithRetry(id)
+    if (!row) return false
+
+    const menuButton = await this.findConversationMenuButton(row, id)
+    if (!menuButton) return false
+
+    this.simulateClick(menuButton)
+
+    const deleteMenuItem = await this.waitForDeleteMenuItem(menuButton)
+    if (!deleteMenuItem) return false
+    this.simulateClick(deleteMenuItem)
+
+    // 某些版本删除后无确认弹窗，先短暂等待一次移除结果。
+    if (await this.waitForConversationRemoved(id, 1000)) {
+      return true
+    }
+
+    const confirmButton = await this.waitForDeleteConfirmButton()
+    if (confirmButton) {
+      this.simulateClick(confirmButton)
+    }
+
+    return this.waitForConversationRemoved(id, 5000)
+  }
+
+  private async isConversationStillVisible(id: string): Promise<boolean> {
+    const row = await this.findConversationRowWithRetry(id)
+    return !!row
+  }
+
+  private async findConversationRowWithRetry(id: string): Promise<HTMLElement | null> {
+    const first = this.findConversationRow(id)
+    if (first) return first
+
+    await this.loadAllConversations()
+    await this.sleep(200)
+    return this.findConversationRow(id)
+  }
+
+  private findConversationRow(id: string): HTMLElement | null {
+    return document.querySelector(
+      `a[data-dd-action-name="sidebar-chat-item"][href="/chat/${id}"], a[data-dd-action-name="sidebar-chat-item"][href$="/chat/${id}"], a[data-dd-action-name="sidebar-chat-item"][href*="/chat/${id}?"]`,
+    ) as HTMLElement | null
+  }
+
+  private async findConversationMenuButton(
+    row: HTMLElement,
+    id: string,
+  ): Promise<HTMLElement | null> {
+    const owner = (row.closest("li") || row.parentElement || row) as HTMLElement
+    const menuSelector = [
+      'button[aria-haspopup="menu"]',
+      'button[data-testid*="menu"]',
+      'button[aria-label*="more"]',
+      'button[aria-label*="More"]',
+      'button[aria-label*="options"]',
+      'button[aria-label*="Options"]',
+      'button[aria-label*="更多"]',
+      'button[aria-label*="选项"]',
+      'button[aria-label*="選項"]',
+    ].join(", ")
+
+    for (let attempt = 0; attempt < 10; attempt++) {
+      owner.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }))
+      owner.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }))
+      row.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }))
+      row.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }))
+
+      const candidates = Array.from(owner.querySelectorAll(menuSelector)) as HTMLElement[]
+      const visibleCandidates = candidates.filter((item) => this.isVisible(item))
+      if (visibleCandidates.length > 0) {
+        const rightMost = this.pickRightMostElement(visibleCandidates)
+        if (rightMost) return rightMost
+      }
+
+      const allButtons = Array.from(owner.querySelectorAll("button")) as HTMLElement[]
+      const iconButtons = allButtons.filter((item) => this.isVisible(item))
+      if (iconButtons.length > 0) {
+        const rightMost = this.pickRightMostElement(iconButtons)
+        if (rightMost) return rightMost
+      }
+
+      await this.sleep(80)
+    }
+
+    return null
+  }
+
+  private getMenuScopeFromTrigger(trigger: HTMLElement): HTMLElement | null {
+    const controlledId = trigger.getAttribute("aria-controls") || trigger.getAttribute("aria-owns")
+    if (controlledId) {
+      const controlled = document.getElementById(controlledId)
+      if (controlled) return controlled
+    }
+
+    const menus = Array.from(
+      document.querySelectorAll('[role="menu"], [data-radix-menu-content], [data-state="open"]'),
+    ) as HTMLElement[]
+    const visibleMenus = menus.filter((menu) => this.isVisible(menu))
+    if (visibleMenus.length === 0) return null
+    return this.pickNearestElement(trigger, visibleMenus)
+  }
+
+  private async waitForDeleteMenuItem(
+    menuTrigger: HTMLElement,
+    timeout = 2500,
+  ): Promise<HTMLElement | null> {
+    const start = Date.now()
+    while (Date.now() - start < timeout) {
+      const menuScope = this.getMenuScopeFromTrigger(menuTrigger)
+      const rawItems = menuScope
+        ? (Array.from(menuScope.querySelectorAll('[role="menuitem"], button')) as HTMLElement[])
+        : (Array.from(
+            document.querySelectorAll('[role="menuitem"], [role="menu"] button'),
+          ) as HTMLElement[])
+
+      for (const item of rawItems) {
+        if (!this.isVisible(item)) continue
+        const text = this.getSignalText(item)
+        if (!this.hasKeyword(text, CLAUDE_DELETE_KEYWORDS)) continue
+        if (this.hasKeyword(text, CLAUDE_CANCEL_KEYWORDS)) continue
+        return item
+      }
+      await this.sleep(80)
+    }
+    return null
+  }
+
+  private async waitForDeleteConfirmButton(timeout = 2500): Promise<HTMLElement | null> {
+    const start = Date.now()
+    while (Date.now() - start < timeout) {
+      const dialog = this.findVisibleDialog()
+      const buttons = dialog
+        ? (Array.from(dialog.querySelectorAll("button")) as HTMLElement[])
+        : (Array.from(document.querySelectorAll("button")) as HTMLElement[])
+
+      for (const button of buttons) {
+        if (!this.isVisible(button)) continue
+        const text = this.getSignalText(button)
+        if (!this.hasKeyword(text, CLAUDE_DELETE_KEYWORDS)) continue
+        if (this.hasKeyword(text, CLAUDE_CANCEL_KEYWORDS)) continue
+        return button
+      }
+
+      await this.sleep(80)
+    }
+    return null
+  }
+
+  private findVisibleDialog(): HTMLElement | null {
+    const dialogs = Array.from(
+      document.querySelectorAll('[role="dialog"], [aria-modal="true"], [data-state="open"]'),
+    ) as HTMLElement[]
+    return dialogs.find((dialog) => this.isVisible(dialog)) || null
+  }
+
+  private async waitForConversationRemoved(id: string, timeout = 3500): Promise<boolean> {
+    const start = Date.now()
+    while (Date.now() - start < timeout) {
+      if (!this.findConversationRow(id)) return true
+      await this.sleep(80)
+    }
+    return false
+  }
+
+  private pickRightMostElement(elements: HTMLElement[]): HTMLElement | null {
+    if (elements.length === 0) return null
+    return [...elements].sort(
+      (a, b) => b.getBoundingClientRect().right - a.getBoundingClientRect().right,
+    )[0]
+  }
+
+  private pickNearestElement(anchor: HTMLElement, elements: HTMLElement[]): HTMLElement | null {
+    if (elements.length === 0) return null
+
+    const anchorRect = anchor.getBoundingClientRect()
+    const anchorX = anchorRect.left + anchorRect.width / 2
+    const anchorY = anchorRect.top + anchorRect.height / 2
+
+    let nearest: HTMLElement | null = null
+    let nearestDistance = Number.POSITIVE_INFINITY
+
+    for (const element of elements) {
+      const rect = element.getBoundingClientRect()
+      const x = rect.left + rect.width / 2
+      const y = rect.top + rect.height / 2
+      const distance = Math.hypot(x - anchorX, y - anchorY)
+      if (distance < nearestDistance) {
+        nearestDistance = distance
+        nearest = element
+      }
+    }
+
+    return nearest
+  }
+
+  private getSignalText(element: HTMLElement): string {
+    return [
+      element.textContent || "",
+      element.getAttribute("aria-label") || "",
+      element.getAttribute("title") || "",
+      element.className || "",
+    ]
+      .join(" ")
+      .toLowerCase()
+  }
+
+  private hasKeyword(text: string, keywords: string[]): boolean {
+    const normalized = text.toLowerCase()
+    return keywords.some((keyword) => normalized.includes(keyword.toLowerCase()))
+  }
+
+  private isVisible(element: Element | null): element is HTMLElement {
+    if (!(element instanceof HTMLElement)) return false
+    if (!element.isConnected) return false
+
+    const style = window.getComputedStyle(element)
+    if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) {
+      return false
+    }
+
+    const rect = element.getBoundingClientRect()
+    return rect.width > 0 && rect.height > 0
+  }
+
+  private async sleep(ms: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, ms))
   }
 
   // ==================== 输入框操作 ====================
