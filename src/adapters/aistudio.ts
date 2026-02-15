@@ -16,11 +16,13 @@ import type { AIStudioSettings } from "~utils/storage"
 
 import {
   SiteAdapter,
+  type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportConfig,
   type MarkdownFixerConfig,
   type OutlineItem,
+  type SiteDeleteConversationResult,
 } from "./base"
 
 // ==================== AI Studio 可用模型列表 ====================
@@ -83,11 +85,57 @@ export const AISTUDIO_MODELS: AIStudioModel[] = [
 
 const DEFAULT_TITLE = "Google AI Studio"
 
+const AISTUDIO_DELETE_REASON = {
+  UI_FAILED: "delete_ui_failed",
+  BATCH_ABORTED_AFTER_UI_FAILURE: "delete_batch_aborted_after_ui_failure",
+  API_DISABLED_UNSTABLE: "delete_api_disabled_unstable",
+  API_AUTH_MISSING: "delete_api_auth_missing",
+  API_KEY_MISSING: "delete_api_key_missing",
+  API_REQUEST_FAILED: "delete_api_request_failed",
+  API_NOT_FOUND_BUT_VISIBLE: "delete_api_not_found_but_visible",
+} as const
+
+const AISTUDIO_DELETE_MENU_KEYWORDS = [
+  "delete",
+  "remove",
+  "删除",
+  "刪除",
+  "削除",
+  "삭제",
+  "supprimer",
+  "eliminar",
+  "löschen",
+  "excluir",
+  "hapus",
+  "удалить",
+]
+
+const AISTUDIO_CANCEL_KEYWORDS = [
+  "cancel",
+  "取消",
+  "キャンセル",
+  "취소",
+  "annuler",
+  "abbrechen",
+  "annulla",
+  "batal",
+  "cancelar",
+  "отмена",
+]
+
+const AISTUDIO_RPC_SERVICE_PATH =
+  "/$rpc/google.internal.alkali.applications.makersuite.v1.MakerSuiteService"
+const AISTUDIO_DELETE_PROMPT_METHOD = "DeletePrompt"
+const AISTUDIO_FALLBACK_RPC_ORIGIN = "https://alkalimakersuite-pa.clients6.google.com"
+
 export class AIStudioAdapter extends SiteAdapter {
   // ==================== 缓存属性 ====================
 
   // 缓存从 library 页面抓取的会话列表
   private cachedLibraryConversations: ConversationInfo[] | null = null
+  private reloadScheduled = false
+  private cachedApiKey: string | null = null
+  private cachedRpcOrigin: string | null = null
 
   // ==================== 基础信息 ====================
 
@@ -752,6 +800,555 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   // ==================== 大纲提取 ====================
+
+  async deleteConversationOnSite(
+    target: ConversationDeleteTarget,
+  ): Promise<SiteDeleteConversationResult> {
+    const result = await this.deleteConversationOnSiteInternal(target)
+    if (result.success) {
+      this.scheduleFullReloadAfterDelete([target.id])
+    }
+    return result
+  }
+
+  async deleteConversationsOnSite(
+    targets: ConversationDeleteTarget[],
+  ): Promise<SiteDeleteConversationResult[]> {
+    const results: SiteDeleteConversationResult[] = []
+    const deletedIds: string[] = []
+
+    for (let index = 0; index < targets.length; index++) {
+      const result = await this.deleteConversationOnSiteInternal(targets[index])
+      results.push(result)
+      if (result.success) {
+        deletedIds.push(targets[index].id)
+      }
+
+      if (!result.success && result.reason === AISTUDIO_DELETE_REASON.UI_FAILED) {
+        for (let i = index + 1; i < targets.length; i++) {
+          results.push({
+            id: targets[i].id,
+            success: false,
+            method: "none",
+            reason: AISTUDIO_DELETE_REASON.BATCH_ABORTED_AFTER_UI_FAILURE,
+          })
+        }
+        break
+      }
+    }
+
+    if (deletedIds.length > 0) {
+      this.scheduleFullReloadAfterDelete(deletedIds)
+    }
+
+    return results
+  }
+
+  private async deleteConversationOnSiteInternal(
+    target: ConversationDeleteTarget,
+  ): Promise<SiteDeleteConversationResult> {
+    const apiResult = this.shouldUseNativeDeleteApi()
+      ? await this.tryDeleteViaGrpcApi(target.id)
+      : {
+          id: target.id,
+          success: false,
+          method: "none" as const,
+          reason: AISTUDIO_DELETE_REASON.API_DISABLED_UNSTABLE,
+        }
+    if (apiResult.success) {
+      return apiResult
+    }
+
+    const uiSuccess = await this.deleteConversationViaUi(target.id)
+    return {
+      id: target.id,
+      success: uiSuccess,
+      method: uiSuccess ? "ui" : "none",
+      reason: uiSuccess ? undefined : apiResult.reason || AISTUDIO_DELETE_REASON.UI_FAILED,
+    }
+  }
+
+  private shouldUseNativeDeleteApi(): boolean {
+    // AI Studio's RPC headers/tokens are highly dynamic and currently unstable across sessions.
+    // Keep API delete disabled to avoid false failures and rely on stable UI automation.
+    return false
+  }
+
+  private async tryDeleteViaGrpcApi(id: string): Promise<SiteDeleteConversationResult> {
+    const authorization = await this.buildGoogleAuthorizationHeader(window.location.origin)
+    if (!authorization) {
+      return {
+        id,
+        success: false,
+        method: "none",
+        reason: AISTUDIO_DELETE_REASON.API_AUTH_MISSING,
+      }
+    }
+
+    const apiKey = this.resolveGoogleApiKey()
+    if (!apiKey) {
+      return {
+        id,
+        success: false,
+        method: "none",
+        reason: AISTUDIO_DELETE_REASON.API_KEY_MISSING,
+      }
+    }
+
+    const promptName = this.normalizePromptName(id)
+    const endpoints = this.getDeletePromptEndpoints()
+    let lastStatus = 0
+
+    try {
+      for (const endpoint of endpoints) {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            accept: "*/*",
+            authorization,
+            "content-type": "application/json+protobuf",
+            "x-goog-api-key": apiKey,
+            "x-goog-authuser": this.resolveGoogAuthUser(),
+            "x-user-agent": "grpc-web-javascript/0.1",
+          },
+          body: JSON.stringify([promptName]),
+        })
+
+        lastStatus = response.status
+        if (response.ok) {
+          this.cachedRpcOrigin = this.normalizeRpcOriginFromEndpoint(endpoint)
+          this.syncConversationListAfterDelete(id)
+          return { id, success: true, method: "api" }
+        }
+
+        if (response.status === 404) {
+          if (!this.isConversationVisible(id)) {
+            this.cachedRpcOrigin = this.normalizeRpcOriginFromEndpoint(endpoint)
+            this.syncConversationListAfterDelete(id)
+            return { id, success: true, method: "api" }
+          }
+          // 404 可能来自错误 shard，继续尝试下一个候选端点。
+          continue
+        }
+
+        // 400/5xx 也可能是错误 host，继续尝试候选端点。
+        if (response.status === 400 || response.status >= 500) {
+          continue
+        }
+
+        return {
+          id,
+          success: false,
+          method: "api",
+          reason: this.toDeleteApiHttpReason(response.status),
+        }
+      }
+
+      if (lastStatus === 404) {
+        return {
+          id,
+          success: false,
+          method: "api",
+          reason: AISTUDIO_DELETE_REASON.API_NOT_FOUND_BUT_VISIBLE,
+        }
+      }
+
+      return {
+        id,
+        success: false,
+        method: "api",
+        reason: this.toDeleteApiHttpReason(lastStatus || 0),
+      }
+    } catch {
+      return {
+        id,
+        success: false,
+        method: "api",
+        reason: AISTUDIO_DELETE_REASON.API_REQUEST_FAILED,
+      }
+    }
+  }
+
+  private toDeleteApiHttpReason(status: number): string {
+    switch (status) {
+      case 401:
+      case 403:
+        return "delete_api_unauthorized"
+      case 429:
+        return "delete_api_rate_limited"
+      default:
+        return `delete_api_http_${status}`
+    }
+  }
+
+  private normalizePromptName(id: string): string {
+    if (!id) return ""
+    return id.startsWith("prompts/") ? id : `prompts/${id}`
+  }
+
+  private getDeletePromptEndpoints(): string[] {
+    const origins: string[] = []
+
+    if (this.cachedRpcOrigin) {
+      origins.push(this.cachedRpcOrigin)
+    }
+
+    origins.push(...this.resolveRpcOriginsFromPerformance())
+    origins.push(AISTUDIO_FALLBACK_RPC_ORIGIN)
+
+    const uniqueOrigins = Array.from(new Set(origins.filter(Boolean)))
+    return uniqueOrigins.map(
+      (origin) => `${origin}${AISTUDIO_RPC_SERVICE_PATH}/${AISTUDIO_DELETE_PROMPT_METHOD}`,
+    )
+  }
+
+  private resolveRpcOriginsFromPerformance(): string[] {
+    const entries = performance.getEntriesByType("resource") as PerformanceResourceTiming[]
+    if (!entries || entries.length === 0) return []
+
+    const origins: string[] = []
+    for (let index = entries.length - 1; index >= 0; index--) {
+      const name = entries[index]?.name
+      if (!name || !name.includes(AISTUDIO_RPC_SERVICE_PATH)) continue
+
+      const origin = this.normalizeRpcOriginFromEndpoint(name)
+      if (origin) origins.push(origin)
+    }
+
+    return Array.from(new Set(origins))
+  }
+
+  private normalizeRpcOriginFromEndpoint(endpoint: string): string | null {
+    try {
+      const url = new URL(endpoint)
+      if (!this.isLikelyRpcHost(url.hostname)) return null
+      return `${url.protocol}//${url.host}`
+    } catch {
+      return null
+    }
+  }
+
+  private isLikelyRpcHost(hostname: string): boolean {
+    return /(?:^|\.)alkalimakersuite-[a-z0-9-]+\.clients\d+\.google\.com$/i.test(hostname)
+  }
+
+  private async buildGoogleAuthorizationHeader(origin: string): Promise<string | null> {
+    const timestamp = Math.floor(Date.now() / 1000)
+    const sapisid = this.getCookieValue("SAPISID")
+    const oneP = this.getCookieValue("__Secure-1PAPISID")
+    const threeP = this.getCookieValue("__Secure-3PAPISID")
+
+    const parts: string[] = []
+
+    const primary = sapisid || oneP || threeP
+    if (primary) {
+      const token = await this.buildSapisidHashToken(primary, origin, timestamp)
+      if (token) parts.push(`SAPISIDHASH ${token}`)
+    }
+
+    if (oneP) {
+      const token = await this.buildSapisidHashToken(oneP, origin, timestamp)
+      if (token) parts.push(`SAPISID1PHASH ${token}`)
+    }
+
+    if (threeP) {
+      const token = await this.buildSapisidHashToken(threeP, origin, timestamp)
+      if (token) parts.push(`SAPISID3PHASH ${token}`)
+    }
+
+    if (parts.length === 0) return null
+    return parts.join(" ")
+  }
+
+  private async buildSapisidHashToken(
+    value: string,
+    origin: string,
+    timestamp: number,
+  ): Promise<string | null> {
+    try {
+      const source = `${timestamp} ${value} ${origin}`
+      const hashBuffer = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(source))
+      const hash = Array.from(new Uint8Array(hashBuffer))
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("")
+      return `${timestamp}_${hash}`
+    } catch {
+      return null
+    }
+  }
+
+  private resolveGoogleApiKey(): string | null {
+    if (this.cachedApiKey && this.isValidGoogleApiKey(this.cachedApiKey)) {
+      return this.cachedApiKey
+    }
+
+    const fromWiz = (window as unknown as Record<string, unknown>).WIZ_global_data as
+      | Record<string, unknown>
+      | undefined
+    const wizKey = fromWiz?.SNlM0e
+    if (this.isValidGoogleApiKey(wizKey)) {
+      this.cachedApiKey = wizKey
+      return wizKey
+    }
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (!key) continue
+      const value = localStorage.getItem(key)
+      if (!value) continue
+      const match = value.match(/AIza[0-9A-Za-z_-]{20,}/)
+      if (match) {
+        this.cachedApiKey = match[0]
+        return match[0]
+      }
+    }
+
+    const scripts = Array.from(document.querySelectorAll("script"))
+    for (const script of scripts) {
+      const text = script.textContent
+      if (!text) continue
+      const match = text.match(/AIza[0-9A-Za-z_-]{20,}/)
+      if (match) {
+        this.cachedApiKey = match[0]
+        return match[0]
+      }
+    }
+
+    return null
+  }
+
+  private isValidGoogleApiKey(value: unknown): value is string {
+    return typeof value === "string" && /^AIza[0-9A-Za-z_-]{20,}$/.test(value)
+  }
+
+  private resolveGoogAuthUser(): string {
+    const fromQuery = new URLSearchParams(window.location.search).get("authuser")
+    if (fromQuery && /^\d+$/.test(fromQuery)) {
+      return fromQuery
+    }
+    return "0"
+  }
+
+  private getCookieValue(name: string): string | null {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`))
+    if (!match) return null
+    try {
+      return decodeURIComponent(match[1])
+    } catch {
+      return match[1]
+    }
+  }
+
+  private syncConversationListAfterDelete(id: string): void {
+    if (this.cachedLibraryConversations) {
+      this.cachedLibraryConversations = this.cachedLibraryConversations.filter(
+        (item) => item.id !== id,
+      )
+    }
+
+    const selectors = [
+      `a.prompt-link[href*="/prompts/${id}"]`,
+      `a.name-btn[href*="/prompts/${id}"]`,
+      `a[href*="/prompts/${id}"]`,
+    ]
+    selectors.forEach((selector) => {
+      const anchors = Array.from(document.querySelectorAll(selector)) as HTMLElement[]
+      anchors.forEach((anchor) => {
+        const container =
+          (anchor.closest("tr") as HTMLElement | null) ||
+          (anchor.closest("li") as HTMLElement | null) ||
+          (anchor.closest("mat-row") as HTMLElement | null) ||
+          anchor
+        container.remove()
+      })
+    })
+  }
+
+  private isConversationVisible(id: string): boolean {
+    return Boolean(
+      document.querySelector(
+        `a.prompt-link[href*="/prompts/${id}"], a.name-btn[href*="/prompts/${id}"], a[href*="/prompts/${id}"]`,
+      ),
+    )
+  }
+
+  private scheduleFullReloadAfterDelete(deletedIds: string[]): void {
+    if (this.reloadScheduled || deletedIds.length === 0) return
+
+    const currentId = this.getSessionId()
+    if (currentId && deletedIds.includes(currentId)) {
+      try {
+        window.history.replaceState(window.history.state, "", "/prompts/new_chat")
+      } catch {
+        // ignore SPA route replacement failure
+      }
+    }
+
+    this.reloadScheduled = true
+    window.setTimeout(() => {
+      window.location.reload()
+    }, 120)
+  }
+
+  private async deleteConversationViaUi(id: string): Promise<boolean> {
+    const row = await this.findLibraryRowByPromptId(id, 1500)
+    if (!row) return false
+
+    const menuButton = this.findLibraryRowMenuButton(row)
+    if (!menuButton) return false
+
+    this.simulateClick(menuButton)
+
+    const deleteItem = await this.waitForDeleteMenuItem(2500)
+    if (!deleteItem) return false
+    this.simulateClick(deleteItem)
+
+    const confirmButton = await this.waitForDeleteConfirmButton(2500)
+    if (!confirmButton) return false
+    this.simulateClick(confirmButton)
+
+    const removed = await this.waitForConversationRemoved(id, 5000)
+    if (removed) {
+      this.syncConversationListAfterDelete(id)
+    }
+    return removed
+  }
+
+  private async findLibraryRowByPromptId(id: string, timeout = 1200): Promise<HTMLElement | null> {
+    const start = Date.now()
+    while (Date.now() - start < timeout) {
+      const anchor = document.querySelector(
+        `ms-library-table a[href*="/prompts/${id}"], a.name-btn[href*="/prompts/${id}"]`,
+      ) as HTMLElement | null
+      if (anchor) {
+        const row = (anchor.closest("tr") || anchor.closest("mat-row") || anchor) as HTMLElement
+        if (row && this.isVisible(row)) return row
+      }
+      await this.sleep(80)
+    }
+    return null
+  }
+
+  private findLibraryRowMenuButton(row: HTMLElement): HTMLElement | null {
+    const selector = [
+      'button[aria-haspopup="menu"]',
+      'button[aria-label*="More"]',
+      'button[aria-label*="more"]',
+      'button[aria-label*="更多"]',
+      'button[aria-label*="更多选项"]',
+      'button[aria-label*="选项"]',
+      'button[title*="More"]',
+      'button[title*="more"]',
+    ].join(", ")
+
+    const candidates = Array.from(row.querySelectorAll(selector)) as HTMLElement[]
+    const visible = candidates.filter((item) => this.isVisible(item))
+    if (visible.length > 0) {
+      return visible.sort(
+        (a, b) => b.getBoundingClientRect().right - a.getBoundingClientRect().right,
+      )[0]
+    }
+
+    const fallbackButtons = Array.from(row.querySelectorAll("button")) as HTMLElement[]
+    const visibleFallback = fallbackButtons.filter((item) => this.isVisible(item))
+    if (visibleFallback.length === 0) return null
+    return visibleFallback.sort(
+      (a, b) => b.getBoundingClientRect().right - a.getBoundingClientRect().right,
+    )[0]
+  }
+
+  private async waitForDeleteMenuItem(timeout = 2500): Promise<HTMLElement | null> {
+    const start = Date.now()
+    while (Date.now() - start < timeout) {
+      const menuItems = Array.from(
+        document.querySelectorAll(
+          '[role="menuitem"], [role="menu"] button, .mat-mdc-menu-panel button',
+        ),
+      ) as HTMLElement[]
+
+      for (const item of menuItems) {
+        if (!this.isVisible(item)) continue
+        const text = this.getSignalText(item)
+        if (!this.hasKeyword(text, AISTUDIO_DELETE_MENU_KEYWORDS)) continue
+        if (this.hasKeyword(text, AISTUDIO_CANCEL_KEYWORDS)) continue
+        return item
+      }
+
+      await this.sleep(80)
+    }
+    return null
+  }
+
+  private async waitForDeleteConfirmButton(timeout = 2500): Promise<HTMLElement | null> {
+    const start = Date.now()
+    while (Date.now() - start < timeout) {
+      const dialog = this.findVisibleDialog()
+      const buttons = dialog
+        ? (Array.from(dialog.querySelectorAll("button")) as HTMLElement[])
+        : (Array.from(document.querySelectorAll("button")) as HTMLElement[])
+
+      for (const button of buttons) {
+        if (!this.isVisible(button)) continue
+        const text = this.getSignalText(button)
+        if (!this.hasKeyword(text, AISTUDIO_DELETE_MENU_KEYWORDS)) continue
+        if (this.hasKeyword(text, AISTUDIO_CANCEL_KEYWORDS)) continue
+        return button
+      }
+      await this.sleep(80)
+    }
+    return null
+  }
+
+  private findVisibleDialog(): HTMLElement | null {
+    const dialogs = Array.from(
+      document.querySelectorAll('[role="dialog"], mat-dialog-container, .mat-mdc-dialog-container'),
+    ) as HTMLElement[]
+    return dialogs.find((dialog) => this.isVisible(dialog)) || null
+  }
+
+  private async waitForConversationRemoved(id: string, timeout = 3500): Promise<boolean> {
+    const start = Date.now()
+    while (Date.now() - start < timeout) {
+      if (!this.isConversationVisible(id)) return true
+      await this.sleep(80)
+    }
+    return false
+  }
+
+  private getSignalText(element: HTMLElement): string {
+    return [
+      element.textContent || "",
+      element.getAttribute("aria-label") || "",
+      element.getAttribute("title") || "",
+      element.className || "",
+    ]
+      .join(" ")
+      .toLowerCase()
+  }
+
+  private hasKeyword(text: string, keywords: string[]): boolean {
+    const normalized = text.toLowerCase()
+    return keywords.some((keyword) => normalized.includes(keyword.toLowerCase()))
+  }
+
+  private isVisible(element: Element | null): element is HTMLElement {
+    if (!(element instanceof HTMLElement)) return false
+    if (!element.isConnected) return false
+
+    const style = window.getComputedStyle(element)
+    if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) {
+      return false
+    }
+
+    const rect = element.getBoundingClientRect()
+    return rect.width > 0 && rect.height > 0
+  }
+
+  private async sleep(ms: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, ms))
+  }
 
   getUserQuerySelector(): string {
     // 用户消息容器 - 只使用顶级容器，避免父子级重复匹配
