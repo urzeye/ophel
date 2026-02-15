@@ -5,6 +5,7 @@ import { SITE_IDS } from "~constants"
 
 import {
   SiteAdapter,
+  type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportConfig,
@@ -12,11 +13,37 @@ import {
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type SiteDeleteConversationResult,
 } from "./base"
 
 const DEFAULT_TITLE = "ChatGPT"
 
+const DELETE_CONFIRM_KEYWORDS = [
+  "delete",
+  "remove",
+  "删除",
+  "刪除",
+  "supprimer",
+  "eliminar",
+  "löschen",
+  "削除",
+  "삭제",
+  "удалить",
+  "excluir",
+]
+
+const DELETE_REASON = {
+  UI_FAILED: "delete_ui_failed",
+  BATCH_ABORTED_AFTER_UI_FAILURE: "delete_batch_aborted_after_ui_failure",
+  API_TOKEN_MISSING: "delete_api_token_missing",
+  API_REQUEST_FAILED: "delete_api_request_failed",
+  API_NOT_FOUND_BUT_VISIBLE: "delete_api_not_found_but_visible",
+} as const
+
 export class ChatGPTAdapter extends SiteAdapter {
+  private sessionAccessToken: string | null = null
+  private sessionAccessTokenExpiresAt = 0
+
   match(): boolean {
     return window.location.hostname.includes("chatgpt.com")
   }
@@ -146,6 +173,555 @@ export class ChatGPTAdapter extends SiteAdapter {
     }
     // 降级：页面刷新
     return super.navigateToConversation(id, url)
+  }
+
+  async deleteConversationOnSite(
+    target: ConversationDeleteTarget,
+  ): Promise<SiteDeleteConversationResult> {
+    return this.deleteConversationOnSiteInternal(target)
+  }
+
+  async deleteConversationsOnSite(
+    targets: ConversationDeleteTarget[],
+  ): Promise<SiteDeleteConversationResult[]> {
+    const results: SiteDeleteConversationResult[] = []
+    for (let index = 0; index < targets.length; index++) {
+      const target = targets[index]
+      const result = await this.deleteConversationOnSiteInternal(target)
+      results.push(result)
+
+      // Failsafe: if UI fallback failed once, stop batch to avoid cascading wrong deletions.
+      if (!result.success && result.reason === DELETE_REASON.UI_FAILED) {
+        for (let i = index + 1; i < targets.length; i++) {
+          results.push({
+            id: targets[i].id,
+            success: false,
+            method: "none",
+            reason: DELETE_REASON.BATCH_ABORTED_AFTER_UI_FAILURE,
+          })
+        }
+        break
+      }
+    }
+    return results
+  }
+
+  private async deleteConversationOnSiteInternal(
+    target: ConversationDeleteTarget,
+  ): Promise<SiteDeleteConversationResult> {
+    const nativeApiResult = await this.tryDeleteViaNativeApi(target.id)
+    if (nativeApiResult.success) return nativeApiResult
+
+    const uiSuccess = await this.deleteConversationViaUi(target.id)
+    return {
+      id: target.id,
+      success: uiSuccess,
+      method: uiSuccess ? "ui" : "none",
+      reason: uiSuccess ? undefined : nativeApiResult.reason || DELETE_REASON.UI_FAILED,
+    }
+  }
+
+  private clearSessionAccessToken() {
+    this.sessionAccessToken = null
+    this.sessionAccessTokenExpiresAt = 0
+  }
+
+  private async getSessionAccessToken(forceRefresh = false): Promise<string | null> {
+    const now = Date.now()
+    if (
+      !forceRefresh &&
+      this.sessionAccessToken &&
+      this.sessionAccessTokenExpiresAt > now + 5 * 1000
+    ) {
+      return this.sessionAccessToken
+    }
+
+    try {
+      const response = await fetch("/api/auth/session", {
+        method: "GET",
+        credentials: "include",
+      })
+      if (!response.ok) {
+        this.clearSessionAccessToken()
+        return null
+      }
+
+      const data = (await response.json()) as Record<string, unknown>
+      const tokenCandidates = [
+        data?.accessToken,
+        data?.access_token,
+        data?.token,
+        (data?.user as Record<string, unknown> | undefined)?.accessToken,
+      ]
+      const token =
+        tokenCandidates.find((value) => typeof value === "string" && value.length > 0) || null
+
+      if (typeof token === "string" && token.length > 0) {
+        this.sessionAccessToken = token
+        this.sessionAccessTokenExpiresAt = now + 5 * 60 * 1000
+        return token
+      }
+
+      this.clearSessionAccessToken()
+      return null
+    } catch {
+      this.clearSessionAccessToken()
+      return null
+    }
+  }
+
+  private getCookieValue(name: string): string | null {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`))
+    if (!match) return null
+    try {
+      return decodeURIComponent(match[1])
+    } catch {
+      return match[1]
+    }
+  }
+
+  private getChatgptAccountId(): string | null {
+    try {
+      const raw = localStorage.getItem("_account")
+      if (!raw) return null
+      const parsed = JSON.parse(raw)
+      if (typeof parsed !== "string" || !parsed || parsed === "personal") {
+        return null
+      }
+      return parsed
+    } catch {
+      return null
+    }
+  }
+
+  private buildNativeDeleteHeaders(
+    token: string,
+    method: "PATCH" | "DELETE",
+  ): Record<string, string> {
+    const headers: Record<string, string> = {
+      accept: "*/*",
+      authorization: `Bearer ${token}`,
+    }
+
+    if (method === "PATCH") {
+      headers["content-type"] = "application/json"
+    }
+
+    const accountId = this.getChatgptAccountId()
+    if (accountId) {
+      headers["chatgpt-account-id"] = accountId
+    }
+
+    const deviceId = this.getCookieValue("oai-did")
+    if (deviceId) {
+      headers["oai-device-id"] = deviceId
+    }
+
+    const language = document.documentElement.lang || navigator.language
+    if (language) {
+      headers["oai-language"] = language
+    }
+
+    return headers
+  }
+
+  private async performNativeDeleteRequest(
+    endpoint: string,
+    token: string,
+    method: "PATCH" | "DELETE" = "PATCH",
+  ): Promise<Response> {
+    const headers = this.buildNativeDeleteHeaders(token, method)
+
+    return fetch(endpoint, {
+      method,
+      headers,
+      body: method === "PATCH" ? JSON.stringify({ is_visible: false }) : undefined,
+      credentials: "include",
+    })
+  }
+
+  private async isConversationAlreadyGone(id: string): Promise<boolean> {
+    const row = await this.findConversationRowWithRetry(id)
+    return !row
+  }
+
+  private syncSidebarAfterRemoteDelete(id: string) {
+    const row = this.findConversationRow(id)
+    if (!row) return
+    const container = row.closest("li") || row
+    container.remove()
+  }
+
+  private toDeleteApiHttpReason(status: number): string {
+    switch (status) {
+      case 401:
+      case 403:
+        return "delete_api_unauthorized"
+      case 404:
+        return "delete_api_not_found"
+      case 429:
+        return "delete_api_rate_limited"
+      default:
+        return `delete_api_http_${status}`
+    }
+  }
+
+  private async tryDeleteViaNativeApi(id: string): Promise<SiteDeleteConversationResult> {
+    let token = await this.getSessionAccessToken()
+    if (!token) {
+      return {
+        id,
+        success: false,
+        method: "none",
+        reason: DELETE_REASON.API_TOKEN_MISSING,
+      }
+    }
+
+    const requestWithRetry = async (
+      endpoint: string,
+      method: "PATCH" | "DELETE" = "PATCH",
+    ): Promise<Response> => {
+      let response = await this.performNativeDeleteRequest(endpoint, token, method)
+      if (response.status === 401 || response.status === 403) {
+        token = await this.getSessionAccessToken(true)
+        if (!token) {
+          this.clearSessionAccessToken()
+          return response
+        }
+        response = await this.performNativeDeleteRequest(endpoint, token, method)
+      }
+      return response
+    }
+
+    const encodedId = encodeURIComponent(id)
+    const endpoints = [
+      `/backend-api/conversation/${encodedId}`,
+      `/backend-api/conversations/${encodedId}`,
+    ]
+
+    try {
+      let lastStatus: number | null = null
+
+      for (const endpoint of endpoints) {
+        let response = await requestWithRetry(endpoint, "PATCH")
+        lastStatus = response.status
+
+        if (response.ok) {
+          this.syncSidebarAfterRemoteDelete(id)
+          return { id, success: true, method: "api" }
+        }
+
+        if (response.status === 405) {
+          response = await requestWithRetry(endpoint, "DELETE")
+          lastStatus = response.status
+          if (response.ok) {
+            this.syncSidebarAfterRemoteDelete(id)
+            return { id, success: true, method: "api" }
+          }
+        }
+
+        if (response.status === 404) {
+          continue
+        }
+
+        if (response.status === 401 || response.status === 403) {
+          this.clearSessionAccessToken()
+        }
+
+        return {
+          id,
+          success: false,
+          method: "api",
+          reason: this.toDeleteApiHttpReason(response.status),
+        }
+      }
+
+      if (lastStatus === 404 && (await this.isConversationAlreadyGone(id))) {
+        this.syncSidebarAfterRemoteDelete(id)
+        return { id, success: true, method: "api" }
+      }
+
+      return {
+        id,
+        success: false,
+        method: "api",
+        reason:
+          lastStatus === 404
+            ? DELETE_REASON.API_NOT_FOUND_BUT_VISIBLE
+            : this.toDeleteApiHttpReason(lastStatus ?? 0),
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        return {
+          id,
+          success: false,
+          method: "api",
+          reason: "delete_api_timeout",
+        }
+      }
+      return {
+        id,
+        success: false,
+        method: "api",
+        reason: DELETE_REASON.API_REQUEST_FAILED,
+      }
+    }
+  }
+
+  private async deleteConversationViaUi(id: string): Promise<boolean> {
+    const row = await this.findConversationRowWithRetry(id)
+    if (!row) return false
+
+    const menuButton = await this.findConversationMenuButton(row, id)
+    if (!menuButton) return false
+
+    document.body.click()
+    await this.sleep(50)
+    this.simulateClick(menuButton)
+
+    const deleteMenuItem = await this.waitForDeleteMenuItem(menuButton)
+    if (!deleteMenuItem) return false
+    this.simulateClick(deleteMenuItem)
+
+    const confirmButton = await this.waitForDeleteConfirmButton()
+    if (confirmButton) {
+      this.simulateClick(confirmButton)
+    }
+
+    return this.waitForConversationRemoved(id, 4000)
+  }
+
+  private async findConversationRowWithRetry(id: string): Promise<HTMLElement | null> {
+    const firstTry = this.findConversationRow(id)
+    if (firstTry) return firstTry
+
+    await this.loadAllConversations()
+    await this.sleep(200)
+    return this.findConversationRow(id)
+  }
+
+  private findConversationRow(id: string): HTMLElement | null {
+    return document.querySelector(
+      `#history a[data-sidebar-item="true"][href="/c/${id}"]`,
+    ) as HTMLElement | null
+  }
+
+  private async findConversationMenuButton(
+    row: HTMLElement,
+    id: string,
+  ): Promise<HTMLElement | null> {
+    const actionSelectors = [
+      'button[aria-haspopup="menu"]',
+      'button[aria-label*="More"]',
+      'button[aria-label*="more"]',
+      'button[aria-label*="更多"]',
+      'button[data-testid*="menu"]',
+      ".trailing button",
+    ].join(", ")
+
+    const itemContainer = this.findConversationItemContainer(row, id)
+    const rawCandidates = [
+      itemContainer,
+      row.closest("li"),
+      row.parentElement,
+      row,
+    ] as Array<Element | null>
+    const candidates = rawCandidates.filter(
+      (node, index, all) => !!node && all.indexOf(node) === index,
+    ) as HTMLElement[]
+
+    for (let attempt = 0; attempt < 8; attempt++) {
+      candidates.forEach((element) => {
+        element.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }))
+        element.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }))
+      })
+
+      for (const candidate of candidates) {
+        const button = this.findFirstInScope(candidate, actionSelectors, (el) =>
+          this.isMenuButtonForConversation(el, id, itemContainer || candidate),
+        )
+        if (button) return button
+      }
+      await this.sleep(100)
+    }
+    return null
+  }
+
+  private findConversationItemContainer(row: HTMLElement, id: string): HTMLElement | null {
+    const targetHref = `/c/${id}`
+    let current: HTMLElement | null = row
+    let fallback: HTMLElement | null = null
+
+    for (let depth = 0; depth < 8 && current; depth++) {
+      const links = Array.from(
+        current.querySelectorAll('a[data-sidebar-item="true"][href^="/c/"]'),
+      ) as HTMLAnchorElement[]
+      const hasTargetLink = links.some((link) => link.getAttribute("href") === targetHref)
+      if (hasTargetLink) {
+        if (!fallback && links.length === 1) {
+          fallback = current
+        }
+
+        const hasActionButton = !!current.querySelector(
+          'button[aria-haspopup="menu"], .trailing button',
+        )
+        if (links.length === 1 && hasActionButton) {
+          return current
+        }
+      }
+
+      if (current.id === "history") break
+      current = current.parentElement
+    }
+
+    return fallback || (row.closest("li") as HTMLElement | null) || row.parentElement || row
+  }
+
+  private findFirstInScope(
+    scope: ParentNode,
+    selector: string,
+    predicate?: (element: HTMLElement) => boolean,
+  ): HTMLElement | null {
+    const elements = Array.from(scope.querySelectorAll(selector)) as HTMLElement[]
+    for (const element of elements) {
+      if (!this.isVisible(element)) continue
+      if (predicate && !predicate(element)) continue
+      return element
+    }
+    return null
+  }
+
+  private isMenuButtonForConversation(
+    button: HTMLElement,
+    id: string,
+    container: HTMLElement,
+  ): boolean {
+    if (!container.contains(button)) return false
+
+    const targetHref = `/c/${id}`
+    const owner = button.closest("li")
+    if (owner) {
+      const ownerLinks = Array.from(
+        owner.querySelectorAll('a[data-sidebar-item="true"][href^="/c/"]'),
+      ) as HTMLAnchorElement[]
+      if (
+        ownerLinks.length === 1 &&
+        ownerLinks[0].getAttribute("href") === targetHref &&
+        owner.contains(container.querySelector(`a[data-sidebar-item="true"][href="${targetHref}"]`))
+      ) {
+        return true
+      }
+    }
+
+    const linksInContainer = Array.from(
+      container.querySelectorAll('a[data-sidebar-item="true"][href^="/c/"]'),
+    ) as HTMLAnchorElement[]
+    return linksInContainer.length === 1 && linksInContainer[0].getAttribute("href") === targetHref
+  }
+
+  private getMenuContainerFromTrigger(trigger: HTMLElement): HTMLElement | null {
+    const controlledId = trigger.getAttribute("aria-controls") || trigger.getAttribute("aria-owns")
+    if (controlledId) {
+      const controlled = document.getElementById(controlledId)
+      if (controlled) return controlled
+    }
+
+    const visibleMenus = Array.from(document.querySelectorAll('[role="menu"]')) as HTMLElement[]
+    let nearest: HTMLElement | null = null
+    let nearestDistance = Number.POSITIVE_INFINITY
+    const triggerRect = trigger.getBoundingClientRect()
+    const triggerCenterX = triggerRect.left + triggerRect.width / 2
+    const triggerCenterY = triggerRect.top + triggerRect.height / 2
+
+    for (const menu of visibleMenus) {
+      if (!this.isVisible(menu)) continue
+      const rect = menu.getBoundingClientRect()
+      const centerX = rect.left + rect.width / 2
+      const centerY = rect.top + rect.height / 2
+      const distance = Math.hypot(centerX - triggerCenterX, centerY - triggerCenterY)
+      if (distance < nearestDistance) {
+        nearestDistance = distance
+        nearest = menu
+      }
+    }
+
+    return nearest
+  }
+
+  private async waitForDeleteMenuItem(
+    menuTrigger: HTMLElement,
+    timeout = 2500,
+  ): Promise<HTMLElement | null> {
+    const start = Date.now()
+    while (Date.now() - start < timeout) {
+      const menuScope = this.getMenuContainerFromTrigger(menuTrigger)
+      const scopedMenuItems = menuScope
+        ? (Array.from(
+            menuScope.querySelectorAll(
+              '[role="menuitem"], [data-radix-collection-item][role="menuitem"]',
+            ),
+          ) as HTMLElement[])
+        : []
+      const fallbackMenuItems = Array.from(
+        document.querySelectorAll(
+          '[role="menuitem"], [data-radix-collection-item][role="menuitem"]',
+        ),
+      ) as HTMLElement[]
+      const menuItems = scopedMenuItems.length > 0 ? scopedMenuItems : fallbackMenuItems
+
+      for (const item of menuItems) {
+        if (!this.isVisible(item)) continue
+        const text = (item.textContent || "").trim().toLowerCase()
+        if (DELETE_CONFIRM_KEYWORDS.some((keyword) => text.includes(keyword.toLowerCase()))) {
+          return item
+        }
+      }
+      await this.sleep(80)
+    }
+    return null
+  }
+
+  private async waitForDeleteConfirmButton(timeout = 2500): Promise<HTMLElement | null> {
+    const start = Date.now()
+    while (Date.now() - start < timeout) {
+      const buttons = Array.from(document.querySelectorAll("button")) as HTMLElement[]
+      for (const button of buttons) {
+        if (!this.isVisible(button)) continue
+        const text = (button.textContent || "").trim().toLowerCase()
+        if (DELETE_CONFIRM_KEYWORDS.some((keyword) => text.includes(keyword.toLowerCase()))) {
+          return button
+        }
+      }
+      await this.sleep(80)
+    }
+    return null
+  }
+
+  private async waitForConversationRemoved(id: string, timeout = 3000): Promise<boolean> {
+    const start = Date.now()
+    while (Date.now() - start < timeout) {
+      if (!this.findConversationRow(id)) {
+        return true
+      }
+      await this.sleep(80)
+    }
+    return false
+  }
+
+  private isVisible(element: Element | null): element is HTMLElement {
+    if (!(element instanceof HTMLElement)) return false
+    if (!element.isConnected) return false
+    const style = window.getComputedStyle(element)
+    if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) {
+      return false
+    }
+    const rect = element.getBoundingClientRect()
+    return rect.width > 0 && rect.height > 0
+  }
+
+  private async sleep(ms: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, ms))
   }
 
   getSessionName(): string | null {
