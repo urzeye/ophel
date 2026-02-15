@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { Conversation, ConversationManager, Folder, Tag } from "~core/conversation-manager"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
+import { showToast } from "~utils/toast"
 
 import {
   ConfirmDialog,
@@ -16,6 +17,7 @@ import {
   RenameDialog,
   TagManagerDialog,
 } from "./ConversationDialogs"
+import { LoadingOverlay } from "./LoadingOverlay"
 import { ConversationMenu, ExportMenu, FolderMenu } from "./ConversationMenus"
 
 import "~styles/conversations.css"
@@ -111,6 +113,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const [batchMode, setBatchMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [syncing, setSyncing] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // 搜索状态
   const [searchQuery, setSearchQuery] = useState("")
@@ -227,9 +230,24 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
   // 监听所有弹窗状态，向上汇报交互状态
   useEffect(() => {
-    const isInteracting = !!(menu || dialog || showTagFilterMenu || isFolderSelectOpen || batchMode)
+    const isInteracting = !!(
+      menu ||
+      dialog ||
+      showTagFilterMenu ||
+      isFolderSelectOpen ||
+      batchMode ||
+      isDeleting
+    )
     onInteractionStateChange?.(isInteracting)
-  }, [menu, dialog, showTagFilterMenu, isFolderSelectOpen, batchMode, onInteractionStateChange])
+  }, [
+    menu,
+    dialog,
+    showTagFilterMenu,
+    isFolderSelectOpen,
+    batchMode,
+    isDeleting,
+    onInteractionStateChange,
+  ])
 
   // 防抖搜索
   const handleSearchInput = (value: string) => {
@@ -463,6 +481,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
   return (
     <>
+      <LoadingOverlay isVisible={isDeleting} text={`${t("delete") || "删除"}...`} />
       <div
         ref={contentRef}
         className="conversations-content"
@@ -903,12 +922,26 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                       message: `确定删除选中的 ${selectedIds.size} 个会话吗？`,
                       danger: true,
                       onConfirm: async () => {
-                        for (const id of selectedIds) {
-                          await manager.deleteConversation(id)
-                        }
-                        clearSelection()
-                        loadData()
+                        if (isDeleting) return
                         setDialog(null)
+                        setIsDeleting(true)
+                        await new Promise((resolve) => setTimeout(resolve, 0))
+                        try {
+                          const result = await manager.deleteConversations(Array.from(selectedIds))
+                          if (result.localDeletedCount === 0) {
+                            showToast(t("deleteError") || "删除失败")
+                            return
+                          }
+                          if (result.remoteAttemptedCount > 0 && result.remoteFailedCount > 0) {
+                            showToast(
+                              `已删除 ${result.localDeletedCount} 个，本地成功，云端失败 ${result.remoteFailedCount} 个`,
+                            )
+                          }
+                          clearSelection()
+                          await loadData()
+                        } finally {
+                          setIsDeleting(false)
+                        }
                       },
                     })
                   }}>
@@ -1080,9 +1113,23 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
               message: `确定删除会话 "${menu.conv.title}" 吗？`,
               danger: true,
               onConfirm: async () => {
-                await manager.deleteConversation(menu.conv.id)
-                loadData()
+                if (isDeleting) return
                 setDialog(null)
+                setIsDeleting(true)
+                await new Promise((resolve) => setTimeout(resolve, 0))
+                try {
+                  const result = await manager.deleteConversation(menu.conv.id)
+                  if (!result.localDeleted) {
+                    showToast(t("deleteError") || "删除失败")
+                    return
+                  }
+                  if (result.remoteAttempted && !result.remoteSuccess) {
+                    showToast("已从面板删除，但云端删除失败")
+                  }
+                  await loadData()
+                } finally {
+                  setIsDeleting(false)
+                }
               },
             })
           }}

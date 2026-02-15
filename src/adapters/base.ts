@@ -29,6 +29,20 @@ export interface ConversationInfo {
   cid?: string
 }
 
+export interface ConversationDeleteTarget {
+  id: string
+  title?: string
+  url?: string
+}
+
+export interface SiteDeleteConversationResult {
+  id: string
+  success: boolean
+  method: "api" | "ui" | "none"
+  reason?: string
+  learnedApiTemplate?: boolean
+}
+
 export interface NetworkMonitorConfig {
   urlPatterns: string[]
   silenceThreshold: number
@@ -196,6 +210,27 @@ export abstract class SiteAdapter {
   }
 
   /** 滚动加载全部会话 */
+  async deleteConversationOnSite(
+    target: ConversationDeleteTarget,
+  ): Promise<SiteDeleteConversationResult> {
+    return {
+      id: target.id,
+      success: false,
+      method: "none",
+      reason: "not_supported",
+    }
+  }
+
+  async deleteConversationsOnSite(
+    targets: ConversationDeleteTarget[],
+  ): Promise<SiteDeleteConversationResult[]> {
+    const results: SiteDeleteConversationResult[] = []
+    for (const target of targets) {
+      results.push(await this.deleteConversationOnSite(target))
+    }
+    return results
+  }
+
   async loadAllConversations(): Promise<void> {
     const container = this.getSidebarScrollContainer()
     if (!container) return

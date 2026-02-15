@@ -46,9 +46,11 @@ export { SiteAdapter } from "./base"
 export type {
   OutlineItem,
   ConversationInfo,
+  ConversationDeleteTarget,
   NetworkMonitorConfig,
   ModelSwitcherConfig,
   ExportConfig,
   ConversationObserverConfig,
+  SiteDeleteConversationResult,
   AnchorData,
 } from "./base"
