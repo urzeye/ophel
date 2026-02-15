@@ -627,7 +627,7 @@ export const ja = {
   folderRainbowLabel: "フォルダのレインボー表示",
   folderRainbowDesc: "フォルダごとに背景色をランダムに設定します",
   conversationsSyncDeleteLabel: "クラウドと同期して削除",
-  conversationsSyncDeleteDesc: "ローカルで削除した際、{site} の履歴も削除します",
+  conversationsSyncDeleteDesc: "ローカル履歴を削除した際、対応サイトのクラウド履歴も削除します",
   conversationsSyncRenameLabel: "クラウドと同期して名前変更",
   conversationsSyncRenameDesc:
     "ローカルで名前を変更した際、{site} のサイドバータイトルも更新します",

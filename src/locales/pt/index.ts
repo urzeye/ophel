@@ -593,7 +593,8 @@ export const pt = {
   folderRainbowLabel: "Pastas Arco-íris",
   folderRainbowDesc: "Cores aleatórias para as pastas",
   conversationsSyncDeleteLabel: "Excluir na Nuvem",
-  conversationsSyncDeleteDesc: "Excluir em {site} ao apagar aqui",
+  conversationsSyncDeleteDesc:
+    "Ao excluir localmente, excluir também a conversa na nuvem do site correspondente",
   conversationsSyncRenameLabel: "Renomear na Nuvem",
   conversationsSyncRenameDesc: "Mudar nome em {site} também",
   conversationsCustomIcon: "Ícone Próprio",

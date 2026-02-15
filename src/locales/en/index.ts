@@ -640,7 +640,8 @@ export const en = {
   folderRainbowLabel: "Folder Rainbow Colors",
   folderRainbowDesc: "Assign different background colors to folders",
   conversationsSyncDeleteLabel: "Sync Delete Cloud",
-  conversationsSyncDeleteDesc: "Delete from {site} cloud when deleting local record",
+  conversationsSyncDeleteDesc:
+    "Delete cloud conversation on the corresponding site when deleting local record",
   conversationsSyncRenameLabel: "Sync Rename Cloud",
   conversationsSyncRenameDesc: "Update {site} sidebar title when renaming locally",
   conversationsCustomIcon: "Custom Icon",

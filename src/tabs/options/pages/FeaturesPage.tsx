@@ -478,6 +478,23 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId: _siteId, initialTab
                 )
               }
             />
+            <ToggleRow
+              label={t("conversationsSyncDeleteLabel") || "Sync Delete Cloud"}
+              description={
+                t("conversationsSyncDeleteDesc") ||
+                "Delete cloud conversation on supported sites when deleting local record"
+              }
+              settingId="conversation-sync-delete"
+              checked={settings.features?.conversations?.syncDelete ?? true}
+              onChange={() =>
+                updateDeepSetting(
+                  "features",
+                  "conversations",
+                  "syncDelete",
+                  !(settings.features?.conversations?.syncDelete ?? true),
+                )
+              }
+            />
           </SettingCard>
 
           {/* 导出设置卡片 */}

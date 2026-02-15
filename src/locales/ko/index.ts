@@ -597,7 +597,7 @@ export const ko = {
   folderRainbowLabel: "폴더 무지개 색상",
   folderRainbowDesc: "폴더에 서로 다른 배경색 할당",
   conversationsSyncDeleteLabel: "삭제 동기화 (클라우드)",
-  conversationsSyncDeleteDesc: "로컬 기록 삭제 시 {site} 클라우드에서도 삭제",
+  conversationsSyncDeleteDesc: "로컬 기록 삭제 시 해당 사이트의 클라우드 대화도 함께 삭제",
   conversationsSyncRenameLabel: "이름 변경 동기화 (클라우드)",
   conversationsSyncRenameDesc: "로컬에서 이름 변경 시 {site} 사이드바 제목 업데이트",
   conversationsCustomIcon: "사용자 정의 아이콘",

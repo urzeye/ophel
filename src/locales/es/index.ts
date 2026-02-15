@@ -593,7 +593,8 @@ export const es = {
   folderRainbowLabel: "Carpetas Arcoíris",
   folderRainbowDesc: "Colores aleatorios para carpetas",
   conversationsSyncDeleteLabel: "Borrar en Nube",
-  conversationsSyncDeleteDesc: "Borrar en {site} al hacerlo aquí",
+  conversationsSyncDeleteDesc:
+    "Al borrar el registro local, borrar también la conversación en la nube del sitio correspondiente",
   conversationsSyncRenameLabel: "Renombrar en Nube",
   conversationsSyncRenameDesc: "Cambiar nombre en {site} también",
   conversationsCustomIcon: "Icono Propio",

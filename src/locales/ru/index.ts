@@ -590,7 +590,8 @@ export const ru = {
   folderRainbowLabel: "Радужные папки",
   folderRainbowDesc: "Случайные цвета папок",
   conversationsSyncDeleteLabel: "Удалять в облаке",
-  conversationsSyncDeleteDesc: "Стирать в {site}, если стерли здесь",
+  conversationsSyncDeleteDesc:
+    "При удалении локальной записи также удалять облачный диалог на соответствующем сайте",
   conversationsSyncRenameLabel: "Имя в облаке",
   conversationsSyncRenameDesc: "Менять имя в {site} тоже",
   conversationsCustomIcon: "Свой значок",

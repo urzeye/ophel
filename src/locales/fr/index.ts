@@ -593,7 +593,8 @@ export const fr = {
   folderRainbowLabel: "Dossiers Arc-en-ciel",
   folderRainbowDesc: "Couleurs aléatoires pour les dossiers",
   conversationsSyncDeleteLabel: "Supprimer sur le Cloud",
-  conversationsSyncDeleteDesc: "Supprimer sur {site} en le faisant ici",
+  conversationsSyncDeleteDesc:
+    "Lors de la suppression locale, supprimer aussi la conversation cloud du site correspondant",
   conversationsSyncRenameLabel: "Renommer sur le Cloud",
   conversationsSyncRenameDesc: "Changer le nom sur {site} aussi",
   conversationsCustomIcon: "Icône Perso",

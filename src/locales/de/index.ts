@@ -594,7 +594,8 @@ export const de = {
   folderRainbowLabel: "Regenbogen-Ordner",
   folderRainbowDesc: "Zufällige Ordnerfarben",
   conversationsSyncDeleteLabel: "Cloud-Löschung",
-  conversationsSyncDeleteDesc: "In {site} löschen, wenn hier gelöscht",
+  conversationsSyncDeleteDesc:
+    "Beim lokalen Löschen auch die Cloud-Konversation der jeweiligen Site löschen",
   conversationsSyncRenameLabel: "Cloud-Umbenennung",
   conversationsSyncRenameDesc: "Name in {site} auch ändern",
   conversationsCustomIcon: "Eignes Icon",

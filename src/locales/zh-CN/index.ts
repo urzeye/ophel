@@ -635,7 +635,7 @@ export const zhCN = {
   folderRainbowLabel: "文件夹彩虹色",
   folderRainbowDesc: "为每个文件夹分配不同的背景颜色，关闭后使用统一纯色",
   conversationsSyncDeleteLabel: "删除时同步删除云端",
-  conversationsSyncDeleteDesc: "删除本地会话记录时，同时从 {site} 云端删除",
+  conversationsSyncDeleteDesc: "删除本地会话记录时，同时删除对应站点的云端会话",
   conversationsSyncRenameLabel: "重命名时同步云端",
   conversationsSyncRenameDesc: "修改会话标题时，同时在 {site} 侧边栏更新标题",
   conversationsCustomIcon: "自定义图标",

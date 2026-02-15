@@ -562,7 +562,7 @@ export const zhTW = {
   folderRainbowLabel: "資料夾彩虹色",
   folderRainbowDesc: "為每個資料夾分配不同的背景顏色，關閉後使用統一純色",
   conversationsSyncDeleteLabel: "刪除時同步刪除雲端",
-  conversationsSyncDeleteDesc: "刪除本地會話記錄時，同時從 {site} 雲端刪除",
+  conversationsSyncDeleteDesc: "刪除本地會話記錄時，同時刪除對應站點的雲端會話",
   conversationsSyncRenameLabel: "重命名時同步雲端",
   conversationsSyncRenameDesc: "修改會話標題時，同時在 {site} 側邊欄更新標題",
   conversationsCustomIcon: "自定義圖示",
