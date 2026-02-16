@@ -1140,6 +1140,8 @@ export const ja = {
   globalSearchFuzzySearchToggleAria: "あいまい検索を切り替え",
   globalSearchFooterTips: "Enter で移動 · ↑↓ で選択 · Tab でカテゴリ切替 · Esc で閉じる",
   globalSearchShortcutNudge: "次回からは {shortcut} ですばやく開けます",
+  doubleShiftToSearch: "Shift を2回押してグローバル検索を開く",
+  doubleShiftToSearchDesc: "Shift キーを素早く2回押すとグローバル検索を開きます",
   globalSearchShortcutNudgeDismiss: "今後は表示しない",
   globalSearchContextCurrentItem: "{current}件目",
   globalSearchContextShownProgress: "表示済み {shown}/{total}",

@@ -1146,7 +1146,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   globalSearchShortcutNudge: "Press {shortcut} to open next time",
   doubleShiftToSearch: "Double Shift to open Global Search",
   doubleShiftToSearchDesc: "Press Shift twice quickly to open Global Search",
-  // 快捷键globalSearchShortcutNudgeDismiss: "Don’t remind me",
+  globalSearchShortcutNudgeDismiss: "Don't remind me",
   globalSearchContextCurrentItem: "Item {current}",
   globalSearchContextShownProgress: "Shown {shown}/{total}",
   globalSearchContextTotalItems: "Total {total}",

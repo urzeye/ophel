@@ -1098,6 +1098,8 @@ export const ko = {
   globalSearchFuzzySearchToggleAria: "퍼지 검색 전환",
   globalSearchFooterTips: "Enter 이동 · ↑↓ 선택 · Tab 카테고리 · Esc 닫기",
   globalSearchShortcutNudge: "다음부터는 {shortcut}로 빠르게 열 수 있어요",
+  doubleShiftToSearch: "Shift 두 번으로 전역 검색 열기",
+  doubleShiftToSearchDesc: "Shift 키를 빠르게 두 번 눌러 전역 검색을 엽니다",
   globalSearchShortcutNudgeDismiss: "다시 알리지 않기",
 
   globalSearchContextCurrentItem: "{current}번째 항목",

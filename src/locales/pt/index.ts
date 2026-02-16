@@ -874,6 +874,8 @@ Dê o código e depois um resumo de melhorias.`,
   globalSearchFooterTips:
     "Enter para abrir · ↑↓ para selecionar · Tab para categorias · Esc para fechar",
   globalSearchShortcutNudge: "Na próxima vez, use {shortcut} para abrir mais rápido",
+  doubleShiftToSearch: "Duplo Shift para abrir a busca global",
+  doubleShiftToSearchDesc: "Pressione Shift duas vezes rapidamente para abrir a busca global",
   globalSearchShortcutNudgeDismiss: "Não lembrar novamente",
   globalSearchContextCurrentItem: "Item {current}",
   globalSearchContextShownProgress: "Exibidos {shown}/{total}",

@@ -1601,7 +1601,8 @@ export const App = () => {
 
       const now = Date.now()
       // Use settingsRef to get the latest settings without re-binding listener
-      const isDoubleShiftEnabled = settingsRef.current?.globalSearch?.doubleShift ?? true
+      const isDoubleShiftEnabled =
+        settingsRef.current?.globalSearch?.doubleShift ?? DEFAULT_SETTINGS.globalSearch.doubleShift
 
       if (isDoubleShiftEnabled && now - lastShiftPressedAtRef.current <= 360) {
         event.preventDefault()

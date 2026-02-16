@@ -199,7 +199,8 @@ export function htmlToMarkdown(el: Element): string {
       }
     } catch (err) {
       console.error("Error processing node in htmlToMarkdown:", err)
-      return ""
+      // 降级为纯文本，避免单个节点异常导致内容被静默丢弃
+      return node.textContent || ""
     }
   }
 

@@ -1088,6 +1088,8 @@ export const ru = {
   globalSearchFuzzySearchToggleAria: "Переключить нечеткий поиск",
   globalSearchFooterTips: "Enter — перейти · ↑↓ — выбрать · Tab — категории · Esc — закрыть",
   globalSearchShortcutNudge: "В следующий раз используйте {shortcut}, чтобы открыть быстрее",
+  doubleShiftToSearch: "Двойной Shift для открытия глобального поиска",
+  doubleShiftToSearchDesc: "Быстро нажмите Shift дважды, чтобы открыть глобальный поиск",
   globalSearchShortcutNudgeDismiss: "Больше не напоминать",
   globalSearchContextCurrentItem: "Элемент {current}",
   globalSearchContextShownProgress: "Показано {shown}/{total}",

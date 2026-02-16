@@ -3,6 +3,7 @@ import React from "react"
 import { SearchIcon } from "~components/icons"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
+import { DEFAULT_SETTINGS } from "~utils/storage"
 
 import { PageTitle, SettingCard, SettingRow, ToggleRow } from "../components"
 
@@ -23,6 +24,8 @@ const GlobalSearchPage: React.FC<GlobalSearchPageProps> = ({ siteId: _siteId }) 
   }
 
   const promptEnterBehavior = settings.globalSearch?.promptEnterBehavior || "smart"
+  const doubleShiftToSearch =
+    settings.globalSearch?.doubleShift ?? DEFAULT_SETTINGS.globalSearch.doubleShift
   const enableFuzzySearch = settings.globalSearch?.enableFuzzySearch ?? false
 
   return (
@@ -44,6 +47,16 @@ const GlobalSearchPage: React.FC<GlobalSearchPageProps> = ({ siteId: _siteId }) 
           "globalSearchMatchingSettingsDesc",
           "Configure how Search Everywhere matches search results",
         )}>
+        <ToggleRow
+          label={getLocalizedText("doubleShiftToSearch", "Double Shift to open Global Search")}
+          description={getLocalizedText(
+            "doubleShiftToSearchDesc",
+            "Press Shift twice quickly to open Global Search",
+          )}
+          checked={doubleShiftToSearch}
+          onChange={() => updateNestedSetting("globalSearch", "doubleShift", !doubleShiftToSearch)}
+          settingId="global-search-double-shift"
+        />
         <ToggleRow
           label={getLocalizedText("globalSearchEnableFuzzySearchLabel", "Enable fuzzy search")}
           description={getLocalizedText(

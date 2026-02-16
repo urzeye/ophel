@@ -1122,7 +1122,7 @@ export const zhCN = {
   globalSearchShortcutNudge: "下次可按 {shortcut} 快速打开",
   doubleShiftToSearch: "双击 Shift 开启全局搜索",
   doubleShiftToSearchDesc: "快速按下两次 Shift 键以打开全局搜索",
-  // 快捷键globalSearchShortcutNudgeDismiss: "不再提示",
+  globalSearchShortcutNudgeDismiss: "不再提示",
   globalSearchContextCurrentItem: "第 {current} 项",
   globalSearchContextShownProgress: "已显示 {shown}/{total}",
   globalSearchContextTotalItems: "共 {total} 项",

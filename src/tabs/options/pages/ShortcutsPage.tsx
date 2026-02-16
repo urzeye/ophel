@@ -19,7 +19,6 @@ import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { MSG_OPEN_URL, sendToBackground } from "~utils/messaging"
-import { DEFAULT_SETTINGS } from "~utils/storage"
 
 import { PageTitle, SettingCard, SettingRow, ToggleRow } from "../components"
 
@@ -265,23 +264,6 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
                 enabled: !(shortcuts?.enabled ?? true),
                 globalUrl: shortcuts?.globalUrl ?? "https://gemini.google.com",
                 keybindings: shortcuts?.keybindings ?? DEFAULT_KEYBINDINGS,
-              },
-            })
-          }
-        />
-
-        <ToggleRow
-          label={t("doubleShiftToSearch") || "Double Shift to open Global Search"}
-          description={
-            t("doubleShiftToSearchDesc") || "Press Shift twice quickly to open Global Search"
-          }
-          checked={settings?.globalSearch?.doubleShift ?? true}
-          onChange={() =>
-            setSettings({
-              globalSearch: {
-                ...DEFAULT_SETTINGS.globalSearch,
-                ...(settings?.globalSearch || {}),
-                doubleShift: !(settings?.globalSearch?.doubleShift ?? true),
               },
             })
           }

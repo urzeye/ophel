@@ -1093,6 +1093,8 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   globalSearchFooterTips:
     "Enter zum Springen · ↑↓ zum Auswählen · Tab für Kategorien · Esc zum Schließen",
   globalSearchShortcutNudge: "Nächstes Mal kannst du mit {shortcut} schneller öffnen",
+  doubleShiftToSearch: "Double Shift zum Öffnen der globalen Suche",
+  doubleShiftToSearchDesc: "Drücke Shift zweimal schnell, um die globale Suche zu öffnen",
   globalSearchShortcutNudgeDismiss: "Nicht mehr erinnern",
   globalSearchContextCurrentItem: "Eintrag {current}",
   globalSearchContextShownProgress: "Angezeigt {shown}/{total}",
