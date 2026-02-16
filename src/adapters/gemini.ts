@@ -19,6 +19,7 @@ import {
 
 const GEMINI_DELETE_REASON = {
   UI_FAILED: "delete_ui_failed",
+  UI_EXCEPTION: "delete_ui_exception",
   BATCH_ABORTED_AFTER_UI_FAILURE: "delete_batch_aborted_after_ui_failure",
 } as const
 
@@ -229,12 +230,25 @@ export class GeminiAdapter extends SiteAdapter {
   private async deleteConversationOnSiteInternal(
     target: ConversationDeleteTarget,
   ): Promise<SiteDeleteConversationResult> {
-    const uiSuccess = await this.deleteConversationViaUi(target.id)
-    return {
-      id: target.id,
-      success: uiSuccess,
-      method: uiSuccess ? "ui" : "none",
-      reason: uiSuccess ? undefined : GEMINI_DELETE_REASON.UI_FAILED,
+    try {
+      const uiSuccess = await this.deleteConversationViaUi(target.id)
+      return {
+        id: target.id,
+        success: uiSuccess,
+        method: uiSuccess ? "ui" : "none",
+        reason: uiSuccess ? undefined : GEMINI_DELETE_REASON.UI_FAILED,
+      }
+    } catch (error) {
+      console.error(
+        `[GeminiAdapter] deleteConversationOnSiteInternal error for "${target.id}":`,
+        error,
+      )
+      return {
+        id: target.id,
+        success: false,
+        method: "none",
+        reason: GEMINI_DELETE_REASON.UI_EXCEPTION,
+      }
     }
   }
 
@@ -374,7 +388,6 @@ export class GeminiAdapter extends SiteAdapter {
         new MouseEvent(eventName, {
           bubbles: true,
           cancelable: true,
-          view: window,
         }),
       )
     }
@@ -712,6 +725,48 @@ export class GeminiAdapter extends SiteAdapter {
 
   private async sleep(ms: number): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, ms))
+  }
+
+  protected simulateClick(element: HTMLElement): void {
+    const eventTypes = ["pointerdown", "mousedown", "pointerup", "mouseup", "click"] as const
+    let dispatched = false
+    for (const type of eventTypes) {
+      try {
+        if (typeof PointerEvent === "function") {
+          element.dispatchEvent(
+            new PointerEvent(type, {
+              bubbles: true,
+              cancelable: true,
+              pointerId: 1,
+            }),
+          )
+        } else {
+          element.dispatchEvent(
+            new MouseEvent(type, {
+              bubbles: true,
+              cancelable: true,
+            }),
+          )
+        }
+        dispatched = true
+      } catch {
+        try {
+          element.dispatchEvent(
+            new MouseEvent(type, {
+              bubbles: true,
+              cancelable: true,
+            }),
+          )
+          dispatched = true
+        } catch {
+          // ignore event dispatch failure and fallback below
+        }
+      }
+    }
+
+    if (!dispatched) {
+      element.click()
+    }
   }
 
   getSessionName(): string | null {

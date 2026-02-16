@@ -139,18 +139,7 @@ export class GrokAdapter extends SiteAdapter {
       this.cacheDialogConversations()
 
       // 自动关闭弹窗：模拟按下 ESC 键（避免 target 不是元素导致快捷键处理报错）
-      const escEvent = new KeyboardEvent("keydown", {
-        key: "Escape",
-        code: "Escape",
-        keyCode: 27,
-        which: 27,
-        bubbles: true,
-        cancelable: true,
-        view: window,
-      })
-      const dispatchTarget =
-        (document.activeElement as HTMLElement | null) || document.body || document.documentElement
-      dispatchTarget?.dispatchEvent(escEvent)
+      this.dispatchEscapeKey()
 
       // 5 秒后清除缓存，确保后续调用使用实时数据
       setTimeout(() => {
@@ -648,19 +637,32 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   private closeConversationDialog(): void {
-    const escEvent = new KeyboardEvent("keydown", {
-      key: "Escape",
-      code: "Escape",
-      keyCode: 27,
-      which: 27,
-      bubbles: true,
-      cancelable: true,
-      view: window,
-    })
+    this.dispatchEscapeKey()
+  }
 
+  private dispatchEscapeKey(): void {
     const dispatchTarget =
       (document.activeElement as HTMLElement | null) || document.body || document.documentElement
-    dispatchTarget?.dispatchEvent(escEvent)
+    if (!dispatchTarget) return
+
+    try {
+      const escEvent = new KeyboardEvent("keydown", {
+        key: "Escape",
+        code: "Escape",
+        keyCode: 27,
+        which: 27,
+        bubbles: true,
+        cancelable: true,
+      })
+      dispatchTarget.dispatchEvent(escEvent)
+    } catch {
+      dispatchTarget.dispatchEvent(
+        new Event("keydown", {
+          bubbles: true,
+          cancelable: true,
+        }),
+      )
+    }
   }
 
   private async scrollCmdkListToLoadAll(): Promise<void> {
@@ -1538,15 +1540,43 @@ export class GrokAdapter extends SiteAdapter {
    */
   protected simulateClick(element: HTMLElement): void {
     const eventTypes = ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]
+    let dispatched = false
     for (const type of eventTypes) {
-      element.dispatchEvent(
-        new PointerEvent(type, {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-          pointerId: 1,
-        }),
-      )
+      try {
+        if (typeof PointerEvent === "function") {
+          element.dispatchEvent(
+            new PointerEvent(type, {
+              bubbles: true,
+              cancelable: true,
+              pointerId: 1,
+            }),
+          )
+        } else {
+          element.dispatchEvent(
+            new MouseEvent(type, {
+              bubbles: true,
+              cancelable: true,
+            }),
+          )
+        }
+        dispatched = true
+      } catch {
+        try {
+          element.dispatchEvent(
+            new MouseEvent(type, {
+              bubbles: true,
+              cancelable: true,
+            }),
+          )
+          dispatched = true
+        } catch {
+          // ignore and fallback below
+        }
+      }
+    }
+
+    if (!dispatched) {
+      element.click()
     }
   }
 

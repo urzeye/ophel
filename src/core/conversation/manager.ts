@@ -504,6 +504,10 @@ export class ConversationManager {
           remoteResultMap.set(item.id, item)
         })
       } catch (error) {
+        console.error(
+          `[ConversationManager] deleteConversationsOnSite failed on ${this.siteAdapter.getName()}:`,
+          error,
+        )
         const reason =
           error instanceof Error ? error.message || "remote_delete_failed" : "remote_delete_failed"
         targets.forEach((target) => {
