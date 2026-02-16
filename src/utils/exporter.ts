@@ -41,157 +41,166 @@ export function htmlToMarkdown(el: Element): string {
   if (!el) return ""
 
   const processNode = (node: Node): string => {
-    if (node.nodeType === Node.TEXT_NODE) {
-      return node.textContent || ""
-    }
+    try {
+      if (!node) return ""
 
-    if (node.nodeType !== Node.ELEMENT_NODE) {
-      return ""
-    }
-
-    const element = node as HTMLElement
-
-    // 处理数学公式
-    if (element.classList?.contains("math-block")) {
-      const latex = element.getAttribute("data-math")
-      if (latex) return `\n$$${latex}$$\n`
-    }
-
-    if (element.classList?.contains("math-inline")) {
-      const latex = element.getAttribute("data-math")
-      if (latex) return `$${latex}$`
-    }
-
-    const tag = element.tagName.toLowerCase()
-
-    // 图片
-    if (tag === "img") {
-      const alt = (element as HTMLImageElement).alt || element.getAttribute("alt") || "图片"
-      const src = (element as HTMLImageElement).src || element.getAttribute("src") || ""
-      return `![${alt}](${src})`
-    }
-
-    // 代码块
-    if (tag === "code-block") {
-      const decoration = element.querySelector(".code-block-decoration")
-      const lang = decoration?.querySelector("span")?.textContent?.trim().toLowerCase() || ""
-      const codeEl = element.querySelector("pre code")
-      const text = codeEl?.textContent || element.querySelector("pre")?.textContent || ""
-      return `\n\`\`\`${lang}\n${text}\n\`\`\`\n`
-    }
-
-    // pre 块
-    if (tag === "pre") {
-      const code = element.querySelector("code")
-      const lang = code?.className.match(/language-(\w+)/)?.[1] || ""
-      const text = code?.textContent || element.textContent
-      return `\n\`\`\`${lang}\n${text}\n\`\`\`\n`
-    }
-
-    // 内联代码
-    if (tag === "code") {
-      if (element.parentElement?.tagName.toLowerCase() === "pre") return ""
-      return `\`${element.textContent}\``
-    }
-
-    // 表格
-    if (tag === "table") {
-      const rows: string[] = []
-      const thead = element.querySelector("thead")
-      const tbody = element.querySelector("tbody")
-
-      const getCellContent = (cell: Element): string => {
-        return cell.textContent?.trim() || ""
+      if (node.nodeType === Node.TEXT_NODE) {
+        return node.textContent || ""
       }
 
-      if (thead) {
-        const headerRow = thead.querySelector("tr")
-        if (headerRow) {
-          const headers = Array.from(headerRow.querySelectorAll("td, th")).map(getCellContent)
-          if (headers.some((h) => h)) {
-            rows.push("| " + headers.join(" | ") + " |")
-            rows.push("| " + headers.map(() => "---").join(" | ") + " |")
-          }
+      if (node.nodeType !== Node.ELEMENT_NODE) {
+        return ""
+      }
+
+      const element = node as HTMLElement
+
+      // 处理数学公式
+      if (element.classList?.contains("math-block")) {
+        const latex = element.getAttribute("data-math")
+        if (latex) return `\n$$${latex}$$\n`
+      }
+
+      if (element.classList?.contains("math-inline")) {
+        const latex = element.getAttribute("data-math")
+        if (latex) return `$${latex}$`
+      }
+
+      const tag = element.tagName?.toLowerCase() || ""
+      if (!tag) return ""
+
+      // 图片
+      if (tag === "img") {
+        const alt = (element as HTMLImageElement).alt || element.getAttribute("alt") || "图片"
+        const src = (element as HTMLImageElement).src || element.getAttribute("src") || ""
+        return `![${alt}](${src})`
+      }
+
+      // 代码块
+      if (tag === "code-block") {
+        const decoration = element.querySelector(".code-block-decoration")
+        const lang = decoration?.querySelector("span")?.textContent?.trim().toLowerCase() || ""
+        const codeEl = element.querySelector("pre code")
+        const text = codeEl?.textContent || element.querySelector("pre")?.textContent || ""
+        return `\n\`\`\`${lang}\n${text}\n\`\`\`\n`
+      }
+
+      // pre 块
+      if (tag === "pre") {
+        const code = element.querySelector("code")
+        const lang = code?.className.match(/language-(\w+)/)?.[1] || ""
+        const text = code?.textContent || element.textContent
+        return `\n\`\`\`${lang}\n${text}\n\`\`\`\n`
+      }
+
+      // 内联代码
+      if (tag === "code") {
+        if (element.parentElement?.tagName.toLowerCase() === "pre") return ""
+        return `\`${element.textContent}\``
+      }
+
+      // 表格
+      if (tag === "table") {
+        const rows: string[] = []
+        const thead = element.querySelector("thead")
+        const tbody = element.querySelector("tbody")
+
+        const getCellContent = (cell: Element): string => {
+          return cell.textContent?.trim() || ""
         }
-      }
 
-      if (tbody) {
-        const bodyRows = tbody.querySelectorAll("tr")
-        bodyRows.forEach((tr) => {
-          const cells = Array.from(tr.querySelectorAll("td, th")).map(getCellContent)
-          if (cells.some((c) => c)) {
-            rows.push("| " + cells.join(" | ") + " |")
-          }
-        })
-      }
-
-      if (!thead && !tbody) {
-        const allRows = element.querySelectorAll("tr")
-        let isFirst = true
-        allRows.forEach((tr) => {
-          const cells = Array.from(tr.querySelectorAll("td, th")).map(getCellContent)
-          if (cells.some((c) => c)) {
-            rows.push("| " + cells.join(" | ") + " |")
-            if (isFirst) {
-              rows.push("| " + cells.map(() => "---").join(" | ") + " |")
-              isFirst = false
+        if (thead) {
+          const headerRow = thead.querySelector("tr")
+          if (headerRow) {
+            const headers = Array.from(headerRow.querySelectorAll("td, th")).map(getCellContent)
+            if (headers.some((h) => h)) {
+              rows.push("| " + headers.join(" | ") + " |")
+              rows.push("| " + headers.map(() => "---").join(" | ") + " |")
             }
           }
-        })
-      }
-
-      return rows.length > 0 ? "\n" + rows.join("\n") + "\n" : ""
-    }
-
-    // 表格容器
-    if (tag === "table-block" || tag === "ucs-markdown-table") {
-      const innerTable = element.querySelector("table")
-      if (innerTable) {
-        return processNode(innerTable)
-      }
-    }
-
-    // 递归处理子节点
-    const children = Array.from(element.childNodes).map(processNode).join("")
-
-    switch (tag) {
-      case "h1":
-        return `\n# ${children}\n`
-      case "h2":
-        return `\n## ${children}\n`
-      case "h3":
-        return `\n### ${children}\n`
-      case "h4":
-        return `\n#### ${children}\n`
-      case "h5":
-        return `\n##### ${children}\n`
-      case "h6":
-        return `\n###### ${children}\n`
-      case "strong":
-      case "b":
-        return `**${children}**`
-      case "em":
-      case "i":
-        return `*${children}*`
-      case "a":
-        return `[${children}](${(element as HTMLAnchorElement).href || ""})`
-      case "li":
-        return `- ${children}\n`
-      case "p":
-        return `${children}\n\n`
-      case "br":
-        return "\n"
-      case "ul":
-      case "ol":
-        return `\n${children}`
-      default:
-        // 处理 Shadow DOM
-        if ((element as HTMLElement).shadowRoot) {
-          return Array.from((element as HTMLElement).shadowRoot!.childNodes)
-            .map(processNode)
-            .join("")
         }
-        return children
+
+        if (tbody) {
+          const bodyRows = tbody.querySelectorAll("tr")
+          bodyRows.forEach((tr) => {
+            const cells = Array.from(tr.querySelectorAll("td, th")).map(getCellContent)
+            if (cells.some((c) => c)) {
+              rows.push("| " + cells.join(" | ") + " |")
+            }
+          })
+        }
+
+        if (!thead && !tbody) {
+          const allRows = element.querySelectorAll("tr")
+          let isFirst = true
+          allRows.forEach((tr) => {
+            const cells = Array.from(tr.querySelectorAll("td, th")).map(getCellContent)
+            if (cells.some((c) => c)) {
+              rows.push("| " + cells.join(" | ") + " |")
+              if (isFirst) {
+                rows.push("| " + cells.map(() => "---").join(" | ") + " |")
+                isFirst = false
+              }
+            }
+          })
+        }
+
+        return rows.length > 0 ? "\n" + rows.join("\n") + "\n" : ""
+      }
+
+      // 表格容器
+      if (tag === "table-block" || tag === "ucs-markdown-table") {
+        const innerTable = element.querySelector("table")
+        if (innerTable) {
+          return processNode(innerTable)
+        }
+      }
+
+      // 递归处理子节点
+      const children = Array.from(element.childNodes).map(processNode).join("")
+
+      switch (tag) {
+        case "h1":
+          return `\n# ${children}\n`
+        case "h2":
+          return `\n## ${children}\n`
+        case "h3":
+          return `\n### ${children}\n`
+        case "h4":
+          return `\n#### ${children}\n`
+        case "h5":
+          return `\n##### ${children}\n`
+        case "h6":
+          return `\n###### ${children}\n`
+        case "strong":
+        case "b":
+          return `**${children}**`
+        case "em":
+        case "i":
+          return `*${children}*`
+        case "a":
+          return `[${children}](${(element as HTMLAnchorElement).href || ""})`
+        case "li":
+          return `- ${children}\n`
+        case "p":
+          return `${children}\n\n`
+        case "br":
+          return "\n"
+        case "ul":
+        case "ol":
+          return `\n${children}`
+        default:
+          // 处理 Shadow DOM
+          if ((element as HTMLElement).shadowRoot) {
+            return Array.from((element as HTMLElement).shadowRoot!.childNodes)
+              .map(processNode)
+              .join("")
+          }
+          return children
+      }
+    } catch (err) {
+      console.error("Error processing node in htmlToMarkdown:", err)
+      // 降级为纯文本，避免单个节点异常导致内容被静默丢弃
+      return node.textContent || ""
     }
   }
 

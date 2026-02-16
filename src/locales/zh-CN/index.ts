@@ -1120,6 +1120,8 @@ export const zhCN = {
   globalSearchFuzzySearchToggleAria: "切换模糊搜索",
   globalSearchFooterTips: "Enter 跳转 · ↑↓ 选择 · Tab 分类 · Esc 关闭",
   globalSearchShortcutNudge: "下次可按 {shortcut} 快速打开",
+  doubleShiftToSearch: "双击 Shift 开启全局搜索",
+  doubleShiftToSearchDesc: "快速按下两次 Shift 键以打开全局搜索",
   globalSearchShortcutNudgeDismiss: "不再提示",
   globalSearchContextCurrentItem: "第 {current} 项",
   globalSearchContextShownProgress: "已显示 {shown}/{total}",

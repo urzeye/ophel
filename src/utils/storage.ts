@@ -162,6 +162,7 @@ export interface Settings {
   globalSearch: {
     promptEnterBehavior: "smart" | "locate"
     enableFuzzySearch: boolean
+    doubleShift: boolean
   }
 
   // 功能模块配置
@@ -349,6 +350,7 @@ export const DEFAULT_SETTINGS: Settings = {
   globalSearch: {
     promptEnterBehavior: "smart",
     enableFuzzySearch: false,
+    doubleShift: false,
   },
 
   features: {
