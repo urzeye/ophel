@@ -133,7 +133,6 @@ export class AIStudioAdapter extends SiteAdapter {
 
   // 缓存从 library 页面抓取的会话列表
   private cachedLibraryConversations: ConversationInfo[] | null = null
-  private reloadScheduled = false
   private cachedApiKey: string | null = null
   private cachedRpcOrigin: string | null = null
 
@@ -1192,7 +1191,7 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   private scheduleFullReloadAfterDelete(deletedIds: string[]): void {
-    if (this.reloadScheduled || deletedIds.length === 0) return
+    if (deletedIds.length === 0) return
 
     const currentId = this.getSessionId()
     if (currentId && deletedIds.includes(currentId)) {
@@ -1202,11 +1201,6 @@ export class AIStudioAdapter extends SiteAdapter {
         // ignore SPA route replacement failure
       }
     }
-
-    this.reloadScheduled = true
-    window.setTimeout(() => {
-      window.location.reload()
-    }, 120)
   }
 
   private async deleteConversationViaUi(id: string): Promise<boolean> {

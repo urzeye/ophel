@@ -51,8 +51,6 @@ const GEMINI_CANCEL_KEYWORDS = [
 ]
 
 export class GeminiAdapter extends SiteAdapter {
-  private reloadScheduled = false
-
   private getUserPathPrefix(): string {
     // Gemini 多账号路径格式：/u/2/app/...
     const match = window.location.pathname.match(/^\/u\/(\d+)(?:\/|$)/)
@@ -662,7 +660,7 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private scheduleFullReloadAfterDelete(deletedIds: string[]): void {
-    if (this.reloadScheduled || deletedIds.length === 0) return
+    if (deletedIds.length === 0) return
 
     const currentId = this.getCurrentConversationIdFromPath()
     if (currentId && deletedIds.includes(currentId)) {
@@ -673,11 +671,6 @@ export class GeminiAdapter extends SiteAdapter {
         // ignore route state failures
       }
     }
-
-    this.reloadScheduled = true
-    window.setTimeout(() => {
-      window.location.reload()
-    }, 120)
   }
 
   private getCurrentConversationIdFromPath(): string | null {

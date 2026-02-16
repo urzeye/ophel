@@ -50,7 +50,6 @@ const GEMINI_ENTERPRISE_CANCEL_KEYWORDS = [
 export class GeminiEnterpriseAdapter extends SiteAdapter {
   // 存储 clearOnInit 配置
   private clearOnInit = false
-  private reloadScheduled = false
 
   match(): boolean {
     return window.location.hostname.includes("business.gemini.google")
@@ -687,7 +686,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   }
 
   private scheduleFullReloadAfterDelete(deletedIds: string[]): void {
-    if (this.reloadScheduled || deletedIds.length === 0) return
+    if (deletedIds.length === 0) return
 
     const currentId = this.getCurrentConversationIdFromPath()
     if (currentId && deletedIds.includes(currentId)) {
@@ -699,11 +698,6 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
         // ignore route state failures
       }
     }
-
-    this.reloadScheduled = true
-    window.setTimeout(() => {
-      window.location.reload()
-    }, 120)
   }
 
   private getCurrentConversationIdFromPath(): string | null {
