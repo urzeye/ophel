@@ -804,44 +804,61 @@ export class AIStudioAdapter extends SiteAdapter {
   async deleteConversationOnSite(
     target: ConversationDeleteTarget,
   ): Promise<SiteDeleteConversationResult> {
-    const result = await this.deleteConversationOnSiteInternal(target)
-    if (result.success) {
-      this.scheduleFullReloadAfterDelete([target.id])
-    }
-    return result
+    const results = await this.deleteConversationsOnSite([target])
+    return (
+      results[0] || {
+        id: target.id,
+        success: false,
+        method: "none",
+        reason: AISTUDIO_DELETE_REASON.UI_FAILED,
+      }
+    )
   }
 
   async deleteConversationsOnSite(
     targets: ConversationDeleteTarget[],
   ): Promise<SiteDeleteConversationResult[]> {
+    const libraryContext = await this.enterLibraryPageForDelete()
     const results: SiteDeleteConversationResult[] = []
     const deletedIds: string[] = []
+    let restored = false
 
-    for (let index = 0; index < targets.length; index++) {
-      const result = await this.deleteConversationOnSiteInternal(targets[index])
-      results.push(result)
-      if (result.success) {
-        deletedIds.push(targets[index].id)
-      }
-
-      if (!result.success && result.reason === AISTUDIO_DELETE_REASON.UI_FAILED) {
-        for (let i = index + 1; i < targets.length; i++) {
-          results.push({
-            id: targets[i].id,
-            success: false,
-            method: "none",
-            reason: AISTUDIO_DELETE_REASON.BATCH_ABORTED_AFTER_UI_FAILURE,
-          })
+    try {
+      for (let index = 0; index < targets.length; index++) {
+        const result = await this.deleteConversationOnSiteInternal(targets[index])
+        results.push(result)
+        if (result.success) {
+          deletedIds.push(targets[index].id)
         }
-        break
+
+        if (!result.success && result.reason === AISTUDIO_DELETE_REASON.UI_FAILED) {
+          for (let i = index + 1; i < targets.length; i++) {
+            results.push({
+              id: targets[i].id,
+              success: false,
+              method: "none",
+              reason: AISTUDIO_DELETE_REASON.BATCH_ABORTED_AFTER_UI_FAILURE,
+            })
+          }
+          break
+        }
+      }
+
+      if (libraryContext.enteredLibrary) {
+        await this.restoreFromLibraryPage(libraryContext.originalPath)
+        restored = true
+      }
+
+      if (deletedIds.length > 0) {
+        this.scheduleFullReloadAfterDelete(deletedIds)
+      }
+
+      return results
+    } finally {
+      if (libraryContext.enteredLibrary && !restored) {
+        await this.restoreFromLibraryPage(libraryContext.originalPath)
       }
     }
-
-    if (deletedIds.length > 0) {
-      this.scheduleFullReloadAfterDelete(deletedIds)
-    }
-
-    return results
   }
 
   private async deleteConversationOnSiteInternal(
@@ -1214,6 +1231,42 @@ export class AIStudioAdapter extends SiteAdapter {
       this.syncConversationListAfterDelete(id)
     }
     return removed
+  }
+
+  private async enterLibraryPageForDelete(): Promise<{
+    enteredLibrary: boolean
+    originalPath: string
+  }> {
+    const originalPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
+    if (window.location.pathname === "/library") {
+      return { enteredLibrary: false, originalPath }
+    }
+
+    const viewAllBtn = document.querySelector(
+      'a.view-all-history-link[href="/library"]',
+    ) as HTMLAnchorElement | null
+    if (!viewAllBtn) {
+      return { enteredLibrary: false, originalPath }
+    }
+
+    viewAllBtn.click()
+    const loaded = await this.waitForLibraryTable()
+    if (!loaded || window.location.pathname !== "/library") {
+      return { enteredLibrary: false, originalPath }
+    }
+
+    return { enteredLibrary: true, originalPath }
+  }
+
+  private async restoreFromLibraryPage(originalPath: string): Promise<void> {
+    if (!originalPath || window.location.pathname !== "/library") return
+
+    window.history.back()
+    const start = Date.now()
+    while (Date.now() - start < 3000) {
+      if (window.location.pathname !== "/library") return
+      await this.sleep(80)
+    }
   }
 
   private async findLibraryRowByPromptId(id: string, timeout = 1200): Promise<HTMLElement | null> {
