@@ -1,52 +1,29 @@
-# Feature Overview
+﻿# Core Features
 
-Ophel provides three core features to comprehensively enhance your AI conversation experience:
+Ophel’s core workspace is built around three main modules: `Smart Outline`, `Conversation Manager`, and `Prompt Library`. These cover structured reading, conversation organization, and prompt reuse.
 
-## 🧠 Smart Outline
+## Three core modules
 
-<div class="tip custom-block">
+| Module               | Problem it solves                                        | Entry                     |
+| -------------------- | -------------------------------------------------------- | ------------------------- |
+| Smart Outline        | Navigate long responses with structure-aware anchors     | [Details](./outline)      |
+| Conversation Manager | Organize, filter, batch-handle, and export conversations | [Details](./conversation) |
+| Prompt Library       | Reuse template prompts with variableized inputs          | [Details](./prompt)       |
 
-Auto-parse AI responses into structured navigation
+## How this connects to Settings Center
 
-</div>
+Core behavior is configured in Settings Center, including:
 
-- 📚 Multi-level heading navigation
-- 🔍 User query filtering mode
-- 📋 One-click copy headings
-- 🎯 Scroll position following
+- Outline auto-update, follow mode, bookmark icon display
+- Conversation sync strategy, export naming, image export mode
+- Prompt double-click send and submit key style
+- Tab auto rename, privacy mode, completion notifications
+- Content interaction enhancements (user-query Markdown, LaTeX/table copy)
 
-[Learn Smart Outline →](./outline)
+See [Settings Center Overview](/en/guide/enhancements) for the full menu and paths.
 
----
+## Suggested reading order
 
-## 💬 Conversation Manager
-
-<div class="tip custom-block">
-
-Powerful conversation organization and search
-
-</div>
-
-- ♾️ Infinite scroll loading
-- 🏷️ Tag system
-- 📂 Colorful folder categories
-- 📤 Multi-format export
-
-[Learn Conversation Manager →](./conversation)
-
----
-
-## ⌨️ Prompt Library
-
-<div class="tip custom-block">
-
-Efficient prompt management and usage
-
-</div>
-
-- 📝 Variable template support
-- 👁️ Real-time Markdown preview
-- 📂 Category management
-- ⭐ Pin favorites
-
-[Learn Prompt Library →](./prompt)
+1. Start with [Smart Outline](./outline) for long-context navigation.
+2. Continue with [Conversation Manager](./conversation) for organization and export flows.
+3. Finish with [Prompt Library](./prompt) to build reusable prompt assets.

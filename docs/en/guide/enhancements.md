@@ -1,156 +1,189 @@
-# ⚡ Enhancements
+﻿# ⚙️ Settings Center & Advanced Capabilities
 
-Beyond the three core features, Ophel provides 20+ practical enhancement features to comprehensively improve AI conversation efficiency.
+This page is a code-aligned map of Ophel settings, so you can quickly jump from a feature name to its exact settings path.
 
-## Claude Exclusive
+> Source mapping: `src/tabs/options/pages/GeneralPage.tsx`, `FeaturesPage.tsx`, `SiteSettingsPage.tsx`, `GlobalSearchPage.tsx`, `AppearancePage.tsx`, `ShortcutsPage.tsx`, `BackupPage.tsx`, `PermissionsPage.tsx`, `ClaudeSettings.tsx`
 
-### Session Key Management
+## Menu Map
 
-::: warning Claude Users Only
-This feature is only for Claude (claude.ai) platform.
-:::
+| Top-Level Menu | Tabs / Modules                                                      | What It Controls                                                                            |
+| -------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| General        | Panel / Tab Layout / Quick Buttons / Toolbox                        | Panel behavior, tab order, quick-entry controls, toolbox visibility                         |
+| Features       | Outline / Conversations / Prompts / Tab / Content / Reading History | Auto rename, notifications, privacy mode, export options, Markdown/LaTeX/table enhancements |
+| Site Settings  | Layout / Model Lock / Gemini / AI Studio / ChatGPT / Claude         | Site-specific behavior, model lock, markdown fixes, Session Key workflows                   |
+| Global Search  | Search Everywhere                                                   | Unified search across outline, conversations, prompts, and settings                         |
+| Appearance     | Presets / Custom Styles                                             | 24 built-in presets, per-site theme mode, custom CSS                                        |
+| Shortcuts      | Global switch / Action categories / Independent options             | Shortcut recording, conflict checks, reset, prompt submit key style                         |
+| Backup & Sync  | Export / Import / WebDAV                                            | Full or partial backup, JSON import, WebDAV upload/restore                                  |
+| Permissions    | Optional / Required permissions                                     | `notifications`, `cookies`, `<all_urls>` grant/revoke                                       |
 
-Manage Claude Session Keys with multi-account rotation:
+## Quick Access
 
-- 🔑 **Quick Switch**: One-click switch between Session Keys
-- 🔄 **Auto Rotation**: Rotate multiple keys to avoid single account limits
-- 🔐 **Secure Storage**: Encrypted key storage, WebDAV sync backup
-- 📊 **Status Monitor**: Real-time key availability status
+- Open settings from panel: `⚙️ Settings` or shortcut `Alt + ,`
+- In-page settings modal: includes the `Global Search` menu
+- Standalone options page: includes `General / Features / Site Settings / Backup / Permissions / About`
 
-## Interface Customization
+<a id="settings-general"></a>
 
-### Wide Screen Mode
+## General
 
-Customize page max width for ultrawide displays:
+### Panel
 
-| Setting    | Description        | Example            |
-| ---------- | ------------------ | ------------------ |
-| Percentage | Relative to screen | `80%`, `90%`       |
-| Pixels     | Fixed width        | `1200px`, `1600px` |
-| Full Width | Fill screen        | `100%`             |
+- Default panel open state and default side (left/right)
+- Default edge distance, panel width (px), panel height (vh)
+- Edge snap and snap threshold
+- Auto-hide when clicking outside panel
 
-### Bubble Width
+### Tab Layout
 
-Independently set user message bubble width:
+- Drag-and-drop order for panel tabs
+- Enable/disable `Outline / Conversations / Prompts` tabs independently
 
-- 📏 Custom width: `60%` ~ `100%`
-- 🎯 Alignment: Left / Center / Right
+### Quick Buttons
 
-### Sidebar Layout
+- Drag-and-drop ordering for quick buttons
+- Toggle visibility for button groups (anchor/theme/search/toolbox, etc.)
+- Global opacity for the quick button group
 
-AI Studio specific optimizations:
+### Toolbox Menu
 
-- 📂 Auto-collapse navigation
-- ⚙️ Auto-collapse settings panel
-- 📐 Maximize workspace
+You can show/hide these toolbox entries (Settings stays always visible):
 
-## Reading Assistance
+- Export
+- Copy Markdown
+- Move to folder
+- Set tag
+- Scroll lock
+- Model lock
+- Cleanup invalid bookmarks
 
-### Scroll Lock
+<a id="settings-features"></a>
 
-Prevent accidental scrolling during AI generation:
+## Features
 
-- 🔒 Lock viewport during generation
-- 👆 Pause lock on manual scroll
-- ⚙️ `Alt + S` to toggle manually
+### Tab Behavior & Notifications
+
+- Open new conversations in a new tab
+- Auto-rename browser tabs
+- Rename detection interval (seconds)
+- Title format template (`{status}`, `{title}`, `{model}`)
+- Show generation status in tab title
+- Completion notification flow (desktop, sound, volume, notify when focused)
+- Auto-focus window after generation
+- Privacy mode and custom masked title
+
+### Outline & Bookmarks
+
+- Auto update and update interval
+- Follow mode (`current / latest / manual`)
+- Word count in outline hover
+- Inline bookmark icon display mode
+- Panel bookmark icon display mode
+- Prevent auto-scroll behavior
+
+### Conversation Strategy & Export Profile
+
+- Folder rainbow colors
+- Unpin on sync
+- Sync delete to cloud on supported sites
+- Custom export user/model names
+- Timestamp in export filename
+- Export images as Base64
+
+### Prompts Interaction
+
+- Double-click to send prompt
+- Prompt submit style (Enter / Ctrl+Enter in Shortcuts page)
 
 ### Reading History
 
-Auto-save and restore reading position:
+- Persist reading position
+- Auto-restore reading position
+- Cleanup retention (1/3/7/30/90 days or forever)
 
-- 📍 Auto-save position on leave
-- 🔄 Auto-restore on return
-- 📊 Independent tracking per conversation
+### Content Interaction Enhancements
 
-### Markdown Optimization
+- User query Markdown rendering
+- Double-click to copy LaTeX formula source
+- Formula delimiter conversion during copy
+- Copy Markdown table from table widget
 
-Fix and enhance Markdown rendering:
+<a id="settings-site-settings"></a>
 
-- ✅ Fix Gemini bold/code block rendering
-- ✅ Real-time render Markdown in input
-- ✅ Optimize code block highlighting
+## Site Settings
 
-## Content Interaction
+### Layout
 
-### Formula Copy
+- Override page width (value + `%/px`)
+- Override user-query bubble width (value + `%/px`)
 
-Double-click LaTeX formulas to copy source:
+### Model Switch Lock
 
-```latex
-E = mc^2
-```
+Per-site model lock support:
 
-- 🖱️ Double-click formula → Auto copy
-- 📋 Copy LaTeX source to clipboard
-- ✨ Show copy success toast
+- Gemini
+- Gemini Enterprise
+- AI Studio (model dropdown with refresh)
+- ChatGPT
+- Claude
+- Grok
 
-### Table Conversion
+### Gemini / Gemini Enterprise
 
-One-click convert AI tables to Markdown:
+- Markdown bold rendering fix
+- Image watermark removal (`<all_urls>` required)
+- Gemini Enterprise policy retry (enable + max retries)
 
-| Table           | Result         |
-| --------------- | -------------- |
-| HTML table      | Markdown table |
-| Complete format | Ready to use   |
+### AI Studio
 
-### Watermark Removal
+- Collapse navbar by default
+- Collapse run settings panel by default
+- Collapse tools panel by default
+- Collapse advanced settings by default
+- Enable search tool by default
+- Remove watermark (takes effect after page refresh)
+- Markdown bold rendering fix
 
-Auto-remove invisible watermarks from Gemini/AI Studio images:
+### ChatGPT
 
-::: warning Permission Required
-Requires `<all_urls>` permission, configurable in permission settings.
-:::
+- Markdown bold rendering fix
 
-- 🖼️ Auto-process generated images
-- 🔇 Remove digital watermarks
-- 📥 Download clean images
+### Claude Session Key Management
 
-## Model Lock
+- Add / delete Session Keys
+- Import current browser Session Key (extension context)
+- JSON import / export
+- Single-key and batch validity testing
+- Current key switching with status display
 
-Auto-lock default model per platform:
+<a id="settings-global-search"></a>
 
-| Platform  | Supported |
-| --------- | :-------: |
-| Gemini    |    ✅     |
-| AI Studio |    ✅     |
-| ChatGPT   |    ✅     |
-| Claude    |    ✅     |
-| Grok      |    ✅     |
+## Global Search (Search Everywhere)
 
-## Tab Management
+Unified search across:
 
-### Auto Rename
+- Outline nodes
+- Conversations
+- Prompts
+- Settings
 
-Auto-rename browser tabs based on conversation:
+Configurable options:
 
-- 📝 Extract conversation topic
-- 🔄 Real-time title update
-- 🎯 Easy identification across tabs
+- Double-Shift trigger
+- Fuzzy search toggle
+- Prompt Enter behavior (`Smart` or `Locate Only`)
 
-### Privacy Mode
+## Site-Specific Enhancements at a Glance
 
-One-click blur page title for privacy:
+| Site      | Site-Specific Enhancements                                                                      |
+| --------- | ----------------------------------------------------------------------------------------------- |
+| Gemini    | Markdown fix, image watermark removal, Gemini Enterprise policy retry                           |
+| AI Studio | Navbar/run settings/tools/advanced collapse, default search on, watermark removal, markdown fix |
+| ChatGPT   | Markdown fix                                                                                    |
+| Claude    | Session Key workflows (switch, test, import/export)                                             |
 
-- 🔒 Show generic tab name
-- 👀 Prevent peeking at conversation
-- ⚡ Quick shortcut toggle
+## Related Pages
 
-### Notifications
-
-Alert when AI response completes:
-
-| Method                  | Description               |
-| ----------------------- | ------------------------- |
-| 🔔 Desktop Notification | System notification popup |
-| 🔊 Sound Alert          | Play notification sound   |
-| 📳 Tab Flash            | Tab title flashing        |
-
-## Custom Shortcuts
-
-All features support custom shortcuts:
-
-- ⌨️ Windows / macOS compatible
-- 🔧 Fully customizable
-- ⚠️ Conflict detection
-
-[View Shortcuts Settings →](/en/guide/shortcuts)
+- [Appearance](/en/guide/appearance)
+- [Shortcuts](/en/guide/shortcuts)
+- [Privacy & Data](/en/guide/privacy)

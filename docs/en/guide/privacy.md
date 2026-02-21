@@ -1,137 +1,89 @@
-# 🔒 Privacy & Data
+﻿# 🔒 Privacy & Data
 
-Ophel follows "Privacy First" design principles. All data is stored locally by default, giving you complete control.
+This page maps to `PermissionsPage.tsx` and `BackupPage.tsx`, covering permissions, backups, import/export, and data boundaries.
 
-## Local First
+## Storage boundary
 
-### Data Storage
+Ophel primarily stores data in browser extension local storage (`chrome.storage.local`). It does not depend on a vendor cloud account to keep your settings and workspace state.
 
-All data stored locally in browser:
+Common modules include:
 
-| Data Type         | Storage Location     |
-| ----------------- | -------------------- |
-| Settings          | Browser LocalStorage |
-| Conversation Tags | Browser LocalStorage |
-| Prompts           | Browser LocalStorage |
-| Custom Styles     | Browser LocalStorage |
+- Settings (`settings`)
+- Prompts (`prompts`)
+- Conversations (`conversations`)
+- Folders and tags (`folders` / `tags`)
+- Reading history (`readingHistory`)
+- Claude Session Keys (`claudeSessionKeys`)
 
-### No Remote Services
+## Permission management
 
-Ophel does NOT:
+<a id="settings-permissions"></a>
 
-- ❌ Upload any data to remote servers
-- ❌ Collect user behavior data
-- ❌ Track user usage
-- ❌ Share any information with third parties
+### Permission types
 
-## Permission Management
+| Type     | Permission      | Purpose                                              |
+| -------- | --------------- | ---------------------------------------------------- |
+| Required | `storage`       | Save settings and local data                         |
+| Optional | `notifications` | Desktop completion notifications                     |
+| Optional | `cookies`       | Claude Session Key read/switch workflows             |
+| Optional | `<all_urls>`    | WebDAV access and watermark-removal related requests |
 
-### Permission Description
+### Revoke side effects
 
-Ophel follows minimum permission principle:
+- Revoking `notifications` automatically disables desktop notifications.
+- Revoking `<all_urls>` blocks features depending on broad host access (for example watermark removal and WebDAV requests).
 
-| Permission      | Usage                    | Required |
-| --------------- | ------------------------ | :------: |
-| `storage`       | Store settings and data  |    ✅    |
-| `activeTab`     | Access current tab       |    ✅    |
-| Site Access     | Run on AI platforms      |    ✅    |
-| `notifications` | Desktop notifications    |    ❌    |
-| `<all_urls>`    | WebDAV/Watermark removal |    ❌    |
+> The permissions page supports manual refresh to sync with browser-level permission changes.
 
-### Permission Panel
+## Backup & sync
 
-View and manage permissions in settings:
+<a id="settings-backup"></a>
 
-1. Open Settings → Privacy & Permissions
-2. View currently granted permissions
-3. Enable/disable optional permissions as needed
+### Local export
 
-### Optional Permissions
+Three JSON export modes are available:
 
-Some features require additional permissions (disabled by default):
+- Full backup (`full`)
+- Prompts only (`prompts`)
+- Settings only (`settings`)
 
-| Feature               | Permission Required |
-| --------------------- | ------------------- |
-| WebDAV Sync           | `<all_urls>`        |
-| Watermark Removal     | `<all_urls>`        |
-| Desktop Notifications | `notifications`     |
+### Local import
 
-::: tip On-Demand Authorization
-Optional permissions are only requested when you enable the feature. You can revoke anytime in settings.
-:::
+- Import from file or paste JSON directly
+- Backup structure is validated before import
+- Confirmed import writes data and refreshes the page
 
-## Data Sync
+### WebDAV
 
-### WebDAV Sync
+Config fields:
 
-Sync data via WebDAV protocol:
+- Server URL
+- Username
+- Password
+- Remote directory
 
-**Supported Services:**
+Actions:
 
-- ☁️ Nutstore (recommended for Chinese users)
-- 🖥️ Synology NAS
-- 📁 Nextcloud
-- 🌐 Any WebDAV-compatible service
+- Save config
+- Test connection
+- Upload backup
+- Open remote backup list (restore/delete)
 
-**Sync Content:**
+## Other privacy-related controls
 
-- ⚙️ Settings
-- 🏷️ Conversation tags and folders
-- ⌨️ Prompt library
-- 🎨 Custom styles
-- 🔑 Claude Session Key (optional)
+Privacy controls also exist in Feature settings:
 
-**Security Measures:**
+- Tab privacy mode (masked title)
+  - Path: Features → Tab → Privacy mode
+- Tab auto rename (can be disabled)
+  - Path: Features → Tab → Auto rename
 
-- 🔐 Sensitive data encrypted
-- 🔒 HTTPS transport encryption
-- 🔑 Credentials stored locally
+## Destructive operation
 
-### Manual Backup
+- `Clear all data` removes all local Ophel data and reloads the page.
+- Export a full backup before running destructive operations.
 
-#### Full Backup
+## Related pages
 
-Export all data to single JSON file:
-
-```json
-{
-  "version": "1.0",
-  "exportTime": "2024-01-15T10:00:00Z",
-  "settings": { ... },
-  "prompts": [ ... ],
-  "tags": [ ... ],
-  "styles": [ ... ]
-}
-```
-
-#### Modular Export
-
-Export specific modules as needed:
-
-- 📋 Prompts only
-- ⚙️ Settings only
-- 🏷️ Tags and folders only
-- 🎨 Custom styles only
-
-## Data Cleanup
-
-### Clear Data
-
-Clear Ophel stored data in settings:
-
-| Action         | Effect               |
-| -------------- | -------------------- |
-| Clear Settings | Reset to defaults    |
-| Clear Cache    | Clear temporary data |
-| Full Reset     | Delete all data      |
-
-::: danger Warning
-Data clearing is irreversible. Please backup important data first.
-:::
-
-## Security Recommendations
-
-1. **Regular Backups**: Backup important data at least weekly
-2. **Careful Authorization**: Only grant optional permissions when needed
-3. **Protect Credentials**: Keep WebDAV passwords and sensitive info safe
-4. **Stay Updated**: Keep extension updated for security fixes
+- [Settings Center Overview](/en/guide/enhancements)
+- [Shortcuts](/en/guide/shortcuts)
