@@ -445,12 +445,12 @@
 
 /* 标签样式 */
 .conversations-tag {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 11px;
-  margin-right: 4px;
-  margin-top: 4px;
+  margin: 0;
   color: white;
   background-color: var(--gh-text-secondary, #9ca3af);
   line-height: 1.2;
@@ -459,21 +459,52 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   vertical-align: middle;
+  flex-shrink: 0;
 }
 
 .conversations-tag-list {
   display: flex;
+  align-items: center;
   gap: 4px;
   border: none;
   padding: 0;
   margin: 0;
   flex-shrink: 0;
-  max-width: 35%;
+  min-width: 0;
+  max-width: 52%;
   overflow: hidden;
 }
 
 .conversations-tag-list:empty {
   display: none;
+}
+
+.conversations-tag-more {
+  color: var(--gh-text-secondary, #6b7280);
+  background: var(--gh-bg-secondary, #f3f4f6);
+  border: 1px solid var(--gh-border, #e5e7eb);
+}
+
+.conversations-hidden-tags-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 110px;
+}
+
+.conversations-hidden-tag-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.conversations-hidden-tag-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
 }
 
 /* 标签筛选按钮 */
@@ -762,12 +793,12 @@
 .conversations-item {
   display: flex;
   align-items: center;
-  padding: 8px 12px;
+  padding: 8px 34px 8px 12px;
   margin-bottom: 4px;
   border-radius: 6px;
   background: var(--gh-bg, white);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s;
   gap: 8px;
   position: relative;
 }
@@ -795,27 +826,39 @@
 }
 
 .conversations-item-title {
-  flex: 1;
-  min-width: 0;
+  display: block;
   font-size: 14px;
   color: var(--gh-text, #374151);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.35;
+}
+
+.conversations-item-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.conversations-item-headline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 
 .conversations-item-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  margin-left: auto;
+  gap: 6px;
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
 }
 
 .conversations-item-time {
-  font-size: 11px;
-  color: var(--gh-text-secondary, #9ca3af);
-  flex-shrink: 0;
+  display: none;
 }
 
 .conversations-item-menu-btn {
@@ -828,7 +871,13 @@
   border-radius: 4px;
   font-size: 12px;
   opacity: 0;
-  transition: opacity 0.2s;
+  pointer-events: none;
+  transform: translateX(4px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    background-color 0.2s,
+    color 0.2s;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -883,11 +932,43 @@
 
 .conversations-item:hover .conversations-item-menu-btn {
   opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+.conversations-item:focus-within .conversations-item-menu-btn {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
 }
 
 .conversations-item-menu-btn:hover {
   background: var(--gh-border, #e5e7eb);
   color: var(--gh-text, #374151);
+}
+
+.conversations-content.is-narrow .conversations-item {
+  padding-right: 34px;
+}
+
+.conversations-content.is-narrow .conversations-item-title {
+  font-size: 13px;
+}
+
+.conversations-content.is-narrow .conversations-tag {
+  max-width: 72px;
+}
+
+.conversations-content.is-narrow .conversations-tag-list {
+  max-width: 46%;
+}
+
+@media (hover: none) {
+  .conversations-item-menu-btn {
+    opacity: 0.72;
+    pointer-events: auto;
+    transform: none;
+  }
 }
 
 .conversations-item-menu {
