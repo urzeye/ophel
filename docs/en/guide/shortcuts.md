@@ -1,84 +1,65 @@
-# ⌨️ Shortcuts
+﻿# ⌨️ Shortcut System
 
-Ophel provides extensive keyboard shortcut support for efficient operation. All shortcuts can be customized in settings.
+This page maps to `ShortcutsPage.tsx` and supports action-level bindings, conflict checks, and one-click reset.
 
-## Navigation
+## Page layout
 
-| Shortcut  | Function         |
-| --------- | ---------------- |
-| `Alt + T` | Scroll to top    |
-| `Alt + B` | Scroll to bottom |
-| `Alt + Z` | Return to anchor |
+| Section              | Purpose                                                                              |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| Shortcut Settings    | Global toggle, global URL (extension context), reset defaults                        |
+| Independent Settings | Prompt submit behavior (Enter / Ctrl+Enter)                                          |
+| Action categories    | Bindings grouped by navigation, panel, outline, conversations, interaction, settings |
 
-## Panel
+## Shortcut Settings
 
-| Shortcut  | Function                |
-| --------- | ----------------------- |
-| `Alt + P` | Toggle panel            |
-| `Alt + D` | Toggle light/dark theme |
-| `Alt + 1` | Switch to tab 1         |
-| `Alt + 2` | Switch to tab 2         |
-| `Alt + 3` | Switch to tab 3         |
+### Global toggle
 
-## Outline
+- `Enable custom shortcuts`: disables all categorized action shortcuts when turned off.
 
-| Shortcut          | Function            |
-| ----------------- | ------------------- |
-| `Alt + R`         | Refresh outline     |
-| `Alt + E`         | Expand/collapse all |
-| `Alt + Shift + 1` | Expand to level 1   |
-| `Alt + Shift + 2` | Expand to level 2   |
-| `Alt + Shift + 3` | Expand to level 3   |
-| `Alt + Q`         | Toggle user view    |
-| `Alt + ↑`         | Previous heading    |
-| `Alt + ↓`         | Next heading        |
-| `Alt + L`         | Locate in outline   |
-| `Alt + F`         | Search outline      |
+### Global shortcut URL (extension context)
 
-## Conversations
+- Configures the URL opened by the browser-level shortcut (default: `https://gemini.google.com`).
+- Includes a button to open browser shortcut settings directly (Chrome / Edge / Firefox).
 
-| Shortcut           | Function                    |
-| ------------------ | --------------------------- |
-| `Ctrl + Shift + O` | New conversation            |
-| `Alt + Shift + R`  | Refresh conversation list   |
-| `Alt + Shift + L`  | Locate current conversation |
-| `Alt + [`          | Previous conversation       |
-| `Alt + ]`          | Next conversation           |
+### Reset defaults
 
-## Editing
+- Restores all keybindings to defaults (with confirmation).
 
-| Shortcut           | Function             |
-| ------------------ | -------------------- |
-| `Ctrl + Shift + E` | Export conversation  |
-| `Ctrl + Shift + C` | Copy latest reply    |
-| `Alt + ;`          | Copy last code block |
-| `Alt + S`          | Lock scroll          |
-| `Alt + I`          | Focus input          |
-| `Alt + K`          | Stop generation      |
-| `Alt + /`          | Open model selector  |
+## Independent setting (always active)
 
-## Settings
+- Prompt submit behavior: `Enter` or `Ctrl + Enter`
+- This setting is not affected by the global shortcut toggle.
 
-| Shortcut         | Function                  |
-| ---------------- | ------------------------- |
-| `Alt + \`        | Shortcuts overview        |
-| `Alt + ,`        | Open settings             |
-| `Ctrl + Alt + C` | Open Claude settings      |
-| `Ctrl + Alt + S` | Switch Claude Session Key |
-| `Ctrl + Alt + G` | Open Gemini settings      |
-| `Ctrl + Alt + T` | Open theme settings       |
-| `Ctrl + Alt + L` | Open model lock settings  |
+## Action categories (code-aligned)
 
-## Customizing Shortcuts
+| Category      | Representative actions                                                                     |
+| ------------- | ------------------------------------------------------------------------------------------ |
+| Navigation    | Scroll top, scroll bottom, return to anchor                                                |
+| Panel         | Toggle panel, toggle theme, switch tab 1/2/3                                               |
+| Outline       | Refresh, expand/collapse, heading navigation, search, locate, bookmark filters             |
+| Conversations | New conversation, refresh list, locate current, previous/next conversation                 |
+| Interaction   | Export conversation, copy latest reply, copy last code block, scroll lock, stop generation |
+| Settings      | Open settings, open Claude/Gemini/theme/model-lock settings, switch Claude key             |
 
-You can customize all shortcuts in the settings panel:
+## Recording and validation rules
 
-1. Press `Alt + \` or open settings panel
-2. Select "Shortcuts" tab
-3. Click any shortcut to edit
-4. Press new key combination
-5. Click save
+- Click an action entry to start recording.
+- Modifier-only keys are ignored.
+- Without modifiers, only specific function keys are accepted (`Esc`, `F1`–`F12`, etc.).
+- Any single binding can be removed (shown as `Not set`).
+- Conflicts are detected and shown inline.
 
-::: tip
-If shortcuts conflict with native website shortcuts, you can modify them or temporarily disable the shortcuts feature.
-:::
+## Default examples
+
+- `Alt + ,`: open settings
+- `Alt + D`: toggle theme
+- `Alt + S`: toggle scroll lock
+- `Ctrl + Shift + O`: new conversation
+- `Ctrl + Alt + C`: open Claude settings
+
+For the full default set, use the shortcuts page directly.
+
+## Related pages
+
+- [Settings Center Overview](/en/guide/enhancements)
+- [Privacy & Data](/en/guide/privacy)
