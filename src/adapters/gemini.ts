@@ -3,6 +3,7 @@
  */
 import { SITE_IDS } from "~constants"
 import { DOMToolkit } from "~utils/dom-toolkit"
+import { htmlToMarkdown } from "~utils/exporter"
 
 import {
   SiteAdapter,
@@ -988,6 +989,37 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   /**
+   * 导出前清理 Gemini 注入的辅助可访问性节点，避免进入 Markdown。
+   */
+  private sanitizeAssistantExportElement(element: Element): Element {
+    const clone = element.cloneNode(true) as Element
+    const hiddenNodes = clone.querySelectorAll(".cdk-visually-hidden")
+    hiddenNodes.forEach((node) => node.remove())
+    return clone
+  }
+
+  /**
+   * 过滤 Gemini 注入的辅助可访问性标题（例如 “Gemini says”）。
+   * 这类标题通常为 visually-hidden，不应进入大纲。
+   */
+  private shouldSkipOutlineHeading(heading: Element): boolean {
+    if (this.isInRenderedMarkdownContainer(heading)) return true
+
+    // 仅过滤 Gemini 注入的辅助可访问性标题，避免误杀正常 Markdown 标题
+    if (heading.classList.contains("cdk-visually-hidden")) return true
+
+    return false
+  }
+
+  /**
+   * Gemini 导出：优先转 Markdown，并过滤辅助可访问性标题（如 “Gemini says”）。
+   */
+  extractAssistantResponseText(element: Element): string {
+    const sanitized = this.sanitizeAssistantExportElement(element)
+    return htmlToMarkdown(sanitized) || this.extractTextWithLineBreaks(sanitized)
+  }
+
+  /**
    * 将渲染后的 HTML 替换到用户提问元素中
    * Gemini 标准版：隐藏 .query-text 并插入渲染容器
    */
@@ -1126,8 +1158,7 @@ export class GeminiAdapter extends SiteAdapter {
       const headings = Array.from(container.querySelectorAll(headingSelectors.join(", ")))
 
       headings.forEach((heading, index) => {
-        // 排除用户提问渲染容器内的标题
-        if (this.isInRenderedMarkdownContainer(heading)) return
+        if (this.shouldSkipOutlineHeading(heading)) return
 
         const level = parseInt(heading.tagName.charAt(1), 10)
         if (level <= maxLevel) {
@@ -1206,7 +1237,7 @@ export class GeminiAdapter extends SiteAdapter {
 
         outline.push(item)
       } else if (/^h[1-6]$/.test(tagName)) {
-        if (this.isInRenderedMarkdownContainer(element)) return
+        if (this.shouldSkipOutlineHeading(element)) return
 
         const level = parseInt(tagName.charAt(1), 10)
         if (level <= maxLevel) {
