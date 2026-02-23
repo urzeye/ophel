@@ -122,6 +122,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null)
   const [showTagFilterMenu, setShowTagFilterMenu] = useState(false)
   const [isFolderSelectOpen, setIsFolderSelectOpen] = useState(false)
+  const [isNarrowLayout, setIsNarrowLayout] = useState(false)
 
   // 对话框和菜单
   const [dialog, setDialog] = useState<DialogType>(null)
@@ -133,6 +134,22 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const tagFilterMenuRef = useRef<HTMLDivElement>(null)
   const tagFilterBtnRef = useRef<HTMLDivElement>(null)
+
+  // 根据面板宽度切换紧凑布局，优先给标题与标签留空间
+  useEffect(() => {
+    const el = contentRef.current
+    if (!el || typeof ResizeObserver === "undefined") return
+
+    const updateLayout = () => {
+      setIsNarrowLayout(el.clientWidth <= 340)
+    }
+
+    updateLayout()
+
+    const observer = new ResizeObserver(updateLayout)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   // 加载数据（设置由 Zustand store 管理，无需手动加载）
   const loadData = useCallback(async () => {
@@ -484,7 +501,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
       <LoadingOverlay isVisible={isDeleting} text={`${t("delete") || "删除"}...`} />
       <div
         ref={contentRef}
-        className="conversations-content"
+        className={`conversations-content ${isNarrowLayout ? "is-narrow" : ""}`}
         style={{
           display: "flex",
           flexDirection: "column",
@@ -800,57 +817,95 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                                 }}
                               />
                             )}
-                            <Tooltip
-                              content={conv.title}
-                              triggerStyle={{
-                                flex: 1,
-                                minWidth: 0,
-                                overflow: "hidden",
-                                display: "block",
-                              }}>
-                              <span
-                                className="conversations-item-title"
-                                style={{ userSelect: "none" }}>
-                                {conv.pinned && (
-                                  <PinIcon
-                                    size={12}
-                                    filled
-                                    style={{
-                                      display: "inline-block",
-                                      marginRight: "4px",
-                                      verticalAlign: "middle",
-                                    }}
-                                  />
-                                )}
-                                {searchQuery && searchResult?.conversationMatches.has(conv.id)
-                                  ? highlightText(conv.title || "无标题", searchQuery)
-                                  : conv.title || "无标题"}
-                              </span>
-                            </Tooltip>
+                            {(() => {
+                              const tagIds = conv.tagIds || []
+                              const maxVisibleTags = isNarrowLayout ? 1 : 2
+                              const resolvedTags = tagIds
+                                .map((tagId) => tags.find((t) => t.id === tagId))
+                                .filter((tag): tag is Tag => !!tag)
+                              const visibleTags = resolvedTags.slice(0, maxVisibleTags)
+                              const hiddenTags = resolvedTags.slice(maxVisibleTags)
+                              const hiddenTagCount = hiddenTags.length
 
-                            {/* 标签 */}
-                            {conv.tagIds && conv.tagIds.length > 0 && (
-                              <div className="conversations-tag-list">
-                                {conv.tagIds.map((tagId) => {
-                                  const tag = tags.find((t) => t.id === tagId)
-                                  return tag ? (
-                                    <span
-                                      key={tagId}
-                                      className="conversations-tag"
-                                      style={{ backgroundColor: tag.color }}>
-                                      {tag.name}
-                                    </span>
-                                  ) : null
-                                })}
-                              </div>
-                            )}
+                              return (
+                                <div className="conversations-item-main">
+                                  <div className="conversations-item-headline">
+                                    <Tooltip
+                                      content={conv.title}
+                                      triggerStyle={{
+                                        flex: 1,
+                                        minWidth: 0,
+                                        overflow: "hidden",
+                                        display: "block",
+                                      }}>
+                                      <span
+                                        className="conversations-item-title"
+                                        style={{ userSelect: "none" }}>
+                                        {conv.pinned && (
+                                          <PinIcon
+                                            size={12}
+                                            filled
+                                            style={{
+                                              display: "inline-block",
+                                              marginRight: "4px",
+                                              verticalAlign: "middle",
+                                            }}
+                                          />
+                                        )}
+                                        {searchQuery &&
+                                        searchResult?.conversationMatches.has(conv.id)
+                                          ? highlightText(conv.title || "无标题", searchQuery)
+                                          : conv.title || "无标题"}
+                                      </span>
+                                    </Tooltip>
+
+                                    {tagIds.length > 0 && (
+                                      <div className="conversations-tag-list">
+                                        {visibleTags.map((tag) => {
+                                          return (
+                                            <span
+                                              key={tag.id}
+                                              className="conversations-tag"
+                                              style={{ backgroundColor: tag.color }}>
+                                              {tag.name}
+                                            </span>
+                                          )
+                                        })}
+                                        {hiddenTagCount > 0 && (
+                                          <Tooltip
+                                            content={
+                                              <div className="conversations-hidden-tags-tooltip">
+                                                {resolvedTags.map((tag) => (
+                                                  <div
+                                                    key={tag.id}
+                                                    className="conversations-hidden-tag-item">
+                                                    <span
+                                                      className="conversations-hidden-tag-dot"
+                                                      style={{ backgroundColor: tag.color }}
+                                                    />
+                                                    <span>{tag.name}</span>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            }
+                                            delay={120}
+                                            triggerStyle={{ display: "inline-flex" }}>
+                                            <span className="conversations-tag conversations-tag-more">
+                                              +{hiddenTagCount}
+                                            </span>
+                                          </Tooltip>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )
+                            })()}
 
                             <div className="conversations-item-meta">
-                              <span className="conversations-item-time">
-                                {manager.formatTime(conv.updatedAt)}
-                              </span>
                               <button
                                 className="conversations-item-menu-btn"
+                                title={t("more") || "更多操作"}
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   onInteractionStateChange?.(true)
