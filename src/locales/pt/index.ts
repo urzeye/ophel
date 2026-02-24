@@ -1134,6 +1134,9 @@ Dê o código e depois um resumo de melhorias.`,
   exportCustomModelNameDesc: "Nome de exibição da IA para exportações (Padrão: Nome do site)",
   exportFilenameTimestamp: "Add Timestamp to Filename",
   exportFilenameTimestampDesc: "Add a timestamp to the end of the exported filename",
+  exportIncludeThoughtsLabel: "Incluir raciocínio na exportação",
+  exportIncludeThoughtsDesc:
+    "Incluir e expandir automaticamente o raciocínio ao exportar (em blocos de citação)",
 
   // ======== Popup ========
   popupCurrentSite: "Site Atual",

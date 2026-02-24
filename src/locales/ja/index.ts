@@ -1061,6 +1061,8 @@ export const ja = {
   exportCustomModelNameDesc: "エクスポート時のAI表示名（デフォルト: サイト名）",
   exportFilenameTimestamp: "Add Timestamp to Filename",
   exportFilenameTimestampDesc: "Add a timestamp to the end of the exported filename",
+  exportIncludeThoughtsLabel: "エクスポートに思考過程を含める",
+  exportIncludeThoughtsDesc: "エクスポート時に思考過程を含めて自動展開します（引用ブロックで区別）",
 
   // ======== Popup ========
   popupCurrentSite: "現在のサイト",

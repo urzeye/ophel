@@ -539,6 +539,8 @@ export const zhCN = {
   exportCustomModelNameDesc: "导出时使用的 AI 显示名称 (默认: 站点名称)",
   exportFilenameTimestamp: "导出文件名包含时间戳",
   exportFilenameTimestampDesc: "在导出文件名末尾添加时间戳",
+  exportIncludeThoughtsLabel: "导出包含思维链",
+  exportIncludeThoughtsDesc: "导出时包含并自动展开思维链内容（使用引用块区分）",
   // 大纲高级设置
   outlineAutoUpdateLabel: "对话期间自动更新大纲",
   outlineAutoUpdateDesc: "AI 生成内容时自动刷新目录结构",

@@ -542,6 +542,20 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId: _siteId, initialTab
             />
 
             <ToggleRow
+              label={t("exportIncludeThoughtsLabel") || "导出包含思维链"}
+              description={t("exportIncludeThoughtsDesc") || "导出时包含并自动展开思维链内容"}
+              settingId="export-include-thoughts"
+              checked={settings.export?.includeThoughts ?? true}
+              onChange={() =>
+                updateNestedSetting(
+                  "export",
+                  "includeThoughts",
+                  !(settings.export?.includeThoughts ?? true),
+                )
+              }
+            />
+
+            <ToggleRow
               label={t("exportImagesToBase64Label") || "导出时图片转 Base64"}
               description={t("exportImagesToBase64Desc") || "导出会话时将图片转为 Base64 嵌入"}
               settingId="export-images-base64"

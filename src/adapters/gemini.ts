@@ -11,6 +11,7 @@ import {
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportConfig,
+  type ExportLifecycleContext,
   type MarkdownFixerConfig,
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
@@ -51,7 +52,15 @@ const GEMINI_CANCEL_KEYWORDS = [
   "отмен",
 ]
 
+const GEMINI_EXPORT_THOUGHT_MARKER_ATTR = "data-ophel-export-thought-id"
+
+interface GeminiExportLifecycleState {
+  toggledThoughtIds: string[]
+}
+
 export class GeminiAdapter extends SiteAdapter {
+  private exportIncludeThoughtsOverride: boolean | null = null
+
   private getUserPathPrefix(): string {
     // Gemini 多账号路径格式：/u/2/app/...
     const match = window.location.pathname.match(/^\/u\/(\d+)(?:\/|$)/)
@@ -989,12 +998,251 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   /**
+   * 导出前自动展开当前会话中所有可见/可加载的思路内容，避免用户手动点击「显示思路」。
+   */
+  async prepareConversationExport(
+    context: ExportLifecycleContext,
+  ): Promise<GeminiExportLifecycleState> {
+    this.exportIncludeThoughtsOverride = context.includeThoughts
+
+    if (!context.includeThoughts) {
+      this.clearThoughtExportMarkers()
+      return { toggledThoughtIds: [] }
+    }
+
+    const toggledThoughtIds = new Set<string>()
+    this.clearThoughtExportMarkers()
+
+    let stableRounds = 0
+    let previousThoughtCount = -1
+
+    // 多轮扫描，兼容导出时的懒渲染/延迟挂载
+    for (let round = 0; round < 10 && stableRounds < 2; round++) {
+      const thoughts = this.getThoughtNodesForExport()
+      if (thoughts.length === previousThoughtCount) {
+        stableRounds++
+      } else {
+        stableRounds = 0
+        previousThoughtCount = thoughts.length
+      }
+
+      for (const thought of thoughts) {
+        if (this.isThoughtExpanded(thought)) continue
+
+        const button = this.getThoughtHeaderButton(thought)
+        if (!button) continue
+
+        let markerId = thought.getAttribute(GEMINI_EXPORT_THOUGHT_MARKER_ATTR)
+        if (!markerId) {
+          markerId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+          thought.setAttribute(GEMINI_EXPORT_THOUGHT_MARKER_ATTR, markerId)
+        }
+
+        try {
+          button.scrollIntoView({ block: "center", behavior: "auto" })
+        } catch {
+          // ignore scroll failures
+        }
+
+        this.simulateClick(button)
+        const expanded = await this.waitForThoughtState(thought, true, 2200)
+        if (expanded) {
+          toggledThoughtIds.add(markerId)
+        }
+
+        await this.sleep(60)
+      }
+
+      await this.sleep(120)
+    }
+
+    // 清理未成功展开项的 marker，仅保留需要恢复的节点标记
+    this.getThoughtNodesForExport().forEach((thought) => {
+      const markerId = thought.getAttribute(GEMINI_EXPORT_THOUGHT_MARKER_ATTR)
+      if (markerId && !toggledThoughtIds.has(markerId)) {
+        thought.removeAttribute(GEMINI_EXPORT_THOUGHT_MARKER_ATTR)
+      }
+    })
+
+    return {
+      toggledThoughtIds: Array.from(toggledThoughtIds),
+    }
+  }
+
+  /**
+   * 导出后恢复导出前的折叠状态：仅恢复本次自动展开过的思路块。
+   */
+  async restoreConversationAfterExport(
+    _context: ExportLifecycleContext,
+    state: unknown,
+  ): Promise<void> {
+    const parsed = this.parseExportLifecycleState(state)
+    if (!parsed) {
+      this.exportIncludeThoughtsOverride = null
+      this.clearThoughtExportMarkers()
+      return
+    }
+
+    try {
+      for (let i = parsed.toggledThoughtIds.length - 1; i >= 0; i--) {
+        const markerId = parsed.toggledThoughtIds[i]
+        const thought = this.findThoughtNodeByMarker(markerId)
+        if (!thought) continue
+
+        const button = this.getThoughtHeaderButton(thought)
+        if (!button) {
+          thought.removeAttribute(GEMINI_EXPORT_THOUGHT_MARKER_ATTR)
+          continue
+        }
+
+        if (this.isThoughtExpanded(thought)) {
+          try {
+            button.scrollIntoView({ block: "center", behavior: "auto" })
+          } catch {
+            // ignore scroll failures
+          }
+
+          this.simulateClick(button)
+          await this.waitForThoughtState(thought, false, 1800)
+        }
+
+        thought.removeAttribute(GEMINI_EXPORT_THOUGHT_MARKER_ATTR)
+        await this.sleep(40)
+      }
+    } finally {
+      this.exportIncludeThoughtsOverride = null
+      this.clearThoughtExportMarkers()
+    }
+  }
+
+  private parseExportLifecycleState(state: unknown): GeminiExportLifecycleState | null {
+    if (!state || typeof state !== "object") return null
+    const candidate = state as Partial<GeminiExportLifecycleState>
+    if (!Array.isArray(candidate.toggledThoughtIds)) return null
+
+    const toggledThoughtIds = candidate.toggledThoughtIds.filter(
+      (id): id is string => typeof id === "string" && id.length > 0,
+    )
+    return { toggledThoughtIds }
+  }
+
+  private getThoughtNodesForExport(): Element[] {
+    return Array.from(
+      document.querySelectorAll('model-thoughts[data-test-id="model-thoughts"], model-thoughts'),
+    )
+  }
+
+  private getThoughtHeaderButton(thought: Element): HTMLElement | null {
+    return thought.querySelector('button[data-test-id="thoughts-header-button"]')
+  }
+
+  private isThoughtExpanded(thought: Element): boolean {
+    const icon = thought.querySelector("button[data-test-id='thoughts-header-button'] mat-icon")
+    const iconName =
+      icon?.getAttribute("data-mat-icon-name") || icon?.getAttribute("fonticon") || ""
+
+    if (iconName.includes("expand_less")) return true
+    if (iconName.includes("expand_more")) return false
+
+    const thoughtContent = thought.querySelector('[data-test-id="thoughts-content"]')
+    if (thoughtContent) return true
+
+    return thought.querySelector(".thoughts-content-expanded") !== null
+  }
+
+  private isThoughtContentReady(thought: Element): boolean {
+    const thoughtContent = thought.querySelector('[data-test-id="thoughts-content"]')
+    if (!thoughtContent) return false
+    return (thoughtContent.textContent?.trim().length || 0) > 0
+  }
+
+  private async waitForThoughtState(
+    thought: Element,
+    expectedExpanded: boolean,
+    timeout = 2200,
+  ): Promise<boolean> {
+    const start = Date.now()
+
+    while (Date.now() - start < timeout) {
+      const expanded = this.isThoughtExpanded(thought)
+      if (expectedExpanded) {
+        if (expanded && this.isThoughtContentReady(thought)) return true
+      } else if (!expanded) {
+        return true
+      }
+      await this.sleep(80)
+    }
+
+    const expanded = this.isThoughtExpanded(thought)
+    return expectedExpanded ? expanded : !expanded
+  }
+
+  private findThoughtNodeByMarker(markerId: string): Element | null {
+    const thoughts = this.getThoughtNodesForExport()
+    for (const thought of thoughts) {
+      if (thought.getAttribute(GEMINI_EXPORT_THOUGHT_MARKER_ATTR) === markerId) {
+        return thought
+      }
+    }
+    return null
+  }
+
+  private clearThoughtExportMarkers(): void {
+    this.getThoughtNodesForExport().forEach((thought) => {
+      if (thought.hasAttribute(GEMINI_EXPORT_THOUGHT_MARKER_ATTR)) {
+        thought.removeAttribute(GEMINI_EXPORT_THOUGHT_MARKER_ATTR)
+      }
+    })
+  }
+
+  private shouldIncludeThoughtsInExport(): boolean {
+    if (typeof this.exportIncludeThoughtsOverride === "boolean") {
+      return this.exportIncludeThoughtsOverride
+    }
+    return true
+  }
+
+  private formatAsThoughtBlockquote(markdown: string): string {
+    const lines = markdown.replace(/\r\n/g, "\n").split("\n")
+    const quotedLines = lines.map((line) => (line.trim().length > 0 ? `> ${line}` : ">"))
+    return ["> [Thoughts]", ...quotedLines].join("\n")
+  }
+
+  private extractThoughtBlockquotesFromElement(element: Element): string[] {
+    const thoughtNodes = Array.from(element.querySelectorAll("model-thoughts"))
+    const blocks: string[] = []
+
+    for (const thought of thoughtNodes) {
+      const thoughtContent =
+        thought.querySelector('[data-test-id="thoughts-content"]') ||
+        thought.querySelector(".thoughts-content")
+      if (!thoughtContent) continue
+
+      const markdown =
+        htmlToMarkdown(thoughtContent) || this.extractTextWithLineBreaks(thoughtContent)
+      const normalized = markdown.trim()
+      if (!normalized) continue
+
+      blocks.push(this.formatAsThoughtBlockquote(normalized))
+    }
+
+    return blocks
+  }
+
+  /**
    * 导出前清理 Gemini 注入的辅助可访问性节点，避免进入 Markdown。
    */
   private sanitizeAssistantExportElement(element: Element): Element {
     const clone = element.cloneNode(true) as Element
     const hiddenNodes = clone.querySelectorAll(".cdk-visually-hidden")
     hiddenNodes.forEach((node) => node.remove())
+
+    // 清理导出流程中的临时 marker 属性
+    clone
+      .querySelectorAll(`model-thoughts[${GEMINI_EXPORT_THOUGHT_MARKER_ATTR}]`)
+      .forEach((node) => {
+        node.removeAttribute(GEMINI_EXPORT_THOUGHT_MARKER_ATTR)
+      })
     return clone
   }
 
@@ -1016,7 +1264,25 @@ export class GeminiAdapter extends SiteAdapter {
    */
   extractAssistantResponseText(element: Element): string {
     const sanitized = this.sanitizeAssistantExportElement(element)
-    return htmlToMarkdown(sanitized) || this.extractTextWithLineBreaks(sanitized)
+    const includeThoughts = this.shouldIncludeThoughtsInExport()
+
+    let thoughtBlocks: string[] = []
+    if (includeThoughts) {
+      thoughtBlocks = this.extractThoughtBlockquotesFromElement(sanitized)
+    }
+
+    // 正文始终移除思维链节点，避免正文与思维链内容重复
+    sanitized.querySelectorAll("model-thoughts").forEach((node) => node.remove())
+
+    const bodyMarkdown = htmlToMarkdown(sanitized) || this.extractTextWithLineBreaks(sanitized)
+    const normalizedBody = bodyMarkdown.trim()
+
+    if (includeThoughts && thoughtBlocks.length > 0) {
+      const thoughtSection = thoughtBlocks.join("\n\n")
+      return normalizedBody ? `${thoughtSection}\n\n${normalizedBody}` : thoughtSection
+    }
+
+    return normalizedBody
   }
 
   /**

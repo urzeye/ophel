@@ -1012,6 +1012,9 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   exportCustomModelNameDesc: "Anzeigename der AI für den Export (Standard: Website-Name)",
   exportFilenameTimestamp: "Add Timestamp to Filename",
   exportFilenameTimestampDesc: "Add a timestamp to the end of the exported filename",
+  exportIncludeThoughtsLabel: "Gedankengang beim Export einbeziehen",
+  exportIncludeThoughtsDesc:
+    "Gedankengang beim Export einbeziehen und automatisch erweitern (als Zitatblöcke)",
 
   // ======== Popup ========
   popupCurrentSite: "Aktuelle Seite",

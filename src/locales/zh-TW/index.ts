@@ -1038,6 +1038,8 @@ export const zhTW = {
   exportCustomModelNameDesc: "匯出時使用的 AI 顯示名稱 (預設: 網站名稱)",
   exportFilenameTimestamp: "導出文件名包含時間戳",
   exportFilenameTimestampDesc: "在導出文件名末尾添加時間戳",
+  exportIncludeThoughtsLabel: "匯出包含思維鏈",
+  exportIncludeThoughtsDesc: "匯出時包含並自動展開思維鏈內容（使用引用區塊區分）",
 
   // ======== Popup 頁面 ========
   popupCurrentSite: "目前站點",

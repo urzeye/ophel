@@ -195,6 +195,7 @@ export const SETTING_ID_ALIASES: Record<string, string> = {
   "features.outline.inlineBookmarkMode": "outline-inline-bookmark-mode",
   "features.outline.panelBookmarkMode": "outline-panel-bookmark-mode",
   "features.outline.preventAutoScroll": "outline-prevent-auto-scroll",
+  "features.export.includeThoughts": "export-include-thoughts",
   "features.readingHistory.persistence": "reading-history-persistence",
   "features.content.formulaCopy": "content-formula-copy",
   "panel.preventAutoScroll": "outline-prevent-auto-scroll",
@@ -455,6 +456,11 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     settingId: "export-filename-timestamp",
     title: "导出文件名包含时间戳",
     keywords: ["export", "filename", "timestamp", "时间戳"],
+  },
+  {
+    settingId: "export-include-thoughts",
+    title: "导出包含思维链",
+    keywords: ["export", "thoughts", "reasoning", "thinking", "思维链", "思路", "推理"],
   },
   {
     settingId: "export-images-base64",

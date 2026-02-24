@@ -3,6 +3,7 @@ import type {
   ConversationDeleteTarget,
   ConversationInfo,
   ConversationObserverConfig,
+  ExportLifecycleContext,
   SiteDeleteConversationResult,
 } from "~adapters/base"
 import { type Folder } from "~constants"
@@ -791,9 +792,22 @@ export class ConversationManager {
       return false
     }
 
+    const scrollContainer = this.siteAdapter.getScrollContainer?.() || null
+    const initialScrollTop = scrollContainer?.scrollTop ?? null
+    const initialWindowScrollY = window.scrollY
+    const settings = useSettingsStore.getState().settings
+
+    const exportContext: ExportLifecycleContext = {
+      conversationId: convId,
+      format,
+      includeThoughts: settings.export?.includeThoughts ?? true,
+    }
+
+    let exportLifecycleEnabled = false
+    let exportLifecycleState: unknown = null
+
     try {
       // 加载完整历史（滚动到顶部）
-      const scrollContainer = this.siteAdapter.getScrollContainer?.()
       if (scrollContainer) {
         let prevHeight = 0
         let retries = 0
@@ -814,6 +828,10 @@ export class ConversationManager {
         }
       }
 
+      // 导出前钩子（站点可选实现）
+      exportLifecycleEnabled = true
+      exportLifecycleState = await this.siteAdapter.prepareConversationExport(exportContext)
+
       // 提取对话内容
       const messages = this.extractConversationMessages()
       if (messages.length === 0) {
@@ -826,7 +844,6 @@ export class ConversationManager {
         .replace(/[<>:"/\\|?*]/g, "_")
         .substring(0, 50)
 
-      const settings = useSettingsStore.getState().settings
       const metadata = createExportMetadata(
         conv.title || "未命名",
         this.siteAdapter.getName(),
@@ -882,6 +899,21 @@ export class ConversationManager {
     } catch (error) {
       console.error("[ConversationManager] Export failed:", error)
       return false
+    } finally {
+      if (exportLifecycleEnabled) {
+        try {
+          await this.siteAdapter.restoreConversationAfterExport(exportContext, exportLifecycleState)
+        } catch (restoreErr) {
+          console.warn("[ConversationManager] Export state restore failed:", restoreErr)
+        }
+      }
+
+      // 无论导出成功与否，尽量恢复用户原始阅读位置
+      if (scrollContainer && initialScrollTop !== null) {
+        scrollContainer.scrollTop = initialScrollTop
+      } else {
+        window.scrollTo({ top: initialWindowScrollY, behavior: "auto" })
+      }
     }
   }
 

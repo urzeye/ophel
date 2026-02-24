@@ -68,6 +68,12 @@ export interface ExportConfig {
   useShadowDOM: boolean
 }
 
+export interface ExportLifecycleContext {
+  conversationId: string
+  format: "markdown" | "json" | "txt" | "clipboard"
+  includeThoughts: boolean
+}
+
 export interface ConversationObserverConfig {
   selector: string
   shadow: boolean
@@ -737,6 +743,25 @@ export abstract class SiteAdapter {
   getExportConfig(): ExportConfig | null {
     return null
   }
+
+  /**
+   * 导出前生命周期钩子。
+   * 可用于准备导出内容（例如展开懒加载内容、记录页面状态等）。
+   * 默认不做处理，返回 null。
+   */
+  async prepareConversationExport(_context: ExportLifecycleContext): Promise<unknown> {
+    return null
+  }
+
+  /**
+   * 导出后生命周期钩子。
+   * 可用于恢复导出前状态（例如恢复折叠状态、滚动位置等）。
+   * 默认不做处理。
+   */
+  async restoreConversationAfterExport(
+    _context: ExportLifecycleContext,
+    _state: unknown,
+  ): Promise<void> {}
 
   // ==================== 新对话监听 ====================
 

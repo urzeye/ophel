@@ -1163,4 +1163,7 @@ export const ru = {
   shortcutToggleModelLock: "Переключить блокировку модели",
   exportFilenameTimestamp: "Add Timestamp to Filename",
   exportFilenameTimestampDesc: "Add a timestamp to the end of the exported filename",
+  exportIncludeThoughtsLabel: "Включать рассуждения при экспорте",
+  exportIncludeThoughtsDesc:
+    "Включать и автоматически разворачивать рассуждения при экспорте (в виде цитатных блоков)",
 }

@@ -1018,6 +1018,8 @@ export const ko = {
   exportCustomModelNameDesc: "내보내기 시 표시될 AI 이름 (기본값: 사이트 이름)",
   exportFilenameTimestamp: "Add Timestamp to Filename",
   exportFilenameTimestampDesc: "Add a timestamp to the end of the exported filename",
+  exportIncludeThoughtsLabel: "내보내기에 사고 과정 포함",
+  exportIncludeThoughtsDesc: "내보낼 때 사고 과정을 포함하고 자동으로 펼칩니다(인용 블록으로 구분)",
 
   // ======== Popup ========
   popupCurrentSite: "현재 사이트",

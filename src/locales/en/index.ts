@@ -403,6 +403,9 @@ export const en = {
   exportCustomModelNameDesc: "Display name for AI in exports (Default: Site Name)",
   exportFilenameTimestamp: "Add Timestamp to Filename",
   exportFilenameTimestampDesc: "Add a timestamp to the end of the exported filename",
+  exportIncludeThoughtsLabel: "Include Thoughts in Export",
+  exportIncludeThoughtsDesc:
+    "Include and auto-expand thoughts when exporting (rendered as blockquotes)",
   userQueryMarkdownLabel: "User Query Markdown Render",
   userQueryMarkdownDesc: "Render Markdown syntax in user queries as formatted text",
   watermarkRemovalLabel: "Remove Image Watermark",

@@ -242,6 +242,7 @@ const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "export-custom-model-name": "exportCustomModelName",
   "export-custom-user-name": "exportCustomUserName",
   "export-filename-timestamp": "exportFilenameTimestamp",
+  "export-include-thoughts": "exportIncludeThoughtsLabel",
   "export-images-base64": "exportImagesToBase64Label",
   "gemini-markdown-fix": "markdownFixLabel",
   "gemini-policy-max-retries": "maxRetriesLabel",
@@ -906,8 +907,9 @@ export const App = () => {
   )
 
   const settingsSearchResults = useMemo(
-    () => searchSettingsItems(isGlobalSearchFuzzySearchEnabled ? "" : activeGlobalSearchPlainQuery),
-    [activeGlobalSearchPlainQuery, isGlobalSearchFuzzySearchEnabled],
+    // 始终返回完整设置列表，交给后续全局搜索评分流程做多语言匹配
+    () => searchSettingsItems(""),
+    [],
   )
 
   useEffect(() => {
