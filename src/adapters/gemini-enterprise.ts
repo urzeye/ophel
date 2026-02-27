@@ -1533,24 +1533,11 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
     try {
       // 2. 找到并点击设置按钮
-      let settingsBtn = DOMToolkit.query("#settings-menu-anchor", { shadow: true }) as HTMLElement
+      let settingsBtn = DOMToolkit.query(".settings-button", { shadow: true }) as HTMLElement
 
       if (!settingsBtn) {
-        console.error("[GeminiEnterpriseAdapter] Settings button not found (#settings-menu-anchor)")
-        const fallbackBtn = DOMToolkit.query(".setting-btn", { shadow: true }) as HTMLElement
-        if (fallbackBtn) {
-          if (typeof fallbackBtn.click === "function") fallbackBtn.click()
-          else
-            fallbackBtn.dispatchEvent(
-              new MouseEvent("click", {
-                bubbles: true,
-                cancelable: true,
-                view: window,
-              }),
-            )
-        } else {
-          return false
-        }
+        console.error("[GeminiEnterpriseAdapter] Settings button not found (.settings-button)")
+        return false
       } else {
         if (typeof settingsBtn.click === "function") {
           settingsBtn.click()
