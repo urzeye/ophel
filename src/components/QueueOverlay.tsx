@@ -27,6 +27,8 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
   const [isExpanded, setIsExpanded] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [inputValue, setInputValue] = useState("")
+  const [editingItemId, setEditingItemId] = useState<string | null>(null)
+  const [editValue, setEditValue] = useState("")
   const [position, setPosition] = useState<{
     bottom: number
     right: number
@@ -45,6 +47,37 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
   const submitShortcut = useSettingsStore(
     (state) => state.settings.features?.prompts?.submitShortcut ?? "enter",
   )
+
+  const shortcuts = useSettingsStore((state) => state.settings?.shortcuts)
+  const queueBinding = shortcuts?.keybindings?.togglePromptQueue
+
+  const shortcutText = React.useMemo(() => {
+    if (queueBinding === null) return ""
+    if (queueBinding) {
+      const isMac = navigator.userAgent.toLowerCase().includes("mac")
+      const parts = []
+      if (queueBinding.ctrl) parts.push(isMac ? "⌃" : "Ctrl")
+      if (queueBinding.alt) parts.push(isMac ? "⌥" : "Alt")
+      if (queueBinding.shift) parts.push(isMac ? "⇧" : "Shift")
+      if (queueBinding.meta) parts.push(isMac ? "⌘" : "Win")
+
+      const keyMap: Record<string, string> = {
+        ArrowUp: "↑",
+        ArrowDown: "↓",
+        ArrowLeft: "←",
+        ArrowRight: "→",
+        Enter: "↵",
+        Escape: "Esc",
+      }
+
+      const displayKey = keyMap[queueBinding.key] || queueBinding.key.toUpperCase()
+      parts.push(displayKey)
+
+      return isMac ? parts.join("") : parts.join("+")
+    }
+    const isMac = navigator.userAgent.toLowerCase().includes("mac")
+    return isMac ? "⌥J" : "Alt+J"
+  }, [queueBinding])
 
   // ==================== 位置计算 ====================
 
@@ -155,19 +188,15 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
     return () => clearInterval(intervalId)
   }, [adapter])
 
-  // ==================== 快捷键 Alt+J ====================
+  // ==================== 自定义快捷键 ====================
 
   useEffect(() => {
-    const handleKeydown = (e: KeyboardEvent) => {
-      if (e.altKey && (e.key === "j" || e.key === "J")) {
-        e.preventDefault()
-        e.stopPropagation()
-        setIsExpanded((prev) => !prev)
-      }
+    const handleToggle = () => {
+      setIsExpanded((prev) => !prev)
     }
 
-    document.addEventListener("keydown", handleKeydown, true)
-    return () => document.removeEventListener("keydown", handleKeydown, true)
+    window.addEventListener("ophel:togglePromptQueue", handleToggle)
+    return () => window.removeEventListener("ophel:togglePromptQueue", handleToggle)
   }, [])
 
   // 展开时聚焦输入框
@@ -266,12 +295,39 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
     store.clear()
   }, [store])
 
+  const handleEditClick = useCallback((id: string, content: string) => {
+    setEditingItemId(id)
+    setEditValue(content)
+  }, [])
+
+  const handleEditSave = useCallback(
+    (id: string) => {
+      if (editValue.trim()) {
+        store.updateContent(id, editValue.trim())
+      }
+      setEditingItemId(null)
+    },
+    [editValue, store],
+  )
+
+  const handleEditCancel = useCallback(() => {
+    setEditingItemId(null)
+  }, [])
+
   // 自动调整输入框高度
+  const adjustTextareaHeight = useCallback(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = "0px" // Reset first to allow shrinking
+      inputRef.current.style.height = Math.min(inputRef.current.scrollHeight, 120) + "px"
+    }
+  }, [])
+
+  useEffect(() => {
+    adjustTextareaHeight()
+  }, [inputValue, adjustTextareaHeight])
+
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value)
-    const textarea = e.target
-    textarea.style.height = "auto"
-    textarea.style.height = Math.min(textarea.scrollHeight, 120) + "px"
   }, [])
 
   // ==================== 渲染 ====================
@@ -302,14 +358,12 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
         className="gh-queue-capsule"
         style={capsuleStyle}
         onClick={() => setIsExpanded(true)}
-        title="Alt+J">
+        title={shortcutText}>
         <span className="gh-queue-capsule-icon">
           <PromptIcon size={14} color="currentColor" />
         </span>
         <span>
-          {activeCount > 0
-            ? t("queue.inQueue", { count: String(activeCount) })
-            : t("queue.quickAsk")}
+          {activeCount > 0 ? t("queueInQueue", { count: String(activeCount) }) : t("queueQuickAsk")}
         </span>
         {activeCount > 0 && <span className="gh-queue-capsule-badge">{activeCount}</span>}
       </div>,
@@ -326,7 +380,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
           <span>
             <PromptIcon size={16} color="currentColor" />
           </span>
-          <span>{t("queue.title")}</span>
+          <span>{t("queueTitle")}</span>
           {pendingCount > 0 && <span className="gh-queue-capsule-badge">{pendingCount}</span>}
         </div>
         <div className="gh-queue-header-actions">
@@ -334,7 +388,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
             <button
               className="gh-queue-header-btn"
               onClick={handleClearAll}
-              title={t("queue.clearAll")}>
+              title={t("queueClearAll")}>
               <CleanupIcon size={16} color="currentColor" />
             </button>
           )}
@@ -358,52 +412,133 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
       {/* 队列列表 */}
       <div className="gh-queue-list">
         {items.filter((i) => i.status === "pending" || i.status === "sending").length === 0 ? (
-          <div className="gh-queue-empty">{t("queue.empty")}</div>
+          <div className="gh-queue-empty">{t("queueEmpty")}</div>
         ) : (
           items
             .filter((i) => i.status === "pending" || i.status === "sending")
             .map((item, index) => (
               <div key={item.id} className="gh-queue-item" data-status={item.status}>
                 <span className="gh-queue-item-index">{index + 1}</span>
-                <span className="gh-queue-item-content">{item.content}</span>
-                <div className="gh-queue-item-actions">
-                  {item.status === "pending" && (
-                    <button
-                      className="gh-queue-item-force-send"
-                      onClick={() => handleForceSend(item.id, item.content)}
-                      title={t("queue.forceSend") || "Force Send"}>
-                      <svg
-                        viewBox="0 0 24 24"
-                        width="14"
-                        height="14"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round">
-                        <line x1="12" y1="19" x2="12" y2="5"></line>
-                        <polyline points="5 12 12 5 19 12"></polyline>
-                      </svg>
-                    </button>
-                  )}
-                  <button
-                    className="gh-queue-item-remove"
-                    onClick={() => handleRemoveItem(item.id)}
-                    title={t("queue.remove")}>
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="14"
-                      height="14"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                  </button>
-                </div>
+                {editingItemId === item.id ? (
+                  <div className="gh-queue-item-edit-area">
+                    <textarea
+                      className="gh-queue-item-edit-input"
+                      value={editValue}
+                      onChange={(e) => {
+                        setEditValue(e.target.value)
+                        const target = e.target as HTMLTextAreaElement
+                        target.style.height = "0px"
+                        target.style.height = Math.min(target.scrollHeight, 120) + "px"
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault()
+                          handleEditSave(item.id)
+                        }
+                        if (e.key === "Escape") {
+                          handleEditCancel()
+                        }
+                      }}
+                      autoFocus
+                    />
+                    <div className="gh-queue-item-edit-actions-row">
+                      <button
+                        className="gh-queue-item-edit-btn-save"
+                        onClick={() => handleEditSave(item.id)}
+                        title={t("queueEditSave") || "保存"}>
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="14"
+                          height="14"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </button>
+                      <button
+                        className="gh-queue-item-edit-btn-cancel"
+                        onClick={handleEditCancel}
+                        title={t("queueEditCancel") || "取消"}>
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="14"
+                          height="14"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <span className="gh-queue-item-content">{item.content}</span>
+                    <div className="gh-queue-item-actions">
+                      {item.status === "pending" && (
+                        <button
+                          className="gh-queue-item-edit"
+                          onClick={() => handleEditClick(item.id, item.content)}
+                          title={t("queueEdit") || "编辑"}>
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="14"
+                            height="14"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                          </svg>
+                        </button>
+                      )}
+                      {item.status === "pending" && (
+                        <button
+                          className="gh-queue-item-force-send"
+                          onClick={() => handleForceSend(item.id, item.content)}
+                          title={t("queueForceSend") || "Force Send"}>
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="14"
+                            height="14"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round">
+                            <line x1="12" y1="19" x2="12" y2="5"></line>
+                            <polyline points="5 12 12 5 19 12"></polyline>
+                          </svg>
+                        </button>
+                      )}
+                      <button
+                        className="gh-queue-item-remove"
+                        onClick={() => handleRemoveItem(item.id)}
+                        title={t("queueRemove")}>
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="14"
+                          height="14"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ))
         )}
@@ -418,7 +553,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
             value={inputValue}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder={isGenerating ? t("queue.placeholderBusy") : t("queue.placeholderIdle")}
+            placeholder={isGenerating ? t("queuePlaceholderBusy") : t("queuePlaceholderIdle")}
             rows={1}
           />
           <button
@@ -445,8 +580,11 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
       {/* 状态栏 */}
       <div className="gh-queue-status">
         <span className="gh-queue-status-dot" data-generating={isGenerating ? "true" : "false"} />
-        <span>{isGenerating ? t("queue.statusBusy") : t("queue.statusIdle")}</span>
-        <span className="gh-queue-shortcut-hint">Alt+J</span>
+        <span>{isGenerating ? t("queueStatusBusy") : t("queueStatusIdle")}</span>
+        <span className="gh-queue-disable-hint" title={t("queueSettingDesc")}>
+          ({t("queueDisableHint")})
+        </span>
+        {shortcutText && <span className="gh-queue-shortcut-hint">{shortcutText}</span>}
       </div>
     </div>,
     targetContainer,

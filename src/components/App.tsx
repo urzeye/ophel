@@ -270,6 +270,7 @@ const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "panel-height": "panelHeightLabel",
   "panel-width": "panelWidthLabel",
   "prompt-double-click-send": "promptDoubleClickSendLabel",
+  "prompt-queue": "queueSettingLabel",
   "quick-buttons-opacity": "quickButtonsOpacityLabel",
   "reading-history-auto-restore": "readingHistoryAutoRestoreLabel",
   "reading-history-cleanup-days": "readingHistoryCleanup",

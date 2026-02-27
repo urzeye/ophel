@@ -166,6 +166,7 @@
   word-break: break-word;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -184,7 +185,8 @@
 }
 
 .gh-queue-item-remove,
-.gh-queue-item-force-send {
+.gh-queue-item-force-send,
+.gh-queue-item-edit {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -203,9 +205,71 @@
   color: var(--gh-text-danger, #dc2626);
 }
 
-.gh-queue-item-force-send:hover {
+.gh-queue-item-force-send:hover,
+.gh-queue-item-edit:hover {
   background: var(--gh-bg-accent, #eef2ff);
   color: var(--gh-accent, #4285f4);
+}
+
+/* Edit Area */
+.gh-queue-item-edit-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gh-queue-item-edit-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--gh-accent, #4285f4);
+  border-radius: 6px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text, #1f2937);
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 48px;
+  max-height: 120px;
+  outline: none;
+  font-family: inherit;
+}
+
+.gh-queue-item-edit-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.gh-queue-item-edit-btn-save,
+.gh-queue-item-edit-btn-cancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.gh-queue-item-edit-btn-save {
+  color: var(--gh-accent, #4285f4);
+}
+.gh-queue-item-edit-btn-save:hover {
+  background: var(--gh-bg-accent, #eef2ff);
+}
+
+.gh-queue-item-edit-btn-cancel {
+  color: var(--gh-text-tertiary, #9ca3af);
+}
+.gh-queue-item-edit-btn-cancel:hover {
+  background: var(--gh-bg-tertiary, #f3f4f6);
+  color: var(--gh-text, #1f2937);
 }
 
 /* 状态指示器 */
@@ -291,6 +355,13 @@
   padding: 6px 12px;
   font-size: 11px;
   color: var(--gh-text-tertiary, #9ca3af);
+}
+
+.gh-queue-disable-hint {
+  margin-left: 4px;
+  opacity: 0.6;
+  font-size: 10px;
+  cursor: help;
 }
 
 .gh-queue-status-dot {

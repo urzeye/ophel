@@ -595,9 +595,9 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId: _siteId, initialTab
           />
 
           <ToggleRow
-            label={t("queue.settingLabel") || "Prompt Queue"}
+            label={t("queueSettingLabel") || "Prompt Queue"}
             description={
-              t("queue.settingDesc") ||
+              t("queueSettingDesc") ||
               "Show queue overlay above input for queuing prompts while AI generates"
             }
             settingId="prompt-queue"

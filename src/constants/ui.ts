@@ -195,6 +195,7 @@ export const SETTING_ID_ALIASES: Record<string, string> = {
   "features.outline.inlineBookmarkMode": "outline-inline-bookmark-mode",
   "features.outline.panelBookmarkMode": "outline-panel-bookmark-mode",
   "features.outline.preventAutoScroll": "outline-prevent-auto-scroll",
+  "features.prompts.promptQueue": "prompt-queue",
   "features.export.includeThoughts": "export-include-thoughts",
   "features.readingHistory.persistence": "reading-history-persistence",
   "features.content.formulaCopy": "content-formula-copy",
@@ -471,6 +472,11 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     settingId: "prompt-double-click-send",
     title: "提示词双击发送",
     keywords: ["prompt", "double click", "send", "双击发送"],
+  },
+  {
+    settingId: "prompt-queue",
+    title: "提示词队列",
+    keywords: ["prompt", "queue", "提示词队列", "连续提问"],
   },
   {
     settingId: "reading-history-persistence",

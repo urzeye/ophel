@@ -28,6 +28,7 @@ interface QueueState {
   enqueue: (content: string) => QueueItem
   dequeue: () => QueueItem | null
   remove: (id: string) => void
+  updateContent: (id: string, content: string) => void
   updateStatus: (id: string, status: QueueItem["status"]) => void
   clear: () => void
   pause: () => void
@@ -71,6 +72,11 @@ export const useQueueStore = create<QueueState>()((set, get) => ({
   remove: (id) =>
     set((state) => ({
       items: state.items.filter((item) => item.id !== id),
+    })),
+
+  updateContent: (id, content) =>
+    set((state) => ({
+      items: state.items.map((item) => (item.id === id ? { ...item, content } : item)),
     })),
 
   updateStatus: (id, status) =>

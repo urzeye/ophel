@@ -596,6 +596,11 @@ export function useShortcuts({
     }
   }, [adapter])
 
+  // 显示/隐藏提示词队列
+  const togglePromptQueue = useCallback(() => {
+    window.dispatchEvent(new CustomEvent("ophel:togglePromptQueue"))
+  }, [])
+
   // 导航到设置页面的通用函数
   // 导航到设置页面的通用函数
   const navigateToSettings = useCallback(
@@ -744,6 +749,7 @@ export function useShortcuts({
       [SHORTCUT_ACTIONS.OPEN_GEMINI_SETTINGS]: openGeminiSettings,
       [SHORTCUT_ACTIONS.OPEN_THEME_SETTINGS]: openThemeSettings,
       [SHORTCUT_ACTIONS.OPEN_MODEL_LOCK_SETTINGS]: openModelLockSettings,
+      [SHORTCUT_ACTIONS.TOGGLE_PROMPT_QUEUE]: togglePromptQueue,
     }
 
     shortcutManager.registerAll(handlers)
@@ -792,6 +798,7 @@ export function useShortcuts({
     openGeminiSettings,
     openThemeSettings,
     openModelLockSettings,
+    togglePromptQueue,
   ])
 
   return shortcutManager

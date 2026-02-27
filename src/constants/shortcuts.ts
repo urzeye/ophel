@@ -64,6 +64,7 @@ export const SHORTCUT_ACTIONS = {
   TOGGLE_SCROLL_LOCK: "toggleScrollLock",
   FOCUS_INPUT: "focusInput",
   STOP_GENERATION: "stopGeneration",
+  TOGGLE_PROMPT_QUEUE: "togglePromptQueue",
 
   // 帮助类
   SHOW_SHORTCUTS: "showShortcuts",
@@ -195,6 +196,11 @@ export const SHORTCUT_META: Record<
     label: "停止生成",
     category: "edit",
   },
+  togglePromptQueue: {
+    labelKey: "shortcutTogglePromptQueue",
+    label: "显示/隐藏提示词队列",
+    category: "edit",
+  },
   showModelSelector: {
     labelKey: "shortcutShowModelSelector",
     label: "模型选择菜单",
@@ -295,6 +301,7 @@ export const DEFAULT_KEYBINDINGS: Record<ShortcutActionId, ShortcutBinding> = {
   toggleScrollLock: { key: "s", alt: true },
   focusInput: { key: "i", alt: true },
   stopGeneration: { key: "k", alt: true },
+  togglePromptQueue: { key: "j", alt: true },
   showModelSelector: { key: "/", alt: true },
 
   // 设置类
