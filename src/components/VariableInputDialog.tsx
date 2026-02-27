@@ -214,7 +214,7 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
  * @returns 变量名数组（去重）
  */
 export const extractVariables = (content: string): string[] => {
-  const regex = /\{\{(\w+)\}\}/g
+  const regex = /\{\{([^\s{}]+)\}\}/g
   const variables = new Set<string>()
   let match
   while ((match = regex.exec(content)) !== null) {
@@ -230,5 +230,5 @@ export const extractVariables = (content: string): string[] => {
  * @returns 替换后的内容
  */
 export const replaceVariables = (content: string, values: Record<string, string>): string => {
-  return content.replace(/\{\{(\w+)\}\}/g, (_, name) => values[name] || `{{${name}}}`)
+  return content.replace(/\{\{([^\s{}]+)\}\}/g, (_, name) => values[name] || `{{${name}}}`)
 }

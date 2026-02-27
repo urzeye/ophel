@@ -313,7 +313,7 @@ const toSearchTitleFallback = (settingId: string): string =>
     .trim()
     .replace(/\b([a-z])/g, (_matched, first) => first.toUpperCase())
 
-const hasPromptVariables = (content: string): boolean => /\{\{(\w+)\}\}/.test(content)
+const hasPromptVariables = (content: string): boolean => /\{\{([^\s{}]+)\}\}/.test(content)
 
 export const App = () => {
   // 读取设置 - 使用 Zustand Store

@@ -110,7 +110,7 @@ export const renderMarkdown = (content: string, highlightVariables = true): stri
 
   // 高亮变量占位符 {{varName}}
   if (highlightVariables) {
-    html = html.replace(/\{\{(\w+)\}\}/g, '<span class="gh-variable-highlight">{{$1}}</span>')
+    html = html.replace(/\{\{([^\s{}]+)\}\}/g, '<span class="gh-variable-highlight">{{$1}}</span>')
   }
 
   // 在代码块中添加复制按钮（使用 data 属性标记，SVG 图标由组件初始化）

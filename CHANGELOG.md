@@ -7,6 +7,12 @@
 
 ---
 
+## [1.0.12] - 2026-02-27
+
+### 🐛 问题修复
+
+- **提示词变量支持多语言**：修复了提示词变量（`{{变量名}}`）仅支持英文字母和数字的问题，现在已完美支持中文、日文、韩文、俄文等所有语言及特殊字符。
+
 ## [1.0.11] - 2026-02-24
 
 ### 新增功能
@@ -389,6 +395,7 @@
 
 ---
 
+[1.0.12]: https://github.com/urzeye/ophel/releases/tag/v1.0.12
 [1.0.11]: https://github.com/urzeye/ophel/releases/tag/v1.0.11
 [1.0.10]: https://github.com/urzeye/ophel/releases/tag/v1.0.10
 [1.0.9]: https://github.com/urzeye/ophel/releases/tag/v1.0.9
