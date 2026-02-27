@@ -1205,7 +1205,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   queueStatusBusy: "AI Generating",
   queueSettingLabel: "Prompt Queue",
   queueSettingDesc: "Show queue overlay above input for queuing prompts while AI generates",
-  queueDisableHint: "Disable in Settings",
+  queueDisableHint: "You can disable this in settings",
   queueEdit: "Edit",
   queueEditSave: "Save",
   queueEditCancel: "Cancel",

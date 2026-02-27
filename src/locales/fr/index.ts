@@ -1192,7 +1192,7 @@ Donnez le code puis un résumé des améliorations.`,
   queueStatusIdle: "IA libre",
   queueStatusBusy: "IA génère",
   queueSettingLabel: "File d’attente des Prompts",
-  queueDisableHint: "Désactiver dans les paramètres",
+  queueDisableHint: "Vous pouvez désactiver cette fonctionnalité dans les paramètres",
   queueSettingDesc:
     "Afficher une file d'attente au-dessus du champ de saisie pour ajouter des prompts pendant que l'IA génère",
   queueEdit: "Éditer",

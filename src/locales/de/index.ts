@@ -1183,7 +1183,7 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   queueStatusIdle: "KI bereit",
   queueStatusBusy: "KI generiert",
   queueSettingLabel: "Prompt-Warteschlange",
-  queueDisableHint: "In den Einstellungen deaktivieren",
+  queueDisableHint: "Sie können diese Funktion in den Einstellungen deaktivieren",
   queueSettingDesc:
     "Zeigt eine Warteschlange über dem Textfeld, um Prompts hinzuzufügen, während die KI schreibt",
   queueEdit: "Bearbeiten",

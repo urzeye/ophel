@@ -1181,7 +1181,7 @@ export const ru = {
   queueStatusBusy: "ИИ генерирует",
   queueSettingLabel: "Очередь промптов",
   queueSettingDesc: "Отображать очередь над полем ввода для добавления промптов, пока ИИ пишет",
-  queueDisableHint: "Отключить в настройках",
+  queueDisableHint: "Вы можете отключить эту функцию в настройках",
   queueEdit: "Редактировать",
   queueEditSave: "Сохранить",
   queueEditCancel: "Отмена",

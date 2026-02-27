@@ -1198,7 +1198,7 @@ export const ja = {
   queueStatusIdle: "AI待機中",
   queueStatusBusy: "AI生成中",
   queueSettingLabel: "プロンプトキュー",
-  queueDisableHint: "設定で無効にする",
+  queueDisableHint: "設定でこの機能をオフにできます",
   queueSettingDesc:
     "有効にすると入力欄上部にキューフロートを表示し、生成中のプロンプト追加をサポートします",
   queueEdit: "編集",

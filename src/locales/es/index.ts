@@ -1185,7 +1185,7 @@ Dame el código y luego un resumen de mejoras.`,
   queueStatusIdle: "IA libre",
   queueStatusBusy: "IA generando",
   queueSettingLabel: "Cola de Prompts",
-  queueDisableHint: "Desactivar en la configuración",
+  queueDisableHint: "Puedes desactivar esta función en la configuración",
   queueSettingDesc:
     "Muestra una cola sobre el cuadro de texto para añadir prompts mientras la IA está escribiendo",
   queueEdit: "Editar",

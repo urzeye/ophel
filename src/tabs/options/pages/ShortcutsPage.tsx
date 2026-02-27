@@ -394,7 +394,7 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
                     enabled: settings.features?.prompts?.enabled ?? true,
                     doubleClickToSend: settings.features?.prompts?.doubleClickToSend ?? false,
                     submitShortcut: e.target.value as "enter" | "ctrlEnter",
-                    promptQueue: settings.features?.prompts?.promptQueue ?? false,
+                    promptQueue: settings.features?.prompts?.promptQueue ?? true,
                   },
                 },
               })

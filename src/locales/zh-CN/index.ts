@@ -1178,7 +1178,7 @@ export const zhCN = {
   queueStatusBusy: "AI 生成中",
   queueSettingLabel: "提示词队列",
   queueSettingDesc: "开启后在输入框上方显示队列浮层，支持AI生成时排队发送提示词",
-  queueDisableHint: "在设置中关闭此功能",
+  queueDisableHint: "你可以前往设置中关闭此功能",
   queueEdit: "编辑",
   queueEditSave: "保存",
   queueEditCancel: "取消",

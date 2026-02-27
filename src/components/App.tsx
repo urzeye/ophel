@@ -676,7 +676,7 @@ export const App = () => {
   // QueueDispatcher lifecycle
   useEffect(() => {
     if (!queueDispatcher) return
-    const isQueueEnabled = settings?.features?.prompts?.promptQueue ?? false
+    const isQueueEnabled = settings?.features?.prompts?.promptQueue ?? true
     if (isQueueEnabled) {
       queueDispatcher.start()
     } else {
@@ -3174,7 +3174,7 @@ export const App = () => {
           onCancel={() => setIsFloatingToolbarClearOpen(false)}
         />
       )}
-      {adapter && queueDispatcher && settings?.features?.prompts?.promptQueue && (
+      {adapter && queueDispatcher && (settings?.features?.prompts?.promptQueue ?? true) && (
         <QueueOverlay adapter={adapter} dispatcher={queueDispatcher} />
       )}
       <DisclaimerModal />

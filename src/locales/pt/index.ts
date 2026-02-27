@@ -1179,7 +1179,7 @@ Dê o código e depois um resumo de melhorias.`,
   queueStatusIdle: "IA ociosa",
   queueStatusBusy: "IA gerando",
   queueSettingLabel: "Fila de Prompts",
-  queueDisableHint: "Desativar nas configurações",
+  queueDisableHint: "Você pode desativar este recurso nas configurações",
   queueSettingDesc:
     "Mostra uma fila acima do campo de texto para adicionar prompts enquanto a IA está gerando",
   queueEdit: "Editar",

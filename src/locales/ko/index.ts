@@ -1184,7 +1184,7 @@ export const ko = {
   queueStatusIdle: "AI 대기 중",
   queueStatusBusy: "AI 생성 중",
   queueSettingLabel: "프롬프트 대기열",
-  queueDisableHint: "설정에서 비활성화",
+  queueDisableHint: "설정에서 이 기능을 끌 수 있습니다",
   queueSettingDesc:
     "활성화 시 입력창 상단에 대기열이 표시되어 생성 중 프롬프트를 추가할 수 있습니다",
   queueEdit: "편집",
