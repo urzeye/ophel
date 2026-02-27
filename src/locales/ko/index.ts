@@ -1171,4 +1171,19 @@ export const ko = {
   watermarkProcessed: "Watermark removed",
   watermarkFailed: "Removal failed",
   shortcutToggleModelLock: "Toggle Model Lock",
+
+  // ==================== Prompt Queue ====================
+  "queue.title": "프롬프트 대기열",
+  "queue.quickAsk": "프롬프트 대기열",
+  "queue.inQueue": "대기 중 ({count})",
+  "queue.empty": "대기열이 비어 있습니다. 입력 후 Enter를 눌러 보내거나 대기열에 추가하세요",
+  "queue.clearAll": "모두 지우기",
+  "queue.remove": "제거",
+  "queue.placeholderIdle": "프롬프트를 입력하고 Enter를 눌러 전송...",
+  "queue.placeholderBusy": "AI 생성 중, Enter를 눌러 대기열에 추가...",
+  "queue.statusIdle": "AI 대기 중",
+  "queue.statusBusy": "AI 생성 중",
+  "queue.settingLabel": "프롬프트 대기열",
+  "queue.settingDesc":
+    "활성화 시 입력창 상단에 대기열이 표시되어 생성 중 프롬프트를 추가할 수 있습니다",
 }

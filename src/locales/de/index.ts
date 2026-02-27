@@ -1169,4 +1169,19 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   watermarkProcessed: "Wasserzeichen entfernt",
   watermarkFailed: "Fehler beim Entfernen",
   shortcutToggleModelLock: "Modellsperre umschalten",
+
+  // ==================== Prompt Queue ====================
+  "queue.title": "Prompt-Warteschlange",
+  "queue.quickAsk": "Prompt-Warteschlange",
+  "queue.inQueue": "In Warteschlange ({count})",
+  "queue.empty": "Die Warteschlange ist leer. Tippen und Enter drücken zum Senden oder Hinzufügen",
+  "queue.clearAll": "Alles löschen",
+  "queue.remove": "Entfernen",
+  "queue.placeholderIdle": "Prompt eingeben und Enter drücken zum Senden...",
+  "queue.placeholderBusy": "KI generiert, Enter drücken zum Hinzufügen...",
+  "queue.statusIdle": "KI bereit",
+  "queue.statusBusy": "KI generiert",
+  "queue.settingLabel": "Prompt-Warteschlange",
+  "queue.settingDesc":
+    "Zeigt eine Warteschlange über dem Textfeld, um Prompts hinzuzufügen, während die KI schreibt",
 }

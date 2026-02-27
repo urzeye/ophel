@@ -1178,4 +1178,19 @@ Donnez le code puis un résumé des améliorations.`,
   watermarkProcessed: "Filigrane supprimé",
   watermarkFailed: "Échec de la suppression",
   shortcutToggleModelLock: "Basculer le verrouillage du modèle",
+
+  // ==================== Prompt Queue ====================
+  "queue.title": "File d’attente des Prompts",
+  "queue.quickAsk": "File des Prompts",
+  "queue.inQueue": "En file ({count})",
+  "queue.empty": "La file est vide. Saisissez et appuyez sur Entrée pour envoyer ou ajouter",
+  "queue.clearAll": "Tout effacer",
+  "queue.remove": "Retirer",
+  "queue.placeholderIdle": "Saisissez le prompt, Entrée pour envoyer direct...",
+  "queue.placeholderBusy": "IA génère, Entrée pour ajouter à la file...",
+  "queue.statusIdle": "IA libre",
+  "queue.statusBusy": "IA génère",
+  "queue.settingLabel": "File d’attente des Prompts",
+  "queue.settingDesc":
+    "Afficher une file d'attente au-dessus du champ de saisie pour ajouter des prompts pendant que l'IA génère",
 }

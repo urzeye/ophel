@@ -1161,4 +1161,18 @@ export const zhTW = {
   globalSearchSyntaxHelpTitle: "搜尋語法示例",
   globalSearchSyntaxHelpDesc: "點擊可直接插入，關鍵詞僅支援英文",
   globalSearchSyntaxHelpTriggerAria: "開啟搜尋語法說明",
+
+  // ==================== Prompt Queue ====================
+  "queue.title": "提示詞隊列",
+  "queue.quickAsk": "提示詞隊列",
+  "queue.inQueue": "隊列中 ({count})",
+  "queue.empty": "隊列為空，輸入內容後按 Enter 發送或排隊",
+  "queue.clearAll": "清空隊列",
+  "queue.remove": "移除",
+  "queue.placeholderIdle": "輸入提示詞，Enter 直接發送...",
+  "queue.placeholderBusy": "AI 生成中，Enter 加入隊列...",
+  "queue.statusIdle": "AI 空閒",
+  "queue.statusBusy": "AI 生成中",
+  "queue.settingLabel": "提示詞隊列",
+  "queue.settingDesc": "開啟後在輸入框上方顯示隊列浮層，支援 AI 生成時排隊發送提示詞",
 }

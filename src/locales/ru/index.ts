@@ -1166,4 +1166,18 @@ export const ru = {
   exportIncludeThoughtsLabel: "Включать рассуждения при экспорте",
   exportIncludeThoughtsDesc:
     "Включать и автоматически разворачивать рассуждения при экспорте (в виде цитатных блоков)",
+
+  // ==================== Prompt Queue ====================
+  "queue.title": "Очередь промптов",
+  "queue.quickAsk": "Очередь промптов",
+  "queue.inQueue": "В очереди ({count})",
+  "queue.empty": "Очередь пуста. Введите и нажмите Enter для отправки или добавления",
+  "queue.clearAll": "Очистить всё",
+  "queue.remove": "Удалить",
+  "queue.placeholderIdle": "Введите промпт, Enter для отправки...",
+  "queue.placeholderBusy": "ИИ генерирует, Enter для добавления в очередь...",
+  "queue.statusIdle": "ИИ свободен",
+  "queue.statusBusy": "ИИ генерирует",
+  "queue.settingLabel": "Очередь промптов",
+  "queue.settingDesc": "Отображать очередь над полем ввода для добавления промптов, пока ИИ пишет",
 }

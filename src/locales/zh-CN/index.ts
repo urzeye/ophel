@@ -1164,4 +1164,17 @@ export const zhCN = {
   globalSearchSyntaxHelpTitle: "搜索语法示例",
   globalSearchSyntaxHelpDesc: "点击可直接插入，关键词仅支持英文",
   globalSearchSyntaxHelpTriggerAria: "打开搜索语法帮助",
+
+  "queue.title": "提示词队列",
+  "queue.quickAsk": "提示词队列",
+  "queue.inQueue": "队列中 ({count})",
+  "queue.empty": "队列为空，输入内容后按 Enter 发送或排队",
+  "queue.clearAll": "清空队列",
+  "queue.remove": "移除",
+  "queue.placeholderIdle": "输入提示词，Enter 直接发送...",
+  "queue.placeholderBusy": "AI 生成中，Enter 加入队列...",
+  "queue.statusIdle": "AI 空闲",
+  "queue.statusBusy": "AI 生成中",
+  "queue.settingLabel": "提示词队列",
+  "queue.settingDesc": "开启后在输入框上方显示队列浮层，支持AI生成时排队发送提示词",
 }

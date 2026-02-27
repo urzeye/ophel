@@ -1190,4 +1190,18 @@ Please output the optimized code block directly, followed by a brief summary of 
   globalSearchSyntaxHelpTitle: "Search syntax examples",
   globalSearchSyntaxHelpDesc: "Click to insert. Keywords are English-only.",
   globalSearchSyntaxHelpTriggerAria: "Open search syntax help",
+
+  // ==================== Prompt Queue ====================
+  "queue.title": "Prompt Queue",
+  "queue.quickAsk": "Prompt Queue",
+  "queue.inQueue": "Queued ({count})",
+  "queue.empty": "Queue is empty. Type and press Enter to send or enqueue.",
+  "queue.clearAll": "Clear Queue",
+  "queue.remove": "Remove",
+  "queue.placeholderIdle": "Type a prompt, Enter to send...",
+  "queue.placeholderBusy": "AI is generating, Enter to enqueue...",
+  "queue.statusIdle": "AI Idle",
+  "queue.statusBusy": "AI Generating",
+  "queue.settingLabel": "Prompt Queue",
+  "queue.settingDesc": "Show queue overlay above input for queuing prompts while AI generates",
 }

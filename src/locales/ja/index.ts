@@ -1184,4 +1184,19 @@ export const ja = {
   globalSearchSyntaxHelpTitle: "検索構文の例",
   globalSearchSyntaxHelpDesc: "クリックで挿入できます。キーワードは英語のみ対応です。",
   globalSearchSyntaxHelpTriggerAria: "検索構文ヘルプを開く",
+
+  // ==================== Prompt Queue ====================
+  "queue.title": "プロンプトキュー",
+  "queue.quickAsk": "プロンプトキュー",
+  "queue.inQueue": "待機中 ({count})",
+  "queue.empty": "キューは空です。入力してEnterで送信または追加",
+  "queue.clearAll": "すべてクリア",
+  "queue.remove": "削除",
+  "queue.placeholderIdle": "プロンプトを入力し、Enterで直接送信...",
+  "queue.placeholderBusy": "AI生成中、Enterでキューに追加...",
+  "queue.statusIdle": "AI待機中",
+  "queue.statusBusy": "AI生成中",
+  "queue.settingLabel": "プロンプトキュー",
+  "queue.settingDesc":
+    "有効にすると入力欄上部にキューフロートを表示し、生成中のプロンプト追加をサポートします",
 }

@@ -593,6 +593,24 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId: _siteId, initialTab
               )
             }
           />
+
+          <ToggleRow
+            label={t("queue.settingLabel") || "Prompt Queue"}
+            description={
+              t("queue.settingDesc") ||
+              "Show queue overlay above input for queuing prompts while AI generates"
+            }
+            settingId="prompt-queue"
+            checked={settings.features?.prompts?.promptQueue ?? false}
+            onChange={() =>
+              updateDeepSetting(
+                "features",
+                "prompts",
+                "promptQueue",
+                !settings.features?.prompts?.promptQueue,
+              )
+            }
+          />
         </SettingCard>
       )}
 

@@ -1171,4 +1171,19 @@ Dame el código y luego un resumen de mejoras.`,
   watermarkProcessed: "Watermark removed",
   watermarkFailed: "Removal failed",
   shortcutToggleModelLock: "Toggle Model Lock",
+
+  // ==================== Prompt Queue ====================
+  "queue.title": "Cola de Prompts",
+  "queue.quickAsk": "Cola de Prompts",
+  "queue.inQueue": "En cola ({count})",
+  "queue.empty": "La cola está vacía. Escribe y pulsa Enter para enviar o encolar",
+  "queue.clearAll": "Borrar todo",
+  "queue.remove": "Quitar",
+  "queue.placeholderIdle": "Escribe un prompt y pulsa Enter para enviarlo...",
+  "queue.placeholderBusy": "IA generando, pulsa Enter para encolar el prompt...",
+  "queue.statusIdle": "IA libre",
+  "queue.statusBusy": "IA generando",
+  "queue.settingLabel": "Cola de Prompts",
+  "queue.settingDesc":
+    "Muestra una cola sobre el cuadro de texto para añadir prompts mientras la IA está escribiendo",
 }

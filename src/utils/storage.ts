@@ -173,6 +173,7 @@ export interface Settings {
       enabled: boolean
       doubleClickToSend: boolean
       submitShortcut: "enter" | "ctrlEnter"
+      promptQueue: boolean
     }
     conversations: {
       enabled: boolean
@@ -361,6 +362,7 @@ export const DEFAULT_SETTINGS: Settings = {
       enabled: true,
       doubleClickToSend: false,
       submitShortcut: "enter",
+      promptQueue: false,
     },
     conversations: {
       enabled: true,

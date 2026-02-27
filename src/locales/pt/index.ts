@@ -1165,4 +1165,19 @@ Dê o código e depois um resumo de melhorias.`,
   toolboxMenu: "Caixa de ferramentas",
   toolboxMenuTitle: "Menu da Caixa de ferramentas",
   toolboxMenuDesc: "Configurar as funções exibidas no menu pop-up da caixa de ferramentas",
+
+  // ==================== Prompt Queue ====================
+  "queue.title": "Fila de Prompts",
+  "queue.quickAsk": "Fila de Prompts",
+  "queue.inQueue": "Na fila ({count})",
+  "queue.empty": "A fila está vazia. Digite e pressione Enter para enviar ou adicionar",
+  "queue.clearAll": "Limpar tudo",
+  "queue.remove": "Remover",
+  "queue.placeholderIdle": "Digite o prompt e pressione Enter para enviar...",
+  "queue.placeholderBusy": "IA gerando, pressione Enter para adicionar à fila...",
+  "queue.statusIdle": "IA ociosa",
+  "queue.statusBusy": "IA gerando",
+  "queue.settingLabel": "Fila de Prompts",
+  "queue.settingDesc":
+    "Mostra uma fila acima do campo de texto para adicionar prompts enquanto a IA está gerando",
 }
