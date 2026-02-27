@@ -16,6 +16,7 @@ import {
 import { Button, ConfirmDialog, InputDialog, Tooltip } from "~components/ui"
 import {
   extractVariables,
+  type ParsedVariable,
   replaceVariables,
   VariableInputDialog,
 } from "~components/VariableInputDialog"
@@ -119,7 +120,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const [variableDialogState, setVariableDialogState] = useState<{
     show: boolean
     prompt: Prompt | null
-    variables: string[]
+    variables: ParsedVariable[]
     submitAfterInsert: boolean
   }>({ show: false, prompt: null, variables: [], submitAfterInsert: false })
 
