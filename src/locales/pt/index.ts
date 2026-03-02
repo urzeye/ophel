@@ -1189,5 +1189,5 @@ Dê o código e depois um resumo de melhorias.`,
   zenModeTitle: "Modo Zen",
   zenModeLabel: "Ativar Modo Zen",
   zenModeDesc:
-    "Oculte elementos desnecessários (como os avisos do modelo na parte inferior) para uma experiência de conversa mais pura",
+    "Oculte elementos desnecessários (como os avisos do modelo na parte inferior) para uma experiência de conversa mais pura (configurado de forma independente para cada site)",
 }

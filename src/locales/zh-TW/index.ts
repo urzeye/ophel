@@ -1183,5 +1183,6 @@ export const zhTW = {
   queueForceSend: "強制發送",
   zenModeTitle: "禪模式 (Zen Mode)",
   zenModeLabel: "啟用禪模式",
-  zenModeDesc: "隱藏頁面中不必要的元素（如底部的模型免責聲明等），體驗更純粹的對話介面",
+  zenModeDesc:
+    "隱藏頁面中不必要的元素（如底部的模型免責聲明等），體驗更純粹的對話介面（每個站點獨立配置）",
 }

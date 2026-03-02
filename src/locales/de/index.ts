@@ -1193,5 +1193,5 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   zenModeTitle: "Zen-Modus",
   zenModeLabel: "Zen-Modus aktivieren",
   zenModeDesc:
-    "Verbergen Sie unnötige Elemente (z. B. Disclaimer des Modells unten), um eine reinere Gesprächserfahrung zu erhalten",
+    "Verbergen Sie unnötige Elemente (z. B. Disclaimer des Modells unten), um eine reinere Gesprächserfahrung zu erhalten (individuell für jede Website konfiguriert)",
 }

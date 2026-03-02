@@ -1185,5 +1185,6 @@ export const zhCN = {
   queueForceSend: "强制发送",
   zenModeTitle: "禅模式 (Zen Mode)",
   zenModeLabel: "启用禅模式",
-  zenModeDesc: "隐藏页面中不必要的元素（如底部的模型免责声明等），体验更纯粹的对话界面",
+  zenModeDesc:
+    "隐藏页面中不必要的元素（如底部的模型免责声明等），体验更纯粹的对话界面（每个站点独立配置）",
 }

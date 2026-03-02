@@ -1213,5 +1213,5 @@ Please output the optimized code block directly, followed by a brief summary of 
   zenModeTitle: "Zen Mode",
   zenModeLabel: "Enable Zen Mode",
   zenModeDesc:
-    "Hide unnecessary elements (like model disclaimers at the bottom) for a purer conversation experience",
+    "Hide unnecessary elements (like model disclaimers at the bottom) for a purer conversation experience (configured independently for each site)",
 }
