@@ -288,8 +288,9 @@ export class WebDAVSyncManager {
 
       const text = await response.text()
       // 简单正则解析 XML
-      // 匹配 <D:response> 块
-      const responseRegex = /<d:response>([\s\S]*?)<\/d:response>/gi
+      // 匹配 <D:response> 块（支持不同命名空间前缀或无前缀）
+      const NS = `(?:[a-zA-Z0-9_-]+:)?` // 可选的命名空间前缀
+      const responseRegex = new RegExp(`<${NS}response[^>]*>([\\s\\S]*?)<\\/${NS}response>`, "gi")
       const responses = Array.from(text.matchAll(responseRegex))
 
       const files: BackupFile[] = []
@@ -297,8 +298,8 @@ export class WebDAVSyncManager {
       for (const match of responses) {
         const content = match[1]
 
-        // 解析 href
-        const hrefMatch = content.match(/<d:href>([^<]+)<\/d:href>/i)
+        // 解析 href（支持不同命名空间前缀或无前缀）
+        const hrefMatch = content.match(new RegExp(`<${NS}href[^>]*>([^<]+)<\\/${NS}href>`, "i"))
         if (!hrefMatch) continue
         const href = safeDecodeURIComponent(hrefMatch[1])
 
@@ -307,11 +308,15 @@ export class WebDAVSyncManager {
         if (!href.endsWith(".json") || !href.includes(`${APP_NAME}_backup_`)) continue
 
         // 解析大小
-        const sizeMatch = content.match(/<d:getcontentlength>([^<]+)<\/d:getcontentlength>/i)
+        const sizeMatch = content.match(
+          new RegExp(`<${NS}getcontentlength[^>]*>([^<]+)<\\/${NS}getcontentlength>`, "i"),
+        )
         const size = sizeMatch ? parseInt(sizeMatch[1], 10) : 0
 
         // 解析时间
-        const timeMatch = content.match(/<d:getlastmodified>([^<]+)<\/d:getlastmodified>/i)
+        const timeMatch = content.match(
+          new RegExp(`<${NS}getlastmodified[^>]*>([^<]+)<\\/${NS}getlastmodified>`, "i"),
+        )
         const lastModified = timeMatch ? new Date(timeMatch[1]) : new Date(0)
 
         // 提取文件名
