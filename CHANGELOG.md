@@ -7,6 +7,16 @@
 
 ---
 
+## [1.0.13] - 2026-03-02
+
+### 🐛 问题修复
+
+- **Gemini Enterprise 提示词队列修复**：修复了 Gemini Enterprise 页面改版后，通过提示词队列发送提示词时，提示词未能插入到原网页输入框、误触语音按钮导致"未能识别您的语音内容"错误的问题。
+  - 修复全局 Enter 键捕获监听器拦截队列输入框的 Enter 事件，导致跳过内容插入直接触发提交的问题。
+  - 修复 `findTextarea()` 错误地匹配到扩展自身的队列输入框（`gh-queue-input`），而非 Gemini Enterprise 的 ProseMirror 编辑器的问题。
+  - 修复提交按钮选择器缺少"发送"标签，导致无法匹配改版后的发送按钮的问题。
+  - 修复发送确认逻辑因编辑器占位文字"接着提问"误判内容未清空，导致确认超时并重复发送的问题。
+
 ## [1.0.12] - 2026-02-27
 
 ### 🚀 新增功能
@@ -411,6 +421,7 @@
 
 ---
 
+[1.0.13]: https://github.com/urzeye/ophel/releases/tag/v1.0.13
 [1.0.12]: https://github.com/urzeye/ophel/releases/tag/v1.0.12
 [1.0.11]: https://github.com/urzeye/ophel/releases/tag/v1.0.11
 [1.0.10]: https://github.com/urzeye/ophel/releases/tag/v1.0.10
