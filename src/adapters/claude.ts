@@ -1327,6 +1327,10 @@ export class ClaudeAdapter extends SiteAdapter {
     ]
   }
 
+  getZenModeSelectors() {
+    return [{ selector: '[data-disclaimer="true"]', action: "hide" as const }]
+  }
+
   getUserQueryWidthSelectors() {
     return [{ selector: '[data-testid="user-message"]', property: "max-width" }]
   }

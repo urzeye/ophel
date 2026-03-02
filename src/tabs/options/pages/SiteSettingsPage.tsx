@@ -625,6 +625,40 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
               </div>
             </SettingRow>
           </SettingCard>
+
+          {/* 禅模式 (Zen Mode) 卡片 */}
+          <SettingCard title={t("zenModeTitle") || "禅模式 (Zen Mode)"}>
+            <ToggleRow
+              label={t("zenModeLabel") || "启用禅模式"}
+              description={
+                t("zenModeDesc") ||
+                "隐藏页面中不必要的元素（如底部的模型免责声明等），体验更纯粹的对话界面"
+              }
+              settingId="layout-zen-mode-enabled"
+              checked={
+                settings.layout?.zenMode?.[siteId as keyof typeof settings.layout.zenMode]
+                  ?.enabled ?? false
+              }
+              onChange={() => {
+                const currentZenMode = settings.layout?.zenMode?.[
+                  siteId as keyof typeof settings.layout.zenMode
+                ] || { enabled: false }
+
+                setSettings({
+                  layout: {
+                    ...settings.layout,
+                    zenMode: {
+                      ...settings.layout?.zenMode,
+                      [siteId]: {
+                        ...currentZenMode,
+                        enabled: !currentZenMode.enabled,
+                      },
+                    },
+                  },
+                })
+              }}
+            />
+          </SettingCard>
         </>
       )}
 

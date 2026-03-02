@@ -1210,4 +1210,8 @@ Please output the optimized code block directly, followed by a brief summary of 
   queueEditSave: "Save",
   queueEditCancel: "Cancel",
   queueForceSend: "Force Send",
+  zenModeTitle: "Zen Mode",
+  zenModeLabel: "Enable Zen Mode",
+  zenModeDesc:
+    "Hide unnecessary elements (like model disclaimers at the bottom) for a purer conversation experience",
 }

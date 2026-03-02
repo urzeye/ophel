@@ -70,6 +70,11 @@ export interface ModelLockConfig {
   keyword: string
 }
 
+// 禅模式配置
+export interface ZenModeConfig {
+  enabled: boolean
+}
+
 // 导出设置
 export interface ExportSettings {
   customUserName?: string // 自定义用户名称
@@ -154,6 +159,7 @@ export interface Settings {
   layout: {
     pageWidth: Record<SiteId, PageWidthConfig>
     userQueryWidth: Record<SiteId, PageWidthConfig>
+    zenMode?: Record<SiteId, ZenModeConfig>
   }
 
   // 模型锁定（按站点独立）
@@ -280,6 +286,11 @@ const DEFAULT_USER_QUERY_WIDTH: PageWidthConfig = {
   unit: "px",
 }
 
+// 默认禅模式配置
+const DEFAULT_ZEN_MODE: ZenModeConfig = {
+  enabled: false,
+}
+
 export const DEFAULT_SETTINGS: Settings = {
   language: "auto",
   hasAgreedToTerms: false,
@@ -342,6 +353,12 @@ export const DEFAULT_SETTINGS: Settings = {
       "gemini-enterprise": { ...DEFAULT_USER_QUERY_WIDTH },
       aistudio: { ...DEFAULT_USER_QUERY_WIDTH },
       _default: { ...DEFAULT_USER_QUERY_WIDTH },
+    },
+    zenMode: {
+      gemini: { ...DEFAULT_ZEN_MODE },
+      "gemini-enterprise": { ...DEFAULT_ZEN_MODE },
+      aistudio: { ...DEFAULT_ZEN_MODE },
+      _default: { ...DEFAULT_ZEN_MODE },
     },
   },
 
@@ -525,6 +542,14 @@ export function getSiteUserQueryWidth(settings: Settings, siteId: string): PageW
     return userQueryWidth[siteId as SiteId]
   }
   return userQueryWidth?._default ?? DEFAULT_USER_QUERY_WIDTH
+}
+
+export function getSiteZenMode(settings: Settings, siteId: string): ZenModeConfig {
+  const zenMode = settings.layout?.zenMode
+  if (zenMode && siteId in zenMode) {
+    return zenMode[siteId as SiteId]
+  }
+  return zenMode?._default ?? DEFAULT_ZEN_MODE
 }
 
 let clearAllFlagPromise: Promise<boolean> | null = null

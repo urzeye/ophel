@@ -8,6 +8,8 @@ const STYLE_IDS = {
   PAGE_WIDTH_SHADOW: "gh-page-width-shadow",
   USER_QUERY_WIDTH: "gh-user-query-width-styles",
   USER_QUERY_WIDTH_SHADOW: "gh-user-query-width-shadow",
+  ZEN_MODE: "gh-zen-mode-styles",
+  ZEN_MODE_SHADOW: "gh-zen-mode-shadow",
 } as const
 
 /**
@@ -21,6 +23,8 @@ export class LayoutManager {
 
   private pageWidthStyle: HTMLStyleElement | null = null
   private userQueryWidthStyle: HTMLStyleElement | null = null
+  private zenModeStyle: HTMLStyleElement | null = null
+  private zenModeEnabled = false
 
   private processedShadowRoots = new WeakSet<ShadowRoot>()
   private shadowCheckInterval: NodeJS.Timeout | null = null
@@ -72,6 +76,29 @@ export class LayoutManager {
     this.refreshShadowInjection()
   }
 
+  // ==================== Zen Mode ====================
+
+  updateZenMode(enabled: boolean) {
+    this.zenModeEnabled = enabled
+    this.applyZenMode()
+  }
+
+  applyZenMode() {
+    this.removeStyle(this.zenModeStyle)
+    this.zenModeStyle = null
+
+    if (!this.zenModeEnabled) {
+      this.refreshShadowInjection()
+      return
+    }
+
+    const css = this.generateZenModeCSS()
+    if (css) {
+      this.zenModeStyle = this.injectStyle(STYLE_IDS.ZEN_MODE, css)
+    }
+    this.refreshShadowInjection()
+  }
+
   // ==================== CSS 生成 ====================
 
   private generatePageWidthCSS(): string {
@@ -88,6 +115,15 @@ export class LayoutManager {
     const width = `${value}${unit}`
     const selectors = this.siteAdapter.getUserQueryWidthSelectors()
     return this.buildCSSFromSelectors(selectors, width, false)
+  }
+
+  private generateZenModeCSS(): string {
+    const rules = this.siteAdapter.getZenModeSelectors()
+    if (rules.length === 0) return ""
+    return rules
+      .filter((r) => r.action === "hide")
+      .map((r) => `${r.selector} { display: none !important; }`)
+      .join("\n")
   }
 
   private buildCSSFromSelectors(
@@ -133,7 +169,8 @@ export class LayoutManager {
   // ==================== Shadow DOM 支持 ====================
 
   private refreshShadowInjection() {
-    const hasAnyEnabled = this.pageWidthConfig?.enabled || this.userQueryWidthConfig?.enabled
+    const hasAnyEnabled =
+      this.pageWidthConfig?.enabled || this.userQueryWidthConfig?.enabled || this.zenModeEnabled
 
     if (!hasAnyEnabled) {
       this.stopShadowInjection()
@@ -195,6 +232,16 @@ export class LayoutManager {
         this.removeStyleFromShadow(shadowRoot, STYLE_IDS.USER_QUERY_WIDTH_SHADOW)
       }
 
+      // Zen Mode
+      if (this.zenModeEnabled) {
+        const css = this.generateZenModeCSS()
+        if (css) {
+          DOMToolkit.cssToShadow(shadowRoot, css, STYLE_IDS.ZEN_MODE_SHADOW)
+        }
+      } else {
+        this.removeStyleFromShadow(shadowRoot, STYLE_IDS.ZEN_MODE_SHADOW)
+      }
+
       this.processedShadowRoots.add(shadowRoot)
     })
   }
@@ -210,6 +257,7 @@ export class LayoutManager {
     DOMToolkit.walkShadowRoots((shadowRoot) => {
       this.removeStyleFromShadow(shadowRoot, STYLE_IDS.PAGE_WIDTH_SHADOW)
       this.removeStyleFromShadow(shadowRoot, STYLE_IDS.USER_QUERY_WIDTH_SHADOW)
+      this.removeStyleFromShadow(shadowRoot, STYLE_IDS.ZEN_MODE_SHADOW)
       this.processedShadowRoots.delete(shadowRoot)
     })
   }

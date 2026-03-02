@@ -856,6 +856,10 @@ export class GeminiAdapter extends SiteAdapter {
     ]
   }
 
+  getZenModeSelectors() {
+    return [{ selector: "hallucination-disclaimer", action: "hide" as const }]
+  }
+
   getMarkdownFixerConfig(): MarkdownFixerConfig {
     return {
       selector: "message-content p",

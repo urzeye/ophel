@@ -790,6 +790,10 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     ]
   }
 
+  getZenModeSelectors() {
+    return [{ selector: ".disclaimer", action: "hide" as const }]
+  }
+
   // ==================== 输入框操作 ====================
 
   getTextareaSelectors(): string[] {

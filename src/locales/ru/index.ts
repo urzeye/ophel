@@ -1186,4 +1186,8 @@ export const ru = {
   queueEditSave: "Сохранить",
   queueEditCancel: "Отмена",
   queueForceSend: "Принудительная отправка",
+  zenModeTitle: "Дзен-режим",
+  zenModeLabel: "Включить дзен-режим",
+  zenModeDesc:
+    "Скрыть ненужные элементы (например, отказ от ответственности модели внизу) для более чистого общения",
 }

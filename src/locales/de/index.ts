@@ -1190,4 +1190,8 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   queueEditSave: "Speichern",
   queueEditCancel: "Abbrechen",
   queueForceSend: "Senden erzwingen",
+  zenModeTitle: "Zen-Modus",
+  zenModeLabel: "Zen-Modus aktivieren",
+  zenModeDesc:
+    "Verbergen Sie unnötige Elemente (z. B. Disclaimer des Modells unten), um eine reinere Gesprächserfahrung zu erhalten",
 }

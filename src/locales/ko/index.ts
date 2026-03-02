@@ -1191,4 +1191,7 @@ export const ko = {
   queueEditSave: "저장",
   queueEditCancel: "취소",
   queueForceSend: "강제 전송",
+  zenModeTitle: "선(Zen) 모드",
+  zenModeLabel: "선 모드 활성화",
+  zenModeDesc: "더 순수한 대화 경험을 위해 불필요한 요소(하단 모델 면책 조항 등)를 숨깁니다",
 }

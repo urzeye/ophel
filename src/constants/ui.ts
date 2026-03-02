@@ -186,6 +186,7 @@ export const SETTING_ID_ALIASES: Record<string, string> = {
   "siteSettings.layout.pageWidth.value": "layout-page-width-value",
   "siteSettings.layout.userQueryWidth.enabled": "layout-user-query-width-enabled",
   "siteSettings.layout.userQueryWidth.value": "layout-user-query-width-value",
+  "siteSettings.layout.zenMode.enabled": "layout-zen-mode-enabled",
   "siteSettings.modelLock": "model-lock-gemini",
   "globalSearch.promptEnterBehavior": "global-search-prompt-enter-behavior",
   "globalSearch.enableFuzzySearch": "global-search-fuzzy-search",
@@ -532,6 +533,11 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     settingId: "layout-user-query-width-value",
     title: "用户问题宽度值",
     keywords: ["layout", "user query width value", "提问宽度值"],
+  },
+  {
+    settingId: "layout-zen-mode-enabled",
+    title: "布局：启用禅模式 (Zen Mode)",
+    keywords: ["layout", "zen mode", "禅模式", "disclaimer", "免责声明", "隐藏"],
   },
   {
     settingId: "model-lock-gemini",

@@ -1183,4 +1183,7 @@ export const zhCN = {
   queueEditSave: "保存",
   queueEditCancel: "取消",
   queueForceSend: "强制发送",
+  zenModeTitle: "禅模式 (Zen Mode)",
+  zenModeLabel: "启用禅模式",
+  zenModeDesc: "隐藏页面中不必要的元素（如底部的模型免责声明等），体验更纯粹的对话界面",
 }

@@ -1199,4 +1199,8 @@ Donnez le code puis un résumé des améliorations.`,
   queueEditSave: "Enregistrer",
   queueEditCancel: "Annuler",
   queueForceSend: "Forcer l'envoi",
+  zenModeTitle: "Mode Zen",
+  zenModeLabel: "Activer le mode Zen",
+  zenModeDesc:
+    "Masquez les éléments inutiles (comme les clauses de non-responsabilité du modèle en bas) pour une expérience de conversation plus épurée",
 }

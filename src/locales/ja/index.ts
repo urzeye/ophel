@@ -1205,4 +1205,8 @@ export const ja = {
   queueEditSave: "保存",
   queueEditCancel: "キャンセル",
   queueForceSend: "強制送信",
+  zenModeTitle: "禅モード",
+  zenModeLabel: "禅モードを有効にする",
+  zenModeDesc:
+    "不要な要素（下部のモデル免責事項など）を非表示にして、より純粋な会話体験を提供します",
 }

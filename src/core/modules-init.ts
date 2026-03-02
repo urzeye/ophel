@@ -24,6 +24,7 @@ import {
   getSitePageWidth,
   getSiteTheme,
   getSiteUserQueryWidth,
+  getSiteZenMode,
   consumeClearAllFlag,
   CLEAR_ALL_FLAG_TTL_MS,
   type Settings,
@@ -180,11 +181,14 @@ export function initLayoutManager(ctx: ModulesContext): void {
   const { adapter, settings, siteId } = ctx
   const sitePageWidth = getSitePageWidth(settings, siteId)
   const siteUserQueryWidth = getSiteUserQueryWidth(settings, siteId)
+  const siteZenMode = getSiteZenMode(settings, siteId)
+  const zenModeEnabled = siteZenMode.enabled
 
-  if (sitePageWidth?.enabled || siteUserQueryWidth?.enabled) {
+  if (sitePageWidth?.enabled || siteUserQueryWidth?.enabled || zenModeEnabled) {
     modules.layoutManager = new LayoutManager(adapter, sitePageWidth)
     if (sitePageWidth?.enabled) modules.layoutManager.apply()
     if (siteUserQueryWidth?.enabled) modules.layoutManager.updateUserQueryConfig(siteUserQueryWidth)
+    if (zenModeEnabled) modules.layoutManager.updateZenMode(true)
   }
 }
 
@@ -415,14 +419,18 @@ export function subscribeModuleUpdates(ctx: ModulesContext): void {
     // 5. Layout Manager update
     const newSitePageWidth = getSitePageWidth(newSettings, siteId)
     const newUserQueryWidth = getSiteUserQueryWidth(newSettings, siteId)
+    const newSiteZenMode = getSiteZenMode(newSettings, siteId)
+    const newZenModeEnabled = newSiteZenMode.enabled
 
     if (modules.layoutManager) {
       modules.layoutManager.updateConfig(newSitePageWidth)
       modules.layoutManager.updateUserQueryConfig(newUserQueryWidth)
-    } else if (newSitePageWidth?.enabled || newUserQueryWidth?.enabled) {
+      modules.layoutManager.updateZenMode(newZenModeEnabled)
+    } else if (newSitePageWidth?.enabled || newUserQueryWidth?.enabled || newZenModeEnabled) {
       modules.layoutManager = new LayoutManager(adapter, newSitePageWidth)
       if (newSitePageWidth?.enabled) modules.layoutManager.apply()
       if (newUserQueryWidth?.enabled) modules.layoutManager.updateUserQueryConfig(newUserQueryWidth)
+      if (newZenModeEnabled) modules.layoutManager.updateZenMode(true)
     }
 
     // 6. Watermark Remover update

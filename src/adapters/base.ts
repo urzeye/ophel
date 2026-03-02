@@ -89,6 +89,12 @@ export interface AnchorData {
   textSignature?: string
 }
 
+/** Zen Mode 规则 */
+export interface ZenModeRule {
+  selector: string
+  action: "hide" // 未来可扩展 'resize' | 'collapse' 等
+}
+
 export interface MarkdownFixerConfig {
   /** 查找段落的选择器，如 "message-content p" */
   selector: string
@@ -298,6 +304,11 @@ export abstract class SiteAdapter {
 
   /** 返回用户问题宽度调整的 CSS 选择器列表 */
   getUserQueryWidthSelectors(): Array<{ selector: string; property: string }> {
+    return []
+  }
+
+  /** 返回 Zen Mode 需要隐藏/调整的 CSS 选择器规则列表 */
+  getZenModeSelectors(): ZenModeRule[] {
     return []
   }
 

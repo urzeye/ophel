@@ -368,6 +368,10 @@ export class AIStudioAdapter extends SiteAdapter {
     ]
   }
 
+  getZenModeSelectors() {
+    return [{ selector: "ms-hallucinations-disclaimer", action: "hide" as const }]
+  }
+
   getMarkdownFixerConfig(): MarkdownFixerConfig {
     return {
       selector: "ms-cmark-node span.ng-star-inserted",
