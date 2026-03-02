@@ -293,6 +293,11 @@ export class PromptManager {
         return true
       }
 
+      // 初始内容不再存在于编辑器中（可能被占位文字替换，如 Gemini Enterprise 的"接着提问"）
+      if (hadContent && !currentContent.includes(initialContent.trim())) {
+        return true
+      }
+
       if (buttonState.clicked && submitSelectors.length > 0) {
         const currentButton = this.findBestSubmitButton(submitSelectors, currentEditor)
 

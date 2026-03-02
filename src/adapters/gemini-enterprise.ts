@@ -806,6 +806,8 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     return [
       'button[aria-label*="Submit"]',
       'button[aria-label*="提交"]',
+      'button[aria-label*="发送"]',
+      'button[aria-label*="Send"]',
       ".send-button",
       '[data-testid*="send"]',
     ]
