@@ -232,14 +232,9 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
       }
     } else {
       // AI 空闲 -> 直接发送
-      const success = await dispatcher.sendImmediately(content, submitShortcut)
-      if (!success) {
-        // 发送失败，回退到队列
-        store.enqueue(content)
-        if (!dispatcher.isRunning()) {
-          dispatcher.start()
-        }
-      }
+      // 注意：不在失败时回退入队，因为 submitPrompt 返回 false
+      // 可能只是确认超时（消息实际已发送），回退入队会导致重复发送
+      await dispatcher.sendImmediately(content, submitShortcut)
     }
   }, [inputValue, isGenerating, store, dispatcher, submitShortcut])
 
