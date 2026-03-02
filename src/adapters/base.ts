@@ -339,6 +339,14 @@ export abstract class SiteAdapter {
 
   /** 验证输入框是否有效 */
   isValidTextarea(element: HTMLElement): boolean {
+    // 排除扩展自身的 UI 元素（队列 overlay、面板等）
+    if (element.closest(".gh-main-panel") || element.closest(".gh-queue-panel")) return false
+    if (
+      Array.from(element.classList).some(
+        (cls) => cls.startsWith("gh-queue-") || cls.startsWith("gh-"),
+      )
+    )
+      return false
     return element.offsetParent !== null
   }
 

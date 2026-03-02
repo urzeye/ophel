@@ -821,6 +821,14 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     if (element.classList.contains("prompt-search-input")) return false
     if (element.id === "prompt-search") return false
     if (element.closest(".gh-main-panel")) return false
+    // 排除队列 overlay 及其他扩展 UI 的输入框
+    if (element.closest(".gh-queue-panel")) return false
+    if (
+      Array.from(element.classList).some(
+        (cls) => cls.startsWith("gh-queue-") || cls.startsWith("gh-"),
+      )
+    )
+      return false
 
     // 必须是 contenteditable 或者 ProseMirror
     const isVisible = element.offsetParent !== null
@@ -891,6 +899,12 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     editor.click()
     editor.focus()
 
+    // 辅助：检查编辑器是否包含目标内容（排除零宽字符等）
+    const hasContent = () => {
+      const text = editor.textContent?.replace(/[\u200B\u200C\u200D\uFEFF]/g, "") || ""
+      return text.includes(content)
+    }
+
     // 第 1 步：尝试通过原生的 Paste 事件，这是欺骗复杂编辑器（ProseMirror、Draft.js）的绝佳途径
     try {
       const dataTransfer = new DataTransfer()
@@ -903,8 +917,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
       editor.dispatchEvent(pasteEvent)
 
-      // 判断如果文本已经进去了，说明 Paste 成功了
-      if (editor.textContent?.includes(content)) {
+      if (hasContent()) {
         editor.dispatchEvent(new Event("input", { bubbles: true }))
         editor.dispatchEvent(new Event("change", { bubbles: true }))
         editor.dispatchEvent(
@@ -919,13 +932,51 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
     // 第 2 步：常规的 DOM execCommand 降级
     try {
-      // 先全选
       document.execCommand("selectAll", false, undefined)
-      // 插入新内容
       const success = document.execCommand("insertText", false, content)
-      if (!success) throw new Error("execCommand returned false")
+      if (success && hasContent()) {
+        editor.dispatchEvent(new Event("input", { bubbles: true }))
+        editor.dispatchEvent(new Event("change", { bubbles: true }))
+        return true
+      }
     } catch {
-      // 降级方案: 直接操作 DOM
+      // execCommand 失败
+    }
+
+    // 第 3 步：beforeinput 事件（现代 ProseMirror 支持）
+    try {
+      editor.focus()
+      const sel = editor.ownerDocument.getSelection()
+      if (sel) {
+        sel.selectAllChildren(editor)
+        sel.collapseToEnd()
+      }
+
+      const beforeInputEvent = new InputEvent("beforeinput", {
+        bubbles: true,
+        cancelable: true,
+        inputType: "insertText",
+        data: content,
+      })
+      editor.dispatchEvent(beforeInputEvent)
+
+      const inputEvent = new InputEvent("input", {
+        bubbles: true,
+        cancelable: true,
+        inputType: "insertText",
+        data: content,
+      })
+      editor.dispatchEvent(inputEvent)
+
+      if (hasContent()) {
+        return true
+      }
+    } catch {
+      // beforeinput 失败
+    }
+
+    // 第 4 步：直接操作 DOM（最后手段，ProseMirror 可能不认）
+    try {
       let p = editor.querySelector("p")
       let isNewP = false
       if (!p) {
@@ -940,22 +991,30 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
         editor.dispatchEvent(new Event("input", { bubbles: true }))
         editor.dispatchEvent(new Event("change", { bubbles: true }))
       }
+
+      // 事件轰炸收尾
+      editor.dispatchEvent(
+        new InputEvent("input", {
+          bubbles: true,
+          cancelable: true,
+          inputType: "insertText",
+          data: content,
+        }),
+      )
+      editor.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: " ", code: "Space" }))
+      editor.dispatchEvent(new KeyboardEvent("keyup", { bubbles: true, key: " ", code: "Space" }))
+      editor.dispatchEvent(new Event("change", { bubbles: true }))
+
+      if (hasContent()) {
+        return true
+      }
+    } catch {
+      // DOM 操作失败
     }
 
-    // 第 3 步：事件轰炸收尾
-    const inputEvent = new InputEvent("input", {
-      bubbles: true,
-      cancelable: true,
-      inputType: "insertText",
-      data: content,
-    })
-    editor.dispatchEvent(inputEvent)
-
-    editor.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: " ", code: "Space" }))
-    editor.dispatchEvent(new KeyboardEvent("keyup", { bubbles: true, key: " ", code: "Space" }))
-    editor.dispatchEvent(new Event("change", { bubbles: true }))
-
-    return true
+    // 所有策略都失败了
+    console.warn("[GeminiEnterpriseAdapter] All insert strategies failed for content insertion.")
+    return false
   }
 
   // ==================== 滚动容器 ====================

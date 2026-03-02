@@ -2565,7 +2565,17 @@ export const App = () => {
       if (e.key !== "Enter") return
       if (e.isComposing || e.keyCode === 229) return
 
+      // 防守：如果事件来自队列 overlay 内部，不拦截（让队列自己处理）
       const path = e.composedPath()
+      const isFromQueue = path.some(
+        (el) =>
+          el instanceof HTMLElement &&
+          (el.classList?.contains("gh-queue-panel") ||
+            el.classList?.contains("gh-queue-input") ||
+            el.classList?.contains("gh-queue-item-edit-input")),
+      )
+      if (isFromQueue) return
+
       const editor = path.find(
         (element) => element instanceof HTMLElement && adapter.isValidTextarea(element),
       ) as HTMLElement | undefined

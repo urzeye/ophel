@@ -247,9 +247,11 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault()
+        e.stopPropagation()
         handleSubmit()
       }
       if (e.key === "Escape") {
+        e.stopPropagation()
         setIsExpanded(false)
       }
     },
