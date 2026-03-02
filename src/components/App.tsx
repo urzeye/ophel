@@ -254,6 +254,7 @@ const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "layout-page-width-value": "pageWidthValueLabel",
   "layout-user-query-width-enabled": "enableUserQueryWidth",
   "layout-user-query-width-value": "userQueryWidthValueLabel",
+  "layout-zen-mode-enabled": "zenModeTitle",
   "outline-auto-update": "outlineAutoUpdateLabel",
   "outline-follow-mode": "outlineFollowModeLabel",
   "outline-inline-bookmark-mode": "inlineBookmarkModeLabel",
