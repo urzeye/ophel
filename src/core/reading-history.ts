@@ -198,7 +198,18 @@ export class ReadingHistoryManager {
     const container = this.adapter.getScrollContainer()
     const scrollTop = container ? container.scrollTop : window.scrollY
 
-    if (scrollTop < 0) return
+    // 注意：Mac 等设备可能有弹性滚动（Overscroll）导致 scrollTop 为负数，故默认忽略小于 0 的值。
+    // 但是！对于豆包这种 column-reverse 容器，其正常的往上滚动坐标就是负数。
+    if (scrollTop < 0) {
+      if (container) {
+        const style = window.getComputedStyle(container)
+        if (style.flexDirection !== "column-reverse") {
+          return
+        }
+      } else {
+        return
+      }
+    }
 
     const key = this.getKey()
 

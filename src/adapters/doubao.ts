@@ -593,7 +593,8 @@ export class DoubaoAdapter extends SiteAdapter {
 
     if (!bestElement) {
       // 如果屏幕内全都是一个超长元素的内部，直接取处于可视区的该元素
-      for (const el of candidates) {
+      for (let i = 0; i < candidates.length; i++) {
+        const el = candidates[i] as HTMLElement
         const rect = el.getBoundingClientRect()
         if (rect.top < containerRect.top && rect.bottom > containerRect.bottom) {
           bestElement = el
