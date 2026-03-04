@@ -21,6 +21,7 @@ import {
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportConfig,
+  type ModelSwitcherConfig,
   type OutlineItem,
 } from "./base"
 
@@ -240,6 +241,84 @@ export class DoubaoAdapter extends SiteAdapter {
       '[data-testid="receive_message"] .flow-markdown-body',
       '[data-testid="message_text_content"]',
     ]
+  }
+
+  // ===== 模型切换 =====
+
+  /**
+   * 在页面上所有 dropdown-menu-trigger 按钮中，精准定位模型选择器按钮。
+   *
+   * 豆包页面存在大量同属性的 Radix UI 下拉按钮（聊天列表三点菜单、用户头像菜单等），
+   * 但只有模型切换按钮同时满足：
+   *   1. 可见（offsetParent !== null）
+   *   2. 内部包含 .truncate 子元素（模型名称的文本容器）
+   */
+  private findModelSelectorButton(): HTMLElement | null {
+    const selector = 'button[data-slot="dropdown-menu-trigger"][aria-haspopup="menu"]'
+    const buttons = document.querySelectorAll(selector)
+    for (const btn of buttons) {
+      const el = btn as HTMLElement
+      if (el.offsetParent !== null) {
+        const truncate = el.querySelector(".truncate")
+        // 模型选择器的 .truncate 里有模型名（如"快速"），而附件上传按钮的 .truncate 为空
+        if (truncate && truncate.textContent?.trim()) {
+          return el
+        }
+      }
+    }
+    return null
+  }
+
+  getModelSwitcherConfig(_keyword: string): ModelSwitcherConfig | null {
+    return {
+      targetModelKeyword: _keyword,
+      selectorButtonSelectors: ['button[data-slot="dropdown-menu-trigger"][aria-haspopup="menu"]'],
+      menuItemSelector: 'div[role="menuitem"][data-slot="dropdown-menu-item"]',
+      menuRenderDelay: 100,
+    }
+  }
+
+  getModelName(): string | null {
+    const button = this.findModelSelectorButton()
+    if (!button) return null
+
+    // 使用 innerText 而非 textContent：
+    // innerText 只返回页面上可见的文本，Radix UI 的 popper 弹出层
+    // 在菜单关闭时被包裹在 h-0 w-0 容器中（不可见），会被自动排除。
+    // 取第一行以防万一有描述文字泄漏
+    const text = (button as HTMLElement).innerText?.trim()
+    return text ? text.split("\n")[0].trim() : null
+  }
+
+  /**
+   * 覆写基类方法：使用 findModelSelectorButton 精准定位，
+   * 避免基类 findElementBySelectors 取到第一个不可见按钮后直接返回 false
+   */
+  clickModelSelector(): boolean {
+    const btn = this.findModelSelectorButton()
+    if (btn) {
+      this.simulateClick(btn)
+      return true
+    }
+    return false
+  }
+
+  /**
+   * 覆写点击模拟：豆包使用 Radix UI，需要完整的 PointerEvent 序列才能触发下拉菜单
+   * 与 ChatGPT 适配器相同的策略
+   */
+  protected simulateClick(element: HTMLElement): void {
+    const eventTypes = ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]
+    for (const type of eventTypes) {
+      element.dispatchEvent(
+        new PointerEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          pointerId: 1,
+        }),
+      )
+    }
   }
 
   // ===== 大纲提取 =====
