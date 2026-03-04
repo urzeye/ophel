@@ -423,8 +423,9 @@ export class DoubaoAdapter extends SiteAdapter {
 
   getSubmitButtonSelectors(): string[] {
     return [
-      "button.semi-button.semi-button-primary[class*='samantha-button-']",
-      "button.semi-button.semi-button-primary[class*='action-btn-']",
+      "[data-testid='chat_input_send_button']",
+      "#flow-end-msg-send",
+      ".send-btn-wrapper button",
     ]
   }
 
