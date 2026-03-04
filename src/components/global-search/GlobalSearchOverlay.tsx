@@ -190,13 +190,51 @@ export const GlobalSearchOverlay = <TItem, TCategoryId extends string>(
     promptPreview,
   } = props
 
+  const containerRef = React.useRef<HTMLDivElement>(null)
+
+  // 防止 Doubao/Grok/Claude 等站点在 keydown 时抢占焦点或拦截快捷键
+  React.useEffect(() => {
+    if (!isOpen) return
+
+    const container = containerRef.current
+    if (!container) return
+
+    // 在捕获阶段拦截，优先级最高
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+
+      const isInputElement =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT" ||
+        target.getAttribute("contenteditable") === "true"
+
+      if (!isInputElement) return
+
+      // 阻止事件继续传播到站点的监听器
+      e.stopPropagation()
+      e.stopImmediatePropagation()
+    }
+
+    container.addEventListener("keydown", handleKeyDown, true)
+    container.addEventListener("keypress", handleKeyDown, true)
+
+    return () => {
+      container.removeEventListener("keydown", handleKeyDown, true)
+      container.removeEventListener("keypress", handleKeyDown, true)
+    }
+  }, [isOpen])
+
   if (!isOpen) {
     return null
   }
 
   return (
     <div className="settings-search-overlay gh-interactive" onClick={onClose}>
-      <div className="settings-search-modal" onClick={(event) => event.stopPropagation()}>
+      <div
+        ref={containerRef}
+        className="settings-search-modal"
+        onClick={(event) => event.stopPropagation()}>
         <div className="settings-search-input-wrap">
           <SearchIcon size={16} />
           <button
