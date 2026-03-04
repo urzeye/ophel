@@ -87,11 +87,18 @@ export class CopyManager {
     this.formulaDblClickHandler = (e: MouseEvent) => {
       const target = e.target as HTMLElement
 
-      // 优先匹配 Gemini 格式
+      // 优先匹配 Gemini/Doubao 格式
       const geminiMathEl = target.closest(".math-block, .math-inline")
       if (geminiMathEl) {
-        const latex = geminiMathEl.getAttribute("data-math")
+        // Gemini 用 data-math，Doubao 用 data-custom-copy-text
+        let latex =
+          geminiMathEl.getAttribute("data-math") ||
+          geminiMathEl.getAttribute("data-custom-copy-text")
+
+        // 去除 Doubao 自带的定界符 (如果是 \$...\$ 或 \(\(...\)\) 或 \(...\) 或 \[...\] 等)
         if (latex) {
+          latex = latex.replace(/^\\?\(|^\\?\[|^\$\$?|\\?\)$|\\?\]$|\$\$?$/g, "").trim()
+
           this.copyLatex(latex, geminiMathEl.classList.contains("math-block"))
           e.preventDefault()
           e.stopPropagation()
