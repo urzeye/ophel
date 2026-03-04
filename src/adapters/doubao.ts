@@ -23,12 +23,17 @@ import {
   type ExportConfig,
   type ModelSwitcherConfig,
   type OutlineItem,
+  type AnchorData,
 } from "./base"
 
 /** 匹配 /chat/{id} 或 /code/chat/{id}，捕获会话 ID */
 const chatPathPattern = /^(?:\/code)?\/chat\/([^/?#]+)/
 
 export class DoubaoAdapter extends SiteAdapter {
+  // 滚动补偿状态记录
+  private lastScrollHeight = 0
+  private lastScrollTop = 0
+
   // ===== 必选抽象方法 =====
 
   match(): boolean {
@@ -551,5 +556,102 @@ export class DoubaoAdapter extends SiteAdapter {
 
   getWidthSelectors(): Array<{ selector: string; property: string }> {
     return [{ selector: '[data-container-name="main"]', property: "max-width" }]
+  }
+
+  // ===== 专用滚动补偿与历史隔离机制 (针对豆包 column-reverse 特殊处理) =====
+
+  // 豆包采用 column-reverse 逆向布局，基类的 scrollTop 与 offsetTop 记录与恢复策略全盘失效。
+  // 因此我们独立覆写历史记录读取和恢复方法：
+  // 1. 获取屏幕最顶部的一个可见对话段落，记录其前 50 字为特征签名
+  // 2. 恢复时，在页面重寻此段落并将其对齐至屏幕顶部。
+  getVisibleAnchorElement(): AnchorData | null {
+    const container = this.getScrollContainer()
+    if (!container) return null
+
+    const selectors = this.getChatContentSelectors()
+    if (!selectors.length) return null
+
+    const candidates = Array.from(container.querySelectorAll(selectors.join(", ")))
+    if (!candidates.length) return null
+
+    const containerRect = container.getBoundingClientRect()
+    let bestElement: Element | null = null
+
+    for (let i = 0; i < candidates.length; i++) {
+      const el = candidates[i] as HTMLElement
+      const rect = el.getBoundingClientRect()
+
+      // 寻找顶部边缘正好在滚动容器可视区内（或略上方交界）的元素
+      if (rect.top >= containerRect.top - 50 && rect.bottom <= containerRect.bottom + 50) {
+        bestElement = el
+        break
+      } else if (rect.top <= containerRect.top && rect.bottom >= containerRect.top) {
+        bestElement = el
+        break
+      }
+    }
+
+    if (!bestElement) {
+      // 如果屏幕内全都是一个超长元素的内部，直接取处于可视区的该元素
+      for (const el of candidates) {
+        const rect = el.getBoundingClientRect()
+        if (rect.top < containerRect.top && rect.bottom > containerRect.bottom) {
+          bestElement = el
+          break
+        }
+      }
+    }
+
+    if (bestElement) {
+      const globalIndex = candidates.indexOf(bestElement)
+      if (globalIndex !== -1) {
+        const textSignature = (bestElement.textContent || "").trim().substring(0, 50)
+        // 在豆包的隔离策略中，忽略 offset，全靠元素对齐
+        return { type: "index", index: globalIndex, offset: 0, textSignature }
+      }
+    }
+    return null
+  }
+
+  restoreScroll(anchorData: AnchorData): boolean {
+    const container = this.getScrollContainer()
+    if (!container || !anchorData) return false
+
+    let targetElement: Element | null = null
+
+    if (anchorData.type === "index" && typeof anchorData.index === "number") {
+      const selectors = this.getChatContentSelectors()
+      const candidates = Array.from(container.querySelectorAll(selectors.join(", ")))
+
+      if (candidates[anchorData.index]) {
+        targetElement = candidates[anchorData.index]
+        if (anchorData.textSignature) {
+          const currentText = (targetElement.textContent || "").trim().substring(0, 50)
+          if (currentText !== anchorData.textSignature) {
+            const found = candidates.find(
+              (c) => (c.textContent || "").trim().substring(0, 50) === anchorData.textSignature,
+            )
+            if (found) targetElement = found
+          }
+        }
+      } else if (anchorData.textSignature) {
+        const found = candidates.find(
+          (c) => (c.textContent || "").trim().substring(0, 50) === anchorData.textSignature,
+        )
+        if (found) targetElement = found
+      }
+    }
+
+    if (targetElement) {
+      targetElement.scrollIntoView({ block: "start", behavior: "instant" })
+
+      // 因为豆包反向滚动的复杂性，执行 scrollIntoView 后立刻同步历史高度避免 ResizeObserver 误报
+      setTimeout(() => {
+        this.lastScrollHeight = container.scrollHeight
+        this.lastScrollTop = container.scrollTop
+      }, 50)
+      return true
+    }
+    return false
   }
 }
