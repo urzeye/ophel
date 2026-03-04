@@ -130,7 +130,11 @@ export async function loadHistoryUntil(options: LoadHistoryOptions): Promise<Loa
     }
 
     // 强制保持在顶部并派发 WheelEvent 触发懒加载
-    container.scrollTop = 0
+    const isReverse =
+      adapter?.getSiteId() === "doubao" &&
+      typeof window !== "undefined" &&
+      window.getComputedStyle(container).flexDirection === "column-reverse"
+    container.scrollTop = isReverse ? -container.scrollHeight : 0
     container.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true }))
 
     // 等待懒加载触发
@@ -162,7 +166,11 @@ export async function loadHistoryUntil(options: LoadHistoryOptions): Promise<Loa
         initialHeight = container.scrollHeight
         lastHeight = container.scrollHeight
         // 重新滚动到顶部
-        container.scrollTop = 0
+        const isReverse =
+          adapter?.getSiteId() === "doubao" &&
+          typeof window !== "undefined" &&
+          window.getComputedStyle(container).flexDirection === "column-reverse"
+        container.scrollTop = isReverse ? -container.scrollHeight : 0
       }
     }
 

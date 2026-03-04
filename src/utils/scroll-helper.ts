@@ -173,7 +173,23 @@ export async function smartScrollToTop(adapter: SiteAdapter | null): Promise<{
   if (container && container.scrollHeight > container.clientHeight) {
     const previousScrollTop = container.scrollTop
     const scrollHeight = container.scrollHeight
-    container.scrollTo({ top: 0, behavior: "instant" })
+
+    // Check for column-reverse (used by Doubao)
+    const isReverse =
+      adapter?.getSiteId() === "doubao" &&
+      typeof window !== "undefined" &&
+      window.getComputedStyle(container).flexDirection === "column-reverse"
+
+    if (isReverse) {
+      container.scrollTo({
+        top: -scrollHeight,
+        behavior: "instant",
+        ...{ __bypassLock: true },
+      } as any)
+    } else {
+      container.scrollTo({ top: 0, behavior: "instant", ...{ __bypassLock: true } } as any)
+    }
+
     return { container, previousScrollTop, scrollHeight }
   }
 
@@ -207,7 +223,23 @@ export async function smartScrollToBottom(adapter: SiteAdapter | null): Promise<
 
   if (container && container.scrollHeight > container.clientHeight) {
     const previousScrollTop = container.scrollTop
-    container.scrollTo({ top: container.scrollHeight, behavior: "instant" })
+
+    // Check for column-reverse (used by Doubao)
+    const isReverse =
+      adapter?.getSiteId() === "doubao" &&
+      typeof window !== "undefined" &&
+      window.getComputedStyle(container).flexDirection === "column-reverse"
+
+    if (isReverse) {
+      container.scrollTo({ top: 0, behavior: "instant", ...{ __bypassLock: true } } as any)
+    } else {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "instant",
+        ...{ __bypassLock: true },
+      } as any)
+    }
+
     return { container, previousScrollTop }
   }
 
@@ -234,12 +266,16 @@ export async function smartScrollTo(
   const container = adapter?.getScrollContainer()
 
   if (container && container.scrollHeight > container.clientHeight) {
-    container.scrollTo({ top: position, behavior: "instant" })
+    container.scrollTo({ top: position, behavior: "instant", ...{ __bypassLock: true } } as any)
     return { success: true, currentScrollTop: container.scrollTop }
   }
 
   // 最终回退
-  document.documentElement.scrollTo({ top: position, behavior: "instant" })
+  document.documentElement.scrollTo({
+    top: position,
+    behavior: "instant",
+    ...{ __bypassLock: true },
+  } as any)
   return { success: true, currentScrollTop: document.documentElement.scrollTop }
 }
 

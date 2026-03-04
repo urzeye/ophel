@@ -8,6 +8,7 @@ import { AIStudioAdapter } from "./aistudio"
 import { SiteAdapter } from "./base"
 import { ChatGPTAdapter } from "./chatgpt"
 import { ClaudeAdapter } from "./claude"
+import { DoubaoAdapter } from "./doubao"
 import { GeminiAdapter } from "./gemini"
 import { GeminiEnterpriseAdapter } from "./gemini-enterprise"
 import { GrokAdapter } from "./grok"
@@ -20,6 +21,7 @@ const adapters: SiteAdapter[] = [
   new GrokAdapter(),
   new AIStudioAdapter(),
   new ClaudeAdapter(),
+  new DoubaoAdapter(),
 ]
 
 /**

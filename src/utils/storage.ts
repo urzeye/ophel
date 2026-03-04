@@ -37,7 +37,7 @@ export const CLEAR_ALL_FLAG_TTL_MS = 5 * 1000
 // ==================== 类型定义 ====================
 
 // 站点 ID 类型
-export type SiteId = "gemini" | "gemini-enterprise" | "aistudio" | "_default"
+export type SiteId = "gemini" | "gemini-enterprise" | "aistudio" | "doubao" | "_default"
 
 // 主题模式
 export type ThemeMode = "light" | "dark" | "system"
@@ -336,6 +336,7 @@ export const DEFAULT_SETTINGS: Settings = {
     sites: {
       gemini: { ...DEFAULT_SITE_THEME },
       "gemini-enterprise": { ...DEFAULT_SITE_THEME },
+      doubao: { ...DEFAULT_SITE_THEME },
       _default: { ...DEFAULT_SITE_THEME },
     },
     customStyles: [], // 空数组，用户可以添加自定义样式
@@ -346,18 +347,21 @@ export const DEFAULT_SETTINGS: Settings = {
       gemini: { ...DEFAULT_PAGE_WIDTH },
       "gemini-enterprise": { ...DEFAULT_PAGE_WIDTH },
       aistudio: { ...DEFAULT_PAGE_WIDTH },
+      doubao: { ...DEFAULT_PAGE_WIDTH },
       _default: { ...DEFAULT_PAGE_WIDTH },
     },
     userQueryWidth: {
       gemini: { ...DEFAULT_USER_QUERY_WIDTH },
       "gemini-enterprise": { ...DEFAULT_USER_QUERY_WIDTH },
       aistudio: { ...DEFAULT_USER_QUERY_WIDTH },
+      doubao: { ...DEFAULT_USER_QUERY_WIDTH },
       _default: { ...DEFAULT_USER_QUERY_WIDTH },
     },
     zenMode: {
       gemini: { ...DEFAULT_ZEN_MODE },
       "gemini-enterprise": { ...DEFAULT_ZEN_MODE },
       aistudio: { ...DEFAULT_ZEN_MODE },
+      doubao: { ...DEFAULT_ZEN_MODE },
       _default: { ...DEFAULT_ZEN_MODE },
     },
   },

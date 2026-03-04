@@ -366,6 +366,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
             "https://chat.openai.com/*",
             "https://chatgpt.com/*",
             "https://claude.ai/*",
+            "https://www.doubao.com/*",
           ]
           const tabs = await chrome.tabs.query({ url: targets })
           await Promise.all(

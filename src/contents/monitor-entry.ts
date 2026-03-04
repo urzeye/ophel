@@ -11,6 +11,7 @@ export const config: PlasmoCSConfig = {
     "https://chat.openai.com/*",
     "https://chatgpt.com/*",
     "https://claude.ai/*",
+    "https://www.doubao.com/*",
   ],
   world: "MAIN",
 }

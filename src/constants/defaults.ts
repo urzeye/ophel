@@ -88,4 +88,5 @@ export const SITE_IDS = {
   GEMINI_ENTERPRISE: "gemini-enterprise",
   GROK: "grok",
   AISTUDIO: "aistudio",
+  DOUBAO: "doubao",
 } as const

@@ -41,3 +41,4 @@ docs/.vitepress/dist
 PUBLISHING.md
 
 .spec-workflow/.idea/
+.playwright-mcp
