@@ -75,16 +75,44 @@ export class DoubaoAdapter extends SiteAdapter {
       // 对于 Slate.js 或其他 contenteditable 编辑器
       const selection = window.getSelection()
       if (selection) {
-        // 尝试全选已有内容并替换（此处假设想要完全替换，若想追加可调整）
         selection.selectAllChildren(el)
         selection.collapseToEnd()
       }
+
+      el.dispatchEvent(
+        new InputEvent("beforeinput", {
+          inputType: "insertText",
+          data: content,
+          bubbles: true,
+          cancelable: true,
+        }),
+      )
 
       // execCommand 能够触发大多数富文本编辑器的 input 事件处理
       document.execCommand("insertText", false, content)
 
       // 添加后退路，触发 input 事件
-      el.dispatchEvent(new InputEvent("input", { bubbles: true, composed: true, data: content }))
+      el.dispatchEvent(
+        new InputEvent("input", {
+          inputType: "insertText",
+          data: content,
+          bubbles: true,
+          composed: true,
+        }),
+      )
+      el.dispatchEvent(new Event("change", { bubbles: true }))
+
+      // 对于极端顽固的 Slate 编辑器（如豆包 /code/chat），直接构造并派发 Paste 事件往往更有效
+      const dataTransfer = new DataTransfer()
+      dataTransfer.setData("text/plain", content)
+      el.dispatchEvent(
+        new ClipboardEvent("paste", {
+          clipboardData: dataTransfer,
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+        }),
+      )
     }
 
     return true
