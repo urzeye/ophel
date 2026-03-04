@@ -126,15 +126,41 @@ export class DoubaoAdapter extends SiteAdapter {
       el.dispatchEvent(new Event("change", { bubbles: true }))
     } else if (el.isContentEditable) {
       el.focus()
-      const selection = window.getSelection()
-      if (selection) {
-        selection.selectAllChildren(el)
-        document.execCommand("delete", false)
-        // 回退机制：如果 execCommand 失败，强行发一个清空的 input 事件让 Slate 重新渲染
-        el.dispatchEvent(
-          new InputEvent("input", { inputType: "deleteContentBackward", bubbles: true }),
-        )
-      }
+
+      // 使用 execCommand("selectAll") 能更好地触发 React 的 selectionchange
+      document.execCommand("selectAll", false)
+
+      // Slate 极度依赖 keydown 事件来处理删除和光标状态
+      el.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Backspace",
+          code: "Backspace",
+          keyCode: 8,
+          bubbles: true,
+          composed: true,
+        }),
+      )
+
+      // 原生删除兜底，确保 DOM 确实被清空
+      document.execCommand("delete", false)
+
+      el.dispatchEvent(
+        new InputEvent("input", {
+          inputType: "deleteContentBackward",
+          bubbles: true,
+          composed: true,
+        }),
+      )
+
+      el.dispatchEvent(
+        new KeyboardEvent("keyup", {
+          key: "Backspace",
+          code: "Backspace",
+          keyCode: 8,
+          bubbles: true,
+          composed: true,
+        }),
+      )
     }
   }
 
