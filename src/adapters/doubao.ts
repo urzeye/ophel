@@ -48,23 +48,45 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getTextareaSelectors(): string[] {
-    return ['textarea[data-testid="chat_input_input"]', "textarea.semi-input-textarea"]
+    return [
+      '[data-slate-editor="true"]',
+      'textarea[data-testid="chat_input_input"]',
+      "textarea.semi-input-textarea",
+    ]
   }
 
   insertPrompt(content: string): boolean {
-    const el = this.getTextareaElement() as HTMLTextAreaElement | null
+    const el = this.getTextareaElement() as HTMLElement | null
     if (!el || !el.isConnected) return false
     el.focus()
-    // Semi Design textarea 是 React controlled component，需通过 prototype setter 绕过
-    const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set
-    if (setter) {
-      setter.call(el, content)
-    } else {
-      el.value = content
+
+    if (el instanceof HTMLTextAreaElement) {
+      // Semi Design textarea 是 React controlled component，需通过 prototype setter 绕过
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set
+      if (setter) {
+        setter.call(el, content)
+      } else {
+        el.value = content
+      }
+      el.dispatchEvent(new InputEvent("input", { bubbles: true, composed: true, data: content }))
+      el.dispatchEvent(new Event("change", { bubbles: true }))
+      el.setSelectionRange(content.length, content.length)
+    } else if (el.isContentEditable) {
+      // 对于 Slate.js 或其他 contenteditable 编辑器
+      const selection = window.getSelection()
+      if (selection) {
+        // 尝试全选已有内容并替换（此处假设想要完全替换，若想追加可调整）
+        selection.selectAllChildren(el)
+        selection.collapseToEnd()
+      }
+
+      // execCommand 能够触发大多数富文本编辑器的 input 事件处理
+      document.execCommand("insertText", false, content)
+
+      // 添加后退路，触发 input 事件
+      el.dispatchEvent(new InputEvent("input", { bubbles: true, composed: true, data: content }))
     }
-    el.dispatchEvent(new InputEvent("input", { bubbles: true, composed: true, data: content }))
-    el.dispatchEvent(new Event("change", { bubbles: true }))
-    el.setSelectionRange(content.length, content.length)
+
     return true
   }
 
