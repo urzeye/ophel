@@ -217,7 +217,9 @@ export class ConversationManager {
     if (this.sidebarObserverStop) return
 
     const config = this.siteAdapter.getConversationObserverConfig()
-    if (!config) return
+    if (!config) {
+      return
+    }
 
     this.observerConfig = config
 

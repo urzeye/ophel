@@ -165,7 +165,9 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getConversationTitle(): string | null {
-    const activeNode = document.querySelector('#chat_list_wrapper a[class*="active-"]')
+    const activeNode = document.querySelector(
+      '[data-testid="chat_list_wrapper"] a[class*="active-"]',
+    )
     if (!activeNode) return null
     const activeLink =
       activeNode instanceof HTMLAnchorElement
@@ -173,7 +175,7 @@ export class DoubaoAdapter extends SiteAdapter {
         : (activeNode.closest("a") as HTMLAnchorElement | null)
     if (!activeLink) return null
     const title = activeLink.querySelector(
-      '#chat_list_item_title, [class^="section-item-title-"], [class*="section-item-title-"]',
+      '[data-testid="chat_list_item_title"], [class^="section-item-title-"], [class*="section-item-title-"]',
     )
     return title?.textContent?.trim() || null
   }
@@ -202,7 +204,7 @@ export class DoubaoAdapter extends SiteAdapter {
   // ===== 会话列表 =====
 
   getConversationList(): ConversationInfo[] {
-    const wrapper = document.querySelector("#chat_list_wrapper")
+    const wrapper = document.querySelector('[data-testid="chat_list_wrapper"]')
     if (!wrapper) return []
     const links = wrapper.querySelectorAll('a[href*="/chat/"]')
     const conversationMap = new Map<string, ConversationInfo>()
@@ -217,7 +219,7 @@ export class DoubaoAdapter extends SiteAdapter {
       const title =
         link
           .querySelector(
-            '#chat_list_item_title, [class^="section-item-title-"], [class*="section-item-title-"]',
+            '[data-testid="chat_list_item_title"], [class^="section-item-title-"], [class*="section-item-title-"]',
           )
           ?.textContent?.trim() || ""
 
@@ -240,7 +242,7 @@ export class DoubaoAdapter extends SiteAdapter {
 
   navigateToConversation(id: string, url?: string): boolean {
     const link = document.querySelector(
-      `#chat_list_wrapper a[href*="/chat/${id}"]`,
+      `[data-testid="chat_list_wrapper"] a[href*="/chat/${id}"]`,
     ) as HTMLElement | null
     if (link) {
       link.click()
@@ -250,13 +252,36 @@ export class DoubaoAdapter extends SiteAdapter {
     return true
   }
 
+  async loadAllConversations(): Promise<void> {
+    const container = this.getSidebarScrollContainer() as HTMLElement
+    if (!container) return
+
+    let lastCount = 0
+    let stableRounds = 0
+    const maxStableRounds = 3
+
+    while (stableRounds < maxStableRounds) {
+      container.scrollTop = container.scrollHeight
+      await new Promise((r) => setTimeout(r, 500))
+
+      const links = container.querySelectorAll('a[href*="/chat/"]')
+      const currentCount = links.length
+      if (currentCount === lastCount) {
+        stableRounds++
+      } else {
+        lastCount = currentCount
+        stableRounds = 0
+      }
+    }
+  }
+
   getSidebarScrollContainer(): Element | null {
-    return document.querySelector("#chat_list_wrapper")
+    return document.querySelector('[data-testid="chat_list_wrapper"]')
   }
 
   getConversationObserverConfig(): ConversationObserverConfig | null {
     return {
-      selector: '#chat_list_wrapper a[href*="/chat/"]',
+      selector: '[data-testid="chat_list_wrapper"] a[href*="/chat/"]',
       shadow: false,
       extractInfo: (el: Element): ConversationInfo | null => {
         const link = el as HTMLAnchorElement
@@ -268,7 +293,7 @@ export class DoubaoAdapter extends SiteAdapter {
         const title =
           link
             .querySelector(
-              '#chat_list_item_title, [class^="section-item-title-"], [class*="section-item-title-"]',
+              '[data-testid="chat_list_item_title"], [class^="section-item-title-"], [class*="section-item-title-"]',
             )
             ?.textContent?.trim() || ""
 
@@ -284,7 +309,7 @@ export class DoubaoAdapter extends SiteAdapter {
       },
       getTitleElement: (el: Element): Element | null => {
         return el.querySelector(
-          '#chat_list_item_title, [class^="section-item-title-"], [class*="section-item-title-"]',
+          '[data-testid="chat_list_item_title"], [class^="section-item-title-"], [class*="section-item-title-"]',
         )
       },
     }
