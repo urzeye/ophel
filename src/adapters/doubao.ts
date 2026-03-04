@@ -75,8 +75,23 @@ export class DoubaoAdapter extends SiteAdapter {
       // 对于 Slate.js 或其他 contenteditable 编辑器
       const selection = window.getSelection()
       if (selection) {
+        // 先确保焦点在元素内
+        el.focus()
+        // 尝试选中已有内容以便替换
         selection.selectAllChildren(el)
         selection.collapseToEnd()
+
+        // 如果选取依旧没能落入文本节点，某些富文本会拒绝 paste
+        // Slate.js 的 placeholder 使用 data-slate-placeholder="true"
+        // 它的空状态真正可输入的位置是 data-slate-zero-width="n" 的兄弟或直接在 element 下
+        const slateNode = el.querySelector('[data-slate-node="element"]')
+        if (slateNode && selection.rangeCount > 0) {
+          const range = document.createRange()
+          range.selectNodeContents(slateNode)
+          range.collapse(false)
+          selection.removeAllRanges()
+          selection.addRange(range)
+        }
       }
 
       // 豆包 /code/chat 的 Slate 编辑器依靠 paste 事件更新状态和插入内容
