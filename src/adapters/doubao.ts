@@ -79,30 +79,8 @@ export class DoubaoAdapter extends SiteAdapter {
         selection.collapseToEnd()
       }
 
-      el.dispatchEvent(
-        new InputEvent("beforeinput", {
-          inputType: "insertText",
-          data: content,
-          bubbles: true,
-          cancelable: true,
-        }),
-      )
-
-      // execCommand 能够触发大多数富文本编辑器的 input 事件处理
-      document.execCommand("insertText", false, content)
-
-      // 添加后退路，触发 input 事件
-      el.dispatchEvent(
-        new InputEvent("input", {
-          inputType: "insertText",
-          data: content,
-          bubbles: true,
-          composed: true,
-        }),
-      )
-      el.dispatchEvent(new Event("change", { bubbles: true }))
-
-      // 对于极端顽固的 Slate 编辑器（如豆包 /code/chat），直接构造并派发 Paste 事件往往更有效
+      // 豆包 /code/chat 的 Slate 编辑器依靠 paste 事件更新状态和插入内容
+      // 使用 execCommand 会导致内容被插入两次（一次 native，一次 React 响应 paste）
       const dataTransfer = new DataTransfer()
       dataTransfer.setData("text/plain", content)
       el.dispatchEvent(
