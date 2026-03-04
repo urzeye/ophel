@@ -166,7 +166,7 @@ export class DoubaoAdapter extends SiteAdapter {
 
   getConversationTitle(): string | null {
     const activeNode = document.querySelector(
-      '[data-testid="chat_list_wrapper"] a[class*="active-"]',
+      'a[data-testid="chat_list_thread_item"][class*="active-"]',
     )
     if (!activeNode) return null
     const activeLink =
@@ -204,9 +204,8 @@ export class DoubaoAdapter extends SiteAdapter {
   // ===== 会话列表 =====
 
   getConversationList(): ConversationInfo[] {
-    const wrapper = document.querySelector('[data-testid="chat_list_wrapper"]')
-    if (!wrapper) return []
-    const links = wrapper.querySelectorAll('a[href*="/chat/"]')
+    const links = document.querySelectorAll('a[data-testid="chat_list_thread_item"]')
+    if (!links.length) return []
     const conversationMap = new Map<string, ConversationInfo>()
 
     links.forEach((linkEl) => {
@@ -242,7 +241,7 @@ export class DoubaoAdapter extends SiteAdapter {
 
   navigateToConversation(id: string, url?: string): boolean {
     const link = document.querySelector(
-      `[data-testid="chat_list_wrapper"] a[href*="/chat/${id}"]`,
+      `a[data-testid="chat_list_thread_item"][href*="/chat/${id}"]`,
     ) as HTMLElement | null
     if (link) {
       link.click()
@@ -264,7 +263,7 @@ export class DoubaoAdapter extends SiteAdapter {
       container.scrollTop = container.scrollHeight
       await new Promise((r) => setTimeout(r, 500))
 
-      const links = container.querySelectorAll('a[href*="/chat/"]')
+      const links = container.querySelectorAll('a[data-testid="chat_list_thread_item"]')
       const currentCount = links.length
       if (currentCount === lastCount) {
         stableRounds++
@@ -281,7 +280,7 @@ export class DoubaoAdapter extends SiteAdapter {
 
   getConversationObserverConfig(): ConversationObserverConfig | null {
     return {
-      selector: '[data-testid="chat_list_wrapper"] a[href*="/chat/"]',
+      selector: 'a[data-testid="chat_list_thread_item"]',
       shadow: false,
       extractInfo: (el: Element): ConversationInfo | null => {
         const link = el as HTMLAnchorElement
