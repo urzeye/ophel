@@ -111,6 +111,33 @@ export class DoubaoAdapter extends SiteAdapter {
     return true
   }
 
+  clearTextarea(): void {
+    const el = this.getTextareaElement() as HTMLElement | null
+    if (!el || !el.isConnected) return
+
+    if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set
+      if (setter) {
+        setter.call(el, "")
+      } else {
+        el.value = ""
+      }
+      el.dispatchEvent(new InputEvent("input", { bubbles: true, composed: true, data: "" }))
+      el.dispatchEvent(new Event("change", { bubbles: true }))
+    } else if (el.isContentEditable) {
+      el.focus()
+      const selection = window.getSelection()
+      if (selection) {
+        selection.selectAllChildren(el)
+        document.execCommand("delete", false)
+        // 回退机制：如果 execCommand 失败，强行发一个清空的 input 事件让 Slate 重新渲染
+        el.dispatchEvent(
+          new InputEvent("input", { inputType: "deleteContentBackward", bubbles: true }),
+        )
+      }
+    }
+  }
+
   getConversationTitle(): string | null {
     const activeNode = document.querySelector('#chat_list_wrapper a[class*="active-"]')
     if (!activeNode) return null
