@@ -97,12 +97,12 @@ export default defineConfig({
         match: [
           "https://gemini.google.com/*",
           "https://business.gemini.google/*",
-          "https://www.doubao.com/*",
+          "https://aistudio.google.com/*",
           "https://grok.com/*",
           "https://chat.openai.com/*",
           "https://chatgpt.com/*",
           "https://claude.ai/*",
-          "https://aistudio.google.com/*",
+          "https://www.doubao.com/*",
         ],
         grant: [
           "GM_getValue",
