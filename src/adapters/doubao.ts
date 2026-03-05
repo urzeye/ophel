@@ -28,6 +28,10 @@ import {
 
 /** 匹配 /chat/{id} 或 /code/chat/{id}，捕获会话 ID */
 const chatPathPattern = /^(?:\/code)?\/chat\/([^/?#]+)/
+const LEGACY_USER_QUERY_SELECTOR = '[data-testid="send_message"]'
+const NEW_USER_QUERY_SELECTOR = '[data-testid="message_content"].justify-end'
+const USER_QUERY_SELECTOR = `${LEGACY_USER_QUERY_SELECTOR}, ${NEW_USER_QUERY_SELECTOR}`
+const USER_QUERY_TEXT_SELECTOR = '[data-testid="message_text_content"]'
 
 export class DoubaoAdapter extends SiteAdapter {
   // 滚动补偿状态记录
@@ -358,14 +362,47 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getUserQuerySelector(): string | null {
-    return '[data-testid="send_message"]'
+    return USER_QUERY_SELECTOR
   }
 
   getChatContentSelectors(): string[] {
-    return [
-      '[data-testid="receive_message"] .flow-markdown-body',
-      '[data-testid="message_text_content"]',
-    ]
+    return ['[data-testid="receive_message"] .flow-markdown-body', USER_QUERY_TEXT_SELECTOR]
+  }
+
+  private getUserMessageTextContainer(element: Element): HTMLElement | null {
+    if (element.matches(USER_QUERY_TEXT_SELECTOR)) {
+      return element as HTMLElement
+    }
+    return element.querySelector(USER_QUERY_TEXT_SELECTOR) as HTMLElement | null
+  }
+
+  extractUserQueryMarkdown(element: Element): string {
+    const textContainer = this.getUserMessageTextContainer(element)
+    return textContainer?.textContent?.trim() || ""
+  }
+
+  replaceUserQueryContent(element: Element, html: string): boolean {
+    const textContainer = this.getUserMessageTextContainer(element)
+    if (!textContainer) return false
+
+    if (textContainer.nextElementSibling?.classList.contains("gh-user-query-markdown")) {
+      return false
+    }
+
+    const rendered = document.createElement("div")
+    rendered.className =
+      `${textContainer.className} gh-user-query-markdown gh-markdown-preview`.trim()
+    rendered.innerHTML = html
+
+    // 复用原始容器的内联样式，避免站点字体大小变量丢失
+    const inlineStyle = textContainer.getAttribute("style")
+    if (inlineStyle) {
+      rendered.setAttribute("style", inlineStyle)
+    }
+
+    textContainer.style.display = "none"
+    textContainer.after(rendered)
+    return true
   }
 
   // ===== 模型切换 =====
@@ -494,10 +531,9 @@ export class DoubaoAdapter extends SiteAdapter {
     // union_message 不存在时的 fallback：直接从消息列表中提取
     if (messageBlocks.length === 0) {
       if (includeUserQueries) {
-        const userMessages = container.querySelectorAll('[data-testid="send_message"]')
+        const userMessages = container.querySelectorAll(USER_QUERY_SELECTOR)
         userMessages.forEach((userMsg) => {
-          const text =
-            userMsg.querySelector('[data-testid="message_text_content"]')?.textContent?.trim() || ""
+          const text = this.extractUserQueryMarkdown(userMsg)
           if (!text) return
 
           let wordCount: number | undefined
@@ -538,10 +574,9 @@ export class DoubaoAdapter extends SiteAdapter {
       }
 
       if (includeUserQueries) {
-        const userMsg = block.querySelector('[data-testid="send_message"]')
+        const userMsg = block.querySelector(USER_QUERY_SELECTOR)
         if (userMsg) {
-          const text =
-            userMsg.querySelector('[data-testid="message_text_content"]')?.textContent?.trim() || ""
+          const text = this.extractUserQueryMarkdown(userMsg)
           if (text) {
             items.push({
               level: 0,
@@ -567,7 +602,7 @@ export class DoubaoAdapter extends SiteAdapter {
 
   getExportConfig(): ExportConfig | null {
     return {
-      userQuerySelector: '[data-testid="send_message"]',
+      userQuerySelector: USER_QUERY_SELECTOR,
       assistantResponseSelector: '[data-testid="receive_message"]',
       turnSelector: null,
       useShadowDOM: false,
@@ -619,6 +654,11 @@ export class DoubaoAdapter extends SiteAdapter {
       // 必须加上 .w-fit 限制，否则 [class*="max-w-"] 会错误匹配到外层的 .max-w-full 导致气泡右对齐布局崩溃
       {
         selector: '[data-testid="send_message"] .w-fit[class*="max-w-"]',
+        property: "max-width",
+      },
+      {
+        selector:
+          '[data-testid="message_content"].justify-end [data-testid="message_text_content"].w-fit[class*="max-w-"]',
         property: "max-width",
       },
     ]

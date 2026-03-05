@@ -6,6 +6,7 @@
  */
 
 import type { SiteAdapter } from "~adapters/base"
+import { SITE_IDS } from "~constants"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { initCopyButtons, showCopySuccess } from "~utils/icons"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
@@ -247,7 +248,7 @@ function looksLikeMarkdown(text: string): boolean {
 export class UserQueryMarkdownRenderer {
   private adapter: SiteAdapter
   private enabled: boolean
-  private processedElements = new WeakSet<Element>()
+  private processedElements = new WeakMap<Element, string>()
   private stopWatch: (() => void) | null = null
   private rescanTimer: number | null = null
   private injectedShadowRoots = new WeakSet<ShadowRoot>()
@@ -287,6 +288,12 @@ export class UserQueryMarkdownRenderer {
         },
         { shadow: true },
       )
+
+      // 兜底重扫：豆包会先插入空节点，再异步填充文本
+      // 仅靠 each() 的“新增节点回调一次”可能错过最终内容
+      if (this.adapter.getSiteId() === SITE_IDS.DOUBAO) {
+        this.startRescanTimer()
+      }
     }
   }
 
@@ -387,16 +394,16 @@ export class UserQueryMarkdownRenderer {
   }
 
   private processQueryElement(element: Element) {
-    // 避免重复处理
-    if (this.processedElements.has(element)) return
-    this.processedElements.add(element)
-
     // 1. 使用适配器提取原始 Markdown 文本
     const rawMarkdown = this.adapter.extractUserQueryMarkdown(element)
     if (!rawMarkdown) return
 
     // 2. 检测是否像 Markdown
     if (!looksLikeMarkdown(rawMarkdown)) return
+
+    // 避免对相同文本重复渲染
+    const processedMarkdown = this.processedElements.get(element)
+    if (processedMarkdown === rawMarkdown) return
 
     // 3. 渲染成 HTML
     const html = renderMarkdown(rawMarkdown, false)
@@ -410,7 +417,7 @@ export class UserQueryMarkdownRenderer {
     }
 
     // 5. 使用适配器替换内容
-    this.adapter.replaceUserQueryContent(element, html)
+    const replaced = this.adapter.replaceUserQueryContent(element, html)
 
     // 6. 初始化复制按钮的 SVG 图标
     // 先尝试在主文档中查找，再在 Shadow DOM 中查找
@@ -423,6 +430,13 @@ export class UserQueryMarkdownRenderer {
     }
     if (container) {
       initCopyButtons(container, { size: 14, color: "#6b7280" })
+      this.processedElements.set(element, rawMarkdown)
+      return
+    }
+
+    // replace 成功但容器查找稍慢时，也先记录，避免重复插入
+    if (replaced) {
+      this.processedElements.set(element, rawMarkdown)
     }
   }
 
@@ -460,7 +474,7 @@ export class UserQueryMarkdownRenderer {
    */
   destroy() {
     this.stop()
-    this.processedElements = new WeakSet()
+    this.processedElements = new WeakMap()
     this.injectedShadowRoots = new WeakSet()
 
     // 移除全局样式
