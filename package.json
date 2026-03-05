@@ -108,7 +108,8 @@
       "https://chatgpt.com/*",
       "https://chat.openai.com/*",
       "https://grok.com/*",
-      "https://claude.ai/*"
+      "https://claude.ai/*",
+      "https://www.doubao.com/*"
     ],
     "optional_host_permissions": [
       "<all_urls>"

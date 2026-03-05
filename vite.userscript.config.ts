@@ -31,8 +31,8 @@ function loadLocalizedMetadata(): {
   description: Record<string, string>
 } {
 
-  const seoNameCN = ", 全能AI助手 (支持 Gemini, ChatGPT, Claude, Grok, AI Studio)"
-  const seoNameEN = " (Support Gemini, ChatGPT, Claude, Grok, AI Studio)"
+  const seoNameCN = ", 全能AI助手 (支持 Gemini, ChatGPT, Claude, Grok, Doubao, AI Studio)"
+  const seoNameEN = " (Support Gemini, ChatGPT, Claude, Grok, Doubao, AI Studio)"
 
   const seoKeywordsCN = " | 功能: 实时大纲导航, 会话管理(文件夹/置顶/导出), 提示词库, 沉浸式宽屏/全屏/滚动锁定, 主题切换, Markdown渲染修复, LaTeX公式/表格复制, WebDAV同步, 隐私模式, 快捷键, 标签页重命名, 阅读历史恢复, Banana去水印"
   const seoKeywordsEN = " | Features: Real-time Outline, Conversation Manager (Folders/Pin/Export), Prompt Library, Immersion/Widescreen/Scroll Lock, Theme Switcher, Markdown Fix, LaTeX/Table Copy, WebDAV Sync, Privacy, Shortcuts, Tab Renamer, History Restore, Watermark Remover"
@@ -102,6 +102,7 @@ export default defineConfig({
           "https://chat.openai.com/*",
           "https://chatgpt.com/*",
           "https://claude.ai/*",
+          "https://www.doubao.com/*",
         ],
         grant: [
           "GM_getValue",

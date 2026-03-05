@@ -27,6 +27,7 @@
     <a href="https://gemini.google.com"><img src="https://img.shields.io/badge/Gemini-4285F4?logo=google%20gemini&logoColor=white&labelColor=4285F4&color=34A853" alt="Gemini"/></a>
     <a href="https://grok.com"><img src="https://img.shields.io/badge/Grok-000000?logo=x&logoColor=white" alt="Grok"/></a>
     <a href="https://claude.ai"><img src="https://img.shields.io/badge/Claude-D97757?logo=anthropic&logoColor=white" alt="Claude"/></a>
+    <a href="https://www.doubao.com"><img src="https://img.shields.io/badge/Doubao-0057FE?logo=bytedance&logoColor=white" alt="Doubao"/></a>
     <a href="https://aistudio.google.com"><img src="https://img.shields.io/badge/AI%20Studio-4285F4?logo=google&logoColor=white" alt="AI Studio"/></a>
     <a href="https://business.gemini.google/"><img src="https://img.shields.io/badge/Gemini%20Enterprise-9334E6?logo=google&logoColor=white" alt="Gemini Enterprise"/></a>
     <a href="https://github.com/urzeye/ophel/issues"><img src="https://img.shields.io/badge/More_coming_soon...-lightgrey" alt="More coming soon"/></a>
