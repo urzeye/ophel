@@ -699,6 +699,8 @@ export const zhTW = {
   backupValidationConversationsType: "conversations 應為物件類型",
   backupValidationHistoryType: "readingHistory 應為物件類型",
   backupTime: "備份時間",
+  backupType: "類型",
+  openAiPagesWillRefresh: "已開啟的 AI 頁面將重新整理。",
   dataManagementNote: "提示：匯出的檔案包含所有設定、對話記錄等資料。可用於備份或遷移到新裝置。",
   // WebDAV 同步
   webdavSectionTitle: "WebDAV 雲同步",

@@ -4,6 +4,7 @@
  */
 
 import { MULTI_PROP_STORES, ZUSTAND_KEYS } from "~constants/defaults"
+import { validateBackupData } from "~utils/backup-validator"
 import { APP_NAME } from "~utils/config"
 import { MSG_WEBDAV_REQUEST } from "~utils/messaging"
 
@@ -411,7 +412,6 @@ export class WebDAVSyncManager {
       const backupData = JSON.parse(text)
 
       // 基础格式和数据类型校验
-      const { validateBackupData } = await import("~utils/backup-validator")
       const validation = validateBackupData(backupData)
       if (!validation.valid) {
         console.error("Backup validation failed:", validation.errorKeys)

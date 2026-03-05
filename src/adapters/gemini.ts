@@ -53,6 +53,9 @@ const GEMINI_CANCEL_KEYWORDS = [
 ]
 
 const GEMINI_EXPORT_THOUGHT_MARKER_ATTR = "data-ophel-export-thought-id"
+const GEMINI_EMAIL_REGEX = /([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i
+const GEMINI_ACCOUNT_HINT_REGEX =
+  /(google|account|账号|帳號|conta|compte|cuenta|konto|アカウント|계정|учет)/i
 
 interface GeminiExportLifecycleState {
   toggledThoughtIds: string[]
@@ -60,6 +63,8 @@ interface GeminiExportLifecycleState {
 
 export class GeminiAdapter extends SiteAdapter {
   private exportIncludeThoughtsOverride: boolean | null = null
+  private cachedAccountEmail: string | null = null
+  private accountEmailLastDetectAt = 0
 
   private getUserPathPrefix(): string {
     // Gemini 多账号路径格式：/u/2/app/...
@@ -72,9 +77,70 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   getCurrentCid(): string {
-    // gemini 使用 /u/<n> 作为账号隔离标识；无 /u/ 前缀时视为主账号 /u/0。
+    // 新逻辑：优先使用当前 Google 账号邮箱作为稳定标识（跨浏览器一致）
+    const accountEmail = this.getCurrentAccountEmail()
+    if (accountEmail) return accountEmail
+
+    // 兼容兜底：若暂时无法提取邮箱，回退到旧版 /u/<n> 索引
     const match = window.location.pathname.match(/^\/u\/(\d+)(?:\/|$)/)
     return match ? match[1] : "0"
+  }
+
+  private getCurrentAccountEmail(): string | null {
+    const now = Date.now()
+    // 缓存命中（含空值）时短暂复用，减少频繁 DOM 扫描
+    if (now - this.accountEmailLastDetectAt < 2000) {
+      return this.cachedAccountEmail
+    }
+    this.accountEmailLastDetectAt = now
+
+    const attrs = ["aria-label", "title", "data-email", "data-identifier"] as const
+    const selectors = [
+      "[data-email]",
+      '[data-identifier*="@"]',
+      '[aria-label*="@"]',
+      '[title*="@"]',
+    ]
+
+    const nodes = new Set<Element>()
+    selectors.forEach((selector) => {
+      document.querySelectorAll(selector).forEach((el) => nodes.add(el))
+    })
+
+    for (const node of nodes) {
+      for (const attr of attrs) {
+        const value = node.getAttribute(attr)
+        const email = this.extractEmailFromAttr(attr, value)
+        if (email) {
+          this.cachedAccountEmail = email
+          return email
+        }
+      }
+    }
+
+    return this.cachedAccountEmail
+  }
+
+  private extractEmailFromAttr(
+    attr: "aria-label" | "title" | "data-email" | "data-identifier",
+    value: string | null | undefined,
+  ): string | null {
+    if (!value) return null
+
+    if (attr === "data-email" || attr === "data-identifier") {
+      return this.extractEmail(value)
+    }
+
+    // aria/title 可能来自普通内容，限定为账号语义后再提取邮箱，避免误识别正文邮箱
+    if (!GEMINI_ACCOUNT_HINT_REGEX.test(value)) return null
+    return this.extractEmail(value)
+  }
+
+  private extractEmail(value: string | null | undefined): string | null {
+    if (!value) return null
+    const match = value.match(GEMINI_EMAIL_REGEX)
+    if (!match) return null
+    return match[1].toLowerCase()
   }
 
   match(): boolean {

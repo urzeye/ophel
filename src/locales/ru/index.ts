@@ -678,6 +678,8 @@ export const ru = {
   backupValidationConversationsType: "Ошибка чатов",
   backupValidationHistoryType: "Ошибка истории",
   backupTime: "Время",
+  backupType: "Тип",
+  openAiPagesWillRefresh: "Открытые страницы AI будут обновлены.",
   dataManagementNote: "Для копий или переезда. Включает всё: настройки, чаты, промпты.",
   permissionRequired: "Нет доступа",
   webdavPermissionDesc: "Нет прав на домен WebDAV.",

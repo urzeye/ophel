@@ -682,6 +682,8 @@ export const de = {
   backupValidationConversationsType: "Falsche Chats",
   backupValidationHistoryType: "Falsche Historie",
   backupTime: "Zeit",
+  backupType: "Typ",
+  openAiPagesWillRefresh: "Geöffnete AI-Seiten werden aktualisiert.",
   dataManagementNote: "Für Kopien oder PC-Umzug. Enthält alles (Einstellungen, Chats, Prompts).",
   permissionRequired: "Berechtigung fehlt",
   webdavPermissionDesc: "Kein Zugriff auf WebDAV-Domain.",

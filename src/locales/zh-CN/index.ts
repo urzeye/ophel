@@ -759,6 +759,8 @@ export const zhCN = {
   backupValidationConversationsType: "conversations 应为对象类型",
   backupValidationHistoryType: "readingHistory 应为对象类型",
   backupTime: "备份时间",
+  backupType: "类型",
+  openAiPagesWillRefresh: "已打开的 AI 页面将被刷新。",
   dataManagementNote: "提示：导出的文件包含所有设置、会话记录等数据。可用于备份或迁移到新设备。",
   // WebDAV 同步
   webdavSectionTitle: "WebDAV 云同步",

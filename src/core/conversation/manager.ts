@@ -6,7 +6,7 @@ import type {
   ExportLifecycleContext,
   SiteDeleteConversationResult,
 } from "~adapters/base"
-import { type Folder } from "~constants"
+import { SITE_IDS, type Folder } from "~constants"
 import { getConversationsStore, useConversationsStore } from "~stores/conversations-store"
 import { getFoldersStore, useFoldersStore } from "~stores/folders-store"
 import { useSettingsStore } from "~stores/settings-store"
@@ -49,6 +49,8 @@ export interface ConversationBatchDeleteResult {
   results: ConversationDeleteResult[]
 }
 
+type GeminiCidMigrationResult = "migrated" | "pending_email" | "noop"
+
 export class ConversationManager {
   public readonly siteAdapter: SiteAdapter
 
@@ -58,6 +60,8 @@ export class ConversationManager {
   private observerContainer: Node | null = null
   private titleWatcher: any = null // DOMToolkit watcher instance
   private pollInterval: NodeJS.Timeout | null = null
+  private geminiMigrationTimer: NodeJS.Timeout | null = null
+  private geminiMigrationRetryCount = 0
 
   // Settings
   private syncUnpin: boolean = false
@@ -110,6 +114,12 @@ export class ConversationManager {
     // 等待所有 stores hydration 完成
     await this.waitForHydration()
 
+    // Gemini 老用户升级迁移：将旧版数字 cid 自动迁移为当前账号邮箱 cid
+    const migrateResult = this.tryMigrateGeminiLegacyCidToEmail()
+    if (migrateResult === "pending_email") {
+      this.startGeminiMigrationRetry()
+    }
+
     // 检查是否刚恢复了备份数据，如果是则跳过自动同步以保持备份的干净状态
     const isRestore = await consumeRestoreFlag()
 
@@ -127,6 +137,111 @@ export class ConversationManager {
     }
 
     this.startSidebarObserver()
+  }
+
+  // Gemini 老数据迁移：数字 cid(0/1/2...) -> 当前邮箱 cid
+  private tryMigrateGeminiLegacyCidToEmail(): GeminiCidMigrationResult {
+    if (this.siteAdapter.getSiteId() !== SITE_IDS.GEMINI) return "noop"
+    const all = this.conversations
+    const geminiEntries = Object.entries(all).filter(([_, conv]) => this.isGeminiConversation(conv))
+    if (geminiEntries.length === 0) return "noop"
+
+    const legacyEntries = geminiEntries.filter(([_, conv]) => this.isLegacyGeminiCid(conv.cid))
+    if (legacyEntries.length === 0) return "noop"
+
+    const currentCid = this.siteAdapter.getCurrentCid?.()
+    if (!this.isEmailCid(currentCid)) return "pending_email"
+
+    // 优先迁移与当前 /u/<n> 对应的旧分桶；若不存在且仅有一个旧分桶，则迁移该分桶（跨浏览器导入场景）
+    const currentUserIndex = this.getGeminiUserIndexFromPath()
+    const hasCurrentIndexBucket = legacyEntries.some(
+      ([_, conv]) => (conv.cid || "0") === currentUserIndex,
+    )
+    const hasCurrentEmailData = geminiEntries.some(([_, conv]) => conv.cid === currentCid)
+    const legacyCidSet = new Set(legacyEntries.map(([_, conv]) => conv.cid || "0"))
+
+    let sourceLegacyCid: string | null = null
+    if (hasCurrentIndexBucket) {
+      sourceLegacyCid = currentUserIndex
+    } else if (!hasCurrentEmailData && legacyCidSet.size === 1) {
+      sourceLegacyCid = Array.from(legacyCidSet)[0]
+    }
+    if (!sourceLegacyCid) return "noop"
+
+    const toMigrate = legacyEntries.filter(([_, conv]) => (conv.cid || "0") === sourceLegacyCid)
+    if (toMigrate.length === 0) return "noop"
+
+    const nextConversations: Record<string, Conversation> = { ...all }
+    const userPathPrefix = this.getGeminiUserPathPrefix()
+
+    toMigrate.forEach(([id, conv]) => {
+      nextConversations[id] = {
+        ...conv,
+        cid: currentCid,
+        url: this.buildGeminiConversationUrl(id, userPathPrefix),
+      }
+    })
+
+    useConversationsStore.setState({ conversations: nextConversations })
+    this.notifyDataChange()
+    console.warn(
+      `[ConversationManager] Gemini legacy cid migrated: ${sourceLegacyCid} -> ${currentCid}, updated ${toMigrate.length} conversations.`,
+    )
+    return "migrated"
+  }
+
+  private startGeminiMigrationRetry() {
+    if (this.siteAdapter.getSiteId() !== SITE_IDS.GEMINI) return
+    if (this.geminiMigrationTimer) return
+
+    const maxRetries = 120 // 约 3 分钟，覆盖页面延迟渲染场景
+    this.geminiMigrationRetryCount = 0
+
+    this.geminiMigrationTimer = setInterval(() => {
+      const result = this.tryMigrateGeminiLegacyCidToEmail()
+      this.geminiMigrationRetryCount += 1
+
+      if (result !== "pending_email" || this.geminiMigrationRetryCount >= maxRetries) {
+        this.stopGeminiMigrationRetry()
+      }
+    }, 1500)
+  }
+
+  private stopGeminiMigrationRetry() {
+    if (this.geminiMigrationTimer) {
+      clearInterval(this.geminiMigrationTimer)
+      this.geminiMigrationTimer = null
+    }
+    this.geminiMigrationRetryCount = 0
+  }
+
+  private isEmailCid(cid: string | null | undefined): cid is string {
+    return typeof cid === "string" && cid.includes("@")
+  }
+
+  private isLegacyGeminiCid(cid: string | undefined): boolean {
+    if (!cid) return true
+    return /^\d+$/.test(cid)
+  }
+
+  private getGeminiUserIndexFromPath(): string {
+    const match = window.location.pathname.match(/^\/u\/(\d+)(?:\/|$)/)
+    return match ? match[1] : "0"
+  }
+
+  private getGeminiUserPathPrefix(): string {
+    const match = window.location.pathname.match(/^\/u\/(\d+)(?:\/|$)/)
+    return match ? `/u/${match[1]}` : ""
+  }
+
+  private isGeminiConversation(conv: Conversation): boolean {
+    if (conv.siteId === SITE_IDS.GEMINI) return true
+    if (conv.siteId && conv.siteId !== SITE_IDS.GEMINI) return false
+    return typeof conv.url === "string" && conv.url.includes("gemini.google.com")
+  }
+
+  private buildGeminiConversationUrl(id: string, userPathPrefix: string): string {
+    return `https://gemini.google.com${userPathPrefix}/app/${id}`
   }
 
   private async waitForHydration() {
@@ -200,6 +315,7 @@ export class ConversationManager {
   }
 
   destroy() {
+    this.stopGeminiMigrationRetry()
     this.stopSidebarObserver()
   }
 

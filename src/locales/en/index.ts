@@ -738,6 +738,8 @@ export const en = {
   backupValidationConversationsType: "conversations must be an object",
   backupValidationHistoryType: "readingHistory must be an object",
   backupTime: "Backup time",
+  backupType: "Type",
+  openAiPagesWillRefresh: "Opened AI pages will be refreshed.",
   dataManagementNote:
     "Note: The exported file contains all settings, conversation records, etc. Can be used for backup or migration to new devices.",
   permissionRequired: "Permission Required",

@@ -684,6 +684,8 @@ export const ko = {
   backupValidationConversationsType: "conversations는 객체여야 합니다",
   backupValidationHistoryType: "readingHistory는 객체여야 합니다",
   backupTime: "백업 시간",
+  backupType: "유형",
+  openAiPagesWillRefresh: "열려 있는 AI 페이지가 새로고침됩니다.",
   dataManagementNote:
     "참고: 내보낸 파일에는 모든 설정, 대화 기록 등이 포함됩니다. 백업 또는 새 장치로의 이전에 사용할 수 있습니다.",
   permissionRequired: "권한 필요",

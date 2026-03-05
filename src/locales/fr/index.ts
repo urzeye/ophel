@@ -681,6 +681,8 @@ export const fr = {
   backupValidationConversationsType: "Chats erronés",
   backupValidationHistoryType: "Historique erroné",
   backupTime: "Heure",
+  backupType: "Type",
+  openAiPagesWillRefresh: "Les pages AI ouvertes seront actualisées.",
   dataManagementNote: "Pour copies ou déménagement de PC. Inclut tout (réglages, chats, prompts).",
   permissionRequired: "Permission Manquante",
   webdavPermissionDesc: "Manque l'accès au domaine WebDAV.",

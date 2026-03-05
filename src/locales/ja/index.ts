@@ -722,6 +722,8 @@ export const ja = {
   backupValidationConversationsType: "conversations はオブジェクトである必要があります",
   backupValidationHistoryType: "readingHistory はオブジェクトである必要があります",
   backupTime: "バックアップ日時",
+  backupType: "種類",
+  openAiPagesWillRefresh: "開いている AI ページは更新されます。",
   dataManagementNote:
     "備考: 書き出されたファイルには、すべての設定、プロンプト、会話、履歴が含まれます。バックアップや新デバイスへの移行に使用してください。",
   permissionRequired: "権限が必要です",
