@@ -437,12 +437,24 @@ export class WebDAVSyncManager {
             if (MULTI_PROP_STORES.includes(k)) {
               // 多属性 store（如 conversations, readingHistory）
               // 通过检查 v 中是否包含与 store 同名的属性来区分格式
-              if (typeof v === "object" && !Array.isArray(v) && v[k] !== undefined) {
-                // 已包装格式：{ conversations: {...}, lastUsedFolderId: "..." }
-                state = v
+              if (typeof v === "object" && !Array.isArray(v)) {
+                const obj = v as Record<string, unknown>
+                if (k === "conversations" && obj.conversations !== undefined) {
+                  // 已包装格式：{ conversations: {...}, lastUsedFolderId: "..." }
+                  state = v
+                } else if (
+                  k === "readingHistory" &&
+                  (obj.history !== undefined || obj.lastCleanupRun !== undefined)
+                ) {
+                  // 已包装格式：{ history: {...}, lastCleanupRun: number }
+                  state = v
+                } else {
+                  // 扁平化格式（旧版本导出）
+                  state = k === "readingHistory" ? { history: v } : { [k]: v }
+                }
               } else {
                 // 扁平化格式（旧版本导出）：v 直接是主数据
-                state = { [k]: v }
+                state = k === "readingHistory" ? { history: v } : { [k]: v }
               }
             } else {
               // 单属性 store
@@ -499,6 +511,7 @@ export class WebDAVSyncManager {
       })
 
       const now = Date.now()
+      await this.saveConfig({ lastSyncTime: now, lastSyncStatus: "success" })
       return { success: true, messageKey: "webdavDownloadSuccess", timestamp: now }
     } catch (err) {
       await this.saveConfig({ lastSyncStatus: "failed" })

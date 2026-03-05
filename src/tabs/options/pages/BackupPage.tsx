@@ -463,16 +463,24 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _o
                 // 针对 multi-prop stores 的特殊处理 (如 conversations)
                 if (MULTI_PROP_STORES.includes(k)) {
                   // 通过检查 v 中是否包含与 store 同名的属性来区分格式
-                  if (
-                    typeof v === "object" &&
-                    !Array.isArray(v) &&
-                    (v as Record<string, unknown>)[k] !== undefined
-                  ) {
-                    // 已包装格式：{ conversations: {...}, lastUsedFolderId: "..." }
-                    stateContent = v
+                  if (typeof v === "object" && !Array.isArray(v)) {
+                    const obj = v as Record<string, unknown>
+                    if (k === "conversations" && obj.conversations !== undefined) {
+                      // 已包装格式：{ conversations: {...}, lastUsedFolderId: "..." }
+                      stateContent = v
+                    } else if (
+                      k === "readingHistory" &&
+                      (obj.history !== undefined || obj.lastCleanupRun !== undefined)
+                    ) {
+                      // 已包装格式：{ history: {...}, lastCleanupRun: number }
+                      stateContent = v
+                    } else {
+                      // 扁平化格式（旧版本导出）
+                      stateContent = k === "readingHistory" ? { history: v } : { [k]: v }
+                    }
                   } else {
                     // 扁平化格式（旧版本导出）：v 直接是主数据
-                    stateContent = { [k]: v }
+                    stateContent = k === "readingHistory" ? { history: v } : { [k]: v }
                   }
                 } else {
                   // prompts, settings 等通常 state key = store name

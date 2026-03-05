@@ -608,7 +608,7 @@ export const RESTORE_FLAG_TTL_MS = 10 * 1000
 let restoreFlagPromise: Promise<boolean> | null = null
 
 /**
- * 消费"恢复备份"标记（仅首次返回 true）
+ * 消费"恢复备份"标记（TTL 窗口内返回 true）
  * - 用于在恢复备份后跳过 autoFullSync，保持备份文件的干净状态
  * - 多处调用将共享结果，避免竞态
  */
@@ -631,17 +631,21 @@ export function consumeRestoreFlag(): Promise<boolean> {
         return
       }
 
-      // 消费后立即移除
-      chrome.storage.local.remove(RESTORE_FLAG_KEY, () => {
-        const ts = typeof rawValue === "number" ? rawValue : Number(rawValue)
-        if (!Number.isFinite(ts)) {
-          resolve(true)
-          return
-        }
+      const ts = typeof rawValue === "number" ? rawValue : Number(rawValue)
+      if (!Number.isFinite(ts)) {
+        resolve(true)
+        return
+      }
 
-        const age = Date.now() - ts
-        resolve(age <= RESTORE_FLAG_TTL_MS)
-      })
+      const age = Date.now() - ts
+      if (age <= RESTORE_FLAG_TTL_MS) {
+        // 不立即移除，允许多个标签页在 TTL 窗口内都能读取到恢复标记，避免竞态
+        resolve(true)
+        return
+      }
+
+      // 标记过期后清理，防止长期残留
+      chrome.storage.local.remove(RESTORE_FLAG_KEY, () => resolve(false))
     })
   })
 
