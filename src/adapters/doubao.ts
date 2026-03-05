@@ -453,17 +453,38 @@ export class DoubaoAdapter extends SiteAdapter {
     const container = document.querySelector('[data-testid="message-list"]')
     if (!container) return items
 
-    const collectHeadings = (root: ParentNode) => {
-      root.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((heading) => {
+    const collectHeadings = (root: ParentNode, parentBlock?: Element | null) => {
+      const headings = Array.from(root.querySelectorAll("h1, h2, h3, h4, h5, h6"))
+      headings.forEach((heading, index) => {
         const level = parseInt(heading.tagName[1], 10)
         if (level > maxLevel) return
         const text = heading.textContent?.trim() || ""
         if (!text) return
+
+        let wordCount: number | undefined
+        if (showWordCount) {
+          let nextBoundaryEl: Element | null = null
+          // Find the next heading of the SAME or HIGHER level (smaller number) as the boundary
+          for (let i = index + 1; i < headings.length; i++) {
+            const candidate = headings[i]
+            const candidateLevel = parseInt(candidate.tagName[1], 10)
+            if (candidateLevel <= level) {
+              nextBoundaryEl = candidate
+              break
+            }
+          }
+          wordCount = this.calculateRangeWordCount(
+            heading,
+            nextBoundaryEl,
+            parentBlock || container,
+          )
+        }
+
         items.push({
           level,
           text,
-          element: heading,
-          wordCount: showWordCount ? text.length : undefined,
+          element: heading as HTMLElement,
+          wordCount,
         })
       })
     }
@@ -478,13 +499,27 @@ export class DoubaoAdapter extends SiteAdapter {
           const text =
             userMsg.querySelector('[data-testid="message_text_content"]')?.textContent?.trim() || ""
           if (!text) return
+
+          let wordCount: number | undefined
+          if (showWordCount) {
+            // Find the immediate next receive_message manually in fallback mode
+            let nextRoot = userMsg.nextElementSibling
+            while (nextRoot && !nextRoot.querySelector('[data-testid="receive_message"]')) {
+              nextRoot = nextRoot.nextElementSibling
+            }
+            if (nextRoot) {
+              const md = nextRoot.querySelector(".flow-markdown-body")
+              wordCount = md?.textContent?.length || 0
+            }
+          }
+
           items.push({
             level: 0,
             text: text.length > 80 ? text.slice(0, 80) + "..." : text,
-            element: userMsg,
+            element: userMsg as HTMLElement,
             isUserQuery: true,
             isTruncated: text.length > 80,
-            wordCount: showWordCount ? text.length : undefined,
+            wordCount,
           })
         })
       }
@@ -495,6 +530,13 @@ export class DoubaoAdapter extends SiteAdapter {
     }
 
     messageBlocks.forEach((block) => {
+      let aiWordCount = 0
+      const aiMsg = block.querySelector('[data-testid="receive_message"]')
+      const markdown = aiMsg?.querySelector(".flow-markdown-body")
+      if (markdown && showWordCount) {
+        aiWordCount = markdown.textContent?.length || 0
+      }
+
       if (includeUserQueries) {
         const userMsg = block.querySelector('[data-testid="send_message"]')
         if (userMsg) {
@@ -504,20 +546,18 @@ export class DoubaoAdapter extends SiteAdapter {
             items.push({
               level: 0,
               text: text.length > 80 ? text.slice(0, 80) + "..." : text,
-              element: userMsg,
+              element: userMsg as HTMLElement,
               isUserQuery: true,
               isTruncated: text.length > 80,
-              wordCount: showWordCount ? text.length : undefined,
+              wordCount: showWordCount ? aiWordCount : undefined,
             })
           }
         }
       }
 
-      const aiMsg = block.querySelector('[data-testid="receive_message"]')
-      if (!aiMsg) return
-      const markdown = aiMsg.querySelector(".flow-markdown-body")
-      if (!markdown) return
-      collectHeadings(markdown)
+      if (markdown) {
+        collectHeadings(markdown, markdown)
+      }
     })
 
     return items
