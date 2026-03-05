@@ -608,6 +608,8 @@ export class DoubaoAdapter extends SiteAdapter {
         property: "--message-block-container-inline-width",
       },
       { selector: ".max-w-\\(--content-max-width\\)", property: "max-width" },
+      // /code/chat 专用结构
+      { selector: ".chrome70-container", property: "--center-content-max-width" },
     ]
   }
 
