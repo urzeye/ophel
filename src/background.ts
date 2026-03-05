@@ -11,6 +11,7 @@ import {
   MSG_OPEN_URL,
   MSG_PROXY_FETCH,
   MSG_REQUEST_PERMISSIONS,
+  MSG_RESTORE_DATA,
   MSG_REVOKE_PERMISSIONS,
   MSG_SET_CLAUDE_SESSION_KEY,
   MSG_SHOW_NOTIFICATION,
@@ -383,6 +384,37 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           sendResponse({ success: true, tabs: tabs.length })
         } catch (err) {
           console.error("Broadcast clear all data failed:", err)
+          sendResponse({ success: false, error: (err as Error).message })
+        }
+      })()
+      break
+
+    case MSG_RESTORE_DATA:
+      ;(async () => {
+        try {
+          const targets = [
+            "https://gemini.google.com/*",
+            "https://business.gemini.google/*",
+            "https://aistudio.google.com/*",
+            "https://grok.com/*",
+            "https://chat.openai.com/*",
+            "https://chatgpt.com/*",
+            "https://claude.ai/*",
+            "https://www.doubao.com/*",
+          ]
+          const tabs = await chrome.tabs.query({ url: targets })
+          await Promise.all(
+            tabs
+              .filter((tab) => tab.id)
+              .map((tab) =>
+                chrome.tabs.sendMessage(tab.id as number, { type: MSG_RESTORE_DATA }).catch(() => {
+                  // 忽略未注入内容脚本的页面
+                }),
+              ),
+          )
+          sendResponse({ success: true, tabs: tabs.length })
+        } catch (err) {
+          console.error("Broadcast restore data failed:", err)
           sendResponse({ success: false, error: (err as Error).message })
         }
       })()

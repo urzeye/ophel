@@ -119,6 +119,13 @@ export interface ClearAllDataMessage {
   type: typeof MSG_CLEAR_ALL_DATA
 }
 
+// 恢复备份数据（通知各上下文重载页面以加载最新数据）
+export const MSG_RESTORE_DATA = "RESTORE_DATA"
+
+export interface RestoreDataMessage {
+  type: typeof MSG_RESTORE_DATA
+}
+
 // 设置Claude SessionKey Cookie
 export const MSG_SET_CLAUDE_SESSION_KEY = "SET_CLAUDE_SESSION_KEY"
 
@@ -167,6 +174,7 @@ export type ExtensionMessage =
   | OpenOptionsPageMessage
   | OpenUrlMessage
   | ClearAllDataMessage
+  | RestoreDataMessage
   | SetClaudeSessionKeyMessage
   | TestClaudeTokenMessage
   | GetClaudeSessionKeyMessage

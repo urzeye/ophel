@@ -22,6 +22,7 @@ import {
   htmlToMarkdown,
 } from "~utils/exporter"
 import { t } from "~utils/i18n"
+import { consumeRestoreFlag } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
 import type { Conversation, ConversationData, Tag } from "./types"
@@ -109,9 +110,12 @@ export class ConversationManager {
     // 等待所有 stores hydration 完成
     await this.waitForHydration()
 
+    // 检查是否刚恢复了备份数据，如果是则跳过自动同步以保持备份的干净状态
+    const isRestore = await consumeRestoreFlag()
+
     // 首次安装或当前站点数据为空时，自动加载全部会话
     const currentSiteCount = Object.keys(this.getAllConversations()).length
-    if (currentSiteCount === 0 && this.siteAdapter.loadAllConversations) {
+    if (currentSiteCount === 0 && this.siteAdapter.loadAllConversations && !isRestore) {
       try {
         const sidebarReady = await this.waitForSidebarReady()
         if (sidebarReady) {

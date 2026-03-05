@@ -22,7 +22,7 @@ import { usePromptsStore } from "~stores/prompts-store"
 import { useReadingHistoryStore } from "~stores/reading-history-store"
 import { getSettingsState, useSettingsStore } from "~stores/settings-store"
 import { useTagsStore } from "~stores/tags-store"
-import { MSG_CLEAR_ALL_DATA } from "~utils/messaging"
+import { MSG_CLEAR_ALL_DATA, MSG_RESTORE_DATA } from "~utils/messaging"
 
 const resetAllStores = () => {
   useSettingsStore.getState().resetSettings()
@@ -97,6 +97,13 @@ if (!window.ophelInitialized) {
         if (message.type === MSG_CLEAR_ALL_DATA) {
           handleClearAllData()
           resetAllStores()
+          sendResponse({ success: true })
+          return true
+        }
+
+        if (message.type === MSG_RESTORE_DATA) {
+          // 收到恢复数据的广播时，刷新页面使得数据从 Storage 重新读取并保证 Zustand hydration 最新的内容
+          window.location.reload()
           sendResponse({ success: true })
           return true
         }

@@ -21,8 +21,8 @@ import { useReadingHistoryStore } from "~stores/reading-history-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { useTagsStore } from "~stores/tags-store"
 import { t } from "~utils/i18n"
-import { MSG_CLEAR_ALL_DATA } from "~utils/messaging"
-import { CLEAR_ALL_FLAG_KEY, DEFAULT_SETTINGS } from "~utils/storage"
+import { MSG_CLEAR_ALL_DATA, MSG_RESTORE_DATA } from "~utils/messaging"
+import { CLEAR_ALL_FLAG_KEY, DEFAULT_SETTINGS, RESTORE_FLAG_KEY } from "~utils/storage"
 import { showToast as showDomToast } from "~utils/toast"
 
 import { PageTitle, SettingCard, SettingRow } from "../components"
@@ -82,7 +82,7 @@ const RemoteBackupModal: React.FC<{
     setConfirmConfig({
       show: true,
       title: t("restore") || "恢复",
-      message: `确定要恢复备份 "${file.name}" 吗？当前数据将被覆盖。`,
+      message: `确定要恢复备份 "${file.name}" 吗？当前数据将被覆盖，已打开的 AI 页面将被刷新。`,
       danger: true,
       onConfirm: async () => {
         setConfirmConfig((prev) => ({ ...prev, show: false }))
@@ -91,6 +91,18 @@ const RemoteBackupModal: React.FC<{
           const manager = getWebDAVSyncManager()
           const result = await manager.download(file.name)
           if (result.success) {
+            try {
+              if (platform.type === "extension" && typeof chrome !== "undefined") {
+                await new Promise<void>((resolve, reject) =>
+                  chrome.storage.local.set({ [RESTORE_FLAG_KEY]: Date.now() }, () =>
+                    chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
+                  ),
+                )
+                await chrome.runtime.sendMessage({ type: MSG_RESTORE_DATA })
+              }
+            } catch {
+              // ignore
+            }
             showDomToast(t("restoreSuccess") || "恢复成功，即将刷新页面...")
             setTimeout(() => {
               onRestore()
@@ -430,7 +442,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _o
       setConfirmConfig({
         show: true,
         title: t("importData") || "导入数据",
-        message: `${t("importConfirm") || "确定导入？"}\n${t("backupTime") || "备份时间"}: ${data.timestamp}\n类型: ${data.type || "未知"}`,
+        message: `${t("importConfirm") || "确定导入？"}\n${t("backupTime") || "备份时间"}: ${data.timestamp}\n类型: ${data.type || "未知"}\n\n已打开的 AI 页面将被刷新。`,
         danger: true,
         onConfirm: async () => {
           setConfirmConfig((prev) => ({ ...prev, show: false }))
@@ -492,6 +504,19 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _o
                 chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
               ),
             )
+
+            try {
+              if (platform.type === "extension" && typeof chrome !== "undefined") {
+                await new Promise<void>((resolve, reject) =>
+                  chrome.storage.local.set({ [RESTORE_FLAG_KEY]: Date.now() }, () =>
+                    chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
+                  ),
+                )
+                await chrome.runtime.sendMessage({ type: MSG_RESTORE_DATA })
+              }
+            } catch {
+              // ignore
+            }
 
             showDomToast(t("importSuccess") || "导入成功")
             setTimeout(() => window.location.reload(), 1000)
