@@ -37,6 +37,7 @@ const DIALOG_STYLES = `
     color: var(--gh-text-secondary, #6b7280);
     margin-bottom: 20px;
     line-height: 1.5;
+    white-space: pre-wrap;
   }
   .gh-dialog-buttons {
     display: flex;
