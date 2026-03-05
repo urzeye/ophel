@@ -582,6 +582,11 @@ export class DoubaoAdapter extends SiteAdapter {
 
   // ===== 其他 =====
 
+  isGenerating(): boolean {
+    const stopBtn = document.querySelector('[data-testid="chat_input_local_break_button"]')
+    return stopBtn !== null && (stopBtn as HTMLElement).offsetParent !== null
+  }
+
   getNewChatButtonSelectors(): string[] {
     return ["#create_conversation_button"]
   }
