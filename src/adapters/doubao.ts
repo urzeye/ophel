@@ -600,7 +600,25 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getWidthSelectors(): Array<{ selector: string; property: string }> {
-    return [{ selector: '[data-container-name="main"]', property: "max-width" }]
+    return [
+      { selector: '[data-container-name="main"]', property: "max-width" },
+      // 匹配豆包新的 DOM 结构里限制对话区宽度的容器
+      {
+        selector: '[data-testid="message-block-container"]',
+        property: "--message-block-container-inline-width",
+      },
+      { selector: ".max-w-\\(--content-max-width\\)", property: "max-width" },
+    ]
+  }
+
+  getUserQueryWidthSelectors(): Array<{ selector: string; property: string }> {
+    return [
+      {
+        selector:
+          '[data-testid="send_message"] .max-w-450, [data-testid="send_message"] [class*="max-w-"]',
+        property: "max-width",
+      },
+    ]
   }
 
   // ===== 专用滚动补偿与历史隔离机制 (针对豆包 column-reverse 特殊处理) =====
