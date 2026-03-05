@@ -193,13 +193,15 @@ export class WebDAVSyncManager {
             // 处理 Zustand persist 格式：提取 state 中的数据
             // 格式: { state: { settings: {...} | prompts: [...] | conversations: {...} }, version: 0 }
             if (ZUSTAND_KEYS.includes(k) && parsed?.state) {
-              // 直接提取 state 中与 key 同名的属性（主数据）
-              // 例如: prompts store 的 state 中有 prompts 数组
-              // 例如: conversations store 的 state 中有 conversations 对象
-              if (parsed.state[k] !== undefined) {
+              if (MULTI_PROP_STORES.includes(k)) {
+                // 多属性 store（如 conversations, readingHistory）：保留整个 state
+                // 避免丢失 lastUsedFolderId、lastCleanupRun 等辅助属性
+                parsed = parsed.state
+              } else if (parsed.state[k] !== undefined) {
+                // 单属性 store：直接提取 state 中与 key 同名的属性
                 parsed = parsed.state[k]
               } else {
-                // 如果没有同名属性，保留整个 state 内容
+                // 兜底：保留整个 state 内容
                 parsed = parsed.state
               }
             }
@@ -434,13 +436,12 @@ export class WebDAVSyncManager {
             let state: Record<string, any>
             if (MULTI_PROP_STORES.includes(k)) {
               // 多属性 store（如 conversations, readingHistory）
-              // 如果导入的数据已经是包含多个属性的对象，直接使用
-              // 否则（扁平化格式），将其包装为 { [k]: v }
-              if (typeof v === "object" && !Array.isArray(v) && Object.keys(v).length > 1) {
-                // 旧格式：已经是 { conversations: {...}, lastUsedFolderId: "..." }
+              // 通过检查 v 中是否包含与 store 同名的属性来区分格式
+              if (typeof v === "object" && !Array.isArray(v) && v[k] !== undefined) {
+                // 已包装格式：{ conversations: {...}, lastUsedFolderId: "..." }
                 state = v
               } else {
-                // 扁平化格式：v 直接是主数据（如 conversations 对象）
+                // 扁平化格式（旧版本导出）：v 直接是主数据
                 state = { [k]: v }
               }
             } else {

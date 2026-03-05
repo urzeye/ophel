@@ -336,10 +336,11 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _o
             try {
               let parsed = typeof v === "string" ? JSON.parse(v) : v
               if (ZUSTAND_KEYS.includes(k) && parsed?.state) {
-                // 如果是 Zustand persist 数据，提取 state
-                // 但为了兼容导入，我们通常需要保持结构或在导入时处理。
-                // 这里保持原逻辑：导出 "hydrated" 的纯数据对象
-                if (parsed.state[k] !== undefined) {
+                if (MULTI_PROP_STORES.includes(k)) {
+                  // 多属性 store：保留整个 state（含 lastUsedFolderId 等辅助属性）
+                  parsed = parsed.state
+                } else if (parsed.state[k] !== undefined) {
+                  // 单属性 store：直接提取主数据
                   parsed = parsed.state[k]
                 } else {
                   parsed = parsed.state
@@ -461,13 +462,16 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _o
                 let stateContent = v
                 // 针对 multi-prop stores 的特殊处理 (如 conversations)
                 if (MULTI_PROP_STORES.includes(k)) {
+                  // 通过检查 v 中是否包含与 store 同名的属性来区分格式
                   if (
                     typeof v === "object" &&
                     !Array.isArray(v) &&
-                    Object.keys(v as object).length > 1
+                    (v as Record<string, unknown>)[k] !== undefined
                   ) {
+                    // 已包装格式：{ conversations: {...}, lastUsedFolderId: "..." }
                     stateContent = v
                   } else {
+                    // 扁平化格式（旧版本导出）：v 直接是主数据
                     stateContent = { [k]: v }
                   }
                 } else {
