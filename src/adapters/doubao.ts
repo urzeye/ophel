@@ -613,9 +613,10 @@ export class DoubaoAdapter extends SiteAdapter {
 
   getUserQueryWidthSelectors(): Array<{ selector: string; property: string }> {
     return [
+      // 匹配豆包用户提问气泡本身的 max-width
+      // 必须加上 .w-fit 限制，否则 [class*="max-w-"] 会错误匹配到外层的 .max-w-full 导致气泡右对齐布局崩溃
       {
-        selector:
-          '[data-testid="send_message"] .max-w-450, [data-testid="send_message"] [class*="max-w-"]',
+        selector: '[data-testid="send_message"] .w-fit[class*="max-w-"]',
         property: "max-width",
       },
     ]
