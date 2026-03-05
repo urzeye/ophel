@@ -238,9 +238,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
     }
   }, [])
 
-  // 防止 Grok 和 Claude 在 keydown 时抢占焦点
+  // 防止 Grok、Claude 和 Doubao 在 keydown 时抢占焦点
   useEffect(() => {
-    if (isOpen && (siteId === SITE_IDS.GROK || siteId === SITE_IDS.CLAUDE)) {
+    if (
+      isOpen &&
+      (siteId === SITE_IDS.GROK || siteId === SITE_IDS.CLAUDE || siteId === SITE_IDS.DOUBAO)
+    ) {
       const container = containerRef.current
       if (!container) {
         return
