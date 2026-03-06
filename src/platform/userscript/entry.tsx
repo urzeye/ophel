@@ -269,7 +269,8 @@ async function init() {
     hostname.includes("chatgpt.com") ||
     hostname.includes("chat.openai.com") ||
     hostname.includes("grok.com") ||
-    hostname.includes("claude.ai")
+    hostname.includes("claude.ai") ||
+    hostname.includes("deepseek.com")
 
   if (needsDelayedMount) {
     const delays = [500, 1000, 2000, 3000]

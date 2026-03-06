@@ -186,6 +186,11 @@ export class PromptManager {
     submitSelectors: string[],
     editor: HTMLElement | null,
   ): HTMLElement | null {
+    const adapterButton = this.adapter.findSubmitButton(editor)
+    if (adapterButton && this.isElementVisible(adapterButton)) {
+      return adapterButton
+    }
+
     const candidates = this.collectSubmitButtons(submitSelectors).filter((button) =>
       this.isElementVisible(button),
     )
@@ -316,6 +321,66 @@ export class PromptManager {
     return false
   }
 
+  private resolveSubmitKeyConfig(submitShortcut?: "enter" | "ctrlEnter"): {
+    key: "Enter" | "Ctrl+Enter"
+  } {
+    return submitShortcut === "ctrlEnter"
+      ? { key: "Ctrl+Enter" as const }
+      : submitShortcut === "enter"
+        ? { key: "Enter" as const }
+        : this.adapter.getSubmitKeyConfig()
+  }
+
+  private dispatchSubmitByKeyboard(
+    editor: HTMLElement,
+    submitShortcut?: "enter" | "ctrlEnter",
+  ): boolean {
+    editor.focus()
+    const keyConfig = this.resolveSubmitKeyConfig(submitShortcut)
+    const needModifier = keyConfig.key === "Ctrl+Enter"
+    const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform)
+    const eventInit: KeyboardEventInit = {
+      key: "Enter",
+      code: "Enter",
+      keyCode: 13,
+      which: 13,
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      ctrlKey: needModifier && !isMac,
+      metaKey: needModifier && isMac,
+      shiftKey: false,
+    }
+
+    editor.dispatchEvent(new KeyboardEvent("keydown", eventInit))
+    editor.dispatchEvent(new KeyboardEvent("keypress", eventInit))
+    editor.dispatchEvent(new KeyboardEvent("keyup", eventInit))
+    return true
+  }
+
+  private shouldRetryWithKeyboard(initialContent: string): boolean {
+    if (this.adapter.isGenerating?.()) {
+      return false
+    }
+
+    const editor = this.adapter.getTextareaElement() || this.adapter.findTextarea()
+    if (!editor) return false
+
+    const currentContent = this.getEditorContent(editor)
+      .replace(/[\u200B\u200C\u200D\uFEFF]/g, "")
+      .trim()
+    const normalizedInitial = initialContent.replace(/[\u200B\u200C\u200D\uFEFF]/g, "").trim()
+
+    if (!currentContent) return false
+    if (!normalizedInitial) return false
+
+    return (
+      currentContent === normalizedInitial ||
+      currentContent.includes(normalizedInitial) ||
+      normalizedInitial.includes(currentContent)
+    )
+  }
+
   async submitPrompt(submitShortcut?: "enter" | "ctrlEnter"): Promise<boolean> {
     this.syncAiStudioSubmitShortcut(submitShortcut ?? "enter")
     const submitSelectors = this.adapter.getSubmitButtonSelectors()
@@ -365,40 +430,41 @@ export class PromptManager {
         editor || this.adapter.getTextareaElement() || this.adapter.findTextarea()
       if (!activeEditor) return false
 
-      activeEditor.focus()
-      const keyConfig =
-        submitShortcut === "ctrlEnter"
-          ? { key: "Ctrl+Enter" as const }
-          : submitShortcut === "enter"
-            ? { key: "Enter" as const }
-            : this.adapter.getSubmitKeyConfig()
-      const needModifier = keyConfig.key === "Ctrl+Enter"
-      const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform)
-      const eventInit: KeyboardEventInit = {
-        key: "Enter",
-        code: "Enter",
-        keyCode: 13,
-        which: 13,
-        bubbles: true,
-        cancelable: true,
-        composed: true,
-        ctrlKey: needModifier && !isMac,
-        metaKey: needModifier && isMac,
-        shiftKey: false,
-      }
-
-      activeEditor.dispatchEvent(new KeyboardEvent("keydown", eventInit))
-      activeEditor.dispatchEvent(new KeyboardEvent("keypress", eventInit))
-      activeEditor.dispatchEvent(new KeyboardEvent("keyup", eventInit))
-      triggered = true
+      triggered = this.dispatchSubmitByKeyboard(activeEditor, submitShortcut)
     }
 
     if (!triggered) return false
 
-    return this.waitForSubmitConfirmation(initialContent, submitSelectors, {
+    let confirmed = await this.waitForSubmitConfirmation(initialContent, submitSelectors, {
       button: clickedButton || initialButton,
       clicked: !!clickedButton,
       wasDisabled: initialButtonWasDisabled,
     })
+
+    if (confirmed) {
+      return true
+    }
+
+    if (!clickedButton || !this.shouldRetryWithKeyboard(initialContent)) {
+      return false
+    }
+
+    const retryEditor = this.adapter.getTextareaElement() || this.adapter.findTextarea()
+    if (!retryEditor) {
+      return false
+    }
+
+    const keyboardTriggered = this.dispatchSubmitByKeyboard(retryEditor, submitShortcut)
+    if (!keyboardTriggered) {
+      return false
+    }
+
+    confirmed = await this.waitForSubmitConfirmation(initialContent, submitSelectors, {
+      button: this.findBestSubmitButton(submitSelectors, retryEditor),
+      clicked: false,
+      wasDisabled: false,
+    })
+
+    return confirmed
   }
 }

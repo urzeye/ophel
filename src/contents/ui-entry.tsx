@@ -16,6 +16,7 @@ export const config: PlasmoCSConfig = {
     "https://chatgpt.com/*",
     "https://claude.ai/*",
     "https://www.doubao.com/*",
+    "https://chat.deepseek.com/*",
   ],
 }
 
@@ -44,7 +45,8 @@ export const mountShadowHost: PlasmoMountShadowHost = ({
     hostname.includes("chatgpt.com") ||
     hostname.includes("chat.openai.com") ||
     hostname.includes("grok.com") ||
-    hostname.includes("claude.ai")
+    hostname.includes("claude.ai") ||
+    hostname.includes("deepseek.com")
 
   const doMount = () => {
     if (!shadowHost.parentElement) {

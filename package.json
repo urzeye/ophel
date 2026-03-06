@@ -109,7 +109,8 @@
       "https://chat.openai.com/*",
       "https://grok.com/*",
       "https://claude.ai/*",
-      "https://www.doubao.com/*"
+      "https://www.doubao.com/*",
+      "https://chat.deepseek.com/*"
     ],
     "optional_host_permissions": [
       "<all_urls>"

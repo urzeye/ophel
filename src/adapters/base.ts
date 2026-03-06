@@ -325,6 +325,14 @@ export abstract class SiteAdapter {
   }
 
   /**
+   * 精准查找提交按钮
+   * 当站点存在多个相邻 icon button，且仅靠通用选择器/距离判断容易误判时使用
+   */
+  findSubmitButton(_editor: HTMLElement | null): HTMLElement | null {
+    return null
+  }
+
+  /**
    * 获取发送消息的快捷键配置
    * 子类可覆盖以适配不同平台的发送键设置
    * @returns 发送键配置：key 为 "Enter" 或 "Ctrl+Enter"

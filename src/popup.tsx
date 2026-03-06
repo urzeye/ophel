@@ -41,6 +41,13 @@ const SUPPORTED_SITES = [
   },
   { name: "Grok", pattern: /grok\.com/, url: "https://grok.com", icon: "🤖" },
   { name: "Claude", pattern: /claude\.ai/, url: "https://claude.ai", icon: "🎭" },
+  { name: "豆包", pattern: /www\.doubao\.com/, url: "https://www.doubao.com", icon: "🌱" },
+  {
+    name: "DeepSeek",
+    pattern: /chat\.deepseek\.com/,
+    url: "https://chat.deepseek.com",
+    icon: "🌀",
+  },
 ]
 
 interface Prompt {

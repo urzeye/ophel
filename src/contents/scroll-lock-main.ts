@@ -18,6 +18,7 @@ export const config: PlasmoCSConfig = {
     "https://grok.com/*",
     "https://claude.ai/*",
     "https://www.doubao.com/*",
+    "https://chat.deepseek.com/*",
   ],
   world: "MAIN",
   run_at: "document_start", // 尽早运行以劫持 API

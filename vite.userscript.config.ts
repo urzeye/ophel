@@ -103,6 +103,7 @@ export default defineConfig({
           "https://chatgpt.com/*",
           "https://claude.ai/*",
           "https://www.doubao.com/*",
+          "https://chat.deepseek.com/*",
         ],
         grant: [
           "GM_getValue",

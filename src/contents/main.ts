@@ -44,6 +44,7 @@ export const config: PlasmoCSConfig = {
     "https://chatgpt.com/*",
     "https://claude.ai/*",
     "https://www.doubao.com/*",
+    "https://chat.deepseek.com/*",
   ],
   run_at: "document_idle",
 }
