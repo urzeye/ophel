@@ -14,6 +14,7 @@ import {
   SearchIcon,
   ToolsIcon,
 } from "~components/icons"
+import { SHORTCUT_META } from "~constants/shortcuts"
 
 // ==================== Tab ID 常量 ====================
 // 用于 Tab 切换判断，避免字符串字面量拼写错误
@@ -105,6 +106,8 @@ const SETTING_ID_ROUTE_RULES: SettingRouteRule[] = [
   { prefix: "panel-", route: { page: NAV_IDS.GENERAL, subTab: "panel" } },
   { prefix: "quick-buttons-", route: { page: NAV_IDS.GENERAL, subTab: "shortcuts" } },
   { prefix: "tools-menu-", route: { page: NAV_IDS.GENERAL, subTab: "toolsMenu" } },
+  { prefix: "shortcuts-", route: { page: NAV_IDS.SHORTCUTS } },
+  { prefix: "shortcut-binding-", route: { page: NAV_IDS.SHORTCUTS } },
   {
     prefix: "layout-",
     route: { page: NAV_IDS.SITE_SETTINGS, subTab: SITE_SETTINGS_TAB_IDS.LAYOUT },
@@ -190,6 +193,10 @@ export const SETTING_ID_ALIASES: Record<string, string> = {
   "siteSettings.modelLock": "model-lock-gemini",
   "globalSearch.promptEnterBehavior": "global-search-prompt-enter-behavior",
   "globalSearch.enableFuzzySearch": "global-search-fuzzy-search",
+  "globalSearch.doubleShift": "global-search-double-shift",
+  "shortcuts.enabled": "shortcuts-enabled",
+  "shortcuts.globalUrl": "shortcuts-global-url",
+  "features.prompts.submitShortcut": "shortcuts-prompt-submit-shortcut",
   "features.tab.openInNewTab": "tab-open-new",
   "features.tab.autoRename": "tab-auto-rename",
   "features.outline.autoUpdate": "outline-auto-update",
@@ -252,6 +259,27 @@ export const resolveSettingsNavigateDetail = (
     settingId: resolvedSettingId,
   }
 }
+
+const SHORTCUT_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = Object.entries(SHORTCUT_META).map(
+  ([actionId, meta]) => ({
+    settingId: `shortcut-binding-${actionId}`,
+    title: `快捷键：${meta.label}`,
+    keywords: [
+      "shortcut",
+      "shortcuts",
+      "keybinding",
+      "hotkey",
+      "keyboard",
+      "快捷键",
+      "键位",
+      "按键",
+      meta.label,
+      meta.labelKey,
+      actionId,
+      meta.category,
+    ],
+  }),
+)
 
 export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   {
@@ -443,6 +471,11 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     settingId: "conversation-sync-unpin",
     title: "同步时自动取消置顶",
     keywords: ["conversation", "sync", "unpin", "置顶"],
+  },
+  {
+    settingId: "conversation-sync-delete",
+    title: "删除时同步删除云端",
+    keywords: ["conversation", "sync", "delete", "cloud", "删除", "云端"],
   },
   {
     settingId: "export-custom-user-name",
@@ -645,6 +678,36 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     keywords: ["global search", "fuzzy", "search everywhere", "matching"],
   },
   {
+    settingId: "global-search-double-shift",
+    title: "全局搜索：双击 Shift 触发",
+    keywords: ["global search", "double shift", "shortcut", "全局搜索", "双击 shift", "快捷键"],
+  },
+  {
+    settingId: "global-search-shortcut-setting-link",
+    title: "全局搜索：快捷键设置入口",
+    keywords: ["global search", "shortcut", "keybinding", "全局搜索", "快捷键", "键位设置"],
+  },
+  {
+    settingId: "shortcuts-enabled",
+    title: "启用自定义快捷键",
+    keywords: ["shortcuts", "enable", "快捷键", "自定义", "总开关"],
+  },
+  {
+    settingId: "shortcuts-global-url",
+    title: "全局快捷键 URL",
+    keywords: ["shortcuts", "global url", "alt+g", "快捷键", "url"],
+  },
+  {
+    settingId: "shortcuts-browser-shortcuts",
+    title: "浏览器快捷键设置入口",
+    keywords: ["shortcuts", "browser shortcuts", "chrome://extensions/shortcuts", "快捷键"],
+  },
+  {
+    settingId: "shortcuts-prompt-submit-shortcut",
+    title: "发送快捷键",
+    keywords: ["shortcuts", "submit", "enter", "ctrl+enter", "发送", "快捷键"],
+  },
+  {
     settingId: "appearance-preset-light",
     title: "浅色主题预设",
     keywords: ["appearance", "theme", "light", "浅色"],
@@ -659,6 +722,7 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     title: "自定义主题样式",
     keywords: ["appearance", "custom style", "主题样式", "css"],
   },
+  ...SHORTCUT_SETTINGS_SEARCH_ITEMS,
 ]
 
 const SETTING_ID_ALIAS_SEARCH_MAP = Object.entries(SETTING_ID_ALIASES).reduce(

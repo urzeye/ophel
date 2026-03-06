@@ -257,6 +257,7 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
           label={t("enableShortcuts") || "启用自定义快捷键"}
           description={t("enableShortcutsDesc") || "启用或禁用所有自定义键盘快捷键"}
           checked={shortcuts?.enabled ?? true}
+          settingId="shortcuts-enabled"
           onChange={() =>
             setSettings({
               shortcuts: {
@@ -273,7 +274,8 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
           <>
             <SettingRow
               label={t("globalShortcutUrl") || "全局快捷键打开的 URL"}
-              description={t("globalShortcutUrlDesc") || "按下全局快捷键 Alt+G 时打开的网址"}>
+              description={t("globalShortcutUrlDesc") || "按下全局快捷键 Alt+G 时打开的网址"}
+              settingId="shortcuts-global-url">
               <input
                 type="text"
                 className="settings-input"
@@ -298,7 +300,8 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
               description={
                 t("globalShortcutsDesc") ||
                 "在浏览器任何页面都可使用，需要在浏览器扩展设置页面配置。"
-              }>
+              }
+              settingId="shortcuts-browser-shortcuts">
               {(() => {
                 const ua = navigator.userAgent
                 const isChrome = ua.includes("Chrome") && !ua.includes("Edg/")
@@ -382,7 +385,8 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
                 ).replace(/[\u3002.]$/, "")}
               </span>
             </div>
-          }>
+          }
+          settingId="shortcuts-prompt-submit-shortcut">
           <select
             className="settings-select"
             value={settings.features?.prompts?.submitShortcut ?? "enter"}

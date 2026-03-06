@@ -67,7 +67,12 @@ import {
   searchSettingsItems,
   type SettingsSearchItem,
 } from "~constants"
-import { DEFAULT_KEYBINDINGS, formatShortcut, SHORTCUT_ACTIONS } from "~constants/shortcuts"
+import {
+  DEFAULT_KEYBINDINGS,
+  formatShortcut,
+  SHORTCUT_ACTIONS,
+  SHORTCUT_META,
+} from "~constants/shortcuts"
 
 interface LocalizedLabelDefinition {
   key: string
@@ -233,7 +238,10 @@ const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "appearance-preset-dark": "darkModePreset",
   "appearance-preset-light": "lightModePreset",
   "chatgpt-markdown-fix": "chatgptMarkdownFixLabel",
+  "conversation-sync-delete": "conversationsSyncDeleteLabel",
   "global-search-fuzzy-search": "globalSearchEnableFuzzySearchLabel",
+  "global-search-double-shift": "doubleShiftToSearch",
+  "global-search-shortcut-setting-link": "globalSearchShortcutSettingLabel",
   "global-search-prompt-enter-behavior": "globalSearchPromptEnterBehaviorLabel",
   "claude-session-keys": "claudeSessionKeyTitle",
   "content-formula-copy": "formulaCopyLabel",
@@ -277,6 +285,10 @@ const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "reading-history-auto-restore": "readingHistoryAutoRestoreLabel",
   "reading-history-cleanup-days": "readingHistoryCleanup",
   "reading-history-persistence": "readingHistoryPersistenceLabel",
+  "shortcuts-enabled": "enableShortcuts",
+  "shortcuts-global-url": "globalShortcutUrl",
+  "shortcuts-browser-shortcuts": "globalShortcutsTitle",
+  "shortcuts-prompt-submit-shortcut": "promptSubmitShortcutLabel",
   "tab-auto-focus": "autoFocusLabel",
   "tab-auto-rename": "autoRenameTabLabel",
   "tab-notification-sound": "notificationSoundLabel",
@@ -668,6 +680,22 @@ export const App = () => {
           const modelLockLabel = getLocalizedText({ key: "tabModelLock", fallback: "Model Lock" })
           const siteLabel = getLocalizedText(siteLabelDefinition)
           return `${modelLockLabel}: ${siteLabel}`
+        }
+      }
+
+      if (item.settingId.startsWith("shortcut-binding-")) {
+        const actionId = item.settingId.slice("shortcut-binding-".length)
+        const shortcutMeta = SHORTCUT_META[actionId as keyof typeof SHORTCUT_META]
+        if (shortcutMeta) {
+          const shortcutsLabel = getLocalizedText({
+            key: "navShortcuts",
+            fallback: "Keyboard Shortcuts",
+          })
+          const actionLabel = getLocalizedText({
+            key: shortcutMeta.labelKey,
+            fallback: shortcutMeta.label,
+          })
+          return `${shortcutsLabel}: ${actionLabel}`
         }
       }
 
