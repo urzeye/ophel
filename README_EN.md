@@ -2,7 +2,7 @@
 
 > Turn AI chats into documents you can read, navigate, and reuse
 
-Language: **English** | [简体中文](./README.md)
+<sub>Language: <strong>English</strong> | <a href="./README.md">简体中文</a></sub>
 
 <div align="center">
   <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo"/>

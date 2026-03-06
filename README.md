@@ -2,7 +2,7 @@
 
 > 让 AI 对话如文档般可阅读、导航、复用
 
-Language: **简体中文** | [English](./README_EN.md)
+<sub>Language: <strong>简体中文</strong> | <a href="./README_EN.md">English</a></sub>
 
 <div align="center">
   <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
