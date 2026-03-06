@@ -2,6 +2,8 @@
 
 > 让 AI 对话如文档般可阅读、导航、复用
 
+Language: **简体中文** | [English](./README_EN.md)
+
 <div align="center">
   <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
 
@@ -36,8 +38,8 @@
     <a href="https://grok.com"><img src="https://img.shields.io/badge/Grok-000000?logo=x&logoColor=white" alt="Grok"/></a>
     <a href="https://claude.ai"><img src="https://img.shields.io/badge/Claude-D97757?logo=anthropic&logoColor=white" alt="Claude"/></a>
     <a href="https://aistudio.google.com"><img src="https://img.shields.io/badge/AI%20Studio-4285F4?logo=google&logoColor=white" alt="AI Studio"/></a>
-    <a href="https://www.doubao.com"><img src="https://img.shields.io/badge/Doubao-0057FE?logo=bytedance&logoColor=white" alt="Doubao"/></a>
     <a href="https://business.gemini.google/"><img src="https://img.shields.io/badge/Gemini%20Enterprise-9334E6?logo=google&logoColor=white" alt="Gemini Enterprise"/></a>
+    <a href="https://www.doubao.com"><img src="https://img.shields.io/badge/Doubao-0057FE?logo=bytedance&logoColor=white" alt="Doubao"/></a>
     <a href="https://github.com/urzeye/ophel/issues"><img src="https://img.shields.io/badge/More_coming_soon...-lightgrey" alt="More coming soon"/></a>
     </br>
     <img src="https://img.shields.io/github/package-json/v/urzeye/ophel?color=blue" alt="Version">
