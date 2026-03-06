@@ -63,6 +63,7 @@ export const SHORTCUT_ACTIONS = {
   COPY_LAST_CODE_BLOCK: "copyLastCodeBlock",
   TOGGLE_SCROLL_LOCK: "toggleScrollLock",
   FOCUS_INPUT: "focusInput",
+  OPEN_GLOBAL_SEARCH: "openGlobalSearch",
   STOP_GENERATION: "stopGeneration",
   TOGGLE_PROMPT_QUEUE: "togglePromptQueue",
 
@@ -191,6 +192,11 @@ export const SHORTCUT_META: Record<
     label: "聚焦输入框",
     category: "edit",
   },
+  openGlobalSearch: {
+    labelKey: "navGlobalSearch",
+    label: "全局搜索",
+    category: "edit",
+  },
   stopGeneration: {
     labelKey: "shortcutStopGeneration",
     label: "停止生成",
@@ -300,6 +306,7 @@ export const DEFAULT_KEYBINDINGS: Record<ShortcutActionId, ShortcutBinding> = {
   copyLastCodeBlock: { key: ";", alt: true },
   toggleScrollLock: { key: "s", alt: true },
   focusInput: { key: "i", alt: true },
+  openGlobalSearch: { key: "k", ctrl: true },
   stopGeneration: { key: "k", alt: true },
   togglePromptQueue: { key: "j", alt: true },
   showModelSelector: { key: "/", alt: true },

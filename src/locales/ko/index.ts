@@ -1084,9 +1084,14 @@ export const ko = {
   globalSearchEmptyCurrentSession: "현재 세션에 결과가 없습니다",
   globalSearchCategoriesLabel: "전체 검색 카테고리",
   globalSearchPageDesc: "Search Everywhere의 검색 동작과 인터랙션 세부 항목을 설정합니다",
-  globalSearchTriggerHint: "실행: Shift 두 번 또는 Ctrl/Cmd + K",
+  globalSearchTriggerHint: "실행: {shortcut}",
+  globalSearchTriggerDoubleShift: "Shift 두 번",
   globalSearchMatchingSettingsTitle: "검색 매칭",
   globalSearchMatchingSettingsDesc: "Search Everywhere가 검색 결과를 매칭하는 방식을 설정합니다",
+  globalSearchShortcutSettingLabel: "전역 검색 단축키",
+  globalSearchShortcutSettingDesc:
+    "단축키 설정으로 이동해 전역 검색 단축키를 사용자 지정하거나 비활성화합니다.",
+  globalSearchShortcutSettingAction: "설정으로 이동",
   globalSearchPromptSettingsTitle: "프롬프트 동작",
   globalSearchPromptSettingsDesc:
     "Search Everywhere에서 프롬프트 결과에 Enter를 눌렀을 때의 동작을 선택합니다",

@@ -1127,9 +1127,14 @@ export const ja = {
   globalSearchEmptyCurrentSession: "現在のセッションに結果がありません",
   globalSearchCategoriesLabel: "グローバル検索カテゴリ",
   globalSearchPageDesc: "Search Everywhere の検索動作と操作の詳細を設定します",
-  globalSearchTriggerHint: "起動方法：Shift を2回押す、または Ctrl/Cmd + K",
+  globalSearchTriggerHint: "起動方法：{shortcut}",
+  globalSearchTriggerDoubleShift: "Shift を2回押す",
   globalSearchMatchingSettingsTitle: "検索マッチング",
   globalSearchMatchingSettingsDesc: "Search Everywhere の結果マッチング方式を設定します",
+  globalSearchShortcutSettingLabel: "グローバル検索ショートカット",
+  globalSearchShortcutSettingDesc:
+    "ショートカット設定に移動して、グローバル検索ショートカットをカスタマイズまたは無効化します。",
+  globalSearchShortcutSettingAction: "設定へ移動",
   globalSearchPromptSettingsTitle: "プロンプト動作",
   globalSearchPromptSettingsDesc:
     "Search Everywhere でプロンプト結果に Enter を押したときの動作を選択します",

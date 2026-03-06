@@ -67,6 +67,7 @@ import {
   searchSettingsItems,
   type SettingsSearchItem,
 } from "~constants"
+import { DEFAULT_KEYBINDINGS, formatShortcut, SHORTCUT_ACTIONS } from "~constants/shortcuts"
 
 interface LocalizedLabelDefinition {
   key: string
@@ -353,24 +354,50 @@ export const App = () => {
   )
 
   const isMacLike = useMemo(() => isLikelyMacPlatform(), [])
-  const globalSearchPrimaryShortcutLabel = isMacLike ? "⌘K" : "Ctrl+K"
-  const globalSearchShortcutHintLabel = `${globalSearchPrimaryShortcutLabel} / double shift`
+  const globalSearchPrimaryBinding = useMemo(() => {
+    const userBinding = settings?.shortcuts?.keybindings?.[SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH]
+    if (userBinding === null) {
+      return null
+    }
+    return userBinding || DEFAULT_KEYBINDINGS[SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH]
+  }, [settings?.shortcuts?.keybindings])
+  const globalSearchPrimaryShortcutLabel = globalSearchPrimaryBinding
+    ? formatShortcut(globalSearchPrimaryBinding, isMacLike)
+    : ""
+  const isDoubleShiftSearchShortcutEnabled =
+    settings?.globalSearch?.doubleShift ?? DEFAULT_SETTINGS.globalSearch.doubleShift
+  const globalSearchShortcutHintLabel = useMemo(() => {
+    const labels: string[] = []
+
+    if (globalSearchPrimaryShortcutLabel) {
+      labels.push(globalSearchPrimaryShortcutLabel)
+    }
+    if (isDoubleShiftSearchShortcutEnabled) {
+      labels.push("double shift")
+    }
+
+    return labels.join(" / ")
+  }, [globalSearchPrimaryShortcutLabel, isDoubleShiftSearchShortcutEnabled])
+  const globalSearchOverlayHotkeyLabel =
+    globalSearchShortcutHintLabel || t("shortcutNotSet") || "未设置"
   const isGlobalSearchFuzzySearchEnabled =
     settings?.globalSearch?.enableFuzzySearch ?? DEFAULT_SETTINGS.globalSearch.enableFuzzySearch
 
-  const globalSearchShortcutNudgeText = useMemo(
-    () =>
-      formatLocalizedText(
-        {
-          key: "globalSearchShortcutNudge",
-          fallback: "下次可按 {shortcut} 快速打开",
-        },
-        {
-          shortcut: globalSearchShortcutHintLabel,
-        },
-      ),
-    [formatLocalizedText, globalSearchShortcutHintLabel],
-  )
+  const globalSearchShortcutNudgeText = useMemo(() => {
+    if (!globalSearchShortcutHintLabel) {
+      return ""
+    }
+
+    return formatLocalizedText(
+      {
+        key: "globalSearchShortcutNudge",
+        fallback: "下次可按 {shortcut} 快速打开",
+      },
+      {
+        shortcut: globalSearchShortcutHintLabel,
+      },
+    )
+  }, [formatLocalizedText, globalSearchShortcutHintLabel])
 
   const getGlobalSearchShortcutNudgeState = useCallback((): GlobalSearchShortcutNudgeState => {
     if (typeof window === "undefined") {
@@ -554,6 +581,10 @@ export const App = () => {
   ])
 
   const tryShowGlobalSearchShortcutNudge = useCallback(() => {
+    if (!globalSearchShortcutNudgeText) {
+      return
+    }
+
     const currentState = getGlobalSearchShortcutNudgeState()
     if (currentState.dismissed) {
       return
@@ -1588,6 +1619,17 @@ export const App = () => {
     isGlobalSettingsSearchOpenRef.current = isGlobalSettingsSearchOpen
   }, [isGlobalSettingsSearchOpen])
 
+  const openGlobalSearchByShortcut = useCallback(() => {
+    if (isGlobalSettingsSearchOpenRef.current) {
+      return
+    }
+
+    // 通过自定义快捷键触发时重置双击 Shift 状态，避免误判
+    lastShiftPressedAtRef.current = 0
+    markGlobalSearchShortcutUsed()
+    openGlobalSettingsSearch("shortcut")
+  }, [markGlobalSearchShortcutUsed, openGlobalSettingsSearch])
+
   useEffect(() => {
     const handleOpenSearchShortcut = (event: KeyboardEvent) => {
       // Use ref to check if search is already open
@@ -1598,23 +1640,6 @@ export const App = () => {
       // 非 Shift 按键会中断双击 Shift 检测，防止输入时误触
       if (event.key !== "Shift") {
         lastShiftPressedAtRef.current = 0
-      }
-
-      const isSearchHotkey =
-        (event.ctrlKey || event.metaKey) &&
-        !event.altKey &&
-        !event.shiftKey &&
-        event.key.toLowerCase() === "k"
-
-      if (isSearchHotkey) {
-        event.preventDefault()
-        event.stopPropagation()
-        event.stopImmediatePropagation()
-        // Ensure double-shift state is reset when opening via hotkey
-        lastShiftPressedAtRef.current = 0
-        markGlobalSearchShortcutUsed()
-        openGlobalSettingsSearch("shortcut")
-        return
       }
 
       if (event.key !== "Shift" || event.repeat || event.ctrlKey || event.metaKey || event.altKey) {
@@ -2218,6 +2243,7 @@ export const App = () => {
     onPanelToggle: () => setIsPanelOpen((prev) => !prev),
     onThemeToggle: handleThemeToggle,
     onOpenSettings: openSettingsModal,
+    onOpenGlobalSearch: openGlobalSearchByShortcut,
     isPanelVisible: isPanelOpen,
     isSnapped: !!edgeSnapState && !isEdgePeeking, // 吸附且未显示
     onShowSnappedPanel: () => {
@@ -2960,13 +2986,17 @@ export const App = () => {
         resultsRef={settingsSearchResultsRef}
         activeOptionId={activeGlobalSearchOptionId}
         inputValue={settingsSearchInputValue}
-        inputPlaceholder={`${resolvedActiveGlobalSearchCategoryText.placeholder}（${globalSearchPrimaryShortcutLabel}）`}
+        inputPlaceholder={
+          globalSearchPrimaryShortcutLabel
+            ? `${resolvedActiveGlobalSearchCategoryText.placeholder}（${globalSearchPrimaryShortcutLabel}）`
+            : resolvedActiveGlobalSearchCategoryText.placeholder
+        }
         onInputChange={(nextValue) => {
           commitSettingsSearchInputValue(nextValue)
           setActiveSearchSyntaxSuggestionIndex(-1)
           setSettingsSearchActiveIndex(0)
         }}
-        hotkeyLabel={globalSearchShortcutHintLabel}
+        hotkeyLabel={globalSearchOverlayHotkeyLabel}
         fuzzySearchToggleLabel={getLocalizedText({
           key: "globalSearchFuzzySearchToggle",
           fallback: "Fuzzy",

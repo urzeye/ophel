@@ -420,7 +420,8 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
               <SettingRow
                 key={actionId}
                 label={t(meta.labelKey) || meta.label}
-                disabled={!shortcuts?.enabled}>
+                disabled={!shortcuts?.enabled}
+                settingId={`shortcut-binding-${actionId}`}>
                 <ShortcutInput
                   binding={binding}
                   onChange={(b) => updateKeybinding(actionId, b)}

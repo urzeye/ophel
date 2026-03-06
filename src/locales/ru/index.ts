@@ -1073,10 +1073,15 @@ export const ru = {
   globalSearchEmptyCurrentSession: "Нет результатов в текущей сессии",
   globalSearchCategoriesLabel: "Категории глобального поиска",
   globalSearchPageDesc: "Настройка поведения и взаимодействия Search Everywhere",
-  globalSearchTriggerHint: "Запуск: двойное нажатие Shift или Ctrl/Cmd + K",
+  globalSearchTriggerHint: "Запуск: {shortcut}",
+  globalSearchTriggerDoubleShift: "двойное нажатие Shift",
   globalSearchMatchingSettingsTitle: "Сопоставление поиска",
   globalSearchMatchingSettingsDesc:
     "Настройте, как Search Everywhere сопоставляет результаты поиска.",
+  globalSearchShortcutSettingLabel: "Горячая клавиша глобального поиска",
+  globalSearchShortcutSettingDesc:
+    "Перейдите в настройки горячих клавиш, чтобы настроить или отключить горячую клавишу глобального поиска.",
+  globalSearchShortcutSettingAction: "Перейти в настройки",
   globalSearchPromptSettingsTitle: "Поведение промптов",
   globalSearchPromptSettingsDesc:
     "Выберите действие при нажатии Enter на результате промпта в Search Everywhere",

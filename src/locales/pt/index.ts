@@ -857,10 +857,15 @@ Dê o código e depois um resumo de melhorias.`,
   globalSearchEmptyCurrentSession: "Sem resultados na sessão atual",
   globalSearchCategoriesLabel: "Categorias da busca global",
   globalSearchPageDesc: "Configure o comportamento e os detalhes de interação do Search Everywhere",
-  globalSearchTriggerHint: "Atalho: pressione Shift duas vezes ou Ctrl/Cmd + K",
+  globalSearchTriggerHint: "Atalho: {shortcut}",
+  globalSearchTriggerDoubleShift: "pressione Shift duas vezes",
   globalSearchMatchingSettingsTitle: "Correspondência de busca",
   globalSearchMatchingSettingsDesc:
     "Configure como o Search Everywhere corresponde os resultados de busca.",
+  globalSearchShortcutSettingLabel: "Atalho da busca global",
+  globalSearchShortcutSettingDesc:
+    "Vá para as configurações de atalhos para personalizar ou desativar o atalho da busca global.",
+  globalSearchShortcutSettingAction: "Ir para configurações",
   globalSearchPromptSettingsTitle: "Comportamento de Prompt",
   globalSearchPromptSettingsDesc:
     "Escolha o que acontece ao pressionar Enter em um resultado de prompt no Search Everywhere",

@@ -1084,10 +1084,15 @@ Dame el código y luego un resumen de mejoras.`,
   globalSearchCategoriesLabel: "Categorías de búsqueda global",
   globalSearchPageDesc:
     "Configura el comportamiento y los detalles de interacción de Search Everywhere",
-  globalSearchTriggerHint: "Activación: doble pulsación de Shift o Ctrl/Cmd + K",
+  globalSearchTriggerHint: "Activación: {shortcut}",
+  globalSearchTriggerDoubleShift: "doble pulsación de Shift",
   globalSearchMatchingSettingsTitle: "Coincidencia de búsqueda",
   globalSearchMatchingSettingsDesc:
     "Configura cómo Search Everywhere hace coincidir los resultados de búsqueda.",
+  globalSearchShortcutSettingLabel: "Atajo de búsqueda global",
+  globalSearchShortcutSettingDesc:
+    "Ve a la configuración de atajos para personalizar o desactivar el atajo de búsqueda global.",
+  globalSearchShortcutSettingAction: "Ir a ajustes",
   globalSearchPromptSettingsTitle: "Comportamiento de Prompt",
   globalSearchPromptSettingsDesc:
     "Define qué ocurre al pulsar Enter sobre un resultado de prompt en Search Everywhere",

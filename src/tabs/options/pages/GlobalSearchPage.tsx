@@ -1,6 +1,13 @@
 import React from "react"
 
 import { SearchIcon } from "~components/icons"
+import { NAV_IDS } from "~constants"
+import {
+  DEFAULT_KEYBINDINGS,
+  formatShortcut,
+  isMacOS,
+  SHORTCUT_ACTIONS,
+} from "~constants/shortcuts"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { DEFAULT_SETTINGS } from "~utils/storage"
@@ -16,6 +23,18 @@ const getLocalizedText = (key: string, fallback: string): string => {
   return localized === key ? fallback : localized
 }
 
+const formatLocalizedText = (
+  key: string,
+  fallback: string,
+  params: Record<string, string>,
+): string => {
+  let text = getLocalizedText(key, fallback)
+  Object.keys(params).forEach((paramKey) => {
+    text = text.replace(new RegExp(`{${paramKey}}`, "g"), params[paramKey])
+  })
+  return text
+}
+
 const GlobalSearchPage: React.FC<GlobalSearchPageProps> = ({ siteId: _siteId }) => {
   const { settings, updateNestedSetting } = useSettingsStore()
 
@@ -27,6 +46,42 @@ const GlobalSearchPage: React.FC<GlobalSearchPageProps> = ({ siteId: _siteId }) 
   const doubleShiftToSearch =
     settings.globalSearch?.doubleShift ?? DEFAULT_SETTINGS.globalSearch.doubleShift
   const enableFuzzySearch = settings.globalSearch?.enableFuzzySearch ?? false
+  const isMacLike = isMacOS()
+  const userGlobalSearchBinding =
+    settings.shortcuts?.keybindings?.[SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH]
+  const globalSearchBinding =
+    userGlobalSearchBinding === null
+      ? null
+      : userGlobalSearchBinding || DEFAULT_KEYBINDINGS[SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH]
+  const globalSearchShortcutLabel = globalSearchBinding
+    ? formatShortcut(globalSearchBinding, isMacLike)
+    : ""
+  const triggerShortcuts: string[] = []
+  if (doubleShiftToSearch) {
+    triggerShortcuts.push(getLocalizedText("globalSearchTriggerDoubleShift", "double-press Shift"))
+  }
+  if (globalSearchShortcutLabel) {
+    triggerShortcuts.push(globalSearchShortcutLabel)
+  }
+  const triggerShortcutText =
+    triggerShortcuts.join(" / ") || getLocalizedText("shortcutNotSet", "Not set")
+  const globalSearchTriggerHintText = formatLocalizedText(
+    "globalSearchTriggerHint",
+    "Trigger: {shortcut}",
+    { shortcut: triggerShortcutText },
+  )
+
+  const globalSearchShortcutSettingId = `shortcut-binding-${SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH}`
+  const handleNavigateToGlobalSearchShortcut = () => {
+    window.dispatchEvent(
+      new CustomEvent("ophel:navigateSettingsPage", {
+        detail: {
+          page: NAV_IDS.SHORTCUTS,
+          settingId: globalSearchShortcutSettingId,
+        },
+      }),
+    )
+  }
 
   return (
     <div>
@@ -35,10 +90,7 @@ const GlobalSearchPage: React.FC<GlobalSearchPageProps> = ({ siteId: _siteId }) 
         {`${getLocalizedText(
           "globalSearchPageDesc",
           "Configure Search Everywhere behavior and interaction details",
-        )} · ${getLocalizedText(
-          "globalSearchTriggerHint",
-          "Trigger: double-press Shift or Ctrl/Cmd + K",
-        )}`}
+        )} · ${globalSearchTriggerHintText}`}
       </p>
 
       <SettingCard
@@ -47,6 +99,19 @@ const GlobalSearchPage: React.FC<GlobalSearchPageProps> = ({ siteId: _siteId }) 
           "globalSearchMatchingSettingsDesc",
           "Configure how Search Everywhere matches search results",
         )}>
+        <SettingRow
+          label={getLocalizedText("globalSearchShortcutSettingLabel", "全局搜索快捷键")}
+          description={getLocalizedText(
+            "globalSearchShortcutSettingDesc",
+            "跳转到快捷键设置，自定义或禁用全局搜索快捷键。",
+          )}
+          settingId="global-search-shortcut-setting-link">
+          <button
+            className="settings-btn settings-btn-secondary"
+            onClick={handleNavigateToGlobalSearchShortcut}>
+            {getLocalizedText("globalSearchShortcutSettingAction", "前往设置")}
+          </button>
+        </SettingRow>
         <ToggleRow
           label={getLocalizedText("doubleShiftToSearch", "Double Shift to open Global Search")}
           description={getLocalizedText(

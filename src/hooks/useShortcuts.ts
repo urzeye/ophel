@@ -73,6 +73,7 @@ interface UseShortcutsOptions {
   onPanelToggle: () => void
   onThemeToggle: () => void
   onOpenSettings: () => void
+  onOpenGlobalSearch?: () => void
   onShowShortcuts?: () => void // 显示快捷键一览
   isPanelVisible?: boolean
   isSnapped?: boolean // 面板是否处于吸附状态
@@ -88,6 +89,7 @@ export function useShortcuts({
   onPanelToggle,
   onThemeToggle,
   onOpenSettings,
+  onOpenGlobalSearch,
   onShowShortcuts,
   isPanelVisible,
   isSnapped,
@@ -334,6 +336,10 @@ export function useShortcuts({
   const openSettings = useCallback(() => {
     onOpenSettings()
   }, [onOpenSettings])
+
+  const openGlobalSearch = useCallback(() => {
+    onOpenGlobalSearch?.()
+  }, [onOpenGlobalSearch])
 
   // 切换 Tab 辅助函数
   const switchTab = useCallback(
@@ -739,6 +745,7 @@ export function useShortcuts({
       [SHORTCUT_ACTIONS.COPY_LAST_CODE_BLOCK]: copyLastCodeBlock,
       [SHORTCUT_ACTIONS.TOGGLE_SCROLL_LOCK]: toggleScrollLock,
       [SHORTCUT_ACTIONS.FOCUS_INPUT]: focusInput,
+      [SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH]: openGlobalSearch,
       [SHORTCUT_ACTIONS.STOP_GENERATION]: stopGeneration,
       [SHORTCUT_ACTIONS.SHOW_SHORTCUTS]: showShortcuts,
       [SHORTCUT_ACTIONS.SHOW_MODEL_SELECTOR]: showModelSelector,
@@ -790,6 +797,7 @@ export function useShortcuts({
     copyLastCodeBlock,
     toggleScrollLock,
     focusInput,
+    openGlobalSearch,
     stopGeneration,
     showShortcuts,
     openClaudeSettings,
