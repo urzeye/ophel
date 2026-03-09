@@ -195,6 +195,21 @@ export abstract class SiteAdapter {
     return []
   }
 
+  /** 获取当前页面会话的基础元数据 */
+  getCurrentConversationInfo(): ConversationInfo | null {
+    const id = this.getSessionId()
+    if (!id || id === "default" || this.isNewConversation()) {
+      return null
+    }
+
+    return {
+      id,
+      title: this.getConversationTitle() || this.getSessionName() || "",
+      url: window.location.href,
+      cid: this.getCurrentCid() || undefined,
+    }
+  }
+
   /** 获取侧边栏滚动容器 */
   getSidebarScrollContainer(): Element | null {
     return null

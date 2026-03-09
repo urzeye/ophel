@@ -64,6 +64,14 @@ export class ChatGPTAdapter extends SiteAdapter {
     return "https://chatgpt.com"
   }
 
+  getSessionId(): string {
+    const conversationMatch = window.location.pathname.match(/\/c\/([a-z0-9-]+)(?:\/|$)/i)
+    if (conversationMatch?.[1]) {
+      return conversationMatch[1]
+    }
+    return super.getSessionId()
+  }
+
   isNewConversation(): boolean {
     const path = window.location.pathname
     return path === "/" || path === ""
@@ -736,8 +744,9 @@ export class ChatGPTAdapter extends SiteAdapter {
   getConversationTitle(): string | null {
     // 从侧边栏获取当前选中项
     const selected = document.querySelector("#history a[data-active] span")
-    if (selected) return selected.textContent?.trim() || null
-    return null
+    const title = selected?.textContent?.trim()
+    if (title) return title
+    return this.getSessionName()
   }
 
   getNewChatButtonSelectors(): string[] {

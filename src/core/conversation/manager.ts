@@ -919,6 +919,74 @@ export class ConversationManager {
     return date.toLocaleDateString()
   }
 
+  private resolveConversationForExport(convId: string): Conversation | null {
+    const existing = this.conversations[convId]
+    const currentInfo = this.siteAdapter.getCurrentConversationInfo()
+
+    if (!currentInfo || currentInfo.id !== convId) {
+      return existing || null
+    }
+
+    const title = currentInfo.title?.trim() || existing?.title || t("untitledConversation")
+    const url = currentInfo.url || existing?.url || window.location.href
+    const cid = currentInfo.cid ?? existing?.cid
+    const pinned = currentInfo.isPinned ?? existing?.pinned ?? false
+
+    if (existing) {
+      const updates: Partial<Conversation> = {}
+      let needsUpdate = false
+
+      if (title !== existing.title) {
+        updates.title = title
+        needsUpdate = true
+      }
+
+      if (url !== existing.url) {
+        updates.url = url
+        needsUpdate = true
+      }
+
+      if (cid !== undefined && cid !== existing.cid) {
+        updates.cid = cid
+        needsUpdate = true
+      }
+
+      if (pinned !== existing.pinned) {
+        updates.pinned = pinned
+        needsUpdate = true
+      }
+
+      if (needsUpdate) {
+        getConversationsStore().updateConversation(convId, updates)
+        this.notifyDataChange()
+        return {
+          ...existing,
+          ...updates,
+          updatedAt: Date.now(),
+        }
+      }
+
+      return existing
+    }
+
+    const now = Date.now()
+    const fallbackConversation: Conversation = {
+      id: convId,
+      siteId: this.siteAdapter.getSiteId(),
+      cid,
+      title,
+      url,
+      folderId: this.lastUsedFolderId || "inbox",
+      pinned,
+      createdAt: now,
+      updatedAt: now,
+    }
+
+    getConversationsStore().addConversation(fallbackConversation)
+    this.notifyDataChange()
+    return fallbackConversation
+  }
+
   // ================= Export Functionality =================
 
   /**
@@ -928,16 +996,16 @@ export class ConversationManager {
     convId: string,
     format: "markdown" | "json" | "txt" | "clipboard",
   ): Promise<boolean> {
-    const conv = this.conversations[convId]
-    if (!conv) {
-      console.error("[ConversationManager] Conversation not found:", convId)
-      return false
-    }
-
     // 检查是否为当前会话
     const currentSessionId = this.siteAdapter.getSessionId()
     if (currentSessionId !== convId) {
       showToast(t("exportNeedOpenFirst"))
+      return false
+    }
+
+    const conv = this.resolveConversationForExport(convId)
+    if (!conv) {
+      console.error("[ConversationManager] Conversation not found:", convId)
       return false
     }
 
