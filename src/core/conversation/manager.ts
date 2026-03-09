@@ -433,14 +433,37 @@ export class ConversationManager {
       this.notifyDataChange()
     } else if (existing) {
       // 更新现有会话
+      let needsUpdate = false
+      const updates: Partial<Conversation> = {}
+
+      if (info.title && info.title !== existing.title) {
+        updates.title = info.title
+        needsUpdate = true
+      }
+
+      if (info.url && info.url !== existing.url) {
+        updates.url = info.url
+        needsUpdate = true
+      }
+
+      if (info.cid !== undefined && info.cid !== existing.cid) {
+        updates.cid = info.cid
+        needsUpdate = true
+      }
+
       if (info.isPinned !== undefined && info.isPinned !== existing.pinned) {
         if (info.isPinned) {
-          getConversationsStore().updateConversation(info.id, { pinned: true })
-          this.notifyDataChange()
+          updates.pinned = true
+          needsUpdate = true
         } else if (!info.isPinned && this.syncUnpin) {
-          getConversationsStore().updateConversation(info.id, { pinned: false })
-          this.notifyDataChange()
+          updates.pinned = false
+          needsUpdate = true
         }
+      }
+
+      if (needsUpdate) {
+        getConversationsStore().updateConversation(info.id, updates)
+        this.notifyDataChange()
       }
     }
   }

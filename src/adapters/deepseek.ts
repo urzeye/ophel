@@ -15,6 +15,7 @@ import {
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportConfig,
+  type NetworkMonitorConfig,
   type OutlineItem,
 } from "./base"
 
@@ -27,6 +28,7 @@ const ASSISTANT_MARKDOWN_SELECTOR = ".ds-message:has(.ds-markdown) .ds-markdown"
 const USER_MESSAGE_SELECTOR = ".ds-message:not(:has(.ds-markdown))"
 const RESPONSE_CONTAINER_SELECTOR =
   'main .ds-scroll-area:has(.ds-message), [role="main"] .ds-scroll-area:has(.ds-message), .ds-scroll-area:has(.ds-message)'
+const CHAT_COMPLETION_API_PATTERN = "/api/v0/chat/completion"
 const STOP_ICON_PATH_PREFIX = "M2 4.88"
 const SEND_ICON_PATH =
   "M8.3125 0.981587C8.66767 1.0545 8.97902 1.20558 9.2627 1.43374C9.48724 1.61438 9.73029 1.85933 9.97949 2.10854L14.707 6.83608L13.293 8.25014L9 3.95717V15.0431H7V3.95717L2.70703 8.25014L1.29297 6.83608L6.02051 2.10854C6.26971 1.85933 6.51277 1.61438 6.7373 1.43374C6.97662 1.24126 7.28445 1.04542 7.6875 0.981587C7.8973 0.94841 8.1031 0.956564 8.3125 0.981587Z"
@@ -459,6 +461,16 @@ export class DeepSeekAdapter extends SiteAdapter {
     return `DeepSeek (${selectedButtons.join(", ")})`
   }
 
+  getNetworkMonitorConfig(): NetworkMonitorConfig {
+    return {
+      // DeepSeek 生成走 SSE 流式接口：/api/v0/chat/completion
+      // 只匹配这个接口，避免把会话列表、重命名等普通请求误判为生成任务。
+      urlPatterns: [CHAT_COMPLETION_API_PATTERN],
+      // 流结束后等待一个很短的静默窗口，让 DOM/标题状态完成收敛。
+      silenceThreshold: 500,
+    }
+  }
+
   async toggleTheme(targetMode: "light" | "dark"): Promise<boolean> {
     try {
       const themeData = JSON.stringify({ value: targetMode, __version: "0" })
@@ -544,8 +556,60 @@ export class DeepSeekAdapter extends SiteAdapter {
       title,
       url,
       isActive,
-      isPinned: false,
+      isPinned: this.isPinnedConversationLink(el),
     }
+  }
+
+  private isPinnedConversationLink(link: Element): boolean {
+    const group = this.findConversationGroup(link)
+    if (!group) return false
+
+    const directChildren = Array.from(group.children)
+    const conversationChildren = directChildren.filter((child) => this.isConversationLink(child))
+    if (conversationChildren.length === 0) return false
+
+    const firstConversation = conversationChildren[0]
+    const firstConversationIndex = directChildren.indexOf(firstConversation)
+    if (firstConversationIndex <= 0) return false
+
+    const header = directChildren.find(
+      (child, index) => index < firstConversationIndex && !this.isConversationLink(child),
+    )
+    if (!header) return false
+
+    const hasElementChildren = header.children.length > 0
+    const hasFocusRing = header.querySelector(":scope > .ds-focus-ring, .ds-focus-ring") !== null
+    const hasSpan = header.querySelector(":scope > span, span") !== null
+
+    return hasElementChildren && hasFocusRing && hasSpan
+  }
+
+  private findConversationGroup(link: Element): HTMLElement | null {
+    let current = link.parentElement
+
+    while (current && current !== document.body) {
+      const directChildren = Array.from(current.children)
+      const conversationChildren = directChildren.filter((child) => this.isConversationLink(child))
+
+      if (conversationChildren.length > 0) {
+        const firstConversationIndex = directChildren.indexOf(conversationChildren[0])
+        const hasHeaderBeforeConversation = directChildren.some(
+          (child, index) => index < firstConversationIndex && !this.isConversationLink(child),
+        )
+
+        if (hasHeaderBeforeConversation && conversationChildren.some((child) => child === link)) {
+          return current
+        }
+      }
+
+      current = current.parentElement
+    }
+
+    return null
+  }
+
+  private isConversationLink(element: Element): boolean {
+    return element.matches(CONVERSATION_LINK_SELECTOR)
   }
 
   private extractConversationTitle(el: Element): string {
@@ -567,6 +631,15 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   private findTitleElement(el: Element): Element | null {
+    const directChildren = Array.from(el.children)
+    const directTitleChild = directChildren.find((child) => {
+      if (!(child instanceof HTMLElement)) return false
+      if (child.classList.contains("ds-focus-ring")) return false
+      if (child.querySelector('[role="button"], .ds-icon-button')) return false
+      return !!child.innerText?.trim()
+    })
+    if (directTitleChild) return directTitleChild
+
     const candidates = el.querySelectorAll("span, p, div")
     for (const candidate of Array.from(candidates)) {
       const text =
