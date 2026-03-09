@@ -12,16 +12,19 @@ import { SITE_IDS } from "~constants"
 
 import {
   SiteAdapter,
+  type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type SiteDeleteConversationResult,
 } from "./base"
 
 const CHAT_PATH_PATTERN = /\/a\/chat\/s\/([a-z0-9-]+)/i
 const TOKEN_STORAGE_PREFIX = "__tea_cache_tokens_"
 const THEME_STORAGE_KEY = "__appKit_@deepseek/chat_themePreference"
+const USER_TOKEN_STORAGE_KEY = "userToken"
 const CONVERSATION_LINK_SELECTOR = 'a[href*="/a/chat/s/"]'
 const MESSAGE_SELECTOR = ".ds-message"
 const ASSISTANT_MARKDOWN_SELECTOR = ".ds-message:has(.ds-markdown) .ds-markdown"
@@ -29,13 +32,27 @@ const USER_MESSAGE_SELECTOR = ".ds-message:not(:has(.ds-markdown))"
 const RESPONSE_CONTAINER_SELECTOR =
   'main .ds-scroll-area:has(.ds-message), [role="main"] .ds-scroll-area:has(.ds-message), .ds-scroll-area:has(.ds-message)'
 const CHAT_COMPLETION_API_PATTERN = "/api/v0/chat/completion"
+const CHAT_DELETE_API_PATH = "/api/v0/chat_session/delete"
+const DEEPSEEK_HOME_URL = "https://chat.deepseek.com/"
+const DELETE_REFRESH_STORAGE_KEY = "gh.deepseek.delete.refresh"
 const STOP_ICON_PATH_PREFIX = "M2 4.88"
 const SEND_ICON_PATH =
   "M8.3125 0.981587C8.66767 1.0545 8.97902 1.20558 9.2627 1.43374C9.48724 1.61438 9.73029 1.85933 9.97949 2.10854L14.707 6.83608L13.293 8.25014L9 3.95717V15.0431H7V3.95717L2.70703 8.25014L1.29297 6.83608L6.02051 2.10854C6.26971 1.85933 6.51277 1.61438 6.7373 1.43374C6.97662 1.24126 7.28445 1.04542 7.6875 0.981587C7.8973 0.94841 8.1031 0.956564 8.3125 0.981587Z"
 
+const DEEPSEEK_DELETE_REASON = {
+  MISSING_AUTH_TOKEN: "delete_api_missing_auth_token",
+  API_REQUEST_FAILED: "delete_api_request_failed",
+  API_INVALID_RESPONSE: "delete_api_invalid_response",
+  API_BUSINESS_FAILED: "delete_api_business_failed",
+} as const
+
 export class DeepSeekAdapter extends SiteAdapter {
   match(): boolean {
-    return window.location.hostname === "chat.deepseek.com"
+    const isMatch = window.location.hostname === "chat.deepseek.com"
+    if (isMatch) {
+      this.consumePendingDeleteRefresh()
+    }
+    return isMatch
   }
 
   getSiteId(): string {
@@ -164,6 +181,63 @@ export class DeepSeekAdapter extends SiteAdapter {
       extractInfo: (el) => this.extractConversationInfo(el, this.getCurrentCid() || undefined),
       getTitleElement: (el) => this.findTitleElement(el),
     }
+  }
+
+  async deleteConversationOnSite(
+    target: ConversationDeleteTarget,
+  ): Promise<SiteDeleteConversationResult> {
+    const currentSessionId = this.getSessionId()
+    const token = this.getUserToken()
+    if (!token) {
+      return {
+        id: target.id,
+        success: false,
+        method: "api",
+        reason: DEEPSEEK_DELETE_REASON.MISSING_AUTH_TOKEN,
+      }
+    }
+
+    const result = await this.deleteConversationViaApi(target, token)
+    if (result.success && target.id === currentSessionId) {
+      this.scheduleHomeRefreshAfterDelete()
+    }
+    return result
+  }
+
+  async deleteConversationsOnSite(
+    targets: ConversationDeleteTarget[],
+  ): Promise<SiteDeleteConversationResult[]> {
+    if (targets.length === 0) {
+      return []
+    }
+
+    const currentSessionId = this.getSessionId()
+    const token = this.getUserToken()
+    if (!token) {
+      return targets.map((target) => ({
+        id: target.id,
+        success: false,
+        method: "api",
+        reason: DEEPSEEK_DELETE_REASON.MISSING_AUTH_TOKEN,
+      }))
+    }
+
+    const results: SiteDeleteConversationResult[] = []
+    let deletedCurrentSession = false
+
+    for (const target of targets) {
+      const result = await this.deleteConversationViaApi(target, token)
+      results.push(result)
+      if (result.success && target.id === currentSessionId) {
+        deletedCurrentSession = true
+      }
+    }
+
+    if (deletedCurrentSession) {
+      this.scheduleHomeRefreshAfterDelete()
+    }
+
+    return results
   }
 
   getConversationTitle(): string | null {
@@ -413,24 +487,11 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   getWidthSelectors() {
-    return [
-      {
-        selector: ":root",
-        property: "--message-area-width",
-        noCenter: true,
-      },
-    ]
+    return []
   }
 
   getUserQueryWidthSelectors() {
-    return [
-      {
-        selector: USER_MESSAGE_SELECTOR,
-        property: "max-width",
-        noCenter: true,
-        extraCss: "margin-left: auto !important; margin-right: 0 !important;",
-      },
-    ]
+    return []
   }
 
   isGenerating(): boolean {
@@ -524,6 +585,181 @@ export class DeepSeekAdapter extends SiteAdapter {
     }
 
     return buttons
+  }
+
+  private async deleteConversationViaApi(
+    target: ConversationDeleteTarget,
+    token: string,
+  ): Promise<SiteDeleteConversationResult> {
+    try {
+      const response = await fetch(CHAT_DELETE_API_PATH, {
+        method: "POST",
+        headers: this.buildDeleteHeaders(token),
+        body: JSON.stringify({ chat_session_id: target.id }),
+        credentials: "include",
+      })
+
+      if (!response.ok) {
+        return {
+          id: target.id,
+          success: false,
+          method: "api",
+          reason: this.toDeleteApiHttpReason(response.status),
+        }
+      }
+
+      const payload = await this.safeParseJson(response)
+      if (this.isDeleteSuccessPayload(payload)) {
+        return {
+          id: target.id,
+          success: true,
+          method: "api",
+        }
+      }
+
+      return {
+        id: target.id,
+        success: false,
+        method: "api",
+        reason: this.toDeleteApiPayloadReason(payload),
+      }
+    } catch {
+      return {
+        id: target.id,
+        success: false,
+        method: "api",
+        reason: DEEPSEEK_DELETE_REASON.API_REQUEST_FAILED,
+      }
+    }
+  }
+
+  private buildDeleteHeaders(token: string): Record<string, string> {
+    return {
+      accept: "*/*",
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+      "x-client-platform": "web",
+      "x-client-locale": this.getClientLocale(),
+      "x-client-timezone-offset": String(-new Date().getTimezoneOffset() * 60),
+    }
+  }
+
+  private getUserToken(): string | null {
+    const raw = localStorage.getItem(USER_TOKEN_STORAGE_KEY)
+    if (!raw) return null
+
+    try {
+      const parsed = JSON.parse(raw) as Record<string, unknown>
+      const value = parsed.value
+      if (typeof value === "string" && value.trim()) {
+        return value.trim()
+      }
+    } catch {
+      // ignore malformed token payload and fall back to raw string
+    }
+
+    const normalized = raw.trim().replace(/^"|"$/g, "")
+    return normalized || null
+  }
+
+  private getClientLocale(): string {
+    const lang = document.documentElement.lang || navigator.language || "en-US"
+    return lang.replace(/-/g, "_")
+  }
+
+  private isDeleteSuccessPayload(payload: unknown): boolean {
+    if (!payload || typeof payload !== "object") return false
+
+    const data = payload as Record<string, unknown>
+    if (data.code !== 0) return false
+
+    const responseData = data.data
+    if (!responseData || typeof responseData !== "object") {
+      return true
+    }
+
+    const bizCode = (responseData as Record<string, unknown>).biz_code
+    return bizCode === undefined || bizCode === 0
+  }
+
+  private toDeleteApiPayloadReason(payload: unknown): string {
+    if (!payload || typeof payload !== "object") {
+      return DEEPSEEK_DELETE_REASON.API_INVALID_RESPONSE
+    }
+
+    const data = payload as Record<string, unknown>
+    if (typeof data.msg === "string" && data.msg.trim()) {
+      return `${DEEPSEEK_DELETE_REASON.API_BUSINESS_FAILED}:${data.msg.trim()}`
+    }
+
+    const nested = data.data
+    if (nested && typeof nested === "object") {
+      const nestedData = nested as Record<string, unknown>
+      if (typeof nestedData.biz_msg === "string" && nestedData.biz_msg.trim()) {
+        return `${DEEPSEEK_DELETE_REASON.API_BUSINESS_FAILED}:${nestedData.biz_msg.trim()}`
+      }
+    }
+
+    return DEEPSEEK_DELETE_REASON.API_BUSINESS_FAILED
+  }
+
+  private toDeleteApiHttpReason(status: number): string {
+    switch (status) {
+      case 401:
+      case 403:
+        return "delete_api_unauthorized"
+      case 404:
+        return "delete_api_not_found"
+      case 429:
+        return "delete_api_rate_limited"
+      default:
+        return `delete_api_http_${status || 0}`
+    }
+  }
+
+  private async safeParseJson(response: Response): Promise<unknown> {
+    try {
+      return await response.json()
+    } catch {
+      return null
+    }
+  }
+
+  private scheduleHomeRefreshAfterDelete() {
+    try {
+      sessionStorage.setItem(DELETE_REFRESH_STORAGE_KEY, "1")
+    } catch {
+      // ignore storage failures and still try to redirect
+    }
+
+    window.location.replace(DEEPSEEK_HOME_URL)
+  }
+
+  private consumePendingDeleteRefresh() {
+    let shouldRefresh = false
+
+    try {
+      shouldRefresh = sessionStorage.getItem(DELETE_REFRESH_STORAGE_KEY) === "1"
+      if (!shouldRefresh) return
+      sessionStorage.removeItem(DELETE_REFRESH_STORAGE_KEY)
+    } catch {
+      return
+    }
+
+    const isHomePage = window.location.pathname === "/" || window.location.pathname === ""
+    if (!isHomePage) {
+      try {
+        sessionStorage.setItem(DELETE_REFRESH_STORAGE_KEY, "1")
+      } catch {
+        // ignore storage failures and still try to redirect
+      }
+      window.location.replace(DEEPSEEK_HOME_URL)
+      return
+    }
+
+    setTimeout(() => {
+      window.location.reload()
+    }, 0)
   }
 
   private findNextAssistantMarkdown(messages: Element[], currentIndex: number): Element | null {
