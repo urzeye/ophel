@@ -537,9 +537,25 @@ export class DeepSeekAdapter extends SiteAdapter {
       const themeData = JSON.stringify({ value: targetMode, __version: "0" })
       localStorage.setItem(THEME_STORAGE_KEY, themeData)
 
-      document.documentElement.classList.toggle("dark", targetMode === "dark")
-      document.documentElement.classList.toggle("light", targetMode === "light")
-      document.documentElement.setAttribute("data-theme", targetMode)
+      const body = document.body
+      if (body) {
+        body.classList.remove("light", "dark")
+        body.classList.add("change-theme", targetMode)
+
+        if (targetMode === "dark") {
+          body.setAttribute("data-ds-dark-theme", "dark")
+        } else {
+          body.removeAttribute("data-ds-dark-theme")
+        }
+
+        body.style.colorScheme = targetMode
+
+        window.setTimeout(() => {
+          if (document.body === body) {
+            body.classList.remove("change-theme")
+          }
+        }, 300)
+      }
 
       window.dispatchEvent(
         new StorageEvent("storage", {
