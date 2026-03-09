@@ -25,6 +25,7 @@ yarn-error.log*
 out/
 build/
 dist/
+demo/
 
 # plasmo
 .plasmo
@@ -36,9 +37,6 @@ tsconfig.tsbuildinfo
 # VitePress
 docs/.vitepress/cache
 docs/.vitepress/dist
-
-# docs
-PUBLISHING.md
 
 .spec-workflow/.idea/
 .playwright-mcp
