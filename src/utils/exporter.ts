@@ -40,6 +40,22 @@ export type ExportFormat = "markdown" | "json" | "txt" | "clipboard"
 export function htmlToMarkdown(el: Element): string {
   if (!el) return ""
 
+  const extractKatexLatex = (element: Element): string => {
+    const annotation = element.querySelector('annotation[encoding="application/x-tex"]')
+    const annotationText = annotation?.textContent?.trim()
+    if (annotationText) return annotationText
+
+    const dataTex =
+      (element as HTMLElement).getAttribute("data-tex") ||
+      (element as HTMLElement).getAttribute("data-latex")
+    if (dataTex) return dataTex.trim()
+
+    const ariaLabel = (element as HTMLElement).getAttribute("aria-label")
+    if (ariaLabel) return ariaLabel.trim()
+
+    return ""
+  }
+
   const processNode = (node: Node): string => {
     try {
       if (!node) return ""
@@ -65,8 +81,30 @@ export function htmlToMarkdown(el: Element): string {
         if (latex) return `$${latex}$`
       }
 
+      if (element.classList?.contains("katex-display")) {
+        const latex = extractKatexLatex(element)
+        if (latex) return `\n$$${latex}$$\n`
+      }
+
+      if (element.classList?.contains("katex")) {
+        const latex = extractKatexLatex(element)
+        if (latex) return `$${latex}$`
+      }
+
+      if (element.classList?.contains("katex-mathml")) {
+        return ""
+      }
+
+      if (element.classList?.contains("katex-html")) {
+        return ""
+      }
+
       const tag = element.tagName?.toLowerCase() || ""
       if (!tag) return ""
+
+      if (tag === "annotation" || tag === "annotation-xml") {
+        return ""
+      }
 
       // 图片
       if (tag === "img") {

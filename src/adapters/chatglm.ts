@@ -294,6 +294,8 @@ export class ChatGLMAdapter extends SiteAdapter {
       ".stop-stream-tip",
       ".answer-content-wrap .generating-icon",
       ".enter-icon-container.stop",
+      ".enter.searching",
+      ".enter.is-main-chat.searching",
     ]
 
     for (const selector of selectors) {
@@ -306,6 +308,9 @@ export class ChatGLMAdapter extends SiteAdapter {
 
   getModelName(): string | null {
     const selectors = [
+      ".wrapper-title .showHideText",
+      ".wrapper-title .wrapper-title-innerText",
+      ".wrapper-title",
       ".selected-model-info .model-select-name",
       ".model-select-container .model-select-name",
       ".model-select-list .model-select-item.selected .model-select-name",
@@ -339,6 +344,8 @@ export class ChatGLMAdapter extends SiteAdapter {
     return {
       targetModelKeyword: keyword,
       selectorButtonSelectors: [
+        ".wrapper-title",
+        ".wrapper-title .showHideText",
         ".model-select-icon-container",
         ".selected-model-info",
         ".model-select-container",
