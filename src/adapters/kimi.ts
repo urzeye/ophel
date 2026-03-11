@@ -566,13 +566,15 @@ export class KimiAdapter extends SiteAdapter {
     return [
       { selector: ".chat-content-container", property: "max-width" },
       {
+        // 不依赖 Vue scoped data-v-*，通过提高 class 选择器优先级覆盖站点限宽规则
         selector:
-          ".chat-content-list, .chat-content-list.chat-content-list, .chat-content-list[data-v-b308b9a1]",
+          ".chat-content-list, .chat-content-list.chat-content-list, .chat-content-list.chat-content-list.chat-content-list, .chat-detail-content .chat-content-list.chat-content-list",
         property: "max-width",
       },
       {
+        // 同步覆盖 width，避免仅修改 max-width 仍被布局约束
         selector:
-          ".chat-content-list, .chat-content-list.chat-content-list, .chat-content-list[data-v-b308b9a1]",
+          ".chat-content-list, .chat-content-list.chat-content-list, .chat-content-list.chat-content-list.chat-content-list, .chat-detail-content .chat-content-list.chat-content-list",
         property: "width",
         value: "100%",
         noCenter: true,
