@@ -18,6 +18,7 @@ export const config: PlasmoCSConfig = {
     "https://www.doubao.com/*",
     "https://chat.deepseek.com/*",
     "https://www.kimi.com/*",
+    "https://chatglm.cn/*",
   ],
 }
 
@@ -41,6 +42,9 @@ export const mountShadowHost: PlasmoMountShadowHost = ({
   mountState: _mountState,
 }) => {
   const hostname = window.location.hostname
+  if (hostname.includes("chatglm.cn")) {
+    shadowHost.classList.add("gh-site-chatglm")
+  }
   // ChatGPT、Claude 和 Grok 都是 Next.js 应用，需要延迟挂载
   const needsDelayedMount =
     hostname.includes("chatgpt.com") ||

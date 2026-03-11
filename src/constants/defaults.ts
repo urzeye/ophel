@@ -85,6 +85,7 @@ export const SITE_IDS = {
   CLAUDE: "claude",
   GEMINI: "gemini",
   CHATGPT: "chatgpt",
+  CHATGLM: "chatglm",
   GEMINI_ENTERPRISE: "gemini-enterprise",
   GROK: "grok",
   AISTUDIO: "aistudio",

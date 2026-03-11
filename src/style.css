@@ -11,6 +11,10 @@
   overflow: visible !important;
 }
 
+:host(.gh-site-chatglm) {
+  text-align: left;
+}
+
 .gh-root {
   position: fixed;
   z-index: 9999;

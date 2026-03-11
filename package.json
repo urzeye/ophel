@@ -111,7 +111,8 @@
       "https://claude.ai/*",
       "https://www.doubao.com/*",
       "https://chat.deepseek.com/*",
-      "https://www.kimi.com/*"
+      "https://www.kimi.com/*",
+      "https://chatglm.cn/*"
     ],
     "optional_host_permissions": [
       "<all_urls>"

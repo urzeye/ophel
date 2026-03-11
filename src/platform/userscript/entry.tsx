@@ -265,6 +265,9 @@ async function init() {
 
   // Next.js 站点需要延迟挂载
   const hostname = window.location.hostname
+  if (hostname.includes("chatglm.cn")) {
+    shadowHost.classList.add("gh-site-chatglm")
+  }
   const needsDelayedMount =
     hostname.includes("chatgpt.com") ||
     hostname.includes("chat.openai.com") ||

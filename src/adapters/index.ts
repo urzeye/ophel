@@ -6,6 +6,7 @@
 
 import { AIStudioAdapter } from "./aistudio"
 import { SiteAdapter } from "./base"
+import { ChatGLMAdapter } from "./chatglm"
 import { ChatGPTAdapter } from "./chatgpt"
 import { ClaudeAdapter } from "./claude"
 import { DeepSeekAdapter } from "./deepseek"
@@ -25,6 +26,7 @@ const adapters: SiteAdapter[] = [
   new ClaudeAdapter(),
   new DeepSeekAdapter(),
   new DoubaoAdapter(),
+  new ChatGLMAdapter(),
   new KimiAdapter(),
 ]
 
