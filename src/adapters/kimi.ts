@@ -6,6 +6,7 @@
  * - 避免依赖 data-v-* 等构建时生成属性
  */
 import { SITE_IDS } from "~constants"
+import { htmlToMarkdown } from "~utils/exporter"
 
 import {
   SiteAdapter,
@@ -389,6 +390,8 @@ export class KimiAdapter extends SiteAdapter {
   extractAssistantResponseText(element: Element): string {
     const markdown = element.matches(".markdown") ? element : element.querySelector(".markdown")
     if (!markdown) return ""
+    const content = htmlToMarkdown(markdown).trim()
+    if (content) return content
     return this.extractTextWithLineBreaks(markdown).trim()
   }
 
@@ -396,7 +399,9 @@ export class KimiAdapter extends SiteAdapter {
     const replies = document.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR)
     if (replies.length === 0) return null
     const last = replies[replies.length - 1]
-    return this.extractAssistantResponseText(last)
+    const markdown = last.matches(".markdown") ? last : last.querySelector(".markdown")
+    if (!markdown) return null
+    return this.extractTextWithLineBreaks(markdown).trim()
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
@@ -580,6 +585,10 @@ export class KimiAdapter extends SiteAdapter {
         noCenter: true,
       },
     ]
+  }
+
+  getZenModeSelectors() {
+    return [{ selector: ".chat-bottom .legal-footer, .legal-footer", action: "hide" as const }]
   }
 
   getMarkdownFixerConfig(): MarkdownFixerConfig {
