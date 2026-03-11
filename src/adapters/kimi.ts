@@ -10,6 +10,7 @@ import { htmlToMarkdown } from "~utils/exporter"
 
 import {
   SiteAdapter,
+  type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportConfig,
@@ -17,11 +18,36 @@ import {
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type SiteDeleteConversationResult,
 } from "./base"
 
 const CHAT_PATH_PATTERN = /^\/chat\/([a-z0-9-]+)(?:\/|$)/i
 const NON_CHAT_PATH_PREFIXES = ["/docs/", "/website/", "/table/"]
 const TOKEN_STORAGE_PREFIX = "__tea_cache_tokens_"
+const KIMI_DELETE_API_PATH = "/apiv2/kimi.chat.v1.ChatService/DeleteChat"
+const KIMI_AUTH_COOKIE_KEY = "kimi-auth"
+const KIMI_AUTH_STORAGE_KEYS = [
+  KIMI_AUTH_COOKIE_KEY,
+  "kimi_auth",
+  "access_token",
+  "accessToken",
+  "token",
+  "auth",
+  "authorization",
+]
+const KIMI_TOKEN_FIELD_KEYS = [
+  "value",
+  "token",
+  "access_token",
+  "accessToken",
+  "auth",
+  "authorization",
+  "id_token",
+  "idToken",
+  "jwt",
+]
+const JWT_TOKEN_REGEX = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/
+const TOKEN_KEYWORD_REGEX = /(token|auth|jwt|tea)/i
 
 const SIDEBAR_CONVERSATION_SELECTOR = "a.chat-info-item"
 const HISTORY_PAGE_CONVERSATION_SELECTOR = "a.history-link"
@@ -40,8 +66,17 @@ const USER_CONTENT_SELECTOR = ".segment-user .segment-content-box"
 const ASSISTANT_MARKDOWN_SELECTOR = ".segment-assistant .markdown"
 
 const THEME_STORAGE_KEY = "CUSTOM_THEME"
+const KIMI_DELETE_REASON = {
+  MISSING_AUTH_TOKEN: "delete_api_missing_auth_token",
+  API_REQUEST_FAILED: "delete_api_request_failed",
+  API_INVALID_RESPONSE: "delete_api_invalid_response",
+  API_BUSINESS_FAILED: "delete_api_business_failed",
+} as const
 
 export class KimiAdapter extends SiteAdapter {
+  private deleteReloadScheduled = false
+  private loggedMissingDeleteToken = false
+
   match(): boolean {
     return window.location.hostname === "www.kimi.com"
   }
@@ -205,6 +240,70 @@ export class KimiAdapter extends SiteAdapter {
     } finally {
       await this.closeMoreHistoryView()
     }
+  }
+
+  async deleteConversationOnSite(
+    target: ConversationDeleteTarget,
+  ): Promise<SiteDeleteConversationResult> {
+    const token = this.getAuthToken()
+    if (!token) {
+      this.logMissingDeleteTokenOnce()
+      return {
+        id: target.id,
+        success: false,
+        method: "api",
+        reason: KIMI_DELETE_REASON.MISSING_AUTH_TOKEN,
+      }
+    }
+
+    const currentSessionId = this.getSessionId()
+    const result = await this.deleteConversationViaApi(target, token)
+
+    if (result.success && target.id === currentSessionId) {
+      this.navigateToHomeAfterDelete()
+    }
+
+    return result
+  }
+
+  async deleteConversationsOnSite(
+    targets: ConversationDeleteTarget[],
+  ): Promise<SiteDeleteConversationResult[]> {
+    if (targets.length === 0) return []
+
+    const token = this.getAuthToken()
+    if (!token) {
+      this.logMissingDeleteTokenOnce()
+      return targets.map((target) => ({
+        id: target.id,
+        success: false,
+        method: "api",
+        reason: KIMI_DELETE_REASON.MISSING_AUTH_TOKEN,
+      }))
+    }
+
+    const currentSessionId = this.getSessionId()
+    const results: SiteDeleteConversationResult[] = []
+    const deletedIds: string[] = []
+
+    for (const target of targets) {
+      const result = await this.deleteConversationViaApi(target, token)
+      results.push(result)
+      if (result.success) {
+        deletedIds.push(target.id)
+      }
+    }
+
+    if (deletedIds.length > 0) {
+      const deletedCurrent = currentSessionId && deletedIds.includes(currentSessionId)
+      if (deletedCurrent) {
+        this.navigateToHomeAfterDelete()
+      } else {
+        this.scheduleReloadAfterBatchDelete()
+      }
+    }
+
+    return results
   }
 
   navigateToConversation(id: string, url?: string): boolean {
@@ -622,6 +721,338 @@ export class KimiAdapter extends SiteAdapter {
         }),
       )
     }
+  }
+
+  private async deleteConversationViaApi(
+    target: ConversationDeleteTarget,
+    token: string,
+  ): Promise<SiteDeleteConversationResult> {
+    try {
+      const deleteUrl = new URL(KIMI_DELETE_API_PATH, window.location.origin).toString()
+      const response = await fetch(deleteUrl, {
+        method: "POST",
+        headers: this.buildDeleteHeaders(token),
+        body: JSON.stringify({ chat_id: target.id }),
+        credentials: "include",
+      })
+
+      if (!response.ok) {
+        return {
+          id: target.id,
+          success: false,
+          method: "api",
+          reason: this.toDeleteApiHttpReason(response.status),
+        }
+      }
+
+      const payload = await this.safeParseJson(response)
+      if (this.isDeleteSuccessPayload(payload, target.id)) {
+        return {
+          id: target.id,
+          success: true,
+          method: "api",
+        }
+      }
+
+      return {
+        id: target.id,
+        success: false,
+        method: "api",
+        reason: this.toDeleteApiPayloadReason(payload),
+      }
+    } catch {
+      return {
+        id: target.id,
+        success: false,
+        method: "api",
+        reason: KIMI_DELETE_REASON.API_REQUEST_FAILED,
+      }
+    }
+  }
+
+  private buildDeleteHeaders(token: string): Record<string, string> {
+    const payload = this.parseJwtPayload(token)
+    const language = this.getClientLanguage()
+    const timezone = this.getClientTimezone()
+
+    const headers: Record<string, string> = {
+      accept: "*/*",
+      authorization: `Bearer ${token}`,
+      "connect-protocol-version": "1",
+      "content-type": "application/json",
+      "x-language": language,
+      "r-timezone": timezone,
+      "x-msh-platform": "web",
+      "x-msh-version": "1.0.0",
+    }
+
+    const deviceId = typeof payload.device_id === "string" ? payload.device_id.trim() : ""
+    const sessionId = typeof payload.ssid === "string" ? payload.ssid.trim() : ""
+    const trafficId = typeof payload.sub === "string" ? payload.sub.trim() : ""
+
+    if (deviceId) headers["x-msh-device-id"] = deviceId
+    if (sessionId) headers["x-msh-session-id"] = sessionId
+    if (trafficId) headers["x-traffic-id"] = trafficId
+
+    return headers
+  }
+
+  private getAuthToken(): string | null {
+    const fromCookie = this.getCookieToken(KIMI_AUTH_COOKIE_KEY)
+    if (fromCookie) return fromCookie
+
+    const fromLocalStorage = this.findAuthTokenInStorage(localStorage)
+    if (fromLocalStorage) return fromLocalStorage
+
+    try {
+      const fromSessionStorage = this.findAuthTokenInStorage(sessionStorage)
+      if (fromSessionStorage) return fromSessionStorage
+    } catch {
+      // ignore unavailable sessionStorage
+    }
+
+    return null
+  }
+
+  private getCookieToken(key: string): string | null {
+    const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${escaped}=([^;]*)`))
+    if (!match?.[1]) return null
+
+    return this.extractTokenFromRaw(match[1])
+  }
+
+  private findAuthTokenInStorage(storage: Storage): string | null {
+    for (const key of KIMI_AUTH_STORAGE_KEYS) {
+      const value = storage.getItem(key)
+      const token = this.extractTokenFromRaw(value)
+      if (token) return token
+    }
+
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i)
+      if (!key || !key.startsWith(TOKEN_STORAGE_PREFIX)) continue
+      const token = this.extractTokenFromRaw(storage.getItem(key))
+      if (token) return token
+    }
+
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i)
+      if (!key || !TOKEN_KEYWORD_REGEX.test(key)) continue
+      const token = this.extractTokenFromRaw(storage.getItem(key))
+      if (token) return token
+    }
+
+    return null
+  }
+
+  private extractTokenFromRaw(raw: string | null): string | null {
+    if (!raw) return null
+
+    const direct = this.extractTokenFromText(raw)
+    if (direct) return direct
+
+    const decoded = this.safeDecodeURIComponent(raw)
+    if (decoded !== raw) {
+      const fromDecoded = this.extractTokenFromText(decoded)
+      if (fromDecoded) return fromDecoded
+    }
+
+    const parsed = this.safeParseUnknown(raw)
+    if (parsed !== undefined) {
+      const fromParsed = this.findTokenInUnknown(parsed, 0)
+      if (fromParsed) return fromParsed
+    }
+
+    if (decoded !== raw) {
+      const parsedDecoded = this.safeParseUnknown(decoded)
+      if (parsedDecoded !== undefined) {
+        const fromParsedDecoded = this.findTokenInUnknown(parsedDecoded, 0)
+        if (fromParsedDecoded) return fromParsedDecoded
+      }
+    }
+
+    return null
+  }
+
+  private extractTokenFromText(text: string): string | null {
+    const normalized = this.normalizeAuthToken(text)
+    if (normalized) return normalized
+
+    const match = text.match(/[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/)
+    if (!match?.[0]) return null
+    return this.normalizeAuthToken(match[0])
+  }
+
+  private normalizeAuthToken(raw: string): string | null {
+    let token = raw.trim()
+    if (!token) return null
+
+    token = token.replace(/^"(.*)"$/, "$1").trim()
+    token = token.replace(/^Bearer\s+/i, "").trim()
+
+    return JWT_TOKEN_REGEX.test(token) ? token : null
+  }
+
+  private safeDecodeURIComponent(value: string): string {
+    try {
+      return decodeURIComponent(value)
+    } catch {
+      return value
+    }
+  }
+
+  private safeParseUnknown(raw: string): unknown | undefined {
+    try {
+      return JSON.parse(raw)
+    } catch {
+      return undefined
+    }
+  }
+
+  private findTokenInUnknown(
+    value: unknown,
+    depth: number,
+    seen: WeakSet<object> = new WeakSet<object>(),
+  ): string | null {
+    if (depth > 6 || value == null) return null
+
+    if (typeof value === "string") {
+      return this.extractTokenFromRaw(value)
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const token = this.findTokenInUnknown(item, depth + 1, seen)
+        if (token) return token
+      }
+      return null
+    }
+
+    if (typeof value !== "object") return null
+    if (seen.has(value as object)) return null
+    seen.add(value as object)
+
+    const record = value as Record<string, unknown>
+
+    for (const key of KIMI_TOKEN_FIELD_KEYS) {
+      if (!(key in record)) continue
+      const token = this.findTokenInUnknown(record[key], depth + 1, seen)
+      if (token) return token
+    }
+
+    for (const [key, nested] of Object.entries(record)) {
+      if (
+        KIMI_TOKEN_FIELD_KEYS.includes(key) ||
+        (depth > 0 && !TOKEN_KEYWORD_REGEX.test(key) && typeof nested !== "object")
+      ) {
+        continue
+      }
+      const token = this.findTokenInUnknown(nested, depth + 1, seen)
+      if (token) return token
+    }
+
+    return null
+  }
+
+  private logMissingDeleteTokenOnce() {
+    if (this.loggedMissingDeleteToken) return
+    this.loggedMissingDeleteToken = true
+    console.warn("[KimiAdapter] DeleteChat skipped: auth token not found in cookie/storage.")
+  }
+
+  private parseJwtPayload(token: string): Record<string, unknown> {
+    try {
+      const parts = token.split(".")
+      if (parts.length < 2) return {}
+
+      const normalized = parts[1].replace(/-/g, "+").replace(/_/g, "/")
+      const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=")
+      const decoded = atob(padded)
+      const parsed = JSON.parse(decoded)
+      return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {}
+    } catch {
+      return {}
+    }
+  }
+
+  private getClientLanguage(): string {
+    return document.documentElement.lang || navigator.language || "en-US"
+  }
+
+  private getClientTimezone(): string {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+    } catch {
+      return "UTC"
+    }
+  }
+
+  private isDeleteSuccessPayload(payload: unknown, targetId: string): boolean {
+    if (!payload || typeof payload !== "object") return false
+
+    const data = payload as Record<string, unknown>
+    const chatId = data.chatId
+    const altChatId = data.chat_id
+    return chatId === targetId || altChatId === targetId
+  }
+
+  private toDeleteApiPayloadReason(payload: unknown): string {
+    if (!payload || typeof payload !== "object") {
+      return KIMI_DELETE_REASON.API_INVALID_RESPONSE
+    }
+
+    const data = payload as Record<string, unknown>
+    const message =
+      (typeof data.message === "string" && data.message.trim()) ||
+      (typeof data.msg === "string" && data.msg.trim()) ||
+      (typeof data.error === "string" && data.error.trim()) ||
+      ""
+    if (message) {
+      return `${KIMI_DELETE_REASON.API_BUSINESS_FAILED}:${message}`
+    }
+
+    return KIMI_DELETE_REASON.API_BUSINESS_FAILED
+  }
+
+  private toDeleteApiHttpReason(status: number): string {
+    switch (status) {
+      case 401:
+      case 403:
+        return "delete_api_unauthorized"
+      case 404:
+        return "delete_api_not_found"
+      case 429:
+        return "delete_api_rate_limited"
+      default:
+        return `delete_api_http_${status || 0}`
+    }
+  }
+
+  private async safeParseJson(response: Response): Promise<unknown> {
+    try {
+      return await response.json()
+    } catch {
+      return null
+    }
+  }
+
+  private scheduleReloadAfterBatchDelete() {
+    if (this.deleteReloadScheduled) return
+    this.deleteReloadScheduled = true
+    window.setTimeout(() => {
+      window.location.reload()
+    }, 120)
+  }
+
+  private navigateToHomeAfterDelete() {
+    const currentPath = window.location.pathname
+    if (currentPath === "/" || currentPath === "") {
+      this.scheduleReloadAfterBatchDelete()
+      return
+    }
+
+    window.location.href = this.getNewTabUrl()
   }
 
   private extractConversationInfo(el: Element, cid?: string): ConversationInfo | null {
