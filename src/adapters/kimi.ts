@@ -66,6 +66,8 @@ const USER_CONTENT_SELECTOR = ".segment-user .segment-content-box"
 const ASSISTANT_MARKDOWN_SELECTOR = ".segment-assistant .markdown"
 
 const THEME_STORAGE_KEY = "CUSTOM_THEME"
+const FULL_LIST_SNAPSHOT_TTL_MS = 15_000
+const FULL_LIST_SNAPSHOT_MAX_USES = 6
 const KIMI_DELETE_REASON = {
   MISSING_AUTH_TOKEN: "delete_api_missing_auth_token",
   API_REQUEST_FAILED: "delete_api_request_failed",
@@ -76,9 +78,16 @@ const KIMI_DELETE_REASON = {
 export class KimiAdapter extends SiteAdapter {
   private deleteReloadScheduled = false
   private loggedMissingDeleteToken = false
+  private fullListSnapshot: ConversationInfo[] = []
+  private fullListSnapshotExpiresAt = 0
+  private fullListSnapshotUsesLeft = 0
 
   match(): boolean {
-    return window.location.hostname === "www.kimi.com"
+    const matched = window.location.hostname === "www.kimi.com"
+    if (matched) {
+      this.normalizeThemeStorageValue()
+    }
+    return matched
   }
 
   getSiteId(): string {
@@ -156,31 +165,36 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   getConversationList(): ConversationInfo[] {
+    const domList = this.collectConversationListFromDom()
+    const snapshot = this.getFreshFullListSnapshot()
+
+    if (domList.length === 0) {
+      return snapshot
+    }
+
+    if (snapshot.length === 0 || snapshot.length <= domList.length) {
+      return domList
+    }
+
+    this.fullListSnapshotUsesLeft = Math.max(0, this.fullListSnapshotUsesLeft - 1)
+    return this.mergeConversationInfos(domList, snapshot)
+  }
+
+  private collectConversationListFromDom(): ConversationInfo[] {
     const links = document.querySelectorAll(CONVERSATION_SELECTOR)
     if (links.length === 0) return []
 
     const cid = this.getCurrentCid() || undefined
-    const map = new Map<string, ConversationInfo>()
+    const list: ConversationInfo[] = []
 
     links.forEach((el) => {
       const info = this.extractConversationInfo(el, cid)
       if (!info) return
 
-      const existing = map.get(info.id)
-      if (!existing) {
-        map.set(info.id, info)
-        return
-      }
-
-      map.set(info.id, {
-        ...existing,
-        title: existing.title || info.title,
-        isActive: existing.isActive || info.isActive,
-        isPinned: existing.isPinned || info.isPinned,
-      })
+      list.push(info)
     })
 
-    return Array.from(map.values())
+    return this.mergeConversationInfos(list)
   }
 
   getConversationObserverConfig(): ConversationObserverConfig {
@@ -237,6 +251,8 @@ export class KimiAdapter extends SiteAdapter {
           stableRounds = 0
         }
       }
+
+      this.cacheFullListSnapshot(this.collectConversationListFromDom())
     } finally {
       await this.closeMoreHistoryView()
     }
@@ -381,23 +397,143 @@ export class KimiAdapter extends SiteAdapter {
     const editor = this.getTextareaElement()
     if (!editor || !editor.isConnected) return
 
-    editor.focus()
-    if (document.activeElement !== editor && !editor.contains(document.activeElement)) {
-      return
+    const isEmpty = () => {
+      const text = (editor.textContent || "").replace(/[\u200b\u00a0]/g, "").trim()
+      return text.length === 0
     }
 
-    const cleared = this.clearByExecCommand(editor)
-    if (cleared) return
+    const selectAll = () => {
+      this.selectEditorAll(editor)
+      try {
+        document.dispatchEvent(new Event("selectionchange"))
+      } catch {
+        // ignore selectionchange failure
+      }
+    }
 
-    editor.textContent = ""
-    editor.dispatchEvent(
-      new InputEvent("input", {
-        bubbles: true,
-        composed: true,
-        inputType: "deleteContentBackward",
-      }),
-    )
-    editor.dispatchEvent(new Event("change", { bubbles: true }))
+    const dispatchBeforeInput = (inputType: InputEvent["inputType"]) => {
+      try {
+        editor.dispatchEvent(
+          new InputEvent("beforeinput", {
+            bubbles: true,
+            composed: true,
+            cancelable: true,
+            inputType,
+          }),
+        )
+      } catch {
+        // ignore beforeinput failure
+      }
+    }
+
+    const dispatchInput = (inputType: InputEvent["inputType"]) => {
+      try {
+        editor.dispatchEvent(
+          new InputEvent("input", {
+            bubbles: true,
+            composed: true,
+            inputType,
+          }),
+        )
+      } catch {
+        editor.dispatchEvent(new Event("input", { bubbles: true }))
+      }
+    }
+
+    const dispatchKey = (key: string, code: string, keyCode: number) => {
+      editor.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key,
+          code,
+          keyCode,
+          which: keyCode,
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+        }),
+      )
+      editor.dispatchEvent(
+        new KeyboardEvent("keyup", {
+          key,
+          code,
+          keyCode,
+          which: keyCode,
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+        }),
+      )
+    }
+
+    const deleteByRange = () => {
+      try {
+        const selection = window.getSelection()
+        if (!selection || selection.rangeCount === 0) return
+        const range = selection.getRangeAt(0)
+        range.deleteContents()
+      } catch {
+        // ignore range delete failure
+      }
+    }
+
+    const performClear = () => {
+      if (!editor.isConnected) return
+
+      editor.focus()
+      selectAll()
+      dispatchBeforeInput("deleteContentBackward")
+
+      try {
+        document.execCommand("delete", false, undefined)
+      } catch {
+        // ignore execCommand delete failure
+      }
+
+      if (!isEmpty()) {
+        try {
+          document.execCommand("insertText", false, "")
+        } catch {
+          // ignore execCommand insertText failure
+        }
+      }
+
+      if (!isEmpty()) {
+        dispatchKey("Backspace", "Backspace", 8)
+      }
+
+      if (!isEmpty()) {
+        dispatchBeforeInput("deleteContentForward")
+        dispatchKey("Delete", "Delete", 46)
+      }
+
+      if (!isEmpty()) {
+        deleteByRange()
+      }
+
+      if (!isEmpty()) {
+        const clearedByExec = this.clearByExecCommand(editor)
+        if (!clearedByExec || !isEmpty()) {
+          // Lexical editor fallback: keep an empty paragraph node so host app state can reconcile.
+          editor.innerHTML = "<p><br></p>"
+        }
+      }
+
+      dispatchInput("deleteContentBackward")
+      editor.dispatchEvent(new Event("change", { bubbles: true }))
+    }
+
+    performClear()
+
+    // Lexical 状态可能异步回写，做少量重试确保清空
+    const retryDelays = [30, 120, 240]
+    retryDelays.forEach((delay) => {
+      setTimeout(() => {
+        if (!editor.isConnected) return
+        if (!isEmpty()) {
+          performClear()
+        }
+      }, delay)
+    })
   }
 
   getSubmitButtonSelectors(): string[] {
@@ -638,7 +774,8 @@ export class KimiAdapter extends SiteAdapter {
 
   async toggleTheme(targetMode: "light" | "dark"): Promise<boolean> {
     try {
-      localStorage.setItem(THEME_STORAGE_KEY, targetMode)
+      const storageValue = JSON.stringify(targetMode)
+      localStorage.setItem(THEME_STORAGE_KEY, storageValue)
 
       const html = document.documentElement
       html.classList.remove("light", "dark")
@@ -647,7 +784,7 @@ export class KimiAdapter extends SiteAdapter {
       window.dispatchEvent(
         new StorageEvent("storage", {
           key: THEME_STORAGE_KEY,
-          newValue: targetMode,
+          newValue: storageValue,
           storageArea: localStorage,
         }),
       )
@@ -710,16 +847,67 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   protected simulateClick(element: HTMLElement): void {
-    const eventTypes = ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]
+    const eventTypes = ["pointerdown", "mousedown", "pointerup", "mouseup", "click"] as const
+    let dispatched = false
+
     for (const type of eventTypes) {
-      element.dispatchEvent(
-        new PointerEvent(type, {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-          pointerId: 1,
-        }),
-      )
+      try {
+        if (typeof PointerEvent === "function") {
+          element.dispatchEvent(
+            new PointerEvent(type, {
+              bubbles: true,
+              cancelable: true,
+              pointerId: 1,
+            }),
+          )
+        } else {
+          element.dispatchEvent(
+            new MouseEvent(type, {
+              bubbles: true,
+              cancelable: true,
+            }),
+          )
+        }
+        dispatched = true
+      } catch {
+        try {
+          element.dispatchEvent(
+            new MouseEvent(type, {
+              bubbles: true,
+              cancelable: true,
+            }),
+          )
+          dispatched = true
+        } catch {
+          // ignore dispatch errors and fallback to native click
+        }
+      }
+    }
+
+    if (!dispatched) {
+      element.click()
+    }
+  }
+
+  private normalizeThemeStorageValue(): void {
+    const raw = localStorage.getItem(THEME_STORAGE_KEY)
+    if (!raw) return
+
+    const trimmed = raw.trim()
+    if (!trimmed) return
+
+    if (trimmed === "light" || trimmed === "dark") {
+      localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(trimmed))
+      return
+    }
+
+    try {
+      const parsed = JSON.parse(trimmed)
+      if (parsed === "light" || parsed === "dark") {
+        return
+      }
+    } catch {
+      // keep unknown payload untouched
     }
   }
 
@@ -1172,16 +1360,73 @@ export class KimiAdapter extends SiteAdapter {
       (closeTarget.closest(".close-button-container") as HTMLElement | null) || closeTarget
 
     this.simulateClick(clickable)
-    if (!this.isHistoryPath()) return
+    if (await this.waitForHistoryClosed(900)) return
 
+    // fallback: some runtimes only react to native click
     clickable.click()
-    if (!this.isHistoryPath()) return
+    if (await this.waitForHistoryClosed(1200)) return
 
-    const timeoutAt = Date.now() + 3000
-    while (Date.now() < timeoutAt) {
-      if (!this.isHistoryPath()) return
-      await new Promise((resolve) => setTimeout(resolve, 120))
+    // last fallback: force browser history back once
+    try {
+      window.history.back()
+    } catch {
+      // ignore and return
     }
+    await this.waitForHistoryClosed(1500)
+  }
+
+  private async waitForHistoryClosed(timeoutMs: number): Promise<boolean> {
+    const timeoutAt = Date.now() + timeoutMs
+    while (Date.now() < timeoutAt) {
+      if (!this.isHistoryPath()) return true
+      await new Promise((resolve) => setTimeout(resolve, 80))
+    }
+    return !this.isHistoryPath()
+  }
+
+  private cacheFullListSnapshot(list: ConversationInfo[]): void {
+    if (!list.length) return
+    this.fullListSnapshot = list.map((item) => ({ ...item }))
+    this.fullListSnapshotExpiresAt = Date.now() + FULL_LIST_SNAPSHOT_TTL_MS
+    this.fullListSnapshotUsesLeft = FULL_LIST_SNAPSHOT_MAX_USES
+  }
+
+  private getFreshFullListSnapshot(): ConversationInfo[] {
+    if (!this.fullListSnapshot.length) return []
+
+    const expired = Date.now() > this.fullListSnapshotExpiresAt
+    const depleted = this.fullListSnapshotUsesLeft <= 0
+    if (expired || depleted) {
+      this.fullListSnapshot = []
+      this.fullListSnapshotExpiresAt = 0
+      this.fullListSnapshotUsesLeft = 0
+      return []
+    }
+
+    return this.fullListSnapshot.map((item) => ({ ...item }))
+  }
+
+  private mergeConversationInfos(...sources: ConversationInfo[][]): ConversationInfo[] {
+    const map = new Map<string, ConversationInfo>()
+
+    sources.forEach((source) => {
+      source.forEach((info) => {
+        const existing = map.get(info.id)
+        if (!existing) {
+          map.set(info.id, info)
+          return
+        }
+
+        map.set(info.id, {
+          ...existing,
+          title: existing.title || info.title,
+          isActive: existing.isActive || info.isActive,
+          isPinned: existing.isPinned || info.isPinned,
+        })
+      })
+    })
+
+    return Array.from(map.values())
   }
 
   private selectEditorAll(editor: HTMLElement): void {
