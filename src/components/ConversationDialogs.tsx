@@ -130,6 +130,30 @@ const injectDialogStyles = () => {
   dialogStyleInjected = true
 }
 
+const getInboxDisplayName = (): string => {
+  const translated = t("conversationsInbox")
+  return translated === "conversationsInbox" ? "Inbox" : translated
+}
+
+const getFolderDisplayName = (folder: Pick<Folder, "id" | "name" | "icon">): string => {
+  if (folder.id === "inbox") {
+    return getInboxDisplayName()
+  }
+
+  const trimmedName = (folder.name || "").trim()
+  const trimmedIcon = (folder.icon || "").trim()
+
+  if (!trimmedIcon) {
+    return trimmedName
+  }
+
+  if (trimmedName.startsWith(trimmedIcon)) {
+    return trimmedName.slice(trimmedIcon.length).trim()
+  }
+
+  return trimmedName
+}
+
 // ==================== 通用对话框组件 ====================
 
 interface DialogOverlayProps {
@@ -478,7 +502,7 @@ export const FolderSelectDialog: React.FC<FolderSelectDialogProps> = ({
   const filteredFolders = folders.filter((f) => {
     if (f.id === excludeFolderId) return false
     if (searchQuery) {
-      return f.name.toLowerCase().includes(searchQuery.toLowerCase())
+      return getFolderDisplayName(f).toLowerCase().includes(searchQuery.toLowerCase())
     }
     return true
   })
@@ -520,7 +544,7 @@ export const FolderSelectDialog: React.FC<FolderSelectDialogProps> = ({
             id={`folder-select-${folder.id}`}
             className="conversations-folder-select-item"
             onClick={() => onSelect(folder.id)}>
-            {folder.icon} {folder.name.replace(folder.icon, "").trim()}
+            {folder.icon} {getFolderDisplayName(folder)}
           </div>
         ))}
         {filteredFolders.length === 0 && (

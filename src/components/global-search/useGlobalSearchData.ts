@@ -4,6 +4,7 @@ import fuzzysort from "fuzzysort"
 import { SETTING_ID_ALIASES, type SettingsSearchItem } from "~constants"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
+import { t } from "~utils/i18n"
 import type { Prompt } from "~utils/storage"
 
 import {
@@ -137,7 +138,16 @@ const buildGlobalSearchSnippet = ({
   return `${prefix}${snippet}${suffix}`
 }
 
-const getFolderDisplayName = (folder: { name: string; icon?: string }): string => {
+const getInboxDisplayName = (): string => {
+  const translated = t("conversationsInbox")
+  return translated === "conversationsInbox" ? "Inbox" : translated
+}
+
+const getFolderDisplayName = (folder: { id: string; name: string; icon?: string }): string => {
+  if (folder.id === "inbox") {
+    return getInboxDisplayName()
+  }
+
   const trimmedName = (folder.name || "").trim()
   const trimmedIcon = (folder.icon || "").trim()
 

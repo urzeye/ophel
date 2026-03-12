@@ -590,8 +590,8 @@ export const ja = {
   conversationsAddFolder: "新規フォルダ",
   conversationsRename: "名前変更",
   conversationsDelete: "削除",
-  conversationsDeleteConfirm:
-    "このフォルダを削除しますか？内の会話は「受信トレイ」に移動されます。",
+  conversationsDeleteConfirm: "フォルダ「{folder}」を削除しますか？会話は{inbox}に移動されます。",
+  conversationsInbox: "受信トレイ",
   conversationsFolderCreated: "フォルダを作成しました",
   conversationsFolderRenamed: "名前を変更しました",
   conversationsFolderDeleted: "フォルダを削除しました",

@@ -8,7 +8,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { Conversation, ConversationManager, Folder, Tag } from "~core/conversation-manager"
 import { SITE_IDS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
-import { t } from "~utils/i18n"
+import { getCurrentLang, t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
 
 import {
@@ -79,7 +79,16 @@ type MenuType =
   | { type: "export"; anchorEl: HTMLElement }
   | null
 
-const getFolderDisplayName = (folder: Pick<Folder, "name" | "icon">): string => {
+const getInboxDisplayName = (): string => {
+  const translated = t("conversationsInbox")
+  return translated === "conversationsInbox" ? "Inbox" : translated
+}
+
+const getFolderDisplayName = (folder: Pick<Folder, "id" | "name" | "icon">): string => {
+  if (folder.id === "inbox") {
+    return getInboxDisplayName()
+  }
+
   const trimmedName = (folder.name || "").trim()
   const trimmedIcon = (folder.icon || "").trim()
 
@@ -124,6 +133,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const [showTagFilterMenu, setShowTagFilterMenu] = useState(false)
   const [isFolderSelectOpen, setIsFolderSelectOpen] = useState(false)
   const [isNarrowLayout, setIsNarrowLayout] = useState(false)
+  const currentLang = getCurrentLang()
 
   const isChatglm = manager.siteAdapter?.getSiteId?.() === SITE_IDS.CHATGLM
   const showUnsupportedMask = isChatglm
@@ -491,27 +501,26 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     return expandedFolderId === folderId
   }
 
-  const folderSelectOptions = useMemo(
-    () =>
-      folders.map((folder) => {
-        const folderName = getFolderDisplayName(folder)
-        const optionLabel = `${folder.icon ? `${folder.icon} ` : ""}${folderName}`.trim()
+  const folderSelectOptions = useMemo(() => {
+    void currentLang
+    return folders.map((folder) => {
+      const folderName = getFolderDisplayName(folder)
+      const optionLabel = `${folder.icon ? `${folder.icon} ` : ""}${folderName}`.trim()
 
-        return {
-          value: folder.id,
-          title: optionLabel,
-          label: (
-            <>
-              {folder.icon && <span style={{ flexShrink: 0 }}>{folder.icon}</span>}
-              <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
-                {folderName}
-              </span>
-            </>
-          ),
-        }
-      }),
-    [folders],
-  )
+      return {
+        value: folder.id,
+        title: optionLabel,
+        label: (
+          <>
+            {folder.icon && <span style={{ flexShrink: 0 }}>{folder.icon}</span>}
+            <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
+              {folderName}
+            </span>
+          </>
+        ),
+      }
+    })
+  }, [folders, currentLang])
 
   // ==================== 渲染 ====================
 
@@ -1157,10 +1166,19 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           }}
           onDelete={() => {
             setMenu(null)
+            const folderName = getFolderDisplayName(menu.folder)
+            const inboxName = getInboxDisplayName()
+            const deleteMessage = t("conversationsDeleteConfirm", {
+              folder: folderName,
+              inbox: inboxName,
+            })
             setDialog({
               type: "confirm",
               title: t("conversationsDelete") || "删除",
-              message: `确定删除文件夹 "${getFolderDisplayName(menu.folder)}" 吗？其中的会话将移至收件箱。`,
+              message:
+                deleteMessage === "conversationsDeleteConfirm"
+                  ? `Delete folder "${folderName}"? Conversations will be moved to ${inboxName}.`
+                  : deleteMessage,
               danger: true,
               onConfirm: async () => {
                 await manager.deleteFolder(menu.folder.id)
