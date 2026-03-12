@@ -6,6 +6,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { Conversation, ConversationManager, Folder, Tag } from "~core/conversation-manager"
+import { SITE_IDS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
@@ -123,6 +124,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const [showTagFilterMenu, setShowTagFilterMenu] = useState(false)
   const [isFolderSelectOpen, setIsFolderSelectOpen] = useState(false)
   const [isNarrowLayout, setIsNarrowLayout] = useState(false)
+
+  const isChatglm = manager.siteAdapter?.getSiteId?.() === SITE_IDS.CHATGLM
 
   // 对话框和菜单
   const [dialog, setDialog] = useState<DialogType>(null)
@@ -275,6 +278,10 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
   // 同步
   const handleSync = useCallback(async () => {
+    if (isChatglm) {
+      showToast("ChatGLM 会话暂不支持同步")
+      return
+    }
     setSyncing(true)
     try {
       await manager.siteAdapter?.loadAllConversations?.()
@@ -294,7 +301,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     } finally {
       setSyncing(false)
     }
-  }, [manager, lastUsedFolderId, loadData])
+  }, [isChatglm, manager, lastUsedFolderId, loadData])
 
   // 定位当前对话
   const handleLocate = useCallback(() => {
@@ -545,7 +552,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           <Tooltip content={t("conversationsSync") || "同步"}>
             <button
               className="conversations-toolbar-btn sync"
-              disabled={syncing}
+              disabled={syncing || isChatglm}
               onClick={handleSync}>
               {syncing ? <HourglassIcon size={18} /> : <SyncIcon size={18} />}
             </button>
@@ -579,6 +586,21 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             </button>
           </Tooltip>
         </div>
+
+        {isChatglm && (
+          <div
+            style={{
+              margin: "0 16px 10px",
+              padding: "8px 10px",
+              borderRadius: "8px",
+              background: "rgba(255, 173, 64, 0.15)",
+              color: "#b46a00",
+              fontSize: "12px",
+              lineHeight: 1.4,
+            }}>
+            ChatGLM 会话暂不支持
+          </div>
+        )}
 
         {/* 搜索栏 */}
         <div className="conversations-search-bar">
