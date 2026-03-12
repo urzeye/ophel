@@ -92,7 +92,7 @@ export interface AnchorData {
 /** Zen Mode 规则 */
 export interface ZenModeRule {
   selector: string
-  action: "hide" // 未来可扩展 'resize' | 'collapse' 等
+  action: "hide" | "click" // 未来可扩展 'resize' | 'collapse' 等
 }
 
 export interface MarkdownFixerConfig {

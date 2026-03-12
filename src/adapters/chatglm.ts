@@ -377,6 +377,7 @@ export class ChatGLMAdapter extends SiteAdapter {
     return [
       { selector: ".footer", action: "hide" },
       { selector: ".policy-wrap, .policy-wrap *", action: "hide" },
+      { selector: ".aside-header .operation-btn .expand-icon", action: "click" },
     ]
   }
 }

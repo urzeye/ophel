@@ -24,6 +24,9 @@ export class LayoutManager {
   private pageWidthStyle: HTMLStyleElement | null = null
   private userQueryWidthStyle: HTMLStyleElement | null = null
   private zenModeStyle: HTMLStyleElement | null = null
+  private zenModeLastEnabled = false
+  private zenModeActionTimer: number | null = null
+  private zenModeActionAttempts = 0
   private zenModeEnabled = false
 
   private processedShadowRoots = new WeakSet<ShadowRoot>()
@@ -88,6 +91,7 @@ export class LayoutManager {
     this.zenModeStyle = null
 
     if (!this.zenModeEnabled) {
+      this.zenModeLastEnabled = false
       this.refreshShadowInjection()
       return
     }
@@ -97,6 +101,11 @@ export class LayoutManager {
       this.zenModeStyle = this.injectStyle(STYLE_IDS.ZEN_MODE, css)
     }
     this.refreshShadowInjection()
+
+    if (this.zenModeEnabled && !this.zenModeLastEnabled) {
+      this.runZenModeActions()
+    }
+    this.zenModeLastEnabled = this.zenModeEnabled
   }
 
   // ==================== CSS 生成 ====================
@@ -124,6 +133,39 @@ export class LayoutManager {
       .filter((r) => r.action === "hide")
       .map((r) => `${r.selector} { display: none !important; }`)
       .join("\n")
+  }
+
+  private runZenModeActions(): void {
+    const rules = this.siteAdapter.getZenModeSelectors().filter((r) => r.action === "click")
+    if (rules.length === 0) return
+
+    if (this.zenModeActionTimer) {
+      window.clearTimeout(this.zenModeActionTimer)
+      this.zenModeActionTimer = null
+    }
+
+    this.zenModeActionAttempts = 0
+    const maxAttempts = 6
+    const attempt = () => {
+      this.zenModeActionAttempts += 1
+      let didClick = false
+
+      rules.forEach((rule) => {
+        const el = document.querySelector(rule.selector) as HTMLElement | null
+        if (!el || el.offsetParent === null) return
+        const target =
+          (el.closest("button, [role='button'], .operation-btn") as HTMLElement | null) || el
+        if (typeof target.click !== "function") return
+        target.click()
+        didClick = true
+      })
+
+      if (!didClick && this.zenModeActionAttempts < maxAttempts) {
+        this.zenModeActionTimer = window.setTimeout(attempt, 400)
+      }
+    }
+
+    attempt()
   }
 
   private buildCSSFromSelectors(
