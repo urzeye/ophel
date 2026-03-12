@@ -574,6 +574,10 @@ export const pt = {
     "Nenhuma conversa detectada na barra lateral. Abra a barra e tente novamente.",
   conversationsSyncResult:
     "Sincronização concluída: {scanned} verificadas, {added} adicionadas, {updated} atualizadas",
+  chatglmConversationsUnsupportedTitle: "Conversas do ChatGLM não suportadas",
+  chatglmConversationsUnsupportedDesc:
+    "As restrições do site impedem obter a lista de conversas de forma estável.",
+  chatglmConversationsUnsupportedSync: "A sincronização das conversas do ChatGLM não é suportada.",
   conversationsLocate: "Localizar atual",
   conversationsLocateSuccess: "Encontrado",
   conversationsLocateNotFound: "Não encontrado, sincronizando...",

@@ -188,6 +188,59 @@
   height: 0;
 }
 
+/* ========== ChatGLM 不支持蒙层 ========== */
+.conversations-unsupported-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.92) 0%, rgba(248, 250, 252, 0.82) 100%);
+  backdrop-filter: blur(6px);
+  pointer-events: all;
+}
+
+.conversations-unsupported-card {
+  width: 100%;
+  max-width: 280px;
+  border-radius: 16px;
+  padding: 16px 18px 18px;
+  background: var(--gh-bg, #ffffff);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+  text-align: center;
+  color: var(--gh-text, #374151);
+}
+
+.conversations-unsupported-icon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 10px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 20px;
+  color: #6a3a00;
+  background: linear-gradient(135deg, #ffd29a 0%, #ffb86b 100%);
+  box-shadow: 0 8px 18px rgba(255, 171, 88, 0.35);
+}
+
+.conversations-unsupported-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.conversations-unsupported-desc {
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+  line-height: 1.4;
+}
+
 .conversations-folder-item {
   display: flex;
   align-items: center;

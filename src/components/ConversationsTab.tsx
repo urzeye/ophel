@@ -126,6 +126,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const [isNarrowLayout, setIsNarrowLayout] = useState(false)
 
   const isChatglm = manager.siteAdapter?.getSiteId?.() === SITE_IDS.CHATGLM
+  const showUnsupportedMask = isChatglm
 
   // 对话框和菜单
   const [dialog, setDialog] = useState<DialogType>(null)
@@ -279,7 +280,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   // 同步
   const handleSync = useCallback(async () => {
     if (isChatglm) {
-      showToast("ChatGLM 会话暂不支持同步")
+      showToast(t("chatglmConversationsUnsupportedSync") || "ChatGLM 会话暂不支持同步")
       return
     }
     setSyncing(true)
@@ -525,7 +526,21 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           flexDirection: "column",
           height: "100%",
           overflow: "hidden",
+          position: "relative",
         }}>
+        {showUnsupportedMask && (
+          <div className="conversations-unsupported-mask" aria-hidden="true">
+            <div className="conversations-unsupported-card">
+              <div className="conversations-unsupported-icon">!</div>
+              <div className="conversations-unsupported-title">
+                {t("chatglmConversationsUnsupportedTitle") || "ChatGLM 会话暂不支持"}
+              </div>
+              <div className="conversations-unsupported-desc">
+                {t("chatglmConversationsUnsupportedDesc") || "当前站点限制导致会话列表无法稳定获取"}
+              </div>
+            </div>
+          </div>
+        )}
         {/* 工具栏 */}
         <div className="conversations-toolbar">
           {/* 1. 同步目标选择 */}
@@ -586,21 +601,6 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             </button>
           </Tooltip>
         </div>
-
-        {isChatglm && (
-          <div
-            style={{
-              margin: "0 16px 10px",
-              padding: "8px 10px",
-              borderRadius: "8px",
-              background: "rgba(255, 173, 64, 0.15)",
-              color: "#b46a00",
-              fontSize: "12px",
-              lineHeight: 1.4,
-            }}>
-            ChatGLM 会话暂不支持
-          </div>
-        )}
 
         {/* 搜索栏 */}
         <div className="conversations-search-bar">

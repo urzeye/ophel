@@ -376,7 +376,7 @@ export class ChatGLMAdapter extends SiteAdapter {
   getZenModeSelectors(): ZenModeRule[] {
     return [
       { selector: ".footer", action: "hide" },
-      { selector: ".policy-wrap", action: "hide" },
+      { selector: ".policy-wrap, .policy-wrap *", action: "hide" },
     ]
   }
 }

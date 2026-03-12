@@ -571,6 +571,10 @@ export const ru = {
     "В боковой панели не найдено разговоров. Откройте боковую панель и повторите попытку.",
   conversationsSyncResult:
     "Синхронизация завершена: проверено {scanned}, добавлено {added}, обновлено {updated}",
+  chatglmConversationsUnsupportedTitle: "Диалоги ChatGLM не поддерживаются",
+  chatglmConversationsUnsupportedDesc:
+    "Ограничения сайта не позволяют стабильно получать список диалогов.",
+  chatglmConversationsUnsupportedSync: "Синхронизация диалогов ChatGLM не поддерживается.",
   conversationsLocate: "Найти текущий",
   conversationsLocateSuccess: "Найдено",
   conversationsLocateNotFound: "Нет в списке, синхро...",

@@ -575,6 +575,11 @@ export const de = {
     "Keine Konversationen in der Seitenleiste erkannt. Öffne die Seitenleiste und versuche es erneut.",
   conversationsSyncResult:
     "Synchronisierung abgeschlossen: {scanned} geprüft, {added} hinzugefügt, {updated} aktualisiert",
+  chatglmConversationsUnsupportedTitle: "ChatGLM-Unterhaltungen nicht unterstützt",
+  chatglmConversationsUnsupportedDesc:
+    "Aufgrund von Einschränkungen der Website kann die Gesprächsliste nicht zuverlässig geladen werden.",
+  chatglmConversationsUnsupportedSync:
+    "Die Synchronisierung von ChatGLM-Unterhaltungen wird nicht unterstützt.",
   conversationsLocate: "Aktuellen finden",
   conversationsLocateSuccess: "Gefunden",
   conversationsLocateNotFound: "Nicht gefunden, synchronisiere...",

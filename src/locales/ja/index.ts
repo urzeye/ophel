@@ -604,6 +604,9 @@ export const ja = {
   conversationsSyncNoSidebarItems:
     "サイドバーで会話が検出できませんでした。サイドバーを開いて再試行してください。",
   conversationsSyncResult: "同期完了: {scanned} 件確認、{added} 件追加、{updated} 件更新",
+  chatglmConversationsUnsupportedTitle: "ChatGLM の会話は未対応",
+  chatglmConversationsUnsupportedDesc: "サイト側の制限により会話一覧を安定して取得できません",
+  chatglmConversationsUnsupportedSync: "ChatGLM の会話同期は未対応です",
   conversationsLocate: "現在の会話を表示",
   conversationsLocateSuccess: "会話を特定しました",
   conversationsLocateNotFound: "会話が記録にありません。同期を試みます...",

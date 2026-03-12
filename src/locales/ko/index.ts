@@ -576,6 +576,9 @@ export const ko = {
   conversationsSyncNoSidebarItems:
     "사이드바에서 대화를 찾지 못했습니다. 사이드바를 열고 다시 시도해 주세요.",
   conversationsSyncResult: "동기화 완료: {scanned}개 확인, {added}개 추가, {updated}개 업데이트",
+  chatglmConversationsUnsupportedTitle: "ChatGLM 대화 미지원",
+  chatglmConversationsUnsupportedDesc: "사이트 제한으로 대화 목록을 안정적으로 가져올 수 없습니다",
+  chatglmConversationsUnsupportedSync: "ChatGLM 대화 동기화는 지원되지 않습니다",
   conversationsLocate: "현재 대화 찾기",
   conversationsLocateSuccess: "현재 대화 위치를 찾았습니다",
   conversationsLocateNotFound: "현재 대화가 추적되지 않았습니다. 동기화 중...",

@@ -574,6 +574,11 @@ export const es = {
     "No se detectaron conversaciones en la barra lateral. Ábrela y vuelve a intentarlo.",
   conversationsSyncResult:
     "Sincronización completa: {scanned} revisadas, {added} añadidas, {updated} actualizadas",
+  chatglmConversationsUnsupportedTitle: "Conversaciones de ChatGLM no compatibles",
+  chatglmConversationsUnsupportedDesc:
+    "Las restricciones del sitio impiden obtener la lista de conversaciones de forma estable.",
+  chatglmConversationsUnsupportedSync:
+    "La sincronización de conversaciones de ChatGLM no está compatible.",
   conversationsLocate: "Ubicar actual",
   conversationsLocateSuccess: "Hallado",
   conversationsLocateNotFound: "No hallado, sincronizando...",
