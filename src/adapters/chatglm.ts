@@ -21,6 +21,20 @@ const CHATGLM_HOSTS = new Set(["chatglm.cn"])
 const SESSION_ID_PARAM = "cid"
 const NEW_TAB_PATH = "/main/alltoolsdetail?lang=zh"
 const MAX_OUTLINE_TEXT_LENGTH = 80
+const SKIN_MODE_KEY = "SKIN_MODE"
+const SKIN_MODE_MAP: Record<"light" | "dark" | "system", string> = {
+  light: "1",
+  dark: "2",
+  system: "3",
+}
+const USER_MENU_BUTTON_SELECTORS = [
+  ".userInfoBar-header .me-icon",
+  ".userInfoBar-header .me",
+  ".userInfoBar-header img.avatar",
+]
+const THEME_ENTRY_SELECTOR = ".themes"
+const THEME_POPOVER_SELECTOR = ".theme-popper"
+const THEME_OPTION_SELECTOR = ".selecttheme-list"
 
 const RESPONSE_CONTAINER_SELECTOR = ".conversation-list"
 const CONVERSATION_ITEM_SELECTOR = ".conversation-item"
@@ -51,6 +65,191 @@ export class ChatGLMAdapter extends SiteAdapter {
 
   getThemeColors(): { primary: string; secondary: string } {
     return { primary: "#2454FF", secondary: "#1F46D6" }
+  }
+
+  async toggleTheme(targetMode: "light" | "dark" | "system"): Promise<boolean> {
+    const nextValue = SKIN_MODE_MAP[targetMode] || SKIN_MODE_MAP.light
+    try {
+      localStorage.setItem(SKIN_MODE_KEY, nextValue)
+      const clicked = await this.applyThemeByClick(targetMode)
+      if (clicked) {
+        return true
+      }
+
+      const prefersDark =
+        targetMode === "system" &&
+        typeof window !== "undefined" &&
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches
+      const resolvedMode: "light" | "dark" =
+        targetMode === "system" ? (prefersDark ? "dark" : "light") : targetMode
+      const applyThemeTo = (element: HTMLElement | null) => {
+        if (!element) return
+        element.classList.toggle("dark-theme", resolvedMode === "dark")
+        element.classList.remove("light-theme")
+        element.setAttribute("data-theme", resolvedMode)
+        element.setAttribute("data-color-scheme", resolvedMode)
+        element.style.colorScheme = resolvedMode
+      }
+
+      const targets = new Set<HTMLElement>()
+      if (document.documentElement) targets.add(document.documentElement)
+      if (document.body) targets.add(document.body)
+
+      const rootCandidates = [
+        document.querySelector("#app"),
+        document.querySelector("[data-v-app]"),
+        document.querySelector(".app"),
+        document.querySelector(".app-container"),
+      ]
+
+      for (const candidate of rootCandidates) {
+        if (candidate instanceof HTMLElement) {
+          targets.add(candidate)
+        }
+      }
+
+      for (const element of targets) {
+        applyThemeTo(element)
+      }
+
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: SKIN_MODE_KEY,
+          newValue: nextValue,
+          storageArea: localStorage,
+        }),
+      )
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  protected simulateClick(element: HTMLElement): void {
+    const eventTypes = ["pointerdown", "mousedown", "pointerup", "mouseup", "click"] as const
+    let dispatched = false
+
+    for (const type of eventTypes) {
+      const event = new MouseEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+      })
+      dispatched = element.dispatchEvent(event) || dispatched
+    }
+
+    if (!dispatched) {
+      element.click()
+    }
+  }
+
+  private async applyThemeByClick(targetMode: "light" | "dark" | "system"): Promise<boolean> {
+    const trigger = this.findVisibleElement(USER_MENU_BUTTON_SELECTORS)
+    if (!trigger) return false
+    this.simulateClick(trigger)
+    await this.delay(120)
+
+    const themeEntry = await this.waitForVisibleElement(THEME_ENTRY_SELECTOR, 1500)
+    if (!themeEntry) return false
+    this.simulateClick(themeEntry)
+    await this.delay(120)
+
+    const option = await this.findThemeOption(targetMode, 1500)
+    if (!option) return false
+    this.simulateClick(option)
+    await this.delay(80)
+
+    return true
+  }
+
+  private findVisibleElement(selectors: string[]): HTMLElement | null {
+    for (const selector of selectors) {
+      const element = document.querySelector(selector) as HTMLElement | null
+      if (!element) continue
+      if (element.offsetParent === null) continue
+      return this.resolveClickable(element)
+    }
+    return null
+  }
+
+  private resolveClickable(element: HTMLElement): HTMLElement {
+    const clickable =
+      element.closest(".me-icon") ||
+      element.closest(".me") ||
+      element.closest(".userInfoBar-header")
+    return (clickable as HTMLElement) || element
+  }
+
+  private async waitForVisibleElement(
+    selector: string,
+    timeoutMs = 800,
+  ): Promise<HTMLElement | null> {
+    const start = Date.now()
+    while (Date.now() - start < timeoutMs) {
+      const element = document.querySelector(selector) as HTMLElement | null
+      if (element && element.offsetParent !== null) {
+        return element
+      }
+      await this.delay(50)
+    }
+    return null
+  }
+
+  private async findThemeOption(
+    targetMode: "light" | "dark" | "system",
+    timeoutMs = 800,
+  ): Promise<HTMLElement | null> {
+    const labelMap: Record<typeof targetMode, string[]> = {
+      system: ["系统", "System", "Auto"],
+      light: ["浅色", "Light", "Light mode"],
+      dark: ["深色", "Dark", "Dark mode"],
+    }
+
+    const start = Date.now()
+    while (Date.now() - start < timeoutMs) {
+      const options = this.collectThemeOptions()
+      const option = this.matchThemeOption(options, labelMap[targetMode])
+      if (option) return option
+      await this.delay(60)
+    }
+
+    return null
+  }
+
+  private collectThemeOptions(): HTMLElement[] {
+    const selectors = [
+      `${THEME_POPOVER_SELECTOR} ${THEME_OPTION_SELECTOR}`,
+      `.selecttheme ${THEME_OPTION_SELECTOR}`,
+      THEME_OPTION_SELECTOR,
+    ]
+    const options = new Set<HTMLElement>()
+    for (const selector of selectors) {
+      const elements = document.querySelectorAll(selector)
+      for (const element of Array.from(elements)) {
+        if (!(element instanceof HTMLElement)) continue
+        if (element.offsetParent === null) continue
+        options.add(element)
+      }
+      if (options.size > 0) break
+    }
+    return Array.from(options)
+  }
+
+  private matchThemeOption(options: HTMLElement[], labels: string[]): HTMLElement | null {
+    const normalizedLabels = labels.map((label) => label.replace(/\s+/g, "").toLowerCase())
+    for (const option of options) {
+      const text = option.textContent?.replace(/\s+/g, "").toLowerCase() || ""
+      if (!text) continue
+      if (normalizedLabels.some((label) => text.includes(label))) {
+        return option
+      }
+    }
+    return null
+  }
+
+  private async delay(ms: number): Promise<void> {
+    await new Promise((resolve) => window.setTimeout(resolve, ms))
   }
 
   getTextareaSelectors(): string[] {
