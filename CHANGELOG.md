@@ -7,6 +7,12 @@
 
 ---
 
+## [1.0.17]
+
+### 🚀 新增功能
+
+- **ChatGLM 站点适配**：新增对 `chatglm.cn` 的首版兼容支持。
+
 ## [1.0.16]
 
 ### 🚀 新增功能
@@ -480,6 +486,8 @@
 
 ---
 
+[1.0.17]: https://github.com/urzeye/ophel/releases/tag/v1.0.17
+[1.0.16]: https://github.com/urzeye/ophel/releases/tag/v1.0.16
 [1.0.15]: https://github.com/urzeye/ophel/releases/tag/v1.0.15
 [1.0.14]: https://github.com/urzeye/ophel/releases/tag/v1.0.14
 [1.0.13]: https://github.com/urzeye/ophel/releases/tag/v1.0.13

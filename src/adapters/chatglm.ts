@@ -568,6 +568,30 @@ export class ChatGLMAdapter extends SiteAdapter {
       { selector: ".conversation-container", property: "max-width" },
       { selector: ".conversation-inner", property: "max-width" },
       { selector: ".conversation-list", property: "max-width" },
+      {
+        selector:
+          ".dialogue .detail .item, .dialogue .detail .item.item, .dialogue .detail .item.item.item",
+        property: "max-width",
+      },
+      {
+        selector:
+          ".markdown-body, .markdown-body.markdown-body, .answer-content-wrap .markdown-body",
+        property: "max-width",
+      },
+      {
+        selector: ".markdown-body table, .answer-content-wrap .markdown-body table",
+        property: "width",
+        value: "100%",
+        extraCss:
+          "table-layout: fixed !important; display: table !important; min-width: 100% !important;",
+        noCenter: true,
+      },
+      {
+        selector: ".markdown-body table th, .markdown-body table td",
+        property: "min-width",
+        value: "0",
+        noCenter: true,
+      },
       { selector: ".conversation-list", property: "width", value: "100%" },
     ]
   }
