@@ -60,6 +60,7 @@ const ASSISTANT_MARKDOWN_SELECTOR = [
   `${CHAT_CONTAINER_SELECTOR} article`,
   `${CHAT_CONTAINER_SELECTOR} [data-markdown]`,
 ].join(", ")
+const THINKING_CONTAINER_SELECTOR = ".thinking-chain-container, .thinking-block"
 const USER_CONTENT_CANDIDATE_SELECTORS = [
   ".gh-user-query-raw",
   ".rounded-xl.whitespace-pre-wrap",
@@ -230,79 +231,159 @@ export class ZaiAdapter extends SiteAdapter {
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
+    const outline: OutlineItem[] = []
     const container =
       document.querySelector(this.getResponseContainerSelector()) ||
       document.querySelector(CHAT_CONTAINER_SELECTOR)
-    if (!container) return []
+    if (!container) return outline
 
-    const outline: OutlineItem[] = []
+    const userQuerySelector = this.getUserQuerySelector()
+    if (!userQuerySelector) return outline
 
-    const assistantBlocks = this.collectTopLevelBlocks(
-      Array.from(container.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR)).filter(
-        (block) => !block.closest(".gh-user-query-markdown"),
-      ),
-    )
-
-    if (includeUserQueries) {
-      const userBlocks = this.collectTopLevelBlocks(
-        Array.from(container.querySelectorAll(USER_QUERY_SELECTOR)),
-      )
-
-      userBlocks.forEach((userBlock) => {
-        const text = this.extractUserQueryMarkdown(userBlock)
-        if (!text) return
-
-        let wordCount: number | undefined
-        if (showWordCount) {
-          const nextAssistant = assistantBlocks.find(
-            (block) => userBlock.compareDocumentPosition(block) & Node.DOCUMENT_POSITION_FOLLOWING,
-          )
-          wordCount = nextAssistant?.textContent?.trim().length || 0
-        }
-
-        outline.push({
-          level: 0,
-          text: text.length > 80 ? `${text.slice(0, 80)}...` : text,
-          element: userBlock,
-          isUserQuery: true,
-          isTruncated: text.length > 80,
-          wordCount,
-        })
-      })
+    const headingSelectors: string[] = []
+    for (let i = 1; i <= maxLevel; i++) {
+      headingSelectors.push(`h${i}`)
     }
 
-    assistantBlocks.forEach((block) => {
-      const headings = Array.from(block.querySelectorAll("h1, h2, h3, h4, h5, h6"))
-      headings.forEach((heading, index) => {
-        if (this.isInRenderedMarkdownContainer(heading)) return
+    const combinedSelector = `${userQuerySelector}, ${headingSelectors.join(", ")}`
+    const allElements = Array.from(container.querySelectorAll(combinedSelector))
 
-        const level = Number.parseInt(heading.tagName.slice(1), 10)
-        if (Number.isNaN(level) || level > maxLevel) return
+    const calculateWordCount = (
+      startEl: Element,
+      nextEl: Element | null,
+      isUserQueryItem: boolean,
+    ): number => {
+      if (!startEl) return 0
+      try {
+        if (isUserQueryItem) {
+          const allAssistants = container.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR)
+          let totalText = ""
 
-        const text = heading.textContent?.trim() || ""
-        if (!text) return
+          for (const assistant of Array.from(allAssistants)) {
+            const positionToStart = startEl.compareDocumentPosition(assistant)
+            const isAfterStart = positionToStart & Node.DOCUMENT_POSITION_FOLLOWING
+            if (!isAfterStart) continue
 
-        let wordCount: number | undefined
-        if (showWordCount) {
-          let nextBoundary: Element | null = null
-          for (let i = index + 1; i < headings.length; i++) {
-            const candidate = headings[i]
-            const candidateLevel = Number.parseInt(candidate.tagName.slice(1), 10)
-            if (!Number.isNaN(candidateLevel) && candidateLevel <= level) {
-              nextBoundary = candidate
+            if (nextEl) {
+              const positionToEnd = nextEl.compareDocumentPosition(assistant)
+              const isBeforeEnd = positionToEnd & Node.DOCUMENT_POSITION_PRECEDING
+              if (!isBeforeEnd) continue
+            }
+
+            const clone = assistant.cloneNode(true) as HTMLElement
+            clone
+              .querySelectorAll(`${THINKING_CONTAINER_SELECTOR}, .gh-user-query-markdown`)
+              .forEach((node) => node.remove())
+            totalText += clone.textContent || ""
+          }
+
+          return totalText.trim().length
+        }
+
+        if (nextEl) {
+          return this.calculateRangeWordCount(startEl, nextEl, container)
+        }
+
+        const allUserQueries = container.querySelectorAll(userQuerySelector)
+        let foundCurrent = false
+        let nextUserQuery: Element | null = null
+
+        for (const uq of Array.from(allUserQueries)) {
+          if (foundCurrent) {
+            nextUserQuery = uq
+            break
+          }
+          if (uq === startEl || uq.contains(startEl) || startEl.contains(uq)) {
+            foundCurrent = true
+          }
+        }
+
+        if (nextUserQuery) {
+          return this.calculateRangeWordCount(startEl, nextUserQuery, container)
+        }
+
+        const allAssistants = container.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR)
+        if (allAssistants.length > 0) {
+          const lastAssistant = allAssistants[allAssistants.length - 1]
+          return this.calculateRangeWordCount(startEl, null, lastAssistant)
+        }
+
+        return this.calculateRangeWordCount(startEl, null, container)
+      } catch {
+        return 0
+      }
+    }
+
+    allElements.forEach((element, index) => {
+      const tagName = element.tagName.toLowerCase()
+      const isUserQuery = element.matches(userQuerySelector)
+      const isHeading = /^h[1-6]$/.test(tagName)
+
+      let shouldCollect = false
+      if (includeUserQueries && isUserQuery) shouldCollect = true
+      if (isHeading) {
+        if (!this.shouldSkipOutlineElement(element)) {
+          const level = parseInt(tagName.charAt(1), 10)
+          if (!Number.isNaN(level) && level <= maxLevel) {
+            shouldCollect = true
+          }
+        }
+      }
+
+      if (!shouldCollect) return
+
+      let item: OutlineItem
+      if (isUserQuery) {
+        let queryText = this.extractUserQueryText(element)
+        let isTruncated = false
+        if (queryText.length > 200) {
+          queryText = queryText.substring(0, 200)
+          isTruncated = true
+        }
+        item = {
+          level: 0,
+          text: queryText,
+          element,
+          isUserQuery: true,
+          isTruncated,
+        }
+      } else {
+        const level = parseInt(tagName.charAt(1), 10)
+        item = {
+          level,
+          text: element.textContent?.trim() || "",
+          element,
+          isUserQuery: false,
+        }
+      }
+
+      if (showWordCount) {
+        let nextBoundaryEl: Element | null = null
+
+        for (let i = index + 1; i < allElements.length; i++) {
+          const candidate = allElements[i]
+          const candidateIsUserQuery = candidate.matches(userQuerySelector)
+
+          if (candidateIsUserQuery) {
+            nextBoundaryEl = candidate
+            break
+          }
+
+          const candidateTagName = candidate.tagName.toLowerCase()
+          if (/^h[1-6]$/.test(candidateTagName)) {
+            if (this.shouldSkipOutlineElement(candidate)) continue
+            const candidateLevel = parseInt(candidateTagName.charAt(1), 10)
+            if (!Number.isNaN(candidateLevel) && candidateLevel <= item.level) {
+              nextBoundaryEl = candidate
               break
             }
           }
-          wordCount = this.calculateRangeWordCount(heading, nextBoundary, block)
         }
 
-        outline.push({
-          level,
-          text,
-          element: heading,
-          wordCount,
-        })
-      })
+        item.wordCount = calculateWordCount(element, nextBoundaryEl, isUserQuery)
+      }
+
+      outline.push(item)
     })
 
     return outline
@@ -485,6 +566,12 @@ export class ZaiAdapter extends SiteAdapter {
   private extractConversationTitle(node: Element): string {
     const titleEl = node.querySelector(SIDEBAR_TITLE_SELECTOR)
     return titleEl?.textContent?.trim() || ""
+  }
+
+  private shouldSkipOutlineElement(element: Element): boolean {
+    if (this.isInRenderedMarkdownContainer(element)) return true
+    if (element.closest(THINKING_CONTAINER_SELECTOR)) return true
+    return false
   }
 
   private findUserContentRoot(element: Element): Element | null {
