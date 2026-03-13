@@ -16,6 +16,7 @@ import {
   type ExportConfig,
   type ModelSwitcherConfig,
   type OutlineItem,
+  type ZenModeRule,
 } from "./base"
 
 const HOSTNAME = "chat.z.ai"
@@ -762,6 +763,50 @@ export class ZaiAdapter extends SiteAdapter {
       console.error("[ZaiAdapter] toggleTheme error:", error)
       return false
     }
+  }
+
+  // ==================== 页面宽度控制 ====================
+
+  getWidthSelectors() {
+    return [
+      {
+        selector: `${CHAT_CONTAINER_SELECTOR} [class*="max-w-[1000px]"]`,
+        property: "max-width",
+      },
+      {
+        selector: `${CHAT_CONTAINER_SELECTOR} [class*="max-w-[960px]"]`,
+        property: "max-width",
+      },
+    ]
+  }
+
+  getUserQueryWidthSelectors() {
+    return [
+      {
+        selector: `${CHAT_CONTAINER_SELECTOR} .chat-user [class*="max-w-[90%]"]`,
+        property: "max-width",
+        noCenter: true,
+      },
+    ]
+  }
+
+  getZenModeSelectors(): ZenModeRule[] {
+    const rules: ZenModeRule[] = []
+
+    // 侧边栏打开时，点击切换按钮关闭它
+    try {
+      const sidebarState = localStorage.getItem("sidebar")
+      if (sidebarState === "true" || sidebarState === '"true"') {
+        rules.push({
+          selector: "div.self-center.m-auto:has(> svg)",
+          action: "click" as const,
+        })
+      }
+    } catch {
+      // localStorage 访问失败时忽略
+    }
+
+    return rules
   }
 
   private extractConversationTitle(node: Element): string {
