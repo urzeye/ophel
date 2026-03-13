@@ -370,6 +370,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
             "https://www.doubao.com/*",
             "https://chat.deepseek.com/*",
             "https://chatglm.cn/*",
+            "https://chat.z.ai/*",
           ]
           const tabs = await chrome.tabs.query({ url: targets })
           await Promise.all(
@@ -405,6 +406,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
             "https://www.doubao.com/*",
             "https://chat.deepseek.com/*",
             "https://chatglm.cn/*",
+            "https://chat.z.ai/*",
           ]
           const tabs = await chrome.tabs.query({ url: targets })
           await Promise.all(

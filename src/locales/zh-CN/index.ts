@@ -1096,6 +1096,7 @@ export const zhCN = {
   globalSearchSiteChatGPT: "ChatGPT",
   globalSearchSiteClaude: "Claude",
   globalSearchSiteGrok: "Grok",
+  globalSearchSiteZai: "Z.ai",
   globalSearchPlaceholderAll: "搜索全部",
   globalSearchPlaceholderOutline: "搜索大纲",
   globalSearchPlaceholderSettings: "搜索设置项",

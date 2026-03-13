@@ -43,6 +43,7 @@ export type SiteId =
   | "aistudio"
   | "doubao"
   | "deepseek"
+  | "zai"
   | "_default"
 
 // 主题模式
@@ -344,6 +345,7 @@ export const DEFAULT_SETTINGS: Settings = {
       "gemini-enterprise": { ...DEFAULT_SITE_THEME },
       doubao: { ...DEFAULT_SITE_THEME },
       deepseek: { ...DEFAULT_SITE_THEME },
+      zai: { ...DEFAULT_SITE_THEME },
       _default: { ...DEFAULT_SITE_THEME },
     },
     customStyles: [], // 空数组，用户可以添加自定义样式
@@ -356,6 +358,7 @@ export const DEFAULT_SETTINGS: Settings = {
       aistudio: { ...DEFAULT_PAGE_WIDTH },
       doubao: { ...DEFAULT_PAGE_WIDTH },
       deepseek: { ...DEFAULT_PAGE_WIDTH },
+      zai: { ...DEFAULT_PAGE_WIDTH },
       _default: { ...DEFAULT_PAGE_WIDTH },
     },
     userQueryWidth: {
@@ -364,6 +367,7 @@ export const DEFAULT_SETTINGS: Settings = {
       aistudio: { ...DEFAULT_USER_QUERY_WIDTH },
       doubao: { ...DEFAULT_USER_QUERY_WIDTH },
       deepseek: { ...DEFAULT_USER_QUERY_WIDTH },
+      zai: { ...DEFAULT_USER_QUERY_WIDTH },
       _default: { ...DEFAULT_USER_QUERY_WIDTH },
     },
     zenMode: {
@@ -372,6 +376,7 @@ export const DEFAULT_SETTINGS: Settings = {
       aistudio: { ...DEFAULT_ZEN_MODE },
       doubao: { ...DEFAULT_ZEN_MODE },
       deepseek: { ...DEFAULT_ZEN_MODE },
+      zai: { ...DEFAULT_ZEN_MODE },
       _default: { ...DEFAULT_ZEN_MODE },
     },
   },

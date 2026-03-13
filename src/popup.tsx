@@ -48,6 +48,7 @@ const SUPPORTED_SITES = [
     url: "https://chat.deepseek.com",
     icon: "🌀",
   },
+  { name: "Z.ai", pattern: /chat\.z\.ai/, url: "https://chat.z.ai", icon: "⚡" },
 ]
 
 interface Prompt {

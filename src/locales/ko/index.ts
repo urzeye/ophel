@@ -1073,6 +1073,7 @@ export const ko = {
   globalSearchSiteChatGPT: "ChatGPT",
   globalSearchSiteClaude: "Claude",
   globalSearchSiteGrok: "Grok",
+  globalSearchSiteZai: "Z.ai",
   globalSearchPlaceholderAll: "전체 검색",
   globalSearchPlaceholderOutline: "개요 검색",
   globalSearchPlaceholderSettings: "설정 검색",

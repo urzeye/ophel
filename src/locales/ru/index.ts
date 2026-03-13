@@ -1064,6 +1064,7 @@ export const ru = {
   globalSearchSiteChatGPT: "ChatGPT",
   globalSearchSiteClaude: "Claude",
   globalSearchSiteGrok: "Grok",
+  globalSearchSiteZai: "Z.ai",
   globalSearchPlaceholderAll: "Искать везде",
   globalSearchPlaceholderOutline: "Искать в оглавлении",
   globalSearchPlaceholderSettings: "Искать в настройках",

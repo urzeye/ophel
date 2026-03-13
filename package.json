@@ -112,7 +112,8 @@
       "https://www.doubao.com/*",
       "https://chat.deepseek.com/*",
       "https://www.kimi.com/*",
-      "https://chatglm.cn/*"
+      "https://chatglm.cn/*",
+      "https://chat.z.ai/*"
     ],
     "optional_host_permissions": [
       "<all_urls>"

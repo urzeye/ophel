@@ -1093,6 +1093,7 @@ export const zhTW = {
   globalSearchSiteChatGPT: "ChatGPT",
   globalSearchSiteClaude: "Claude",
   globalSearchSiteGrok: "Grok",
+  globalSearchSiteZai: "Z.ai",
   globalSearchPlaceholderAll: "搜尋全部",
   globalSearchPlaceholderOutline: "搜尋大綱",
   globalSearchPlaceholderSettings: "搜尋設定項",

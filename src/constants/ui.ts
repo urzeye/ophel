@@ -603,6 +603,11 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     keywords: ["model lock", "grok", "模型锁定"],
   },
   {
+    settingId: "model-lock-zai",
+    title: "模型锁定：Z.ai",
+    keywords: ["model lock", "z.ai", "zai", "模型锁定"],
+  },
+  {
     settingId: "gemini-markdown-fix",
     title: "Gemini：Markdown 修复",
     keywords: ["gemini", "markdown", "fix", "修复"],

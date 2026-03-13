@@ -132,6 +132,21 @@ export class ThemeManager {
           )
           return true
         }
+        case SITE_IDS.ZAI: {
+          localStorage.setItem("theme", "system")
+          document.documentElement.classList.remove("light", "dark")
+          document.documentElement.classList.add(targetMode)
+          document.documentElement.style.colorScheme = targetMode
+          document.body.style.colorScheme = targetMode
+          window.dispatchEvent(
+            new StorageEvent("storage", {
+              key: "theme",
+              newValue: "system",
+              storageArea: localStorage,
+            }),
+          )
+          return true
+        }
         case SITE_IDS.GROK: {
           localStorage.setItem("theme", "system")
           document.documentElement.classList.remove("light", "dark")
@@ -338,7 +353,8 @@ export class ThemeManager {
     try {
       switch (siteId) {
         case SITE_IDS.CHATGPT:
-        case SITE_IDS.GROK: {
+        case SITE_IDS.GROK:
+        case SITE_IDS.ZAI: {
           const storedTheme = localStorage.getItem("theme")
           if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system") {
             return storedTheme

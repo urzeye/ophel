@@ -1115,6 +1115,7 @@ export const ja = {
   globalSearchSiteChatGPT: "ChatGPT",
   globalSearchSiteClaude: "Claude",
   globalSearchSiteGrok: "Grok",
+  globalSearchSiteZai: "Z.ai",
   globalSearchPlaceholderAll: "すべてを検索",
   globalSearchPlaceholderOutline: "アウトラインを検索",
   globalSearchPlaceholderSettings: "設定を検索",

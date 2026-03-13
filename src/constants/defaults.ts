@@ -92,4 +92,5 @@ export const SITE_IDS = {
   DOUBAO: "doubao",
   DEEPSEEK: "deepseek",
   KIMI: "kimi",
+  ZAI: "zai",
 } as const

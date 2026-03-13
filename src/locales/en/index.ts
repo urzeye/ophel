@@ -1123,6 +1123,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   globalSearchSiteChatGPT: "ChatGPT",
   globalSearchSiteClaude: "Claude",
   globalSearchSiteGrok: "Grok",
+  globalSearchSiteZai: "Z.ai",
   globalSearchPlaceholderAll: "Search all",
   globalSearchPlaceholderOutline: "Search outline",
   globalSearchPlaceholderSettings: "Search settings",

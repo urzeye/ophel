@@ -740,6 +740,17 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
             onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
             settingId="model-lock-kimi"
           />
+
+          {/* Z.ai */}
+          <ModelLockRow
+            label="Z.ai"
+            siteKey="zai"
+            settings={settings}
+            setSettings={setSettings}
+            placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
+            onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
+            settingId="model-lock-zai"
+          />
         </SettingCard>
       )}
 
