@@ -11,7 +11,9 @@ import {
   SiteAdapter,
   type ConversationInfo,
   type ConversationObserverConfig,
+  type ExportConfig,
   type ModelSwitcherConfig,
+  type OutlineItem,
 } from "./base"
 
 const HOSTNAME = "chat.z.ai"
@@ -28,6 +30,48 @@ const MODEL_SELECTOR_BUTTON_SELECTORS = [
 const MODEL_MENU_ITEM_SELECTOR =
   'button[aria-label="model-item"], button[data-melt-collapsible-trigger]'
 const MODEL_SUB_MENU_SELECTOR = "button[data-melt-collapsible-trigger]"
+const CHAT_CONTAINER_SELECTOR = "#chat-container"
+const CHAT_SCROLL_CONTAINER_SELECTOR = [
+  `${CHAT_CONTAINER_SELECTOR} .flex.overflow-y-scroll.flex-col.w-full.h-full`,
+  `${CHAT_CONTAINER_SELECTOR} .scrollbar-none.flex.flex-col`,
+  `${CHAT_CONTAINER_SELECTOR} [data-pane-id] .overflow-y-scroll`,
+  `${CHAT_CONTAINER_SELECTOR} [data-pane-id] .scrollbar-none`,
+].join(", ")
+const USER_QUERY_SELECTOR = [
+  `${CHAT_CONTAINER_SELECTOR} [data-message-author-role="user"]`,
+  `${CHAT_CONTAINER_SELECTOR} [data-role="user"]`,
+  `${CHAT_CONTAINER_SELECTOR} .message-user`,
+  `${CHAT_CONTAINER_SELECTOR} .user-message`,
+  `${CHAT_CONTAINER_SELECTOR} .chat-message-user`,
+  `${CHAT_CONTAINER_SELECTOR} .message.user`,
+].join(", ")
+const ASSISTANT_MARKDOWN_SELECTOR = [
+  `${CHAT_CONTAINER_SELECTOR} [data-message-author-role="assistant"]`,
+  `${CHAT_CONTAINER_SELECTOR} [data-role="assistant"]`,
+  `${CHAT_CONTAINER_SELECTOR} .message-assistant`,
+  `${CHAT_CONTAINER_SELECTOR} .assistant-message`,
+  `${CHAT_CONTAINER_SELECTOR} .chat-message-assistant`,
+  `${CHAT_CONTAINER_SELECTOR} .markdown`,
+  `${CHAT_CONTAINER_SELECTOR} .markdown-body`,
+  `${CHAT_CONTAINER_SELECTOR} .prose`,
+  `${CHAT_CONTAINER_SELECTOR} article`,
+  `${CHAT_CONTAINER_SELECTOR} [data-markdown]`,
+].join(", ")
+const USER_CONTENT_CANDIDATE_SELECTORS = [
+  ".gh-user-query-raw",
+  "[data-user-content]",
+  ".message-content",
+  ".chat-message-content",
+  ".user-message-content",
+  ".content",
+  'div[dir="auto"]',
+  "p",
+]
+const STOP_BUTTON_SELECTOR = [
+  'div[aria-label="停止"] button',
+  "button:has(span.rounded-xs):has(span.size-3)",
+  "button:has(span.rounded-xs):has(span.block)",
+].join(", ")
 const SIDEBAR_ITEM_SELECTOR = "#sidebar .w-full.mb-1.relative.group"
 const SIDEBAR_TITLE_SELECTOR = 'div[dir="auto"]'
 const CID_STORAGE_KEY = "_arms_uid"
@@ -104,6 +148,166 @@ export class ZaiAdapter extends SiteAdapter {
     if (!button || button.hasAttribute("disabled")) return null
     if (button.offsetParent === null) return null
     return button
+  }
+
+  // ===== 导出与大纲 =====
+
+  getResponseContainerSelector(): string {
+    return CHAT_SCROLL_CONTAINER_SELECTOR
+  }
+
+  getChatContentSelectors(): string[] {
+    return [USER_QUERY_SELECTOR, ASSISTANT_MARKDOWN_SELECTOR]
+  }
+
+  getUserQuerySelector(): string | null {
+    return USER_QUERY_SELECTOR
+  }
+
+  extractUserQueryText(element: Element): string {
+    const contentRoot = this.findUserContentRoot(element)
+    if (!contentRoot) return ""
+
+    const clone = contentRoot.cloneNode(true) as HTMLElement
+    clone
+      .querySelectorAll(".gh-user-query-markdown, button, [role=button], svg, [aria-hidden=true]")
+      .forEach((node) => node.remove())
+
+    return this.extractTextWithLineBreaks(clone).trim()
+  }
+
+  extractUserQueryMarkdown(element: Element): string {
+    return this.extractUserQueryText(element)
+  }
+
+  replaceUserQueryContent(element: Element, html: string): boolean {
+    const contentRoot = this.findUserContentRoot(element)
+    if (!contentRoot) return false
+    if (element.querySelector(".gh-user-query-markdown")) return false
+
+    const rendered = document.createElement("div")
+    rendered.className =
+      `${contentRoot instanceof HTMLElement ? contentRoot.className : ""} gh-user-query-markdown gh-markdown-preview`.trim()
+    rendered.innerHTML = html
+
+    if (contentRoot instanceof HTMLElement) {
+      const inlineStyle = contentRoot.getAttribute("style")
+      if (inlineStyle) {
+        rendered.setAttribute("style", inlineStyle)
+      }
+    }
+
+    if (contentRoot === element) {
+      const rawWrapper = document.createElement("div")
+      rawWrapper.className = "gh-user-query-raw"
+      while (element.firstChild) {
+        rawWrapper.appendChild(element.firstChild)
+      }
+      rawWrapper.style.display = "none"
+      element.appendChild(rawWrapper)
+      element.appendChild(rendered)
+      return true
+    }
+
+    ;(contentRoot as HTMLElement).style.display = "none"
+    contentRoot.after(rendered)
+    return true
+  }
+
+  getExportConfig(): ExportConfig {
+    return {
+      userQuerySelector: USER_QUERY_SELECTOR,
+      assistantResponseSelector: ASSISTANT_MARKDOWN_SELECTOR,
+      turnSelector: null,
+      useShadowDOM: false,
+    }
+  }
+
+  extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
+    const container =
+      document.querySelector(this.getResponseContainerSelector()) ||
+      document.querySelector(CHAT_CONTAINER_SELECTOR)
+    if (!container) return []
+
+    const outline: OutlineItem[] = []
+
+    const assistantBlocks = this.collectTopLevelBlocks(
+      Array.from(container.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR)).filter(
+        (block) => !block.closest(".gh-user-query-markdown"),
+      ),
+    )
+
+    if (includeUserQueries) {
+      const userBlocks = this.collectTopLevelBlocks(
+        Array.from(container.querySelectorAll(USER_QUERY_SELECTOR)),
+      )
+
+      userBlocks.forEach((userBlock) => {
+        const text = this.extractUserQueryMarkdown(userBlock)
+        if (!text) return
+
+        let wordCount: number | undefined
+        if (showWordCount) {
+          const nextAssistant = assistantBlocks.find(
+            (block) => userBlock.compareDocumentPosition(block) & Node.DOCUMENT_POSITION_FOLLOWING,
+          )
+          wordCount = nextAssistant?.textContent?.trim().length || 0
+        }
+
+        outline.push({
+          level: 0,
+          text: text.length > 80 ? `${text.slice(0, 80)}...` : text,
+          element: userBlock,
+          isUserQuery: true,
+          isTruncated: text.length > 80,
+          wordCount,
+        })
+      })
+    }
+
+    assistantBlocks.forEach((block) => {
+      const headings = Array.from(block.querySelectorAll("h1, h2, h3, h4, h5, h6"))
+      headings.forEach((heading, index) => {
+        if (this.isInRenderedMarkdownContainer(heading)) return
+
+        const level = Number.parseInt(heading.tagName.slice(1), 10)
+        if (Number.isNaN(level) || level > maxLevel) return
+
+        const text = heading.textContent?.trim() || ""
+        if (!text) return
+
+        let wordCount: number | undefined
+        if (showWordCount) {
+          let nextBoundary: Element | null = null
+          for (let i = index + 1; i < headings.length; i++) {
+            const candidate = headings[i]
+            const candidateLevel = Number.parseInt(candidate.tagName.slice(1), 10)
+            if (!Number.isNaN(candidateLevel) && candidateLevel <= level) {
+              nextBoundary = candidate
+              break
+            }
+          }
+          wordCount = this.calculateRangeWordCount(heading, nextBoundary, block)
+        }
+
+        outline.push({
+          level,
+          text,
+          element: heading,
+          wordCount,
+        })
+      })
+    })
+
+    return outline
+  }
+
+  // ===== 生成状态检测 =====
+
+  isGenerating(): boolean {
+    const stopButton = document.querySelector(STOP_BUTTON_SELECTOR) as HTMLElement | null
+    if (stopButton && stopButton.offsetParent !== null) return true
+    return false
   }
 
   getNewChatButtonSelectors(): string[] {
@@ -275,6 +479,31 @@ export class ZaiAdapter extends SiteAdapter {
   private extractConversationTitle(node: Element): string {
     const titleEl = node.querySelector(SIDEBAR_TITLE_SELECTOR)
     return titleEl?.textContent?.trim() || ""
+  }
+
+  private findUserContentRoot(element: Element): Element | null {
+    const messageRoot = element.matches(USER_QUERY_SELECTOR)
+      ? element
+      : element.closest(USER_QUERY_SELECTOR)
+    const scope = messageRoot || element
+
+    for (const selector of USER_CONTENT_CANDIDATE_SELECTORS) {
+      const candidate = scope.querySelector(selector)
+      if (!candidate) continue
+      if (candidate.closest(".gh-user-query-markdown")) continue
+      if (candidate.closest("button, [role=button]")) continue
+      const text = candidate.textContent?.trim()
+      if (!text) continue
+      return candidate
+    }
+    return scope
+  }
+
+  private collectTopLevelBlocks(blocks: Element[]): Element[] {
+    if (blocks.length <= 1) return blocks
+    return blocks.filter(
+      (block) => !blocks.some((other) => other !== block && other.contains(block)),
+    )
   }
 
   private extractConversationId(node: Element): string {
