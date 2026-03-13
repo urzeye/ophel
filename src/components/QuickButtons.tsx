@@ -489,6 +489,29 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     setGroupPosition(null)
   }, [quickButtonsSide])
 
+  useEffect(() => {
+    let rafId: number | null = null
+
+    const handleResize = () => {
+      if (rafId !== null) return
+      rafId = requestAnimationFrame(() => {
+        rafId = null
+        setGroupPosition((prev) => {
+          if (!prev) return prev
+          const next = clampGroupPosition(prev.x, prev.y)
+          if (next.x === prev.x && next.y === prev.y) return prev
+          return next
+        })
+      })
+    }
+
+    window.addEventListener("resize", handleResize)
+    return () => {
+      window.removeEventListener("resize", handleResize)
+      if (rafId !== null) cancelAnimationFrame(rafId)
+    }
+  }, [clampGroupPosition])
+
   const clearDragTimer = () => {
     if (dragTimerRef.current) {
       window.clearTimeout(dragTimerRef.current)
