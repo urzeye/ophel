@@ -99,6 +99,28 @@ export function htmlToMarkdown(el: Element): string {
         return ""
       }
 
+      // 跳过 UI 元素（复制按钮、装饰 SVG 等）
+      if (element.tagName === "BUTTON" || element.tagName === "SVG") {
+        return ""
+      }
+
+      // CodeMirror 代码块（Z.ai 等站点使用）
+      if (element.classList?.contains("cm-content") && element.getAttribute("data-language")) {
+        const lang = element.getAttribute("data-language") || ""
+        const lines = Array.from(element.querySelectorAll(".cm-line"))
+        const code = lines.map((l) => l.textContent || "").join("\n")
+        return `\n\`\`\`${lang}\n${code}\n\`\`\`\n`
+      }
+
+      // 跳过 CodeMirror 装饰层（光标、选区等）
+      if (
+        element.classList?.contains("cm-cursorLayer") ||
+        element.classList?.contains("cm-selectionLayer") ||
+        element.classList?.contains("cm-announced")
+      ) {
+        return ""
+      }
+
       const tag = element.tagName?.toLowerCase() || ""
       if (!tag) return ""
 
@@ -217,8 +239,17 @@ export function htmlToMarkdown(el: Element): string {
           return `*${children}*`
         case "a":
           return `[${children}](${(element as HTMLAnchorElement).href || ""})`
-        case "li":
+        case "li": {
+          const parentTag = element.parentElement?.tagName?.toLowerCase()
+          if (parentTag === "ol") {
+            const siblings = Array.from(element.parentElement!.children).filter(
+              (c) => c.tagName?.toLowerCase() === "li",
+            )
+            const index = siblings.indexOf(element) + 1
+            return `${index}. ${children}\n`
+          }
           return `- ${children}\n`
+        }
         case "p":
           return `${children}\n\n`
         case "br":
@@ -226,6 +257,11 @@ export function htmlToMarkdown(el: Element): string {
         case "ul":
         case "ol":
           return `\n${children}`
+        case "blockquote": {
+          const lines = children.replace(/\r\n/g, "\n").split("\n")
+          const quoted = lines.map((l: string) => (l.trim().length > 0 ? `> ${l}` : ">"))
+          return `\n${quoted.join("\n")}\n`
+        }
         default:
           // 处理 Shadow DOM
           if ((element as HTMLElement).shadowRoot) {

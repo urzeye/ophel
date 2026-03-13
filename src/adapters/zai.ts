@@ -6,11 +6,13 @@
  * - 会话列表缺少稳定 ID，列表解析为 best-effort
  */
 import { SITE_IDS } from "~constants"
+import { htmlToMarkdown } from "~utils/exporter"
 
 import {
   SiteAdapter,
   type ConversationInfo,
   type ConversationObserverConfig,
+  type ExportLifecycleContext,
   type ExportConfig,
   type ModelSwitcherConfig,
   type OutlineItem,
@@ -60,7 +62,12 @@ const ASSISTANT_MARKDOWN_SELECTOR = [
   `${CHAT_CONTAINER_SELECTOR} article`,
   `${CHAT_CONTAINER_SELECTOR} [data-markdown]`,
 ].join(", ")
+const EXPORT_ROLE_ATTR = "data-gh-export-role"
+const EXPORT_USER_QUERY_SELECTOR = `[${EXPORT_ROLE_ATTR}="user"]`
+const EXPORT_ASSISTANT_SELECTOR = `[${EXPORT_ROLE_ATTR}="assistant"]`
 const THINKING_CONTAINER_SELECTOR = ".thinking-chain-container, .thinking-block"
+const THINKING_BLOCKQUOTE_SELECTOR =
+  "blockquote[slot='content'], .thinking-block blockquote, .thinking-chain-container blockquote"
 const USER_CONTENT_CANDIDATE_SELECTORS = [
   ".gh-user-query-raw",
   ".rounded-xl.whitespace-pre-wrap",
@@ -92,6 +99,8 @@ const THEME_COLORS = {
 const CONVERSATION_ID_PATTERN = /[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/i
 
 export class ZaiAdapter extends SiteAdapter {
+  private exportIncludeThoughtsOverride: boolean | null = null
+
   match(): boolean {
     return window.location.hostname === HOSTNAME
   }
@@ -223,11 +232,171 @@ export class ZaiAdapter extends SiteAdapter {
 
   getExportConfig(): ExportConfig {
     return {
-      userQuerySelector: USER_QUERY_SELECTOR,
-      assistantResponseSelector: ASSISTANT_MARKDOWN_SELECTOR,
+      userQuerySelector: EXPORT_USER_QUERY_SELECTOR,
+      assistantResponseSelector: EXPORT_ASSISTANT_SELECTOR,
       turnSelector: null,
       useShadowDOM: false,
     }
+  }
+
+  async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
+    this.exportIncludeThoughtsOverride = context.includeThoughts
+    this.clearExportMarkers()
+
+    const container =
+      document.querySelector(this.getResponseContainerSelector()) ||
+      document.querySelector(CHAT_CONTAINER_SELECTOR) ||
+      document.body
+
+    this.markExportMessages(container)
+    return null
+  }
+
+  async restoreConversationAfterExport(
+    _context: ExportLifecycleContext,
+    _state: unknown,
+  ): Promise<void> {
+    this.clearExportMarkers()
+    this.exportIncludeThoughtsOverride = null
+  }
+
+  private clearExportMarkers(): void {
+    document
+      .querySelectorAll(`[${EXPORT_ROLE_ATTR}]`)
+      .forEach((node) => node.removeAttribute(EXPORT_ROLE_ATTR))
+  }
+
+  private shouldSkipExportElement(element: Element): boolean {
+    if (element.closest(".gh-root")) return true
+    if (element.closest(".gh-user-query-markdown")) return true
+    if (element.closest(THINKING_CONTAINER_SELECTOR)) return true
+    return false
+  }
+
+  private collectExportMessages(container: Element): {
+    users: Element[]
+    assistants: Element[]
+  } {
+    const userCandidates = Array.from(container.querySelectorAll(USER_QUERY_SELECTOR))
+    const userTop = this.collectTopLevelBlocks(userCandidates).filter(
+      (el) => !this.shouldSkipExportElement(el),
+    )
+
+    const assistantCandidates = Array.from(container.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR))
+    const assistantTop = this.collectTopLevelBlocks(assistantCandidates).filter((el) => {
+      if (this.shouldSkipExportElement(el)) return false
+      if (el.closest(USER_QUERY_SELECTOR)) return false
+      return true
+    })
+
+    return { users: userTop, assistants: assistantTop }
+  }
+
+  private markExportMessages(container: Element): void {
+    const { users, assistants } = this.collectExportMessages(container)
+    users.forEach((el) => el.setAttribute(EXPORT_ROLE_ATTR, "user"))
+    assistants.forEach((el) => el.setAttribute(EXPORT_ROLE_ATTR, "assistant"))
+  }
+
+  private shouldIncludeThoughtsInExport(): boolean {
+    if (typeof this.exportIncludeThoughtsOverride === "boolean") {
+      return this.exportIncludeThoughtsOverride
+    }
+    return true
+  }
+
+  private formatAsThoughtBlockquote(markdown: string): string {
+    // 清理连续空行，避免 blockquote 断裂
+    const cleaned = markdown.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n")
+    const lines = cleaned.split("\n")
+    const quotedLines = lines.map((line) => (line.trim().length > 0 ? `> ${line}` : `>`))
+    return ["> **💭 思考过程**", ">", ...quotedLines].join("\n")
+  }
+
+  private extractThoughtBlockquotesFromElement(element: Element): {
+    blocks: string[]
+    removalNodes: Element[]
+  } {
+    const blocks: string[] = []
+    const removalNodes: Element[] = []
+
+    // 辅助函数：将 blockquote/target 的子节点转为 markdown（避免 blockquote 标签自身被加 `>`）
+    const extractInnerMarkdown = (target: Element): string => {
+      const wrapper = document.createElement("div")
+      Array.from(target.childNodes).forEach((child) => wrapper.appendChild(child.cloneNode(true)))
+      return htmlToMarkdown(wrapper) || this.extractTextWithLineBreaks(target)
+    }
+
+    const blockquoteNodes = Array.from(
+      element.querySelectorAll(THINKING_BLOCKQUOTE_SELECTOR),
+    ) as Element[]
+
+    if (blockquoteNodes.length > 0) {
+      const topLevelQuotes = this.collectTopLevelBlocks(blockquoteNodes)
+      for (const blockquote of topLevelQuotes) {
+        const markdown = extractInnerMarkdown(blockquote)
+        const normalized = markdown.trim()
+        if (normalized) {
+          blocks.push(this.formatAsThoughtBlockquote(normalized))
+        }
+
+        const container =
+          blockquote.closest(".thinking-chain-container") ||
+          blockquote.closest(".thinking-block") ||
+          blockquote
+        removalNodes.push(container)
+      }
+
+      return {
+        blocks,
+        removalNodes: this.collectTopLevelBlocks(removalNodes),
+      }
+    }
+
+    const thoughtNodes = Array.from(element.querySelectorAll(THINKING_CONTAINER_SELECTOR))
+    const topLevel = this.collectTopLevelBlocks(thoughtNodes)
+    for (const thought of topLevel) {
+      const thoughtContent =
+        thought.querySelector("blockquote[slot='content']") || thought.querySelector("blockquote")
+      const target = thoughtContent || thought
+      const markdown = extractInnerMarkdown(target)
+      const normalized = markdown.trim()
+      if (normalized) {
+        blocks.push(this.formatAsThoughtBlockquote(normalized))
+      }
+      removalNodes.push(thought)
+    }
+
+    return {
+      blocks,
+      removalNodes: this.collectTopLevelBlocks(removalNodes),
+    }
+  }
+
+  extractAssistantResponseText(element: Element): string {
+    const sanitized = element.cloneNode(true) as Element
+    const includeThoughts = this.shouldIncludeThoughtsInExport()
+
+    const thoughtResult = this.extractThoughtBlockquotesFromElement(sanitized)
+    const thoughtBlocks = includeThoughts ? thoughtResult.blocks : []
+
+    // 无论是否导出思维链，都必须从克隆中移除思维链容器
+    // Z.ai 的思维链始终在 DOM 中（CSS h-0 隐藏），不移除会泄漏到 body
+    if (thoughtResult.removalNodes.length > 0) {
+      thoughtResult.removalNodes.forEach((node) => node.remove())
+    }
+    // 兜底：再次清理残留的思维链元素
+    sanitized.querySelectorAll(THINKING_CONTAINER_SELECTOR).forEach((node) => node.remove())
+
+    const bodyMarkdown = htmlToMarkdown(sanitized) || this.extractTextWithLineBreaks(sanitized)
+    const normalizedBody = bodyMarkdown.trim()
+
+    if (thoughtBlocks.length > 0) {
+      const thoughtSection = thoughtBlocks.join("\n\n")
+      return normalizedBody ? `${thoughtSection}\n\n${normalizedBody}` : thoughtSection
+    }
+
+    return normalizedBody
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
@@ -246,9 +415,21 @@ export class ZaiAdapter extends SiteAdapter {
     }
 
     const combinedSelector = `${userQuerySelector}, ${headingSelectors.join(", ")}`
-    const allElements = Array.from(container.querySelectorAll(combinedSelector))
-    const assistantElements = Array.from(container.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR))
-    const seenUserQueryKeys = new Set<string>()
+
+    const rawUserQueries = Array.from(container.querySelectorAll(userQuerySelector))
+    const userQueries = this.collectTopLevelBlocks(rawUserQueries).filter(
+      (element) => !this.shouldSkipOutlineElement(element),
+    )
+    const userQuerySet = new Set(userQueries)
+
+    const allElements = Array.from(container.querySelectorAll(combinedSelector)).filter(
+      (element) => {
+        if (element.matches(userQuerySelector)) {
+          return userQuerySet.has(element)
+        }
+        return !this.shouldSkipOutlineElement(element)
+      },
+    )
 
     const calculateWordCount = (
       startEl: Element,
@@ -336,21 +517,12 @@ export class ZaiAdapter extends SiteAdapter {
 
       let item: OutlineItem
       if (isUserQuery) {
-        if (!this.isVisibleElement(element)) return
-
         let queryText = this.extractUserQueryText(element)
         let isTruncated = false
         if (queryText.length > 200) {
           queryText = queryText.substring(0, 200)
           isTruncated = true
         }
-
-        const dedupeKey = this.getUserQueryDedupKey(element, queryText, assistantElements)
-        if (dedupeKey) {
-          if (seenUserQueryKeys.has(dedupeKey)) return
-          seenUserQueryKeys.add(dedupeKey)
-        }
-
         item = {
           level: 0,
           text: queryText,
@@ -406,6 +578,24 @@ export class ZaiAdapter extends SiteAdapter {
     const stopButton = document.querySelector(STOP_BUTTON_SELECTOR) as HTMLElement | null
     if (stopButton && stopButton.offsetParent !== null) return true
     return false
+  }
+
+  getLatestReplyText(): string | null {
+    const container =
+      document.querySelector(this.getResponseContainerSelector()) ||
+      document.querySelector(CHAT_CONTAINER_SELECTOR) ||
+      document.body
+
+    const { assistants } = this.collectExportMessages(container)
+    if (assistants.length === 0) return null
+
+    const last = assistants[assistants.length - 1]
+    // 复制最新回复时不包含思维链
+    const prevOverride = this.exportIncludeThoughtsOverride
+    this.exportIncludeThoughtsOverride = false
+    const text = this.extractAssistantResponseText(last)
+    this.exportIncludeThoughtsOverride = prevOverride
+    return text
   }
 
   getNewChatButtonSelectors(): string[] {
@@ -580,40 +770,25 @@ export class ZaiAdapter extends SiteAdapter {
   }
 
   private shouldSkipOutlineElement(element: Element): boolean {
+    if (!this.isOutlineElementVisible(element)) return true
+    if (element.closest(".gh-root")) return true
     if (this.isInRenderedMarkdownContainer(element)) return true
     if (element.closest(THINKING_CONTAINER_SELECTOR)) return true
     return false
   }
 
-  private isVisibleElement(element: Element): boolean {
-    if (!(element instanceof HTMLElement)) return true
-    const rect = element.getBoundingClientRect()
-    if (rect.width === 0 || rect.height === 0) return false
+  private isOutlineElementVisible(element: Element): boolean {
+    if (!(element instanceof HTMLElement)) return false
+    if (!element.isConnected) return false
+    if (element.closest("[hidden], [aria-hidden='true']")) return false
+
     const style = window.getComputedStyle(element)
-    if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") {
+    if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) {
       return false
     }
-    return true
-  }
 
-  private getUserQueryDedupKey(
-    element: Element,
-    text: string,
-    assistantElements: Element[],
-  ): string {
-    const idAttrs = ["data-message-id", "data-msg-id", "data-id", "data-uuid", "data-turn-id"]
-
-    for (const attr of idAttrs) {
-      const value = element.getAttribute(attr)
-      if (value) return `${attr}:${value}`
-    }
-
-    const normalizedText = text.replace(/\s+/g, " ").trim()
-    const assistantIndex = assistantElements.findIndex(
-      (assistant) => element.compareDocumentPosition(assistant) & Node.DOCUMENT_POSITION_FOLLOWING,
-    )
-    const top = element instanceof HTMLElement ? Math.round(element.getBoundingClientRect().top) : 0
-    return `a:${assistantIndex}|t:${top}|${normalizedText}`
+    const rect = element.getBoundingClientRect()
+    return rect.width > 0 && rect.height > 0
   }
 
   private findUserContentRoot(element: Element): Element | null {
