@@ -247,6 +247,8 @@ export class ZaiAdapter extends SiteAdapter {
 
     const combinedSelector = `${userQuerySelector}, ${headingSelectors.join(", ")}`
     const allElements = Array.from(container.querySelectorAll(combinedSelector))
+    const assistantElements = Array.from(container.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR))
+    const seenUserQueryKeys = new Set<string>()
 
     const calculateWordCount = (
       startEl: Element,
@@ -334,12 +336,21 @@ export class ZaiAdapter extends SiteAdapter {
 
       let item: OutlineItem
       if (isUserQuery) {
+        if (!this.isVisibleElement(element)) return
+
         let queryText = this.extractUserQueryText(element)
         let isTruncated = false
         if (queryText.length > 200) {
           queryText = queryText.substring(0, 200)
           isTruncated = true
         }
+
+        const dedupeKey = this.getUserQueryDedupKey(element, queryText, assistantElements)
+        if (dedupeKey) {
+          if (seenUserQueryKeys.has(dedupeKey)) return
+          seenUserQueryKeys.add(dedupeKey)
+        }
+
         item = {
           level: 0,
           text: queryText,
@@ -572,6 +583,37 @@ export class ZaiAdapter extends SiteAdapter {
     if (this.isInRenderedMarkdownContainer(element)) return true
     if (element.closest(THINKING_CONTAINER_SELECTOR)) return true
     return false
+  }
+
+  private isVisibleElement(element: Element): boolean {
+    if (!(element instanceof HTMLElement)) return true
+    const rect = element.getBoundingClientRect()
+    if (rect.width === 0 || rect.height === 0) return false
+    const style = window.getComputedStyle(element)
+    if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") {
+      return false
+    }
+    return true
+  }
+
+  private getUserQueryDedupKey(
+    element: Element,
+    text: string,
+    assistantElements: Element[],
+  ): string {
+    const idAttrs = ["data-message-id", "data-msg-id", "data-id", "data-uuid", "data-turn-id"]
+
+    for (const attr of idAttrs) {
+      const value = element.getAttribute(attr)
+      if (value) return `${attr}:${value}`
+    }
+
+    const normalizedText = text.replace(/\s+/g, " ").trim()
+    const assistantIndex = assistantElements.findIndex(
+      (assistant) => element.compareDocumentPosition(assistant) & Node.DOCUMENT_POSITION_FOLLOWING,
+    )
+    const top = element instanceof HTMLElement ? Math.round(element.getBoundingClientRect().top) : 0
+    return `a:${assistantIndex}|t:${top}|${normalizedText}`
   }
 
   private findUserContentRoot(element: Element): Element | null {
