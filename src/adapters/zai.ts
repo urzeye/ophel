@@ -2,7 +2,7 @@
  * Z.ai 适配器（chat.z.ai）
  *
  * 选择器策略：
- * - 优先使用 ID / aria-label 等稳定属性
+ * - 优先使用 ID / data-* / class 等稳定属性
  * - 会话列表缺少稳定 ID，列表解析为 best-effort
  */
 import { SITE_IDS } from "~constants"
@@ -20,10 +20,10 @@ const TEXTAREA_SELECTORS = ["#chat-input", "textarea#chat-input"]
 const SUBMIT_BUTTON_SELECTOR = "#send-message-button"
 const NEW_CHAT_BUTTON_SELECTORS = ["#sidebar-new-chat-button", "#new-chat-button"]
 const MODEL_SELECTOR_BUTTON_SELECTORS = [
+  "button.modelSelectorButton",
+  'button[id^="model-selector-"][id$="-button"]',
   "#model-selector-glm-5-button",
-  'button[aria-label="选择一个模型"]',
-  'button[aria-label*="模型"]',
-  'button[aria-label*="model"]',
+  "button[data-melt-dropdown-menu-trigger][data-menu-trigger].modelSelectorButton",
 ]
 const MODEL_MENU_ITEM_SELECTOR =
   'button[aria-label="model-item"], button[data-melt-collapsible-trigger]'
