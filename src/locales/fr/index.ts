@@ -575,11 +575,11 @@ export const fr = {
     "Aucune conversation détectée dans la barre latérale. Ouvrez-la puis réessayez.",
   conversationsSyncResult:
     "Synchronisation terminée: {scanned} analysées, {added} ajoutées, {updated} mises à jour",
-  chatglmConversationsUnsupportedTitle: "Conversations ChatGLM non prises en charge",
-  chatglmConversationsUnsupportedDesc:
+  conversationsUnsupportedTitle: "Conversations {site} non prises en charge",
+  conversationsUnsupportedDesc:
     "Les restrictions du site empêchent d'obtenir de façon stable la liste des conversations.",
-  chatglmConversationsUnsupportedSync:
-    "La synchronisation des conversations ChatGLM n'est pas prise en charge.",
+  conversationsUnsupportedSync:
+    "La synchronisation des conversations {site} n'est pas prise en charge.",
   conversationsLocate: "Localiser actuel",
   conversationsLocateSuccess: "Trouvé",
   conversationsLocateNotFound: "Non trouvé, synchronisation...",

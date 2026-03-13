@@ -13,13 +13,13 @@ import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 
 // Markdown 语法检测规则
 const MARKDOWN_PATTERNS = [
-  /^#{1,6}\s+\S/m, // 标题：# Title
+  /^\s*#{1,6}\s+\S/m, // 标题：# Title
   /\*\*[^*]+\*\*/, // 加粗：**bold**
   /`[^`]+`/, // 行内代码：`code`
-  /^```/m, // 代码块：```
-  /^>\s+\S/m, // 引用：> quote
-  /^[-*]\s+\S/m, // 无序列表：- item 或 * item
-  /^\d+\.\s+\S/m, // 有序列表：1. item
+  /^\s*```/m, // 代码块：```
+  /^\s*(?:>|&gt;)\s+\S/m, // 引用：> quote
+  /^\s*[-*]\s+\S/m, // 无序列表：- item 或 * item
+  /^\s*\d+\.\s+\S/m, // 有序列表：1. item
   /\[.+\]\(.+\)/, // 链接：[text](url)
 ]
 
