@@ -38,6 +38,8 @@ const CHAT_SCROLL_CONTAINER_SELECTOR = [
   `${CHAT_CONTAINER_SELECTOR} [data-pane-id] .scrollbar-none`,
 ].join(", ")
 const USER_QUERY_SELECTOR = [
+  `${CHAT_CONTAINER_SELECTOR} .chat-user.markdown-prose`,
+  `${CHAT_CONTAINER_SELECTOR} .chat-user`,
   `${CHAT_CONTAINER_SELECTOR} [data-message-author-role="user"]`,
   `${CHAT_CONTAINER_SELECTOR} [data-role="user"]`,
   `${CHAT_CONTAINER_SELECTOR} .message-user`,
@@ -46,6 +48,7 @@ const USER_QUERY_SELECTOR = [
   `${CHAT_CONTAINER_SELECTOR} .message.user`,
 ].join(", ")
 const ASSISTANT_MARKDOWN_SELECTOR = [
+  `${CHAT_CONTAINER_SELECTOR} .markdown-prose:not(.chat-user)`,
   `${CHAT_CONTAINER_SELECTOR} [data-message-author-role="assistant"]`,
   `${CHAT_CONTAINER_SELECTOR} [data-role="assistant"]`,
   `${CHAT_CONTAINER_SELECTOR} .message-assistant`,
@@ -59,6 +62,9 @@ const ASSISTANT_MARKDOWN_SELECTOR = [
 ].join(", ")
 const USER_CONTENT_CANDIDATE_SELECTORS = [
   ".gh-user-query-raw",
+  ".rounded-xl.whitespace-pre-wrap",
+  ".rounded-xl",
+  ".whitespace-pre-wrap",
   "[data-user-content]",
   ".message-content",
   ".chat-message-content",
