@@ -27,6 +27,9 @@ import {
 } from "./base"
 
 const DEFAULT_TITLE = "Grok"
+const PIN_ICON_PATH_SIGNATURES = [
+  "M13 21L12 23L11 21V16H4.5V13.7129L4.65234 13.4697L6.95801 9.78027L6.41797 5.99512C6.11675 3.8866 7.75289 2 9.88281 2H14.1172C16.2471 2 17.8832 3.8866 17.582 5.99512L17.041 9.78027L19.5 13.7129V16H13V21Z",
+].map((path) => path.replace(/\s+/g, ""))
 
 const DELETE_REASON = {
   UI_FAILED: "delete_ui_failed",
@@ -157,6 +160,8 @@ export class GrokAdapter extends SiteAdapter {
     // 扫描所有 cmdk 对话框中的会话链接
     const allLinks = document.querySelectorAll('a[href^="/c/"]')
     allLinks.forEach((link) => {
+      if (this.isCmdkActionItem(link)) return
+
       const href = link.getAttribute("href")
       if (!href) return
 
@@ -204,10 +209,6 @@ export class GrokAdapter extends SiteAdapter {
         const links = group.querySelectorAll('a[href^="/c/"]')
         if (links.length === 0) return
 
-        // 置顶判断：没有 sticky 日期标题的分组
-        const hasStickyDateHeader = group.querySelector(".sticky") !== null
-        const isPinnedGroup = !hasStickyDateHeader
-
         links.forEach((link) => {
           const href = link.getAttribute("href")
           if (!href) return
@@ -218,12 +219,13 @@ export class GrokAdapter extends SiteAdapter {
           const titleSpan = link.querySelector("span.flex-1, span.truncate, span")
           const title = titleSpan?.textContent?.trim() || link.textContent?.trim() || "New Chat"
           const isActive = link.classList.contains("bg-button-ghost-hover")
+          const isPinned = this.isPinnedSidebarConversation(link)
 
           conversationMap.set(id, {
             id,
             title,
             url: href,
-            isPinned: isPinnedGroup,
+            isPinned,
             isActive,
           })
         })
@@ -234,6 +236,8 @@ export class GrokAdapter extends SiteAdapter {
     // 这能捕获"查看全部"对话框中的会话，无论选择器细节如何
     const allLinks = document.querySelectorAll('a[href^="/c/"]')
     allLinks.forEach((link) => {
+      if (this.isCmdkActionItem(link)) return
+
       const href = link.getAttribute("href")
       if (!href) return
 
@@ -310,10 +314,8 @@ export class GrokAdapter extends SiteAdapter {
         if (isFromSidebar) {
           const titleSpan = el.querySelector("span.flex-1, span.truncate, span")
           title = titleSpan?.textContent?.trim() || el.textContent?.trim() || ""
-          // 通过检查分组是否有 sticky 日期标题判断置顶（语言无关）
-          const group = el.closest('[data-sidebar="group"]')
-          const hasStickyDateHeader = group?.querySelector(".sticky") !== null
-          isPinned = !hasStickyDateHeader
+          // 通过左侧置顶图标判断（未置顶项没有 icon）
+          isPinned = this.isPinnedSidebarConversation(el)
         } else if (isFromCmdk) {
           const cmdkItem = el.closest("[cmdk-item]")
           const titleSpan = cmdkItem?.querySelector("span.truncate")
@@ -966,8 +968,63 @@ export class GrokAdapter extends SiteAdapter {
     return match ? match[1] : null
   }
 
-  private isVisible(element: Element | null): element is HTMLElement {
-    if (!(element instanceof HTMLElement)) return false
+  private isPinnedSidebarConversation(element: Element): boolean {
+    if (!element.closest('[data-sidebar="content"]')) return false
+
+    const anchor = element.closest('a[href^="/c/"]') ?? element
+    if (!this.hasPinnedIcon(anchor)) return false
+
+    const item = anchor.closest('[data-sidebar="menu-item"]')
+    const menu = anchor.closest('[data-sidebar="menu"]')
+    if (!item || !menu) return true
+
+    return this.isPinnedSectionItem(item)
+  }
+
+  private hasPinnedIcon(anchor: Element): boolean {
+    const icon = anchor.querySelector('[data-sidebar="icon"] svg')
+    if (!icon) return false
+    if (!this.isDomElementVisible(icon)) return false
+
+    const paths = Array.from(icon.querySelectorAll("path"))
+    if (paths.length === 0) return false
+
+    return paths.some((path) => {
+      const data = (path.getAttribute("d") || "").replace(/\s+/g, "")
+      if (!data) return false
+      return PIN_ICON_PATH_SIGNATURES.some((signature) => data === signature)
+    })
+  }
+
+  private isPinnedSectionItem(item: Element): boolean {
+    let sibling = item.previousElementSibling
+    while (sibling) {
+      if (!sibling.matches('[data-sidebar="menu-item"]')) {
+        return false
+      }
+      sibling = sibling.previousElementSibling
+    }
+    return true
+  }
+
+  private isCmdkActionItem(element: Element): boolean {
+    const cmdkItem = element.closest("[cmdk-item]")
+    if (!cmdkItem) return false
+
+    const itemValue = (cmdkItem.getAttribute("data-value") || "").toLowerCase()
+    if (itemValue.startsWith("action:")) return true
+
+    const group = cmdkItem.closest("[cmdk-group]")
+    if (!group) return false
+
+    const groupValue = (group.getAttribute("data-value") || "").replace(/\s+/g, "").toLowerCase()
+    if (groupValue === "actionsshowall" || groupValue.startsWith("actions")) return true
+
+    return false
+  }
+
+  private isDomElementVisible(element: Element | null): boolean {
+    if (!element) return false
     if (!element.isConnected) return false
 
     const style = window.getComputedStyle(element)
@@ -977,6 +1034,11 @@ export class GrokAdapter extends SiteAdapter {
 
     const rect = element.getBoundingClientRect()
     return rect.width > 0 && rect.height > 0
+  }
+
+  private isVisible(element: Element | null): element is HTMLElement {
+    if (!(element instanceof HTMLElement)) return false
+    return this.isDomElementVisible(element)
   }
 
   private async sleep(ms: number): Promise<void> {
