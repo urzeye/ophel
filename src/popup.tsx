@@ -35,19 +35,26 @@ const SUPPORTED_SITES = [
   },
   {
     name: "ChatGPT",
-    pattern: /chatgpt\.com|chat\.openai\.com/,
+    pattern: /chatgpt\.com/,
     url: "https://chatgpt.com",
     icon: "💬",
   },
   { name: "Grok", pattern: /grok\.com/, url: "https://grok.com", icon: "🤖" },
-  { name: "Claude", pattern: /claude\.ai/, url: "https://claude.ai", icon: "🎭" },
-  { name: "豆包", pattern: /www\.doubao\.com/, url: "https://www.doubao.com", icon: "🌱" },
+  { name: "Claude", pattern: /claude\.(ai|com)/, url: "https://claude.ai", icon: "🎭" },
+  { name: "Doubao", pattern: /www\.doubao\.com/, url: "https://www.doubao.com", icon: "🌱" },
   {
     name: "DeepSeek",
     pattern: /chat\.deepseek\.com/,
     url: "https://chat.deepseek.com",
     icon: "🌀",
   },
+  {
+    name: "ChatGLM",
+    pattern: /chatglm\.cn/,
+    url: "https://chatglm.cn/main/alltoolsdetail?lang=zh",
+    icon: "🧠",
+  },
+  { name: "Kimi", pattern: /www\.kimi\.com/, url: "https://www.kimi.com", icon: "🌙" },
   { name: "Z.ai", pattern: /chat\.z\.ai/, url: "https://chat.z.ai", icon: "⚡" },
 ]
 
@@ -201,7 +208,7 @@ function IndexPopup() {
         <>
           <div className="popup-section-title">{t("popupQuickAccess")}</div>
           <div className="popup-sites-grid">
-            {SUPPORTED_SITES.slice(0, 6).map((site) => (
+            {SUPPORTED_SITES.map((site) => (
               <Tooltip
                 key={site.name}
                 content={site.name}
