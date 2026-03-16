@@ -365,6 +365,14 @@ export class AIStudioAdapter extends SiteAdapter {
       { selector: ".chat-session-content", property: "max-width" },
       // 每个对话轮次容器
       { selector: ".chat-turn-container", property: "max-width" },
+      // 表格默认 width:auto，开启页面加宽后仍不会拉伸
+      {
+        selector: ".table-container > table",
+        property: "width",
+        value: "100%",
+        noCenter: true,
+        extraCss: "min-width: 100% !important;",
+      },
     ]
   }
 
