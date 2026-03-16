@@ -411,6 +411,8 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
           title={t("collapsedButtonsOrderTitle") || "快捷按钮组"}
           description={t("collapsedButtonsOrderDesc") || "快捷按钮组排序与启用 (拖拽排序)"}>
           {settings.collapsedButtons?.map((btn, index) => {
+            // 暂时隐藏“手动锚点”设置项，避免对用户造成困扰
+            if (btn.id === "manualAnchor") return null
             const def = COLLAPSED_BUTTON_DEFS[btn.id]
             if (!def) return null
             return (

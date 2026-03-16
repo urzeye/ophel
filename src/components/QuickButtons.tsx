@@ -345,6 +345,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
     const renderable = collapsedButtonsOrder
       .map((btnConfig) => {
+        // 暂时禁用“手动锚点”按钮，避免对用户造成困扰
+        if (btnConfig.id === "manualAnchor") return null
         const def = COLLAPSED_BUTTON_DEFS[btnConfig.id]
         if (!def) return null
 
