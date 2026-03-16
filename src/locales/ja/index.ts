@@ -176,8 +176,8 @@ export const ja = {
   enablePrerequisiteToast: "先に「{setting}」を有効にしてください",
   privacyModeTitle: "プライバシーモード",
   collapsedButtonsOrderTitle: "クイックボタン",
-  quickButtonsOpacityLabel: "Quick buttons opacity",
-  quickButtonsOpacityDesc: "Adjust overall opacity of the quick buttons",
+  quickButtonsOpacityLabel: "クイックボタンの不透明度",
+  quickButtonsOpacityDesc: "クイックボタングループ全体の不透明度を調整します",
 
   // ======== Continue existing translations ========
   searchPlaceholder: "プロンプトを検索...",
@@ -278,8 +278,8 @@ export const ja = {
   // Settings panel
   settingsTitle: "基本設定",
   panelSettingsTitle: "パネル設定",
-  settingOn: "ON",
-  settingOff: "OFF",
+  settingOn: "オン",
+  settingOff: "オフ",
   // Model Lock
   modelLockTitle: "モデルロック",
   modelLockEnabledLabel: "モデルロックを有効化",
@@ -659,7 +659,7 @@ export const ja = {
   exportMetaSource: "ソース",
   exportNotSupported: "このサイトでは出力がサポートされていません",
   exportToTXT: "TXT形式",
-  exportMetaUrl: "URL",
+  exportMetaUrl: "リンク",
   exportUntitled: "無題",
   exportToClipboard: "Markdownをコピー",
   conversationsRefresh: "リロード",
@@ -784,7 +784,7 @@ export const ja = {
 
   webdavConfig: "WebDAV設定",
   webdavConfigDesc: "WebDAVサーバーを設定して自動・手動同期を可能にします",
-  webdavAddress: "WebDAV URL",
+  webdavAddress: "WebDAV アドレス",
   username: "ユーザー名",
   password: "パスワード",
   saveConfig: "設定を保存",
@@ -879,7 +879,7 @@ export const ja = {
   resetShortcuts: "デフォルトに戻す",
   resetShortcutsConfirm: "すべてのショートカットを初期値に戻しますか？",
   pressAnyKey: "キーを押してください...",
-  shortcutConflictWith: "重複:",
+  shortcutConflictWith: "競合:",
   shortcutConflict: "",
   globalShortcutsTitle: "グローバルショートカット",
   globalShortcutsDesc: "ブラウザのどこでも動作します。拡張機能の管理画面から設定してください。",
@@ -1068,8 +1068,8 @@ export const ja = {
   exportCustomUserNameDesc: "エクスポート時のユーザー表示名（デフォルト: User）",
   exportCustomModelName: "カスタムAI名",
   exportCustomModelNameDesc: "エクスポート時のAI表示名（デフォルト: サイト名）",
-  exportFilenameTimestamp: "Add Timestamp to Filename",
-  exportFilenameTimestampDesc: "Add a timestamp to the end of the exported filename",
+  exportFilenameTimestamp: "エクスポート名にタイムスタンプを追加",
+  exportFilenameTimestampDesc: "エクスポートしたファイル名の末尾にタイムスタンプを追加します",
   exportIncludeThoughtsLabel: "エクスポートに思考過程を含める",
   exportIncludeThoughtsDesc: "エクスポート時に思考過程を含めて自動展開します（引用ブロックで区別）",
 

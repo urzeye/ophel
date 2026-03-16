@@ -177,7 +177,12 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
           !!b.meta === !!binding.meta &&
           !!b.shift === !!binding.shift
         ) {
-          return `${t("shortcutConflictWith") || "与"} "${t(meta.labelKey) || meta.label}" ${t("shortcutConflict") || "冲突"}`
+          const conflictParts = [
+            t("shortcutConflictWith") || "与",
+            `"${t(meta.labelKey) || meta.label}"`,
+            t("shortcutConflict"),
+          ].filter(Boolean)
+          return conflictParts.join(" ")
         }
       }
       return undefined
