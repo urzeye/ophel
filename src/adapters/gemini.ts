@@ -893,6 +893,14 @@ export class GeminiAdapter extends SiteAdapter {
     return [
       { selector: ".conversation-container", property: "max-width" },
       { selector: ".input-area-container", property: "max-width" },
+      // 表格容器随页面加宽（覆盖 Gemini 的 max-width 限制）
+      {
+        selector: ".table-block.new-table-style",
+        property: "max-width",
+        value: "100%",
+        noCenter: true,
+        extraCss: "width: 100% !important;",
+      },
       // 用户消息右对齐
       {
         selector: "user-query",
