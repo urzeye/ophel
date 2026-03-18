@@ -113,6 +113,7 @@
       "https://chat.deepseek.com/*",
       "https://www.kimi.com/*",
       "https://chatglm.cn/*",
+      "https://www.qianwen.com/*",
       "https://chat.z.ai/*"
     ],
     "optional_host_permissions": [

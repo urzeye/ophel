@@ -106,6 +106,7 @@ export default defineConfig({
           "https://chat.deepseek.com/*",
           "https://www.kimi.com/*",
           "https://chatglm.cn/*",
+          "https://www.qianwen.com/*",
         ],
         grant: [
           "GM_getValue",

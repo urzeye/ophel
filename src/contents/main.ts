@@ -47,6 +47,8 @@ export const config: PlasmoCSConfig = {
     "https://chat.deepseek.com/*",
     "https://www.kimi.com/*",
     "https://chatglm.cn/*",
+    "https://www.qianwen.com/*",
+    "https://qianwen.com/*",
     "https://chat.z.ai/*",
   ],
   run_at: "document_idle",

@@ -55,6 +55,12 @@ const SUPPORTED_SITES = [
     icon: "🧠",
   },
   { name: "Kimi", pattern: /www\.kimi\.com/, url: "https://www.kimi.com", icon: "🌙" },
+  {
+    name: "Qianwen",
+    pattern: /www\.qianwen\.com/,
+    url: "https://www.qianwen.com",
+    icon: "🔮",
+  },
   { name: "Z.ai", pattern: /chat\.z\.ai/, url: "https://chat.z.ai", icon: "⚡" },
 ]
 

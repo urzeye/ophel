@@ -112,6 +112,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const unsupportedSiteLabels: Record<string, string> = {
     [SITE_IDS.CHATGLM]: "ChatGLM",
     [SITE_IDS.ZAI]: "Z.ai",
+    [SITE_IDS.QIANWEN]: "Qianwen",
   }
 
   // 设置 - 使用 Zustand store，确保设置变更实时生效
