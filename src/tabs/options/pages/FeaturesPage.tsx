@@ -7,7 +7,7 @@ import React, { useEffect, useState } from "react"
 
 import { FeaturesIcon } from "~components/icons"
 import { NumberInput } from "~components/ui"
-import { FEATURES_TAB_IDS } from "~constants"
+import { FEATURES_TAB_IDS, NOTIFICATION_SOUND_PRESETS } from "~constants"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
@@ -99,8 +99,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId: _siteId, initialTab
   const privacyModeLabel = t("privacyModeLabel") || "隐私模式"
   const readingHistoryLabel = t("readingHistoryPersistenceLabel") || "启用阅读历史"
   const formulaCopyLabel = t("formulaCopyLabel") || "双击复制公式"
+  const hasMultipleNotificationSoundPresets = NOTIFICATION_SOUND_PRESETS.length > 1
   const formatSecondsOptionLabel = (value: number) =>
     t("secondsValueLabel", { val: String(value) }) || `${value} 秒`
+  const formatRepeatCountOptionLabel = (value: number) => `${value}x`
 
   return (
     <div>
@@ -227,6 +229,28 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId: _siteId, initialTab
               }
             />
 
+            {hasMultipleNotificationSoundPresets && (
+              <SettingRow
+                label={t("notificationSoundPresetLabel") || "提示音预设"}
+                settingId="tab-notification-sound-preset"
+                disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
+                onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
+                <select
+                  className="settings-select"
+                  value={settings.tab?.notificationSoundPreset || NOTIFICATION_SOUND_PRESETS[0].id}
+                  onChange={(e) =>
+                    updateNestedSetting("tab", "notificationSoundPreset", e.target.value)
+                  }
+                  disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}>
+                  {NOTIFICATION_SOUND_PRESETS.map((preset) => (
+                    <option key={preset.id} value={preset.id}>
+                      {t(preset.labelKey) || preset.fallback}
+                    </option>
+                  ))}
+                </select>
+              </SettingRow>
+            )}
+
             <SettingRow
               label={t("notificationVolumeLabel") || "声音音量"}
               settingId="tab-notification-volume"
@@ -249,6 +273,46 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId: _siteId, initialTab
                   {Math.round((settings.tab?.notificationVolume || 0.5) * 100)}%
                 </span>
               </div>
+            </SettingRow>
+
+            <SettingRow
+              label={t("notificationRepeatCountLabel") || "播放次数"}
+              settingId="tab-notification-repeat-count"
+              disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
+              onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
+              <select
+                className="settings-select"
+                value={settings.tab?.notificationRepeatCount ?? 1}
+                onChange={(e) =>
+                  updateNestedSetting("tab", "notificationRepeatCount", parseInt(e.target.value))
+                }
+                disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}>
+                {[1, 2, 3, 5].map((value) => (
+                  <option key={value} value={value}>
+                    {formatRepeatCountOptionLabel(value)}
+                  </option>
+                ))}
+              </select>
+            </SettingRow>
+
+            <SettingRow
+              label={t("notificationRepeatIntervalLabel") || "播放间隔"}
+              settingId="tab-notification-repeat-interval"
+              disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
+              onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
+              <select
+                className="settings-select"
+                value={settings.tab?.notificationRepeatInterval ?? 3}
+                onChange={(e) =>
+                  updateNestedSetting("tab", "notificationRepeatInterval", parseInt(e.target.value))
+                }
+                disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}>
+                {[1, 2, 3, 5, 10].map((value) => (
+                  <option key={value} value={value}>
+                    {formatSecondsOptionLabel(value)}
+                  </option>
+                ))}
+              </select>
             </SettingRow>
 
             <ToggleRow

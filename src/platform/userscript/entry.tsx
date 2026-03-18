@@ -6,11 +6,16 @@ import { App } from "~components/App"
 
 // 显式导入 NetworkMonitor 初始化函数（避免被 tree-shaking 移除）
 import { initNetworkMonitor } from "../../core/network-monitor"
+import defaultNotificationSound from "../../../assets/streaming-complete-v2.mp3?inline"
 // 导入样式为内联字符串（用于注入到 Shadow DOM）
 // 使用相对路径避免别名解析问题
 import mainStyle from "../../style.css?inline"
 import conversationsStyle from "../../styles/conversations.css?inline"
 import settingsStyle from "../../styles/settings.css?inline"
+
+const USERSCRIPT_ASSET_URLS: Record<string, string> = {
+  "assets/streaming-complete-v2.mp3": defaultNotificationSound,
+}
 
 /**
  * Ophel - Userscript Entry Point
@@ -142,7 +147,7 @@ if (typeof chrome === "undefined" || !chrome.storage) {
     },
     runtime: {
       getManifest: () => ({ version: "1.0.0" }),
-      getURL: (path: string) => path,
+      getURL: (path: string) => USERSCRIPT_ASSET_URLS[path] || path,
       sendMessage: () => Promise.resolve({}),
     },
   }

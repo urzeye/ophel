@@ -1026,3 +1026,15 @@ export const STATUS_COLORS = {
   WARNING: "#f59e0b", // amber-500
   INFO: "var(--gh-text-secondary)",
 } as const
+
+// ==================== 通知声音预设 ====================
+export const NOTIFICATION_SOUND_PRESETS = [
+  {
+    id: "default",
+    labelKey: "notificationSoundPresetDefault",
+    fallback: "Default",
+    assetPath: "assets/streaming-complete-v2.mp3",
+  },
+] as const
+
+export type NotificationSoundPresetId = (typeof NOTIFICATION_SOUND_PRESETS)[number]["id"]

@@ -217,7 +217,10 @@ export interface Settings {
     titleFormat: string
     showNotification: boolean
     notificationSound: boolean
+    notificationSoundPreset: string
     notificationVolume: number
+    notificationRepeatCount: number
+    notificationRepeatInterval: number
     notifyWhenFocused: boolean
     autoFocus: boolean
     privacyMode: boolean
@@ -429,7 +432,10 @@ export const DEFAULT_SETTINGS: Settings = {
     // 油猴脚本环境默认开启（GM_notification 已通过 @grant 声明）
     showNotification: isUserscript,
     notificationSound: true,
+    notificationSoundPreset: "default",
     notificationVolume: 0.6,
+    notificationRepeatCount: 1,
+    notificationRepeatInterval: 3,
     notifyWhenFocused: false,
     autoFocus: false,
     privacyMode: false,

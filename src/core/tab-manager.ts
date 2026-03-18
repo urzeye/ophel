@@ -1,4 +1,5 @@
 import { type SiteAdapter } from "~adapters/base"
+import { NOTIFICATION_SOUND_PRESETS } from "~constants"
 import { platform } from "~platform"
 import { t } from "~utils/i18n"
 import {
@@ -9,9 +10,6 @@ import {
 } from "~utils/messaging"
 import { type Settings } from "~utils/storage"
 import { showToast } from "~utils/toast"
-
-// 通知声音文件（本地 assets）
-const NOTIFICATION_SOUND_PATH = "assets/streaming-complete-v2.mp3"
 
 export class TabManager {
   private adapter: SiteAdapter
@@ -31,6 +29,8 @@ export class TabManager {
 
   // 通知声音
   private notificationAudio: HTMLAudioElement | null = null
+  private notificationRepeatTimer: number | null = null
+  private notificationPlaybackId = 0
 
   // 绑定的事件处理函数引用（用于移除）
   private boundHandleMessage: (event: MessageEvent) => void
@@ -61,7 +61,27 @@ export class TabManager {
 
   updateSettings(settings: Settings["tab"]) {
     const oldInterval = this.settings.renameInterval
+    const oldNotificationSettings = {
+      showNotification: this.settings.showNotification,
+      notificationSound: this.settings.notificationSound,
+      notificationSoundPreset: this.settings.notificationSoundPreset,
+      notificationVolume: this.settings.notificationVolume,
+      notificationRepeatCount: this.settings.notificationRepeatCount,
+      notificationRepeatInterval: this.settings.notificationRepeatInterval,
+    }
     this.settings = settings
+
+    if (
+      oldNotificationSettings.showNotification !== this.settings.showNotification ||
+      oldNotificationSettings.notificationSound !== this.settings.notificationSound ||
+      oldNotificationSettings.notificationSoundPreset !== this.settings.notificationSoundPreset ||
+      oldNotificationSettings.notificationVolume !== this.settings.notificationVolume ||
+      oldNotificationSettings.notificationRepeatCount !== this.settings.notificationRepeatCount ||
+      oldNotificationSettings.notificationRepeatInterval !==
+        this.settings.notificationRepeatInterval
+    ) {
+      this.stopNotificationPlayback()
+    }
 
     if (this.settings.autoRename && !this.isRunning) {
       this.start()
@@ -131,6 +151,7 @@ export class TabManager {
    */
   destroy() {
     this.stop()
+    this.stopNotificationPlayback()
     window.removeEventListener("message", this.boundHandleMessage)
     document.removeEventListener("visibilitychange", this.boundVisibilityHandler)
     window.removeEventListener("focus", this.boundFocusHandler)
@@ -282,6 +303,7 @@ export class TabManager {
     const { type } = event.data || {}
 
     if (type === EVENT_MONITOR_START) {
+      this.stopNotificationPlayback()
       this.lastAiState = this.aiState
       this.aiState = "generating"
       this.updateTabName()
@@ -320,6 +342,10 @@ export class TabManager {
   private onVisibilityChange() {
     const isAway = this.isUserAway()
 
+    if (!isAway) {
+      this.stopNotificationPlayback()
+    }
+
     // 用户切换回页面时，检查 DOM 状态
     // 如果正在生成但 DOM 显示已完成，说明用户看到了完成状态
     if (this.aiState === "generating" && !isAway) {
@@ -333,6 +359,8 @@ export class TabManager {
    * 窗口获得焦点事件处理
    */
   private onWindowFocus() {
+    this.stopNotificationPlayback()
+
     // 用户回到页面时，检查是否应该标记 userSawCompletion
     if (this.aiState === "generating") {
       if (this.adapter.isGenerating && !this.adapter.isGenerating()) {
@@ -379,6 +407,8 @@ export class TabManager {
    * 发送完成通知
    */
   private sendCompletionNotification() {
+    this.stopNotificationPlayback()
+
     // 发送桌面通知（使用平台抽象层，支持扩展和油猴脚本）
     if (this.settings.showNotification) {
       try {
@@ -406,31 +436,114 @@ export class TabManager {
 
   /**
    * 播放通知声音
-   * 使用本地 assets 文件
    */
   private playNotificationSound() {
-    // 使用 chrome.runtime.getURL 获取本地 assets 路径
-    const audioUrl = chrome.runtime.getURL(NOTIFICATION_SOUND_PATH)
-    this.playAudioFromUrl(audioUrl)
+    const presetId = this.settings.notificationSoundPreset || NOTIFICATION_SOUND_PRESETS[0].id
+    const preset =
+      NOTIFICATION_SOUND_PRESETS.find((item) => item.id === presetId) ||
+      NOTIFICATION_SOUND_PRESETS[0]
+    const audioUrl = chrome.runtime.getURL(preset.assetPath)
+    const repeatCount = this.normalizeNotificationRepeatCount(this.settings.notificationRepeatCount)
+    const repeatIntervalMs =
+      this.normalizeNotificationRepeatInterval(this.settings.notificationRepeatInterval) * 1000
+
+    this.startNotificationPlayback(audioUrl, repeatCount, repeatIntervalMs)
   }
 
   /**
-   * 从 URL 播放音频
+   * 启动可中断的通知声音播放
    */
-  private playAudioFromUrl(url: string) {
-    try {
-      if (!this.notificationAudio) {
-        this.notificationAudio = new Audio()
+  private startNotificationPlayback(url: string, repeatCount: number, repeatIntervalMs: number) {
+    this.stopNotificationPlayback()
+
+    const playbackId = ++this.notificationPlaybackId
+
+    const playOnce = (remainingCount: number) => {
+      if (playbackId !== this.notificationPlaybackId) return
+
+      try {
+        if (!this.notificationAudio) {
+          this.notificationAudio = new Audio()
+        }
+
+        const volume = this.settings.notificationVolume ?? 0.5
+        this.notificationAudio.volume = Math.max(0.1, Math.min(1.0, volume))
+        this.notificationAudio.src = url
+        this.notificationAudio.currentTime = 0
+        this.notificationAudio.onended = () => {
+          if (playbackId !== this.notificationPlaybackId) return
+
+          if (remainingCount <= 1) {
+            this.clearNotificationPlaybackHandlers()
+            this.notificationRepeatTimer = null
+            return
+          }
+
+          if (!this.isUserAway()) {
+            this.stopNotificationPlayback()
+            return
+          }
+
+          this.notificationRepeatTimer = window.setTimeout(() => {
+            this.notificationRepeatTimer = null
+            playOnce(remainingCount - 1)
+          }, repeatIntervalMs)
+        }
+        this.notificationAudio.onerror = () => {
+          if (playbackId === this.notificationPlaybackId) {
+            this.stopNotificationPlayback()
+          }
+        }
+        this.notificationAudio.play().catch(() => {
+          if (playbackId === this.notificationPlaybackId) {
+            this.stopNotificationPlayback()
+          }
+        })
+      } catch (e) {
+        console.error("[TabManager] 音频初始化失败:", e)
       }
-      // 使用用户设置的音量，默认 0.5
-      const volume = this.settings.notificationVolume ?? 0.5
-      this.notificationAudio.volume = Math.max(0.1, Math.min(1.0, volume))
-      this.notificationAudio.src = url
-      this.notificationAudio.currentTime = 0
-      this.notificationAudio.play().catch(() => {}) // 忽略播放失败
-    } catch (e) {
-      console.error("[TabManager] 音频初始化失败:", e)
     }
+
+    playOnce(repeatCount)
+  }
+
+  /**
+   * 停止当前通知声音播放与后续重复
+   */
+  private stopNotificationPlayback() {
+    this.notificationPlaybackId += 1
+
+    if (this.notificationRepeatTimer !== null) {
+      window.clearTimeout(this.notificationRepeatTimer)
+      this.notificationRepeatTimer = null
+    }
+
+    try {
+      if (this.notificationAudio) {
+        this.clearNotificationPlaybackHandlers()
+        this.notificationAudio.pause()
+        this.notificationAudio.currentTime = 0
+      }
+    } catch (e) {
+      console.error("[TabManager] 音频停止失败:", e)
+    }
+  }
+
+  private clearNotificationPlaybackHandlers() {
+    if (!this.notificationAudio) return
+
+    this.notificationAudio.onended = null
+    this.notificationAudio.onerror = null
+  }
+
+  private normalizeNotificationRepeatCount(value?: number) {
+    if (!Number.isFinite(value)) return 1
+    return Math.max(1, Math.min(10, Math.round(value as number)))
+  }
+
+  private normalizeNotificationRepeatInterval(value?: number) {
+    if (!Number.isFinite(value)) return 3
+    return Math.max(1, Math.min(60, value as number))
   }
 
   /**
