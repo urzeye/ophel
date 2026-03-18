@@ -26,6 +26,7 @@ interface QueueState {
 
   // Actions
   enqueue: (content: string) => QueueItem
+  enqueueMany: (contents: string[]) => QueueItem[]
   dequeue: () => QueueItem | null
   remove: (id: string) => void
   updateContent: (id: string, content: string) => void
@@ -37,23 +38,40 @@ interface QueueState {
 
 // ==================== Store 创建 ====================
 
+const createQueueItem = (content: string): QueueItem => ({
+  id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+  content,
+  createdAt: Date.now(),
+  status: "pending",
+  type: "prompt",
+})
+
 export const useQueueStore = create<QueueState>()((set, get) => ({
   items: [],
   isProcessing: false,
   isPaused: false,
 
   enqueue: (content) => {
-    const item: QueueItem = {
-      id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      content,
-      createdAt: Date.now(),
-      status: "pending",
-      type: "prompt",
-    }
+    const item = createQueueItem(content)
     set((state) => ({
       items: [...state.items, item],
     }))
     return item
+  },
+
+  enqueueMany: (contents) => {
+    const items = contents
+      .map((content) => content.trim())
+      .filter(Boolean)
+      .map((content) => createQueueItem(content))
+
+    if (items.length === 0) return []
+
+    set((state) => ({
+      items: [...state.items, ...items],
+    }))
+
+    return items
   },
 
   dequeue: () => {

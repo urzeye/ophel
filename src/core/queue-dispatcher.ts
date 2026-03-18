@@ -140,4 +140,24 @@ export class QueueDispatcher {
       return false
     }
   }
+
+  /**
+   * 当 AI 当前空闲时，立即处理一条队列任务，不等待轮询防抖。
+   */
+  async processNextNow(): Promise<boolean> {
+    const state = useQueueStore.getState()
+
+    if (state.isPaused) return false
+    if (this.adapter.isGenerating()) return false
+
+    const hasSending = state.items.some((item) => item.status === "sending")
+    if (hasSending) return false
+
+    const hasPending = state.items.some((item) => item.status === "pending")
+    if (!hasPending) return false
+
+    this.idleCount = 0
+    await this.dispatchNext()
+    return true
+  }
 }

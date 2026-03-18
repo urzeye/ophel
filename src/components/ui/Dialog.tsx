@@ -103,6 +103,7 @@ export interface DialogOverlayProps {
   children: React.ReactNode
   onClose: () => void
   closeOnOverlayClick?: boolean
+  closeOnEscape?: boolean
   dialogClassName?: string
   dialogStyle?: React.CSSProperties
 }
@@ -114,6 +115,7 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
   children,
   onClose,
   closeOnOverlayClick = true,
+  closeOnEscape = true,
   dialogClassName,
   dialogStyle,
 }) => {
@@ -121,11 +123,11 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
     injectDialogStyles()
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose()
+      if (closeOnEscape && e.key === "Escape") onClose()
     }
     document.addEventListener("keydown", handleKeyDown)
     return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [onClose])
+  }, [closeOnEscape, onClose])
 
   const dialogContent = (
     <div
