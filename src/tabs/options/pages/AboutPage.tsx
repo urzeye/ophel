@@ -74,7 +74,7 @@ const AboutPage: React.FC = () => {
             {t("chromeStore") || "Chrome 商店"}
           </div>
           <button className="about-link-btn" style={{ marginTop: "auto" }}>
-            Review
+            {t("reviewBtn") || "Review"}
           </button>
         </a>
 
@@ -89,7 +89,7 @@ const AboutPage: React.FC = () => {
             {t("firefoxAddons") || "Firefox 扩展"}
           </div>
           <button className="about-link-btn" style={{ marginTop: "auto", background: "#FF7139" }}>
-            Review
+            {t("reviewBtn") || "Review"}
           </button>
         </a>
 
@@ -104,7 +104,7 @@ const AboutPage: React.FC = () => {
             {t("greasyFork") || "Greasy Fork"}
           </div>
           <button className="about-link-btn" style={{ marginTop: "auto", background: "#333" }}>
-            Review
+            {t("reviewBtn") || "Review"}
           </button>
         </a>
       </div>
@@ -129,7 +129,7 @@ const AboutPage: React.FC = () => {
           className="about-link-card">
           <div className="about-link-header">
             <GithubIcon size={20} />
-            GitHub 仓库
+            {t("githubRepository") || "GitHub 仓库"}
           </div>
           <div className="about-link-desc">
             {t("githubDesc") || "查看源代码、提交问题或参与项目开发"}

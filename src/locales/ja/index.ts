@@ -142,6 +142,7 @@ export const ja = {
   aboutDescription:
     "{appName}は、Gemini、ChatGPT、Claude、AI Studio、GrokなどのAIプラットフォーム向けに設計されたブラウザ拡張機能です。会話管理、スマートアウトライン、プロンプトライブラリなどの機能でワークフローを強化し、既読位置の復元、双方向アンカー、透かし除去、フォーマット修正、モデルロックなどのユーティリティを提供します。テーマやUIの豊富なカスタマイズオプションにより、よりスムーズで効率的なAI体験を実現します。",
   projectLinks: "プロジェクトリンク",
+  githubRepository: "GitHub リポジトリ",
   githubDesc: "ソースコードの確認、バグ報告、貢献はこちら",
   giveStar: "GitHubでスターを送る",
   projectWebsite: "公式サイト",
@@ -433,6 +434,7 @@ export const ja = {
   renameIntervalLabel: "検出間隔",
   renameIntervalDesc: "会話名の変更をチェックする間隔（秒）",
   secondsSuffix: "秒",
+  secondsValueLabel: "{val}秒",
   showStatusLabel: "状態を表示",
   showStatusDesc: "タブ名の先頭に生成状態アイコンを表示 (⏳/✅)",
   showNotificationLabel: "デスクトップ通知",
@@ -1048,6 +1050,8 @@ export const ja = {
   aistudioEnableSearch: "検索ツールを有効にする",
   aistudioEnableSearchDesc: "ページを開いたときにGoogleリアルタイム検索を自動で有効にします",
   aistudioModelsFetched: "モデルリストを更新しました",
+  aistudioRefreshModelListTooltip: "AI Studio ページでモデル一覧を更新",
+  aistudioRefreshModelListFirst: "先にモデル一覧を更新してください",
   aistudioNoTabError: "先にAI Studioページを開いてください",
   aistudioModelsError: "モデルリストの取得に失敗しました",
 

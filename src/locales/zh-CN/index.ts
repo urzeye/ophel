@@ -176,6 +176,7 @@ export const zhCN = {
   aboutDescription:
     "{appName} 是一款专为 Gemini、ChatGPT、Claude、AI Studio、Grok 等 AI 平台打造的浏览器增强扩展。它为您提供会话管理与导出、智能大纲导航、提示词指令库等效率工具，同时具备阅读进度恢复、双向锚点定位、水印移除、排版修复、公式复制及模型锁定等实用功能，并支持深度自定义主题与页面美化，让您的 AI 交互体验更加流畅愉悦。",
   projectLinks: "项目链接",
+  githubRepository: "GitHub 仓库",
   communityAndSupport: "社区与支持",
   githubDesc: "查看源代码、提交问题或参与项目开发",
   giveStar: "点个 Star",
@@ -431,6 +432,7 @@ export const zhCN = {
   renameIntervalLabel: "检测频率",
   renameIntervalDesc: "检测对话名称变化的间隔时间",
   secondsSuffix: "秒",
+  secondsValueLabel: "{val} 秒",
   showStatusLabel: "显示生成状态",
   toggleTheme: "切换亮/暗主题",
   // 面板设置
@@ -1044,6 +1046,8 @@ export const zhCN = {
 
   // AI Studio 模型列表获取
   aistudioModelsFetched: "模型列表已更新",
+  aistudioRefreshModelListTooltip: "点击在 AI Studio 页面刷新模型列表",
+  aistudioRefreshModelListFirst: "请先刷新模型列表",
   aistudioNoTabError: "请先打开 AI Studio 页面",
   aistudioModelsError: "获取模型列表失败",
 

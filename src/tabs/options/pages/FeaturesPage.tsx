@@ -99,6 +99,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId: _siteId, initialTab
   const privacyModeLabel = t("privacyModeLabel") || "隐私模式"
   const readingHistoryLabel = t("readingHistoryPersistenceLabel") || "启用阅读历史"
   const formulaCopyLabel = t("formulaCopyLabel") || "双击复制公式"
+  const formatSecondsOptionLabel = (value: number) =>
+    t("secondsValueLabel", { val: String(value) }) || `${value} 秒`
 
   return (
     <div>
@@ -144,7 +146,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId: _siteId, initialTab
                 disabled={!settings.tab?.autoRename}>
                 {[1, 3, 5, 10, 30, 60].map((v) => (
                   <option key={v} value={v}>
-                    {v} 秒
+                    {formatSecondsOptionLabel(v)}
                   </option>
                 ))}
               </select>

@@ -146,6 +146,7 @@ export const en = {
   aboutDescription:
     "{appName} is a browser extension designed for AI platforms like Gemini, ChatGPT, Claude, AI Studio, and Grok. It empowers your workflow with conversation management, smart outlines, and a prompt library, while offering utilities like reading history restoration, bidirectional anchors, watermark removal, formatting fixes, and model locking. With comprehensive customization options for themes and UI, {appName} ensures a smoother and more efficient AI interaction experience.",
   projectLinks: "Project Links",
+  githubRepository: "GitHub Repository",
   communityAndSupport: "Community & Support",
   rateAndReview: "Love Ophel?",
   rateDesc: "If you enjoy using Ophel, please give us a 5-star rating! It helps us a lot.",
@@ -438,6 +439,7 @@ export const en = {
   renameIntervalLabel: "Detection Interval",
   renameIntervalDesc: "Interval for detecting conversation name changes",
   secondsSuffix: "s",
+  secondsValueLabel: "{val} s",
   showStatusLabel: "Show Status",
   toggleTheme: "Toggle Light/Dark Theme",
 
@@ -1071,6 +1073,8 @@ Please output the optimized code block directly, followed by a brief summary of 
 
   // AI Studio Model List
   aistudioModelsFetched: "Model list updated",
+  aistudioRefreshModelListTooltip: "Refresh model list on the AI Studio page",
+  aistudioRefreshModelListFirst: "Please refresh the model list first",
   aistudioNoTabError: "Please open AI Studio page first",
   aistudioModelsError: "Failed to fetch model list",
 

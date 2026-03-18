@@ -141,6 +141,7 @@ export const ko = {
   aboutDescription:
     "{appName}은 Gemini, ChatGPT, Claude, AI Studio, Grok과 같은 AI 플랫폼을 위해 설계된 브라우저 확장 프로그램입니다. 대화 관리, 스마트 개요, 프롬프트 라이브러리로 워크플로우를 강화하며 읽기 기록 복원, 양방향 앵커, 워터마크 제거, 형식 수정, 모델 잠금과 같은 유틸리티를 제공합니다. 테마 및 UI에 대한 포괄적인 사용자 정의 옵션을 통해 {appName}은 더욱 부드럽고 효율적인 AI 상호작용 환경을 보장합니다.",
   projectLinks: "프로젝트 링크",
+  githubRepository: "GitHub 저장소",
   githubDesc: "소스 코드 확인, 문제 보고 또는 기여",
   giveStar: "GitHub에서 스타 주기",
   projectWebsite: "공식 웹사이트",
@@ -422,6 +423,7 @@ export const ko = {
   renameIntervalLabel: "감지 간격",
   renameIntervalDesc: "대화 이름 변경 감지 간격",
   secondsSuffix: "초",
+  secondsValueLabel: "{val}초",
   showStatusLabel: "상태 표시",
   showStatusDesc: "탭 제목에 생성 상태 아이콘 표시 (⏳/✅)",
   showNotificationLabel: "데스크톱 알림",
@@ -1006,6 +1008,8 @@ export const ko = {
   aistudioEnableSearch: "검색 도구 활성화",
   aistudioEnableSearchDesc: "페이지 열 때 Google 실시간 검색을 자동으로 활성화합니다",
   aistudioModelsFetched: "모델 목록이 업데이트되었습니다",
+  aistudioRefreshModelListTooltip: "AI Studio 페이지에서 모델 목록 새로고침",
+  aistudioRefreshModelListFirst: "먼저 모델 목록을 새로고침하세요",
   aistudioNoTabError: "먼저 AI Studio 페이지를 열어주세요",
   aistudioModelsError: "모델 목록을 가져오지 못했습니다",
 

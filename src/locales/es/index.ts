@@ -139,6 +139,7 @@ export const es = {
   aboutDescription:
     "{appName} es una extensión diseñada para Gemini, ChatGPT, Claude, AI Studio y Grok. Mejora tu flujo de trabajo con gestión de chats, índices inteligentes y biblioteca de prompts, ofreciendo utilidades como historial de lectura, anclajes, eliminación de marcas de agua, avisos de finalización y bloqueo de modelo. Con amplias opciones de personalización, {appName} asegura una experiencia de IA más fluida.",
   projectLinks: "Enlaces del Proyecto",
+  githubRepository: "Repositorio de GitHub",
   githubDesc: "Código fuente, reportes o contribuir",
   giveStar: "Dar Estrella en GitHub",
   projectWebsite: "Sitio Oficial",
@@ -418,6 +419,7 @@ export const es = {
   renameIntervalLabel: "Intervalo",
   renameIntervalDesc: "Frecuencia de chequeo",
   secondsSuffix: "s",
+  secondsValueLabel: "{val} s",
   showStatusLabel: "Mostrar Estado",
   showStatusDesc: "Icono de carga en pestaña (⏳/✅)",
   showNotificationLabel: "Notificación Escritorio",
@@ -1003,6 +1005,8 @@ Dame el código y luego un resumen de mejoras.`,
   aistudioEnableSearchDesc:
     "Habilitar automáticamente la búsqueda en tiempo real de Google al abrir",
   aistudioModelsFetched: "Lista de modelos actualizada",
+  aistudioRefreshModelListTooltip: "Actualizar la lista de modelos en la página de AI Studio",
+  aistudioRefreshModelListFirst: "Actualiza primero la lista de modelos",
   aistudioNoTabError: "Por favor, abra primero la página de AI Studio",
   aistudioModelsError: "Error al obtener la lista de modelos",
 

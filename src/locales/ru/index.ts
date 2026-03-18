@@ -138,6 +138,7 @@ export const ru = {
   aboutDescription:
     "{appName} — расширение для Gemini, ChatGPT, Claude, AI Studio и Grok. Оно оптимизирует работу с папками чатов, умным содержанием и библиотекой промптов. Функции вроде истории чтения, удаления водяных знаков и блокировки модели вместе с темами делают работу с ИИ удобнее.",
   projectLinks: "Ссылки",
+  githubRepository: "Репозиторий GitHub",
   githubDesc: "Код, ошибки или вклад в проект",
   giveStar: "Поставить звезду на GitHub",
   projectWebsite: "Сайт",
@@ -416,6 +417,7 @@ export const ru = {
   renameIntervalLabel: "Частота",
   renameIntervalDesc: "Интервал проверки имени",
   secondsSuffix: "с",
+  secondsValueLabel: "{val} с",
   showStatusLabel: "Статус в иконке",
   showStatusDesc: "Иконка загрузки вкладки (⏳/✅)",
   showNotificationLabel: "Уведомление на раб. стол",
@@ -999,6 +1001,8 @@ export const ru = {
   aistudioEnableSearch: "Включить поисковый инструмент",
   aistudioEnableSearchDesc: "Автоматически включать поиск Google в реальном времени при открытии",
   aistudioModelsFetched: "Список моделей обновлён",
+  aistudioRefreshModelListTooltip: "Обновить список моделей на странице AI Studio",
+  aistudioRefreshModelListFirst: "Сначала обновите список моделей",
   aistudioNoTabError: "Сначала откройте страницу AI Studio",
   aistudioModelsError: "Ошибка получения списка моделей",
 

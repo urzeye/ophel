@@ -225,7 +225,8 @@ const AIStudioModelLockRow: React.FC<{
         AI Studio
       </span>
       {/* 刷新按钮 */}
-      <Tooltip content="点击在 AI Studio 页面刷新模型列表">
+      <Tooltip
+        content={t("aistudioRefreshModelListTooltip") || "点击在 AI Studio 页面刷新模型列表"}>
         <button
           className="icon-button"
           onClick={handleRefresh}
@@ -262,7 +263,9 @@ const AIStudioModelLockRow: React.FC<{
             opacity: currentConfig.enabled ? 1 : 0.5,
             pointerEvents: currentConfig.enabled ? "auto" : "none",
           }}>
-          {modelList.length === 0 && <option value="">请先刷新模型列表</option>}
+          {modelList.length === 0 && (
+            <option value="">{t("aistudioRefreshModelListFirst") || "请先刷新模型列表"}</option>
+          )}
           {modelList.map((model) => (
             <option key={model.id} value={model.id}>
               {model.name}

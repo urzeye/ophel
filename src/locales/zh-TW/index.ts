@@ -82,6 +82,7 @@ export const zhTW = {
   aboutDescription:
     "{appName} 一款專為 Gemini、ChatGPT、Claude、AI Studio、Grok 等 AI 平台打造的瀏覽器增強擴充功能。它為您提供會話管理與匯出、智慧大綱導航、提示詞指令庫等效率工具，同時具備閱讀進度恢復、雙向錨點定位、浮水印移除、排版修復、公式複製及模型鎖定等實用功能，並支援深度自定義主題與頁面美化，讓您的 AI 互動體驗更加流暢愉悅。",
   projectLinks: "專案連結",
+  githubRepository: "GitHub 儲存庫",
   githubDesc: "檢視原始碼、提交問題或參與專案開發",
   giveStar: "按個 Star",
   projectWebsite: "專案官網",
@@ -371,6 +372,7 @@ export const zhTW = {
   renameIntervalLabel: "檢測頻率",
   renameIntervalDesc: "檢測對話名稱變化的間隔時間",
   secondsSuffix: "秒",
+  secondsValueLabel: "{val} 秒",
   showStatusLabel: "顯示生成狀態",
   showStatusDesc: "在標籤頁標題中顯示生成狀態圖示（⏳/✅）",
   showNotificationLabel: "傳送桌面通知",
@@ -1026,6 +1028,8 @@ export const zhTW = {
   aistudioEnableSearch: "預設啟用搜尋工具",
   aistudioEnableSearchDesc: "開啟頁面時自動啟用 Google 即時搜尋",
   aistudioModelsFetched: "模型列表已更新",
+  aistudioRefreshModelListTooltip: "點擊在 AI Studio 頁面刷新模型列表",
+  aistudioRefreshModelListFirst: "請先刷新模型列表",
   aistudioNoTabError: "請先開啟 AI Studio 頁面",
   aistudioModelsError: "獲取模型列表失敗",
 
