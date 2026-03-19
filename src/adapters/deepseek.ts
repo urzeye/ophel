@@ -270,34 +270,18 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   getScrollContainer(): HTMLElement | null {
-    const firstMessage = document.querySelector(MESSAGE_SELECTOR)
-    if (firstMessage) {
-      const scrollArea = firstMessage.closest(".ds-scroll-area") as HTMLElement | null
-      if (scrollArea && scrollArea.scrollHeight > scrollArea.clientHeight) {
-        return scrollArea
-      }
+    const topLevelMessages = Array.from(document.querySelectorAll(MESSAGE_SELECTOR)).filter(
+      (message) => !message.parentElement?.closest(MESSAGE_SELECTOR),
+    )
+    const fromMessages = this.pickBestScrollableAncestor(topLevelMessages)
+    if (fromMessages) {
+      return fromMessages
     }
 
-    let best: HTMLElement | null = null
-    let bestScore = -1
-    const candidates = document.querySelectorAll(".ds-scroll-area")
-
-    candidates.forEach((candidate) => {
-      const el = candidate as HTMLElement
-      if (el.querySelector(CONVERSATION_LINK_SELECTOR)) return
-      if (el.querySelector("textarea")) return
-
-      const messageCount = el.querySelectorAll(MESSAGE_SELECTOR).length
-      if (messageCount === 0) return
-
-      const score = messageCount * 100000 + el.scrollHeight
-      if (score > bestScore) {
-        best = el
-        bestScore = score
-      }
-    })
-
-    return best || super.getScrollContainer()
+    const fallbackRoots = Array.from(
+      document.querySelectorAll(`${ASSISTANT_MARKDOWN_SELECTOR}, ${USER_MESSAGE_SELECTOR}`),
+    ).filter((element) => !element.closest(".gh-root, .gh-table-container"))
+    return this.pickBestScrollableAncestor(fallbackRoots)
   }
 
   getResponseContainerSelector(): string {
@@ -601,6 +585,107 @@ export class DeepSeekAdapter extends SiteAdapter {
     }
 
     return buttons
+  }
+
+  private pickBestScrollableAncestor(elements: Element[]): HTMLElement | null {
+    const scored = new Map<HTMLElement, number>()
+
+    for (const element of elements) {
+      const ancestor = this.findScrollableAncestor(element)
+      if (!ancestor) continue
+      const current = scored.get(ancestor) || 0
+      scored.set(ancestor, current + this.scoreScrollContainer(ancestor))
+    }
+
+    let best: HTMLElement | null = null
+    let bestScore = -1
+
+    for (const [candidate, score] of scored.entries()) {
+      if (score > bestScore) {
+        best = candidate
+        bestScore = score
+      }
+    }
+
+    return bestScore > 0 ? best : null
+  }
+
+  private findScrollableAncestor(element: Element | null): HTMLElement | null {
+    let current = element instanceof HTMLElement ? element : element?.parentElement || null
+
+    while (current && current !== document.body) {
+      if (this.isPrimaryScrollContainer(current)) {
+        return current
+      }
+      current = current.parentElement
+    }
+
+    return null
+  }
+
+  private isPrimaryScrollContainer(element: HTMLElement): boolean {
+    if (!element.isConnected) return false
+
+    const style = window.getComputedStyle(element)
+    if (!(style.overflowY === "auto" || style.overflowY === "scroll")) {
+      return false
+    }
+
+    if (element.scrollHeight <= element.clientHeight) {
+      return false
+    }
+
+    if (element.clientHeight < 220) {
+      return false
+    }
+
+    const rect = element.getBoundingClientRect()
+    if (rect.width < 320 || rect.height < 220) {
+      return false
+    }
+
+    return true
+  }
+
+  private scoreScrollContainer(element: HTMLElement): number {
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0
+    const rect = element.getBoundingClientRect()
+    const messageCount = element.querySelectorAll(MESSAGE_SELECTOR).length
+    const userCount = element.querySelectorAll(USER_MESSAGE_SELECTOR).length
+    const assistantCount = element.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR).length
+
+    let score = 0
+
+    score += Math.min(messageCount, 80) * 200
+    score += Math.min(userCount, 40) * 120
+    score += Math.min(assistantCount, 40) * 120
+
+    if (element.scrollTop > 0) {
+      score += 800
+    }
+
+    if (rect.height >= viewportHeight * 0.35) {
+      score += 500
+    }
+
+    if (rect.width >= viewportWidth * 0.45) {
+      score += 350
+    }
+
+    if (element.matches("main, [role='main']") || element.closest("main, [role='main']")) {
+      score += 250
+    }
+
+    if (element.querySelector("textarea")) {
+      score -= 700
+    }
+
+    if (element.querySelector(".gh-table-container")) {
+      score -= 250
+    }
+
+    return score
   }
 
   private async deleteConversationViaApi(

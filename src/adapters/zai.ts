@@ -689,6 +689,17 @@ export class ZaiAdapter extends SiteAdapter {
     return document.querySelector("#sidebar .overflow-y-auto")
   }
 
+  getScrollContainer(): HTMLElement | null {
+    const roots = this.collectScrollAnchorRoots()
+    const fromMessages = this.pickBestScrollableAncestor(roots)
+    if (fromMessages) {
+      return fromMessages
+    }
+
+    const paneRoots = Array.from(document.querySelectorAll("[data-pane-id]"))
+    return this.pickBestScrollableAncestor(paneRoots)
+  }
+
   navigateToConversation(id: string, url?: string): boolean {
     const nodes = document.querySelectorAll(SIDEBAR_ITEM_SELECTOR)
     for (const node of Array.from(nodes)) {
@@ -812,6 +823,118 @@ export class ZaiAdapter extends SiteAdapter {
   private extractConversationTitle(node: Element): string {
     const titleEl = node.querySelector(SIDEBAR_TITLE_SELECTOR)
     return titleEl?.textContent?.trim() || ""
+  }
+
+  private collectScrollAnchorRoots(): Element[] {
+    const roots = Array.from(
+      document.querySelectorAll(`${USER_QUERY_SELECTOR}, ${ASSISTANT_MARKDOWN_SELECTOR}`),
+    )
+    return this.collectTopLevelBlocks(roots).filter(
+      (element) => !element.closest(".gh-root, .gh-table-container"),
+    )
+  }
+
+  private pickBestScrollableAncestor(elements: Element[]): HTMLElement | null {
+    const scored = new Map<HTMLElement, number>()
+
+    for (const element of elements) {
+      const ancestor = this.findScrollableAncestor(element)
+      if (!ancestor) continue
+      const current = scored.get(ancestor) || 0
+      scored.set(ancestor, current + this.scoreScrollContainer(ancestor))
+    }
+
+    let best: HTMLElement | null = null
+    let bestScore = -1
+
+    for (const [candidate, score] of scored.entries()) {
+      if (score > bestScore) {
+        best = candidate
+        bestScore = score
+      }
+    }
+
+    return bestScore > 0 ? best : null
+  }
+
+  private findScrollableAncestor(element: Element | null): HTMLElement | null {
+    let current = element instanceof HTMLElement ? element : element?.parentElement || null
+
+    while (current && current !== document.body) {
+      if (this.isPrimaryScrollContainer(current)) {
+        return current
+      }
+      current = current.parentElement
+    }
+
+    return null
+  }
+
+  private isPrimaryScrollContainer(element: HTMLElement): boolean {
+    if (!element.isConnected) return false
+
+    const style = window.getComputedStyle(element)
+    if (!(style.overflowY === "auto" || style.overflowY === "scroll")) {
+      return false
+    }
+
+    if (element.scrollHeight <= element.clientHeight) {
+      return false
+    }
+
+    if (element.clientHeight < 220) {
+      return false
+    }
+
+    const rect = element.getBoundingClientRect()
+    if (rect.width < 320 || rect.height < 220) {
+      return false
+    }
+
+    return true
+  }
+
+  private scoreScrollContainer(element: HTMLElement): number {
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0
+    const rect = element.getBoundingClientRect()
+    const userCount = element.querySelectorAll(USER_QUERY_SELECTOR).length
+    const assistantCount = element.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR).length
+
+    let score = 0
+
+    score += Math.min(userCount, 60) * 160
+    score += Math.min(assistantCount, 60) * 160
+
+    if (userCount > 0 && assistantCount > 0) {
+      score += 700
+    }
+
+    if (element.scrollTop > 0) {
+      score += 900
+    }
+
+    if (rect.height >= viewportHeight * 0.35) {
+      score += 500
+    }
+
+    if (rect.width >= viewportWidth * 0.45) {
+      score += 350
+    }
+
+    if (element.closest("[data-pane-id]")) {
+      score += 300
+    }
+
+    if (element.querySelector("textarea, #chat-input")) {
+      score -= 700
+    }
+
+    if (element.matches(".scrollbar-none") && element.scrollWidth > element.clientWidth) {
+      score -= 400
+    }
+
+    return score
   }
 
   private shouldSkipOutlineElement(element: Element): boolean {

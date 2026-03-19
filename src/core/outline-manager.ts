@@ -1,4 +1,5 @@
 import type { OutlineItem, SiteAdapter } from "~adapters/base"
+import { SITE_IDS } from "~constants"
 import type { Settings } from "~utils/storage"
 import { useBookmarkStore } from "~stores/bookmarks-store"
 import { useSettingsStore } from "~stores/settings-store"
@@ -1281,6 +1282,11 @@ export class OutlineManager {
       if (idx + 1 < count && this.scrollPositions[idx + 1] < bottom) {
         return this.scrollNodes[idx + 1].index
       }
+      if (this.shouldKeepPreviousVisibleItem()) {
+        // DeepSeek / Z.ai often have long content gaps between headings.
+        // In that gap, keep the nearest previous heading highlighted instead of dropping to null.
+        return this.scrollNodes[idx].index
+      }
       return null
     }
 
@@ -1289,5 +1295,10 @@ export class OutlineManager {
     }
 
     return null
+  }
+
+  private shouldKeepPreviousVisibleItem(): boolean {
+    const siteId = this.siteAdapter.getSiteId()
+    return siteId === SITE_IDS.DEEPSEEK || siteId === SITE_IDS.ZAI
   }
 }
