@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from "react"
 
 import { FeaturesIcon } from "~components/icons"
-import { NumberInput } from "~components/ui"
+import { Button, NumberInput } from "~components/ui"
 import { FEATURES_TAB_IDS, NOTIFICATION_SOUND_PRESETS } from "~constants"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
@@ -82,13 +82,61 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId: _siteId, initialTab
   ]
 
   const [activeTab, setActiveTab] = useState<string>(initialTab || tabs[0].id)
+  const [isPreviewPlaying, setIsPreviewPlaying] = useState(false)
+  const previewAudioRef = React.useRef<HTMLAudioElement | null>(null)
   const { settings, updateDeepSetting, updateNestedSetting } = useSettingsStore()
+
+  const clearPreviewAudioHandlers = () => {
+    if (!previewAudioRef.current) return
+
+    previewAudioRef.current.onended = null
+    previewAudioRef.current.onerror = null
+  }
+
+  const stopNotificationSoundPreview = () => {
+    const audio = previewAudioRef.current
+    if (!audio) {
+      setIsPreviewPlaying(false)
+      return
+    }
+
+    clearPreviewAudioHandlers()
+    audio.pause()
+    audio.currentTime = 0
+    setIsPreviewPlaying(false)
+  }
 
   useEffect(() => {
     if (initialTab) {
       setActiveTab(initialTab)
     }
   }, [initialTab])
+
+  useEffect(() => {
+    return () => {
+      stopNotificationSoundPreview()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (activeTab !== FEATURES_TAB_IDS.REMINDER) {
+      stopNotificationSoundPreview()
+    }
+  }, [activeTab])
+
+  useEffect(() => {
+    if (!settings?.tab?.showNotification || !settings.tab.notificationSound) {
+      stopNotificationSoundPreview()
+    }
+  }, [settings?.tab?.notificationSound, settings?.tab?.showNotification])
+
+  useEffect(() => {
+    const previewAudio = previewAudioRef.current
+    if (!previewAudio || !isPreviewPlaying) return
+
+    const volume = settings?.tab?.notificationVolume ?? 0.5
+    previewAudio.volume = Math.max(0.1, Math.min(1.0, volume))
+  }, [isPreviewPlaying, settings?.tab?.notificationVolume])
 
   if (!settings) return null
 
@@ -104,6 +152,46 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId: _siteId, initialTab
   const formatSecondsOptionLabel = (value: number) =>
     t("secondsValueLabel", { val: String(value) }) || `${value} 秒`
   const formatRepeatCountOptionLabel = (value: number) => `${value}x`
+  const previewSoundButtonLabel = t("notificationSoundPreviewButtonLabel") || "试听"
+  const playNotificationSoundPreview = (presetId?: string) => {
+    const targetPresetId =
+      presetId || settings.tab?.notificationSoundPreset || NOTIFICATION_SOUND_PRESETS[0].id
+    const sourceUrl = platform.getNotificationSoundUrl(targetPresetId)
+
+    if (!sourceUrl) {
+      showToast(t("notificationSoundPreviewFailed") || "提示音试听失败", 2000)
+      return
+    }
+
+    stopNotificationSoundPreview()
+
+    let previewAudio = previewAudioRef.current
+    if (!previewAudio) {
+      previewAudio = new Audio()
+      previewAudioRef.current = previewAudio
+    }
+
+    const volume = settings.tab?.notificationVolume ?? 0.5
+    previewAudio.volume = Math.max(0.1, Math.min(1.0, volume))
+    previewAudio.src = sourceUrl
+    previewAudio.currentTime = 0
+    previewAudio.onended = () => {
+      clearPreviewAudioHandlers()
+      setIsPreviewPlaying(false)
+    }
+    previewAudio.onerror = () => {
+      clearPreviewAudioHandlers()
+      setIsPreviewPlaying(false)
+      showToast(t("notificationSoundPreviewFailed") || "提示音试听失败", 2000)
+    }
+
+    setIsPreviewPlaying(true)
+    previewAudio.play().catch(() => {
+      clearPreviewAudioHandlers()
+      setIsPreviewPlaying(false)
+      showToast(t("notificationSoundPreviewFailed") || "提示音试听失败", 2000)
+    })
+  }
   const notificationSettingsCard = (
     <SettingCard title={t("notificationSettings") || "完成后操作"}>
       <ToggleRow
@@ -159,17 +247,33 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId: _siteId, initialTab
           settingId="tab-notification-sound-preset"
           disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
           onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
-          <select
-            className="settings-select"
-            value={settings.tab?.notificationSoundPreset || NOTIFICATION_SOUND_PRESETS[0].id}
-            onChange={(e) => updateNestedSetting("tab", "notificationSoundPreset", e.target.value)}
-            disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}>
-            {NOTIFICATION_SOUND_PRESETS.map((preset) => (
-              <option key={preset.id} value={preset.id}>
-                {t(preset.labelKey) || preset.fallback}
-              </option>
-            ))}
-          </select>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <select
+              className="settings-select"
+              value={settings.tab?.notificationSoundPreset || NOTIFICATION_SOUND_PRESETS[0].id}
+              onChange={(e) => {
+                const nextPresetId = e.target.value
+                updateNestedSetting("tab", "notificationSoundPreset", nextPresetId)
+                playNotificationSoundPreview(nextPresetId)
+              }}
+              disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
+              style={{ flex: 1 }}>
+              {NOTIFICATION_SOUND_PRESETS.map((preset) => (
+                <option key={preset.id} value={preset.id}>
+                  {t(preset.labelKey) || preset.fallback}
+                </option>
+              ))}
+            </select>
+            <Button
+              type="button"
+              variant={isPreviewPlaying ? "primary" : "secondary"}
+              size="sm"
+              onClick={() => playNotificationSoundPreview()}
+              disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
+              style={{ minWidth: "56px", flexShrink: 0 }}>
+              {previewSoundButtonLabel}
+            </Button>
+          </div>
         </SettingRow>
       )}
 
