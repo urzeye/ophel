@@ -122,7 +122,8 @@
     "web_accessible_resources": [
       {
         "resources": [
-          "assets/*"
+          "assets/*",
+          "assets/notification-sounds/*"
         ],
         "matches": [
           "<all_urls>"

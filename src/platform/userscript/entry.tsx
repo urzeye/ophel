@@ -16,11 +16,11 @@ import mainStyle from "../../style.css?inline"
 import conversationsStyle from "../../styles/conversations.css?inline"
 import settingsStyle from "../../styles/settings.css?inline"
 
-const USERSCRIPT_ASSET_URLS: Record<string, string> = {
-  "assets/notification-sounds/bright-alert.ogg": brightAlertNotificationSound,
-  "assets/notification-sounds/glass-ping.ogg": glassPingNotificationSound,
-  "assets/notification-sounds/soft-chime.ogg": softChimeNotificationSound,
-  "assets/notification-sounds/streaming-complete-v2.mp3": defaultNotificationSound,
+window.__OPHEL_NOTIFICATION_SOUND_URLS__ = {
+  default: defaultNotificationSound,
+  softChime: softChimeNotificationSound,
+  glassPing: glassPingNotificationSound,
+  brightAlert: brightAlertNotificationSound,
 }
 
 /**
@@ -153,7 +153,7 @@ if (typeof chrome === "undefined" || !chrome.storage) {
     },
     runtime: {
       getManifest: () => ({ version: "1.0.0" }),
-      getURL: (path: string) => USERSCRIPT_ASSET_URLS[path] || path,
+      getURL: (path: string) => path,
       sendMessage: () => Promise.resolve({}),
     },
   }

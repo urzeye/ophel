@@ -15,6 +15,12 @@ import type {
   PlatformStorage,
 } from "../types"
 
+declare global {
+  interface Window {
+    __OPHEL_NOTIFICATION_SOUND_URLS__?: Record<string, string>
+  }
+}
+
 // GM API 类型声明
 declare function GM_getValue<T>(key: string, defaultValue?: T): T
 declare function GM_setValue(key: string, value: unknown): void
@@ -140,6 +146,10 @@ export const platform: Platform = {
         window.focus()
       },
     })
+  },
+
+  getNotificationSoundUrl(presetId: string): string | undefined {
+    return window.__OPHEL_NOTIFICATION_SOUND_URLS__?.[presetId]
   },
 
   focusWindow(): void {

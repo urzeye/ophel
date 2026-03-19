@@ -13,6 +13,15 @@ import type {
   PlatformStorage,
 } from "../types"
 
+const notificationSoundUrls: Record<string, string> = {
+  default: new URL("../../../assets/notification-sounds/streaming-complete-v2.mp3", import.meta.url)
+    .href,
+  softChime: new URL("../../../assets/notification-sounds/soft-chime.ogg", import.meta.url).href,
+  glassPing: new URL("../../../assets/notification-sounds/glass-ping.ogg", import.meta.url).href,
+  brightAlert: new URL("../../../assets/notification-sounds/bright-alert.ogg", import.meta.url)
+    .href,
+}
+
 /**
  * 扩展版存储实现
  */
@@ -93,6 +102,10 @@ export const platform: Platform = {
       title: options.title,
       body: options.message,
     })
+  },
+
+  getNotificationSoundUrl(presetId: string): string | undefined {
+    return notificationSoundUrls[presetId]
   },
 
   focusWindow(): void {

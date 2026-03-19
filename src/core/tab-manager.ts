@@ -442,7 +442,13 @@ export class TabManager {
     const preset =
       NOTIFICATION_SOUND_PRESETS.find((item) => item.id === presetId) ||
       NOTIFICATION_SOUND_PRESETS[0]
-    const audioUrl = chrome.runtime.getURL(preset.assetPath)
+    const audioUrl = platform.getNotificationSoundUrl(preset.id)
+
+    if (!audioUrl) {
+      console.warn("[TabManager] Notification sound URL not found for preset:", preset.id)
+      return
+    }
+
     const repeatCount = this.normalizeNotificationRepeatCount(this.settings.notificationRepeatCount)
     const repeatIntervalMs =
       this.normalizeNotificationRepeatInterval(this.settings.notificationRepeatInterval) * 1000

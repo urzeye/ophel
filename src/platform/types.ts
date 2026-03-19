@@ -109,6 +109,11 @@ export interface Platform {
   notify(options: NotifyOptions): void
 
   /**
+   * 获取通知音资源地址
+   */
+  getNotificationSoundUrl(presetId: string): string | undefined
+
+  /**
    * 聚焦当前标签页/窗口
    */
   focusWindow(): void
