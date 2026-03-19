@@ -31,6 +31,7 @@ export class TabManager {
   private notificationAudio: HTMLAudioElement | null = null
   private notificationRepeatTimer: number | null = null
   private notificationPlaybackId = 0
+  private notificationSoundUrlCache = new Map<string, string>()
 
   // 绑定的事件处理函数引用（用于移除）
   private boundHandleMessage: (event: MessageEvent) => void
@@ -152,6 +153,7 @@ export class TabManager {
   destroy() {
     this.stop()
     this.stopNotificationPlayback()
+    this.clearNotificationSoundUrlCache()
     window.removeEventListener("message", this.boundHandleMessage)
     document.removeEventListener("visibilitychange", this.boundVisibilityHandler)
     window.removeEventListener("focus", this.boundFocusHandler)
@@ -442,9 +444,9 @@ export class TabManager {
     const preset =
       NOTIFICATION_SOUND_PRESETS.find((item) => item.id === presetId) ||
       NOTIFICATION_SOUND_PRESETS[0]
-    const audioUrl = platform.getNotificationSoundUrl(preset.id)
+    const sourceUrl = platform.getNotificationSoundUrl(preset.id)
 
-    if (!audioUrl) {
+    if (!sourceUrl) {
       console.warn("[TabManager] Notification sound URL not found for preset:", preset.id)
       return
     }
@@ -453,7 +455,44 @@ export class TabManager {
     const repeatIntervalMs =
       this.normalizeNotificationRepeatInterval(this.settings.notificationRepeatInterval) * 1000
 
-    this.startNotificationPlayback(audioUrl, repeatCount, repeatIntervalMs)
+    void this.resolvePlayableNotificationSoundUrl(preset.id, sourceUrl)
+      .then((audioUrl) => {
+        this.startNotificationPlayback(audioUrl, repeatCount, repeatIntervalMs)
+      })
+      .catch((error) => {
+        console.error("[TabManager] Failed to resolve notification sound URL:", error)
+      })
+  }
+
+  private async resolvePlayableNotificationSoundUrl(presetId: string, sourceUrl: string) {
+    const cachedUrl = this.notificationSoundUrlCache.get(presetId)
+    if (cachedUrl) {
+      return cachedUrl
+    }
+
+    // 对扩展资源先转为 blob URL，避免页面上下文直接加载 chrome-extension:// 资源被拦截
+    if (platform.type === "extension" && sourceUrl.startsWith("chrome-extension://")) {
+      try {
+        const response = await fetch(sourceUrl)
+        if (!response.ok) {
+          console.warn(
+            "[TabManager] Failed to fetch notification sound resource:",
+            response.status,
+            sourceUrl,
+          )
+          return sourceUrl
+        }
+
+        const blob = await response.blob()
+        const objectUrl = URL.createObjectURL(blob)
+        this.notificationSoundUrlCache.set(presetId, objectUrl)
+        return objectUrl
+      } catch (error) {
+        console.warn("[TabManager] Falling back to direct notification sound URL:", error)
+      }
+    }
+
+    return sourceUrl
   }
 
   /**
@@ -497,11 +536,16 @@ export class TabManager {
         }
         this.notificationAudio.onerror = () => {
           if (playbackId === this.notificationPlaybackId) {
+            console.error("[TabManager] Notification audio element error:", {
+              url,
+              mediaError: this.notificationAudio?.error,
+            })
             this.stopNotificationPlayback()
           }
         }
-        this.notificationAudio.play().catch(() => {
+        this.notificationAudio.play().catch((error) => {
           if (playbackId === this.notificationPlaybackId) {
+            console.error("[TabManager] Notification audio play rejected:", { url, error })
             this.stopNotificationPlayback()
           }
         })
@@ -540,6 +584,15 @@ export class TabManager {
 
     this.notificationAudio.onended = null
     this.notificationAudio.onerror = null
+  }
+
+  private clearNotificationSoundUrlCache() {
+    for (const objectUrl of this.notificationSoundUrlCache.values()) {
+      if (objectUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(objectUrl)
+      }
+    }
+    this.notificationSoundUrlCache.clear()
   }
 
   private normalizeNotificationRepeatCount(value?: number) {
