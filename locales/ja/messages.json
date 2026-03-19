@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel Atlas - AI対話の構造化とナビゲーションツール",
+    "message": "Ophel Atlas - ChatGPT・Gemini・Claudeなど対応の対話ナビゲーター",
     "description": "拡張機能名"
   },
   "extensionDescription": {
-    "message": "AIチャットを読みやすく、ナビゲート可能な知識へ変換。アウトライン、会話フォルダ、プロンプト集で無限スクロールを解消。整理・蓄積可能なワークフローを実現し、AIを活用する学習や業務に最適です。",
+    "message": "ChatGPT、Gemini、ClaudeなどのAIサイトを、アウトライン、フォルダ、プロンプト集で見やすく整理し、すばやく移動・再利用。",
     "description": "拡張機能の説明"
   }
 }

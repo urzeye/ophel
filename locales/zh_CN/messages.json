@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel Atlas - AI 对话结构化与导航工具",
+    "message": "Ophel Atlas - ChatGPT、Gemini、Claude 等站点的对话导航与整理",
     "description": "扩展名称"
   },
   "extensionDescription": {
-    "message": "将 AI 对话转化为可阅读、可导航、可复用的知识内容。通过实时大纲、会话文件夹与 Prompt 词库，让对话告别无限滚动，成为可组织、可沉淀的工作流，适用于高频使用 AI 的学习与工作场景。",
+    "message": "支持 ChatGPT、Gemini、Claude 等 AI 站点的对话导航、实时大纲、文件夹与提示词库，让长对话更易读、更好找、更好复用。",
     "description": "扩展描述"
   }
 }

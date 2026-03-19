@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel Atlas - AI 對話結構化與導覽工具",
+    "message": "Ophel Atlas - ChatGPT、Gemini、Claude 等站點的對話導覽與整理",
     "description": "擴充功能名稱"
   },
   "extensionDescription": {
-    "message": "將 AI 對話轉化為可閱讀、可導覽、可複用的知識內容。透過即時大綱、對話資料夾與 Prompt 詞庫，讓對話告別無限捲動，成為可組織、可沉澱的工作流，適用於高頻使用 AI 的學習與工作場景。",
+    "message": "支援 ChatGPT、Gemini、Claude 等 AI 站點的對話導覽、即時大綱、資料夾與提示詞庫，讓長對話更易讀、更好找、更好複用。",
     "description": "擴充功能描述"
   }
 }

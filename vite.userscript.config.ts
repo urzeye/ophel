@@ -11,74 +11,56 @@ const author: string = pkg.author
 const version: string = pkg.version
 const license: string = pkg.license
 
-// Locale directory to userscript locale code mapping
-const localeMapping: Record<string, string> = {
-  zh_CN: "zh-CN",
-  zh_TW: "zh-TW",
-  en: "en",
-  de: "de",
-  es: "es",
-  fr: "fr",
-  ja: "ja",
-  ko: "ko",
-  pt_BR: "pt-BR",
-  ru: "ru",
-}
-
-// Read name and description from locale files
-function loadLocalizedMetadata(): {
+type UserscriptMetadata = {
   name: Record<string, string>
   description: Record<string, string>
-} {
-
-  const seoNameCN = ", 全能AI助手 (支持 Gemini, ChatGPT, Claude, Grok, AI Studio, 豆包)"
-  const seoNameEN = " (Support Gemini, ChatGPT, Claude, Grok, AI Studio)"
-
-  const seoKeywordsCN = " | 功能: 实时大纲导航, 会话管理(文件夹/置顶/导出), 提示词库, 沉浸式宽屏/全屏/滚动锁定, 主题切换, Markdown渲染修复, LaTeX公式/表格复制, WebDAV同步, 隐私模式, 快捷键, 标签页重命名, 阅读历史恢复, Banana去水印"
-  const seoKeywordsEN = " | Features: Real-time Outline, Conversation Manager (Folders/Pin/Export), Prompt Library, Immersion/Widescreen/Scroll Lock, Theme Switcher, Markdown Fix, LaTeX/Table Copy, WebDAV Sync, Privacy, Shortcuts, Tab Renamer, History Restore, Watermark Remover"
-
-  let defaultDescription = "将 AI 对话转化为可阅读、可导航、可复用的知识内容。通过实时大纲、会话文件夹与 Prompt 词库，让对话告别无限滚动，成为可组织、可沉淀的工作流，适用于高频使用 AI 的学习与工作场景。" + seoKeywordsCN + " | Turn AI chats into readable, navigable knowledge. Use outlines, folders, and prompts to organize your workflow and stop scrolling." + seoKeywordsEN
-
-  const name: Record<string, string> = { "": "Ophel Atlas - AI 对话结构化与导航工具" + seoNameCN } // Default fallback
-  const description: Record<string, string> = {
-    "": defaultDescription.substring(0, 500),
-  }
-
-  const localesDir = path.resolve(__dirname, "locales")
-  for (const [dirName, localeCode] of Object.entries(localeMapping)) {
-    const messagesPath = path.join(localesDir, dirName, "messages.json")
-    if (fs.existsSync(messagesPath)) {
-      try {
-        const messages = JSON.parse(fs.readFileSync(messagesPath, "utf-8"))
-        if (messages.extensionName?.message) {
-          let extensionName = messages.extensionName.message
-          // Append Platform Support text to Name for SEO
-          if (dirName === "zh_CN" || dirName === "zh_TW") {
-            extensionName += seoNameCN
-          } else {
-            extensionName += seoNameEN
-          }
-          name[localeCode] = extensionName
-        }
-        if (messages.extensionDescription?.message) {
-          let desc = messages.extensionDescription.message
-          // Append SEO keywords: zh_CN gets CN version, everyone else gets EN version
-          if (dirName === "zh_CN") {
-            desc += seoKeywordsCN
-          } else {
-            desc += seoKeywordsEN
-          }
-          description[localeCode] = desc
-        }
-      } catch {
-        console.warn(`Failed to parse ${messagesPath}`)
-      }
-    }
-  }
-  return { name, description }
 }
 
-const { name: localizedName, description: localizedDescription } = loadLocalizedMetadata()
+const USERSCRIPT_NAME_MAX = 100
+const USERSCRIPT_DESCRIPTION_MAX = 500
+
+const userscriptMetadata: UserscriptMetadata = {
+  name: {
+    "": "Ophel Atlas Nav · Gemini, AI Studio, ChatGPT, Claude, Grok, DeepSeek, Qwen, Doubao, Kimi, GLM/Z.ai",
+    en: "Ophel Atlas Nav · Gemini, AI Studio, ChatGPT, Claude, Grok, DeepSeek, Qwen, Doubao, Kimi, GLM/Z.ai",
+    "zh-CN": "Ophel Atlas - AI对话导航整理：Gemini、AI Studio、ChatGPT、Claude、Grok、DeepSeek、Qwen、豆包、Kimi、ChatGLM、Z.ai",
+    "zh-TW": "Ophel Atlas - AI對話導覽整理：Gemini、AI Studio、ChatGPT、Claude、Grok、DeepSeek、Qwen、豆包、Kimi、ChatGLM、Z.ai",
+    de: "Ophel Atlas Nav · Gemini, AI Studio, ChatGPT, Claude, Grok, DeepSeek, Qwen, Doubao, Kimi, GLM/Z.ai",
+    es: "Ophel Atlas Nav · Gemini, AI Studio, ChatGPT, Claude, Grok, DeepSeek, Qwen, Doubao, Kimi, GLM/Z.ai",
+    fr: "Ophel Atlas Nav · Gemini, AI Studio, ChatGPT, Claude, Grok, DeepSeek, Qwen, Doubao, Kimi, GLM/Z.ai",
+    ja: "Ophel Atlas - AI対話ナビ：Gemini・GEnt・AI Studio・ChatGPT・Claude・Grok・DeepSeek・Qwen・豆包・Kimi・ChatGLM・Z.ai対応版",
+    ko: "Ophel Atlas - AI 대화 내비: Gemini·GEnt·AI Studio·ChatGPT·Claude·Grok·DeepSeek·Qwen·豆包·Kimi·ChatGLM·Z.ai",
+    "pt-BR": "Ophel Atlas Nav · Gemini, AI Studio, ChatGPT, Claude, Grok, DeepSeek, Qwen, Doubao, Kimi, GLM/Z.ai",
+    ru: "Ophel Atlas Nav · Gemini, AI Studio, ChatGPT, Claude, Grok, DeepSeek, Qwen, Doubao, Kimi, GLM/Z.ai",
+  },
+  description: {
+    "": "AI chat navigator and organizer for Gemini, Gemini Enterprise, AI Studio, ChatGPT, Claude, Grok, DeepSeek, Kimi, Qwen, Doubao, ChatGLM, and Z.ai. Adds real-time outlines, Search Everywhere, conversation folders, pinning, prompt queue, prompt library, Markdown/JSON export, WebDAV sync, Zen Mode, wide/full-screen reading, scroll lock, LaTeX/table copy, tab renaming, privacy mode, notifications, reading history restore, shortcuts, prompt variables, and theme tweaks. Sound presets. Batch import.",
+    en: "AI chat navigator and organizer for Gemini, Gemini Enterprise, AI Studio, ChatGPT, Claude, Grok, DeepSeek, Kimi, Qwen, Doubao, ChatGLM, and Z.ai. Adds real-time outlines, Search Everywhere, conversation folders, pinning, prompt queue, prompt library, Markdown/JSON export, WebDAV sync, Zen Mode, wide/full-screen reading, scroll lock, LaTeX/table copy, tab renaming, privacy mode, notifications, reading history restore, shortcuts, prompt variables, and theme tweaks. Sound presets. Batch import.",
+    "zh-CN": "适用于 Gemini、Gemini Enterprise、AI Studio、ChatGPT、Claude、Grok、DeepSeek、Qwen、豆包、Kimi、ChatGLM、Z.ai 的 AI 对话导航与整理工具，提供实时大纲、Search Everywhere 全局搜索、会话文件夹、置顶、提示词队列与提示词库、提示词变量、Markdown/JSON 导出、思维链导出控制、WebDAV 同步、禅模式、宽屏/全屏阅读、滚动锁定、主题切换、LaTeX/表格复制、标签页重命名、隐私模式、完成通知音、阅读历史恢复、快捷键与批量导入提示词队列，让长 AI 对话更易搜索、更易导航、更易沉淀、更易复用。",
+    "zh-TW": "適用於 Gemini、Gemini Enterprise、AI Studio、ChatGPT、Claude、Grok、DeepSeek、Qwen、豆包、Kimi、ChatGLM、Z.ai 的 AI 對話導覽與整理工具，提供即時大綱、Search Everywhere 全域搜尋、對話資料夾、置頂、提示詞佇列與提示詞庫、提示詞變數、Markdown/JSON 匯出、思維鏈匯出控制、WebDAV 同步、禪模式、寬螢幕/全螢幕閱讀、捲動鎖定、主題切換、LaTeX/表格複製、分頁重新命名、隱私模式、完成通知音、閱讀歷史恢復、快捷鍵與批量匯入提示詞佇列，讓長 AI 對話更易搜尋、更易導覽、更易沉澱、更易複用。",
+    de: "KI-Chat-Navigator und Organizer für Gemini, Gemini Enterprise, AI Studio, ChatGPT, Claude, Grok, DeepSeek, Kimi, Qwen, Doubao, ChatGLM und Z.ai. Mit Echtzeit-Gliederung, Search Everywhere, Ordnern, Anheften, Prompt Queue, Prompt Library, Prompt-Variablen, Markdown/JSON-Export, WebDAV-Sync, Zen Mode, Wide/Fullscreen, Scroll Lock, LaTeX-/Tabellen-Kopie, Tab-Umbenennung, Datenschutzmodus, Benachrichtigungen und Wiederherstellung des Leseverlaufs für lange, durchsuchbare, wiederverwendbare AI-Chats.",
+    es: "Navegador y organizador de chats con IA para Gemini, Gemini Enterprise, AI Studio, ChatGPT, Claude, Grok, DeepSeek, Kimi, Qwen, Doubao, ChatGLM y Z.ai. Incluye esquemas en tiempo real, Search Everywhere, carpetas, fijado, cola y biblioteca de prompts, variables, exportación Markdown/JSON, sincronización WebDAV, Zen Mode, lectura amplia, bloqueo de desplazamiento, copia de LaTeX/tablas, renombrado de pestañas, privacidad, notificaciones e historial para chats largos y reutilizables.",
+    fr: "Navigateur et organisateur de chats IA pour Gemini, Gemini Enterprise, AI Studio, ChatGPT, Claude, Grok, DeepSeek, Kimi, Qwen, Doubao, ChatGLM et Z.ai. Ajoute un plan en temps réel, Search Everywhere, dossiers, épinglage, file et bibliothèque de prompts, variables, export Markdown/JSON, sync WebDAV, Zen Mode, lecture large, verrouillage du défilement, copie LaTeX/tableaux, renommage des onglets, confidentialité, notifications et reprise de lecture pour des chats IA longs et réutilisables.",
+    ja: "Gemini、Gemini Enterprise、AI Studio、ChatGPT、Claude、Grok、DeepSeek、Qwen、豆包、Kimi、ChatGLM、Z.ai に対応する AI対話ナビゲーション整理ツール。リアルタイム目次、Search Everywhere、会話フォルダ、ピン留め、プロンプトキューとプロンプトライブラリ、プロンプト変数、Markdown/JSON エクスポート、WebDAV 同期、禅モード、ワイド/全画面読書、スクロールロック、LaTeX/表コピー、タブ名変更、プライバシーモード、完了通知、閲覧履歴復元を提供し、長い AI 対話を検索しやすく再利用しやすくします。",
+    ko: "Gemini, Gemini Enterprise, AI Studio, ChatGPT, Claude, Grok, DeepSeek, Qwen, 豆包, Kimi, ChatGLM, Z.ai를 지원하는 AI 대화 탐색·정리 도구입니다. 실시간 개요, Search Everywhere, 대화 폴더, 고정, 프롬프트 큐와 프롬프트 라이브러리, 프롬프트 변수, Markdown/JSON 내보내기, WebDAV 동기화, Zen Mode, 와이드/전체 화면 읽기, 스크롤 잠금, LaTeX/표 복사, 탭 이름 변경, 프라이버시 모드, 완료 알림, 읽기 기록 복원을 제공해 긴 AI 대화를 더 쉽게 검색하고 재사용할 수 있게 합니다.",
+    "pt-BR": "Navegador e organizador de chats com IA para Gemini, Gemini Enterprise, AI Studio, ChatGPT, Claude, Grok, DeepSeek, Kimi, Qwen, Doubao, ChatGLM e Z.ai. Inclui outlines em tempo real, Search Everywhere, pastas, fixação, fila e biblioteca de prompts, variáveis, exportação Markdown/JSON, sincronização WebDAV, Zen Mode, leitura ampla, scroll lock, cópia de LaTeX/tabelas, renomeação de abas, privacidade, notificações e histórico para chats longos, pesquisáveis e reutilizáveis.",
+    ru: "Навигатор и органайзер AI-чатов для Gemini, Gemini Enterprise, AI Studio, ChatGPT, Claude, Grok, DeepSeek, Kimi, Qwen, Doubao, ChatGLM и Z.ai. Добавляет структуру в реальном времени, Search Everywhere, папки, закрепление, очередь и библиотеку промптов, переменные, экспорт Markdown/JSON, синхронизацию WebDAV, Zen Mode, широкий режим, Scroll Lock, копирование LaTeX/таблиц, переименование вкладок, приватный режим, уведомления и историю чтения для длинных и переиспользуемых AI-чатов.",
+  },
+}
+
+function validateUserscriptMetadata(metadata: UserscriptMetadata) {
+  for (const [locale, value] of Object.entries(metadata.name)) {
+    if (value.length > USERSCRIPT_NAME_MAX)
+      throw new Error(`Userscript name for locale "${locale || "default"}" exceeds ${USERSCRIPT_NAME_MAX} characters`)
+  }
+
+  for (const [locale, value] of Object.entries(metadata.description)) {
+    if (value.length > USERSCRIPT_DESCRIPTION_MAX)
+      throw new Error(`Userscript description for locale "${locale || "default"}" exceeds ${USERSCRIPT_DESCRIPTION_MAX} characters`)
+  }
+}
+
+validateUserscriptMetadata(userscriptMetadata)
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -87,8 +69,8 @@ export default defineConfig({
     monkey({
       entry: "src/platform/userscript/entry.tsx",
       userscript: {
-        name: localizedName,
-        description: localizedDescription,
+        name: userscriptMetadata.name,
+        description: userscriptMetadata.description,
         version: version,
         author: author,
         namespace: "https://github.com/urzeye/ophel",
@@ -107,6 +89,7 @@ export default defineConfig({
           "https://www.kimi.com/*",
           "https://chatglm.cn/*",
           "https://www.qianwen.com/*",
+          "https://chat.z.ai/*",
         ],
         grant: [
           "GM_getValue",

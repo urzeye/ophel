@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel Atlas - AI 채팅 정리 및 탐색 도구",
+    "message": "Ophel Atlas - ChatGPT·Gemini·Claude 등 지원 대화 내비게이터",
     "description": "확장 프로그램 이름"
   },
   "extensionDescription": {
-    "message": "AI 채팅을 읽기 쉽고 탐색 가능한 지식으로 변환하세요. 개요, 폴더, 프롬프트로 워크플로우를 정리하여 무한 스크롤에서 해방되세요.",
+    "message": "ChatGPT, Gemini, Claude 등 AI 사이트 대화를 개요, 폴더, 프롬프트 라이브러리로 탐색하고 더 쉽게 읽고 재사용하세요.",
     "description": "확장 프로그램 설명"
   }
 }
