@@ -13,13 +13,11 @@ import type {
   PlatformStorage,
 } from "../types"
 
-const notificationSoundUrls: Record<string, string> = {
-  default: new URL("../../../assets/notification-sounds/streaming-complete-v2.mp3", import.meta.url)
-    .href,
-  softChime: new URL("../../../assets/notification-sounds/soft-chime.ogg", import.meta.url).href,
-  glassPing: new URL("../../../assets/notification-sounds/glass-ping.ogg", import.meta.url).href,
-  brightAlert: new URL("../../../assets/notification-sounds/bright-alert.ogg", import.meta.url)
-    .href,
+const notificationSoundPaths: Record<string, string> = {
+  default: "assets/notification-sounds/streaming-complete-v2.mp3",
+  softChime: "assets/notification-sounds/soft-chime.ogg",
+  glassPing: "assets/notification-sounds/glass-ping.ogg",
+  brightAlert: "assets/notification-sounds/bright-alert.ogg",
 }
 
 /**
@@ -105,7 +103,8 @@ export const platform: Platform = {
   },
 
   getNotificationSoundUrl(presetId: string): string | undefined {
-    return notificationSoundUrls[presetId]
+    const path = notificationSoundPaths[presetId]
+    return path ? chrome.runtime.getURL(path) : undefined
   },
 
   focusWindow(): void {
