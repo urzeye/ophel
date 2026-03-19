@@ -80,6 +80,7 @@ export const ko = {
   // ======== General / Tab Settings Tab ========
   generalTab: "일반",
   tabSettingsTab: "탭 설정",
+  reminderTab: "알림",
   generalSettings: "일반 설정",
   panelTab: "패널",
   tabOrderTab: "탭 순서",

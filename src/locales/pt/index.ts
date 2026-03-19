@@ -77,6 +77,7 @@ export const pt = {
   // ======== General / Tab Settings Tab ========
   generalTab: "Geral",
   tabSettingsTab: "Abas",
+  reminderTab: "Alertas",
   generalSettings: "Ajustes Gerais",
   panelTab: "Painel",
   tabOrderTab: "Ordem",

@@ -78,6 +78,7 @@ export const zhCN = {
   // ======== 通用 / 标签页 Tab ========
   generalTab: "通用",
   tabSettingsTab: "标签页",
+  reminderTab: "提醒",
   generalSettings: "通用设置",
   panelTab: "面板",
   tabOrderTab: "界面排版",

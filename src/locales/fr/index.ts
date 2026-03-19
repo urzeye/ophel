@@ -78,6 +78,7 @@ export const fr = {
   // ======== General / Tab Settings Tab ========
   generalTab: "Général",
   tabSettingsTab: "Onglets",
+  reminderTab: "Alertes",
   generalSettings: "Réglages Généraux",
   panelTab: "Panneau",
   tabOrderTab: "Ordre",

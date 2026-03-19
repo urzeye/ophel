@@ -206,6 +206,7 @@ export const zhTW = {
   // 設置面板
   generalTab: "通用",
   tabSettingsTab: "標籤頁",
+  reminderTab: "提醒",
   generalSettings: "通用設定",
   panelTab: "面板",
   tabOrderTab: "介面排版",

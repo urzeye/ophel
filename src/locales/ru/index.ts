@@ -77,6 +77,7 @@ export const ru = {
   // ======== General / Tab Settings Tab ========
   generalTab: "Общие",
   tabSettingsTab: "Вкладки",
+  reminderTab: "Оповещения",
   generalSettings: "Общие настройки",
   panelTab: "Панель",
   tabOrderTab: "Порядок",

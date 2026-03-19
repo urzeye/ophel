@@ -79,6 +79,7 @@ export const ja = {
   // ======== General / Tab Settings Tab ========
   generalTab: "全般",
   tabSettingsTab: "タブ設定",
+  reminderTab: "通知",
   generalSettings: "全般設定",
   panelTab: "パネル",
   tabOrderTab: "タブ順序",

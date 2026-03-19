@@ -78,6 +78,7 @@ export const de = {
   // ======== General / Tab Settings Tab ========
   generalTab: "Allgemein",
   tabSettingsTab: "Tabs",
+  reminderTab: "Hinweise",
   generalSettings: "Allgemeine Einstellungen",
   panelTab: "Bedienfeld",
   tabOrderTab: "Reihenfolge",

@@ -1,6 +1,6 @@
 /**
  * 功能模块页面
- * 包含：标签页、内容处理、大纲、会话、模型锁定、阅读历史
+ * 包含：标签页、提醒、内容处理、大纲、会话、模型锁定、阅读历史
  * 使用顶部 Tab 切换
  */
 import React, { useEffect, useState } from "react"
@@ -76,6 +76,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId: _siteId, initialTab
     { id: FEATURES_TAB_IDS.CONVERSATIONS, label: t("tabConversations") || "会话" },
     { id: FEATURES_TAB_IDS.PROMPTS, label: t("tabPrompts") || "Prompts" },
     { id: FEATURES_TAB_IDS.TAB_SETTINGS, label: t("tabSettingsTab") || "标签页" },
+    { id: FEATURES_TAB_IDS.REMINDER, label: t("reminderTab") || "提醒" },
     { id: FEATURES_TAB_IDS.CONTENT, label: t("navContent") || "内容交互" },
     { id: FEATURES_TAB_IDS.READING_HISTORY, label: t("readingHistoryTitle") || "阅读历史" },
   ]
@@ -103,6 +104,160 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId: _siteId, initialTab
   const formatSecondsOptionLabel = (value: number) =>
     t("secondsValueLabel", { val: String(value) }) || `${value} 秒`
   const formatRepeatCountOptionLabel = (value: number) => `${value}x`
+  const notificationSettingsCard = (
+    <SettingCard title={t("notificationSettings") || "完成后操作"}>
+      <ToggleRow
+        label={t("showNotificationLabel") || "桌面通知"}
+        description={t("showNotificationDesc") || "生成完成时发送桌面通知"}
+        settingId="tab-show-notification"
+        checked={settings.tab?.showNotification ?? false}
+        onChange={async () => {
+          const checked = settings.tab?.showNotification
+          if (!checked) {
+            // 油猴脚本环境：直接启用（不需要检查权限，GM_notification 已通过 @grant 声明）
+            if (!platform.hasCapability("permissions")) {
+              updateNestedSetting("tab", "showNotification", true)
+              return
+            }
+            // 1. 检查是否已有权限
+            const response = await sendToBackground({
+              type: MSG_CHECK_PERMISSIONS,
+              permissions: ["notifications"],
+            })
+
+            if (response.success && response.hasPermission) {
+              updateNestedSetting("tab", "showNotification", true)
+            } else {
+              // 2. 请求权限 (打开独立窗口)
+              await sendToBackground({
+                type: MSG_REQUEST_PERMISSIONS,
+                permType: "notifications",
+              })
+              showToast(t("permissionRequestToast") || "请在弹出的窗口中授予权限", 3000)
+            }
+          } else {
+            updateNestedSetting("tab", "showNotification", false)
+          }
+        }}
+      />
+
+      <ToggleRow
+        label={t("notificationSoundLabel") || "通知声音"}
+        description={t("notificationSoundDesc") || "生成完成时播放提示音"}
+        settingId="tab-notification-sound"
+        checked={settings.tab?.notificationSound ?? false}
+        disabled={!settings.tab?.showNotification}
+        onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}
+        onChange={() =>
+          updateNestedSetting("tab", "notificationSound", !settings.tab?.notificationSound)
+        }
+      />
+
+      {hasMultipleNotificationSoundPresets && (
+        <SettingRow
+          label={t("notificationSoundPresetLabel") || "提示音预设"}
+          settingId="tab-notification-sound-preset"
+          disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
+          onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
+          <select
+            className="settings-select"
+            value={settings.tab?.notificationSoundPreset || NOTIFICATION_SOUND_PRESETS[0].id}
+            onChange={(e) => updateNestedSetting("tab", "notificationSoundPreset", e.target.value)}
+            disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}>
+            {NOTIFICATION_SOUND_PRESETS.map((preset) => (
+              <option key={preset.id} value={preset.id}>
+                {t(preset.labelKey) || preset.fallback}
+              </option>
+            ))}
+          </select>
+        </SettingRow>
+      )}
+
+      <SettingRow
+        label={t("notificationVolumeLabel") || "声音音量"}
+        settingId="tab-notification-volume"
+        disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
+        onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <input
+            type="range"
+            min="0.1"
+            max="1.0"
+            step="0.1"
+            value={settings.tab?.notificationVolume || 0.5}
+            onChange={(e) =>
+              updateNestedSetting("tab", "notificationVolume", parseFloat(e.target.value))
+            }
+            disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
+            style={{ width: "100px" }}
+          />
+          <span style={{ fontSize: "12px", minWidth: "36px" }}>
+            {Math.round((settings.tab?.notificationVolume || 0.5) * 100)}%
+          </span>
+        </div>
+      </SettingRow>
+
+      <SettingRow
+        label={t("notificationRepeatCountLabel") || "播放次数"}
+        settingId="tab-notification-repeat-count"
+        disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
+        onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
+        <select
+          className="settings-select"
+          value={settings.tab?.notificationRepeatCount ?? 1}
+          onChange={(e) =>
+            updateNestedSetting("tab", "notificationRepeatCount", parseInt(e.target.value))
+          }
+          disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}>
+          {[1, 2, 3, 5].map((value) => (
+            <option key={value} value={value}>
+              {formatRepeatCountOptionLabel(value)}
+            </option>
+          ))}
+        </select>
+      </SettingRow>
+
+      <SettingRow
+        label={t("notificationRepeatIntervalLabel") || "播放间隔"}
+        settingId="tab-notification-repeat-interval"
+        disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
+        onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
+        <select
+          className="settings-select"
+          value={settings.tab?.notificationRepeatInterval ?? 3}
+          onChange={(e) =>
+            updateNestedSetting("tab", "notificationRepeatInterval", parseInt(e.target.value))
+          }
+          disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}>
+          {[1, 2, 3, 5, 10].map((value) => (
+            <option key={value} value={value}>
+              {formatSecondsOptionLabel(value)}
+            </option>
+          ))}
+        </select>
+      </SettingRow>
+
+      <ToggleRow
+        label={t("notifyWhenFocusedLabel") || "前台时也通知"}
+        description={t("notifyWhenFocusedDesc") || "窗口在前台时也发送通知"}
+        settingId="tab-notify-when-focused"
+        checked={settings.tab?.notifyWhenFocused ?? false}
+        disabled={!settings.tab?.showNotification}
+        onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}
+        onChange={() =>
+          updateNestedSetting("tab", "notifyWhenFocused", !settings.tab?.notifyWhenFocused)
+        }
+      />
+
+      <ToggleRow
+        label={t("autoFocusLabel") || "自动置顶窗口"}
+        description={t("autoFocusDesc") || "生成完成后自动激活窗口"}
+        settingId="tab-auto-focus"
+        checked={settings.tab?.autoFocus ?? false}
+        onChange={() => updateNestedSetting("tab", "autoFocus", !settings.tab?.autoFocus)}
+      />
+    </SettingCard>
+  )
 
   return (
     <div>
@@ -180,162 +335,6 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId: _siteId, initialTab
             />
           </SettingCard>
 
-          {/* 完成后操作卡片 */}
-          <SettingCard title={t("notificationSettings") || "完成后操作"}>
-            <ToggleRow
-              label={t("showNotificationLabel") || "桌面通知"}
-              description={t("showNotificationDesc") || "生成完成时发送桌面通知"}
-              settingId="tab-show-notification"
-              checked={settings.tab?.showNotification ?? false}
-              onChange={async () => {
-                const checked = settings.tab?.showNotification
-                if (!checked) {
-                  // 油猴脚本环境：直接启用（不需要检查权限，GM_notification 已通过 @grant 声明）
-                  if (!platform.hasCapability("permissions")) {
-                    updateNestedSetting("tab", "showNotification", true)
-                    return
-                  }
-                  // 1. 检查是否已有权限
-                  const response = await sendToBackground({
-                    type: MSG_CHECK_PERMISSIONS,
-                    permissions: ["notifications"],
-                  })
-
-                  if (response.success && response.hasPermission) {
-                    updateNestedSetting("tab", "showNotification", true)
-                  } else {
-                    // 2. 请求权限 (打开独立窗口)
-                    await sendToBackground({
-                      type: MSG_REQUEST_PERMISSIONS,
-                      permType: "notifications",
-                    })
-                    showToast(t("permissionRequestToast") || "请在弹出的窗口中授予权限", 3000)
-                  }
-                } else {
-                  updateNestedSetting("tab", "showNotification", false)
-                }
-              }}
-            />
-
-            <ToggleRow
-              label={t("notificationSoundLabel") || "通知声音"}
-              description={t("notificationSoundDesc") || "生成完成时播放提示音"}
-              settingId="tab-notification-sound"
-              checked={settings.tab?.notificationSound ?? false}
-              disabled={!settings.tab?.showNotification}
-              onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}
-              onChange={() =>
-                updateNestedSetting("tab", "notificationSound", !settings.tab?.notificationSound)
-              }
-            />
-
-            {hasMultipleNotificationSoundPresets && (
-              <SettingRow
-                label={t("notificationSoundPresetLabel") || "提示音预设"}
-                settingId="tab-notification-sound-preset"
-                disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
-                onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
-                <select
-                  className="settings-select"
-                  value={settings.tab?.notificationSoundPreset || NOTIFICATION_SOUND_PRESETS[0].id}
-                  onChange={(e) =>
-                    updateNestedSetting("tab", "notificationSoundPreset", e.target.value)
-                  }
-                  disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}>
-                  {NOTIFICATION_SOUND_PRESETS.map((preset) => (
-                    <option key={preset.id} value={preset.id}>
-                      {t(preset.labelKey) || preset.fallback}
-                    </option>
-                  ))}
-                </select>
-              </SettingRow>
-            )}
-
-            <SettingRow
-              label={t("notificationVolumeLabel") || "声音音量"}
-              settingId="tab-notification-volume"
-              disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
-              onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <input
-                  type="range"
-                  min="0.1"
-                  max="1.0"
-                  step="0.1"
-                  value={settings.tab?.notificationVolume || 0.5}
-                  onChange={(e) =>
-                    updateNestedSetting("tab", "notificationVolume", parseFloat(e.target.value))
-                  }
-                  disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
-                  style={{ width: "100px" }}
-                />
-                <span style={{ fontSize: "12px", minWidth: "36px" }}>
-                  {Math.round((settings.tab?.notificationVolume || 0.5) * 100)}%
-                </span>
-              </div>
-            </SettingRow>
-
-            <SettingRow
-              label={t("notificationRepeatCountLabel") || "播放次数"}
-              settingId="tab-notification-repeat-count"
-              disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
-              onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
-              <select
-                className="settings-select"
-                value={settings.tab?.notificationRepeatCount ?? 1}
-                onChange={(e) =>
-                  updateNestedSetting("tab", "notificationRepeatCount", parseInt(e.target.value))
-                }
-                disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}>
-                {[1, 2, 3, 5].map((value) => (
-                  <option key={value} value={value}>
-                    {formatRepeatCountOptionLabel(value)}
-                  </option>
-                ))}
-              </select>
-            </SettingRow>
-
-            <SettingRow
-              label={t("notificationRepeatIntervalLabel") || "播放间隔"}
-              settingId="tab-notification-repeat-interval"
-              disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
-              onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
-              <select
-                className="settings-select"
-                value={settings.tab?.notificationRepeatInterval ?? 3}
-                onChange={(e) =>
-                  updateNestedSetting("tab", "notificationRepeatInterval", parseInt(e.target.value))
-                }
-                disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}>
-                {[1, 2, 3, 5, 10].map((value) => (
-                  <option key={value} value={value}>
-                    {formatSecondsOptionLabel(value)}
-                  </option>
-                ))}
-              </select>
-            </SettingRow>
-
-            <ToggleRow
-              label={t("notifyWhenFocusedLabel") || "前台时也通知"}
-              description={t("notifyWhenFocusedDesc") || "窗口在前台时也发送通知"}
-              settingId="tab-notify-when-focused"
-              checked={settings.tab?.notifyWhenFocused ?? false}
-              disabled={!settings.tab?.showNotification}
-              onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}
-              onChange={() =>
-                updateNestedSetting("tab", "notifyWhenFocused", !settings.tab?.notifyWhenFocused)
-              }
-            />
-
-            <ToggleRow
-              label={t("autoFocusLabel") || "自动置顶窗口"}
-              description={t("autoFocusDesc") || "生成完成后自动激活窗口"}
-              settingId="tab-auto-focus"
-              checked={settings.tab?.autoFocus ?? false}
-              onChange={() => updateNestedSetting("tab", "autoFocus", !settings.tab?.autoFocus)}
-            />
-          </SettingCard>
-
           {/* 隐私模式卡片 */}
           <SettingCard title={t("privacyModeTitle") || "隐私模式"}>
             <ToggleRow
@@ -364,6 +363,9 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId: _siteId, initialTab
           </SettingCard>
         </>
       )}
+
+      {/* ========== 提醒 Tab ========== */}
+      {activeTab === FEATURES_TAB_IDS.REMINDER && notificationSettingsCard}
 
       {/* ========== 大纲 Tab ========== */}
       {activeTab === FEATURES_TAB_IDS.OUTLINE && (
