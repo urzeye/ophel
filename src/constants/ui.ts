@@ -1033,7 +1033,25 @@ export const NOTIFICATION_SOUND_PRESETS = [
     id: "default",
     labelKey: "notificationSoundPresetDefault",
     fallback: "Default",
-    assetPath: "assets/streaming-complete-v2.mp3",
+    assetPath: "assets/notification-sounds/streaming-complete-v2.mp3",
+  },
+  {
+    id: "softChime",
+    labelKey: "notificationSoundPresetSoftChime",
+    fallback: "Soft Chime",
+    assetPath: "assets/notification-sounds/soft-chime.ogg",
+  },
+  {
+    id: "glassPing",
+    labelKey: "notificationSoundPresetGlassPing",
+    fallback: "Glass Ping",
+    assetPath: "assets/notification-sounds/glass-ping.ogg",
+  },
+  {
+    id: "brightAlert",
+    labelKey: "notificationSoundPresetBrightAlert",
+    fallback: "Bright Alert",
+    assetPath: "assets/notification-sounds/bright-alert.ogg",
   },
 ] as const
 

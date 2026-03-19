@@ -6,7 +6,10 @@ import { App } from "~components/App"
 
 // 显式导入 NetworkMonitor 初始化函数（避免被 tree-shaking 移除）
 import { initNetworkMonitor } from "../../core/network-monitor"
-import defaultNotificationSound from "../../../assets/streaming-complete-v2.mp3?inline"
+import brightAlertNotificationSound from "../../../assets/notification-sounds/bright-alert.ogg?inline"
+import glassPingNotificationSound from "../../../assets/notification-sounds/glass-ping.ogg?inline"
+import softChimeNotificationSound from "../../../assets/notification-sounds/soft-chime.ogg?inline"
+import defaultNotificationSound from "../../../assets/notification-sounds/streaming-complete-v2.mp3?inline"
 // 导入样式为内联字符串（用于注入到 Shadow DOM）
 // 使用相对路径避免别名解析问题
 import mainStyle from "../../style.css?inline"
@@ -14,7 +17,10 @@ import conversationsStyle from "../../styles/conversations.css?inline"
 import settingsStyle from "../../styles/settings.css?inline"
 
 const USERSCRIPT_ASSET_URLS: Record<string, string> = {
-  "assets/streaming-complete-v2.mp3": defaultNotificationSound,
+  "assets/notification-sounds/bright-alert.ogg": brightAlertNotificationSound,
+  "assets/notification-sounds/glass-ping.ogg": glassPingNotificationSound,
+  "assets/notification-sounds/soft-chime.ogg": softChimeNotificationSound,
+  "assets/notification-sounds/streaming-complete-v2.mp3": defaultNotificationSound,
 }
 
 /**
