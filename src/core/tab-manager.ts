@@ -305,11 +305,25 @@ export class TabManager {
     const { type } = event.data || {}
 
     if (type === EVENT_MONITOR_START) {
+      console.debug("[TabManager] EVENT_MONITOR_START", {
+        aiState: this.aiState,
+        isAway: this.isUserAway(),
+        visibilityState: document.visibilityState,
+        hidden: document.hidden,
+        hasFocus: document.hasFocus(),
+      })
       this.stopNotificationPlayback()
       this.lastAiState = this.aiState
       this.aiState = "generating"
       this.updateTabName()
     } else if (type === EVENT_MONITOR_COMPLETE) {
+      console.debug("[TabManager] EVENT_MONITOR_COMPLETE", {
+        aiState: this.aiState,
+        isAway: this.isUserAway(),
+        visibilityState: document.visibilityState,
+        hidden: document.hidden,
+        hasFocus: document.hasFocus(),
+      })
       this.onAiComplete()
     } else if (type === EVENT_PRIVACY_TOGGLE) {
       // 切换隐私模式
@@ -343,6 +357,13 @@ export class TabManager {
    */
   private onVisibilityChange() {
     const isAway = this.isUserAway()
+    console.debug("[TabManager] visibilitychange", {
+      isAway,
+      visibilityState: document.visibilityState,
+      hidden: document.hidden,
+      hasFocus: document.hasFocus(),
+      aiState: this.aiState,
+    })
 
     if (!isAway) {
       this.stopNotificationPlayback()
@@ -361,6 +382,12 @@ export class TabManager {
    * 窗口获得焦点事件处理
    */
   private onWindowFocus() {
+    console.debug("[TabManager] window focus", {
+      visibilityState: document.visibilityState,
+      hidden: document.hidden,
+      hasFocus: document.hasFocus(),
+      aiState: this.aiState,
+    })
     this.stopNotificationPlayback()
 
     // 用户回到页面时，检查是否应该标记 userSawCompletion
@@ -375,7 +402,12 @@ export class TabManager {
    * 窗口失去焦点事件处理
    */
   private onWindowBlur() {
-    // blur 事件表明用户离开了页面，不需要额外处理
+    console.debug("[TabManager] window blur", {
+      visibilityState: document.visibilityState,
+      hidden: document.hidden,
+      hasFocus: document.hasFocus(),
+      aiState: this.aiState,
+    })
   }
 
   /**
@@ -394,6 +426,17 @@ export class TabManager {
     const isAway = this.isUserAway()
     const shouldNotify = wasGenerating && !this.userSawCompletion && (isAway || notifyWhenFocused)
 
+    console.debug("[TabManager] onAiComplete decision", {
+      wasGenerating,
+      userSawCompletion: this.userSawCompletion,
+      notifyWhenFocused,
+      isAway,
+      shouldNotify,
+      visibilityState: document.visibilityState,
+      hidden: document.hidden,
+      hasFocus: document.hasFocus(),
+    })
+
     if (shouldNotify) {
       this.sendCompletionNotification()
     }
@@ -409,6 +452,12 @@ export class TabManager {
    * 发送完成通知
    */
   private sendCompletionNotification() {
+    console.debug("[TabManager] sendCompletionNotification", {
+      showNotification: this.settings.showNotification,
+      notificationSound: this.settings.notificationSound,
+      presetId: this.settings.notificationSoundPreset,
+      notifyWhenFocused: this.settings.notifyWhenFocused,
+    })
     this.stopNotificationPlayback()
 
     // 发送桌面通知（使用平台抽象层，支持扩展和油猴脚本）
