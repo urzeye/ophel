@@ -16,6 +16,10 @@ export class TabManager {
   private settings: Settings["tab"]
   private isRunning = false
   private intervalId: NodeJS.Timeout | null = null
+  private titleObserver: MutationObserver | null = null
+  private expectedTitle: string | null = null
+  private isApplyingManagedTitle = false
+  private titleSyncTimer: number | null = null
 
   // AI 生成状态（简化的状态机）
   private aiState: "idle" | "generating" | "completed" = "idle"
@@ -110,6 +114,7 @@ export class TabManager {
     }
 
     this.isRunning = true
+    this.startTitleObserver()
 
     this.updateTabName()
 
@@ -139,6 +144,8 @@ export class TabManager {
     if (!this.isRunning) return
 
     this.isRunning = false
+    this.stopTitleObserver()
+    this.expectedTitle = null
 
     if (this.intervalId) {
       clearInterval(this.intervalId)
@@ -152,6 +159,7 @@ export class TabManager {
   destroy() {
     this.stop()
     this.stopNotificationPlayback()
+    this.stopTitleObserver()
     window.removeEventListener("message", this.boundHandleMessage)
     document.removeEventListener("visibilitychange", this.boundVisibilityHandler)
     window.removeEventListener("focus", this.boundFocusHandler)
@@ -203,9 +211,7 @@ export class TabManager {
     // 隐私模式
     if (this.settings.privacyMode) {
       const privacyTitle = this.settings.privacyTitle || "Google"
-      if (document.title !== privacyTitle) {
-        document.title = privacyTitle
-      }
+      this.applyManagedTitle(privacyTitle, force)
       return
     }
 
@@ -244,9 +250,71 @@ export class TabManager {
       .replace(/\s+/g, " ")
       .trim()
 
-    if (finalTitle && (force || finalTitle !== document.title)) {
-      document.title = finalTitle
+    if (finalTitle) {
+      this.applyManagedTitle(finalTitle, force)
     }
+  }
+
+  private applyManagedTitle(title: string, force = false) {
+    this.expectedTitle = title
+
+    if (!force && document.title === title) {
+      return
+    }
+
+    this.isApplyingManagedTitle = true
+    document.title = title
+    queueMicrotask(() => {
+      this.isApplyingManagedTitle = false
+    })
+  }
+
+  private startTitleObserver() {
+    if (this.titleObserver || typeof MutationObserver === "undefined") {
+      return
+    }
+
+    const observe = () => {
+      if (!document.head) return
+      this.titleObserver?.disconnect()
+      this.titleObserver?.observe(document.head, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      })
+    }
+
+    this.titleObserver = new MutationObserver(() => {
+      if (!this.isRunning || !this.settings.autoRename) return
+      if (this.isApplyingManagedTitle) return
+      if (!this.expectedTitle) return
+      if (document.title === this.expectedTitle) return
+
+      if (this.titleSyncTimer !== null) {
+        window.clearTimeout(this.titleSyncTimer)
+      }
+
+      this.titleSyncTimer = window.setTimeout(() => {
+        this.titleSyncTimer = null
+        if (!this.isRunning || !this.settings.autoRename) return
+        if (this.isApplyingManagedTitle) return
+        if (!this.expectedTitle || document.title === this.expectedTitle) return
+        this.updateTabName(true)
+      }, 0)
+    })
+
+    observe()
+  }
+
+  private stopTitleObserver() {
+    if (this.titleSyncTimer !== null) {
+      window.clearTimeout(this.titleSyncTimer)
+      this.titleSyncTimer = null
+    }
+
+    this.titleObserver?.disconnect()
+    this.titleObserver = null
+    this.isApplyingManagedTitle = false
   }
 
   /**
