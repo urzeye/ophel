@@ -636,6 +636,11 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     keywords: ["model lock", "grok", "模型锁定"],
   },
   {
+    settingId: "model-lock-qianwen",
+    title: "模型锁定：Qianwen",
+    keywords: ["model lock", "qianwen", "tongyi", "通义千问", "模型锁定"],
+  },
+  {
     settingId: "model-lock-zai",
     title: "模型锁定：Z.ai",
     keywords: ["model lock", "z.ai", "zai", "模型锁定"],
