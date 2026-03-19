@@ -31,7 +31,6 @@ export class TabManager {
   private notificationAudio: HTMLAudioElement | null = null
   private notificationRepeatTimer: number | null = null
   private notificationPlaybackId = 0
-  private notificationSoundUrlCache = new Map<string, string>()
 
   // 绑定的事件处理函数引用（用于移除）
   private boundHandleMessage: (event: MessageEvent) => void
@@ -153,7 +152,6 @@ export class TabManager {
   destroy() {
     this.stop()
     this.stopNotificationPlayback()
-    this.clearNotificationSoundUrlCache()
     window.removeEventListener("message", this.boundHandleMessage)
     document.removeEventListener("visibilitychange", this.boundVisibilityHandler)
     window.removeEventListener("focus", this.boundFocusHandler)
@@ -305,25 +303,11 @@ export class TabManager {
     const { type } = event.data || {}
 
     if (type === EVENT_MONITOR_START) {
-      console.debug("[TabManager] EVENT_MONITOR_START", {
-        aiState: this.aiState,
-        isAway: this.isUserAway(),
-        visibilityState: document.visibilityState,
-        hidden: document.hidden,
-        hasFocus: document.hasFocus(),
-      })
       this.stopNotificationPlayback()
       this.lastAiState = this.aiState
       this.aiState = "generating"
       this.updateTabName()
     } else if (type === EVENT_MONITOR_COMPLETE) {
-      console.debug("[TabManager] EVENT_MONITOR_COMPLETE", {
-        aiState: this.aiState,
-        isAway: this.isUserAway(),
-        visibilityState: document.visibilityState,
-        hidden: document.hidden,
-        hasFocus: document.hasFocus(),
-      })
       this.onAiComplete()
     } else if (type === EVENT_PRIVACY_TOGGLE) {
       // 切换隐私模式
@@ -357,16 +341,9 @@ export class TabManager {
    */
   private onVisibilityChange() {
     const isAway = this.isUserAway()
-    console.debug("[TabManager] visibilitychange", {
-      isAway,
-      visibilityState: document.visibilityState,
-      hidden: document.hidden,
-      hasFocus: document.hasFocus(),
-      aiState: this.aiState,
-    })
 
     if (!isAway) {
-      this.stopNotificationPlayback()
+      this.stopNotificationPlayback({ stopCurrentAudio: false })
     }
 
     // 用户切换回页面时，检查 DOM 状态
@@ -382,13 +359,7 @@ export class TabManager {
    * 窗口获得焦点事件处理
    */
   private onWindowFocus() {
-    console.debug("[TabManager] window focus", {
-      visibilityState: document.visibilityState,
-      hidden: document.hidden,
-      hasFocus: document.hasFocus(),
-      aiState: this.aiState,
-    })
-    this.stopNotificationPlayback()
+    this.stopNotificationPlayback({ stopCurrentAudio: false })
 
     // 用户回到页面时，检查是否应该标记 userSawCompletion
     if (this.aiState === "generating") {
@@ -402,12 +373,7 @@ export class TabManager {
    * 窗口失去焦点事件处理
    */
   private onWindowBlur() {
-    console.debug("[TabManager] window blur", {
-      visibilityState: document.visibilityState,
-      hidden: document.hidden,
-      hasFocus: document.hasFocus(),
-      aiState: this.aiState,
-    })
+    // blur 事件表明用户离开了页面，不需要额外处理
   }
 
   /**
@@ -426,17 +392,6 @@ export class TabManager {
     const isAway = this.isUserAway()
     const shouldNotify = wasGenerating && !this.userSawCompletion && (isAway || notifyWhenFocused)
 
-    console.debug("[TabManager] onAiComplete decision", {
-      wasGenerating,
-      userSawCompletion: this.userSawCompletion,
-      notifyWhenFocused,
-      isAway,
-      shouldNotify,
-      visibilityState: document.visibilityState,
-      hidden: document.hidden,
-      hasFocus: document.hasFocus(),
-    })
-
     if (shouldNotify) {
       this.sendCompletionNotification()
     }
@@ -452,12 +407,6 @@ export class TabManager {
    * 发送完成通知
    */
   private sendCompletionNotification() {
-    console.debug("[TabManager] sendCompletionNotification", {
-      showNotification: this.settings.showNotification,
-      notificationSound: this.settings.notificationSound,
-      presetId: this.settings.notificationSoundPreset,
-      notifyWhenFocused: this.settings.notifyWhenFocused,
-    })
     this.stopNotificationPlayback()
 
     // 发送桌面通知（使用平台抽象层，支持扩展和油猴脚本）
@@ -504,44 +453,7 @@ export class TabManager {
     const repeatIntervalMs =
       this.normalizeNotificationRepeatInterval(this.settings.notificationRepeatInterval) * 1000
 
-    void this.resolvePlayableNotificationSoundUrl(preset.id, sourceUrl)
-      .then((audioUrl) => {
-        this.startNotificationPlayback(audioUrl, repeatCount, repeatIntervalMs)
-      })
-      .catch((error) => {
-        console.error("[TabManager] Failed to resolve notification sound URL:", error)
-      })
-  }
-
-  private async resolvePlayableNotificationSoundUrl(presetId: string, sourceUrl: string) {
-    const cachedUrl = this.notificationSoundUrlCache.get(presetId)
-    if (cachedUrl) {
-      return cachedUrl
-    }
-
-    // 对扩展资源先转为 blob URL，避免页面上下文直接加载 chrome-extension:// 资源被拦截
-    if (platform.type === "extension" && sourceUrl.startsWith("chrome-extension://")) {
-      try {
-        const response = await fetch(sourceUrl)
-        if (!response.ok) {
-          console.warn(
-            "[TabManager] Failed to fetch notification sound resource:",
-            response.status,
-            sourceUrl,
-          )
-          return sourceUrl
-        }
-
-        const blob = await response.blob()
-        const objectUrl = URL.createObjectURL(blob)
-        this.notificationSoundUrlCache.set(presetId, objectUrl)
-        return objectUrl
-      } catch (error) {
-        console.warn("[TabManager] Falling back to direct notification sound URL:", error)
-      }
-    }
-
-    return sourceUrl
+    this.startNotificationPlayback(sourceUrl, repeatCount, repeatIntervalMs)
   }
 
   /**
@@ -609,7 +521,8 @@ export class TabManager {
   /**
    * 停止当前通知声音播放与后续重复
    */
-  private stopNotificationPlayback() {
+  private stopNotificationPlayback(options?: { stopCurrentAudio?: boolean }) {
+    const stopCurrentAudio = options?.stopCurrentAudio ?? true
     this.notificationPlaybackId += 1
 
     if (this.notificationRepeatTimer !== null) {
@@ -618,7 +531,7 @@ export class TabManager {
     }
 
     try {
-      if (this.notificationAudio) {
+      if (stopCurrentAudio && this.notificationAudio) {
         this.clearNotificationPlaybackHandlers()
         this.notificationAudio.pause()
         this.notificationAudio.currentTime = 0
@@ -633,15 +546,6 @@ export class TabManager {
 
     this.notificationAudio.onended = null
     this.notificationAudio.onerror = null
-  }
-
-  private clearNotificationSoundUrlCache() {
-    for (const objectUrl of this.notificationSoundUrlCache.values()) {
-      if (objectUrl.startsWith("blob:")) {
-        URL.revokeObjectURL(objectUrl)
-      }
-    }
-    this.notificationSoundUrlCache.clear()
   }
 
   private normalizeNotificationRepeatCount(value?: number) {

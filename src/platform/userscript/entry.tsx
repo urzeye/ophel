@@ -16,12 +16,50 @@ import mainStyle from "../../style.css?inline"
 import conversationsStyle from "../../styles/conversations.css?inline"
 import settingsStyle from "../../styles/settings.css?inline"
 
-window.__OPHEL_NOTIFICATION_SOUND_URLS__ = {
-  default: defaultNotificationSound,
-  softChime: softChimeNotificationSound,
-  glassPing: glassPingNotificationSound,
-  brightAlert: brightAlertNotificationSound,
+function createMediaObjectUrl(source: string): string {
+  if (!source.startsWith("data:")) {
+    return source
+  }
+
+  const match = source.match(/^data:([^;,]+)?(;base64)?,(.*)$/)
+  if (!match) {
+    return source
+  }
+
+  const mimeType = match[1] || "application/octet-stream"
+  const isBase64 = Boolean(match[2])
+  const payload = match[3] || ""
+
+  let bytes: Uint8Array
+  if (isBase64) {
+    const binary = atob(payload)
+    bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i += 1) {
+      bytes[i] = binary.charCodeAt(i)
+    }
+  } else {
+    bytes = new TextEncoder().encode(decodeURIComponent(payload))
+  }
+
+  return URL.createObjectURL(new Blob([bytes], { type: mimeType }))
 }
+
+const notificationSoundUrls = {
+  default: createMediaObjectUrl(defaultNotificationSound),
+  softChime: createMediaObjectUrl(softChimeNotificationSound),
+  glassPing: createMediaObjectUrl(glassPingNotificationSound),
+  brightAlert: createMediaObjectUrl(brightAlertNotificationSound),
+}
+
+window.__OPHEL_NOTIFICATION_SOUND_URLS__ = notificationSoundUrls
+
+window.addEventListener("unload", () => {
+  Object.values(notificationSoundUrls).forEach((url) => {
+    if (url.startsWith("blob:")) {
+      URL.revokeObjectURL(url)
+    }
+  })
+})
 
 /**
  * Ophel - Userscript Entry Point
