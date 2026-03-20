@@ -6,9 +6,9 @@
 
 export interface ShortcutBinding {
   key: string // 主键 (e.g., "t", "1", ",", "ArrowUp")
-  alt?: boolean // Windows Alt / Mac Option
-  ctrl?: boolean // Windows Ctrl
-  meta?: boolean // Mac Cmd
+  alt?: boolean // 次修饰键：Windows Alt / Mac Option
+  ctrl?: boolean // 主修饰键：Windows Ctrl / Mac Cmd
+  meta?: boolean // 兼容旧数据，运行时会迁移到 ctrl
   shift?: boolean
 }
 
@@ -328,22 +328,177 @@ export const DEFAULT_SHORTCUTS_SETTINGS: ShortcutsSettings = {
   keybindings: DEFAULT_KEYBINDINGS,
 }
 
+const CODE_TO_KEY_MAP: Record<string, string> = {
+  Backquote: "`",
+  Minus: "-",
+  Equal: "=",
+  BracketLeft: "[",
+  BracketRight: "]",
+  Backslash: "\\",
+  Semicolon: ";",
+  Quote: "'",
+  Comma: ",",
+  Period: ".",
+  Slash: "/",
+}
+
+const LEGACY_MAC_OPTION_CHAR_MAP: Record<string, string> = {
+  // US keyboard letters
+  å: "a",
+  "∫": "b",
+  ç: "c",
+  "∂": "d",
+  "´": "e",
+  ƒ: "f",
+  "©": "g",
+  "˙": "h",
+  ˆ: "i",
+  "∆": "j",
+  "˚": "k",
+  "¬": "l",
+  µ: "m",
+  "˜": "n",
+  ø: "o",
+  π: "p",
+  œ: "q",
+  "®": "r",
+  ß: "s",
+  "†": "t",
+  "¨": "u",
+  "√": "v",
+  "∑": "w",
+  "≈": "x",
+  "¥": "y",
+  Ω: "z",
+  // US keyboard digits
+  "¡": "1",
+  "™": "2",
+  "£": "3",
+  "¢": "4",
+  "∞": "5",
+  "§": "6",
+  "¶": "7",
+  "•": "8",
+  ª: "9",
+  º: "0",
+  "⁄": "1",
+  "€": "2",
+  "‹": "3",
+  "›": "4",
+  ﬁ: "5",
+  ﬂ: "6",
+  "‡": "7",
+  "°": "8",
+  "·": "9",
+  "‚": "0",
+  // US keyboard punctuation
+  "–": "-",
+  "—": "-",
+  "≠": "=",
+  "±": "=",
+  "“": "[",
+  "”": "[",
+  "‘": "]",
+  "’": "]",
+  "«": "\\",
+  "»": "\\",
+  "…": ";",
+  æ: "'",
+  Æ: "'",
+  "≤": ",",
+  "¯": ",",
+  "≥": ".",
+  "˘": ".",
+  "÷": "/",
+  "¿": "/",
+}
+
+/**
+ * 归一化主键，保证跨平台与跨输入法稳定。
+ * 优先使用物理按键 code，避免 macOS Option 组合产生 ∂ / † / ¬ 等字符。
+ */
+export function normalizeShortcutKey(key: string, code?: string): string {
+  if (code) {
+    if (/^Key[A-Z]$/.test(code)) {
+      return code.slice(3).toLowerCase()
+    }
+
+    if (/^Digit[0-9]$/.test(code)) {
+      return code.slice(5)
+    }
+
+    if (CODE_TO_KEY_MAP[code]) {
+      return CODE_TO_KEY_MAP[code]
+    }
+  }
+
+  if (LEGACY_MAC_OPTION_CHAR_MAP[key]) {
+    return LEGACY_MAC_OPTION_CHAR_MAP[key]
+  }
+
+  return key
+}
+
+export function normalizeShortcutBinding(
+  binding: ShortcutBinding | null | undefined,
+): ShortcutBinding | null | undefined {
+  if (!binding) return binding
+
+  const normalized: ShortcutBinding = {
+    key: normalizeShortcutKey(binding.key),
+    alt: !!binding.alt,
+    ctrl: !!binding.ctrl || !!binding.meta,
+    shift: !!binding.shift,
+  }
+
+  return normalized
+}
+
+export function normalizeShortcutKeybindings(
+  keybindings: Record<string, ShortcutBinding | null> | undefined,
+): Record<string, ShortcutBinding | null> | undefined {
+  if (!keybindings) return keybindings
+
+  return Object.fromEntries(
+    Object.entries(keybindings).map(([actionId, binding]) => [
+      actionId,
+      binding === null ? null : normalizeShortcutBinding(binding),
+    ]),
+  )
+}
+
+export function normalizeShortcutsSettings(
+  shortcuts: ShortcutsSettings | undefined,
+): ShortcutsSettings | undefined {
+  if (!shortcuts) return shortcuts
+
+  return {
+    enabled: shortcuts.enabled ?? true,
+    globalUrl: shortcuts.globalUrl || DEFAULT_SHORTCUTS_SETTINGS.globalUrl,
+    keybindings:
+      normalizeShortcutKeybindings(shortcuts.keybindings) || DEFAULT_SHORTCUTS_SETTINGS.keybindings,
+  }
+}
+
 /**
  * 将快捷键配置转换为用于显示的字符串
  */
 export function formatShortcut(binding: ShortcutBinding, isMac = false): string {
+  const normalizedBinding = normalizeShortcutBinding(binding)
+  if (!normalizedBinding) return ""
+
   const parts: string[] = []
 
-  if (binding.ctrl) {
+  if (normalizedBinding.ctrl) {
     parts.push(isMac ? "⌘" : "Ctrl")
   }
-  if (binding.meta && isMac) {
+  if (normalizedBinding.meta && isMac) {
     parts.push("⌘")
   }
-  if (binding.alt) {
+  if (normalizedBinding.alt) {
     parts.push(isMac ? "⌥" : "Alt")
   }
-  if (binding.shift) {
+  if (normalizedBinding.shift) {
     parts.push(isMac ? "⇧" : "Shift")
   }
 
@@ -356,7 +511,8 @@ export function formatShortcut(binding: ShortcutBinding, isMac = false): string 
     ",": ",",
   }
 
-  const displayKey = keyMap[binding.key] || binding.key.toUpperCase()
+  const normalizedKey = normalizeShortcutKey(normalizedBinding.key)
+  const displayKey = keyMap[normalizedKey] || normalizedKey.toUpperCase()
   parts.push(displayKey)
 
   return parts.join(isMac ? "" : "+")

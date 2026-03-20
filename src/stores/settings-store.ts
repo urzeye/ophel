@@ -8,11 +8,30 @@
 import { create } from "zustand"
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware"
 
+import { normalizeShortcutsSettings } from "~constants/shortcuts"
 import { DEFAULT_SETTINGS, type Settings } from "~utils/storage"
 
 import { chromeStorageAdapter } from "./chrome-adapter"
 
 let isUpdatingFromStorage = false
+
+const normalizeSettings = (settings: Settings): Settings => ({
+  ...settings,
+  shortcuts: normalizeShortcutsSettings(settings.shortcuts) || DEFAULT_SETTINGS.shortcuts,
+})
+
+const sortedStringify = (obj: any): string => {
+  if (typeof obj !== "object" || obj === null) return JSON.stringify(obj)
+  if (Array.isArray(obj)) return JSON.stringify(obj.map(sortedStringify))
+  return JSON.stringify(
+    Object.keys(obj)
+      .sort()
+      .reduce((result: any, key) => {
+        result[key] = sortedStringify(obj[key])
+        return result
+      }, {}),
+  )
+}
 
 // 包装 adapter 以支持防循环写入
 const storageAdapter: StateStorage = {
@@ -60,7 +79,7 @@ export const useSettingsStore = create<SettingsState>()(
        */
       setSettings: (newSettings) =>
         set((state) => ({
-          settings: { ...state.settings, ...newSettings },
+          settings: normalizeSettings({ ...state.settings, ...newSettings }),
         })),
 
       /**
@@ -105,7 +124,7 @@ export const useSettingsStore = create<SettingsState>()(
        */
       replaceSettings: (settings) =>
         set({
-          settings: { ...DEFAULT_SETTINGS, ...settings },
+          settings: normalizeSettings({ ...DEFAULT_SETTINGS, ...settings }),
         }),
 
       /**
@@ -113,7 +132,7 @@ export const useSettingsStore = create<SettingsState>()(
        */
       resetSettings: () =>
         set({
-          settings: DEFAULT_SETTINGS,
+          settings: normalizeSettings(DEFAULT_SETTINGS),
         }),
 
       /**
@@ -128,6 +147,12 @@ export const useSettingsStore = create<SettingsState>()(
       partialize: (state) => ({ settings: state.settings }),
       // Hydration 完成回调
       onRehydrateStorage: () => (state) => {
+        if (state) {
+          const normalizedSettings = normalizeSettings(state.settings)
+          if (sortedStringify(normalizedSettings) !== sortedStringify(state.settings)) {
+            useSettingsStore.setState({ settings: normalizedSettings })
+          }
+        }
         state?.setHasHydrated(true)
       },
     },
@@ -195,24 +220,12 @@ if (isExtension) {
       const newSettings = parsed?.state?.settings
 
       if (newSettings) {
+        const normalizedIncomingSettings = normalizeSettings(newSettings)
         const currentState = useSettingsStore.getState()
         const currentSettings = currentState.settings
         // 仅当设置确实发生变化时更新（避免循环更新）
-        // 使用 sortedStringify 进行稳定比较
-        const sortedStringify = (obj: any): string => {
-          if (typeof obj !== "object" || obj === null) return JSON.stringify(obj)
-          if (Array.isArray(obj)) return JSON.stringify(obj.map(sortedStringify))
-          return JSON.stringify(
-            Object.keys(obj)
-              .sort()
-              .reduce((result: any, key) => {
-                result[key] = sortedStringify(obj[key])
-                return result
-              }, {}),
-          )
-        }
 
-        if (sortedStringify(currentSettings) !== sortedStringify(newSettings)) {
+        if (sortedStringify(currentSettings) !== sortedStringify(normalizedIncomingSettings)) {
           // 标记为来自 Storage 的更新，防止回写导致死循环
           isUpdatingFromStorage = true
 
@@ -220,7 +233,7 @@ if (isExtension) {
             // 同时更新 settings 和递增 _syncVersion
             // _syncVersion 变化会强制触发所有订阅它的 React 组件重渲染
             useSettingsStore.setState({
-              settings: newSettings,
+              settings: normalizedIncomingSettings,
               _syncVersion: currentState._syncVersion + 1,
             })
           } finally {
@@ -231,10 +244,13 @@ if (isExtension) {
           }
 
           // 同步更新 i18n 模块的语言设置
-          if (newSettings.language && newSettings.language !== currentSettings.language) {
+          if (
+            normalizedIncomingSettings.language &&
+            normalizedIncomingSettings.language !== currentSettings.language
+          ) {
             import("~utils/i18n")
               .then(({ setLanguage }) => {
-                setLanguage(newSettings.language)
+                setLanguage(normalizedIncomingSettings.language)
               })
               .catch(() => {
                 // ignore

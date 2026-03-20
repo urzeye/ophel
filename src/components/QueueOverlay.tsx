@@ -12,6 +12,7 @@ import { createPortal } from "react-dom"
 import type { SiteAdapter } from "~adapters/base"
 import { CleanupIcon, ImportIcon, PromptIcon } from "~components/icons"
 import { DialogOverlay } from "~components/ui"
+import { formatShortcut, normalizeShortcutBinding } from "~constants/shortcuts"
 import type { QueueDispatcher } from "~core/queue-dispatcher"
 import { useSettingsStore } from "~stores/settings-store"
 import { useQueueItems, useQueueStore } from "~stores/queue-store"
@@ -100,29 +101,11 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
   const shortcutText = React.useMemo(() => {
     if (queueBinding === null) return ""
-    if (queueBinding) {
-      const isMac = navigator.userAgent.toLowerCase().includes("mac")
-      const parts = []
-      if (queueBinding.ctrl) parts.push(isMac ? "⌃" : "Ctrl")
-      if (queueBinding.alt) parts.push(isMac ? "⌥" : "Alt")
-      if (queueBinding.shift) parts.push(isMac ? "⇧" : "Shift")
-      if (queueBinding.meta) parts.push(isMac ? "⌘" : "Win")
-
-      const keyMap: Record<string, string> = {
-        ArrowUp: "↑",
-        ArrowDown: "↓",
-        ArrowLeft: "←",
-        ArrowRight: "→",
-        Enter: "↵",
-        Escape: "Esc",
-      }
-
-      const displayKey = keyMap[queueBinding.key] || queueBinding.key.toUpperCase()
-      parts.push(displayKey)
-
-      return isMac ? parts.join("") : parts.join("+")
-    }
     const isMac = navigator.userAgent.toLowerCase().includes("mac")
+    if (queueBinding) {
+      const normalizedBinding = normalizeShortcutBinding(queueBinding)
+      return normalizedBinding ? formatShortcut(normalizedBinding, isMac) : ""
+    }
     return isMac ? "⌥J" : "Alt+J"
   }, [queueBinding])
 

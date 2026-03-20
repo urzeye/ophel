@@ -7,6 +7,9 @@
 import {
   DEFAULT_KEYBINDINGS,
   isMacOS,
+  normalizeShortcutBinding,
+  normalizeShortcutKey,
+  normalizeShortcutsSettings,
   type ShortcutActionId,
   type ShortcutBinding,
   type ShortcutsSettings,
@@ -25,7 +28,7 @@ export class ShortcutManager {
    * 更新快捷键设置
    */
   updateSettings(settings: ShortcutsSettings | undefined) {
-    this.settings = settings || null
+    this.settings = normalizeShortcutsSettings(settings) || null
   }
 
   /**
@@ -112,9 +115,12 @@ export class ShortcutManager {
    * 检查按键是否匹配快捷键绑定
    */
   private matchesBinding(e: KeyboardEvent, binding: ShortcutBinding): boolean {
+    const normalizedBinding = normalizeShortcutBinding(binding)
+    if (!normalizedBinding) return false
+
     // 检查主键
-    const eventKey = e.key.toLowerCase()
-    const bindingKey = binding.key.toLowerCase()
+    const eventKey = normalizeShortcutKey(e.key, e.code).toLowerCase()
+    const bindingKey = normalizedBinding.key.toLowerCase()
 
     // 特殊键映射
     let keyMatches =
@@ -127,7 +133,7 @@ export class ShortcutManager {
     // 修复 Shift + 数字键无法触发的问题
     // 当绑定包含 Shift 且键是数字时，e.key 会变成符号（如 !），导致不匹配
     // 使用 e.code (Digit0-Digit9) 进行辅助判断
-    if (!keyMatches && binding.shift && /^[0-9]$/.test(bindingKey)) {
+    if (!keyMatches && normalizedBinding.shift && /^[0-9]$/.test(bindingKey)) {
       if (e.code === `Digit${bindingKey}`) {
         keyMatches = true
       }
@@ -138,20 +144,20 @@ export class ShortcutManager {
     // 检查修饰键
     // Mac 上 alt 对应 Option，meta 对应 Cmd
     // Windows 上 ctrl 对应 Ctrl，alt 对应 Alt
-    const altMatches = !!binding.alt === e.altKey
-    const shiftMatches = !!binding.shift === e.shiftKey
+    const altMatches = !!normalizedBinding.alt === e.altKey
+    const shiftMatches = !!normalizedBinding.shift === e.shiftKey
 
     // ctrl 和 meta 的处理
     // Mac: binding.ctrl/meta 都映射到 metaKey
     // Windows: binding.ctrl 映射到 ctrlKey，binding.meta 忽略
     let ctrlMetaMatches: boolean
     if (this.isMac) {
-      // Mac 上 Ctrl 和 Meta 都使用 Cmd
-      const expectedMeta = !!binding.ctrl || !!binding.meta
+      // Mac 上主修饰键统一使用 Cmd，不支持真实 Control 作为自定义修饰键
+      const expectedMeta = !!normalizedBinding.ctrl
       ctrlMetaMatches = expectedMeta === e.metaKey && !e.ctrlKey
     } else {
-      // Windows 上 Ctrl 使用 ctrlKey
-      ctrlMetaMatches = !!binding.ctrl === e.ctrlKey
+      // Windows 上主修饰键使用 Ctrl
+      ctrlMetaMatches = !!normalizedBinding.ctrl === e.ctrlKey
     }
 
     return altMatches && shiftMatches && ctrlMetaMatches
