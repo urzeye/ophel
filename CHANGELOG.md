@@ -7,6 +7,16 @@
 
 ---
 
+## [1.0.20]
+
+### ✨ 功能优化
+
+- **快捷键跨平台兼容优化**：
+  - 统一主修饰键与次修饰键的跨平台语义：Windows/Linux 使用 `Ctrl`、`Alt`，macOS 使用 `Command`、`Option`，提升多设备共用配置时的一致性。
+  - 快捷键设置页与队列快捷键提示统一按物理按键归一化显示，macOS 下录入 `Option + 字母/数字/常用符号` 时不再因为系统特殊字符输入而出现异常展示。
+  - 修复 macOS 下部分快捷键因 `Option` 参与输入特殊字符，导致保存为 `∂`、`†`、`¬` 等字符后显示异常或触发不稳定的问题。
+  - 为本地已保存的旧快捷键配置增加兼容迁移，覆盖扩展启动、设置页 hydration、跨页面同步与整包设置替换等场景，减少历史用户升级后的重配成本。
+
 ## [1.0.19]
 
 ### 🚀 新增功能
@@ -529,6 +539,9 @@
 
 ---
 
+[1.0.20]: https://github.com/urzeye/ophel/releases/tag/v1.0.20
+[1.0.19]: https://github.com/urzeye/ophel/releases/tag/v1.0.19
+[1.0.18]: https://github.com/urzeye/ophel/releases/tag/v1.0.18
 [1.0.17]: https://github.com/urzeye/ophel/releases/tag/v1.0.17
 [1.0.16]: https://github.com/urzeye/ophel/releases/tag/v1.0.16
 [1.0.15]: https://github.com/urzeye/ophel/releases/tag/v1.0.15
