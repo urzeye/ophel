@@ -50,6 +50,12 @@ const ShortcutInput: React.FC<{
         return
       }
 
+      // Windows 国际键盘上的 AltGr 会被浏览器报告为 Ctrl+Alt，
+      // 录制时需要跳过，避免把输入字符误保存成 Ctrl+Alt 快捷键。
+      if (!isMac && e.getModifierState("AltGraph")) {
+        return
+      }
+
       const newBinding: ShortcutBinding = {
         key: normalizeShortcutKey(e.key, e.code),
         alt: e.altKey,

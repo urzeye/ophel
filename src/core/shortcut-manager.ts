@@ -176,6 +176,10 @@ export class ShortcutManager {
     // 检查快捷键是否启用
     if (!this.settings?.enabled) return
 
+    // Windows 国际键盘上的 AltGr 会同时带上 Ctrl+Alt。
+    // 这里显式忽略 AltGraph，避免输入本地字符时误触发 Ctrl+Alt 快捷键。
+    if (!this.isMac && e.getModifierState("AltGraph")) return
+
     // 检查是否应该忽略
     if (this.shouldIgnoreEvent(e)) return
 
