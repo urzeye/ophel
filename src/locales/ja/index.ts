@@ -298,6 +298,8 @@ export const ja = {
   modelLockEnabled: "モデルロック有効",
   modelLockDisabled: "モデルロック無効",
   modelLockNoKeyword: "モデルロック: キーワード未設定",
+  geminiMystuffOpenInNewTab: "新しいタブで開く",
+  geminiMystuffLocateFailed: "元の会話位置を特定できませんでした",
 
   userQueryWidthDesc: "ユーザーの発言バブルの最大幅を調整（サイトごとに設定）",
   // Category management

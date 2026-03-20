@@ -33,6 +33,7 @@ export const STORAGE_KEYS = {
 // 清除全部数据标记（用于跳过首次自动恢复/自动同步）
 export const CLEAR_ALL_FLAG_KEY = "ophel:clearAllFlag"
 export const CLEAR_ALL_FLAG_TTL_MS = 5 * 1000
+export const SKIP_READING_HISTORY_RESTORE_PARAM = "ophel_skip_restore"
 
 // ==================== 类型定义 ====================
 
@@ -671,4 +672,20 @@ export function consumeRestoreFlag(): Promise<boolean> {
   })
 
   return restoreFlagPromise
+}
+
+export function consumeSkipReadingHistoryRestoreFlag(): boolean {
+  if (typeof window === "undefined") return false
+
+  const url = new URL(window.location.href)
+  if (url.searchParams.get(SKIP_READING_HISTORY_RESTORE_PARAM) !== "1") {
+    return false
+  }
+
+  url.searchParams.delete(SKIP_READING_HISTORY_RESTORE_PARAM)
+  const nextPath =
+    `${url.pathname}${url.search}${url.hash}` ||
+    window.location.pathname + window.location.search + window.location.hash
+  window.history.replaceState(window.history.state, "", nextPath)
+  return true
 }

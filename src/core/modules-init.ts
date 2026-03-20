@@ -26,6 +26,7 @@ import {
   getSiteUserQueryWidth,
   getSiteZenMode,
   consumeClearAllFlag,
+  consumeSkipReadingHistoryRestoreFlag,
   CLEAR_ALL_FLAG_TTL_MS,
   type Settings,
 } from "~utils/storage"
@@ -259,7 +260,7 @@ export async function initReadingHistoryManager(ctx: ModulesContext): Promise<vo
       modules.readingHistoryManager.cleanup()
     }
 
-    const skipAutoRestore = await consumeClearAllFlag()
+    const skipAutoRestore = (await consumeClearAllFlag()) || consumeSkipReadingHistoryRestoreFlag()
     if (skipAutoRestore) {
       readingHistoryAutoStartTimer = setTimeout(() => {
         readingHistoryAutoStartTimer = null
@@ -529,11 +530,14 @@ export function initUrlChangeObserver(ctx: ModulesContext): void {
         readingHistoryRestoreTimeoutId = setTimeout(async () => {
           readingHistoryRestoreTimeoutId = null
           const { showToast } = await import("~utils/toast")
-          const restored = await modules.readingHistoryManager?.restoreProgress((msg) =>
-            showToast(msg, 3000),
-          )
-          if (restored) {
-            showToast("阅读进度已恢复", 2000)
+          const shouldSkipRestore = consumeSkipReadingHistoryRestoreFlag()
+          if (!shouldSkipRestore) {
+            const restored = await modules.readingHistoryManager?.restoreProgress((msg) =>
+              showToast(msg, 3000),
+            )
+            if (restored) {
+              showToast("阅读进度已恢复", 2000)
+            }
           }
           modules.readingHistoryManager?.startRecording()
         }, 1500)

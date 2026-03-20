@@ -2,8 +2,19 @@
  * Gemini 标准版适配器 (gemini.google.com)
  */
 import { SITE_IDS } from "~constants"
+import { platform } from "~platform"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { htmlToMarkdown } from "~utils/exporter"
+import { t } from "~utils/i18n"
+import {
+  EVENT_GEMINI_MYSTUFF_CACHE_SYNC,
+  EVENT_GEMINI_MYSTUFF_SYNC_REQUEST,
+  type GeminiMyStuffCachePayload,
+  type GeminiMyStuffKind,
+  type GeminiMyStuffRecord,
+} from "~utils/messaging"
+import { SKIP_READING_HISTORY_RESTORE_PARAM } from "~utils/storage"
+import { showToast } from "~utils/toast"
 
 import {
   SiteAdapter,
@@ -61,10 +72,727 @@ interface GeminiExportLifecycleState {
   toggledThoughtIds: string[]
 }
 
+interface GeminiMyStuffLocator {
+  kind: GeminiMyStuffKind
+  status?: number
+  timestamp?: number
+  timestampNano?: number
+  title?: string
+  thumbnailUrl?: string
+}
+
+interface GeminiMyStuffEnhancerOptions {
+  getUserPathPrefix: () => string
+}
+
+interface GeminiMyStuffTooltipBinding {
+  destroy: () => void
+}
+
+const GEMINI_MYSTUFF_ACTIVE_CLASS = "ophel-gemini-mystuff-active"
+const GEMINI_MYSTUFF_STYLE_ID = "ophel-gemini-mystuff-style"
+const GEMINI_MYSTUFF_OPEN_BUTTON_CLASS = "ophel-mystuff-open-btn"
+const GEMINI_MYSTUFF_OPEN_BUTTON_ATTR = "data-ophel-mystuff-open"
+const GEMINI_MYSTUFF_SYNC_TIMEOUT_MS = 12000
+const GEMINI_MYSTUFF_ROUTE_EVENT = "gh-url-change"
+const GEMINI_GOOGLEUSERCONTENT_HOST_REGEX = /^https:\/\/lh\d+\.googleusercontent\.com\//i
+const GEMINI_MYSTUFF_TOOLTIP_DELAY_MS = 300
+
+class GeminiMyStuffEnhancer {
+  private started = false
+  private mediaWatchStop: (() => void) | null = null
+  private tooltipBindings = new WeakMap<HTMLElement, GeminiMyStuffTooltipBinding>()
+  private pendingRequests = new Map<
+    string,
+    {
+      resolve: (payload: GeminiMyStuffCachePayload) => void
+      reject: (reason?: unknown) => void
+      timeoutId: ReturnType<typeof setTimeout>
+    }
+  >()
+  private recordsByKind = {
+    media: new Map<string, GeminiMyStuffRecord>(),
+    document: new Map<string, GeminiMyStuffRecord>(),
+  }
+  private mediaByTimestamp = new Map<number, GeminiMyStuffRecord[]>()
+  private mediaByThumbnail = new Map<string, GeminiMyStuffRecord[]>()
+  private documentByTimestamp = new Map<number, GeminiMyStuffRecord[]>()
+  private documentByTitle = new Map<string, GeminiMyStuffRecord[]>()
+
+  constructor(private readonly options: GeminiMyStuffEnhancerOptions) {}
+
+  start(): void {
+    if (this.started) return
+    this.started = true
+
+    this.injectStyles()
+    this.mediaWatchStop = DOMToolkit.each(
+      ".library-item-card",
+      (element) => this.enhanceMediaCard(element),
+      { shadow: true },
+    )
+
+    document.addEventListener("click", this.handleDocumentClick, true)
+    window.addEventListener("message", this.handleWindowMessage)
+    window.addEventListener(GEMINI_MYSTUFF_ROUTE_EVENT, this.handleRouteChange)
+
+    this.refreshForCurrentRoute(false)
+    setTimeout(() => this.refreshForCurrentRoute(false), 600)
+    setTimeout(() => this.refreshForCurrentRoute(false), 1500)
+  }
+
+  private readonly handleRouteChange = () => {
+    this.refreshForCurrentRoute(false)
+  }
+
+  private readonly handleWindowMessage = (event: MessageEvent) => {
+    const { type, payload } = event.data || {}
+
+    if (event.source !== window && type !== EVENT_GEMINI_MYSTUFF_CACHE_SYNC) {
+      return
+    }
+
+    if (type !== EVENT_GEMINI_MYSTUFF_CACHE_SYNC) return
+    this.handleCachePayload(payload as GeminiMyStuffCachePayload | undefined)
+  }
+
+  private readonly handleDocumentClick = (event: MouseEvent) => {
+    if (!this.isMyStuffPath() || event.defaultPrevented || event.button !== 0) {
+      return
+    }
+
+    const target = event.target instanceof Element ? event.target : null
+    if (!target) return
+
+    const actionButton = target.closest(
+      `[${GEMINI_MYSTUFF_OPEN_BUTTON_ATTR}="1"]`,
+    ) as HTMLElement | null
+    if (actionButton) {
+      const mediaHost = actionButton.closest("library-item-card")
+      if (!mediaHost) return
+      this.preventNativeNavigation(event)
+      void this.openHostInNewTab(mediaHost, "media", this.preparePendingTab())
+      return
+    }
+
+    if (target.closest("library-item-card")) {
+      // 媒体卡本体点击交回 Gemini 原生逻辑处理
+      return
+    }
+
+    const documentHost = target.closest("library-list-item")
+    if (documentHost) {
+      this.preventNativeNavigation(event)
+      void this.openHostInNewTab(documentHost, "document", this.preparePendingTab())
+    }
+  }
+
+  private preventNativeNavigation(event: MouseEvent): void {
+    event.preventDefault()
+    event.stopPropagation()
+    event.stopImmediatePropagation()
+  }
+
+  private refreshForCurrentRoute(force: boolean): void {
+    const active = this.isMyStuffPath()
+    document.documentElement.classList.toggle(GEMINI_MYSTUFF_ACTIVE_CLASS, active)
+
+    if (!active) return
+
+    this.enhanceExistingMediaCards()
+    void this.requestSync(force, this.getKindsForCurrentPath()).catch(() => {
+      // 点击时会再强制拉一次，这里静默即可
+    })
+  }
+
+  private injectStyles(): void {
+    if (document.getElementById(GEMINI_MYSTUFF_STYLE_ID)) return
+
+    const style = document.createElement("style")
+    style.id = GEMINI_MYSTUFF_STYLE_ID
+    style.textContent = `
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} library-item-card .library-item-card,
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} .library-item-card-container {
+        position: relative;
+      }
+
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS} {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 32px;
+        height: 32px;
+        border: none;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        background: rgba(15, 23, 42, 0.68);
+        color: #ffffff;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+        backdrop-filter: blur(6px);
+        cursor: pointer;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-2px);
+        transition:
+          opacity 0.18s ease,
+          transform 0.18s ease,
+          background-color 0.18s ease,
+          color 0.18s ease;
+        z-index: 3;
+      }
+
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} library-item-card:hover .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} library-item-card:focus-within .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} .library-item-card:hover .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} .library-item-card:focus-within .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} .library-item-card-container:hover .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} .library-item-card-container:focus-within .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS} {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
+
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS}:hover {
+        background: rgba(15, 23, 42, 0.82);
+        color: #ffffff;
+      }
+
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS} svg {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      body.dark-theme .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
+      html[dark-theme] .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
+      html.dark .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS} {
+        background: rgba(15, 23, 42, 0.68);
+        color: #f9fafb;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.32);
+      }
+
+      body.dark-theme .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS}:hover,
+      html[dark-theme] .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS}:hover,
+      html.dark .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS}:hover {
+        background: rgba(15, 23, 42, 0.82);
+        color: #ffffff;
+      }
+
+      .ophel-tooltip {
+        background-color: rgba(30, 30, 35, 0.95);
+        color: #ffffff;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        line-height: 1.5;
+        z-index: 2147483647;
+        pointer-events: none;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(4px);
+        animation: ophel-mystuff-tooltip-fade-in 0.15s ease-out;
+      }
+
+      @keyframes ophel-mystuff-tooltip-fade-in {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+    `
+    document.head.appendChild(style)
+  }
+
+  private enhanceExistingMediaCards(): void {
+    document
+      .querySelectorAll(".library-item-card")
+      .forEach((element) => this.enhanceMediaCard(element))
+  }
+
+  private enhanceMediaCard(element: Element): void {
+    if (!this.isMyStuffPath()) return
+
+    const host = element.closest("library-item-card")
+    const card = (
+      element.matches(".library-item-card") ? element : element.querySelector(".library-item-card")
+    ) as HTMLElement | null
+    if (!host || !card) return
+
+    const existingButton = card.querySelector(
+      `[${GEMINI_MYSTUFF_OPEN_BUTTON_ATTR}="1"]`,
+    ) as HTMLElement | null
+    if (existingButton) return
+
+    const button = document.createElement("button")
+    button.type = "button"
+    button.className = `${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS} ophel-tooltip-trigger`
+    button.setAttribute(GEMINI_MYSTUFF_OPEN_BUTTON_ATTR, "1")
+    button.setAttribute("aria-label", this.getOpenInNewTabLabel())
+    button.innerHTML =
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5"/><path d="M10 14 19 5"/><path d="M19 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4"/></svg>'
+
+    card.appendChild(button)
+    this.bindTooltip(button, () => this.getOpenInNewTabLabel())
+  }
+
+  private isMyStuffPath(): boolean {
+    const path = this.getNormalizedPath()
+    return path === "/mystuff" || path === "/mystuff/" || path.startsWith("/mystuff/")
+  }
+
+  private getKindsForCurrentPath(): GeminiMyStuffKind[] {
+    const path = this.getNormalizedPath()
+    if (path.startsWith("/mystuff/documents")) {
+      return ["document"]
+    }
+    return ["media", "document"]
+  }
+
+  private getNormalizedPath(): string {
+    return window.location.pathname.replace(/^\/u\/\d+/, "")
+  }
+
+  private handleCachePayload(payload: GeminiMyStuffCachePayload | undefined): void {
+    if (!payload || !Array.isArray(payload.items) || !Array.isArray(payload.kinds)) return
+
+    this.replaceRecords(payload.kinds, payload.items)
+
+    const pending = payload.requestId ? this.pendingRequests.get(payload.requestId) : null
+    if (!pending || !payload.requestId) return
+
+    clearTimeout(pending.timeoutId)
+    this.pendingRequests.delete(payload.requestId)
+    pending.resolve(payload)
+  }
+
+  private replaceRecords(kinds: GeminiMyStuffKind[], items: GeminiMyStuffRecord[]): void {
+    for (const kind of kinds) {
+      this.recordsByKind[kind].clear()
+      items
+        .filter((item) => item.kind === kind)
+        .forEach((item) => this.recordsByKind[kind].set(this.getRecordKey(item), item))
+    }
+
+    this.rebuildIndexes()
+  }
+
+  private rebuildIndexes(): void {
+    this.mediaByTimestamp.clear()
+    this.mediaByThumbnail.clear()
+    this.documentByTimestamp.clear()
+    this.documentByTitle.clear()
+
+    this.recordsByKind.media.forEach((record) => {
+      this.pushIndex(this.mediaByTimestamp, record.timestamp, record)
+      const thumbnailKey = this.normalizeThumbnailUrl(record.thumbnailUrl)
+      if (thumbnailKey) {
+        this.pushIndex(this.mediaByThumbnail, thumbnailKey, record)
+      }
+    })
+
+    this.recordsByKind.document.forEach((record) => {
+      this.pushIndex(this.documentByTimestamp, record.timestamp, record)
+      const titleKey = this.normalizeTitle(record.title)
+      if (titleKey) {
+        this.pushIndex(this.documentByTitle, titleKey, record)
+      }
+    })
+  }
+
+  private pushIndex<Key extends string | number>(
+    index: Map<Key, GeminiMyStuffRecord[]>,
+    key: Key | null | undefined,
+    record: GeminiMyStuffRecord,
+  ): void {
+    if (key === null || key === undefined || key === "" || key === 0) return
+    const current = index.get(key) || []
+    current.push(record)
+    index.set(key, current)
+  }
+
+  private async requestSync(
+    force: boolean,
+    kinds: GeminiMyStuffKind[],
+  ): Promise<GeminiMyStuffCachePayload> {
+    const requestId = `ophel-mystuff-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+    const payload = {
+      requestId,
+      force,
+      kinds,
+    }
+
+    const requestPromise = new Promise<GeminiMyStuffCachePayload>((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        this.pendingRequests.delete(requestId)
+        reject(new Error("mystuff-sync-timeout"))
+      }, GEMINI_MYSTUFF_SYNC_TIMEOUT_MS)
+
+      this.pendingRequests.set(requestId, {
+        resolve,
+        reject,
+        timeoutId,
+      })
+    })
+
+    window.postMessage(
+      {
+        type: EVENT_GEMINI_MYSTUFF_SYNC_REQUEST,
+        payload,
+      },
+      "*",
+    )
+
+    return requestPromise
+  }
+
+  private preparePendingTab(): Window | null {
+    if (platform.type !== "userscript") {
+      return null
+    }
+
+    return window.open("about:blank", "_blank")
+  }
+
+  private async openHostInNewTab(
+    host: Element,
+    kind: GeminiMyStuffKind,
+    pendingTab: Window | null,
+  ): Promise<void> {
+    const record = await this.resolveRecord(host, kind)
+    if (!record) {
+      if (pendingTab && !pendingTab.closed) {
+        pendingTab.close()
+      }
+      console.warn("[GeminiAdapter][MyStuff] record not found for host", {
+        kind,
+        locator: this.extractLocator(host, kind),
+      })
+      showToast(t("geminiMystuffLocateFailed") || "未找到原始会话定位信息", 2500)
+      return
+    }
+
+    const targetUrl = this.buildRecordUrl(record)
+    if (pendingTab && !pendingTab.closed) {
+      pendingTab.location.href = targetUrl
+      return
+    }
+
+    platform.openTab(targetUrl)
+  }
+
+  private async resolveRecord(
+    host: Element,
+    kind: GeminiMyStuffKind,
+  ): Promise<GeminiMyStuffRecord | null> {
+    const locator = this.extractLocator(host, kind)
+    let record = this.findRecord(locator)
+    if (record) return record
+
+    try {
+      await this.requestSync(true, [kind])
+    } catch (error) {
+      console.warn("[GeminiAdapter][MyStuff] sync failed before open", {
+        kind,
+        error,
+      })
+    }
+
+    record = this.findRecord(locator)
+    return record
+  }
+
+  private extractLocator(host: Element, kind: GeminiMyStuffKind): GeminiMyStuffLocator {
+    const jslogHost =
+      (host.closest("[jslog]") as HTMLElement | null) ||
+      (host.querySelector("[jslog]") as HTMLElement | null)
+    const jslog = jslogHost?.getAttribute("jslog") || ""
+    const jslogMeta = this.extractJslogMeta(jslog)
+
+    return {
+      kind,
+      status: jslogMeta?.status,
+      timestamp: jslogMeta?.timestamp,
+      timestampNano: jslogMeta?.timestampNano,
+      title: kind === "document" ? this.extractTitle(host) : undefined,
+      thumbnailUrl: kind === "media" ? this.extractThumbnailUrl(host) : undefined,
+    }
+  }
+
+  private extractJslogMeta(
+    jslog: string,
+  ): { status?: number; timestamp?: number; timestampNano?: number } | null {
+    if (!jslog) return null
+
+    const matches = Array.from(jslog.matchAll(/\[(\d+),\[(\d+)(?:,(\d+))?\]\]/g))
+    const lastMatch = matches[matches.length - 1]
+    if (!lastMatch) return null
+
+    return {
+      status: Number(lastMatch[1]),
+      timestamp: Number(lastMatch[2]),
+      timestampNano: lastMatch[3] ? Number(lastMatch[3]) : undefined,
+    }
+  }
+
+  private extractTitle(host: Element): string {
+    const titleElement = host.querySelector(".title, .gds-title-m, .text-content .title")
+    return titleElement?.textContent?.trim() || ""
+  }
+
+  private extractThumbnailUrl(host: Element): string {
+    const image = host.querySelector("img")
+    if (!(image instanceof HTMLImageElement)) return ""
+    return this.normalizeThumbnailUrl(image.currentSrc || image.src || "")
+  }
+
+  private normalizeTitle(value?: string): string {
+    return (value || "").trim().replace(/\s+/g, " ").toLowerCase()
+  }
+
+  private normalizeThumbnailUrl(value?: string): string {
+    if (!value) return ""
+
+    let normalized = value
+    try {
+      normalized = new URL(value, window.location.href).toString()
+    } catch {
+      normalized = value
+    }
+
+    if (!GEMINI_GOOGLEUSERCONTENT_HOST_REGEX.test(normalized)) {
+      return normalized
+    }
+
+    return normalized.replace(/=[^/?#]+$/, "")
+  }
+
+  private findRecord(locator: GeminiMyStuffLocator): GeminiMyStuffRecord | null {
+    if (locator.kind === "media") {
+      return this.findMediaRecord(locator)
+    }
+    return this.findDocumentRecord(locator)
+  }
+
+  private findMediaRecord(locator: GeminiMyStuffLocator): GeminiMyStuffRecord | null {
+    const candidates = new Map<string, GeminiMyStuffRecord>()
+    const thumbnailKey = this.normalizeThumbnailUrl(locator.thumbnailUrl)
+
+    if (thumbnailKey) {
+      for (const record of this.mediaByThumbnail.get(thumbnailKey) || []) {
+        candidates.set(this.getRecordKey(record), record)
+      }
+    }
+
+    if (locator.timestamp) {
+      for (const record of this.mediaByTimestamp.get(locator.timestamp) || []) {
+        candidates.set(this.getRecordKey(record), record)
+      }
+    }
+
+    return this.pickBestRecord(Array.from(candidates.values()), locator)
+  }
+
+  private findDocumentRecord(locator: GeminiMyStuffLocator): GeminiMyStuffRecord | null {
+    const candidates = new Map<string, GeminiMyStuffRecord>()
+    const titleKey = this.normalizeTitle(locator.title)
+
+    if (locator.timestamp) {
+      for (const record of this.documentByTimestamp.get(locator.timestamp) || []) {
+        candidates.set(this.getRecordKey(record), record)
+      }
+    }
+
+    if (titleKey) {
+      for (const record of this.documentByTitle.get(titleKey) || []) {
+        candidates.set(this.getRecordKey(record), record)
+      }
+    }
+
+    return this.pickBestRecord(Array.from(candidates.values()), locator)
+  }
+
+  private pickBestRecord(
+    candidates: GeminiMyStuffRecord[],
+    locator: GeminiMyStuffLocator,
+  ): GeminiMyStuffRecord | null {
+    if (candidates.length === 0) return null
+
+    const thumbnailKey = this.normalizeThumbnailUrl(locator.thumbnailUrl)
+    const titleKey = this.normalizeTitle(locator.title)
+
+    const scored = candidates
+      .map((record) => {
+        let score = 0
+
+        if (locator.status !== undefined && record.status === locator.status) {
+          score += 20
+        }
+
+        if (locator.timestamp !== undefined && record.timestamp === locator.timestamp) {
+          score += 80
+        }
+
+        if (thumbnailKey && this.normalizeThumbnailUrl(record.thumbnailUrl) === thumbnailKey) {
+          score += 200
+        }
+
+        if (titleKey && this.normalizeTitle(record.title) === titleKey) {
+          score += 120
+        }
+
+        if (locator.timestampNano !== undefined) {
+          score -= Math.min(
+            Math.abs((record.timestampNano || 0) - locator.timestampNano) / 1_000_000,
+            20,
+          )
+        }
+
+        return { record, score }
+      })
+      .sort((left, right) => right.score - left.score)
+
+    return scored[0]?.record || null
+  }
+
+  private buildRecordUrl(record: GeminiMyStuffRecord): string {
+    const conversationId = record.conversationId.replace(/^c_/, "")
+    const responseId = record.responseId.replace(/^r_/, "")
+    const targetUrl = new URL(
+      `${window.location.origin}${this.options.getUserPathPrefix()}/app/${conversationId}`,
+    )
+    targetUrl.searchParams.set(SKIP_READING_HISTORY_RESTORE_PARAM, "1")
+    targetUrl.hash = responseId
+    return targetUrl.toString()
+  }
+
+  private getRecordKey(record: Pick<GeminiMyStuffRecord, "conversationId" | "responseId">): string {
+    return `${record.conversationId}:${record.responseId}`
+  }
+
+  private getOpenInNewTabLabel(): string {
+    return t("geminiMystuffOpenInNewTab") || "在新标签页中打开"
+  }
+
+  private bindTooltip(button: HTMLElement, contentProvider: () => string): void {
+    if (this.tooltipBindings.has(button)) return
+
+    let tooltipEl: HTMLDivElement | null = null
+    let timerId: ReturnType<typeof setTimeout> | null = null
+
+    const cleanupTimer = () => {
+      if (timerId) {
+        clearTimeout(timerId)
+        timerId = null
+      }
+    }
+
+    const removeTooltip = () => {
+      cleanupTimer()
+      if (tooltipEl?.parentNode) {
+        tooltipEl.parentNode.removeChild(tooltipEl)
+      }
+      tooltipEl = null
+      button.removeAttribute("aria-describedby")
+    }
+
+    const positionTooltip = () => {
+      if (!tooltipEl) return
+
+      const triggerRect = button.getBoundingClientRect()
+      let top = triggerRect.top - tooltipEl.offsetHeight - 10
+      let left = triggerRect.left + triggerRect.width / 2
+
+      const tooltipRect = tooltipEl.getBoundingClientRect()
+      if (top < 10) {
+        top = triggerRect.bottom + 10
+      }
+
+      left -= tooltipRect.width / 2
+      if (left < 10) left = 10
+      if (left + tooltipRect.width > window.innerWidth - 10) {
+        left = window.innerWidth - tooltipRect.width - 10
+      }
+
+      tooltipEl.style.top = `${top}px`
+      tooltipEl.style.left = `${left}px`
+      tooltipEl.style.opacity = "1"
+    }
+
+    const showTooltip = () => {
+      cleanupTimer()
+      if (tooltipEl) {
+        positionTooltip()
+        return
+      }
+
+      timerId = setTimeout(() => {
+        const content = contentProvider()
+        tooltipEl = document.createElement("div")
+        tooltipEl.className = "ophel-tooltip"
+        tooltipEl.textContent = content
+        tooltipEl.style.position = "fixed"
+        tooltipEl.style.top = "0"
+        tooltipEl.style.left = "0"
+        tooltipEl.style.opacity = "0"
+        tooltipEl.style.zIndex = "2147483647"
+        tooltipEl.style.pointerEvents = "none"
+        tooltipEl.style.maxWidth = "260px"
+        tooltipEl.id = `ophel-mystuff-tooltip-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+        document.body.appendChild(tooltipEl)
+        button.setAttribute("aria-label", content)
+        button.setAttribute("aria-describedby", tooltipEl.id)
+        positionTooltip()
+      }, GEMINI_MYSTUFF_TOOLTIP_DELAY_MS)
+    }
+
+    const hideTooltip = () => {
+      removeTooltip()
+    }
+
+    const onWindowChange = () => {
+      if (tooltipEl) positionTooltip()
+    }
+
+    button.addEventListener("mouseenter", showTooltip)
+    button.addEventListener("mouseleave", hideTooltip)
+    button.addEventListener("focus", showTooltip)
+    button.addEventListener("blur", hideTooltip)
+    window.addEventListener("scroll", onWindowChange, true)
+    window.addEventListener("resize", onWindowChange)
+
+    this.tooltipBindings.set(button, {
+      destroy: () => {
+        button.removeEventListener("mouseenter", showTooltip)
+        button.removeEventListener("mouseleave", hideTooltip)
+        button.removeEventListener("focus", showTooltip)
+        button.removeEventListener("blur", hideTooltip)
+        window.removeEventListener("scroll", onWindowChange, true)
+        window.removeEventListener("resize", onWindowChange)
+        removeTooltip()
+      },
+    })
+  }
+}
+
 export class GeminiAdapter extends SiteAdapter {
   private exportIncludeThoughtsOverride: boolean | null = null
   private cachedAccountEmail: string | null = null
   private accountEmailLastDetectAt = 0
+  private myStuffEnhancer: GeminiMyStuffEnhancer | null = null
 
   private getUserPathPrefix(): string {
     // Gemini 多账号路径格式：/u/2/app/...
@@ -1664,6 +2392,19 @@ export class GeminiAdapter extends SiteAdapter {
     return {
       urlPatterns: ["BardFrontendService", "StreamGenerate"],
       silenceThreshold: 3000,
+    }
+  }
+
+  afterPropertiesSet(
+    options: { modelLockConfig?: { enabled: boolean; keyword: string } } = {},
+  ): void {
+    super.afterPropertiesSet(options)
+
+    if (!this.myStuffEnhancer) {
+      this.myStuffEnhancer = new GeminiMyStuffEnhancer({
+        getUserPathPrefix: () => this.getUserPathPrefix(),
+      })
+      this.myStuffEnhancer.start()
     }
   }
 

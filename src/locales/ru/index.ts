@@ -286,6 +286,8 @@ export const ru = {
   modelLockFailedNoButton: "Селектор не найден",
   modelLockFailedMenuEmpty: "Меню не загрузилось",
   modelLockFailedNotFound: 'Модель "{model}" не найдена',
+  geminiMystuffOpenInNewTab: "Открыть в новой вкладке",
+  geminiMystuffLocateFailed: "Не удалось найти исходное место беседы",
 
   userQueryWidthDesc: "Ширина пузыря сообщения (на сайт)",
   // Category management

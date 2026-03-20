@@ -215,6 +215,8 @@ export const EVENT_MONITOR_INIT = "GH_MONITOR_INIT"
 export const EVENT_MONITOR_START = "GH_MONITOR_START"
 export const EVENT_MONITOR_COMPLETE = "GH_MONITOR_COMPLETE"
 export const EVENT_PRIVACY_TOGGLE = "GH_PRIVACY_TOGGLE"
+export const EVENT_GEMINI_MYSTUFF_SYNC_REQUEST = "OPHEL_GEMINI_MYSTUFF_SYNC_REQUEST"
+export const EVENT_GEMINI_MYSTUFF_CACHE_SYNC = "OPHEL_GEMINI_MYSTUFF_CACHE_SYNC"
 
 export interface MonitorConfigPayload {
   urlPatterns: string[]
@@ -227,6 +229,34 @@ export interface MonitorEventPayload {
   activeCount?: number
   lastUrl?: string
   type?: string
+}
+
+export type GeminiMyStuffKind = "media" | "document"
+
+export interface GeminiMyStuffRecord {
+  kind: GeminiMyStuffKind
+  conversationId: string
+  responseId: string
+  timestamp: number
+  timestampNano: number
+  status: number
+  title?: string
+  resourceId?: string
+  thumbnailUrl?: string
+}
+
+export interface GeminiMyStuffSyncRequestPayload {
+  requestId: string
+  force?: boolean
+  kinds?: GeminiMyStuffKind[]
+}
+
+export interface GeminiMyStuffCachePayload {
+  requestId?: string
+  items: GeminiMyStuffRecord[]
+  kinds: GeminiMyStuffKind[]
+  reason: "snapshot" | "sync"
+  timestamp: number
 }
 
 export interface WindowMessage {

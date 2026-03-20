@@ -1,3 +1,4 @@
+import { initGeminiMyStuffBridge } from "~core/gemini-mystuff-bridge"
 import { EVENT_MONITOR_COMPLETE, EVENT_MONITOR_INIT, EVENT_MONITOR_START } from "~utils/messaging"
 
 // 油猴脚本环境需要使用 unsafeWindow 才能访问页面的原生 fetch/XMLHttpRequest
@@ -252,6 +253,8 @@ export function initNetworkMonitor(): void {
     return
   }
   isInitialized = true
+
+  initGeminiMyStuffBridge()
 
   window.addEventListener("message", (event) => {
     const { type, payload } = event.data || {}

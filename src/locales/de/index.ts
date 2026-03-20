@@ -289,6 +289,8 @@ export const de = {
   modelLockFailedNoButton: "Wähler nicht gefunden",
   modelLockFailedMenuEmpty: "Menü konnte nicht geladen werden",
   modelLockFailedNotFound: 'Modell "{model}" nicht gefunden',
+  geminiMystuffOpenInNewTab: "In neuem Tab öffnen",
+  geminiMystuffLocateFailed: "Ursprüngliche Gesprächsposition konnte nicht gefunden werden",
 
   userQueryWidthDesc: "Maximale Breite der Benutzerblase (pro Website)",
   // Category management

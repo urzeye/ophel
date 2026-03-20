@@ -300,6 +300,8 @@ export const en = {
   modelLockEnabled: "Model Lock Enabled",
   modelLockDisabled: "Model Lock Disabled",
   modelLockNoKeyword: "Please configure model keyword in settings first",
+  geminiMystuffOpenInNewTab: "Open in new tab",
+  geminiMystuffLocateFailed: "Original conversation location not found",
 
   userQueryWidthDesc: "Adjust max width of user query bubble container (per site)",
   // Category management

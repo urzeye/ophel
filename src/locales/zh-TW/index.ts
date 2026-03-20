@@ -232,6 +232,8 @@ export const zhTW = {
   modelLockEnabled: "模型鎖定已開啟",
   modelLockDisabled: "模型鎖定已關閉",
   modelLockNoKeyword: "模型鎖定：未設定關鍵字",
+  geminiMystuffOpenInNewTab: "在新分頁中開啟",
+  geminiMystuffLocateFailed: "找不到原始對話定位資訊",
 
   userQueryWidthDesc: "調整使用者問題氣泡容器的最大寬度（每個站點獨立配置）",
   // 分類管理

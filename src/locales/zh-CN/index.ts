@@ -327,6 +327,8 @@ export const zhCN = {
   modelLockEnabled: "模型锁定已开启",
   modelLockDisabled: "模型锁定已关闭",
   modelLockNoKeyword: "请先在设置中配置模型关键词",
+  geminiMystuffOpenInNewTab: "在新标签页中打开",
+  geminiMystuffLocateFailed: "未找到原始会话定位信息",
   userQueryWidthDesc: "调整用户问题气泡容器的最大宽度（每个站点独立配置）",
   // 分类管理
   categoryManage: "分类管理",

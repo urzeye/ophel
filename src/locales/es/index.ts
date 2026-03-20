@@ -288,6 +288,8 @@ export const es = {
   modelLockFailedNoButton: "Selector no hallado",
   modelLockFailedMenuEmpty: "Error al cargar menú",
   modelLockFailedNotFound: 'Modelo "{model}" no hallado',
+  geminiMystuffOpenInNewTab: "Abrir en una pestaña nueva",
+  geminiMystuffLocateFailed: "No se pudo encontrar la ubicación original de la conversación",
 
   userQueryWidthDesc: "Ancho máximo del globo de usuario (por sitio)",
   // Category management

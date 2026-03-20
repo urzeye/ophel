@@ -291,6 +291,8 @@ export const ko = {
   modelLockFailedNoButton: "모델 선택기를 찾을 수 없습니다",
   modelLockFailedMenuEmpty: "모델 메뉴를 로드하지 못했습니다",
   modelLockFailedNotFound: '"{model}" 모델을 찾을 수 없습니다',
+  geminiMystuffOpenInNewTab: "새 탭에서 열기",
+  geminiMystuffLocateFailed: "원본 대화 위치 정보를 찾을 수 없습니다",
 
   userQueryWidthDesc: "사용자 쿼리 버블 컨테이너의 최대 너비 조정 (사이트별)",
   // Category management
