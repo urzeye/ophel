@@ -18,12 +18,14 @@ import { SITE_IDS } from "~constants"
 
 import {
   SiteAdapter,
+  type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportConfig,
   type ModelSwitcherConfig,
   type OutlineItem,
   type AnchorData,
+  type SiteDeleteConversationResult,
 } from "./base"
 
 /** 匹配 /chat/{id} 或 /code/chat/{id}，捕获会话 ID */
@@ -32,6 +34,10 @@ const LEGACY_USER_QUERY_SELECTOR = '[data-testid="send_message"]'
 const NEW_USER_QUERY_SELECTOR = '[data-testid="message_content"].justify-end'
 const USER_QUERY_SELECTOR = `${LEGACY_USER_QUERY_SELECTOR}, ${NEW_USER_QUERY_SELECTOR}`
 const USER_QUERY_TEXT_SELECTOR = '[data-testid="message_text_content"]'
+const DOUBAO_DELETE_REASON = {
+  UI_FAILED: "delete_ui_failed",
+  BATCH_ABORTED_AFTER_UI_FAILURE: "delete_batch_aborted_after_ui_failure",
+} as const
 
 export class DoubaoAdapter extends SiteAdapter {
   // 滚动补偿状态记录
@@ -323,6 +329,43 @@ export class DoubaoAdapter extends SiteAdapter {
     }
   }
 
+  async deleteConversationOnSite(
+    target: ConversationDeleteTarget,
+  ): Promise<SiteDeleteConversationResult> {
+    const success = await this.deleteConversationViaUi(target.id)
+    return {
+      id: target.id,
+      success,
+      method: success ? "ui" : "none",
+      reason: success ? undefined : DOUBAO_DELETE_REASON.UI_FAILED,
+    }
+  }
+
+  async deleteConversationsOnSite(
+    targets: ConversationDeleteTarget[],
+  ): Promise<SiteDeleteConversationResult[]> {
+    const results: SiteDeleteConversationResult[] = []
+
+    for (let index = 0; index < targets.length; index += 1) {
+      const result = await this.deleteConversationOnSite(targets[index])
+      results.push(result)
+
+      if (!result.success && result.reason === DOUBAO_DELETE_REASON.UI_FAILED) {
+        for (let i = index + 1; i < targets.length; i += 1) {
+          results.push({
+            id: targets[i].id,
+            success: false,
+            method: "none",
+            reason: DOUBAO_DELETE_REASON.BATCH_ABORTED_AFTER_UI_FAILURE,
+          })
+        }
+        break
+      }
+    }
+
+    return results
+  }
+
   getScrollContainer(): HTMLElement | null {
     // 根据豆包的 DOM 结构，真正的滚动容器是一个有 scrollable=* 类的 div，其父级或者自身可能是 data-testid="scroll_view"
     // 但它的 class 带有随机哈希，如 .scrollable-Se7zNt
@@ -467,20 +510,354 @@ export class DoubaoAdapter extends SiteAdapter {
 
   /**
    * 覆写点击模拟：豆包使用 Radix UI，需要完整的 PointerEvent 序列才能触发下拉菜单
-   * 与 ChatGPT 适配器相同的策略
+   * 同时补发 hover 相关事件，兼容侧边栏 hover 后才显示操作按钮的交互
    */
   protected simulateClick(element: HTMLElement): void {
-    const eventTypes = ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]
-    for (const type of eventTypes) {
-      element.dispatchEvent(
-        new PointerEvent(type, {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-          pointerId: 1,
-        }),
-      )
+    const rect = element.getBoundingClientRect()
+    const clientX = rect.left + Math.max(1, Math.min(rect.width / 2, rect.width - 1))
+    const clientY = rect.top + Math.max(1, Math.min(rect.height / 2, rect.height - 1))
+    const commonInit = {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      view: window,
+      button: 0,
+      buttons: 1,
+      clientX,
+      clientY,
     }
+
+    element.dispatchEvent(
+      new PointerEvent("pointerenter", {
+        ...commonInit,
+        pointerId: 1,
+        pointerType: "mouse",
+        isPrimary: true,
+      }),
+    )
+    element.dispatchEvent(
+      new PointerEvent("pointerover", {
+        ...commonInit,
+        pointerId: 1,
+        pointerType: "mouse",
+        isPrimary: true,
+      }),
+    )
+    element.dispatchEvent(new MouseEvent("mouseenter", commonInit))
+    element.dispatchEvent(new MouseEvent("mouseover", commonInit))
+    element.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        ...commonInit,
+        pointerId: 1,
+        pointerType: "mouse",
+        isPrimary: true,
+      }),
+    )
+    element.dispatchEvent(new MouseEvent("mousedown", commonInit))
+    element.dispatchEvent(
+      new PointerEvent("pointerup", {
+        ...commonInit,
+        pointerId: 1,
+        pointerType: "mouse",
+        isPrimary: true,
+      }),
+    )
+    element.dispatchEvent(new MouseEvent("mouseup", commonInit))
+    element.dispatchEvent(new MouseEvent("click", commonInit))
+  }
+
+  private async deleteConversationViaUi(id: string): Promise<boolean> {
+    const row = await this.findConversationRowWithRetry(id)
+    if (!row) {
+      return false
+    }
+
+    const menuOpened = await this.openConversationMenu(row, id)
+    if (!menuOpened) {
+      return false
+    }
+
+    const deleteMenuItem = await this.waitForDeleteMenuItem(2500)
+    if (!deleteMenuItem) {
+      return false
+    }
+    this.simulateClick(deleteMenuItem)
+
+    const confirmButton = await this.waitForDeleteConfirmButton(2500)
+    if (!confirmButton) {
+      return false
+    }
+    this.simulateClick(confirmButton)
+
+    return this.waitForConversationRemoved(id, 7000)
+  }
+
+  private async findConversationRowWithRetry(id: string): Promise<HTMLElement | null> {
+    const firstTry = this.findConversationRow(id)
+    if (firstTry) return firstTry
+
+    await this.loadAllConversations()
+    await this.sleep(200)
+    return this.findConversationRow(id)
+  }
+
+  private findConversationRow(id: string): HTMLElement | null {
+    return document.querySelector(
+      `#conversation_${id}, a[data-testid="chat_list_thread_item"][href*="/chat/${id}"]`,
+    ) as HTMLElement | null
+  }
+
+  private getConversationMenuButtons(row: HTMLElement, id: string): HTMLElement[] {
+    const actionSelector = `[data-testid="chat_list_item_setting_more_${id}"]`
+    const visibleButtons: HTMLElement[] = []
+    const hiddenButtons: HTMLElement[] = []
+    const seen = new Set<HTMLElement>()
+
+    const push = (element: HTMLElement | null) => {
+      if (!element) return
+      if (seen.has(element)) return
+      seen.add(element)
+
+      if (this.isVisible(element)) {
+        visibleButtons.push(element)
+      } else {
+        hiddenButtons.push(element)
+      }
+    }
+
+    const actionRoot = row.querySelector(actionSelector) as HTMLElement | null
+    if (!actionRoot) return []
+
+    const trigger = actionRoot.querySelector(
+      'button[data-slot="dropdown-menu-trigger"][aria-haspopup="menu"]',
+    ) as HTMLElement | null
+    const innerButton = actionRoot.querySelector(
+      'button[data-dbx-name="button"]',
+    ) as HTMLElement | null
+    const entry = actionRoot.querySelector(
+      '[data-testid="chat_item_dropdown_entry"]',
+    ) as HTMLElement | null
+    const entryButton = entry?.closest("button") as HTMLElement | null
+
+    push(trigger)
+    push(innerButton)
+    push(entryButton)
+    push(actionRoot)
+
+    return [...visibleButtons, ...hiddenButtons]
+  }
+
+  private async openConversationMenu(row: HTMLElement, id: string): Promise<boolean> {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      row.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }))
+      row.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }))
+
+      const candidates = this.getConversationMenuButtons(row, id)
+      if (candidates.length === 0) {
+        await this.sleep(80)
+        continue
+      }
+
+      for (const candidate of candidates) {
+        document.body.click()
+        await this.sleep(50)
+        const opened = await this.tryActivateConversationAction(row, candidate)
+        if (opened) {
+          return true
+        }
+      }
+
+      await this.sleep(100)
+    }
+
+    return false
+  }
+
+  private async waitForDeleteMenuItem(timeout = 2500): Promise<HTMLElement | null> {
+    const start = Date.now()
+
+    while (Date.now() - start < timeout) {
+      const direct = document.querySelector(
+        '[data-radix-popper-content-wrapper] [data-testid="chat_item_menu_remove_icon"]',
+      ) as HTMLElement | null
+      const directItem = direct?.closest(
+        '[role="menuitem"][data-slot="dropdown-menu-item"]',
+      ) as HTMLElement | null
+      if (this.isVisible(directItem)) {
+        return directItem
+      }
+
+      const items = Array.from(
+        document.querySelectorAll(
+          '[data-radix-popper-content-wrapper] [role="menuitem"][data-slot="dropdown-menu-item"]',
+        ),
+      ) as HTMLElement[]
+
+      for (const item of items) {
+        if (!this.isVisible(item)) continue
+        if (this.getSignalText(item).includes("删除")) {
+          return item
+        }
+      }
+
+      await this.sleep(80)
+    }
+
+    return null
+  }
+
+  private async waitForDeleteConfirmButton(timeout = 2500): Promise<HTMLElement | null> {
+    const start = Date.now()
+
+    while (Date.now() - start < timeout) {
+      const dialog = this.findVisibleDeleteDialog()
+      if (dialog) {
+        const explicit = dialog.querySelector('button[aria-label="confirm"]') as HTMLElement | null
+        if (this.isVisible(explicit)) {
+          return explicit
+        }
+
+        const buttons = Array.from(dialog.querySelectorAll("button")) as HTMLElement[]
+        for (const button of buttons) {
+          if (!this.isVisible(button)) continue
+          if (this.getSignalText(button).includes("删除")) {
+            return button
+          }
+        }
+      }
+
+      await this.sleep(80)
+    }
+
+    return null
+  }
+
+  private findVisibleDeleteDialog(): HTMLElement | null {
+    const dialogs = Array.from(
+      document.querySelectorAll('[role="dialog"][aria-modal="true"], [role="dialog"]'),
+    ) as HTMLElement[]
+    return (
+      dialogs.find(
+        (dialog) => this.isVisible(dialog) && this.getSignalText(dialog).includes("删除"),
+      ) || null
+    )
+  }
+
+  private async waitForConversationRemoved(id: string, timeout = 3500): Promise<boolean> {
+    const start = Date.now()
+
+    while (Date.now() - start < timeout) {
+      if (!this.findConversationRow(id)) {
+        return true
+      }
+
+      if (this.getSessionId() !== id && !window.location.pathname.includes(`/chat/${id}`)) {
+        return true
+      }
+
+      await this.sleep(80)
+    }
+
+    return false
+  }
+
+  private async tryActivateConversationAction(
+    row: HTMLElement,
+    button: HTMLElement,
+  ): Promise<boolean> {
+    if (!button.isConnected) {
+      return false
+    }
+
+    row.scrollIntoView({ block: "nearest", inline: "nearest" })
+    button.scrollIntoView({ block: "nearest", inline: "nearest" })
+
+    const hoverTarget = button.closest(
+      `[data-testid^="chat_list_item_setting_more_"]`,
+    ) as HTMLElement | null
+    hoverTarget?.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }))
+    hoverTarget?.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }))
+    button.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }))
+    button.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }))
+
+    button.focus()
+    this.simulateClick(button)
+    if (await this.waitForConversationMenuOpen(350)) {
+      return true
+    }
+
+    button.click()
+    if (await this.waitForConversationMenuOpen(350)) {
+      return true
+    }
+
+    const keyboardEvents = [
+      new KeyboardEvent("keydown", {
+        key: "Enter",
+        code: "Enter",
+        bubbles: true,
+        cancelable: true,
+      }),
+      new KeyboardEvent("keyup", { key: "Enter", code: "Enter", bubbles: true, cancelable: true }),
+      new KeyboardEvent("keydown", { key: " ", code: "Space", bubbles: true, cancelable: true }),
+      new KeyboardEvent("keyup", { key: " ", code: "Space", bubbles: true, cancelable: true }),
+    ]
+
+    for (const event of keyboardEvents) {
+      button.dispatchEvent(event)
+      if (await this.waitForConversationMenuOpen(200)) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  private async waitForConversationMenuOpen(timeout = 500): Promise<boolean> {
+    const start = Date.now()
+    while (Date.now() - start < timeout) {
+      const menus = Array.from(
+        document.querySelectorAll(
+          '[data-radix-popper-content-wrapper] [role="menu"][data-state="open"], [data-radix-popper-content-wrapper] [role="menu"]',
+        ),
+      ) as HTMLElement[]
+
+      if (menus.some((menu) => this.isVisible(menu))) {
+        return true
+      }
+
+      await this.sleep(50)
+    }
+
+    return false
+  }
+
+  private getSignalText(element: HTMLElement): string {
+    return [
+      element.textContent || "",
+      element.getAttribute("aria-label") || "",
+      element.getAttribute("title") || "",
+      element.className || "",
+    ]
+      .join(" ")
+      .toLowerCase()
+  }
+
+  private isVisible(element: Element | null): element is HTMLElement {
+    if (!(element instanceof HTMLElement)) return false
+    if (!element.isConnected) return false
+
+    const style = window.getComputedStyle(element)
+    if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) {
+      return false
+    }
+
+    const rect = element.getBoundingClientRect()
+    return rect.width > 0 && rect.height > 0
+  }
+
+  private async sleep(ms: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, ms))
   }
 
   // ===== 大纲提取 =====

@@ -643,6 +643,7 @@ export class ConversationManager {
       .filter((target): target is ConversationDeleteTarget => Boolean(target))
 
     const remoteResultMap = new Map<string, SiteDeleteConversationResult>()
+
     if (this.syncDelete && targets.length > 0) {
       try {
         const remoteResults = await this.siteAdapter.deleteConversationsOnSite(targets)

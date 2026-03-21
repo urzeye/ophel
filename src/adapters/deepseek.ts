@@ -213,8 +213,12 @@ export class DeepSeekAdapter extends SiteAdapter {
     }
 
     const result = await this.deleteConversationViaApi(target, token)
-    if (result.success && target.id === currentSessionId) {
-      this.scheduleHomeRefreshAfterDelete()
+    if (result.success) {
+      if (target.id === currentSessionId) {
+        this.scheduleHomeRefreshAfterDelete()
+      } else {
+        this.schedulePageReloadAfterDelete()
+      }
     }
     return result
   }
@@ -239,17 +243,25 @@ export class DeepSeekAdapter extends SiteAdapter {
 
     const results: SiteDeleteConversationResult[] = []
     let deletedCurrentSession = false
+    let hasSuccessfulDeletion = false
 
     for (const target of targets) {
       const result = await this.deleteConversationViaApi(target, token)
       results.push(result)
-      if (result.success && target.id === currentSessionId) {
-        deletedCurrentSession = true
+      if (result.success) {
+        hasSuccessfulDeletion = true
+        if (target.id === currentSessionId) {
+          deletedCurrentSession = true
+        }
       }
     }
 
-    if (deletedCurrentSession) {
-      this.scheduleHomeRefreshAfterDelete()
+    if (hasSuccessfulDeletion) {
+      if (deletedCurrentSession) {
+        this.scheduleHomeRefreshAfterDelete()
+      } else {
+        this.schedulePageReloadAfterDelete()
+      }
     }
 
     return results
@@ -1461,6 +1473,12 @@ export class DeepSeekAdapter extends SiteAdapter {
     }
 
     window.location.replace(DEEPSEEK_HOME_URL)
+  }
+
+  private schedulePageReloadAfterDelete() {
+    window.setTimeout(() => {
+      window.location.reload()
+    }, 0)
   }
 
   private consumePendingDeleteRefresh() {
