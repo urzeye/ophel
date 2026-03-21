@@ -9,6 +9,7 @@
  * 注意：DeepSeek 页面存在部分 CSS Modules 哈希类名，首版实现尽量避免依赖它们。
  */
 import { SITE_IDS } from "~constants"
+import { htmlToMarkdown } from "~utils/exporter"
 
 import {
   SiteAdapter,
@@ -16,6 +17,7 @@ import {
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportConfig,
+  type ExportLifecycleContext,
   type NetworkMonitorConfig,
   type OutlineItem,
   type SiteDeleteConversationResult,
@@ -36,6 +38,12 @@ const CHAT_COMPLETION_API_PATTERN = "/api/v0/chat/completion"
 const CHAT_DELETE_API_PATH = "/api/v0/chat_session/delete"
 const DEEPSEEK_HOME_URL = "https://chat.deepseek.com/"
 const DELETE_REFRESH_STORAGE_KEY = "gh.deepseek.delete.refresh"
+const DEEPSEEK_EXPORT_ROOT_ATTR = "data-gh-deepseek-export-root"
+const DEEPSEEK_EXPORT_ROLE_ATTR = "data-gh-deepseek-export-role"
+const DEEPSEEK_EXPORT_ROLE_USER = "user"
+const DEEPSEEK_EXPORT_ROLE_ASSISTANT = "assistant"
+const DEEPSEEK_EXPORT_USER_SELECTOR = `[${DEEPSEEK_EXPORT_ROOT_ATTR}="1"] [${DEEPSEEK_EXPORT_ROLE_ATTR}="${DEEPSEEK_EXPORT_ROLE_USER}"]`
+const DEEPSEEK_EXPORT_ASSISTANT_SELECTOR = `[${DEEPSEEK_EXPORT_ROOT_ATTR}="1"] [${DEEPSEEK_EXPORT_ROLE_ATTR}="${DEEPSEEK_EXPORT_ROLE_ASSISTANT}"]`
 const STOP_ICON_PATH_PREFIX = "M2 4.88"
 const SEND_ICON_PATH =
   "M8.3125 0.981587C8.66767 1.0545 8.97902 1.20558 9.2627 1.43374C9.48724 1.61438 9.73029 1.85933 9.97949 2.10854L14.707 6.83608L13.293 8.25014L9 3.95717V15.0431H7V3.95717L2.70703 8.25014L1.29297 6.83608L6.02051 2.10854C6.26971 1.85933 6.51277 1.61438 6.7373 1.43374C6.97662 1.24126 7.28445 1.04542 7.6875 0.981587C7.8973 0.94841 8.1031 0.956564 8.3125 0.981587Z"
@@ -59,8 +67,15 @@ interface DeepSeekNativeOutlineCache {
   items: DeepSeekNativeOutlineEntry[]
 }
 
+interface DeepSeekExportMessageSnapshot {
+  role: "user" | "assistant"
+  content: string
+}
+
 export class DeepSeekAdapter extends SiteAdapter {
   private nativeOutlineCache: DeepSeekNativeOutlineCache | null = null
+  private exportSnapshotRoot: HTMLElement | null = null
+  private exportSnapshotActive = false
 
   match(): boolean {
     const isMatch = window.location.hostname === "chat.deepseek.com"
@@ -324,6 +339,10 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   extractUserQueryText(element: Element): string {
+    if (this.isExportSnapshotElement(element)) {
+      return element.textContent?.trim() || ""
+    }
+
     const source = this.findUserContentRoot(element) || element
     const clone = source.cloneNode(true) as HTMLElement
 
@@ -375,10 +394,19 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   extractAssistantResponseText(element: Element): string {
+    if (this.isExportSnapshotElement(element)) {
+      return element.textContent?.trim() || ""
+    }
+
     const markdown = element.matches(".ds-markdown")
       ? element
       : element.querySelector(".ds-markdown")
-    return markdown ? this.extractTextWithLineBreaks(markdown).trim() : ""
+    if (!markdown) return ""
+
+    const content = htmlToMarkdown(markdown).trim()
+    if (content) return content
+
+    return this.extractTextWithLineBreaks(markdown).trim()
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
@@ -496,12 +524,46 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   getExportConfig(): ExportConfig {
+    if (this.exportSnapshotActive) {
+      return {
+        userQuerySelector: DEEPSEEK_EXPORT_USER_SELECTOR,
+        assistantResponseSelector: DEEPSEEK_EXPORT_ASSISTANT_SELECTOR,
+        turnSelector: null,
+        useShadowDOM: false,
+      }
+    }
+
     return {
       userQuerySelector: USER_MESSAGE_SELECTOR,
       assistantResponseSelector: ASSISTANT_MARKDOWN_SELECTOR,
       turnSelector: null,
       useShadowDOM: false,
     }
+  }
+
+  async prepareConversationExport(_context: ExportLifecycleContext): Promise<unknown> {
+    this.clearExportSnapshot()
+
+    const scrollContainer =
+      this.getScrollContainer() || document.querySelector(this.getResponseContainerSelector())
+    if (!(scrollContainer instanceof HTMLElement)) {
+      return null
+    }
+
+    const messages = await this.collectExportMessageSnapshots(scrollContainer)
+    if (messages.length === 0) {
+      return null
+    }
+
+    this.mountExportSnapshot(messages)
+    return { count: messages.length }
+  }
+
+  async restoreConversationAfterExport(
+    _context: ExportLifecycleContext,
+    _state: unknown,
+  ): Promise<void> {
+    this.clearExportSnapshot()
   }
 
   getSubmitButtonSelectors(): string[] {
@@ -1325,6 +1387,185 @@ export class DeepSeekAdapter extends SiteAdapter {
 
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => window.setTimeout(resolve, ms))
+  }
+
+  private isExportSnapshotElement(element: Element): boolean {
+    return element.hasAttribute(DEEPSEEK_EXPORT_ROLE_ATTR)
+  }
+
+  private async collectExportMessageSnapshots(
+    scrollContainer: HTMLElement,
+  ): Promise<DeepSeekExportMessageSnapshot[]> {
+    const positions = this.buildExportSnapshotPositions(scrollContainer)
+    const originalScrollTop = scrollContainer.scrollTop
+    let collected: DeepSeekExportMessageSnapshot[] = []
+
+    try {
+      for (const top of positions) {
+        scrollContainer.scrollTop = top
+        scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
+        scrollContainer.getBoundingClientRect()
+        await this.sleep(80)
+
+        const batch = this.readVisibleExportMessageSnapshots(scrollContainer)
+        collected = this.mergeExportMessageBatch(collected, batch)
+      }
+    } finally {
+      scrollContainer.scrollTop = originalScrollTop
+      scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
+    }
+
+    return collected
+  }
+
+  private buildExportSnapshotPositions(scrollContainer: HTMLElement): number[] {
+    const maxScroll = Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight)
+    const currentScrollTop = scrollContainer.scrollTop
+
+    if (maxScroll <= 0) {
+      return [currentScrollTop]
+    }
+
+    const step = Math.max(160, Math.floor(scrollContainer.clientHeight * 0.75))
+    const positions = new Set<number>([0, currentScrollTop, maxScroll])
+
+    for (let top = 0; top < maxScroll; top += step) {
+      positions.add(top)
+    }
+
+    return Array.from(positions).sort((a, b) => a - b)
+  }
+
+  private readVisibleExportMessageSnapshots(
+    container: ParentNode,
+  ): DeepSeekExportMessageSnapshot[] {
+    const messages = Array.from(container.querySelectorAll(MESSAGE_SELECTOR)).filter(
+      (message): message is HTMLElement =>
+        message instanceof HTMLElement &&
+        !message.closest(`[${DEEPSEEK_EXPORT_ROOT_ATTR}]`) &&
+        !message.parentElement?.closest(MESSAGE_SELECTOR),
+    )
+
+    return messages
+      .map((message) => this.extractExportMessageSnapshot(message))
+      .filter((message): message is DeepSeekExportMessageSnapshot => message !== null)
+  }
+
+  private extractExportMessageSnapshot(message: Element): DeepSeekExportMessageSnapshot | null {
+    const markdown = message.querySelector(".ds-markdown")
+    if (markdown) {
+      const content = this.normalizeExportMessageContent(
+        this.extractAssistantResponseText(markdown),
+      )
+      return content
+        ? {
+            role: DEEPSEEK_EXPORT_ROLE_ASSISTANT,
+            content,
+          }
+        : null
+    }
+
+    const content = this.normalizeExportMessageContent(this.extractUserQueryMarkdown(message))
+    return content
+      ? {
+          role: DEEPSEEK_EXPORT_ROLE_USER,
+          content,
+        }
+      : null
+  }
+
+  private normalizeExportMessageContent(content: string): string {
+    return content
+      .replace(/\r\n/g, "\n")
+      .replace(/\u00a0/g, " ")
+      .trim()
+  }
+
+  private mergeExportMessageBatch(
+    collected: DeepSeekExportMessageSnapshot[],
+    batch: DeepSeekExportMessageSnapshot[],
+  ): DeepSeekExportMessageSnapshot[] {
+    if (batch.length === 0) {
+      return collected
+    }
+
+    if (collected.length === 0) {
+      return batch.map((item) => ({ ...item }))
+    }
+
+    const maxOverlap = Math.min(collected.length, batch.length)
+    for (let overlap = maxOverlap; overlap > 0; overlap -= 1) {
+      const collectedTail = collected.slice(-overlap)
+      const batchHead = batch.slice(0, overlap)
+      if (this.exportMessageSequenceEquals(collectedTail, batchHead)) {
+        return [...collected, ...batch.slice(overlap).map((item) => ({ ...item }))]
+      }
+    }
+
+    const merged = collected.map((item) => ({ ...item }))
+    batch.forEach((item) => {
+      if (!this.exportMessageEntryEquals(merged[merged.length - 1], item)) {
+        merged.push({ ...item })
+      }
+    })
+    return merged
+  }
+
+  private exportMessageSequenceEquals(
+    left: DeepSeekExportMessageSnapshot[],
+    right: DeepSeekExportMessageSnapshot[],
+  ): boolean {
+    if (left.length !== right.length) {
+      return false
+    }
+
+    return left.every((item, index) => this.exportMessageEntryEquals(item, right[index]))
+  }
+
+  private exportMessageEntryEquals(
+    left: DeepSeekExportMessageSnapshot | undefined,
+    right: DeepSeekExportMessageSnapshot | undefined,
+  ): boolean {
+    if (!left || !right) {
+      return false
+    }
+
+    return left.role === right.role && left.content === right.content
+  }
+
+  private mountExportSnapshot(messages: DeepSeekExportMessageSnapshot[]): void {
+    this.clearExportSnapshot()
+
+    const root = document.createElement("div")
+    root.setAttribute(DEEPSEEK_EXPORT_ROOT_ATTR, "1")
+    root.style.display = "none"
+
+    messages.forEach((message) => {
+      const node = document.createElement("div")
+      node.setAttribute(DEEPSEEK_EXPORT_ROLE_ATTR, message.role)
+      node.textContent = message.content
+      root.appendChild(node)
+    })
+
+    document.body.appendChild(root)
+    this.exportSnapshotRoot = root
+    this.exportSnapshotActive = true
+  }
+
+  private clearExportSnapshot(): void {
+    this.exportSnapshotActive = false
+    const root = this.exportSnapshotRoot
+    this.exportSnapshotRoot = null
+
+    if (root?.isConnected) {
+      root.remove()
+    }
+
+    document.querySelectorAll(`[${DEEPSEEK_EXPORT_ROOT_ATTR}]`).forEach((node) => {
+      if (node !== root) {
+        node.parentNode?.removeChild(node)
+      }
+    })
   }
 
   private async deleteConversationViaApi(
