@@ -2,6 +2,7 @@
  * ChatGPT 适配器 (chatgpt.com)
  */
 import { SITE_IDS } from "~constants"
+import { htmlToMarkdown } from "~utils/exporter"
 
 import {
   SiteAdapter,
@@ -768,7 +769,19 @@ export class ChatGPTAdapter extends SiteAdapter {
     if (responses.length === 0) return null
 
     const lastResponse = responses[responses.length - 1]
-    return this.extractTextWithLineBreaks(lastResponse)
+    const markdownContainer =
+      lastResponse.querySelector(".markdown, .prose, [class*='prose']") || lastResponse
+    const clone = markdownContainer.cloneNode(true) as HTMLElement
+    clone
+      .querySelectorAll('.sr-only, button, [role="button"], svg, [aria-hidden="true"]')
+      .forEach((node) => node.remove())
+
+    const markdown = htmlToMarkdown(clone).trim()
+    if (markdown) {
+      return markdown
+    }
+
+    return this.extractTextWithLineBreaks(clone)
   }
 
   // ==================== 页面宽度控制 ====================

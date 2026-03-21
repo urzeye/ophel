@@ -3,6 +3,7 @@
  */
 import { SITE_IDS } from "~constants"
 import { DOMToolkit } from "~utils/dom-toolkit"
+import { htmlToMarkdown } from "~utils/exporter"
 
 import {
   SiteAdapter,
@@ -212,6 +213,11 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     if (!markdownDoc) {
       // 降级：直接提取文本
       return this.extractTextWithLineBreaks(ucsSummary)
+    }
+
+    const markdown = htmlToMarkdown(markdownDoc).trim()
+    if (markdown) {
+      return markdown
     }
 
     return this.extractTextWithLineBreaks(markdownDoc)

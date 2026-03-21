@@ -13,6 +13,7 @@
  * - document.documentElement.style.colorScheme 同步
  */
 import { SITE_IDS } from "~constants"
+import { htmlToMarkdown } from "~utils/exporter"
 
 import {
   SiteAdapter,
@@ -1084,7 +1085,17 @@ export class GrokAdapter extends SiteAdapter {
     // 从 .response-content-markdown 提取内容
     const contentContainer = lastMessage.querySelector(".response-content-markdown")
     if (contentContainer) {
-      return this.extractTextWithLineBreaks(contentContainer)
+      const clone = contentContainer.cloneNode(true) as HTMLElement
+      clone
+        .querySelectorAll('button, [role="button"], svg, [aria-hidden="true"]')
+        .forEach((node) => node.remove())
+
+      const markdown = htmlToMarkdown(clone).trim()
+      if (markdown) {
+        return markdown
+      }
+
+      return this.extractTextWithLineBreaks(clone)
     }
 
     return this.extractTextWithLineBreaks(lastMessage)

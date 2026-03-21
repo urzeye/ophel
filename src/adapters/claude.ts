@@ -1091,7 +1091,8 @@ export class ClaudeAdapter extends SiteAdapter {
     // 过滤掉Artifact卡片,只提取.standard-markdown或.progressive-markdown
     const markdownContent = lastResponse.querySelector(".standard-markdown, .progressive-markdown")
     if (markdownContent) {
-      return markdownContent.textContent?.trim() || null
+      const markdown = htmlToMarkdown(markdownContent).trim()
+      return markdown || markdownContent.textContent?.trim() || null
     }
 
     // 降级:如果没有markdown容器,返回整个内容(兼容旧版本)

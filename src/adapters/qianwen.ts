@@ -316,7 +316,7 @@ export class QianwenAdapter extends SiteAdapter {
   getLatestReplyText(): string | null {
     const responses = document.querySelectorAll(ANSWER_ITEM_SELECTOR)
     const last = responses[responses.length - 1]
-    return last ? this.extractAssistantPlainText(last) : null
+    return last ? this.extractAssistantResponseText(last) : null
   }
 
   // ==================== 文本提取 / 大纲 / 导出 ====================

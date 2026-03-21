@@ -13,6 +13,7 @@
 
 - 修复 DeepSeek 虚拟滚动导致的大纲缺失与导出格式丢失问题
 - 修复 DeepSeek 删除后页面未刷新，以及豆包会话删除未同步到原网站的问题
+- 修复豆包“复制最新回复”无内容的问题，并将多站点“复制最新回复”统一升级为 Markdown 提取，尽量保留标题、加粗、表格、公式与代码块；兼容 DeepSeek / AI Studio 虚拟滚动与 Gemini Enterprise Shadow DOM 场景
 
 ## [1.0.20]
 

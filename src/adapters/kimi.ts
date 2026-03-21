@@ -634,9 +634,8 @@ export class KimiAdapter extends SiteAdapter {
     const replies = document.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR)
     if (replies.length === 0) return null
     const last = replies[replies.length - 1]
-    const markdown = last.matches(".markdown") ? last : last.querySelector(".markdown")
-    if (!markdown) return null
-    return this.extractTextWithLineBreaks(markdown).trim()
+    const text = this.extractAssistantResponseText(last)
+    return text || null
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {

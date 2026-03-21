@@ -388,10 +388,8 @@ export class ChatGLMAdapter extends SiteAdapter {
     if (replies.length === 0) return null
 
     const last = replies[replies.length - 1]
-    const markdown = last.matches(".markdown-body") ? last : last.querySelector(".markdown-body")
-    if (!markdown) return null
-
-    return this.extractTextWithLineBreaks(markdown).trim()
+    const text = this.extractAssistantResponseText(last)
+    return text || null
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {

@@ -1527,7 +1527,7 @@ export class DeepSeekAdapter extends SiteAdapter {
 
   private extractLatestReplyTextFromMarkdowns(markdowns: HTMLElement[]): string | null {
     for (let i = markdowns.length - 1; i >= 0; i -= 1) {
-      const text = this.extractTextWithLineBreaks(markdowns[i]).trim()
+      const text = this.extractAssistantResponseText(markdowns[i]).trim()
       if (text) {
         return text
       }

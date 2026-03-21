@@ -12,6 +12,7 @@
  */
 import { SITE_IDS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
+import { htmlToMarkdown } from "~utils/exporter"
 import type { AIStudioSettings } from "~utils/storage"
 
 import {
@@ -1847,6 +1848,41 @@ export class AIStudioAdapter extends SiteAdapter {
 
   // ==================== 复制最新回复 ====================
 
+  private extractAssistantResponseMarkdown(element: Element): string {
+    const markdownNodes = Array.from(element.querySelectorAll("ms-cmark-node")).filter(
+      (node) => !node.closest("ms-thought-chunk") && !node.parentElement?.closest("ms-cmark-node"),
+    )
+
+    if (markdownNodes.length > 0) {
+      const wrapper = document.createElement("div")
+      markdownNodes.forEach((node) => wrapper.appendChild(node.cloneNode(true)))
+
+      const markdown = htmlToMarkdown(wrapper).trim()
+      if (markdown) {
+        return markdown
+      }
+
+      const text = this.extractTextWithLineBreaks(wrapper).trim()
+      if (text) {
+        return text
+      }
+    }
+
+    const clone = element.cloneNode(true) as HTMLElement
+    clone
+      .querySelectorAll(
+        'ms-thought-chunk, .author-label, .actions-container, button, [role="button"], svg, [aria-hidden="true"]',
+      )
+      .forEach((node) => node.remove())
+
+    const markdown = htmlToMarkdown(clone).trim()
+    if (markdown) {
+      return markdown
+    }
+
+    return this.extractTextWithLineBreaks(clone).trim()
+  }
+
   getLatestReplyText(): string | null {
     // AI 回复容器
     const aiMessages = document.querySelectorAll(
@@ -1855,7 +1891,8 @@ export class AIStudioAdapter extends SiteAdapter {
     if (aiMessages.length === 0) return null
 
     const lastMessage = aiMessages[aiMessages.length - 1]
-    return this.extractTextWithLineBreaks(lastMessage)
+    const text = this.extractAssistantResponseMarkdown(lastMessage)
+    return text || null
   }
 
   // ==================== 新对话按钮 ====================
