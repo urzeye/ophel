@@ -412,6 +412,28 @@ export class DoubaoAdapter extends SiteAdapter {
     return ['[data-testid="receive_message"] .flow-markdown-body', USER_QUERY_TEXT_SELECTOR]
   }
 
+  private extractAssistantPlainText(element: Element): string {
+    const markdown = element.matches(".flow-markdown-body")
+      ? element
+      : element.querySelector(".flow-markdown-body")
+    const target = (markdown || element).cloneNode(true) as HTMLElement
+
+    target
+      .querySelectorAll('button, [role="button"], svg, [aria-hidden="true"]')
+      .forEach((node) => node.remove())
+
+    return this.extractTextWithLineBreaks(target).trim()
+  }
+
+  getLatestReplyText(): string | null {
+    const responses = document.querySelectorAll('[data-testid="receive_message"]')
+    if (responses.length === 0) return null
+
+    const last = responses[responses.length - 1]
+    const text = this.extractAssistantPlainText(last)
+    return text || null
+  }
+
   private getUserMessageTextContainer(element: Element): HTMLElement | null {
     if (element.matches(USER_QUERY_TEXT_SELECTOR)) {
       return element as HTMLElement
