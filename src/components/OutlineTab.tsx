@@ -806,30 +806,25 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
   const handleClick = useCallback(
     async (node: OutlineNode) => {
       let targetElement = node.element
+      let anchorCaptured = false
 
       // 元素失效时重新查找
       if (!targetElement || !targetElement.isConnected) {
-        // 用户提问节点（level=0）需要使用专门的查找逻辑
-        if (node.isUserQuery && node.level === 0) {
-          // 按 queryIndex 和文本查找用户提问元素
-          const found = manager.findUserQueryElement(node.queryIndex!, node.text)
-          if (found) {
-            targetElement = found as HTMLElement
-            node.element = targetElement
-          }
-        } else {
-          // 普通标题使用 findElementByHeading
-          const found = manager.findElementByHeading(node.level, node.text)
-          if (found) {
-            targetElement = found as HTMLElement
-            node.element = targetElement
-          }
+        if (onJumpBefore) {
+          await onJumpBefore()
+          anchorCaptured = true
+        }
+
+        const found = await manager.resolveOutlineTarget(node, node.queryIndex)
+        if (found) {
+          targetElement = found as HTMLElement
+          node.element = targetElement
         }
       }
 
       if (targetElement && targetElement.isConnected) {
         // 等待锚点保存完成后再跳转（instant 模式必须）
-        if (onJumpBefore) {
+        if (onJumpBefore && !anchorCaptured) {
           await onJumpBefore()
         }
         // 传入 __bypassLock: true 以绕过 ScrollLockManager 的拦截

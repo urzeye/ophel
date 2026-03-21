@@ -27,6 +27,7 @@ const THEME_STORAGE_KEY = "__appKit_@deepseek/chat_themePreference"
 const USER_TOKEN_STORAGE_KEY = "userToken"
 const CONVERSATION_LINK_SELECTOR = 'a[href*="/a/chat/s/"]'
 const MESSAGE_SELECTOR = ".ds-message"
+const OUTLINE_HEADING_SELECTOR = "h1, h2, h3, h4, h5, h6"
 const ASSISTANT_MARKDOWN_SELECTOR = ".ds-message:has(.ds-markdown) .ds-markdown"
 const USER_MESSAGE_SELECTOR = ".ds-message:not(:has(.ds-markdown))"
 const RESPONSE_CONTAINER_SELECTOR =
@@ -46,7 +47,21 @@ const DEEPSEEK_DELETE_REASON = {
   API_BUSINESS_FAILED: "delete_api_business_failed",
 } as const
 
+interface DeepSeekNativeOutlineEntry {
+  text: string
+  scrollTop?: number
+  batchIndex?: number
+}
+
+interface DeepSeekNativeOutlineCache {
+  sessionId: string
+  snapshot: string
+  items: DeepSeekNativeOutlineEntry[]
+}
+
 export class DeepSeekAdapter extends SiteAdapter {
+  private nativeOutlineCache: DeepSeekNativeOutlineCache | null = null
+
   match(): boolean {
     const isMatch = window.location.hostname === "chat.deepseek.com"
     if (isMatch) {
@@ -360,6 +375,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     if (!container) return []
 
     const outline: OutlineItem[] = []
+    const domUserQueries: OutlineItem[] = []
     const messages = Array.from(container.querySelectorAll(MESSAGE_SELECTOR)).filter(
       (message) => !message.parentElement?.closest(MESSAGE_SELECTOR),
     )
@@ -379,18 +395,13 @@ export class DeepSeekAdapter extends SiteAdapter {
             this.findNextAssistantMarkdown(messages, index)?.textContent?.trim().length || 0
         }
 
-        outline.push({
-          level: 0,
-          text: text.length > 80 ? `${text.slice(0, 80)}...` : text,
-          element: message as HTMLElement,
-          isUserQuery: true,
-          isTruncated: text.length > 80,
-          wordCount,
-        })
+        const item = this.createUserQueryOutlineItem(text, message as HTMLElement, wordCount)
+        domUserQueries.push(item)
+        outline.push(item)
         return
       }
 
-      const headings = Array.from(markdown.querySelectorAll("h1, h2, h3, h4, h5, h6"))
+      const headings = Array.from(markdown.querySelectorAll(OUTLINE_HEADING_SELECTOR))
       headings.forEach((heading, headingIndex) => {
         const level = Number.parseInt(heading.tagName.slice(1), 10)
         if (Number.isNaN(level) || level > maxLevel) return
@@ -421,7 +432,55 @@ export class DeepSeekAdapter extends SiteAdapter {
       })
     })
 
-    return outline
+    if (!includeUserQueries) {
+      return outline
+    }
+
+    const nativeUserQueries = this.extractNativeUserQueries(domUserQueries)
+    if (nativeUserQueries.length <= domUserQueries.length) {
+      return outline
+    }
+
+    return this.mergeOutlineWithNativeUserQueries(outline, nativeUserQueries)
+  }
+
+  async resolveOutlineTarget(
+    item: Pick<OutlineItem, "level" | "text" | "isUserQuery">,
+    queryIndex?: number,
+  ): Promise<Element | null> {
+    const directTarget = await super.resolveOutlineTarget(item, queryIndex)
+    if (directTarget) {
+      return directTarget
+    }
+
+    if (!item.isUserQuery || item.level !== 0 || queryIndex === undefined) {
+      return null
+    }
+
+    const jumped = await this.revealUserQueryThroughNativeOutline(queryIndex, item.text)
+    if (!jumped) {
+      return null
+    }
+
+    return this.waitForUserQueryElement(queryIndex, item.text)
+  }
+
+  private createUserQueryOutlineItem(
+    text: string,
+    element: Element | null,
+    wordCount?: number,
+  ): OutlineItem {
+    const normalizedText = this.normalizeOutlineText(text)
+    const isTruncated = normalizedText.length > 80
+
+    return {
+      level: 0,
+      text: isTruncated ? `${normalizedText.slice(0, 80)}...` : normalizedText,
+      element,
+      isUserQuery: true,
+      isTruncated,
+      wordCount,
+    }
   }
 
   getExportConfig(): ExportConfig {
@@ -686,6 +745,574 @@ export class DeepSeekAdapter extends SiteAdapter {
     }
 
     return score
+  }
+
+  private extractNativeUserQueries(domUserQueries: OutlineItem[]): OutlineItem[] {
+    const nativeEntries = this.collectNativeOutlineEntries()
+    if (nativeEntries.length === 0) {
+      return []
+    }
+
+    const outline: OutlineItem[] = []
+    const occurrenceMap = new Map<string, number>()
+    let domQueryCursor = 0
+
+    nativeEntries.forEach((entry) => {
+      const matchIndex = this.findMatchingUserQueryIndex(domUserQueries, entry.text, domQueryCursor)
+      const matchedQuery = matchIndex >= 0 ? domUserQueries[matchIndex] : null
+
+      if (matchIndex >= 0) {
+        domQueryCursor = matchIndex + 1
+      }
+
+      const item = this.createUserQueryOutlineItem(entry.text, matchedQuery?.element || null)
+      item.wordCount = matchedQuery?.wordCount
+
+      const occurrenceKey = this.normalizeUserQueryMatchText(entry.text)
+      const occurrence = occurrenceMap.get(occurrenceKey) || 0
+      occurrenceMap.set(occurrenceKey, occurrence + 1)
+
+      item.id =
+        matchedQuery?.id ||
+        `deepseek-user-query::${occurrence}::${this.normalizeUserQueryMatchText(entry.text)}`
+
+      outline.push(item)
+    })
+
+    return outline
+  }
+
+  private mergeOutlineWithNativeUserQueries(
+    domOutline: OutlineItem[],
+    nativeUserQueries: OutlineItem[],
+  ): OutlineItem[] {
+    if (!domOutline.some((item) => item.isUserQuery)) {
+      return [...nativeUserQueries, ...domOutline]
+    }
+
+    const merged: OutlineItem[] = []
+    let nativeQueryCursor = 0
+
+    domOutline.forEach((item) => {
+      if (!item.isUserQuery) {
+        merged.push(item)
+        return
+      }
+
+      const matchIndex = this.findMatchingNativeUserQueryIndex(
+        nativeUserQueries,
+        item,
+        nativeQueryCursor,
+      )
+      if (matchIndex < 0) {
+        merged.push(item)
+        return
+      }
+
+      while (nativeQueryCursor <= matchIndex) {
+        merged.push(nativeUserQueries[nativeQueryCursor])
+        nativeQueryCursor += 1
+      }
+    })
+
+    while (nativeQueryCursor < nativeUserQueries.length) {
+      merged.push(nativeUserQueries[nativeQueryCursor])
+      nativeQueryCursor += 1
+    }
+
+    return merged
+  }
+
+  private collectNativeOutlineEntries(): DeepSeekNativeOutlineEntry[] {
+    const sessionId = this.getSessionId()
+    const list = this.findNativeOutlineList()
+
+    if (!list) {
+      return this.nativeOutlineCache?.sessionId === sessionId
+        ? this.nativeOutlineCache.items.map((item) => ({ ...item }))
+        : []
+    }
+
+    const scrollContainer = this.findNativeOutlineScrollContainer(list)
+    const snapshot = this.getNativeOutlineSnapshot(sessionId, list, scrollContainer)
+
+    if (
+      this.nativeOutlineCache &&
+      this.nativeOutlineCache.sessionId === sessionId &&
+      this.nativeOutlineCache.snapshot === snapshot
+    ) {
+      return this.nativeOutlineCache.items.map((item) => ({ ...item }))
+    }
+
+    const scanned = this.scanNativeOutlineEntries(list, scrollContainer)
+    if (scanned.length > 0) {
+      this.nativeOutlineCache = {
+        sessionId,
+        snapshot,
+        items: scanned.map((item) => ({ ...item })),
+      }
+    }
+
+    return scanned
+  }
+
+  private findNativeOutlineList(): HTMLElement | null {
+    const candidates = Array.from(document.querySelectorAll(".ds-virtual-list")).filter(
+      (candidate) =>
+        candidate instanceof HTMLElement &&
+        candidate.querySelector(".ds-virtual-list-items, .ds-virtual-list-visible-items") &&
+        !candidate.querySelector(CONVERSATION_LINK_SELECTOR) &&
+        !candidate.closest("aside, nav"),
+    ) as HTMLElement[]
+
+    let best: HTMLElement | null = null
+    let bestScore = -1
+
+    candidates.forEach((candidate) => {
+      const rect = candidate.getBoundingClientRect()
+      let score = 0
+
+      if (candidate.closest('[style*="--scroll-nav-page-padding"]')) {
+        score += 2500
+      }
+
+      if (candidate.closest("main, [role='main']")) {
+        score += 600
+      }
+
+      if (candidate.querySelector(".ds-virtual-list-visible-items")) {
+        score += 400
+      }
+
+      if (rect.width >= 140 && rect.width <= 420) {
+        score += 350
+      }
+
+      if (rect.height >= 120) {
+        score += 250
+      }
+
+      if (candidate.scrollHeight > candidate.clientHeight + 20) {
+        score += 300
+      }
+
+      if (candidate.querySelector(MESSAGE_SELECTOR)) {
+        score -= 1500
+      }
+
+      if (score > bestScore) {
+        best = candidate
+        bestScore = score
+      }
+    })
+
+    return bestScore > 0 ? best : null
+  }
+
+  private findNativeOutlineScrollContainer(list: HTMLElement): HTMLElement | null {
+    const candidates = [
+      list,
+      list.closest(".ds-scroll-area"),
+      list.parentElement,
+      list.closest('[style*="--scroll-nav-page-padding"]')?.querySelector(".ds-scroll-area"),
+    ].filter((candidate): candidate is HTMLElement => candidate instanceof HTMLElement)
+
+    let best: HTMLElement | null = null
+    let bestScore = -1
+
+    candidates.forEach((candidate) => {
+      const style = window.getComputedStyle(candidate)
+      const canScroll =
+        candidate.scrollHeight > candidate.clientHeight + 8 ||
+        style.overflowY === "auto" ||
+        style.overflowY === "scroll" ||
+        candidate.classList.contains("ds-virtual-list") ||
+        candidate.classList.contains("ds-scroll-area")
+
+      if (!canScroll || candidate.clientHeight <= 0) {
+        return
+      }
+
+      let score = 0
+      if (candidate === list) score += 500
+      if (candidate.classList.contains("ds-virtual-list")) score += 350
+      if (candidate.classList.contains("ds-scroll-area")) score += 250
+      score += Math.min(candidate.scrollHeight - candidate.clientHeight, 2000)
+
+      if (score > bestScore) {
+        best = candidate
+        bestScore = score
+      }
+    })
+
+    return bestScore > 0 ? best : null
+  }
+
+  private getNativeOutlineSnapshot(
+    sessionId: string,
+    list: HTMLElement,
+    scrollContainer: HTMLElement | null,
+  ): string {
+    const itemsRoot = list.querySelector(".ds-virtual-list-items") as HTMLElement | null
+    const visibleRoot = list.querySelector(".ds-virtual-list-visible-items")
+    const scrollHost = scrollContainer || list
+
+    return [
+      sessionId,
+      scrollHost.scrollHeight,
+      scrollHost.clientHeight,
+      itemsRoot?.scrollHeight || 0,
+      visibleRoot?.childElementCount || 0,
+    ].join("::")
+  }
+
+  private scanNativeOutlineEntries(
+    list: HTMLElement,
+    scrollContainer: HTMLElement | null,
+  ): DeepSeekNativeOutlineEntry[] {
+    const visibleOnly = this.readVisibleNativeOutlineEntries(list)
+    if (!scrollContainer) {
+      return visibleOnly
+    }
+
+    const maxScroll = Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight)
+    if (maxScroll <= 0) {
+      return visibleOnly
+    }
+
+    const originalScrollTop = scrollContainer.scrollTop
+    const step = Math.max(48, Math.floor(scrollContainer.clientHeight * 0.6))
+    const positions = new Set<number>([0, maxScroll, originalScrollTop])
+
+    for (let top = 0; top < maxScroll; top += step) {
+      positions.add(top)
+    }
+
+    let collected: DeepSeekNativeOutlineEntry[] = []
+
+    try {
+      Array.from(positions)
+        .sort((a, b) => a - b)
+        .forEach((top) => {
+          scrollContainer.scrollTop = top
+          scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
+
+          // 强制浏览器同步 layout，确保虚拟列表完成本轮渲染。
+          scrollContainer.getBoundingClientRect()
+          list.getBoundingClientRect()
+
+          const batch = this.readVisibleNativeOutlineEntries(list)
+          collected = this.mergeNativeOutlineEntryBatch(collected, batch, top)
+        })
+    } finally {
+      scrollContainer.scrollTop = originalScrollTop
+      scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
+    }
+
+    return collected
+  }
+
+  private readVisibleNativeOutlineEntries(list: HTMLElement): DeepSeekNativeOutlineEntry[] {
+    const visibleRoot =
+      (list.querySelector(".ds-virtual-list-visible-items") as HTMLElement | null) ||
+      (list.querySelector(".ds-virtual-list-items") as HTMLElement | null)
+    if (!visibleRoot) {
+      return []
+    }
+
+    const entries: DeepSeekNativeOutlineEntry[] = []
+
+    Array.from(visibleRoot.children).forEach((child, index) => {
+      if (!(child instanceof HTMLElement)) return
+
+      const text = this.extractNativeOutlineText(child)
+      if (!text) return
+
+      entries.push({ text, batchIndex: index })
+    })
+
+    return entries
+  }
+
+  private extractNativeOutlineText(item: HTMLElement): string {
+    const directChildren = Array.from(item.children).filter(
+      (child): child is HTMLElement => child instanceof HTMLElement,
+    )
+
+    for (const child of directChildren) {
+      const text = this.normalizeOutlineText(child.innerText || child.textContent || "")
+      if (text) {
+        return text
+      }
+    }
+
+    return this.normalizeOutlineText(item.innerText || item.textContent || "")
+  }
+
+  private mergeNativeOutlineEntryBatch(
+    collected: DeepSeekNativeOutlineEntry[],
+    batch: DeepSeekNativeOutlineEntry[],
+    scrollTop: number,
+  ): DeepSeekNativeOutlineEntry[] {
+    if (batch.length === 0) {
+      return collected
+    }
+
+    if (collected.length === 0) {
+      return batch.map((item) => ({
+        ...item,
+        scrollTop: item.scrollTop ?? scrollTop,
+      }))
+    }
+
+    const maxOverlap = Math.min(collected.length, batch.length)
+    for (let overlap = maxOverlap; overlap > 0; overlap -= 1) {
+      const collectedTail = collected.slice(-overlap)
+      const batchHead = batch.slice(0, overlap)
+      if (this.nativeOutlineEntrySequenceEquals(collectedTail, batchHead)) {
+        return [
+          ...collected,
+          ...batch.slice(overlap).map((item) => ({
+            ...item,
+            scrollTop: item.scrollTop ?? scrollTop,
+          })),
+        ]
+      }
+    }
+
+    return [
+      ...collected,
+      ...batch.map((item) => ({
+        ...item,
+        scrollTop: item.scrollTop ?? scrollTop,
+      })),
+    ]
+  }
+
+  private nativeOutlineEntrySequenceEquals(
+    left: DeepSeekNativeOutlineEntry[],
+    right: DeepSeekNativeOutlineEntry[],
+  ): boolean {
+    if (left.length !== right.length) {
+      return false
+    }
+
+    return left.every((item, index) => this.nativeOutlineEntryEquals(item, right[index]))
+  }
+
+  private nativeOutlineEntryEquals(
+    left: DeepSeekNativeOutlineEntry,
+    right: DeepSeekNativeOutlineEntry,
+  ): boolean {
+    return (
+      this.normalizeUserQueryMatchText(left.text) === this.normalizeUserQueryMatchText(right.text)
+    )
+  }
+
+  private findMatchingUserQueryIndex(
+    queries: OutlineItem[],
+    text: string,
+    startIndex: number,
+  ): number {
+    for (let i = startIndex; i < queries.length; i += 1) {
+      if (this.isEquivalentUserQueryText(queries[i].text, text)) {
+        return i
+      }
+    }
+
+    return -1
+  }
+
+  private findMatchingNativeUserQueryIndex(
+    nativeQueries: OutlineItem[],
+    query: OutlineItem,
+    startIndex: number,
+  ): number {
+    for (let i = startIndex; i < nativeQueries.length; i += 1) {
+      if (this.isEquivalentUserQueryText(nativeQueries[i].text, query.text)) {
+        return i
+      }
+    }
+
+    return -1
+  }
+
+  private isEquivalentUserQueryText(left: string, right: string): boolean {
+    const normalizedLeft = this.normalizeUserQueryMatchText(left)
+    const normalizedRight = this.normalizeUserQueryMatchText(right)
+
+    return (
+      normalizedLeft === normalizedRight ||
+      normalizedLeft.startsWith(normalizedRight) ||
+      normalizedRight.startsWith(normalizedLeft)
+    )
+  }
+
+  private normalizeUserQueryMatchText(text: string): string {
+    return this.normalizeOutlineText(text).replace(/\.{3}$/, "")
+  }
+
+  private normalizeOutlineText(text: string): string {
+    return text.replace(/\s+/g, " ").trim()
+  }
+
+  private async revealUserQueryThroughNativeOutline(
+    queryIndex: number,
+    text: string,
+  ): Promise<boolean> {
+    const list = this.findNativeOutlineList()
+    if (!list) {
+      return false
+    }
+
+    const scrollContainer = this.findNativeOutlineScrollContainer(list)
+    if (!scrollContainer) {
+      return false
+    }
+
+    const entries = this.collectNativeOutlineEntries()
+    if (entries.length === 0) {
+      return false
+    }
+
+    const targetEntry = this.resolveNativeOutlineEntry(entries, queryIndex, text)
+    if (!targetEntry) {
+      return false
+    }
+
+    const candidateScrollTops = this.buildNativeOutlineJumpPositions(
+      entries,
+      targetEntry,
+      queryIndex,
+      scrollContainer,
+      text,
+    )
+
+    for (const top of candidateScrollTops) {
+      scrollContainer.scrollTop = top
+      scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
+      await this.sleep(80)
+
+      const targetItem = this.findVisibleNativeOutlineItem(list, targetEntry, text)
+      if (!targetItem) {
+        continue
+      }
+
+      this.dispatchNativeOutlineClick(targetItem)
+      return true
+    }
+
+    return false
+  }
+
+  private resolveNativeOutlineEntry(
+    entries: DeepSeekNativeOutlineEntry[],
+    queryIndex: number,
+    text: string,
+  ): DeepSeekNativeOutlineEntry | null {
+    if (queryIndex > 0 && queryIndex <= entries.length) {
+      return entries[queryIndex - 1]
+    }
+
+    return entries.find((entry) => this.isEquivalentUserQueryText(entry.text, text)) || null
+  }
+
+  private buildNativeOutlineJumpPositions(
+    entries: DeepSeekNativeOutlineEntry[],
+    targetEntry: DeepSeekNativeOutlineEntry,
+    queryIndex: number,
+    scrollContainer: HTMLElement,
+    text: string,
+  ): number[] {
+    const maxScroll = Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight)
+    const estimatedTop =
+      entries.length > 1
+        ? Math.round((maxScroll * Math.max(queryIndex - 1, 0)) / Math.max(entries.length - 1, 1))
+        : 0
+
+    const matchTops = entries
+      .filter((entry) => this.isEquivalentUserQueryText(entry.text, text))
+      .map((entry) => entry.scrollTop)
+      .filter((top): top is number => typeof top === "number")
+
+    const positions = [
+      targetEntry.scrollTop,
+      estimatedTop,
+      estimatedTop - scrollContainer.clientHeight * 0.5,
+      estimatedTop + scrollContainer.clientHeight * 0.5,
+      ...matchTops,
+      0,
+      maxScroll,
+    ]
+
+    const seen = new Set<number>()
+
+    return positions
+      .map((top) => Math.max(0, Math.min(maxScroll, Math.round(top || 0))))
+      .filter((top) => {
+        if (seen.has(top)) {
+          return false
+        }
+        seen.add(top)
+        return true
+      })
+  }
+
+  private findVisibleNativeOutlineItem(
+    list: HTMLElement,
+    targetEntry: DeepSeekNativeOutlineEntry,
+    text: string,
+  ): HTMLElement | null {
+    const visibleRoot =
+      (list.querySelector(".ds-virtual-list-visible-items") as HTMLElement | null) ||
+      (list.querySelector(".ds-virtual-list-items") as HTMLElement | null)
+    if (!visibleRoot) {
+      return null
+    }
+
+    const children = Array.from(visibleRoot.children).filter(
+      (child): child is HTMLElement => child instanceof HTMLElement,
+    )
+
+    if (
+      typeof targetEntry.batchIndex === "number" &&
+      targetEntry.batchIndex >= 0 &&
+      targetEntry.batchIndex < children.length
+    ) {
+      const indexedChild = children[targetEntry.batchIndex]
+      if (this.isEquivalentUserQueryText(this.extractNativeOutlineText(indexedChild), text)) {
+        return indexedChild
+      }
+    }
+
+    return (
+      children.find((child) =>
+        this.isEquivalentUserQueryText(this.extractNativeOutlineText(child), text),
+      ) || null
+    )
+  }
+
+  private dispatchNativeOutlineClick(element: HTMLElement): void {
+    element.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }))
+    element.dispatchEvent(new MouseEvent("mouseup", { bubbles: true, cancelable: true }))
+    element.click()
+  }
+
+  private async waitForUserQueryElement(queryIndex: number, text: string): Promise<Element | null> {
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const found = this.findUserQueryElement(queryIndex, text)
+      if (found) {
+        return found
+      }
+
+      await this.sleep(80)
+    }
+
+    return null
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => window.setTimeout(resolve, ms))
   }
 
   private async deleteConversationViaApi(

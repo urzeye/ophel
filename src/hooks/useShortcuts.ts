@@ -195,7 +195,7 @@ export function useShortcuts({
   // 追踪上次导航的目标索引，避免重复依赖视口判定
   const lastNavigatedIndexRef = useRef<number | null>(null)
   const navigateHeading = useCallback(
-    (direction: "prev" | "next") => {
+    async (direction: "prev" | "next") => {
       if (!outlineManager) return
 
       // 获取大纲状态
@@ -230,18 +230,10 @@ export function useShortcuts({
           const targetItem = flatItems[idx]
           let element = targetItem.element
           if (!element || !element.isConnected) {
-            // 尝试重新查找元素
-            if (targetItem.isUserQuery && targetItem.level === 0) {
-              element = outlineManager.findUserQueryElement(
-                targetItem.queryIndex!,
-                targetItem.text,
-              ) as HTMLElement
-            } else {
-              element = outlineManager.findElementByHeading(
-                targetItem.level,
-                targetItem.text,
-              ) as HTMLElement
-            }
+            element = (await outlineManager.resolveOutlineTarget(
+              targetItem,
+              targetItem.queryIndex,
+            )) as HTMLElement
           }
           if (element && element.isConnected) {
             const rect = element.getBoundingClientRect()
@@ -293,17 +285,10 @@ export function useShortcuts({
         let element = targetItem.element
         // 如果元素丢失重新查找（复用 OutlineTab 的逻辑）
         if (!element || !element.isConnected) {
-          if (targetItem.isUserQuery && targetItem.level === 0) {
-            element = outlineManager.findUserQueryElement(
-              targetItem.queryIndex!,
-              targetItem.text,
-            ) as HTMLElement
-          } else {
-            element = outlineManager.findElementByHeading(
-              targetItem.level,
-              targetItem.text,
-            ) as HTMLElement
-          }
+          element = (await outlineManager.resolveOutlineTarget(
+            targetItem,
+            targetItem.queryIndex,
+          )) as HTMLElement
           if (element) {
             targetItem.element = element
           }

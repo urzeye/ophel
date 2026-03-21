@@ -426,6 +426,13 @@ export class OutlineManager {
     return this.siteAdapter.findUserQueryElement(queryIndex, text)
   }
 
+  async resolveOutlineTarget(
+    item: Pick<OutlineItem, "level" | "text" | "isUserQuery">,
+    queryIndex?: number,
+  ): Promise<Element | null> {
+    return this.siteAdapter.resolveOutlineTarget(item, queryIndex)
+  }
+
   getState() {
     // 根据是否开启用户提问，确定 minRelativeLevel
     const minRelativeLevel = this.settings.showUserQueries ? 0 : 1
@@ -840,6 +847,23 @@ export class OutlineManager {
     const containerScrollTop = container.scrollTop
     const entries: Array<{ node: OutlineNode; top: number; height: number; order: number }> = []
     let order = 0
+    const allowCachedMetrics = this.shouldKeepPreviousVisibleItem()
+
+    const pushCachedEntry = (node: OutlineNode): boolean => {
+      const cachedTop = node.scrollTop
+      if (!allowCachedMetrics || typeof cachedTop !== "number" || Number.isNaN(cachedTop)) {
+        return false
+      }
+
+      const cachedHeight =
+        typeof node.scrollHeight === "number" && !Number.isNaN(node.scrollHeight)
+          ? node.scrollHeight
+          : 0
+
+      entries.push({ node, top: cachedTop, height: cachedHeight, order })
+      order += 1
+      return true
+    }
 
     this.flatNodes.forEach((node) => {
       if (node.isGhost) return
@@ -856,10 +880,16 @@ export class OutlineManager {
         }
       }
 
-      if (!element || !element.isConnected) return
+      if (!element || !element.isConnected) {
+        pushCachedEntry(node)
+        return
+      }
 
       const clientRects = element.getClientRects()
-      if (clientRects.length === 0) return
+      if (clientRects.length === 0) {
+        pushCachedEntry(node)
+        return
+      }
 
       const rect = element.getBoundingClientRect()
       const top = rect.top - containerTop + containerScrollTop

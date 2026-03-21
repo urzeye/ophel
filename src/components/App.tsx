@@ -1443,7 +1443,7 @@ export const App = () => {
   }, [closeGlobalSettingsSearch, edgeSnapState, isGlobalSettingsSearchOpen])
 
   const navigateToSearchResult = useCallback(
-    (item: GlobalSearchResultItem) => {
+    async (item: GlobalSearchResultItem) => {
       closeGlobalSettingsSearch({ restoreFocus: false })
 
       if (item.category === "settings" && item.settingId) {
@@ -1479,22 +1479,12 @@ export const App = () => {
         let targetElement = targetNode?.element || null
 
         if (!targetElement || !targetElement.isConnected) {
-          if (item.outlineTarget.isUserQuery && item.outlineTarget.queryIndex) {
-            const found = outlineManager.findUserQueryElement(
-              item.outlineTarget.queryIndex,
-              item.outlineTarget.text,
-            )
-            if (found) {
-              targetElement = found
-            }
-          } else {
-            const found = outlineManager.findElementByHeading(
-              item.outlineTarget.level,
-              item.outlineTarget.text,
-            )
-            if (found) {
-              targetElement = found
-            }
+          const found = await outlineManager.resolveOutlineTarget(
+            item.outlineTarget,
+            item.outlineTarget.queryIndex,
+          )
+          if (found) {
+            targetElement = found
           }
         }
 
