@@ -566,6 +566,66 @@ export class DeepSeekAdapter extends SiteAdapter {
     this.clearExportSnapshot()
   }
 
+  getLatestReplyText(): string | null {
+    const scrollContainer =
+      this.getScrollContainer() || document.querySelector(this.getResponseContainerSelector())
+    if (scrollContainer instanceof HTMLElement) {
+      const originalScrollTop = scrollContainer.scrollTop
+      const maxScroll = Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight)
+
+      try {
+        scrollContainer.scrollTop = maxScroll
+        scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
+        scrollContainer.getBoundingClientRect()
+
+        const latest = this.extractLatestReplyTextFromMarkdowns(
+          this.getVisibleAssistantMarkdownElements(scrollContainer),
+        )
+        if (latest) {
+          return latest
+        }
+      } finally {
+        scrollContainer.scrollTop = originalScrollTop
+        scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
+      }
+    }
+
+    return this.extractLatestReplyTextFromMarkdowns(
+      this.getVisibleAssistantMarkdownElements(document),
+    )
+  }
+
+  getLastCodeBlockText(): string | null {
+    const scrollContainer =
+      this.getScrollContainer() || document.querySelector(this.getResponseContainerSelector())
+    if (scrollContainer instanceof HTMLElement) {
+      const positions = this.buildBottomUpScanPositions(scrollContainer)
+      const originalScrollTop = scrollContainer.scrollTop
+
+      try {
+        for (const top of positions) {
+          scrollContainer.scrollTop = top
+          scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
+          scrollContainer.getBoundingClientRect()
+
+          const code = this.extractLastCodeBlockTextFromMarkdowns(
+            this.getVisibleAssistantMarkdownElements(scrollContainer),
+          )
+          if (code) {
+            return code
+          }
+        }
+      } finally {
+        scrollContainer.scrollTop = originalScrollTop
+        scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
+      }
+    }
+
+    return this.extractLastCodeBlockTextFromMarkdowns(
+      this.getVisibleAssistantMarkdownElements(document),
+    )
+  }
+
   getSubmitButtonSelectors(): string[] {
     return [
       `div[role="button"].ds-icon-button:has(svg path[d="${SEND_ICON_PATH}"])`,
@@ -1434,6 +1494,103 @@ export class DeepSeekAdapter extends SiteAdapter {
     }
 
     return Array.from(positions).sort((a, b) => a - b)
+  }
+
+  private buildBottomUpScanPositions(scrollContainer: HTMLElement): number[] {
+    const maxScroll = Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight)
+    if (maxScroll <= 0) {
+      return [scrollContainer.scrollTop]
+    }
+
+    const step = Math.max(160, Math.floor(scrollContainer.clientHeight * 0.9))
+    const positions: number[] = []
+
+    for (let top = maxScroll; top > 0; top -= step) {
+      positions.push(top)
+    }
+
+    if (positions[positions.length - 1] !== 0) {
+      positions.push(0)
+    }
+
+    return positions
+  }
+
+  private getVisibleAssistantMarkdownElements(container: ParentNode): HTMLElement[] {
+    return Array.from(container.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR)).filter(
+      (element): element is HTMLElement =>
+        element instanceof HTMLElement &&
+        !element.closest(`[${DEEPSEEK_EXPORT_ROOT_ATTR}]`) &&
+        !element.closest(".gh-root"),
+    )
+  }
+
+  private extractLatestReplyTextFromMarkdowns(markdowns: HTMLElement[]): string | null {
+    for (let i = markdowns.length - 1; i >= 0; i -= 1) {
+      const text = this.extractTextWithLineBreaks(markdowns[i]).trim()
+      if (text) {
+        return text
+      }
+    }
+
+    return null
+  }
+
+  private extractLastCodeBlockTextFromMarkdowns(markdowns: HTMLElement[]): string | null {
+    for (let i = markdowns.length - 1; i >= 0; i -= 1) {
+      const markdownText = this.extractAssistantResponseText(markdowns[i])
+      const fromMarkdown = this.extractLastFencedCodeBlock(markdownText)
+      if (fromMarkdown) {
+        return fromMarkdown
+      }
+
+      const fromDom = this.extractLastCodeBlockTextFromDom(markdowns[i])
+      if (fromDom) {
+        return fromDom
+      }
+    }
+
+    return null
+  }
+
+  private extractLastFencedCodeBlock(markdown: string): string | null {
+    if (!markdown) {
+      return null
+    }
+
+    const pattern = /```[^\n]*\n([\s\S]*?)```/g
+    let lastMatch: string | null = null
+
+    for (const match of markdown.matchAll(pattern)) {
+      lastMatch = match[1] || null
+    }
+
+    if (!lastMatch || !lastMatch.trim()) {
+      return null
+    }
+
+    return lastMatch.replace(/\r\n/g, "\n").replace(/\n+$/, "")
+  }
+
+  private extractLastCodeBlockTextFromDom(markdown: Element): string | null {
+    const candidates = Array.from(markdown.querySelectorAll("pre code, pre"))
+
+    for (let i = candidates.length - 1; i >= 0; i -= 1) {
+      const candidate = candidates[i]
+      if (!(candidate instanceof HTMLElement)) continue
+
+      const clone = candidate.cloneNode(true) as HTMLElement
+      clone
+        .querySelectorAll('button, [role="button"], svg, .ds-icon-button, [aria-hidden="true"]')
+        .forEach((node) => node.remove())
+
+      const text = clone.textContent?.replace(/\r\n/g, "\n").replace(/\n+$/, "") || ""
+      if (text.trim()) {
+        return text
+      }
+    }
+
+    return null
   }
 
   private readVisibleExportMessageSnapshots(

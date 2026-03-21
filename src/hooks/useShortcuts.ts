@@ -541,14 +541,35 @@ export function useShortcuts({
 
   // 复制最后代码块 (Alt+;)
   const copyLastCodeBlock = useCallback(async () => {
-    // 查找页面中所有代码块
-    const codeBlocks = document.querySelectorAll("pre code, pre.code-block, .code-block code")
+    const adapterCode = adapter?.getLastCodeBlockText?.() || ""
+    if (adapterCode.trim()) {
+      try {
+        await navigator.clipboard.writeText(adapterCode)
+        showToast(t("codeBlockCopied") || "代码块已复制")
+      } catch {
+        showToast(t("copyFailed") || "复制失败")
+      }
+      return
+    }
+
+    // 通用兜底：查找页面中所有代码块，排除扩展自身 UI
+    const codeBlocks = Array.from(
+      document.querySelectorAll("pre code, pre, pre.code-block, .code-block code"),
+    ).filter(
+      (element) => !element.closest(".gh-root, .gh-user-query-markdown, .gh-markdown-preview"),
+    )
     if (codeBlocks.length === 0) {
       showToast(t("noCodeBlock") || "未找到代码块")
       return
     }
-    const lastCodeBlock = codeBlocks[codeBlocks.length - 1]
-    const code = lastCodeBlock.textContent || ""
+
+    const lastCodeBlock = codeBlocks[codeBlocks.length - 1] as HTMLElement
+    const clone = lastCodeBlock.cloneNode(true) as HTMLElement
+    clone
+      .querySelectorAll('button, [role="button"], svg, [aria-hidden="true"]')
+      .forEach((node) => node.remove())
+
+    const code = (clone.textContent || "").replace(/\r\n/g, "\n").replace(/\n+$/, "")
     if (!code.trim()) {
       showToast(t("noCodeBlock") || "未找到代码块")
       return
@@ -559,7 +580,7 @@ export function useShortcuts({
     } catch {
       showToast(t("copyFailed") || "复制失败")
     }
-  }, [])
+  }, [adapter])
 
   // 快捷键一览 (Alt+\)
   const showShortcuts = useCallback(() => {

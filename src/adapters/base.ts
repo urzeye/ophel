@@ -827,6 +827,11 @@ export abstract class SiteAdapter {
     return null
   }
 
+  /** 获取最后一个代码块的文本内容（用于复制功能） */
+  getLastCodeBlockText(): string | null {
+    return null
+  }
+
   /** 获取"新对话"按钮的选择器列表 */
   getNewChatButtonSelectors(): string[] {
     return []
