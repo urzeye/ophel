@@ -193,8 +193,6 @@ if (typeof chrome === "undefined" || !chrome.storage) {
   }
 }
 
-console.warn("[Ophel Userscript] Chrome storage polyfill ready")
-
 const chromeStorage = (window as any).chrome?.storage
 if (chromeStorage && !chromeStorage.onChanged) {
   chromeStorage.onChanged = {
@@ -229,8 +227,6 @@ if ((window as any).ophelUserscriptInitialized) {
  * 初始化油猴脚本
  */
 async function init() {
-  console.warn("[Ophel Userscript] Preparing runtime imports after polyfills...")
-
   const [{ getAdapter }, { App }, { initNetworkMonitor }] = await Promise.all([
     import("~adapters"),
     import("~components/App"),
@@ -240,14 +236,8 @@ async function init() {
   const adapter = getAdapter()
 
   if (!adapter) {
-    console.warn("[Ophel Userscript] No adapter found for:", window.location.hostname)
     return
   }
-
-  console.warn(
-    `[Ophel Userscript] Loaded ${adapter.getName()} adapter on:`,
-    window.location.hostname,
-  )
 
   // 初始化适配器
   adapter.afterPropertiesSet({})
@@ -266,8 +256,6 @@ async function init() {
 
   const mountUserscriptApp = async () => {
     try {
-      console.warn("[Ophel Userscript] Preparing shadow host...")
-
       const shadowHost = document.createElement("div")
       shadowHost.id = "ophel-userscript-root"
       shadowHost.style.cssText =
@@ -293,7 +281,6 @@ async function init() {
         if (!parent) return
         if (shadowHost.parentElement !== parent) {
           parent.appendChild(shadowHost)
-          console.warn("[Ophel Userscript] Shadow host mounted")
         }
       }
 
@@ -318,46 +305,27 @@ async function init() {
         shadowHost.classList.add("gh-site-chatglm")
       }
 
-      let shadowRoot: ShadowRoot
-      try {
-        shadowRoot = shadowHost.attachShadow({ mode: "open" })
-        console.warn("[Ophel Userscript] Shadow root attached")
-      } catch (error) {
-        console.error("[Ophel Userscript] attachShadow failed:", error)
-        throw error
-      }
+      const shadowRoot = shadowHost.attachShadow({ mode: "open" })
 
-      try {
-        const styleEl = document.createElement("style")
-        const sanitizedMainStyle = mainStyle.replace(
-          /@import\s+["'][^"']*theme-variables\.css["'];?\s*/g,
-          "",
-        )
-        styleEl.textContent = [
-          themeVariablesStyle,
-          sanitizedMainStyle,
-          conversationsStyle,
-          settingsStyle,
-        ].join("\n")
-        shadowRoot.appendChild(styleEl)
-        console.warn("[Ophel Userscript] Styles injected into shadow root")
-      } catch (error) {
-        console.error("[Ophel Userscript] Style injection failed:", error)
-        throw error
-      }
+      const styleEl = document.createElement("style")
+      const sanitizedMainStyle = mainStyle.replace(
+        /@import\s+["'][^"']*theme-variables\.css["'];?\s*/g,
+        "",
+      )
+      styleEl.textContent = [
+        themeVariablesStyle,
+        sanitizedMainStyle,
+        conversationsStyle,
+        settingsStyle,
+      ].join("\n")
+      shadowRoot.appendChild(styleEl)
 
       const container = document.createElement("div")
       container.id = "ophel-app-container"
       shadowRoot.appendChild(container)
 
-      try {
-        const root = ReactDOM.createRoot(container)
-        root.render(React.createElement(App))
-        console.warn("[Ophel Userscript] React root rendered")
-      } catch (error) {
-        console.error("[Ophel Userscript] React render failed:", error)
-        throw error
-      }
+      const root = ReactDOM.createRoot(container)
+      root.render(React.createElement(App))
     } catch (error) {
       cleanupMountWatchers()
       throw error
@@ -375,20 +343,14 @@ async function init() {
   const { useClaudeSessionKeysStore } = await import("~stores/claude-sessionkeys-store")
 
   // 等待所有 store hydration 完成
-  const waitForHydration = (
-    name: string,
-    store: {
-      getState: () => { _hasHydrated: boolean }
-      subscribe: (fn: (state: { _hasHydrated: boolean }) => void) => () => void
-      setState: (partial: Partial<{ _hasHydrated: boolean }>) => void
-    },
-  ) => {
+  const waitForHydration = (store: {
+    getState: () => { _hasHydrated: boolean }
+    subscribe: (fn: (state: { _hasHydrated: boolean }) => void) => () => void
+    setState: (partial: Partial<{ _hasHydrated: boolean }>) => void
+  }) => {
     if (store.getState()._hasHydrated) {
-      console.warn(`[Ophel Userscript] Store hydrated: ${name}`)
       return Promise.resolve(true)
     }
-
-    console.warn(`[Ophel Userscript] Waiting for hydration: ${name}`)
 
     const hydrationPromise = new Promise<boolean>((resolve) => {
       let timeoutId: number
@@ -403,14 +365,12 @@ async function init() {
       const unsub = store.subscribe((state) => {
         if (state._hasHydrated) {
           unsub()
-          console.warn(`[Ophel Userscript] Store hydrated: ${name}`)
           finish(true)
         }
       })
 
       timeoutId = window.setTimeout(() => {
         unsub()
-        console.warn(`[Ophel Userscript] Store hydration timeout: ${name}`)
         // 首次空存储时，persist 可能不会自然结束 hydration。
         // userscript 环境下这里直接兜底结束 loading，允许默认配置先渲染出来。
         store.setState({ _hasHydrated: true })
@@ -421,24 +381,18 @@ async function init() {
     return hydrationPromise
   }
 
-  const hydrationResults = await Promise.all([
-    waitForHydration("settings", useSettingsStore),
-    waitForHydration("conversations", useConversationsStore),
-    waitForHydration("folders", useFoldersStore),
-    waitForHydration("tags", useTagsStore),
-    waitForHydration("prompts", usePromptsStore),
-    waitForHydration("claudeSessionKeys", useClaudeSessionKeysStore),
+  await Promise.all([
+    waitForHydration(useSettingsStore),
+    waitForHydration(useConversationsStore),
+    waitForHydration(useFoldersStore),
+    waitForHydration(useTagsStore),
+    waitForHydration(usePromptsStore),
+    waitForHydration(useClaudeSessionKeysStore),
   ])
-
-  if (hydrationResults.includes(false)) {
-    console.warn("[Ophel Userscript] Continuing initialization with partially hydrated stores")
-  }
 
   // 获取用户设置
   const settings = getSettingsState()
   const siteId = adapter.getSiteId()
-
-  console.warn("[Ophel Userscript] Initializing core modules...")
 
   // ========== 初始化所有核心模块（使用共享模块） ==========
   const { initCoreModules, subscribeModuleUpdates, initUrlChangeObserver } = await import(
@@ -447,17 +401,10 @@ async function init() {
 
   const ctx = { adapter, settings, siteId }
 
-  try {
-    await initCoreModules(ctx)
-    console.warn("[Ophel Userscript] Core modules initialized")
-  } catch (error) {
-    console.error("[Ophel Userscript] Core module initialization failed:", error)
-    throw error
-  }
+  await initCoreModules(ctx)
 
   // 初始化 NetworkMonitor 消息监听器（必须显式调用以避免 tree-shaking）
   initNetworkMonitor()
-  console.warn("[Ophel Userscript] Network monitor initialized")
 
   // 订阅设置变化
   subscribeModuleUpdates(ctx)
@@ -469,6 +416,4 @@ async function init() {
 }
 
 // 启动
-init().catch((error) => {
-  console.error("[Ophel Userscript] Initialization failed:", error)
-})
+void init()
