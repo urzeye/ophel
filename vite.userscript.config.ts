@@ -2,14 +2,21 @@
 import * as fs from "fs"
 import * as path from "path"
 import react from "@vitejs/plugin-react"
-import { defineConfig } from "vite"
+import { defineConfig, type Plugin } from "vite"
 import monkey from "vite-plugin-monkey"
+
+import {
+  USERSCRIPT_RESOURCE_DEFINITIONS,
+  getUserscriptReleaseAssetBaseUrl,
+  getUserscriptResourceUrls,
+} from "./src/platform/userscript/resource-manifest"
 
 // ========== Dynamic Metadata Loading ==========
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, "package.json"), "utf-8"))
 const author: string = pkg.author
 const version: string = pkg.version
 const license: string = pkg.license
+const userscriptFuzzysortFileName = "fuzzysort.js"
 
 type UserscriptMetadata = {
   name: Record<string, string>
@@ -62,10 +69,83 @@ function validateUserscriptMetadata(metadata: UserscriptMetadata) {
 
 validateUserscriptMetadata(userscriptMetadata)
 
+const userscriptBuildOutDir = path.resolve(__dirname, "build/userscript")
+
+const userscriptAssetSources: Record<string, string> = {
+  [USERSCRIPT_RESOURCE_DEFINITIONS.icon.fileName]: path.resolve(__dirname, "assets/icon.png"),
+  [USERSCRIPT_RESOURCE_DEFINITIONS.notificationDefault.fileName]: path.resolve(
+    __dirname,
+    "assets/notification-sounds/streaming-complete-v2.mp3",
+  ),
+  [USERSCRIPT_RESOURCE_DEFINITIONS.notificationSoftChime.fileName]: path.resolve(
+    __dirname,
+    "assets/notification-sounds/soft-chime.ogg",
+  ),
+  [USERSCRIPT_RESOURCE_DEFINITIONS.notificationGlassPing.fileName]: path.resolve(
+    __dirname,
+    "assets/notification-sounds/glass-ping.ogg",
+  ),
+  [USERSCRIPT_RESOURCE_DEFINITIONS.notificationBrightAlert.fileName]: path.resolve(
+    __dirname,
+    "assets/notification-sounds/bright-alert.ogg",
+  ),
+  [USERSCRIPT_RESOURCE_DEFINITIONS.watermarkBg48.fileName]: path.resolve(
+    __dirname,
+    "assets/userscript/ophel-watermark-bg-48.png",
+  ),
+  [USERSCRIPT_RESOURCE_DEFINITIONS.watermarkBg96.fileName]: path.resolve(
+    __dirname,
+    "assets/userscript/ophel-watermark-bg-96.png",
+  ),
+  [userscriptFuzzysortFileName]: require.resolve("fuzzysort"),
+}
+
+function buildUserscriptStyleBundle(): string {
+  const themeVariablesStyle = fs.readFileSync(
+    path.resolve(__dirname, "src/styles/theme-variables.css"),
+    "utf-8",
+  )
+  const mainStyle = fs
+    .readFileSync(path.resolve(__dirname, "src/style.css"), "utf-8")
+    .replace(/@import\s+["'][^"']*theme-variables\.css["'];?\s*/g, "")
+  const conversationsStyle = fs.readFileSync(
+    path.resolve(__dirname, "src/styles/conversations.css"),
+    "utf-8",
+  )
+  const settingsStyle = fs.readFileSync(
+    path.resolve(__dirname, "src/styles/settings.css"),
+    "utf-8",
+  )
+
+  return [themeVariablesStyle, mainStyle, conversationsStyle, settingsStyle].join("\n")
+}
+
+function emitUserscriptAssets(): Plugin {
+  return {
+    name: "ophel-userscript-assets",
+    writeBundle() {
+      fs.mkdirSync(userscriptBuildOutDir, { recursive: true })
+      fs.writeFileSync(
+        path.join(userscriptBuildOutDir, USERSCRIPT_RESOURCE_DEFINITIONS.styles.fileName),
+        buildUserscriptStyleBundle(),
+        "utf-8",
+      )
+
+      for (const [fileName, sourcePath] of Object.entries(userscriptAssetSources)) {
+        fs.copyFileSync(sourcePath, path.join(userscriptBuildOutDir, fileName))
+      }
+    },
+  }
+}
+
+const userscriptResourceUrls = getUserscriptResourceUrls(version)
+const userscriptReleaseAssetBaseUrl = getUserscriptReleaseAssetBaseUrl(version)
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    emitUserscriptAssets(),
     monkey({
       entry: "src/platform/userscript/entry.tsx",
       userscript: {
@@ -92,6 +172,8 @@ export default defineConfig({
           "https://chat.z.ai/*",
         ],
         grant: [
+          "GM_getResourceText",
+          "GM_getResourceURL",
           "GM_getValue",
           "GM_setValue",
           "GM_deleteValue",
@@ -110,7 +192,8 @@ export default defineConfig({
         noframes: true,
         homepageURL: "https://github.com/urzeye/ophel",
         supportURL: "https://github.com/urzeye/ophel/issues",
-        require: ["https://cdn.jsdelivr.net/npm/fuzzysort@3.1.0/fuzzysort.min.js"],
+        require: [`${userscriptReleaseAssetBaseUrl}/${userscriptFuzzysortFileName}`],
+        resource: userscriptResourceUrls,
       },
       build: {
         // CSS 自动注入到 head

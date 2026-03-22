@@ -1,61 +1,57 @@
 import React from "react"
 import ReactDOM from "react-dom/client"
 
-import brightAlertNotificationSound from "../../../assets/notification-sounds/bright-alert.ogg?inline"
-import glassPingNotificationSound from "../../../assets/notification-sounds/glass-ping.ogg?inline"
-import softChimeNotificationSound from "../../../assets/notification-sounds/soft-chime.ogg?inline"
-import defaultNotificationSound from "../../../assets/notification-sounds/streaming-complete-v2.mp3?inline"
-// 导入样式为内联字符串（用于注入到 Shadow DOM）
-// 使用相对路径避免别名解析问题
-import mainStyle from "../../style.css?inline"
-import conversationsStyle from "../../styles/conversations.css?inline"
-import settingsStyle from "../../styles/settings.css?inline"
-import themeVariablesStyle from "../../styles/theme-variables.css?inline"
+import { USERSCRIPT_RESOURCE_DEFINITIONS } from "./resource-manifest"
 
-function createMediaObjectUrl(source: string): string {
-  if (!source.startsWith("data:")) {
-    return source
+function getUserscriptResourceText(resourceName: string): string {
+  try {
+    return GM_getResourceText(resourceName)
+  } catch (error) {
+    console.warn(`[Ophel] Failed to load userscript text resource: ${resourceName}`, error)
+    return ""
   }
-
-  const match = source.match(/^data:([^;,]+)?(;base64)?,(.*)$/)
-  if (!match) {
-    return source
-  }
-
-  const mimeType = match[1] || "application/octet-stream"
-  const isBase64 = Boolean(match[2])
-  const payload = match[3] || ""
-
-  let bytes: Uint8Array
-  if (isBase64) {
-    const binary = atob(payload)
-    bytes = new Uint8Array(binary.length)
-    for (let i = 0; i < binary.length; i += 1) {
-      bytes[i] = binary.charCodeAt(i)
-    }
-  } else {
-    bytes = new TextEncoder().encode(decodeURIComponent(payload))
-  }
-
-  return URL.createObjectURL(new Blob([bytes], { type: mimeType }))
 }
+
+function getUserscriptResourceUrl(resourceName: string): string | undefined {
+  try {
+    const resourceUrl = GM_getResourceURL(resourceName)
+    return resourceUrl || undefined
+  } catch (error) {
+    console.warn(`[Ophel] Failed to load userscript URL resource: ${resourceName}`, error)
+    return undefined
+  }
+}
+
+const userscriptStyleText = getUserscriptResourceText(
+  USERSCRIPT_RESOURCE_DEFINITIONS.styles.metaName,
+)
 
 const notificationSoundUrls = {
-  default: createMediaObjectUrl(defaultNotificationSound),
-  softChime: createMediaObjectUrl(softChimeNotificationSound),
-  glassPing: createMediaObjectUrl(glassPingNotificationSound),
-  brightAlert: createMediaObjectUrl(brightAlertNotificationSound),
+  default: getUserscriptResourceUrl(USERSCRIPT_RESOURCE_DEFINITIONS.notificationDefault.metaName),
+  softChime: getUserscriptResourceUrl(
+    USERSCRIPT_RESOURCE_DEFINITIONS.notificationSoftChime.metaName,
+  ),
+  glassPing: getUserscriptResourceUrl(
+    USERSCRIPT_RESOURCE_DEFINITIONS.notificationGlassPing.metaName,
+  ),
+  brightAlert: getUserscriptResourceUrl(
+    USERSCRIPT_RESOURCE_DEFINITIONS.notificationBrightAlert.metaName,
+  ),
 }
 
-window.__OPHEL_NOTIFICATION_SOUND_URLS__ = notificationSoundUrls
+window.__OPHEL_NOTIFICATION_SOUND_URLS__ = Object.fromEntries(
+  Object.entries(notificationSoundUrls).filter(
+    ([, url]) => typeof url === "string" && url.length > 0,
+  ),
+)
 
-window.addEventListener("unload", () => {
-  Object.values(notificationSoundUrls).forEach((url) => {
-    if (url.startsWith("blob:")) {
-      URL.revokeObjectURL(url)
-    }
-  })
-})
+window.__OPHEL_USERSCRIPT_ASSET_URLS__ = {
+  icon: getUserscriptResourceUrl(USERSCRIPT_RESOURCE_DEFINITIONS.icon.metaName) || "",
+  watermarkBg48:
+    getUserscriptResourceUrl(USERSCRIPT_RESOURCE_DEFINITIONS.watermarkBg48.metaName) || "",
+  watermarkBg96:
+    getUserscriptResourceUrl(USERSCRIPT_RESOURCE_DEFINITIONS.watermarkBg96.metaName) || "",
+}
 
 /**
  * Ophel - Userscript Entry Point
@@ -308,16 +304,7 @@ async function init() {
       const shadowRoot = shadowHost.attachShadow({ mode: "open" })
 
       const styleEl = document.createElement("style")
-      const sanitizedMainStyle = mainStyle.replace(
-        /@import\s+["'][^"']*theme-variables\.css["'];?\s*/g,
-        "",
-      )
-      styleEl.textContent = [
-        themeVariablesStyle,
-        sanitizedMainStyle,
-        conversationsStyle,
-        settingsStyle,
-      ].join("\n")
+      styleEl.textContent = userscriptStyleText
       shadowRoot.appendChild(styleEl)
 
       const container = document.createElement("div")

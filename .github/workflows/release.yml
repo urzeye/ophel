@@ -23,27 +23,6 @@ jobs:
         with:
           fetch-depth: 0 # 获取完整历史和所有 tags
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 20
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build all platforms
-        run: pnpm build:all
-
-      - name: Build Userscript
-        run: pnpm build:userscript
-
-      - name: Package all platforms
-        run: pnpm package:all
-
       - name: Get version
         id: get_version
         run: |
@@ -59,6 +38,38 @@ jobs:
             PREV_TAG="v1.0.0"
           fi
           echo "PREV_VERSION=$PREV_TAG" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate package version
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          RELEASE_VERSION=${{ steps.get_version.outputs.VERSION }}
+          RELEASE_VERSION_NO_V=${RELEASE_VERSION#v}
+
+          if [ "$PACKAGE_VERSION" != "$RELEASE_VERSION_NO_V" ]; then
+            echo "package.json version ($PACKAGE_VERSION) does not match release version ($RELEASE_VERSION_NO_V)"
+            exit 1
+          fi
+
+      - name: Build all platforms
+        run: pnpm build:all
+
+      - name: Build Userscript
+        run: pnpm build:userscript
+
+      - name: Package all platforms
+        run: pnpm package:all
 
       - name: Extract Changelog
         id: extract_changelog
@@ -156,6 +167,15 @@ jobs:
             build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-firefox.zip
             build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}.user.js
             build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip
+            build/userscript/ophel.user.css
+            build/userscript/ophel-icon.png
+            build/userscript/ophel-sound-default.mp3
+            build/userscript/ophel-sound-soft-chime.ogg
+            build/userscript/ophel-sound-glass-ping.ogg
+            build/userscript/ophel-sound-bright-alert.ogg
+            build/userscript/ophel-watermark-bg-48.png
+            build/userscript/ophel-watermark-bg-96.png
+            build/userscript/fuzzysort.js
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
         env:

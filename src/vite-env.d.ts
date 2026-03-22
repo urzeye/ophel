@@ -23,3 +23,11 @@ declare const GM_info: {
     version: string
   }
 }
+
+declare function GM_getResourceText(name: string): string
+declare function GM_getResourceURL(name: string): string
+
+interface Window {
+  __OPHEL_NOTIFICATION_SOUND_URLS__?: Record<string, string>
+  __OPHEL_USERSCRIPT_ASSET_URLS__?: Record<string, string>
+}
