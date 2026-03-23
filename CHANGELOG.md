@@ -17,6 +17,7 @@
 
 - **ThemeManager 全局单例复用**：修复页面刷新时 `App` 与核心模块重复创建 `ThemeManager`，导致主题状态竞争以及控制台出现 `[App] Global ThemeManager not found, creating fallback instance` 告警的问题。
 - **Gemini 刷新误报完成通知**：修复 Gemini 普通版与 Gemini Enterprise 在页面刷新时，偶发误判“AI 已生成完成”并错误弹出完成通知、播放提示音的问题。
+- **ChatGPT 模型锁定兼容新版页面**：适配 ChatGPT 新版模型选择菜单，修复模型锁定时反复打开/关闭模型弹窗、旧模型名被误判为当前模型，以及标签页标题中的模型名称在新版页面下显示不稳定的问题。
 
 ## [1.0.22]
 

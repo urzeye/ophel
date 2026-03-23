@@ -304,6 +304,15 @@ export abstract class SiteAdapter {
     return null
   }
 
+  /**
+   * 获取模型锁定时用于判定“当前模型”的文本。
+   * 默认保持旧行为：直接读取选择器按钮文本。
+   * 站点可覆盖此方法，使用更可靠的模型来源。
+   */
+  getModelLockCheckText(selectorBtn?: HTMLElement | null): string {
+    return selectorBtn?.textContent || selectorBtn?.innerText || ""
+  }
+
   /** 获取网络监控配置 */
   getNetworkMonitorConfig(): NetworkMonitorConfig | null {
     return null
@@ -958,7 +967,7 @@ export abstract class SiteAdapter {
         clearInterval(waitForButton)
 
         // 阶段2: 检查当前模型
-        const currentText = normalize(selectorBtn.textContent || selectorBtn.innerText || "")
+        const currentText = normalize(this.getModelLockCheckText(selectorBtn))
         if (currentText.includes(target)) {
           // 已经是目标模型，直接成功
           if (onSuccess) onSuccess()

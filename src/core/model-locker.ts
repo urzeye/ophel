@@ -106,7 +106,7 @@ export class ModelLocker {
         return
       }
 
-      const currentText = (selectorBtn.textContent || "").toLowerCase().trim()
+      const currentText = this.adapter.getModelLockCheckText(selectorBtn).toLowerCase().trim()
       const target = config.targetModelKeyword.toLowerCase().trim()
 
       if (currentText.includes(target)) {
