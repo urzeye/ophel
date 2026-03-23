@@ -1,6 +1,7 @@
 /**
  * Gemini 标准版适配器 (gemini.google.com)
  */
+import { bindDomTooltip, type DomTooltipBinding } from "~components/ui/Tooltip"
 import { SITE_IDS } from "~constants"
 import { platform } from "~platform"
 import { DOMToolkit } from "~utils/dom-toolkit"
@@ -86,11 +87,6 @@ interface GeminiMyStuffEnhancerOptions {
   getUserPathPrefix: () => string
 }
 
-interface GeminiMyStuffTooltipBinding {
-  destroy: () => void
-  hide: () => void
-}
-
 const GEMINI_MYSTUFF_ACTIVE_CLASS = "ophel-gemini-mystuff-active"
 const GEMINI_MYSTUFF_STYLE_ID = "ophel-gemini-mystuff-style"
 const GEMINI_MYSTUFF_OPEN_BUTTON_CLASS = "ophel-mystuff-open-btn"
@@ -104,7 +100,7 @@ const GEMINI_MYSTUFF_TOOLTIP_DELAY_MS = 300
 class GeminiMyStuffEnhancer {
   private started = false
   private mediaWatchStop: (() => void) | null = null
-  private tooltipBindings = new WeakMap<HTMLElement, GeminiMyStuffTooltipBinding>()
+  private tooltipBindings = new WeakMap<HTMLElement, DomTooltipBinding>()
   private pendingRequests = new Map<
     string,
     {
@@ -295,33 +291,6 @@ class GeminiMyStuffEnhancer {
         color: #ffffff;
       }
 
-      .ophel-tooltip {
-        background-color: rgba(30, 30, 35, 0.95);
-        color: #ffffff;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 13px;
-        line-height: 1.5;
-        z-index: 2147483647;
-        pointer-events: none;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(4px);
-        animation: ophel-mystuff-tooltip-fade-in 0.15s ease-out;
-      }
-
-      @keyframes ophel-mystuff-tooltip-fade-in {
-        from {
-          opacity: 0;
-          transform: scale(0.95);
-        }
-        to {
-          opacity: 1;
-          transform: scale(1);
-        }
-      }
     `
     document.head.appendChild(style)
   }
@@ -354,7 +323,15 @@ class GeminiMyStuffEnhancer {
     button.appendChild(createOpenInNewTabIcon())
 
     card.appendChild(button)
-    this.bindTooltip(button, () => this.getOpenInNewTabLabel())
+    this.tooltipBindings.set(
+      button,
+      bindDomTooltip(button, {
+        getContent: () => this.getOpenInNewTabLabel(),
+        delay: GEMINI_MYSTUFF_TOOLTIP_DELAY_MS,
+        maxWidth: 260,
+        preferredPlacement: "top",
+      }),
+    )
   }
 
   private isMyStuffPath(): boolean {
@@ -717,121 +694,6 @@ class GeminiMyStuffEnhancer {
     window.addEventListener("wheel", release, true)
     window.addEventListener("touchstart", release, true)
     button.addEventListener("focus", release, true)
-  }
-
-  private bindTooltip(button: HTMLElement, contentProvider: () => string): void {
-    if (this.tooltipBindings.has(button)) return
-
-    let tooltipEl: HTMLDivElement | null = null
-    let timerId: ReturnType<typeof setTimeout> | null = null
-
-    const cleanupTimer = () => {
-      if (timerId) {
-        clearTimeout(timerId)
-        timerId = null
-      }
-    }
-
-    const removeTooltip = () => {
-      cleanupTimer()
-      if (tooltipEl?.parentNode) {
-        tooltipEl.parentNode.removeChild(tooltipEl)
-      }
-      tooltipEl = null
-      button.removeAttribute("aria-describedby")
-    }
-
-    const positionTooltip = () => {
-      if (!tooltipEl) return
-
-      const triggerRect = button.getBoundingClientRect()
-      let top = triggerRect.top - tooltipEl.offsetHeight - 10
-      let left = triggerRect.left + triggerRect.width / 2
-
-      const tooltipRect = tooltipEl.getBoundingClientRect()
-      if (top < 10) {
-        top = triggerRect.bottom + 10
-      }
-
-      left -= tooltipRect.width / 2
-      if (left < 10) left = 10
-      if (left + tooltipRect.width > window.innerWidth - 10) {
-        left = window.innerWidth - tooltipRect.width - 10
-      }
-
-      tooltipEl.style.top = `${top}px`
-      tooltipEl.style.left = `${left}px`
-      tooltipEl.style.opacity = "1"
-    }
-
-    const showTooltip = () => {
-      cleanupTimer()
-      if (tooltipEl) {
-        positionTooltip()
-        return
-      }
-
-      timerId = setTimeout(() => {
-        const content = contentProvider()
-        tooltipEl = document.createElement("div")
-        tooltipEl.className = "ophel-tooltip"
-        tooltipEl.textContent = content
-        tooltipEl.style.position = "fixed"
-        tooltipEl.style.top = "0"
-        tooltipEl.style.left = "0"
-        tooltipEl.style.opacity = "0"
-        tooltipEl.style.zIndex = "2147483647"
-        tooltipEl.style.pointerEvents = "none"
-        tooltipEl.style.maxWidth = "260px"
-        tooltipEl.id = `ophel-mystuff-tooltip-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
-        document.body.appendChild(tooltipEl)
-        button.setAttribute("aria-label", content)
-        button.setAttribute("aria-describedby", tooltipEl.id)
-        positionTooltip()
-      }, GEMINI_MYSTUFF_TOOLTIP_DELAY_MS)
-    }
-
-    const hideTooltip = () => {
-      removeTooltip()
-    }
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        hideTooltip()
-      }
-    }
-
-    const onWindowChange = () => {
-      if (tooltipEl) positionTooltip()
-    }
-
-    button.addEventListener("pointerdown", hideTooltip)
-    button.addEventListener("click", hideTooltip)
-    button.addEventListener("mouseenter", showTooltip)
-    button.addEventListener("mouseleave", hideTooltip)
-    button.addEventListener("focus", showTooltip)
-    button.addEventListener("blur", hideTooltip)
-    window.addEventListener("blur", hideTooltip)
-    document.addEventListener("visibilitychange", handleVisibilityChange)
-    window.addEventListener("scroll", onWindowChange, true)
-    window.addEventListener("resize", onWindowChange)
-
-    this.tooltipBindings.set(button, {
-      hide: hideTooltip,
-      destroy: () => {
-        button.removeEventListener("pointerdown", hideTooltip)
-        button.removeEventListener("click", hideTooltip)
-        button.removeEventListener("mouseenter", showTooltip)
-        button.removeEventListener("mouseleave", hideTooltip)
-        button.removeEventListener("focus", showTooltip)
-        button.removeEventListener("blur", hideTooltip)
-        window.removeEventListener("blur", hideTooltip)
-        document.removeEventListener("visibilitychange", handleVisibilityChange)
-        window.removeEventListener("scroll", onWindowChange, true)
-        window.removeEventListener("resize", onWindowChange)
-        removeTooltip()
-      },
-    })
   }
 }
 
