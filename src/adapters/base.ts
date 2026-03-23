@@ -883,13 +883,21 @@ export abstract class SiteAdapter {
 
   /** 触发站点原生"新对话"入口 */
   startNewConversation(): boolean {
+    const beforeState = this.captureConversationNavigationState()
     const trigger = this.findVisibleElementBySelectors(this.getNewChatButtonSelectors())
-    if (!trigger) {
-      return false
+    if (trigger) {
+      this.simulateClick(trigger)
+
+      window.setTimeout(() => {
+        if (!this.hasConversationNavigationChanged(beforeState)) {
+          this.navigateToNewConversationUrl()
+        }
+      }, 150)
+
+      return true
     }
 
-    this.simulateClick(trigger)
-    return true
+    return this.navigateToNewConversationUrl()
   }
 
   /** 获取"停止生成"按钮的选择器列表 */
@@ -1511,6 +1519,50 @@ export abstract class SiteAdapter {
     return (
       !element.closest(".gh-root, .gh-user-query-markdown, .gh-markdown-preview") &&
       this.isElementVisible(element)
+    )
+  }
+
+  protected navigateToNewConversationUrl(): boolean {
+    const targetUrl = this.getNewTabUrl()
+    if (!targetUrl) {
+      return false
+    }
+
+    try {
+      const resolvedTargetUrl = new URL(targetUrl, window.location.origin).href
+      if (resolvedTargetUrl === window.location.href && this.isNewConversation()) {
+        return true
+      }
+
+      window.location.href = resolvedTargetUrl
+      return true
+    } catch {
+      window.location.href = targetUrl
+      return true
+    }
+  }
+
+  protected captureConversationNavigationState(): {
+    href: string
+    sessionId: string
+    isNewConversation: boolean
+  } {
+    return {
+      href: window.location.href,
+      sessionId: this.getSessionId(),
+      isNewConversation: this.isNewConversation(),
+    }
+  }
+
+  protected hasConversationNavigationChanged(state: {
+    href: string
+    sessionId: string
+    isNewConversation: boolean
+  }): boolean {
+    return (
+      window.location.href !== state.href ||
+      this.getSessionId() !== state.sessionId ||
+      this.isNewConversation() !== state.isNewConversation
     )
   }
 }

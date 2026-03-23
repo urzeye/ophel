@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef } from "react"
 
 import type { SiteAdapter } from "~adapters/base"
-import { SHORTCUT_ACTIONS, type ShortcutActionId } from "~constants/shortcuts"
+import { SHORTCUT_ACTIONS, isMacOS, type ShortcutActionId } from "~constants/shortcuts"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
 import { getShortcutManager } from "~core/shortcut-manager"
@@ -431,17 +431,19 @@ export function useShortcuts({
     showToast(t("locatingConversation") || "正在定位当前会话...")
   }, [adapter, settings, isPanelVisible, isSnapped, onPanelToggle, onShowSnappedPanel])
 
-  // 新会话（触发 Ctrl+Shift+O）
+  // 新会话（主修饰键 + Shift + O）
   const newConversation = useCallback(() => {
     if (adapter?.startNewConversation()) {
       return
     }
 
-    // 保留旧兜底，避免个别站点已有原生同键位监听时回退失效
+    // 保留旧兜底，兼容少数仍监听站点原生快捷键的页面
+    const isMac = isMacOS()
     const event = new KeyboardEvent("keydown", {
       key: "o",
       code: "KeyO",
-      ctrlKey: true,
+      ctrlKey: !isMac,
+      metaKey: isMac,
       shiftKey: true,
       bubbles: true,
     })
