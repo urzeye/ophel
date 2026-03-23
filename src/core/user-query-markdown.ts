@@ -12,14 +12,17 @@ import { initCopyButtons, showCopySuccess } from "~utils/icons"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 
 // Markdown 语法检测规则
-const MARKDOWN_PATTERNS = [
+const BLOCK_MARKDOWN_PATTERNS = [
   /^\s*#{1,6}\s+\S/m, // 标题：# Title
-  /\*\*[^*]+\*\*/, // 加粗：**bold**
-  /`[^`]+`/, // 行内代码：`code`
   /^\s*```/m, // 代码块：```
   /^\s*(?:>|&gt;)\s+\S/m, // 引用：> quote
   /^\s*[-*]\s+\S/m, // 无序列表：- item 或 * item
   /^\s*\d+\.\s+\S/m, // 有序列表：1. item
+]
+
+const INLINE_MARKDOWN_PATTERNS = [
+  /\*\*[^*]+\*\*/, // 加粗：**bold**
+  /`[^`]+`/, // 行内代码：`code`
   /\[.+\]\(.+\)/, // 链接：[text](url)
 ]
 
@@ -239,14 +242,16 @@ html.dark .gh-user-query-markdown hr {
 
 /**
  * 检测文本是否看起来像 Markdown
- * 需要同时满足：包含换行 + 命中至少一个规则
+ * 单行块级语法（如引用、标题、列表）和单行行内语法（如加粗、行内代码、链接）也允许渲染
  */
 function looksLikeMarkdown(text: string): boolean {
-  // 单行文本不处理
-  if (!text.includes("\n")) return false
+  const normalized = text.trim()
+  if (!normalized) return false
 
-  // 检测是否命中至少一个 Markdown 语法规则
-  return MARKDOWN_PATTERNS.some((pattern) => pattern.test(text))
+  return (
+    BLOCK_MARKDOWN_PATTERNS.some((pattern) => pattern.test(normalized)) ||
+    INLINE_MARKDOWN_PATTERNS.some((pattern) => pattern.test(normalized))
+  )
 }
 
 export class UserQueryMarkdownRenderer {

@@ -21,6 +21,8 @@
 - **Gemini My Stuff 悬浮态残留**：修复点击“在新标签页中打开”后返回原页面时，悬浮按钮与 tooltip 文案仍残留显示的问题。
 - **Gemini Usage 面板油猴兼容性**：修复高级模型 Usage 统计面板在 Gemini 页面油猴脚本环境下因 `innerHTML` 被 Trusted Types 拦截而持续报错的问题。
 - **Gemini 用户问题渲染油猴兼容性**：修复 Gemini 普通版用户问题 Markdown 渲染在油猴脚本环境下因 Trusted Types 拦截直接 `innerHTML` 赋值而报错的问题。
+- **Gemini Enterprise Shadow DOM 兼容性**：修复 Gemini Enterprise 用户问题 Markdown 预览在 Shadow DOM 场景下渲染失效，以及高级模型 Usage 统计面板挂载异常导致样式丢失、文字出现在输入区的问题。
+- **单行 Markdown 用户问题渲染**：放宽用户问题 Markdown 识别条件，支持单行引用、标题、列表、加粗、行内代码与链接内容正常触发渲染。
 
 ## [1.0.21]
 
