@@ -3,6 +3,83 @@ import ReactDOM from "react-dom/client"
 
 import { USERSCRIPT_RESOURCE_DEFINITIONS } from "./resource-manifest"
 
+const USERSCRIPT_OBJECT_URLS = new Set<string>()
+
+const USERSCRIPT_AUDIO_RESOURCE_NAMES = new Set<string>(
+  Object.values(USERSCRIPT_RESOURCE_DEFINITIONS)
+    .filter(({ fileName }) => /\.(mp3|ogg)$/i.test(fileName))
+    .map(({ metaName }) => metaName),
+)
+
+const USERSCRIPT_RESOURCE_MIME_TYPES = Object.fromEntries(
+  Object.values(USERSCRIPT_RESOURCE_DEFINITIONS).map(({ metaName, fileName }) => {
+    const extension = fileName.split(".").pop()?.toLowerCase()
+    const mimeType =
+      extension === "css"
+        ? "text/css"
+        : extension === "png"
+          ? "image/png"
+          : extension === "mp3"
+            ? "audio/mpeg"
+            : extension === "ogg"
+              ? "audio/ogg"
+              : "application/octet-stream"
+
+    return [metaName, mimeType]
+  }),
+)
+
+function decodeBase64ToBytes(base64Data: string): Uint8Array {
+  const binary = atob(base64Data)
+  const bytes = new Uint8Array(binary.length)
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index)
+  }
+
+  return bytes
+}
+
+function normalizeUserscriptResourceUrl(resourceName: string, resourceUrl: string): string {
+  if (!resourceUrl.startsWith("data:") || !USERSCRIPT_AUDIO_RESOURCE_NAMES.has(resourceName)) {
+    return resourceUrl
+  }
+
+  try {
+    const separatorIndex = resourceUrl.indexOf(",")
+    if (separatorIndex === -1) {
+      return resourceUrl
+    }
+
+    const metadata = resourceUrl.slice(5, separatorIndex)
+    const payload = resourceUrl.slice(separatorIndex + 1)
+    const metadataSegments = metadata.split(";").filter(Boolean)
+    const rawMimeType = metadataSegments[0] || ""
+    const mimeType =
+      USERSCRIPT_RESOURCE_MIME_TYPES[resourceName as keyof typeof USERSCRIPT_RESOURCE_MIME_TYPES] ||
+      rawMimeType ||
+      "application/octet-stream"
+    const bytes = metadataSegments.includes("base64")
+      ? decodeBase64ToBytes(payload)
+      : new TextEncoder().encode(decodeURIComponent(payload))
+    const blobUrl = URL.createObjectURL(new Blob([bytes], { type: mimeType }))
+
+    USERSCRIPT_OBJECT_URLS.add(blobUrl)
+    return blobUrl
+  } catch (error) {
+    console.warn(`[Ophel] Failed to normalize userscript resource URL: ${resourceName}`, error)
+    return resourceUrl
+  }
+}
+
+function cleanupUserscriptObjectUrls(): void {
+  for (const objectUrl of USERSCRIPT_OBJECT_URLS) {
+    URL.revokeObjectURL(objectUrl)
+  }
+
+  USERSCRIPT_OBJECT_URLS.clear()
+}
+
 function getUserscriptResourceText(resourceName: string): string {
   try {
     return GM_getResourceText(resourceName)
@@ -15,7 +92,7 @@ function getUserscriptResourceText(resourceName: string): string {
 function getUserscriptResourceUrl(resourceName: string): string | undefined {
   try {
     const resourceUrl = GM_getResourceURL(resourceName)
-    return resourceUrl || undefined
+    return resourceUrl ? normalizeUserscriptResourceUrl(resourceName, resourceUrl) : undefined
   } catch (error) {
     console.warn(`[Ophel] Failed to load userscript URL resource: ${resourceName}`, error)
     return undefined
@@ -400,6 +477,7 @@ async function init() {
   initUrlChangeObserver(ctx)
 
   window.addEventListener("unload", cleanupMountWatchers)
+  window.addEventListener("unload", cleanupUserscriptObjectUrls)
 }
 
 // 启动
