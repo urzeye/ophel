@@ -766,7 +766,7 @@ export class KimiAdapter extends SiteAdapter {
 
   getNetworkMonitorConfig(): NetworkMonitorConfig {
     return {
-      urlPatterns: ["chat/completion", "api/chat"],
+      urlPatterns: ["apiv2/kimi.gateway.chat.v1.ChatService/Chat"],
       silenceThreshold: 2000,
     }
   }

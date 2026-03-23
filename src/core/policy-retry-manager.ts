@@ -51,6 +51,7 @@ export class PolicyRetryManager {
           type: EVENT_MONITOR_INIT,
           payload: {
             urlPatterns: config.urlPatterns,
+            urlPathEndsWith: config.urlPathEndsWith,
             silenceThreshold: config.silenceThreshold,
           },
         },

@@ -19,6 +19,7 @@ function getPageWindow(): typeof globalThis {
 
 interface NetworkMonitorOptions {
   urlPatterns?: string[]
+  urlPathEndsWith?: string[]
   silenceThreshold?: number
   onComplete?: (ctx: any) => void
   onStart?: (ctx: any) => void
@@ -27,6 +28,7 @@ interface NetworkMonitorOptions {
 
 class NetworkMonitor {
   private urlPatterns: string[]
+  private urlPathEndsWith: string[]
   private silenceThreshold: number
   private onComplete: (ctx: any) => void
   private onStart: ((ctx: any) => void) | null
@@ -44,6 +46,7 @@ class NetworkMonitor {
 
   constructor(options: NetworkMonitorOptions = {}) {
     this.urlPatterns = options.urlPatterns || []
+    this.urlPathEndsWith = options.urlPathEndsWith || []
     this.silenceThreshold = options.silenceThreshold || 3000
     this.onComplete = options.onComplete || (() => {})
     this.onStart = options.onStart || null
@@ -84,8 +87,21 @@ class NetworkMonitor {
   }
 
   private _isTargetUrl(url: string | null): boolean {
-    if (!url || this.urlPatterns.length === 0) return false
-    return this.urlPatterns.some((pattern) => url.includes(pattern))
+    if (!url) return false
+
+    const matchesPattern =
+      this.urlPatterns.length === 0 || this.urlPatterns.some((pattern) => url.includes(pattern))
+
+    if (!matchesPattern) return false
+
+    if (this.urlPathEndsWith.length === 0) return true
+
+    try {
+      const pathname = new URL(url, window.location.origin).pathname
+      return this.urlPathEndsWith.some((suffix) => pathname.endsWith(suffix))
+    } catch {
+      return this.urlPathEndsWith.some((suffix) => url.endsWith(suffix))
+    }
   }
 
   private _tryTriggerComplete() {
@@ -277,6 +293,7 @@ export function initNetworkMonitor(): void {
       if (monitor) monitor.stop()
       monitor = new NetworkMonitor({
         urlPatterns: payload?.urlPatterns,
+        urlPathEndsWith: payload?.urlPathEndsWith,
         silenceThreshold: payload?.silenceThreshold,
         onStart: (info) => window.postMessage({ type: EVENT_MONITOR_START, payload: info }, "*"),
         onComplete: (info) =>

@@ -24,6 +24,9 @@ export class TabManager {
   // AI 生成状态（简化的状态机）
   private aiState: "idle" | "generating" | "completed" = "idle"
   private lastAiState: "idle" | "generating" | "completed" = "idle"
+  private currentNetworkGenerationPending = false
+  private currentNetworkGenerationConfirmed = false
+  private generationConfirmationIntervalId: number | null = null
 
   // 用户是否在前台看到过生成完成（用于避免误发通知）
   private userSawCompletion = false
@@ -132,6 +135,7 @@ export class TabManager {
           type: EVENT_MONITOR_INIT,
           payload: {
             urlPatterns: config.urlPatterns,
+            urlPathEndsWith: config.urlPathEndsWith,
             silenceThreshold: config.silenceThreshold,
           },
         },
@@ -144,6 +148,7 @@ export class TabManager {
     if (!this.isRunning) return
 
     this.isRunning = false
+    this.resetGenerationConfirmationState()
     this.stopTitleObserver()
     this.expectedTitle = null
 
@@ -159,6 +164,7 @@ export class TabManager {
   destroy() {
     this.stop()
     this.stopNotificationPlayback()
+    this.resetGenerationConfirmationState()
     this.stopTitleObserver()
     window.removeEventListener("message", this.boundHandleMessage)
     document.removeEventListener("visibilitychange", this.boundVisibilityHandler)
@@ -362,6 +368,67 @@ export class TabManager {
     return this.aiState === "generating" || (this.adapter.isGenerating?.() ?? false)
   }
 
+  private requiresDomConfirmationForNetworkGeneration(): boolean {
+    return this.adapter.requiresDomConfirmationForNetworkGeneration?.() ?? false
+  }
+
+  private beginNetworkGeneration() {
+    this.stopNotificationPlayback()
+
+    if (!this.requiresDomConfirmationForNetworkGeneration()) {
+      this.confirmCurrentNetworkGeneration()
+      return
+    }
+
+    this.currentNetworkGenerationPending = true
+    this.currentNetworkGenerationConfirmed = false
+    this.startGenerationConfirmationPolling()
+  }
+
+  private confirmCurrentNetworkGeneration() {
+    this.currentNetworkGenerationPending = false
+    this.currentNetworkGenerationConfirmed = true
+    this.clearGenerationConfirmationPolling()
+
+    if (this.aiState !== "generating") {
+      this.lastAiState = this.aiState
+      this.aiState = "generating"
+    }
+
+    this.updateTabName()
+  }
+
+  private startGenerationConfirmationPolling() {
+    this.clearGenerationConfirmationPolling()
+
+    const confirmIfGenerating = () => {
+      if (!this.currentNetworkGenerationPending) return
+
+      if (this.adapter.isGenerating?.() ?? false) {
+        this.confirmCurrentNetworkGeneration()
+      }
+    }
+
+    confirmIfGenerating()
+
+    if (!this.currentNetworkGenerationConfirmed) {
+      this.generationConfirmationIntervalId = window.setInterval(confirmIfGenerating, 200)
+    }
+  }
+
+  private clearGenerationConfirmationPolling() {
+    if (this.generationConfirmationIntervalId !== null) {
+      window.clearInterval(this.generationConfirmationIntervalId)
+      this.generationConfirmationIntervalId = null
+    }
+  }
+
+  private resetGenerationConfirmationState() {
+    this.clearGenerationConfirmationPolling()
+    this.currentNetworkGenerationPending = false
+    this.currentNetworkGenerationConfirmed = false
+  }
+
   private handleMessage(event: MessageEvent) {
     // 兼容性与安全性平衡：
     // 1. 移除 event.source === window 检查（油猴脚本中 source 可能不一致）
@@ -371,10 +438,7 @@ export class TabManager {
     const { type } = event.data || {}
 
     if (type === EVENT_MONITOR_START) {
-      this.stopNotificationPlayback()
-      this.lastAiState = this.aiState
-      this.aiState = "generating"
-      this.updateTabName()
+      this.beginNetworkGeneration()
     } else if (type === EVENT_MONITOR_COMPLETE) {
       this.onAiComplete()
     } else if (type === EVENT_PRIVACY_TOGGLE) {
@@ -448,6 +512,18 @@ export class TabManager {
    * AI 任务完成处理（由 NetworkMonitor 触发）
    */
   private onAiComplete() {
+    const requiresDomConfirmation = this.requiresDomConfirmationForNetworkGeneration()
+    const generationConfirmed = this.currentNetworkGenerationConfirmed
+
+    if (requiresDomConfirmation && !generationConfirmed) {
+      this.resetGenerationConfirmationState()
+      this.lastAiState = this.aiState
+      this.aiState = "idle"
+      this.userSawCompletion = false
+      this.updateTabName(true)
+      return
+    }
+
     const wasGenerating = this.aiState === "generating"
     this.lastAiState = this.aiState
     this.aiState = "completed"
@@ -466,6 +542,7 @@ export class TabManager {
 
     // 重置状态
     this.userSawCompletion = false
+    this.resetGenerationConfirmationState()
 
     // 强制更新标签页标题
     this.updateTabName(true)

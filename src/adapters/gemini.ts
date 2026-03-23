@@ -2289,6 +2289,10 @@ export class GeminiAdapter extends SiteAdapter {
     return stopIcon !== null && (stopIcon as HTMLElement).offsetParent !== null
   }
 
+  requiresDomConfirmationForNetworkGeneration(): boolean {
+    return true
+  }
+
   getModelName(): string | null {
     const switchLabel = document.querySelector(".input-area-switch-label")
     if (switchLabel) {

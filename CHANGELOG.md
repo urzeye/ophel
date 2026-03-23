@@ -9,9 +9,14 @@
 
 ## [Unreleased]
 
+### ✨ 功能优化
+
+- **流式请求监控精度提升**：收窄 ChatGPT、Grok、Kimi 与 ChatGLM 的生成请求匹配条件，减少把普通网络请求误判为 AI 流式回复的情况。
+
 ### 🐛 问题修复
 
 - **ThemeManager 全局单例复用**：修复页面刷新时 `App` 与核心模块重复创建 `ThemeManager`，导致主题状态竞争以及控制台出现 `[App] Global ThemeManager not found, creating fallback instance` 告警的问题。
+- **Gemini 刷新误报完成通知**：修复 Gemini 普通版与 Gemini Enterprise 在页面刷新时，偶发误判“AI 已生成完成”并错误弹出完成通知、播放提示音的问题。
 
 ## [1.0.22]
 

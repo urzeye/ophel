@@ -1467,6 +1467,10 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     return findInShadow(document)
   }
 
+  requiresDomConfirmationForNetworkGeneration(): boolean {
+    return true
+  }
+
   /** 获取当前使用的模型名称（递归 Shadow DOM 搜索）*/
   getModelName(): string | null {
     const findInShadow = (root: Document | ShadowRoot, depth = 0): string | null => {

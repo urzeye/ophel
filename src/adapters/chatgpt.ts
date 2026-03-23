@@ -1320,7 +1320,8 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   getNetworkMonitorConfig(): NetworkMonitorConfig {
     return {
-      urlPatterns: ["conversation", "backend-api"],
+      urlPatterns: ["backend-api/f/conversation"],
+      urlPathEndsWith: ["backend-api/f/conversation"],
       silenceThreshold: 3000,
     }
   }

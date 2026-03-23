@@ -556,7 +556,7 @@ export class ChatGLMAdapter extends SiteAdapter {
 
   getNetworkMonitorConfig(): NetworkMonitorConfig {
     return {
-      urlPatterns: ["chat/completion", "/api/chat"],
+      urlPatterns: ["/chatglm/backend-api/assistant/stream"],
       silenceThreshold: 2000,
     }
   }

@@ -1585,7 +1585,8 @@ export class GrokAdapter extends SiteAdapter {
     // 接口格式：/rest/app-chat/conversations/{id}/responses
     // 该接口使用 NDJSON 流式输出，通过 isSoftStop: true 标记生成结束
     return {
-      urlPatterns: ["rest/app-chat/conversations"],
+      urlPatterns: ["/rest/app-chat/conversations/"],
+      urlPathEndsWith: ["/responses"],
       silenceThreshold: 500,
     }
   }

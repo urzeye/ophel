@@ -45,6 +45,7 @@ export interface SiteDeleteConversationResult {
 
 export interface NetworkMonitorConfig {
   urlPatterns: string[]
+  urlPathEndsWith?: string[]
   silenceThreshold: number
 }
 
@@ -287,6 +288,14 @@ export abstract class SiteAdapter {
 
   /** 检测 AI 是否正在生成响应 */
   isGenerating(): boolean {
+    return false
+  }
+
+  /**
+   * 某些站点刷新时会命中与真实生成相同的流式请求。
+   * 返回 true 时，只有在 DOM 生成态出现后，才把该轮网络请求视为真实生成。
+   */
+  requiresDomConfirmationForNetworkGeneration(): boolean {
     return false
   }
 
