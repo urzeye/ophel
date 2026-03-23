@@ -175,7 +175,6 @@ jobs:
             build/userscript/ophel-sound-bright-alert.ogg
             build/userscript/ophel-watermark-bg-48.png
             build/userscript/ophel-watermark-bg-96.png
-            build/userscript/fuzzysort.js
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
         env:

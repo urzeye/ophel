@@ -7,7 +7,6 @@ import monkey from "vite-plugin-monkey"
 
 import {
   USERSCRIPT_RESOURCE_DEFINITIONS,
-  getUserscriptReleaseAssetBaseUrl,
   getUserscriptResourceUrls,
 } from "./src/platform/userscript/resource-manifest"
 
@@ -16,7 +15,6 @@ const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, "package.json"), 
 const author: string = pkg.author
 const version: string = pkg.version
 const license: string = pkg.license
-const userscriptFuzzysortFileName = "fuzzysort.js"
 
 type UserscriptMetadata = {
   name: Record<string, string>
@@ -97,7 +95,6 @@ const userscriptAssetSources: Record<string, string> = {
     __dirname,
     "assets/userscript/ophel-watermark-bg-96.png",
   ),
-  [userscriptFuzzysortFileName]: require.resolve("fuzzysort"),
 }
 
 function buildUserscriptStyleBundle(): string {
@@ -139,7 +136,6 @@ function emitUserscriptAssets(): Plugin {
 }
 
 const userscriptResourceUrls = getUserscriptResourceUrls(version)
-const userscriptReleaseAssetBaseUrl = getUserscriptReleaseAssetBaseUrl(version)
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -192,7 +188,7 @@ export default defineConfig({
         noframes: true,
         homepageURL: "https://github.com/urzeye/ophel",
         supportURL: "https://github.com/urzeye/ophel/issues",
-        require: [`${userscriptReleaseAssetBaseUrl}/${userscriptFuzzysortFileName}`],
+        require: ["https://cdn.jsdelivr.net/npm/fuzzysort@3.1.0/fuzzysort.min.js"],
         resource: userscriptResourceUrls,
       },
       build: {
