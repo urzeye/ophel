@@ -31,6 +31,18 @@ export type ThemeModeChangeCallback = (mode: ThemeMode, preference: ThemePrefere
 // 订阅者类型
 type Listener = () => void
 
+const DEFAULT_LIGHT_PRESET_ID = "google-gradient"
+const DEFAULT_DARK_PRESET_ID = "classic-dark"
+
+export interface GlobalThemeManagerOptions {
+  mode: ThemePreference | string
+  onModeChange?: ThemeModeChangeCallback
+  adapter?: SiteAdapter | null
+  lightPresetId?: string
+  darkPresetId?: string
+  apply?: boolean
+}
+
 export class ThemeManager {
   private mode: ThemeMode
   private preference: ThemePreference
@@ -927,6 +939,13 @@ ${cssVars}
   }
 
   /**
+   * 获取当前主题偏好（light/dark/system）
+   */
+  getPreference(): ThemePreference {
+    return this.preference
+  }
+
+  /**
    * 获取当前模式快照（用于 useSyncExternalStore）
    */
   getSnapshot = (): ThemeMode => {
@@ -960,4 +979,46 @@ ${cssVars}
     this.stopMonitoring()
     this.listeners.clear()
   }
+}
+
+/**
+ * 确保 window 上始终只有一个 ThemeManager 实例
+ * userscript 场景下，App 可能会比核心模块更早渲染，
+ * 这里统一复用同一个实例，避免 fallback 和正式实例竞争。
+ */
+export function ensureGlobalThemeManager(options: GlobalThemeManagerOptions): ThemeManager {
+  const {
+    mode,
+    onModeChange,
+    adapter,
+    lightPresetId = DEFAULT_LIGHT_PRESET_ID,
+    darkPresetId = DEFAULT_DARK_PRESET_ID,
+    apply = false,
+  } = options
+
+  const themeManager =
+    window.__ophelThemeManager ||
+    new ThemeManager(mode, onModeChange, adapter, lightPresetId, darkPresetId)
+
+  if (!window.__ophelThemeManager) {
+    window.__ophelThemeManager = themeManager
+  }
+
+  themeManager.setAdapter(adapter ?? null)
+  themeManager.setPresets(lightPresetId, darkPresetId)
+
+  if (onModeChange !== undefined) {
+    themeManager.setOnModeChange(onModeChange)
+  }
+
+  const normalizedPreference: ThemePreference =
+    mode === "system" ? "system" : mode === "dark" ? "dark" : "light"
+
+  if (themeManager.getPreference() !== normalizedPreference) {
+    themeManager.updateMode(normalizedPreference)
+  } else if (apply) {
+    themeManager.apply()
+  }
+
+  return themeManager
 }

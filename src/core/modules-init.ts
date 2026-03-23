@@ -15,7 +15,7 @@ import { PolicyRetryManager } from "~core/policy-retry-manager"
 import { ReadingHistoryManager } from "~core/reading-history"
 import { ScrollLockManager } from "~core/scroll-lock-manager"
 import { TabManager } from "~core/tab-manager"
-import { ThemeManager } from "~core/theme-manager"
+import { ThemeManager, ensureGlobalThemeManager } from "~core/theme-manager"
 import { UsageCounterManager } from "~core/usage-counter-manager"
 import { UserQueryMarkdownRenderer } from "~core/user-query-markdown"
 import { WatermarkRemover } from "~core/watermark-remover"
@@ -84,17 +84,14 @@ export function initThemeManager(ctx: ModulesContext): ThemeManager {
   const { adapter, settings, siteId } = ctx
   const siteTheme = getSiteTheme(settings, siteId)
 
-  const themeManager = new ThemeManager(
-    siteTheme.mode,
-    undefined, // onModeChange callback - 由 App.tsx 动态注册
+  const themeManager = ensureGlobalThemeManager({
+    mode: siteTheme.mode,
     adapter,
-    siteTheme.lightStyleId || "google-gradient",
-    siteTheme.darkStyleId || "classic-dark",
-  )
-  themeManager.apply()
+    lightPresetId: siteTheme.lightStyleId || "google-gradient",
+    darkPresetId: siteTheme.darkStyleId || "classic-dark",
+    apply: true,
+  })
 
-  // 挂载到 window 对象，供 App.tsx 获取
-  window.__ophelThemeManager = themeManager
   modules.themeManager = themeManager
 
   return themeManager

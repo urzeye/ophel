@@ -14,7 +14,7 @@ import { InlineBookmarkManager } from "~core/inline-bookmark-manager"
 import { OutlineManager, type OutlineNode } from "~core/outline-manager"
 import { AI_STUDIO_SHORTCUT_SYNC_EVENT, PromptManager } from "~core/prompt-manager"
 import { QueueDispatcher } from "~core/queue-dispatcher"
-import { ThemeManager } from "~core/theme-manager"
+import { ensureGlobalThemeManager } from "~core/theme-manager"
 import { useShortcuts } from "~hooks/useShortcuts"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { useConversationsStore } from "~stores/conversations-store"
@@ -1915,27 +1915,20 @@ export const App = () => {
   }, [conversationManager, settings])
 
   // 从 window 获取 main.ts 创建的全局 ThemeManager 实例
-  // 这样只有一个 ThemeManager 实例，避免竞争条件
+  // userscript 场景下 App 可能先于核心模块渲染，这里统一复用全局单例
   const themeManager = useMemo(() => {
-    const globalTM = window.__ophelThemeManager
-    if (globalTM) {
-      return globalTM
-    }
-    // 降级：如果 main.ts 还没创建，则临时创建一个（不应该发生）
-    console.warn("[App] Global ThemeManager not found, creating fallback instance")
-    // 使用当前站点的配置
     const currentAdapter = getAdapter()
     const siteId = currentAdapter?.getSiteId() || "_default"
     const fallbackTheme =
       settings?.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
       settings?.theme?.sites?._default
-    return new ThemeManager(
-      fallbackTheme?.mode || "light", // 使用 settings 中的 mode，而非本地状态
-      undefined,
+
+    return ensureGlobalThemeManager({
+      mode: fallbackTheme?.mode || "light",
       adapter,
-      fallbackTheme?.lightStyleId || "google-gradient",
-      fallbackTheme?.darkStyleId || "classic-dark",
-    )
+      lightPresetId: fallbackTheme?.lightStyleId || "google-gradient",
+      darkPresetId: fallbackTheme?.darkStyleId || "classic-dark",
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在初始化时获取
   }, [])
 
