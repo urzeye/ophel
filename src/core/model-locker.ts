@@ -109,6 +109,14 @@ export class ModelLocker {
       const currentText = this.adapter.getModelLockCheckText(selectorBtn).toLowerCase().trim()
       const target = config.targetModelKeyword.toLowerCase().trim()
 
+      if (!currentText) {
+        // 某些站点在菜单关闭后无法稳定读取当前模型，空值视为“未知”而非“已切回”
+        if (verifyAttempts >= maxVerifyAttempts) {
+          this.finishVerification()
+        }
+        return
+      }
+
       if (currentText.includes(target)) {
         // 当前是目标模型
         consecutiveSuccess++
