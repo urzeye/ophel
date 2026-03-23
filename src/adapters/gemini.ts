@@ -17,6 +17,7 @@ import {
 } from "~utils/messaging"
 import { SKIP_READING_HISTORY_RESTORE_PARAM } from "~utils/storage"
 import { showToast } from "~utils/toast"
+import { setSafeHTML } from "~utils/trusted-types"
 
 import {
   SiteAdapter,
@@ -2028,13 +2029,15 @@ export class GeminiAdapter extends SiteAdapter {
       return false
     }
 
-    // 隐藏原内容
-    ;(textContainer as HTMLElement).style.display = "none"
-
     // 创建渲染容器
     const rendered = document.createElement("div")
     rendered.className = "gh-user-query-markdown gh-markdown-preview"
-    rendered.innerHTML = html
+    if (!setSafeHTML(rendered, html)) {
+      return false
+    }
+
+    // 隐藏原内容
+    ;(textContainer as HTMLElement).style.display = "none"
 
     // 插入到原容器后面
     textContainer.after(rendered)

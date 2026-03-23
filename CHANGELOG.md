@@ -20,6 +20,7 @@
 - **Gemini My Stuff 油猴兼容性**：修复 Gemini「我的内容」页在油猴脚本环境下因 CSP / Trusted Types 限制导致“在新标签页中打开”悬浮按钮图标无法渲染的问题。
 - **Gemini My Stuff 悬浮态残留**：修复点击“在新标签页中打开”后返回原页面时，悬浮按钮与 tooltip 文案仍残留显示的问题。
 - **Gemini Usage 面板油猴兼容性**：修复高级模型 Usage 统计面板在 Gemini 页面油猴脚本环境下因 `innerHTML` 被 Trusted Types 拦截而持续报错的问题。
+- **Gemini 用户问题渲染油猴兼容性**：修复 Gemini 普通版用户问题 Markdown 渲染在油猴脚本环境下因 Trusted Types 拦截直接 `innerHTML` 赋值而报错的问题。
 
 ## [1.0.21]
 
