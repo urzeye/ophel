@@ -983,6 +983,10 @@ export class ConversationManager {
       updatedAt: now,
     }
 
+    if (this.siteAdapter.isSharePage()) {
+      return fallbackConversation
+    }
+
     getConversationsStore().addConversation(fallbackConversation)
     this.notifyDataChange()
     return fallbackConversation

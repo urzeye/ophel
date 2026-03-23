@@ -24,6 +24,7 @@ import {
 } from "./base"
 
 const CHAT_PATH_PATTERN = /\/a\/chat\/s\/([a-z0-9-]+)/i
+const SHARE_PATH_PATTERN = /\/share\/([a-z0-9-]+)/i
 const TOKEN_STORAGE_PREFIX = "__tea_cache_tokens_"
 const THEME_STORAGE_KEY = "__appKit_@deepseek/chat_themePreference"
 const USER_TOKEN_STORAGE_KEY = "userToken"
@@ -144,12 +145,20 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   getSessionId(): string {
-    const match = window.location.pathname.match(CHAT_PATH_PATTERN)
-    return match ? match[1] : ""
+    const path = window.location.pathname
+    const chatMatch = path.match(CHAT_PATH_PATTERN)
+    if (chatMatch?.[1]) {
+      return chatMatch[1]
+    }
+
+    const shareMatch = path.match(SHARE_PATH_PATTERN)
+    return shareMatch?.[1] || ""
   }
 
   isNewConversation(): boolean {
     const path = window.location.pathname
+    if (this.isSharePage()) return false
+
     return (
       path === "/" || path === "/a/chat" || path === "/a/chat/" || !CHAT_PATH_PATTERN.test(path)
     )
@@ -285,6 +294,10 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   getConversationTitle(): string | null {
+    if (this.isSharePage()) {
+      return this.getShareConversationTitle()
+    }
+
     const sessionId = this.getSessionId()
     const activeLink =
       (sessionId
@@ -2041,6 +2054,32 @@ export class DeepSeekAdapter extends SiteAdapter {
       isActive,
       isPinned: this.isPinnedConversationLink(el),
     }
+  }
+
+  private getShareConversationTitle(): string | null {
+    const firstUserMessage = Array.from(document.querySelectorAll(USER_MESSAGE_SELECTOR)).find(
+      (message) => !message.parentElement?.closest(MESSAGE_SELECTOR),
+    )
+    const firstUserText = firstUserMessage ? this.extractUserQueryText(firstUserMessage) : ""
+    const normalizedUserText = this.normalizeOutlineText(firstUserText)
+
+    if (normalizedUserText) {
+      return normalizedUserText.length > 80
+        ? `${normalizedUserText.slice(0, 80)}...`
+        : normalizedUserText
+    }
+
+    const metaTitle = document
+      .querySelector('meta[property="og:title"], meta[name="twitter:title"]')
+      ?.getAttribute("content")
+      ?.replace(/\s*[-|]\s*DeepSeek$/i, "")
+      ?.trim()
+
+    if (metaTitle && metaTitle !== "来自分享的对话") {
+      return metaTitle
+    }
+
+    return metaTitle || "DeepSeek Share"
   }
 
   private isPinnedConversationLink(link: Element): boolean {
