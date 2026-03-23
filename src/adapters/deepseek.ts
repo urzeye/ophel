@@ -956,12 +956,30 @@ export class DeepSeekAdapter extends SiteAdapter {
       return [...nativeUserQueries, ...domOutline]
     }
 
-    const merged: OutlineItem[] = []
+    type QuerySegment =
+      | {
+          type: "matched"
+          nativeIndex: number
+          assistantItems: OutlineItem[]
+        }
+      | {
+          type: "unmatched"
+          userItem: OutlineItem
+          assistantItems: OutlineItem[]
+        }
+
+    const leadingAssistantItems: OutlineItem[] = []
+    const segments: QuerySegment[] = []
+    let currentSegment: QuerySegment | null = null
     let nativeQueryCursor = 0
 
     domOutline.forEach((item) => {
       if (!item.isUserQuery) {
-        merged.push(item)
+        if (currentSegment) {
+          currentSegment.assistantItems.push(item)
+        } else {
+          leadingAssistantItems.push(item)
+        }
         return
       }
 
@@ -970,20 +988,73 @@ export class DeepSeekAdapter extends SiteAdapter {
         item,
         nativeQueryCursor,
       )
-      if (matchIndex < 0) {
-        merged.push(item)
+
+      if (matchIndex >= 0) {
+        currentSegment = {
+          type: "matched",
+          nativeIndex: matchIndex,
+          assistantItems: [],
+        }
+        nativeQueryCursor = matchIndex + 1
+      } else {
+        currentSegment = {
+          type: "unmatched",
+          userItem: item,
+          assistantItems: [],
+        }
+      }
+
+      segments.push(currentSegment)
+    })
+
+    const firstMatchedSegment = segments.find(
+      (segment): segment is Extract<QuerySegment, { type: "matched" }> =>
+        segment.type === "matched",
+    )
+    if (!firstMatchedSegment) {
+      return [...nativeUserQueries, ...domOutline]
+    }
+
+    const merged: OutlineItem[] = []
+    let nextNativeQueryIndex = 0
+
+    if (leadingAssistantItems.length > 0) {
+      // DeepSeek 虚拟滚动可能会让当前可见 assistant 回复先挂在 DOM 中，
+      // 而对应的上一条用户提问暂时被卸载。此时把这些 heading 归到
+      // “首个可见用户提问之前的最后一条原生提问”后面，可以避免回答跑到提问上方。
+      const leadingTargetIndex = Math.max(firstMatchedSegment.nativeIndex - 1, 0)
+
+      while (
+        nextNativeQueryIndex <= leadingTargetIndex &&
+        nextNativeQueryIndex < nativeUserQueries.length
+      ) {
+        merged.push(nativeUserQueries[nextNativeQueryIndex])
+        nextNativeQueryIndex += 1
+      }
+
+      merged.push(...leadingAssistantItems)
+    }
+
+    segments.forEach((segment) => {
+      if (segment.type === "matched") {
+        while (
+          nextNativeQueryIndex <= segment.nativeIndex &&
+          nextNativeQueryIndex < nativeUserQueries.length
+        ) {
+          merged.push(nativeUserQueries[nextNativeQueryIndex])
+          nextNativeQueryIndex += 1
+        }
+
+        merged.push(...segment.assistantItems)
         return
       }
 
-      while (nativeQueryCursor <= matchIndex) {
-        merged.push(nativeUserQueries[nativeQueryCursor])
-        nativeQueryCursor += 1
-      }
+      merged.push(segment.userItem, ...segment.assistantItems)
     })
 
-    while (nativeQueryCursor < nativeUserQueries.length) {
-      merged.push(nativeUserQueries[nativeQueryCursor])
-      nativeQueryCursor += 1
+    while (nextNativeQueryIndex < nativeUserQueries.length) {
+      merged.push(nativeUserQueries[nextNativeQueryIndex])
+      nextNativeQueryIndex += 1
     }
 
     return merged
