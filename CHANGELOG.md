@@ -7,6 +7,12 @@
 
 ---
 
+## [Unreleased]
+
+### 🐛 问题修复
+
+- **ThemeManager 全局单例复用**：修复页面刷新时 `App` 与核心模块重复创建 `ThemeManager`，导致主题状态竞争以及控制台出现 `[App] Global ThemeManager not found, creating fallback instance` 告警的问题。
+
 ## [1.0.22]
 
 ### ✨ 功能优化
