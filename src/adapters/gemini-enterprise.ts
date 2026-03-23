@@ -1467,6 +1467,16 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     return findInShadow(document)
   }
 
+  getStopButtonSelectors(): string[] {
+    return [
+      'button[aria-label*="Stop"]',
+      'button[aria-label*="停止"]',
+      '[data-test-id="stop-button"]',
+      ".stop-button",
+      'md-icon-button[aria-label*="Stop"]',
+    ]
+  }
+
   requiresDomConfirmationForNetworkGeneration(): boolean {
     return true
   }

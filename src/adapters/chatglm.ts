@@ -503,6 +503,18 @@ export class ChatGLMAdapter extends SiteAdapter {
     return false
   }
 
+  getStopButtonSelectors(): string[] {
+    return [
+      ".stop-generate",
+      ".stop-answer-default",
+      ".stop-stream-tip",
+      ".answer-content-wrap .generating-icon",
+      ".enter-icon-container.stop",
+      ".enter.searching",
+      ".enter.is-main-chat.searching",
+    ]
+  }
+
   getModelName(): string | null {
     const selectors = [
       ".wrapper-title .showHideText",

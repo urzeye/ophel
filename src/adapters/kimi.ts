@@ -741,6 +741,10 @@ export class KimiAdapter extends SiteAdapter {
     return false
   }
 
+  getStopButtonSelectors(): string[] {
+    return [".send-button-container.stop", '.send-button-container:has(svg[name="stop"])']
+  }
+
   getModelName(): string | null {
     const el = document.querySelector(".current-model .model-name .name")
     return el?.textContent?.trim() || null

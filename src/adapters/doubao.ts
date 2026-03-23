@@ -1027,6 +1027,10 @@ export class DoubaoAdapter extends SiteAdapter {
     return stopBtn !== null && (stopBtn as HTMLElement).offsetParent !== null
   }
 
+  getStopButtonSelectors(): string[] {
+    return ['[data-testid="chat_input_local_break_button"]']
+  }
+
   getNewChatButtonSelectors(): string[] {
     return ["#create_conversation_button"]
   }

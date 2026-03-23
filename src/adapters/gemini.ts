@@ -2289,6 +2289,10 @@ export class GeminiAdapter extends SiteAdapter {
     return stopIcon !== null && (stopIcon as HTMLElement).offsetParent !== null
   }
 
+  getStopButtonSelectors(): string[] {
+    return ['button:has(mat-icon[fonticon="stop"])', 'mat-icon[fonticon="stop"]']
+  }
+
   requiresDomConfirmationForNetworkGeneration(): boolean {
     return true
   }

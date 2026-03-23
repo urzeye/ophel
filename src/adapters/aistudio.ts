@@ -1794,6 +1794,14 @@ export class AIStudioAdapter extends SiteAdapter {
     return false
   }
 
+  getStopButtonSelectors(): string[] {
+    return [
+      "ms-stop-button",
+      'button:has(mat-icon[fonticon="stop"])',
+      'button mat-icon[fonticon="stop"]',
+    ]
+  }
+
   // ==================== 模型名称获取 ====================
 
   /** 获取当前使用的模型名称 */

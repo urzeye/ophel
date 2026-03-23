@@ -1062,6 +1062,10 @@ export class ClaudeAdapter extends SiteAdapter {
     return false
   }
 
+  getStopButtonSelectors(): string[] {
+    return ['button[aria-label="Stop response"]']
+  }
+
   getNetworkMonitorConfig(): NetworkMonitorConfig {
     return {
       // Claude API 请求模式

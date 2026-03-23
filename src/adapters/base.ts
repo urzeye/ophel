@@ -847,12 +847,65 @@ export abstract class SiteAdapter {
 
   /** 获取最后一个代码块的文本内容（用于复制功能） */
   getLastCodeBlockText(): string | null {
+    const latestReplyText = this.getLatestReplyText()
+    const latestReplyCode = this.extractLastFencedCodeBlockText(latestReplyText || "")
+    if (latestReplyCode) {
+      return latestReplyCode
+    }
+
+    const responses = this.getAssistantResponseElementsForCodeSearch()
+    for (let i = responses.length - 1; i >= 0; i -= 1) {
+      const response = responses[i]
+
+      const codeFromDom = this.extractLastCodeBlockTextFromDomRoot(response)
+      if (codeFromDom) {
+        return codeFromDom
+      }
+
+      const responseText = this.extractAssistantResponseText(response).trim()
+      const codeFromMarkdown = this.extractLastFencedCodeBlockText(responseText)
+      if (codeFromMarkdown) {
+        return codeFromMarkdown
+      }
+    }
+
+    if (responses.length === 0) {
+      return this.extractLastCodeBlockTextFromDomRoot(this.getPrimaryCodeSearchRoot())
+    }
+
     return null
   }
 
   /** 获取"新对话"按钮的选择器列表 */
   getNewChatButtonSelectors(): string[] {
     return []
+  }
+
+  /** 触发站点原生"新对话"入口 */
+  startNewConversation(): boolean {
+    const trigger = this.findVisibleElementBySelectors(this.getNewChatButtonSelectors())
+    if (!trigger) {
+      return false
+    }
+
+    this.simulateClick(trigger)
+    return true
+  }
+
+  /** 获取"停止生成"按钮的选择器列表 */
+  getStopButtonSelectors(): string[] {
+    return []
+  }
+
+  /** 触发站点原生"停止生成"入口 */
+  stopGeneration(): boolean {
+    const trigger = this.findVisibleElementBySelectors(this.getStopButtonSelectors())
+    if (!trigger) {
+      return false
+    }
+
+    this.simulateClick(trigger)
+    return true
   }
 
   /** 绑定新对话触发事件 */
@@ -1330,5 +1383,134 @@ export abstract class SiteAdapter {
   /** 判断是否应该将样式注入到指定的 Shadow Host 中 */
   shouldInjectIntoShadow(_host: Element): boolean {
     return true
+  }
+
+  protected findVisibleElementBySelectors(selectors: string[]): HTMLElement | null {
+    if (selectors.length === 0) {
+      return null
+    }
+
+    const matched = DOMToolkit.query(selectors, {
+      all: true,
+      shadow: true,
+      filter: (element) => this.isElementVisible(element),
+    }) as Element[]
+
+    for (const element of matched || []) {
+      if (!(element instanceof HTMLElement)) continue
+
+      const clickable = this.resolveClickableTarget(element)
+      if (clickable && this.isElementVisible(clickable)) {
+        return clickable
+      }
+    }
+
+    return null
+  }
+
+  protected extractLastFencedCodeBlockText(markdown: string): string | null {
+    if (!markdown) {
+      return null
+    }
+
+    const pattern = /```[^\n]*\n([\s\S]*?)```/g
+    let lastMatch: string | null = null
+
+    for (const match of markdown.matchAll(pattern)) {
+      lastMatch = match[1] || null
+    }
+
+    if (!lastMatch || !lastMatch.trim()) {
+      return null
+    }
+
+    return lastMatch.replace(/\r\n/g, "\n").replace(/\n+$/, "")
+  }
+
+  protected extractLastCodeBlockTextFromDomRoot(root: ParentNode): string | null {
+    const candidates =
+      (DOMToolkit.query("pre code, pre, pre.code-block, .code-block code", {
+        parent: root as Node,
+        all: true,
+        shadow: true,
+        filter: (element) => this.shouldIncludeCodeElement(element),
+      }) as Element[]) || []
+
+    for (let i = candidates.length - 1; i >= 0; i -= 1) {
+      const candidate = candidates[i]
+      if (!(candidate instanceof HTMLElement)) continue
+
+      const clone = candidate.cloneNode(true) as HTMLElement
+      clone
+        .querySelectorAll(
+          'button, [role="button"], svg, [aria-hidden="true"], .gh-copy-btn, [data-testid*="copy"]',
+        )
+        .forEach((node) => node.remove())
+
+      const text = clone.textContent?.replace(/\r\n/g, "\n").replace(/\n+$/, "") || ""
+      if (text.trim()) {
+        return text
+      }
+    }
+
+    return null
+  }
+
+  protected getAssistantResponseElementsForCodeSearch(): Element[] {
+    const config = this.getExportConfig()
+    if (!config?.assistantResponseSelector) {
+      return []
+    }
+
+    return (
+      (DOMToolkit.query(config.assistantResponseSelector, {
+        parent: this.getPrimaryCodeSearchRoot() as Node,
+        all: true,
+        shadow: true,
+        filter: (element) => this.shouldIncludeAssistantResponseElement(element),
+      }) as Element[]) || []
+    )
+  }
+
+  protected getPrimaryCodeSearchRoot(): ParentNode {
+    const containerSelector = this.getResponseContainerSelector()
+    if (containerSelector) {
+      const container = DOMToolkit.query(containerSelector, { shadow: true }) as ParentNode | null
+      if (container) {
+        return container
+      }
+    }
+
+    return this.getScrollContainer() || document
+  }
+
+  protected resolveClickableTarget(element: HTMLElement | null): HTMLElement | null {
+    if (!element) {
+      return null
+    }
+
+    if (element.matches("button, a, [role='button'], [tabindex], md-icon-button, ms-stop-button")) {
+      return element
+    }
+
+    return (
+      (element.closest(
+        "button, a, [role='button'], [tabindex], md-icon-button, ms-stop-button",
+      ) as HTMLElement | null) || element
+    )
+  }
+
+  protected shouldIncludeAssistantResponseElement(element: Element): boolean {
+    return (
+      !element.closest(".gh-root, .gh-user-query-markdown, .gh-markdown-preview") &&
+      this.isElementVisible(element)
+    )
+  }
+
+  protected shouldIncludeCodeElement(element: Element): boolean {
+    return (
+      !element.closest(".gh-root, .gh-user-query-markdown, .gh-markdown-preview") &&
+      this.isElementVisible(element)
+    )
   }
 }

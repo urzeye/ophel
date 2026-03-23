@@ -433,7 +433,11 @@ export function useShortcuts({
 
   // 新会话（触发 Ctrl+Shift+O）
   const newConversation = useCallback(() => {
-    // 模拟 Ctrl+Shift+O 快捷键
+    if (adapter?.startNewConversation()) {
+      return
+    }
+
+    // 保留旧兜底，避免个别站点已有原生同键位监听时回退失效
     const event = new KeyboardEvent("keydown", {
       key: "o",
       code: "KeyO",
@@ -442,7 +446,7 @@ export function useShortcuts({
       bubbles: true,
     })
     document.dispatchEvent(event)
-  }, [])
+  }, [adapter])
 
   // 导出对话
   const exportConversation = useCallback(async () => {
@@ -508,7 +512,13 @@ export function useShortcuts({
   // 停止生成 (Alt+K)
   const stopGeneration = useCallback(() => {
     if (!adapter) return
-    // 查找停止按钮并点击
+
+    if (adapter.stopGeneration()) {
+      showToast(t("generationStopped") || "已停止生成")
+      return
+    }
+
+    // 保留旧兜底，降低未覆写站点的回归风险
     const stopSelectors = [
       '[data-testid="stop-button"]',
       'button[aria-label*="Stop"]',

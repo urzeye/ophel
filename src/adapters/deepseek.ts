@@ -717,6 +717,13 @@ export class DeepSeekAdapter extends SiteAdapter {
     return false
   }
 
+  getStopButtonSelectors(): string[] {
+    return [
+      `div[role="button"].ds-icon-button:has(svg path[d^="${STOP_ICON_PATH_PREFIX}"])`,
+      `button.ds-icon-button:has(svg path[d^="${STOP_ICON_PATH_PREFIX}"])`,
+    ]
+  }
+
   getModelName(): string | null {
     const selectedButtons = Array.from(document.querySelectorAll(".ds-toggle-button--selected"))
       .map(

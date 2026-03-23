@@ -581,6 +581,10 @@ export class ZaiAdapter extends SiteAdapter {
     return false
   }
 
+  getStopButtonSelectors(): string[] {
+    return [STOP_BUTTON_SELECTOR]
+  }
+
   getLatestReplyText(): string | null {
     const container =
       document.querySelector(this.getResponseContainerSelector()) ||

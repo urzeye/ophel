@@ -786,7 +786,6 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   getLatestReplyText(): string | null {
-    // TODO: 需要分析 ChatGPT 的回复结构
     const container = document.querySelector(this.getResponseContainerSelector())
     if (!container) return null
 
@@ -1319,6 +1318,10 @@ export class ChatGPTAdapter extends SiteAdapter {
     // ChatGPT 生成时会显示 stop 按钮
     const stopBtn = document.querySelector('[data-testid="stop-button"]')
     return stopBtn !== null && (stopBtn as HTMLElement).offsetParent !== null
+  }
+
+  getStopButtonSelectors(): string[] {
+    return ['[data-testid="stop-button"]']
   }
 
   private findModelSelectorButton(): HTMLElement | null {

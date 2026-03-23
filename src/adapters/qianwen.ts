@@ -551,6 +551,25 @@ export class QianwenAdapter extends SiteAdapter {
     return false
   }
 
+  getStopButtonSelectors(): string[] {
+    return [STOP_BUTTON_SELECTOR]
+  }
+
+  stopGeneration(): boolean {
+    const stopButtons = document.querySelectorAll(STOP_BUTTON_SELECTOR)
+    for (const button of Array.from(stopButtons)) {
+      const el = button as HTMLElement
+      if (!this.isVisibleElement(el) || this.isDisabledActionButton(el)) {
+        continue
+      }
+
+      this.simulateClick(el)
+      return true
+    }
+
+    return false
+  }
+
   getDefaultLockSettings(): { enabled: boolean; keyword: string } {
     return { enabled: false, keyword: "" }
   }

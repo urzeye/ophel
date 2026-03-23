@@ -1309,7 +1309,6 @@ export class GrokAdapter extends SiteAdapter {
 
   getExportConfig(): ExportConfig | null {
     // 配置导出功能
-    // 注意：这里的选择器是基于推测的，后续可能需要根据实际 DOM 调整
     return {
       userQuerySelector: this.getUserQuerySelector(),
       // AI 回复：没有 rounded-br-lg 的 .message-bubble（用户消息有此类）
@@ -1564,6 +1563,10 @@ export class GrokAdapter extends SiteAdapter {
     }
 
     return false
+  }
+
+  getStopButtonSelectors(): string[] {
+    return ['button[aria-label*="停止"]', 'button[aria-label*="Stop"]']
   }
 
   getModelName(): string | null {
