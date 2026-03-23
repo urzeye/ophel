@@ -665,60 +665,30 @@ export class UsageCounterManager {
       const roundTripDesc =
         t("usageMonitorRoundTripDesc") || "单轮往返 = 当前请求 + 一次预计回复的总消耗粗估区间"
       const resetButtonLabel = t("usageMonitorResetButton") || "清零"
-      const modeBadge = this.settings.autoResetEnabled
-        ? ""
-        : `<span class="gh-usage-monitor-badge">${this.escapeHtml(
-            t("usageMonitorManualMode") || "手动模式",
-          )}</span>`
+      const manualModeLabel = this.settings.autoResetEnabled
+        ? null
+        : t("usageMonitorManualMode") || "手动模式"
+      const contextCharsLabel = t("usageMonitorContextChars") || "上下文字符"
 
-      this.root.innerHTML = `
-        <div class="gh-usage-monitor-panel">
-          <div class="gh-usage-monitor-top">
-            <div class="gh-usage-monitor-title">${this.escapeHtml(title)}</div>
-            <div class="gh-usage-monitor-meta">
-              ${modeBadge}
-              <div class="gh-usage-monitor-count">${this.escapeHtml(
-                `${usageLabel}: ${count} / ${limit}`,
-              )}</div>
-              <button type="button" class="gh-usage-monitor-reset" data-action="reset-counter">${this.escapeHtml(
-                resetButtonLabel,
-              )}</button>
-            </div>
-          </div>
-          <div class="gh-usage-monitor-progress">
-            <div class="gh-usage-monitor-progress-bar" style="width: ${percent.toFixed(1)}%"></div>
-          </div>
-          <div class="gh-usage-monitor-grid">
-            <div class="gh-usage-monitor-item">
-              <span class="gh-usage-monitor-label">${this.escapeHtml(inputCharsLabel)}</span>
-              <span class="gh-usage-monitor-value">${estimate.inputChars} chars</span>
-            </div>
-            <div class="gh-usage-monitor-item">
-              <span class="gh-usage-monitor-label">${this.escapeHtml(loadedConversationLabel)}</span>
-              <span class="gh-usage-monitor-value">${estimate.loadedConversationTokens} tokens</span>
-            </div>
-            <div class="gh-usage-monitor-item">
-              <span class="gh-usage-monitor-label">${this.escapeHtml(loadedOutputLabel)}</span>
-              <span class="gh-usage-monitor-value">${estimate.loadedOutputTokens} tokens</span>
-            </div>
-            <div class="gh-usage-monitor-item">
-              <span class="gh-usage-monitor-label">${this.escapeHtml(requestTokensLabel)}</span>
-              <span class="gh-usage-monitor-value">${estimate.requestTokens} tokens</span>
-            </div>
-            <div class="gh-usage-monitor-item">
-              <span class="gh-usage-monitor-label">${this.escapeHtml(roundTripLabel)}</span>
-              <span class="gh-usage-monitor-value">${estimate.roundTripMin}-${estimate.roundTripMax}</span>
-            </div>
-            <div class="gh-usage-monitor-item">
-              <span class="gh-usage-monitor-label">${this.escapeHtml(
-                t("usageMonitorContextChars") || "上下文字符",
-              )}</span>
-              <span class="gh-usage-monitor-value">${estimate.loadedConversationChars} chars</span>
-            </div>
-          </div>
-          <div class="gh-usage-monitor-footnote">${this.escapeHtml(roundTripDesc)}</div>
-        </div>
-      `
+      this.root.replaceChildren(
+        this.buildUsageMonitorPanel({
+          title,
+          usageLabel,
+          resetButtonLabel,
+          roundTripDesc,
+          inputCharsLabel,
+          loadedConversationLabel,
+          loadedOutputLabel,
+          requestTokensLabel,
+          roundTripLabel,
+          contextCharsLabel,
+          manualModeLabel,
+          count,
+          limit,
+          percent,
+          estimate,
+        }),
+      )
       this.bindPanelControls()
       if (this.activeAnchor) {
         this.applySlotLayout(this.activeAnchor)
@@ -1295,12 +1265,118 @@ export class UsageCounterManager {
     return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ? "dark" : "light"
   }
 
-  private escapeHtml(value: string): string {
-    return value
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;")
+  private buildUsageMonitorPanel({
+    title,
+    usageLabel,
+    resetButtonLabel,
+    roundTripDesc,
+    inputCharsLabel,
+    loadedConversationLabel,
+    loadedOutputLabel,
+    requestTokensLabel,
+    roundTripLabel,
+    contextCharsLabel,
+    manualModeLabel,
+    count,
+    limit,
+    percent,
+    estimate,
+  }: {
+    title: string
+    usageLabel: string
+    resetButtonLabel: string
+    roundTripDesc: string
+    inputCharsLabel: string
+    loadedConversationLabel: string
+    loadedOutputLabel: string
+    requestTokensLabel: string
+    roundTripLabel: string
+    contextCharsLabel: string
+    manualModeLabel: string | null
+    count: number
+    limit: number
+    percent: number
+    estimate: UsageEstimateSnapshot
+  }): HTMLDivElement {
+    const panel = document.createElement("div")
+    panel.className = "gh-usage-monitor-panel"
+
+    const top = document.createElement("div")
+    top.className = "gh-usage-monitor-top"
+
+    const titleElement = document.createElement("div")
+    titleElement.className = "gh-usage-monitor-title"
+    titleElement.textContent = title
+
+    const meta = document.createElement("div")
+    meta.className = "gh-usage-monitor-meta"
+
+    if (manualModeLabel) {
+      const badge = document.createElement("span")
+      badge.className = "gh-usage-monitor-badge"
+      badge.textContent = manualModeLabel
+      meta.appendChild(badge)
+    }
+
+    const countElement = document.createElement("div")
+    countElement.className = "gh-usage-monitor-count"
+    countElement.textContent = `${usageLabel}: ${count} / ${limit}`
+
+    const resetButton = document.createElement("button")
+    resetButton.type = "button"
+    resetButton.className = "gh-usage-monitor-reset"
+    resetButton.dataset.action = "reset-counter"
+    resetButton.textContent = resetButtonLabel
+
+    meta.append(countElement, resetButton)
+    top.append(titleElement, meta)
+
+    const progress = document.createElement("div")
+    progress.className = "gh-usage-monitor-progress"
+
+    const progressBar = document.createElement("div")
+    progressBar.className = "gh-usage-monitor-progress-bar"
+    progressBar.style.width = `${percent.toFixed(1)}%`
+    progress.appendChild(progressBar)
+
+    const grid = document.createElement("div")
+    grid.className = "gh-usage-monitor-grid"
+    grid.append(
+      this.createUsageMonitorItem(inputCharsLabel, `${estimate.inputChars} chars`),
+      this.createUsageMonitorItem(
+        loadedConversationLabel,
+        `${estimate.loadedConversationTokens} tokens`,
+      ),
+      this.createUsageMonitorItem(loadedOutputLabel, `${estimate.loadedOutputTokens} tokens`),
+      this.createUsageMonitorItem(requestTokensLabel, `${estimate.requestTokens} tokens`),
+      this.createUsageMonitorItem(
+        roundTripLabel,
+        `${estimate.roundTripMin}-${estimate.roundTripMax}`,
+      ),
+      this.createUsageMonitorItem(contextCharsLabel, `${estimate.loadedConversationChars} chars`),
+    )
+
+    const footnote = document.createElement("div")
+    footnote.className = "gh-usage-monitor-footnote"
+    footnote.textContent = roundTripDesc
+
+    panel.append(top, progress, grid, footnote)
+    return panel
+  }
+
+  private createUsageMonitorItem(label: string, value: string): HTMLDivElement {
+    const item = document.createElement("div")
+    item.className = "gh-usage-monitor-item"
+
+    const labelElement = document.createElement("span")
+    labelElement.className = "gh-usage-monitor-label"
+    labelElement.textContent = label
+
+    const valueElement = document.createElement("span")
+    valueElement.className = "gh-usage-monitor-value"
+    valueElement.textContent = value
+
+    item.append(labelElement, valueElement)
+    return item
   }
 }
