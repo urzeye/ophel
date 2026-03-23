@@ -67,6 +67,7 @@ export class UsageCounterManager {
   private unwatchStorage: (() => void) | null = null
   private activeRecordKey = ""
   private currentRecord: UsageCounterRecord = { ...DEFAULT_RECORD }
+  private injectedStyleRoots = new Set<ShadowRoot>()
   private readonly handleViewportChange = () => {
     if (!this.settings.enabled) return
     this.scheduleRender(0)
@@ -272,6 +273,7 @@ export class UsageCounterManager {
 
     const target = this.resolveMountAnchor(editor)
     if (!target?.parentElement) return false
+    this.ensureStylesForTarget(target)
 
     if (!this.root) {
       this.root = document.createElement("div")
@@ -336,7 +338,20 @@ export class UsageCounterManager {
 
     const style = document.createElement("style")
     style.id = STYLE_ID
-    style.textContent = `
+    style.textContent = this.getUsageMonitorStyles()
+    document.head.appendChild(style)
+  }
+
+  private ensureStylesForTarget(target: HTMLElement) {
+    const rootNode = target.getRootNode()
+    if (!(rootNode instanceof ShadowRoot)) return
+
+    DOMToolkit.cssToShadow(rootNode, this.getUsageMonitorStyles(), STYLE_ID)
+    this.injectedStyleRoots.add(rootNode)
+  }
+
+  private getUsageMonitorStyles(): string {
+    return `
       .${ROOT_CLASS} {
         box-sizing: border-box;
         width: 100%;
@@ -563,11 +578,14 @@ export class UsageCounterManager {
         }
       }
     `
-    document.head.appendChild(style)
   }
 
   private removeStyles() {
     document.getElementById(STYLE_ID)?.remove()
+    for (const shadowRoot of this.injectedStyleRoots) {
+      shadowRoot.getElementById(STYLE_ID)?.remove()
+    }
+    this.injectedStyleRoots.clear()
   }
 
   private applySlotLayout(target: HTMLElement) {
@@ -798,7 +816,7 @@ export class UsageCounterManager {
         if (target.matches(selector)) {
           return target as HTMLElement
         }
-        const closest = target.closest(selector)
+        const closest = DOMToolkit.closestComposed(target, selector)
         if (closest instanceof HTMLElement) {
           return closest
         }
@@ -808,7 +826,7 @@ export class UsageCounterManager {
     }
 
     const editor = this.resolveEditor()
-    if (editor && (editor === target || editor.contains(target))) {
+    if (editor && this.containsInComposedTree(editor, target)) {
       return editor
     }
 
@@ -820,10 +838,10 @@ export class UsageCounterManager {
       this.adapter.findSubmitButton(editor) || this.findSubmitButtonBySelectors(editor)
 
     const strongCandidates = [
-      editor.closest("form"),
-      submitButton?.closest("form"),
+      DOMToolkit.closestComposed(editor, "form"),
+      submitButton ? DOMToolkit.closestComposed(submitButton, "form") : null,
       this.findClosestCommonAncestor(editor, submitButton),
-      editor.closest('[role="form"]'),
+      DOMToolkit.closestComposed(editor, '[role="form"]'),
     ].filter(Boolean) as HTMLElement[]
 
     const bestStrongCandidate = this.pickBestMountCandidate(strongCandidates, editor, submitButton)
@@ -832,11 +850,15 @@ export class UsageCounterManager {
     }
 
     const candidates = [
-      editor.closest(".chat-input-editor-container"),
-      editor.closest(".chat-editor"),
-      editor.closest(".input-area"),
-      editor.closest(".composer"),
-      editor.closest(".footer-input-wrap"),
+      DOMToolkit.closestComposed(editor, ".chat-input-editor-container"),
+      DOMToolkit.closestComposed(editor, ".chat-editor"),
+      DOMToolkit.closestComposed(editor, ".input-area-container"),
+      DOMToolkit.closestComposed(editor, ".input-area"),
+      DOMToolkit.closestComposed(editor, ".composer"),
+      DOMToolkit.closestComposed(editor, ".footer-input-wrap"),
+      DOMToolkit.closestComposed(editor, ".input-container"),
+      DOMToolkit.closestComposed(editor, ".editor-container"),
+      DOMToolkit.getComposedParentElement(editor),
       editor.parentElement,
     ].filter(Boolean) as HTMLElement[]
 
@@ -852,6 +874,7 @@ export class UsageCounterManager {
       .filter((candidate) => {
         if (!candidate?.parentElement) return false
         if (candidate === document.body || candidate === document.documentElement) return false
+        if (candidate.isContentEditable) return false
         const rect = candidate.getBoundingClientRect()
         return rect.width > 0 && rect.height > 0
       })
@@ -874,13 +897,17 @@ export class UsageCounterManager {
     const area = Math.max(1, candidateRect.width * candidateRect.height)
 
     let score = 0
+    const candidateContainsEditor = this.containsInComposedTree(candidate, editor)
+    const candidateContainsSubmit = submitButton
+      ? this.containsInComposedTree(candidate, submitButton)
+      : false
 
     const tagName = candidate.tagName.toLowerCase()
     if (tagName === "form") score += 520
     if (candidate.getAttribute("role") === "form") score += 320
-    if (candidate.contains(editor)) score += 160
-    if (submitButton && candidate.contains(submitButton)) score += 180
-    if (submitButton && candidate.contains(editor) && candidate.contains(submitButton)) {
+    if (candidateContainsEditor) score += 160
+    if (candidateContainsSubmit) score += 180
+    if (candidateContainsEditor && candidateContainsSubmit) {
       score += 260
     }
 
@@ -907,8 +934,8 @@ export class UsageCounterManager {
         parentStyle.display.includes("flex") && !parentStyle.flexDirection.startsWith("column")
       if (
         isRowFlex &&
-        parent.contains(editor) &&
-        (!submitButton || parent.contains(submitButton))
+        this.containsInComposedTree(parent, editor) &&
+        (!submitButton || this.containsInComposedTree(parent, submitButton))
       ) {
         const parentRect = parent.getBoundingClientRect()
         const parentArea = Math.max(1, parentRect.width * parentRect.height)
@@ -929,21 +956,23 @@ export class UsageCounterManager {
     if (!first || !second) return null
 
     const ancestors = new Set<HTMLElement>()
-    let current: HTMLElement | null = first
+    let current: Node | null = first
     while (current) {
-      ancestors.add(current)
-      current = current.parentElement
+      if (current instanceof HTMLElement) {
+        ancestors.add(current)
+      }
+      current = DOMToolkit.getComposedParent(current)
     }
 
     current = second
     while (current) {
-      if (ancestors.has(current)) {
+      if (current instanceof HTMLElement && ancestors.has(current)) {
         if (current === document.body || current === document.documentElement) {
           return null
         }
         return current
       }
-      current = current.parentElement
+      current = DOMToolkit.getComposedParent(current)
     }
 
     return null
@@ -953,9 +982,18 @@ export class UsageCounterManager {
     const selectors = this.adapter.getSubmitButtonSelectors()
     if (selectors.length === 0) return null
 
-    const scopeCandidates = [editor?.closest("form"), editor?.parentElement, document.body].filter(
-      Boolean,
-    ) as ParentNode[]
+    const rootNode = editor?.getRootNode()
+    const scopeCandidates = Array.from(
+      new Set(
+        [
+          rootNode instanceof ShadowRoot ? rootNode : null,
+          editor ? DOMToolkit.closestComposed(editor, "form") : null,
+          editor?.parentElement,
+          DOMToolkit.getComposedParentElement(editor),
+          document.body,
+        ].filter(Boolean) as ParentNode[],
+      ),
+    )
 
     for (const scope of scopeCandidates) {
       for (const selector of selectors) {
@@ -969,6 +1007,17 @@ export class UsageCounterManager {
     }
 
     return null
+  }
+
+  private containsInComposedTree(container: HTMLElement, target: Element | null): boolean {
+    let current: Node | null = target
+    while (current) {
+      if (current === container) {
+        return true
+      }
+      current = DOMToolkit.getComposedParent(current)
+    }
+    return false
   }
 
   private isSubmitButtonClick(event: MouseEvent, editor: HTMLElement): boolean {

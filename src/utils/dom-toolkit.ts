@@ -286,6 +286,69 @@ class DOMToolkitClass {
     this.cache.clear()
   }
 
+  // ===================== Composed Tree 辅助 =====================
+
+  /**
+   * 获取跨 Shadow DOM 边界的父节点
+   */
+  getComposedParent(node: Node | null): Node | null {
+    if (!node) return null
+
+    if (node instanceof ShadowRoot) {
+      return node.host
+    }
+
+    if (node instanceof Element && node.assignedSlot) {
+      return node.assignedSlot
+    }
+
+    if (node.parentNode) {
+      return node.parentNode
+    }
+
+    const root = node.getRootNode?.()
+    if (root instanceof ShadowRoot) {
+      return root.host
+    }
+
+    return null
+  }
+
+  /**
+   * 获取跨 Shadow DOM 边界的最近父元素
+   */
+  getComposedParentElement(node: Node | null): HTMLElement | null {
+    let current = this.getComposedParent(node)
+    while (current) {
+      if (current instanceof HTMLElement) {
+        return current
+      }
+      current = this.getComposedParent(current)
+    }
+    return null
+  }
+
+  /**
+   * 跨 Shadow DOM 边界执行 closest 查询
+   */
+  closestComposed(element: Element | null, selector: string): HTMLElement | null {
+    let current: Node | null = element
+    while (current) {
+      if (current instanceof HTMLElement) {
+        try {
+          if (current.matches(selector)) {
+            return current
+          }
+        } catch {
+          return null
+        }
+      }
+      current = this.getComposedParent(current)
+    }
+
+    return null
+  }
+
   // ===================== 同步查询 =====================
 
   /**

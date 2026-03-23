@@ -4,6 +4,7 @@
 import { SITE_IDS } from "~constants"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { htmlToMarkdown } from "~utils/exporter"
+import { setSafeHTML } from "~utils/trusted-types"
 
 import {
   SiteAdapter,
@@ -1126,13 +1127,15 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       return false
     }
 
-    // 隐藏原内容
-    ;(markdownDoc as HTMLElement).style.display = "none"
-
     // 创建渲染容器并插入到 Shadow DOM 中
     const rendered = document.createElement("div")
     rendered.className = "gh-user-query-markdown gh-markdown-preview"
-    rendered.innerHTML = html
+    if (!setSafeHTML(rendered, html)) {
+      return false
+    }
+
+    // 隐藏原内容
+    ;(markdownDoc as HTMLElement).style.display = "none"
 
     markdownDoc.after(rendered)
     return true
