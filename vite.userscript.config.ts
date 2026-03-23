@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { createHash } from "crypto"
 import * as fs from "fs"
 import * as path from "path"
 import react from "@vitejs/plugin-react"
@@ -7,6 +8,7 @@ import monkey from "vite-plugin-monkey"
 
 import {
   USERSCRIPT_RESOURCE_DEFINITIONS,
+  type UserscriptResourceMetaName,
   getUserscriptResourceUrls,
 } from "./src/platform/userscript/resource-manifest"
 
@@ -68,34 +70,37 @@ function validateUserscriptMetadata(metadata: UserscriptMetadata) {
 validateUserscriptMetadata(userscriptMetadata)
 
 const userscriptBuildOutDir = path.resolve(__dirname, "build/userscript")
+const userscriptAssetOutDirName = "userscript-assets"
+const userscriptAssetOutDir = path.join(userscriptBuildOutDir, userscriptAssetOutDirName)
+const userscriptAssetManifestFileName = "manifest.json"
 
-const userscriptAssetSources: Record<string, string> = {
-  [USERSCRIPT_RESOURCE_DEFINITIONS.icon.fileName]: path.resolve(__dirname, "assets/icon.png"),
-  [USERSCRIPT_RESOURCE_DEFINITIONS.notificationDefault.fileName]: path.resolve(
+const userscriptAssetSources = {
+  icon: path.resolve(__dirname, "assets/icon.png"),
+  notificationDefault: path.resolve(
     __dirname,
     "assets/notification-sounds/streaming-complete-v2.mp3",
   ),
-  [USERSCRIPT_RESOURCE_DEFINITIONS.notificationSoftChime.fileName]: path.resolve(
+  notificationSoftChime: path.resolve(
     __dirname,
     "assets/notification-sounds/soft-chime.ogg",
   ),
-  [USERSCRIPT_RESOURCE_DEFINITIONS.notificationGlassPing.fileName]: path.resolve(
+  notificationGlassPing: path.resolve(
     __dirname,
     "assets/notification-sounds/glass-ping.ogg",
   ),
-  [USERSCRIPT_RESOURCE_DEFINITIONS.notificationBrightAlert.fileName]: path.resolve(
+  notificationBrightAlert: path.resolve(
     __dirname,
     "assets/notification-sounds/bright-alert.ogg",
   ),
-  [USERSCRIPT_RESOURCE_DEFINITIONS.watermarkBg48.fileName]: path.resolve(
+  watermarkBg48: path.resolve(
     __dirname,
     "assets/userscript/ophel-watermark-bg-48.png",
   ),
-  [USERSCRIPT_RESOURCE_DEFINITIONS.watermarkBg96.fileName]: path.resolve(
+  watermarkBg96: path.resolve(
     __dirname,
     "assets/userscript/ophel-watermark-bg-96.png",
   ),
-}
+} as const
 
 function buildUserscriptStyleBundle(): string {
   const themeVariablesStyle = fs.readFileSync(
@@ -117,25 +122,88 @@ function buildUserscriptStyleBundle(): string {
   return [themeVariablesStyle, mainStyle, conversationsStyle, settingsStyle].join("\n")
 }
 
+function createContentHash(content: string | Buffer): string {
+  return createHash("sha256").update(content).digest("hex").slice(0, 12)
+}
+
+function createHashedFileName(fileName: string, content: string | Buffer): string {
+  const ext = path.extname(fileName)
+  const baseName = fileName.slice(0, fileName.length - ext.length)
+  return `${baseName}.${createContentHash(content)}${ext}`
+}
+
+function readUserscriptAssetContent(
+  key: keyof typeof USERSCRIPT_RESOURCE_DEFINITIONS,
+): string | Buffer {
+  if (key === "styles") {
+    return buildUserscriptStyleBundle()
+  }
+
+  return fs.readFileSync(userscriptAssetSources[key])
+}
+
+const userscriptResourceFiles = Object.fromEntries(
+  Object.entries(USERSCRIPT_RESOURCE_DEFINITIONS).map(([key, definition]) => {
+    const content = readUserscriptAssetContent(key as keyof typeof USERSCRIPT_RESOURCE_DEFINITIONS)
+    const fileName = createHashedFileName(definition.fileName, content)
+
+    return [
+      key,
+      {
+        ...definition,
+        content,
+        fileName,
+        relativePath: `${userscriptAssetOutDirName}/${fileName}`,
+      },
+    ]
+  }),
+) as Record<
+  keyof typeof USERSCRIPT_RESOURCE_DEFINITIONS,
+  {
+    metaName: UserscriptResourceMetaName
+    fileName: string
+    content: string | Buffer
+    relativePath: string
+  }
+>
+
+const userscriptResourcePaths = Object.fromEntries(
+  Object.values(userscriptResourceFiles).map(({ metaName, relativePath }) => [metaName, relativePath]),
+) as Record<UserscriptResourceMetaName, string>
+
 function emitUserscriptAssets(): Plugin {
   return {
     name: "ophel-userscript-assets",
     writeBundle() {
-      fs.mkdirSync(userscriptBuildOutDir, { recursive: true })
+      fs.mkdirSync(userscriptAssetOutDir, { recursive: true })
+
+      for (const { relativePath, content } of Object.values(userscriptResourceFiles)) {
+        fs.writeFileSync(path.join(userscriptBuildOutDir, relativePath), content)
+      }
+
       fs.writeFileSync(
-        path.join(userscriptBuildOutDir, USERSCRIPT_RESOURCE_DEFINITIONS.styles.fileName),
-        buildUserscriptStyleBundle(),
+        path.join(userscriptAssetOutDir, userscriptAssetManifestFileName),
+        JSON.stringify(
+          {
+            generatedAt: new Date().toISOString(),
+            version,
+            resources: Object.fromEntries(
+              Object.values(userscriptResourceFiles).map(({ metaName, fileName, relativePath }) => [
+                metaName,
+                { fileName, relativePath },
+              ]),
+            ),
+          },
+          null,
+          2,
+        ),
         "utf-8",
       )
-
-      for (const [fileName, sourcePath] of Object.entries(userscriptAssetSources)) {
-        fs.copyFileSync(sourcePath, path.join(userscriptBuildOutDir, fileName))
-      }
     },
   }
 }
 
-const userscriptResourceUrls = getUserscriptResourceUrls(version)
+const userscriptResourceUrls = getUserscriptResourceUrls(userscriptResourcePaths)
 
 // https://vitejs.dev/config/
 export default defineConfig({

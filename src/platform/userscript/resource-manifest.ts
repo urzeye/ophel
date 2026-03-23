@@ -1,4 +1,5 @@
-export const USERSCRIPT_RELEASE_REPOSITORY = "urzeye/ophel"
+export const USERSCRIPT_ASSET_REPOSITORY = "urzeye/ophel"
+export const USERSCRIPT_ASSET_BRANCH = "userscript-assets"
 
 export const USERSCRIPT_RESOURCE_DEFINITIONS = {
   styles: {
@@ -40,20 +41,26 @@ export type UserscriptResourceKey = keyof typeof USERSCRIPT_RESOURCE_DEFINITIONS
 export type UserscriptResourceMetaName =
   (typeof USERSCRIPT_RESOURCE_DEFINITIONS)[UserscriptResourceKey]["metaName"]
 
-export function getUserscriptReleaseAssetBaseUrl(version: string): string {
-  const normalizedVersion = version.startsWith("v") ? version : `v${version}`
-  return `https://github.com/${USERSCRIPT_RELEASE_REPOSITORY}/releases/download/${normalizedVersion}`
+export function getUserscriptAssetBaseUrl(): string {
+  const explicitBaseUrl =
+    typeof process !== "undefined" ? process.env.USERSCRIPT_ASSET_BASE_URL : undefined
+
+  if (explicitBaseUrl && explicitBaseUrl.trim().length > 0) {
+    return explicitBaseUrl.replace(/\/+$/, "")
+  }
+
+  return `https://cdn.jsdelivr.net/gh/${USERSCRIPT_ASSET_REPOSITORY}@${USERSCRIPT_ASSET_BRANCH}`
 }
 
 export function getUserscriptResourceUrls(
-  version: string,
+  resourcePaths: Record<UserscriptResourceMetaName, string>,
 ): Record<UserscriptResourceMetaName, string> {
-  const baseUrl = getUserscriptReleaseAssetBaseUrl(version)
+  const baseUrl = getUserscriptAssetBaseUrl()
 
   return Object.fromEntries(
-    Object.values(USERSCRIPT_RESOURCE_DEFINITIONS).map(({ metaName, fileName }) => [
+    Object.values(USERSCRIPT_RESOURCE_DEFINITIONS).map(({ metaName }) => [
       metaName,
-      `${baseUrl}/${fileName}`,
+      `${baseUrl}/${resourcePaths[metaName]}`,
     ]),
   ) as Record<UserscriptResourceMetaName, string>
 }

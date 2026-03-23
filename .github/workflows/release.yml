@@ -124,6 +124,18 @@ jobs:
           cp build/userscript/ophel.user.js build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}.user.js
           cp build/ophel-atlas-cws-upload.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip
 
+      - name: Publish userscript hashed assets
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/userscript/userscript-assets
+          publish_branch: userscript-assets
+          destination_dir: userscript-assets
+          keep_files: true
+          user_name: "github-actions[bot]"
+          user_email: "github-actions[bot]@users.noreply.github.com"
+          commit_message: "Publish userscript assets ${{ steps.get_version.outputs.VERSION }} [skip ci]"
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -167,14 +179,6 @@ jobs:
             build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-firefox.zip
             build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}.user.js
             build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip
-            build/userscript/ophel.user.css
-            build/userscript/ophel-icon.png
-            build/userscript/ophel-sound-default.mp3
-            build/userscript/ophel-sound-soft-chime.ogg
-            build/userscript/ophel-sound-glass-ping.ogg
-            build/userscript/ophel-sound-bright-alert.ogg
-            build/userscript/ophel-watermark-bg-48.png
-            build/userscript/ophel-watermark-bg-96.png
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
         env:
