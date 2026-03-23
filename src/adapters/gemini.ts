@@ -6,6 +6,7 @@ import { platform } from "~platform"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { htmlToMarkdown } from "~utils/exporter"
 import { t } from "~utils/i18n"
+import { createOpenInNewTabIcon } from "~utils/icons"
 import {
   EVENT_GEMINI_MYSTUFF_CACHE_SYNC,
   EVENT_GEMINI_MYSTUFF_SYNC_REQUEST,
@@ -87,12 +88,14 @@ interface GeminiMyStuffEnhancerOptions {
 
 interface GeminiMyStuffTooltipBinding {
   destroy: () => void
+  hide: () => void
 }
 
 const GEMINI_MYSTUFF_ACTIVE_CLASS = "ophel-gemini-mystuff-active"
 const GEMINI_MYSTUFF_STYLE_ID = "ophel-gemini-mystuff-style"
 const GEMINI_MYSTUFF_OPEN_BUTTON_CLASS = "ophel-mystuff-open-btn"
 const GEMINI_MYSTUFF_OPEN_BUTTON_ATTR = "data-ophel-mystuff-open"
+const GEMINI_MYSTUFF_OPEN_BUTTON_SUPPRESS_ATTR = "data-ophel-mystuff-open-suppress"
 const GEMINI_MYSTUFF_SYNC_TIMEOUT_MS = 12000
 const GEMINI_MYSTUFF_ROUTE_EVENT = "gh-url-change"
 const GEMINI_GOOGLEUSERCONTENT_HOST_REGEX = /^https:\/\/lh\d+\.googleusercontent\.com\//i
@@ -171,6 +174,7 @@ class GeminiMyStuffEnhancer {
       const mediaHost = actionButton.closest("library-item-card")
       if (!mediaHost) return
       this.preventNativeNavigation(event)
+      this.dismissActionButtonVisualState(actionButton)
       void this.openHostInNewTab(mediaHost, "media", this.preparePendingTab())
       return
     }
@@ -260,6 +264,12 @@ class GeminiMyStuffEnhancer {
         color: #ffffff;
       }
 
+      .${GEMINI_MYSTUFF_ACTIVE_CLASS} .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS}[${GEMINI_MYSTUFF_OPEN_BUTTON_SUPPRESS_ATTR}="1"] {
+        opacity: 0 !important;
+        pointer-events: none !important;
+        transform: translateY(-2px) !important;
+      }
+
       .${GEMINI_MYSTUFF_ACTIVE_CLASS} .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS} svg {
         width: 16px;
         height: 16px;
@@ -341,8 +351,7 @@ class GeminiMyStuffEnhancer {
     button.className = `${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS} ophel-tooltip-trigger`
     button.setAttribute(GEMINI_MYSTUFF_OPEN_BUTTON_ATTR, "1")
     button.setAttribute("aria-label", this.getOpenInNewTabLabel())
-    button.innerHTML =
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5"/><path d="M10 14 19 5"/><path d="M19 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4"/></svg>'
+    button.appendChild(createOpenInNewTabIcon())
 
     card.appendChild(button)
     this.bindTooltip(button, () => this.getOpenInNewTabLabel())
@@ -687,6 +696,29 @@ class GeminiMyStuffEnhancer {
     return t("geminiMystuffOpenInNewTab") || "在新标签页中打开"
   }
 
+  private dismissActionButtonVisualState(button: HTMLElement): void {
+    this.tooltipBindings.get(button)?.hide()
+    button.blur()
+    button.setAttribute(GEMINI_MYSTUFF_OPEN_BUTTON_SUPPRESS_ATTR, "1")
+
+    const release = () => {
+      button.removeAttribute(GEMINI_MYSTUFF_OPEN_BUTTON_SUPPRESS_ATTR)
+      window.removeEventListener("pointermove", release, true)
+      window.removeEventListener("pointerdown", release, true)
+      window.removeEventListener("keydown", release, true)
+      window.removeEventListener("wheel", release, true)
+      window.removeEventListener("touchstart", release, true)
+      button.removeEventListener("focus", release, true)
+    }
+
+    window.addEventListener("pointermove", release, true)
+    window.addEventListener("pointerdown", release, true)
+    window.addEventListener("keydown", release, true)
+    window.addEventListener("wheel", release, true)
+    window.addEventListener("touchstart", release, true)
+    button.addEventListener("focus", release, true)
+  }
+
   private bindTooltip(button: HTMLElement, contentProvider: () => string): void {
     if (this.tooltipBindings.has(button)) return
 
@@ -763,23 +795,38 @@ class GeminiMyStuffEnhancer {
       removeTooltip()
     }
 
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        hideTooltip()
+      }
+    }
+
     const onWindowChange = () => {
       if (tooltipEl) positionTooltip()
     }
 
+    button.addEventListener("pointerdown", hideTooltip)
+    button.addEventListener("click", hideTooltip)
     button.addEventListener("mouseenter", showTooltip)
     button.addEventListener("mouseleave", hideTooltip)
     button.addEventListener("focus", showTooltip)
     button.addEventListener("blur", hideTooltip)
+    window.addEventListener("blur", hideTooltip)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
     window.addEventListener("scroll", onWindowChange, true)
     window.addEventListener("resize", onWindowChange)
 
     this.tooltipBindings.set(button, {
+      hide: hideTooltip,
       destroy: () => {
+        button.removeEventListener("pointerdown", hideTooltip)
+        button.removeEventListener("click", hideTooltip)
         button.removeEventListener("mouseenter", showTooltip)
         button.removeEventListener("mouseleave", hideTooltip)
         button.removeEventListener("focus", showTooltip)
         button.removeEventListener("blur", hideTooltip)
+        window.removeEventListener("blur", hideTooltip)
+        document.removeEventListener("visibilitychange", handleVisibilityChange)
         window.removeEventListener("scroll", onWindowChange, true)
         window.removeEventListener("resize", onWindowChange)
         removeTooltip()

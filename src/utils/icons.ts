@@ -105,6 +105,43 @@ export function createCheckIcon(options: IconOptions = {}): SVGSVGElement {
 }
 
 /**
+ * 新标签页打开图标
+ */
+export function createOpenInNewTabIcon(options: IconOptions = {}): SVGSVGElement {
+  const { size = 16, color = "currentColor", className = "" } = options
+
+  const svg = createSVGElement("svg", {
+    xmlns: SVG_NS,
+    width: size.toString(),
+    height: size.toString(),
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: color,
+    "stroke-width": "2",
+    "stroke-linecap": "round",
+    "stroke-linejoin": "round",
+    "aria-hidden": "true",
+    ...(className ? { class: className } : {}),
+  }) as SVGSVGElement
+
+  const topRightPath = createSVGElement("path", {
+    d: "M14 5h5v5",
+  })
+  const diagonalPath = createSVGElement("path", {
+    d: "M10 14 19 5",
+  })
+  const framePath = createSVGElement("path", {
+    d: "M19 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4",
+  })
+
+  svg.appendChild(topRightPath)
+  svg.appendChild(diagonalPath)
+  svg.appendChild(framePath)
+
+  return svg
+}
+
+/**
  * 更新按钮内部的图标（复制 -> 勾选 -> 复制）
  * 使用 DOM API 避免 innerHTML（CSP Trusted Types 兼容）
  */
