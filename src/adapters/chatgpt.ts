@@ -52,8 +52,9 @@ const CHATGPT_MODEL_SELECTOR_BUTTON_SELECTORS = [
   '[aria-haspopup="menu"][aria-label*="model"]',
 ] as const
 
-const CHATGPT_MODEL_LOCK_CACHE_TTL_MS = 15_000
-const CHATGPT_MODEL_LOCK_ATTEMPT_TIMEOUT_MS = 12_000
+const CHATGPT_MODEL_LOCK_CACHE_TTL_MS = 6_000
+const CHATGPT_SELECTED_MODEL_CACHE_TTL_MS = 30_000
+const CHATGPT_MODEL_LOCK_REENTRY_COOLDOWN_MS = 1_200
 const CHATGPT_MODEL_MENU_SELECTOR =
   '[data-radix-popper-content-wrapper] [role="menu"][data-radix-menu-content]'
 const CHATGPT_MODEL_MENU_ITEM_SELECTOR = `${CHATGPT_MODEL_MENU_SELECTOR} [role="menuitem"][data-testid^="model-switcher-"]`
@@ -63,11 +64,13 @@ export class ChatGPTAdapter extends SiteAdapter {
   private sessionAccessTokenExpiresAt = 0
   private cachedLockedModelKeyword: string | null = null
   private cachedLockedModelKeywordExpiresAt = 0
-  private modelLockAttemptInFlight = false
-  private modelLockAttemptTimeoutId: ReturnType<typeof setTimeout> | null = null
+  private cachedLockedModelKeywordContextKey = ""
+  private lastModelLockAttemptAt = 0
   private lastModelLockAttemptKeyword = ""
   private cachedSelectedModelName: string | null = null
   private cachedSelectedModelSlug: string | null = null
+  private cachedSelectedModelExpiresAt = 0
+  private cachedSelectedModelContextKey = ""
   private cachedModelDisplayNamesBySlug = new Map<string, string>()
 
   match(): boolean {
@@ -1324,43 +1327,64 @@ export class ChatGPTAdapter extends SiteAdapter {
     return this.findElementBySelectors([...CHATGPT_MODEL_SELECTOR_BUTTON_SELECTORS])
   }
 
+  private getModelStateContextKey(): string {
+    const cid = this.getCurrentCid() || "default"
+    const sessionId = this.getSessionId() || window.location.pathname || "root"
+    return `${cid}::${sessionId}`
+  }
+
   private rememberLockedModelKeyword(keyword: string) {
     const normalizedKeyword = keyword.trim()
     if (!normalizedKeyword) return
 
     this.cachedLockedModelKeyword = normalizedKeyword
+    this.cachedLockedModelKeywordContextKey = this.getModelStateContextKey()
     this.cachedLockedModelKeywordExpiresAt = Date.now() + CHATGPT_MODEL_LOCK_CACHE_TTL_MS
   }
 
   private getRememberedLockedModelKeyword(): string | null {
-    if (this.cachedLockedModelKeyword && this.cachedLockedModelKeywordExpiresAt > Date.now()) {
+    if (
+      this.cachedLockedModelKeyword &&
+      this.cachedLockedModelKeywordContextKey === this.getModelStateContextKey() &&
+      this.cachedLockedModelKeywordExpiresAt > Date.now()
+    ) {
       return this.cachedLockedModelKeyword
     }
 
     this.cachedLockedModelKeyword = null
+    this.cachedLockedModelKeywordContextKey = ""
     this.cachedLockedModelKeywordExpiresAt = 0
     return null
   }
 
-  private beginModelLockAttempt(keyword: string) {
-    this.modelLockAttemptInFlight = true
-    this.lastModelLockAttemptKeyword = keyword
+  private rememberSelectedModelState(name: string | null, slug: string | null) {
+    const normalizedName = name?.trim() || null
+    const normalizedSlug = slug?.trim() || null
+    if (!normalizedName && !normalizedSlug) return
 
-    if (this.modelLockAttemptTimeoutId) {
-      clearTimeout(this.modelLockAttemptTimeoutId)
-    }
-
-    this.modelLockAttemptTimeoutId = setTimeout(() => {
-      this.finishModelLockAttempt()
-    }, CHATGPT_MODEL_LOCK_ATTEMPT_TIMEOUT_MS)
+    this.cachedSelectedModelName = normalizedName
+    this.cachedSelectedModelSlug = normalizedSlug
+    this.cachedSelectedModelContextKey = this.getModelStateContextKey()
+    this.cachedSelectedModelExpiresAt = Date.now() + CHATGPT_SELECTED_MODEL_CACHE_TTL_MS
   }
 
-  private finishModelLockAttempt() {
-    this.modelLockAttemptInFlight = false
-    if (this.modelLockAttemptTimeoutId) {
-      clearTimeout(this.modelLockAttemptTimeoutId)
-      this.modelLockAttemptTimeoutId = null
+  private getRememberedSelectedModelState(): { name: string | null; slug: string | null } | null {
+    if (
+      this.cachedSelectedModelContextKey === this.getModelStateContextKey() &&
+      this.cachedSelectedModelExpiresAt > Date.now() &&
+      (this.cachedSelectedModelName || this.cachedSelectedModelSlug)
+    ) {
+      return {
+        name: this.cachedSelectedModelName,
+        slug: this.cachedSelectedModelSlug,
+      }
     }
+
+    this.cachedSelectedModelName = null
+    this.cachedSelectedModelSlug = null
+    this.cachedSelectedModelContextKey = ""
+    this.cachedSelectedModelExpiresAt = 0
+    return null
   }
 
   private getLatestMessageModelSlug(): string | null {
@@ -1398,12 +1422,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       }
     }
 
-    if (selectedName) {
-      this.cachedSelectedModelName = selectedName
-    }
-    if (selectedSlug) {
-      this.cachedSelectedModelSlug = selectedSlug
-    }
+    this.rememberSelectedModelState(selectedName, selectedSlug)
 
     return {
       name: selectedName,
@@ -1433,12 +1452,21 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   private getCurrentModelSignalsForLockCheck(): string[] {
     const selectedModelFromMenu = this.readModelStateFromOpenMenu()
+    const rememberedSelectedModel = this.getRememberedSelectedModelState()
+    const latestMessageModelSlug = this.getLatestMessageModelSlug()
     const signals = [
       selectedModelFromMenu?.name,
       selectedModelFromMenu?.slug,
+      rememberedSelectedModel?.name,
+      rememberedSelectedModel?.slug,
+      latestMessageModelSlug,
+      latestMessageModelSlug
+        ? this.cachedModelDisplayNamesBySlug.get(latestMessageModelSlug)
+        : null,
       this.findModelSelectorButton()
         ? this.extractModelNameFromSelectorButton(this.findModelSelectorButton() as HTMLElement)
         : null,
+      this.getRememberedLockedModelKeyword(),
     ]
 
     return signals.filter((value): value is string => Boolean(value && value.trim()))
@@ -1455,8 +1483,9 @@ export class ChatGPTAdapter extends SiteAdapter {
       return this.cachedModelDisplayNamesBySlug.get(messageModel) || messageModel
     }
 
-    if (this.cachedSelectedModelName) {
-      return this.cachedSelectedModelName
+    const rememberedSelectedModel = this.getRememberedSelectedModelState()
+    if (rememberedSelectedModel?.name) {
+      return rememberedSelectedModel.name
     }
 
     const modelBtn = this.findModelSelectorButton()
@@ -1516,19 +1545,24 @@ export class ChatGPTAdapter extends SiteAdapter {
       return
     }
 
-    if (this.modelLockAttemptInFlight && this.lastModelLockAttemptKeyword === normalizedKeyword) {
+    const selectorBtn = this.findModelSelectorButton()
+    const isMenuOpen =
+      selectorBtn?.getAttribute("aria-expanded") === "true" ||
+      Boolean(this.readModelStateFromOpenMenu())
+    const isRapidRepeat =
+      this.lastModelLockAttemptKeyword === normalizedKeyword &&
+      Date.now() - this.lastModelLockAttemptAt < CHATGPT_MODEL_LOCK_REENTRY_COOLDOWN_MS
+
+    if (isMenuOpen || isRapidRepeat) {
       return
     }
 
-    if (this.modelLockAttemptInFlight && this.lastModelLockAttemptKeyword !== normalizedKeyword) {
-      this.finishModelLockAttempt()
-    }
-
-    this.beginModelLockAttempt(normalizedKeyword)
+    this.lastModelLockAttemptKeyword = normalizedKeyword
+    this.lastModelLockAttemptAt = Date.now()
 
     super.lockModel(normalizedKeyword, () => {
       this.rememberLockedModelKeyword(normalizedKeyword)
-      this.finishModelLockAttempt()
+      this.lastModelLockAttemptAt = 0
       onSuccess?.()
     })
   }
