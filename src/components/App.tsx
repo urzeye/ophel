@@ -313,6 +313,9 @@ const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "tools-menu-modelLock": "modelLockTitle",
   "tools-menu-cleanup": "cleanup",
   "tools-menu-settings": "tabSettings",
+  "usage-monitor-enabled": "usageMonitorEnabledLabel",
+  "usage-monitor-daily-limit": "usageMonitorDailyLimitLabel",
+  "usage-monitor-auto-reset": "usageMonitorAutoResetLabel",
 }
 
 const MODEL_LOCK_SITE_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinition> = {
