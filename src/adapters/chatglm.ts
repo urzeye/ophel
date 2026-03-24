@@ -301,6 +301,10 @@ export class ChatGLMAdapter extends SiteAdapter {
     return !this.getSessionId()
   }
 
+  getNewChatButtonSelectors(): string[] {
+    return [".new-session", 'div[class~="new-session"]']
+  }
+
   getNewTabUrl(): string {
     return new URL(NEW_TAB_PATH, window.location.origin).toString()
   }
