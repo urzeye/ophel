@@ -870,6 +870,9 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private extractQwenCodeBlockText(block: Element): string | null {
+    const mermaidSource = this.extractQwenMermaidSource(block)
+    if (mermaidSource) return mermaidSource
+
     const lines = Array.from(block.querySelectorAll(".view-lines .view-line"))
       .map((line) => this.normalizeQwenCodeLineText(line.textContent || ""))
       .filter((line, index, arr) => !(index === arr.length - 1 && line === "" && arr.length > 1))
@@ -886,6 +889,40 @@ export class QwenAiAdapter extends SiteAdapter {
 
     const fallbackText = this.normalizeQwenCodeLineText(fallbackBody.textContent || "")
     return fallbackText.trim() ? fallbackText : null
+  }
+
+  private extractQwenMermaidSource(block: Element): string | null {
+    if (!this.isQwenMermaidCodeBlock(block)) return null
+
+    const lines = Array.from(
+      block.querySelectorAll(
+        ".qwen-markdown-code-body.mermaid .view-lines .view-line, [data-mode-id='mermaid'] .view-lines .view-line",
+      ),
+    )
+      .map((line) => this.normalizeQwenCodeLineText(line.textContent || ""))
+      .filter((line, index, arr) => !(index === arr.length - 1 && line === "" && arr.length > 1))
+
+    if (lines.length === 0) {
+      return null
+    }
+
+    const joined = lines.join("\n").replace(/\n+$/, "")
+    return joined.trim() ? joined : null
+  }
+
+  private isQwenMermaidCodeBlock(block: Element): boolean {
+    const headerText =
+      block
+        .querySelector(".qwen-markdown-code-header > div:first-child, .qwen-markdown-code-header")
+        ?.textContent?.trim()
+        ?.toLowerCase() || ""
+
+    if (headerText === "mermaid") return true
+
+    const codeBody = block.querySelector(".qwen-markdown-code-body")
+    if (codeBody?.classList.contains("mermaid")) return true
+
+    return block.querySelector(".qwen-markdown-mermaid-chart-wrapper") !== null
   }
 
   private extractQwenCodeLanguage(block: Element): string {
