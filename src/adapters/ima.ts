@@ -14,6 +14,7 @@ import {
   type ExportConfig,
   type ExportLifecycleContext,
   type ModelSwitcherConfig,
+  type NetworkMonitorConfig,
   type OutlineItem,
   type ZenModeRule,
 } from "./base"
@@ -417,6 +418,15 @@ export class ImaAdapter extends SiteAdapter {
 
     this.simulateClick(button)
     return true
+  }
+
+  getNetworkMonitorConfig(): NetworkMonitorConfig {
+    return {
+      // ima 对话使用 SSE 流式接口：POST /cgi-bin/assistant/qa
+      urlPatterns: ["/cgi-bin/assistant/qa"],
+      urlPathEndsWith: ["/cgi-bin/assistant/qa"],
+      silenceThreshold: 2000,
+    }
   }
 
   getModelName(): string | null {
