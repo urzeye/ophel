@@ -522,5 +522,24 @@ export function formatShortcut(binding: ShortcutBinding, isMac = false): string 
  * 检测当前是否为 Mac 系统
  */
 export function isMacOS(): boolean {
-  return typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform)
+  if (typeof navigator === "undefined") return false
+
+  const platform = navigator.platform?.toLowerCase?.() || ""
+  const userAgent = navigator.userAgent?.toLowerCase?.() || ""
+  const userAgentDataPlatform = (
+    navigator as Navigator & { userAgentData?: { platform?: string } }
+  ).userAgentData?.platform?.toLowerCase?.()
+
+  return (
+    platform.includes("mac") ||
+    platform.includes("iphone") ||
+    platform.includes("ipad") ||
+    platform.includes("ipod") ||
+    !!userAgentDataPlatform?.includes("mac") ||
+    userAgent.includes("mac os") ||
+    userAgent.includes("macintosh") ||
+    userAgent.includes("iphone") ||
+    userAgent.includes("ipad") ||
+    userAgent.includes("ipod")
+  )
 }
