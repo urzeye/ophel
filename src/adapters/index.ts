@@ -14,6 +14,7 @@ import { DoubaoAdapter } from "./doubao"
 import { GeminiAdapter } from "./gemini"
 import { GeminiEnterpriseAdapter } from "./gemini-enterprise"
 import { GrokAdapter } from "./grok"
+import { ImaAdapter } from "./ima"
 import { KimiAdapter } from "./kimi"
 import { QianwenAdapter } from "./qianwen"
 import { QwenAiAdapter } from "./qwenai"
@@ -29,6 +30,7 @@ const adapters: SiteAdapter[] = [
   new ClaudeAdapter(),
   new DeepSeekAdapter(),
   new DoubaoAdapter(),
+  new ImaAdapter(),
   new ChatGLMAdapter(),
   new KimiAdapter(),
   new QwenAiAdapter(),

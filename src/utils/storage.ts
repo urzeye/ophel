@@ -43,6 +43,7 @@ export type SiteId =
   | "gemini-enterprise"
   | "aistudio"
   | "doubao"
+  | "ima"
   | "deepseek"
   | "zai"
   | "_default"
@@ -357,6 +358,7 @@ export const DEFAULT_SETTINGS: Settings = {
       gemini: { ...DEFAULT_SITE_THEME },
       "gemini-enterprise": { ...DEFAULT_SITE_THEME },
       doubao: { ...DEFAULT_SITE_THEME },
+      ima: { ...DEFAULT_SITE_THEME },
       deepseek: { ...DEFAULT_SITE_THEME },
       zai: { ...DEFAULT_SITE_THEME },
       _default: { ...DEFAULT_SITE_THEME },
@@ -370,6 +372,7 @@ export const DEFAULT_SETTINGS: Settings = {
       "gemini-enterprise": { ...DEFAULT_PAGE_WIDTH },
       aistudio: { ...DEFAULT_PAGE_WIDTH },
       doubao: { ...DEFAULT_PAGE_WIDTH },
+      ima: { ...DEFAULT_PAGE_WIDTH },
       deepseek: { ...DEFAULT_PAGE_WIDTH },
       zai: { ...DEFAULT_PAGE_WIDTH },
       _default: { ...DEFAULT_PAGE_WIDTH },
@@ -379,6 +382,7 @@ export const DEFAULT_SETTINGS: Settings = {
       "gemini-enterprise": { ...DEFAULT_USER_QUERY_WIDTH },
       aistudio: { ...DEFAULT_USER_QUERY_WIDTH },
       doubao: { ...DEFAULT_USER_QUERY_WIDTH },
+      ima: { ...DEFAULT_USER_QUERY_WIDTH },
       deepseek: { ...DEFAULT_USER_QUERY_WIDTH },
       zai: { ...DEFAULT_USER_QUERY_WIDTH },
       _default: { ...DEFAULT_USER_QUERY_WIDTH },
@@ -388,6 +392,7 @@ export const DEFAULT_SETTINGS: Settings = {
       "gemini-enterprise": { ...DEFAULT_ZEN_MODE },
       aistudio: { ...DEFAULT_ZEN_MODE },
       doubao: { ...DEFAULT_ZEN_MODE },
+      ima: { ...DEFAULT_ZEN_MODE },
       deepseek: { ...DEFAULT_ZEN_MODE },
       zai: { ...DEFAULT_ZEN_MODE },
       _default: { ...DEFAULT_ZEN_MODE },
@@ -397,6 +402,7 @@ export const DEFAULT_SETTINGS: Settings = {
   modelLock: {
     gemini: { enabled: false, keyword: "" },
     "gemini-enterprise": { enabled: false, keyword: "" },
+    ima: { enabled: false, keyword: "" },
     qwenai: { enabled: false, keyword: "" },
   },
 

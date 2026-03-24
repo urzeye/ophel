@@ -90,6 +90,7 @@ export const SITE_IDS = {
   GROK: "grok",
   AISTUDIO: "aistudio",
   DOUBAO: "doubao",
+  IMA: "ima",
   DEEPSEEK: "deepseek",
   KIMI: "kimi",
   QIANWEN: "qianwen",

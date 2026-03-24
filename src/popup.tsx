@@ -42,6 +42,7 @@ const SUPPORTED_SITES = [
   { name: "Grok", pattern: /grok\.com/, url: "https://grok.com", icon: "🤖" },
   { name: "Claude", pattern: /claude\.(ai|com)/, url: "https://claude.ai", icon: "🎭" },
   { name: "Doubao", pattern: /www\.doubao\.com/, url: "https://www.doubao.com", icon: "🌱" },
+  { name: "ima", pattern: /ima\.qq\.com/, url: "https://ima.qq.com", icon: "🐼" },
   {
     name: "DeepSeek",
     pattern: /chat\.deepseek\.com/,

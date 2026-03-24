@@ -766,6 +766,17 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
             settingId="model-lock-qwenai"
           />
 
+          {/* ima */}
+          <ModelLockRow
+            label="ima"
+            siteKey="ima"
+            settings={settings}
+            setSettings={setSettings}
+            placeholder={t("modelKeywordPlaceholder") || "模型关键词"}
+            onDisabledClick={() => showPrerequisiteToast(modelLockLabel)}
+            settingId="model-lock-ima"
+          />
+
           {/* Z.ai */}
           <ModelLockRow
             label="Z.ai"
