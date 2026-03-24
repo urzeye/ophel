@@ -12,6 +12,7 @@ import { htmlToMarkdown } from "~utils/exporter"
 import {
   SiteAdapter,
   type ExportConfig,
+  type ExportLifecycleContext,
   type ModelSwitcherConfig,
   type OutlineItem,
   type ZenModeRule,
@@ -29,6 +30,9 @@ const IMA_USER_TEXT_SELECTOR = `${IMA_USER_BUBBLE_SELECTOR} [class*="content"]`
 const IMA_AI_CONTAINER_SELECTOR = 'div[class*="aiContainer"]'
 const IMA_AI_BUBBLE_SELECTOR = `${IMA_AI_CONTAINER_SELECTOR} [class*="bubble"]`
 const IMA_MARKDOWN_SELECTOR = `${IMA_AI_BUBBLE_SELECTOR} [class*="markdown"]`
+const IMA_THINKING_SELECTOR = '[class*="thinking"]'
+const IMA_THINKING_TITLE_SELECTOR =
+  '[class*="tipsWrap"], [class*="thinkingTitle"], [class*="thinkingHeader"]'
 const IMA_INLINE_REFERENCE_SELECTOR =
   '.system-copy-exclude, [x-noteelement="excluded"], [x-copyelement="copy-exclude"]'
 const IMA_INPUT_SELECTOR =
@@ -50,6 +54,8 @@ const IMA_FOOT_TIPS_SELECTOR = '[class*="footTips"]'
 const MAX_OUTLINE_TEXT_LENGTH = 80
 
 export class ImaAdapter extends SiteAdapter {
+  private exportIncludeThoughts: boolean | undefined = undefined
+
   match(): boolean {
     return window.location.hostname === IMA_HOSTNAME
   }
@@ -262,20 +268,30 @@ export class ImaAdapter extends SiteAdapter {
   }
 
   extractAssistantResponseText(element: Element): string {
-    const markdownRoot = this.findAssistantMarkdownRoot(element)
-    if (!markdownRoot) return ""
-
-    const clone = markdownRoot.cloneNode(true) as HTMLElement
+    const clone = element.cloneNode(true) as HTMLElement
     clone
       .querySelectorAll(
         `${IMA_INLINE_REFERENCE_SELECTOR}, button, [role='button'], svg, [aria-hidden='true']`,
       )
       .forEach((node) => node.remove())
 
-    const markdown = htmlToMarkdown(clone).trim()
+    const includeThoughts = this.shouldIncludeThoughtsInExport()
+    const thoughtBlocks = includeThoughts ? this.extractThoughtBlockquotes(clone) : []
+
+    clone.querySelectorAll(IMA_THINKING_SELECTOR).forEach((node) => node.remove())
+
+    const markdownRoot = this.findAssistantMarkdownRoot(clone)
+    const markdownSource = markdownRoot instanceof HTMLElement ? markdownRoot : clone
+    const markdown = htmlToMarkdown(markdownSource).trim()
+
+    if (includeThoughts && thoughtBlocks.length > 0) {
+      const thoughtSection = thoughtBlocks.join("\n\n")
+      return markdown ? `${thoughtSection}\n\n${markdown}` : thoughtSection
+    }
+
     if (markdown) return markdown
 
-    return this.extractTextWithLineBreaks(clone).trim()
+    return this.extractTextWithLineBreaks(markdownSource).trim()
   }
 
   getLatestReplyText(): string | null {
@@ -375,6 +391,18 @@ export class ImaAdapter extends SiteAdapter {
     }
   }
 
+  async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
+    this.exportIncludeThoughts = context.includeThoughts
+    return null
+  }
+
+  async restoreConversationAfterExport(
+    _context: ExportLifecycleContext,
+    _state: unknown,
+  ): Promise<void> {
+    this.exportIncludeThoughts = undefined
+  }
+
   isGenerating(): boolean {
     return this.findStopButton() !== null
   }
@@ -463,6 +491,41 @@ export class ImaAdapter extends SiteAdapter {
     const clone = heading.cloneNode(true) as HTMLElement
     clone.querySelectorAll(IMA_INLINE_REFERENCE_SELECTOR).forEach((node) => node.remove())
     return this.extractTextWithLineBreaks(clone).trim()
+  }
+
+  private shouldIncludeThoughtsInExport(): boolean {
+    if (this.exportIncludeThoughts !== undefined) {
+      return this.exportIncludeThoughts
+    }
+    return false
+  }
+
+  private extractThoughtBlockquotes(element: Element): string[] {
+    const thoughtNodes = Array.from(element.querySelectorAll(IMA_THINKING_SELECTOR))
+    const blocks: string[] = []
+
+    for (const thought of thoughtNodes) {
+      const clone = thought.cloneNode(true) as HTMLElement
+      clone
+        .querySelectorAll(
+          `${IMA_THINKING_TITLE_SELECTOR}, button, [role='button'], svg, [aria-hidden='true']`,
+        )
+        .forEach((node) => node.remove())
+
+      const markdown = htmlToMarkdown(clone) || this.extractTextWithLineBreaks(clone)
+      const normalized = markdown.trim()
+      if (!normalized) continue
+
+      blocks.push(this.formatAsThoughtBlockquote(normalized))
+    }
+
+    return blocks
+  }
+
+  private formatAsThoughtBlockquote(markdown: string): string {
+    const lines = markdown.replace(/\r\n/g, "\n").split("\n")
+    const quotedLines = lines.map((line) => (line.trim().length > 0 ? `> ${line}` : ">"))
+    return ["> [Thoughts]", ...quotedLines].join("\n")
   }
 
   private truncateText(text: string, maxLength: number): string {
