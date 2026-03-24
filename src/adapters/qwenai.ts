@@ -43,7 +43,22 @@ const QWENAI_RESPONSE_TOOLBAR_SELECTOR =
 const QWENAI_MODEL_TRIGGER_SELECTOR =
   '#qwen-chat-header-left .ant-dropdown-trigger:has([class*="model-selector-text"])'
 const QWENAI_MODEL_TEXT_SELECTOR = '#qwen-chat-header-left [class*="model-selector-text"]'
+const QWENAI_MODEL_POPUP_SELECTOR = '[class*="model-selector-popup"]'
+const QWENAI_PRIMARY_MODEL_POPUP_SELECTOR =
+  '.ant-dropdown:not(.ant-dropdown-hidden) [class*="model-selector-popup"]:not([class*="secondary"])'
+const QWENAI_SECONDARY_MODEL_POPUP_SELECTOR =
+  '.ant-dropdown:not(.ant-dropdown-hidden) [class*="model-selector-popup"][class*="secondary"]'
+const QWENAI_MODEL_ITEM_SELECTOR = [
+  `${QWENAI_MODEL_POPUP_SELECTOR} [class*="model-list"] > [class*="model-item___"]`,
+  `${QWENAI_MODEL_POPUP_SELECTOR} [class*="model-list"] > [class*="model-item-selected___"]`,
+].join(", ")
+const QWENAI_MODEL_MORE_TRIGGER_SELECTOR = [
+  `${QWENAI_MODEL_POPUP_SELECTOR} .ant-dropdown-trigger:has([class*="view-more-text"])`,
+  `${QWENAI_MODEL_POPUP_SELECTOR} .ant-dropdown-trigger:has([class*="view-more-icon"])`,
+].join(", ")
 const QWENAI_MODEL_MENU_ITEM_SELECTOR = [
+  QWENAI_MODEL_ITEM_SELECTOR,
+  QWENAI_MODEL_MORE_TRIGGER_SELECTOR,
   '.ant-dropdown [role="menuitem"]',
   ".ant-dropdown .ant-dropdown-menu-item",
   ".ant-dropdown .ant-dropdown-menu-title-content",
@@ -65,6 +80,8 @@ interface QwenAiSettingsUpdateResponse {
   success?: boolean
   data?: unknown
 }
+
+type QwenAiModelLockFailureReason = "button_not_found" | "menu_empty" | "not_found"
 
 export class QwenAiAdapter extends SiteAdapter {
   private conversationSnapshot: ConversationInfo[] = []
@@ -459,14 +476,55 @@ export class QwenAiAdapter extends SiteAdapter {
     return true
   }
 
+  lockModel(keyword: string, onSuccess?: () => void): void {
+    const target = this.normalizeModelKeyword(keyword)
+    if (!target) return
+
+    const maxAttempts = 12
+    const checkInterval = 1000
+    let attempts = 0
+
+    const tryLock = async () => {
+      attempts++
+
+      const trigger = this.findModelTrigger()
+      if (!trigger) {
+        if (attempts >= maxAttempts) {
+          void this.showQwenModelLockFailure(keyword, "button_not_found")
+          return
+        }
+        window.setTimeout(tryLock, checkInterval)
+        return
+      }
+
+      const currentText = this.normalizeModelKeyword(this.getModelLockCheckText(trigger))
+      if (currentText.includes(target)) {
+        onSuccess?.()
+        return
+      }
+
+      const result = await this.selectQwenModel(target)
+      if (result.success) {
+        onSuccess?.()
+        return
+      }
+
+      void this.showQwenModelLockFailure(keyword, result.reason || "not_found")
+    }
+
+    void tryLock()
+  }
+
   getModelSwitcherConfig(keyword: string): ModelSwitcherConfig | null {
     return {
       targetModelKeyword: keyword,
       selectorButtonSelectors: [QWENAI_MODEL_TRIGGER_SELECTOR, QWENAI_MODEL_TEXT_SELECTOR],
       menuItemSelector: QWENAI_MODEL_MENU_ITEM_SELECTOR,
       checkInterval: 1000,
-      maxAttempts: 10,
-      menuRenderDelay: 300,
+      maxAttempts: 12,
+      menuRenderDelay: 400,
+      subMenuSelector: QWENAI_MODEL_MORE_TRIGGER_SELECTOR,
+      subMenuTriggers: ["展开更多模型", "更多模型", "view more", "more models"],
     }
   }
 
@@ -764,6 +822,277 @@ export class QwenAiAdapter extends SiteAdapter {
     if (targetMode !== "system") return targetMode
 
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+  }
+
+  private async selectQwenModel(
+    target: string,
+  ): Promise<{ success: boolean; reason?: QwenAiModelLockFailureReason }> {
+    const trigger = this.findModelTrigger()
+    if (!trigger) return { success: false, reason: "button_not_found" }
+
+    this.simulateClick(trigger)
+
+    const primaryPopup = await this.waitForVisibleQwenModelPopup(
+      QWENAI_PRIMARY_MODEL_POPUP_SELECTOR,
+    )
+    if (!primaryPopup) {
+      return { success: false, reason: "menu_empty" }
+    }
+
+    const primaryItems = this.getQwenModelItems(primaryPopup)
+    const primaryMatch = this.findBestQwenModelItem(primaryItems, target)
+    if (primaryMatch) {
+      this.clickQwenModelItem(primaryMatch)
+      return { success: true }
+    }
+
+    const moreTrigger = this.findQwenMoreTrigger(primaryPopup)
+    if (!moreTrigger) {
+      document.body.click()
+      return { success: false, reason: "not_found" }
+    }
+
+    const secondaryPopup = await this.openQwenMoreMenu(moreTrigger)
+    if (!secondaryPopup) {
+      document.body.click()
+      return { success: false, reason: "menu_empty" }
+    }
+
+    const secondaryItems = this.getQwenModelItems(secondaryPopup)
+    const secondaryMatch = this.findBestQwenModelItem(secondaryItems, target)
+    if (!secondaryMatch) {
+      document.body.click()
+      return { success: false, reason: "not_found" }
+    }
+
+    this.clickQwenModelItem(secondaryMatch)
+    return { success: true }
+  }
+
+  private async waitForVisibleQwenModelPopup(
+    selector: string,
+    maxAttempts = 8,
+    delay = 150,
+  ): Promise<HTMLElement | null> {
+    for (let i = 0; i < maxAttempts; i++) {
+      const popup = this.findVisibleQwenModelPopup(selector)
+      if (popup) return popup
+      await this.sleep(delay)
+    }
+    return null
+  }
+
+  private findVisibleQwenModelPopup(selector: string): HTMLElement | null {
+    const nodes = this.findAllElementsBySelector(selector)
+    for (const node of nodes) {
+      if (!(node instanceof HTMLElement)) continue
+      if (!this.isQwenElementVisible(node)) continue
+      return node
+    }
+    return null
+  }
+
+  private getQwenModelItems(popup: HTMLElement): HTMLElement[] {
+    const items = Array.from(
+      popup.querySelectorAll('[class*="model-list"] > [class*="model-item___"]'),
+    )
+
+    return items.filter(
+      (item): item is HTMLElement => item instanceof HTMLElement && this.isQwenElementVisible(item),
+    )
+  }
+
+  private findBestQwenModelItem(items: HTMLElement[], target: string): HTMLElement | null {
+    const normalizedTarget = this.normalizeModelKeyword(target)
+    if (!normalizedTarget) return null
+
+    for (const item of items) {
+      const name = this.normalizeModelKeyword(this.getQwenModelItemName(item))
+      if (name === normalizedTarget) return item
+    }
+
+    for (const item of items) {
+      const name = this.normalizeModelKeyword(this.getQwenModelItemName(item))
+      if (name.endsWith(normalizedTarget)) return item
+    }
+
+    for (const item of items) {
+      const name = this.normalizeModelKeyword(this.getQwenModelItemName(item))
+      if (name.includes(normalizedTarget)) return item
+    }
+
+    return null
+  }
+
+  private getQwenModelItemName(item: HTMLElement): string {
+    const label =
+      item.querySelector('[class*="model-item-name"] > span') ||
+      item.querySelector('[class*="model-item-name"]') ||
+      item
+
+    return (label.textContent || "").trim()
+  }
+
+  private findQwenMoreTrigger(popup: HTMLElement): HTMLElement | null {
+    const trigger = popup.querySelector(QWENAI_MODEL_MORE_TRIGGER_SELECTOR)
+    if (trigger instanceof HTMLElement && this.isQwenElementVisible(trigger)) {
+      return trigger
+    }
+    return null
+  }
+
+  private async openQwenMoreMenu(trigger: HTMLElement): Promise<HTMLElement | null> {
+    const targets: HTMLElement[] = [trigger]
+    const innerCandidates = [
+      trigger.querySelector('[class*="view-more___"]'),
+      trigger.querySelector('[class*="view-more-text"]'),
+      trigger.querySelector('[class*="view-more-icon"]'),
+    ]
+
+    innerCandidates.forEach((node) => {
+      if (node instanceof HTMLElement && !targets.includes(node)) {
+        targets.push(node)
+      }
+    })
+
+    for (const target of targets) {
+      this.dispatchQwenMoreMenuHover(target)
+
+      let popup = await this.waitForVisibleQwenSecondaryPopup(trigger, 3, 100)
+      if (popup) return popup
+
+      this.simulateClick(target)
+      popup = await this.waitForVisibleQwenSecondaryPopup(trigger, 4, 120)
+      if (popup) return popup
+    }
+
+    return this.waitForVisibleQwenSecondaryPopup(trigger, 4, 150)
+  }
+
+  private async waitForVisibleQwenSecondaryPopup(
+    trigger: HTMLElement,
+    maxAttempts = 8,
+    delay = 150,
+  ): Promise<HTMLElement | null> {
+    for (let i = 0; i < maxAttempts; i++) {
+      const popup = this.findVisibleQwenSecondaryPopup(trigger)
+      if (popup) return popup
+      await this.sleep(delay)
+    }
+    return null
+  }
+
+  private findVisibleQwenSecondaryPopup(trigger: HTMLElement): HTMLElement | null {
+    const nested = trigger.querySelector(
+      '.ant-dropdown:not(.ant-dropdown-hidden) [class*="model-selector-popup"][class*="secondary"]',
+    )
+    if (nested instanceof HTMLElement && this.isQwenElementVisible(nested)) {
+      return nested
+    }
+
+    return this.findVisibleQwenModelPopup(QWENAI_SECONDARY_MODEL_POPUP_SELECTOR)
+  }
+
+  private dispatchQwenMoreMenuHover(element: HTMLElement): void {
+    const rect = element.getBoundingClientRect()
+    const eventInit: MouseEventInit = {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      clientX: rect.left + rect.width / 2,
+      clientY: rect.top + rect.height / 2,
+      view: window,
+    }
+
+    const mouseEvents: Array<keyof GlobalEventHandlersEventMap> = [
+      "pointerover",
+      "pointerenter",
+      "mouseover",
+      "mouseenter",
+      "mousemove",
+    ]
+
+    mouseEvents.forEach((eventName) => {
+      try {
+        if (eventName.startsWith("pointer") && typeof PointerEvent !== "undefined") {
+          element.dispatchEvent(
+            new PointerEvent(eventName, {
+              ...eventInit,
+              pointerType: "mouse",
+              isPrimary: true,
+            }),
+          )
+          return
+        }
+
+        element.dispatchEvent(new MouseEvent(eventName, eventInit))
+      } catch {
+        // 静默降级到后续 click
+      }
+    })
+  }
+
+  private clickQwenModelItem(item: HTMLElement): void {
+    this.simulateClick(item)
+    window.setTimeout(() => {
+      document.body.click()
+    }, 100)
+  }
+
+  private normalizeModelKeyword(text: string): string {
+    return (text || "").toLowerCase().replace(/\s+/g, " ").trim()
+  }
+
+  private isQwenElementVisible(element: Element | null): element is HTMLElement {
+    if (!(element instanceof HTMLElement)) return false
+    if (!element.isConnected) return false
+
+    const style = window.getComputedStyle(element)
+    if (
+      style.display === "none" ||
+      style.visibility === "hidden" ||
+      parseFloat(style.opacity || "1") === 0
+    ) {
+      return false
+    }
+
+    const rect = element.getBoundingClientRect()
+    return rect.width > 0 && rect.height > 0
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => window.setTimeout(resolve, ms))
+  }
+
+  private async showQwenModelLockFailure(
+    keyword: string,
+    reason: QwenAiModelLockFailureReason,
+  ): Promise<void> {
+    try {
+      const { showToast } = await import("~utils/toast")
+      const { t } = await import("~utils/i18n")
+
+      let message: string
+      switch (reason) {
+        case "button_not_found":
+          message = t("modelLockFailedNoButton") || "模型选择器未找到"
+          break
+        case "menu_empty":
+          message = t("modelLockFailedMenuEmpty") || "模型菜单加载失败"
+          break
+        case "not_found":
+        default:
+          message = (t("modelLockFailedNotFound") || '未找到模型 "{model}"').replace(
+            "{model}",
+            keyword,
+          )
+          break
+      }
+
+      showToast(message, 3000)
+    } catch (error) {
+      console.error("[QwenAiAdapter] Failed to show model lock error:", error)
+    }
   }
 
   private readCookieValue(name: string): string | null {
