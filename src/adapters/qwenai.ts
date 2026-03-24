@@ -38,6 +38,10 @@ const QWENAI_ASSISTANT_CONTENT_SELECTOR = ".response-message-content"
 const QWENAI_TEXTAREA_SELECTOR = "textarea.message-input-textarea"
 const QWENAI_SEND_BUTTON_SELECTOR = "button.send-button"
 const QWENAI_CODE_BLOCK_SELECTOR = "pre.qwen-markdown-code"
+const QWENAI_MERMAID_SWITCH_SELECTOR = ".artifacts-body-header-switch"
+const QWENAI_MERMAID_SWITCH_ITEM_SELECTOR =
+  ".artifacts-body-header-switch-active, .artifacts-body-header-switch-unactive, .header-switch-status-small"
+const QWENAI_MERMAID_EXPORT_SWITCHED_ATTR = "data-ophel-qwenai-mermaid-export-switched"
 const QWENAI_THINKING_CARD_SELECTOR =
   ".qwen-chat-thinking-tool-status-card-wraper, .qwen-chat-thinking-status-card"
 const QWENAI_THOUGHT_TRIGGER_SELECTOR =
@@ -496,6 +500,7 @@ export class QwenAiAdapter extends SiteAdapter {
   ): Promise<QwenAiExportLifecycleState> {
     this.exportIncludeThoughtsOverride = context.includeThoughts
     this.clearThoughtExportCache()
+    await this.prepareMermaidBlocksForExport()
 
     const panelWasOpen = this.getVisibleThoughtPanel() !== null
     if (!context.includeThoughts) {
@@ -523,6 +528,7 @@ export class QwenAiAdapter extends SiteAdapter {
       if (this.parseThoughtExportState(state)?.shouldCloseThoughtPanel) {
         await this.closeThoughtPanelIfNeeded()
       }
+      await this.restoreMermaidBlocksAfterExport()
     } finally {
       this.exportIncludeThoughtsOverride = null
       this.clearThoughtExportCache()
@@ -894,28 +900,39 @@ export class QwenAiAdapter extends SiteAdapter {
   private extractQwenMermaidSource(block: Element): string | null {
     if (!this.isQwenMermaidCodeBlock(block)) return null
 
-    const lines = Array.from(
-      block.querySelectorAll(
-        ".qwen-markdown-code-body.mermaid .view-lines .view-line, [data-mode-id='mermaid'] .view-lines .view-line",
-      ),
-    )
-      .map((line) => this.normalizeQwenCodeLineText(line.textContent || ""))
-      .filter((line, index, arr) => !(index === arr.length - 1 && line === "" && arr.length > 1))
-
-    if (lines.length === 0) {
-      return null
+    const candidates: Element[] = []
+    const pushCandidate = (element: Element | null | undefined) => {
+      if (!element) return
+      if (candidates.includes(element)) return
+      candidates.push(element)
     }
 
-    const joined = lines.join("\n").replace(/\n+$/, "")
-    return joined.trim() ? joined : null
+    const codeBody = block.querySelector(".qwen-markdown-code-body.mermaid")
+    pushCandidate(codeBody)
+
+    Array.from(block.querySelectorAll(".qwen-markdown-code-body.mermaid > div")).forEach((node) =>
+      pushCandidate(node),
+    )
+    Array.from(block.querySelectorAll("[data-mode-id='mermaid']")).forEach((node) =>
+      pushCandidate(node),
+    )
+
+    let bestSource: string | null = null
+
+    for (const candidate of candidates) {
+      const source = this.extractQwenCodeLinesFromRoot(candidate)
+      if (!source) continue
+
+      if (!bestSource || source.length > bestSource.length) {
+        bestSource = source
+      }
+    }
+
+    return bestSource
   }
 
   private isQwenMermaidCodeBlock(block: Element): boolean {
-    const headerText =
-      block
-        .querySelector(".qwen-markdown-code-header > div:first-child, .qwen-markdown-code-header")
-        ?.textContent?.trim()
-        ?.toLowerCase() || ""
+    const headerText = this.extractQwenCodeHeaderLabel(block).toLowerCase()
 
     if (headerText === "mermaid") return true
 
@@ -926,11 +943,7 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   private extractQwenCodeLanguage(block: Element): string {
-    const headerText =
-      block
-        .querySelector(".qwen-markdown-code-header > div:first-child, .qwen-markdown-code-header")
-        ?.textContent?.trim()
-        ?.toLowerCase() || ""
+    const headerText = this.extractQwenCodeHeaderLabel(block).toLowerCase()
 
     if (headerText) return headerText
 
@@ -945,6 +958,37 @@ export class QwenAiAdapter extends SiteAdapter {
     )
 
     return lang?.trim().toLowerCase() || ""
+  }
+
+  private extractQwenCodeHeaderLabel(block: Element): string {
+    const header = block.querySelector(".qwen-markdown-code-header") as HTMLElement | null
+    if (!header) return ""
+
+    const directChildren = Array.from(header.children)
+    for (const child of directChildren) {
+      if (!(child instanceof HTMLElement)) continue
+      if (child.classList.contains("qwen-markdown-code-header-actions")) continue
+
+      const text = child.textContent?.trim() || ""
+      if (text) return text
+    }
+
+    const firstChild = header.firstElementChild as HTMLElement | null
+    return firstChild?.textContent?.trim() || ""
+  }
+
+  private extractQwenCodeLinesFromRoot(root: Element): string | null {
+    const lineNodes = Array.from(root.querySelectorAll(".view-lines .view-line"))
+    if (lineNodes.length === 0) return null
+
+    const lines = lineNodes
+      .map((line) => this.normalizeQwenCodeLineText(line.textContent || ""))
+      .filter((line, index, arr) => !(index === arr.length - 1 && line === "" && arr.length > 1))
+
+    if (lines.length === 0) return null
+
+    const joined = lines.join("\n").replace(/\n+$/, "")
+    return joined.trim() ? joined : null
   }
 
   private normalizeQwenCodeLineText(text: string): string {
@@ -975,6 +1019,147 @@ export class QwenAiAdapter extends SiteAdapter {
 
   private clearThoughtExportCache(): void {
     this.exportThoughtBlocks = new WeakMap<Element, string[]>()
+  }
+
+  private async prepareMermaidBlocksForExport(): Promise<void> {
+    this.clearMermaidExportMarkers()
+
+    const codeBlocks = Array.from(document.querySelectorAll(QWENAI_CODE_BLOCK_SELECTOR)).filter(
+      (block) => this.isQwenMermaidCodeBlock(block),
+    )
+
+    for (const block of codeBlocks) {
+      if (!(block instanceof HTMLElement)) continue
+      const initialView = this.getQwenMermaidActiveView(block)
+      const codeTab = this.findQwenMermaidViewTab(block, "code")
+      const previewTab = this.findQwenMermaidViewTab(block, "preview")
+
+      if (initialView !== "code" && codeTab) {
+        try {
+          codeTab.scrollIntoView({ block: "center", behavior: "auto" })
+        } catch {
+          // ignore scroll failures
+        }
+
+        this.simulateClick(codeTab)
+      }
+
+      let ready = await this.waitForMermaidCodeViewReady(block)
+
+      if (!ready && initialView === "code" && previewTab && codeTab) {
+        this.simulateClick(previewTab)
+        await this.sleep(100)
+        this.simulateClick(codeTab)
+        ready = await this.waitForMermaidCodeViewReady(block)
+      }
+
+      if (ready && initialView !== "code") {
+        block.setAttribute(QWENAI_MERMAID_EXPORT_SWITCHED_ATTR, "true")
+      }
+    }
+  }
+
+  private async restoreMermaidBlocksAfterExport(): Promise<void> {
+    const blocks = Array.from(
+      document.querySelectorAll(
+        `${QWENAI_CODE_BLOCK_SELECTOR}[${QWENAI_MERMAID_EXPORT_SWITCHED_ATTR}]`,
+      ),
+    )
+
+    for (const block of blocks) {
+      if (!(block instanceof HTMLElement)) continue
+
+      const previewTab = this.findQwenMermaidViewTab(block, "preview")
+      if (previewTab && this.getQwenMermaidActiveView(block) !== "preview") {
+        this.simulateClick(previewTab)
+        await this.sleep(80)
+      }
+
+      block.removeAttribute(QWENAI_MERMAID_EXPORT_SWITCHED_ATTR)
+    }
+  }
+
+  private clearMermaidExportMarkers(): void {
+    document
+      .querySelectorAll(`${QWENAI_CODE_BLOCK_SELECTOR}[${QWENAI_MERMAID_EXPORT_SWITCHED_ATTR}]`)
+      .forEach((node) => node.removeAttribute(QWENAI_MERMAID_EXPORT_SWITCHED_ATTR))
+  }
+
+  private getQwenMermaidActiveView(block: Element): "code" | "preview" | null {
+    const switcher = block.querySelector(QWENAI_MERMAID_SWITCH_SELECTOR)
+    if (!(switcher instanceof HTMLElement)) return null
+
+    const items = Array.from(switcher.querySelectorAll(QWENAI_MERMAID_SWITCH_ITEM_SELECTOR))
+    for (const item of items) {
+      if (!(item instanceof HTMLElement)) continue
+      const text = item.textContent?.trim().toLowerCase() || ""
+      if (!text) continue
+
+      if (item.className.includes("switch-active")) {
+        if (text.includes("code")) return "code"
+        if (text.includes("preview")) return "preview"
+      }
+    }
+
+    return null
+  }
+
+  private findQwenMermaidViewTab(block: Element, target: "code" | "preview"): HTMLElement | null {
+    const switcher = block.querySelector(QWENAI_MERMAID_SWITCH_SELECTOR)
+    if (!(switcher instanceof HTMLElement)) return null
+
+    const items = Array.from(switcher.querySelectorAll(QWENAI_MERMAID_SWITCH_ITEM_SELECTOR))
+    for (const item of items) {
+      if (!(item instanceof HTMLElement)) continue
+      const text = item.textContent?.trim().toLowerCase() || ""
+      if (!text.includes(target)) continue
+      return item
+    }
+
+    return null
+  }
+
+  private async waitForMermaidCodeViewReady(block: Element, timeout = 2200): Promise<boolean> {
+    const start = Date.now()
+    let longestSource = ""
+    let stableRounds = 0
+    const expectedLineCount = this.getQwenMermaidExpectedLineCount(block)
+
+    while (Date.now() - start < timeout) {
+      if (this.getQwenMermaidActiveView(block) === "code") {
+        const source = this.extractQwenMermaidSource(block) || ""
+        if (source.length > longestSource.length) {
+          longestSource = source
+          stableRounds = 0
+        } else if (source.length > 0) {
+          stableRounds += 1
+        }
+
+        const lineCount = longestSource ? longestSource.split("\n").length : 0
+        const lineReady = expectedLineCount > 1 ? lineCount >= expectedLineCount : lineCount > 0
+
+        if (lineReady && stableRounds >= 2) {
+          return true
+        }
+      }
+
+      await this.sleep(80)
+    }
+
+    const lineCount = longestSource ? longestSource.split("\n").length : 0
+    return expectedLineCount > 1 ? lineCount >= expectedLineCount : longestSource.length > 0
+  }
+
+  private getQwenMermaidExpectedLineCount(block: Element): number {
+    const lineNumbers = Array.from(block.querySelectorAll(".margin-view-overlays .line-numbers"))
+      .map((node) => parseInt(node.textContent?.trim() || "", 10))
+      .filter((value) => Number.isFinite(value) && value > 0)
+
+    if (lineNumbers.length === 0) {
+      return 0
+    }
+
+    return Math.max(...lineNumbers)
   }
 
   private parseThoughtExportState(state: unknown): QwenAiExportLifecycleState | null {
