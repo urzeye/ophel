@@ -13,6 +13,7 @@ import {
   SiteAdapter,
   type ConversationInfo,
   type ConversationObserverConfig,
+  type ExportLifecycleContext,
   type ExportConfig,
   type MarkdownFixerConfig,
   type ModelSwitcherConfig,
@@ -39,6 +40,15 @@ const QWENAI_SEND_BUTTON_SELECTOR = "button.send-button"
 const QWENAI_CODE_BLOCK_SELECTOR = "pre.qwen-markdown-code"
 const QWENAI_THINKING_CARD_SELECTOR =
   ".qwen-chat-thinking-tool-status-card-wraper, .qwen-chat-thinking-status-card"
+const QWENAI_THOUGHT_TRIGGER_SELECTOR =
+  ".qwen-chat-thinking-tool-status-card-wraper .qwen-chat-tool-status-card, .qwen-chat-thinking-tool-status-card-wraper .qwen-chat-thinking-status-card-completed"
+const QWENAI_THOUGHT_TITLE_SELECTOR = ".qwen-chat-thinking-status-card-title-text"
+const QWENAI_THOUGHT_PANEL_SELECTOR =
+  ".splitter-container-right-panel .qwen-chat-thinking-and-sources"
+const QWENAI_THOUGHT_PANEL_CONTENT_SELECTOR =
+  ".qwen-chat-thinking-and-sources-content-thinking-container"
+const QWENAI_THOUGHT_PANEL_CLOSE_SELECTOR =
+  ".qwen-chat-thinking-and-sources-header .anticon, .qwen-chat-thinking-and-sources-header [role='img']"
 const QWENAI_RESPONSE_TOOLBAR_SELECTOR =
   ".response-message-footer, .copy-response-button, .message-hoc-container"
 const QWENAI_MODEL_TRIGGER_SELECTOR =
@@ -82,12 +92,18 @@ interface QwenAiSettingsUpdateResponse {
   data?: unknown
 }
 
+interface QwenAiExportLifecycleState {
+  shouldCloseThoughtPanel: boolean
+}
+
 type QwenAiModelLockFailureReason = "button_not_found" | "menu_empty" | "not_found"
 
 export class QwenAiAdapter extends SiteAdapter {
   private conversationSnapshot: ConversationInfo[] = []
   private conversationSnapshotFetchedAt = 0
   private conversationSnapshotPromise: Promise<ConversationInfo[]> | null = null
+  private exportIncludeThoughtsOverride: boolean | null = null
+  private exportThoughtBlocks = new WeakMap<Element, string[]>()
 
   afterPropertiesSet(
     options: { modelLockConfig?: { enabled: boolean; keyword: string } } = {},
@@ -346,6 +362,9 @@ export class QwenAiAdapter extends SiteAdapter {
     const contentRoot = this.findAssistantContentRoot(element)
     if (!contentRoot) return ""
 
+    const includeThoughts = this.shouldIncludeThoughtsInExport()
+    const thoughtBlocks = includeThoughts ? this.getThoughtBlocksForElement(element) : []
+
     const clone = contentRoot.cloneNode(true) as HTMLElement
     this.normalizeQwenCodeBlocks(clone)
 
@@ -356,7 +375,14 @@ export class QwenAiAdapter extends SiteAdapter {
       .forEach((node) => node.remove())
 
     const markdown = htmlToMarkdown(clone) || this.extractTextWithLineBreaks(clone)
-    return markdown.trim()
+    const normalizedBody = markdown.trim()
+
+    if (includeThoughts && thoughtBlocks.length > 0) {
+      const thoughtSection = thoughtBlocks.join("\n\n")
+      return normalizedBody ? `${thoughtSection}\n\n${normalizedBody}` : thoughtSection
+    }
+
+    return normalizedBody
   }
 
   getLastCodeBlockText(): string | null {
@@ -462,6 +488,44 @@ export class QwenAiAdapter extends SiteAdapter {
       assistantResponseSelector: QWENAI_ASSISTANT_MESSAGE_SELECTOR,
       turnSelector: null,
       useShadowDOM: false,
+    }
+  }
+
+  async prepareConversationExport(
+    context: ExportLifecycleContext,
+  ): Promise<QwenAiExportLifecycleState> {
+    this.exportIncludeThoughtsOverride = context.includeThoughts
+    this.clearThoughtExportCache()
+
+    const panelWasOpen = this.getVisibleThoughtPanel() !== null
+    if (!context.includeThoughts) {
+      return { shouldCloseThoughtPanel: false }
+    }
+
+    const assistantMessages = Array.from(
+      document.querySelectorAll(QWENAI_ASSISTANT_MESSAGE_SELECTOR),
+    ).filter((element) => !element.closest(".gh-root"))
+
+    for (const message of assistantMessages) {
+      await this.captureThoughtBlocksForMessage(message)
+    }
+
+    return {
+      shouldCloseThoughtPanel: !panelWasOpen && this.getVisibleThoughtPanel() !== null,
+    }
+  }
+
+  async restoreConversationAfterExport(
+    _context: ExportLifecycleContext,
+    state: unknown,
+  ): Promise<void> {
+    try {
+      if (this.parseThoughtExportState(state)?.shouldCloseThoughtPanel) {
+        await this.closeThoughtPanelIfNeeded()
+      }
+    } finally {
+      this.exportIncludeThoughtsOverride = null
+      this.clearThoughtExportCache()
     }
   }
 
@@ -853,6 +917,189 @@ export class QwenAiAdapter extends SiteAdapter {
       .replace(/\r\n/g, "\n")
       .replace(/\n/g, "")
       .replace(/\s+$/g, "")
+  }
+
+  private shouldIncludeThoughtsInExport(): boolean {
+    if (typeof this.exportIncludeThoughtsOverride === "boolean") {
+      return this.exportIncludeThoughtsOverride
+    }
+
+    return false
+  }
+
+  private getThoughtBlocksForElement(element: Element): string[] {
+    const host = element.closest(QWENAI_ASSISTANT_MESSAGE_SELECTOR)
+    return (
+      this.exportThoughtBlocks.get(element) ||
+      (host ? this.exportThoughtBlocks.get(host) : undefined) ||
+      []
+    )
+  }
+
+  private clearThoughtExportCache(): void {
+    this.exportThoughtBlocks = new WeakMap<Element, string[]>()
+  }
+
+  private parseThoughtExportState(state: unknown): QwenAiExportLifecycleState | null {
+    if (!state || typeof state !== "object") return null
+
+    const candidate = state as Partial<QwenAiExportLifecycleState>
+    return {
+      shouldCloseThoughtPanel: Boolean(candidate.shouldCloseThoughtPanel),
+    }
+  }
+
+  private async captureThoughtBlocksForMessage(message: Element): Promise<void> {
+    const trigger = this.findThoughtTriggerForMessage(message)
+    if (!trigger) return
+
+    const previousSignature = this.getThoughtPanelSignature()
+
+    try {
+      trigger.scrollIntoView({ block: "center", behavior: "auto" })
+    } catch {
+      // ignore scroll failures
+    }
+
+    this.simulateClick(trigger)
+
+    const panel = await this.waitForThoughtPanelUpdate(previousSignature)
+    if (!panel) return
+
+    const blocks = this.extractThoughtBlockquotesFromPanel(panel)
+    if (blocks.length > 0) {
+      this.exportThoughtBlocks.set(message, blocks)
+    }
+
+    await this.sleep(60)
+  }
+
+  private findThoughtTriggerForMessage(message: Element): HTMLElement | null {
+    const candidates = Array.from(message.querySelectorAll(QWENAI_THOUGHT_TRIGGER_SELECTOR))
+
+    for (const candidate of candidates) {
+      if (!(candidate instanceof HTMLElement)) continue
+      if (!this.isQwenElementVisible(candidate)) continue
+
+      const title =
+        candidate.querySelector(QWENAI_THOUGHT_TITLE_SELECTOR)?.textContent?.trim() ||
+        candidate.textContent?.trim() ||
+        ""
+
+      if (!title) continue
+      if (!/已.*完成思考|已经完成思考/i.test(title)) continue
+      return candidate
+    }
+
+    return null
+  }
+
+  private getVisibleThoughtPanel(): HTMLElement | null {
+    const panel = document.querySelector(QWENAI_THOUGHT_PANEL_SELECTOR)
+    return this.isQwenElementVisible(panel) ? (panel as HTMLElement) : null
+  }
+
+  private getThoughtPanelSignature(panel?: Element | null): string | null {
+    const target = panel || this.getVisibleThoughtPanel()
+    if (!target) return null
+
+    const phaseIds = Array.from(target.querySelectorAll("[data-phase-id]"))
+      .map((node) => node.getAttribute("data-phase-id")?.trim() || "")
+      .filter(Boolean)
+    if (phaseIds.length > 0) {
+      return phaseIds.join("|")
+    }
+
+    const blocks = this.extractThoughtBlockquotesFromPanel(target)
+    if (blocks.length === 0) return null
+
+    return blocks.join("\n\n")
+  }
+
+  private async waitForThoughtPanelUpdate(
+    previousSignature: string | null,
+    timeout = 2200,
+  ): Promise<HTMLElement | null> {
+    const start = Date.now()
+
+    while (Date.now() - start < timeout) {
+      const panel = this.getVisibleThoughtPanel()
+      if (panel) {
+        const signature = this.getThoughtPanelSignature(panel)
+        if (signature && (previousSignature === null || signature !== previousSignature)) {
+          return panel
+        }
+      }
+
+      await this.sleep(80)
+    }
+
+    return null
+  }
+
+  private extractThoughtBlockquotesFromPanel(panel: Element): string[] {
+    const container =
+      panel.querySelector(QWENAI_THOUGHT_PANEL_CONTENT_SELECTOR) ||
+      panel.querySelector(".qwen-chat-thinking-and-sources-content") ||
+      panel
+
+    const cards = Array.from(container.querySelectorAll(".qwen-chat-thinking-status-card"))
+    const blocks: string[] = []
+
+    for (const card of cards) {
+      const contentRoot =
+        card.querySelector(".qwen-chat-thinking-status-card-content") ||
+        card.querySelector(".qwen-markdown")
+      if (!contentRoot) continue
+
+      const title = card.querySelector(QWENAI_THOUGHT_TITLE_SELECTOR)?.textContent?.trim() || ""
+
+      const clone = contentRoot.cloneNode(true) as HTMLElement
+      this.normalizeQwenCodeBlocks(clone)
+      clone
+        .querySelectorAll(
+          `${QWENAI_THOUGHT_TITLE_SELECTOR}, button, [role='button'], svg, [aria-hidden='true']`,
+        )
+        .forEach((node) => node.remove())
+
+      const markdown = htmlToMarkdown(clone) || this.extractTextWithLineBreaks(clone)
+      const normalized = markdown.trim()
+      if (!normalized) continue
+
+      blocks.push(this.formatAsThoughtBlockquote(normalized, title))
+    }
+
+    return blocks
+  }
+
+  private formatAsThoughtBlockquote(markdown: string, title?: string): string {
+    const lines = markdown.replace(/\r\n/g, "\n").split("\n")
+    const quotedLines = lines.map((line) => (line.trim().length > 0 ? `> ${line}` : ">"))
+    const normalizedTitle = (title || "").trim()
+    const titleLines =
+      normalizedTitle && !/已.*完成思考|已经完成思考/i.test(normalizedTitle)
+        ? [`> **${normalizedTitle}**`, ">"]
+        : []
+
+    return ["> [Thoughts]", ...titleLines, ...quotedLines].join("\n")
+  }
+
+  private async closeThoughtPanelIfNeeded(timeout = 1500): Promise<void> {
+    const panel = this.getVisibleThoughtPanel()
+    if (!panel) return
+
+    const closeButton = panel.querySelector(
+      QWENAI_THOUGHT_PANEL_CLOSE_SELECTOR,
+    ) as HTMLElement | null
+    if (!closeButton || !this.isQwenElementVisible(closeButton)) return
+
+    this.simulateClick(closeButton)
+
+    const start = Date.now()
+    while (Date.now() - start < timeout) {
+      if (!this.getVisibleThoughtPanel()) return
+      await this.sleep(80)
+    }
   }
 
   private async updateThemePreference(targetMode: "light" | "dark" | "system"): Promise<boolean> {
