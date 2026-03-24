@@ -36,6 +36,7 @@ const QWENAI_USER_CONTENT_SELECTOR = ".user-message-content"
 const QWENAI_ASSISTANT_CONTENT_SELECTOR = ".response-message-content"
 const QWENAI_TEXTAREA_SELECTOR = "textarea.message-input-textarea"
 const QWENAI_SEND_BUTTON_SELECTOR = "button.send-button"
+const QWENAI_CODE_BLOCK_SELECTOR = "pre.qwen-markdown-code"
 const QWENAI_THINKING_CARD_SELECTOR =
   ".qwen-chat-thinking-tool-status-card-wraper, .qwen-chat-thinking-status-card"
 const QWENAI_RESPONSE_TOOLBAR_SELECTOR =
@@ -346,6 +347,8 @@ export class QwenAiAdapter extends SiteAdapter {
     if (!contentRoot) return ""
 
     const clone = contentRoot.cloneNode(true) as HTMLElement
+    this.normalizeQwenCodeBlocks(clone)
+
     clone
       .querySelectorAll(
         `${QWENAI_THINKING_CARD_SELECTOR}, ${QWENAI_RESPONSE_TOOLBAR_SELECTOR}, button, [role='button'], svg, [aria-hidden='true']`,
@@ -354,6 +357,23 @@ export class QwenAiAdapter extends SiteAdapter {
 
     const markdown = htmlToMarkdown(clone) || this.extractTextWithLineBreaks(clone)
     return markdown.trim()
+  }
+
+  getLastCodeBlockText(): string | null {
+    const responses = document.querySelectorAll(QWENAI_ASSISTANT_MESSAGE_SELECTOR)
+
+    for (let i = responses.length - 1; i >= 0; i -= 1) {
+      const contentRoot = this.findAssistantContentRoot(responses[i])
+      if (!contentRoot) continue
+
+      const codeBlocks = Array.from(contentRoot.querySelectorAll(QWENAI_CODE_BLOCK_SELECTOR))
+      for (let j = codeBlocks.length - 1; j >= 0; j -= 1) {
+        const codeText = this.extractQwenCodeBlockText(codeBlocks[j])
+        if (codeText) return codeText
+      }
+    }
+
+    return super.getLastCodeBlockText()
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
@@ -764,6 +784,77 @@ export class QwenAiAdapter extends SiteAdapter {
     return Array.from(merged.values())
   }
 
+  private normalizeQwenCodeBlocks(root: HTMLElement): void {
+    const codeBlocks = Array.from(root.querySelectorAll(QWENAI_CODE_BLOCK_SELECTOR))
+
+    codeBlocks.forEach((block) => {
+      const codeText = this.extractQwenCodeBlockText(block)
+      if (!codeText) return
+
+      const lang = this.extractQwenCodeLanguage(block)
+      const pre = document.createElement("pre")
+      const code = document.createElement("code")
+
+      if (lang) {
+        code.className = `language-${lang}`
+      }
+
+      code.textContent = codeText
+      pre.appendChild(code)
+      block.replaceWith(pre)
+    })
+  }
+
+  private extractQwenCodeBlockText(block: Element): string | null {
+    const lines = Array.from(block.querySelectorAll(".view-lines .view-line"))
+      .map((line) => this.normalizeQwenCodeLineText(line.textContent || ""))
+      .filter((line, index, arr) => !(index === arr.length - 1 && line === "" && arr.length > 1))
+
+    if (lines.length > 0) {
+      const joined = lines.join("\n").replace(/\n+$/, "")
+      return joined.trim() ? joined : null
+    }
+
+    const fallbackBody =
+      block.querySelector(".qwen-markdown-code-body") ||
+      block.querySelector("[data-mode-id]") ||
+      block
+
+    const fallbackText = this.normalizeQwenCodeLineText(fallbackBody.textContent || "")
+    return fallbackText.trim() ? fallbackText : null
+  }
+
+  private extractQwenCodeLanguage(block: Element): string {
+    const headerText =
+      block
+        .querySelector(".qwen-markdown-code-header > div:first-child, .qwen-markdown-code-header")
+        ?.textContent?.trim()
+        ?.toLowerCase() || ""
+
+    if (headerText) return headerText
+
+    const body = block.querySelector(".qwen-markdown-code-body") as HTMLElement | null
+    if (!body) return ""
+
+    const classNames = Array.from(body.classList)
+    const lang = classNames.find(
+      (name) =>
+        name !== "qwen-markdown-code-body" &&
+        !["monaco", "editor", "body"].includes(name.toLowerCase()),
+    )
+
+    return lang?.trim().toLowerCase() || ""
+  }
+
+  private normalizeQwenCodeLineText(text: string): string {
+    return text
+      .replace(/\u00a0/g, " ")
+      .replace(/\u200b/g, "")
+      .replace(/\r\n/g, "\n")
+      .replace(/\n/g, "")
+      .replace(/\s+$/g, "")
+  }
+
   private async updateThemePreference(targetMode: "light" | "dark" | "system"): Promise<boolean> {
     const response = await fetch("/api/v2/users/user/settings/update", {
       method: "POST",
@@ -1145,6 +1236,8 @@ export class QwenAiAdapter extends SiteAdapter {
     if (!contentRoot) return ""
 
     const clone = contentRoot.cloneNode(true) as HTMLElement
+    this.normalizeQwenCodeBlocks(clone)
+
     clone
       .querySelectorAll(
         `${QWENAI_THINKING_CARD_SELECTOR}, ${QWENAI_RESPONSE_TOOLBAR_SELECTOR}, button, [role='button'], svg, [aria-hidden='true']`,
