@@ -17,6 +17,7 @@ import {
   type ExportConfig,
   type MarkdownFixerConfig,
   type ModelSwitcherConfig,
+  type NetworkMonitorConfig,
   type OutlineItem,
   type ZenModeRule,
 } from "./base"
@@ -37,6 +38,11 @@ const QWENAI_USER_CONTENT_SELECTOR = ".user-message-content"
 const QWENAI_ASSISTANT_CONTENT_SELECTOR = ".response-message-content"
 const QWENAI_TEXTAREA_SELECTOR = "textarea.message-input-textarea"
 const QWENAI_SEND_BUTTON_SELECTOR = "button.send-button"
+const QWENAI_STOP_BUTTON_SELECTORS = [
+  "button.stop-button",
+  'button[class*="stop-button"]',
+  ".stop-button",
+]
 const QWENAI_CODE_BLOCK_SELECTOR = "pre.qwen-markdown-code"
 const QWENAI_MERMAID_SWITCH_SELECTOR = ".artifacts-body-header-switch"
 const QWENAI_MERMAID_SWITCH_ITEM_SELECTOR =
@@ -619,17 +625,27 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   isGenerating(): boolean {
-    const button = document.querySelector(QWENAI_SEND_BUTTON_SELECTOR) as HTMLElement | null
-    return this.isStopLikeButton(button)
+    return this.findStopButton() !== null
+  }
+
+  getStopButtonSelectors(): string[] {
+    return [...QWENAI_STOP_BUTTON_SELECTORS]
   }
 
   stopGeneration(): boolean {
-    const button = document.querySelector(QWENAI_SEND_BUTTON_SELECTOR) as HTMLElement | null
-    if (!this.isVisibleActionElement(button)) return false
-    if (!this.isStopLikeButton(button)) return false
-
+    const button = this.findStopButton()
+    if (!button) return false
     this.simulateClick(button)
     return true
+  }
+
+  getNetworkMonitorConfig(): NetworkMonitorConfig {
+    return {
+      // 国际版千问流式回复接口：/api/v2/chat/completions?chat_id=...
+      urlPatterns: ["/api/v2/chat/completions"],
+      urlPathEndsWith: ["/chat/completions"],
+      silenceThreshold: 2000,
+    }
   }
 
   getZenModeSelectors(): ZenModeRule[] {
@@ -1739,6 +1755,24 @@ export class QwenAiAdapter extends SiteAdapter {
     return /stop/i.test(iconHref) || text.includes("stop") || text.includes("停止")
   }
 
+  private findStopButton(): HTMLElement | null {
+    const stopButton = this.findVisibleElementBySelectors(this.getStopButtonSelectors())
+    if (stopButton && !this.isDisabledActionElement(stopButton)) {
+      return stopButton
+    }
+
+    const composerButton = document.querySelector(QWENAI_SEND_BUTTON_SELECTOR) as HTMLElement | null
+    if (
+      this.isVisibleActionElement(composerButton) &&
+      !this.isDisabledActionElement(composerButton) &&
+      this.isStopLikeButton(composerButton)
+    ) {
+      return composerButton
+    }
+
+    return null
+  }
+
   private isVisibleActionElement(element: HTMLElement | null): element is HTMLElement {
     if (!(element instanceof HTMLElement)) return false
     if (!element.isConnected) return false
@@ -1750,6 +1784,16 @@ export class QwenAiAdapter extends SiteAdapter {
 
     const rect = element.getBoundingClientRect()
     return rect.width > 0 && rect.height > 0
+  }
+
+  private isDisabledActionElement(element: HTMLElement | null): boolean {
+    if (!(element instanceof HTMLElement)) return true
+
+    return (
+      element.hasAttribute("disabled") ||
+      element.getAttribute("aria-disabled") === "true" ||
+      /\bdisabled\b/i.test(element.className || "")
+    )
   }
 
   private truncateText(text: string, maxLength: number): string {
