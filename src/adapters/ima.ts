@@ -41,6 +41,12 @@ const IMA_INPUT_SELECTOR =
 const IMA_SEND_BUTTON_SELECTOR = '[class*="sendBtnWrap"]'
 const IMA_SEND_DISABLED_SELECTOR = '.icon-send-disable-big, [class*="sendDisableIcon"]'
 const IMA_STOP_BUTTON_SELECTOR = 'div[class*="stopButton"], [class*="stopButton"]'
+const IMA_STOP_BUTTON_CLICKABLE_SELECTOR = [
+  'div[class*="stopButton"] > div',
+  '[class*="stopButton"][role="button"]',
+  'button[class*="stopButton"]',
+  '[class*="stopButton"]',
+].join(", ")
 const IMA_NEW_CHAT_BUTTON_SELECTOR = '[class*="newChatWrap"]'
 const IMA_ACTIVE_HISTORY_TITLE_SELECTOR =
   '[class*="historyListWrap"] [class*="itemWrap"][class*="highLight"] [class*="main"]'
@@ -409,7 +415,7 @@ export class ImaAdapter extends SiteAdapter {
   }
 
   getStopButtonSelectors(): string[] {
-    return [IMA_STOP_BUTTON_SELECTOR]
+    return [IMA_STOP_BUTTON_CLICKABLE_SELECTOR]
   }
 
   stopGeneration(): boolean {
@@ -603,9 +609,70 @@ export class ImaAdapter extends SiteAdapter {
     return rect.width > 0 && rect.height > 0
   }
 
+  protected simulateClick(element: HTMLElement): void {
+    const eventTypes = ["pointerdown", "mousedown", "pointerup", "mouseup", "click"] as const
+    let dispatched = false
+
+    for (const type of eventTypes) {
+      try {
+        if (typeof PointerEvent === "function") {
+          element.dispatchEvent(
+            new PointerEvent(type, {
+              bubbles: true,
+              cancelable: true,
+              pointerId: 1,
+            }),
+          )
+        } else {
+          element.dispatchEvent(
+            new MouseEvent(type, {
+              bubbles: true,
+              cancelable: true,
+            }),
+          )
+        }
+        dispatched = true
+      } catch {
+        try {
+          element.dispatchEvent(
+            new MouseEvent(type, {
+              bubbles: true,
+              cancelable: true,
+            }),
+          )
+          dispatched = true
+        } catch {
+          // ignore dispatch errors and fallback to native click
+        }
+      }
+    }
+
+    if (!dispatched) {
+      element.click()
+    }
+  }
+
   private findStopButton(): HTMLElement | null {
-    const button = this.findVisibleElementBySelectors(this.getStopButtonSelectors())
-    if (!button) return null
-    return this.isVisibleElement(button) ? button : null
+    const candidates = Array.from(document.querySelectorAll(IMA_STOP_BUTTON_SELECTOR))
+
+    for (const candidate of candidates) {
+      if (!(candidate instanceof HTMLElement) || !this.isVisibleElement(candidate)) {
+        continue
+      }
+
+      const clickableCandidates = [
+        candidate.querySelector(":scope > div"),
+        candidate.querySelector('[class*="container"]'),
+        candidate,
+      ]
+
+      for (const clickable of clickableCandidates) {
+        if (clickable instanceof HTMLElement && this.isVisibleElement(clickable)) {
+          return clickable
+        }
+      }
+    }
+
+    return null
   }
 }
