@@ -16,6 +16,7 @@ import { GeminiEnterpriseAdapter } from "./gemini-enterprise"
 import { GrokAdapter } from "./grok"
 import { KimiAdapter } from "./kimi"
 import { QianwenAdapter } from "./qianwen"
+import { QwenAiAdapter } from "./qwenai"
 import { ZaiAdapter } from "./zai"
 
 // 所有可用的适配器
@@ -30,6 +31,7 @@ const adapters: SiteAdapter[] = [
   new DoubaoAdapter(),
   new ChatGLMAdapter(),
   new KimiAdapter(),
+  new QwenAiAdapter(),
   new QianwenAdapter(),
   new ZaiAdapter(),
 ]

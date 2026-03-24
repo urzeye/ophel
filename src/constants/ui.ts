@@ -682,6 +682,11 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     keywords: ["model lock", "qianwen", "tongyi", "通义千问", "模型锁定"],
   },
   {
+    settingId: "model-lock-qwenai",
+    title: "模型锁定：QwenAI",
+    keywords: ["model lock", "qwenai", "chat.qwen.ai", "国际版千问", "模型锁定"],
+  },
+  {
     settingId: "model-lock-zai",
     title: "模型锁定：Z.ai",
     keywords: ["model lock", "z.ai", "zai", "模型锁定"],

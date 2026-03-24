@@ -173,6 +173,41 @@ export class ThemeManager {
           )
           return true
         }
+        case SITE_IDS.QWENAI: {
+          const previousTheme = localStorage.getItem("theme")
+          localStorage.setItem("theme", "system")
+          document.documentElement.classList.remove("light", "dark")
+          document.documentElement.classList.add(targetMode)
+          document.documentElement.setAttribute("data-theme", targetMode)
+          document.documentElement.style.colorScheme = targetMode
+          if (document.body) {
+            document.body.setAttribute("data-theme", targetMode)
+            document.body.style.colorScheme = targetMode
+          }
+          const meta = document.querySelector('meta[name="color-scheme"]')
+          if (meta) {
+            meta.setAttribute("content", targetMode)
+          }
+
+          if (previousTheme !== "system" && this.adapter?.toggleTheme) {
+            ;(
+              this.adapter as SiteAdapter & {
+                toggleTheme: (targetMode: "light" | "dark" | "system") => Promise<boolean>
+              }
+            )
+              .toggleTheme("system")
+              .catch(() => {})
+          } else {
+            window.dispatchEvent(
+              new StorageEvent("storage", {
+                key: "theme",
+                newValue: "system",
+                storageArea: localStorage,
+              }),
+            )
+          }
+          return true
+        }
         case SITE_IDS.AISTUDIO: {
           const prefStr = localStorage.getItem("aiStudioUserPreference") || "{}"
           let pref: Record<string, unknown> = {}

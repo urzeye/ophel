@@ -48,20 +48,21 @@ const SUPPORTED_SITES = [
     url: "https://chat.deepseek.com",
     icon: "🌀",
   },
+  { name: "Kimi", pattern: /www\.kimi\.com/, url: "https://www.kimi.com", icon: "🌙" },
+  { name: "Z.ai", pattern: /chat\.z\.ai/, url: "https://chat.z.ai", icon: "⚡" },
   {
     name: "ChatGLM",
     pattern: /chatglm\.cn/,
     url: "https://chatglm.cn/main/alltoolsdetail?lang=zh",
     icon: "🧠",
   },
-  { name: "Kimi", pattern: /www\.kimi\.com/, url: "https://www.kimi.com", icon: "🌙" },
   {
     name: "Qianwen",
     pattern: /www\.qianwen\.com/,
     url: "https://www.qianwen.com",
     icon: "🔮",
   },
-  { name: "Z.ai", pattern: /chat\.z\.ai/, url: "https://chat.z.ai", icon: "⚡" },
+  { name: "QwenAI", pattern: /chat\.qwen\.ai/, url: "https://chat.qwen.ai", icon: "🪄" },
 ]
 
 interface Prompt {

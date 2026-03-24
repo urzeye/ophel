@@ -397,6 +397,7 @@ export const DEFAULT_SETTINGS: Settings = {
   modelLock: {
     gemini: { enabled: false, keyword: "" },
     "gemini-enterprise": { enabled: false, keyword: "" },
+    qwenai: { enabled: false, keyword: "" },
   },
 
   globalSearch: {

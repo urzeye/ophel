@@ -370,6 +370,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
             "https://www.doubao.com/*",
             "https://chat.deepseek.com/*",
             "https://chatglm.cn/*",
+            "https://chat.qwen.ai/*",
             "https://chat.z.ai/*",
           ]
           const tabs = await chrome.tabs.query({ url: targets })
@@ -406,6 +407,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
             "https://www.doubao.com/*",
             "https://chat.deepseek.com/*",
             "https://chatglm.cn/*",
+            "https://chat.qwen.ai/*",
             "https://chat.z.ai/*",
           ]
           const tabs = await chrome.tabs.query({ url: targets })
