@@ -113,6 +113,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     [SITE_IDS.CHATGLM]: "ChatGLM",
     [SITE_IDS.ZAI]: "Z.ai",
     [SITE_IDS.QIANWEN]: "Qianwen",
+    [SITE_IDS.QWENAI]: "QwenAI",
   }
 
   // 设置 - 使用 Zustand store，确保设置变更实时生效
