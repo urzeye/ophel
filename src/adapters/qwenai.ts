@@ -648,6 +648,30 @@ export class QwenAiAdapter extends SiteAdapter {
     }
   }
 
+  getWidthSelectors() {
+    return [
+      {
+        // QwenAI 对话宽度由消息外层 .qwen-chat-message 的 max-width 控制。
+        // 同时覆盖 width 和 box-sizing，避免原始 content-box + padding 让加宽效果不明显。
+        selector: ".qwen-chat-message",
+        property: "max-width",
+        extraCss: "width: 100% !important; box-sizing: border-box !important;",
+      },
+    ]
+  }
+
+  getUserQueryWidthSelectors() {
+    return [
+      {
+        // 用户问题气泡本身使用 max-width: 70% 限宽，需要直接覆盖气泡节点。
+        // 保持右侧对齐，不额外注入通用居中样式。
+        selector: ".chat-user-message-container .chat-user-message-wrapper .chat-user-message",
+        property: "max-width",
+        noCenter: true,
+      },
+    ]
+  }
+
   getZenModeSelectors(): ZenModeRule[] {
     return [
       { selector: QWENAI_SIDEBAR_SELECTOR, action: "hide" },
