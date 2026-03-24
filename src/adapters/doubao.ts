@@ -1032,7 +1032,7 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getNewChatButtonSelectors(): string[] {
-    return ["#create_conversation_button"]
+    return ['[data-testid="create_conversation_button"]']
   }
 
   getSubmitButtonSelectors(): string[] {

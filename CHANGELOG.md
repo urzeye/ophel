@@ -7,20 +7,11 @@
 
 ---
 
-## [Unreleased]
-
-### ✨ 功能优化
-
-- **流式请求监控精度提升**：收窄 ChatGPT、Grok、Kimi 与 ChatGLM 的生成请求匹配条件，减少把普通网络请求误判为 AI 流式回复的情况。
+## [1.0.23]
 
 ### 🐛 问题修复
 
-- **ThemeManager 全局单例复用**：修复页面刷新时 `App` 与核心模块重复创建 `ThemeManager`，导致主题状态竞争以及控制台出现 `[App] Global ThemeManager not found, creating fallback instance` 告警的问题。
-- **Gemini 刷新误报完成通知**：修复 Gemini 普通版与 Gemini Enterprise 在页面刷新时，偶发误判“AI 已生成完成”并错误弹出完成通知、播放提示音的问题。
-- **ChatGPT 模型锁定兼容新版页面**：适配 ChatGPT 新版模型选择菜单，修复模型锁定时反复打开/关闭模型弹窗、旧模型名被误判为当前模型，以及标签页标题中的模型名称在新版页面下显示不稳定的问题。
-- **DeepSeek 深度思考导出与大纲提取**：修复 DeepSeek 开启深度思考时，大纲、复制 Markdown、导出 Markdown 误提取思维链内容的问题；导出结果现已受“导出包含思维链”设置控制。
-- **DeepSeek 分享会话导出**：修复 `chat.deepseek.com/share/*` 分享页导出时误提示“请先打开要导出的会话”的问题，支持直接识别分享会话并完成导出。
-- **DeepSeek 虚拟滚动大纲错序**：修复在 DeepSeek 长对话虚拟滚动场景下，当前可见 AI 回复标题偶发被排到对应用户提问之前，导致大纲顺序不合理的问题。
+- **新会话快捷键兼容性**：修复 macOS 与部分站点上新建会话快捷键失效，及豆包误回退为整页刷新的问题。
 
 ## [1.0.22]
 
@@ -28,6 +19,7 @@
 
 - **Userscript 外置资源发布优化**：将油猴脚本的样式、通知音与水印底图改为 hash 文件名的外置静态资源，通过独立的 `userscript-assets` 发布链分发，避免后续每个 GitHub Release 重复附带同一批资源文件。
 - **Tooltip 基础能力收敛**：抽取共享 tooltip core，统一 React 面板与站点注入场景的样式、定位、容器选择与隐藏时机，减少重复实现并降低后续维护成本。
+- **流式请求监控精度提升**：收窄 ChatGPT、Grok、Kimi 与 ChatGLM 的生成请求匹配条件，减少把普通网络请求误判为 AI 流式回复的情况。
 
 ### 🐛 问题修复
 
@@ -38,6 +30,12 @@
 - **Gemini 用户问题渲染油猴兼容性**：修复 Gemini 普通版用户问题 Markdown 渲染在油猴脚本环境下因 Trusted Types 拦截直接 `innerHTML` 赋值而报错的问题。
 - **Gemini Enterprise Shadow DOM 兼容性**：修复 Gemini Enterprise 用户问题 Markdown 预览在 Shadow DOM 场景下渲染失效，以及高级模型 Usage 统计面板挂载异常导致样式丢失、文字出现在输入区的问题。
 - **单行 Markdown 用户问题渲染**：放宽用户问题 Markdown 识别条件，支持单行引用、标题、列表、加粗、行内代码与链接内容正常触发渲染。
+- **ThemeManager 全局单例复用**：修复页面刷新时 `App` 与核心模块重复创建 `ThemeManager`，导致主题状态竞争以及控制台出现 `[App] Global ThemeManager not found, creating fallback instance` 告警的问题。
+- **Gemini 刷新误报完成通知**：修复 Gemini 普通版与 Gemini Enterprise 在页面刷新时，偶发误判“AI 已生成完成”并错误弹出完成通知、播放提示音的问题。
+- **ChatGPT 模型锁定兼容新版页面**：适配 ChatGPT 新版模型选择菜单，修复模型锁定时反复打开/关闭模型弹窗、旧模型名被误判为当前模型，以及标签页标题中的模型名称在新版页面下显示不稳定的问题。
+- **DeepSeek 深度思考导出与大纲提取**：修复 DeepSeek 开启深度思考时，大纲、复制 Markdown、导出 Markdown 误提取思维链内容的问题；导出结果现已受“导出包含思维链”设置控制。
+- **DeepSeek 分享会话导出**：修复 `chat.deepseek.com/share/*` 分享页导出时误提示“请先打开要导出的会话”的问题，支持直接识别分享会话并完成导出。
+- **DeepSeek 虚拟滚动大纲错序**：修复在 DeepSeek 长对话虚拟滚动场景下，当前可见 AI 回复标题偶发被排到对应用户提问之前，导致大纲顺序不合理的问题。
 
 ## [1.0.21]
 
