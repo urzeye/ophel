@@ -36,6 +36,12 @@ const USER_MESSAGE_SELECTOR = ".ds-message:not(:has(.ds-markdown))"
 const THOUGHT_CONTAINER_SELECTOR = ".ds-think-content"
 const RESPONSE_CONTAINER_SELECTOR =
   'main .ds-scroll-area:has(.ds-message), [role="main"] .ds-scroll-area:has(.ds-message), .ds-scroll-area:has(.ds-message)'
+const MESSAGE_LIST_ITEMS_SELECTOR = ".ds-virtual-list-items, .ds-virtual-list-visible-items"
+const USER_MESSAGE_CONTENT_SELECTOR = [
+  `${USER_MESSAGE_SELECTOR} > .gh-inline-bookmark + div`,
+  `${USER_MESSAGE_SELECTOR} > div:not(.gh-user-query-raw):not(.gh-user-query-markdown):not(.ds-focus-ring)`,
+  `${USER_MESSAGE_SELECTOR} > div.gh-user-query-markdown`,
+].join(", ")
 const CHAT_COMPLETION_API_PATTERN = "/api/v0/chat/completion"
 const CHAT_DELETE_API_PATH = "/api/v0/chat_session/delete"
 const DEEPSEEK_HOME_URL = "https://chat.deepseek.com/"
@@ -696,11 +702,28 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   getWidthSelectors() {
-    return []
+    return [
+      {
+        // DeepSeek 消息区宽度由虚拟列表节点上的 --message-list-max-width
+        // 以及基于该变量计算出的左右 padding 一起控制。
+        selector: MESSAGE_LIST_ITEMS_SELECTOR,
+        property: "--message-list-max-width",
+        extraCss:
+          "padding-left: max(0px, calc((100% - var(--message-list-max-width)) / 2)) !important; padding-right: max(0px, calc((100% - var(--message-list-max-width)) / 2)) !important;",
+        noCenter: true,
+      },
+    ]
   }
 
   getUserQueryWidthSelectors() {
-    return []
+    return [
+      {
+        // 用户问题内容节点使用随机哈希类名，改为匹配 ds-message 下稳定的直接内容 div。
+        selector: USER_MESSAGE_CONTENT_SELECTOR,
+        property: "max-width",
+        noCenter: true,
+      },
+    ]
   }
 
   isGenerating(): boolean {
