@@ -64,6 +64,12 @@ const SUPPORTED_SITES = [
     icon: "🔮",
   },
   { name: "QwenAI", pattern: /chat\.qwen\.ai/, url: "https://chat.qwen.ai", icon: "🪄" },
+  {
+    name: "Yuanbao",
+    pattern: /yuanbao\.tencent\.com/,
+    url: "https://yuanbao.tencent.com",
+    icon: "💎",
+  },
 ]
 
 interface Prompt {

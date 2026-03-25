@@ -17,6 +17,7 @@ export const config: PlasmoCSConfig = {
     "https://www.kimi.com/*",
     "https://chatglm.cn/*",
     "https://chat.qwen.ai/*",
+    "https://yuanbao.tencent.com/*",
     "https://chat.z.ai/*",
   ],
   world: "MAIN",

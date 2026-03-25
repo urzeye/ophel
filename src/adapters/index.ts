@@ -18,6 +18,7 @@ import { ImaAdapter } from "./ima"
 import { KimiAdapter } from "./kimi"
 import { QianwenAdapter } from "./qianwen"
 import { QwenAiAdapter } from "./qwenai"
+import { YuanbaoAdapter } from "./yuanbao"
 import { ZaiAdapter } from "./zai"
 
 // 所有可用的适配器
@@ -35,6 +36,7 @@ const adapters: SiteAdapter[] = [
   new KimiAdapter(),
   new QwenAiAdapter(),
   new QianwenAdapter(),
+  new YuanbaoAdapter(),
   new ZaiAdapter(),
 ]
 

@@ -23,6 +23,7 @@ export const config: PlasmoCSConfig = {
     "https://chat.qwen.ai/*",
     "https://www.qianwen.com/*",
     "https://qianwen.com/*",
+    "https://yuanbao.tencent.com/*",
     "https://chat.z.ai/*",
   ],
 }
@@ -56,7 +57,8 @@ export const mountShadowHost: PlasmoMountShadowHost = ({
     hostname.includes("chat.openai.com") ||
     hostname.includes("grok.com") ||
     hostname.includes("claude.ai") ||
-    hostname.includes("deepseek.com")
+    hostname.includes("deepseek.com") ||
+    hostname.includes("yuanbao.tencent.com")
 
   const doMount = () => {
     if (!shadowHost.parentElement) {

@@ -235,6 +235,7 @@ export default defineConfig({
           "https://chatglm.cn/*",
           "https://chat.qwen.ai/*",
           "https://www.qianwen.com/*",
+          "https://yuanbao.tencent.com/*",
           "https://chat.z.ai/*",
         ],
         grant: [
