@@ -277,10 +277,14 @@ flowchart TB
  </picture>
 </a>
 
-## 💖 Поддержка
+## 💖 Поддержка и благодарности
 
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
+</p>
+
+<p align="center">
+  Спасибо сообществу <a href="https://linux.do/">Linux.do</a> за общение и поддержку. Многие идеи и улучшения проекта появились благодаря отзывам участников сообщества.
 </p>
 
 <p align="center">

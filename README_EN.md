@@ -280,10 +280,14 @@ For issues or suggestions, please visit [GitHub Issues](https://github.com/urzey
  </picture>
 </a>
 
-## 💖 Support
+## 💖 Support and Thanks
 
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
+</p>
+
+<p align="center">
+  Thanks to the <a href="https://linux.do/">Linux.do</a> community for the discussions and support. Many ideas and improvements in this project came from feedback shared by community members.
 </p>
 
 <p align="center">

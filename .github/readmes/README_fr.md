@@ -277,10 +277,14 @@ Pour des problèmes ou suggestions, visitez [GitHub Issues](https://github.com/u
  </picture>
 </a>
 
-## 💖 Soutien
+## 💖 Soutien et remerciements
 
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
+</p>
+
+<p align="center">
+  Merci à la communauté <a href="https://linux.do/">Linux.do</a> pour ses échanges et son soutien. De nombreuses idées et améliorations du projet viennent des retours de ses membres.
 </p>
 
 <p align="center">

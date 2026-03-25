@@ -285,10 +285,14 @@ flowchart TB
  </picture>
 </a>
 
-## 💖 프로젝트 후원
+## 💖 지원과 감사
 
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
+</p>
+
+<p align="center">
+  <a href="https://linux.do/">Linux.do</a> 커뮤니티의 교류와 지원에 감사드립니다. 프로젝트의 많은 아이디어와 개선점은 커뮤니티 구성원들의 피드백에서 나왔습니다.
 </p>
 
 <p align="center">

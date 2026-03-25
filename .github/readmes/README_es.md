@@ -277,10 +277,14 @@ Para problemas o sugerencias, visita [GitHub Issues](https://github.com/urzeye/o
  </picture>
 </a>
 
-## 💖 Soporte
+## 💖 Soporte y agradecimientos
 
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
+</p>
+
+<p align="center">
+  Gracias a la comunidad de <a href="https://linux.do/">Linux.do</a> por el intercambio y el apoyo. Muchas ideas y mejoras del proyecto surgieron de los comentarios de sus miembros.
 </p>
 
 <p align="center">

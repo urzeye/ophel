@@ -291,14 +291,18 @@ flowchart TB
  </picture>
 </a>
 
-## 💖 支持项目
+## 💖 支持与致谢
 
 <p align="center">
   <em>"一个人可以走得很快，但一群人可以走得更远。"</em>
 </p>
 
 <p align="center">
-  如果这款工具对你的工作/学习流程带来提升，欢迎以 Star、Sponsor 的方式支持我们，让 Ophel 变得更好。
+  感谢 <a href="https://linux.do/">Linux.do</a> 社区的交流与支持，项目的许多想法和改进都来自社区成员的反馈。
+</p>
+
+<p align="center">
+  如果这款工具对你的工作或学习流程带来提升，欢迎以 Star、Sponsor 的方式支持我们，让 Ophel 变得更好。
 </p>
 
 <p align="center">
