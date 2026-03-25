@@ -44,14 +44,22 @@ body:
     attributes:
       label: 适用 AI 平台 | Target AI Platform
       options:
-        - All Platforms
-        - Gemini
-        - Gemini Enterprise
-        - ChatGPT
-        - Claude
-        - Grok
-        - AI Studio
-        - Other
+        - All Platforms (所有平台)
+        - Gemini (gemini.google.com)
+        - Gemini Enterprise (business.gemini.google)
+        - ChatGPT (chatgpt.com)
+        - Claude (claude.ai)
+        - Grok (grok.com)
+        - AI Studio (aistudio.google.com)
+        - DeepSeek (chat.deepseek.com)
+        - Doubao (www.doubao.com)
+        - ima (ima.qq.com)
+        - ChatGLM (chatglm.cn)
+        - Kimi (www.kimi.com)
+        - Qianwen (www.qianwen.com)
+        - QwenAI (chat.qwen.ai)
+        - Z.ai (chat.z.ai)
+        - Other (其他)
     validations:
       required: true
 
