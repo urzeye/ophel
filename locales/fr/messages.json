@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel Atlas : Navigateur de chats IA pour ChatGPT, Gemini, Claude et plus",
-    "description": "Nom de l'extension"
+    "message": "Gestionnaire de Chats IA & Sommaires pour ChatGPT/Claude/Gemini - Ophel",
+    "description": "Extension name"
   },
   "extensionDescription": {
-    "message": "Naviguez dans ChatGPT, Gemini, Claude et d’autres sites IA avec plans, dossiers et bibliothèque de prompts pour lire plus vite.",
-    "description": "Description de l'extension"
+    "message": "Créez sommaires et timelines pour naviguer dans vos chats IA en 1 clic. Organisez-les avec dossiers, exports et prompts.",
+    "description": "Extension description"
   }
 }
