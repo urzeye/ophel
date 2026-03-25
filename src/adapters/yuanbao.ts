@@ -61,15 +61,20 @@ const MODEL_MENU_ITEM_SELECTOR =
 const DISCLAIMER_SELECTOR = ".agent-dialogue__content-copyright"
 const FOLD_BUTTON_SELECTOR = '.yb-common-nav__trigger[data-desc="fold"]'
 const THOUGHT_MARKDOWN_SELECTOR = [
-  ".hyc-component-reasoner__think--expand .hyc-common-markdown-style",
+  ".hyc-component-reasoner__think-content .hyc-common-markdown-style",
   ".hyc-component-deepsearch-cot__think__content__item .hyc-common-markdown-style",
   ".hyc-common-markdown-style-cot",
 ].join(", ")
 const THOUGHT_CONTAINER_SELECTOR = [
-  ".hyc-component-reasoner",
+  ".hyc-component-reasoner__think",
   ".hyc-component-deepsearch-cot__think",
   ".hyc-common-markdown-style-cot",
 ].join(", ")
+const ASSISTANT_REASONER_BODY_SELECTORS = [
+  ".hyc-component-reasoner__text .hyc-common-markdown-style",
+  ".hyc-component-reasoner__text .hyc-content-md-done",
+  ".hyc-component-reasoner__text",
+]
 const DROPDOWN_MENU_SELECTOR =
   '.t-dropdown__menu, .t-dropdown__submenu, [role="menu"], [role="listbox"]'
 const DROPDOWN_ITEM_SELECTOR = '.t-dropdown__item, [role="menuitem"], [role="option"]'
@@ -771,19 +776,18 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   private findAssistantMarkdownRoot(element: Element): Element | null {
-    if (
-      element.matches(ASSISTANT_MARKDOWN_SELECTOR) &&
-      !element.closest(THOUGHT_CONTAINER_SELECTOR)
-    ) {
+    const reasonerBody = this.findFirstAssistantNodeOutsideThoughts(
+      element,
+      ASSISTANT_REASONER_BODY_SELECTORS.slice(0, 2),
+    )
+    if (reasonerBody) return reasonerBody
+
+    if (element.matches(ASSISTANT_MARKDOWN_SELECTOR) && !this.isThoughtElement(element)) {
       return element
     }
 
     const markdownRoots = Array.from(element.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR))
-    return (
-      markdownRoots.find((node) => !node.closest(THOUGHT_CONTAINER_SELECTOR)) ||
-      markdownRoots[0] ||
-      null
-    )
+    return markdownRoots.find((node) => !this.isThoughtElement(node)) || markdownRoots[0] || null
   }
 
   private extractAssistantPlainText(element: Element): string {
@@ -805,18 +809,24 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   private findAssistantBodyRoot(element: Element): HTMLElement | null {
+    const reasonerBody = this.findFirstAssistantNodeOutsideThoughts(
+      element,
+      ASSISTANT_REASONER_BODY_SELECTORS,
+    )
+    if (reasonerBody) return reasonerBody
+
     const markdownRoot = this.findAssistantMarkdownRoot(element)
     if (markdownRoot instanceof HTMLElement) return markdownRoot
 
     const speechText = element.querySelector(".agent-chat__speech-text") as HTMLElement | null
-    if (speechText && !speechText.closest(THOUGHT_CONTAINER_SELECTOR)) {
+    if (speechText && !this.isThoughtElement(speechText)) {
       return speechText
     }
 
     const bubbleContent = element.querySelector(
       ".agent-chat__bubble__content",
     ) as HTMLElement | null
-    if (bubbleContent && !bubbleContent.closest(THOUGHT_CONTAINER_SELECTOR)) {
+    if (bubbleContent && !this.isThoughtElement(bubbleContent)) {
       return bubbleContent
     }
 
@@ -858,6 +868,28 @@ export class YuanbaoAdapter extends SiteAdapter {
     const lines = markdown.replace(/\r\n/g, "\n").split("\n")
     const quotedLines = lines.map((line) => (line.trim().length > 0 ? `> ${line}` : ">"))
     return ["> [Thoughts]", ...quotedLines].join("\n")
+  }
+
+  private findFirstAssistantNodeOutsideThoughts(
+    element: Element,
+    selectors: string[],
+  ): HTMLElement | null {
+    for (const selector of selectors) {
+      if (element.matches(selector) && !this.isThoughtElement(element)) {
+        return element as HTMLElement
+      }
+
+      const match = Array.from(element.querySelectorAll(selector)).find(
+        (node): node is HTMLElement => node instanceof HTMLElement && !this.isThoughtElement(node),
+      )
+      if (match) return match
+    }
+
+    return null
+  }
+
+  private isThoughtElement(element: Element): boolean {
+    return element.closest(THOUGHT_CONTAINER_SELECTOR) !== null
   }
 
   private findConversationRowById(id: string): HTMLElement | null {
