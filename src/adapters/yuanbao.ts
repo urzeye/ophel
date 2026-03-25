@@ -39,6 +39,8 @@ const CONVERSATION_ITEM_SELECTOR = ".yb-recent-conv-list__item"
 const ACTIVE_CONVERSATION_SELECTOR = ".yb-recent-conv-list__item.active"
 const CONVERSATION_TITLE_SELECTOR =
   ".yb-recent-conv-list__item-name[data-item-name], .yb-recent-conv-list__item-name, [data-item-id][data-item-name]"
+const CONVERSATION_PINNED_SELECTOR =
+  ".yb-recent-conv-list__item-name.isTop, .yb-recent-conv-list__chat-top .icon-yb-ic_pin_16"
 
 const RESPONSE_SCROLL_SELECTOR =
   "#chat-content .agent-chat__list__content-wrapper, .agent-chat__list__content-wrapper"
@@ -280,6 +282,29 @@ export class YuanbaoAdapter extends SiteAdapter {
   getConversationTitle(): string | null {
     const active = document.querySelector(ACTIVE_CONVERSATION_SELECTOR)
     return active ? this.extractConversationTitle(active) : null
+  }
+
+  getCurrentConversationInfo(): ConversationInfo | null {
+    const current = super.getCurrentConversationInfo()
+    if (!current) return null
+
+    const active = document.querySelector(ACTIVE_CONVERSATION_SELECTOR)
+    const activeInfo = active
+      ? this.extractConversationInfo(active, this.getCurrentCid() || undefined)
+      : null
+
+    if (!activeInfo || activeInfo.id !== current.id) {
+      return current
+    }
+
+    return {
+      ...current,
+      title: activeInfo.title || current.title,
+      url: activeInfo.url || current.url,
+      cid: activeInfo.cid ?? current.cid,
+      isActive: activeInfo.isActive ?? current.isActive,
+      isPinned: activeInfo.isPinned ?? current.isPinned,
+    }
   }
 
   getConversationList(): ConversationInfo[] {
@@ -727,6 +752,7 @@ export class YuanbaoAdapter extends SiteAdapter {
       url,
       cid,
       isActive: container.classList.contains("active"),
+      isPinned: this.isPinnedConversation(container),
     }
   }
 
@@ -736,6 +762,10 @@ export class YuanbaoAdapter extends SiteAdapter {
       titleElement?.getAttribute("data-item-name") || titleElement?.dataset?.itemName
     const text = attrTitle || titleElement?.textContent || ""
     return text.trim()
+  }
+
+  private isPinnedConversation(element: Element): boolean {
+    return element.querySelector(CONVERSATION_PINNED_SELECTOR) !== null
   }
 
   private findScrollableParent(element: Element | null): HTMLElement | null {
