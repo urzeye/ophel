@@ -734,6 +734,7 @@ export const es = {
   formulaCopyLabel: "Doble clic copia fórmula",
   formulaCopyDesc: "Copia fuente LaTeX (no en todos los sitios)",
   formulaCopied: "Copiada",
+  formulaSourceUnavailable: "Esta fórmula no contiene código LaTeX",
   formulaDelimiterLabel: "Añadir $ o $$",
   formulaDelimiterDesc: "Según el tipo de fórmula automáticamente",
   tableCopyLabel: "Copiar Tabla",

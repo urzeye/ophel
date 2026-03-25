@@ -744,6 +744,7 @@ export const zhTW = {
   formulaCopyLabel: "雙擊複製公式",
   formulaCopyDesc: "雙擊數學公式可複製 LaTeX 原始碼（部分站點不支持）",
   formulaCopied: "公式已複製",
+  formulaSourceUnavailable: "此公式節點不包含 LaTeX 原始碼",
   formulaDelimiterLabel: "複製時添加分隔符",
   formulaDelimiterDesc: "根據公式類型自動添加 $ 或 $$ 分隔符",
   tableCopyLabel: "表格複製 Markdown",

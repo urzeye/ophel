@@ -731,6 +731,7 @@ export const ru = {
   formulaCopyLabel: "Копи латекса кликом",
   formulaCopyDesc: "Копирует исходник LaTeX (не везде)",
   formulaCopied: "Формула в буфере",
+  formulaSourceUnavailable: "В этой формуле нет исходника LaTeX",
   formulaDelimiterLabel: "Добавить $ или $$",
   formulaDelimiterDesc: "Автоматически по типу формулы",
   tableCopyLabel: "Копия таблицы",

@@ -804,6 +804,7 @@ export const zhCN = {
   formulaCopyLabel: "双击复制公式",
   formulaCopyDesc: "双击数学公式可复制 LaTeX 源码（部分站点不支持）",
   formulaCopied: "公式已复制",
+  formulaSourceUnavailable: "该公式节点不包含 LaTeX 源码",
   formulaDelimiterLabel: "复制时添加分隔符",
   formulaDelimiterDesc: "根据公式类型自动添加 $ 或 $$ 分隔符",
   tableCopyLabel: "表格复制 Markdown",

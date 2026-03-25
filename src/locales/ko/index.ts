@@ -734,6 +734,7 @@ export const ko = {
   formulaCopyLabel: "수식을 더블 클릭하여 복사",
   formulaCopyDesc: "수식을 더블 클릭하여 LaTeX 소스 복사 (일부 사이트 미지원)",
   formulaCopied: "수식이 복사되었습니다",
+  formulaSourceUnavailable: "이 수식 노드에는 LaTeX 소스가 없습니다",
   formulaDelimiterLabel: "복사 시 구분 기호 추가",
   formulaDelimiterDesc: "수식 유형에 따라 $ 또는 $$ 구분 기호를 자동으로 추가",
   tableCopyLabel: "테이블 Markdown 복사",

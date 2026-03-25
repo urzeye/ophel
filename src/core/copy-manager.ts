@@ -21,6 +21,17 @@ export class CopyManager {
   private stopTableWatch: (() => void) | null = null
   private rescanTimer: ReturnType<typeof setInterval> | null = null
 
+  private static readonly FORMULA_HOST_SELECTOR = [
+    ".math-block",
+    ".math-inline",
+    ".katex",
+    ".katex-display",
+    "math",
+    "[data-math]",
+    "[data-custom-copy-text]",
+    'annotation[encoding="application/x-tex"]',
+  ].join(", ")
+
   constructor(settings: Settings["content"], siteAdapter?: SiteAdapter) {
     this.settings = settings
     this.siteAdapter = siteAdapter || null
@@ -85,40 +96,71 @@ export class CopyManager {
 
     // 双击事件委托处理
     this.formulaDblClickHandler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement
+      const target =
+        e.target instanceof Element
+          ? e.target
+          : e.target instanceof Node
+            ? e.target.parentElement
+            : null
+      if (!target) return
 
-      // 优先匹配 Gemini/Doubao 格式
-      const geminiMathEl = target.closest(".math-block, .math-inline")
-      if (geminiMathEl) {
-        // Gemini 用 data-math，Doubao 用 data-custom-copy-text
-        let latex =
-          geminiMathEl.getAttribute("data-math") ||
-          geminiMathEl.getAttribute("data-custom-copy-text")
+      try {
+        const formulaHost = target.closest(CopyManager.FORMULA_HOST_SELECTOR)
+        if (!formulaHost) return
 
-        // 去除 Doubao 自带的定界符 (如果是 \$...\$ 或 \(\(...\)\) 或 \(...\) 或 \[...\] 等)
-        if (latex) {
-          latex = latex.replace(/^\\?\(|^\\?\[|^\$\$?|\\?\)$|\\?\]$|\$\$?$/g, "").trim()
+        // 优先匹配 Gemini/Doubao 这类直接携带源码的节点
+        const structuredMathEl = formulaHost.closest(
+          ".math-block, .math-inline, [data-math], [data-custom-copy-text]",
+        ) as HTMLElement | null
+        if (structuredMathEl) {
+          let latex =
+            structuredMathEl.getAttribute("data-math") ||
+            structuredMathEl.getAttribute("data-custom-copy-text")
 
-          this.copyLatex(latex, geminiMathEl.classList.contains("math-block"))
-          e.preventDefault()
-          e.stopPropagation()
-          return
+          if (latex) {
+            latex = latex.replace(/^\\?\(|^\\?\[|^\$\$?|\\?\)$|\\?\]$|\$\$?$/g, "").trim()
+            if (latex) {
+              this.copyLatex(
+                latex,
+                structuredMathEl.classList.contains("math-block") ||
+                  structuredMathEl.matches(".math-block"),
+              )
+              e.preventDefault()
+              e.stopPropagation()
+              return
+            }
+          }
         }
-      }
 
-      // 匹配 ChatGPT/KaTeX 格式
-      const katexEl = target.closest(".katex")
-      if (katexEl) {
-        // 从 annotation 标签获取 LaTeX 源码
-        const annotation = katexEl.querySelector('annotation[encoding="application/x-tex"]')
+        // 匹配 KaTeX / MathML 格式，兼容 annotation 本身被双击命中的情况
+        const katexEl =
+          formulaHost.closest(".katex, .katex-display") || target.closest(".katex, .katex-display")
+        const mathEl =
+          formulaHost.closest("math") ||
+          target.closest("math") ||
+          katexEl?.querySelector("math") ||
+          null
+        const annotation = formulaHost.matches('annotation[encoding="application/x-tex"]')
+          ? formulaHost
+          : katexEl?.querySelector('annotation[encoding="application/x-tex"]') ||
+            mathEl?.querySelector('annotation[encoding="application/x-tex"]') ||
+            null
+
         if (annotation?.textContent) {
-          // 检测是否为 display 模式（块级公式）
-          const isBlock = !!katexEl.closest(".katex-display")
+          const isBlock = !!katexEl?.closest(".katex-display")
           this.copyLatex(annotation.textContent, isBlock)
           e.preventDefault()
           e.stopPropagation()
           return
         }
+
+        // 命中了公式节点，但页面本身没有提供可提取的 LaTeX 源码
+        showToast(t("formulaSourceUnavailable") || t("copyFailed"))
+        e.preventDefault()
+        e.stopPropagation()
+      } catch (err) {
+        console.error("[FormulaCopy] Unexpected error:", err)
+        showToast(t("copyFailed"))
       }
     }
 
@@ -132,6 +174,11 @@ export class CopyManager {
     let copyText = latex
     if (this.settings.formulaDelimiter) {
       copyText = isBlock ? `$$${latex}$$` : `$${latex}$`
+    }
+
+    if (!navigator.clipboard?.writeText) {
+      showToast(t("copyFailed"))
+      return
     }
 
     navigator.clipboard

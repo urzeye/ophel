@@ -771,6 +771,7 @@ export const ja = {
   formulaCopyLabel: "ダブルクリックで数式をコピー",
   formulaCopyDesc: "数式をダブルクリックしてLaTeXソースをコピー（一部サイト不可）",
   formulaCopied: "数式をコピーしました",
+  formulaSourceUnavailable: "この数式ノードには LaTeX ソースがありません",
   formulaDelimiterLabel: "コピー時に区切り文字を付与",
   formulaDelimiterDesc: "数式の形式に合わせて $ または $$ を自動付与します",
   tableCopyLabel: "テーブルのMarkdownコピー",

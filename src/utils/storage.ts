@@ -45,6 +45,7 @@ export type SiteId =
   | "doubao"
   | "ima"
   | "deepseek"
+  | "yuanbao"
   | "zai"
   | "_default"
 
@@ -360,6 +361,7 @@ export const DEFAULT_SETTINGS: Settings = {
       doubao: { ...DEFAULT_SITE_THEME },
       ima: { ...DEFAULT_SITE_THEME },
       deepseek: { ...DEFAULT_SITE_THEME },
+      yuanbao: { ...DEFAULT_SITE_THEME },
       zai: { ...DEFAULT_SITE_THEME },
       _default: { ...DEFAULT_SITE_THEME },
     },
@@ -374,6 +376,7 @@ export const DEFAULT_SETTINGS: Settings = {
       doubao: { ...DEFAULT_PAGE_WIDTH },
       ima: { ...DEFAULT_PAGE_WIDTH },
       deepseek: { ...DEFAULT_PAGE_WIDTH },
+      yuanbao: { ...DEFAULT_PAGE_WIDTH },
       zai: { ...DEFAULT_PAGE_WIDTH },
       _default: { ...DEFAULT_PAGE_WIDTH },
     },
@@ -384,6 +387,7 @@ export const DEFAULT_SETTINGS: Settings = {
       doubao: { ...DEFAULT_USER_QUERY_WIDTH },
       ima: { ...DEFAULT_USER_QUERY_WIDTH },
       deepseek: { ...DEFAULT_USER_QUERY_WIDTH },
+      yuanbao: { ...DEFAULT_USER_QUERY_WIDTH },
       zai: { ...DEFAULT_USER_QUERY_WIDTH },
       _default: { ...DEFAULT_USER_QUERY_WIDTH },
     },
@@ -394,6 +398,7 @@ export const DEFAULT_SETTINGS: Settings = {
       doubao: { ...DEFAULT_ZEN_MODE },
       ima: { ...DEFAULT_ZEN_MODE },
       deepseek: { ...DEFAULT_ZEN_MODE },
+      yuanbao: { ...DEFAULT_ZEN_MODE },
       zai: { ...DEFAULT_ZEN_MODE },
       _default: { ...DEFAULT_ZEN_MODE },
     },
@@ -404,6 +409,7 @@ export const DEFAULT_SETTINGS: Settings = {
     "gemini-enterprise": { enabled: false, keyword: "" },
     ima: { enabled: false, keyword: "" },
     qwenai: { enabled: false, keyword: "" },
+    yuanbao: { enabled: false, keyword: "" },
   },
 
   globalSearch: {

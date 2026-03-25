@@ -789,6 +789,7 @@ export const en = {
 
   formulaCopyDesc: "Double-click math formula to copy LaTeX source (Not supported on some sites)",
   formulaCopied: "Formula copied",
+  formulaSourceUnavailable: "This formula has no LaTeX source",
   formulaDelimiterLabel: "Add delimiter when copying",
   formulaDelimiterDesc: "Automatically add $ or $$ delimiter based on formula type",
   tableCopyLabel: "Table Copy Markdown",

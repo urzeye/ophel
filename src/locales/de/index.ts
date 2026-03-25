@@ -736,6 +736,7 @@ export const de = {
   formulaCopyLabel: "Doppelklick kopiert Formel",
   formulaCopyDesc: "LaTeX-Quelle kopieren (nicht überall unterstützt)",
   formulaCopied: "Formel kopiert",
+  formulaSourceUnavailable: "Diese Formel enthält keinen LaTeX-Quelltext",
   formulaDelimiterLabel: "$ oder $$ hinzufügen",
   formulaDelimiterDesc: "Je nach Formeltyp automatisch",
   tableCopyLabel: "Tabelle kopieren",
