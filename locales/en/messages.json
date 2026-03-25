@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Ophel Atlas: AI Chat Navigator for ChatGPT, Gemini, Claude & more",
+    "message": "AI Chat Organizer & Outline Navigator for ChatGPT/Claude/Gemini - Ophel",
     "description": "Extension name"
   },
   "extensionDescription": {
-    "message": "Navigate ChatGPT, Gemini, Claude, and more AI sites with outlines, folders, and a prompt library for faster reading and reuse.",
+    "message": "Auto-generate outlines & timelines to 1-click navigate AI chats. Organize via folders, exports & prompts across top platforms.",
     "description": "Extension description"
   }
 }
