@@ -77,9 +77,22 @@ const ASSISTANT_REASONER_BODY_SELECTORS = [
   ".hyc-component-reasoner__text .hyc-content-md-done",
   ".hyc-component-reasoner__text",
 ]
-const DROPDOWN_MENU_SELECTOR =
-  '.t-dropdown__menu, .t-dropdown__submenu, [role="menu"], [role="listbox"]'
-const DROPDOWN_ITEM_SELECTOR = '.t-dropdown__item, [role="menuitem"], [role="option"]'
+const DROPDOWN_MENU_SELECTOR = [
+  ".t-dropdown__menu",
+  ".t-dropdown__submenu",
+  ".t-dropdown",
+  ".t-popup",
+  ".t-popup__content",
+  ".t-popup__content__inner",
+  '[role="menu"]',
+  '[role="listbox"]',
+].join(", ")
+const DROPDOWN_ITEM_SELECTOR = [
+  ".t-dropdown__item",
+  ".yb-dropdown__item",
+  '[role="menuitem"]',
+  '[role="option"]',
+].join(", ")
 const CONVERSATION_MENU_TRIGGER_SELECTOR = [
   '[aria-haspopup="menu"]',
   '[aria-haspopup="listbox"]',
@@ -202,6 +215,46 @@ export class YuanbaoAdapter extends SiteAdapter {
       }),
     )
     editor.dispatchEvent(new Event("change", { bubbles: true }))
+  }
+
+  protected simulateClick(element: HTMLElement): void {
+    const rect = element.getBoundingClientRect()
+    const clientX = rect.left + Math.max(1, Math.min(rect.width / 2, Math.max(rect.width - 1, 1)))
+    const clientY = rect.top + Math.max(1, Math.min(rect.height / 2, Math.max(rect.height - 1, 1)))
+    const commonInit = {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      view: window,
+      button: 0,
+      buttons: 1,
+      clientX,
+      clientY,
+    }
+
+    const dispatchPointer = (type: string) => {
+      if (typeof PointerEvent !== "function") return false
+      return element.dispatchEvent(
+        new PointerEvent(type, {
+          ...commonInit,
+          pointerId: 1,
+          pointerType: "mouse",
+          isPrimary: true,
+        }),
+      )
+    }
+
+    dispatchPointer("pointerenter")
+    dispatchPointer("pointerover")
+    dispatchPointer("pointermove")
+    element.dispatchEvent(new MouseEvent("mouseenter", commonInit))
+    element.dispatchEvent(new MouseEvent("mouseover", commonInit))
+    element.dispatchEvent(new MouseEvent("mousemove", commonInit))
+    dispatchPointer("pointerdown")
+    element.dispatchEvent(new MouseEvent("mousedown", commonInit))
+    dispatchPointer("pointerup")
+    element.dispatchEvent(new MouseEvent("mouseup", commonInit))
+    element.dispatchEvent(new MouseEvent("click", commonInit))
   }
 
   getSubmitButtonSelectors(): string[] {
@@ -955,18 +1008,21 @@ export class YuanbaoAdapter extends SiteAdapter {
     let trigger = this.findConversationMenuTrigger(row)
     if (!trigger) return false
 
-    const menu = await this.openConversationMenu(row, trigger)
-    if (!menu) return false
+    const action = await this.openConversationAction(row, trigger)
+    if (!action) return false
 
-    const deleteItem = await this.waitForDeleteMenuItem(menu, 2000)
-    if (!deleteItem) {
-      document.body.click()
-      return false
+    let dialog: HTMLElement | null = action.kind === "dialog" ? action.dialog : null
+    if (action.kind === "menu") {
+      const deleteItem = await this.waitForDeleteMenuItem(action.menu, 2000)
+      if (!deleteItem) {
+        document.body.click()
+        return false
+      }
+
+      this.simulateClick(deleteItem)
+      dialog = await this.waitForDialogOpen(1200)
     }
 
-    this.simulateClick(deleteItem)
-
-    const dialog = await this.waitForDialogOpen(1200)
     if (dialog) {
       const confirmButton = await this.waitForDeleteConfirmButton(dialog, 2000)
       if (!confirmButton) return false
@@ -985,91 +1041,177 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   private revealConversationActions(row: HTMLElement): void {
-    ;["mouseenter", "mousemove", "mouseover"].forEach((type) => {
-      row.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, view: window }))
-    })
+    const title = row.querySelector(CONVERSATION_TITLE_SELECTOR) as HTMLElement | null
+    const targets = [row, title].filter(
+      (element): element is HTMLElement => element instanceof HTMLElement,
+    )
+
+    for (const target of targets) {
+      const rect = target.getBoundingClientRect()
+      const clientX = rect.left + Math.max(1, Math.min(rect.width / 2, Math.max(rect.width - 1, 1)))
+      const clientY =
+        rect.top + Math.max(1, Math.min(rect.height / 2, Math.max(rect.height - 1, 1)))
+      const commonInit = {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        view: window,
+        clientX,
+        clientY,
+      }
+
+      if (typeof PointerEvent === "function") {
+        for (const type of ["pointerenter", "pointerover", "pointermove"]) {
+          target.dispatchEvent(
+            new PointerEvent(type, {
+              ...commonInit,
+              pointerId: 1,
+              pointerType: "mouse",
+              isPrimary: true,
+            }),
+          )
+        }
+      }
+
+      for (const type of ["mouseenter", "mouseover", "mousemove"]) {
+        target.dispatchEvent(new MouseEvent(type, commonInit))
+      }
+    }
   }
 
   private findConversationMenuTrigger(row: HTMLElement): HTMLElement | null {
-    const candidates = Array.from(row.querySelectorAll(CONVERSATION_MENU_TRIGGER_SELECTOR))
-    let bestCandidate: HTMLElement | null = null
-    let bestScore = Number.NEGATIVE_INFINITY
-
-    for (const candidate of candidates) {
-      if (!(candidate instanceof HTMLElement) || !this.isVisibleElement(candidate)) continue
-      if (candidate.closest(CONVERSATION_TITLE_SELECTOR)) continue
-      if (candidate === row) continue
-      if (candidate.closest(".t-checkbox, [role='checkbox']")) continue
-      if (candidate.matches("input, label")) continue
-
-      const signal = this.getConversationActionSignal(candidate)
-      let score = 0
-
-      if (candidate.matches('[aria-haspopup="menu"], [aria-haspopup="listbox"]')) score += 100
-      if (/(ellipsis|more[_-]?vert|icon-more|icon-menu|menu)/i.test(signal)) score += 60
-      if (/(delete|删除)/i.test(signal)) score += 40
-      if (candidate.matches("button, [role='button']")) score += 10
-      if (candidate.querySelector(".iconfont-yb, .yb-icon, svg")) score += 5
-
-      if (score > bestScore) {
-        bestScore = score
-        bestCandidate = candidate
-      }
-    }
-
-    return bestCandidate
+    return this.getConversationActionCandidates(row)[0] || null
   }
 
-  private async openConversationMenu(
+  private getConversationActionCandidates(
+    row: HTMLElement,
+    preferredTrigger?: HTMLElement | null,
+  ): HTMLElement[] {
+    const candidates = Array.from(row.querySelectorAll(CONVERSATION_MENU_TRIGGER_SELECTOR))
+    const scoredCandidates: Array<{ element: HTMLElement; score: number }> = []
+    const seen = new Set<HTMLElement>()
+
+    const pushCandidate = (candidate: HTMLElement | null, bonus = 0) => {
+      if (!(candidate instanceof HTMLElement) || seen.has(candidate)) return
+      seen.add(candidate)
+
+      const score = this.getConversationActionScore(candidate)
+      if (!Number.isFinite(score)) return
+
+      scoredCandidates.push({ element: candidate, score: score + bonus })
+    }
+
+    pushCandidate(preferredTrigger, 25)
+
+    for (const candidate of candidates) {
+      pushCandidate(candidate as HTMLElement)
+    }
+
+    scoredCandidates.sort((left, right) => right.score - left.score)
+    return scoredCandidates.map(({ element }) => element)
+  }
+
+  private getConversationActionScore(candidate: HTMLElement): number {
+    if (candidate.closest(CONVERSATION_TITLE_SELECTOR)) return Number.NEGATIVE_INFINITY
+    if (candidate.closest(".t-checkbox, [role='checkbox']")) return Number.NEGATIVE_INFINITY
+    if (candidate.matches("input, label")) return Number.NEGATIVE_INFINITY
+
+    const signal = this.getConversationActionSignal(candidate)
+    const style = window.getComputedStyle(candidate)
+    let score = 0
+
+    if (candidate.matches('[aria-haspopup="menu"], [aria-haspopup="listbox"]')) score += 120
+    if (/(ellipsis|more[_-]?vert|icon-more|icon-menu|menu)/i.test(signal)) score += 70
+    if (/(delete|删除)/i.test(signal)) score += 45
+    if (/(action|operate|dropdown|popup)/i.test(signal)) score += 15
+    if (candidate.matches("button, [role='button']")) score += 10
+    if (candidate.querySelector(".iconfont-yb, .yb-icon, svg")) score += 5
+    if (style.pointerEvents !== "none") score += 5
+    if (this.isVisibleElement(candidate)) score += 30
+
+    return score
+  }
+
+  private async openConversationAction(
     row: HTMLElement,
     initialTrigger: HTMLElement,
-  ): Promise<HTMLElement | null> {
+  ): Promise<{ kind: "menu"; menu: HTMLElement } | { kind: "dialog"; dialog: HTMLElement } | null> {
     let trigger: HTMLElement | null = initialTrigger
 
-    for (let attempt = 0; attempt < 3; attempt += 1) {
+    for (let attempt = 0; attempt < 4; attempt += 1) {
       document.body.click()
       await this.sleep(80)
 
       this.revealConversationActions(row)
-      if (!trigger?.isConnected) {
-        trigger = this.findConversationMenuTrigger(row)
-      }
-      if (!trigger) return null
+      const candidates = this.getConversationActionCandidates(row, trigger)
+      if (candidates.length === 0) return null
 
-      this.simulateClick(trigger)
-      const menu = await this.waitForMenuOpen(trigger, 1000)
-      if (menu) return menu
+      trigger = candidates[0] || null
+      for (const candidate of candidates) {
+        if (!candidate.isConnected) continue
+
+        this.simulateClick(candidate)
+        const opened = await this.waitForConversationActionOpen(candidate, 1000)
+        if (opened) return opened
+      }
     }
 
     return null
   }
 
-  private async waitForMenuOpen(
+  private async waitForConversationActionOpen(
     trigger: HTMLElement,
     timeout: number,
-  ): Promise<HTMLElement | null> {
-    const controlledId = trigger.getAttribute("aria-controls") || trigger.getAttribute("aria-owns")
+  ): Promise<{ kind: "menu"; menu: HTMLElement } | { kind: "dialog"; dialog: HTMLElement } | null> {
     const start = Date.now()
 
     while (Date.now() - start < timeout) {
-      if (controlledId) {
-        const controlled = document.getElementById(controlledId)
-        if (controlled instanceof HTMLElement && this.isVisibleElement(controlled)) {
-          return controlled
-        }
+      const dialog = this.findVisibleDialog()
+      if (dialog) {
+        return { kind: "dialog", dialog }
       }
 
-      const menus = Array.from(document.querySelectorAll(DROPDOWN_MENU_SELECTOR)).filter(
-        (menu): menu is HTMLElement => menu instanceof HTMLElement && this.isVisibleElement(menu),
-      )
-      if (menus.length > 0) {
-        return menus[menus.length - 1]
+      const menu = this.findVisibleMenu(trigger)
+      if (menu) {
+        return { kind: "menu", menu }
       }
 
       await this.sleep(80)
     }
 
     return null
+  }
+
+  private findVisibleMenu(trigger?: HTMLElement | null): HTMLElement | null {
+    const controlledId =
+      trigger?.getAttribute("aria-controls") || trigger?.getAttribute("aria-owns")
+    if (controlledId) {
+      const controlled = document.getElementById(controlledId)
+      if (
+        controlled instanceof HTMLElement &&
+        this.isVisibleElement(controlled) &&
+        this.isDropdownMenuContainer(controlled)
+      ) {
+        return controlled
+      }
+    }
+
+    const menus = Array.from(document.querySelectorAll(DROPDOWN_MENU_SELECTOR)).filter(
+      (menu): menu is HTMLElement =>
+        menu instanceof HTMLElement &&
+        this.isVisibleElement(menu) &&
+        this.isDropdownMenuContainer(menu),
+    )
+    if (menus.length > 0) {
+      return menus[menus.length - 1]
+    }
+
+    return null
+  }
+
+  private isDropdownMenuContainer(element: HTMLElement): boolean {
+    if (element.matches(DROPDOWN_ITEM_SELECTOR)) return true
+    return !!element.querySelector(DROPDOWN_ITEM_SELECTOR)
   }
 
   private async waitForDeleteMenuItem(
@@ -1100,16 +1242,22 @@ export class YuanbaoAdapter extends SiteAdapter {
     const start = Date.now()
 
     while (Date.now() - start < timeout) {
-      const dialog = Array.from(document.querySelectorAll(DIALOG_SELECTOR)).find(
-        (element): element is HTMLElement =>
-          element instanceof HTMLElement && this.isVisibleElement(element),
-      )
+      const dialog = this.findVisibleDialog()
       if (dialog) return dialog
 
       await this.sleep(80)
     }
 
     return null
+  }
+
+  private findVisibleDialog(): HTMLElement | null {
+    return (
+      Array.from(document.querySelectorAll(DIALOG_SELECTOR)).find(
+        (element): element is HTMLElement =>
+          element instanceof HTMLElement && this.isVisibleElement(element),
+      ) || null
+    )
   }
 
   private async waitForDeleteConfirmButton(
