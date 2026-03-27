@@ -747,6 +747,35 @@ export const ru = {
   importSuccess: "Успех. Перезагрузка...",
   importError: "Ошибка: ",
   invalidBackupFile: "Не тот формат",
+  voyagerImportTitle: "Импорт из Gemini Voyager",
+  voyagerImportDesc:
+    "Импортировать организацию папок и поэтапно объединить её с текущей учетной записью",
+  voyagerImportAction: "Начать импорт",
+  voyagerImportPlaceholder:
+    "Вставьте JSON, экспортированный из Gemini Voyager, например gemini-voyager.folders.v1 ...",
+  voyagerImportConfirm:
+    "Импортировать структуру папок Voyager в текущую открытую учетную запись Gemini с поэтапным объединением?",
+  voyagerImportVersion: "Версия Voyager",
+  voyagerImportFolderCount: "Папки",
+  voyagerImportConversationCount: "Диалоги",
+  voyagerImportNewFolders: "Новые папки",
+  voyagerImportNewConversations: "Новые диалоги",
+  voyagerImportMovedConversations: "Перемещенные диалоги",
+  voyagerImportPreservedConversations: "Сохраненные папки",
+  voyagerImportFlattenNotice:
+    "Вложенные папки будут преобразованы в имена-пути вроде «Родитель / Дочерняя».",
+  voyagerImportMergeNotice:
+    "Чтобы не перезаписать вашу текущую организацию, диалоги, уже помещенные в другие папки Ophel, останутся на месте. Перераспределяются только Входящие и ранее импортированные папки Voyager.",
+  voyagerImportSuccess:
+    "Импорт Voyager завершен: добавлено папок {folders}, добавлено диалогов {conversations}, перемещено диалогов {moved}.",
+  voyagerImportGeminiOnly:
+    "Откройте управление данными на странице Gemini перед импортом данных Voyager.",
+  voyagerImportGeminiHint:
+    "Поддерживается только JSON `gemini-voyager.folders.v1`. Импортированные данные будут автоматически привязаны к текущей открытой учетной записи Gemini.",
+  voyagerImportPasteRequired: "Сначала выберите файл Voyager или вставьте JSON",
+  voyagerImportInvalidFormat: "Это не экспорт папок Gemini Voyager",
+  voyagerImportInvalidData: "Отсутствуют корректные данные папок или содержимого",
+  voyagerImportEmpty: "В импортируемом файле не найдено пригодных папок",
   backupValidationInvalidFormat: "Формат не тот",
   backupValidationMissingVersion: "Нет версии",
   backupValidationMissingData: "Нет данных",

@@ -750,6 +750,32 @@ export const ko = {
   importSuccess: "가져오기 성공! 새 설정을 적용하기 위해 페이지가 새로고침됩니다.",
   importError: "가져오기 실패: ",
   invalidBackupFile: "잘못된 백업 파일 형식",
+  voyagerImportTitle: "Gemini Voyager에서 가져오기",
+  voyagerImportDesc: "폴더 정리 결과를 현재 계정에 증분 방식으로 병합하며 가져옵니다",
+  voyagerImportAction: "가져오기 시작",
+  voyagerImportPlaceholder:
+    "Gemini Voyager가 내보낸 JSON을 붙여넣으세요. 예: gemini-voyager.folders.v1 ...",
+  voyagerImportConfirm:
+    "Voyager 폴더 구조를 현재 열려 있는 Gemini 계정으로 증분 가져오기 하시겠습니까?",
+  voyagerImportVersion: "Voyager 버전",
+  voyagerImportFolderCount: "폴더",
+  voyagerImportConversationCount: "대화",
+  voyagerImportNewFolders: "새 폴더",
+  voyagerImportNewConversations: "새 대화",
+  voyagerImportMovedConversations: "이동된 대화",
+  voyagerImportPreservedConversations: "유지된 폴더",
+  voyagerImportFlattenNotice: '중첩 폴더는 "상위 / 하위" 같은 경로 이름으로 평탄화됩니다.',
+  voyagerImportMergeNotice:
+    "기존 정리를 덮어쓰지 않도록 이미 다른 Ophel 폴더에 있는 대화는 그대로 유지됩니다. 받은편지함과 이전에 가져온 Voyager 폴더만 다시 분류됩니다.",
+  voyagerImportSuccess:
+    "Voyager 가져오기 완료: 폴더 {folders}개 추가, 대화 {conversations}개 추가, 대화 {moved}개 이동.",
+  voyagerImportGeminiOnly: "Voyager 데이터를 가져오기 전에 Gemini 페이지에서 데이터 관리를 여세요.",
+  voyagerImportGeminiHint:
+    "`gemini-voyager.folders.v1` JSON만 지원합니다. 가져온 내용은 현재 열려 있는 Gemini 계정에 자동으로 연결됩니다.",
+  voyagerImportPasteRequired: "먼저 Voyager 파일을 선택하거나 JSON을 붙여넣어 주세요",
+  voyagerImportInvalidFormat: "이 파일은 Gemini Voyager 폴더 내보내기 형식이 아닙니다",
+  voyagerImportInvalidData: "유효한 폴더 또는 내용 데이터가 없습니다",
+  voyagerImportEmpty: "가져올 파일에 사용할 수 있는 폴더가 없습니다",
   backupValidationInvalidFormat: "잘못된 데이터 형식",
   backupValidationMissingVersion: "버전 필드 누락",
   backupValidationMissingData: "데이터 필드 누락",

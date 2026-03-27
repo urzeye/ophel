@@ -750,6 +750,35 @@ export const pt = {
   importSuccess: "Sucesso. Recarregando...",
   importError: "Falha: ",
   invalidBackupFile: "Formato inválido",
+  voyagerImportTitle: "Importar do Gemini Voyager",
+  voyagerImportDesc:
+    "Importa a organização de pastas e faz a mesclagem incremental com a conta atual",
+  voyagerImportAction: "Iniciar importação",
+  voyagerImportPlaceholder:
+    "Cole o JSON exportado pelo Gemini Voyager, por exemplo gemini-voyager.folders.v1 ...",
+  voyagerImportConfirm:
+    "Importar a estrutura de pastas do Voyager para a conta Gemini aberta no momento com mesclagem incremental?",
+  voyagerImportVersion: "Versão do Voyager",
+  voyagerImportFolderCount: "Pastas",
+  voyagerImportConversationCount: "Conversas",
+  voyagerImportNewFolders: "Novas pastas",
+  voyagerImportNewConversations: "Novas conversas",
+  voyagerImportMovedConversations: "Conversas movidas",
+  voyagerImportPreservedConversations: "Pastas preservadas",
+  voyagerImportFlattenNotice:
+    'Pastas aninhadas são achatadas em nomes de caminho como "Pai / Filho".',
+  voyagerImportMergeNotice:
+    "Para não sobrescrever sua organização atual, conversas já colocadas em outras pastas do Ophel permanecem onde estão. Apenas a Caixa de entrada e as pastas importadas do Voyager são reatribuídas.",
+  voyagerImportSuccess:
+    "Importação do Voyager concluída: {folders} pastas adicionadas, {conversations} conversas adicionadas e {moved} conversas movidas.",
+  voyagerImportGeminiOnly:
+    "Abra o Gerenciamento de dados em uma página do Gemini antes de importar dados do Voyager.",
+  voyagerImportGeminiHint:
+    "Apenas JSON `gemini-voyager.folders.v1` é compatível. Os dados importados serão vinculados automaticamente à conta Gemini aberta no momento.",
+  voyagerImportPasteRequired: "Escolha primeiro um arquivo do Voyager ou cole o JSON",
+  voyagerImportInvalidFormat: "Este não é um arquivo de exportação de pastas do Gemini Voyager",
+  voyagerImportInvalidData: "Faltam dados válidos de pastas ou de conteúdo",
+  voyagerImportEmpty: "Nenhuma pasta utilizável foi encontrada no arquivo importado",
   backupValidationInvalidFormat: "Formato inválido",
   backupValidationMissingVersion: "Versão ausente",
   backupValidationMissingData: "Dados ausentes",

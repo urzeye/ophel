@@ -787,6 +787,33 @@ export const ja = {
   importSuccess: "インポート完了！ページを再読み込みして適用します。",
   importError: "インポート失敗: ",
   invalidBackupFile: "バックアップファイルの形式が正しくありません",
+  voyagerImportTitle: "Gemini Voyager からインポート",
+  voyagerImportDesc: "フォルダー整理結果を現在のアカウントへ増分マージしながら取り込みます",
+  voyagerImportAction: "インポート開始",
+  voyagerImportPlaceholder:
+    "Gemini Voyager が書き出した JSON を貼り付けてください。例: gemini-voyager.folders.v1 ...",
+  voyagerImportConfirm:
+    "Voyager のフォルダー構造を、現在開いている Gemini アカウントに増分インポートしますか？",
+  voyagerImportVersion: "Voyager バージョン",
+  voyagerImportFolderCount: "フォルダー",
+  voyagerImportConversationCount: "会話",
+  voyagerImportNewFolders: "新規フォルダー",
+  voyagerImportNewConversations: "新規会話",
+  voyagerImportMovedConversations: "移動した会話",
+  voyagerImportPreservedConversations: "保持したフォルダー",
+  voyagerImportFlattenNotice: "入れ子のフォルダーは「親 / 子」のようなパス名にフラット化されます。",
+  voyagerImportMergeNotice:
+    "既存の整理を上書きしないよう、すでに別の Ophel フォルダーにある会話はそのまま残します。再分類されるのは受信トレイと過去にインポートした Voyager フォルダーだけです。",
+  voyagerImportSuccess:
+    "Voyager のインポートが完了しました: フォルダー {folders} 件追加、会話 {conversations} 件追加、会話 {moved} 件を移動しました。",
+  voyagerImportGeminiOnly:
+    "Voyager データをインポートする前に、Gemini ページでデータ管理を開いてください。",
+  voyagerImportGeminiHint:
+    "`gemini-voyager.folders.v1` JSON のみ対応しています。インポートした内容は現在開いている Gemini アカウントに自動で紐づきます。",
+  voyagerImportPasteRequired: "先に Voyager ファイルを選択するか JSON を貼り付けてください",
+  voyagerImportInvalidFormat: "これは Gemini Voyager のフォルダーエクスポート形式ではありません",
+  voyagerImportInvalidData: "有効なフォルダーまたは内容データが不足しています",
+  voyagerImportEmpty: "インポートファイルに使用できるフォルダーがありません",
   backupValidationInvalidFormat: "データ形式が不正です",
   backupValidationMissingVersion: "バージョン情報がありません",
   backupValidationMissingData: "データ本体がありません",

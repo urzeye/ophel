@@ -806,6 +806,34 @@ export const en = {
   importSuccess: "Import successful! The page will refresh to apply new settings.",
   importError: "Import failed: ",
   invalidBackupFile: "Invalid backup file format",
+  voyagerImportTitle: "Import from Gemini Voyager",
+  voyagerImportDesc:
+    "Import folder organization and merge it into the current account incrementally",
+  voyagerImportAction: "Start Import",
+  voyagerImportPlaceholder:
+    "Paste the JSON exported by Gemini Voyager, for example gemini-voyager.folders.v1 ...",
+  voyagerImportConfirm:
+    "Import the Voyager folder structure into the current Gemini account with incremental merge?",
+  voyagerImportVersion: "Voyager version",
+  voyagerImportFolderCount: "Folders",
+  voyagerImportConversationCount: "Conversations",
+  voyagerImportNewFolders: "New folders",
+  voyagerImportNewConversations: "New conversations",
+  voyagerImportMovedConversations: "Moved conversations",
+  voyagerImportPreservedConversations: "Preserved folders",
+  voyagerImportFlattenNotice:
+    'Nested folders are flattened into path-like names such as "Parent / Child".',
+  voyagerImportMergeNotice:
+    "To avoid overwriting existing organization, conversations already placed in other Ophel folders stay where they are. Only Inbox and Voyager-imported folders are reassigned.",
+  voyagerImportSuccess:
+    "Voyager import completed: {folders} folders added, {conversations} conversations added, {moved} conversations moved.",
+  voyagerImportGeminiOnly: "Open Data Management on a Gemini page before importing Voyager data.",
+  voyagerImportGeminiHint:
+    "Only `gemini-voyager.folders.v1` JSON is supported. Imported data will be assigned to the currently open Gemini account automatically.",
+  voyagerImportPasteRequired: "Choose a Voyager file or paste JSON first",
+  voyagerImportInvalidFormat: "This is not a Gemini Voyager folders export",
+  voyagerImportInvalidData: "Missing valid folders or folder contents data",
+  voyagerImportEmpty: "No usable folders were found in the import file",
   backupValidationInvalidFormat: "Invalid data format",
   backupValidationMissingVersion: "Missing version field",
   backupValidationMissingData: "Missing data field",

@@ -752,6 +752,35 @@ export const de = {
   importSuccess: "Erfolg. Wird neu geladen...",
   importError: "Fehler: ",
   invalidBackupFile: "Ungültiges Format",
+  voyagerImportTitle: "Aus Gemini Voyager importieren",
+  voyagerImportDesc:
+    "Die Ordnerstruktur importieren und schrittweise mit dem aktuellen Konto zusammenführen",
+  voyagerImportAction: "Import starten",
+  voyagerImportPlaceholder:
+    "Den von Gemini Voyager exportierten JSON-Inhalt einfügen, z. B. gemini-voyager.folders.v1 ...",
+  voyagerImportConfirm:
+    "Die Voyager-Ordnerstruktur schrittweise in das aktuell geöffnete Gemini-Konto importieren?",
+  voyagerImportVersion: "Voyager-Version",
+  voyagerImportFolderCount: "Ordner",
+  voyagerImportConversationCount: "Unterhaltungen",
+  voyagerImportNewFolders: "Neue Ordner",
+  voyagerImportNewConversations: "Neue Unterhaltungen",
+  voyagerImportMovedConversations: "Verschobene Unterhaltungen",
+  voyagerImportPreservedConversations: "Beibehaltene Ordner",
+  voyagerImportFlattenNotice:
+    "Verschachtelte Ordner werden zu Pfadnamen wie „Eltern / Kind“ abgeflacht.",
+  voyagerImportMergeNotice:
+    "Damit bestehende Ordnung nicht überschrieben wird, bleiben Unterhaltungen in anderen Ophel-Ordnern an ihrem Platz. Nur Posteingang und bereits importierte Voyager-Ordner werden neu zugeordnet.",
+  voyagerImportSuccess:
+    "Voyager-Import abgeschlossen: {folders} Ordner hinzugefügt, {conversations} Unterhaltungen hinzugefügt, {moved} Unterhaltungen verschoben.",
+  voyagerImportGeminiOnly:
+    "Öffnen Sie die Datenverwaltung auf einer Gemini-Seite, bevor Sie Voyager-Daten importieren.",
+  voyagerImportGeminiHint:
+    "Nur `gemini-voyager.folders.v1`-JSON wird unterstützt. Die importierten Daten werden automatisch dem aktuell geöffneten Gemini-Konto zugeordnet.",
+  voyagerImportPasteRequired: "Bitte zuerst eine Voyager-Datei wählen oder JSON einfügen",
+  voyagerImportInvalidFormat: "Dies ist kein Gemini-Voyager-Ordnerexport",
+  voyagerImportInvalidData: "Gültige Ordner- oder Inhaltsdaten fehlen",
+  voyagerImportEmpty: "In der Importdatei wurden keine verwendbaren Ordner gefunden",
   backupValidationInvalidFormat: "Ungültiges Format",
   backupValidationMissingVersion: "Version fehlt",
   backupValidationMissingData: "Daten fehlen",

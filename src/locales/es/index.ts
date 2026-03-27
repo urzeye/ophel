@@ -750,6 +750,35 @@ export const es = {
   importSuccess: "Éxito. Recargando...",
   importError: "Fallo: ",
   invalidBackupFile: "Formato mal",
+  voyagerImportTitle: "Importar desde Gemini Voyager",
+  voyagerImportDesc:
+    "Importa la organización de carpetas y la fusiona de forma incremental con la cuenta actual",
+  voyagerImportAction: "Iniciar importación",
+  voyagerImportPlaceholder:
+    "Pega el JSON exportado por Gemini Voyager, por ejemplo gemini-voyager.folders.v1 ...",
+  voyagerImportConfirm:
+    "¿Importar la estructura de carpetas de Voyager a la cuenta de Gemini abierta actualmente con fusión incremental?",
+  voyagerImportVersion: "Versión de Voyager",
+  voyagerImportFolderCount: "Carpetas",
+  voyagerImportConversationCount: "Conversaciones",
+  voyagerImportNewFolders: "Carpetas nuevas",
+  voyagerImportNewConversations: "Conversaciones nuevas",
+  voyagerImportMovedConversations: "Conversaciones movidas",
+  voyagerImportPreservedConversations: "Carpetas conservadas",
+  voyagerImportFlattenNotice:
+    'Las carpetas anidadas se aplanan en nombres de ruta como "Padre / Hijo".',
+  voyagerImportMergeNotice:
+    "Para no sobrescribir tu organización actual, las conversaciones que ya estén en otras carpetas de Ophel se quedan donde están. Solo la Bandeja de entrada y las carpetas importadas de Voyager se reasignan.",
+  voyagerImportSuccess:
+    "Importación de Voyager completada: {folders} carpetas añadidas, {conversations} conversaciones añadidas y {moved} conversaciones movidas.",
+  voyagerImportGeminiOnly:
+    "Abre Gestión de datos en una página de Gemini antes de importar datos de Voyager.",
+  voyagerImportGeminiHint:
+    "Solo se admite JSON `gemini-voyager.folders.v1`. Los datos importados se asignarán automáticamente a la cuenta de Gemini abierta actualmente.",
+  voyagerImportPasteRequired: "Primero elige un archivo de Voyager o pega el JSON",
+  voyagerImportInvalidFormat: "Este no es un archivo de exportación de carpetas de Gemini Voyager",
+  voyagerImportInvalidData: "Faltan datos válidos de carpetas o contenidos",
+  voyagerImportEmpty: "No se encontraron carpetas utilizables en el archivo importado",
   backupValidationInvalidFormat: "Formato mal",
   backupValidationMissingVersion: "Falta versión",
   backupValidationMissingData: "Faltan datos",

@@ -4,14 +4,17 @@
  */
 import React, { useEffect, useRef, useState } from "react"
 
+import { GeminiAdapter } from "~adapters/gemini"
 import { CloudIcon } from "~components/icons"
 import { ConfirmDialog, Tooltip } from "~components/ui"
+import { PRESET_EMOJIS, SITE_IDS, type Folder } from "~constants"
 import {
   DEFAULT_FOLDERS,
   MULTI_PROP_STORES,
   ZUSTAND_KEYS,
   getDefaultPrompts,
 } from "~constants/defaults"
+import type { Conversation } from "~core/conversation/types"
 import { getWebDAVSyncManager, type BackupFile } from "~core/webdav-sync"
 import { platform } from "~platform"
 import { useConversationsStore } from "~stores/conversations-store"
@@ -33,6 +36,13 @@ interface BackupPageProps {
   onNavigate?: (page: string) => void
 }
 
+interface WebDAVFormState {
+  url: string
+  username: string
+  password: string
+  remoteDir: string
+}
+
 // 辅助函数：格式化文件大小
 const formatSize = (bytes: number) => {
   if (bytes === 0) return "0 B"
@@ -52,6 +62,384 @@ const formatBackupTypeLabel = (type: unknown): string => {
   if (type === "prompts") return t("promptsBackup") || "仅提示词"
   if (type === "settings") return t("settingsBackup") || "仅设置"
   return String(type || t("unknown") || "未知")
+}
+
+const VOYAGER_FORMAT = "gemini-voyager.folders.v1"
+const VOYAGER_FOLDER_ID_PREFIX = "voyager_"
+const VOYAGER_PATH_SEPARATOR = " / "
+const VOYAGER_ICON_POOL = PRESET_EMOJIS.filter((emoji) =>
+  ["📁", "📂", "🗂️", "📋", "💼", "📝", "🔍", "🧠"].includes(emoji),
+)
+
+interface VoyagerFolderSource {
+  id: string
+  name: string
+  parentId: string | null
+  sortIndex?: number
+}
+
+interface PreparedVoyagerFolder {
+  folder: Folder
+  sourceId: string
+}
+
+interface PreparedVoyagerConversation extends Conversation {
+  importedFolderId: string
+}
+
+interface PreparedVoyagerImport {
+  folders: PreparedVoyagerFolder[]
+  conversations: PreparedVoyagerConversation[]
+  sourceVersion: string
+}
+
+interface VoyagerImportPlan {
+  nextFolders: Folder[]
+  nextConversations: Record<string, Conversation>
+  lastUsedFolderId: string
+  sourceVersion: string
+  stats: {
+    folderCount: number
+    conversationCount: number
+    foldersAdded: number
+    conversationsAdded: number
+    conversationsMoved: number
+    conversationsUpdated: number
+    conversationsPreserved: number
+    conversationsSkipped: number
+  }
+}
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value)
+
+const normalizeVoyagerFolderId = (sourceId: string): string =>
+  `${VOYAGER_FOLDER_ID_PREFIX}${sourceId}`
+
+const isVoyagerManagedFolder = (folderId: string | undefined): boolean =>
+  typeof folderId === "string" && folderId.startsWith(VOYAGER_FOLDER_ID_PREFIX)
+
+const hashString = (value: string): number => {
+  let hash = 0
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0
+  }
+  return hash
+}
+
+const pickVoyagerFolderIcon = (seed: string): string => {
+  if (VOYAGER_ICON_POOL.length === 0) return "📁"
+  return VOYAGER_ICON_POOL[hashString(seed) % VOYAGER_ICON_POOL.length]
+}
+
+const getCurrentGeminiUserPathPrefix = (): string => {
+  const match = window.location.pathname.match(/^\/u\/(\d+)(?:\/|$)/)
+  return match ? `/u/${match[1]}` : ""
+}
+
+const buildGeminiConversationUrl = (conversationId: string, userPathPrefix: string): string =>
+  `https://gemini.google.com${userPathPrefix}/app/${conversationId}`
+
+const getVoyagerTimestamp = (...values: Array<number | undefined>): number => {
+  for (const value of values) {
+    if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+      return value
+    }
+  }
+  return Date.now()
+}
+
+const prepareVoyagerImport = (
+  jsonString: string,
+  currentCid: string,
+  userPathPrefix: string,
+): PreparedVoyagerImport => {
+  const parsed = JSON.parse(jsonString) as Record<string, unknown>
+
+  if (!isPlainObject(parsed) || parsed.format !== VOYAGER_FORMAT) {
+    throw new Error(t("voyagerImportInvalidFormat") || "不是 Gemini Voyager 文件夹导出格式")
+  }
+
+  const data = parsed.data
+  if (!isPlainObject(data)) {
+    throw new Error(t("voyagerImportInvalidData") || "缺少有效的 data 字段")
+  }
+
+  const folderList = data.folders
+  const folderContents = data.folderContents
+
+  if (!Array.isArray(folderList) || !isPlainObject(folderContents)) {
+    throw new Error(t("voyagerImportInvalidData") || "缺少有效的文件夹或内容数据")
+  }
+
+  const sourceFolders = folderList
+    .map((folder, index): (VoyagerFolderSource & { originalIndex: number }) | null => {
+      if (!isPlainObject(folder) || typeof folder.id !== "string") {
+        return null
+      }
+
+      const rawName = typeof folder.name === "string" ? folder.name.trim() : ""
+      const normalizedName = rawName || `${t("untitled") || "未命名"} ${index + 1}`
+      const parentId =
+        typeof folder.parentId === "string" && folder.parentId.trim() ? folder.parentId : null
+      const sortIndex = typeof folder.sortIndex === "number" ? folder.sortIndex : undefined
+
+      return {
+        id: folder.id,
+        name: normalizedName,
+        parentId,
+        sortIndex,
+        originalIndex: index,
+      }
+    })
+    .filter((folder): folder is VoyagerFolderSource & { originalIndex: number } => Boolean(folder))
+
+  if (sourceFolders.length === 0) {
+    throw new Error(t("voyagerImportEmpty") || "导入文件中没有可用的文件夹")
+  }
+
+  const folderMap = new Map(sourceFolders.map((folder) => [folder.id, folder]))
+  const childrenMap = new Map<
+    string | null,
+    Array<VoyagerFolderSource & { originalIndex: number }>
+  >()
+
+  sourceFolders.forEach((folder) => {
+    const parentId = folder.parentId && folderMap.has(folder.parentId) ? folder.parentId : null
+    const siblings = childrenMap.get(parentId) || []
+    siblings.push(folder)
+    childrenMap.set(parentId, siblings)
+  })
+
+  childrenMap.forEach((siblings) => {
+    siblings.sort((a, b) => {
+      const sortA = typeof a.sortIndex === "number" ? a.sortIndex : Number.MAX_SAFE_INTEGER
+      const sortB = typeof b.sortIndex === "number" ? b.sortIndex : Number.MAX_SAFE_INTEGER
+      if (sortA !== sortB) return sortA - sortB
+      return a.originalIndex - b.originalIndex
+    })
+  })
+
+  const preparedFolders: PreparedVoyagerFolder[] = []
+
+  const visitFolder = (
+    folder: VoyagerFolderSource & { originalIndex: number },
+    ancestors: string[],
+  ) => {
+    const pathParts = [...ancestors, folder.name]
+    const pathName = pathParts.join(VOYAGER_PATH_SEPARATOR)
+    preparedFolders.push({
+      sourceId: folder.id,
+      folder: {
+        id: normalizeVoyagerFolderId(folder.id),
+        name: pathName,
+        icon: pickVoyagerFolderIcon(pathName),
+      },
+    })
+
+    const children = childrenMap.get(folder.id) || []
+    children.forEach((child) => walkFolder(child, pathParts))
+  }
+
+  const visitedFolderIds = new Set<string>()
+  const roots = childrenMap.get(null) || []
+
+  const walkFolder = (
+    folder: VoyagerFolderSource & { originalIndex: number },
+    ancestors: string[],
+  ) => {
+    if (visitedFolderIds.has(folder.id)) return
+    visitedFolderIds.add(folder.id)
+    visitFolder(folder, ancestors)
+  }
+
+  roots.forEach((folder) => walkFolder(folder, []))
+  sourceFolders.forEach((folder) => walkFolder(folder, []))
+
+  const seenConversationIds = new Set<string>()
+  const preparedConversations: PreparedVoyagerConversation[] = []
+
+  preparedFolders.forEach(({ sourceId, folder }) => {
+    const items = folderContents[sourceId]
+    if (!Array.isArray(items)) return
+
+    const sortedItems = [...items].sort((a, b) => {
+      const itemA = isPlainObject(a) ? a : {}
+      const itemB = isPlainObject(b) ? b : {}
+      const sortA = typeof itemA.sortIndex === "number" ? itemA.sortIndex : Number.MAX_SAFE_INTEGER
+      const sortB = typeof itemB.sortIndex === "number" ? itemB.sortIndex : Number.MAX_SAFE_INTEGER
+      if (sortA !== sortB) return sortA - sortB
+      return 0
+    })
+
+    sortedItems.forEach((item) => {
+      if (!isPlainObject(item) || typeof item.conversationId !== "string") {
+        return
+      }
+
+      if (seenConversationIds.has(item.conversationId)) {
+        return
+      }
+
+      seenConversationIds.add(item.conversationId)
+
+      const createdAt = getVoyagerTimestamp(
+        typeof item.addedAt === "number" ? item.addedAt : undefined,
+        typeof item.updatedAt === "number" ? item.updatedAt : undefined,
+        typeof item.lastOpenedAt === "number" ? item.lastOpenedAt : undefined,
+      )
+      const updatedAt = getVoyagerTimestamp(
+        typeof item.updatedAt === "number" ? item.updatedAt : undefined,
+        typeof item.lastOpenedAt === "number" ? item.lastOpenedAt : undefined,
+        typeof item.addedAt === "number" ? item.addedAt : undefined,
+      )
+      const title =
+        typeof item.title === "string" && item.title.trim()
+          ? item.title.trim()
+          : item.conversationId
+
+      preparedConversations.push({
+        id: item.conversationId,
+        siteId: SITE_IDS.GEMINI,
+        cid: currentCid,
+        title,
+        url: buildGeminiConversationUrl(item.conversationId, userPathPrefix),
+        folderId: folder.id,
+        importedFolderId: folder.id,
+        pinned: Boolean(item.starred),
+        createdAt,
+        updatedAt,
+      })
+    })
+  })
+
+  return {
+    folders: preparedFolders,
+    conversations: preparedConversations,
+    sourceVersion: String(parsed.version || "-"),
+  }
+}
+
+const planVoyagerImport = (
+  prepared: PreparedVoyagerImport,
+  existingFolders: Folder[],
+  existingConversations: Record<string, Conversation>,
+  lastUsedFolderId: string,
+): VoyagerImportPlan => {
+  const nextFolders = [...existingFolders]
+  const nextConversations = { ...existingConversations }
+  const existingFolderIds = new Set(existingFolders.map((folder) => folder.id))
+
+  let foldersAdded = 0
+  let conversationsAdded = 0
+  let conversationsMoved = 0
+  let conversationsUpdated = 0
+  let conversationsPreserved = 0
+  let conversationsSkipped = 0
+
+  prepared.folders.forEach(({ folder }) => {
+    if (existingFolderIds.has(folder.id)) {
+      return
+    }
+    nextFolders.push(folder)
+    existingFolderIds.add(folder.id)
+    foldersAdded++
+  })
+
+  prepared.conversations.forEach((conversation) => {
+    const existing = nextConversations[conversation.id]
+
+    if (existing && existing.siteId && existing.siteId !== SITE_IDS.GEMINI) {
+      conversationsSkipped++
+      return
+    }
+
+    if (!existing) {
+      nextConversations[conversation.id] = {
+        ...conversation,
+      }
+      conversationsAdded++
+      return
+    }
+
+    const nextConversation: Conversation = { ...existing }
+    let changed = false
+    let moved = false
+
+    if (!nextConversation.siteId) {
+      nextConversation.siteId = SITE_IDS.GEMINI
+      changed = true
+    }
+
+    if (nextConversation.cid !== conversation.cid) {
+      nextConversation.cid = conversation.cid
+      changed = true
+    }
+
+    if (!nextConversation.url || nextConversation.url !== conversation.url) {
+      nextConversation.url = conversation.url
+      changed = true
+    }
+
+    if (!nextConversation.title) {
+      nextConversation.title = conversation.title
+      changed = true
+    }
+
+    if (!nextConversation.pinned && conversation.pinned) {
+      nextConversation.pinned = true
+      changed = true
+    }
+
+    if (
+      nextConversation.folderId === "inbox" ||
+      isVoyagerManagedFolder(nextConversation.folderId) ||
+      !nextConversation.folderId
+    ) {
+      if (nextConversation.folderId !== conversation.importedFolderId) {
+        nextConversation.folderId = conversation.importedFolderId
+        changed = true
+        moved = true
+      }
+    } else {
+      conversationsPreserved++
+    }
+
+    if (changed) {
+      nextConversation.createdAt =
+        nextConversation.createdAt || conversation.createdAt || Date.now()
+      nextConversation.updatedAt = Math.max(
+        nextConversation.updatedAt || 0,
+        conversation.updatedAt || 0,
+        nextConversation.createdAt || 0,
+      )
+      nextConversations[conversation.id] = nextConversation
+      conversationsUpdated++
+      if (moved) {
+        conversationsMoved++
+      }
+    }
+  })
+
+  const normalizedLastUsedFolderId =
+    lastUsedFolderId && existingFolderIds.has(lastUsedFolderId) ? lastUsedFolderId : "inbox"
+
+  return {
+    nextFolders,
+    nextConversations,
+    lastUsedFolderId: normalizedLastUsedFolderId,
+    sourceVersion: prepared.sourceVersion,
+    stats: {
+      folderCount: prepared.folders.length,
+      conversationCount: prepared.conversations.length,
+      foldersAdded,
+      conversationsAdded,
+      conversationsMoved,
+      conversationsUpdated,
+      conversationsPreserved,
+      conversationsSkipped,
+    },
+  }
 }
 
 // ==================== 远程备份列表模态框 (保持原有逻辑) ====================
@@ -279,16 +667,19 @@ const RemoteBackupModal: React.FC<{
 }
 
 // ==================== 主页面组件 ====================
-const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _onNavigate }) => {
+const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate }) => {
   const { settings, setSettings, resetSettings } = useSettingsStore()
+  const isGeminiPage = siteId === SITE_IDS.GEMINI
 
   // 状态管理
   const [showRemoteBackups, setShowRemoteBackups] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pasteContent, setPasteContent] = useState("")
+  const voyagerFileInputRef = useRef<HTMLInputElement>(null)
+  const [voyagerPasteContent, setVoyagerPasteContent] = useState("")
 
   // WebDAV 本地表单状态（与 Store 解耦，仅点击保存时同步）
-  const [webdavForm, setWebdavForm] = useState<any>({
+  const [webdavForm, setWebdavForm] = useState<WebDAVFormState>({
     url: "",
     username: "",
     password: "",
@@ -330,17 +721,36 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _o
 
   if (!settings) return null
 
+  const writeStorageUpdates = async (updates: Record<string, unknown>) => {
+    await new Promise<void>((resolve, reject) =>
+      chrome.storage.local.set(updates, () =>
+        chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
+      ),
+    )
+  }
+
+  const notifyPagesToReload = async () => {
+    try {
+      if (platform.type === "extension" && typeof chrome !== "undefined") {
+        await writeStorageUpdates({ [RESTORE_FLAG_KEY]: Date.now() })
+        await chrome.runtime.sendMessage({ type: MSG_RESTORE_DATA })
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   // -------------------- 导出功能 --------------------
 
   const handleExport = async (type: "full" | "prompts" | "settings") => {
     try {
-      let exportData: any = {}
+      let exportData: Record<string, unknown> = {}
       const timestamp = new Date().toISOString()
       let filename = `ophel-backup-${timestamp.slice(0, 10)}.json`
 
       if (type === "full") {
         // 1. 完整导出
-        const localData = await new Promise<Record<string, any>>((resolve) =>
+        const localData = await new Promise<Record<string, unknown>>((resolve) =>
           chrome.storage.local.get(null, resolve),
         )
         // 过滤和处理数据
@@ -374,7 +784,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _o
       } else if (type === "prompts") {
         // 2. 仅提示词导出 (KEY: prompts)
         // 注意：不包含 folders 和 tags，按需求
-        const raw = await new Promise<Record<string, any>>((resolve) =>
+        const raw = await new Promise<Record<string, unknown>>((resolve) =>
           chrome.storage.local.get("prompts", resolve),
         )
         // 解析 Zustand 结构
@@ -397,7 +807,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _o
         filename = `ophel-prompts-${timestamp.slice(0, 10)}.json`
       } else if (type === "settings") {
         // 3. 仅设置导出 (KEY: settings)
-        const raw = await new Promise<Record<string, any>>((resolve) =>
+        const raw = await new Promise<Record<string, unknown>>((resolve) =>
           chrome.storage.local.get("settings", resolve),
         )
         let settingsData = {}
@@ -497,7 +907,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _o
           setConfirmConfig((prev) => ({ ...prev, show: false }))
           try {
             // 数据回填逻辑 (Rehydration)
-            const updates: Record<string, any> = {}
+            const updates: Record<string, unknown> = {}
 
             Object.entries(data.data).forEach(([k, v]) => {
               if (v === null || v === undefined) return
@@ -559,24 +969,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _o
               }
             })
 
-            await new Promise<void>((resolve, reject) =>
-              chrome.storage.local.set(updates, () =>
-                chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
-              ),
-            )
-
-            try {
-              if (platform.type === "extension" && typeof chrome !== "undefined") {
-                await new Promise<void>((resolve, reject) =>
-                  chrome.storage.local.set({ [RESTORE_FLAG_KEY]: Date.now() }, () =>
-                    chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
-                  ),
-                )
-                await chrome.runtime.sendMessage({ type: MSG_RESTORE_DATA })
-              }
-            } catch {
-              // ignore
-            }
+            await writeStorageUpdates(updates)
+            await notifyPagesToReload()
 
             showDomToast(t("importSuccess") || "导入成功")
             setTimeout(() => window.location.reload(), 1000)
@@ -607,6 +1001,153 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _o
       return
     }
     processImport(pasteContent)
+  }
+
+  const handleVoyagerFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const text = await file.text()
+    setVoyagerPasteContent(text)
+    if (voyagerFileInputRef.current) voyagerFileInputRef.current.value = ""
+  }
+
+  const handleVoyagerImportClick = () => {
+    if (!voyagerPasteContent.trim()) {
+      showDomToast(t("voyagerImportPasteRequired") || "请先选择 Voyager 文件或粘贴 JSON 内容")
+      return
+    }
+
+    if (!isGeminiPage) {
+      showDomToast(
+        t("voyagerImportGeminiOnly") || "请在 Gemini 页面打开数据管理后再执行 Voyager 导入",
+      )
+      return
+    }
+
+    try {
+      const adapter = new GeminiAdapter()
+      const currentCid = adapter.getCurrentCid()
+      const userPathPrefix = getCurrentGeminiUserPathPrefix()
+      const prepared = prepareVoyagerImport(voyagerPasteContent, currentCid, userPathPrefix)
+      const conversationsState = useConversationsStore.getState()
+      const plan = planVoyagerImport(
+        prepared,
+        useFoldersStore.getState().folders,
+        conversationsState.conversations,
+        conversationsState.lastUsedFolderId,
+      )
+
+      setConfirmConfig({
+        show: true,
+        title: t("voyagerImportTitle") || "从 Gemini Voyager 导入",
+        message: (
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div>
+              {t("voyagerImportConfirm") || "确认将 Voyager 文件夹结构增量导入到当前 Gemini 账号？"}
+            </div>
+            <div
+              style={{
+                border: "1px solid var(--gh-border, #e5e7eb)",
+                background: "var(--gh-hover, #f8fafc)",
+                borderRadius: "8px",
+                padding: "10px 12px",
+              }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "120px 1fr",
+                  rowGap: "6px",
+                  columnGap: "10px",
+                  alignItems: "start",
+                }}>
+                <div style={{ color: "var(--gh-text-secondary, #6b7280)" }}>
+                  {t("voyagerImportVersion") || "Voyager 版本"}
+                </div>
+                <div style={{ color: "var(--gh-text, #111827)", fontWeight: 500 }}>
+                  {plan.sourceVersion}
+                </div>
+                <div style={{ color: "var(--gh-text-secondary, #6b7280)" }}>
+                  {t("voyagerImportFolderCount") || "文件夹"}
+                </div>
+                <div style={{ color: "var(--gh-text, #111827)", fontWeight: 500 }}>
+                  {plan.stats.folderCount}
+                </div>
+                <div style={{ color: "var(--gh-text-secondary, #6b7280)" }}>
+                  {t("voyagerImportConversationCount") || "会话"}
+                </div>
+                <div style={{ color: "var(--gh-text, #111827)", fontWeight: 500 }}>
+                  {plan.stats.conversationCount}
+                </div>
+                <div style={{ color: "var(--gh-text-secondary, #6b7280)" }}>
+                  {t("voyagerImportNewFolders") || "新增文件夹"}
+                </div>
+                <div style={{ color: "var(--gh-text, #111827)", fontWeight: 500 }}>
+                  {plan.stats.foldersAdded}
+                </div>
+                <div style={{ color: "var(--gh-text-secondary, #6b7280)" }}>
+                  {t("voyagerImportNewConversations") || "新增会话"}
+                </div>
+                <div style={{ color: "var(--gh-text, #111827)", fontWeight: 500 }}>
+                  {plan.stats.conversationsAdded}
+                </div>
+                <div style={{ color: "var(--gh-text-secondary, #6b7280)" }}>
+                  {t("voyagerImportMovedConversations") || "移动会话"}
+                </div>
+                <div style={{ color: "var(--gh-text, #111827)", fontWeight: 500 }}>
+                  {plan.stats.conversationsMoved}
+                </div>
+                <div style={{ color: "var(--gh-text-secondary, #6b7280)" }}>
+                  {t("voyagerImportPreservedConversations") || "保留原文件夹"}
+                </div>
+                <div style={{ color: "var(--gh-text, #111827)", fontWeight: 500 }}>
+                  {plan.stats.conversationsPreserved}
+                </div>
+              </div>
+            </div>
+            <div style={{ fontSize: "12px", color: "var(--gh-text-secondary, #6b7280)" }}>
+              {t("voyagerImportFlattenNotice") || "层级文件夹会压平成路径名称，例如“父级 / 子级”。"}
+            </div>
+            <div style={{ fontSize: "12px", color: "var(--gh-text-secondary, #6b7280)" }}>
+              {t("voyagerImportMergeNotice") ||
+                "为避免覆盖现有整理结果，已在其他 Ophel 文件夹中的会话会保留原位；仅收件箱和已导入的 Voyager 文件夹会被重新归类。"}
+            </div>
+          </div>
+        ),
+        onConfirm: async () => {
+          setConfirmConfig((prev) => ({ ...prev, show: false }))
+          try {
+            await writeStorageUpdates({
+              folders: JSON.stringify({ state: { folders: plan.nextFolders }, version: 0 }),
+              conversations: JSON.stringify({
+                state: {
+                  conversations: plan.nextConversations,
+                  lastUsedFolderId: plan.lastUsedFolderId,
+                },
+                version: 0,
+              }),
+            })
+            await notifyPagesToReload()
+
+            showDomToast(
+              (
+                t("voyagerImportSuccess") ||
+                "Voyager 导入完成：新增 {folders} 个文件夹，新增 {conversations} 个会话，移动 {moved} 个会话。"
+              )
+                .replace("{folders}", String(plan.stats.foldersAdded))
+                .replace("{conversations}", String(plan.stats.conversationsAdded))
+                .replace("{moved}", String(plan.stats.conversationsMoved)),
+            )
+            setTimeout(() => window.location.reload(), 1000)
+          } catch (err) {
+            console.error("[Backup] voyager import write failed:", err)
+            showDomToast(`${t("importError") || "导入失败："}${getErrorMessage(err)}`)
+          }
+        },
+      })
+    } catch (err) {
+      console.error("[Backup] voyager import parse failed:", err)
+      showDomToast(`${t("importError") || "导入失败："}${getErrorMessage(err)}`)
+    }
   }
 
   const resetLocalStores = () => {
@@ -683,7 +1224,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _o
     try {
       const urlObj = new URL(url)
       const origin = urlObj.origin + "/*"
-      const checkResult: any = await chrome.runtime.sendMessage({
+      const checkResult: { hasPermission?: boolean } = await chrome.runtime.sendMessage({
         type: "CHECK_PERMISSION",
         origin,
       })
@@ -711,9 +1252,10 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _o
 
   const handleSaveConfig = () => {
     // 保存配置到 Store（持久化）
+    const baseWebdav = settings.webdav ?? DEFAULT_SETTINGS.webdav
     setSettings({
       webdav: {
-        ...(settings.webdav ?? DEFAULT_SETTINGS.webdav ?? {}),
+        ...baseWebdav,
         ...webdavForm,
       },
     })
@@ -932,6 +1474,123 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId: _siteId, onNavigate: _o
           </div>
         </SettingCard>
       </div>
+
+      <SettingCard
+        title={t("voyagerImportTitle") || "从 Gemini Voyager 导入"}
+        description={t("voyagerImportDesc") || "导入文件夹整理结果，并增量合并到当前账号"}
+        style={{ marginBottom: "24px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+            gap: "20px",
+            alignItems: "start",
+          }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div
+              style={{
+                fontSize: "12px",
+                lineHeight: 1.6,
+                color: "var(--gh-text-secondary)",
+                padding: "10px 12px",
+                borderRadius: "8px",
+                background: "var(--gh-bg-secondary)",
+                border: "1px solid var(--gh-border, #e5e7eb)",
+              }}>
+              {isGeminiPage
+                ? t("voyagerImportGeminiHint") ||
+                  "仅支持 Gemini Voyager 的 `gemini-voyager.folders.v1` JSON。导入内容会自动归入当前打开的 Gemini 账号。"
+                : t("voyagerImportGeminiOnly") ||
+                  "请在 Gemini 页面打开数据管理后再执行 Voyager 导入。"}
+            </div>
+
+            <div
+              style={{
+                fontSize: "12px",
+                lineHeight: 1.6,
+                color: "var(--gh-text-secondary)",
+                padding: "10px 12px",
+                borderRadius: "8px",
+                background: "var(--gh-bg-secondary)",
+                border: "1px solid var(--gh-border, #e5e7eb)",
+              }}>
+              {t("voyagerImportMergeNotice") ||
+                "为避免覆盖现有整理结果，已在其他 Ophel 文件夹中的会话会保留原位；仅收件箱和已导入的 Voyager 文件夹会被重新归类。"}
+            </div>
+
+            <div
+              style={{
+                fontSize: "12px",
+                lineHeight: 1.6,
+                color: "var(--gh-text-secondary)",
+                padding: "10px 12px",
+                borderRadius: "8px",
+                background: "var(--gh-bg-secondary)",
+                border: "1px solid var(--gh-border, #e5e7eb)",
+              }}>
+              {t("voyagerImportFlattenNotice") || "层级文件夹会压平成路径名称，例如“父级 / 子级”。"}
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ fontSize: "14px", fontWeight: 500 }}>
+                {t("selectFile") || "选择文件"}
+              </div>
+              <button
+                className="settings-btn settings-btn-secondary"
+                onClick={() => voyagerFileInputRef.current?.click()}
+                style={{ padding: "6px 12px" }}
+                disabled={!isGeminiPage}>
+                {t("browse") || "浏览..."}
+                <input
+                  ref={voyagerFileInputRef}
+                  type="file"
+                  accept=".json"
+                  style={{ display: "none" }}
+                  onChange={handleVoyagerFileChange}
+                />
+              </button>
+            </div>
+
+            <div>
+              <div
+                style={{
+                  fontSize: "12px",
+                  color: "var(--gh-text-secondary)",
+                  marginBottom: "4px",
+                }}>
+                {t("dataPreview") || "数据预览 (可直接粘贴)"}
+              </div>
+              <textarea
+                className="settings-input"
+                value={voyagerPasteContent}
+                onChange={(e) => setVoyagerPasteContent(e.target.value)}
+                placeholder={
+                  t("voyagerImportPlaceholder") ||
+                  "粘贴 Gemini Voyager 导出的 JSON 内容，例如 gemini-voyager.folders.v1 ..."
+                }
+                style={{
+                  width: "100%",
+                  height: "140px",
+                  fontFamily: "monospace",
+                  fontSize: "12px",
+                  resize: "vertical",
+                }}
+                disabled={!isGeminiPage}
+              />
+            </div>
+
+            <button
+              onClick={handleVoyagerImportClick}
+              className="settings-btn settings-btn-primary"
+              style={{ width: "100%", justifyContent: "center", padding: "8px" }}
+              disabled={!isGeminiPage || !voyagerPasteContent.trim()}>
+              {t("voyagerImportAction") || "开始导入"}
+            </button>
+          </div>
+        </div>
+      </SettingCard>
 
       {/* WebDAV 设置与操作 */}
       <SettingCard

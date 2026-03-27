@@ -751,6 +751,35 @@ export const fr = {
   importSuccess: "Succès. Rechargement...",
   importError: "Échec : ",
   invalidBackupFile: "Format invalide",
+  voyagerImportTitle: "Importer depuis Gemini Voyager",
+  voyagerImportDesc:
+    "Importer l'organisation des dossiers et la fusionner progressivement avec le compte actuel",
+  voyagerImportAction: "Lancer l'import",
+  voyagerImportPlaceholder:
+    "Collez le JSON exporté par Gemini Voyager, par exemple gemini-voyager.folders.v1 ...",
+  voyagerImportConfirm:
+    "Importer progressivement la structure de dossiers Voyager dans le compte Gemini actuellement ouvert ?",
+  voyagerImportVersion: "Version de Voyager",
+  voyagerImportFolderCount: "Dossiers",
+  voyagerImportConversationCount: "Conversations",
+  voyagerImportNewFolders: "Nouveaux dossiers",
+  voyagerImportNewConversations: "Nouvelles conversations",
+  voyagerImportMovedConversations: "Conversations déplacées",
+  voyagerImportPreservedConversations: "Dossiers conservés",
+  voyagerImportFlattenNotice:
+    "Les dossiers imbriqués sont aplatis en noms de chemin comme « Parent / Enfant ».",
+  voyagerImportMergeNotice:
+    "Pour éviter d'écraser votre organisation existante, les conversations déjà placées dans d'autres dossiers Ophel restent en place. Seuls la boîte de réception et les dossiers déjà importés depuis Voyager sont réaffectés.",
+  voyagerImportSuccess:
+    "Import Voyager terminé : {folders} dossiers ajoutés, {conversations} conversations ajoutées et {moved} conversations déplacées.",
+  voyagerImportGeminiOnly:
+    "Ouvrez la gestion des données sur une page Gemini avant d'importer des données Voyager.",
+  voyagerImportGeminiHint:
+    "Seul le JSON `gemini-voyager.folders.v1` est pris en charge. Les données importées seront automatiquement rattachées au compte Gemini actuellement ouvert.",
+  voyagerImportPasteRequired: "Choisissez d'abord un fichier Voyager ou collez le JSON",
+  voyagerImportInvalidFormat: "Ce fichier n'est pas une exportation de dossiers Gemini Voyager",
+  voyagerImportInvalidData: "Les données de dossiers ou de contenu valides sont manquantes",
+  voyagerImportEmpty: "Aucun dossier exploitable n'a été trouvé dans le fichier importé",
   backupValidationInvalidFormat: "Format invalide",
   backupValidationMissingVersion: "Version manquante",
   backupValidationMissingData: "Données manquantes",
