@@ -19,12 +19,7 @@ import {
   SearchIcon,
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
-import {
-  NAV_IDS,
-  SITE_IDS,
-  resolveSettingsNavigateDetail,
-  type SettingsNavigateDetail,
-} from "~constants"
+import { NAV_IDS, resolveSettingsNavigateDetail, type SettingsNavigateDetail } from "~constants"
 import { platform } from "~platform"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { SidebarFooter } from "~tabs/options/components/SidebarFooter"
@@ -238,12 +233,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
     }
   }, [])
 
-  // 防止 Grok、Claude 和 Doubao 在 keydown 时抢占焦点
+  // 防止所有站点在设置弹窗输入时抢占焦点或拦截快捷键
   useEffect(() => {
-    if (
-      isOpen &&
-      (siteId === SITE_IDS.GROK || siteId === SITE_IDS.CLAUDE || siteId === SITE_IDS.DOUBAO)
-    ) {
+    if (isOpen) {
       const container = containerRef.current
       if (!container) {
         return
@@ -261,7 +253,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
 
         if (!isInputElement) return
 
-        // 阻止事件继续传播到 Grok 的监听器
+        // 阻止事件继续传播到页面站点自身的监听器
         e.stopPropagation()
         e.stopImmediatePropagation()
       }
