@@ -35,9 +35,17 @@ if (!(window as any).__ophelScrollLockInitialized) {
   ;(window as any).__ophelScrollLockInitialized = true
   const isClaudeHost =
     location.hostname.includes("claude.ai") || location.hostname.includes("claude.com")
+  ;(window as any).__ophelClaudeScrollDebug = (window as any).__ophelClaudeScrollDebug || []
   const debugScrollLock = (step: string, payload: Record<string, unknown> = {}) => {
     if (!isClaudeHost) return
-    console.debug("[ClaudeScrollDebug]", `ScrollLockMain:${step}`, payload)
+    const entry = {
+      source: "scroll-lock-main",
+      step: `ScrollLockMain:${step}`,
+      payload,
+      timestamp: Date.now(),
+    }
+    ;(window as any).__ophelClaudeScrollDebug.push(entry)
+    console.debug("[ClaudeScrollDebug]", entry.step, payload)
   }
 
   // 保存原始 API
@@ -245,6 +253,13 @@ if (!(window as any).__ophelScrollLockInitialized) {
   // 监听来自 Content Script 的消息（启用/禁用劫持）
   window.addEventListener("message", (event) => {
     if (event.source !== window) return
+    if (event.data?.type === "OPHEL_CLAUDE_SCROLL_DEBUG") {
+      if (isClaudeHost) {
+        ;(window as any).__ophelClaudeScrollDebug.push(event.data.payload)
+        console.debug("[ClaudeScrollDebug]", event.data.payload.step, event.data.payload.payload)
+      }
+      return
+    }
     if (event.data?.type === "OPHEL_SCROLL_LOCK_TOGGLE") {
       debugScrollLock("toggle", { enabled: event.data.enabled })
       ;(window as any).__ophelScrollLockEnabled = event.data.enabled

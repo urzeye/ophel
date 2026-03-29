@@ -45,6 +45,13 @@ function logClaudeScroll(
 ) {
   if (!isClaudeAdapter(adapter)) return
   console.debug("[ClaudeScrollDebug]", step, payload)
+  window.postMessage(
+    {
+      type: "OPHEL_CLAUDE_SCROLL_DEBUG",
+      payload: { source: "scroll-helper", step, payload, timestamp: Date.now() },
+    },
+    "*",
+  )
 }
 
 /**

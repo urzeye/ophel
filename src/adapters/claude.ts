@@ -62,6 +62,13 @@ export class ClaudeAdapter extends SiteAdapter {
 
   private debugScroll(step: string, payload: Record<string, unknown> = {}) {
     console.debug("[ClaudeScrollDebug]", step, payload)
+    window.postMessage(
+      {
+        type: "OPHEL_CLAUDE_SCROLL_DEBUG",
+        payload: { source: "ClaudeAdapter", step, payload, timestamp: Date.now() },
+      },
+      "*",
+    )
   }
 
   private describeContainer(container: HTMLElement | null) {
