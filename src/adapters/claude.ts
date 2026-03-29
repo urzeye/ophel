@@ -6,6 +6,7 @@ import { htmlToMarkdown } from "~utils/exporter"
 
 import {
   SiteAdapter,
+  type AnchorData,
   type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationObserverConfig,
@@ -847,6 +848,32 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private findClaudeScrollContainer(): HTMLElement | null {
+    const conversationAnchor = document.querySelector(
+      '.font-claude-response, [data-testid="user-message"]',
+    ) as HTMLElement | null
+
+    const isScrollable = (element: HTMLElement | null): boolean => {
+      if (!element) return false
+
+      const style = window.getComputedStyle(element)
+      const overflowY = style.overflowY
+      const allowsScroll = overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay"
+
+      if (!allowsScroll && element.getAttribute("data-autoscroll-container") !== "true") {
+        return false
+      }
+
+      return element.scrollHeight > element.clientHeight + 4
+    }
+
+    let current: HTMLElement | null = conversationAnchor
+    while (current && current !== document.body) {
+      if (isScrollable(current)) {
+        return current
+      }
+      current = current.parentElement as HTMLElement | null
+    }
+
     const selectors = [
       '[data-autoscroll-container="true"]',
       "#main-content .overflow-y-scroll",
@@ -855,13 +882,7 @@ export class ClaudeAdapter extends SiteAdapter {
 
     for (const selector of selectors) {
       const container = document.querySelector(selector) as HTMLElement | null
-      if (!container) continue
-
-      const hasConversationContent = !!container.querySelector(
-        '.font-claude-response, [data-testid="user-message"]',
-      )
-
-      if (hasConversationContent) {
+      if (isScrollable(container)) {
         return container
       }
     }
@@ -872,6 +893,11 @@ export class ClaudeAdapter extends SiteAdapter {
   getScrollContainer(): HTMLElement | null {
     const container = this.findClaudeScrollContainer()
     if (container) return container
+
+    const scrollingElement = document.scrollingElement as HTMLElement | null
+    if (scrollingElement && scrollingElement.scrollHeight > scrollingElement.clientHeight + 4) {
+      return scrollingElement
+    }
 
     return super.getScrollContainer()
   }
@@ -934,8 +960,104 @@ export class ClaudeAdapter extends SiteAdapter {
     return { enabled: false, keyword: "sonnet" }
   }
 
+  private getClaudeChatCandidates(container: ParentNode): HTMLElement[] {
+    return Array.from(
+      container.querySelectorAll(this.getChatContentSelectors().join(", ")),
+    ) as HTMLElement[]
+  }
+
+  private getRelativeTop(container: HTMLElement, element: HTMLElement): number {
+    const containerRect = container.getBoundingClientRect()
+    const elementRect = element.getBoundingClientRect()
+    return elementRect.top - containerRect.top + container.scrollTop
+  }
+
   private getOutlineRoot(): HTMLElement | Document {
     return this.getScrollContainer() || this.findClaudeScrollContainer() || document
+  }
+
+  getVisibleAnchorElement(): AnchorData | null {
+    const container = this.getScrollContainer()
+    if (!container) return null
+
+    const candidates = this.getClaudeChatCandidates(container)
+    if (!candidates.length) return null
+
+    const scrollTop = container.scrollTop
+    let bestElement: HTMLElement | null = null
+    let bestTop = Number.NEGATIVE_INFINITY
+
+    candidates.forEach((element) => {
+      const top = this.getRelativeTop(container, element)
+      if (top <= scrollTop + 100 && top > bestTop) {
+        bestElement = element
+        bestTop = top
+      }
+    })
+
+    if (!bestElement) {
+      bestElement = candidates[0]
+      bestTop = this.getRelativeTop(container, bestElement)
+    }
+
+    const offset = scrollTop - bestTop
+    const id = bestElement.getAttribute("data-message-id") || bestElement.id
+
+    if (id) {
+      let selector = `[data-message-id="${id}"]`
+      if (!bestElement.matches(selector)) selector = `#${id}`
+      return { type: "selector", selector, offset }
+    }
+
+    const index = candidates.indexOf(bestElement)
+    if (index === -1) return null
+
+    const textSignature = (bestElement.textContent || "").trim().substring(0, 50)
+    return { type: "index", index, offset, textSignature }
+  }
+
+  restoreScroll(anchorData: AnchorData): boolean {
+    const container = this.getScrollContainer()
+    if (!container || !anchorData) return false
+
+    let targetElement: HTMLElement | null = null
+
+    if (anchorData.type === "selector" && anchorData.selector) {
+      targetElement = container.querySelector(anchorData.selector) as HTMLElement | null
+    } else if (anchorData.type === "index" && typeof anchorData.index === "number") {
+      const candidates = this.getClaudeChatCandidates(container)
+
+      if (candidates[anchorData.index]) {
+        targetElement = candidates[anchorData.index]
+
+        if (anchorData.textSignature) {
+          const currentText = (targetElement.textContent || "").trim().substring(0, 50)
+          if (currentText !== anchorData.textSignature) {
+            targetElement =
+              candidates.find(
+                (candidate) =>
+                  (candidate.textContent || "").trim().substring(0, 50) ===
+                  anchorData.textSignature,
+              ) || targetElement
+          }
+        }
+      } else if (anchorData.textSignature) {
+        targetElement =
+          candidates.find(
+            (candidate) =>
+              (candidate.textContent || "").trim().substring(0, 50) === anchorData.textSignature,
+          ) || null
+      }
+    }
+
+    if (!targetElement) return false
+
+    const targetTop = this.getRelativeTop(container, targetElement) + (anchorData.offset || 0)
+    container.scrollTo({
+      top: targetTop,
+      behavior: "instant" as ScrollBehavior,
+    })
+    return true
   }
 
   // ==================== 大纲功能 ====================
