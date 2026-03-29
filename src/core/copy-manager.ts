@@ -118,7 +118,7 @@ export class CopyManager {
             structuredMathEl.getAttribute("data-custom-copy-text")
 
           if (latex) {
-            latex = latex.replace(/^\\?\(|^\\?\[|^\$\$?|\\?\)$|\\?\]$|\$\$?$/g, "").trim()
+            latex = this.unwrapMathDelimiters(latex)
             if (latex) {
               this.copyLatex(
                 latex,
@@ -165,6 +165,30 @@ export class CopyManager {
     }
 
     document.addEventListener("dblclick", this.formulaDblClickHandler, true)
+  }
+
+  private unwrapMathDelimiters(latex: string): string {
+    const trimmed = latex.trim()
+    if (!trimmed) return ""
+
+    const delimiterPairs: Array<[string, string]> = [
+      ["$$", "$$"],
+      ["\\(", "\\)"],
+      ["\\[", "\\]"],
+      ["$", "$"],
+    ]
+
+    for (const [open, close] of delimiterPairs) {
+      if (
+        trimmed.startsWith(open) &&
+        trimmed.endsWith(close) &&
+        trimmed.length > open.length + close.length
+      ) {
+        return trimmed.slice(open.length, trimmed.length - close.length).trim()
+      }
+    }
+
+    return trimmed
   }
 
   /**
