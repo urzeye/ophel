@@ -21,6 +21,32 @@ interface ScrollResponse {
   reason?: string
 }
 
+function isClaudeAdapter(adapter: SiteAdapter | null): boolean {
+  return adapter?.getSiteId?.() === "claude"
+}
+
+function describeContainer(container: HTMLElement | null) {
+  if (!container) return null
+  return {
+    tag: container.tagName,
+    className: container.className,
+    id: container.id || null,
+    scrollTop: container.scrollTop,
+    scrollHeight: container.scrollHeight,
+    clientHeight: container.clientHeight,
+    dataset: { ...container.dataset },
+  }
+}
+
+function logClaudeScroll(
+  adapter: SiteAdapter | null,
+  step: string,
+  payload: Record<string, unknown>,
+) {
+  if (!isClaudeAdapter(adapter)) return
+  console.debug("[ClaudeScrollDebug]", step, payload)
+}
+
 /**
  * 获取主世界的 window 对象
  * 油猴脚本：使用 unsafeWindow
@@ -160,6 +186,7 @@ export async function smartScrollToTop(adapter: SiteAdapter | null): Promise<{
 }> {
   // 首先尝试通过 Main World 处理 iframe 内滚动（图文并茂模式）
   const infoResult = await sendScrollRequest("getScrollInfo")
+  logClaudeScroll(adapter, "smartScrollToTop:main-world-info", { infoResult })
   if (infoResult.success) {
     const previousScrollTop = infoResult.scrollTop || 0
     const scrollHeight = infoResult.scrollHeight || 0
@@ -173,6 +200,11 @@ export async function smartScrollToTop(adapter: SiteAdapter | null): Promise<{
   if (container && container.scrollHeight > container.clientHeight) {
     const previousScrollTop = container.scrollTop
     const scrollHeight = container.scrollHeight
+    logClaudeScroll(adapter, "smartScrollToTop:before", {
+      previousScrollTop,
+      scrollHeight,
+      container: describeContainer(container),
+    })
 
     // Check for column-reverse (used by Doubao)
     const isReverse =
@@ -189,6 +221,11 @@ export async function smartScrollToTop(adapter: SiteAdapter | null): Promise<{
     } else {
       container.scrollTo({ top: 0, behavior: "instant", ...{ __bypassLock: true } } as any)
     }
+
+    logClaudeScroll(adapter, "smartScrollToTop:after", {
+      currentScrollTop: container.scrollTop,
+      container: describeContainer(container),
+    })
 
     return { container, previousScrollTop, scrollHeight }
   }
@@ -212,6 +249,7 @@ export async function smartScrollToBottom(adapter: SiteAdapter | null): Promise<
 }> {
   // 首先尝试通过 Main World 处理 iframe 内滚动（图文并茂模式）
   const infoResult = await sendScrollRequest("getScrollInfo")
+  logClaudeScroll(adapter, "smartScrollToBottom:main-world-info", { infoResult })
   if (infoResult.success) {
     const previousScrollTop = infoResult.scrollTop || 0
     await sendScrollRequest("scrollToBottom")
@@ -223,6 +261,11 @@ export async function smartScrollToBottom(adapter: SiteAdapter | null): Promise<
 
   if (container && container.scrollHeight > container.clientHeight) {
     const previousScrollTop = container.scrollTop
+    logClaudeScroll(adapter, "smartScrollToBottom:before", {
+      previousScrollTop,
+      targetTop: container.scrollHeight,
+      container: describeContainer(container),
+    })
 
     // Check for column-reverse (used by Doubao)
     const isReverse =
@@ -239,6 +282,11 @@ export async function smartScrollToBottom(adapter: SiteAdapter | null): Promise<
         ...{ __bypassLock: true },
       } as any)
     }
+
+    logClaudeScroll(adapter, "smartScrollToBottom:after", {
+      currentScrollTop: container.scrollTop,
+      container: describeContainer(container),
+    })
 
     return { container, previousScrollTop }
   }
@@ -258,6 +306,7 @@ export async function smartScrollTo(
 ): Promise<{ success: boolean; currentScrollTop: number }> {
   // 首先尝试通过 Main World 处理
   const result = await sendScrollRequest("scrollTo", position)
+  logClaudeScroll(adapter, "smartScrollTo:main-world-result", { position, result })
   if (result.success) {
     return { success: true, currentScrollTop: result.scrollTop || 0 }
   }
@@ -266,7 +315,17 @@ export async function smartScrollTo(
   const container = adapter?.getScrollContainer()
 
   if (container && container.scrollHeight > container.clientHeight) {
+    logClaudeScroll(adapter, "smartScrollTo:before", {
+      position,
+      currentScrollTop: container.scrollTop,
+      container: describeContainer(container),
+    })
     container.scrollTo({ top: position, behavior: "instant", ...{ __bypassLock: true } } as any)
+    logClaudeScroll(adapter, "smartScrollTo:after", {
+      position,
+      currentScrollTop: container.scrollTop,
+      container: describeContainer(container),
+    })
     return { success: true, currentScrollTop: container.scrollTop }
   }
 
@@ -291,6 +350,7 @@ export async function getScrollInfo(adapter: SiteAdapter | null): Promise<{
 }> {
   // 首先尝试通过 Main World 获取 Flutter 容器信息
   const result = await sendScrollRequest("getScrollInfo")
+  logClaudeScroll(adapter, "getScrollInfo:main-world-result", { result })
   if (result.success) {
     return {
       scrollTop: result.scrollTop || 0,
@@ -304,6 +364,9 @@ export async function getScrollInfo(adapter: SiteAdapter | null): Promise<{
   const container = adapter?.getScrollContainer()
 
   if (container && container.scrollHeight > container.clientHeight) {
+    logClaudeScroll(adapter, "getScrollInfo:local-container", {
+      container: describeContainer(container),
+    })
     return {
       scrollTop: container.scrollTop,
       scrollHeight: container.scrollHeight,
