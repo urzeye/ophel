@@ -33,20 +33,6 @@ export const config: PlasmoCSConfig = {
 // 防止重复初始化
 if (!(window as any).__ophelScrollLockInitialized) {
   ;(window as any).__ophelScrollLockInitialized = true
-  const isClaudeHost =
-    location.hostname.includes("claude.ai") || location.hostname.includes("claude.com")
-  ;(window as any).__ophelClaudeScrollDebug = (window as any).__ophelClaudeScrollDebug || []
-  const debugScrollLock = (step: string, payload: Record<string, unknown> = {}) => {
-    if (!isClaudeHost) return
-    const entry = {
-      source: "scroll-lock-main",
-      step: `ScrollLockMain:${step}`,
-      payload,
-      timestamp: Date.now(),
-    }
-    ;(window as any).__ophelClaudeScrollDebug.push(entry)
-    console.debug("[ClaudeScrollDebug]", entry.step, payload)
-  }
 
   // 保存原始 API
   const originalApis = {
@@ -74,9 +60,6 @@ if (!(window as any).__ophelScrollLockInitialized) {
     }
 
     if (!shouldBypass) {
-      debugScrollLock("scrollIntoView-blocked", {
-        target: this instanceof HTMLElement ? this.className : this.tagName,
-      })
       return
     }
 
@@ -100,10 +83,6 @@ if (!(window as any).__ophelScrollLockInitialized) {
 
     // 只有当向下大幅滚动时才拦截（防止系统自动拉到底）
     if (typeof targetY === "number" && targetY > window.scrollY + 50) {
-      debugScrollLock("window.scrollTo-blocked", {
-        targetY,
-        currentY: window.scrollY,
-      })
       return
     }
 
@@ -130,11 +109,6 @@ if (!(window as any).__ophelScrollLockInitialized) {
 
         // 如果启用且是向下滚动超过 50px，阻止
         if (value > currentScrollTop + 50) {
-          debugScrollLock("scrollTop-setter-blocked", {
-            target: this instanceof HTMLElement ? this.className : this.tagName,
-            value,
-            currentScrollTop,
-          })
           return
         }
 
@@ -171,11 +145,6 @@ if (!(window as any).__ophelScrollLockInitialized) {
 
     // 只有当向下大幅滚动时才拦截
     if (typeof targetY === "number" && targetY > currentScrollTop + 50) {
-      debugScrollLock("element.scrollTo-blocked", {
-        target: this instanceof HTMLElement ? this.className : this.tagName,
-        targetY,
-        currentScrollTop,
-      })
       return
     }
 
@@ -207,11 +176,6 @@ if (!(window as any).__ophelScrollLockInitialized) {
 
     // 只有当向下大幅滚动时才拦截
     if (typeof targetY === "number" && targetY > currentScrollTop + 50) {
-      debugScrollLock("element.scroll-blocked", {
-        target: this instanceof HTMLElement ? this.className : this.tagName,
-        targetY,
-        currentScrollTop,
-      })
       return
     }
 
@@ -240,10 +204,6 @@ if (!(window as any).__ophelScrollLockInitialized) {
 
     // 只有当向下大幅滚动时才拦截（scrollBy 是相对偏移）
     if (typeof deltaY === "number" && deltaY > 50) {
-      debugScrollLock("element.scrollBy-blocked", {
-        target: this instanceof HTMLElement ? this.className : this.tagName,
-        deltaY,
-      })
       return
     }
 
@@ -253,15 +213,7 @@ if (!(window as any).__ophelScrollLockInitialized) {
   // 监听来自 Content Script 的消息（启用/禁用劫持）
   window.addEventListener("message", (event) => {
     if (event.source !== window) return
-    if (event.data?.type === "OPHEL_CLAUDE_SCROLL_DEBUG") {
-      if (isClaudeHost) {
-        ;(window as any).__ophelClaudeScrollDebug.push(event.data.payload)
-        console.debug("[ClaudeScrollDebug]", event.data.payload.step, event.data.payload.payload)
-      }
-      return
-    }
     if (event.data?.type === "OPHEL_SCROLL_LOCK_TOGGLE") {
-      debugScrollLock("toggle", { enabled: event.data.enabled })
       ;(window as any).__ophelScrollLockEnabled = event.data.enabled
     }
   })

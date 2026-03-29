@@ -916,17 +916,40 @@ export class ClaudeAdapter extends SiteAdapter {
 
   getScrollContainer(): HTMLElement | null {
     const container = this.findClaudeScrollContainer()
+    const scrollingElement = document.scrollingElement as HTMLElement | null
+
+    const containerRange = container ? container.scrollHeight - container.clientHeight : -1
+    const scrollingRange = scrollingElement
+      ? scrollingElement.scrollHeight - scrollingElement.clientHeight
+      : -1
+
+    if (
+      container &&
+      scrollingElement &&
+      scrollingRange > containerRange + 100 &&
+      scrollingElement.scrollHeight > scrollingElement.clientHeight + 4
+    ) {
+      this.debugScroll("getScrollContainer:prefer-scrollingElement", {
+        adapterContainer: this.describeContainer(container),
+        scrollingElement: this.describeContainer(scrollingElement),
+        adapterRange: containerRange,
+        scrollingRange,
+      })
+      return scrollingElement
+    }
+
     if (container) {
       this.debugScroll("getScrollContainer:adapter", {
         container: this.describeContainer(container),
+        containerRange,
       })
       return container
     }
 
-    const scrollingElement = document.scrollingElement as HTMLElement | null
     if (scrollingElement && scrollingElement.scrollHeight > scrollingElement.clientHeight + 4) {
       this.debugScroll("getScrollContainer:scrollingElement", {
         container: this.describeContainer(scrollingElement),
+        scrollingRange,
       })
       return scrollingElement
     }
