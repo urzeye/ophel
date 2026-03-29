@@ -36,6 +36,7 @@ const USER_MESSAGE_SELECTOR = ".ds-message:not(:has(.ds-markdown))"
 const THOUGHT_CONTAINER_SELECTOR = ".ds-think-content"
 const RESPONSE_CONTAINER_SELECTOR =
   'main .ds-scroll-area:has(.ds-message), [role="main"] .ds-scroll-area:has(.ds-message), .ds-scroll-area:has(.ds-message)'
+const MESSAGE_LAYOUT_WIDTH_SCOPE_SELECTOR = ":root"
 const MESSAGE_LIST_ITEMS_SELECTOR = ".ds-virtual-list-items, .ds-virtual-list-visible-items"
 const USER_MESSAGE_CONTENT_SELECTOR = [
   `${USER_MESSAGE_SELECTOR} > .gh-inline-bookmark + div`,
@@ -704,8 +705,13 @@ export class DeepSeekAdapter extends SiteAdapter {
   getWidthSelectors() {
     return [
       {
-        // DeepSeek 消息区宽度由虚拟列表节点上的 --message-list-max-width
-        // 以及基于该变量计算出的左右 padding 一起控制。
+        // DeepSeek 输入区与消息区都会读取同一个 --message-list-max-width，
+        selector: MESSAGE_LAYOUT_WIDTH_SCOPE_SELECTOR,
+        property: "--message-list-max-width",
+        noCenter: true,
+      },
+      {
+        // 虚拟列表本身仍然需要基于该变量重算左右 padding，保持内容居中。
         selector: MESSAGE_LIST_ITEMS_SELECTOR,
         property: "--message-list-max-width",
         extraCss:
