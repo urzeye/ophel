@@ -846,19 +846,33 @@ export class ClaudeAdapter extends SiteAdapter {
     return null
   }
 
-  getScrollContainer(): HTMLElement | null {
-    // Claude 新版页面使用 data-autoscroll-container 标记主聊天滚动区
-    const autoScrollContainer = document.querySelector(
+  private findClaudeScrollContainer(): HTMLElement | null {
+    const selectors = [
       '[data-autoscroll-container="true"]',
-    ) as HTMLElement | null
-    if (autoScrollContainer) return autoScrollContainer
+      "#main-content .overflow-y-scroll",
+      "#root .overflow-y-auto.overflow-x-hidden",
+    ]
 
-    // 兼容旧版结构：#main-content > .overflow-y-scroll
-    const mainContent = document.getElementById("main-content")
-    if (mainContent) {
-      const scrollable = mainContent.querySelector(".overflow-y-scroll")
-      if (scrollable) return scrollable as HTMLElement
+    for (const selector of selectors) {
+      const container = document.querySelector(selector) as HTMLElement | null
+      if (!container) continue
+
+      const hasConversationContent = !!container.querySelector(
+        '.font-claude-response, [data-testid="user-message"]',
+      )
+
+      if (hasConversationContent) {
+        return container
+      }
     }
+
+    return null
+  }
+
+  getScrollContainer(): HTMLElement | null {
+    const container = this.findClaudeScrollContainer()
+    if (container) return container
+
     return super.getScrollContainer()
   }
 
@@ -921,11 +935,7 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private getOutlineRoot(): HTMLElement | Document {
-    return (
-      this.getScrollContainer() ||
-      (document.querySelector('[data-autoscroll-container="true"]') as HTMLElement | null) ||
-      document
-    )
+    return this.getScrollContainer() || this.findClaudeScrollContainer() || document
   }
 
   // ==================== 大纲功能 ====================
