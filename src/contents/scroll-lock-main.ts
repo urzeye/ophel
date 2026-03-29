@@ -127,8 +127,15 @@ if (!(window as any).__ophelScrollLockInitialized) {
     optionsOrX?: ScrollToOptions | number,
     y?: number,
   ) {
+    const shouldBypass =
+      typeof optionsOrX === "object" && optionsOrX !== null && (optionsOrX as any).__bypassLock
+
     // 如果劫持未启用，直接调用原始 API
     if (!(window as any).__ophelScrollLockEnabled) {
+      return originalElementScrollTo.apply(this, arguments as any)
+    }
+
+    if (shouldBypass) {
       return originalElementScrollTo.apply(this, arguments as any)
     }
 
@@ -158,8 +165,15 @@ if (!(window as any).__ophelScrollLockInitialized) {
     optionsOrX?: ScrollToOptions | number,
     y?: number,
   ) {
+    const shouldBypass =
+      typeof optionsOrX === "object" && optionsOrX !== null && (optionsOrX as any).__bypassLock
+
     // 如果劫持未启用，直接调用原始 API
     if (!(window as any).__ophelScrollLockEnabled) {
+      return originalElementScroll.apply(this, arguments as any)
+    }
+
+    if (shouldBypass) {
       return originalElementScroll.apply(this, arguments as any)
     }
 
@@ -189,8 +203,15 @@ if (!(window as any).__ophelScrollLockInitialized) {
     optionsOrX?: ScrollToOptions | number,
     y?: number,
   ) {
+    const shouldBypass =
+      typeof optionsOrX === "object" && optionsOrX !== null && (optionsOrX as any).__bypassLock
+
     // 如果劫持未启用，直接调用原始 API
     if (!(window as any).__ophelScrollLockEnabled) {
+      return originalElementScrollBy.apply(this, arguments as any)
+    }
+
+    if (shouldBypass) {
       return originalElementScrollBy.apply(this, arguments as any)
     }
 
