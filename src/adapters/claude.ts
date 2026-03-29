@@ -866,35 +866,11 @@ export class ClaudeAdapter extends SiteAdapter {
       return element.scrollHeight > element.clientHeight + 4
     }
 
-    const scoreContainer = (element: HTMLElement | null) => {
-      if (!element || !isScrollable(element)) {
-        return null
-      }
-
-      const candidateCount = this.getClaudeChatCandidates(element).length
-      return {
-        element,
-        candidateCount,
-        scrollRange: element.scrollHeight - element.clientHeight,
-      }
-    }
-
-    const pickBetterContainer = (
-      currentBest: ReturnType<typeof scoreContainer>,
-      next: ReturnType<typeof scoreContainer>,
-    ) => {
-      if (!next) return currentBest
-      if (!currentBest) return next
-      if (next.candidateCount !== currentBest.candidateCount) {
-        return next.candidateCount > currentBest.candidateCount ? next : currentBest
-      }
-      return next.scrollRange > currentBest.scrollRange ? next : currentBest
-    }
-
     let current: HTMLElement | null = conversationAnchor
-    let bestContainer: ReturnType<typeof scoreContainer> = null
     while (current && current !== document.body) {
-      bestContainer = pickBetterContainer(bestContainer, scoreContainer(current))
+      if (isScrollable(current)) {
+        return current
+      }
       current = current.parentElement as HTMLElement | null
     }
 
@@ -906,10 +882,12 @@ export class ClaudeAdapter extends SiteAdapter {
 
     for (const selector of selectors) {
       const container = document.querySelector(selector) as HTMLElement | null
-      bestContainer = pickBetterContainer(bestContainer, scoreContainer(container))
+      if (isScrollable(container)) {
+        return container
+      }
     }
 
-    return bestContainer?.element || null
+    return null
   }
 
   getScrollContainer(): HTMLElement | null {
