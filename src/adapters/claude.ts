@@ -60,30 +60,6 @@ export class ClaudeAdapter extends SiteAdapter {
   private activeOrganizationId: string | null = null
   private activeOrganizationIdExpiresAt = 0
 
-  private debugScroll(step: string, payload: Record<string, unknown> = {}) {
-    console.debug("[ClaudeScrollDebug]", step, payload)
-    window.postMessage(
-      {
-        type: "OPHEL_CLAUDE_SCROLL_DEBUG",
-        payload: { source: "ClaudeAdapter", step, payload, timestamp: Date.now() },
-      },
-      "*",
-    )
-  }
-
-  private describeContainer(container: HTMLElement | null) {
-    if (!container) return null
-    return {
-      tag: container.tagName,
-      id: container.id || null,
-      className: container.className,
-      scrollTop: container.scrollTop,
-      scrollHeight: container.scrollHeight,
-      clientHeight: container.clientHeight,
-      dataset: { ...container.dataset },
-    }
-  }
-
   match(): boolean {
     return (
       window.location.hostname.includes("claude.ai") ||
@@ -929,32 +905,17 @@ export class ClaudeAdapter extends SiteAdapter {
       scrollingRange > containerRange + 100 &&
       scrollingElement.scrollHeight > scrollingElement.clientHeight + 4
     ) {
-      this.debugScroll("getScrollContainer:prefer-scrollingElement", {
-        adapterContainer: this.describeContainer(container),
-        scrollingElement: this.describeContainer(scrollingElement),
-        adapterRange: containerRange,
-        scrollingRange,
-      })
       return scrollingElement
     }
 
     if (container) {
-      this.debugScroll("getScrollContainer:adapter", {
-        container: this.describeContainer(container),
-        containerRange,
-      })
       return container
     }
 
     if (scrollingElement && scrollingElement.scrollHeight > scrollingElement.clientHeight + 4) {
-      this.debugScroll("getScrollContainer:scrollingElement", {
-        container: this.describeContainer(scrollingElement),
-        scrollingRange,
-      })
       return scrollingElement
     }
 
-    this.debugScroll("getScrollContainer:super-fallback")
     return super.getScrollContainer()
   }
 
@@ -1062,30 +1023,14 @@ export class ClaudeAdapter extends SiteAdapter {
     if (id) {
       let selector = `[data-message-id="${id}"]`
       if (!bestElement.matches(selector)) selector = `#${id}`
-      const anchor = { type: "selector", selector, offset } as AnchorData
-      this.debugScroll("getVisibleAnchorElement", {
-        anchor,
-        bestTop,
-        scrollTop,
-        candidateCount: candidates.length,
-        container: this.describeContainer(container),
-      })
-      return anchor
+      return { type: "selector", selector, offset } as AnchorData
     }
 
     const index = candidates.indexOf(bestElement)
     if (index === -1) return null
 
     const textSignature = (bestElement.textContent || "").trim().substring(0, 50)
-    const anchor = { type: "index", index, offset, textSignature } as AnchorData
-    this.debugScroll("getVisibleAnchorElement", {
-      anchor,
-      bestTop,
-      scrollTop,
-      candidateCount: candidates.length,
-      container: this.describeContainer(container),
-    })
-    return anchor
+    return { type: "index", index, offset, textSignature } as AnchorData
   }
 
   restoreScroll(anchorData: AnchorData): boolean {
@@ -1125,21 +1070,9 @@ export class ClaudeAdapter extends SiteAdapter {
     if (!targetElement) return false
 
     const targetTop = this.getRelativeTop(container, targetElement) + (anchorData.offset || 0)
-    this.debugScroll("restoreScroll:before", {
-      anchorData,
-      targetTop,
-      currentScrollTop: container.scrollTop,
-      targetText: (targetElement.textContent || "").trim().substring(0, 80),
-      container: this.describeContainer(container),
-    })
     container.scrollTo({
       top: targetTop,
       behavior: "instant" as ScrollBehavior,
-    })
-    this.debugScroll("restoreScroll:after", {
-      currentScrollTop: container.scrollTop,
-      targetTop,
-      container: this.describeContainer(container),
     })
     return true
   }
