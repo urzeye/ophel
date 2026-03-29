@@ -847,9 +847,13 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   getScrollContainer(): HTMLElement | null {
-    // 聊天内容滚动容器
-    // 根据 MHTML: #main-content > div ...
-    // 通常是 flex-1 h-full overflow-y-scroll
+    // Claude 新版页面使用 data-autoscroll-container 标记主聊天滚动区
+    const autoScrollContainer = document.querySelector(
+      '[data-autoscroll-container="true"]',
+    ) as HTMLElement | null
+    if (autoScrollContainer) return autoScrollContainer
+
+    // 兼容旧版结构：#main-content > .overflow-y-scroll
     const mainContent = document.getElementById("main-content")
     if (mainContent) {
       const scrollable = mainContent.querySelector(".overflow-y-scroll")
@@ -916,12 +920,19 @@ export class ClaudeAdapter extends SiteAdapter {
     return { enabled: false, keyword: "sonnet" }
   }
 
+  private getOutlineRoot(): HTMLElement | Document {
+    return (
+      this.getScrollContainer() ||
+      (document.querySelector('[data-autoscroll-container="true"]') as HTMLElement | null) ||
+      document
+    )
+  }
+
   // ==================== 大纲功能 ====================
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const outline: OutlineItem[] = []
-    const scrollContainer = this.getScrollContainer()
-    if (!scrollContainer) return outline
+    const outlineRoot = this.getOutlineRoot()
 
     // 辅助函数：从文本中移除思维链内容
     const removeThinkingContent = (text: string): string => {
@@ -935,8 +946,8 @@ export class ClaudeAdapter extends SiteAdapter {
     const calculateUserQueryWordCount = (startEl: Element): number => {
       // Claude 结构：用户消息和AI回复在同一滚动容器中，不是严格的siblings
       // 需要向下遍历找到下一个用户消息之前的所有AI回复
-      const allUserQueries = Array.from(scrollContainer!.querySelectorAll(userQuerySelector))
-      const allResponses = Array.from(scrollContainer!.querySelectorAll(".font-claude-response"))
+      const allUserQueries = Array.from(outlineRoot.querySelectorAll(userQuerySelector))
+      const allResponses = Array.from(outlineRoot.querySelectorAll(".font-claude-response"))
 
       const startIndex = allUserQueries.indexOf(startEl)
       if (startIndex === -1) return 0
@@ -970,7 +981,7 @@ export class ClaudeAdapter extends SiteAdapter {
 
     // Claude 的标题在 AI 回复中，有 text-text-100 class
     // 排除侧边栏的 H3 (RecentsHide 等)
-    const headings = Array.from(scrollContainer.querySelectorAll("h1, h2, h3, h4, h5, h6"))
+    const headings = Array.from(outlineRoot.querySelectorAll("h1, h2, h3, h4, h5, h6"))
 
     headings.forEach((h, index) => {
       const level = parseInt(h.tagName[1])
@@ -1017,7 +1028,7 @@ export class ClaudeAdapter extends SiteAdapter {
 
     // 可选：包含用户问题
     if (includeUserQueries) {
-      const userQueries = scrollContainer.querySelectorAll('[data-testid="user-message"]')
+      const userQueries = outlineRoot.querySelectorAll('[data-testid="user-message"]')
       userQueries.forEach((el) => {
         const text = el.textContent?.trim() || ""
         if (!text) return
