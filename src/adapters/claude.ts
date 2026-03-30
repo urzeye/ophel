@@ -3,6 +3,7 @@
  */
 import { SITE_IDS } from "~constants"
 import { htmlToMarkdown } from "~utils/exporter"
+import { renderMarkdown } from "~utils/markdown"
 
 import {
   SiteAdapter,
@@ -55,6 +56,32 @@ const CLAUDE_CANCEL_KEYWORDS = [
 ]
 
 const ORG_ID_REGEX = /^[a-f0-9-]{36}$/i
+
+const CLAUDE_BLOCK_MATH_PATTERNS = [/(^|[^\\])\$\$[\s\S]+?\$\$/m, /\\\[[\s\S]+?\\\]/m]
+
+const CLAUDE_INLINE_MATH_PATTERNS = [
+  /((^|[^\\$])\$[^\s$](?:[^$\n]*[^\s$])?\$(?!\$))/,
+  /\\\([^\n]+?\\\)/,
+]
+
+function stripClaudeCodeContent(text: string): string {
+  return text.replace(/```[\s\S]*?```/g, "").replace(/`[^`\n]*`/g, "")
+}
+
+function shouldEnhanceClaudeParagraph(text: string): boolean {
+  const normalized = text.trim()
+  if (!normalized) return false
+
+  const stripped = stripClaudeCodeContent(normalized)
+
+  return (
+    /^#{1,6}\s/m.test(normalized) ||
+    /\*\*[^*]+\*\*/.test(normalized) ||
+    /(?<!\*)\*(?!\*)[^*]+\*(?!\*)/.test(normalized) ||
+    CLAUDE_BLOCK_MATH_PATTERNS.some((pattern) => pattern.test(stripped)) ||
+    CLAUDE_INLINE_MATH_PATTERNS.some((pattern) => pattern.test(stripped))
+  )
+}
 
 export class ClaudeAdapter extends SiteAdapter {
   private activeOrganizationId: string | null = null
@@ -544,7 +571,7 @@ export class ClaudeAdapter extends SiteAdapter {
     const row = await this.findConversationRowWithRetry(id)
     if (!row) return false
 
-    const menuButton = await this.findConversationMenuButton(row, id)
+    const menuButton = await this.findConversationMenuButton(row)
     if (!menuButton) return false
 
     this.simulateClick(menuButton)
@@ -586,10 +613,7 @@ export class ClaudeAdapter extends SiteAdapter {
     ) as HTMLElement | null
   }
 
-  private async findConversationMenuButton(
-    row: HTMLElement,
-    id: string,
-  ): Promise<HTMLElement | null> {
+  private async findConversationMenuButton(row: HTMLElement): Promise<HTMLElement | null> {
     const owner = (row.closest("li") || row.parentElement || row) as HTMLElement
     const menuSelector = [
       'button[aria-haspopup="menu"]',
@@ -1292,13 +1316,7 @@ export class ClaudeAdapter extends SiteAdapter {
     const paragraphsToRender: string[] = []
     textParagraphs.forEach((p) => {
       const text = p.textContent || ""
-      // 检查是否包含未渲染的 Markdown：标题、加粗、斜体
-      const hasUnrendered =
-        /^#{1,6}\s/m.test(text) || // 标题
-        /\*\*[^*]+\*\*/.test(text) || // 加粗
-        /\*[^*]+\*/.test(text) // 斜体
-
-      if (hasUnrendered) {
+      if (shouldEnhanceClaudeParagraph(text)) {
         paragraphsToRender.push(text)
       }
     })
@@ -1332,47 +1350,16 @@ export class ClaudeAdapter extends SiteAdapter {
     textParagraphs.forEach((p) => {
       const text = p.textContent || ""
 
-      // 检查是否包含未渲染的 Markdown
-      const hasHeaders = /^#{1,6}\s/m.test(text)
-      const hasBold = /\*\*[^*]+\*\*/.test(text)
-      const hasItalic = /(?<!\*)\*(?!\*)[^*]+\*(?!\*)/.test(text)
-
-      if (!hasHeaders && !hasBold && !hasItalic) {
+      if (!shouldEnhanceClaudeParagraph(text)) {
         return // 这个段落不需要处理
       }
 
-      // 渲染这个段落的 Markdown
-      let html = text
-
-      // 处理标题（多行情况）
-      html = html.replace(/^(#{1,6})\s+(.+)$/gm, (_, hashes, content) => {
-        const level = hashes.length
-        // 使用 Claude 的标题样式
-        const sizeClass =
-          level === 1 ? "text-[1.375rem]" : level === 2 ? "text-[1.125rem]" : "text-base"
-        return `<h${level} class="text-text-100 mt-2 -mb-1 ${sizeClass} font-bold">${content}</h${level}>`
-      })
-
-      // 处理加粗
-      html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-
-      // 处理斜体（注意不要匹配加粗）
-      html = html.replace(/(?<!\*)\*(?!\*)([^*]+)\*(?!\*)/g, "<em>$1</em>")
-
-      // 处理换行（保持 whitespace-pre-wrap 行为）
-      // 将连续的换行转为 <br>，单个换行保留
-      html = html
-        .split("\n")
-        .map((line) => {
-          // 如果这行已经是 HTML 标签开头，不加 br
-          if (line.startsWith("<h") || line.trim() === "") return line
-          return line
-        })
-        .join("<br>")
+      const html = renderMarkdown(text, false, { enableMath: true })
 
       // 创建替换元素
       const rendered = document.createElement("div")
-      rendered.className = "gh-claude-enhanced whitespace-pre-wrap break-words"
+      rendered.className =
+        "gh-claude-enhanced gh-user-query-markdown gh-markdown-preview whitespace-pre-wrap break-words"
       rendered.innerHTML = html
 
       // 替换原始 <p> 元素

@@ -983,12 +983,32 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   extractUserQueryText(element: Element): string {
-    return this.extractTextWithLineBreaks(element)
+    const textContainer = element.matches(".whitespace-pre-wrap")
+      ? element
+      : element.querySelector(".whitespace-pre-wrap")
+
+    if (textContainer) {
+      return this.extractTextWithLineBreaks(textContainer).trim()
+    }
+
+    return this.extractTextWithLineBreaks(element).trim()
   }
 
   extractUserQueryMarkdown(element: Element): string {
-    // ChatGPT 用户消息通常是纯文本
-    return element.textContent?.trim() || ""
+    const textContainer = element.querySelector(".whitespace-pre-wrap")
+    if (!textContainer) {
+      return this.extractUserQueryText(element).trim()
+    }
+
+    const clone = textContainer.cloneNode(true) as HTMLElement
+    clone.querySelectorAll(".sr-only").forEach((node) => node.remove())
+
+    const markdown = htmlToMarkdown(clone).trim()
+    if (markdown) {
+      return markdown
+    }
+
+    return this.extractUserQueryText(textContainer).trim()
   }
 
   /**

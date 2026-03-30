@@ -449,7 +449,7 @@ export class DoubaoAdapter extends SiteAdapter {
 
   extractUserQueryMarkdown(element: Element): string {
     const textContainer = this.getUserMessageTextContainer(element)
-    return textContainer?.textContent?.trim() || ""
+    return textContainer ? this.extractTextWithLineBreaks(textContainer).trim() : ""
   }
 
   replaceUserQueryContent(element: Element, html: string): boolean {

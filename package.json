@@ -38,10 +38,12 @@
     ]
   },
   "dependencies": {
+    "@mdit/plugin-tex": "^0.24.1",
     "@plasmohq/storage": "^1.12.0",
     "effect": "^3.19.13",
     "fuzzysort": "3.1.0",
     "highlight.js": "^11.11.1",
+    "katex": "^0.16.44",
     "markdown-it": "^14.1.0",
     "markdown-it-anchor": "^9.2.0",
     "markdown-it-container": "^4.0.0",

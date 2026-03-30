@@ -21,12 +21,15 @@ import sql from "highlight.js/lib/languages/sql"
 import typescript from "highlight.js/lib/languages/typescript"
 import xml from "highlight.js/lib/languages/xml"
 import yaml from "highlight.js/lib/languages/yaml"
+import { tex } from "@mdit/plugin-tex"
 import MarkdownIt from "markdown-it"
 import anchor from "markdown-it-anchor"
 import container from "markdown-it-container"
 import { full as emoji } from "markdown-it-emoji"
 import mark from "markdown-it-mark"
 import taskLists from "markdown-it-task-lists"
+
+import { getKatexStylesText, renderKatexToString } from "~platform/katex"
 
 // 注册语言
 hljs.registerLanguage("javascript", javascript)
@@ -53,49 +56,67 @@ hljs.registerLanguage("git", diff)
 hljs.registerLanguage("dockerfile", dockerfile)
 hljs.registerLanguage("docker", dockerfile)
 
-// 创建 markdown-it 实例
-const md = new MarkdownIt({
-  html: false, // 禁用 HTML 标签（安全）
-  breaks: true, // 换行转 <br>
-  linkify: true, // 自动识别链接
-  highlight: (str: string, lang: string) => {
-    if (lang && hljs.getLanguage(lang)) {
-      try {
-        return hljs.highlight(str, { language: lang }).value
-      } catch {
-        // 忽略错误
-      }
-    }
-    // 自动检测语言
-    try {
-      return hljs.highlightAuto(str).value
-    } catch {
-      return "" // 使用默认转义
-    }
-  },
-})
+type RenderMarkdownOptions = {
+  enableMath?: boolean
+}
 
-// 使用任务列表插件（关闭 label 选项避免重复渲染）
-md.use(taskLists, { enabled: true, label: false })
-// 使用 emoji 插件
-md.use(emoji)
-// 使用高亮插件 ==text==
-md.use(mark)
-// 使用标题锚点插件
-md.use(anchor, { permalink: false })
-// 使用容器插件 :::info, :::warning, :::danger
-md.use(container, "info", {
-  render: (tokens: { nesting: number }[], idx: number) =>
-    tokens[idx].nesting === 1 ? '<div class="gh-container gh-container-info">' : "</div>\n",
-})
-md.use(container, "warning", {
-  render: (tokens: { nesting: number }[], idx: number) =>
-    tokens[idx].nesting === 1 ? '<div class="gh-container gh-container-warning">' : "</div>\n",
-})
-md.use(container, "danger", {
-  render: (tokens: { nesting: number }[], idx: number) =>
-    tokens[idx].nesting === 1 ? '<div class="gh-container gh-container-danger">' : "</div>\n",
-})
+const createMarkdownIt = (enableMath = false): MarkdownIt => {
+  const instance = new MarkdownIt({
+    html: false, // 禁用 HTML 标签（安全）
+    breaks: true, // 换行转 <br>
+    linkify: true, // 自动识别链接
+    highlight: (str: string, lang: string) => {
+      if (lang && hljs.getLanguage(lang)) {
+        try {
+          return hljs.highlight(str, { language: lang }).value
+        } catch {
+          // 忽略错误
+        }
+      }
+      // 自动检测语言
+      try {
+        return hljs.highlightAuto(str).value
+      } catch {
+        return "" // 使用默认转义
+      }
+    },
+  })
+
+  // 使用任务列表插件（关闭 label 选项避免重复渲染）
+  instance.use(taskLists, { enabled: true, label: false })
+  // 使用 emoji 插件
+  instance.use(emoji)
+  // 使用高亮插件 ==text==
+  instance.use(mark)
+  // 使用标题锚点插件
+  instance.use(anchor, { permalink: false })
+  // 使用容器插件 :::info, :::warning, :::danger
+  instance.use(container, "info", {
+    render: (tokens: { nesting: number }[], idx: number) =>
+      tokens[idx].nesting === 1 ? '<div class="gh-container gh-container-info">' : "</div>\n",
+  })
+  instance.use(container, "warning", {
+    render: (tokens: { nesting: number }[], idx: number) =>
+      tokens[idx].nesting === 1 ? '<div class="gh-container gh-container-warning">' : "</div>\n",
+  })
+  instance.use(container, "danger", {
+    render: (tokens: { nesting: number }[], idx: number) =>
+      tokens[idx].nesting === 1 ? '<div class="gh-container gh-container-danger">' : "</div>\n",
+  })
+
+  if (enableMath) {
+    instance.use(tex, {
+      delimiters: "all",
+      allowInlineWithSpace: false,
+      render: (content, displayMode) => renderKatexToString(content, { displayMode }),
+    })
+  }
+
+  return instance
+}
+
+const md = createMarkdownIt()
+const mdWithMath = createMarkdownIt(true)
 
 /**
  * 渲染 Markdown 内容
@@ -103,10 +124,15 @@ md.use(container, "danger", {
  * @param highlightVariables 是否高亮变量占位符
  * @returns 渲染后的 HTML
  */
-export const renderMarkdown = (content: string, highlightVariables = true): string => {
+export const renderMarkdown = (
+  content: string,
+  highlightVariables = true,
+  options: RenderMarkdownOptions = {},
+): string => {
   if (!content) return ""
 
-  let html = md.render(content)
+  const markdownIt = options.enableMath ? mdWithMath : md
+  let html = markdownIt.render(content)
 
   // 高亮变量占位符 {{varName}}
   if (highlightVariables) {
@@ -121,6 +147,8 @@ export const renderMarkdown = (content: string, highlightVariables = true): stri
 
   return html
 }
+
+export const getMathStyles = (): string => getKatexStylesText()
 
 /**
  * 获取 highlight.js 主题样式

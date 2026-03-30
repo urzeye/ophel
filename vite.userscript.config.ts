@@ -11,6 +11,11 @@ import {
   type UserscriptResourceMetaName,
   getUserscriptResourceUrls,
 } from "./src/platform/userscript/resource-manifest"
+import {
+  KATEX_CDN_CSS_URL,
+  KATEX_CDN_JS_URL,
+  KATEX_CSS_RESOURCE_NAME,
+} from "./src/platform/userscript/katex-cdn"
 
 // ========== Dynamic Metadata Loading ==========
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, "package.json"), "utf-8"))
@@ -259,8 +264,14 @@ export default defineConfig({
         noframes: true,
         homepageURL: "https://github.com/urzeye/ophel",
         supportURL: "https://github.com/urzeye/ophel/issues",
-        require: ["https://cdn.jsdelivr.net/npm/fuzzysort@3.1.0/fuzzysort.min.js"],
-        resource: userscriptResourceUrls,
+        require: [
+          "https://cdn.jsdelivr.net/npm/fuzzysort@3.1.0/fuzzysort.min.js",
+          KATEX_CDN_JS_URL,
+        ],
+        resource: {
+          ...userscriptResourceUrls,
+          [KATEX_CSS_RESOURCE_NAME]: KATEX_CDN_CSS_URL,
+        },
       },
       build: {
         // CSS 自动注入到 head
@@ -274,6 +285,7 @@ export default defineConfig({
       // 替换 @plasmohq/storage 为 GM_* 实现
       "@plasmohq/storage": path.resolve(__dirname, "src/platform/userscript/storage-polyfill.ts"),
       fuzzysort: path.resolve(__dirname, "src/platform/userscript/fuzzysort-global.ts"),
+      "~platform/katex": path.resolve(__dirname, "src/platform/userscript/katex.ts"),
       // 注意：chrome-adapter.ts 已内置跨平台支持（通过 __PLATFORM__ 判断），无需 alias 替换
 
       // ========== 路径别名（与 Plasmo 的 ~ 别名一致）==========
