@@ -1471,9 +1471,9 @@ export class AIStudioAdapter extends SiteAdapter {
     //     > ms-prompt-chunk.text-chunk (实际用户输入)
     //
     // 必须精确定位到 ms-prompt-chunk.text-chunk，避免抓取按钮和标签文本
-    const contentChunk = element.querySelector("ms-prompt-chunk.text-chunk, ms-prompt-chunk")
+    const contentChunk = this.findUserContentChunk(element)
     if (contentChunk) {
-      extractedText = contentChunk.textContent?.trim() || ""
+      extractedText = this.extractTextWithLineBreaks(contentChunk).trim()
     } else {
       // 回退：尝试从 .turn-content 中排除 .author-label
       const turnContent = element.querySelector(".turn-content")
@@ -1520,6 +1520,27 @@ export class AIStudioAdapter extends SiteAdapter {
     }
 
     return ""
+  }
+
+  private findUserContentChunk(element: Element): Element | null {
+    const selectors = [
+      "ms-text-chunk",
+      "ms-prompt-chunk.text-chunk",
+      "ms-prompt-chunk",
+      "ms-cmark-node.cmark-node.user-chunk",
+    ]
+
+    for (const selector of selectors) {
+      const candidate = element.querySelector(selector)
+      if (!candidate) continue
+
+      const text = this.extractTextWithLineBreaks(candidate).trim()
+      if (text) {
+        return candidate
+      }
+    }
+
+    return null
   }
 
   getExportConfig(): ExportConfig | null {
@@ -2129,7 +2150,7 @@ export class AIStudioAdapter extends SiteAdapter {
       scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
     }
 
-    return collected
+    return this.repairLikelyTruncatedUserSnapshots(collected, scrollContainer)
   }
 
   private buildExportSnapshotPositions(scrollContainer: HTMLElement): number[] {
@@ -2266,7 +2287,92 @@ export class AIStudioAdapter extends SiteAdapter {
       return current
     }
 
+    const normalizedPrevious = this.normalizeSnapshotComparisonText(previous)
+    const normalizedCurrent = this.normalizeSnapshotComparisonText(current)
+
+    if (normalizedPrevious && normalizedCurrent) {
+      if (normalizedCurrent.startsWith(normalizedPrevious) && current.length >= previous.length) {
+        return current
+      }
+
+      if (normalizedPrevious.startsWith(normalizedCurrent) && previous.length >= current.length) {
+        return previous
+      }
+    }
+
     return `${previous}\n\n${current}`.trim()
+  }
+
+  private async repairLikelyTruncatedUserSnapshots(
+    collected: AIStudioExportMessageSnapshot[],
+    scrollContainer: HTMLElement,
+  ): Promise<AIStudioExportMessageSnapshot[]> {
+    const targets = collected.filter((snapshot) => this.isLikelyTruncatedUserSnapshot(snapshot))
+    if (targets.length === 0) {
+      return collected
+    }
+
+    const repaired = collected.map((item) => ({ ...item }))
+    const originalScrollTop = scrollContainer.scrollTop
+
+    try {
+      for (const target of targets) {
+        const start = Math.max(0, target.order - Math.max(120, scrollContainer.clientHeight * 0.25))
+        const end = target.order + Math.max(120, scrollContainer.clientHeight * 0.25)
+        const positions = [start, target.order, end].map((value) => Math.round(value))
+
+        for (const position of positions) {
+          scrollContainer.scrollTop = position
+          scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
+          scrollContainer.getBoundingClientRect()
+          await this.sleep(120)
+
+          const batch = this.readVisibleExportMessageSnapshots(scrollContainer)
+          const candidate = batch.find((item) => item.turnKey === target.turnKey)
+          if (!candidate) {
+            continue
+          }
+
+          const repairedIndex = repaired.findIndex((item) => item.turnKey === target.turnKey)
+          if (repairedIndex === -1) {
+            break
+          }
+
+          repaired[repairedIndex] = {
+            ...repaired[repairedIndex],
+            order: Math.min(repaired[repairedIndex].order, candidate.order),
+            content: this.mergeSnapshotContent(repaired[repairedIndex].content, candidate.content),
+          }
+
+          if (!this.isLikelyTruncatedUserSnapshot(repaired[repairedIndex])) {
+            break
+          }
+        }
+      }
+    } finally {
+      scrollContainer.scrollTop = originalScrollTop
+      scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
+    }
+
+    return repaired
+  }
+
+  private isLikelyTruncatedUserSnapshot(snapshot: AIStudioExportMessageSnapshot): boolean {
+    if (snapshot.role !== AISTUDIO_EXPORT_ROLE_USER) {
+      return false
+    }
+
+    const text = snapshot.content.trim()
+    return /(?:\.{3}|…)$/.test(text)
+  }
+
+  private normalizeSnapshotComparisonText(content: string): string {
+    return content
+      .replace(/\r\n/g, "\n")
+      .replace(/\u2026/g, "...")
+      .replace(/\.{3}\s*$/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
   }
 
   private normalizeExportMessageContent(content: string): string {
