@@ -463,13 +463,10 @@ export class DoubaoAdapter extends SiteAdapter {
       return this.extractUserQueryText(element)
     }
 
-    const clone = textContainer.cloneNode(true) as HTMLElement
-    clone
-      .querySelectorAll('button, [role="button"], svg, [aria-hidden="true"]')
-      .forEach((node) => node.remove())
-
-    const markdown = htmlToMarkdown(clone).trim()
-    return markdown || this.extractUserQueryText(textContainer)
+    // 豆包会保留一份隐藏的原始用户输入文本，导出时直接读取这份源文本，
+    // 避免从我们注入的渲染结果反推 Markdown，减少回归风险。
+    const rawText = textContainer.textContent?.trim()
+    return rawText || this.extractUserQueryText(textContainer)
   }
 
   replaceUserQueryContent(element: Element, html: string): boolean {
