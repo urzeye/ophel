@@ -254,6 +254,7 @@ export const SETTING_ID_ALIASES: Record<string, string> = {
   "features.prompts.promptQueue": "prompt-queue",
   "features.export.includeThoughts": "export-include-thoughts",
   "features.readingHistory.persistence": "reading-history-persistence",
+  "features.content.assistantMermaid": "content-assistant-mermaid",
   "features.content.formulaCopy": "content-formula-copy",
   "panel.preventAutoScroll": "outline-prevent-auto-scroll",
   "content.markdownFix": "gemini-markdown-fix",
@@ -600,6 +601,11 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     settingId: "reading-history-cleanup-days",
     title: "阅读记录清理天数",
     keywords: ["reading history", "cleanup", "days", "清理周期"],
+  },
+  {
+    settingId: "content-assistant-mermaid",
+    title: "AI 回复 Mermaid 渲染",
+    keywords: ["content", "mermaid", "diagram", "assistant response", "AI 回复"],
   },
   {
     settingId: "content-user-query-markdown",

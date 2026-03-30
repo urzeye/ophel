@@ -245,6 +245,7 @@ const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "global-search-shortcut-setting-link": "globalSearchShortcutSettingLabel",
   "global-search-prompt-enter-behavior": "globalSearchPromptEnterBehaviorLabel",
   "claude-session-keys": "claudeSessionKeyTitle",
+  "content-assistant-mermaid": "assistantMermaidLabel",
   "content-formula-copy": "formulaCopyLabel",
   "content-formula-delimiter": "formulaDelimiterLabel",
   "content-table-copy": "tableCopyLabel",

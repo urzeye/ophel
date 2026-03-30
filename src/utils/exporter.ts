@@ -109,6 +109,7 @@ export function htmlToMarkdown(el: Element): string {
       tag === "svg" ||
       tag === "annotation" ||
       tag === "annotation-xml" ||
+      element.classList?.contains("gh-assistant-mermaid") ||
       element.classList?.contains("katex-mathml") ||
       element.classList?.contains("katex-html")
     ) {
@@ -284,6 +285,10 @@ export function htmlToMarkdown(el: Element): string {
       }
 
       const element = node as HTMLElement
+
+      if (element.classList?.contains("gh-assistant-mermaid")) {
+        return ""
+      }
 
       // 处理数学公式
       if (element.classList?.contains("math-block")) {

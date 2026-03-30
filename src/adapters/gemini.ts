@@ -1582,6 +1582,10 @@ export class GeminiAdapter extends SiteAdapter {
     }
   }
 
+  getAssistantMermaidSupportMode() {
+    return "fallback" as const
+  }
+
   // ==================== 输入框操作 ====================
 
   getTextareaSelectors(): string[] {

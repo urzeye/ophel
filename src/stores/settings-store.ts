@@ -17,6 +17,10 @@ let isUpdatingFromStorage = false
 
 const normalizeSettings = (settings: Settings): Settings => ({
   ...settings,
+  content: {
+    ...DEFAULT_SETTINGS.content,
+    ...settings.content,
+  },
   usageMonitor: {
     ...DEFAULT_SETTINGS.usageMonitor,
     ...settings.usageMonitor,

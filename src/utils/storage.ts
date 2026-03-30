@@ -153,6 +153,7 @@ export interface Settings {
 
   // 内容处理（含复制、导出）
   content: {
+    assistantMermaid: boolean // AI 回复 Mermaid 渲染增强
     markdownFix: boolean
     watermarkRemoval: boolean
     formulaCopy: boolean
@@ -337,6 +338,7 @@ export const DEFAULT_SETTINGS: Settings = {
   },
 
   content: {
+    assistantMermaid: true, // 默认开启，仅对非原生 Mermaid 站点生效
     markdownFix: true,
     // 油猴脚本环境默认开启（GM_xmlhttpRequest 已通过 @grant 声明）
     watermarkRemoval: isUserscript,

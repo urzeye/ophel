@@ -316,6 +316,10 @@ export class QwenAiAdapter extends SiteAdapter {
     return QWENAI_MESSAGE_CONTAINER_SELECTOR
   }
 
+  getAssistantMermaidSupportMode() {
+    return "native" as const
+  }
+
   getChatContentSelectors(): string[] {
     return [QWENAI_USER_MESSAGE_SELECTOR, QWENAI_ASSISTANT_MESSAGE_SELECTOR]
   }

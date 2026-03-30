@@ -8,6 +8,7 @@
 import type { SiteAdapter } from "~adapters/base"
 import { SITE_IDS } from "~constants"
 import { CopyManager } from "~core/copy-manager"
+import { AssistantMermaidRenderer } from "~core/assistant-mermaid-renderer"
 import { LayoutManager } from "~core/layout-manager"
 import { MarkdownFixer } from "~core/markdown-fixer"
 import { ModelLocker } from "~core/model-locker"
@@ -47,6 +48,7 @@ export interface ModulesContext {
 export interface ModuleInstances {
   themeManager: ThemeManager | null
   copyManager: CopyManager | null
+  assistantMermaidRenderer: AssistantMermaidRenderer | null
   layoutManager: LayoutManager | null
   markdownFixer: MarkdownFixer | null
   tabManager: TabManager | null
@@ -63,6 +65,7 @@ export interface ModuleInstances {
 let modules: ModuleInstances = {
   themeManager: null,
   copyManager: null,
+  assistantMermaidRenderer: null,
   layoutManager: null,
   markdownFixer: null,
   tabManager: null,
@@ -211,6 +214,17 @@ export function initCopyManager(ctx: ModulesContext): void {
 }
 
 /**
+ * 初始化 AI 回复 Mermaid 渲染器
+ */
+export function initAssistantMermaidRenderer(ctx: ModulesContext): void {
+  const { adapter, settings } = ctx
+  modules.assistantMermaidRenderer = new AssistantMermaidRenderer(
+    adapter,
+    settings.content?.assistantMermaid ?? true,
+  )
+}
+
+/**
  * 初始化标签页管理器
  */
 export function initTabManager(ctx: ModulesContext): void {
@@ -350,28 +364,31 @@ export async function initCoreModules(ctx: ModulesContext): Promise<ModuleInstan
   // 4. 复制功能
   initCopyManager(ctx)
 
-  // 5. 标签页管理
+  // 5. AI 回复 Mermaid 渲染
+  initAssistantMermaidRenderer(ctx)
+
+  // 6. 标签页管理
   initTabManager(ctx)
 
-  // 6. 水印移除
+  // 7. 水印移除
   initWatermarkRemover(ctx)
 
-  // 7. 本地使用量计数与预估
+  // 8. 本地使用量计数与预估
   initUsageCounterManager(ctx)
 
-  // 8. 阅读历史
+  // 9. 阅读历史
   await initReadingHistoryManager(ctx)
 
-  // 9. 模型锁定
+  // 10. 模型锁定
   initModelLocker(ctx)
 
-  // 10. 滚动锁定
+  // 11. 滚动锁定
   initScrollLockManager(ctx)
 
-  // 11. 用户提问 Markdown 渲染
+  // 12. 用户提问 Markdown 渲染
   initUserQueryMarkdownRenderer(ctx)
 
-  // 12. Policy Retry Manager
+  // 13. Policy Retry Manager
   initPolicyRetryManager(ctx)
 
   return modules
@@ -504,6 +521,16 @@ export function subscribeModuleUpdates(ctx: ModulesContext): void {
         modules.copyManager = new CopyManager(newSettings.content)
         if (newSettings.content.formulaCopy) modules.copyManager.initFormulaCopy()
         if (newSettings.content.tableCopy) modules.copyManager.initTableCopy()
+      }
+
+      if (newSettings.content.assistantMermaid) {
+        if (modules.assistantMermaidRenderer) {
+          modules.assistantMermaidRenderer.updateSettings(true)
+        } else {
+          modules.assistantMermaidRenderer = new AssistantMermaidRenderer(adapter, true)
+        }
+      } else {
+        modules.assistantMermaidRenderer?.updateSettings(false)
       }
 
       // 11. User Query Markdown Renderer update

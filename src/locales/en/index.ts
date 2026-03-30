@@ -448,6 +448,9 @@ export const en = {
   exportImagesToBase64Label: "Export Images to Base64",
   exportImagesToBase64Desc:
     "Convert images to Base64 when exporting conversations for offline viewing",
+  assistantMermaidLabel: "Assistant Mermaid Render",
+  assistantMermaidDesc:
+    "Automatically render Mermaid diagrams in AI responses on sites without native Mermaid support",
   aistudioRemoveWatermark: "Remove Image Watermark",
   aistudioRemoveWatermarkDesc:
     "Remove watermarks from AI Studio generated images (Requires page refresh)",
@@ -466,6 +469,9 @@ export const en = {
     "Include and auto-expand thoughts when exporting (rendered as blockquotes)",
   userQueryMarkdownLabel: "User Query Markdown Render",
   userQueryMarkdownDesc: "Render Markdown syntax in user queries as formatted text",
+  assistantMermaidPreviewTab: "Diagram",
+  assistantMermaidCodeTab: "Code",
+  assistantMermaidCopyCode: "Copy Code",
   watermarkRemovalLabel: "Remove Image Watermark",
   watermarkRemovalDesc: "Automatically remove NanoBanana watermark from AI generated images",
   refreshPrompts: "Refresh Prompts",

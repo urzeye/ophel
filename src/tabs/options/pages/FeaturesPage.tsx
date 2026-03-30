@@ -1485,7 +1485,24 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       {activeTab === FEATURES_TAB_IDS.CONTENT && (
         <SettingCard
           title={t("interactionEnhance") || "交互增强"}
-          description={t("interactionEnhanceDesc") || "增强公式和表格的交互功能"}>
+          description={t("interactionEnhanceDesc") || "增强 Mermaid、公式和表格的交互功能"}>
+          <ToggleRow
+            label={t("assistantMermaidLabel") || "AI 回复 Mermaid 渲染"}
+            description={
+              t("assistantMermaidDesc") ||
+              "为未原生支持 Mermaid 的站点自动渲染 AI 回复中的 Mermaid 图表"
+            }
+            settingId="content-assistant-mermaid"
+            checked={settings.content?.assistantMermaid ?? true}
+            onChange={() =>
+              updateNestedSetting(
+                "content",
+                "assistantMermaid",
+                !(settings.content?.assistantMermaid ?? true),
+              )
+            }
+          />
+
           <ToggleRow
             label={t("userQueryMarkdownLabel") || "用户问题 Markdown 渲染"}
             description={t("userQueryMarkdownDesc") || "将用户输入的 Markdown 渲染为富文本"}
