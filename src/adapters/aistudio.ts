@@ -1526,6 +1526,34 @@ export class AIStudioAdapter extends SiteAdapter {
     return ""
   }
 
+  extractUserQueryMarkdown(element: Element): string {
+    if (this.isExportSnapshotElement(element)) {
+      return element.textContent?.trim() || ""
+    }
+
+    const contentChunk = this.findUserContentChunk(element)
+    const source = (contentChunk || element).cloneNode(true) as HTMLElement
+    source
+      .querySelectorAll(
+        '.author-label, .actions-container, button, [role="button"], svg, [aria-hidden="true"]',
+      )
+      .forEach((node) => node.remove())
+
+    this.normalizeAssistantExportDom(source)
+
+    const markdown = htmlToMarkdown(source).trim()
+    if (markdown) {
+      return markdown
+    }
+
+    return this.extractTextWithLineBreaks(source).trim()
+  }
+
+  extractUserQueryExportText(element: Element): string {
+    const markdown = this.extractUserQueryMarkdown(element).trim()
+    return markdown || this.extractUserQueryText(element)
+  }
+
   private findUserContentChunk(element: Element): Element | null {
     const selectors = [
       "ms-text-chunk",
@@ -2030,6 +2058,7 @@ export class AIStudioAdapter extends SiteAdapter {
   private normalizeAssistantExportDom(root: HTMLElement): void {
     this.unwrapCmarkNodes(root)
     this.replaceInlineCodeSpans(root)
+    this.replaceKatexComponents(root)
     this.replaceCodeBlockComponents(root)
   }
 
@@ -2049,6 +2078,23 @@ export class AIStudioAdapter extends SiteAdapter {
       const code = document.createElement("code")
       code.textContent = node.textContent || ""
       node.replaceWith(code)
+    })
+  }
+
+  private replaceKatexComponents(root: HTMLElement): void {
+    root.querySelectorAll("ms-katex").forEach((node) => {
+      if (!(node instanceof HTMLElement)) return
+
+      const latex =
+        node.querySelector('annotation[encoding="application/x-tex"]')?.textContent?.trim() || ""
+      if (!latex) {
+        return
+      }
+
+      const replacement = document.createElement(node.classList.contains("inline") ? "span" : "div")
+      replacement.className = node.classList.contains("inline") ? "math-inline" : "math-block"
+      replacement.setAttribute("data-math", latex)
+      node.replaceWith(replacement)
     })
   }
 
