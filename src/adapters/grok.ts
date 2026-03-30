@@ -1264,47 +1264,82 @@ export class GrokAdapter extends SiteAdapter {
     return ".message-bubble.rounded-br-lg"
   }
 
-  extractUserQueryText(element: Element): string {
+  private cloneUserQuerySource(element: Element): HTMLElement | null {
     const markdownContainer = element.querySelector(".response-content-markdown")
     if (!markdownContainer) {
-      return this.extractTextWithLineBreaks(element).trim()
+      return null
     }
 
     const originalWrapper = markdownContainer.querySelector(".gh-user-query-original")
     const source = (originalWrapper || markdownContainer).cloneNode(true) as HTMLElement
     source.querySelectorAll(".gh-user-query-markdown").forEach((node) => node.remove())
+    return source
+  }
+
+  private isLikelyInlineCodeSpan(element: HTMLElement): boolean {
+    if (element.tagName.toLowerCase() !== "span") {
+      return false
+    }
+
+    if (element.childElementCount > 0) {
+      return false
+    }
+
+    const className = element.getAttribute("class") || ""
+    const hasMonoFont = /(^|\s)!?font-mono(\s|$)/.test(className)
+    const hasCodeChipShape = /(^|\s)rounded-sm(\s|$)/.test(className)
+
+    return hasMonoFont && hasCodeChipShape
+  }
+
+  private normalizeUserQueryMarkdownSource(source: HTMLElement): HTMLElement {
+    source.querySelectorAll("span").forEach((node) => {
+      const span = node as HTMLElement
+      if (!this.isLikelyInlineCodeSpan(span)) {
+        return
+      }
+
+      const code = (source.ownerDocument || document).createElement("code")
+      code.textContent = span.textContent || ""
+      span.replaceWith(code)
+    })
+
+    return source
+  }
+
+  private extractUserQueryMarkdownFromSource(source: HTMLElement): string {
+    const normalizedSource = this.normalizeUserQueryMarkdownSource(source)
+    return htmlToMarkdown(normalizedSource).trim()
+  }
+
+  extractUserQueryText(element: Element): string {
+    const source = this.cloneUserQuerySource(element)
+    if (!source) {
+      return this.extractTextWithLineBreaks(element).trim()
+    }
+
     return this.extractTextWithLineBreaks(source).trim()
   }
 
   extractUserQueryMarkdown(element: Element): string {
-    // Grok 用户消息结构：
-    // .message-bubble.rounded-br-lg > div.relative > div.relative > .response-content-markdown
-    // 内部直接是 <p> 标签，需要提取文本并还原 Markdown
-    const markdownContainer = element.querySelector(".response-content-markdown")
-    if (markdownContainer) {
-      // 提取所有 <p> 标签的文本，用换行连接
-      const paragraphs = markdownContainer.querySelectorAll("p")
-      if (paragraphs.length > 0) {
-        return Array.from(paragraphs)
-          .map((p) => p.textContent?.trim() || "")
-          .filter((text) => text.length > 0)
-          .join("\n\n")
+    const source = this.cloneUserQuerySource(element)
+    if (source) {
+      const markdown = this.extractUserQueryMarkdownFromSource(source)
+      if (markdown) {
+        return markdown
       }
     }
+
     return element.textContent?.trim() || ""
   }
 
   extractUserQueryExportText(element: Element): string {
-    const markdownContainer = element.querySelector(".response-content-markdown")
-    if (!markdownContainer) {
+    const source = this.cloneUserQuerySource(element)
+    if (!source) {
       return this.extractUserQueryText(element)
     }
 
-    const originalWrapper = markdownContainer.querySelector(".gh-user-query-original")
-    const source = (originalWrapper || markdownContainer).cloneNode(true) as HTMLElement
-    source.querySelectorAll(".gh-user-query-markdown").forEach((node) => node.remove())
-
-    const markdown = htmlToMarkdown(source).trim()
+    const markdown = this.extractUserQueryMarkdownFromSource(source)
     return markdown || this.extractUserQueryText(element)
   }
 
