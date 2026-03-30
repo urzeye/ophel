@@ -40,6 +40,36 @@ export type ExportFormat = "markdown" | "json" | "txt" | "clipboard"
 export function htmlToMarkdown(el: Element): string {
   if (!el) return ""
 
+  type RenderContext = {
+    listDepth: number
+    inListItem: boolean
+  }
+
+  const normalizeLineEndings = (value: string): string => value.replace(/\r\n?/g, "\n")
+
+  const sanitizeLanguageLabel = (value: string | null | undefined): string => {
+    const normalized = value?.split(/\r?\n/)[0]?.trim().toLowerCase() || ""
+    if (!normalized || /^(copy|复制)$/.test(normalized)) return ""
+    return normalized.replace(/\s+/g, "")
+  }
+
+  const formatInlineMath = (latex: string): string => {
+    const normalized = normalizeLineEndings(latex)
+      .replace(/\s*\n\s*/g, " ")
+      .trim()
+    return normalized ? `$${normalized}$` : ""
+  }
+
+  const formatBlockMath = (latex: string): string => {
+    const normalized = normalizeLineEndings(latex).trim()
+    if (!normalized) return ""
+
+    const shouldUseMultilineDelimiters =
+      normalized.includes("\n") || /(^|[^\\])\\\\($|[^\\])/.test(normalized)
+
+    return shouldUseMultilineDelimiters ? `\n$$\n${normalized}\n$$\n` : `\n$$${normalized}$$\n`
+  }
+
   const extractKatexLatex = (element: Element): string => {
     const annotation = element.querySelector('annotation[encoding="application/x-tex"]')
     const annotationText = annotation?.textContent?.trim()
@@ -56,7 +86,192 @@ export function htmlToMarkdown(el: Element): string {
     return ""
   }
 
-  const processNode = (node: Node): string => {
+  const extractTextWithLineBreaks = (node: Node): string => {
+    if (!node) return ""
+
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.textContent || ""
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return ""
+    }
+
+    const element = node as HTMLElement
+    const tag = element.tagName?.toLowerCase() || ""
+
+    if (tag === "br") {
+      return "\n"
+    }
+
+    if (
+      tag === "button" ||
+      tag === "svg" ||
+      tag === "annotation" ||
+      tag === "annotation-xml" ||
+      element.classList?.contains("katex-mathml") ||
+      element.classList?.contains("katex-html")
+    ) {
+      return ""
+    }
+
+    return Array.from(element.childNodes).map(extractTextWithLineBreaks).join("")
+  }
+
+  const getCodeBlockLanguage = (element: Element): string => {
+    const codeEl = element.querySelector("code")
+    const codeClassMatch = codeEl?.className.match(/language-([A-Za-z0-9_#+-]+)/)
+    const hasCodeMirrorViewer = !!element.querySelector("#code-block-viewer, .cm-editor")
+
+    const candidates = [
+      (element as HTMLElement).getAttribute("data-language"),
+      (element.querySelector(".cm-content") as HTMLElement | null)?.getAttribute("data-language"),
+      codeClassMatch?.[1],
+      element.querySelector(".code-block-decoration span")?.textContent,
+      hasCodeMirrorViewer
+        ? element.querySelector('.sticky [class*="font-medium"]')?.textContent
+        : null,
+    ]
+
+    for (const candidate of candidates) {
+      const language = sanitizeLanguageLabel(candidate)
+      if (language) return language
+    }
+
+    return ""
+  }
+
+  const extractCodeBlock = (element: Element): { lang: string; code: string } | null => {
+    const hasStructuredCodeViewer = !!element.querySelector("#code-block-viewer, .cm-editor")
+    const cmContent = element.matches(".cm-content")
+      ? (element as HTMLElement)
+      : (element.querySelector(".cm-content") as HTMLElement | null) ?? null
+
+    if (cmContent) {
+      const code = normalizeLineEndings(extractTextWithLineBreaks(cmContent)).replace(/\n+$/, "")
+      if (code.trim()) {
+        return {
+          lang: getCodeBlockLanguage(element),
+          code,
+        }
+      }
+    }
+
+    const codeEl = element.matches("code")
+      ? (element as HTMLElement)
+      : (element.querySelector("pre code, code") as HTMLElement | null) ?? null
+
+    if (codeEl) {
+      const code = normalizeLineEndings(extractTextWithLineBreaks(codeEl)).replace(/\n+$/, "")
+      if (code.trim()) {
+        return {
+          lang: getCodeBlockLanguage(element),
+          code,
+        }
+      }
+    }
+
+    if (!hasStructuredCodeViewer) {
+      const code = normalizeLineEndings(extractTextWithLineBreaks(element)).replace(/\n+$/, "")
+      if (code.trim()) {
+        return {
+          lang: getCodeBlockLanguage(element),
+          code,
+        }
+      }
+    }
+
+    return null
+  }
+
+  const renderChildren = (element: HTMLElement, context: RenderContext): string =>
+    Array.from(element.childNodes)
+      .map((child) => processNode(child, context))
+      .join("")
+
+  const normalizeListItemContent = (value: string): string =>
+    normalizeLineEndings(value)
+      .replace(/[ \t]+\n/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
+
+  const prefixMultilineContent = (
+    value: string,
+    prefix: string,
+    continuationIndent: string,
+  ): string => {
+    const lines = normalizeLineEndings(value).split("\n")
+    const [firstLine = "", ...restLines] = lines
+    if (restLines.length === 0) {
+      return `${prefix}${firstLine}`
+    }
+
+    return [
+      `${prefix}${firstLine}`,
+      ...restLines.map((line) => (line ? `${continuationIndent}${line}` : "")),
+    ].join("\n")
+  }
+
+  const renderList = (element: HTMLElement, depth: number): string => {
+    const ordered = element.tagName.toLowerCase() === "ol"
+    const items = Array.from(element.children).filter(
+      (child) => child.tagName?.toLowerCase() === "li",
+    ) as HTMLElement[]
+
+    const rendered = items
+      .map((item, index) => renderListItem(item, depth, ordered ? index + 1 : null))
+      .filter(Boolean)
+      .join("\n")
+
+    return rendered ? `\n${rendered}\n\n` : ""
+  }
+
+  const renderListItem = (
+    element: HTMLElement,
+    depth: number,
+    orderedIndex: number | null,
+  ): string => {
+    const indent = "  ".repeat(depth)
+    const marker = orderedIndex === null ? "-" : `${orderedIndex}.`
+    const bodyParts: string[] = []
+    const nestedLists: string[] = []
+
+    for (const child of Array.from(element.childNodes)) {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        const childElement = child as HTMLElement
+        const childTag = childElement.tagName.toLowerCase()
+
+        if (childTag === "ul" || childTag === "ol") {
+          const nested = renderList(childElement, depth + 1).replace(/^\n+|\n+$/g, "")
+          if (nested) nestedLists.push(nested)
+          continue
+        }
+      }
+
+      bodyParts.push(
+        processNode(child, {
+          listDepth: depth,
+          inListItem: true,
+        }),
+      )
+    }
+
+    const body = normalizeListItemContent(bodyParts.join(""))
+    let result = body
+      ? prefixMultilineContent(body, `${indent}${marker} `, `${indent}  `)
+      : `${indent}${marker}`
+
+    if (nestedLists.length > 0) {
+      result = `${result.trimEnd()}\n${nestedLists.join("\n")}`
+    }
+
+    return result
+  }
+
+  const processNode = (
+    node: Node,
+    context: RenderContext = { listDepth: 0, inListItem: false },
+  ): string => {
     try {
       if (!node) return ""
 
@@ -73,22 +288,22 @@ export function htmlToMarkdown(el: Element): string {
       // 处理数学公式
       if (element.classList?.contains("math-block")) {
         const latex = element.getAttribute("data-math")
-        if (latex) return `\n$$${latex}$$\n`
+        if (latex) return formatBlockMath(latex)
       }
 
       if (element.classList?.contains("math-inline")) {
         const latex = element.getAttribute("data-math")
-        if (latex) return `$${latex}$`
+        if (latex) return formatInlineMath(latex)
       }
 
       if (element.classList?.contains("katex-display")) {
         const latex = extractKatexLatex(element)
-        if (latex) return `\n$$${latex}$$\n`
+        if (latex) return formatBlockMath(latex)
       }
 
       if (element.classList?.contains("katex")) {
         const latex = extractKatexLatex(element)
-        if (latex) return `$${latex}$`
+        if (latex) return formatInlineMath(latex)
       }
 
       if (element.classList?.contains("katex-mathml")) {
@@ -106,10 +321,10 @@ export function htmlToMarkdown(el: Element): string {
 
       // CodeMirror 代码块（Z.ai 等站点使用）
       if (element.classList?.contains("cm-content") && element.getAttribute("data-language")) {
-        const lang = element.getAttribute("data-language") || ""
-        const lines = Array.from(element.querySelectorAll(".cm-line"))
-        const code = lines.map((l) => l.textContent || "").join("\n")
-        return `\n\`\`\`${lang}\n${code}\n\`\`\`\n`
+        const codeBlock = extractCodeBlock(element)
+        if (codeBlock) {
+          return `\n\`\`\`${codeBlock.lang}\n${codeBlock.code}\n\`\`\`\n`
+        }
       }
 
       // 跳过 CodeMirror 装饰层（光标、选区等）
@@ -137,19 +352,18 @@ export function htmlToMarkdown(el: Element): string {
 
       // 代码块
       if (tag === "code-block") {
-        const decoration = element.querySelector(".code-block-decoration")
-        const lang = decoration?.querySelector("span")?.textContent?.trim().toLowerCase() || ""
-        const codeEl = element.querySelector("pre code")
-        const text = codeEl?.textContent || element.querySelector("pre")?.textContent || ""
-        return `\n\`\`\`${lang}\n${text}\n\`\`\`\n`
+        const codeBlock = extractCodeBlock(element)
+        if (codeBlock) {
+          return `\n\`\`\`${codeBlock.lang}\n${codeBlock.code}\n\`\`\`\n`
+        }
       }
 
       // pre 块
       if (tag === "pre") {
-        const code = element.querySelector("code")
-        const lang = code?.className.match(/language-(\w+)/)?.[1] || ""
-        const text = code?.textContent || element.textContent
-        return `\n\`\`\`${lang}\n${text}\n\`\`\`\n`
+        const codeBlock = extractCodeBlock(element)
+        if (codeBlock) {
+          return `\n\`\`\`${codeBlock.lang}\n${codeBlock.code}\n\`\`\`\n`
+        }
       }
 
       // 内联代码
@@ -215,50 +429,48 @@ export function htmlToMarkdown(el: Element): string {
         }
       }
 
-      // 递归处理子节点
-      const children = Array.from(element.childNodes).map(processNode).join("")
-
       switch (tag) {
         case "h1":
-          return `\n# ${children}\n`
+          return `\n# ${renderChildren(element, context)}\n`
         case "h2":
-          return `\n## ${children}\n`
+          return `\n## ${renderChildren(element, context)}\n`
         case "h3":
-          return `\n### ${children}\n`
+          return `\n### ${renderChildren(element, context)}\n`
         case "h4":
-          return `\n#### ${children}\n`
+          return `\n#### ${renderChildren(element, context)}\n`
         case "h5":
-          return `\n##### ${children}\n`
+          return `\n##### ${renderChildren(element, context)}\n`
         case "h6":
-          return `\n###### ${children}\n`
+          return `\n###### ${renderChildren(element, context)}\n`
         case "strong":
         case "b":
-          return `**${children}**`
+          return `**${renderChildren(element, context)}**`
         case "em":
         case "i":
-          return `*${children}*`
+          return `*${renderChildren(element, context)}*`
         case "a":
-          return `[${children}](${(element as HTMLAnchorElement).href || ""})`
-        case "li": {
-          const parentTag = element.parentElement?.tagName?.toLowerCase()
-          if (parentTag === "ol") {
-            const siblings = Array.from(element.parentElement!.children).filter(
-              (c) => c.tagName?.toLowerCase() === "li",
-            )
-            const index = siblings.indexOf(element) + 1
-            return `${index}. ${children}\n`
-          }
-          return `- ${children}\n`
-        }
+          return `[${renderChildren(element, context)}](${(element as HTMLAnchorElement).href || ""})`
+        case "li":
+          return renderListItem(
+            element,
+            context.listDepth,
+            element.parentElement?.tagName?.toLowerCase() === "ol"
+              ? Array.from(element.parentElement.children)
+                  .filter((child) => child.tagName?.toLowerCase() === "li")
+                  .indexOf(element) + 1
+              : null,
+          )
         case "p":
-          return `${children}\n\n`
+          return context.inListItem
+            ? `${renderChildren(element, context).trim()}\n`
+            : `${renderChildren(element, context)}\n\n`
         case "br":
           return "\n"
         case "ul":
         case "ol":
-          return `\n${children}`
+          return renderList(element, context.listDepth)
         case "blockquote": {
-          const lines = children.replace(/\r\n/g, "\n").split("\n")
+          const lines = renderChildren(element, context).replace(/\r\n/g, "\n").split("\n")
           const quoted = lines.map((l: string) => (l.trim().length > 0 ? `> ${l}` : ">"))
           return `\n${quoted.join("\n")}\n`
         }
@@ -266,10 +478,10 @@ export function htmlToMarkdown(el: Element): string {
           // 处理 Shadow DOM
           if ((element as HTMLElement).shadowRoot) {
             return Array.from((element as HTMLElement).shadowRoot!.childNodes)
-              .map(processNode)
+              .map((child) => processNode(child, context))
               .join("")
           }
-          return children
+          return renderChildren(element, context)
       }
     } catch (err) {
       console.error("Error processing node in htmlToMarkdown:", err)

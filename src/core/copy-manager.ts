@@ -195,9 +195,18 @@ export class CopyManager {
    * 复制 LaTeX 公式
    */
   private copyLatex(latex: string, isBlock: boolean) {
-    let copyText = latex
+    const normalizedLatex = latex.replace(/\r\n?/g, "\n").trim()
+    let copyText = normalizedLatex
     if (this.settings.formulaDelimiter) {
-      copyText = isBlock ? `$$${latex}$$` : `$${latex}$`
+      const shouldUseMultilineDelimiters =
+        isBlock &&
+        (normalizedLatex.includes("\n") || /(^|[^\\])\\\\($|[^\\])/.test(normalizedLatex))
+
+      copyText = isBlock
+        ? shouldUseMultilineDelimiters
+          ? `$$\n${normalizedLatex}\n$$`
+          : `$$${normalizedLatex}$$`
+        : `$${normalizedLatex}$`
     }
 
     if (!navigator.clipboard?.writeText) {
