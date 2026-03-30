@@ -1011,6 +1011,11 @@ export class ChatGPTAdapter extends SiteAdapter {
     return this.extractUserQueryText(textContainer).trim()
   }
 
+  extractUserQueryExportText(element: Element): string {
+    const markdown = this.extractUserQueryMarkdown(element).trim()
+    return markdown || this.extractUserQueryText(element)
+  }
+
   /**
    * 检查元素是否应跳过（屏幕阅读器专用元素）
    * ChatGPT 使用 .sr-only 类标记屏幕阅读器辅助文本

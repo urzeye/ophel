@@ -1265,7 +1265,15 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   extractUserQueryText(element: Element): string {
-    return this.extractTextWithLineBreaks(element)
+    const markdownContainer = element.querySelector(".response-content-markdown")
+    if (!markdownContainer) {
+      return this.extractTextWithLineBreaks(element).trim()
+    }
+
+    const originalWrapper = markdownContainer.querySelector(".gh-user-query-original")
+    const source = (originalWrapper || markdownContainer).cloneNode(true) as HTMLElement
+    source.querySelectorAll(".gh-user-query-markdown").forEach((node) => node.remove())
+    return this.extractTextWithLineBreaks(source).trim()
   }
 
   extractUserQueryMarkdown(element: Element): string {
@@ -1284,6 +1292,20 @@ export class GrokAdapter extends SiteAdapter {
       }
     }
     return element.textContent?.trim() || ""
+  }
+
+  extractUserQueryExportText(element: Element): string {
+    const markdownContainer = element.querySelector(".response-content-markdown")
+    if (!markdownContainer) {
+      return this.extractUserQueryText(element)
+    }
+
+    const originalWrapper = markdownContainer.querySelector(".gh-user-query-original")
+    const source = (originalWrapper || markdownContainer).cloneNode(true) as HTMLElement
+    source.querySelectorAll(".gh-user-query-markdown").forEach((node) => node.remove())
+
+    const markdown = htmlToMarkdown(source).trim()
+    return markdown || this.extractUserQueryText(element)
   }
 
   replaceUserQueryContent(element: Element, html: string): boolean {

@@ -695,6 +695,14 @@ export abstract class SiteAdapter {
   }
 
   /**
+   * 导出时提取用户提问内容
+   * 默认沿用纯文本提取，子类可覆盖以保留原始 Markdown 语义
+   */
+  extractUserQueryExportText(element: Element): string {
+    return this.extractUserQueryText(element)
+  }
+
+  /**
    * 将渲染后的 HTML 替换到用户提问元素中
    * 子类可重写以处理特殊的 DOM 结构
    * @returns 是否成功替换

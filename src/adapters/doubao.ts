@@ -447,9 +447,29 @@ export class DoubaoAdapter extends SiteAdapter {
     return element.querySelector(USER_QUERY_TEXT_SELECTOR) as HTMLElement | null
   }
 
+  extractUserQueryText(element: Element): string {
+    const textContainer = this.getUserMessageTextContainer(element)
+    return textContainer ? this.extractTextWithLineBreaks(textContainer).trim() : ""
+  }
+
   extractUserQueryMarkdown(element: Element): string {
     const textContainer = this.getUserMessageTextContainer(element)
     return textContainer ? this.extractTextWithLineBreaks(textContainer).trim() : ""
+  }
+
+  extractUserQueryExportText(element: Element): string {
+    const textContainer = this.getUserMessageTextContainer(element)
+    if (!textContainer) {
+      return this.extractUserQueryText(element)
+    }
+
+    const clone = textContainer.cloneNode(true) as HTMLElement
+    clone
+      .querySelectorAll('button, [role="button"], svg, [aria-hidden="true"]')
+      .forEach((node) => node.remove())
+
+    const markdown = htmlToMarkdown(clone).trim()
+    return markdown || this.extractUserQueryText(textContainer)
   }
 
   replaceUserQueryContent(element: Element, html: string): boolean {
