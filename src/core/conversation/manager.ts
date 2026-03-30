@@ -1154,7 +1154,87 @@ export class ConversationManager {
       return messages
     }
 
-    const { userQuerySelector, assistantResponseSelector, useShadowDOM } = config
+    const { userQuerySelector, assistantResponseSelector, turnSelector, useShadowDOM } = config
+
+    if (turnSelector) {
+      const turns =
+        (DOMToolkit.query(turnSelector, {
+          all: true,
+          shadow: useShadowDOM,
+        }) as Element[]) || []
+
+      if (turns.length > 0) {
+        const collectTurnMatches = (turn: Element, selector: string): Element[] => {
+          const matches: Element[] = []
+
+          if (turn.matches?.(selector)) {
+            matches.push(turn)
+          }
+
+          const descendants =
+            (DOMToolkit.query(selector, {
+              parent: turn as Node,
+              all: true,
+              shadow: useShadowDOM,
+            }) as Element[]) || []
+
+          descendants.forEach((element) => {
+            if (!matches.includes(element)) {
+              matches.push(element)
+            }
+          })
+
+          return matches
+        }
+
+        const compareDomOrder = (left: Element, right: Element): number => {
+          if (left === right) return 0
+          const position = left.compareDocumentPosition(right)
+          if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1
+          if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1
+          return 0
+        }
+
+        const pushMessage = (role: "user" | "assistant", element: Element) => {
+          if (role === "user") {
+            const userContent = this.siteAdapter.extractUserQueryText(element)
+            messages.push({ role, content: userContent })
+            return
+          }
+
+          const adapterExtract = this.siteAdapter.extractAssistantResponseText
+          const baseExtract = SiteAdapter.prototype.extractAssistantResponseText
+          let aiContent = ""
+          if (adapterExtract && adapterExtract !== baseExtract) {
+            aiContent = adapterExtract.call(this.siteAdapter, element)
+          }
+          if (!aiContent) {
+            aiContent = htmlToMarkdown(element) || element.textContent?.trim() || ""
+          }
+
+          messages.push({ role, content: aiContent })
+        }
+
+        turns.forEach((turn) => {
+          const orderedMessages = [
+            ...collectTurnMatches(turn, userQuerySelector).map((element) => ({
+              role: "user" as const,
+              element,
+            })),
+            ...collectTurnMatches(turn, assistantResponseSelector).map((element) => ({
+              role: "assistant" as const,
+              element,
+            })),
+          ].sort((left, right) => compareDomOrder(left.element, right.element))
+
+          orderedMessages.forEach(({ role, element }) => {
+            pushMessage(role, element)
+          })
+        })
+
+        return messages
+      }
+    }
 
     const userMessages =
       (DOMToolkit.query(userQuerySelector, {

@@ -134,15 +134,18 @@ const AISTUDIO_ASSISTANT_FRAGMENT_SELECTOR = ".chat-turn-container.model, .model
 const AISTUDIO_ASSISTANT_SELECTOR = ".chat-turn-container.model"
 const AISTUDIO_THOUGHT_SELECTOR = "ms-thought-chunk"
 const AISTUDIO_EXPORT_ROOT_ATTR = "data-gh-aistudio-export-root"
+const AISTUDIO_EXPORT_TURN_ATTR = "data-gh-aistudio-export-turn"
 const AISTUDIO_EXPORT_ROLE_ATTR = "data-gh-aistudio-export-role"
 const AISTUDIO_EXPORT_ROLE_USER = "user"
 const AISTUDIO_EXPORT_ROLE_ASSISTANT = "assistant"
+const AISTUDIO_EXPORT_TURN_SELECTOR = `[${AISTUDIO_EXPORT_ROOT_ATTR}="1"] [${AISTUDIO_EXPORT_TURN_ATTR}="1"]`
 const AISTUDIO_EXPORT_USER_SELECTOR = `[${AISTUDIO_EXPORT_ROOT_ATTR}="1"] [${AISTUDIO_EXPORT_ROLE_ATTR}="${AISTUDIO_EXPORT_ROLE_USER}"]`
 const AISTUDIO_EXPORT_ASSISTANT_SELECTOR = `[${AISTUDIO_EXPORT_ROOT_ATTR}="1"] [${AISTUDIO_EXPORT_ROLE_ATTR}="${AISTUDIO_EXPORT_ROLE_ASSISTANT}"]`
 
 interface AIStudioExportMessageSnapshot {
   role: "user" | "assistant"
   turnKey: string
+  order: number
   content: string
 }
 
@@ -1524,7 +1527,7 @@ export class AIStudioAdapter extends SiteAdapter {
       return {
         userQuerySelector: AISTUDIO_EXPORT_USER_SELECTOR,
         assistantResponseSelector: AISTUDIO_EXPORT_ASSISTANT_SELECTOR,
-        turnSelector: null,
+        turnSelector: AISTUDIO_EXPORT_TURN_SELECTOR,
         useShadowDOM: false,
       }
     }
@@ -1533,7 +1536,7 @@ export class AIStudioAdapter extends SiteAdapter {
       userQuerySelector: this.getUserQuerySelector(),
       // AI 回复容器 - 同样只用顶级容器
       assistantResponseSelector: AISTUDIO_ASSISTANT_SELECTOR,
-      turnSelector: ".chat-turn-container",
+      turnSelector: null,
       useShadowDOM: false,
     }
   }
@@ -2155,11 +2158,15 @@ export class AIStudioAdapter extends SiteAdapter {
         turn instanceof HTMLElement && !turn.closest(`[${AISTUDIO_EXPORT_ROOT_ATTR}]`),
     )
 
-    return turns.flatMap((turn) => this.extractExportSnapshotsFromTurn(turn))
+    return turns.flatMap((turn) => this.extractExportSnapshotsFromTurn(turn, container))
   }
 
-  private extractExportSnapshotsFromTurn(turn: HTMLElement): AIStudioExportMessageSnapshot[] {
+  private extractExportSnapshotsFromTurn(
+    turn: HTMLElement,
+    container: ParentNode,
+  ): AIStudioExportMessageSnapshot[] {
     const snapshots: AIStudioExportMessageSnapshot[] = []
+    const baseOrder = this.getTurnRenderOrder(turn, container)
 
     const userContainer = this.getUserContainerForTurn(turn)
     if (userContainer) {
@@ -2170,6 +2177,7 @@ export class AIStudioAdapter extends SiteAdapter {
         snapshots.push({
           role: AISTUDIO_EXPORT_ROLE_USER,
           turnKey: this.getExportTurnKey(turn, "user", content),
+          order: baseOrder,
           content,
         })
       }
@@ -2189,12 +2197,23 @@ export class AIStudioAdapter extends SiteAdapter {
         snapshots.push({
           role: AISTUDIO_EXPORT_ROLE_ASSISTANT,
           turnKey: this.getExportTurnKey(turn, "assistant", content),
+          order: baseOrder + 0.5,
           content,
         })
       }
     }
 
     return snapshots
+  }
+
+  private getTurnRenderOrder(turn: HTMLElement, container: ParentNode): number {
+    const turnRect = turn.getBoundingClientRect()
+    if (container instanceof HTMLElement) {
+      const containerRect = container.getBoundingClientRect()
+      return container.scrollTop + (turnRect.top - containerRect.top)
+    }
+
+    return window.scrollY + turnRect.top
   }
 
   private getUserContainerForTurn(turn: HTMLElement): HTMLElement | null {
@@ -2270,27 +2289,56 @@ export class AIStudioAdapter extends SiteAdapter {
     }
 
     const merged = collected.map((item) => ({ ...item }))
-    const indexByTurnKey = new Map<string, number>()
-    merged.forEach((item, index) => {
-      indexByTurnKey.set(item.turnKey, index)
-    })
+    let anchorIndex: number | null = null
 
-    batch.forEach((item) => {
-      const existingIndex = indexByTurnKey.get(item.turnKey)
-      if (existingIndex === undefined) {
-        merged.push({ ...item })
-        indexByTurnKey.set(item.turnKey, merged.length - 1)
-        return
+    for (let batchIndex = 0; batchIndex < batch.length; batchIndex += 1) {
+      const item = batch[batchIndex]
+      const existingIndex = merged.findIndex((entry) => entry.turnKey === item.turnKey)
+
+      if (existingIndex !== -1) {
+        const existing = merged[existingIndex]
+        merged[existingIndex] = {
+          ...existing,
+          order: Math.min(existing.order, item.order),
+          content: this.mergeSnapshotContent(existing.content, item.content),
+        }
+        anchorIndex = existingIndex
+        continue
       }
 
-      const existing = merged[existingIndex]
-      merged[existingIndex] = {
-        ...existing,
-        content: this.mergeSnapshotContent(existing.content, item.content),
+      const nextKnownIndex = this.findNextKnownSnapshotIndex(merged, batch, batchIndex + 1)
+      let insertIndex = merged.length
+
+      if (anchorIndex !== null) {
+        insertIndex = anchorIndex + 1
+        if (nextKnownIndex !== null && insertIndex > nextKnownIndex) {
+          insertIndex = nextKnownIndex
+        }
+      } else if (nextKnownIndex !== null) {
+        insertIndex = nextKnownIndex
       }
-    })
+
+      merged.splice(insertIndex, 0, { ...item })
+      anchorIndex = insertIndex
+    }
 
     return merged
+  }
+
+  private findNextKnownSnapshotIndex(
+    merged: AIStudioExportMessageSnapshot[],
+    batch: AIStudioExportMessageSnapshot[],
+    startIndex: number,
+  ): number | null {
+    for (let index = startIndex; index < batch.length; index += 1) {
+      const turnKey = batch[index].turnKey
+      const knownIndex = merged.findIndex((entry) => entry.turnKey === turnKey)
+      if (knownIndex !== -1) {
+        return knownIndex
+      }
+    }
+
+    return null
   }
 
   private mountExportSnapshot(messages: AIStudioExportMessageSnapshot[]): void {
@@ -2301,10 +2349,14 @@ export class AIStudioAdapter extends SiteAdapter {
     root.style.display = "none"
 
     messages.forEach((message) => {
+      const turn = document.createElement("div")
+      turn.setAttribute(AISTUDIO_EXPORT_TURN_ATTR, "1")
+
       const node = document.createElement("div")
       node.setAttribute(AISTUDIO_EXPORT_ROLE_ATTR, message.role)
       node.textContent = message.content
-      root.appendChild(node)
+      turn.appendChild(node)
+      root.appendChild(turn)
     })
 
     document.body.appendChild(root)
