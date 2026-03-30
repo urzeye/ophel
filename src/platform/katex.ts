@@ -5,6 +5,14 @@ export type KatexRenderOptions = {
   displayMode: boolean
 }
 
+type ExtensionRuntimeLike = {
+  getURL: (path: string) => string
+}
+
+type ExtensionApiLike = {
+  runtime?: ExtensionRuntimeLike
+}
+
 const escapeHtml = (value: string): string =>
   value
     .replace(/&/g, "&amp;")
@@ -13,7 +21,47 @@ const escapeHtml = (value: string): string =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;")
 
-export const getKatexStylesText = (): string => katexStylesText
+const getExtensionGetUrl = (): ((path: string) => string) | null => {
+  const extensionApi =
+    (
+      globalThis as typeof globalThis & {
+        chrome?: ExtensionApiLike
+        browser?: ExtensionApiLike
+      }
+    ).chrome ??
+    (
+      globalThis as typeof globalThis & {
+        chrome?: ExtensionApiLike
+        browser?: ExtensionApiLike
+      }
+    ).browser
+
+  if (!extensionApi?.runtime || typeof extensionApi.runtime.getURL !== "function") {
+    return null
+  }
+
+  return extensionApi.runtime.getURL.bind(extensionApi.runtime)
+}
+
+const rewriteKatexAssetUrls = (cssText: string): string => {
+  const getUrl = getExtensionGetUrl()
+  if (!getUrl) {
+    return cssText
+  }
+
+  return cssText.replace(
+    /url\((['"]?)(?!data:|https?:|chrome-extension:|moz-extension:|\/)([^)'"]+)\1\)/g,
+    (_match, quote, assetPath) => {
+      const normalizedPath = String(assetPath).replace(/^\.?\//, "")
+      const runtimePath = normalizedPath.startsWith("fonts/")
+        ? normalizedPath.slice("fonts/".length)
+        : normalizedPath
+      return `url(${quote}${getUrl(runtimePath)}${quote})`
+    },
+  )
+}
+
+export const getKatexStylesText = (): string => rewriteKatexAssetUrls(katexStylesText)
 
 export const renderKatexToString = (
   content: string,
