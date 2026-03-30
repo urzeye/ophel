@@ -129,8 +129,8 @@ const AISTUDIO_RPC_SERVICE_PATH =
   "/$rpc/google.internal.alkali.applications.makersuite.v1.MakerSuiteService"
 const AISTUDIO_DELETE_PROMPT_METHOD = "DeletePrompt"
 const AISTUDIO_FALLBACK_RPC_ORIGIN = "https://alkalimakersuite-pa.clients6.google.com"
+const AISTUDIO_TURN_SELECTOR = "ms-chat-turn"
 const AISTUDIO_ASSISTANT_FRAGMENT_SELECTOR = ".chat-turn-container.model, .model-prompt-container"
-const AISTUDIO_MESSAGE_SELECTOR = `.chat-turn-container.user, ${AISTUDIO_ASSISTANT_FRAGMENT_SELECTOR}`
 const AISTUDIO_ASSISTANT_SELECTOR = ".chat-turn-container.model"
 const AISTUDIO_THOUGHT_SELECTOR = "ms-thought-chunk"
 const AISTUDIO_EXPORT_ROOT_ATTR = "data-gh-aistudio-export-root"
@@ -142,6 +142,7 @@ const AISTUDIO_EXPORT_ASSISTANT_SELECTOR = `[${AISTUDIO_EXPORT_ROOT_ATTR}="1"] [
 
 interface AIStudioExportMessageSnapshot {
   role: "user" | "assistant"
+  turnKey: string
   content: string
 }
 
@@ -2149,56 +2150,87 @@ export class AIStudioAdapter extends SiteAdapter {
   private readVisibleExportMessageSnapshots(
     container: ParentNode,
   ): AIStudioExportMessageSnapshot[] {
-    const messages = Array.from(container.querySelectorAll(AISTUDIO_MESSAGE_SELECTOR)).filter(
-      (message): message is HTMLElement =>
-        message instanceof HTMLElement && !message.closest(`[${AISTUDIO_EXPORT_ROOT_ATTR}]`),
+    const turns = Array.from(container.querySelectorAll(AISTUDIO_TURN_SELECTOR)).filter(
+      (turn): turn is HTMLElement =>
+        turn instanceof HTMLElement && !turn.closest(`[${AISTUDIO_EXPORT_ROOT_ATTR}]`),
     )
 
-    const snapshots = messages
-      .map((message) => this.extractExportMessageSnapshot(message))
-      .filter((message): message is AIStudioExportMessageSnapshot => message !== null)
-
-    return this.mergeAssistantFragments(snapshots)
+    return turns.flatMap((turn) => this.extractExportSnapshotsFromTurn(turn))
   }
 
-  private extractExportMessageSnapshot(message: Element): AIStudioExportMessageSnapshot | null {
-    const isAssistant = message.matches(AISTUDIO_ASSISTANT_FRAGMENT_SELECTOR)
-    const content = this.normalizeExportMessageContent(
-      isAssistant
-        ? this.extractAssistantResponseText(message)
-        : this.extractUserQueryMarkdown(message),
-    )
+  private extractExportSnapshotsFromTurn(turn: HTMLElement): AIStudioExportMessageSnapshot[] {
+    const snapshots: AIStudioExportMessageSnapshot[] = []
 
-    if (!content) {
-      return null
-    }
-
-    return {
-      role: isAssistant ? AISTUDIO_EXPORT_ROLE_ASSISTANT : AISTUDIO_EXPORT_ROLE_USER,
-      content,
-    }
-  }
-
-  private mergeAssistantFragments(
-    snapshots: AIStudioExportMessageSnapshot[],
-  ): AIStudioExportMessageSnapshot[] {
-    const merged: AIStudioExportMessageSnapshot[] = []
-
-    snapshots.forEach((snapshot) => {
-      const previous = merged[merged.length - 1]
-      if (snapshot.role !== AISTUDIO_EXPORT_ROLE_ASSISTANT || previous?.role !== snapshot.role) {
-        merged.push({ ...snapshot })
-        return
+    const userContainer = this.getUserContainerForTurn(turn)
+    if (userContainer) {
+      const content = this.normalizeExportMessageContent(
+        this.extractUserQueryMarkdown(userContainer),
+      )
+      if (content) {
+        snapshots.push({
+          role: AISTUDIO_EXPORT_ROLE_USER,
+          turnKey: this.getExportTurnKey(turn, "user", content),
+          content,
+        })
       }
+    }
 
-      const combined = this.mergeAssistantFragmentContent(previous.content, snapshot.content)
-      previous.content = combined
-    })
+    const assistantFragments = this.getAssistantFragmentsForTurn(turn)
+    if (assistantFragments.length > 0) {
+      let content = ""
+      assistantFragments.forEach((fragment) => {
+        const fragmentContent = this.normalizeExportMessageContent(
+          this.extractAssistantResponseText(fragment),
+        )
+        content = this.mergeSnapshotContent(content, fragmentContent)
+      })
 
-    return merged
+      if (content) {
+        snapshots.push({
+          role: AISTUDIO_EXPORT_ROLE_ASSISTANT,
+          turnKey: this.getExportTurnKey(turn, "assistant", content),
+          content,
+        })
+      }
+    }
+
+    return snapshots
   }
 
-  private mergeAssistantFragmentContent(previous: string, current: string): string {
+  private getUserContainerForTurn(turn: HTMLElement): HTMLElement | null {
+    const candidates = Array.from(turn.querySelectorAll(".chat-turn-container.user")).filter(
+      (element): element is HTMLElement =>
+        element instanceof HTMLElement && element.closest(AISTUDIO_TURN_SELECTOR) === turn,
+    )
+    return candidates[0] || null
+  }
+
+  private getAssistantFragmentsForTurn(turn: HTMLElement): HTMLElement[] {
+    return Array.from(turn.querySelectorAll(AISTUDIO_ASSISTANT_FRAGMENT_SELECTOR)).filter(
+      (element): element is HTMLElement => {
+        if (!(element instanceof HTMLElement)) return false
+        if (element.closest(AISTUDIO_TURN_SELECTOR) !== turn) return false
+
+        const parentFragment = element.parentElement?.closest(AISTUDIO_ASSISTANT_FRAGMENT_SELECTOR)
+        return parentFragment?.closest(AISTUDIO_TURN_SELECTOR) !== turn
+      },
+    )
+  }
+
+  private getExportTurnKey(message: Element, role: "user" | "assistant", content: string): string {
+    const turnId = message
+      .closest("ms-chat-turn")
+      ?.id?.replace(/^turn-/, "")
+      .trim()
+    if (turnId) {
+      return `${role}:${turnId}`
+    }
+
+    const normalizedContent = content.replace(/\s+/g, " ").trim().slice(0, 120)
+    return `${role}:content:${normalizedContent}`
+  }
+
+  private mergeSnapshotContent(previous: string, current: string): string {
     if (!current) {
       return previous
     }
@@ -2237,44 +2269,28 @@ export class AIStudioAdapter extends SiteAdapter {
       return batch.map((item) => ({ ...item }))
     }
 
-    const maxOverlap = Math.min(collected.length, batch.length)
-    for (let overlap = maxOverlap; overlap > 0; overlap -= 1) {
-      const collectedTail = collected.slice(-overlap)
-      const batchHead = batch.slice(0, overlap)
-      if (this.exportMessageSequenceEquals(collectedTail, batchHead)) {
-        return [...collected, ...batch.slice(overlap).map((item) => ({ ...item }))]
-      }
-    }
-
     const merged = collected.map((item) => ({ ...item }))
+    const indexByTurnKey = new Map<string, number>()
+    merged.forEach((item, index) => {
+      indexByTurnKey.set(item.turnKey, index)
+    })
+
     batch.forEach((item) => {
-      if (!this.exportMessageEntryEquals(merged[merged.length - 1], item)) {
+      const existingIndex = indexByTurnKey.get(item.turnKey)
+      if (existingIndex === undefined) {
         merged.push({ ...item })
+        indexByTurnKey.set(item.turnKey, merged.length - 1)
+        return
+      }
+
+      const existing = merged[existingIndex]
+      merged[existingIndex] = {
+        ...existing,
+        content: this.mergeSnapshotContent(existing.content, item.content),
       }
     })
+
     return merged
-  }
-
-  private exportMessageSequenceEquals(
-    left: AIStudioExportMessageSnapshot[],
-    right: AIStudioExportMessageSnapshot[],
-  ): boolean {
-    if (left.length !== right.length) {
-      return false
-    }
-
-    return left.every((item, index) => this.exportMessageEntryEquals(item, right[index]))
-  }
-
-  private exportMessageEntryEquals(
-    left: AIStudioExportMessageSnapshot | undefined,
-    right: AIStudioExportMessageSnapshot | undefined,
-  ): boolean {
-    if (!left || !right) {
-      return false
-    }
-
-    return left.role === right.role && left.content === right.content
   }
 
   private mountExportSnapshot(messages: AIStudioExportMessageSnapshot[]): void {
