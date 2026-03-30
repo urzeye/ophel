@@ -322,9 +322,10 @@ export class UserQueryMarkdownRenderer {
         { shadow: true },
       )
 
-      // 兜底重扫：豆包会先插入空节点，再异步填充文本
+      // 兜底重扫：豆包 / QwenAI 可能先插入空节点，再异步填充文本
       // 仅靠 each() 的“新增节点回调一次”可能错过最终内容
-      if (this.adapter.getSiteId() === SITE_IDS.DOUBAO) {
+      const siteId = this.adapter.getSiteId()
+      if (siteId === SITE_IDS.DOUBAO || siteId === SITE_IDS.QWENAI) {
         this.startRescanTimer()
       }
     }
