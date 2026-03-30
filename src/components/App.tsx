@@ -22,7 +22,7 @@ import { useFoldersStore } from "~stores/folders-store"
 import { usePromptsStore } from "~stores/prompts-store"
 import { DEFAULT_SETTINGS, type Prompt, type Settings } from "~utils/storage"
 import { MSG_CLEAR_ALL_DATA } from "~utils/messaging"
-import { showToast } from "~utils/toast"
+import { EXPORT_START_TOAST_DURATION, showToast } from "~utils/toast"
 import { setLanguage, t } from "~utils/i18n"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 import { createSafeHTML } from "~utils/trusted-types"
@@ -2136,7 +2136,10 @@ export const App = () => {
       showToast(t("exportNeedOpenFirst") || "请先打开要导出的会话")
       return
     }
-    showToast(t("exportStarted") || "开始导出...")
+    showToast(
+      t("exportStarted") || "正在导出会话，请勿操作当前页面...",
+      EXPORT_START_TOAST_DURATION,
+    )
     const success = await conversationManager.exportConversation(sessionId, "markdown")
     if (!success) {
       showToast(t("exportFailed") || "导出失败")

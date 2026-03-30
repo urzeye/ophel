@@ -998,7 +998,7 @@ export const ru = {
   noConversationToLocate: "Чата нет",
   outlineDisabled: "Содержание выкл",
   conversationsDisabled: "Чаты выкл",
-  exportStarted: "Экспорт...",
+  exportStarted: "Идет экспорт диалога, не взаимодействуйте с этой страницей...",
   replyCopied: "Ответ скопирован",
   noReplyToCopy: "Нечего копить",
   scrollLockToggled: "Скролл изменен",

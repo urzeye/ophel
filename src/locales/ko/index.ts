@@ -1004,7 +1004,7 @@ export const ko = {
   noConversationToLocate: "찾을 수 있는 대화가 없습니다",
   outlineDisabled: "개요 기능이 비활성화되었습니다",
   conversationsDisabled: "대화 기능이 비활성화되었습니다",
-  exportStarted: "내보내기 시작 중...",
+  exportStarted: "대화를 내보내는 중입니다. 이 페이지를 조작하지 마세요...",
   replyCopied: "최신 응답이 복사되었습니다",
   noReplyToCopy: "복사할 응답이 없습니다",
   scrollLockToggled: "스크롤 잠금이 전환되었습니다",

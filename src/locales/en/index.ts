@@ -1069,7 +1069,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   noConversationToLocate: "No conversation to locate",
   outlineDisabled: "Outline feature is disabled",
   conversationsDisabled: "Conversations feature is disabled",
-  exportStarted: "Starting export...",
+  exportStarted: "Exporting conversation, please do not interact with this page...",
   replyCopied: "Latest reply copied",
   noReplyToCopy: "No reply to copy",
   scrollLockToggled: "Scroll lock toggled",

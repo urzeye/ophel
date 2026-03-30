@@ -8,6 +8,7 @@ type ToastOptions = {
 }
 
 const toastCooldowns = new Map<string, number>()
+export const EXPORT_START_TOAST_DURATION = 5000
 
 export function showToast(message: string, duration = 2000, options: ToastOptions = {}) {
   // 移除现有的 toast

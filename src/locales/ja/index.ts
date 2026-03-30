@@ -1046,7 +1046,7 @@ export const ja = {
   noConversationToLocate: "特定できる会話がありません",
   outlineDisabled: "目次機能が無効です",
   conversationsDisabled: "会話管理機能が無効です",
-  exportStarted: "エクスポートを開始します...",
+  exportStarted: "会話をエクスポート中です。このページは操作しないでください...",
   replyCopied: "最新の回答をコピーしました",
   noReplyToCopy: "コピーできる回答がありません",
   scrollLockToggled: "スクロールロックを切り替えました",

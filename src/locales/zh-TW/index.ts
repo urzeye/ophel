@@ -1019,7 +1019,7 @@ export const zhTW = {
   noConversationToLocate: "當前無會話可定位",
   outlineDisabled: "大綱功能已禁用",
   conversationsDisabled: "會話功能已禁用",
-  exportStarted: "開始匯出對話...",
+  exportStarted: "正在匯出會話，請勿操作目前頁面...",
   replyCopied: "已複製最新回覆",
   noReplyToCopy: "無可複製內容",
   scrollLockToggled: "滾動鎖定已切換",

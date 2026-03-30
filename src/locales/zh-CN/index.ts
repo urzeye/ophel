@@ -1035,7 +1035,7 @@ export const zhCN = {
   noConversationToLocate: "当前无会话可定位",
   outlineDisabled: "大纲功能已禁用",
   conversationsDisabled: "会话功能已禁用",
-  exportStarted: "开始导出对话...",
+  exportStarted: "正在导出会话，请勿操作当前页面...",
   replyCopied: "已复制最新回复",
   noReplyToCopy: "无可复制内容",
   scrollLockToggled: "滚动锁定已切换",

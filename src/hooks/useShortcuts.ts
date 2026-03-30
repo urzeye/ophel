@@ -21,7 +21,7 @@ import {
   smartScrollToTop,
 } from "~utils/scroll-helper"
 import type { Settings } from "~utils/storage"
-import { showToast } from "~utils/toast"
+import { EXPORT_START_TOAST_DURATION, showToast } from "~utils/toast"
 
 /**
  * 辅助函数：导航到上/下一个会话
@@ -460,7 +460,10 @@ export function useShortcuts({
       return
     }
 
-    showToast(t("exportStarted") || "开始导出对话...")
+    showToast(
+      t("exportStarted") || "正在导出会话，请勿操作当前页面...",
+      EXPORT_START_TOAST_DURATION,
+    )
     try {
       // 默认导出为 Markdown 文件
       await conversationManager.exportConversation(sessionId, "markdown")

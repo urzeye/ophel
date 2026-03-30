@@ -513,11 +513,13 @@ export function formatToMarkdown(metadata: ExportMetadata, messages: ExportMessa
   lines.push(`# ${metadata.title}`)
   lines.push("")
   lines.push("---")
+  lines.push("")
   lines.push(`## ${EMOJI_EXPORT} ${t("exportMetaTitle")}`)
   lines.push(`- **${t("exportMetaConvTitle")}**: ${metadata.title}`)
   lines.push(`- **${t("exportMetaTime")}**: ${metadata.exportTime}`)
   lines.push(`- **${t("exportMetaSource")}**: ${metadata.source}`)
   lines.push(`- **${t("exportMetaUrl")}**: ${metadata.url}`)
+  lines.push("")
   lines.push("---")
   lines.push("")
 
