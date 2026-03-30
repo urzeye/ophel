@@ -375,6 +375,41 @@ export class ChatGLMAdapter extends SiteAdapter {
     return this.extractUserQueryText(element)
   }
 
+  replaceUserQueryContent(element: Element, html: string): boolean {
+    const contentRoot = element.querySelector(USER_TEXT_SELECTOR) as HTMLElement | null
+    if (!contentRoot) return false
+
+    if (element.querySelector(".gh-user-query-markdown")) {
+      return false
+    }
+
+    const rendered = document.createElement("div")
+    rendered.className = [...contentRoot.classList, "gh-user-query-markdown", "gh-markdown-preview"]
+      .filter((className) => className !== "dots" && className !== "dot-3-line")
+      .join(" ")
+      .trim()
+    rendered.innerHTML = html
+
+    const inlineStyle = contentRoot.getAttribute("style")
+    if (inlineStyle) {
+      rendered.setAttribute("style", inlineStyle)
+    }
+
+    rendered.style.textAlign = "left"
+    rendered.style.display = "block"
+    rendered.style.width = "100%"
+
+    contentRoot.style.display = "none"
+
+    const collapseButton = element.querySelector(".collapse-button-bg") as HTMLElement | null
+    if (collapseButton) {
+      collapseButton.style.display = "none"
+    }
+
+    contentRoot.after(rendered)
+    return true
+  }
+
   extractAssistantResponseText(element: Element): string {
     const markdown = element.matches(".markdown-body")
       ? element
