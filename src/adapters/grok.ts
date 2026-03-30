@@ -27,7 +27,6 @@ import {
   type SiteDeleteConversationResult,
 } from "./base"
 
-const DEFAULT_TITLE = "Grok"
 const PIN_ICON_PATH_SIGNATURES = [
   "M13 21L12 23L11 21V16H4.5V13.7129L4.65234 13.4697L6.95801 9.78027L6.41797 5.99512C6.11675 3.8866 7.75289 2 9.88281 2H14.1172C16.2471 2 17.8832 3.8866 17.582 5.99512L17.041 9.78027L19.5 13.7129V16H13V21Z",
 ].map((path) => path.replace(/\s+/g, ""))
@@ -1046,22 +1045,36 @@ export class GrokAdapter extends SiteAdapter {
     await new Promise((resolve) => setTimeout(resolve, ms))
   }
 
-  getSessionName(): string | null {
-    // 从页面标题获取
-    const title = document.title
-    if (title && title !== DEFAULT_TITLE) {
-      return title.replace(` - ${DEFAULT_TITLE}`, "").trim()
+  private getCurrentConversationTitleFromSources(): string | null {
+    const sessionId = this.extractConversationIdFromHref(window.location.pathname)
+    if (!sessionId) return null
+
+    const matched = this.getConversationList().find((item) => item.id === sessionId)
+    if (matched?.title?.trim()) {
+      return matched.title.trim()
     }
-    return super.getSessionName()
+
+    const activeLink = document.querySelector(
+      `[data-sidebar="content"] a[href="/c/${sessionId}"], a[href="/c/${sessionId}"]`,
+    )
+    if (!activeLink) return null
+
+    const title = activeLink.querySelector("span.flex-1, span.truncate, span")?.textContent?.trim()
+    return title || activeLink.textContent?.trim() || null
+  }
+
+  private getConversationTitleFromPage(): string | null {
+    const titleEl = document.querySelector(".conversation-title")
+    const name = titleEl?.textContent?.trim()
+    return name || null
+  }
+
+  getSessionName(): string | null {
+    return this.getCurrentConversationTitleFromSources() || this.getConversationTitleFromPage()
   }
 
   getConversationTitle(): string | null {
-    // 尝试从页面标题获取
-    const title = document.title
-    if (title && title !== DEFAULT_TITLE) {
-      return title.replace(` - ${DEFAULT_TITLE}`, "").trim()
-    }
-    return null
+    return this.getCurrentConversationTitleFromSources() || this.getConversationTitleFromPage()
   }
 
   getNewChatButtonSelectors(): string[] {

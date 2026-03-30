@@ -85,8 +85,6 @@ export const AISTUDIO_MODELS: AIStudioModel[] = [
   { id: "models/veo-2.0-generate-001", name: "Veo 2", category: "Veo" },
 ]
 
-const DEFAULT_TITLE = "Google AI Studio"
-
 const AISTUDIO_DELETE_REASON = {
   UI_FAILED: "delete_ui_failed",
   BATCH_ABORTED_AFTER_UI_FAILURE: "delete_batch_aborted_after_ui_failure",
@@ -229,22 +227,28 @@ export class AIStudioAdapter extends SiteAdapter {
     return null
   }
 
-  getSessionName(): string | null {
-    // 从页面标题获取
-    const title = document.title
-    if (title && !title.includes(DEFAULT_TITLE)) {
-      return title.replace(` | ${DEFAULT_TITLE}`, "").trim()
+  private getCurrentConversationTitleFromSources(): string | null {
+    const sessionId = this.getSessionId()
+    if (!sessionId) return null
+
+    const matched = this.getConversationList().find((item) => item.id === sessionId)
+    if (matched?.title?.trim()) {
+      return matched.title.trim()
     }
-    return super.getSessionName()
+
+    const link = document.querySelector(
+      `a.prompt-link[href*="/prompts/${sessionId}"], a.name-btn[href*="/prompts/${sessionId}"], a[href*="/prompts/${sessionId}"]`,
+    )
+    const title = link?.textContent?.trim()
+    return title || null
+  }
+
+  getSessionName(): string | null {
+    return this.getCurrentConversationTitleFromSources()
   }
 
   getConversationTitle(): string | null {
-    // 尝试从页面标题获取
-    const title = document.title
-    if (title && !title.includes(DEFAULT_TITLE)) {
-      return title.replace(` | ${DEFAULT_TITLE}`, "").trim()
-    }
-    return null
+    return this.getCurrentConversationTitleFromSources()
   }
 
   // ==================== 输入框操作 ====================
