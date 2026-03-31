@@ -12,6 +12,7 @@ import {
   ScrollBottomIcon,
   ScrollTopIcon,
   StarIcon,
+  UserQueryIcon,
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
@@ -1054,7 +1055,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
               <button
                 onClick={handleGroupModeToggle}
                 className={`outline-toolbar-btn ${showUserQueries ? "active-subtle" : ""}`}>
-                🙋
+                <UserQueryIcon size={15} />
               </button>
             </Tooltip>
 
