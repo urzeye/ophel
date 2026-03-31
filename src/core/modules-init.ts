@@ -5,6 +5,7 @@
  * 避免代码重复维护
  */
 
+import type { AssistantMermaidRenderer } from "~core/assistant-mermaid-renderer"
 import type { SiteAdapter } from "~adapters/base"
 import { SITE_IDS } from "~constants"
 import { CopyManager } from "~core/copy-manager"
@@ -45,6 +46,7 @@ export interface ModulesContext {
  * 模块管理器实例集合
  */
 export interface ModuleInstances {
+  assistantMermaidRenderer: AssistantMermaidRenderer | null
   themeManager: ThemeManager | null
   copyManager: CopyManager | null
   layoutManager: LayoutManager | null
@@ -61,6 +63,7 @@ export interface ModuleInstances {
 
 // 全局模块实例（用于设置变更时的热更新）
 let modules: ModuleInstances = {
+  assistantMermaidRenderer: null,
   themeManager: null,
   copyManager: null,
   layoutManager: null,
@@ -76,6 +79,68 @@ let modules: ModuleInstances = {
 }
 
 let readingHistoryAutoStartTimer: NodeJS.Timeout | null = null
+let assistantMermaidModulePromise: Promise<
+  typeof import("~core/assistant-mermaid-renderer")
+> | null = null
+let assistantMermaidInitPromise: Promise<void> | null = null
+
+function isAssistantMermaidEnabled(settings: Settings): boolean {
+  return settings.content?.assistantMermaid ?? true
+}
+
+async function loadAssistantMermaidRendererModule(): Promise<
+  typeof import("~core/assistant-mermaid-renderer")
+> {
+  if (!assistantMermaidModulePromise) {
+    assistantMermaidModulePromise = import("~core/assistant-mermaid-renderer")
+  }
+
+  return assistantMermaidModulePromise
+}
+
+export async function initAssistantMermaidRenderer(ctx: ModulesContext): Promise<void> {
+  const { adapter, settings } = ctx
+
+  if (adapter.getAssistantMermaidSupportMode() !== "fallback") {
+    modules.assistantMermaidRenderer?.stop()
+    modules.assistantMermaidRenderer = null
+    return
+  }
+
+  if (!isAssistantMermaidEnabled(settings)) {
+    modules.assistantMermaidRenderer?.updateSettings(false)
+    return
+  }
+
+  if (modules.assistantMermaidRenderer) {
+    modules.assistantMermaidRenderer.updateSettings(true)
+    return
+  }
+
+  if (!assistantMermaidInitPromise) {
+    assistantMermaidInitPromise = (async () => {
+      const { AssistantMermaidRenderer } = await loadAssistantMermaidRendererModule()
+
+      if (adapter.getAssistantMermaidSupportMode() !== "fallback") {
+        return
+      }
+
+      if (!isAssistantMermaidEnabled(getSettingsState())) {
+        return
+      }
+
+      if (!modules.assistantMermaidRenderer) {
+        modules.assistantMermaidRenderer = new AssistantMermaidRenderer(adapter, true)
+      } else {
+        modules.assistantMermaidRenderer.updateSettings(true)
+      }
+    })().finally(() => {
+      assistantMermaidInitPromise = null
+    })
+  }
+
+  await assistantMermaidInitPromise
+}
 
 /**
  * 初始化主题管理器
@@ -371,7 +436,10 @@ export async function initCoreModules(ctx: ModulesContext): Promise<ModuleInstan
   // 11. 用户提问 Markdown 渲染
   initUserQueryMarkdownRenderer(ctx)
 
-  // 12. Policy Retry Manager
+  // 12. AI 回复 Mermaid 渲染
+  await initAssistantMermaidRenderer(ctx)
+
+  // 13. Policy Retry Manager
   initPolicyRetryManager(ctx)
 
   return modules
@@ -518,7 +586,16 @@ export function subscribeModuleUpdates(ctx: ModulesContext): void {
       }
     }
 
-    // 12. Policy Retry Manager update
+    // 12. Assistant Mermaid Renderer update
+    void initAssistantMermaidRenderer({
+      adapter,
+      settings: newSettings,
+      siteId,
+    }).catch((error) => {
+      console.error("[Ophel] Assistant Mermaid renderer update failed:", error)
+    })
+
+    // 13. Policy Retry Manager update
     if (
       newSettings?.geminiEnterprise &&
       siteId === SITE_IDS.GEMINI_ENTERPRISE &&

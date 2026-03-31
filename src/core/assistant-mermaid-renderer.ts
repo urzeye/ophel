@@ -1,4 +1,4 @@
-import type { AssistantMermaidAdapter } from "~adapters/base"
+import type { SiteAdapter } from "~adapters/base"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
@@ -166,7 +166,7 @@ function getRuntimeAssetUrl(
 }
 
 export class AssistantMermaidRenderer {
-  private adapter: AssistantMermaidAdapter
+  private adapter: SiteAdapter
   private enabled: boolean
   private stopWatch: (() => void) | null = null
   private rescanTimer: number | null = null
@@ -180,7 +180,7 @@ export class AssistantMermaidRenderer {
   private pendingRequests = new Map<string, PendingRenderRequest>()
   private previewIdCounter = 0
 
-  constructor(adapter: AssistantMermaidAdapter, enabled: boolean) {
+  constructor(adapter: SiteAdapter, enabled: boolean) {
     this.adapter = adapter
     this.enabled = enabled
 

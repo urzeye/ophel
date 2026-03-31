@@ -15,8 +15,6 @@ declare global {
     __ophelScrollLockInitialized?: boolean
     /** 滚动锁定是否启用 */
     __ophelScrollLockEnabled?: boolean
-    /** Mermaid 独立入口初始化标记 */
-    __ophelAssistantMermaidEntryInitialized?: boolean
     /** Mermaid 页面内 runner 初始化标记 */
     __ophelAssistantMermaidRunnerReady?: boolean
     /** 原始滚动 API 备份 */

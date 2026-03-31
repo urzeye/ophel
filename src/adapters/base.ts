@@ -112,26 +112,6 @@ export interface AssistantMermaidBlock {
   source: string
 }
 
-export interface AssistantMermaidAdapter {
-  getAssistantMermaidSupportMode(): AssistantMermaidSupportMode
-  getExportConfig(): Pick<ExportConfig, "assistantResponseSelector"> | null
-  getAssistantMermaidBlocks(root: ParentNode): AssistantMermaidBlock[]
-}
-
-type AssistantMermaidStaticSiteConfig = {
-  assistantResponseSelector: string
-  hostnames: string[]
-  supportMode: "fallback"
-}
-
-const ASSISTANT_MERMAID_STATIC_SITE_CONFIGS: AssistantMermaidStaticSiteConfig[] = [
-  {
-    hostnames: ["gemini.google.com"],
-    assistantResponseSelector: "model-response, .model-response-container .markdown",
-    supportMode: "fallback",
-  },
-]
-
 export function isAssistantMermaidCandidateElement(element: HTMLElement): boolean {
   const code = (
     element.matches("code") ? element : element.querySelector("code")
@@ -195,25 +175,6 @@ export function findAssistantMermaidBlocks(root: ParentNode): AssistantMermaidBl
   }
 
   return blocks
-}
-
-export function getAssistantMermaidAdapterForHostname(
-  hostname: string = window.location.hostname,
-): AssistantMermaidAdapter | null {
-  const config =
-    ASSISTANT_MERMAID_STATIC_SITE_CONFIGS.find((site) => site.hostnames.includes(hostname)) || null
-
-  if (!config) {
-    return null
-  }
-
-  return {
-    getAssistantMermaidSupportMode: () => config.supportMode,
-    getExportConfig: () => ({
-      assistantResponseSelector: config.assistantResponseSelector,
-    }),
-    getAssistantMermaidBlocks: findAssistantMermaidBlocks,
-  }
 }
 
 // ==================== SiteAdapter 基类 ====================
