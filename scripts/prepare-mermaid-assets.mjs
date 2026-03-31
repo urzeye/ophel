@@ -33,9 +33,7 @@ function extractFingerprint(currentContent) {
 }
 
 if (!fs.existsSync(vendorSourcePath)) {
-  console.error(
-    `[prepare-mermaid-assets] Tiny Mermaid bundle not found: ${vendorSourcePath}`,
-  )
+  console.error(`[prepare-mermaid-assets] Tiny Mermaid bundle not found: ${vendorSourcePath}`)
   process.exit(1)
 }
 
