@@ -123,6 +123,24 @@ const ASSISTANT_MERMAID_SOURCE_PATTERNS = [
   /^gitGraph\b/i,
 ]
 
+const ASSISTANT_MERMAID_SOURCE_NORMALIZERS = [
+  { pattern: /^flow\s*-?\s*chart\b/i, replacement: "flowchart" },
+  { pattern: /^sequence\s*-?\s*diagram\b/i, replacement: "sequenceDiagram" },
+  { pattern: /^class\s*-?\s*diagram(?:\s*-\s*|\s+)v2\b/i, replacement: "classDiagram-v2" },
+  { pattern: /^class\s*-?\s*diagram\b/i, replacement: "classDiagram" },
+  { pattern: /^state\s*-?\s*diagram(?:\s*-\s*|\s+)v2\b/i, replacement: "stateDiagram-v2" },
+  { pattern: /^state\s*-?\s*diagram\b/i, replacement: "stateDiagram" },
+  { pattern: /^er\s*-?\s*diagram\b/i, replacement: "erDiagram" },
+  { pattern: /^git\s*-?\s*graph\b/i, replacement: "gitGraph" },
+]
+
+function getFirstMeaningfulMermaidLineIndex(lines: string[]): number {
+  return lines.findIndex((line) => {
+    const trimmed = line.trim()
+    return Boolean(trimmed) && !trimmed.startsWith("%%")
+  })
+}
+
 export function isAssistantMermaidCandidateElement(element: HTMLElement): boolean {
   const code = (
     element.matches("code") ? element : element.querySelector("code")
@@ -148,7 +166,7 @@ export function isAssistantMermaidCandidateElement(element: HTMLElement): boolea
 }
 
 export function looksLikeAssistantMermaidSource(source: string): boolean {
-  const normalized = source.replace(/\r\n/g, "\n").trim()
+  const normalized = normalizeAssistantMermaidSource(source)
   if (!normalized) return false
 
   const firstMeaningfulLine = normalized
@@ -159,6 +177,32 @@ export function looksLikeAssistantMermaidSource(source: string): boolean {
   if (!firstMeaningfulLine) return false
 
   return ASSISTANT_MERMAID_SOURCE_PATTERNS.some((pattern) => pattern.test(firstMeaningfulLine))
+}
+
+export function normalizeAssistantMermaidSource(source: string): string {
+  const normalized = source.replace(/\r\n/g, "\n").replace(/\n+$/, "").trim()
+  if (!normalized) return ""
+
+  const lines = normalized.split("\n")
+  const firstMeaningfulLineIndex = getFirstMeaningfulMermaidLineIndex(lines)
+  if (firstMeaningfulLineIndex === -1) {
+    return normalized
+  }
+
+  const originalLine = lines[firstMeaningfulLineIndex]
+  const trimmedLine = originalLine.trim()
+  const leadingWhitespace = originalLine.match(/^\s*/)?.[0] || ""
+
+  for (const { pattern, replacement } of ASSISTANT_MERMAID_SOURCE_NORMALIZERS) {
+    const match = trimmedLine.match(pattern)
+    if (!match) continue
+
+    lines[firstMeaningfulLineIndex] =
+      `${leadingWhitespace}${replacement}${trimmedLine.slice(match[0].length)}`
+    return lines.join("\n")
+  }
+
+  return normalized
 }
 
 export function extractAssistantMermaidSourceFromElement(element: HTMLElement): string | null {

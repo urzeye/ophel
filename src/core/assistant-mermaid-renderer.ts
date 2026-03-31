@@ -1,4 +1,4 @@
-import type { SiteAdapter } from "~adapters/base"
+import { normalizeAssistantMermaidSource, type SiteAdapter } from "~adapters/base"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
@@ -68,6 +68,11 @@ const ASSISTANT_MERMAID_CSS = `
   background: rgba(59, 130, 246, 0.14);
   color: #2563eb;
   border-color: rgba(59, 130, 246, 0.3);
+}
+
+.gh-assistant-mermaid-btn:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
 }
 
 .gh-assistant-mermaid-preview {
@@ -408,8 +413,11 @@ export class AssistantMermaidRenderer {
   private async processMermaidBlock(block: HTMLElement, source: string) {
     if (!block.isConnected) return
 
+    const renderSource = normalizeAssistantMermaidSource(source)
+    if (!renderSource) return
+
     const theme = this.getMermaidTheme()
-    const processedKey = `${theme}::${source}`
+    const processedKey = `${theme}::${renderSource}`
     if (this.processedBlocks.get(block) === processedKey) {
       return
     }
@@ -425,7 +433,7 @@ export class AssistantMermaidRenderer {
 
     try {
       await this.ensureRuntime()
-      await this.requestRender(requestId, previewId, source, theme)
+      await this.requestRender(requestId, previewId, renderSource, theme)
       if (!block.isConnected) return
       if (preview.getAttribute(PREVIEW_TOKEN_ATTR) !== requestId) {
         return
@@ -433,16 +441,18 @@ export class AssistantMermaidRenderer {
 
       panel.hidden = false
       panel.dataset.source = source
+      this.setPreviewEnabled(panel, true)
       this.processedBlocks.set(block, processedKey)
       this.setView(block, panel, currentView)
     } catch (error) {
       console.warn("[AssistantMermaidRenderer] Mermaid render skipped:", error)
       if (shouldRetryMermaidRender(error)) {
         this.processedBlocks.delete(block)
+        this.cleanupPanel(block)
       } else {
         this.processedBlocks.set(block, processedKey)
+        this.applyRenderFallback(block, panel, source)
       }
-      this.cleanupPanel(block)
     }
   }
 
@@ -534,6 +544,27 @@ export class AssistantMermaidRenderer {
       if (!(button instanceof HTMLElement)) return
       button.classList.toggle("is-active", button.dataset.mermaidAction === view)
     })
+  }
+
+  private setPreviewEnabled(panel: HTMLElement, enabled: boolean) {
+    const previewButton = panel.querySelector(
+      "[data-mermaid-action='preview']",
+    ) as HTMLButtonElement | null
+    if (!previewButton) return
+
+    previewButton.disabled = !enabled
+  }
+
+  private applyRenderFallback(block: HTMLElement, panel: HTMLElement, source: string) {
+    const preview = panel.querySelector(".gh-assistant-mermaid-preview") as HTMLElement | null
+    if (preview) {
+      preview.replaceChildren()
+    }
+
+    panel.hidden = false
+    panel.dataset.source = source
+    this.setPreviewEnabled(panel, false)
+    this.setView(block, panel, "code")
   }
 
   private async copyMermaidSource(panel: HTMLElement) {
