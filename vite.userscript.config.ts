@@ -147,8 +147,12 @@ function readUserscriptAssetContent(
   return fs.readFileSync(userscriptAssetSources[key])
 }
 
+const localUserscriptResourceEntries = Object.entries(USERSCRIPT_RESOURCE_DEFINITIONS).filter(
+  ([, definition]) => !("externalUrl" in definition),
+)
+
 const userscriptResourceFiles = Object.fromEntries(
-  Object.entries(USERSCRIPT_RESOURCE_DEFINITIONS).map(([key, definition]) => {
+  localUserscriptResourceEntries.map(([key, definition]) => {
     const content = readUserscriptAssetContent(key as keyof typeof USERSCRIPT_RESOURCE_DEFINITIONS)
     const fileName = createHashedFileName(definition.fileName, content)
 

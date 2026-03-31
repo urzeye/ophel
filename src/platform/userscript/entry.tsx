@@ -128,6 +128,10 @@ window.__OPHEL_USERSCRIPT_ASSET_URLS__ = {
     getUserscriptResourceUrl(USERSCRIPT_RESOURCE_DEFINITIONS.watermarkBg48.metaName) || "",
   watermarkBg96:
     getUserscriptResourceUrl(USERSCRIPT_RESOURCE_DEFINITIONS.watermarkBg96.metaName) || "",
+  assistantMermaidRunner:
+    getUserscriptResourceUrl(USERSCRIPT_RESOURCE_DEFINITIONS.assistantMermaidRunner.metaName) || "",
+  assistantMermaidVendor:
+    getUserscriptResourceUrl(USERSCRIPT_RESOURCE_DEFINITIONS.assistantMermaidVendor.metaName) || "",
 }
 
 /**

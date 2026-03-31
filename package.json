@@ -11,15 +11,16 @@
   },
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "dev": "plasmo dev",
+    "prepare:mermaid-assets": "node scripts/prepare-mermaid-assets.mjs",
+    "dev": "pnpm prepare:mermaid-assets && plasmo dev",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
-    "build": "plasmo build",
-    "build:firefox": "plasmo build --target=firefox-mv3",
-    "build:all": "plasmo build && plasmo build --target=firefox-mv3",
+    "build": "pnpm prepare:mermaid-assets && plasmo build",
+    "build:firefox": "pnpm prepare:mermaid-assets && plasmo build --target=firefox-mv3",
+    "build:all": "pnpm build && pnpm build:firefox",
     "package": "pnpm build && plasmo package",
     "package:firefox": "pnpm build:firefox && node scripts/package-firefox.mjs",
     "package:all": "pnpm package && pnpm package:firefox",
@@ -50,7 +51,7 @@
     "markdown-it-emoji": "^3.0.0",
     "markdown-it-mark": "^4.0.0",
     "markdown-it-task-lists": "^2.1.1",
-    "mermaid": "^11.13.0",
+    "mermaid": "^10.9.1",
     "plasmo": "0.90.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -130,7 +131,9 @@
     "web_accessible_resources": [
       {
         "resources": [
-          "assets/*",
+          "assets/icon.png",
+          "assets/assistant-mermaid-runner.js",
+          "assets/assistant-mermaid-vendor.js",
           "assets/notification-sounds/*",
           "assets/userscript/*"
         ],

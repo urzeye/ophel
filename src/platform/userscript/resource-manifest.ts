@@ -1,5 +1,10 @@
 export const USERSCRIPT_ASSET_REPOSITORY = "urzeye/ophel"
 export const USERSCRIPT_ASSET_BRANCH = "userscript-assets"
+export const USERSCRIPT_MERMAID_RUNNER_REPOSITORY = "urzeye/ophel"
+export const USERSCRIPT_MERMAID_RUNNER_BRANCH = "main"
+export const USERSCRIPT_MERMAID_VERSION = "10.9.1"
+export const USERSCRIPT_MERMAID_RUNNER_CDN_URL = `https://cdn.jsdelivr.net/gh/${USERSCRIPT_MERMAID_RUNNER_REPOSITORY}@${USERSCRIPT_MERMAID_RUNNER_BRANCH}/assets/assistant-mermaid-runner.js`
+export const USERSCRIPT_MERMAID_VENDOR_CDN_URL = `https://cdn.jsdelivr.net/npm/mermaid@${USERSCRIPT_MERMAID_VERSION}/dist/mermaid.min.js`
 
 export const USERSCRIPT_RESOURCE_DEFINITIONS = {
   styles: {
@@ -34,6 +39,16 @@ export const USERSCRIPT_RESOURCE_DEFINITIONS = {
     metaName: "ophelWatermarkBg96",
     fileName: "ophel-watermark-bg-96.png",
   },
+  assistantMermaidRunner: {
+    metaName: "ophelAssistantMermaidRunner",
+    fileName: "ophel-assistant-mermaid-runner.js",
+    externalUrl: USERSCRIPT_MERMAID_RUNNER_CDN_URL,
+  },
+  assistantMermaidVendor: {
+    metaName: "ophelAssistantMermaidVendor",
+    fileName: "ophel-assistant-mermaid-vendor.js",
+    externalUrl: USERSCRIPT_MERMAID_VENDOR_CDN_URL,
+  },
 } as const
 
 export type UserscriptResourceKey = keyof typeof USERSCRIPT_RESOURCE_DEFINITIONS
@@ -53,14 +68,18 @@ export function getUserscriptAssetBaseUrl(): string {
 }
 
 export function getUserscriptResourceUrls(
-  resourcePaths: Record<UserscriptResourceMetaName, string>,
+  resourcePaths: Partial<Record<UserscriptResourceMetaName, string>>,
 ): Record<UserscriptResourceMetaName, string> {
   const baseUrl = getUserscriptAssetBaseUrl()
 
   return Object.fromEntries(
-    Object.values(USERSCRIPT_RESOURCE_DEFINITIONS).map(({ metaName }) => [
-      metaName,
-      `${baseUrl}/${resourcePaths[metaName]}`,
-    ]),
+    Object.values(USERSCRIPT_RESOURCE_DEFINITIONS).map((definition) => {
+      const externalUrl = "externalUrl" in definition ? definition.externalUrl : undefined
+
+      return [
+        definition.metaName,
+        externalUrl || `${baseUrl}/${resourcePaths[definition.metaName]}`,
+      ]
+    }),
   ) as Record<UserscriptResourceMetaName, string>
 }

@@ -112,6 +112,110 @@ export interface AssistantMermaidBlock {
   source: string
 }
 
+export interface AssistantMermaidAdapter {
+  getAssistantMermaidSupportMode(): AssistantMermaidSupportMode
+  getExportConfig(): Pick<ExportConfig, "assistantResponseSelector"> | null
+  getAssistantMermaidBlocks(root: ParentNode): AssistantMermaidBlock[]
+}
+
+type AssistantMermaidStaticSiteConfig = {
+  assistantResponseSelector: string
+  hostnames: string[]
+  supportMode: "fallback"
+}
+
+const ASSISTANT_MERMAID_STATIC_SITE_CONFIGS: AssistantMermaidStaticSiteConfig[] = [
+  {
+    hostnames: ["gemini.google.com"],
+    assistantResponseSelector: "model-response, .model-response-container .markdown",
+    supportMode: "fallback",
+  },
+]
+
+export function isAssistantMermaidCandidateElement(element: HTMLElement): boolean {
+  const code = (
+    element.matches("code") ? element : element.querySelector("code")
+  ) as HTMLElement | null
+
+  const labels = [
+    element.getAttribute("data-language"),
+    element.getAttribute("data-test-language"),
+    code?.getAttribute("data-language"),
+    code?.getAttribute("data-test-language"),
+    element.className,
+    code?.className,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+
+  return (
+    labels.includes("language-mermaid") ||
+    labels.includes("lang-mermaid") ||
+    /\bmermaid\b/.test(labels)
+  )
+}
+
+export function extractAssistantMermaidSourceFromElement(element: HTMLElement): string | null {
+  const code = (
+    element.matches("code") ? element : element.querySelector("code")
+  ) as HTMLElement | null
+  const source = (code?.textContent || element.textContent || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\n+$/, "")
+    .trim()
+
+  return source || null
+}
+
+export function findAssistantMermaidBlocks(root: ParentNode): AssistantMermaidBlock[] {
+  const candidates =
+    (DOMToolkit.query("pre, pre code, [data-language], [data-test-language]", {
+      parent: root as Node,
+      all: true,
+      shadow: true,
+    }) as Element[]) || []
+
+  const seen = new Set<HTMLElement>()
+  const blocks: AssistantMermaidBlock[] = []
+
+  for (const candidate of candidates) {
+    if (!(candidate instanceof HTMLElement)) continue
+    if (candidate.closest(".gh-assistant-mermaid")) continue
+
+    const block = (candidate.closest("pre") as HTMLElement | null) || candidate
+    if (!block || seen.has(block)) continue
+    if (!isAssistantMermaidCandidateElement(block)) continue
+
+    const source = extractAssistantMermaidSourceFromElement(block)
+    if (!source) continue
+
+    seen.add(block)
+    blocks.push({ element: block, source })
+  }
+
+  return blocks
+}
+
+export function getAssistantMermaidAdapterForHostname(
+  hostname: string = window.location.hostname,
+): AssistantMermaidAdapter | null {
+  const config =
+    ASSISTANT_MERMAID_STATIC_SITE_CONFIGS.find((site) => site.hostnames.includes(hostname)) || null
+
+  if (!config) {
+    return null
+  }
+
+  return {
+    getAssistantMermaidSupportMode: () => config.supportMode,
+    getExportConfig: () => ({
+      assistantResponseSelector: config.assistantResponseSelector,
+    }),
+    getAssistantMermaidBlocks: findAssistantMermaidBlocks,
+  }
+}
+
 // ==================== SiteAdapter 基类 ====================
 
 export abstract class SiteAdapter {
@@ -367,32 +471,7 @@ export abstract class SiteAdapter {
    * 子类可覆盖以适配非标准代码块结构。
    */
   getAssistantMermaidBlocks(root: ParentNode): AssistantMermaidBlock[] {
-    const candidates =
-      (DOMToolkit.query("pre, pre code, [data-language], [data-test-language]", {
-        parent: root as Node,
-        all: true,
-        shadow: true,
-      }) as Element[]) || []
-
-    const seen = new Set<HTMLElement>()
-    const blocks: AssistantMermaidBlock[] = []
-
-    for (const candidate of candidates) {
-      if (!(candidate instanceof HTMLElement)) continue
-      if (candidate.closest(".gh-assistant-mermaid")) continue
-
-      const block = (candidate.closest("pre") as HTMLElement | null) || candidate
-      if (!block || seen.has(block)) continue
-      if (!this.isAssistantMermaidCandidate(block)) continue
-
-      const source = this.extractAssistantMermaidSource(block)
-      if (!source) continue
-
-      seen.add(block)
-      blocks.push({ element: block, source })
-    }
-
-    return blocks
+    return findAssistantMermaidBlocks(root)
   }
 
   // ==================== 输入框操作 ====================
@@ -1578,39 +1657,11 @@ export abstract class SiteAdapter {
   }
 
   protected isAssistantMermaidCandidate(element: HTMLElement): boolean {
-    const code = (
-      element.matches("code") ? element : element.querySelector("code")
-    ) as HTMLElement | null
-
-    const labels = [
-      element.getAttribute("data-language"),
-      element.getAttribute("data-test-language"),
-      code?.getAttribute("data-language"),
-      code?.getAttribute("data-test-language"),
-      element.className,
-      code?.className,
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase()
-
-    return (
-      labels.includes("language-mermaid") ||
-      labels.includes("lang-mermaid") ||
-      /\bmermaid\b/.test(labels)
-    )
+    return isAssistantMermaidCandidateElement(element)
   }
 
   protected extractAssistantMermaidSource(element: HTMLElement): string | null {
-    const code = (
-      element.matches("code") ? element : element.querySelector("code")
-    ) as HTMLElement | null
-    const source = (code?.textContent || element.textContent || "")
-      .replace(/\r\n/g, "\n")
-      .replace(/\n+$/, "")
-      .trim()
-
-    return source || null
+    return extractAssistantMermaidSourceFromElement(element)
   }
 
   protected navigateToNewConversationUrl(): boolean {

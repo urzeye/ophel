@@ -11,6 +11,7 @@ export default [
       "build/**",
       ".plasmo/**",
       "node_modules/**",
+      "assets/assistant-mermaid-vendor.js",
       ".spec-workflow/**",
       ".claude/**",
       "CLAUDE.md",

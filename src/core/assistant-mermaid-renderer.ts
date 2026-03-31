@@ -1,7 +1,6 @@
-import type { SiteAdapter } from "~adapters/base"
+import type { AssistantMermaidAdapter } from "~adapters/base"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
-import { setSafeHTML } from "~utils/trusted-types"
 import { showToast } from "~utils/toast"
 
 const STYLE_ID = "gh-assistant-mermaid-style"
@@ -10,6 +9,15 @@ const RESCAN_INTERVAL = 2000
 const PANEL_SELECTOR = ".gh-assistant-mermaid"
 const BLOCK_MANAGED_ATTR = "data-ophel-assistant-mermaid-managed"
 const ORIGINAL_DISPLAY_ATTR = "data-ophel-assistant-mermaid-original-display"
+const PREVIEW_ID_ATTR = "data-ophel-assistant-mermaid-preview-id"
+const PREVIEW_TOKEN_ATTR = "data-ophel-assistant-mermaid-render-token"
+const RUNTIME_VENDOR_PATH = "assets/assistant-mermaid-vendor.js"
+const RUNTIME_RUNNER_PATH = "assets/assistant-mermaid-runner.js"
+const RUNTIME_VENDOR_KEY = "assistantMermaidVendor"
+const RUNTIME_RUNNER_KEY = "assistantMermaidRunner"
+const RUNTIME_REQUEST_EVENT = "OPHEL_ASSISTANT_MERMAID_RENDER_REQUEST"
+const RUNTIME_RESPONSE_EVENT = "OPHEL_ASSISTANT_MERMAID_RENDER_RESPONSE"
+const RUNTIME_TIMEOUT_MS = 15000
 
 const ASSISTANT_MERMAID_CSS = `
 .gh-assistant-mermaid {
@@ -114,23 +122,65 @@ html[dark-theme] .gh-assistant-mermaid-btn.is-active {
 }
 `
 
-type MermaidApi = typeof import("mermaid").default
 type MermaidTheme = "default" | "dark"
 type MermaidView = "preview" | "code"
 
+type PendingRenderRequest = {
+  reject: (reason?: unknown) => void
+  resolve: () => void
+  timeoutId: number
+}
+
+function shouldRetryMermaidRender(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+
+  return [
+    "runtime asset url is unavailable",
+    "failed to load script",
+    "runner did not initialize",
+    "runtime is unavailable",
+    "render timed out",
+    "preview container not found",
+  ].some((keyword) => message.toLowerCase().includes(keyword))
+}
+
+function isUserscriptPlatform(): boolean {
+  return typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
+}
+
+function getRuntimeAssetUrl(
+  kind: typeof RUNTIME_VENDOR_KEY | typeof RUNTIME_RUNNER_KEY,
+): string | null {
+  if (isUserscriptPlatform()) {
+    const assetUrl = window.__OPHEL_USERSCRIPT_ASSET_URLS__?.[kind]
+    return typeof assetUrl === "string" && assetUrl.length > 0 ? assetUrl : null
+  }
+
+  if (typeof chrome === "undefined" || !chrome.runtime?.getURL) {
+    return null
+  }
+
+  return chrome.runtime.getURL(
+    kind === RUNTIME_VENDOR_KEY ? RUNTIME_VENDOR_PATH : RUNTIME_RUNNER_PATH,
+  )
+}
+
 export class AssistantMermaidRenderer {
-  private adapter: SiteAdapter
+  private adapter: AssistantMermaidAdapter
   private enabled: boolean
   private stopWatch: (() => void) | null = null
   private rescanTimer: number | null = null
   private clickHandler: ((e: MouseEvent) => void) | null = null
-  private mermaidPromise: Promise<MermaidApi> | null = null
+  private messageHandler: ((event: MessageEvent) => void) | null = null
+  private runtimePromise: Promise<void> | null = null
   private processedBlocks = new WeakMap<HTMLElement, string>()
   private blockPanels = new WeakMap<HTMLElement, HTMLElement>()
   private panelBlocks = new WeakMap<HTMLElement, HTMLElement>()
   private injectedRoots = new WeakSet<Document | ShadowRoot>()
+  private pendingRequests = new Map<string, PendingRenderRequest>()
+  private previewIdCounter = 0
 
-  constructor(adapter: SiteAdapter, enabled: boolean) {
+  constructor(adapter: AssistantMermaidAdapter, enabled: boolean) {
     this.adapter = adapter
     this.enabled = enabled
 
@@ -167,6 +217,21 @@ export class AssistantMermaidRenderer {
       this.clickHandler = null
     }
 
+    if (this.messageHandler) {
+      window.removeEventListener("message", this.messageHandler)
+      this.messageHandler = null
+    }
+
+    for (const pending of this.pendingRequests.values()) {
+      window.clearTimeout(pending.timeoutId)
+      pending.reject(new Error("Assistant Mermaid renderer stopped"))
+    }
+    this.pendingRequests.clear()
+
+    this.processedBlocks = new WeakMap()
+    this.blockPanels = new WeakMap()
+    this.panelBlocks = new WeakMap()
+
     this.cleanupInjectedPanels()
   }
 
@@ -182,6 +247,7 @@ export class AssistantMermaidRenderer {
 
     this.injectStyles(document)
     this.initClickHandler()
+    this.initMessageHandler()
 
     this.stopWatch = DOMToolkit.each(
       selector,
@@ -229,6 +295,33 @@ export class AssistantMermaidRenderer {
     }
 
     document.addEventListener("click", this.clickHandler, true)
+  }
+
+  private initMessageHandler() {
+    if (this.messageHandler) return
+
+    this.messageHandler = (event: MessageEvent) => {
+      if (event.source !== window) return
+      if (event.data?.type !== RUNTIME_RESPONSE_EVENT) return
+
+      const requestId = typeof event.data.requestId === "string" ? event.data.requestId : ""
+      if (!requestId) return
+
+      const pending = this.pendingRequests.get(requestId)
+      if (!pending) return
+
+      window.clearTimeout(pending.timeoutId)
+      this.pendingRequests.delete(requestId)
+
+      if (event.data.success) {
+        pending.resolve()
+        return
+      }
+
+      pending.reject(new Error(event.data.error || "Mermaid render failed"))
+    }
+
+    window.addEventListener("message", this.messageHandler)
   }
 
   private startRescanTimer() {
@@ -288,29 +381,17 @@ export class AssistantMermaidRenderer {
     if (!preview) return
 
     const currentView = (panel.dataset.view as MermaidView | undefined) || "preview"
+    const previewId = this.ensurePreviewId(preview)
+    const requestId = this.createRequestId()
+    preview.setAttribute(PREVIEW_TOKEN_ATTR, requestId)
 
     try {
-      const mermaid = await this.loadMermaid()
-      mermaid.initialize({
-        startOnLoad: false,
-        securityLevel: "strict",
-        suppressErrorRendering: true,
-        theme,
-      })
-
-      const parsed = await mermaid.parse(source, { suppressErrors: true })
-      if (!parsed) {
-        this.processedBlocks.set(block, processedKey)
-        this.cleanupPanel(block)
+      await this.ensureRuntime()
+      await this.requestRender(requestId, previewId, source, theme)
+      if (!block.isConnected) return
+      if (preview.getAttribute(PREVIEW_TOKEN_ATTR) !== requestId) {
         return
       }
-
-      const renderId = `gh-assistant-mermaid-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-      const { svg, bindFunctions } = await mermaid.render(renderId, source)
-      if (!block.isConnected) return
-
-      setSafeHTML(preview, svg)
-      bindFunctions?.(preview)
 
       panel.hidden = false
       panel.dataset.source = source
@@ -318,7 +399,11 @@ export class AssistantMermaidRenderer {
       this.setView(block, panel, currentView)
     } catch (error) {
       console.warn("[AssistantMermaidRenderer] Mermaid render skipped:", error)
-      this.processedBlocks.set(block, processedKey)
+      if (shouldRetryMermaidRender(error)) {
+        this.processedBlocks.delete(block)
+      } else {
+        this.processedBlocks.set(block, processedKey)
+      }
       this.cleanupPanel(block)
     }
   }
@@ -368,6 +453,7 @@ export class AssistantMermaidRenderer {
 
     const preview = document.createElement("div")
     preview.className = "gh-assistant-mermaid-preview"
+    this.ensurePreviewId(preview)
 
     panel.append(toolbar, preview)
     block.before(panel)
@@ -380,6 +466,18 @@ export class AssistantMermaidRenderer {
     this.blockPanels.set(block, panel)
     this.panelBlocks.set(panel, block)
     return panel
+  }
+
+  private ensurePreviewId(preview: HTMLElement): string {
+    const existingId = preview.getAttribute(PREVIEW_ID_ATTR)
+    if (existingId) {
+      return existingId
+    }
+
+    this.previewIdCounter += 1
+    const previewId = `gh-assistant-mermaid-preview-${Date.now()}-${this.previewIdCounter}`
+    preview.setAttribute(PREVIEW_ID_ATTR, previewId)
+    return previewId
   }
 
   private setView(block: HTMLElement, panel: HTMLElement, view: MermaidView) {
@@ -465,11 +563,103 @@ export class AssistantMermaidRenderer {
     return htmlHasDark || bodyHasDarkTheme || htmlHasDarkThemeAttr ? "dark" : "default"
   }
 
-  private loadMermaid(): Promise<MermaidApi> {
-    if (!this.mermaidPromise) {
-      this.mermaidPromise = import("mermaid").then((module) => module.default)
+  private createRequestId(): string {
+    return `gh-assistant-mermaid-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+  }
+
+  private async ensureRuntime(): Promise<void> {
+    if (window.__ophelAssistantMermaidRunnerReady) {
+      return
     }
 
-    return this.mermaidPromise
+    if (!this.runtimePromise) {
+      this.runtimePromise = (async () => {
+        const vendorUrl = getRuntimeAssetUrl(RUNTIME_VENDOR_KEY)
+        const runnerUrl = getRuntimeAssetUrl(RUNTIME_RUNNER_KEY)
+
+        if (!vendorUrl || !runnerUrl) {
+          throw new Error("Assistant Mermaid runtime asset URL is unavailable")
+        }
+
+        await this.injectScript(vendorUrl, "ophel-assistant-mermaid-vendor")
+        await this.injectScript(runnerUrl, "ophel-assistant-mermaid-runner")
+
+        if (!window.__ophelAssistantMermaidRunnerReady) {
+          throw new Error("Assistant Mermaid runner did not initialize")
+        }
+      })().catch((error) => {
+        this.runtimePromise = null
+        throw error
+      })
+    }
+
+    return this.runtimePromise
+  }
+
+  private injectScript(src: string, marker: string): Promise<void> {
+    const selector = `script[data-ophel-runtime="${marker}"]`
+    const existing = document.querySelector(selector) as HTMLScriptElement | null
+    if (existing?.dataset.loaded === "true") {
+      return Promise.resolve()
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      const script = existing || document.createElement("script")
+      const cleanup = () => {
+        script.removeEventListener("load", handleLoad)
+        script.removeEventListener("error", handleError)
+      }
+      const handleLoad = () => {
+        cleanup()
+        script.dataset.loaded = "true"
+        resolve()
+      }
+      const handleError = () => {
+        cleanup()
+        reject(new Error(`Failed to load script: ${src}`))
+      }
+
+      script.addEventListener("load", handleLoad, { once: true })
+      script.addEventListener("error", handleError, { once: true })
+
+      if (!existing) {
+        script.dataset.ophelRuntime = marker
+        script.dataset.loaded = "false"
+        script.src = src
+        script.async = false
+        ;(document.head || document.documentElement).appendChild(script)
+      }
+    })
+  }
+
+  private requestRender(
+    requestId: string,
+    previewId: string,
+    source: string,
+    theme: MermaidTheme,
+  ): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const timeoutId = window.setTimeout(() => {
+        this.pendingRequests.delete(requestId)
+        reject(new Error("Assistant Mermaid render timed out"))
+      }, RUNTIME_TIMEOUT_MS)
+
+      this.pendingRequests.set(requestId, {
+        resolve,
+        reject,
+        timeoutId,
+      })
+
+      window.postMessage(
+        {
+          type: RUNTIME_REQUEST_EVENT,
+          requestId,
+          previewId,
+          source,
+          theme,
+        },
+        "*",
+      )
+    })
   }
 }
