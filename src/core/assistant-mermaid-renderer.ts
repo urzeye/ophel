@@ -19,6 +19,10 @@ const RUNTIME_RUNNER_KEY = "assistantMermaidRunner"
 const RUNTIME_REQUEST_EVENT = "OPHEL_ASSISTANT_MERMAID_RENDER_REQUEST"
 const RUNTIME_RESPONSE_EVENT = "OPHEL_ASSISTANT_MERMAID_RENDER_RESPONSE"
 const RUNTIME_TIMEOUT_MS = 15000
+const DEFAULT_PREVIEW_ZOOM = 1
+const MIN_PREVIEW_ZOOM = 0.5
+const MAX_PREVIEW_ZOOM = 3
+const PREVIEW_ZOOM_STEP = 0.25
 
 const ASSISTANT_MERMAID_CSS = `
 .gh-assistant-mermaid {
@@ -40,6 +44,18 @@ const ASSISTANT_MERMAID_CSS = `
 }
 
 .gh-assistant-mermaid-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gh-assistant-mermaid-toolbar-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gh-assistant-mermaid-zoom {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -330,6 +346,11 @@ export class AssistantMermaidRenderer {
         return
       }
 
+      if (action === "zoom-in" || action === "zoom-out" || action === "zoom-reset") {
+        this.adjustPreviewZoom(panel, action)
+        return
+      }
+
       if (action === "copy") {
         this.copyMermaidSource(panel).catch((error) => {
           console.error("[AssistantMermaidRenderer] Copy failed:", error)
@@ -442,6 +463,8 @@ export class AssistantMermaidRenderer {
       panel.hidden = false
       panel.dataset.source = renderSource
       this.setPreviewEnabled(panel, true)
+      this.setZoomEnabled(panel, true)
+      this.applyPreviewZoom(panel, DEFAULT_PREVIEW_ZOOM)
       this.processedBlocks.set(block, processedKey)
       this.setView(block, panel, currentView)
     } catch (error) {
@@ -475,6 +498,9 @@ export class AssistantMermaidRenderer {
     const toolbar = document.createElement("div")
     toolbar.className = "gh-assistant-mermaid-toolbar"
 
+    const leadingActions = document.createElement("div")
+    leadingActions.className = "gh-assistant-mermaid-toolbar-group"
+
     const actions = document.createElement("div")
     actions.className = "gh-assistant-mermaid-actions"
 
@@ -496,8 +522,31 @@ export class AssistantMermaidRenderer {
     copyButton.dataset.mermaidAction = "copy"
     copyButton.textContent = t("assistantMermaidCopyCode")
 
+    const zoomControls = document.createElement("div")
+    zoomControls.className = "gh-assistant-mermaid-zoom"
+
+    const zoomOutButton = document.createElement("button")
+    zoomOutButton.type = "button"
+    zoomOutButton.className = "gh-assistant-mermaid-btn"
+    zoomOutButton.dataset.mermaidAction = "zoom-out"
+    zoomOutButton.textContent = "-"
+
+    const zoomResetButton = document.createElement("button")
+    zoomResetButton.type = "button"
+    zoomResetButton.className = "gh-assistant-mermaid-btn"
+    zoomResetButton.dataset.mermaidAction = "zoom-reset"
+    zoomResetButton.textContent = "100%"
+
+    const zoomInButton = document.createElement("button")
+    zoomInButton.type = "button"
+    zoomInButton.className = "gh-assistant-mermaid-btn"
+    zoomInButton.dataset.mermaidAction = "zoom-in"
+    zoomInButton.textContent = "+"
+
+    zoomControls.append(zoomOutButton, zoomResetButton, zoomInButton)
+    leadingActions.append(actions, zoomControls)
     actions.append(previewButton, codeButton)
-    toolbar.append(actions, copyButton)
+    toolbar.append(leadingActions, copyButton)
 
     const preview = document.createElement("div")
     preview.className = "gh-assistant-mermaid-preview"
@@ -555,6 +604,88 @@ export class AssistantMermaidRenderer {
     previewButton.disabled = !enabled
   }
 
+  private setZoomEnabled(panel: HTMLElement, enabled: boolean) {
+    const zoomButtons = panel.querySelectorAll(
+      "[data-mermaid-action='zoom-out'], [data-mermaid-action='zoom-reset'], [data-mermaid-action='zoom-in']",
+    )
+
+    zoomButtons.forEach((button) => {
+      if (!(button instanceof HTMLButtonElement)) return
+      button.disabled = !enabled
+    })
+  }
+
+  private adjustPreviewZoom(panel: HTMLElement, action: "zoom-in" | "zoom-out" | "zoom-reset") {
+    const currentZoom = Number.parseFloat(panel.dataset.zoom || `${DEFAULT_PREVIEW_ZOOM}`)
+    if (action === "zoom-reset") {
+      this.applyPreviewZoom(panel, DEFAULT_PREVIEW_ZOOM)
+      return
+    }
+
+    const nextZoom =
+      action === "zoom-in" ? currentZoom + PREVIEW_ZOOM_STEP : currentZoom - PREVIEW_ZOOM_STEP
+
+    this.applyPreviewZoom(panel, nextZoom)
+  }
+
+  private applyPreviewZoom(panel: HTMLElement, zoom: number) {
+    const preview = panel.querySelector(".gh-assistant-mermaid-preview") as HTMLElement | null
+    const svg = preview?.querySelector("svg") as SVGSVGElement | null
+    if (!preview || !svg) {
+      this.setZoomEnabled(panel, false)
+      return
+    }
+
+    const clampedZoom = Math.min(MAX_PREVIEW_ZOOM, Math.max(MIN_PREVIEW_ZOOM, zoom))
+    panel.dataset.zoom = `${clampedZoom}`
+
+    const fittedWidth = this.getPreviewBaseWidth(svg)
+    svg.style.maxWidth = "none"
+    svg.style.width = `${Math.max(1, Math.round(fittedWidth * clampedZoom))}px`
+    svg.style.height = "auto"
+
+    this.updateZoomButtonState(panel, clampedZoom)
+  }
+
+  private getPreviewBaseWidth(svg: SVGSVGElement): number {
+    const cachedWidth = Number.parseFloat(svg.dataset.ophelBaseWidth || "")
+    if (Number.isFinite(cachedWidth) && cachedWidth > 0) {
+      return cachedWidth
+    }
+
+    const measuredWidth = svg.getBoundingClientRect().width
+    const fallbackWidth =
+      Number.parseFloat(svg.getAttribute("width") || "") || svg.viewBox?.baseVal?.width || 320
+    const baseWidth = measuredWidth > 0 ? measuredWidth : fallbackWidth
+    svg.dataset.ophelBaseWidth = `${baseWidth}`
+
+    return baseWidth
+  }
+
+  private updateZoomButtonState(panel: HTMLElement, zoom: number) {
+    const zoomOutButton = panel.querySelector(
+      "[data-mermaid-action='zoom-out']",
+    ) as HTMLButtonElement | null
+    const zoomResetButton = panel.querySelector(
+      "[data-mermaid-action='zoom-reset']",
+    ) as HTMLButtonElement | null
+    const zoomInButton = panel.querySelector(
+      "[data-mermaid-action='zoom-in']",
+    ) as HTMLButtonElement | null
+
+    if (zoomOutButton) {
+      zoomOutButton.disabled = zoom <= MIN_PREVIEW_ZOOM
+    }
+
+    if (zoomResetButton) {
+      zoomResetButton.disabled = Math.abs(zoom - DEFAULT_PREVIEW_ZOOM) < 0.001
+    }
+
+    if (zoomInButton) {
+      zoomInButton.disabled = zoom >= MAX_PREVIEW_ZOOM
+    }
+  }
+
   private applyRenderFallback(block: HTMLElement, panel: HTMLElement, source: string) {
     const preview = panel.querySelector(".gh-assistant-mermaid-preview") as HTMLElement | null
     if (preview) {
@@ -564,6 +695,7 @@ export class AssistantMermaidRenderer {
     panel.hidden = false
     panel.dataset.source = source
     this.setPreviewEnabled(panel, false)
+    this.setZoomEnabled(panel, false)
     this.setView(block, panel, "code")
   }
 
