@@ -55,6 +55,12 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   // 存储 clearOnInit 配置
   private clearOnInit = false
 
+  private cloneWithoutSrOnly(element: Element): Element {
+    const clone = element.cloneNode(true) as Element
+    clone.querySelectorAll(".sr-only").forEach((node) => node.remove())
+    return clone
+  }
+
   match(): boolean {
     return window.location.hostname.includes("business.gemini.google")
   }
@@ -218,12 +224,13 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       return this.extractTextWithLineBreaks(ucsSummary)
     }
 
-    const markdown = htmlToMarkdown(markdownDoc).trim()
+    const sanitizedMarkdownDoc = this.cloneWithoutSrOnly(markdownDoc)
+    const markdown = htmlToMarkdown(sanitizedMarkdownDoc).trim()
     if (markdown) {
       return markdown
     }
 
-    return this.extractTextWithLineBreaks(markdownDoc)
+    return this.extractTextWithLineBreaks(sanitizedMarkdownDoc)
   }
 
   getSidebarScrollContainer(): Element | null {
@@ -1085,6 +1092,21 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     }
 
     return this.extractTextWithLineBreaks(element)
+  }
+
+  extractAssistantResponseText(element: Element): string {
+    const markdownDoc = this.extractSummaryContent(element)
+    if (!markdownDoc) {
+      return this.extractTextWithLineBreaks(element)
+    }
+
+    const sanitizedMarkdownDoc = this.cloneWithoutSrOnly(markdownDoc)
+    const markdown = htmlToMarkdown(sanitizedMarkdownDoc).trim()
+    if (markdown) {
+      return markdown
+    }
+
+    return this.extractTextWithLineBreaks(sanitizedMarkdownDoc)
   }
 
   /**

@@ -105,6 +105,10 @@ export function htmlToMarkdown(el: Element): string {
     }
 
     if (
+      tag === "style" ||
+      tag === "script" ||
+      tag === "template" ||
+      tag === "noscript" ||
       tag === "button" ||
       tag === "svg" ||
       tag === "annotation" ||
@@ -345,6 +349,10 @@ export function htmlToMarkdown(el: Element): string {
       if (!tag) return ""
 
       if (tag === "annotation" || tag === "annotation-xml") {
+        return ""
+      }
+
+      if (tag === "style" || tag === "script" || tag === "template" || tag === "noscript") {
         return ""
       }
 
