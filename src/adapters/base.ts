@@ -218,7 +218,9 @@ export function extractAssistantMermaidSourceFromElement(element: HTMLElement): 
 }
 
 function resolveAssistantMermaidBlockElement(candidate: HTMLElement): HTMLElement | null {
-  const structuredCodeBlock = candidate.closest("code-block, ms-code-block") as HTMLElement | null
+  const structuredCodeBlock = candidate.closest(
+    "code-block, ms-code-block, ucs-code-block",
+  ) as HTMLElement | null
   if (structuredCodeBlock) {
     return structuredCodeBlock
   }

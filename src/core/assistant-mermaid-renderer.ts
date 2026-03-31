@@ -327,11 +327,20 @@ export class AssistantMermaidRenderer {
     if (this.clickHandler) return
 
     this.clickHandler = (event: MouseEvent) => {
-      const target = event.target as HTMLElement | null
-      const button = target?.closest("[data-mermaid-action]") as HTMLElement | null
+      const path = event.composedPath()
+      const button =
+        (path.find(
+          (node) => node instanceof HTMLElement && node.hasAttribute("data-mermaid-action"),
+        ) as HTMLElement | undefined) ||
+        ((event.target as HTMLElement | null)?.closest(
+          "[data-mermaid-action]",
+        ) as HTMLElement | null)
       if (!button) return
 
-      const panel = button.closest(PANEL_SELECTOR) as HTMLElement | null
+      const panel =
+        (path.find((node) => node instanceof HTMLElement && node.matches(PANEL_SELECTOR)) as
+          | HTMLElement
+          | undefined) || (button.closest(PANEL_SELECTOR) as HTMLElement | null)
       if (!panel) return
 
       const block = this.panelBlocks.get(panel)
@@ -433,6 +442,11 @@ export class AssistantMermaidRenderer {
 
   private async processMermaidBlock(block: HTMLElement, source: string) {
     if (!block.isConnected) return
+
+    const blockRoot = block.getRootNode()
+    if (blockRoot instanceof ShadowRoot) {
+      this.injectStyles(blockRoot)
+    }
 
     const renderSource = normalizeAssistantMermaidSource(source)
     if (!renderSource) return

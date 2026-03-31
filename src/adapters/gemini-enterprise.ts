@@ -7,7 +7,9 @@ import { htmlToMarkdown } from "~utils/exporter"
 import { setSafeHTML } from "~utils/trusted-types"
 
 import {
+  findAssistantMermaidBlocks,
   SiteAdapter,
+  type AssistantMermaidBlock,
   type ConversationDeleteTarget,
   type ConversationInfo,
   type ConversationObserverConfig,
@@ -1426,6 +1428,35 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       turnSelector: ".turn",
       useShadowDOM: true,
     }
+  }
+
+  getAssistantMermaidSupportMode() {
+    return "fallback" as const
+  }
+
+  getAssistantMermaidBlocks(root: ParentNode): AssistantMermaidBlock[] {
+    const summaryRoot =
+      root instanceof Element
+        ? root.matches("ucs-summary")
+          ? root
+          : ((root.closest("ucs-summary") ||
+              DOMToolkit.query("ucs-summary", {
+                parent: root,
+                shadow: true,
+              })) as Element | null)
+        : (DOMToolkit.query("ucs-summary", {
+            parent: root as Node,
+            shadow: true,
+          }) as Element | null) || null
+
+    if (!summaryRoot) {
+      return []
+    }
+
+    const markdownDoc = this.extractSummaryContent(summaryRoot)
+    return markdownDoc
+      ? findAssistantMermaidBlocks(markdownDoc)
+      : findAssistantMermaidBlocks(summaryRoot)
   }
 
   // ==================== 生成状态检测 ====================
