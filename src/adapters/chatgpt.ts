@@ -1118,6 +1118,10 @@ export class ChatGPTAdapter extends SiteAdapter {
     }
   }
 
+  getAssistantMermaidSupportMode() {
+    return "native" as const
+  }
+
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const outline: OutlineItem[] = []
     const container = document.querySelector(this.getResponseContainerSelector())
