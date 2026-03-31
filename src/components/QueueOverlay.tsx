@@ -10,7 +10,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
 import type { SiteAdapter } from "~adapters/base"
-import { CleanupIcon, ImportIcon, PromptIcon } from "~components/icons"
+import { CleanupIcon, ImportIcon, PromptQueueIcon } from "~components/icons"
 import { DialogOverlay } from "~components/ui"
 import { formatShortcut, normalizeShortcutBinding } from "~constants/shortcuts"
 import type { QueueDispatcher } from "~core/queue-dispatcher"
@@ -434,7 +434,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
         onClick={() => setIsExpanded(true)}
         title={shortcutText}>
         <span className="gh-queue-capsule-icon">
-          <PromptIcon size={14} color="currentColor" />
+          <PromptQueueIcon size={15} color="currentColor" />
         </span>
         <span>
           {activeCount > 0 ? t("queueInQueue", { count: String(activeCount) }) : t("queueQuickAsk")}
@@ -454,7 +454,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
           <div className="gh-queue-header">
             <div className="gh-queue-header-title">
               <span>
-                <PromptIcon size={16} color="currentColor" />
+                <PromptQueueIcon size={18} color="currentColor" />
               </span>
               <span>{t("queueTitle")}</span>
               {pendingCount > 0 && <span className="gh-queue-capsule-badge">{pendingCount}</span>}
