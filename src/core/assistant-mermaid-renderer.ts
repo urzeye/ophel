@@ -11,6 +11,9 @@ const BLOCK_MANAGED_ATTR = "data-ophel-assistant-mermaid-managed"
 const ORIGINAL_DISPLAY_ATTR = "data-ophel-assistant-mermaid-original-display"
 const PREVIEW_ID_ATTR = "data-ophel-assistant-mermaid-preview-id"
 const PREVIEW_TOKEN_ATTR = "data-ophel-assistant-mermaid-render-token"
+const FULLSCREEN_ACTIVE_ATTR = "data-ophel-assistant-mermaid-fullscreen"
+const FULLSCREEN_RESTORE_ZOOM_ATTR = "data-ophel-assistant-mermaid-restore-zoom"
+const FULLSCREEN_MAX_ZOOM_ATTR = "data-ophel-assistant-mermaid-fullscreen-max-zoom"
 const RUNTIME_ROOT_ATTR = "data-ophel-assistant-mermaid-runner"
 const RUNTIME_VENDOR_PATH = "assets/assistant-mermaid-vendor.js"
 const RUNTIME_RUNNER_PATH = "assets/assistant-mermaid-runner.js"
@@ -23,6 +26,7 @@ const DEFAULT_PREVIEW_ZOOM = 1
 const MIN_PREVIEW_ZOOM = 0.5
 const MAX_PREVIEW_ZOOM = 3
 const PREVIEW_ZOOM_STEP = 0.25
+const FULLSCREEN_PREVIEW_PADDING = 24
 const PNG_EXPORT_SCALE = 2
 const PNG_EXPORT_PADDING = 24
 const PNG_EXPORT_LIGHT_BG = "#ffffff"
@@ -104,11 +108,7 @@ const ASSISTANT_MERMAID_CSS = `
 .gh-assistant-mermaid-btn-icon {
   width: 14px;
   height: 14px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  display: block;
   flex: 0 0 auto;
 }
 
@@ -135,6 +135,19 @@ const ASSISTANT_MERMAID_CSS = `
   background: var(--gh-bg-primary, rgba(255, 255, 255, 0.96));
 }
 
+.gh-assistant-mermaid-preview:fullscreen,
+.gh-assistant-mermaid-preview:-webkit-full-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: ${FULLSCREEN_PREVIEW_PADDING}px;
+  box-sizing: border-box;
+  overflow: auto;
+  background: var(--gh-bg-primary, rgba(255, 255, 255, 0.98));
+}
+
 .gh-assistant-mermaid-preview[hidden] {
   display: none !important;
 }
@@ -144,6 +157,12 @@ const ASSISTANT_MERMAID_CSS = `
   max-width: 100%;
   height: auto;
   margin: 0 auto;
+}
+
+.gh-assistant-mermaid-preview:fullscreen svg,
+.gh-assistant-mermaid-preview:-webkit-full-screen svg {
+  margin: auto;
+  flex: 0 0 auto;
 }
 
 body.dark-theme .gh-assistant-mermaid,
@@ -229,17 +248,68 @@ function isAssistantMermaidRuntimeReady(): boolean {
   return document.documentElement.getAttribute(RUNTIME_ROOT_ATTR) === "1"
 }
 
-function createFitToPageIcon(documentRef: Document): SVGSVGElement {
+function createToolbarIcon(documentRef: Document, viewBox: string): SVGSVGElement {
   const svg = documentRef.createElementNS(SVG_NS, "svg")
-  svg.setAttribute("viewBox", "0 0 16 16")
+  svg.setAttribute("viewBox", viewBox)
   svg.setAttribute("aria-hidden", "true")
   svg.setAttribute("focusable", "false")
   svg.classList.add("gh-assistant-mermaid-btn-icon")
+  return svg
+}
 
+function createFitToPageIcon(documentRef: Document): SVGSVGElement {
+  const svg = createToolbarIcon(documentRef, "0 0 24 24")
   const path = documentRef.createElementNS(SVG_NS, "path")
+  path.setAttribute("fill", "currentColor")
+  path.setAttribute("fill-rule", "evenodd")
+  path.setAttribute("clip-rule", "evenodd")
   path.setAttribute(
     "d",
-    "M6 2.5H2.5V6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10M6.5 6.5 3 3M9.5 6.5 13 3M6.5 9.5 3 13M9.5 9.5 13 13",
+    "M9 3a1 1 0 0 0-1-1H4a2 2 0 0 0-2 2v4.5a1 1 0 0 0 2 0V4h4a1 1 0 0 0 1-1m6 0a1 1 0 0 1 1-1h4a2 2 0 0 1 2 2v4.5a1 1 0 1 1-2 0V4h-4a1 1 0 0 1-1-1m1 19a1 1 0 1 1 0-2h4v-4.5a1 1 0 1 1 2 0V20a2 2 0 0 1-2 2zm-7-1a1 1 0 0 1-1 1H4a2 2 0 0 1-2-2v-4.5a1 1 0 1 1 2 0V20h4a1 1 0 0 1 1 1M8 10h8v4H8zm-2 0a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z",
+  )
+
+  svg.appendChild(path)
+  return svg
+}
+
+function createZoomOutIcon(documentRef: Document): SVGSVGElement {
+  const svg = createToolbarIcon(documentRef, "0 0 24 24")
+  const path = documentRef.createElementNS(SVG_NS, "path")
+  path.setAttribute("fill", "currentColor")
+  path.setAttribute("fill-rule", "evenodd")
+  path.setAttribute("clip-rule", "evenodd")
+  path.setAttribute(
+    "d",
+    "M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13m0 2a8.46 8.46 0 0 0 5.263-1.825l.03.032 5 5a1 1 0 0 0 1.414-1.414l-5-5-.032-.03A8.5 8.5 0 1 0 10.5 19M8 9.5a1 1 0 0 0 0 2h5a1 1 0 1 0 0-2z",
+  )
+
+  svg.appendChild(path)
+  return svg
+}
+
+function createZoomInIcon(documentRef: Document): SVGSVGElement {
+  const svg = createToolbarIcon(documentRef, "0 0 24 24")
+  const path = documentRef.createElementNS(SVG_NS, "path")
+  path.setAttribute("fill", "currentColor")
+  path.setAttribute("fill-rule", "evenodd")
+  path.setAttribute("clip-rule", "evenodd")
+  path.setAttribute(
+    "d",
+    "M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0m-1.237 6.675a8.5 8.5 0 1 1 1.413-1.413l.031.03 5 5a1 1 0 0 1-1.414 1.415l-5-5zM7 10.5a1 1 0 0 1 1-1h1.5V8a1 1 0 0 1 2 0v1.5H13a1 1 0 1 1 0 2h-1.5V13a1 1 0 1 1-2 0v-1.5H8a1 1 0 0 1-1-1",
+  )
+
+  svg.appendChild(path)
+  return svg
+}
+
+function createFullscreenIcon(documentRef: Document): SVGSVGElement {
+  const svg = createToolbarIcon(documentRef, "0 0 24 24")
+
+  const path = documentRef.createElementNS(SVG_NS, "path")
+  path.setAttribute("fill", "currentColor")
+  path.setAttribute(
+    "d",
+    "M22 3v7a1 1 0 1 1-2 0V4h-6a1 1 0 1 1 0-2h7a1 1 0 0 1 1 1M11.005 21a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-7a1 1 0 0 1 2.002 0v6h6.003a1 1 0 0 1 1 1",
   )
 
   svg.appendChild(path)
@@ -253,6 +323,7 @@ export class AssistantMermaidRenderer {
   private rescanTimer: number | null = null
   private clickHandler: ((e: MouseEvent) => void) | null = null
   private messageHandler: ((event: MessageEvent) => void) | null = null
+  private fullscreenChangeHandler: (() => void) | null = null
   private runtimePromise: Promise<void> | null = null
   private processedBlocks = new WeakMap<HTMLElement, string>()
   private blockPanels = new WeakMap<HTMLElement, HTMLElement>()
@@ -303,6 +374,15 @@ export class AssistantMermaidRenderer {
       this.messageHandler = null
     }
 
+    if (this.fullscreenChangeHandler) {
+      document.removeEventListener("fullscreenchange", this.fullscreenChangeHandler)
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        this.fullscreenChangeHandler as EventListener,
+      )
+      this.fullscreenChangeHandler = null
+    }
+
     for (const pending of this.pendingRequests.values()) {
       window.clearTimeout(pending.timeoutId)
       pending.reject(new Error("Assistant Mermaid renderer stopped"))
@@ -340,6 +420,15 @@ export class AssistantMermaidRenderer {
       const zoomResetButton = panel.querySelector(
         "[data-mermaid-action='zoom-reset']",
       ) as HTMLButtonElement | null
+      const zoomOutButton = panel.querySelector(
+        "[data-mermaid-action='zoom-out']",
+      ) as HTMLButtonElement | null
+      const zoomInButton = panel.querySelector(
+        "[data-mermaid-action='zoom-in']",
+      ) as HTMLButtonElement | null
+      const fullscreenButton = panel.querySelector(
+        "[data-mermaid-action='fullscreen']",
+      ) as HTMLButtonElement | null
 
       if (previewButton) {
         previewButton.textContent = t("assistantMermaidPreviewTab")
@@ -360,6 +449,18 @@ export class AssistantMermaidRenderer {
       if (zoomResetButton) {
         this.configureZoomResetButton(zoomResetButton)
       }
+
+      if (zoomOutButton) {
+        this.configureZoomOutButton(zoomOutButton)
+      }
+
+      if (zoomInButton) {
+        this.configureZoomInButton(zoomInButton)
+      }
+
+      if (fullscreenButton) {
+        this.configureFullscreenButton(fullscreenButton)
+      }
     })
   }
 
@@ -376,6 +477,7 @@ export class AssistantMermaidRenderer {
     this.injectStyles(document)
     this.initClickHandler()
     this.initMessageHandler()
+    this.initFullscreenChangeHandler()
 
     this.stopWatch = DOMToolkit.each(
       selector,
@@ -429,6 +531,14 @@ export class AssistantMermaidRenderer {
         return
       }
 
+      if (action === "fullscreen") {
+        this.togglePreviewFullscreen(panel).catch((error) => {
+          console.error("[AssistantMermaidRenderer] Fullscreen failed:", error)
+          showToast(t("assistantMermaidFullscreenFailed") || t("exportFailed"), 2000)
+        })
+        return
+      }
+
       if (action === "copy") {
         this.copyMermaidSource(panel).catch((error) => {
           console.error("[AssistantMermaidRenderer] Copy failed:", error)
@@ -472,6 +582,38 @@ export class AssistantMermaidRenderer {
     }
 
     window.addEventListener("message", this.messageHandler)
+  }
+
+  private initFullscreenChangeHandler() {
+    if (this.fullscreenChangeHandler) return
+
+    this.fullscreenChangeHandler = () => {
+      const activePanel = DOMToolkit.query(`${PANEL_SELECTOR}[${FULLSCREEN_ACTIVE_ATTR}='1']`, {
+        shadow: true,
+      }) as HTMLElement | null
+      if (!activePanel) return
+
+      const preview = activePanel.querySelector(
+        ".gh-assistant-mermaid-preview",
+      ) as HTMLElement | null
+      if (!preview) {
+        this.clearFullscreenState(activePanel)
+        return
+      }
+
+      if (document.fullscreenElement === preview) {
+        this.fitPreviewToFullscreen(activePanel, preview)
+        return
+      }
+
+      this.restorePreviewZoomAfterFullscreen(activePanel)
+    }
+
+    document.addEventListener("fullscreenchange", this.fullscreenChangeHandler)
+    document.addEventListener(
+      "webkitfullscreenchange",
+      this.fullscreenChangeHandler as EventListener,
+    )
   }
 
   private startRescanTimer() {
@@ -628,9 +770,9 @@ export class AssistantMermaidRenderer {
 
     const zoomOutButton = document.createElement("button")
     zoomOutButton.type = "button"
-    zoomOutButton.className = "gh-assistant-mermaid-btn"
+    zoomOutButton.className = "gh-assistant-mermaid-btn is-icon"
     zoomOutButton.dataset.mermaidAction = "zoom-out"
-    zoomOutButton.textContent = "-"
+    this.configureZoomOutButton(zoomOutButton)
 
     const zoomResetButton = document.createElement("button")
     zoomResetButton.type = "button"
@@ -640,11 +782,17 @@ export class AssistantMermaidRenderer {
 
     const zoomInButton = document.createElement("button")
     zoomInButton.type = "button"
-    zoomInButton.className = "gh-assistant-mermaid-btn"
+    zoomInButton.className = "gh-assistant-mermaid-btn is-icon"
     zoomInButton.dataset.mermaidAction = "zoom-in"
-    zoomInButton.textContent = "+"
+    this.configureZoomInButton(zoomInButton)
 
-    zoomControls.append(zoomOutButton, zoomResetButton, zoomInButton)
+    const fullscreenButton = document.createElement("button")
+    fullscreenButton.type = "button"
+    fullscreenButton.className = "gh-assistant-mermaid-btn is-icon"
+    fullscreenButton.dataset.mermaidAction = "fullscreen"
+    this.configureFullscreenButton(fullscreenButton)
+
+    zoomControls.append(zoomOutButton, zoomResetButton, zoomInButton, fullscreenButton)
     leadingActions.append(actions, zoomControls)
     actions.append(previewButton, codeButton)
     trailingActions.append(downloadButton, copyButton)
@@ -673,6 +821,30 @@ export class AssistantMermaidRenderer {
     button.setAttribute("aria-label", label)
     button.title = label
     button.replaceChildren(createFitToPageIcon(button.ownerDocument || document))
+  }
+
+  private configureZoomOutButton(button: HTMLButtonElement) {
+    const label = t("assistantMermaidZoomOut")
+    button.classList.add("is-icon")
+    button.setAttribute("aria-label", label)
+    button.title = label
+    button.replaceChildren(createZoomOutIcon(button.ownerDocument || document))
+  }
+
+  private configureZoomInButton(button: HTMLButtonElement) {
+    const label = t("assistantMermaidZoomIn")
+    button.classList.add("is-icon")
+    button.setAttribute("aria-label", label)
+    button.title = label
+    button.replaceChildren(createZoomInIcon(button.ownerDocument || document))
+  }
+
+  private configureFullscreenButton(button: HTMLButtonElement) {
+    const label = t("assistantMermaidFullscreen")
+    button.classList.add("is-icon")
+    button.setAttribute("aria-label", label)
+    button.title = label
+    button.replaceChildren(createFullscreenIcon(button.ownerDocument || document))
   }
 
   private ensurePreviewId(preview: HTMLElement): string {
@@ -716,7 +888,7 @@ export class AssistantMermaidRenderer {
 
   private setZoomEnabled(panel: HTMLElement, enabled: boolean) {
     const zoomButtons = panel.querySelectorAll(
-      "[data-mermaid-action='zoom-out'], [data-mermaid-action='zoom-reset'], [data-mermaid-action='zoom-in']",
+      "[data-mermaid-action='zoom-out'], [data-mermaid-action='zoom-reset'], [data-mermaid-action='zoom-in'], [data-mermaid-action='fullscreen']",
     )
 
     zoomButtons.forEach((button) => {
@@ -755,7 +927,7 @@ export class AssistantMermaidRenderer {
       return
     }
 
-    const clampedZoom = Math.min(MAX_PREVIEW_ZOOM, Math.max(MIN_PREVIEW_ZOOM, zoom))
+    const clampedZoom = Math.min(this.getMaxPreviewZoom(panel), Math.max(MIN_PREVIEW_ZOOM, zoom))
     panel.dataset.zoom = `${clampedZoom}`
 
     const fittedWidth = this.getPreviewBaseWidth(svg)
@@ -764,6 +936,11 @@ export class AssistantMermaidRenderer {
     svg.style.height = "auto"
 
     this.updateZoomButtonState(panel, clampedZoom)
+  }
+
+  private getMaxPreviewZoom(panel: HTMLElement): number {
+    const fullscreenMaxZoom = Number.parseFloat(panel.getAttribute(FULLSCREEN_MAX_ZOOM_ATTR) || "")
+    return Math.max(MAX_PREVIEW_ZOOM, Number.isFinite(fullscreenMaxZoom) ? fullscreenMaxZoom : 0)
   }
 
   private getPreviewBaseWidth(svg: SVGSVGElement): number {
@@ -781,6 +958,25 @@ export class AssistantMermaidRenderer {
     return baseWidth
   }
 
+  private getPreviewBaseDimensions(svg: SVGSVGElement): { width: number; height: number } {
+    const width = this.getPreviewBaseWidth(svg)
+    const rect = svg.getBoundingClientRect()
+    const attrWidth = Number.parseFloat(svg.getAttribute("width") || "")
+    const attrHeight = Number.parseFloat(svg.getAttribute("height") || "")
+    const viewBoxWidth = svg.viewBox?.baseVal?.width || 0
+    const viewBoxHeight = svg.viewBox?.baseVal?.height || 0
+    const ratio =
+      (viewBoxWidth > 0 && viewBoxHeight > 0 && viewBoxHeight / viewBoxWidth) ||
+      (rect.width > 0 && rect.height > 0 && rect.height / rect.width) ||
+      (attrWidth > 0 && attrHeight > 0 && attrHeight / attrWidth) ||
+      0.75
+
+    return {
+      width,
+      height: width * ratio,
+    }
+  }
+
   private updateZoomButtonState(panel: HTMLElement, zoom: number) {
     const zoomOutButton = panel.querySelector(
       "[data-mermaid-action='zoom-out']",
@@ -791,6 +987,7 @@ export class AssistantMermaidRenderer {
     const zoomInButton = panel.querySelector(
       "[data-mermaid-action='zoom-in']",
     ) as HTMLButtonElement | null
+    const maxZoom = this.getMaxPreviewZoom(panel)
 
     if (zoomOutButton) {
       zoomOutButton.disabled = zoom <= MIN_PREVIEW_ZOOM
@@ -801,7 +998,7 @@ export class AssistantMermaidRenderer {
     }
 
     if (zoomInButton) {
-      zoomInButton.disabled = zoom >= MAX_PREVIEW_ZOOM
+      zoomInButton.disabled = zoom >= maxZoom
     }
   }
 
@@ -817,6 +1014,75 @@ export class AssistantMermaidRenderer {
     this.setDownloadEnabled(panel, false)
     this.setZoomEnabled(panel, false)
     this.setView(block, panel, "code")
+  }
+
+  private async togglePreviewFullscreen(panel: HTMLElement) {
+    const preview = panel.querySelector(".gh-assistant-mermaid-preview") as HTMLElement | null
+    if (!preview) {
+      throw new Error("Mermaid preview container not found")
+    }
+
+    const block = this.panelBlocks.get(panel)
+    if (block && panel.dataset.view !== "preview") {
+      this.setView(block, panel, "preview")
+    }
+
+    if (document.fullscreenElement === preview) {
+      await document.exitFullscreen()
+      return
+    }
+
+    if (typeof preview.requestFullscreen !== "function") {
+      throw new Error("Fullscreen API is unavailable")
+    }
+
+    panel.setAttribute(FULLSCREEN_ACTIVE_ATTR, "1")
+    panel.setAttribute(
+      FULLSCREEN_RESTORE_ZOOM_ATTR,
+      panel.dataset.zoom || `${DEFAULT_PREVIEW_ZOOM}`,
+    )
+
+    try {
+      await preview.requestFullscreen()
+    } catch (error) {
+      this.clearFullscreenState(panel)
+      throw error
+    }
+  }
+
+  private fitPreviewToFullscreen(panel: HTMLElement, preview: HTMLElement) {
+    const svg = preview.querySelector("svg") as SVGSVGElement | null
+    if (!svg) {
+      this.setZoomEnabled(panel, false)
+      return
+    }
+
+    const { width: baseWidth, height: baseHeight } = this.getPreviewBaseDimensions(svg)
+    if (baseWidth <= 0 || baseHeight <= 0) return
+
+    const availableWidth = Math.max(1, preview.clientWidth - FULLSCREEN_PREVIEW_PADDING * 2)
+    const availableHeight = Math.max(1, preview.clientHeight - FULLSCREEN_PREVIEW_PADDING * 2)
+    const fitZoom = Math.min(availableWidth / baseWidth, availableHeight / baseHeight)
+
+    panel.setAttribute(FULLSCREEN_MAX_ZOOM_ATTR, `${Math.max(MAX_PREVIEW_ZOOM, fitZoom)}`)
+    this.applyPreviewZoom(panel, fitZoom)
+    preview.scrollTop = 0
+    preview.scrollLeft = 0
+  }
+
+  private restorePreviewZoomAfterFullscreen(panel: HTMLElement) {
+    const restoreZoom =
+      Number.parseFloat(panel.getAttribute(FULLSCREEN_RESTORE_ZOOM_ATTR) || "") ||
+      DEFAULT_PREVIEW_ZOOM
+
+    this.clearFullscreenState(panel)
+    this.applyPreviewZoom(panel, restoreZoom)
+  }
+
+  private clearFullscreenState(panel: HTMLElement) {
+    panel.removeAttribute(FULLSCREEN_ACTIVE_ATTR)
+    panel.removeAttribute(FULLSCREEN_RESTORE_ZOOM_ATTR)
+    panel.removeAttribute(FULLSCREEN_MAX_ZOOM_ATTR)
   }
 
   private async copyMermaidSource(panel: HTMLElement) {
