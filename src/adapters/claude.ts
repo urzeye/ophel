@@ -1270,6 +1270,10 @@ export class ClaudeAdapter extends SiteAdapter {
     }
   }
 
+  getAssistantMermaidSupportMode() {
+    return "native" as const
+  }
+
   getLatestReplyText(): string | null {
     const responses = document.querySelectorAll(".font-claude-response")
     if (responses.length === 0) return null
