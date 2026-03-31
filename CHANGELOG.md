@@ -13,24 +13,16 @@
 
 - **AI 回复 Mermaid 兜底渲染**：为未原生支持的站点增加 Mermaid 代码块识别与渲染，支持代码/图表切换、缩放、全屏与 PNG 下载。 (#285)
 
-### ♻️ 重构
-
-- **Mermaid 运行时拆分**：隔离 Mermaid 资源与初始化链路，减少对主内容脚本的污染。
-- **切换 Tiny Runtime**：改用 `@mermaid-js/tiny`，继续压缩依赖与构建体积。
-
 ### ✨ 功能优化
 
 - **KaTeX 字体瘦身**：扩展包仅保留 `.woff2` 字体，减轻包体积并兼容 Firefox 打包。
 - **Mermaid 工具栏体验优化**：优化按钮图标、适应页面与全屏查看体验。
+- **面板与大纲图标焕新**：将面板顶部/折叠入口的 Sparkle 图标与大纲面板“仅显示提问”按钮升级为更统一的 SVG 图标，并同步微调按钮尺寸与层次感，提升深浅主题下的辨识度。
+- **提示词图标体系优化**：重绘提示词相关图标，并为提示词队列补充独立图标，减少不同入口之间的视觉混淆，提升识别效率。
 
 ### 🐛 问题修复
 
-- **Gemini Mermaid 渲染恢复**：修复 Gemini 中 Mermaid fallback 不生效的问题。
-- **AI Studio Mermaid 适配**：支持 AI Studio Mermaid 代码块识别与渲染。
 - **Gemini Enterprise 导出噪音清理**：去除导出 Markdown 时混入的多余样式与状态文本。
-- **Gemini Enterprise Mermaid 适配**：补齐 Shadow DOM 场景下的 Mermaid 渲染支持。
-- **Mermaid 兼容性修复**：修复语言切换不刷新、非标准 Mermaid 头部识别与复制源码不规范的问题。
-- **原生支持站点标记修复**：将 ChatGPT、Claude、Grok 等站点改为优先使用原生 Mermaid。
 
 ## [1.0.27]
 
