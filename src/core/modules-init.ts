@@ -21,6 +21,7 @@ import { UsageCounterManager } from "~core/usage-counter-manager"
 import { UserQueryMarkdownRenderer } from "~core/user-query-markdown"
 import { WatermarkRemover } from "~core/watermark-remover"
 import { getSettingsState, subscribeSettings } from "~stores/settings-store"
+import { setLanguage } from "~utils/i18n"
 import {
   getSiteModelLock,
   getSitePageWidth,
@@ -448,8 +449,15 @@ export function initPolicyRetryManager(ctx: ModulesContext): void {
  */
 export function subscribeModuleUpdates(ctx: ModulesContext): void {
   const { adapter, siteId } = ctx
+  let lastLanguage = getSettingsState().language
 
   subscribeSettings((newSettings: Settings) => {
+    if (newSettings.language && newSettings.language !== lastLanguage) {
+      lastLanguage = newSettings.language
+      setLanguage(newSettings.language)
+      modules.assistantMermaidRenderer?.refreshLocalizedTexts()
+    }
+
     // 1. Theme Manager - 只更新主题预置
     const newSiteTheme = getSiteTheme(newSettings, siteId)
     if (newSiteTheme && modules.themeManager) {

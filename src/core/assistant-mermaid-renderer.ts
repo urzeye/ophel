@@ -240,6 +240,39 @@ export class AssistantMermaidRenderer {
     this.cleanupInjectedPanels()
   }
 
+  refreshLocalizedTexts() {
+    const panels = DOMToolkit.query(PANEL_SELECTOR, {
+      all: true,
+      shadow: true,
+    }) as Element[]
+
+    panels.forEach((panel) => {
+      if (!(panel instanceof HTMLElement)) return
+
+      const previewButton = panel.querySelector(
+        "[data-mermaid-action='preview']",
+      ) as HTMLButtonElement | null
+      const codeButton = panel.querySelector(
+        "[data-mermaid-action='code']",
+      ) as HTMLButtonElement | null
+      const copyButton = panel.querySelector(
+        "[data-mermaid-action='copy']",
+      ) as HTMLButtonElement | null
+
+      if (previewButton) {
+        previewButton.textContent = t("assistantMermaidPreviewTab")
+      }
+
+      if (codeButton) {
+        codeButton.textContent = t("assistantMermaidCodeTab")
+      }
+
+      if (copyButton) {
+        copyButton.textContent = t("assistantMermaidCopyCode")
+      }
+    })
+  }
+
   private init() {
     if (this.adapter.getAssistantMermaidSupportMode() !== "fallback") {
       return
