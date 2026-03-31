@@ -519,7 +519,7 @@ export abstract class SiteAdapter {
 
   /** 获取 AI 回复 Mermaid 渲染支持模式 */
   getAssistantMermaidSupportMode(): AssistantMermaidSupportMode {
-    return "unsupported"
+    return "native"
   }
 
   /**
