@@ -440,7 +440,7 @@ export class AssistantMermaidRenderer {
       }
 
       panel.hidden = false
-      panel.dataset.source = source
+      panel.dataset.source = renderSource
       this.setPreviewEnabled(panel, true)
       this.processedBlocks.set(block, processedKey)
       this.setView(block, panel, currentView)
@@ -451,7 +451,7 @@ export class AssistantMermaidRenderer {
         this.cleanupPanel(block)
       } else {
         this.processedBlocks.set(block, processedKey)
-        this.applyRenderFallback(block, panel, source)
+        this.applyRenderFallback(block, panel, renderSource)
       }
     }
   }
