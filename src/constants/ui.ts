@@ -12,6 +12,7 @@ import {
   ScrollBottomIcon,
   ScrollTopIcon,
   SearchIcon,
+  SparkleIcon,
   ToolsIcon,
 } from "~components/icons"
 import { SHORTCUT_META } from "~constants/shortcuts"
@@ -950,6 +951,7 @@ export const COLLAPSED_BUTTON_DEFS: Record<
     labelKey: "panelTitle",
     canToggle: false,
     isPanelOnly: true,
+    IconComponent: SparkleIcon,
   },
   floatingToolbar: {
     icon: "🧰",
