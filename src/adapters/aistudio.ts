@@ -1594,6 +1594,10 @@ export class AIStudioAdapter extends SiteAdapter {
     }
   }
 
+  getAssistantMermaidSupportMode() {
+    return "fallback" as const
+  }
+
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
     this.exportIncludeThoughtsOverride = context.includeThoughts
     this.clearExportSnapshot()

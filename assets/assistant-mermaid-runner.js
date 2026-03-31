@@ -165,20 +165,98 @@
     )
   }
 
-  function applyRenderedSvg(previewElement, svgMarkup) {
+  function tryParseRenderedSvgAsXml(svgMarkup) {
     const parser = new DOMParser()
     const parsedDocument = parser.parseFromString(svgMarkup, "image/svg+xml")
     const parseError = parsedDocument.querySelector("parsererror")
     const svgElement = parsedDocument.documentElement
 
-    if (
-      parseError ||
-      !svgElement ||
-      svgElement.tagName.toLowerCase() !== "svg"
-    ) {
+    if (parseError || !svgElement || svgElement.tagName.toLowerCase() !== "svg") {
+      return null
+    }
+
+    return svgElement
+  }
+
+  function tryParseRenderedSvgAsHtml(svgMarkup) {
+    const parser = new DOMParser()
+    const parsedDocument = parser.parseFromString(svgMarkup, "text/html")
+    return parsedDocument.querySelector("svg")
+  }
+
+  function decodeBase64Utf8(value) {
+    const normalizedValue = value.replace(/\s+/g, "")
+    const binary = atob(normalizedValue)
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0))
+    return new TextDecoder().decode(bytes)
+  }
+
+  function decodeDataUrlContent(dataUrl) {
+    if (!dataUrl || !dataUrl.startsWith("data:")) {
+      return null
+    }
+
+    const commaIndex = dataUrl.indexOf(",")
+    if (commaIndex === -1) {
+      return null
+    }
+
+    const metadata = dataUrl.slice(0, commaIndex)
+    const payload = dataUrl.slice(commaIndex + 1)
+
+    try {
+      return /;base64/i.test(metadata) ? decodeBase64Utf8(payload) : decodeURIComponent(payload)
+    } catch (error) {
+      console.warn("[AssistantMermaidRunner] Failed to decode iframe data URL:", error)
+      return null
+    }
+  }
+
+  function tryParseRenderedSvgFromIframe(svgMarkup) {
+    const parser = new DOMParser()
+    const parsedDocument = parser.parseFromString(svgMarkup, "text/html")
+    const iframe = parsedDocument.querySelector("iframe")
+    if (!iframe) {
+      return null
+    }
+
+    const embeddedDocumentMarkup =
+      iframe.getAttribute("srcdoc") ||
+      decodeDataUrlContent(iframe.getAttribute("src") || "") ||
+      iframe.innerHTML.trim()
+
+    if (!embeddedDocumentMarkup) {
+      return null
+    }
+
+    return (
+      tryParseRenderedSvgAsXml(embeddedDocumentMarkup) ||
+      tryParseRenderedSvgAsHtml(embeddedDocumentMarkup)
+    )
+  }
+
+  function extractRenderedSvgElement(svgMarkup) {
+    const normalizedMarkup =
+      typeof svgMarkup === "string" ? svgMarkup.trim() : String(svgMarkup || "").trim()
+
+    if (!normalizedMarkup) {
+      throw new Error("Rendered SVG markup is empty")
+    }
+
+    const svgElement =
+      tryParseRenderedSvgAsXml(normalizedMarkup) ||
+      tryParseRenderedSvgAsHtml(normalizedMarkup) ||
+      tryParseRenderedSvgFromIframe(normalizedMarkup)
+
+    if (!svgElement) {
       throw new Error("Failed to parse rendered SVG")
     }
 
+    return svgElement
+  }
+
+  function applyRenderedSvg(previewElement, svgMarkup) {
+    const svgElement = extractRenderedSvgElement(svgMarkup)
     const importedSvg = document.importNode(svgElement, true)
     previewElement.replaceChildren(importedSvg)
   }
