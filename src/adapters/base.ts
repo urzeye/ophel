@@ -119,20 +119,8 @@ const ASSISTANT_MERMAID_SOURCE_PATTERNS = [
   /^classDiagram(?:-v2)?\b/i,
   /^stateDiagram(?:-v2)?\b/i,
   /^erDiagram\b/i,
-  /^journey\b/i,
   /^gantt\b/i,
-  /^pie\b/i,
-  /^mindmap\b/i,
-  /^timeline\b/i,
   /^gitGraph\b/i,
-  /^quadrantChart\b/i,
-  /^requirementDiagram\b/i,
-  /^sankey-beta\b/i,
-  /^xychart-beta\b/i,
-  /^block-beta\b/i,
-  /^packet-beta\b/i,
-  /^architecture-beta\b/i,
-  /^c4(?:context|container|component|dynamic|deployment|relationship)\b/i,
 ]
 
 export function isAssistantMermaidCandidateElement(element: HTMLElement): boolean {

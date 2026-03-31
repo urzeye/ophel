@@ -2,9 +2,9 @@ export const USERSCRIPT_ASSET_REPOSITORY = "urzeye/ophel"
 export const USERSCRIPT_ASSET_BRANCH = "userscript-assets"
 export const USERSCRIPT_MERMAID_RUNNER_REPOSITORY = "urzeye/ophel"
 export const USERSCRIPT_MERMAID_RUNNER_BRANCH = "main"
-export const USERSCRIPT_MERMAID_VERSION = "10.9.1"
+export const USERSCRIPT_MERMAID_TINY_VERSION = "11.13.0"
 export const USERSCRIPT_MERMAID_RUNNER_CDN_URL = `https://cdn.jsdelivr.net/gh/${USERSCRIPT_MERMAID_RUNNER_REPOSITORY}@${USERSCRIPT_MERMAID_RUNNER_BRANCH}/assets/assistant-mermaid-runner.js`
-export const USERSCRIPT_MERMAID_VENDOR_CDN_URL = `https://cdn.jsdelivr.net/npm/mermaid@${USERSCRIPT_MERMAID_VERSION}/dist/mermaid.min.js`
+export const USERSCRIPT_MERMAID_VENDOR_CDN_URL = `https://cdn.jsdelivr.net/npm/@mermaid-js/tiny@${USERSCRIPT_MERMAID_TINY_VERSION}/dist/mermaid.tiny.js`
 
 export const USERSCRIPT_RESOURCE_DEFINITIONS = {
   styles: {
