@@ -23,6 +23,25 @@ const DEFAULT_PREVIEW_ZOOM = 1
 const MIN_PREVIEW_ZOOM = 0.5
 const MAX_PREVIEW_ZOOM = 3
 const PREVIEW_ZOOM_STEP = 0.25
+const PNG_EXPORT_SCALE = 2
+const PNG_EXPORT_PADDING = 24
+const PNG_EXPORT_LIGHT_BG = "#ffffff"
+const PNG_EXPORT_DARK_BG = "#0f172a"
+const SVG_NS = "http://www.w3.org/2000/svg"
+
+function isTaintedCanvasError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  const name = error instanceof DOMException ? error.name : error instanceof Error ? error.name : ""
+
+  const normalizedMessage = message.toLowerCase()
+  const normalizedName = name.toLowerCase()
+
+  return (
+    normalizedName.includes("securityerror") ||
+    normalizedMessage.includes("tainted canvas") ||
+    normalizedMessage.includes("tainted canvases may not be exported")
+  )
+}
 
 const ASSISTANT_MERMAID_CSS = `
 .gh-assistant-mermaid {
@@ -279,6 +298,9 @@ export class AssistantMermaidRenderer {
       const copyButton = panel.querySelector(
         "[data-mermaid-action='copy']",
       ) as HTMLButtonElement | null
+      const downloadButton = panel.querySelector(
+        "[data-mermaid-action='download']",
+      ) as HTMLButtonElement | null
 
       if (previewButton) {
         previewButton.textContent = t("assistantMermaidPreviewTab")
@@ -290,6 +312,10 @@ export class AssistantMermaidRenderer {
 
       if (copyButton) {
         copyButton.textContent = t("assistantMermaidCopyCode")
+      }
+
+      if (downloadButton) {
+        downloadButton.textContent = t("assistantMermaidDownloadPng")
       }
     })
   }
@@ -363,6 +389,14 @@ export class AssistantMermaidRenderer {
       if (action === "copy") {
         this.copyMermaidSource(panel).catch((error) => {
           console.error("[AssistantMermaidRenderer] Copy failed:", error)
+        })
+        return
+      }
+
+      if (action === "download") {
+        this.downloadMermaidPng(panel).catch((error) => {
+          console.error("[AssistantMermaidRenderer] PNG download failed:", error)
+          showToast(t("assistantMermaidDownloadFailed") || t("exportFailed"), 2000)
         })
       }
     }
@@ -477,6 +511,7 @@ export class AssistantMermaidRenderer {
       panel.hidden = false
       panel.dataset.source = renderSource
       this.setPreviewEnabled(panel, true)
+      this.setDownloadEnabled(panel, true)
       this.setZoomEnabled(panel, true)
       this.applyPreviewZoom(panel, DEFAULT_PREVIEW_ZOOM)
       this.processedBlocks.set(block, processedKey)
@@ -536,6 +571,15 @@ export class AssistantMermaidRenderer {
     copyButton.dataset.mermaidAction = "copy"
     copyButton.textContent = t("assistantMermaidCopyCode")
 
+    const downloadButton = document.createElement("button")
+    downloadButton.type = "button"
+    downloadButton.className = "gh-assistant-mermaid-btn"
+    downloadButton.dataset.mermaidAction = "download"
+    downloadButton.textContent = t("assistantMermaidDownloadPng")
+
+    const trailingActions = document.createElement("div")
+    trailingActions.className = "gh-assistant-mermaid-toolbar-group"
+
     const zoomControls = document.createElement("div")
     zoomControls.className = "gh-assistant-mermaid-zoom"
 
@@ -560,7 +604,8 @@ export class AssistantMermaidRenderer {
     zoomControls.append(zoomOutButton, zoomResetButton, zoomInButton)
     leadingActions.append(actions, zoomControls)
     actions.append(previewButton, codeButton)
-    toolbar.append(leadingActions, copyButton)
+    trailingActions.append(downloadButton, copyButton)
+    toolbar.append(leadingActions, trailingActions)
 
     const preview = document.createElement("div")
     preview.className = "gh-assistant-mermaid-preview"
@@ -627,6 +672,15 @@ export class AssistantMermaidRenderer {
       if (!(button instanceof HTMLButtonElement)) return
       button.disabled = !enabled
     })
+  }
+
+  private setDownloadEnabled(panel: HTMLElement, enabled: boolean) {
+    const downloadButton = panel.querySelector(
+      "[data-mermaid-action='download']",
+    ) as HTMLButtonElement | null
+    if (!downloadButton) return
+
+    downloadButton.disabled = !enabled
   }
 
   private adjustPreviewZoom(panel: HTMLElement, action: "zoom-in" | "zoom-out" | "zoom-reset") {
@@ -709,6 +763,7 @@ export class AssistantMermaidRenderer {
     panel.hidden = false
     panel.dataset.source = source
     this.setPreviewEnabled(panel, false)
+    this.setDownloadEnabled(panel, false)
     this.setZoomEnabled(panel, false)
     this.setView(block, panel, "code")
   }
@@ -719,6 +774,251 @@ export class AssistantMermaidRenderer {
 
     await navigator.clipboard.writeText(source)
     showToast(t("copySuccess"), 1500)
+  }
+
+  private async downloadMermaidPng(panel: HTMLElement) {
+    const preview = panel.querySelector(".gh-assistant-mermaid-preview") as HTMLElement | null
+    const svg = preview?.querySelector("svg") as SVGSVGElement | null
+    if (!svg) {
+      throw new Error("Mermaid preview svg not found")
+    }
+
+    const { width, height } = this.getSvgExportDimensions(svg)
+    const exportWidth = Math.max(1, Math.round(width))
+    const exportHeight = Math.max(1, Math.round(height))
+    let pngBlob: Blob
+
+    try {
+      pngBlob = await this.renderSvgToPngBlob(svg, exportWidth, exportHeight)
+    } catch (error) {
+      if (!svg.querySelector("foreignObject") || !isTaintedCanvasError(error)) {
+        throw error
+      }
+
+      pngBlob = await this.renderSvgToPngBlob(svg, exportWidth, exportHeight, {
+        downgradeForeignObjects: true,
+      })
+    }
+
+    const url = URL.createObjectURL(pngBlob)
+    try {
+      const anchor = document.createElement("a")
+      anchor.href = url
+      anchor.download = this.createPngFilename()
+      anchor.click()
+    } finally {
+      URL.revokeObjectURL(url)
+    }
+
+    showToast(t("assistantMermaidDownloadSuccess") || t("exportSuccess"), 1500)
+  }
+
+  private getSvgExportDimensions(svg: SVGSVGElement): { width: number; height: number } {
+    const rect = svg.getBoundingClientRect()
+    const styledWidth = Number.parseFloat(svg.style.width || "")
+    const styledHeight = Number.parseFloat(svg.style.height || "")
+    const attrWidth = Number.parseFloat(svg.getAttribute("width") || "")
+    const attrHeight = Number.parseFloat(svg.getAttribute("height") || "")
+    const viewBoxWidth = svg.viewBox?.baseVal?.width || 0
+    const viewBoxHeight = svg.viewBox?.baseVal?.height || 0
+    const width =
+      rect.width || styledWidth || attrWidth || this.getPreviewBaseWidth(svg) || viewBoxWidth || 320
+    const ratio =
+      (rect.width > 0 && rect.height > 0 && rect.height / rect.width) ||
+      (styledWidth > 0 && styledHeight > 0 && styledHeight / styledWidth) ||
+      (attrWidth > 0 && attrHeight > 0 && attrHeight / attrWidth) ||
+      (viewBoxWidth > 0 && viewBoxHeight > 0 && viewBoxHeight / viewBoxWidth) ||
+      0.75
+
+    return {
+      width,
+      height: width * ratio,
+    }
+  }
+
+  private serializeSvgForPng(
+    svg: SVGSVGElement,
+    width: number,
+    height: number,
+    options: { downgradeForeignObjects?: boolean } = {},
+  ): string {
+    const clone = svg.cloneNode(true) as SVGSVGElement
+    clone.setAttribute("xmlns", SVG_NS)
+    clone.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink")
+    clone.setAttribute("width", `${width}`)
+    clone.setAttribute("height", `${height}`)
+    clone.style.width = `${width}px`
+    clone.style.height = `${height}px`
+    clone.style.maxWidth = "none"
+
+    if (options.downgradeForeignObjects) {
+      this.downgradeForeignObjectsForPng(svg, clone)
+    }
+
+    return new XMLSerializer().serializeToString(clone)
+  }
+
+  private async renderSvgToPngBlob(
+    svg: SVGSVGElement,
+    exportWidth: number,
+    exportHeight: number,
+    options: { downgradeForeignObjects?: boolean } = {},
+  ): Promise<Blob> {
+    const svgMarkup = this.serializeSvgForPng(svg, exportWidth, exportHeight, options)
+    const svgUrl = URL.createObjectURL(
+      new Blob([svgMarkup], { type: "image/svg+xml;charset=utf-8" }),
+    )
+
+    try {
+      const image = await this.loadSvgImage(svgUrl)
+      const canvas = document.createElement("canvas")
+      canvas.width = Math.ceil((exportWidth + PNG_EXPORT_PADDING * 2) * PNG_EXPORT_SCALE)
+      canvas.height = Math.ceil((exportHeight + PNG_EXPORT_PADDING * 2) * PNG_EXPORT_SCALE)
+
+      const context = canvas.getContext("2d")
+      if (!context) {
+        throw new Error("Canvas 2D context is unavailable")
+      }
+
+      context.scale(PNG_EXPORT_SCALE, PNG_EXPORT_SCALE)
+      context.fillStyle =
+        this.getMermaidTheme() === "dark" ? PNG_EXPORT_DARK_BG : PNG_EXPORT_LIGHT_BG
+      context.fillRect(0, 0, canvas.width / PNG_EXPORT_SCALE, canvas.height / PNG_EXPORT_SCALE)
+      context.drawImage(image, PNG_EXPORT_PADDING, PNG_EXPORT_PADDING, exportWidth, exportHeight)
+
+      return await this.canvasToBlob(canvas)
+    } finally {
+      URL.revokeObjectURL(svgUrl)
+    }
+  }
+
+  private downgradeForeignObjectsForPng(sourceSvg: SVGSVGElement, exportSvg: SVGSVGElement) {
+    const sourceForeignObjects = Array.from(sourceSvg.querySelectorAll("foreignObject"))
+    const exportForeignObjects = Array.from(exportSvg.querySelectorAll("foreignObject"))
+
+    exportForeignObjects.forEach((foreignObject, index) => {
+      const replacement = this.createForeignObjectTextFallback(
+        sourceForeignObjects[index],
+        exportSvg.ownerDocument,
+      )
+      foreignObject.replaceWith(replacement)
+    })
+  }
+
+  private createForeignObjectTextFallback(
+    sourceForeignObject: Element | undefined,
+    documentRef: Document,
+  ): SVGGElement {
+    const group = documentRef.createElementNS(SVG_NS, "g")
+    if (!sourceForeignObject) {
+      return group
+    }
+
+    const x = this.getForeignObjectMetric(sourceForeignObject, "x")
+    const y = this.getForeignObjectMetric(sourceForeignObject, "y")
+    const width = this.getForeignObjectMetric(sourceForeignObject, "width")
+    const height = this.getForeignObjectMetric(sourceForeignObject, "height")
+    const lines = this.getForeignObjectLines(sourceForeignObject)
+    if (lines.length === 0 || width <= 0 || height <= 0) {
+      return group
+    }
+
+    const styleElement = (sourceForeignObject.querySelector("*") as HTMLElement | null) || null
+    const style = styleElement ? window.getComputedStyle(styleElement) : null
+    const fontSize = Math.max(
+      10,
+      Number.parseFloat(style?.fontSize || "") || Math.min(16, Math.max(12, height * 0.35)),
+    )
+    const lineHeight =
+      Number.parseFloat(style?.lineHeight || "") ||
+      Math.max(fontSize * 1.2, height / Math.max(lines.length, 1))
+    const centerX = x + width / 2
+    const startY = y + height / 2 - ((lines.length - 1) * lineHeight) / 2
+    const fill = style?.color || (this.getMermaidTheme() === "dark" ? "#e5e7eb" : "#111827")
+    const fontFamily = style?.fontFamily || "Arial, sans-serif"
+    const fontWeight = style?.fontWeight || "400"
+
+    lines.forEach((line, index) => {
+      const text = documentRef.createElementNS(SVG_NS, "text")
+      text.setAttribute("x", `${centerX}`)
+      text.setAttribute("y", `${startY + index * lineHeight}`)
+      text.setAttribute("text-anchor", "middle")
+      text.setAttribute("dominant-baseline", "middle")
+      text.setAttribute("fill", fill)
+      text.setAttribute("font-size", `${fontSize}`)
+      text.setAttribute("font-family", fontFamily)
+      text.setAttribute("font-weight", fontWeight)
+      text.textContent = line
+      group.appendChild(text)
+    })
+
+    return group
+  }
+
+  private getForeignObjectMetric(element: Element, name: string): number {
+    const attributeValue = Number.parseFloat(element.getAttribute(name) || "")
+    if (Number.isFinite(attributeValue)) {
+      return attributeValue
+    }
+
+    const bbox =
+      element instanceof SVGGraphicsElement
+        ? element.getBBox()
+        : {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+          }
+
+    if (name === "x") return bbox.x
+    if (name === "y") return bbox.y
+    if (name === "width") return bbox.width
+    if (name === "height") return bbox.height
+    return 0
+  }
+
+  private getForeignObjectLines(element: Element): string[] {
+    const root = (element.querySelector("*") as HTMLElement | null) || null
+    const rawText =
+      (root && typeof root.innerText === "string" && root.innerText) ||
+      root?.textContent ||
+      element.textContent ||
+      ""
+
+    return rawText
+      .replace(/\r\n/g, "\n")
+      .split("\n")
+      .map((line) => line.replace(/\s+/g, " ").trim())
+      .filter(Boolean)
+  }
+
+  private loadSvgImage(url: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const image = new Image()
+      image.decoding = "async"
+      image.onload = () => resolve(image)
+      image.onerror = () => reject(new Error("Failed to load Mermaid SVG image"))
+      image.src = url
+    })
+  }
+
+  private canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(blob)
+          return
+        }
+
+        reject(new Error("Failed to convert Mermaid canvas to PNG blob"))
+      }, "image/png")
+    })
+  }
+
+  private createPngFilename(): string {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+    return `ophel-mermaid-${timestamp}.png`
   }
 
   private cleanupInjectedPanels() {
