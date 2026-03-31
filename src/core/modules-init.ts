@@ -5,9 +5,9 @@
  * 避免代码重复维护
  */
 
-import type { AssistantMermaidRenderer } from "~core/assistant-mermaid-renderer"
 import type { SiteAdapter } from "~adapters/base"
 import { SITE_IDS } from "~constants"
+import { AssistantMermaidRenderer } from "~core/assistant-mermaid-renderer"
 import { CopyManager } from "~core/copy-manager"
 import { LayoutManager } from "~core/layout-manager"
 import { MarkdownFixer } from "~core/markdown-fixer"
@@ -79,23 +79,10 @@ let modules: ModuleInstances = {
 }
 
 let readingHistoryAutoStartTimer: NodeJS.Timeout | null = null
-let assistantMermaidModulePromise: Promise<
-  typeof import("~core/assistant-mermaid-renderer")
-> | null = null
 let assistantMermaidInitPromise: Promise<void> | null = null
 
 function isAssistantMermaidEnabled(settings: Settings): boolean {
   return settings.content?.assistantMermaid ?? true
-}
-
-async function loadAssistantMermaidRendererModule(): Promise<
-  typeof import("~core/assistant-mermaid-renderer")
-> {
-  if (!assistantMermaidModulePromise) {
-    assistantMermaidModulePromise = import("~core/assistant-mermaid-renderer")
-  }
-
-  return assistantMermaidModulePromise
 }
 
 export async function initAssistantMermaidRenderer(ctx: ModulesContext): Promise<void> {
@@ -119,8 +106,6 @@ export async function initAssistantMermaidRenderer(ctx: ModulesContext): Promise
 
   if (!assistantMermaidInitPromise) {
     assistantMermaidInitPromise = (async () => {
-      const { AssistantMermaidRenderer } = await loadAssistantMermaidRendererModule()
-
       if (adapter.getAssistantMermaidSupportMode() !== "fallback") {
         return
       }

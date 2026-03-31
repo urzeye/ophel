@@ -112,6 +112,29 @@ export interface AssistantMermaidBlock {
   source: string
 }
 
+const ASSISTANT_MERMAID_SOURCE_PATTERNS = [
+  /^flowchart\b/i,
+  /^graph\b/i,
+  /^sequenceDiagram\b/i,
+  /^classDiagram(?:-v2)?\b/i,
+  /^stateDiagram(?:-v2)?\b/i,
+  /^erDiagram\b/i,
+  /^journey\b/i,
+  /^gantt\b/i,
+  /^pie\b/i,
+  /^mindmap\b/i,
+  /^timeline\b/i,
+  /^gitGraph\b/i,
+  /^quadrantChart\b/i,
+  /^requirementDiagram\b/i,
+  /^sankey-beta\b/i,
+  /^xychart-beta\b/i,
+  /^block-beta\b/i,
+  /^packet-beta\b/i,
+  /^architecture-beta\b/i,
+  /^c4(?:context|container|component|dynamic|deployment|relationship)\b/i,
+]
+
 export function isAssistantMermaidCandidateElement(element: HTMLElement): boolean {
   const code = (
     element.matches("code") ? element : element.querySelector("code")
@@ -136,6 +159,20 @@ export function isAssistantMermaidCandidateElement(element: HTMLElement): boolea
   )
 }
 
+export function looksLikeAssistantMermaidSource(source: string): boolean {
+  const normalized = source.replace(/\r\n/g, "\n").trim()
+  if (!normalized) return false
+
+  const firstMeaningfulLine = normalized
+    .split("\n")
+    .map((line) => line.trim())
+    .find((line) => line && !line.startsWith("%%"))
+
+  if (!firstMeaningfulLine) return false
+
+  return ASSISTANT_MERMAID_SOURCE_PATTERNS.some((pattern) => pattern.test(firstMeaningfulLine))
+}
+
 export function extractAssistantMermaidSourceFromElement(element: HTMLElement): string | null {
   const code = (
     element.matches("code") ? element : element.querySelector("code")
@@ -148,13 +185,35 @@ export function extractAssistantMermaidSourceFromElement(element: HTMLElement): 
   return source || null
 }
 
+function resolveAssistantMermaidBlockElement(candidate: HTMLElement): HTMLElement | null {
+  const structuredCodeBlock = candidate.closest("code-block, ms-code-block") as HTMLElement | null
+  if (structuredCodeBlock) {
+    return structuredCodeBlock
+  }
+
+  const pre = candidate.closest("pre") as HTMLElement | null
+  if (pre) {
+    return pre
+  }
+
+  const codeMirrorBlock = candidate.closest(".cm-editor, #code-block-viewer") as HTMLElement | null
+  if (codeMirrorBlock) {
+    return codeMirrorBlock
+  }
+
+  return candidate
+}
+
 export function findAssistantMermaidBlocks(root: ParentNode): AssistantMermaidBlock[] {
   const candidates =
-    (DOMToolkit.query("pre, pre code, [data-language], [data-test-language]", {
-      parent: root as Node,
-      all: true,
-      shadow: true,
-    }) as Element[]) || []
+    (DOMToolkit.query(
+      "code-block, ms-code-block, pre, pre code, [data-language], [data-test-language], [data-test-id='code-content'], .cm-content, #code-block-viewer",
+      {
+        parent: root as Node,
+        all: true,
+        shadow: true,
+      },
+    ) as Element[]) || []
 
   const seen = new Set<HTMLElement>()
   const blocks: AssistantMermaidBlock[] = []
@@ -163,12 +222,14 @@ export function findAssistantMermaidBlocks(root: ParentNode): AssistantMermaidBl
     if (!(candidate instanceof HTMLElement)) continue
     if (candidate.closest(".gh-assistant-mermaid")) continue
 
-    const block = (candidate.closest("pre") as HTMLElement | null) || candidate
+    const block = resolveAssistantMermaidBlockElement(candidate)
     if (!block || seen.has(block)) continue
-    if (!isAssistantMermaidCandidateElement(block)) continue
 
     const source = extractAssistantMermaidSourceFromElement(block)
     if (!source) continue
+    if (!isAssistantMermaidCandidateElement(block) && !looksLikeAssistantMermaidSource(source)) {
+      continue
+    }
 
     seen.add(block)
     blocks.push({ element: block, source })

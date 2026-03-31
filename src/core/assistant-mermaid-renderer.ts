@@ -11,6 +11,7 @@ const BLOCK_MANAGED_ATTR = "data-ophel-assistant-mermaid-managed"
 const ORIGINAL_DISPLAY_ATTR = "data-ophel-assistant-mermaid-original-display"
 const PREVIEW_ID_ATTR = "data-ophel-assistant-mermaid-preview-id"
 const PREVIEW_TOKEN_ATTR = "data-ophel-assistant-mermaid-render-token"
+const RUNTIME_ROOT_ATTR = "data-ophel-assistant-mermaid-runner"
 const RUNTIME_VENDOR_PATH = "assets/assistant-mermaid-vendor.js"
 const RUNTIME_RUNNER_PATH = "assets/assistant-mermaid-runner.js"
 const RUNTIME_VENDOR_KEY = "assistantMermaidVendor"
@@ -163,6 +164,10 @@ function getRuntimeAssetUrl(
   return chrome.runtime.getURL(
     kind === RUNTIME_VENDOR_KEY ? RUNTIME_VENDOR_PATH : RUNTIME_RUNNER_PATH,
   )
+}
+
+function isAssistantMermaidRuntimeReady(): boolean {
+  return document.documentElement.getAttribute(RUNTIME_ROOT_ATTR) === "1"
 }
 
 export class AssistantMermaidRenderer {
@@ -568,7 +573,7 @@ export class AssistantMermaidRenderer {
   }
 
   private async ensureRuntime(): Promise<void> {
-    if (window.__ophelAssistantMermaidRunnerReady) {
+    if (isAssistantMermaidRuntimeReady()) {
       return
     }
 
@@ -584,7 +589,7 @@ export class AssistantMermaidRenderer {
         await this.injectScript(vendorUrl, "ophel-assistant-mermaid-vendor")
         await this.injectScript(runnerUrl, "ophel-assistant-mermaid-runner")
 
-        if (!window.__ophelAssistantMermaidRunnerReady) {
+        if (!isAssistantMermaidRuntimeReady()) {
           throw new Error("Assistant Mermaid runner did not initialize")
         }
       })().catch((error) => {

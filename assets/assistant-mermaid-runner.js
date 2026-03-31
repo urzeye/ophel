@@ -7,6 +7,7 @@
   const PREVIEW_TOKEN_ATTR = "data-ophel-assistant-mermaid-render-token"
   const ROOT_ATTR = "data-ophel-assistant-mermaid-runner"
   const READY_FLAG = "__ophelAssistantMermaidRunnerReady"
+  const TRUSTED_TYPES_POLICY_KEY = "__ophelAssistantMermaidTrustedTypesPolicy"
 
   if (window[READY_FLAG]) {
     return
@@ -16,6 +17,100 @@
   document.documentElement?.setAttribute(ROOT_ATTR, "1")
 
   let initializedTheme = null
+
+  function getTrustedTypesPolicy() {
+    if (window[TRUSTED_TYPES_POLICY_KEY]) {
+      return window[TRUSTED_TYPES_POLICY_KEY]
+    }
+
+    const tt = window.trustedTypes
+    if (!tt || typeof tt.createPolicy !== "function") {
+      return null
+    }
+
+    try {
+      const policy = tt.createPolicy("ophel-assistant-mermaid", {
+        createHTML(value) {
+          return value
+        },
+        createScript(value) {
+          return value
+        },
+        createScriptURL(value) {
+          return value
+        },
+      })
+
+      window[TRUSTED_TYPES_POLICY_KEY] = policy
+      return policy
+    } catch (error) {
+      console.warn("[AssistantMermaidRunner] Failed to create Trusted Types policy:", error)
+      return null
+    }
+  }
+
+  function ensureTrustedTypesDefaultPolicy() {
+    const tt = window.trustedTypes
+    if (!tt || typeof tt.createPolicy !== "function") {
+      return
+    }
+
+    try {
+      tt.createPolicy("default", {
+        createHTML(value) {
+          return value
+        },
+        createScript(value) {
+          return value
+        },
+        createScriptURL(value) {
+          return value
+        },
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      if (!/default/i.test(message) && !/already exists/i.test(message)) {
+        console.warn(
+          "[AssistantMermaidRunner] Failed to create default Trusted Types policy:",
+          error,
+        )
+      }
+    }
+  }
+
+  function withTrustedHtmlAssignments(task) {
+    ensureTrustedTypesDefaultPolicy()
+
+    const policy = getTrustedTypesPolicy()
+    if (!policy) {
+      return task()
+    }
+
+    const descriptor = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML")
+    if (!descriptor || typeof descriptor.set !== "function" || descriptor.configurable !== true) {
+      return task()
+    }
+
+    Object.defineProperty(Element.prototype, "innerHTML", {
+      configurable: true,
+      enumerable: descriptor.enumerable === true,
+      get: descriptor.get,
+      set(value) {
+        const nextValue =
+          typeof value === "string"
+            ? policy.createHTML(value)
+            : value
+
+        descriptor.set.call(this, nextValue)
+      },
+    })
+
+    return Promise.resolve()
+      .then(() => task())
+      .finally(() => {
+        Object.defineProperty(Element.prototype, "innerHTML", descriptor)
+      })
+  }
 
   function getMermaid() {
     const mermaid = window.mermaid
@@ -70,6 +165,24 @@
     )
   }
 
+  function applyRenderedSvg(previewElement, svgMarkup) {
+    const parser = new DOMParser()
+    const parsedDocument = parser.parseFromString(svgMarkup, "image/svg+xml")
+    const parseError = parsedDocument.querySelector("parsererror")
+    const svgElement = parsedDocument.documentElement
+
+    if (
+      parseError ||
+      !svgElement ||
+      svgElement.tagName.toLowerCase() !== "svg"
+    ) {
+      throw new Error("Failed to parse rendered SVG")
+    }
+
+    const importedSvg = document.importNode(svgElement, true)
+    previewElement.replaceChildren(importedSvg)
+  }
+
   async function renderMermaid(payload) {
     const { requestId, previewId, source, theme } = payload || {}
 
@@ -94,24 +207,29 @@
         initializedTheme = theme
       }
 
-      if (typeof mermaid.parse === "function") {
-        const parsed = await mermaid.parse(source, { suppressErrors: true })
-        if (parsed === false) {
-          throw new Error("Mermaid parse rejected")
+      await withTrustedHtmlAssignments(async () => {
+        if (typeof mermaid.parse === "function") {
+          const parsed = await mermaid.parse(source, { suppressErrors: true })
+          if (parsed === false) {
+            throw new Error("Mermaid parse rejected")
+          }
         }
-      }
 
-      const renderId = `ophel-assistant-mermaid-${requestId}`
-      const result = await mermaid.render(renderId, source)
-      if (!isLatestRequest(previewElement, requestId)) {
-        postResponse(requestId, true)
-        return
-      }
+        const renderId = `ophel-assistant-mermaid-${requestId}`
+        const result = await mermaid.render(renderId, source)
+        if (!isLatestRequest(previewElement, requestId)) {
+          postResponse(requestId, true)
+          return
+        }
 
-      previewElement.innerHTML = result.svg
-      if (typeof result.bindFunctions === "function" && isLatestRequest(previewElement, requestId)) {
-        result.bindFunctions(previewElement)
-      }
+        applyRenderedSvg(previewElement, result.svg)
+        if (
+          typeof result.bindFunctions === "function" &&
+          isLatestRequest(previewElement, requestId)
+        ) {
+          result.bindFunctions(previewElement)
+        }
+      })
 
       postResponse(requestId, true)
     } catch (error) {
