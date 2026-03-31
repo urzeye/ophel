@@ -473,6 +473,7 @@ export const en = {
   assistantMermaidCodeTab: "Code",
   assistantMermaidCopyCode: "Copy Code",
   assistantMermaidDownloadPng: "Download PNG",
+  assistantMermaidFitToPage: "Fit to Page",
   assistantMermaidDownloadSuccess: "PNG downloaded",
   assistantMermaidDownloadFailed: "PNG download failed",
   watermarkRemovalLabel: "Remove Image Watermark",

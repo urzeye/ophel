@@ -93,6 +93,25 @@ const ASSISTANT_MERMAID_CSS = `
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
+.gh-assistant-mermaid-btn.is-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  padding: 4px 8px;
+}
+
+.gh-assistant-mermaid-btn-icon {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: 0 0 auto;
+}
+
 .gh-assistant-mermaid-btn:hover {
   background: rgba(59, 130, 246, 0.08);
   color: var(--gh-text, #0f172a);
@@ -210,6 +229,23 @@ function isAssistantMermaidRuntimeReady(): boolean {
   return document.documentElement.getAttribute(RUNTIME_ROOT_ATTR) === "1"
 }
 
+function createFitToPageIcon(documentRef: Document): SVGSVGElement {
+  const svg = documentRef.createElementNS(SVG_NS, "svg")
+  svg.setAttribute("viewBox", "0 0 16 16")
+  svg.setAttribute("aria-hidden", "true")
+  svg.setAttribute("focusable", "false")
+  svg.classList.add("gh-assistant-mermaid-btn-icon")
+
+  const path = documentRef.createElementNS(SVG_NS, "path")
+  path.setAttribute(
+    "d",
+    "M6 2.5H2.5V6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10M6.5 6.5 3 3M9.5 6.5 13 3M6.5 9.5 3 13M9.5 9.5 13 13",
+  )
+
+  svg.appendChild(path)
+  return svg
+}
+
 export class AssistantMermaidRenderer {
   private adapter: SiteAdapter
   private enabled: boolean
@@ -301,6 +337,9 @@ export class AssistantMermaidRenderer {
       const downloadButton = panel.querySelector(
         "[data-mermaid-action='download']",
       ) as HTMLButtonElement | null
+      const zoomResetButton = panel.querySelector(
+        "[data-mermaid-action='zoom-reset']",
+      ) as HTMLButtonElement | null
 
       if (previewButton) {
         previewButton.textContent = t("assistantMermaidPreviewTab")
@@ -316,6 +355,10 @@ export class AssistantMermaidRenderer {
 
       if (downloadButton) {
         downloadButton.textContent = t("assistantMermaidDownloadPng")
+      }
+
+      if (zoomResetButton) {
+        this.configureZoomResetButton(zoomResetButton)
       }
     })
   }
@@ -591,9 +634,9 @@ export class AssistantMermaidRenderer {
 
     const zoomResetButton = document.createElement("button")
     zoomResetButton.type = "button"
-    zoomResetButton.className = "gh-assistant-mermaid-btn"
+    zoomResetButton.className = "gh-assistant-mermaid-btn is-icon"
     zoomResetButton.dataset.mermaidAction = "zoom-reset"
-    zoomResetButton.textContent = "100%"
+    this.configureZoomResetButton(zoomResetButton)
 
     const zoomInButton = document.createElement("button")
     zoomInButton.type = "button"
@@ -622,6 +665,14 @@ export class AssistantMermaidRenderer {
     this.blockPanels.set(block, panel)
     this.panelBlocks.set(panel, block)
     return panel
+  }
+
+  private configureZoomResetButton(button: HTMLButtonElement) {
+    const label = t("assistantMermaidFitToPage")
+    button.classList.add("is-icon")
+    button.setAttribute("aria-label", label)
+    button.title = label
+    button.replaceChildren(createFitToPageIcon(button.ownerDocument || document))
   }
 
   private ensurePreviewId(preview: HTMLElement): string {

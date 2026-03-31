@@ -467,6 +467,7 @@ export const ja = {
   assistantMermaidCodeTab: "コード",
   assistantMermaidCopyCode: "コードをコピー",
   assistantMermaidDownloadPng: "PNGをダウンロード",
+  assistantMermaidFitToPage: "ページに合わせる",
   assistantMermaidDownloadSuccess: "PNGをダウンロードしました",
   assistantMermaidDownloadFailed: "PNGのダウンロードに失敗しました",
   watermarkRemovalLabel: "画像の透かし除去",

@@ -594,6 +594,7 @@ export const zhCN = {
   assistantMermaidCodeTab: "代码",
   assistantMermaidCopyCode: "复制代码",
   assistantMermaidDownloadPng: "下载 PNG",
+  assistantMermaidFitToPage: "适应页面",
   assistantMermaidDownloadSuccess: "PNG 下载成功",
   assistantMermaidDownloadFailed: "PNG 下载失败",
   watermarkRemovalLabel: "移除图片水印",

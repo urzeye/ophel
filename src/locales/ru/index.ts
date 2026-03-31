@@ -451,6 +451,7 @@ export const ru = {
   assistantMermaidCodeTab: "Код",
   assistantMermaidCopyCode: "Копировать код",
   assistantMermaidDownloadPng: "Скачать PNG",
+  assistantMermaidFitToPage: "Уместить в экран",
   assistantMermaidDownloadSuccess: "PNG скачан",
   assistantMermaidDownloadFailed: "Не удалось скачать PNG",
   watermarkRemovalLabel: "Удалять вотермарки",

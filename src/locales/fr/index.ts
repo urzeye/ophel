@@ -454,6 +454,7 @@ export const fr = {
   assistantMermaidCodeTab: "Code",
   assistantMermaidCopyCode: "Copier le code",
   assistantMermaidDownloadPng: "Télécharger PNG",
+  assistantMermaidFitToPage: "Ajuster a la page",
   assistantMermaidDownloadSuccess: "PNG téléchargé",
   assistantMermaidDownloadFailed: "Échec du téléchargement PNG",
   watermarkRemovalLabel: "Supprimer les Filigranes",

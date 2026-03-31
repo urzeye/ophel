@@ -453,6 +453,7 @@ export const pt = {
   assistantMermaidCodeTab: "Codigo",
   assistantMermaidCopyCode: "Copiar codigo",
   assistantMermaidDownloadPng: "Baixar PNG",
+  assistantMermaidFitToPage: "Ajustar a pagina",
   assistantMermaidDownloadSuccess: "PNG baixado",
   assistantMermaidDownloadFailed: "Falha ao baixar PNG",
   watermarkRemovalLabel: "Remover Marcas d'Água",

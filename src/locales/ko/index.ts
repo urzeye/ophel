@@ -456,6 +456,7 @@ export const ko = {
   assistantMermaidCodeTab: "코드",
   assistantMermaidCopyCode: "코드 복사",
   assistantMermaidDownloadPng: "PNG 다운로드",
+  assistantMermaidFitToPage: "페이지에 맞춤",
   assistantMermaidDownloadSuccess: "PNG 다운로드 완료",
   assistantMermaidDownloadFailed: "PNG 다운로드 실패",
   watermarkRemovalLabel: "이미지 워터마크 제거",

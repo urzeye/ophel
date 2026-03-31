@@ -747,6 +747,7 @@ export const zhTW = {
   assistantMermaidCodeTab: "程式碼",
   assistantMermaidCopyCode: "複製程式碼",
   assistantMermaidDownloadPng: "下載 PNG",
+  assistantMermaidFitToPage: "適應頁面",
   assistantMermaidDownloadSuccess: "PNG 下載成功",
   assistantMermaidDownloadFailed: "PNG 下載失敗",
   formulaCopyLabel: "雙擊複製公式",
