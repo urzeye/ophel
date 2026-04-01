@@ -448,8 +448,9 @@ export const ru = {
   assistantMermaidLabel: "Рендер Mermaid в ответах ИИ",
   assistantMermaidDesc:
     "Автоматически отображает диаграммы Mermaid в ответах ИИ на сайтах без нативной поддержки Mermaid",
-  userQueryMarkdownLabel: "Markdown у меня",
-  userQueryMarkdownDesc: "Форматировать и мои сообщения",
+  userQueryMarkdownLabel: "Улучшить вид вопросов пользователя",
+  userQueryMarkdownDesc:
+    "Применяет Markdown-оформление и рендеринг формул LaTeX к вопросам пользователя",
   assistantMermaidPreviewTab: "Диаграмма",
   assistantMermaidCodeTab: "Код",
   assistantMermaidCopyCode: "Копировать код",

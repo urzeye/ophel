@@ -451,8 +451,9 @@ export const de = {
   assistantMermaidLabel: "Mermaid-Rendering fur KI-Antworten",
   assistantMermaidDesc:
     "Rendert Mermaid-Diagramme in KI-Antworten automatisch auf Websites ohne native Mermaid-Unterstutzung",
-  userQueryMarkdownLabel: "Benutzer-Markdown",
-  userQueryMarkdownDesc: "Auch eigene Nachrichten formatieren",
+  userQueryMarkdownLabel: "Darstellung eigener Fragen optimieren",
+  userQueryMarkdownDesc:
+    "Wendet Markdown-Formatierung und LaTeX-Mathe-Rendering auf eigene Fragen an",
   assistantMermaidPreviewTab: "Diagramm",
   assistantMermaidCodeTab: "Code",
   assistantMermaidCopyCode: "Code kopieren",

@@ -1504,8 +1504,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           />
 
           <ToggleRow
-            label={t("userQueryMarkdownLabel") || "用户问题 Markdown 渲染"}
-            description={t("userQueryMarkdownDesc") || "将用户输入的 Markdown 渲染为富文本"}
+            label={t("userQueryMarkdownLabel") || "用户提问样式优化"}
+            description={
+              t("userQueryMarkdownDesc") || "为用户提问启用 Markdown 排版与 LaTeX 数学公式渲染"
+            }
             settingId="content-user-query-markdown"
             checked={settings.content?.userQueryMarkdown ?? true}
             onChange={() =>

@@ -610,8 +610,8 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   },
   {
     settingId: "content-user-query-markdown",
-    title: "用户问题复制为 Markdown",
-    keywords: ["content", "markdown", "user query", "用户问题"],
+    title: "用户提问样式优化",
+    keywords: ["content", "markdown", "latex", "math", "user query", "用户提问", "数学公式"],
   },
   {
     settingId: "content-formula-copy",

@@ -453,8 +453,8 @@ export const ko = {
   assistantMermaidLabel: "AI 응답 Mermaid 렌더링",
   assistantMermaidDesc:
     "Mermaid를 기본 지원하지 않는 사이트에서 AI 응답의 Mermaid 다이어그램을 자동으로 렌더링합니다",
-  userQueryMarkdownLabel: "사용자 쿼리 Markdown 렌더링",
-  userQueryMarkdownDesc: "사용자 쿼리의 Markdown 구문을 서식 있는 텍스트로 렌더링",
+  userQueryMarkdownLabel: "사용자 질문 스타일 최적화",
+  userQueryMarkdownDesc: "사용자 질문에 Markdown 서식과 LaTeX 수식 렌더링을 적용합니다",
   assistantMermaidPreviewTab: "다이어그램",
   assistantMermaidCodeTab: "코드",
   assistantMermaidCopyCode: "코드 복사",

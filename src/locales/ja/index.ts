@@ -464,8 +464,8 @@ export const ja = {
   assistantMermaidLabel: "AI回答のMermaid描画",
   assistantMermaidDesc:
     "Mermaidをネイティブ描画しないサイトで、AI回答内のMermaid図を自動描画します",
-  userQueryMarkdownLabel: "ユーザー入力のMarkdown描画",
-  userQueryMarkdownDesc: "ユーザーの発言に対してもMarkdown文法を適用し描画します",
+  userQueryMarkdownLabel: "ユーザー入力の表示最適化",
+  userQueryMarkdownDesc: "ユーザー入力に Markdown 整形と LaTeX 数式レンダリングを適用します",
   assistantMermaidPreviewTab: "図",
   assistantMermaidCodeTab: "コード",
   assistantMermaidCopyCode: "コードをコピー",

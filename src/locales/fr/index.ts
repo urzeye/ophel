@@ -451,8 +451,9 @@ export const fr = {
   assistantMermaidLabel: "Rendu Mermaid des reponses IA",
   assistantMermaidDesc:
     "Affiche automatiquement les diagrammes Mermaid dans les reponses IA sur les sites sans prise en charge native de Mermaid",
-  userQueryMarkdownLabel: "Markdown chez l'Utilisateur",
-  userQueryMarkdownDesc: "Formater vos messages également",
+  userQueryMarkdownLabel: "Optimiser l'affichage des questions",
+  userQueryMarkdownDesc:
+    "Applique le formatage Markdown et le rendu mathématique LaTeX aux questions utilisateur",
   assistantMermaidPreviewTab: "Diagramme",
   assistantMermaidCodeTab: "Code",
   assistantMermaidCopyCode: "Copier le code",
