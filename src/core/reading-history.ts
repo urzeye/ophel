@@ -20,6 +20,10 @@ import type { Settings } from "~utils/storage"
 export type { ReadingPosition }
 
 export class ReadingHistoryManager {
+  private static readonly HYDRATION_TIMEOUT_MS = 5000
+  private static readonly SESSION_READY_TIMEOUT_MS = 3000
+  private static readonly SESSION_READY_POLL_MS = 100
+
   private adapter: SiteAdapter
   private settings: Settings["readingHistory"]
 
@@ -44,17 +48,34 @@ export class ReadingHistoryManager {
   /**
    * 等待 store hydration 完成
    */
-  async waitForHydration() {
-    if (!useReadingHistoryStore.getState()._hasHydrated) {
-      await new Promise<void>((resolve) => {
-        const unsubscribe = useReadingHistoryStore.subscribe((state) => {
-          if (state._hasHydrated) {
-            unsubscribe()
-            resolve()
-          }
-        })
-      })
+  async waitForHydration(timeoutMs = ReadingHistoryManager.HYDRATION_TIMEOUT_MS): Promise<boolean> {
+    if (useReadingHistoryStore.getState()._hasHydrated) {
+      return true
     }
+
+    return new Promise<boolean>((resolve) => {
+      let resolved = false
+      let timeoutId = 0
+
+      const finish = (value: boolean) => {
+        if (resolved) return
+        resolved = true
+        window.clearTimeout(timeoutId)
+        unsubscribe()
+        resolve(value)
+      }
+
+      const unsubscribe = useReadingHistoryStore.subscribe((state) => {
+        if (state._hasHydrated) {
+          finish(true)
+        }
+      })
+
+      timeoutId = window.setTimeout(() => {
+        useReadingHistoryStore.setState({ _hasHydrated: true })
+        finish(false)
+      }, timeoutMs)
+    })
   }
 
   updateSettings(settings: Settings["readingHistory"]) {
@@ -69,7 +90,7 @@ export class ReadingHistoryManager {
   startRecording() {
     if (this.isRecording) return
     this.isRecording = true
-    this.currentSessionId = this.adapter.getSessionId() // 锁定当前会话 ID
+    this.currentSessionId = null
 
     this.scrollHandler = (e: Event) => this.handleScroll(e)
 
@@ -117,6 +138,7 @@ export class ReadingHistoryManager {
   stopRecording() {
     if (!this.isRecording) return
     this.isRecording = false
+    this.currentSessionId = null
 
     if (this.scrollHandler) {
       if (this.listeningContainer) {
@@ -173,10 +195,45 @@ export class ReadingHistoryManager {
     }
   }
 
-  private getKey(): string {
-    const sessionId = this.adapter.getSessionId() || "unknown"
+  private getKey(sessionId = this.getSessionId()): string {
+    const normalizedSessionId = sessionId || "unknown"
     const siteId = this.adapter.getSiteId()
-    return `${siteId}:${sessionId}`
+    return `${siteId}:${normalizedSessionId}`
+  }
+
+  private getSessionId(): string {
+    return this.adapter.getSessionId()?.trim() || ""
+  }
+
+  private lockCurrentSessionId(sessionId: string) {
+    if (!sessionId) return
+    if (!this.currentSessionId) {
+      this.currentSessionId = sessionId
+    }
+  }
+
+  private async waitForReadySessionId(
+    timeoutMs = ReadingHistoryManager.SESSION_READY_TIMEOUT_MS,
+  ): Promise<string> {
+    const deadline = Date.now() + timeoutMs
+
+    while (Date.now() <= deadline) {
+      const sessionId = this.getSessionId()
+      if (sessionId && !this.adapter.isNewConversation()) {
+        return sessionId
+      }
+
+      await new Promise<void>((resolve) =>
+        window.setTimeout(resolve, ReadingHistoryManager.SESSION_READY_POLL_MS),
+      )
+    }
+
+    const sessionId = this.getSessionId()
+    if (sessionId && !this.adapter.isNewConversation()) {
+      return sessionId
+    }
+
+    return ""
   }
 
   private saveProgress() {
@@ -184,16 +241,19 @@ export class ReadingHistoryManager {
     if (this.isRestoring) {
       return
     }
+    const sessionId = this.getSessionId()
     // 检查会话一致性：如果当前 URL 的会话 ID 与记录时不一致，说明发生了切换但还没重置
-    if (this.currentSessionId && this.adapter.getSessionId() !== this.currentSessionId) {
+    if (this.currentSessionId && sessionId && sessionId !== this.currentSessionId) {
       return
     }
     if (Date.now() < this.ignoreScrollUntil) {
       return
     }
-    if (this.adapter.isNewConversation()) {
+    if (!sessionId || this.adapter.isNewConversation()) {
       return
     }
+
+    this.lockCurrentSessionId(sessionId)
 
     const container = this.adapter.getScrollContainer()
     const scrollTop = container ? container.scrollTop : window.scrollY
@@ -211,7 +271,7 @@ export class ReadingHistoryManager {
       }
     }
 
-    const key = this.getKey()
+    const key = this.getKey(sessionId)
 
     let anchorInfo = {}
     try {
@@ -236,15 +296,17 @@ export class ReadingHistoryManager {
       return false
     }
 
-    // 如果是新会话（无 ID），不进行恢复
-    if (this.adapter.isNewConversation()) {
-      return false
-    }
-
     // 确保 store 已 hydrated
     await this.waitForHydration()
 
-    const key = this.getKey()
+    const sessionId = await this.waitForReadySessionId()
+    if (!sessionId) {
+      return false
+    }
+
+    this.lockCurrentSessionId(sessionId)
+
+    const key = this.getKey(sessionId)
     const data = getReadingHistoryStore().getPosition(key)
 
     if (!data) {

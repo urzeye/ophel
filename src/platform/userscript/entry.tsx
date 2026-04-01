@@ -409,6 +409,7 @@ async function init() {
   const { useTagsStore } = await import("~stores/tags-store")
   const { usePromptsStore } = await import("~stores/prompts-store")
   const { useClaudeSessionKeysStore } = await import("~stores/claude-sessionkeys-store")
+  const { useReadingHistoryStore } = await import("~stores/reading-history-store")
 
   // 等待所有 store hydration 完成
   const waitForHydration = (store: {
@@ -456,6 +457,7 @@ async function init() {
     waitForHydration(useTagsStore),
     waitForHydration(usePromptsStore),
     waitForHydration(useClaudeSessionKeysStore),
+    waitForHydration(useReadingHistoryStore),
   ])
 
   // 获取用户设置
