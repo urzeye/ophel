@@ -5,6 +5,20 @@ export const USERSCRIPT_MERMAID_RUNNER_BRANCH = "main"
 export const USERSCRIPT_MERMAID_TINY_VERSION = "11.13.0"
 export const USERSCRIPT_MERMAID_RUNNER_CDN_URL = `https://cdn.jsdelivr.net/gh/${USERSCRIPT_MERMAID_RUNNER_REPOSITORY}@${USERSCRIPT_MERMAID_RUNNER_BRANCH}/assets/assistant-mermaid-runner.js`
 export const USERSCRIPT_MERMAID_VENDOR_CDN_URL = `https://cdn.jsdelivr.net/npm/@mermaid-js/tiny@${USERSCRIPT_MERMAID_TINY_VERSION}/dist/mermaid.tiny.js`
+export const USERSCRIPT_SUPPORTED_LOCALES = [
+  "zh-CN",
+  "zh-TW",
+  "en",
+  "ja",
+  "ko",
+  "fr",
+  "de",
+  "ru",
+  "es",
+  "pt",
+] as const
+
+export type UserscriptLocale = (typeof USERSCRIPT_SUPPORTED_LOCALES)[number]
 
 export const USERSCRIPT_RESOURCE_DEFINITIONS = {
   styles: {
@@ -51,10 +65,56 @@ export const USERSCRIPT_RESOURCE_DEFINITIONS = {
   },
 } as const
 
+export const USERSCRIPT_LOCALE_RESOURCE_DEFINITIONS = {
+  "zh-CN": {
+    metaName: "ophelLocaleZhCN",
+    fileName: "ophel.locale.zh-CN.json",
+  },
+  "zh-TW": {
+    metaName: "ophelLocaleZhTW",
+    fileName: "ophel.locale.zh-TW.json",
+  },
+  en: {
+    metaName: "ophelLocaleEn",
+    fileName: "ophel.locale.en.json",
+  },
+  ja: {
+    metaName: "ophelLocaleJa",
+    fileName: "ophel.locale.ja.json",
+  },
+  ko: {
+    metaName: "ophelLocaleKo",
+    fileName: "ophel.locale.ko.json",
+  },
+  fr: {
+    metaName: "ophelLocaleFr",
+    fileName: "ophel.locale.fr.json",
+  },
+  de: {
+    metaName: "ophelLocaleDe",
+    fileName: "ophel.locale.de.json",
+  },
+  ru: {
+    metaName: "ophelLocaleRu",
+    fileName: "ophel.locale.ru.json",
+  },
+  es: {
+    metaName: "ophelLocaleEs",
+    fileName: "ophel.locale.es.json",
+  },
+  pt: {
+    metaName: "ophelLocalePt",
+    fileName: "ophel.locale.pt.json",
+  },
+} as const
+
 export type UserscriptResourceKey = keyof typeof USERSCRIPT_RESOURCE_DEFINITIONS
 
 export type UserscriptResourceMetaName =
   (typeof USERSCRIPT_RESOURCE_DEFINITIONS)[UserscriptResourceKey]["metaName"]
+
+export type UserscriptLocaleResourceMetaName =
+  (typeof USERSCRIPT_LOCALE_RESOURCE_DEFINITIONS)[UserscriptLocale]["metaName"]
 
 export function getUserscriptAssetBaseUrl(): string {
   const explicitBaseUrl =
@@ -82,4 +142,21 @@ export function getUserscriptResourceUrls(
       ]
     }),
   ) as Record<UserscriptResourceMetaName, string>
+}
+
+export function getUserscriptLocaleResourceUrls(
+  resourcePaths: Partial<Record<UserscriptLocaleResourceMetaName, string>>,
+): Record<UserscriptLocaleResourceMetaName, string> {
+  const baseUrl = getUserscriptAssetBaseUrl()
+
+  return Object.fromEntries(
+    USERSCRIPT_SUPPORTED_LOCALES.map((locale) => {
+      const definition = USERSCRIPT_LOCALE_RESOURCE_DEFINITIONS[locale]
+      return [definition.metaName, `${baseUrl}/${resourcePaths[definition.metaName]}`]
+    }),
+  ) as Record<UserscriptLocaleResourceMetaName, string>
+}
+
+export function isUserscriptLocale(value: string): value is UserscriptLocale {
+  return Object.prototype.hasOwnProperty.call(USERSCRIPT_LOCALE_RESOURCE_DEFINITIONS, value)
 }

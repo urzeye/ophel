@@ -1,7 +1,7 @@
 {
   "name": "ophel",
   "displayName": "Ophel Atlas - AI 对话结构化与导航工具",
-  "version": "1.0.28",
+  "version": "1.0.29",
   "description": "将 AI 对话转化为可阅读、可导航、可复用的知识内容。通过实时大纲、会话文件夹与 Prompt 词库，让对话告别无限滚动，成为可组织、可沉淀的工作流，适用于高频使用 AI 的学习与工作场景。",
   "author": "urzeye",
   "license": "GPL-3.0-only",
@@ -27,7 +27,7 @@
     "dev:userscript": "vite --config vite.userscript.config.ts",
     "build:userscript": "vite build --config vite.userscript.config.ts",
     "build:userscript:local": "node -e \"const { spawnSync } = require('node:child_process'); const path = require('node:path'); const vitePkg = require.resolve('vite/package.json'); const viteBin = path.join(path.dirname(vitePkg), 'bin', 'vite.js'); const result = spawnSync(process.execPath, [viteBin, 'build', '--config', 'vite.userscript.config.ts'], { stdio: 'inherit', env: { ...process.env, USERSCRIPT_ASSET_BASE_URL: 'http://127.0.0.1:8123' } }); process.exit(result.status ?? 1);\"",
-    "serve:userscript:assets": "node -e \"const http = require('node:http'); const fs = require('node:fs'); const path = require('node:path'); const root = path.resolve('build/userscript'); const mimeTypes = { '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.ogg': 'audio/ogg', '.mp3': 'audio/mpeg', '.json': 'application/json; charset=utf-8', '.js': 'application/javascript; charset=utf-8' }; http.createServer((req, res) => { const requestPath = decodeURIComponent((req.url || '/').split('?')[0]); const normalizedPath = path.normalize(requestPath).replace(/^([/\\\\])+/, ''); const relativePath = normalizedPath || 'ophel.user.js'; const filePath = path.resolve(root, relativePath); if (!filePath.startsWith(root)) { res.writeHead(403); res.end('Forbidden'); return; } fs.readFile(filePath, (error, data) => { if (error) { res.writeHead(404); res.end('Not Found'); return; } res.writeHead(200, { 'Content-Type': mimeTypes[path.extname(filePath)] || 'application/octet-stream', 'Access-Control-Allow-Origin': '*' }); res.end(data); }); }).listen(8123, '127.0.0.1', () => { console.log('Serving userscript assets at http://127.0.0.1:8123'); });\"",
+    "serve:userscript:assets": "node scripts/serve-userscript-assets.mjs",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",

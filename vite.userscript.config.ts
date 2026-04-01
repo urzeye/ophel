@@ -8,7 +8,12 @@ import monkey from "vite-plugin-monkey"
 
 import {
   USERSCRIPT_RESOURCE_DEFINITIONS,
+  USERSCRIPT_LOCALE_RESOURCE_DEFINITIONS,
+  USERSCRIPT_SUPPORTED_LOCALES,
+  type UserscriptLocale,
+  type UserscriptLocaleResourceMetaName,
   type UserscriptResourceMetaName,
+  getUserscriptLocaleResourceUrls,
   getUserscriptResourceUrls,
 } from "./src/platform/userscript/resource-manifest"
 import {
@@ -16,12 +21,23 @@ import {
   KATEX_CDN_JS_URL,
   KATEX_CSS_RESOURCE_NAME,
 } from "./src/platform/userscript/katex-cdn"
+import { resources as localeResources } from "./src/locales/resources"
 
 // ========== Dynamic Metadata Loading ==========
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, "package.json"), "utf-8"))
+const reactPkg = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, "node_modules/react/package.json"), "utf-8"),
+)
+const reactDomPkg = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, "node_modules/react-dom/package.json"), "utf-8"),
+)
 const author: string = pkg.author
 const version: string = pkg.version
 const license: string = pkg.license
+const reactVersion: string = reactPkg.version
+const reactDomVersion: string = reactDomPkg.version
+const reactCdnUrl = `https://cdn.jsdelivr.net/npm/react@${reactVersion}/umd/react.production.min.js`
+const reactDomCdnUrl = `https://cdn.jsdelivr.net/npm/react-dom@${reactDomVersion}/umd/react-dom.production.min.js`
 
 type UserscriptMetadata = {
   name: Record<string, string>
@@ -180,6 +196,45 @@ const userscriptResourcePaths = Object.fromEntries(
   Object.values(userscriptResourceFiles).map(({ metaName, relativePath }) => [metaName, relativePath]),
 ) as Record<UserscriptResourceMetaName, string>
 
+const userscriptLocaleResourceFiles = Object.fromEntries(
+  USERSCRIPT_SUPPORTED_LOCALES.map((locale) => {
+    const definition = USERSCRIPT_LOCALE_RESOURCE_DEFINITIONS[locale]
+    const content = JSON.stringify(
+      localeResources[locale as keyof typeof localeResources],
+      null,
+      0,
+    )
+    const fileName = createHashedFileName(definition.fileName, content)
+
+    return [
+      locale,
+      {
+        ...definition,
+        locale,
+        content,
+        fileName,
+        relativePath: `${userscriptAssetOutDirName}/${fileName}`,
+      },
+    ]
+  }),
+) as Record<
+  UserscriptLocale,
+  {
+    locale: UserscriptLocale
+    metaName: UserscriptLocaleResourceMetaName
+    fileName: string
+    content: string
+    relativePath: string
+  }
+>
+
+const userscriptLocaleResourcePaths = Object.fromEntries(
+  Object.values(userscriptLocaleResourceFiles).map(({ metaName, relativePath }) => [
+    metaName,
+    relativePath,
+  ]),
+) as Record<UserscriptLocaleResourceMetaName, string>
+
 function emitUserscriptAssets(): Plugin {
   return {
     name: "ophel-userscript-assets",
@@ -190,6 +245,10 @@ function emitUserscriptAssets(): Plugin {
         fs.writeFileSync(path.join(userscriptBuildOutDir, relativePath), content)
       }
 
+      for (const { relativePath, content } of Object.values(userscriptLocaleResourceFiles)) {
+        fs.writeFileSync(path.join(userscriptBuildOutDir, relativePath), content)
+      }
+
       fs.writeFileSync(
         path.join(userscriptAssetOutDir, userscriptAssetManifestFileName),
         JSON.stringify(
@@ -197,10 +256,9 @@ function emitUserscriptAssets(): Plugin {
             generatedAt: new Date().toISOString(),
             version,
             resources: Object.fromEntries(
-              Object.values(userscriptResourceFiles).map(({ metaName, fileName, relativePath }) => [
-                metaName,
-                { fileName, relativePath },
-              ]),
+              [...Object.values(userscriptResourceFiles), ...Object.values(userscriptLocaleResourceFiles)].map(
+                ({ metaName, fileName, relativePath }) => [metaName, { fileName, relativePath }],
+              ),
             ),
           },
           null,
@@ -213,6 +271,7 @@ function emitUserscriptAssets(): Plugin {
 }
 
 const userscriptResourceUrls = getUserscriptResourceUrls(userscriptResourcePaths)
+const userscriptLocaleResourceUrls = getUserscriptLocaleResourceUrls(userscriptLocaleResourcePaths)
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -269,11 +328,14 @@ export default defineConfig({
         homepageURL: "https://github.com/urzeye/ophel",
         supportURL: "https://github.com/urzeye/ophel/issues",
         require: [
+          reactCdnUrl,
+          reactDomCdnUrl,
           "https://cdn.jsdelivr.net/npm/fuzzysort@3.1.0/fuzzysort.min.js",
           KATEX_CDN_JS_URL,
         ],
         resource: {
           ...userscriptResourceUrls,
+          ...userscriptLocaleResourceUrls,
           [KATEX_CSS_RESOURCE_NAME]: KATEX_CDN_CSS_URL,
         },
       },
@@ -286,9 +348,17 @@ export default defineConfig({
   resolve: {
     alias: {
       // ========== Userscript Polyfills ==========
+      "react/jsx-runtime": path.resolve(__dirname, "src/platform/userscript/react-jsx-runtime.ts"),
+      "react-dom/client": path.resolve(
+        __dirname,
+        "src/platform/userscript/react-dom-client-global.ts",
+      ),
+      "react-dom": path.resolve(__dirname, "src/platform/userscript/react-dom-global.ts"),
+      react: path.resolve(__dirname, "src/platform/userscript/react-global.ts"),
       // 替换 @plasmohq/storage 为 GM_* 实现
       "@plasmohq/storage": path.resolve(__dirname, "src/platform/userscript/storage-polyfill.ts"),
       fuzzysort: path.resolve(__dirname, "src/platform/userscript/fuzzysort-global.ts"),
+      "~utils/i18n": path.resolve(__dirname, "src/platform/userscript/i18n.ts"),
       "~platform/katex": path.resolve(__dirname, "src/platform/userscript/katex.ts"),
       // 注意：chrome-adapter.ts 已内置跨平台支持（通过 __PLATFORM__ 判断），无需 alias 替换
 

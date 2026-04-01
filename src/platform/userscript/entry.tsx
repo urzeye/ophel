@@ -2,6 +2,7 @@ import React from "react"
 import ReactDOM from "react-dom/client"
 
 import { USERSCRIPT_RESOURCE_DEFINITIONS } from "./resource-manifest"
+import { getInitialUserscriptLanguage, primeUserscriptLocales, subscribeI18nChanges } from "./i18n"
 
 const USERSCRIPT_OBJECT_URLS = new Set<string>()
 
@@ -133,6 +134,8 @@ window.__OPHEL_USERSCRIPT_ASSET_URLS__ = {
   assistantMermaidVendor:
     getUserscriptResourceUrl(USERSCRIPT_RESOURCE_DEFINITIONS.assistantMermaidVendor.metaName) || "",
 }
+
+primeUserscriptLocales(getInitialUserscriptLanguage())
 
 /**
  * Ophel - Userscript Entry Point
@@ -392,8 +395,22 @@ async function init() {
       container.id = "ophel-app-container"
       shadowRoot.appendChild(container)
 
+      const UserscriptAppRoot = () => {
+        const [, forceUpdate] = React.useState(0)
+
+        React.useEffect(
+          () =>
+            subscribeI18nChanges(() => {
+              forceUpdate((version) => version + 1)
+            }),
+          [],
+        )
+
+        return React.createElement(App)
+      }
+
       const root = ReactDOM.createRoot(container)
-      root.render(React.createElement(App))
+      root.render(React.createElement(UserscriptAppRoot))
     } catch (error) {
       cleanupMountWatchers()
       throw error
