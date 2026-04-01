@@ -16,7 +16,7 @@ import {
   ThemeLightIcon,
 } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
-import { SITE_IDS, TAB_IDS } from "~constants"
+import { TAB_IDS } from "~constants"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
 import type { PromptManager } from "~core/prompt-manager"
@@ -54,6 +54,20 @@ interface MainPanelProps {
   onOpenSettings?: () => void
   onMouseEnter?: React.MouseEventHandler<HTMLDivElement>
   onMouseLeave?: React.MouseEventHandler<HTMLDivElement>
+}
+
+const isEditableKeyboardTarget = (target: EventTarget | null): target is HTMLElement => {
+  if (!(target instanceof HTMLElement)) {
+    return false
+  }
+
+  return (
+    target.tagName === "INPUT" ||
+    target.tagName === "TEXTAREA" ||
+    target.tagName === "SELECT" ||
+    target.isContentEditable ||
+    target.getAttribute("contenteditable") === "true"
+  )
 }
 
 export const MainPanel: React.FC<MainPanelProps> = ({
@@ -152,44 +166,43 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     }
   }, [tabOrder])
 
-  // 防止 Grok 和 Claude 在 keydown 时抢占焦点
-  // 只在 Grok 和 Claude 站点生效
+  // 防止原生站点在面板输入时抢占焦点或吞掉按键
   useEffect(() => {
-    const siteId = adapter?.getSiteId()
-
-    if (isOpen && (siteId === SITE_IDS.GROK || siteId === SITE_IDS.CLAUDE)) {
-      const panel = panelRef.current
-      if (!panel) {
-        return
-      }
-
-      const handleKeyDown = (e: KeyboardEvent) => {
-        const target = e.target as HTMLElement
-
-        const isInputElement =
-          target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.tagName === "SELECT" ||
-          target.getAttribute("contenteditable") === "true"
-
-        if (!isInputElement) return
-
-        // 阻止事件传播到 Grok 的监听器
-        e.stopPropagation()
-        e.stopImmediatePropagation()
-      }
-
-      // 直接在面板元素上监听，而不是 document
-      // 这样可以在 Shadow DOM 内部捕获事件
-      panel.addEventListener("keydown", handleKeyDown, true)
-      panel.addEventListener("keypress", handleKeyDown, true)
-
-      return () => {
-        panel.removeEventListener("keydown", handleKeyDown, true)
-        panel.removeEventListener("keypress", handleKeyDown, true)
-      }
+    if (!isOpen) {
+      return
     }
-  }, [isOpen, adapter, panelRef])
+
+    const panel = panelRef.current
+    if (!panel) {
+      return
+    }
+
+    const handleEditableKeyEvent = (e: KeyboardEvent) => {
+      const path = typeof e.composedPath === "function" ? e.composedPath() : []
+      const target =
+        path.find((node): node is HTMLElement => node instanceof HTMLElement) ||
+        (e.target instanceof HTMLElement ? e.target : null)
+
+      if (!isEditableKeyboardTarget(target)) return
+
+      // 阻止事件继续传播到宿主页面的全局键盘监听器
+      e.stopPropagation()
+      e.stopImmediatePropagation()
+    }
+
+    const guardedEvents: Array<keyof HTMLElementEventMap> = ["keydown", "keypress", "keyup"]
+
+    // 直接在面板元素上监听，覆盖 Shadow DOM 内部的输入控件
+    guardedEvents.forEach((eventName) => {
+      panel.addEventListener(eventName, handleEditableKeyEvent, true)
+    })
+
+    return () => {
+      guardedEvents.forEach((eventName) => {
+        panel.removeEventListener(eventName, handleEditableKeyEvent, true)
+      })
+    }
+  }, [isOpen, panelRef])
 
   // === 锚点状态（使用全局存储） ===
   const anchorPosition = useSyncExternalStore(anchorStore.subscribe, anchorStore.getSnapshot)
