@@ -15,7 +15,7 @@ import {
   smartScrollTo,
   smartScrollToBottom,
 } from "~utils/scroll-helper"
-import { DEFAULT_SETTINGS } from "~utils/storage"
+import { DEFAULT_SETTINGS, getSiteTheme } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
 interface QuickButtonsProps {
@@ -57,11 +57,20 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 }) => {
   const { settings } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
+  const adapter = getAdapter()
   const collapsedButtonsOrder = currentSettings.collapsedButtons || []
   const quickButtonsSide = currentSettings.panel?.defaultPosition ?? "right"
   const quickButtonsPositionStyle =
     quickButtonsSide === "left" ? { left: "16px", right: "auto" } : { right: "16px", left: "auto" }
   const quickButtonsOpacity = Math.min(Math.max(currentSettings.quickButtonsOpacity ?? 1, 0.4), 1)
+  const siteId = adapter?.getSiteId() || "_default"
+  const siteTheme = getSiteTheme(currentSettings, siteId)
+  const resolvedThemeMode = themeMode || (siteTheme.mode === "dark" ? "dark" : "light")
+  const currentThemeStyleId =
+    resolvedThemeMode === "light"
+      ? siteTheme.lightStyleId || "google-gradient"
+      : siteTheme.darkStyleId || "classic-dark"
+  const panelSparkleColor = currentThemeStyleId === "google-gradient" ? "currentColor" : "brand"
 
   const DRAG_LONG_PRESS_MS = 150
   const DRAG_THRESHOLD_PX = 6
@@ -102,9 +111,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   // 悬浮隐藏状态
   const [_isHovered, setIsHovered] = useState(false)
   // groupRef moved to top
-
-  // 获取适配器
-  const adapter = getAdapter()
 
   // 跟踪是否处于 Flutter 模式（图文并茂）
   const [_isFlutterMode, setIsFlutterMode] = useState(false)
@@ -280,8 +286,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       icon = getThemeIcon()
     } else if (def.IconComponent) {
       const IconComp = def.IconComponent
-      // 只有面板主按钮的 SparkleIcon 支持 brand 语义色，其余线框图标应继续使用 currentColor。
-      const iconColor = id === "panel" ? "brand" : undefined
+      // 面板主按钮在默认 google-gradient 主题下跟随环境文字色，其余主题使用品牌渐变。
+      const iconColor = id === "panel" ? panelSparkleColor : undefined
       icon = <IconComp size={id === "panel" ? 21 : 18} color={iconColor} />
     } else {
       icon = def.icon

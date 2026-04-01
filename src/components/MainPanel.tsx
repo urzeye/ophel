@@ -26,7 +26,7 @@ import { attachEditableKeyboardFocusGuard } from "~utils/dom-toolkit"
 import { loadHistoryUntil } from "~utils/history-loader"
 import { t } from "~utils/i18n"
 import { getScrollInfo, smartScrollTo, smartScrollToBottom } from "~utils/scroll-helper"
-import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
+import { DEFAULT_SETTINGS, getSiteTheme, type Prompt } from "~utils/storage"
 import { showToast } from "~utils/toast"
 import { anchorStore } from "~stores/anchor-store"
 
@@ -80,6 +80,17 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const { settings } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
   const tabOrder = currentSettings.features?.order || DEFAULT_SETTINGS.features.order
+  const siteId = adapter?.getSiteId() || "_default"
+  const siteTheme = getSiteTheme(currentSettings, siteId)
+  const resolvedThemeMode = themeMode || (siteTheme.mode === "dark" ? "dark" : "light")
+  const currentThemeStyleId =
+    resolvedThemeMode === "light"
+      ? siteTheme.lightStyleId || "google-gradient"
+      : siteTheme.darkStyleId || "classic-dark"
+  const panelSparkleColor = currentThemeStyleId === "google-gradient" ? "currentColor" : "brand"
+  const currentCustomStyle = Array.isArray(currentSettings.theme?.customStyles)
+    ? currentSettings.theme.customStyles.find((style) => style.id === currentThemeStyleId)
+    : null
 
   // 拖拽功能（高性能版本：直接 DOM 操作，不触发 React 渲染）
   const { panelRef, headerRef } = useDraggable({
@@ -330,25 +341,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           // 位置现在由 useDraggable 通过直接 DOM 操作控制，不再通过 React state
         }}>
         {/* 自定义 CSS 注入：根据当前站点的样式 ID 查找自定义样式 */}
-        {(() => {
-          const siteId = adapter?.getSiteId() || "_default"
-          const siteTheme =
-            settings.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
-            settings.theme?.sites?._default
-          const resolvedMode = themeMode || (siteTheme?.mode === "dark" ? "dark" : "light")
-          const styleId =
-            resolvedMode === "light" ? siteTheme?.lightStyleId : siteTheme?.darkStyleId
-
-          // 在自定义样式中查找（确保 customStyles 是数组）
-          const customStyles = settings.theme?.customStyles
-          if (Array.isArray(customStyles)) {
-            const customStyle = customStyles.find((s) => s.id === styleId)
-            if (customStyle) {
-              return <style>{customStyle.css}</style>
-            }
-          }
-          return null
-        })()}
+        {currentCustomStyle ? <style>{currentCustomStyle.css}</style> : null}
 
         {/* Header - 拖拽区域 */}
         <div
@@ -371,7 +364,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                 // 发送隐私模式切换事件给 TabManager
                 window.postMessage({ type: "GH_PRIVACY_TOGGLE" }, "*")
               }}>
-              <SparkleIcon size={18} color="currentColor" />
+              <SparkleIcon size={18} color={panelSparkleColor} />
               <span style={{ fontSize: "15px", fontWeight: 600 }}>{t("panelTitle")}</span>
             </div>
           </Tooltip>
