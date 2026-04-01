@@ -267,7 +267,9 @@
     try {
       const previewElement = findPreviewElement(previewId)
       if (!previewElement) {
-        throw new Error("Preview container not found")
+        // 容器已被宿主页面重绘移除时，视为过期请求而不是实际渲染失败。
+        postResponse(requestId, true)
+        return
       }
 
       if (!isLatestRequest(previewElement, requestId)) {
@@ -316,9 +318,13 @@
   }
 
   window.addEventListener("message", (event) => {
-    if (event.source !== window) return
-    if (event.data?.type !== REQUEST_EVENT) return
+    const payload = event.data
 
-    void renderMermaid(event.data)
+    // Userscript 沙箱下 event.source 可能与页面 window 不全等，
+    // 这里优先按消息类型识别，避免合法请求被误丢弃。
+    if (event.source !== window && payload?.type !== REQUEST_EVENT) return
+    if (payload?.type !== REQUEST_EVENT) return
+
+    void renderMermaid(payload)
   })
 })()

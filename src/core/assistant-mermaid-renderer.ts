@@ -2,6 +2,7 @@ import { normalizeAssistantMermaidSource, type SiteAdapter } from "~adapters/bas
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
+import { setSafeScriptSrc } from "~utils/trusted-types"
 
 const STYLE_ID = "gh-assistant-mermaid-style"
 const INITIAL_DELAY = 1000
@@ -561,10 +562,14 @@ export class AssistantMermaidRenderer {
     if (this.messageHandler) return
 
     this.messageHandler = (event: MessageEvent) => {
-      if (event.source !== window) return
-      if (event.data?.type !== RUNTIME_RESPONSE_EVENT) return
+      const payload = event.data
 
-      const requestId = typeof event.data.requestId === "string" ? event.data.requestId : ""
+      // 在 userscript 沙箱中，event.source 可能是页面 window 的代理对象，
+      // 不能依赖与当前 window 的严格相等判断。
+      if (event.source !== window && payload?.type !== RUNTIME_RESPONSE_EVENT) return
+      if (payload?.type !== RUNTIME_RESPONSE_EVENT) return
+
+      const requestId = typeof payload.requestId === "string" ? payload.requestId : ""
       if (!requestId) return
 
       const pending = this.pendingRequests.get(requestId)
@@ -573,12 +578,12 @@ export class AssistantMermaidRenderer {
       window.clearTimeout(pending.timeoutId)
       this.pendingRequests.delete(requestId)
 
-      if (event.data.success) {
+      if (payload.success) {
         pending.resolve()
         return
       }
 
-      pending.reject(new Error(event.data.error || "Mermaid render failed"))
+      pending.reject(new Error(payload.error || "Mermaid render failed"))
     }
 
     window.addEventListener("message", this.messageHandler)
@@ -689,6 +694,9 @@ export class AssistantMermaidRenderer {
       await this.ensureRuntime()
       await this.requestRender(requestId, previewId, renderSource, theme)
       if (!block.isConnected) return
+      if (!panel.isConnected || !preview.isConnected) {
+        return
+      }
       if (preview.getAttribute(PREVIEW_TOKEN_ATTR) !== requestId) {
         return
       }
@@ -702,6 +710,15 @@ export class AssistantMermaidRenderer {
       this.processedBlocks.set(block, processedKey)
       this.setView(block, panel, currentView)
     } catch (error) {
+      if (
+        !block.isConnected ||
+        !panel.isConnected ||
+        !preview.isConnected ||
+        preview.getAttribute(PREVIEW_TOKEN_ATTR) !== requestId
+      ) {
+        return
+      }
+
       console.warn("[AssistantMermaidRenderer] Mermaid render skipped:", error)
       if (shouldRetryMermaidRender(error)) {
         this.processedBlocks.delete(block)
@@ -1454,12 +1471,21 @@ export class AssistantMermaidRenderer {
       script.addEventListener("load", handleLoad, { once: true })
       script.addEventListener("error", handleError, { once: true })
 
-      if (!existing) {
+      try {
         script.dataset.ophelRuntime = marker
         script.dataset.loaded = "false"
-        script.src = src
         script.async = false
-        ;(document.head || document.documentElement).appendChild(script)
+        const currentSrc = script.getAttribute("src") || script.src
+        if (currentSrc !== src && !setSafeScriptSrc(script, src)) {
+          throw new Error(`Failed to set trusted script src: ${src}`)
+        }
+
+        if (!existing) {
+          ;(document.head || document.documentElement).appendChild(script)
+        }
+      } catch (error) {
+        cleanup()
+        reject(error instanceof Error ? error : new Error(`Failed to load script: ${src}`))
       }
     })
   }
