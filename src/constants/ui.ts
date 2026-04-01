@@ -912,7 +912,7 @@ export const TAB_DEFINITIONS: Record<
   {
     label: string
     icon: string
-    IconComponent?: React.ComponentType<{ size?: number; color?: string }>
+    IconComponent?: React.ComponentType<{ size?: number | string; color?: string }>
   }
 > = {
   [TAB_IDS.PROMPTS]: { label: "tabPrompts", icon: "✏️", IconComponent: PromptIcon },
@@ -936,7 +936,7 @@ export const COLLAPSED_BUTTON_DEFS: Record<
     canToggle: boolean
     isPanelOnly: boolean
     isGroup?: boolean
-    IconComponent?: React.ComponentType<{ size?: number; color?: string }>
+    IconComponent?: React.ComponentType<{ size?: number | string; color?: string }>
   }
 > = {
   scrollTop: {

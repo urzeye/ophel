@@ -22,7 +22,7 @@ import { usePromptsStore } from "~stores/prompts-store"
 import { useReadingHistoryStore } from "~stores/reading-history-store"
 import { getSettingsState, useSettingsStore } from "~stores/settings-store"
 import { useTagsStore } from "~stores/tags-store"
-import { MSG_CLEAR_ALL_DATA, MSG_RESTORE_DATA } from "~utils/messaging"
+import { MSG_CLEAR_ALL_DATA, MSG_RESTORE_DATA, MSG_START_NEW_CONVERSATION } from "~utils/messaging"
 
 const resetAllStores = () => {
   useSettingsStore.getState().resetSettings()
@@ -122,6 +122,17 @@ if (!window.ophelInitialized) {
           const isGenerating = adapter.isGenerating?.() ?? false
           sendResponse({ isGenerating })
           return true // 保持消息通道打开
+        }
+
+        if (message.type === MSG_START_NEW_CONVERSATION) {
+          try {
+            const success = adapter.startNewConversation()
+            sendResponse({ success })
+          } catch (err) {
+            console.error("[Ophel] startNewConversation failed:", err)
+            sendResponse({ success: false, error: (err as Error).message })
+          }
+          return true
         }
 
         // AI Studio 获取模型列表

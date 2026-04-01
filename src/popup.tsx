@@ -12,6 +12,7 @@ import { Tooltip } from "~components/ui/Tooltip"
 import { SITE_ICONS } from "~constants/site-icons"
 import { getStoreInfo } from "~utils/getStoreInfo"
 import { setLanguage, t } from "~utils/i18n"
+import { MSG_START_NEW_CONVERSATION } from "~utils/messaging"
 import { version } from "../package.json"
 
 import "./popup.css"
@@ -21,13 +22,14 @@ declare const __PLATFORM__: "extension" | "userscript" | undefined
 
 // Supported AI platforms
 const SUPPORTED_SITES = [
-  { name: "Gemini", pattern: /gemini\.google\.com/, url: "https://gemini.google.com", icon: "🌟" },
   {
-    name: "Gemini Enterprise",
-    pattern: /business\.gemini\.google/,
-    url: "https://business.gemini.google",
-    icon: "🏢",
+    name: "ChatGPT",
+    pattern: /chatgpt\.com/,
+    url: "https://chatgpt.com",
+    icon: "💬",
   },
+  { name: "Gemini", pattern: /gemini\.google\.com/, url: "https://gemini.google.com", icon: "🌟" },
+  { name: "Claude", pattern: /claude\.(ai|com)/, url: "https://claude.ai", icon: "🎭" },
   {
     name: "AI Studio",
     pattern: /aistudio\.google\.com/,
@@ -35,15 +37,13 @@ const SUPPORTED_SITES = [
     icon: "🧪",
   },
   {
-    name: "ChatGPT",
-    pattern: /chatgpt\.com/,
-    url: "https://chatgpt.com",
-    icon: "💬",
+    name: "Gemini Enterprise",
+    pattern: /business\.gemini\.google/,
+    url: "https://business.gemini.google",
+    icon: "🏢",
   },
   { name: "Grok", pattern: /grok\.com/, url: "https://grok.com", icon: "🤖" },
-  { name: "Claude", pattern: /claude\.(ai|com)/, url: "https://claude.ai", icon: "🎭" },
   { name: "Doubao", pattern: /www\.doubao\.com/, url: "https://www.doubao.com", icon: "🌱" },
-  { name: "ima", pattern: /ima\.qq\.com/, url: "https://ima.qq.com", icon: "🐼" },
   {
     name: "DeepSeek",
     pattern: /chat\.deepseek\.com/,
@@ -59,18 +59,19 @@ const SUPPORTED_SITES = [
     icon: "🧠",
   },
   {
+    name: "Yuanbao",
+    pattern: /yuanbao\.tencent\.com/,
+    url: "https://yuanbao.tencent.com",
+    icon: "💎",
+  },
+  {
     name: "Qianwen",
     pattern: /www\.qianwen\.com/,
     url: "https://www.qianwen.com",
     icon: "🔮",
   },
   { name: "QwenAI", pattern: /chat\.qwen\.ai/, url: "https://chat.qwen.ai", icon: "🪄" },
-  {
-    name: "Yuanbao",
-    pattern: /yuanbao\.tencent\.com/,
-    url: "https://yuanbao.tencent.com",
-    icon: "💎",
-  },
+  { name: "ima", pattern: /ima\.qq\.com/, url: "https://ima.qq.com", icon: "🐼" },
 ]
 
 interface Prompt {
@@ -150,6 +151,11 @@ function IndexPopup() {
     setTimeout(() => setToastVisible(false), 1500)
   }
 
+  const getActiveTab = async () => {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
+    return tabs[0] ?? null
+  }
+
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text)
@@ -171,6 +177,40 @@ function IndexPopup() {
     window.close()
   }
 
+  const openUrlInCurrentTab = async (url: string) => {
+    const activeTab = await getActiveTab()
+    if (activeTab?.id) {
+      await chrome.tabs.update(activeTab.id, { url, active: true })
+    } else {
+      await chrome.tabs.create({ url, active: true })
+    }
+    window.close()
+  }
+
+  const startNewChatInCurrentSite = async () => {
+    if (!currentSite?.supported) {
+      return
+    }
+
+    try {
+      const activeTab = await getActiveTab()
+      if (activeTab?.id) {
+        const result = (await chrome.tabs.sendMessage(activeTab.id, {
+          type: MSG_START_NEW_CONVERSATION,
+        })) as { success?: boolean } | undefined
+
+        if (result?.success) {
+          window.close()
+          return
+        }
+      }
+    } catch (err) {
+      console.warn("[Ophel Popup] Failed to start new conversation in current tab:", err)
+    }
+
+    await openUrlInCurrentTab(currentSite.url)
+  }
+
   // Fetch store info
   const storeInfo = getStoreInfo()
 
@@ -189,7 +229,7 @@ function IndexPopup() {
       <div className="popup-header">
         <div className="popup-header-left">
           <img src={chrome.runtime.getURL("assets/icon.png")} alt="Ophel" className="popup-logo" />
-          <span className="popup-title">Ophel</span>
+          <span className="popup-title">Ophel Atlas</span>
         </div>
         <Tooltip content={t("popupSettings")}>
           <button className="popup-settings-btn" onClick={openOptionsPage}>
@@ -215,7 +255,7 @@ function IndexPopup() {
       {/* Quick Actions or Site Links */}
       {currentSite?.supported ? (
         <div className="popup-actions popup-actions-single">
-          <button className="popup-action-btn primary-btn" onClick={() => openUrl(currentSite.url)}>
+          <button className="popup-action-btn primary-btn" onClick={startNewChatInCurrentSite}>
             🚀 {t("popupNewChat")}
           </button>
         </div>

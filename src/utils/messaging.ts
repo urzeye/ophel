@@ -195,6 +195,13 @@ export interface GetAIStudioModelsMessage {
   type: typeof MSG_GET_AISTUDIO_MODELS
 }
 
+// Popup -> Content Script: 触发当前站点的新对话
+export const MSG_START_NEW_CONVERSATION = "START_NEW_CONVERSATION"
+
+export interface StartNewConversationMessage {
+  type: typeof MSG_START_NEW_CONVERSATION
+}
+
 export interface AIStudioModelInfo {
   id: string
   name: string
