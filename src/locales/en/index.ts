@@ -146,6 +146,9 @@ export const en = {
   version: "Version",
   aboutDescription:
     "{appName} is a browser extension designed for AI platforms like Gemini, ChatGPT, Claude, AI Studio, and Grok. It empowers your workflow with conversation management, smart outlines, and a prompt library, while offering utilities like reading history restoration, bidirectional anchors, watermark removal, formatting fixes, and model locking. With comprehensive customization options for themes and UI, {appName} ensures a smoother and more efficient AI interaction experience.",
+  aboutSupportedPlatforms: "Supported Platforms",
+  aboutSupportedPlatformsDesc:
+    "Currently covers {count} AI platforms, kept in sync with popup detection and quick access.",
   projectLinks: "Project Links",
   githubRepository: "GitHub Repository",
   communityAndSupport: "Community & Support",

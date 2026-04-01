@@ -81,6 +81,9 @@ export const zhTW = {
   version: "版本",
   aboutDescription:
     "{appName} 一款專為 Gemini、ChatGPT、Claude、AI Studio、Grok 等 AI 平台打造的瀏覽器增強擴充功能。它為您提供會話管理與匯出、智慧大綱導航、提示詞指令庫等效率工具，同時具備閱讀進度恢復、雙向錨點定位、浮水印移除、排版修復、公式複製及模型鎖定等實用功能，並支援深度自定義主題與頁面美化，讓您的 AI 互動體驗更加流暢愉悅。",
+  aboutSupportedPlatforms: "支援平台",
+  aboutSupportedPlatformsDesc:
+    "目前已涵蓋 {count} 個 AI 平台，並與彈出視窗中的站點識別與快捷入口保持同步。",
   projectLinks: "專案連結",
   githubRepository: "GitHub 儲存庫",
   githubDesc: "檢視原始碼、提交問題或參與專案開發",

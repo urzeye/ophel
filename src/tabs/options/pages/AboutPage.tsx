@@ -15,12 +15,16 @@ import {
   ShieldCheckIcon,
   StarIcon,
 } from "~components/icons"
+import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
+import { SITE_ICONS } from "~constants/site-icons"
 import { APP_DISPLAY_NAME, APP_ICON_URL, APP_VERSION } from "~utils/config"
 import { t } from "~utils/i18n"
 
 import { PageTitle } from "../components"
 
 const AboutPage: React.FC = () => {
+  const supportedPlatformsCount = String(SUPPORTED_AI_PLATFORMS.length)
+
   return (
     <div>
       <PageTitle title={t("navAbout") || "关于"} Icon={AboutIcon} />
@@ -157,6 +161,41 @@ const AboutPage: React.FC = () => {
           </div>
           <button className="about-link-btn">{t("visitWebsite") || "访问官网"}</button>
         </a>
+      </div>
+
+      <div className="about-section-title">{t("aboutSupportedPlatforms") || "支持平台"}</div>
+      <div className="about-platforms-card">
+        <div className="about-platforms-header">
+          <div className="about-platforms-desc">
+            {t("aboutSupportedPlatformsDesc", { count: supportedPlatformsCount }) ||
+              `当前已深度集成 ${supportedPlatformsCount} 个主流 AI 平台，并持续扩充中。这些平台在主界面弹窗中也支持智能状态识别与一键捷径入口。`}
+          </div>
+          <span className="about-platforms-count">{supportedPlatformsCount}</span>
+        </div>
+        <div className="about-platforms-grid">
+          {SUPPORTED_AI_PLATFORMS.map((platform) => (
+            <a
+              key={platform.id}
+              href={platform.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="about-platform-chip"
+              title={platform.url}>
+              {SITE_ICONS[platform.name] ? (
+                <img
+                  src={SITE_ICONS[platform.name]}
+                  alt={platform.name}
+                  className="about-platform-chip-icon"
+                />
+              ) : (
+                <span className="about-platform-chip-emoji" aria-hidden="true">
+                  {platform.icon}
+                </span>
+              )}
+              <span>{platform.name}</span>
+            </a>
+          ))}
+        </div>
       </div>
 
       <div className="about-section-title">{t("techStack") || "技术栈"}</div>

@@ -8,6 +8,7 @@ import { useEffect, useState } from "react"
 
 import { SettingsIcon } from "~components/icons/SettingsIcon"
 import { StarIcon } from "~components/icons/StarIcon"
+import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 import { Tooltip } from "~components/ui/Tooltip"
 import { SITE_ICONS } from "~constants/site-icons"
 import { getStoreInfo } from "~utils/getStoreInfo"
@@ -19,60 +20,6 @@ import "./popup.css"
 
 // Inject platform type
 declare const __PLATFORM__: "extension" | "userscript" | undefined
-
-// Supported AI platforms
-const SUPPORTED_SITES = [
-  {
-    name: "ChatGPT",
-    pattern: /chatgpt\.com/,
-    url: "https://chatgpt.com",
-    icon: "💬",
-  },
-  { name: "Gemini", pattern: /gemini\.google\.com/, url: "https://gemini.google.com", icon: "🌟" },
-  { name: "Claude", pattern: /claude\.(ai|com)/, url: "https://claude.ai", icon: "🎭" },
-  {
-    name: "AI Studio",
-    pattern: /aistudio\.google\.com/,
-    url: "https://aistudio.google.com",
-    icon: "🧪",
-  },
-  {
-    name: "Gemini Enterprise",
-    pattern: /business\.gemini\.google/,
-    url: "https://business.gemini.google",
-    icon: "🏢",
-  },
-  { name: "Grok", pattern: /grok\.com/, url: "https://grok.com", icon: "🤖" },
-  { name: "Doubao", pattern: /www\.doubao\.com/, url: "https://www.doubao.com", icon: "🌱" },
-  {
-    name: "DeepSeek",
-    pattern: /chat\.deepseek\.com/,
-    url: "https://chat.deepseek.com",
-    icon: "🌀",
-  },
-  { name: "Kimi", pattern: /www\.kimi\.com/, url: "https://www.kimi.com", icon: "🌙" },
-  { name: "Z.ai", pattern: /chat\.z\.ai/, url: "https://chat.z.ai", icon: "⚡" },
-  {
-    name: "ChatGLM",
-    pattern: /chatglm\.cn/,
-    url: "https://chatglm.cn/main/alltoolsdetail?lang=zh",
-    icon: "🧠",
-  },
-  {
-    name: "Yuanbao",
-    pattern: /yuanbao\.tencent\.com/,
-    url: "https://yuanbao.tencent.com",
-    icon: "💎",
-  },
-  {
-    name: "Qianwen",
-    pattern: /www\.qianwen\.com/,
-    url: "https://www.qianwen.com",
-    icon: "🔮",
-  },
-  { name: "QwenAI", pattern: /chat\.qwen\.ai/, url: "https://chat.qwen.ai", icon: "🪄" },
-  { name: "ima", pattern: /ima\.qq\.com/, url: "https://ima.qq.com", icon: "🐼" },
-]
 
 interface Prompt {
   id: string
@@ -111,7 +58,7 @@ function IndexPopup() {
     // Detect current tab's site
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const url = tabs[0]?.url || ""
-      const matchedSite = SUPPORTED_SITES.find((site) => site.pattern.test(url))
+      const matchedSite = SUPPORTED_AI_PLATFORMS.find((site) => site.pattern.test(url))
 
       if (matchedSite) {
         setCurrentSite({ name: matchedSite.name, url: matchedSite.url, supported: true })
@@ -263,9 +210,9 @@ function IndexPopup() {
         <>
           <div className="popup-section-title">{t("popupQuickAccess")}</div>
           <div className="popup-sites-grid">
-            {SUPPORTED_SITES.map((site) => (
+            {SUPPORTED_AI_PLATFORMS.map((site) => (
               <Tooltip
-                key={site.name}
+                key={site.id}
                 content={site.name}
                 triggerStyle={{ width: "100%", display: "flex" }}
                 triggerClassName="popup-tooltip-trigger">

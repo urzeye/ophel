@@ -17,6 +17,10 @@ import {
   PermissionsIcon,
   RestoreIcon,
   SearchIcon,
+  ThemeDarkIcon,
+  ThemeLightIcon,
+  TranslateIcon,
+  GithubIcon,
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
 import { NAV_IDS, resolveSettingsNavigateDetail, type SettingsNavigateDetail } from "~constants"
@@ -368,6 +372,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
                 <span>{getLocalizedLabel(item.labelKey, item.label)}</span>
               </button>
             ))}
+
+            {/* 红色空置区：GitHub Star 宣传位 */}
+            <a
+              href="https://github.com/urzeye/ophel"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="sidebar-github-link">
+              <GithubIcon size={16} />
+              <span>Star on GitHub</span>
+            </a>
           </nav>
 
           {/* 侧边栏底部快捷设置 */}

@@ -176,6 +176,9 @@ export const zhCN = {
   version: "版本",
   aboutDescription:
     "{appName} 是一款专为 Gemini、ChatGPT、Claude、AI Studio、Grok 等 AI 平台打造的浏览器增强扩展。它为您提供会话管理与导出、智能大纲导航、提示词指令库等效率工具，同时具备阅读进度恢复、双向锚点定位、水印移除、排版修复、公式复制及模型锁定等实用功能，并支持深度自定义主题与页面美化，让您的 AI 交互体验更加流畅愉悦。",
+  aboutSupportedPlatforms: "支持平台",
+  aboutSupportedPlatformsDesc:
+    "当前已覆盖 {count} 个 AI 平台，和弹窗中的站点识别与快捷入口保持同步。",
   projectLinks: "项目链接",
   githubRepository: "GitHub 仓库",
   communityAndSupport: "社区与支持",

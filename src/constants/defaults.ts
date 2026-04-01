@@ -98,3 +98,119 @@ export const SITE_IDS = {
   YUANBAO: "yuanbao",
   ZAI: "zai",
 } as const
+
+export interface SupportedAiPlatform {
+  id: (typeof SITE_IDS)[keyof typeof SITE_IDS]
+  name: string
+  pattern: RegExp
+  url: string
+  icon: string
+}
+
+export const SUPPORTED_AI_PLATFORMS: SupportedAiPlatform[] = [
+  {
+    id: SITE_IDS.CHATGPT,
+    name: "ChatGPT",
+    pattern: /chatgpt\.com/,
+    url: "https://chatgpt.com",
+    icon: "💬",
+  },
+  {
+    id: SITE_IDS.GEMINI,
+    name: "Gemini",
+    pattern: /gemini\.google\.com/,
+    url: "https://gemini.google.com",
+    icon: "🌟",
+  },
+  {
+    id: SITE_IDS.CLAUDE,
+    name: "Claude",
+    pattern: /claude\.(ai|com)/,
+    url: "https://claude.ai",
+    icon: "🎭",
+  },
+  {
+    id: SITE_IDS.AISTUDIO,
+    name: "AI Studio",
+    pattern: /aistudio\.google\.com/,
+    url: "https://aistudio.google.com",
+    icon: "🧪",
+  },
+  {
+    id: SITE_IDS.GEMINI_ENTERPRISE,
+    name: "Gemini Enterprise",
+    pattern: /business\.gemini\.google/,
+    url: "https://business.gemini.google",
+    icon: "🏢",
+  },
+  {
+    id: SITE_IDS.GROK,
+    name: "Grok",
+    pattern: /grok\.com/,
+    url: "https://grok.com",
+    icon: "🤖",
+  },
+  {
+    id: SITE_IDS.DOUBAO,
+    name: "Doubao",
+    pattern: /www\.doubao\.com/,
+    url: "https://www.doubao.com",
+    icon: "🌱",
+  },
+  {
+    id: SITE_IDS.DEEPSEEK,
+    name: "DeepSeek",
+    pattern: /chat\.deepseek\.com/,
+    url: "https://chat.deepseek.com",
+    icon: "🌀",
+  },
+  {
+    id: SITE_IDS.KIMI,
+    name: "Kimi",
+    pattern: /www\.kimi\.com/,
+    url: "https://www.kimi.com",
+    icon: "🌙",
+  },
+  {
+    id: SITE_IDS.ZAI,
+    name: "Z.ai",
+    pattern: /chat\.z\.ai/,
+    url: "https://chat.z.ai",
+    icon: "⚡",
+  },
+  {
+    id: SITE_IDS.CHATGLM,
+    name: "ChatGLM",
+    pattern: /chatglm\.cn/,
+    url: "https://chatglm.cn/main/alltoolsdetail?lang=zh",
+    icon: "🧠",
+  },
+  {
+    id: SITE_IDS.YUANBAO,
+    name: "Yuanbao",
+    pattern: /yuanbao\.tencent\.com/,
+    url: "https://yuanbao.tencent.com",
+    icon: "💎",
+  },
+  {
+    id: SITE_IDS.QIANWEN,
+    name: "Qianwen",
+    pattern: /www\.qianwen\.com/,
+    url: "https://www.qianwen.com",
+    icon: "🔮",
+  },
+  {
+    id: SITE_IDS.QWENAI,
+    name: "QwenAI",
+    pattern: /chat\.qwen\.ai/,
+    url: "https://chat.qwen.ai",
+    icon: "🪄",
+  },
+  {
+    id: SITE_IDS.IMA,
+    name: "ima",
+    pattern: /ima\.qq\.com/,
+    url: "https://ima.qq.com",
+    icon: "🐼",
+  },
+]

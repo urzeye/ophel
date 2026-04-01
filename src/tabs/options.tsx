@@ -12,6 +12,7 @@ import {
   GeneralIcon,
   PageContentIcon,
   PermissionsIcon,
+  GithubIcon,
 } from "~components/icons"
 import { resolveSettingsNavigateDetail } from "~constants"
 import { platform } from "~platform"
@@ -270,6 +271,16 @@ const OptionsPage = () => {
               <span>{t(item.labelKey) || item.label}</span>
             </button>
           ))}
+
+          {/* 红色空置区：GitHub Star 宣传位 */}
+          <a
+            href="https://github.com/urzeye/ophel"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="sidebar-github-link">
+            <GithubIcon size={16} />
+            <span>Star on GitHub</span>
+          </a>
         </nav>
 
         {/* 侧边栏底部快捷设置 */}

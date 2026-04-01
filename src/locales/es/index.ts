@@ -139,6 +139,9 @@ export const es = {
   version: "Versión",
   aboutDescription:
     "{appName} es una extensión diseñada para Gemini, ChatGPT, Claude, AI Studio y Grok. Mejora tu flujo de trabajo con gestión de chats, índices inteligentes y biblioteca de prompts, ofreciendo utilidades como historial de lectura, anclajes, eliminación de marcas de agua, avisos de finalización y bloqueo de modelo. Con amplias opciones de personalización, {appName} asegura una experiencia de IA más fluida.",
+  aboutSupportedPlatforms: "Plataformas compatibles",
+  aboutSupportedPlatformsDesc:
+    "Actualmente cubre {count} plataformas de IA, sincronizadas con la detección y el acceso rápido del popup.",
   projectLinks: "Enlaces del Proyecto",
   githubRepository: "Repositorio de GitHub",
   githubDesc: "Código fuente, reportes o contribuir",
