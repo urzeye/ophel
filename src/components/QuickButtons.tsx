@@ -280,7 +280,9 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       icon = getThemeIcon()
     } else if (def.IconComponent) {
       const IconComp = def.IconComponent
-      icon = <IconComp size={id === "panel" ? 21 : 18} color="brand" />
+      // 只有面板主按钮的 SparkleIcon 支持 brand 语义色，其余线框图标应继续使用 currentColor。
+      const iconColor = id === "panel" ? "brand" : undefined
+      icon = <IconComp size={id === "panel" ? 21 : 18} color={iconColor} />
     } else {
       icon = def.icon
     }
