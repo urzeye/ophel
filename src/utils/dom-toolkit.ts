@@ -84,6 +84,11 @@ export interface ScrollContainerOptions {
 
 export type EditableKeyboardGuardEvent = "keydown" | "keypress" | "keyup"
 
+export interface EditableKeyboardFocusGuardOptions {
+  events?: readonly EditableKeyboardGuardEvent[]
+  capture?: boolean
+}
+
 export const EDITABLE_KEYBOARD_GUARD_EVENTS: readonly EditableKeyboardGuardEvent[] = [
   "keydown",
   "keypress",
@@ -118,8 +123,10 @@ export const getEditableKeyboardTargetFromEvent = (event: Event): HTMLElement | 
 
 export const attachEditableKeyboardFocusGuard = (
   container: HTMLElement,
-  events: readonly EditableKeyboardGuardEvent[] = EDITABLE_KEYBOARD_GUARD_EVENTS,
+  options: EditableKeyboardFocusGuardOptions = {},
 ): (() => void) => {
+  const { events = EDITABLE_KEYBOARD_GUARD_EVENTS, capture = true } = options
+
   const handleEditableKeyEvent = (event: KeyboardEvent) => {
     if (!getEditableKeyboardTargetFromEvent(event)) {
       return
@@ -130,12 +137,12 @@ export const attachEditableKeyboardFocusGuard = (
   }
 
   events.forEach((eventName) => {
-    container.addEventListener(eventName, handleEditableKeyEvent, true)
+    container.addEventListener(eventName, handleEditableKeyEvent, capture)
   })
 
   return () => {
     events.forEach((eventName) => {
-      container.removeEventListener(eventName, handleEditableKeyEvent, true)
+      container.removeEventListener(eventName, handleEditableKeyEvent, capture)
     })
   }
 }

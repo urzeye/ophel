@@ -242,7 +242,8 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
       return
     }
 
-    return attachEditableKeyboardFocusGuard(panel)
+    // 队列输入依赖本地 Enter / Escape 逻辑，改为冒泡阶段拦截以避免吞掉自身键盘处理。
+    return attachEditableKeyboardFocusGuard(panel, { capture: false })
   }, [isExpanded, position])
 
   // 点击外部关闭

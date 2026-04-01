@@ -138,7 +138,8 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
       return
     }
 
-    return attachEditableKeyboardFocusGuard(overlay)
+    // 通用弹窗内部广泛依赖本地 onKeyDown 逻辑，这里使用冒泡阶段拦截，避免吞掉确认/关闭等键盘行为。
+    return attachEditableKeyboardFocusGuard(overlay, { capture: false })
   }, [])
 
   const dialogContent = (
