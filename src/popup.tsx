@@ -9,6 +9,7 @@ import { useEffect, useState } from "react"
 import { SettingsIcon } from "~components/icons/SettingsIcon"
 import { StarIcon } from "~components/icons/StarIcon"
 import { Tooltip } from "~components/ui/Tooltip"
+import { SITE_ICONS } from "~constants/site-icons"
 import { getStoreInfo } from "~utils/getStoreInfo"
 import { setLanguage, t } from "~utils/i18n"
 import { version } from "../package.json"
@@ -199,22 +200,22 @@ function IndexPopup() {
 
       {/* Site Status */}
       <div className="popup-site-status">
-        <div className="popup-site-label">{t("popupCurrentSite")}</div>
-        <div className="popup-site-info">
-          <span className="popup-site-name">{currentSite?.name || "..."}</span>
-          {currentSite && (
-            <span
-              className={`popup-status-badge ${currentSite.supported ? "supported" : "unsupported"}`}>
-              {currentSite.supported ? t("popupSupported") : t("popupUnsupported")}
-            </span>
-          )}
+        <div className="popup-site-status-left">
+          <div className="popup-site-label">{t("popupCurrentSite")}</div>
+          <div className="popup-site-name">{currentSite?.name || "..."}</div>
         </div>
+        {currentSite && (
+          <div
+            className={`popup-status-badge ${currentSite.supported ? "supported" : "unsupported"}`}>
+            {currentSite.supported ? t("popupSupported") : t("popupUnsupported")}
+          </div>
+        )}
       </div>
 
       {/* Quick Actions or Site Links */}
       {currentSite?.supported ? (
         <div className="popup-actions popup-actions-single">
-          <button className="popup-action-btn" onClick={() => openUrl(currentSite.url)}>
+          <button className="popup-action-btn primary-btn" onClick={() => openUrl(currentSite.url)}>
             🚀 {t("popupNewChat")}
           </button>
         </div>
@@ -229,8 +230,12 @@ function IndexPopup() {
                 triggerStyle={{ width: "100%", display: "flex" }}
                 triggerClassName="popup-tooltip-trigger">
                 <button className="popup-site-link" onClick={() => openUrl(site.url)}>
-                  <span>{site.icon}</span>
-                  <span>{site.name}</span>
+                  {SITE_ICONS[site.name] ? (
+                    <img src={SITE_ICONS[site.name]} alt={site.name} className="popup-site-icon" />
+                  ) : (
+                    <span className="popup-site-emoji">{site.icon}</span>
+                  )}
+                  <span className="popup-site-title">{site.name}</span>
                 </button>
               </Tooltip>
             ))}
