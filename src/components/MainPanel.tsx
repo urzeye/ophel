@@ -22,6 +22,7 @@ import type { OutlineManager } from "~core/outline-manager"
 import type { PromptManager } from "~core/prompt-manager"
 import { useDraggable } from "~hooks/useDraggable"
 import { useSettingsStore } from "~stores/settings-store"
+import { attachEditableKeyboardFocusGuard } from "~utils/dom-toolkit"
 import { loadHistoryUntil } from "~utils/history-loader"
 import { t } from "~utils/i18n"
 import { getScrollInfo, smartScrollTo, smartScrollToBottom } from "~utils/scroll-helper"
@@ -54,20 +55,6 @@ interface MainPanelProps {
   onOpenSettings?: () => void
   onMouseEnter?: React.MouseEventHandler<HTMLDivElement>
   onMouseLeave?: React.MouseEventHandler<HTMLDivElement>
-}
-
-const isEditableKeyboardTarget = (target: EventTarget | null): target is HTMLElement => {
-  if (!(target instanceof HTMLElement)) {
-    return false
-  }
-
-  return (
-    target.tagName === "INPUT" ||
-    target.tagName === "TEXTAREA" ||
-    target.tagName === "SELECT" ||
-    target.isContentEditable ||
-    target.getAttribute("contenteditable") === "true"
-  )
 }
 
 export const MainPanel: React.FC<MainPanelProps> = ({
@@ -177,31 +164,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       return
     }
 
-    const handleEditableKeyEvent = (e: KeyboardEvent) => {
-      const path = typeof e.composedPath === "function" ? e.composedPath() : []
-      const target =
-        path.find((node): node is HTMLElement => node instanceof HTMLElement) ||
-        (e.target instanceof HTMLElement ? e.target : null)
-
-      if (!isEditableKeyboardTarget(target)) return
-
-      // 阻止事件继续传播到宿主页面的全局键盘监听器
-      e.stopPropagation()
-      e.stopImmediatePropagation()
-    }
-
-    const guardedEvents: Array<keyof HTMLElementEventMap> = ["keydown", "keypress", "keyup"]
-
     // 直接在面板元素上监听，覆盖 Shadow DOM 内部的输入控件
-    guardedEvents.forEach((eventName) => {
-      panel.addEventListener(eventName, handleEditableKeyEvent, true)
-    })
-
-    return () => {
-      guardedEvents.forEach((eventName) => {
-        panel.removeEventListener(eventName, handleEditableKeyEvent, true)
-      })
-    }
+    return attachEditableKeyboardFocusGuard(panel)
   }, [isOpen, panelRef])
 
   // === 锚点状态（使用全局存储） ===

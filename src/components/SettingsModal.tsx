@@ -37,6 +37,7 @@ import PermissionsPage from "~tabs/options/pages/PermissionsPage"
 import ShortcutsPage from "~tabs/options/pages/ShortcutsPage"
 import SiteSettingsPage from "~tabs/options/pages/SiteSettingsPage"
 import { APP_DISPLAY_NAME, APP_ICON_URL } from "~utils/config"
+import { attachEditableKeyboardFocusGuard } from "~utils/dom-toolkit"
 import { setLanguage, t } from "~utils/i18n"
 
 const getLocalizedLabel = (labelKey: string, fallback: string): string => {
@@ -245,31 +246,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
         return
       }
 
-      // 在捕获阶段拦截，优先级最高
-      const handleKeyDown = (e: KeyboardEvent) => {
-        const target = e.target as HTMLElement
-
-        const isInputElement =
-          target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.tagName === "SELECT" ||
-          target.getAttribute("contenteditable") === "true"
-
-        if (!isInputElement) return
-
-        // 阻止事件继续传播到页面站点自身的监听器
-        e.stopPropagation()
-        e.stopImmediatePropagation()
-      }
-
-      // 直接在容器元素上监听，而不是 document
-      container.addEventListener("keydown", handleKeyDown, true)
-      container.addEventListener("keypress", handleKeyDown, true)
-
-      return () => {
-        container.removeEventListener("keydown", handleKeyDown, true)
-        container.removeEventListener("keypress", handleKeyDown, true)
-      }
+      return attachEditableKeyboardFocusGuard(container)
     }
   }, [isOpen, siteId])
 

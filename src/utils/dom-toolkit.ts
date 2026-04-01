@@ -82,6 +82,64 @@ export interface ScrollContainerOptions {
   minOverflow?: number
 }
 
+export type EditableKeyboardGuardEvent = "keydown" | "keypress" | "keyup"
+
+export const EDITABLE_KEYBOARD_GUARD_EVENTS: readonly EditableKeyboardGuardEvent[] = [
+  "keydown",
+  "keypress",
+  "keyup",
+]
+
+export const isEditableKeyboardTarget = (target: EventTarget | null): target is HTMLElement => {
+  if (!(target instanceof HTMLElement)) {
+    return false
+  }
+
+  return (
+    target.tagName === "INPUT" ||
+    target.tagName === "TEXTAREA" ||
+    target.tagName === "SELECT" ||
+    target.isContentEditable ||
+    target.getAttribute("contenteditable") === "true" ||
+    target.classList.contains("ProseMirror")
+  )
+}
+
+export const getEditableKeyboardTargetFromEvent = (event: Event): HTMLElement | null => {
+  const path = typeof event.composedPath === "function" ? event.composedPath() : []
+  const pathTarget = path.find((node): node is HTMLElement => node instanceof HTMLElement) || null
+
+  if (isEditableKeyboardTarget(pathTarget)) {
+    return pathTarget
+  }
+
+  return isEditableKeyboardTarget(event.target) ? event.target : null
+}
+
+export const attachEditableKeyboardFocusGuard = (
+  container: HTMLElement,
+  events: readonly EditableKeyboardGuardEvent[] = EDITABLE_KEYBOARD_GUARD_EVENTS,
+): (() => void) => {
+  const handleEditableKeyEvent = (event: KeyboardEvent) => {
+    if (!getEditableKeyboardTargetFromEvent(event)) {
+      return
+    }
+
+    event.stopPropagation()
+    event.stopImmediatePropagation()
+  }
+
+  events.forEach((eventName) => {
+    container.addEventListener(eventName, handleEditableKeyEvent, true)
+  })
+
+  return () => {
+    events.forEach((eventName) => {
+      container.removeEventListener(eventName, handleEditableKeyEvent, true)
+    })
+  }
+}
+
 // ============================================================================
 // 工具函数
 // ============================================================================

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
+import { attachEditableKeyboardFocusGuard } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 
 // ==================== 对话框样式 ====================
@@ -119,6 +120,8 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
   dialogClassName,
   dialogStyle,
 }) => {
+  const overlayRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     injectDialogStyles()
 
@@ -129,8 +132,18 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
     return () => document.removeEventListener("keydown", handleKeyDown)
   }, [closeOnEscape, onClose])
 
+  useEffect(() => {
+    const overlay = overlayRef.current
+    if (!overlay) {
+      return
+    }
+
+    return attachEditableKeyboardFocusGuard(overlay)
+  }, [])
+
   const dialogContent = (
     <div
+      ref={overlayRef}
       className="gh-dialog-overlay gh-interactive"
       onClick={closeOnOverlayClick ? onClose : undefined}>
       <div

@@ -1,6 +1,7 @@
 import React from "react"
 
 import { SearchIcon } from "~components/icons"
+import { attachEditableKeyboardFocusGuard } from "~utils/dom-toolkit"
 
 import type { GlobalSearchSyntaxSuggestionItem } from "./types"
 
@@ -199,30 +200,7 @@ export const GlobalSearchOverlay = <TItem, TCategoryId extends string>(
     const container = containerRef.current
     if (!container) return
 
-    // 在捕获阶段拦截，优先级最高
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement
-
-      const isInputElement =
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.tagName === "SELECT" ||
-        target.getAttribute("contenteditable") === "true"
-
-      if (!isInputElement) return
-
-      // 阻止事件继续传播到站点的监听器
-      e.stopPropagation()
-      e.stopImmediatePropagation()
-    }
-
-    container.addEventListener("keydown", handleKeyDown, true)
-    container.addEventListener("keypress", handleKeyDown, true)
-
-    return () => {
-      container.removeEventListener("keydown", handleKeyDown, true)
-      container.removeEventListener("keypress", handleKeyDown, true)
-    }
+    return attachEditableKeyboardFocusGuard(container)
   }, [isOpen])
 
   if (!isOpen) {
