@@ -100,7 +100,7 @@ const AboutPage: React.FC = () => {
           rel="noopener noreferrer"
           className="about-link-card">
           <div className="about-link-header">
-            <GreasyForkIcon size={24} color="#000000" />
+            <GreasyForkIcon size={24} color="currentColor" />
             {t("greasyFork") || "Greasy Fork"}
           </div>
           <button className="about-link-btn" style={{ marginTop: "auto", background: "#333" }}>

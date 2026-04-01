@@ -1,6 +1,6 @@
 /**
  * 设置页面 (Options Page) 专用样式
- * 
+ *
  * 此文件用于独立的 Options 页面，采用侧边栏导航 + 顶部标签页布局
  */
 
@@ -928,6 +928,8 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   transition: all 0.2s ease;
   text-decoration: none;
 }
@@ -941,11 +943,13 @@
 .about-link-header {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   font-size: 16px;
   font-weight: 600;
   color: var(--gh-text);
   margin-bottom: 8px;
+  width: 100%;
 }
 
 .about-link-desc {
@@ -956,7 +960,7 @@
 }
 
 .about-link-btn {
-  align-self: flex-start;
+  align-self: center;
   padding: 6px 16px;
   background: var(--gh-primary, #4285f4);
   color: #fff;
@@ -983,7 +987,7 @@
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   /* Fix alignment */
-  align-self: flex-start !important;
+  align-self: center !important;
   margin-top: 4px;
 }
 
