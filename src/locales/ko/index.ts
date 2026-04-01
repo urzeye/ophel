@@ -1342,4 +1342,10 @@ export const ko = {
   zenModeLabel: "선 모드 활성화",
   zenModeDesc:
     "더 순수한 대화 경험을 위해 불필요한 요소(하단 모델 면책 조항 등)를 숨깁니다 (각 사이트별 개별 설정)",
+  extensionUpdateNoticeKicker: "확장 프로그램이 업데이트되었습니다",
+  extensionUpdateNotice:
+    "Ophel Atlas가 업데이트되었습니다. 최신 버전을 계속 사용하려면 이 페이지를 새로고침하세요.",
+  extensionUpdateNoticeWithVersion:
+    "Ophel Atlas가 v{version}(으)로 업데이트되었습니다. 최신 버전을 계속 사용하려면 이 페이지를 새로고침하세요.",
+  extensionUpdateNoticeAction: "페이지 새로고침",
 }

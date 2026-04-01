@@ -1350,4 +1350,10 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   zenModeLabel: "Zen-Modus aktivieren",
   zenModeDesc:
     "Verbergen Sie unnötige Elemente (z. B. Disclaimer des Modells unten), um eine reinere Gesprächserfahrung zu erhalten (individuell für jede Website konfiguriert)",
+  extensionUpdateNoticeKicker: "Erweiterung aktualisiert",
+  extensionUpdateNotice:
+    "Ophel Atlas wurde aktualisiert. Laden Sie diese Seite neu, um die neueste Version weiter zu verwenden.",
+  extensionUpdateNoticeWithVersion:
+    "Ophel Atlas wurde auf v{version} aktualisiert. Laden Sie diese Seite neu, um die neueste Version weiter zu verwenden.",
+  extensionUpdateNoticeAction: "Seite neu laden",
 }

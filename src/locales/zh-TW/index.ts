@@ -1323,4 +1323,9 @@ export const zhTW = {
   zenModeLabel: "啟用禪模式",
   zenModeDesc:
     "隱藏頁面中不必要的元素（如底部的模型免責聲明等），體驗更純粹的對話介面（每個站點獨立配置）",
+  extensionUpdateNoticeKicker: "外掛已更新",
+  extensionUpdateNotice: "Ophel Atlas 已更新。重新整理目前頁面後即可繼續使用最新版本。",
+  extensionUpdateNoticeWithVersion:
+    "Ophel Atlas 已更新至 v{version}。重新整理目前頁面後即可繼續使用最新版本。",
+  extensionUpdateNoticeAction: "重新整理頁面",
 }

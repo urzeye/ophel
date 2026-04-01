@@ -112,6 +112,17 @@ export interface OpenUrlMessage extends OpenUrlPayload {
   type: typeof MSG_OPEN_URL
 }
 
+// 扩展有新版本可用（通知页面展示刷新提示）
+export const MSG_EXTENSION_UPDATE_AVAILABLE = "EXTENSION_UPDATE_AVAILABLE"
+
+export interface ExtensionUpdateAvailablePayload {
+  version?: string
+}
+
+export interface ExtensionUpdateAvailableMessage extends ExtensionUpdateAvailablePayload {
+  type: typeof MSG_EXTENSION_UPDATE_AVAILABLE
+}
+
 // 清除全部数据（通知各上下文重置内存态）
 export const MSG_CLEAR_ALL_DATA = "CLEAR_ALL_DATA"
 
@@ -173,6 +184,7 @@ export type ExtensionMessage =
   | RevokePermissionsMessage
   | OpenOptionsPageMessage
   | OpenUrlMessage
+  | ExtensionUpdateAvailableMessage
   | ClearAllDataMessage
   | RestoreDataMessage
   | SetClaudeSessionKeyMessage
@@ -224,6 +236,7 @@ export const EVENT_MONITOR_COMPLETE = "GH_MONITOR_COMPLETE"
 export const EVENT_PRIVACY_TOGGLE = "GH_PRIVACY_TOGGLE"
 export const EVENT_GEMINI_MYSTUFF_SYNC_REQUEST = "OPHEL_GEMINI_MYSTUFF_SYNC_REQUEST"
 export const EVENT_GEMINI_MYSTUFF_CACHE_SYNC = "OPHEL_GEMINI_MYSTUFF_CACHE_SYNC"
+export const EVENT_EXTENSION_UPDATE_AVAILABLE = "OPHEL_EXTENSION_UPDATE_AVAILABLE"
 
 export interface MonitorConfigPayload {
   urlPatterns: string[]

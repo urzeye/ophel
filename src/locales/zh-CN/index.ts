@@ -1325,4 +1325,9 @@ export const zhCN = {
   zenModeLabel: "启用禅模式",
   zenModeDesc:
     "隐藏页面中不必要的元素（如底部的模型免责声明等），体验更纯粹的对话界面（每个站点独立配置）",
+  extensionUpdateNoticeKicker: "插件已更新",
+  extensionUpdateNotice: "Ophel Atlas 已更新。刷新当前页面后即可继续使用最新版本。",
+  extensionUpdateNoticeWithVersion:
+    "Ophel Atlas 已更新至 v{version}。刷新当前页面后即可继续使用最新版本。",
+  extensionUpdateNoticeAction: "刷新页面",
 }

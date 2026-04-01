@@ -20,8 +20,9 @@ import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
 import { usePromptsStore } from "~stores/prompts-store"
+import { APP_DISPLAY_NAME } from "~utils/config"
 import { DEFAULT_SETTINGS, type Prompt, type Settings } from "~utils/storage"
-import { MSG_CLEAR_ALL_DATA } from "~utils/messaging"
+import { EVENT_EXTENSION_UPDATE_AVAILABLE, MSG_CLEAR_ALL_DATA } from "~utils/messaging"
 import { EXPORT_START_TOAST_DURATION, showToast } from "~utils/toast"
 import { setLanguage, t } from "~utils/i18n"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
@@ -874,6 +875,12 @@ export const App = () => {
   const [globalSearchShortcutNudgeMessage, setGlobalSearchShortcutNudgeMessage] = useState("")
   const [showGlobalSearchSyntaxHelp, setShowGlobalSearchSyntaxHelp] = useState(false)
   const [activeSearchSyntaxSuggestionIndex, setActiveSearchSyntaxSuggestionIndex] = useState(-1)
+  const [showExtensionUpdateNotice, setShowExtensionUpdateNotice] = useState(
+    () => typeof window !== "undefined" && Boolean(window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__),
+  )
+  const [extensionUpdateVersion, setExtensionUpdateVersion] = useState<string | null>(() =>
+    typeof window !== "undefined" ? window.__OPHEL_PENDING_UPDATE_VERSION__ || null : null,
+  )
   const settingsSearchInputRef = useRef<HTMLInputElement | null>(null)
   const globalSearchSyntaxHelpTriggerRef = useRef<HTMLButtonElement | null>(null)
   const globalSearchSyntaxHelpPopoverRef = useRef<HTMLDivElement | null>(null)
@@ -2093,6 +2100,49 @@ export const App = () => {
   }, [conversationManager])
 
   useEffect(() => {
+    const handleExtensionUpdateAvailable = (event: Event) => {
+      const customEvent = event as CustomEvent<{ version?: string }>
+      const nextVersion =
+        customEvent.detail?.version || window.__OPHEL_PENDING_UPDATE_VERSION__ || null
+
+      setExtensionUpdateVersion(nextVersion)
+      setShowExtensionUpdateNotice(true)
+    }
+
+    window.addEventListener(EVENT_EXTENSION_UPDATE_AVAILABLE, handleExtensionUpdateAvailable)
+
+    if (window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__) {
+      setShowExtensionUpdateNotice(true)
+      setExtensionUpdateVersion(window.__OPHEL_PENDING_UPDATE_VERSION__ || null)
+    }
+
+    return () => {
+      window.removeEventListener(EVENT_EXTENSION_UPDATE_AVAILABLE, handleExtensionUpdateAvailable)
+    }
+  }, [])
+
+  useEffect(() => {
+    window.__OPHEL_EXTENSION_UPDATE_NOTICE_ACTIVE__ = showExtensionUpdateNotice
+
+    if (showExtensionUpdateNotice) {
+      document.getElementById("ophel-extension-update-fallback")?.remove()
+    }
+
+    return () => {
+      window.__OPHEL_EXTENSION_UPDATE_NOTICE_ACTIVE__ = false
+    }
+  }, [showExtensionUpdateNotice])
+
+  const handleDismissExtensionUpdateNotice = useCallback(() => {
+    window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__ = false
+    setShowExtensionUpdateNotice(false)
+  }, [])
+
+  const handleReloadAfterExtensionUpdate = useCallback(() => {
+    window.location.reload()
+  }, [])
+
+  useEffect(() => {
     if (!conversationManager) return
     conversationManager.updateSettings({
       syncUnpin: syncUnpin ?? false,
@@ -2787,6 +2837,28 @@ export const App = () => {
     }))
   }, [])
 
+  const extensionUpdateKickerText = getLocalizedText({
+    key: "extensionUpdateNoticeKicker",
+    fallback: "Extension updated",
+  })
+  const extensionUpdateDescription = extensionUpdateVersion
+    ? formatLocalizedText(
+        {
+          key: "extensionUpdateNoticeWithVersion",
+          fallback: `${APP_DISPLAY_NAME} has been updated to v{version}. Reload this page to keep using the latest version.`,
+        },
+        { version: extensionUpdateVersion },
+      )
+    : getLocalizedText({
+        key: "extensionUpdateNotice",
+        fallback: `${APP_DISPLAY_NAME} has been updated. Reload this page to keep using the latest version.`,
+      })
+  const extensionUpdateActionLabel = getLocalizedText({
+    key: "extensionUpdateNoticeAction",
+    fallback: "Reload page",
+  })
+  const extensionUpdateCloseLabel = t("close") || "关闭"
+
   const outlineRoleLabels = useMemo(
     () => ({
       query: getLocalizedText({ key: "outlineOnlyUserQueries", fallback: "Query" }),
@@ -3242,6 +3314,27 @@ export const App = () => {
       )}
       {adapter && queueDispatcher && (settings?.features?.prompts?.promptQueue ?? false) && (
         <QueueOverlay adapter={adapter} dispatcher={queueDispatcher} />
+      )}
+      {showExtensionUpdateNotice && (
+        <section className="gh-update-notice gh-interactive" role="status" aria-live="polite">
+          <button
+            type="button"
+            className="gh-update-notice-close"
+            aria-label={extensionUpdateCloseLabel}
+            onClick={handleDismissExtensionUpdateNotice}>
+            ×
+          </button>
+          <div className="gh-update-notice-kicker">{extensionUpdateKickerText}</div>
+          <p className="gh-update-notice-message">{extensionUpdateDescription}</p>
+          <div className="gh-update-notice-actions">
+            <button
+              type="button"
+              className="gh-update-notice-button gh-update-notice-button--primary"
+              onClick={handleReloadAfterExtensionUpdate}>
+              {extensionUpdateActionLabel}
+            </button>
+          </div>
+        </section>
       )}
       <DisclaimerModal />
     </div>

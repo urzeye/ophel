@@ -1356,4 +1356,10 @@ export const ja = {
   zenModeLabel: "禅モードを有効にする",
   zenModeDesc:
     "不要な要素（下部のモデル免責事項など）を非表示にして、より純粋な会話体験を提供します（各サイトごとに個別に設定）",
+  extensionUpdateNoticeKicker: "拡張機能を更新しました",
+  extensionUpdateNotice:
+    "Ophel Atlas が更新されました。最新バージョンを引き続き使うには、このページを再読み込みしてください。",
+  extensionUpdateNoticeWithVersion:
+    "Ophel Atlas が v{version} に更新されました。最新バージョンを引き続き使うには、このページを再読み込みしてください。",
+  extensionUpdateNoticeAction: "ページを再読み込み",
 }

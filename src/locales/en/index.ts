@@ -1366,4 +1366,10 @@ Please output the optimized code block directly, followed by a brief summary of 
   zenModeLabel: "Enable Zen Mode",
   zenModeDesc:
     "Hide unnecessary elements (like model disclaimers at the bottom) for a purer conversation experience (configured independently for each site)",
+  extensionUpdateNoticeKicker: "Extension updated",
+  extensionUpdateNotice:
+    "Ophel Atlas has been updated. Reload this page to keep using the latest version.",
+  extensionUpdateNoticeWithVersion:
+    "Ophel Atlas has been updated to v{version}. Reload this page to keep using the latest version.",
+  extensionUpdateNoticeAction: "Reload page",
 }

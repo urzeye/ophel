@@ -4,6 +4,7 @@ import {
   MSG_CHECK_CLAUDE_GENERATING,
   MSG_CHECK_PERMISSION,
   MSG_CHECK_PERMISSIONS,
+  MSG_EXTENSION_UPDATE_AVAILABLE,
   MSG_FOCUS_TAB,
   MSG_GET_AISTUDIO_MODELS,
   MSG_GET_CLAUDE_SESSION_KEY,
@@ -32,9 +33,59 @@ import { localStorage, type Settings } from "~utils/storage"
  * - 代理请求（图片 Base64 转换等）
  */
 
+const OPHEL_TARGET_URLS = [
+  "https://gemini.google.com/*",
+  "https://business.gemini.google/*",
+  "https://aistudio.google.com/*",
+  "https://grok.com/*",
+  "https://chat.openai.com/*",
+  "https://chatgpt.com/*",
+  "https://claude.ai/*",
+  "https://www.doubao.com/*",
+  "https://ima.qq.com/*",
+  "https://chat.deepseek.com/*",
+  "https://chatglm.cn/*",
+  "https://chat.qwen.ai/*",
+  "https://yuanbao.tencent.com/*",
+  "https://chat.z.ai/*",
+]
+
+async function queryOphelTabs() {
+  return chrome.tabs.query({ url: OPHEL_TARGET_URLS })
+}
+
+async function broadcastToOphelTabs(message: ExtensionMessage) {
+  const tabs = await queryOphelTabs()
+
+  await Promise.all(
+    tabs
+      .filter((tab) => tab.id)
+      .map((tab) =>
+        chrome.tabs.sendMessage(tab.id as number, message).catch(() => {
+          // 忽略未注入内容脚本的页面
+        }),
+      ),
+  )
+
+  return tabs
+}
+
 // 监听扩展安装/更新
 chrome.runtime.onInstalled.addListener(() => {
   setupDynamicRules()
+})
+
+chrome.runtime.onUpdateAvailable.addListener((details) => {
+  void (async () => {
+    try {
+      await broadcastToOphelTabs({
+        type: MSG_EXTENSION_UPDATE_AVAILABLE,
+        version: details.version,
+      })
+    } catch (error) {
+      console.warn("[Ophel] Failed to broadcast update notice:", error)
+    }
+  })()
 })
 
 // 监听权限移除
@@ -359,34 +410,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
     case MSG_CLEAR_ALL_DATA:
       ;(async () => {
         try {
-          const targets = [
-            "https://gemini.google.com/*",
-            "https://business.gemini.google/*",
-            "https://aistudio.google.com/*",
-            "https://grok.com/*",
-            "https://chat.openai.com/*",
-            "https://chatgpt.com/*",
-            "https://claude.ai/*",
-            "https://www.doubao.com/*",
-            "https://ima.qq.com/*",
-            "https://chat.deepseek.com/*",
-            "https://chatglm.cn/*",
-            "https://chat.qwen.ai/*",
-            "https://yuanbao.tencent.com/*",
-            "https://chat.z.ai/*",
-          ]
-          const tabs = await chrome.tabs.query({ url: targets })
-          await Promise.all(
-            tabs
-              .filter((tab) => tab.id)
-              .map((tab) =>
-                chrome.tabs
-                  .sendMessage(tab.id as number, { type: MSG_CLEAR_ALL_DATA })
-                  .catch(() => {
-                    // 忽略未注入内容脚本的页面
-                  }),
-              ),
-          )
+          const tabs = await broadcastToOphelTabs({ type: MSG_CLEAR_ALL_DATA })
           sendResponse({ success: true, tabs: tabs.length })
         } catch (err) {
           console.error("Broadcast clear all data failed:", err)
@@ -398,32 +422,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
     case MSG_RESTORE_DATA:
       ;(async () => {
         try {
-          const targets = [
-            "https://gemini.google.com/*",
-            "https://business.gemini.google/*",
-            "https://aistudio.google.com/*",
-            "https://grok.com/*",
-            "https://chat.openai.com/*",
-            "https://chatgpt.com/*",
-            "https://claude.ai/*",
-            "https://www.doubao.com/*",
-            "https://ima.qq.com/*",
-            "https://chat.deepseek.com/*",
-            "https://chatglm.cn/*",
-            "https://chat.qwen.ai/*",
-            "https://yuanbao.tencent.com/*",
-            "https://chat.z.ai/*",
-          ]
-          const tabs = await chrome.tabs.query({ url: targets })
-          await Promise.all(
-            tabs
-              .filter((tab) => tab.id)
-              .map((tab) =>
-                chrome.tabs.sendMessage(tab.id as number, { type: MSG_RESTORE_DATA }).catch(() => {
-                  // 忽略未注入内容脚本的页面
-                }),
-              ),
-          )
+          const tabs = await broadcastToOphelTabs({ type: MSG_RESTORE_DATA })
           sendResponse({ success: true, tabs: tabs.length })
         } catch (err) {
           console.error("Broadcast restore data failed:", err)

@@ -1351,4 +1351,10 @@ Dame el código y luego un resumen de mejoras.`,
   zenModeLabel: "Habilitar modo Zen",
   zenModeDesc:
     "Oculte elementos innecesarios (como los avisos del modelo en la parte inferior) para una experiencia de conversación más pura (configurado de forma independiente para cada sitio)",
+  extensionUpdateNoticeKicker: "Extensión actualizada",
+  extensionUpdateNotice:
+    "Ophel Atlas se ha actualizado. Recarga esta página para seguir usando la versión más reciente.",
+  extensionUpdateNoticeWithVersion:
+    "Ophel Atlas se ha actualizado a la versión v{version}. Recarga esta página para seguir usando la versión más reciente.",
+  extensionUpdateNoticeAction: "Recargar página",
 }
