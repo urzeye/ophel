@@ -172,28 +172,54 @@ function renderFallbackExtensionUpdateNotice(version?: string): void {
         all: initial;
       }
       .ophel-update-card {
-        width: min(360px, calc(100vw - 32px));
-        border-radius: 16px;
-        border: 1px solid rgba(148, 163, 184, 0.32);
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
-        box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
+        width: min(380px, calc(100vw - 32px));
+        border-radius: 20px;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(24px) saturate(180%);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.15), 0 0 0 1.5px inset rgba(255, 255, 255, 0.5);
         color: #111827;
-        font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-        padding: 18px 18px 16px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        padding: 20px 24px;
         position: relative;
+        overflow: hidden;
+        animation: ophel-update-notice-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .ophel-update-card::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: radial-gradient(circle at top right, rgba(37, 99, 235, 0.15), transparent 50%),
+                    radial-gradient(circle at bottom left, rgba(168, 85, 247, 0.08), transparent 40%);
+        pointer-events: none;
+        z-index: -1;
       }
       .ophel-update-kicker {
+        display: flex;
+        align-items: center;
+        gap: 6px;
         color: #2563eb;
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 700;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.02em;
         margin-bottom: 8px;
+      }
+      .ophel-update-icon {
+        width: 16px;
+        height: 16px;
+        color: #2563eb;
+        animation: ophel-update-icon-pulse 2s infinite ease-in-out;
+      }
+      @keyframes ophel-update-icon-pulse {
+        0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        50% { transform: scale(1.1) rotate(5deg); opacity: 0.8; }
       }
       .ophel-update-message {
         color: #374151;
         font-size: 14px;
-        line-height: 1.65;
-        margin: 0 0 16px;
+        line-height: 1.6;
+        margin: 0 0 18px;
         padding-right: 28px;
       }
       .ophel-update-actions {
@@ -203,34 +229,76 @@ function renderFallbackExtensionUpdateNotice(version?: string): void {
       .ophel-update-button {
         appearance: none;
         border: none;
-        border-radius: 10px;
-        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        border-radius: 12px;
+        background: #2563eb;
+        box-shadow: 0 8px 20px -6px rgba(37, 99, 235, 0.6);
         color: #ffffff;
         cursor: pointer;
         font-size: 13px;
         font-weight: 600;
-        padding: 10px 16px;
+        padding: 10px 18px;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+        overflow: hidden;
+      }
+      .ophel-update-button::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: linear-gradient(rgba(255,255,255,0.1), transparent);
+        opacity: 0;
+        transition: opacity 0.2s;
       }
       .ophel-update-button:hover {
-        filter: brightness(1.05);
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 12px 28px -6px rgba(37, 99, 235, 0.8);
+      }
+      .ophel-update-button:hover::after {
+        opacity: 1;
       }
       .ophel-update-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
         appearance: none;
-        background: transparent;
         border: none;
+        outline: none;
+        background: rgba(107, 114, 128, 0.1);
         color: #6b7280;
         cursor: pointer;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         font-size: 18px;
         line-height: 1;
         padding: 0;
-        position: absolute;
-        right: 14px;
-        top: 12px;
+        transition: all 0.2s;
+      }
+      .ophel-update-close:hover {
+        background: rgba(107, 114, 128, 0.2);
+        color: #111827;
+        transform: rotate(90deg);
+      }
+      @keyframes ophel-update-notice-enter {
+        0% { opacity: 0; transform: translateY(20px) scale(0.95); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
       }
     </style>
     <section class="ophel-update-card" role="status" aria-live="polite">
-      <button class="ophel-update-close" type="button" aria-label="${copy.closeLabel}">×</button>
-      <div class="ophel-update-kicker">${copy.kicker}</div>
+      <button class="ophel-update-close" type="button" aria-label="${copy.closeLabel}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+        </svg>
+      </button>
+      <div class="ophel-update-kicker">
+        <svg class="ophel-update-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+        </svg>
+        ${copy.kicker}
+      </div>
       <p class="ophel-update-message">${copy.description.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
       <div class="ophel-update-actions">
         <button class="ophel-update-button" type="button">${copy.reloadLabel}</button>
