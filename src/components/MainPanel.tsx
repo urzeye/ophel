@@ -11,11 +11,11 @@ import {
   RefreshIcon,
   ScrollBottomIcon,
   ScrollTopIcon,
-  SparkleIcon,
   SettingsIcon,
   ThemeDarkIcon,
   ThemeLightIcon,
 } from "~components/icons"
+import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { SITE_IDS, TAB_IDS } from "~constants"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"

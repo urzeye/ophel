@@ -12,9 +12,9 @@ import {
   ScrollBottomIcon,
   ScrollTopIcon,
   SearchIcon,
-  SparkleIcon,
   ToolsIcon,
 } from "~components/icons"
+import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { SHORTCUT_META } from "~constants/shortcuts"
 
 // ==================== Tab ID 常量 ====================
