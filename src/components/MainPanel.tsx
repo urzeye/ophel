@@ -394,7 +394,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                 // 发送隐私模式切换事件给 TabManager
                 window.postMessage({ type: "GH_PRIVACY_TOGGLE" }, "*")
               }}>
-              <SparkleIcon size={18} />
+              <SparkleIcon size={18} color="brand" />
               <span style={{ fontSize: "15px", fontWeight: 600 }}>{t("panelTitle")}</span>
             </div>
           </Tooltip>

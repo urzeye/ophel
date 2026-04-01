@@ -11,8 +11,9 @@ export const SparkleIcon: React.FC<IconProps> = ({ size = 18, color, className =
   const baseId = React.useId().replace(/:/g, "")
   const gradientId = `sparkle-gradient-${baseId}`
 
-  // 保持默认无颜色时，使用绚丽品牌的线性渐变
-  const isDefaultColor = !color || color === "currentColor"
+  // 当 color 显式传入 currentColor 时，允许其退化为单色轮廓，以融入环境 UI
+  // 否则保持默认的品牌极光渐变
+  const isDefaultColor = !color || color === "brand"
   const fillValue = isDefaultColor ? `url(#${gradientId})` : color
 
   // 尺寸放大 25%，保证在同排图标中拥有“凸显、加大”的高清主视觉

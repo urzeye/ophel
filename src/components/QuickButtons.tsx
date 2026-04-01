@@ -280,7 +280,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       icon = getThemeIcon()
     } else if (def.IconComponent) {
       const IconComp = def.IconComponent
-      icon = <IconComp size={id === "panel" ? 21 : 18} />
+      icon = <IconComp size={id === "panel" ? 21 : 18} color="brand" />
     } else {
       icon = def.icon
     }
