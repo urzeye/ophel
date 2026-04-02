@@ -192,8 +192,7 @@ pnpm package:all
  </picture>
 </a>
 
-
-## 💖 지원과 감사
+## 🙌 지원과 감사
 
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
@@ -251,7 +250,11 @@ pnpm package:all
 <!-- supporters:end -->
 
 <p align="center">
-  이 도구가 여러분의 업무나 학습 워크플로우를 개선하는 데 도움이 되었다면, Star나 Sponsor로 지원해 주세요. Ophel이 더 발전할 수 있도록 힘이 됩니다.
+  <strong>Ophel Atlas</strong>가 여러분의 일이나 학습 효율을 높여 주었다면, <strong>Star</strong> 또는 <strong>Sponsor</strong>로 응원해 주세요.
+</p>
+
+<p align="center">
+  <strong>널리 알려 주시는 것 역시 큰 힘이 됩니다</strong>: <strong>Linux.do, X, Xiaohongshu, Bilibili</strong> 등 더 많은 플랫폼에 공유해 주시면 정말 큰 도움이 됩니다. 여러분의 모든 피드백과 공유가 Ophel을 더 좋게 만듭니다.
 </p>
 
 <p align="center">

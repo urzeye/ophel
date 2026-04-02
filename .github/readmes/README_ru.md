@@ -184,8 +184,7 @@ pnpm package:all
  </picture>
 </a>
 
-
-## 💖 Поддержка и благодарности
+## 🙌 Поддержка и благодарности
 
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
@@ -243,7 +242,11 @@ pnpm package:all
 <!-- supporters:end -->
 
 <p align="center">
-  Если Ophel улучшает ваш рабочий процесс, рассмотрите возможность поддержки через Star или Sponsor, чтобы помочь нам идти дальше.
+  Если <strong>Ophel Atlas</strong> сделал вашу работу или обучение эффективнее, вы можете поддержать нас через <strong>Star</strong> или <strong>Sponsor</strong>.
+</p>
+
+<p align="center">
+  <strong>Распространение тоже помогает</strong>: будем рады, если вы поделитесь им на <strong>Linux.do, X, Xiaohongshu, Bilibili</strong> и других платформах. Каждый ваш отзыв и каждый репост помогают делать Ophel лучше!
 </p>
 
 <p align="center">

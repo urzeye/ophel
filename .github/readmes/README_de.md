@@ -184,8 +184,7 @@ Bei Problemen oder Vorschlägen besuchen Sie bitte [GitHub Issues](https://githu
  </picture>
 </a>
 
-
-## 💖 Unterstützung und Dank
+## 🙌 Unterstützung und Dank
 
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
@@ -243,7 +242,11 @@ Bei Problemen oder Vorschlägen besuchen Sie bitte [GitHub Issues](https://githu
 <!-- supporters:end -->
 
 <p align="center">
-  Wenn Ophel Ihren Arbeitsablauf oder Ihr Lernen verbessert, ziehen Sie bitte eine Unterstützung durch Star oder Sponsor in Betracht, damit wir weiter kommen.
+  Wenn <strong>Ophel Atlas</strong> deine Arbeit oder dein Lernen effizienter macht, unterstütze uns gern mit einem <strong>Star</strong> oder <strong>Sponsor</strong>.
+</p>
+
+<p align="center">
+  <strong>Auch das Weiterempfehlen ist wertvoll</strong>: Wir freuen uns, wenn du es auf <strong>Linux.do, X, Xiaohongshu, Bilibili</strong> und weiteren Plattformen teilst. Jedes Feedback und jede Weiterempfehlung helfen dabei, Ophel besser zu machen!
 </p>
 
 <p align="center">

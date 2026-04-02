@@ -184,8 +184,7 @@ Para problemas ou sugestões, visite [GitHub Issues](https://github.com/urzeye/o
  </picture>
 </a>
 
-
-## 💖 Apoio e agradecimentos
+## 🙌 Apoio e agradecimentos
 
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
@@ -243,7 +242,11 @@ Para problemas ou sugestões, visite [GitHub Issues](https://github.com/urzeye/o
 <!-- supporters:end -->
 
 <p align="center">
-  Se Ophel melhora seu fluxo de trabalho, considere apoiar via Star ou Sponsor para nos ajudar a ir mais longe.
+  Se <strong>Ophel Atlas</strong> aumentou a sua eficiência no trabalho ou nos estudos, apoie-nos com uma <strong>Star</strong> ou como <strong>Sponsor</strong>.
+</p>
+
+<p align="center">
+  <strong>Divulgar também é uma forma de apoiar</strong>: ficaremos felizes se você compartilhar no <strong>Linux.do, X, Xiaohongshu, Bilibili</strong> e em outras plataformas. Cada feedback e cada compartilhamento ajudam a tornar o Ophel ainda melhor!
 </p>
 
 <p align="center">

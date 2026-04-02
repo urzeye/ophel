@@ -192,8 +192,7 @@ pnpm package:all
  </picture>
 </a>
 
-
-## 💖 支持與致謝
+## 🙌 支持與致謝
 
 <p align="center">
   <em>"一個人可以走得很快，但一群人可以走得更遠。"</em>
@@ -251,7 +250,11 @@ pnpm package:all
 <!-- supporters:end -->
 
 <p align="center">
-  如果這款工具對你的工作或學習流程帶來提升，歡迎以 Star、Sponsor 的方式支持我們，讓 Ophel 變得更好。
+  如果 <strong>Ophel Atlas</strong> 提升了你的工作或學習效率，歡迎透過 <strong>Star</strong> 或 <strong>Sponsor</strong> 來支持我們。
+</p>
+
+<p align="center">
+  <strong>傳播也是一種力量</strong>：也期待你將它分享到 <strong>Linux.do、X、小紅書、Bilibili</strong> 及更多平台。你的每一份回饋與分享，都在讓 Ophel 變得更好！
 </p>
 
 <p align="center">
