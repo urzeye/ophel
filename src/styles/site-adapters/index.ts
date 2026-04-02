@@ -6,6 +6,7 @@ import { grokNativeThemeCss } from "./grok"
 import { claudeNativeThemeCss } from "./claude"
 import { doubaoNativeThemeCss } from "./doubao"
 import { deepseekNativeThemeCss } from "./deepseek"
+import { kimiNativeThemeCss } from "./kimi"
 
 /**
  * 集中管理各原生站点的 CSS 主题变量映射。
@@ -19,4 +20,5 @@ export const siteNativeThemeAdapters: Record<string, string> = {
   [SITE_IDS.CLAUDE]: claudeNativeThemeCss,
   [SITE_IDS.DOUBAO]: doubaoNativeThemeCss,
   [SITE_IDS.DEEPSEEK]: deepseekNativeThemeCss,
+  kimi: kimiNativeThemeCss, // 临时字面量
 }
