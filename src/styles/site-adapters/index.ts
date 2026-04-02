@@ -5,6 +5,7 @@ import { aistudioNativeThemeCss } from "./aistudio"
 import { grokNativeThemeCss } from "./grok"
 import { claudeNativeThemeCss } from "./claude"
 import { doubaoNativeThemeCss } from "./doubao"
+import { deepseekNativeThemeCss } from "./deepseek"
 
 /**
  * 集中管理各原生站点的 CSS 主题变量映射。
@@ -16,5 +17,6 @@ export const siteNativeThemeAdapters: Record<string, string> = {
   [SITE_IDS.AISTUDIO]: aistudioNativeThemeCss,
   [SITE_IDS.GROK]: grokNativeThemeCss,
   [SITE_IDS.CLAUDE]: claudeNativeThemeCss,
-  doubao: doubaoNativeThemeCss, // 临时使用字符串字面量或等待 SITE_IDS 更新
+  [SITE_IDS.DOUBAO]: doubaoNativeThemeCss,
+  [SITE_IDS.DEEPSEEK]: deepseekNativeThemeCss,
 }
