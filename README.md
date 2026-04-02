@@ -183,6 +183,10 @@ pnpm package:all
 
 </details>
 
+### 🐛 问题反馈
+
+如有问题或建议，欢迎在 [GitHub Issues](https://github.com/urzeye/ophel/issues) 反馈。
+
 ## 🙌 支持与致谢
 
 <p align="center">
@@ -317,10 +321,19 @@ pnpm package:all
   </tr>
 </table>
 
-<p align="center">
+⭐ Star History
+
+<div align="center">
+<a href="https://star-history.com/#urzeye/ophel&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=urzeye/ophel&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=urzeye/ophel&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=urzeye/ophel&type=Date" />
+ </picture>
+</a>
+<p>
   Made with ❤️ by <a href="https://github.com/urzeye">urzeye</a>
+  <span aria-hidden="true"> · </span>
+  <a href="./LICENSE"><strong>GPLv3 License</strong></a>
 </p>
-
-## 📜 许可证
-
-本项目采用 **GNU GPLv3** 协议。详情请参阅 [LICENSE](./LICENSE)。
+</div>

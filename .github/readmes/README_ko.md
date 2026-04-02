@@ -182,16 +182,6 @@ pnpm package:all
 
 문제가 있거나 제안 사항이 있으면 [GitHub Issues](https://github.com/urzeye/ophel/issues) 에 피드백을 남겨주세요.
 
-## ⭐ Star History
-
-<a href="https://star-history.com/#urzeye/ophel&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=urzeye/ophel&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=urzeye/ophel&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=urzeye/ophel&type=Date" />
- </picture>
-</a>
-
 ## 🙌 지원과 감사
 
 <p align="center">
@@ -311,10 +301,19 @@ pnpm package:all
   <strong>널리 알려 주시는 것 역시 큰 힘이 됩니다</strong>: <strong>Linux.do, X, Xiaohongshu, Bilibili</strong> 등 더 많은 플랫폼에 공유해 주시면 정말 큰 도움이 됩니다. 여러분의 모든 피드백과 공유가 Ophel을 더 좋게 만듭니다.
 </p>
 
-<p align="center">
+⭐ Star History
+
+<div align="center">
+<a href="https://star-history.com/#urzeye/ophel&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=urzeye/ophel&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=urzeye/ophel&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=urzeye/ophel&type=Date" />
+ </picture>
+</a>
+<p>
   Made with ❤️ by <a href="https://github.com/urzeye">urzeye</a>
+  <span aria-hidden="true"> · </span>
+  <a href="../../LICENSE"><strong>GPLv3 License</strong></a>
 </p>
-
-## 📜 라이선스
-
-이 프로젝트는 **GNU GPLv3** 라이선스를 따릅니다. 자세한 내용은 [LICENSE](../../LICENSE) 를 참조하세요.
+</div>
