@@ -292,8 +292,23 @@ For issues or suggestions, please visit [GitHub Issues](https://github.com/urzey
 </p>
 
 <p align="center">
-  If Ophel improves your workflow or learning, please consider supporting via Star or Sponsor to help us go further.
+  If Ophel improves your workflow or learning, please consider supporting via Star, Sponsor, WeChat, or Afdian to help us go further.
 </p>
+
+<table align="center">
+  <tr>
+    <td align="center"><strong>WeChat</strong></td>
+    <td align="center"><strong>Afdian</strong></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="./assets/support/wechat-pay.jpg" width="220" alt="WeChat donation QR code" />
+    </td>
+    <td align="center">
+      <img src="./assets/support/afdian.png" width="220" alt="Afdian support" />
+    </td>
+  </tr>
+</table>
 
 <p align="center">
   Made with ❤️ by <a href="https://github.com/urzeye">urzeye</a>

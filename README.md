@@ -303,8 +303,23 @@ flowchart TB
 </p>
 
 <p align="center">
-  如果这款工具对你的工作或学习流程带来提升，欢迎以 Star、Sponsor 的方式支持我们，让 Ophel 变得更好。
+  如果这款工具对你的工作或学习流程带来提升，欢迎以 Star、Sponsor、微信赞赏或爱发电的方式支持我们，让 Ophel 变得更好。
 </p>
+
+<table align="center">
+  <tr>
+    <td align="center"><strong>微信收款码</strong></td>
+    <td align="center"><strong>爱发电</strong></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="./assets/support/wechat-pay.jpg" width="220" alt="微信收款码" />
+    </td>
+    <td align="center">
+      <img src="./assets/support/afdian.png" width="220" alt="爱发电" />
+    </td>
+  </tr>
+</table>
 
 <p align="center">
   Made with ❤️ by <a href="https://github.com/urzeye">urzeye</a>
