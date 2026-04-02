@@ -38,6 +38,7 @@ export const geminiNativeThemeCss = `
   /* 6. 其他元素 */
   --gem-sys-color--surface-container-high: var(--gh-bg-tertiary) !important;
   --gem-sys-color--primary: var(--gh-primary) !important;
+  /* 图标颜色 */
   --mat-icon-color: var(--gh-primary) !important;
 }
 `
