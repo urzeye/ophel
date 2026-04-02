@@ -228,9 +228,9 @@ pnpm package:all
       <strong>Hugh</strong>
     </td>
     <td align="center" width="220" style="border: none; padding: 0 18px;">
-      <a href="https://github.com/hugo1120"><img src="https://github.com/hugo1120.png?size=160" width="84" height="84" alt="hugo1120" /></a>
+      <a href="https://github.com/hugo1120"><img src="https://github.com/hugo1120.png?size=160" width="84" height="84" alt="hugo2233" /></a>
       <br />
-      <a href="https://github.com/hugo1120"><strong>hugo1120</strong></a>
+      <a href="https://github.com/hugo1120"><strong>hugo2233</strong></a>
     </td>
   </tr>
 </table>

@@ -222,9 +222,9 @@ For issues or suggestions, please visit [GitHub Issues](https://github.com/urzey
       <strong>Hugh</strong>
     </td>
     <td align="center" width="220" style="border: none; padding: 0 18px;">
-      <a href="https://github.com/hugo1120"><img src="https://github.com/hugo1120.png?size=160" width="84" height="84" alt="hugo1120" /></a>
+      <a href="https://github.com/hugo1120"><img src="https://github.com/hugo1120.png?size=160" width="84" height="84" alt="hugo2233" /></a>
       <br />
-      <a href="https://github.com/hugo1120"><strong>hugo1120</strong></a>
+      <a href="https://github.com/hugo1120"><strong>hugo2233</strong></a>
     </td>
   </tr>
 </table>
@@ -298,11 +298,15 @@ For issues or suggestions, please visit [GitHub Issues](https://github.com/urzey
 <table align="center">
   <tr>
     <td align="center"><strong>WeChat</strong></td>
+    <td align="center"><strong>Alipay</strong></td>
     <td align="center"><strong>Afdian</strong></td>
   </tr>
   <tr>
     <td align="center">
       <img src="./assets/support/wechat-pay.jpg" width="220" alt="WeChat donation QR code" />
+    </td>
+    <td align="center">
+      <img src="./assets/support/alipay.png" width="220" alt="Alipay donation QR code" />
     </td>
     <td align="center">
       <img src="./assets/support/afdian.png" width="220" alt="Afdian support" />
