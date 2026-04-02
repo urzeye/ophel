@@ -14,6 +14,7 @@ import {
   type ThemePreset,
   type ThemeVariables,
 } from "~utils/themes"
+import { siteNativeThemeAdapters } from "~styles/site-adapters"
 
 export type ThemeMode = "light" | "dark"
 export type ThemePreference = "light" | "dark" | "system"
@@ -319,7 +320,7 @@ export class ThemeManager {
         animation: none;
         mix-blend-mode: normal;
       }
-      
+
       ::view-transition-new(root) {
         clip-path: circle(0px at var(--theme-x, 50%) var(--theme-y, 50%));
       }
@@ -328,10 +329,32 @@ export class ThemeManager {
   }
 
   /**
+   * 注入站点的原生主题映射器 (降维覆盖宿主 CSS 变量)
+   * 将在应用初始化时一次性执行挂载
+   */
+  private injectNativeSiteThemeAdapter() {
+    if (!this.adapter) return
+    const siteId = this.adapter.getSiteId()
+
+    // 如果没有对应的原生适配器样式或已注入，则跳过
+    const cssContent = siteNativeThemeAdapters[siteId]
+    if (!cssContent || document.getElementById("ophel-native-adaptive-style")) return
+
+    const styleEl = document.createElement("style")
+    styleEl.id = "ophel-native-adaptive-style"
+    styleEl.textContent = cssContent
+
+    // 添加到原生 head 当中发生全局覆盖作用
+    document.head.appendChild(styleEl)
+  }
+
+  /**
    * 设置适配器引用（用于调用适配器的 toggleTheme 方法）
    */
   setAdapter(adapter: SiteAdapter | null) {
     this.adapter = adapter
+    // 设置好适配器后，尝试注入对应的原生主题替换器
+    this.injectNativeSiteThemeAdapter()
   }
 
   /**
