@@ -67,7 +67,6 @@
   <a href="#-demo">Demo</a> •
   <a href="#-kernfunktionen">Kernfunktionen</a> •
   <a href="#-schnellstart">Schnellstart</a> •
-  <a href="#%EF%B8%8F-architektur">Architektur</a> •
   <a href="#-unterstützung">Unterstützung</a>
 </p>
 
@@ -154,112 +153,19 @@ git clone https://github.com/urzeye/ophel.git
 cd ophel
 
 pnpm install
-pnpm dev              # Entwicklungsmodus
-pnpm build            # Chrome/Edge Produktions-Build
-pnpm build:firefox    # Firefox Produktions-Build
-pnpm build:userscript # Userscript Produktions-Build
-```
 
-</details>
+pnpm dev
+pnpm build
+pnpm build:firefox
+pnpm build:all
 
-## 🏗️ Architektur
+pnpm build:userscript
+pnpm build:userscript:local
+pnpm serve:userscript:assets
 
-**Tech Stack**: [Plasmo](https://docs.plasmo.com/) + [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) + [Zustand](https://github.com/pmndrs/zustand)
-
-<details>
-<summary>📐 Architekturdiagramm (zum Erweitern klicken)</summary>
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#6366f1', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4f46e5', 'lineColor': '#94a3b8', 'secondaryColor': '#f1f5f9', 'tertiaryColor': '#e2e8f0', 'background': '#ffffff'}}}%%
-flowchart TB
-    subgraph Platforms["🚀 Dual Platform Build"]
-        direction LR
-        EXT["🧩 Browser Extension<br/><small>Plasmo + Manifest V3</small>"]
-        US["🛢️ Userscript<br/><small>Vite + vite-plugin-monkey</small>"]
-    end
-
-    subgraph Entry["📦 Entry Layer"]
-        direction LR
-        CE["Content Script<br/><small>ui-entry.tsx</small>"]
-        BG["Background<br/><small>background.ts</small>"]
-        OPT["Options Page<br/><small>tabs/options.tsx</small>"]
-        USE["Userscript Entry<br/><small>platform/userscript/entry.tsx</small>"]
-    end
-
-    subgraph Adapters["🔌 Site Adapters"]
-        direction LR
-        GEM["Gemini"]
-        GPT["ChatGPT"]
-        CLA["Claude"]
-        GRK["Grok"]
-        AIS["AI Studio"]
-        GEE["Gemini<br/>Enterprise"]
-    end
-
-    subgraph Core["⚙️ Core Modules"]
-        direction TB
-        TM["🎨 Theme Manager<br/><small>Theme Switch · View Transitions</small>"]
-        OM["📑 Outline Manager<br/><small>Outline Generation · Navigation</small>"]
-        RH["📖 Reading History<br/><small>Position Restore</small>"]
-        ML["🔒 Model Lock<br/><small>Model Locking</small>"]
-        NM["📡 Network Monitor<br/><small>Request Interception · Status Detection</small>"]
-    end
-
-    subgraph State["💾 State Management"]
-        direction LR
-        ZS["Zustand Stores<br/><small>settings · prompts · conversations</small>"]
-        CS["Chrome Storage<br/><small>local · sync</small>"]
-        GM["GM_* Storage<br/><small>Userscript API</small>"]
-    end
-
-    subgraph UI["🎯 UI Components"]
-        direction TB
-        APP["App.tsx"]
-        MP["MainPanel<br/><small>Side Panel</small>"]
-        SM["SettingsModal<br/><small>Settings Dialog</small>"]
-        TABS["Tabs<br/><small>Outline · Conversations · Prompts</small>"]
-    end
-
-    subgraph CSS["🎨 Styling System"]
-        direction LR
-        SD["Shadow DOM<br/><small>Style Isolation</small>"]
-        TV["CSS Variables<br/><small>Theme Variables</small>"]
-        TH["Theme Presets<br/><small>20+ Preset Themes</small>"]
-    end
-
-    %% Connections
-    EXT --> CE & BG & OPT
-    US --> USE
-
-    CE --> Adapters
-    USE --> Adapters
-
-    Adapters --> Core
-    Core --> State
-
-    CE --> UI
-    USE --> UI
-    UI --> CSS
-
-    ZS <--> CS
-    ZS <-.-> GM
-
-    %% Styles
-    classDef platform fill:#818cf8,stroke:#6366f1,color:#fff
-    classDef entry fill:#34d399,stroke:#10b981,color:#fff
-    classDef adapter fill:#fbbf24,stroke:#f59e0b,color:#1f2937
-    classDef core fill:#60a5fa,stroke:#3b82f6,color:#fff
-    classDef state fill:#f472b6,stroke:#ec4899,color:#fff
-    classDef ui fill:#a78bfa,stroke:#8b5cf6,color:#fff
-    classDef css fill:#fb923c,stroke:#f97316,color:#fff
-
-    class EXT,US platform
-    class CE,BG,OPT,USE entry
-    class GEM,GPT,CLA,GRK,AIS,GEE adapter
-    class TM,OM,RH,ML,NM core
-    class ZS,CS,GM state
-    class APP,MP,SM,TABS ui
-    class SD,TV,TH css
+pnpm package
+pnpm package:firefox
+pnpm package:all
 ```
 
 </details>
@@ -277,6 +183,7 @@ Bei Problemen oder Vorschlägen besuchen Sie bitte [GitHub Issues](https://githu
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=urzeye/ophel&type=Date" />
  </picture>
 </a>
+
 
 ## 💖 Unterstützung und Dank
 

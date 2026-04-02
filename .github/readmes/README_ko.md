@@ -75,7 +75,6 @@
   <a href="#-기능-데모">기능 데모</a> •
   <a href="#-핵심-기능">핵심 기능</a> •
   <a href="#-시작하기">시작하기</a> •
-  <a href="#%EF%B8%8F-기술 아키텍처">기술 아키텍처</a> •
   <a href="#-프로젝트-후원">프로젝트 후원</a>
 </p>
 
@@ -162,112 +161,19 @@ git clone https://github.com/urzeye/ophel.git
 cd ophel
 
 pnpm install
-pnpm dev              # 개발 모드
-pnpm build            # Chrome/Edge 프로덕션 빌드
-pnpm build:firefox    # Firefox 프로덕션 빌드
-pnpm build:userscript # Userscript 프로덕션 빌드
-```
 
-</details>
+pnpm dev
+pnpm build
+pnpm build:firefox
+pnpm build:all
 
-## 🏗️ 기술 아키텍처
+pnpm build:userscript
+pnpm build:userscript:local
+pnpm serve:userscript:assets
 
-**기술 스택**: [Plasmo](https://docs.plasmo.com/) + [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) + [Zustand](https://github.com/pmndrs/zustand)
-
-<details>
-<summary>📐 아키텍처 다이어그램 (클릭하여 펼치기)</summary>
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#6366f1', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4f46e5', 'lineColor': '#94a3b8', 'secondaryColor': '#f1f5f9', 'tertiaryColor': '#e2e8f0', 'background': '#ffffff'}}}%%
-flowchart TB
-    subgraph Platforms["🚀 듀얼 플랫폼 빌드"]
-        direction LR
-        EXT["🧩 브라우저 확장<br/><small>Plasmo + Manifest V3</small>"]
-        US["🛢️ 유저스크립트<br/><small>Vite + vite-plugin-monkey</small>"]
-    end
-
-    subgraph Entry["📦 진입 계층"]
-        direction LR
-        CE["Content Script<br/><small>ui-entry.tsx</small>"]
-        BG["Background<br/><small>background.ts</small>"]
-        OPT["Options Page<br/><small>tabs/options.tsx</small>"]
-        USE["Userscript Entry<br/><small>platform/userscript/entry.tsx</small>"]
-    end
-
-    subgraph Adapters["🔌 사이트 어댑터"]
-        direction LR
-        GEM["Gemini"]
-        GPT["ChatGPT"]
-        CLA["Claude"]
-        GRK["Grok"]
-        AIS["AI Studio"]
-        GEE["Gemini<br/>Enterprise"]
-    end
-
-    subgraph Core["⚙️ 핵심 모듈"]
-        direction TB
-        TM["🎨 Theme Manager<br/><small>테마 전환 · View Transitions</small>"]
-        OM["📑 Outline Manager<br/><small>개요 생성 · 내비게이션</small>"]
-        RH["📖 Reading History<br/><small>읽기 위치 복원</small>"]
-        ML["🔒 Model Lock<br/><small>모델 잠금</small>"]
-        NM["📡 Network Monitor<br/><small>요청 가로채기 · 상태 감지</small>"]
-    end
-
-    subgraph State["💾 상태 관리"]
-        direction LR
-        ZS["Zustand Stores<br/><small>settings · prompts · conversations</small>"]
-        CS["Chrome Storage<br/><small>local · sync</small>"]
-        GM["GM_* Storage<br/><small>유저스크립트 API</small>"]
-    end
-
-    subgraph UI["🎯 UI 컴포넌트"]
-        direction TB
-        APP["App.tsx"]
-        MP["MainPanel<br/><small>사이드 패널</small>"]
-        SM["SettingsModal<br/><small>설정 모달</small>"]
-        TABS["Tabs<br/><small>개요 · 대화 · 프롬프트</small>"]
-    end
-
-    subgraph CSS["🎨 스타일 시스템"]
-        direction LR
-        SD["Shadow DOM<br/><small>스타일 격리</small>"]
-        TV["CSS Variables<br/><small>테마 변수</small>"]
-        TH["Theme Presets<br/><small>20+ 프리셋 테마</small>"]
-    end
-
-    %% Connections
-    EXT --> CE & BG & OPT
-    US --> USE
-
-    CE --> Adapters
-    USE --> Adapters
-
-    Adapters --> Core
-    Core --> State
-
-    CE --> UI
-    USE --> UI
-    UI --> CSS
-
-    ZS <--> CS
-    ZS <-.-> GM
-
-    %% Styles
-    classDef platform fill:#818cf8,stroke:#6366f1,color:#fff
-    classDef entry fill:#34d399,stroke:#10b981,color:#fff
-    classDef adapter fill:#fbbf24,stroke:#f59e0b,color:#1f2937
-    classDef core fill:#60a5fa,stroke:#3b82f6,color:#fff
-    classDef state fill:#f472b6,stroke:#ec4899,color:#fff
-    classDef ui fill:#a78bfa,stroke:#8b5cf6,color:#fff
-    classDef css fill:#fb923c,stroke:#f97316,color:#fff
-
-    class EXT,US platform
-    class CE,BG,OPT,USE entry
-    class GEM,GPT,CLA,GRK,AIS,GEE adapter
-    class TM,OM,RH,ML,NM core
-    class ZS,CS,GM state
-    class APP,MP,SM,TABS ui
-    class SD,TV,TH css
+pnpm package
+pnpm package:firefox
+pnpm package:all
 ```
 
 </details>
@@ -285,6 +191,7 @@ flowchart TB
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=urzeye/ophel&type=Date" />
  </picture>
 </a>
+
 
 ## 💖 지원과 감사
 

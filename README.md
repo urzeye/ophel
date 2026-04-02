@@ -80,7 +80,6 @@
   <a href="#-功能演示">功能演示</a> •
   <a href="#-核心功能">核心功能</a> •
   <a href="#-快速开始">快速开始</a> •
-  <a href="#%EF%B8%8F-技术架构">技术架构</a> •
   <a href="#-支持项目">支持项目</a>
 </p>
 
@@ -168,112 +167,19 @@ git clone https://github.com/urzeye/ophel.git
 cd ophel
 
 pnpm install
-pnpm dev              # 开发模式
-pnpm build            # Chrome/Edge 生产构建
-pnpm build:firefox    # Firefox 生产构建
-pnpm build:userscript # 油猴脚本生产构建
-```
 
-</details>
+pnpm dev
+pnpm build
+pnpm build:firefox
+pnpm build:all
 
-## 🏗️ 技术架构
+pnpm build:userscript
+pnpm build:userscript:local
+pnpm serve:userscript:assets
 
-**技术栈**：[Plasmo](https://docs.plasmo.com/) + [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) + [Zustand](https://github.com/pmndrs/zustand)
-
-<details>
-<summary>📐 架构图（点击展开）</summary>
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#6366f1', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4f46e5', 'lineColor': '#94a3b8', 'secondaryColor': '#f1f5f9', 'tertiaryColor': '#e2e8f0', 'background': '#ffffff'}}}%%
-flowchart TB
-    subgraph Platforms["🚀 双平台构建"]
-        direction LR
-        EXT["🧩 浏览器扩展<br/><small>Plasmo + Manifest V3</small>"]
-        US["🛢️ 油猴脚本<br/><small>Vite + vite-plugin-monkey</small>"]
-    end
-
-    subgraph Entry["📦 入口层"]
-        direction LR
-        CE["Content Script<br/><small>ui-entry.tsx</small>"]
-        BG["Background<br/><small>background.ts</small>"]
-        OPT["Options Page<br/><small>tabs/options.tsx</small>"]
-        USE["Userscript Entry<br/><small>platform/userscript/entry.tsx</small>"]
-    end
-
-    subgraph Adapters["🔌 站点适配器"]
-        direction LR
-        GEM["Gemini"]
-        GPT["ChatGPT"]
-        CLA["Claude"]
-        GRK["Grok"]
-        AIS["AI Studio"]
-        GEE["Gemini<br/>Enterprise"]
-    end
-
-    subgraph Core["⚙️ 核心模块"]
-        direction TB
-        TM["🎨 Theme Manager<br/><small>主题切换 · View Transitions</small>"]
-        OM["📑 Outline Manager<br/><small>大纲生成 · 导航定位</small>"]
-        RH["📖 Reading History<br/><small>阅读位置恢复</small>"]
-        ML["🔒 Model Lock<br/><small>模型锁定</small>"]
-        NM["📡 Network Monitor<br/><small>请求拦截 · 状态检测</small>"]
-    end
-
-    subgraph State["💾 状态管理"]
-        direction LR
-        ZS["Zustand Stores<br/><small>settings · prompts · conversations</small>"]
-        CS["Chrome Storage<br/><small>local · sync</small>"]
-        GM["GM_* Storage<br/><small>油猴 API</small>"]
-    end
-
-    subgraph UI["🎯 UI 组件"]
-        direction TB
-        APP["App.tsx"]
-        MP["MainPanel<br/><small>侧边面板</small>"]
-        SM["SettingsModal<br/><small>设置弹窗</small>"]
-        TABS["Tabs<br/><small>大纲 · 会话 · 提示词</small>"]
-    end
-
-    subgraph CSS["🎨 样式系统"]
-        direction LR
-        SD["Shadow DOM<br/><small>样式隔离</small>"]
-        TV["CSS Variables<br/><small>主题变量</small>"]
-        TH["Theme Presets<br/><small>20+ 预设主题</small>"]
-    end
-
-    %% 连接关系
-    EXT --> CE & BG & OPT
-    US --> USE
-
-    CE --> Adapters
-    USE --> Adapters
-
-    Adapters --> Core
-    Core --> State
-
-    CE --> UI
-    USE --> UI
-    UI --> CSS
-
-    ZS <--> CS
-    ZS <-.-> GM
-
-    %% 样式
-    classDef platform fill:#818cf8,stroke:#6366f1,color:#fff
-    classDef entry fill:#34d399,stroke:#10b981,color:#fff
-    classDef adapter fill:#fbbf24,stroke:#f59e0b,color:#1f2937
-    classDef core fill:#60a5fa,stroke:#3b82f6,color:#fff
-    classDef state fill:#f472b6,stroke:#ec4899,color:#fff
-    classDef ui fill:#a78bfa,stroke:#8b5cf6,color:#fff
-    classDef css fill:#fb923c,stroke:#f97316,color:#fff
-
-    class EXT,US platform
-    class CE,BG,OPT,USE entry
-    class GEM,GPT,CLA,GRK,AIS,GEE adapter
-    class TM,OM,RH,ML,NM core
-    class ZS,CS,GM state
-    class APP,MP,SM,TABS ui
-    class SD,TV,TH css
+pnpm package
+pnpm package:firefox
+pnpm package:all
 ```
 
 </details>
@@ -350,7 +256,7 @@ flowchart TB
 <!-- supporters:end -->
 
 <p align="center">
-  如果这款工具对你的工作或学习流程带来提升，欢迎以 Star、Sponsor、微信赞赏或爱发电的方式支持我们，让 Ophel 变得更好。
+  如果 Ophel Atlas 对你的工作或学习流程带来提升，欢迎以 Star、Sponsor 的方式支持我们，更欢迎分享到 X、小红书、Linux.do、V2EX、Bilibili 等社区，从而改善 Gemini 的使用体验。谢谢。，让 Ophel 变得更好。
 </p>
 
 <table align="center">
