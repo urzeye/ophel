@@ -14,7 +14,6 @@ import {
   type ThemePreset,
   type ThemeVariables,
 } from "~utils/themes"
-import { siteNativeThemeAdapters } from "~styles/site-adapters"
 
 export type ThemeMode = "light" | "dark"
 export type ThemePreference = "light" | "dark" | "system"
@@ -329,15 +328,14 @@ export class ThemeManager {
   }
 
   /**
-   * 注入站点的原生主题映射器 (降维覆盖宿主 CSS 变量)
-   * 将在应用初始化时一次性执行挂载
+   * 注入站点的原生主题覆盖 CSS (降维覆盖宿主 CSS 变量)
+   * 由各站点 adapter 自行声明，初始化时一次性挂载。
    */
   private injectNativeSiteThemeAdapter() {
     if (!this.adapter) return
-    const siteId = this.adapter.getSiteId()
 
-    // 如果没有对应的原生适配器样式或已注入，则跳过
-    const cssContent = siteNativeThemeAdapters[siteId]
+    // 如果 adapter 未声明原生适配器样式或已注入，则跳过
+    const cssContent = this.adapter.getNativeThemeCss()
     if (!cssContent || document.getElementById("ophel-native-adaptive-style")) return
 
     const styleEl = document.createElement("style")

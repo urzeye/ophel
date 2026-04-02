@@ -13,6 +13,7 @@
  * - document.documentElement.style.colorScheme 同步
  */
 import { SITE_IDS } from "~constants"
+import { grokNativeThemeCss } from "~styles/native-theme-adapters/grok"
 import { htmlToMarkdown } from "~utils/exporter"
 
 import {
@@ -72,6 +73,10 @@ export class GrokAdapter extends SiteAdapter {
   getThemeColors(): { primary: string; secondary: string } {
     // Grok 官方主题色
     return { primary: "#f39c12", secondary: "#1e1f22" }
+  }
+
+  getNativeThemeCss(): string | null {
+    return grokNativeThemeCss
   }
 
   getNewTabUrl(): string {

@@ -6,6 +6,7 @@
  * - 避免依赖 data-v-* 等构建时生成属性
  */
 import { SITE_IDS } from "~constants"
+import { kimiNativeThemeCss } from "~styles/native-theme-adapters/kimi"
 import { htmlToMarkdown } from "~utils/exporter"
 
 import {
@@ -100,6 +101,10 @@ export class KimiAdapter extends SiteAdapter {
 
   getThemeColors(): { primary: string; secondary: string } {
     return { primary: "#7C3AED", secondary: "#6D28D9" }
+  }
+
+  getNativeThemeCss(): string | null {
+    return kimiNativeThemeCss
   }
 
   getNewTabUrl(): string {

@@ -7,6 +7,7 @@
  * - 会话列表使用“当前可见项 + 快照缓存”兼容 react-window 虚拟列表
  */
 import { SITE_IDS } from "~constants"
+import { qianwenNativeThemeCss } from "~styles/native-theme-adapters/qianwen"
 import { htmlToMarkdown } from "~utils/exporter"
 
 import {
@@ -66,6 +67,10 @@ export class QianwenAdapter extends SiteAdapter {
 
   getThemeColors(): { primary: string; secondary: string } {
     return { primary: "#615ced", secondary: "#4b45c0" }
+  }
+
+  getNativeThemeCss(): string | null {
+    return qianwenNativeThemeCss
   }
 
   getSessionId(): string {

@@ -2,6 +2,7 @@
  * Claude.ai 适配器
  */
 import { SITE_IDS } from "~constants"
+import { claudeNativeThemeCss } from "~styles/native-theme-adapters/claude"
 import { htmlToMarkdown } from "~utils/exporter"
 import { renderMarkdown } from "~utils/markdown"
 
@@ -105,6 +106,10 @@ export class ClaudeAdapter extends SiteAdapter {
   getThemeColors(): { primary: string; secondary: string } {
     // Claude 品牌色 (Terracotta/Orange)
     return { primary: "#d97757", secondary: "#c66045" }
+  }
+
+  getNativeThemeCss(): string | null {
+    return claudeNativeThemeCss
   }
 
   getNewTabUrl(): string {

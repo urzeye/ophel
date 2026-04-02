@@ -495,6 +495,14 @@ export abstract class SiteAdapter {
     return false
   }
 
+  /**
+   * 返回站点原生主题覆盖 CSS。
+   * 默认不提供，子类可按需覆盖。
+   */
+  getNativeThemeCss(): string | null {
+    return null
+  }
+
   // ==================== 页面宽度控制 ====================
 
   /** 返回需要加宽的 CSS 选择器列表 */

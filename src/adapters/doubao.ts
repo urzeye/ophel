@@ -15,6 +15,7 @@
  * - 统一使用 chatPathPattern 提取会话 ID
  */
 import { SITE_IDS } from "~constants"
+import { doubaoNativeThemeCss } from "~styles/native-theme-adapters/doubao"
 import { htmlToMarkdown } from "~utils/exporter"
 
 import {
@@ -62,6 +63,10 @@ export class DoubaoAdapter extends SiteAdapter {
 
   getThemeColors(): { primary: string; secondary: string } {
     return { primary: "#315efb", secondary: "#0f6eff" }
+  }
+
+  getNativeThemeCss(): string | null {
+    return doubaoNativeThemeCss
   }
 
   getTextareaSelectors(): string[] {

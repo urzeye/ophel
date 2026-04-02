@@ -12,6 +12,7 @@
  */
 import { SITE_IDS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
+import { aistudioNativeThemeCss } from "~styles/native-theme-adapters/aistudio"
 import { htmlToMarkdown } from "~utils/exporter"
 import type { AIStudioSettings } from "~utils/storage"
 
@@ -177,6 +178,10 @@ export class AIStudioAdapter extends SiteAdapter {
   getThemeColors(): { primary: string; secondary: string } {
     // Google AI 蓝色主题
     return { primary: "#4285f4", secondary: "#1a73e8" }
+  }
+
+  getNativeThemeCss(): string | null {
+    return aistudioNativeThemeCss
   }
 
   getNewTabUrl(): string {

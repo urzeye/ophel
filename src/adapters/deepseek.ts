@@ -9,6 +9,7 @@
  * 注意：DeepSeek 页面存在部分 CSS Modules 哈希类名，首版实现尽量避免依赖它们。
  */
 import { SITE_IDS } from "~constants"
+import { deepseekNativeThemeCss } from "~styles/native-theme-adapters/deepseek"
 import { htmlToMarkdown } from "~utils/exporter"
 
 import {
@@ -105,6 +106,10 @@ export class DeepSeekAdapter extends SiteAdapter {
 
   getThemeColors(): { primary: string; secondary: string } {
     return { primary: "#4b6bfe", secondary: "#3a5ae0" }
+  }
+
+  getNativeThemeCss(): string | null {
+    return deepseekNativeThemeCss
   }
 
   getTextareaSelectors(): string[] {

@@ -2,6 +2,7 @@
  * ChatGPT 适配器 (chatgpt.com)
  */
 import { SITE_IDS } from "~constants"
+import { chatgptNativeThemeCss } from "~styles/native-theme-adapters/chatgpt"
 import { htmlToMarkdown } from "~utils/exporter"
 
 import {
@@ -85,6 +86,10 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   getThemeColors(): { primary: string; secondary: string } {
     return { primary: "#10a37f", secondary: "#1a7f64" }
+  }
+
+  getNativeThemeCss(): string | null {
+    return chatgptNativeThemeCss
   }
 
   getNewTabUrl(): string {

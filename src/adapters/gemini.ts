@@ -4,6 +4,7 @@
 import { bindDomTooltip, type DomTooltipBinding } from "~components/ui/Tooltip"
 import { SITE_IDS } from "~constants"
 import { platform } from "~platform"
+import { geminiNativeThemeCss } from "~styles/native-theme-adapters/gemini"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { htmlToMarkdown } from "~utils/exporter"
 import { t } from "~utils/i18n"
@@ -798,6 +799,10 @@ export class GeminiAdapter extends SiteAdapter {
 
   getThemeColors(): { primary: string; secondary: string } {
     return { primary: "#4285f4", secondary: "#34a853" }
+  }
+
+  getNativeThemeCss(): string | null {
+    return geminiNativeThemeCss
   }
 
   getNewTabUrl(): string {
