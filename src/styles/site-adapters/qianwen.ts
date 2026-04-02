@@ -23,8 +23,5 @@ body {
     --color-link: var(--gh-primary) !important;
     --color-link-border: var(--gh-primary) !important;
     --color-qk-link-border: var(--gh-primary) !important;
-
-    /* 注意: 避开 --color-fg-default, --color-li-default, --color-heading
-       以及 --color-inline-code-color 以防止文字对比度丧失 */
 }
 `

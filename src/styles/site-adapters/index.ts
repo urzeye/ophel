@@ -21,6 +21,6 @@ export const siteNativeThemeAdapters: Record<string, string> = {
   [SITE_IDS.CLAUDE]: claudeNativeThemeCss,
   [SITE_IDS.DOUBAO]: doubaoNativeThemeCss,
   [SITE_IDS.DEEPSEEK]: deepseekNativeThemeCss,
-  kimi: kimiNativeThemeCss, // 临时字面量
-  qianwen: qianwenNativeThemeCss,
+  [SITE_IDS.KIMI]: kimiNativeThemeCss,
+  [SITE_IDS.QIANWEN]: qianwenNativeThemeCss,
 }
