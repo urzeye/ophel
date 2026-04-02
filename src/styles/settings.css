@@ -147,6 +147,14 @@
   white-space: nowrap;
 }
 
+.settings-theme-segment .segment-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
 .settings-theme-segmented.is-compact .settings-theme-segment {
   gap: 4px;
   padding: 4px 2px;

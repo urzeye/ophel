@@ -1,6 +1,12 @@
 import React, { useSyncExternalStore } from "react"
 
-import { EarthIcon, ThemeDarkIcon, ThemeLightIcon, TranslateIcon } from "~components/icons"
+import {
+  EarthIcon,
+  ThemeDarkIcon,
+  ThemeLightIcon,
+  ThemeSystemIcon,
+  TranslateIcon,
+} from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
 import type { ThemeManager } from "~core/theme-manager"
 import { useSettingsStore } from "~stores/settings-store"
@@ -186,7 +192,9 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
             <button
               className={`settings-theme-segment ${currentThemePreference === "system" ? "active" : ""}`}
               onClick={(event) => handleThemeModeToggle("system", event)}>
-              <span className="segment-icon">A</span>
+              <span className="segment-icon">
+                <ThemeSystemIcon size={16} />
+              </span>
               <span className="segment-label">{t("themeSystem") || "系统"}</span>
             </button>
           </Tooltip>
