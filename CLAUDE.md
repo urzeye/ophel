@@ -4,7 +4,7 @@
 
 Ophel 是一款跨平台浏览器扩展（同时支持油猴脚本），将 AI 对话转化为可阅读、可导航、可复用的知识内容。通过实时大纲、会话文件夹与 Prompt 词库，让 AI 对话告别无限滚动，成为可组织、可沉淀的工作流。
 
-支持站点：Gemini、Gemini Enterprise、AI Studio、ChatGPT、Grok、Claude。
+支持站点：Gemini、Gemini Enterprise、AI Studio、ChatGPT、Grok、Claude、DeepSeek、Doubao、Kimi、QwenAI、Qianwen、Yuanbao、Z.ai、ChatGLM、Ima。
 
 ## 架构总览
 
@@ -40,6 +40,15 @@ getAdapter() --> SiteAdapter (抽象基类)
     |               +-- ClaudeAdapter
     |               +-- GrokAdapter
     |               +-- AIStudioAdapter
+    |               +-- DeepSeekAdapter
+    |               +-- DoubaoAdapter
+    |               +-- KimiAdapter
+    |               +-- QwenAiAdapter
+    |               +-- QianwenAdapter
+    |               +-- YuanbaoAdapter
+    |               +-- ZaiAdapter
+    |               +-- ChatGLMAdapter
+    |               +-- ImaAdapter
     |
     v
 initCoreModules(ctx) --> 11 个核心模块
@@ -109,8 +118,8 @@ graph TD
 
 | 模块路径 | 职责 | 关键文件 |
 |----------|------|----------|
-| `src/adapters/` | 多站点适配器层，基于 `SiteAdapter` 抽象基类，每个站点一个实现 | `base.ts`, `gemini.ts`, `chatgpt.ts`, `claude.ts`, `grok.ts`, `aistudio.ts`, `gemini-enterprise.ts` |
-| `src/core/` | 核心业务模块（11 个管理器），由 `modules-init.ts` 统一编排 | `modules-init.ts`, `outline-manager.ts`, `theme-manager.ts`, `layout-manager.ts`, `conversation/`, `webdav-sync.ts` |
+| `src/adapters/` | 多站点适配器层，基于 `SiteAdapter` 抽象基类，每个站点一个实现 | `base.ts`, `gemini.ts`, `gemini-enterprise.ts`, `chatgpt.ts`, `claude.ts`, `grok.ts`, `aistudio.ts`, `deepseek.ts`, `doubao.ts`, `kimi.ts`, `qwenai.ts`, `qianwen.ts`, `yuanbao.ts`, `zai.ts`, `chatglm.ts`, `ima.ts` |
+| `src/core/` | 核心业务模块（多个管理器），由 `modules-init.ts` 统一编排 | `modules-init.ts`, `outline-manager.ts`, `theme-manager.ts`, `layout-manager.ts`, `conversation/`, `webdav-sync.ts`, `assistant-mermaid-renderer.ts`, `gemini-mystuff-bridge.ts`, `usage-counter-manager.ts` |
 | `src/components/` | React UI 层，运行在 Shadow DOM 中 | `App.tsx`, `MainPanel.tsx`, `OutlineTab.tsx`, `ConversationsTab.tsx`, `SettingsModal.tsx`, `global-search/` |
 | `src/stores/` | Zustand 状态管理，persist 到 chrome.storage.local | `settings-store.ts`, `conversations-store.ts`, `prompts-store.ts`, `folders-store.ts`, `tags-store.ts` |
 | `src/contents/` | Plasmo Content Script 入口 | `main.ts`（逻辑入口）, `ui-entry.tsx`（UI 入口/Shadow DOM） |
@@ -205,11 +214,11 @@ import { useSettingsStore } from "~stores/settings-store"
 - `getExportConfig()` - 导出配置
 - `lockModel()` - 模型锁定（通用实现在基类中）
 
-支持的站点标识（`SITE_IDS`）：`gemini`, `gemini-enterprise`, `chatgpt`, `claude`, `grok`, `aistudio`
+支持的站点标识（`SITE_IDS`）：`gemini`, `gemini-enterprise`, `chatgpt`, `claude`, `grok`, `aistudio`, `deepseek`, `doubao`, `kimi`, `qwenai`, `qianwen`, `yuanbao`, `zai`, `chatglm`, `ima`
 
 ### 核心模块 (`src/core/modules-init.ts`)
 
-`initCoreModules()` 按以下顺序初始化 11 个管理器：
+`initCoreModules()` 按以下顺序初始化管理器：
 
 1. **ThemeManager** - 主题管理（light/dark/system + 自定义预设样式）
 2. **MarkdownFixer** - AI 响应中的 Markdown 渲染修复
@@ -222,6 +231,9 @@ import { useSettingsStore } from "~stores/settings-store"
 9. **ScrollLockManager** - 滚动锁定
 10. **UserQueryMarkdownRenderer** - 用户提问 Markdown 渲染
 11. **PolicyRetryManager** - Gemini Enterprise 策略重试
+12. **AssistantMermaidRenderer** - AI 回复 Mermaid 兜底渲染
+13. **GeminiMystuffBridge** - Gemini My Stuff 桥接
+14. **UsageCounterManager** - 使用统计管理
 
 所有模块支持通过 `subscribeModuleUpdates()` 响应设置变化的热更新。
 
@@ -426,3 +438,4 @@ feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, deps, ux
 |------|------|------|
 | 2026-03-04 | 初始创建 | 全仓扫描生成，覆盖率 ~92% |
 | 2026-03-04 | CSS 架构分析 | 补充完整 CSS 架构文档：7 个样式文件、主题系统、CSS 变量体系、Shadow DOM 注入机制 |
+| 2026-04-03 | 全面更新 | 更新支持站点列表（新增 7 个站点）、更新核心模块列表（新增 4 个模块）、更新 TypeScript 配置（使用 bundler 模块解析） |

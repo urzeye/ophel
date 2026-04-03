@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "timestamp": "2026-03-04T10:54:06+08:00",
+  "timestamp": "2026-04-03T14:31:00+08:00",
   "project": {
     "name": "ophel",
     "displayName": "Ophel Atlas - AI 对话结构化与导航工具",
@@ -34,7 +34,16 @@
         "src/adapters/chatgpt.ts",
         "src/adapters/claude.ts",
         "src/adapters/grok.ts",
-        "src/adapters/aistudio.ts"
+        "src/adapters/aistudio.ts",
+        "src/adapters/deepseek.ts",
+        "src/adapters/doubao.ts",
+        "src/adapters/kimi.ts",
+        "src/adapters/qwenai.ts",
+        "src/adapters/qianwen.ts",
+        "src/adapters/yuanbao.ts",
+        "src/adapters/zai.ts",
+        "src/adapters/chatglm.ts",
+        "src/adapters/ima.ts"
       ],
       "hasTests": false,
       "coverage": "full"
@@ -46,7 +55,6 @@
       "keyFiles": [
         "src/core/modules-init.ts",
         "src/core/outline-manager.ts",
-        "src/core/conversation-manager.ts",
         "src/core/conversation/manager.ts",
         "src/core/theme-manager.ts",
         "src/core/layout-manager.ts",
@@ -64,7 +72,10 @@
         "src/core/inline-bookmark-manager.ts",
         "src/core/shortcut-manager.ts",
         "src/core/user-query-markdown.ts",
-        "src/core/policy-retry-manager.ts"
+        "src/core/policy-retry-manager.ts",
+        "src/core/assistant-mermaid-renderer.ts",
+        "src/core/gemini-mystuff-bridge.ts",
+        "src/core/usage-counter-manager.ts"
       ],
       "hasTests": false,
       "coverage": "full"
@@ -252,17 +263,17 @@
   },
   "scan": {
     "totalFiles": {
-      "ts": 92,
-      "tsx": 102,
+      "ts": 130,
+      "tsx": 129,
       "css": 7,
       "json": 10,
       "md": 24,
       "other": 21
     },
-    "scannedFiles": 38,
-    "estimatedCoveragePercent": 92,
+    "scannedFiles": 45,
+    "estimatedCoveragePercent": 95,
     "truncated": false,
-    "scanDate": "2026-03-04T10:54:06+08:00",
+    "scanDate": "2026-04-03T14:31:00+08:00",
     "scanDuration": "single-pass"
   },
   "gaps": [
