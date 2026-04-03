@@ -6,7 +6,8 @@
     "paths": {
       "~*": ["./src/*"],
     },
-    "baseUrl": ".",
     "resolveJsonModule": true,
+    "moduleResolution": "bundler",
+    "module": "ESNext",
   },
 }
