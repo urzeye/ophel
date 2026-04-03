@@ -78,7 +78,7 @@ const zhConfig = {
     lightModeSwitchTitle: "切换到浅色模式",
     darkModeSwitchTitle: "切换到深色模式",
     editLink: {
-      pattern: "https://github.com/urzeye/ophel/edit/main/docs/:path",
+      pattern: "https://github.com/urzeye/ophel/edit/main/docs/site/:path",
       text: "在 GitHub 上编辑此页",
     },
   },
@@ -155,7 +155,7 @@ const enConfig = {
     lightModeSwitchTitle: "Switch to light mode",
     darkModeSwitchTitle: "Switch to dark mode",
     editLink: {
-      pattern: "https://github.com/urzeye/ophel/edit/main/docs/:path",
+      pattern: "https://github.com/urzeye/ophel/edit/main/docs/site/:path",
       text: "Edit this page on GitHub",
     },
   },
@@ -176,9 +176,6 @@ export default defineConfig({
     ],
   ],
   base: "/ophel/",
-
-  // 排除非文档文件（多语言 README 放在 i18n 目录下）
-  srcExclude: ["**/i18n/**"],
 
   locales: {
     zh: zhConfig,

@@ -2,7 +2,7 @@
 
 > 让 AI 对话如文档般可阅读、导航、复用
 
-<sub>Language: <strong>简体中文</strong> | <a href="./README_EN.md">English</a></sub>
+<sub>Language: <strong>简体中文</strong> | <a href="./README_en.md">English</a></sub>
 
 <div align="center">
   <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
@@ -23,7 +23,7 @@
   
   <sub>👇 Demo: 从“无限滚动的聊天记录”，到“可导航的 AI 文档”</sub>
   
-  ![Ophel Demo](./assets/demo/outline.gif)
+  ![Ophel Demo](./docs/media/demo/outline.gif)
   
   <p>
     <strong><em>它让 AI 对话第一次成为可组织的工作流</em></strong><br/>
@@ -84,7 +84,7 @@
 </p>
 
 <p align="center">
-  🌐 <a href="./README_EN.md">English</a> | <strong>简体中文</strong> | <a href="./docs/i18n/README_zh-TW.md">繁體中文</a> | <a href="./docs/i18n/README_ja.md">日本語</a> | <a href="./docs/i18n/README_ko.md">한국어</a> | <a href="./docs/i18n/README_de.md">Deutsch</a> | <a href="./docs/i18n/README_fr.md">Français</a> | <a href="./docs/i18n/README_es.md">Español</a> | <a href="./docs/i18n/README_pt.md">Português</a> | <a href="./docs/i18n/README_ru.md">Русский</a>
+  🌐 <a href="./README_en.md">English</a> | <strong>简体中文</strong> | <a href="./docs/readmes/README_zh-TW.md">繁體中文</a> | <a href="./docs/readmes/README_ja.md">日本語</a> | <a href="./docs/readmes/README_ko.md">한국어</a> | <a href="./docs/readmes/README_de.md">Deutsch</a> | <a href="./docs/readmes/README_fr.md">Français</a> | <a href="./docs/readmes/README_es.md">Español</a> | <a href="./docs/readmes/README_pt-BR.md">Português</a> | <a href="./docs/readmes/README_ru.md">Русский</a>
 </p>
 
 ## 📹 功能演示
@@ -293,13 +293,13 @@ pnpm package:all
   </tr>
   <tr>
     <td align="center">
-      <img src="./assets/support/wechat-pay.jpg" width="220" alt="微信赞赏码" />
+      <img src="./docs/media/support/wechat-pay.jpg" width="220" alt="微信赞赏码" />
     </td>
     <td align="center">
-      <img src="./assets/support/alipay.png" width="220" alt="支付宝赞赏码" />
+      <img src="./docs/media/support/alipay.png" width="220" alt="支付宝赞赏码" />
     </td>
     <td align="center">
-      <img src="./assets/support/afdian.png" width="220" alt="爱发电" />
+      <img src="./docs/media/support/afdian.png" width="220" alt="爱发电" />
     </td>
   </tr>
 </table>

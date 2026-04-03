@@ -28,10 +28,10 @@
     "build:userscript": "vite build --config vite.userscript.config.ts",
     "build:userscript:local": "node -e \"const { spawnSync } = require('node:child_process'); const path = require('node:path'); const vitePkg = require.resolve('vite/package.json'); const viteBin = path.join(path.dirname(vitePkg), 'bin', 'vite.js'); const result = spawnSync(process.execPath, [viteBin, 'build', '--config', 'vite.userscript.config.ts'], { stdio: 'inherit', env: { ...process.env, USERSCRIPT_ASSET_BASE_URL: 'http://127.0.0.1:8123' } }); process.exit(result.status ?? 1);\"",
     "serve:userscript:assets": "node scripts/serve-userscript-assets.mjs",
-    "supporters:sync": "node scripts/generate-supporters-readme.mjs",
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs",
+    "supporters:sync": "node scripts/generate-supporters-readmes.mjs",
+    "docs:dev": "vitepress dev docs/site",
+    "docs:build": "vitepress build docs/site",
+    "docs:preview": "vitepress preview docs/site",
     "prepare": "husky"
   },
   "lint-staged": {

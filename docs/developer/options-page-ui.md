@@ -303,16 +303,16 @@ const openOptionsPage = () => {
 为了符合 Chrome 扩展安全规范并提供良好的用户体验，采用了 **"混合环境处理"** 策略：
 
 1. **权限展示**：
-    - **必需权限** (`storage`, `notifications` 等)：只读展示，不可撤销。
-    - **可选权限** (`<all_urls>` 等)：提供授予/撤销按钮。
+   - **必需权限** (`storage`, `notifications` 等)：只读展示，不可撤销。
+   - **可选权限** (`<all_urls>` 等)：提供授予/撤销按钮。
 2. **API 调用限制与解决方案**：
-    - **问题**：Content Script 环境（模态框所在环境）**无法直接调用** `chrome.permissions.request` API（Chrome 安全限制）。
-    - **方案**：
-      1. 用户点击“授予”按钮。
-      2. 模态框发送 `MSG_REQUEST_PERMISSIONS` 消息给 Background Script。
-      3. Background Script 打开一个 **popup 类型** 的独立小窗口（加载 Options 页面并带上 `?page=permissions&auto_request=true` 参数）。
-      4. Options 页面加载后自动触发 Chrome 原生权限请求弹窗。
-      5. 用户授权后，Options 页面状态更新；用户手动关闭小窗口回到原页面，刷新状态即可看到变更。
+   - **问题**：Content Script 环境（模态框所在环境）**无法直接调用** `chrome.permissions.request` API（Chrome 安全限制）。
+   - **方案**：
+     1. 用户点击“授予”按钮。
+     2. 模态框发送 `MSG_REQUEST_PERMISSIONS` 消息给 Background Script。
+     3. Background Script 打开一个 **popup 类型** 的独立小窗口（加载 Options 页面并带上 `?page=permissions&auto_request=true` 参数）。
+     4. Options 页面加载后自动触发 Chrome 原生权限请求弹窗。
+     5. 用户授权后，Options 页面状态更新；用户手动关闭小窗口回到原页面，刷新状态即可看到变更。
 
 ### 4.3 跨环境通信 (Messaging)
 

@@ -423,7 +423,7 @@ export const getStyle = () => {
 | `document.body`            | `document.body`   | 默认方案，简单可靠            |
 | `document.documentElement` | Shadow DOM 内容器 | 需要额外的 Context 和样式处理 |
 
-详见 [TROUBLESHOOTING.md #12](./TROUBLESHOOTING.md#12-chatgpt-面板被-react-hydration-清除)。
+详见 [troubleshooting.md #12](./troubleshooting.md#12-chatgpt-面板被-react-hydration-清除)。
 
 ---
 
@@ -464,7 +464,7 @@ export const getStyle = () => {
 
 ## 📚 相关文档
 
-- [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - 详细的问题排查案例
+- [troubleshooting.md](./troubleshooting.md) - 详细的问题排查案例
 - [Plasmo 官方文档 - CSUI](https://docs.plasmo.com/framework/content-scripts-ui)
 - [Shadow DOM 样式隔离](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM)
 

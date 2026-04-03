@@ -22,6 +22,8 @@ public/
 .spec-workflow/
 .claude/
 CLAUDE.md
+docs/site/.vitepress/.temp/
+docs/site/.vitepress/dist/
 
 .prettierrc.mjs
 vite.userscript.config.ts

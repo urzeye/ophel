@@ -3,7 +3,7 @@ import path from "node:path"
 import process from "node:process"
 
 const projectRoot = process.cwd()
-const dataPath = path.resolve(projectRoot, "assets/support/supporters.json")
+const dataPath = path.resolve(projectRoot, "docs/data/supporters.json")
 const packageJsonPath = path.resolve(projectRoot, "package.json")
 const markerStart = "<!-- supporters:start -->"
 const markerEnd = "<!-- supporters:end -->"
@@ -15,55 +15,55 @@ const readmeConfigs = [
     contributorsTitle: "### 🌟 贡献者",
   },
   {
-    file: "README_EN.md",
+    file: "README_en.md",
     featuredTitle: "### 💖 Angel Support",
     supportersTitle: "### 🤝 Supporters",
     contributorsTitle: "### 🌟 Contributors",
   },
   {
-    file: ".github/readmes/README_de.md",
+    file: "docs/readmes/README_de.md",
     featuredTitle: "### 💖 Besonderer Dank",
     supportersTitle: "### 🤝 Unterstützer",
     contributorsTitle: "### 🌟 Mitwirkende",
   },
   {
-    file: ".github/readmes/README_es.md",
+    file: "docs/readmes/README_es.md",
     featuredTitle: "### 💖 Agradecimiento especial",
     supportersTitle: "### 🤝 Patrocinadores",
     contributorsTitle: "### 🌟 Colaboradores",
   },
   {
-    file: ".github/readmes/README_fr.md",
+    file: "docs/readmes/README_fr.md",
     featuredTitle: "### 💖 Remerciement special",
     supportersTitle: "### 🤝 Soutiens",
     contributorsTitle: "### 🌟 Contributeurs",
   },
   {
-    file: ".github/readmes/README_ja.md",
+    file: "docs/readmes/README_ja.md",
     featuredTitle: "### 💖 特別な感謝",
     supportersTitle: "### 🤝 支援者",
     contributorsTitle: "### 🌟 コントリビューター",
   },
   {
-    file: ".github/readmes/README_ko.md",
+    file: "docs/readmes/README_ko.md",
     featuredTitle: "### 💖 특별한 감사",
     supportersTitle: "### 🤝 후원자",
     contributorsTitle: "### 🌟 기여자",
   },
   {
-    file: ".github/readmes/README_pt.md",
+    file: "docs/readmes/README_pt-BR.md",
     featuredTitle: "### 💖 Agradecimento especial",
     supportersTitle: "### 🤝 Apoiadores",
     contributorsTitle: "### 🌟 Contribuidores",
   },
   {
-    file: ".github/readmes/README_ru.md",
+    file: "docs/readmes/README_ru.md",
     featuredTitle: "### 💖 Особая благодарность",
     supportersTitle: "### 🤝 Поддержавшие",
     contributorsTitle: "### 🌟 Участники",
   },
   {
-    file: ".github/readmes/README_zh-TW.md",
+    file: "docs/readmes/README_zh-TW.md",
     featuredTitle: "### 💖 天使支持特別鳴謝",
     supportersTitle: "### 🤝 支持者",
     contributorsTitle: "### 🌟 貢獻者",

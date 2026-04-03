@@ -1,34 +1,26 @@
 # Ophel Atlas 🚀
 
-> AI 대화를 문서처럼 읽기 쉽고, 탐색 가능하며, 재사용할 수 있게 만듭니다
+> Transformez les conversations IA en documents lisibles, navigables et réutilisables
 
 <div align="center">
   <img src="../../assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
 
-  <h3 style="margin-top: -2px;">✨ 대화를 단순한 기록이 아닌 지식으로 바꾸세요 ✨</h3>
+  <h3 style="margin-top: -2px;">✨ Transformez les conversations en connaissances, pas seulement en historique ✨</h3>
   
   <p>
-    무한 스크롤 속 정보의 미궁과 작별하세요
-    </br>
-    실시간 개요로 맥락을 정리하고,
-    </br>
-    대화 폴더로 체계를 구축하며,
-    </br>
-    프롬프트 라이브러리로 경험을 축적하고,
-    </br>
-    반짝이는 생각들이 질서 속에서 자유롭게 흐르게 하세요
+    Fini de se perdre dans le défilement infini. Clarifiez le contexte avec des plans en temps réel, construisez votre système avec des dossiers de conversation, affinez l'expérience avec la bibliothèque de prompts, et laissez les pensées brillantes couler librement dans l'ordre.
   </p>
   
-  <p align="center" style="font-size: 12px; color: #555;">👇 데모: "무한 스크롤 채팅 기록"에서 "탐색 가능한 AI 문서"로</p>
+  <p align="center" style="font-size: 12px; color: #555;">👇 Démo : De "l'historique de chat à défilement infini" aux "documents IA navigables"</p>
 
-  ![Ophel Demo](../../assets/demo/outline.gif)
-  
+![Ophel Demo](../media/demo/outline.gif)
+
   <p>
-    <strong><em>AI 채팅을 처음으로 정리 가능한 워크플로우로 만듭니다</em></strong><br/>
+    <strong><em>Faire du chat IA un flux de travail véritablement organisable pour la première fois</em></strong><br/>
   </p>
 
   <small style="opacity: 0.6;">
-  어떤 플랫폼을 사용하든, 일관되고 정리 가능하며 재사용 가능한 경험을 얻을 수 있습니다
+  Peu importe la plateforme que vous utilisez, Ophel vous permet d'organiser les conversations en flux de travail réutilisables avec une expérience cohérente et unifiée.
   </small>
   <p>
     <a href="https://chatgpt.com"><img src="https://img.shields.io/static/v1?label=&message=ChatGPT&color=74AA9C&style=flat&logo=data%3Aimage/png%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAD4UlEQVRYheXXaYjVVRgG8N%2BYOVlhiVhpWWSW0WZlYEjZRLTRAkaKpBJEESREChGt1pfMihZoIYIkCkXFaSEiworINYhS2yCTyG0qzYy2cbTbh%2BdM945zZ7P8Ui/8uff//s/ynOd93nPew//dGvrY/kCMwLDy3oJv0fZvgqpnDWjCQmzBH%2BXZUnxN/2TgnuwAzMAD6I8V%2BLL0PRXj8Duex24cg9/wKd7BV/sKrt2mlgFX4kI01nwbinmolKcVP5ffCr7BTAzc18mHYR2%2BwMk1/n64AK%2BXyTZhTgE4BhNwJ9bjT8zFgH0BME1ovbXGNxpPYacwMw9ndtH/NGFuF67ry8Sj8JBQ%2BBPGFv8kbJBVLcXlogvC1qwC9oiasc7DDizDYb2ZfILQXsEebMVJ5dsSSblZGFR8B4tOPlLVwipcq6qXRfhVBNutjcZnQu39eAvf40RR/auSekfXgH1NUrIFj%2BFJ/Ci0L8TZuLsAu6a7yfvh6dLwjvI%2BHz/UAXAJnpDwVITi6TVjjVdlqwUfl/9XdwdgJDYKfYOLb8FeAJpFlN9JeN4TLbSK4mdiSOl7ECZjtWqKXtkdgEvL4A%2BW94YuAFSwFjeKqAbhhuLbgw8wUTXthmI2fsFy2crr2qQy%2BKw6AE4ovlewTeK6t50lgq2IJubjnJrv7TqYU9upX83/HYWB4TW%2BCg6XmB%2BqSuX2OgC2S5zX4k3Jgjdwffn%2BnGhhsi5YGIGvS6OhxTdN4t0mq18jOjmuTv9jZUdsxiESolYRY/tCHyljXVyPgY1YLLvazcX3sghnsWw6Z8iRPERnGyJ53yBp/HZhpUH10NssG9fgOv3/ZmG5CGZ2DRMDRFjLRGjrdBbhGglRc5nweNFEs5yoROC7cVlXAOAKEVFFUmiSpFT7KmdKyu3Cu%2BVpT822LgA0lFWvkjCN7A7AVWXwT2QT2SUhOLemzVQRbUU2o8clrptls6oFsKQwcHtp/4yOoe9kE%2BWwuUvSbYGIaRselaN1qxQhzTi/9BteB8CWwtB9EtbPdTzW69o4OTheKu%2BNqvFvP2w%2BxBTVQmOQhKatrFgBsLEspiIV0oSeJid5v0JiOrbGP0SyYwaOLL7%2BIqilIs4NohlSmGyXI32uHPG9tukS%2B/dxShdtxuAFSbmdUqTU0nuLMDK9c9eerREPC33rcY%2BUYGOk7Joj9LZKWdako7BGS7zXqpbwfbaBuE0orFdwVvCijtVPYwG4UnQ0padJelOWj8JFOF2qn00S%2B5sKyNVSxFQkBONlX7gXz4o29os1ScWzWceLyiJhoVe3rr5ezfa29qvaUeW9RbSx369q/x37C/dbHMwqTvecAAAAAElFTkSuQmCC" alt="ChatGPT"/></a>
@@ -72,89 +64,89 @@
 </p>
 
 <p align="center">
-  <a href="#-기능-데모">기능 데모</a> •
-  <a href="#-핵심-기능">핵심 기능</a> •
-  <a href="#-시작하기">시작하기</a> •
-  <a href="#-프로젝트-후원">프로젝트 후원</a>
+  <a href="#-démo">Démo</a> •
+  <a href="#-fonctionnalités-clés">Fonctionnalités Clés</a> •
+  <a href="#-démarrage-rapide">Démarrage Rapide</a> •
+  <a href="#-soutien">Soutien</a>
 </p>
 
 <p align="center">
-  🌐 <a href="../../README_EN.md">English</a> | <a href="../../README.md">简体中文</a> | <a href="./README_zh-TW.md">繁體中文</a> | <a href="./README_ja.md">日本語</a> | <strong>한국어</strong> | <a href="./README_de.md">Deutsch</a> | <a href="./README_fr.md">Français</a> | <a href="./README_es.md">Español</a> | <a href="./README_pt.md">Português</a> | <a href="./README_ru.md">Русский</a>
+  🌐 <a href="../../README_en.md">English</a> | <a href="../../README.md">简体中文</a> | <a href="./README_zh-TW.md">繁體中文</a> | <a href="./README_ja.md">日本語</a> | <a href="./README_ko.md">한국어</a> | <a href="./README_de.md">Deutsch</a> | <strong>Français</strong> | <a href="./README_es.md">Español</a> | <a href="./README_pt-BR.md">Português</a> | <a href="./README_ru.md">Русский</a>
 </p>
 
-## 📹 기능 데모
+## 📹 Démo
 
-|                                                        개요 Outline                                                        |                                                     대화 Conversations                                                     |                                                       기능 Features                                                        |
+|                                                          Outline                                                           |                                                       Conversations                                                        |                                                          Features                                                          |
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
-## 🎯 활용 시나리오
+## 🎯 Cas d’usage
 
-- 학습·연구: 긴 대화 추론, 지식 정리, 결론 회고, 노트 추출
-- 일상 업무: 요구사항 분해, 제안서 작성, 경쟁 분석, 회의록, 컨설팅/관리 워크플로
-- 개발·기술 문서: 긴 코드 논의, 버그 파악, 아키텍처 검토, 문서/블로그 작성
-- 콘텐츠 제작: 스크립트/아웃라인/다듬기 반복, 핵심 구간으로 빠르게 돌아가 재가공
-- AI 고빈도 사용자: 임시 대화가 아닌 ‘구조·질서·재사용’이 필요
+- Apprentissage et recherche : raisonnement sur longues conversations, organiser les connaissances, relire les conclusions, extraire des notes
+- Travail au quotidien : découpage des besoins, rédaction de solutions, analyse concurrentielle, comptes rendus de réunion, workflows de conseil et de management
+- Développement et rédaction technique : longues discussions de code, triage de bugs, exploration d’architecture, documentation/blog
+- Création de contenu : itérer scripts/plans/révisions, revenir vite aux passages clés et exporter pour retravailler
+- Utilisateurs intensifs d’IA : besoin de structure, d’ordre et de réutilisation, pas seulement de chats ponctuels
 
-## ✨ 핵심 기능
+## ✨ Fonctionnalités Clés
 
-- 🧠 **스마트 개요** — 사용자 질문과 AI 답변을 자동으로 분석하여 탐색 가능한 목차 생성
-- 💬 **대화 관리** — 폴더 분류, 태그, 검색, 일괄 작업
-- ⌨️ **프롬프트 라이브러리** — 변수 지원, 마크다운 미리보기, 분류 관리, 원클릭 입력
-- 🎨 **테마 커스터마이징** — 20종 이상의 다크/라이트 테마, 사용자 정의 CSS
-- 🔧 **인터페이스 최적화** — 와이드스크린 모드, 페이지 및 채팅 너비 조정, 사이드바 레이아웃 제어
-- 📖 **읽기 환경** — 스크롤 잠금, 읽기 위치 복구, 마크다운 렌더링 최적화
-- ⚡ **생산성 도구** — 단축키, 모델 잠금, 탭 자동 이름 지정, 완료 알림
-- 🎭 **Claude 확장** — Session Key 관리, 다중 계정 전환
-- 🔒 **개인정보 우선** — 로컬 저장소, WebDAV 동기화, 데이터 수집 없음
+- 🧠 **Smart Outline** — Analyse automatique des requêtes utilisateur et réponses IA en structure navigable
+- 💬 **Conversation Manager** — Dossiers, tags, recherche, opérations par lot
+- ⌨️ **Prompt Library** — Variables, prévisualisation Markdown, catégories, insertion en un clic
+- 🎨 **Personnalisation de Thème** — 20+ thèmes sombres/clairs, CSS personnalisé
+- 🔧 **Optimisation UI** — Mode écran large, contrôle de largeur, mise en page latérale
+- 📖 **Expérience de Lecture** — Verrouillage du défilement, restauration de l'historique, rendu Markdown
+- ⚡ **Outils de Productivité** — Raccourcis, verrouillage de modèle, renommage automatique, notifications
+- 🎭 **Amélioration Claude** — Gestion de clé de session, changement multi-compte
+- 🔒 **Confidentialité d'Abord** — Stockage local, sync WebDAV, aucune collecte de données
 
 <details>
-<summary>개인정보와 데이터 (펼치기)</summary>
+<summary>Confidentialité & données (déplier)</summary>
 
-**Ophel Atlas** 는 개인정보를 최우선으로 합니다: 기본은 로컬 저장이며 데이터는 사용자가 통제합니다.
+**Ophel Atlas** place la confidentialité au premier plan : stockage local par défaut, vos données restent sous votre contrôle.
 
-- **기본 로컬 저장:** 설정, 프롬프트, 대화 관리 데이터는 브라우저에 저장
-- **계정 불필요:** 등록 없이 사용
-- **필요 시 권한 요청:** 선택 권한은 필요할 때만 요청하고 언제든지 철회 가능 (확장 프로그램 Permissions 페이지)
-- **선택적 WebDAV 동기화:** 개인 WebDAV로 다중 기기 동기화 (제어 가능, 이동 용이)
-- **내보내기/백업:** 내보내기와 마이그레이션 지원, 락인 방지
+- **Stockage local par défaut :** réglages, prompts et données de gestion des conversations sont stockés dans le navigateur
+- **Sans compte :** aucune inscription nécessaire
+- **Permissions à la demande :** permissions optionnelles demandées uniquement si nécessaire, révocables à tout moment (voir la page Permissions de l’extension)
+- **Synchronisation WebDAV optionnelle :** utilisez votre propre WebDAV pour plusieurs appareils (contrôlable, portable)
+- **Export & sauvegarde :** export et migration pour éviter le verrouillage
 
 </details>
 
-> 참고: 특정 AI 사이트 지원은 사이트 매칭 및 페이지 구조 변경에 따라 달라집니다.
+> Note : la prise en charge de sites d’IA spécifiques dépend du matching du site et des changements de structure des pages.
 
-## 🚀 시작하기
+## 🚀 Démarrage Rapide
 
 > [!tip]
 >
-> **브라우저 확장 프로그램(Extension) 버전 사용을 권장합니다**. 기능이 더 완벽하고 경험이 좋으며 호환성이 뛰어납니다. 유저스크립트(Tampermonkey) 버전은 기능이 제한적입니다.
+> **Nous recommandons fortement d'utiliser la version Extension de Navigateur** pour un ensemble de fonctionnalités plus complet, une meilleure expérience et une compatibilité plus élevée. La version Userscript a des limitations.
 
-### 앱 스토어
+### Web Store
 
 <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=Chrome%20Web%20Store&color=4285F4&labelColor=4285F4" alt="Chrome Web Store"></a>
 <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=Firefox%20Add-ons&color=FF7139&labelColor=FF7139" alt="Firefox Add-ons"></a>
 <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=Greasy%20Fork&color=black&labelColor=black" alt="Greasy Fork"></a>
 
-### 수동 설치
+### Installation Manuelle
 
-#### 브라우저 확장 프로그램
+#### Extension de Navigateur
 
-1. [Releases](https://github.com/urzeye/ophel/releases/latest) 에서 설치 패키지를 다운로드하고 압축을 풉니다
-2. 브라우저 확장 프로그램 관리 페이지를 열고 **개발자 모드**를 켭니다
-3. **압축 해제된 확장 프로그램을 로드합니다**를 클릭하고 압축을 푼 폴더를 선택합니다
+1. Téléchargez et décompressez depuis [Releases](https://github.com/urzeye/ophel/releases/latest)
+2. Ouvrez la page de gestion des extensions du navigateur, activez le **Mode développeur**
+3. Cliquez sur **Charger l'extension non empaquetée** et sélectionnez le dossier décompressé
 
-#### 유저스크립트(Tampermonkey)
+#### Userscript
 
-1. [Tampermonkey](https://www.tampermonkey.net/) 플러그인을 설치합니다
-2. [Releases](https://github.com/urzeye/ophel/releases) 에서 `.user.js` 파일을 다운로드합니다
-3. 브라우저로 드래그하거나 링크를 클릭하여 설치합니다
+1. Installez [Tampermonkey](https://www.tampermonkey.net/)
+2. Téléchargez le fichier `.user.js` depuis [Releases](https://github.com/urzeye/ophel/releases)
+3. Faites glisser dans le navigateur ou cliquez sur le lien pour installer
 
-### 로컬 빌드
+### Build Local
 
 <details>
-<summary>빌드 단계 펼치기</summary>
+<summary>Cliquez pour étendre les étapes de build</summary>
 
-**요구 사항**: Node.js >= 20.x, pnpm >= 9.x
+**Prérequis**: Node.js >= 20.x, pnpm >= 9.x
 
 ```bash
 git clone https://github.com/urzeye/ophel.git
@@ -178,25 +170,25 @@ pnpm package:all
 
 </details>
 
-### 🐛 버그 제보
+### 🐛 Signaler un Bug
 
-문제가 있거나 제안 사항이 있으면 [GitHub Issues](https://github.com/urzeye/ophel/issues) 에 피드백을 남겨주세요.
+Pour des problèmes ou suggestions, visitez [GitHub Issues](https://github.com/urzeye/ophel/issues).
 
-## 🙌 지원과 감사
+## 🙌 Soutien et remerciements
 
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
 </p>
 
 <p align="center">
-  <a href="https://linux.do/">Linux.do</a> 커뮤니티의 교류와 지원에 감사드립니다. 프로젝트의 많은 아이디어와 개선점은 커뮤니티 구성원들의 피드백에서 나왔습니다.
+  Merci à la communauté <a href="https://linux.do/">Linux.do</a> pour ses échanges et son soutien. De nombreuses idées et améliorations du projet viennent des retours de ses membres.
 </p>
 
 <!-- supporters:start -->
 
 <!-- This block is auto-generated by `pnpm supporters:sync`. Do not edit manually. -->
 
-### 💖 특별한 감사
+### 💖 Remerciement special
 
 <p align="center">
   <a href="https://github.com/treasuresure"><img src="https://github.com/treasuresure.png?size=160" width="96" height="96" alt="treasuresure" /></a>
@@ -204,7 +196,7 @@ pnpm package:all
   <a href="https://github.com/treasuresure"><strong>treasuresure</strong></a>
 </p>
 
-### 🤝 후원자
+### 🤝 Soutiens
 
 <table align="center">
   <tr>
@@ -221,7 +213,7 @@ pnpm package:all
   </tr>
 </table>
 
-### 🌟 기여자
+### 🌟 Contributeurs
 
 <table align="center">
   <tr>
@@ -273,11 +265,11 @@ pnpm package:all
 <!-- supporters:end -->
 
 <p align="center">
-  <strong>Ophel Atlas</strong>가 여러분의 일이나 학습 효율을 높여 주었다면, <strong>Star</strong> 또는 <strong>Sponsor</strong>로 응원해 주세요.
+  Si <strong>Ophel Atlas</strong> améliore ton travail ou ton apprentissage, n'hésite pas à nous soutenir avec une <strong>Star</strong> ou en devenant <strong>Sponsor</strong>.
 </p>
 
 <p align="center">
-  <strong>널리 알려 주시는 것 역시 큰 힘이 됩니다</strong>: <strong>Linux.do, X, Xiaohongshu, Bilibili</strong> 등 더 많은 플랫폼에 공유해 주시면 정말 큰 도움이 됩니다. 여러분의 모든 피드백과 공유가 Ophel을 더 좋게 만듭니다.
+  <strong>Le partage est aussi une force</strong> : nous serions ravis que tu le partages sur <strong>Linux.do, X, Xiaohongshu, Bilibili</strong> et d'autres plateformes. Chaque retour et chaque partage contribuent à rendre Ophel meilleur.
 </p>
 
 ⭐ Star History

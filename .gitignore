@@ -35,8 +35,9 @@ demo/
 
 tsconfig.tsbuildinfo
 # VitePress
-docs/.vitepress/cache
-docs/.vitepress/dist
+docs/site/.vitepress/.temp
+docs/site/.vitepress/cache
+docs/site/.vitepress/dist
 
 .spec-workflow/.idea/
 .playwright-mcp

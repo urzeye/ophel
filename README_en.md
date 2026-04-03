@@ -1,26 +1,28 @@
 # Ophel Atlas 🚀
 
-> Transformez les conversations IA en documents lisibles, navigables et réutilisables
+> Turn AI chats into documents you can read, navigate, and reuse
+
+<sub>Language: <strong>English</strong> | <a href="./README.md">简体中文</a></sub>
 
 <div align="center">
-  <img src="../../assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
+  <img src="./assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
 
-  <h3 style="margin-top: -2px;">✨ Transformez les conversations en connaissances, pas seulement en historique ✨</h3>
+  <h3 style="margin-top: -2px;">✨ Turn Conversations into Knowledge, Not Just History ✨</h3>
   
   <p>
-    Fini de se perdre dans le défilement infini. Clarifiez le contexte avec des plans en temps réel, construisez votre système avec des dossiers de conversation, affinez l'expérience avec la bibliothèque de prompts, et laissez les pensées brillantes couler librement dans l'ordre.
+    No more getting lost in endless scroll. Clarify context with real-time Outlines, Build your system with Conversation Folders, Refine experience with the Prompt Library, Let sparkling thoughts flow freely in order.
   </p>
   
-  <p align="center" style="font-size: 12px; color: #555;">👇 Démo : De "l'historique de chat à défilement infini" aux "documents IA navigables"</p>
-
-  ![Ophel Demo](../../assets/demo/outline.gif)
+  <sub>👇 Demo: From "Infinite Scroll" to "Navigable AI Documents"</sub>
+  
+  ![Ophel Demo](./docs/media/demo/outline.gif)
   
   <p>
-    <strong><em>Faire du chat IA un flux de travail véritablement organisable pour la première fois</em></strong><br/>
+    <strong><em>Making AI chat a truly organizeable workflow for the first time</em></strong><br/>
   </p>
 
   <small style="opacity: 0.6;">
-  Peu importe la plateforme que vous utilisez, Ophel vous permet d'organiser les conversations en flux de travail réutilisables avec une expérience cohérente et unifiée.
+  No matter which of these platforms you use, Ophel lets you organize conversations into reusable workflows with a consistent, unified experience.
   </small>
   <p>
     <a href="https://chatgpt.com"><img src="https://img.shields.io/static/v1?label=&message=ChatGPT&color=74AA9C&style=flat&logo=data%3Aimage/png%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAD4UlEQVRYheXXaYjVVRgG8N%2BYOVlhiVhpWWSW0WZlYEjZRLTRAkaKpBJEESREChGt1pfMihZoIYIkCkXFaSEiworINYhS2yCTyG0qzYy2cbTbh%2BdM945zZ7P8Ui/8uff//s/ynOd93nPew//dGvrY/kCMwLDy3oJv0fZvgqpnDWjCQmzBH%2BXZUnxN/2TgnuwAzMAD6I8V%2BLL0PRXj8Duex24cg9/wKd7BV/sKrt2mlgFX4kI01nwbinmolKcVP5ffCr7BTAzc18mHYR2%2BwMk1/n64AK%2BXyTZhTgE4BhNwJ9bjT8zFgH0BME1ovbXGNxpPYacwMw9ndtH/NGFuF67ry8Sj8JBQ%2BBPGFv8kbJBVLcXlogvC1qwC9oiasc7DDizDYb2ZfILQXsEebMVJ5dsSSblZGFR8B4tOPlLVwipcq6qXRfhVBNutjcZnQu39eAvf40RR/auSekfXgH1NUrIFj%2BFJ/Ci0L8TZuLsAu6a7yfvh6dLwjvI%2BHz/UAXAJnpDwVITi6TVjjVdlqwUfl/9XdwdgJDYKfYOLb8FeAJpFlN9JeN4TLbSK4mdiSOl7ECZjtWqKXtkdgEvL4A%2BW94YuAFSwFjeKqAbhhuLbgw8wUTXthmI2fsFy2crr2qQy%2BKw6AE4ovlewTeK6t50lgq2IJubjnJrv7TqYU9upX83/HYWB4TW%2BCg6XmB%2BqSuX2OgC2S5zX4k3Jgjdwffn%2BnGhhsi5YGIGvS6OhxTdN4t0mq18jOjmuTv9jZUdsxiESolYRY/tCHyljXVyPgY1YLLvazcX3sghnsWw6Z8iRPERnGyJ53yBp/HZhpUH10NssG9fgOv3/ZmG5CGZ2DRMDRFjLRGjrdBbhGglRc5nweNFEs5yoROC7cVlXAOAKEVFFUmiSpFT7KmdKyu3Cu%2BVpT822LgA0lFWvkjCN7A7AVWXwT2QT2SUhOLemzVQRbUU2o8clrptls6oFsKQwcHtp/4yOoe9kE%2BWwuUvSbYGIaRselaN1qxQhzTi/9BteB8CWwtB9EtbPdTzW69o4OTheKu%2BNqvFvP2w%2BxBTVQmOQhKatrFgBsLEspiIV0oSeJid5v0JiOrbGP0SyYwaOLL7%2BIqilIs4NohlSmGyXI32uHPG9tukS%2B/dxShdtxuAFSbmdUqTU0nuLMDK9c9eerREPC33rcY%2BUYGOk7Joj9LZKWdako7BGS7zXqpbwfbaBuE0orFdwVvCijtVPYwG4UnQ0padJelOWj8JFOF2qn00S%2B5sKyNVSxFQkBONlX7gXz4o29os1ScWzWceLyiJhoVe3rr5ezfa29qvaUeW9RbSx369q/x37C/dbHMwqTvecAAAAAElFTkSuQmCC" alt="ChatGPT"/></a>
@@ -42,7 +44,7 @@
     <a href="https://ima.qq.com"><img src="https://img.shields.io/static/v1?label=&message=ima&color=07A45F&style=flat&logo=data%3Aimage/png%3Bbase64%2C/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Kzc3Nzc3Kzc3Nys3Ny01Nzc1LTcuKzI3NzctNys3Liw3Kys3NzctKysrLis3NCsrN//AABEIACAAIAMBIgACEQEDEQH/xAAYAAEBAQEBAAAAAAAAAAAAAAAGBQgHA//EACYQAAEDBAICAgIDAAAAAAAAAAECAwQFBhEhADEHExJBYYEUIlH/xAAXAQEBAQEAAAAAAAAAAAAAAAAEAAUB/8QAHREAAgEEAwAAAAAAAAAAAAAAAAECAwQRIQUSE//aAAwDAQACEQMRAD8Ag%2BSPINy1G9ZFJoM2XEYiSv4rDERRQt51KviSSNqyrQHWMaznmhYXvTEYEtSVSA2n2lPRXj%2B2P3nkqfEt%2BjOS7kmQ4UZ5psrfnekezGMdgZJPWtnQ5CsvyXSLwqsmn0%2BPLZcZaLqVPpSA4gEAnRODsa5HGNZnvVCfENSUyS2r1FXQXjWf3jmePG3kG5aderFIr0yXLZlyv4r7EtRWtl1SviCCdpwrRHWM6zjnU7y8m0iz6rGp1Qjy3nHmw6pTCUkNoJIHZGTo64gp8W3q05EuSHDhSXnWwtid6R7MYx2RkEdb2NjkSeSb5Et926bVlUmNKRHecUhaVrz8SUnOFY3jhC0rCk2ZSJ7tNnRHbhkthCJDzZ9LScglI%2BznHf4TrW39RW9HWUqSr4/Svo8mlxazk55nXV55aCTrtvqkELtsKVeNJgO1KbFauCM2ULkMtn0upySEn7GM9/lWt6YeOaE7a1rRaTJkpkOtqWtSkZ%2BIKjnCc7xz1bURylBC3VAAH4/Z/wA4KhyUqs1BCKaljZ//2Q%3D%3D" alt="ima"/></a>
     </br>
     <img src="https://img.shields.io/github/package-json/v/urzeye/ophel?color=blue" alt="Version">
-    <a href="../../LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License"></a>
+    <a href="./LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License"></a>
     <img src="https://img.shields.io/github/last-commit/urzeye/ophel" alt="Last Commit">
     <a href="https://github.com/urzeye/ophel/stargazers"><img src="https://img.shields.io/github/stars/urzeye/ophel?style=social" alt="Stars"></a>
     <a href="https://github.com/urzeye/ophel/network/members"><img src="https://img.shields.io/github/forks/urzeye/ophel?style=social" alt="Forks"></a>
@@ -64,62 +66,63 @@
 </p>
 
 <p align="center">
-  <a href="#-démo">Démo</a> •
-  <a href="#-fonctionnalités-clés">Fonctionnalités Clés</a> •
-  <a href="#-démarrage-rapide">Démarrage Rapide</a> •
-  <a href="#-soutien">Soutien</a>
+  <a href="#-demo">Demo</a> •
+  <a href="#-core-features">Core Features</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-support">Support</a>
 </p>
 
 <p align="center">
-  🌐 <a href="../../README_EN.md">English</a> | <a href="../../README.md">简体中文</a> | <a href="./README_zh-TW.md">繁體中文</a> | <a href="./README_ja.md">日本語</a> | <a href="./README_ko.md">한국어</a> | <a href="./README_de.md">Deutsch</a> | <strong>Français</strong> | <a href="./README_es.md">Español</a> | <a href="./README_pt.md">Português</a> | <a href="./README_ru.md">Русский</a>
+  🌐 <strong>English</strong> | <a href="./README.md">简体中文</a> | <a href="./docs/readmes/README_zh-TW.md">繁體中文</a> | <a href="./docs/readmes/README_ja.md">日本語</a> | <a href="./docs/readmes/README_ko.md">한국어</a> | <a href="./docs/readmes/README_de.md">Deutsch</a> | <a href="./docs/readmes/README_fr.md">Français</a> | <a href="./docs/readmes/README_es.md">Español</a> | <a href="./docs/readmes/README_pt-BR.md">Português</a> | <a href="./docs/readmes/README_ru.md">Русский</a>
 </p>
 
-## 📹 Démo
+## 📹 Demo
 
 |                                                          Outline                                                           |                                                       Conversations                                                        |                                                          Features                                                          |
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
-## 🎯 Cas d’usage
+## 🎯 Use Cases
 
-- Apprentissage et recherche : raisonnement sur longues conversations, organiser les connaissances, relire les conclusions, extraire des notes
-- Travail au quotidien : découpage des besoins, rédaction de solutions, analyse concurrentielle, comptes rendus de réunion, workflows de conseil et de management
-- Développement et rédaction technique : longues discussions de code, triage de bugs, exploration d’architecture, documentation/blog
-- Création de contenu : itérer scripts/plans/révisions, revenir vite aux passages clés et exporter pour retravailler
-- Utilisateurs intensifs d’IA : besoin de structure, d’ordre et de réutilisation, pas seulement de chats ponctuels
+- Learning & research: long-form reasoning, organize knowledge, review conclusions, extract notes
+- Daily work: requirements breakdown, solution drafting, competitive analysis, meeting notes, consulting & management workflows
+- Development & technical writing: long code discussions, bug triage, architecture exploration, docs/blog writing
+- Content creation: iterate on scripts/outlines/polish, jump back to key passages, export for reuse
+- Power users of AI: need structure, order, and reuse — not just ad-hoc chats
 
-## ✨ Fonctionnalités Clés
+## ✨ Core Features
 
-- 🧠 **Smart Outline** — Analyse automatique des requêtes utilisateur et réponses IA en structure navigable
-- 💬 **Conversation Manager** — Dossiers, tags, recherche, opérations par lot
-- ⌨️ **Prompt Library** — Variables, prévisualisation Markdown, catégories, insertion en un clic
-- 🎨 **Personnalisation de Thème** — 20+ thèmes sombres/clairs, CSS personnalisé
-- 🔧 **Optimisation UI** — Mode écran large, contrôle de largeur, mise en page latérale
-- 📖 **Expérience de Lecture** — Verrouillage du défilement, restauration de l'historique, rendu Markdown
-- ⚡ **Outils de Productivité** — Raccourcis, verrouillage de modèle, renommage automatique, notifications
-- 🎭 **Amélioration Claude** — Gestion de clé de session, changement multi-compte
-- 🔒 **Confidentialité d'Abord** — Stockage local, sync WebDAV, aucune collecte de données
+- 🧠 **Smart Outline** — Auto-parse user queries & AI responses into rich structured outlines
+- 💬 **Conversation Manager** — Folders, tags, search, batch operations
+- ⌨️ **Prompt Library** — Variables, Markdown preview, categories, one-click insert
+- 🎨 **Theme Customization** — 20+ dark/light themes, custom CSS
+- 🔧 **UI Optimization** — Widescreen mode, page & bubble width control, sidebar layout
+- 📖 **Reading Experience** — Scroll lock, reading history restore, Markdown fixes
+- ⚡ **Productivity Tools** — Shortcuts, model lock, tab auto-rename, notifications
+- 📊 **Usage Estimates** — Optional local usage counter, token estimates, and history chart
+- 🎭 **Claude Enhancement** — Session Key management, multi-account switching
+- 🔒 **Privacy First** — Local storage, WebDAV sync, no data collection
 
 <details>
-<summary>Confidentialité & données (déplier)</summary>
+<summary>Privacy & Data (expand)</summary>
 
-**Ophel Atlas** place la confidentialité au premier plan : stockage local par défaut, vos données restent sous votre contrôle.
+**Ophel Atlas** puts privacy first: local by default, your data stays in your control.
 
-- **Stockage local par défaut :** réglages, prompts et données de gestion des conversations sont stockés dans le navigateur
-- **Sans compte :** aucune inscription nécessaire
-- **Permissions à la demande :** permissions optionnelles demandées uniquement si nécessaire, révocables à tout moment (voir la page Permissions de l’extension)
-- **Synchronisation WebDAV optionnelle :** utilisez votre propre WebDAV pour plusieurs appareils (contrôlable, portable)
-- **Export & sauvegarde :** export et migration pour éviter le verrouillage
+- **Local by default:** settings, prompts, and conversation management data are stored in your browser
+- **No account required:** use it without signing up
+- **Permissions on demand:** optional permissions are requested only when needed and can be revoked anytime (see the Permissions page in the extension)
+- **Optional WebDAV sync:** use your own WebDAV for multi-device consistency (controllable, portable)
+- **Export & backup:** export and migrate to avoid lock-in
 
 </details>
 
-> Note : la prise en charge de sites d’IA spécifiques dépend du matching du site et des changements de structure des pages.
+> Note: Support for specific AI sites depends on site matching and page structure changes.
 
-## 🚀 Démarrage Rapide
+## 🚀 Quick Start
 
 > [!tip]
 >
-> **Nous recommandons fortement d'utiliser la version Extension de Navigateur** pour un ensemble de fonctionnalités plus complet, une meilleure expérience et une compatibilité plus élevée. La version Userscript a des limitations.
+> **We highly recommend using the Browser Extension version** for a more complete feature set, better experience, and higher compatibility. The Userscript version has limitations.
 
 ### Web Store
 
@@ -127,26 +130,26 @@
 <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=Firefox%20Add-ons&color=FF7139&labelColor=FF7139" alt="Firefox Add-ons"></a>
 <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=Greasy%20Fork&color=black&labelColor=black" alt="Greasy Fork"></a>
 
-### Installation Manuelle
+### Manual Installation
 
-#### Extension de Navigateur
+#### Browser Extension
 
-1. Téléchargez et décompressez depuis [Releases](https://github.com/urzeye/ophel/releases/latest)
-2. Ouvrez la page de gestion des extensions du navigateur, activez le **Mode développeur**
-3. Cliquez sur **Charger l'extension non empaquetée** et sélectionnez le dossier décompressé
+1. Download & unzip from [Releases](https://github.com/urzeye/ophel/releases/latest)
+2. Open browser extensions page, enable **Developer mode**
+3. Click **Load unpacked** and select the unzipped folder
 
 #### Userscript
 
-1. Installez [Tampermonkey](https://www.tampermonkey.net/)
-2. Téléchargez le fichier `.user.js` depuis [Releases](https://github.com/urzeye/ophel/releases)
-3. Faites glisser dans le navigateur ou cliquez sur le lien pour installer
+1. Install [Tampermonkey](https://www.tampermonkey.net/)
+2. Download `.user.js` file from [Releases](https://github.com/urzeye/ophel/releases)
+3. Drag into browser or click the link to install
 
-### Build Local
+### Local Build
 
 <details>
-<summary>Cliquez pour étendre les étapes de build</summary>
+<summary>Click to expand build steps</summary>
 
-**Prérequis**: Node.js >= 20.x, pnpm >= 9.x
+**Requirements**: Node.js >= 20.x, pnpm >= 9.x
 
 ```bash
 git clone https://github.com/urzeye/ophel.git
@@ -169,26 +172,25 @@ pnpm package:all
 ```
 
 </details>
+### 🐛 Bug Report
 
-### 🐛 Signaler un Bug
+For issues or suggestions, please visit [GitHub Issues](https://github.com/urzeye/ophel/issues).
 
-Pour des problèmes ou suggestions, visitez [GitHub Issues](https://github.com/urzeye/ophel/issues).
-
-## 🙌 Soutien et remerciements
+## 🙌 Support and Thanks
 
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
 </p>
 
 <p align="center">
-  Merci à la communauté <a href="https://linux.do/">Linux.do</a> pour ses échanges et son soutien. De nombreuses idées et améliorations du projet viennent des retours de ses membres.
+  Thanks to the <a href="https://linux.do/">Linux.do</a> community for the discussions and support. Many ideas and improvements in this project came from feedback shared by community members.
 </p>
 
 <!-- supporters:start -->
 
 <!-- This block is auto-generated by `pnpm supporters:sync`. Do not edit manually. -->
 
-### 💖 Remerciement special
+### 💖 Angel Support
 
 <p align="center">
   <a href="https://github.com/treasuresure"><img src="https://github.com/treasuresure.png?size=160" width="96" height="96" alt="treasuresure" /></a>
@@ -196,7 +198,7 @@ Pour des problèmes ou suggestions, visitez [GitHub Issues](https://github.com/u
   <a href="https://github.com/treasuresure"><strong>treasuresure</strong></a>
 </p>
 
-### 🤝 Soutiens
+### 🤝 Supporters
 
 <table align="center">
   <tr>
@@ -213,7 +215,7 @@ Pour des problèmes ou suggestions, visitez [GitHub Issues](https://github.com/u
   </tr>
 </table>
 
-### 🌟 Contributeurs
+### 🌟 Contributors
 
 <table align="center">
   <tr>
@@ -265,12 +267,31 @@ Pour des problèmes ou suggestions, visitez [GitHub Issues](https://github.com/u
 <!-- supporters:end -->
 
 <p align="center">
-  Si <strong>Ophel Atlas</strong> améliore ton travail ou ton apprentissage, n'hésite pas à nous soutenir avec une <strong>Star</strong> ou en devenant <strong>Sponsor</strong>.
+  If <strong>Ophel Atlas</strong> has improved your work or learning efficiency, you are welcome to support us with a <strong>Star</strong> or <strong>Sponsor</strong>.
 </p>
 
 <p align="center">
-  <strong>Le partage est aussi une force</strong> : nous serions ravis que tu le partages sur <strong>Linux.do, X, Xiaohongshu, Bilibili</strong> et d'autres plateformes. Chaque retour et chaque partage contribuent à rendre Ophel meilleur.
+  <strong>Sharing is support too</strong>: we'd also love for you to share it on <strong>Linux.do, X, Xiaohongshu, Bilibili</strong>, and more. Every bit of feedback and every share helps make Ophel better!
 </p>
+
+<table align="center">
+  <tr>
+    <td align="center"><strong>WeChat</strong></td>
+    <td align="center"><strong>Alipay</strong></td>
+    <td align="center"><strong>Afdian</strong></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="./docs/media/support/wechat-pay.jpg" width="220" alt="WeChat donation QR code" />
+    </td>
+    <td align="center">
+      <img src="./docs/media/support/alipay.png" width="220" alt="Alipay donation QR code" />
+    </td>
+    <td align="center">
+      <img src="./docs/media/support/afdian.png" width="220" alt="Afdian support" />
+    </td>
+  </tr>
+</table>
 
 ⭐ Star History
 
@@ -285,6 +306,6 @@ Pour des problèmes ou suggestions, visitez [GitHub Issues](https://github.com/u
 <p>
   Made with ❤️ by <a href="https://github.com/urzeye">urzeye</a>
   <span aria-hidden="true"> · </span>
-  <a href="../../LICENSE"><strong>GPLv3 License</strong></a>
+  <a href="./LICENSE"><strong>GPLv3 License</strong></a>
 </p>
 </div>

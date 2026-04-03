@@ -15,8 +15,9 @@ export default [
       ".spec-workflow/**",
       ".claude/**",
       "CLAUDE.md",
-      "docs/.vitepress/cache/**",
-      "docs/.vitepress/dist/**",
+      "docs/site/.vitepress/.temp/**",
+      "docs/site/.vitepress/cache/**",
+      "docs/site/.vitepress/dist/**",
     ],
   },
   {

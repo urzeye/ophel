@@ -190,15 +190,14 @@ jobs:
       - name: Copy README for Userscript
         run: |
           cp README*.md build/userscript/
-          mkdir -p build/userscript/.github/readmes
-          mkdir -p build/userscript/assets/support
-          cp .github/readmes/README*.md build/userscript/.github/readmes/ 2>/dev/null || true
-          cp -R assets/support/. build/userscript/assets/support/
-          # 替换本地图片路径为网络 URL（油猴脚本 release 分支需要）
-          sed -i 's|./assets/icon.png|https://gist.github.com/user-attachments/assets/cdd08324-3962-4270-87a3-474b5d240f03|g' build/userscript/README*.md
-          sed -i 's|../../assets/icon.png|https://gist.github.com/user-attachments/assets/cdd08324-3962-4270-87a3-474b5d240f03|g' build/userscript/.github/readmes/README*.md 2>/dev/null || true
-          sed -i 's|!\[Ophel Demo\](./assets/demo/outline.gif)|<img src="https://github.com/user-attachments/assets/7161a37b-5fb3-4799-a6a9-25521e1a514f" alt="Ophel Demo" style="max-width:100%;">|g' build/userscript/README*.md
-          sed -i 's|!\[Ophel Demo\](../../assets/demo/outline.gif)|<img src="https://github.com/user-attachments/assets/7161a37b-5fb3-4799-a6a9-25521e1a514f" alt="Ophel Demo" style="max-width:100%;">|g' build/userscript/.github/readmes/README*.md 2>/dev/null || true
+          cp LICENSE build/userscript/
+          mkdir -p build/userscript/assets
+          mkdir -p build/userscript/docs
+          cp assets/icon.png build/userscript/assets/
+          cp -R docs/readmes build/userscript/docs/
+          mkdir -p build/userscript/docs/media
+          cp -R docs/media/demo build/userscript/docs/media/
+          cp -R docs/media/support build/userscript/docs/media/
 
       - name: Deploy Userscript to release branch
         uses: peaceiris/actions-gh-pages@v4
@@ -210,4 +209,3 @@ jobs:
           user_email: "github-actions[bot]@users.noreply.github.com"
           commit_message: "Deploy userscript ${{ steps.get_version.outputs.VERSION }} [skip ci]"
           force_orphan: true
-          exclude_assets: ''  # 禁用默认排除，包含 .github 目录

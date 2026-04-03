@@ -617,7 +617,8 @@ window.addEventListener("blur", this.boundBlurHandler)
 
 ```typescript
 // 修改前
-const shouldNotify = wasGenerating && !this.userSawCompletion && (document.hidden || notifyWhenFocused)
+const shouldNotify =
+  wasGenerating && !this.userSawCompletion && (document.hidden || notifyWhenFocused)
 
 // 修改后
 const isAway = this.isUserAway()
@@ -1326,7 +1327,8 @@ const siteTheme = settings?.theme?.sites?._default || settings?.theme?.sites?.ge
 // 修复后
 const currentAdapter = getAdapter()
 const siteId = currentAdapter?.getSiteId() || "_default"
-const siteTheme = settings?.theme?.sites?.[siteId as keyof typeof sites] || settings?.theme?.sites?._default
+const siteTheme =
+  settings?.theme?.sites?.[siteId as keyof typeof sites] || settings?.theme?.sites?._default
 ```
 
 涉及修改的位置：
@@ -1436,13 +1438,13 @@ private handleScroll(e: Event) {
 利用底部偏移量（Offset from Bottom）来判断内容是否已存在：
 
 ```typescript
-const savedOffsetFromBottom = data.scrollHeight - data.top;
+const savedOffsetFromBottom = data.scrollHeight - data.top
 // 如果当前内容高度足以容纳这个偏移量，说明目标内容已在视口中
 if (container.scrollHeight >= savedOffsetFromBottom) {
-  const fastTop = container.scrollHeight - savedOffsetFromBottom;
-  await smartScrollTo(this.adapter, fastTop);
+  const fastTop = container.scrollHeight - savedOffsetFromBottom
+  await smartScrollTo(this.adapter, fastTop)
   // 跳过 loadHistoryUntil，直接完成
-  return true;
+  return true
 }
 ```
 
@@ -2114,7 +2116,7 @@ const containerRef = useRef<HTMLDivElement>(null)
 const userscriptStorageAdapter: StateStorage = {
   getItem: (name: string): Promise<string | null> => {
     const value = GM_getValue(name)
-    return Promise.resolve(value)  // ❌ 返回 Promise
+    return Promise.resolve(value) // ❌ 返回 Promise
   },
   setItem: (name: string, value: string): Promise<void> => {
     GM_setValue(name, value)
@@ -2163,7 +2165,8 @@ const userscriptStorageAdapter: StateStorage = {
 ```typescript
 // chrome-adapter.ts
 const userscriptStorageAdapter: StateStorage = {
-  getItem: (name: string): string | null => {  // ✅ 直接返回
+  getItem: (name: string): string | null => {
+    // ✅ 直接返回
     const value = GM_getValue(name)
     if (value === undefined || value === null) {
       return null
@@ -2171,7 +2174,8 @@ const userscriptStorageAdapter: StateStorage = {
     return typeof value === "string" ? value : JSON.stringify(value)
   },
 
-  setItem: (name: string, value: string): void => {  // ✅ 同步写入
+  setItem: (name: string, value: string): void => {
+    // ✅ 同步写入
     GM_setValue(name, value)
   },
 
@@ -2200,14 +2204,14 @@ const userscriptStorageAdapter: StateStorage = {
 
 ### 经验总结
 
-| 教训 | 说明 |
-| :--- | :--- |
-| **同步 API 不要包装成 Promise** | GM_* 是同步 API，直接返回值即可让 Zustand 执行同步 hydration，无需 Promise 包装 |
-| **理解框架的 hydration 机制** | Zustand persist 根据返回类型决定同步/异步 hydration，这是设计而非 Bug |
-| **简单胜于复杂** | 之前尝试用 setTimeout、hydrationComplete 标志等复杂方案，都不如直接返回同步值简洁有效 |
+| 教训                            | 说明                                                                                  |
+| :------------------------------ | :------------------------------------------------------------------------------------ |
+| **同步 API 不要包装成 Promise** | GM\_\* 是同步 API，直接返回值即可让 Zustand 执行同步 hydration，无需 Promise 包装     |
+| **理解框架的 hydration 机制**   | Zustand persist 根据返回类型决定同步/异步 hydration，这是设计而非 Bug                 |
+| **简单胜于复杂**                | 之前尝试用 setTimeout、hydrationComplete 标志等复杂方案，都不如直接返回同步值简洁有效 |
 
 ### 文件变更
 
-| 文件                               | 变更                                        |
-| ---------------------------------- | ------------------------------------------- |
-| `src/stores/chrome-adapter.ts`     | **修改** - `getItem` 改为直接返回 `string \| null` |
+| 文件                           | 变更                                               |
+| ------------------------------ | -------------------------------------------------- |
+| `src/stores/chrome-adapter.ts` | **修改** - `getItem` 改为直接返回 `string \| null` |

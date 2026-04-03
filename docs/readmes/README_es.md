@@ -1,26 +1,26 @@
 # Ophel Atlas 🚀
 
-> Machen Sie AI-Chats zu Dokumenten, die Sie lesen, navigieren und wiederverwenden können
+> Transforma chats de IA en documentos legibles, navegables y reutilizables
 
 <div align="center">
   <img src="../../assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
 
-  <h3 style="margin-top: -2px;">✨ Machen Sie aus Gesprächen Wissen, nicht nur Geschichte ✨</h3>
+  <h3 style="margin-top: -2px;">✨ Convierte las conversaciones en conocimiento, no solo en historia ✨</h3>
   
   <p>
-    Schluss mit dem Verlieren im endlosen Scrollen. Klären Sie den Kontext mit Echtzeit-Gliederungen, bauen Sie Ihr System mit Gesprächsordnern auf, verfeinern Sie die Erfahrung mit der Prompt-Bibliothek und lassen Sie funkelnde Gedanken in geordneten Bahnen fließen.
+    No más perderse en el desplazamiento infinito. Aclara el contexto con esquemas en tiempo real, construye tu sistema con carpetas de conversación, refina la experiencia con la biblioteca de prompts y deja que los pensamientos brillantes fluyan libremente en orden.
   </p>
   
-  <p align="center" style="font-size: 12px; color: #555;">👇 Demo: Von "Unendlichem Scrollen" zu "Navigierbaren AI-Dokumenten"</p>
+  <p align="center" style="font-size: 12px; color: #555;">👇 Demo: De "Historial de chat infinito" a "Documentos de IA navegables"</p>
 
-  ![Ophel Demo](../../assets/demo/outline.gif)
-  
+![Ophel Demo](../media/demo/outline.gif)
+
   <p>
-    <strong><em>Macht den AI-Chat zum ersten Mal zu einem wirklich organisierbaren Workflow</em></strong><br/>
+    <strong><em>Haciendo del chat con IA un flujo de trabajo verdaderamente organizable por primera vez</em></strong><br/>
   </p>
 
   <small style="opacity: 0.6;">
-  Egal welche Plattform Sie nutzen, Ophel ermöglicht es Ihnen, Gespräche in wiederverwendbare Workflows mit einer konsistenten, einheitlichen Erfahrung zu organisieren.
+  No importa qué plataforma uses, Ophel te permite organizar conversaciones en flujos de trabajo reutilizables con una experiencia consistente y unificada.
   </small>
   <p>
     <a href="https://chatgpt.com"><img src="https://img.shields.io/static/v1?label=&message=ChatGPT&color=74AA9C&style=flat&logo=data%3Aimage/png%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAD4UlEQVRYheXXaYjVVRgG8N%2BYOVlhiVhpWWSW0WZlYEjZRLTRAkaKpBJEESREChGt1pfMihZoIYIkCkXFaSEiworINYhS2yCTyG0qzYy2cbTbh%2BdM945zZ7P8Ui/8uff//s/ynOd93nPew//dGvrY/kCMwLDy3oJv0fZvgqpnDWjCQmzBH%2BXZUnxN/2TgnuwAzMAD6I8V%2BLL0PRXj8Duex24cg9/wKd7BV/sKrt2mlgFX4kI01nwbinmolKcVP5ffCr7BTAzc18mHYR2%2BwMk1/n64AK%2BXyTZhTgE4BhNwJ9bjT8zFgH0BME1ovbXGNxpPYacwMw9ndtH/NGFuF67ry8Sj8JBQ%2BBPGFv8kbJBVLcXlogvC1qwC9oiasc7DDizDYb2ZfILQXsEebMVJ5dsSSblZGFR8B4tOPlLVwipcq6qXRfhVBNutjcZnQu39eAvf40RR/auSekfXgH1NUrIFj%2BFJ/Ci0L8TZuLsAu6a7yfvh6dLwjvI%2BHz/UAXAJnpDwVITi6TVjjVdlqwUfl/9XdwdgJDYKfYOLb8FeAJpFlN9JeN4TLbSK4mdiSOl7ECZjtWqKXtkdgEvL4A%2BW94YuAFSwFjeKqAbhhuLbgw8wUTXthmI2fsFy2crr2qQy%2BKw6AE4ovlewTeK6t50lgq2IJubjnJrv7TqYU9upX83/HYWB4TW%2BCg6XmB%2BqSuX2OgC2S5zX4k3Jgjdwffn%2BnGhhsi5YGIGvS6OhxTdN4t0mq18jOjmuTv9jZUdsxiESolYRY/tCHyljXVyPgY1YLLvazcX3sghnsWw6Z8iRPERnGyJ53yBp/HZhpUH10NssG9fgOv3/ZmG5CGZ2DRMDRFjLRGjrdBbhGglRc5nweNFEs5yoROC7cVlXAOAKEVFFUmiSpFT7KmdKyu3Cu%2BVpT822LgA0lFWvkjCN7A7AVWXwT2QT2SUhOLemzVQRbUU2o8clrptls6oFsKQwcHtp/4yOoe9kE%2BWwuUvSbYGIaRselaN1qxQhzTi/9BteB8CWwtB9EtbPdTzW69o4OTheKu%2BNqvFvP2w%2BxBTVQmOQhKatrFgBsLEspiIV0oSeJid5v0JiOrbGP0SyYwaOLL7%2BIqilIs4NohlSmGyXI32uHPG9tukS%2B/dxShdtxuAFSbmdUqTU0nuLMDK9c9eerREPC33rcY%2BUYGOk7Joj9LZKWdako7BGS7zXqpbwfbaBuE0orFdwVvCijtVPYwG4UnQ0padJelOWj8JFOF2qn00S%2B5sKyNVSxFQkBONlX7gXz4o29os1ScWzWceLyiJhoVe3rr5ezfa29qvaUeW9RbSx369q/x37C/dbHMwqTvecAAAAAElFTkSuQmCC" alt="ChatGPT"/></a>
@@ -65,13 +65,13 @@
 
 <p align="center">
   <a href="#-demo">Demo</a> •
-  <a href="#-kernfunktionen">Kernfunktionen</a> •
-  <a href="#-schnellstart">Schnellstart</a> •
-  <a href="#-unterstützung">Unterstützung</a>
+  <a href="#-características-principales">Características Principales</a> •
+  <a href="#-inicio-rápido">Inicio Rápido</a> •
+  <a href="#-soporte">Soporte</a>
 </p>
 
 <p align="center">
-  🌐 <a href="../../README_EN.md">English</a> | <a href="../../README.md">简体中文</a> | <a href="./README_zh-TW.md">繁體中文</a> | <a href="./README_ja.md">日本語</a> | <a href="./README_ko.md">한국어</a> | <strong>Deutsch</strong> | <a href="./README_fr.md">Français</a> | <a href="./README_es.md">Español</a> | <a href="./README_pt.md">Português</a> | <a href="./README_ru.md">Русский</a>
+  🌐 <a href="../../README_en.md">English</a> | <a href="../../README.md">简体中文</a> | <a href="./README_zh-TW.md">繁體中文</a> | <a href="./README_ja.md">日本語</a> | <a href="./README_ko.md">한국어</a> | <a href="./README_de.md">Deutsch</a> | <a href="./README_fr.md">Français</a> | <strong>Español</strong> | <a href="./README_pt-BR.md">Português</a> | <a href="./README_ru.md">Русский</a>
 </p>
 
 ## 📹 Demo
@@ -80,46 +80,46 @@
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
-## 🎯 Anwendungsfälle
+## 🎯 Casos de uso
 
-- Lernen & Forschung: lange Dialoge, Wissen ordnen, Erkenntnisse reflektieren, Notizen extrahieren
-- Alltag & Arbeit: Anforderungen zerlegen, Konzepte ausarbeiten, Wettbewerbsanalyse, Meeting-Notizen, Beratungs- und Management-Workflows
-- Entwicklung & technisches Schreiben: längere Code-Diskussionen, Bug-Analyse, Architektur-Exploration, Dokumentation/Blog
-- Content-Erstellung: Skripte/Gliederungen/Feinschliff iterieren, schnell zu Schlüsselstellen springen und exportieren
-- Vielnutzer von KI: brauchen Struktur, Ordnung und Wiederverwendung – nicht nur flüchtige Chats
+- Aprendizaje e investigación: razonamiento en conversaciones largas, organizar conocimiento, revisar conclusiones, extraer notas
+- Trabajo diario: desglose de requisitos, redacción de propuestas, análisis competitivo, actas de reunión, flujos de consultoría y gestión
+- Desarrollo y escritura técnica: discusiones largas de código, depuración de bugs, exploración de arquitectura, documentación/blog
+- Creación de contenido: iterar guiones/esquemas/revisión, volver rápido a pasajes clave y exportar para reutilizar
+- Usuarios intensivos de IA: necesitan estructura, orden y reutilización, no solo chats puntuales
 
-## ✨ Kernfunktionen
+## ✨ Características Principales
 
-- 🧠 **Smart Outline** — Automatische Analyse von Benutzeranfragen und AI-Antworten in eine navigierbare Struktur
-- 💬 **Conversation Manager** — Ordner, Tags, Suche, Stapelverarbeitung
-- ⌨️ **Prompt Library** — Variablen, Markdown-Vorschau, Kategorien, Einfügen mit einem Klick
-- 🎨 **Theme Anpassung** — 20+ dunkle/helle Themes, benutzerdefiniertes CSS
-- 🔧 **UI Optimierung** — Widescreen-Modus, Breitensteuerung, Seitenleisten-Layout
-- 📖 **Leseerlebnis** — Scroll-Sperre, Wiederherstellung des Lesefortschritts, Markdown-Fixes
-- ⚡ **Produktivitätstools** — Shortcuts, Modellsperre, automatische Tab-Benennung, Benachrichtigungen
-- 🎭 **Claude Erweiterung** — Session Key Management, Multi-Account-Switching
-- 🔒 **Datenschutz First** — Lokaler Speicher, WebDAV-Sync, keine Datensammlung
+- 🧠 **Smart Outline** — Analiza automáticamente consultas y respuestas de IA en una estructura navegable
+- 💬 **Conversation Manager** — Carpetas, etiquetas, búsqueda, operaciones por lotes
+- ⌨️ **Prompt Library** — Variables, vista previa Markdown, categorías, inserción con un clic
+- 🎨 **Personalización de Temas** — 20+ temas oscuros/claros, CSS personalizado
+- 🔧 **Optimización UI** — Modo pantalla ancha, control de ancho, diseño de barra lateral
+- 📖 **Experiencia de Lectura** — Bloqueo de desplazamiento, restauración de posición, renderizado Markdown
+- ⚡ **Productividad** — Atajos, bloqueo de modelo, renombrado automático, notificaciones
+- 🎭 **Mejora de Claude** — Gestión de Key de sesión, cambio multi-cuenta
+- 🔒 **Privacidad Primero** — Almacenamiento local, sinc WebDAV, sin recolección de datos
 
 <details>
-<summary>Datenschutz & Daten (aufklappen)</summary>
+<summary>Privacidad y datos (expandir)</summary>
 
-**Ophel Atlas** stellt Datenschutz an erste Stelle: Standardmäßig lokal gespeichert, deine Daten bleiben unter deiner Kontrolle.
+**Ophel Atlas** prioriza la privacidad: por defecto todo es local y tus datos quedan bajo tu control.
 
-- **Standardmäßig lokal gespeichert:** Einstellungen, Prompts und Gesprächsverwaltung liegen im Browser
-- **Kein Konto erforderlich:** Nutzung ohne Registrierung
-- **Berechtigungen nach Bedarf:** optionale Berechtigungen nur bei Bedarf, jederzeit widerrufbar (siehe Permissions-Seite in der Erweiterung)
-- **Optionaler WebDAV-Sync:** Multi-Device-Sync über deinen eigenen WebDAV-Server (kontrollierbar, portabel)
-- **Export & Backup:** Export und Migration, kein Lock-in
+- **Almacenamiento local por defecto:** configuraciones, prompts y datos de gestión de conversaciones se guardan en el navegador
+- **Sin cuenta:** úsalo sin registrarte
+- **Permisos bajo demanda:** los permisos opcionales se solicitan solo cuando se necesitan y pueden revocarse (ver página Permissions en la extensión)
+- **Sincronización WebDAV opcional:** usa tu propio WebDAV para varios dispositivos (controlable, portable)
+- **Exportar y respaldar:** exportación y migración para evitar el lock-in
 
 </details>
 
-> Hinweis: Die Unterstützung einzelner KI-Websites hängt vom Site-Matching und von Änderungen der Seitenstruktur ab.
+> Nota: el soporte de sitios de IA específicos depende del matching del sitio y de cambios en la estructura de la página.
 
-## 🚀 Schnellstart
+## 🚀 Inicio Rápido
 
 > [!tip]
 >
-> **Wir empfehlen dringend die Verwendung der Browser-Erweiterungsversion** für einen vollständigeren Funktionsumfang, eine bessere Erfahrung und höhere Kompatibilität. Die Userscript-Version hat Einschränkungen.
+> **Recomendamos encarecidamente usar la versión de Extensión del Navegador** para un conjunto de características más completo, mejor experiencia y mayor compatibilidad. La versión Userscript tiene limitaciones.
 
 ### Web Store
 
@@ -127,26 +127,26 @@
 <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=Firefox%20Add-ons&color=FF7139&labelColor=FF7139" alt="Firefox Add-ons"></a>
 <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=Greasy%20Fork&color=black&labelColor=black" alt="Greasy Fork"></a>
 
-### Manuelle Installation
+### Instalación Manual
 
-#### Browser Erweiterung
+#### Extensión del Navegador
 
-1. Laden Sie das Installationspaket von [Releases](https://github.com/urzeye/ophel/releases/latest) herunter und entpacken Sie es
-2. Öffnen Sie die Seite zur Verwaltung von Browsererweiterungen und aktivieren Sie den **Entwicklermodus**
-3. Klicken Sie auf **Entpackte Erweiterung laden** und wählen Sie den entpackten Ordner aus
+1. Descarga y descomprime desde [Releases](https://github.com/urzeye/ophel/releases/latest)
+2. Abre la página de administración de extensiones, activa el **Modo desarrollador**
+3. Haz clic en **Cargar descomprimida** y selecciona la carpeta descomprimida
 
 #### Userscript
 
-1. Installieren Sie [Tampermonkey](https://www.tampermonkey.net/)
-2. Laden Sie die `.user.js` Datei von [Releases](https://github.com/urzeye/ophel/releases) herunter
-3. Ziehen Sie sie in den Browser oder klicken Sie auf den Link zur Installation
+1. Instala [Tampermonkey](https://www.tampermonkey.net/)
+2. Descarga el archivo `.user.js` desde [Releases](https://github.com/urzeye/ophel/releases)
+3. Arrástralo al navegador o haz clic en el enlace para instalar
 
-### Lokaler Build
+### Build Local
 
 <details>
-<summary>Klicken Sie hier, um die Build-Schritte zu erweitern</summary>
+<summary>Haz clic para expandir los pasos de construcción</summary>
 
-**Anforderungen**: Node.js >= 20.x, pnpm >= 9.x
+**Requisitos**: Node.js >= 20.x, pnpm >= 9.x
 
 ```bash
 git clone https://github.com/urzeye/ophel.git
@@ -170,25 +170,25 @@ pnpm package:all
 
 </details>
 
-### 🐛 Bug-Bericht
+### 🐛 Reportar Error
 
-Bei Problemen oder Vorschlägen besuchen Sie bitte [GitHub Issues](https://github.com/urzeye/ophel/issues).
+Para problemas o sugerencias, visita [GitHub Issues](https://github.com/urzeye/ophel/issues).
 
-## 🙌 Unterstützung und Dank
+## 🙌 Soporte y agradecimientos
 
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
 </p>
 
 <p align="center">
-  Vielen Dank an die <a href="https://linux.do/">Linux.do</a>-Community für den Austausch und die Unterstützung. Viele Ideen und Verbesserungen dieses Projekts stammen aus dem Feedback der Community-Mitglieder.
+  Gracias a la comunidad de <a href="https://linux.do/">Linux.do</a> por el intercambio y el apoyo. Muchas ideas y mejoras del proyecto surgieron de los comentarios de sus miembros.
 </p>
 
 <!-- supporters:start -->
 
 <!-- This block is auto-generated by `pnpm supporters:sync`. Do not edit manually. -->
 
-### 💖 Besonderer Dank
+### 💖 Agradecimiento especial
 
 <p align="center">
   <a href="https://github.com/treasuresure"><img src="https://github.com/treasuresure.png?size=160" width="96" height="96" alt="treasuresure" /></a>
@@ -196,7 +196,7 @@ Bei Problemen oder Vorschlägen besuchen Sie bitte [GitHub Issues](https://githu
   <a href="https://github.com/treasuresure"><strong>treasuresure</strong></a>
 </p>
 
-### 🤝 Unterstützer
+### 🤝 Patrocinadores
 
 <table align="center">
   <tr>
@@ -213,7 +213,7 @@ Bei Problemen oder Vorschlägen besuchen Sie bitte [GitHub Issues](https://githu
   </tr>
 </table>
 
-### 🌟 Mitwirkende
+### 🌟 Colaboradores
 
 <table align="center">
   <tr>
@@ -265,11 +265,11 @@ Bei Problemen oder Vorschlägen besuchen Sie bitte [GitHub Issues](https://githu
 <!-- supporters:end -->
 
 <p align="center">
-  Wenn <strong>Ophel Atlas</strong> deine Arbeit oder dein Lernen effizienter macht, unterstütze uns gern mit einem <strong>Star</strong> oder <strong>Sponsor</strong>.
+  Si <strong>Ophel Atlas</strong> mejora tu trabajo o tu aprendizaje, puedes apoyarnos con una <strong>Star</strong> o como <strong>Sponsor</strong>.
 </p>
 
 <p align="center">
-  <strong>Auch das Weiterempfehlen ist wertvoll</strong>: Wir freuen uns, wenn du es auf <strong>Linux.do, X, Xiaohongshu, Bilibili</strong> und weiteren Plattformen teilst. Jedes Feedback und jede Weiterempfehlung helfen dabei, Ophel besser zu machen!
+  <strong>Compartir también suma</strong>: nos encantará que lo difundas en <strong>Linux.do, X, Xiaohongshu, Bilibili</strong> y más plataformas. Cada comentario y cada vez que lo compartes ayudan a que Ophel siga mejorando.
 </p>
 
 ⭐ Star History

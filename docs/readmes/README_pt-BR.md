@@ -1,34 +1,26 @@
 # Ophel Atlas 🚀
 
-> 讓 AI 對話如文檔般可閱讀、導航、複用
+> Transforme chats de IA em documentos legíveis, navegáveis e reutilizáveis
 
 <div align="center">
   <img src="../../assets/icon.png" width="120" height="120" alt="Ophel Logo"/>
 
-  <h3 style="margin-top: -2px;">✨ 把對話變成知識，而不是歷史 ✨</h3>
+  <h3 style="margin-top: -2px;">✨ Transforme Conversas em Conhecimento, Não Apenas Histórico ✨</h3>
   
   <p>
-    告別無限滾動帶來的資訊迷航
-    </br>
-    用實時大綱釐清脈絡，
-    </br>
-    用會話文件夾構築體系，
-    </br>
-    用 Prompt 詞庫沉澱經驗，
-    </br>
-    讓那些閃光的思考在秩序中自由流動
+    Chega de se perder na rolagem infinita. Clarifique o contexto com tópicos em tempo real, construa seu sistema com pastas de conversas, refine a experiência com a biblioteca de prompts e deixe pensamentos brilhantes fluírem livremente em ordem.
   </p>
   
-  <p align="center" style="font-size: 12px; color: #555;">👇 Demo: 從“無限滾動的聊天記錄”，到“可導航的 AI 文檔”</p>
+  <p align="center" style="font-size: 12px; color: #555;">👇 Demo: De "Histórico de chat infinito" para "Documentos IA navegáveis"</p>
 
-  ![Ophel Demo](../../assets/demo/outline.gif)
-  
+![Ophel Demo](../media/demo/outline.gif)
+
   <p>
-    <strong><em>它讓 AI 對話第一次成為可組織的工作流</em></strong><br/>
+    <strong><em>Tornando o chat de IA um fluxo de trabalho verdadeiramente organizável pela primeira vez</em></strong><br/>
   </p>
 
   <small style="opacity: 0.6;">
-  無論你使用哪個平台，都可以以同一種方式，獲得一致、可組織且可重用的體驗
+  Não importa qual plataforma você usa, o Ophel permite organizar conversas em fluxos de trabalho reutilizáveis com uma experiência consistente e unificada.
   </small>
   <p>
     <a href="https://chatgpt.com"><img src="https://img.shields.io/static/v1?label=&message=ChatGPT&color=74AA9C&style=flat&logo=data%3Aimage/png%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAD4UlEQVRYheXXaYjVVRgG8N%2BYOVlhiVhpWWSW0WZlYEjZRLTRAkaKpBJEESREChGt1pfMihZoIYIkCkXFaSEiworINYhS2yCTyG0qzYy2cbTbh%2BdM945zZ7P8Ui/8uff//s/ynOd93nPew//dGvrY/kCMwLDy3oJv0fZvgqpnDWjCQmzBH%2BXZUnxN/2TgnuwAzMAD6I8V%2BLL0PRXj8Duex24cg9/wKd7BV/sKrt2mlgFX4kI01nwbinmolKcVP5ffCr7BTAzc18mHYR2%2BwMk1/n64AK%2BXyTZhTgE4BhNwJ9bjT8zFgH0BME1ovbXGNxpPYacwMw9ndtH/NGFuF67ry8Sj8JBQ%2BBPGFv8kbJBVLcXlogvC1qwC9oiasc7DDizDYb2ZfILQXsEebMVJ5dsSSblZGFR8B4tOPlLVwipcq6qXRfhVBNutjcZnQu39eAvf40RR/auSekfXgH1NUrIFj%2BFJ/Ci0L8TZuLsAu6a7yfvh6dLwjvI%2BHz/UAXAJnpDwVITi6TVjjVdlqwUfl/9XdwdgJDYKfYOLb8FeAJpFlN9JeN4TLbSK4mdiSOl7ECZjtWqKXtkdgEvL4A%2BW94YuAFSwFjeKqAbhhuLbgw8wUTXthmI2fsFy2crr2qQy%2BKw6AE4ovlewTeK6t50lgq2IJubjnJrv7TqYU9upX83/HYWB4TW%2BCg6XmB%2BqSuX2OgC2S5zX4k3Jgjdwffn%2BnGhhsi5YGIGvS6OhxTdN4t0mq18jOjmuTv9jZUdsxiESolYRY/tCHyljXVyPgY1YLLvazcX3sghnsWw6Z8iRPERnGyJ53yBp/HZhpUH10NssG9fgOv3/ZmG5CGZ2DRMDRFjLRGjrdBbhGglRc5nweNFEs5yoROC7cVlXAOAKEVFFUmiSpFT7KmdKyu3Cu%2BVpT822LgA0lFWvkjCN7A7AVWXwT2QT2SUhOLemzVQRbUU2o8clrptls6oFsKQwcHtp/4yOoe9kE%2BWwuUvSbYGIaRselaN1qxQhzTi/9BteB8CWwtB9EtbPdTzW69o4OTheKu%2BNqvFvP2w%2BxBTVQmOQhKatrFgBsLEspiIV0oSeJid5v0JiOrbGP0SyYwaOLL7%2BIqilIs4NohlSmGyXI32uHPG9tukS%2B/dxShdtxuAFSbmdUqTU0nuLMDK9c9eerREPC33rcY%2BUYGOk7Joj9LZKWdako7BGS7zXqpbwfbaBuE0orFdwVvCijtVPYwG4UnQ0padJelOWj8JFOF2qn00S%2B5sKyNVSxFQkBONlX7gXz4o29os1ScWzWceLyiJhoVe3rr5ezfa29qvaUeW9RbSx369q/x37C/dbHMwqTvecAAAAAElFTkSuQmCC" alt="ChatGPT"/></a>
@@ -65,96 +57,96 @@
 <!-- Promo Link -->
 <p align="center">
   📣 <a href="https://github.com/urzeye/ophel/issues/30">
-    <strong>Help promote Ophel / 幫忙宣傳 Ophel</strong>
+    <strong>Help promote Ophel Atlas</strong>
   </a>
   <br/>
   <a href="https://www.producthunt.com/products/ophel?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-ophel" target="_blank" rel="noopener noreferrer"><img alt="Ophel - Enhance AI chat with outline, conversations, prompts & more. | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1068867&theme=light&t=1769514514380"></a>
 </p>
 
 <p align="center">
-  <a href="#-功能演示">功能演示</a> •
-  <a href="#-核心功能">核心功能</a> •
-  <a href="#-快速開始">快速開始</a> •
-  <a href="#-支持項目">支持項目</a>
+  <a href="#-demo">Demo</a> •
+  <a href="#-recursos-principais">Recursos Principais</a> •
+  <a href="#-início-rápido">Início Rápido</a> •
+  <a href="#-apoio">Apoio</a>
 </p>
 
 <p align="center">
-  🌐 <a href="../../README_EN.md">English</a> | <a href="../../README.md">简体中文</a> | <strong>繁體中文</strong> | <a href="./README_ja.md">日本語</a> | <a href="./README_ko.md">한국어</a> | <a href="./README_de.md">Deutsch</a> | <a href="./README_fr.md">Français</a> | <a href="./README_es.md">Español</a> | <a href="./README_pt.md">Português</a> | <a href="./README_ru.md">Русский</a>
+  🌐 <a href="../../README_en.md">English</a> | <a href="../../README.md">简体中文</a> | <a href="./README_zh-TW.md">繁體中文</a> | <a href="./README_ja.md">日本語</a> | <a href="./README_ko.md">한국어</a> | <a href="./README_de.md">Deutsch</a> | <a href="./README_fr.md">Français</a> | <a href="./README_es.md">Español</a> | <strong>Português</strong> | <a href="./README_ru.md">Русский</a>
 </p>
 
-## 📹 功能演示
+## 📹 Demo
 
-|                                                        大綱 Outline                                                        |                                                     會話 Conversations                                                     |                                                       功能 Features                                                        |
+|                                                          Outline                                                           |                                                       Conversations                                                        |                                                          Features                                                          |
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
-## 🎯 適用場景
+## 🎯 Casos de uso
 
-- 學習與研究：長對話推理、整理知識點、回顧結論、提煉筆記
-- 日常工作：需求拆解、方案撰寫、競品分析、會議紀要、諮詢與管理工作流
-- 開發與技術寫作：長程式碼討論、Bug 排查、架構推演、文件/部落格寫作
-- 內容創作：腳本/大綱/潤色反覆迭代，快速回到關鍵段落並匯出再加工
-- 高頻使用 AI 的使用者：需要「結構、秩序、復用能力」，而不只是臨時聊天
+- Aprendizado e pesquisa: raciocínio em conversas longas, organizar conhecimento, revisar conclusões, extrair notas
+- Trabalho diário: decomposição de requisitos, elaboração de propostas, análise competitiva, atas de reunião, fluxos de consultoria e gestão
+- Desenvolvimento e escrita técnica: discussões longas de código, investigação de bugs, exploração de arquitetura, docs/blog
+- Criação de conteúdo: iterar scripts/esboços/revisões, voltar rápido a trechos-chave e exportar para retrabalhar
+- Usuários intensivos de IA: precisam de estrutura, ordem e reutilização — não apenas chats pontuais
 
-## ✨ 核心功能
+## ✨ Recursos Principais
 
-- 🧠 **智能大綱** — 自動解析用戶問題與 AI 回覆，生成可導航的目錄結構
-- 💬 **會話管理** — 文件夾分類、標籤、搜索、批量操作
-- ⌨️ **提示詞庫** — 變量支持、Markdown 預覽、分類管理、一鍵填充
-- 🎨 **主題定製** — 20+ 深色/淺色主題，自定義 CSS
-- 🔧 **界面優化** — 寬屏模式、頁面與用戶問題寬度調整、側邊欄佈局控制
-- 📖 **閱讀體驗** — 滾動鎖定、閱讀歷史恢復、Markdown 渲染優化
-- ⚡ **效率工具** — 快捷鍵、模型鎖定、標籤頁自動命名、完成通知
-- 🎭 **Claude 增強** — Session Key 管理、多賬號切換
-- 🔒 **隱私優先** — 本地存儲、WebDAV 同步、無數據收集
+- 🧠 **Smart Outline** — Analisa automaticamente consultas e respostas de IA em estrutura navegável
+- 💬 **Conversation Manager** — Pastas, etiquetas, pesquisa, operações em lote
+- ⌨️ **Prompt Library** — Variáveis, pré-visualização Markdown, categorias, inserção com um clique
+- 🎨 **Personalização de Tema** — 20+ temas escuros/claros, CSS personalizado
+- 🔧 **Otimização de UI** — Modo widescreen, controle de largura, layout da barra lateral
+- 📖 **Experiência de Leitura** — Bloqueio de rolagem, restauração de histórico, renderização Markdown
+- ⚡ **Produtividade** — Atalhos, bloqueio de modelo, renomeação automática, notificações
+- 🎭 **Melhoria Claude** — Gestão de chave de sessão, troca multi-conta
+- 🔒 **Privacidade Primeiro** — Armazenamento local, sincronização WebDAV, sem coleta de dados
 
 <details>
-<summary>隱私與資料（展開說明）</summary>
+<summary>Privacidade e dados (expandir)</summary>
 
-**Ophel Atlas** 以隱私優先為原則：預設本地儲存，你的資料由你掌控。
+**Ophel Atlas** prioriza a privacidade: por padrão é tudo local e seus dados ficam sob seu controle.
 
-- **預設本地儲存：** 設定、Prompt、會話管理資料等預設保存在瀏覽器本地
-- **無需註冊帳號：** 不需要建立任何帳號即可使用
-- **按需授權：** 可選權限在需要時再授權，並可隨時撤銷（見擴充功能 Permissions 頁）
-- **可選 WebDAV 同步：** 如需多裝置一致，可使用你自己的 WebDAV 服務同步（可控、可遷移）
-- **可匯出備份：** 支援匯出與遷移，避免被平台綁定
+- **Armazenamento local por padrão:** configurações, prompts e dados de gestão de conversas ficam no navegador
+- **Sem conta:** não é necessário registro
+- **Permissões sob demanda:** permissões opcionais só quando necessário, revogáveis (ver página Permissions na extensão)
+- **Sincronização WebDAV opcional:** use seu próprio WebDAV para múltiplos dispositivos (controlável, portátil)
+- **Exportar e fazer backup:** exportação e migração para evitar lock-in
 
 </details>
 
-> 提示：擴充功能對特定 AI 站點的支援取決於站點匹配與頁面結構變化
+> Nota: o suporte a sites de IA específicos depende do matching do site e de mudanças na estrutura da página.
 
-## 🚀 快速開始
+## 🚀 Início Rápido
 
 > [!tip]
 >
-> **推薦使用瀏覽器擴展（Extension）版本**，功能更全、體驗更佳、兼容性更好，油猴腳本版本功能受限。
+> **Recomendamos fortemente usar a versão de Extensão do Navegador** para um conjunto de recursos mais completo, melhor experiência e maior compatibilidade. A versão Userscript tem limitações.
 
-### 應用商店
+### Web Store
 
 <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=Chrome%20Web%20Store&color=4285F4&labelColor=4285F4" alt="Chrome Web Store"></a>
 <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=Firefox%20Add-ons&color=FF7139&labelColor=FF7139" alt="Firefox Add-ons"></a>
 <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=Greasy%20Fork&color=black&labelColor=black" alt="Greasy Fork"></a>
 
-### 手動安裝
+### Instalação Manual
 
-#### 瀏覽器擴展
+#### Extensão do Navegador
 
-1. 從 [Releases](https://github.com/urzeye/ophel/releases/latest) 下載並解壓安裝包
-2. 打開瀏覽器擴展管理頁面，開啟 **開發者模式**
-3. 點擊 **加載已解壓的擴展程序**，選擇解壓的文件夾
+1. Baixe e descompacte de [Releases](https://github.com/urzeye/ophel/releases/latest)
+2. Abra a página de gerenciamento de extensões, ative o **Modo de desenvolvedor**
+3. Clique em **Carregar sem compactação** e selecione a pasta descompactada
 
-#### 油猴腳本
+#### Userscript
 
-1. 安裝 [Tampermonkey](https://www.tampermonkey.net/) 插件
-2. 從 [Releases](https://github.com/urzeye/ophel/releases) 下載 `.user.js` 文件
-3. 拖入瀏覽器或點擊鏈接即可安裝
+1. Instale [Tampermonkey](https://www.tampermonkey.net/)
+2. Baixe o arquivo `.user.js` de [Releases](https://github.com/urzeye/ophel/releases)
+3. Arraste para o navegador ou clique no link para instalar
 
-### 本地構建
+### Build Local
 
 <details>
-<summary>展開查看構建步驟</summary>
+<summary>Clique para expandir os passos de build</summary>
 
-**環境要求**：Node.js >= 20.x, pnpm >= 9.x
+**Requisitos**: Node.js >= 20.x, pnpm >= 9.x
 
 ```bash
 git clone https://github.com/urzeye/ophel.git
@@ -178,25 +170,25 @@ pnpm package:all
 
 </details>
 
-### 🐛 問題反饋
+### 🐛 Relatar Bug
 
-如有問題或建議，歡迎在 [GitHub Issues](https://github.com/urzeye/ophel/issues) 反饋。
+Para problemas ou sugestões, visite [GitHub Issues](https://github.com/urzeye/ophel/issues).
 
-## 🙌 支持與致謝
+## 🙌 Apoio e agradecimentos
 
 <p align="center">
-  <em>"一個人可以走得很快，但一群人可以走得更遠。"</em>
+  <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
 </p>
 
 <p align="center">
-  感謝 <a href="https://linux.do/">Linux.do</a> 社群的交流與支持，專案的許多想法與改進都來自社群成員的回饋。
+  Agradecemos à comunidade <a href="https://linux.do/">Linux.do</a> pelas conversas e pelo apoio. Muitas ideias e melhorias do projeto vieram do feedback dos membros da comunidade.
 </p>
 
 <!-- supporters:start -->
 
 <!-- This block is auto-generated by `pnpm supporters:sync`. Do not edit manually. -->
 
-### 💖 天使支持特別鳴謝
+### 💖 Agradecimento especial
 
 <p align="center">
   <a href="https://github.com/treasuresure"><img src="https://github.com/treasuresure.png?size=160" width="96" height="96" alt="treasuresure" /></a>
@@ -204,7 +196,7 @@ pnpm package:all
   <a href="https://github.com/treasuresure"><strong>treasuresure</strong></a>
 </p>
 
-### 🤝 支持者
+### 🤝 Apoiadores
 
 <table align="center">
   <tr>
@@ -221,7 +213,7 @@ pnpm package:all
   </tr>
 </table>
 
-### 🌟 貢獻者
+### 🌟 Contribuidores
 
 <table align="center">
   <tr>
@@ -273,11 +265,11 @@ pnpm package:all
 <!-- supporters:end -->
 
 <p align="center">
-  如果 <strong>Ophel Atlas</strong> 提升了你的工作或學習效率，歡迎透過 <strong>Star</strong> 或 <strong>Sponsor</strong> 來支持我們。
+  Se <strong>Ophel Atlas</strong> aumentou a sua eficiência no trabalho ou nos estudos, apoie-nos com uma <strong>Star</strong> ou como <strong>Sponsor</strong>.
 </p>
 
 <p align="center">
-  <strong>傳播也是一種力量</strong>：也期待你將它分享到 <strong>Linux.do、X、小紅書、Bilibili</strong> 及更多平台。你的每一份回饋與分享，都在讓 Ophel 變得更好！
+  <strong>Divulgar também é uma forma de apoiar</strong>: ficaremos felizes se você compartilhar no <strong>Linux.do, X, Xiaohongshu, Bilibili</strong> e em outras plataformas. Cada feedback e cada compartilhamento ajudam a tornar o Ophel ainda melhor!
 </p>
 
 ⭐ Star History
