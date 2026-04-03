@@ -25,7 +25,6 @@ yarn-error.log*
 out/
 build/
 dist/
-demo/
 
 # plasmo
 .plasmo
@@ -42,3 +41,4 @@ docs/site/.vitepress/dist
 .spec-workflow/.idea/
 .playwright-mcp
 assets/assistant-mermaid-vendor.js
+comparison_result.txt
