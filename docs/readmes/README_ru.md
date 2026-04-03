@@ -71,7 +71,7 @@
 </p>
 
 <p align="center">
-  🌐 <a href="../../README_en.md">English</a> | <a href="../../README.md">简体中文</a> | <a href="./README_zh-TW.md">繁體中文</a> | <a href="./README_ja.md">日本語</a> | <a href="./README_ko.md">한국어</a> | <a href="./README_de.md">Deutsch</a> | <a href="./README_fr.md">Français</a> | <a href="./README_es.md">Español</a> | <a href="./README_pt-BR.md">Português</a> | <strong>Русский</strong>
+  🌐 <a href="../../README.md">English</a> | <a href="../../README_zh-CN.md">简体中文</a> | <a href="./README_zh-TW.md">繁體中文</a> | <a href="./README_ja.md">日本語</a> | <a href="./README_ko.md">한국어</a> | <a href="./README_de.md">Deutsch</a> | <a href="./README_fr.md">Français</a> | <a href="./README_es.md">Español</a> | <a href="./README_pt-BR.md">Português</a> | <strong>Русский</strong>
 </p>
 
 ## 📹 Демо

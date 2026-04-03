@@ -10,15 +10,15 @@ const markerEnd = "<!-- supporters:end -->"
 const readmeConfigs = [
   {
     file: "README.md",
-    featuredTitle: "### 💖 天使投资特别鸣谢",
-    supportersTitle: "### 🤝 支持者",
-    contributorsTitle: "### 🌟 贡献者",
-  },
-  {
-    file: "README_en.md",
     featuredTitle: "### 💖 Angel Support",
     supportersTitle: "### 🤝 Supporters",
     contributorsTitle: "### 🌟 Contributors",
+  },
+  {
+    file: "README_zh-CN.md",
+    featuredTitle: "### 💖 天使投资特别鸣谢",
+    supportersTitle: "### 🤝 支持者",
+    contributorsTitle: "### 🌟 贡献者",
   },
   {
     file: "docs/readmes/README_de.md",

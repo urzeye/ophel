@@ -79,7 +79,7 @@
 </p>
 
 <p align="center">
-  🌐 <a href="../../README_en.md">English</a> | <a href="../../README.md">简体中文</a> | <a href="./README_zh-TW.md">繁體中文</a> | <a href="./README_ja.md">日本語</a> | <strong>한국어</strong> | <a href="./README_de.md">Deutsch</a> | <a href="./README_fr.md">Français</a> | <a href="./README_es.md">Español</a> | <a href="./README_pt-BR.md">Português</a> | <a href="./README_ru.md">Русский</a>
+  🌐 <a href="../../README.md">English</a> | <a href="../../README_zh-CN.md">简体中文</a> | <a href="./README_zh-TW.md">繁體中文</a> | <a href="./README_ja.md">日本語</a> | <strong>한국어</strong> | <a href="./README_de.md">Deutsch</a> | <a href="./README_fr.md">Français</a> | <a href="./README_es.md">Español</a> | <a href="./README_pt-BR.md">Português</a> | <a href="./README_ru.md">Русский</a>
 </p>
 
 ## 📹 기능 데모
