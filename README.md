@@ -92,31 +92,80 @@
 
 ## ✨ Core Features
 
-- 🧠 **Smart Outline** — Auto-parse user queries & AI responses into rich structured outlines
-- 💬 **Conversation Manager** — Folders, tags, search, batch operations
-- ⌨️ **Prompt Library** — Variables, Markdown preview, categories, one-click insert
-- 🎨 **Theme Customization** — 20+ dark/light themes, custom CSS
-- 🔧 **UI Optimization** — Widescreen mode, page & bubble width control, sidebar layout
-- 📖 **Reading Experience** — Scroll lock, reading history restore, Markdown fixes
-- ⚡ **Productivity Tools** — Shortcuts, model lock, tab auto-rename, notifications
-- 📊 **Usage Estimates** — Optional local usage counter, token estimates, and history chart
-- 🎭 **Claude Enhancement** — Session Key management, multi-account switching
-- 🔒 **Privacy First** — Local storage, WebDAV sync, no data collection
+### 🎯 Smart Navigation
 
-<details>
-<summary>Privacy & Data (expand)</summary>
+- **Real-time Outline** — Auto-parse conversation structure, generate navigable table of contents with support for hierarchical collapse/expand/search, one-click jump
+- **Anchor System** — One-click navigation to top, bottom, or last jump position
+- **Bookmark System** — Save important information nodes to avoid information overload, click to go directly
+- **Word Count** — Real-time word count for current heading, nested subheadings are automatically summed, supporting separate counts for user questions and AI response headings
 
-**Ophel Atlas** puts privacy first: local by default, your data stays in your control.
+### 💬 Conversation Management
 
-- **Local by default:** settings, prompts, and conversation management data are stored in your browser
-- **No account required:** use it without signing up
-- **Permissions on demand:** optional permissions are requested only when needed and can be revoked anytime (see the Permissions page in the extension)
-- **Optional WebDAV sync:** use your own WebDAV for multi-device consistency (controllable, portable)
-- **Export & backup:** export and migrate to avoid lock-in
+- **Folder Organization** — Dual-dimension management with folders and tags, automatically sync conversations from source websites, support search, location, and batch operations
+- **Conversation Export** — Support exporting to Markdown, JSON, TXT formats (including thinking chain), persistent storage for peace of mind
+- **Voyager Import** — Support importing folder and conversation hierarchy from Voyager
 
-</details>
+### 🪄 Prompt Library
 
-> Note: Support for specific AI sites depends on site matching and page structure changes.
+- **Prompt Management** — Support variable substitution (default values/options/manual input), Markdown preview, categorization, pinning, sorting
+- **Quick Insert** — One-click filling into input box, double-click send, multi-scenario adaptation
+- **Prompt Queue** — Queue prompts for AI generation (continuously improving)
+
+### 🔍 Global Search
+
+- **Multi-type Search** — Search across conversations, outlines, prompts, and settings, covering all content
+- **Syntax Search** — Support advanced search syntax and fuzzy search, use `folder:`, `tag:`, `is:`, `type:`, `level:`, `date:` filters for precise searching
+- **Quick Search Tips** — Provide search syntax examples and common keywords for quick start
+- **Real-time Preview & Jump** — Support search result preview, quick location of target content, one-click jump to corresponding position
+
+### 📖 Reading Experience Optimization
+
+- **Mermaid Diagram Rendering** — Provide Mermaid diagram rendering for sites without native support, supporting code/diagram switching, zoom, full screen, and PNG download
+- **Mathematical Formula Support** — Support LaTeX mathematical formula recognition and rendering, double-click to copy quickly
+- **User Question Styling** — Enable Markdown formatting and LaTeX formula rendering for user questions
+- **Scroll Lock** — Prevent page scroll to bottom when sending messages while reading, focus on current content
+
+### ⌨️ Productivity Tools
+
+- **Reading History** — Automatically record reading progress, quickly return to last reading position when switching conversations or refreshing pages
+- **Shortcut System** — Rich shortcut support with custom configuration for improved efficiency
+- **Model Lock** — Automatically lock preferred model to avoid frequent switching
+- **Enhanced Tab Management** — Auto-rename tabs with format [generation status - conversation title - used model], double-click panel title to quickly enable privacy mode, hide tab title to protect conversation privacy
+- **Completion Notifications** — Send desktop notifications and sound alerts when AI generation completes, automatically bring to foreground for multi-task efficiency
+
+### 🎨 UI Optimization
+
+- **Theme Customization** — 20+ dark/light themes, support custom CSS, `option + d` one-click theme mode switch
+- **Widescreen Mode** — Support page width adjustment for improved reading experience
+- **Zen Mode** — Control page element display and hiding to avoid unnecessary information distraction
+
+### 📊 Data Statistics
+
+- **Usage Estimates** — Optional local conversation counter, token estimates, and history chart
+- **Usage Statistics** — Provide conversation counts, token estimates, and history charts (support viewing by site and time)
+
+### 🎭 Claude Enhancement
+
+- **Session Key Management** — Support Claude Session Key management
+- **Multi-account Switching** — Support quick switching between multiple Claude accounts
+
+### 🔒 Privacy, Security & Data Management
+
+- **Local Storage** — Settings, prompts, and conversation management data are stored in your browser by default, support file import/export, flexible control
+- **WebDAV Sync** — Support WebDAV sync for multi-device data consistency
+- **No Data Collection** — Privacy-first design, no user data collection
+
+> [!IMPORTANT]
+>
+> **Ophel Atlas** puts privacy first: local by default, your data stays in your control.
+>
+> - **Local by default:** settings, prompts, and conversation management data are stored in your browser
+> - **No account required:** use it without signing up
+> - **Permissions on demand:** optional permissions are requested only when needed and can be revoked anytime (see the Permissions page in the extension)
+> - **Optional WebDAV sync:** use your own WebDAV for multi-device consistency (controllable, portable)
+> - **Export & backup:** export and migrate to avoid lock-in
+>
+> _Support for specific AI sites depends on site matching and page structure changes_
 
 ## 🚀 Quick Start
 
@@ -272,7 +321,7 @@ For issues or suggestions, please visit [GitHub Issues](https://github.com/urzey
 </p>
 
 <p align="center">
-  <strong>Sharing is support too</strong>: we'd also love for you to share it on <strong>Linux.do, X, Xiaohongshu, Bilibili</strong>, and more. Every bit of feedback and every share helps make Ophel better!
+  <strong>Sharing is support too</strong>: we'd also love for you to share it on <strong>Linux.do, Reddit, X, Youtube</strong>, and more. Every bit of feedback and every share helps make Ophel better!
 </p>
 
 <table align="center">

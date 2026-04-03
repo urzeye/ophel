@@ -174,7 +174,7 @@
 > - **可选 WebDAV 同步：** 如果你需要多设备一致，可选择使用你自己的 WebDAV 服务进行同步（可控、可迁移）
 > - **可导出备份：** 支持导出与迁移，避免被平台绑定
 >
-> 提示：扩展对具体 AI 站点的支持取决于站点匹配与页面结构变化
+> _扩展对具体 AI 站点的支持取决于站点匹配与页面结构变化_
 
 ## 🚀 快速开始
 
@@ -324,7 +324,7 @@ pnpm package:all
 </p>
 
 <p align="center">
-  <strong>传播也是一种力量</strong>：也期待你将它分享至 <strong>Linux.do、X、小红书、Bilibili</strong> 及更多平台。你的每一份反馈与传播，都在让 Ophel 变得更好！
+  <strong>传播也是一种力量</strong>：期待你将它分享至 <strong>Linux.do、X、小红书、Bilibili</strong> 及更多平台。你的每一份反馈与传播，都在让 Ophel 变得更好！
 </p>
 
 <table align="center">
