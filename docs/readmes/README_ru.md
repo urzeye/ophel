@@ -146,7 +146,7 @@
 <details>
 <summary>Нажмите, чтобы развернуть шаги сборки</summary>
 
-**Требования**: Node.js >= 20.x, pnpm >= 9.x
+**Требования**: Node.js >= 18.x, pnpm >= 9.x
 
 ```bash
 git clone https://github.com/urzeye/ophel.git

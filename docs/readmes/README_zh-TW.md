@@ -154,7 +154,7 @@
 <details>
 <summary>展開查看構建步驟</summary>
 
-**環境要求**：Node.js >= 20.x, pnpm >= 9.x
+**環境要求**：Node.js >= 18.x, pnpm >= 9.x
 
 ```bash
 git clone https://github.com/urzeye/ophel.git

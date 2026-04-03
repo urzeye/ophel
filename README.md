@@ -149,7 +149,7 @@
 <details>
 <summary>Click to expand build steps</summary>
 
-**Requirements**: Node.js >= 20.x, pnpm >= 9.x
+**Requirements**: Node.js >= 18.x, pnpm >= 9.x
 
 ```bash
 git clone https://github.com/urzeye/ophel.git
