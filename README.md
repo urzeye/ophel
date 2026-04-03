@@ -172,6 +172,7 @@ pnpm package:all
 ```
 
 </details>
+
 ### 🐛 Bug Report
 
 For issues or suggestions, please visit [GitHub Issues](https://github.com/urzeye/ophel/issues).

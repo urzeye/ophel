@@ -42,3 +42,24 @@ docs/site/.vitepress/dist
 .playwright-mcp
 assets/assistant-mermaid-vendor.js
 comparison_result.txt
+
+# Claude AI related
+.claude/settings.local.json
+.claude/plan/*.md
+
+# Spec workflow temporary files
+.spec-workflow/approvals/
+.spec-workflow/archive/
+.spec-workflow/specs/
+.spec-workflow/steering/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+Thumbs.db
+.DS_Store
