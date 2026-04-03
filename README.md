@@ -211,31 +211,67 @@ pnpm package:all
 
 ### 🤝 支持者
 
-<p align="center">
-  <img src="https://lh3.googleusercontent.com/a-/ALV-UjVwv0jFS2TRGiNOMB4xl4BXF5j1D5jRIlR6t-4xgaUSpNIsYWc=s96-w96-h96" width="72" height="72" alt="Hugh" />
-  <a href="https://github.com/hugo1120"><img src="https://github.com/hugo1120.png?size=160" width="72" height="72" alt="hugo2233" /></a>
-</p>
-
-<p align="center">
-  <sub>Hugh</sub> · <sub><a href="https://github.com/hugo1120">hugo2233</a></sub>
-</p>
+<table align="center">
+  <tr>
+    <td align="center" width="110">
+      <img src="https://lh3.googleusercontent.com/a-/ALV-UjVwv0jFS2TRGiNOMB4xl4BXF5j1D5jRIlR6t-4xgaUSpNIsYWc=s96-w96-h96" width="72" height="72" alt="Hugh" />
+      <br />
+      <sub>Hugh</sub>
+    </td>
+    <td align="center" width="110">
+      <a href="https://github.com/hugo1120"><img src="https://github.com/hugo1120.png?size=160" width="72" height="72" alt="hugo2233" /></a>
+      <br />
+      <sub><a href="https://github.com/hugo1120">hugo2233</a></sub>
+    </td>
+  </tr>
+</table>
 
 ### 🌟 贡献者
 
-<p align="center">
-  <a href="https://github.com/urzeye"><img src="https://avatars.githubusercontent.com/u/20869204?s=64&amp;v=4" width="64" height="64" alt="urzeye" /></a>
-  <a href="https://github.com/treasuresure"><img src="https://avatars.githubusercontent.com/u/50103468?s=64&amp;v=4" width="64" height="64" alt="treasuresure" /></a>
-  <a href="https://github.com/joevalleyfield"><img src="https://avatars.githubusercontent.com/u/14796422?s=64&amp;v=4" width="64" height="64" alt="joevalleyfield" /></a>
-  <a href="https://github.com/tjsky"><img src="https://avatars.githubusercontent.com/u/7272911?s=64&amp;v=4" width="64" height="64" alt="tjsky" /></a>
-  <a href="https://github.com/lanvent"><img src="https://avatars.githubusercontent.com/u/26515464?s=64&amp;v=4" width="64" height="64" alt="lanvent" /></a>
-  <a href="https://github.com/KanameMadoka520"><img src="https://avatars.githubusercontent.com/u/90090108?s=64&amp;v=4" width="64" height="64" alt="KanameMadoka520" /></a>
-  <a href="https://github.com/Felix3322"><img src="https://avatars.githubusercontent.com/u/115849429?s=64&amp;v=4" width="64" height="64" alt="Felix3322" /></a>
-  <a href="https://github.com/RyanLin-InfEvo"><img src="https://avatars.githubusercontent.com/u/121378653?s=64&amp;v=4" width="64" height="64" alt="RyanLin-InfEvo" /></a>
-</p>
-
-<p align="center">
-  <sub><a href="https://github.com/urzeye">urzeye</a></sub> · <sub><a href="https://github.com/treasuresure">treasuresure</a></sub> · <sub><a href="https://github.com/joevalleyfield">joevalleyfield</a></sub> · <sub><a href="https://github.com/tjsky">tjsky</a></sub> · <sub><a href="https://github.com/lanvent">lanvent</a></sub> · <sub><a href="https://github.com/KanameMadoka520">KanameMadoka520</a></sub> · <sub><a href="https://github.com/Felix3322">Felix3322</a></sub> · <sub><a href="https://github.com/RyanLin-InfEvo">RyanLin-InfEvo</a></sub>
-</p>
+<table align="center">
+  <tr>
+    <td align="center" width="90">
+      <a href="https://github.com/urzeye"><img src="https://avatars.githubusercontent.com/u/20869204?s=64&amp;v=4" width="56" height="56" alt="urzeye" /></a>
+      <br />
+      <sub><a href="https://github.com/urzeye">urzeye</a></sub>
+    </td>
+    <td align="center" width="90">
+      <a href="https://github.com/treasuresure"><img src="https://avatars.githubusercontent.com/u/50103468?s=64&amp;v=4" width="56" height="56" alt="treasuresure" /></a>
+      <br />
+      <sub><a href="https://github.com/treasuresure">treasuresure</a></sub>
+    </td>
+    <td align="center" width="90">
+      <a href="https://github.com/joevalleyfield"><img src="https://avatars.githubusercontent.com/u/14796422?s=64&amp;v=4" width="56" height="56" alt="joevalleyfield" /></a>
+      <br />
+      <sub><a href="https://github.com/joevalleyfield">joevalleyfield</a></sub>
+    </td>
+    <td align="center" width="90">
+      <a href="https://github.com/tjsky"><img src="https://avatars.githubusercontent.com/u/7272911?s=64&amp;v=4" width="56" height="56" alt="tjsky" /></a>
+      <br />
+      <sub><a href="https://github.com/tjsky">tjsky</a></sub>
+    </td>
+    <td align="center" width="90">
+      <a href="https://github.com/lanvent"><img src="https://avatars.githubusercontent.com/u/26515464?s=64&amp;v=4" width="56" height="56" alt="lanvent" /></a>
+      <br />
+      <sub><a href="https://github.com/lanvent">lanvent</a></sub>
+    </td>
+    <td align="center" width="90">
+      <a href="https://github.com/KanameMadoka520"><img src="https://avatars.githubusercontent.com/u/90090108?s=64&amp;v=4" width="56" height="56" alt="KanameMadoka520" /></a>
+      <br />
+      <sub><a href="https://github.com/KanameMadoka520">KanameMadoka520</a></sub>
+    </td>
+    <td align="center" width="90">
+      <a href="https://github.com/Felix3322"><img src="https://avatars.githubusercontent.com/u/115849429?s=64&amp;v=4" width="56" height="56" alt="Felix3322" /></a>
+      <br />
+      <sub><a href="https://github.com/Felix3322">Felix3322</a></sub>
+    </td>
+    <td align="center" width="90">
+      <a href="https://github.com/RyanLin-InfEvo"><img src="https://avatars.githubusercontent.com/u/121378653?s=64&amp;v=4" width="56" height="56" alt="RyanLin-InfEvo" /></a>
+      <br />
+      <sub><a href="https://github.com/RyanLin-InfEvo">RyanLin-InfEvo</a></sub>
+    </td>
+  </tr>
+</table>
 
 ---
 

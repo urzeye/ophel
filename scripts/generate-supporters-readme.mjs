@@ -104,11 +104,11 @@ function resolveAvatarPath(readmePath, avatar) {
   return ensureRelativePath(relativeAvatarPath.replaceAll(path.sep, "/"))
 }
 
-function renderImageCell({ name, url, avatar, readmePath, size = 84 }) {
+function renderImageCell({ name, url, avatar, readmePath, size = 84, link = true }) {
   const avatarPath = resolveAvatarPath(readmePath, avatar)
   const image = `<img src="${escapeHtml(avatarPath)}" width="${size}" height="${size}" alt="${escapeHtml(name)}" />`
 
-  if (!url) {
+  if (!url || !link) {
     return image
   }
 
@@ -130,22 +130,14 @@ function renderCompactName(person) {
   return `<sub>${renderName(person, { strong: false })}</sub>`
 }
 
-function renderPeopleRow(people, readmePath, options = {}) {
-  const { avatarSize = 72 } = options
+function renderPersonCell(person, readmePath, options = {}) {
+  const { width = 96, avatarSize = 56 } = options
 
-  const avatars = people
-    .map((person) => renderImageCell({ ...person, readmePath, size: avatarSize }))
-    .join("\n  ")
-
-  const names = people.map((person) => renderCompactName(person)).join(" · ")
-
-  return `<p align="center">
-  ${avatars}
-</p>
-
-<p align="center">
-  ${names}
-</p>`
+  return `    <td align="center" width="${width}">
+      ${renderImageCell({ ...person, readmePath, size: avatarSize })}
+      <br />
+      ${renderCompactName(person)}
+    </td>`
 }
 
 function renderFeaturedSection(featuredSupporters, config, readmePath) {
@@ -183,13 +175,19 @@ function renderSupportersGrid(supporters, config, readmePath) {
     return ""
   }
 
-  const rows = chunk(supporters, 8)
-    .map((row) => renderPeopleRow(row, readmePath, { avatarSize: 72 }))
+  const rows = chunk(supporters, 10)
+    .map(
+      (row) => `  <tr>
+${row.map((supporter) => renderPersonCell(supporter, readmePath, { width: 110, avatarSize: 72 })).join("\n")}
+  </tr>`,
+    )
     .join("\n\n")
 
   return `${config.supportersTitle}
 
-${rows}`
+<table align="center">
+${rows}
+</table>`
 }
 
 function renderContributorsGrid(contributors, config, readmePath) {
@@ -197,13 +195,19 @@ function renderContributorsGrid(contributors, config, readmePath) {
     return ""
   }
 
-  const rows = chunk(contributors, 8)
-    .map((row) => renderPeopleRow(row, readmePath, { avatarSize: 64 }))
+  const rows = chunk(contributors, 10)
+    .map(
+      (row) => `  <tr>
+${row.map((contributor) => renderPersonCell(contributor, readmePath, { width: 90, avatarSize: 56 })).join("\n")}
+  </tr>`,
+    )
     .join("\n\n")
 
   return `${config.contributorsTitle}
 
-${rows}`
+<table align="center">
+${rows}
+</table>`
 }
 
 function renderSupportersSection(supporters, contributors, config, readmePath) {
