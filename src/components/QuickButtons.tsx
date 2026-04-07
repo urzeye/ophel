@@ -1,4 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react"
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react"
 
 import { getAdapter } from "~adapters/index"
 import { ThemeDarkIcon, ThemeLightIcon } from "~components/icons"
@@ -45,6 +52,10 @@ type ViewportSize = {
 }
 
 type GroupPosition = QuickButtonsPosition
+type GroupMetrics = {
+  width: number
+  height: number
+}
 
 const readViewportSize = (): ViewportSize => ({
   width: window.visualViewport?.width ?? window.innerWidth,
@@ -103,6 +114,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const groupRef = useRef<HTMLDivElement>(null)
   const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false)
   const [viewportSize, setViewportSize] = useState<ViewportSize>(readViewportSize)
+  const [groupMetrics, setGroupMetrics] = useState<GroupMetrics>({ width: 0, height: 0 })
 
   // 点击外部关闭菜单
   useEffect(() => {
@@ -121,6 +133,9 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const [isDragging, setIsDragging] = useState(false)
   const [isPressing, setIsPressing] = useState(false)
   const groupPositionRef = useRef<GroupPosition | null>(persistedGroupPosition)
+  const groupMetricsRef = useRef<GroupMetrics>({ width: 0, height: 0 })
+  const [defaultTopPx, setDefaultTopPx] = useState<number | null>(null)
+  const defaultTopPxRef = useRef<number | null>(null)
 
   const dragTimerRef = useRef<number | null>(null)
   const dragStartRef = useRef<{ x: number; y: number } | null>(null)
@@ -150,6 +165,143 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     groupPositionRef.current = persistedGroupPosition
     setGroupPosition(persistedGroupPosition)
   }, [persistedGroupPosition])
+
+  useEffect(() => {
+    if (persistedGroupPosition) {
+      defaultTopPxRef.current = null
+      setDefaultTopPx(null)
+    }
+  }, [persistedGroupPosition])
+
+  const getGroupBounds = useCallback(
+    (viewport: ViewportSize, metrics: GroupMetrics = groupMetricsRef.current) => {
+      const width = metrics.width
+      const height = metrics.height
+      const maxX = Math.max(DRAG_PADDING_PX, viewport.width - width - DRAG_PADDING_PX)
+      const maxY = Math.max(DRAG_PADDING_PX, viewport.height - height - DRAG_PADDING_PX)
+
+      return { width, height, maxX, maxY }
+    },
+    [DRAG_PADDING_PX],
+  )
+
+  const clampPixelGroupPosition = useCallback(
+    (
+      x: number,
+      y: number,
+      viewport: ViewportSize,
+      metrics: GroupMetrics = groupMetricsRef.current,
+    ) => {
+      const { width, height, maxX, maxY } = getGroupBounds(viewport, metrics)
+
+      return {
+        x: Math.min(Math.max(x, DRAG_PADDING_PX), maxX),
+        y: Math.min(Math.max(y, DRAG_PADDING_PX), maxY),
+        width,
+        height,
+        maxX,
+        maxY,
+      }
+    },
+    [DRAG_PADDING_PX, getGroupBounds],
+  )
+
+  const toLogicalGroupPosition = useCallback(
+    (
+      x: number,
+      y: number,
+      viewport: ViewportSize,
+      metrics: GroupMetrics = groupMetricsRef.current,
+    ): GroupPosition => {
+      const clamped = clampPixelGroupPosition(x, y, viewport, metrics)
+      const usableWidth = Math.max(1, clamped.maxX - DRAG_PADDING_PX)
+      const usableHeight = Math.max(1, clamped.maxY - DRAG_PADDING_PX)
+      const xRatio = Math.min(1, Math.max(0, (clamped.x - DRAG_PADDING_PX) / usableWidth))
+      const yRatio = Math.min(1, Math.max(0, (clamped.y - DRAG_PADDING_PX) / usableHeight))
+
+      return { xRatio, yRatio }
+    },
+    [DRAG_PADDING_PX, clampPixelGroupPosition],
+  )
+
+  const resolveLogicalGroupPosition = useCallback(
+    (
+      position: GroupPosition | null,
+      viewport: ViewportSize,
+      metrics: GroupMetrics = groupMetricsRef.current,
+    ) => {
+      if (!position) return null
+
+      const { maxX, maxY } = getGroupBounds(viewport, metrics)
+      const usableWidth = Math.max(1, maxX - DRAG_PADDING_PX)
+      const usableHeight = Math.max(1, maxY - DRAG_PADDING_PX)
+      const rawX = DRAG_PADDING_PX + position.xRatio * usableWidth
+      const rawY = DRAG_PADDING_PX + position.yRatio * usableHeight
+
+      return {
+        x: Math.min(Math.max(rawX, DRAG_PADDING_PX), maxX),
+        y: Math.min(Math.max(rawY, DRAG_PADDING_PX), maxY),
+      }
+    },
+    [DRAG_PADDING_PX, getGroupBounds],
+  )
+
+  useLayoutEffect(() => {
+    const element = groupRef.current
+    if (!element) return
+
+    const syncGroupMetrics = () => {
+      const rect = element.getBoundingClientRect()
+      const nextMetrics = { width: rect.width, height: rect.height }
+      const prevMetrics = groupMetricsRef.current
+      const metricsChanged =
+        prevMetrics.width !== nextMetrics.width || prevMetrics.height !== nextMetrics.height
+
+      if (!metricsChanged) return
+
+      groupMetricsRef.current = nextMetrics
+      setGroupMetrics(nextMetrics)
+
+      const viewport = readViewportSize()
+
+      if (!groupPositionRef.current) {
+        const fallbackTop = defaultTopPxRef.current ?? rect.top
+        const nextDefaultTop = clampPixelGroupPosition(0, fallbackTop, viewport, nextMetrics).y
+
+        if (defaultTopPxRef.current !== nextDefaultTop) {
+          defaultTopPxRef.current = nextDefaultTop
+          setDefaultTopPx(nextDefaultTop)
+        }
+
+        return
+      }
+
+      if (draggingRef.current) return
+
+      const nextPosition = toLogicalGroupPosition(rect.left, rect.top, viewport, nextMetrics)
+      const prevPosition = groupPositionRef.current
+
+      if (
+        prevPosition.xRatio !== nextPosition.xRatio ||
+        prevPosition.yRatio !== nextPosition.yRatio
+      ) {
+        groupPositionRef.current = nextPosition
+        setGroupPosition(nextPosition)
+      }
+    }
+
+    syncGroupMetrics()
+
+    const resizeObserver = new ResizeObserver(() => {
+      syncGroupMetrics()
+    })
+
+    resizeObserver.observe(element)
+
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [clampPixelGroupPosition, toLogicalGroupPosition])
 
   // 滚动到顶部（支持图文并茂模式）
   const scrollToTop = useCallback(async () => {
@@ -256,68 +408,12 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return isDark ? <ThemeLightIcon size={20} /> : <ThemeDarkIcon size={20} />
   }
 
-  const getGroupBounds = useCallback(
-    (viewport: ViewportSize) => {
-      const rect = groupRef.current?.getBoundingClientRect()
-      const width = rect?.width ?? 0
-      const height = rect?.height ?? 0
-      const maxX = Math.max(DRAG_PADDING_PX, viewport.width - width - DRAG_PADDING_PX)
-      const maxY = Math.max(DRAG_PADDING_PX, viewport.height - height - DRAG_PADDING_PX)
-
-      return { width, height, maxX, maxY }
-    },
-    [DRAG_PADDING_PX],
+  const resolvedGroupPosition = resolveLogicalGroupPosition(
+    groupPosition,
+    viewportSize,
+    groupMetrics,
   )
-
-  const clampPixelGroupPosition = useCallback(
-    (x: number, y: number, viewport: ViewportSize) => {
-      const { width, height, maxX, maxY } = getGroupBounds(viewport)
-
-      return {
-        x: Math.min(Math.max(x, DRAG_PADDING_PX), maxX),
-        y: Math.min(Math.max(y, DRAG_PADDING_PX), maxY),
-        width,
-        height,
-        maxX,
-        maxY,
-      }
-    },
-    [DRAG_PADDING_PX, getGroupBounds],
-  )
-
-  const toLogicalGroupPosition = useCallback(
-    (x: number, y: number, viewport: ViewportSize): GroupPosition => {
-      const clamped = clampPixelGroupPosition(x, y, viewport)
-      const usableWidth = Math.max(1, clamped.maxX - DRAG_PADDING_PX)
-      const usableHeight = Math.max(1, clamped.maxY - DRAG_PADDING_PX)
-      const xRatio = Math.min(1, Math.max(0, (clamped.x - DRAG_PADDING_PX) / usableWidth))
-      const yRatio = Math.min(1, Math.max(0, (clamped.y - DRAG_PADDING_PX) / usableHeight))
-
-      return { xRatio, yRatio }
-    },
-    [DRAG_PADDING_PX, clampPixelGroupPosition],
-  )
-
-  const resolveLogicalGroupPosition = useCallback(
-    (position: GroupPosition | null, viewport: ViewportSize) => {
-      if (!position) return null
-
-      const { maxX, maxY } = getGroupBounds(viewport)
-      const usableWidth = Math.max(1, maxX - DRAG_PADDING_PX)
-      const usableHeight = Math.max(1, maxY - DRAG_PADDING_PX)
-      const rawX = DRAG_PADDING_PX + position.xRatio * usableWidth
-      const rawY = DRAG_PADDING_PX + position.yRatio * usableHeight
-
-      return {
-        x: Math.min(Math.max(rawX, DRAG_PADDING_PX), maxX),
-        y: Math.min(Math.max(rawY, DRAG_PADDING_PX), maxY),
-      }
-    },
-    [DRAG_PADDING_PX, getGroupBounds],
-  )
-
-  const resolvedGroupPosition = resolveLogicalGroupPosition(groupPosition, viewportSize)
-  const groupBounds = getGroupBounds(viewportSize)
+  const groupBounds = getGroupBounds(viewportSize, groupMetrics)
   const toolsMenuSideClass =
     resolvedGroupPosition && groupBounds.width > 0
       ? resolvedGroupPosition.x + groupBounds.width / 2 <= viewportSize.width / 2
@@ -584,7 +680,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       el.removeEventListener("mouseleave", handleMouseLeave)
       if (hideTimer) clearTimeout(hideTimer)
     }
-  }, [])
+  }, [clampPixelGroupPosition])
 
   useEffect(() => {
     let rafId: number | null = null
@@ -596,6 +692,20 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       setViewportSize((prev) =>
         prev.width === next.width && prev.height === next.height ? prev : next,
       )
+
+      if (groupPositionRef.current || defaultTopPxRef.current === null) return
+
+      const nextDefaultTop = clampPixelGroupPosition(
+        0,
+        defaultTopPxRef.current,
+        next,
+        groupMetricsRef.current,
+      ).y
+
+      if (defaultTopPxRef.current !== nextDefaultTop) {
+        defaultTopPxRef.current = nextDefaultTop
+        setDefaultTopPx(nextDefaultTop)
+      }
     }
 
     const scheduleRaf = () => {
@@ -637,7 +747,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       if (rafId !== null) cancelAnimationFrame(rafId)
       if (debounceId !== null) window.clearTimeout(debounceId)
     }
-  }, [])
+  }, [clampPixelGroupPosition])
 
   const clearDragTimer = () => {
     if (dragTimerRef.current) {
@@ -758,12 +868,16 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         onClickCapture={handleClickCapture}
         style={{
           position: "fixed",
-          top: resolvedGroupPosition ? `${resolvedGroupPosition.y}px` : "50%",
+          top: resolvedGroupPosition
+            ? `${resolvedGroupPosition.y}px`
+            : defaultTopPx !== null
+              ? `${defaultTopPx}px`
+              : "50%",
           left: resolvedGroupPosition
             ? `${resolvedGroupPosition.x}px`
             : quickButtonsPositionStyle.left,
           right: resolvedGroupPosition ? "auto" : quickButtonsPositionStyle.right,
-          transform: resolvedGroupPosition ? "none" : "translateY(-50%)",
+          transform: resolvedGroupPosition || defaultTopPx !== null ? "none" : "translateY(-50%)",
           display: "flex",
           flexDirection: "column",
           gap: "8px",
