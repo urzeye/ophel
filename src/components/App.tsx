@@ -21,7 +21,7 @@ import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
 import { usePromptsStore } from "~stores/prompts-store"
 import { APP_DISPLAY_NAME } from "~utils/config"
-import { DEFAULT_SETTINGS, type Prompt, type Settings } from "~utils/storage"
+import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
 import { EVENT_EXTENSION_UPDATE_AVAILABLE, MSG_CLEAR_ALL_DATA } from "~utils/messaging"
 import { EXPORT_START_TOAST_DURATION, showToast } from "~utils/toast"
 import { setLanguage, t } from "~utils/i18n"
@@ -43,7 +43,6 @@ import { useGlobalSearchPreview } from "./global-search/useGlobalSearchPreview"
 import { useGlobalSearchSyntax } from "./global-search/useGlobalSearchSyntax"
 import type {
   GlobalSearchCategoryId,
-  GlobalSearchGroupedResult,
   GlobalSearchMatchReason,
   GlobalSearchResultCategory,
   GlobalSearchResultItem,
@@ -55,7 +54,6 @@ import {
   parseGlobalSearchQuery,
   stringifyGlobalSearchQuery,
   toGlobalSearchTokens,
-  type GlobalSearchSyntaxFilter,
 } from "./global-search/syntax"
 import { useTagsStore } from "~stores/tags-store"
 import {
@@ -812,46 +810,6 @@ export const App = () => {
       }
     }
   }, [isSettingsHydrated, settings])
-
-  useEffect(() => {
-    if (!isSettingsHydrated || !settings) return
-
-    let needsUpdate = false
-    const nextSettings: Partial<Settings> = {}
-    const buttons = settings.collapsedButtons || []
-    let nextButtons = buttons
-
-    if (!nextButtons.some((btn) => btn.id === "floatingToolbar")) {
-      nextButtons = [...nextButtons]
-      const panelIndex = nextButtons.findIndex((btn) => btn.id === "panel")
-      const insertIndex = panelIndex >= 0 ? panelIndex + 1 : nextButtons.length
-      nextButtons.splice(insertIndex, 0, { id: "floatingToolbar", enabled: true })
-      needsUpdate = true
-    }
-
-    if (!nextButtons.some((btn) => btn.id === "globalSearch")) {
-      if (nextButtons === buttons) {
-        nextButtons = [...nextButtons]
-      }
-      const toolboxIndex = nextButtons.findIndex((btn) => btn.id === "floatingToolbar")
-      const insertIndex = toolboxIndex >= 0 ? toolboxIndex + 1 : nextButtons.length
-      nextButtons.splice(insertIndex, 0, { id: "globalSearch", enabled: true })
-      needsUpdate = true
-    }
-
-    if (nextButtons !== buttons) {
-      nextSettings.collapsedButtons = nextButtons
-    }
-
-    if (!settings.floatingToolbar) {
-      nextSettings.floatingToolbar = { open: true }
-      needsUpdate = true
-    }
-
-    if (needsUpdate) {
-      setSettings(nextSettings)
-    }
-  }, [isSettingsHydrated, settings, setSettings])
 
   // 选中的提示词状态
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null)
@@ -2001,10 +1959,11 @@ export const App = () => {
   const syncDelete = settings?.features?.conversations?.syncDelete
   const inlineBookmarkMode = settings?.features?.outline?.inlineBookmarkMode
   const hasSettings = Boolean(settings)
-  const collapsedButtons = settings?.collapsedButtons || DEFAULT_SETTINGS.collapsedButtons
+  const quickButtonsSettings = settings?.quickButtons || DEFAULT_SETTINGS.quickButtons
+  const collapsedButtons = quickButtonsSettings.collapsed
   const floatingToolbarEnabled =
     collapsedButtons.find((btn) => btn.id === "floatingToolbar")?.enabled ?? true
-  const floatingToolbarOpen = settings?.floatingToolbar?.open ?? true
+  const floatingToolbarOpen = quickButtonsSettings.floatingToolbar?.open ?? true
   const isScrollLockActive = settings?.panel?.preventAutoScroll ?? false
   const ghostBookmarkCount = outlineManager?.getGhostBookmarkIds().length ?? 0
 
@@ -2084,7 +2043,11 @@ export const App = () => {
   useEffect(() => {
     if (!conversationManager || typeof chrome === "undefined") return
 
-    const handler = (message: any, _sender: any, sendResponse: any) => {
+    const handler = (
+      message: { type?: string } | undefined,
+      _sender: chrome.runtime.MessageSender,
+      sendResponse: (response: { success: boolean }) => void,
+    ) => {
       if (message?.type === MSG_CLEAR_ALL_DATA) {
         conversationManager.destroy()
         sendResponse({ success: true })

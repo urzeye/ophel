@@ -118,14 +118,27 @@
     "cleanupDays": 30
   },
 
-  "collapsedButtons": [
-    { "id": "scrollTop", "enabled": true },
-    { "id": "panel", "enabled": true },
-    { "id": "anchor", "enabled": true },
-    { "id": "theme", "enabled": true },
-    { "id": "manualAnchor", "enabled": true },
-    { "id": "scrollBottom", "enabled": true }
-  ],
+  "quickButtons": {
+    "collapsed": [
+      { "id": "scrollTop", "enabled": true },
+      { "id": "panel", "enabled": true },
+      { "id": "floatingToolbar", "enabled": true },
+      { "id": "globalSearch", "enabled": true },
+      { "id": "anchor", "enabled": true },
+      { "id": "theme", "enabled": true },
+      { "id": "manualAnchor", "enabled": true },
+      { "id": "scrollBottom", "enabled": true }
+    ],
+    "opacity": 1,
+    "toolsMenu": ["export", "copyMarkdown", "move", "setTag", "scrollLock", "cleanup"],
+    "floatingToolbar": {
+      "open": true
+    },
+    "position": {
+      "xRatio": 0.82,
+      "yRatio": 0.48
+    }
+  },
 
   "shortcuts": {
     "enabled": true,

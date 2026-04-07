@@ -9,33 +9,131 @@ import { create } from "zustand"
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware"
 
 import { normalizeShortcutsSettings } from "~constants/shortcuts"
-import { DEFAULT_SETTINGS, type Settings } from "~utils/storage"
+import {
+  DEFAULT_QUICK_BUTTONS_SETTINGS,
+  DEFAULT_SETTINGS,
+  type QuickButtonConfig,
+  type QuickButtonsPosition,
+  type Settings,
+} from "~utils/storage"
 
 import { chromeStorageAdapter } from "./chrome-adapter"
 
 let isUpdatingFromStorage = false
 
-const normalizeSettings = (settings: Settings): Settings => ({
-  ...settings,
-  content: {
-    ...DEFAULT_SETTINGS.content,
-    ...settings.content,
-  },
-  usageMonitor: {
-    ...DEFAULT_SETTINGS.usageMonitor,
-    ...settings.usageMonitor,
-  },
-  shortcuts: normalizeShortcutsSettings(settings.shortcuts) || DEFAULT_SETTINGS.shortcuts,
-})
+type LegacyQuickButtonsSettings = {
+  collapsedButtons?: QuickButtonConfig[]
+  quickButtonsOpacity?: number
+  toolsMenu?: string[]
+  floatingToolbar?: {
+    open?: boolean
+  }
+}
 
-const sortedStringify = (obj: any): string => {
+type SettingsInput = Omit<Partial<Settings>, "quickButtons"> & {
+  quickButtons?: Partial<Settings["quickButtons"]>
+} & LegacyQuickButtonsSettings
+
+const ensureQuickButton = (
+  buttons: QuickButtonConfig[],
+  button: QuickButtonConfig,
+  insertAfterId?: string,
+): QuickButtonConfig[] => {
+  if (buttons.some((item) => item.id === button.id)) return buttons
+
+  const nextButtons = [...buttons]
+  const insertIndex = insertAfterId
+    ? nextButtons.findIndex((item) => item.id === insertAfterId) + 1
+    : nextButtons.length
+
+  nextButtons.splice(insertIndex > 0 ? insertIndex : nextButtons.length, 0, button)
+  return nextButtons
+}
+
+const normalizeQuickButtonsPosition = (
+  position?: Partial<QuickButtonsPosition> | null,
+): QuickButtonsPosition | undefined => {
+  if (!position) return undefined
+
+  const xRatio = Number(position.xRatio)
+  const yRatio = Number(position.yRatio)
+
+  if (!Number.isFinite(xRatio) || !Number.isFinite(yRatio)) return undefined
+
+  return {
+    xRatio: Math.min(1, Math.max(0, xRatio)),
+    yRatio: Math.min(1, Math.max(0, yRatio)),
+  }
+}
+
+const normalizeQuickButtons = (settings: SettingsInput): Settings["quickButtons"] => {
+  const legacyCollapsed = Array.isArray(settings.collapsedButtons) ? settings.collapsedButtons : []
+  const quickButtons = settings.quickButtons || {}
+  const collapsedSource = quickButtons.collapsed ?? legacyCollapsed
+
+  let collapsed =
+    collapsedSource.length > 0
+      ? collapsedSource
+          .filter((button): button is QuickButtonConfig => Boolean(button?.id))
+          .map((button) => ({
+            id: button.id,
+            enabled: button.enabled !== false,
+          }))
+      : DEFAULT_QUICK_BUTTONS_SETTINGS.collapsed.map((button) => ({ ...button }))
+
+  collapsed = ensureQuickButton(collapsed, { id: "floatingToolbar", enabled: true }, "panel")
+  collapsed = ensureQuickButton(collapsed, { id: "globalSearch", enabled: true }, "floatingToolbar")
+
+  return {
+    collapsed,
+    opacity:
+      quickButtons.opacity ??
+      settings.quickButtonsOpacity ??
+      DEFAULT_QUICK_BUTTONS_SETTINGS.opacity,
+    toolsMenu: quickButtons.toolsMenu ?? settings.toolsMenu,
+    floatingToolbar: {
+      ...DEFAULT_QUICK_BUTTONS_SETTINGS.floatingToolbar,
+      ...(settings.floatingToolbar || {}),
+      ...(quickButtons.floatingToolbar || {}),
+    },
+    position: normalizeQuickButtonsPosition(quickButtons.position),
+  }
+}
+
+const normalizeSettings = (settings: SettingsInput): Settings => {
+  const {
+    collapsedButtons: _legacyCollapsedButtons,
+    quickButtonsOpacity: _legacyQuickButtonsOpacity,
+    toolsMenu: _legacyToolsMenu,
+    floatingToolbar: _legacyFloatingToolbar,
+    quickButtons: _quickButtons,
+    ...rest
+  } = settings
+
+  return {
+    ...DEFAULT_SETTINGS,
+    ...rest,
+    content: {
+      ...DEFAULT_SETTINGS.content,
+      ...settings.content,
+    },
+    usageMonitor: {
+      ...DEFAULT_SETTINGS.usageMonitor,
+      ...settings.usageMonitor,
+    },
+    shortcuts: normalizeShortcutsSettings(settings.shortcuts) || DEFAULT_SETTINGS.shortcuts,
+    quickButtons: normalizeQuickButtons(settings),
+  }
+}
+
+const sortedStringify = (obj: unknown): string => {
   if (typeof obj !== "object" || obj === null) return JSON.stringify(obj)
   if (Array.isArray(obj)) return JSON.stringify(obj.map(sortedStringify))
   return JSON.stringify(
     Object.keys(obj)
       .sort()
-      .reduce((result: any, key) => {
-        result[key] = sortedStringify(obj[key])
+      .reduce<Record<string, string>>((result, key) => {
+        result[key] = sortedStringify((obj as Record<string, unknown>)[key])
         return result
       }, {}),
   )
@@ -65,9 +163,14 @@ interface SettingsState {
   updateNestedSetting: <K extends keyof Settings>(
     section: K,
     key: keyof Settings[K],
-    value: any,
+    value: unknown,
   ) => void
-  updateDeepSetting: (section: keyof Settings, subsection: string, key: string, value: any) => void
+  updateDeepSetting: (
+    section: keyof Settings,
+    subsection: string,
+    key: string,
+    value: unknown,
+  ) => void
   replaceSettings: (settings: Settings) => void
   resetSettings: () => void
   setHasHydrated: (state: boolean) => void
@@ -96,13 +199,13 @@ export const useSettingsStore = create<SettingsState>()(
        */
       updateNestedSetting: (section, key, value) =>
         set((state) => ({
-          settings: {
+          settings: normalizeSettings({
             ...state.settings,
             [section]: {
               ...(state.settings[section] as object),
               [key]: value,
             },
-          },
+          }),
         })),
 
       /**
@@ -114,7 +217,7 @@ export const useSettingsStore = create<SettingsState>()(
           const sectionObj = state.settings[section] as Record<string, unknown>
           const subsectionObj = (sectionObj?.[subsection] || {}) as Record<string, unknown>
           return {
-            settings: {
+            settings: normalizeSettings({
               ...state.settings,
               [section]: {
                 ...sectionObj,
@@ -123,7 +226,7 @@ export const useSettingsStore = create<SettingsState>()(
                   [key]: value,
                 },
               },
-            },
+            }),
           }
         }),
 

@@ -87,7 +87,7 @@ const SortableItem: React.FC<{
 
 const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }) => {
   const [activeTab, setActiveTab] = useState(initialTab || "panel")
-  const { settings, setSettings, updateNestedSetting, updateDeepSetting } = useSettingsStore()
+  const { settings, updateNestedSetting, updateDeepSetting } = useSettingsStore()
 
   useEffect(() => {
     if (initialTab) {
@@ -155,10 +155,10 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
     const fromIndex = draggedItem.index
     if (fromIndex === targetIndex) return
 
-    const newButtons = [...(settings.collapsedButtons || [])]
+    const newButtons = [...(settings.quickButtons?.collapsed || [])]
     const [moved] = newButtons.splice(fromIndex, 1)
     newButtons.splice(targetIndex, 0, moved)
-    setSettings({ collapsedButtons: newButtons })
+    updateNestedSetting("quickButtons", "collapsed", newButtons)
     setDraggedItem(null)
   }
 
@@ -169,9 +169,9 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
 
   // 切换按钮启用状态
   const toggleButton = (index: number) => {
-    const newButtons = [...(settings.collapsedButtons || [])]
+    const newButtons = [...(settings.quickButtons?.collapsed || [])]
     newButtons[index] = { ...newButtons[index], enabled: !newButtons[index].enabled }
-    setSettings({ collapsedButtons: newButtons })
+    updateNestedSetting("quickButtons", "collapsed", newButtons)
   }
 
   if (!settings) return null
@@ -410,7 +410,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
         <SettingCard
           title={t("collapsedButtonsOrderTitle") || "快捷按钮组"}
           description={t("collapsedButtonsOrderDesc") || "快捷按钮组排序与启用 (拖拽排序)"}>
-          {settings.collapsedButtons?.map((btn, index) => {
+          {settings.quickButtons?.collapsed?.map((btn, index) => {
             // 暂时隐藏“手动锚点”设置项，避免对用户造成困扰
             if (btn.id === "manualAnchor") return null
             const def = COLLAPSED_BUTTON_DEFS[btn.id]
@@ -427,7 +427,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
                 }
                 label={t(def.labelKey) || btn.id}
                 index={index}
-                total={settings.collapsedButtons.length}
+                total={settings.quickButtons.collapsed.length}
                 enabled={btn.enabled}
                 showToggle={def.canToggle}
                 onToggle={() => toggleButton(index)}
@@ -449,12 +449,14 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
                 min="0.4"
                 max="1"
                 step="0.05"
-                value={settings.quickButtonsOpacity ?? 1}
-                onChange={(e) => setSettings({ quickButtonsOpacity: parseFloat(e.target.value) })}
+                value={settings.quickButtons?.opacity ?? 1}
+                onChange={(e) =>
+                  updateNestedSetting("quickButtons", "opacity", parseFloat(e.target.value))
+                }
                 style={{ width: "120px" }}
               />
               <span style={{ fontSize: "12px", minWidth: "36px" }}>
-                {Math.round((settings.quickButtonsOpacity ?? 1) * 100)}%
+                {Math.round((settings.quickButtons?.opacity ?? 1) * 100)}%
               </span>
             </div>
           </SettingRow>
@@ -467,7 +469,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
           title={t("toolboxMenuTitle") || "工具箱菜单"}
           description={t("toolboxMenuDesc") || "配置工具箱弹出菜单中显示的功能"}>
           {TOOLS_MENU_ITEMS.filter((item) => item.id !== TOOLS_MENU_IDS.SETTINGS).map((item) => {
-            const enabledIds = settings.toolsMenu ?? TOOLS_MENU_ITEMS.map((i) => i.id)
+            const enabledIds = settings.quickButtons?.toolsMenu ?? TOOLS_MENU_ITEMS.map((i) => i.id)
             const isEnabled = enabledIds.includes(item.id)
             return (
               <ToggleRow
@@ -476,11 +478,12 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
                 settingId={`tools-menu-${item.id}`}
                 checked={isEnabled}
                 onChange={() => {
-                  const currentIds = settings.toolsMenu ?? TOOLS_MENU_ITEMS.map((i) => i.id)
+                  const currentIds =
+                    settings.quickButtons?.toolsMenu ?? TOOLS_MENU_ITEMS.map((i) => i.id)
                   const newIds = isEnabled
                     ? currentIds.filter((id) => id !== item.id)
                     : [...currentIds, item.id]
-                  setSettings({ toolsMenu: newIds })
+                  updateNestedSetting("quickButtons", "toolsMenu", newIds)
                 }}
               />
             )

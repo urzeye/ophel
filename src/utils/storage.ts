@@ -126,6 +126,26 @@ export interface UsageMonitorSettings {
   autoResetEnabled: boolean
 }
 
+export interface QuickButtonConfig {
+  id: string
+  enabled: boolean
+}
+
+export interface QuickButtonsPosition {
+  xRatio: number
+  yRatio: number
+}
+
+export interface QuickButtonsSettings {
+  collapsed: QuickButtonConfig[]
+  opacity: number
+  toolsMenu?: string[]
+  floatingToolbar: {
+    open: boolean
+  }
+  position?: QuickButtonsPosition
+}
+
 export interface Settings {
   language: string
   hasAgreedToTerms: boolean // 用户是否同意免责声明
@@ -248,16 +268,8 @@ export interface Settings {
     cleanupDays: number
   }
 
-  // 快捷按钮配置
-  collapsedButtons: Array<{ id: string; enabled: boolean }>
-  quickButtonsOpacity: number
-
-  // 工具箱菜单配置 (启用的菜单项 ID 列表，undefined 表示全部显示)
-  toolsMenu?: string[]
-
-  floatingToolbar: {
-    open: boolean
-  }
+  // 快捷按钮与工具箱配置
+  quickButtons: QuickButtonsSettings
 
   // Claude 专属设置
   claude?: {
@@ -312,6 +324,25 @@ const DEFAULT_USER_QUERY_WIDTH: PageWidthConfig = {
 // 默认禅模式配置
 const DEFAULT_ZEN_MODE: ZenModeConfig = {
   enabled: false,
+}
+
+const DEFAULT_COLLAPSED_BUTTONS: QuickButtonConfig[] = [
+  { id: "panel", enabled: true },
+  { id: "floatingToolbar", enabled: true },
+  { id: "globalSearch", enabled: true },
+  { id: "theme", enabled: true },
+  { id: "scrollTop", enabled: true },
+  { id: "manualAnchor", enabled: false },
+  { id: "anchor", enabled: true },
+  { id: "scrollBottom", enabled: true },
+]
+
+export const DEFAULT_QUICK_BUTTONS_SETTINGS: QuickButtonsSettings = {
+  collapsed: DEFAULT_COLLAPSED_BUTTONS.map((button) => ({ ...button })),
+  opacity: 1,
+  floatingToolbar: {
+    open: true,
+  },
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -480,19 +511,12 @@ export const DEFAULT_SETTINGS: Settings = {
     cleanupDays: 30,
   },
 
-  collapsedButtons: [
-    { id: "panel", enabled: true },
-    { id: "floatingToolbar", enabled: true },
-    { id: "globalSearch", enabled: true },
-    { id: "theme", enabled: true },
-    { id: "scrollTop", enabled: true },
-    { id: "manualAnchor", enabled: false },
-    { id: "anchor", enabled: true },
-    { id: "scrollBottom", enabled: true },
-  ],
-  quickButtonsOpacity: 1,
-  floatingToolbar: {
-    open: true,
+  quickButtons: {
+    collapsed: DEFAULT_COLLAPSED_BUTTONS.map((button) => ({ ...button })),
+    opacity: DEFAULT_QUICK_BUTTONS_SETTINGS.opacity,
+    floatingToolbar: {
+      ...DEFAULT_QUICK_BUTTONS_SETTINGS.floatingToolbar,
+    },
   },
 
   claude: {

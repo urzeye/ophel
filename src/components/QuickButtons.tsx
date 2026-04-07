@@ -16,7 +16,7 @@ import {
   smartScrollTo,
   smartScrollToBottom,
 } from "~utils/scroll-helper"
-import { DEFAULT_SETTINGS, getSiteTheme } from "~utils/storage"
+import { DEFAULT_SETTINGS, getSiteTheme, type QuickButtonsPosition } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
 interface QuickButtonsProps {
@@ -44,10 +44,7 @@ type ViewportSize = {
   height: number
 }
 
-type GroupPosition = {
-  xRatio: number
-  yRatio: number
-}
+type GroupPosition = QuickButtonsPosition
 
 const readViewportSize = (): ViewportSize => ({
   width: window.visualViewport?.width ?? window.innerWidth,
@@ -79,14 +76,16 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     }
   }, [])
 
-  const { settings } = useSettingsStore()
+  const { settings, updateNestedSetting } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
   const adapter = getAdapter()
-  const collapsedButtonsOrder = currentSettings.collapsedButtons || []
+  const quickButtonsSettings = currentSettings.quickButtons || DEFAULT_SETTINGS.quickButtons
+  const collapsedButtonsOrder = quickButtonsSettings.collapsed || []
   const quickButtonsSide = currentSettings.panel?.defaultPosition ?? "right"
   const quickButtonsPositionStyle =
     quickButtonsSide === "left" ? { left: "16px", right: "auto" } : { right: "16px", left: "auto" }
-  const quickButtonsOpacity = Math.min(Math.max(currentSettings.quickButtonsOpacity ?? 1, 0.4), 1)
+  const quickButtonsOpacity = Math.min(Math.max(quickButtonsSettings.opacity ?? 1, 0.4), 1)
+  const persistedGroupPosition = quickButtonsSettings.position ?? null
   const siteId = adapter?.getSiteId() || "_default"
   const siteTheme = getSiteTheme(currentSettings, siteId)
   const resolvedThemeMode = themeMode || (siteTheme.mode === "dark" ? "dark" : "light")
@@ -118,9 +117,10 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [isToolsMenuOpen])
 
-  const [groupPosition, setGroupPosition] = useState<GroupPosition | null>(null)
+  const [groupPosition, setGroupPosition] = useState<GroupPosition | null>(persistedGroupPosition)
   const [isDragging, setIsDragging] = useState(false)
   const [isPressing, setIsPressing] = useState(false)
+  const groupPositionRef = useRef<GroupPosition | null>(persistedGroupPosition)
 
   const dragTimerRef = useRef<number | null>(null)
   const dragStartRef = useRef<{ x: number; y: number } | null>(null)
@@ -144,6 +144,12 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const [loadingText, setLoadingText] = useState("")
   const abortLoadingRef = useRef(false)
+
+  useEffect(() => {
+    if (draggingRef.current) return
+    groupPositionRef.current = persistedGroupPosition
+    setGroupPosition(persistedGroupPosition)
+  }, [persistedGroupPosition])
 
   // 滚动到顶部（支持图文并茂模式）
   const scrollToTop = useCallback(async () => {
@@ -509,7 +515,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     let lastWasSystem = false
 
     // 从设置中获取启用的菜单项，如果没有则使用默认全部显示
-    const enabledIds = currentSettings.toolsMenu ?? TOOLS_MENU_ITEMS.map((item) => item.id)
+    const enabledIds = quickButtonsSettings.toolsMenu ?? TOOLS_MENU_ITEMS.map((item) => item.id)
     const enabledSet = new Set(enabledIds)
 
     for (const item of TOOLS_MENU_ITEMS) {
@@ -581,10 +587,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   }, [])
 
   useEffect(() => {
-    setGroupPosition(null)
-  }, [quickButtonsSide])
-
-  useEffect(() => {
     let rafId: number | null = null
     let debounceId: number | null = null
     let needsFollowUp = false
@@ -645,6 +647,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   }
 
   const endDragging = () => {
+    const shouldPersist = draggingRef.current
     setIsPressing(false)
     clearDragTimer()
     dragStartRef.current = null
@@ -661,6 +664,10 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       }
     }
     pointerIdRef.current = null
+
+    if (shouldPersist) {
+      updateNestedSetting("quickButtons", "position", groupPositionRef.current || undefined)
+    }
   }
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -706,12 +713,14 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     const offset = dragOffsetRef.current || { x: 0, y: 0 }
     const nextX = e.clientX - offset.x
     const nextY = e.clientY - offset.y
+    const nextPosition = toLogicalGroupPosition(nextX, nextY, currentViewport)
     setViewportSize((prev) =>
       prev.width === currentViewport.width && prev.height === currentViewport.height
         ? prev
         : currentViewport,
     )
-    setGroupPosition(toLogicalGroupPosition(nextX, nextY, currentViewport))
+    groupPositionRef.current = nextPosition
+    setGroupPosition(nextPosition)
   }
 
   const handlePointerUp = () => {
