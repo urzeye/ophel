@@ -1,14 +1,15 @@
 import { GithubIcon, ShieldCheckIcon } from "~components/icons"
-import { useSettingsStore } from "~stores/settings-store"
+import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { APP_ICON_URL } from "~utils/config"
 import { getStoreInfo } from "~utils/getStoreInfo"
 import { t } from "~utils/i18n"
 
 export const DisclaimerModal: React.FC = () => {
   const { settings, setSettings } = useSettingsStore()
+  const isHydrated = useSettingsHydrated()
 
-  // 如果已经同意或者 settings 还没加载，不显示
-  if (!settings || settings.hasAgreedToTerms) {
+  // 等待 settings hydration 完成，避免默认值短暂覆盖时误弹免责声明。
+  if (!isHydrated || !settings || settings.hasAgreedToTerms) {
     return null
   }
 

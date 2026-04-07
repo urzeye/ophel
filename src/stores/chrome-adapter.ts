@@ -16,6 +16,49 @@ declare function GM_getValue<T>(key: string, defaultValue?: T): T
 declare function GM_setValue(key: string, value: unknown): void
 declare function GM_deleteValue(key: string): void
 
+const tryParseJSON = (value: string): unknown => {
+  try {
+    return JSON.parse(value)
+  } catch {
+    return undefined
+  }
+}
+
+const isPersistEnvelope = (value: unknown): value is { state: unknown; version?: unknown } =>
+  typeof value === "object" && value !== null && "state" in value
+
+const isLegacySettingsPayload = (value: unknown): value is Record<string, unknown> => {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false
+  }
+
+  return ["hasAgreedToTerms", "panel", "content", "theme", "layout"].some((key) => key in value)
+}
+
+const normalizeUserscriptPersistValue = (name: string, value: unknown): string | null => {
+  if (value === undefined || value === null) {
+    return null
+  }
+
+  const parsed = typeof value === "string" ? tryParseJSON(value) : value
+
+  // 兼容旧版 userscript 直接把 settings 原始对象存到 GM 存储的格式。
+  // Zustand persist 需要 { state, version } 包装，否则会把它视为“无持久化数据”。
+  if (
+    name === "settings" &&
+    parsed !== undefined &&
+    !isPersistEnvelope(parsed) &&
+    isLegacySettingsPayload(parsed)
+  ) {
+    return JSON.stringify({
+      state: { settings: parsed },
+      version: 0,
+    })
+  }
+
+  return typeof value === "string" ? value : JSON.stringify(value)
+}
+
 /**
  * 油猴脚本存储适配器
  *
@@ -26,11 +69,7 @@ declare function GM_deleteValue(key: string): void
 const userscriptStorageAdapter: StateStorage = {
   getItem: (name: string): string | null => {
     const value = GM_getValue(name)
-    if (value === undefined || value === null) {
-      return null
-    }
-    // GM_getValue 返回的可能是对象或字符串
-    return typeof value === "string" ? value : JSON.stringify(value)
+    return normalizeUserscriptPersistValue(name, value)
   },
 
   setItem: (name: string, value: string): void => {

@@ -23,6 +23,30 @@ import {
 import { chromeStorageAdapter } from "./chrome-adapter"
 
 let isUpdatingFromStorage = false
+let skippedPersistWrites = 0
+
+const releaseSkippedPersistWrite = () => {
+  const release = () => {
+    skippedPersistWrites = Math.max(0, skippedPersistWrites - 1)
+  }
+
+  if (typeof queueMicrotask === "function") {
+    queueMicrotask(release)
+    return
+  }
+
+  void Promise.resolve().then(release)
+}
+
+const runWithoutPersist = <T>(callback: () => T): T => {
+  skippedPersistWrites += 1
+
+  try {
+    return callback()
+  } finally {
+    releaseSkippedPersistWrite()
+  }
+}
 
 type LegacyQuickButtonsSettings = {
   collapsedButtons?: QuickButtonConfig[]
@@ -224,7 +248,7 @@ const sortedStringify = (obj: unknown): string => {
 const storageAdapter: StateStorage = {
   ...chromeStorageAdapter,
   setItem: async (name, value) => {
-    if (isUpdatingFromStorage) {
+    if (isUpdatingFromStorage || skippedPersistWrites > 0) {
       return
     }
     return chromeStorageAdapter.setItem(name, value)
@@ -301,19 +325,23 @@ export const useSettingsStore = create<SettingsState>()(
        * 设置临时预览 settings（不持久化）
        */
       setPreviewSettings: (previewSettings) =>
-        set((state) => ({
-          previewSettings,
-          settings: buildEffectiveSettings(state.persistedSettings, previewSettings),
-        })),
+        runWithoutPersist(() =>
+          set((state) => ({
+            previewSettings,
+            settings: buildEffectiveSettings(state.persistedSettings, previewSettings),
+          })),
+        ),
 
       /**
        * 清除临时预览 settings
        */
       clearPreviewSettings: () =>
-        set((state) => ({
-          previewSettings: null,
-          settings: state.persistedSettings,
-        })),
+        runWithoutPersist(() =>
+          set((state) => ({
+            previewSettings: null,
+            settings: state.persistedSettings,
+          })),
+        ),
 
       /**
        * 更新嵌套设置项
@@ -393,26 +421,47 @@ export const useSettingsStore = create<SettingsState>()(
       /**
        * 设置 hydration 状态
        */
-      setHasHydrated: (state) => set({ _hasHydrated: state }),
+      setHasHydrated: (state) => runWithoutPersist(() => set({ _hasHydrated: state })),
     }),
     {
       name: "settings", // chrome.storage key
       storage: createJSONStorage(() => storageAdapter),
       // 只持久化 settings，不持久化 _hasHydrated
       partialize: (state) => ({ settings: state.persistedSettings }),
+      // 自定义 merge，确保 hydration 后 settings / persistedSettings 同步一致，
+      // 避免默认浅合并让 persistedSettings 暂时回落到 DEFAULT_SETTINGS。
+      merge: (persistedState, currentState) => {
+        const persistedSettings = (persistedState as { settings?: SettingsInput } | undefined)
+          ?.settings
+        const normalizedSettings = normalizeSettings(
+          persistedSettings ?? currentState.persistedSettings,
+        )
+
+        return {
+          ...currentState,
+          settings: normalizedSettings,
+          persistedSettings: normalizedSettings,
+          previewSettings: null,
+        }
+      },
       // Hydration 完成回调
       onRehydrateStorage: () => (state) => {
-        if (state) {
-          const normalizedSettings = normalizeSettings(state.settings)
-          useSettingsStore.setState({
-            persistedSettings: normalizedSettings,
-            previewSettings: null,
-            settings: normalizedSettings,
-          })
-        }
-        // 首次空存储时，persist 可能不会把 state 实例传入回调。
-        // 这里直接用 store.setState 兜底，确保 userscript / extension 都能结束 hydration。
-        useSettingsStore.setState({ _hasHydrated: true })
+        runWithoutPersist(() => {
+          if (state) {
+            const normalizedSettings = normalizeSettings(state.settings)
+            useSettingsStore.setState({
+              persistedSettings: normalizedSettings,
+              previewSettings: null,
+              settings: normalizedSettings,
+              _hasHydrated: true,
+            })
+            return
+          }
+
+          // 首次空存储时，persist 可能不会把 state 实例传入回调。
+          // 这里直接用 store.setState 兜底，确保 userscript / extension 都能结束 hydration。
+          useSettingsStore.setState({ _hasHydrated: true })
+        })
       },
     },
   ),
