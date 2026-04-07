@@ -8,13 +8,16 @@
 import { create } from "zustand"
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware"
 
+import { LAYOUT_CONFIG } from "~constants"
 import { normalizeShortcutsSettings } from "~constants/shortcuts"
 import {
   DEFAULT_QUICK_BUTTONS_SETTINGS,
   DEFAULT_SETTINGS,
+  type PageWidthConfig,
   type QuickButtonConfig,
   type QuickButtonsPosition,
   type Settings,
+  type SiteId,
 } from "~utils/storage"
 
 import { chromeStorageAdapter } from "./chrome-adapter"
@@ -100,6 +103,49 @@ const normalizeQuickButtons = (settings: SettingsInput): Settings["quickButtons"
   }
 }
 
+type WidthConfigKind = "PAGE_WIDTH" | "USER_QUERY_WIDTH"
+
+const clamp = (value: number, min: number, max: number): number =>
+  Math.min(max, Math.max(min, value))
+
+const normalizePercentWidthConfig = (
+  config: Partial<PageWidthConfig> | undefined,
+  kind: WidthConfigKind,
+): PageWidthConfig => {
+  const layoutDefaults = LAYOUT_CONFIG[kind]
+  const defaultPercent = Number.parseInt(layoutDefaults.DEFAULT_PERCENT, 10)
+  const defaultPx = Number.parseInt(layoutDefaults.DEFAULT_PX, 10)
+  const rawValue = Number.parseInt(String(config?.value ?? layoutDefaults.DEFAULT_PERCENT), 10)
+  const sourceUnit = config?.unit === "px" ? "px" : "%"
+
+  let nextValue = Number.isNaN(rawValue) ? defaultPercent : rawValue
+
+  // 兼容旧版 px 数据：按旧默认值与新默认百分比的比例换算到百分比区间。
+  if (sourceUnit === "px") {
+    nextValue = Math.round((nextValue / defaultPx) * defaultPercent)
+  }
+
+  return {
+    enabled: config?.enabled ?? false,
+    value: String(clamp(nextValue, layoutDefaults.MIN_PERCENT, layoutDefaults.MAX_PERCENT)),
+    unit: "%",
+  }
+}
+
+const normalizeWidthRecord = (
+  record: Partial<Record<SiteId, Partial<PageWidthConfig>>> | undefined,
+  kind: WidthConfigKind,
+  fallback: Record<SiteId, PageWidthConfig>,
+): Record<SiteId, PageWidthConfig> => {
+  const result = { ...fallback } as Record<SiteId, PageWidthConfig>
+
+  ;(Object.keys(fallback) as SiteId[]).forEach((siteId) => {
+    result[siteId] = normalizePercentWidthConfig(record?.[siteId], kind)
+  })
+
+  return result
+}
+
 const normalizeSettings = (settings: SettingsInput): Settings => {
   const {
     collapsedButtons: _legacyCollapsedButtons,
@@ -113,9 +159,44 @@ const normalizeSettings = (settings: SettingsInput): Settings => {
   return {
     ...DEFAULT_SETTINGS,
     ...rest,
+    panel: {
+      ...DEFAULT_SETTINGS.panel,
+      ...settings.panel,
+    },
     content: {
       ...DEFAULT_SETTINGS.content,
       ...settings.content,
+    },
+    theme: {
+      ...DEFAULT_SETTINGS.theme,
+      ...settings.theme,
+      sites: {
+        ...DEFAULT_SETTINGS.theme.sites,
+        ...settings.theme?.sites,
+      },
+      customStyles: settings.theme?.customStyles ?? DEFAULT_SETTINGS.theme.customStyles,
+    },
+    layout: {
+      ...DEFAULT_SETTINGS.layout,
+      ...settings.layout,
+      pageWidth: normalizeWidthRecord(
+        settings.layout?.pageWidth,
+        "PAGE_WIDTH",
+        DEFAULT_SETTINGS.layout.pageWidth,
+      ),
+      userQueryWidth: normalizeWidthRecord(
+        settings.layout?.userQueryWidth,
+        "USER_QUERY_WIDTH",
+        DEFAULT_SETTINGS.layout.userQueryWidth,
+      ),
+      zenMode: {
+        ...DEFAULT_SETTINGS.layout.zenMode,
+        ...settings.layout?.zenMode,
+      },
+    },
+    modelLock: {
+      ...DEFAULT_SETTINGS.modelLock,
+      ...settings.modelLock,
     },
     usageMonitor: {
       ...DEFAULT_SETTINGS.usageMonitor,

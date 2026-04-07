@@ -471,6 +471,103 @@
   border-color: var(--gh-primary, #4285f4);
 }
 
+.settings-slider {
+  width: min(280px, 100%);
+}
+
+.settings-slider.disabled {
+  opacity: 0.6;
+}
+
+.settings-slider-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-slider-input {
+  flex: 1;
+  min-width: 0;
+  height: 6px;
+  border-radius: 999px;
+  outline: none;
+  appearance: none;
+  background: linear-gradient(
+    90deg,
+    var(--gh-primary, #4285f4) 0%,
+    var(--gh-primary, #4285f4) var(--slider-progress, 0%),
+    var(--gh-hover, #e5e7eb) var(--slider-progress, 0%),
+    var(--gh-hover, #e5e7eb) 100%
+  );
+  cursor: pointer;
+}
+
+.settings-slider-input::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.settings-slider-input::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -5px;
+  border: 2px solid var(--gh-bg, #ffffff);
+  border-radius: 50%;
+  background: var(--gh-primary, #4285f4);
+  box-shadow: 0 1px 4px rgba(66, 133, 244, 0.35);
+}
+
+.settings-slider-input::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.settings-slider-input::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--gh-primary, #4285f4);
+}
+
+.settings-slider-input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--gh-bg, #ffffff);
+  border-radius: 50%;
+  background: var(--gh-primary, #4285f4);
+  box-shadow: 0 1px 4px rgba(66, 133, 244, 0.35);
+}
+
+.settings-slider-input:disabled {
+  cursor: not-allowed;
+}
+
+.settings-slider-value {
+  min-width: 52px;
+  padding: 4px 8px;
+  border: 1px solid var(--gh-input-border, #d1d5db);
+  border-radius: 999px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--gh-text, #374151);
+  background: var(--gh-input-bg, #ffffff);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.settings-slider-boundary {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--gh-text-secondary, #9ca3af);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 .settings-textarea {
   width: 100%;
   padding: 12px;

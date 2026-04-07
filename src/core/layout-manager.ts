@@ -118,9 +118,9 @@ export class LayoutManager {
 
   private generateUserQueryWidthCSS(): string {
     if (!this.userQueryWidthConfig) return ""
-    // 添加默认值防止 undefined（默认 600px）
-    const value = this.userQueryWidthConfig.value || "600"
-    const unit = this.userQueryWidthConfig.unit || "px"
+    // 添加默认值防止 undefined（默认 81%）
+    const value = this.userQueryWidthConfig.value || "81"
+    const unit = this.userQueryWidthConfig.unit || "%"
     const width = `${value}${unit}`
     const selectors = this.siteAdapter.getUserQueryWidthSelectors()
     return this.buildCSSFromSelectors(selectors, width, false)
@@ -262,8 +262,8 @@ export class LayoutManager {
 
       // 用户问题宽度
       if (this.userQueryWidthConfig?.enabled) {
-        const value = this.userQueryWidthConfig.value || "600"
-        const unit = this.userQueryWidthConfig.unit || "px"
+        const value = this.userQueryWidthConfig.value || "81"
+        const unit = this.userQueryWidthConfig.unit || "%"
         const css = this.buildCSSFromSelectors(
           siteAdapter.getUserQueryWidthSelectors(),
           `${value}${unit}`,

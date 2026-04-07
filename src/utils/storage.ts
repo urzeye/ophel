@@ -310,15 +310,15 @@ const DEFAULT_SITE_THEME: SiteThemeConfig = {
 // 默认页面宽度配置
 const DEFAULT_PAGE_WIDTH: PageWidthConfig = {
   enabled: false,
-  value: "1280",
-  unit: "px",
+  value: "81",
+  unit: "%",
 }
 
-// 默认用户问题宽度配置（使用 px 防止随页面宽度缩放）
+// 默认用户问题宽度配置（统一使用百分比，旧版 px 数据在 store 中自动迁移）
 const DEFAULT_USER_QUERY_WIDTH: PageWidthConfig = {
   enabled: false,
-  value: "600",
-  unit: "px",
+  value: "81",
+  unit: "%",
 }
 
 // 默认禅模式配置

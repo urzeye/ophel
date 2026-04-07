@@ -57,9 +57,9 @@
       "_default": { "enabled": false, "value": "81", "unit": "%" }
     },
     "userQueryWidth": {
-      "gemini": { "enabled": false, "value": "600", "unit": "px" },
-      "gemini-enterprise": { "enabled": false, "value": "600", "unit": "px" },
-      "_default": { "enabled": false, "value": "600", "unit": "px" }
+      "gemini": { "enabled": false, "value": "81", "unit": "%" },
+      "gemini-enterprise": { "enabled": false, "value": "81", "unit": "%" },
+      "_default": { "enabled": false, "value": "81", "unit": "%" }
     }
   },
 

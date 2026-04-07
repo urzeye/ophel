@@ -57,14 +57,14 @@ export const LAYOUT_CONFIG = {
     DEFAULT_PX: "1280",
     DEFAULT_PERCENT: "81",
     MIN_PERCENT: 40,
-    MAX_PERCENT: 100,
+    MAX_PERCENT: 96,
     MIN_PX: 1200,
   },
   USER_QUERY_WIDTH: {
     DEFAULT_PX: "600",
     DEFAULT_PERCENT: "81",
     MIN_PERCENT: 40,
-    MAX_PERCENT: 100,
+    MAX_PERCENT: 96,
     MIN_PX: 600,
   },
 } as const

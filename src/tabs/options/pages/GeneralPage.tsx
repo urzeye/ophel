@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from "react"
 
 import { DragIcon, GeneralIcon } from "~components/icons"
-import { NumberInput, Switch } from "~components/ui"
+import { Slider, Switch } from "~components/ui"
 import {
   COLLAPSED_BUTTON_DEFS,
   TAB_DEFINITIONS,
@@ -262,17 +262,16 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
             label={t("defaultEdgeDistanceLabel") || "默认边距"}
             description={t("defaultEdgeDistanceDesc") || "面板距离屏幕边缘的初始距离"}
             settingId="panel-edge-distance">
-            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <NumberInput
-                value={settings.panel?.defaultEdgeDistance ?? 25}
-                onChange={handleEdgeDistanceChange}
-                min={0}
-                max={400}
-                defaultValue={25}
-                style={{ width: "85px" }}
-              />
-              <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
-            </div>
+            <Slider
+              value={settings.panel?.defaultEdgeDistance ?? 25}
+              onChange={handleEdgeDistanceChange}
+              min={0}
+              max={400}
+              step={5}
+              unit="px"
+              formatValue={(value) => `${value}px`}
+              ariaLabel={t("defaultEdgeDistanceLabel") || "默认边距"}
+            />
           </SettingRow>
 
           {/* 面板宽度 */}
@@ -280,17 +279,16 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
             label={t("panelWidthLabel") || "面板宽度"}
             description={t("panelWidthDesc") || "面板的宽度 (px)"}
             settingId="panel-width">
-            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <NumberInput
-                value={settings.panel?.width ?? 320}
-                onChange={handleWidthChange}
-                min={200}
-                max={600}
-                defaultValue={320}
-                style={{ width: "85px" }}
-              />
-              <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
-            </div>
+            <Slider
+              value={settings.panel?.width ?? 320}
+              onChange={handleWidthChange}
+              min={200}
+              max={600}
+              step={10}
+              unit="px"
+              formatValue={(value) => `${value}px`}
+              ariaLabel={t("panelWidthLabel") || "面板宽度"}
+            />
           </SettingRow>
 
           {/* 面板高度 */}
@@ -298,17 +296,16 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
             label={t("panelHeightLabel") || "面板高度"}
             description={t("panelHeightDesc") || "面板占用屏幕高度的百分比"}
             settingId="panel-height">
-            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <NumberInput
-                value={settings.panel?.height ?? 85}
-                onChange={handleHeightChange}
-                min={50}
-                max={100}
-                defaultValue={85}
-                style={{ width: "85px" }}
-              />
-              <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>vh</span>
-            </div>
+            <Slider
+              value={settings.panel?.height ?? 85}
+              onChange={handleHeightChange}
+              min={50}
+              max={100}
+              step={1}
+              unit="vh"
+              formatValue={(value) => `${value}vh`}
+              ariaLabel={t("panelHeightLabel") || "面板高度"}
+            />
           </SettingRow>
 
           <ToggleRow
@@ -326,18 +323,17 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
             settingId="panel-edge-snap-threshold"
             disabled={!settings.panel?.edgeSnap}
             onDisabledClick={() => showPrerequisiteToast(edgeSnapLabel)}>
-            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <NumberInput
-                value={settings.panel?.edgeSnapThreshold ?? 18}
-                onChange={handleSnapThresholdChange}
-                min={0}
-                max={400}
-                defaultValue={18}
-                disabled={!settings.panel?.edgeSnap}
-                style={{ width: "85px" }}
-              />
-              <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>px</span>
-            </div>
+            <Slider
+              value={settings.panel?.edgeSnapThreshold ?? 18}
+              onChange={handleSnapThresholdChange}
+              min={0}
+              max={400}
+              step={2}
+              unit="px"
+              disabled={!settings.panel?.edgeSnap}
+              formatValue={(value) => `${value}px`}
+              ariaLabel={t("edgeSnapThresholdLabel") || "吸附触发距离"}
+            />
           </SettingRow>
 
           <ToggleRow
