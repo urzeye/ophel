@@ -286,7 +286,8 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
       setActiveTab(initialTab)
     }
   }, [initialTab])
-  const { settings, setSettings, updateNestedSetting } = useSettingsStore()
+  const { settings, setSettings, setPreviewSettings, clearPreviewSettings, updateNestedSetting } =
+    useSettingsStore()
   const prerequisiteToastTemplate = t("enablePrerequisiteToast") || "请先开启「{setting}」"
   const showPrerequisiteToast = (label: string) =>
     showToastThrottled(prerequisiteToastTemplate.replace("{setting}", label), 2000, {}, 1500, label)
@@ -316,7 +317,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
     LAYOUT_CONFIG.USER_QUERY_WIDTH.DEFAULT_PERCENT,
   )
 
-  const updatePercentWidth = (key: "pageWidth" | "userQueryWidth", value: number) => {
+  const buildPercentWidthSettings = (key: "pageWidth" | "userQueryWidth", value: number) => {
     if (!settings) return
 
     const config = key === "pageWidth" ? LAYOUT_CONFIG.PAGE_WIDTH : LAYOUT_CONFIG.USER_QUERY_WIDTH
@@ -327,7 +328,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
     }
     const nextValue = Math.min(config.MAX_PERCENT, Math.max(config.MIN_PERCENT, value))
 
-    setSettings({
+    return {
       layout: {
         ...settings.layout,
         [key]: {
@@ -339,7 +340,19 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
           },
         },
       },
-    })
+    }
+  }
+
+  const updatePercentWidthPreview = (key: "pageWidth" | "userQueryWidth", value: number) => {
+    const nextSettings = buildPercentWidthSettings(key, value)
+    if (!nextSettings) return
+    setPreviewSettings(nextSettings)
+  }
+
+  const updatePercentWidth = (key: "pageWidth" | "userQueryWidth", value: number) => {
+    const nextSettings = buildPercentWidthSettings(key, value)
+    if (!nextSettings) return
+    setSettings(nextSettings)
   }
 
   if (!settings) return null
@@ -394,10 +407,13 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
               <Slider
                 value={currentPageWidthValue}
                 onChange={(value) => updatePercentWidth("pageWidth", value)}
+                onPreviewChange={(value) => updatePercentWidthPreview("pageWidth", value)}
+                onCancelPreview={clearPreviewSettings}
                 min={LAYOUT_CONFIG.PAGE_WIDTH.MIN_PERCENT}
                 max={LAYOUT_CONFIG.PAGE_WIDTH.MAX_PERCENT}
                 step={1}
                 unit="%"
+                defaultValue={Number.parseInt(LAYOUT_CONFIG.PAGE_WIDTH.DEFAULT_PERCENT, 10)}
                 disabled={!currentPageWidth?.enabled}
                 formatValue={(value) => `${value}%`}
                 ariaLabel={t("pageWidthValueLabel") || "宽度值"}
@@ -438,10 +454,13 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
               <Slider
                 value={currentUserQueryWidthValue}
                 onChange={(value) => updatePercentWidth("userQueryWidth", value)}
+                onPreviewChange={(value) => updatePercentWidthPreview("userQueryWidth", value)}
+                onCancelPreview={clearPreviewSettings}
                 min={LAYOUT_CONFIG.USER_QUERY_WIDTH.MIN_PERCENT}
                 max={LAYOUT_CONFIG.USER_QUERY_WIDTH.MAX_PERCENT}
                 step={1}
                 unit="%"
+                defaultValue={Number.parseInt(LAYOUT_CONFIG.USER_QUERY_WIDTH.DEFAULT_PERCENT, 10)}
                 disabled={!currentUserQueryWidth?.enabled}
                 formatValue={(value) => `${value}%`}
                 ariaLabel={t("userQueryWidthValueLabel") || "问题宽度"}

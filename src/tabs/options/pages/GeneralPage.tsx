@@ -87,7 +87,14 @@ const SortableItem: React.FC<{
 
 const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }) => {
   const [activeTab, setActiveTab] = useState(initialTab || "panel")
-  const { settings, updateNestedSetting, updateDeepSetting } = useSettingsStore()
+  const {
+    settings,
+    setSettings,
+    setPreviewSettings,
+    clearPreviewSettings,
+    updateNestedSetting,
+    updateDeepSetting,
+  } = useSettingsStore()
 
   useEffect(() => {
     if (initialTab) {
@@ -105,21 +112,44 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
     null,
   )
 
+  const buildPanelPreview = (key: keyof typeof settings.panel, value: number) => ({
+    panel: {
+      ...settings.panel,
+      [key]: value,
+    },
+  })
+
   // 面板设置更新函数
+  const handleEdgeDistancePreview = (val: number) => {
+    setPreviewSettings(buildPanelPreview("defaultEdgeDistance", val))
+  }
+
   const handleEdgeDistanceChange = (val: number) => {
-    updateNestedSetting("panel", "defaultEdgeDistance", val)
+    setSettings(buildPanelPreview("defaultEdgeDistance", val))
+  }
+
+  const handleSnapThresholdPreview = (val: number) => {
+    setPreviewSettings(buildPanelPreview("edgeSnapThreshold", val))
   }
 
   const handleSnapThresholdChange = (val: number) => {
-    updateNestedSetting("panel", "edgeSnapThreshold", val)
+    setSettings(buildPanelPreview("edgeSnapThreshold", val))
+  }
+
+  const handleHeightPreview = (val: number) => {
+    setPreviewSettings(buildPanelPreview("height", val))
   }
 
   const handleHeightChange = (val: number) => {
-    updateNestedSetting("panel", "height", val)
+    setSettings(buildPanelPreview("height", val))
+  }
+
+  const handleWidthPreview = (val: number) => {
+    setPreviewSettings(buildPanelPreview("width", val))
   }
 
   const handleWidthChange = (val: number) => {
-    updateNestedSetting("panel", "width", val)
+    setSettings(buildPanelPreview("width", val))
   }
 
   // 处理拖拽开始
@@ -265,10 +295,13 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
             <Slider
               value={settings.panel?.defaultEdgeDistance ?? 25}
               onChange={handleEdgeDistanceChange}
+              onPreviewChange={handleEdgeDistancePreview}
+              onCancelPreview={clearPreviewSettings}
               min={0}
               max={400}
               step={5}
               unit="px"
+              defaultValue={25}
               formatValue={(value) => `${value}px`}
               ariaLabel={t("defaultEdgeDistanceLabel") || "默认边距"}
             />
@@ -282,10 +315,13 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
             <Slider
               value={settings.panel?.width ?? 320}
               onChange={handleWidthChange}
+              onPreviewChange={handleWidthPreview}
+              onCancelPreview={clearPreviewSettings}
               min={200}
               max={600}
               step={10}
               unit="px"
+              defaultValue={320}
               formatValue={(value) => `${value}px`}
               ariaLabel={t("panelWidthLabel") || "面板宽度"}
             />
@@ -299,10 +335,13 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
             <Slider
               value={settings.panel?.height ?? 85}
               onChange={handleHeightChange}
+              onPreviewChange={handleHeightPreview}
+              onCancelPreview={clearPreviewSettings}
               min={50}
               max={100}
               step={1}
               unit="vh"
+              defaultValue={85}
               formatValue={(value) => `${value}vh`}
               ariaLabel={t("panelHeightLabel") || "面板高度"}
             />
@@ -326,10 +365,13 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
             <Slider
               value={settings.panel?.edgeSnapThreshold ?? 18}
               onChange={handleSnapThresholdChange}
+              onPreviewChange={handleSnapThresholdPreview}
+              onCancelPreview={clearPreviewSettings}
               min={0}
               max={400}
               step={2}
               unit="px"
+              defaultValue={18}
               disabled={!settings.panel?.edgeSnap}
               formatValue={(value) => `${value}px`}
               ariaLabel={t("edgeSnapThresholdLabel") || "吸附触发距离"}

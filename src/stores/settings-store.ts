@@ -236,11 +236,15 @@ const storageAdapter: StateStorage = {
 interface SettingsState {
   // 状态
   settings: Settings
+  persistedSettings: Settings
+  previewSettings: Partial<Settings> | null
   _hasHydrated: boolean
   _syncVersion: number // 跨上下文同步版本号，每次同步时递增，用于强制 React 重渲染
 
   // Actions
   setSettings: (settings: Partial<Settings>) => void
+  setPreviewSettings: (settings: Partial<Settings> | null) => void
+  clearPreviewSettings: () => void
   updateNestedSetting: <K extends keyof Settings>(
     section: K,
     key: keyof Settings[K],
@@ -259,10 +263,20 @@ interface SettingsState {
 
 // ==================== Store 创建 ====================
 
+const buildEffectiveSettings = (
+  persistedSettings: Settings,
+  previewSettings: Partial<Settings> | null,
+): Settings =>
+  previewSettings
+    ? normalizeSettings({ ...persistedSettings, ...previewSettings })
+    : persistedSettings
+
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, _get) => ({
       settings: DEFAULT_SETTINGS,
+      persistedSettings: DEFAULT_SETTINGS,
+      previewSettings: null,
       _hasHydrated: false,
       _syncVersion: 0,
 
@@ -270,8 +284,35 @@ export const useSettingsStore = create<SettingsState>()(
        * 合并更新 settings
        */
       setSettings: (newSettings) =>
+        set((state) => {
+          const nextPersistedSettings = normalizeSettings({
+            ...state.persistedSettings,
+            ...newSettings,
+          })
+
+          return {
+            persistedSettings: nextPersistedSettings,
+            previewSettings: null,
+            settings: nextPersistedSettings,
+          }
+        }),
+
+      /**
+       * 设置临时预览 settings（不持久化）
+       */
+      setPreviewSettings: (previewSettings) =>
         set((state) => ({
-          settings: normalizeSettings({ ...state.settings, ...newSettings }),
+          previewSettings,
+          settings: buildEffectiveSettings(state.persistedSettings, previewSettings),
+        })),
+
+      /**
+       * 清除临时预览 settings
+       */
+      clearPreviewSettings: () =>
+        set((state) => ({
+          previewSettings: null,
+          settings: state.persistedSettings,
         })),
 
       /**
@@ -279,15 +320,21 @@ export const useSettingsStore = create<SettingsState>()(
        * 例如: updateNestedSetting("tab", "autoRename", true)
        */
       updateNestedSetting: (section, key, value) =>
-        set((state) => ({
-          settings: normalizeSettings({
-            ...state.settings,
+        set((state) => {
+          const nextPersistedSettings = normalizeSettings({
+            ...state.persistedSettings,
             [section]: {
-              ...(state.settings[section] as object),
+              ...(state.persistedSettings[section] as object),
               [key]: value,
             },
-          }),
-        })),
+          })
+
+          return {
+            persistedSettings: nextPersistedSettings,
+            previewSettings: null,
+            settings: nextPersistedSettings,
+          }
+        }),
 
       /**
        * 更新深层嵌套设置项（三层）
@@ -295,19 +342,23 @@ export const useSettingsStore = create<SettingsState>()(
        */
       updateDeepSetting: (section, subsection, key, value) =>
         set((state) => {
-          const sectionObj = state.settings[section] as Record<string, unknown>
+          const sectionObj = state.persistedSettings[section] as Record<string, unknown>
           const subsectionObj = (sectionObj?.[subsection] || {}) as Record<string, unknown>
-          return {
-            settings: normalizeSettings({
-              ...state.settings,
-              [section]: {
-                ...sectionObj,
-                [subsection]: {
-                  ...subsectionObj,
-                  [key]: value,
-                },
+          const nextPersistedSettings = normalizeSettings({
+            ...state.persistedSettings,
+            [section]: {
+              ...sectionObj,
+              [subsection]: {
+                ...subsectionObj,
+                [key]: value,
               },
-            }),
+            },
+          })
+
+          return {
+            persistedSettings: nextPersistedSettings,
+            previewSettings: null,
+            settings: nextPersistedSettings,
           }
         }),
 
@@ -315,16 +366,28 @@ export const useSettingsStore = create<SettingsState>()(
        * 完全替换 settings（用于 WebDAV 恢复等场景）
        */
       replaceSettings: (settings) =>
-        set({
-          settings: normalizeSettings({ ...DEFAULT_SETTINGS, ...settings }),
+        set(() => {
+          const nextPersistedSettings = normalizeSettings({ ...DEFAULT_SETTINGS, ...settings })
+
+          return {
+            persistedSettings: nextPersistedSettings,
+            previewSettings: null,
+            settings: nextPersistedSettings,
+          }
         }),
 
       /**
        * 重置为默认设置
        */
       resetSettings: () =>
-        set({
-          settings: normalizeSettings(DEFAULT_SETTINGS),
+        set(() => {
+          const nextPersistedSettings = normalizeSettings(DEFAULT_SETTINGS)
+
+          return {
+            persistedSettings: nextPersistedSettings,
+            previewSettings: null,
+            settings: nextPersistedSettings,
+          }
         }),
 
       /**
@@ -336,14 +399,16 @@ export const useSettingsStore = create<SettingsState>()(
       name: "settings", // chrome.storage key
       storage: createJSONStorage(() => storageAdapter),
       // 只持久化 settings，不持久化 _hasHydrated
-      partialize: (state) => ({ settings: state.settings }),
+      partialize: (state) => ({ settings: state.persistedSettings }),
       // Hydration 完成回调
       onRehydrateStorage: () => (state) => {
         if (state) {
           const normalizedSettings = normalizeSettings(state.settings)
-          if (sortedStringify(normalizedSettings) !== sortedStringify(state.settings)) {
-            useSettingsStore.setState({ settings: normalizedSettings })
-          }
+          useSettingsStore.setState({
+            persistedSettings: normalizedSettings,
+            previewSettings: null,
+            settings: normalizedSettings,
+          })
         }
         // 首次空存储时，persist 可能不会把 state 实例传入回调。
         // 这里直接用 store.setState 兜底，确保 userscript / extension 都能结束 hydration。
@@ -365,6 +430,11 @@ export const useSettingsHydrated = () => useSettingsStore((state) => state._hasH
  * 只订阅 settings 的便捷 Hook
  */
 export const useSettings = () => useSettingsStore((state) => state.settings)
+
+/**
+ * 只订阅已持久化的 settings（不包含预览态）
+ */
+export const usePersistedSettings = () => useSettingsStore((state) => state.persistedSettings)
 
 // ==================== 非 React 环境使用 ====================
 
@@ -416,10 +486,12 @@ if (isExtension) {
       if (newSettings) {
         const normalizedIncomingSettings = normalizeSettings(newSettings)
         const currentState = useSettingsStore.getState()
-        const currentSettings = currentState.settings
+        const currentPersistedSettings = currentState.persistedSettings
         // 仅当设置确实发生变化时更新（避免循环更新）
 
-        if (sortedStringify(currentSettings) !== sortedStringify(normalizedIncomingSettings)) {
+        if (
+          sortedStringify(currentPersistedSettings) !== sortedStringify(normalizedIncomingSettings)
+        ) {
           // 标记为来自 Storage 的更新，防止回写导致死循环
           isUpdatingFromStorage = true
 
@@ -427,7 +499,11 @@ if (isExtension) {
             // 同时更新 settings 和递增 _syncVersion
             // _syncVersion 变化会强制触发所有订阅它的 React 组件重渲染
             useSettingsStore.setState({
-              settings: normalizedIncomingSettings,
+              persistedSettings: normalizedIncomingSettings,
+              settings: buildEffectiveSettings(
+                normalizedIncomingSettings,
+                currentState.previewSettings,
+              ),
               _syncVersion: currentState._syncVersion + 1,
             })
           } finally {
@@ -440,7 +516,7 @@ if (isExtension) {
           // 同步更新 i18n 模块的语言设置
           if (
             normalizedIncomingSettings.language &&
-            normalizedIncomingSettings.language !== currentSettings.language
+            normalizedIncomingSettings.language !== currentPersistedSettings.language
           ) {
             import("~utils/i18n")
               .then(({ setLanguage }) => {
