@@ -194,9 +194,9 @@ export interface Settings {
 
   // 布局设置（页面宽度、用户问题宽度等）
   layout: {
-    pageWidth: Record<SiteId, PageWidthConfig>
-    userQueryWidth: Record<SiteId, PageWidthConfig>
-    zenMode?: Record<SiteId, ZenModeConfig>
+    pageWidth: Record<string, PageWidthConfig>
+    userQueryWidth: Record<string, PageWidthConfig>
+    zenMode?: Record<string, ZenModeConfig>
   }
 
   // 模型锁定（按站点独立）
@@ -607,7 +607,7 @@ export function getSiteTheme(settings: Settings, siteId: string): SiteThemeConfi
 export function getSitePageWidth(settings: Settings, siteId: string): PageWidthConfig {
   const pageWidth = settings.layout?.pageWidth
   if (pageWidth && siteId in pageWidth) {
-    return pageWidth[siteId as SiteId]
+    return pageWidth[siteId]
   }
   return pageWidth?._default ?? DEFAULT_PAGE_WIDTH
 }
@@ -619,7 +619,7 @@ export function getSiteModelLock(settings: Settings, siteId: string): ModelLockC
 export function getSiteUserQueryWidth(settings: Settings, siteId: string): PageWidthConfig {
   const userQueryWidth = settings.layout?.userQueryWidth
   if (userQueryWidth && siteId in userQueryWidth) {
-    return userQueryWidth[siteId as SiteId]
+    return userQueryWidth[siteId]
   }
   return userQueryWidth?._default ?? DEFAULT_USER_QUERY_WIDTH
 }
@@ -627,7 +627,7 @@ export function getSiteUserQueryWidth(settings: Settings, siteId: string): PageW
 export function getSiteZenMode(settings: Settings, siteId: string): ZenModeConfig {
   const zenMode = settings.layout?.zenMode
   if (zenMode && siteId in zenMode) {
-    return zenMode[siteId as SiteId]
+    return zenMode[siteId]
   }
   return zenMode?._default ?? DEFAULT_ZEN_MODE
 }

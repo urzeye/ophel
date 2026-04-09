@@ -17,7 +17,6 @@ import {
   type QuickButtonConfig,
   type QuickButtonsPosition,
   type Settings,
-  type SiteId,
 } from "~utils/storage"
 
 import { chromeStorageAdapter } from "./chrome-adapter"
@@ -157,14 +156,16 @@ const normalizePercentWidthConfig = (
 }
 
 const normalizeWidthRecord = (
-  record: Partial<Record<SiteId, Partial<PageWidthConfig>>> | undefined,
+  record: Record<string, Partial<PageWidthConfig>> | undefined,
   kind: WidthConfigKind,
-  fallback: Record<SiteId, PageWidthConfig>,
-): Record<SiteId, PageWidthConfig> => {
-  const result = { ...fallback } as Record<SiteId, PageWidthConfig>
+  fallback: Record<string, PageWidthConfig>,
+): Record<string, PageWidthConfig> => {
+  const result: Record<string, PageWidthConfig> = { ...fallback }
+  const siteIds = new Set([...Object.keys(fallback), ...Object.keys(record ?? {})])
 
-  ;(Object.keys(fallback) as SiteId[]).forEach((siteId) => {
-    result[siteId] = normalizePercentWidthConfig(record?.[siteId], kind)
+  // 归一化时同时保留已保存的站点键，避免新增/未列入默认表的站点配置被覆盖丢失。
+  siteIds.forEach((siteId) => {
+    result[siteId] = normalizePercentWidthConfig(record?.[siteId] ?? fallback[siteId], kind)
   })
 
   return result
