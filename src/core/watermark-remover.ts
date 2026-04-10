@@ -17,6 +17,26 @@ type WatermarkConfig = {
   marginBottom: number
 }
 
+type WatermarkPosition = {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+type WatermarkDetectionMetrics = {
+  insideMean: number
+  outsideMean: number
+  score: number
+}
+
+type WatermarkCandidate = {
+  config: WatermarkConfig
+  position: WatermarkPosition
+  alphaMap: Float32Array
+  metrics: WatermarkDetectionMetrics
+}
+
 // 油猴脚本的 GM_xmlhttpRequest 声明
 declare function GM_xmlhttpRequest(details: {
   method: string
@@ -59,9 +79,17 @@ export class WatermarkRemover {
     96: "assets/userscript/ophel-watermark-bg-96.png",
   }
 
+  static WATERMARK_CONFIGS: readonly WatermarkConfig[] = [
+    { logoSize: 48, marginRight: 32, marginBottom: 32 },
+    { logoSize: 96, marginRight: 64, marginBottom: 64 },
+  ]
   static ALPHA_THRESHOLD = 0.002
   static MAX_ALPHA = 0.99
   static LOGO_VALUE = 255
+  static DETECTION_MIN_SCORE = 0.035
+  static DETECTION_MIN_IMPROVEMENT = 0.015
+  static DETECTION_MAX_DARKENING = 0.12
+  static MAX_VALIDATION_CANDIDATES = 4
   private alphaMaps: Record<number, Float32Array> = {}
   private bgImages: Record<number, HTMLImageElement> = {}
   private processingQueue = new Set<string>()
@@ -748,18 +776,21 @@ export class WatermarkRemover {
     }
   }
 
-  private detectWatermarkConfig(imageWidth: number, imageHeight: number): WatermarkConfig {
-    if (imageWidth > 1024 && imageHeight > 1024) {
-      return { logoSize: 96, marginRight: 64, marginBottom: 64 }
-    }
-    return { logoSize: 48, marginRight: 32, marginBottom: 32 }
+  private getCandidateWatermarkConfigs(
+    imageWidth: number,
+    imageHeight: number,
+  ): readonly WatermarkConfig[] {
+    const preferredLarge = imageWidth > 1024 && imageHeight > 1024
+    return preferredLarge
+      ? [WatermarkRemover.WATERMARK_CONFIGS[1], WatermarkRemover.WATERMARK_CONFIGS[0]]
+      : [WatermarkRemover.WATERMARK_CONFIGS[0], WatermarkRemover.WATERMARK_CONFIGS[1]]
   }
 
   private calculateWatermarkPosition(
     imageWidth: number,
     imageHeight: number,
     config: WatermarkConfig,
-  ) {
+  ): WatermarkPosition {
     const { logoSize, marginRight, marginBottom } = config
     return {
       x: imageWidth - marginRight - logoSize,
@@ -767,6 +798,192 @@ export class WatermarkRemover {
       width: logoSize,
       height: logoSize,
     }
+  }
+
+  private cloneImageData(imageData: ImageData): ImageData {
+    return new ImageData(new Uint8ClampedArray(imageData.data), imageData.width, imageData.height)
+  }
+
+  private isWatermarkPositionInsideImage(
+    imageWidth: number,
+    imageHeight: number,
+    position: WatermarkPosition,
+  ): boolean {
+    return (
+      position.x >= 0 &&
+      position.y >= 0 &&
+      position.x + position.width <= imageWidth &&
+      position.y + position.height <= imageHeight
+    )
+  }
+
+  private getPixelLuminance(data: Uint8ClampedArray, idx: number): number {
+    return (data[idx] * 0.2126 + data[idx + 1] * 0.7152 + data[idx + 2] * 0.0722) / 255
+  }
+
+  private getWatermarkSearchOffsets(logoSize: 48 | 96): number[] {
+    const step = logoSize === 96 ? 12 : 8
+    const radius = logoSize === 96 ? 24 : 16
+    const offsets = [0]
+
+    for (let offset = step; offset <= radius; offset += step) {
+      offsets.push(-offset, offset)
+    }
+
+    return offsets
+  }
+
+  private measureWatermarkCandidate(
+    imageData: ImageData,
+    alphaMap: Float32Array,
+    position: WatermarkPosition,
+  ): WatermarkDetectionMetrics {
+    let insideWeightedSum = 0
+    let insideWeight = 0
+
+    for (let row = 0; row < position.height; row++) {
+      for (let col = 0; col < position.width; col++) {
+        const alpha = alphaMap[row * position.width + col]
+        if (alpha < WatermarkRemover.ALPHA_THRESHOLD) continue
+
+        const pixelIdx = ((position.y + row) * imageData.width + (position.x + col)) * 4
+        const luminance = this.getPixelLuminance(imageData.data, pixelIdx)
+        const weight = alpha * alpha
+        insideWeightedSum += luminance * weight
+        insideWeight += weight
+      }
+    }
+
+    const insideMean = insideWeight > 0 ? insideWeightedSum / insideWeight : 0
+    const samplePadding = Math.max(8, Math.round(position.width / 4))
+    const sampleStartX = Math.max(0, position.x - samplePadding)
+    const sampleStartY = Math.max(0, position.y - samplePadding)
+    const sampleEndX = Math.min(imageData.width, position.x + position.width + samplePadding)
+    const sampleEndY = Math.min(imageData.height, position.y + position.height + samplePadding)
+    let outsideSum = 0
+    let outsideCount = 0
+
+    for (let y = sampleStartY; y < sampleEndY; y++) {
+      for (let x = sampleStartX; x < sampleEndX; x++) {
+        const insideRegion =
+          x >= position.x &&
+          x < position.x + position.width &&
+          y >= position.y &&
+          y < position.y + position.height
+
+        if (insideRegion) continue
+
+        const pixelIdx = (y * imageData.width + x) * 4
+        outsideSum += this.getPixelLuminance(imageData.data, pixelIdx)
+        outsideCount += 1
+      }
+    }
+
+    const outsideMean = outsideCount > 0 ? outsideSum / outsideCount : insideMean
+    return {
+      insideMean,
+      outsideMean,
+      score: insideMean - outsideMean,
+    }
+  }
+
+  private isWatermarkRemovalValid(
+    before: WatermarkDetectionMetrics,
+    after: WatermarkDetectionMetrics,
+  ): boolean {
+    const improvement = before.score - after.score
+    const maxResidualScore = Math.max(before.score * 0.65, 0.018)
+    const darkening = before.outsideMean - after.insideMean
+
+    return (
+      before.score >= WatermarkRemover.DETECTION_MIN_SCORE &&
+      improvement >= WatermarkRemover.DETECTION_MIN_IMPROVEMENT &&
+      after.score <= maxResidualScore &&
+      darkening <= WatermarkRemover.DETECTION_MAX_DARKENING
+    )
+  }
+
+  private async buildWatermarkCandidates(imageData: ImageData): Promise<WatermarkCandidate[]> {
+    const configs = this.getCandidateWatermarkConfigs(imageData.width, imageData.height)
+    const alphaMaps = await Promise.all(configs.map((config) => this.getAlphaMap(config.logoSize)))
+    const candidates: WatermarkCandidate[] = []
+    const seenPositions = new Set<string>()
+
+    configs.forEach((config, configIndex) => {
+      const basePosition = this.calculateWatermarkPosition(
+        imageData.width,
+        imageData.height,
+        config,
+      )
+      const offsets = this.getWatermarkSearchOffsets(config.logoSize)
+      const alphaMap = alphaMaps[configIndex]
+
+      for (const offsetY of offsets) {
+        for (const offsetX of offsets) {
+          const position: WatermarkPosition = {
+            x: basePosition.x + offsetX,
+            y: basePosition.y + offsetY,
+            width: basePosition.width,
+            height: basePosition.height,
+          }
+
+          if (!this.isWatermarkPositionInsideImage(imageData.width, imageData.height, position)) {
+            continue
+          }
+
+          const key = `${position.x}:${position.y}:${position.width}`
+          if (seenPositions.has(key)) continue
+          seenPositions.add(key)
+
+          candidates.push({
+            config,
+            position,
+            alphaMap,
+            metrics: this.measureWatermarkCandidate(imageData, alphaMap, position),
+          })
+        }
+      }
+    })
+
+    candidates.sort((a, b) => {
+      if (b.metrics.score !== a.metrics.score) {
+        return b.metrics.score - a.metrics.score
+      }
+
+      return a.config.logoSize - b.config.logoSize
+    })
+
+    return candidates
+  }
+
+  private async resolveValidatedWatermarkRemoval(imageData: ImageData): Promise<ImageData | null> {
+    const candidates = await this.buildWatermarkCandidates(imageData)
+    let validatedAttempts = 0
+
+    for (const candidate of candidates) {
+      if (candidate.metrics.score < WatermarkRemover.DETECTION_MIN_SCORE) {
+        break
+      }
+
+      const nextImageData = this.cloneImageData(imageData)
+      this.removeWatermark(nextImageData, candidate.alphaMap, candidate.position)
+      const afterMetrics = this.measureWatermarkCandidate(
+        nextImageData,
+        candidate.alphaMap,
+        candidate.position,
+      )
+
+      if (this.isWatermarkRemovalValid(candidate.metrics, afterMetrics)) {
+        return nextImageData
+      }
+
+      validatedAttempts += 1
+      if (validatedAttempts >= WatermarkRemover.MAX_VALIDATION_CANDIDATES) {
+        break
+      }
+    }
+
+    return null
   }
 
   private getWatermarkBgUrl(size: 48 | 96): string {
@@ -981,11 +1198,11 @@ export class WatermarkRemover {
     ctx.drawImage(loadedImg, 0, 0)
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-    const config = this.detectWatermarkConfig(canvas.width, canvas.height)
-    const position = this.calculateWatermarkPosition(canvas.width, canvas.height, config)
-    const alphaMap = await this.getAlphaMap(config.logoSize)
-    this.removeWatermark(imageData, alphaMap, position)
-    ctx.putImageData(imageData, 0, 0)
+    const processedImageData = await this.resolveValidatedWatermarkRemoval(imageData)
+
+    if (processedImageData) {
+      ctx.putImageData(processedImageData, 0, 0)
+    }
 
     return canvas.toDataURL("image/png")
   }
