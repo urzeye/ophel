@@ -1910,10 +1910,18 @@ export const App = () => {
   // 动态注册主题变化回调，当页面主题变化时同步更新 settings
   // 注意：themeMode 由 useSyncExternalStore 自动订阅更新，不需要手动 setThemeMode
   useEffect(() => {
+    if (!isSettingsHydrated) {
+      return
+    }
+
     const handleThemeModeChange = (
       mode: "light" | "dark",
       preference?: "light" | "dark" | "system",
     ) => {
+      if (!useSettingsStore.getState()._hasHydrated) {
+        return
+      }
+
       const nextPreference = preference || mode
       // 使用 ref 获取最新 settings，避免闭包捕获过期值
       const currentSettings = settingsRef.current
@@ -1952,7 +1960,7 @@ export const App = () => {
     return () => {
       themeManager.setOnModeChange(undefined)
     }
-  }, [themeManager, setSettings]) // 移除 settings?.theme 依赖，通过 ref 访问最新值
+  }, [themeManager, setSettings, isSettingsHydrated]) // 移除 settings?.theme 依赖，通过 ref 访问最新值
 
   const themeSites = settings?.theme?.sites
   const syncUnpin = settings?.features?.conversations?.syncUnpin
@@ -2010,6 +2018,10 @@ export const App = () => {
 
   // 启动主题监听器
   useEffect(() => {
+    if (!isSettingsHydrated) {
+      return
+    }
+
     // 不再调用 updateMode，由 main.ts 负责初始应用
     // 只启动监听器，监听页面主题变化（浏览器自动切换等场景）
     themeManager.monitorTheme()
@@ -2018,7 +2030,7 @@ export const App = () => {
       // 清理监听器
       themeManager.stopMonitoring()
     }
-  }, [themeManager])
+  }, [themeManager, isSettingsHydrated])
 
   // 初始化
   useEffect(() => {
