@@ -638,7 +638,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                     options?: IdleRequestOptions,
                   ) => number
                 }
-              ).requestIdleCallback
+              ).requestIdleCallback?.bind(window)
             : undefined
 
         if (requestIdle) {
@@ -756,8 +756,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       if (idleHandle !== null) {
         const cancelIdle =
           typeof window !== "undefined"
-            ? (window as Window & { cancelIdleCallback?: (handle: number) => void })
-                .cancelIdleCallback
+            ? (
+                window as Window & { cancelIdleCallback?: (handle: number) => void }
+              ).cancelIdleCallback?.bind(window)
             : undefined
         if (cancelIdle) {
           cancelIdle(idleHandle)
