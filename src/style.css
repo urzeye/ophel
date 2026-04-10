@@ -1487,6 +1487,7 @@
   position: fixed;
   right: max(24px, env(safe-area-inset-right));
   bottom: max(24px, env(safe-area-inset-bottom));
+  z-index: 2147483645;
   width: min(380px, calc(100vw - 32px));
   padding: 20px 24px;
   border-radius: 20px;
