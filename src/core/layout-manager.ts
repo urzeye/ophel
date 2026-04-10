@@ -174,6 +174,7 @@ export class LayoutManager {
       property: string
       globalSelector?: string
       value?: string
+      transformValue?: (value: string) => string
       extraCss?: string
       noCenter?: boolean
     }>,
@@ -182,8 +183,10 @@ export class LayoutManager {
   ): string {
     return selectors
       .map((config) => {
-        const { selector, globalSelector, property, value, extraCss, noCenter } = config
-        const finalWidth = value || globalWidth
+        const { selector, globalSelector, property, value, transformValue, extraCss, noCenter } =
+          config
+        const rawWidth = value || globalWidth
+        const finalWidth = transformValue ? transformValue(rawWidth) : rawWidth
         const targetSelector = useGlobalSelector ? globalSelector || selector : selector
         const centerCss = noCenter
           ? ""

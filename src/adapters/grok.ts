@@ -1121,15 +1121,37 @@ export class GrokAdapter extends SiteAdapter {
 
   // ==================== 页面宽度控制 ====================
 
-  // ==================== 页面宽度控制 ====================
+  private normalizeContentMaxWidth(width: string): string {
+    const trimmed = width.trim()
+    if (!trimmed.endsWith("%")) {
+      return trimmed
+    }
+
+    const numeric = Number.parseFloat(trimmed)
+    if (!Number.isFinite(numeric)) {
+      return trimmed
+    }
+
+    // Grok 会在多个嵌套节点上消费 --content-max-width。
+    // 若直接写入百分比，max-width 会按父容器层层递减，导致最新消息明显更窄。
+    // 这里转成基于视口的绝对长度，避免嵌套百分比叠缩。
+    return `min(${numeric}vw, calc(100vw - 32px))`
+  }
 
   getWidthSelectors() {
     // Grok 使用 CSS 变量 --content-max-width 控制主内容区域宽度
-    // 该变量定义在包含响应式断点的容器上
+    // 该变量定义在包含响应式断点的外层容器上。
+    // 不能命中内部的 max-w-[--content-max-width] 消费节点，否则会造成最新消息宽度异常收缩。
     return [
       {
-        selector: '[class*="--content-max-width"]',
+        selector: '[class*="[--content-max-width:"]',
         property: "--content-max-width",
+        transformValue: (width) => this.normalizeContentMaxWidth(width),
+      },
+      {
+        selector: '[style*="--content-max-width"]',
+        property: "--content-max-width",
+        transformValue: (width) => this.normalizeContentMaxWidth(width),
       },
     ]
   }
@@ -1141,6 +1163,10 @@ export class GrokAdapter extends SiteAdapter {
       {
         selector: ".message-bubble.rounded-br-lg",
         property: "max-width",
+        // LayoutManager 默认会为用户提问追加左右 auto 居中。
+        // Grok 的用户气泡需要保持右对齐，否则加宽后会跑到中间。
+        noCenter: true,
+        extraCss: "margin-left: auto !important; margin-right: 0 !important;",
       },
     ]
   }
