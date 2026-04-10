@@ -9,6 +9,7 @@ const OPHEL_WATERMARK_FETCH_TOGGLE = "OPHEL_WATERMARK_FETCH_TOGGLE"
 const OPHEL_WATERMARK_PROCESS_REQUEST = "OPHEL_WATERMARK_PROCESS_REQUEST"
 const OPHEL_WATERMARK_PROCESS_RESPONSE = "OPHEL_WATERMARK_PROCESS_RESPONSE"
 const GEMINI_GOOGLEUSERCONTENT_HOST_PATTERN = /^https:\/\/lh3\.googleusercontent\.com\//i
+const WATERMARK_NOT_DETECTED_ERROR = "watermark-not-detected"
 
 type GeminiImageAction = "copy" | "download"
 type WatermarkConfig = {
@@ -28,6 +29,7 @@ type WatermarkDetectionMetrics = {
   insideMean: number
   outsideMean: number
   score: number
+  normalizedScore: number
 }
 
 type WatermarkCandidate = {
@@ -35,6 +37,11 @@ type WatermarkCandidate = {
   position: WatermarkPosition
   alphaMap: Float32Array
   metrics: WatermarkDetectionMetrics
+}
+
+type ProcessedImageResult = {
+  dataUrl: string
+  watermarkRemoved: boolean
 }
 
 // 油猴脚本的 GM_xmlhttpRequest 声明
@@ -86,14 +93,16 @@ export class WatermarkRemover {
   static ALPHA_THRESHOLD = 0.002
   static MAX_ALPHA = 0.99
   static LOGO_VALUE = 255
-  static DETECTION_MIN_SCORE = 0.035
-  static DETECTION_MIN_IMPROVEMENT = 0.015
+  static DETECTION_MIN_SCORE = 0.012
+  static DETECTION_MIN_NORMALIZED_SCORE = 0.09
+  static DETECTION_MIN_IMPROVEMENT = 0.01
+  static DETECTION_MIN_NORMALIZED_IMPROVEMENT = 0.04
   static DETECTION_MAX_DARKENING = 0.12
   static MAX_VALIDATION_CANDIDATES = 4
   private alphaMaps: Record<number, Float32Array> = {}
   private bgImages: Record<number, HTMLImageElement> = {}
   private processingQueue = new Set<string>()
-  private processingMap = new Map<string, Promise<string>>()
+  private processingMap = new Map<string, Promise<ProcessedImageResult>>()
   private processedDataUrlCache = new Map<string, string>()
   private enabled = false
   private stopObserver: (() => void) | null = null
@@ -337,14 +346,16 @@ export class WatermarkRemover {
         ? new Blob([sourceArrayBuffer], { type: sourceMimeType || "image/png" })
         : undefined
 
-      const dataUrl = sourceBlob
-        ? await this.processImageBlobToDataUrl(sourceBlob)
-        : await this.getProcessedDataUrl(sourceUrl)
+      const processedImage = sourceBlob
+        ? this.ensureWatermarkRemoved(await this.processImageBlobToDataUrl(sourceBlob))
+        : await this.getProcessedImageResult(sourceUrl, {
+            requireWatermarkRemoval: true,
+          })
 
       this.postMainWorldProcessResponse({
         requestId,
         success: true,
-        dataUrl,
+        dataUrl: processedImage.dataUrl,
       })
     } catch (error) {
       this.postMainWorldProcessResponse({
@@ -377,8 +388,10 @@ export class WatermarkRemover {
       }
 
       try {
-        const dataUrl = await this.getProcessedDataUrl(requestUrl)
-        const processedBlob = await this.dataUrlToBlob(dataUrl)
+        const processedImage = await this.getProcessedImageResult(requestUrl, {
+          requireWatermarkRemoval: true,
+        })
+        const processedBlob = await this.dataUrlToBlob(processedImage.dataUrl)
         return new Response(processedBlob, {
           status: 200,
           statusText: "OK",
@@ -609,16 +622,12 @@ export class WatermarkRemover {
     return blobFallback || dataFallback || ""
   }
 
-  private async resolveActionDataUrl(source: string): Promise<string> {
-    if (source.startsWith("data:image/")) {
-      return source
-    }
-
-    if (source.startsWith("blob:")) {
+  private async resolveActionImage(source: string): Promise<ProcessedImageResult> {
+    if (source.startsWith("data:image/") || source.startsWith("blob:")) {
       return this.processImageSourceToDataUrl(source)
     }
 
-    return this.getProcessedDataUrl(source)
+    return this.getProcessedImageResult(source)
   }
 
   private async writeImageToClipboard(dataUrl: string) {
@@ -655,27 +664,23 @@ export class WatermarkRemover {
     )
   }
 
-  private async resolveProcessedDataUrlForAction(
+  private async resolveProcessedImageForAction(
     source: string,
     action: GeminiImageAction,
-  ): Promise<string> {
-    if (source.startsWith("data:image/")) {
-      return source
-    }
-
-    if (source.startsWith("blob:")) {
-      return this.resolveActionDataUrl(source)
+  ): Promise<ProcessedImageResult> {
+    if (source.startsWith("data:image/") || source.startsWith("blob:")) {
+      return this.resolveActionImage(source)
     }
 
     try {
-      return await this.getProcessedDataUrl(source, {
+      return await this.getProcessedImageResult(source, {
         bypassCache: true,
         requireNonPreviewSource: true,
       })
     } catch (error) {
       const message = error instanceof Error ? error.message : ""
       if (action === "copy" && message === "fullsize-source-unavailable") {
-        return this.getProcessedDataUrl(source, {
+        return this.getProcessedImageResult(source, {
           bypassCache: true,
           requireNonPreviewSource: false,
         })
@@ -716,23 +721,16 @@ export class WatermarkRemover {
     event.stopImmediatePropagation()
 
     try {
-      const processedDataUrl = await this.resolveProcessedDataUrlForAction(
-        source,
-        actionInfo.action,
-      )
+      const processedImage = await this.resolveProcessedImageForAction(source, actionInfo.action)
 
-      if (!processedDataUrl) {
-        return
-      }
-
-      if (relatedImage) {
+      if (relatedImage && processedImage.watermarkRemoved) {
         relatedImage.setAttribute("data-ophel-wm-processed", "1")
       }
 
       if (actionInfo.action === "copy") {
-        await this.writeImageToClipboard(processedDataUrl)
+        await this.writeImageToClipboard(processedImage.dataUrl)
       } else {
-        this.triggerDownloadFromDataUrl(processedDataUrl)
+        this.triggerDownloadFromDataUrl(processedImage.dataUrl)
       }
     } catch {
       return
@@ -880,11 +878,21 @@ export class WatermarkRemover {
     }
 
     const outsideMean = outsideCount > 0 ? outsideSum / outsideCount : insideMean
+    const score = insideMean - outsideMean
+    const headroom = Math.max(0.08, 1 - Math.min(outsideMean, 0.98))
     return {
       insideMean,
       outsideMean,
-      score: insideMean - outsideMean,
+      score,
+      normalizedScore: score / headroom,
     }
+  }
+
+  private hasDetectableWatermark(metrics: WatermarkDetectionMetrics): boolean {
+    return (
+      metrics.score >= WatermarkRemover.DETECTION_MIN_SCORE ||
+      metrics.normalizedScore >= WatermarkRemover.DETECTION_MIN_NORMALIZED_SCORE
+    )
   }
 
   private isWatermarkRemovalValid(
@@ -892,13 +900,17 @@ export class WatermarkRemover {
     after: WatermarkDetectionMetrics,
   ): boolean {
     const improvement = before.score - after.score
+    const normalizedImprovement = before.normalizedScore - after.normalizedScore
     const maxResidualScore = Math.max(before.score * 0.65, 0.018)
+    const maxResidualNormalizedScore = Math.max(before.normalizedScore * 0.65, 0.05)
     const darkening = before.outsideMean - after.insideMean
 
     return (
-      before.score >= WatermarkRemover.DETECTION_MIN_SCORE &&
-      improvement >= WatermarkRemover.DETECTION_MIN_IMPROVEMENT &&
+      this.hasDetectableWatermark(before) &&
+      (improvement >= WatermarkRemover.DETECTION_MIN_IMPROVEMENT ||
+        normalizedImprovement >= WatermarkRemover.DETECTION_MIN_NORMALIZED_IMPROVEMENT) &&
       after.score <= maxResidualScore &&
+      after.normalizedScore <= maxResidualNormalizedScore &&
       darkening <= WatermarkRemover.DETECTION_MAX_DARKENING
     )
   }
@@ -946,6 +958,10 @@ export class WatermarkRemover {
     })
 
     candidates.sort((a, b) => {
+      if (b.metrics.normalizedScore !== a.metrics.normalizedScore) {
+        return b.metrics.normalizedScore - a.metrics.normalizedScore
+      }
+
       if (b.metrics.score !== a.metrics.score) {
         return b.metrics.score - a.metrics.score
       }
@@ -961,7 +977,7 @@ export class WatermarkRemover {
     let validatedAttempts = 0
 
     for (const candidate of candidates) {
-      if (candidate.metrics.score < WatermarkRemover.DETECTION_MIN_SCORE) {
+      if (!this.hasDetectableWatermark(candidate.metrics)) {
         break
       }
 
@@ -984,6 +1000,14 @@ export class WatermarkRemover {
     }
 
     return null
+  }
+
+  private ensureWatermarkRemoved(result: ProcessedImageResult): ProcessedImageResult {
+    if (result.watermarkRemoved) {
+      return result
+    }
+
+    throw new Error(WATERMARK_NOT_DETECTED_ERROR)
   }
 
   private getWatermarkBgUrl(size: 48 | 96): string {
@@ -1188,7 +1212,9 @@ export class WatermarkRemover {
     throw lastError instanceof Error ? lastError : new Error("Failed to fetch original image")
   }
 
-  private async processLoadedImageToDataUrl(loadedImg: HTMLImageElement): Promise<string> {
+  private async processLoadedImageToDataUrl(
+    loadedImg: HTMLImageElement,
+  ): Promise<ProcessedImageResult> {
     const canvas = document.createElement("canvas")
     canvas.width = loadedImg.width
     canvas.height = loadedImg.height
@@ -1199,20 +1225,24 @@ export class WatermarkRemover {
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
     const processedImageData = await this.resolveValidatedWatermarkRemoval(imageData)
+    const watermarkRemoved = !!processedImageData
 
     if (processedImageData) {
       ctx.putImageData(processedImageData, 0, 0)
     }
 
-    return canvas.toDataURL("image/png")
+    return {
+      dataUrl: canvas.toDataURL("image/png"),
+      watermarkRemoved,
+    }
   }
 
-  private async processImageSourceToDataUrl(source: string): Promise<string> {
+  private async processImageSourceToDataUrl(source: string): Promise<ProcessedImageResult> {
     const loadedImg = await this.loadImageFromSource(source)
     return this.processLoadedImageToDataUrl(loadedImg)
   }
 
-  private async processImageBlobToDataUrl(blob: Blob): Promise<string> {
+  private async processImageBlobToDataUrl(blob: Blob): Promise<ProcessedImageResult> {
     const blobUrl = URL.createObjectURL(blob)
     try {
       return await this.processImageSourceToDataUrl(blobUrl)
@@ -1221,19 +1251,41 @@ export class WatermarkRemover {
     }
   }
 
-  private async getProcessedDataUrl(
-    sourceUrl: string,
-    options?: { bypassCache?: boolean; requireNonPreviewSource?: boolean },
-  ): Promise<string> {
-    const normalizedSourceUrl = this.replaceWithNormalSize(sourceUrl)
+  private buildProcessingCacheKey(
+    normalizedSourceUrl: string,
+    options?: {
+      requireNonPreviewSource?: boolean
+      requireWatermarkRemoval?: boolean
+    },
+  ): string {
+    const previewMode = options?.requireNonPreviewSource ? "fullsize" : "any"
+    const detectionMode = options?.requireWatermarkRemoval ? "required" : "optional"
+    return `${normalizedSourceUrl}|${previewMode}|${detectionMode}`
+  }
 
-    if (!options?.bypassCache) {
+  private async getProcessedImageResult(
+    sourceUrl: string,
+    options?: {
+      bypassCache?: boolean
+      requireNonPreviewSource?: boolean
+      requireWatermarkRemoval?: boolean
+    },
+  ): Promise<ProcessedImageResult> {
+    const normalizedSourceUrl = this.replaceWithNormalSize(sourceUrl)
+    const processingKey = this.buildProcessingCacheKey(normalizedSourceUrl, options)
+
+    if (!options?.bypassCache && !options?.requireNonPreviewSource) {
       const cached = this.processedDataUrlCache.get(normalizedSourceUrl)
-      if (cached) return cached
+      if (cached) {
+        return {
+          dataUrl: cached,
+          watermarkRemoved: true,
+        }
+      }
     }
 
     if (!options?.bypassCache) {
-      const inFlight = this.processingMap.get(normalizedSourceUrl)
+      const inFlight = this.processingMap.get(processingKey)
       if (inFlight) return inFlight
     }
 
@@ -1241,9 +1293,18 @@ export class WatermarkRemover {
       const originalBlob = await this.fetchOriginalBlob(normalizedSourceUrl, {
         requireNonPreviewSource: options?.requireNonPreviewSource,
       })
-      const processedDataUrl = await this.processImageBlobToDataUrl(originalBlob)
-      if (!options?.bypassCache) {
-        this.processedDataUrlCache.set(normalizedSourceUrl, processedDataUrl)
+      const processedImage = await this.processImageBlobToDataUrl(originalBlob)
+
+      if (options?.requireWatermarkRemoval) {
+        this.ensureWatermarkRemoved(processedImage)
+      }
+
+      if (
+        !options?.bypassCache &&
+        !options?.requireNonPreviewSource &&
+        processedImage.watermarkRemoved
+      ) {
+        this.processedDataUrlCache.set(normalizedSourceUrl, processedImage.dataUrl)
         if (this.processedDataUrlCache.size > 100) {
           const oldestKey = this.processedDataUrlCache.keys().next().value
           if (oldestKey) {
@@ -1251,15 +1312,15 @@ export class WatermarkRemover {
           }
         }
       }
-      return processedDataUrl
+      return processedImage
     })()
 
     if (!options?.bypassCache) {
-      this.processingMap.set(normalizedSourceUrl, processing)
+      this.processingMap.set(processingKey, processing)
       try {
         return await processing
       } finally {
-        this.processingMap.delete(normalizedSourceUrl)
+        this.processingMap.delete(processingKey)
       }
     }
 
@@ -1277,13 +1338,32 @@ export class WatermarkRemover {
   private findGeminiImages() {
     return [...document.querySelectorAll<HTMLImageElement>("img")].filter((img) => {
       const source = this.getImageSourceForAction(img)
+      const skipSource = img.getAttribute("data-ophel-wm-skip-source") || ""
+      const isSkippedForCurrentSource =
+        img.dataset.watermarkProcessed === "skipped" && skipSource === source
+
       return (
         this.isValidGeminiImage(img) &&
         this.isSupportedGeminiImageSource(source) &&
         img.dataset.watermarkProcessed !== "true" &&
-        img.dataset.watermarkProcessed !== "processing"
+        img.dataset.watermarkProcessed !== "processing" &&
+        !isSkippedForCurrentSource
       )
     })
+  }
+
+  private async resolveDisplayImageDataUrl(source: string): Promise<string> {
+    if (source.startsWith("data:image/") || source.startsWith("blob:")) {
+      const processedImage = this.ensureWatermarkRemoved(
+        await this.processImageSourceToDataUrl(source),
+      )
+      return processedImage.dataUrl
+    }
+
+    const processedImage = await this.getProcessedImageResult(source, {
+      requireWatermarkRemoval: true,
+    })
+    return processedImage.dataUrl
   }
 
   private async processExistingImages() {
@@ -1299,20 +1379,28 @@ export class WatermarkRemover {
     if (this.processingQueue.has(originalSrc)) return
     this.processingQueue.add(originalSrc)
     img.dataset.watermarkProcessed = "processing"
+    const sourceForProcessing =
+      originalSrc.startsWith("data:image/") || originalSrc.startsWith("blob:")
+        ? originalSrc
+        : this.replaceWithNormalSize(originalSrc)
 
     try {
-      // 替换为原始尺寸URL（去除尺寸限制）
-      const sourceForProcessing =
-        originalSrc.startsWith("data:image/") || originalSrc.startsWith("blob:")
-          ? originalSrc
-          : this.replaceWithNormalSize(originalSrc)
-
-      const newUrl = await this.resolveActionDataUrl(sourceForProcessing)
+      const newUrl = await this.resolveDisplayImageDataUrl(sourceForProcessing)
       img.src = newUrl
       img.dataset.watermarkProcessed = "true"
       img.setAttribute("data-ophel-wm-source", sourceForProcessing)
       img.setAttribute("data-ophel-wm-processed", "1")
-    } catch {
+      img.removeAttribute("data-ophel-wm-skip-source")
+    } catch (error) {
+      const message = error instanceof Error ? error.message : ""
+      if (message === WATERMARK_NOT_DETECTED_ERROR) {
+        img.dataset.watermarkProcessed = "skipped"
+        img.setAttribute("data-ophel-wm-skip-source", sourceForProcessing)
+        img.removeAttribute("data-ophel-wm-source")
+        img.removeAttribute("data-ophel-wm-processed")
+        return
+      }
+
       img.dataset.watermarkProcessed = "error"
       img.removeAttribute("data-ophel-wm-processed")
     } finally {
