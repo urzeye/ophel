@@ -68,9 +68,18 @@ const GEMINI_CANCEL_KEYWORDS = [
 ]
 
 const GEMINI_EXPORT_THOUGHT_MARKER_ATTR = "data-ophel-export-thought-id"
+const GEMINI_EXPORT_IMAGE_SRC_ATTR = "data-ophel-export-image-src"
 const GEMINI_EMAIL_REGEX = /([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i
 const GEMINI_ACCOUNT_HINT_REGEX =
   /(google|account|账号|帳號|conta|compte|cuenta|konto|アカウント|계정|учет)/i
+const GEMINI_EXPORT_IMAGE_SCOPE_SELECTOR = [
+  ".attachment-container.generated-images",
+  "response-element",
+  "generated-image",
+  "single-image.generated-image",
+  ".image-container.replace-fife-images-at-export",
+  "[data-image-attachment-index]",
+].join(", ")
 
 interface GeminiExportLifecycleState {
   toggledThoughtIds: string[]
@@ -1744,6 +1753,7 @@ export class GeminiAdapter extends SiteAdapter {
     context: ExportLifecycleContext,
   ): Promise<GeminiExportLifecycleState> {
     this.exportIncludeThoughtsOverride = context.includeThoughts
+    await this.prepareGeneratedImagesForExport()
 
     if (!context.includeThoughts) {
       this.clearThoughtExportMarkers()
@@ -1816,6 +1826,7 @@ export class GeminiAdapter extends SiteAdapter {
     _context: ExportLifecycleContext,
     state: unknown,
   ): Promise<void> {
+    this.clearPreparedExportImageMetadata()
     const parsed = this.parseExportLifecycleState(state)
     if (!parsed) {
       this.exportIncludeThoughtsOverride = null
@@ -1935,6 +1946,97 @@ export class GeminiAdapter extends SiteAdapter {
     })
   }
 
+  private async prepareGeneratedImagesForExport(): Promise<void> {
+    this.clearPreparedExportImageMetadata()
+
+    const images = Array.from(
+      document.querySelectorAll(`model-response ${GEMINI_EXPORT_IMAGE_SCOPE_SELECTOR} img`),
+    ).filter((node): node is HTMLImageElement => node instanceof HTMLImageElement)
+
+    for (const image of images) {
+      try {
+        const exportSrc = await this.resolvePreparedExportImageSrc(image)
+        if (!exportSrc) continue
+        image.setAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR, exportSrc)
+      } catch (error) {
+        console.warn("[GeminiAdapter] Failed to prepare export image source", error)
+      }
+    }
+  }
+
+  private clearPreparedExportImageMetadata(): void {
+    document.querySelectorAll(`[${GEMINI_EXPORT_IMAGE_SRC_ATTR}]`).forEach((node) => {
+      node.removeAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR)
+    })
+  }
+
+  private async resolvePreparedExportImageSrc(image: HTMLImageElement): Promise<string> {
+    const directCandidates = [
+      image.getAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR) || "",
+      image.getAttribute("data-ophel-wm-source") || "",
+      image.currentSrc || "",
+      image.src || "",
+      image.getAttribute("src") || "",
+    ]
+
+    for (const rawCandidate of directCandidates) {
+      const candidate = this.normalizeExportImageUrl(rawCandidate)
+      if (!candidate) continue
+
+      if (this.isStablePreparedExportImageUrl(candidate)) {
+        return candidate
+      }
+    }
+
+    const blobCandidate = directCandidates
+      .map((candidate) => this.normalizeExportImageUrl(candidate))
+      .find((candidate) => candidate.startsWith("blob:"))
+
+    if (!blobCandidate) {
+      return ""
+    }
+
+    return this.convertBlobUrlToDataUrl(blobCandidate)
+  }
+
+  private normalizeExportImageUrl(value: string): string {
+    if (!value) return ""
+    if (value.startsWith("blob:") || value.startsWith("data:image/")) {
+      return value
+    }
+
+    try {
+      return new URL(value, window.location.href).toString()
+    } catch {
+      return value
+    }
+  }
+
+  private isStablePreparedExportImageUrl(value: string): boolean {
+    if (!value) return false
+    if (value.startsWith("data:image/")) return true
+    if (GEMINI_GOOGLEUSERCONTENT_HOST_REGEX.test(value)) return true
+    return /^https?:\/\//i.test(value)
+  }
+
+  private async convertBlobUrlToDataUrl(blobUrl: string): Promise<string> {
+    const response = await fetch(blobUrl)
+    const blob = await response.blob()
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          resolve(reader.result)
+          return
+        }
+        reject(new Error("Failed to convert blob image to data URL"))
+      }
+      reader.onerror = () => reject(reader.error || new Error("Failed to read blob image"))
+      reader.readAsDataURL(blob)
+    })
+  }
+
   private shouldIncludeThoughtsInExport(): boolean {
     if (typeof this.exportIncludeThoughtsOverride === "boolean") {
       return this.exportIncludeThoughtsOverride
@@ -1976,6 +2078,7 @@ export class GeminiAdapter extends SiteAdapter {
     const clone = element.cloneNode(true) as Element
     const hiddenNodes = clone.querySelectorAll(".cdk-visually-hidden")
     hiddenNodes.forEach((node) => node.remove())
+    this.normalizeAssistantGeneratedImagesForExport(clone)
 
     // 清理导出流程中的临时 marker 属性
     clone
@@ -1984,6 +2087,44 @@ export class GeminiAdapter extends SiteAdapter {
         node.removeAttribute(GEMINI_EXPORT_THOUGHT_MARKER_ATTR)
       })
     return clone
+  }
+
+  private normalizeAssistantGeneratedImagesForExport(root: Element): void {
+    root.querySelectorAll(`img[${GEMINI_EXPORT_IMAGE_SRC_ATTR}]`).forEach((node) => {
+      if (!(node instanceof HTMLImageElement)) return
+
+      const preparedSrc = node.getAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR) || ""
+      if (!preparedSrc) return
+
+      node.setAttribute("src", preparedSrc)
+      node.removeAttribute("srcset")
+      node.removeAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR)
+    })
+
+    root
+      .querySelectorAll(`${GEMINI_EXPORT_IMAGE_SCOPE_SELECTOR} button.image-button`)
+      .forEach((node) => {
+        if (!(node instanceof HTMLButtonElement) || !node.parentNode) return
+
+        const image = node.querySelector("img")
+        if (!(image instanceof HTMLImageElement)) return
+
+        const replacement = image.cloneNode(true) as HTMLImageElement
+        const preparedSrc = replacement.getAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR) || ""
+        if (preparedSrc) {
+          replacement.setAttribute("src", preparedSrc)
+          replacement.removeAttribute("srcset")
+          replacement.removeAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR)
+        }
+
+        node.replaceWith(replacement)
+      })
+
+    root
+      .querySelectorAll(
+        "share-button, copy-button, download-generated-image-button, .generated-image-controls, .loader",
+      )
+      .forEach((node) => node.remove())
   }
 
   /**
