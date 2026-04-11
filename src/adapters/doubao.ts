@@ -461,7 +461,7 @@ export class DoubaoAdapter extends SiteAdapter {
     return textContainer ? this.extractTextWithLineBreaks(textContainer).trim() : ""
   }
 
-  extractUserQueryExportText(element: Element): string {
+  extractUserQueryExportContent(element: Element): string {
     const textContainer = this.getUserMessageTextContainer(element)
     if (!textContainer) {
       return this.extractUserQueryText(element)

@@ -80,6 +80,10 @@ const GEMINI_EXPORT_IMAGE_SCOPE_SELECTOR = [
   ".image-container.replace-fife-images-at-export",
   "[data-image-attachment-index]",
 ].join(", ")
+const GEMINI_USER_QUERY_IMAGE_SELECTOR = [
+  "user-query img[data-test-id='uploaded-img']",
+  "user-query .preview-image",
+].join(", ")
 
 interface GeminiExportLifecycleState {
   toggledThoughtIds: string[]
@@ -1746,6 +1750,19 @@ export class GeminiAdapter extends SiteAdapter {
     return textLines.join("\n")
   }
 
+  extractUserQueryExportContent(element: Element): string {
+    const sanitized = this.sanitizeUserQueryElement(element)
+    const imageMarkdown = this.extractUserQueryImageMarkdown(sanitized)
+    const markdown = this.extractUserQueryMarkdown(sanitized).trim()
+    const textContent = markdown || this.extractUserQueryText(sanitized).trim()
+
+    if (imageMarkdown.length === 0) {
+      return textContent
+    }
+
+    return [imageMarkdown.join("\n\n"), textContent].filter(Boolean).join("\n\n")
+  }
+
   /**
    * 导出前自动展开当前会话中所有可见/可加载的思路内容，避免用户手动点击「显示思路」。
    */
@@ -1753,7 +1770,7 @@ export class GeminiAdapter extends SiteAdapter {
     context: ExportLifecycleContext,
   ): Promise<GeminiExportLifecycleState> {
     this.exportIncludeThoughtsOverride = context.includeThoughts
-    await this.prepareGeneratedImagesForExport()
+    await this.prepareImagesForExport()
 
     if (!context.includeThoughts) {
       this.clearThoughtExportMarkers()
@@ -1946,11 +1963,13 @@ export class GeminiAdapter extends SiteAdapter {
     })
   }
 
-  private async prepareGeneratedImagesForExport(): Promise<void> {
+  private async prepareImagesForExport(): Promise<void> {
     this.clearPreparedExportImageMetadata()
 
     const images = Array.from(
-      document.querySelectorAll(`model-response ${GEMINI_EXPORT_IMAGE_SCOPE_SELECTOR} img`),
+      document.querySelectorAll(
+        `model-response ${GEMINI_EXPORT_IMAGE_SCOPE_SELECTOR} img, ${GEMINI_USER_QUERY_IMAGE_SELECTOR}`,
+      ),
     ).filter((node): node is HTMLImageElement => node instanceof HTMLImageElement)
 
     for (const image of images) {
@@ -1970,8 +1989,48 @@ export class GeminiAdapter extends SiteAdapter {
     })
   }
 
-  private async resolvePreparedExportImageSrc(image: HTMLImageElement): Promise<string> {
+  private extractUserQueryImageMarkdown(element: Element): string[] {
+    const images = Array.from(
+      element.querySelectorAll("img[data-test-id='uploaded-img'], .preview-image"),
+    ).filter((node): node is HTMLImageElement => node instanceof HTMLImageElement)
+    const imageMarkdown: string[] = []
+    const seenSources = new Set<string>()
+
+    for (const image of images) {
+      const source = this.getPreparedExportImageSrc(image)
+      if (!source || seenSources.has(source)) continue
+
+      seenSources.add(source)
+      const alt = (image.alt || "uploaded image").replace(/\s+/g, " ").trim()
+      const escapedAlt = alt.replace(/[[\]]/g, "\\$&")
+      imageMarkdown.push(`![${escapedAlt || "uploaded image"}](${source})`)
+    }
+
+    return imageMarkdown
+  }
+
+  private getPreparedExportImageSrc(image: HTMLImageElement): string {
     const directCandidates = [
+      image.getAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR) || "",
+      image.getAttribute("data-ophel-wm-source") || "",
+      image.currentSrc || "",
+      image.src || "",
+      image.getAttribute("src") || "",
+    ]
+
+    for (const rawCandidate of directCandidates) {
+      const candidate = this.normalizeExportImageUrl(rawCandidate)
+      if (this.isStablePreparedExportImageUrl(candidate)) {
+        return candidate
+      }
+    }
+
+    return ""
+  }
+
+  private async resolvePreparedExportImageSrc(image: HTMLImageElement): Promise<string> {
+    const directCandidates = [this.getPreparedExportImageSrc(image)]
+    const fallbackCandidates = [
       image.getAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR) || "",
       image.getAttribute("data-ophel-wm-source") || "",
       image.currentSrc || "",
@@ -1988,7 +2047,7 @@ export class GeminiAdapter extends SiteAdapter {
       }
     }
 
-    const blobCandidate = directCandidates
+    const blobCandidate = fallbackCandidates
       .map((candidate) => this.normalizeExportImageUrl(candidate))
       .find((candidate) => candidate.startsWith("blob:"))
 

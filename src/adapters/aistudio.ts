@@ -1554,7 +1554,7 @@ export class AIStudioAdapter extends SiteAdapter {
     return this.extractTextWithLineBreaks(source).trim()
   }
 
-  extractUserQueryExportText(element: Element): string {
+  extractUserQueryExportContent(element: Element): string {
     const markdown = this.extractUserQueryMarkdown(element).trim()
     return markdown || this.extractUserQueryText(element)
   }

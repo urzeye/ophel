@@ -884,10 +884,18 @@ export abstract class SiteAdapter {
 
   /**
    * 导出时提取用户提问内容
-   * 默认沿用纯文本提取，子类可覆盖以保留原始 Markdown 语义
+   * 默认沿用纯文本提取，子类可覆盖以返回适合导出的文本内容
+   * （例如 Markdown、图片链接等）。
+   */
+  extractUserQueryExportContent(element: Element): string {
+    return this.extractUserQueryText(element)
+  }
+
+  /**
+   * @deprecated 使用 extractUserQueryExportContent
    */
   extractUserQueryExportText(element: Element): string {
-    return this.extractUserQueryText(element)
+    return this.extractUserQueryExportContent(element)
   }
 
   /**

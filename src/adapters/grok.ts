@@ -1364,7 +1364,7 @@ export class GrokAdapter extends SiteAdapter {
     return element.textContent?.trim() || ""
   }
 
-  extractUserQueryExportText(element: Element): string {
+  extractUserQueryExportContent(element: Element): string {
     const source = this.cloneUserQuerySource(element)
     if (!source) {
       return this.extractUserQueryText(element)

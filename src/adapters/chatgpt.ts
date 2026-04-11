@@ -1016,7 +1016,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     return this.extractUserQueryText(textContainer).trim()
   }
 
-  extractUserQueryExportText(element: Element): string {
+  extractUserQueryExportContent(element: Element): string {
     const markdown = this.extractUserQueryMarkdown(element).trim()
     return markdown || this.extractUserQueryText(element)
   }

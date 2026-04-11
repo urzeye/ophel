@@ -1198,7 +1198,7 @@ export class ConversationManager {
 
         const pushMessage = (role: "user" | "assistant", element: Element) => {
           if (role === "user") {
-            const userContent = this.siteAdapter.extractUserQueryExportText(element)
+            const userContent = this.siteAdapter.extractUserQueryExportContent(element)
             messages.push({ role, content: userContent })
             return
           }
@@ -1253,7 +1253,7 @@ export class ConversationManager {
     for (let i = 0; i < maxLen; i++) {
       if (userMessages[i]) {
         // 导出时优先使用站点适配器提供的 Markdown 语义提取
-        const userContent = this.siteAdapter.extractUserQueryExportText(userMessages[i])
+        const userContent = this.siteAdapter.extractUserQueryExportContent(userMessages[i])
         messages.push({ role: "user", content: userContent })
       }
       if (aiMessages[i]) {
