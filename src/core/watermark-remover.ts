@@ -10,6 +10,15 @@ const OPHEL_WATERMARK_PROCESS_REQUEST = "OPHEL_WATERMARK_PROCESS_REQUEST"
 const OPHEL_WATERMARK_PROCESS_RESPONSE = "OPHEL_WATERMARK_PROCESS_RESPONSE"
 const GEMINI_GOOGLEUSERCONTENT_HOST_PATTERN = /^https:\/\/lh3\.googleusercontent\.com\//i
 const WATERMARK_NOT_DETECTED_ERROR = "watermark-not-detected"
+const GEMINI_IMAGE_CONTAINER_SELECTOR = [
+  "generated-image",
+  ".generated-image-container",
+  "single-image.generated-image",
+  ".attachment-container.generated-images",
+  "response-element",
+  ".image-container.replace-fife-images-at-export",
+  "[data-image-attachment-index]",
+].join(", ")
 
 type GeminiImageAction = "copy" | "download"
 type WatermarkConfig = {
@@ -429,6 +438,19 @@ export class WatermarkRemover {
   }
 
   private isActionButtonElement(el: Element, action: GeminiImageAction): boolean {
+    if (action === "copy" && el.closest("copy-button")) {
+      return true
+    }
+
+    if (
+      action === "download" &&
+      el.closest(
+        "download-generated-image-button, [data-test-id='download-generated-image-button']",
+      )
+    ) {
+      return true
+    }
+
     const label = [
       el.getAttribute("aria-label") || "",
       el.getAttribute("data-tooltip") || "",
@@ -532,7 +554,7 @@ export class WatermarkRemover {
     const centerY = rect.top + rect.height / 2
     const nearestImage = document
       .elementFromPoint(centerX, centerY)
-      ?.closest("generated-image, .generated-image-container")
+      ?.closest(GEMINI_IMAGE_CONTAINER_SELECTOR)
 
     if (nearestImage) {
       const nearbyImages = Array.from(nearestImage.querySelectorAll("img")) as HTMLImageElement[]
@@ -1328,7 +1350,7 @@ export class WatermarkRemover {
   }
 
   private isValidGeminiImage(img: HTMLImageElement) {
-    if (img.closest("generated-image,.generated-image-container")) {
+    if (img.closest(GEMINI_IMAGE_CONTAINER_SELECTOR)) {
       return true
     }
 
