@@ -95,6 +95,27 @@ type TemplateWarp = {
   scale: number
 }
 
+type HaloAssessment = {
+  bandMeanLum: number
+  outerMeanLum: number
+  positiveDeltaLum: number
+  visibility: number
+}
+
+type EdgeCleanupPreset = {
+  minAlpha: number
+  maxAlpha: number
+  radius: number
+  strength: number
+  outsideAlphaMax: number
+  overbrightThreshold?: number
+  maxBoost?: number
+  darkProtectThreshold?: number
+  minGradientImprovement?: number
+  maxSpatialDrift?: number
+  maxAcceptedSpatial?: number
+}
+
 type GeminiResolutionTier = "0.5k" | "1k" | "2k" | "4k"
 
 type OfficialGeminiImageSize = {
@@ -262,6 +283,71 @@ export class WatermarkRemover {
   static PREVIEW_ANCHOR_TOP_K = 8
   static PREVIEW_ANCHOR_MIN_SCORE = 0.2
   static PREVIEW_ANCHOR_LOCAL_DELTAS = [-1, 0, 1]
+  static EDGE_CLEANUP_SPATIAL_THRESHOLD = 0.24
+  static EDGE_CLEANUP_GRADIENT_THRESHOLD = 0.03
+  static EDGE_CLEANUP_MIN_GRADIENT_IMPROVEMENT = 0.002
+  static EDGE_CLEANUP_MAX_SPATIAL_DRIFT = 0.08
+  static EDGE_CLEANUP_MAX_PASSES = 3
+  static EDGE_CLEANUP_STRONG_HALO_THRESHOLD = 4
+  static EDGE_CLEANUP_MIN_HALO_REDUCTION = 0.15
+  static EDGE_CLEANUP_HALO_WEIGHT = 0.02
+  static EDGE_CLEANUP_PRESETS: readonly EdgeCleanupPreset[] = [
+    {
+      minAlpha: 0.02,
+      maxAlpha: 0.45,
+      radius: 2,
+      strength: 0.9,
+      outsideAlphaMax: 0.05,
+      overbrightThreshold: 4,
+      maxBoost: 1.5,
+      darkProtectThreshold: 6,
+    },
+    {
+      minAlpha: 0.05,
+      maxAlpha: 0.65,
+      radius: 3,
+      strength: 1.05,
+      outsideAlphaMax: 0.08,
+      overbrightThreshold: 5,
+      maxBoost: 1.7,
+      darkProtectThreshold: 8,
+    },
+    {
+      minAlpha: 0.01,
+      maxAlpha: 0.85,
+      radius: 4,
+      strength: 1.35,
+      outsideAlphaMax: 0.1,
+      overbrightThreshold: 6,
+      maxBoost: 1.9,
+      darkProtectThreshold: 10,
+    },
+    {
+      minAlpha: 0.005,
+      maxAlpha: 0.95,
+      radius: 5,
+      strength: 1.55,
+      outsideAlphaMax: 0.05,
+      overbrightThreshold: 4,
+      maxBoost: 2.2,
+      darkProtectThreshold: 12,
+    },
+  ]
+  static EDGE_CLEANUP_AGGRESSIVE_PRESETS: readonly EdgeCleanupPreset[] = [
+    {
+      minAlpha: 0.005,
+      maxAlpha: 0.9,
+      radius: 4,
+      strength: 1.8,
+      outsideAlphaMax: 0.05,
+      overbrightThreshold: 3,
+      maxBoost: 2.4,
+      darkProtectThreshold: 12,
+      minGradientImprovement: 0,
+      maxSpatialDrift: 0.16,
+      maxAcceptedSpatial: 0.24,
+    },
+  ]
   private alphaMaps: Record<number, Float32Array> = {}
   private bgImages: Record<number, HTMLImageElement> = {}
   private alphaGradientCache = new WeakMap<Float32Array, Float32Array>()
@@ -1451,6 +1537,149 @@ export class WatermarkRemover {
     return { meanLum, stdLum: Math.sqrt(variance) }
   }
 
+  private assessAlphaBandHalo(
+    imageData: ImageData,
+    position: WatermarkPosition,
+    alphaMap: Float32Array,
+    minAlpha = 0.04,
+    maxAlpha = 0.8,
+    outsideAlphaMax = 0.02,
+    outerMargin = 4,
+  ): HaloAssessment {
+    let bandSum = 0
+    let bandCount = 0
+    let outerSum = 0
+    let outerSq = 0
+    let outerCount = 0
+
+    for (let row = -outerMargin; row < position.height + outerMargin; row++) {
+      for (let col = -outerMargin; col < position.width + outerMargin; col++) {
+        const pixelX = position.x + col
+        const pixelY = position.y + row
+        if (pixelX < 0 || pixelY < 0 || pixelX >= imageData.width || pixelY >= imageData.height) {
+          continue
+        }
+
+        const pixelIndex = (pixelY * imageData.width + pixelX) * 4
+        const luminance =
+          0.2126 * imageData.data[pixelIndex] +
+          0.7152 * imageData.data[pixelIndex + 1] +
+          0.0722 * imageData.data[pixelIndex + 2]
+        const insideRegion = row >= 0 && col >= 0 && row < position.height && col < position.width
+        const alpha = insideRegion ? alphaMap[row * position.width + col] : 0
+
+        if (insideRegion && alpha >= minAlpha && alpha <= maxAlpha) {
+          bandSum += luminance
+          bandCount += 1
+          continue
+        }
+
+        if (!insideRegion || alpha <= outsideAlphaMax) {
+          outerSum += luminance
+          outerSq += luminance * luminance
+          outerCount += 1
+        }
+      }
+    }
+
+    const bandMeanLum = bandCount > 0 ? bandSum / bandCount : 0
+    const outerMeanLum = outerCount > 0 ? outerSum / outerCount : 0
+    const outerStdLum =
+      outerCount > 0
+        ? Math.sqrt(Math.max(0, outerSq / outerCount - outerMeanLum * outerMeanLum))
+        : 0
+    const deltaLum = bandMeanLum - outerMeanLum
+    return {
+      bandMeanLum,
+      outerMeanLum,
+      positiveDeltaLum: Math.max(0, deltaLum),
+      visibility: deltaLum / Math.max(1, outerStdLum),
+    }
+  }
+
+  private blendResidualEdge(
+    sourceImageData: ImageData,
+    alphaMap: Float32Array,
+    position: WatermarkPosition,
+    preset: EdgeCleanupPreset,
+  ): ImageData {
+    const candidate = this.cloneImageData(sourceImageData)
+    const { width: imageWidth, height: imageHeight, data } = sourceImageData
+    const regionSize = position.width
+    const maxAlphaSafe = Math.max(preset.maxAlpha, 1e-6)
+
+    for (let row = 0; row < regionSize; row++) {
+      for (let col = 0; col < regionSize; col++) {
+        const alpha = alphaMap[row * regionSize + col]
+        if (alpha < preset.minAlpha || alpha > preset.maxAlpha) continue
+
+        let sumR = 0
+        let sumG = 0
+        let sumB = 0
+        let sumWeight = 0
+
+        for (let dy = -preset.radius; dy <= preset.radius; dy++) {
+          for (let dx = -preset.radius; dx <= preset.radius; dx++) {
+            if (dx === 0 && dy === 0) continue
+            const localY = row + dy
+            const localX = col + dx
+            const pixelX = position.x + localX
+            const pixelY = position.y + localY
+            if (pixelX < 0 || pixelY < 0 || pixelX >= imageWidth || pixelY >= imageHeight) {
+              continue
+            }
+
+            let neighborAlpha = 0
+            if (localY >= 0 && localX >= 0 && localY < regionSize && localX < regionSize) {
+              neighborAlpha = alphaMap[localY * regionSize + localX]
+            }
+            if (neighborAlpha > preset.outsideAlphaMax) continue
+
+            const distance = Math.sqrt(dx * dx + dy * dy) || 1
+            const weight = 1 / distance
+            const pixelIndex = (pixelY * imageWidth + pixelX) * 4
+            sumR += data[pixelIndex] * weight
+            sumG += data[pixelIndex + 1] * weight
+            sumB += data[pixelIndex + 2] * weight
+            sumWeight += weight
+          }
+        }
+
+        if (sumWeight <= 0) continue
+        const pixelIndex = ((position.y + row) * imageWidth + (position.x + col)) * 4
+        const currentLum =
+          0.2126 * data[pixelIndex] + 0.7152 * data[pixelIndex + 1] + 0.0722 * data[pixelIndex + 2]
+        const neighborLum =
+          0.2126 * (sumR / sumWeight) + 0.7152 * (sumG / sumWeight) + 0.0722 * (sumB / sumWeight)
+        const brightnessDelta = currentLum - neighborLum
+        const darkProtectThreshold = preset.darkProtectThreshold ?? 10
+        if (brightnessDelta < -darkProtectThreshold) continue
+
+        const overbrightThreshold = preset.overbrightThreshold ?? 4
+        const boost =
+          brightnessDelta > overbrightThreshold
+            ? this.clamp(
+                1 + (brightnessDelta - overbrightThreshold) / 18,
+                1,
+                preset.maxBoost ?? 1.8,
+              )
+            : 1
+        const blend = this.clamp(((preset.strength * alpha) / maxAlphaSafe) * boost, 0, 1)
+        candidate.data[pixelIndex] = Math.round(
+          data[pixelIndex] * (1 - blend) + (sumR / sumWeight) * blend,
+        )
+        candidate.data[pixelIndex + 1] = Math.round(
+          data[pixelIndex + 1] * (1 - blend) + (sumG / sumWeight) * blend,
+        )
+        candidate.data[pixelIndex + 2] = Math.round(
+          data[pixelIndex + 2] * (1 - blend) + (sumB / sumWeight) * blend,
+        )
+      }
+    }
+
+    return candidate
+  }
+
   private getReferenceRegion(
     position: WatermarkPosition,
     imageData: ImageData,
@@ -1537,22 +1766,14 @@ export class WatermarkRemover {
     return candidate
   }
 
-  private evaluateRestorationCandidate(
+  private createRestorationTrial(
     originalImageData: ImageData,
     candidate: WatermarkCandidate,
-    alphaMap = candidate.alphaMap,
-    alphaGain = 1,
+    imageData: ImageData,
+    alphaMap: Float32Array,
+    alphaGain: number,
+    originalMetrics: WatermarkDetectionMetrics,
   ): WatermarkRemovalTrial {
-    const originalMetrics =
-      alphaMap === candidate.alphaMap && alphaGain === 1
-        ? candidate.metrics
-        : this.measureWatermarkCandidate(originalImageData, alphaMap, candidate.position)
-    const imageData = this.materializeCandidateImageData(
-      originalImageData,
-      alphaMap,
-      candidate.position,
-      alphaGain,
-    )
     const processedMetrics = this.measureWatermarkCandidate(
       imageData,
       alphaMap,
@@ -1601,6 +1822,32 @@ export class WatermarkRemover {
     }
   }
 
+  private evaluateRestorationCandidate(
+    originalImageData: ImageData,
+    candidate: WatermarkCandidate,
+    alphaMap = candidate.alphaMap,
+    alphaGain = 1,
+  ): WatermarkRemovalTrial {
+    const originalMetrics =
+      alphaMap === candidate.alphaMap && alphaGain === 1
+        ? candidate.metrics
+        : this.measureWatermarkCandidate(originalImageData, alphaMap, candidate.position)
+    const imageData = this.materializeCandidateImageData(
+      originalImageData,
+      alphaMap,
+      candidate.position,
+      alphaGain,
+    )
+    return this.createRestorationTrial(
+      originalImageData,
+      candidate,
+      imageData,
+      alphaMap,
+      alphaGain,
+      originalMetrics,
+    )
+  }
+
   private pickBetterRemovalTrial(
     current: WatermarkRemovalTrial | null,
     candidate: WatermarkRemovalTrial | null,
@@ -1624,6 +1871,134 @@ export class WatermarkRemover {
       return candidate
     }
     return current
+  }
+
+  private shouldRefineResidualEdge(trial: WatermarkRemovalTrial, halo: HaloAssessment): boolean {
+    if (!trial.accepted) return false
+    if (trial.position.width < 24 || trial.position.width > 160) return false
+    if (halo.positiveDeltaLum < 0.15 && halo.visibility < 0.05) return false
+
+    return (
+      Math.abs(trial.processedMetrics.spatialScore) <=
+        WatermarkRemover.EDGE_CLEANUP_SPATIAL_THRESHOLD ||
+      halo.positiveDeltaLum >= WatermarkRemover.EDGE_CLEANUP_STRONG_HALO_THRESHOLD ||
+      Math.max(0, trial.processedMetrics.gradientScore) >=
+        WatermarkRemover.EDGE_CLEANUP_GRADIENT_THRESHOLD
+    )
+  }
+
+  private refineResidualEdge(
+    originalImageData: ImageData,
+    baseTrial: WatermarkRemovalTrial,
+  ): WatermarkRemovalTrial | null {
+    const baselineHalo = this.assessAlphaBandHalo(
+      baseTrial.imageData,
+      baseTrial.position,
+      baseTrial.alphaMap,
+    )
+    if (!this.shouldRefineResidualEdge(baseTrial, baselineHalo)) return null
+
+    const baselineNearBlackRatio = this.calculateNearBlackRatio(
+      baseTrial.imageData,
+      baseTrial.position,
+    )
+    const maxAllowedNearBlackRatio = Math.min(
+      1,
+      baselineNearBlackRatio + WatermarkRemover.MAX_NEAR_BLACK_RATIO_INCREASE,
+    )
+    const relaxedGradientImprovement =
+      baselineHalo.positiveDeltaLum >= WatermarkRemover.EDGE_CLEANUP_STRONG_HALO_THRESHOLD
+        ? 0.005
+        : WatermarkRemover.EDGE_CLEANUP_MIN_GRADIENT_IMPROVEMENT
+    const presets =
+      baselineHalo.positiveDeltaLum >= WatermarkRemover.EDGE_CLEANUP_STRONG_HALO_THRESHOLD
+        ? [
+            ...WatermarkRemover.EDGE_CLEANUP_PRESETS,
+            ...WatermarkRemover.EDGE_CLEANUP_AGGRESSIVE_PRESETS,
+          ]
+        : WatermarkRemover.EDGE_CLEANUP_PRESETS
+
+    let bestTrial: WatermarkRemovalTrial | null = null
+    let bestCost = Number.POSITIVE_INFINITY
+
+    const baseCandidate: WatermarkCandidate = {
+      config: baseTrial.config,
+      position: baseTrial.position,
+      alphaMap: baseTrial.alphaMap,
+      metrics: baseTrial.metrics,
+      source: "edge-cleanup",
+    }
+
+    for (const preset of presets) {
+      const candidateImageData = this.blendResidualEdge(
+        baseTrial.imageData,
+        baseTrial.alphaMap,
+        baseTrial.position,
+        preset,
+      )
+      const candidateNearBlackRatio = this.calculateNearBlackRatio(
+        candidateImageData,
+        baseTrial.position,
+      )
+      if (candidateNearBlackRatio > maxAllowedNearBlackRatio) continue
+
+      const candidateTrial = this.createRestorationTrial(
+        originalImageData,
+        baseCandidate,
+        candidateImageData,
+        baseTrial.alphaMap,
+        baseTrial.alphaGain,
+        baseTrial.metrics,
+      )
+      if (!candidateTrial.accepted) continue
+
+      const candidateHalo = this.assessAlphaBandHalo(
+        candidateImageData,
+        baseTrial.position,
+        baseTrial.alphaMap,
+      )
+      const minGradientImprovement = preset.minGradientImprovement ?? relaxedGradientImprovement
+      const maxSpatialDrift =
+        preset.maxSpatialDrift ?? WatermarkRemover.EDGE_CLEANUP_MAX_SPATIAL_DRIFT
+      const maxAcceptedSpatial =
+        preset.maxAcceptedSpatial ?? WatermarkRemover.VALIDATION_TARGET_RESIDUAL
+      const improvedGradient =
+        candidateTrial.processedMetrics.gradientScore <=
+        baseTrial.processedMetrics.gradientScore - minGradientImprovement
+      const strongHaloReduction =
+        candidateHalo.positiveDeltaLum <=
+        baselineHalo.positiveDeltaLum - WatermarkRemover.EDGE_CLEANUP_MIN_HALO_REDUCTION
+      const keptSpatial =
+        Math.abs(candidateTrial.processedMetrics.spatialScore) <=
+        Math.abs(baseTrial.processedMetrics.spatialScore) + maxSpatialDrift
+      const keptResidualWithinTarget =
+        Math.abs(candidateTrial.processedMetrics.spatialScore) <= maxAcceptedSpatial
+      const improvedHalo =
+        candidateHalo.positiveDeltaLum <= baselineHalo.positiveDeltaLum - 0.05 ||
+        candidateHalo.visibility <= baselineHalo.visibility - 0.01 ||
+        candidateHalo.bandMeanLum <= baselineHalo.bandMeanLum - 1.5
+
+      if (
+        !(improvedGradient || strongHaloReduction) ||
+        !keptSpatial ||
+        !keptResidualWithinTarget ||
+        !improvedHalo
+      ) {
+        continue
+      }
+
+      const cleanupCost =
+        Math.abs(candidateTrial.processedMetrics.spatialScore) * 0.6 +
+        Math.max(0, candidateTrial.processedMetrics.gradientScore) +
+        candidateHalo.positiveDeltaLum * WatermarkRemover.EDGE_CLEANUP_HALO_WEIGHT
+
+      if (cleanupCost < bestCost) {
+        bestTrial = candidateTrial
+        bestCost = cleanupCost
+      }
+    }
+
+    return bestTrial
   }
 
   private findBestTemplateWarp(
@@ -1936,6 +2311,14 @@ export class WatermarkRemover {
                 alphaGain,
               ),
             ) || selectedTrial
+        }
+      }
+
+      if (selectedTrial.accepted) {
+        for (let pass = 0; pass < WatermarkRemover.EDGE_CLEANUP_MAX_PASSES; pass++) {
+          const cleanupTrial = this.refineResidualEdge(imageData, selectedTrial)
+          if (!cleanupTrial) break
+          selectedTrial = cleanupTrial
         }
       }
 
