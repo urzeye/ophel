@@ -41,12 +41,18 @@ type WatermarkDetectionMetrics = {
   varianceScore: number
 }
 
+type CandidateProvenance = {
+  previewAnchor?: boolean
+  previewAnchorLocalRefine?: boolean
+}
+
 type WatermarkCandidate = {
   config: WatermarkConfig
   position: WatermarkPosition
   alphaMap: Float32Array
   metrics: WatermarkDetectionMetrics
   source: string
+  provenance?: CandidateProvenance
 }
 
 type ProcessedImageResult = {
@@ -87,6 +93,8 @@ type WatermarkRemovalTrial = {
   nearBlackIncrease: number
   texturePenalty: number
   validationCost: number
+  source: string
+  provenance?: CandidateProvenance
 }
 
 type TemplateWarp = {
@@ -263,6 +271,11 @@ export class WatermarkRemover {
   static VALIDATION_TARGET_RESIDUAL = 0.22
   static VALIDATION_MAX_GRADIENT_INCREASE = 0.04
   static MAX_VALIDATION_CANDIDATES = 8
+  static PREVIEW_ANCHOR_RESERVED_VALIDATION_BUDGET = 2
+  static STANDARD_DIRECT_MATCH_MIN_SPATIAL_SCORE = 0.3
+  static STANDARD_DIRECT_MATCH_MIN_GRADIENT_SCORE = 0.12
+  static STANDARD_STRONG_GRADIENT_DIRECT_MATCH_MIN_SPATIAL_SCORE = 0.295
+  static STANDARD_STRONG_GRADIENT_DIRECT_MATCH_MIN_GRADIENT_SCORE = 0.45
   static TEXTURE_REFERENCE_MARGIN = 1
   static TEXTURE_STD_FLOOR_RATIO = 0.8
   static TEXTURE_DARKNESS_VISIBILITY_HARD_REJECT_THRESHOLD = 1.5
@@ -1041,6 +1054,21 @@ export class WatermarkRemover {
     return { ...WATERMARK_CONFIG_BY_TIER[entry.resolutionTier] }
   }
 
+  private isPreviewAnchorSearchEligible(
+    imageWidth: number,
+    imageHeight: number,
+    config: WatermarkConfig | null | undefined,
+  ): boolean {
+    if (!config || config.logoSize !== 48) return false
+    const normalizedWidth = this.normalizeDimension(imageWidth)
+    const normalizedHeight = this.normalizeDimension(imageHeight)
+    if (!normalizedWidth || !normalizedHeight) return false
+    if (normalizedWidth < 384 || normalizedWidth > 1536) return false
+    if (normalizedHeight < 384 || normalizedHeight > 1536) return false
+    if (Math.max(normalizedWidth, normalizedHeight) < 512) return false
+    return this.resolveOfficialGeminiWatermarkConfig(normalizedWidth, normalizedHeight) === null
+  }
+
   private resolveOfficialGeminiSearchConfigs(
     imageWidth: number,
     imageHeight: number,
@@ -1747,6 +1775,84 @@ export class WatermarkRemover {
     )
   }
 
+  private hasReliableStandardWatermarkSignal(
+    metrics: Pick<WatermarkDetectionMetrics, "spatialScore" | "gradientScore"> | null | undefined,
+  ): boolean {
+    const spatialScore = metrics?.spatialScore
+    const gradientScore = metrics?.gradientScore
+    if (!Number.isFinite(spatialScore) || !Number.isFinite(gradientScore)) {
+      return false
+    }
+    return (
+      (spatialScore >= WatermarkRemover.STANDARD_DIRECT_MATCH_MIN_SPATIAL_SCORE &&
+        gradientScore >= WatermarkRemover.STANDARD_DIRECT_MATCH_MIN_GRADIENT_SCORE) ||
+      (spatialScore >= WatermarkRemover.STANDARD_STRONG_GRADIENT_DIRECT_MATCH_MIN_SPATIAL_SCORE &&
+        gradientScore >= WatermarkRemover.STANDARD_STRONG_GRADIENT_DIRECT_MATCH_MIN_GRADIENT_SCORE)
+    )
+  }
+
+  private isPreviewAnchorEntity(
+    entity:
+      | Pick<WatermarkCandidate, "source" | "provenance">
+      | Pick<WatermarkRemovalTrial, "source" | "provenance">
+      | null
+      | undefined,
+  ): boolean {
+    return (
+      entity?.provenance?.previewAnchor === true ||
+      (typeof entity?.source === "string" && entity.source.includes("preview-anchor"))
+    )
+  }
+
+  private shouldPreferPreviewAnchorTrial(
+    current: Pick<WatermarkRemovalTrial, "metrics" | "source" | "provenance"> | null | undefined,
+    candidate: Pick<WatermarkRemovalTrial, "metrics" | "source" | "provenance"> | null | undefined,
+  ): boolean {
+    if (!this.isPreviewAnchorEntity(candidate)) return false
+    if (!current || this.isPreviewAnchorEntity(current)) return false
+
+    const currentSpatial = current.metrics?.spatialScore
+    const currentGradient = current.metrics?.gradientScore
+    const candidateSpatial = candidate.metrics?.spatialScore
+    const candidateGradient = candidate.metrics?.gradientScore
+    if (
+      !Number.isFinite(currentSpatial) ||
+      !Number.isFinite(currentGradient) ||
+      !Number.isFinite(candidateSpatial) ||
+      !Number.isFinite(candidateGradient)
+    ) {
+      return false
+    }
+
+    const currentReliable = this.hasReliableStandardWatermarkSignal(current.metrics)
+    const candidateReliable = this.hasReliableStandardWatermarkSignal(candidate.metrics)
+    if (candidateReliable && !currentReliable) {
+      return true
+    }
+
+    return candidateGradient >= currentGradient + 0.2 && candidateSpatial >= currentSpatial + 0.05
+  }
+
+  private shouldPreserveReliableStandardTrial(
+    standardTrial:
+      | Pick<WatermarkRemovalTrial, "accepted" | "metrics" | "source" | "provenance">
+      | null
+      | undefined,
+    previewTrial:
+      | Pick<WatermarkRemovalTrial, "accepted" | "metrics" | "source" | "provenance">
+      | null
+      | undefined,
+  ): boolean {
+    if (!standardTrial?.accepted || !previewTrial?.accepted) return false
+    if (this.isPreviewAnchorEntity(standardTrial) || !this.isPreviewAnchorEntity(previewTrial)) {
+      return false
+    }
+    return (
+      this.hasReliableStandardWatermarkSignal(standardTrial.metrics) &&
+      !this.shouldPreferPreviewAnchorTrial(standardTrial, previewTrial)
+    )
+  }
+
   private shouldEscalateSearch(trial: WatermarkRemovalTrial): boolean {
     return (
       Math.abs(trial.processedMetrics.spatialScore) > WatermarkRemover.VALIDATION_TARGET_RESIDUAL ||
@@ -1819,6 +1925,8 @@ export class WatermarkRemover {
         Math.max(0, processedMetrics.gradientScore) * 0.6 +
         Math.max(0, nearBlackIncrease) * 3 +
         textureAssessment.texturePenalty,
+      source: candidate.source,
+      provenance: candidate.provenance,
     }
   }
 
@@ -1857,6 +1965,18 @@ export class WatermarkRemover {
     if (!current) return candidate
     if (candidate.accepted !== current.accepted) {
       return candidate.accepted ? candidate : current
+    }
+    if (this.shouldPreserveReliableStandardTrial(current, candidate)) {
+      return current
+    }
+    if (this.shouldPreserveReliableStandardTrial(candidate, current)) {
+      return candidate
+    }
+    if (this.shouldPreferPreviewAnchorTrial(current, candidate)) {
+      return candidate
+    }
+    if (this.shouldPreferPreviewAnchorTrial(candidate, current)) {
+      return current
     }
     if (candidate.validationCost < current.validationCost - minCostDelta) {
       return candidate
@@ -1926,7 +2046,8 @@ export class WatermarkRemover {
       position: baseTrial.position,
       alphaMap: baseTrial.alphaMap,
       metrics: baseTrial.metrics,
-      source: "edge-cleanup",
+      source: baseTrial.source,
+      provenance: baseTrial.provenance,
     }
 
     for (const preset of presets) {
@@ -2049,7 +2170,9 @@ export class WatermarkRemover {
     context: DetectionContext,
     baseConfig: WatermarkConfig,
   ): Promise<WatermarkCandidate[]> {
-    if (baseConfig.logoSize !== 48) return []
+    if (!this.isPreviewAnchorSearchEligible(imageData.width, imageData.height, baseConfig)) {
+      return []
+    }
 
     const minSize = Math.max(
       WatermarkRemover.PREVIEW_ANCHOR_MIN_SIZE,
@@ -2129,8 +2252,9 @@ export class WatermarkRemover {
             position,
             alphaMap,
             metrics,
-            source: "standard+preview",
+            source: "standard+preview-anchor",
             coarseScore,
+            provenance: { previewAnchor: true },
           })
         }
       }
@@ -2167,7 +2291,11 @@ export class WatermarkRemover {
               position,
               alphaMap,
               metrics: this.measureWatermarkCandidate(imageData, alphaMap, position, context),
-              source: "standard+preview",
+              source: "standard+preview-anchor",
+              provenance: {
+                previewAnchor: true,
+                previewAnchorLocalRefine: sizeDelta !== 0 || dx !== 0 || dy !== 0,
+              },
             })
           }
         }
@@ -2178,7 +2306,25 @@ export class WatermarkRemover {
     return refinedCandidates.slice(0, WatermarkRemover.PREVIEW_ANCHOR_TOP_K)
   }
 
-  private async buildWatermarkCandidates(imageData: ImageData): Promise<WatermarkCandidate[]> {
+  private sortWatermarkCandidates(candidates: WatermarkCandidate[]) {
+    candidates.sort((a, b) => {
+      if (b.metrics.confidence !== a.metrics.confidence) {
+        return b.metrics.confidence - a.metrics.confidence
+      }
+      if (b.metrics.spatialScore !== a.metrics.spatialScore) {
+        return b.metrics.spatialScore - a.metrics.spatialScore
+      }
+      if (b.metrics.gradientScore !== a.metrics.gradientScore) {
+        return b.metrics.gradientScore - a.metrics.gradientScore
+      }
+      return a.config.logoSize - b.config.logoSize
+    })
+  }
+
+  private async buildWatermarkCandidateBuckets(imageData: ImageData): Promise<{
+    standardCandidates: WatermarkCandidate[]
+    previewCandidates: WatermarkCandidate[]
+  }> {
     const context = this.buildDetectionContext(imageData)
     const baseConfigs = this.getCandidateWatermarkConfigs(imageData.width, imageData.height)
     const expandedConfigs: WatermarkConfig[] = []
@@ -2212,7 +2358,7 @@ export class WatermarkRemover {
       ),
     )
 
-    const candidates: WatermarkCandidate[] = []
+    const standardCandidates: WatermarkCandidate[] = []
     const seenPositions = new Set<string>()
     for (const config of expandedConfigs) {
       const basePosition = this.calculateWatermarkPosition(
@@ -2238,7 +2384,7 @@ export class WatermarkRemover {
           const key = `${position.x}:${position.y}:${position.width}`
           if (seenPositions.has(key)) continue
           seenPositions.add(key)
-          candidates.push({
+          standardCandidates.push({
             config,
             position,
             alphaMap,
@@ -2251,6 +2397,7 @@ export class WatermarkRemover {
 
     const previewBaseConfig =
       baseConfigs.find((config) => config.logoSize === 48) || WatermarkRemover.WATERMARK_CONFIGS[0]
+    const previewCandidates: WatermarkCandidate[] = []
     for (const previewCandidate of await this.buildPreviewAnchorCandidates(
       imageData,
       context,
@@ -2259,27 +2406,24 @@ export class WatermarkRemover {
       const key = `${previewCandidate.position.x}:${previewCandidate.position.y}:${previewCandidate.position.width}`
       if (seenPositions.has(key)) continue
       seenPositions.add(key)
-      candidates.push(previewCandidate)
+      previewCandidates.push(previewCandidate)
     }
 
-    candidates.sort((a, b) => {
-      if (b.metrics.confidence !== a.metrics.confidence) {
-        return b.metrics.confidence - a.metrics.confidence
-      }
-      if (b.metrics.spatialScore !== a.metrics.spatialScore) {
-        return b.metrics.spatialScore - a.metrics.spatialScore
-      }
-      if (b.metrics.gradientScore !== a.metrics.gradientScore) {
-        return b.metrics.gradientScore - a.metrics.gradientScore
-      }
-      return a.config.logoSize - b.config.logoSize
-    })
+    this.sortWatermarkCandidates(standardCandidates)
+    this.sortWatermarkCandidates(previewCandidates)
 
-    return candidates
+    return { standardCandidates, previewCandidates }
   }
 
-  private async resolveValidatedWatermarkRemoval(imageData: ImageData): Promise<ImageData | null> {
-    const candidates = await this.buildWatermarkCandidates(imageData)
+  private evaluateCandidateTrials(
+    imageData: ImageData,
+    candidates: WatermarkCandidate[],
+    maxValidationCandidates: number,
+  ): { bestTrial: WatermarkRemovalTrial | null; validatedAttempts: number } {
+    if (maxValidationCandidates <= 0 || candidates.length === 0) {
+      return { bestTrial: null, validatedAttempts: 0 }
+    }
+
     let validatedAttempts = 0
     let bestTrial: WatermarkRemovalTrial | null = null
 
@@ -2324,8 +2468,51 @@ export class WatermarkRemover {
 
       bestTrial = this.pickBetterRemovalTrial(bestTrial, selectedTrial)
       validatedAttempts += 1
-      if (validatedAttempts >= WatermarkRemover.MAX_VALIDATION_CANDIDATES) {
+      if (validatedAttempts >= maxValidationCandidates) {
         break
+      }
+    }
+
+    return { bestTrial, validatedAttempts }
+  }
+
+  private async resolveValidatedWatermarkRemoval(imageData: ImageData): Promise<ImageData | null> {
+    const { standardCandidates, previewCandidates } =
+      await this.buildWatermarkCandidateBuckets(imageData)
+    const reservedPreviewBudget =
+      previewCandidates.length > 0
+        ? Math.min(
+            WatermarkRemover.PREVIEW_ANCHOR_RESERVED_VALIDATION_BUDGET,
+            Math.max(0, WatermarkRemover.MAX_VALIDATION_CANDIDATES - 1),
+          )
+        : 0
+    const standardBudget = Math.max(
+      1,
+      WatermarkRemover.MAX_VALIDATION_CANDIDATES - reservedPreviewBudget,
+    )
+    const standardResult = this.evaluateCandidateTrials(
+      imageData,
+      standardCandidates,
+      standardBudget,
+    )
+    let bestTrial = standardResult.bestTrial
+    const hasReliableStandardTrial =
+      bestTrial?.accepted === true &&
+      !this.isPreviewAnchorEntity(bestTrial) &&
+      this.hasReliableStandardWatermarkSignal(bestTrial.metrics)
+
+    if (!hasReliableStandardTrial && previewCandidates.length > 0) {
+      const previewBudget = Math.min(
+        previewCandidates.length,
+        Math.max(0, WatermarkRemover.MAX_VALIDATION_CANDIDATES - standardResult.validatedAttempts),
+      )
+      if (previewBudget > 0) {
+        const previewResult = this.evaluateCandidateTrials(
+          imageData,
+          previewCandidates,
+          previewBudget,
+        )
+        bestTrial = this.pickBetterRemovalTrial(bestTrial, previewResult.bestTrial)
       }
     }
 
