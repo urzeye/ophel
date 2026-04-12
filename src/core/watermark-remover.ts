@@ -22,7 +22,7 @@ const GEMINI_IMAGE_CONTAINER_SELECTOR = [
 
 type GeminiImageAction = "copy" | "download"
 type WatermarkConfig = {
-  logoSize: 48 | 96
+  logoSize: number
   marginRight: number
   marginBottom: number
 }
@@ -35,10 +35,10 @@ type WatermarkPosition = {
 }
 
 type WatermarkDetectionMetrics = {
-  insideMean: number
-  outsideMean: number
-  score: number
-  normalizedScore: number
+  confidence: number
+  spatialScore: number
+  gradientScore: number
+  varianceScore: number
 }
 
 type WatermarkCandidate = {
@@ -46,12 +46,143 @@ type WatermarkCandidate = {
   position: WatermarkPosition
   alphaMap: Float32Array
   metrics: WatermarkDetectionMetrics
+  source: string
 }
 
 type ProcessedImageResult = {
   dataUrl: string
   watermarkRemoved: boolean
 }
+
+type DetectionContext = {
+  gray: Float32Array
+  grad: Float32Array
+  width: number
+  height: number
+}
+
+type TextureStats = {
+  meanLum: number
+  stdLum: number
+}
+
+type TextureAssessment = {
+  texturePenalty: number
+  tooDark: boolean
+  tooFlat: boolean
+  hardReject: boolean
+}
+
+type WatermarkRemovalTrial = {
+  accepted: boolean
+  imageData: ImageData
+  config: WatermarkConfig
+  position: WatermarkPosition
+  alphaMap: Float32Array
+  alphaGain: number
+  metrics: WatermarkDetectionMetrics
+  processedMetrics: WatermarkDetectionMetrics
+  improvement: number
+  gradientIncrease: number
+  nearBlackIncrease: number
+  texturePenalty: number
+  validationCost: number
+}
+
+type TemplateWarp = {
+  dx: number
+  dy: number
+  scale: number
+}
+
+type GeminiResolutionTier = "0.5k" | "1k" | "2k" | "4k"
+
+type OfficialGeminiImageSize = {
+  width: number
+  height: number
+  resolutionTier: GeminiResolutionTier
+}
+
+const WATERMARK_CONFIG_BY_TIER: Record<GeminiResolutionTier, WatermarkConfig> = {
+  "0.5k": { logoSize: 48, marginRight: 32, marginBottom: 32 },
+  "1k": { logoSize: 96, marginRight: 64, marginBottom: 64 },
+  "2k": { logoSize: 96, marginRight: 64, marginBottom: 64 },
+  "4k": { logoSize: 96, marginRight: 64, marginBottom: 64 },
+}
+
+const OFFICIAL_GEMINI_IMAGE_SIZES: readonly OfficialGeminiImageSize[] = [
+  { width: 512, height: 512, resolutionTier: "0.5k" },
+  { width: 256, height: 1024, resolutionTier: "0.5k" },
+  { width: 192, height: 1536, resolutionTier: "0.5k" },
+  { width: 424, height: 632, resolutionTier: "0.5k" },
+  { width: 632, height: 424, resolutionTier: "0.5k" },
+  { width: 448, height: 600, resolutionTier: "0.5k" },
+  { width: 1024, height: 256, resolutionTier: "0.5k" },
+  { width: 600, height: 448, resolutionTier: "0.5k" },
+  { width: 464, height: 576, resolutionTier: "0.5k" },
+  { width: 576, height: 464, resolutionTier: "0.5k" },
+  { width: 1536, height: 192, resolutionTier: "0.5k" },
+  { width: 384, height: 688, resolutionTier: "0.5k" },
+  { width: 688, height: 384, resolutionTier: "0.5k" },
+  { width: 792, height: 168, resolutionTier: "0.5k" },
+  { width: 1024, height: 1024, resolutionTier: "1k" },
+  { width: 512, height: 2064, resolutionTier: "1k" },
+  { width: 352, height: 2928, resolutionTier: "1k" },
+  { width: 848, height: 1264, resolutionTier: "1k" },
+  { width: 1264, height: 848, resolutionTier: "1k" },
+  { width: 896, height: 1200, resolutionTier: "1k" },
+  { width: 2064, height: 512, resolutionTier: "1k" },
+  { width: 1200, height: 896, resolutionTier: "1k" },
+  { width: 928, height: 1152, resolutionTier: "1k" },
+  { width: 1152, height: 928, resolutionTier: "1k" },
+  { width: 2928, height: 352, resolutionTier: "1k" },
+  { width: 768, height: 1376, resolutionTier: "1k" },
+  { width: 1376, height: 768, resolutionTier: "1k" },
+  { width: 1408, height: 768, resolutionTier: "1k" },
+  { width: 1584, height: 672, resolutionTier: "1k" },
+  { width: 2048, height: 2048, resolutionTier: "2k" },
+  { width: 512, height: 2048, resolutionTier: "2k" },
+  { width: 384, height: 3072, resolutionTier: "2k" },
+  { width: 1696, height: 2528, resolutionTier: "2k" },
+  { width: 2528, height: 1696, resolutionTier: "2k" },
+  { width: 1792, height: 2400, resolutionTier: "2k" },
+  { width: 2048, height: 512, resolutionTier: "2k" },
+  { width: 2400, height: 1792, resolutionTier: "2k" },
+  { width: 1856, height: 2304, resolutionTier: "2k" },
+  { width: 2304, height: 1856, resolutionTier: "2k" },
+  { width: 3072, height: 384, resolutionTier: "2k" },
+  { width: 1536, height: 2752, resolutionTier: "2k" },
+  { width: 2752, height: 1536, resolutionTier: "2k" },
+  { width: 3168, height: 1344, resolutionTier: "2k" },
+  { width: 4096, height: 4096, resolutionTier: "4k" },
+  { width: 2048, height: 8192, resolutionTier: "4k" },
+  { width: 1536, height: 12288, resolutionTier: "4k" },
+  { width: 3392, height: 5056, resolutionTier: "4k" },
+  { width: 5056, height: 3392, resolutionTier: "4k" },
+  { width: 3584, height: 4800, resolutionTier: "4k" },
+  { width: 8192, height: 2048, resolutionTier: "4k" },
+  { width: 4800, height: 3584, resolutionTier: "4k" },
+  { width: 3712, height: 4608, resolutionTier: "4k" },
+  { width: 4608, height: 3712, resolutionTier: "4k" },
+  { width: 12288, height: 1536, resolutionTier: "4k" },
+  { width: 3072, height: 5504, resolutionTier: "4k" },
+  { width: 5504, height: 3072, resolutionTier: "4k" },
+  { width: 6336, height: 2688, resolutionTier: "4k" },
+  { width: 1024, height: 1024, resolutionTier: "1k" },
+  { width: 832, height: 1248, resolutionTier: "1k" },
+  { width: 1248, height: 832, resolutionTier: "1k" },
+  { width: 864, height: 1184, resolutionTier: "1k" },
+  { width: 1184, height: 864, resolutionTier: "1k" },
+  { width: 896, height: 1152, resolutionTier: "1k" },
+  { width: 1152, height: 896, resolutionTier: "1k" },
+  { width: 768, height: 1344, resolutionTier: "1k" },
+  { width: 1344, height: 768, resolutionTier: "1k" },
+  { width: 1536, height: 672, resolutionTier: "1k" },
+]
+
+const OFFICIAL_GEMINI_IMAGE_SIZE_INDEX = new Map(
+  OFFICIAL_GEMINI_IMAGE_SIZES.map((entry) => [`${entry.width}x${entry.height}`, entry]),
+)
 
 // 油猴脚本的 GM_xmlhttpRequest 声明
 declare function GM_xmlhttpRequest(details: {
@@ -99,17 +230,41 @@ export class WatermarkRemover {
     { logoSize: 48, marginRight: 32, marginBottom: 32 },
     { logoSize: 96, marginRight: 64, marginBottom: 64 },
   ]
+  static ALPHA_NOISE_FLOOR = 3 / 255
   static ALPHA_THRESHOLD = 0.002
   static MAX_ALPHA = 0.99
   static LOGO_VALUE = 255
-  static DETECTION_MIN_SCORE = 0.012
-  static DETECTION_MIN_NORMALIZED_SCORE = 0.09
-  static DETECTION_MIN_IMPROVEMENT = 0.01
-  static DETECTION_MIN_NORMALIZED_IMPROVEMENT = 0.04
-  static DETECTION_MAX_DARKENING = 0.12
-  static MAX_VALIDATION_CANDIDATES = 4
+  static DETECTION_MIN_CONFIDENCE = 0.14
+  static DETECTION_MIN_SPATIAL_SCORE = 0.18
+  static DETECTION_MIN_GRADIENT_SCORE = 0.05
+  static MAX_NEAR_BLACK_RATIO_INCREASE = 0.05
+  static VALIDATION_MIN_IMPROVEMENT = 0.08
+  static VALIDATION_TARGET_RESIDUAL = 0.22
+  static VALIDATION_MAX_GRADIENT_INCREASE = 0.04
+  static MAX_VALIDATION_CANDIDATES = 8
+  static TEXTURE_REFERENCE_MARGIN = 1
+  static TEXTURE_STD_FLOOR_RATIO = 0.8
+  static TEXTURE_DARKNESS_VISIBILITY_HARD_REJECT_THRESHOLD = 1.5
+  static TEXTURE_DARKNESS_HARD_REJECT_PENALTY_THRESHOLD = 0.5
+  static TEXTURE_FLATNESS_HARD_REJECT_PENALTY_THRESHOLD = 0.2
+  static NEAR_BLACK_THRESHOLD = 5
+  static TEMPLATE_ALIGN_SHIFTS = [-0.5, -0.25, 0, 0.25, 0.5]
+  static TEMPLATE_ALIGN_SCALES = [0.99, 1, 1.01]
+  static ALPHA_GAIN_CANDIDATES = [1.05, 1.12, 1.2, 1.28, 1.36, 1.45, 1.6, 1.85]
+  static STANDARD_SIZE_JITTERS = [-12, -8, -4, 4, 8, 12]
+  static PREVIEW_ANCHOR_MIN_SIZE = 24
+  static PREVIEW_ANCHOR_MIN_SIZE_RATIO = 0.55
+  static PREVIEW_ANCHOR_MAX_SIZE_RATIO = 1.05
+  static PREVIEW_ANCHOR_MARGIN_WINDOW = 16
+  static PREVIEW_ANCHOR_MARGIN_EXTENSION = 8
+  static PREVIEW_ANCHOR_SIZE_STEP = 2
+  static PREVIEW_ANCHOR_MARGIN_STEP = 4
+  static PREVIEW_ANCHOR_TOP_K = 8
+  static PREVIEW_ANCHOR_MIN_SCORE = 0.2
+  static PREVIEW_ANCHOR_LOCAL_DELTAS = [-1, 0, 1]
   private alphaMaps: Record<number, Float32Array> = {}
   private bgImages: Record<number, HTMLImageElement> = {}
+  private alphaGradientCache = new WeakMap<Float32Array, Float32Array>()
   private processingQueue = new Set<string>()
   private processingMap = new Map<string, Promise<ProcessedImageResult>>()
   private processedDataUrlCache = new Map<string, string>()
@@ -122,6 +277,7 @@ export class WatermarkRemover {
   constructor() {
     this.alphaMaps = {}
     this.bgImages = {}
+    this.alphaGradientCache = new WeakMap()
     this.processingQueue = new Set()
     this.processingMap = new Map()
     this.processedDataUrlCache = new Map()
@@ -773,37 +929,117 @@ export class WatermarkRemover {
     return alphaMap
   }
 
-  private removeWatermark(
-    imageData: ImageData,
-    alphaMap: Float32Array,
-    position: { x: number; y: number; width: number; height: number },
-  ) {
-    const { x, y, width, height } = position
-    for (let row = 0; row < height; row++) {
-      for (let col = 0; col < width; col++) {
-        const imgIdx = ((y + row) * imageData.width + (x + col)) * 4
-        const alphaIdx = row * width + col
-        let alpha = alphaMap[alphaIdx]
-        if (alpha < WatermarkRemover.ALPHA_THRESHOLD) continue
-        alpha = Math.min(alpha, WatermarkRemover.MAX_ALPHA)
-        const oneMinusAlpha = 1 - alpha
-        for (let c = 0; c < 3; c++) {
-          const watermarked = imageData.data[imgIdx + c]
-          const original = (watermarked - alpha * WatermarkRemover.LOGO_VALUE) / oneMinusAlpha
-          imageData.data[imgIdx + c] = Math.max(0, Math.min(255, Math.round(original)))
-        }
-      }
-    }
+  private clamp(value: number, min: number, max: number): number {
+    return Math.max(min, Math.min(max, value))
   }
 
-  private getCandidateWatermarkConfigs(
+  private normalizeDimension(value: number): number | null {
+    if (!Number.isFinite(value)) return null
+    const rounded = Math.round(value)
+    return rounded > 0 ? rounded : null
+  }
+
+  private buildConfigKey(config: WatermarkConfig): string {
+    return `${config.logoSize}:${config.marginRight}:${config.marginBottom}`
+  }
+
+  private resolveOfficialGeminiWatermarkConfig(
     imageWidth: number,
     imageHeight: number,
-  ): readonly WatermarkConfig[] {
-    const preferredLarge = imageWidth > 1024 && imageHeight > 1024
-    return preferredLarge
-      ? [WatermarkRemover.WATERMARK_CONFIGS[1], WatermarkRemover.WATERMARK_CONFIGS[0]]
-      : [WatermarkRemover.WATERMARK_CONFIGS[0], WatermarkRemover.WATERMARK_CONFIGS[1]]
+  ): WatermarkConfig | null {
+    const normalizedWidth = this.normalizeDimension(imageWidth)
+    const normalizedHeight = this.normalizeDimension(imageHeight)
+    if (!normalizedWidth || !normalizedHeight) return null
+    const entry = OFFICIAL_GEMINI_IMAGE_SIZE_INDEX.get(`${normalizedWidth}x${normalizedHeight}`)
+    if (!entry) return null
+    return { ...WATERMARK_CONFIG_BY_TIER[entry.resolutionTier] }
+  }
+
+  private resolveOfficialGeminiSearchConfigs(
+    imageWidth: number,
+    imageHeight: number,
+    limit = 3,
+  ): WatermarkConfig[] {
+    const normalizedWidth = this.normalizeDimension(imageWidth)
+    const normalizedHeight = this.normalizeDimension(imageHeight)
+    if (!normalizedWidth || !normalizedHeight) return []
+
+    const exact = this.resolveOfficialGeminiWatermarkConfig(normalizedWidth, normalizedHeight)
+    if (exact) return [exact]
+
+    const targetAspectRatio = normalizedWidth / normalizedHeight
+    const ranked = OFFICIAL_GEMINI_IMAGE_SIZES.map((entry) => {
+      const baseConfig = WATERMARK_CONFIG_BY_TIER[entry.resolutionTier]
+      const scaleX = normalizedWidth / entry.width
+      const scaleY = normalizedHeight / entry.height
+      const scale = (scaleX + scaleY) / 2
+      const entryAspectRatio = entry.width / entry.height
+      const relativeAspectRatioDelta =
+        Math.abs(targetAspectRatio - entryAspectRatio) / entryAspectRatio
+      const scaleMismatchRatio = Math.abs(scaleX - scaleY) / Math.max(scaleX, scaleY)
+      if (relativeAspectRatioDelta > 0.02 || scaleMismatchRatio > 0.12) return null
+
+      const config: WatermarkConfig = {
+        logoSize: this.clamp(Math.round(baseConfig.logoSize * scale), 24, 192),
+        marginRight: Math.max(8, Math.round(baseConfig.marginRight * scaleX)),
+        marginBottom: Math.max(8, Math.round(baseConfig.marginBottom * scaleY)),
+      }
+      const position = this.calculateWatermarkPosition(normalizedWidth, normalizedHeight, config)
+      if (!this.isWatermarkPositionInsideImage(normalizedWidth, normalizedHeight, position)) {
+        return null
+      }
+
+      return {
+        config,
+        score:
+          relativeAspectRatioDelta * 100 +
+          scaleMismatchRatio * 20 +
+          Math.abs(Math.log2(Math.max(scale, 1e-6))),
+      }
+    })
+      .filter((entry): entry is { config: WatermarkConfig; score: number } => !!entry)
+      .sort((a, b) => a.score - b.score)
+
+    const deduped: WatermarkConfig[] = []
+    const seen = new Set<string>()
+    for (const entry of ranked) {
+      const key = this.buildConfigKey(entry.config)
+      if (seen.has(key)) continue
+      seen.add(key)
+      deduped.push(entry.config)
+      if (deduped.length >= limit) break
+    }
+    return deduped
+  }
+
+  private getCandidateWatermarkConfigs(imageWidth: number, imageHeight: number): WatermarkConfig[] {
+    const defaultConfig =
+      this.resolveOfficialGeminiWatermarkConfig(imageWidth, imageHeight) ||
+      (imageWidth > 1024 && imageHeight > 1024
+        ? { ...WatermarkRemover.WATERMARK_CONFIGS[1] }
+        : { ...WatermarkRemover.WATERMARK_CONFIGS[0] })
+
+    const alternateConfig =
+      defaultConfig.logoSize >= 96
+        ? { ...WatermarkRemover.WATERMARK_CONFIGS[0] }
+        : { ...WatermarkRemover.WATERMARK_CONFIGS[1] }
+
+    const configs = [
+      defaultConfig,
+      alternateConfig,
+      ...this.resolveOfficialGeminiSearchConfigs(imageWidth, imageHeight),
+    ]
+    const seen = new Set<string>()
+    const deduped: WatermarkConfig[] = []
+
+    for (const config of configs) {
+      const key = this.buildConfigKey(config)
+      if (seen.has(key)) continue
+      seen.add(key)
+      deduped.push(config)
+    }
+
+    return deduped
   }
 
   private calculateWatermarkPosition(
@@ -837,120 +1073,781 @@ export class WatermarkRemover {
     )
   }
 
-  private getPixelLuminance(data: Uint8ClampedArray, idx: number): number {
-    return (data[idx] * 0.2126 + data[idx + 1] * 0.7152 + data[idx + 2] * 0.0722) / 255
+  private interpolateAlphaMap(
+    sourceAlpha: Float32Array,
+    sourceSize: number,
+    targetSize: number,
+  ): Float32Array {
+    if (targetSize <= 0) return new Float32Array(0)
+    if (sourceSize === targetSize) return new Float32Array(sourceAlpha)
+
+    const out = new Float32Array(targetSize * targetSize)
+    const scale = (sourceSize - 1) / Math.max(1, targetSize - 1)
+    for (let y = 0; y < targetSize; y++) {
+      const sy = y * scale
+      const y0 = Math.floor(sy)
+      const y1 = Math.min(sourceSize - 1, y0 + 1)
+      const fy = sy - y0
+      for (let x = 0; x < targetSize; x++) {
+        const sx = x * scale
+        const x0 = Math.floor(sx)
+        const x1 = Math.min(sourceSize - 1, x0 + 1)
+        const fx = sx - x0
+        const p00 = sourceAlpha[y0 * sourceSize + x0]
+        const p10 = sourceAlpha[y0 * sourceSize + x1]
+        const p01 = sourceAlpha[y1 * sourceSize + x0]
+        const p11 = sourceAlpha[y1 * sourceSize + x1]
+        const top = p00 + (p10 - p00) * fx
+        const bottom = p01 + (p11 - p01) * fx
+        out[y * targetSize + x] = top + (bottom - top) * fy
+      }
+    }
+    return out
   }
 
-  private getWatermarkSearchOffsets(logoSize: 48 | 96): number[] {
-    const step = logoSize === 96 ? 12 : 8
-    const radius = logoSize === 96 ? 24 : 16
-    const offsets = [0]
+  private warpAlphaMap(
+    alphaMap: Float32Array,
+    size: number,
+    { dx = 0, dy = 0, scale = 1 }: TemplateWarp,
+  ): Float32Array {
+    if (size <= 0) return new Float32Array(0)
+    if (dx === 0 && dy === 0 && scale === 1) return new Float32Array(alphaMap)
 
-    for (let offset = step; offset <= radius; offset += step) {
-      offsets.push(-offset, offset)
+    const sample = (x: number, y: number) => {
+      const x0 = Math.floor(x)
+      const y0 = Math.floor(y)
+      const fx = x - x0
+      const fy = y - y0
+      const ix0 = this.clamp(x0, 0, size - 1)
+      const iy0 = this.clamp(y0, 0, size - 1)
+      const ix1 = this.clamp(x0 + 1, 0, size - 1)
+      const iy1 = this.clamp(y0 + 1, 0, size - 1)
+      const p00 = alphaMap[iy0 * size + ix0]
+      const p10 = alphaMap[iy0 * size + ix1]
+      const p01 = alphaMap[iy1 * size + ix0]
+      const p11 = alphaMap[iy1 * size + ix1]
+      const top = p00 + (p10 - p00) * fx
+      const bottom = p01 + (p11 - p01) * fx
+      return top + (bottom - top) * fy
     }
 
-    return offsets
+    const out = new Float32Array(size * size)
+    const center = (size - 1) / 2
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const sx = (x - center) / scale + center + dx
+        const sy = (y - center) / scale + center + dy
+        out[y * size + x] = sample(sx, sy)
+      }
+    }
+    return out
+  }
+
+  private meanAndVariance(values: Float32Array): { mean: number; variance: number } {
+    let sum = 0
+    for (let i = 0; i < values.length; i++) sum += values[i]
+    const mean = values.length > 0 ? sum / values.length : 0
+    let sq = 0
+    for (let i = 0; i < values.length; i++) {
+      const delta = values[i] - mean
+      sq += delta * delta
+    }
+    return { mean, variance: values.length > 0 ? sq / values.length : 0 }
+  }
+
+  private normalizedCrossCorrelation(a: Float32Array, b: Float32Array): number {
+    if (a.length !== b.length || a.length === 0) return 0
+    const statsA = this.meanAndVariance(a)
+    const statsB = this.meanAndVariance(b)
+    const denominator = Math.sqrt(statsA.variance * statsB.variance) * a.length
+    if (denominator < 1e-8) return 0
+
+    let numerator = 0
+    for (let i = 0; i < a.length; i++) {
+      numerator += (a[i] - statsA.mean) * (b[i] - statsB.mean)
+    }
+    return numerator / denominator
+  }
+
+  private toGrayscale(imageData: ImageData): Float32Array {
+    const { width, height, data } = imageData
+    const gray = new Float32Array(width * height)
+    for (let i = 0; i < width * height; i++) {
+      const idx = i * 4
+      gray[i] = (0.2126 * data[idx] + 0.7152 * data[idx + 1] + 0.0722 * data[idx + 2]) / 255
+    }
+    return gray
+  }
+
+  private getRegion(
+    data: Float32Array,
+    width: number,
+    x: number,
+    y: number,
+    size: number,
+    height = Math.ceil(data.length / Math.max(width, 1)),
+  ): Float32Array {
+    if (size <= 0 || x < 0 || y < 0 || x + size > width || y + size > height) {
+      return new Float32Array(0)
+    }
+    const out = new Float32Array(size * size)
+    for (let row = 0; row < size; row++) {
+      const sourceBase = (y + row) * width + x
+      const targetBase = row * size
+      for (let col = 0; col < size; col++) {
+        out[targetBase + col] = data[sourceBase + col]
+      }
+    }
+    return out
+  }
+
+  private toRegionGrayscale(imageData: ImageData, position: WatermarkPosition): Float32Array {
+    const size = Math.min(position.width, position.height)
+    if (!this.isWatermarkPositionInsideImage(imageData.width, imageData.height, position)) {
+      return new Float32Array(0)
+    }
+
+    const out = new Float32Array(size * size)
+    for (let row = 0; row < size; row++) {
+      for (let col = 0; col < size; col++) {
+        const idx = ((position.y + row) * imageData.width + (position.x + col)) * 4
+        out[row * size + col] =
+          (0.2126 * imageData.data[idx] +
+            0.7152 * imageData.data[idx + 1] +
+            0.0722 * imageData.data[idx + 2]) /
+          255
+      }
+    }
+    return out
+  }
+
+  private sobelMagnitude(data: Float32Array, width: number, height: number): Float32Array {
+    const grad = new Float32Array(width * height)
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const i = y * width + x
+        const gx =
+          -data[i - width - 1] -
+          2 * data[i - 1] -
+          data[i + width - 1] +
+          data[i - width + 1] +
+          2 * data[i + 1] +
+          data[i + width + 1]
+        const gy =
+          -data[i - width - 1] -
+          2 * data[i - width] -
+          data[i - width + 1] +
+          data[i + width - 1] +
+          2 * data[i + width] +
+          data[i + width + 1]
+        grad[i] = Math.sqrt(gx * gx + gy * gy)
+      }
+    }
+    return grad
+  }
+
+  private stdDevRegion(
+    data: Float32Array,
+    width: number,
+    x: number,
+    y: number,
+    size: number,
+  ): number {
+    let sum = 0
+    let sq = 0
+    let total = 0
+    for (let row = 0; row < size; row++) {
+      const base = (y + row) * width + x
+      for (let col = 0; col < size; col++) {
+        const value = data[base + col]
+        sum += value
+        sq += value * value
+        total += 1
+      }
+    }
+    if (total === 0) return 0
+    const mean = sum / total
+    return Math.sqrt(Math.max(0, sq / total - mean * mean))
+  }
+
+  private getTemplateGradient(alphaMap: Float32Array, size: number): Float32Array {
+    const cached = this.alphaGradientCache.get(alphaMap)
+    if (cached) return cached
+    const gradient = this.sobelMagnitude(alphaMap, size, size)
+    this.alphaGradientCache.set(alphaMap, gradient)
+    return gradient
+  }
+
+  private buildDetectionContext(imageData: ImageData): DetectionContext {
+    const gray = this.toGrayscale(imageData)
+    return {
+      gray,
+      grad: this.sobelMagnitude(gray, imageData.width, imageData.height),
+      width: imageData.width,
+      height: imageData.height,
+    }
   }
 
   private measureWatermarkCandidate(
     imageData: ImageData,
     alphaMap: Float32Array,
     position: WatermarkPosition,
+    context?: DetectionContext,
+    includeVariance = true,
   ): WatermarkDetectionMetrics {
-    let insideWeightedSum = 0
-    let insideWeight = 0
+    const size = position.width
+    if (
+      !alphaMap ||
+      alphaMap.length !== size * size ||
+      !this.isWatermarkPositionInsideImage(imageData.width, imageData.height, position)
+    ) {
+      return {
+        confidence: 0,
+        spatialScore: 0,
+        gradientScore: 0,
+        varianceScore: 0,
+      }
+    }
 
+    const grayRegion = context
+      ? this.getRegion(context.gray, context.width, position.x, position.y, size)
+      : this.toRegionGrayscale(imageData, position)
+    if (grayRegion.length === 0 || grayRegion.length !== alphaMap.length) {
+      return {
+        confidence: 0,
+        spatialScore: 0,
+        gradientScore: 0,
+        varianceScore: 0,
+      }
+    }
+
+    const gradRegion = context
+      ? this.getRegion(context.grad, context.width, position.x, position.y, size)
+      : this.sobelMagnitude(grayRegion, size, size)
+    const spatialScore = this.normalizedCrossCorrelation(grayRegion, alphaMap)
+    const gradientScore = this.normalizedCrossCorrelation(
+      gradRegion,
+      this.getTemplateGradient(alphaMap, size),
+    )
+
+    let varianceScore = 0
+    if (includeVariance && position.y > 8) {
+      const referenceY = Math.max(0, position.y - size)
+      const referenceHeight = Math.min(size, position.y - referenceY)
+      if (referenceHeight > 8) {
+        const sourceGray = context?.gray || this.toGrayscale(imageData)
+        const watermarkStd = this.stdDevRegion(
+          sourceGray,
+          imageData.width,
+          position.x,
+          position.y,
+          size,
+        )
+        const referenceStd = this.stdDevRegion(
+          sourceGray,
+          imageData.width,
+          position.x,
+          referenceY,
+          referenceHeight,
+        )
+        if (referenceStd > 1e-8) {
+          varianceScore = this.clamp(1 - watermarkStd / referenceStd, 0, 1)
+        }
+      }
+    }
+
+    return {
+      confidence: this.clamp(
+        Math.max(0, spatialScore) * 0.5 + Math.max(0, gradientScore) * 0.3 + varianceScore * 0.2,
+        0,
+        1,
+      ),
+      spatialScore,
+      gradientScore,
+      varianceScore,
+    }
+  }
+
+  private getWatermarkSearchOffsets(logoSize: number): number[] {
+    const step = logoSize >= 96 ? 6 : 4
+    const radius = logoSize >= 96 ? 24 : 12
+    const offsets = [0]
+    for (let offset = step; offset <= radius; offset += step) {
+      offsets.push(-offset, offset)
+    }
+    return offsets
+  }
+
+  private removeWatermark(
+    imageData: ImageData,
+    alphaMap: Float32Array,
+    position: WatermarkPosition,
+    alphaGain = 1,
+  ) {
+    const { x, y, width, height } = position
+    for (let row = 0; row < height; row++) {
+      for (let col = 0; col < width; col++) {
+        const imageIndex = ((y + row) * imageData.width + (x + col)) * 4
+        const alphaIndex = row * width + col
+        const rawAlpha = alphaMap[alphaIndex]
+        const signalAlpha = Math.max(0, rawAlpha - WatermarkRemover.ALPHA_NOISE_FLOOR) * alphaGain
+        if (signalAlpha < WatermarkRemover.ALPHA_THRESHOLD) continue
+
+        const alpha = Math.min(rawAlpha * alphaGain, WatermarkRemover.MAX_ALPHA)
+        const oneMinusAlpha = 1 - alpha
+        for (let channel = 0; channel < 3; channel++) {
+          const watermarked = imageData.data[imageIndex + channel]
+          const original =
+            (watermarked - alpha * WatermarkRemover.LOGO_VALUE) / Math.max(oneMinusAlpha, 0.01)
+          imageData.data[imageIndex + channel] = Math.max(0, Math.min(255, Math.round(original)))
+        }
+      }
+    }
+  }
+
+  private calculateNearBlackRatio(imageData: ImageData, position: WatermarkPosition): number {
+    let nearBlack = 0
+    let total = 0
     for (let row = 0; row < position.height; row++) {
       for (let col = 0; col < position.width; col++) {
-        const alpha = alphaMap[row * position.width + col]
-        if (alpha < WatermarkRemover.ALPHA_THRESHOLD) continue
-
-        const pixelIdx = ((position.y + row) * imageData.width + (position.x + col)) * 4
-        const luminance = this.getPixelLuminance(imageData.data, pixelIdx)
-        const weight = alpha * alpha
-        insideWeightedSum += luminance * weight
-        insideWeight += weight
+        const idx = ((position.y + row) * imageData.width + (position.x + col)) * 4
+        const r = imageData.data[idx]
+        const g = imageData.data[idx + 1]
+        const b = imageData.data[idx + 2]
+        if (
+          r <= WatermarkRemover.NEAR_BLACK_THRESHOLD &&
+          g <= WatermarkRemover.NEAR_BLACK_THRESHOLD &&
+          b <= WatermarkRemover.NEAR_BLACK_THRESHOLD
+        ) {
+          nearBlack += 1
+        }
+        total += 1
       }
     }
+    return total > 0 ? nearBlack / total : 0
+  }
 
-    const insideMean = insideWeight > 0 ? insideWeightedSum / insideWeight : 0
-    const samplePadding = Math.max(8, Math.round(position.width / 4))
-    const sampleStartX = Math.max(0, position.x - samplePadding)
-    const sampleStartY = Math.max(0, position.y - samplePadding)
-    const sampleEndX = Math.min(imageData.width, position.x + position.width + samplePadding)
-    const sampleEndY = Math.min(imageData.height, position.y + position.height + samplePadding)
-    let outsideSum = 0
-    let outsideCount = 0
-
-    for (let y = sampleStartY; y < sampleEndY; y++) {
-      for (let x = sampleStartX; x < sampleEndX; x++) {
-        const insideRegion =
-          x >= position.x &&
-          x < position.x + position.width &&
-          y >= position.y &&
-          y < position.y + position.height
-
-        if (insideRegion) continue
-
-        const pixelIdx = (y * imageData.width + x) * 4
-        outsideSum += this.getPixelLuminance(imageData.data, pixelIdx)
-        outsideCount += 1
+  private calculateRegionTextureStats(
+    imageData: ImageData,
+    position: WatermarkPosition,
+  ): TextureStats {
+    let sum = 0
+    let sq = 0
+    let total = 0
+    for (let row = 0; row < position.height; row++) {
+      for (let col = 0; col < position.width; col++) {
+        const idx = ((position.y + row) * imageData.width + (position.x + col)) * 4
+        const lum =
+          0.2126 * imageData.data[idx] +
+          0.7152 * imageData.data[idx + 1] +
+          0.0722 * imageData.data[idx + 2]
+        sum += lum
+        sq += lum * lum
+        total += 1
       }
     }
+    const meanLum = total > 0 ? sum / total : 0
+    const variance = total > 0 ? Math.max(0, sq / total - meanLum * meanLum) : 0
+    return { meanLum, stdLum: Math.sqrt(variance) }
+  }
 
-    const outsideMean = outsideCount > 0 ? outsideSum / outsideCount : insideMean
-    const score = insideMean - outsideMean
-    const headroom = Math.max(0.08, 1 - Math.min(outsideMean, 0.98))
+  private getReferenceRegion(
+    position: WatermarkPosition,
+    imageData: ImageData,
+  ): WatermarkPosition | null {
+    const referenceY = position.y - position.height
+    if (referenceY < 0) return null
     return {
-      insideMean,
-      outsideMean,
-      score,
-      normalizedScore: score / headroom,
+      x: position.x,
+      y: referenceY,
+      width: position.width,
+      height: position.height,
+    }
+  }
+
+  private assessReferenceTextureAlignment(
+    originalImageData: ImageData,
+    candidateImageData: ImageData,
+    position: WatermarkPosition,
+  ): TextureAssessment {
+    const referenceRegion = this.getReferenceRegion(position, originalImageData)
+    if (!referenceRegion) {
+      return { texturePenalty: 0, tooDark: false, tooFlat: false, hardReject: false }
+    }
+
+    const referenceStats = this.calculateRegionTextureStats(originalImageData, referenceRegion)
+    const candidateStats = this.calculateRegionTextureStats(candidateImageData, position)
+    const darknessPenalty =
+      Math.max(
+        0,
+        referenceStats.meanLum - candidateStats.meanLum - WatermarkRemover.TEXTURE_REFERENCE_MARGIN,
+      ) / Math.max(1, referenceStats.meanLum)
+    const flatnessPenalty =
+      Math.max(
+        0,
+        referenceStats.stdLum * WatermarkRemover.TEXTURE_STD_FLOOR_RATIO - candidateStats.stdLum,
+      ) / Math.max(1, referenceStats.stdLum)
+    const darknessVisibility =
+      Math.max(
+        0,
+        referenceStats.meanLum - candidateStats.meanLum - WatermarkRemover.TEXTURE_REFERENCE_MARGIN,
+      ) / Math.max(1, referenceStats.stdLum)
+    const tooDark = darknessPenalty > 0
+    const tooFlat = flatnessPenalty > 0
+    const hardReject =
+      (tooDark &&
+        darknessVisibility >= WatermarkRemover.TEXTURE_DARKNESS_VISIBILITY_HARD_REJECT_THRESHOLD) ||
+      (tooDark &&
+        tooFlat &&
+        darknessPenalty >= WatermarkRemover.TEXTURE_DARKNESS_HARD_REJECT_PENALTY_THRESHOLD &&
+        flatnessPenalty >= WatermarkRemover.TEXTURE_FLATNESS_HARD_REJECT_PENALTY_THRESHOLD)
+
+    return {
+      texturePenalty: darknessPenalty * 2 + flatnessPenalty * 2,
+      tooDark,
+      tooFlat,
+      hardReject,
     }
   }
 
   private hasDetectableWatermark(metrics: WatermarkDetectionMetrics): boolean {
     return (
-      metrics.score >= WatermarkRemover.DETECTION_MIN_SCORE ||
-      metrics.normalizedScore >= WatermarkRemover.DETECTION_MIN_NORMALIZED_SCORE
+      metrics.confidence >= WatermarkRemover.DETECTION_MIN_CONFIDENCE ||
+      metrics.spatialScore >= WatermarkRemover.DETECTION_MIN_SPATIAL_SCORE ||
+      metrics.gradientScore >= WatermarkRemover.DETECTION_MIN_GRADIENT_SCORE
     )
   }
 
-  private isWatermarkRemovalValid(
-    before: WatermarkDetectionMetrics,
-    after: WatermarkDetectionMetrics,
-  ): boolean {
-    const improvement = before.score - after.score
-    const normalizedImprovement = before.normalizedScore - after.normalizedScore
-    const maxResidualScore = Math.max(before.score * 0.65, 0.018)
-    const maxResidualNormalizedScore = Math.max(before.normalizedScore * 0.65, 0.05)
-    const darkening = before.outsideMean - after.insideMean
-
+  private shouldEscalateSearch(trial: WatermarkRemovalTrial): boolean {
     return (
-      this.hasDetectableWatermark(before) &&
-      (improvement >= WatermarkRemover.DETECTION_MIN_IMPROVEMENT ||
-        normalizedImprovement >= WatermarkRemover.DETECTION_MIN_NORMALIZED_IMPROVEMENT) &&
-      after.score <= maxResidualScore &&
-      after.normalizedScore <= maxResidualNormalizedScore &&
-      darkening <= WatermarkRemover.DETECTION_MAX_DARKENING
+      Math.abs(trial.processedMetrics.spatialScore) > WatermarkRemover.VALIDATION_TARGET_RESIDUAL ||
+      Math.max(0, trial.processedMetrics.gradientScore) > 0.08 ||
+      !trial.accepted
     )
+  }
+
+  private materializeCandidateImageData(
+    originalImageData: ImageData,
+    alphaMap: Float32Array,
+    position: WatermarkPosition,
+    alphaGain: number,
+  ): ImageData {
+    const candidate = this.cloneImageData(originalImageData)
+    this.removeWatermark(candidate, alphaMap, position, alphaGain)
+    return candidate
+  }
+
+  private evaluateRestorationCandidate(
+    originalImageData: ImageData,
+    candidate: WatermarkCandidate,
+    alphaMap = candidate.alphaMap,
+    alphaGain = 1,
+  ): WatermarkRemovalTrial {
+    const originalMetrics =
+      alphaMap === candidate.alphaMap && alphaGain === 1
+        ? candidate.metrics
+        : this.measureWatermarkCandidate(originalImageData, alphaMap, candidate.position)
+    const imageData = this.materializeCandidateImageData(
+      originalImageData,
+      alphaMap,
+      candidate.position,
+      alphaGain,
+    )
+    const processedMetrics = this.measureWatermarkCandidate(
+      imageData,
+      alphaMap,
+      candidate.position,
+      undefined,
+      false,
+    )
+    const baselineNearBlackRatio = this.calculateNearBlackRatio(
+      originalImageData,
+      candidate.position,
+    )
+    const nearBlackIncrease =
+      this.calculateNearBlackRatio(imageData, candidate.position) - baselineNearBlackRatio
+    const improvement = originalMetrics.spatialScore - processedMetrics.spatialScore
+    const gradientIncrease = processedMetrics.gradientScore - originalMetrics.gradientScore
+    const textureAssessment = this.assessReferenceTextureAlignment(
+      originalImageData,
+      imageData,
+      candidate.position,
+    )
+    const accepted =
+      !textureAssessment.hardReject &&
+      nearBlackIncrease <= WatermarkRemover.MAX_NEAR_BLACK_RATIO_INCREASE &&
+      improvement >= WatermarkRemover.VALIDATION_MIN_IMPROVEMENT &&
+      (Math.abs(processedMetrics.spatialScore) <= WatermarkRemover.VALIDATION_TARGET_RESIDUAL ||
+        gradientIncrease <= WatermarkRemover.VALIDATION_MAX_GRADIENT_INCREASE)
+
+    return {
+      accepted,
+      imageData,
+      config: candidate.config,
+      position: candidate.position,
+      alphaMap,
+      alphaGain,
+      metrics: originalMetrics,
+      processedMetrics,
+      improvement,
+      gradientIncrease,
+      nearBlackIncrease,
+      texturePenalty: textureAssessment.texturePenalty,
+      validationCost:
+        Math.abs(processedMetrics.spatialScore) +
+        Math.max(0, processedMetrics.gradientScore) * 0.6 +
+        Math.max(0, nearBlackIncrease) * 3 +
+        textureAssessment.texturePenalty,
+    }
+  }
+
+  private pickBetterRemovalTrial(
+    current: WatermarkRemovalTrial | null,
+    candidate: WatermarkRemovalTrial | null,
+    minCostDelta = 0.002,
+  ): WatermarkRemovalTrial | null {
+    if (!candidate) return current
+    if (!current) return candidate
+    if (candidate.accepted !== current.accepted) {
+      return candidate.accepted ? candidate : current
+    }
+    if (candidate.validationCost < current.validationCost - minCostDelta) {
+      return candidate
+    }
+    if (
+      Math.abs(candidate.validationCost - current.validationCost) <= minCostDelta &&
+      candidate.improvement > current.improvement + minCostDelta
+    ) {
+      return candidate
+    }
+    if (candidate.metrics.confidence > current.metrics.confidence + 0.01) {
+      return candidate
+    }
+    return current
+  }
+
+  private findBestTemplateWarp(
+    imageData: ImageData,
+    candidate: WatermarkCandidate,
+  ): { alphaMap: Float32Array; shift: TemplateWarp } | null {
+    const size = candidate.position.width
+    if (!size || size <= 8) return null
+
+    let bestMetrics = candidate.metrics
+    let bestAlphaMap = candidate.alphaMap
+    let bestShift: TemplateWarp = { dx: 0, dy: 0, scale: 1 }
+    let bestConfidence =
+      Math.max(0, candidate.metrics.spatialScore) * 0.7 +
+      Math.max(0, candidate.metrics.gradientScore) * 0.3
+
+    for (const scale of WatermarkRemover.TEMPLATE_ALIGN_SCALES) {
+      for (const dy of WatermarkRemover.TEMPLATE_ALIGN_SHIFTS) {
+        for (const dx of WatermarkRemover.TEMPLATE_ALIGN_SHIFTS) {
+          if (dx === 0 && dy === 0 && scale === 1) continue
+          const warpedAlphaMap = this.warpAlphaMap(candidate.alphaMap, size, { dx, dy, scale })
+          const metrics = this.measureWatermarkCandidate(
+            imageData,
+            warpedAlphaMap,
+            candidate.position,
+            undefined,
+            false,
+          )
+          const confidence =
+            Math.max(0, metrics.spatialScore) * 0.7 + Math.max(0, metrics.gradientScore) * 0.3
+          if (confidence > bestConfidence + 0.01) {
+            bestMetrics = metrics
+            bestAlphaMap = warpedAlphaMap
+            bestShift = { dx, dy, scale }
+            bestConfidence = confidence
+          }
+        }
+      }
+    }
+
+    const improvedSpatial = bestMetrics.spatialScore >= candidate.metrics.spatialScore + 0.01
+    const improvedGradient = bestMetrics.gradientScore >= candidate.metrics.gradientScore + 0.01
+    return improvedSpatial || improvedGradient ? { alphaMap: bestAlphaMap, shift: bestShift } : null
+  }
+
+  private async buildPreviewAnchorCandidates(
+    imageData: ImageData,
+    context: DetectionContext,
+    baseConfig: WatermarkConfig,
+  ): Promise<WatermarkCandidate[]> {
+    if (baseConfig.logoSize !== 48) return []
+
+    const minSize = Math.max(
+      WatermarkRemover.PREVIEW_ANCHOR_MIN_SIZE,
+      Math.round(baseConfig.logoSize * WatermarkRemover.PREVIEW_ANCHOR_MIN_SIZE_RATIO),
+    )
+    const maxSize = Math.max(
+      minSize,
+      Math.round(baseConfig.logoSize * WatermarkRemover.PREVIEW_ANCHOR_MAX_SIZE_RATIO),
+    )
+    const minMarginRight = Math.max(
+      8,
+      baseConfig.marginRight - WatermarkRemover.PREVIEW_ANCHOR_MARGIN_WINDOW,
+    )
+    const maxMarginRight = baseConfig.marginRight + WatermarkRemover.PREVIEW_ANCHOR_MARGIN_EXTENSION
+    const minMarginBottom = Math.max(
+      8,
+      baseConfig.marginBottom - WatermarkRemover.PREVIEW_ANCHOR_MARGIN_WINDOW,
+    )
+    const maxMarginBottom =
+      baseConfig.marginBottom + WatermarkRemover.PREVIEW_ANCHOR_MARGIN_EXTENSION
+
+    const alphaMaps = new Map<number, Float32Array>()
+    const getPreviewAlphaMap = async (size: number) => {
+      const cached = alphaMaps.get(size)
+      if (cached) return cached
+      const alphaMap = await this.getAlphaMap(size)
+      alphaMaps.set(size, alphaMap)
+      return alphaMap
+    }
+    for (let size = minSize; size <= maxSize; size += WatermarkRemover.PREVIEW_ANCHOR_SIZE_STEP) {
+      alphaMaps.set(size, await getPreviewAlphaMap(size))
+    }
+
+    const coarseCandidates: Array<WatermarkCandidate & { coarseScore: number }> = []
+    const pushTopCandidate = (candidate: WatermarkCandidate & { coarseScore: number }) => {
+      coarseCandidates.push(candidate)
+      coarseCandidates.sort((a, b) => b.coarseScore - a.coarseScore)
+      if (coarseCandidates.length > WatermarkRemover.PREVIEW_ANCHOR_TOP_K) {
+        coarseCandidates.length = WatermarkRemover.PREVIEW_ANCHOR_TOP_K
+      }
+    }
+
+    for (let size = minSize; size <= maxSize; size += WatermarkRemover.PREVIEW_ANCHOR_SIZE_STEP) {
+      const alphaMap = alphaMaps.get(size)
+      if (!alphaMap) continue
+      for (
+        let marginRight = minMarginRight;
+        marginRight <= maxMarginRight;
+        marginRight += WatermarkRemover.PREVIEW_ANCHOR_MARGIN_STEP
+      ) {
+        for (
+          let marginBottom = minMarginBottom;
+          marginBottom <= maxMarginBottom;
+          marginBottom += WatermarkRemover.PREVIEW_ANCHOR_MARGIN_STEP
+        ) {
+          const config: WatermarkConfig = { logoSize: size, marginRight, marginBottom }
+          const position = this.calculateWatermarkPosition(
+            imageData.width,
+            imageData.height,
+            config,
+          )
+          if (!this.isWatermarkPositionInsideImage(imageData.width, imageData.height, position)) {
+            continue
+          }
+          const metrics = this.measureWatermarkCandidate(
+            imageData,
+            alphaMap,
+            position,
+            context,
+            false,
+          )
+          const coarseScore =
+            Math.max(0, metrics.gradientScore) * 0.6 + Math.max(0, metrics.spatialScore) * 0.4
+          if (coarseScore < WatermarkRemover.PREVIEW_ANCHOR_MIN_SCORE) continue
+          pushTopCandidate({
+            config,
+            position,
+            alphaMap,
+            metrics,
+            source: "standard+preview",
+            coarseScore,
+          })
+        }
+      }
+    }
+
+    const refinedCandidates: WatermarkCandidate[] = []
+    const seen = new Set<string>()
+    for (const coarseCandidate of coarseCandidates) {
+      for (const sizeDelta of WatermarkRemover.PREVIEW_ANCHOR_LOCAL_DELTAS) {
+        const size = coarseCandidate.position.width + sizeDelta
+        if (size < minSize || size > maxSize) continue
+        const alphaMap = await getPreviewAlphaMap(size)
+        if (!alphaMap) continue
+        for (const dx of WatermarkRemover.PREVIEW_ANCHOR_LOCAL_DELTAS) {
+          for (const dy of WatermarkRemover.PREVIEW_ANCHOR_LOCAL_DELTAS) {
+            const position: WatermarkPosition = {
+              x: coarseCandidate.position.x + dx,
+              y: coarseCandidate.position.y + dy,
+              width: size,
+              height: size,
+            }
+            if (!this.isWatermarkPositionInsideImage(imageData.width, imageData.height, position)) {
+              continue
+            }
+            const key = `${position.x}:${position.y}:${position.width}`
+            if (seen.has(key)) continue
+            seen.add(key)
+            refinedCandidates.push({
+              config: {
+                logoSize: size,
+                marginRight: imageData.width - position.x - size,
+                marginBottom: imageData.height - position.y - size,
+              },
+              position,
+              alphaMap,
+              metrics: this.measureWatermarkCandidate(imageData, alphaMap, position, context),
+              source: "standard+preview",
+            })
+          }
+        }
+      }
+    }
+
+    refinedCandidates.sort((a, b) => b.metrics.confidence - a.metrics.confidence)
+    return refinedCandidates.slice(0, WatermarkRemover.PREVIEW_ANCHOR_TOP_K)
   }
 
   private async buildWatermarkCandidates(imageData: ImageData): Promise<WatermarkCandidate[]> {
-    const configs = this.getCandidateWatermarkConfigs(imageData.width, imageData.height)
-    const alphaMaps = await Promise.all(configs.map((config) => this.getAlphaMap(config.logoSize)))
+    const context = this.buildDetectionContext(imageData)
+    const baseConfigs = this.getCandidateWatermarkConfigs(imageData.width, imageData.height)
+    const expandedConfigs: WatermarkConfig[] = []
+    const seenConfigs = new Set<string>()
+    const addConfig = (config: WatermarkConfig) => {
+      if (!Number.isFinite(config.logoSize) || config.logoSize < 24) return
+      const key = this.buildConfigKey(config)
+      if (seenConfigs.has(key)) return
+      const position = this.calculateWatermarkPosition(imageData.width, imageData.height, config)
+      if (!this.isWatermarkPositionInsideImage(imageData.width, imageData.height, position)) return
+      seenConfigs.add(key)
+      expandedConfigs.push(config)
+    }
+
+    for (const config of baseConfigs) {
+      addConfig(config)
+      for (const delta of WatermarkRemover.STANDARD_SIZE_JITTERS) {
+        const jitteredConfig: WatermarkConfig = {
+          logoSize: config.logoSize + delta,
+          marginRight: config.marginRight,
+          marginBottom: config.marginBottom,
+        }
+        addConfig(jitteredConfig)
+      }
+    }
+
+    const uniqueSizes = Array.from(new Set(expandedConfigs.map((config) => config.logoSize)))
+    const alphaMaps = new Map<number, Float32Array>(
+      await Promise.all(
+        uniqueSizes.map(async (size) => [size, await this.getAlphaMap(size)] as const),
+      ),
+    )
+
     const candidates: WatermarkCandidate[] = []
     const seenPositions = new Set<string>()
-
-    configs.forEach((config, configIndex) => {
+    for (const config of expandedConfigs) {
       const basePosition = this.calculateWatermarkPosition(
         imageData.width,
         imageData.height,
         config,
       )
       const offsets = this.getWatermarkSearchOffsets(config.logoSize)
-      const alphaMap = alphaMaps[configIndex]
+      const alphaMap = alphaMaps.get(config.logoSize)
+      if (!alphaMap) continue
 
       for (const offsetY of offsets) {
         for (const offsetX of offsets) {
@@ -960,34 +1857,46 @@ export class WatermarkRemover {
             width: basePosition.width,
             height: basePosition.height,
           }
-
           if (!this.isWatermarkPositionInsideImage(imageData.width, imageData.height, position)) {
             continue
           }
-
           const key = `${position.x}:${position.y}:${position.width}`
           if (seenPositions.has(key)) continue
           seenPositions.add(key)
-
           candidates.push({
             config,
             position,
             alphaMap,
-            metrics: this.measureWatermarkCandidate(imageData, alphaMap, position),
+            metrics: this.measureWatermarkCandidate(imageData, alphaMap, position, context),
+            source: "standard",
           })
         }
       }
-    })
+    }
+
+    const previewBaseConfig =
+      baseConfigs.find((config) => config.logoSize === 48) || WatermarkRemover.WATERMARK_CONFIGS[0]
+    for (const previewCandidate of await this.buildPreviewAnchorCandidates(
+      imageData,
+      context,
+      previewBaseConfig,
+    )) {
+      const key = `${previewCandidate.position.x}:${previewCandidate.position.y}:${previewCandidate.position.width}`
+      if (seenPositions.has(key)) continue
+      seenPositions.add(key)
+      candidates.push(previewCandidate)
+    }
 
     candidates.sort((a, b) => {
-      if (b.metrics.normalizedScore !== a.metrics.normalizedScore) {
-        return b.metrics.normalizedScore - a.metrics.normalizedScore
+      if (b.metrics.confidence !== a.metrics.confidence) {
+        return b.metrics.confidence - a.metrics.confidence
       }
-
-      if (b.metrics.score !== a.metrics.score) {
-        return b.metrics.score - a.metrics.score
+      if (b.metrics.spatialScore !== a.metrics.spatialScore) {
+        return b.metrics.spatialScore - a.metrics.spatialScore
       }
-
+      if (b.metrics.gradientScore !== a.metrics.gradientScore) {
+        return b.metrics.gradientScore - a.metrics.gradientScore
+      }
       return a.config.logoSize - b.config.logoSize
     })
 
@@ -997,31 +1906,47 @@ export class WatermarkRemover {
   private async resolveValidatedWatermarkRemoval(imageData: ImageData): Promise<ImageData | null> {
     const candidates = await this.buildWatermarkCandidates(imageData)
     let validatedAttempts = 0
+    let bestTrial: WatermarkRemovalTrial | null = null
 
     for (const candidate of candidates) {
       if (!this.hasDetectableWatermark(candidate.metrics)) {
-        break
+        if (bestTrial?.accepted) break
+        continue
       }
 
-      const nextImageData = this.cloneImageData(imageData)
-      this.removeWatermark(nextImageData, candidate.alphaMap, candidate.position)
-      const afterMetrics = this.measureWatermarkCandidate(
-        nextImageData,
-        candidate.alphaMap,
-        candidate.position,
-      )
-
-      if (this.isWatermarkRemovalValid(candidate.metrics, afterMetrics)) {
-        return nextImageData
+      let selectedTrial = this.evaluateRestorationCandidate(imageData, candidate)
+      const warped = this.findBestTemplateWarp(imageData, candidate)
+      if (warped) {
+        selectedTrial =
+          this.pickBetterRemovalTrial(
+            selectedTrial,
+            this.evaluateRestorationCandidate(imageData, candidate, warped.alphaMap),
+          ) || selectedTrial
       }
 
+      if (this.shouldEscalateSearch(selectedTrial)) {
+        for (const alphaGain of WatermarkRemover.ALPHA_GAIN_CANDIDATES) {
+          selectedTrial =
+            this.pickBetterRemovalTrial(
+              selectedTrial,
+              this.evaluateRestorationCandidate(
+                imageData,
+                candidate,
+                selectedTrial.alphaMap,
+                alphaGain,
+              ),
+            ) || selectedTrial
+        }
+      }
+
+      bestTrial = this.pickBetterRemovalTrial(bestTrial, selectedTrial)
       validatedAttempts += 1
       if (validatedAttempts >= WatermarkRemover.MAX_VALIDATION_CANDIDATES) {
         break
       }
     }
 
-    return null
+    return bestTrial?.accepted ? bestTrial.imageData : null
   }
 
   private ensureWatermarkRemoved(result: ProcessedImageResult): ProcessedImageResult {
@@ -1061,8 +1986,16 @@ export class WatermarkRemover {
     })
   }
 
-  private async getAlphaMap(size: 48 | 96): Promise<Float32Array> {
+  private async getAlphaMap(size: number): Promise<Float32Array> {
     if (this.alphaMaps[size]) return this.alphaMaps[size]
+
+    if (size !== 48 && size !== 96) {
+      const alpha96 = await this.getAlphaMap(96)
+      const alphaMap = this.interpolateAlphaMap(alpha96, 96, size)
+      this.alphaMaps[size] = alphaMap
+      return alphaMap
+    }
+
     const bgImage = await this.loadBgImage(size)
     const canvas = document.createElement("canvas")
     canvas.width = size
