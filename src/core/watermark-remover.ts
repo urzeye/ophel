@@ -11,6 +11,7 @@ const OPHEL_WATERMARK_PROCESS_REQUEST = "OPHEL_WATERMARK_PROCESS_REQUEST"
 const OPHEL_WATERMARK_PROCESS_RESPONSE = "OPHEL_WATERMARK_PROCESS_RESPONSE"
 const GEMINI_GOOGLEUSERCONTENT_HOST_PATTERN = /^https:\/\/lh3\.googleusercontent\.com\//i
 const OPHEL_WATERMARK_LOADING_STYLE_ID = "ophel-watermark-loading-style"
+const WATERMARK_NOT_DETECTED_ERROR = "watermark-not-detected"
 const GEMINI_IMAGE_LOADING_HOST_SELECTOR = [
   "[data-image-attachment-index]",
   "single-image.generated-image",
@@ -24,6 +25,18 @@ type WatermarkConfig = {
   logoSize: 48 | 96
   marginRight: number
   marginBottom: number
+}
+type WatermarkPosition = {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+type WatermarkDetectionMetrics = {
+  insideMean: number
+  outsideMean: number
+  score: number
+  normalizedScore: number
 }
 
 // 油猴脚本的 GM_xmlhttpRequest 声明
@@ -75,6 +88,8 @@ export class WatermarkRemover {
   static ALPHA_THRESHOLD = 0.002
   static MAX_ALPHA = 0.99
   static LOGO_VALUE = 255
+  static DETECTION_MIN_SCORE = 0.012
+  static DETECTION_MIN_NORMALIZED_SCORE = 0.09
   private alphaMaps: Record<number, Float32Array> = {}
   private bgImages: Record<number, HTMLImageElement> = {}
   private processingQueue = new Set<string>()
@@ -215,6 +230,12 @@ export class WatermarkRemover {
     }
 
     if (isUserscript) {
+      // userscript 的 /app 会话图大多已经变成 blob:，这里不能再直接跳过，
+      // 否则会话缩略图与放大图都没有机会进入自动去水印流程。
+      if (source.startsWith("blob:") && this.isGeminiConversationPath()) {
+        return false
+      }
+
       return this.userscriptOriginalFetch !== null
     }
 
@@ -942,7 +963,7 @@ export class WatermarkRemover {
     imageWidth: number,
     imageHeight: number,
     config: WatermarkConfig,
-  ) {
+  ): WatermarkPosition {
     const { logoSize, marginRight, marginBottom } = config
     return {
       x: imageWidth - marginRight - logoSize,
@@ -950,6 +971,87 @@ export class WatermarkRemover {
       width: logoSize,
       height: logoSize,
     }
+  }
+
+  private isWatermarkPositionInsideImage(
+    imageWidth: number,
+    imageHeight: number,
+    position: WatermarkPosition,
+  ): boolean {
+    return (
+      position.x >= 0 &&
+      position.y >= 0 &&
+      position.x + position.width <= imageWidth &&
+      position.y + position.height <= imageHeight
+    )
+  }
+
+  private getPixelLuminance(data: Uint8ClampedArray, idx: number): number {
+    return (data[idx] * 0.2126 + data[idx + 1] * 0.7152 + data[idx + 2] * 0.0722) / 255
+  }
+
+  private measureWatermarkCandidate(
+    imageData: ImageData,
+    alphaMap: Float32Array,
+    position: WatermarkPosition,
+  ): WatermarkDetectionMetrics {
+    let insideWeightedSum = 0
+    let insideWeight = 0
+
+    for (let row = 0; row < position.height; row++) {
+      for (let col = 0; col < position.width; col++) {
+        const alpha = alphaMap[row * position.width + col]
+        if (alpha < WatermarkRemover.ALPHA_THRESHOLD) continue
+
+        const pixelIdx = ((position.y + row) * imageData.width + (position.x + col)) * 4
+        const luminance = this.getPixelLuminance(imageData.data, pixelIdx)
+        const weight = alpha * alpha
+        insideWeightedSum += luminance * weight
+        insideWeight += weight
+      }
+    }
+
+    const insideMean = insideWeight > 0 ? insideWeightedSum / insideWeight : 0
+    const samplePadding = Math.max(8, Math.round(position.width / 4))
+    const sampleStartX = Math.max(0, position.x - samplePadding)
+    const sampleStartY = Math.max(0, position.y - samplePadding)
+    const sampleEndX = Math.min(imageData.width, position.x + position.width + samplePadding)
+    const sampleEndY = Math.min(imageData.height, position.y + position.height + samplePadding)
+    let outsideSum = 0
+    let outsideCount = 0
+
+    for (let y = sampleStartY; y < sampleEndY; y++) {
+      for (let x = sampleStartX; x < sampleEndX; x++) {
+        const insideRegion =
+          x >= position.x &&
+          x < position.x + position.width &&
+          y >= position.y &&
+          y < position.y + position.height
+
+        if (insideRegion) continue
+
+        const pixelIdx = (y * imageData.width + x) * 4
+        outsideSum += this.getPixelLuminance(imageData.data, pixelIdx)
+        outsideCount += 1
+      }
+    }
+
+    const outsideMean = outsideCount > 0 ? outsideSum / outsideCount : insideMean
+    const score = insideMean - outsideMean
+    const headroom = Math.max(0.08, 1 - Math.min(outsideMean, 0.98))
+    return {
+      insideMean,
+      outsideMean,
+      score,
+      normalizedScore: score / headroom,
+    }
+  }
+
+  private hasDetectableWatermark(metrics: WatermarkDetectionMetrics): boolean {
+    return (
+      metrics.score >= WatermarkRemover.DETECTION_MIN_SCORE ||
+      metrics.normalizedScore >= WatermarkRemover.DETECTION_MIN_NORMALIZED_SCORE
+    )
   }
 
   private getWatermarkBgUrl(size: 48 | 96): string {
@@ -1157,6 +1259,7 @@ export class WatermarkRemover {
   private async processLoadedImageToDataUrl(
     loadedImg: HTMLImageElement,
     sourceUrl?: string,
+    options?: { requireDetectableWatermark?: boolean },
   ): Promise<string> {
     const canvas = document.createElement("canvas")
     canvas.width = loadedImg.width
@@ -1170,15 +1273,29 @@ export class WatermarkRemover {
     const config = this.detectWatermarkConfig(canvas.width, canvas.height, sourceUrl)
     const position = this.calculateWatermarkPosition(canvas.width, canvas.height, config)
     const alphaMap = await this.getAlphaMap(config.logoSize)
+
+    if (
+      options?.requireDetectableWatermark &&
+      this.isWatermarkPositionInsideImage(canvas.width, canvas.height, position)
+    ) {
+      const metrics = this.measureWatermarkCandidate(imageData, alphaMap, position)
+      if (!this.hasDetectableWatermark(metrics)) {
+        throw new Error(WATERMARK_NOT_DETECTED_ERROR)
+      }
+    }
+
     this.removeWatermark(imageData, alphaMap, position)
     ctx.putImageData(imageData, 0, 0)
 
     return canvas.toDataURL("image/png")
   }
 
-  private async processImageSourceToDataUrl(source: string): Promise<string> {
+  private async processImageSourceToDataUrl(
+    source: string,
+    options?: { requireDetectableWatermark?: boolean },
+  ): Promise<string> {
     const loadedImg = await this.loadImageFromSource(source)
-    return this.processLoadedImageToDataUrl(loadedImg, source)
+    return this.processLoadedImageToDataUrl(loadedImg, source, options)
   }
 
   private async processImageBlobToDataUrl(blob: Blob, sourceUrl?: string): Promise<string> {
@@ -1217,12 +1334,7 @@ export class WatermarkRemover {
       )
       if (!options?.bypassCache) {
         this.processedDataUrlCache.set(normalizedSourceUrl, processedDataUrl)
-        if (this.processedDataUrlCache.size > 100) {
-          const oldestKey = this.processedDataUrlCache.keys().next().value
-          if (oldestKey) {
-            this.processedDataUrlCache.delete(oldestKey)
-          }
-        }
+        this.trimProcessedDataUrlCache()
       }
       return processedDataUrl
     })()
@@ -1239,6 +1351,57 @@ export class WatermarkRemover {
     return processing
   }
 
+  private trimProcessedDataUrlCache() {
+    if (this.processedDataUrlCache.size <= 100) return
+
+    const oldestKey = this.processedDataUrlCache.keys().next().value
+    if (oldestKey) {
+      this.processedDataUrlCache.delete(oldestKey)
+    }
+  }
+
+  private async getProcessedDisplayDataUrl(sourceUrl: string): Promise<string> {
+    if (
+      isUserscript &&
+      this.isGeminiConversationPath() &&
+      (sourceUrl.startsWith("blob:") || sourceUrl.startsWith("data:image/"))
+    ) {
+      return this.processImageSourceToDataUrl(sourceUrl, {
+        requireDetectableWatermark: true,
+      })
+    }
+
+    if (!isUserscript || !this.shouldInterceptGeminiImageUrl(sourceUrl)) {
+      return this.resolveActionDataUrl(sourceUrl)
+    }
+
+    const normalizedSourceUrl = this.replaceWithNormalSize(sourceUrl)
+    const cached = this.processedDataUrlCache.get(normalizedSourceUrl)
+    if (cached) return cached
+
+    const processingKey = `display:${normalizedSourceUrl}`
+    const inFlight = this.processingMap.get(processingKey)
+    if (inFlight) return inFlight
+
+    const processing = (async () => {
+      const originalBlob = await this.fetchOriginalBlobSingle(normalizedSourceUrl)
+      const processedDataUrl = await this.processImageBlobToDataUrl(
+        originalBlob,
+        normalizedSourceUrl,
+      )
+      this.processedDataUrlCache.set(normalizedSourceUrl, processedDataUrl)
+      this.trimProcessedDataUrlCache()
+      return processedDataUrl
+    })()
+
+    this.processingMap.set(processingKey, processing)
+    try {
+      return await processing
+    } finally {
+      this.processingMap.delete(processingKey)
+    }
+  }
+
   private isValidGeminiImage(img: HTMLImageElement) {
     if (img.closest("generated-image,.generated-image-container")) {
       return true
@@ -1250,12 +1413,16 @@ export class WatermarkRemover {
   private findGeminiImages() {
     return [...document.querySelectorAll<HTMLImageElement>("img")].filter((img) => {
       const source = this.getImageSourceForAction(img)
+      const skipSource = img.getAttribute("data-ophel-wm-skip-source") || ""
+      const isSkippedForCurrentSource =
+        img.dataset.watermarkProcessed === "skipped" && skipSource === source
       return (
         this.isValidGeminiImage(img) &&
         this.isSupportedGeminiImageSource(source) &&
         !this.shouldSkipAutoProcessingSource(source) &&
         img.dataset.watermarkProcessed !== "true" &&
-        img.dataset.watermarkProcessed !== "processing"
+        img.dataset.watermarkProcessed !== "processing" &&
+        !isSkippedForCurrentSource
       )
     })
   }
@@ -1275,20 +1442,28 @@ export class WatermarkRemover {
     this.processingQueue.add(originalSrc)
     img.dataset.watermarkProcessed = "processing"
     const loadingHost = this.showImageProcessingIndicator(img)
+    const sourceForProcessing =
+      originalSrc.startsWith("data:image/") || originalSrc.startsWith("blob:")
+        ? originalSrc
+        : this.replaceWithNormalSize(originalSrc)
 
     try {
-      // 替换为原始尺寸URL（去除尺寸限制）
-      const sourceForProcessing =
-        originalSrc.startsWith("data:image/") || originalSrc.startsWith("blob:")
-          ? originalSrc
-          : this.replaceWithNormalSize(originalSrc)
-
-      const newUrl = await this.resolveActionDataUrl(sourceForProcessing)
+      const newUrl = await this.getProcessedDisplayDataUrl(sourceForProcessing)
       img.src = newUrl
       img.dataset.watermarkProcessed = "true"
       img.setAttribute("data-ophel-wm-source", sourceForProcessing)
       img.setAttribute("data-ophel-wm-processed", "1")
-    } catch {
+      img.removeAttribute("data-ophel-wm-skip-source")
+    } catch (error) {
+      const message = error instanceof Error ? error.message : ""
+      if (message === WATERMARK_NOT_DETECTED_ERROR) {
+        img.dataset.watermarkProcessed = "skipped"
+        img.setAttribute("data-ophel-wm-skip-source", sourceForProcessing)
+        img.removeAttribute("data-ophel-wm-source")
+        img.removeAttribute("data-ophel-wm-processed")
+        return
+      }
+
       img.dataset.watermarkProcessed = "error"
       img.removeAttribute("data-ophel-wm-processed")
     } finally {
