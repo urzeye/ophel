@@ -1349,13 +1349,15 @@ export class ChatGPTAdapter extends SiteAdapter {
   // ==================== 生成状态检测 ====================
 
   isGenerating(): boolean {
-    // ChatGPT 生成时会显示 stop 按钮
-    const stopBtn = document.querySelector('[data-testid="stop-button"]')
-    return stopBtn !== null && (stopBtn as HTMLElement).offsetParent !== null
+    return this.findElementBySelectors(this.getStopButtonSelectors()) !== null
   }
 
   getStopButtonSelectors(): string[] {
-    return ['[data-testid="stop-button"]']
+    return [
+      '[data-testid="stop-button"]',
+      'button[aria-label*="Stop"]',
+      'button[aria-label*="停止"]',
+    ]
   }
 
   private findModelSelectorButton(): HTMLElement | null {
@@ -1526,12 +1528,11 @@ export class ChatGPTAdapter extends SiteAdapter {
     return null
   }
 
-  getNetworkMonitorConfig(): NetworkMonitorConfig {
-    return {
-      urlPatterns: ["backend-api/f/conversation"],
-      urlPathEndsWith: ["backend-api/f/conversation"],
-      silenceThreshold: 3000,
-    }
+  getNetworkMonitorConfig(): NetworkMonitorConfig | null {
+    // ChatGPT 在思考模式下会先通过 /backend-api/f/conversation 返回 stream_handoff，
+    // 随后立即 [DONE]，真正的回复可能继续走其他内部通道。
+    // 这里保留网络监控会把“切流完成”误判成“回答完成”，因此 ChatGPT 退回 DOM 生成态检测。
+    return null
   }
 
   // ==================== 模型锁定 ====================
