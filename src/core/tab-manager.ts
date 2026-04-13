@@ -7,6 +7,7 @@ import {
   EVENT_MONITOR_INIT,
   EVENT_MONITOR_START,
   EVENT_PRIVACY_TOGGLE,
+  type MonitorEventPayload,
 } from "~utils/messaging"
 import { type Settings } from "~utils/storage"
 import { showToast } from "~utils/toast"
@@ -27,6 +28,10 @@ export class TabManager {
   private currentNetworkGenerationPending = false
   private currentNetworkGenerationConfirmed = false
   private generationConfirmationIntervalId: number | null = null
+  private currentGenerationUsesDomCompletion = false
+  private currentDomCompletionObservedStart = false
+  private domCompletionIntervalId: number | null = null
+  private domCompletionTrackingStartedAt = 0
 
   // 用户是否在前台看到过生成完成（用于避免误发通知）
   private userSawCompletion = false
@@ -137,6 +142,7 @@ export class TabManager {
             urlPatterns: config.urlPatterns,
             urlPathEndsWith: config.urlPathEndsWith,
             silenceThreshold: config.silenceThreshold,
+            requestBodyRules: config.requestBodyRules,
           },
         },
         "*",
@@ -372,8 +378,15 @@ export class TabManager {
     return this.adapter.requiresDomConfirmationForNetworkGeneration?.() ?? false
   }
 
-  private beginNetworkGeneration() {
+  private beginNetworkGeneration(payload?: MonitorEventPayload) {
     this.stopNotificationPlayback()
+
+    if (payload?.domCompletionRequired) {
+      this.beginDomCompletionDrivenGeneration()
+      return
+    }
+
+    this.resetDomCompletionState()
 
     if (!this.requiresDomConfirmationForNetworkGeneration()) {
       this.confirmCurrentNetworkGeneration()
@@ -416,6 +429,56 @@ export class TabManager {
     }
   }
 
+  private beginDomCompletionDrivenGeneration() {
+    this.resetGenerationConfirmationState()
+    this.currentGenerationUsesDomCompletion = true
+    this.currentDomCompletionObservedStart = false
+    this.domCompletionTrackingStartedAt = Date.now()
+    this.startDomCompletionPolling()
+    this.updateTabName()
+  }
+
+  private startDomCompletionPolling() {
+    this.clearDomCompletionPolling()
+
+    const poll = () => {
+      if (!this.currentGenerationUsesDomCompletion) return
+
+      const isGenerating = this.adapter.isGenerating?.() ?? false
+      if (!this.currentDomCompletionObservedStart) {
+        if (isGenerating) {
+          this.currentDomCompletionObservedStart = true
+          if (this.aiState !== "generating") {
+            this.lastAiState = this.aiState
+            this.aiState = "generating"
+          }
+          this.updateTabName()
+          return
+        }
+
+        // 思考模式请求会先 handoff 再真正进入生成。若长时间未进入 DOM 生成态，
+        // 则视为本轮没有可追踪的生成，避免轮询残留。
+        if (Date.now() - this.domCompletionTrackingStartedAt > 30_000) {
+          this.lastAiState = this.aiState
+          this.aiState = "idle"
+          this.userSawCompletion = false
+          this.resetDomCompletionState()
+          this.updateTabName(true)
+        }
+        return
+      }
+
+      if (!isGenerating) {
+        this.finalizeAiCompletion()
+      }
+    }
+
+    poll()
+    if (this.currentGenerationUsesDomCompletion) {
+      this.domCompletionIntervalId = window.setInterval(poll, 150)
+    }
+  }
+
   private clearGenerationConfirmationPolling() {
     if (this.generationConfirmationIntervalId !== null) {
       window.clearInterval(this.generationConfirmationIntervalId)
@@ -423,8 +486,23 @@ export class TabManager {
     }
   }
 
+  private clearDomCompletionPolling() {
+    if (this.domCompletionIntervalId !== null) {
+      window.clearInterval(this.domCompletionIntervalId)
+      this.domCompletionIntervalId = null
+    }
+  }
+
+  private resetDomCompletionState() {
+    this.clearDomCompletionPolling()
+    this.currentGenerationUsesDomCompletion = false
+    this.currentDomCompletionObservedStart = false
+    this.domCompletionTrackingStartedAt = 0
+  }
+
   private resetGenerationConfirmationState() {
     this.clearGenerationConfirmationPolling()
+    this.resetDomCompletionState()
     this.currentNetworkGenerationPending = false
     this.currentNetworkGenerationConfirmed = false
   }
@@ -435,10 +513,10 @@ export class TabManager {
     // 2. 增加 origin 检查，防止跨域 iframe 干扰
     if (event.origin !== window.location.origin) return
 
-    const { type } = event.data || {}
+    const { type, payload } = event.data || {}
 
     if (type === EVENT_MONITOR_START) {
-      this.beginNetworkGeneration()
+      this.beginNetworkGeneration(payload as MonitorEventPayload | undefined)
     } else if (type === EVENT_MONITOR_COMPLETE) {
       this.onAiComplete()
     } else if (type === EVENT_PRIVACY_TOGGLE) {
@@ -512,6 +590,12 @@ export class TabManager {
    * AI 任务完成处理（由 NetworkMonitor 触发）
    */
   private onAiComplete() {
+    if (this.currentGenerationUsesDomCompletion) {
+      // ChatGPT 思考模式下，/backend-api/f/conversation 的 complete 仅代表 handoff 结束，
+      // 真正的完成要等 stop 按钮出现并最终消失。
+      return
+    }
+
     const requiresDomConfirmation = this.requiresDomConfirmationForNetworkGeneration()
     const generationConfirmed = this.currentNetworkGenerationConfirmed
 
@@ -524,6 +608,10 @@ export class TabManager {
       return
     }
 
+    this.finalizeAiCompletion()
+  }
+
+  private finalizeAiCompletion() {
     const wasGenerating = this.aiState === "generating"
     this.lastAiState = this.aiState
     this.aiState = "completed"

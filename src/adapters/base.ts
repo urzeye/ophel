@@ -47,6 +47,13 @@ export interface NetworkMonitorConfig {
   urlPatterns: string[]
   urlPathEndsWith?: string[]
   silenceThreshold: number
+  requestBodyRules?: NetworkMonitorRequestBodyRule[]
+}
+
+export interface NetworkMonitorRequestBodyRule {
+  type: "json-field-exists"
+  field: string
+  metadata: Record<string, string | number | boolean | null>
 }
 
 export interface ModelSwitcherConfig {

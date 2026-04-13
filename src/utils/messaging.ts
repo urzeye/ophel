@@ -1,3 +1,5 @@
+import type { NetworkMonitorRequestBodyRule } from "~adapters/base"
+
 /**
  * Messaging Protocol Definitions
  */
@@ -240,7 +242,9 @@ export const EVENT_EXTENSION_UPDATE_AVAILABLE = "OPHEL_EXTENSION_UPDATE_AVAILABL
 
 export interface MonitorConfigPayload {
   urlPatterns: string[]
+  urlPathEndsWith?: string[]
   silenceThreshold: number
+  requestBodyRules?: NetworkMonitorRequestBodyRule[]
 }
 
 export interface MonitorEventPayload {
@@ -249,6 +253,7 @@ export interface MonitorEventPayload {
   activeCount?: number
   lastUrl?: string
   type?: string
+  domCompletionRequired?: boolean
 }
 
 export type GeminiMyStuffKind = "media" | "document"

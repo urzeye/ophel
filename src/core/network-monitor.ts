@@ -1,5 +1,11 @@
 import { initGeminiMyStuffBridge } from "~core/gemini-mystuff-bridge"
-import { EVENT_MONITOR_COMPLETE, EVENT_MONITOR_INIT, EVENT_MONITOR_START } from "~utils/messaging"
+import type { NetworkMonitorRequestBodyRule } from "~adapters/base"
+import {
+  EVENT_MONITOR_COMPLETE,
+  EVENT_MONITOR_INIT,
+  EVENT_MONITOR_START,
+  type MonitorEventPayload,
+} from "~utils/messaging"
 
 // 油猴脚本环境需要使用 unsafeWindow 才能访问页面的原生 fetch/XMLHttpRequest
 declare const unsafeWindow: Window | undefined
@@ -21,6 +27,7 @@ interface NetworkMonitorOptions {
   urlPatterns?: string[]
   urlPathEndsWith?: string[]
   silenceThreshold?: number
+  requestBodyRules?: NetworkMonitorRequestBodyRule[]
   onComplete?: (ctx: any) => void
   onStart?: (ctx: any) => void
   domValidation?: (ctx: any) => boolean
@@ -30,6 +37,7 @@ class NetworkMonitor {
   private urlPatterns: string[]
   private urlPathEndsWith: string[]
   private silenceThreshold: number
+  private requestBodyRules: NetworkMonitorRequestBodyRule[]
   private onComplete: (ctx: any) => void
   private onStart: ((ctx: any) => void) | null
   private domValidation: ((ctx: any) => boolean) | null
@@ -48,6 +56,7 @@ class NetworkMonitor {
     this.urlPatterns = options.urlPatterns || []
     this.urlPathEndsWith = options.urlPathEndsWith || []
     this.silenceThreshold = options.silenceThreshold || 3000
+    this.requestBodyRules = options.requestBodyRules || []
     this.onComplete = options.onComplete || (() => {})
     this.onStart = options.onStart || null
     this.domValidation = options.domValidation || null
@@ -135,7 +144,7 @@ class NetworkMonitor {
   private async _hookedFetch(...args: any[]) {
     // 获取正确的页面上下文（油猴脚本环境使用 unsafeWindow）
     const pageWindow = getPageWindow()
-    const url = args[0] ? args[0].toString() : ""
+    const url = this._extractFetchUrl(args)
     const isTarget = this._isTargetUrl(url)
 
     if (!isTarget) {
@@ -153,7 +162,8 @@ class NetworkMonitor {
     if (!this._hasTriggeredStart && this.onStart) {
       this._hasTriggeredStart = true
       try {
-        this.onStart({ url, timestamp: Date.now(), type: "fetch" })
+        const requestMetadata = await this._extractFetchRequestMetadata(args)
+        this.onStart({ url, timestamp: Date.now(), type: "fetch", ...requestMetadata })
       } catch {}
     }
 
@@ -225,7 +235,8 @@ class NetworkMonitor {
       if (!self._hasTriggeredStart && self.onStart) {
         self._hasTriggeredStart = true
         try {
-          self.onStart({ url, timestamp: Date.now(), type: "xhr" })
+          const requestMetadata = self._extractRequestMetadata(body)
+          self.onStart({ url, timestamp: Date.now(), type: "xhr", ...requestMetadata })
         } catch {}
       }
 
@@ -253,6 +264,122 @@ class NetworkMonitor {
     if (this._originalXhrSend) {
       PageXHR.prototype.send = this._originalXhrSend
       this._originalXhrSend = null
+    }
+  }
+
+  private _extractFetchUrl(args: any[]): string {
+    const input = args[0]
+    if (!input) return ""
+
+    if (typeof input === "string") {
+      return input
+    }
+
+    if (input instanceof URL) {
+      return input.toString()
+    }
+
+    if (typeof input === "object" && typeof input.url === "string") {
+      return input.url
+    }
+
+    return typeof input.toString === "function" ? input.toString() : ""
+  }
+
+  private async _extractFetchRequestMetadata(args: any[]): Promise<Partial<MonitorEventPayload>> {
+    if (this.requestBodyRules.length === 0) {
+      return {}
+    }
+
+    const initBodyText = await this._bodyToText(args[1]?.body)
+    if (initBodyText !== null) {
+      return this._extractRequestMetadata(initBodyText)
+    }
+
+    const input = args[0]
+    if (
+      input &&
+      typeof input === "object" &&
+      typeof input.clone === "function" &&
+      typeof input.text === "function"
+    ) {
+      try {
+        const clone = input.clone()
+        if (clone && typeof clone.text === "function") {
+          const bodyText = await clone.text()
+          return this._extractRequestMetadata(bodyText)
+        }
+      } catch {}
+    }
+
+    return {}
+  }
+
+  private async _bodyToText(body: unknown): Promise<string | null> {
+    if (typeof body === "string") {
+      return body
+    }
+
+    if (!body || typeof body !== "object") {
+      return null
+    }
+
+    const tag = Object.prototype.toString.call(body)
+    if (tag === "[object URLSearchParams]") {
+      return typeof (body as URLSearchParams).toString === "function" ? body.toString() : null
+    }
+
+    if (tag === "[object Blob]" && typeof (body as Blob).text === "function") {
+      try {
+        return await (body as Blob).text()
+      } catch {
+        return null
+      }
+    }
+
+    if (ArrayBuffer.isView(body)) {
+      try {
+        return new TextDecoder().decode(body)
+      } catch {
+        return null
+      }
+    }
+
+    if (body instanceof ArrayBuffer) {
+      try {
+        return new TextDecoder().decode(body)
+      } catch {
+        return null
+      }
+    }
+
+    return null
+  }
+
+  private _extractRequestMetadata(body: unknown): Partial<MonitorEventPayload> {
+    if (
+      typeof body !== "string" ||
+      body.trim().length === 0 ||
+      this.requestBodyRules.length === 0
+    ) {
+      return {}
+    }
+
+    try {
+      const parsed = JSON.parse(body) as Record<string, unknown>
+      const metadata: Record<string, string | number | boolean | null> = {}
+
+      for (const rule of this.requestBodyRules) {
+        if (rule.type === "json-field-exists" && parsed[rule.field] !== undefined) {
+          Object.assign(metadata, rule.metadata)
+        }
+      }
+
+      return {
+        ...metadata,
+      }
+    } catch {
+      return {}
     }
   }
 }
@@ -295,6 +422,7 @@ export function initNetworkMonitor(): void {
         urlPatterns: payload?.urlPatterns,
         urlPathEndsWith: payload?.urlPathEndsWith,
         silenceThreshold: payload?.silenceThreshold,
+        requestBodyRules: payload?.requestBodyRules,
         onStart: (info) => window.postMessage({ type: EVENT_MONITOR_START, payload: info }, "*"),
         onComplete: (info) =>
           window.postMessage({ type: EVENT_MONITOR_COMPLETE, payload: info }, "*"),
