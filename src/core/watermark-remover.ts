@@ -1,4 +1,5 @@
 import { MSG_PROXY_FETCH, sendToBackground } from "~utils/messaging"
+import { t } from "~utils/i18n"
 
 // 平台检测
 declare const __PLATFORM__: "extension" | "userscript" | undefined
@@ -9,6 +10,14 @@ const OPHEL_WATERMARK_FETCH_TOGGLE = "OPHEL_WATERMARK_FETCH_TOGGLE"
 const OPHEL_WATERMARK_PROCESS_REQUEST = "OPHEL_WATERMARK_PROCESS_REQUEST"
 const OPHEL_WATERMARK_PROCESS_RESPONSE = "OPHEL_WATERMARK_PROCESS_RESPONSE"
 const GEMINI_GOOGLEUSERCONTENT_HOST_PATTERN = /^https:\/\/lh3\.googleusercontent\.com\//i
+const OPHEL_WATERMARK_LOADING_STYLE_ID = "ophel-watermark-loading-style"
+const GEMINI_IMAGE_LOADING_HOST_SELECTOR = [
+  "[data-image-attachment-index]",
+  "single-image.generated-image",
+  "generated-image",
+  ".generated-image-container",
+  ".image-container.replace-fife-images-at-export",
+].join(", ")
 
 type GeminiImageAction = "copy" | "download"
 type WatermarkConfig = {
@@ -116,6 +125,8 @@ export class WatermarkRemover {
     this.teardownActionButtonInterception()
     this.processingMap.clear()
     this.processingQueue.clear()
+    this.clearAllProcessingIndicators()
+    this.removeProcessingIndicatorStyles()
 
     if (this.stopObserver) {
       this.stopObserver()
@@ -196,6 +207,127 @@ export class WatermarkRemover {
     if (!this.shouldInterceptGeminiImageUrl(normalizedSource)) return false
 
     return normalizedSource.includes("/gg/")
+  }
+
+  private ensureProcessingIndicatorStyles() {
+    if (document.getElementById(OPHEL_WATERMARK_LOADING_STYLE_ID)) return
+    if (!document.head) return
+
+    const style = document.createElement("style")
+    style.id = OPHEL_WATERMARK_LOADING_STYLE_ID
+    style.textContent = `
+      [data-ophel-wm-loading="1"] {
+        isolation: isolate;
+      }
+
+      .ophel-wm-loading-indicator {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.72);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.22);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      .ophel-wm-loading-indicator::after {
+        content: "";
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.35);
+        border-top-color: rgba(255, 255, 255, 1);
+        animation: ophel-wm-loading-spin 0.72s linear infinite;
+      }
+
+      @keyframes ophel-wm-loading-spin {
+        from {
+          transform: rotate(0deg);
+        }
+
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    `
+
+    document.head.appendChild(style)
+  }
+
+  private removeProcessingIndicatorStyles() {
+    document.getElementById(OPHEL_WATERMARK_LOADING_STYLE_ID)?.remove()
+  }
+
+  private findProcessingIndicatorHost(img: HTMLImageElement): HTMLElement | null {
+    const host = img.closest(GEMINI_IMAGE_LOADING_HOST_SELECTOR)
+    if (host instanceof HTMLElement) return host
+    if (img.parentElement instanceof HTMLElement) return img.parentElement
+    return img
+  }
+
+  private restoreProcessingIndicatorHost(host: HTMLElement) {
+    host.removeAttribute("data-ophel-wm-loading")
+    host.removeAttribute("data-ophel-wm-loading-count")
+    host.querySelector(".ophel-wm-loading-indicator")?.remove()
+
+    if (host.dataset.ophelWmLoadingManagedPosition === "1") {
+      host.style.position = host.dataset.ophelWmLoadingOriginalPosition || ""
+      delete host.dataset.ophelWmLoadingManagedPosition
+      delete host.dataset.ophelWmLoadingOriginalPosition
+    }
+  }
+
+  private showImageProcessingIndicator(img: HTMLImageElement): HTMLElement | null {
+    const host = this.findProcessingIndicatorHost(img)
+    if (!host) return null
+
+    this.ensureProcessingIndicatorStyles()
+
+    const currentCount = Number(host.dataset.ophelWmLoadingCount || "0")
+    if (currentCount <= 0) {
+      if (window.getComputedStyle(host).position === "static") {
+        host.dataset.ophelWmLoadingManagedPosition = "1"
+        host.dataset.ophelWmLoadingOriginalPosition = host.style.position || ""
+        host.style.position = "relative"
+      }
+
+      host.setAttribute("data-ophel-wm-loading", "1")
+
+      const indicator = document.createElement("div")
+      indicator.className = "ophel-wm-loading-indicator"
+      indicator.setAttribute("aria-hidden", "true")
+      indicator.title = t("watermarkProcessing") || "Processing image..."
+      host.appendChild(indicator)
+    }
+
+    host.dataset.ophelWmLoadingCount = String(Math.max(0, currentCount) + 1)
+    return host
+  }
+
+  private hideImageProcessingIndicator(host: HTMLElement | null) {
+    if (!host) return
+
+    const currentCount = Number(host.dataset.ophelWmLoadingCount || "0")
+    if (currentCount > 1) {
+      host.dataset.ophelWmLoadingCount = String(currentCount - 1)
+      return
+    }
+
+    this.restoreProcessingIndicatorHost(host)
+  }
+
+  private clearAllProcessingIndicators() {
+    document.querySelectorAll<HTMLElement>('[data-ophel-wm-loading="1"]').forEach((host) => {
+      this.restoreProcessingIndicatorHost(host)
+    })
   }
 
   private extractSupportedUrlFromNode(node: Element): string {
@@ -713,6 +845,8 @@ export class WatermarkRemover {
     event.stopPropagation()
     event.stopImmediatePropagation()
 
+    const loadingHost = relatedImage ? this.showImageProcessingIndicator(relatedImage) : null
+
     try {
       const processedDataUrl = await this.resolveProcessedDataUrlForAction(
         source,
@@ -734,6 +868,8 @@ export class WatermarkRemover {
       }
     } catch {
       return
+    } finally {
+      this.hideImageProcessingIndicator(loadingHost)
     }
   }
 
@@ -1124,6 +1260,7 @@ export class WatermarkRemover {
     if (this.processingQueue.has(originalSrc)) return
     this.processingQueue.add(originalSrc)
     img.dataset.watermarkProcessed = "processing"
+    const loadingHost = this.showImageProcessingIndicator(img)
 
     try {
       // 替换为原始尺寸URL（去除尺寸限制）
@@ -1141,6 +1278,7 @@ export class WatermarkRemover {
       img.dataset.watermarkProcessed = "error"
       img.removeAttribute("data-ophel-wm-processed")
     } finally {
+      this.hideImageProcessingIndicator(loadingHost)
       this.processingQueue.delete(originalSrc)
     }
   }
