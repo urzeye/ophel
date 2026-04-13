@@ -59,6 +59,10 @@ export class WatermarkRemover {
     96: "assets/userscript/ophel-watermark-bg-96.png",
   }
 
+  static WATERMARK_CONFIGS: Record<48 | 96, WatermarkConfig> = {
+    48: { logoSize: 48, marginRight: 32, marginBottom: 32 },
+    96: { logoSize: 96, marginRight: 64, marginBottom: 64 },
+  }
   static ALPHA_THRESHOLD = 0.002
   static MAX_ALPHA = 0.99
   static LOGO_VALUE = 255
@@ -170,6 +174,28 @@ export class WatermarkRemover {
     } catch {
       return value
     }
+  }
+
+  private getNormalizedGeminiPath(pathname = window.location.pathname): string {
+    return pathname.replace(/^\/u\/\d+/, "")
+  }
+
+  private isGeminiConversationPath(pathname = this.getNormalizedGeminiPath()): boolean {
+    return pathname === "/app" || pathname === "/app/" || pathname.startsWith("/app/")
+  }
+
+  private getWatermarkConfigBySize(size: 48 | 96): WatermarkConfig {
+    return { ...WatermarkRemover.WATERMARK_CONFIGS[size] }
+  }
+
+  private shouldUseConversationPreviewWatermark(sourceUrl?: string): boolean {
+    // /app 会话里的 preview 图仍可能走 48px 水印布局，不能再只按画布尺寸硬猜。
+    if (!sourceUrl || !this.isGeminiConversationPath()) return false
+
+    const normalizedSource = this.normalizePossibleUrl(sourceUrl)
+    if (!this.shouldInterceptGeminiImageUrl(normalizedSource)) return false
+
+    return normalizedSource.includes("/gg/")
   }
 
   private extractSupportedUrlFromNode(node: Element): string {
@@ -310,7 +336,7 @@ export class WatermarkRemover {
         : undefined
 
       const dataUrl = sourceBlob
-        ? await this.processImageBlobToDataUrl(sourceBlob)
+        ? await this.processImageBlobToDataUrl(sourceBlob, sourceUrl)
         : await this.getProcessedDataUrl(sourceUrl)
 
       this.postMainWorldProcessResponse({
@@ -748,11 +774,20 @@ export class WatermarkRemover {
     }
   }
 
-  private detectWatermarkConfig(imageWidth: number, imageHeight: number): WatermarkConfig {
-    if (imageWidth > 1024 && imageHeight > 1024) {
-      return { logoSize: 96, marginRight: 64, marginBottom: 64 }
+  private detectWatermarkConfig(
+    imageWidth: number,
+    imageHeight: number,
+    sourceUrl?: string,
+  ): WatermarkConfig {
+    if (this.shouldUseConversationPreviewWatermark(sourceUrl)) {
+      return this.getWatermarkConfigBySize(48)
     }
-    return { logoSize: 48, marginRight: 32, marginBottom: 32 }
+
+    if (imageWidth > 1024 && imageHeight > 1024) {
+      return this.getWatermarkConfigBySize(96)
+    }
+
+    return this.getWatermarkConfigBySize(48)
   }
 
   private calculateWatermarkPosition(
@@ -971,7 +1006,10 @@ export class WatermarkRemover {
     throw lastError instanceof Error ? lastError : new Error("Failed to fetch original image")
   }
 
-  private async processLoadedImageToDataUrl(loadedImg: HTMLImageElement): Promise<string> {
+  private async processLoadedImageToDataUrl(
+    loadedImg: HTMLImageElement,
+    sourceUrl?: string,
+  ): Promise<string> {
     const canvas = document.createElement("canvas")
     canvas.width = loadedImg.width
     canvas.height = loadedImg.height
@@ -981,7 +1019,7 @@ export class WatermarkRemover {
     ctx.drawImage(loadedImg, 0, 0)
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-    const config = this.detectWatermarkConfig(canvas.width, canvas.height)
+    const config = this.detectWatermarkConfig(canvas.width, canvas.height, sourceUrl)
     const position = this.calculateWatermarkPosition(canvas.width, canvas.height, config)
     const alphaMap = await this.getAlphaMap(config.logoSize)
     this.removeWatermark(imageData, alphaMap, position)
@@ -992,13 +1030,14 @@ export class WatermarkRemover {
 
   private async processImageSourceToDataUrl(source: string): Promise<string> {
     const loadedImg = await this.loadImageFromSource(source)
-    return this.processLoadedImageToDataUrl(loadedImg)
+    return this.processLoadedImageToDataUrl(loadedImg, source)
   }
 
-  private async processImageBlobToDataUrl(blob: Blob): Promise<string> {
+  private async processImageBlobToDataUrl(blob: Blob, sourceUrl?: string): Promise<string> {
     const blobUrl = URL.createObjectURL(blob)
     try {
-      return await this.processImageSourceToDataUrl(blobUrl)
+      const loadedImg = await this.loadImageFromSource(blobUrl)
+      return await this.processLoadedImageToDataUrl(loadedImg, sourceUrl)
     } finally {
       URL.revokeObjectURL(blobUrl)
     }
@@ -1024,7 +1063,10 @@ export class WatermarkRemover {
       const originalBlob = await this.fetchOriginalBlob(normalizedSourceUrl, {
         requireNonPreviewSource: options?.requireNonPreviewSource,
       })
-      const processedDataUrl = await this.processImageBlobToDataUrl(originalBlob)
+      const processedDataUrl = await this.processImageBlobToDataUrl(
+        originalBlob,
+        normalizedSourceUrl,
+      )
       if (!options?.bypassCache) {
         this.processedDataUrlCache.set(normalizedSourceUrl, processedDataUrl)
         if (this.processedDataUrlCache.size > 100) {
