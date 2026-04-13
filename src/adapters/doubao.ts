@@ -36,17 +36,17 @@ const SIDEBAR_HISTORY_SELECTOR = `${SIDEBAR_ROOT_SELECTOR} [data-history-contain
 const CONVERSATION_ROW_SELECTOR = `${SIDEBAR_ROOT_SELECTOR} a[id^="conversation_"][href*="/chat/"]`
 const CONVERSATION_TITLE_SELECTOR = '[class*="overallTitle-"], [class*="title-"]'
 const NEW_CHAT_BUTTON_SELECTOR = `${SIDEBAR_ROOT_SELECTOR} > div:nth-child(2)`
-const USER_QUERY_SELECTOR = '[data-testid="message_content"].justify-end'
-const RAW_USER_QUERY_TEXT_SELECTOR = '[data-testid="message_text_content"]'
-const USER_QUERY_TEXT_SELECTOR = `${USER_QUERY_SELECTOR} ${RAW_USER_QUERY_TEXT_SELECTOR}`
 const MESSAGE_LIST_SELECTOR =
-  '[data-testid="message-list"], [data-testid="message-block-container"]'
-const ASSISTANT_MESSAGE_SELECTOR =
-  '[data-testid="receive_message"], [data-testid="message_content"]:not(.justify-end)'
-const ASSISTANT_CONTENT_SELECTOR =
-  `${ASSISTANT_MESSAGE_SELECTOR} .flow-markdown-body, ` +
-  `${ASSISTANT_MESSAGE_SELECTOR} ${RAW_USER_QUERY_TEXT_SELECTOR}`
-const MESSAGE_BLOCK_SELECTOR = '[data-testid="union_message"]'
+  '[data-table-spillover="true"][data-table-spillover-force-disable="true"]'
+const MESSAGE_SCROLL_SELECTOR = '[class^="scrollable-"], [class*=" scrollable-"]'
+const MESSAGE_BLOCK_SELECTOR = '[data-target-id="message-box-target-id"]'
+const USER_QUERY_SELECTOR = "[data-message-id].justify-end"
+const RAW_USER_QUERY_TEXT_SELECTOR =
+  ".whitespace-pre-wrap.wrap-anywhere:not(.gh-user-query-markdown)"
+const USER_QUERY_TEXT_SELECTOR = `${USER_QUERY_SELECTOR} ${RAW_USER_QUERY_TEXT_SELECTOR}`
+const ASSISTANT_MESSAGE_SELECTOR = "[data-message-id]:not(.justify-end)"
+const ASSISTANT_MARKDOWN_SELECTOR = ".flow-markdown-body"
+const ASSISTANT_CONTENT_SELECTOR = `${ASSISTANT_MESSAGE_SELECTOR} ${ASSISTANT_MARKDOWN_SELECTOR}`
 const DOUBAO_DELETE_REASON = {
   UI_FAILED: "delete_ui_failed",
   BATCH_ABORTED_AFTER_UI_FAILURE: "delete_batch_aborted_after_ui_failure",
@@ -254,15 +254,25 @@ export class DoubaoAdapter extends SiteAdapter {
 
     return (
       candidates.find((candidate) =>
-        candidate.querySelector(`${USER_QUERY_SELECTOR}, ${ASSISTANT_MESSAGE_SELECTOR}`),
+        candidate.querySelector(`${USER_QUERY_SELECTOR}, ${ASSISTANT_CONTENT_SELECTOR}`),
       ) || candidates[0]
     )
   }
 
   private getAssistantContentRoots(root: ParentNode): HTMLElement[] {
-    return Array.from(root.querySelectorAll(ASSISTANT_CONTENT_SELECTOR)).filter(
-      (node): node is HTMLElement => node instanceof HTMLElement,
-    )
+    const roots: HTMLElement[] = []
+
+    if (root instanceof HTMLElement && root.matches(ASSISTANT_MARKDOWN_SELECTOR)) {
+      roots.push(root)
+    }
+
+    Array.from(root.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR)).forEach((node) => {
+      if (node instanceof HTMLElement && !roots.includes(node)) {
+        roots.push(node)
+      }
+    })
+
+    return roots
   }
 
   getConversationTitle(): string | null {
@@ -433,37 +443,31 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getScrollContainer(): HTMLElement | null {
-    // 根据豆包的 DOM 结构，真正的滚动容器是一个有 scrollable=* 类的 div，其父级或者自身可能是 data-testid="scroll_view"
-    // 但它的 class 带有随机哈希，如 .scrollable-Se7zNt
-    // 我们使用稳定的选择器：带有 [scrollable="true"] 属性或者 [data-testid="scroll_view"] 内的第一个带有可滚动 class 的元素
-
-    // 策略 1：根据特征选择（豆包现在的结构：带有特定前缀 class 并且是 column-reverse 的节点）
     const messageList = this.getMessageListContainer()
     if (messageList) {
-      // 向上寻找具有 overflow-y: scroll 且 height > 0 的容器
-      let current: HTMLElement | null = messageList.parentElement
-      while (current && current !== document.body) {
-        const style = window.getComputedStyle(current)
-        if (
-          (style.overflowY === "scroll" || style.overflowY === "auto") &&
-          current.scrollHeight > current.clientHeight
-        ) {
-          return current
-        }
-        current = current.parentElement
+      const nestedScrollable = messageList.querySelector(
+        MESSAGE_SCROLL_SELECTOR,
+      ) as HTMLElement | null
+      if (nestedScrollable) {
+        return nestedScrollable
       }
+
+      const scrollableAncestor = this.findScrollableAncestor(messageList)
+      if (scrollableAncestor) return scrollableAncestor
     }
 
-    // 策略 2：基于具有 column-reverse 特征的随机 class 前缀匹配（不太稳定但可作降级）
-    const scrollContainers = document.querySelectorAll('[class^="scrollable-"]')
+    const scrollContainers = document.querySelectorAll(MESSAGE_SCROLL_SELECTOR)
     for (const el of scrollContainers) {
       const style = window.getComputedStyle(el)
-      if (style.flexDirection === "column-reverse" && el.scrollHeight > el.clientHeight) {
+      if (
+        (style.overflowY === "scroll" || style.overflowY === "auto") &&
+        (el.scrollHeight > el.clientHeight || el.clientHeight > 0)
+      ) {
         return el as HTMLElement
       }
     }
 
-    return document.querySelector('[data-testid="scroll_view"]') as HTMLElement | null
+    return null
   }
 
   getResponseContainerSelector(): string {
@@ -479,13 +483,22 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   private extractAssistantMarkdown(element: Element): string {
-    const markdown = element.matches(`.flow-markdown-body, ${RAW_USER_QUERY_TEXT_SELECTOR}`)
+    const markdown = element.matches(ASSISTANT_MARKDOWN_SELECTOR)
       ? element
-      : element.querySelector(`.flow-markdown-body, ${RAW_USER_QUERY_TEXT_SELECTOR}`)
+      : element.querySelector(ASSISTANT_MARKDOWN_SELECTOR)
     const target = (markdown || element).cloneNode(true) as HTMLElement
 
     target
-      .querySelectorAll('button, [role="button"], svg, [aria-hidden="true"]')
+      .querySelectorAll(
+        [
+          "button",
+          "[role='button']",
+          "svg",
+          "[aria-hidden='true']",
+          '[data-foundation-type="receive-message-action-bar"]',
+          '[data-foundation-type="receive-message-suggest-foundation"]',
+        ].join(", "),
+      )
       .forEach((node) => node.remove())
 
     const content = htmlToMarkdown(target).trim()
@@ -506,13 +519,18 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   private getUserMessageTextContainer(element: Element): HTMLElement | null {
-    if (
-      element.matches(USER_QUERY_TEXT_SELECTOR) ||
-      element.matches(RAW_USER_QUERY_TEXT_SELECTOR)
-    ) {
+    if (element.matches(RAW_USER_QUERY_TEXT_SELECTOR)) {
       return element as HTMLElement
     }
-    return element.querySelector(RAW_USER_QUERY_TEXT_SELECTOR) as HTMLElement | null
+
+    if (element.matches(USER_QUERY_SELECTOR)) {
+      return element.querySelector(RAW_USER_QUERY_TEXT_SELECTOR) as HTMLElement | null
+    }
+
+    return (
+      (element.querySelector(USER_QUERY_TEXT_SELECTOR) as HTMLElement | null) ||
+      (element.querySelector(RAW_USER_QUERY_TEXT_SELECTOR) as HTMLElement | null)
+    )
   }
 
   extractUserQueryText(element: Element): string {
@@ -1008,57 +1026,37 @@ export class DoubaoAdapter extends SiteAdapter {
       })
     }
 
-    const messageBlocks = container.querySelectorAll(MESSAGE_BLOCK_SELECTOR)
-
-    if (messageBlocks.length > 0) {
-      messageBlocks.forEach((block) => {
-        const assistantRoots = this.getAssistantContentRoots(block)
-        const aiWordCount = showWordCount
-          ? assistantRoots.reduce((sum, root) => sum + (root.textContent?.length || 0), 0)
-          : undefined
-
-        if (includeUserQueries) {
-          const userMsg = block.querySelector(USER_QUERY_SELECTOR)
-          if (userMsg) {
-            const text = this.extractUserQueryMarkdown(userMsg)
-            if (text) {
-              items.push({
-                level: 0,
-                text: text.length > 80 ? text.slice(0, 80) + "..." : text,
-                element: userMsg as HTMLElement,
-                isUserQuery: true,
-                isTruncated: text.length > 80,
-                wordCount: aiWordCount,
-              })
-            }
-          }
-        }
-
-        assistantRoots.forEach((root) => collectHeadings(root, root))
-      })
-
-      return items
-    }
+    const messageBlocks = Array.from(container.querySelectorAll(MESSAGE_BLOCK_SELECTOR)).filter(
+      (block): block is HTMLElement => block instanceof HTMLElement,
+    )
 
     let pendingUserQuery: {
       element: HTMLElement
       text: string
     } | null = null
 
-    const orderedMessages = Array.from(
-      container.querySelectorAll(`${USER_QUERY_SELECTOR}, ${ASSISTANT_MESSAGE_SELECTOR}`),
-    )
+    const orderedUnits =
+      messageBlocks.length > 0
+        ? messageBlocks
+        : Array.from(
+            container.querySelectorAll(`${USER_QUERY_SELECTOR}, ${ASSISTANT_MESSAGE_SELECTOR}`),
+          ).filter((message): message is HTMLElement => message instanceof HTMLElement)
 
-    orderedMessages.forEach((message) => {
-      if (!(message instanceof HTMLElement)) return
+    orderedUnits.forEach((unit) => {
+      const userMessage = unit.matches(USER_QUERY_SELECTOR)
+        ? unit
+        : (unit.querySelector(USER_QUERY_SELECTOR) as HTMLElement | null) ?? null
 
-      if (message.matches(USER_QUERY_SELECTOR)) {
-        const text = this.extractUserQueryMarkdown(message)
-        pendingUserQuery = text ? { element: message, text } : null
+      if (userMessage) {
+        const text = this.extractUserQueryMarkdown(userMessage)
+        pendingUserQuery = text ? { element: userMessage, text } : null
+      }
+
+      const assistantRoots = this.getAssistantContentRoots(unit)
+      if (assistantRoots.length === 0) {
         return
       }
 
-      const assistantRoots = this.getAssistantContentRoots(message)
       const aiWordCount = showWordCount
         ? assistantRoots.reduce((sum, root) => sum + (root.textContent?.length || 0), 0)
         : undefined
@@ -1088,7 +1086,7 @@ export class DoubaoAdapter extends SiteAdapter {
 
   getExportConfig(): ExportConfig | null {
     return {
-      userQuerySelector: USER_QUERY_TEXT_SELECTOR,
+      userQuerySelector: USER_QUERY_SELECTOR,
       assistantResponseSelector: ASSISTANT_MESSAGE_SELECTOR,
       turnSelector: MESSAGE_BLOCK_SELECTOR,
       useShadowDOM: false,
@@ -1127,11 +1125,6 @@ export class DoubaoAdapter extends SiteAdapter {
   getWidthSelectors(): Array<{ selector: string; property: string }> {
     return [
       { selector: '[data-container-name="main"]', property: "max-width" },
-      // 匹配豆包新的 DOM 结构里限制对话区宽度的容器
-      {
-        selector: '[data-testid="message-block-container"]',
-        property: "--message-block-container-inline-width",
-      },
       // 兼容豆包不同版本的 Tailwind 转义类名
       { selector: ".max-w-\\(--content-max-width\\)", property: "max-width" },
       { selector: ".max-w-\\[var\\(--content-max-width\\)\\]", property: "max-width" },
@@ -1147,8 +1140,7 @@ export class DoubaoAdapter extends SiteAdapter {
       // 匹配豆包用户提问气泡本身的 max-width
       // 必须加上 .w-fit 限制，否则 [class*="max-w-"] 会错误匹配到外层的 .max-w-full 导致气泡右对齐布局崩溃
       {
-        selector:
-          '[data-testid="message_content"].justify-end [data-testid="message_text_content"].w-fit[class*="max-w-"]',
+        selector: `${USER_QUERY_SELECTOR} .w-fit[class*="max-w-"]`,
         property: "max-width",
       },
     ]
