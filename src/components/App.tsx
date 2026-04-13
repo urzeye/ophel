@@ -235,6 +235,7 @@ const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "aistudio-markdown-fix": "aistudioMarkdownFixLabel",
   "aistudio-remove-watermark": "aistudioRemoveWatermark",
   "appearance-custom-styles": "customCSS",
+  "appearance-sync-native-page-theme": "syncNativePageThemeLabel",
   "appearance-preset-dark": "darkModePreset",
   "appearance-preset-light": "lightModePreset",
   "chatgpt-markdown-fix": "chatgptMarkdownFixLabel",

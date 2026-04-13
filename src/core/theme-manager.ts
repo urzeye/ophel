@@ -818,16 +818,6 @@ ${cssVars}
     return { x, y }
   }
 
-  private restoreMonitoringAfterThemeChange() {
-    if (!this.syncNativePageTheme) {
-      this.stopMonitoring()
-      return
-    }
-
-    this.skipNextDetection = true
-    this.monitorTheme()
-  }
-
   private async applyWithTransition(
     action: () => void,
     event?: ThemeTransitionOrigin,
@@ -841,7 +831,11 @@ ${cssVars}
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     if (!document.startViewTransition || prefersReducedMotion) {
-      action()
+      try {
+        action()
+      } finally {
+        this.monitorTheme()
+      }
       return false
     }
 
@@ -878,8 +872,12 @@ ${cssVars}
       })
     } catch {
       action()
+      this.monitorTheme()
       return false
     }
+
+    this.skipNextDetection = true
+    this.monitorTheme()
     return true
   }
 
@@ -923,24 +921,11 @@ ${cssVars}
     // 执行主题切换的核心逻辑
     const doToggle = () => {
       // 优先使用适配器的原生切换逻辑 (针对 Gemini Enterprise)
-      if (
-        this.syncNativePageTheme &&
-        this.adapter &&
-        typeof this.adapter.toggleTheme === "function"
-      ) {
+      if (this.adapter && typeof this.adapter.toggleTheme === "function") {
         this.adapter.toggleTheme(nextMode).catch(() => {})
       }
       // 同步应用主题（包括 Shadow DOM）
       this.apply(nextMode)
-    }
-
-    const finalizeToggle = () => {
-      this.mode = nextMode
-      if (this.onModeChange) {
-        this.onModeChange(nextMode, this.preference)
-      }
-      this.emitChange()
-      this.restoreMonitoringAfterThemeChange()
     }
 
     // 检查是否支持 View Transitions API
@@ -949,7 +934,10 @@ ${cssVars}
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
     ) {
       doToggle()
-      finalizeToggle()
+      this.mode = nextMode
+      this.emitChange()
+      // 无条件启动监听（确保网页主题变化能被检测）
+      this.monitorTheme()
       return nextMode
     }
 
@@ -992,7 +980,18 @@ ${cssVars}
       // 忽略动画错误
     })
 
-    finalizeToggle()
+    // 标记跳过下一次检测，防止 monitorTheme 检测到错误的页面状态而覆盖用户意图
+    this.skipNextDetection = true
+    // 触发回调通知 React 更新状态（动画完成后）
+    if (this.onModeChange) {
+      this.onModeChange(nextMode, this.preference)
+    }
+    // 无条件启动监听（确保网页主题变化能被检测）
+    this.monitorTheme()
+
+    // 更新内部状态
+    this.mode = nextMode
+    this.emitChange()
     return nextMode
   }
 
@@ -1031,9 +1030,6 @@ ${cssVars}
       }
       if (this.onModeChange) {
         this.onModeChange(resolved, this.preference)
-      }
-      if (shouldAnimate) {
-        this.restoreMonitoringAfterThemeChange()
       }
       return { mode: resolved, animated }
     }

@@ -90,6 +90,9 @@ interface SettingRouteRule {
 }
 
 export const SETTING_ID_ROUTE_MAP: Record<string, SettingRoute> = {
+  "appearance-sync-native-page-theme": {
+    page: NAV_IDS.APPEARANCE,
+  },
   "appearance-preset-light": {
     page: NAV_IDS.APPEARANCE,
     subTab: APPEARANCE_TAB_IDS.PRESETS,
@@ -271,6 +274,7 @@ export const SETTING_ID_ALIASES: Record<string, string> = {
   "aistudio.markdownFix": "aistudio-markdown-fix",
   "chatgpt.markdownFix": "chatgpt-markdown-fix",
   "claude.sessionKeys": "claude-session-keys",
+  "appearance.syncNativePageTheme": "appearance-sync-native-page-theme",
   "appearance.presets.light": "appearance-preset-light",
   "appearance.presets.dark": "appearance-preset-dark",
   "appearance.custom.styles": "appearance-custom-styles",
@@ -812,6 +816,22 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     settingId: "shortcuts-prompt-submit-shortcut",
     title: "发送快捷键",
     keywords: ["shortcuts", "submit", "enter", "ctrl+enter", "发送", "快捷键"],
+  },
+  {
+    settingId: "appearance-sync-native-page-theme",
+    title: "同步原生页面主题",
+    keywords: [
+      "appearance",
+      "theme",
+      "native page theme",
+      "sync native page theme",
+      "sync page theme",
+      "同步原生页面主题",
+      "原生页面主题",
+      "同步主题",
+      "亮暗模式联动",
+      "宿主页面主题",
+    ],
   },
   {
     settingId: "appearance-preset-light",
