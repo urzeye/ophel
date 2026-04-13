@@ -2,9 +2,9 @@
  * 豆包适配器（www.doubao.com）
  *
  * 选择器策略：
- * - 优先使用 data-testid 属性 - 稳定，不受 CSS Modules 哈希影响
- * - 使用元素 ID（如 #chat_list_wrapper）- 稳定
- * - class 前缀匹配仅作兜底（如 [class^="section-item-title-"]）
+ * - 侧边栏基于新结构的稳定根节点 `#flow_chat_sidebar`
+ * - 历史会话基于 `a[id^="conversation_"]`
+ * - 文本与按钮仅在必要时使用哈希 class 的局部模糊匹配
  *
  * 主题机制：
  * - <html data-theme="light">，仅支持浅色模式
@@ -31,11 +31,22 @@ import {
 
 /** 匹配 /chat/{id} 或 /code/chat/{id}，捕获会话 ID */
 const chatPathPattern = /^(?:\/code)?\/chat\/([^/?#]+)/
-const LEGACY_USER_QUERY_SELECTOR = '[data-testid="send_message"]'
-const NEW_USER_QUERY_SELECTOR = '[data-testid="message_content"].justify-end'
-const USER_QUERY_SELECTOR = `${LEGACY_USER_QUERY_SELECTOR}, ${NEW_USER_QUERY_SELECTOR}`
+const SIDEBAR_ROOT_SELECTOR = "#flow_chat_sidebar"
+const SIDEBAR_HISTORY_SELECTOR = `${SIDEBAR_ROOT_SELECTOR} [data-history-container="true"]`
+const CONVERSATION_ROW_SELECTOR = `${SIDEBAR_ROOT_SELECTOR} a[id^="conversation_"][href*="/chat/"]`
+const CONVERSATION_TITLE_SELECTOR = '[class*="overallTitle-"], [class*="title-"]'
+const NEW_CHAT_BUTTON_SELECTOR = `${SIDEBAR_ROOT_SELECTOR} > div:nth-child(2)`
+const USER_QUERY_SELECTOR = '[data-testid="message_content"].justify-end'
 const RAW_USER_QUERY_TEXT_SELECTOR = '[data-testid="message_text_content"]'
-const USER_QUERY_TEXT_SELECTOR = `${LEGACY_USER_QUERY_SELECTOR} ${RAW_USER_QUERY_TEXT_SELECTOR}, ${NEW_USER_QUERY_SELECTOR} ${RAW_USER_QUERY_TEXT_SELECTOR}`
+const USER_QUERY_TEXT_SELECTOR = `${USER_QUERY_SELECTOR} ${RAW_USER_QUERY_TEXT_SELECTOR}`
+const MESSAGE_LIST_SELECTOR =
+  '[data-testid="message-list"], [data-testid="message-block-container"]'
+const ASSISTANT_MESSAGE_SELECTOR =
+  '[data-testid="receive_message"], [data-testid="message_content"]:not(.justify-end)'
+const ASSISTANT_CONTENT_SELECTOR =
+  `${ASSISTANT_MESSAGE_SELECTOR} .flow-markdown-body, ` +
+  `${ASSISTANT_MESSAGE_SELECTOR} ${RAW_USER_QUERY_TEXT_SELECTOR}`
+const MESSAGE_BLOCK_SELECTOR = '[data-testid="union_message"]'
 const DOUBAO_DELETE_REASON = {
   UI_FAILED: "delete_ui_failed",
   BATCH_ABORTED_AFTER_UI_FAILURE: "delete_batch_aborted_after_ui_failure",
@@ -181,20 +192,83 @@ export class DoubaoAdapter extends SiteAdapter {
     }
   }
 
+  private extractConversationId(link: HTMLAnchorElement): string | null {
+    const rowId = link.id.match(/^conversation_(.+)$/)?.[1]
+    if (rowId) return rowId
+
+    const href = link.getAttribute("href") || ""
+    const idMatch = href.match(chatPathPattern)
+    return idMatch?.[1] || null
+  }
+
+  private extractConversationTitle(link: HTMLAnchorElement): string {
+    const titleElement =
+      (link.querySelector(CONVERSATION_TITLE_SELECTOR) as HTMLElement | null) ||
+      Array.from(link.querySelectorAll("span")).find((span) => span.textContent?.trim()) ||
+      null
+
+    return titleElement?.textContent?.trim() || ""
+  }
+
+  private getConversationRows(root: ParentNode = document): HTMLAnchorElement[] {
+    return Array.from(root.querySelectorAll(CONVERSATION_ROW_SELECTOR)) as HTMLAnchorElement[]
+  }
+
+  private getHistoryContainer(): HTMLElement | null {
+    return document.querySelector(SIDEBAR_HISTORY_SELECTOR) as HTMLElement | null
+  }
+
+  private findScrollableAncestor(start: Element | null): HTMLElement | null {
+    let current = start as HTMLElement | null
+    while (current && current !== document.body) {
+      const style = window.getComputedStyle(current)
+      if (
+        (style.overflowY === "auto" || style.overflowY === "scroll") &&
+        current.clientHeight > 0
+      ) {
+        return current
+      }
+      current = current.parentElement
+    }
+    return null
+  }
+
+  private getActiveConversationRow(): HTMLAnchorElement | null {
+    const currentSessionId = this.getSessionId()
+    const rows = this.getConversationRows()
+
+    return (
+      rows.find((row) => row.getAttribute("aria-current") === "page") ||
+      rows.find(
+        (row) =>
+          row.className.includes("active-link-") || row.className.includes("e2e-test-active"),
+      ) ||
+      rows.find((row) => this.extractConversationId(row) === currentSessionId) ||
+      null
+    )
+  }
+
+  private getMessageListContainer(): HTMLElement | null {
+    const candidates = Array.from(document.querySelectorAll(MESSAGE_LIST_SELECTOR)) as HTMLElement[]
+    if (candidates.length === 0) return null
+
+    return (
+      candidates.find((candidate) =>
+        candidate.querySelector(`${USER_QUERY_SELECTOR}, ${ASSISTANT_MESSAGE_SELECTOR}`),
+      ) || candidates[0]
+    )
+  }
+
+  private getAssistantContentRoots(root: ParentNode): HTMLElement[] {
+    return Array.from(root.querySelectorAll(ASSISTANT_CONTENT_SELECTOR)).filter(
+      (node): node is HTMLElement => node instanceof HTMLElement,
+    )
+  }
+
   getConversationTitle(): string | null {
-    const activeNode = document.querySelector(
-      'a[data-testid="chat_list_thread_item"][class*="active-"]',
-    )
-    if (!activeNode) return null
-    const activeLink =
-      activeNode instanceof HTMLAnchorElement
-        ? activeNode
-        : (activeNode.closest("a") as HTMLAnchorElement | null)
+    const activeLink = this.getActiveConversationRow()
     if (!activeLink) return null
-    const title = activeLink.querySelector(
-      '[data-testid="chat_list_item_title"], [class^="section-item-title-"], [class*="section-item-title-"]',
-    )
-    return title?.textContent?.trim() || null
+    return this.extractConversationTitle(activeLink) || null
   }
 
   // ===== 会话与路由 =====
@@ -221,28 +295,21 @@ export class DoubaoAdapter extends SiteAdapter {
   // ===== 会话列表 =====
 
   getConversationList(): ConversationInfo[] {
-    const links = document.querySelectorAll('a[data-testid="chat_list_thread_item"]')
+    const links = this.getConversationRows()
     if (!links.length) return []
     const conversationMap = new Map<string, ConversationInfo>()
 
     links.forEach((linkEl) => {
       const link = linkEl as HTMLAnchorElement
-      const href = link.getAttribute("href") || ""
-      const idMatch = href.match(chatPathPattern)
-      const id = idMatch?.[1]
+      const id = this.extractConversationId(link)
       if (!id || id === "new") return
 
-      const title =
-        link
-          .querySelector(
-            '[data-testid="chat_list_item_title"], [class^="section-item-title-"], [class*="section-item-title-"]',
-          )
-          ?.textContent?.trim() || ""
-
-      const isActive = link.className.includes("active-")
-      const isPinned = !!link.querySelector(
-        '[id="chat_list_item_pin_icon"], [class^="pin-"], [class*="pin-"]',
-      )
+      const title = this.extractConversationTitle(link)
+      const isActive =
+        link.getAttribute("aria-current") === "page" ||
+        link.className.includes("active-link-") ||
+        link.className.includes("e2e-test-active")
+      const isPinned = !!link.querySelector('[class*="pin-"]')
 
       conversationMap.set(id, {
         id,
@@ -258,7 +325,7 @@ export class DoubaoAdapter extends SiteAdapter {
 
   navigateToConversation(id: string, url?: string): boolean {
     const link = document.querySelector(
-      `a[data-testid="chat_list_thread_item"][href*="/chat/${id}"]`,
+      `#conversation_${id}, ${CONVERSATION_ROW_SELECTOR}[href*="/chat/${id}"]`,
     ) as HTMLElement | null
     if (link) {
       link.click()
@@ -280,7 +347,7 @@ export class DoubaoAdapter extends SiteAdapter {
       container.scrollTop = container.scrollHeight
       await new Promise((r) => setTimeout(r, 500))
 
-      const links = container.querySelectorAll('a[data-testid="chat_list_thread_item"]')
+      const links = container.querySelectorAll(CONVERSATION_ROW_SELECTOR)
       const currentCount = links.length
       if (currentCount === lastCount) {
         stableRounds++
@@ -292,40 +359,37 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getSidebarScrollContainer(): Element | null {
-    return document.querySelector('[data-testid="chat_list_wrapper"]')
+    const historyContainer = this.getHistoryContainer()
+    return this.findScrollableAncestor(historyContainer) || historyContainer
   }
 
   getConversationObserverConfig(): ConversationObserverConfig | null {
     return {
-      selector: 'a[data-testid="chat_list_thread_item"]',
+      selector: CONVERSATION_ROW_SELECTOR,
       shadow: false,
       extractInfo: (el: Element): ConversationInfo | null => {
         const link = el as HTMLAnchorElement
-        const href = link.getAttribute("href") || ""
-        const idMatch = href.match(chatPathPattern)
-        const id = idMatch?.[1]
+        const id = this.extractConversationId(link)
         if (!id || id === "new") return null
 
-        const title =
-          link
-            .querySelector(
-              '[data-testid="chat_list_item_title"], [class^="section-item-title-"], [class*="section-item-title-"]',
-            )
-            ?.textContent?.trim() || ""
+        const title = this.extractConversationTitle(link)
 
         return {
           id,
           title,
           url: `https://www.doubao.com/chat/${id}`,
-          isActive: link.className.includes("active-"),
-          isPinned: !!link.querySelector(
-            '[id="chat_list_item_pin_icon"], [class^="pin-"], [class*="pin-"]',
-          ),
+          isActive:
+            link.getAttribute("aria-current") === "page" ||
+            link.className.includes("active-link-") ||
+            link.className.includes("e2e-test-active"),
+          isPinned: !!link.querySelector('[class*="pin-"]'),
         }
       },
       getTitleElement: (el: Element): Element | null => {
-        return el.querySelector(
-          '[data-testid="chat_list_item_title"], [class^="section-item-title-"], [class*="section-item-title-"]',
+        return (
+          el.querySelector(CONVERSATION_TITLE_SELECTOR) ||
+          Array.from(el.querySelectorAll("span")).find((span) => span.textContent?.trim()) ||
+          null
         )
       },
     }
@@ -374,7 +438,7 @@ export class DoubaoAdapter extends SiteAdapter {
     // 我们使用稳定的选择器：带有 [scrollable="true"] 属性或者 [data-testid="scroll_view"] 内的第一个带有可滚动 class 的元素
 
     // 策略 1：根据特征选择（豆包现在的结构：带有特定前缀 class 并且是 column-reverse 的节点）
-    const messageList = document.querySelector('[data-testid="message-list"]')
+    const messageList = this.getMessageListContainer()
     if (messageList) {
       // 向上寻找具有 overflow-y: scroll 且 height > 0 的容器
       let current: HTMLElement | null = messageList.parentElement
@@ -403,7 +467,7 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getResponseContainerSelector(): string {
-    return '[data-testid="message-list"]'
+    return MESSAGE_LIST_SELECTOR
   }
 
   getUserQuerySelector(): string | null {
@@ -411,13 +475,13 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getChatContentSelectors(): string[] {
-    return ['[data-testid="receive_message"] .flow-markdown-body', USER_QUERY_TEXT_SELECTOR]
+    return [ASSISTANT_CONTENT_SELECTOR, USER_QUERY_TEXT_SELECTOR]
   }
 
   private extractAssistantMarkdown(element: Element): string {
-    const markdown = element.matches(".flow-markdown-body")
+    const markdown = element.matches(`.flow-markdown-body, ${RAW_USER_QUERY_TEXT_SELECTOR}`)
       ? element
-      : element.querySelector(".flow-markdown-body")
+      : element.querySelector(`.flow-markdown-body, ${RAW_USER_QUERY_TEXT_SELECTOR}`)
     const target = (markdown || element).cloneNode(true) as HTMLElement
 
     target
@@ -433,7 +497,7 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getLatestReplyText(): string | null {
-    const responses = document.querySelectorAll('[data-testid="receive_message"]')
+    const responses = document.querySelectorAll(ASSISTANT_MESSAGE_SELECTOR)
     if (responses.length === 0) return null
 
     const last = responses[responses.length - 1]
@@ -651,13 +715,10 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   private findConversationRow(id: string): HTMLElement | null {
-    return document.querySelector(
-      `#conversation_${id}, a[data-testid="chat_list_thread_item"][href*="/chat/${id}"]`,
-    ) as HTMLElement | null
+    return document.querySelector(`#conversation_${id}`) as HTMLElement | null
   }
 
-  private getConversationMenuButtons(row: HTMLElement, id: string): HTMLElement[] {
-    const actionSelector = `[data-testid="chat_list_item_setting_more_${id}"]`
+  private getConversationMenuButtons(row: HTMLElement): HTMLElement[] {
     const visibleButtons: HTMLElement[] = []
     const hiddenButtons: HTMLElement[] = []
     const seen = new Set<HTMLElement>()
@@ -674,7 +735,7 @@ export class DoubaoAdapter extends SiteAdapter {
       }
     }
 
-    const actionRoot = row.querySelector(actionSelector) as HTMLElement | null
+    const actionRoot = row.querySelector('[class*="chat-item-menu-wrapper-"]') as HTMLElement | null
     if (!actionRoot) return []
 
     const trigger = actionRoot.querySelector(
@@ -683,25 +744,22 @@ export class DoubaoAdapter extends SiteAdapter {
     const innerButton = actionRoot.querySelector(
       'button[data-dbx-name="button"]',
     ) as HTMLElement | null
-    const entry = actionRoot.querySelector(
-      '[data-testid="chat_item_dropdown_entry"]',
+    const genericTrigger = actionRoot.querySelector(
+      'button[aria-haspopup="menu"]',
     ) as HTMLElement | null
-    const entryButton = entry?.closest("button") as HTMLElement | null
 
     push(trigger)
     push(innerButton)
-    push(entryButton)
-    push(actionRoot)
-
+    push(genericTrigger)
     return [...visibleButtons, ...hiddenButtons]
   }
 
-  private async openConversationMenu(row: HTMLElement, id: string): Promise<boolean> {
+  private async openConversationMenu(row: HTMLElement, _id: string): Promise<boolean> {
     for (let attempt = 0; attempt < 10; attempt += 1) {
       row.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }))
       row.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }))
 
-      const candidates = this.getConversationMenuButtons(row, id)
+      const candidates = this.getConversationMenuButtons(row)
       if (candidates.length === 0) {
         await this.sleep(80)
         continue
@@ -821,9 +879,7 @@ export class DoubaoAdapter extends SiteAdapter {
     row.scrollIntoView({ block: "nearest", inline: "nearest" })
     button.scrollIntoView({ block: "nearest", inline: "nearest" })
 
-    const hoverTarget = button.closest(
-      `[data-testid^="chat_list_item_setting_more_"]`,
-    ) as HTMLElement | null
+    const hoverTarget = button.closest('[class*="chat-item-menu-wrapper-"]') as HTMLElement | null
     hoverTarget?.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }))
     hoverTarget?.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }))
     button.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }))
@@ -913,7 +969,7 @@ export class DoubaoAdapter extends SiteAdapter {
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const items: OutlineItem[] = []
-    const container = document.querySelector('[data-testid="message-list"]')
+    const container = this.getMessageListContainer()
     if (!container) return items
 
     const collectHeadings = (root: ParentNode, parentBlock?: Element | null) => {
@@ -952,73 +1008,77 @@ export class DoubaoAdapter extends SiteAdapter {
       })
     }
 
-    const messageBlocks = container.querySelectorAll('[data-testid="union_message"]')
+    const messageBlocks = container.querySelectorAll(MESSAGE_BLOCK_SELECTOR)
 
-    // union_message 不存在时的 fallback：直接从消息列表中提取
-    if (messageBlocks.length === 0) {
-      if (includeUserQueries) {
-        const userMessages = container.querySelectorAll(USER_QUERY_SELECTOR)
-        userMessages.forEach((userMsg) => {
-          const text = this.extractUserQueryMarkdown(userMsg)
-          if (!text) return
+    if (messageBlocks.length > 0) {
+      messageBlocks.forEach((block) => {
+        const assistantRoots = this.getAssistantContentRoots(block)
+        const aiWordCount = showWordCount
+          ? assistantRoots.reduce((sum, root) => sum + (root.textContent?.length || 0), 0)
+          : undefined
 
-          let wordCount: number | undefined
-          if (showWordCount) {
-            // Find the immediate next receive_message manually in fallback mode
-            let nextRoot = userMsg.nextElementSibling
-            while (nextRoot && !nextRoot.querySelector('[data-testid="receive_message"]')) {
-              nextRoot = nextRoot.nextElementSibling
-            }
-            if (nextRoot) {
-              const md = nextRoot.querySelector(".flow-markdown-body")
-              wordCount = md?.textContent?.length || 0
+        if (includeUserQueries) {
+          const userMsg = block.querySelector(USER_QUERY_SELECTOR)
+          if (userMsg) {
+            const text = this.extractUserQueryMarkdown(userMsg)
+            if (text) {
+              items.push({
+                level: 0,
+                text: text.length > 80 ? text.slice(0, 80) + "..." : text,
+                element: userMsg as HTMLElement,
+                isUserQuery: true,
+                isTruncated: text.length > 80,
+                wordCount: aiWordCount,
+              })
             }
           }
+        }
 
-          items.push({
-            level: 0,
-            text: text.length > 80 ? text.slice(0, 80) + "..." : text,
-            element: userMsg as HTMLElement,
-            isUserQuery: true,
-            isTruncated: text.length > 80,
-            wordCount,
-          })
-        })
-      }
-      container
-        .querySelectorAll('[data-testid="receive_message"] .flow-markdown-body')
-        .forEach((md) => collectHeadings(md))
+        assistantRoots.forEach((root) => collectHeadings(root, root))
+      })
+
       return items
     }
 
-    messageBlocks.forEach((block) => {
-      let aiWordCount = 0
-      const aiMsg = block.querySelector('[data-testid="receive_message"]')
-      const markdown = aiMsg?.querySelector(".flow-markdown-body")
-      if (markdown && showWordCount) {
-        aiWordCount = markdown.textContent?.length || 0
+    let pendingUserQuery: {
+      element: HTMLElement
+      text: string
+    } | null = null
+
+    const orderedMessages = Array.from(
+      container.querySelectorAll(`${USER_QUERY_SELECTOR}, ${ASSISTANT_MESSAGE_SELECTOR}`),
+    )
+
+    orderedMessages.forEach((message) => {
+      if (!(message instanceof HTMLElement)) return
+
+      if (message.matches(USER_QUERY_SELECTOR)) {
+        const text = this.extractUserQueryMarkdown(message)
+        pendingUserQuery = text ? { element: message, text } : null
+        return
       }
 
-      if (includeUserQueries) {
-        const userMsg = block.querySelector(USER_QUERY_SELECTOR)
-        if (userMsg) {
-          const text = this.extractUserQueryMarkdown(userMsg)
-          if (text) {
-            items.push({
-              level: 0,
-              text: text.length > 80 ? text.slice(0, 80) + "..." : text,
-              element: userMsg as HTMLElement,
-              isUserQuery: true,
-              isTruncated: text.length > 80,
-              wordCount: showWordCount ? aiWordCount : undefined,
-            })
-          }
-        }
+      const assistantRoots = this.getAssistantContentRoots(message)
+      const aiWordCount = showWordCount
+        ? assistantRoots.reduce((sum, root) => sum + (root.textContent?.length || 0), 0)
+        : undefined
+
+      if (includeUserQueries && pendingUserQuery) {
+        items.push({
+          level: 0,
+          text:
+            pendingUserQuery.text.length > 80
+              ? pendingUserQuery.text.slice(0, 80) + "..."
+              : pendingUserQuery.text,
+          element: pendingUserQuery.element,
+          isUserQuery: true,
+          isTruncated: pendingUserQuery.text.length > 80,
+          wordCount: aiWordCount,
+        })
       }
 
-      if (markdown) {
-        collectHeadings(markdown, markdown)
-      }
+      assistantRoots.forEach((root) => collectHeadings(root, root))
+      pendingUserQuery = null
     })
 
     return items
@@ -1029,8 +1089,8 @@ export class DoubaoAdapter extends SiteAdapter {
   getExportConfig(): ExportConfig | null {
     return {
       userQuerySelector: USER_QUERY_TEXT_SELECTOR,
-      assistantResponseSelector: '[data-testid="receive_message"]',
-      turnSelector: '[data-testid="union_message"]',
+      assistantResponseSelector: ASSISTANT_MESSAGE_SELECTOR,
+      turnSelector: MESSAGE_BLOCK_SELECTOR,
       useShadowDOM: false,
     }
   }
@@ -1053,7 +1113,7 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getNewChatButtonSelectors(): string[] {
-    return ['[data-testid="create_conversation_button"]']
+    return [NEW_CHAT_BUTTON_SELECTOR]
   }
 
   getSubmitButtonSelectors(): string[] {
@@ -1086,10 +1146,6 @@ export class DoubaoAdapter extends SiteAdapter {
     return [
       // 匹配豆包用户提问气泡本身的 max-width
       // 必须加上 .w-fit 限制，否则 [class*="max-w-"] 会错误匹配到外层的 .max-w-full 导致气泡右对齐布局崩溃
-      {
-        selector: '[data-testid="send_message"] .w-fit[class*="max-w-"]',
-        property: "max-width",
-      },
       {
         selector:
           '[data-testid="message_content"].justify-end [data-testid="message_text_content"].w-fit[class*="max-w-"]',
