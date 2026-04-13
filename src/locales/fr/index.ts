@@ -375,6 +375,9 @@ export const fr = {
   themeSettings: "Réglages de Thème",
   currentThemeMode: "Mode actuel",
   themeSettingsDesc: "Choisir des styles clair/sombre",
+  syncNativePageThemeLabel: "Synchroniser le thème natif de la page",
+  syncNativePageThemeDesc:
+    "Lors du changement de thème Ophel, ajuste aussi le mode clair/sombre et certaines couleurs natives du site actuel.",
   themeLight: "Clair",
   themeSystem: "Système",
   customCSS: "Styles CSS",

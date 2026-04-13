@@ -188,6 +188,7 @@ export interface Settings {
 
   // 主题（按站点独立 + 共享自定义样式）
   theme: {
+    syncNativePageTheme: boolean
     sites: Partial<Record<SiteId, SiteThemeConfig>>
     customStyles: CustomStyle[] // 自定义样式列表
   }
@@ -388,6 +389,7 @@ export const DEFAULT_SETTINGS: Settings = {
   },
 
   theme: {
+    syncNativePageTheme: true,
     sites: {
       gemini: { ...DEFAULT_SITE_THEME },
       "gemini-enterprise": { ...DEFAULT_SITE_THEME },

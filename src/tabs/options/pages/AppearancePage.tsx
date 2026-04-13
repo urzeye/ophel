@@ -21,7 +21,7 @@ import {
 import { showToast as showDomToast } from "~utils/toast"
 import { createSafeHTML } from "~utils/trusted-types"
 
-import { PageTitle, SettingCard, TabGroup } from "../components"
+import { PageTitle, SettingCard, TabGroup, ToggleRow } from "../components"
 import { SafeCodeEditor } from "../components/SafeCodeEditor"
 import { ThemePreview } from "../components/ThemePreview"
 
@@ -245,6 +245,26 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
       <p className="settings-page-desc">
         {t("appearancePageDesc") || "自定义扩展的视觉样式和主题"}
       </p>
+
+      <SettingCard settingId="appearance-theme-sync">
+        <ToggleRow
+          label={t("syncNativePageThemeLabel") || "同步原生页面主题"}
+          description={
+            t("syncNativePageThemeDesc") ||
+            "切换 Ophel 主题时，同时修改当前网站的亮暗模式与部分原生颜色"
+          }
+          checked={settings?.theme?.syncNativePageTheme ?? true}
+          onChange={() =>
+            setSettings({
+              theme: {
+                ...settings?.theme,
+                syncNativePageTheme: !(settings?.theme?.syncNativePageTheme ?? true),
+              },
+            })
+          }
+          settingId="appearance-sync-native-page-theme"
+        />
+      </SettingCard>
 
       <TabGroup tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 

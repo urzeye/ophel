@@ -386,6 +386,9 @@ export const ja = {
   themeSettings: "テーマ設定",
   currentThemeMode: "現在のモード",
   themeSettingsDesc: "ライトモードとダークモードのプリセットを選択",
+  syncNativePageThemeLabel: "ネイティブページテーマを同期",
+  syncNativePageThemeDesc:
+    "Ophel のテーマ切り替え時に、現在のサイトのライト/ダークモードと一部のネイティブカラーも変更します。",
   themeLight: "ライト",
   themeSystem: "システム",
   customCSS: "カスタムスタイル",

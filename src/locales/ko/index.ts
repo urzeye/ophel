@@ -377,6 +377,9 @@ export const ko = {
   themeSettings: "테마 설정",
   currentThemeMode: "현재 모드",
   themeSettingsDesc: "라이트 및 다크 모드용 프리셋 선택",
+  syncNativePageThemeLabel: "네이티브 페이지 테마 동기화",
+  syncNativePageThemeDesc:
+    "Ophel 테마를 전환할 때 현재 사이트의 라이트/다크 모드와 일부 기본 색상도 함께 변경합니다.",
   themeLight: "라이트",
   themeSystem: "시스템",
   customCSS: "사용자 정의 스타일",

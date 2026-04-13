@@ -140,6 +140,7 @@ export function initThemeManager(ctx: ModulesContext): ThemeManager {
     adapter,
     lightPresetId: siteTheme.lightStyleId || "google-gradient",
     darkPresetId: siteTheme.darkStyleId || "classic-dark",
+    syncNativePageTheme: settings.theme?.syncNativePageTheme ?? true,
     apply: true,
   })
 
@@ -167,6 +168,11 @@ export async function syncPageTheme(ctx: ModulesContext): Promise<void> {
       : siteTheme.mode === "dark"
         ? "dark"
         : "light"
+
+  if (!(settings.theme?.syncNativePageTheme ?? true)) {
+    modules.themeManager?.apply(targetTheme)
+    return
+  }
 
   // 检测页面实际的主题状态
   const htmlClass = document.documentElement.className
@@ -461,6 +467,9 @@ export function subscribeModuleUpdates(ctx: ModulesContext): void {
     // 1. Theme Manager - 只更新主题预置
     const newSiteTheme = getSiteTheme(newSettings, siteId)
     if (newSiteTheme && modules.themeManager) {
+      modules.themeManager.setNativePageThemeSyncEnabled(
+        newSettings.theme?.syncNativePageTheme ?? true,
+      )
       modules.themeManager.setPresets(
         newSiteTheme.lightStyleId || "google-gradient",
         newSiteTheme.darkStyleId || "classic-dark",

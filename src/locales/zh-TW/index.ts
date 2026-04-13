@@ -267,6 +267,8 @@ export const zhTW = {
   themeSettings: "主題設置",
   currentThemeMode: "當前模式",
   themeSettingsDesc: "選擇淺色和深色模式下使用的主題預設",
+  syncNativePageThemeLabel: "同步原生頁面主題",
+  syncNativePageThemeDesc: "切換 Ophel 主題時，同時修改當前網站的明暗模式與部分原生顏色",
   themePresetsTab: "主題預設",
   customStylesTab: "自定義樣式",
   pleaseEnterStyleName: "請輸入樣式名稱",

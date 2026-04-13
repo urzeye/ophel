@@ -387,6 +387,9 @@ export const en = {
   themeSettings: "Theme Settings",
   currentThemeMode: "Current Mode",
   themeSettingsDesc: "Choose presets for light and dark mode",
+  syncNativePageThemeLabel: "Sync Native Page Theme",
+  syncNativePageThemeDesc:
+    "When switching Ophel themes, also update the current site's light/dark mode and native colors.",
   themeLight: "Light",
   themeSystem: "System",
   customCSS: "Custom Styles",

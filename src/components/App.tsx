@@ -1899,6 +1899,7 @@ export const App = () => {
       adapter,
       lightPresetId: fallbackTheme?.lightStyleId || "google-gradient",
       darkPresetId: fallbackTheme?.darkStyleId || "classic-dark",
+      syncNativePageTheme: settings?.theme?.syncNativePageTheme ?? true,
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在初始化时获取
   }, [])
@@ -2004,6 +2005,11 @@ export const App = () => {
     if (!isSettingsHydrated) return
     themeManager.setCustomStyles(settings?.theme?.customStyles || [])
   }, [settings?.theme?.customStyles, themeManager, isSettingsHydrated])
+
+  useEffect(() => {
+    if (!isSettingsHydrated) return
+    themeManager.setNativePageThemeSyncEnabled(settings?.theme?.syncNativePageTheme ?? true)
+  }, [settings?.theme?.syncNativePageTheme, themeManager, isSettingsHydrated])
 
   // 主题切换（异步处理，支持 View Transitions API 动画）
   // 不在这里更新 React 状态，由 ThemeManager 的 onModeChange 回调在动画完成后统一处理

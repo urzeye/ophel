@@ -372,6 +372,9 @@ export const ru = {
   themeSettings: "Настройки темы",
   currentThemeMode: "Режим",
   themeSettingsDesc: "Темы для светлого/темного режимов",
+  syncNativePageThemeLabel: "Синхронизировать нативную тему страницы",
+  syncNativePageThemeDesc:
+    "При переключении темы Ophel также меняет светлый/тёмный режим и некоторые нативные цвета текущего сайта.",
   themeLight: "Светлая",
   themeSystem: "Система",
   customCSS: "CSS-стили",

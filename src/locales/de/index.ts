@@ -375,6 +375,9 @@ export const de = {
   themeSettings: "Theme-Einstellungen",
   currentThemeMode: "Modus",
   themeSettingsDesc: "Designs für Hell/Dunkel wählen",
+  syncNativePageThemeLabel: "Native Seitenthemen synchronisieren",
+  syncNativePageThemeDesc:
+    "Beim Wechsel des Ophel-Themas auch den Hell/Dunkel-Modus und native Farben der aktuellen Website anpassen.",
   themeLight: "Hell",
   themeSystem: "System",
   customCSS: "CSS-Stile",
