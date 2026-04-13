@@ -304,6 +304,14 @@ export class WatermarkRemover {
   static EDGE_CLEANUP_STRONG_HALO_THRESHOLD = 4
   static EDGE_CLEANUP_MIN_HALO_REDUCTION = 0.15
   static EDGE_CLEANUP_HALO_WEIGHT = 0.02
+  static LOW_ALPHA_HALO_MIN_ALPHA = 0.002
+  static LOW_ALPHA_HALO_MAX_ALPHA = 0.06
+  static LOW_ALPHA_HALO_OUTSIDE_ALPHA_MAX = 0.001
+  static LOW_ALPHA_HALO_OUTER_MARGIN = 3
+  static LOW_ALPHA_HALO_MIN_DELTA = 0.2
+  static LOW_ALPHA_HALO_MIN_VISIBILITY = 0.03
+  static LOW_ALPHA_HALO_MIN_REDUCTION = 0.08
+  static LEGACY_CANONICAL_MAX_VALIDATION_REGRESSION = 0.025
   static EDGE_CLEANUP_PRESETS: readonly EdgeCleanupPreset[] = [
     {
       minAlpha: 0.02,
@@ -364,6 +372,7 @@ export class WatermarkRemover {
   private alphaMaps: Record<number, Float32Array> = {}
   private bgImages: Record<number, HTMLImageElement> = {}
   private alphaGradientCache = new WeakMap<Float32Array, Float32Array>()
+  private detectionAlphaCache = new WeakMap<Float32Array, Float32Array>()
   private processingQueue = new Set<string>()
   private processingMap = new Map<string, Promise<ProcessedImageResult>>()
   private processedDataUrlCache = new Map<string, string>()
@@ -377,6 +386,7 @@ export class WatermarkRemover {
     this.alphaMaps = {}
     this.bgImages = {}
     this.alphaGradientCache = new WeakMap()
+    this.detectionAlphaCache = new WeakMap()
     this.processingQueue = new Set()
     this.processingMap = new Map()
     this.processedDataUrlCache = new Map()
@@ -1392,6 +1402,19 @@ export class WatermarkRemover {
     return gradient
   }
 
+  private getDetectionAlphaMap(alphaMap: Float32Array): Float32Array {
+    const cached = this.detectionAlphaCache.get(alphaMap)
+    if (cached) return cached
+
+    const filtered = new Float32Array(alphaMap.length)
+    for (let i = 0; i < alphaMap.length; i++) {
+      filtered[i] = Math.max(0, alphaMap[i] - WatermarkRemover.ALPHA_NOISE_FLOOR)
+    }
+
+    this.detectionAlphaCache.set(alphaMap, filtered)
+    return filtered
+  }
+
   private buildDetectionContext(imageData: ImageData): DetectionContext {
     const gray = this.toGrayscale(imageData)
     return {
@@ -1438,10 +1461,11 @@ export class WatermarkRemover {
     const gradRegion = context
       ? this.getRegion(context.grad, context.width, position.x, position.y, size)
       : this.sobelMagnitude(grayRegion, size, size)
-    const spatialScore = this.normalizedCrossCorrelation(grayRegion, alphaMap)
+    const detectionAlphaMap = this.getDetectionAlphaMap(alphaMap)
+    const spatialScore = this.normalizedCrossCorrelation(grayRegion, detectionAlphaMap)
     const gradientScore = this.normalizedCrossCorrelation(
       gradRegion,
-      this.getTemplateGradient(alphaMap, size),
+      this.getTemplateGradient(detectionAlphaMap, size),
     )
 
     let varianceScore = 0
@@ -1504,10 +1528,8 @@ export class WatermarkRemover {
         const imageIndex = ((y + row) * imageData.width + (x + col)) * 4
         const alphaIndex = row * width + col
         const rawAlpha = alphaMap[alphaIndex]
-        const signalAlpha = Math.max(0, rawAlpha - WatermarkRemover.ALPHA_NOISE_FLOOR) * alphaGain
-        if (signalAlpha < WatermarkRemover.ALPHA_THRESHOLD) continue
-
         const alpha = Math.min(rawAlpha * alphaGain, WatermarkRemover.MAX_ALPHA)
+        if (alpha < WatermarkRemover.ALPHA_THRESHOLD) continue
         const oneMinusAlpha = 1 - alpha
         for (let channel = 0; channel < 3; channel++) {
           const watermarked = imageData.data[imageIndex + channel]
@@ -1853,6 +1875,106 @@ export class WatermarkRemover {
     )
   }
 
+  private matchesWatermarkConfig(a: WatermarkConfig, b: WatermarkConfig): boolean {
+    return (
+      a.logoSize === b.logoSize &&
+      a.marginRight === b.marginRight &&
+      a.marginBottom === b.marginBottom
+    )
+  }
+
+  private matchesWatermarkPosition(a: WatermarkPosition, b: WatermarkPosition): boolean {
+    return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height
+  }
+
+  private assessLowAlphaResidualHalo(
+    imageData: ImageData,
+    position: WatermarkPosition,
+    alphaMap: Float32Array,
+  ): HaloAssessment {
+    return this.assessAlphaBandHalo(
+      imageData,
+      position,
+      alphaMap,
+      WatermarkRemover.LOW_ALPHA_HALO_MIN_ALPHA,
+      WatermarkRemover.LOW_ALPHA_HALO_MAX_ALPHA,
+      WatermarkRemover.LOW_ALPHA_HALO_OUTSIDE_ALPHA_MAX,
+      WatermarkRemover.LOW_ALPHA_HALO_OUTER_MARGIN,
+    )
+  }
+
+  private hasVisibleLowAlphaResidualHalo(halo: HaloAssessment): boolean {
+    return (
+      halo.positiveDeltaLum >= WatermarkRemover.LOW_ALPHA_HALO_MIN_DELTA ||
+      halo.visibility >= WatermarkRemover.LOW_ALPHA_HALO_MIN_VISIBILITY
+    )
+  }
+
+  private isLegacyCanonicalStandardFastPathEligible(
+    imageData: ImageData,
+    candidate: WatermarkCandidate,
+  ): boolean {
+    if (candidate.source !== "standard") return false
+    if (!this.hasReliableStandardWatermarkSignal(candidate.metrics)) return false
+
+    const officialConfig = this.resolveOfficialGeminiWatermarkConfig(
+      imageData.width,
+      imageData.height,
+    )
+    if (!officialConfig) return false
+
+    const officialPosition = this.calculateWatermarkPosition(
+      imageData.width,
+      imageData.height,
+      officialConfig,
+    )
+    return (
+      this.matchesWatermarkConfig(candidate.config, officialConfig) &&
+      this.matchesWatermarkPosition(candidate.position, officialPosition)
+    )
+  }
+
+  private shouldPreferLegacyCanonicalTrial(
+    currentTrial: WatermarkRemovalTrial,
+    directTrial: WatermarkRemovalTrial,
+  ): boolean {
+    if (!directTrial.accepted) return false
+    if (!currentTrial.accepted) return true
+
+    const currentLowAlphaHalo = this.assessLowAlphaResidualHalo(
+      currentTrial.imageData,
+      currentTrial.position,
+      currentTrial.alphaMap,
+    )
+    if (!this.hasVisibleLowAlphaResidualHalo(currentLowAlphaHalo)) {
+      return false
+    }
+
+    const directLowAlphaHalo = this.assessLowAlphaResidualHalo(
+      directTrial.imageData,
+      directTrial.position,
+      directTrial.alphaMap,
+    )
+    const improvedLowAlphaHalo =
+      directLowAlphaHalo.positiveDeltaLum <=
+        currentLowAlphaHalo.positiveDeltaLum - WatermarkRemover.LOW_ALPHA_HALO_MIN_REDUCTION ||
+      directLowAlphaHalo.visibility <= currentLowAlphaHalo.visibility - 0.01 ||
+      directLowAlphaHalo.bandMeanLum <= currentLowAlphaHalo.bandMeanLum - 0.5
+
+    if (!improvedLowAlphaHalo) return false
+
+    return (
+      directTrial.validationCost <=
+        currentTrial.validationCost + WatermarkRemover.LEGACY_CANONICAL_MAX_VALIDATION_REGRESSION &&
+      directTrial.texturePenalty <= currentTrial.texturePenalty + 0.05 &&
+      directTrial.nearBlackIncrease <= currentTrial.nearBlackIncrease + 0.015 &&
+      Math.abs(directTrial.processedMetrics.spatialScore) <=
+        Math.abs(currentTrial.processedMetrics.spatialScore) + 0.03 &&
+      Math.max(0, directTrial.processedMetrics.gradientScore) <=
+        Math.max(0, currentTrial.processedMetrics.gradientScore) + 0.02
+    )
+  }
+
   private shouldEscalateSearch(trial: WatermarkRemovalTrial): boolean {
     return (
       Math.abs(trial.processedMetrics.spatialScore) > WatermarkRemover.VALIDATION_TARGET_RESIDUAL ||
@@ -1993,15 +2115,26 @@ export class WatermarkRemover {
     return current
   }
 
-  private shouldRefineResidualEdge(trial: WatermarkRemovalTrial, halo: HaloAssessment): boolean {
+  private shouldRefineResidualEdge(
+    trial: WatermarkRemovalTrial,
+    halo: HaloAssessment,
+    lowAlphaHalo: HaloAssessment,
+  ): boolean {
     if (!trial.accepted) return false
     if (trial.position.width < 24 || trial.position.width > 160) return false
-    if (halo.positiveDeltaLum < 0.15 && halo.visibility < 0.05) return false
+    if (
+      halo.positiveDeltaLum < 0.15 &&
+      halo.visibility < 0.05 &&
+      !this.hasVisibleLowAlphaResidualHalo(lowAlphaHalo)
+    ) {
+      return false
+    }
 
     return (
       Math.abs(trial.processedMetrics.spatialScore) <=
         WatermarkRemover.EDGE_CLEANUP_SPATIAL_THRESHOLD ||
       halo.positiveDeltaLum >= WatermarkRemover.EDGE_CLEANUP_STRONG_HALO_THRESHOLD ||
+      this.hasVisibleLowAlphaResidualHalo(lowAlphaHalo) ||
       Math.max(0, trial.processedMetrics.gradientScore) >=
         WatermarkRemover.EDGE_CLEANUP_GRADIENT_THRESHOLD
     )
@@ -2016,7 +2149,12 @@ export class WatermarkRemover {
       baseTrial.position,
       baseTrial.alphaMap,
     )
-    if (!this.shouldRefineResidualEdge(baseTrial, baselineHalo)) return null
+    const baselineLowAlphaHalo = this.assessLowAlphaResidualHalo(
+      baseTrial.imageData,
+      baseTrial.position,
+      baseTrial.alphaMap,
+    )
+    if (!this.shouldRefineResidualEdge(baseTrial, baselineHalo, baselineLowAlphaHalo)) return null
 
     const baselineNearBlackRatio = this.calculateNearBlackRatio(
       baseTrial.imageData,
@@ -2078,6 +2216,11 @@ export class WatermarkRemover {
         baseTrial.position,
         baseTrial.alphaMap,
       )
+      const candidateLowAlphaHalo = this.assessLowAlphaResidualHalo(
+        candidateImageData,
+        baseTrial.position,
+        baseTrial.alphaMap,
+      )
       const minGradientImprovement = preset.minGradientImprovement ?? relaxedGradientImprovement
       const maxSpatialDrift =
         preset.maxSpatialDrift ?? WatermarkRemover.EDGE_CLEANUP_MAX_SPATIAL_DRIFT
@@ -2098,12 +2241,17 @@ export class WatermarkRemover {
         candidateHalo.positiveDeltaLum <= baselineHalo.positiveDeltaLum - 0.05 ||
         candidateHalo.visibility <= baselineHalo.visibility - 0.01 ||
         candidateHalo.bandMeanLum <= baselineHalo.bandMeanLum - 1.5
+      const improvedLowAlphaHalo =
+        candidateLowAlphaHalo.positiveDeltaLum <=
+          baselineLowAlphaHalo.positiveDeltaLum - WatermarkRemover.LOW_ALPHA_HALO_MIN_REDUCTION ||
+        candidateLowAlphaHalo.visibility <= baselineLowAlphaHalo.visibility - 0.01 ||
+        candidateLowAlphaHalo.bandMeanLum <= baselineLowAlphaHalo.bandMeanLum - 0.5
 
       if (
-        !(improvedGradient || strongHaloReduction) ||
+        !(improvedGradient || strongHaloReduction || improvedLowAlphaHalo) ||
         !keptSpatial ||
         !keptResidualWithinTarget ||
-        !improvedHalo
+        !(improvedHalo || improvedLowAlphaHalo)
       ) {
         continue
       }
@@ -2111,7 +2259,8 @@ export class WatermarkRemover {
       const cleanupCost =
         Math.abs(candidateTrial.processedMetrics.spatialScore) * 0.6 +
         Math.max(0, candidateTrial.processedMetrics.gradientScore) +
-        candidateHalo.positiveDeltaLum * WatermarkRemover.EDGE_CLEANUP_HALO_WEIGHT
+        candidateHalo.positiveDeltaLum * WatermarkRemover.EDGE_CLEANUP_HALO_WEIGHT +
+        candidateLowAlphaHalo.positiveDeltaLum * 0.05
 
       if (cleanupCost < bestCost) {
         bestTrial = candidateTrial
@@ -2434,6 +2583,7 @@ export class WatermarkRemover {
       }
 
       let selectedTrial = this.evaluateRestorationCandidate(imageData, candidate)
+      const directTrial = selectedTrial
       const warped = this.findBestTemplateWarp(imageData, candidate)
       if (warped) {
         selectedTrial =
@@ -2464,6 +2614,14 @@ export class WatermarkRemover {
           if (!cleanupTrial) break
           selectedTrial = cleanupTrial
         }
+      }
+
+      if (
+        selectedTrial !== directTrial &&
+        this.isLegacyCanonicalStandardFastPathEligible(imageData, candidate) &&
+        this.shouldPreferLegacyCanonicalTrial(selectedTrial, directTrial)
+      ) {
+        selectedTrial = directTrial
       }
 
       bestTrial = this.pickBetterRemovalTrial(bestTrial, selectedTrial)
