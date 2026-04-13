@@ -209,6 +209,18 @@ export class WatermarkRemover {
     return normalizedSource.includes("/gg/")
   }
 
+  private shouldSkipAutoProcessingSource(source: string): boolean {
+    if (!source.startsWith("blob:") && !source.startsWith("data:image/")) {
+      return false
+    }
+
+    if (isUserscript) {
+      return this.userscriptOriginalFetch !== null
+    }
+
+    return this.isGeminiStandardSite()
+  }
+
   private ensureProcessingIndicatorStyles() {
     if (document.getElementById(OPHEL_WATERMARK_LOADING_STYLE_ID)) return
     if (!document.head) return
@@ -1241,6 +1253,7 @@ export class WatermarkRemover {
       return (
         this.isValidGeminiImage(img) &&
         this.isSupportedGeminiImageSource(source) &&
+        !this.shouldSkipAutoProcessingSource(source) &&
         img.dataset.watermarkProcessed !== "true" &&
         img.dataset.watermarkProcessed !== "processing"
       )
@@ -1257,6 +1270,7 @@ export class WatermarkRemover {
   private async processSingleImage(img: HTMLImageElement) {
     const originalSrc = img.currentSrc || img.src
     if (!originalSrc || !this.isSupportedGeminiImageSource(originalSrc)) return
+    if (this.shouldSkipAutoProcessingSource(originalSrc)) return
     if (this.processingQueue.has(originalSrc)) return
     this.processingQueue.add(originalSrc)
     img.dataset.watermarkProcessed = "processing"
