@@ -248,10 +248,10 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
 
       <SettingCard settingId="appearance-theme-sync">
         <ToggleRow
-          label={t("syncNativePageThemeLabel") || "同步原生页面主题"}
+          label={t("syncNativePageThemeLabel") || "同步原生页面颜色"}
           description={
             t("syncNativePageThemeDesc") ||
-            "切换 Ophel 主题时，同时修改当前网站的亮暗模式与部分原生颜色"
+            "当前网站的亮暗模式始终跟随 Ophel；开启后还会同步调整部分原生元素颜色（仅对部分站点生效）"
           }
           checked={settings?.theme?.syncNativePageTheme ?? true}
           onChange={() =>

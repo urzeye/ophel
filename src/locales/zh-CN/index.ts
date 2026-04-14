@@ -410,8 +410,9 @@ export const zhCN = {
   themeSettings: "主题设置",
   currentThemeMode: "当前模式",
   themeSettingsDesc: "选择浅色和深色模式下使用的主题预置",
-  syncNativePageThemeLabel: "同步原生页面主题",
-  syncNativePageThemeDesc: "切换 Ophel 主题时，同时修改当前网站的亮暗模式与部分原生颜色",
+  syncNativePageThemeLabel: "同步原生页面颜色",
+  syncNativePageThemeDesc:
+    "当前网站的亮暗模式始终跟随 Ophel；开启后还会同步调整部分原生元素颜色（仅对部分站点生效）",
   customCSS: "自定义样式",
   customCSSDesc: "创建自定义 CSS 样式，可在主题选择器中使用",
   customCSSTemplate: "插入模板",
