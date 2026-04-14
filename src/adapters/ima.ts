@@ -480,8 +480,10 @@ export class ImaAdapter extends SiteAdapter {
     return [{ selector: IMA_USER_BUBBLE_SELECTOR, property: "max-width" }]
   }
 
-  getZenModeSelectors(): string[] {
-    return [".expandable-sidebar-panel-sidebar", IMA_FOOT_TIPS_SELECTOR]
+  getZenModeConfig() {
+    return {
+      hide: [".expandable-sidebar-panel-sidebar", IMA_FOOT_TIPS_SELECTOR],
+    }
   }
 
   private getActiveHistoryTitle(): string | null {

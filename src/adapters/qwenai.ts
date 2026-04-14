@@ -675,8 +675,10 @@ export class QwenAiAdapter extends SiteAdapter {
     ]
   }
 
-  getZenModeSelectors(): string[] {
-    return [QWENAI_SIDEBAR_SELECTOR, QWENAI_DISCLAIMER_SELECTOR]
+  getZenModeConfig() {
+    return {
+      hide: [QWENAI_SIDEBAR_SELECTOR, QWENAI_DISCLAIMER_SELECTOR],
+    }
   }
 
   getMarkdownFixerConfig(): MarkdownFixerConfig | null {

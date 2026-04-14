@@ -338,8 +338,10 @@ export class DeepSeekAdapter extends SiteAdapter {
     return firstLink?.closest(".ds-scroll-area") || null
   }
 
-  getZenModeSelectors(): string[] {
-    return [".dc04ec1d", "._0fcaa63"]
+  getZenModeConfig() {
+    return {
+      hide: [".dc04ec1d", "._0fcaa63"],
+    }
   }
 
   getScrollContainer(): HTMLElement | null {

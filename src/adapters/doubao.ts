@@ -373,8 +373,10 @@ export class DoubaoAdapter extends SiteAdapter {
     return this.findScrollableAncestor(historyContainer) || historyContainer
   }
 
-  getZenModeSelectors(): string[] {
-    return ["nav", ".container-qOgFQp"]
+  getZenModeConfig() {
+    return {
+      hide: ["nav", ".container-qOgFQp"],
+    }
   }
 
   getConversationObserverConfig(): ConversationObserverConfig | null {

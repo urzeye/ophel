@@ -804,8 +804,10 @@ export class ZaiAdapter extends SiteAdapter {
     ]
   }
 
-  getZenModeSelectors(): string[] {
-    return ["#sidebar"]
+  getZenModeConfig() {
+    return {
+      hide: ["#sidebar"],
+    }
   }
 
   private extractConversationTitle(node: Element): string {

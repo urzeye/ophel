@@ -404,8 +404,10 @@ export class AIStudioAdapter extends SiteAdapter {
     ]
   }
 
-  getZenModeSelectors() {
-    return ["ms-navbar", "ms-hallucinations-disclaimer", "ms-right-side-panel"]
+  getZenModeConfig() {
+    return {
+      hide: ["ms-navbar", "ms-hallucinations-disclaimer", "ms-right-side-panel"],
+    }
   }
 
   getMarkdownFixerConfig(): MarkdownFixerConfig {

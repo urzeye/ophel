@@ -15,7 +15,6 @@ import {
   type NetworkMonitorConfig,
   type OutlineItem,
 } from "./base"
-import { property } from "effect/FastCheck"
 
 const CHATGLM_HOSTS = new Set(["chatglm.cn"])
 const SESSION_ID_PARAM = "cid"
@@ -654,7 +653,9 @@ export class ChatGLMAdapter extends SiteAdapter {
     ]
   }
 
-  getZenModeSelectors(): string[] {
-    return [".el-aside", ".policy-wrap, .policy-wrap *", ".vip-btn"]
+  getZenModeConfig() {
+    return {
+      hide: [".el-aside", ".policy-wrap, .policy-wrap *", ".vip-btn"],
+    }
   }
 }

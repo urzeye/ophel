@@ -709,12 +709,14 @@ export class QianwenAdapter extends SiteAdapter {
     return [{ selector: `${QUESTION_ITEM_SELECTOR} ${BUBBLE_SELECTOR}`, property: "max-width" }]
   }
 
-  getZenModeSelectors(): string[] {
-    return [
-      SIDEBAR_SELECTOR,
-      FOOTNOTE_SELECTOR,
-      '[aria-haspopup="dialog"][aria-controls][data-state]',
-    ]
+  getZenModeConfig() {
+    return {
+      hide: [
+        SIDEBAR_SELECTOR,
+        FOOTNOTE_SELECTOR,
+        '[aria-haspopup="dialog"][aria-controls][data-state]',
+      ],
+    }
   }
 
   getMarkdownFixerConfig(): MarkdownFixerConfig | null {

@@ -134,9 +134,15 @@ export class LayoutManager {
   }
 
   private generateZenModeCSS(): string {
-    const selectors = this.siteAdapter.getZenModeSelectors()
-    if (selectors.length === 0) return ""
-    return selectors.map((selector) => `${selector} { display: none !important; }`).join("\n")
+    const config = this.siteAdapter.getZenModeConfig()
+    if (!config) return ""
+
+    const hideCss = (config.hide || [])
+      .map((selector) => `${selector} { display: none !important; }`)
+      .join("\n")
+    const styleCss = this.buildZenModeStyleCSS(config.styles || [])
+
+    return [hideCss, styleCss].filter(Boolean).join("\n")
   }
 
   private buildCSSFromSelectors(
@@ -182,29 +188,47 @@ export class LayoutManager {
     if (style) style.remove()
   }
 
+  private buildZenModeStyleCSS(
+    rules: Array<{
+      selector: string
+      property: string
+      value: string
+      globalSelector?: string
+      extraCss?: string
+    }>,
+  ): string {
+    return rules
+      .map((rule) => {
+        const targetSelector = rule.globalSelector || rule.selector
+        const extra = rule.extraCss || ""
+        return `${targetSelector} { ${rule.property}: ${rule.value} !important; ${extra} }`
+      })
+      .join("\n")
+  }
+
   private syncZenModeRootClass() {
-    const config = this.siteAdapter.getZenModeRootClass()
-    if (!config) return
+    const rootClass = this.siteAdapter.getZenModeConfig()?.rootClass
+    if (!rootClass) return
 
     const currentState = this.zenModeRootClassState
     if (
       !currentState ||
-      currentState.selector !== config.selector ||
-      currentState.className !== config.className
+      currentState.selector !== rootClass.selector ||
+      currentState.className !== rootClass.className
     ) {
-      const element = document.querySelector(config.selector)
+      const element = document.querySelector(rootClass.selector)
       if (!(element instanceof HTMLElement)) return
 
       this.zenModeRootClassState = {
-        selector: config.selector,
-        className: config.className,
-        removeOnDisable: !element.classList.contains(config.className),
+        selector: rootClass.selector,
+        className: rootClass.className,
+        removeOnDisable: !element.classList.contains(rootClass.className),
       }
     }
 
-    document.querySelectorAll(config.selector).forEach((element) => {
-      if (element instanceof HTMLElement && !element.classList.contains(config.className)) {
-        element.classList.add(config.className)
+    document.querySelectorAll(rootClass.selector).forEach((element) => {
+      if (element instanceof HTMLElement && !element.classList.contains(rootClass.className)) {
+        element.classList.add(rootClass.className)
       }
     })
   }

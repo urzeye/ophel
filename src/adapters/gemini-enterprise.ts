@@ -806,8 +806,10 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     ]
   }
 
-  getZenModeSelectors() {
-    return ["ucs-nav-panel", ".disclaimer"]
+  getZenModeConfig() {
+    return {
+      hide: ["ucs-nav-panel", ".disclaimer"],
+    }
   }
 
   // ==================== 输入框操作 ====================

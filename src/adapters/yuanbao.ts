@@ -757,8 +757,23 @@ export class YuanbaoAdapter extends SiteAdapter {
     return [NEW_CHAT_BUTTON_SELECTOR]
   }
 
-  getZenModeSelectors(): string[] {
-    return [".yb-nav__content-wrapper", ".yb-nav-fixed.yb-nav-fixed--pc-ctx", DISCLAIMER_SELECTOR]
+  getZenModeConfig() {
+    return {
+      hide: [".yb-nav__content-wrapper", ".yb-nav-fixed.yb-nav-fixed--pc-ctx", DISCLAIMER_SELECTOR],
+      styles: [
+        {
+          selector: ".agent-dialogue__content--common__input-box",
+          property: "padding-bottom",
+          value: "0",
+        },
+        {
+          selector:
+            ".yb-nav--push.yb-nav--open~.yb-layout__content, .yb-nav--push.yb-nav--open~.yb-layout__content-skeleton",
+          property: "margin-left",
+          value: "0",
+        },
+      ],
+    }
   }
 
   private getAgentId(): string | null {

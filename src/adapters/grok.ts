@@ -295,8 +295,10 @@ export class GrokAdapter extends SiteAdapter {
     return document.querySelector('[data-sidebar="content"]')
   }
 
-  getZenModeSelectors(): string[] {
-    return [".text-sidebar-foreground", '[data-sidebar="sidebar"]']
+  getZenModeConfig() {
+    return {
+      hide: [".text-sidebar-foreground", '[data-sidebar="sidebar"]'],
+    }
   }
 
   getConversationObserverConfig(): ConversationObserverConfig | null {

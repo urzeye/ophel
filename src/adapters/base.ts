@@ -106,9 +106,23 @@ export interface MarkdownFixerConfig {
   shouldSkip?: (element: HTMLElement) => boolean
 }
 
+export interface ZenModeStyleRule {
+  selector: string
+  property: string
+  value: string
+  globalSelector?: string
+  extraCss?: string
+}
+
 export interface ZenModeRootClassConfig {
   selector: string
   className: string
+}
+
+export interface ZenModeConfig {
+  hide?: string[]
+  rootClass?: ZenModeRootClassConfig
+  styles?: ZenModeStyleRule[]
 }
 
 export type AssistantMermaidSupportMode = "native" | "fallback" | "unsupported"
@@ -521,13 +535,8 @@ export abstract class SiteAdapter {
     return []
   }
 
-  /** 返回 Zen Mode 需要隐藏的 CSS 选择器列表 */
-  getZenModeSelectors(): string[] {
-    return []
-  }
-
-  /** 返回 Zen Mode 需要额外切换的根节点 class（如站点原生折叠态） */
-  getZenModeRootClass(): ZenModeRootClassConfig | null {
+  /** 返回 Zen Mode 配置 */
+  getZenModeConfig(): ZenModeConfig | null {
     return null
   }
 
