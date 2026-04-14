@@ -3002,6 +3002,7 @@ export const App = () => {
         onCopyMarkdown={handleCopyMarkdown}
         onModelLockToggle={handleModelLockToggle}
         isModelLocked={isModelLocked}
+        onOpenSettings={openSettingsModal}
       />
       {/* 选中提示词悬浮条 */}
       {selectedPrompt && (

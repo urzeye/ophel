@@ -13,6 +13,8 @@ import {
   ScrollTopIcon,
   SearchIcon,
   ToolsIcon,
+  EyeIcon,
+  SettingsIcon,
 } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { SHORTCUT_META } from "~constants/shortcuts"
@@ -962,7 +964,7 @@ export const COLLAPSED_BUTTON_DEFS: Record<
   scrollTop: {
     icon: "⬆",
     labelKey: "scrollTop",
-    canToggle: false,
+    canToggle: true,
     isPanelOnly: false,
     IconComponent: ScrollTopIcon,
   },
@@ -1011,9 +1013,23 @@ export const COLLAPSED_BUTTON_DEFS: Record<
   scrollBottom: {
     icon: "⬇",
     labelKey: "scrollBottom",
-    canToggle: false,
+    canToggle: true,
     isPanelOnly: false,
     IconComponent: ScrollBottomIcon,
+  },
+  zenMode: {
+    icon: "🧘",
+    labelKey: "zenModeTitle",
+    canToggle: true,
+    isPanelOnly: false,
+    IconComponent: EyeIcon,
+  },
+  settings: {
+    icon: "⚙️",
+    labelKey: "tabSettings",
+    canToggle: true,
+    isPanelOnly: false,
+    IconComponent: SettingsIcon,
   },
 }
 

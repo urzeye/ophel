@@ -42,8 +42,8 @@ interface QuickButtonsProps {
   scrollLocked?: boolean
   // 新增功能
   onCopyMarkdown?: () => void
-  onModelLockToggle?: () => void
   isModelLocked?: boolean
+  onOpenSettings?: () => void
 }
 
 type ViewportSize = {
@@ -78,6 +78,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   onCopyMarkdown,
   onModelLockToggle,
   isModelLocked,
+  onOpenSettings,
 }) => {
   const getButtonCenter = useCallback((button: HTMLButtonElement): ThemeTransitionOrigin => {
     const rect = button.getBoundingClientRect()
@@ -447,6 +448,19 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       e?.stopPropagation()
       setIsToolsMenuOpen(false)
       onGlobalSearch?.()
+    },
+    zenMode: (e) => {
+      e?.stopPropagation()
+      const siteId = adapter?.getSiteId() || "_default"
+      const currentZenMode = settings?.layout?.zenMode?.[siteId]?.enabled || false
+      updateNestedSetting("layout", "zenMode", {
+        [siteId]: { enabled: !currentZenMode },
+      })
+    },
+    settings: (e) => {
+      e?.stopPropagation()
+      setIsToolsMenuOpen(false)
+      onOpenSettings?.()
     },
   }
 
