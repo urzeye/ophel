@@ -788,23 +788,32 @@ export class DeepSeekAdapter extends SiteAdapter {
     }
   }
 
-  async toggleTheme(targetMode: "light" | "dark"): Promise<boolean> {
+  async toggleTheme(targetMode: "light" | "dark" | "system"): Promise<boolean> {
     try {
+      const resolvedMode: "light" | "dark" =
+        targetMode === "system"
+          ? typeof window !== "undefined" &&
+            typeof window.matchMedia === "function" &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light"
+          : targetMode
+
       const themeData = JSON.stringify({ value: targetMode, __version: "0" })
       localStorage.setItem(THEME_STORAGE_KEY, themeData)
 
       const body = document.body
       if (body) {
         body.classList.remove("light", "dark")
-        body.classList.add("change-theme", targetMode)
+        body.classList.add("change-theme", resolvedMode)
 
-        if (targetMode === "dark") {
+        if (resolvedMode === "dark") {
           body.setAttribute("data-ds-dark-theme", "dark")
         } else {
           body.removeAttribute("data-ds-dark-theme")
         }
 
-        body.style.colorScheme = targetMode
+        body.style.colorScheme = resolvedMode
 
         window.setTimeout(() => {
           if (document.body === body) {

@@ -264,6 +264,19 @@ export class ThemeManager {
           }
           return true
         }
+        case SITE_IDS.DEEPSEEK: {
+          if (this.adapter && typeof this.adapter.toggleTheme === "function") {
+            ;(
+              this.adapter as SiteAdapter & {
+                toggleTheme: (targetMode: "light" | "dark" | "system") => Promise<boolean>
+              }
+            )
+              .toggleTheme("system")
+              .catch(() => {})
+            return true
+          }
+          return false
+        }
         case SITE_IDS.GEMINI: {
           localStorage.removeItem("Bard-Color-Theme")
           if (targetMode === "dark") {
@@ -524,6 +537,21 @@ export class ThemeManager {
           const theme = pref.theme
           if (theme === "light" || theme === "dark" || theme === "system") {
             return theme
+          }
+          return null
+        }
+        case SITE_IDS.DEEPSEEK: {
+          const raw = localStorage.getItem("__appKit_@deepseek/chat_themePreference")
+          if (!raw) return null
+          let data: Record<string, unknown> = {}
+          try {
+            data = JSON.parse(raw)
+          } catch {
+            data = {}
+          }
+          const value = data.value
+          if (value === "light" || value === "dark" || value === "system") {
+            return value
           }
           return null
         }
