@@ -38,6 +38,12 @@ type WatermarkDetectionMetrics = {
   score: number
   normalizedScore: number
 }
+type WatermarkCandidate = {
+  config: WatermarkConfig
+  position: WatermarkPosition
+  alphaMap: Float32Array
+  metrics: WatermarkDetectionMetrics
+}
 
 // 油猴脚本的 GM_xmlhttpRequest 声明
 declare function GM_xmlhttpRequest(details: {
@@ -90,6 +96,10 @@ export class WatermarkRemover {
   static LOGO_VALUE = 255
   static DETECTION_MIN_SCORE = 0.012
   static DETECTION_MIN_NORMALIZED_SCORE = 0.09
+  static DETECTION_MIN_IMPROVEMENT = 0.01
+  static DETECTION_MIN_NORMALIZED_IMPROVEMENT = 0.04
+  static DETECTION_MAX_DARKENING = 0.12
+  static MAX_VALIDATION_CANDIDATES = 4
   private alphaMaps: Record<number, Float32Array> = {}
   private bgImages: Record<number, HTMLImageElement> = {}
   private processingQueue = new Set<string>()
@@ -210,6 +220,23 @@ export class WatermarkRemover {
     return pathname === "/app" || pathname === "/app/" || pathname.startsWith("/app/")
   }
 
+  private isGeminiSharedImagePath(pathname = this.getNormalizedGeminiPath()): boolean {
+    return pathname === "/share" || pathname === "/share/" || pathname.startsWith("/share/")
+  }
+
+  private isGeminiInlineDisplayPath(pathname = this.getNormalizedGeminiPath()): boolean {
+    return this.isGeminiConversationPath(pathname) || this.isGeminiSharedImagePath(pathname)
+  }
+
+  private isUserscriptInlineDisplaySource(sourceUrl?: string): boolean {
+    return (
+      !!sourceUrl &&
+      isUserscript &&
+      this.isGeminiInlineDisplayPath() &&
+      (sourceUrl.startsWith("blob:") || sourceUrl.startsWith("data:image/"))
+    )
+  }
+
   private getWatermarkConfigBySize(size: 48 | 96): WatermarkConfig {
     return { ...WatermarkRemover.WATERMARK_CONFIGS[size] }
   }
@@ -230,9 +257,9 @@ export class WatermarkRemover {
     }
 
     if (isUserscript) {
-      // userscript 的 /app 会话图大多已经变成 blob:，这里不能再直接跳过，
-      // 否则会话缩略图与放大图都没有机会进入自动去水印流程。
-      if (source.startsWith("blob:") && this.isGeminiConversationPath()) {
+      // userscript 的 Gemini /app 与 /share 页面里的 inline 图不能直接跳过，
+      // 否则首屏已有图和放大图都没有机会进入自动去水印流程。
+      if (this.isUserscriptInlineDisplaySource(source)) {
         return false
       }
 
@@ -773,6 +800,10 @@ export class WatermarkRemover {
   }
 
   private async resolveActionDataUrl(source: string): Promise<string> {
+    if (this.isUserscriptInlineDisplaySource(source)) {
+      return this.getProcessedInlineDisplayDataUrl(source)
+    }
+
     if (source.startsWith("data:image/")) {
       return source
     }
@@ -1054,6 +1085,152 @@ export class WatermarkRemover {
     )
   }
 
+  private cloneImageData(imageData: ImageData): ImageData {
+    return new ImageData(new Uint8ClampedArray(imageData.data), imageData.width, imageData.height)
+  }
+
+  private getInlineDisplayWatermarkConfigs(
+    imageWidth: number,
+    imageHeight: number,
+    sourceUrl?: string,
+  ): WatermarkConfig[] {
+    const primaryConfig = this.detectWatermarkConfig(imageWidth, imageHeight, sourceUrl)
+    const alternateSize = primaryConfig.logoSize === 48 ? 96 : 48
+    return [primaryConfig, this.getWatermarkConfigBySize(alternateSize)].filter(
+      (config, index, configs) =>
+        configs.findIndex((candidate) => candidate.logoSize === config.logoSize) === index,
+    )
+  }
+
+  private getWatermarkSearchOffsets(logoSize: 48 | 96): number[] {
+    const step = logoSize === 96 ? 12 : 8
+    const radius = logoSize === 96 ? 24 : 16
+    const offsets = [0]
+
+    for (let offset = step; offset <= radius; offset += step) {
+      offsets.push(-offset, offset)
+    }
+
+    return offsets
+  }
+
+  private isWatermarkRemovalValid(
+    before: WatermarkDetectionMetrics,
+    after: WatermarkDetectionMetrics,
+  ): boolean {
+    const improvement = before.score - after.score
+    const normalizedImprovement = before.normalizedScore - after.normalizedScore
+    const maxResidualScore = Math.max(before.score * 0.65, 0.018)
+    const maxResidualNormalizedScore = Math.max(before.normalizedScore * 0.65, 0.05)
+    const darkening = before.outsideMean - after.insideMean
+
+    return (
+      this.hasDetectableWatermark(before) &&
+      (improvement >= WatermarkRemover.DETECTION_MIN_IMPROVEMENT ||
+        normalizedImprovement >= WatermarkRemover.DETECTION_MIN_NORMALIZED_IMPROVEMENT) &&
+      after.score <= maxResidualScore &&
+      after.normalizedScore <= maxResidualNormalizedScore &&
+      darkening <= WatermarkRemover.DETECTION_MAX_DARKENING
+    )
+  }
+
+  private async buildInlineDisplayWatermarkCandidates(
+    imageData: ImageData,
+    sourceUrl?: string,
+  ): Promise<WatermarkCandidate[]> {
+    const configs = this.getInlineDisplayWatermarkConfigs(
+      imageData.width,
+      imageData.height,
+      sourceUrl,
+    )
+    const alphaMaps = await Promise.all(configs.map((config) => this.getAlphaMap(config.logoSize)))
+    const candidates: WatermarkCandidate[] = []
+    const seenPositions = new Set<string>()
+
+    configs.forEach((config, configIndex) => {
+      const basePosition = this.calculateWatermarkPosition(
+        imageData.width,
+        imageData.height,
+        config,
+      )
+      const offsets = this.getWatermarkSearchOffsets(config.logoSize)
+      const alphaMap = alphaMaps[configIndex]
+
+      for (const offsetY of offsets) {
+        for (const offsetX of offsets) {
+          const position: WatermarkPosition = {
+            x: basePosition.x + offsetX,
+            y: basePosition.y + offsetY,
+            width: basePosition.width,
+            height: basePosition.height,
+          }
+
+          if (!this.isWatermarkPositionInsideImage(imageData.width, imageData.height, position)) {
+            continue
+          }
+
+          const key = `${position.x}:${position.y}:${position.width}`
+          if (seenPositions.has(key)) continue
+          seenPositions.add(key)
+
+          candidates.push({
+            config,
+            position,
+            alphaMap,
+            metrics: this.measureWatermarkCandidate(imageData, alphaMap, position),
+          })
+        }
+      }
+    })
+
+    candidates.sort((a, b) => {
+      if (b.metrics.normalizedScore !== a.metrics.normalizedScore) {
+        return b.metrics.normalizedScore - a.metrics.normalizedScore
+      }
+
+      if (b.metrics.score !== a.metrics.score) {
+        return b.metrics.score - a.metrics.score
+      }
+
+      return a.config.logoSize - b.config.logoSize
+    })
+
+    return candidates
+  }
+
+  private async resolveValidatedInlineDisplayRemoval(
+    imageData: ImageData,
+    sourceUrl?: string,
+  ): Promise<ImageData | null> {
+    const candidates = await this.buildInlineDisplayWatermarkCandidates(imageData, sourceUrl)
+    let validatedAttempts = 0
+
+    for (const candidate of candidates) {
+      if (!this.hasDetectableWatermark(candidate.metrics)) {
+        break
+      }
+
+      const nextImageData = this.cloneImageData(imageData)
+      this.removeWatermark(nextImageData, candidate.alphaMap, candidate.position)
+      const afterMetrics = this.measureWatermarkCandidate(
+        nextImageData,
+        candidate.alphaMap,
+        candidate.position,
+      )
+
+      if (this.isWatermarkRemovalValid(candidate.metrics, afterMetrics)) {
+        return nextImageData
+      }
+
+      validatedAttempts += 1
+      if (validatedAttempts >= WatermarkRemover.MAX_VALIDATION_CANDIDATES) {
+        break
+      }
+    }
+
+    return null
+  }
+
   private getWatermarkBgUrl(size: 48 | 96): string {
     if (isUserscript) {
       return size === 48
@@ -1270,6 +1447,20 @@ export class WatermarkRemover {
     ctx.drawImage(loadedImg, 0, 0)
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+
+    if (options?.requireDetectableWatermark && this.isUserscriptInlineDisplaySource(sourceUrl)) {
+      const validatedImageData = await this.resolveValidatedInlineDisplayRemoval(
+        imageData,
+        sourceUrl,
+      )
+      if (!validatedImageData) {
+        throw new Error(WATERMARK_NOT_DETECTED_ERROR)
+      }
+
+      ctx.putImageData(validatedImageData, 0, 0)
+      return canvas.toDataURL("image/png")
+    }
+
     const config = this.detectWatermarkConfig(canvas.width, canvas.height, sourceUrl)
     const position = this.calculateWatermarkPosition(canvas.width, canvas.height, config)
     const alphaMap = await this.getAlphaMap(config.logoSize)
@@ -1360,15 +1551,34 @@ export class WatermarkRemover {
     }
   }
 
-  private async getProcessedDisplayDataUrl(sourceUrl: string): Promise<string> {
-    if (
-      isUserscript &&
-      this.isGeminiConversationPath() &&
-      (sourceUrl.startsWith("blob:") || sourceUrl.startsWith("data:image/"))
-    ) {
-      return this.processImageSourceToDataUrl(sourceUrl, {
+  private async getProcessedInlineDisplayDataUrl(sourceUrl: string): Promise<string> {
+    const cacheKey = `inline-display:${sourceUrl}`
+    const cached = this.processedDataUrlCache.get(cacheKey)
+    if (cached) return cached
+
+    const inFlight = this.processingMap.get(cacheKey)
+    if (inFlight) return inFlight
+
+    const processing = (async () => {
+      const processedDataUrl = await this.processImageSourceToDataUrl(sourceUrl, {
         requireDetectableWatermark: true,
       })
+      this.processedDataUrlCache.set(cacheKey, processedDataUrl)
+      this.trimProcessedDataUrlCache()
+      return processedDataUrl
+    })()
+
+    this.processingMap.set(cacheKey, processing)
+    try {
+      return await processing
+    } finally {
+      this.processingMap.delete(cacheKey)
+    }
+  }
+
+  private async getProcessedDisplayDataUrl(sourceUrl: string): Promise<string> {
+    if (this.isUserscriptInlineDisplaySource(sourceUrl)) {
+      return this.getProcessedInlineDisplayDataUrl(sourceUrl)
     }
 
     if (!isUserscript || !this.shouldInterceptGeminiImageUrl(sourceUrl)) {
