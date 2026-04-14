@@ -263,13 +263,10 @@ export class LayoutManager {
 
     const host = document.createElement("div")
     host.id = ZEN_MODE_EXIT_HOST_ID
-    host.style.cssText = [
-      "position: fixed",
-      "top: 60px",
-      "right: 20px",
-      "z-index: 2147483647",
-      "pointer-events: auto",
-    ].join(";")
+    // 使用 shadowRoot 内部样式控制，以便媒体查询可以完美覆盖
+    host.style.cssText = ["position: fixed", "z-index: 2147483647", "pointer-events: auto"].join(
+      ";",
+    )
 
     const primary = this.siteAdapter.getThemeColors().primary || "#2563eb"
     const exitLabel = t("zenModeExitButton") || ZEN_MODE_EXIT_LABEL
@@ -278,74 +275,117 @@ export class LayoutManager {
       <style>
         :host {
           all: initial;
+          display: block; /* 必须是 block 或 flex，否则 transform 在 inline 元素上不生效 */
+          position: fixed;
+          top: 24px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 2147483647;
+          pointer-events: auto;
+          animation: ghSlideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes ghSlideDown {
+          0% {
+            opacity: 0;
+            transform: translateY(-24px) translateX(-50%) scale(0.92);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) translateX(-50%) scale(1);
+          }
         }
 
         .zen-exit-btn {
           appearance: none;
-          border: 1px solid color-mix(in srgb, ${primary} 32%, rgba(255, 255, 255, 0.88));
-          border-radius: 999px;
-          background:
-            linear-gradient(135deg, color-mix(in srgb, ${primary} 18%, rgba(255, 255, 255, 0.94)), rgba(255, 255, 255, 0.92));
-          box-shadow:
-            0 18px 40px rgba(15, 23, 42, 0.18),
-            0 0 0 1px rgba(255, 255, 255, 0.35) inset;
-          color: #111827;
+          background: var(--gh-glass-bg, rgba(255, 255, 255, 0.25));
+          border: 1px solid var(--gh-border, rgba(255, 255, 255, 0.15));
+          border-radius: 9999px;
+          box-shadow: 
+            var(--gh-shadow-lg, 0 10px 40px rgba(0, 0, 0, 0.15)),
+            0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+          color: var(--gh-text, #1f2937);
           cursor: pointer;
           display: inline-flex;
           align-items: center;
-          gap: 10px;
+          gap: 12px;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-          font-size: 13px;
-          font-weight: 700;
+          font-size: 14px;
+          font-weight: 500;
           line-height: 1;
-          padding: 12px 16px;
-          backdrop-filter: blur(20px) saturate(180%);
-          -webkit-backdrop-filter: blur(20px) saturate(180%);
-          transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+          padding: 10px 18px 10px 12px;
+          backdrop-filter: blur(24px) saturate(180%);
+          -webkit-backdrop-filter: blur(24px) saturate(180%);
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .zen-exit-btn:hover {
-          transform: translateY(-1px);
-          box-shadow:
-            0 22px 46px rgba(15, 23, 42, 0.22),
-            0 0 0 1px rgba(255, 255, 255, 0.42) inset;
-          border-color: color-mix(in srgb, ${primary} 45%, rgba(255, 255, 255, 0.92));
+          transform: translateY(-2px) scale(1.02);
+          box-shadow: 
+            var(--gh-shadow-lg, 0 20px 60px rgba(0, 0, 0, 0.2)),
+            0 0 0 1px var(--gh-primary, ${primary}) inset,
+            0 0 20px rgba(255, 255, 255, 0.1) inset;
+          background: var(--gh-glass-bg-hover, rgba(255, 255, 255, 0.4));
+        }
+
+        .zen-exit-btn:active {
+          transform: translateY(1px) scale(0.98);
+          transition-duration: 0.1s;
         }
 
         .zen-exit-btn:focus-visible {
-          outline: 2px solid color-mix(in srgb, ${primary} 78%, white);
-          outline-offset: 2px;
+          outline: 2px solid var(--gh-primary, ${primary});
+          outline-offset: 4px;
         }
 
         .zen-exit-icon {
-          width: 18px;
-          height: 18px;
-          border-radius: 999px;
-          display: inline-flex;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          display: flex;
           align-items: center;
           justify-content: center;
-          background: color-mix(in srgb, ${primary} 16%, white);
-          color: ${primary};
-          font-size: 12px;
+          background: var(--gh-primary, ${primary});
+          color: var(--gh-text-on-primary, #ffffff);
           flex-shrink: 0;
+          transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .zen-exit-btn:hover .zen-exit-icon {
+          transform: rotate(90deg) scale(1.1);
         }
 
         .zen-exit-text {
           white-space: nowrap;
+          letter-spacing: 0.2px;
         }
 
         @media (max-width: 768px) {
           :host {
-            top: auto;
-            right: auto;
-            left: 50%;
-            bottom: 18px;
-            transform: translateX(-50%);
+            top: auto !important;
+            bottom: 32px;
+            animation-name: ghSlideUp;
+            /* 必须重置 transform，否则动画覆盖不完美 */
+          }
+          
+          @keyframes ghSlideUp {
+            0% {
+              opacity: 0;
+              transform: translateY(24px) translateX(-50%) scale(0.92);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0) translateX(-50%) scale(1);
+            }
           }
         }
       </style>
       <button class="zen-exit-btn" type="button" aria-label="${exitLabel}">
-        <span class="zen-exit-icon" aria-hidden="true">×</span>
+        <span class="zen-exit-icon" aria-hidden="true">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </span>
         <span class="zen-exit-text">${exitLabel}</span>
       </button>
     `
