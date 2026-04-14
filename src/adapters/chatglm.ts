@@ -15,6 +15,7 @@ import {
   type NetworkMonitorConfig,
   type OutlineItem,
 } from "./base"
+import { property } from "effect/FastCheck"
 
 const CHATGLM_HOSTS = new Set(["chatglm.cn"])
 const SESSION_ID_PARAM = "cid"
@@ -641,10 +642,19 @@ export class ChatGLMAdapter extends SiteAdapter {
         noCenter: true,
       },
       { selector: ".conversation-list", property: "width", value: "100%" },
+      {
+        selector: ".conversation-bottom[data-v-e5578310]",
+        property: "max-width",
+        extraCss: "flex: 1 !important;",
+      },
+      {
+        selector: ".component-box-new[data-v-fb010f38]",
+        property: "max-width",
+      },
     ]
   }
 
   getZenModeSelectors(): string[] {
-    return [".aside-header", ".aside-header ~ *", ".footer", ".policy-wrap, .policy-wrap *"]
+    return [".el-aside", ".policy-wrap, .policy-wrap *", ".vip-btn"]
   }
 }

@@ -481,7 +481,7 @@ export class ImaAdapter extends SiteAdapter {
   }
 
   getZenModeSelectors(): string[] {
-    return ["#historySideBar", IMA_FOOT_TIPS_SELECTOR]
+    return [".expandable-sidebar-panel-sidebar", IMA_FOOT_TIPS_SELECTOR]
   }
 
   private getActiveHistoryTitle(): string | null {

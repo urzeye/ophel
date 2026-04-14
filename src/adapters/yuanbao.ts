@@ -758,7 +758,7 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   getZenModeSelectors(): string[] {
-    return [".yb-common-nav", SIDEBAR_SCROLL_SELECTOR, DISCLAIMER_SELECTOR]
+    return [".yb-nav__content-wrapper", ".yb-nav-fixed.yb-nav-fixed--pc-ctx", DISCLAIMER_SELECTOR]
   }
 
   private getAgentId(): string | null {
