@@ -42,6 +42,7 @@ interface QuickButtonsProps {
   scrollLocked?: boolean
   // 新增功能
   onCopyMarkdown?: () => void
+  onModelLockToggle?: () => void
   isModelLocked?: boolean
   onOpenSettings?: () => void
 }
