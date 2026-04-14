@@ -694,8 +694,8 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   },
   {
     settingId: "model-lock-qwenai",
-    title: "模型锁定：QwenAI",
-    keywords: ["model lock", "qwenai", "chat.qwen.ai", "国际版千问", "模型锁定"],
+    title: "模型锁定：Qwen Studio",
+    keywords: ["model lock", "qwen studio", "qwenai", "chat.qwen.ai", "国际版千问", "模型锁定"],
   },
   {
     settingId: "model-lock-yuanbao",

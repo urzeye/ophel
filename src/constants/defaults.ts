@@ -201,7 +201,7 @@ export const SUPPORTED_AI_PLATFORMS: SupportedAiPlatform[] = [
   },
   {
     id: SITE_IDS.QWENAI,
-    name: "QwenAI",
+    name: "Qwen Studio",
     pattern: /chat\.qwen\.ai/,
     url: "https://chat.qwen.ai",
     icon: "🪄",

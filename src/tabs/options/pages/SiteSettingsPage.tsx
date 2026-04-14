@@ -594,9 +594,9 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
             settingId="model-lock-qianwen"
           />
 
-          {/* QwenAI */}
+          {/* Qwen Studio */}
           <ModelLockRow
-            label="QwenAI"
+            label="Qwen Studio"
             siteKey="qwenai"
             settings={settings}
             setSettings={setSettings}

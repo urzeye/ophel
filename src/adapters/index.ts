@@ -17,7 +17,7 @@ import { GrokAdapter } from "./grok"
 import { ImaAdapter } from "./ima"
 import { KimiAdapter } from "./kimi"
 import { QianwenAdapter } from "./qianwen"
-import { QwenAiAdapter } from "./qwenai"
+import { QwenAiAdapter } from "./qwen-studio"
 import { YuanbaoAdapter } from "./yuanbao"
 import { ZaiAdapter } from "./zai"
 

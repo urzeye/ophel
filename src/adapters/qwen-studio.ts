@@ -1,5 +1,5 @@
 /**
- * QwenAI 国际版适配器（chat.qwen.ai）
+ * Qwen Studio 适配器（chat.qwen.ai）
  *
  * 说明：
  * - 与国内版 qianwen.com 完全独立，避免选择器/路由相互污染
@@ -130,7 +130,7 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   getName(): string {
-    return "QwenAI"
+    return "Qwen Studio"
   }
 
   getThemeColors(): { primary: string; secondary: string } {
@@ -158,11 +158,11 @@ export class QwenAiAdapter extends SiteAdapter {
     if (!title) return null
 
     const cleaned = title
-      .replace(/\s*[-|]\s*Qwen(?:AI| Chat)?$/i, "")
-      .replace(/^Qwen(?:AI| Chat)?\s*[-|]\s*/i, "")
+      .replace(/\s*[-|]\s*Qwen(?:AI| Chat| Studio)?$/i, "")
+      .replace(/^Qwen(?:AI| Chat| Studio)?\s*[-|]\s*/i, "")
       .trim()
 
-    if (!cleaned || /^(qwen(?:ai|\s*chat)?)$/i.test(cleaned)) {
+    if (!cleaned || /^(qwen(?:ai|\s*chat|\s*studio)?)$/i.test(cleaned)) {
       return null
     }
 
@@ -654,7 +654,7 @@ export class QwenAiAdapter extends SiteAdapter {
   getWidthSelectors() {
     return [
       {
-        // QwenAI 对话宽度由消息外层 .qwen-chat-message 的 max-width 控制。
+        // Qwen Studio 对话宽度由消息外层 .qwen-chat-message 的 max-width 控制。
         // 同时覆盖 width 和 box-sizing，避免原始 content-box + padding 让加宽效果不明显。
         selector: ".qwen-chat-message",
         property: "max-width",

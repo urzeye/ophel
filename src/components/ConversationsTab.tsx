@@ -113,7 +113,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     [SITE_IDS.CHATGLM]: "ChatGLM",
     [SITE_IDS.ZAI]: "Z.ai",
     [SITE_IDS.QIANWEN]: "Qianwen",
-    [SITE_IDS.QWENAI]: "QwenAI",
+    [SITE_IDS.QWENAI]: "Qwen Studio",
     [SITE_IDS.IMA]: "ima",
   }
 

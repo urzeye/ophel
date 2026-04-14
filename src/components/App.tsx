@@ -329,7 +329,7 @@ const MODEL_LOCK_SITE_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinition
   chatgpt: { key: "globalSearchSiteChatGPT", fallback: "ChatGPT" },
   claude: { key: "globalSearchSiteClaude", fallback: "Claude" },
   grok: { key: "globalSearchSiteGrok", fallback: "Grok" },
-  qwenai: { key: "globalSearchSiteQwenAi", fallback: "QwenAI" },
+  qwenai: { key: "globalSearchSiteQwenAi", fallback: "Qwen Studio" },
   ima: { key: "globalSearchSiteIma", fallback: "ima" },
   zai: { key: "globalSearchSiteZai", fallback: "Z.ai" },
 }
