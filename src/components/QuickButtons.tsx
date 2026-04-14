@@ -8,7 +8,7 @@ import React, {
 } from "react"
 
 import { getAdapter } from "~adapters/index"
-import { ThemeDarkIcon, ThemeLightIcon } from "~components/icons"
+import { ThemeDarkIcon, ThemeLightIcon, EyeClosedIcon } from "~components/icons"
 import { LoadingOverlay } from "~components/LoadingOverlay"
 import { Tooltip } from "~components/ui/Tooltip"
 import { COLLAPSED_BUTTON_DEFS, TOOLS_MENU_IDS, TOOLS_MENU_ITEMS } from "~constants"
@@ -473,8 +473,12 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     const isPanelOnly = def.isPanelOnly
     const isDisabled = !enabled
     const isFloatingToolbarBtn = id === "floatingToolbar"
-    // Animation: Active state for floatingToolbar button is controlled by isToolsMenuOpen
-    const isActive = isFloatingToolbarBtn ? isToolsMenuOpen : false
+    const isZenModeBtn = id === "zenMode"
+    // Check if Zen mode is active
+    const isZenModeActive = isZenModeBtn && Boolean(settings?.layout?.zenMode?.[siteId]?.enabled)
+    
+    // Animation: Active state
+    const isActive = isFloatingToolbarBtn ? isToolsMenuOpen : isZenModeActive
 
     // panel-only 按钮：面板展开时隐藏
     // 禁用的按钮：永远隐藏
@@ -485,6 +489,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     let icon: React.ReactNode
     if (id === "theme") {
       icon = getThemeIcon()
+    } else if (isZenModeActive) { // 用闭眼表示开启禅模式
+      icon = <EyeClosedIcon size={18} color="currentColor" />
     } else if (def.IconComponent) {
       const IconComp = def.IconComponent
       // 面板主按钮在默认 google-gradient 主题下跟随环境文字色，其余主题使用品牌渐变。
@@ -506,7 +512,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return (
       <Tooltip key={id} content={tooltipContent}>
         <button
-          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isActive ? "active" : ""} ${isFloatingToolbarBtn ? "tools-trigger-btn" : ""}`}
+          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isActive ? "active" : ""} ${isFloatingToolbarBtn ? "tools-trigger-btn" : ""} ${isZenModeBtn ? "zen-mode-btn" : ""}`}
           onClick={(e) => buttonActions[id]?.(e)}
           style={{
             opacity: anchorDisabled ? 0.4 : 1,
