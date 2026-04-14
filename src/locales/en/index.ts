@@ -1065,6 +1065,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   shortcutCopyLastCodeBlock: "Copy Last Code Block",
   shortcutToggleScrollLock: "Prevent auto-scroll to bottom",
   shortcutToggleModelLock: "Toggle Model Lock",
+  shortcutToggleZenMode: "Toggle Zen Mode",
   shortcutFocusInput: "Focus Input",
 
   shortcutStopGeneration: "Stop Generation",
@@ -1093,6 +1094,8 @@ Please output the optimized code block directly, followed by a brief summary of 
   replyCopied: "Latest reply copied",
   noReplyToCopy: "No reply to copy",
   scrollLockToggled: "Scroll lock toggled",
+  zenModeEnabledToast: "Zen Mode enabled",
+  zenModeDisabledToast: "Zen Mode disabled",
   browserNotSupported: "This browser does not support custom extension shortcuts",
   inputFocused: "Input focused",
   cleanup: "Clear Invalid Bookmarks",
@@ -1369,6 +1372,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   zenModeLabel: "Enable Zen Mode",
   zenModeDesc:
     "Hide unnecessary elements (like model disclaimers at the bottom) for a purer conversation experience (configured independently for each site)",
+  zenModeExitButton: "Exit Zen Mode",
   extensionUpdateNoticeKicker: "Extension updated",
   extensionUpdateNotice:
     "Ophel Atlas has been updated. Reload this page to keep using the latest version.",

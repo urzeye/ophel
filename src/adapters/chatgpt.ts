@@ -838,10 +838,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   getZenModeSelectors() {
-    return [
-      'nav:has(a[data-sidebar-item="true"]), nav:has(#history)',
-      "div.select-none:has(> .pointer-events-auto)",
-    ]
+    return ["#stage-slideover-sidebar", "div.select-none:has(> .pointer-events-auto)"]
   }
 
   getMarkdownFixerConfig(): MarkdownFixerConfig {

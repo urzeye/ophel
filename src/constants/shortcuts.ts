@@ -62,6 +62,7 @@ export const SHORTCUT_ACTIONS = {
   COPY_LATEST_REPLY: "copyLatestReply",
   COPY_LAST_CODE_BLOCK: "copyLastCodeBlock",
   TOGGLE_SCROLL_LOCK: "toggleScrollLock",
+  TOGGLE_ZEN_MODE: "toggleZenMode",
   FOCUS_INPUT: "focusInput",
   OPEN_GLOBAL_SEARCH: "openGlobalSearch",
   STOP_GENERATION: "stopGeneration",
@@ -187,6 +188,11 @@ export const SHORTCUT_META: Record<
     label: "锁定滚动",
     category: "edit",
   },
+  toggleZenMode: {
+    labelKey: "shortcutToggleZenMode",
+    label: "切换禅模式",
+    category: "edit",
+  },
   focusInput: {
     labelKey: "shortcutFocusInput",
     label: "聚焦输入框",
@@ -305,6 +311,7 @@ export const DEFAULT_KEYBINDINGS: Record<ShortcutActionId, ShortcutBinding> = {
   copyLatestReply: { key: "c", ctrl: true, shift: true },
   copyLastCodeBlock: { key: ";", alt: true },
   toggleScrollLock: { key: "s", alt: true },
+  toggleZenMode: { key: "z", ctrl: true, shift: true },
   focusInput: { key: "i", alt: true },
   openGlobalSearch: { key: "k", ctrl: true },
   stopGeneration: { key: "k", alt: true },

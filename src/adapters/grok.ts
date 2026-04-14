@@ -296,7 +296,7 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   getZenModeSelectors(): string[] {
-    return ['[data-sidebar="header"]', '[data-sidebar="content"]']
+    return [".text-sidebar-foreground", '[data-sidebar="sidebar"]']
   }
 
   getConversationObserverConfig(): ConversationObserverConfig | null {

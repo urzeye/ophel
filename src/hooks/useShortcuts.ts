@@ -12,6 +12,7 @@ import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
 import { getShortcutManager } from "~core/shortcut-manager"
 import { anchorStore } from "~stores/anchor-store"
+import { useSettingsStore } from "~stores/settings-store"
 import { loadHistoryUntil } from "~utils/history-loader"
 import { t } from "~utils/i18n"
 import {
@@ -20,7 +21,7 @@ import {
   smartScrollToBottom,
   smartScrollToTop,
 } from "~utils/scroll-helper"
-import type { Settings } from "~utils/storage"
+import { getSiteZenMode, type Settings } from "~utils/storage"
 import { EXPORT_START_TOAST_DURATION, showToast } from "~utils/toast"
 
 /**
@@ -502,6 +503,25 @@ export function useShortcuts({
     }
   }, [onToggleScrollLock])
 
+  // 切换禅模式
+  const toggleZenMode = useCallback(() => {
+    if (!adapter) return
+
+    const siteId = adapter.getSiteId()
+    const liveSettings = useSettingsStore.getState().settings
+    const currentEnabled = getSiteZenMode(liveSettings, siteId).enabled
+    const nextEnabled = !currentEnabled
+
+    useSettingsStore
+      .getState()
+      .updateDeepSetting("layout", "zenMode", siteId, { enabled: nextEnabled })
+
+    showToast(
+      t(nextEnabled ? "zenModeEnabledToast" : "zenModeDisabledToast") ||
+        (nextEnabled ? "已开启禅模式" : "已关闭禅模式"),
+    )
+  }, [adapter])
+
   // 聚焦输入框 (Alt+I)
   const focusInput = useCallback(() => {
     if (!adapter) return
@@ -765,6 +785,7 @@ export function useShortcuts({
       [SHORTCUT_ACTIONS.COPY_LATEST_REPLY]: copyLatestReply,
       [SHORTCUT_ACTIONS.COPY_LAST_CODE_BLOCK]: copyLastCodeBlock,
       [SHORTCUT_ACTIONS.TOGGLE_SCROLL_LOCK]: toggleScrollLock,
+      [SHORTCUT_ACTIONS.TOGGLE_ZEN_MODE]: toggleZenMode,
       [SHORTCUT_ACTIONS.FOCUS_INPUT]: focusInput,
       [SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH]: openGlobalSearch,
       [SHORTCUT_ACTIONS.STOP_GENERATION]: stopGeneration,
@@ -817,6 +838,7 @@ export function useShortcuts({
     copyLatestReply,
     copyLastCodeBlock,
     toggleScrollLock,
+    toggleZenMode,
     focusInput,
     openGlobalSearch,
     stopGeneration,

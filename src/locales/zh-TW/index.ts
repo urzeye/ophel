@@ -672,6 +672,7 @@ export const zhTW = {
   conversationsNoSearchResult: "未找到匹配結果",
   shortcutToggleScrollLock: "AI生成時禁止自動滾動到底部",
   shortcutToggleModelLock: "切換模型鎖定狀態",
+  shortcutToggleZenMode: "切換禪模式",
 
   conversationsNewTag: "新建標籤",
   conversationsSetTag: "設置標籤",
@@ -1041,6 +1042,8 @@ export const zhTW = {
   replyCopied: "已複製最新回覆",
   noReplyToCopy: "無可複製內容",
   scrollLockToggled: "滾動鎖定已切換",
+  zenModeEnabledToast: "已啟用禪模式",
+  zenModeDisabledToast: "已關閉禪模式",
   browserNotSupported: "當前瀏覽器不支援自訂擴充功能快捷鍵",
   inputFocused: "已聚焦輸入框",
   generationStopped: "已停止生成",
@@ -1325,6 +1328,7 @@ export const zhTW = {
   zenModeLabel: "啟用禪模式",
   zenModeDesc:
     "隱藏頁面中不必要的元素（如底部的模型免責聲明等），體驗更純粹的對話介面（每個站點獨立配置）",
+  zenModeExitButton: "退出禪模式",
   extensionUpdateNoticeKicker: "外掛已更新",
   extensionUpdateNotice: "Ophel Atlas 已更新。重新整理目前頁面後即可繼續使用最新版本。",
   extensionUpdateNoticeWithVersion:

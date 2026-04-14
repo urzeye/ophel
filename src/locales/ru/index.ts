@@ -996,6 +996,7 @@ export const ru = {
   shortcutCopyLatestReply: "Копир. последний ответ",
   shortcutCopyLastCodeBlock: "Копир. последний код",
   shortcutToggleScrollLock: "Предотвратить автопрокрутку вниз",
+  shortcutToggleZenMode: "Переключить дзен-режим",
   shortcutFocusInput: "В поле ввода",
   shortcutStopGeneration: "Стоп ИИ",
   shortcutTogglePromptQueue: "Переключить очередь запросов",
@@ -1023,6 +1024,8 @@ export const ru = {
   replyCopied: "Ответ скопирован",
   noReplyToCopy: "Нечего копить",
   scrollLockToggled: "Скролл изменен",
+  zenModeEnabledToast: "Дзен-режим включен",
+  zenModeDisabledToast: "Дзен-режим выключен",
   browserNotSupported: "Браузер не потянет",
   inputFocused: "Пишите сейчас",
   generationStopped: "Стоп",
@@ -1348,6 +1351,7 @@ export const ru = {
   zenModeLabel: "Включить дзен-режим",
   zenModeDesc:
     "Скрыть ненужные элементы (например, отказ от ответственности модели внизу) для более чистого общения (настраивается индивидуально для каждого сайта)",
+  zenModeExitButton: "Выйти из дзен-режима",
   extensionUpdateNoticeKicker: "Расширение обновлено",
   extensionUpdateNotice:
     "Ophel Atlas обновлён. Перезагрузите эту страницу, чтобы продолжить пользоваться последней версией.",

@@ -1030,6 +1030,7 @@ export const zhCN = {
   shortcutCopyLastCodeBlock: "复制最后代码块",
   shortcutToggleScrollLock: "AI生成时禁止自动滚动到底部",
   shortcutToggleModelLock: "切换模型锁定",
+  shortcutToggleZenMode: "切换禅模式",
   shortcutFocusInput: "聚焦输入框",
   shortcutStopGeneration: "停止生成",
   shortcutTogglePromptQueue: "显示/隐藏提示词队列",
@@ -1057,6 +1058,8 @@ export const zhCN = {
   replyCopied: "已复制最新回复",
   noReplyToCopy: "无可复制内容",
   scrollLockToggled: "滚动锁定已切换",
+  zenModeEnabledToast: "已开启禅模式",
+  zenModeDisabledToast: "已关闭禅模式",
   browserNotSupported: "当前浏览器不支持自定义扩展快捷键",
   inputFocused: "已聚焦输入框",
   generationStopped: "已停止生成",
@@ -1327,6 +1330,7 @@ export const zhCN = {
   zenModeLabel: "启用禅模式",
   zenModeDesc:
     "隐藏页面中不必要的元素（如底部的模型免责声明等），体验更纯粹的对话界面（每个站点独立配置）",
+  zenModeExitButton: "退出禅模式",
   extensionUpdateNoticeKicker: "插件已更新",
   extensionUpdateNotice: "Ophel Atlas 已更新。刷新当前页面后即可继续使用最新版本。",
   extensionUpdateNoticeWithVersion:

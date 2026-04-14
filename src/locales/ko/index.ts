@@ -1001,6 +1001,7 @@ export const ko = {
   shortcutCopyLatestReply: "최신 응답 복사",
   shortcutCopyLastCodeBlock: "마지막 코드 블록 복사",
   shortcutToggleScrollLock: "AI 생성 시 자동 스크롤 방지",
+  shortcutToggleZenMode: "선 모드 전환",
   shortcutFocusInput: "입력창 포커스",
   shortcutStopGeneration: "생성 중지",
   shortcutTogglePromptQueue: "프롬프트 큐 전환",
@@ -1028,6 +1029,8 @@ export const ko = {
   replyCopied: "최신 응답이 복사되었습니다",
   noReplyToCopy: "복사할 응답이 없습니다",
   scrollLockToggled: "스크롤 잠금이 전환되었습니다",
+  zenModeEnabledToast: "선 모드를 켰습니다",
+  zenModeDisabledToast: "선 모드를 껐습니다",
   browserNotSupported: "이 브라우저는 사용자 정의 확장 프로그램 단축키를 지원하지 않습니다",
   inputFocused: "입력창이 포커스되었습니다",
   generationStopped: "생성이 중지되었습니다",
@@ -1345,6 +1348,7 @@ export const ko = {
   zenModeLabel: "선 모드 활성화",
   zenModeDesc:
     "더 순수한 대화 경험을 위해 불필요한 요소(하단 모델 면책 조항 등)를 숨깁니다 (각 사이트별 개별 설정)",
+  zenModeExitButton: "선 모드 종료",
   extensionUpdateNoticeKicker: "확장 프로그램이 업데이트되었습니다",
   extensionUpdateNotice:
     "Ophel Atlas가 업데이트되었습니다. 최신 버전을 계속 사용하려면 이 페이지를 새로고침하세요.",

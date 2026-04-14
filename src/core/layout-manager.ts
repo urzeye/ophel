@@ -1,6 +1,7 @@
 import type { SiteAdapter } from "~adapters/base"
 import { useSettingsStore } from "~stores/settings-store"
 import { DOMToolkit } from "~utils/dom-toolkit"
+import { t } from "~utils/i18n"
 import type { PageWidthConfig } from "~utils/storage"
 
 // ==================== 样式 ID 常量 ====================
@@ -189,13 +190,14 @@ export class LayoutManager {
     host.id = ZEN_MODE_EXIT_HOST_ID
     host.style.cssText = [
       "position: fixed",
-      "top: 20px",
+      "top: 60px",
       "right: 20px",
       "z-index: 2147483647",
       "pointer-events: auto",
     ].join(";")
 
     const primary = this.siteAdapter.getThemeColors().primary || "#2563eb"
+    const exitLabel = t("zenModeExitButton") || ZEN_MODE_EXIT_LABEL
     const shadowRoot = host.attachShadow({ mode: "open" })
     shadowRoot.innerHTML = `
       <style>
@@ -267,9 +269,9 @@ export class LayoutManager {
           }
         }
       </style>
-      <button class="zen-exit-btn" type="button" aria-label="${ZEN_MODE_EXIT_LABEL}">
+      <button class="zen-exit-btn" type="button" aria-label="${exitLabel}">
         <span class="zen-exit-icon" aria-hidden="true">×</span>
-        <span class="zen-exit-text">${ZEN_MODE_EXIT_LABEL}</span>
+        <span class="zen-exit-text">${exitLabel}</span>
       </button>
     `
 

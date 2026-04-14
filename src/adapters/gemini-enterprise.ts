@@ -807,7 +807,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   }
 
   getZenModeSelectors() {
-    return ["mat-sidenav", ".disclaimer"]
+    return ["ucs-nav-panel", ".disclaimer"]
   }
 
   // ==================== 输入框操作 ====================

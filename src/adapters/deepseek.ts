@@ -339,7 +339,7 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   getZenModeSelectors(): string[] {
-    return ['.ds-scroll-area:has(a[href*="/a/chat/s/"])']
+    return [".dc04ec1d", "._0fcaa63"]
   }
 
   getScrollContainer(): HTMLElement | null {

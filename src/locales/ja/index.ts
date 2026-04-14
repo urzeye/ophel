@@ -707,6 +707,7 @@ export const ja = {
   conversationsMoveTo: "会話を移動",
   shortcutToggleScrollLock: "AI生成時の自動スクロールを防止",
   shortcutToggleModelLock: "モデルロック切り替え",
+  shortcutToggleZenMode: "禅モード切替",
 
   conversationsMoved: "移動しました: ",
   conversationsSyncDeleteTitle: "同期削除",
@@ -1070,6 +1071,8 @@ export const ja = {
   replyCopied: "最新の回答をコピーしました",
   noReplyToCopy: "コピーできる回答がありません",
   scrollLockToggled: "スクロールロックを切り替えました",
+  zenModeEnabledToast: "禅モードを有効化しました",
+  zenModeDisabledToast: "禅モードを無効化しました",
   browserNotSupported: "このブラウザでは拡張機能のショートカット設定をサポートしていません",
   inputFocused: "入力欄へフォーカスしました",
   generationStopped: "生成を停止しました",
@@ -1359,6 +1362,7 @@ export const ja = {
   zenModeLabel: "禅モードを有効にする",
   zenModeDesc:
     "不要な要素（下部のモデル免責事項など）を非表示にして、より純粋な会話体験を提供します（各サイトごとに個別に設定）",
+  zenModeExitButton: "禅モードを終了",
   extensionUpdateNoticeKicker: "拡張機能を更新しました",
   extensionUpdateNotice:
     "Ophel Atlas が更新されました。最新バージョンを引き続き使うには、このページを再読み込みしてください。",

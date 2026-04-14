@@ -374,7 +374,7 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getZenModeSelectors(): string[] {
-    return [SIDEBAR_ROOT_SELECTOR]
+    return ["nav", ".container-qOgFQp"]
   }
 
   getConversationObserverConfig(): ConversationObserverConfig | null {

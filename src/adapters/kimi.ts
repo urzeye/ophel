@@ -828,16 +828,16 @@ export class KimiAdapter extends SiteAdapter {
         value: "100%",
         noCenter: true,
       },
+      {
+        // 输入框宽度
+        selector: ".chat-editor",
+        property: "max-width",
+      },
     ]
   }
 
   getZenModeSelectors() {
-    return [
-      ".history",
-      HISTORY_CONTAINER_SELECTOR,
-      HISTORY_PAGE_LIST_SELECTOR,
-      ".chat-bottom .legal-footer, .legal-footer",
-    ]
+    return [".sidebar-placeholder", ".chat-bottom .legal-footer, .legal-footer"]
   }
 
   getMarkdownFixerConfig(): MarkdownFixerConfig {
