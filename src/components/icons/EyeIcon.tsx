@@ -27,7 +27,6 @@ export const EyeIcon: React.FC<IconProps> = ({
   </svg>
 )
 
-
 export const EyeClosedIcon: React.FC<IconProps> = ({
   size = 18,
   color = "currentColor",

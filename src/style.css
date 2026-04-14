@@ -927,8 +927,17 @@
 
 /* 禅模式按钮特殊动画 (Subtle breathing + primary state) */
 @keyframes zen-breathe {
-  0%, 100% { opacity: 0.8; transform: scale(1); filter: drop-shadow(0 0 2px color-mix(in srgb, var(--gh-primary) 30%, transparent)); }
-  50% { opacity: 1; transform: scale(1.05); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--gh-primary) 60%, transparent)); }
+  0%,
+  100% {
+    opacity: 0.8;
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px color-mix(in srgb, var(--gh-primary) 30%, transparent));
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--gh-primary) 60%, transparent));
+  }
 }
 
 .quick-prompt-btn.zen-mode-btn.active svg {

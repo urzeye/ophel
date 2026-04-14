@@ -476,7 +476,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     const isZenModeBtn = id === "zenMode"
     // Check if Zen mode is active
     const isZenModeActive = isZenModeBtn && Boolean(settings?.layout?.zenMode?.[siteId]?.enabled)
-    
+
     // Animation: Active state
     const isActive = isFloatingToolbarBtn ? isToolsMenuOpen : isZenModeActive
 
@@ -489,7 +489,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     let icon: React.ReactNode
     if (id === "theme") {
       icon = getThemeIcon()
-    } else if (isZenModeActive) { // 用闭眼表示开启禅模式
+    } else if (isZenModeActive) {
+      // 用闭眼表示开启禅模式
       icon = <EyeClosedIcon size={18} color="currentColor" />
     } else if (def.IconComponent) {
       const IconComp = def.IconComponent
