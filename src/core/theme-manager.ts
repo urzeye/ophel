@@ -277,6 +277,19 @@ export class ThemeManager {
           }
           return false
         }
+        case SITE_IDS.CHATGLM: {
+          if (this.adapter && typeof this.adapter.toggleTheme === "function") {
+            ;(
+              this.adapter as SiteAdapter & {
+                toggleTheme: (targetMode: "light" | "dark" | "system") => Promise<boolean>
+              }
+            )
+              .toggleTheme("system")
+              .catch(() => {})
+            return true
+          }
+          return false
+        }
         case SITE_IDS.GEMINI: {
           localStorage.removeItem("Bard-Color-Theme")
           if (targetMode === "dark") {
@@ -518,7 +531,8 @@ export class ThemeManager {
       switch (siteId) {
         case SITE_IDS.CHATGPT:
         case SITE_IDS.GROK:
-        case SITE_IDS.ZAI: {
+        case SITE_IDS.ZAI:
+        case SITE_IDS.QWENAI: {
           const storedTheme = localStorage.getItem("theme")
           if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system") {
             return storedTheme
@@ -553,6 +567,13 @@ export class ThemeManager {
           if (value === "light" || value === "dark" || value === "system") {
             return value
           }
+          return null
+        }
+        case SITE_IDS.CHATGLM: {
+          const storedMode = localStorage.getItem("SKIN_MODE")
+          if (storedMode === "1") return "light"
+          if (storedMode === "2") return "dark"
+          if (storedMode === "3") return "system"
           return null
         }
         case SITE_IDS.GEMINI: {
