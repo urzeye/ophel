@@ -338,6 +338,10 @@ export class DeepSeekAdapter extends SiteAdapter {
     return firstLink?.closest(".ds-scroll-area") || null
   }
 
+  getZenModeSelectors(): string[] {
+    return ['.ds-scroll-area:has(a[href*="/a/chat/s/"])']
+  }
+
   getScrollContainer(): HTMLElement | null {
     const topLevelMessages = Array.from(document.querySelectorAll(MESSAGE_SELECTOR)).filter(
       (message) => !message.parentElement?.closest(MESSAGE_SELECTOR),

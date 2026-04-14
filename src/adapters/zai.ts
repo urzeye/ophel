@@ -16,7 +16,6 @@ import {
   type ExportConfig,
   type ModelSwitcherConfig,
   type OutlineItem,
-  type ZenModeRule,
 } from "./base"
 
 const HOSTNAME = "chat.z.ai"
@@ -805,23 +804,8 @@ export class ZaiAdapter extends SiteAdapter {
     ]
   }
 
-  getZenModeSelectors(): ZenModeRule[] {
-    const rules: ZenModeRule[] = []
-
-    // 侧边栏打开时，点击切换按钮关闭它
-    try {
-      const sidebarState = localStorage.getItem("sidebar")
-      if (sidebarState === "true" || sidebarState === '"true"') {
-        rules.push({
-          selector: "div.self-center.m-auto:has(> svg)",
-          action: "click" as const,
-        })
-      }
-    } catch {
-      // localStorage 访问失败时忽略
-    }
-
-    return rules
+  getZenModeSelectors(): string[] {
+    return ["#sidebar"]
   }
 
   private extractConversationTitle(node: Element): string {

@@ -832,7 +832,12 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   getZenModeSelectors() {
-    return [{ selector: ".chat-bottom .legal-footer, .legal-footer", action: "hide" as const }]
+    return [
+      ".history",
+      HISTORY_CONTAINER_SELECTOR,
+      HISTORY_PAGE_LIST_SELECTOR,
+      ".chat-bottom .legal-footer, .legal-footer",
+    ]
   }
 
   getMarkdownFixerConfig(): MarkdownFixerConfig {

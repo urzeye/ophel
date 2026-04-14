@@ -19,7 +19,6 @@ import {
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
-  type ZenModeRule,
 } from "./base"
 
 const QWENAI_CHAT_PATH_PATTERN = /\/c\/([a-f0-9-]+)/i
@@ -676,11 +675,8 @@ export class QwenAiAdapter extends SiteAdapter {
     ]
   }
 
-  getZenModeSelectors(): ZenModeRule[] {
-    return [
-      { selector: QWENAI_SIDEBAR_SELECTOR, action: "hide" },
-      { selector: QWENAI_DISCLAIMER_SELECTOR, action: "hide" },
-    ]
+  getZenModeSelectors(): string[] {
+    return [QWENAI_SIDEBAR_SELECTOR, QWENAI_DISCLAIMER_SELECTOR]
   }
 
   getMarkdownFixerConfig(): MarkdownFixerConfig | null {

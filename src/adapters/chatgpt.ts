@@ -838,7 +838,10 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   getZenModeSelectors() {
-    return [{ selector: "div.select-none:has(> .pointer-events-auto)", action: "hide" as const }]
+    return [
+      'nav:has(a[data-sidebar-item="true"]), nav:has(#history)',
+      "div.select-none:has(> .pointer-events-auto)",
+    ]
   }
 
   getMarkdownFixerConfig(): MarkdownFixerConfig {

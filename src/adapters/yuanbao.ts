@@ -20,7 +20,6 @@ import {
   type NetworkMonitorConfig,
   type OutlineItem,
   type SiteDeleteConversationResult,
-  type ZenModeRule,
 } from "./base"
 
 const HOSTNAME = "yuanbao.tencent.com"
@@ -61,7 +60,6 @@ const MODEL_TEXT_SELECTOR = ".ybc-model-select-button .t-button__text"
 const MODEL_MENU_ITEM_SELECTOR =
   ".ybc-model-select-dropdown-popup .t-dropdown__item, .ybc-model-select-dropdown .t-dropdown__item, .t-popup .t-dropdown__item"
 const DISCLAIMER_SELECTOR = ".agent-dialogue__content-copyright"
-const FOLD_BUTTON_SELECTOR = '.yb-common-nav__trigger[data-desc="fold"]'
 const THOUGHT_MARKDOWN_SELECTOR = [
   ".hyc-component-reasoner__think-content .hyc-common-markdown-style",
   ".hyc-component-deepsearch-cot__think__content__item .hyc-common-markdown-style",
@@ -759,11 +757,8 @@ export class YuanbaoAdapter extends SiteAdapter {
     return [NEW_CHAT_BUTTON_SELECTOR]
   }
 
-  getZenModeSelectors(): ZenModeRule[] {
-    return [
-      { selector: FOLD_BUTTON_SELECTOR, action: "click" },
-      { selector: DISCLAIMER_SELECTOR, action: "hide" },
-    ]
+  getZenModeSelectors(): string[] {
+    return [".yb-common-nav", SIDEBAR_SCROLL_SELECTOR, DISCLAIMER_SELECTOR]
   }
 
   private getAgentId(): string | null {

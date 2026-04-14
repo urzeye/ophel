@@ -18,7 +18,6 @@ import {
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
-  type ZenModeRule,
 } from "./base"
 
 const CHAT_PATH_PATTERN = /\/chat\/([a-f0-9]+)/i
@@ -710,11 +709,11 @@ export class QianwenAdapter extends SiteAdapter {
     return [{ selector: `${QUESTION_ITEM_SELECTOR} ${BUBBLE_SELECTOR}`, property: "max-width" }]
   }
 
-  getZenModeSelectors(): ZenModeRule[] {
+  getZenModeSelectors(): string[] {
     return [
-      { selector: SIDEBAR_SELECTOR, action: "hide" },
-      { selector: FOOTNOTE_SELECTOR, action: "hide" },
-      { selector: '[aria-haspopup="dialog"][aria-controls][data-state]', action: "hide" },
+      SIDEBAR_SELECTOR,
+      FOOTNOTE_SELECTOR,
+      '[aria-haspopup="dialog"][aria-controls][data-state]',
     ]
   }
 

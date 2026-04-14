@@ -14,7 +14,6 @@ import {
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
-  type ZenModeRule,
 } from "./base"
 
 const CHATGLM_HOSTS = new Set(["chatglm.cn"])
@@ -645,11 +644,7 @@ export class ChatGLMAdapter extends SiteAdapter {
     ]
   }
 
-  getZenModeSelectors(): ZenModeRule[] {
-    return [
-      { selector: ".footer", action: "hide" },
-      { selector: ".policy-wrap, .policy-wrap *", action: "hide" },
-      { selector: ".aside-header .operation-btn .expand-icon", action: "click" },
-    ]
+  getZenModeSelectors(): string[] {
+    return [".aside-header", ".aside-header ~ *", ".footer", ".policy-wrap, .policy-wrap *"]
   }
 }

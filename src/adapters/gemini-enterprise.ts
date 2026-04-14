@@ -807,7 +807,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
   }
 
   getZenModeSelectors() {
-    return [{ selector: ".disclaimer", action: "hide" as const }]
+    return ["mat-sidenav", ".disclaimer"]
   }
 
   // ==================== 输入框操作 ====================

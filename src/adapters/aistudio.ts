@@ -410,7 +410,7 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   getZenModeSelectors() {
-    return [{ selector: "ms-hallucinations-disclaimer", action: "hide" as const }]
+    return ["aside", "ms-hallucinations-disclaimer"]
   }
 
   getMarkdownFixerConfig(): MarkdownFixerConfig {

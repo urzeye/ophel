@@ -16,7 +16,6 @@ import {
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
-  type ZenModeRule,
 } from "./base"
 
 const IMA_HOSTNAME = "ima.qq.com"
@@ -481,11 +480,8 @@ export class ImaAdapter extends SiteAdapter {
     return [{ selector: IMA_USER_BUBBLE_SELECTOR, property: "max-width" }]
   }
 
-  getZenModeSelectors(): ZenModeRule[] {
-    return [
-      { selector: "#historySideBar", action: "hide" },
-      { selector: IMA_FOOT_TIPS_SELECTOR, action: "hide" },
-    ]
+  getZenModeSelectors(): string[] {
+    return ["#historySideBar", IMA_FOOT_TIPS_SELECTOR]
   }
 
   private getActiveHistoryTitle(): string | null {

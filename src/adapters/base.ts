@@ -97,12 +97,6 @@ export interface AnchorData {
   textSignature?: string
 }
 
-/** Zen Mode 规则 */
-export interface ZenModeRule {
-  selector: string
-  action: "hide" | "click" // 未来可扩展 'resize' | 'collapse' 等
-}
-
 export interface MarkdownFixerConfig {
   /** 查找段落的选择器，如 "message-content p" */
   selector: string
@@ -522,8 +516,8 @@ export abstract class SiteAdapter {
     return []
   }
 
-  /** 返回 Zen Mode 需要隐藏/调整的 CSS 选择器规则列表 */
-  getZenModeSelectors(): ZenModeRule[] {
+  /** 返回 Zen Mode 需要隐藏的 CSS 选择器列表 */
+  getZenModeSelectors(): string[] {
     return []
   }
 
