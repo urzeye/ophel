@@ -24,31 +24,36 @@ export function showToast(message: string, duration = 2000, options: ToastOption
     style.textContent = `
       .gh-toast {
         position: fixed !important;
-        top: 32px !important;
         left: 50% !important;
-        transform: translateX(-50%) !important;
-        background: var(--gh-brand-gradient);
-        color: white;
-        border: none;
-        padding: 10px 24px;
-        border-radius: 9999px;
-        font-size: 14px;
-        font-weight: 500;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-        z-index: 2147483647;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        font-family: 'Google Sans', Roboto, sans-serif;
+        background: var(--gh-glass-bg, rgba(255, 255, 255, 0.6)) !important;
+        color: var(--gh-text, #1f2937) !important;
+        border: 1px solid var(--gh-border, rgba(255, 255, 255, 0.15)) !important;
+        padding: 12px 24px !important;
+        border-radius: 9999px !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        box-shadow: 
+          var(--gh-shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.1)),
+          0 0 0 1px inset rgba(255, 255, 255, 0.1) !important;
+        z-index: 2147483646 !important; /* 刚好在一级最高层（禅模式按钮 2147483647）之下 */
+        pointer-events: none !important;
+        opacity: 0 !important;
+        transform: translateY(-16px) translateX(-50%) scale(0.96) !important;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif !important;
+        letter-spacing: 0.2px !important;
+        backdrop-filter: blur(24px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
       }
       .gh-toast.show {
-        opacity: 1;
+        opacity: 1 !important;
+        transform: translateY(0) translateX(-50%) scale(1) !important;
       }
       .gh-toast--outline-nav {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 360px;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 360px !important;
       }
     `
     document.head.appendChild(style)
@@ -57,6 +62,11 @@ export function showToast(message: string, duration = 2000, options: ToastOption
   const toast = document.createElement("div")
   toast.id = "gh-toast"
   toast.className = "gh-toast"
+  
+  // 动态避让：检测禅模式退出按钮是否存在，以决定 top 位置
+  const isZenMode = !!document.getElementById("gh-zen-mode-exit-host")
+  toast.style.setProperty("top", isZenMode ? "84px" : "32px", "important")
+
   if (options.className) {
     toast.classList.add(options.className)
   }

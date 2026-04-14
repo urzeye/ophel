@@ -415,6 +415,23 @@ export class LayoutManager {
     useSettingsStore.getState().updateDeepSetting("layout", "zenMode", siteId, { enabled: false })
   }
 
+  // ==================== 国际化支持 ====================
+
+  refreshLocalizedTexts() {
+    if (!this.zenModeEnabled || !this.zenModeExitHost?.shadowRoot) return
+
+    const exitLabel = t("zenModeExitButton") || ZEN_MODE_EXIT_LABEL
+    const textSpan = this.zenModeExitHost.shadowRoot.querySelector(".zen-exit-text")
+    const btn = this.zenModeExitHost.shadowRoot.querySelector(".zen-exit-btn")
+
+    if (textSpan) {
+      textSpan.textContent = exitLabel
+    }
+    if (btn) {
+      btn.setAttribute("aria-label", exitLabel)
+    }
+  }
+
   // ==================== Shadow DOM 支持 ====================
 
   private refreshShadowInjection() {
