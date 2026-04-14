@@ -840,6 +840,13 @@ export class KimiAdapter extends SiteAdapter {
     return [".sidebar-placeholder", ".chat-bottom .legal-footer, .legal-footer"]
   }
 
+  getZenModeRootClass() {
+    return {
+      selector: ".app.has-sidebar",
+      className: "fold",
+    }
+  }
+
   getMarkdownFixerConfig(): MarkdownFixerConfig {
     return {
       selector: ".segment-assistant .markdown p",

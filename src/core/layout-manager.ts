@@ -31,6 +31,11 @@ export class LayoutManager {
   private zenModeStyle: HTMLStyleElement | null = null
   private zenModeEnabled = false
   private zenModeExitHost: HTMLElement | null = null
+  private zenModeRootClassState: {
+    selector: string
+    className: string
+    removeOnDisable: boolean
+  } | null = null
 
   private processedShadowRoots = new WeakSet<ShadowRoot>()
   private shadowCheckInterval: NodeJS.Timeout | null = null
@@ -94,10 +99,13 @@ export class LayoutManager {
     this.zenModeStyle = null
 
     if (!this.zenModeEnabled) {
+      this.cleanupZenModeRootClass()
       this.unmountZenModeExitButton()
       this.refreshShadowInjection()
       return
     }
+
+    this.syncZenModeRootClass()
 
     const css = this.generateZenModeCSS()
     if (css) {
@@ -172,6 +180,49 @@ export class LayoutManager {
 
   private removeStyle(style: HTMLStyleElement | null) {
     if (style) style.remove()
+  }
+
+  private syncZenModeRootClass() {
+    const config = this.siteAdapter.getZenModeRootClass()
+    if (!config) return
+
+    const currentState = this.zenModeRootClassState
+    if (
+      !currentState ||
+      currentState.selector !== config.selector ||
+      currentState.className !== config.className
+    ) {
+      const element = document.querySelector(config.selector)
+      if (!(element instanceof HTMLElement)) return
+
+      this.zenModeRootClassState = {
+        selector: config.selector,
+        className: config.className,
+        removeOnDisable: !element.classList.contains(config.className),
+      }
+    }
+
+    document.querySelectorAll(config.selector).forEach((element) => {
+      if (element instanceof HTMLElement && !element.classList.contains(config.className)) {
+        element.classList.add(config.className)
+      }
+    })
+  }
+
+  private cleanupZenModeRootClass() {
+    if (!this.zenModeRootClassState?.removeOnDisable) {
+      this.zenModeRootClassState = null
+      return
+    }
+
+    const { selector, className } = this.zenModeRootClassState
+    document.querySelectorAll(selector).forEach((element) => {
+      if (element instanceof HTMLElement) {
+        element.classList.remove(className)
+      }
+    })
+
+    this.zenModeRootClassState = null
   }
 
   private mountZenModeExitButton() {
@@ -334,6 +385,10 @@ export class LayoutManager {
 
   private injectToAllShadows() {
     if (!document.body) return
+
+    if (this.zenModeEnabled) {
+      this.syncZenModeRootClass()
+    }
 
     const siteAdapter = this.siteAdapter
 
