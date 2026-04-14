@@ -282,10 +282,10 @@ export class WatermarkRemover {
 
       .ophel-wm-loading-indicator {
         position: absolute;
-        top: 12px;
-        right: 12px;
-        width: 28px;
-        height: 28px;
+        bottom: 20px;
+        right: 20px;
+        width: 30px;
+        height: 30px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
