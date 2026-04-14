@@ -62,7 +62,7 @@ export function showToast(message: string, duration = 2000, options: ToastOption
   const toast = document.createElement("div")
   toast.id = "gh-toast"
   toast.className = "gh-toast"
-  
+
   // 动态避让：检测禅模式退出按钮是否存在，以决定 top 位置
   const isZenMode = !!document.getElementById("gh-zen-mode-exit-host")
   toast.style.setProperty("top", isZenMode ? "84px" : "32px", "important")
