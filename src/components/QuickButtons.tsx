@@ -878,11 +878,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
             : quickButtonsPositionStyle.left,
           right: resolvedGroupPosition ? "auto" : quickButtonsPositionStyle.right,
           transform: resolvedGroupPosition || defaultTopPx !== null ? "none" : "translateY(-50%)",
-          display: "flex",
-          flexDirection: "column",
-          gap: "8px",
-          zIndex: 9998,
-          transition: "opacity 0.3s",
           opacity: quickButtonsOpacity,
         }}>
         <div

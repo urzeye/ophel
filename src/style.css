@@ -782,69 +782,7 @@
 
 /* ============= 快捷按钮组样式 (QuickButtons) ============= */
 
-/* 单个快捷按钮 */
-.quick-prompt-btn {
-  width: 44px;
-  height: 44px;
-  /* 极致高透明玻璃态：脱离白色 base，直接使用极低浓度的主要色 */
-  background: color-mix(in srgb, var(--gh-primary) 6%, transparent);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid color-mix(in srgb, var(--gh-primary) 12%, transparent);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--gh-primary);
-  font-size: 18px;
-  cursor: pointer;
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--gh-primary) 15%, transparent);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-
-.quick-prompt-btn:hover {
-  transform: scale(1.1);
-  background: color-mix(in srgb, var(--gh-primary) 12%, transparent);
-  border-color: color-mix(in srgb, var(--gh-primary) 25%, transparent);
-  box-shadow: 0 8px 16px color-mix(in srgb, var(--gh-primary) 20%, transparent);
-  color: var(--gh-primary);
-}
-
-.quick-prompt-btn.active {
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--gh-primary) 30%, transparent),
-    0 6px 16px color-mix(in srgb, var(--gh-primary) 40%, transparent);
-  background: var(--gh-primary);
-  color: var(--gh-text-on-primary, white);
-  border-color: transparent;
-}
-
-/* 工具箱按钮动画：旋转 + 高亮 (Rotation + Glow) */
-.quick-prompt-btn.tools-trigger-btn {
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.quick-prompt-btn.tools-trigger-btn.active {
-  /* 增强的高亮光晕，使用主题变量协调 */
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--gh-primary) 40%, transparent),
-    0 0 20px color-mix(in srgb, var(--gh-primary) 60%, transparent);
-  background: var(--gh-primary);
-  color: var(--gh-text-on-primary, white);
-  /* 持续旋转动画 */
-  animation: tools-spin 3s linear infinite;
-}
-
-@keyframes tools-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* 快捷按钮组容器 */
+/* 快捷按钮组容器 (Pill Container) */
 .quick-btn-group {
   position: fixed;
   right: 16px;
@@ -852,9 +790,23 @@
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  z-index: 999997;
-  transition: opacity 0.3s;
+  gap: 4px;
+  padding: 6px;
+  z-index: 9998;
+
+  /* Modern Glassmorphism Pill */
+  background: color-mix(in srgb, var(--gh-bg) 80%, transparent);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid color-mix(in srgb, var(--gh-border, #e5e7eb) 70%, transparent);
+  border-radius: 36px;
+  box-shadow:
+    0 12px 32px color-mix(in srgb, var(--gh-text) 8%, transparent),
+    inset 0 1px 1px color-mix(in srgb, var(--gh-bg) 80%, transparent);
+
+  transition:
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
   cursor: grab;
   user-select: none;
   touch-action: none;
@@ -862,37 +814,29 @@
 
 .quick-btn-group.dragging {
   cursor: grabbing;
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--gh-text) 12%, transparent);
+  transform: scale(1.02); /* Slight scale when grabbed */
 }
 
+/* 拖拽手柄 (iOS style indicator) */
 .quick-btn-group .quick-btn-drag-handle {
-  width: 28px;
-  height: 14px;
-  margin: 0 auto 2px;
+  width: 24px;
+  height: 4px;
+  margin: 4px auto 6px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--gh-text) 14%, var(--gh-bg) 86%);
+  background: color-mix(in srgb, var(--gh-text) 15%, transparent);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--gh-shadow-sm);
-  opacity: 0.6;
+  cursor: inherit;
   position: relative;
   overflow: hidden;
   transition:
-    opacity 0.2s ease,
-    background 0.2s ease;
+    background 0.2s ease,
+    width 0.2s ease,
+    transform 0.2s ease;
 }
 
-.quick-btn-group .quick-btn-drag-handle::before {
-  content: "";
-  width: 14px;
-  height: 2px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--gh-text) 70%, transparent);
-  box-shadow:
-    0 -4px 0 color-mix(in srgb, var(--gh-text) 70%, transparent),
-    0 4px 0 color-mix(in srgb, var(--gh-text) 70%, transparent);
-  position: relative;
-  z-index: 1;
+.quick-btn-group:hover .quick-btn-drag-handle {
+  background: color-mix(in srgb, var(--gh-text) 25%, transparent);
 }
 
 .quick-btn-group .quick-btn-drag-handle::after {
@@ -902,25 +846,23 @@
   top: 0;
   height: 100%;
   width: 0;
-  background: color-mix(in srgb, var(--gh-primary) 45%, transparent);
-  opacity: 0.9;
-  z-index: 0;
+  background: var(--gh-primary);
+  border-radius: 999px;
 }
 
+/* 长按进度填充效果 */
 .quick-btn-group.pressing .quick-btn-drag-handle::after {
   animation: quick-btn-hold-fill var(--quick-btn-press-duration, 150ms) linear forwards;
 }
 
-.quick-btn-group.dragging .quick-btn-drag-handle::after {
-  width: 100%;
-}
-
-.quick-btn-group:hover .quick-btn-drag-handle {
-  opacity: 1;
-}
-
+/* 拖拽时效果 */
 .quick-btn-group.dragging .quick-btn-drag-handle {
-  background: color-mix(in srgb, var(--gh-text) 22%, var(--gh-bg) 78%);
+  width: 16px;
+  background: var(--gh-primary);
+  transform: translateY(2px);
+}
+.quick-btn-group.dragging .quick-btn-drag-handle::after {
+  display: none;
 }
 
 @keyframes quick-btn-hold-fill {
@@ -932,15 +874,68 @@
   }
 }
 
-.quick-btn-group.dragging .quick-prompt-btn {
-  pointer-events: none;
+/* 单个快捷按钮 */
+.quick-prompt-btn {
+  width: 38px;
+  height: 38px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Default icon color matches text secondary for subtlety */
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
 }
 
-.quick-btn-group .quick-prompt-btn {
-  width: 40px;
-  height: 40px;
-  font-size: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+.quick-prompt-btn:hover {
+  transform: scale(1.08); /* More subtle scaling */
+  background: color-mix(in srgb, var(--gh-text) 6%, transparent);
+  color: var(--gh-text, #111827);
+}
+
+.quick-prompt-btn.active {
+  background: color-mix(in srgb, var(--gh-primary) 12%, transparent);
+  color: var(--gh-primary);
+}
+
+/* 面板主控制按钮默认跟随 Primary 色以强调主入口身份 */
+.quick-prompt-btn:has(svg[color="currentColor"]) {
+  color: var(--gh-text-secondary);
+}
+
+.quick-prompt-btn:has(svg[color="brand"]) {
+  color: var(--gh-primary);
+}
+
+/* 工具箱悬浮菜单按钮特殊动画 (Rotation + primary state) */
+.quick-prompt-btn.tools-trigger-btn {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.quick-prompt-btn.tools-trigger-btn.active {
+  background: var(--gh-primary);
+  color: var(--gh-text-on-primary, white);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--gh-primary) 40%, transparent);
+  animation: tools-spin 3s linear infinite;
+  transform: scale(1.05);
+}
+
+@keyframes tools-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.quick-btn-group.dragging .quick-prompt-btn {
+  pointer-events: none;
 }
 
 /* panel-only 按钮：面板展开时隐藏 */
@@ -969,17 +964,20 @@
   cursor: pointer;
 }
 
-/* 手动锚点清除按钮：悬停时变红 */
+/* 手动锚点清除按钮：悬停时变红危险预警 */
 .quick-btn-group .quick-prompt-btn.manual-anchor-btn.clear-btn:hover:not(:disabled) {
-  background: #ef4444 !important;
+  background: color-mix(in srgb, var(--gh-error) 15%, transparent) !important;
+  color: var(--gh-error) !important;
 }
 
 /* 分隔线 */
 .quick-btn-group .divider {
-  width: 24px;
+  width: 20px;
   height: 1px;
-  background: rgba(255, 255, 255, 0.3);
+  /* Subtler divider line blending with background */
+  background: color-mix(in srgb, var(--gh-text) 10%, transparent);
   margin: 2px auto;
+  border-radius: 1px;
 }
 
 /* panel-only 分隔线：面板展开时隐藏 */
