@@ -660,6 +660,10 @@ export class QwenAiAdapter extends SiteAdapter {
         property: "max-width",
         extraCss: "width: 100% !important; box-sizing: border-box !important;",
       },
+      {
+        selector: ".message-input-wrapper",
+        property: "max-width",
+      },
     ]
   }
 

@@ -19,6 +19,7 @@ import {
   type NetworkMonitorConfig,
   type OutlineItem,
 } from "./base"
+import { property } from "effect/FastCheck"
 
 const CHAT_PATH_PATTERN = /\/chat\/([a-f0-9]+)/i
 const GROUP_PATH_PATTERN = /\/group\/([a-f0-9]+)/i
@@ -702,20 +703,39 @@ export class QianwenAdapter extends SiteAdapter {
         extraCss: "width: 100% !important;",
         noCenter: true,
       },
+      {
+        selector: '[class*="inputMotionCarrier"]',
+        property: "max-width",
+        extraCss: "width: 100% !important;",
+      },
+      {
+        selector: '[class*="inputOutWrap"]',
+        property: "max-width",
+      },
+      {
+        selector: '[class*="answerItem"] [class*="containerWrap"]',
+        property: "max-width",
+      },
+      {
+        selector: `${QUESTION_ITEM_SELECTOR}`,
+        property: "width",
+        extraCss: "margin-right: 0 !important",
+      },
     ]
   }
 
   getUserQueryWidthSelectors(): Array<{ selector: string; property: string }> {
-    return [{ selector: `${QUESTION_ITEM_SELECTOR} ${BUBBLE_SELECTOR}`, property: "max-width" }]
+    return [
+      {
+        selector: `${QUESTION_ITEM_SELECTOR} ${BUBBLE_SELECTOR}`,
+        property: "max-width",
+      },
+    ]
   }
 
   getZenModeConfig() {
     return {
-      hide: [
-        SIDEBAR_SELECTOR,
-        FOOTNOTE_SELECTOR,
-        '[aria-haspopup="dialog"][aria-controls][data-state]',
-      ],
+      hide: [SIDEBAR_SELECTOR, FOOTNOTE_SELECTOR],
     }
   }
 

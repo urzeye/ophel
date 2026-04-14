@@ -473,6 +473,11 @@ export class ImaAdapter extends SiteAdapter {
         extraCss: "width: 100% !important;",
         noCenter: true,
       },
+      {
+        selector: '[class*="_chatInputContainer_"] [class*="_editorContainer_"]',
+        property: "max-width",
+        extraCss: "width: 100vw !important; margin: 0 auto;",
+      },
     ]
   }
 
@@ -482,7 +487,11 @@ export class ImaAdapter extends SiteAdapter {
 
   getZenModeConfig() {
     return {
-      hide: [".expandable-sidebar-panel-sidebar", IMA_FOOT_TIPS_SELECTOR],
+      hide: [
+        '[class*="_downloadContainer_"]',
+        ".expandable-sidebar-panel-sidebar",
+        IMA_FOOT_TIPS_SELECTOR,
+      ],
     }
   }
 
