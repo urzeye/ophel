@@ -44,12 +44,11 @@ export const EyeClosedIcon: React.FC<IconProps> = ({
     strokeLinejoin="round"
     className={className}
     style={{ display: "block" }}>
-    <path d="M2 12s3-4.5 10-4.5 10 4.5 10 4.5" />
-    <path d="m3 15 2-2" />
-    <path d="m21 15-2-2" />
-    <path d="m8 17 1-2" />
-    <path d="m16 17-1-2" />
-    <path d="m12 18v-2" />
+    <path d="M2 8a10.645 10.645 0 0 0 20 0" />
+    <path d="m4 15 1.726-2.05" />
+    <path d="m9 18 .722-3.25" />
+    <path d="m15 18-.722-3.25" />
+    <path d="m20 15-1.726-2.05" />
   </svg>
 )
 
