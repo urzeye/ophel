@@ -2009,7 +2009,7 @@ export const App = () => {
 
   useEffect(() => {
     if (!isSettingsHydrated) return
-    themeManager.setNativePageThemeSyncEnabled(settings?.theme?.syncNativePageTheme ?? true)
+    themeManager.setHostThemeSyncEnabled(settings?.theme?.syncNativePageTheme ?? true)
   }, [settings?.theme?.syncNativePageTheme, themeManager, isSettingsHydrated])
 
   // 主题切换（异步处理，支持 View Transitions API 动画）
@@ -2023,19 +2023,19 @@ export const App = () => {
     [themeManager],
   )
 
-  // 启动主题监听器
+  // 启动宿主页主题监听
   useEffect(() => {
     if (!isSettingsHydrated) {
       return
     }
 
-    // 不再调用 updateMode，由 main.ts 负责初始应用
-    // 只启动监听器，监听页面主题变化（浏览器自动切换等场景）
-    themeManager.monitorTheme()
+    // 不再调用 applyModePreference，由 main.ts 负责初始应用
+    // 这里只启动监听器，监听页面主题变化（如浏览器/站点自动切换）
+    themeManager.startThemeMonitoring()
 
     return () => {
       // 清理监听器
-      themeManager.stopMonitoring()
+      themeManager.stopThemeMonitoring()
     }
   }, [themeManager, isSettingsHydrated])
 

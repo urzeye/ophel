@@ -1,7 +1,8 @@
 /**
  * 主题管理器
- * 处理亮/暗模式切换，支持主题预置系统
- * 通过动态注入 CSS 变量实现 Shadow DOM 内的主题切换
+ * 负责两类主题同步：
+ * 1. 宿主页（host page）的亮/暗模式联动、监听与必要 fallback
+ * 2. Ophel 面板 / Shadow DOM 的主题变量注入与切换动画
  */
 
 import type { SiteAdapter } from "~adapters/base"
@@ -34,7 +35,7 @@ type Listener = () => void
 
 const DEFAULT_LIGHT_PRESET_ID = "google-gradient"
 const DEFAULT_DARK_PRESET_ID = "classic-dark"
-const NATIVE_THEME_STYLE_ID = "ophel-native-adaptive-style"
+const HOST_THEME_OVERRIDE_STYLE_ID = "ophel-native-adaptive-style"
 
 export interface GlobalThemeManagerOptions {
   mode: ThemePreference | string
@@ -42,6 +43,7 @@ export interface GlobalThemeManagerOptions {
   adapter?: SiteAdapter | null
   lightPresetId?: string
   darkPresetId?: string
+  // 沿用 settings 里的历史字段名；在 ThemeManager 内部统一称为 host theme sync。
   syncNativePageTheme?: boolean
   apply?: boolean
 }
@@ -51,13 +53,12 @@ export class ThemeManager {
   private preference: ThemePreference
   private lightPresetId: string
   private darkPresetId: string
-  private cleanPresetId: string // Purely for debugging or tracking
-  private themeObserver: MutationObserver | null = null
+  private hostThemeObserver: MutationObserver | null = null
   private onModeChange?: ThemeModeChangeCallback
   private adapter?: SiteAdapter | null
-  private syncNativePageTheme: boolean
+  private hostThemeSyncEnabled: boolean
   private customStyles: CustomStyle[] = [] // 存储自定义样式列表
-  private skipNextDetection = false // 标志：跳过下一次主题检测（用于 toggle 后避免被 monitorTheme 反悔）
+  private skipNextDetection = false // 标志：跳过下一次主题检测，避免 toggle 后被 observer 立即反写
   private listeners: Set<Listener> = new Set() // 订阅者集合
   private systemMediaQuery: MediaQueryList | null = null
   private handleSystemChange = (event: MediaQueryListEvent) => {
@@ -66,7 +67,7 @@ export class ThemeManager {
     if (this.mode === nextMode) return
     this.mode = nextMode
     this.emitChange()
-    this.syncPageTheme(nextMode, "system")
+    this.syncHostTheme(nextMode, "system")
     if (this.onModeChange) {
       this.onModeChange(nextMode, this.preference)
     }
@@ -88,7 +89,7 @@ export class ThemeManager {
     this.darkPresetId = darkPresetId
     this.onModeChange = onModeChange
     this.adapter = adapter
-    this.syncNativePageTheme = syncNativePageTheme
+    this.hostThemeSyncEnabled = syncNativePageTheme
 
     // 注入全局动画样式 (View Transitions 需要在主文档生效)
     this.injectGlobalStyles()
@@ -121,24 +122,32 @@ export class ThemeManager {
     return preference
   }
 
-  private syncPageTheme(targetMode: ThemeMode, preference: ThemePreference = targetMode) {
-    if (!this.syncNativePageTheme) {
-      this.apply(targetMode)
+  /**
+   * 将 Ophel 的主题偏好同步到宿主页。
+   * 这一步可能调用站点 adapter 的原生切换逻辑，也可能退回到通用 DOM fallback。
+   */
+  private syncHostTheme(targetMode: ThemeMode, preference: ThemePreference = targetMode) {
+    if (!this.hostThemeSyncEnabled) {
+      this.applyTheme(targetMode)
       return
     }
 
     if (preference === "system") {
-      const handled = this.applySystemPreference(targetMode)
+      const handled = this.applySystemPreferenceToHost(targetMode)
       if (!handled && this.adapter && typeof this.adapter.toggleTheme === "function") {
         this.adapter.toggleTheme(targetMode).catch(() => {})
       }
     } else if (this.adapter && typeof this.adapter.toggleTheme === "function") {
       this.adapter.toggleTheme(preference).catch(() => {})
     }
-    this.apply(targetMode)
+    this.applyTheme(targetMode)
   }
 
-  private applySystemPreference(targetMode: ThemeMode): boolean {
+  /**
+   * 站点处于“跟随系统”偏好时，尝试把宿主页切到对应的实际明暗模式。
+   * 返回 true 表示该站点已由此分支完整处理。
+   */
+  private applySystemPreferenceToHost(targetMode: ThemeMode): boolean {
     if (!this.adapter) return false
     const siteId = this.adapter.getSiteId()
     try {
@@ -338,43 +347,42 @@ export class ThemeManager {
   }
 
   /**
-   * 注入站点的原生主题覆盖 CSS (降维覆盖宿主 CSS 变量)
+   * 注入站点声明的宿主页主题覆盖 CSS。
    * 由各站点 adapter 自行声明，初始化时一次性挂载。
    */
-  private injectNativeSiteThemeAdapter() {
-    if (!this.adapter || !this.syncNativePageTheme) return
+  private injectNativeThemeOverrideCss() {
+    if (!this.adapter || !this.hostThemeSyncEnabled) return
 
-    // 如果 adapter 未声明原生适配器样式或已注入，则跳过
+    // 如果 adapter 未声明覆盖样式或已注入，则跳过
     const cssContent = this.adapter.getNativeThemeCss()
-    if (!cssContent || document.getElementById(NATIVE_THEME_STYLE_ID)) return
+    if (!cssContent || document.getElementById(HOST_THEME_OVERRIDE_STYLE_ID)) return
 
     const styleEl = document.createElement("style")
-    styleEl.id = NATIVE_THEME_STYLE_ID
+    styleEl.id = HOST_THEME_OVERRIDE_STYLE_ID
     styleEl.textContent = cssContent
 
-    // 添加到原生 head 当中发生全局覆盖作用
+    // 添加到宿主页 head 中，对站点原生变量/组件形成覆盖
     document.head.appendChild(styleEl)
   }
 
-  private removeNativeSiteThemeAdapter() {
-    document.getElementById(NATIVE_THEME_STYLE_ID)?.remove()
+  private removeNativeThemeOverrideCss() {
+    document.getElementById(HOST_THEME_OVERRIDE_STYLE_ID)?.remove()
   }
 
-  private syncNativeThemeAdapterState() {
-    if (!this.syncNativePageTheme) {
-      this.removeNativeSiteThemeAdapter()
+  private syncNativeThemeOverrideCssState() {
+    if (!this.hostThemeSyncEnabled) {
+      this.removeNativeThemeOverrideCss()
       return
     }
-    this.injectNativeSiteThemeAdapter()
+    this.injectNativeThemeOverrideCss()
   }
 
   /**
-   * 设置适配器引用（用于调用适配器的 toggleTheme 方法）
+   * 设置当前站点适配器，并同步站点声明的主题覆盖 CSS。
    */
   setAdapter(adapter: SiteAdapter | null) {
     this.adapter = adapter
-    // 设置好适配器后，尝试注入对应的原生主题替换器
-    this.syncNativeThemeAdapterState()
+    this.syncNativeThemeOverrideCssState()
   }
 
   /**
@@ -385,44 +393,53 @@ export class ThemeManager {
     this.onModeChange = callback
   }
 
-  setNativePageThemeSyncEnabled(enabled: boolean) {
+  /**
+   * 控制是否启用宿主页主题联动。
+   * 开启后会同步宿主页主题、启动监听，并按需注入站点声明的覆盖 CSS。
+   */
+  setHostThemeSyncEnabled(enabled: boolean) {
     const nextEnabled = enabled !== false
-    const hasChanged = this.syncNativePageTheme !== nextEnabled
+    const hasChanged = this.hostThemeSyncEnabled !== nextEnabled
 
-    this.syncNativePageTheme = nextEnabled
-    this.syncNativeThemeAdapterState()
+    this.hostThemeSyncEnabled = nextEnabled
+    this.syncNativeThemeOverrideCssState()
 
     if (!hasChanged) {
       return
     }
 
     if (!nextEnabled) {
-      this.stopMonitoring()
-      this.syncPluginUITheme(this.mode)
+      this.stopThemeMonitoring()
+      this.syncPluginUiTheme(this.mode)
       return
     }
 
-    this.syncPageTheme(this.mode, this.preference)
-    this.monitorTheme()
+    this.syncHostTheme(this.mode, this.preference)
+    this.startThemeMonitoring()
   }
 
   /**
-   * 更新模式并应用
+   * 直接用给定偏好刷新内部状态，并立即应用到宿主页 / 插件 UI。
+   * 主要用于 hydration 或外部状态回放，不带显式用户交互语义。
    */
-  updateMode(mode: ThemePreference | string) {
+  applyModePreference(mode: ThemePreference | string) {
     const normalizedPreference: ThemePreference =
       mode === "system" ? "system" : mode === "dark" ? "dark" : "light"
     this.preference = normalizedPreference
     this.mode = this.resolveMode(normalizedPreference)
     this.emitChange()
     if (this.preference === "system") {
-      this.syncPageTheme(this.mode, "system")
+      this.syncHostTheme(this.mode, "system")
       return
     }
-    this.apply(this.mode)
+    this.applyTheme(this.mode)
   }
 
-  private applyPageThemeFallback(mode: ThemeMode) {
+  /**
+   * 通用宿主页 fallback。
+   * 仅用于未提供站点自定义 toggleTheme() 的场景，直接改 body class / color-scheme。
+   */
+  private applyGenericHostThemeFallback(mode: ThemeMode) {
     const isGeminiStandard = this.adapter?.getSiteId() === SITE_IDS.GEMINI
 
     if (mode === "dark") {
@@ -442,10 +459,10 @@ export class ThemeManager {
   }
 
   /**
-   * 检测当前页面的实际主题状态
+   * 检测当前宿主页实际呈现出的亮/暗模式。
    * 优先级：html Class (ChatGPT) > body Class (Gemini) > Data Attribute > Style (colorScheme)
    */
-  private detectCurrentTheme(): ThemeMode {
+  private detectHostThemeMode(): ThemeMode {
     // 1. html 元素的 class（ChatGPT 使用 html.dark / html.light）
     const htmlClass = document.documentElement.className
     if (/\bdark\b/i.test(htmlClass)) {
@@ -478,7 +495,10 @@ export class ThemeManager {
     return "light"
   }
 
-  private detectThemePreference(): ThemePreference | null {
+  /**
+   * 从宿主页持久化状态中推断主题偏好（light / dark / system）。
+   */
+  private detectHostThemePreference(): ThemePreference | null {
     if (!this.adapter) return null
     const siteId = this.adapter.getSiteId()
     try {
@@ -565,17 +585,18 @@ export class ThemeManager {
   }
 
   /**
-   * 应用主题到网页
+   * 应用当前主题状态。
+   * 这一步会先按需处理宿主页 fallback，再同步 Ophel 面板 / Shadow DOM 的主题变量。
    */
-  apply(targetMode?: ThemeMode) {
+  applyTheme(targetMode?: ThemeMode) {
     const mode = targetMode || this.mode
 
-    if (this.syncNativePageTheme) {
-      this.applyPageThemeFallback(mode)
+    if (this.hostThemeSyncEnabled && (!this.adapter || !this.adapter.hasCustomToggleTheme())) {
+      this.applyGenericHostThemeFallback(mode)
     }
 
     // 同步插件 UI 主题
-    this.syncPluginUITheme(mode)
+    this.syncPluginUiTheme(mode)
   }
 
   /**
@@ -592,7 +613,7 @@ export class ThemeManager {
   setPresets(lightPresetId: string, darkPresetId: string) {
     this.lightPresetId = lightPresetId
     this.darkPresetId = darkPresetId
-    this.syncPluginUITheme()
+    this.syncPluginUiTheme()
   }
 
   /**
@@ -604,16 +625,16 @@ export class ThemeManager {
     const currentId = this.mode === "dark" ? this.darkPresetId : this.lightPresetId
     const isUsingCustom = this.customStyles.some((s) => s.id === currentId)
     if (isUsingCustom) {
-      this.syncPluginUITheme()
+      this.syncPluginUiTheme()
     }
   }
 
   /**
    * 同步插件 UI 的主题状态
    * 从主题预置读取 CSS 变量值，注入到 Shadow DOM
-   * ⭐ 暂停 MutationObserver 以避免循环触发
+   * 会临时断开宿主页 observer，避免自身 DOM 写入被误判为页面主题变化。
    */
-  private syncPluginUITheme(mode?: ThemeMode) {
+  private syncPluginUiTheme(mode?: ThemeMode) {
     const currentMode = mode || this.mode
     const root = document.documentElement
 
@@ -642,9 +663,9 @@ export class ThemeManager {
 
     // 暂时断开 MutationObserver，避免循环触发
     // 因为下面的 DOM 修改会触发 observer，导致 onModeChange 被意外调用
-    const wasObserving = this.themeObserver !== null
+    const wasObserving = this.hostThemeObserver !== null
     if (wasObserving) {
-      this.themeObserver?.disconnect()
+      this.hostThemeObserver?.disconnect()
     }
 
     // 设置 body 属性，供插件自身样式选择器使用
@@ -705,14 +726,14 @@ ${cssVars}
     })
 
     // 恢复 MutationObserver
-    if (wasObserving && this.themeObserver) {
+    if (wasObserving && this.hostThemeObserver) {
       // 重新观察 body 和 html 元素
-      this.themeObserver.observe(document.body, {
+      this.hostThemeObserver.observe(document.body, {
         attributes: true,
         attributeFilter: ["class", "data-theme", "style"],
       })
       // 同时监听 html 元素的 class 和 data-theme 属性（ChatGPT 使用 html.dark/light）
-      this.themeObserver.observe(document.documentElement, {
+      this.hostThemeObserver.observe(document.documentElement, {
         attributes: true,
         attributeFilter: ["class", "data-theme"],
       })
@@ -720,25 +741,25 @@ ${cssVars}
   }
 
   /**
-   * 启动主题监听器 (Auto Dark Mode)
-   * 监听页面主题变化，自动同步到面板
+   * 启动宿主页主题监听。
+   * 当站点自身主题变化时，会把变化同步回 Ophel 的内部主题状态。
    */
-  monitorTheme() {
-    if (!this.syncNativePageTheme) {
-      this.stopMonitoring()
-      this.syncPluginUITheme(this.mode)
+  startThemeMonitoring() {
+    if (!this.hostThemeSyncEnabled) {
+      this.stopThemeMonitoring()
+      this.syncPluginUiTheme(this.mode)
       return
     }
 
-    const checkTheme = () => {
+    const reconcileObservedTheme = () => {
       // 如果是 toggle() 主动触发后的首次恢复，跳过检测以避免覆盖用户意图
       if (this.skipNextDetection) {
         this.skipNextDetection = false
         return
       }
 
-      const detectedMode = this.detectCurrentTheme()
-      const detectedPreference = this.detectThemePreference()
+      const detectedMode = this.detectHostThemeMode()
+      const detectedPreference = this.detectHostThemePreference()
       const nextPreference: ThemePreference = detectedPreference ?? detectedMode
       const nextMode: ThemeMode =
         nextPreference === "system" ? this.getSystemMode() : nextPreference
@@ -746,13 +767,13 @@ ${cssVars}
       if (nextPreference === "system") {
         this.ensureSystemListener()
         if (detectedMode !== nextMode) {
-          this.syncPageTheme(nextMode, "system")
+          this.syncHostTheme(nextMode, "system")
         } else {
-          this.syncPluginUITheme(nextMode)
+          this.syncPluginUiTheme(nextMode)
         }
       } else {
         // 同步到插件 UI (ghMode)
-        this.syncPluginUITheme(nextMode)
+        this.syncPluginUiTheme(nextMode)
       }
 
       // 如果检测到的模式或偏好发生变化，更新并触发回调
@@ -767,22 +788,22 @@ ${cssVars}
     }
 
     // 首次检查
-    checkTheme()
+    reconcileObservedTheme()
 
     // 如果已有 Observer，不重复创建
-    if (!this.themeObserver) {
-      this.themeObserver = new MutationObserver(() => {
-        checkTheme()
+    if (!this.hostThemeObserver) {
+      this.hostThemeObserver = new MutationObserver(() => {
+        reconcileObservedTheme()
       })
 
       // 监听 body 的 class、data-theme、style 属性变化
-      this.themeObserver.observe(document.body, {
+      this.hostThemeObserver.observe(document.body, {
         attributes: true,
         attributeFilter: ["class", "data-theme", "style"],
       })
 
       // 同时监听 html 元素的 class 和 data-theme 属性（ChatGPT 使用 html.dark/light）
-      this.themeObserver.observe(document.documentElement, {
+      this.hostThemeObserver.observe(document.documentElement, {
         attributes: true,
         attributeFilter: ["class", "data-theme"],
       })
@@ -790,12 +811,12 @@ ${cssVars}
   }
 
   /**
-   * 停止主题监听
+   * 停止宿主页主题监听
    */
-  stopMonitoring() {
-    if (this.themeObserver) {
-      this.themeObserver.disconnect()
-      this.themeObserver = null
+  stopThemeMonitoring() {
+    if (this.hostThemeObserver) {
+      this.hostThemeObserver.disconnect()
+      this.hostThemeObserver = null
     }
   }
 
@@ -827,14 +848,14 @@ ${cssVars}
     document.documentElement.style.setProperty("--theme-x", `${x}%`)
     document.documentElement.style.setProperty("--theme-y", `${y}%`)
 
-    this.stopMonitoring()
+    this.stopThemeMonitoring()
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     if (!document.startViewTransition || prefersReducedMotion) {
       try {
         action()
       } finally {
-        this.monitorTheme()
+        this.startThemeMonitoring()
       }
       return false
     }
@@ -872,12 +893,12 @@ ${cssVars}
       })
     } catch {
       action()
-      this.monitorTheme()
+      this.startThemeMonitoring()
       return false
     }
 
     this.skipNextDetection = true
-    this.monitorTheme()
+    this.startThemeMonitoring()
     return true
   }
 
@@ -886,11 +907,11 @@ ${cssVars}
    * @param event 可选的鼠标事件，用于确定动画中心
    */
   async toggle(event?: ThemeTransitionOrigin): Promise<ThemeMode> {
-    // 使用 detectCurrentTheme 统一检测当前主题
+    // 使用 detectHostThemeMode 统一检测当前宿主页状态
     const currentMode =
-      this.preference === "system" || !this.syncNativePageTheme
+      this.preference === "system" || !this.hostThemeSyncEnabled
         ? this.mode
-        : this.detectCurrentTheme()
+        : this.detectHostThemeMode()
     const nextMode: ThemeMode = currentMode === "dark" ? "light" : "dark"
     this.preference = nextMode
 
@@ -916,7 +937,7 @@ ${cssVars}
     document.documentElement.style.setProperty("--theme-y", `${y}%`)
 
     // 暂停 MutationObserver，防止在 View Transition 期间触发额外的 DOM 修改
-    this.stopMonitoring()
+    this.stopThemeMonitoring()
 
     // 执行主题切换的核心逻辑
     const doToggle = () => {
@@ -925,7 +946,7 @@ ${cssVars}
         this.adapter.toggleTheme(nextMode).catch(() => {})
       }
       // 同步应用主题（包括 Shadow DOM）
-      this.apply(nextMode)
+      this.applyTheme(nextMode)
     }
 
     // 检查是否支持 View Transitions API
@@ -937,7 +958,7 @@ ${cssVars}
       this.mode = nextMode
       this.emitChange()
       // 无条件启动监听（确保网页主题变化能被检测）
-      this.monitorTheme()
+      this.startThemeMonitoring()
       return nextMode
     }
 
@@ -980,14 +1001,14 @@ ${cssVars}
       // 忽略动画错误
     })
 
-    // 标记跳过下一次检测，防止 monitorTheme 检测到错误的页面状态而覆盖用户意图
+    // 标记跳过下一次检测，防止 observer 立即根据中间态把结果回写掉
     this.skipNextDetection = true
     // 触发回调通知 React 更新状态（动画完成后）
     if (this.onModeChange) {
       this.onModeChange(nextMode, this.preference)
     }
     // 无条件启动监听（确保网页主题变化能被检测）
-    this.monitorTheme()
+    this.startThemeMonitoring()
 
     // 更新内部状态
     this.mode = nextMode
@@ -1019,10 +1040,10 @@ ${cssVars}
       let animated = false
       if (shouldAnimate) {
         animated = await this.applyWithTransition(() => {
-          this.syncPageTheme(resolved, "system")
+          this.syncHostTheme(resolved, "system")
         }, event)
       } else {
-        this.syncPageTheme(resolved, "system")
+        this.syncHostTheme(resolved, "system")
       }
       if (modeChanged) {
         this.mode = resolved
@@ -1034,12 +1055,12 @@ ${cssVars}
       return { mode: resolved, animated }
     }
 
-    const currentMode = this.syncNativePageTheme ? this.detectCurrentTheme() : this.mode
+    const currentMode = this.hostThemeSyncEnabled ? this.detectHostThemeMode() : this.mode
 
     // 如果已经是目标模式，仅更新偏好
     if (currentMode === normalizedPreference) {
       this.preference = normalizedPreference
-      this.syncPageTheme(normalizedPreference, normalizedPreference)
+      this.syncHostTheme(normalizedPreference, normalizedPreference)
       if (this.onModeChange) {
         this.onModeChange(normalizedPreference, this.preference)
       }
@@ -1096,7 +1117,7 @@ ${cssVars}
    * 销毁，清理资源
    */
   destroy() {
-    this.stopMonitoring()
+    this.stopThemeMonitoring()
     this.listeners.clear()
   }
 }
@@ -1104,7 +1125,7 @@ ${cssVars}
 /**
  * 确保 window 上始终只有一个 ThemeManager 实例
  * userscript 场景下，App 可能会比核心模块更早渲染，
- * 这里统一复用同一个实例，避免 fallback 和正式实例竞争。
+ * 这里统一复用同一个实例，避免 fallback、observer 与正式实例互相打架。
  */
 export function ensureGlobalThemeManager(options: GlobalThemeManagerOptions): ThemeManager {
   const {
@@ -1126,7 +1147,7 @@ export function ensureGlobalThemeManager(options: GlobalThemeManagerOptions): Th
   }
 
   themeManager.setAdapter(adapter ?? null)
-  themeManager.setNativePageThemeSyncEnabled(syncNativePageTheme)
+  themeManager.setHostThemeSyncEnabled(syncNativePageTheme)
   themeManager.setPresets(lightPresetId, darkPresetId)
 
   if (onModeChange !== undefined) {
@@ -1137,9 +1158,9 @@ export function ensureGlobalThemeManager(options: GlobalThemeManagerOptions): Th
     mode === "system" ? "system" : mode === "dark" ? "dark" : "light"
 
   if (themeManager.getPreference() !== normalizedPreference) {
-    themeManager.updateMode(normalizedPreference)
+    themeManager.applyModePreference(normalizedPreference)
   } else if (apply) {
-    themeManager.apply()
+    themeManager.applyTheme()
   }
 
   return themeManager

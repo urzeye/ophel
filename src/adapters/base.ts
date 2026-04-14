@@ -516,6 +516,14 @@ export abstract class SiteAdapter {
   }
 
   /**
+   * 是否由子类提供了站点专用主题切换逻辑。
+   * 用于避免在自定义切换后再次套用通用 fallback，造成宿主页面状态冲突。
+   */
+  hasCustomToggleTheme(): boolean {
+    return this.toggleTheme !== SiteAdapter.prototype.toggleTheme
+  }
+
+  /**
    * 返回站点原生主题覆盖 CSS。
    * 默认不提供，子类可按需覆盖。
    */

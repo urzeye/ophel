@@ -150,10 +150,10 @@ export function initThemeManager(ctx: ModulesContext): ThemeManager {
 }
 
 /**
- * 同步页面原生主题与 settings
- * (恢复备份后，面板主题会正确应用，但页面本身的主题可能不一致)
+ * 按 settings 校准宿主页主题。
+ * (恢复备份后，面板主题会正确应用，但宿主页本身的主题可能不一致)
  */
-export async function syncPageTheme(ctx: ModulesContext): Promise<void> {
+export async function syncHostThemeWithSettings(ctx: ModulesContext): Promise<void> {
   const { adapter, settings, siteId } = ctx
   const siteTheme = getSiteTheme(settings, siteId)
   if (siteTheme.mode === "system" && modules.themeManager) {
@@ -170,7 +170,7 @@ export async function syncPageTheme(ctx: ModulesContext): Promise<void> {
         : "light"
 
   if (!(settings.theme?.syncNativePageTheme ?? true)) {
-    modules.themeManager?.apply(targetTheme)
+    modules.themeManager?.applyTheme(targetTheme)
     return
   }
 
@@ -193,7 +193,7 @@ export async function syncPageTheme(ctx: ModulesContext): Promise<void> {
   // 如果不一致，需要同步主题
   if (actualPageTheme !== targetTheme) {
     if (modules.themeManager) {
-      modules.themeManager.apply(targetTheme)
+      modules.themeManager.applyTheme(targetTheme)
     }
     if (adapter && typeof adapter.toggleTheme === "function") {
       await adapter.toggleTheme(targetTheme)
@@ -396,7 +396,7 @@ export async function initCoreModules(ctx: ModulesContext): Promise<ModuleInstan
   initThemeManager(ctx)
 
   // 延迟同步页面主题
-  setTimeout(() => syncPageTheme(ctx), 1000)
+  setTimeout(() => syncHostThemeWithSettings(ctx), 1000)
 
   // 2. Markdown 修复
   initMarkdownFixer(ctx)
@@ -468,9 +468,7 @@ export function subscribeModuleUpdates(ctx: ModulesContext): void {
     // 1. Theme Manager - 只更新主题预置
     const newSiteTheme = getSiteTheme(newSettings, siteId)
     if (newSiteTheme && modules.themeManager) {
-      modules.themeManager.setNativePageThemeSyncEnabled(
-        newSettings.theme?.syncNativePageTheme ?? true,
-      )
+      modules.themeManager.setHostThemeSyncEnabled(newSettings.theme?.syncNativePageTheme ?? true)
       modules.themeManager.setPresets(
         newSiteTheme.lightStyleId || "google-gradient",
         newSiteTheme.darkStyleId || "classic-dark",
