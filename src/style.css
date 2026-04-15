@@ -33,11 +33,15 @@
 }
 
 /* ============= 穿透与幽灵模式 (防遮挡体验升级) ============= */
-.gh-main-panel.scroll-hidden,
-.quick-btn-group.scroll-hidden {
-  opacity: 0.15 !important;
+.gh-root.gh-pass-through .gh-interactive {
   pointer-events: none !important;
-  transition: opacity 0.4s ease-out !important;
+  opacity: 0.03 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform: scale(0.98) !important;
 }
 
 /* ============= 面板 Header 样式 ============= */

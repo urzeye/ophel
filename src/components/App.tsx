@@ -812,6 +812,47 @@ export const App = () => {
     }
   }, [isSettingsHydrated, settings])
 
+  // 全局防遮挡状态 (防遮挡体验升级)
+  const [isPassThrough, setIsPassThrough] = useState(false)
+  const pressedKeys = useRef<Set<string>>(new Set())
+
+  useEffect(() => {
+    const checkPassThrough = () => {
+      const keys = pressedKeys.current
+      // 仅当只按下一个修饰键时才触发穿透，完美避开组合键冲突
+      if (keys.size === 1 && (keys.has("Control") || keys.has("Meta"))) {
+        setIsPassThrough(true)
+      } else {
+        setIsPassThrough(false)
+      }
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      pressedKeys.current.add(e.key)
+      checkPassThrough()
+    }
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      pressedKeys.current.delete(e.key)
+      checkPassThrough()
+    }
+
+    const handleBlur = () => {
+      pressedKeys.current.clear()
+      checkPassThrough()
+    }
+
+    window.addEventListener("keydown", handleKeyDown, true)
+    window.addEventListener("keyup", handleKeyUp, true)
+    window.addEventListener("blur", handleBlur)
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown, true)
+      window.removeEventListener("keyup", handleKeyUp, true)
+      window.removeEventListener("blur", handleBlur)
+    }
+  }, [])
+
   // 选中的提示词状态
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null)
 
@@ -2891,7 +2932,7 @@ export const App = () => {
   }
 
   return (
-    <div className="gh-root">
+    <div className={`gh-root ${isPassThrough ? "gh-pass-through" : ""}`}>
       <MainPanel
         isOpen={isPanelOpen}
         onClose={() => setIsPanelOpen(false)}
