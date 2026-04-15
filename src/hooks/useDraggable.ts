@@ -90,6 +90,42 @@ export function useDraggable(options: UseDraggableOptions = {}) {
     panel.style.top = e.clientY - offsetRef.current.y + "px"
   }, [])
 
+  // 动画过渡函数
+  const animateToPosition = useCallback(
+    (targetLeft: number, targetTop: number, duration = 300, onComplete?: () => void) => {
+      const panel = panelRef.current
+      if (!panel) return
+
+      // 读取当前数值或实时位置
+      const startLeft = parseFloat(panel.style.left) || panel.getBoundingClientRect().left
+      const startTop = parseFloat(panel.style.top) || panel.getBoundingClientRect().top
+      const startTime = performance.now()
+
+      const animate = (currentTime: number) => {
+        const elapsed = currentTime - startTime
+        let progress = Math.min(elapsed / duration, 1)
+
+        // ease-out-cubic
+        progress = 1 - Math.pow(1 - progress, 3)
+
+        const currentLeft = startLeft + (targetLeft - startLeft) * progress
+        const currentTop = startTop + (targetTop - startTop) * progress
+
+        panel.style.left = `${currentLeft}px`
+        panel.style.top = `${currentTop}px`
+
+        if (progress < 1) {
+          requestAnimationFrame(animate)
+        } else {
+          onComplete?.()
+        }
+      }
+
+      requestAnimationFrame(animate)
+    },
+    [],
+  )
+
   // 结束拖拽
   const handleMouseUp = useCallback(() => {
     if (!isDraggingRef.current) return
@@ -108,15 +144,21 @@ export function useDraggable(options: UseDraggableOptions = {}) {
     // 边缘吸附检测
     if (edgeSnapHide && hasMoved && panel) {
       const rect = panel.getBoundingClientRect()
-      // 使用传入的 snapThreshold 参数
+      const vw = window.innerWidth
+      const pw = rect.width
+      const pTop = rect.top
 
       if (rect.left < snapThreshold) {
-        onEdgeSnap?.("left")
-      } else if (window.innerWidth - rect.right < snapThreshold) {
-        onEdgeSnap?.("right")
+        animateToPosition(12 - pw, pTop, 250, () => {
+          onEdgeSnap?.("left")
+        })
+      } else if (vw - rect.right < snapThreshold) {
+        animateToPosition(vw - 12, pTop, 250, () => {
+          onEdgeSnap?.("right")
+        })
       }
     }
-  }, [edgeSnapHide, onEdgeSnap, snapThreshold])
+  }, [edgeSnapHide, onEdgeSnap, snapThreshold, animateToPosition])
 
   // 边界检测：确保面板在视口内可见
   const clampToViewport = useCallback(() => {
