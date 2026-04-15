@@ -163,7 +163,7 @@ function getFirstMeaningfulMermaidLineIndex(lines: string[]): number {
 
 export function isAssistantMermaidCandidateElement(element: HTMLElement): boolean {
   const code = (
-    element.matches("code") ? element : element.querySelector("code")
+    element.nodeName.toLowerCase() === "code" ? element : element.querySelector("code")
   ) as HTMLElement | null
 
   const labels = [
@@ -227,7 +227,7 @@ export function normalizeAssistantMermaidSource(source: string): string {
 
 export function extractAssistantMermaidSourceFromElement(element: HTMLElement): string | null {
   const code = (
-    element.matches("code") ? element : element.querySelector("code")
+    element.nodeName.toLowerCase() === "code" ? element : element.querySelector("code")
   ) as HTMLElement | null
   const source = (code?.textContent || element.textContent || "")
     .replace(/\r\n/g, "\n")
