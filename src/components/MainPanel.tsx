@@ -342,11 +342,11 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           backgroundBlendMode: "overlay",
           animation: "var(--gh-bg-animation, none)",
           borderRadius: "12px",
-          boxShadow: "var(--gh-shadow, 0 10px 40px rgba(0,0,0,0.15))",
+          boxShadow: "var(--gh-shadow)", // Use the new glassmorphic shadow
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          border: "1px solid var(--gh-border, #e5e7eb)",
+          border: "var(--gh-panel-border, none)", // Remove solid border, rely on inner inset shadow
           zIndex: 9999,
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           // 位置现在由 useDraggable 通过直接 DOM 操作控制，不再通过 React state
@@ -530,9 +530,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           className="gh-panel-tabs"
           style={{
             display: "flex",
-            borderBottom: "1px solid var(--gh-border, #e5e7eb)",
+            borderBottom: "1px solid var(--gh-border, rgba(0,0,0,0.05))",
             padding: "0",
-            background: "var(--gh-bg-secondary, #f9fafb)",
+            background: "var(--gh-bg-secondary)",
           }}>
           {visibleTabs.map((tab) => {
             let IconComp: React.FC<{ size?: number }> | null = null
@@ -612,8 +612,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             justifyContent: "space-around",
             alignItems: "center",
             padding: "10px 16px",
-            borderTop: "1px solid var(--gh-border, #e5e7eb)",
-            background: "var(--gh-bg-secondary, #f9fafb)",
+            borderTop: "1px solid var(--gh-border, rgba(0,0,0,0.05))",
+            background: "var(--gh-bg-secondary)",
           }}>
           {/* 顶部按钮 */}
           <Tooltip content={t("scrollTop")} triggerStyle={{ flex: 1, maxWidth: "120px" }}>
