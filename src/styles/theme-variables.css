@@ -39,9 +39,9 @@
   --gh-icon-hover: var(--gh-text);
 
   /* === 阴影 === */
-  --gh-shadow: 0 8px 24px rgba(0, 0, 0, 0.06), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
-  --gh-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
-  --gh-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+  --gh-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  --gh-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --gh-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.3);
 
   /* === 品牌色 === */
   --gh-primary: #4285f4;
@@ -149,9 +149,6 @@
   --gh-category-5: #a5f3fc; /* 青 */
   --gh-category-6: #c7d2fe; /* 蓝紫 */
   --gh-category-7: #f5d0fe; /* 粉紫 */
-
-  /* === 面板边框（玻璃拟态高光） === */
-  --gh-panel-border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 /* ==================== 深色模式 ==================== */
@@ -188,9 +185,9 @@ html[data-theme="dark"] {
   --gh-icon-hover: var(--gh-text);
 
   /* === 阴影 === */
-  --gh-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  --gh-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
-  --gh-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --gh-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  --gh-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --gh-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.7);
 
   /* === 语义化组件变量（深色模式覆盖） === */
   --gh-header-bg: #1e1e1e;
@@ -286,7 +283,4 @@ html[data-theme="dark"] {
 
   /* === 品牌色（深色模式） === */
   --gh-brand-gradient: linear-gradient(135deg, #8ab4f8 0%, #81c995 100%);
-
-  /* === 面板边框（深色模式玻璃边缘） === */
-  --gh-panel-border: none;
 }
