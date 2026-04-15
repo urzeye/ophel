@@ -40,8 +40,12 @@
   -webkit-backdrop-filter: none !important;
   box-shadow: none !important;
   filter: none !important;
-  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-  transform: scale(0.98) !important;
+  transition:
+    opacity 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    backdrop-filter 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    -webkit-backdrop-filter 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 /* ============= 面板 Header 样式 ============= */

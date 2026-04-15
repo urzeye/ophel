@@ -815,16 +815,41 @@ export const App = () => {
   // 全局防遮挡状态 (防遮挡体验升级)
   const [isPassThrough, setIsPassThrough] = useState(false)
   const pressedKeys = useRef<Set<string>>(new Set())
+  const passThroughTimerRef = useRef<number | null>(null)
 
   useEffect(() => {
+    const PASS_THROUGH_HOLD_MS = 200
+    const passThroughModifierKey = isMacLike ? "Meta" : "Control"
+
+    const clearPassThroughTimer = () => {
+      if (passThroughTimerRef.current !== null) {
+        window.clearTimeout(passThroughTimerRef.current)
+        passThroughTimerRef.current = null
+      }
+    }
+
     const checkPassThrough = () => {
       const keys = pressedKeys.current
-      // 仅当只按下一个修饰键时才触发穿透，完美避开组合键冲突
-      if (keys.size === 1 && (keys.has("Control") || keys.has("Meta"))) {
-        setIsPassThrough(true)
-      } else {
+      // 平台限定：Windows/Linux 仅保留 Ctrl，macOS 仅保留 Command，避免浏览器级 Alt 焦点劫持。
+      const shouldPassThrough = keys.size === 1 && keys.has(passThroughModifierKey)
+
+      if (!shouldPassThrough) {
+        clearPassThroughTimer()
         setIsPassThrough(false)
+        return
       }
+
+      if (isPassThrough || passThroughTimerRef.current !== null) {
+        return
+      }
+
+      passThroughTimerRef.current = window.setTimeout(() => {
+        passThroughTimerRef.current = null
+        const latestKeys = pressedKeys.current
+        if (latestKeys.size === 1 && latestKeys.has(passThroughModifierKey)) {
+          setIsPassThrough(true)
+        }
+      }, PASS_THROUGH_HOLD_MS)
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -847,11 +872,12 @@ export const App = () => {
     window.addEventListener("blur", handleBlur)
 
     return () => {
+      clearPassThroughTimer()
       window.removeEventListener("keydown", handleKeyDown, true)
       window.removeEventListener("keyup", handleKeyUp, true)
       window.removeEventListener("blur", handleBlur)
     }
-  }, [])
+  }, [isMacLike, isPassThrough])
 
   // 选中的提示词状态
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null)
