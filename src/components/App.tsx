@@ -142,6 +142,9 @@ const isLikelyMacPlatform = () => {
   return platform.includes("mac") || userAgent.includes("mac os")
 }
 
+const PASS_THROUGH_META_KEY_ALIASES = new Set(["Meta", "OS", "Command", "Cmd"])
+const PASS_THROUGH_CONTROL_KEY_ALIASES = new Set(["Control", "Ctrl"])
+
 const GLOBAL_SEARCH_CATEGORY_DEFINITIONS: GlobalSearchCategoryDefinition[] = [
   {
     id: "all",
@@ -820,6 +823,28 @@ export const App = () => {
   useEffect(() => {
     const PASS_THROUGH_HOLD_MS = 200
     const passThroughModifierKey = isMacLike ? "Meta" : "Control"
+    const passThroughModifierKeyAliases = isMacLike
+      ? PASS_THROUGH_META_KEY_ALIASES
+      : PASS_THROUGH_CONTROL_KEY_ALIASES
+
+    const normalizePassThroughKey = (key: string) => {
+      if (PASS_THROUGH_META_KEY_ALIASES.has(key)) return "Meta"
+      if (PASS_THROUGH_CONTROL_KEY_ALIASES.has(key)) return "Control"
+      return key
+    }
+
+    const hasUnexpectedPassThroughModifier = (event?: KeyboardEvent) => {
+      if (!event) return false
+
+      return isMacLike
+        ? event.ctrlKey || event.altKey || event.shiftKey
+        : event.metaKey || event.altKey || event.shiftKey
+    }
+
+    const hasOnlyPassThroughModifierKeys = () => {
+      const keys = Array.from(pressedKeys.current)
+      return keys.length > 0 && keys.every((key) => passThroughModifierKeyAliases.has(key))
+    }
 
     const clearPassThroughTimer = () => {
       if (passThroughTimerRef.current !== null) {
@@ -828,10 +853,18 @@ export const App = () => {
       }
     }
 
-    const checkPassThrough = () => {
-      const keys = pressedKeys.current
+    const checkPassThrough = (event?: KeyboardEvent) => {
+      const hasPassThroughModifier = event
+        ? isMacLike
+          ? event.metaKey || passThroughModifierKeyAliases.has(normalizePassThroughKey(event.key))
+          : event.ctrlKey || passThroughModifierKeyAliases.has(normalizePassThroughKey(event.key))
+        : pressedKeys.current.has(passThroughModifierKey)
+
       // 平台限定：Windows/Linux 仅保留 Ctrl，macOS 仅保留 Command，避免浏览器级 Alt 焦点劫持。
-      const shouldPassThrough = keys.size === 1 && keys.has(passThroughModifierKey)
+      const shouldPassThrough =
+        hasPassThroughModifier &&
+        hasOnlyPassThroughModifierKeys() &&
+        !hasUnexpectedPassThroughModifier(event)
 
       if (!shouldPassThrough) {
         clearPassThroughTimer()
@@ -845,21 +878,28 @@ export const App = () => {
 
       passThroughTimerRef.current = window.setTimeout(() => {
         passThroughTimerRef.current = null
-        const latestKeys = pressedKeys.current
-        if (latestKeys.size === 1 && latestKeys.has(passThroughModifierKey)) {
+        if (hasOnlyPassThroughModifierKeys() && pressedKeys.current.has(passThroughModifierKey)) {
           setIsPassThrough(true)
         }
       }, PASS_THROUGH_HOLD_MS)
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      pressedKeys.current.add(e.key)
-      checkPassThrough()
+      const normalizedKey = normalizePassThroughKey(e.key)
+
+      // macOS 上 Command 参与快捷键时，非修饰键的 keyup 可能被浏览器吞掉。
+      // 在新的主修饰键按下时清掉残留键，避免透明隐藏状态被旧按键卡住。
+      if (normalizedKey === passThroughModifierKey && !hasUnexpectedPassThroughModifier(e)) {
+        pressedKeys.current.clear()
+      }
+
+      pressedKeys.current.add(normalizedKey)
+      checkPassThrough(e)
     }
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      pressedKeys.current.delete(e.key)
-      checkPassThrough()
+      pressedKeys.current.delete(normalizePassThroughKey(e.key))
+      checkPassThrough(e)
     }
 
     const handleBlur = () => {
