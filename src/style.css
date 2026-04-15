@@ -869,6 +869,10 @@
   display: none !important;
 }
 
+.quick-btn-group.liquid-collapsed .quick-prompt-btn.panel-btn svg {
+  transform: translate(-1px, -1px);
+}
+
 /* 拖拽手柄 (iOS style indicator) */
 .quick-btn-group .quick-btn-drag-handle {
   width: 24px;

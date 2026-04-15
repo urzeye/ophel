@@ -534,6 +534,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     }
 
     const isAnchorBtn = id === "anchor"
+    const isPanelBtn = id === "panel"
     const anchorDisabled = isAnchorBtn && !hasAnchor
 
     const tooltipContent = isAnchorBtn
@@ -545,7 +546,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return (
       <Tooltip key={id} content={tooltipContent}>
         <button
-          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isActive ? "active" : ""} ${isFloatingToolbarBtn ? "tools-trigger-btn" : ""} ${isZenModeBtn ? "zen-mode-btn" : ""}`}
+          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isPanelBtn ? "panel-btn" : ""} ${isActive ? "active" : ""} ${isFloatingToolbarBtn ? "tools-trigger-btn" : ""} ${isZenModeBtn ? "zen-mode-btn" : ""}`}
           onClick={(e) => buttonActions[id]?.(e)}
           style={{
             opacity: anchorDisabled ? 0.4 : 1,
