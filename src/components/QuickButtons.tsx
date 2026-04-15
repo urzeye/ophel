@@ -45,6 +45,7 @@ interface QuickButtonsProps {
   onModelLockToggle?: () => void
   isModelLocked?: boolean
   onOpenSettings?: () => void
+  isScrolling?: boolean
 }
 
 type ViewportSize = {
@@ -80,6 +81,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   onModelLockToggle,
   isModelLocked,
   onOpenSettings,
+  isScrolling,
 }) => {
   const getButtonCenter = useCallback((button: HTMLButtonElement): ThemeTransitionOrigin => {
     const rect = button.getBoundingClientRect()
@@ -153,6 +155,35 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   // 悬浮隐藏状态
   const [_isHovered, setIsHovered] = useState(false)
   // groupRef moved to top
+
+  // 闲置状态 (用于液态折叠)
+  const [isIdle, setIsIdle] = useState(false)
+  const idleTimerRef = useRef<number | null>(null)
+
+  const resetIdleTimer = useCallback(() => {
+    setIsIdle(false)
+    if (idleTimerRef.current) {
+      window.clearTimeout(idleTimerRef.current)
+    }
+    idleTimerRef.current = window.setTimeout(() => {
+      setIsIdle(true)
+    }, 5000)
+  }, [])
+
+  useEffect(() => {
+    const handleActivity = () => resetIdleTimer()
+    document.addEventListener("mousemove", handleActivity, { passive: true })
+    document.addEventListener("keydown", handleActivity, { passive: true })
+    resetIdleTimer()
+    return () => {
+      document.removeEventListener("mousemove", handleActivity)
+      document.removeEventListener("keydown", handleActivity)
+      if (idleTimerRef.current) window.clearTimeout(idleTimerRef.current)
+    }
+  }, [resetIdleTimer])
+
+  const isLiquidCollapsed =
+    isIdle && !_isHovered && !isToolsMenuOpen && !isPanelOpen && !isDragging && !isPressing
 
   // 跟踪是否处于 Flutter 模式（图文并茂）
   const [_isFlutterMode, setIsFlutterMode] = useState(false)
@@ -881,7 +912,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       <LoadingOverlay isVisible={isLoadingHistory} text={loadingText} onStop={stopLoading} />
       <div
         ref={groupRef}
-        className={`quick-btn-group gh-interactive ${!isPanelOpen ? "collapsed" : ""} ${isDragging ? "dragging" : ""} ${isPressing ? "pressing" : ""}`}
+        className={`quick-btn-group gh-interactive ${!isPanelOpen ? "collapsed" : ""} ${isDragging ? "dragging" : ""} ${isPressing ? "pressing" : ""} ${isScrolling ? "scroll-hidden" : ""} ${isLiquidCollapsed ? "liquid-collapsed" : ""}`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}

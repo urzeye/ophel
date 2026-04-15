@@ -32,6 +32,14 @@
   pointer-events: auto;
 }
 
+/* ============= 穿透与幽灵模式 (防遮挡体验升级) ============= */
+.gh-main-panel.scroll-hidden,
+.quick-btn-group.scroll-hidden {
+  opacity: 0.15 !important;
+  pointer-events: none !important;
+  transition: opacity 0.4s ease-out !important;
+}
+
 /* ============= 面板 Header 样式 ============= */
 .gh-panel-header {
   /* 使用 CSS 变量，支持动态主题切换 */
@@ -710,30 +718,40 @@
 
 /* 面板吸附到左边缘时隐藏 */
 .gh-main-panel.edge-snapped-left {
-  left: calc(10px - var(--panel-width, 320px)) !important;
+  left: calc(12px - var(--panel-width, 320px)) !important;
   right: auto !important;
+  border-right: 2px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 2px 0 12px rgba(66, 133, 244, 0.4) !important;
   transition:
-    left 0.3s ease,
-    opacity 0.3s ease;
+    left 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    border 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .gh-main-panel.edge-snapped-left:hover,
 .gh-main-panel.edge-snapped-left.edge-peek {
   left: 0 !important;
+  border-right-color: transparent !important;
+  box-shadow: var(--gh-shadow, 0 10px 40px rgba(0, 0, 0, 0.15)) !important;
 }
 
 /* 面板吸附到右边缘时隐藏 */
 .gh-main-panel.edge-snapped-right {
-  right: calc(10px - var(--panel-width, 320px)) !important;
+  right: calc(12px - var(--panel-width, 320px)) !important;
   left: auto !important;
+  border-left: 2px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: -2px 0 12px rgba(66, 133, 244, 0.4) !important;
   transition:
-    right 0.3s ease,
-    opacity 0.3s ease;
+    right 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    border 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .gh-main-panel.edge-snapped-right:hover,
 .gh-main-panel.edge-snapped-right.edge-peek {
   right: 0 !important;
+  border-left-color: transparent !important;
+  box-shadow: var(--gh-shadow, 0 10px 40px rgba(0, 0, 0, 0.15)) !important;
 }
 
 /* 边缘触发条 */
@@ -816,6 +834,35 @@
   cursor: grabbing;
   box-shadow: 0 16px 40px color-mix(in srgb, var(--gh-text) 12%, transparent);
   transform: scale(1.02); /* Slight scale when grabbed */
+}
+
+/* ============= 液态折叠 (Liquid Collapse) ============= */
+.quick-btn-group.liquid-collapsed {
+  height: 48px;
+  width: 48px;
+  border-radius: 24px;
+  overflow: hidden;
+  padding: 6px;
+  gap: 0;
+  background: color-mix(in srgb, var(--gh-bg) 60%, transparent);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.quick-btn-group.liquid-collapsed .divider,
+.quick-btn-group.liquid-collapsed .quick-prompt-btn:not(:first-child) {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.8);
+  pointer-events: none;
+  visibility: hidden;
+  margin: 0;
+  height: 0;
+  padding: 0;
+}
+
+.quick-btn-group.liquid-collapsed .quick-btn-drag-handle {
+  display: none !important;
 }
 
 /* 拖拽手柄 (iOS style indicator) */

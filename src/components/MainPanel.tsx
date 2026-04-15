@@ -40,6 +40,7 @@ import { Tooltip } from "~components/ui/Tooltip"
 interface MainPanelProps {
   onClose: () => void
   isOpen: boolean
+  isScrolling?: boolean
   promptManager: PromptManager
   conversationManager: ConversationManager
   outlineManager: OutlineManager
@@ -61,6 +62,7 @@ interface MainPanelProps {
 export const MainPanel: React.FC<MainPanelProps> = ({
   onClose,
   isOpen,
+  isScrolling,
   promptManager,
   conversationManager,
   outlineManager,
@@ -321,7 +323,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         ref={panelRef}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
-        className={`gh-main-panel gh-interactive ${edgeSnapState ? `edge-snapped-${edgeSnapState}` : ""} ${isEdgePeeking ? "edge-peek" : ""}`}
+        className={`gh-main-panel gh-interactive ${edgeSnapState ? `edge-snapped-${edgeSnapState}` : ""} ${isEdgePeeking ? "edge-peek" : ""} ${isScrolling ? "scroll-hidden" : ""}`}
         style={{
           position: "fixed",
           top: "50%",
