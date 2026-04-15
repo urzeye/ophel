@@ -171,10 +171,39 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   }, [])
 
   useEffect(() => {
-    const handleActivity = () => resetIdleTimer()
+    const handleActivity = (e: MouseEvent | KeyboardEvent) => {
+      if (e.type === "keydown") {
+        resetIdleTimer()
+        return
+      }
+
+      // Proximity Check / 引力场检测
+      const mouseEvent = e as MouseEvent
+      if (groupRef.current) {
+        const rect = groupRef.current.getBoundingClientRect()
+        // 计算鼠标到组件包围盒边界的最小距离
+        const dx = Math.max(rect.left - mouseEvent.clientX, 0, mouseEvent.clientX - rect.right)
+        const dy = Math.max(rect.top - mouseEvent.clientY, 0, mouseEvent.clientY - rect.bottom)
+        const distance = Math.sqrt(dx * dx + dy * dy)
+
+        const PROXIMITY_RADIUS = 150 // 改为 150px 的引力场
+
+        if (distance <= PROXIMITY_RADIUS) {
+          // 在 150px 引力场内，瞬间唤醒并重置倒计时
+          resetIdleTimer()
+        } else {
+          // 在引力场外：我们甚至可以不重置 idleTimer，这样如果一直在别处读文章，5秒后它照样收缩。
+          // 或者让它立即加速收缩（如果需要），这里我们保守一点，只在刚移出时维持正常倒计时，但不阻止它进入 Idle。
+        }
+      } else {
+        resetIdleTimer()
+      }
+    }
+
     document.addEventListener("mousemove", handleActivity, { passive: true })
     document.addEventListener("keydown", handleActivity, { passive: true })
-    resetIdleTimer()
+    resetIdleTimer() // 初始唤醒
+
     return () => {
       document.removeEventListener("mousemove", handleActivity)
       document.removeEventListener("keydown", handleActivity)
