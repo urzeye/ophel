@@ -65,7 +65,7 @@
   <a href="#-demo">Demo</a> •
   <a href="#-kernfunktionen">Kernfunktionen</a> •
   <a href="#-schnellstart">Schnellstart</a> •
-  <a href="#-unterstützung">Unterstützung</a>
+  <a href="#-unterstützung-und-dank">Unterstützung und Dank</a>
 </p>
 
 <p align="center">

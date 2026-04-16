@@ -67,7 +67,7 @@
   <a href="#-demo">Demo</a> •
   <a href="#-core-features">Core Features</a> •
   <a href="#-quick-start">Quick Start</a> •
-  <a href="#-support">Support</a>
+  <a href="#-support-and-thanks">Support and Thanks</a>
 </p>
 
 <p align="center">

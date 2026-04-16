@@ -65,7 +65,7 @@
   <a href="#-démo">Démo</a> •
   <a href="#-fonctionnalités-clés">Fonctionnalités Clés</a> •
   <a href="#-démarrage-rapide">Démarrage Rapide</a> •
-  <a href="#-soutien">Soutien</a>
+  <a href="#-soutien-et-remerciements">Soutien et remerciements</a>
 </p>
 
 <p align="center">

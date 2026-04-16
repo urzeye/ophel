@@ -65,7 +65,7 @@
   <a href="#-demo">Demo</a> •
   <a href="#-características-principales">Características Principales</a> •
   <a href="#-inicio-rápido">Inicio Rápido</a> •
-  <a href="#-soporte">Soporte</a>
+  <a href="#-soporte-y-agradecimientos">Soporte y agradecimientos</a>
 </p>
 
 <p align="center">
