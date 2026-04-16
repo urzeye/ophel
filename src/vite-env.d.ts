@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+/// <reference types="chrome" />
 
 /**
  * Vite 类型声明
