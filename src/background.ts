@@ -50,6 +50,25 @@ const OPHEL_TARGET_URLS = [
   "https://chat.z.ai/*",
 ]
 
+// 通知 ID → 来源 Tab 的映射，用于点击通知时跳转到对应标签页
+const notificationTabMap = new Map<string, { tabId: number; windowId: number }>()
+
+// 点击通知时激活对应标签页并聚焦窗口
+chrome.notifications.onClicked.addListener((notifId) => {
+  const tab = notificationTabMap.get(notifId)
+  if (tab) {
+    chrome.tabs.update(tab.tabId, { active: true }).catch(() => {})
+    chrome.windows.update(tab.windowId, { focused: true }).catch(() => {})
+    notificationTabMap.delete(notifId)
+  }
+  chrome.notifications.clear(notifId)
+})
+
+// 通知关闭时清理映射，防止内存泄漏
+chrome.notifications.onClosed.addListener((notifId) => {
+  notificationTabMap.delete(notifId)
+})
+
 async function queryOphelTabs() {
   return chrome.tabs.query({ url: OPHEL_TARGET_URLS })
 }
@@ -200,16 +219,25 @@ async function setupDynamicRules() {
 // 消息监听 - 与 Content Script 通信
 chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendResponse) => {
   switch (message.type) {
-    case MSG_SHOW_NOTIFICATION:
-      chrome.notifications.create({
+    case MSG_SHOW_NOTIFICATION: {
+      const notifId = `ophel-${Date.now()}`
+      chrome.notifications.create(notifId, {
         type: "basic",
         iconUrl: chrome.runtime.getURL("assets/icon.png"),
         title: message.title || APP_DISPLAY_NAME,
         message: message.body || "",
         silent: true, // 禁用系统默认通知声音，由扩展自行播放自定义声音
       })
+      // 记录通知与来源 Tab 的映射，用于点击通知时跳转
+      if (sender.tab?.id != null && sender.tab?.windowId != null) {
+        notificationTabMap.set(notifId, {
+          tabId: sender.tab.id,
+          windowId: sender.tab.windowId,
+        })
+      }
       sendResponse({ success: true })
       break
+    }
 
     case MSG_FOCUS_TAB:
       if (sender.tab?.id) {
