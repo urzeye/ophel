@@ -19,11 +19,11 @@ The counter is displayed near the input field on supported sites and shows:
 
 **Settings → Features → Usage Monitor**:
 
-| Setting | Description | Default |
-| ------- | ----------- | ------- |
-| Enable | Show the usage monitor widget | Off |
-| Daily limit | Your expected daily usage cap (used to calculate the progress bar) | 100 |
-| Auto reset | Automatically reset the count at midnight | Off |
+| Setting     | Description                                                        | Default |
+| ----------- | ------------------------------------------------------------------ | ------- |
+| Enable      | Show the usage monitor widget                                      | Off     |
+| Daily limit | Your expected daily usage cap (used to calculate the progress bar) | 100     |
+| Auto reset  | Automatically reset the count at midnight                          | Off     |
 
 ## Use Cases
 

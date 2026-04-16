@@ -88,7 +88,7 @@ The Prompt Queue lets you line up multiple prompts and send them automatically o
 
 ### Enabling the Queue
 
-Go to **Settings → Features → Prompts → Prompt Queue** and toggle it on. A queue widget appears near the AI input box, and you can show/hide it with the **Toggle Prompt Queue** shortcut (default: `Alt+J`).
+Go to **Settings → Features → Prompts → Prompt Queue** and toggle it on. A queue widget appears near the AI input box, and you can show/hide it with the **Toggle Prompt Queue** shortcut (default: `Alt+J`, Mac: `Option+J`).
 
 ### Adding Prompts to the Queue
 

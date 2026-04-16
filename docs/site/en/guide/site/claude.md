@@ -25,7 +25,7 @@ Each key can have a label to help you identify which account it belongs to.
 Two ways to switch:
 
 - **Toolbox menu** → Click the currently active key and select a different one
-- **Shortcut `Ctrl+Alt+S`** — Switch to the next key in your list
+- **Shortcut `Ctrl+Alt+S`** (Mac: `Cmd+Option+S`) — Switch to the next key in your list
 
 After switching, Ophel refreshes the current Claude page to apply the new Session Key.
 
@@ -51,6 +51,8 @@ Exported JSON files contain the full Session Keys. Anyone who has the file can u
 - If an account is banned or a key expires, Ophel cannot help you bypass that; the key test feature will mark invalid keys
 
 ## Shortcuts
+
+> Mac users: **Ctrl** = **Cmd**, **Alt** = **Option**.
 
 | Action | Shortcut |
 | ------ | -------- |

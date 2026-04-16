@@ -8,8 +8,8 @@ Ophel provides two layout enhancements: custom page content width and zen mode f
 
 Many AI platforms cap their content area to a narrow width, leaving large empty margins on wide screens. When enabled, you can set a custom maximum width for the content area:
 
-- **Units**: Percentage (% relative to viewport) or pixels (absolute value)
-- **Suggested range**: 60%–90% (percentage) / 1200px or higher (absolute)
+- **Unit**: Percentage (% relative to viewport width)
+- **How to adjust**: Drag the slider; range is 50%–100%
 
 Changes take effect immediately — no page refresh needed. Disable the option at any time to revert to the platform's default.
 
@@ -45,15 +45,15 @@ No configuration needed; this works at any time.
 
 **Settings → General → Panel**:
 
-| Setting | Description | Default |
-| ------- | ----------- | ------- |
-| Default open | Whether the panel opens automatically on supported sites | Yes |
-| Default side | Left or right side of the screen | Right |
-| Edge distance | Default distance from the screen edge (px) | 25 px |
-| Panel width | Panel width (200–600 px) | 320 px |
-| Panel height | Panel height as a percentage of viewport (50–100 vh) | 85 vh |
-| Auto-hide | Collapse the panel when you click outside it | No |
-| Edge snap | Snap to screen edge when dragged near it; hover to preview when snapped | On |
-| Snap threshold | Distance from edge that triggers snapping (10–100 px) | 18 px |
+| Setting        | Description                                                             | Default |
+| -------------- | ----------------------------------------------------------------------- | ------- |
+| Default open   | Whether the panel opens automatically on supported sites                | Yes     |
+| Default side   | Left or right side of the screen                                        | Right   |
+| Edge distance  | Default distance from the screen edge (px)                              | 25 px   |
+| Panel width    | Panel width (200–600 px)                                                | 320 px  |
+| Panel height   | Panel height as a percentage of viewport (50–100 vh)                    | 85 vh   |
+| Auto-hide      | Collapse the panel when you click outside it                            | No      |
+| Edge snap      | Snap to screen edge when dragged near it; hover to preview when snapped | On      |
+| Snap threshold | Distance from edge that triggers snapping (10–100 px)                   | 18 px   |
 
 Drag the panel's title bar to move it. When snapped, hover over the corresponding screen edge to pop the panel out for a preview; drag it away from the edge to unsnap.

@@ -17,19 +17,19 @@ Ophel 在页面加载完成后，检测模型选择器的当前状态，如果�
 
 ## 支持的站点
 
-| 站点             | 说明                       |
-| ---------------- | -------------------------- |
-| Gemini           | gemini.google.com          |
-| Gemini 企业版    | 企业账号                   |
-| AI Studio        | aistudio.google.com        |
-| ChatGPT          | chatgpt.com                |
-| Claude           | claude.ai                  |
-| Grok             | grok.com / x.com           |
-| 通义千问         | tongyi.aliyun.com          |
-| Qwen Studio      | chat.qwen.ai               |
-| 元宝             | yuanbao.tencent.com        |
-| ima              | ima.copilot.tencent.com    |
-| Z.ai             | chat.z.ai                  |
+| 站点               | 说明                |
+| ------------------ | ------------------- |
+| Gemini             | gemini.google.com   |
+| Gemini 企业版      | 企业账号            |
+| AI Studio          | aistudio.google.com |
+| ChatGPT            | chatgpt.com         |
+| Claude             | claude.ai           |
+| Grok               | grok.com            |
+| 通义千问 (Qianwen) | <www.qianwen.com>   |
+| Qwen Studio        | chat.qwen.ai        |
+| 元宝               | yuanbao.tencent.com |
+| ima                | ima.qq.com          |
+| Z.ai               | chat.z.ai           |
 
 ## 使用技巧
 

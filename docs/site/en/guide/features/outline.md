@@ -39,7 +39,7 @@ Three filter buttons sit above the outline list:
 | **Questions only** | Hides AI headings, shows only your messages — useful for reviewing the conversation flow |
 | **Bookmarks only** | Shows only the headings you have starred                                                 |
 
-You can also toggle these with shortcuts: `Alt+Q` (questions only), `Alt+Shift+Q` (all), `Alt+C` (bookmarks).
+You can also toggle these with shortcuts: `Alt+Q` (Mac: `Option+Q`) (questions only), `Alt+Shift+Q` (Mac: `Option+Shift+Q`) (all), `Alt+C` (Mac: `Option+C`) (bookmarks).
 
 ## Bookmarks
 
@@ -49,7 +49,7 @@ If a bookmarked heading gets deleted from the conversation (e.g. the AI regenera
 
 ## Expand by Level
 
-Right-click on any outline node, or use shortcuts `Alt+Shift+1` through `Alt+Shift+6`, to expand the tree to a specific heading depth. `Alt+E` toggles all nodes expanded or collapsed.
+Right-click on any outline node, or use shortcuts `Alt+Shift+1` through `Alt+Shift+6` (Mac: `Option+Shift+1` through `Option+Shift+6`), to expand the tree to a specific heading depth. `Alt+E` (Mac: `Option+E`) toggles all nodes expanded or collapsed.
 
 ## Word Count on Hover
 
@@ -61,7 +61,7 @@ Each user question entry has a copy icon on hover. Click it to copy the original
 
 ## Locate
 
-Press `Alt+L` to scroll the outline panel to highlight the entry for your current reading position, even if you have scrolled the outline list away from it.
+Press `Alt+L` (Mac: `Option+L`) to scroll the outline panel to highlight the entry for your current reading position, even if you have scrolled the outline list away from it.
 
 ## Settings
 
@@ -78,6 +78,8 @@ Go to **Settings → Features → Outline** to configure:
 | Prevent auto-scroll  | Stop the outline panel from scrolling itself when you navigate                     |
 
 ## Shortcuts
+
+> Mac users: **Alt** = **Option**.
 
 | Shortcut         | Action                              |
 | ---------------- | ----------------------------------- |

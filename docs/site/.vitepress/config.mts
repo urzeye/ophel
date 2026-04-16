@@ -8,7 +8,11 @@ const zhConfig = {
   link: "/zh/",
   themeConfig: {
     nav: [
-      { text: "快速上手", link: "/zh/guide/getting-started" },
+      { text: "入门", items: [
+        { text: "快速上手", link: "/zh/guide/getting-started" },
+        { text: "面板概览", link: "/zh/guide/panel" },
+        { text: "浮动按钮", link: "/zh/guide/enhancements/quick-buttons" },
+      ]},
       {
         text: "功能",
         items: [
@@ -21,11 +25,11 @@ const zhConfig = {
       {
         text: "设置",
         items: [
-          { text: "浮动按钮", link: "/zh/guide/enhancements/quick-buttons" },
           { text: "全局搜索", link: "/zh/guide/enhancements/global-search" },
           { text: "布局与禅模式", link: "/zh/guide/enhancements/layout" },
           { text: "内容增强", link: "/zh/guide/enhancements/content" },
           { text: "阅读历史与滚动锁定", link: "/zh/guide/enhancements/reading-history" },
+          { text: "用量统计", link: "/zh/guide/site/usage-monitor" },
           { text: "外观与主题", link: "/zh/guide/appearance" },
           { text: "标签页与通知", link: "/zh/guide/tab-notifications" },
           { text: "备份与同步", link: "/zh/guide/sync" },
@@ -49,7 +53,7 @@ const zhConfig = {
       "/zh/guide/": [
         {
           text: "入门",
-          items: [{ text: "快速上手", link: "/zh/guide/getting-started" }],
+          items: [{ text: "快速上手", link: "/zh/guide/getting-started" }, { text: "面板概览", link: "/zh/guide/panel" }, { text: "浮动按钮", link: "/zh/guide/enhancements/quick-buttons" }],
         },
         {
           text: "核心功能",
@@ -63,11 +67,11 @@ const zhConfig = {
         {
           text: "增强功能",
           items: [
-            { text: "浮动按钮与工具箱", link: "/zh/guide/enhancements/quick-buttons" },
-            { text: "全局搜索", link: "/zh/guide/enhancements/global-search" },
+            { text: "全局搜索", link: "/zh/guide/enhancements/global-search" },,
             { text: "布局与禅模式", link: "/zh/guide/enhancements/layout" },
             { text: "内容增强", link: "/zh/guide/enhancements/content" },
             { text: "阅读历史与滚动锁定", link: "/zh/guide/enhancements/reading-history" },
+            { text: "用量统计", link: "/zh/guide/site/usage-monitor" },
           ],
         },
         {
@@ -82,7 +86,6 @@ const zhConfig = {
           text: "站点配置",
           items: [
             { text: "模型锁定", link: "/zh/guide/site/model-lock" },
-            { text: "用量统计", link: "/zh/guide/site/usage-monitor" },
             { text: "Claude 账号管理", link: "/zh/guide/site/claude" },
             { text: "站点专属设置", link: "/zh/guide/site/site-settings" },
           ],
@@ -123,7 +126,11 @@ const enConfig = {
   link: "/en/",
   themeConfig: {
     nav: [
-      { text: "Quick Start", link: "/en/guide/getting-started" },
+      { text: "Getting Started", items: [
+        { text: "Quick Start", link: "/en/guide/getting-started" },
+        { text: "Panel Overview", link: "/en/guide/panel" },
+        { text: "Quick Buttons", link: "/en/guide/enhancements/quick-buttons" },
+      ]},
       {
         text: "Features",
         items: [
@@ -136,11 +143,11 @@ const enConfig = {
       {
         text: "Settings",
         items: [
-          { text: "Quick Buttons", link: "/en/guide/enhancements/quick-buttons" },
           { text: "Global Search", link: "/en/guide/enhancements/global-search" },
           { text: "Layout & Zen Mode", link: "/en/guide/enhancements/layout" },
           { text: "Content Enhancements", link: "/en/guide/enhancements/content" },
           { text: "Reading History", link: "/en/guide/enhancements/reading-history" },
+          { text: "Usage Monitor", link: "/en/guide/site/usage-monitor" },
           { text: "Appearance", link: "/en/guide/appearance" },
           { text: "Tab & Notifications", link: "/en/guide/tab-notifications" },
           { text: "Backup & Sync", link: "/en/guide/sync" },
@@ -164,7 +171,7 @@ const enConfig = {
       "/en/guide/": [
         {
           text: "Getting Started",
-          items: [{ text: "Quick Start", link: "/en/guide/getting-started" }],
+          items: [{ text: "Quick Start", link: "/en/guide/getting-started" }, { text: "Panel Overview", link: "/en/guide/panel" }, { text: "Quick Buttons", link: "/en/guide/enhancements/quick-buttons" }],
         },
         {
           text: "Core Features",
@@ -178,11 +185,11 @@ const enConfig = {
         {
           text: "Enhancements",
           items: [
-            { text: "Quick Buttons & Toolbar", link: "/en/guide/enhancements/quick-buttons" },
             { text: "Global Search", link: "/en/guide/enhancements/global-search" },
             { text: "Layout & Zen Mode", link: "/en/guide/enhancements/layout" },
             { text: "Content Enhancements", link: "/en/guide/enhancements/content" },
             { text: "Reading History & Scroll Lock", link: "/en/guide/enhancements/reading-history" },
+            { text: "Usage Monitor", link: "/en/guide/site/usage-monitor" },
           ],
         },
         {
@@ -197,7 +204,6 @@ const enConfig = {
           text: "Site Settings",
           items: [
             { text: "Model Lock", link: "/en/guide/site/model-lock" },
-            { text: "Usage Monitor", link: "/en/guide/site/usage-monitor" },
             { text: "Claude Accounts", link: "/en/guide/site/claude" },
             { text: "Site-Specific Settings", link: "/en/guide/site/site-settings" },
           ],
@@ -267,5 +273,11 @@ export default defineConfig({
 
   markdown: {
     lineNumbers: true,
+  },
+
+  vite: {
+    server: {
+      host: "127.0.0.1",
+    },
   },
 })

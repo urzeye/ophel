@@ -25,7 +25,7 @@ Session Key 存储在本机的浏览器扩展存储中（`chrome.storage.local`�
 切换方式有两种：
 
 - **工具箱菜单** → 直接点击当前激活的 Key，选择另一个
-- **快捷键 `Ctrl+Alt+S`** — 切换到 Key 列表中的下一个账号
+- **快捷键 `Ctrl+Alt+S`**（Mac: `Cmd+Option+S`）— 切换到 Key 列表中的下一个账号
 
 切换后 Ophel 会刷新当前 Claude 页面，使新 Key 生效。
 
@@ -51,6 +51,8 @@ Session Key 存储在本机的浏览器扩展存储中（`chrome.storage.local`�
 - 如果某个账号被封或 Key 失效，Ophel 也无法帮你绕过；Key 测试功能会标记出无效的 Key
 
 ## 相关快捷键
+
+> Mac 用户：**Ctrl** = **Cmd**，**Alt** = **Option**。
 
 | 操作             | 快捷键       |
 | ---------------- | ------------ |

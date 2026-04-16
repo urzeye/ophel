@@ -17,19 +17,19 @@ You can also quickly toggle model lock for the current site from the **Toolbox m
 
 ## Supported Sites
 
-| Site | URL |
-| ---- | --- |
-| Gemini | gemini.google.com |
+| Site              | URL                 |
+| ----------------- | ------------------- |
+| Gemini            | gemini.google.com   |
 | Gemini Enterprise | Enterprise accounts |
-| AI Studio | aistudio.google.com |
-| ChatGPT | chatgpt.com |
-| Claude | claude.ai |
-| Grok | grok.com / x.com |
-| Tongyi Qianwen | tongyi.aliyun.com |
-| Qwen Studio | chat.qwen.ai |
-| Yuanbao | yuanbao.tencent.com |
-| ima | ima.copilot.tencent.com |
-| Z.ai | chat.z.ai |
+| AI Studio         | aistudio.google.com |
+| ChatGPT           | chatgpt.com         |
+| Claude            | claude.ai           |
+| Grok              | grok.com            |
+| Tongyi Qianwen    | <www.qianwen.com>   |
+| Qwen Studio       | chat.qwen.ai        |
+| Yuanbao           | yuanbao.tencent.com |
+| ima               | ima.qq.com          |
+| Z.ai              | chat.z.ai           |
 
 ## Tips
 

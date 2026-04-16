@@ -8,15 +8,34 @@ All Ophel data is stored locally in your browser by default. This page explains 
 
 You can export your data as a JSON file for backup or migration to another device:
 
-| Export type | What's included |
-| ----------- | --------------- |
-| Full backup | Everything: settings, prompts, conversation metadata, folders, tags (and optionally Claude Session Keys) |
-| Prompts only | Your prompt library |
-| Settings only | All configuration items |
+| Export type   | What's included                                                                                          |
+| ------------- | -------------------------------------------------------------------------------------------------------- |
+| Full backup   | Everything: settings, prompts, conversation metadata, folders, tags (and optionally Claude Session Keys) |
+| Prompts only  | Your prompt library                                                                                      |
+| Settings only | All configuration items                                                                                  |
 
 **Import**: Drag and drop a JSON file or click to select one. Ophel validates the format before writing. After import, the page refreshes automatically to apply the new configuration.
 
 > Import **overwrites** existing data. We recommend exporting a backup of your current data before importing.
+
+## Import from Gemini Voyager
+
+**Settings → Backup & Sync → Import from Gemini Voyager**
+
+[Gemini Voyager](https://chromewebstore.google.com/detail/gemini-voyager/pgmfbpioicfjbfghalhcjkfdlkadamep) is another Gemini conversation management extension. If you have already organized your conversations into folders with it, you can import that folder structure directly into Ophel.
+
+**Steps**:
+
+1. Export your folder data from Gemini Voyager (JSON format, filename looks like `gemini-voyager.folders.v1...`)
+2. Copy the contents of the exported JSON file
+3. In Ophel Settings, find **Import from Gemini Voyager**, paste the JSON into the input field, and click **Start import**
+4. Ophel shows a preview (new folders added, conversations moved, etc.) — confirm to proceed
+
+**How the import works**:
+
+- **Incremental merge**: The import does not overwrite folders you have already organized in Ophel. Only conversations in your inbox or in previously imported Voyager folders will be re-categorized
+- **Folder flattening**: Nested Voyager folders are flattened into path names (e.g. “Parent / Child”) — Ophel does not support nested folder hierarchies
+- **Gemini only**: The import uses your currently signed-in Gemini account. Run it from a Gemini page
 
 ## Clear All Data
 
@@ -34,15 +53,15 @@ WebDAV sync lets you upload Ophel data to your own private server and keep it co
 
 **Settings → Backup & Sync → WebDAV**:
 
-| Field | Description |
-| ----- | ----------- |
-| Server URL | Full URL of the WebDAV server (must start with `https://`) |
-| Username | Your WebDAV account username |
-| Password | Your WebDAV account password (stored locally, never sent to third parties) |
-| Remote path | Directory on the server where sync files are stored (default: `ophel`, created automatically) |
-| Sync mode | Manual (click a button) or automatic (on a set interval) |
-| Auto sync interval | Minimum time between automatic syncs (minutes) |
-| Data sources | Which data types to sync (settings / conversations / prompts / Claude Keys) |
+| Field              | Description                                                                                   |
+| ------------------ | --------------------------------------------------------------------------------------------- |
+| Server URL         | Full URL of the WebDAV server (must start with `https://`)                                    |
+| Username           | Your WebDAV account username                                                                  |
+| Password           | Your WebDAV account password (stored locally, never sent to third parties)                    |
+| Remote path        | Directory on the server where sync files are stored (default: `ophel`, created automatically) |
+| Sync mode          | Manual (click a button) or automatic (on a set interval)                                      |
+| Auto sync interval | Minimum time between automatic syncs (minutes)                                                |
+| Data sources       | Which data types to sync (settings / conversations / prompts / Claude Keys)                   |
 
 ### What Gets Synced?
 
@@ -67,11 +86,11 @@ WebDAV sync covers the **metadata** Ophel maintains locally:
 
 Ophel uses the following permissions:
 
-| Permission | Type | Purpose |
-| ---------- | ---- | ------- |
-| `storage` | Required | Save local configuration and data |
+| Permission      | Type     | Purpose                                        |
+| --------------- | -------- | ---------------------------------------------- |
+| `storage`       | Required | Save local configuration and data              |
 | `notifications` | Optional | Desktop notification when generation completes |
-| `cookies` | Optional | Claude Session Key reading and switching |
-| `<all_urls>` | Optional | WebDAV sync + watermark removal |
+| `cookies`       | Optional | Claude Session Key reading and switching       |
+| `<all_urls>`    | Optional | WebDAV sync + watermark removal                |
 
 Each optional permission can be revoked individually from this page. After revoking, features that depend on that permission are automatically disabled.

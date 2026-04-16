@@ -8,11 +8,11 @@ Ophel quietly records the scroll position of each conversation when you leave. T
 
 **Settings → Features → Reading History**:
 
-| Setting | Description | Default |
-| ------- | ----------- | ------- |
-| Record reading position | Whether to track scroll positions | On |
-| Auto-restore | Automatically scroll to the last position when reopening a conversation | On |
-| Retention period | How long history records are kept before being cleaned up | 30 days |
+| Setting                 | Description                                                             | Default |
+| ----------------------- | ----------------------------------------------------------------------- | ------- |
+| Record reading position | Whether to track scroll positions                                       | On      |
+| Auto-restore            | Automatically scroll to the last position when reopening a conversation | On      |
+| Retention period        | How long history records are kept before being cleaned up               | 30 days |
 
 Available retention periods: 1 day / 3 days / 7 days / 30 days / 90 days / Forever.
 

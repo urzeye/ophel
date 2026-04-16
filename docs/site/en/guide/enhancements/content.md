@@ -4,7 +4,7 @@ This group of features layers extra interactivity on top of AI conversation page
 
 ## User Message Markdown Rendering
 
-Markdown syntax you type in the AI input box — `**bold**`, `` ```code``` ``, `- list item`, etc. — usually appears as plain text in the message bubble after sending. With this feature enabled, Ophel renders Markdown formatting inside your message bubbles so they're easier to read.
+Markdown syntax you type in the AI input box — `**bold**`, ` ```code``` `, `- list item`, etc. — usually appears as plain text in the message bubble after sending. With this feature enabled, Ophel renders Markdown formatting inside your message bubbles so they're easier to read.
 
 **Settings → Features → Content → Render Markdown in user messages** (default: on)
 
@@ -59,9 +59,9 @@ This feature requires the optional `<all_urls>` permission (used to fetch images
 
 **Settings → Features → Export**:
 
-| Setting | Description |
-| ------- | ----------- |
-| Custom user name | Replaces "Me" in exported files; leave blank to use the default |
-| Custom AI name | Replaces the AI's name in exported files; leave blank to use the platform name |
-| Include timestamp in filename | Appends a timestamp to the filename to avoid overwriting existing exports |
-| Include chain of thought | Whether to include the AI's reasoning content in exports (applies to platforms that expose it) |
+| Setting                       | Description                                                                                    |
+| ----------------------------- | ---------------------------------------------------------------------------------------------- |
+| Custom user name              | Replaces "Me" in exported files; leave blank to use the default                                |
+| Custom AI name                | Replaces the AI's name in exported files; leave blank to use the platform name                 |
+| Include timestamp in filename | Appends a timestamp to the filename to avoid overwriting existing exports                      |
+| Include chain of thought      | Whether to include the AI's reasoning content in exports (applies to platforms that expose it) |

@@ -8,7 +8,7 @@ Ophel follows three modes:
 - **Dark** — always use the dark theme
 - **System** — automatically match your operating system preference
 
-Switch modes using the theme button in the floating quick buttons group, the `Alt+D` shortcut, or Settings → Appearance.
+Switch modes using the theme button in the floating quick buttons group, the `Alt+D` (Mac: `Option+D`) shortcut, or Settings → Appearance.
 
 ## Built-in Theme Presets
 
@@ -50,7 +50,7 @@ Each mode has 12 presets to choose from.
 
 ## Choosing a Theme
 
-1. Open Settings (`Alt+,`)
+1. Open Settings (`Alt+,`, Mac: `Option+,`)
 2. Go to **Appearance**
 3. Select **Light** or **Dark** from the mode tabs
 4. Click any preset card to preview and apply it

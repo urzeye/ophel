@@ -4,23 +4,23 @@
 
 Ophel 支持哪些 AI 平台？
 
-| 平台              | 网址                          |
-| ----------------- | ----------------------------- |
-| Gemini            | gemini.google.com             |
-| Gemini Enterprise | gemini.google.com（企业账号） |
-| AI Studio         | aistudio.google.com           |
-| ChatGPT           | chatgpt.com                   |
-| Claude            | claude.ai                     |
-| Grok              | grok.com, x.com               |
-| DeepSeek          | chat.deepseek.com             |
-| 豆包 (Doubao)     | <www.doubao.com>              |
-| Kimi              | kimi.moonshot.cn              |
-| Qwen Studio       | chat.qwen.ai                  |
-| 通义千问          | tongyi.aliyun.com             |
-| 元宝 (Yuanbao)    | yuanbao.tencent.com           |
-| Z.ai              | chat.z.ai                     |
-| 智谱 ChatGLM      | chatglm.cn                    |
-| ima               | ima.copilot.tencent.com       |
+| 平台               | 网址                   |
+| ------------------ | ---------------------- |
+| Gemini             | gemini.google.com      |
+| Gemini Enterprise  | business.gemini.google |
+| AI Studio          | aistudio.google.com    |
+| ChatGPT            | chatgpt.com            |
+| Claude             | claude.ai              |
+| Grok               | grok.com               |
+| DeepSeek           | chat.deepseek.com      |
+| 豆包 (Doubao)      | www.doubao.com         |
+| Kimi               | www.kimi.com           |
+| Qwen Studio        | chat.qwen.ai           |
+| 通义千问 (Qianwen) | www.qianwen.com        |
+| 元宝 (Yuanbao)     | yuanbao.tencent.com    |
+| Z.ai               | chat.z.ai              |
+| 智谱 ChatGLM       | chatglm.cn             |
+| ima                | ima.qq.com             |
 
 ## 安装与启动
 
@@ -29,11 +29,11 @@ Ophel 支持哪些 AI 平台？
 1. 确认扩展已安装并启用（检查浏览器工具栏）
 2. 用 `Ctrl+Shift+R`（Mac 上为 `Cmd+Shift+R`）强制刷新页面
 3. 确认当前站点在[上表](#支持的平台)中
-4. 如果面板被关闭了，按 `Alt+P` 重新打开
+4. 如果面板被关闭了，按 `Alt+P`（Mac: `Option+P`）重新打开
 
 **浮动按钮不见了，怎么打开面板？**
 
-按 `Alt+P`，无论浮动按钮是否可见，这个快捷键都能切换面板。
+按 `Alt+P`（Mac: `Option+P`），无论浮动按钟是否可见，这个快捷键都能切换面板。
 
 **扩展提示"点击启用"。**
 
@@ -47,7 +47,7 @@ Ophel 支持哪些 AI 平台？
 
 **浮动按钮不见了。**
 
-按钮 5 秒不操作后会折叠成药丸形。将鼠标移近约 150px 内，它们会重新展开。如果完全消失，按 `Alt+P` 打开面板，按钮会随之出现。
+按钟 5 秒不操作后会折叠成药丸形。将鼠标移近约 150px 内，它们会重新展开。如果完全消失，按 `Alt+P`（Mac: `Option+P`）打开面板，按钟会随之出现。
 
 **面板吸附到边缘后无法移动。**
 
@@ -57,7 +57,7 @@ Ophel 支持哪些 AI 平台？
 
 **大纲是空的，但对话有内容。**
 
-按 `Alt+R` 手动刷新大纲。部分平台的 DOM 是异步更新的，页面加载后大纲可能需要几秒才能填充。
+按 `Alt+R`（Mac: `Option+R`）手动刷新大纲。部分平台的 DOM 是异步更新的，页面加载后大纲可能需要几秒才能填充。
 
 **大纲没有同步我的滚动位置。**
 
@@ -80,7 +80,7 @@ WebDAV 只同步 Ophel 中的**元数据**：你在 Ophel 里设置的文件夹�
 **提示词队列怎么用？**
 
 1. 在 **设置 → 功能 → 提示词 → 队列** 中启用队列
-2. 按 `Alt+J` 打开队列叠加层
+2. 按 `Alt+J`（Mac: `Option+J`）打开队列叠加层
 3. 逐条添加，或批量导入一组提示词
 4. 点击开始，Ophel 会在 AI 每次完成回复后自动发送下一条
 

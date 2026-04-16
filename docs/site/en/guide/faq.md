@@ -4,23 +4,23 @@
 
 Which AI sites does Ophel support?
 
-| Platform          | URL                                   |
-| ----------------- | ------------------------------------- |
-| Gemini            | gemini.google.com                     |
-| Gemini Enterprise | gemini.google.com (workspace account) |
-| AI Studio         | aistudio.google.com                   |
-| ChatGPT           | chatgpt.com                           |
-| Claude            | claude.ai                             |
-| Grok              | grok.com, x.com                       |
-| DeepSeek          | chat.deepseek.com                     |
-| Doubao            | <www.doubao.com>                      |
-| Kimi              | kimi.moonshot.cn                      |
-| Qwen Studio       | chat.qwen.ai                          |
-| Qianwen           | tongyi.aliyun.com                     |
-| Yuanbao           | yuanbao.tencent.com                   |
-| Z.ai              | chat.z.ai                             |
-| ChatGLM           | chatglm.cn                            |
-| ima               | ima.copilot.tencent.com               |
+| Platform          | URL                    |
+| ----------------- | ---------------------- |
+| Gemini            | gemini.google.com      |
+| Gemini Enterprise | business.gemini.google |
+| AI Studio         | aistudio.google.com    |
+| ChatGPT           | chatgpt.com            |
+| Claude            | claude.ai              |
+| Grok              | grok.com               |
+| DeepSeek          | chat.deepseek.com      |
+| Doubao            | www.doubao.com         |
+| Kimi              | www.kimi.com           |
+| Qwen Studio       | chat.qwen.ai           |
+| Qianwen           | www.qianwen.com        |
+| Yuanbao           | yuanbao.tencent.com    |
+| Z.ai              | chat.z.ai              |
+| ChatGLM           | chatglm.cn             |
+| ima               | ima.qq.com             |
 
 ## Installation & Setup
 
@@ -29,11 +29,11 @@ Which AI sites does Ophel support?
 1. Confirm you installed the extension and it is enabled (check the browser toolbar)
 2. Hard-reload the page (`Ctrl+Shift+R` or `Cmd+Shift+R`)
 3. Check that the site is in the [supported list above](#supported-platforms)
-4. If the panel was closed, press `Alt+P` or click the floating show/hide button
+4. If the panel was closed, press `Alt+P` (Mac: `Option+P`) or click the floating show/hide button
 
 **How do I open the panel if the floating buttons are not visible?**
 
-Press `Alt+P`. This toggles the panel regardless of whether the floating buttons are visible.
+Press `Alt+P` (Mac: `Option+P`). This toggles the panel regardless of whether the floating buttons are visible.
 
 **The extension shows "Click to enable" for some sites.**
 
@@ -47,7 +47,7 @@ Hold **Ctrl** (Windows/Linux) or **Command** (Mac) alone for about 0.2 seconds. 
 
 **The floating buttons disappeared.**
 
-They auto-collapse after 5 seconds of inactivity into a compact pill shape. Move your mouse within ~150px of them and they will expand again. If they are completely missing, press `Alt+P` to open the panel — the buttons appear alongside it.
+They auto-collapse after 5 seconds of inactivity into a compact pill shape. Move your mouse within ~150px of them and they will expand again. If they are completely missing, press `Alt+P` (Mac: `Option+P`) to open the panel — the buttons appear alongside it.
 
 **The panel snapped to the edge and I cannot move it.**
 
@@ -57,7 +57,7 @@ When the panel is in edge-snap mode, hover over the screen edge and it will slid
 
 **The outline is empty even though the conversation has content.**
 
-Try pressing `Alt+R` to refresh the outline manually. Some platforms update the DOM asynchronously and the outline may not populate immediately on page load.
+Try pressing `Alt+R` (Mac: `Option+R`) to refresh the outline manually. Some platforms update the DOM asynchronously and the outline may not populate immediately on page load.
 
 **The outline is not tracking my scroll position.**
 
@@ -78,7 +78,7 @@ WebDAV syncs your Ophel metadata only: conversation titles, folder assignments, 
 **How does the Prompt Queue work?**
 
 1. Enable the queue in Settings → Features → Prompts → Queue
-2. Open the queue overlay (`Alt+J`)
+2. Open the queue overlay (`Alt+J`, Mac: `Option+J`)
 3. Add prompts one by one or batch-import a list
 4. Start the queue — Ophel will automatically send each prompt after the AI finishes responding
 
