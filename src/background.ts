@@ -226,40 +226,30 @@ async function setupDynamicRules() {
 chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendResponse) => {
   switch (message.type) {
     case MSG_SHOW_NOTIFICATION: {
-      void (async () => {
-        const hasNotificationsPermission = await chrome.permissions.contains({
-          permissions: ["notifications"],
-        })
+      // 将 tabId/windowId 编码进 notifId，SW 重启后点击通知仍可正确跳转
+      const tabId = sender.tab?.id
+      const windowId = sender.tab?.windowId
+      const notifId =
+        tabId != null && windowId != null
+          ? encodeNotifId(tabId, windowId)
+          : `ophel|${crypto.randomUUID()}`
 
-        if (!hasNotificationsPermission) {
-          sendResponse({ success: false, error: "Notifications permission is not granted" })
-          return
-        }
-
-        // 将 tabId/windowId 编码进 notifId，SW 重启后点击通知仍可正确跳转
-        const tabId = sender.tab?.id
-        const windowId = sender.tab?.windowId
-        const notifId =
-          tabId != null && windowId != null
-            ? encodeNotifId(tabId, windowId)
-            : `ophel|${crypto.randomUUID()}`
-
-        try {
-          await chrome.notifications.create(notifId, {
-            type: "basic",
-            iconUrl: chrome.runtime.getURL("assets/icon.png"),
-            title: message.title || APP_DISPLAY_NAME,
-            message: message.body || "",
-            silent: true, // 禁用系统默认通知声音，由扩展自行播放自定义声音
-          })
-          sendResponse({ success: true })
-        } catch (error) {
-          sendResponse({
-            success: false,
-            error: error instanceof Error ? error.message : "Failed to create notification",
-          })
-        }
-      })()
+      chrome.notifications.create(
+        notifId,
+        {
+          type: "basic",
+          iconUrl: chrome.runtime.getURL("assets/icon.png"),
+          title: message.title || APP_DISPLAY_NAME,
+          message: message.body || "",
+          silent: true, // 禁用系统默认通知声音，由扩展自行播放自定义声音
+        },
+        () => {
+          if (chrome.runtime.lastError) {
+            console.error("[Ophel] Notification create failed:", chrome.runtime.lastError.message)
+          }
+        },
+      )
+      sendResponse({ success: true })
       break
     }
 
