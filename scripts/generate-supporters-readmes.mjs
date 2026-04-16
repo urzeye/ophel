@@ -307,7 +307,8 @@ function isBotContributor(contributor) {
     normalizedName.endsWith("[bot]") ||
     normalizedUrl.includes("/apps/") ||
     normalizedName.includes("claude") ||
-    normalizedName.includes("copilot")
+    normalizedName.includes("copilot") ||
+    normalizedName.includes("codex")
   )
 }
 
