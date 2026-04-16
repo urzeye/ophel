@@ -22,6 +22,7 @@ import {
   type NetworkMonitorConfig,
   type OutlineItem,
   type SiteDeleteConversationResult,
+  type ZenModeConfig,
 } from "./base"
 
 const CHAT_PATH_PATTERN = /\/a\/chat\/s\/([a-z0-9-]+)/i
@@ -341,6 +342,12 @@ export class DeepSeekAdapter extends SiteAdapter {
   getZenModeConfig() {
     return {
       hide: [".dc04ec1d", "._0fcaa63"],
+    }
+  }
+
+  getCleanModeConfig(): ZenModeConfig | null {
+    return {
+      hide: ["._0fcaa63"],
     }
   }
 

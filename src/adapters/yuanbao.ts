@@ -778,7 +778,12 @@ export class YuanbaoAdapter extends SiteAdapter {
 
   getCleanModeConfig() {
     return {
-      hide: [DISCLAIMER_SELECTOR],
+      hide: [
+        DISCLAIMER_SELECTOR,
+        ".yb-nav-fixed.yb-nav-fixed--pc-ctx",
+        ".yb__pc_download",
+        ".agent-dialogue__tool",
+      ],
     }
   }
 

@@ -525,14 +525,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         })
       }
     },
-    cleanMode: (e) => {
-      e?.stopPropagation()
-      const siteId = adapter?.getSiteId() || "_default"
-      const currentCleanMode = settings?.layout?.cleanMode?.[siteId]?.enabled || false
-      updateNestedSetting("layout", "cleanMode", {
-        [siteId]: { enabled: !currentCleanMode },
-      })
-    },
     settings: (e) => {
       e?.stopPropagation()
       setIsToolsMenuOpen(false)
@@ -550,15 +542,11 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     const isDisabled = !enabled
     const isFloatingToolbarBtn = id === "floatingToolbar"
     const isZenModeBtn = id === "zenMode"
-    const isCleanModeBtn = id === "cleanMode"
     // Check if Zen mode is active
     const isZenModeActive = isZenModeBtn && Boolean(settings?.layout?.zenMode?.[siteId]?.enabled)
-    // Check if Clean mode is active
-    const isCleanModeActive =
-      isCleanModeBtn && Boolean(settings?.layout?.cleanMode?.[siteId]?.enabled)
 
     // Animation: Active state
-    const isActive = isFloatingToolbarBtn ? isToolsMenuOpen : isZenModeActive || isCleanModeActive
+    const isActive = isFloatingToolbarBtn ? isToolsMenuOpen : isZenModeActive
 
     // panel-only 按钮：面板展开时隐藏
     // 禁用的按钮：永远隐藏
@@ -594,7 +582,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return (
       <Tooltip key={id} content={tooltipContent}>
         <button
-          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isPanelBtn ? "panel-btn" : ""} ${isActive ? "active" : ""} ${isFloatingToolbarBtn ? "tools-trigger-btn" : ""} ${isZenModeBtn ? "zen-mode-btn" : ""} ${isCleanModeBtn ? "clean-mode-btn" : ""}`}
+          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isPanelBtn ? "panel-btn" : ""} ${isActive ? "active" : ""} ${isFloatingToolbarBtn ? "tools-trigger-btn" : ""} ${isZenModeBtn ? "zen-mode-btn" : ""}`}
           onClick={(e) => buttonActions[id]?.(e)}
           style={{
             opacity: anchorDisabled ? 0.4 : 1,

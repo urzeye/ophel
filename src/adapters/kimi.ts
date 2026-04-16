@@ -848,7 +848,11 @@ export class KimiAdapter extends SiteAdapter {
 
   getCleanModeConfig() {
     return {
-      hide: [".chat-bottom .legal-footer, .legal-footer"],
+      hide: [
+        ".chat-bottom .legal-footer, .legal-footer",
+        ".membership-upgrade",
+        ".download-app-btn",
+      ],
     }
   }
 

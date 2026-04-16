@@ -339,7 +339,6 @@ const DEFAULT_COLLAPSED_BUTTONS: QuickButtonConfig[] = [
   { id: "globalSearch", enabled: true },
   { id: "theme", enabled: true },
   { id: "zenMode", enabled: true },
-  { id: "cleanMode", enabled: true },
   { id: "settings", enabled: true },
   { id: "scrollTop", enabled: true },
   { id: "manualAnchor", enabled: false },

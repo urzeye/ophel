@@ -27,6 +27,7 @@ import {
   type OutlineItem,
   type AnchorData,
   type SiteDeleteConversationResult,
+  type ZenModeConfig,
 } from "./base"
 
 /** 匹配 /chat/{id} 或 /code/chat/{id}，捕获会话 ID */
@@ -376,6 +377,12 @@ export class DoubaoAdapter extends SiteAdapter {
   getZenModeConfig() {
     return {
       hide: ["nav", ".container-qOgFQp"],
+    }
+  }
+
+  getCleanModeConfig(): ZenModeConfig | null {
+    return {
+      hide: [".container-qOgFQp", '[aria-label="活动入口"]'],
     }
   }
 

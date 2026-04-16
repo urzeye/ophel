@@ -15,7 +15,6 @@ import {
   ToolsIcon,
   EyeIcon,
   SettingsIcon,
-  CleanModeIcon,
 } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { SHORTCUT_META } from "~constants/shortcuts"
@@ -1024,13 +1023,6 @@ export const COLLAPSED_BUTTON_DEFS: Record<
     canToggle: true,
     isPanelOnly: false,
     IconComponent: EyeIcon,
-  },
-  cleanMode: {
-    icon: "✨",
-    labelKey: "cleanModeTitle",
-    canToggle: true,
-    isPanelOnly: false,
-    IconComponent: CleanModeIcon,
   },
   settings: {
     icon: "⚙️",

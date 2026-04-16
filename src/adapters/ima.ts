@@ -493,7 +493,11 @@ export class ImaAdapter extends SiteAdapter {
 
   getCleanModeConfig() {
     return {
-      hide: ['[class*="_downloadContainer_"]', IMA_FOOT_TIPS_SELECTOR],
+      hide: [
+        '[class*="_downloadContainer_"]',
+        IMA_FOOT_TIPS_SELECTOR,
+        '[class*="_activityBanner"]',
+      ],
     }
   }
 

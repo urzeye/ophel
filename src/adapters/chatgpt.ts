@@ -16,6 +16,7 @@ import {
   type NetworkMonitorConfig,
   type OutlineItem,
   type SiteDeleteConversationResult,
+  type ZenModeConfig,
 } from "./base"
 
 const DEFAULT_TITLE = "ChatGPT"
@@ -840,6 +841,12 @@ export class ChatGPTAdapter extends SiteAdapter {
   getZenModeConfig() {
     return {
       hide: ["#stage-slideover-sidebar", "div.select-none:has(> .pointer-events-auto)"],
+    }
+  }
+
+  getCleanModeConfig(): ZenModeConfig | null {
+    return {
+      hide: ["div.select-none:has(> .pointer-events-auto)"],
     }
   }
 
