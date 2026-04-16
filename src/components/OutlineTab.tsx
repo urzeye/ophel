@@ -417,6 +417,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
   const activeIndexRef = useRef<number | null>(null)
   const visibleHighlightRef = useRef<number | null>(null)
   const itemRefMap = useRef<Map<number, HTMLElement>>(new Map())
+  const userScrollingOutlineRef = useRef(false)
+  const userScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const visibilityMapsRef = useRef<{
     parentMap: Record<number, number | null>
     visibleMap: Record<number, boolean>
@@ -700,6 +702,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
       if (visibleIdx === null) return
 
       requestAnimationFrame(() => {
+        if (userScrollingOutlineRef.current) return
         const listContainer = listRef.current
         if (!listContainer) return
 
@@ -798,6 +801,24 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
     return () => el.removeEventListener("scroll", checkScroll)
   }, []) // Empty dependency array as listRef strictly stable
 
+  // 用户手动滚动大纲面板时，暂停自动定位（修复 Firefox 滚轮事件传播导致的回弹）
+  useEffect(() => {
+    const el = listRef.current
+    if (!el) return
+    const onWheel = () => {
+      userScrollingOutlineRef.current = true
+      if (userScrollTimerRef.current) clearTimeout(userScrollTimerRef.current)
+      userScrollTimerRef.current = setTimeout(() => {
+        userScrollingOutlineRef.current = false
+      }, 1500)
+    }
+    el.addEventListener("wheel", onWheel, { passive: true })
+    return () => {
+      el.removeEventListener("wheel", onWheel)
+      if (userScrollTimerRef.current) clearTimeout(userScrollTimerRef.current)
+    }
+  }, [])
+
   const handleToggle = useCallback(
     (node: OutlineNode) => {
       manager.toggleNode(node)
@@ -835,6 +856,16 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
           block: "start",
           __bypassLock: true,
         } as any)
+
+        // 若阅读历史 Position Keeper 正在锁定位置，同步更新锁目标到新位置
+        // 这样 Position Keeper 继续保护新位置，不会跳回旧位置或被平台自动滚动覆盖
+        if (document.documentElement.dataset.ophelPositionLock !== undefined) {
+          const scrollContainer = manager.getScrollContainer()
+          if (scrollContainer) {
+            document.documentElement.dataset.ophelPositionLock = String(scrollContainer.scrollTop)
+          }
+        }
+
         // 高亮效果
         targetElement.classList.add("outline-highlight")
         setTimeout(() => targetElement?.classList.remove("outline-highlight"), 2000)

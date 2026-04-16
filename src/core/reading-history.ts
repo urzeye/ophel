@@ -36,7 +36,6 @@ export class ReadingHistoryManager {
   private lastSaveTime = 0
   private ignoreScrollUntil = 0 // 初始化冷却期
   private positionKeeperRaF = 0 // 位置保持器的动画帧 ID
-  private keepPositionEndTime = 0 // 位置保持结束时间
 
   public restoredTop: number | undefined
 
@@ -105,7 +104,9 @@ export class ReadingHistoryManager {
     // 设置 2 秒冷却期，防止 SPA 切换时的自动滚动被误记录
     this.ignoreScrollUntil = Date.now() + 2000
 
-    // 监听用户交互，一旦用户手动操作，立即取消冷却和位置锁定
+    // 监听用户交互，一旦用户手动滚动，立即取消冷却和位置锁定
+    // 注意：不监听 pointerdown，因为点击大纲等 UI 操作不应中断 Position Keeper
+    // 大纲点击通过同步更新 DOM 属性的方式与 Position Keeper 协作
     this.userInteractionHandler = (e: Event) => {
       // 对于 keydown 事件，只响应会导致滚动的按键
       if (e.type === "keydown") {
@@ -327,6 +328,8 @@ export class ReadingHistoryManager {
           if (contentRestored) {
             const scrollContainer = this.adapter.getScrollContainer() || document.documentElement
             this.restoredTop = (scrollContainer as HTMLElement).scrollTop || window.scrollY
+            // 同步设置 DOM 属性，主世界立即可见，拦截平台自动滚动
+            document.documentElement.dataset.ophelPositionLock = String(this.restoredTop)
             restoredSuccessfully = true
           }
         } catch {
@@ -358,25 +361,29 @@ export class ReadingHistoryManager {
           // 只有在"保持相对位置"（Anchor）且内容被挤下去时才需要修正，但这里我们是想"回到原来的绝对位置"
           const newScrollTop = data.top!
 
-          // 滚动到目标位置
+          // 同步设置 DOM 属性，主世界立即可见，拦截平台自动滚动
+          document.documentElement.dataset.ophelPositionLock = String(newScrollTop)
+
+          // 滚动到目标位置（content script 的 scrollTo 走原始原型链，不受主世界劫持影响）
           await smartScrollTo(this.adapter, newScrollTop)
           this.restoredTop = newScrollTop
           restoredSuccessfully = true
         } catch {
-          // 恢复失败
+          // 恢复失败，清除位置锁
+          delete document.documentElement.dataset.ophelPositionLock
           return false
         }
       }
 
       return restoredSuccessfully
     } finally {
+      // 立即启动位置保持器（无延迟），对抗平台自动滚动
+      if (restoredSuccessfully && this.restoredTop !== undefined) {
+        this.startPositionKeeper(this.restoredTop)
+      }
       // 延迟重置恢复标志，防止恢复过程中的滚动事件触发保存
       setTimeout(() => {
         this.isRestoring = false
-        // 启动位置锁定保护：持续 3 秒强制保持位置，对抗 Gemini 的自动滚动
-        if (this.restoredTop !== undefined) {
-          this.startPositionKeeper(this.restoredTop, 3000)
-        }
       }, 1000)
     }
   }
@@ -391,21 +398,57 @@ export class ReadingHistoryManager {
   /**
    * 启动位置保持器 (Position Keeper)
    * 使用 requestAnimationFrame 持续强制锁定滚动位置，对抗页面的自动滚动
-   * 用户交互会立即终止此锁定
+   * 用户交互（pointerdown/wheel/touchmove/keydown）会立即终止此锁定
+   *
+   * 自适应超时策略：
+   * - 最短保持 minHoldMs（2秒）
+   * - 主世界每次拦截滚动时更新 lastBlock 时间戳（DOM 属性）
+   * - 当无拦截超过 quietMs（2秒）后释放
+   * - 最长不超过 maxHoldMs（15秒）
    */
-  private startPositionKeeper(targetTop: number, duration: number) {
+  private startPositionKeeper(targetTop: number) {
     this.stopPositionKeeper()
-    this.keepPositionEndTime = Date.now() + duration
+
+    const startTime = Date.now()
+    const minHoldMs = 2000
+    const quietMs = 2000
+    const maxHoldMs = 15000
+
+    // 在主世界启用精确位置锁，拦截所有偏离 targetTop 的滚动（scrollTop/scrollTo/scrollIntoView 等）
+    // 使用 DOM 属性实现同步跨世界通信，避免 postMessage 的异步竞态
+    document.documentElement.dataset.ophelPositionLock = String(targetTop)
 
     const keepOpen = () => {
-      if (Date.now() > this.keepPositionEndTime) {
+      const now = Date.now()
+      const elapsed = now - startTime
+
+      // 硬上限：最长保持 15 秒
+      if (elapsed > maxHoldMs) {
         this.stopPositionKeeper()
         return
       }
 
+      // 自适应释放：至少保持 2 秒后，若主世界无拦截超过 2 秒则释放
+      if (elapsed > minHoldMs) {
+        const lastBlock = Number(document.documentElement.dataset.ophelPositionLockLastBlock || "0")
+        if (lastBlock > 0 && now - lastBlock > quietMs) {
+          this.stopPositionKeeper()
+          return
+        }
+      }
+
       const container = this.adapter.getScrollContainer()
       if (container) {
-        // 只有当偏差较大时才强制修正，避免微小抖动
+        // 检查 DOM 属性是否被外部更新（如大纲点击后同步更新了锁目标）
+        const currentLockStr = document.documentElement.dataset.ophelPositionLock
+        if (currentLockStr !== undefined) {
+          const currentLock = Number(currentLockStr)
+          if (!isNaN(currentLock) && Math.abs(currentLock - targetTop) > 5) {
+            targetTop = currentLock
+          }
+        }
+
+        // Content Script 的 scrollTop setter 走原始原型链，不受主世界劫持影响
         if (Math.abs(container.scrollTop - targetTop) > 5) {
           container.scrollTop = targetTop
         }
@@ -421,7 +464,9 @@ export class ReadingHistoryManager {
     if (this.positionKeeperRaF) {
       cancelAnimationFrame(this.positionKeeperRaF)
       this.positionKeeperRaF = 0
-      this.keepPositionEndTime = 0
+      // 释放精确位置锁及清理拦截时间戳
+      delete document.documentElement.dataset.ophelPositionLock
+      delete document.documentElement.dataset.ophelPositionLockLastBlock
     }
   }
 }

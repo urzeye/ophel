@@ -259,6 +259,7 @@ export async function smartScrollTo(
   // 首先尝试通过 Main World 处理
   const result = await sendScrollRequest("scrollTo", position)
   if (result.success) {
+    syncPositionLock(result.scrollTop || 0)
     return { success: true, currentScrollTop: result.scrollTop || 0 }
   }
 
@@ -267,6 +268,7 @@ export async function smartScrollTo(
 
   if (container && container.scrollHeight > container.clientHeight) {
     container.scrollTo({ top: position, behavior: "instant", ...{ __bypassLock: true } } as any)
+    syncPositionLock(container.scrollTop)
     return { success: true, currentScrollTop: container.scrollTop }
   }
 
@@ -276,7 +278,18 @@ export async function smartScrollTo(
     behavior: "instant",
     ...{ __bypassLock: true },
   } as any)
+  syncPositionLock(document.documentElement.scrollTop)
   return { success: true, currentScrollTop: document.documentElement.scrollTop }
+}
+
+/**
+ * 若阅读历史 Position Keeper 正在锁定位置，同步更新锁目标到新滚动位置
+ * 这样 Position Keeper 继续保护新位置，不会跳回旧位置或被平台自动滚动覆盖
+ */
+function syncPositionLock(scrollTop: number) {
+  if (document.documentElement.dataset.ophelPositionLock !== undefined) {
+    document.documentElement.dataset.ophelPositionLock = String(scrollTop)
+  }
 }
 
 /**

@@ -49,10 +49,25 @@ if (!(window as any).__ophelScrollLockInitialized) {
   // 默认禁用，等待 Content Script 通过消息启用
   ;(window as any).__ophelScrollLockEnabled = false
 
+  // 精确位置锁：通过 DOM 属性实现同步跨世界通信（postMessage 是异步的，存在竞态）
+  // Content Script 设置 document.documentElement.dataset.ophelPositionLock = "scrollTop值"
+  // 主世界每次 API 拦截时同步读取该属性，立即生效，无需等待消息传递
+  function getPositionLockTarget(): number | null {
+    const attr = document.documentElement.dataset.ophelPositionLock
+    if (attr !== undefined) {
+      const val = Number(attr)
+      if (!isNaN(val)) return val
+    }
+    return null
+  }
+
   // 1. 劫持 Element.prototype.scrollIntoView
   Element.prototype.scrollIntoView = function (options?: boolean | ScrollIntoViewOptions) {
-    // 检查是否包含绕过锁定的标志
+    // 精确位置锁激活时，仅允许带 __bypassLock 的调用
     const shouldBypass = options && typeof options === "object" && (options as any).__bypassLock
+    if (getPositionLockTarget() !== null && !shouldBypass) {
+      return
+    }
 
     // 如果劫持未启用，直接调用原始 API
     if (!(window as any).__ophelScrollLockEnabled) {
@@ -68,6 +83,7 @@ if (!(window as any).__ophelScrollLockInitialized) {
 
   // 2. 劫持 window.scrollTo
   ;(window as any).scrollTo = function (x?: ScrollToOptions | number, y?: number) {
+    if (getPositionLockTarget() !== null) return
     // 如果劫持未启用，直接调用原始 API
     if (!(window as any).__ophelScrollLockEnabled) {
       return originalApis.scrollTo.apply(window, arguments as any)
@@ -97,6 +113,18 @@ if (!(window as any).__ophelScrollLockInitialized) {
         return descriptor.get ? descriptor.get.call(this) : 0
       },
       set: function (value: number) {
+        // 精确位置锁：强制回到目标位置
+        const lockTarget = getPositionLockTarget()
+        if (lockTarget !== null) {
+          if (Math.abs(value - lockTarget) > 10) {
+            // 记录拦截时间戳，供 Position Keeper 自适应判断何时释放
+            document.documentElement.dataset.ophelPositionLockLastBlock = String(Date.now())
+            if (descriptor.set) descriptor.set.call(this, lockTarget)
+            return
+          }
+          if (descriptor.set) descriptor.set.call(this, value)
+          return
+        }
         // 如果劫持未启用，直接设置
         if (!(window as any).__ophelScrollLockEnabled) {
           if (descriptor.set) {
@@ -128,6 +156,7 @@ if (!(window as any).__ophelScrollLockInitialized) {
     y?: number,
   ) {
     // 如果劫持未启用，直接调用原始 API
+    if (getPositionLockTarget() !== null) return
     if (!(window as any).__ophelScrollLockEnabled) {
       return originalElementScrollTo.apply(this, arguments as any)
     }
@@ -159,6 +188,7 @@ if (!(window as any).__ophelScrollLockInitialized) {
     y?: number,
   ) {
     // 如果劫持未启用，直接调用原始 API
+    if (getPositionLockTarget() !== null) return
     if (!(window as any).__ophelScrollLockEnabled) {
       return originalElementScroll.apply(this, arguments as any)
     }
@@ -190,6 +220,7 @@ if (!(window as any).__ophelScrollLockInitialized) {
     y?: number,
   ) {
     // 如果劫持未启用，直接调用原始 API
+    if (getPositionLockTarget() !== null) return
     if (!(window as any).__ophelScrollLockEnabled) {
       return originalElementScrollBy.apply(this, arguments as any)
     }
@@ -217,4 +248,16 @@ if (!(window as any).__ophelScrollLockInitialized) {
       ;(window as any).__ophelScrollLockEnabled = event.data.enabled
     }
   })
+
+  // 7. 劫持 scrollIntoViewIfNeeded（Chrome 专有 API）
+  // 仅在精确位置锁期间拦截，不影响常规 Scroll Lock 功能
+  if (typeof (Element.prototype as any).scrollIntoViewIfNeeded === "function") {
+    const originalScrollIntoViewIfNeeded = (Element.prototype as any).scrollIntoViewIfNeeded
+    ;(Element.prototype as any).scrollIntoViewIfNeeded = function (centerIfNeeded?: boolean) {
+      if (getPositionLockTarget() !== null) {
+        return
+      }
+      return originalScrollIntoViewIfNeeded.call(this, centerIfNeeded)
+    }
+  }
 }
