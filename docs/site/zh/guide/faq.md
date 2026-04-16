@@ -73,6 +73,8 @@ Ophel 支持哪些 AI 平台？
 
 WebDAV 只同步 Ophel 中的**元数据**：你在 Ophel 里设置的文件夹归属、标签、置顶状态和备注。不会上传实际的对话消息（那些内容属于 AI 平台）。
 
+→ 详情参见[备份与同步](./sync)
+
 ## 提示词 / 队列
 
 **提示词队列怎么用？**
@@ -81,6 +83,8 @@ WebDAV 只同步 Ophel 中的**元数据**：你在 Ophel 里设置的文件夹�
 2. 按 `Alt+J` 打开队列叠加层
 3. 逐条添加，或批量导入一组提示词
 4. 点击开始，Ophel 会在 AI 每次完成回复后自动发送下一条
+
+→ 详情参见[提示词库文档](./features/prompt)
 
 **队列卡住了，没有发送下一条。**
 
@@ -95,6 +99,8 @@ Claude Session Key 是你在 claude.ai 浏览器会话中的认证令牌。通�
 **在 Ophel 中存储 Session Key 安全吗？**
 
 Key 存储在你本机的 `chrome.storage.local` 中，Ophel 不会将其上传到任何服务器。WebDAV 备份可选择包含 Session Key——分享备份文件时请注意。
+
+→ 详情参见 [Claude 账号管理](./site/claude)
 
 ## 权限
 

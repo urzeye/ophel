@@ -15,7 +15,7 @@ Ophel works on 15 AI platforms:
 | **Claude**            | claude.ai              |
 | **Grok**              | grok.com               |
 | **DeepSeek**          | chat.deepseek.com      |
-| **Doubao**            | <www.doubao.com>       |
+| **Doubao**            | doubao.com       |
 | **Kimi**              | kimi.moonshot.cn       |
 | **Qwen Studio**       | chat.qwen.ai           |
 | **Qianwen**           | tongyi.aliyun.com      |
@@ -82,7 +82,7 @@ When you drag the panel close to the screen edge, it can snap and hide there. Ho
 - [Smart Outline](./features/outline) — Navigate long AI responses
 - [Conversation Manager](./features/conversation) — Organize your chat history
 - [Prompt Library](./features/prompt) — Save and reuse your prompts
-- [All Features & Settings](./enhancements) — Complete reference
+- [Enhancements Overview](./enhancements) — All features at a glance
 - [Shortcuts](./shortcuts) — Keyboard shortcuts list
 - [Appearance](./appearance) — Themes and custom CSS
 - [FAQ](./faq) — Common questions

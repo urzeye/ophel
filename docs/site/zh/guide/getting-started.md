@@ -9,13 +9,13 @@ Ophel 目前支持 15 个 AI 平台：
 | 平台                  | 网址                          |
 | --------------------- | ----------------------------- |
 | **Gemini**            | gemini.google.com             |
-| **Gemini Enterprise** | gemini.google.com（企业账号） |
+| **Gemini Enterprise** | business.gemini.google |
 | **AI Studio**         | aistudio.google.com           |
 | **ChatGPT**           | chatgpt.com                   |
 | **Claude**            | claude.ai                     |
 | **Grok**              | grok.com, x.com               |
 | **DeepSeek**          | chat.deepseek.com             |
-| **豆包 (Doubao)**     | www.doubao.com                |
+| **豆包 (Doubao)**     | doubao.com                |
 | **Kimi**              | kimi.moonshot.cn              |
 | **Qwen Studio**       | chat.qwen.ai                  |
 | **通义千问**          | tongyi.aliyun.com             |
@@ -95,7 +95,7 @@ Ophel 目前支持 15 个 AI 平台：
 - [智能大纲](./features/outline) — 在长对话中快速导航
 - [会话管理](./features/conversation) — 整理你的聊天记录
 - [提示词库](./features/prompt) — 保存和复用常用提示词
-- [全部功能与设置](./enhancements) — 完整功能参考
-- [快捷键](./shortcuts) — 快捷键列表
+- [增强功能总览](./enhancements) — 浮动按钮、布局、内容增强等功能索引
+- [快捷键](./shortcuts) — 完整快捷键列表
 - [外观与主题](./appearance) — 主题和自定义 CSS
 - [常见问题](./faq) — 遇到问题看这里

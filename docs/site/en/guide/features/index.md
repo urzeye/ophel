@@ -14,21 +14,19 @@ Ophel's panel has three main tabs: **Outline**, **Conversations**, and **Prompts
 
 Beyond the three tabs, Ophel includes:
 
-- **Floating quick buttons** — scroll to top/bottom, save a return anchor, toggle panel, switch theme, open global search, enable zen mode
-- **Toolbox menu** — export current conversation, copy as Markdown, assign folder/tag, toggle scroll lock, toggle model lock, clean up invalid bookmarks
-- **Global search** — search across outline, conversations, prompts, and settings with a single hotkey
-- **Ghost pass-through** — hold Ctrl/Cmd to make the panel transparent so you can click through it
-- **Edge snap** — drag the panel to an edge to hide it; hover the edge to peek
-- **Prompt queue** — queue prompts to send automatically one by one
-- **Usage counter** — track how many times you have used premium AI models today
-- **Reading history** — remembers and restores your scroll position per conversation
-- **Scroll lock** — freeze the page while AI is generating
-- **Layout control** — override page width, question bubble width, or enable zen mode
-- **Theme system** — 24 presets, custom CSS, per-site settings
-- **Model lock** — auto-switch to your preferred model on page load
-- **Tab management** — auto-rename tabs, completion sounds/notifications, privacy mode
-- **Content enhancements** — user question Markdown rendering, LaTeX copy, table copy, Mermaid diagrams
-- **Site-specific tweaks** — Markdown fixes, watermark removal, AI Studio panel collapsing, Claude multi-key management
+- **[Floating quick buttons](../enhancements/quick-buttons)** — scroll to top/bottom, save a return anchor, toggle panel, switch theme, open global search, enable zen mode
+- **[Toolbox menu](../enhancements/quick-buttons#toolbox-menu)** — export current conversation, copy as Markdown, assign folder/tag, toggle scroll lock, toggle model lock
+- **[Global search](../enhancements/global-search)** — search across outline, conversations, prompts, and settings — with syntax filters
+- **[Layout & Zen Mode](../enhancements/layout)** — override page width, zen mode, ghost pass-through, edge snap
+- **[Reading history & Scroll lock](../enhancements/reading-history)** — auto-restore scroll position; freeze page during generation
+- **[Usage monitor](../site/usage-monitor)** — local counter for daily turns and estimated token usage
+- **[Prompt queue](../features/prompt)** — queue prompts to send automatically one by one
+- **[Model lock](../site/model-lock)** — auto-switch to your preferred model on page load
+- **[Content enhancements](../enhancements/content)** — Markdown rendering, LaTeX copy, Mermaid diagrams, table copy
+- **[Tab management & Notifications](../tab-notifications)** — auto-rename tabs, completion sounds/notifications, privacy mode
+- **[Claude account management](../site/claude)** — store multiple Session Keys and switch accounts instantly
+- **[Appearance & themes](../appearance)** — 24 presets, custom CSS, per-site settings
+- **[Site-specific settings](../site/site-settings)** — Gemini/AI Studio/ChatGPT tweaks and watermark removal
 
 ## Suggested Reading
 

@@ -3,280 +3,89 @@ layout: home
 
 hero:
   name: Ophel
-  text: AI Conversation Enhancer
-  tagline: Outline navigation, conversation management, prompt library, global search, themes, shortcuts, and backup sync — all in one panel.
+  text: AI Conversation Enhancement
+  tagline: "Outline · Conversations · Prompts · Search · Themes · Shortcuts · Sync"
   image:
     src: /logo.png
     alt: Ophel
   actions:
     - theme: brand
-      text: Get Started →
-      link: /en/guide/getting-started
-    - theme: alt
-      text: English
-      link: /en/
-    - theme: alt
-      text: 中文文档
+      text: 中文文档 →
       link: /zh/
+    - theme: alt
+      text: English Docs →
+      link: /en/
     - theme: alt
       text: GitHub
       link: https://github.com/urzeye/ophel
 
 features:
   - icon: "📑"
-    title: "Smart Outline"
-    details: "Auto-parses conversation headings and your questions into a navigable tree. Click to jump. Scroll to follow. Bookmark your favorite sections."
-    link: "/en/guide/features/outline"
-    linkText: "Learn more"
+    title: "智能大纲 · Smart Outline"
+    details: "实时解析对话结构，定位、跟随与书签。Auto-parses headings into a navigable tree with locate, follow, and bookmark modes."
+    link: "/zh/guide/features/outline"
+    linkText: "查看详情 / Learn more"
   - icon: "💬"
-    title: "Conversation Manager"
-    details: "Folders, tags, pins, filters, and batch operations. Export to Markdown, JSON, or plain text. Sync via WebDAV."
-    link: "/en/guide/features/conversation"
-    linkText: "Learn more"
+    title: "会话管理 · Conversation Manager"
+    details: "文件夹、标签、置顶与批量操作，支持导出与同步。Folders, tags, pins, bulk actions, export, and WebDAV sync."
+    link: "/zh/guide/features/conversation"
+    linkText: "查看详情 / Learn more"
   - icon: "✍️"
-    title: "Prompt Library"
-    details: "Save prompts with variable templates. One click to fill and send. Organize by category, pin favorites, and import/export your collection."
-    link: "/en/guide/features/prompt"
-    linkText: "Learn more"
-  - icon: "🔁"
-    title: "Prompt Queue"
-    details: "Queue multiple prompts to send automatically one by one while AI generates. Supports batch import and pause/resume."
-    link: "/en/guide/features/prompt"
-    linkText: "Learn more"
+    title: "提示词库 · Prompt Library"
+    details: "变量模板、一键发送、分类管理、导入导出。Variable templates, one-click send, category management, import/export."
+    link: "/zh/guide/features/prompt"
+    linkText: "查看详情 / Learn more"
   - icon: "🔎"
-    title: "Global Search"
-    details: "Press Ctrl/Cmd+K or double-Shift to search across outline, conversations, prompts, and settings in one place."
-    link: "/en/guide/enhancements"
-    linkText: "Learn more"
-  - icon: "🏷️"
-    title: "Tab Management & Notifications"
-    details: "Auto-rename tabs, play a sound when generation completes, auto-focus window, and mask tab titles with privacy mode."
-    link: "/en/guide/enhancements"
-    linkText: "Learn more"
-  - icon: "🕘"
-    title: "Reading History"
-    details: "Remembers where you left off in each conversation and restores your scroll position automatically on return."
-    link: "/en/guide/enhancements"
-    linkText: "Learn more"
-  - icon: "📤"
-    title: "Conversation Export"
-    details: "Export any conversation to JSON, Markdown, or plain text. Customize author names, include reasoning chains, and convert images to Base64."
-    link: "/en/guide/features/conversation"
-    linkText: "Learn more"
-  - icon: "🧰"
-    title: "Quick Buttons & Toolbox"
-    details: "A floating button group for navigation, theming, search, and tools. Draggable, auto-collapses when idle, and fully configurable."
-    link: "/en/guide/enhancements"
-    linkText: "Learn more"
-  - icon: "👻"
-    title: "Ghost Pass-Through"
-    details: "Hold Ctrl (Win/Linux) or Command (Mac) to make the panel transparent and click-through — read without obstruction."
-    link: "/en/guide/enhancements"
-    linkText: "Learn more"
-  - icon: "⌨️"
-    title: "Shortcut System"
-    details: "40+ configurable shortcuts with conflict detection. Navigate headings, switch tabs, export, copy replies, and more."
-    link: "/en/guide/shortcuts"
-    linkText: "Learn more"
-  - icon: "🖥️"
-    title: "Layout Control"
-    details: "Override page width and question bubble width. Enable Zen Mode to strip away distractions for focused reading."
-    link: "/en/guide/enhancements"
-    linkText: "Learn more"
-  - icon: "🔐"
-    title: "Scroll Lock"
-    details: "Freeze the page while AI generates so you can read previous content without being pulled to the bottom."
-    link: "/en/guide/enhancements"
-    linkText: "Learn more"
+    title: "全局搜索 · Global Search"
+    details: "Ctrl+K 统一搜索大纲、会话、提示词与设置。Unified search across outline, conversations, prompts, and settings."
+    link: "/zh/guide/enhancements/global-search"
+    linkText: "查看详情 / Learn more"
   - icon: "🎨"
-    title: "Theme System"
-    details: "24 built-in presets (12 light, 12 dark), light/dark/system modes, per-site settings, and custom CSS editor."
-    link: "/en/guide/appearance"
-    linkText: "Learn more"
+    title: "主题系统 · Theme System"
+    details: "24 套内置主题，支持浅色/深色/系统模式与自定义 CSS。24 built-in presets, light/dark/system modes, custom CSS."
+    link: "/zh/guide/appearance"
+    linkText: "查看详情 / Learn more"
+  - icon: "⌨️"
+    title: "快捷键 · Shortcuts"
+    details: "40+ 可配置快捷键，冲突检测，高频操作零鼠标。40+ configurable shortcuts with conflict detection."
+    link: "/zh/guide/shortcuts"
+    linkText: "查看详情 / Learn more"
+  - icon: "🏷️"
+    title: "标签页与通知 · Tabs & Alerts"
+    details: "自动重命名标签页，生成完成时桌面通知与音效提醒。Auto-rename tabs, desktop notifications, and sound alerts on completion."
+    link: "/zh/guide/tab-notifications"
+    linkText: "查看详情 / Learn more"
   - icon: "🤖"
-    title: "Model Lock"
-    details: "Automatically switch to your preferred model whenever you open a supported AI site. No more manual selection."
-    link: "/en/guide/enhancements"
-    linkText: "Learn more"
-  - icon: "📊"
-    title: "Usage Counter"
-    details: "Track how many times you've used premium AI models today. Set a daily limit and get visual estimates of token usage."
-    link: "/en/guide/enhancements"
-    linkText: "Learn more"
+    title: "模型锁定 · Model Lock"
+    details: "打开站点时自动切换到目标模型，无需手动选择。Auto-switch to your preferred model on every page load."
+    link: "/zh/guide/site/model-lock"
+    linkText: "查看详情 / Learn more"
   - icon: "🔑"
-    title: "Claude Session Key 管理"
-    details: "支持 Session Key 的导入、校验、切换与状态管理，适配多账号轮换。"
-    link: "/zh/guide/enhancements"
-    linkText: "查看详情"
-  - icon: "🖼️"
-    title: "Banana 去水印"
-    details: "提供图像水印移除能力，优化生成图片的可用性与后续复用体验。"
-    link: "/zh/guide/enhancements"
-    linkText: "查看详情"
+    title: "Claude 账号管理 · Claude Accounts"
+    details: "存储多个 Session Key，达到限额时一键切换账号。Store multiple Session Keys and switch instantly when one account hits its limit."
+    link: "/zh/guide/site/claude"
+    linkText: "查看详情 / Learn more"
+  - icon: "🖥️"
+    title: "布局控制 · Layout Control"
+    details: "自定义页面宽度、禅模式，面板吸附与穿透。Page width override, zen mode, edge snap, and ghost pass-through."
+    link: "/zh/guide/enhancements/layout"
+    linkText: "查看详情 / Learn more"
+  - icon: "🕘"
+    title: "阅读历史 · Reading History"
+    details: "记录并自动恢复每个对话的阅读位置。Records and auto-restores your scroll position per conversation."
+    link: "/zh/guide/enhancements/reading-history"
+    linkText: "查看详情 / Learn more"
   - icon: "☁️"
-    title: "数据同步与隐私控制"
-    details: "支持 WebDAV 备份/恢复、按需授权、本地优先存储与隐私模式。"
-    link: "/zh/guide/privacy"
-    linkText: "查看详情"
+    title: "备份与同步 · Backup & Sync"
+    details: "本地导出与 WebDAV 多端同步，数据本地优先。Local export and WebDAV sync, local-first storage."
+    link: "/zh/guide/sync"
+    linkText: "查看详情 / Learn more"
 ---
 
-<style>
-:root {
-  --vp-home-hero-name-color: transparent;
-  --vp-home-hero-name-background: -webkit-linear-gradient(120deg, #4285f4 30%, #ea4335);
-  --vp-home-hero-image-background-image: linear-gradient(-45deg, #4285f4 50%, #ea4335 50%);
-  --vp-home-hero-image-filter: blur(44px);
-}
+<script setup>
+import { onMounted } from 'vue'
 
-.VPHome .VPHero {
-  padding-top: calc(var(--vp-nav-height) + var(--vp-layout-top-height, 0px) + 14px) !important;
-  padding-bottom: 10px !important;
-}
-
-.VPHome .VPHero .name,
-.VPHome .VPHero .text {
-  max-width: none !important;
-  line-height: 1.08 !important;
-  font-size: clamp(32px, 3.4vw, 44px) !important;
-}
-
-.VPHome .VPHero .tagline {
-  max-width: 960px !important;
-  padding-top: 8px !important;
-  line-height: 1.4 !important;
-  font-size: clamp(15px, 1.05vw, 17px) !important;
-}
-
-.VPHome .VPHero .actions {
-  margin: -4px !important;
-  padding-top: 8px !important;
-}
-
-.VPHome .VPHero .action {
-  padding: 4px !important;
-}
-
-@media (min-width: 960px) {
-  .VPHome .VPHero .image {
-    display: none !important;
-  }
-
-  .VPHome .VPHero .main,
-  .VPHome .VPHero.has-image .main {
-    width: 100% !important;
-    max-width: none !important;
-  }
-
-  .VPHome .VPHero.has-image .container {
-    text-align: left !important;
-  }
-}
-
-.VPHome .VPHomeFeatures {
-  padding-top: 8px !important;
-  padding-bottom: 0 !important;
-}
-
-.VPHome .VPFeatures .container {
-  max-width: 1440px !important;
-}
-
-.VPHome .VPFeatures .items {
-  display: grid !important;
-  margin: 0 !important;
-  gap: 12px !important;
-  align-items: stretch;
-}
-
-.VPHome .VPFeatures .item {
-  width: auto !important;
-  min-width: 0;
-  padding: 0 !important;
-}
-
-.VPHome .VPFeature {
-  height: 100% !important;
-  border-radius: 14px !important;
-}
-
-.VPHome .VPFeature .box {
-  height: 100% !important;
-  padding: 16px 16px 14px !important;
-  border: 1px solid var(--vp-c-divider) !important;
-}
-
-.VPHome .VPFeature .icon {
-  width: 38px !important;
-  height: 38px !important;
-  margin-bottom: 10px !important;
-  font-size: 22px !important;
-}
-
-.VPHome .VPFeature .title {
-  margin: 0 !important;
-  line-height: 1.22 !important;
-  font-size: 16px !important;
-  font-weight: 600;
-  white-space: normal;
-}
-
-.VPHome .VPFeature .details {
-  display: -webkit-box;
-  overflow: hidden;
-  padding-top: 8px !important;
-  line-height: 1.36 !important;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  font-size: 13px !important;
-  color: var(--vp-c-text-2);
-}
-
-.VPHome .VPFeature .link-text {
-  margin-top: 8px !important;
-  font-size: 12px !important;
-}
-
-@media (min-width: 1400px) {
-  .VPHome .VPFeatures .items {
-    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-    grid-template-rows: repeat(3, minmax(0, 1fr)) !important;
-    height: clamp(500px, calc(100svh - 280px), 660px);
-  }
-}
-
-@media (min-width: 1100px) and (max-width: 1399px) {
-  .VPHome .VPFeatures .items {
-    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-    grid-template-rows: repeat(4, minmax(0, 1fr)) !important;
-    height: clamp(560px, calc(100svh - 260px), 760px);
-  }
-
-  .VPHome .VPFeature .title {
-    font-size: 15px !important;
-  }
-}
-
-@media (min-width: 760px) and (max-width: 1099px) {
-  .VPHome .VPFeatures .items {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    grid-template-rows: repeat(6, minmax(0, 1fr)) !important;
-    height: auto;
-  }
-}
-
-@media (max-width: 759px) {
-  .VPHome .VPFeatures .items {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    grid-template-rows: auto !important;
-    height: auto;
-  }
-
-  .VPHome .VPFeature .title {
-    font-size: 15px !important;
-  }
-
-  .VPHome .VPFeature .details {
-    -webkit-line-clamp: 3;
-  }
-}
-</style>
+onMounted(() => {
+  window.location.replace('/ophel/en/')
+})
+</script>
