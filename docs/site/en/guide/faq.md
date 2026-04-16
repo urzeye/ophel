@@ -1,148 +1,125 @@
-# ❓ FAQ
+# Frequently Asked Questions
 
-Common questions and solutions collected here.
+## Supported Platforms
 
-## Installation Issues
+Which AI sites does Ophel support?
 
-### Extension Won't Load
+| Platform          | URL                    |
+| ----------------- | ---------------------- |
+| Gemini            | gemini.google.com      |
+| Gemini Enterprise | business.gemini.google |
+| AI Studio         | aistudio.google.com    |
+| ChatGPT           | chatgpt.com            |
+| Claude            | claude.ai              |
+| Grok              | grok.com               |
+| DeepSeek          | chat.deepseek.com      |
+| Doubao            | www.doubao.com         |
+| Kimi              | www.kimi.com           |
+| Qwen Studio       | chat.qwen.ai           |
+| Qianwen           | www.qianwen.com        |
+| Yuanbao           | yuanbao.tencent.com    |
+| Z.ai              | chat.z.ai              |
+| ChatGLM           | chatglm.cn             |
+| ima               | ima.qq.com             |
 
-**Symptoms:** After installation, extension icon doesn't appear or doesn't work on AI platforms.
+## Installation & Setup
 
-**Solutions:**
+**The panel is not appearing on the AI site.**
 
-1. Ensure Developer Mode is enabled
-2. Try refreshing the page or restarting browser
-3. Check if extension has Site Access permission for that site
-4. Clear browser cache and reinstall
+1. Confirm you installed the extension and it is enabled (check the browser toolbar)
+2. Hard-reload the page (`Ctrl+Shift+R` or `Cmd+Shift+R`)
+3. Check that the site is in the [supported list above](#supported-platforms)
+4. If the panel was closed, press `Alt+P` (Mac: `Option+P`) or click the floating show/hide button
 
-### Multiple Extensions Conflict
+**How do I open the panel if the floating buttons are not visible?**
 
-**Symptoms:** Ophel behaves abnormally when other extensions are installed.
+Press `Alt+P` (Mac: `Option+P`). This toggles the panel regardless of whether the floating buttons are visible.
 
-**Solutions:**
+**The extension shows "Click to enable" for some sites.**
 
-1. Disable other similar extensions
-2. Check for overlapping shortcut keys
-3. Try using in browser incognito mode
+Some URLs require you to explicitly grant the extension permission to run. Click the extension icon in the browser toolbar and allow access to the current site.
 
-## Feature Issues
+## Panel Behavior
 
-### Outline Not Showing
+**The panel is covering part of the page I need to click.**
 
-**Symptoms:** Outline panel is empty, doesn't show headings.
+Hold **Ctrl** (Windows/Linux) or **Command** (Mac) alone for about 0.2 seconds. The panel becomes transparent and click-through (ghost mode). Release the key to return to normal.
 
-**Possible Causes:**
+**The floating buttons disappeared.**
 
-1. AI response has no Markdown headings
-2. Page structure parsing failed
-3. Panel might be hidden
+They auto-collapse after 5 seconds of inactivity into a compact pill shape. Move your mouse within ~150px of them and they will expand again. If they are completely missing, press `Alt+P` (Mac: `Option+P`) to open the panel — the buttons appear alongside it.
 
-**Solutions:**
+**The panel snapped to the edge and I cannot move it.**
 
-1. Ensure AI response contains `# ## ###` etc. heading markers
-2. Try `Alt + R` to refresh outline
-3. Try `Alt + P` to toggle panel
+When the panel is in edge-snap mode, hover over the screen edge and it will slide out. Drag it away from the edge to undock it. You can disable edge snap entirely in Settings → General → Panel.
 
-### Conversations Not Syncing
+## Outline
 
-**Symptoms:** WebDAV sync fails or data incomplete.
+**The outline is empty even though the conversation has content.**
 
-**Check Steps:**
+Try pressing `Alt+R` (Mac: `Option+R`) to refresh the outline manually. Some platforms update the DOM asynchronously and the outline may not populate immediately on page load.
 
-1. Verify WebDAV server address is correct
-2. Check username/password is correct
-3. Ensure server supports WebDAV protocol
-4. Check network connection
+**The outline is not tracking my scroll position.**
 
-### Prompts Not Auto-Filling
+Make sure "Sync outline with scroll" is enabled in Settings → Features → Outline.
 
-**Symptoms:** Variable prompts don't popup for input.
+## Conversations
 
-**Solutions:**
+**My conversations are not showing in the Conversations tab.**
 
-1. Check prompt uses correct <code v-pre>{{variable}}</code> syntax
-2. Ensure variables are in prompt content, not title
-3. Try re-editing and saving the prompt
+The Conversations tab reads from the AI platform's own sidebar. If the platform's sidebar is not loaded, Ophel cannot see the conversations. Try scrolling the native sidebar to load more items.
 
-## Platform Compatibility
+**What does WebDAV sync actually back up?**
 
-### Feature Support Table
+WebDAV syncs your Ophel metadata only: conversation titles, folder assignments, tags, pins, and notes you added in Ophel. It does not upload the actual conversation messages (those belong to the AI platform).
 
-| Feature                 | Gemini | AI Studio | ChatGPT | Claude | Grok |
-| ----------------------- | :----: | :-------: | :-----: | :----: | :--: |
-| Smart Outline           |   ✅   |    ✅     |   ✅    |   ✅   |  ✅  |
-| Conversation Management |   ✅   |    ✅     |   ✅    |   ✅   |  ✅  |
-| Prompt Library          |   ✅   |    ✅     |   ✅    |   ✅   |  ✅  |
-| Theme Switching         |   ✅   |    ✅     |   ✅    |   ✅   |  ✅  |
-| Model Lock              |   ✅   |    ✅     |   ✅    |   ✅   |  ✅  |
-| Wide Screen Mode        |   ✅   |    ✅     |   ✅    |   ✅   |  ✅  |
+## Prompts / Queue
 
-### Platform Specifics
+**How does the Prompt Queue work?**
 
-#### Gemini
+1. Enable the queue in Settings → Features → Prompts → Queue
+2. Open the queue overlay (`Alt+J`, Mac: `Option+J`)
+3. Add prompts one by one or batch-import a list
+4. Start the queue — Ophel will automatically send each prompt after the AI finishes responding
 
-- Supports Gemini (gemini.google.com) and Gemini Business
-- Auto-differentiate personal and workspace accounts
+**The queue is not sending the next prompt.**
 
-#### AI Studio
+Ophel waits until the AI page looks idle (no generation spinner) for 2 consecutive polling intervals (~2 seconds). If the AI page uses an unusual loading indicator that Ophel cannot detect, the queue may stall. Click the manual "Send next" button in the queue overlay as a workaround.
 
-- Supports Google AI Studio (aistudio.google.com)
-- Supports sidebar auto-collapse
+## Claude
 
-#### ChatGPT
+**What are Session Keys?**
 
-- Supports ChatGPT (chatgpt.com)
-- Compatible with GPT-4, GPT-3.5 models
+A Claude session key is an authentication token from your browser session on claude.ai. By adding multiple keys (from different accounts), you can rotate between accounts when one hits its usage limit. Ophel intercepts outgoing requests and swaps in the active key.
 
-#### Claude
+**Is it safe to store session keys in Ophel?**
 
-- Supports Claude (claude.ai)
-- Session Key management supported
+Keys are stored locally in `chrome.storage.local` on your machine. They are not uploaded anywhere by Ophel. WebDAV backup can optionally include session keys — be careful when sharing backup files.
 
-#### Grok
+## Permissions
 
-- Supports Grok (grok.x.ai)
-- Full feature support
+**Why does Ophel ask for `<all_urls>`?**
 
-## Performance Issues
+This permission is only needed for the watermark-removal feature (fetching and converting images to base64). It is optional — if you do not use that feature, you can deny or revoke it in Settings → Permissions.
 
-### Page Lag
+**Can I revoke permissions after granting them?**
 
-**Symptoms:** Page slowly responds or freezes after installing Ophel.
+Yes. Go to Settings → Permissions and click **Revoke** next to any permission.
 
-**Solutions:**
+## Privacy
 
-1. Try disabling some features (like outline auto-refresh)
-2. Clear browser cache
-3. Check if too many conversations loaded
+**Does Ophel send my conversation data anywhere?**
 
-### High Memory Usage
+No. Ophel runs entirely in your browser. Conversation data, prompts, and settings stay on your device (or your own WebDAV server if you configure sync). See the [Privacy page](./privacy) for details.
 
-**Symptoms:** Browser memory usage increases.
+## Other
 
-**Solutions:**
+**How do I reset everything to defaults?**
 
-1. Reduce number of loaded conversations
-2. Close unused tabs
-3. Periodically clear cached data
+Settings → Backup & Sync → **Clear all data**. This removes all Ophel data including prompts, conversations metadata, folders, and settings.
 
-## Other Issues
+**Something is broken and restarting did not help.**
 
-### How to Reset Settings
-
-1. Open Settings Panel
-2. Scroll to bottom, click "Reset All Settings"
-3. Confirm reset
-
-### How to Backup Data
-
-1. Open Settings → Backup
-2. Click "Export Data"
-3. Save JSON file to safe location
-
-### How to Report Issues
-
-1. Visit [GitHub Issues](https://github.com/urzeye/ophel/issues)
-2. Describe the problem in detail
-3. Provide browser version, OS info
-4. Attach screenshots or error logs if possible
+1. Check if the issue reproduces in a fresh incognito window with only Ophel enabled
+2. Check the browser DevTools console for errors (right-click → Inspect → Console)
+3. Report the issue on the GitHub issues page with browser version, extension version, and the console output

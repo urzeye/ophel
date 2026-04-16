@@ -1,87 +1,57 @@
-# 快速开始
+# 快速上手
 
-Ophel 是一款浏览器扩展，为主流 AI 对话平台提供统一的增强体验。
+Ophel 是一款浏览器扩展，为你常用的 AI 对话平台（Gemini、ChatGPT、Claude 等）添加一个强大的侧边面板。它提供大纲导航、会话整理、提示词库以及大量体验优化功能，全程不需要离开 AI 页面。
 
-> 💡 **Ophel** 这个名字源于古希腊语 _Ὀφέλεια (Ophelia)_，意为「帮助」与「益处」。我们的愿景是：**AI 之益，触手可及**。
+## 支持的平台
 
-## 支持平台
+Ophel 目前支持 15 个 AI 平台：
 
-Ophel 深度适配以下 AI 平台，提供一致的使用体验：
+| 平台                   | 网址                   |
+| ---------------------- | ---------------------- |
+| **Gemini**             | gemini.google.com      |
+| **Gemini Enterprise**  | business.gemini.google |
+| **AI Studio**          | aistudio.google.com    |
+| **ChatGPT**            | chatgpt.com            |
+| **Claude**             | claude.ai              |
+| **Grok**               | grok.com               |
+| **DeepSeek**           | chat.deepseek.com      |
+| **豆包 (Doubao)**      | <www.doubao.com>       |
+| **Kimi**               | <www.kimi.com>         |
+| **Qwen Studio**        | chat.qwen.ai           |
+| **通义千问 (Qianwen)** | <www.qianwen.com>      |
+| **元宝 (Yuanbao)**     | yuanbao.tencent.com    |
+| **Z.ai**               | chat.z.ai              |
+| **智谱 ChatGLM**       | chatglm.cn             |
+| **ima**                | ima.qq.com             |
 
-| 平台                  | 网址                   |  支持状态   |
-| --------------------- | ---------------------- | :---------: |
-| **Gemini**            | gemini.google.com      | ✅ 完全支持 |
-| **Gemini Enterprise** | business.gemini.google | ✅ 完全支持 |
-| **AI Studio**         | aistudio.google.com    | ✅ 完全支持 |
-| **ChatGPT**           | chatgpt.com            | ✅ 完全支持 |
-| **Claude**            | claude.ai              | ✅ 完全支持 |
-| **Grok**              | grok.com               | ✅ 完全支持 |
+## 安装方式
 
-## 核心功能预览
+### Chrome / Edge（商店安装）
 
-<div class="feature-cards">
+从 [Chrome 网上应用店](https://chromewebstore.google.com) 或 [Edge 附加组件商店](https://microsoftedge.microsoft.com/addons) 搜索 **Ophel** 安装。
 
-### 🧠 智能大纲
+### Chrome / Edge（手动加载）
 
-自动解析对话结构，生成可导航的大纲树。滚动时自动高亮当前位置，点击即可跳转。[查看详情 →](/zh/guide/features/outline)
+1. 前往 [GitHub Releases](https://github.com/urzeye/ophel/releases) 下载最新的 `ophel-vX.X.X-chrome.zip`
+2. 解压到本地某个文件夹
+3. 打开扩展程序管理页面：Chrome 为 `chrome://extensions`，Edge 为 `edge://extensions`
+4. 打开右上角的 **开发者模式**
+5. 点击 **加载已解压的扩展程序**，选择解压后的文件夹
 
-### 💬 会话管理
+### Firefox
 
-标签系统 + 彩色文件夹，让海量对话井井有条。支持多格式导出和 WebDAV 同步。[查看详情 →](/zh/guide/features/conversation)
+从 [Firefox 附加组件商店](https://addons.mozilla.org) 搜索 **Ophel** 安装。
 
-### ⌨️ 提示词助手
+或手动临时加载：
 
-变量模板 + 分类管理，常用提示词一键直达。[查看详情 →](/zh/guide/features/prompt)
-
-</div>
-
-## 安装
-
-### 应用商店（推荐）
-
-::: info 🚧 审核中
-扩展正在各应用商店审核中，敬请期待。
-:::
-
-- [Chrome Web Store](#) — 即将上线
-- [Edge Add-ons](#) — 即将上线
-- [Firefox Add-ons](#) — 即将上线
-
-### 手动安装
-
-#### Chrome / Edge
-
-1. 前往 [GitHub Releases](https://github.com/urzeye/ophel/releases) 下载最新版本
-2. 下载 `ophel-vX.X.X-chrome.zip`（Chrome 和 Edge 通用）
-3. 解压到本地文件夹
-4. 打开扩展管理页面：
-   - Chrome: 地址栏输入 `chrome://extensions/`
-   - Edge: 地址栏输入 `edge://extensions/`
-5. 开启右上角的 **「开发者模式」**
-6. 点击 **「加载已解压的扩展程序」**
-7. 选择解压后的文件夹
-
-#### Firefox
-
-1. 前往 [GitHub Releases](https://github.com/urzeye/ophel/releases) 下载 `ophel-vX.X.X-firefox.zip`
+1. 下载 `ophel-vX.X.X-firefox.zip`
 2. 打开 `about:debugging#/runtime/this-firefox`
-3. 点击 **「临时载入附加组件」**
-4. 选择下载的 zip 文件
+3. 点击 **临时载入附加组件**，选择 zip 文件
 
-::: warning 注意
-Firefox 临时加载的扩展在浏览器关闭后会失效，需要重新加载。
-:::
+> Firefox 临时扩展在浏览器重启后会失效，需重新加载。
 
-## 开始使用
+### 油猴脚本（UserScript）
 
-安装完成后，访问任意支持的 AI 平台，Ophel 会自动激活：
+从 [Greasy Fork](https://greasyfork.org) 搜索 **Ophel** 安装油猴版本，需先安装 Tampermonkey 或 Violentmonkey。
 
-1. **查看大纲面板**：页面右侧会自动显示对话大纲
-2. **打开设置**：点击浏览器工具栏的 Ophel 图标
-3. **探索功能**：前往 [功能介绍](/zh/guide/features/) 深入了解各项能力
-
-## 下一步
-
-- 📖 [功能介绍](/zh/guide/features/) — 了解 Ophel 的全部能力
-- 🎨 [外观定制](/zh/guide/appearance) — 定制你的专属体验
-- ❓ [常见问题](/zh/guide/faq) — 解决使用中的疑问
+安装完成后，打开任意支持的 AI 网站，参阅 [面板概览](./panel) 了解面板基础操作和浮动按钮的使用方式。

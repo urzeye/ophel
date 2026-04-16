@@ -1,168 +1,104 @@
-# 💬 Conversation Manager
+# Conversation Manager
 
-Conversation Manager is one of Ophel's core features, providing powerful organization, search, and backup capabilities for your AI conversations.
+![Conversation tab — folder and tag list](/images/features/conversation.png)
 
-## Overview
+The Conversations tab gives you a searchable, organized view of all your chat history on a given AI platform. You can tag, group, pin, export, and back up conversations.
 
-<div class="tip custom-block">
+## Browsing Your Conversations
 
-**Use Cases**
+The Conversations tab shows the same list the AI platform shows, but with enhancements:
 
-- 📂 Organize extensive chat history
-- 🔍 Quickly search for specific topics
-- 💾 Backup important conversations
-- 🔄 Sync conversation data across devices
+- **Search** — type in the search box to filter conversations by title in real time
+- **Filter by folder** — click a folder in the sidebar to show only its conversations
+- **Filter by tag** — click a tag to show matching conversations
+- **Sort and pin** — pin important conversations to the top so they do not get buried
 
-</div>
+## Folders
 
-## Enhanced Sidebar
+Create color-coded folders to group related conversations. There are 8 color options. You can enable "rainbow colors" in settings to give each folder a distinct tint that carries through the entire list item.
 
-### Infinite Scroll
+To assign a conversation to a folder:
 
-Native AI platforms usually show only recent conversations. Ophel's enhanced sidebar supports:
+1. Open the toolbox menu (☰ button in the floating group)
+2. Click **Move to folder**
+3. Pick an existing folder or create a new one
 
-- ♾️ **Infinite scroll**: Auto-load all history
-- ⚡ **Virtual list**: Smooth scrolling with hundreds of conversations
-- 📊 **Statistics**: Display total conversation count
+You can also do this from the conversation list context menu or the batch action bar.
 
-### Real-time Search
+## Tags
 
-Type keywords to filter the conversation list in real-time:
+Tags are free-form labels you attach to conversations. One conversation can have multiple tags. Use them to mark status ("reviewed", "todo"), topic ("work", "study"), or anything else.
 
-- 🔍 Search by title
-- ⏱️ Instant results
-- 🎯 Highlight matching keywords
+- Create and manage tags in **Settings → Features → Conversations**
+- Assign tags via toolbox → **Set tag**, or from the conversation list
+- Filter by tag using the tag sidebar
 
-## Tags & Categories
+## Pins and Bulk Actions
 
-### Tag System
+Right-click any conversation (or hover to reveal action buttons) to pin it to the top of the list.
 
-Add custom tags to conversations for flexible organization:
+For bulk work, select multiple conversations using the checkboxes to:
 
-```
-💼 Work
-├── [Code] React component design
-├── [Code] API interface design
-└── [Docs] Product requirements
+- Move to folder
+- Set tags
+- Delete
 
-📚 Study Notes
-├── [English] Grammar practice
-└── [Math] Calculus concepts
-```
+## Exporting a Conversation
 
-**Tag Features:**
+To export the current conversation, open the toolbox (☰) and click **Export**, or use the shortcut `Alt+Shift+E`.
 
-- ➕ Create custom tags
-- 🎨 Auto-assign tag colors
-- 🏷️ Multiple tags per conversation
-- 🔍 Filter by tag
+Three formats are available:
 
-### Colorful Folders
+**Markdown (.md)** — great for pasting into a note-taking app. Includes headings, code blocks, and image references.
 
-Use colorful folders to organize different types of conversations:
+**JSON (.json)** — structured data containing all messages, roles, timestamps, and model info. Good for programmatic use.
 
-- 🌈 8 rainbow color options
-- 📂 Drag conversations into folders
-- 🔍 Filter by folder
+**Plain text (.txt)** — simple, no formatting. Copy into any text editor.
 
-## Data Export
+Export settings (in **Settings → Features → Conversations**):
 
-### Single Conversation Export
+- Custom user name in export (replaces "User")
+- Custom model name in export
+- Include filename timestamp
+- Include thinking/reasoning chains (for models that show their reasoning steps)
+- Convert images to Base64 (embeds images inline instead of linking)
 
-Export any conversation in multiple formats:
+You can also **Copy as Markdown** from the toolbox to copy the entire conversation to the clipboard without saving a file.
 
-#### Markdown (.md)
+## WebDAV Sync and Backup
 
-```markdown
-# Conversation Title
+Ophel supports syncing conversation data (titles, tags, folders, pins) via WebDAV. This does not sync the full message content, only the metadata Ophel adds.
 
-## User
+To set up:
 
-How do I manage state in React?
+1. Go to **Settings → Backup & Sync**
+2. Enter your WebDAV server URL, username, and password
+3. Click **Test Connection**
+4. Choose which data to sync: conversations metadata, prompts, settings, Claude session keys
+5. Set to **Manual** or **Auto** sync with an interval
 
-## AI
+Compatible services include Nextcloud, Nutstore (recommended for users in China), Synology NAS, and any standard WebDAV host.
 
-React provides several state management options...
-```
-
-#### JSON (.json)
-
-```json
-{
-  "title": "Conversation Title",
-  "created": "2024-01-15T10:00:00Z",
-  "messages": [
-    { "role": "user", "content": "..." },
-    { "role": "assistant", "content": "..." }
-  ]
-}
-```
-
-#### Plain Text (.txt)
-
-```
-Conversation Title
-Created: 2024-01-15
-
-[User]
-How do I manage state in React?
-
-[AI]
-React provides several state management options...
-```
-
-### Batch Operations
-
-- ☑️ Multi-select conversations
-- 📦 Batch export
-- 🗑️ Batch delete
-- 🏷️ Batch add tags
-
-## Sync & Backup
-
-### WebDAV Sync
-
-Sync with cloud storage via WebDAV protocol:
-
-- ☁️ **Nutstore** (recommended for Chinese users)
-- 🗄️ **Synology NAS**
-- 📁 **Nextcloud**
-- 🌐 Any WebDAV-compatible service
-
-**Setup Steps:**
-
-1. Open Settings → Backup & Sync
-2. Enter WebDAV server address
-3. Fill in username and password
-4. Click "Test Connection" to verify
-5. Set auto-sync interval (optional)
-
-### Local Backup
-
-Besides cloud sync, export data locally:
-
-- 📥 **Full backup**: Export all conversations and settings
-- 📂 **Modular export**: Export only conversations/tags/folders
+You can also do a **full local backup** from the same page — exports all your Ophel data as a single JSON file you can import later.
 
 ## Settings
 
-| Option        | Description                  | Default |
-| ------------- | ---------------------------- | :-----: |
-| Default Sort  | Conversation list sort order | Recent  |
-| Show Time     | Display creation/update time |   On    |
-| Auto Sync     | Enable WebDAV auto sync      |   Off   |
-| Sync Interval | Auto sync time interval      | 30 min  |
+Go to **Settings → Features → Conversations** to configure:
+
+| Setting               | Description                                                        |
+| --------------------- | ------------------------------------------------------------------ |
+| Folder rainbow colors | Use distinct colored backgrounds for folder-assigned conversations |
+| Auto unpin on sync    | Remove pins when syncing from remote                               |
+| Sync delete to cloud  | Delete remote records when you delete conversations locally        |
 
 ## Shortcuts
 
-| Shortcut           | Function                    |
-| ------------------ | --------------------------- |
-| `Ctrl + Shift + O` | New conversation            |
-| `Alt + Shift + R`  | Refresh conversation list   |
-| `Alt + Shift + L`  | Locate current conversation |
-| `Alt + [`          | Previous conversation       |
-| `Alt + ]`          | Next conversation           |
+| Shortcut       | Action                              |
+| -------------- | ----------------------------------- |
+| `Ctrl+Shift+O` | New conversation                    |
+| `Alt+Shift+R`  | Refresh conversation list           |
+| `Alt+Shift+L`  | Locate current conversation in list |
+| `Alt+[`        | Previous conversation               |
+| `Alt+]`        | Next conversation                   |
 
-::: tip
-Conversation data is stored in browser local storage. Clearing browser data may cause data loss. Regular backups recommended.
-:::
+All shortcuts are customizable in **Settings → Shortcuts**.

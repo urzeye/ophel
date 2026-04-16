@@ -8,14 +8,34 @@ const zhConfig = {
   link: "/zh/",
   themeConfig: {
     nav: [
-      { text: "指南", link: "/zh/guide/getting-started" },
+      { text: "入门", items: [
+        { text: "快速上手", link: "/zh/guide/getting-started" },
+        { text: "面板概览", link: "/zh/guide/panel" },
+        { text: "浮动按钮", link: "/zh/guide/enhancements/quick-buttons" },
+      ]},
       {
         text: "功能",
         items: [
           { text: "功能概览", link: "/zh/guide/features/" },
           { text: "智能大纲", link: "/zh/guide/features/outline" },
           { text: "会话管理", link: "/zh/guide/features/conversation" },
-          { text: "提示词助手", link: "/zh/guide/features/prompt" },
+          { text: "提示词库", link: "/zh/guide/features/prompt" },
+        ],
+      },
+      {
+        text: "设置",
+        items: [
+          { text: "全局搜索", link: "/zh/guide/enhancements/global-search" },
+          { text: "布局与禅模式", link: "/zh/guide/enhancements/layout" },
+          { text: "内容增强", link: "/zh/guide/enhancements/content" },
+          { text: "阅读历史与滚动锁定", link: "/zh/guide/enhancements/reading-history" },
+          { text: "用量统计", link: "/zh/guide/site/usage-monitor" },
+          { text: "外观与主题", link: "/zh/guide/appearance" },
+          { text: "标签页与通知", link: "/zh/guide/tab-notifications" },
+          { text: "备份与同步", link: "/zh/guide/sync" },
+          { text: "模型锁定", link: "/zh/guide/site/model-lock" },
+          { text: "Claude 账号管理", link: "/zh/guide/site/claude" },
+          { text: "站点专属设置", link: "/zh/guide/site/site-settings" },
         ],
       },
       { text: "常见问题", link: "/zh/guide/faq" },
@@ -33,7 +53,7 @@ const zhConfig = {
       "/zh/guide/": [
         {
           text: "入门",
-          items: [{ text: "快速开始", link: "/zh/guide/getting-started" }],
+          items: [{ text: "快速上手", link: "/zh/guide/getting-started" }, { text: "面板概览", link: "/zh/guide/panel" }, { text: "浮动按钮", link: "/zh/guide/enhancements/quick-buttons" }],
         },
         {
           text: "核心功能",
@@ -41,31 +61,46 @@ const zhConfig = {
             { text: "功能概览", link: "/zh/guide/features/" },
             { text: "智能大纲", link: "/zh/guide/features/outline" },
             { text: "会话管理", link: "/zh/guide/features/conversation" },
-            { text: "提示词助手", link: "/zh/guide/features/prompt" },
+            { text: "提示词库", link: "/zh/guide/features/prompt" },
           ],
         },
         {
-          text: "设置中心",
+          text: "增强功能",
           items: [
-            { text: "设置总览", link: "/zh/guide/enhancements" },
-            { text: "基本设置", link: "/zh/guide/enhancements#settings-general" },
-            { text: "功能模块", link: "/zh/guide/enhancements#settings-features" },
-            {
-              text: "站点设置",
-              link: "/zh/guide/enhancements#settings-site-settings",
-            },
-            {
-              text: "全局搜索",
-              link: "/zh/guide/enhancements#settings-global-search",
-            },
-            { text: "外观主题", link: "/zh/guide/appearance" },
-            { text: "快捷键系统", link: "/zh/guide/shortcuts" },
-            { text: "数据与权限", link: "/zh/guide/privacy" },
+            { text: "全局搜索", link: "/zh/guide/enhancements/global-search" },,
+            { text: "布局与禅模式", link: "/zh/guide/enhancements/layout" },
+            { text: "内容增强", link: "/zh/guide/enhancements/content" },
+            { text: "阅读历史与滚动锁定", link: "/zh/guide/enhancements/reading-history" },
+            { text: "用量统计", link: "/zh/guide/site/usage-monitor" },
           ],
         },
         {
-          text: "帮助",
-          items: [{ text: "常见问题", link: "/zh/guide/faq" }],
+          text: "外观",
+          items: [{ text: "外观与主题", link: "/zh/guide/appearance" }],
+        },
+        {
+          text: "标签页与通知",
+          items: [{ text: "标签页与通知", link: "/zh/guide/tab-notifications" }],
+        },
+        {
+          text: "站点配置",
+          items: [
+            { text: "模型锁定", link: "/zh/guide/site/model-lock" },
+            { text: "Claude 账号管理", link: "/zh/guide/site/claude" },
+            { text: "站点专属设置", link: "/zh/guide/site/site-settings" },
+          ],
+        },
+        {
+          text: "备份与同步",
+          items: [{ text: "备份与同步", link: "/zh/guide/sync" }],
+        },
+        {
+          text: "参考",
+          items: [
+            { text: "快捷键", link: "/zh/guide/shortcuts" },
+            { text: "常见问题", link: "/zh/guide/faq" },
+            { text: "隐私政策", link: "/zh/guide/privacy" },
+          ],
         },
       ],
     },
@@ -91,7 +126,11 @@ const enConfig = {
   link: "/en/",
   themeConfig: {
     nav: [
-      { text: "Guide", link: "/en/guide/getting-started" },
+      { text: "Getting Started", items: [
+        { text: "Quick Start", link: "/en/guide/getting-started" },
+        { text: "Panel Overview", link: "/en/guide/panel" },
+        { text: "Quick Buttons", link: "/en/guide/enhancements/quick-buttons" },
+      ]},
       {
         text: "Features",
         items: [
@@ -99,6 +138,22 @@ const enConfig = {
           { text: "Smart Outline", link: "/en/guide/features/outline" },
           { text: "Conversation Manager", link: "/en/guide/features/conversation" },
           { text: "Prompt Library", link: "/en/guide/features/prompt" },
+        ],
+      },
+      {
+        text: "Settings",
+        items: [
+          { text: "Global Search", link: "/en/guide/enhancements/global-search" },
+          { text: "Layout & Zen Mode", link: "/en/guide/enhancements/layout" },
+          { text: "Content Enhancements", link: "/en/guide/enhancements/content" },
+          { text: "Reading History", link: "/en/guide/enhancements/reading-history" },
+          { text: "Usage Monitor", link: "/en/guide/site/usage-monitor" },
+          { text: "Appearance", link: "/en/guide/appearance" },
+          { text: "Tab & Notifications", link: "/en/guide/tab-notifications" },
+          { text: "Backup & Sync", link: "/en/guide/sync" },
+          { text: "Model Lock", link: "/en/guide/site/model-lock" },
+          { text: "Claude Accounts", link: "/en/guide/site/claude" },
+          { text: "Site Settings", link: "/en/guide/site/site-settings" },
         ],
       },
       { text: "FAQ", link: "/en/guide/faq" },
@@ -116,7 +171,7 @@ const enConfig = {
       "/en/guide/": [
         {
           text: "Getting Started",
-          items: [{ text: "Quick Start", link: "/en/guide/getting-started" }],
+          items: [{ text: "Quick Start", link: "/en/guide/getting-started" }, { text: "Panel Overview", link: "/en/guide/panel" }, { text: "Quick Buttons", link: "/en/guide/enhancements/quick-buttons" }],
         },
         {
           text: "Core Features",
@@ -128,21 +183,42 @@ const enConfig = {
           ],
         },
         {
-          text: "Settings Center",
+          text: "Enhancements",
           items: [
-            { text: "Overview", link: "/en/guide/enhancements" },
-            { text: "General", link: "/en/guide/enhancements#settings-general" },
-            { text: "Features", link: "/en/guide/enhancements#settings-features" },
-            { text: "Site Settings", link: "/en/guide/enhancements#settings-site-settings" },
-            { text: "Global Search", link: "/en/guide/enhancements#settings-global-search" },
-            { text: "Appearance", link: "/en/guide/appearance" },
-            { text: "Shortcuts", link: "/en/guide/shortcuts" },
-            { text: "Data & Permissions", link: "/en/guide/privacy" },
+            { text: "Global Search", link: "/en/guide/enhancements/global-search" },
+            { text: "Layout & Zen Mode", link: "/en/guide/enhancements/layout" },
+            { text: "Content Enhancements", link: "/en/guide/enhancements/content" },
+            { text: "Reading History & Scroll Lock", link: "/en/guide/enhancements/reading-history" },
+            { text: "Usage Monitor", link: "/en/guide/site/usage-monitor" },
           ],
         },
         {
-          text: "Help",
-          items: [{ text: "FAQ", link: "/en/guide/faq" }],
+          text: "Appearance",
+          items: [{ text: "Appearance & Themes", link: "/en/guide/appearance" }],
+        },
+        {
+          text: "Tab & Notifications",
+          items: [{ text: "Tab & Notifications", link: "/en/guide/tab-notifications" }],
+        },
+        {
+          text: "Site Settings",
+          items: [
+            { text: "Model Lock", link: "/en/guide/site/model-lock" },
+            { text: "Claude Accounts", link: "/en/guide/site/claude" },
+            { text: "Site-Specific Settings", link: "/en/guide/site/site-settings" },
+          ],
+        },
+        {
+          text: "Backup & Sync",
+          items: [{ text: "Backup & Sync", link: "/en/guide/sync" }],
+        },
+        {
+          text: "Reference",
+          items: [
+            { text: "Shortcuts", link: "/en/guide/shortcuts" },
+            { text: "FAQ", link: "/en/guide/faq" },
+            { text: "Privacy", link: "/en/guide/privacy" },
+          ],
         },
       ],
     },
@@ -191,11 +267,17 @@ export default defineConfig({
     },
     search: { provider: "local" },
 
-    // 默认使用中文配置
-    ...zhConfig.themeConfig,
+    // 默认使用英文配置
+    ...enConfig.themeConfig,
   },
 
   markdown: {
     lineNumbers: true,
+  },
+
+  vite: {
+    server: {
+      host: "127.0.0.1",
+    },
   },
 })

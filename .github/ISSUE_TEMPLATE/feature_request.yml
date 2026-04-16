@@ -27,6 +27,8 @@ body:
           required: true
         - label: 我已为项目点了 Star 🌟 | I have starred the project 🌟
           required: false
+        - label: 我愿意为此提交 Pull Request 贡献代码 | I am willing to contribute a Pull Request for this
+          required: false
 
   - type: dropdown
     id: installation_type

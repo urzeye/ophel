@@ -1,65 +1,90 @@
-﻿# ⌨️ Shortcut System
+# Keyboard Shortcuts
 
-This page maps to `ShortcutsPage.tsx` and supports action-level bindings, conflict checks, and one-click reset.
+All shortcuts can be customized or disabled in **Settings → Shortcuts**.
 
-## Page layout
+In the table below, **Alt** means `Alt` on Windows/Linux and `Option` on Mac. **Ctrl** means `Ctrl` on Windows/Linux and `Cmd` on Mac.
 
-| Section              | Purpose                                                                              |
-| -------------------- | ------------------------------------------------------------------------------------ |
-| Shortcut Settings    | Global toggle, global URL (extension context), reset defaults                        |
-| Independent Settings | Prompt submit behavior (Enter / Ctrl+Enter)                                          |
-| Action categories    | Bindings grouped by navigation, panel, outline, conversations, interaction, settings |
+## Navigation
 
-## Shortcut Settings
+| Action                           | Default Shortcut |
+| -------------------------------- | ---------------- |
+| Scroll to top of conversation    | `Alt+T`          |
+| Scroll to bottom of conversation | `Alt+B`          |
+| Return to anchor position        | `Alt+Z`          |
 
-### Global toggle
+## Panel
 
-- `Enable custom shortcuts`: disables all categorized action shortcuts when turned off.
+| Action                               | Default Shortcut |
+| ------------------------------------ | ---------------- |
+| Toggle panel open/closed             | `Alt+P`          |
+| Switch to first tab (Outline)        | `Alt+1`          |
+| Switch to second tab (Conversations) | `Alt+2`          |
+| Switch to third tab (Prompts)        | `Alt+3`          |
+| Toggle light/dark theme              | `Alt+D`          |
+| Open settings                        | `Alt+,`          |
+| Show shortcut reference              | `Alt+\`          |
 
-### Global shortcut URL (extension context)
+## Outline
 
-- Configures the URL opened by the browser-level shortcut (default: `https://gemini.google.com`).
-- Includes a button to open browser shortcut settings directly (Chrome / Edge / Firefox).
+| Action                             | Default Shortcut |
+| ---------------------------------- | ---------------- |
+| Refresh outline                    | `Alt+R`          |
+| Toggle expand all / collapse all   | `Alt+E`          |
+| Expand to heading level 1          | `Alt+Shift+1`    |
+| Expand to heading level 2          | `Alt+Shift+2`    |
+| Expand to heading level 3          | `Alt+Shift+3`    |
+| Expand to heading level 4          | `Alt+Shift+4`    |
+| Expand to heading level 5          | `Alt+Shift+5`    |
+| Expand to heading level 6          | `Alt+Shift+6`    |
+| Jump to previous heading           | `Alt+ArrowUp`    |
+| Jump to next heading               | `Alt+ArrowDown`  |
+| Toggle Questions filter            | `Alt+Q`          |
+| Only Questions mode                | `Alt+Shift+Q`    |
+| Toggle Bookmarks filter            | `Alt+C`          |
+| Locate current position in outline | `Alt+L`          |
+| Search outline                     | `Alt+F`          |
 
-### Reset defaults
+## Conversations
 
-- Restores all keybindings to defaults (with confirmation).
+| Action                        | Default Shortcut |
+| ----------------------------- | ---------------- |
+| New conversation (in new tab) | `Ctrl+Shift+O`   |
+| Refresh conversation list     | `Alt+Shift+R`    |
+| Locate current conversation   | `Alt+Shift+L`    |
+| Go to previous conversation   | `Alt+[`          |
+| Go to next conversation       | `Alt+]`          |
 
-## Independent setting (always active)
+## Editing & Actions
 
-- Prompt submit behavior: `Enter` or `Ctrl + Enter`
-- This setting is not affected by the global shortcut toggle.
+| Action                      | Default Shortcut |
+| --------------------------- | ---------------- |
+| Stop AI generation          | `Alt+K`          |
+| Focus the input box         | `Alt+I`          |
+| Open global search          | `Ctrl+K`         |
+| Export current conversation | `Ctrl+Shift+E`   |
+| Copy latest AI reply        | `Ctrl+Shift+C`   |
+| Copy last code block        | `Alt+;`          |
+| Toggle scroll lock          | `Alt+S`          |
+| Toggle zen mode             | `Ctrl+Shift+Z`   |
+| Toggle prompt queue         | `Alt+J`          |
+| Show model selector         | `Alt+/`          |
 
-## Action categories (code-aligned)
+## Site-Specific
 
-| Category      | Representative actions                                                                     |
-| ------------- | ------------------------------------------------------------------------------------------ |
-| Navigation    | Scroll top, scroll bottom, return to anchor                                                |
-| Panel         | Toggle panel, toggle theme, switch tab 1/2/3                                               |
-| Outline       | Refresh, expand/collapse, heading navigation, search, locate, bookmark filters             |
-| Conversations | New conversation, refresh list, locate current, previous/next conversation                 |
-| Interaction   | Export conversation, copy latest reply, copy last code block, scroll lock, stop generation |
-| Settings      | Open settings, open Claude/Gemini/theme/model-lock settings, switch Claude key             |
+| Action                    | Default Shortcut |
+| ------------------------- | ---------------- |
+| Open Claude settings      | `Ctrl+Alt+C`     |
+| Switch Claude session key | `Ctrl+Alt+S`     |
+| Open Gemini settings      | `Ctrl+Alt+G`     |
+| Open theme settings       | `Ctrl+Alt+T`     |
+| Open model lock settings  | `Ctrl+Alt+L`     |
 
-## Recording and validation rules
+## Customizing Shortcuts
 
-- Click an action entry to start recording.
-- Modifier-only keys are ignored.
-- Without modifiers, only specific function keys are accepted (`Esc`, `F1`–`F12`, etc.).
-- Any single binding can be removed (shown as `Not set`).
-- Conflicts are detected and shown inline.
+1. Open Settings (`Alt+,`)
+2. Go to **Shortcuts**
+3. Click any shortcut row to record a new key combination
+4. Click **×** to remove a shortcut entirely
+5. Toggle the **Enable shortcuts** switch at the top to disable all at once
 
-## Default examples
-
-- `Alt + ,`: open settings
-- `Alt + D`: toggle theme
-- `Alt + S`: toggle scroll lock
-- `Ctrl + Shift + O`: new conversation
-- `Ctrl + Alt + C`: open Claude settings
-
-For the full default set, use the shortcuts page directly.
-
-## Related pages
-
-- [Settings Center Overview](/en/guide/enhancements)
-- [Privacy & Data](/en/guide/privacy)
+You can also configure a **Global URL** — a URL that a global browser shortcut (set in your browser extension shortcuts page) will open.

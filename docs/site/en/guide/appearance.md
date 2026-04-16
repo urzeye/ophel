@@ -1,70 +1,91 @@
-﻿# 🎨 Appearance
+# Appearance & Themes
 
-This page maps to `AppearancePage.tsx` and focuses on theme presets plus custom styles. It does not manage font size, panel layout, or other settings from different menus.
+![Appearance & Themes settings — theme preview and switcher](/images/appearance/theme-preview.png)
 
-## Structure
+## Light / Dark Mode
 
-| Tab           | Purpose                                    |
-| ------------- | ------------------------------------------ |
-| Theme Presets | Choose built-in light/dark presets         |
-| Custom Styles | Create, edit, and delete custom CSS styles |
+Ophel follows three modes:
 
-## Theme Presets
+- **Light** — always use the light theme
+- **Dark** — always use the dark theme
+- **System** — automatically match your operating system preference
 
-### Dual preset sets
+Switch modes using the theme button in the floating quick buttons group, the `Alt+D` (Mac: `Option+D`) shortcut, or Settings → Appearance.
 
-- Light presets: 12 (`lightPresets`)
-- Dark presets: 12 (`darkPresets`)
-- Total built-in presets: 24
+## Built-in Theme Presets
 
-### How they apply
+Each mode has 12 presets to choose from.
 
-- Each site stores `lightStyleId` and `darkStyleId` independently
-- In `system` mode, style switches with OS light/dark mode
-- In fixed light/dark mode, only that mode’s preset ID is updated
+### Light Presets
 
-> Theme mode switching (Light / Dark / System) is in the settings sidebar footer, not inside the Appearance cards.
+| Name                        | Description                                   |
+| --------------------------- | --------------------------------------------- |
+| Google Gradient _(default)_ | Clean white with a blue-green gradient header |
+| Violet                      | Soft purple accent palette                    |
+| Ocean Blue                  | Calm sea-blue tones                           |
+| Sakura                      | Delicate pink blossom palette                 |
+| Mint                        | Fresh mint-green highlights                   |
+| Nordic Frost                | Cool Nordic minimalism                        |
+| Lemon Soda                  | Cheerful yellow-citrus palette                |
+| Ancient Scroll              | Warm parchment and sepia tones                |
+| Mono Pro                    | Minimal black-and-white typography            |
+| Blue-and-White Porcelain    | Classic Chinese porcelain blue                |
+| Shortbread                  | Warm cream and biscuit tones                  |
+| Unicorn Dream               | Pastel gradient dream theme                   |
 
-## Custom Styles
+### Dark Presets
 
-### Style fields
+| Name                     | Description                            |
+| ------------------------ | -------------------------------------- |
+| Classic Dark _(default)_ | Deep gray panel, timeless and readable |
+| Midnight Blue            | Deep blue night palette                |
+| Dark Forest              | Muted green shadows                    |
+| Cyberpunk Neon           | Electric neon on dark                  |
+| Roasted Coffee           | Warm brown dark palette                |
+| Sunset Dream             | Purple-orange sunset gradient          |
+| Dracula                  | The beloved Dracula color scheme       |
+| Deep Abyss               | Almost-black ultra-deep dark           |
+| Crimson Moon             | Dark red and crimson accents           |
+| Retro Terminal           | Hacker green-on-black terminal look    |
+| EVA Unit-01              | Purple-and-green mecha-inspired        |
+| Aurora                   | Cool teal aurora borealis              |
 
-- Style name (required)
-- Mode scope (Light / Dark)
-- CSS content
+## Choosing a Theme
 
-### Editor capabilities
+1. Open Settings (`Alt+,`, Mac: `Option+,`)
+2. Go to **Appearance**
+3. Select **Light** or **Dark** from the mode tabs
+4. Click any preset card to preview and apply it
 
-- CSS syntax highlighting
-- In-place editing
-- Saved custom styles appear directly in preset grids
+The transition uses a radial animation that expands from the point you clicked.
 
-### Management actions
+## Custom CSS
 
-- Add style
-- Edit style
-- Delete style (with confirmation)
+For full control over appearance, go to Settings → Appearance → **Custom CSS** and write your own CSS rules. The panel runs inside a Shadow DOM so your rules are isolated from the AI page.
 
-## Example variables to override
-
-The theme system uses `--gh-*` variables. Example:
+The panel's styles use CSS variables prefixed with `--gh-`. You can override any of them in custom CSS. For example:
 
 ```css
 :host {
-  --gh-primary: #4285f4;
-  --gh-bg: #ffffff;
-  --gh-text: #1f2937;
-  --gh-border: #e5e7eb;
+  --gh-bg: #1a1a2e;
+  --gh-primary: #e94560;
+  --gh-text: #eaeaea;
 }
 ```
 
-## Recommended workflow
+Key variables:
 
-1. Start from the closest built-in preset.
-2. Fine-tune with custom CSS.
-3. Maintain separate light/dark custom styles for stable contrast.
+| Variable              | Controls                                          |
+| --------------------- | ------------------------------------------------- |
+| `--gh-bg`             | Main panel background                             |
+| `--gh-bg-secondary`   | Secondary background (sidebars, alternating rows) |
+| `--gh-text`           | Primary text color                                |
+| `--gh-text-secondary` | Muted text color                                  |
+| `--gh-primary`        | Accent / active color (buttons, highlights)       |
+| `--gh-border`         | Border color                                      |
+| `--gh-shadow`         | Panel drop shadow                                 |
+| `--gh-header-bg`      | Panel header background (supports gradients)      |
+| `--gh-danger`         | Delete / destructive action color                 |
+| `--gh-hover`          | Row hover background                              |
 
-## Related pages
-
-- [Settings Center Overview](/en/guide/enhancements)
-- [Shortcuts](/en/guide/shortcuts)
+Changes apply instantly without reloading.

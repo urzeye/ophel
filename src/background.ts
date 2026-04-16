@@ -50,6 +50,31 @@ const OPHEL_TARGET_URLS = [
   "https://chat.z.ai/*",
 ]
 
+// 通知 ID 格式："ophel|{tabId}|{windowId}|{uuid}"
+// 将 Tab 信息编码进 notifId，避免 MV3 Service Worker 重启后内存 Map 丢失
+function encodeNotifId(tabId: number, windowId: number): string {
+  return `ophel|${tabId}|${windowId}|${crypto.randomUUID()}`
+}
+
+function decodeNotifId(notifId: string): { tabId: number; windowId: number } | null {
+  const parts = notifId.split("|")
+  if (parts.length !== 4 || parts[0] !== "ophel") return null
+  const tabId = parseInt(parts[1], 10)
+  const windowId = parseInt(parts[2], 10)
+  if (!Number.isFinite(tabId) || !Number.isFinite(windowId)) return null
+  return { tabId, windowId }
+}
+
+// 点击通知时激活对应标签页并聚焦窗口
+chrome.notifications.onClicked.addListener((notifId) => {
+  const tab = decodeNotifId(notifId)
+  if (tab) {
+    chrome.tabs.update(tab.tabId, { active: true }).catch(() => {})
+    chrome.windows.update(tab.windowId, { focused: true }).catch(() => {})
+  }
+  chrome.notifications.clear(notifId)
+})
+
 async function queryOphelTabs() {
   return chrome.tabs.query({ url: OPHEL_TARGET_URLS })
 }
@@ -200,16 +225,33 @@ async function setupDynamicRules() {
 // 消息监听 - 与 Content Script 通信
 chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendResponse) => {
   switch (message.type) {
-    case MSG_SHOW_NOTIFICATION:
-      chrome.notifications.create({
-        type: "basic",
-        iconUrl: chrome.runtime.getURL("assets/icon.png"),
-        title: message.title || APP_DISPLAY_NAME,
-        message: message.body || "",
-        silent: true, // 禁用系统默认通知声音，由扩展自行播放自定义声音
-      })
+    case MSG_SHOW_NOTIFICATION: {
+      // 将 tabId/windowId 编码进 notifId，SW 重启后点击通知仍可正确跳转
+      const tabId = sender.tab?.id
+      const windowId = sender.tab?.windowId
+      const notifId =
+        tabId != null && windowId != null
+          ? encodeNotifId(tabId, windowId)
+          : `ophel|${crypto.randomUUID()}`
+
+      chrome.notifications.create(
+        notifId,
+        {
+          type: "basic",
+          iconUrl: chrome.runtime.getURL("assets/icon.png"),
+          title: message.title || APP_DISPLAY_NAME,
+          message: message.body || "",
+          silent: true, // 禁用系统默认通知声音，由扩展自行播放自定义声音
+        },
+        () => {
+          if (chrome.runtime.lastError) {
+            console.error("[Ophel] Notification create failed:", chrome.runtime.lastError.message)
+          }
+        },
+      )
       sendResponse({ success: true })
       break
+    }
 
     case MSG_FOCUS_TAB:
       if (sender.tab?.id) {

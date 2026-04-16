@@ -18,5 +18,11 @@
     "url": "https://github.com/hugo1120",
     "avatar": "https://github.com/hugo1120.png?size=160",
     "source": "linux.do"
+  },
+  {
+    "name": "anonymous",
+    "avatar": "https://api.dicebear.com/7.x/identicon/svg?seed=Lucky",
+    "source": "alipay",
+    "date": "2026-04-09"
   }
 ]

@@ -1,57 +1,50 @@
 # Quick Start
 
-Welcome to **Ophel** - an AI conversation enhancement extension that provides unified outline navigation, conversation management, and prompt system for mainstream AI platforms.
+Ophel is a browser extension that adds a powerful side panel to your favorite AI chat platforms. It gives you outline navigation, conversation organization, a prompt library, and many quality-of-life features — all without leaving the page.
 
 ## Supported Platforms
 
-| Platform  | Outline | Conversations | Prompts | Themes |
-| --------- | :-----: | :-----------: | :-----: | :----: |
-| Gemini    |   ✅    |      ✅       |   ✅    |   ✅   |
-| AI Studio |   ✅    |      ✅       |   ✅    |   ✅   |
-| ChatGPT   |   ✅    |      ✅       |   ✅    |   ✅   |
-| Claude    |   ✅    |      ✅       |   ✅    |   ✅   |
-| Grok      |   ✅    |      ✅       |   ✅    |   ✅   |
+Ophel works on 15 AI platforms:
+
+| Platform              | URL                    |
+| --------------------- | ---------------------- |
+| **Gemini**            | gemini.google.com      |
+| **Gemini Enterprise** | business.gemini.google |
+| **AI Studio**         | aistudio.google.com    |
+| **ChatGPT**           | chatgpt.com            |
+| **Claude**            | claude.ai              |
+| **Grok**              | grok.com               |
+| **DeepSeek**          | chat.deepseek.com      |
+| **Doubao**            | www.doubao.com         |
+| **Kimi**              | www.kimi.com           |
+| **Qwen Studio**       | chat.qwen.ai           |
+| **Qianwen**           | www.qianwen.com        |
+| **Yuanbao**           | yuanbao.tencent.com    |
+| **Z.ai**              | chat.z.ai              |
+| **ChatGLM**           | chatglm.cn             |
+| **ima**               | ima.qq.com             |
 
 ## Installation
 
-### Chrome / Edge
+### Chrome / Edge (Manual)
 
-1. Download the latest `.zip` from [GitHub Releases](https://github.com/urzeye/ophel/releases)
-2. Unzip to a local folder
-3. Open browser extension management page
+1. Go to [GitHub Releases](https://github.com/urzeye/ophel/releases) and download the latest `ophel-vX.X.X-chrome.zip`
+2. Unzip it to a folder on your computer
+3. Open the extensions page:
    - Chrome: `chrome://extensions`
    - Edge: `edge://extensions`
-4. Enable "Developer mode"
-5. Click "Load unpacked" and select the unzipped folder
+4. Enable **Developer mode** (top right toggle)
+5. Click **Load unpacked** and select the unzipped folder
 
-### Firefox
+### Firefox (Manual)
 
-1. Download the latest `.xpi` from [GitHub Releases](https://github.com/urzeye/ophel/releases)
-2. Open `about:addons`
-3. Click the gear icon → "Install Add-on From File"
-4. Select the downloaded `.xpi` file
+1. Download `ophel-vX.X.X-firefox.zip` from [GitHub Releases](https://github.com/urzeye/ophel/releases)
+2. Open `about:debugging#/runtime/this-firefox`
+3. Click **Load Temporary Add-on**
+4. Select the downloaded zip file
 
-## First Use
+::: warning
+Firefox temporary add-ons are removed when you restart the browser. You'll need to reload after each restart.
+:::
 
-After installation, open any supported AI platform:
-
-1. **🧠 Outline Panel**: Appears on the right side, auto-parsing conversation structure
-2. **💬 Conversation Tab**: Click to switch to conversation list with tagging and folders
-3. **⌨️ Prompt Tab**: Click to switch to prompt library, create and manage prompts
-4. **⚙️ Settings**: Click the gear icon to customize features
-
-## Quick Tips
-
-| Feature            | Description                                  |
-| ------------------ | -------------------------------------------- |
-| Outline Navigation | Click headings in outline to jump to content |
-| Pin Panel          | Drag panel edge to dock                      |
-| Quick Theme        | `Alt + D` to toggle light/dark mode          |
-| Open Settings      | `Alt + ,` to open settings                   |
-
-## Next Steps
-
-- [🧠 Smart Outline](/en/guide/features/outline) - Master outline navigation
-- [💬 Conversation Manager](/en/guide/features/conversation) - Organize your chats
-- [⌨️ Prompt Library](/en/guide/features/prompt) - Build your prompt collection
-- [🎨 Appearance](/en/guide/appearance) - Customize your look
+Once installed, open any supported AI site and see the [Panel Overview](./panel) to learn the basics — tabs, floating buttons, ghost mode, and edge snap.

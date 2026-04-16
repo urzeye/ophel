@@ -104,8 +104,19 @@ function resolveAvatarPath(readmePath, avatar) {
   return ensureRelativePath(relativeAvatarPath.replaceAll(path.sep, "/"))
 }
 
-function renderImageCell({ name, url, avatar, readmePath, size = 84, link = true }) {
-  const avatarPath = resolveAvatarPath(readmePath, avatar)
+/**
+ * 当 avatar 未设置时，用 DiceBear identicon 按名字+来源+日期生成确定性头像
+ * 避免大量 "anonymous" 用户共享同一头像
+ */
+function getAvatarUrl(name, avatar, source, date) {
+  if (avatar) return avatar
+  const seed = encodeURIComponent(`${name || "anonymous"}|${source || ""}|${date || ""}`)
+  return `https://api.dicebear.com/7.x/identicon/svg?seed=${seed}`
+}
+
+function renderImageCell({ name, url, avatar, source, date, readmePath, size = 84, link = true }) {
+  const resolvedAvatar = getAvatarUrl(name, avatar, source, date)
+  const avatarPath = resolveAvatarPath(readmePath, resolvedAvatar)
   const image = `<img src="${escapeHtml(avatarPath)}" width="${size}" height="${size}" alt="${escapeHtml(name)}" />`
 
   if (!url || !link) {
@@ -307,7 +318,8 @@ function isBotContributor(contributor) {
     normalizedName.endsWith("[bot]") ||
     normalizedUrl.includes("/apps/") ||
     normalizedName.includes("claude") ||
-    normalizedName.includes("copilot")
+    normalizedName.includes("copilot") ||
+    normalizedName.includes("codex")
   )
 }
 

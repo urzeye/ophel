@@ -1,185 +1,128 @@
-# ⌨️ Prompt Library
+# Prompt Library
 
-Prompt Library is one of Ophel's core features, helping you efficiently manage and use frequently-used prompts.
+![Prompt Library tab — prompt list and categories](/images/features/prompt.png)
 
-## Overview
+The Prompts tab is where you save, organize, and reuse prompts. Instead of retyping the same instructions over and over, you build a personal library and insert from it instantly.
 
-<div class="tip custom-block">
+## Using a Prompt
 
-**Use Cases**
+There are two ways to use a prompt:
 
-- 📝 Save and reuse common prompts
-- 🔄 Create dynamic prompts with variable templates
-- 📂 Organize prompts by category
-- ⚡ Quick access to recent prompts
+- **Single click** — inserts the prompt into the AI input box but does not submit. You can review or edit it first.
+- **Double-click** — inserts and submits immediately (can be toggled off in Settings if you prefer single-click only).
 
-</div>
+If the prompt contains variables (see below), a dialog appears first asking you to fill in each value before insertion.
 
-## Advanced Features
+## Creating Prompts
 
-### Variable Support
+Click the **+** button at the top of the Prompts tab. Fill in:
 
-Use <code v-pre>{{variable}}</code> syntax to define dynamic variables that prompt for input:
+- **Title** — a short label shown in the list
+- **Content** — the full prompt text. Variables can be embedded here.
+- **Category** — optional tag to group related prompts (e.g., "Writing", "Coding", "Research")
+- **Pin** — optional, to keep this prompt at the top of the list
 
-**Example: Translation Assistant**
+The prompt appears in the list immediately after saving. You can edit or delete it at any time.
 
-```markdown
-You are a professional translator. Please translate the following into {{target_language}}:
+## Variables
 
-{{content_to_translate}}
+Variables let you write a reusable prompt template where certain values are filled in at send time. The syntax is **double curly braces**: `&#123;&#123;...&#125;&#125;`.
 
-Requirements:
+There are three sub-types, all within `&#123;&#123; &#125;&#125;`:
 
-- Maintain original style
-- Natural and fluent translation
-- Accurate terminology
-```
-
-**When using:**
-
-1. Click to use this prompt
-2. Dialog prompts for variables:
-   - Target language: `English`
-   - Content to translate: `Hello, world!`
-3. Auto-generates final prompt and inserts into input
-
-**Advanced Variable Usage:**
-
-| Syntax                                           | Description        | Example                                               |
-| ------------------------------------------------ | ------------------ | ----------------------------------------------------- |
-| <code v-pre>{{variable}}</code>                  | Basic variable     | <code v-pre>{{topic}}</code>                          |
-| <code v-pre>{{variable:default}}</code>          | With default value | <code v-pre>{{language:English}}</code>               |
-| <code v-pre>{{variable:option1\|option2}}</code> | Dropdown selection | <code v-pre>{{style:formal\|casual\|humorous}}</code> |
-
-### Markdown Preview
-
-Real-time preview when editing prompts:
-
-- 📝 Code block syntax highlighting
-- 📋 Proper list indentation
-- 🔗 Clickable links
-- 💡 Variable highlighting
-
-### Category Management
-
-Create categories for prompts with auto-assigned colors:
+### Basic variable
 
 ```
-📁 Productivity
-├── ✍️ Copy Editing
-├── 📊 Data Analysis
-└── 📧 Email Writing
+Summarize the following text in {{language}}:
 
-📁 Programming
-├── 🐛 Debug Assistant
-├── 📖 Code Explanation
-└── ⚡ Code Optimization
-
-📁 Learning
-├── 📚 Concept Explanation
-├── 🎯 Practice Problems
-└── 📝 Note Taking
+{{content}}
 ```
 
-**Category Features:**
+When you use this prompt, a dialog pops up with a text input for each variable. Enter values and press Enter or click Confirm.
 
-- ➕ Create custom categories
-- 🎨 Auto-assign category colors
-- 📂 Drag prompts into categories
-- 🔍 Filter by category
+### Variable with a default value
 
-## Data Management
+Use a colon (`:`) followed by the default:
 
-### Quick Access
+```
+Translate to {{target_language:English}}:
 
-#### Pin Favorites
-
-Pin most-used prompts to the top:
-
-- ⭐ Click star icon to pin/unpin
-- 📌 Pinned prompts appear first
-- 🔢 Support multiple pinned prompts
-
-#### Recent Usage
-
-Auto-track usage history for quick access:
-
-- 🕐 Sorted by recent use
-- 📊 Show usage count
-- 🔄 One-click clear history
-
-### Import/Export
-
-Prompt data managed independently:
-
-#### Export
-
-```json
-{
-  "version": "1.0",
-  "exportTime": "2024-01-15T10:00:00Z",
-  "prompts": [
-    {
-      "id": "xxx",
-      "title": "Translation Assistant",
-      "content": "You are a professional translator...",
-      "category": "Productivity",
-      "pinned": true,
-      "useCount": 42
-    }
-  ],
-  "categories": ["Productivity", "Programming", "Learning"]
-}
+{{text}}
 ```
 
-#### Import
+The default value pre-fills the text field. Press Enter to accept without changing it.
 
-- 📥 Import Ophel format JSON files
-- 🔀 Smart merge: Choose to overwrite or skip duplicates
-- 📂 Auto-create missing categories
+### Variable with dropdown options
 
-## Usage Flow
+Use a colon followed by options separated by pipe characters (`|`):
 
-### Create Prompts
+```
+Rewrite this in a {{tone:formal|casual|humorous}} tone.
+```
 
-1. Open prompt panel
-2. Click "New Prompt"
-3. Enter title and content
-4. Select or create category
-5. Save
+The dialog shows a dropdown menu instead of a text field. Pick one of the listed options. You can add as many options as you need:
 
-### Use Prompts
+```
+Code review for {{language:TypeScript|Python|Go|Rust|Java}}
+```
 
-1. Open prompt panel
-2. Click target prompt
-3. Fill in variables (if any)
-4. Auto-inserts into input
+Variables can be mixed in any combination within a single prompt. The variable name is the text before the colon (or the whole `&#123;&#123; &#125;&#125;` content if there is no colon).
 
-## Built-in Prompts
+## Categories
 
-Ophel includes several useful prompt templates:
+Assign prompts to categories to keep them organized. A category sidebar appears on the Prompts tab — click a category to filter the list. Categories are created automatically when you type a new name while editing a prompt.
 
-| Name                     | Purpose                    |
-| ------------------------ | -------------------------- |
-| 🌐 Translation Assistant | Multi-language translation |
-| ⚡ Code Optimizer        | Improve code quality       |
-| 📝 Copy Editor           | Polish text expression     |
-| 🤔 Deep Analysis         | Comprehensive analysis     |
+## Pins
 
-::: tip
-You can modify built-in prompts or use them as templates for new ones.
-:::
+Click the pin icon on any prompt to float it to the top of the list. Pinned prompts are always visible before unpinned ones, regardless of the active category filter.
+
+## Import and Export
+
+**Export** saves all your prompts to a JSON file — useful for backup or sharing between devices. **Import** reads a JSON file back and lets you choose whether to:
+
+- Add new prompts (skip existing ones with the same title)
+- Overwrite existing prompts with the same title
+- Replace all prompts entirely
+
+## Prompt Queue
+
+The Prompt Queue lets you line up multiple prompts and send them automatically one by one, so you do not have to wait and manually submit after each AI response. This is useful for multi-step workflows, batch tasks, or long interview sequences.
+
+### Enabling the Queue
+
+Go to **Settings → Features → Prompts → Prompt Queue** and toggle it on. A queue widget appears near the AI input box, and you can show/hide it with the **Toggle Prompt Queue** shortcut (default: `Alt+J`, Mac: `Option+J`).
+
+### Adding Prompts to the Queue
+
+Type in the queue input field and press **Enter** to add a prompt. The queue shows a numbered list of pending items.
+
+**Batch import** — click the import button in the queue panel to paste a large block of text and split it into multiple prompts at once. Two split modes:
+
+- **Split by line** — each line becomes one prompt (empty lines are ignored)
+- **Split by delimiter** — enter a custom separator string (e.g. `---`) and the text is split at each occurrence
+
+A preview shows exactly how the text will be divided before you confirm.
+
+### Running the Queue
+
+Press **Start**. Ophel monitors the AI page every second. When it detects that the page has been idle (no active generation) for two consecutive checks, it automatically sends the next prompt in the queue.
+
+You can:
+
+- **Pause** — stop auto-sending until you resume
+- **Skip** — immediately mark the current item as done and move to the next (sends it right away)
+- **Reorder** — drag items to change their order
+- **Delete** individual items
+- **Clear all** — remove every item from the queue
+
+The queue remembers paused state between interactions.
 
 ## Settings
 
-| Option           | Description                      | Default |
-| ---------------- | -------------------------------- | :-----: |
-| Show Usage Count | Display usage statistics in list |   On    |
-| Auto Close Panel | Close panel after using prompt   |   On    |
+Go to **Settings → Features → Prompts** to configure:
 
-## Shortcuts
-
-| Shortcut  | Function           |
-| --------- | ------------------ |
-| `Alt + P` | Open prompt panel  |
-| `Esc`     | Close prompt panel |
+| Setting              | Description                                                                      |
+| -------------------- | -------------------------------------------------------------------------------- |
+| Double-click to send | Double-clicking sends the prompt directly without manual submission confirmation |
+| Submit key           | Key used to submit to the AI after insertion — Enter or Ctrl/Shift+Enter         |
+| Prompt queue         | Enable or disable the queue overlay feature                                      |

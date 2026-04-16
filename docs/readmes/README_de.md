@@ -59,15 +59,13 @@
   📣 <a href="https://github.com/urzeye/ophel/issues/30">
     <strong>Help promote Ophel Atlas</strong>
   </a>
-  <br/>
-  <a href="https://www.producthunt.com/products/ophel?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-ophel" target="_blank" rel="noopener noreferrer"><img alt="Ophel - Enhance AI chat with outline, conversations, prompts & more. | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1068867&theme=light&t=1769514514380"></a>
 </p>
 
 <p align="center">
   <a href="#-demo">Demo</a> •
   <a href="#-kernfunktionen">Kernfunktionen</a> •
   <a href="#-schnellstart">Schnellstart</a> •
-  <a href="#-unterstützung">Unterstützung</a>
+  <a href="#-unterstützung-und-dank">Unterstützung und Dank</a>
 </p>
 
 <p align="center">
@@ -209,6 +207,11 @@ Bei Problemen oder Vorschlägen besuchen Sie bitte [GitHub Issues](https://githu
       <a href="https://github.com/hugo1120"><img src="https://github.com/hugo1120.png?size=160" width="72" height="72" alt="hugo2233" /></a>
       <br />
       <sub><a href="https://github.com/hugo1120">hugo2233</a></sub>
+    </td>
+    <td align="center" width="110">
+      <img src="https://api.dicebear.com/7.x/identicon/svg?seed=Lucky" width="72" height="72" alt="anonymous" />
+      <br />
+      <sub>anonymous</sub>
     </td>
   </tr>
 </table>
