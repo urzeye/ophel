@@ -50,23 +50,29 @@ const OPHEL_TARGET_URLS = [
   "https://chat.z.ai/*",
 ]
 
-// 通知 ID → 来源 Tab 的映射，用于点击通知时跳转到对应标签页
-const notificationTabMap = new Map<string, { tabId: number; windowId: number }>()
+// 通知 ID 格式："ophel|{tabId}|{windowId}|{uuid}"
+// 将 Tab 信息编码进 notifId，避免 MV3 Service Worker 重启后内存 Map 丢失
+function encodeNotifId(tabId: number, windowId: number): string {
+  return `ophel|${tabId}|${windowId}|${crypto.randomUUID()}`
+}
+
+function decodeNotifId(notifId: string): { tabId: number; windowId: number } | null {
+  const parts = notifId.split("|")
+  if (parts.length !== 4 || parts[0] !== "ophel") return null
+  const tabId = parseInt(parts[1], 10)
+  const windowId = parseInt(parts[2], 10)
+  if (!Number.isFinite(tabId) || !Number.isFinite(windowId)) return null
+  return { tabId, windowId }
+}
 
 // 点击通知时激活对应标签页并聚焦窗口
 chrome.notifications.onClicked.addListener((notifId) => {
-  const tab = notificationTabMap.get(notifId)
+  const tab = decodeNotifId(notifId)
   if (tab) {
     chrome.tabs.update(tab.tabId, { active: true }).catch(() => {})
     chrome.windows.update(tab.windowId, { focused: true }).catch(() => {})
-    notificationTabMap.delete(notifId)
   }
   chrome.notifications.clear(notifId)
-})
-
-// 通知关闭时清理映射，防止内存泄漏
-chrome.notifications.onClosed.addListener((notifId) => {
-  notificationTabMap.delete(notifId)
 })
 
 async function queryOphelTabs() {
@@ -220,21 +226,31 @@ async function setupDynamicRules() {
 chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendResponse) => {
   switch (message.type) {
     case MSG_SHOW_NOTIFICATION: {
-      const notifId = `ophel-${Date.now()}`
-      chrome.notifications.create(notifId, {
-        type: "basic",
-        iconUrl: chrome.runtime.getURL("assets/icon.png"),
-        title: message.title || APP_DISPLAY_NAME,
-        message: message.body || "",
-        silent: true, // 禁用系统默认通知声音，由扩展自行播放自定义声音
-      })
-      // 记录通知与来源 Tab 的映射，用于点击通知时跳转
-      if (sender.tab?.id != null && sender.tab?.windowId != null) {
-        notificationTabMap.set(notifId, {
-          tabId: sender.tab.id,
-          windowId: sender.tab.windowId,
-        })
-      }
+      // 将 tabId/windowId 编码进 notifId，SW 重启后点击通知仍可正确跳转
+      const tabId = sender.tab?.id
+      const windowId = sender.tab?.windowId
+      const notifId =
+        tabId != null && windowId != null
+          ? encodeNotifId(tabId, windowId)
+          : `ophel|${crypto.randomUUID()}`
+      chrome.notifications.create(
+        notifId,
+        {
+          type: "basic",
+          iconUrl: chrome.runtime.getURL("assets/icon.png"),
+          title: message.title || APP_DISPLAY_NAME,
+          message: message.body || "",
+          silent: true, // 禁用系统默认通知声音，由扩展自行播放自定义声音
+        },
+        () => {
+          if (chrome.runtime.lastError) {
+            console.error(
+              "[Ophel] Failed to create notification:",
+              chrome.runtime.lastError.message,
+            )
+          }
+        },
+      )
       sendResponse({ success: true })
       break
     }
