@@ -1591,13 +1591,13 @@ export class GeminiAdapter extends SiteAdapter {
 
   getZenModeConfig() {
     return {
-      hide: [
-        "bard-sidenav",
-        "side-nav-menu-button",
-        ".top-bar-actions",
-        "bard-logo",
-        "hallucination-disclaimer",
-      ],
+      hide: ["bard-sidenav", "side-nav-menu-button", ".top-bar-actions", "bard-logo"],
+    }
+  }
+
+  getCleanModeConfig() {
+    return {
+      hide: ["hallucination-disclaimer", "g1-dynamic-upsell-button"],
     }
   }
 

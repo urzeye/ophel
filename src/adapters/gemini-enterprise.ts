@@ -808,7 +808,13 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
 
   getZenModeConfig() {
     return {
-      hide: ["ucs-nav-panel", ".disclaimer"],
+      hide: ["ucs-nav-panel"],
+    }
+  }
+
+  getCleanModeConfig() {
+    return {
+      hide: [".disclaimer"],
     }
   }
 

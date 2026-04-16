@@ -735,7 +735,13 @@ export class QianwenAdapter extends SiteAdapter {
 
   getZenModeConfig() {
     return {
-      hide: [SIDEBAR_SELECTOR, FOOTNOTE_SELECTOR],
+      hide: [SIDEBAR_SELECTOR],
+    }
+  }
+
+  getCleanModeConfig() {
+    return {
+      hide: [FOOTNOTE_SELECTOR],
     }
   }
 

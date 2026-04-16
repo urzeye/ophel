@@ -28,6 +28,7 @@ import {
   getSiteTheme,
   getSiteUserQueryWidth,
   getSiteZenMode,
+  getSiteCleanMode,
   consumeClearAllFlag,
   consumeSkipReadingHistoryRestoreFlag,
   CLEAR_ALL_FLAG_TTL_MS,
@@ -241,12 +242,15 @@ export function initLayoutManager(ctx: ModulesContext): void {
   const siteUserQueryWidth = getSiteUserQueryWidth(settings, siteId)
   const siteZenMode = getSiteZenMode(settings, siteId)
   const zenModeEnabled = siteZenMode.enabled
+  const siteCleanMode = getSiteCleanMode(settings, siteId)
+  const cleanModeEnabled = siteCleanMode.enabled
 
-  if (sitePageWidth?.enabled || siteUserQueryWidth?.enabled || zenModeEnabled) {
+  if (sitePageWidth?.enabled || siteUserQueryWidth?.enabled || zenModeEnabled || cleanModeEnabled) {
     modules.layoutManager = new LayoutManager(adapter, sitePageWidth)
     if (sitePageWidth?.enabled) modules.layoutManager.apply()
     if (siteUserQueryWidth?.enabled) modules.layoutManager.updateUserQueryConfig(siteUserQueryWidth)
     if (zenModeEnabled) modules.layoutManager.updateZenMode(true)
+    if (cleanModeEnabled) modules.layoutManager.updateCleanMode(true)
   }
 }
 
@@ -504,16 +508,25 @@ export function subscribeModuleUpdates(ctx: ModulesContext): void {
     const newUserQueryWidth = getSiteUserQueryWidth(newSettings, siteId)
     const newSiteZenMode = getSiteZenMode(newSettings, siteId)
     const newZenModeEnabled = newSiteZenMode.enabled
+    const newSiteCleanMode = getSiteCleanMode(newSettings, siteId)
+    const newCleanModeEnabled = newSiteCleanMode.enabled
 
     if (modules.layoutManager) {
       modules.layoutManager.updateConfig(newSitePageWidth)
       modules.layoutManager.updateUserQueryConfig(newUserQueryWidth)
       modules.layoutManager.updateZenMode(newZenModeEnabled)
-    } else if (newSitePageWidth?.enabled || newUserQueryWidth?.enabled || newZenModeEnabled) {
+      modules.layoutManager.updateCleanMode(newCleanModeEnabled)
+    } else if (
+      newSitePageWidth?.enabled ||
+      newUserQueryWidth?.enabled ||
+      newZenModeEnabled ||
+      newCleanModeEnabled
+    ) {
       modules.layoutManager = new LayoutManager(adapter, newSitePageWidth)
       if (newSitePageWidth?.enabled) modules.layoutManager.apply()
       if (newUserQueryWidth?.enabled) modules.layoutManager.updateUserQueryConfig(newUserQueryWidth)
       if (newZenModeEnabled) modules.layoutManager.updateZenMode(true)
+      if (newCleanModeEnabled) modules.layoutManager.updateCleanMode(true)
     }
 
     // 6. Watermark Remover update

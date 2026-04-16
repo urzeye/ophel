@@ -1327,9 +1327,12 @@ export const zhTW = {
   queueBatchImportEmpty: "沒有可匯入的提示詞",
   zenModeTitle: "禪模式 (Zen Mode)",
   zenModeLabel: "啟用禪模式",
-  zenModeDesc:
-    "隱藏頁面中不必要的元素（如底部的模型免責聲明等），體驗更純粹的對話介面（每個站點獨立配置）",
+  zenModeDesc: "隱藏側邊欄和導航元素，專注於當前對話（每個站點獨立配置）",
   zenModeExitButton: "退出禪模式",
+  cleanModeTitle: "淨化模式 (Clean Mode)",
+  cleanModeLabel: "啟用淨化模式",
+  cleanModeDesc:
+    "隱藏頁面中的免責聲明、廣告、下載按鈕等冗餘元素，獲得更乾淨的介面（每個站點獨立配置）",
   extensionUpdateNoticeKicker: "外掛已更新",
   extensionUpdateNotice: "Ophel Atlas 已更新。重新整理目前頁面後即可繼續使用最新版本。",
   extensionUpdateNoticeWithVersion:

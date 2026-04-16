@@ -472,10 +472,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
           <SettingCard title={t("zenModeTitle") || "禅模式 (Zen Mode)"}>
             <ToggleRow
               label={t("zenModeLabel") || "启用禅模式"}
-              description={
-                t("zenModeDesc") ||
-                "隐藏页面中不必要的元素（如底部的模型免责声明等），体验更纯粹的对话界面"
-              }
+              description={t("zenModeDesc") || "隐藏侧边栏和导航元素，专注于当前对话"}
               settingId="layout-zen-mode-enabled"
               checked={
                 settings.layout?.zenMode?.[siteId as keyof typeof settings.layout.zenMode]
@@ -486,14 +483,55 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
                   siteId as keyof typeof settings.layout.zenMode
                 ] || { enabled: false }
 
+                const newZenEnabled = !currentZenMode.enabled
+                const updatedLayout: typeof settings.layout = {
+                  ...settings.layout,
+                  zenMode: {
+                    ...settings.layout?.zenMode,
+                    [siteId]: {
+                      ...currentZenMode,
+                      enabled: newZenEnabled,
+                    },
+                  },
+                }
+                // 开启禅模式时自动开启净化模式
+                if (newZenEnabled) {
+                  updatedLayout.cleanMode = {
+                    ...settings.layout?.cleanMode,
+                    [siteId]: { enabled: true },
+                  }
+                }
+                setSettings({ layout: updatedLayout })
+              }}
+            />
+          </SettingCard>
+
+          {/* 净化模式 (Clean Mode) 卡片 */}
+          <SettingCard title={t("cleanModeTitle") || "净化模式 (Clean Mode)"}>
+            <ToggleRow
+              label={t("cleanModeLabel") || "启用净化模式"}
+              description={
+                t("cleanModeDesc") ||
+                "隐藏页面中的免责声明、广告、下载按钮等冗余元素，获得更干净的界面"
+              }
+              settingId="layout-clean-mode-enabled"
+              checked={
+                settings.layout?.cleanMode?.[siteId as keyof typeof settings.layout.zenMode]
+                  ?.enabled ?? false
+              }
+              onChange={() => {
+                const currentCleanMode = settings.layout?.cleanMode?.[
+                  siteId as keyof typeof settings.layout.zenMode
+                ] || { enabled: false }
+
                 setSettings({
                   layout: {
                     ...settings.layout,
-                    zenMode: {
-                      ...settings.layout?.zenMode,
+                    cleanMode: {
+                      ...settings.layout?.cleanMode,
                       [siteId]: {
-                        ...currentZenMode,
-                        enabled: !currentZenMode.enabled,
+                        ...currentCleanMode,
+                        enabled: !currentCleanMode.enabled,
                       },
                     },
                   },

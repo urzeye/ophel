@@ -13,6 +13,8 @@ const STYLE_IDS = {
   USER_QUERY_WIDTH_SHADOW: "gh-user-query-width-shadow",
   ZEN_MODE: "gh-zen-mode-styles",
   ZEN_MODE_SHADOW: "gh-zen-mode-shadow",
+  CLEAN_MODE: "gh-clean-mode-styles",
+  CLEAN_MODE_SHADOW: "gh-clean-mode-shadow",
 } as const
 
 const ZEN_MODE_EXIT_HOST_ID = "gh-zen-mode-exit-host"
@@ -37,6 +39,9 @@ export class LayoutManager {
     className: string
     removeOnDisable: boolean
   } | null = null
+
+  private cleanModeStyle: HTMLStyleElement | null = null
+  private cleanModeEnabled = false
 
   private processedShadowRoots = new WeakSet<ShadowRoot>()
   private shadowCheckInterval: NodeJS.Timeout | null = null
@@ -116,6 +121,29 @@ export class LayoutManager {
     this.refreshShadowInjection()
   }
 
+  // ==================== Clean Mode ====================
+
+  updateCleanMode(enabled: boolean) {
+    this.cleanModeEnabled = enabled
+    this.applyCleanMode()
+  }
+
+  applyCleanMode() {
+    this.removeStyle(this.cleanModeStyle)
+    this.cleanModeStyle = null
+
+    if (!this.cleanModeEnabled) {
+      this.refreshShadowInjection()
+      return
+    }
+
+    const css = this.generateCleanModeCSS()
+    if (css) {
+      this.cleanModeStyle = this.injectStyle(STYLE_IDS.CLEAN_MODE, css)
+    }
+    this.refreshShadowInjection()
+  }
+
   // ==================== CSS 生成 ====================
 
   private generatePageWidthCSS(): string {
@@ -135,7 +163,24 @@ export class LayoutManager {
   }
 
   private generateZenModeCSS(): string {
-    const config = this.siteAdapter.getZenModeConfig()
+    const zenConfig = this.siteAdapter.getZenModeConfig()
+    const cleanConfig = this.siteAdapter.getCleanModeConfig()
+    if (!zenConfig && !cleanConfig) return ""
+
+    // 禅模式是超集，合并禅模式 + 净化模式的所有选择器
+    const allHide = [...(zenConfig?.hide || []), ...(cleanConfig?.hide || [])]
+    const allStyles = [...(zenConfig?.styles || []), ...(cleanConfig?.styles || [])]
+
+    const hideCss = allHide
+      .map((selector) => `${selector} { display: none !important; }`)
+      .join("\n")
+    const styleCss = this.buildZenModeStyleCSS(allStyles)
+
+    return [hideCss, styleCss].filter(Boolean).join("\n")
+  }
+
+  private generateCleanModeCSS(): string {
+    const config = this.siteAdapter.getCleanModeConfig()
     if (!config) return ""
 
     const hideCss = (config.hide || [])
@@ -437,7 +482,10 @@ export class LayoutManager {
 
   private refreshShadowInjection() {
     const hasAnyEnabled =
-      this.pageWidthConfig?.enabled || this.userQueryWidthConfig?.enabled || this.zenModeEnabled
+      this.pageWidthConfig?.enabled ||
+      this.userQueryWidthConfig?.enabled ||
+      this.zenModeEnabled ||
+      this.cleanModeEnabled
 
     if (!hasAnyEnabled) {
       this.stopShadowInjection()
@@ -515,6 +563,18 @@ export class LayoutManager {
         this.removeStyleFromShadow(shadowRoot, STYLE_IDS.ZEN_MODE_SHADOW)
       }
 
+      // Clean Mode
+      if (this.cleanModeEnabled) {
+        const css = this.generateCleanModeCSS()
+        if (css) {
+          DOMToolkit.cssToShadow(shadowRoot, css, STYLE_IDS.CLEAN_MODE_SHADOW)
+        } else {
+          this.removeStyleFromShadow(shadowRoot, STYLE_IDS.CLEAN_MODE_SHADOW)
+        }
+      } else {
+        this.removeStyleFromShadow(shadowRoot, STYLE_IDS.CLEAN_MODE_SHADOW)
+      }
+
       this.processedShadowRoots.add(shadowRoot)
     })
   }
@@ -531,6 +591,7 @@ export class LayoutManager {
       this.removeStyleFromShadow(shadowRoot, STYLE_IDS.PAGE_WIDTH_SHADOW)
       this.removeStyleFromShadow(shadowRoot, STYLE_IDS.USER_QUERY_WIDTH_SHADOW)
       this.removeStyleFromShadow(shadowRoot, STYLE_IDS.ZEN_MODE_SHADOW)
+      this.removeStyleFromShadow(shadowRoot, STYLE_IDS.CLEAN_MODE_SHADOW)
       this.processedShadowRoots.delete(shadowRoot)
     })
   }

@@ -487,11 +487,13 @@ export class ImaAdapter extends SiteAdapter {
 
   getZenModeConfig() {
     return {
-      hide: [
-        '[class*="_downloadContainer_"]',
-        ".expandable-sidebar-panel-sidebar",
-        IMA_FOOT_TIPS_SELECTOR,
-      ],
+      hide: [".expandable-sidebar-panel-sidebar"],
+    }
+  }
+
+  getCleanModeConfig() {
+    return {
+      hide: ['[class*="_downloadContainer_"]', IMA_FOOT_TIPS_SELECTOR],
     }
   }
 

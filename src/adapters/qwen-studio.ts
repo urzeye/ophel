@@ -681,7 +681,13 @@ export class QwenAiAdapter extends SiteAdapter {
 
   getZenModeConfig() {
     return {
-      hide: [QWENAI_SIDEBAR_SELECTOR, QWENAI_DISCLAIMER_SELECTOR],
+      hide: [QWENAI_SIDEBAR_SELECTOR],
+    }
+  }
+
+  getCleanModeConfig() {
+    return {
+      hide: [QWENAI_DISCLAIMER_SELECTOR],
     }
   }
 

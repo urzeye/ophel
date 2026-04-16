@@ -1329,9 +1329,12 @@ export const zhCN = {
   queueBatchImportEmpty: "没有可导入的提示词",
   zenModeTitle: "禅模式 (Zen Mode)",
   zenModeLabel: "启用禅模式",
-  zenModeDesc:
-    "隐藏页面中不必要的元素（如底部的模型免责声明等），体验更纯粹的对话界面（每个站点独立配置）",
+  zenModeDesc: "隐藏侧边栏和导航元素，专注于当前对话（每个站点独立配置）",
   zenModeExitButton: "退出禅模式",
+  cleanModeTitle: "净化模式 (Clean Mode)",
+  cleanModeLabel: "启用净化模式",
+  cleanModeDesc:
+    "隐藏页面中的免责声明、广告、下载按钮等冗余元素，获得更干净的界面（每个站点独立配置）",
   extensionUpdateNoticeKicker: "插件已更新",
   extensionUpdateNotice: "Ophel Atlas 已更新。刷新当前页面后即可继续使用最新版本。",
   extensionUpdateNoticeWithVersion:

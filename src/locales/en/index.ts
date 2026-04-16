@@ -1371,8 +1371,12 @@ Please output the optimized code block directly, followed by a brief summary of 
   zenModeTitle: "Zen Mode",
   zenModeLabel: "Enable Zen Mode",
   zenModeDesc:
-    "Hide unnecessary elements (like model disclaimers at the bottom) for a purer conversation experience (configured independently for each site)",
+    "Hide sidebar and navigation elements to focus on the current conversation (configured independently for each site)",
   zenModeExitButton: "Exit Zen Mode",
+  cleanModeTitle: "Clean Mode",
+  cleanModeLabel: "Enable Clean Mode",
+  cleanModeDesc:
+    "Hide disclaimers, ads, download buttons, and other clutter for a cleaner interface (configured independently for each site)",
   extensionUpdateNoticeKicker: "Extension updated",
   extensionUpdateNotice:
     "Ophel Atlas has been updated. Reload this page to keep using the latest version.",

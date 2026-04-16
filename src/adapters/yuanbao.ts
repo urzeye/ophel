@@ -759,7 +759,7 @@ export class YuanbaoAdapter extends SiteAdapter {
 
   getZenModeConfig() {
     return {
-      hide: [".yb-nav__content-wrapper", ".yb-nav-fixed.yb-nav-fixed--pc-ctx", DISCLAIMER_SELECTOR],
+      hide: [".yb-nav__content-wrapper", ".yb-nav-fixed.yb-nav-fixed--pc-ctx"],
       styles: [
         {
           selector: ".agent-dialogue__content--common__input-box",
@@ -773,6 +773,12 @@ export class YuanbaoAdapter extends SiteAdapter {
           value: "0",
         },
       ],
+    }
+  }
+
+  getCleanModeConfig() {
+    return {
+      hide: [DISCLAIMER_SELECTOR],
     }
   }
 

@@ -514,8 +514,23 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       e?.stopPropagation()
       const siteId = adapter?.getSiteId() || "_default"
       const currentZenMode = settings?.layout?.zenMode?.[siteId]?.enabled || false
+      const newZenEnabled = !currentZenMode
       updateNestedSetting("layout", "zenMode", {
-        [siteId]: { enabled: !currentZenMode },
+        [siteId]: { enabled: newZenEnabled },
+      })
+      // 开启禅模式时自动开启净化模式，关闭禅模式时不变净化模式
+      if (newZenEnabled) {
+        updateNestedSetting("layout", "cleanMode", {
+          [siteId]: { enabled: true },
+        })
+      }
+    },
+    cleanMode: (e) => {
+      e?.stopPropagation()
+      const siteId = adapter?.getSiteId() || "_default"
+      const currentCleanMode = settings?.layout?.cleanMode?.[siteId]?.enabled || false
+      updateNestedSetting("layout", "cleanMode", {
+        [siteId]: { enabled: !currentCleanMode },
       })
     },
     settings: (e) => {
@@ -535,11 +550,15 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     const isDisabled = !enabled
     const isFloatingToolbarBtn = id === "floatingToolbar"
     const isZenModeBtn = id === "zenMode"
+    const isCleanModeBtn = id === "cleanMode"
     // Check if Zen mode is active
     const isZenModeActive = isZenModeBtn && Boolean(settings?.layout?.zenMode?.[siteId]?.enabled)
+    // Check if Clean mode is active
+    const isCleanModeActive =
+      isCleanModeBtn && Boolean(settings?.layout?.cleanMode?.[siteId]?.enabled)
 
     // Animation: Active state
-    const isActive = isFloatingToolbarBtn ? isToolsMenuOpen : isZenModeActive
+    const isActive = isFloatingToolbarBtn ? isToolsMenuOpen : isZenModeActive || isCleanModeActive
 
     // panel-only 按钮：面板展开时隐藏
     // 禁用的按钮：永远隐藏
@@ -575,7 +594,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return (
       <Tooltip key={id} content={tooltipContent}>
         <button
-          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isPanelBtn ? "panel-btn" : ""} ${isActive ? "active" : ""} ${isFloatingToolbarBtn ? "tools-trigger-btn" : ""} ${isZenModeBtn ? "zen-mode-btn" : ""}`}
+          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isPanelBtn ? "panel-btn" : ""} ${isActive ? "active" : ""} ${isFloatingToolbarBtn ? "tools-trigger-btn" : ""} ${isZenModeBtn ? "zen-mode-btn" : ""} ${isCleanModeBtn ? "clean-mode-btn" : ""}`}
           onClick={(e) => buttonActions[id]?.(e)}
           style={{
             opacity: anchorDisabled ? 0.4 : 1,

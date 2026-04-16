@@ -1356,8 +1356,12 @@ Dame el código y luego un resumen de mejoras.`,
   zenModeTitle: "Modo Zen",
   zenModeLabel: "Habilitar modo Zen",
   zenModeDesc:
-    "Oculte elementos innecesarios (como los avisos del modelo en la parte inferior) para una experiencia de conversación más pura (configurado de forma independiente para cada sitio)",
+    "Oculte la barra lateral y los elementos de navegación para centrarse en la conversación actual (configurado de forma independiente para cada sitio)",
   zenModeExitButton: "Salir del modo Zen",
+  cleanModeTitle: "Modo Limpio",
+  cleanModeLabel: "Habilitar modo Limpio",
+  cleanModeDesc:
+    "Oculte avisos legales, anuncios, botones de descarga y otros elementos innecesarios para una interfaz más limpia (configurado de forma independiente para cada sitio)",
   extensionUpdateNoticeKicker: "Extensión actualizada",
   extensionUpdateNotice:
     "Ophel Atlas se ha actualizado. Recarga esta página para seguir usando la versión más reciente.",

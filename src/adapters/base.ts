@@ -543,8 +543,13 @@ export abstract class SiteAdapter {
     return []
   }
 
-  /** 返回 Zen Mode 配置 */
+  /** 返回 Zen Mode 配置（隐藏侧边栏/导航栏，专注当前对话） */
   getZenModeConfig(): ZenModeConfig | null {
+    return null
+  }
+
+  /** 返回净化模式配置（隐藏免责声明、广告、下载按钮等冗余元素） */
+  getCleanModeConfig(): ZenModeConfig | null {
     return null
   }
 

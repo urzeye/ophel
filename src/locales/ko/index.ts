@@ -1346,9 +1346,12 @@ export const ko = {
   queueBatchImportEmpty: "가져올 프롬프트가 없습니다",
   zenModeTitle: "선(Zen) 모드",
   zenModeLabel: "선 모드 활성화",
-  zenModeDesc:
-    "더 순수한 대화 경험을 위해 불필요한 요소(하단 모델 면책 조항 등)를 숨깁니다 (각 사이트별 개별 설정)",
+  zenModeDesc: "사이드바 및 내비게이션 요소를 숨겨 현재 대화에 집중합니다 (각 사이트별 개별 설정)",
   zenModeExitButton: "선 모드 종료",
+  cleanModeTitle: "클린 모드",
+  cleanModeLabel: "클린 모드 활성화",
+  cleanModeDesc:
+    "면책 조항, 광고, 다운로드 버튼 등 불필요한 요소를 숨겨 더 깨끗한 인터페이스를 제공합니다 (각 사이트별 개별 설정)",
   extensionUpdateNoticeKicker: "확장 프로그램이 업데이트되었습니다",
   extensionUpdateNotice:
     "Ophel Atlas가 업데이트되었습니다. 최신 버전을 계속 사용하려면 이 페이지를 새로고침하세요.",

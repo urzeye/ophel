@@ -1361,8 +1361,12 @@ export const ja = {
   zenModeTitle: "禅モード",
   zenModeLabel: "禅モードを有効にする",
   zenModeDesc:
-    "不要な要素（下部のモデル免責事項など）を非表示にして、より純粋な会話体験を提供します（各サイトごとに個別に設定）",
+    "サイドバーとナビゲーション要素を非表示にして、現在の会話に集中します（各サイトごとに個別に設定）",
   zenModeExitButton: "禅モードを終了",
+  cleanModeTitle: "クリーンモード",
+  cleanModeLabel: "クリーンモードを有効にする",
+  cleanModeDesc:
+    "免責事項、広告、ダウンロードボタンなどの不要な要素を非表示にして、よりクリーンなインターフェースを実現します（各サイトごとに個別に設定）",
   extensionUpdateNoticeKicker: "拡張機能を更新しました",
   extensionUpdateNotice:
     "Ophel Atlas が更新されました。最新バージョンを引き続き使うには、このページを再読み込みしてください。",

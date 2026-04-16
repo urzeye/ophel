@@ -3,6 +3,7 @@
  * 统一导出所有 SVG 图标组件
  */
 
+export { CleanModeIcon } from "./CleanModeIcon"
 export { ManualAnchorIcon } from "./ManualAnchorIcon"
 export { ThemeLightIcon } from "./ThemeLightIcon"
 export { ThemeDarkIcon } from "./ThemeDarkIcon"

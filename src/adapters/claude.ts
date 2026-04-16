@@ -1490,7 +1490,13 @@ export class ClaudeAdapter extends SiteAdapter {
 
   getZenModeConfig() {
     return {
-      hide: ['nav:has(a[data-dd-action-name="sidebar-chat-item"])', '[data-disclaimer="true"]'],
+      hide: ['nav:has(a[data-dd-action-name="sidebar-chat-item"])'],
+    }
+  }
+
+  getCleanModeConfig() {
+    return {
+      hide: ['[data-disclaimer="true"]'],
     }
   }
 

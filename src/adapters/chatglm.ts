@@ -655,7 +655,13 @@ export class ChatGLMAdapter extends SiteAdapter {
 
   getZenModeConfig() {
     return {
-      hide: [".el-aside", ".policy-wrap, .policy-wrap *", ".vip-btn"],
+      hide: [".el-aside"],
+    }
+  }
+
+  getCleanModeConfig() {
+    return {
+      hide: [".policy-wrap, .policy-wrap *", ".vip-btn"],
     }
   }
 }

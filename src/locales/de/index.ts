@@ -1355,8 +1355,12 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   zenModeTitle: "Zen-Modus",
   zenModeLabel: "Zen-Modus aktivieren",
   zenModeDesc:
-    "Verbergen Sie unnötige Elemente (z. B. Disclaimer des Modells unten), um eine reinere Gesprächserfahrung zu erhalten (individuell für jede Website konfiguriert)",
+    "Seitenleiste und Navigationselemente ausblenden, um sich auf das aktuelle Gespräch zu konzentrieren (individuell für jede Website konfiguriert)",
   zenModeExitButton: "Zen-Modus beenden",
+  cleanModeTitle: "Reinigungsmodus",
+  cleanModeLabel: "Reinigungsmodus aktivieren",
+  cleanModeDesc:
+    "Haftungsausschlüsse, Werbung, Download-Buttons und andere überflüssige Elemente für eine sauberere Oberfläche ausblenden (individuell für jede Website konfiguriert)",
   extensionUpdateNoticeKicker: "Erweiterung aktualisiert",
   extensionUpdateNotice:
     "Ophel Atlas wurde aktualisiert. Laden Sie diese Seite neu, um die neueste Version weiter zu verwenden.",
