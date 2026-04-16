@@ -104,8 +104,18 @@ function resolveAvatarPath(readmePath, avatar) {
   return ensureRelativePath(relativeAvatarPath.replaceAll(path.sep, "/"))
 }
 
+/**
+ * 当 avatar 未设置时，用 DiceBear identicon 按名字生成确定性头像
+ */
+function getAvatarUrl(name, avatar) {
+  if (avatar) return avatar
+  const seed = encodeURIComponent(name || "anonymous")
+  return `https://api.dicebear.com/7.x/identicon/svg?seed=${seed}`
+}
+
 function renderImageCell({ name, url, avatar, readmePath, size = 84, link = true }) {
-  const avatarPath = resolveAvatarPath(readmePath, avatar)
+  const resolvedAvatar = getAvatarUrl(name, avatar)
+  const avatarPath = resolveAvatarPath(readmePath, resolvedAvatar)
   const image = `<img src="${escapeHtml(avatarPath)}" width="${size}" height="${size}" alt="${escapeHtml(name)}" />`
 
   if (!url || !link) {
