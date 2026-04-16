@@ -1,5 +1,7 @@
 # Global Search
 
+![Global search overlay — search box and categorized results](/images/enhancements/global-search.png)
+
 Press **Ctrl+K** (Cmd+K on Mac), or click the search icon in the floating buttons, to open the global search overlay. It brings outline nodes, conversation history, prompts, and settings items into a single search field — no more hunting through individual tabs.
 
 ## Search Scope

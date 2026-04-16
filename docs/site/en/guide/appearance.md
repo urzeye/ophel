@@ -1,5 +1,7 @@
 # Appearance & Themes
 
+![Appearance & Themes settings — theme preview and switcher](/images/appearance/theme-preview.png)
+
 ## Light / Dark Mode
 
 Ophel follows three modes:

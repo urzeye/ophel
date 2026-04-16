@@ -1,5 +1,7 @@
 # 外观与主题
 
+![外观与主题设置 — 主题预览与切换](/images/appearance/theme-preview.png)
+
 ## 亮色 / 暗色模式
 
 Ophel 支持三种模式：

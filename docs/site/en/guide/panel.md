@@ -4,6 +4,8 @@ After installation, open any [supported AI site](./getting-started#supported-pla
 
 ## The Three Tabs
 
+![Ophel side panel — three tabs overview](/images/panel/panel-tabs.png)
+
 Click the tab bar at the top of the panel to switch between:
 
 | Tab               | Description                                                       |
@@ -26,6 +28,8 @@ If the panel does not appear automatically, press **Alt+P** (Mac: **Option+P**) 
 
 ## Floating Quick Buttons
 
+![Floating quick button group — expanded and pill states](/images/panel/floating-buttons.png)
+
 The floating button group at the screen edge is your fastest access point:
 
 - **Auto-collapses** into a pill shape after 5 seconds of inactivity; expands again when your cursor moves within ~150px
@@ -36,11 +40,15 @@ The floating button group at the screen edge is your fastest access point:
 
 ## Ghost Pass-Through Mode
 
+![Ghost pass-through — panel turns semi-transparent](/images/panel/ghost-mode.webp)
+
 Does the panel cover something you need to click? No need to close it first:
 
 Hold **Ctrl** (Windows/Linux) or **Command** (Mac) for about **0.2 seconds** (that key alone). The panel turns semi-transparent and lets mouse clicks pass through — you can click directly on the AI page behind it. Release the key to restore normal mode.
 
 ## Edge Snap
+
+![Edge snap — panel snapped to edge, hover to peek](/images/panel/edge-snap.webp)
 
 Drag the panel close to the screen edge and it snaps in and hides. Hover your cursor over the corresponding edge to peek at the panel. Drag it away from the edge to unsnap.
 

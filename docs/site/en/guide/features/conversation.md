@@ -1,5 +1,7 @@
 # Conversation Manager
 
+![Conversation tab — folder and tag list](/images/features/conversation.png)
+
 The Conversations tab gives you a searchable, organized view of all your chat history on a given AI platform. You can tag, group, pin, export, and back up conversations.
 
 ## Browsing Your Conversations

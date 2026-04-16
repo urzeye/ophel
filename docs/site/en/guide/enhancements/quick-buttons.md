@@ -4,6 +4,8 @@ When you open any supported AI site, a group of quick-access buttons floats on t
 
 ## Default Buttons
 
+![Floating button group — button positions and icons](/images/panel/floating-buttons.png)
+
 | Button   | Name             | Action                                                           |
 | -------- | ---------------- | ---------------------------------------------------------------- |
 | Panel    | Toggle panel     | Show or hide the Ophel side panel                                |
@@ -39,6 +41,8 @@ You can also use keyboard shortcuts:
 If you want to set an anchor without scrolling anywhere, go to **Settings → General → Quick Buttons** and enable the **Manual Anchor** button (hidden by default). Clicking it saves your current position as the anchor without moving the page.
 
 ## Toolbox Menu
+
+![Toolbox menu expanded](/images/quick-buttons/toolbox-menu.png)
 
 Click the toolbox button (☰, the second button by default) to open a dropdown with the following actions:
 

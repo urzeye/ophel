@@ -1,5 +1,7 @@
 # Smart Outline
 
+![Smart Outline — live conversation table of contents](/images/features/outline.png)
+
 The Smart Outline automatically reads your AI conversation and builds a live, clickable table of contents in the side panel. The longer the conversation, the more useful it becomes.
 
 ## How It Works

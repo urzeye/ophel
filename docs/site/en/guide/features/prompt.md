@@ -1,5 +1,7 @@
 # Prompt Library
 
+![Prompt Library tab — prompt list and categories](/images/features/prompt.png)
+
 The Prompts tab is where you save, organize, and reuse prompts. Instead of retyping the same instructions over and over, you build a personal library and insert from it instantly.
 
 ## Using a Prompt
