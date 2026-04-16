@@ -243,7 +243,8 @@ export function initLayoutManager(ctx: ModulesContext): void {
   const siteZenMode = getSiteZenMode(settings, siteId)
   const zenModeEnabled = siteZenMode.enabled
   const siteCleanMode = getSiteCleanMode(settings, siteId)
-  const cleanModeEnabled = siteCleanMode.enabled
+  const hasCleanConfig = !!adapter.getCleanModeConfig()
+  const cleanModeEnabled = hasCleanConfig && siteCleanMode.enabled
 
   if (sitePageWidth?.enabled || siteUserQueryWidth?.enabled || zenModeEnabled || cleanModeEnabled) {
     modules.layoutManager = new LayoutManager(adapter, sitePageWidth)
@@ -509,7 +510,8 @@ export function subscribeModuleUpdates(ctx: ModulesContext): void {
     const newSiteZenMode = getSiteZenMode(newSettings, siteId)
     const newZenModeEnabled = newSiteZenMode.enabled
     const newSiteCleanMode = getSiteCleanMode(newSettings, siteId)
-    const newCleanModeEnabled = newSiteCleanMode.enabled
+    const hasCleanConfig = !!adapter.getCleanModeConfig()
+    const newCleanModeEnabled = hasCleanConfig && newSiteCleanMode.enabled
 
     if (modules.layoutManager) {
       modules.layoutManager.updateConfig(newSitePageWidth)

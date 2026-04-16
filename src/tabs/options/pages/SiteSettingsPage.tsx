@@ -516,12 +516,12 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
               }
               settingId="layout-clean-mode-enabled"
               checked={
-                settings.layout?.cleanMode?.[siteId as keyof typeof settings.layout.zenMode]
+                settings.layout?.cleanMode?.[siteId as keyof typeof settings.layout.cleanMode]
                   ?.enabled ?? true
               }
               onChange={() => {
                 const currentCleanMode = settings.layout?.cleanMode?.[
-                  siteId as keyof typeof settings.layout.zenMode
+                  siteId as keyof typeof settings.layout.cleanMode
                 ] || { enabled: true }
 
                 setSettings({
