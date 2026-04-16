@@ -61,11 +61,17 @@ if (!(window as any).__ophelScrollLockInitialized) {
     return null
   }
 
+  // 记录位置锁拦截时间戳，供 Position Keeper 自适应判断何时释放
+  function recordPositionLockBlock() {
+    document.documentElement.dataset.ophelPositionLockLastBlock = String(Date.now())
+  }
+
   // 1. 劫持 Element.prototype.scrollIntoView
   Element.prototype.scrollIntoView = function (options?: boolean | ScrollIntoViewOptions) {
     // 精确位置锁激活时，仅允许带 __bypassLock 的调用
     const shouldBypass = options && typeof options === "object" && (options as any).__bypassLock
     if (getPositionLockTarget() !== null && !shouldBypass) {
+      recordPositionLockBlock()
       return
     }
 
@@ -83,7 +89,10 @@ if (!(window as any).__ophelScrollLockInitialized) {
 
   // 2. 劫持 window.scrollTo
   ;(window as any).scrollTo = function (x?: ScrollToOptions | number, y?: number) {
-    if (getPositionLockTarget() !== null) return
+    if (getPositionLockTarget() !== null) {
+      recordPositionLockBlock()
+      return
+    }
     // 如果劫持未启用，直接调用原始 API
     if (!(window as any).__ophelScrollLockEnabled) {
       return originalApis.scrollTo.apply(window, arguments as any)
@@ -118,7 +127,7 @@ if (!(window as any).__ophelScrollLockInitialized) {
         if (lockTarget !== null) {
           if (Math.abs(value - lockTarget) > 10) {
             // 记录拦截时间戳，供 Position Keeper 自适应判断何时释放
-            document.documentElement.dataset.ophelPositionLockLastBlock = String(Date.now())
+            recordPositionLockBlock()
             if (descriptor.set) descriptor.set.call(this, lockTarget)
             return
           }
@@ -156,7 +165,10 @@ if (!(window as any).__ophelScrollLockInitialized) {
     y?: number,
   ) {
     // 如果劫持未启用，直接调用原始 API
-    if (getPositionLockTarget() !== null) return
+    if (getPositionLockTarget() !== null) {
+      recordPositionLockBlock()
+      return
+    }
     if (!(window as any).__ophelScrollLockEnabled) {
       return originalElementScrollTo.apply(this, arguments as any)
     }
@@ -188,7 +200,10 @@ if (!(window as any).__ophelScrollLockInitialized) {
     y?: number,
   ) {
     // 如果劫持未启用，直接调用原始 API
-    if (getPositionLockTarget() !== null) return
+    if (getPositionLockTarget() !== null) {
+      recordPositionLockBlock()
+      return
+    }
     if (!(window as any).__ophelScrollLockEnabled) {
       return originalElementScroll.apply(this, arguments as any)
     }
@@ -220,7 +235,10 @@ if (!(window as any).__ophelScrollLockInitialized) {
     y?: number,
   ) {
     // 如果劫持未启用，直接调用原始 API
-    if (getPositionLockTarget() !== null) return
+    if (getPositionLockTarget() !== null) {
+      recordPositionLockBlock()
+      return
+    }
     if (!(window as any).__ophelScrollLockEnabled) {
       return originalElementScrollBy.apply(this, arguments as any)
     }
@@ -255,6 +273,7 @@ if (!(window as any).__ophelScrollLockInitialized) {
     const originalScrollIntoViewIfNeeded = (Element.prototype as any).scrollIntoViewIfNeeded
     ;(Element.prototype as any).scrollIntoViewIfNeeded = function (centerIfNeeded?: boolean) {
       if (getPositionLockTarget() !== null) {
+        recordPositionLockBlock()
         return
       }
       return originalScrollIntoViewIfNeeded.call(this, centerIfNeeded)

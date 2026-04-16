@@ -398,7 +398,8 @@ export class ReadingHistoryManager {
   /**
    * 启动位置保持器 (Position Keeper)
    * 使用 requestAnimationFrame 持续强制锁定滚动位置，对抗页面的自动滚动
-   * 用户交互（pointerdown/wheel/touchmove/keydown）会立即终止此锁定
+   * 用户交互（wheel/touchmove/keydown）会立即终止此锁定
+   * 不监听 pointerdown，以避免点击大纲等操作时误中断锁定
    *
    * 自适应超时策略：
    * - 最短保持 minHoldMs（2秒）
@@ -417,6 +418,8 @@ export class ReadingHistoryManager {
     // 在主世界启用精确位置锁，拦截所有偏离 targetTop 的滚动（scrollTop/scrollTo/scrollIntoView 等）
     // 使用 DOM 属性实现同步跨世界通信，避免 postMessage 的异步竞态
     document.documentElement.dataset.ophelPositionLock = String(targetTop)
+    // 初始化拦截时间戳，确保无拦截场景下不会锁到 maxHoldMs
+    document.documentElement.dataset.ophelPositionLockLastBlock = String(startTime)
 
     const keepOpen = () => {
       const now = Date.now()
