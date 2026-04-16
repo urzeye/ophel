@@ -45,22 +45,11 @@ const zhConfig = {
           ],
         },
         {
-          text: "设置中心",
+          text: "设置与功能",
           items: [
-            { text: "设置总览", link: "/zh/guide/enhancements" },
-            { text: "基本设置", link: "/zh/guide/enhancements#settings-general" },
-            { text: "功能模块", link: "/zh/guide/enhancements#settings-features" },
-            {
-              text: "站点设置",
-              link: "/zh/guide/enhancements#settings-site-settings",
-            },
-            {
-              text: "全局搜索",
-              link: "/zh/guide/enhancements#settings-global-search",
-            },
+            { text: "功能与设置参考", link: "/zh/guide/enhancements" },
             { text: "外观主题", link: "/zh/guide/appearance" },
             { text: "快捷键系统", link: "/zh/guide/shortcuts" },
-            { text: "数据与权限", link: "/zh/guide/privacy" },
           ],
         },
         {
@@ -128,16 +117,11 @@ const enConfig = {
           ],
         },
         {
-          text: "Settings Center",
+          text: "Settings & Features",
           items: [
-            { text: "Overview", link: "/en/guide/enhancements" },
-            { text: "General", link: "/en/guide/enhancements#settings-general" },
-            { text: "Features", link: "/en/guide/enhancements#settings-features" },
-            { text: "Site Settings", link: "/en/guide/enhancements#settings-site-settings" },
-            { text: "Global Search", link: "/en/guide/enhancements#settings-global-search" },
+            { text: "All Features & Settings", link: "/en/guide/enhancements" },
             { text: "Appearance", link: "/en/guide/appearance" },
             { text: "Shortcuts", link: "/en/guide/shortcuts" },
-            { text: "Data & Permissions", link: "/en/guide/privacy" },
           ],
         },
         {
@@ -191,8 +175,8 @@ export default defineConfig({
     },
     search: { provider: "local" },
 
-    // 默认使用中文配置
-    ...zhConfig.themeConfig,
+    // 默认使用英文配置
+    ...enConfig.themeConfig,
   },
 
   markdown: {
