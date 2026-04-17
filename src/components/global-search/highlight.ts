@@ -91,12 +91,12 @@ const getGlobalSearchHighlightRangesFromIndexes = (
 
 export type GlobalSearchHighlightMatchType = "none" | "exact" | "fuzzy"
 
-// 简易缓存：同一渲染周期内相同参数不重复计算
+// 模块级缓存：跨渲染/跨组件生命周期复用相同参数的计算结果，
+// 直到显式调用 clearGlobalSearchHighlightCache()，或达到上限后被整体清空。
 const highlightCache = new Map<
   string,
   Array<{ text: string; matchType: GlobalSearchHighlightMatchType }>
 >()
-let highlightCacheSize = 0
 const HIGHLIGHT_CACHE_MAX = 500
 
 const getHighlightCacheKey = (value: string, tokens: string[], fuzzyIndexes?: number[]): string => {
@@ -105,7 +105,6 @@ const getHighlightCacheKey = (value: string, tokens: string[], fuzzyIndexes?: nu
 
 export const clearGlobalSearchHighlightCache = () => {
   highlightCache.clear()
-  highlightCacheSize = 0
 }
 
 export const splitGlobalSearchHighlightSegments = (
@@ -123,12 +122,10 @@ export const splitGlobalSearchHighlightSegments = (
 
   const result = splitGlobalSearchHighlightSegmentsUncached(value, tokens, fuzzyIndexes)
 
-  if (highlightCacheSize >= HIGHLIGHT_CACHE_MAX) {
+  if (highlightCache.size >= HIGHLIGHT_CACHE_MAX) {
     highlightCache.clear()
-    highlightCacheSize = 0
   }
   highlightCache.set(cacheKey, result)
-  highlightCacheSize++
 
   return result
 }

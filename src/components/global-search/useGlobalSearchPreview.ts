@@ -33,6 +33,13 @@ export const useGlobalSearchPreview = ({
     }
   }, [])
 
+  const escapeAttrValue = useCallback((value: string): string => {
+    if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
+      return CSS.escape(value)
+    }
+    return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+  }, [])
+
   const getGlobalSearchPromptAnchorElement = useCallback(
     (itemId: string) => {
       const container = settingsSearchResultsRef.current
@@ -41,10 +48,10 @@ export const useGlobalSearchPreview = ({
       }
 
       return container.querySelector<HTMLElement>(
-        `[data-global-search-item-id="${CSS.escape(itemId)}"]`,
+        `[data-global-search-item-id="${escapeAttrValue(itemId)}"]`,
       )
     },
-    [settingsSearchResultsRef],
+    [escapeAttrValue, settingsSearchResultsRef],
   )
 
   const hideGlobalSearchPromptPreview = useCallback(() => {
