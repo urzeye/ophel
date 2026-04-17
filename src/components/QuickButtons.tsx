@@ -72,6 +72,16 @@ const areGroupPositionsEqual = (
   return left.xRatio === right.xRatio && left.yRatio === right.yRatio
 }
 
+// 交互常量（module-level 以避免 react-hooks/exhaustive-deps 噪音）
+const DRAG_LONG_PRESS_MS = 150
+const DRAG_THRESHOLD_PX = 6
+const DRAG_PADDING_PX = 8
+const POSITION_PERSIST_DEBOUNCE_MS = 220
+const PROXIMITY_RADIUS_PX = 150
+const PROXIMITY_RETAIN_MS = 3000
+const ACTIVITY_PROTECT_MS = 4000
+const LEAVE_WINDOW_RETAIN_MS = 1500
+
 export const QuickButtons: React.FC<QuickButtonsProps> = ({
   isPanelOpen,
   onPanelToggle,
@@ -118,15 +128,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       : siteTheme.darkStyleId || "classic-dark"
   const panelSparkleColor = currentThemeStyleId === "google-gradient" ? "currentColor" : "brand"
 
-  const DRAG_LONG_PRESS_MS = 150
-  const DRAG_THRESHOLD_PX = 6
-  const DRAG_PADDING_PX = 8
-  const POSITION_PERSIST_DEBOUNCE_MS = 220
-  const PROXIMITY_RADIUS_PX = 150
-  const PROXIMITY_RETAIN_MS = 3000
-  const ACTIVITY_PROTECT_MS = 4000
-  const LEAVE_WINDOW_RETAIN_MS = 1500
-
   // 工具菜单状态
   const groupRef = useRef<HTMLDivElement>(null)
   const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false)
@@ -169,6 +170,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   // 悬浮隐藏状态
   const [_isHovered, setIsHovered] = useState(false)
+  const [_hasFocusWithin, setHasFocusWithin] = useState(false)
   // groupRef moved to top
 
   // 局部失焦状态 (用于液态折叠)
@@ -266,7 +268,13 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   }, [retainActivity, shortenCountdown])
 
   const isLiquidCollapsed =
-    !isProximate && !_isHovered && !isToolsMenuOpen && !isPanelOpen && !isDragging && !isPressing
+    !isProximate &&
+    !_isHovered &&
+    !_hasFocusWithin &&
+    !isToolsMenuOpen &&
+    !isPanelOpen &&
+    !isDragging &&
+    !isPressing
 
   // 用 ref 追踪 isLiquidCollapsed，避免 ResizeObserver 的 useLayoutEffect 因它变化而反复 teardown/recreate
   const isLiquidCollapsedRef = useRef(isLiquidCollapsed)
@@ -1099,6 +1107,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         onPointerCancel={handlePointerUp}
         onPointerLeave={handlePointerLeave}
         onClickCapture={handleClickCapture}
+        onFocusCapture={() => setHasFocusWithin(true)}
+        onBlurCapture={() => setHasFocusWithin(false)}
         style={{
           position: "fixed",
           top: resolvedGroupPosition
