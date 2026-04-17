@@ -23,6 +23,9 @@ import { ConversationMenu, ExportMenu, FolderMenu } from "./ConversationMenus"
 
 import "~styles/conversations.css"
 
+// 渐进式加载：每次渲染的会话批次大小
+const PROGRESSIVE_BATCH_SIZE = 30
+
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -101,6 +104,21 @@ const getFolderDisplayName = (folder: Pick<Folder, "id" | "name" | "icon">): str
   }
 
   return trimmedName
+}
+
+// 高亮文本
+const highlightText = (text: string, query: string): React.ReactNode => {
+  if (!query) return text
+  const parts = text.split(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"))
+  return parts.map((part, i) =>
+    part.toLowerCase() === query.toLowerCase() ? (
+      <span key={i} className="conversations-highlight">
+        {part}
+      </span>
+    ) : (
+      part
+    ),
+  )
 }
 
 // ==================== 主组件 ====================
@@ -306,6 +324,60 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     searchTimeoutRef.current = setTimeout(() => handleSearch(value), 150)
   }
 
+  // Tag 查表 Map（O(1) 查找替代 tags.find()）
+  const tagMap = useMemo(() => {
+    const map = new Map<string, Tag>()
+    tags.forEach((tag) => map.set(tag.id, tag))
+    return map
+  }, [tags])
+
+  // 缓存每个文件夹的会话列表（过滤并排序），避免重复计算
+  const folderConversationsMap = useMemo(() => {
+    const sidebarOrder = manager.getSidebarConversationOrder()
+    const byFolder = new Map<string, Conversation[]>()
+    const allConvs = Object.values(conversations)
+
+    // 按 folderId 分组
+    for (const conv of allConvs) {
+      let list = byFolder.get(conv.folderId)
+      if (!list) {
+        list = []
+        byFolder.set(conv.folderId, list)
+      }
+      list.push(conv)
+    }
+
+    // 对每个文件夹的会话过滤 + 排序
+    const result = new Map<string, Conversation[]>()
+    for (const [folderId, convs] of byFolder) {
+      let filtered = searchResult
+        ? convs.filter((c) => searchResult.conversationMatches.has(c.id))
+        : convs
+      filtered.sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1
+        if (!a.pinned && b.pinned) return 1
+        const indexA = sidebarOrder.indexOf(a.id)
+        const indexB = sidebarOrder.indexOf(b.id)
+        if (indexA === -1 && indexB === -1) return (b.updatedAt || 0) - (a.updatedAt || 0)
+        if (indexA === -1) return 1
+        if (indexB === -1) return -1
+        return indexA - indexB
+      })
+      result.set(folderId, filtered)
+    }
+    return result
+  }, [conversations, searchResult, manager])
+
+  // 快捷获取方法（从缓存中读取）
+  const getConversationsInFolder = (folderId: string): Conversation[] => {
+    return folderConversationsMap.get(folderId) || []
+  }
+
+  // 获取文件夹计数
+  const getFolderCount = (folderId: string): number => {
+    return getConversationsInFolder(folderId).length
+  }
+
   // 同步
   const handleSync = useCallback(async () => {
     if (isConversationUnsupported) {
@@ -350,6 +422,18 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     }
 
     setExpandedFolderId(conv.folderId)
+
+    // 渐进式加载：确保定位目标在已渲染范围内
+    const folderConvs = folderConversationsMap.get(conv.folderId) || []
+    const targetIndex = folderConvs.findIndex((c) => c.id === sessionId)
+    if (targetIndex >= 0) {
+      const needed = targetIndex + 1
+      setVisibleCounts((prev) => ({
+        ...prev,
+        [conv.folderId]: Math.max(prev[conv.folderId] || PROGRESSIVE_BATCH_SIZE, needed),
+      }))
+    }
+
     setTimeout(() => {
       // 使用 contentRef 在组件内查找元素（Shadow DOM 内）
       const container = contentRef.current
@@ -361,7 +445,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         setTimeout(() => item.classList.remove("locate-highlight"), 2000)
       }
     }, 100)
-  }, [manager, handleSync])
+  }, [manager, handleSync, folderConversationsMap])
 
   // 监听快捷键触发的定位事件
   useEffect(() => {
@@ -420,64 +504,83 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
   const hasFilters = searchQuery || filterPinned || filterTagIds.size > 0
 
-  // 获取文件夹下的会话（过滤并排序）
-  const getConversationsInFolder = (folderId: string): Conversation[] => {
-    let convs = Object.values(conversations).filter((c) => c.folderId === folderId)
-    if (searchResult) {
-      convs = convs.filter((c) => searchResult.conversationMatches.has(c.id))
-    }
-    const sidebarOrder = manager.getSidebarConversationOrder()
-    convs.sort((a, b) => {
-      if (a.pinned && !b.pinned) return -1
-      if (!a.pinned && b.pinned) return 1
-      const indexA = sidebarOrder.indexOf(a.id)
-      const indexB = sidebarOrder.indexOf(b.id)
-      if (indexA === -1 && indexB === -1) return (b.updatedAt || 0) - (a.updatedAt || 0)
-      if (indexA === -1) return 1
-      if (indexB === -1) return -1
-      return indexA - indexB
-    })
-    return convs
-  }
+  // 渐进式加载：记录每个文件夹已显示的会话数量
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({})
+  const loadMoreSentinelRefs = useRef<Map<string, HTMLDivElement | null>>(new Map())
 
-  // 获取文件夹计数
-  const getFolderCount = (folderId: string): number => {
-    if (searchResult) {
-      return Object.values(conversations).filter(
-        (c) => c.folderId === folderId && searchResult.conversationMatches.has(c.id),
-      ).length
+  // 文件夹展开/折叠时重置已显示数量
+  const prevExpandedFolderId = useRef<string | null>(null)
+  useEffect(() => {
+    if (expandedFolderId !== prevExpandedFolderId.current) {
+      prevExpandedFolderId.current = expandedFolderId
+      if (expandedFolderId) {
+        setVisibleCounts((prev) => ({
+          ...prev,
+          [expandedFolderId]: PROGRESSIVE_BATCH_SIZE,
+        }))
+      }
     }
-    return Object.values(conversations).filter((c) => c.folderId === folderId).length
-  }
+  }, [expandedFolderId])
 
-  // 高亮文本
-  const highlightText = (text: string, query: string): React.ReactNode => {
-    if (!query) return text
-    const parts = text.split(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"))
-    return parts.map((part, i) =>
-      part.toLowerCase() === query.toLowerCase() ? (
-        <span key={i} className="conversations-highlight">
-          {part}
-        </span>
-      ) : (
-        part
-      ),
+  // 搜索模式下展开多个文件夹时也初始化
+  useEffect(() => {
+    if (searchResult) {
+      const folderIds = new Set(searchResult.conversationFolderMap.values())
+      setVisibleCounts((prev) => {
+        const next = { ...prev }
+        for (const fid of folderIds) {
+          if (!(fid in next)) next[fid] = PROGRESSIVE_BATCH_SIZE
+        }
+        return next
+      })
+    }
+  }, [searchResult])
+
+  // IntersectionObserver 监听加载更多哨兵
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const folderId = (entry.target as HTMLElement).dataset.folderId
+            if (folderId) {
+              setVisibleCounts((prev) => ({
+                ...prev,
+                [folderId]: (prev[folderId] || PROGRESSIVE_BATCH_SIZE) + PROGRESSIVE_BATCH_SIZE,
+              }))
+            }
+          }
+        }
+      },
+      { rootMargin: "100px" },
     )
-  }
+
+    const sentinels = loadMoreSentinelRefs.current
+    for (const [, el] of sentinels) {
+      if (el) observer.observe(el)
+    }
+
+    return () => observer.disconnect()
+  }, [visibleCounts, expandedFolderId, searchResult])
 
   // 点击会话
-  const handleConversationClick = (conv: Conversation) => {
-    if (batchMode) {
-      const newSelected = new Set(selectedIds)
-      if (newSelected.has(conv.id)) newSelected.delete(conv.id)
-      else newSelected.add(conv.id)
-      setSelectedIds(newSelected)
-      return
-    }
+  const handleConversationClick = useCallback(
+    (conv: Conversation) => {
+      if (batchMode) {
+        setSelectedIds((prev) => {
+          const next = new Set(prev)
+          if (next.has(conv.id)) next.delete(conv.id)
+          else next.add(conv.id)
+          return next
+        })
+        return
+      }
 
-    // 使用适配器的 navigateToConversation 方法（SPA 导航）
-    manager.siteAdapter?.navigateToConversation(conv.id, conv.url)
-  }
+      // 使用适配器的 navigateToConversation 方法（SPA 导航）
+      manager.siteAdapter?.navigateToConversation(conv.id, conv.url)
+    },
+    [batchMode, manager],
+  )
 
   // 文件夹展开/折叠（手风琴模式）
   const handleFolderClick = (folderId: string) => {
@@ -844,136 +947,55 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                   {/* 会话列表 */}
                   {isExpanded && (
                     <div className="conversations-list" data-folder-id={folder.id}>
-                      {getConversationsInFolder(folder.id).length === 0 ? (
-                        <div className="conversations-list-empty">
-                          {t("conversationsEmpty") || "暂无会话"}
-                        </div>
-                      ) : (
-                        getConversationsInFolder(folder.id).map((conv) => (
-                          <div
-                            key={conv.id}
-                            className="conversations-item"
-                            data-id={conv.id}
-                            onClick={() => handleConversationClick(conv)}>
-                            {batchMode && (
-                              <input
-                                type="checkbox"
-                                className="conversations-item-checkbox"
-                                checked={selectedIds.has(conv.id)}
-                                onChange={() => {}}
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  // 切换选中状态
-                                  const newSelected = new Set(selectedIds)
-                                  if (newSelected.has(conv.id)) {
-                                    newSelected.delete(conv.id)
-                                  } else {
-                                    newSelected.add(conv.id)
-                                  }
-                                  setSelectedIds(newSelected)
+                      {(() => {
+                        const allConvs = getConversationsInFolder(folder.id)
+                        if (allConvs.length === 0) {
+                          return (
+                            <div className="conversations-list-empty">
+                              {t("conversationsEmpty") || "暂无会话"}
+                            </div>
+                          )
+                        }
+
+                        const visibleCount = visibleCounts[folder.id] || PROGRESSIVE_BATCH_SIZE
+                        const visibleConvs = allConvs.slice(0, visibleCount)
+                        const hasMore = allConvs.length > visibleCount
+
+                        return (
+                          <>
+                            {visibleConvs.map((conv) => (
+                              <ConversationItem
+                                key={conv.id}
+                                conv={conv}
+                                batchMode={batchMode}
+                                isSelected={selectedIds.has(conv.id)}
+                                isNarrowLayout={isNarrowLayout}
+                                searchQuery={searchQuery}
+                                searchResult={searchResult}
+                                tagMap={tagMap}
+                                onConversationClick={handleConversationClick}
+                                onSelectionChange={setSelectedIds}
+                                onInteractionStateChange={onInteractionStateChange}
+                                onMenuChange={setMenu}
+                              />
+                            ))}
+                            {hasMore && (
+                              <div
+                                className="conversations-load-more-sentinel"
+                                data-folder-id={folder.id}
+                                ref={(el) => {
+                                  loadMoreSentinelRefs.current.set(folder.id, el)
+                                }}
+                                style={{
+                                  height: "1px",
+                                  margin: 0,
+                                  padding: 0,
                                 }}
                               />
                             )}
-                            {(() => {
-                              const tagIds = conv.tagIds || []
-                              const maxVisibleTags = isNarrowLayout ? 1 : 2
-                              const resolvedTags = tagIds
-                                .map((tagId) => tags.find((t) => t.id === tagId))
-                                .filter((tag): tag is Tag => !!tag)
-                              const visibleTags = resolvedTags.slice(0, maxVisibleTags)
-                              const hiddenTags = resolvedTags.slice(maxVisibleTags)
-                              const hiddenTagCount = hiddenTags.length
-
-                              return (
-                                <div className="conversations-item-main">
-                                  <div className="conversations-item-headline">
-                                    <Tooltip
-                                      content={conv.title}
-                                      triggerStyle={{
-                                        flex: 1,
-                                        minWidth: 0,
-                                        overflow: "hidden",
-                                        display: "block",
-                                      }}>
-                                      <span
-                                        className="conversations-item-title"
-                                        style={{ userSelect: "none" }}>
-                                        {conv.pinned && (
-                                          <PinIcon
-                                            size={12}
-                                            filled
-                                            style={{
-                                              display: "inline-block",
-                                              marginRight: "4px",
-                                              verticalAlign: "middle",
-                                            }}
-                                          />
-                                        )}
-                                        {searchQuery &&
-                                        searchResult?.conversationMatches.has(conv.id)
-                                          ? highlightText(conv.title || "无标题", searchQuery)
-                                          : conv.title || "无标题"}
-                                      </span>
-                                    </Tooltip>
-
-                                    {tagIds.length > 0 && (
-                                      <div className="conversations-tag-list">
-                                        {visibleTags.map((tag) => {
-                                          return (
-                                            <span
-                                              key={tag.id}
-                                              className="conversations-tag"
-                                              style={{ backgroundColor: tag.color }}>
-                                              {tag.name}
-                                            </span>
-                                          )
-                                        })}
-                                        {hiddenTagCount > 0 && (
-                                          <Tooltip
-                                            content={
-                                              <div className="conversations-hidden-tags-tooltip">
-                                                {resolvedTags.map((tag) => (
-                                                  <div
-                                                    key={tag.id}
-                                                    className="conversations-hidden-tag-item">
-                                                    <span
-                                                      className="conversations-hidden-tag-dot"
-                                                      style={{ backgroundColor: tag.color }}
-                                                    />
-                                                    <span>{tag.name}</span>
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            }
-                                            delay={120}
-                                            triggerStyle={{ display: "inline-flex" }}>
-                                            <span className="conversations-tag conversations-tag-more">
-                                              +{hiddenTagCount}
-                                            </span>
-                                          </Tooltip>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              )
-                            })()}
-
-                            <div className="conversations-item-meta">
-                              <button
-                                className="conversations-item-menu-btn"
-                                title={t("more") || "更多操作"}
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  onInteractionStateChange?.(true)
-                                  setMenu({ type: "conversation", conv, anchorEl: e.currentTarget })
-                                }}>
-                                <MoreHorizontalIcon size={16} />
-                              </button>
-                            </div>
-                          </div>
-                        ))
-                      )}
+                          </>
+                        )
+                      })()}
                     </div>
                   )}
                 </React.Fragment>
@@ -1283,3 +1305,145 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     </>
   )
 }
+
+// ==================== 会话项子组件（React.memo 防止不必要的重渲染）====================
+
+interface ConversationItemProps {
+  conv: Conversation
+  batchMode: boolean
+  isSelected: boolean
+  isNarrowLayout: boolean
+  searchQuery: string
+  searchResult: SearchResult | null
+  tagMap: Map<string, Tag>
+  onConversationClick: (conv: Conversation) => void
+  onSelectionChange: React.Dispatch<React.SetStateAction<Set<string>>>
+  onInteractionStateChange?: (isActive: boolean) => void
+  onMenuChange: React.Dispatch<React.SetStateAction<MenuType>>
+}
+
+const ConversationItem = React.memo<ConversationItemProps>(
+  ({
+    conv,
+    batchMode,
+    isSelected,
+    isNarrowLayout,
+    searchQuery,
+    searchResult,
+    tagMap,
+    onConversationClick,
+    onSelectionChange,
+    onInteractionStateChange,
+    onMenuChange,
+  }) => {
+    const tagIds = conv.tagIds || []
+    const maxVisibleTags = isNarrowLayout ? 1 : 2
+    const resolvedTags = tagIds.map((tagId) => tagMap.get(tagId)).filter((tag): tag is Tag => !!tag)
+    const visibleTags = resolvedTags.slice(0, maxVisibleTags)
+    const hiddenTags = resolvedTags.slice(maxVisibleTags)
+    const hiddenTagCount = hiddenTags.length
+
+    return (
+      <div
+        className="conversations-item"
+        data-id={conv.id}
+        onClick={() => onConversationClick(conv)}>
+        {batchMode && (
+          <input
+            type="checkbox"
+            className="conversations-item-checkbox"
+            checked={isSelected}
+            onChange={() => {}}
+            onClick={(e) => {
+              e.stopPropagation()
+              onSelectionChange((prev) => {
+                const next = new Set(prev)
+                if (next.has(conv.id)) next.delete(conv.id)
+                else next.add(conv.id)
+                return next
+              })
+            }}
+          />
+        )}
+
+        <div className="conversations-item-main">
+          <div className="conversations-item-headline">
+            <Tooltip
+              content={conv.title}
+              triggerStyle={{
+                flex: 1,
+                minWidth: 0,
+                overflow: "hidden",
+                display: "block",
+              }}>
+              <span className="conversations-item-title" style={{ userSelect: "none" }}>
+                {conv.pinned && (
+                  <PinIcon
+                    size={12}
+                    filled
+                    style={{
+                      display: "inline-block",
+                      marginRight: "4px",
+                      verticalAlign: "middle",
+                    }}
+                  />
+                )}
+                {searchQuery && searchResult?.conversationMatches.has(conv.id)
+                  ? highlightText(conv.title || "无标题", searchQuery)
+                  : conv.title || "无标题"}
+              </span>
+            </Tooltip>
+
+            {tagIds.length > 0 && (
+              <div className="conversations-tag-list">
+                {visibleTags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="conversations-tag"
+                    style={{ backgroundColor: tag.color }}>
+                    {tag.name}
+                  </span>
+                ))}
+                {hiddenTagCount > 0 && (
+                  <Tooltip
+                    content={
+                      <div className="conversations-hidden-tags-tooltip">
+                        {resolvedTags.map((tag) => (
+                          <div key={tag.id} className="conversations-hidden-tag-item">
+                            <span
+                              className="conversations-hidden-tag-dot"
+                              style={{ backgroundColor: tag.color }}
+                            />
+                            <span>{tag.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    }
+                    delay={120}
+                    triggerStyle={{ display: "inline-flex" }}>
+                    <span className="conversations-tag conversations-tag-more">
+                      +{hiddenTagCount}
+                    </span>
+                  </Tooltip>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="conversations-item-meta">
+          <button
+            className="conversations-item-menu-btn"
+            title={t("more") || "更多操作"}
+            onClick={(e) => {
+              e.stopPropagation()
+              onInteractionStateChange?.(true)
+              onMenuChange({ type: "conversation", conv, anchorEl: e.currentTarget })
+            }}>
+            <MoreHorizontalIcon size={16} />
+          </button>
+        </div>
+      </div>
+    )
+  },
+)
