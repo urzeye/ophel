@@ -701,6 +701,11 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   // 构建按钮列表（包含智能分隔线逻辑）
   const renderButtonGroup = () => {
+    if (isLiquidCollapsed) {
+      // 液态收缩态只显示固定品牌 Logo，避免受到按钮排序影响。
+      return [renderButton("panel", COLLAPSED_BUTTON_DEFS.panel, true)]
+    }
+
     const elements: React.ReactNode[] = []
     const navigations = new Set(["scrollTop", "scrollBottom", "anchor", "manualAnchor"])
 
