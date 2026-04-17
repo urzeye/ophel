@@ -226,8 +226,16 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       retainActivity(1500)
     }
 
+    const handleVisibilityChange = () => {
+      // 标签页切换或窗口最小化时，mouseleave 不触发，用 visibilitychange 兜底
+      if (document.hidden) {
+        retainActivity(1500)
+      }
+    }
+
     document.addEventListener("mousemove", handleMouseMove, { passive: true })
     document.addEventListener("mouseleave", handleMouseLeaveWindow, { passive: true })
+    document.addEventListener("visibilitychange", handleVisibilityChange)
 
     // 初始化时维持 3 秒展开
     retainActivity(3000)
@@ -235,6 +243,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return () => {
       document.removeEventListener("mousemove", handleMouseMove)
       document.removeEventListener("mouseleave", handleMouseLeaveWindow)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
       if (rafId !== null) cancelAnimationFrame(rafId)
       if (activityTimerRef.current !== null) {
         window.clearTimeout(activityTimerRef.current)
@@ -244,6 +253,10 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   const isLiquidCollapsed =
     !isProximate && !_isHovered && !isToolsMenuOpen && !isPanelOpen && !isDragging && !isPressing
+
+  // 用 ref 追踪 isLiquidCollapsed，避免 ResizeObserver 的 useLayoutEffect 因它变化而反复 teardown/recreate
+  const isLiquidCollapsedRef = useRef(isLiquidCollapsed)
+  isLiquidCollapsedRef.current = isLiquidCollapsed
 
   // 跟踪是否处于 Flutter 模式（图文并茂）
   const [_isFlutterMode, setIsFlutterMode] = useState(false)
@@ -449,7 +462,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         groupPositionRef.current = nextPosition
         setGroupPosition(nextPosition)
 
-        if (isLiquidCollapsed) {
+        if (isLiquidCollapsedRef.current) {
           // 水滴态和展开态使用的尺寸不同，但这里的 ratio 是按“当前尺寸”反推出来的。
           // 如果把水滴态 ratio 持久化，下一次刷新按展开态尺寸恢复时就会整体向上漂。
           // 因此液态收缩期间只修正当前会话位置，不写回持久化设置。
@@ -472,12 +485,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return () => {
       resizeObserver.disconnect()
     }
-  }, [
-    clampPixelGroupPosition,
-    isLiquidCollapsed,
-    scheduleGroupPositionPersist,
-    toLogicalGroupPosition,
-  ])
+  }, [clampPixelGroupPosition, scheduleGroupPositionPersist, toLogicalGroupPosition])
 
   // 滚动到顶部（支持图文并茂模式）
   const scrollToTop = useCallback(async () => {
