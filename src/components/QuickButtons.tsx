@@ -409,6 +409,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       const rect = element.getBoundingClientRect()
       const nextMetrics = { width: rect.width, height: rect.height }
       const prevMetrics = groupMetricsRef.current
+      const isInitialMetricsSync = prevMetrics.width === 0 && prevMetrics.height === 0
       const metricsChanged =
         prevMetrics.width !== nextMetrics.width || prevMetrics.height !== nextMetrics.height
 
@@ -431,7 +432,12 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         return
       }
 
-      if (draggingRef.current) return
+      if (draggingRef.current || isInitialMetricsSync) {
+        // 首次挂载时，持久化位置仍按 0x0 尺寸参与了首帧定位。
+        // 这时如果直接用当前 rect 反推 ratio，会把这个“临时偏低”的像素位置写回，
+        // 导致刷新一次就下移一点。先只更新 metrics，让下一帧用真实尺寸重算位置。
+        return
+      }
 
       const nextPosition = toLogicalGroupPosition(rect.left, rect.top, viewport, nextMetrics)
       const prevPosition = groupPositionRef.current
@@ -443,7 +449,14 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         groupPositionRef.current = nextPosition
         setGroupPosition(nextPosition)
 
-        // ResizeObserver 会在液态收缩动画期间连续触发，这里只在尺寸稳定后回写一次。
+        if (isLiquidCollapsed) {
+          // 水滴态和展开态使用的尺寸不同，但这里的 ratio 是按“当前尺寸”反推出来的。
+          // 如果把水滴态 ratio 持久化，下一次刷新按展开态尺寸恢复时就会整体向上漂。
+          // 因此液态收缩期间只修正当前会话位置，不写回持久化设置。
+          return
+        }
+
+        // ResizeObserver 会在尺寸动画期间连续触发，这里只在尺寸稳定后回写一次。
         scheduleGroupPositionPersist(nextPosition)
       }
     }
@@ -459,7 +472,12 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return () => {
       resizeObserver.disconnect()
     }
-  }, [clampPixelGroupPosition, scheduleGroupPositionPersist, toLogicalGroupPosition])
+  }, [
+    clampPixelGroupPosition,
+    isLiquidCollapsed,
+    scheduleGroupPositionPersist,
+    toLogicalGroupPosition,
+  ])
 
   // 滚动到顶部（支持图文并茂模式）
   const scrollToTop = useCallback(async () => {
