@@ -926,11 +926,11 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     const shouldPersist = draggingRef.current
     setIsPressing(false)
     clearDragTimer()
-    clearPositionPersistTimer()
     dragStartRef.current = null
     dragOffsetRef.current = null
 
     if (draggingRef.current) {
+      clearPositionPersistTimer()
       draggingRef.current = false
       setIsDragging(false)
     }
@@ -951,7 +951,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     if (e.button !== 0) return
     if (!groupRef.current) return
 
-    clearPositionPersistTimer()
     pointerIdRef.current = e.pointerId
     dragStartRef.current = { x: e.clientX, y: e.clientY }
     suppressClickRef.current = false
@@ -964,6 +963,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     dragTimerRef.current = window.setTimeout(() => {
       if (!groupRef.current || pointerIdRef.current === null) return
 
+      clearPositionPersistTimer()
       groupRef.current.setPointerCapture(pointerIdRef.current)
       setIsPressing(false)
       draggingRef.current = true
