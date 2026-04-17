@@ -15,6 +15,7 @@ import {
   ToolsIcon,
   EyeIcon,
   SettingsIcon,
+  ThemeSystemIcon,
 } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { SHORTCUT_META } from "~constants/shortcuts"
@@ -1001,6 +1002,7 @@ export const COLLAPSED_BUTTON_DEFS: Record<
     labelKey: "showCollapsedThemeLabel",
     canToggle: true,
     isPanelOnly: false,
+    IconComponent: ThemeSystemIcon,
   },
   manualAnchor: {
     icon: "📍",
