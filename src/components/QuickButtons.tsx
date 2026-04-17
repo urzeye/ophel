@@ -122,6 +122,10 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const DRAG_THRESHOLD_PX = 6
   const DRAG_PADDING_PX = 8
   const POSITION_PERSIST_DEBOUNCE_MS = 220
+  const PROXIMITY_RADIUS_PX = 150
+  const PROXIMITY_RETAIN_MS = 3000
+  const ACTIVITY_PROTECT_MS = 4000
+  const LEAVE_WINDOW_RETAIN_MS = 1500
 
   // 工具菜单状态
   const groupRef = useRef<HTMLDivElement>(null)
@@ -170,8 +174,9 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   // 局部失焦状态 (用于液态折叠)
   const [isProximate, setIsProximate] = useState(true)
   const activityTimerRef = useRef<number | null>(null)
+  const isActiveRef = useRef(false)
 
-  const retainActivity = useCallback((durationMs: number = 3000) => {
+  const retainActivity = useCallback((durationMs: number = PROXIMITY_RETAIN_MS) => {
     setIsProximate(true)
     if (activityTimerRef.current !== null) {
       window.clearTimeout(activityTimerRef.current)
@@ -181,9 +186,20 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     }, durationMs)
   }, [])
 
+  // 仅缩短已有的收缩倒计时，不唤醒已收缩态（避免 mouseleave / visibilitychange 产生闪烁）
+  const shortenCountdown = useCallback((durationMs: number) => {
+    if (activityTimerRef.current !== null) {
+      window.clearTimeout(activityTimerRef.current)
+      activityTimerRef.current = window.setTimeout(() => {
+        setIsProximate(false)
+      }, durationMs)
+    }
+  }, [])
+
   // 监听组件活跃状态：包括拖拽、按压、面板展开、工具菜单打开
   useEffect(() => {
     const isActive = isDragging || isPressing || isPanelOpen || isToolsMenuOpen
+    isActiveRef.current = isActive
     if (isActive) {
       setIsProximate(true)
       if (activityTimerRef.current !== null) {
@@ -191,8 +207,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         activityTimerRef.current = null
       }
     } else {
-      // 从活跃变成不活跃时，给 4 秒的保护时间（尤其是刚拖拽完）
-      retainActivity(4000)
+      // 从活跃变成不活跃时，给保护时间（尤其是刚拖拽完）
+      retainActivity(ACTIVITY_PROTECT_MS)
     }
   }, [isDragging, isPressing, isPanelOpen, isToolsMenuOpen, retainActivity])
 
@@ -204,7 +220,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
       rafId = requestAnimationFrame(() => {
         rafId = null
-        if (!groupRef.current) return
+        if (!groupRef.current || isActiveRef.current) return
 
         const rect = groupRef.current.getBoundingClientRect()
         // 计算鼠标到组件包围盒边界的最小距离
@@ -212,24 +228,22 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         const dy = Math.max(rect.top - e.clientY, 0, e.clientY - rect.bottom)
         const distance = Math.sqrt(dx * dx + dy * dy)
 
-        const PROXIMITY_RADIUS = 150 // 150px 的引力场
-
-        if (distance <= PROXIMITY_RADIUS) {
-          // 在引力场内：保持唤醒并重置收缩倒计时 3s
-          retainActivity(3000)
+        if (distance <= PROXIMITY_RADIUS_PX) {
+          // 在引力场内：保持唤醒并重置收缩倒计时
+          retainActivity(PROXIMITY_RETAIN_MS)
         }
       })
     }
 
     const handleMouseLeaveWindow = () => {
-      // 鼠标离开当前窗口（页面）时，加速或维持收缩倒计时
-      retainActivity(1500)
+      // 鼠标离开窗口时，仅缩短已有倒计时，不唤醒已收缩态
+      shortenCountdown(LEAVE_WINDOW_RETAIN_MS)
     }
 
     const handleVisibilityChange = () => {
       // 标签页切换或窗口最小化时，mouseleave 不触发，用 visibilitychange 兜底
       if (document.hidden) {
-        retainActivity(1500)
+        shortenCountdown(LEAVE_WINDOW_RETAIN_MS)
       }
     }
 
@@ -237,8 +251,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     document.addEventListener("mouseleave", handleMouseLeaveWindow, { passive: true })
     document.addEventListener("visibilitychange", handleVisibilityChange)
 
-    // 初始化时维持 3 秒展开
-    retainActivity(3000)
+    // 初始化时维持展开
+    retainActivity(PROXIMITY_RETAIN_MS)
 
     return () => {
       document.removeEventListener("mousemove", handleMouseMove)
@@ -249,7 +263,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         window.clearTimeout(activityTimerRef.current)
       }
     }
-  }, [retainActivity])
+  }, [retainActivity, shortenCountdown])
 
   const isLiquidCollapsed =
     !isProximate && !_isHovered && !isToolsMenuOpen && !isPanelOpen && !isDragging && !isPressing
