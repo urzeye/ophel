@@ -24,4 +24,9 @@ body {
     --color-link-border: var(--gh-primary) !important;
     --color-qk-link-border: var(--gh-primary) !important;
 }
+
+.bg-pc-sidebar {
+    background-color: var(--color-canvas-subtle) !important;
+}
+
 `

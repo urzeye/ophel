@@ -4,7 +4,7 @@ export const deepseekNativeThemeCss = `
  * ============================================= */
 body, page, .ds-theme {
     /* 核心页面背景层 - 覆盖基础背景 */
-    --dsw-alias-bg-base: color-mix(in srgb, var(--gh-primary) 2%, var(--gh-bg)) !important;
+    // --dsw-alias-bg-base: color-mix(in srgb, var(--gh-primary) 2%, var(--gh-bg)) !important;
 
     --dsr-side-hover-bg: var(--gh-hover) !important;
 
@@ -15,6 +15,6 @@ body, page, .ds-theme {
 
 /* 侧边栏背景 */
 .b8812f16, .f3d18f6a {
-    background-color: var(--dsw-alias-bg-base) !important;
+    background-color: color-mix(in srgb, var(--gh-primary) 2%, var(--gh-bg)) !important;
 }
 `

@@ -4,11 +4,11 @@ export const kimiNativeThemeCss = `
  * ============================================= */
 :root {
   /* 1. 主体与大容器背景 */
-  --Bg-Primary: var(--gh-bg) !important;
-  --Bg-Tertiary: var(--gh-bg) !important;
-  --Bg-Quaternary: var(--gh-bg) !important;
-  --BgGp-Secondary: var(--gh-bg-secondary) !important;
-  --Always-White: var(--gh-bg) !important;
+  // --Bg-Primary: var(--gh-bg) !important;
+  // --Bg-Tertiary: var(--gh-bg) !important;
+  // --Bg-Quaternary: var(--gh-bg) !important;
+  // --BgGp-Secondary: var(--gh-bg-secondary) !important;
+  // --Always-White: var(--gh-bg) !important;
 
   /* 2. 灰色次级容器层 (底色画布、侧边栏、交互卡片) */
   --Bg-GroundPC: color-mix(in srgb, var(--gh-primary) 1%, var(--gh-bg)) !important;
@@ -33,6 +33,10 @@ export const kimiNativeThemeCss = `
   /* 代码块背景色 */
   --Fills-F1: var(--gh-bg-tertiary) !important;
 
+}
+
+.sidebar {
+  background-color: color-mix(in srgb, var(--gh-primary) 1%, var(--gh-bg)) !important;
 }
 
 `

@@ -3,10 +3,8 @@ export const chatgptNativeThemeCss = `
  * ChatGPT 站点原生主题适配器 (ChatGPT Theme Adapter)
  * ============================================= */
 :root, .dark, .light {
-  /* 1. 核心页面容器及背景：主背景也稍微混入一点主题色（2%），避免纯白色大面积太刺眼 */
-  --bg-primary: color-mix(in srgb, var(--gh-primary) 1%, var(--gh-bg)) !important;
-  --bg-secondary: color-mix(in srgb, var(--gh-primary) 2%, var(--gh-bg)) !important;
-  --bg-tertiary: color-mix(in srgb, var(--gh-primary) 3%, var(--gh-bg)) !important;
+  /* 1. 侧边栏容器 */
+  --sidebar-surface-primary: color-mix(in srgb, var(--gh-primary) 1%, var(--gh-bg)) !important;
 
   /* 悬浮层、气泡和弹窗 */
   --bg-elevated-primary: var(--gh-bg-secondary) !important;
@@ -51,6 +49,11 @@ export const chatgptNativeThemeCss = `
   --utility-scrollbar: var(--gh-border) !important;
   /* 行内代码块背景 */
   --gray-100: var(--gh-bg-tertiary) !important;
+}
+
+/* 用户提问 */
+.user-message-bubble-color {
+  background-color: color-mix(in srgb, var(--gh-primary) 10%, var(--gh-bg)) !important;
 }
 
 /* 按钮颜色 */
