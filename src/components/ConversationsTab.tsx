@@ -388,6 +388,10 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     return getConversationsInFolder(folderId).length
   }
 
+  // 渐进式加载：记录每个文件夹已显示的会话数量
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({})
+  const loadMoreSentinelRefs = useRef<Map<string, HTMLDivElement | null>>(new Map())
+
   // 同步
   const handleSync = useCallback(async () => {
     if (isConversationUnsupported) {
@@ -514,10 +518,6 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
   const hasFilters = searchQuery || filterPinned || filterTagIds.size > 0
 
-  // 渐进式加载：记录每个文件夹已显示的会话数量
-  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({})
-  const loadMoreSentinelRefs = useRef<Map<string, HTMLDivElement | null>>(new Map())
-
   // 文件夹展开/折叠时重置已显示数量
   const prevExpandedFolderId = useRef<string | null>(null)
   useEffect(() => {
@@ -526,7 +526,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
       if (expandedFolderId) {
         setVisibleCounts((prev) => ({
           ...prev,
-          [expandedFolderId]: PROGRESSIVE_BATCH_SIZE,
+          [expandedFolderId]: Math.max(prev[expandedFolderId] ?? 0, PROGRESSIVE_BATCH_SIZE),
         }))
       }
     }
