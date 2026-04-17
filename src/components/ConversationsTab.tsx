@@ -334,6 +334,12 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   // 缓存每个文件夹的会话列表（过滤并排序），避免重复计算
   const folderConversationsMap = useMemo(() => {
     const sidebarOrder = manager.getSidebarConversationOrder()
+    // 预处理为 Map<id, index>，排序比较时 O(1) 取位置
+    const orderMap = new Map<string, number>()
+    for (let i = 0; i < sidebarOrder.length; i++) {
+      orderMap.set(sidebarOrder[i], i)
+    }
+
     const byFolder = new Map<string, Conversation[]>()
     const allConvs = Object.values(conversations)
 
@@ -356,8 +362,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
       filtered.sort((a, b) => {
         if (a.pinned && !b.pinned) return -1
         if (!a.pinned && b.pinned) return 1
-        const indexA = sidebarOrder.indexOf(a.id)
-        const indexB = sidebarOrder.indexOf(b.id)
+        const indexA = orderMap.get(a.id) ?? -1
+        const indexB = orderMap.get(b.id) ?? -1
         if (indexA === -1 && indexB === -1) return (b.updatedAt || 0) - (a.updatedAt || 0)
         if (indexA === -1) return 1
         if (indexB === -1) return -1
@@ -367,6 +373,10 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     }
     return result
   }, [conversations, searchResult, manager])
+
+  // 保持最新引用，供 IntersectionObserver 回调读取文件夹总数
+  const folderConversationsMapRef = useRef(folderConversationsMap)
+  folderConversationsMapRef.current = folderConversationsMap
 
   // 快捷获取方法（从缓存中读取）
   const getConversationsInFolder = (folderId: string): Conversation[] => {
@@ -536,32 +546,36 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     }
   }, [searchResult])
 
-  // IntersectionObserver 监听加载更多哨兵
-  useEffect(() => {
-    const observer = new IntersectionObserver(
+  // IntersectionObserver 持久化引用，避免每次 visibleCounts 变化时重建
+  const observerRef = useRef<IntersectionObserver | null>(null)
+  if (!observerRef.current) {
+    observerRef.current = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
             const folderId = (entry.target as HTMLElement).dataset.folderId
             if (folderId) {
-              setVisibleCounts((prev) => ({
-                ...prev,
-                [folderId]: (prev[folderId] || PROGRESSIVE_BATCH_SIZE) + PROGRESSIVE_BATCH_SIZE,
-              }))
+              const total = folderConversationsMapRef.current.get(folderId)?.length || 0
+              setVisibleCounts((prev) => {
+                const current = prev[folderId] || PROGRESSIVE_BATCH_SIZE
+                const next = Math.min(current + PROGRESSIVE_BATCH_SIZE, total)
+                if (next === current) return prev // 无变化，不触发更新
+                return { ...prev, [folderId]: next }
+              })
+              // 已全部加载时提前 unobserve（哨兵将在下次渲染中因 hasMore=false 被移除）
+              observerRef.current?.unobserve(entry.target)
             }
           }
         }
       },
       { rootMargin: "100px" },
     )
+  }
 
-    const sentinels = loadMoreSentinelRefs.current
-    for (const [, el] of sentinels) {
-      if (el) observer.observe(el)
-    }
-
-    return () => observer.disconnect()
-  }, [visibleCounts, expandedFolderId, searchResult])
+  // 组件卸载时断开 observer
+  useEffect(() => {
+    return () => observerRef.current?.disconnect()
+  }, [])
 
   // 点击会话
   const handleConversationClick = useCallback(
@@ -984,7 +998,16 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                                 className="conversations-load-more-sentinel"
                                 data-folder-id={folder.id}
                                 ref={(el) => {
-                                  loadMoreSentinelRefs.current.set(folder.id, el)
+                                  const prev = loadMoreSentinelRefs.current.get(folder.id)
+                                  if (prev && prev !== el) {
+                                    observerRef.current?.unobserve(prev)
+                                  }
+                                  if (el) {
+                                    loadMoreSentinelRefs.current.set(folder.id, el)
+                                    observerRef.current?.observe(el)
+                                  } else {
+                                    loadMoreSentinelRefs.current.delete(folder.id)
+                                  }
                                 }}
                                 style={{
                                   height: "1px",
