@@ -61,7 +61,7 @@ export const useGlobalSearchKeyboard = ({
   keyboardSafeBottom,
 }: UseGlobalSearchKeyboardParams) => {
   // 用 ref 持有最新的事件处理函数，避免每次依赖变化都重新注册 listener
-  const handleSearchNavigationRef = useRef<(event: KeyboardEvent) => void>()
+  const handleSearchNavigationRef = useRef<((event: KeyboardEvent) => void) | undefined>(undefined)
   handleSearchNavigationRef.current = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
       event.preventDefault()
