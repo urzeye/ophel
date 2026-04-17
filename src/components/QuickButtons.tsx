@@ -167,63 +167,83 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const [_isHovered, setIsHovered] = useState(false)
   // groupRef moved to top
 
-  // 闲置状态 (用于液态折叠)
-  const [isIdle, setIsIdle] = useState(false)
-  const idleTimerRef = useRef<number | null>(null)
+  // 局部失焦状态 (用于液态折叠)
+  const [isProximate, setIsProximate] = useState(true)
+  const activityTimerRef = useRef<number | null>(null)
 
-  const resetIdleTimer = useCallback(() => {
-    setIsIdle(false)
-    if (idleTimerRef.current) {
-      window.clearTimeout(idleTimerRef.current)
+  const retainActivity = useCallback((durationMs: number = 3000) => {
+    setIsProximate(true)
+    if (activityTimerRef.current !== null) {
+      window.clearTimeout(activityTimerRef.current)
     }
-    idleTimerRef.current = window.setTimeout(() => {
-      setIsIdle(true)
-    }, 5000)
+    activityTimerRef.current = window.setTimeout(() => {
+      setIsProximate(false)
+    }, durationMs)
   }, [])
 
+  // 监听组件活跃状态：包括拖拽、按压、面板展开、工具菜单打开
   useEffect(() => {
-    const handleActivity = (e: MouseEvent | KeyboardEvent) => {
-      if (e.type === "keydown") {
-        resetIdleTimer()
-        return
+    const isActive = isDragging || isPressing || isPanelOpen || isToolsMenuOpen
+    if (isActive) {
+      setIsProximate(true)
+      if (activityTimerRef.current !== null) {
+        window.clearTimeout(activityTimerRef.current)
+        activityTimerRef.current = null
       }
+    } else {
+      // 从活跃变成不活跃时，给 4 秒的保护时间（尤其是刚拖拽完）
+      retainActivity(4000)
+    }
+  }, [isDragging, isPressing, isPanelOpen, isToolsMenuOpen, retainActivity])
 
-      // Proximity Check / 引力场检测
-      const mouseEvent = e as MouseEvent
-      if (groupRef.current) {
+  useEffect(() => {
+    let rafId: number | null = null
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (rafId !== null) return
+
+      rafId = requestAnimationFrame(() => {
+        rafId = null
+        if (!groupRef.current) return
+
         const rect = groupRef.current.getBoundingClientRect()
         // 计算鼠标到组件包围盒边界的最小距离
-        const dx = Math.max(rect.left - mouseEvent.clientX, 0, mouseEvent.clientX - rect.right)
-        const dy = Math.max(rect.top - mouseEvent.clientY, 0, mouseEvent.clientY - rect.bottom)
+        const dx = Math.max(rect.left - e.clientX, 0, e.clientX - rect.right)
+        const dy = Math.max(rect.top - e.clientY, 0, e.clientY - rect.bottom)
         const distance = Math.sqrt(dx * dx + dy * dy)
 
-        const PROXIMITY_RADIUS = 150 // 改为 150px 的引力场
+        const PROXIMITY_RADIUS = 150 // 150px 的引力场
 
         if (distance <= PROXIMITY_RADIUS) {
-          // 在 150px 引力场内，瞬间唤醒并重置倒计时
-          resetIdleTimer()
-        } else {
-          // 在引力场外：我们甚至可以不重置 idleTimer，这样如果一直在别处读文章，5秒后它照样收缩。
-          // 或者让它立即加速收缩（如果需要），这里我们保守一点，只在刚移出时维持正常倒计时，但不阻止它进入 Idle。
+          // 在引力场内：保持唤醒并重置收缩倒计时 3s
+          retainActivity(3000)
         }
-      } else {
-        resetIdleTimer()
-      }
+      })
     }
 
-    document.addEventListener("mousemove", handleActivity, { passive: true })
-    document.addEventListener("keydown", handleActivity, { passive: true })
-    resetIdleTimer() // 初始唤醒
+    const handleMouseLeaveWindow = () => {
+      // 鼠标离开当前窗口（页面）时，加速或维持收缩倒计时
+      retainActivity(1500)
+    }
+
+    document.addEventListener("mousemove", handleMouseMove, { passive: true })
+    document.addEventListener("mouseleave", handleMouseLeaveWindow, { passive: true })
+
+    // 初始化时维持 3 秒展开
+    retainActivity(3000)
 
     return () => {
-      document.removeEventListener("mousemove", handleActivity)
-      document.removeEventListener("keydown", handleActivity)
-      if (idleTimerRef.current) window.clearTimeout(idleTimerRef.current)
+      document.removeEventListener("mousemove", handleMouseMove)
+      document.removeEventListener("mouseleave", handleMouseLeaveWindow)
+      if (rafId !== null) cancelAnimationFrame(rafId)
+      if (activityTimerRef.current !== null) {
+        window.clearTimeout(activityTimerRef.current)
+      }
     }
-  }, [resetIdleTimer])
+  }, [retainActivity])
 
   const isLiquidCollapsed =
-    isIdle && !_isHovered && !isToolsMenuOpen && !isPanelOpen && !isDragging && !isPressing
+    !isProximate && !_isHovered && !isToolsMenuOpen && !isPanelOpen && !isDragging && !isPressing
 
   // 跟踪是否处于 Flutter 模式（图文并茂）
   const [_isFlutterMode, setIsFlutterMode] = useState(false)
