@@ -170,7 +170,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   // 悬浮隐藏状态
   const [_isHovered, setIsHovered] = useState(false)
-  const [_hasFocusWithin, setHasFocusWithin] = useState(false)
   // groupRef moved to top
 
   // 局部失焦状态 (用于液态折叠)
@@ -268,13 +267,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   }, [retainActivity, shortenCountdown])
 
   const isLiquidCollapsed =
-    !isProximate &&
-    !_isHovered &&
-    !_hasFocusWithin &&
-    !isToolsMenuOpen &&
-    !isPanelOpen &&
-    !isDragging &&
-    !isPressing
+    !isProximate && !_isHovered && !isToolsMenuOpen && !isPanelOpen && !isDragging && !isPressing
 
   // 用 ref 追踪 isLiquidCollapsed，避免 ResizeObserver 的 useLayoutEffect 因它变化而反复 teardown/recreate
   const isLiquidCollapsedRef = useRef(isLiquidCollapsed)
@@ -1107,8 +1100,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         onPointerCancel={handlePointerUp}
         onPointerLeave={handlePointerLeave}
         onClickCapture={handleClickCapture}
-        onFocusCapture={() => setHasFocusWithin(true)}
-        onBlurCapture={() => setHasFocusWithin(false)}
         style={{
           position: "fixed",
           top: resolvedGroupPosition
