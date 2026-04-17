@@ -548,8 +548,11 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
   // IntersectionObserver 持久化引用，避免每次 visibleCounts 变化时重建
   const observerRef = useRef<IntersectionObserver | null>(null)
-  if (!observerRef.current) {
-    observerRef.current = new IntersectionObserver(
+
+  // 在 useEffect 中创建 observer，兼容 React 严格模式/并发渲染，并做特性检测
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return
+    const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
@@ -563,18 +566,21 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                 return { ...prev, [folderId]: next }
               })
               // 已全部加载时提前 unobserve（哨兵将在下次渲染中因 hasMore=false 被移除）
-              observerRef.current?.unobserve(entry.target)
+              observer.unobserve(entry.target)
             }
           }
         }
       },
       { rootMargin: "100px" },
     )
-  }
+    observerRef.current = observer
 
-  // 组件卸载时断开 observer
-  useEffect(() => {
-    return () => observerRef.current?.disconnect()
+    // 对已挂载的哨兵元素补做 observe
+    for (const [, el] of loadMoreSentinelRefs.current) {
+      if (el) observer.observe(el)
+    }
+
+    return () => observer.disconnect()
   }, [])
 
   // 点击会话
