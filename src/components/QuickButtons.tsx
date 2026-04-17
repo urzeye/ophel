@@ -64,6 +64,14 @@ const readViewportSize = (): ViewportSize => ({
   height: window.visualViewport?.height ?? window.innerHeight,
 })
 
+const areGroupPositionsEqual = (
+  left: GroupPosition | null | undefined,
+  right: GroupPosition | null | undefined,
+): boolean => {
+  if (!left || !right) return left === right
+  return left.xRatio === right.xRatio && left.yRatio === right.yRatio
+}
+
 export const QuickButtons: React.FC<QuickButtonsProps> = ({
   isPanelOpen,
   onPanelToggle,
@@ -137,6 +145,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const [isDragging, setIsDragging] = useState(false)
   const [isPressing, setIsPressing] = useState(false)
   const groupPositionRef = useRef<GroupPosition | null>(persistedGroupPosition)
+  const lastPersistedGroupPositionRef = useRef<GroupPosition | null>(persistedGroupPosition)
   const groupMetricsRef = useRef<GroupMetrics>({ width: 0, height: 0 })
   const [defaultTopPx, setDefaultTopPx] = useState<number | null>(null)
   const defaultTopPxRef = useRef<number | null>(null)
@@ -223,7 +232,13 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const abortLoadingRef = useRef(false)
 
   useEffect(() => {
-    if (draggingRef.current) return
+    const persistedChanged = !areGroupPositionsEqual(
+      lastPersistedGroupPositionRef.current,
+      persistedGroupPosition,
+    )
+    lastPersistedGroupPositionRef.current = persistedGroupPosition
+
+    if (!persistedChanged || draggingRef.current) return
     groupPositionRef.current = persistedGroupPosition
     setGroupPosition(persistedGroupPosition)
   }, [persistedGroupPosition])
@@ -349,6 +364,11 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       ) {
         groupPositionRef.current = nextPosition
         setGroupPosition(nextPosition)
+
+        if (!areGroupPositionsEqual(lastPersistedGroupPositionRef.current, nextPosition)) {
+          lastPersistedGroupPositionRef.current = nextPosition
+          updateNestedSetting("quickButtons", "position", nextPosition)
+        }
       }
     }
 
@@ -363,7 +383,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return () => {
       resizeObserver.disconnect()
     }
-  }, [clampPixelGroupPosition, toLogicalGroupPosition])
+  }, [clampPixelGroupPosition, toLogicalGroupPosition, updateNestedSetting])
 
   // 滚动到顶部（支持图文并茂模式）
   const scrollToTop = useCallback(async () => {
