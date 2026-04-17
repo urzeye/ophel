@@ -32,7 +32,21 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    "Apple SD Gothic Neo",
+    "Malgun Gothic",
+    "PingFang SC",
+    "Microsoft YaHei",
+    "Apple Color Emoji",
+    "Segoe UI Emoji",
+    "Segoe UI Symbol",
+    sans-serif;
   background: var(--popup-bg);
   color: var(--popup-text);
   width: 320px;

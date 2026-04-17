@@ -355,7 +355,7 @@ export class LayoutManager {
           display: inline-flex;
           align-items: center;
           gap: 12px;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "PingFang SC", "Microsoft YaHei", sans-serif;
           font-size: 14px;
           font-weight: 500;
           line-height: 1;

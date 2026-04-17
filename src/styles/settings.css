@@ -11,7 +11,21 @@
   height: 100vh;
   background: var(--gh-bg, #f9fafb);
   color: var(--gh-text, #374151);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    "Apple SD Gothic Neo",
+    "Malgun Gothic",
+    "PingFang SC",
+    "Microsoft YaHei",
+    "Apple Color Emoji",
+    "Segoe UI Emoji",
+    "Segoe UI Symbol",
+    sans-serif;
 }
 
 /* 侧边栏 */

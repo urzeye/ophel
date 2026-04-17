@@ -121,7 +121,7 @@ export const DisclaimerModal: React.FC = () => {
           align-items: center;
           justify-content: center;
           z-index: 99999;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'PingFang SC', 'Microsoft YaHei', sans-serif;
           pointer-events: auto;
         }
 
