@@ -91,6 +91,23 @@ const getGlobalSearchHighlightRangesFromIndexes = (
 
 export type GlobalSearchHighlightMatchType = "none" | "exact" | "fuzzy"
 
+// 简易缓存：同一渲染周期内相同参数不重复计算
+const highlightCache = new Map<
+  string,
+  Array<{ text: string; matchType: GlobalSearchHighlightMatchType }>
+>()
+let highlightCacheSize = 0
+const HIGHLIGHT_CACHE_MAX = 500
+
+const getHighlightCacheKey = (value: string, tokens: string[], fuzzyIndexes?: number[]): string => {
+  return `${value}\0${tokens.join("\0")}\0${fuzzyIndexes ? fuzzyIndexes.join(",") : ""}`
+}
+
+export const clearGlobalSearchHighlightCache = () => {
+  highlightCache.clear()
+  highlightCacheSize = 0
+}
+
 export const splitGlobalSearchHighlightSegments = (
   value: string,
   tokens: string[],
@@ -100,6 +117,27 @@ export const splitGlobalSearchHighlightSegments = (
     return []
   }
 
+  const cacheKey = getHighlightCacheKey(value, tokens, fuzzyIndexes)
+  const cached = highlightCache.get(cacheKey)
+  if (cached) return cached
+
+  const result = splitGlobalSearchHighlightSegmentsUncached(value, tokens, fuzzyIndexes)
+
+  if (highlightCacheSize >= HIGHLIGHT_CACHE_MAX) {
+    highlightCache.clear()
+    highlightCacheSize = 0
+  }
+  highlightCache.set(cacheKey, result)
+  highlightCacheSize++
+
+  return result
+}
+
+const splitGlobalSearchHighlightSegmentsUncached = (
+  value: string,
+  tokens: string[],
+  fuzzyIndexes?: number[],
+): Array<{ text: string; matchType: GlobalSearchHighlightMatchType }> => {
   const exactRanges = getGlobalSearchHighlightRanges(value, tokens)
   const fuzzyRanges = getGlobalSearchHighlightRangesFromIndexes(value, fuzzyIndexes)
 

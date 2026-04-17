@@ -40,14 +40,9 @@ export const useGlobalSearchPreview = ({
         return null
       }
 
-      const candidates = container.querySelectorAll<HTMLElement>("[data-global-search-item-id]")
-      for (const candidate of candidates) {
-        if (candidate.dataset.globalSearchItemId === itemId) {
-          return candidate
-        }
-      }
-
-      return null
+      return container.querySelector<HTMLElement>(
+        `[data-global-search-item-id="${CSS.escape(itemId)}"]`,
+      )
     },
     [settingsSearchResultsRef],
   )
