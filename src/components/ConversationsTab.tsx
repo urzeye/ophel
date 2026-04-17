@@ -182,7 +182,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   // Refs
   const contentRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const tagFilterMenuRef = useRef<HTMLDivElement>(null)
   const tagFilterBtnRef = useRef<HTMLDivElement>(null)
 

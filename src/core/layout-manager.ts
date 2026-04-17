@@ -44,7 +44,7 @@ export class LayoutManager {
   private cleanModeEnabled = false
 
   private processedShadowRoots = new WeakSet<ShadowRoot>()
-  private shadowCheckInterval: NodeJS.Timeout | null = null
+  private shadowCheckInterval: ReturnType<typeof setTimeout> | null = null
 
   constructor(siteAdapter: SiteAdapter, pageWidthConfig: PageWidthConfig) {
     this.siteAdapter = siteAdapter

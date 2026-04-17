@@ -952,9 +952,9 @@ export const App = () => {
   const globalSearchSyntaxHelpPopoverRef = useRef<HTMLDivElement | null>(null)
   const settingsSearchResultsRef = useRef<HTMLDivElement | null>(null)
   const promptPreviewContainerRef = useRef<HTMLDivElement | null>(null)
-  const searchInputDebounceTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const searchInputDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const settingsSearchWheelFreezeUntilRef = useRef(0)
-  const globalSearchNudgeHideTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const globalSearchNudgeHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const globalSearchOpenSourceRef = useRef<GlobalSearchOpenSource>("ui")
   const lastShiftPressedAtRef = useRef(0)
   const [outlineSearchVersion, setOutlineSearchVersion] = useState(0)
@@ -991,9 +991,9 @@ export const App = () => {
   // 是否有活跃的交互（如打开了菜单/对话框），此时即使鼠标移出也不隐藏面板
   // 使用 useRef 避免闭包陷阱和不必要的重渲染
   const isInteractionActiveRef = useRef(false)
-  const hideTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // 快捷键触发的面板显示延迟缩回计时器
-  const shortcutPeekTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const shortcutPeekTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // 使用 ref 跟踪设置模态框状态，避免闭包捕获过期值
   const isSettingsOpenRef = useRef(false)
   // 标记全局搜索是否由设置页切换而来（用于 Esc 返回）

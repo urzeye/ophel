@@ -79,7 +79,7 @@ export interface BackupFile {
  */
 export class WebDAVSyncManager {
   private config: WebDAVConfig = DEFAULT_WEBDAV_CONFIG
-  private autoSyncTimer: NodeJS.Timeout | null = null
+  private autoSyncTimer: ReturnType<typeof setTimeout> | null = null
 
   constructor() {
     this.loadConfig()

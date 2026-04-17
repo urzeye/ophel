@@ -53,7 +53,7 @@ export class OutlineManager {
   private minLevel: number = 1
   private treeKey: string = ""
   private listeners: (() => void)[] = []
-  private updateIntervalId: NodeJS.Timeout | null = null
+  private updateIntervalId: ReturnType<typeof setTimeout> | null = null
   private isAutoUpdating = false
 
   // UI State
@@ -79,7 +79,7 @@ export class OutlineManager {
 
   // 兜底方案：基于内容变化检测
   private lastTreeChangeTime: number = 0
-  private fallbackRefreshTimer: NodeJS.Timeout | null = null
+  private fallbackRefreshTimer: ReturnType<typeof setTimeout> | null = null
   private static readonly FALLBACK_DELAY = 3000 // 3秒无变化后触发强制刷新
 
   // Tab 激活状态（只有激活时才监听）
@@ -156,7 +156,7 @@ export class OutlineManager {
 
   // State for Auto Update
   private observer: MutationObserver | null = null
-  private updateDebounceTimer: NodeJS.Timeout | null = null
+  private updateDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
   private handleMessage(event: MessageEvent) {
     if (event.source !== window) return

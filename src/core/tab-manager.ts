@@ -16,7 +16,7 @@ export class TabManager {
   private adapter: SiteAdapter
   private settings: Settings["tab"]
   private isRunning = false
-  private intervalId: NodeJS.Timeout | null = null
+  private intervalId: ReturnType<typeof setTimeout> | null = null
   private titleObserver: MutationObserver | null = null
   private expectedTitle: string | null = null
   private isApplyingManagedTitle = false

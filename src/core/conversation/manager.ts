@@ -59,8 +59,8 @@ export class ConversationManager {
   private sidebarObserverStop: (() => void) | null = null
   private observerContainer: Node | null = null
   private titleWatcher: any = null // DOMToolkit watcher instance
-  private pollInterval: NodeJS.Timeout | null = null
-  private geminiMigrationTimer: NodeJS.Timeout | null = null
+  private pollInterval: ReturnType<typeof setTimeout> | null = null
+  private geminiMigrationTimer: ReturnType<typeof setTimeout> | null = null
   private geminiMigrationRetryCount = 0
 
   // Settings

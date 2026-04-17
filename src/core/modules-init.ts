@@ -80,7 +80,7 @@ let modules: ModuleInstances = {
   usageCounterManager: null,
 }
 
-let readingHistoryAutoStartTimer: NodeJS.Timeout | null = null
+let readingHistoryAutoStartTimer: ReturnType<typeof setTimeout> | null = null
 let assistantMermaidInitPromise: Promise<void> | null = null
 
 function isAssistantMermaidEnabled(settings: Settings): boolean {

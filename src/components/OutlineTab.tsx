@@ -613,10 +613,10 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
 
     let scrollContainer: HTMLElement | null = null
     let retryCount = 0
-    let retryTimer: NodeJS.Timeout
+    let retryTimer: ReturnType<typeof setTimeout>
     let lastScrollHeight = 0
     let resizeObserver: ResizeObserver | null = null
-    let staleTimer: NodeJS.Timeout | null = null
+    let staleTimer: ReturnType<typeof setTimeout> | null = null
     let idleHandle: number | null = null
     const staleDebounceMs = 300
     const staleIdleTimeoutMs = 500

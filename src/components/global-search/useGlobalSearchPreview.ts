@@ -15,8 +15,8 @@ export const useGlobalSearchPreview = ({
 }: UseGlobalSearchPreviewParams) => {
   const [globalSearchPromptPreview, setGlobalSearchPromptPreview] =
     useState<GlobalSearchPromptPreviewState | null>(null)
-  const promptPreviewTimerRef = useRef<NodeJS.Timeout | null>(null)
-  const promptPreviewHideTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const promptPreviewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const promptPreviewHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const keyboardPreviewTargetRef = useRef<string | null>(null)
 
   const clearPromptPreviewTimer = useCallback(() => {

@@ -19,6 +19,7 @@
 ### 🐛 问题修复
 
 - **修复韩文显示为方块**：补充面板字体栈中缺失的韩文/CJK 字体回退，解决油猴脚本 Shadow DOM 内韩文字符无法正常渲染的问题。(#373)
+- **修复 TypeScript 类型错误**：将 `NodeJS.Timeout` 替换为 `ReturnType<typeof setTimeout>`，消除浏览器环境下的 18 处命名空间报错。
 
 ## [1.0.38]
 
