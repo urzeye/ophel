@@ -12,6 +12,7 @@
   background: var(--gh-bg, #f9fafb);
   color: var(--gh-text, #374151);
   font-family:
+    "Inter",
     system-ui,
     -apple-system,
     BlinkMacSystemFont,

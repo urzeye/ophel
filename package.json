@@ -133,6 +133,7 @@
       {
         "resources": [
           "assets/icon.png",
+          "assets/fonts/*",
           "assets/assistant-mermaid-runner.js",
           "assets/assistant-mermaid-vendor.js",
           "assets/notification-sounds/*",

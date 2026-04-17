@@ -40,7 +40,7 @@ export function showToast(message: string, duration = 2000, options: ToastOption
         opacity: 0 !important;
         transform: translateY(-16px) translateX(-50%) scale(0.96) !important;
         transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "PingFang SC", "Microsoft YaHei", sans-serif !important;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "PingFang SC", "Microsoft YaHei", sans-serif !important;
         letter-spacing: 0.2px !important;
         backdrop-filter: blur(24px) saturate(180%) !important;
         -webkit-backdrop-filter: blur(24px) saturate(180%) !important;

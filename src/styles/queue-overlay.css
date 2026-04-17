@@ -21,6 +21,7 @@
   transition: all 0.2s ease;
   font-family: var(
     --gh-font-family,
+    "Inter",
     system-ui,
     -apple-system,
     BlinkMacSystemFont,
@@ -76,6 +77,7 @@
   overflow: hidden;
   font-family: var(
     --gh-font-family,
+    "Inter",
     system-ui,
     -apple-system,
     BlinkMacSystemFont,
