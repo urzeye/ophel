@@ -152,13 +152,15 @@ export interface Settings {
 
   // 面板行为
   panel: {
-    defaultOpen: boolean
-    autoHide: boolean
-    edgeSnap: boolean
+    panelMode: "edge-snap" | "floating" // 面板模式
+    lastPanelOpen?: boolean // 悬浮模式下记住上次面板开关状态
+    defaultOpen?: boolean // 🔧 弃用：保留以兼容旧数据
+    autoHide?: boolean // 🔧 弃用：保留以兼容旧数据
+    edgeSnap?: boolean // 🔧 弃用：保留以兼容旧数据
     preventAutoScroll: boolean
     defaultPosition: "left" | "right" // 默认位置
     defaultEdgeDistance: number // 默认边距 (0-400, 默认 25)
-    edgeSnapThreshold: number // 吸附触发距离 (10-100, 默认 18)
+    edgeSnapThreshold: number // 吸附触发距离 (10-100, 默认 30)
     height: number // 面板高度 (50-100, 默认 85, 单位 vh)
     width: number // 面板宽度 (200-600, 默认 320, 单位 px)
   }
@@ -359,13 +361,15 @@ export const DEFAULT_SETTINGS: Settings = {
   hasAgreedToTerms: false,
 
   panel: {
-    defaultOpen: true,
-    autoHide: false,
-    edgeSnap: true,
+    panelMode: "edge-snap",
+    lastPanelOpen: true, // 悬浮模式下记住上次状态
+    defaultOpen: true, // 兼容保留
+    autoHide: false, // 兼容保留
+    edgeSnap: true, // 兼容保留
     preventAutoScroll: false,
     defaultPosition: "right",
     defaultEdgeDistance: 25,
-    edgeSnapThreshold: 18,
+    edgeSnapThreshold: 30,
     height: 85,
     width: 320,
   },

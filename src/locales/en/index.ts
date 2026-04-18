@@ -651,7 +651,12 @@ export const en = {
   collapsedButtonsOrderDesc: "Adjust the display order of collapsed panel buttons",
   preventAutoScrollLabel: "Prevent auto-scroll",
   preventAutoScrollDesc: "Stop page from auto-scrolling to bottom during AI generation",
-  // Panel Settings
+  // Panel Mode
+  panelModeLabel: "Panel Mode",
+  panelModeDesc: "Control panel display and hide behavior",
+  panelModeEdgeSnap: "Auto Snap",
+  panelModeFloating: "Floating",
+  // Panel Settings (legacy)
   defaultPanelStateLabel: "Default Expand Panel",
   defaultPanelStateDesc: "Keep panel expanded after page refresh",
   autoHidePanelLabel: "Collapse on Click Outside",

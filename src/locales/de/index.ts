@@ -588,7 +588,7 @@ export const de = {
   outlineFollowModeLabel: "Folgemodus",
   outlineFollowCurrent: "Position folgen",
   outlineFollowLatest: "Letztem folgen",
-  outlineFollowManual: "Manuell",
+  outlineFollowManual: "Schwebend (Standard geschlossen)",
   outlineFollowCurrentDesc: "Hervorheben, wo Sie lesen",
   outlineFollowLatestDesc: "Nur bei neuen Nachrichten scrollen",
   outlineFollowManualDesc: "Kein Auto-Scroll, Sie steuern",
@@ -614,6 +614,11 @@ export const de = {
   collapsedButtonsOrderDesc: "Button-Reihenfolge in Sidebar",
   preventAutoScrollLabel: "Auto-Scroll verhindern",
   preventAutoScrollDesc: "Nicht automatisch nach unten springen",
+  // Panel Mode
+  panelModeLabel: "Panel-Modus",
+  panelModeDesc: "Steuerung des Ein-/Ausblendeverhaltens",
+  panelModeEdgeSnap: "Auto-Snap",
+  panelModeFloating: "Schwebend",
   // Panel Settings
   defaultPanelStateLabel: "Standardmäßig offen",
   defaultPanelStateDesc: "Panel beim Laden ausgeklappt",

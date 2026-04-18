@@ -631,6 +631,11 @@ export const ja = {
   collapsedButtonsOrderDesc: "サイドバーに表示されるボタンの順序を調整",
   preventAutoScrollLabel: "自動スクロールを防止",
   preventAutoScrollDesc: "AIの生成中に、ページが勝手に一番下へ移動するのを防ぎます",
+  // Panel Mode
+  panelModeLabel: "パネルモード",
+  panelModeDesc: "パネルの表示・非表示の制御方法",
+  panelModeEdgeSnap: "自動スナップ",
+  panelModeFloating: "フローティング",
   // Panel Settings
   defaultPanelStateLabel: "デフォルトで展開",
   defaultPanelStateDesc: "ページ読み込み時にパネルを展開した状態にします",

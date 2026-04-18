@@ -638,7 +638,7 @@ export const zhCN = {
   outlineFollowModeLabel: "大纲跟随模式",
   outlineFollowCurrent: "跟随当前位置",
   outlineFollowLatest: "跟随最新消息",
-  outlineFollowManual: "手动控制",
+  outlineFollowManual: "悬浮 (默认收起)",
   outlineFollowCurrentDesc: "滚动页面时高亮当前大纲项",
   outlineFollowLatestDesc: "自动滚动到最新消息",
   outlineFollowManualDesc: "不自动滚动，用户手动控制",
@@ -664,7 +664,13 @@ export const zhCN = {
   preventAutoScrollLabel: "防止自动滚动",
   preventAutoScrollDesc: "当 AI 生成长内容时，阻止页面自动滚动到底部，方便阅读上文",
 
-  // 界面排版开关
+  // 面板模式
+  panelModeLabel: "面板模式",
+  panelModeDesc: "控制面板的显示和隐藏行为",
+  panelModeEdgeSnap: "自动吸附",
+  panelModeFloating: "悬浮",
+
+  // 界面排版开关（旧字段保留兼容）
   defaultPanelStateLabel: "默认展开面板",
   defaultPanelStateDesc: "刷新页面后面板默认保持展开状态",
   autoHidePanelLabel: "点击外部收起",

@@ -493,7 +493,7 @@ export const zhTW = {
   outlineFollowModeLabel: "大綱跟隨模式",
   outlineFollowCurrent: "跟隨當前位置",
   outlineFollowLatest: "跟隨最新訊息",
-  outlineFollowManual: "手動控制",
+  outlineFollowManual: "懸浮 (預設收起)",
   outlineFollowCurrentDesc: "滾動頁面時高亮當前大綱項",
   outlineFollowLatestDesc: "自動滾動到最新訊息",
   outlineFollowManualDesc: "不自動滾動，用戶手動控制",
@@ -518,6 +518,12 @@ export const zhTW = {
   collapsedButtonsOrderDesc: "調整折疊面板按鈕的顯示順序",
   preventAutoScrollLabel: "防止自動滾動",
   preventAutoScrollDesc: "當 AI 生成長內容時，阻止頁面自動滾動到底部，方便閱讀上文",
+
+  // 面板模式
+  panelModeLabel: "面板模式",
+  panelModeDesc: "控制面板的顯示和隱藏行為",
+  panelModeEdgeSnap: "自動吸附",
+  panelModeFloating: "懸浮",
 
   // 介面排版開關
   defaultPanelStateLabel: "預設展開面板",

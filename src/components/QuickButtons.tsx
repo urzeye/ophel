@@ -686,8 +686,10 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     const isActive = isFloatingToolbarBtn ? isToolsMenuOpen : isZenModeActive
 
     // panel-only 按钮：面板展开时隐藏
+    // hideWhenPanelOpen 按钮：面板展开时隐藏（功能已在面板内提供）
     // 禁用的按钮：永远隐藏
-    const shouldHide = isDisabled || (isPanelOnly && isPanelOpen)
+    const shouldHide =
+      isDisabled || (isPanelOnly && isPanelOpen) || (def.hideWhenPanelOpen && isPanelOpen)
     if (shouldHide) return null
 
     // 优先使用 IconComponent，否则用 emoji
@@ -781,6 +783,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         if (!isEnabled) return null
 
         if (def.isPanelOnly && isPanelOpen) return null
+        if (def.hideWhenPanelOpen && isPanelOpen) return null
 
         return {
           id: btnConfig.id,

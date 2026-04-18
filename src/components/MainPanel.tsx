@@ -105,7 +105,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   // 拖拽功能（高性能版本：直接 DOM 操作，不触发 React 渲染）
   const { panelRef, headerRef } = useDraggable({
-    edgeSnapHide: currentSettings.panel?.edgeSnap,
+    edgeSnapHide: currentSettings.panel?.panelMode === "edge-snap",
     edgeSnapState, // 传递当前吸附状态
     snapThreshold: currentSettings.panel?.edgeSnapThreshold ?? 30,
     onEdgeSnap,

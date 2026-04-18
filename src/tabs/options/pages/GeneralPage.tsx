@@ -105,7 +105,6 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
   const prerequisiteToastTemplate = t("enablePrerequisiteToast") || "请先开启「{setting}」"
   const showPrerequisiteToast = (label: string) =>
     showToastThrottled(prerequisiteToastTemplate.replace("{setting}", label), 2000, {}, 1500, label)
-  const edgeSnapLabel = t("edgeSnapHideLabel") || "边缘自动吸附"
 
   // 拖拽状态
   const [draggedItem, setDraggedItem] = useState<{ type: "tab" | "button"; index: number } | null>(
@@ -223,15 +222,48 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
       {/* ========== 面板 Tab ========== */}
       {activeTab === "panel" && (
         <SettingCard title={t("panelSettings") || "面板设置"}>
-          <ToggleRow
-            label={t("defaultPanelStateLabel") || "默认显示面板"}
-            description={t("defaultPanelStateDesc") || "页面加载后自动展开面板"}
-            settingId="panel-default-open"
-            checked={settings.panel?.defaultOpen ?? false}
-            onChange={() =>
-              updateNestedSetting("panel", "defaultOpen", !settings.panel?.defaultOpen)
-            }
-          />
+          {/* 面板模式 */}
+          <SettingRow
+            label={t("panelModeLabel") || "面板模式"}
+            description={t("panelModeDesc") || "控制面板的显示和隐藏行为"}
+            settingId="panel-mode">
+            <div
+              style={{
+                display: "inline-flex",
+                borderRadius: "6px",
+                overflow: "hidden",
+                border: "1px solid var(--gh-border, #e5e7eb)",
+              }}>
+              {(
+                [
+                  { value: "edge-snap", label: t("panelModeEdgeSnap") || "自动吸附" },
+                  { value: "floating", label: t("panelModeFloating") || "悬浮" },
+                ] as const
+              ).map((option, index) => (
+                <button
+                  key={option.value}
+                  onClick={() => updateNestedSetting("panel", "panelMode", option.value)}
+                  style={{
+                    padding: "4px 12px",
+                    fontSize: "13px",
+                    border: "none",
+                    borderLeft: index > 0 ? "1px solid var(--gh-border, #e5e7eb)" : "none",
+                    cursor: "pointer",
+                    background:
+                      (settings.panel?.panelMode ?? "edge-snap") === option.value
+                        ? "var(--gh-primary, #4285f4)"
+                        : "var(--gh-bg, #fff)",
+                    color:
+                      (settings.panel?.panelMode ?? "edge-snap") === option.value
+                        ? "#fff"
+                        : "var(--gh-text-secondary, #6b7280)",
+                    transition: "all 0.2s",
+                  }}>
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </SettingRow>
 
           {/* 默认位置 */}
           <SettingRow
@@ -347,48 +379,27 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
             />
           </SettingRow>
 
-          <ToggleRow
-            label={t("edgeSnapHideLabel") || "边缘自动吸附"}
-            description={t("edgeSnapHideDesc") || "拖动面板到屏幕边缘时自动吸附，悬停显示"}
-            settingId="panel-edge-snap"
-            checked={settings.panel?.edgeSnap ?? false}
-            onChange={() => updateNestedSetting("panel", "edgeSnap", !settings.panel?.edgeSnap)}
-          />
-
-          {/* 吸附触发距离 */}
-          <SettingRow
-            label={t("edgeSnapThresholdLabel") || "吸附触发距离"}
-            description={t("edgeSnapThresholdDesc") || "拖拽面板到边缘多近时触发吸附"}
-            settingId="panel-edge-snap-threshold"
-            disabled={!settings.panel?.edgeSnap}
-            onDisabledClick={() => showPrerequisiteToast(edgeSnapLabel)}>
-            <Slider
-              value={settings.panel?.edgeSnapThreshold ?? 18}
-              onChange={handleSnapThresholdChange}
-              onPreviewChange={handleSnapThresholdPreview}
-              onCancelPreview={clearPreviewSettings}
-              min={0}
-              max={400}
-              step={2}
-              unit="px"
-              defaultValue={18}
-              disabled={!settings.panel?.edgeSnap}
-              formatValue={(value) => `${value}px`}
-              ariaLabel={t("edgeSnapThresholdLabel") || "吸附触发距离"}
-            />
-          </SettingRow>
-
-          <ToggleRow
-            label={t("autoHidePanelLabel") || "点击外部收起"}
-            description={
-              settings.panel?.edgeSnap
-                ? t("autoHidePanelDescEdgeSnap") || "点击面板外部区域时自动缩回边缘"
-                : t("autoHidePanelDesc") || "点击面板外部区域时自动收起为悬浮球"
-            }
-            settingId="panel-auto-hide"
-            checked={settings.panel?.autoHide ?? false}
-            onChange={() => updateNestedSetting("panel", "autoHide", !settings.panel?.autoHide)}
-          />
+          {/* 吸附触发距离 - 仅在自动吸附模式下显示 */}
+          {(settings.panel?.panelMode ?? "edge-snap") === "edge-snap" && (
+            <SettingRow
+              label={t("edgeSnapThresholdLabel") || "吸附触发距离"}
+              description={t("edgeSnapThresholdDesc") || "拖拽面板到边缘多近时触发吸附"}
+              settingId="panel-edge-snap-threshold">
+              <Slider
+                value={settings.panel?.edgeSnapThreshold ?? 30}
+                onChange={handleSnapThresholdChange}
+                onPreviewChange={handleSnapThresholdPreview}
+                onCancelPreview={clearPreviewSettings}
+                min={0}
+                max={400}
+                step={2}
+                unit="px"
+                defaultValue={30}
+                formatValue={(value) => `${value}px`}
+                ariaLabel={t("edgeSnapThresholdLabel") || "吸附触发距离"}
+              />
+            </SettingRow>
+          )}
         </SettingCard>
       )}
 

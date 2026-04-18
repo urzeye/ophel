@@ -610,6 +610,11 @@ export const ru = {
   collapsedButtonsOrderDesc: "Порядок кнопок в сайдбаре",
   preventAutoScrollLabel: "Блок авто-скролла",
   preventAutoScrollDesc: "Не скроллить вниз самовольно",
+  // Panel Mode
+  panelModeLabel: "Режим панели",
+  panelModeDesc: "Управление отображением и скрытием панели",
+  panelModeEdgeSnap: "Авто-прилипание",
+  panelModeFloating: "Плавающая",
   // Panel Settings
   defaultPanelStateLabel: "Открыта всегда",
   defaultPanelStateDesc: "Развернута при загрузке",

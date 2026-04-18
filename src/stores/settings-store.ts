@@ -173,6 +173,41 @@ const normalizeWidthRecord = (
   return result
 }
 
+/**
+ * 从旧的 defaultOpen/edgeSnap/autoHide 三字段推导 panelMode
+ * 也处理旧三态 panelMode（always-open/manual）到二态的迁移
+ */
+const migratePanelMode = (panel?: Partial<Settings["panel"]>): "edge-snap" | "floating" => {
+  // 处理旧三态 panelMode 到二态的迁移
+  const oldMode = panel?.panelMode as string | undefined
+  if (oldMode === "always-open" || oldMode === "manual") return "floating"
+  if (oldMode === "edge-snap" || oldMode === "floating") return oldMode
+
+  // 从更旧的三字段推导
+  const defaultOpen = panel?.defaultOpen ?? true
+  const edgeSnap = panel?.edgeSnap ?? true
+
+  if (!defaultOpen) return "floating"
+  if (edgeSnap) return "edge-snap"
+  return "floating"
+}
+
+/**
+ * 从旧数据推导 lastPanelOpen 初始值
+ */
+const migrateLastPanelOpen = (panel?: Partial<Settings["panel"]>): boolean => {
+  // 如果已有 lastPanelOpen 字段，直接用
+  if (panel?.lastPanelOpen !== undefined) return panel.lastPanelOpen
+
+  // 旧三态 panelMode 迁移
+  const oldMode = panel?.panelMode as string | undefined
+  if (oldMode === "manual") return false
+  if (oldMode === "always-open") return true
+
+  // 从更旧的字段推导
+  return panel?.defaultOpen ?? true
+}
+
 const normalizeSettings = (settings: SettingsInput): Settings => {
   const {
     collapsedButtons: _legacyCollapsedButtons,
@@ -189,6 +224,11 @@ const normalizeSettings = (settings: SettingsInput): Settings => {
     panel: {
       ...DEFAULT_SETTINGS.panel,
       ...settings.panel,
+      panelMode:
+        settings.panel?.panelMode === "edge-snap" || settings.panel?.panelMode === "floating"
+          ? settings.panel.panelMode
+          : migratePanelMode(settings.panel),
+      lastPanelOpen: migrateLastPanelOpen(settings.panel),
     },
     content: {
       ...DEFAULT_SETTINGS.content,

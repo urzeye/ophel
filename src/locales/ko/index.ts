@@ -542,7 +542,7 @@ export const ko = {
   inlineBookmarkModeDesc: "제목 옆 아이콘 표시 방식 제어",
   panelBookmarkModeLabel: "패널 북마크 아이콘",
   panelBookmarkModeDesc: "개요 패널의 북마크 아이콘 표시 방식 제어",
-  inlineBookmarkModeAlways: "항상 표시",
+  inlineBookmarkModeAlways: "플로팅 (기본 열림)",
   inlineBookmarkModeHover: "마우스 오버 시",
   inlineBookmarkModeHidden: "숨기기",
   enableOutline: "개요 활성화",
@@ -614,6 +614,11 @@ export const ko = {
   collapsedButtonsOrderDesc: "접힌 패널 버튼의 표시 순서 조정",
   preventAutoScrollLabel: "자동 스크롤 방지",
   preventAutoScrollDesc: "AI 생성 중에 페이지가 하단으로 자동 스크롤되는 것을 방지",
+  // Panel Mode
+  panelModeLabel: "패널 모드",
+  panelModeDesc: "패널 표시 및 숨기기 동작 제어",
+  panelModeEdgeSnap: "자동 스냅",
+  panelModeFloating: "플로팅",
   // Panel Settings
   defaultPanelStateLabel: "기본으로 패널 표시",
   defaultPanelStateDesc: "페이지 새로고침 후 패널 펼침 상태 유지",

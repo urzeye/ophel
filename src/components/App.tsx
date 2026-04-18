@@ -348,7 +348,7 @@ const hasPromptVariables = (content: string): boolean => /\{\{([^\s{}]+)\}\}/.te
 
 export const App = () => {
   // 读取设置 - 使用 Zustand Store
-  const { settings, setSettings, updateDeepSetting } = useSettingsStore()
+  const { settings, setSettings, updateDeepSetting, updateNestedSetting } = useSettingsStore()
   const isSettingsHydrated = useSettingsHydrated()
   const promptSubmitShortcut = settings?.features?.prompts?.submitShortcut ?? "enter"
 
@@ -798,22 +798,32 @@ export const App = () => {
     // 确保仅在 hydration 完成且 settings 加载后执行一次初始化
     if (isSettingsHydrated && settings && !isInitializedRef.current) {
       isInitializedRef.current = true
-      // 如果 defaultPanelOpen 为 true，打开面板
-      if (settings.panel?.defaultOpen) {
-        // 如果开启了边缘吸附，且初始边距小于吸附阈值，则直接初始化为吸附状态
-        const {
-          edgeSnap,
-          defaultEdgeDistance = 25,
-          edgeSnapThreshold = 18,
-          defaultPosition = "right",
-        } = settings.panel
-        if (edgeSnap && defaultEdgeDistance <= edgeSnapThreshold) {
+      const panelMode = settings.panel?.panelMode ?? "edge-snap"
+      const defaultPosition = settings.panel?.defaultPosition ?? "right"
+
+      switch (panelMode) {
+        case "edge-snap":
+          setIsPanelOpen(true)
           setEdgeSnapState(defaultPosition)
+          break
+        case "floating": {
+          // 悬浮模式：恢复上次的开关状态
+          const lastOpen = settings.panel?.lastPanelOpen ?? true
+          setIsPanelOpen(lastOpen)
+          break
         }
-        setIsPanelOpen(true)
       }
     }
   }, [isSettingsHydrated, settings])
+
+  // 悬浮模式下，持久化面板开关状态
+  useEffect(() => {
+    if (!isInitializedRef.current) return
+    const panelMode = settings?.panel?.panelMode ?? "edge-snap"
+    if (panelMode === "floating") {
+      updateNestedSetting("panel", "lastPanelOpen", isPanelOpen)
+    }
+  }, [isPanelOpen])
 
   // 全局防遮挡状态 (防遮挡体验升级)
   const [isPassThrough, setIsPassThrough] = useState(false)
@@ -1027,7 +1037,7 @@ export const App = () => {
       if (!isSettingsOpenRef.current) {
         isSettingsOpenRef.current = true
 
-        if (edgeSnapState && settingsRef.current?.panel?.edgeSnap) {
+        if (edgeSnapState && settingsRef.current?.panel?.panelMode === "edge-snap") {
           setIsEdgePeeking(true)
         }
 
@@ -1388,7 +1398,7 @@ export const App = () => {
     setIsSettingsOpen(false)
 
     const currentSettings = settingsRef.current
-    if (!currentSettings?.panel?.edgeSnap) return
+    if (currentSettings?.panel?.panelMode !== "edge-snap") return
 
     let panel: HTMLElement | null = null
     const shadowHost = document.querySelector("plasmo-csui, #ophel-userscript-root")
@@ -1428,7 +1438,7 @@ export const App = () => {
         searchOpenedFromSettingsRef.current = false
       }
 
-      if (edgeSnapState && settingsRef.current?.panel?.edgeSnap) {
+      if (edgeSnapState && settingsRef.current?.panel?.panelMode === "edge-snap") {
         setIsEdgePeeking(true)
       }
 
@@ -1479,7 +1489,7 @@ export const App = () => {
       if (shouldReopenSettings) {
         isSettingsOpenRef.current = true
 
-        if (edgeSnapState && settingsRef.current?.panel?.edgeSnap) {
+        if (edgeSnapState && settingsRef.current?.panel?.panelMode === "edge-snap") {
           setIsEdgePeeking(true)
         }
 
@@ -1514,7 +1524,7 @@ export const App = () => {
     searchOpenedFromSettingsRef.current = false
     isSettingsOpenRef.current = true
 
-    if (edgeSnapState && settingsRef.current?.panel?.edgeSnap) {
+    if (edgeSnapState && settingsRef.current?.panel?.panelMode === "edge-snap") {
       setIsEdgePeeking(true)
     }
 
@@ -2426,11 +2436,12 @@ export const App = () => {
   // 当自动吸附设置变化时的处理：关闭自动吸附时立即重置吸附状态
   // 开启自动吸附的处理在 SettingsModal onClose 回调中
   useEffect(() => {
-    if (edgeSnapState && !settings?.panel?.edgeSnap) {
+    const panelMode = settings?.panel?.panelMode ?? "edge-snap"
+    if (edgeSnapState && panelMode !== "edge-snap") {
       setEdgeSnapState(null)
       setIsEdgePeeking(false)
     }
-  }, [settings?.panel?.edgeSnap, edgeSnapState])
+  }, [settings?.panel?.panelMode, edgeSnapState])
 
   // 监听默认位置变化，重置吸附状态
   // 当用户切换默认位置（如从左到右）时，如果是吸附状态，需要重置以便面板能跳转到新位置
@@ -2457,7 +2468,8 @@ export const App = () => {
   // 使用 MutationObserver 监听 Portal 元素（菜单/对话框/设置模态框）的存在
   // 当 Portal 元素存在时，强制设置 isEdgePeeking 为 true，防止 CSS :hover 失效导致面板隐藏
   useEffect(() => {
-    if (!edgeSnapState || !settings?.panel?.edgeSnap) return
+    const panelMode = settings?.panel?.panelMode ?? "edge-snap"
+    if (!edgeSnapState || panelMode !== "edge-snap") return
 
     const portalSelector =
       ".conversations-dialog-overlay, .conversations-folder-menu, .conversations-tag-filter-menu, .prompt-modal, .gh-dialog-overlay, .settings-modal-overlay"
@@ -2514,13 +2526,14 @@ export const App = () => {
     return () => {
       observer.disconnect()
     }
-  }, [edgeSnapState, settings?.panel?.edgeSnap])
+  }, [edgeSnapState, settings?.panel?.panelMode])
 
   // 监听面板内输入框的聚焦状态
   // 解决问题：当用户在输入框中打字时，IME 输入法弹出会导致浏览器丢失 CSS :hover 状态
   // 方案：在输入框聚焦时主动设置 isEdgePeeking = true，不依赖纯 CSS :hover
   useEffect(() => {
-    if (!edgeSnapState || !settings?.panel?.edgeSnap) return
+    const panelMode = settings?.panel?.panelMode ?? "edge-snap"
+    if (!edgeSnapState || panelMode !== "edge-snap") return
 
     // 获取 Shadow DOM 根节点
     const shadowHost = document.querySelector("plasmo-csui, #ophel-userscript-root")
@@ -2597,67 +2610,7 @@ export const App = () => {
       shadowRoot.removeEventListener("focusin", handleFocusIn, true)
       shadowRoot.removeEventListener("focusout", handleFocusOut, true)
     }
-  }, [edgeSnapState, settings?.panel?.edgeSnap])
-
-  useEffect(() => {
-    // 只有在开启自动隐藏时，才监听点击外部
-    // 如果没有开启自动隐藏，无论是否吸附，点击外部都不应有反应
-    const shouldHandle = settings?.panel?.autoHide
-    if (!shouldHandle || !isPanelOpen) return
-
-    const handleClickOutside = (e: MouseEvent) => {
-      // 使用 composedPath() 支持 Shadow DOM
-      const path = e.composedPath()
-
-      // 检查点击路径中是否包含面板、快捷按钮或 Portal 元素（菜单/对话框）
-      const isInsidePanelOrPortal = path.some((el) => {
-        if (!(el instanceof Element)) return false
-        // 检查是否是面板内部
-        if (el.closest?.(".gh-main-panel")) return true
-        // 检查是否是快捷按钮
-        if (el.closest?.(".gh-quick-buttons")) return true
-        // 检查是否是 Portal 元素（菜单、对话框、设置模态框）
-        if (el.closest?.(".conversations-dialog-overlay")) return true
-        if (el.closest?.(".conversations-folder-menu")) return true
-        if (el.closest?.(".conversations-tag-filter-menu")) return true
-        if (el.closest?.(".prompt-modal")) return true
-        if (el.closest?.(".gh-dialog-overlay")) return true
-        if (el.closest?.(".settings-modal-overlay")) return true
-        if (el.closest?.(".settings-search-overlay")) return true
-        return false
-      })
-
-      if (!isInsidePanelOrPortal) {
-        // 如果开启了边缘吸附，点击外部应触发吸附（缩回边缘），而不是完全关闭
-        if (settings?.panel?.edgeSnap) {
-          if (!edgeSnapState) {
-            setEdgeSnapState(settings.panel.defaultPosition || "right")
-            setIsEdgePeeking(false)
-          }
-          // 如果已经是吸附状态，点击外部不做处理（保持吸附）
-        } else {
-          // 普通模式：点击外部关闭面板
-          setIsPanelOpen(false)
-        }
-      }
-    }
-
-    // 延迟添加监听，避免立即触发
-    const timer = setTimeout(() => {
-      document.addEventListener("click", handleClickOutside, true)
-    }, 100)
-
-    return () => {
-      clearTimeout(timer)
-      document.removeEventListener("click", handleClickOutside, true)
-    }
-  }, [
-    settings?.panel?.autoHide,
-    settings?.panel?.edgeSnap,
-    isPanelOpen,
-    edgeSnapState,
-    settings?.panel?.defaultPosition,
-  ])
+  }, [edgeSnapState, settings?.panel?.panelMode])
 
   const showAiStudioSubmitShortcutSyncToast = useCallback(
     (submitShortcut: "enter" | "ctrlEnter") => {
@@ -3030,7 +2983,7 @@ export const App = () => {
           cancelShortcutPeekTimer()
           // 当处于吸附状态时，鼠标进入面板应设置 isEdgePeeking = true
           // 这样 onMouseLeave 时才能正确隐藏
-          if (edgeSnapState && settings?.panel?.edgeSnap && !isEdgePeeking) {
+          if (edgeSnapState && settings?.panel?.panelMode === "edge-snap" && !isEdgePeeking) {
             setIsEdgePeeking(true)
           }
         }}
@@ -3058,7 +3011,7 @@ export const App = () => {
             if (interactionActive || hasPortal) return
 
             // 安全检查后隐藏面板
-            if (edgeSnapState && settings?.panel?.edgeSnap && isEdgePeeking) {
+            if (edgeSnapState && settings?.panel?.panelMode === "edge-snap" && isEdgePeeking) {
               setIsEdgePeeking(false)
             }
           }, 200)
@@ -3070,7 +3023,7 @@ export const App = () => {
         onPanelToggle={() => {
           if (!isPanelOpen) {
             // 展开面板：如果处于吸附状态，进入 peek 模式
-            if (edgeSnapState && settings?.panel?.edgeSnap) {
+            if (edgeSnapState && settings?.panel?.panelMode === "edge-snap") {
               setIsEdgePeeking(true)
             }
           } else {
@@ -3129,7 +3082,7 @@ export const App = () => {
           // 关闭设置模态框后，检测面板位置，如果在边缘且自动吸附已开启则自动吸附
           // 使用 settingsRef 确保读取到最新的设置值
           const currentSettings = settingsRef.current
-          if (!currentSettings?.panel?.edgeSnap) return
+          if (currentSettings?.panel?.panelMode !== "edge-snap") return
 
           // 查询面板元素（在 Plasmo Shadow DOM 内部）
           // 先尝试在 Shadow DOM 内查找，再尝试普通 DOM

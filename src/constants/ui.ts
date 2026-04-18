@@ -227,14 +227,12 @@ const SETTING_ID_ROUTE_RULES: SettingRouteRule[] = [
 ]
 
 export const SETTING_ID_ALIASES: Record<string, string> = {
-  "general.panel.defaultOpen": "panel-default-open",
+  "general.panel.panelMode": "panel-mode",
   "general.panel.defaultPosition": "panel-default-position",
   "general.panel.defaultEdgeDistance": "panel-edge-distance",
   "general.panel.width": "panel-width",
   "general.panel.height": "panel-height",
-  "general.panel.edgeSnap": "panel-edge-snap",
   "general.panel.edgeSnapThreshold": "panel-edge-snap-threshold",
-  "general.panel.autoHide": "panel-auto-hide",
   "general.shortcuts.quickButtonsOpacity": "quick-buttons-opacity",
   "general.toolsMenu": "tools-menu-scrollTop",
   "siteSettings.layout.pageWidth.enabled": "layout-page-width-enabled",
@@ -959,6 +957,7 @@ export const COLLAPSED_BUTTON_DEFS: Record<
     canToggle: boolean
     isPanelOnly: boolean
     isGroup?: boolean
+    hideWhenPanelOpen?: boolean
     IconComponent?: React.ComponentType<{ size?: number | string; color?: string }>
   }
 > = {
@@ -967,6 +966,7 @@ export const COLLAPSED_BUTTON_DEFS: Record<
     labelKey: "scrollTop",
     canToggle: true,
     isPanelOnly: false,
+    hideWhenPanelOpen: true,
     IconComponent: ScrollTopIcon,
   },
   panel: {
@@ -995,6 +995,7 @@ export const COLLAPSED_BUTTON_DEFS: Record<
     canToggle: true,
     labelKey: "showCollapsedAnchorLabel",
     isPanelOnly: false,
+    hideWhenPanelOpen: true,
     IconComponent: AnchorIcon,
   },
   theme: {
@@ -1017,6 +1018,7 @@ export const COLLAPSED_BUTTON_DEFS: Record<
     labelKey: "scrollBottom",
     canToggle: true,
     isPanelOnly: false,
+    hideWhenPanelOpen: true,
     IconComponent: ScrollBottomIcon,
   },
   zenMode: {
