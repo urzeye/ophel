@@ -160,14 +160,17 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
           }
         } else {
           // Content Script 发送消息请求
-          await sendToBackground({
+          const response = await sendToBackground({
             type: MSG_REQUEST_PERMISSIONS,
-            permType: perm.id,
             origins: perm.origins,
             permissions: perm.permissions,
           })
-          // 延迟后自动刷新权限状态（给用户操作弹窗的时间）
-          setTimeout(() => checkOptionalPermissions(), 2000)
+          // 检查响应并更新状态
+          if (response && response.success && response.granted) {
+            setOptionalPermissionStatus((prev) => ({ ...prev, [perm.id]: true }))
+          }
+          // 延迟后自动刷新权限状态（以确保状态同步）
+          setTimeout(() => checkOptionalPermissions(), 500)
         }
       } catch (e) {
         console.error(`请求权限 ${perm.id} 失败:`, e)

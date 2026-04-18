@@ -382,35 +382,18 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
       })()
       break
 
-    // 请求权限：打开最小化权限请求页面
+    // 请求权限
     case MSG_REQUEST_PERMISSIONS:
       ;(async () => {
         try {
-          // 从消息中获取权限类型，默认为 allUrls
-          const permType = (message as any).permType || "allUrls"
-          const url = chrome.runtime.getURL(`tabs/perm-request.html?type=${permType}`)
-
-          // 获取当前窗口信息以计算居中位置
-          const currentWindow = await chrome.windows.getCurrent()
-          const width = 450
-          const height = 380
-          const left = currentWindow.left! + Math.round((currentWindow.width! - width) / 2)
-          const top = currentWindow.top! + Math.round((currentWindow.height! - height) / 2)
-
-          // 最小化弹窗，居中显示
-          await chrome.windows.create({
-            url,
-            type: "popup",
-            width,
-            height,
-            left,
-            top,
-            focused: true,
+          const { origins, permissions } = message as any
+          const granted = await chrome.permissions.request({
+            origins: origins?.length ? origins : undefined,
+            permissions: permissions?.length ? permissions : undefined,
           })
-
-          sendResponse({ success: true })
+          sendResponse({ success: true, granted })
         } catch (err) {
-          console.error("Request permissions flow failed:", err)
+          console.error("Request permissions failed:", err)
           sendResponse({ success: false, error: (err as Error).message })
         }
       })()
