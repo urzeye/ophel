@@ -338,9 +338,19 @@ const SHORTCUT_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = Object.entries(SHOR
 
 export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   {
-    settingId: "panel-default-open",
-    title: "默认显示面板",
-    keywords: ["panel", "default open", "默认打开"],
+    settingId: "panel-mode",
+    title: "面板模式",
+    keywords: [
+      "panel",
+      "mode",
+      "edge snap",
+      "floating",
+      "模式",
+      "吸附",
+      "悬浮",
+      "默认打开",
+      "自动隐藏",
+    ],
   },
   {
     settingId: "panel-default-position",
@@ -363,20 +373,11 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     keywords: ["panel height", "高度"],
   },
   {
-    settingId: "panel-edge-snap",
-    title: "边缘自动吸附",
-    keywords: ["snap", "edge", "吸附"],
-  },
-  {
     settingId: "panel-edge-snap-threshold",
     title: "边缘吸附阈值",
     keywords: ["snap threshold", "edge snap", "吸附阈值"],
   },
-  {
-    settingId: "panel-auto-hide",
-    title: "自动隐藏面板",
-    keywords: ["auto hide", "panel"],
-  },
+
   {
     settingId: "quick-buttons-opacity",
     title: "快捷按钮透明度",

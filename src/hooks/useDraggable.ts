@@ -89,6 +89,9 @@ export function useDraggable(options: UseDraggableOptions = {}) {
           pendingUnsnapRef.current = null
         }
 
+        // 同步移除吸附 class，避免其 !important 定位在 React 重渲染前覆盖拖拽位置
+        panel.classList.remove("edge-snapped-left", "edge-snapped-right")
+
         // 切换 CSS 定位从 right+transform 为 left+top，避免后续拖拽跳动
         panel.style.right = "auto"
         panel.style.transform = "none"

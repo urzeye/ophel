@@ -174,8 +174,8 @@ const normalizeWidthRecord = (
 }
 
 /**
- * 从旧的 defaultOpen/edgeSnap/autoHide 三字段推导 panelMode
- * 也处理旧三态 panelMode（always-open/manual）到二态的迁移
+ * 处理旧三态 panelMode（always-open/manual）到二态的迁移，
+ * 并在缺少 panelMode 时从更旧的 defaultOpen/edgeSnap 字段推导 panelMode
  */
 const migratePanelMode = (panel?: Partial<Settings["panel"]>): "edge-snap" | "floating" => {
   // 处理旧三态 panelMode 到二态的迁移
