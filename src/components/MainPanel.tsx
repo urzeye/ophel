@@ -144,7 +144,20 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       }),
     ]
   }, [keybindings, isMac])
-  const currentTipRef = useRef("")
+  const [currentTip, setCurrentTip] = useState(() => {
+    const fmt = (id: string) =>
+      formatShortcut((currentSettings.shortcuts?.keybindings ?? DEFAULT_KEYBINDINGS)[id], isMacOS())
+    const tips = [
+      t("tip1", { modifier: isMacOS() ? "⌘" : "Ctrl" }),
+      t("tip2"),
+      t("tip3", { shortcut: fmt("showShortcuts") }),
+      t("tip4", { shortcut: fmt("openGlobalSearch") }),
+      t("tip5", { shortcut: fmt("copyLatestReply") }),
+      t("tip6", { shortcut: fmt("prevHeading") + "/" + fmt("nextHeading") }),
+    ]
+    return tips[Math.floor(Math.random() * tips.length)]
+  })
+  const pointerEventsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
     const currentMode = currentSettings.panel?.panelMode
     const prevMode = prevPanelModeRef.current
@@ -188,9 +201,18 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       panel.style.right = ""
       // 临时禁用 pointer-events，防止 CSS :hover 在鼠标仍在面板区域时阻止收缩动画
       panel.style.pointerEvents = "none"
-      setTimeout(() => {
+      if (pointerEventsTimerRef.current) clearTimeout(pointerEventsTimerRef.current)
+      pointerEventsTimerRef.current = setTimeout(() => {
         panel.style.pointerEvents = ""
+        pointerEventsTimerRef.current = null
       }, 400)
+    }
+
+    return () => {
+      if (pointerEventsTimerRef.current) {
+        clearTimeout(pointerEventsTimerRef.current)
+        pointerEventsTimerRef.current = null
+      }
     }
   }, [
     currentSettings.panel?.panelMode,
@@ -455,12 +477,12 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             userSelect: "none",
           }}>
           {/* 左侧：图标 + 标题（双击切换隐私模式） */}
-          <Tooltip content={currentTipRef.current}>
+          <Tooltip content={currentTip}>
             <div
               style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}
               onMouseEnter={() => {
                 const tips = getTips()
-                currentTipRef.current = tips[Math.floor(Math.random() * tips.length)]
+                setCurrentTip(tips[Math.floor(Math.random() * tips.length)])
               }}
               onDoubleClick={() => {
                 // 发送隐私模式切换事件给 TabManager
