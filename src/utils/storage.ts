@@ -511,7 +511,7 @@ export const DEFAULT_SETTINGS: Settings = {
   },
 
   tab: {
-    openInNewTab: true,
+    openInNewTab: false,
     autoRename: true,
     renameInterval: 3,
     showStatus: true,

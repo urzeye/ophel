@@ -514,27 +514,29 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               </Tooltip>
             )}
 
-            {/* 新标签页按钮 */}
-            <Tooltip content={t("newTabTooltip") || "新标签页打开"}>
-              <button
-                onClick={() => window.open(window.location.origin, "_blank")}
-                style={{
-                  background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
-                  border: "none",
-                  color: "var(--gh-glass-text, white)",
-                  width: "24px",
-                  height: "24px",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "16px",
-                  transition: "all 0.2s",
-                }}>
-                <NewTabIcon size={14} />
-              </button>
-            </Tooltip>
+            {/* 新标签页按钮 - 受 openInNewTab 设置控制 */}
+            {currentSettings.tab?.openInNewTab && (
+              <Tooltip content={t("newTabTooltip") || "新标签页打开"}>
+                <button
+                  onClick={() => window.open(window.location.origin, "_blank")}
+                  style={{
+                    background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
+                    border: "none",
+                    color: "var(--gh-glass-text, white)",
+                    width: "24px",
+                    height: "24px",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "16px",
+                    transition: "all 0.2s",
+                  }}>
+                  <NewTabIcon size={14} />
+                </button>
+              </Tooltip>
+            )}
 
             {/* 设置按钮 - 打开设置模态框 */}
             <Tooltip content={t("tabSettings")}>
@@ -560,8 +562,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               </button>
             </Tooltip>
 
-            {/* 刷新按钮 - 根据当前 Tab 智能刷新 */}
-            <Tooltip
+            {/* 刷新按钮 - 暂时隐藏，数据已是响应式自动更新 */}
+            {/* <Tooltip
               content={
                 activeTab === TAB_IDS.OUTLINE
                   ? t("refreshOutline")
@@ -573,18 +575,13 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               }>
               <button
                 onClick={() => {
-                  // 根据当前 Tab 执行对应的刷新逻辑
                   if (activeTab === TAB_IDS.OUTLINE) {
                     outlineManager?.refresh()
                   } else if (activeTab === TAB_IDS.PROMPTS) {
-                    // 提示词由 Zustand store 管理，自动响应数据变化，无需手动刷新
-                    // 触发 UI 重新获取数据
                     promptManager?.init()
                   } else if (activeTab === TAB_IDS.CONVERSATIONS) {
-                    // 触发数据变更通知，刷新 UI
                     conversationManager?.notifyDataChange()
                   }
-                  // settings 不需要刷新
                 }}
                 style={{
                   background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
@@ -602,7 +599,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                 }}>
                 <RefreshIcon size={14} />
               </button>
-            </Tooltip>
+            </Tooltip> */}
 
             {/* 折叠按钮（收起面板） */}
             <Tooltip content={t("collapse")}>
