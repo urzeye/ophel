@@ -31,6 +31,10 @@ export function useDraggable(options: UseDraggableOptions = {}) {
   const hasMovedRef = useRef(false)
   const offsetRef = useRef({ x: 0, y: 0 })
 
+  // 延迟取消吸附：记录 mousedown 时的吸附状态，仅在实际拖拽移动时才执行取消
+  // 这样单击/双击（如双击标题切换隐私模式）不会导致面板脱离吸附
+  const pendingUnsnapRef = useRef<"left" | "right" | null>(null)
+
   // 开始拖拽
   const handleMouseDown = useCallback(
     (e: MouseEvent) => {
@@ -42,10 +46,8 @@ export function useDraggable(options: UseDraggableOptions = {}) {
 
       e.preventDefault() // 阻止文本选中
 
-      // 如果当前处于吸附状态，先取消吸附
-      if (edgeSnapState) {
-        onUnsnap?.()
-      }
+      // 记录当前吸附状态，延迟到实际移动时才取消吸附
+      pendingUnsnapRef.current = edgeSnapState || null
 
       // 读取面板当前的实际位置
       const rect = panel.getBoundingClientRect()
@@ -56,39 +58,49 @@ export function useDraggable(options: UseDraggableOptions = {}) {
         y: e.clientY - rect.top,
       }
 
-      // 首次拖拽时，将 CSS 定位从 right+transform 切换为 left+top
-      // 这样后续拖拽就不会有跳动问题
-      panel.style.left = rect.left + "px"
-      panel.style.top = rect.top + "px"
-      panel.style.right = "auto" // 清除 right 定位
-      panel.style.transform = "none" // 清除 translateY(-50%)
-
       hasMovedRef.current = false
       isDraggingRef.current = true
-
-      // 添加 dragging 类，通过 CSS !important 确保拖拽时 left/top 定位不会被 React 重渲染覆盖
-      panel.classList.add("dragging")
 
       // 拖动时禁止全局文本选中
       document.body.style.userSelect = "none"
     },
-    [edgeSnapState, onUnsnap],
+    [edgeSnapState],
   )
 
   // 拖拽移动 - 直接操作 DOM，不触发 React 渲染
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDraggingRef.current) return
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDraggingRef.current) return
 
-    const panel = panelRef.current
-    if (!panel) return
+      const panel = panelRef.current
+      if (!panel) return
 
-    e.preventDefault()
-    hasMovedRef.current = true
+      e.preventDefault()
 
-    // 核心优化：直接操作 DOM 样式，绕过 React 更新
-    panel.style.left = e.clientX - offsetRef.current.x + "px"
-    panel.style.top = e.clientY - offsetRef.current.y + "px"
-  }, [])
+      // 首次移动时：执行延迟的取消吸附 + 切换 CSS 定位模式
+      if (!hasMovedRef.current) {
+        hasMovedRef.current = true
+
+        // 执行延迟的取消吸附
+        if (pendingUnsnapRef.current) {
+          onUnsnap?.()
+          pendingUnsnapRef.current = null
+        }
+
+        // 切换 CSS 定位从 right+transform 为 left+top，避免后续拖拽跳动
+        panel.style.right = "auto"
+        panel.style.transform = "none"
+
+        // 添加 dragging 类，通过 CSS !important 确保拖拽时定位不会被 React 重渲染覆盖
+        panel.classList.add("dragging")
+      }
+
+      // 核心优化：直接操作 DOM 样式，绕过 React 更新
+      panel.style.left = e.clientX - offsetRef.current.x + "px"
+      panel.style.top = e.clientY - offsetRef.current.y + "px"
+    },
+    [onUnsnap],
+  )
 
   // 动画过渡函数
   const animateToPosition = useCallback(
@@ -134,6 +146,7 @@ export function useDraggable(options: UseDraggableOptions = {}) {
     const hasMoved = hasMovedRef.current
 
     isDraggingRef.current = false
+    pendingUnsnapRef.current = null
 
     // 恢复文本选中
     document.body.style.userSelect = ""
