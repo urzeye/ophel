@@ -118,14 +118,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   // useDraggable 通过直接 DOM 操作设置了 left/top/right/transform，React 无法感知这些变化，
   // 所以需要在模式切换时手动重置
   const prevPanelModeRef = useRef(currentSettings.panel?.panelMode)
-  // 自动保存面板在 peeking 可见时的位置，用于切换到悬浮模式时"原地固定"
+  // 保存面板当前位置，用于 header 按钮触发的"原地固定"
   const savedPeekingRectRef = useRef<DOMRect | null>(null)
-  useEffect(() => {
-    if (currentSettings.panel?.panelMode === "edge-snap" && isEdgePeeking && panelRef.current) {
-      savedPeekingRectRef.current = panelRef.current.getBoundingClientRect()
-    }
-  }, [currentSettings.panel?.panelMode, isEdgePeeking, panelRef])
-
   useEffect(() => {
     const currentMode = currentSettings.panel?.panelMode
     const prevMode = prevPanelModeRef.current
@@ -141,13 +135,13 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       savedPeekingRectRef.current = null
 
       if (savedRect && savedRect.right > 0 && savedRect.left < window.innerWidth) {
-        // 面板在切换前可见（有 peeking 记录）：原地固定
+        // 面板从 header 按钮切换且当前可见（peeking）：原地固定
         panel.style.left = `${savedRect.left}px`
         panel.style.top = `${savedRect.top}px`
         panel.style.right = "auto"
         panel.style.transform = "none"
       } else {
-        // 面板在切换前不可见（从未 peek）：重置为默认悬浮位置
+        // 面板不可见或从设置页切换：重置为默认悬浮位置
         const edge = currentSettings.panel?.defaultEdgeDistance ?? 40
         const pos = currentSettings.panel?.defaultPosition ?? "right"
 
@@ -457,6 +451,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               <button
                 onClick={() => {
                   const current = currentSettings.panel?.panelMode ?? "edge-snap"
+                  // 从吸附切换到悬浮时，保存当前面板位置用于"原地固定"
+                  if (current === "edge-snap" && panelRef.current) {
+                    savedPeekingRectRef.current = panelRef.current.getBoundingClientRect()
+                  }
                   updateNestedSetting(
                     "panel",
                     "panelMode",
