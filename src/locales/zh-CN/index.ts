@@ -646,7 +646,7 @@ export const zhCN = {
   outlineFollowModeLabel: "大纲跟随模式",
   outlineFollowCurrent: "跟随当前位置",
   outlineFollowLatest: "跟随最新消息",
-  outlineFollowManual: "悬浮 (默认收起)",
+  outlineFollowManual: "手动控制",
   outlineFollowCurrentDesc: "滚动页面时高亮当前大纲项",
   outlineFollowLatestDesc: "自动滚动到最新消息",
   outlineFollowManualDesc: "不自动滚动，用户手动控制",

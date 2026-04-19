@@ -85,7 +85,7 @@ All settings below are in **Settings → General → Panel**:
 | Panel width    | Panel width (200–600 px)                                             | 320 px    |
 | Panel height   | Panel height as a percentage of viewport (50–100 vh)                 | 85 vh     |
 | Edge distance  | Initial distance from screen edge                                    | 25 px     |
-| Snap threshold | Distance from edge that triggers snapping (10–100 px)                | 30 px     |
+| Snap threshold | Distance from edge that triggers snapping (0–400 px)                 | 30 px     |
 
 ## What's Next
 

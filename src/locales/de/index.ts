@@ -596,7 +596,7 @@ export const de = {
   outlineFollowModeLabel: "Folgemodus",
   outlineFollowCurrent: "Position folgen",
   outlineFollowLatest: "Letztem folgen",
-  outlineFollowManual: "Schwebend (Standard geschlossen)",
+  outlineFollowManual: "Manuell",
   outlineFollowCurrentDesc: "Hervorheben, wo Sie lesen",
   outlineFollowLatestDesc: "Nur bei neuen Nachrichten scrollen",
   outlineFollowManualDesc: "Kein Auto-Scroll, Sie steuern",

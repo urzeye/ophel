@@ -181,10 +181,10 @@ panel.style.right = ""
 
 在面板 header 控制按钮区域（主题/设置/刷新/收起旁边）添加 pin/snap 切换按钮：
 
-| 当前模式 | 图标                                | Tooltip      | 点击效果       |
-| -------- | ----------------------------------- | ------------ | -------------- |
-| 自动吸附 | `<FloatingModeIcon>` (四向移动箭头) | "固定面板"   | 切换到悬浮模式 |
-| 悬浮     | `<SnapToEdgeIcon>` (侧边栏+左箭头)  | "吸附到边缘" | 切换到吸附模式 |
+| 当前模式 | 图标                               | Tooltip      | 点击效果       |
+| -------- | ---------------------------------- | ------------ | -------------- |
+| 自动吸附 | `<FloatingModeIcon>` (图钉/Pin)    | "固定面板"   | 切换到悬浮模式 |
+| 悬浮     | `<SnapToEdgeIcon>` (侧边栏+左箭头) | "吸附到边缘" | 切换到吸附模式 |
 
 按钮通过 `updateNestedSetting("panel", "panelMode", ...)` 直接更新 Zustand store，由 App.tsx 的模式切换 useEffect 响应状态变化。
 
@@ -208,10 +208,12 @@ anchor:       { ..., hideWhenPanelOpen: true }
 
 ```typescript
 const shouldHide =
-  isDisabled || (isPanelOnly && isPanelOpen) || (def.hideWhenPanelOpen && isPanelOpen)
+  isDisabled || (isPanelOnly && isPanelOpen) || (def.hideWhenPanelOpen && isFloatingOpen)
 ```
 
-效果：面板展开时隐藏 scrollTop/scrollBottom/anchor 按钮（这些功能在面板 footer 中已存在）。
+其中 `isFloatingOpen = isPanelOpen && panelMode !== "edge-snap"`。
+
+效果：在悬浮模式下，面板展开时隐藏 scrollTop/scrollBottom/anchor 按钮；在自动吸附模式下，这三个按钮始终可见（因为面板收在边缘不占空间）。
 
 ## F. 设置 UI 改动（`src/tabs/options/pages/GeneralPage.tsx`）
 
@@ -235,10 +237,10 @@ const shouldHide =
 
 ## G. SVG 图标（`src/components/icons/`）
 
-新增两个 stroke-based SVG 图标组件，与项目现有图标风格一致（viewBox 0 0 24 24, strokeWidth 2）：
+新增两个 SVG 图标组件：
 
-- `SnapToEdgeIcon.tsx`：左侧边缘线 + 面板矩形 + 向左箭头
-- `FloatingModeIcon.tsx`：面板矩形 + 四向移动箭头
+- `SnapToEdgeIcon.tsx`：左侧边缘线 + 面板矩形 + 向左箭头（stroke-based，viewBox 0 0 24 24）
+- `FloatingModeIcon.tsx`：fill-based 图钉（Pin）图标（viewBox 0 0 1024 1024）
 
 ## H. 国际化（`src/locales/*/index.ts`）
 

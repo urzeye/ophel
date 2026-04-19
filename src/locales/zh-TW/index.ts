@@ -501,7 +501,7 @@ export const zhTW = {
   outlineFollowModeLabel: "大綱跟隨模式",
   outlineFollowCurrent: "跟隨當前位置",
   outlineFollowLatest: "跟隨最新訊息",
-  outlineFollowManual: "懸浮 (預設收起)",
+  outlineFollowManual: "手動控制",
   outlineFollowCurrentDesc: "滾動頁面時高亮當前大綱項",
   outlineFollowLatestDesc: "自動滾動到最新訊息",
   outlineFollowManualDesc: "不自動滾動，用戶手動控制",

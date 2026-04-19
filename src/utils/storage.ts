@@ -160,7 +160,7 @@ export interface Settings {
     preventAutoScroll: boolean
     defaultPosition: "left" | "right" // 默认位置
     defaultEdgeDistance: number // 默认边距 (0-400, 默认 25)
-    edgeSnapThreshold: number // 吸附触发距离 (10-100, 默认 30)
+    edgeSnapThreshold: number // 吸附触发距离 (0-400, 默认 30)
     height: number // 面板高度 (50-100, 默认 85, 单位 vh)
     width: number // 面板宽度 (200-600, 默认 320, 单位 px)
   }

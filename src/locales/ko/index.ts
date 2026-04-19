@@ -550,7 +550,7 @@ export const ko = {
   inlineBookmarkModeDesc: "제목 옆 아이콘 표시 방식 제어",
   panelBookmarkModeLabel: "패널 북마크 아이콘",
   panelBookmarkModeDesc: "개요 패널의 북마크 아이콘 표시 방식 제어",
-  inlineBookmarkModeAlways: "플로팅 (기본 열림)",
+  inlineBookmarkModeAlways: "항상 표시",
   inlineBookmarkModeHover: "마우스 오버 시",
   inlineBookmarkModeHidden: "숨기기",
   enableOutline: "개요 활성화",
