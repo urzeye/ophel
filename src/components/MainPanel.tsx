@@ -132,7 +132,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const isMac = useMemo(() => isMacOS(), [])
   const keybindings = currentSettings.shortcuts?.keybindings ?? DEFAULT_KEYBINDINGS
   const getTips = useCallback(() => {
-    const fmt = (id: string) => formatShortcut(keybindings[id], isMac)
+    const fmt = (id: string) => {
+      const shortcut = keybindings[id] ?? DEFAULT_KEYBINDINGS[id]
+      return shortcut ? formatShortcut(shortcut, isMac) : ""
+    }
     return [
       t("tip1", { modifier: isMac ? "⌘" : "Ctrl" }),
       t("tip2"),
