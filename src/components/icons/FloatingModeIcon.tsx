@@ -27,12 +27,12 @@ export const FloatingModeIcon: React.FC<IconProps> = ({
     className={className}
     style={{ display: "block" }}>
     {/* 面板矩形 */}
-    <rect x="5" y="6" width="14" height="12" rx="2" />
+    <rect x="3" y="3" width="18" height="18" rx="2" />
     {/* 四向移动箭头（自由拖拽） */}
-    <line x1="12" y1="9" x2="12" y2="15" />
-    <line x1="9" y1="12" x2="15" y2="12" />
-    <polyline points="10 10 12 9 14 10" />
-    <polyline points="14 14 12 15 10 14" />
+    <line x1="12" y1="8" x2="12" y2="16" />
+    <line x1="8" y1="12" x2="16" y2="12" />
+    <polyline points="10 9.5 12 8 14 9.5" />
+    <polyline points="14 14.5 12 16 10 14.5" />
   </svg>
 )
 

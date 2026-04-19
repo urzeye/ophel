@@ -27,11 +27,11 @@ export const SnapToEdgeIcon: React.FC<IconProps> = ({
     className={className}
     style={{ display: "block" }}>
     {/* 左侧边缘线 */}
-    <line x1="3" y1="3" x2="3" y2="21" />
+    <line x1="2" y1="2" x2="2" y2="22" />
     {/* 面板矩形 */}
-    <rect x="7" y="6" width="14" height="12" rx="2" />
+    <rect x="6" y="4" width="16" height="16" rx="2" />
     {/* 向左箭头（吸附方向） */}
-    <polyline points="13 10 10 12 13 14" />
+    <polyline points="15 9 11 12 15 15" />
   </svg>
 )
 
