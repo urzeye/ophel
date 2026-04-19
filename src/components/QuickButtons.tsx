@@ -468,11 +468,19 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       }
 
       // Metrics 变化（如 collapsed ↔ expanded 切换、液态收缩等）时，
-      // 保持 ratio 不变——ratio 是位置的规范表示，不应从 DOM rect 反推。
-      // 因为此刻 DOM 位置仍按旧 metrics 渲染，用 rect.top + 新 metrics
-      // 反推会产生累积漂移。
-      // resolveLogicalGroupPosition() 在渲染时自动用新 metrics + 现有 ratio
-      // 计算正确的像素位置并执行边界钳位。
+      // 从 DOM rect 反推 ratio 以保持 logo 视觉位置不变，但**不持久化**。
+      // 持久化仅在拖拽结束时进行，避免跨刷新的累积漂移。
+      const nextPosition = toLogicalGroupPosition(rect.left, rect.top, viewport, nextMetrics)
+      const prevPosition = groupPositionRef.current
+
+      if (
+        prevPosition.xRatio !== nextPosition.xRatio ||
+        prevPosition.yRatio !== nextPosition.yRatio
+      ) {
+        groupPositionRef.current = nextPosition
+        setGroupPosition(nextPosition)
+        // 注意：此处不调用 scheduleGroupPositionPersist()
+      }
     }
 
     syncGroupMetrics()
@@ -486,7 +494,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return () => {
       resizeObserver.disconnect()
     }
-  }, [clampPixelGroupPosition])
+  }, [clampPixelGroupPosition, toLogicalGroupPosition])
 
   // 滚动到顶部（支持图文并茂模式）
   const scrollToTop = useCallback(async () => {
