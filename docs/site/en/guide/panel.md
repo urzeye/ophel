@@ -50,26 +50,42 @@ Hold **Ctrl** (Windows/Linux) or **Command** (Mac) for about **0.2 seconds** (th
 
 ![Edge snap — panel snapped to edge, hover to peek](/images/panel/edge-snap.webp)
 
-Drag the panel close to the screen edge and it snaps in and hides. Hover your cursor over the corresponding edge to peek at the panel. Drag it away from the edge to unsnap.
+The panel has two operating modes, configurable in **Settings → General → Panel → Panel Mode**:
 
-Adjust the snap threshold or disable this feature in **Settings → General → Panel → Edge Snap**.
+| Mode      | Behavior                                                                                     |
+| --------- | -------------------------------------------------------------------------------------------- |
+| Edge Snap | The panel hugs the screen edge and stays hidden. Hover over the edge to peek at the panel.   |
+| Floating  | The panel floats above the page, stays visible at all times, and can be freely repositioned. |
+
+You can also click the **mode toggle button** (pin / snap icon) in the panel header to switch instantly — no need to open settings.
+
+In edge-snap mode, dragging the panel title bar pulls it away from the edge. While dragging, move it to the opposite edge to change the snap direction.
+
+## Panel Header
+
+The panel header provides the following controls:
+
+| Element         | Action                                                                                                                              |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Title area      | Hover to see a random usage tip (shortcuts auto-adapt to your platform and custom keybindings); double-click to toggle privacy mode |
+| Mode toggle     | Switch between Edge Snap and Floating mode with one click                                                                           |
+| Theme toggle    | Switch light / dark mode (`Alt+D`, Mac: `Option+D`)                                                                                 |
+| Settings button | Open settings dialog (`Alt+,`, Mac: `Option+,`)                                                                                     |
+
+Drag the title bar to reposition the panel. If the “Open in New Tab” setting is enabled, a new-tab button will also appear.
 
 ## Basic Panel Settings
 
 All settings below are in **Settings → General → Panel**:
 
-| Setting        | Description                                                      | Default |
-| -------------- | ---------------------------------------------------------------- | ------- |
-| Default open   | Whether the panel opens automatically on supported sites         | Yes     |
-| Default side   | Left or right side of the screen                                 | Right   |
-| Panel width    | Panel width (200–600 px)                                         | 320 px  |
-| Panel height   | Panel height as a percentage of viewport (50–100 vh)             | 85 vh   |
-| Edge distance  | Initial distance from screen edge                                | 25 px   |
-| Auto-hide      | Collapse the panel when you click outside it                     | No      |
-| Edge snap      | Snap to edge when dragged near it; hover to preview when snapped | On      |
-| Snap threshold | Distance from edge that triggers snapping (10–100 px)            | 18 px   |
-
-Drag the panel’s title bar to move it.
+| Setting        | Description                                                          | Default   |
+| -------------- | -------------------------------------------------------------------- | --------- |
+| Panel mode     | Edge Snap (hide at edge, hover to peek) or Floating (always visible) | Edge Snap |
+| Default side   | Left or right side of the screen                                     | Right     |
+| Panel width    | Panel width (200–600 px)                                             | 320 px    |
+| Panel height   | Panel height as a percentage of viewport (50–100 vh)                 | 85 vh     |
+| Edge distance  | Initial distance from screen edge                                    | 25 px     |
+| Snap threshold | Distance from edge that triggers snapping (10–100 px)                | 30 px     |
 
 ## What's Next
 

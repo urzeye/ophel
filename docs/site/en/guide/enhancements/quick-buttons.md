@@ -28,6 +28,8 @@ You can toggle the visibility and reorder the buttons in **Settings → General 
 
 **Opacity**: Under **Settings → General → Quick Buttons → Opacity**, you can dial down the opacity so the buttons blend into the background.
 
+**Panel mode awareness**: In Floating mode, the Scroll to top, Scroll to bottom, and Anchor buttons hide automatically when the panel is open (it's already on screen). In Edge Snap mode, these three buttons stay visible at all times because the panel is tucked away at the edge.
+
 ## Return Anchor
 
 Every time you click **Scroll to top** or **Scroll to bottom**, Ophel records your current scroll position as an anchor. Click **Anchor** to jump back. Click it again to toggle between the anchor and your current position — useful for quickly cross-referencing different parts of a long conversation.
