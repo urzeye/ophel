@@ -467,26 +467,12 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         return
       }
 
-      const nextPosition = toLogicalGroupPosition(rect.left, rect.top, viewport, nextMetrics)
-      const prevPosition = groupPositionRef.current
-
-      if (
-        prevPosition.xRatio !== nextPosition.xRatio ||
-        prevPosition.yRatio !== nextPosition.yRatio
-      ) {
-        groupPositionRef.current = nextPosition
-        setGroupPosition(nextPosition)
-
-        if (isLiquidCollapsedRef.current) {
-          // 水滴态和展开态使用的尺寸不同，但这里的 ratio 是按“当前尺寸”反推出来的。
-          // 如果把水滴态 ratio 持久化，下一次刷新按展开态尺寸恢复时就会整体向上漂。
-          // 因此液态收缩期间只修正当前会话位置，不写回持久化设置。
-          return
-        }
-
-        // ResizeObserver 会在尺寸动画期间连续触发，这里只在尺寸稳定后回写一次。
-        scheduleGroupPositionPersist(nextPosition)
-      }
+      // Metrics 变化（如 collapsed ↔ expanded 切换、液态收缩等）时，
+      // 保持 ratio 不变——ratio 是位置的规范表示，不应从 DOM rect 反推。
+      // 因为此刻 DOM 位置仍按旧 metrics 渲染，用 rect.top + 新 metrics
+      // 反推会产生累积漂移。
+      // resolveLogicalGroupPosition() 在渲染时自动用新 metrics + 现有 ratio
+      // 计算正确的像素位置并执行边界钳位。
     }
 
     syncGroupMetrics()
@@ -500,7 +486,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return () => {
       resizeObserver.disconnect()
     }
-  }, [clampPixelGroupPosition, scheduleGroupPositionPersist, toLogicalGroupPosition])
+  }, [clampPixelGroupPosition])
 
   // 滚动到顶部（支持图文并茂模式）
   const scrollToTop = useCallback(async () => {
