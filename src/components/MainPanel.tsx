@@ -175,6 +175,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     panel.classList.remove("dragging")
 
     if (prevMode === "edge-snap" && currentMode === "floating") {
+      // 恢复 pointer-events：floating→edge-snap 会临时禁用，
+      // 若快速切回 floating，cleanup 已取消恢复定时器，需在此处手动恢复
+      panel.style.pointerEvents = ""
+
       const savedRect = savedPeekingRectRef.current
       savedPeekingRectRef.current = null
 
