@@ -9,7 +9,7 @@ import {
   NewTabIcon,
   OutlineIcon,
   PromptIcon,
-  RefreshIcon,
+  // RefreshIcon, (刷新按钮已注释掉)
   ScrollBottomIcon,
   ScrollTopIcon,
   SettingsIcon,
@@ -120,6 +120,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const prevPanelModeRef = useRef(currentSettings.panel?.panelMode)
   // 保存面板当前位置，用于 header 按钮触发的"原地固定"
   const savedPeekingRectRef = useRef<DOMRect | null>(null)
+  // 标题 tooltip 随机 tip 索引
+  const tipIndexRef = useRef<1 | 2 | 3 | 4 | 5 | 6>(
+    (Math.floor(Math.random() * 6) + 1) as 1 | 2 | 3 | 4 | 5 | 6,
+  )
   useEffect(() => {
     const currentMode = currentSettings.panel?.panelMode
     const prevMode = prevPanelModeRef.current
@@ -430,9 +434,12 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             userSelect: "none",
           }}>
           {/* 左侧：图标 + 标题（双击切换隐私模式） */}
-          <Tooltip content={t("aboutPageDesc")}>
+          <Tooltip content={t(`tip${tipIndexRef.current}`)}>
             <div
               style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}
+              onMouseEnter={() => {
+                tipIndexRef.current = (Math.floor(Math.random() * 6) + 1) as 1 | 2 | 3 | 4 | 5 | 6
+              }}
               onDoubleClick={() => {
                 // 发送隐私模式切换事件给 TabManager
                 window.postMessage({ type: "GH_PRIVACY_TOGGLE" }, "*")
