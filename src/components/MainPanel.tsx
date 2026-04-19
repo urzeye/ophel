@@ -161,6 +161,11 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       panel.style.transform = "translateY(-50%)"
       panel.style.left = ""
       panel.style.right = ""
+      // 临时禁用 pointer-events，防止 CSS :hover 在鼠标仍在面板区域时阻止收缩动画
+      panel.style.pointerEvents = "none"
+      setTimeout(() => {
+        panel.style.pointerEvents = ""
+      }, 400)
     }
   }, [
     currentSettings.panel?.panelMode,
