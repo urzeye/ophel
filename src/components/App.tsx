@@ -2452,9 +2452,11 @@ export const App = () => {
       setEdgeSnapState(defaultPosition)
       setIsPanelOpen(true)
     } else {
-      // 切换离开吸附模式：清除吸附状态
+      // 切换离开吸附模式：清除吸附状态，恢复悬浮模式的上次开关记忆
       setEdgeSnapState(null)
       setIsEdgePeeking(false)
+      const lastOpen = settings?.panel?.lastPanelOpen ?? true
+      setIsPanelOpen(lastOpen)
     }
   }, [settings?.panel?.panelMode])
 
