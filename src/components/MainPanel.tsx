@@ -1,4 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react"
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react"
 
 import type { SiteAdapter } from "~adapters/base"
 import {
@@ -19,6 +26,7 @@ import {
 } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { TAB_IDS } from "~constants"
+import { DEFAULT_KEYBINDINGS, formatShortcut, isMacOS } from "~constants/shortcuts"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
 import type { PromptManager } from "~core/prompt-manager"
@@ -120,10 +128,23 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const prevPanelModeRef = useRef(currentSettings.panel?.panelMode)
   // 保存面板当前位置，用于 header 按钮触发的"原地固定"
   const savedPeekingRectRef = useRef<DOMRect | null>(null)
-  // 标题 tooltip 随机 tip 索引
-  const tipIndexRef = useRef<1 | 2 | 3 | 4 | 5 | 6>(
-    (Math.floor(Math.random() * 6) + 1) as 1 | 2 | 3 | 4 | 5 | 6,
-  )
+  // 标题 tooltip 随机 tips（动态读取实际快捷键配置 + 平台检测）
+  const isMac = useMemo(() => isMacOS(), [])
+  const keybindings = currentSettings.shortcuts?.keybindings ?? DEFAULT_KEYBINDINGS
+  const getTips = useCallback(() => {
+    const fmt = (id: string) => formatShortcut(keybindings[id], isMac)
+    return [
+      t("tip1", { modifier: isMac ? "⌘" : "Ctrl" }),
+      t("tip2"),
+      t("tip3", { shortcut: fmt("showShortcuts") }),
+      t("tip4", { shortcut: fmt("openGlobalSearch") }),
+      t("tip5", { shortcut: fmt("copyLatestReply") }),
+      t("tip6", {
+        shortcut: fmt("prevHeading") + "/" + fmt("nextHeading"),
+      }),
+    ]
+  }, [keybindings, isMac])
+  const currentTipRef = useRef("")
   useEffect(() => {
     const currentMode = currentSettings.panel?.panelMode
     const prevMode = prevPanelModeRef.current
@@ -434,11 +455,12 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             userSelect: "none",
           }}>
           {/* 左侧：图标 + 标题（双击切换隐私模式） */}
-          <Tooltip content={t(`tip${tipIndexRef.current}`)}>
+          <Tooltip content={currentTipRef.current}>
             <div
               style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}
               onMouseEnter={() => {
-                tipIndexRef.current = (Math.floor(Math.random() * 6) + 1) as 1 | 2 | 3 | 4 | 5 | 6
+                const tips = getTips()
+                currentTipRef.current = tips[Math.floor(Math.random() * tips.length)]
               }}
               onDoubleClick={() => {
                 // 发送隐私模式切换事件给 TabManager
