@@ -118,6 +118,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   // useDraggable 通过直接 DOM 操作设置了 left/top/right/transform，React 无法感知这些变化，
   // 所以需要在模式切换时手动重置
   const prevPanelModeRef = useRef(currentSettings.panel?.panelMode)
+  // 保存面板当前位置，用于 header 按钮触发的"原地固定"
+  const savedPeekingRectRef = useRef<DOMRect | null>(null)
   useEffect(() => {
     const currentMode = currentSettings.panel?.panelMode
     const prevMode = prevPanelModeRef.current
@@ -129,18 +131,29 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     panel.classList.remove("dragging")
 
     if (prevMode === "edge-snap" && currentMode === "floating") {
-      // 吸附 → 悬浮：重置为默认悬浮位置
-      const edge = currentSettings.panel?.defaultEdgeDistance ?? 40
-      const pos = currentSettings.panel?.defaultPosition ?? "right"
+      const savedRect = savedPeekingRectRef.current
+      savedPeekingRectRef.current = null
 
-      panel.style.top = "50%"
-      panel.style.transform = "translateY(-50%)"
-      if (pos === "left") {
-        panel.style.left = `${edge}px`
+      if (savedRect && savedRect.right > 0 && savedRect.left < window.innerWidth) {
+        // 面板从 header 按钮切换且当前可见（peeking）：原地固定
+        panel.style.left = `${savedRect.left}px`
+        panel.style.top = `${savedRect.top}px`
         panel.style.right = "auto"
+        panel.style.transform = "none"
       } else {
-        panel.style.right = `${edge}px`
-        panel.style.left = "auto"
+        // 面板不可见或从设置页切换：重置为默认悬浮位置
+        const edge = currentSettings.panel?.defaultEdgeDistance ?? 40
+        const pos = currentSettings.panel?.defaultPosition ?? "right"
+
+        panel.style.top = "50%"
+        panel.style.transform = "translateY(-50%)"
+        if (pos === "left") {
+          panel.style.left = `${edge}px`
+          panel.style.right = "auto"
+        } else {
+          panel.style.right = `${edge}px`
+          panel.style.left = "auto"
+        }
       }
     } else if (prevMode === "floating" && currentMode === "edge-snap") {
       // 悬浮 → 吸附：重置垂直位置（水平由 CSS edge-snapped-* !important 接管）
@@ -438,6 +451,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               <button
                 onClick={() => {
                   const current = currentSettings.panel?.panelMode ?? "edge-snap"
+                  // 从吸附切换到悬浮时，保存当前面板位置用于"原地固定"
+                  if (current === "edge-snap" && panelRef.current) {
+                    savedPeekingRectRef.current = panelRef.current.getBoundingClientRect()
+                  }
                   updateNestedSetting(
                     "panel",
                     "panelMode",
@@ -459,9 +476,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                   transition: "all 0.2s",
                 }}>
                 {(currentSettings.panel?.panelMode ?? "edge-snap") === "edge-snap" ? (
-                  <FloatingModeIcon size={20} />
+                  <FloatingModeIcon size={24} />
                 ) : (
-                  <SnapToEdgeIcon size={20} />
+                  <SnapToEdgeIcon size={24} />
                 )}
               </button>
             </Tooltip>
