@@ -686,10 +686,12 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     const isActive = isFloatingToolbarBtn ? isToolsMenuOpen : isZenModeActive
 
     // panel-only 按钮：面板展开时隐藏
-    // hideWhenPanelOpen 按钮：面板展开时隐藏（功能已在面板内提供）
+    // hideWhenPanelOpen 按钮：仅在悬浮模式且面板展开时隐藏（edge-snap 模式下始终显示，因为面板收在边缘不便操作）
     // 禁用的按钮：永远隐藏
+    const isFloatingOpen =
+      isPanelOpen && (settings?.panel?.panelMode ?? "edge-snap") !== "edge-snap"
     const shouldHide =
-      isDisabled || (isPanelOnly && isPanelOpen) || (def.hideWhenPanelOpen && isPanelOpen)
+      isDisabled || (isPanelOnly && isPanelOpen) || (def.hideWhenPanelOpen && isFloatingOpen)
     if (shouldHide) return null
 
     // 优先使用 IconComponent，否则用 emoji
@@ -783,7 +785,9 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         if (!isEnabled) return null
 
         if (def.isPanelOnly && isPanelOpen) return null
-        if (def.hideWhenPanelOpen && isPanelOpen) return null
+        const isFloatingOpen =
+          isPanelOpen && (settings?.panel?.panelMode ?? "edge-snap") !== "edge-snap"
+        if (def.hideWhenPanelOpen && isFloatingOpen) return null
 
         return {
           id: btnConfig.id,
