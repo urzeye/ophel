@@ -18,6 +18,7 @@
 10. [阅读记录恢复异常与性能优化排查](#10-阅读记录恢复异常与性能优化排查)
 11. [首次安装会话同步不全问题](#11-首次安装会话同步不全问题)
 12. [ChatGPT 面板被 React Hydration 清除](#12-chatgpt-面板被-react-hydration-清除)
+13. [onRehydrateStorage 回调中 Store 变量未初始化](#13-onrehydratestorage-回调中-store-变量未初始化)
 
 ---
 
@@ -2215,3 +2216,149 @@ const userscriptStorageAdapter: StateStorage = {
 | 文件                           | 变更                                               |
 | ------------------------------ | -------------------------------------------------- |
 | `src/stores/chrome-adapter.ts` | **修改** - `getItem` 改为直接返回 `string \| null` |
+
+---
+
+## 13. onRehydrateStorage 回调中 Store 变量未初始化
+
+**日期**: 2026-04-20
+
+### 症状
+
+- 油猴脚本环境下，Store hydration 时 `useXxxStore` 变量为 `undefined`
+- 所有 7 个使用 `persist` 中间件的 Store 均存在此问题
+- 浏览器扩展环境无此问题（异步存储）
+
+### 背景
+
+项目的 Zustand Store 使用 `persist` 中间件持久化到 `chrome.storage.local`（扩展）或 `GM_getValue`（油猴脚本）。在 `onRehydrateStorage` 回调中，需要标记 `_hasHydrated: true` 表示 hydration 完成。
+
+### 根因
+
+**同步存储适配器导致 hydration 在 `create()` 返回前完成。**
+
+执行时序：
+
+```
+create(persist(stateCreator, options))
+  │
+  ├── 1. stateCreator(set, get, api) 执行 → 初始状态创建
+  ├── 2. hydrate() 调用
+  │     ├── onRehydrateStorage 外层函数执行 → 获取内层回调
+  │     ├── storage.getItem() 读取存储
+  │     │     ├── 异步存储 (chrome.storage.local) → 返回 Promise → 内层回调延迟执行 ✓
+  │     │     └── 同步存储 (GM_getValue) → 立即返回 → 内层回调立即执行 ✗
+  │     └── 内层回调触发 → 此时 useXxxStore 尚未赋值！
+  │
+  └── 3. create() 返回 → useXxxStore 赋值
+```
+
+之前的代码在内层回调中直接引用 `useXxxStore.setState(...)`，在同步存储模式下 `useXxxStore` 为 `undefined`。
+
+### 解决方案
+
+**通过逗号运算符在 state creator 中捕获 `set` 函数到模块级变量：**
+
+```typescript
+// 模块级变量
+let _completeHydration: (() => void) | null = null
+
+export const useXxxStore = create<XxxState>()(
+  persist(
+    // state creator 中通过逗号运算符捕获 set
+    (set, get) => (
+      (_completeHydration = () => set({ _hasHydrated: true })),
+      {
+        _hasHydrated: false,
+        // ... 其他状态
+      }
+    ),
+    {
+      onRehydrateStorage: () => () => {
+        // 使用捕获的 set，而非 store 变量
+        _completeHydration?.()
+      },
+    },
+  ),
+)
+```
+
+**关键原理**：`set` 在 persist 中间件内部的 `stateCreator(set, get, api)` 调用时已就绪，早于 `hydrate()` 的执行，因此无论同步/异步存储，捕获的 `set` 都可用。
+
+### 为何使用逗号运算符
+
+对比两种方式：
+
+```typescript
+// 方式 A：逗号运算符（采用） — 保持箭头函数表达式，不改变 }), 的闭合结构
+(set) => (_completeHydration = () => set({...}), { ... })
+
+// 方式 B：块函数体 — 需要 return，所有属性缩进增加一层（大量 diff）
+(set) => {
+  _completeHydration = () => set({...})
+  return {
+    ...
+  }
+}
+```
+
+方式 A 仅修改第一行，所有属性保持原有缩进，diff 最小。
+
+### settings-store 的特殊处理
+
+settings-store 的 hydration 逻辑更复杂（需要 `normalizeSettings` + `runWithoutPersist`），因此直接捕获原始 `set`：
+
+```typescript
+let _hydrationSet: ((partial: Partial<SettingsState>) => void) | null = null
+
+// state creator 中捕获
+(set, _get) => (_hydrationSet = set, { ... })
+
+// onRehydrateStorage 中使用
+runWithoutPersist(() => {
+  if (state) {
+    const normalizedSettings = normalizeSettings(state.settings)
+    _hydrationSet?.({
+      persistedSettings: normalizedSettings,
+      previewSettings: null,
+      settings: normalizedSettings,
+      _hasHydrated: true,
+    })
+    return
+  }
+  _hydrationSet?.({ _hasHydrated: true })
+})
+```
+
+### 受影响的 Store
+
+| Store 文件                    | 捕获变量                                                     | 备注                                       |
+| ----------------------------- | ------------------------------------------------------------ | ------------------------------------------ |
+| `conversations-store.ts`      | `_completeHydration: (() => void)`                           | 简单模式                                   |
+| `claude-sessionkeys-store.ts` | 同上                                                         | 简单模式                                   |
+| `folders-store.ts`            | 同上                                                         | 简单模式                                   |
+| `prompts-store.ts`            | 同上                                                         | 简单模式                                   |
+| `tags-store.ts`               | 同上                                                         | 简单模式                                   |
+| `reading-history-store.ts`    | 同上                                                         | 简单模式                                   |
+| `settings-store.ts`           | `_hydrationSet: ((partial: Partial<SettingsState>) => void)` | 复杂模式，含 normalize + runWithoutPersist |
+
+### 经验总结
+
+| 原则                                   | 说明                                                                            |
+| -------------------------------------- | ------------------------------------------------------------------------------- |
+| **避免在 `create()` 闭包内引用返回值** | Zustand 的 `create()` 返回值在内部回调中不一定可用                              |
+| **同步/异步存储行为差异**              | `GM_*` 同步 API 导致 hydration 时序完全不同于 `chrome.storage.local` 的异步模式 |
+| **逗号运算符的实用性**                 | 在不改变函数结构的前提下插入副作用语句，适合最小化 diff                         |
+
+### 文件变更
+
+| 文件                                     | 变更                                                              |
+| ---------------------------------------- | ----------------------------------------------------------------- |
+| `src/stores/conversations-store.ts`      | **修改** - 捕获 set，onRehydrateStorage 改用 `_completeHydration` |
+| `src/stores/claude-sessionkeys-store.ts` | **修改** - 同上                                                   |
+| `src/stores/folders-store.ts`            | **修改** - 同上                                                   |
+| `src/stores/prompts-store.ts`            | **修改** - 同上                                                   |
+| `src/stores/tags-store.ts`               | **修改** - 同上                                                   |
+| `src/stores/reading-history-store.ts`    | **修改** - 同上                                                   |
+| `src/stores/settings-store.ts`           | **修改** - 捕获 set + 移除调试日志 + 简化 merge try-catch         |
+| `src/stores/chrome-adapter.ts`           | **修改** - 移除调试日志                                           |

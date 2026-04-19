@@ -27,63 +27,69 @@ interface TagsState {
 
 // ==================== Store 创建 ====================
 
+// Captured set for safe hydration (avoids referencing store variable before assignment in sync hydration)
+let _completeHydration: (() => void) | null = null
+
 export const useTagsStore = create<TagsState>()(
   persist(
-    (set, get) => ({
-      tags: [],
-      _hasHydrated: false,
+    (set, get) => (
+      (_completeHydration = () => set({ _hasHydrated: true })),
+      {
+        tags: [],
+        _hasHydrated: false,
 
-      addTag: (name, color) => {
-        const state = get()
-        // 检查重复
-        const exists = state.tags.some((t) => t.name.toLowerCase() === name.toLowerCase())
-        if (exists) return null
+        addTag: (name, color) => {
+          const state = get()
+          // 检查重复
+          const exists = state.tags.some((t) => t.name.toLowerCase() === name.toLowerCase())
+          if (exists) return null
 
-        const newTag: Tag = {
-          id: "tag_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5),
-          name,
-          color,
-        }
-        set((s) => ({
-          tags: [...s.tags, newTag],
-        }))
-        return newTag
-      },
+          const newTag: Tag = {
+            id: "tag_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5),
+            name,
+            color,
+          }
+          set((s) => ({
+            tags: [...s.tags, newTag],
+          }))
+          return newTag
+        },
 
-      updateTag: (tagId, name, color) => {
-        const state = get()
-        // 检查重复（排除自己）
-        const exists = state.tags.some(
-          (t) => t.id !== tagId && t.name.toLowerCase() === name.toLowerCase(),
-        )
-        if (exists) return null
+        updateTag: (tagId, name, color) => {
+          const state = get()
+          // 检查重复（排除自己）
+          const exists = state.tags.some(
+            (t) => t.id !== tagId && t.name.toLowerCase() === name.toLowerCase(),
+          )
+          if (exists) return null
 
-        let updatedTag: Tag | null = null
-        set((s) => ({
-          tags: s.tags.map((t) => {
-            if (t.id === tagId) {
-              updatedTag = { ...t, name, color }
-              return updatedTag
-            }
-            return t
-          }),
-        }))
-        return updatedTag
-      },
+          let updatedTag: Tag | null = null
+          set((s) => ({
+            tags: s.tags.map((t) => {
+              if (t.id === tagId) {
+                updatedTag = { ...t, name, color }
+                return updatedTag
+              }
+              return t
+            }),
+          }))
+          return updatedTag
+        },
 
-      deleteTag: (tagId) =>
-        set((state) => ({
-          tags: state.tags.filter((t) => t.id !== tagId),
-        })),
+        deleteTag: (tagId) =>
+          set((state) => ({
+            tags: state.tags.filter((t) => t.id !== tagId),
+          })),
 
-      setHasHydrated: (state) => set({ _hasHydrated: state }),
-    }),
+        setHasHydrated: (state) => set({ _hasHydrated: state }),
+      }
+    ),
     {
       name: "tags", // chrome.storage key
       storage: createJSONStorage(() => chromeStorageAdapter),
       partialize: (state) => ({ tags: state.tags }),
-      onRehydrateStorage: () => (state) => {
-        useTagsStore.setState({ _hasHydrated: true })
+      onRehydrateStorage: () => () => {
+        _completeHydration?.()
       },
     },
   ),

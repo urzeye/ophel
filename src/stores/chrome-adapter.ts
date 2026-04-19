@@ -68,8 +68,13 @@ const normalizeUserscriptPersistValue = (name: string, value: unknown): string |
  */
 const userscriptStorageAdapter: StateStorage = {
   getItem: (name: string): string | null => {
-    const value = GM_getValue(name)
-    return normalizeUserscriptPersistValue(name, value)
+    try {
+      const value = GM_getValue(name)
+      return normalizeUserscriptPersistValue(name, value)
+    } catch (e) {
+      console.error(`[ophel] userscriptStorageAdapter.getItem("${name}") THREW:`, e)
+      throw e
+    }
   },
 
   setItem: (name: string, value: string): void => {

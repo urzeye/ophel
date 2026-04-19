@@ -28,57 +28,63 @@ interface SessionKeysStore extends ClaudeSessionKeysState {
 
 // ==================== Store 创建 ====================
 
+// Captured set for safe hydration (avoids referencing store variable before assignment in sync hydration)
+let _completeHydration: (() => void) | null = null
+
 export const useClaudeSessionKeysStore = create<SessionKeysStore>()(
   persist(
-    (set, _get) => ({
-      keys: [],
-      currentKeyId: "", // 空字符串表示使用浏览器默认cookie
-      _hasHydrated: false,
+    (set, _get) => (
+      (_completeHydration = () => set({ _hasHydrated: true })),
+      {
+        keys: [],
+        currentKeyId: "", // 空字符串表示使用浏览器默认cookie
+        _hasHydrated: false,
 
-      addKey: (data) => {
-        const newKey: ClaudeSessionKey = {
-          id: crypto.randomUUID(),
-          ...data,
-          createdAt: Date.now(),
-        }
-        set((state) => ({
-          keys: [...state.keys, newKey],
-        }))
-        return newKey
-      },
+        addKey: (data) => {
+          const newKey: ClaudeSessionKey = {
+            id: crypto.randomUUID(),
+            ...data,
+            createdAt: Date.now(),
+          }
+          set((state) => ({
+            keys: [...state.keys, newKey],
+          }))
+          return newKey
+        },
 
-      updateKey: (id, data) =>
-        set((state) => ({
-          keys: state.keys.map((k) => (k.id === id ? { ...k, ...data } : k)),
-        })),
+        updateKey: (id, data) =>
+          set((state) => ({
+            keys: state.keys.map((k) => (k.id === id ? { ...k, ...data } : k)),
+          })),
 
-      deleteKey: (id) =>
-        set((state) => ({
-          keys: state.keys.filter((k) => k.id !== id),
-          // 如果删除的是当前使用的key,重置为默认
-          currentKeyId: state.currentKeyId === id ? "" : state.currentKeyId,
-        })),
+        deleteKey: (id) =>
+          set((state) => ({
+            keys: state.keys.filter((k) => k.id !== id),
+            // 如果删除的是当前使用的key,重置为默认
+            currentKeyId: state.currentKeyId === id ? "" : state.currentKeyId,
+          })),
 
-      setCurrentKey: (id) => set({ currentKeyId: id }),
+        setCurrentKey: (id) => set({ currentKeyId: id }),
 
-      testKey: (id, result) =>
-        set((state) => ({
-          keys: state.keys.map((k) =>
-            k.id === id
-              ? {
-                  ...k,
-                  isValid: result.isValid,
-                  accountType: result.accountType as ClaudeSessionKey["accountType"],
-                  testedAt: Date.now(),
-                }
-              : k,
-          ),
-        })),
+        testKey: (id, result) =>
+          set((state) => ({
+            keys: state.keys.map((k) =>
+              k.id === id
+                ? {
+                    ...k,
+                    isValid: result.isValid,
+                    accountType: result.accountType as ClaudeSessionKey["accountType"],
+                    testedAt: Date.now(),
+                  }
+                : k,
+            ),
+          })),
 
-      setKeys: (keys) => set({ keys }),
+        setKeys: (keys) => set({ keys }),
 
-      setHasHydrated: (state) => set({ _hasHydrated: state }),
-    }),
+        setHasHydrated: (state) => set({ _hasHydrated: state }),
+      }
+    ),
     {
       name: "claudeSessionKeys", // chrome.storage key
       storage: createJSONStorage(() => chromeStorageAdapter),
@@ -86,8 +92,8 @@ export const useClaudeSessionKeysStore = create<SessionKeysStore>()(
         keys: state.keys,
         currentKeyId: state.currentKeyId,
       }),
-      onRehydrateStorage: () => (state) => {
-        useClaudeSessionKeysStore.setState({ _hasHydrated: true })
+      onRehydrateStorage: () => () => {
+        _completeHydration?.()
       },
     },
   ),

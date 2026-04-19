@@ -34,84 +34,90 @@ interface PromptsState {
 
 // ==================== Store 创建 ====================
 
+// Captured set for safe hydration (avoids referencing store variable before assignment in sync hydration)
+let _completeHydration: (() => void) | null = null
+
 export const usePromptsStore = create<PromptsState>()(
   persist(
-    (set, _get) => ({
-      prompts: getDefaultPrompts(), // 使用国际化后的默认提示词
-      _hasHydrated: false,
+    (set, _get) => (
+      (_completeHydration = () => set({ _hasHydrated: true })),
+      {
+        prompts: getDefaultPrompts(), // 使用国际化后的默认提示词
+        _hasHydrated: false,
 
-      addPrompt: (data) => {
-        const newPrompt: Prompt = {
-          id: "custom_" + Date.now(),
-          ...data,
-        }
-        set((state) => ({
-          prompts: [...state.prompts, newPrompt],
-        }))
-        return newPrompt
-      },
+        addPrompt: (data) => {
+          const newPrompt: Prompt = {
+            id: "custom_" + Date.now(),
+            ...data,
+          }
+          set((state) => ({
+            prompts: [...state.prompts, newPrompt],
+          }))
+          return newPrompt
+        },
 
-      updatePrompt: (id, data) =>
-        set((state) => ({
-          prompts: state.prompts.map((p) => (p.id === id ? { ...p, ...data } : p)),
-        })),
+        updatePrompt: (id, data) =>
+          set((state) => ({
+            prompts: state.prompts.map((p) => (p.id === id ? { ...p, ...data } : p)),
+          })),
 
-      deletePrompt: (id) =>
-        set((state) => ({
-          prompts: state.prompts.filter((p) => p.id !== id),
-        })),
+        deletePrompt: (id) =>
+          set((state) => ({
+            prompts: state.prompts.filter((p) => p.id !== id),
+          })),
 
-      renameCategory: (oldName, newName) =>
-        set((state) => ({
-          prompts: state.prompts.map((p) =>
-            p.category === oldName ? { ...p, category: newName } : p,
-          ),
-        })),
+        renameCategory: (oldName, newName) =>
+          set((state) => ({
+            prompts: state.prompts.map((p) =>
+              p.category === oldName ? { ...p, category: newName } : p,
+            ),
+          })),
 
-      deleteCategory: (name, defaultCategory = "未分类") =>
-        set((state) => ({
-          prompts: state.prompts.map((p) =>
-            p.category === name ? { ...p, category: defaultCategory } : p,
-          ),
-        })),
+        deleteCategory: (name, defaultCategory = "未分类") =>
+          set((state) => ({
+            prompts: state.prompts.map((p) =>
+              p.category === name ? { ...p, category: defaultCategory } : p,
+            ),
+          })),
 
-      updateOrder: (newOrderIds) =>
-        set((state) => {
-          const ordered: Prompt[] = []
-          newOrderIds.forEach((id) => {
-            const p = state.prompts.find((x) => x.id === id)
-            if (p) ordered.push(p)
-          })
-          // 追加任何遗漏的项
-          state.prompts.forEach((p) => {
-            if (!ordered.find((x) => x.id === p.id)) ordered.push(p)
-          })
-          return { prompts: ordered }
-        }),
+        updateOrder: (newOrderIds) =>
+          set((state) => {
+            const ordered: Prompt[] = []
+            newOrderIds.forEach((id) => {
+              const p = state.prompts.find((x) => x.id === id)
+              if (p) ordered.push(p)
+            })
+            // 追加任何遗漏的项
+            state.prompts.forEach((p) => {
+              if (!ordered.find((x) => x.id === p.id)) ordered.push(p)
+            })
+            return { prompts: ordered }
+          }),
 
-      setHasHydrated: (state) => set({ _hasHydrated: state }),
+        setHasHydrated: (state) => set({ _hasHydrated: state }),
 
-      // 切换置顶状态
-      togglePin: (id) =>
-        set((state) => ({
-          prompts: state.prompts.map((p) => (p.id === id ? { ...p, pinned: !p.pinned } : p)),
-        })),
+        // 切换置顶状态
+        togglePin: (id) =>
+          set((state) => ({
+            prompts: state.prompts.map((p) => (p.id === id ? { ...p, pinned: !p.pinned } : p)),
+          })),
 
-      // 更新最近使用时间
-      updateLastUsed: (id) =>
-        set((state) => ({
-          prompts: state.prompts.map((p) => (p.id === id ? { ...p, lastUsedAt: Date.now() } : p)),
-        })),
+        // 更新最近使用时间
+        updateLastUsed: (id) =>
+          set((state) => ({
+            prompts: state.prompts.map((p) => (p.id === id ? { ...p, lastUsedAt: Date.now() } : p)),
+          })),
 
-      // 批量设置提示词（用于导入）
-      setPrompts: (prompts) => set({ prompts }),
-    }),
+        // 批量设置提示词（用于导入）
+        setPrompts: (prompts) => set({ prompts }),
+      }
+    ),
     {
       name: "prompts", // chrome.storage key
       storage: createJSONStorage(() => chromeStorageAdapter),
       partialize: (state) => ({ prompts: state.prompts }),
-      onRehydrateStorage: () => (state) => {
-        usePromptsStore.setState({ _hasHydrated: true })
+      onRehydrateStorage: () => () => {
+        _completeHydration?.()
       },
     },
   ),

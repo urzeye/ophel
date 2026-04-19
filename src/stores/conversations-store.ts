@@ -34,111 +34,117 @@ interface ConversationsState {
 
 // ==================== Store 创建 ====================
 
+// Captured set for safe hydration (avoids referencing store variable before assignment in sync hydration)
+let _completeHydration: (() => void) | null = null
+
 export const useConversationsStore = create<ConversationsState>()(
   persist(
-    (set, get) => ({
-      conversations: {},
-      lastUsedFolderId: "inbox",
-      _hasHydrated: false,
+    (set, get) => (
+      (_completeHydration = () => set({ _hasHydrated: true })),
+      {
+        conversations: {},
+        lastUsedFolderId: "inbox",
+        _hasHydrated: false,
 
-      addConversation: (conv) =>
-        set((state) => ({
-          conversations: { ...state.conversations, [conv.id]: conv },
-        })),
+        addConversation: (conv) =>
+          set((state) => ({
+            conversations: { ...state.conversations, [conv.id]: conv },
+          })),
 
-      updateConversation: (id, updates) =>
-        set((state) => {
-          if (!state.conversations[id]) return state
-          return {
+        updateConversation: (id, updates) =>
+          set((state) => {
+            if (!state.conversations[id]) return state
+            return {
+              conversations: {
+                ...state.conversations,
+                [id]: { ...state.conversations[id], ...updates, updatedAt: Date.now() },
+              },
+            }
+          }),
+
+        deleteConversation: (id) =>
+          set((state) => {
+            const { [id]: _, ...rest } = state.conversations
+            return { conversations: rest }
+          }),
+
+        moveToFolder: (id, folderId) =>
+          set((state) => {
+            if (!state.conversations[id]) return state
+            return {
+              conversations: {
+                ...state.conversations,
+                [id]: { ...state.conversations[id], folderId, updatedAt: Date.now() },
+              },
+            }
+          }),
+
+        togglePin: (id) => {
+          const state = get()
+          if (!state.conversations[id]) return false
+          const newPinned = !state.conversations[id].pinned
+          set((s) => ({
             conversations: {
-              ...state.conversations,
-              [id]: { ...state.conversations[id], ...updates, updatedAt: Date.now() },
+              ...s.conversations,
+              [id]: { ...s.conversations[id], pinned: newPinned, updatedAt: Date.now() },
             },
-          }
-        }),
+          }))
+          return newPinned
+        },
 
-      deleteConversation: (id) =>
-        set((state) => {
-          const { [id]: _, ...rest } = state.conversations
-          return { conversations: rest }
-        }),
+        setConversationTags: (id, tagIds) =>
+          set((state) => {
+            if (!state.conversations[id]) return state
+            const conv = { ...state.conversations[id] }
+            if (tagIds.length > 0) {
+              conv.tagIds = tagIds
+            } else {
+              delete conv.tagIds
+            }
+            return {
+              conversations: { ...state.conversations, [id]: conv },
+            }
+          }),
 
-      moveToFolder: (id, folderId) =>
-        set((state) => {
-          if (!state.conversations[id]) return state
-          return {
-            conversations: {
-              ...state.conversations,
-              [id]: { ...state.conversations[id], folderId, updatedAt: Date.now() },
-            },
-          }
-        }),
-
-      togglePin: (id) => {
-        const state = get()
-        if (!state.conversations[id]) return false
-        const newPinned = !state.conversations[id].pinned
-        set((s) => ({
-          conversations: {
-            ...s.conversations,
-            [id]: { ...s.conversations[id], pinned: newPinned, updatedAt: Date.now() },
-          },
-        }))
-        return newPinned
-      },
-
-      setConversationTags: (id, tagIds) =>
-        set((state) => {
-          if (!state.conversations[id]) return state
-          const conv = { ...state.conversations[id] }
-          if (tagIds.length > 0) {
-            conv.tagIds = tagIds
-          } else {
-            delete conv.tagIds
-          }
-          return {
-            conversations: { ...state.conversations, [id]: conv },
-          }
-        }),
-
-      removeTagFromAll: (tagId) =>
-        set((state) => {
-          const updated: Record<string, Conversation> = {}
-          let changed = false
-          for (const [id, conv] of Object.entries(state.conversations)) {
-            if (conv.tagIds?.includes(tagId)) {
-              const newTagIds = conv.tagIds.filter((t) => t !== tagId)
-              updated[id] = {
-                ...conv,
-                tagIds: newTagIds.length > 0 ? newTagIds : undefined,
+        removeTagFromAll: (tagId) =>
+          set((state) => {
+            const updated: Record<string, Conversation> = {}
+            let changed = false
+            for (const [id, conv] of Object.entries(state.conversations)) {
+              if (conv.tagIds?.includes(tagId)) {
+                const newTagIds = conv.tagIds.filter((t) => t !== tagId)
+                updated[id] = {
+                  ...conv,
+                  tagIds: newTagIds.length > 0 ? newTagIds : undefined,
+                }
+                changed = true
+              } else {
+                updated[id] = conv
               }
-              changed = true
-            } else {
-              updated[id] = conv
             }
-          }
-          return changed ? { conversations: updated } : state
-        }),
+            return changed ? { conversations: updated } : state
+          }),
 
-      moveConversationsToInbox: (folderId) =>
-        set((state) => {
-          const updated: Record<string, Conversation> = {}
-          let changed = false
-          for (const [id, conv] of Object.entries(state.conversations)) {
-            if (conv.folderId === folderId) {
-              updated[id] = { ...conv, folderId: "inbox" }
-              changed = true
-            } else {
-              updated[id] = conv
+        moveConversationsToInbox: (folderId) =>
+          set((state) => {
+            const updated: Record<string, Conversation> = {}
+            let changed = false
+            for (const [id, conv] of Object.entries(state.conversations)) {
+              if (conv.folderId === folderId) {
+                updated[id] = { ...conv, folderId: "inbox" }
+                changed = true
+              } else {
+                updated[id] = conv
+              }
             }
-          }
-          return changed ? { conversations: updated } : state
-        }),
+            return changed ? { conversations: updated } : state
+          }),
 
-      setLastUsedFolderId: (folderId) => set({ lastUsedFolderId: folderId }),
+        setLastUsedFolderId: (folderId) => set({ lastUsedFolderId: folderId }),
 
-      setHasHydrated: (state) => set({ _hasHydrated: state }),
-    }),
+        setHasHydrated: (state) => set({ _hasHydrated: state }),
+      }
+    ),
     {
       name: "conversations", // chrome.storage key
       storage: createJSONStorage(() => chromeStorageAdapter),
@@ -146,8 +152,8 @@ export const useConversationsStore = create<ConversationsState>()(
         conversations: state.conversations,
         lastUsedFolderId: state.lastUsedFolderId,
       }),
-      onRehydrateStorage: () => (state) => {
-        useConversationsStore.setState({ _hasHydrated: true })
+      onRehydrateStorage: () => () => {
+        _completeHydration?.()
       },
     },
   ),
