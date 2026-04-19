@@ -74,7 +74,11 @@ if (chrome.notifications?.onClicked) {
       chrome.tabs.update(tab.tabId, { active: true }).catch(() => {})
       chrome.windows.update(tab.windowId, { focused: true }).catch(() => {})
     }
-    chrome.notifications.clear(notifId)
+    try {
+      chrome.notifications.clear(notifId)
+    } catch {
+      // ignore: permission may have been revoked
+    }
   })
 }
 
@@ -394,7 +398,8 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
       ;(async () => {
         try {
           // 支持 permType 或从 origins/permissions 推断类型
-          let permType = (message as any).permType
+          const VALID_PERM_TYPES = ["allUrls", "notifications", "cookies"] as const
+          let permType: string = (message as any).permType
           if (!permType) {
             const { origins, permissions } = message as any
             if (origins?.includes("<all_urls>")) {
@@ -407,7 +412,13 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
               permType = "allUrls"
             }
           }
-          const url = chrome.runtime.getURL(`tabs/perm-request.html?type=${permType}`)
+          // 白名单校验，防止非法值
+          if (!VALID_PERM_TYPES.includes(permType as any)) {
+            permType = "allUrls"
+          }
+          const url = chrome.runtime.getURL(
+            `tabs/perm-request.html?type=${encodeURIComponent(permType)}`,
+          )
 
           // 获取当前窗口信息以计算居中位置
           const currentWindow = await chrome.windows.getCurrent()
