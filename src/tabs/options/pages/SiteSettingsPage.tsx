@@ -706,21 +706,36 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
                   updateNestedSetting("content", "watermarkRemoval", true)
                   return
                 }
-                // 1. 检查是否已有权限
-                const response = await sendToBackground({
-                  type: MSG_CHECK_PERMISSIONS,
-                  origins: ["<all_urls>"],
-                })
-
-                if (response.success && response.hasPermission) {
-                  updateNestedSetting("content", "watermarkRemoval", true)
-                } else {
-                  // 2. 请求权限 (打开独立窗口)
-                  await sendToBackground({
-                    type: MSG_REQUEST_PERMISSIONS,
-                    permType: "allUrls",
+                // Options 页面可直接调用 chrome.permissions API
+                if (typeof chrome.permissions !== "undefined") {
+                  const hasPermission = await chrome.permissions.contains({
+                    origins: ["<all_urls>"],
                   })
-                  showToast(t("permissionRequestToast") || "请在弹出的窗口中授予权限", 3000)
+                  if (hasPermission) {
+                    updateNestedSetting("content", "watermarkRemoval", true)
+                  } else {
+                    const granted = await chrome.permissions.request({
+                      origins: ["<all_urls>"],
+                    })
+                    if (granted) {
+                      updateNestedSetting("content", "watermarkRemoval", true)
+                    }
+                  }
+                } else {
+                  // Content Script fallback：通过 background 打开权限请求弹窗
+                  const response = await sendToBackground({
+                    type: MSG_CHECK_PERMISSIONS,
+                    origins: ["<all_urls>"],
+                  })
+                  if (response.success && response.hasPermission) {
+                    updateNestedSetting("content", "watermarkRemoval", true)
+                  } else {
+                    await sendToBackground({
+                      type: MSG_REQUEST_PERMISSIONS,
+                      permType: "allUrls",
+                    })
+                    showToast(t("permissionRequestToast") || "请在弹出的窗口中授予权限", 3000)
+                  }
                 }
               } else {
                 updateNestedSetting("content", "watermarkRemoval", false)

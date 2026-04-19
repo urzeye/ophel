@@ -734,21 +734,36 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               updateNestedSetting("tab", "showNotification", true)
               return
             }
-            // 1. 检查是否已有权限
-            const response = await sendToBackground({
-              type: MSG_CHECK_PERMISSIONS,
-              permissions: ["notifications"],
-            })
-
-            if (response.success && response.hasPermission) {
-              updateNestedSetting("tab", "showNotification", true)
-            } else {
-              // 2. 请求权限 (打开独立窗口)
-              await sendToBackground({
-                type: MSG_REQUEST_PERMISSIONS,
-                permType: "notifications",
+            // Options 页面可直接调用 chrome.permissions API（无需经过 background）
+            if (typeof chrome.permissions !== "undefined") {
+              const hasPermission = await chrome.permissions.contains({
+                permissions: ["notifications"],
               })
-              showToast(t("permissionRequestToast") || "请在弹出的窗口中授予权限", 3000)
+              if (hasPermission) {
+                updateNestedSetting("tab", "showNotification", true)
+              } else {
+                const granted = await chrome.permissions.request({
+                  permissions: ["notifications"],
+                })
+                if (granted) {
+                  updateNestedSetting("tab", "showNotification", true)
+                }
+              }
+            } else {
+              // Content Script fallback：通过 background 打开权限请求弹窗
+              const response = await sendToBackground({
+                type: MSG_CHECK_PERMISSIONS,
+                permissions: ["notifications"],
+              })
+              if (response.success && response.hasPermission) {
+                updateNestedSetting("tab", "showNotification", true)
+              } else {
+                await sendToBackground({
+                  type: MSG_REQUEST_PERMISSIONS,
+                  permType: "notifications",
+                })
+                showToast(t("permissionRequestToast") || "请在弹出的窗口中授予权限", 3000)
+              }
             }
           } else {
             updateNestedSetting("tab", "showNotification", false)
