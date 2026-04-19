@@ -243,6 +243,8 @@ export const pt = {
   scrollBottom: "Fim",
   refresh: "Recarregar",
   collapse: "Recolher",
+  pinPanel: "Fixar painel",
+  snapToEdge: "Fixar na borda",
   edit: "Editar",
   delete: "Excluir",
   copy: "Copiar",

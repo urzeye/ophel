@@ -244,6 +244,8 @@ export const ko = {
   scrollBottom: "하단",
   refresh: "새로고침",
   collapse: "접기",
+  pinPanel: "패널 고정",
+  snapToEdge: "가장자리에 스냅",
   edit: "편집",
   delete: "삭제",
   copy: "복사",

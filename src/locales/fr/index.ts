@@ -244,6 +244,8 @@ export const fr = {
   scrollBottom: "Bas",
   refresh: "Actualiser",
   collapse: "Replier",
+  pinPanel: "Épingler le panneau",
+  snapToEdge: "Ancrer au bord",
   edit: "Modifier",
   delete: "Supprimer",
   copy: "Copier",

@@ -823,7 +823,7 @@ export const App = () => {
     if (panelMode === "floating") {
       updateNestedSetting("panel", "lastPanelOpen", isPanelOpen)
     }
-  }, [isPanelOpen])
+  }, [isPanelOpen, settings?.panel?.panelMode, updateNestedSetting])
 
   // 全局防遮挡状态 (防遮挡体验升级)
   const [isPassThrough, setIsPassThrough] = useState(false)
@@ -2458,7 +2458,7 @@ export const App = () => {
       const lastOpen = settings?.panel?.lastPanelOpen ?? true
       setIsPanelOpen(lastOpen)
     }
-  }, [settings?.panel?.panelMode])
+  }, [settings?.panel?.panelMode, settings?.panel?.defaultPosition, settings?.panel?.lastPanelOpen])
 
   // 监听默认位置变化，重置吸附状态
   // 当用户切换默认位置（如从左到右）时，如果是吸附状态，需要重置以便面板能跳转到新位置

@@ -243,6 +243,8 @@ export const es = {
   scrollBottom: "Abajo",
   refresh: "Recargar",
   collapse: "Contraer",
+  pinPanel: "Fijar panel",
+  snapToEdge: "Acoplar al borde",
   edit: "Editar",
   delete: "Borrar",
   copy: "Copiar",

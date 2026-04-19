@@ -248,6 +248,8 @@ export const ja = {
   scrollBottom: "ボトムへ",
   refresh: "更新",
   collapse: "折りたたむ",
+  pinPanel: "パネルを固定",
+  snapToEdge: "端にスナップ",
   edit: "編集",
   delete: "削除",
   copy: "コピー",

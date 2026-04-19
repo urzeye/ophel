@@ -251,6 +251,8 @@ export const en = {
   scrollBottom: "Bottom",
   refresh: "Refresh",
   collapse: "Collapse",
+  pinPanel: "Pin panel",
+  snapToEdge: "Snap to edge",
   edit: "Edit",
   delete: "Delete",
   copy: "Copy",

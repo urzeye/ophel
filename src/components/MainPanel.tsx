@@ -4,6 +4,7 @@ import type { SiteAdapter } from "~adapters/base"
 import {
   AnchorIcon,
   ConversationIcon,
+  FloatingModeIcon,
   MinimizeIcon,
   NewTabIcon,
   OutlineIcon,
@@ -12,6 +13,7 @@ import {
   ScrollBottomIcon,
   ScrollTopIcon,
   SettingsIcon,
+  SnapToEdgeIcon,
   ThemeDarkIcon,
   ThemeLightIcon,
 } from "~components/icons"
@@ -88,7 +90,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     }
   }, [])
 
-  const { settings } = useSettingsStore()
+  const { settings, updateNestedSetting } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
   const tabOrder = currentSettings.features?.order || DEFAULT_SETTINGS.features.order
   const siteId = adapter?.getSiteId() || "_default"
@@ -426,6 +428,44 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           <div
             className="gh-panel-controls"
             style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+            {/* 面板模式切换按钮 */}
+            <Tooltip
+              content={
+                (currentSettings.panel?.panelMode ?? "edge-snap") === "edge-snap"
+                  ? t("pinPanel")
+                  : t("snapToEdge")
+              }>
+              <button
+                onClick={() => {
+                  const current = currentSettings.panel?.panelMode ?? "edge-snap"
+                  updateNestedSetting(
+                    "panel",
+                    "panelMode",
+                    current === "edge-snap" ? "floating" : "edge-snap",
+                  )
+                }}
+                style={{
+                  background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
+                  border: "none",
+                  color: "var(--gh-glass-text, white)",
+                  width: "24px",
+                  height: "24px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "14px",
+                  transition: "all 0.2s",
+                }}>
+                {(currentSettings.panel?.panelMode ?? "edge-snap") === "edge-snap" ? (
+                  <FloatingModeIcon size={20} />
+                ) : (
+                  <SnapToEdgeIcon size={20} />
+                )}
+              </button>
+            </Tooltip>
+
             {/* 主题切换按钮 */}
             {onThemeToggle && (
               <Tooltip content={t("toggleTheme")}>

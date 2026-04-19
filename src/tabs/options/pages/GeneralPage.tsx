@@ -4,7 +4,7 @@
  */
 import React, { useEffect, useState } from "react"
 
-import { DragIcon, GeneralIcon } from "~components/icons"
+import { DragIcon, FloatingModeIcon, GeneralIcon, SnapToEdgeIcon } from "~components/icons"
 import { Slider, Switch } from "~components/ui"
 import {
   COLLAPSED_BUTTON_DEFS,
@@ -236,14 +236,25 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
               }}>
               {(
                 [
-                  { value: "edge-snap", label: t("panelModeEdgeSnap") || "自动吸附" },
-                  { value: "floating", label: t("panelModeFloating") || "悬浮" },
+                  {
+                    value: "edge-snap",
+                    label: t("panelModeEdgeSnap") || "自动吸附",
+                    Icon: SnapToEdgeIcon,
+                  },
+                  {
+                    value: "floating",
+                    label: t("panelModeFloating") || "悬浮",
+                    Icon: FloatingModeIcon,
+                  },
                 ] as const
               ).map((option, index) => (
                 <button
                   key={option.value}
                   onClick={() => updateNestedSetting("panel", "panelMode", option.value)}
                   style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
                     padding: "4px 12px",
                     fontSize: "13px",
                     border: "none",
@@ -259,6 +270,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
                         : "var(--gh-text-secondary, #6b7280)",
                     transition: "all 0.2s",
                   }}>
+                  <option.Icon size={14} />
                   {option.label}
                 </button>
               ))}

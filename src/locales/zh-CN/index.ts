@@ -299,6 +299,8 @@ export const zhCN = {
   drag: "拖动",
   refresh: "刷新",
   collapse: "收起",
+  pinPanel: "固定面板",
+  snapToEdge: "吸附到边缘",
   copy: "复制",
   addBookmark: "添加收藏",
   removeBookmark: "移除收藏",

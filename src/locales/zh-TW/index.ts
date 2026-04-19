@@ -146,6 +146,8 @@ export const zhTW = {
   dangerZoneDesc: "破壞性操作（不可恢復）",
   refresh: "刷新",
   collapse: "收起",
+  pinPanel: "固定面板",
+  snapToEdge: "吸附到邊緣",
   copy: "複製",
   addBookmark: "加入收藏",
   removeBookmark: "移除收藏",

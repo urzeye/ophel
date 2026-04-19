@@ -243,6 +243,8 @@ export const de = {
   scrollBottom: "Unten",
   refresh: "Aktualisieren",
   collapse: "Einklappen",
+  pinPanel: "Panel anheften",
+  snapToEdge: "Am Rand andocken",
   edit: "Bearbeiten",
   delete: "Löschen",
   copy: "Kopieren",

@@ -241,6 +241,8 @@ export const ru = {
   scrollBottom: "Вниз",
   refresh: "Обновить",
   collapse: "Свернуть",
+  pinPanel: "Закрепить панель",
+  snapToEdge: "Прикрепить к краю",
   edit: "Изм.",
   delete: "Удалить",
   copy: "Коп.",
