@@ -2433,15 +2433,30 @@ export const App = () => {
     onToggleScrollLock: handleToggleScrollLock,
   })
 
-  // 当自动吸附设置变化时的处理：关闭自动吸附时立即重置吸附状态
-  // 开启自动吸附的处理在 SettingsModal onClose 回调中
+  // 当面板模式切换时的处理
+  const prevPanelModeForSwitchRef = useRef<string | undefined>(undefined)
   useEffect(() => {
     const panelMode = settings?.panel?.panelMode ?? "edge-snap"
-    if (edgeSnapState && panelMode !== "edge-snap") {
+
+    // 首次渲染时仅记录模式，不执行切换逻辑（初始化由 init useEffect 处理）
+    if (prevPanelModeForSwitchRef.current === undefined) {
+      prevPanelModeForSwitchRef.current = panelMode
+      return
+    }
+    if (prevPanelModeForSwitchRef.current === panelMode) return
+    prevPanelModeForSwitchRef.current = panelMode
+
+    if (panelMode === "edge-snap") {
+      // 切换到吸附模式：初始化吸附到默认位置
+      const defaultPosition = settings?.panel?.defaultPosition ?? "right"
+      setEdgeSnapState(defaultPosition)
+      setIsPanelOpen(true)
+    } else {
+      // 切换离开吸附模式：清除吸附状态
       setEdgeSnapState(null)
       setIsEdgePeeking(false)
     }
-  }, [settings?.panel?.panelMode, edgeSnapState])
+  }, [settings?.panel?.panelMode])
 
   // 监听默认位置变化，重置吸附状态
   // 当用户切换默认位置（如从左到右）时，如果是吸附状态，需要重置以便面板能跳转到新位置

@@ -112,17 +112,22 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     onUnsnap,
   })
 
-  // 模式切换时重置面板位置：从吸附切换到悬浮时，将面板移到默认悬浮位置
+  // 模式切换时重置面板 DOM 位置
   // useDraggable 通过直接 DOM 操作设置了 left/top/right/transform，React 无法感知这些变化，
-  // 所以需要手动重置为默认位置
+  // 所以需要在模式切换时手动重置
   const prevPanelModeRef = useRef(currentSettings.panel?.panelMode)
   useEffect(() => {
     const currentMode = currentSettings.panel?.panelMode
     const prevMode = prevPanelModeRef.current
     prevPanelModeRef.current = currentMode
 
-    if (prevMode === "edge-snap" && currentMode === "floating" && panelRef.current) {
-      const panel = panelRef.current
+    if (prevMode === currentMode || !panelRef.current) return
+
+    const panel = panelRef.current
+    panel.classList.remove("dragging")
+
+    if (prevMode === "edge-snap" && currentMode === "floating") {
+      // 吸附 → 悬浮：重置为默认悬浮位置
       const edge = currentSettings.panel?.defaultEdgeDistance ?? 40
       const pos = currentSettings.panel?.defaultPosition ?? "right"
 
@@ -135,9 +140,19 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         panel.style.right = `${edge}px`
         panel.style.left = "auto"
       }
-      panel.classList.remove("dragging")
+    } else if (prevMode === "floating" && currentMode === "edge-snap") {
+      // 悬浮 → 吸附：重置垂直位置（水平由 CSS edge-snapped-* !important 接管）
+      panel.style.top = "50%"
+      panel.style.transform = "translateY(-50%)"
+      panel.style.left = ""
+      panel.style.right = ""
     }
-  }, [currentSettings.panel?.panelMode])
+  }, [
+    currentSettings.panel?.panelMode,
+    currentSettings.panel?.defaultEdgeDistance,
+    currentSettings.panel?.defaultPosition,
+    panelRef,
+  ])
 
   // 计算默认位置样式
   const defaultPosition = currentSettings.panel?.defaultPosition ?? "right"
