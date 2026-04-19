@@ -505,6 +505,12 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                   : t("snapToEdge")
               }>
               <button
+                type="button"
+                aria-label={
+                  (currentSettings.panel?.panelMode ?? "edge-snap") === "edge-snap"
+                    ? t("pinPanel")
+                    : t("snapToEdge")
+                }
                 onClick={() => {
                   const current = currentSettings.panel?.panelMode ?? "edge-snap"
                   // 从吸附切换到悬浮时，保存当前面板位置用于"原地固定"

@@ -249,7 +249,9 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
                 ] as const
               ).map((option, index) => (
                 <button
+                  type="button"
                   key={option.value}
+                  aria-pressed={(settings.panel?.panelMode ?? "edge-snap") === option.value}
                   onClick={() => updateNestedSetting("panel", "panelMode", option.value)}
                   style={{
                     display: "inline-flex",
