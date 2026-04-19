@@ -74,11 +74,10 @@ if (chrome.notifications?.onClicked) {
       chrome.tabs.update(tab.tabId, { active: true }).catch(() => {})
       chrome.windows.update(tab.windowId, { focused: true }).catch(() => {})
     }
-    try {
-      chrome.notifications.clear(notifId)
-    } catch {
+    // MV3 returns Promise at runtime; cast to handle both callback/Promise signatures
+    void Promise.resolve(chrome.notifications.clear(notifId)).catch(() => {
       // ignore: permission may have been revoked
-    }
+    })
   })
 }
 
