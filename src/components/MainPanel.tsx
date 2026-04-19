@@ -148,8 +148,11 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     ]
   }, [keybindings, isMac])
   const [currentTip, setCurrentTip] = useState(() => {
-    const fmt = (id: string) =>
-      formatShortcut((currentSettings.shortcuts?.keybindings ?? DEFAULT_KEYBINDINGS)[id], isMacOS())
+    const kb = currentSettings.shortcuts?.keybindings ?? DEFAULT_KEYBINDINGS
+    const fmt = (id: string) => {
+      const shortcut = kb[id] ?? DEFAULT_KEYBINDINGS[id]
+      return shortcut ? formatShortcut(shortcut, isMacOS()) : ""
+    }
     const tips = [
       t("tip1", { modifier: isMacOS() ? "⌘" : "Ctrl" }),
       t("tip2"),
