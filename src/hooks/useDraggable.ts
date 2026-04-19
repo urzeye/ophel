@@ -34,6 +34,8 @@ export function useDraggable(options: UseDraggableOptions = {}) {
   // 延迟取消吸附：记录 mousedown 时的吸附状态，仅在实际拖拽移动时才执行取消
   // 这样单击/双击（如双击标题切换隐私模式）不会导致面板脱离吸附
   const pendingUnsnapRef = useRef<"left" | "right" | null>(null)
+  // 动画 RAF ID，用于组件卸载时取消
+  const animationRafRef = useRef<number | null>(null)
 
   // 开始拖拽
   const handleMouseDown = useCallback(
@@ -108,6 +110,12 @@ export function useDraggable(options: UseDraggableOptions = {}) {
       const panel = panelRef.current
       if (!panel) return
 
+      // 取消正在进行的动画
+      if (animationRafRef.current !== null) {
+        cancelAnimationFrame(animationRafRef.current)
+        animationRafRef.current = null
+      }
+
       // 读取当前数值或实时位置
       const startLeft = parseFloat(panel.style.left) || panel.getBoundingClientRect().left
       const startTop = parseFloat(panel.style.top) || panel.getBoundingClientRect().top
@@ -127,13 +135,14 @@ export function useDraggable(options: UseDraggableOptions = {}) {
         panel.style.top = `${currentTop}px`
 
         if (progress < 1) {
-          requestAnimationFrame(animate)
+          animationRafRef.current = requestAnimationFrame(animate)
         } else {
+          animationRafRef.current = null
           onComplete?.()
         }
       }
 
-      requestAnimationFrame(animate)
+      animationRafRef.current = requestAnimationFrame(animate)
     },
     [],
   )
@@ -218,6 +227,10 @@ export function useDraggable(options: UseDraggableOptions = {}) {
       document.removeEventListener("mousemove", handleMouseMove)
       document.removeEventListener("mouseup", handleMouseUp)
       window.removeEventListener("resize", clampToViewport)
+      if (animationRafRef.current !== null) {
+        cancelAnimationFrame(animationRafRef.current)
+        animationRafRef.current = null
+      }
     }
   }, [handleMouseDown, handleMouseMove, handleMouseUp, clampToViewport])
 
