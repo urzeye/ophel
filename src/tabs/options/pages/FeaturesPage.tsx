@@ -734,20 +734,13 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               updateNestedSetting("tab", "showNotification", true)
               return
             }
-            // Options 页面可直接调用 chrome.permissions API（无需经过 background）
+            // Options 页面可直接调用 chrome.permissions API（无需先 contains，避免 await 导致 user gesture 丢失）
             if (typeof chrome.permissions !== "undefined") {
-              const hasPermission = await chrome.permissions.contains({
+              const granted = await chrome.permissions.request({
                 permissions: ["notifications"],
               })
-              if (hasPermission) {
+              if (granted) {
                 updateNestedSetting("tab", "showNotification", true)
-              } else {
-                const granted = await chrome.permissions.request({
-                  permissions: ["notifications"],
-                })
-                if (granted) {
-                  updateNestedSetting("tab", "showNotification", true)
-                }
               }
             } else {
               // Content Script fallback：通过 background 打开权限请求弹窗

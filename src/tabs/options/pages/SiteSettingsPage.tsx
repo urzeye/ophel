@@ -706,20 +706,13 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
                   updateNestedSetting("content", "watermarkRemoval", true)
                   return
                 }
-                // Options 页面可直接调用 chrome.permissions API
+                // Options 页面直接调用 chrome.permissions API（request 已授权时不弹窗直接返回 true）
                 if (typeof chrome.permissions !== "undefined") {
-                  const hasPermission = await chrome.permissions.contains({
+                  const granted = await chrome.permissions.request({
                     origins: ["<all_urls>"],
                   })
-                  if (hasPermission) {
+                  if (granted) {
                     updateNestedSetting("content", "watermarkRemoval", true)
-                  } else {
-                    const granted = await chrome.permissions.request({
-                      origins: ["<all_urls>"],
-                    })
-                    if (granted) {
-                      updateNestedSetting("content", "watermarkRemoval", true)
-                    }
                   }
                 } else {
                   // Content Script fallback：通过 background 打开权限请求弹窗
