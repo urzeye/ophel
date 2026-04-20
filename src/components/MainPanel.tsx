@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -164,7 +165,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     return tips[Math.floor(Math.random() * tips.length)]
   })
   const pointerEventsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  useEffect(() => {
+  // 使用 useLayoutEffect 保证在浏览器绘制前完成定位，避免模式切换时闪烁
+  useLayoutEffect(() => {
     const currentMode = currentSettings.panel?.panelMode
     const prevMode = prevPanelModeRef.current
     prevPanelModeRef.current = currentMode
@@ -204,7 +206,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         }
       }
     } else if (prevMode === "floating" && currentMode === "edge-snap") {
-      // 悬浮 → 吸附：重置垂直位置（水平由 CSS edge-snapped-* !important 接管）
+      // 悬浮 → 吸附：先添加 CSS 吸附类，确保 !important 定位在清除 inline style 前生效
+      const pos = currentSettings.panel?.defaultPosition ?? "right"
+      panel.classList.add(`edge-snapped-${pos}`)
       panel.style.top = "50%"
       panel.style.transform = "translateY(-50%)"
       panel.style.left = ""
