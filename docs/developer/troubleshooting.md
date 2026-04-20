@@ -2225,7 +2225,7 @@ const userscriptStorageAdapter: StateStorage = {
 
 ### 症状
 
-- 油猴脚本环境下，Store hydration 时 `useXxxStore` 变量为 `undefined`
+- 油猴脚本环境下，Store hydration 时 `useXxxStore` 尚未初始化，触发 TDZ `ReferenceError`（如 `Cannot access 'useXxxStore' before initialization`）
 - 所有 7 个使用 `persist` 中间件的 Store 均存在此问题
 - 浏览器扩展环境无此问题（异步存储）
 
