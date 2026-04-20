@@ -37,6 +37,15 @@ interface TreeState {
   hadChildren: boolean
 }
 
+/** djb2 hash：将任意长度字符串压缩为 8 位十六进制字符串 */
+function djb2Hash(str: string): string {
+  let hash = 5381
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash + str.charCodeAt(i)) >>> 0
+  }
+  return hash.toString(16)
+}
+
 export class OutlineManager {
   private siteAdapter: SiteAdapter
   private settings: Settings["features"]["outline"]
@@ -712,12 +721,13 @@ export class OutlineManager {
     const sessionIdForKey = this.siteAdapter.getSessionId() || "no-session"
     const pathname = typeof window !== "undefined" ? window.location.pathname : ""
     const sessionScopeKey = `${this.siteAdapter.getSiteId()}:${sessionIdForKey}:${pathname}`
-    const outlineKey =
+    const rawKey =
       sessionScopeKey +
       "|" +
       showWordCountFlag +
       "|" +
       outlineData.map((i) => `${i.text}:${(i as ExtendedOutlineItem).isBookmarked}`).join("|")
+    const outlineKey = djb2Hash(rawKey)
     const currentStateMap: Record<string, TreeState> = {}
     if (this.tree.length > 0) {
       this.captureTreeState(this.tree, currentStateMap)
