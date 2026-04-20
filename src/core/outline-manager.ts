@@ -184,9 +184,10 @@ export class OutlineManager {
       this.triggerAutoUpdate()
     })
 
-    // 观察 document.body，虽然范围大但为了确保捕获所有变化
-    // legacy 使用的是 document.body
-    this.observer.observe(document.body, {
+    // 优先观察适配器指定的容器（比整个 document.body 范围更小），
+    // 若适配器未提供则 fallback 到 document.body
+    const observeTarget = this.siteAdapter.getObserveTarget() ?? document.body
+    this.observer.observe(observeTarget, {
       childList: true,
       subtree: true,
       characterData: true,

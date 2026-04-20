@@ -799,6 +799,17 @@ export abstract class SiteAdapter {
     return ""
   }
 
+  /**
+   * 返回 MutationObserver 应观察的目标元素。
+   * 默认使用 getResponseContainerSelector() 找到的容器，找不到时返回 null（fallback 到 document.body）。
+   * 各适配器可覆盖以返回更精确的容器，从而减少 AI 生成时的无效回调。
+   */
+  getObserveTarget(): Element | null {
+    const selector = this.getResponseContainerSelector()
+    if (!selector) return null
+    return document.querySelector(selector)
+  }
+
   /** 获取聊天内容元素的选择器列表 */
   getChatContentSelectors(): string[] {
     return []

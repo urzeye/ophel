@@ -1295,6 +1295,14 @@ export class ClaudeAdapter extends SiteAdapter {
     return ".font-claude-response"
   }
 
+  /**
+   * Claude 的大纲根容器是滚动容器，而非单条回复 .font-claude-response，
+   * 所以 MutationObserver 也应观察滚动容器，避免漏掉列表头部变更。
+   */
+  getObserveTarget(): Element | null {
+    return this.getScrollContainer()
+  }
+
   // ==================== 用户问题处理 ====================
 
   getUserQuerySelector(): string {
