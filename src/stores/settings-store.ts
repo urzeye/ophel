@@ -500,7 +500,7 @@ export const useSettingsStore = create<SettingsState>()(
       },
       // Hydration 完成回调
       onRehydrateStorage: () => {
-        return (state, error) => {
+        return (state, _error) => {
           runWithoutPersist(() => {
             if (state) {
               const normalizedSettings = normalizeSettings(state.settings)

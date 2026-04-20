@@ -2360,5 +2360,5 @@ runWithoutPersist(() => {
 | `src/stores/prompts-store.ts`            | **修改** - 同上                                                   |
 | `src/stores/tags-store.ts`               | **修改** - 同上                                                   |
 | `src/stores/reading-history-store.ts`    | **修改** - 同上                                                   |
-| `src/stores/settings-store.ts`           | **修改** - 捕获 set + 移除调试日志 + 简化 merge try-catch         |
-| `src/stores/chrome-adapter.ts`           | **修改** - 移除调试日志                                           |
+| `src/stores/settings-store.ts`           | **修改** - 捕获 set + 简化 merge try-catch + 新增错误日志         |
+| `src/stores/chrome-adapter.ts`           | **修改** - 调整日志处理，新增错误日志捕获                         |
