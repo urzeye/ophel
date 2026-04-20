@@ -2611,6 +2611,7 @@ export const App = () => {
 
     return () => {
       observer.disconnect()
+      suppressEdgePeekInitRef.current = false
     }
   }, [
     edgeSnapState,
