@@ -1019,6 +1019,9 @@ export const App = () => {
   const isInputFocusedRef = useRef(false)
   // 追踪是否已完成初始化，防止重复执行
   const isInitializedRef = useRef(false)
+  // 模式刚切换到 edge-snap，压制 MutationObserver 的初始 overlay 检查
+  // 让面板先收缩作为预览，而不是因为设置模态框仍在打开而强制 peek
+  const suppressEdgePeekInitRef = useRef(false)
 
   const getEdgePeekQueryRoots = useCallback((): Array<Element | ShadowRoot> => {
     const roots: Array<Element | ShadowRoot> = []
@@ -2521,9 +2524,11 @@ export const App = () => {
     prevPanelModeForSwitchRef.current = panelMode
 
     if (panelMode === "edge-snap") {
-      // 切换到吸附模式：初始化吸附到默认位置
+      // 切换到吸附模式：初始化吸附到默认位置，立即收缩作为预览
       const defaultPosition = settings?.panel?.defaultPosition ?? "right"
+      suppressEdgePeekInitRef.current = true
       setEdgeSnapState(defaultPosition)
+      setIsEdgePeeking(false)
       setIsPanelOpen(true)
     } else {
       // 切换离开吸附模式：清除吸附状态，恢复悬浮模式的上次开关记忆
@@ -2597,8 +2602,10 @@ export const App = () => {
       })
     }
 
-    // 初始检查
-    if (checkPortalExists()) {
+    // 初始检查（模式刚切换到 edge-snap 时跳过，让面板先收缩作为预览）
+    if (suppressEdgePeekInitRef.current) {
+      suppressEdgePeekInitRef.current = false
+    } else if (checkPortalExists()) {
       setIsEdgePeeking(true)
     }
 
