@@ -273,9 +273,9 @@ setActive(active: boolean) {
 
 ---
 
-## Phase 7：虚拟列表（OutlineTab 大量节点渲染优化）
+## Phase 7：OutlineTab 渲染优化
 
-**状态**：评估中，不进入当前迭代（工程量较大，需单独讨论）
+**状态**：进行中（方案 A: React.memo 滚动同步优化）
 
 ### 问题描述
 
@@ -283,19 +283,85 @@ setActive(active: boolean) {
 
 - React reconcile 开销大
 - 所有节点的 `ref` 均保留在内存中
+- **最高频触发**：滚动同步 (`activeIndex` 变化) 导致 1000+ `OutlineNodeView` 全量 re-render，但实际仅 2 个节点需更新
 
-### 可能方案
+### 分析结论
 
-1. 使用 `react-window` / `react-virtual` 添加虚拟滚动
-2. 手写分页/懒加载（仅渲染可见区域 ±100px 的节点）
-3. 折叠状态下大量节点不渲染，实际影响可能较小——需先用 Profiler 量化
+#### Node 数据模型
+
+`outline-manager.ts` 中 **82% 的操作是原地修改 (Mutation)**，不创建新 node 对象：
+
+| 操作                                           | Node 引用  | 修改的属性                                     |
+| ---------------------------------------------- | ---------- | ---------------------------------------------- |
+| `toggleNode()`                                 | 不变       | `collapsed`, `forceExpanded`                   |
+| `toggleBookmark()`                             | 不变       | `isBookmarked`, `bookmarkId`                   |
+| `setLevel()` / `expandAll()` / `collapseAll()` | 不变       | 全树 `collapsed`                               |
+| `setSearchQuery()`                             | 不变       | `isMatch`, `hasMatchedDescendant`, `collapsed` |
+| `refresh()` / `buildTree()`                    | **新对象** | 全新树                                         |
+
+因此 `React.memo` 的 `prev.node !== next.node` 引用比较在 mutation 场景下**无法区分变化**。
+
+#### 虚拟列表评估
+
+**不建议引入**，原因：
+
+1. 树形结构需要先扁平化，react-window 等库原生不支持
+2. 动态行高（缩进、搜索高亮、换行）需 DOM 测量
+3. 搜索+折叠+书签三重过滤叠加，扁平化映射实时同步复杂
+4. 折叠后可见节点仅 50-200，常见场景下瓶颈不在 DOM 数量
+5. 工程量 5-15 天，回归风险高
+
+### 实施方案
+
+#### 方案 A（当前迭代）: React.memo 仅优化滚动同步
+
+**核心收益**：滚动同步是最高频操作（每 16ms），activeIndex 变化导致全量 re-render。方案 A 将其从 O(n) 降为 O(1)。
+
+**安全性**：
+
+- Mutation 操作（展开/折叠/搜索/树重建）仍全量渲染，行为不变
+- 懒加载场景安全：`buildTree()` 创建新对象 → memo 不跳过
+- `activeIndex` 实时计算，不缓存旧值
+
+**比较函数设计**：
+
+```ts
+// 只阻止"非我相关的 activeIndex/visibleHighlightIndex 变化"
+// mutation 操作照常全量渲染
+;(prev, next) => {
+  if (prev.node !== next.node) return false // 树重建
+  if (prev.visibleMap !== next.visibleMap) return false // 可见性变化
+  if (prev.searchQuery !== next.searchQuery) return false // 搜索变化
+  // activeIndex: 只关心"我是否 active"
+  if ((prev.activeIndex === prev.node.index) !== (next.activeIndex === next.node.index))
+    return false
+  if (
+    (prev.visibleHighlightIndex === prev.node.index) !==
+    (next.visibleHighlightIndex === next.node.index)
+  )
+    return false
+  return true
+}
+```
+
+**受限于 mutation 模式，此方案不拦截 toggleNode 等操作**——这是有意为之：mutation 操作通过 `notify()` → `setTree([...state.tree])` 触发重渲染，tree 数组引用变化而 node 引用不变，此时 `prev.node === next.node` 为 true，但 `prev.visibleMap !== next.visibleMap`（因为 tree 变了 useMemo 会重算），所以仍会正常渲染。
+
+#### 方案 B（后续迭代）: 局部优化
+
+- `itemRefMap` 仅保存可见节点的 ref
+- `useMemo` 依赖项拆分（当前 7 个 → 2-3 个分组）
+- 需 React Profiler 量化瓶颈后决定
+
+### 影响范围
+
+- `OutlineTab.tsx` — `OutlineNodeView` 组件
 
 ---
 
 ## 执行规则
 
-1. 严格按 Phase 1 → Phase 2 → ... → Phase 6 顺序执行
+1. 严格按 Phase 1 → Phase 2 → ... → Phase 6 → Phase 7 顺序执行
 2. 每完成一个 Phase，需要用户确认再继续下一个
 3. 每个 Phase 在独立提交中完成
-4. 分支名：`perf/outline-optimizations`
-5. Phase 7 虚拟列表单独评估，不在本计划内强制执行
+4. Phase 1-6 分支名：`perf/outline-optimizations`
+5. Phase 7 分支名：`perf/outline-memo`

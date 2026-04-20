@@ -144,8 +144,6 @@ const OutlineNodeView: React.FC<{
   onClick: (node: OutlineNode) => void
   onCopy: (e: React.MouseEvent, node: OutlineNode) => void
   onToggleBookmark: (e: React.MouseEvent, node: OutlineNode) => void
-  activeIndex: number | null
-  visibleHighlightIndex: number | null
   setItemRef: (index: number, el: HTMLElement | null) => void
   visibleMap: Record<number, boolean>
   searchQuery: string
@@ -156,15 +154,11 @@ const OutlineNodeView: React.FC<{
   onClick,
   onCopy,
   onToggleBookmark,
-  activeIndex,
-  visibleHighlightIndex,
   setItemRef,
   visibleMap,
   searchQuery,
   extractUserQueryText,
 }) => {
-  const isActive = node.index === activeIndex
-  const isVisibleHighlight = node.index === visibleHighlightIndex
   const hasChildren = node.children && node.children.length > 0
   // Legacy: isExpanded 直接看 hasChildren 和 collapsed，不考虑搜索
   // 箭头始终显示（只要有子节点），因为用户可能想手动展开查看不匹配的子节点
@@ -178,8 +172,6 @@ const OutlineNodeView: React.FC<{
     `outline-level-${node.relativeLevel}`,
     node.isUserQuery ? "user-query-node" : "",
     node.isGhost ? "ghost-node" : "", // Add ghost styling class
-    isActive ? "sync-highlight" : "",
-    isVisibleHighlight ? "sync-highlight-visible" : "",
     !shouldShow ? "outline-hidden" : "",
   ]
     .filter(Boolean)
@@ -373,8 +365,6 @@ const OutlineNodeView: React.FC<{
             onClick={onClick}
             onCopy={onCopy}
             onToggleBookmark={onToggleBookmark}
-            activeIndex={activeIndex}
-            visibleHighlightIndex={visibleHighlightIndex}
             setItemRef={setItemRef}
             visibleMap={visibleMap}
             searchQuery={searchQuery}
@@ -393,8 +383,6 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
   const initialState = manager.getState()
 
   const [tree, setTree] = useState<OutlineNode[]>(initialState.tree)
-  const [activeIndex, setActiveIndex] = useState<number | null>(null) // manager doesn't track activeIndex
-  const [visibleHighlightIndex, setVisibleHighlightIndex] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState(manager.getSearchQuery())
   const [isAllExpanded, setIsAllExpanded] = useState(initialState.isAllExpanded)
   const [showUserQueries, setShowUserQueries] = useState(initialState.includeUserQueries)
@@ -528,24 +516,32 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
     }
   }, [tree]) // 依赖 tree，当 tree 变化（渲染完成）后执行
 
+  // 滚动同步高亮：直接操作 DOM class，不触发 React re-render
   const updateActiveIndex = useCallback((idx: number | null) => {
-    if (activeIndexRef.current !== idx) {
-      activeIndexRef.current = idx
-      setActiveIndex(idx)
-    }
+    const prevIdx = activeIndexRef.current
+    if (prevIdx === idx) return
+    const map = itemRefMap.current
+    if (prevIdx !== null) map.get(prevIdx)?.classList.remove("sync-highlight")
+    if (idx !== null) map.get(idx)?.classList.add("sync-highlight")
+    activeIndexRef.current = idx
   }, [])
 
   const updateVisibleHighlightIndex = useCallback((idx: number | null) => {
-    if (visibleHighlightRef.current !== idx) {
-      visibleHighlightRef.current = idx
-      setVisibleHighlightIndex(idx)
-    }
+    const prevIdx = visibleHighlightRef.current
+    if (prevIdx === idx) return
+    const map = itemRefMap.current
+    if (prevIdx !== null) map.get(prevIdx)?.classList.remove("sync-highlight-visible")
+    if (idx !== null) map.get(idx)?.classList.add("sync-highlight-visible")
+    visibleHighlightRef.current = idx
   }, [])
 
   const setItemRef = useCallback((index: number, el: HTMLElement | null) => {
     const map = itemRefMap.current
     if (el) {
       map.set(index, el)
+      // 树重建后 DOM 元素更新，重新应用当前高亮 class
+      if (index === activeIndexRef.current) el.classList.add("sync-highlight")
+      if (index === visibleHighlightRef.current) el.classList.add("sync-highlight-visible")
     } else {
       map.delete(index)
     }
@@ -1461,8 +1457,6 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                   onClick={handleClick}
                   onCopy={handleCopy}
                   onToggleBookmark={handleToggleBookmark}
-                  activeIndex={activeIndex}
-                  visibleHighlightIndex={visibleHighlightIndex}
                   setItemRef={setItemRef}
                   visibleMap={visibleMap}
                   searchQuery={searchQuery}
