@@ -21,7 +21,7 @@
 
 ## Phase 1：`captureTreeState` key 碰撞 Bug
 
-**状态**：待修复
+**状态**：已完成
 
 ### 问题描述
 
@@ -55,7 +55,7 @@ const key = node.id ? `id:${node.id}` : `${node.level}_${node.text}_${node.index
 
 ## Phase 2：缩小 MutationObserver 观察范围
 
-**状态**：待修复（等待 Phase 1 确认后开始）
+**状态**：已完成
 
 ### 问题描述
 
@@ -74,17 +74,19 @@ this.observer.observe(document.body, {
 
 ### 修复方案
 
-在 `SiteAdapter` 基类新增方法 `getObserveTarget()`，各适配器可覆盖返回更小范围的容器：
+在 `SiteAdapter` 基类新增方法 `getObserveTarget()`，默认使用 `getResponseContainerSelector()` 返回更小范围的容器；各适配器如有需要仍可覆盖：
 
 ```ts
-// base.ts 新增默认实现
+// base.ts 默认实现（通过 getResponseContainerSelector 自动查找容器）
 getObserveTarget(): Element | null {
-  return null  // null 表示 fallback 到 document.body
+  const selector = this.getResponseContainerSelector()
+  if (!selector) return null
+  return document.querySelector(selector)
 }
 
-// gemini.ts 覆盖
+// claude.ts 覆盖（使用滚动容器而非单条回复容器）
 getObserveTarget(): Element | null {
-  return document.querySelector(this.getResponseContainerSelector())
+  return this.getScrollContainer()
 }
 ```
 
@@ -97,16 +99,16 @@ this.observer.observe(target, { childList: true, subtree: true, characterData: t
 
 ### 影响范围
 
-- `src/adapters/base.ts` 新增一个方法（有默认实现，不破坏已有适配器）
-- `src/adapters/gemini.ts` 覆盖实现
+- `src/adapters/base.ts` 新增 `getObserveTarget()`（默认用 `getResponseContainerSelector()` 查找容器，不破坏已有适配器）
+- `src/adapters/claude.ts` 覆盖为 `getScrollContainer()`
 - `src/core/outline-manager.ts` 修改 `startAutoUpdate`
-- 其他适配器（chatgpt、claude 等）可按需覆盖；未覆盖的自动 fallback 到 `document.body`
+- 其他适配器通过基类默认实现自动生效；未实现 `getResponseContainerSelector()` 的适配器自动 fallback 到 `document.body`
 
 ---
 
 ## Phase 3：`treeKey` 改用 hash
 
-**状态**：待修复（等待 Phase 2 确认后开始）
+**状态**：已完成
 
 ### 问题描述
 
@@ -177,9 +179,9 @@ const outlineKey = djb2Hash(rawKey)
 
 ---
 
-## Phase 5：修复 fallback 竞态（Phase 6 后重编）
+## Phase 5：修复 fallback 竞态
 
-**状态**：待修复（等待 Phase 4 确认后开始）
+**状态**：已完成
 
 ### 问题描述
 
@@ -216,7 +218,7 @@ this.fallbackRefreshTimer = setTimeout(() => {
 
 ## Phase 6：修复生成完成后切 Tab 漏刷新
 
-**状态**：待修复（等待 Phase 5 确认后开始）
+**状态**：已完成
 
 ### 问题描述
 
