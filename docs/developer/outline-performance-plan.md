@@ -154,53 +154,26 @@ const outlineKey = djb2Hash(rawKey)
 
 ---
 
-## Phase 4：消除 Layout Thrashing（`updateScrollPositions`）
+## Phase 4：~~消除 Layout Thrashing~~（`updateScrollPositions`）
 
-**状态**：待修复（等待 Phase 3 确认后开始）
+**状态**：跳过（诊断有误）
 
-### 问题描述
+### 原始诊断（有误）
 
-```ts
-this.flatNodes.forEach((node) => {
-  const rect = element.getBoundingClientRect()  // 每次都强制 reflow
-  ...
-})
-```
+原计划认为 `getBoundingClientRect()` 循环调用构成 Layout Thrashing。
 
-1000 个节点时，`flatNodes.forEach` 中对每个节点单独调用 `getBoundingClientRect()`，浏览器必须在每次调用前完成 layout 计算，即经典的 Layout Thrashing。
+### 实际分析
 
-### 修复方案
+经审查，`updateScrollPositions` 中 **不存在 Layout Thrashing**：
 
-将所有读操作批量化：先一次性收集所有元素，然后统一读取 `getBoundingClientRect()`，最后统一写回：
+- `getClientRects()` / `getBoundingClientRect()` 均为 DOM 只读操作
+- `node.scrollTop = top` / `node.scrollHeight = height` 写的是 JS 对象属性（`OutlineNode`），**不是 DOM 属性**
+- 无 DOM 读写交替，浏览器首次读取后使用缓存布局，不会反复重排
 
-```ts
-// 1. 收集所有需要读取的元素
-const toRead: Array<{ node: OutlineNode; el: HTMLElement }> = []
-this.flatNodes.forEach((node) => {
-  if (node.isGhost) return
-  let element = node.element as HTMLElement | null
-  // ... 元素失效处理
-  if (element?.isConnected) {
-    toRead.push({ node, el: element })
-  }
-})
+仅有的小优化空间（收益极低，暂不处理）：
 
-// 2. 批量读取（浏览器只需一次 layout）
-const rects = toRead.map(({ el }) => el.getBoundingClientRect())
-
-// 3. 批量写回
-toRead.forEach(({ node }, i) => {
-  const rect = rects[i]
-  node.scrollTop = rect.top - containerTop + containerScrollTop
-  node.scrollHeight = rect.height
-  entries.push(...)
-})
-```
-
-### 影响范围
-
-- 仅 `updateScrollPositions` 方法内部重构
-- 不改变外部接口和调用方式
+1. `getClientRects()` + `getBoundingClientRect()` 每个元素两次 API 调用，可合并为一次
+2. 元素重连接逻辑（`querySelectorAll`）可前置到测量循环外
 
 ---
 
