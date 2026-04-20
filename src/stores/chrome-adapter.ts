@@ -63,8 +63,10 @@ const normalizeUserscriptPersistValue = (name: string, value: unknown): string |
  * 油猴脚本存储适配器
  *
  * 关键设计：GM_* API 是同步的，我们直接返回 string | null（而非 Promise）
- * 让 Zustand persist 执行**同步 hydration**，在 store 创建时立即完成数据加载
- * 这彻底消除了异步 hydration 带来的竞态条件问题
+ * 让 Zustand persist 执行**同步 hydration**，在 store 创建时立即完成数据加载。
+ * 这可避免异步 hydration 带来的竞态条件，但也意味着 onRehydrateStorage 回调
+ * 会在 create() 返回之前触发，此时 store 变量仍处于 TDZ/未初始化状态。
+ * 因此回调内必须避免直接引用 useXxxStore，应改用闭包捕获的 set/api.setState。
  */
 const userscriptStorageAdapter: StateStorage = {
   getItem: (name: string): string | null => {
