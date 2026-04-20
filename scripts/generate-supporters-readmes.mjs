@@ -110,6 +110,9 @@ function resolveAvatarPath(readmePath, avatar) {
  */
 function getAvatarUrl(name, avatar, source, date) {
   if (avatar) return avatar
+  if (name && name !== "anonymous") {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
+  }
   const seed = encodeURIComponent(`${name || "anonymous"}|${source || ""}|${date || ""}`)
   return `https://api.dicebear.com/7.x/identicon/svg?seed=${seed}`
 }

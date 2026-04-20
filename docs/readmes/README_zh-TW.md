@@ -221,6 +221,11 @@ pnpm package:all
       <br />
       <sub>anonymous</sub>
     </td>
+    <td align="center" width="110">
+      <img src="https://ui-avatars.com/api/?name=%E7%8B%B7%E5%AE%A2%E8%A1%8C%E8%88%9F%F0%9F%8D%9C%E7%8B%82%EF%BC%9F&amp;background=random" width="72" height="72" alt="狷客行舟🍜狂？" />
+      <br />
+      <sub>狷客行舟🍜狂？</sub>
+    </td>
   </tr>
 </table>
 
@@ -282,6 +287,31 @@ pnpm package:all
 <p align="center">
   <strong>傳播也是一種力量</strong>：也期待你將它分享到 <strong>Linux.do、X、小紅書、Bilibili</strong> 及更多平台。你的每一份回饋與分享，都在讓 Ophel 變得更好！
 </p>
+
+<p align="center">
+  <a href="https://ko-fi.com/urzeye">
+    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Buy Me a Coffee at ko-fi.com" />
+  </a>
+</p>
+
+<table align="center">
+  <tr>
+    <td align="center"><strong>微信讚賞碼</strong></td>
+    <td align="center"><strong>支付寶</strong></td>
+    <td align="center"><strong>愛發電</strong></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="../media/support/wechat-pay.jpg" width="220" alt="微信讚賞碼" />
+    </td>
+    <td align="center">
+      <img src="../media/support/alipay.png" width="220" alt="支付寶讚賞碼" />
+    </td>
+    <td align="center">
+      <img src="../media/support/afdian.png" width="220" alt="愛發電" />
+    </td>
+  </tr>
+</table>
 
 ⭐ Star History
 

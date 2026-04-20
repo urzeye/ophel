@@ -213,6 +213,11 @@ Bei Problemen oder Vorschlägen besuchen Sie bitte [GitHub Issues](https://githu
       <br />
       <sub>anonymous</sub>
     </td>
+    <td align="center" width="110">
+      <img src="https://ui-avatars.com/api/?name=%E7%8B%B7%E5%AE%A2%E8%A1%8C%E8%88%9F%F0%9F%8D%9C%E7%8B%82%EF%BC%9F&amp;background=random" width="72" height="72" alt="狷客行舟🍜狂？" />
+      <br />
+      <sub>狷客行舟🍜狂？</sub>
+    </td>
   </tr>
 </table>
 
@@ -273,6 +278,12 @@ Bei Problemen oder Vorschlägen besuchen Sie bitte [GitHub Issues](https://githu
 
 <p align="center">
   <strong>Auch das Weiterempfehlen ist wertvoll</strong>: Wir freuen uns, wenn du es auf <strong>Linux.do, X, Xiaohongshu, Bilibili</strong> und weiteren Plattformen teilst. Jedes Feedback und jede Weiterempfehlung helfen dabei, Ophel besser zu machen!
+</p>
+
+<p align="center">
+  <a href="https://ko-fi.com/urzeye">
+    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Buy Me a Coffee at ko-fi.com" />
+  </a>
 </p>
 
 ⭐ Star History

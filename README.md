@@ -265,6 +265,11 @@ For issues or suggestions, please visit [GitHub Issues](https://github.com/urzey
       <br />
       <sub>anonymous</sub>
     </td>
+    <td align="center" width="110">
+      <img src="https://ui-avatars.com/api/?name=%E7%8B%B7%E5%AE%A2%E8%A1%8C%E8%88%9F%F0%9F%8D%9C%E7%8B%82%EF%BC%9F&amp;background=random" width="72" height="72" alt="狷客行舟🍜狂？" />
+      <br />
+      <sub>狷客行舟🍜狂？</sub>
+    </td>
   </tr>
 </table>
 
@@ -325,6 +330,12 @@ For issues or suggestions, please visit [GitHub Issues](https://github.com/urzey
 
 <p align="center">
   <strong>Sharing is support too</strong>: we'd also love for you to share it on <strong>Linux.do, Reddit, X, Youtube</strong>, and more. Every bit of feedback and every share helps make Ophel better!
+</p>
+
+<p align="center">
+  <a href="https://ko-fi.com/urzeye">
+    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Buy Me a Coffee at ko-fi.com" />
+  </a>
 </p>
 
 <table align="center">
