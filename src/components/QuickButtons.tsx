@@ -73,7 +73,7 @@ const areGroupPositionsEqual = (
 }
 
 // 交互常量（module-level 以避免 react-hooks/exhaustive-deps 噪音）
-const DRAG_LONG_PRESS_MS = 150
+const DRAG_LONG_PRESS_MS = 220
 const DRAG_THRESHOLD_PX = 6
 const DRAG_PADDING_PX = 8
 const POSITION_PERSIST_DEBOUNCE_MS = 220
