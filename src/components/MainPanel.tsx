@@ -184,24 +184,36 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       const savedRect = savedPeekingRectRef.current
       savedPeekingRectRef.current = null
 
-      if (savedRect && savedRect.right > 0 && savedRect.left < window.innerWidth) {
-        // 面板从 header 按钮切换且当前可见（peeking）：原地固定
-        panel.style.left = `${savedRect.left}px`
-        panel.style.top = `${savedRect.top}px`
+      // 优先使用 header 按钮保存的 peeking 位置，否则用面板当前 rect 原地固定
+      const fixRect = savedRect ?? panel.getBoundingClientRect()
+
+      // 判断面板是否在可见区域内（非吸附收缩状态）
+      const isVisible =
+        fixRect && fixRect.right > 0 && fixRect.left < window.innerWidth && fixRect.width > 0
+
+      if (savedRect && isVisible) {
+        // header 按钮切换且面板 peeking 可见：原地固定
+        panel.style.left = `${fixRect.left}px`
+        panel.style.top = `${fixRect.top}px`
         panel.style.right = "auto"
         panel.style.transform = "none"
       } else {
-        // 面板不可见或从设置页切换：重置为默认悬浮位置
-        const edge = currentSettings.panel?.defaultEdgeDistance ?? 40
+        // 设置页切换或面板不可见：0px 边距贴边展开，保留垂直位置
         const pos = currentSettings.panel?.defaultPosition ?? "right"
+        const currentTop = fixRect ? fixRect.top : null
 
-        panel.style.top = "50%"
-        panel.style.transform = "translateY(-50%)"
+        if (currentTop !== null && currentTop >= 0 && currentTop < window.innerHeight) {
+          panel.style.top = `${currentTop}px`
+          panel.style.transform = "none"
+        } else {
+          panel.style.top = "50%"
+          panel.style.transform = "translateY(-50%)"
+        }
         if (pos === "left") {
-          panel.style.left = `${edge}px`
+          panel.style.left = "0px"
           panel.style.right = "auto"
         } else {
-          panel.style.right = `${edge}px`
+          panel.style.right = "0px"
           panel.style.left = "auto"
         }
       }
