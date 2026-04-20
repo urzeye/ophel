@@ -933,7 +933,8 @@ export class OutlineManager {
   // State Management
   private captureTreeState(nodes: OutlineNode[], stateMap: Record<string, TreeState>) {
     nodes.forEach((node) => {
-      const key = `${node.level}_${node.text}`
+      // 优先使用稳定 ID 避免同文本同级标题 key 碰撞；回退时附加 index 保证唯一
+      const key = node.id ? `id:${node.id}` : `${node.level}_${node.text}_${node.index}`
       const hasChildren = node.children && node.children.length > 0
       stateMap[key] = {
         collapsed: node.collapsed,
@@ -948,7 +949,8 @@ export class OutlineManager {
 
   private restoreTreeState(nodes: OutlineNode[], stateMap: Record<string, TreeState>) {
     nodes.forEach((node) => {
-      const key = `${node.level}_${node.text}`
+      // 与 captureTreeState 保持相同的 key 生成逻辑
+      const key = node.id ? `id:${node.id}` : `${node.level}_${node.text}_${node.index}`
       const state = stateMap[key]
       if (state) {
         const hasChildrenNow = node.children && node.children.length > 0
