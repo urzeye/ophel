@@ -260,13 +260,18 @@ export class OutlineManager {
       if (this.fallbackRefreshTimer) {
         clearTimeout(this.fallbackRefreshTimer)
       }
+      // 记录触发 timer 时的 treeKey，用于判断后续是否已自然更新
+      const keyAtSchedule = this.treeKey
       // 设置兆底计时器：如果 3 秒内没有新变化，触发强制刷新
       this.fallbackRefreshTimer = setTimeout(() => {
         this.fallbackRefreshTimer = null
         // 确保确实 3 秒没有变化
         if (Date.now() - this.lastTreeChangeTime >= OutlineManager.FALLBACK_DELAY - 100) {
-          this.treeKey = "" // 强制重建
-          this.refresh()
+          // 只有 treeKey 没有自然更新时才强制重建，避免打断正常状态恢复
+          if (this.treeKey === keyAtSchedule) {
+            this.treeKey = "" // 强制重建
+            this.refresh()
+          }
         }
       }, OutlineManager.FALLBACK_DELAY)
     }
