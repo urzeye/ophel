@@ -1025,10 +1025,12 @@ export const App = () => {
 
   const getEdgePeekQueryRoots = useCallback((): Array<Element | ShadowRoot> => {
     const roots: Array<Element | ShadowRoot> = []
-    const shadowHost = document.querySelector("plasmo-csui, #ophel-userscript-root")
+    const shadowHosts = document.querySelectorAll("plasmo-csui, #ophel-userscript-root")
 
-    if (shadowHost?.shadowRoot) {
-      roots.push(shadowHost.shadowRoot)
+    for (const shadowHost of shadowHosts) {
+      if (shadowHost.shadowRoot) {
+        roots.push(shadowHost.shadowRoot)
+      }
     }
 
     if (document.body) {
@@ -2598,7 +2600,8 @@ export const App = () => {
     for (const root of getEdgePeekQueryRoots()) {
       observer.observe(root, {
         childList: true,
-        subtree: true,
+        // ShadowRoot 内 overlay 嵌套较深需要 subtree；body 上的 portal 是直接子节点，无需 subtree 避免聊天页频繁 DOM 变动触发回调
+        subtree: root !== document.body,
       })
     }
 
