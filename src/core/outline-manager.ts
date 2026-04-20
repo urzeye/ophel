@@ -85,6 +85,7 @@ export class OutlineManager {
   // 生成状态追踪（用于检测生成完成后刷新）
   private wasGenerating: boolean = false
   private postGenerationScheduled: boolean = false // 防止重复触发
+  private pendingPostGenerationRefresh: boolean = false // 切 Tab 时暂存待刷新标记
 
   // 兜底方案：基于内容变化检测
   private lastTreeChangeTime: number = 0
@@ -136,6 +137,12 @@ export class OutlineManager {
   setActive(active: boolean) {
     this.isActive = active
     this.updateAutoUpdateState()
+    // 切回时如果有待处理的生成完成刷新，立即执行
+    if (active && this.pendingPostGenerationRefresh) {
+      this.pendingPostGenerationRefresh = false
+      this.treeKey = ""
+      this.refresh()
+    }
   }
 
   // 根据条件启动/停止自动更新
@@ -241,6 +248,11 @@ export class OutlineManager {
       // 生成完成后延迟 500ms 再刷新，确保 DOM 稳定
       setTimeout(() => {
         this.postGenerationScheduled = false
+        if (!this.isActive) {
+          // Tab 已切走，标记为待刷新，切回时再执行
+          this.pendingPostGenerationRefresh = true
+          return
+        }
         // 清空 treeKey 强制重建树，获取新的 DOM 元素引用
         this.treeKey = ""
         this.refresh()
