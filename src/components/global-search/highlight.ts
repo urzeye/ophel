@@ -123,7 +123,9 @@ export const splitGlobalSearchHighlightSegments = (
   const result = splitGlobalSearchHighlightSegmentsUncached(value, tokens, fuzzyIndexes)
 
   if (highlightCache.size >= HIGHLIGHT_CACHE_MAX) {
-    highlightCache.clear()
+    // LRU 逐条驱逐：Map 保持插入顺序，删除最旧的一条
+    const oldest = highlightCache.keys().next().value
+    if (oldest !== undefined) highlightCache.delete(oldest)
   }
   highlightCache.set(cacheKey, result)
 
