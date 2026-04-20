@@ -204,7 +204,7 @@ pnpm package:all
 
 ### 🤝 支持者
 
-<table align="center">
+<table align="center" border="0" cellpadding="0" cellspacing="0">
   <tr>
     <td align="center" width="110">
       <img src="https://lh3.googleusercontent.com/a-/ALV-UjVwv0jFS2TRGiNOMB4xl4BXF5j1D5jRIlR6t-4xgaUSpNIsYWc=s96-w96-h96" width="72" height="72" alt="Hugh" />
@@ -231,7 +231,7 @@ pnpm package:all
 
 ### 🌟 貢獻者
 
-<table align="center">
+<table align="center" border="0" cellpadding="0" cellspacing="0">
   <tr>
     <td align="center" width="90">
       <a href="https://github.com/urzeye"><img src="https://avatars.githubusercontent.com/u/20869204?s=64&amp;v=4" width="56" height="56" alt="urzeye" /></a>

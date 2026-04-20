@@ -199,7 +199,7 @@ ${row.map((supporter) => renderPersonCell(supporter, readmePath, { width: 110, a
 
   return `${config.supportersTitle}
 
-<table align="center">
+<table align="center" border="0" cellpadding="0" cellspacing="0">
 ${rows}
 </table>`
 }
@@ -219,7 +219,7 @@ ${row.map((contributor) => renderPersonCell(contributor, readmePath, { width: 90
 
   return `${config.contributorsTitle}
 
-<table align="center">
+<table align="center" border="0" cellpadding="0" cellspacing="0">
 ${rows}
 </table>`
 }
