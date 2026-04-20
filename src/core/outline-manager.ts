@@ -265,7 +265,7 @@ export class OutlineManager {
     const oldTreeKey = this.treeKey
     this.refresh()
 
-    // 兆底方案：检测内容变化
+    // 兜底方案：检测内容变化
     if (this.treeKey !== oldTreeKey) {
       // 有新内容，记录时间并重置计时器
       this.lastTreeChangeTime = Date.now()
@@ -274,7 +274,7 @@ export class OutlineManager {
       }
       // 记录触发 timer 时的 treeKey，用于判断后续是否已自然更新
       const keyAtSchedule = this.treeKey
-      // 设置兆底计时器：如果 3 秒内没有新变化，触发强制刷新
+      // 设置兜底计时器：如果 3 秒内没有新变化，触发强制刷新
       this.fallbackRefreshTimer = setTimeout(() => {
         this.fallbackRefreshTimer = null
         // 确保确实 3 秒没有变化
@@ -961,8 +961,8 @@ export class OutlineManager {
   // State Management
   private captureTreeState(nodes: OutlineNode[], stateMap: Record<string, TreeState>) {
     nodes.forEach((node) => {
-      // 优先使用稳定 ID 避免同文本同级标题 key 碰撞；回退时附加 index 保证唯一
-      const key = node.id ? `id:${node.id}` : `${node.level}_${node.text}_${node.index}`
+      // 优先使用稳定 ID 避免同文本同级标题 key 碰撞
+      const key = node.id ? `id:${node.id}` : `${node.level}_${node.text}`
       const hasChildren = node.children && node.children.length > 0
       stateMap[key] = {
         collapsed: node.collapsed,
@@ -978,7 +978,7 @@ export class OutlineManager {
   private restoreTreeState(nodes: OutlineNode[], stateMap: Record<string, TreeState>) {
     nodes.forEach((node) => {
       // 与 captureTreeState 保持相同的 key 生成逻辑
-      const key = node.id ? `id:${node.id}` : `${node.level}_${node.text}_${node.index}`
+      const key = node.id ? `id:${node.id}` : `${node.level}_${node.text}`
       const state = stateMap[key]
       if (state) {
         const hasChildrenNow = node.children && node.children.length > 0
