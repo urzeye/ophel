@@ -1576,11 +1576,7 @@ export const App = () => {
         }
 
         if (targetElement && targetElement.isConnected) {
-          targetElement.scrollIntoView({
-            behavior: "instant",
-            block: "start",
-            __bypassLock: true,
-          } as ScrollIntoViewOptions & { __bypassLock?: boolean })
+          outlineManager.scrollToOutlineTarget(targetElement as HTMLElement)
           targetElement.classList.add("outline-highlight")
           setTimeout(() => targetElement?.classList.remove("outline-highlight"), 2000)
           return

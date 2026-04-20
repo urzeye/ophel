@@ -1057,6 +1057,18 @@ export abstract class SiteAdapter {
     return this.findElementByHeading(item.level, item.text)
   }
 
+  /**
+   * 将大纲目标元素滚动到可见区域。
+   * 默认使用 scrollIntoView；子类可覆盖以避免外层容器被意外滚动（如 Shadow DOM 场景）。
+   */
+  scrollToOutlineTarget(element: HTMLElement): void {
+    element.scrollIntoView({
+      behavior: "instant",
+      block: "start",
+      __bypassLock: true,
+    } as any)
+  }
+
   /** 是否支持滚动锁定功能 */
   supportsScrollLock(): boolean {
     return false

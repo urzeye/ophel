@@ -460,6 +460,10 @@ export class OutlineManager {
     return this.siteAdapter.resolveOutlineTarget(item, queryIndex)
   }
 
+  scrollToOutlineTarget(element: HTMLElement): void {
+    this.siteAdapter.scrollToOutlineTarget(element)
+  }
+
   getState() {
     // 根据是否开启用户提问，确定 minRelativeLevel
     const minRelativeLevel = this.settings.showUserQueries ? 0 : 1

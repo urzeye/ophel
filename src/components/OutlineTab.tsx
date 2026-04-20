@@ -846,12 +846,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
         if (onJumpBefore && !anchorCaptured) {
           await onJumpBefore()
         }
-        // 传入 __bypassLock: true 以绕过 ScrollLockManager 的拦截
-        targetElement.scrollIntoView({
-          behavior: "instant",
-          block: "start",
-          __bypassLock: true,
-        } as any)
+        // 通过 adapter 滚动——避免 scrollIntoView 在 Shadow DOM 场景下
+        // 意外滚动外层容器（如 Gemini Enterprise 的 mat-sidenav-content）
+        manager.scrollToOutlineTarget(targetElement as HTMLElement)
 
         // 若阅读历史 Position Keeper 正在锁定位置，同步更新锁目标到新位置
         // 这样 Position Keeper 继续保护新位置，不会跳回旧位置或被平台自动滚动覆盖

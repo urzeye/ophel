@@ -1061,6 +1061,26 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     return super.getScrollContainer()
   }
 
+  /**
+   * 覆盖基类：手动滚动 .chat-mode-scroller 容器，避免 scrollIntoView 导致外层
+   * mat-sidenav-content 等祖先容器被意外滚动（Shadow DOM 多层嵌套场景）。
+   */
+  scrollToOutlineTarget(element: HTMLElement): void {
+    const container = this.getScrollContainer()
+    if (container) {
+      const containerRect = container.getBoundingClientRect()
+      const elementRect = element.getBoundingClientRect()
+      const targetScrollTop = container.scrollTop + (elementRect.top - containerRect.top)
+      container.scrollTo({
+        top: targetScrollTop,
+        behavior: "instant",
+        __bypassLock: true,
+      } as any)
+    } else {
+      super.scrollToOutlineTarget(element)
+    }
+  }
+
   getResponseContainerSelector(): string {
     return ".conversation-container"
   }
