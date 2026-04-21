@@ -187,18 +187,18 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       // 优先使用 header 按钮保存的 peeking 位置，否则用面板当前 rect 原地固定
       const fixRect = savedRect ?? panel.getBoundingClientRect()
 
-      // 判断面板是否在可见区域内（非吸附收缩状态）
+      // 判断面板是否在可见区域内（peeking 展开态，非吸附收缩状态）
       const isVisible =
         fixRect && fixRect.right > 0 && fixRect.left < window.innerWidth && fixRect.width > 0
 
-      if (savedRect && isVisible) {
-        // header 按钮切换且面板 peeking 可见：原地固定
+      if (isVisible) {
+        // 面板可见（peeking 展开）：原地固定，无论切换来源
         panel.style.left = `${fixRect.left}px`
         panel.style.top = `${fixRect.top}px`
         panel.style.right = "auto"
         panel.style.transform = "none"
       } else {
-        // 设置页切换或面板不可见：0px 边距贴边展开，保留垂直位置
+        // 面板不可见（吸附收缩态）：0px 边距贴边展开，保留垂直位置（兜底）
         const pos = currentSettings.panel?.defaultPosition ?? "right"
         const currentTop = fixRect ? fixRect.top : null
 
