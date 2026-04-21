@@ -163,15 +163,24 @@ const tipsQuery = trimmedGlobalSearchPlainQuery.startsWith("tip:")
   ? trimmedGlobalSearchPlainQuery.slice(4).trim().toLowerCase()
   : trimmedGlobalSearchPlainQuery.trim().toLowerCase()
 
+const tipsLabel = getLocalizedText({ key: "featureTipsCategory", fallback: "Feature Tips" })
+const shortcutNotConfiguredLabel = getLocalizedText({
+  key: "featureTipShortcutNotConfigured",
+  fallback: "Shortcut not configured",
+})
+
 const tipsItems = FEATURE_TIPS.map((tip) => {
   const shortcutLabels =
     tip.shortcutIds
       ?.map((id) => resolveShortcutLabel(id))
       .filter((label): label is string => Boolean(label)) ?? []
-  const title = t(`featureTip-${tip.id}-title`, {
+  const params = {
     modifier: passThroughModifierLabel,
     shortcut: shortcutLabels.length > 0 ? shortcutLabels.join(" / ") : shortcutNotConfiguredLabel,
-  })
+  }
+  const title = t(`featureTip-${tip.id}-title`, params)
+  const desc = t(`featureTip-${tip.id}-desc`, params)
+  const path = t(`featureTip-${tip.id}-path`, params)
   const snippet = shortcutLabels.length > 0 ? `${desc}  [${shortcutLabels.join(" / ")}]` : desc
   return {
     id: `tips:${tip.id}`,
@@ -193,7 +202,7 @@ const tipsItems = FEATURE_TIPS.map((tip) => {
 
 - `shortcutIds` 中的每个 ID 通过 `resolveShortcutLabel(id)` 解析为用户可见文本（包含平台前缀）
 - `passThroughModifierLabel` 用于 `{modifier}` 插值（穿透模式的长按键）
-- 若快捷键未配置/已禁用（为 null/空），在 path 中显示 `(未配置)` 而非插入空字符串
+- 若快捷键未配置/已禁用（为 null/空），在 breadcrumb 中显示 `(未配置)` 而非插入空字符串
 
 ---
 
