@@ -16,15 +16,18 @@ export function showToast(message: string, duration = 2000, options: ToastOption
     shadowHost?.shadowRoot?.querySelector(
       ".gh-root, #plasmo-shadow-container, .plasmo-csui-container",
     ) || document.body
-  const styleContainer = shadowHost?.shadowRoot || document.head
 
-  // 移除现有的 toast (支持从 body 和 shadow root 中查找)
-  const existing = targetContainer.querySelector("#gh-toast") || document.getElementById("gh-toast")
-  if (existing) {
-    existing.remove()
-  }
+  // 使用 targetContainer 所在的根节点作为样式容器
+  const styleContainer = (targetContainer.getRootNode() as ShadowRoot | Document) || document.head
 
-  // 确保样式已注入 (支持在 shadow root 或 document.head 中查找)
+  // 移除所有可能存在的旧 toast (包括 body 和 shadow root 中)
+  const existingInTarget = targetContainer.querySelector("#gh-toast")
+  const existingInBody = document.getElementById("gh-toast")
+
+  if (existingInTarget) existingInTarget.remove()
+  if (existingInBody && existingInBody !== existingInTarget) existingInBody.remove()
+
+  // 确保样式已注入
   if (!styleContainer.querySelector("#gh-toast-style")) {
     const style = document.createElement("style")
     style.id = "gh-toast-style"
