@@ -7,6 +7,14 @@
 
 ---
 
+## [Unreleased]
+
+### 🔧 兼容性更新
+
+- **AI Studio 适配新版侧边栏**：AI Studio 将侧边栏升级为 `ms-navbar-v2`，历史会话链接（`a.prompt-link`）不再出现在侧边栏中。本次更新重写了会话列表的获取方式：通过 SPA 导航（`history.pushState` + `popstate`）无刷新跳转至 `/library` 页面抓取完整列表；新增 `navigateToLibraryViaSpa()` 统一管理导航逻辑；`extractLibraryConversations()` 优先读取链接 `title` 属性获取完整标题；删除流程、会话观察器、侧边栏滚动容器等均已同步适配新结构。
+
+---
+
 ## [1.0.41]
 
 ### ✨ 功能优化
