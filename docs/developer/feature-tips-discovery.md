@@ -56,7 +56,7 @@ export interface FeatureTip {
   /** 在 Shadow DOM 内用 data-tip-target="{id}" 标记的目标元素（可选） */
   highlightTarget?: string
   /** 引用 DEFAULT_KEYBINDINGS 中的 key，用于动态显示快捷键 */
-  shortcutIds?: string[]
+  shortcutIds?: ShortcutActionId[]
 }
 
 export const FEATURE_TIPS: FeatureTip[] = [
@@ -126,54 +126,73 @@ export interface GlobalSearchResultItem {
   // ... 现有字段 ...
   tipId?: string // 标记这是一个功能技巧条目
   tipHighlightTarget?: string // 语义目标名称（对应 data-tip-target 属性值）
-  tipShortcutIds?: string[] // 引用的快捷键 ID，用于动态显示
+  tipShortcutIds?: ShortcutActionId[] // 引用的快捷键 ID，用于动态显示
 }
 ```
 
-无需修改 `GlobalSearchCategoryId` 类型，tips 复用 `"settings"` 类别。
+同时在 `GlobalSearchCategoryId` 类型中新增独立的 `"tips"` 类别（不复用 `"settings"`）：
+
+```typescript
+export type GlobalSearchCategoryId =
+  | "all"
+  | "outline"
+  | "conversations"
+  | "prompts"
+  | "settings"
+  | "tips"
+```
 
 ---
 
 ### Step 5：修改 `global-search/useGlobalSearchData.ts`
 
-在 hook 入参中增加 `keybindings` 和 `isMac`，在数据生成逻辑中：
+使用 hook 已有入参 `resolveShortcutLabel` 和 `passThroughModifierLabel`，在数据生成逻辑中：
 
-1. 检测 query 是否以 `?` 开头
-2. 提取 `?` 后的实际搜索词（可为空）
-3. 从 `FEATURE_TIPS` 生成 `GlobalSearchResultItem[]`，category 设为 `"settings"`，通过title/desc/path 的 i18n key 生成内容
+1. 检测 query 是否以 `tip:` 开头，或当前分类已切到 `tips`
+2. 提取 `tip:` 后的实际搜索词（可为空）
+3. 从 `FEATURE_TIPS` 生成 `GlobalSearchResultItem[]`，category 设为独立的 `"tips"`，通过 title/desc/path 的 i18n key 生成内容
 4. 按搜索词模糊过滤
 5. 当处于 tips 模式时，清空其他所有分组，仅返回 tips 分组
 
 关键逻辑：
 
 ```typescript
-const isTipsMode = activeGlobalSearchPlainQuery.startsWith("?")
-const tipsQuery = isTipsMode ? activeGlobalSearchPlainQuery.slice(1).trim().toLowerCase() : ""
+const isTipsMode =
+  trimmedGlobalSearchPlainQuery.startsWith("tip:") || activeGlobalSearchCategory === "tips"
+const tipsQuery = trimmedGlobalSearchPlainQuery.startsWith("tip:")
+  ? trimmedGlobalSearchPlainQuery.slice(4).trim().toLowerCase()
+  : trimmedGlobalSearchPlainQuery.trim().toLowerCase()
 
-if (isTipsMode) {
-  const tipsItems = FEATURE_TIPS.filter((tip) => {
-    if (!tipsQuery) return true
-    const title = t(`featureTip-${tip.id}-title`).toLowerCase()
-    const desc = t(`featureTip-${tip.id}-desc`).toLowerCase()
-    return title.includes(tipsQuery) || desc.includes(tipsQuery)
-  }).map((tip) => ({
-    id: `tip-${tip.id}`,
-    title: t(`featureTip-${tip.id}-title`),
-    breadcrumb: t(`featureTip-${tip.id}-path`, {
-      /* shortcut/modifier 动态插值 */
-    }),
-    category: "settings" as GlobalSearchResultCategory,
+const tipsItems = FEATURE_TIPS.map((tip) => {
+  const shortcutLabels =
+    tip.shortcutIds
+      ?.map((id) => resolveShortcutLabel(id))
+      .filter((label): label is string => Boolean(label)) ?? []
+  const title = t(`featureTip-${tip.id}-title`, {
+    modifier: passThroughModifierLabel,
+    shortcut: shortcutLabels.length > 0 ? shortcutLabels.join(" / ") : shortcutNotConfiguredLabel,
+  })
+  const snippet = shortcutLabels.length > 0 ? `${desc}  [${shortcutLabels.join(" / ")}]` : desc
+  return {
+    id: `tips:${tip.id}`,
+    title,
+    breadcrumb: `${tipsLabel} / ${path}`,
+    snippet,
+    category: "tips" as GlobalSearchResultCategory,
     tipId: tip.id,
     tipHighlightTarget: tip.highlightTarget,
     tipShortcutIds: tip.shortcutIds,
-  }))
-  // 只返回 tips 分组
-}
+  }
+}).filter((tipItem) => {
+  if (!tipsQuery) return true
+  return [tipItem.title, tipItem.snippet].some((v) => v?.toLowerCase().includes(tipsQuery))
+})
 ```
 
 **快捷键动态插值策略：**
 
-- `shortcutIds` 中的每个 ID 从 `keybindings` 解析 → `formatShortcut(shortcut, isMac)`
+- `shortcutIds` 中的每个 ID 通过 `resolveShortcutLabel(id)` 解析为用户可见文本（包含平台前缀）
+- `passThroughModifierLabel` 用于 `{modifier}` 插值（穿透模式的长按键）
 - 若快捷键未配置/已禁用（为 null/空），在 path 中显示 `(未配置)` 而非插入空字符串
 
 ---
