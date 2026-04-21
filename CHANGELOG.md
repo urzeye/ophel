@@ -7,14 +7,6 @@
 
 ---
 
-## [Unreleased]
-
-### 🔧 兼容性更新
-
-- **AI Studio 适配新版侧边栏**：AI Studio 将侧边栏升级为 `ms-navbar-v2`，历史会话链接（`a.prompt-link`）不再出现在侧边栏中。本次更新重写了会话列表的获取方式：通过 SPA 导航（`history.pushState` + `popstate`）无刷新跳转至 `/library` 页面抓取完整列表；新增 `navigateToLibraryViaSpa()` 统一管理导航逻辑；`extractLibraryConversations()` 优先读取链接 `title` 属性获取完整标题；删除流程、会话观察器、侧边栏滚动容器等均已同步适配新结构。
-
----
-
 ## [1.0.41]
 
 ### ✨ 功能优化
@@ -26,6 +18,7 @@
 
 - **搜索语法示例点击无效**：修复全局搜索中点击语法示例（如 `type:outline`、`date:7d` 等）只关闭弹层、未插入到输入框的问题。
 - **Toast 提示层级遮挡**：修复 Toast 提示被全局搜索和设置页的背景模糊滤镜 (`backdrop-filter`) 阻挡和模糊的问题。将挂载点从 `document.body` 调整到 Shadow DOM 最高层级容器内，避免层叠上下文隔离。
+- **AI Studio 适配新版侧边栏**：同步适配 AI Studio 新侧边栏结构。
 
 ---
 
