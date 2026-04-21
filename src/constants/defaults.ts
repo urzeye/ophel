@@ -137,18 +137,18 @@ export const SUPPORTED_AI_PLATFORMS: SupportedAiPlatform[] = [
     icon: "🧪",
   },
   {
-    id: SITE_IDS.GEMINI_ENTERPRISE,
-    name: "Gemini Enterprise",
-    pattern: /business\.gemini\.google/,
-    url: "https://business.gemini.google",
-    icon: "🏢",
-  },
-  {
     id: SITE_IDS.GROK,
     name: "Grok",
     pattern: /grok\.com/,
     url: "https://grok.com",
     icon: "🤖",
+  },
+  {
+    id: SITE_IDS.GEMINI_ENTERPRISE,
+    name: "Gemini Enterprise",
+    pattern: /business\.gemini\.google/,
+    url: "https://business.gemini.google",
+    icon: "🏢",
   },
   {
     id: SITE_IDS.DOUBAO,
