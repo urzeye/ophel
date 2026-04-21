@@ -37,17 +37,25 @@ body {
   background: var(--popup-bg);
   color: var(--popup-text);
   width: 320px;
-  height: 600px;
+  min-height: 200px;
   max-height: 600px;
-  overflow: hidden;
 }
 
 .popup-container {
-  height: 100vh;
-  margin: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  max-height: 600px;
+}
+
+.popup-scrollable {
+  flex: 0 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
 }
 
 .popup-scrollable {
