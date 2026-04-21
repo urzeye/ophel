@@ -196,7 +196,7 @@ const GLOBAL_SEARCH_CATEGORY_DEFINITIONS: GlobalSearchCategoryDefinition[] = [
   {
     id: "tips",
     label: { key: "featureTipsCategory", fallback: "Tips" },
-    placeholder: { key: "globalSearchTipsPlaceholder", fallback: "Search feature tips…" },
+    placeholder: { key: "featureTipSearchPlaceholder", fallback: "Search feature tips…" },
     emptyText: { key: "globalSearchEmptyTips", fallback: "No matching tips" },
   },
 ]
@@ -3341,7 +3341,7 @@ export const App = () => {
           label: resolvedGlobalSearchCategoryLabels[category.id],
           count:
             category.id === "tips" && activeGlobalSearchCategory !== "tips"
-              ? -1
+              ? null
               : globalSearchResultCounts[category.id],
         }))}
         activeCategoryId={activeGlobalSearchCategory}

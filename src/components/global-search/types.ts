@@ -1,3 +1,5 @@
+import type { ShortcutActionId } from "~constants/shortcuts"
+
 export type GlobalSearchCategoryId =
   | "all"
   | "outline"
@@ -72,7 +74,7 @@ export interface GlobalSearchResultItem {
   /** 点击技巧项后优先展示的操作提示文案 */
   tipActionText?: string
   /** 该技巧关联的快捷键 ID 列表（对应 DEFAULT_KEYBINDINGS 的 key）*/
-  tipShortcutIds?: string[]
+  tipShortcutIds?: ShortcutActionId[]
 }
 
 export interface GlobalSearchGroupedResult {

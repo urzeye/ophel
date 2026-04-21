@@ -1392,7 +1392,6 @@ export const ja = {
   featureTipShortcutNotConfigured: "ショートカット未設定",
   featureTipToastTryShortcut: "ショートカットを試す：{shortcut}",
   featureTipsCategory: "機能ヒント",
-  globalSearchTipsPlaceholder: "機能のヒントを検索…",
   "featureTip-passthrough-title": "透過モード",
   "featureTip-passthrough-desc": "パネルを透明にして下のページコンテンツを操作",
   "featureTip-passthrough-path": "{modifier}を長押し — パネルが透明になりクリック可能",

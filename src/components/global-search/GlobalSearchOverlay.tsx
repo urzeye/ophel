@@ -27,7 +27,7 @@ interface GlobalSearchSyntaxDiagnosticItem {
 interface GlobalSearchCategoryTab<TCategoryId extends string> {
   id: TCategoryId
   label: string
-  count: number
+  count: number | null
 }
 
 interface GlobalSearchContextInfo {
@@ -386,7 +386,7 @@ export const GlobalSearchOverlay = <TItem, TCategoryId extends string>(
                 onClick={() => onSelectCategory(category.id)}>
                 <span>{category.label}</span>
                 <span className="settings-search-category-count">
-                  {category.count < 0 ? "-" : category.count}
+                  {category.count == null ? "-" : category.count}
                 </span>
               </button>
             ))}

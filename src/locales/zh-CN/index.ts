@@ -1360,7 +1360,6 @@ export const zhCN = {
   featureTipShortcutNotConfigured: "快捷键未配置",
   featureTipToastTryShortcut: "试试快捷键：{shortcut}",
   featureTipsCategory: "功能技巧",
-  globalSearchTipsPlaceholder: "搜索功能技巧…",
   "featureTip-passthrough-title": "穿透模式",
   "featureTip-passthrough-desc": "让面板变透明，直接点击/选中下方页面内容",
   "featureTip-passthrough-path": "长按 {modifier}，面板变透明，可操作下层内容",

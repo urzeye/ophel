@@ -1402,7 +1402,6 @@ Please output the optimized code block directly, followed by a brief summary of 
   featureTipShortcutNotConfigured: "Shortcut not configured",
   featureTipToastTryShortcut: "Try shortcut: {shortcut}",
   featureTipsCategory: "Feature Tips",
-  globalSearchTipsPlaceholder: "Search feature tips…",
   "featureTip-passthrough-title": "Passthrough Mode",
   "featureTip-passthrough-desc":
     "Make the panel transparent and interact with page content beneath",

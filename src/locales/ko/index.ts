@@ -1377,7 +1377,6 @@ export const ko = {
   featureTipShortcutNotConfigured: "단축키 미설정",
   featureTipToastTryShortcut: "단축키 시도하기: {shortcut}",
   featureTipsCategory: "기능 팁",
-  globalSearchTipsPlaceholder: "기능 팁 검색…",
   "featureTip-passthrough-title": "통클 모드",
   "featureTip-passthrough-desc": "패널을 투명하게 만들고 아래 페이지 콘텐츠 조작",
   "featureTip-passthrough-path":

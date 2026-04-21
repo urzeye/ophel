@@ -1386,7 +1386,6 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   featureTipShortcutNotConfigured: "Tastenkürzel nicht konfiguriert",
   featureTipToastTryShortcut: "Tastenkürzel ausprobieren: {shortcut}",
   featureTipsCategory: "Feature-Tipps",
-  globalSearchTipsPlaceholder: "Feature-Tipps durchsuchen…",
   "featureTip-passthrough-title": "Durchsicht-Modus",
   "featureTip-passthrough-desc":
     "Panel transparent machen und mit Seiteninhalt darunter interagieren",

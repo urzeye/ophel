@@ -1387,7 +1387,6 @@ Dame el código y luego un resumen de mejoras.`,
   featureTipShortcutNotConfigured: "Atajo de teclado no configurado",
   featureTipToastTryShortcut: "Prueba el atajo: {shortcut}",
   featureTipsCategory: "Consejos",
-  globalSearchTipsPlaceholder: "Buscar consejos de funciones…",
   "featureTip-passthrough-title": "Modo de transparencia",
   "featureTip-passthrough-desc":
     "Hacer el panel transparente e interactuar con el contenido de la página",

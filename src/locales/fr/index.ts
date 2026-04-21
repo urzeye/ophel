@@ -1395,7 +1395,6 @@ Donnez le code puis un résumé des améliorations.`,
   featureTipShortcutNotConfigured: "Raccourci non configuré",
   featureTipToastTryShortcut: "Essayez le raccourci : {shortcut}",
   featureTipsCategory: "Astuces",
-  globalSearchTipsPlaceholder: "Rechercher des astuces…",
   "featureTip-passthrough-title": "Mode transparent",
   "featureTip-passthrough-desc":
     "Rendre le panneau transparent et interagir avec le contenu en dessous",

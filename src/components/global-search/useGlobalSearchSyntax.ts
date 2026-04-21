@@ -166,7 +166,7 @@ export const useGlobalSearchSyntax = ({
   const globalSearchFeatureTipsDescription = useMemo(
     () =>
       getLocalizedText({
-        key: "globalSearchTipsPlaceholder",
+        key: "featureTipSearchPlaceholder",
         fallback: "Search feature tips…",
       }),
     [getLocalizedText],
