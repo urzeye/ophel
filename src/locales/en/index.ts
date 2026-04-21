@@ -1439,4 +1439,11 @@ Please output the optimized code block directly, followed by a brief summary of 
   "featureTip-notifications-desc":
     "Get a desktop notification when AI finishes — never miss a response",
   "featureTip-notifications-path": "Features → Alerts → Desktop Notification",
+  discordCommunity: "Discord Community",
+  discordDesc:
+    "Join our community to chat with other users, provide feedback, and get the latest updates",
+  joinDiscord: "Join Discord",
+  kofiSupport: "Buy Me a Coffee",
+  kofiDesc: "If Ophel is helpful to you, please consider buying a coffee to support the developer",
+  kofiBtn: "Support on Ko-fi",
 }

@@ -7,11 +7,13 @@ import React from "react"
 import {
   AboutIcon,
   ChromeIcon,
+  DiscordIcon,
   FirefoxIcon,
   GithubIcon,
   GlobeIcon,
   GreasyForkIcon,
   HeartIcon,
+  KofiIcon,
   ShieldCheckIcon,
   StarIcon,
 } from "~components/icons"
@@ -120,11 +122,14 @@ const AboutPage: React.FC = () => {
           color: "var(--gh-text-secondary)",
           marginBottom: 16,
           fontStyle: "italic",
+          textAlign: "center",
         }}>
         "{t("communityMotto")}"
       </div>
 
-      <div className="about-links-grid">
+      <div
+        className="about-links-grid"
+        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
         {/* GitHub Link */}
         <a
           href="https://github.com/urzeye/ophel"
@@ -132,8 +137,8 @@ const AboutPage: React.FC = () => {
           rel="noopener noreferrer"
           className="about-link-card">
           <div className="about-link-header">
-            <GithubIcon size={20} />
-            {t("githubRepository") || "GitHub 仓库"}
+            <GithubIcon size={22} />
+            <span style={{ fontWeight: 600 }}>{t("githubRepository") || "GitHub 仓库"}</span>
           </div>
           <div className="about-link-desc">
             {t("githubDesc") || "查看源代码、提交问题或参与项目开发"}
@@ -146,20 +151,94 @@ const AboutPage: React.FC = () => {
           </button>
         </a>
 
-        {/* Website Link (Placeholder) */}
+        {/* Website Link */}
         <a
           href="https://github.com/urzeye/ophel"
           target="_blank"
           rel="noopener noreferrer"
           className="about-link-card">
           <div className="about-link-header">
-            <GlobeIcon size={20} />
-            {t("projectWebsite") || "项目官网"}
+            <GlobeIcon size={22} color="var(--gh-primary, #4285F4)" />
+            <span style={{ fontWeight: 600, color: "var(--gh-primary, #4285F4)" }}>
+              {t("projectWebsite") || "项目官网"}
+            </span>
           </div>
           <div className="about-link-desc">
             {t("websiteDesc") || "查看详细文档、使用指南和更多信息"}
           </div>
-          <button className="about-link-btn">{t("visitWebsite") || "访问官网"}</button>
+          <button
+            className="about-link-btn"
+            style={{
+              borderRadius: "24px",
+              fontWeight: 600,
+              background: "linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%)",
+            }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <GlobeIcon size={14} color="#FFF" />
+              {t("visitWebsite") || "访问官网"}
+            </span>
+          </button>
+        </a>
+
+        {/* Discord Link */}
+        <a
+          href="https://discord.gg/79B2hFxR"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="about-link-card"
+          style={{
+            borderColor: "rgba(88, 101, 242, 0.2)",
+            background: "rgba(88, 101, 242, 0.02)",
+          }}>
+          <div className="about-link-header" style={{ color: "#5865F2" }}>
+            <DiscordIcon size={22} color="#5865F2" />
+            <span style={{ fontWeight: 600 }}>{t("discordCommunity") || "Discord 社区"}</span>
+          </div>
+          <div className="about-link-desc" style={{ color: "var(--gh-text-secondary)" }}>
+            {t("discordDesc") || "加入社区，与其他用户交流、反馈问题、获取最新动态"}
+          </div>
+          <button
+            className="about-link-btn"
+            style={{
+              borderRadius: "24px",
+              fontWeight: 600,
+              background: "linear-gradient(135deg, #7289da 0%, #5865f2 100%)",
+              boxShadow: "0 2px 8px rgba(88, 101, 242, 0.25)",
+            }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <DiscordIcon size={14} color="#FFF" />
+              {t("joinDiscord") || "加入群组"}
+            </span>
+          </button>
+        </a>
+
+        {/* Ko-fi Link */}
+        <a
+          href="https://ko-fi.com/urzeye"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="about-link-card"
+          style={{ borderColor: "rgba(255, 94, 91, 0.2)", background: "rgba(255, 94, 91, 0.02)" }}>
+          <div className="about-link-header" style={{ color: "#FF5E5B" }}>
+            <KofiIcon size={22} color="#FF5E5B" />
+            <span style={{ fontWeight: 600 }}>{t("kofiSupport") || "Buy Me a Coffee"}</span>
+          </div>
+          <div className="about-link-desc" style={{ color: "var(--gh-text-secondary)" }}>
+            {t("kofiDesc") || "如果 Ophel 对你有帮助，请考虑赞助一杯咖啡支持开发者"}
+          </div>
+          <button
+            className="about-link-btn"
+            style={{
+              borderRadius: "24px",
+              fontWeight: 600,
+              background: "linear-gradient(135deg, #FF7E67 0%, #FF5E5B 100%)",
+              boxShadow: "0 2px 8px rgba(255, 94, 91, 0.25)",
+            }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <KofiIcon size={14} color="#FFF" />
+              {t("kofiBtn") || "赞助支持"}
+            </span>
+          </button>
         </a>
       </div>
 

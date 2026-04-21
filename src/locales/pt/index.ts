@@ -1419,4 +1419,11 @@ Dê o código e depois um resumo de melhorias.`,
   "featureTip-notifications-desc":
     "Receba uma notificação na área de trabalho quando a IA terminar — nunca perca uma resposta",
   "featureTip-notifications-path": "Recursos → Alertas → Notificação na Área de Trabalho",
+  discordCommunity: "Comunidade Discord",
+  discordDesc:
+    "Junte-se à nossa comunidade para conversar com outros usuários, fornecer feedback e receber as últimas atualizações",
+  joinDiscord: "Entrar no grupo",
+  kofiSupport: "Buy Me a Coffee",
+  kofiDesc: "Se o Ophel for útil para você, considere comprar um café para apoiar o desenvolvedor",
+  kofiBtn: "Apoiar no Ko-fi",
 }

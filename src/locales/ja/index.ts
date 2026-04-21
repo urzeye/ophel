@@ -1425,4 +1425,11 @@ export const ja = {
   "featureTip-notifications-title": "生成完了通知",
   "featureTip-notifications-desc": "AI完了時にデスクトップ通知 — 応答を見逃すな",
   "featureTip-notifications-path": "機能 → 通知 → デスクトップ通知",
+  discordCommunity: "Discord コミュニティ",
+  discordDesc:
+    "コミュニティに参加して、他のユーザーと交流したり、フィードバックを提供したり、最新情報を入手したりできます",
+  joinDiscord: "グループに参加",
+  kofiSupport: "Buy Me a Coffee",
+  kofiDesc: "Ophel がお役に立ちましたら、開発者を支援するためにコーヒーを奢ることをご検討ください",
+  kofiBtn: "Ko-fi で支援",
 }

@@ -6,6 +6,8 @@
 
 import { useEffect, useState } from "react"
 
+import { DiscordIcon } from "~components/icons/DiscordIcon"
+import { KofiIcon } from "~components/icons/KofiIcon"
 import { SettingsIcon } from "~components/icons/SettingsIcon"
 import { StarIcon } from "~components/icons/StarIcon"
 import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
@@ -172,111 +174,139 @@ function IndexPopup() {
 
   return (
     <div className="popup-container">
-      {/* Header */}
-      <div className="popup-header">
-        <div className="popup-header-left">
-          <img src={chrome.runtime.getURL("assets/icon.png")} alt="Ophel" className="popup-logo" />
-          <span className="popup-title">Ophel Atlas</span>
-        </div>
-        <Tooltip content={t("popupSettings")}>
-          <button className="popup-settings-btn" onClick={openOptionsPage}>
-            <SettingsIcon size={18} />
-          </button>
-        </Tooltip>
-      </div>
-
-      {/* Site Status */}
-      <div className="popup-site-status">
-        <div className="popup-site-status-left">
-          <div className="popup-site-label">{t("popupCurrentSite")}</div>
-          <div className="popup-site-name">{currentSite?.name || "..."}</div>
-        </div>
-        {currentSite && (
-          <div
-            className={`popup-status-badge ${currentSite.supported ? "supported" : "unsupported"}`}>
-            {currentSite.supported ? t("popupSupported") : t("popupUnsupported")}
+      <div className="popup-scrollable">
+        {/* Header */}
+        <div className="popup-header">
+          <div className="popup-header-left">
+            <img
+              src={chrome.runtime.getURL("assets/icon.png")}
+              alt="Ophel"
+              className="popup-logo"
+            />
+            <span className="popup-title">Ophel Atlas</span>
           </div>
-        )}
-      </div>
-
-      {/* Quick Actions or Site Links */}
-      {currentSite?.supported ? (
-        <div className="popup-actions popup-actions-single">
-          <button className="popup-action-btn primary-btn" onClick={startNewChatInCurrentSite}>
-            🚀 {t("popupNewChat")}
-          </button>
+          <Tooltip content={t("popupSettings")}>
+            <button className="popup-settings-btn" onClick={openOptionsPage}>
+              <SettingsIcon size={18} />
+            </button>
+          </Tooltip>
         </div>
-      ) : (
-        <>
-          <div className="popup-section-title">{t("popupQuickAccess")}</div>
-          <div className="popup-sites-grid">
-            {SUPPORTED_AI_PLATFORMS.map((site) => (
-              <Tooltip
-                key={site.id}
-                content={site.name}
-                triggerStyle={{ width: "100%", display: "flex" }}
-                triggerClassName="popup-tooltip-trigger">
-                <button className="popup-site-link" onClick={() => openUrl(site.url)}>
-                  {SITE_ICONS[site.name] ? (
-                    <img src={SITE_ICONS[site.name]} alt={site.name} className="popup-site-icon" />
-                  ) : (
-                    <span className="popup-site-emoji">{site.icon}</span>
-                  )}
-                  <span className="popup-site-title">{site.name}</span>
-                </button>
-              </Tooltip>
-            ))}
-          </div>
-        </>
-      )}
 
-      {/* Recent Prompts */}
-      <div>
-        <div className="popup-section-title">{t("popupRecentUsed")}</div>
-        {recentPrompts.length > 0 ? (
-          <div className="popup-prompts-list">
-            {recentPrompts.map((prompt) => (
-              <div
-                key={prompt.id}
-                className="popup-prompt-item"
-                onClick={() => copyToClipboard(prompt.content)}>
-                <span className="popup-prompt-title">{prompt.title}</span>
-                <span className="popup-prompt-copy">{t("copy")}</span>
-              </div>
-            ))}
+        {/* Site Status */}
+        <div className="popup-site-status">
+          <div className="popup-site-status-left">
+            <div className="popup-site-label">{t("popupCurrentSite")}</div>
+            <div className="popup-site-name">{currentSite?.name || "..."}</div>
+          </div>
+          {currentSite && (
+            <div
+              className={`popup-status-badge ${currentSite.supported ? "supported" : "unsupported"}`}>
+              {currentSite.supported ? t("popupSupported") : t("popupUnsupported")}
+            </div>
+          )}
+        </div>
+
+        {/* Quick Actions or Site Links */}
+        {currentSite?.supported ? (
+          <div className="popup-actions popup-actions-single">
+            <button className="popup-action-btn primary-btn" onClick={startNewChatInCurrentSite}>
+              🚀 {t("popupNewChat")}
+            </button>
           </div>
         ) : (
-          <div className="popup-no-prompts">{t("popupNoRecentPrompts")}</div>
+          <>
+            <div className="popup-section-title">{t("popupQuickAccess")}</div>
+            <div className="popup-sites-grid">
+              {SUPPORTED_AI_PLATFORMS.map((site) => (
+                <Tooltip
+                  key={site.id}
+                  content={site.name}
+                  triggerStyle={{ width: "100%", display: "flex" }}
+                  triggerClassName="popup-tooltip-trigger">
+                  <button className="popup-site-link" onClick={() => openUrl(site.url)}>
+                    {SITE_ICONS[site.name] ? (
+                      <img
+                        src={SITE_ICONS[site.name]}
+                        alt={site.name}
+                        className="popup-site-icon"
+                      />
+                    ) : (
+                      <span className="popup-site-emoji">{site.icon}</span>
+                    )}
+                    <span className="popup-site-title">{site.name}</span>
+                  </button>
+                </Tooltip>
+              ))}
+            </div>
+          </>
         )}
+
+        {/* Recent Prompts */}
+        <div>
+          <div className="popup-section-title">{t("popupRecentUsed")}</div>
+          {recentPrompts.length > 0 ? (
+            <div className="popup-prompts-list">
+              {recentPrompts.map((prompt) => (
+                <div
+                  key={prompt.id}
+                  className="popup-prompt-item"
+                  onClick={() => copyToClipboard(prompt.content)}>
+                  <span className="popup-prompt-title">{prompt.title}</span>
+                  <span className="popup-prompt-copy">{t("copy")}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="popup-no-prompts">{t("popupNoRecentPrompts")}</div>
+          )}
+        </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer - fixed at bottom */}
       <div className="popup-footer">
         <span className="popup-version">v{version}</span>
         <div className="popup-footer-actions">
           <Tooltip content={t("rateAndReview") || "Love Ophel?"}>
-            <button className="popup-action-pill review-btn" onClick={() => openUrl(storeInfo.url)}>
-              {storeInfo.icon}
-              <span>{storeInfo.label}</span>
+            <button
+              className="popup-action-pill review-btn icon-only"
+              onClick={() => openUrl(storeInfo.url)}>
+              {storeInfo.icon || <StarIcon size={16} />}
             </button>
           </Tooltip>
 
           <Tooltip content={t("giveStar") || "Star on GitHub"}>
             <button
-              className="popup-action-pill star-btn"
+              className="popup-action-pill star-btn icon-only"
               onClick={() => openUrl("https://github.com/urzeye/ophel")}>
-              <StarIcon size={14} />
-              <span>{t("starBtn") || "Star"}</span>
+              <StarIcon size={16} />
+            </button>
+          </Tooltip>
+
+          <Tooltip content={t("kofiSupport") || "Buy Me a Coffee"}>
+            <button
+              className="popup-action-pill kofi-btn icon-only"
+              onClick={() => openUrl("https://ko-fi.com/urzeye")}>
+              <KofiIcon size={16} />
+            </button>
+          </Tooltip>
+
+          <Tooltip content={t("discordCommunity") || "Discord 社区"}>
+            <button
+              className="popup-action-pill discord-btn icon-only"
+              onClick={() => openUrl("https://discord.gg/79B2hFxR")}>
+              <DiscordIcon size={16} />
             </button>
           </Tooltip>
         </div>
-        <a
-          href="https://github.com/urzeye/ophel/issues"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="popup-feedback-link">
-          {t("popupFeedback") || "反馈"}
-        </a>
+        <div className="popup-footer-links">
+          <a
+            href="https://github.com/urzeye/ophel/issues"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="popup-feedback-link">
+            {t("popupFeedback") || "反馈"}
+          </a>
+        </div>
       </div>
 
       {/* Toast */}

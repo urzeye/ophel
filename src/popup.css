@@ -32,33 +32,37 @@
 }
 
 body {
-  font-family:
-    "Inter",
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    "Helvetica Neue",
-    "Apple SD Gothic Neo",
-    "Malgun Gothic",
-    "PingFang SC",
-    "Microsoft YaHei",
-    "Apple Color Emoji",
-    "Segoe UI Emoji",
-    "Segoe UI Symbol",
-    sans-serif;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background: var(--popup-bg);
   color: var(--popup-text);
   width: 320px;
-  min-height: 200px;
+  height: 600px;
+  max-height: 600px;
+  overflow: hidden;
 }
 
 .popup-container {
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.popup-scrollable {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-height: 0;
+  scrollbar-width: none;
+}
+.popup-scrollable::-webkit-scrollbar {
+  display: none;
 }
 
 /* Header */
@@ -203,17 +207,65 @@ body {
 }
 
 .popup-action-btn.primary-btn {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-  color: white;
-  border: none;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(124, 58, 237, 0.15) 100%);
+  color: #7c3aed;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.08);
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+
+@media (prefers-color-scheme: dark) {
+  .popup-action-btn.primary-btn {
+    background: linear-gradient(135deg, rgba(167, 139, 250, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+    color: #ddd6fe;
+    border-color: rgba(167, 139, 250, 0.3);
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.15);
+  }
+}
+
+.popup-action-btn.primary-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: all 0.5s;
+  transform: skewX(-20deg);
 }
 
 .popup-action-btn.primary-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.4);
-  filter: brightness(1.1);
-  color: white;
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(124, 58, 237, 0.2) 100%);
+  border-color: rgba(139, 92, 246, 0.4);
+  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.15);
+  color: #6d28d9;
+}
+
+@media (prefers-color-scheme: dark) {
+  .popup-action-btn.primary-btn:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(196, 181, 253, 0.25) 0%,
+      rgba(167, 139, 250, 0.25) 100%
+    );
+    border-color: rgba(196, 181, 253, 0.4);
+    color: #fff;
+  }
+}
+
+.popup-action-btn.primary-btn:hover::before {
+  animation: popup-shine 0.5s forwards;
+}
+
+@keyframes popup-shine {
+  100% {
+    left: 150%;
+  }
 }
 
 .popup-action-btn:disabled {
@@ -364,25 +416,28 @@ body {
 
 /* Footer */
 .popup-footer {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 12px;
+  padding: 10px 16px 14px;
   border-top: 1px solid var(--popup-border);
-  margin-top: 4px;
+  background: var(--popup-bg);
+  gap: 8px;
 }
 
 .popup-version {
   font-size: 10px;
   color: var(--popup-text-secondary);
   opacity: 0.7;
-  width: 40px; /* Fixed width to help centering actions */
+  flex: none;
+  width: 40px;
 }
 
 .popup-footer-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   flex: 1;
   justify-content: center;
 }
@@ -390,58 +445,91 @@ body {
 .popup-action-pill {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 4px;
   border: none;
-  border-radius: 20px;
-  padding: 6px 16px;
+  border-radius: 14px;
+  padding: 5px 12px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   position: relative;
-  overflow: hidden;
+}
+
+.popup-action-pill.icon-only {
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .popup-action-pill:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  filter: brightness(1.05);
 }
 
-.popup-action-pill:active {
-  transform: translateY(0);
-}
-
-/* Specific button styles */
 .review-btn {
-  /* Blue/Purple Gradient for Store Review */
   background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  width: 32px;
+  height: 32px;
+  box-shadow: 0 3px 6px rgba(124, 58, 237, 0.25);
 }
-
 .star-btn {
-  /* Orange/Yellow Gradient for Github Star */
   background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+  width: 30px;
+  height: 30px;
+  box-shadow: 0 3px 6px rgba(234, 88, 12, 0.25);
+}
+.discord-btn {
+  background: transparent;
+  color: #5865f2;
+  box-shadow: none;
+}
+.discord-btn:hover {
+  background: rgba(88, 101, 242, 0.1);
+  color: #4752c4;
+  box-shadow: none;
+  filter: none;
+}
+.kofi-btn {
+  background: linear-gradient(135deg, #ff7e67 0%, #ff5e5b 100%);
+  width: 30px;
+  height: 30px;
+  box-shadow: 0 3px 6px rgba(255, 94, 91, 0.25);
+}
+.kofi-btn:hover {
+  background: linear-gradient(135deg, #ff9481 0%, #e04e4b 100%);
 }
 
-/* Feedback Link */
+.popup-footer-links {
+  flex: none;
+  width: 40px;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .popup-feedback-link {
   font-size: 11px;
   color: var(--popup-text-secondary);
   text-decoration: none;
   transition: color 0.2s;
-  width: 40px; /* Fixed width matching version for balance */
-  text-align: right;
   opacity: 0.7;
+  display: flex;
+  align-items: center;
 }
-
 .popup-feedback-link:hover {
-  text-decoration: underline;
-  color: var(--popup-accent);
+  color: var(--popup-text);
   opacity: 1;
 }
-
-/* Toast */
 .popup-toast {
   position: fixed;
   bottom: 16px;

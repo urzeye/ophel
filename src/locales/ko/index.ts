@@ -1411,4 +1411,11 @@ export const ko = {
   "featureTip-notifications-title": "생성 완료 알림",
   "featureTip-notifications-desc": "AI 완료 시 데스크탑 알림 — 응답을 놓치지 마세요",
   "featureTip-notifications-path": "기능 → 알림 → 데스크탑 알림",
+  discordCommunity: "Discord 커뮤니티",
+  discordDesc:
+    "커뮤니티에 참여하여 다른 사용자와 소통하고, 피드백을 제공하고, 최신 소식을 받아보세요",
+  joinDiscord: "그룹 가입",
+  kofiSupport: "Buy Me a Coffee",
+  kofiDesc: "Ophel이 도움이 되었다면 개발자를 지원하기 위해 커피를 사주는 것을 고려해 주세요",
+  kofiBtn: "Ko-fi에서 후원하기",
 }

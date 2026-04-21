@@ -1390,4 +1390,10 @@ export const zhTW = {
   "featureTip-notifications-title": "生成完成通知",
   "featureTip-notifications-desc": "AI 生成完成時送出桌面通知，切換分頁也不會錯過",
   "featureTip-notifications-path": "功能模組 → 提醒 → 傳送桌面通知",
+  discordCommunity: "Discord 社群",
+  discordDesc: "加入社群，與其他用戶交流、反饋問題、獲取最新動態",
+  joinDiscord: "加入群組",
+  kofiSupport: "Buy Me a Coffee",
+  kofiDesc: "如果 Ophel 對你有幫助，請考慮贊助一杯咖啡支持開發者",
+  kofiBtn: "贊助支持",
 }

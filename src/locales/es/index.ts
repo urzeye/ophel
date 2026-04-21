@@ -1424,4 +1424,11 @@ Dame el código y luego un resumen de mejoras.`,
   "featureTip-notifications-desc":
     "Notificación de escritorio cuando la IA termina — no te pierdas respuestas",
   "featureTip-notifications-path": "Funciones → Avisos → Notificación Escritorio",
+  discordCommunity: "Comunidad de Discord",
+  discordDesc:
+    "Únete a nuestra comunidad para hablar con otros usuarios, enviar comentarios y obtener las últimas noticias",
+  joinDiscord: "Unirse al grupo",
+  kofiSupport: "Buy Me a Coffee",
+  kofiDesc: "Si Ophel te resulta útil, considera invitar a un café para apoyar al desarrollador",
+  kofiBtn: "Apoyar en Ko-fi",
 }

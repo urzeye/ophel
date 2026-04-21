@@ -1393,4 +1393,10 @@ export const zhCN = {
   "featureTip-notifications-title": "生成完成通知",
   "featureTip-notifications-desc": "AI 生成完成时发送桌面通知，切标签也不错过",
   "featureTip-notifications-path": "功能模块 → 提醒 → 发送桌面通知",
+  discordCommunity: "Discord 社区",
+  discordDesc: "加入社区，与其他用户交流、反馈问题、获取最新动态",
+  joinDiscord: "加入群组",
+  kofiSupport: "Buy Me a Coffee",
+  kofiDesc: "如果 Ophel 对你有帮助，请考虑赞助一杯咖啡支持开发者",
+  kofiBtn: "赞助支持",
 }

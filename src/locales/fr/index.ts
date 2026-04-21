@@ -1439,4 +1439,11 @@ Donnez le code puis un résumé des améliorations.`,
   "featureTip-notifications-desc":
     "Notification bureau quand l’IA termine — ne manquez aucune réponse",
   "featureTip-notifications-path": "Fonctions → Alertes → Notification de Bureau",
+  discordCommunity: "Communauté Discord",
+  discordDesc:
+    "Rejoignez notre communauté pour discuter avec d'autres utilisateurs, donner votre avis et obtenir les dernières nouvelles",
+  joinDiscord: "Rejoindre le groupe",
+  kofiSupport: "Buy Me a Coffee",
+  kofiDesc: "Si Ophel vous est utile, pensez à offrir un café pour soutenir le développeur",
+  kofiBtn: "Soutenir sur Ko-fi",
 }
