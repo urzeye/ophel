@@ -2,6 +2,13 @@ import { useMemo } from "react"
 import fuzzysort from "fuzzysort"
 
 import { SETTING_ID_ALIASES, type SettingsSearchItem } from "~constants"
+import { FEATURE_TIPS } from "~constants/feature-tips"
+import {
+  DEFAULT_KEYBINDINGS,
+  formatShortcut,
+  isMacOS,
+  type ShortcutActionId,
+} from "~constants/shortcuts"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
 import { t } from "~utils/i18n"
@@ -545,7 +552,49 @@ export const useGlobalSearchData = ({
   expandedGlobalSearchCategories,
   allCategoryItemLimit,
 }: UseGlobalSearchDataParams) => {
+  const isTipsMode = activeGlobalSearchPlainQuery.startsWith("?")
+
+  const tipsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
+    if (!isTipsMode) {
+      return []
+    }
+    const tipsQuery = activeGlobalSearchPlainQuery.slice(1).trim().toLowerCase()
+    const tipsLabel = getLocalizedText({ key: "featureTipsCategory", fallback: "Feature Tips" })
+    const isMac = isMacOS()
+
+    return FEATURE_TIPS.filter((tip) => {
+      if (!tipsQuery) return true
+      const title = t(`featureTip-${tip.id}-title`).toLowerCase()
+      const desc = t(`featureTip-${tip.id}-desc`).toLowerCase()
+      return title.includes(tipsQuery) || desc.includes(tipsQuery)
+    }).map((tip) => {
+      const desc = t(`featureTip-${tip.id}-desc`)
+      const shortcutLabels =
+        tip.shortcutIds
+          ?.map((id) => {
+            const binding = DEFAULT_KEYBINDINGS[id as ShortcutActionId]
+            return binding ? formatShortcut(binding, isMac) : null
+          })
+          .filter((label): label is string => Boolean(label)) ?? []
+      const snippet = shortcutLabels.length > 0 ? `${desc}  [${shortcutLabels.join(" / ")}]` : desc
+
+      return {
+        id: `tips:${tip.id}`,
+        title: t(`featureTip-${tip.id}-title`),
+        breadcrumb: `${tipsLabel} / ${t(`featureTip-${tip.id}-path`)}`,
+        snippet,
+        category: "settings" as const,
+        tipId: tip.id,
+        tipHighlightTarget: tip.highlightTarget,
+        tipShortcutIds: tip.shortcutIds,
+      }
+    })
+  }, [activeGlobalSearchPlainQuery, getLocalizedText, isTipsMode])
+
   const settingsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
+    if (isTipsMode) {
+      return []
+    }
     const normalizedQuery = normalizeGlobalSearchValue(activeGlobalSearchPlainQuery)
     const tokens = toGlobalSearchTokens(activeGlobalSearchPlainQuery)
 
@@ -632,12 +681,13 @@ export const useGlobalSearchData = ({
     activeGlobalSearchPlainQuery,
     enableFuzzySearch,
     getSettingsBreadcrumb,
+    isTipsMode,
     resolveSettingSearchTitle,
     settingsSearchResults,
   ])
 
   const conversationGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
-    if (!conversationManager) {
+    if (!conversationManager || isTipsMode) {
       return []
     }
 
@@ -763,9 +813,13 @@ export const useGlobalSearchData = ({
     getLocalizedText,
     activeGlobalSearchPlainQuery,
     enableFuzzySearch,
+    isTipsMode,
   ])
 
   const promptsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
+    if (isTipsMode) {
+      return []
+    }
     const normalizedQuery = normalizeGlobalSearchValue(activeGlobalSearchPlainQuery)
     const tokens = toGlobalSearchTokens(activeGlobalSearchPlainQuery)
     const promptsLabel = getLocalizedText({
@@ -881,10 +935,16 @@ export const useGlobalSearchData = ({
       .sort(compareGlobalSearchRankedItems)
 
     return scoredItems.map(({ item }) => item)
-  }, [activeGlobalSearchPlainQuery, enableFuzzySearch, getLocalizedText, promptsSnapshot])
+  }, [
+    activeGlobalSearchPlainQuery,
+    enableFuzzySearch,
+    getLocalizedText,
+    isTipsMode,
+    promptsSnapshot,
+  ])
 
   const outlineGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
-    if (!outlineManager) {
+    if (!outlineManager || isTipsMode) {
       return []
     }
 
@@ -1005,16 +1065,19 @@ export const useGlobalSearchData = ({
     outlineManager,
     getLocalizedText,
     outlineSearchVersion,
+    isTipsMode,
   ])
 
   const normalizedGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(
     () => [
+      ...tipsGlobalSearchResults,
       ...settingsGlobalSearchResults,
       ...conversationGlobalSearchResults,
       ...outlineGlobalSearchResults,
       ...promptsGlobalSearchResults,
     ],
     [
+      tipsGlobalSearchResults,
       conversationGlobalSearchResults,
       outlineGlobalSearchResults,
       promptsGlobalSearchResults,

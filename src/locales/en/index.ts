@@ -1396,4 +1396,53 @@ Please output the optimized code block directly, followed by a brief summary of 
   extensionUpdateNoticeWithVersion:
     "Ophel Atlas has been updated to v{version}. Reload this page to keep using the latest version.",
   extensionUpdateNoticeAction: "Reload page",
+  // Feature tips: global search ? prefix help mode
+  featureTipSearchPlaceholder: "Search feature tips…",
+  featureTipShortcutNotConfigured: "Shortcut not configured",
+  featureTipToastTryShortcut: "Try shortcut: {shortcut}",
+  featureTipsCategory: "Feature Tips",
+  globalSearchTipsPlaceholder: "Search feature tips…",
+  "featureTip-passthrough-title": "Passthrough Mode",
+  "featureTip-passthrough-desc":
+    "Make the panel transparent and interact with page content beneath",
+  "featureTip-passthrough-path":
+    "Hold {modifier} — panel turns transparent, click through to content below",
+  "featureTip-privacy-mode-title": "Privacy Mode",
+  "featureTip-privacy-mode-desc": "Hide conversation titles to keep your screen private",
+  "featureTip-privacy-mode-path": "Double-click the panel title bar to toggle",
+  "featureTip-shortcuts-title": "Keyboard Shortcuts Overview",
+  "featureTip-shortcuts-desc": "View and customize all keyboard shortcuts",
+  "featureTip-shortcuts-path": "{shortcut} to open shortcuts overview",
+  "featureTip-global-search-title": "Global Search Syntax",
+  "featureTip-global-search-desc":
+    "Use folder: tag: site: level: filter syntax to pinpoint content",
+  "featureTip-global-search-path": "{shortcut} to open search — supports folder: tag: site: syntax",
+  "featureTip-copy-reply-title": "Copy Latest AI Reply",
+  "featureTip-copy-reply-desc": "Copy the most recent AI response to clipboard in one keystroke",
+  "featureTip-copy-reply-path": "Shortcut: {shortcut}",
+  "featureTip-prev-next-heading-title": "Jump Between Headings",
+  "featureTip-prev-next-heading-desc": "Navigate up/down between outline headings",
+  "featureTip-prev-next-heading-path": "Shortcut: {shortcut}",
+  "featureTip-export-conv-title": "Export Conversations",
+  "featureTip-export-conv-desc": "Export selected conversations as Markdown / JSON / CSV",
+  "featureTip-export-conv-path":
+    "Conversations Tab → Long-press to multi-select → Export in bottom bar",
+  "featureTip-batch-select-title": "Batch Manage Conversations",
+  "featureTip-batch-select-desc": "Bulk delete, export, archive, or move conversations",
+  "featureTip-batch-select-path":
+    "Conversations Tab → Long-press any item to enter multi-select mode",
+  "featureTip-export-markdown-title": "Export Current Conversation",
+  "featureTip-export-markdown-desc": "Export the current page conversation as a Markdown file",
+  "featureTip-export-markdown-path":
+    "Quick-action buttons (right side) → Toolbox → Export Markdown",
+  "featureTip-prompt-queue-title": "Prompt Queue",
+  "featureTip-prompt-queue-desc": "Queue multiple prompts to send sequentially, one after another",
+  "featureTip-prompt-queue-path": "Prompts Tab → ＋ or queue icon → Add to queue",
+  "featureTip-show-user-query-title": "Show User Queries in Outline",
+  "featureTip-show-user-query-desc": "Include your questions in the outline, not just AI headings",
+  "featureTip-show-user-query-path": "Outline Tab → gear icon → Show user queries",
+  "featureTip-notifications-title": "Generation Complete Notification",
+  "featureTip-notifications-desc":
+    "Get a desktop notification when AI finishes — never miss a response",
+  "featureTip-notifications-path": "Settings → Notifications → Enable desktop notifications",
 }

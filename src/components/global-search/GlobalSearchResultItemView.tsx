@@ -72,6 +72,7 @@ export const GlobalSearchResultItemView = React.memo(
     const isOutlineItem = item.category === "outline" && Boolean(item.outlineTarget)
     const isConversationItem = item.category === "conversations"
     const isPromptItem = item.category === "prompts"
+    const isTipItem = Boolean(item.tipId)
     const isOutlineQuery = isOutlineItem && Boolean(item.outlineTarget?.isUserQuery)
     const outlineRoleLabel = isOutlineQuery ? outlineRoleLabels.query : outlineRoleLabels.reply
     const showCodeOnMeta = Boolean(item.code) && !isOutlineItem
@@ -102,6 +103,8 @@ export const GlobalSearchResultItemView = React.memo(
         data-global-search-index={index}
         data-global-search-item-id={item.id}
         className={`settings-search-item ${isActive ? "active" : ""} ${
+          isTipItem ? "tip-item" : ""
+        } ${
           isOutlineItem
             ? isOutlineQuery
               ? "outline-item outline-query"
@@ -125,7 +128,16 @@ export const GlobalSearchResultItemView = React.memo(
         }}
         onClick={onClick}>
         <div className="settings-search-item-title" title={item.title}>
-          {isOutlineItem ? (
+          {isTipItem ? (
+            <div className="gs-tip-item-head">
+              <span className="gs-tip-icon" aria-hidden="true">
+                💡
+              </span>
+              <span className="settings-search-item-title-text">
+                {renderSearchHighlightedParts(item.title, "default", fuzzyTitleIndexes)}
+              </span>
+            </div>
+          ) : isOutlineItem ? (
             <div className="settings-search-outline-head">
               <span
                 className={`settings-search-outline-role ${isOutlineQuery ? "query" : "reply"}`}

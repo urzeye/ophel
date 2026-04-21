@@ -35,8 +35,12 @@ export function getEffectiveLanguage(settingLang: string): string {
 }
 
 export function t(key: string, params?: Record<string, string>): string {
-  const langResources = resources[currentLang as keyof typeof resources] || resources["en"]
-  let text = (langResources[key as keyof typeof langResources] as string) || key
+  const langResources = resources[currentLang as keyof typeof resources]
+  const enResources = resources["en"]
+  let text =
+    (langResources?.[key as keyof typeof langResources] as string) ||
+    (enResources[key as keyof typeof enResources] as string) ||
+    key
 
   if (params) {
     Object.keys(params).forEach((paramKey) => {

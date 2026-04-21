@@ -59,6 +59,12 @@ export interface GlobalSearchResultItem {
   matchReasons?: GlobalSearchMatchReason[]
   fuzzyMatch?: GlobalSearchFuzzyMatchMeta
   outlineTarget?: GlobalSearchOutlineTarget
+  /** 标记这是一个功能技巧条目 */
+  tipId?: string
+  /** 语义目标名称，对应面板内 data-tip-target 属性值 */
+  tipHighlightTarget?: string
+  /** 该技巧关联的快捷键 ID 列表（对应 DEFAULT_KEYBINDINGS 的 key）*/
+  tipShortcutIds?: string[]
 }
 
 export interface GlobalSearchGroupedResult {

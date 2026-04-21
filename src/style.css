@@ -282,6 +282,48 @@
   border-right-color: var(--gh-outline-locate-border) !important;
 }
 
+/* ===== 功能技巧高亮动画 ===== */
+@keyframes featureHighlightPulse {
+  0% {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 0 rgba(250, 173, 20, 0.8);
+  }
+  30% {
+    outline: 2px solid rgb(250, 173, 20);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(250, 173, 20, 0.4);
+  }
+  60% {
+    outline: 2px solid rgb(250, 173, 20);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(250, 173, 20, 0.2);
+  }
+  100% {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 0 rgba(250, 173, 20, 0);
+  }
+}
+
+.feature-highlight {
+  animation: featureHighlightPulse 2.5s ease-out forwards;
+  border-radius: 6px;
+}
+
+/* Tips 搜索结果条目样式 */
+.settings-search-item.tip-item .gs-tip-item-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.settings-search-item.tip-item .gs-tip-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
 @keyframes outlineLocatePulse {
   0%,
   100% {

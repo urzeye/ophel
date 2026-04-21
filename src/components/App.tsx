@@ -1618,6 +1618,24 @@ export const App = () => {
     async (item: GlobalSearchResultItem) => {
       closeGlobalSettingsSearch({ restoreFocus: false })
 
+      if (item.tipId) {
+        if (item.tipHighlightTarget) {
+          const targetEl = findUiElement(`[data-tip-target="${item.tipHighlightTarget}"]`)
+          if (targetEl) {
+            targetEl.classList.remove("feature-highlight")
+            // Force reflow to restart animation
+            void targetEl.offsetWidth
+            targetEl.classList.add("feature-highlight")
+            setTimeout(() => targetEl.classList.remove("feature-highlight"), 2500)
+            targetEl.scrollIntoView({ behavior: "smooth", block: "nearest" })
+            return
+          }
+        }
+        // 无可定位 UI 元素时，用 toast 提示描述文字
+        showToast(item.snippet || item.title, 3000)
+        return
+      }
+
       if (item.category === "settings" && item.settingId) {
         window.dispatchEvent(
           new CustomEvent("ophel:navigateSettingsPage", {
@@ -1774,7 +1792,15 @@ export const App = () => {
         adapter?.navigateToConversation(item.conversationId, item.conversationUrl)
       }
     },
-    [adapter, closeGlobalSettingsSearch, outlineManager, promptManager, promptsSnapshot, settings],
+    [
+      adapter,
+      closeGlobalSettingsSearch,
+      findUiElement,
+      outlineManager,
+      promptManager,
+      promptsSnapshot,
+      settings,
+    ],
   )
 
   useEffect(() => {
@@ -3165,9 +3191,14 @@ export const App = () => {
         activeOptionId={activeGlobalSearchOptionId}
         inputValue={settingsSearchInputValue}
         inputPlaceholder={
-          globalSearchPrimaryShortcutLabel
-            ? `${resolvedActiveGlobalSearchCategoryText.placeholder}（${globalSearchPrimaryShortcutLabel}）`
-            : resolvedActiveGlobalSearchCategoryText.placeholder
+          settingsSearchInputValue.startsWith("?")
+            ? getLocalizedText({
+                key: "globalSearchTipsPlaceholder",
+                fallback: "Search feature tips…",
+              })
+            : globalSearchPrimaryShortcutLabel
+              ? `${resolvedActiveGlobalSearchCategoryText.placeholder}（${globalSearchPrimaryShortcutLabel}）`
+              : resolvedActiveGlobalSearchCategoryText.placeholder
         }
         onInputChange={(nextValue) => {
           commitSettingsSearchInputValue(nextValue)

@@ -518,7 +518,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                 window.postMessage({ type: "GH_PRIVACY_TOGGLE" }, "*")
               }}>
               <SparkleIcon size={18} color={panelSparkleColor} />
-              <span style={{ fontSize: "15px", fontWeight: 600 }}>{t("panelTitle")}</span>
+              <span data-tip-target="header-title" style={{ fontSize: "15px", fontWeight: 600 }}>
+                {t("panelTitle")}
+              </span>
             </div>
           </Tooltip>
 
@@ -627,6 +629,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             {/* 设置按钮 - 打开设置模态框 */}
             <Tooltip content={t("tabSettings")}>
               <button
+                data-tip-target="settings-btn"
                 onClick={() => {
                   onOpenSettings?.()
                 }}
@@ -730,6 +733,15 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             return (
               <button
                 key={tab}
+                data-tip-target={
+                  tab === TAB_IDS.OUTLINE
+                    ? "outline-tab"
+                    : tab === TAB_IDS.CONVERSATIONS
+                      ? "conversations-tab"
+                      : tab === TAB_IDS.PROMPTS
+                        ? "prompts-tab"
+                        : undefined
+                }
                 onClick={() => setActiveTab(tab)}
                 style={{
                   flex: 1,

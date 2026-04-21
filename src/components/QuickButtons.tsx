@@ -719,6 +719,17 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         <button
           className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isPanelBtn ? "panel-btn" : ""} ${isActive ? "active" : ""} ${isFloatingToolbarBtn ? "tools-trigger-btn" : ""} ${isZenModeBtn ? "zen-mode-btn" : ""}`}
           onClick={(e) => buttonActions[id]?.(e)}
+          data-tip-target={
+            id === "globalSearch"
+              ? "search-btn"
+              : id === "floatingToolbar"
+                ? "toolbar-btn"
+                : id === "shortcuts"
+                  ? "shortcuts-btn"
+                  : id === "settings"
+                    ? "settings-btn"
+                    : undefined
+          }
           style={{
             opacity: anchorDisabled ? 0.4 : 1,
             cursor: anchorDisabled ? "default" : "pointer",
