@@ -11,14 +11,21 @@ const toastCooldowns = new Map<string, number>()
 export const EXPORT_START_TOAST_DURATION = 5000
 
 export function showToast(message: string, duration = 2000, options: ToastOptions = {}) {
-  // 移除现有的 toast
-  const existing = document.getElementById("gh-toast")
+  const shadowHost = document.querySelector("plasmo-csui, #ophel-userscript-root")
+  const targetContainer =
+    shadowHost?.shadowRoot?.querySelector(
+      ".gh-root, #plasmo-shadow-container, .plasmo-csui-container",
+    ) || document.body
+  const styleContainer = shadowHost?.shadowRoot || document.head
+
+  // 移除现有的 toast (支持从 body 和 shadow root 中查找)
+  const existing = targetContainer.querySelector("#gh-toast") || document.getElementById("gh-toast")
   if (existing) {
     existing.remove()
   }
 
-  // 确保样式已注入
-  if (!document.getElementById("gh-toast-style")) {
+  // 确保样式已注入 (支持在 shadow root 或 document.head 中查找)
+  if (!styleContainer.querySelector("#gh-toast-style")) {
     const style = document.createElement("style")
     style.id = "gh-toast-style"
     style.textContent = `
@@ -32,7 +39,7 @@ export function showToast(message: string, duration = 2000, options: ToastOption
         border-radius: 9999px !important;
         font-size: 14px !important;
         font-weight: 500 !important;
-        box-shadow: 
+        box-shadow:
           var(--gh-shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.1)),
           0 0 0 1px inset rgba(255, 255, 255, 0.1) !important;
         z-index: 2147483646 !important; /* 刚好在一级最高层（禅模式按钮 2147483647）之下 */
@@ -56,7 +63,7 @@ export function showToast(message: string, duration = 2000, options: ToastOption
         max-width: 360px !important;
       }
     `
-    document.head.appendChild(style)
+    styleContainer.appendChild(style)
   }
 
   const toast = document.createElement("div")
@@ -64,7 +71,11 @@ export function showToast(message: string, duration = 2000, options: ToastOption
   toast.className = "gh-toast"
 
   // 动态避让：检测禅模式退出按钮是否存在，以决定 top 位置
-  const isZenMode = !!document.getElementById("gh-zen-mode-exit-host")
+  const isZenMode = !!(
+    document.getElementById("gh-zen-mode-exit-host") ||
+    document.querySelector("gh-zen-mode-exit-host") ||
+    shadowHost?.shadowRoot?.querySelector("#gh-zen-mode-exit-host")
+  )
   toast.style.setProperty("top", isZenMode ? "84px" : "32px", "important")
 
   if (options.className) {
@@ -75,7 +86,8 @@ export function showToast(message: string, duration = 2000, options: ToastOption
   }
   toast.textContent = message
 
-  document.body.appendChild(toast)
+  // 挂载到最高层级容器，如果不存在则使用 body
+  targetContainer.appendChild(toast)
 
   // 触发重绘以应用过渡效果
   requestAnimationFrame(() => {
