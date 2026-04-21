@@ -163,8 +163,23 @@ export const useGlobalSearchSyntax = ({
     [getLocalizedText],
   )
 
+  const globalSearchFeatureTipsDescription = useMemo(
+    () =>
+      getLocalizedText({
+        key: "globalSearchTipsPlaceholder",
+        fallback: "Search feature tips…",
+      }),
+    [getLocalizedText],
+  )
+
   const globalSearchSyntaxHelpItems = useMemo<GlobalSearchSyntaxSuggestionItem[]>(
     () => [
+      {
+        id: "help:tip:",
+        token: "tip:",
+        label: "tip:",
+        description: globalSearchFeatureTipsDescription,
+      },
       {
         id: "help:type:outline",
         token: "type:outline",
@@ -236,6 +251,7 @@ export const useGlobalSearchSyntax = ({
       },
     ],
     [
+      globalSearchFeatureTipsDescription,
       getLocalizedText,
       globalSearchSuggestionDateDescription,
       globalSearchSuggestionIsDescriptions.pinned,

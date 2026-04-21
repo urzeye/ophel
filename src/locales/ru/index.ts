@@ -1404,23 +1404,18 @@ export const ru = {
   "featureTip-export-conv-title": "Экспорт бесед",
   "featureTip-export-conv-desc": "Экспортируйте выбранные беседы в Markdown / JSON / CSV",
   "featureTip-export-conv-path":
-    "Вкладка бесед → долгое нажатие для мультивыбора → кнопка экспорта внизу",
+    "Вкладка бесед → справа сверху Правка паком → Экспорт в нижней панели",
   "featureTip-batch-select-title": "Пакетная работа с беседами",
   "featureTip-batch-select-desc":
     "Массово удаляйте, экспортируйте, архивируйте или перемещайте беседы",
-  "featureTip-batch-select-path":
-    "Вкладка бесед → долго нажмите на любой элемент, чтобы войти в режим мультивыбора",
+  "featureTip-batch-select-path": "Вкладка бесед → справа сверху Правка паком",
   "featureTip-export-markdown-title": "Экспорт текущей беседы",
   "featureTip-export-markdown-desc": "Экспортирует текущую беседу на странице в файл Markdown",
   "featureTip-export-markdown-path": "Инструменты → Экспорт Markdown",
-  "featureTip-prompt-queue-title": "Очередь промптов",
-  "featureTip-prompt-queue-desc":
-    "Добавляйте несколько промптов в очередь и отправляйте их по одному по порядку",
-  "featureTip-prompt-queue-path": "Вкладка промптов → ＋ или значок очереди → добавить в очередь",
   "featureTip-show-user-query-title": "Показывать вопросы пользователя в плане",
   "featureTip-show-user-query-desc":
     "Добавляет в план ваши вопросы, а не только заголовки, созданные ИИ",
-  "featureTip-show-user-query-path": "Вкладка плана → ⚙ → Показать мои вопросы",
+  "featureTip-show-user-query-path": "Вкладка плана → ⚡ → Показать мои вопросы",
   "featureTip-notifications-title": "Уведомление о завершении генерации",
   "featureTip-notifications-desc":
     "Получайте уведомление на рабочем столе, когда ИИ закончит ответ — ничего не пропустите",

@@ -1414,24 +1414,18 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   "featureTip-export-conv-title": "Gespräche exportieren",
   "featureTip-export-conv-desc": "Ausgewählte Gespräche als Markdown / JSON / CSV exportieren",
   "featureTip-export-conv-path":
-    "Gespräche-Tab → Lang drücken für Mehrfachauswahl → Exportieren in der unteren Leiste",
+    "Gespräche-Tab → oben rechts Stapelmodus → Exportieren in der unteren Leiste",
   "featureTip-batch-select-title": "Gespräche in Stapeln verwalten",
   "featureTip-batch-select-desc":
     "Gespräche in Massen löschen, exportieren, archivieren oder verschieben",
-  "featureTip-batch-select-path":
-    "Gespräche-Tab → Beliebiges Element lang drücken für Mehrfachauswahl",
+  "featureTip-batch-select-path": "Gespräche-Tab → oben rechts Stapelmodus",
   "featureTip-export-markdown-title": "Aktuelles Gespräch exportieren",
   "featureTip-export-markdown-desc": "Das aktuelle Seitengespräch als Markdown-Datei exportieren",
   "featureTip-export-markdown-path": "Werkzeugkasten → Markdown exportieren",
-  "featureTip-prompt-queue-title": "Prompt-Warteschlange",
-  "featureTip-prompt-queue-desc":
-    "Mehrere Prompts in eine Warteschlange stellen und nacheinander senden",
-  "featureTip-prompt-queue-path":
-    "Prompts-Tab → ＋ oder Warteschlangen-Symbol → In die Warteschlange",
   "featureTip-show-user-query-title": "Eigene Fragen in Gliederung anzeigen",
   "featureTip-show-user-query-desc":
     "Eigene Fragen in der Gliederung anzeigen, nicht nur KI-Überschriften",
-  "featureTip-show-user-query-path": "Gliederung-Tab → ⚙ → Eigene Fragen im Verzeichnis",
+  "featureTip-show-user-query-path": "Gliederung-Tab → ⚡ → Eigene Fragen im Verzeichnis",
   "featureTip-notifications-title": "Benachrichtigung bei Fertigstellung",
   "featureTip-notifications-desc":
     "Desktop-Benachrichtigung wenn KI fertig ist — keine Antwort verpassen",

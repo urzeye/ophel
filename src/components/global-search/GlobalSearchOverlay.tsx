@@ -263,7 +263,15 @@ export const GlobalSearchOverlay = <TItem, TCategoryId extends string>(
                       key={item.id}
                       type="button"
                       className="settings-search-help-item"
-                      onClick={() => onApplySyntaxHelpItem(item)}>
+                      onMouseDown={(event) => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                      }}
+                      onClick={(event) => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        onApplySyntaxHelpItem(item)
+                      }}>
                       <span className="settings-search-help-token">{item.token}</span>
                       <span className="settings-search-help-desc">{item.description}</span>
                     </button>
@@ -313,7 +321,15 @@ export const GlobalSearchOverlay = <TItem, TCategoryId extends string>(
                   activeSyntaxSuggestionIndex === index ? "active" : ""
                 }`}
                 onMouseEnter={() => onHoverSyntaxSuggestion(index)}
-                onClick={() => onApplySyntaxSuggestion(suggestion)}>
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                }}
+                onClick={(event) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  onApplySyntaxSuggestion(suggestion)
+                }}>
                 <span className="settings-search-syntax-suggestion-token">{suggestion.label}</span>
                 <span className="settings-search-syntax-suggestion-desc">
                   {suggestion.description}
@@ -402,7 +418,15 @@ export const GlobalSearchOverlay = <TItem, TCategoryId extends string>(
                     key={example.id}
                     type="button"
                     className="settings-search-empty-guide-example"
-                    onClick={example.onClick}>
+                    onMouseDown={(event) => {
+                      event.preventDefault()
+                      event.stopPropagation()
+                    }}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      event.stopPropagation()
+                      example.onClick()
+                    }}>
                     {example.token}
                   </button>
                 ))}

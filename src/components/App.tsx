@@ -69,8 +69,10 @@ import {
 import {
   DEFAULT_KEYBINDINGS,
   formatShortcut,
+  normalizeShortcutsSettings,
   SHORTCUT_ACTIONS,
   SHORTCUT_META,
+  type ShortcutActionId,
 } from "~constants/shortcuts"
 
 interface LocalizedLabelDefinition {
@@ -394,13 +396,21 @@ export const App = () => {
   )
 
   const isMacLike = useMemo(() => isLikelyMacPlatform(), [])
+  const resolvedShortcutSettings = useMemo(
+    () => normalizeShortcutsSettings(settings?.shortcuts) || DEFAULT_SETTINGS.shortcuts,
+    [settings?.shortcuts],
+  )
   const globalSearchPrimaryBinding = useMemo(() => {
-    const userBinding = settings?.shortcuts?.keybindings?.[SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH]
+    if (!resolvedShortcutSettings.enabled) {
+      return null
+    }
+
+    const userBinding = resolvedShortcutSettings.keybindings[SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH]
     if (userBinding === null) {
       return null
     }
     return userBinding || DEFAULT_KEYBINDINGS[SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH]
-  }, [settings?.shortcuts?.keybindings])
+  }, [resolvedShortcutSettings])
   const globalSearchPrimaryShortcutLabel = globalSearchPrimaryBinding
     ? formatShortcut(globalSearchPrimaryBinding, isMacLike)
     : ""
@@ -418,6 +428,27 @@ export const App = () => {
 
     return labels.join(" / ")
   }, [globalSearchPrimaryShortcutLabel, isDoubleShiftSearchShortcutEnabled])
+  const passThroughModifierLabel = isMacLike ? "⌘" : "Ctrl"
+  const resolveShortcutLabel = useCallback(
+    (actionId: ShortcutActionId): string | null => {
+      if (actionId === SHORTCUT_ACTIONS.OPEN_GLOBAL_SEARCH) {
+        return globalSearchShortcutHintLabel || null
+      }
+
+      if (!resolvedShortcutSettings.enabled) {
+        return null
+      }
+
+      const binding = resolvedShortcutSettings.keybindings[actionId]
+      if (binding === null) {
+        return null
+      }
+
+      const resolvedBinding = binding || DEFAULT_KEYBINDINGS[actionId]
+      return resolvedBinding ? formatShortcut(resolvedBinding, isMacLike) : null
+    },
+    [globalSearchShortcutHintLabel, isMacLike, resolvedShortcutSettings],
+  )
   const globalSearchOverlayHotkeyLabel =
     globalSearchShortcutHintLabel || t("shortcutNotSet") || "未设置"
   const isGlobalSearchFuzzySearchEnabled =
@@ -557,6 +588,23 @@ export const App = () => {
       setSettingsSearchQuery(nextValue)
     },
     [clearSettingsSearchInputDebounceTimer],
+  )
+
+  const syncGlobalSearchValueAndCategory = useCallback(
+    (nextValue: string) => {
+      const normalizedValue = nextValue.trimStart()
+
+      syncSettingsSearchInputAndQuery(nextValue)
+
+      setActiveGlobalSearchCategory((previousCategory) => {
+        if (normalizedValue.startsWith("tip:")) {
+          return previousCategory === "tips" ? previousCategory : "tips"
+        }
+
+        return previousCategory === "tips" ? "all" : previousCategory
+      })
+    },
+    [syncSettingsSearchInputAndQuery],
   )
 
   const toggleGlobalSearchFuzzySearch = useCallback(() => {
@@ -1232,6 +1280,8 @@ export const App = () => {
     outlineManager,
     outlineSearchVersion,
     getLocalizedText,
+    resolveShortcutLabel,
+    passThroughModifierLabel,
     activeGlobalSearchCategory,
     expandedGlobalSearchCategories,
     allCategoryItemLimit: GLOBAL_SEARCH_ALL_CATEGORY_ITEM_LIMIT,
@@ -1356,9 +1406,11 @@ export const App = () => {
       const nextToken = `${suggestion.token}${shouldAppendTrailingSpace ? " " : ""}`
       const nextValue = trailingTokenInfo
         ? `${settingsSearchInputValue.slice(0, trailingTokenInfo.start)}${nextToken}`
-        : `${settingsSearchInputValue}${settingsSearchInputValue.endsWith(" ") ? "" : " "}${nextToken}`
+        : settingsSearchInputValue.trim().length > 0
+          ? `${settingsSearchInputValue}${settingsSearchInputValue.endsWith(" ") ? "" : " "}${nextToken}`
+          : nextToken
 
-      syncSettingsSearchInputAndQuery(nextValue)
+      syncGlobalSearchValueAndCategory(nextValue)
       setActiveSearchSyntaxSuggestionIndex(-1)
       setSettingsSearchActiveIndex(0)
 
@@ -1373,7 +1425,7 @@ export const App = () => {
         inputElement.setSelectionRange(cursorPosition, cursorPosition)
       })
     },
-    [settingsSearchInputValue, syncSettingsSearchInputAndQuery],
+    [settingsSearchInputValue, syncGlobalSearchValueAndCategory],
   )
 
   const applyGlobalSearchSyntaxHelpItem = useCallback(
@@ -1638,8 +1690,8 @@ export const App = () => {
             return
           }
         }
-        // 无可定位 UI 元素时，用 toast 提示描述文字
-        showToast(item.snippet || item.title, 3000)
+        // 无可定位 UI 元素时，优先提示可执行动作文案，而不是说明文案
+        showToast(item.tipActionText || item.snippet || item.title, 3000)
         return
       }
 
@@ -3206,10 +3258,11 @@ export const App = () => {
           commitSettingsSearchInputValue(nextValue)
           setActiveSearchSyntaxSuggestionIndex(-1)
           setSettingsSearchActiveIndex(0)
-          // ? prefix → auto-switch to tips category
-          if (nextValue.startsWith("tip:") && activeGlobalSearchCategory !== "tips") {
+          const normalizedValue = nextValue.trimStart()
+
+          if (normalizedValue.startsWith("tip:") && activeGlobalSearchCategory !== "tips") {
             setActiveGlobalSearchCategory("tips")
-          } else if (!nextValue.startsWith("tip:") && activeGlobalSearchCategory === "tips") {
+          } else if (!normalizedValue.startsWith("tip:") && activeGlobalSearchCategory === "tips") {
             setActiveGlobalSearchCategory("all")
           }
         }}
@@ -3319,32 +3372,68 @@ export const App = () => {
           {
             id: "example:type-prompts",
             token: "type:prompts",
-            onClick: () => syncSettingsSearchInputAndQuery("type:prompts "),
+            onClick: () =>
+              applyGlobalSearchSyntaxSuggestion({
+                id: "example:type-prompts",
+                token: "type:prompts",
+                label: "type:prompts",
+                description: "",
+              }),
           },
           {
             id: "example:is-pinned",
             token: "is:pinned",
-            onClick: () => syncSettingsSearchInputAndQuery("is:pinned "),
+            onClick: () =>
+              applyGlobalSearchSyntaxSuggestion({
+                id: "example:is-pinned",
+                token: "is:pinned",
+                label: "is:pinned",
+                description: "",
+              }),
           },
           {
             id: "example:folder-inbox",
             token: "folder:inbox",
-            onClick: () => syncSettingsSearchInputAndQuery("folder:inbox "),
+            onClick: () =>
+              applyGlobalSearchSyntaxSuggestion({
+                id: "example:folder-inbox",
+                token: "folder:inbox",
+                label: "folder:inbox",
+                description: "",
+              }),
           },
           {
             id: "example:tag-work",
             token: "tag:work",
-            onClick: () => syncSettingsSearchInputAndQuery("tag:work "),
+            onClick: () =>
+              applyGlobalSearchSyntaxSuggestion({
+                id: "example:tag-work",
+                token: "tag:work",
+                label: "tag:work",
+                description: "",
+              }),
           },
           {
             id: "example:level-0",
             token: "level:0",
-            onClick: () => syncSettingsSearchInputAndQuery("level:0 "),
+            onClick: () =>
+              applyGlobalSearchSyntaxSuggestion({
+                id: "example:level-0",
+                token: "level:0",
+                label: "level:0",
+                description: "",
+              }),
           },
           {
             id: "example:date-7d",
             token: "date:7d",
-            onClick: () => syncSettingsSearchInputAndQuery("date:7d "),
+            onClick: () =>
+              applyGlobalSearchSyntaxSuggestion({
+                id: "example:date-7d",
+                token: "date:7d",
+                label: "date:7d",
+                description: "",
+              }),
           },
         ]}
         renderSearchResultItem={renderSearchResultItem}

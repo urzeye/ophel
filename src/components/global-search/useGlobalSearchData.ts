@@ -3,12 +3,6 @@ import fuzzysort from "fuzzysort"
 
 import { SETTING_ID_ALIASES, type SettingsSearchItem } from "~constants"
 import { FEATURE_TIPS } from "~constants/feature-tips"
-import {
-  DEFAULT_KEYBINDINGS,
-  formatShortcut,
-  isMacOS,
-  type ShortcutActionId,
-} from "~constants/shortcuts"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
 import { t } from "~utils/i18n"
@@ -72,6 +66,8 @@ interface UseGlobalSearchDataParams {
   outlineManager: OutlineManager | null
   outlineSearchVersion: number
   getLocalizedText: (definition: LocalizedLabelDefinition) => string
+  resolveShortcutLabel: (actionId: string) => string | null
+  passThroughModifierLabel: string
   activeGlobalSearchCategory: GlobalSearchCategoryId
   expandedGlobalSearchCategories: Partial<Record<GlobalSearchResultCategory, boolean>>
   allCategoryItemLimit: number
@@ -549,51 +545,80 @@ export const useGlobalSearchData = ({
   outlineManager,
   outlineSearchVersion,
   getLocalizedText,
+  resolveShortcutLabel,
+  passThroughModifierLabel,
   activeGlobalSearchCategory,
   expandedGlobalSearchCategories,
   allCategoryItemLimit,
 }: UseGlobalSearchDataParams) => {
+  const trimmedGlobalSearchPlainQuery = activeGlobalSearchPlainQuery.trimStart()
   const isTipsMode =
-    activeGlobalSearchPlainQuery.startsWith("tip:") || activeGlobalSearchCategory === "tips"
+    trimmedGlobalSearchPlainQuery.startsWith("tip:") || activeGlobalSearchCategory === "tips"
 
   const tipsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
     if (!isTipsMode) {
       return []
     }
-    const tipsQuery = activeGlobalSearchPlainQuery.startsWith("tip:")
-      ? activeGlobalSearchPlainQuery.slice(4).trim().toLowerCase()
-      : activeGlobalSearchPlainQuery.trim().toLowerCase()
+    const tipsQuery = trimmedGlobalSearchPlainQuery.startsWith("tip:")
+      ? trimmedGlobalSearchPlainQuery.slice(4).trim().toLowerCase()
+      : trimmedGlobalSearchPlainQuery.trim().toLowerCase()
     const tipsLabel = getLocalizedText({ key: "featureTipsCategory", fallback: "Feature Tips" })
-    const isMac = isMacOS()
+    const shortcutNotConfiguredLabel = getLocalizedText({
+      key: "featureTipShortcutNotConfigured",
+      fallback: "Shortcut not configured",
+    })
 
-    return FEATURE_TIPS.filter((tip) => {
-      if (!tipsQuery) return true
-      const title = t(`featureTip-${tip.id}-title`).toLowerCase()
-      const desc = t(`featureTip-${tip.id}-desc`).toLowerCase()
-      return title.includes(tipsQuery) || desc.includes(tipsQuery)
-    }).map((tip) => {
-      const desc = t(`featureTip-${tip.id}-desc`)
+    const buildFeatureTipText = (
+      tipId: string,
+      field: "title" | "desc" | "path",
+      shortcutLabels: string[],
+    ) =>
+      t(`featureTip-${tipId}-${field}`, {
+        modifier: passThroughModifierLabel,
+        shortcut:
+          shortcutLabels.length > 0 ? shortcutLabels.join(" / ") : shortcutNotConfiguredLabel,
+      })
+
+    return FEATURE_TIPS.map((tip) => {
       const shortcutLabels =
         tip.shortcutIds
-          ?.map((id) => {
-            const binding = DEFAULT_KEYBINDINGS[id as ShortcutActionId]
-            return binding ? formatShortcut(binding, isMac) : null
-          })
+          ?.map((id) => resolveShortcutLabel(id))
           .filter((label): label is string => Boolean(label)) ?? []
-      const snippet = shortcutLabels.length > 0 ? `${desc}  [${shortcutLabels.join(" / ")}]` : desc
+
+      const title = buildFeatureTipText(tip.id, "title", shortcutLabels)
+      const desc = buildFeatureTipText(tip.id, "desc", shortcutLabels)
+      const path = buildFeatureTipText(tip.id, "path", shortcutLabels)
+      const shortcutText = shortcutLabels.join(" / ")
+      const snippet = shortcutText ? `${desc}  [${shortcutText}]` : desc
 
       return {
         id: `tips:${tip.id}`,
-        title: t(`featureTip-${tip.id}-title`),
-        breadcrumb: `${tipsLabel} / ${t(`featureTip-${tip.id}-path`)}`,
+        title,
+        breadcrumb: `${tipsLabel} / ${path}`,
         snippet,
         category: "tips" as const,
         tipId: tip.id,
         tipHighlightTarget: tip.highlightTarget,
+        tipActionText: path,
         tipShortcutIds: tip.shortcutIds,
       }
+    }).filter((tipItem) => {
+      if (!tipsQuery) {
+        return true
+      }
+
+      return [tipItem.title, tipItem.snippet, tipItem.tipActionText]
+        .filter((value): value is string => Boolean(value))
+        .some((value) => value.toLowerCase().includes(tipsQuery))
     })
-  }, [activeGlobalSearchPlainQuery, activeGlobalSearchCategory, getLocalizedText, isTipsMode])
+  }, [
+    activeGlobalSearchCategory,
+    getLocalizedText,
+    isTipsMode,
+    passThroughModifierLabel,
+    resolveShortcutLabel,
+    trimmedGlobalSearchPlainQuery,
+  ])
 
   const settingsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
     if (isTipsMode) {

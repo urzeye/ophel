@@ -57,11 +57,6 @@ export const FEATURE_TIPS: FeatureTip[] = [
     id: "export-markdown",
     highlightTarget: "toolbar-btn",
   },
-  // ---- 提示词 ----
-  {
-    id: "prompt-queue",
-    highlightTarget: "prompts-tab",
-  },
   // ---- 大纲 ----
   {
     id: "show-user-query",

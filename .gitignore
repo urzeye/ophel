@@ -63,3 +63,4 @@ comparison_result.txt
 # OS generated files
 Thumbs.db
 .DS_Store
+.codelf/

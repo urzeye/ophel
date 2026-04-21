@@ -69,6 +69,8 @@ export interface GlobalSearchResultItem {
   tipId?: string
   /** 语义目标名称，对应面板内 data-tip-target 属性值 */
   tipHighlightTarget?: string
+  /** 点击技巧项后优先展示的操作提示文案 */
+  tipActionText?: string
   /** 该技巧关联的快捷键 ID 列表（对应 DEFAULT_KEYBINDINGS 的 key）*/
   tipShortcutIds?: string[]
 }

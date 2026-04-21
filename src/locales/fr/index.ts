@@ -1422,23 +1422,19 @@ Donnez le code puis un résumé des améliorations.`,
   "featureTip-export-conv-desc":
     "Exporter les conversations sélectionnées en Markdown / JSON / CSV",
   "featureTip-export-conv-path":
-    "Onglet Conversations → Appui long pour sélection multiple → Exporter dans la barre inférieure",
+    "Onglet Conversations → en haut à droite Mode lot → Exporter dans la barre inférieure",
   "featureTip-batch-select-title": "Gérer les conversations en lot",
   "featureTip-batch-select-desc":
     "Supprimer, exporter, archiver ou déplacer des conversations en lot",
-  "featureTip-batch-select-path": "Onglet Conversations → Appui long pour sélection multiple",
+  "featureTip-batch-select-path": "Onglet Conversations → en haut à droite Mode lot",
   "featureTip-export-markdown-title": "Exporter la conversation actuelle",
   "featureTip-export-markdown-desc":
     "Exporter la conversation de la page courante en fichier Markdown",
   "featureTip-export-markdown-path": "Boîte à outils → Exporter Markdown",
-  "featureTip-prompt-queue-title": "File d'attente de prompts",
-  "featureTip-prompt-queue-desc":
-    "Mettre en file d'attente plusieurs prompts à envoyer séquentiellement",
-  "featureTip-prompt-queue-path": "Onglet Prompts → ＋ ou icône de file → Ajouter à la file",
   "featureTip-show-user-query-title": "Afficher les questions dans le plan",
   "featureTip-show-user-query-desc":
     "Inclure vos questions dans le plan, pas seulement les titres IA",
-  "featureTip-show-user-query-path": "Onglet Plan → ⚙ → Afficher mes questions",
+  "featureTip-show-user-query-path": "Onglet Plan → ⚡ → Afficher mes questions",
   "featureTip-notifications-title": "Notification de génération terminée",
   "featureTip-notifications-desc":
     "Notification bureau quand l’IA termine — ne manquez aucune réponse",

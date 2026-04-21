@@ -1404,22 +1404,16 @@ Dê o código e depois um resumo de melhorias.`,
   "featureTip-export-conv-title": "Exportar Conversas",
   "featureTip-export-conv-desc": "Exporte conversas selecionadas em Markdown / JSON / CSV",
   "featureTip-export-conv-path":
-    "Aba Conversas → Pressione longo para selecionar múltiplas → Exportar na barra inferior",
+    "Aba Conversas → canto superior direito Modo lote → Exportar na barra inferior",
   "featureTip-batch-select-title": "Gerenciar Conversas em Lote",
   "featureTip-batch-select-desc": "Exclua, exporte, arquive ou mova conversas em massa",
-  "featureTip-batch-select-path":
-    "Aba Conversas → Pressione longo em qualquer item para entrar no modo de seleção múltipla",
+  "featureTip-batch-select-path": "Aba Conversas → canto superior direito Modo lote",
   "featureTip-export-markdown-title": "Exportar Conversa Atual",
   "featureTip-export-markdown-desc": "Exporta a conversa da página atual como arquivo Markdown",
   "featureTip-export-markdown-path": "Caixa de Ferramentas → Exportar Markdown",
-  "featureTip-prompt-queue-title": "Fila de Prompts",
-  "featureTip-prompt-queue-desc":
-    "Enfileire vários prompts para enviar sequencialmente, um após o outro",
-  "featureTip-prompt-queue-path": "Aba Prompts → ＋ ou ícone de fila → Adicionar à fila",
   "featureTip-show-user-query-title": "Exibir Perguntas do Usuário no Esboço",
   "featureTip-show-user-query-desc": "Inclua suas perguntas no esboço, não apenas os títulos da IA",
-  "featureTip-show-user-query-path":
-    "Aba Esboço → ícone de engrenagem → Mostrar perguntas do usuário",
+  "featureTip-show-user-query-path": "Aba Esboço → ⚡ → Exibir minhas perguntas",
   "featureTip-notifications-title": "Notificação de Geração Concluída",
   "featureTip-notifications-desc":
     "Receba uma notificação na área de trabalho quando a IA terminar — nunca perca uma resposta",
