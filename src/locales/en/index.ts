@@ -1433,8 +1433,7 @@ Please output the optimized code block directly, followed by a brief summary of 
     "Conversations Tab → Long-press any item to enter multi-select mode",
   "featureTip-export-markdown-title": "Export Current Conversation",
   "featureTip-export-markdown-desc": "Export the current page conversation as a Markdown file",
-  "featureTip-export-markdown-path":
-    "Quick-action buttons (right side) → Toolbox → Export Markdown",
+  "featureTip-export-markdown-path": "Toolbox → Export Markdown",
   "featureTip-prompt-queue-title": "Prompt Queue",
   "featureTip-prompt-queue-desc": "Queue multiple prompts to send sequentially, one after another",
   "featureTip-prompt-queue-path": "Prompts Tab → ＋ or queue icon → Add to queue",
@@ -1444,5 +1443,5 @@ Please output the optimized code block directly, followed by a brief summary of 
   "featureTip-notifications-title": "Generation Complete Notification",
   "featureTip-notifications-desc":
     "Get a desktop notification when AI finishes — never miss a response",
-  "featureTip-notifications-path": "Settings → Notifications → Enable desktop notifications",
+  "featureTip-notifications-path": "Features → Alerts → Desktop Notification",
 }

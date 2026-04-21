@@ -1386,7 +1386,7 @@ export const zhCN = {
   "featureTip-batch-select-path": "会话 Tab → 长按任意会话项进入多选模式",
   "featureTip-export-markdown-title": "导出当前对话",
   "featureTip-export-markdown-desc": "将当前页面对话导出为 Markdown 文件",
-  "featureTip-export-markdown-path": "右侧快捷按钮组 → 工具箱 → 导出 Markdown",
+  "featureTip-export-markdown-path": "工具箱 → 导出",
   "featureTip-prompt-queue-title": "提示词队列发送",
   "featureTip-prompt-queue-desc": "将多条提示词加入队列，按顺序自动依次发送",
   "featureTip-prompt-queue-path": "提示词 Tab → ＋ 或队列图标 → 加入排队",
@@ -1395,5 +1395,5 @@ export const zhCN = {
   "featureTip-show-user-query-path": "大纲 Tab → 齿轮图标 → 显示用户提问",
   "featureTip-notifications-title": "生成完成通知",
   "featureTip-notifications-desc": "AI 生成完成时发送桌面通知，切标签也不错过",
-  "featureTip-notifications-path": "设置 → 通知 → 启用桌面通知",
+  "featureTip-notifications-path": "功能模块 → 提醒 → 发送桌面通知",
 }

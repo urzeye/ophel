@@ -1375,4 +1375,54 @@ export const ru = {
   extensionUpdateNoticeWithVersion:
     "Ophel Atlas обновлён до версии v{version}. Перезагрузите эту страницу, чтобы продолжить пользоваться последней версией.",
   extensionUpdateNoticeAction: "Перезагрузить страницу",
+  featureTipSearchPlaceholder: "Поиск подсказок по функциям…",
+  featureTipShortcutNotConfigured: "Горячая клавиша не настроена",
+  featureTipToastTryShortcut: "Попробуйте сочетание: {shortcut}",
+  featureTipsCategory: "Подсказки по функциям",
+  "featureTip-passthrough-title": "Режим сквозного клика",
+  "featureTip-passthrough-desc":
+    "Делает панель прозрачной и позволяет взаимодействовать с содержимым страницы под ней",
+  "featureTip-passthrough-path":
+    "Удерживайте {modifier} — панель станет прозрачной, можно нажимать по содержимому ниже",
+  "featureTip-privacy-mode-title": "Приватный режим",
+  "featureTip-privacy-mode-desc": "Скрывает заголовки бесед, чтобы защитить экран от чужих глаз",
+  "featureTip-privacy-mode-path": "Дважды щёлкните по заголовку панели, чтобы переключить режим",
+  "featureTip-shortcuts-title": "Обзор горячих клавиш",
+  "featureTip-shortcuts-desc": "Просматривайте и настраивайте все горячие клавиши",
+  "featureTip-shortcuts-path": "{shortcut} — открыть обзор горячих клавиш",
+  "featureTip-global-search-title": "Синтаксис глобального поиска",
+  "featureTip-global-search-desc":
+    "Поддерживаются фильтры folder:, tag:, site:, level: для точного поиска контента",
+  "featureTip-global-search-path":
+    "{shortcut} — открыть поиск, поддерживаются folder:, tag:, site:",
+  "featureTip-copy-reply-title": "Копировать последний ответ ИИ",
+  "featureTip-copy-reply-desc": "Быстро копирует последний ответ ИИ в буфер обмена",
+  "featureTip-copy-reply-path": "Горячая клавиша: {shortcut}",
+  "featureTip-prev-next-heading-title": "Переход между заголовками",
+  "featureTip-prev-next-heading-desc": "Перемещайтесь вверх и вниз между заголовками в плане",
+  "featureTip-prev-next-heading-path": "Горячая клавиша: {shortcut}",
+  "featureTip-export-conv-title": "Экспорт бесед",
+  "featureTip-export-conv-desc": "Экспортируйте выбранные беседы в Markdown / JSON / CSV",
+  "featureTip-export-conv-path":
+    "Вкладка бесед → долгое нажатие для мультивыбора → кнопка экспорта внизу",
+  "featureTip-batch-select-title": "Пакетная работа с беседами",
+  "featureTip-batch-select-desc":
+    "Массово удаляйте, экспортируйте, архивируйте или перемещайте беседы",
+  "featureTip-batch-select-path":
+    "Вкладка бесед → долго нажмите на любой элемент, чтобы войти в режим мультивыбора",
+  "featureTip-export-markdown-title": "Экспорт текущей беседы",
+  "featureTip-export-markdown-desc": "Экспортирует текущую беседу на странице в файл Markdown",
+  "featureTip-export-markdown-path": "Инструменты → Экспорт Markdown",
+  "featureTip-prompt-queue-title": "Очередь промптов",
+  "featureTip-prompt-queue-desc":
+    "Добавляйте несколько промптов в очередь и отправляйте их по одному по порядку",
+  "featureTip-prompt-queue-path": "Вкладка промптов → ＋ или значок очереди → добавить в очередь",
+  "featureTip-show-user-query-title": "Показывать вопросы пользователя в плане",
+  "featureTip-show-user-query-desc":
+    "Добавляет в план ваши вопросы, а не только заголовки, созданные ИИ",
+  "featureTip-show-user-query-path": "Вкладка плана → ⚙ → Показать мои вопросы",
+  "featureTip-notifications-title": "Уведомление о завершении генерации",
+  "featureTip-notifications-desc":
+    "Получайте уведомление на рабочем столе, когда ИИ закончит ответ — ничего не пропустите",
+  "featureTip-notifications-path": "Функции → Оповещения → Уведомление на раб. стол",
 }

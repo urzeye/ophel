@@ -1389,4 +1389,58 @@ Donnez le code puis un résumé des améliorations.`,
   extensionUpdateNoticeWithVersion:
     "Ophel Atlas a été mis à jour vers la version v{version}. Rechargez cette page pour continuer à utiliser la dernière version.",
   extensionUpdateNoticeAction: "Recharger la page",
+  // Astuces de fonctionnalités
+  featureTipSearchPlaceholder: "Rechercher des astuces…",
+  featureTipShortcutNotConfigured: "Raccourci non configuré",
+  featureTipToastTryShortcut: "Essayez le raccourci : {shortcut}",
+  featureTipsCategory: "Astuces",
+  globalSearchTipsPlaceholder: "Rechercher des astuces…",
+  "featureTip-passthrough-title": "Mode transparent",
+  "featureTip-passthrough-desc":
+    "Rendre le panneau transparent et interagir avec le contenu en dessous",
+  "featureTip-passthrough-path": "Maintenir {modifier} — le panneau devient transparent",
+  "featureTip-privacy-mode-title": "Mode privé",
+  "featureTip-privacy-mode-desc":
+    "Masquer les titres des conversations pour protéger la vie privée",
+  "featureTip-privacy-mode-path": "Double-cliquer sur la barre de titre du panneau pour basculer",
+  "featureTip-shortcuts-title": "Raccourcis clavier",
+  "featureTip-shortcuts-desc": "Voir et personnaliser tous les raccourcis clavier",
+  "featureTip-shortcuts-path": "{shortcut} pour ouvrir les raccourcis",
+  "featureTip-global-search-title": "Syntaxe de recherche globale",
+  "featureTip-global-search-desc":
+    "Utilisez les filtres folder: tag: site: level: pour cibler le contenu",
+  "featureTip-global-search-path":
+    "{shortcut} pour ouvrir la recherche — prend en charge folder: tag: site:",
+  "featureTip-copy-reply-title": "Copier la dernière réponse",
+  "featureTip-copy-reply-desc":
+    "Copier la dernière réponse IA dans le presse-papiers en une touche",
+  "featureTip-copy-reply-path": "Raccourci : {shortcut}",
+  "featureTip-prev-next-heading-title": "Naviguer entre les titres",
+  "featureTip-prev-next-heading-desc": "Naviguer vers le haut/bas entre les titres du plan",
+  "featureTip-prev-next-heading-path": "Raccourci : {shortcut}",
+  "featureTip-export-conv-title": "Exporter des conversations",
+  "featureTip-export-conv-desc":
+    "Exporter les conversations sélectionnées en Markdown / JSON / CSV",
+  "featureTip-export-conv-path":
+    "Onglet Conversations → Appui long pour sélection multiple → Exporter dans la barre inférieure",
+  "featureTip-batch-select-title": "Gérer les conversations en lot",
+  "featureTip-batch-select-desc":
+    "Supprimer, exporter, archiver ou déplacer des conversations en lot",
+  "featureTip-batch-select-path": "Onglet Conversations → Appui long pour sélection multiple",
+  "featureTip-export-markdown-title": "Exporter la conversation actuelle",
+  "featureTip-export-markdown-desc":
+    "Exporter la conversation de la page courante en fichier Markdown",
+  "featureTip-export-markdown-path": "Boîte à outils → Exporter Markdown",
+  "featureTip-prompt-queue-title": "File d'attente de prompts",
+  "featureTip-prompt-queue-desc":
+    "Mettre en file d'attente plusieurs prompts à envoyer séquentiellement",
+  "featureTip-prompt-queue-path": "Onglet Prompts → ＋ ou icône de file → Ajouter à la file",
+  "featureTip-show-user-query-title": "Afficher les questions dans le plan",
+  "featureTip-show-user-query-desc":
+    "Inclure vos questions dans le plan, pas seulement les titres IA",
+  "featureTip-show-user-query-path": "Onglet Plan → ⚙ → Afficher mes questions",
+  "featureTip-notifications-title": "Notification de génération terminée",
+  "featureTip-notifications-desc":
+    "Notification bureau quand l’IA termine — ne manquez aucune réponse",
+  "featureTip-notifications-path": "Fonctions → Alertes → Notification de Bureau",
 }

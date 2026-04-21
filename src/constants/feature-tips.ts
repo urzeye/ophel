@@ -1,5 +1,5 @@
 /**
- * 功能技巧数据 —— 全局搜索 `?` 前缀帮助模式的数据源
+ * 功能技巧数据 —— 全局搜索 `tip:` 前缀帮助模式的数据源
  *
  * highlightTarget: 对应 data-tip-target 属性值，用于点击后高亮对应 UI 元素
  * shortcutIds:    引用 DEFAULT_KEYBINDINGS 中的 key，用于动态显示快捷键

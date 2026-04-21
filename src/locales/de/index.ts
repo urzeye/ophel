@@ -1380,4 +1380,60 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   extensionUpdateNoticeWithVersion:
     "Ophel Atlas wurde auf v{version} aktualisiert. Laden Sie diese Seite neu, um die neueste Version weiter zu verwenden.",
   extensionUpdateNoticeAction: "Seite neu laden",
+  // Feature-Tipps
+  featureTipSearchPlaceholder: "Feature-Tipps durchsuchen…",
+  featureTipShortcutNotConfigured: "Tastenkürzel nicht konfiguriert",
+  featureTipToastTryShortcut: "Tastenkürzel ausprobieren: {shortcut}",
+  featureTipsCategory: "Feature-Tipps",
+  globalSearchTipsPlaceholder: "Feature-Tipps durchsuchen…",
+  "featureTip-passthrough-title": "Durchsicht-Modus",
+  "featureTip-passthrough-desc":
+    "Panel transparent machen und mit Seiteninhalt darunter interagieren",
+  "featureTip-passthrough-path":
+    "{modifier} gedrückt halten — Panel wird transparent, Klick durch den Inhalt",
+  "featureTip-privacy-mode-title": "Datenschutz-Modus",
+  "featureTip-privacy-mode-desc":
+    "Gesprächstitel ausblenden, um den Bildschirm vor anderen zu schützen",
+  "featureTip-privacy-mode-path": "Doppelklick auf die Panel-Titelleiste zum Umschalten",
+  "featureTip-shortcuts-title": "Tastaturkürzel-Übersicht",
+  "featureTip-shortcuts-desc": "Alle Tastaturkürzel anzeigen und anpassen",
+  "featureTip-shortcuts-path": "{shortcut} zum Öffnen der Tastaturkürzel-Übersicht",
+  "featureTip-global-search-title": "Globale Suchsyntax",
+  "featureTip-global-search-desc":
+    "Filtersyntax wie folder: tag: site: level: verwenden, um Inhalte gezielt zu finden",
+  "featureTip-global-search-path":
+    "{shortcut} zum Öffnen der Suche — unterstützt folder: tag: site: Syntax",
+  "featureTip-copy-reply-title": "Letzte KI-Antwort kopieren",
+  "featureTip-copy-reply-desc":
+    "Die neueste KI-Antwort mit einem Tastendruck in die Zwischenablage kopieren",
+  "featureTip-copy-reply-path": "Tastenkürzel: {shortcut}",
+  "featureTip-prev-next-heading-title": "Zwischen Überschriften springen",
+  "featureTip-prev-next-heading-desc":
+    "Aufwärts/abwärts zwischen Gliederungsüberschriften navigieren",
+  "featureTip-prev-next-heading-path": "Tastenkürzel: {shortcut}",
+  "featureTip-export-conv-title": "Gespräche exportieren",
+  "featureTip-export-conv-desc": "Ausgewählte Gespräche als Markdown / JSON / CSV exportieren",
+  "featureTip-export-conv-path":
+    "Gespräche-Tab → Lang drücken für Mehrfachauswahl → Exportieren in der unteren Leiste",
+  "featureTip-batch-select-title": "Gespräche in Stapeln verwalten",
+  "featureTip-batch-select-desc":
+    "Gespräche in Massen löschen, exportieren, archivieren oder verschieben",
+  "featureTip-batch-select-path":
+    "Gespräche-Tab → Beliebiges Element lang drücken für Mehrfachauswahl",
+  "featureTip-export-markdown-title": "Aktuelles Gespräch exportieren",
+  "featureTip-export-markdown-desc": "Das aktuelle Seitengespräch als Markdown-Datei exportieren",
+  "featureTip-export-markdown-path": "Werkzeugkasten → Markdown exportieren",
+  "featureTip-prompt-queue-title": "Prompt-Warteschlange",
+  "featureTip-prompt-queue-desc":
+    "Mehrere Prompts in eine Warteschlange stellen und nacheinander senden",
+  "featureTip-prompt-queue-path":
+    "Prompts-Tab → ＋ oder Warteschlangen-Symbol → In die Warteschlange",
+  "featureTip-show-user-query-title": "Eigene Fragen in Gliederung anzeigen",
+  "featureTip-show-user-query-desc":
+    "Eigene Fragen in der Gliederung anzeigen, nicht nur KI-Überschriften",
+  "featureTip-show-user-query-path": "Gliederung-Tab → ⚙ → Eigene Fragen im Verzeichnis",
+  "featureTip-notifications-title": "Benachrichtigung bei Fertigstellung",
+  "featureTip-notifications-desc":
+    "Desktop-Benachrichtigung wenn KI fertig ist — keine Antwort verpassen",
+  "featureTip-notifications-path": "Funktionen → Hinweise → Desktop-Benachrichtigung",
 }
