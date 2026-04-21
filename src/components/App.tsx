@@ -3272,11 +3272,15 @@ export const App = () => {
           key: "globalSearchCategoriesLabel",
           fallback: "Global search categories",
         })}
-        categories={GLOBAL_SEARCH_CATEGORY_DEFINITIONS.map((category) => ({
-          id: category.id,
-          label: resolvedGlobalSearchCategoryLabels[category.id],
-          count: globalSearchResultCounts[category.id],
-        }))}
+        categories={
+          settingsSearchInputValue.startsWith("?")
+            ? []
+            : GLOBAL_SEARCH_CATEGORY_DEFINITIONS.map((category) => ({
+                id: category.id,
+                label: resolvedGlobalSearchCategoryLabels[category.id],
+                count: globalSearchResultCounts[category.id],
+              }))
+        }
         activeCategoryId={activeGlobalSearchCategory}
         onSelectCategory={(categoryId) => {
           setActiveGlobalSearchCategory(categoryId)

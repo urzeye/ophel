@@ -358,20 +358,22 @@ export const GlobalSearchOverlay = <TItem, TCategoryId extends string>(
           </div>
         ) : null}
 
-        <div className="settings-search-categories" role="tablist" aria-label={categoriesLabel}>
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              type="button"
-              role="tab"
-              aria-selected={activeCategoryId === category.id}
-              className={`settings-search-category ${activeCategoryId === category.id ? "active" : ""}`}
-              onClick={() => onSelectCategory(category.id)}>
-              <span>{category.label}</span>
-              <span className="settings-search-category-count">{category.count}</span>
-            </button>
-          ))}
-        </div>
+        {categories.length > 0 ? (
+          <div className="settings-search-categories" role="tablist" aria-label={categoriesLabel}>
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                role="tab"
+                aria-selected={activeCategoryId === category.id}
+                className={`settings-search-category ${activeCategoryId === category.id ? "active" : ""}`}
+                onClick={() => onSelectCategory(category.id)}>
+                <span>{category.label}</span>
+                <span className="settings-search-category-count">{category.count}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
 
         {activeContext ? (
           <div className="settings-search-context-bar">
