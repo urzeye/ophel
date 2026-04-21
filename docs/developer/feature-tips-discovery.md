@@ -53,7 +53,7 @@ Ophel 功能丰富，但许多入口隐藏较深（如会话导出、快捷键�
 ```typescript
 export interface FeatureTip {
   id: string
-  /** 在 Shadow DOM 内用 data-highlight="{id}" 标记的目标元素（可选） */
+  /** 在 Shadow DOM 内用 data-tip-target="{id}" 标记的目标元素（可选） */
   highlightTarget?: string
   /** 引用 DEFAULT_KEYBINDINGS 中的 key，用于动态显示快捷键 */
   shortcutIds?: string[]
