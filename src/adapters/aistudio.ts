@@ -693,10 +693,21 @@ export class AIStudioAdapter extends SiteAdapter {
    * 优先寻找页面内的 Angular 路由链接，回退到 history.pushState + popstate
    */
   private async navigateToLibraryViaSpa(): Promise<boolean> {
-    // 方法 1: 查找页面内已存在的 /library 链接并点击（Angular routerLink）
-    const libraryLink = document.querySelector('a[href="/library"]') as HTMLAnchorElement | null
-    if (libraryLink) {
-      libraryLink.click()
+    // 方法 1: 仅在导航容器（ms-navbar-v2）内查找 /library 链接，
+    // 或链接本身带有 Angular routerLink 属性，确保是 SPA 路由链接而非普通 <a>
+    const scopedLink = document.querySelector(
+      'ms-navbar-v2 a[href="/library"]',
+    ) as HTMLAnchorElement | null
+    const fallbackLink = document.querySelector('a[href="/library"]') as HTMLAnchorElement | null
+    const candidate = scopedLink ?? fallbackLink
+    const isRouterLink =
+      !!candidate &&
+      (!!candidate.closest("ms-navbar-v2") ||
+        candidate.hasAttribute("routerlink") ||
+        candidate.hasAttribute("ng-reflect-router-link"))
+
+    if (isRouterLink && candidate) {
+      candidate.click()
       return this.waitForLibraryTable()
     }
 
@@ -711,9 +722,11 @@ export class AIStudioAdapter extends SiteAdapter {
    */
   private async waitForLibraryTable(): Promise<boolean> {
     // 最多等待 5 秒
+    // 以 ms-library-table table 出现为就绪信号（而非必须有 tbody tr），
+    // 避免历史列表为空时误判为导航失败
     for (let i = 0; i < 50; i++) {
       await new Promise((resolve) => setTimeout(resolve, 100))
-      const table = document.querySelector("ms-library-table table tbody tr")
+      const table = document.querySelector("ms-library-table table")
       if (table) {
         // 额外等待 200ms 确保数据渲染完成
         await new Promise((resolve) => setTimeout(resolve, 200))
@@ -808,12 +821,21 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   getSidebarScrollContainer(): Element | null {
-    // 新版 AI Studio（ms-navbar-v2）侧边栏不再包含可滚动的会话历史列表
-    // 会话列表仅在 /library 页面展示，此处返回 null
+    // /library 页面返回真实的会话列表滚动容器
     if (window.location.pathname === "/library") {
       return document.querySelector("ms-library-table .lib-table-wrapper") || null
     }
-    return null
+
+    // 非 /library 页面：新版 AI Studio（ms-navbar-v2）侧边栏不再包含可滚动的历史列表，
+    // 但上层 waitForSidebarReady() 需要一个稳定可获取的元素作为「页面就绪」信号，
+    // 否则首次安装或会话列表为空时的自动全量同步（autoFullSync）会被永久阻塞。
+    // 这里返回稳定宿主容器作为就绪信号，而非直接返回 null。
+    return (
+      document.querySelector("ms-navbar-v2") ||
+      document.querySelector("main") ||
+      document.body ||
+      null
+    )
   }
 
   getConversationObserverConfig(): ConversationObserverConfig | null {
@@ -843,16 +865,15 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    // 尝试找到页面中的对应链接并点击（SPA 跳转，避免页面刷新）
-    // 新版侧边栏已无 a.prompt-link，仅 Library 页面表格有 a.name-btn
+    // 优先在 ms-library-table 内查找 a.name-btn，避免误命中页面其他区域的同 URL 链接
     const link = document.querySelector(
-      `a.name-btn[href*="/prompts/${id}"], a[href*="/prompts/${id}"]`,
-    ) as HTMLAnchorElement
+      `ms-library-table a.name-btn[href*="/prompts/${id}"]`,
+    ) as HTMLAnchorElement | null
     if (link) {
       link.click()
       return true
     }
-    // 降级：页面刷新
+    // 降级：硬跳转
     window.location.href = url || `/prompts/${id}`
     return true
   }
