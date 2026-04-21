@@ -9,6 +9,7 @@ import React, {
 
 import { getAdapter } from "~adapters/index"
 import { SITE_IDS } from "~constants/defaults"
+import { FEATURE_TIPS } from "~constants/feature-tips"
 import { ConversationManager } from "~core/conversation-manager"
 import { InlineBookmarkManager } from "~core/inline-bookmark-manager"
 import { OutlineManager, type OutlineNode } from "~core/outline-manager"
@@ -3283,7 +3284,10 @@ export const App = () => {
         categories={GLOBAL_SEARCH_CATEGORY_DEFINITIONS.map((category) => ({
           id: category.id,
           label: resolvedGlobalSearchCategoryLabels[category.id],
-          count: globalSearchResultCounts[category.id],
+          count:
+            category.id === "tips" && activeGlobalSearchCategory !== "tips"
+              ? FEATURE_TIPS.length
+              : globalSearchResultCounts[category.id],
         }))}
         activeCategoryId={activeGlobalSearchCategory}
         onSelectCategory={(categoryId) => {
