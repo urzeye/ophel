@@ -69,7 +69,6 @@ export const FEATURE_TIPS: FeatureTip[] = [
   { id: "export-conv", highlightTarget: "conversations-tab" },
   { id: "batch-select", highlightTarget: "conversations-tab" },
   { id: "export-markdown", highlightTarget: "toolbar-btn" },
-  { id: "prompt-queue", highlightTarget: "prompts-tab" },
   { id: "show-user-query", highlightTarget: "outline-tab" },
   { id: "notifications", highlightTarget: "settings-btn" },
 ]
