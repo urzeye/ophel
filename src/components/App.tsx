@@ -9,7 +9,6 @@ import React, {
 
 import { getAdapter } from "~adapters/index"
 import { SITE_IDS } from "~constants/defaults"
-import { FEATURE_TIPS } from "~constants/feature-tips"
 import { ConversationManager } from "~core/conversation-manager"
 import { InlineBookmarkManager } from "~core/inline-bookmark-manager"
 import { OutlineManager, type OutlineNode } from "~core/outline-manager"
@@ -3286,7 +3285,7 @@ export const App = () => {
           label: resolvedGlobalSearchCategoryLabels[category.id],
           count:
             category.id === "tips" && activeGlobalSearchCategory !== "tips"
-              ? FEATURE_TIPS.length
+              ? -1
               : globalSearchResultCounts[category.id],
         }))}
         activeCategoryId={activeGlobalSearchCategory}

@@ -369,7 +369,9 @@ export const GlobalSearchOverlay = <TItem, TCategoryId extends string>(
                 className={`settings-search-category ${activeCategoryId === category.id ? "active" : ""}`}
                 onClick={() => onSelectCategory(category.id)}>
                 <span>{category.label}</span>
-                <span className="settings-search-category-count">{category.count}</span>
+                <span className="settings-search-category-count">
+                  {category.count < 0 ? "-" : category.count}
+                </span>
               </button>
             ))}
           </div>
