@@ -191,6 +191,12 @@ const GLOBAL_SEARCH_CATEGORY_DEFINITIONS: GlobalSearchCategoryDefinition[] = [
     placeholder: { key: "globalSearchPlaceholderSettings", fallback: "Search settings" },
     emptyText: { key: "globalSearchEmptySettings", fallback: "No matching settings" },
   },
+  {
+    id: "tips",
+    label: { key: "featureTipsCategory", fallback: "Tips" },
+    placeholder: { key: "globalSearchTipsPlaceholder", fallback: "Search feature tips…" },
+    emptyText: { key: "globalSearchEmptySettings", fallback: "No matching tips" },
+  },
 ]
 
 const GLOBAL_SEARCH_RESULT_CATEGORY_LABELS: Record<
@@ -201,6 +207,7 @@ const GLOBAL_SEARCH_RESULT_CATEGORY_LABELS: Record<
   settings: { key: "globalSearchCategorySettings", fallback: "Settings" },
   conversations: { key: "globalSearchCategoryConversations", fallback: "Conversations" },
   prompts: { key: "globalSearchCategoryPrompts", fallback: "Prompts" },
+  tips: { key: "featureTipsCategory", fallback: "Tips" },
 }
 
 const GLOBAL_SEARCH_MATCH_REASON_LABEL_DEFINITIONS: Record<
@@ -3191,19 +3198,20 @@ export const App = () => {
         activeOptionId={activeGlobalSearchOptionId}
         inputValue={settingsSearchInputValue}
         inputPlaceholder={
-          settingsSearchInputValue.startsWith("?")
-            ? getLocalizedText({
-                key: "globalSearchTipsPlaceholder",
-                fallback: "Search feature tips…",
-              })
-            : globalSearchPrimaryShortcutLabel
-              ? `${resolvedActiveGlobalSearchCategoryText.placeholder}（${globalSearchPrimaryShortcutLabel}）`
-              : resolvedActiveGlobalSearchCategoryText.placeholder
+          globalSearchPrimaryShortcutLabel
+            ? `${resolvedActiveGlobalSearchCategoryText.placeholder}（${globalSearchPrimaryShortcutLabel}）`
+            : resolvedActiveGlobalSearchCategoryText.placeholder
         }
         onInputChange={(nextValue) => {
           commitSettingsSearchInputValue(nextValue)
           setActiveSearchSyntaxSuggestionIndex(-1)
           setSettingsSearchActiveIndex(0)
+          // ? prefix → auto-switch to tips category
+          if (nextValue.startsWith("?") && activeGlobalSearchCategory !== "tips") {
+            setActiveGlobalSearchCategory("tips")
+          } else if (!nextValue.startsWith("?") && activeGlobalSearchCategory === "tips") {
+            setActiveGlobalSearchCategory("all")
+          }
         }}
         hotkeyLabel={globalSearchOverlayHotkeyLabel}
         fuzzySearchToggleLabel={getLocalizedText({
@@ -3272,15 +3280,11 @@ export const App = () => {
           key: "globalSearchCategoriesLabel",
           fallback: "Global search categories",
         })}
-        categories={
-          settingsSearchInputValue.startsWith("?")
-            ? []
-            : GLOBAL_SEARCH_CATEGORY_DEFINITIONS.map((category) => ({
-                id: category.id,
-                label: resolvedGlobalSearchCategoryLabels[category.id],
-                count: globalSearchResultCounts[category.id],
-              }))
-        }
+        categories={GLOBAL_SEARCH_CATEGORY_DEFINITIONS.map((category) => ({
+          id: category.id,
+          label: resolvedGlobalSearchCategoryLabels[category.id],
+          count: globalSearchResultCounts[category.id],
+        }))}
         activeCategoryId={activeGlobalSearchCategory}
         onSelectCategory={(categoryId) => {
           setActiveGlobalSearchCategory(categoryId)

@@ -1,4 +1,10 @@
-export type GlobalSearchCategoryId = "all" | "outline" | "conversations" | "prompts" | "settings"
+export type GlobalSearchCategoryId =
+  | "all"
+  | "outline"
+  | "conversations"
+  | "prompts"
+  | "settings"
+  | "tips"
 
 export type GlobalSearchResultCategory = Exclude<GlobalSearchCategoryId, "all">
 

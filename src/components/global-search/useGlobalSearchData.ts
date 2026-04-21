@@ -82,6 +82,7 @@ const ORDERED_GLOBAL_SEARCH_CATEGORIES: GlobalSearchResultCategory[] = [
   "conversations",
   "prompts",
   "settings",
+  "tips",
 ]
 
 const buildSettingAliasMap = (): Record<string, string[]> => {
@@ -552,13 +553,16 @@ export const useGlobalSearchData = ({
   expandedGlobalSearchCategories,
   allCategoryItemLimit,
 }: UseGlobalSearchDataParams) => {
-  const isTipsMode = activeGlobalSearchPlainQuery.startsWith("?")
+  const isTipsMode =
+    activeGlobalSearchPlainQuery.startsWith("?") || activeGlobalSearchCategory === "tips"
 
   const tipsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
     if (!isTipsMode) {
       return []
     }
-    const tipsQuery = activeGlobalSearchPlainQuery.slice(1).trim().toLowerCase()
+    const tipsQuery = activeGlobalSearchPlainQuery.startsWith("?")
+      ? activeGlobalSearchPlainQuery.slice(1).trim().toLowerCase()
+      : activeGlobalSearchPlainQuery.trim().toLowerCase()
     const tipsLabel = getLocalizedText({ key: "featureTipsCategory", fallback: "Feature Tips" })
     const isMac = isMacOS()
 
@@ -583,13 +587,13 @@ export const useGlobalSearchData = ({
         title: t(`featureTip-${tip.id}-title`),
         breadcrumb: `${tipsLabel} / ${t(`featureTip-${tip.id}-path`)}`,
         snippet,
-        category: "settings" as const,
+        category: "tips" as const,
         tipId: tip.id,
         tipHighlightTarget: tip.highlightTarget,
         tipShortcutIds: tip.shortcutIds,
       }
     })
-  }, [activeGlobalSearchPlainQuery, getLocalizedText, isTipsMode])
+  }, [activeGlobalSearchPlainQuery, activeGlobalSearchCategory, getLocalizedText, isTipsMode])
 
   const settingsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
     if (isTipsMode) {
@@ -1100,6 +1104,7 @@ export const useGlobalSearchData = ({
       conversations: 0,
       prompts: 0,
       settings: 0,
+      tips: 0,
     }
 
     filteredGlobalSearchResults.forEach((item) => {
