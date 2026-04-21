@@ -554,14 +554,14 @@ export const useGlobalSearchData = ({
   allCategoryItemLimit,
 }: UseGlobalSearchDataParams) => {
   const isTipsMode =
-    activeGlobalSearchPlainQuery.startsWith("?") || activeGlobalSearchCategory === "tips"
+    activeGlobalSearchPlainQuery.startsWith("tip:") || activeGlobalSearchCategory === "tips"
 
   const tipsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
     if (!isTipsMode) {
       return []
     }
-    const tipsQuery = activeGlobalSearchPlainQuery.startsWith("?")
-      ? activeGlobalSearchPlainQuery.slice(1).trim().toLowerCase()
+    const tipsQuery = activeGlobalSearchPlainQuery.startsWith("tip:")
+      ? activeGlobalSearchPlainQuery.slice(4).trim().toLowerCase()
       : activeGlobalSearchPlainQuery.trim().toLowerCase()
     const tipsLabel = getLocalizedText({ key: "featureTipsCategory", fallback: "Feature Tips" })
     const isMac = isMacOS()

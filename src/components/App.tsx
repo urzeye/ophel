@@ -3207,9 +3207,9 @@ export const App = () => {
           setActiveSearchSyntaxSuggestionIndex(-1)
           setSettingsSearchActiveIndex(0)
           // ? prefix → auto-switch to tips category
-          if (nextValue.startsWith("?") && activeGlobalSearchCategory !== "tips") {
+          if (nextValue.startsWith("tip:") && activeGlobalSearchCategory !== "tips") {
             setActiveGlobalSearchCategory("tips")
-          } else if (!nextValue.startsWith("?") && activeGlobalSearchCategory === "tips") {
+          } else if (!nextValue.startsWith("tip:") && activeGlobalSearchCategory === "tips") {
             setActiveGlobalSearchCategory("all")
           }
         }}
