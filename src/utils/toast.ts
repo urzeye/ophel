@@ -18,7 +18,8 @@ export function showToast(message: string, duration = 2000, options: ToastOption
     ) || document.body
 
   // 使用 targetContainer 所在的根节点作为样式容器
-  const styleContainer = (targetContainer.getRootNode() as ShadowRoot | Document) || document.head
+  const rootNode = targetContainer.getRootNode()
+  const styleContainer = rootNode instanceof ShadowRoot ? rootNode : document.head
 
   // 移除所有可能存在的旧 toast (包括 body 和 shadow root 中)
   const existingInTarget = targetContainer.querySelector("#gh-toast")
@@ -76,7 +77,6 @@ export function showToast(message: string, duration = 2000, options: ToastOption
   // 动态避让：检测禅模式退出按钮是否存在，以决定 top 位置
   const isZenMode = !!(
     document.getElementById("gh-zen-mode-exit-host") ||
-    document.querySelector("gh-zen-mode-exit-host") ||
     shadowHost?.shadowRoot?.querySelector("#gh-zen-mode-exit-host")
   )
   toast.style.setProperty("top", isZenMode ? "84px" : "32px", "important")
