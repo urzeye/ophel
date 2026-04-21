@@ -1969,16 +1969,19 @@ export const App = () => {
     }
 
     const handleOutsidePress = (event: MouseEvent) => {
-      const target = event.target as Node | null
-      if (!target) {
+      const path = event.composedPath ? event.composedPath() : [event.target as Node]
+
+      if (
+        globalSearchSyntaxHelpTriggerRef.current &&
+        path.includes(globalSearchSyntaxHelpTriggerRef.current)
+      ) {
         return
       }
 
-      if (globalSearchSyntaxHelpTriggerRef.current?.contains(target)) {
-        return
-      }
-
-      if (globalSearchSyntaxHelpPopoverRef.current?.contains(target)) {
+      if (
+        globalSearchSyntaxHelpPopoverRef.current &&
+        path.includes(globalSearchSyntaxHelpPopoverRef.current)
+      ) {
         return
       }
 
