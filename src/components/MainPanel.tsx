@@ -198,8 +198,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         panel.style.right = "auto"
         panel.style.transform = "none"
       } else {
-        // 面板不可见（吸附收缩态）：0px 边距贴边展开，保留垂直位置（兜底）
+        // 面板不可见（吸附收缩态）：使用默认边距贴边展开，保留垂直位置（兜底）
         const pos = currentSettings.panel?.defaultPosition ?? "right"
+        const edgeDist = currentSettings.panel?.defaultEdgeDistance ?? 0
         const currentTop = fixRect ? fixRect.top : null
 
         if (currentTop !== null && currentTop >= 0 && currentTop < window.innerHeight) {
@@ -210,10 +211,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           panel.style.transform = "translateY(-50%)"
         }
         if (pos === "left") {
-          panel.style.left = "0px"
+          panel.style.left = `${edgeDist}px`
           panel.style.right = "auto"
         } else {
-          panel.style.right = "0px"
+          panel.style.right = `${edgeDist}px`
           panel.style.left = "auto"
         }
       }
