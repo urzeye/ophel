@@ -11,22 +11,40 @@ const toastCooldowns = new Map<string, number>()
 export const EXPORT_START_TOAST_DURATION = 5000
 
 export function showToast(message: string, duration = 2000, options: ToastOptions = {}) {
-  const shadowHost = document.querySelector("plasmo-csui, #ophel-userscript-root")
-  const targetContainer =
-    shadowHost?.shadowRoot?.querySelector(
-      ".gh-root, #plasmo-shadow-container, .plasmo-csui-container",
-    ) || document.body
+  let targetContainer: Node = document.body
+  let shadowHost: Element | null = null
+
+  // 遍历所有可能的 shadow host，找到真正挂载了应用容器的那个，优先使用 .gh-root
+  const hosts = document.querySelectorAll("plasmo-csui, #ophel-userscript-root")
+  for (const host of hosts) {
+    if (host.shadowRoot) {
+      const container = host.shadowRoot.querySelector(
+        ".gh-root, #plasmo-shadow-container, .plasmo-csui-container, #ophel-app-container",
+      )
+      if (container) {
+        targetContainer = container
+        shadowHost = host
+        break
+      }
+      // 如果还没渲染具体容器，但有 shadowRoot，退而求其次用 shadowRoot 自己
+      targetContainer = host.shadowRoot
+      shadowHost = host
+    }
+  }
 
   // 使用 targetContainer 所在的根节点作为样式容器
   const rootNode = targetContainer.getRootNode()
   const styleContainer = rootNode instanceof ShadowRoot ? rootNode : document.head
 
-  // 移除所有可能存在的旧 toast (包括 body 和 shadow root 中)
-  const existingInTarget = targetContainer.querySelector("#gh-toast")
+  // 移除所有可能存在的旧 toast (遍历所有 DOM 树)
   const existingInBody = document.getElementById("gh-toast")
-
-  if (existingInTarget) existingInTarget.remove()
-  if (existingInBody && existingInBody !== existingInTarget) existingInBody.remove()
+  if (existingInBody) existingInBody.remove()
+  for (const host of hosts) {
+    if (host.shadowRoot) {
+      const existingInShadow = host.shadowRoot.querySelector("#gh-toast")
+      if (existingInShadow) existingInShadow.remove()
+    }
+  }
 
   // 确保样式已注入
   if (!styleContainer.querySelector("#gh-toast-style")) {
