@@ -5,6 +5,7 @@ import { SETTING_ID_ALIASES, type SettingsSearchItem } from "~constants"
 import { FEATURE_TIPS } from "~constants/feature-tips"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
+import type { ShortcutActionId } from "~constants/shortcuts"
 import { t } from "~utils/i18n"
 import type { Prompt } from "~utils/storage"
 
@@ -66,7 +67,7 @@ interface UseGlobalSearchDataParams {
   outlineManager: OutlineManager | null
   outlineSearchVersion: number
   getLocalizedText: (definition: LocalizedLabelDefinition) => string
-  resolveShortcutLabel: (actionId: string) => string | null
+  resolveShortcutLabel: (actionId: ShortcutActionId) => string | null
   passThroughModifierLabel: string
   activeGlobalSearchCategory: GlobalSearchCategoryId
   expandedGlobalSearchCategories: Partial<Record<GlobalSearchResultCategory, boolean>>

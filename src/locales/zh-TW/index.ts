@@ -1232,6 +1232,7 @@ export const zhTW = {
   globalSearchEmptyAll: "未找到匹配結果",
   globalSearchEmptyOutline: "暫無大綱搜尋結果",
   globalSearchEmptySettings: "未找到匹配的設定項",
+  globalSearchEmptyTips: "未找到匹配的功能技巧",
   globalSearchEmptyConversations: "暫無會話搜尋結果",
   globalSearchEmptyFolders: "暫無資料夾搜尋結果",
   globalSearchEmptyTags: "暫無標籤搜尋結果",

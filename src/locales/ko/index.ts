@@ -1218,6 +1218,7 @@ export const ko = {
   globalSearchEmptyAll: "일치하는 결과가 없습니다",
   globalSearchEmptyOutline: "개요 결과가 없습니다",
   globalSearchEmptySettings: "일치하는 설정이 없습니다",
+  globalSearchEmptyTips: "일치하는 기능 팁이 없습니다",
   globalSearchEmptyConversations: "대화 결과가 없습니다",
   globalSearchEmptyFolders: "폴더 결과가 없습니다",
   globalSearchEmptyTags: "태그 결과가 없습니다",

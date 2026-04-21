@@ -197,7 +197,7 @@ const GLOBAL_SEARCH_CATEGORY_DEFINITIONS: GlobalSearchCategoryDefinition[] = [
     id: "tips",
     label: { key: "featureTipsCategory", fallback: "Tips" },
     placeholder: { key: "globalSearchTipsPlaceholder", fallback: "Search feature tips…" },
-    emptyText: { key: "globalSearchEmptySettings", fallback: "No matching tips" },
+    emptyText: { key: "globalSearchEmptyTips", fallback: "No matching tips" },
   },
 ]
 

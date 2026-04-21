@@ -1270,6 +1270,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   globalSearchEmptyAll: "No matching results",
   globalSearchEmptyOutline: "No outline results",
   globalSearchEmptySettings: "No matching settings",
+  globalSearchEmptyTips: "No matching tips",
   globalSearchEmptyConversations: "No conversation results",
   globalSearchEmptyFolders: "No folder results",
   globalSearchEmptyTags: "No tag results",

@@ -1235,6 +1235,7 @@ export const zhCN = {
   globalSearchEmptyAll: "未找到匹配结果",
   globalSearchEmptyOutline: "暂无大纲搜索结果",
   globalSearchEmptySettings: "未找到匹配的设置项",
+  globalSearchEmptyTips: "未找到匹配的功能技巧",
   globalSearchEmptyConversations: "暂无会话搜索结果",
   globalSearchEmptyFolders: "暂无文件夹搜索结果",
   globalSearchEmptyTags: "暂无标签搜索结果",

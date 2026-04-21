@@ -1213,6 +1213,7 @@ export const ru = {
   globalSearchEmptyAll: "Совпадений не найдено",
   globalSearchEmptyOutline: "Нет результатов в оглавлении",
   globalSearchEmptySettings: "Подходящих настроек не найдено",
+  globalSearchEmptyTips: "Подходящих советов не найдено",
   globalSearchEmptyConversations: "Нет результатов по диалогам",
   globalSearchEmptyFolders: "Нет результатов по папкам",
   globalSearchEmptyTags: "Нет результатов по тегам",

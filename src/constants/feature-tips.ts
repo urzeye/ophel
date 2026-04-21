@@ -1,3 +1,5 @@
+import type { ShortcutActionId } from "./shortcuts"
+
 /**
  * 功能技巧数据 —— 全局搜索 `tip:` 前缀帮助模式的数据源
  *
@@ -10,7 +12,7 @@ export interface FeatureTip {
   /** 语义目标名称，对应 Shadow DOM 内元素的 data-tip-target 属性（可选） */
   highlightTarget?: string
   /** 引用快捷键 ID 列表（对应 DEFAULT_KEYBINDINGS 的 key） */
-  shortcutIds?: string[]
+  shortcutIds?: ShortcutActionId[]
 }
 
 export const FEATURE_TIPS: FeatureTip[] = [
