@@ -112,7 +112,6 @@ export function t(key: string, params?: Record<string, string>): string {
 | export-conv       | 导出会话         | 会话 Tab → 长按进入多选 → 底部导出按钮          |
 | batch-select      | 批量操作会话     | 会话 Tab → 长按任意项进入多选模式               |
 | export-markdown   | 导出当前对话     | 右侧快捷按钮组 → 工具箱 → 导出 Markdown         |
-| prompt-queue      | 提示词队列发送   | 提示词 Tab → 点击队列图标添加排队               |
 | show-user-query   | 大纲显示用户提问 | 大纲设置 → 显示用户提问                         |
 | notifications     | 生成完成通知     | 设置 → 通知 → 启用桌面通知                      |
 
