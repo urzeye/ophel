@@ -1547,117 +1547,138 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         </Tooltip>
       </div>
 
-      {/* 分类标签栏 */}
+      {/* 分类标签栏：左侧可滚动 + 右侧固定 */}
       <div
-        className="prompt-category-bar"
         style={{
-          padding: "8px 12px",
           display: "flex",
-          gap: "6px",
-          flexWrap: "nowrap",
-          overflowX: "auto",
+          alignItems: "center",
           background: "var(--gh-bg, white)",
           borderBottom: "1px solid var(--gh-border, #e5e7eb)",
-          userSelect: "none", // 禁止文字选中
-          scrollbarWidth: "none",
+          userSelect: "none",
         }}>
-        <span
-          onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.ALL)}
+        {/* 左侧可滚动分类列表 */}
+        <div
+          className="prompt-category-bar"
           style={{
-            padding: "4px 10px",
-            background:
-              selectedCategory === VIRTUAL_CATEGORY.ALL
-                ? "var(--gh-primary, #4285f4)"
-                : "var(--gh-hover, #f3f4f6)",
-            borderRadius: "12px",
-            fontSize: "12px",
-            color: selectedCategory === VIRTUAL_CATEGORY.ALL ? "white" : "#4b5563",
-            cursor: "pointer",
-            border:
-              selectedCategory === VIRTUAL_CATEGORY.ALL
-                ? "1px solid var(--gh-primary, #4285f4)"
-                : "1px solid transparent",
+            flex: 1,
+            minWidth: 0,
+            padding: "8px 0 8px 12px",
+            display: "flex",
+            gap: "6px",
+            flexWrap: "nowrap",
+            overflowX: "auto",
+            scrollbarWidth: "none",
           }}>
-          {t("allCategory")}
-        </span>
-
-        {categories.map((cat) => {
-          const colorIndex = getCategoryColorIndex(cat)
-          return (
-            <Tooltip key={cat} content={cat}>
-              <span
-                onClick={() => setSelectedCategory(cat)}
-                style={{
-                  padding: "4px 10px",
-                  background:
-                    selectedCategory === cat
-                      ? "var(--gh-primary, #4285f4)"
-                      : `var(--gh-category-${colorIndex})`,
-                  borderRadius: "12px",
-                  fontSize: "12px",
-                  color: selectedCategory === cat ? "white" : "#4b5563",
-                  cursor: "pointer",
-                  border:
-                    selectedCategory === cat
-                      ? "1px solid var(--gh-primary, #4285f4)"
-                      : "1px solid transparent",
-                  maxWidth: "80px",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}>
-                {cat}
-              </span>
-            </Tooltip>
-          )
-        })}
-
-        {/* ⭐ 最近使用（仅图标） */}
-        <Tooltip content={t("promptRecentUsed") || "最近使用"}>
           <span
-            onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.RECENT)}
+            onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.ALL)}
             style={{
-              padding: "4px 8px",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              lineHeight: 1,
+              padding: "4px 10px",
               background:
-                selectedCategory === VIRTUAL_CATEGORY.RECENT
+                selectedCategory === VIRTUAL_CATEGORY.ALL
                   ? "var(--gh-primary, #4285f4)"
                   : "var(--gh-hover, #f3f4f6)",
               borderRadius: "12px",
               fontSize: "12px",
-              color: selectedCategory === VIRTUAL_CATEGORY.RECENT ? "white" : "#4b5563",
+              color: selectedCategory === VIRTUAL_CATEGORY.ALL ? "white" : "#4b5563",
               cursor: "pointer",
+              flexShrink: 0,
               border:
-                selectedCategory === VIRTUAL_CATEGORY.RECENT
+                selectedCategory === VIRTUAL_CATEGORY.ALL
                   ? "1px solid var(--gh-primary, #4285f4)"
                   : "1px solid transparent",
             }}>
-            <TimeIcon size={16} />
+            {t("allCategory")}
           </span>
-        </Tooltip>
 
-        {categories.length > 0 && (
-          <button
-            onClick={() => setIsCategoryModalOpen(true)}
-            style={{
-              padding: "4px 8px",
-              background: "transparent",
-              border: "1px dashed var(--gh-border, #d1d5db)",
-              borderRadius: "12px",
-              fontSize: "11px",
-              color: "var(--gh-text-secondary, #9ca3af)",
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "4px",
-            }}>
-            <SettingsIcon size={12} />
-            {t("manageCategory") || "管理"}
-          </button>
-        )}
+          {categories.map((cat) => {
+            const colorIndex = getCategoryColorIndex(cat)
+            return (
+              <Tooltip key={cat} content={cat}>
+                <span
+                  onClick={() => setSelectedCategory(cat)}
+                  style={{
+                    padding: "4px 10px",
+                    background:
+                      selectedCategory === cat
+                        ? "var(--gh-primary, #4285f4)"
+                        : `var(--gh-category-${colorIndex})`,
+                    borderRadius: "12px",
+                    fontSize: "12px",
+                    color: selectedCategory === cat ? "white" : "#4b5563",
+                    cursor: "pointer",
+                    flexShrink: 0,
+                    border:
+                      selectedCategory === cat
+                        ? "1px solid var(--gh-primary, #4285f4)"
+                        : "1px solid transparent",
+                    maxWidth: "80px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}>
+                  {cat}
+                </span>
+              </Tooltip>
+            )
+          })}
+        </div>
+
+        {/* 右侧固定：最近使用 + 管理 */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "8px 12px",
+            flexShrink: 0,
+            borderLeft: "1px solid var(--gh-border, #e5e7eb)",
+          }}>
+          {/* ⭐ 最近使用（仅图标） */}
+          <Tooltip content={t("promptRecentUsed") || "最近使用"}>
+            <span
+              onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.RECENT)}
+              style={{
+                padding: "4px 8px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                lineHeight: 1,
+                background:
+                  selectedCategory === VIRTUAL_CATEGORY.RECENT
+                    ? "var(--gh-primary, #4285f4)"
+                    : "var(--gh-hover, #f3f4f6)",
+                borderRadius: "12px",
+                fontSize: "12px",
+                color: selectedCategory === VIRTUAL_CATEGORY.RECENT ? "white" : "#4b5563",
+                cursor: "pointer",
+                border:
+                  selectedCategory === VIRTUAL_CATEGORY.RECENT
+                    ? "1px solid var(--gh-primary, #4285f4)"
+                    : "1px solid transparent",
+              }}>
+              <TimeIcon size={16} />
+            </span>
+          </Tooltip>
+          {categories.length > 0 && (
+            <button
+              onClick={() => setIsCategoryModalOpen(true)}
+              style={{
+                padding: "4px 8px",
+                background: "transparent",
+                border: "1px dashed var(--gh-border, #d1d5db)",
+                borderRadius: "12px",
+                fontSize: "11px",
+                color: "var(--gh-text-secondary, #9ca3af)",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+              }}>
+              <SettingsIcon size={12} />
+              {t("manageCategory") || "管理"}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 提示词列表 */}
