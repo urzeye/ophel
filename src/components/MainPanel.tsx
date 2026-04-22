@@ -540,7 +540,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             // cursor 由 CSS (.gh-panel-header) 统一控制为 pointer
             userSelect: "none",
           }}>
-          {/* 左侧：图标 + 标题（点击弹出法典，双击切换隐私模式） */}
+          {/* 左侧：图标 + 标题（点击弹出法典） */}
           <div
             className="gh-interactive"
             style={{
@@ -554,10 +554,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               e.stopPropagation()
               setShowCodex(!showCodex)
               setHasSeenCodex(true)
-            }}
-            onDoubleClick={(e) => {
-              e.stopPropagation()
-              window.postMessage({ type: "GH_PRIVACY_TOGGLE" }, "*")
             }}>
             <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
               <SparkleIcon size={18} color={panelSparkleColor} />

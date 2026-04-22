@@ -22,11 +22,6 @@ export const FEATURE_TIPS: FeatureTip[] = [
     // 无 highlightTarget，纯按键操作
   },
   {
-    id: "privacy-mode",
-    highlightTarget: "header-title",
-    // 双击标题栏，无快捷键
-  },
-  {
     id: "shortcuts",
     highlightTarget: "shortcuts-btn",
     shortcutIds: ["showShortcuts"],

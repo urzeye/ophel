@@ -32,7 +32,7 @@ export function useDraggable(options: UseDraggableOptions = {}) {
   const offsetRef = useRef({ x: 0, y: 0 })
 
   // 延迟取消吸附：记录 mousedown 时的吸附状态，仅在实际拖拽移动时才执行取消
-  // 这样单击/双击（如双击标题切换隐私模式）不会导致面板脱离吸附
+  // 这样单击/双击不会导致面板脱离吸附
   const pendingUnsnapRef = useRef<"left" | "right" | null>(null)
   // 动画 RAF ID，用于组件卸载时取消
   const animationRafRef = useRef<number | null>(null)

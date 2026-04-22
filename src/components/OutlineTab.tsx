@@ -1,3 +1,5 @@
+import { MagicCodex } from "~components/MagicCodex"
+import { isMacOS, formatShortcut, DEFAULT_KEYBINDINGS } from "~constants/shortcuts"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import {
@@ -378,6 +380,57 @@ const OutlineNodeView: React.FC<{
 export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore }) => {
   // 获取设置 - 使用 Zustand Store
   const { settings } = useSettingsStore()
+  const currentSettings = settings
+  const isMac = React.useMemo(() => isMacOS(), [])
+
+  const structuredTips = React.useMemo(() => {
+    const kb = currentSettings.shortcuts?.keybindings ?? DEFAULT_KEYBINDINGS
+    const fmt = (id: string) => {
+      const shortcut = kb[id] ?? DEFAULT_KEYBINDINGS[id]
+      return shortcut ? formatShortcut(shortcut, isMac) : "未设置"
+    }
+
+    // React node builder for inline shortcut formatting
+    const renderTip = (transKey: string, placeholderName: string, kbValue: string) => {
+      const raw = t(transKey, { [placeholderName]: "___SC___" })
+      const parts = raw.split("___SC___")
+      if (parts.length === 1) return parts[0]
+      return (
+        <span style={{ display: "inline" }}>
+          {parts[0]}
+          <span
+            style={{
+              fontFamily: "monospace",
+              background: "var(--gh-bg-secondary, #f3f4f6)",
+              border: "1px solid var(--gh-border, #e5e7eb)",
+              padding: "2px 6px",
+              borderRadius: "4px",
+              fontSize: "11px",
+              fontWeight: 500,
+              color: "var(--gh-text, #1f2937)",
+              display: "inline-flex",
+              alignItems: "center",
+              margin: "0 4px",
+              verticalAlign: "bottom",
+            }}>
+            {kbValue}
+          </span>
+          {parts[1]}
+        </span>
+      )
+    }
+
+    return [
+      { icon: "👻", text: renderTip("tip1", "modifier", isMac ? "⌘ Cmd" : "Ctrl") },
+      { icon: "🔍", text: renderTip("tip4", "shortcut", fmt("openGlobalSearch")) },
+      { icon: "🚀", text: renderTip("tip3", "shortcut", fmt("showShortcuts")) },
+      { icon: "📋", text: renderTip("tip5", "shortcut", fmt("copyLatestReply")) },
+      {
+        icon: "🧭",
+        text: renderTip("tip6", "shortcut", fmt("prevHeading") + "/" + fmt("nextHeading")),
+      },
+    ]
+  }, [currentSettings.shortcuts?.keybindings, isMac])
 
   // Initialize state from manager to prevent flicker
   const initialState = manager.getState()
@@ -1439,6 +1492,22 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                       {emptyDescriptionSecondLine}
                     </span>
                   )}
+                </div>
+
+                <div
+                  style={{
+                    marginTop: "32px",
+                    width: "100%",
+                    display: "flex",
+                    justifyContent: "center",
+                  }}>
+                  <MagicCodex
+                    isOpen={true}
+                    onClose={() => {}}
+                    tips={structuredTips}
+                    color="var(--gh-primary, #6366f1)"
+                    isStatic={true}
+                  />
                 </div>
               </div>
             )
