@@ -747,7 +747,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                 onClick={() => setActiveTab(tab)}
                 style={{
                   flex: 1,
-                  padding: "10px 8px",
+                  padding: "7px 8px",
                   border: "none",
                   background: "transparent",
                   borderBottom:
