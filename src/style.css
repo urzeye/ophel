@@ -946,7 +946,7 @@
   width: 52px;
   border-radius: 26px;
   overflow: hidden;
-  padding: 6px;
+  padding: 0; /* 收缩时去掉内边距，让内部的特效按钮完全撑满，消除双层同心圆的割裂感 */
   gap: 0;
   background: color-mix(in srgb, var(--gh-bg) 60%, transparent);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
@@ -963,6 +963,13 @@
   margin: 0;
   height: 0;
   padding: 0;
+}
+
+/* 折叠时让 Logo 按钮撑满整个容器 */
+.quick-btn-group.liquid-collapsed .quick-prompt-btn.panel-btn {
+  width: 100%;
+  height: 100%;
+  border-radius: 26px;
 }
 
 .quick-btn-group.liquid-collapsed .quick-btn-drag-handle {
@@ -1072,10 +1079,11 @@
 }
 
 .quick-prompt-btn.panel-btn:hover {
-  background: var(--gh-primary);
-  color: #ffffff !important;
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--gh-primary) 35%, transparent);
-  transform: scale(1.1);
+  /* 悬浮时不再使用刺眼的深色实心背景，而是适度加深透明度，保持琉璃感和呼吸感 */
+  background: color-mix(in srgb, var(--gh-primary) 24%, transparent);
+  color: var(--gh-primary) !important;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--gh-primary) 35%, transparent);
+  transform: scale(1.05); /* 稍微收敛膨胀比例，显得更精致 */
 }
 
 .quick-prompt-btn.panel-btn:hover svg {
