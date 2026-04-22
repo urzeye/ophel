@@ -40,8 +40,10 @@ export const SparkleIcon: React.FC<IconProps> = ({ size = 18, color, className =
         {isDefaultColor && (
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
             {/* 抛弃杂乱的红橙色，使用极具现代感和科技感的 Cyan -> Indigo 双色极光渐变 */}
-            <stop offset="0%" stopColor="#22d3ee" /> /* Cyan 青色 */
-            <stop offset="100%" stopColor="#6366f1" /> /* Indigo 靛蓝色 */
+            {/* Cyan 青色 */}
+            <stop offset="0%" stopColor="#22d3ee" />
+            {/* Indigo 靛蓝色 */}
+            <stop offset="100%" stopColor="#6366f1" />
           </linearGradient>
         )}
       </defs>
