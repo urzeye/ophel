@@ -325,6 +325,8 @@ function renderFallbackExtensionUpdateNotice(version?: string): void {
 }
 
 function scheduleFallbackExtensionUpdateNotice(version?: string): void {
+  if (window.__OPHEL_EXTENSION_UPDATE_DISMISSED__) return
+
   removeFallbackExtensionUpdateNotice()
 
   extensionUpdateFallbackTimer = window.setTimeout(() => {
