@@ -960,7 +960,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                           onInteractionStateChange?.(true)
                           setMenu({ type: "folder", folder, anchorEl: e.currentTarget })
                         }}>
-                        <MoreHorizontalIcon size={18} />
+                        <MoreHorizontalIcon size={20} />
                       </button>
                     </div>
                   </div>
@@ -1493,7 +1493,7 @@ const ConversationItem = React.memo<ConversationItemProps>(
               onInteractionStateChange?.(true)
               onMenuChange({ type: "conversation", conv, anchorEl: e.currentTarget })
             }}>
-            <MoreHorizontalIcon size={18} />
+            <MoreHorizontalIcon size={20} />
           </button>
         </div>
       </div>

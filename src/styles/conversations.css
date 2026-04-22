@@ -942,13 +942,13 @@ html[data-theme="dark"] .conversations-unsupported-icon {
 }
 
 .conversations-item-menu-btn {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border: none;
   background: transparent;
   color: var(--gh-text-tertiary, #9ca3af);
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 12px;
   opacity: 0;
   pointer-events: none;
@@ -1010,21 +1010,18 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   border-color: var(--gh-primary, #4285f4);
 }
 
-.conversations-item:hover .conversations-item-menu-btn {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateX(0);
-}
-
+.conversations-item:hover .conversations-item-menu-btn,
 .conversations-item:focus-within .conversations-item-menu-btn {
   opacity: 1;
   pointer-events: auto;
   transform: translateX(0);
+  background: var(--gh-active-bg, rgba(0, 0, 0, 0.07));
+  color: var(--gh-text-secondary, #6b7280);
 }
 
 .conversations-item-menu-btn:hover {
-  background: var(--gh-border, #e5e7eb);
-  color: var(--gh-text, #374151);
+  background: var(--gh-hover, rgba(0, 0, 0, 0.12)) !important;
+  color: var(--gh-primary, #4285f4) !important;
 }
 
 .conversations-content.is-narrow .conversations-item {
