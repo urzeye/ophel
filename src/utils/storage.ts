@@ -149,6 +149,7 @@ export interface QuickButtonsSettings {
 export interface Settings {
   language: string
   hasAgreedToTerms: boolean // 用户是否同意免责声明
+  hasSeenOphelAdvancedGuide?: boolean
 
   // 面板行为
   panel: {
@@ -359,6 +360,7 @@ export const DEFAULT_QUICK_BUTTONS_SETTINGS: QuickButtonsSettings = {
 export const DEFAULT_SETTINGS: Settings = {
   language: "auto",
   hasAgreedToTerms: false,
+  hasSeenOphelAdvancedGuide: false,
 
   panel: {
     panelMode: "edge-snap",

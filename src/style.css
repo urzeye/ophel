@@ -1927,3 +1927,27 @@
   background: var(--gh-glass-bg, rgba(255, 255, 255, 0.15));
   transform: scale(0.96);
 }
+
+@keyframes pulse-red {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* MagicCodex hidden scrollbar */
+.gh-hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.gh-hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}

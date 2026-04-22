@@ -26,6 +26,7 @@ import {
   ThemeLightIcon,
 } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
+import { MagicCodex } from "~components/MagicCodex"
 import { TAB_IDS } from "~constants"
 import { DEFAULT_KEYBINDINGS, formatShortcut, isMacOS } from "~constants/shortcuts"
 import type { ConversationManager } from "~core/conversation-manager"
@@ -99,7 +100,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     }
   }, [])
 
-  const { settings, updateNestedSetting } = useSettingsStore()
+  const { settings, updateNestedSetting, setSettings } = useSettingsStore()
   const currentSettings = settings || DEFAULT_SETTINGS
   const tabOrder = currentSettings.features?.order || DEFAULT_SETTINGS.features.order
   const siteId = adapter?.getSiteId() || "_default"
@@ -134,38 +135,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   // 标题 tooltip 随机 tips（动态读取实际快捷键配置 + 平台检测）
   const isMac = useMemo(() => isMacOS(), [])
   const keybindings = currentSettings.shortcuts?.keybindings ?? DEFAULT_KEYBINDINGS
-  const getTips = useCallback(() => {
-    const fmt = (id: string) => {
-      const shortcut = keybindings[id] ?? DEFAULT_KEYBINDINGS[id]
-      return shortcut ? formatShortcut(shortcut, isMac) : ""
-    }
-    return [
-      t("tip1", { modifier: isMac ? "⌘" : "Ctrl" }),
-      t("tip2"),
-      t("tip3", { shortcut: fmt("showShortcuts") }),
-      t("tip4", { shortcut: fmt("openGlobalSearch") }),
-      t("tip5", { shortcut: fmt("copyLatestReply") }),
-      t("tip6", {
-        shortcut: fmt("prevHeading") + "/" + fmt("nextHeading"),
-      }),
-    ]
-  }, [keybindings, isMac])
-  const [currentTip, setCurrentTip] = useState(() => {
-    const kb = currentSettings.shortcuts?.keybindings ?? DEFAULT_KEYBINDINGS
-    const fmt = (id: string) => {
-      const shortcut = kb[id] ?? DEFAULT_KEYBINDINGS[id]
-      return shortcut ? formatShortcut(shortcut, isMacOS()) : ""
-    }
-    const tips = [
-      t("tip1", { modifier: isMacOS() ? "⌘" : "Ctrl" }),
-      t("tip2"),
-      t("tip3", { shortcut: fmt("showShortcuts") }),
-      t("tip4", { shortcut: fmt("openGlobalSearch") }),
-      t("tip5", { shortcut: fmt("copyLatestReply") }),
-      t("tip6", { shortcut: fmt("prevHeading") + "/" + fmt("nextHeading") }),
-    ]
-    return tips[Math.floor(Math.random() * tips.length)]
-  })
+
+  // (Generic tips have moved to MagicCodex)
   const pointerEventsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // 使用 useLayoutEffect 保证在浏览器绘制前完成定位，避免模式切换时闪烁
   useLayoutEffect(() => {
@@ -255,6 +226,64 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   // 计算默认位置样式
   const defaultPosition = currentSettings.panel?.defaultPosition ?? "right"
   const defaultEdgeDistance = currentSettings.panel?.defaultEdgeDistance ?? 40
+
+  const [showCodex, setShowCodex] = useState(false)
+  const [isHeaderPressed, setIsHeaderPressed] = useState(false)
+  const hasSeenCodex = currentSettings.hasSeenOphelAdvancedGuide ?? false
+  const setHasSeenCodex = (val: boolean) => {
+    if (val && !hasSeenCodex && setSettings) {
+      setSettings({ hasSeenOphelAdvancedGuide: true })
+    }
+  }
+
+  const structuredTips = useMemo(() => {
+    const kb = currentSettings.shortcuts?.keybindings ?? DEFAULT_KEYBINDINGS
+    const fmt = (id: string) => {
+      const shortcut = kb[id] ?? DEFAULT_KEYBINDINGS[id]
+      return shortcut ? formatShortcut(shortcut, isMacOS()) : "未设置"
+    }
+
+    // React node builder for inline shortcut formatting
+    const renderTip = (transKey: string, placeholderName: string, kbValue: string) => {
+      const raw = t(transKey, { [placeholderName]: "___SC___" })
+      const parts = raw.split("___SC___")
+      if (parts.length === 1) return parts[0]
+      return (
+        <span style={{ display: "inline" }}>
+          {parts[0]}
+          <span
+            style={{
+              fontFamily: "monospace",
+              background: "var(--gh-bg-secondary, #f3f4f6)",
+              border: "1px solid var(--gh-border, #e5e7eb)",
+              padding: "2px 6px",
+              borderRadius: "4px",
+              fontSize: "11px",
+              fontWeight: 500,
+              color: "var(--gh-text, #1f2937)",
+              display: "inline-flex",
+              alignItems: "center",
+              margin: "0 4px",
+              verticalAlign: "bottom",
+            }}>
+            {kbValue}
+          </span>
+          {parts[1]}
+        </span>
+      )
+    }
+
+    return [
+      { icon: "👻", text: renderTip("tip1", "modifier", isMacOS() ? "⌘ Cmd" : "Ctrl") },
+      { icon: "🔍", text: renderTip("tip4", "shortcut", fmt("openGlobalSearch")) },
+      { icon: "🚀", text: renderTip("tip3", "shortcut", fmt("showShortcuts")) },
+      { icon: "📋", text: renderTip("tip5", "shortcut", fmt("copyLatestReply")) },
+      {
+        icon: "🧭",
+        text: renderTip("tip6", "shortcut", fmt("prevHeading") + "/" + fmt("nextHeading")),
+      },
+    ]
+  }, [currentSettings.shortcuts?.keybindings, t])
 
   // 获取排序后的首个 tab
   // tabOrder 是 string[]，数组顺序就是显示顺序
@@ -497,8 +526,12 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         {/* Header - 拖拽区域 */}
         <div
           ref={headerRef}
+          onPointerDown={() => setIsHeaderPressed(true)}
+          onPointerUp={() => setIsHeaderPressed(false)}
+          onPointerLeave={() => setIsHeaderPressed(false)}
           className="gh-panel-header"
           style={{
+            position: "relative",
             padding: "10px 14px",
             borderRadius: "12px 12px 0 0",
             display: "flex",
@@ -507,24 +540,54 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             // cursor 由 CSS (.gh-panel-header) 统一控制为 pointer
             userSelect: "none",
           }}>
-          {/* 左侧：图标 + 标题（双击切换隐私模式） */}
-          <Tooltip content={currentTip} triggerStyle={{ flex: 1, minWidth: 0 }}>
-            <div
-              style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}
-              onMouseEnter={() => {
-                const tips = getTips()
-                setCurrentTip(tips[Math.floor(Math.random() * tips.length)])
-              }}
-              onDoubleClick={() => {
-                // 发送隐私模式切换事件给 TabManager
-                window.postMessage({ type: "GH_PRIVACY_TOGGLE" }, "*")
-              }}>
+          {/* 左侧：图标 + 标题（点击弹出法典，双击切换隐私模式） */}
+          <div
+            className="gh-interactive"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              cursor: "pointer",
+              position: "relative",
+            }}
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowCodex(!showCodex)
+              setHasSeenCodex(true)
+            }}
+            onDoubleClick={(e) => {
+              e.stopPropagation()
+              window.postMessage({ type: "GH_PRIVACY_TOGGLE" }, "*")
+            }}>
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
               <SparkleIcon size={18} color={panelSparkleColor} />
-              <span data-tip-target="header-title" style={{ fontSize: "18px", fontWeight: 600 }}>
-                {t("panelTitle")}
-              </span>
+              {!hasSeenCodex && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "-2px",
+                    right: "-2px",
+                    width: "6px",
+                    height: "6px",
+                    backgroundColor: "var(--gh-danger, #ef4444)",
+                    borderRadius: "50%",
+                    boxShadow: "0 0 0 2px var(--gh-bg, #ffffff)",
+                    animation: "pulse-red 2s infinite",
+                  }}
+                />
+              )}
             </div>
-          </Tooltip>
+            <span style={{ fontSize: "18px", fontWeight: 600, userSelect: "none" }}>
+              {t("panelTitle")}
+            </span>
+
+            <MagicCodex
+              isOpen={showCodex}
+              onClose={() => setShowCodex(false)}
+              tips={structuredTips}
+              color={panelSparkleColor}
+            />
+          </div>
 
           {/* 右侧：按钮组 - 需要 gh-panel-controls 以排除拖拽 */}
           <div
@@ -636,7 +699,39 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           </div>
         </div>
 
-        {/* Tabs - 标签栏 */}
+        {/* 拖拽/悬停 即时提示层 (幽灵模式) */}
+        <div
+          style={{
+            position: "absolute",
+            top: "56px",
+            left: "50%",
+            width: "max-content",
+            maxWidth: "85%",
+            transform: `translate(-50%, ${isHeaderPressed ? "8px" : "-4px"})`,
+            opacity: isHeaderPressed ? 1 : 0,
+            pointerEvents: "none",
+            transition: "all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)",
+            background: "var(--gh-bg-secondary, rgba(255, 255, 255, 0.85))",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            color: "var(--gh-text, #1f2937)",
+            border: "1px solid var(--gh-border, rgba(0,0,0,0.1))",
+            padding: "6px 12px",
+            borderRadius: "12px",
+            fontSize: "12px",
+            fontWeight: 500,
+            display: "flex",
+            textAlign: "left",
+            alignItems: "flex-start",
+            gap: "8px",
+            boxShadow: "var(--gh-shadow-lg, 0 8px 24px rgba(0,0,0,0.12))",
+            zIndex: 10,
+          }}>
+          <span style={{ fontSize: "14px", flexShrink: 0, marginTop: "1px" }}>👻</span>
+          <span style={{ lineHeight: "1.5" }}>
+            {t("tip1", { modifier: isMacOS() ? "⌘ Cmd" : "Ctrl" })}
+          </span>
+        </div>
         <div
           className="gh-panel-tabs"
           style={{
