@@ -1409,7 +1409,6 @@ const ConversationItem = React.memo<ConversationItemProps>(
                 {conv.pinned && (
                   <PinIcon
                     size={12}
-                    filled
                     style={{
                       display: "inline-block",
                       marginRight: "4px",
