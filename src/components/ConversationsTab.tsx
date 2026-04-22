@@ -973,6 +973,10 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                             : folderName}
                         </span>
                       </Tooltip>
+                    </div>
+
+                    <div className="conversations-folder-controls">
+                      <span className="conversations-folder-count">({count})</span>
 
                       {/* 拖拽排序手柄 */}
                       {!folder.isDefault && (
@@ -995,10 +999,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                           <ReorderIcon size={13} />
                         </div>
                       )}
-                    </div>
 
-                    <div className="conversations-folder-controls">
-                      <span className="conversations-folder-count">({count})</span>
                       <button
                         className="conversations-folder-menu-btn"
                         style={{
