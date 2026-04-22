@@ -449,10 +449,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const getThemeIcon = () => {
     if (themeMode === "dark") {
       // 深色模式时显示太阳图标（点击切换到浅色）
-      return <ThemeLightIcon size={22} />
+      return <ThemeLightIcon size={14} />
     }
     // 浅色模式时显示月亮图标（点击切换到深色）
-    return <ThemeDarkIcon size={22} />
+    return <ThemeDarkIcon size={14} />
   }
 
   return (
@@ -529,7 +529,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           {/* 右侧：按钮组 - 需要 gh-panel-controls 以排除拖拽 */}
           <div
             className="gh-panel-controls"
-            style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+            style={{ display: "flex", gap: "1px", alignItems: "center" }}>
             {/* 面板模式切换按钮 */}
             <Tooltip
               content={
@@ -556,24 +556,11 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                     current === "edge-snap" ? "floating" : "edge-snap",
                   )
                 }}
-                style={{
-                  background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
-                  border: "none",
-                  color: "var(--gh-glass-text, white)",
-                  width: "28px",
-                  height: "28px",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "14px",
-                  transition: "all 0.2s",
-                }}>
+                className="gh-header-icon-btn">
                 {(currentSettings.panel?.panelMode ?? "edge-snap") === "edge-snap" ? (
-                  <FloatingModeIcon size={22} />
+                  <FloatingModeIcon size={14} />
                 ) : (
-                  <SnapToEdgeIcon size={22} />
+                  <SnapToEdgeIcon size={14} />
                 )}
               </button>
             </Tooltip>
@@ -585,20 +572,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                   onClick={(event) => {
                     onThemeToggle?.(getButtonCenter(event.currentTarget))
                   }}
-                  style={{
-                    background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
-                    border: "none",
-                    color: "var(--gh-glass-text, white)",
-                    width: "28px",
-                    height: "28px",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "14px",
-                    transition: "all 0.2s",
-                  }}>
+                  className="gh-header-icon-btn">
                   {getThemeIcon()}
                 </button>
               </Tooltip>
@@ -609,21 +583,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               <Tooltip content={t("newTabTooltip") || "新标签页打开"}>
                 <button
                   onClick={() => window.open(window.location.origin, "_blank")}
-                  style={{
-                    background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
-                    border: "none",
-                    color: "var(--gh-glass-text, white)",
-                    width: "28px",
-                    height: "28px",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "16px",
-                    transition: "all 0.2s",
-                  }}>
-                  <NewTabIcon size={22} />
+                  className="gh-header-icon-btn">
+                  <NewTabIcon size={14} />
                 </button>
               </Tooltip>
             )}
@@ -635,21 +596,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                 onClick={() => {
                   onOpenSettings?.()
                 }}
-                style={{
-                  background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
-                  border: "none",
-                  color: "var(--gh-glass-text, white)",
-                  width: "28px",
-                  height: "28px",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "14px",
-                  transition: "all 0.2s",
-                }}>
-                <SettingsIcon size={22} />
+                className="gh-header-icon-btn">
+                <SettingsIcon size={14} />
               </button>
             </Tooltip>
 
@@ -674,44 +622,15 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                     conversationManager?.notifyDataChange()
                   }
                 }}
-                style={{
-                  background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
-                  border: "none",
-                  color: "var(--gh-glass-text, white)",
-                  width: "24px",
-                  height: "24px",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "14px",
-                  transition: "all 0.2s",
-                }}>
+                className="gh-header-icon-btn">
                 <RefreshIcon size={14} />
               </button>
             </Tooltip> */}
 
             {/* 折叠按钮（收起面板） */}
             <Tooltip content={t("collapse")}>
-              <button
-                onClick={onClose}
-                style={{
-                  background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
-                  border: "none",
-                  color: "var(--gh-glass-text, white)",
-                  width: "28px",
-                  height: "28px",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "18px",
-                  fontWeight: 600,
-                  transition: "all 0.2s",
-                }}>
-                <MinimizeIcon size={22} />
+              <button onClick={onClose} className="gh-header-icon-btn">
+                <MinimizeIcon size={14} />
               </button>
             </Tooltip>
           </div>
@@ -769,7 +688,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                   transition: "all 0.2s",
                 }}>
                 <span style={{ display: "flex", alignItems: "center" }}>
-                  {IconComp && <IconComp size={16} />}
+                  {IconComp && <IconComp size={14} />}
                 </span>
                 <span>{t(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`)}</span>
               </button>

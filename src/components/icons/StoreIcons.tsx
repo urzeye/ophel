@@ -11,7 +11,7 @@ export const ChromeIcon: React.FC<{ size?: number; className?: string; color?: s
     viewBox="0 0 24 24"
     fill="none"
     stroke={color}
-    strokeWidth="2"
+    strokeWidth="1.5"
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
@@ -35,7 +35,7 @@ export const FirefoxIcon: React.FC<{ size?: number; className?: string; color?: 
     viewBox="0 0 24 24"
     fill="none"
     stroke={color}
-    strokeWidth="2"
+    strokeWidth="1.5"
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
@@ -55,7 +55,7 @@ export const GreasyForkIcon: React.FC<{ size?: number; className?: string; color
     viewBox="0 0 24 24"
     fill="none"
     stroke={color}
-    strokeWidth="2"
+    strokeWidth="1.5"
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}

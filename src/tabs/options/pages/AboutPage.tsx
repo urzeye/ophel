@@ -152,6 +152,28 @@ const AboutPage: React.FC = () => {
           </button>
         </a>
 
+        {/* Ko-fi Link */}
+        <a
+          href="https://ko-fi.com/urzeye"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="about-link-card kofi-card"
+          style={{ "--card-color": "#FF5E5B" } as React.CSSProperties}>
+          <div className="about-link-header" style={{ color: "var(--card-color)" }}>
+            <KofiIcon size={22} color="var(--card-color)" />
+            <span style={{ fontWeight: 600 }}>{t("kofiSupport") || "Buy Me a Coffee"}</span>
+          </div>
+          <div className="about-link-desc" style={{ color: "var(--gh-text-secondary)" }}>
+            {t("kofiDesc") || "如果 Ophel 对你有帮助，请考虑赞助一杯咖啡支持开发者"}
+          </div>
+          <button className="about-link-btn">
+            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <KofiIcon size={14} color="currentColor" />
+              {t("kofiBtn") || "赞助支持"}
+            </span>
+          </button>
+        </a>
+
         {/* Website Link */}
         <a
           href="https://github.com/urzeye/ophel"
@@ -194,28 +216,6 @@ const AboutPage: React.FC = () => {
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <DiscordIcon size={14} color="currentColor" />
               {t("joinDiscord") || "加入群组"}
-            </span>
-          </button>
-        </a>
-
-        {/* Ko-fi Link */}
-        <a
-          href="https://ko-fi.com/urzeye"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="about-link-card kofi-card"
-          style={{ "--card-color": "#FF5E5B" } as React.CSSProperties}>
-          <div className="about-link-header" style={{ color: "var(--card-color)" }}>
-            <KofiIcon size={22} color="var(--card-color)" />
-            <span style={{ fontWeight: 600 }}>{t("kofiSupport") || "Buy Me a Coffee"}</span>
-          </div>
-          <div className="about-link-desc" style={{ color: "var(--gh-text-secondary)" }}>
-            {t("kofiDesc") || "如果 Ophel 对你有帮助，请考虑赞助一杯咖啡支持开发者"}
-          </div>
-          <button className="about-link-btn">
-            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <KofiIcon size={14} color="currentColor" />
-              {t("kofiBtn") || "赞助支持"}
             </span>
           </button>
         </a>

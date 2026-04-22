@@ -1902,3 +1902,28 @@
     transform: translateY(0) scale(1);
   }
 }
+
+/* ============= 面板 Header 控制按钮 ============= */
+.gh-header-icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--gh-glass-text, white);
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  padding: 0;
+}
+
+.gh-header-icon-btn:hover {
+  background: var(--gh-glass-bg-hover, rgba(255, 255, 255, 0.2));
+}
+
+.gh-header-icon-btn:active {
+  background: var(--gh-glass-bg, rgba(255, 255, 255, 0.15));
+  transform: scale(0.96);
+}
