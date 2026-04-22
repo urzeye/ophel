@@ -914,6 +914,8 @@
   align-items: center; /* 确保所有子按钮严格居中对齐 */
   gap: 4px;
   padding: 6px;
+  width: 52px; /* 强制两端状态宽度一致，消除横向抖动 */
+  box-sizing: border-box;
   z-index: 9998;
 
   /* Modern Glassmorphism Pill */
@@ -946,12 +948,21 @@
   width: 52px;
   border-radius: 26px;
   overflow: hidden;
-  padding: 0; /* 收缩时去掉内边距，让内部的特效按钮完全撑满，消除双层同心圆的割裂感 */
+  padding: 6px; /* 恢复原有的内边距，保持内部元素排列结构恒定，消除动画碰撞 */
   gap: 0;
-  background: color-mix(in srgb, var(--gh-bg) 60%, transparent);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+
+  /* 容器收缩时，接管主按钮的视觉特征（品牌色底色与高光边框） */
+  background: color-mix(in srgb, var(--gh-primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--gh-primary) 20%, transparent);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--gh-primary) 15%, transparent);
   box-sizing: border-box;
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.quick-btn-group.liquid-collapsed:hover {
+  background: color-mix(in srgb, var(--gh-primary) 20%, transparent);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--gh-primary) 30%, transparent);
+  transform: translateY(-50%) scale(1.02);
 }
 
 .quick-btn-group.liquid-collapsed .divider,
@@ -965,12 +976,15 @@
   padding: 0;
 }
 
-/* 折叠时让 Logo 按钮撑满整个容器 */
+/* 折叠时，内部 Logo 按钮把背景色交给外层容器，自身变透明，消除双环效果 */
 .quick-btn-group.liquid-collapsed .quick-prompt-btn.panel-btn {
-  width: 52px !important;
-  height: 52px !important;
-  flex: 1 0 auto;
-  border-radius: 26px;
+  background: transparent !important;
+  box-shadow: none !important;
+  /* 保持自身默认的 38x38 尺寸，避免缩放跳变 */
+}
+
+.quick-btn-group.liquid-collapsed .quick-prompt-btn.panel-btn:hover {
+  transform: none; /* 外层容器已经响应 hover，内部按钮不再二次缩放 */
 }
 
 .quick-btn-group.liquid-collapsed .quick-btn-drag-handle {
