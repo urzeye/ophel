@@ -235,7 +235,7 @@ export const ru = {
   addPrompt: "Новый промпт",
   allCategory: "Все",
   uncategorized: "Без категории",
-  manageCategory: "⚙ Упр.",
+  manageCategory: "Упр.",
   currentPrompt: "Тек: ",
   scrollTop: "Вверх",
   scrollBottom: "Вниз",

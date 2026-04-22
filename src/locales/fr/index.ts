@@ -238,7 +238,7 @@ export const fr = {
   addPrompt: "Nouveau Prompt",
   allCategory: "Tout",
   uncategorized: "Sans Catégorie",
-  manageCategory: "⚙ Gérer",
+  manageCategory: "Gérer",
   currentPrompt: "Actuel : ",
   scrollTop: "Haut",
   scrollBottom: "Bas",

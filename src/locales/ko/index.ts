@@ -238,7 +238,7 @@ export const ko = {
   addPrompt: "새 프롬프트 추가",
   allCategory: "전체",
   uncategorized: "미분류",
-  manageCategory: "⚙ 관리",
+  manageCategory: "관리",
   currentPrompt: "현재: ",
   scrollTop: "상단",
   scrollBottom: "하단",

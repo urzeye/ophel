@@ -237,7 +237,7 @@ export const de = {
   addPrompt: "Neuer Prompt",
   allCategory: "Alle",
   uncategorized: "Unkategorisiert",
-  manageCategory: "⚙ Verwalten",
+  manageCategory: "Verwalten",
   currentPrompt: "Aktuell: ",
   scrollTop: "Oben",
   scrollBottom: "Unten",

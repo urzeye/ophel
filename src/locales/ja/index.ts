@@ -242,7 +242,7 @@ export const ja = {
   addPrompt: "新規プロンプト",
   allCategory: "すべて",
   uncategorized: "未分類",
-  manageCategory: "⚙ カテゴリ管理",
+  manageCategory: "カテゴリ管理",
   currentPrompt: "現在: ",
   scrollTop: "トップへ",
   scrollBottom: "ボトムへ",

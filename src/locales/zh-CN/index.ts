@@ -269,7 +269,7 @@ export const zhCN = {
   addPrompt: "添加提示词",
   allCategory: "全部",
   uncategorized: "未分类",
-  manageCategory: "⚙ 管理",
+  manageCategory: "管理",
   currentPrompt: "当前提示词：",
   scrollTop: "顶部",
   scrollBottom: "底部",

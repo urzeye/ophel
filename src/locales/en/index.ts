@@ -245,7 +245,7 @@ export const en = {
   addPrompt: "Add New Prompt",
   allCategory: "All",
   uncategorized: "Uncategorized",
-  manageCategory: "⚙ Manage",
+  manageCategory: "Manage",
   currentPrompt: "Current: ",
   scrollTop: "Top",
   scrollBottom: "Bottom",

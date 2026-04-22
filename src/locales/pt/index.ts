@@ -237,7 +237,7 @@ export const pt = {
   addPrompt: "Novo Prompt",
   allCategory: "Tudo",
   uncategorized: "Sem Categoria",
-  manageCategory: "⚙ Gerenciar",
+  manageCategory: "Gerenciar",
   currentPrompt: "Atual: ",
   scrollTop: "Topo",
   scrollBottom: "Fim",

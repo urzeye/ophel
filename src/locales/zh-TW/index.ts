@@ -117,7 +117,7 @@ export const zhTW = {
   addPrompt: "新增提示詞",
   allCategory: "全部",
   uncategorized: "未分類",
-  manageCategory: "⚙ 管理",
+  manageCategory: "管理",
   currentPrompt: "當前提示詞：",
   scrollTop: "頂部",
   scrollBottom: "底部",
