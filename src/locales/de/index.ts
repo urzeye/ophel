@@ -267,7 +267,7 @@ export const de = {
   close: "Schließen",
   add: "Hinzufügen",
   confirm: "Bestätigen",
-  export: "Markdown exportieren",
+  export: "Exportieren",
   clear: "Leeren",
   error: "Fehler",
   operationFailed: "Vorgang fehlgeschlagen",

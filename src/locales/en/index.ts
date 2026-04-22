@@ -275,7 +275,7 @@ export const en = {
   close: "Close",
   add: "Add",
   confirm: "Confirm",
-  export: "Export Markdown",
+  export: "Export",
   clear: "Clear",
   error: "Error",
   operationFailed: "Operation failed",

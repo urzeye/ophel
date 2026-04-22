@@ -359,7 +359,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
             description={t("panelWidthDesc") || "面板的宽度 (px)"}
             settingId="panel-width">
             <Slider
-              value={settings.panel?.width ?? 320}
+              value={Math.max(settings.panel?.width ?? 320, 240)}
               onChange={handleWidthChange}
               onPreviewChange={handleWidthPreview}
               onCancelPreview={clearPreviewSettings}

@@ -268,7 +268,7 @@ export const fr = {
   close: "Fermer",
   add: "Ajouter",
   confirm: "Confirmer",
-  export: "Exporter Markdown",
+  export: "Exporter",
   clear: "Effacer",
   error: "Erreur",
   operationFailed: "Op?ration ?chou?e",

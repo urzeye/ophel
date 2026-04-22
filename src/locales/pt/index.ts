@@ -267,7 +267,7 @@ export const pt = {
   close: "Fechar",
   add: "Adicionar",
   confirm: "Confirmar",
-  export: "Exportar Markdown",
+  export: "Exportar",
   clear: "Limpar",
   error: "Erro",
   operationFailed: "Falha na opera??o",

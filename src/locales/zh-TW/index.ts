@@ -126,7 +126,7 @@ export const zhTW = {
   save: "儲存",
   delete: "刪除",
   edit: "編輯",
-  export: "匯出 Markdown",
+  export: "匯出",
   clear: "清除",
   error: "錯誤",
   operationFailed: "操作失敗",

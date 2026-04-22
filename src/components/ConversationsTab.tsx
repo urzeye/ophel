@@ -993,7 +993,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                             setDragOverFolderId(null)
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          title="拖拽排序">
+                          title={t("drag")}>
                           <DragIcon size={17} />
                         </div>
                       )}

@@ -112,8 +112,8 @@ export const useFoldersStore = create<FoldersState>()(
 
         reorderFolders: (orderedIds) =>
           set((state) => {
-            const inbox = state.folders.find((f) => f.isDefault)
-            const nonDefault = state.folders.filter((f) => !f.isDefault)
+            const inbox = state.folders.find((f) => f.id === "inbox" || !!f.isDefault)
+            const nonDefault = state.folders.filter((f) => f.id !== "inbox" && !f.isDefault)
             const reordered = orderedIds
               .map((id) => nonDefault.find((f) => f.id === id))
               .filter(Boolean) as Folder[]

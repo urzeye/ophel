@@ -265,7 +265,7 @@ export const ru = {
   close: "Закрыть",
   add: "Добавить",
   confirm: "ОК",
-  export: "Экспорт Markdown",
+  export: "Экспорт",
   clear: "Очистить",
   error: "Ошибка",
   operationFailed: "Операция не удалась",

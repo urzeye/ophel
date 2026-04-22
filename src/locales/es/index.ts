@@ -267,7 +267,7 @@ export const es = {
   close: "Cerrar",
   add: "Añadir",
   confirm: "Confirmar",
-  export: "Exportar Markdown",
+  export: "Exportar",
   clear: "Limpiar",
   error: "Error",
   operationFailed: "Operaci?n fallida",

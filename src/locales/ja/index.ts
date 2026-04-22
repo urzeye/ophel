@@ -272,7 +272,7 @@ export const ja = {
   close: "閉じる",
   add: "追加",
   confirm: "確定",
-  export: "Markdown出力",
+  export: "エクスポート",
   clear: "クリア",
   error: "エラー",
   operationFailed: "操作に失敗しました",

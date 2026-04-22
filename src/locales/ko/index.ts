@@ -268,7 +268,7 @@ export const ko = {
   close: "닫기",
   add: "추가",
   confirm: "확인",
-  export: "Markdown 내보내기",
+  export: "내보내기",
   clear: "지우기",
   error: "오류",
   operationFailed: "작업에 실패했습니다",
