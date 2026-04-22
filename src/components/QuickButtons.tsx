@@ -126,7 +126,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     resolvedThemeMode === "light"
       ? siteTheme.lightStyleId || "google-gradient"
       : siteTheme.darkStyleId || "classic-dark"
-  const panelSparkleColor = currentThemeStyleId === "google-gradient" ? "currentColor" : "brand"
+  const panelSparkleColor = resolvedThemeMode === "dark" ? "brand" : "currentColor"
 
   // 工具菜单状态
   const groupRef = useRef<HTMLDivElement>(null)

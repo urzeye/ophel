@@ -888,8 +888,9 @@
 
 .settings-theme-card:hover {
   border-color: var(--gh-primary, #4285f4);
+  border-style: dashed; /* 虚线 = "候选态"，与实线选中态形成语义区分 */
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.08); /* 悬浮加上浅蓝阴影 */
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.08);
 }
 
 .settings-theme-card:not(.active) {
@@ -902,9 +903,10 @@
 
 .settings-theme-card.active {
   border-color: var(--gh-primary, #4285f4);
-  background: rgba(66, 133, 244, 0.05); /* 浅浅的蓝底 */
-  transform: scale(1.03); /* 【新特技】微微放大选中态 */
-  box-shadow: 0 6px 16px rgba(66, 133, 244, 0.2); /* 悬浮选中状态，高光弥散阴影 */
+  border-style: solid; /* 实线 = 确定选中，不受 hover 虚线覆盖 */
+  background: rgba(66, 133, 244, 0.05);
+  transform: scale(1.03);
+  box-shadow: 0 6px 16px rgba(66, 133, 244, 0.2);
 }
 
 .settings-theme-preview {

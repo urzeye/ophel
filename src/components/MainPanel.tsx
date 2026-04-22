@@ -109,7 +109,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     resolvedThemeMode === "light"
       ? siteTheme.lightStyleId || "google-gradient"
       : siteTheme.darkStyleId || "classic-dark"
-  const panelSparkleColor = currentThemeStyleId === "google-gradient" ? "currentColor" : "brand"
+  // 浅色模式：所有彩色 header 背景 → currentColor（白色），永远可见
+  // 深色模式：深色纯色 header → 品牌渐变，美观且对比鲜明
+  const panelSparkleColor = resolvedThemeMode === "dark" ? "brand" : "currentColor"
   const currentCustomStyle = Array.isArray(currentSettings.theme?.customStyles)
     ? currentSettings.theme.customStyles.find((style) => style.id === currentThemeStyleId)
     : null
