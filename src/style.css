@@ -967,8 +967,9 @@
 
 /* 折叠时让 Logo 按钮撑满整个容器 */
 .quick-btn-group.liquid-collapsed .quick-prompt-btn.panel-btn {
-  width: 100%;
-  height: 100%;
+  width: 52px !important;
+  height: 52px !important;
+  flex: 1 0 auto;
   border-radius: 26px;
 }
 
