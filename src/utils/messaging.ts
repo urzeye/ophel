@@ -114,6 +114,9 @@ export interface OpenUrlMessage extends OpenUrlPayload {
   type: typeof MSG_OPEN_URL
 }
 
+// 扩展更新提示的本地抑制存储键
+export const EXTENSION_UPDATE_DISMISS_KEY = "ophel:update-dismissed-version"
+
 // 扩展有新版本可用（通知页面展示刷新提示）
 export const MSG_EXTENSION_UPDATE_AVAILABLE = "EXTENSION_UPDATE_AVAILABLE"
 

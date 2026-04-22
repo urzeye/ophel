@@ -22,7 +22,11 @@ import { useFoldersStore } from "~stores/folders-store"
 import { usePromptsStore } from "~stores/prompts-store"
 import { APP_DISPLAY_NAME } from "~utils/config"
 import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
-import { EVENT_EXTENSION_UPDATE_AVAILABLE, MSG_CLEAR_ALL_DATA } from "~utils/messaging"
+import {
+  EVENT_EXTENSION_UPDATE_AVAILABLE,
+  EXTENSION_UPDATE_DISMISS_KEY,
+  MSG_CLEAR_ALL_DATA,
+} from "~utils/messaging"
 import { EXPORT_START_TOAST_DURATION, showToast } from "~utils/toast"
 import { setLanguage, t } from "~utils/i18n"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
@@ -246,6 +250,45 @@ const GLOBAL_SEARCH_PROMPT_PREVIEW_HIDE_DELAY_MS = 220
 const GLOBAL_SEARCH_INPUT_DEBOUNCE_MS = 140
 const GLOBAL_SEARCH_SYNTAX_SUGGESTION_LIMIT = 8
 const GLOBAL_SEARCH_FILTER_CHIP_MAX_COUNT = 4
+const EXTENSION_UPDATE_UNKNOWN_TOKEN = "unknown"
+
+function getDismissedExtensionUpdateToken(): string | null {
+  if (typeof window === "undefined") return null
+  if (window.__OPHEL_EXTENSION_UPDATE_DISMISSED_VERSION__) {
+    return window.__OPHEL_EXTENSION_UPDATE_DISMISSED_VERSION__ || null
+  }
+  try {
+    const stored = sessionStorage.getItem(EXTENSION_UPDATE_DISMISS_KEY)
+    if (stored) {
+      window.__OPHEL_EXTENSION_UPDATE_DISMISSED_VERSION__ = stored
+    }
+    return stored
+  } catch {
+    return null
+  }
+}
+
+function getExtensionUpdateToken(version: string | null | undefined): string {
+  return version ?? EXTENSION_UPDATE_UNKNOWN_TOKEN
+}
+
+function isExtensionUpdateDismissed(version: string | null | undefined): boolean {
+  const dismissed = getDismissedExtensionUpdateToken()
+  if (!dismissed) return false
+  return dismissed === getExtensionUpdateToken(version)
+}
+
+function rememberDismissedExtensionUpdate(version: string | null | undefined): void {
+  const token = getExtensionUpdateToken(version)
+  if (typeof window !== "undefined") {
+    window.__OPHEL_EXTENSION_UPDATE_DISMISSED_VERSION__ = token
+  }
+  try {
+    sessionStorage.setItem(EXTENSION_UPDATE_DISMISS_KEY, token)
+  } catch {
+    // ignore write failure
+  }
+}
 
 const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "aistudio-collapse-advanced": "aistudioCollapseAdvanced",
@@ -1013,9 +1056,15 @@ export const App = () => {
   const [globalSearchShortcutNudgeMessage, setGlobalSearchShortcutNudgeMessage] = useState("")
   const [showGlobalSearchSyntaxHelp, setShowGlobalSearchSyntaxHelp] = useState(false)
   const [activeSearchSyntaxSuggestionIndex, setActiveSearchSyntaxSuggestionIndex] = useState(-1)
-  const [showExtensionUpdateNotice, setShowExtensionUpdateNotice] = useState(
-    () => typeof window !== "undefined" && Boolean(window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__),
-  )
+  const [showExtensionUpdateNotice, setShowExtensionUpdateNotice] = useState(() => {
+    if (typeof window === "undefined") return false
+    const initialVersion = window.__OPHEL_PENDING_UPDATE_VERSION__ || null
+    if (isExtensionUpdateDismissed(initialVersion)) {
+      window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__ = false
+      return false
+    }
+    return Boolean(window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__)
+  })
   const [extensionUpdateVersion, setExtensionUpdateVersion] = useState<string | null>(() =>
     typeof window !== "undefined" ? window.__OPHEL_PENDING_UPDATE_VERSION__ || null : null,
   )
@@ -2371,15 +2420,27 @@ export const App = () => {
       const nextVersion =
         customEvent.detail?.version || window.__OPHEL_PENDING_UPDATE_VERSION__ || null
 
+      if (isExtensionUpdateDismissed(nextVersion)) {
+        window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__ = false
+        return
+      }
+
       setExtensionUpdateVersion(nextVersion)
       setShowExtensionUpdateNotice(true)
     }
 
     window.addEventListener(EVENT_EXTENSION_UPDATE_AVAILABLE, handleExtensionUpdateAvailable)
 
-    if (window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__) {
+    const pendingVersion = window.__OPHEL_PENDING_UPDATE_VERSION__ || null
+
+    if (
+      window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__ &&
+      !isExtensionUpdateDismissed(pendingVersion)
+    ) {
       setShowExtensionUpdateNotice(true)
-      setExtensionUpdateVersion(window.__OPHEL_PENDING_UPDATE_VERSION__ || null)
+      setExtensionUpdateVersion(pendingVersion)
+    } else if (isExtensionUpdateDismissed(pendingVersion)) {
+      window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__ = false
     }
 
     return () => {
@@ -2400,9 +2461,10 @@ export const App = () => {
   }, [showExtensionUpdateNotice])
 
   const handleDismissExtensionUpdateNotice = useCallback(() => {
+    rememberDismissedExtensionUpdate(extensionUpdateVersion)
     window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__ = false
     setShowExtensionUpdateNotice(false)
-  }, [])
+  }, [extensionUpdateVersion])
 
   const handleReloadAfterExtensionUpdate = useCallback(() => {
     window.location.reload()

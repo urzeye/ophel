@@ -30,6 +30,8 @@ declare global {
     __OPHEL_EXTENSION_UPDATE_AVAILABLE__?: boolean
     /** React / fallback 更新提示是否已显示 */
     __OPHEL_EXTENSION_UPDATE_NOTICE_ACTIVE__?: boolean
+    /** 已在当前页面内抑制的扩展更新版本标识 */
+    __OPHEL_EXTENSION_UPDATE_DISMISSED_VERSION__?: string
     /** 扩展更新失效兜底是否已安装 */
     __ophelExtensionUpdateGuardsInstalled?: boolean
     /** 扩展更新消息监听器是否已注册 */

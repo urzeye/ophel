@@ -26,6 +26,7 @@ import { useTagsStore } from "~stores/tags-store"
 import {
   EVENT_EXTENSION_UPDATE_AVAILABLE,
   MSG_CLEAR_ALL_DATA,
+  EXTENSION_UPDATE_DISMISS_KEY,
   MSG_EXTENSION_UPDATE_AVAILABLE,
   MSG_RESTORE_DATA,
   MSG_START_NEW_CONVERSATION,
@@ -43,6 +44,29 @@ const resetAllStores = () => {
 const OPHEL_EXTENSION_UPDATE_FALLBACK_ID = "ophel-extension-update-fallback"
 const PLASMO_RUNTIME_RELOAD_PROMPT_ID = "__plasmo-loading__"
 let extensionUpdateFallbackTimer: number | null = null
+const EXTENSION_UPDATE_UNKNOWN_TOKEN = "unknown"
+
+function getDismissedExtensionUpdateToken(): string | null {
+  if (typeof window === "undefined") return null
+  if (window.__OPHEL_EXTENSION_UPDATE_DISMISSED_VERSION__) {
+    return window.__OPHEL_EXTENSION_UPDATE_DISMISSED_VERSION__ || null
+  }
+  try {
+    const stored = sessionStorage.getItem(EXTENSION_UPDATE_DISMISS_KEY)
+    if (stored) {
+      window.__OPHEL_EXTENSION_UPDATE_DISMISSED_VERSION__ = stored
+    }
+    return stored
+  } catch {
+    return null
+  }
+}
+
+function isExtensionUpdateDismissed(version?: string | null): boolean {
+  const token = version ?? EXTENSION_UPDATE_UNKNOWN_TOKEN
+  const dismissedToken = getDismissedExtensionUpdateToken()
+  return Boolean(dismissedToken) && dismissedToken === token
+}
 
 function getExtensionUpdateCopy(version?: string) {
   const isZh = navigator.language.toLowerCase().startsWith("zh")
@@ -81,11 +105,18 @@ function removeFallbackExtensionUpdateNotice(): void {
 }
 
 function dispatchExtensionUpdateNotice(version?: string): void {
-  window.__OPHEL_PENDING_UPDATE_VERSION__ = version || window.__OPHEL_PENDING_UPDATE_VERSION__
+  const nextVersion = version || window.__OPHEL_PENDING_UPDATE_VERSION__ || null
+
+  if (isExtensionUpdateDismissed(nextVersion)) {
+    window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__ = false
+    return
+  }
+
+  window.__OPHEL_PENDING_UPDATE_VERSION__ = nextVersion || undefined
   window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__ = true
   window.dispatchEvent(
     new CustomEvent(EVENT_EXTENSION_UPDATE_AVAILABLE, {
-      detail: { version: version || window.__OPHEL_PENDING_UPDATE_VERSION__ },
+      detail: { version: nextVersion || window.__OPHEL_PENDING_UPDATE_VERSION__ },
     }),
   )
 }
@@ -323,6 +354,11 @@ function renderFallbackExtensionUpdateNotice(version?: string): void {
 function scheduleFallbackExtensionUpdateNotice(version?: string): void {
   removeFallbackExtensionUpdateNotice()
 
+  const targetVersion = version || window.__OPHEL_PENDING_UPDATE_VERSION__ || null
+  if (isExtensionUpdateDismissed(targetVersion)) {
+    return
+  }
+
   extensionUpdateFallbackTimer = window.setTimeout(() => {
     extensionUpdateFallbackTimer = null
 
@@ -330,11 +366,15 @@ function scheduleFallbackExtensionUpdateNotice(version?: string): void {
       window.__OPHEL_EXTENSION_UPDATE_NOTICE_ACTIVE__ ||
       Boolean(document.querySelector(".gh-update-notice"))
 
-    if (hasPrimaryNotice || document.getElementById(OPHEL_EXTENSION_UPDATE_FALLBACK_ID)) {
+    if (
+      hasPrimaryNotice ||
+      document.getElementById(OPHEL_EXTENSION_UPDATE_FALLBACK_ID) ||
+      isExtensionUpdateDismissed(targetVersion)
+    ) {
       return
     }
 
-    renderFallbackExtensionUpdateNotice(version)
+    renderFallbackExtensionUpdateNotice(targetVersion || undefined)
   }, 600)
 }
 
