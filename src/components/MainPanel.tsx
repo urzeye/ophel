@@ -629,7 +629,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
             {/* 折叠按钮（收起面板） */}
             <Tooltip content={t("collapse")}>
-              <button onClick={onClose} className="gh-header-icon-btn">
+              <button
+                onClick={onClose}
+                aria-label={t("collapse")}
+                className="gh-header-icon-btn">
                 <MinimizeIcon size={14} />
               </button>
             </Tooltip>
