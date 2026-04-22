@@ -1066,8 +1066,9 @@
 }
 
 .quick-prompt-btn.panel-btn svg {
-  /* 恢复原本的自然状态，此时由于外层容器物理尺寸已修复对齐，按钮本身已物理居中 */
-  transform: none;
+  /* 容器物理尺寸修复后，由于星芒图案本身的非对称性（左下角视觉重心较重），
+     视觉上会显得偏向左下。需要向右上（X正，Y负）进行微调补偿 */
+  transform: translate(1px, -1px);
 }
 
 .quick-prompt-btn.panel-btn:hover {
@@ -1078,7 +1079,7 @@
 }
 
 .quick-prompt-btn.panel-btn:hover svg {
-  transform: none;
+  transform: translate(1px, -1px);
 }
 
 .quick-prompt-btn:has(svg[color="currentColor"]) {
