@@ -911,6 +911,7 @@
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
+  align-items: center; /* 确保所有子按钮严格居中对齐 */
   gap: 4px;
   padding: 6px;
   z-index: 9998;
@@ -941,9 +942,9 @@
 
 /* ============= 液态折叠 (Liquid Collapse) ============= */
 .quick-btn-group.liquid-collapsed {
-  height: 48px;
-  width: 48px;
-  border-radius: 24px;
+  height: 50px;
+  width: 50px;
+  border-radius: 25px;
   overflow: hidden;
   padding: 6px;
   gap: 0;
@@ -1065,9 +1066,8 @@
 }
 
 .quick-prompt-btn.panel-btn svg {
-  /* 由于星环向右下延伸，导致 SVG 的几何中心比星芒中心更靠右下。
-     当 flex 居中时，星芒主体会被挤到左上方。因此我们需要向右下方补偿偏移，使“星芒中心”对准按钮中心 */
-  transform: translate(1px, 1px);
+  /* 恢复原本的自然状态，此时由于外层容器物理尺寸已修复对齐，按钮本身已物理居中 */
+  transform: none;
 }
 
 .quick-prompt-btn.panel-btn:hover {
@@ -1078,8 +1078,7 @@
 }
 
 .quick-prompt-btn.panel-btn:hover svg {
-  /* Hover 时按钮整体放大了，微调偏移保持中心稳定 */
-  transform: translate(1.2px, 1.2px);
+  transform: none;
 }
 
 .quick-prompt-btn:has(svg[color="currentColor"]) {
