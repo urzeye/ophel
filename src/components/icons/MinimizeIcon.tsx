@@ -25,7 +25,7 @@ export const MinimizeIcon: React.FC<IconProps> = ({
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
-    style={{ display: "block" }}>
+    style={{ display: "block", width: size, height: size }}>
     <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
 )

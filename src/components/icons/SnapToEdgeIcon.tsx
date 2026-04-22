@@ -25,7 +25,7 @@ export const SnapToEdgeIcon: React.FC<IconProps> = ({
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
-    style={{ display: "block" }}>
+    style={{ display: "block", width: size, height: size }}>
     {/* 左侧边缘线 */}
     <line x1="2" y1="2" x2="2" y2="22" />
     {/* 面板矩形 */}
