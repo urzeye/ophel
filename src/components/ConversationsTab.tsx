@@ -80,6 +80,7 @@ type MenuType =
   | { type: "folder"; folder: Folder; anchorEl: HTMLElement }
   | { type: "conversation"; conv: Conversation; anchorEl: HTMLElement }
   | { type: "export"; anchorEl: HTMLElement }
+  | { type: "export-conv"; conv: Conversation; anchorEl: HTMLElement }
   | null
 
 const getInboxDisplayName = (): string => {
@@ -1277,6 +1278,11 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             setMenu(null)
             setDialog({ type: "folderSelect", conv: menu.conv })
           }}
+          onExport={() => {
+            const conv = menu.conv
+            const anchorEl = menu.anchorEl
+            setMenu({ type: "export-conv", conv, anchorEl })
+          }}
           onDelete={() => {
             setMenu(null)
             setDialog({
@@ -1328,6 +1334,24 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             const convId =
               selectedIds.size > 0 ? Array.from(selectedIds)[0] : manager.siteAdapter.getSessionId()
             await manager.exportConversation(convId, "txt")
+          }}
+        />
+      )}
+      {menu?.type === "export-conv" && (
+        <ExportMenu
+          anchorEl={menu.anchorEl}
+          onClose={() => setMenu(null)}
+          onExportMarkdown={async () => {
+            setMenu(null)
+            await manager.exportConversation(menu.conv.id, "markdown")
+          }}
+          onExportJSON={async () => {
+            setMenu(null)
+            await manager.exportConversation(menu.conv.id, "json")
+          }}
+          onExportTXT={async () => {
+            setMenu(null)
+            await manager.exportConversation(menu.conv.id, "txt")
           }}
         />
       )}

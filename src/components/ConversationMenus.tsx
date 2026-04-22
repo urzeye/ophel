@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
-import { CopyIcon, PageContentIcon } from "~components/icons"
+import { CopyIcon, ExportIcon, PageContentIcon } from "~components/icons"
 import { DeleteIcon } from "~components/icons/DeleteIcon"
 import { FolderMoveIcon } from "~components/icons/FolderMoveIcon"
 import { PinIcon } from "~components/icons/PinIcon"
@@ -235,6 +235,7 @@ interface ConversationMenuProps {
   onTogglePin: () => void
   onSetTags: () => void
   onMoveTo: () => void
+  onExport: () => void
   onDelete: () => void
 }
 
@@ -246,6 +247,7 @@ export const ConversationMenu: React.FC<ConversationMenuProps> = ({
   onTogglePin,
   onSetTags,
   onMoveTo,
+  onExport,
   onDelete,
 }) => {
   return (
@@ -316,6 +318,22 @@ export const ConversationMenu: React.FC<ConversationMenuProps> = ({
           }}>
           <span>{t("conversationsMoveTo") || "移动到..."}</span>
           <FolderMoveIcon size={13} />
+        </span>
+      </MenuButton>
+      <MenuButton
+        onClick={() => {
+          onClose()
+          onExport()
+        }}>
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "16px",
+          }}>
+          <span>{t("export") || "导出"}</span>
+          <ExportIcon size={13} />
         </span>
       </MenuButton>
       <MenuButton
