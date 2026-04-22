@@ -4,7 +4,7 @@
  */
 import React, { useEffect, useState } from "react"
 
-import { DragIcon, FloatingModeIcon, GeneralIcon, SnapToEdgeIcon } from "~components/icons"
+import { ReorderIcon, FloatingModeIcon, GeneralIcon, SnapToEdgeIcon } from "~components/icons"
 import { Slider, Switch } from "~components/ui"
 import {
   COLLAPSED_BUTTON_DEFS,
@@ -74,7 +74,7 @@ const SortableItem: React.FC<{
         cursor: "grab",
         color: "var(--gh-text-secondary, #9ca3af)",
       }}>
-      <DragIcon size={16} />
+      <ReorderIcon size={16} />
     </div>
 
     {iconNode && <span className="settings-sortable-item-icon">{iconNode}</span>}
