@@ -35,12 +35,13 @@ const AboutPage: React.FC = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          gap: 8,
-          marginBottom: 24,
+          marginBottom: 32,
         }}>
-        <span style={{ fontSize: 18 }}>✨</span>
-        <div className="about-slogan">{t("aboutPageDesc") || "AI 之益，触手可及"}</div>
-        <span style={{ fontSize: 18 }}>✨</span>
+        <div className="about-slogan-badge">
+          <span style={{ marginRight: 6 }}>✨</span>
+          {t("aboutPageDesc") || "AI 之益，触手可及"}
+          <span style={{ marginLeft: 6 }}>✨</span>
+        </div>
       </div>
 
       {/* Hero Card */}
@@ -74,14 +75,13 @@ const AboutPage: React.FC = () => {
           href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"
           target="_blank"
           rel="noopener noreferrer"
-          className="about-link-card">
+          className="about-link-card"
+          style={{ "--card-color": "#4285F4" } as React.CSSProperties}>
           <div className="about-link-header">
-            <ChromeIcon size={24} color="#4285F4" />
-            {t("chromeStore") || "Chrome 商店"}
+            <ChromeIcon size={24} color="var(--card-color)" />
+            <span style={{ fontWeight: 600 }}>{t("chromeStore") || "Chrome 商店"}</span>
           </div>
-          <button className="about-link-btn" style={{ marginTop: "auto" }}>
-            {t("reviewBtn") || "Review"}
-          </button>
+          <button className="about-link-btn">{t("reviewBtn") || "Review"}</button>
         </a>
 
         {/* Firefox Add-on */}
@@ -89,14 +89,13 @@ const AboutPage: React.FC = () => {
           href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"
           target="_blank"
           rel="noopener noreferrer"
-          className="about-link-card">
+          className="about-link-card"
+          style={{ "--card-color": "#FF7139" } as React.CSSProperties}>
           <div className="about-link-header">
-            <FirefoxIcon size={24} color="#FF7139" />
-            {t("firefoxAddons") || "Firefox 扩展"}
+            <FirefoxIcon size={24} color="var(--card-color)" />
+            <span style={{ fontWeight: 600 }}>{t("firefoxAddons") || "Firefox 扩展"}</span>
           </div>
-          <button className="about-link-btn" style={{ marginTop: "auto", background: "#FF7139" }}>
-            {t("reviewBtn") || "Review"}
-          </button>
+          <button className="about-link-btn">{t("reviewBtn") || "Review"}</button>
         </a>
 
         {/* GreasyFork */}
@@ -104,14 +103,15 @@ const AboutPage: React.FC = () => {
           href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"
           target="_blank"
           rel="noopener noreferrer"
-          className="about-link-card">
+          className="about-link-card"
+          style={{ "--card-color": "#4b5563" } as React.CSSProperties}>
           <div className="about-link-header">
             <GreasyForkIcon size={24} color="currentColor" />
-            {t("greasyFork") || "Greasy Fork"}
+            <span style={{ fontWeight: 600, color: "var(--gh-text)" }}>
+              {t("greasyFork") || "Greasy Fork"}
+            </span>
           </div>
-          <button className="about-link-btn" style={{ marginTop: "auto", background: "#333" }}>
-            {t("reviewBtn") || "Review"}
-          </button>
+          <button className="about-link-btn">{t("reviewBtn") || "Review"}</button>
         </a>
       </div>
 
@@ -135,7 +135,8 @@ const AboutPage: React.FC = () => {
           href="https://github.com/urzeye/ophel"
           target="_blank"
           rel="noopener noreferrer"
-          className="about-link-card">
+          className="about-link-card"
+          style={{ "--card-color": "17, 24, 39" } as React.CSSProperties}>
           <div className="about-link-header">
             <GithubIcon size={22} />
             <span style={{ fontWeight: 600 }}>{t("githubRepository") || "GitHub 仓库"}</span>
@@ -156,25 +157,20 @@ const AboutPage: React.FC = () => {
           href="https://github.com/urzeye/ophel"
           target="_blank"
           rel="noopener noreferrer"
-          className="about-link-card">
+          className="about-link-card"
+          style={{ "--card-color": "#3B82F6" } as React.CSSProperties}>
           <div className="about-link-header">
-            <GlobeIcon size={22} color="var(--gh-primary, #4285F4)" />
-            <span style={{ fontWeight: 600, color: "var(--gh-primary, #4285F4)" }}>
+            <GlobeIcon size={22} color="var(--card-color)" />
+            <span style={{ fontWeight: 600, color: "var(--card-color)" }}>
               {t("projectWebsite") || "项目官网"}
             </span>
           </div>
           <div className="about-link-desc">
             {t("websiteDesc") || "查看详细文档、使用指南和更多信息"}
           </div>
-          <button
-            className="about-link-btn"
-            style={{
-              borderRadius: "24px",
-              fontWeight: 600,
-              background: "linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%)",
-            }}>
+          <button className="about-link-btn">
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <GlobeIcon size={14} color="#FFF" />
+              <GlobeIcon size={14} color="currentColor" />
               {t("visitWebsite") || "访问官网"}
             </span>
           </button>
@@ -185,28 +181,18 @@ const AboutPage: React.FC = () => {
           href="https://discord.gg/79B2hFxR"
           target="_blank"
           rel="noopener noreferrer"
-          className="about-link-card"
-          style={{
-            borderColor: "rgba(88, 101, 242, 0.2)",
-            background: "rgba(88, 101, 242, 0.02)",
-          }}>
-          <div className="about-link-header" style={{ color: "#5865F2" }}>
-            <DiscordIcon size={22} color="#5865F2" />
+          className="about-link-card discord-card"
+          style={{ "--card-color": "#5865F2" } as React.CSSProperties}>
+          <div className="about-link-header" style={{ color: "var(--card-color)" }}>
+            <DiscordIcon size={22} color="var(--card-color)" />
             <span style={{ fontWeight: 600 }}>{t("discordCommunity") || "Discord 社区"}</span>
           </div>
           <div className="about-link-desc" style={{ color: "var(--gh-text-secondary)" }}>
             {t("discordDesc") || "加入社区，与其他用户交流、反馈问题、获取最新动态"}
           </div>
-          <button
-            className="about-link-btn"
-            style={{
-              borderRadius: "24px",
-              fontWeight: 600,
-              background: "linear-gradient(135deg, #7289da 0%, #5865f2 100%)",
-              boxShadow: "0 2px 8px rgba(88, 101, 242, 0.25)",
-            }}>
+          <button className="about-link-btn">
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <DiscordIcon size={14} color="#FFF" />
+              <DiscordIcon size={14} color="currentColor" />
               {t("joinDiscord") || "加入群组"}
             </span>
           </button>
@@ -217,25 +203,18 @@ const AboutPage: React.FC = () => {
           href="https://ko-fi.com/urzeye"
           target="_blank"
           rel="noopener noreferrer"
-          className="about-link-card"
-          style={{ borderColor: "rgba(255, 94, 91, 0.2)", background: "rgba(255, 94, 91, 0.02)" }}>
-          <div className="about-link-header" style={{ color: "#FF5E5B" }}>
-            <KofiIcon size={22} color="#FF5E5B" />
+          className="about-link-card kofi-card"
+          style={{ "--card-color": "#FF5E5B" } as React.CSSProperties}>
+          <div className="about-link-header" style={{ color: "var(--card-color)" }}>
+            <KofiIcon size={22} color="var(--card-color)" />
             <span style={{ fontWeight: 600 }}>{t("kofiSupport") || "Buy Me a Coffee"}</span>
           </div>
           <div className="about-link-desc" style={{ color: "var(--gh-text-secondary)" }}>
             {t("kofiDesc") || "如果 Ophel 对你有帮助，请考虑赞助一杯咖啡支持开发者"}
           </div>
-          <button
-            className="about-link-btn"
-            style={{
-              borderRadius: "24px",
-              fontWeight: 600,
-              background: "linear-gradient(135deg, #FF7E67 0%, #FF5E5B 100%)",
-              boxShadow: "0 2px 8px rgba(255, 94, 91, 0.25)",
-            }}>
+          <button className="about-link-btn">
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <KofiIcon size={14} color="#FFF" />
+              <KofiIcon size={14} color="currentColor" />
               {t("kofiBtn") || "赞助支持"}
             </span>
           </button>

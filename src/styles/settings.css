@@ -407,6 +407,8 @@
   background: transparent;
   width: 100%;
   text-align: left;
+  position: relative;
+  overflow: hidden;
 }
 
 .settings-nav-item:hover {
@@ -415,9 +417,21 @@
 }
 
 .settings-nav-item.active {
-  background: var(--gh-active-bg, #e0e7ff);
+  background: var(--gh-active-bg, rgba(66, 133, 244, 0.08));
   color: var(--gh-primary, #4285f4);
-  font-weight: 500;
+  font-weight: 600;
+}
+
+.settings-nav-item.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 50%;
+  width: 3px;
+  background-color: var(--gh-primary, #4285f4);
+  border-radius: 0 4px 4px 0;
 }
 
 .settings-nav-item-icon {
@@ -859,17 +873,30 @@
   border-radius: 10px;
   border: 2px solid var(--gh-border, #e5e7eb);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: center;
+  background: var(--gh-card-bg, #fff);
 }
 
 .settings-theme-card:hover {
   border-color: var(--gh-primary, #4285f4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.08); /* 悬浮加上浅蓝阴影 */
+}
+
+.settings-theme-card:not(.active) {
+  opacity: 0.85; /* 未选中调白一点透明度，让激活态更突出 */
+}
+
+.settings-theme-card:not(.active):hover {
+  opacity: 1;
 }
 
 .settings-theme-card.active {
   border-color: var(--gh-primary, #4285f4);
-  background: rgba(66, 133, 244, 0.05);
+  background: rgba(66, 133, 244, 0.05); /* 浅浅的蓝底 */
+  transform: scale(1.03); /* 【新特技】微微放大选中态 */
+  box-shadow: 0 6px 16px rgba(66, 133, 244, 0.2); /* 悬浮选中状态，高光弥散阴影 */
 }
 
 .settings-theme-preview {
@@ -1212,16 +1239,46 @@
   margin-top: 0;
 }
 
+/* 渐变色 Slogan 改为徽章风格 */
+.about-slogan-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.05);
+}
+
+html[data-theme="dark"] .about-slogan-badge {
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.12) 0%, rgba(192, 132, 252, 0.12) 100%);
+  color: #c4b5fd;
+  border-color: rgba(167, 139, 250, 0.2);
+}
+
+/* 废弃 .about-slogan */
+.about-slogan {
+  display: none;
+}
+
 /* Hero Card */
 .about-hero-card {
   background: var(--gh-bg-secondary, #f3f4f6);
-  border: 1px solid var(--gh-border, #e5e7eb);
+  border: 1px solid rgba(0, 0, 0, 0.04);
   border-radius: 16px;
   padding: 24px;
   display: flex;
   gap: 20px;
   align-items: flex-start;
   margin-bottom: 32px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+html[data-theme="dark"] .about-hero-card {
+  border-color: rgba(255, 255, 255, 0.05);
 }
 
 .about-hero-logo {
@@ -1249,7 +1306,7 @@
   font-size: 20px;
   font-weight: 700;
   color: var(--gh-text);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1290,18 +1347,22 @@
 .about-hero-desc {
   font-size: 14px;
   color: var(--gh-text-secondary);
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
 .about-platforms-card {
   background: var(--gh-card-bg, #fff);
-  border: 1px solid var(--gh-border, #e5e7eb);
+  border: 1px solid rgba(0, 0, 0, 0.04);
   border-radius: 16px;
   padding: 24px;
   margin-bottom: 32px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+html[data-theme="dark"] .about-platforms-card {
+  border-color: rgba(255, 255, 255, 0.05);
 }
 
 .about-platforms-card::before {
@@ -1425,7 +1486,7 @@
 
 .about-link-card {
   background: var(--gh-card-bg, #fff);
-  border: 1px solid var(--gh-border, #e5e7eb);
+  border: 1px solid rgba(0, 0, 0, 0.04);
   border-radius: 16px;
   padding: 24px;
   display: flex;
@@ -1439,10 +1500,14 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
 }
 
+html[data-theme="dark"] .about-link-card {
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
 .about-link-card:hover {
   border-color: var(--gh-border-hover, #d1d5db);
   transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
 }
 
 .about-link-header {
@@ -1466,56 +1531,64 @@
 }
 
 .about-link-btn {
-  padding: 8px 16px;
-  margin-top: auto;
-  border: none;
-  color: white;
+  align-self: center;
+  padding: 8px 20px;
+  background: transparent;
+  color: var(--card-color, var(--gh-primary));
+  border: 1px solid var(--card-color, var(--gh-primary));
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  transition:
-    filter 0.2s ease,
-    transform 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.2px;
 }
 
-.about-link-btn {
-  align-self: center;
-  padding: 6px 16px;
-  background: var(--gh-primary, #4285f4);
+html[data-theme="dark"] .about-link-card:not(.discord-card):not(.kofi-card) .about-link-btn {
+  /* Override default dark text color on specific cards so it's readable in dark mode */
+  color: var(--gh-text);
+  border-color: var(--gh-border);
+}
+html[data-theme="dark"] .about-link-card:not(.discord-card):not(.kofi-card):hover .about-link-btn {
+  color: #111827;
+}
+
+.about-link-card:hover .about-link-btn {
+  /* On hover, fill with solid color */
+  background: var(--card-color, var(--gh-primary));
   color: #fff;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  border: none;
-  cursor: pointer;
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Star Button Special Style - Sunset Gold Pill */
 .about-star-btn {
-  /* Warm Sunset Gradient */
-  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%) !important;
-  color: white !important;
-  font-weight: 600;
-  border: none !important;
-  /* Pill Shape */
-  border-radius: 24px !important;
+  /* Warm Sunset Gold as ghost button default */
+  background: transparent !important;
+  color: #ff9800 !important;
+  border: 1px solid #ff9800 !important;
+  border-radius: 20px !important;
   padding: 8px 24px !important;
-  /* Soft Colored Shadow */
-  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+  font-weight: 600;
   position: relative;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  /* Fix alignment */
   align-self: center !important;
-  margin-top: 4px;
+  margin-top: auto; /* Push to bottom */
 }
 
-.about-star-btn:hover {
+/* Hover State - Solia Gold Gradient with glow */
+.about-link-card:hover .about-star-btn {
+  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%) !important;
+  color: white !important;
+  border-color: transparent !important;
   transform: translateY(-2px) scale(1.05);
   box-shadow: 0 8px 20px rgba(255, 152, 0, 0.45);
-  filter: brightness(1.05);
 }
 
 .about-star-btn:active {
