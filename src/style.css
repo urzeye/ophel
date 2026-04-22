@@ -1408,7 +1408,10 @@
 /* 操作按钮悬停效果 */
 .prompt-action-btn:hover {
   background: var(--gh-hover, #f3f4f6) !important;
-  transform: scale(1.1);
+}
+
+.prompt-action-btn.danger:hover {
+  background: var(--gh-bg-danger, #fef2f2) !important;
 }
 
 /* 拖拽状态 */
@@ -1475,7 +1478,30 @@
 }
 
 .prompt-action-btn {
-  background: var(--gh-bg, #ffffff) !important;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  border-radius: 5px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--gh-text-secondary, #6b7280);
+  transition:
+    background 0.12s,
+    color 0.12s;
+  flex-shrink: 0;
+}
+
+.prompt-action-btn.danger {
+  color: var(--gh-text-danger, #ef4444);
+}
+
+.prompt-action-btn.active {
+  background: var(--gh-primary, #4285f4) !important;
+  color: white;
 }
 
 .prompt-modal-content {

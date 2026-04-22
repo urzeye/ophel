@@ -1750,27 +1750,14 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 {/* 悬浮操作按钮 */}
                 <div
                   className="prompt-item-actions"
-                  style={{ position: "absolute", top: "8px", right: "8px", gap: "4px" }}>
+                  style={{ position: "absolute", top: "8px", right: "8px", gap: "3px" }}>
                   {/* ⭐ 置顶按钮 */}
                   <Tooltip
                     content={p.pinned ? t("promptUnpin") || "取消置顶" : t("promptPin") || "置顶"}>
                     <button
                       onClick={(e) => handleTogglePin(p.id, e)}
-                      style={{
-                        width: "24px",
-                        height: "24px",
-                        border: "1px solid var(--gh-border, #e5e7eb)",
-                        background: p.pinned ? "var(--gh-primary, #4285f4)" : "var(--gh-bg, white)",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
-                        fontSize: "12px",
-                        color: p.pinned ? "white" : "var(--gh-text-secondary, #6b7280)",
-                      }}>
-                      <PinIcon size={12} filled={p.pinned} />
+                      className={`prompt-action-btn${p.pinned ? " active" : ""}`}>
+                      <PinIcon size={16} filled={p.pinned} />
                     </button>
                   </Tooltip>
                   <Tooltip content="拖动排序">
@@ -1784,20 +1771,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                         const item = e.currentTarget.closest(".prompt-item") as HTMLDivElement
                         if (item) item.draggable = false
                       }}
-                      style={{
-                        width: "24px",
-                        height: "24px",
-                        border: "1px solid var(--gh-border, #e5e7eb)",
-                        background: "var(--gh-bg, white)",
-                        borderRadius: "4px",
-                        cursor: "grab",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
-                        fontSize: "12px",
-                      }}>
-                      <DragIcon size={14} />
+                      className="prompt-action-btn"
+                      style={{ cursor: "grab" }}>
+                      <DragIcon size={16} />
                     </button>
                   </Tooltip>
                   {/* ⭐ 预览按钮 */}
@@ -1808,39 +1784,13 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                         e.preventDefault()
                         setPreviewModal({ show: true, prompt: p })
                       }}
-                      style={{
-                        width: "24px",
-                        height: "24px",
-                        border: "1px solid var(--gh-border, #e5e7eb)",
-                        background: "var(--gh-bg, white)",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
-                        fontSize: "12px",
-                      }}>
-                      <EyeIcon size={14} />
+                      className="prompt-action-btn">
+                      <EyeIcon size={16} />
                     </button>
                   </Tooltip>
                   <Tooltip content={t("copy")}>
-                    <button
-                      onClick={(e) => handleCopy(p.content, e)}
-                      style={{
-                        width: "24px",
-                        height: "24px",
-                        border: "1px solid var(--gh-border, #e5e7eb)",
-                        background: "var(--gh-bg, white)",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
-                        fontSize: "12px",
-                      }}>
-                      <CopyIcon size={14} />
+                    <button onClick={(e) => handleCopy(p.content, e)} className="prompt-action-btn">
+                      <CopyIcon size={16} />
                     </button>
                   </Tooltip>
                   <Tooltip content={t("edit")}>
@@ -1850,40 +1800,15 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                         e.preventDefault()
                         openEditModal(p)
                       }}
-                      style={{
-                        width: "24px",
-                        height: "24px",
-                        border: "1px solid var(--gh-border, #e5e7eb)",
-                        background: "var(--gh-bg, white)",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
-                        fontSize: "12px",
-                      }}>
-                      <EditIcon size={14} />
+                      className="prompt-action-btn">
+                      <EditIcon size={16} />
                     </button>
                   </Tooltip>
                   <Tooltip content={t("delete")}>
                     <button
                       onClick={(e) => handleDelete(p.id, e)}
-                      style={{
-                        width: "24px",
-                        height: "24px",
-                        border: "1px solid var(--gh-border, #e5e7eb)",
-                        background: "var(--gh-bg, white)",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        boxShadow: "var(--gh-shadow-sm, 0 1px 3px rgba(0,0,0,0.1))",
-                        fontSize: "12px",
-                        color: "var(--gh-text-danger, #ef4444)",
-                      }}>
-                      <DeleteIcon size={14} />
+                      className="prompt-action-btn danger">
+                      <DeleteIcon size={16} />
                     </button>
                   </Tooltip>
                 </div>
