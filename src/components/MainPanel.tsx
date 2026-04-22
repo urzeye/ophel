@@ -449,10 +449,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const getThemeIcon = () => {
     if (themeMode === "dark") {
       // 深色模式时显示太阳图标（点击切换到浅色）
-      return <ThemeLightIcon size={14} />
+      return <ThemeLightIcon size={16} />
     }
     // 浅色模式时显示月亮图标（点击切换到深色）
-    return <ThemeDarkIcon size={14} />
+    return <ThemeDarkIcon size={16} />
   }
 
   return (
@@ -571,9 +571,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                   transition: "all 0.2s",
                 }}>
                 {(currentSettings.panel?.panelMode ?? "edge-snap") === "edge-snap" ? (
-                  <FloatingModeIcon size={24} />
+                  <FloatingModeIcon size={16} />
                 ) : (
-                  <SnapToEdgeIcon size={24} />
+                  <SnapToEdgeIcon size={16} />
                 )}
               </button>
             </Tooltip>
@@ -623,7 +623,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                     fontSize: "16px",
                     transition: "all 0.2s",
                   }}>
-                  <NewTabIcon size={14} />
+                  <NewTabIcon size={16} />
                 </button>
               </Tooltip>
             )}
@@ -649,7 +649,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                   fontSize: "14px",
                   transition: "all 0.2s",
                 }}>
-                <SettingsIcon size={14} />
+                <SettingsIcon size={16} />
               </button>
             </Tooltip>
 
@@ -711,7 +711,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                   fontWeight: 600,
                   transition: "all 0.2s",
                 }}>
-                <MinimizeIcon size={14} />
+                <MinimizeIcon size={16} />
               </button>
             </Tooltip>
           </div>
