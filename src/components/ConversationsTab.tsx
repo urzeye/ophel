@@ -769,7 +769,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                 className={`conversations-pin-filter-btn ${filterPinned ? "active" : ""}`}
                 style={{ userSelect: "none" }}
                 onClick={() => setFilterPinned(!filterPinned)}>
-                <PinIcon size={14} />
+                <PinIcon size={16} />
               </div>
             </Tooltip>
 
@@ -784,7 +784,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                   if (newState) onInteractionStateChange?.(true)
                   setShowTagFilterMenu(newState)
                 }}>
-                <TagIcon size={14} />
+                <TagIcon size={16} />
               </div>
             </Tooltip>
 
