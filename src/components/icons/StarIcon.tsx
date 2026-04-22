@@ -1,6 +1,6 @@
 /**
  * SVG 图标组件 - 星星 (收藏/评分)
- * 风格：Fill-based
+ * 风格：Fill-based (1024×1024 viewBox)
  */
 import React from "react"
 
@@ -19,17 +19,19 @@ export const StarIcon: React.FC<IconProps & { filled?: boolean }> = ({
   filled = false,
 }) => (
   <svg
-    viewBox="0 0 24 24"
+    viewBox="0 0 1024 1024"
     width={size}
     height={size}
-    fill={filled ? color : "none"}
-    stroke={color}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
+    xmlns="http://www.w3.org/2000/svg"
     className={className}
-    style={{ display: "block", ...style }}>
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    style={{ display: "block", flexShrink: 0, ...style }}>
+    <polygon
+      points="512,64 625,357 968,364 695,571 794,901 512,704 230,901 329,571 56,364 399,357"
+      fill={filled ? color : "none"}
+      stroke={filled ? "none" : color}
+      strokeWidth={128}
+      strokeLinejoin="round"
+    />
   </svg>
 )
 
