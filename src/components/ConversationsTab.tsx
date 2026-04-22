@@ -994,7 +994,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                           }}
                           onClick={(e) => e.stopPropagation()}
                           title="拖拽排序">
-                          <DragIcon size={14} />
+                          <DragIcon size={17} />
                         </div>
                       )}
 
