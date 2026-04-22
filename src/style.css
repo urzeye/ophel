@@ -1528,6 +1528,11 @@
   display: none;
 }
 
+/* 分类标签不收缩，保持原始宽度 */
+.prompt-category-bar > * {
+  flex-shrink: 0;
+}
+
 /* ============= 加载历史遮罩样式 ============= */
 .gh-loading-mask {
   position: fixed;
