@@ -499,7 +499,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           ref={headerRef}
           className="gh-panel-header"
           style={{
-            padding: "12px 14px",
+            padding: "9px 14px",
             borderRadius: "12px 12px 0 0",
             display: "flex",
             alignItems: "center",
@@ -812,7 +812,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             display: "flex",
             justifyContent: "space-around",
             alignItems: "center",
-            padding: "10px 16px",
+            padding: "8px 16px",
             borderTop: "1px solid var(--gh-border, #e5e7eb)",
             background: "var(--gh-bg-secondary, #f9fafb)",
           }}>
