@@ -436,9 +436,8 @@
   /* 背景适配：使用 var(--gh-bg) 混合，确保亮暗模式都自然 */
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, var(--gh-bg));
 
-  /* 边框适配：混合主色与文字颜色，增强深色模式可见度 */
+  /* 边框适配：四边完整，消除左侧断裂感 */
   border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 30%, transparent);
-  border-left: none;
 
   /* 阴影：移除硬编码的白色内发光, 使用通用阴影变量 */
   box-shadow: var(--gh-shadow-sm);
