@@ -36,6 +36,8 @@ declare global {
     __ophelExtensionUpdateMessageListenerInstalled?: boolean
     /** 默认 reload 提示抑制观察器 */
     __ophelExtensionUpdatePromptObserver?: MutationObserver | null
+    /** 用户是否已主动关闭过更新提示（关闭后不再重复弹出） */
+    __OPHEL_EXTENSION_UPDATE_DISMISSED__?: boolean
   }
 }
 

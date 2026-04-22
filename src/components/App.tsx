@@ -2367,6 +2367,8 @@ export const App = () => {
 
   useEffect(() => {
     const handleExtensionUpdateAvailable = (event: Event) => {
+      if (window.__OPHEL_EXTENSION_UPDATE_DISMISSED__) return
+
       const customEvent = event as CustomEvent<{ version?: string }>
       const nextVersion =
         customEvent.detail?.version || window.__OPHEL_PENDING_UPDATE_VERSION__ || null
@@ -2377,7 +2379,7 @@ export const App = () => {
 
     window.addEventListener(EVENT_EXTENSION_UPDATE_AVAILABLE, handleExtensionUpdateAvailable)
 
-    if (window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__) {
+    if (window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__ && !window.__OPHEL_EXTENSION_UPDATE_DISMISSED__) {
       setShowExtensionUpdateNotice(true)
       setExtensionUpdateVersion(window.__OPHEL_PENDING_UPDATE_VERSION__ || null)
     }
@@ -2400,6 +2402,7 @@ export const App = () => {
   }, [showExtensionUpdateNotice])
 
   const handleDismissExtensionUpdateNotice = useCallback(() => {
+    window.__OPHEL_EXTENSION_UPDATE_DISMISSED__ = true
     window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__ = false
     setShowExtensionUpdateNotice(false)
   }, [])

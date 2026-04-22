@@ -81,6 +81,8 @@ function removeFallbackExtensionUpdateNotice(): void {
 }
 
 function dispatchExtensionUpdateNotice(version?: string): void {
+  if (window.__OPHEL_EXTENSION_UPDATE_DISMISSED__) return
+
   window.__OPHEL_PENDING_UPDATE_VERSION__ = version || window.__OPHEL_PENDING_UPDATE_VERSION__
   window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__ = true
   window.dispatchEvent(
@@ -315,6 +317,8 @@ function renderFallbackExtensionUpdateNotice(version?: string): void {
   shadowRoot
     .querySelector<HTMLButtonElement>(".ophel-update-close")
     ?.addEventListener("click", () => {
+      window.__OPHEL_EXTENSION_UPDATE_DISMISSED__ = true
+      window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__ = false
       removeFallbackExtensionUpdateNotice()
     })
   ;(document.body || document.documentElement).appendChild(host)
