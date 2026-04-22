@@ -1562,12 +1562,18 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           style={{
             flex: 1,
             minWidth: 0,
-            padding: "8px 0 8px 12px",
+            padding: "6px 0 6px 10px",
             display: "flex",
-            gap: "6px",
+            gap: "5px",
             flexWrap: "nowrap",
             overflowX: "auto",
             scrollbarWidth: "none",
+          }}
+          onWheel={(e) => {
+            // 将竖向滚轮转为横向滚动（Shadow DOM 内 wheel 事件不自动横滚）
+            if (e.deltaY !== 0) {
+              e.currentTarget.scrollLeft += e.deltaY
+            }
           }}>
           <span
             onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.ALL)}
@@ -1623,13 +1629,13 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           })}
         </div>
 
-        {/* 右侧固定：最近使用 + 管理 */}
+        {/* 右侧固定：最近使用 + 管理（仅图标） */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "6px",
-            padding: "8px 12px",
+            gap: "4px",
+            padding: "6px 8px",
             flexShrink: 0,
             borderLeft: "1px solid var(--gh-border, #e5e7eb)",
           }}>
@@ -1638,7 +1644,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             <span
               onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.RECENT)}
               style={{
-                padding: "4px 8px",
+                padding: "3px 6px",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -1647,8 +1653,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                   selectedCategory === VIRTUAL_CATEGORY.RECENT
                     ? "var(--gh-primary, #4285f4)"
                     : "var(--gh-hover, #f3f4f6)",
-                borderRadius: "12px",
-                fontSize: "12px",
+                borderRadius: "10px",
                 color: selectedCategory === VIRTUAL_CATEGORY.RECENT ? "white" : "#4b5563",
                 cursor: "pointer",
                 border:
@@ -1656,27 +1661,27 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     ? "1px solid var(--gh-primary, #4285f4)"
                     : "1px solid transparent",
               }}>
-              <TimeIcon size={16} />
+              <TimeIcon size={14} />
             </span>
           </Tooltip>
           {categories.length > 0 && (
-            <button
-              onClick={() => setIsCategoryModalOpen(true)}
-              style={{
-                padding: "4px 8px",
-                background: "transparent",
-                border: "1px dashed var(--gh-border, #d1d5db)",
-                borderRadius: "12px",
-                fontSize: "11px",
-                color: "var(--gh-text-secondary, #9ca3af)",
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-              }}>
-              <SettingsIcon size={12} />
-              {t("manageCategory") || "管理"}
-            </button>
+            <Tooltip content={t("manageCategory") || "管理"}>
+              <button
+                onClick={() => setIsCategoryModalOpen(true)}
+                style={{
+                  padding: "3px 6px",
+                  background: "transparent",
+                  border: "1px dashed var(--gh-border, #d1d5db)",
+                  borderRadius: "10px",
+                  color: "var(--gh-text-secondary, #9ca3af)",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}>
+                <SettingsIcon size={13} />
+              </button>
+            </Tooltip>
           )}
         </div>
       </div>
