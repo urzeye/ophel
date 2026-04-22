@@ -1064,11 +1064,21 @@
   box-shadow: 0 2px 8px color-mix(in srgb, var(--gh-primary) 15%, transparent);
 }
 
+.quick-prompt-btn.panel-btn svg {
+  /* 由于星芒图标右下角有较重的星环，几何居中会显得偏右下。此处向上和向左偏移进行“视觉光学居中”修正 */
+  transform: translate(-1.5px, -1.5px);
+}
+
 .quick-prompt-btn.panel-btn:hover {
   background: var(--gh-primary);
   color: #ffffff !important;
   box-shadow: 0 4px 12px color-mix(in srgb, var(--gh-primary) 35%, transparent);
   transform: scale(1.1);
+}
+
+.quick-prompt-btn.panel-btn:hover svg {
+  /* Hover 时按钮整体放大了，微调偏移保持中心稳定 */
+  transform: translate(-1px, -1px);
 }
 
 .quick-prompt-btn:has(svg[color="currentColor"]) {
