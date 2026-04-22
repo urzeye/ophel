@@ -592,7 +592,7 @@ export const ja = {
   grokSyncingConversations: "会話リストを同期しています。お待ちください...",
   // Tab Order Settings
   tabOrderSettings: "表示配置",
-  tabOrderDesc: "パネル内の各タブの並び順を調整します",
+  tabOrderDesc: "パネル内の各タブの並び順を調整します（ドラッグで並び替え可能）",
   moveUp: "上へ",
   moveDown: "下へ",
   // Reading Navigation Settings
@@ -636,7 +636,7 @@ export const ja = {
   floatingToolbarClearGhostConfirm: "このセッションの無効なブックマーク {count} 件を削除しますか？",
   floatingToolbarClearGhostEmpty: "削除する無効なブックマークはありません。",
   showCollapsedThemeDesc: "パネルを閉じたとき、サイドバーにテーマ切り替えを表示",
-  collapsedButtonsOrderDesc: "サイドバーに表示されるボタンの順序を調整",
+  collapsedButtonsOrderDesc: "サイドバーに表示されるボタンの順序を調整（ドラッグで並び替え可能）",
   preventAutoScrollLabel: "自動スクロールを防止",
   preventAutoScrollDesc: "AIの生成中に、ページが勝手に一番下へ移動するのを防ぎます",
   // Panel Mode

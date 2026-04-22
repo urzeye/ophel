@@ -573,7 +573,7 @@ export const es = {
   grokSyncingConversations: "Sincronizando chats, espera...",
   // Tab Order Settings
   tabOrderSettings: "Distribución UI",
-  tabOrderDesc: "Orden de las pestañas del panel",
+  tabOrderDesc: "Orden de las pestañas del panel (arrastra para reordenar)",
   moveUp: "Subir",
   moveDown: "Bajar",
   // Reading Navigation Settings
@@ -618,7 +618,7 @@ export const es = {
   floatingToolbarClearGhostConfirm: "¿Borrar {count} marcadores inválidos en esta sesión?",
   floatingToolbarClearGhostEmpty: "No hay marcadores inválidos para borrar.",
   showCollapsedThemeDesc: "Cambio de tema en barra lateral",
-  collapsedButtonsOrderDesc: "Orden de botones en barra lateral",
+  collapsedButtonsOrderDesc: "Orden de botones en barra lateral (arrastra para reordenar)",
   preventAutoScrollLabel: "Evitar Auto-Scroll",
   preventAutoScrollDesc: "Que no baje solo mientras escribe la IA",
   // Panel Mode

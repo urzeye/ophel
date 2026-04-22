@@ -466,7 +466,7 @@ export const zhTW = {
   outlineLevelHint: "級標題",
   // Tab 順序設置
   tabOrderSettings: "介面排版",
-  tabOrderDesc: "調整面板 Tab 的顯示順序",
+  tabOrderDesc: "調整面板 Tab 的顯示順序（拖動手柄可排序）",
   moveUp: "上移",
   moveDown: "下移",
   // 閱讀導航設置
@@ -523,7 +523,7 @@ export const zhTW = {
   floatingToolbarClearGhostConfirm: "是否清除目前會話中的 {count} 筆無效收藏？",
   floatingToolbarClearGhostEmpty: "沒有需要清理的無效收藏",
   showCollapsedThemeDesc: "當面板收起時，在側邊浮動條中顯示主題切換按鈕",
-  collapsedButtonsOrderDesc: "調整折疊面板按鈕的顯示順序",
+  collapsedButtonsOrderDesc: "調整折疊面板按鈕的顯示順序（拖動手柄可排序）",
   preventAutoScrollLabel: "防止自動滾動",
   preventAutoScrollDesc: "當 AI 生成長內容時，阻止頁面自動滾動到底部，方便閱讀上文",
 

@@ -573,7 +573,7 @@ export const pt = {
   grokSyncingConversations: "Sincronizando chats, aguarde...",
   // Tab Order Settings
   tabOrderSettings: "Layout da UI",
-  tabOrderDesc: "Ordem das abas do painel",
+  tabOrderDesc: "Ordem das abas do painel (arraste para reordenar)",
   moveUp: "Subir",
   moveDown: "Descer",
   // Reading Navigation Settings
@@ -618,7 +618,7 @@ export const pt = {
   floatingToolbarClearGhostConfirm: "Limpar {count} favoritos inválidos nesta sessão?",
   floatingToolbarClearGhostEmpty: "Não há favoritos inválidos para limpar.",
   showCollapsedThemeDesc: "Troca de tema na barra lateral",
-  collapsedButtonsOrderDesc: "Ordem dos botões na barra lateral",
+  collapsedButtonsOrderDesc: "Ordem dos botões na barra lateral (arraste para reordenar)",
   preventAutoScrollLabel: "Evitar Auto-Scroll",
   preventAutoScrollDesc: "Não rolar sozinho enquanto a IA escreve",
   // Panel Mode

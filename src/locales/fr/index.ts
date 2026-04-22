@@ -573,7 +573,7 @@ export const fr = {
   grokSyncingConversations: "Synchronisation des chats, attendez...",
   // Tab Order Settings
   tabOrderSettings: "Disposition UI",
-  tabOrderDesc: "Ordre des onglets du panneau",
+  tabOrderDesc: "Ordre des onglets du panneau (glisser pour réorganiser)",
   moveUp: "Monter",
   moveDown: "Descendre",
   // Reading Navigation Settings
@@ -618,7 +618,7 @@ export const fr = {
   floatingToolbarClearGhostConfirm: "Supprimer {count} favoris invalides dans cette session ?",
   floatingToolbarClearGhostEmpty: "Aucun favori invalide à supprimer.",
   showCollapsedThemeDesc: "Changement de thème dans la barre latérale",
-  collapsedButtonsOrderDesc: "Ordre des boutons dans la barre latérale",
+  collapsedButtonsOrderDesc: "Ordre des boutons dans la barre latérale (glisser pour réorganiser)",
   preventAutoScrollLabel: "Éviter l'Auto-Scroll",
   preventAutoScrollDesc: "Ne pas descendre seul pendant que l'IA écrit",
   // Panel Mode

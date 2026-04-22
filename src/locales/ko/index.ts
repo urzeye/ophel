@@ -574,7 +574,7 @@ export const ko = {
   grokSyncingConversations: "대화 목록을 동기화하는 중입니다. 잠시만 기다려 주세요...",
   // Tab Order Settings
   tabOrderSettings: "인터페이스 레이아웃",
-  tabOrderDesc: "패널 탭의 표시 순서 조정",
+  tabOrderDesc: "패널 탭의 표시 순서 조정 (드래그하여 재정렬)",
   moveUp: "위로 이동",
   moveDown: "아래로 이동",
   // Reading Navigation Settings
@@ -619,7 +619,7 @@ export const ko = {
   floatingToolbarClearGhostConfirm: "이 세션의 유효하지 않은 북마크 {count}개를 삭제하시겠습니까?",
   floatingToolbarClearGhostEmpty: "삭제할 유효하지 않은 북마크가 없습니다.",
   showCollapsedThemeDesc: "패널을 접었을 때 사이드바에 테마 전환 버튼 표시",
-  collapsedButtonsOrderDesc: "접힌 패널 버튼의 표시 순서 조정",
+  collapsedButtonsOrderDesc: "접힌 패널 버튼의 표시 순서 조정 (드래그하여 재정렬)",
   preventAutoScrollLabel: "자동 스크롤 방지",
   preventAutoScrollDesc: "AI 생성 중에 페이지가 하단으로 자동 스크롤되는 것을 방지",
   // Panel Mode

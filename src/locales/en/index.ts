@@ -600,7 +600,7 @@ export const en = {
   grokSyncingConversations: "Syncing conversations, please wait...",
   // Tab Order Settings
   tabOrderSettings: "Interface Layout",
-  tabOrderDesc: "Adjust the display order of panel tabs",
+  tabOrderDesc: "Adjust the display order of panel tabs (drag handle to reorder)",
   moveUp: "Move Up",
   moveDown: "Move Down",
   // Reading Navigation Settings
@@ -656,7 +656,8 @@ export const en = {
   floatingToolbarClearGhostConfirm: "Clear {count} invalid bookmarks in this session?",
   floatingToolbarClearGhostEmpty: "No invalid bookmarks to clear.",
   showCollapsedThemeDesc: "Display theme toggle button in sidebar when panel is collapsed",
-  collapsedButtonsOrderDesc: "Adjust the display order of collapsed panel buttons",
+  collapsedButtonsOrderDesc:
+    "Adjust the display order of collapsed panel buttons (drag handle to reorder)",
   preventAutoScrollLabel: "Prevent auto-scroll",
   preventAutoScrollDesc: "Stop page from auto-scrolling to bottom during AI generation",
   // Panel Mode

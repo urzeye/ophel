@@ -570,7 +570,7 @@ export const ru = {
   grokSyncingConversations: "Грузим историю, подождите...",
   // Tab Order Settings
   tabOrderSettings: "Расположение UI",
-  tabOrderDesc: "Порядок вкладок панели",
+  tabOrderDesc: "Порядок вкладок панели (перетащите для сортировки)",
   moveUp: "Выше",
   moveDown: "Ниже",
   // Reading Navigation Settings
@@ -615,7 +615,7 @@ export const ru = {
   floatingToolbarClearGhostConfirm: "Удалить {count} недействительных закладок в этой сессии?",
   floatingToolbarClearGhostEmpty: "Нет недействительных закладок для удаления.",
   showCollapsedThemeDesc: "Смена темы в сайдбаре",
-  collapsedButtonsOrderDesc: "Порядок кнопок в сайдбаре",
+  collapsedButtonsOrderDesc: "Порядок кнопок в сайдбаре (перетащите для сортировки)",
   preventAutoScrollLabel: "Блок авто-скролла",
   preventAutoScrollDesc: "Не скроллить вниз самовольно",
   // Panel Mode
