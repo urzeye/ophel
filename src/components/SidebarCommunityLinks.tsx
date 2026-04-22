@@ -16,6 +16,7 @@ export function SidebarCommunityLinks() {
           href={storeInfo.url}
           target="_blank"
           rel="noopener noreferrer"
+          aria-label={t("rateAndReview") || "去商店评分"}
           className="sidebar-social-btn review-btn">
           {React.cloneElement(storeInfo.icon as React.ReactElement, { size: 18 })}
         </a>
@@ -26,6 +27,7 @@ export function SidebarCommunityLinks() {
           href="https://github.com/urzeye/ophel"
           target="_blank"
           rel="noopener noreferrer"
+          aria-label={t("giveStar") || "Star on GitHub"}
           className="sidebar-social-btn github-btn">
           <GithubIcon size={18} />
         </a>
@@ -36,6 +38,7 @@ export function SidebarCommunityLinks() {
           href="https://ko-fi.com/urzeye"
           target="_blank"
           rel="noopener noreferrer"
+          aria-label={t("kofiSupport") || "Buy Me a Coffee"}
           className="sidebar-social-btn kofi-btn">
           <KofiIcon size={18} />
         </a>
@@ -46,6 +49,7 @@ export function SidebarCommunityLinks() {
           href="https://discord.gg/79B2hFxR"
           target="_blank"
           rel="noopener noreferrer"
+          aria-label={t("discordCommunity") || "Discord 社区"}
           className="sidebar-social-btn discord-btn">
           <DiscordIcon size={18} />
         </a>

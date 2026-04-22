@@ -128,6 +128,14 @@
   animation-play-state: paused !important; /* 悬浮时暂停呼吸动画 */
 }
 
+/* 尊重系统减少动效偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-social-btn {
+    animation: none;
+    transition: none;
+  }
+}
+
 /* 1. Review (Chrome/Firefox/Greasyfork) */
 .sidebar-social-btn.review-btn {
   color: #6366f1;
@@ -1702,25 +1710,7 @@ html[data-theme="dark"] .about-privacy-banner {
   line-height: 1.5;
 }
 
-/* 渐变色 Slogan */
-.about-slogan {
-  font-size: 18px;
-  font-weight: 700;
-  /* margin-bottom: 24px; Handled by parent container */
-  background: var(--gh-brand-gradient, linear-gradient(135deg, #4285f4 0%, #a855f7 100%));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  display: inline-block;
-}
-
-/* 确保深色模式下 Slogan 清晰可见 */
-html[data-theme="dark"] .about-slogan {
-  background: linear-gradient(135deg, #8ab4f8 0%, #81c995 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
+/* 渐变色 Slogan（已废弃，由 .about-slogan-badge 替代） */
 
 @media (max-width: 640px) {
   .about-platforms-header {

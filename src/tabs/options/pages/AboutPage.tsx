@@ -136,7 +136,7 @@ const AboutPage: React.FC = () => {
           target="_blank"
           rel="noopener noreferrer"
           className="about-link-card"
-          style={{ "--card-color": "17, 24, 39" } as React.CSSProperties}>
+          style={{ "--card-color": "#111827" } as React.CSSProperties}>
           <div className="about-link-header">
             <GithubIcon size={22} />
             <span style={{ fontWeight: 600 }}>{t("githubRepository") || "GitHub 仓库"}</span>
