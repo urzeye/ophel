@@ -355,48 +355,38 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   flex-shrink: 0;
 }
 
-.conversations-folder-order-btns {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+.conversations-folder-drag-handle {
+  opacity: 0;
+  cursor: grab;
   display: flex;
   align-items: center;
-  gap: 2px;
-  opacity: 0;
-  transition: opacity 0.2s;
-  background: inherit;
-  padding-left: 8px;
+  padding: 0 2px;
+  color: var(--gh-text-tertiary, #9ca3af);
+  transition:
+    opacity 0.15s,
+    color 0.15s;
+  flex-shrink: 0;
+  user-select: none;
 }
 
-.conversations-folder-item:hover .conversations-folder-order-btns {
+.conversations-folder-item:hover .conversations-folder-drag-handle {
   opacity: 1;
 }
 
-.conversations-folder-order-btn {
-  width: 20px;
-  height: 20px;
-  border: 1px solid var(--gh-input-border, #d1d5db);
-  border-radius: 4px;
-  background: var(--gh-bg, white);
+.conversations-folder-drag-handle:hover {
   color: var(--gh-text-secondary, #6b7280);
-  cursor: pointer;
-  font-size: 11px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
 }
 
-.conversations-folder-order-btn:hover:not(:disabled) {
-  background: var(--gh-hover, #f3f4f6);
-  border-color: var(--gh-text-tertiary, #9ca3af);
-  color: var(--gh-text, #374151);
+.conversations-folder-drag-handle:active {
+  cursor: grabbing;
 }
 
-.conversations-folder-order-btn:disabled {
-  opacity: 0.3;
-  cursor: default;
+.conversations-folder-item.is-dragging {
+  opacity: 0.45;
+}
+
+.conversations-folder-item.is-drag-over {
+  box-shadow: inset 0 2px 0 var(--gh-primary, #4285f4);
 }
 
 .conversations-folder-menu {

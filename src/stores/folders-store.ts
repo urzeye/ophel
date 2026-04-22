@@ -45,6 +45,7 @@ interface FoldersState {
   updateFolder: (id: string, updates: Partial<Folder>) => void
   deleteFolder: (id: string) => void
   moveFolder: (id: string, direction: "up" | "down") => void
+  reorderFolders: (orderedIds: string[]) => void
   setHasHydrated: (state: boolean) => void
 }
 
@@ -107,6 +108,19 @@ export const useFoldersStore = create<FoldersState>()(
             const newFolders = [...state.folders]
             ;[newFolders[index], newFolders[newIndex]] = [newFolders[newIndex], newFolders[index]]
             return { folders: newFolders }
+          }),
+
+        reorderFolders: (orderedIds) =>
+          set((state) => {
+            const inbox = state.folders.find((f) => f.isDefault)
+            const nonDefault = state.folders.filter((f) => !f.isDefault)
+            const reordered = orderedIds
+              .map((id) => nonDefault.find((f) => f.id === id))
+              .filter(Boolean) as Folder[]
+            const missing = nonDefault.filter((f) => !orderedIds.includes(f.id))
+            return {
+              folders: [...(inbox ? [inbox] : []), ...reordered, ...missing],
+            }
           }),
 
         setHasHydrated: (state) => set({ _hasHydrated: state }),

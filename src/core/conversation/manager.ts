@@ -597,6 +597,10 @@ export class ConversationManager {
     getFoldersStore().moveFolder(id, direction)
   }
 
+  reorderFolders(orderedIds: string[]) {
+    getFoldersStore().reorderFolders(orderedIds)
+  }
+
   // ================= Conversation Operations =================
 
   async deleteConversation(id: string): Promise<ConversationDeleteResult> {
