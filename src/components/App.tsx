@@ -2379,7 +2379,10 @@ export const App = () => {
 
     window.addEventListener(EVENT_EXTENSION_UPDATE_AVAILABLE, handleExtensionUpdateAvailable)
 
-    if (window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__ && !window.__OPHEL_EXTENSION_UPDATE_DISMISSED__) {
+    if (
+      window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__ &&
+      !window.__OPHEL_EXTENSION_UPDATE_DISMISSED__
+    ) {
       setShowExtensionUpdateNotice(true)
       setExtensionUpdateVersion(window.__OPHEL_PENDING_UPDATE_VERSION__ || null)
     }
