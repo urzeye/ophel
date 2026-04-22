@@ -37,8 +37,8 @@ import {
   HourglassIcon,
   LocateIcon,
   MoreHorizontalIcon,
+  DragIcon,
   PinIcon,
-  ReorderIcon,
   SyncIcon,
   TagIcon,
 } from "~components/icons"
@@ -994,7 +994,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                           }}
                           onClick={(e) => e.stopPropagation()}
                           title="拖拽排序">
-                          <ReorderIcon size={13} />
+                          <DragIcon size={14} />
                         </div>
                       )}
 
