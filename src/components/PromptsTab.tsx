@@ -1631,7 +1631,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                   ? "1px solid var(--gh-primary, #4285f4)"
                   : "1px solid transparent",
             }}>
-            <TimeIcon size={14} />
+            <TimeIcon size={16} />
           </span>
         </Tooltip>
 
