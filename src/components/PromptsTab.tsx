@@ -11,6 +11,7 @@ import {
   EyeIcon,
   ImportIcon,
   PinIcon,
+  SettingsIcon,
   TimeIcon,
 } from "~components/icons"
 import { Button, ConfirmDialog, InputDialog, Tooltip } from "~components/ui"
@@ -1646,7 +1647,11 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               fontSize: "11px",
               color: "var(--gh-text-secondary, #9ca3af)",
               cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
             }}>
+            <SettingsIcon size={12} />
             {t("manageCategory") || "管理"}
           </button>
         )}
