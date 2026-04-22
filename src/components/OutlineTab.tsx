@@ -26,6 +26,7 @@ import { showToast } from "~utils/toast"
 interface OutlineTabProps {
   manager: OutlineManager
   onJumpBefore?: () => void
+  isCodexOpen?: boolean
 }
 
 const buildVisibilityMaps = (
@@ -377,7 +378,11 @@ const OutlineNodeView: React.FC<{
   )
 }
 
-export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore }) => {
+export const OutlineTab: React.FC<OutlineTabProps> = ({
+  manager,
+  onJumpBefore,
+  isCodexOpen = false,
+}) => {
   // 获取设置 - 使用 Zustand Store
   const { settings } = useSettingsStore()
   const currentSettings = settings
@@ -1501,13 +1506,15 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({ manager, onJumpBefore })
                     display: "flex",
                     justifyContent: "center",
                   }}>
-                  <MagicCodex
-                    isOpen={true}
-                    onClose={() => {}}
-                    tips={structuredTips}
-                    color="var(--gh-primary, #6366f1)"
-                    isStatic={true}
-                  />
+                  {!isCodexOpen && (
+                    <MagicCodex
+                      isOpen={true}
+                      onClose={() => {}}
+                      tips={structuredTips}
+                      color="var(--gh-primary, #6366f1)"
+                      isStatic={true}
+                    />
+                  )}
                 </div>
               </div>
             )
