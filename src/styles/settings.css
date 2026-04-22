@@ -1521,7 +1521,7 @@ html[data-theme="dark"] .about-link-card {
 .about-link-header {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 10px;
   font-size: 16px;
   font-weight: 600;
