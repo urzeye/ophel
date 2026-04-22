@@ -14,16 +14,16 @@ export const MoreHorizontalIcon = ({
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
+      fill="currentColor"
+      stroke="none"
       strokeLinecap="round"
       strokeLinejoin="round"
       className={`more-horizontal-icon ${className}`}
+      style={{ display: "block", width: size, height: size }}
       {...props}>
-      <circle cx="12" cy="12" r="1" className="dot dot-2" />
-      <circle cx="19" cy="12" r="1" className="dot dot-3" />
-      <circle cx="5" cy="12" r="1" className="dot dot-1" />
+      <circle cx="12" cy="12" r="1.5" className="dot dot-2" />
+      <circle cx="19" cy="12" r="1.5" className="dot dot-3" />
+      <circle cx="5" cy="12" r="1.5" className="dot dot-1" />
       <style>{`
         .more-horizontal-icon .dot {
           transform-box: fill-box;

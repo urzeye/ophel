@@ -942,8 +942,8 @@ html[data-theme="dark"] .conversations-unsupported-icon {
 }
 
 .conversations-item-menu-btn {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border: none;
   background: transparent;
   color: var(--gh-text-tertiary, #9ca3af);
