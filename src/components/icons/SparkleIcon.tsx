@@ -30,21 +30,16 @@ export const SparkleIcon: React.FC<IconProps> = ({ size = 18, color, className =
         display: "block",
         flexShrink: 0,
         overflow: "visible",
-        // 关键：通过 CSS 物理投影将彩色星芒与任何亮色背景彻底隔开，产生漂亮的悬浮悬浮感。
-        // 同时利用 CSS 放缩与精准投影直接替代以前粗暴的描边，避免污染内部细薄紧密的空心线条。
-        filter: isDefaultColor
-          ? "drop-shadow(0px 2px 5px rgba(0, 0, 0, 0.45)) drop-shadow(0px 0px 1px rgba(0,0,0,0.2))"
-          : "none",
+        // 关键：抛弃发脏的黑色阴影，改为同色系（青蓝色）的通透光晕（Glow），带来现代科技感
+        filter: isDefaultColor ? "drop-shadow(0px 2px 6px rgba(34, 211, 238, 0.4))" : "none",
         ...style,
       }}>
       <defs>
         {isDefaultColor && (
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-            {/* 将起手的深蓝色提亮为超高明度的天青色（Cyan），彻底解决了左上角因为暗蓝色遇暗背景而“发糊/看不见”的问题 */}
-            <stop offset="0%" stopColor="#22d3ee" />
-            <stop offset="35%" stopColor="#8b5cf6" />
-            <stop offset="70%" stopColor="#f43f5e" />
-            <stop offset="100%" stopColor="#f59e0b" />
+            {/* 抛弃杂乱的红橙色，使用极具现代感和科技感的 Cyan -> Indigo 双色极光渐变 */}
+            <stop offset="0%" stopColor="#22d3ee" /> /* Cyan 青色 */
+            <stop offset="100%" stopColor="#6366f1" /> /* Indigo 靛蓝色 */
           </linearGradient>
         )}
       </defs>
