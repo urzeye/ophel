@@ -84,53 +84,114 @@
   background: transparent;
 }
 
+@keyframes communityPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    transform: scale(1);
+    background: var(--pulse-bg);
+  }
+  10% {
+    box-shadow: 0 0 0 6px rgba(0, 0, 0, 0);
+    transform: scale(1.05);
+    background: var(--pulse-bg-hover);
+  }
+  20% {
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    transform: scale(1);
+    background: var(--pulse-bg);
+  }
+}
+
 .sidebar-social-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   color: var(--gh-text-tertiary, #9ca3af);
   text-decoration: none;
-  background: transparent;
-  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: var(--pulse-bg, transparent); /* 默认用 pulse-bg 打底 */
+  transition:
+    transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+    color 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
   position: relative;
+  /* 应用 8 秒轮回动画 */
+  animation: communityPulse 8s infinite cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Hover Brand Colors */
+/* Hover 强压制动画并展示明亮颜色 */
+.sidebar-social-btn:hover {
+  animation-play-state: paused !important; /* 悬浮时暂停呼吸动画 */
+}
+
+/* 1. Review (Chrome/Firefox/Greasyfork) */
+.sidebar-social-btn.review-btn {
+  color: #6366f1;
+  --pulse-bg: rgba(99, 102, 241, 0.08); /* 极弱紫紫 */
+  --pulse-bg-hover: rgba(99, 102, 241, 0.15);
+  animation-delay: 0s;
+}
 .sidebar-social-btn.review-btn:hover {
-  color: #fff;
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
   box-shadow: 0 4px 10px rgba(124, 58, 237, 0.25);
   transform: translateY(-2px);
 }
 
+/* 2. GitHub */
+.sidebar-social-btn.github-btn {
+  color: #24292f;
+  --pulse-bg: rgba(36, 41, 47, 0.05);
+  --pulse-bg-hover: rgba(36, 41, 47, 0.1);
+  animation-delay: 2s;
+}
+:host-context([data-gh-mode="dark"]) .sidebar-social-btn.github-btn {
+  color: #ffffff;
+  --pulse-bg: rgba(255, 255, 255, 0.08);
+  --pulse-bg-hover: rgba(255, 255, 255, 0.15);
+}
 .sidebar-social-btn.github-btn:hover {
-  color: #fff;
-  background: #24292f;
+  color: #ffffff !important;
+  background: #24292f !important;
   box-shadow: 0 4px 10px rgba(36, 41, 47, 0.25);
   transform: translateY(-2px);
 }
+:host-context([data-gh-mode="dark"]) .sidebar-social-btn.github-btn:hover {
+  background: #ffffff !important;
+  color: #000000 !important;
+  box-shadow: 0 4px 10px rgba(255, 255, 255, 0.25);
+}
 
+/* 3. Ko-fi */
+.sidebar-social-btn.kofi-btn {
+  color: #ff5e5b;
+  --pulse-bg: rgba(255, 94, 91, 0.08);
+  --pulse-bg-hover: rgba(255, 94, 91, 0.15);
+  animation-delay: 4s;
+}
 .sidebar-social-btn.kofi-btn:hover {
-  color: #fff;
-  background: #ff5e5b;
+  color: #ffffff !important;
+  background: #ff5e5b !important;
   box-shadow: 0 4px 10px rgba(255, 94, 91, 0.25);
   transform: translateY(-2px);
 }
 
+/* 4. Discord */
+.sidebar-social-btn.discord-btn {
+  color: #5865f2;
+  --pulse-bg: rgba(88, 101, 242, 0.08);
+  --pulse-bg-hover: rgba(88, 101, 242, 0.15);
+  animation-delay: 6s;
+}
 .sidebar-social-btn.discord-btn:hover {
-  color: #fff;
-  background: #5865f2;
+  color: #ffffff !important;
+  background: #5865f2 !important;
   box-shadow: 0 4px 10px rgba(88, 101, 242, 0.25);
   transform: translateY(-2px);
-}
-
-:host-context([data-gh-mode="dark"]) .sidebar-social-btn.github-btn:hover {
-  background: #f0f6fc;
-  color: #1f2328;
-  box-shadow: 0 4px 10px rgba(240, 246, 252, 0.25);
 }
 
 /* =========================================

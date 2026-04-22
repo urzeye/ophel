@@ -17,7 +17,7 @@ export function SidebarCommunityLinks() {
           target="_blank"
           rel="noopener noreferrer"
           className="sidebar-social-btn review-btn">
-          {React.cloneElement(storeInfo.icon as React.ReactElement, { size: 16 })}
+          {React.cloneElement(storeInfo.icon as React.ReactElement, { size: 18 })}
         </a>
       </Tooltip>
 
@@ -27,7 +27,7 @@ export function SidebarCommunityLinks() {
           target="_blank"
           rel="noopener noreferrer"
           className="sidebar-social-btn github-btn">
-          <GithubIcon size={16} />
+          <GithubIcon size={18} />
         </a>
       </Tooltip>
 
@@ -37,7 +37,7 @@ export function SidebarCommunityLinks() {
           target="_blank"
           rel="noopener noreferrer"
           className="sidebar-social-btn kofi-btn">
-          <KofiIcon size={16} />
+          <KofiIcon size={18} />
         </a>
       </Tooltip>
 
@@ -47,7 +47,7 @@ export function SidebarCommunityLinks() {
           target="_blank"
           rel="noopener noreferrer"
           className="sidebar-social-btn discord-btn">
-          <DiscordIcon size={16} />
+          <DiscordIcon size={18} />
         </a>
       </Tooltip>
     </div>
