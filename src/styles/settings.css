@@ -73,65 +73,124 @@
   flex-direction: column;
 }
 
-/* 侧边栏 GitHub Star 特效链接 */
-.sidebar-github-link {
+/* 侧边栏底部社区链接（替代原 GitHub Star 特效链接） */
+.sidebar-community-links {
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly; /* 均匀分布在底部 */
+  gap: 4px;
+  margin: auto 8px 12px 8px; /* 增加一点下沉感，避免撞底 */
+  padding: 6px 8px;
+  background: transparent;
+}
+
+.sidebar-social-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin: auto 8px 8px 8px; /* 自动吸收上部空间，左右预留防贴边留白 */
-  padding: 10px 14px;
-  background: var(--gh-bg-secondary, #f9fafb);
-  border: 1px solid var(--gh-border, #e5e7eb);
-  border-radius: 12px;
-  color: var(--gh-text-secondary, #4b5563);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--gh-text-tertiary, #9ca3af);
   text-decoration: none;
-  font-size: 13px;
-  font-weight: 600;
+  background: transparent;
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  position: relative;
 }
 
-.sidebar-github-link:hover {
+/* Hover Brand Colors */
+.sidebar-social-btn.review-btn:hover {
+  color: #fff;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.25);
   transform: translateY(-2px);
-  border-color: #d1d5db;
-  color: #111827;
-  background: var(--gh-bg, #ffffff);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
 }
 
-:host-context([data-gh-mode="dark"]) .sidebar-github-link {
-  background: rgba(255, 255, 255, 0.03);
-  color: #9ca3af;
-  border-color: rgba(255, 255, 255, 0.08);
+.sidebar-social-btn.github-btn:hover {
+  color: #fff;
+  background: #24292f;
+  box-shadow: 0 4px 10px rgba(36, 41, 47, 0.25);
+  transform: translateY(-2px);
 }
 
-:host-context([data-gh-mode="dark"]) .sidebar-github-link:hover {
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.08);
-  color: #f9fafb;
+.sidebar-social-btn.kofi-btn:hover {
+  color: #fff;
+  background: #ff5e5b;
+  box-shadow: 0 4px 10px rgba(255, 94, 91, 0.25);
+  transform: translateY(-2px);
 }
 
-/* 侧边栏底部快捷设置 */
+.sidebar-social-btn.discord-btn:hover {
+  color: #fff;
+  background: #5865f2;
+  box-shadow: 0 4px 10px rgba(88, 101, 242, 0.25);
+  transform: translateY(-2px);
+}
+
+:host-context([data-gh-mode="dark"]) .sidebar-social-btn.github-btn:hover {
+  background: #f0f6fc;
+  color: #1f2328;
+  box-shadow: 0 4px 10px rgba(240, 246, 252, 0.25);
+}
+
+/* =========================================
+   Sidebar Lower Area - Option B: The Minimalist Dock
+   ========================================= */
+
+/* 1. 消除顶部的生硬截断线，用伪元素画一条居中极细虚化线，增加通透感 */
 .settings-sidebar-footer {
-  padding: 12px 14px 16px 14px;
-  border-top: 1px solid var(--gh-border, #e5e7eb);
+  padding: 10px 14px 16px 14px; /* 缩减上方的断裂感 */
+  border-top: none; /* 去除原本非常突兀的分界线 */
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  background: var(--gh-bg, #ffffff);
+  gap: 8px; /* 收紧主题与语言的间隙 */
+  background: transparent;
+  position: relative;
 }
 
-/* 主题切换 - 分段控制器 */
+.settings-sidebar-footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 14px;
+  right: 14px;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--gh-border, #e5e7eb) 20%,
+    var(--gh-border, #e5e7eb) 80%,
+    transparent
+  );
+  opacity: 0.6;
+}
+:host-context([data-gh-mode="dark"]) .settings-sidebar-footer::before {
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.08) 20%,
+    rgba(255, 255, 255, 0.08) 80%,
+    transparent
+  );
+}
+
+/* 2. 主题切换 - The Pill Dock */
 .settings-theme-segmented {
   display: flex;
-  background: var(--gh-hover, #f3f4f6);
+  background: var(--gh-bg-tertiary, #f3f4f6);
   padding: 4px;
-  border-radius: 10px;
+  border-radius: 12px; /* 更加圆润的大切角 */
   gap: 4px;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04); /* 轻微的内凹下沉感 */
+  transition: background 0.3s ease;
+}
+
+:host-context([data-gh-mode="dark"]) .settings-theme-segmented {
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .settings-theme-segment {
@@ -142,13 +201,13 @@
   gap: 6px;
   padding: 6px 4px;
   min-width: 0;
-  border-radius: 8px;
+  border-radius: 8px; /* 紧紧包裹内的圆角 */
   border: none;
   background: transparent;
   color: var(--gh-text-secondary, #6b7280);
   font-size: 13px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
 
@@ -167,7 +226,7 @@
   align-items: center;
   justify-content: center;
   color: inherit;
-  transition: color 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
 .settings-theme-segmented.is-compact .settings-theme-segment {
@@ -189,45 +248,87 @@
   color: var(--gh-text, #374151);
 }
 
+/* 激活状态的拔出立体感 */
 .settings-theme-segment.active {
   background: var(--gh-bg, #ffffff);
-  color: var(--gh-text, #1f2937);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  color: var(--gh-text, #111827);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.08);
   font-weight: 500;
+  transform: translateY(-1px); /* 轻微的物理高度拔出 */
 }
 
-/* 语言切换 - 行内文字链 */
+/* 深色模式下的 Theme Segment Active */
+:host-context([data-gh-mode="dark"]) .settings-theme-segment {
+  color: #9ca3af;
+}
+:host-context([data-gh-mode="dark"]) .settings-theme-segment:hover {
+  color: #e5e7eb;
+}
+:host-context([data-gh-mode="dark"]) .settings-theme-segment.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* 3. 语言切换 - Minimalist Bubble Label */
 .settings-lang-inline {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 4px;
+  padding: 4px 8px;
+  background: transparent;
+  border-radius: 8px;
+  align-self: center; /* 不拉紧占满整宽，聚拢中间 */
 }
 
 .lang-link {
   background: none;
   border: none;
-  padding: 4px 6px;
-  color: var(--gh-text-secondary, #9ca3af);
+  padding: 4px 8px;
+  color: var(--gh-text-tertiary, #9ca3af);
   font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.15s ease;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  position: relative;
 }
 
 .lang-link:hover {
   color: var(--gh-text, #374151);
+  background: var(--gh-bg-secondary, #f9fafb);
 }
 
 .lang-link.active {
-  color: var(--gh-primary, #4285f4);
+  color: var(--gh-text, #111827);
   font-weight: 600;
-  background: var(--gh-active-bg, #e0e7ff);
+  background: var(--gh-hover, #f3f4f6);
+}
+
+/* 深色模式的文字链打底 */
+:host-context([data-gh-mode="dark"]) .lang-link:hover {
+  color: #f3f4f6;
+  background: rgba(255, 255, 255, 0.05);
+}
+:host-context([data-gh-mode="dark"]) .lang-link.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .lang-divider {
-  color: var(--gh-border, #e5e7eb);
-  font-size: 12px;
+  width: 1px;
+  height: 10px;
+  background-color: var(--gh-border, #e5e7eb);
+  margin: 0 4px;
+  opacity: 0.8;
+}
+:host-context([data-gh-mode="dark"]) .lang-divider {
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .settings-nav-item {

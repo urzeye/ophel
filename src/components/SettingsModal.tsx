@@ -23,6 +23,7 @@ import {
   GithubIcon,
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
+import { SidebarCommunityLinks } from "~components/SidebarCommunityLinks"
 import { NAV_IDS, resolveSettingsNavigateDetail, type SettingsNavigateDetail } from "~constants"
 import { platform } from "~platform"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
@@ -350,15 +351,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
               </button>
             ))}
 
-            {/* 红色空置区：GitHub Star 宣传位 */}
-            <a
-              href="https://github.com/urzeye/ophel"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="sidebar-github-link">
-              <GithubIcon size={16} />
-              <span>Star on GitHub</span>
-            </a>
+            {/* 左下角社区链接图标 */}
+            <SidebarCommunityLinks />
           </nav>
 
           {/* 侧边栏底部快捷设置 */}

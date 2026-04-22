@@ -18,6 +18,7 @@ import { resolveSettingsNavigateDetail } from "~constants"
 import { platform } from "~platform"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { APP_DISPLAY_NAME, APP_ICON_URL } from "~utils/config"
+import { SidebarCommunityLinks } from "~components/SidebarCommunityLinks"
 import { setLanguage, t } from "~utils/i18n"
 
 import AboutPage from "./options/pages/AboutPage"
@@ -272,15 +273,8 @@ const OptionsPage = () => {
             </button>
           ))}
 
-          {/* 红色空置区：GitHub Star 宣传位 */}
-          <a
-            href="https://github.com/urzeye/ophel"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="sidebar-github-link">
-            <GithubIcon size={16} />
-            <span>Star on GitHub</span>
-          </a>
+          {/* 左下角社区链接图标 */}
+          <SidebarCommunityLinks />
         </nav>
 
         {/* 侧边栏底部快捷设置 */}
