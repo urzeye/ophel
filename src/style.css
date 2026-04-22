@@ -1403,6 +1403,11 @@
 /* 悬停时显示操作按钮 */
 .prompt-item:hover .prompt-item-actions {
   display: flex !important;
+  /* 渐变辮色道：左侧透明渐变至背景色，避免长标题防穿图标 */
+  background: linear-gradient(to right, transparent, var(--gh-bg, #fff) 20px);
+  padding-left: 20px;
+  margin-left: -20px;
+  border-radius: 0 4px 4px 0;
 }
 
 /* 操作按钮悬停效果 */

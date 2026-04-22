@@ -1750,7 +1750,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 {/* 悬浮操作按钮 */}
                 <div
                   className="prompt-item-actions"
-                  style={{ position: "absolute", top: "8px", right: "8px", gap: "3px" }}>
+                  style={{ position: "absolute", top: "8px", right: "8px", gap: "2px" }}>
                   {/* ⭐ 置顶按钮 */}
                   <Tooltip
                     content={p.pinned ? t("promptUnpin") || "取消置顶" : t("promptPin") || "置顶"}>
