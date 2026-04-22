@@ -327,12 +327,16 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
          }
 
         .lang-link.active {
-          color: var(--gh-text, #111827);
-          font-weight: 600;
+          color: var(--gh-primary, #4285f4);
+          font-weight: 700;
+          background: var(--gh-bg, #ffffff);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
         }
 
         :host-context([data-gh-mode="dark"]) .lang-link.active {
-           color: #f9fafb;
+          color: var(--gh-primary, #7cb3ff);
+          background: rgba(255, 255, 255, 0.12);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
 
         .lang-divider {
