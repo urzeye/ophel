@@ -496,10 +496,14 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         style={{
           position: "fixed",
           top: "50%",
-          // 根据默认位置设置 left 或 right
-          ...(defaultPosition === "left"
-            ? { left: `${defaultEdgeDistance}px`, right: "auto" }
-            : { right: `${defaultEdgeDistance}px`, left: "auto" }),
+          // edge-snap 模式下让 CSS class (!important) 完全控制 left/right 定位，
+          // 避免 React style reconciliation 在吸附 CSS transition 执行期间重新写入 right/left
+          // 导致动画中断抖动
+          ...(currentSettings.panel?.panelMode === "edge-snap"
+            ? {}
+            : defaultPosition === "left"
+              ? { left: `${defaultEdgeDistance}px`, right: "auto" }
+              : { right: `${defaultEdgeDistance}px`, left: "auto" }),
           transform: "translateY(-50%)",
           width: `${currentSettings.panel?.width ?? 320}px`,
           height: `${currentSettings.panel?.height ?? 85}vh`,
@@ -526,8 +530,18 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         {/* Header - 拖拽区域 */}
         <div
           ref={headerRef}
-          onPointerDown={() => setIsHeaderPressed(true)}
-          onPointerUp={() => setIsHeaderPressed(false)}
+          onPointerDown={(e) => {
+            // 排除右侧按钮区域，避免触发 setIsHeaderPressed 引发多余的 React 重渲染
+            // 这些重渲染会在面板吸附动画期间重新应用 style.right，导致 CSS transition 抖动
+            if (!(e.target as Element).closest(".gh-panel-controls")) {
+              setIsHeaderPressed(true)
+            }
+          }}
+          onPointerUp={(e) => {
+            if (!(e.target as Element).closest(".gh-panel-controls")) {
+              setIsHeaderPressed(false)
+            }
+          }}
           onPointerLeave={() => setIsHeaderPressed(false)}
           className="gh-panel-header"
           style={{
