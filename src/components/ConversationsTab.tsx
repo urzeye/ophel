@@ -1433,6 +1433,7 @@ const ConversationItem = React.memo<ConversationItemProps>(
                 {conv.pinned && (
                   <PinIcon
                     size={12}
+                    color="var(--gh-primary, #3b82f6)"
                     style={{
                       display: "inline-block",
                       marginRight: "4px",
