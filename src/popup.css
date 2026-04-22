@@ -342,10 +342,16 @@ body {
 }
 
 .popup-no-prompts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   font-size: 12px;
   color: var(--popup-text-secondary);
   text-align: center;
-  padding: 12px;
+  padding: 24px 12px;
+  opacity: 0.6;
 }
 
 /* Sites Grid (for unsupported sites) */
@@ -462,9 +468,9 @@ body {
   font-size: 11px;
   font-weight: 500;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  color: white;
+  background: var(--popup-border);
+  color: var(--popup-text-secondary);
   white-space: nowrap;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   position: relative;
 }
 
@@ -481,25 +487,30 @@ body {
 
 .popup-action-pill:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  filter: brightness(1.05);
+  color: white;
 }
 
 .review-btn {
+  background: var(--popup-border);
+}
+.review-btn:hover {
   background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-  width: 32px;
-  height: 32px;
   box-shadow: 0 3px 6px rgba(124, 58, 237, 0.25);
+  color: white;
 }
+
 .star-btn {
-  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
-  width: 30px;
-  height: 30px;
-  box-shadow: 0 3px 6px rgba(234, 88, 12, 0.25);
+  background: var(--popup-border);
 }
+.star-btn:hover {
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+  box-shadow: 0 3px 6px rgba(234, 88, 12, 0.25);
+  color: white;
+}
+
 .discord-btn {
   background: transparent;
-  color: #5865f2;
+  color: var(--popup-text-secondary);
   box-shadow: none;
 }
 .discord-btn:hover {
@@ -508,14 +519,14 @@ body {
   box-shadow: none;
   filter: none;
 }
+
 .kofi-btn {
-  background: linear-gradient(135deg, #ff7e67 0%, #ff5e5b 100%);
-  width: 30px;
-  height: 30px;
-  box-shadow: 0 3px 6px rgba(255, 94, 91, 0.25);
+  background: var(--popup-border);
 }
 .kofi-btn:hover {
-  background: linear-gradient(135deg, #ff9481 0%, #e04e4b 100%);
+  background: linear-gradient(135deg, #ff7e67 0%, #ff5e5b 100%);
+  box-shadow: 0 3px 6px rgba(255, 94, 91, 0.25);
+  color: white;
 }
 
 .popup-footer-links {

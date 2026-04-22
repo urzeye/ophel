@@ -10,6 +10,7 @@ import { DiscordIcon } from "~components/icons/DiscordIcon"
 import { KofiIcon } from "~components/icons/KofiIcon"
 import { SettingsIcon } from "~components/icons/SettingsIcon"
 import { StarIcon } from "~components/icons/StarIcon"
+import { TimeIcon } from "~components/icons/TimeIcon"
 import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 import { Tooltip } from "~components/ui/Tooltip"
 import { SITE_ICONS } from "~constants/site-icons"
@@ -195,7 +196,9 @@ function IndexPopup() {
         {/* Site Status */}
         <div className="popup-site-status">
           <div className="popup-site-status-left">
-            <div className="popup-site-label">{t("popupCurrentSite")}</div>
+            {currentSite?.name !== t("popupCurrentSite") && (
+              <div className="popup-site-label">{t("popupCurrentSite")}</div>
+            )}
             <div className="popup-site-name">{currentSite?.name || "..."}</div>
           </div>
           {currentSite && (
@@ -257,7 +260,10 @@ function IndexPopup() {
               ))}
             </div>
           ) : (
-            <div className="popup-no-prompts">{t("popupNoRecentPrompts")}</div>
+            <div className="popup-no-prompts">
+              <TimeIcon size={28} />
+              <span>{t("popupNoRecentPrompts")}</span>
+            </div>
           )}
         </div>
       </div>

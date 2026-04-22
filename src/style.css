@@ -1057,7 +1057,20 @@
   color: var(--gh-primary);
 }
 
-/* 面板主控制按钮默认跟随 Primary 色以强调主入口身份 */
+/* 面板主控制按钮强化视觉层级，与主题色融合并更显眼 */
+.quick-prompt-btn.panel-btn {
+  background: color-mix(in srgb, var(--gh-primary) 12%, transparent);
+  color: var(--gh-primary) !important;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--gh-primary) 15%, transparent);
+}
+
+.quick-prompt-btn.panel-btn:hover {
+  background: var(--gh-primary);
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--gh-primary) 35%, transparent);
+  transform: scale(1.1);
+}
+
 .quick-prompt-btn:has(svg[color="currentColor"]) {
   color: var(--gh-text-secondary);
 }
