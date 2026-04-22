@@ -29,7 +29,7 @@ export const StarIcon: React.FC<IconProps & { filled?: boolean }> = ({
       points="512,64 625,357 968,364 695,571 794,901 512,704 230,901 329,571 56,364 399,357"
       fill={filled ? color : "none"}
       stroke={filled ? "none" : color}
-      strokeWidth={128}
+      strokeWidth={96}
       strokeLinejoin="round"
     />
   </svg>
