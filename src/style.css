@@ -1523,6 +1523,11 @@
   -ms-overflow-style: none;
 }
 
+/* 分类标签栏横向滚动 - 隐藏滚动条 */
+.prompt-category-bar::-webkit-scrollbar {
+  display: none;
+}
+
 /* ============= 加载历史遮罩样式 ============= */
 .gh-loading-mask {
   position: fixed;

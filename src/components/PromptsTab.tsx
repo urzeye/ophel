@@ -1549,14 +1549,17 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
       {/* 分类标签栏 */}
       <div
+        className="prompt-category-bar"
         style={{
           padding: "8px 12px",
           display: "flex",
           gap: "6px",
-          flexWrap: "wrap",
+          flexWrap: "nowrap",
+          overflowX: "auto",
           background: "var(--gh-bg, white)",
           borderBottom: "1px solid var(--gh-border, #e5e7eb)",
           userSelect: "none", // 禁止文字选中
+          scrollbarWidth: "none",
         }}>
         <span
           onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.ALL)}
