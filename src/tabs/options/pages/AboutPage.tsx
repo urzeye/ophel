@@ -146,7 +146,7 @@ const AboutPage: React.FC = () => {
           </div>
           <button className="about-link-btn about-star-btn">
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <StarIcon size={14} />
+              <StarIcon size={15} color="currentColor" filled={true} />
               {t("giveStar") || "点个 Star"}
             </span>
           </button>
