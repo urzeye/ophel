@@ -508,7 +508,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             userSelect: "none",
           }}>
           {/* 左侧：图标 + 标题（双击切换隐私模式） */}
-          <Tooltip content={currentTip}>
+          <Tooltip content={currentTip} triggerStyle={{ flex: 1, minWidth: 0 }}>
             <div
               style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}
               onMouseEnter={() => {
