@@ -368,7 +368,7 @@ export const DEFAULT_SETTINGS: Settings = {
     edgeSnap: true, // 兼容保留
     preventAutoScroll: false,
     defaultPosition: "right",
-    defaultEdgeDistance: 25,
+    defaultEdgeDistance: 0,
     edgeSnapThreshold: 30,
     height: 85,
     width: 320,
