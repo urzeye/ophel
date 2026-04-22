@@ -1481,7 +1481,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       {/* 搜索栏 + 导入导出按钮 */}
       <div
         style={{
-          padding: "12px",
+          padding: "8px 12px",
           borderBottom: "1px solid var(--gh-border, #e5e7eb)",
           background: "var(--gh-bg-secondary, #f9fafb)",
           display: "flex",
@@ -1496,7 +1496,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{
             flex: 1,
-            padding: "8px 12px",
+            padding: "6px 10px",
             border: "1px solid var(--gh-border, #d1d5db)",
             borderRadius: "8px",
             fontSize: "14px",

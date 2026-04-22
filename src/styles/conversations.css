@@ -75,7 +75,7 @@
 .conversations-toolbar {
   display: flex;
   gap: 6px;
-  padding: 10px 12px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--gh-border, #e5e7eb);
   flex-shrink: 0;
   background: var(--gh-bg, #ffffff);
@@ -435,7 +435,7 @@ html[data-theme="dark"] .conversations-unsupported-icon {
 
 /* 搜索栏样式 */
 .conversations-search-bar {
-  padding: 8px 12px;
+  padding: 6px 12px;
   border-bottom: 1px solid var(--gh-border, #e5e7eb);
   background: var(--gh-bg-secondary, #f9fafb);
   flex-shrink: 0;
@@ -456,7 +456,7 @@ html[data-theme="dark"] .conversations-unsupported-icon {
 .conversations-search-input-group {
   flex: 1;
   position: relative;
-  height: 36px;
+  height: 32px;
   min-width: 0;
 }
 
@@ -483,8 +483,8 @@ html[data-theme="dark"] .conversations-unsupported-icon {
 /* Pin Button */
 .conversations-pin-filter-btn {
   cursor: pointer;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   color: var(--gh-text-tertiary, #9ca3af);
   font-size: 14px;
   display: flex;
@@ -590,8 +590,8 @@ html[data-theme="dark"] .conversations-unsupported-icon {
 /* 标签筛选按钮 */
 .conversations-tag-search-btn {
   cursor: pointer;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   color: var(--gh-text-tertiary, #9ca3af);
   font-size: 14px;
   display: flex;
@@ -623,8 +623,8 @@ html[data-theme="dark"] .conversations-unsupported-icon {
 /* Clear Button */
 .conversations-search-clear {
   cursor: pointer;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   color: var(--gh-text-tertiary, #9ca3af);
   font-size: 18px;
   display: flex;

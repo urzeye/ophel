@@ -499,7 +499,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           ref={headerRef}
           className="gh-panel-header"
           style={{
-            padding: "9px 14px",
+            padding: "10px 14px",
             borderRadius: "12px 12px 0 0",
             display: "flex",
             alignItems: "center",
@@ -520,7 +520,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                 window.postMessage({ type: "GH_PRIVACY_TOGGLE" }, "*")
               }}>
               <SparkleIcon size={18} color={panelSparkleColor} />
-              <span data-tip-target="header-title" style={{ fontSize: "15px", fontWeight: 600 }}>
+              <span data-tip-target="header-title" style={{ fontSize: "18px", fontWeight: 600 }}>
                 {t("panelTitle")}
               </span>
             </div>
