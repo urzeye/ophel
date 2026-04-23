@@ -132,10 +132,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const prevPanelModeRef = useRef(currentSettings.panel?.panelMode)
   // 保存面板当前位置，用于 header 按钮触发的"原地固定"
   const savedPeekingRectRef = useRef<DOMRect | null>(null)
-  // 标题 tooltip 随机 tips（动态读取实际快捷键配置 + 平台检测）
-  const isMac = useMemo(() => isMacOS(), [])
-  const keybindings = currentSettings.shortcuts?.keybindings ?? DEFAULT_KEYBINDINGS
-
   // (Generic tips have moved to MagicCodex)
   const pointerEventsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // 使用 useLayoutEffect 保证在浏览器绘制前完成定位，避免模式切换时闪烁
@@ -152,6 +148,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     if (prevMode === "edge-snap" && currentMode === "floating") {
       // 恢复 pointer-events：floating→edge-snap 会临时禁用，
       // 若快速切回 floating，cleanup 已取消恢复定时器，需在此处手动恢复
+      panel.removeAttribute("data-edge-snap-transitioning")
       panel.style.pointerEvents = ""
 
       const savedRect = savedPeekingRectRef.current
@@ -197,6 +194,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       // 悬浮 → 吸附：先添加 CSS 吸附类，确保 !important 定位在清除 inline style 前生效
       const pos = currentSettings.panel?.defaultPosition ?? "right"
       panel.classList.add(`edge-snapped-${pos}`)
+      panel.setAttribute("data-edge-snap-transitioning", "true")
       panel.style.top = "50%"
       panel.style.transform = "translateY(-50%)"
       panel.style.left = ""
@@ -205,6 +203,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       panel.style.pointerEvents = "none"
       if (pointerEventsTimerRef.current) clearTimeout(pointerEventsTimerRef.current)
       pointerEventsTimerRef.current = setTimeout(() => {
+        panel.removeAttribute("data-edge-snap-transitioning")
         panel.style.pointerEvents = ""
         pointerEventsTimerRef.current = null
       }, 400)
@@ -215,6 +214,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         clearTimeout(pointerEventsTimerRef.current)
         pointerEventsTimerRef.current = null
       }
+      panel.removeAttribute("data-edge-snap-transitioning")
     }
   }, [
     currentSettings.panel?.panelMode,
@@ -226,6 +226,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   // 计算默认位置样式
   const defaultPosition = currentSettings.panel?.defaultPosition ?? "right"
   const defaultEdgeDistance = currentSettings.panel?.defaultEdgeDistance ?? 40
+  const isEdgeSnapMode = (currentSettings.panel?.panelMode ?? "edge-snap") === "edge-snap"
 
   const [showCodex, setShowCodex] = useState(false)
   const [isHeaderPressed, setIsHeaderPressed] = useState(false)
@@ -283,7 +284,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         text: renderTip("tip6", "shortcut", fmt("prevHeading") + "/" + fmt("nextHeading")),
       },
     ]
-  }, [currentSettings.shortcuts?.keybindings, t])
+  }, [currentSettings.shortcuts?.keybindings])
 
   // 获取排序后的首个 tab
   // tabOrder 是 string[]，数组顺序就是显示顺序
@@ -496,10 +497,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         style={{
           position: "fixed",
           top: "50%",
-          // 仅在 floating 模式下通过 React style prop 设置位置；edge-snap 模式下
-          // 由 useLayoutEffect + CSS class 控制，避免 React reconciler 每次重渲染
-          // 写回 inline style 覆盖 CSS transition，导致动画抖动
-          ...(!edgeSnapState
+          // 仅在 floating 模式下通过 React style prop 设置位置；
+          // edge-snap 模式下由 useLayoutEffect + CSS class 控制，避免切换首帧
+          // 与后续重渲染写回 inline style 覆盖 CSS transition，导致动画抖动
+          ...(!isEdgeSnapMode
             ? defaultPosition === "left"
               ? { left: `${defaultEdgeDistance}px`, right: "auto" }
               : { right: `${defaultEdgeDistance}px`, left: "auto" }
