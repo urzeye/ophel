@@ -399,7 +399,7 @@ async function init() {
       // 读取缓存的主题 CSS，预注入以避免主题闪烁（FOUC）
       let earlyThemeCSS = ""
       try {
-        earlyThemeCSS = localStorage.getItem("ophel_theme_cache") || ""
+        earlyThemeCSS = localStorage.getItem("ophel_us_theme_cache") || ""
       } catch {}
       styleEl.textContent =
         (userscriptStyleText || "") + (earlyThemeCSS ? "\n" + earlyThemeCSS : "")

@@ -777,9 +777,14 @@ ${cssVars}
     })
 
     // 将主题 CSS 缓存到 localStorage，供 getStyle() 预注入，消除下次页面刷新时的主题闪烁
+    // 浏览器扩展与油猴脚本使用不同的 key，避免同时启用时互相覆盖
     if (themeCSS) {
       try {
-        localStorage.setItem("ophel_theme_cache", themeCSS)
+        const cacheKey =
+          typeof chrome !== "undefined" && chrome.runtime?.id
+            ? "ophel_ext_theme_cache"
+            : "ophel_us_theme_cache"
+        localStorage.setItem(cacheKey, themeCSS)
       } catch {}
     }
 
