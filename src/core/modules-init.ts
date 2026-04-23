@@ -704,6 +704,8 @@ export function initUrlChangeObserver(ctx: ModulesContext): void {
   setInterval(handleUrlChange, 1000)
 }
 
+declare const __PLATFORM__: "extension" | "userscript" | undefined
+
 /**
  * 清除全部数据时的模块清理
  */
@@ -722,8 +724,12 @@ export function handleClearAllData(): void {
   }
 
   try {
-    localStorage.removeItem("ophel_ext_theme_cache")
-    localStorage.removeItem("ophel_us_theme_cache")
+    const isUserscript = typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
+    if (isUserscript) {
+      localStorage.removeItem("ophel_us_theme_cache")
+    } else {
+      localStorage.removeItem("ophel_ext_theme_cache")
+    }
     localStorage.removeItem("ophel:global-search-shortcut-nudge:v1")
   } catch (e) {
     console.warn("Failed to clear theme cache from localStorage:", e)
