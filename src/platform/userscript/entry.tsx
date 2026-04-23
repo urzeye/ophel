@@ -396,7 +396,13 @@ async function init() {
       const shadowRoot = shadowHost.attachShadow({ mode: "open" })
 
       const styleEl = document.createElement("style")
-      styleEl.textContent = userscriptStyleText
+      // 读取缓存的主题 CSS，预注入以避免主题闪烁（FOUC）
+      let earlyThemeCSS = ""
+      try {
+        earlyThemeCSS = localStorage.getItem("ophel_theme_cache") || ""
+      } catch {}
+      styleEl.textContent =
+        (userscriptStyleText || "") + (earlyThemeCSS ? "\n" + earlyThemeCSS : "")
       shadowRoot.appendChild(styleEl)
 
       const container = document.createElement("div")
