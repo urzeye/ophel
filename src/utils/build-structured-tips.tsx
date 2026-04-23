@@ -52,6 +52,7 @@ export function buildStructuredTips(
 
   return [
     { icon: "👻", text: renderTip("tip1", "modifier", isMac ? "⌘ Cmd" : "Ctrl") },
+    { icon: "↔️", text: t("featureTip-panel-mode-toggle-path") },
     { icon: "🔍", text: renderTip("tip4", "shortcut", fmt("openGlobalSearch")) },
     { icon: "🚀", text: renderTip("tip3", "shortcut", fmt("showShortcuts")) },
     { icon: "📋", text: renderTip("tip5", "shortcut", fmt("copyLatestReply")) },

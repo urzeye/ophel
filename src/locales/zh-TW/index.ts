@@ -149,6 +149,7 @@ export const zhTW = {
   pinPanel: "固定面板",
   snapToEdge: "吸附到邊緣",
   tip1: "長按 {modifier} 進入穿透模式，可穿透面板操作下方內容",
+
   tip3: "按 {shortcut} 查看全部快捷鍵",
   tip4: "{shortcut} 開啟全域搜尋，支援 folder: tag: site: 語法",
   tip5: "{shortcut} 一鍵複製最新 AI 回覆",
@@ -1359,6 +1360,9 @@ export const zhTW = {
   "featureTip-passthrough-title": "穿透模式",
   "featureTip-passthrough-desc": "讓面板變透明，直接操作下方頁面內容",
   "featureTip-passthrough-path": "長按 {modifier}，面板會變透明，可直接點擊下層內容",
+  "featureTip-panel-mode-toggle-title": "切換面板模式",
+  "featureTip-panel-mode-toggle-desc": "快速在懸浮面板和自動吸附邊緣模式之間切換",
+  "featureTip-panel-mode-toggle-path": "雙擊面板頂部標題列快速切換面板顯示模式",
   "featureTip-shortcuts-title": "快捷鍵總覽",
   "featureTip-shortcuts-desc": "查看並自訂所有鍵盤快捷鍵",
   "featureTip-shortcuts-path": "{shortcut} 開啟快捷鍵總覽",

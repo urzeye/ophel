@@ -7,9 +7,18 @@ interface Props {
   onClose: () => void
   tips: { icon: string; text: React.ReactNode; shortcut?: string }[]
   isStatic?: boolean
+  onMouseEnter?: React.MouseEventHandler<HTMLDivElement>
+  onMouseLeave?: React.MouseEventHandler<HTMLDivElement>
 }
 
-export const MagicCodex: React.FC<Props> = ({ isOpen, onClose, tips, isStatic = false }) => {
+export const MagicCodex: React.FC<Props> = ({
+  isOpen,
+  onClose,
+  tips,
+  isStatic = false,
+  onMouseEnter,
+  onMouseLeave,
+}) => {
   const popoverRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -59,6 +68,9 @@ export const MagicCodex: React.FC<Props> = ({ isOpen, onClose, tips, isStatic = 
       onPointerDown={(e) => e.stopPropagation()}
       onPointerUp={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
+      onDoubleClick={(e) => e.stopPropagation()}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       style={{
         position: isStatic ? "relative" : "absolute",
         top: isStatic ? "auto" : "36px",
@@ -85,9 +97,10 @@ export const MagicCodex: React.FC<Props> = ({ isOpen, onClose, tips, isStatic = 
           padding: "10px",
           display: "flex",
           flexDirection: "column",
-          gap: "4px",
-          maxHeight: "320px",
+          gap: "2px",
+          maxHeight: "420px",
           overflowY: "auto",
+          userSelect: "none",
         }}>
         {tips.map((tip, idx) => (
           <div
@@ -97,7 +110,7 @@ export const MagicCodex: React.FC<Props> = ({ isOpen, onClose, tips, isStatic = 
               display: "flex",
               alignItems: "flex-start",
               gap: "12px",
-              padding: "10px 12px",
+              padding: "7px 12px",
               borderRadius: "10px",
               fontSize: "13px",
               color: "var(--gh-text-secondary, #4b5563)",

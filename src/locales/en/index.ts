@@ -254,6 +254,7 @@ export const en = {
   pinPanel: "Pin panel",
   snapToEdge: "Snap to edge",
   tip1: "Long press {modifier} to enter passthrough mode and interact with content beneath the panel",
+
   tip3: "Press {shortcut} to view all keyboard shortcuts",
   tip4: "{shortcut} opens global search with folder: tag: site: syntax",
   tip5: "{shortcut} to quickly copy the latest AI response",
@@ -1406,6 +1407,10 @@ Please output the optimized code block directly, followed by a brief summary of 
     "Make the panel transparent and interact with page content beneath",
   "featureTip-passthrough-path":
     "Hold {modifier} — panel turns transparent, click through to content below",
+  "featureTip-panel-mode-toggle-title": "Switch Panel Mode",
+  "featureTip-panel-mode-toggle-desc": "Quickly switch between floating and edge-snap mode",
+  "featureTip-panel-mode-toggle-path":
+    "Double-click the title bar to quickly switch the panel display mode",
   "featureTip-shortcuts-title": "Keyboard Shortcuts Overview",
   "featureTip-shortcuts-desc": "View and customize all keyboard shortcuts",
   "featureTip-shortcuts-path": "{shortcut} to open shortcuts overview",

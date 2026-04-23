@@ -22,6 +22,10 @@ export const FEATURE_TIPS: FeatureTip[] = [
     // 无 highlightTarget，纯按键操作
   },
   {
+    id: "panel-mode-toggle",
+    highlightTarget: "header-title",
+  },
+  {
     id: "shortcuts",
     highlightTarget: "shortcuts-btn",
     shortcutIds: ["showShortcuts"],

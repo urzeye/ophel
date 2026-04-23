@@ -1380,6 +1380,9 @@ export const ko = {
   "featureTip-passthrough-desc": "패널을 투명하게 만들고 아래 페이지 콘텐츠 조작",
   "featureTip-passthrough-path":
     "{modifier} 잡아두기 — 패널이 투명해지고 아래 콘텐츠를 클릭할 수 있음",
+  "featureTip-panel-mode-toggle-title": "패널 모드 전환",
+  "featureTip-panel-mode-toggle-desc": "플로팅 모드와 가장자리 스냅 모드 사이를 빠르게 전환",
+  "featureTip-panel-mode-toggle-path": "제목 표시줄을 더블 클릭하여 패널 표시 모드를 빠르게 전환",
   "featureTip-shortcuts-title": "키보드 단축키 모아보기",
   "featureTip-shortcuts-desc": "모든 키보드 단축키 확인 및 사용자 지정",
   "featureTip-shortcuts-path": "{shortcut}으로 단축키 모아보기 열기",

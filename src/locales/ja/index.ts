@@ -251,6 +251,7 @@ export const ja = {
   pinPanel: "パネルを固定",
   snapToEdge: "端にスナップ",
   tip1: "{modifier} を長押しで透過モード、パネルの下のコンテンツを操作可能",
+
   tip3: "{shortcut} で全ショートカットを表示",
   tip4: "{shortcut} でグローバル検索（folder: tag: site: 構文対応）",
   tip5: "{shortcut} で最新のAI回答をコピー",
@@ -1393,6 +1394,11 @@ export const ja = {
   "featureTip-passthrough-title": "透過モード",
   "featureTip-passthrough-desc": "パネルを透明にして下のページコンテンツを操作",
   "featureTip-passthrough-path": "{modifier}を長押し — パネルが透明になりクリック可能",
+  "featureTip-panel-mode-toggle-title": "パネルモードの切り替え",
+  "featureTip-panel-mode-toggle-desc":
+    "フローティングモードとエッジスナップモードを素早く切り替える",
+  "featureTip-panel-mode-toggle-path":
+    "タイトルバーをダブルクリックしてパネル表示モードを素早く切り替え",
   "featureTip-shortcuts-title": "キーボードショートカット一覧",
   "featureTip-shortcuts-desc": "すべてのキーボードショートカットを確認・カスタマイズ",
   "featureTip-shortcuts-path": "{shortcut}でショートカット一覧を開く",

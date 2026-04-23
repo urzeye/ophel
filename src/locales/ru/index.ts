@@ -244,6 +244,7 @@ export const ru = {
   pinPanel: "Закрепить панель",
   snapToEdge: "Прикрепить к краю",
   tip1: "Удерживайте {modifier} для режима прозрачности — взаимодействие с контентом под панелью",
+
   tip3: "{shortcut} показывает все горячие клавиши",
   tip4: "{shortcut} — глобальный поиск (folder: tag: site:)",
   tip5: "{shortcut} копирует последний ответ ИИ",
@@ -1384,6 +1385,11 @@ export const ru = {
     "Делает панель прозрачной и позволяет взаимодействовать с содержимым страницы под ней",
   "featureTip-passthrough-path":
     "Удерживайте {modifier} — панель станет прозрачной, можно нажимать по содержимому ниже",
+  "featureTip-panel-mode-toggle-title": "Переключить режим панели",
+  "featureTip-panel-mode-toggle-desc":
+    "Быстро переключаться между плавающим и прикреплённым режимом",
+  "featureTip-panel-mode-toggle-path":
+    "Дважды щёлкните по заголовку панели, чтобы быстро переключить режим отображения",
   "featureTip-shortcuts-title": "Обзор горячих клавиш",
   "featureTip-shortcuts-desc": "Просматривайте и настраивайте все горячие клавиши",
   "featureTip-shortcuts-path": "{shortcut} — открыть обзор горячих клавиш",

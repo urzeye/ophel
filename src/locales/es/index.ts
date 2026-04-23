@@ -246,6 +246,7 @@ export const es = {
   pinPanel: "Fijar panel",
   snapToEdge: "Acoplar al borde",
   tip1: "Mantén {modifier} para activar el modo transparente e interactuar con el contenido debajo",
+
   tip3: "{shortcut} muestra todos los atajos de teclado",
   tip4: "{shortcut} abre la búsqueda global (sintaxis folder: tag: site:)",
   tip5: "{shortcut} copia la última respuesta de IA",
@@ -1390,6 +1391,11 @@ Dame el código y luego un resumen de mejoras.`,
   "featureTip-passthrough-desc":
     "Hacer el panel transparente e interactuar con el contenido de la página",
   "featureTip-passthrough-path": "Mantén {modifier} — el panel se vuelve transparente",
+  "featureTip-panel-mode-toggle-title": "Cambiar modo del panel",
+  "featureTip-panel-mode-toggle-desc":
+    "Cambia rápidamente entre el modo flotante y el modo de anclaje",
+  "featureTip-panel-mode-toggle-path":
+    "Doble clic en la barra de título para cambiar rápidamente el modo de visualización del panel",
   "featureTip-shortcuts-title": "Atajos de teclado",
   "featureTip-shortcuts-desc": "Ver y personalizar todos los atajos de teclado",
   "featureTip-shortcuts-path": "{shortcut} para abrir los atajos",

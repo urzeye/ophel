@@ -247,6 +247,7 @@ export const fr = {
   pinPanel: "Épingler le panneau",
   snapToEdge: "Ancrer au bord",
   tip1: "Maintenez {modifier} pour le mode transparent et interagir avec le contenu en dessous",
+
   tip3: "{shortcut} affiche tous les raccourcis clavier",
   tip4: "{shortcut} ouvre la recherche globale (syntaxe folder: tag: site:)",
   tip5: "{shortcut} copie la dernière réponse IA",
@@ -1398,6 +1399,11 @@ Donnez le code puis un résumé des améliorations.`,
   "featureTip-passthrough-desc":
     "Rendre le panneau transparent et interagir avec le contenu en dessous",
   "featureTip-passthrough-path": "Maintenir {modifier} — le panneau devient transparent",
+  "featureTip-panel-mode-toggle-title": "Changer le mode du panneau",
+  "featureTip-panel-mode-toggle-desc":
+    "Basculer rapidement entre le mode flottant et le mode d'ancrage",
+  "featureTip-panel-mode-toggle-path":
+    "Double-cliquer sur la barre de titre pour changer rapidement le mode d'affichage du panneau",
   "featureTip-shortcuts-title": "Raccourcis clavier",
   "featureTip-shortcuts-desc": "Voir et personnaliser tous les raccourcis clavier",
   "featureTip-shortcuts-path": "{shortcut} pour ouvrir les raccourcis",

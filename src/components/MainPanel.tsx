@@ -273,18 +273,48 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     [currentSettings.shortcuts?.keybindings, currentSettings.language, shortcutNotSetLabel],
   )
 
+  // Hover logic for MagicCodex trigger instead of click
+  const headerInteractionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleLogoMouseEnter = useCallback(() => {
+    if (hasSeenCodex) return
+    if (headerInteractionTimerRef.current) clearTimeout(headerInteractionTimerRef.current)
+    setShowCodex(true)
+    setHasSeenCodex(true)
+  }, [hasSeenCodex, setHasSeenCodex])
+
+  const handleLogoMouseLeave = useCallback(() => {
+    if (headerInteractionTimerRef.current) clearTimeout(headerInteractionTimerRef.current)
+    headerInteractionTimerRef.current = setTimeout(() => {
+      setShowCodex(false)
+    }, 300)
+  }, [])
+
+  // Double click to toggle panel mode
+  const handleHeaderDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      // 忽略在控制按钮上的双击
+      const target = e.target
+      if (target instanceof Element && target.closest(".gh-panel-controls")) return
+
+      const current = currentSettings.panel?.panelMode ?? "edge-snap"
+      if (current === "edge-snap" && panelRef.current) {
+        savedPeekingRectRef.current = panelRef.current.getBoundingClientRect()
+      }
+      updateNestedSetting("panel", "panelMode", current === "edge-snap" ? "floating" : "edge-snap")
+    },
+    [currentSettings.panel?.panelMode, updateNestedSetting],
+  )
+
+  useEffect(() => {
+    return () => {
+      if (headerInteractionTimerRef.current) clearTimeout(headerInteractionTimerRef.current)
+    }
+  }, [])
+
   const closeCodex = useCallback(() => {
     setShowCodex(false)
   }, [])
-
-  const toggleCodex = useCallback(
-    (event?: React.SyntheticEvent) => {
-      event?.stopPropagation()
-      setShowCodex((prev) => !prev)
-      setHasSeenCodex(true)
-    },
-    [setHasSeenCodex],
-  )
 
   // 获取排序后的首个 tab
   // tabOrder 是 string[]，数组顺序就是显示顺序
@@ -535,6 +565,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           onPointerUp={resetHeaderPressHint}
           onPointerLeave={resetHeaderPressHint}
           onPointerCancel={resetHeaderPressHint}
+          onDoubleClick={handleHeaderDoubleClick}
           className="gh-panel-header"
           style={{
             position: "relative",
@@ -546,12 +577,28 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             // cursor 由 CSS (.gh-panel-header) 统一控制为 pointer
             userSelect: "none",
           }}>
-          {/* 左侧：图标 + 标题（点击弹出法典） */}
-          <div style={{ position: "relative" }}>
-            <button
-              type="button"
+          {/* 左侧：图标 + 标题悬停展示高级指南 */}
+          <div
+            style={{ position: "relative" }}
+            onMouseEnter={handleLogoMouseEnter}
+            onMouseLeave={handleLogoMouseLeave}>
+            <div
               className="gh-interactive"
+              role="button"
+              tabIndex={0}
               aria-label={t("panelTitle")}
+              data-tip-target="header-title"
+              data-no-header-press-hint="true"
+              onClick={() => {
+                setShowCodex((v) => !v)
+                setHasSeenCodex(true)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault()
+                  setShowCodex((v) => !v)
+                }
+              }}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -562,8 +609,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                 background: "transparent",
                 padding: 0,
                 color: "inherit",
-              }}
-              onClick={toggleCodex}>
+              }}>
               <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
                 <SparkleIcon size={18} color={panelSparkleColor} />
                 {!hasSeenCodex && (
@@ -585,9 +631,15 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               <span style={{ fontSize: "18px", fontWeight: 600, userSelect: "none" }}>
                 {t("panelTitle")}
               </span>
-            </button>
+            </div>
 
-            <MagicCodex isOpen={showCodex} onClose={closeCodex} tips={structuredTips} />
+            <MagicCodex
+              isOpen={showCodex}
+              onClose={closeCodex}
+              tips={structuredTips}
+              onMouseEnter={handleLogoMouseEnter}
+              onMouseLeave={handleLogoMouseLeave}
+            />
           </div>
 
           {/* 右侧：按钮组 - 需要 gh-panel-controls 以排除拖拽 */}

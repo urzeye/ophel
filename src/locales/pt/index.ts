@@ -246,6 +246,7 @@ export const pt = {
   pinPanel: "Fixar painel",
   snapToEdge: "Fixar na borda",
   tip1: "Segure {modifier} para modo transparente e interagir com o conteúdo abaixo",
+
   tip3: "{shortcut} mostra todos os atalhos de teclado",
   tip4: "{shortcut} abre a busca global (sintaxe folder: tag: site:)",
   tip5: "{shortcut} copia a resposta mais recente da IA",
@@ -1384,6 +1385,11 @@ Dê o código e depois um resumo de melhorias.`,
     "Torna o painel transparente para interagir com o conteúdo da página abaixo",
   "featureTip-passthrough-path":
     "Segure {modifier} — o painel fica transparente, clique no conteúdo abaixo",
+  "featureTip-panel-mode-toggle-title": "Alternar modo do painel",
+  "featureTip-panel-mode-toggle-desc":
+    "Alterne rapidamente entre o modo flutuante e o modo de encaixe",
+  "featureTip-panel-mode-toggle-path":
+    "Clique duplo na barra de título para alternar rapidamente o modo de exibição do painel",
   "featureTip-shortcuts-title": "Visão Geral dos Atalhos",
   "featureTip-shortcuts-desc": "Visualize e personalize todos os atalhos de teclado",
   "featureTip-shortcuts-path": "{shortcut} para abrir a visão geral dos atalhos",

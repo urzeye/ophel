@@ -246,6 +246,7 @@ export const de = {
   pinPanel: "Panel anheften",
   snapToEdge: "Am Rand andocken",
   tip1: "{modifier} gedrückt halten für Durchreichmodus – Inhalte unter dem Panel bedienen",
+
   tip3: "{shortcut} zeigt alle Tastaturkürzel",
   tip4: "{shortcut} öffnet die globale Suche (folder: tag: site: Syntax)",
   tip5: "{shortcut} kopiert die neueste KI-Antwort",
@@ -1390,6 +1391,11 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
     "Panel transparent machen und mit Seiteninhalt darunter interagieren",
   "featureTip-passthrough-path":
     "{modifier} gedrückt halten — Panel wird transparent, Klick durch den Inhalt",
+  "featureTip-panel-mode-toggle-title": "Panel-Modus wechseln",
+  "featureTip-panel-mode-toggle-desc":
+    "Schnell zwischen schwebendem und eingebettetem Modus wechseln",
+  "featureTip-panel-mode-toggle-path":
+    "Doppelklick auf die Titelleiste zum schnellen Wechsel des Panel-Anzeigemodus",
   "featureTip-shortcuts-title": "Tastaturkürzel-Übersicht",
   "featureTip-shortcuts-desc": "Alle Tastaturkürzel anzeigen und anpassen",
   "featureTip-shortcuts-path": "{shortcut} zum Öffnen der Tastaturkürzel-Übersicht",

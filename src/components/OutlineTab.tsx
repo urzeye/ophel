@@ -1404,41 +1404,23 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
           if (bookmarkMode && !hasVisibleBookmarks && !searchQuery) {
             return (
-              <div
-                style={{
-                  textAlign: "center",
-                  color: "var(--gh-text-tertiary, #9ca3af)",
-                  marginTop: "40px",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "8px",
-                }}>
+              <div className="outline-empty-state">
                 <div
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: "50%",
-                    background: "rgba(245, 158, 11, 0.1)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#f59e0b",
-                    marginBottom: "8px",
-                  }}>
+                  className="outline-empty-state-icon"
+                  style={{ background: "rgba(245, 158, 11, 0.1)", color: "#f59e0b" }}
+                  aria-hidden="true">
                   <StarIcon size={20} filled={true} color="#f59e0b" />
                 </div>
-                <div
-                  style={{ fontSize: "14px", fontWeight: 500, color: "var(--gh-text, #374151)" }}>
+                <div className="outline-empty-state-title">
                   {t("outlineNoBookmarks") || "暂无收藏"}
                 </div>
-                <div style={{ fontSize: "12px", opacity: 0.7 }}>
+                <div className="outline-empty-state-desc">
                   {t("outlineAddBookmarkHint") || "点击条目旁的星号添加收藏"}
                 </div>
 
                 <div
                   style={{
-                    marginTop: "48px",
+                    marginTop: "32px",
                     width: "100%",
                     display: "flex",
                     justifyContent: "center",
