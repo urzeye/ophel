@@ -233,7 +233,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const [showCodex, setShowCodex] = useState(false)
   const [isHeaderPressed, setIsHeaderPressed] = useState(false)
   const hasSeenCodex = currentSettings.hasSeenOphelAdvancedGuide ?? false
-  const shortcutNotSetLabel = t("shortcutNotSet") || "未设置"
+  const shortcutNotSetKey = "shortcutNotSet"
+  const translatedShortcutNotSetLabel = t(shortcutNotSetKey)
+  const shortcutNotSetLabel =
+    translatedShortcutNotSetLabel === shortcutNotSetKey ? "未设置" : translatedShortcutNotSetLabel
   const setHasSeenCodex = (val: boolean) => {
     if (val && !hasSeenCodex && setSettings) {
       setSettings({ hasSeenOphelAdvancedGuide: true })
