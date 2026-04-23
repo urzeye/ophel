@@ -724,6 +724,7 @@ export function handleClearAllData(): void {
   try {
     localStorage.removeItem("ophel_ext_theme_cache")
     localStorage.removeItem("ophel_us_theme_cache")
+    localStorage.removeItem("ophel:global-search-shortcut-nudge:v1")
   } catch (e) {
     console.warn("Failed to clear theme cache from localStorage:", e)
   }
