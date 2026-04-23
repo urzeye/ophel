@@ -1460,7 +1460,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             return (
               <div className="outline-empty-state">
                 <div className="outline-empty-state-icon" aria-hidden="true">
-                  <OutlineIcon size={18} color="currentColor" />
+                  <OutlineIcon size={20} color="currentColor" />
                 </div>
                 <div className="outline-empty-state-title">
                   {t("outlineEmpty") || "暂无大纲内容"}

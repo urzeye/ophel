@@ -142,14 +142,15 @@
 }
 
 .outline-empty-state-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: var(--gh-text-tertiary, #9ca3af);
   background: color-mix(in srgb, var(--gh-border, #e5e7eb) 22%, transparent);
+  margin-bottom: 8px;
 }
 
 .outline-empty-state-title {
