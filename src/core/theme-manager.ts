@@ -732,6 +732,24 @@ export class ThemeManager {
       }
     }
 
+    // 提前构建主题 CSS 字符串（供注入和缓存复用）
+    let themeCSS = ""
+    if (customStyle) {
+      themeCSS = customStyle.css
+    } else if (vars) {
+      const cssVars = themeVariablesToCSS(vars)
+      themeCSS = `:host {
+${cssVars}
+color-scheme: ${currentMode};
+}
+
+:host([data-theme="dark"]),
+:host .gh-root[data-theme="dark"] {
+${cssVars}
+}
+`
+    }
+
     // 查找 Shadow Host：支持 Plasmo 扩展 (plasmo-csui) 和油猴脚本 (#ophel-userscript-root)
     const shadowHosts = document.querySelectorAll("plasmo-csui, #ophel-userscript-root")
 
@@ -745,26 +763,10 @@ export class ThemeManager {
           styleEl.id = "gh-theme-vars"
         }
 
-        if (customStyle) {
-          // 自定义样式：直接注入 CSS
-          styleEl.textContent = customStyle.css
-        } else if (vars) {
-          // 预置主题：生成变量定义
-          const cssVars = themeVariablesToCSS(vars)
-
-          // 同时设置 data-theme 属性以便 CSS 选择器使用
-          // 并添加强制覆盖的样式
-          styleEl.textContent = `:host {
-${cssVars}
-color-scheme: ${currentMode};
-}
-
-:host([data-theme="dark"]),
-:host .gh-root[data-theme="dark"] {
-${cssVars}
-}
-`
+        if (themeCSS) {
+          styleEl.textContent = themeCSS
         }
+
         // 设置 host 元素的 data-theme 属性
         ;(host as HTMLElement).dataset.theme = currentMode
 
@@ -773,6 +775,13 @@ ${cssVars}
         shadowRoot.append(styleEl)
       }
     })
+
+    // 将主题 CSS 缓存到 localStorage，供 getStyle() 预注入，消除下次页面刷新时的主题闪烁
+    if (themeCSS) {
+      try {
+        localStorage.setItem("ophel_theme_cache", themeCSS)
+      } catch {}
+    }
 
     // 恢复 MutationObserver
     if (wasObserving && this.hostThemeObserver) {

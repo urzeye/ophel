@@ -43,9 +43,22 @@ export const getStyle = () => {
 }
 `
 
+  // 读取缓存的主题 CSS，预注入到 Shadow DOM 初始样式，避免主题闪烁（FOUC）
+  let earlyThemeCSS = ""
+  try {
+    earlyThemeCSS = localStorage.getItem("ophel_theme_cache") || ""
+  } catch {}
+
   // 合并所有 CSS 样式
   style.textContent =
-    interFontFace + "\n" + cssText + "\n" + conversationsCssText + "\n" + settingsCssText
+    interFontFace +
+    "\n" +
+    cssText +
+    "\n" +
+    conversationsCssText +
+    "\n" +
+    settingsCssText +
+    (earlyThemeCSS ? "\n" + earlyThemeCSS : "")
   return style
 }
 
