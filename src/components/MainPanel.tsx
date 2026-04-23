@@ -215,6 +215,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         pointerEventsTimerRef.current = null
       }
       panel.removeAttribute("data-edge-snap-transitioning")
+      panel.style.pointerEvents = ""
     }
   }, [
     currentSettings.panel?.panelMode,
@@ -231,6 +232,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const [showCodex, setShowCodex] = useState(false)
   const [isHeaderPressed, setIsHeaderPressed] = useState(false)
   const hasSeenCodex = currentSettings.hasSeenOphelAdvancedGuide ?? false
+  const shortcutNotSetLabel = t("shortcutNotSet") || "未设置"
   const setHasSeenCodex = (val: boolean) => {
     if (val && !hasSeenCodex && setSettings) {
       setSettings({ hasSeenOphelAdvancedGuide: true })
@@ -309,7 +311,20 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         text: renderTip("tip6", "shortcut", fmt("prevHeading") + "/" + fmt("nextHeading")),
       },
     ]
-  }, [currentSettings.shortcuts?.keybindings])
+  }, [currentSettings.shortcuts?.keybindings, shortcutNotSetLabel])
+
+  const closeCodex = useCallback(() => {
+    setShowCodex(false)
+  }, [])
+
+  const toggleCodex = useCallback(
+    (event?: React.SyntheticEvent) => {
+      event?.stopPropagation()
+      setShowCodex((prev) => !prev)
+      setHasSeenCodex(true)
+    },
+    [setHasSeenCodex],
+  )
 
   // 获取排序后的首个 tab
   // tabOrder 是 string[]，数组顺序就是显示顺序
@@ -572,20 +587,22 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             userSelect: "none",
           }}>
           {/* 左侧：图标 + 标题（点击弹出法典） */}
-          <div
+          <button
+            type="button"
             className="gh-interactive"
+            aria-label={t("panelTitle")}
             style={{
               display: "flex",
               alignItems: "center",
               gap: "6px",
               cursor: "pointer",
               position: "relative",
+              border: "none",
+              background: "transparent",
+              padding: 0,
+              color: "inherit",
             }}
-            onClick={(e) => {
-              e.stopPropagation()
-              setShowCodex(!showCodex)
-              setHasSeenCodex(true)
-            }}>
+            onClick={toggleCodex}>
             <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
               <SparkleIcon size={18} color={panelSparkleColor} />
               {!hasSeenCodex && (
@@ -610,11 +627,11 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
             <MagicCodex
               isOpen={showCodex}
-              onClose={() => setShowCodex(false)}
+              onClose={closeCodex}
               tips={structuredTips}
               color={panelSparkleColor}
             />
-          </div>
+          </button>
 
           {/* 右侧：按钮组 - 需要 gh-panel-controls 以排除拖拽 */}
           <div

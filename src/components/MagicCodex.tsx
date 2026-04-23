@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from "react"
-import { SparkleIcon } from "~components/icons/SparkleIcon"
 
 interface Props {
   isOpen: boolean
@@ -11,21 +10,32 @@ interface Props {
 
 export const MagicCodex: React.FC<Props> = ({ isOpen, onClose, tips, color, isStatic = false }) => {
   const popoverRef = useRef<HTMLDivElement>(null)
+  const ignoreNextDocumentClickRef = useRef(false)
 
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen || isStatic) return
+
+    ignoreNextDocumentClickRef.current = true
+
     const handleOutsideClick = (e: MouseEvent) => {
-      const target = e.composedPath().length > 0 ? e.composedPath()[0] : e.target
+      if (ignoreNextDocumentClickRef.current) {
+        ignoreNextDocumentClickRef.current = false
+        return
+      }
+
+      const target = typeof e.composedPath === "function" ? e.composedPath()[0] : e.target
       if (popoverRef.current && !popoverRef.current.contains(target as Node)) {
         onClose()
       }
     }
-    // Set timeout to avoid immediate close from the open click event
-    setTimeout(() => {
-      document.addEventListener("click", handleOutsideClick)
-    }, 10)
-    return () => document.removeEventListener("click", handleOutsideClick)
-  }, [isOpen, onClose])
+
+    document.addEventListener("click", handleOutsideClick)
+
+    return () => {
+      ignoreNextDocumentClickRef.current = false
+      document.removeEventListener("click", handleOutsideClick)
+    }
+  }, [isOpen, isStatic, onClose])
 
   if (!isOpen) return null
 
@@ -51,7 +61,7 @@ export const MagicCodex: React.FC<Props> = ({ isOpen, onClose, tips, color, isSt
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        animation: "popover-enter 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)",
+        animation: "gh-popover-enter 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)",
       }}>
       <div
         className="gh-hide-scrollbar"

@@ -387,12 +387,13 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   const { settings } = useSettingsStore()
   const currentSettings = settings
   const isMac = React.useMemo(() => isMacOS(), [])
+  const shortcutNotSetLabel = t("shortcutNotSet") || "未设置"
 
   const structuredTips = React.useMemo(() => {
     const kb = currentSettings.shortcuts?.keybindings ?? DEFAULT_KEYBINDINGS
     const fmt = (id: string) => {
       const shortcut = kb[id] ?? DEFAULT_KEYBINDINGS[id]
-      return shortcut ? formatShortcut(shortcut, isMac) : "未设置"
+      return shortcut ? formatShortcut(shortcut, isMac) : shortcutNotSetLabel
     }
 
     // React node builder for inline shortcut formatting
@@ -435,7 +436,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         text: renderTip("tip6", "shortcut", fmt("prevHeading") + "/" + fmt("nextHeading")),
       },
     ]
-  }, [currentSettings.shortcuts?.keybindings, isMac])
+  }, [currentSettings.shortcuts?.keybindings, isMac, shortcutNotSetLabel])
 
   // Initialize state from manager to prevent flicker
   const initialState = manager.getState()
