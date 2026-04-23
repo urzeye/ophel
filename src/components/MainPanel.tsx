@@ -263,9 +263,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   const structuredTips = useMemo(() => {
     const kb = currentSettings.shortcuts?.keybindings ?? DEFAULT_KEYBINDINGS
+    const shortcutNotSetLabel = t("shortcutNotSet") || "未设置"
     const fmt = (id: string) => {
       const shortcut = kb[id] ?? DEFAULT_KEYBINDINGS[id]
-      return shortcut ? formatShortcut(shortcut, isMacOS()) : "未设置"
+      return shortcut ? formatShortcut(shortcut, isMacOS()) : shortcutNotSetLabel
     }
 
     // React node builder for inline shortcut formatting
