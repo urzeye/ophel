@@ -63,7 +63,7 @@ export const MagicCodex: React.FC<Props> = ({ isOpen, onClose, tips, isStatic = 
         position: isStatic ? "relative" : "absolute",
         top: isStatic ? "auto" : "36px",
         left: isStatic ? "auto" : "-4px",
-        width: isStatic ? "calc(100% - 32px)" : "max-content",
+        width: isStatic ? "calc(100% - 16px)" : "max-content",
         margin: isStatic ? "0 auto" : "0",
         maxWidth: isStatic ? "100%" : "calc(var(--panel-width, 320px) - 24px)",
         textAlign: "left",
