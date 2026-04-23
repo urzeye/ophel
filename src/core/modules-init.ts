@@ -720,6 +720,13 @@ export function handleClearAllData(): void {
     modules.usageCounterManager.destroy()
     modules.usageCounterManager = null
   }
+
+  try {
+    localStorage.removeItem("ophel_ext_theme_cache")
+    localStorage.removeItem("ophel_us_theme_cache")
+  } catch (e) {
+    console.warn("Failed to clear theme cache from localStorage:", e)
+  }
 }
 
 /**
