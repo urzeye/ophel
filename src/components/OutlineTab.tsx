@@ -1435,6 +1435,23 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                 <div style={{ fontSize: "12px", opacity: 0.7 }}>
                   {t("outlineAddBookmarkHint") || "点击条目旁的星号添加收藏"}
                 </div>
+
+                <div
+                  style={{
+                    marginTop: "48px",
+                    width: "100%",
+                    display: "flex",
+                    justifyContent: "center",
+                  }}>
+                  {!isCodexOpen && (
+                    <MagicCodex
+                      isOpen={true}
+                      onClose={() => {}}
+                      tips={structuredTips}
+                      isStatic={true}
+                    />
+                  )}
+                </div>
               </div>
             )
           }
