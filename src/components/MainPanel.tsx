@@ -138,39 +138,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   // (Generic tips have moved to MagicCodex)
   const pointerEventsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // 用原生事件监听控制拖拽提示层的显隐，完全绕过 React re-render
-  // 避免 setIsHeaderPressed 触发的 React 重渲染与 CSS snap 动画互相干扰
-  useEffect(() => {
-    const header = headerRef.current
-    const hint = dragHintRef.current
-    if (!header || !hint) return
-
-    const handleDown = (e: PointerEvent) => {
-      // 排除 controls 区域（按钮点击不触发提示）和 gh-interactive（Logo/标题点击）
-      if (
-        (e.target as Element).closest(".gh-panel-controls") ||
-        (e.target as Element).closest(".gh-interactive")
-      )
-        return
-      hint.style.transform = "translate(-50%, 8px)"
-      hint.style.opacity = "1"
-    }
-    const handleUp = () => {
-      hint.style.transform = "translate(-50%, -4px)"
-      hint.style.opacity = "0"
-    }
-
-    header.addEventListener("pointerdown", handleDown)
-    header.addEventListener("pointerup", handleUp)
-    header.addEventListener("pointerleave", handleUp)
-
-    return () => {
-      header.removeEventListener("pointerdown", handleDown)
-      header.removeEventListener("pointerup", handleUp)
-      header.removeEventListener("pointerleave", handleUp)
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- refs are stable after mount
   // 使用 useLayoutEffect 保证在浏览器绘制前完成定位，避免模式切换时闪烁
   useLayoutEffect(() => {
     const currentMode = currentSettings.panel?.panelMode
@@ -261,8 +228,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const defaultEdgeDistance = currentSettings.panel?.defaultEdgeDistance ?? 40
 
   const [showCodex, setShowCodex] = useState(false)
-  // 拖拽提示层 ref：直接操作 DOM，不触发 React re-render（与 useDraggable 保持一致）
-  const dragHintRef = useRef<HTMLDivElement>(null)
+  const [isHeaderPressed, setIsHeaderPressed] = useState(false)
   const hasSeenCodex = currentSettings.hasSeenOphelAdvancedGuide ?? false
   const setHasSeenCodex = (val: boolean) => {
     if (val && !hasSeenCodex && setSettings) {
@@ -560,6 +526,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         {/* Header - 拖拽区域 */}
         <div
           ref={headerRef}
+          onPointerDown={() => setIsHeaderPressed(true)}
+          onPointerUp={() => setIsHeaderPressed(false)}
+          onPointerLeave={() => setIsHeaderPressed(false)}
           className="gh-panel-header"
           style={{
             position: "relative",
@@ -728,15 +697,14 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
         {/* 拖拽/悬停 即时提示层 (幽灵模式) */}
         <div
-          ref={dragHintRef}
           style={{
             position: "absolute",
             top: "56px",
             left: "50%",
             width: "max-content",
             maxWidth: "85%",
-            transform: "translate(-50%, -4px)",
-            opacity: 0,
+            transform: `translate(-50%, ${isHeaderPressed ? "8px" : "-4px"})`,
+            opacity: isHeaderPressed ? 1 : 0,
             pointerEvents: "none",
             transition: "all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)",
             background: "var(--gh-bg-secondary, rgba(255, 255, 255, 0.85))",
