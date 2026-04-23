@@ -42,7 +42,11 @@ export function buildStructuredTips(
 ): TipItem[] {
   const kb = keybindings ?? DEFAULT_KEYBINDINGS
   const fmt = (id: string) => {
-    const shortcut = kb[id] ?? DEFAULT_KEYBINDINGS[id]
+    const shortcut = kb[id]
+    if (shortcut === undefined) {
+      const defaultShortcut = DEFAULT_KEYBINDINGS[id]
+      return defaultShortcut ? formatShortcut(defaultShortcut, isMac) : shortcutNotSetLabel
+    }
     return shortcut ? formatShortcut(shortcut, isMac) : shortcutNotSetLabel
   }
 
