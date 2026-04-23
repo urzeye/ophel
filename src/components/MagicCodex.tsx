@@ -15,6 +15,22 @@ export const MagicCodex: React.FC<Props> = ({ isOpen, onClose, tips, color, isSt
   useEffect(() => {
     if (!isOpen || isStatic) return
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation()
+        onClose()
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown)
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [isOpen, isStatic, onClose])
+
+  useEffect(() => {
+    if (!isOpen || isStatic) return
+
     ignoreNextDocumentClickRef.current = true
 
     const handleOutsideClick = (e: MouseEvent) => {
@@ -42,6 +58,8 @@ export const MagicCodex: React.FC<Props> = ({ isOpen, onClose, tips, color, isSt
   return (
     <div
       ref={popoverRef}
+      role="dialog"
+      aria-label="Feature tips"
       className="gh-magic-codex-popover"
       onPointerDown={(e) => e.stopPropagation()}
       onPointerUp={(e) => e.stopPropagation()}
