@@ -28,7 +28,8 @@ import {
 import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { MagicCodex } from "~components/MagicCodex"
 import { TAB_IDS } from "~constants"
-import { DEFAULT_KEYBINDINGS, formatShortcut, isMacOS } from "~constants/shortcuts"
+import { isMacOS } from "~constants/shortcuts"
+import { buildStructuredTips } from "~utils/build-structured-tips"
 import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager } from "~core/outline-manager"
 import type { PromptManager } from "~core/prompt-manager"
@@ -263,54 +264,16 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     [resetHeaderPressHint, shouldShowHeaderPressHint],
   )
 
-  const structuredTips = useMemo(() => {
-    const kb = currentSettings.shortcuts?.keybindings ?? DEFAULT_KEYBINDINGS
-    const fmt = (id: string) => {
-      const shortcut = kb[id] ?? DEFAULT_KEYBINDINGS[id]
-      return shortcut ? formatShortcut(shortcut, isMacOS()) : shortcutNotSetLabel
-    }
-
-    // React node builder for inline shortcut formatting
-    const renderTip = (transKey: string, placeholderName: string, kbValue: string) => {
-      const raw = t(transKey, { [placeholderName]: "___SC___" })
-      const parts = raw.split("___SC___")
-      if (parts.length === 1) return parts[0]
-      return (
-        <span style={{ display: "inline" }}>
-          {parts[0]}
-          <span
-            style={{
-              fontFamily: "monospace",
-              background: "var(--gh-bg-secondary, #f3f4f6)",
-              border: "1px solid var(--gh-border, #e5e7eb)",
-              padding: "2px 6px",
-              borderRadius: "4px",
-              fontSize: "11px",
-              fontWeight: 500,
-              color: "var(--gh-text, #1f2937)",
-              display: "inline-flex",
-              alignItems: "center",
-              margin: "0 4px",
-              verticalAlign: "bottom",
-            }}>
-            {kbValue}
-          </span>
-          {parts[1]}
-        </span>
-      )
-    }
-
-    return [
-      { icon: "👻", text: renderTip("tip1", "modifier", isMacOS() ? "⌘ Cmd" : "Ctrl") },
-      { icon: "🔍", text: renderTip("tip4", "shortcut", fmt("openGlobalSearch")) },
-      { icon: "🚀", text: renderTip("tip3", "shortcut", fmt("showShortcuts")) },
-      { icon: "📋", text: renderTip("tip5", "shortcut", fmt("copyLatestReply")) },
-      {
-        icon: "🧭",
-        text: renderTip("tip6", "shortcut", fmt("prevHeading") + "/" + fmt("nextHeading")),
-      },
-    ]
-  }, [currentSettings.shortcuts?.keybindings, currentSettings.language, shortcutNotSetLabel])
+  const structuredTips = useMemo(
+    () =>
+      buildStructuredTips(
+        currentSettings.shortcuts?.keybindings,
+        isMacOS(),
+        shortcutNotSetLabel,
+        currentSettings.language,
+      ),
+    [currentSettings.shortcuts?.keybindings, currentSettings.language, shortcutNotSetLabel],
+  )
 
   const closeCodex = useCallback(() => {
     setShowCodex(false)
