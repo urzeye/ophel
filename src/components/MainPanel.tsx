@@ -785,7 +785,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                   transition: "all 0.2s",
                 }}>
                 <span style={{ display: "flex", alignItems: "center" }}>
-                  {IconComp && <IconComp size={14} />}
+                  {IconComp && <IconComp size={16} />}
                 </span>
                 <span>{t(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`)}</span>
               </button>
