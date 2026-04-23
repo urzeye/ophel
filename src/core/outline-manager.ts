@@ -122,6 +122,9 @@ export class OutlineManager {
     // Listen to monitor messages
     window.addEventListener("message", this.handleMessage.bind(this))
 
+    // URL 变化时立即刷新大纲（SPA 导航：_doRefresh 内有 isNewConversation() 守卫）
+    window.addEventListener("gh-url-change", this.handleUrlChange.bind(this))
+
     // 订阅 bookmarks-store，当书签变化时刷新大纲
     this.unsubscribeBookmarks = useBookmarkStore.subscribe(() => {
       // 只有在激活状态下才刷新，避免不必要的计算
@@ -189,6 +192,13 @@ export class OutlineManager {
       // Final refresh
       this.refresh()
     }
+  }
+
+  private handleUrlChange() {
+    // SPA 导航时立即触发一次刷新：_doRefresh 内的 isNewConversation() 守卫会
+    // 在新对话页清空大纲，在普通会话页正常抽取
+    this.treeKey = ""
+    this.refresh()
   }
 
   private startAutoUpdate() {
