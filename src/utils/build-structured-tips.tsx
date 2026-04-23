@@ -39,8 +39,6 @@ export function buildStructuredTips(
   keybindings: Record<string, ShortcutBinding | null> | undefined,
   isMac: boolean,
   shortcutNotSetLabel: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _language?: string,
 ): TipItem[] {
   const kb = keybindings ?? DEFAULT_KEYBINDINGS
   const fmt = (id: string) => {

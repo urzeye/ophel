@@ -391,13 +391,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   const shortcutNotSetLabel = t("shortcutNotSet") || "未设置"
 
   const structuredTips = React.useMemo(
-    () =>
-      buildStructuredTips(
-        currentSettings.shortcuts?.keybindings,
-        isMac,
-        shortcutNotSetLabel,
-        currentSettings.language,
-      ),
+    () => buildStructuredTips(currentSettings.shortcuts?.keybindings, isMac, shortcutNotSetLabel),
     [currentSettings.shortcuts?.keybindings, currentSettings.language, isMac, shortcutNotSetLabel],
   )
 

@@ -1,16 +1,16 @@
 import React, { useEffect, useRef } from "react"
 
+import { t } from "~utils/i18n"
+
 interface Props {
   isOpen: boolean
   onClose: () => void
   tips: { icon: string; text: React.ReactNode; shortcut?: string }[]
-  color: string
   isStatic?: boolean
 }
 
-export const MagicCodex: React.FC<Props> = ({ isOpen, onClose, tips, color, isStatic = false }) => {
+export const MagicCodex: React.FC<Props> = ({ isOpen, onClose, tips, isStatic = false }) => {
   const popoverRef = useRef<HTMLDivElement>(null)
-  const ignoreNextDocumentClickRef = useRef(false)
 
   useEffect(() => {
     if (!isOpen || isStatic) return
@@ -31,24 +31,19 @@ export const MagicCodex: React.FC<Props> = ({ isOpen, onClose, tips, color, isSt
   useEffect(() => {
     if (!isOpen || isStatic) return
 
-    ignoreNextDocumentClickRef.current = true
-
     const handleOutsideClick = (e: MouseEvent) => {
-      if (ignoreNextDocumentClickRef.current) {
-        ignoreNextDocumentClickRef.current = false
-        return
-      }
-
       const target = typeof e.composedPath === "function" ? e.composedPath()[0] : e.target
       if (popoverRef.current && !popoverRef.current.contains(target as Node)) {
         onClose()
       }
     }
 
-    document.addEventListener("click", handleOutsideClick)
+    const timeoutId = window.setTimeout(() => {
+      document.addEventListener("click", handleOutsideClick)
+    }, 10)
 
     return () => {
-      ignoreNextDocumentClickRef.current = false
+      window.clearTimeout(timeoutId)
       document.removeEventListener("click", handleOutsideClick)
     }
   }, [isOpen, isStatic, onClose])
@@ -59,7 +54,7 @@ export const MagicCodex: React.FC<Props> = ({ isOpen, onClose, tips, color, isSt
     <div
       ref={popoverRef}
       role="dialog"
-      aria-label="Feature tips"
+      aria-label={t("featureTipsCategory")}
       className="gh-magic-codex-popover"
       onPointerDown={(e) => e.stopPropagation()}
       onPointerUp={(e) => e.stopPropagation()}

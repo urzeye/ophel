@@ -266,12 +266,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   const structuredTips = useMemo(
     () =>
-      buildStructuredTips(
-        currentSettings.shortcuts?.keybindings,
-        isMacOS(),
-        shortcutNotSetLabel,
-        currentSettings.language,
-      ),
+      buildStructuredTips(currentSettings.shortcuts?.keybindings, isMacOS(), shortcutNotSetLabel),
     [currentSettings.shortcuts?.keybindings, currentSettings.language, shortcutNotSetLabel],
   )
 
@@ -549,51 +544,48 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             userSelect: "none",
           }}>
           {/* 左侧：图标 + 标题（点击弹出法典） */}
-          <button
-            type="button"
-            className="gh-interactive"
-            aria-label={t("panelTitle")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              cursor: "pointer",
-              position: "relative",
-              border: "none",
-              background: "transparent",
-              padding: 0,
-              color: "inherit",
-            }}
-            onClick={toggleCodex}>
-            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-              <SparkleIcon size={18} color={panelSparkleColor} />
-              {!hasSeenCodex && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "-2px",
-                    right: "-2px",
-                    width: "6px",
-                    height: "6px",
-                    backgroundColor: "var(--gh-danger, #ef4444)",
-                    borderRadius: "50%",
-                    boxShadow: "0 0 0 2px var(--gh-bg, #ffffff)",
-                    animation: "pulse-red 2s infinite",
-                  }}
-                />
-              )}
-            </div>
-            <span style={{ fontSize: "18px", fontWeight: 600, userSelect: "none" }}>
-              {t("panelTitle")}
-            </span>
+          <div style={{ position: "relative" }}>
+            <button
+              type="button"
+              className="gh-interactive"
+              aria-label={t("panelTitle")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                cursor: "pointer",
+                position: "relative",
+                border: "none",
+                background: "transparent",
+                padding: 0,
+                color: "inherit",
+              }}
+              onClick={toggleCodex}>
+              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                <SparkleIcon size={18} color={panelSparkleColor} />
+                {!hasSeenCodex && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "-2px",
+                      right: "-2px",
+                      width: "6px",
+                      height: "6px",
+                      backgroundColor: "var(--gh-danger, #ef4444)",
+                      borderRadius: "50%",
+                      boxShadow: "0 0 0 2px var(--gh-bg, #ffffff)",
+                      animation: "pulse-red 2s infinite",
+                    }}
+                  />
+                )}
+              </div>
+              <span style={{ fontSize: "18px", fontWeight: 600, userSelect: "none" }}>
+                {t("panelTitle")}
+              </span>
+            </button>
 
-            <MagicCodex
-              isOpen={showCodex}
-              onClose={closeCodex}
-              tips={structuredTips}
-              color={panelSparkleColor}
-            />
-          </button>
+            <MagicCodex isOpen={showCodex} onClose={closeCodex} tips={structuredTips} />
+          </div>
 
           {/* 右侧：按钮组 - 需要 gh-panel-controls 以排除拖拽 */}
           <div
