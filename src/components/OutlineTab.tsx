@@ -436,7 +436,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         text: renderTip("tip6", "shortcut", fmt("prevHeading") + "/" + fmt("nextHeading")),
       },
     ]
-  }, [currentSettings.shortcuts?.keybindings, isMac, shortcutNotSetLabel])
+  }, [currentSettings.shortcuts?.keybindings, currentSettings.language, isMac, shortcutNotSetLabel])
 
   // Initialize state from manager to prevent flicker
   const initialState = manager.getState()

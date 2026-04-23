@@ -265,7 +265,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   const structuredTips = useMemo(() => {
     const kb = currentSettings.shortcuts?.keybindings ?? DEFAULT_KEYBINDINGS
-    const shortcutNotSetLabel = t("shortcutNotSet") || "未设置"
     const fmt = (id: string) => {
       const shortcut = kb[id] ?? DEFAULT_KEYBINDINGS[id]
       return shortcut ? formatShortcut(shortcut, isMacOS()) : shortcutNotSetLabel
@@ -311,7 +310,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         text: renderTip("tip6", "shortcut", fmt("prevHeading") + "/" + fmt("nextHeading")),
       },
     ]
-  }, [currentSettings.shortcuts?.keybindings, shortcutNotSetLabel])
+  }, [currentSettings.shortcuts?.keybindings, currentSettings.language, shortcutNotSetLabel])
 
   const closeCodex = useCallback(() => {
     setShowCodex(false)
