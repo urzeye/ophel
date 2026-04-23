@@ -1469,7 +1469,6 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                       isOpen={true}
                       onClose={() => {}}
                       tips={structuredTips}
-                      color="var(--gh-primary, #6366f1)"
                       isStatic={true}
                     />
                   )}
