@@ -63,13 +63,16 @@ export const MagicCodex: React.FC<Props> = ({ isOpen, onClose, tips, isStatic = 
         position: isStatic ? "relative" : "absolute",
         top: isStatic ? "auto" : "36px",
         left: isStatic ? "auto" : "-4px",
-        width: isStatic ? "100%" : "max-content",
+        width: isStatic ? "calc(100% - 32px)" : "max-content",
+        margin: isStatic ? "0 auto" : "0",
         maxWidth: isStatic ? "100%" : "calc(var(--panel-width, 320px) - 24px)",
         textAlign: "left",
         backgroundColor: "var(--gh-bg, #ffffff)",
         border: "1px solid var(--gh-border, #e5e7eb)",
         borderRadius: "12px",
-        boxShadow: "var(--gh-shadow-lg, 0 10px 40px rgba(0,0,0,0.15))",
+        boxShadow: isStatic
+          ? "var(--gh-shadow-sm, 0 4px 12px rgba(0,0,0,0.08))"
+          : "var(--gh-shadow-lg, 0 10px 40px rgba(0,0,0,0.15))",
         zIndex: 10000,
         overflow: "hidden",
         display: "flex",
