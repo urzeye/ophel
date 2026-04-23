@@ -496,10 +496,14 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         style={{
           position: "fixed",
           top: "50%",
-          // 根据默认位置设置 left 或 right
-          ...(defaultPosition === "left"
-            ? { left: `${defaultEdgeDistance}px`, right: "auto" }
-            : { right: `${defaultEdgeDistance}px`, left: "auto" }),
+          // 仅在 floating 模式下通过 React style prop 设置位置；edge-snap 模式下
+          // 由 useLayoutEffect + CSS class 控制，避免 React reconciler 每次重渲染
+          // 写回 inline style 覆盖 CSS transition，导致动画抖动
+          ...(!edgeSnapState
+            ? defaultPosition === "left"
+              ? { left: `${defaultEdgeDistance}px`, right: "auto" }
+              : { right: `${defaultEdgeDistance}px`, left: "auto" }
+            : { left: "", right: "" }),
           transform: "translateY(-50%)",
           width: `${currentSettings.panel?.width ?? 320}px`,
           height: `${currentSettings.panel?.height ?? 85}vh`,
