@@ -237,6 +237,30 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     }
   }
 
+  const shouldShowHeaderPressHint = useCallback((target: EventTarget | null) => {
+    if (!(target instanceof Element)) {
+      return true
+    }
+
+    return !target.closest('.gh-panel-controls, [data-no-header-press-hint="true"]')
+  }, [])
+
+  const resetHeaderPressHint = useCallback(() => {
+    setIsHeaderPressed(false)
+  }, [])
+
+  const handleHeaderPointerDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (!shouldShowHeaderPressHint(event.target)) {
+        resetHeaderPressHint()
+        return
+      }
+
+      setIsHeaderPressed(true)
+    },
+    [resetHeaderPressHint, shouldShowHeaderPressHint],
+  )
+
   const structuredTips = useMemo(() => {
     const kb = currentSettings.shortcuts?.keybindings ?? DEFAULT_KEYBINDINGS
     const fmt = (id: string) => {
@@ -531,9 +555,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         {/* Header - 拖拽区域 */}
         <div
           ref={headerRef}
-          onPointerDown={() => setIsHeaderPressed(true)}
-          onPointerUp={() => setIsHeaderPressed(false)}
-          onPointerLeave={() => setIsHeaderPressed(false)}
+          onPointerDown={handleHeaderPointerDown}
+          onPointerUp={resetHeaderPressHint}
+          onPointerLeave={resetHeaderPressHint}
+          onPointerCancel={resetHeaderPressHint}
           className="gh-panel-header"
           style={{
             position: "relative",
@@ -593,6 +618,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           {/* 右侧：按钮组 - 需要 gh-panel-controls 以排除拖拽 */}
           <div
             className="gh-panel-controls"
+            data-no-header-press-hint="true"
             style={{ display: "flex", gap: "1px", alignItems: "center" }}>
             {/* 面板模式切换按钮 */}
             <Tooltip
