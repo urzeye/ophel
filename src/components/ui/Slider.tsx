@@ -118,7 +118,6 @@ export const Slider: React.FC<SliderProps> = ({
     hasPendingCommitRef.current = false
     setDraftValue(safeDefaultValue)
     draftValueRef.current = safeDefaultValue
-    onPreviewChange?.(safeDefaultValue)
     onChange(safeDefaultValue)
   }
 
