@@ -55,7 +55,7 @@ export const MagicCodex: React.FC<Props> = ({ isOpen, onClose, tips, isStatic = 
       ref={popoverRef}
       role="dialog"
       aria-label={t("featureTipsCategory")}
-      className="gh-magic-codex-popover"
+      className={`gh-magic-codex-popover ${isStatic ? "static" : "floating"}`}
       onPointerDown={(e) => e.stopPropagation()}
       onPointerUp={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
@@ -67,26 +67,26 @@ export const MagicCodex: React.FC<Props> = ({ isOpen, onClose, tips, isStatic = 
         margin: isStatic ? "0 auto" : "0",
         maxWidth: isStatic ? "100%" : "calc(var(--panel-width, 320px) - 24px)",
         textAlign: "left",
-        backgroundColor: "var(--gh-bg, #ffffff)",
+        backgroundColor: isStatic ? "var(--gh-bg-secondary, #f9fafb)" : "var(--gh-bg, #ffffff)",
         border: "1px solid var(--gh-border, #e5e7eb)",
-        borderRadius: "12px",
+        borderRadius: "16px",
         boxShadow: isStatic
-          ? "var(--gh-shadow-sm, 0 4px 12px rgba(0,0,0,0.08))"
-          : "var(--gh-shadow-lg, 0 10px 40px rgba(0,0,0,0.15))",
+          ? "inset 0 1px 0 rgba(255,255,255,0.1)"
+          : "var(--gh-shadow-lg, 0 12px 32px -4px rgba(0,0,0,0.15))",
         zIndex: 10000,
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        animation: "gh-popover-enter 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)",
+        animation: "gh-popover-enter 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)",
       }}>
       <div
         className="gh-hide-scrollbar"
         style={{
-          padding: "8px",
+          padding: "10px",
           display: "flex",
           flexDirection: "column",
-          gap: "2px",
-          maxHeight: "300px",
+          gap: "4px",
+          maxHeight: "320px",
           overflowY: "auto",
         }}>
         {tips.map((tip, idx) => (
@@ -95,17 +95,47 @@ export const MagicCodex: React.FC<Props> = ({ isOpen, onClose, tips, isStatic = 
             className="gh-interactive"
             style={{
               display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              padding: "8px 10px",
-              borderRadius: "8px",
+              alignItems: "flex-start",
+              gap: "12px",
+              padding: "10px 12px",
+              borderRadius: "10px",
               fontSize: "13px",
               color: "var(--gh-text-secondary, #4b5563)",
               lineHeight: "1.5",
+              backgroundColor: isStatic ? "transparent" : "var(--gh-bg, transparent)",
+              transition: "background-color 0.2s ease, transform 0.1s ease",
             }}>
-            <span style={{ fontSize: "16px" }}>{tip.icon}</span>
-            <div style={{ flex: 1, display: "block", alignSelf: "center", lineHeight: "1.6" }}>
-              <span style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{tip.text}</span>
+            <div
+              style={{
+                fontSize: "18px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "28px",
+                height: "28px",
+                flexShrink: 0,
+                borderRadius: "8px",
+                backgroundColor: "var(--gh-bg-tertiary, rgba(0,0,0,0.04))",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2)",
+              }}>
+              {tip.icon}
+            </div>
+            <div
+              style={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignSelf: "center",
+                gap: "2px",
+              }}>
+              <span
+                style={{
+                  whiteSpace: "normal",
+                  wordBreak: "break-word",
+                  color: "var(--gh-text, #374151)",
+                }}>
+                {tip.text}
+              </span>
             </div>
           </div>
         ))}
