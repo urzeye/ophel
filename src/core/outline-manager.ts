@@ -122,9 +122,6 @@ export class OutlineManager {
     // Listen to monitor messages
     window.addEventListener("message", this.handleMessage.bind(this))
 
-    // URL 变化时立即刷新大纲（SPA 导航：_doRefresh 内有 isNewConversation() 守卫）
-    window.addEventListener("gh-url-change", this.handleUrlChange.bind(this))
-
     // 订阅 bookmarks-store，当书签变化时刷新大纲
     this.unsubscribeBookmarks = useBookmarkStore.subscribe(() => {
       // 只有在激活状态下才刷新，避免不必要的计算
@@ -192,13 +189,6 @@ export class OutlineManager {
       // Final refresh
       this.refresh()
     }
-  }
-
-  private handleUrlChange() {
-    // SPA 导航时立即触发一次刷新：_doRefresh 内的 isNewConversation() 守卫会
-    // 在新对话页清空大纲，在普通会话页正常抽取
-    this.treeKey = ""
-    this.refresh()
   }
 
   private startAutoUpdate() {
@@ -594,45 +584,7 @@ export class OutlineManager {
     }
   }
 
-  private clearOutlineState(forceNotify: boolean = false) {
-    const hadState =
-      forceNotify ||
-      this.tree.length > 0 ||
-      this.flatItems.length > 0 ||
-      this.flatNodes.length > 0 ||
-      this.scrollNodes.length > 0 ||
-      this.scrollPositions.length > 0 ||
-      this.scrollHeights.length > 0 ||
-      Object.keys(this.levelCounts).length > 0 ||
-      this.matchCount > 0 ||
-      this.ghostBookmarkIds.size > 0 ||
-      this.isAllExpanded
-
-    this.tree = []
-    this.flatItems = []
-    this.flatNodes = []
-    this.scrollNodes = []
-    this.scrollPositions = []
-    this.scrollHeights = []
-    this.scrollPositionsStale = true
-    this.levelCounts = {}
-    this.treeKey = ""
-    this.minLevel = 1
-    this.matchCount = 0
-    this.isAllExpanded = false
-    this.ghostBookmarkIds.clear()
-
-    if (hadState) {
-      this.notify()
-    }
-  }
-
   private _doRefresh(overrideLevel?: number) {
-    if (this.siteAdapter.isNewConversation()) {
-      this.clearOutlineState()
-      return
-    }
-
     // Read showWordCount from live settings store to pick up changes without page refresh
     const liveSettings = useSettingsStore.getState().settings
     const showWordCount = liveSettings?.features?.outline?.showWordCount ?? false
@@ -762,7 +714,15 @@ export class OutlineManager {
     }
 
     if (outlineData.length === 0) {
-      this.clearOutlineState()
+      if (this.tree.length > 0) {
+        this.tree = []
+        this.flatNodes = []
+        this.scrollNodes = []
+        this.scrollPositions = []
+        this.scrollHeights = []
+        this.scrollPositionsStale = true
+        this.notify()
+      }
       return
     }
 
