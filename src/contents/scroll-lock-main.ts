@@ -68,32 +68,37 @@ if (!(window as any).__ophelScrollLockInitialized) {
 
   // 1. 劫持 Element.prototype.scrollIntoView
   Element.prototype.scrollIntoView = function (options?: boolean | ScrollIntoViewOptions) {
-    // 精确位置锁激活时，仅允许带 __bypassLock 的调用
+    // 精确位置锁激活时，仅允许带 __bypassLock 的调用（或处于水平容器内的元素）
     const shouldBypass = options && typeof options === "object" && (options as any).__bypassLock
+    const posLock = getPositionLockTarget()
+    if (posLock !== null) {
+      if (shouldBypass) {
+        return originalApis.scrollIntoView.call(this, options as any)
+      }
+      // 水平容器内的元素不影响主页垂直滤动，逆辑放行
+      let el: Element | null = this.parentElement
+      while (el) {
+        if (el.scrollWidth > el.clientWidth && el.scrollHeight <= el.clientHeight + 10) {
+          return originalApis.scrollIntoView.call(this, options as any)
+        }
+        el = el.parentElement
+      }
+      recordPositionLockBlock()
+      return
+    }
 
     // 快速路径：锁未激活则直接调用原始 API
-    if (!(window as any).__ophelScrollLockEnabled && getPositionLockTarget() === null) {
+    if (!(window as any).__ophelScrollLockEnabled) {
       return originalApis.scrollIntoView.call(this, options as any)
     }
 
-    // 水平滚动容器内的元素（如图片轮播）：直接放行，不拦截
-    // 仅在锁生效时才做 DOM 父链遍历，避免频繁不必要的开销
+    // scrollLock 已启用：水平容器内的元素直接放行
     let el: Element | null = this.parentElement
     while (el) {
       if (el.scrollWidth > el.clientWidth && el.scrollHeight <= el.clientHeight + 10) {
         return originalApis.scrollIntoView.call(this, options as any)
       }
       el = el.parentElement
-    }
-
-    if (getPositionLockTarget() !== null && !shouldBypass) {
-      recordPositionLockBlock()
-      return
-    }
-
-    // 如果劫持未启用，直接调用原始 API
-    if (!(window as any).__ophelScrollLockEnabled) {
-      return originalApis.scrollIntoView.call(this, options as any)
     }
 
     if (!shouldBypass) {
