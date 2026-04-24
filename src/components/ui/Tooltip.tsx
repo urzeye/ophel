@@ -8,6 +8,19 @@ const DEFAULT_TOOLTIP_MAX_WIDTH = 260
 const DEFAULT_TOOLTIP_GAP = 8
 const DEFAULT_VIEWPORT_PADDING = 10
 
+// 切换标签页/窗口回来时浏览器会自动恢复焦点到上次聚焦的元素，
+// 触发 onFocus → showTooltip，导致 tooltip 凭空出现。
+// 用模块级 flag 标记"刚从 window.focus 恢复"，在此期间忽略 element focus 事件。
+let _suppressFocusFromWindowRestoration = false
+if (typeof window !== "undefined") {
+  window.addEventListener("focus", () => {
+    _suppressFocusFromWindowRestoration = true
+    requestAnimationFrame(() => {
+      _suppressFocusFromWindowRestoration = false
+    })
+  })
+}
+
 export const GLOBAL_TOOLTIP_STYLE_TEXT = `
   .ophel-tooltip {
     background-color: rgba(30, 30, 35, 0.95);
@@ -376,6 +389,12 @@ export const Tooltip: React.FC<TooltipProps> = ({
     }, delay)
   }, [delay, disabled])
 
+  // 仅响应键盘导航的 focus，忽略切回标签页时浏览器自动恢复的焦点
+  const showTooltipFromFocus = useCallback(() => {
+    if (_suppressFocusFromWindowRestoration) return
+    showTooltip()
+  }, [showTooltip])
+
   const updatePosition = useCallback(() => {
     const triggerRect = triggerRef.current?.getBoundingClientRect()
     const tooltipRect = tooltipRef.current?.getBoundingClientRect()
@@ -463,7 +482,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
       className={`ophel-tooltip-trigger ${className} ${triggerClassName}`}
       onMouseEnter={showTooltip}
       onMouseLeave={hideTooltip}
-      onFocus={showTooltip}
+      onFocus={showTooltipFromFocus}
       onBlur={hideTooltip}
       style={{ display: "inline-flex", ...triggerStyle }}>
       {children}
