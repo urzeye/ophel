@@ -1001,6 +1001,7 @@ export const zhTW = {
   shortcutScrollBottom: "去底部",
   shortcutGoToAnchor: "返回錨點",
   shortcutTogglePanel: "展開/收起面板",
+  shortcutTogglePanelMode: "切換面板模式（自動吸附/懸浮）",
   shortcutToggleTheme: "切換主題",
   shortcutOpenSettings: "開啟設置",
   shortcutSwitchTab1: "切換到第 1 個標籤",

@@ -80,6 +80,7 @@ interface UseShortcutsOptions {
   isSnapped?: boolean // 面板是否处于吸附状态
   onShowSnappedPanel?: () => void // 强制显示吸附的面板
   onToggleScrollLock?: () => void // 切换滚动锁定
+  onTogglePanelMode?: () => void // 切换面板模式（自动吸附/悬浮）
 }
 
 export function useShortcuts({
@@ -96,6 +97,7 @@ export function useShortcuts({
   isSnapped,
   onShowSnappedPanel,
   onToggleScrollLock,
+  onTogglePanelMode,
 }: UseShortcutsOptions) {
   const shortcutManager = useMemo(() => getShortcutManager(), [])
 
@@ -503,6 +505,22 @@ export function useShortcuts({
     }
   }, [onToggleScrollLock])
 
+  // 切换面板模式（自动吸附 ↔ 悬浮）
+  const togglePanelMode = useCallback(() => {
+    if (onTogglePanelMode) {
+      onTogglePanelMode()
+    } else {
+      const { settings: liveSettings, updateNestedSetting } = useSettingsStore.getState()
+      const current = liveSettings?.panel?.panelMode ?? "edge-snap"
+      const next = current === "edge-snap" ? "floating" : "edge-snap"
+      updateNestedSetting("panel", "panelMode", next)
+      showToast(
+        t(next === "edge-snap" ? "panelModeEdgeSnap" : "panelModeFloating") ||
+          (next === "edge-snap" ? "已切换为自动吸附" : "已切换为悬浮"),
+      )
+    }
+  }, [onTogglePanelMode])
+
   // 切换禅模式
   const toggleZenMode = useCallback(() => {
     if (!adapter) return
@@ -756,6 +774,7 @@ export function useShortcuts({
       [SHORTCUT_ACTIONS.SCROLL_BOTTOM]: scrollToBottom,
       [SHORTCUT_ACTIONS.GO_TO_ANCHOR]: goToAnchor,
       [SHORTCUT_ACTIONS.TOGGLE_PANEL]: onPanelToggle,
+      [SHORTCUT_ACTIONS.TOGGLE_PANEL_MODE]: togglePanelMode,
       [SHORTCUT_ACTIONS.TOGGLE_THEME]: onThemeToggle,
       [SHORTCUT_ACTIONS.OPEN_SETTINGS]: openSettings,
       [SHORTCUT_ACTIONS.SWITCH_TAB_1]: switchTab1,
@@ -815,6 +834,7 @@ export function useShortcuts({
     goToAnchor,
     onPanelToggle,
     onThemeToggle,
+    togglePanelMode,
     openSettings,
     switchTab1,
     switchTab2,

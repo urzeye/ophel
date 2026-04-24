@@ -1048,6 +1048,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   shortcutScrollBottom: "Scroll to Bottom",
   shortcutGoToAnchor: "Go to Anchor",
   shortcutTogglePanel: "Expand/Collapse Panel",
+  shortcutTogglePanelMode: "Toggle Panel Mode (Snap/Float)",
   shortcutToggleTheme: "Toggle Theme",
   shortcutOpenSettings: "Open Settings",
   shortcutSwitchTab1: "Switch to 1st Tab",

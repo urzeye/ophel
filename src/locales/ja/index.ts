@@ -1027,6 +1027,7 @@ export const ja = {
   shortcutScrollBottom: "一番下へ",
   shortcutGoToAnchor: "アンカーへ移動",
   shortcutTogglePanel: "パネルを展開/折りたたむ",
+  shortcutTogglePanelMode: "パネルモードを切り替える（スナップ/フロート）",
   shortcutToggleTheme: "テーマ切り替え",
   shortcutOpenSettings: "設定を開く",
   shortcutSwitchTab1: "第1タブへ",

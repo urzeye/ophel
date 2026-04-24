@@ -27,6 +27,7 @@ export const SHORTCUT_ACTIONS = {
 
   // 面板类
   TOGGLE_PANEL: "togglePanel",
+  TOGGLE_PANEL_MODE: "togglePanelMode",
   TOGGLE_THEME: "toggleTheme",
   OPEN_SETTINGS: "openSettings",
   SWITCH_TAB_1: "switchTab1",
@@ -94,6 +95,7 @@ export const SHORTCUT_META: Record<
 
   // 面板类
   togglePanel: { labelKey: "shortcutTogglePanel", label: "展开/收起面板", category: "panel" },
+  togglePanelMode: { labelKey: "shortcutTogglePanelMode", label: "切换面板模式（吸附/悬浮）", category: "panel" },
   toggleTheme: { labelKey: "shortcutToggleTheme", label: "切换主题", category: "panel" },
   switchTab1: { labelKey: "shortcutSwitchTab1", label: "切换到第 1 个标签", category: "panel" },
   switchTab2: { labelKey: "shortcutSwitchTab2", label: "切换到第 2 个标签", category: "panel" },
@@ -277,6 +279,7 @@ export const DEFAULT_KEYBINDINGS: Record<ShortcutActionId, ShortcutBinding> = {
 
   // 面板类
   togglePanel: { key: "p", alt: true },
+  togglePanelMode: { key: "m", alt: true },
   toggleTheme: { key: "d", alt: true },
   switchTab1: { key: "1", alt: true },
   switchTab2: { key: "2", alt: true },

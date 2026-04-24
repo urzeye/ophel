@@ -1014,6 +1014,7 @@ export const zhCN = {
   shortcutScrollBottom: "去底部",
   shortcutGoToAnchor: "返回锚点",
   shortcutTogglePanel: "展开/收起面板",
+  shortcutTogglePanelMode: "切换面板模式（自动吸附/悬浮）",
   shortcutToggleTheme: "切换主题",
   shortcutOpenSettings: "打开设置",
   shortcutSwitchTab1: "切换到第 1 个标签",

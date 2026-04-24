@@ -984,6 +984,7 @@ export const ko = {
   shortcutScrollBottom: "맨 아래로 스크롤",
   shortcutGoToAnchor: "앵커로 이동",
   shortcutTogglePanel: "패널 확장/축소",
+  shortcutTogglePanelMode: "패널 모드 전환 (스냅/플로트)",
   shortcutToggleTheme: "테마 전환",
   shortcutOpenSettings: "설정 열기",
   shortcutSwitchTab1: "첫 번째 탭으로 전환",

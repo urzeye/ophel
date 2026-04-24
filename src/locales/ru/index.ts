@@ -980,6 +980,7 @@ export const ru = {
   shortcutScrollBottom: "В самый низ",
   shortcutGoToAnchor: "К якорю",
   shortcutTogglePanel: "Развернуть/свернуть панель",
+  shortcutTogglePanelMode: "Переключить режим панели (Прилипание/Свободное)",
   shortcutToggleTheme: "Смена темы",
   shortcutOpenSettings: "В настройки",
   shortcutSwitchTab1: "Таб 1",
