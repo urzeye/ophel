@@ -70,6 +70,22 @@ if (!(window as any).__ophelScrollLockInitialized) {
   Element.prototype.scrollIntoView = function (options?: boolean | ScrollIntoViewOptions) {
     // 精确位置锁激活时，仅允许带 __bypassLock 的调用
     const shouldBypass = options && typeof options === "object" && (options as any).__bypassLock
+
+    // 水平滚动容器内的元素（如图片轮播）：直接放行，不拦截
+    const isInHorizontalContainer = (() => {
+      let el: Element | null = this.parentElement
+      while (el) {
+        if (el.scrollWidth > el.clientWidth && el.scrollHeight <= el.clientHeight + 10) {
+          return true
+        }
+        el = el.parentElement
+      }
+      return false
+    })()
+    if (isInHorizontalContainer) {
+      return originalApis.scrollIntoView.call(this, options as any)
+    }
+
     if (getPositionLockTarget() !== null && !shouldBypass) {
       recordPositionLockBlock()
       return
