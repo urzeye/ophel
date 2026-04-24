@@ -69,6 +69,21 @@ export function injectScrollLock(): void {
   // 1. 劫持 Element.prototype.scrollIntoView
   PageElement.prototype.scrollIntoView = function (options?: boolean | ScrollIntoViewOptions) {
     const shouldBypass = options && typeof options === "object" && (options as any).__bypassLock
+
+    // 快速路径：锁未激活则直接调用原始 API
+    if (!pageWin.__ophelScrollLockEnabled && getPositionLockTarget() === null) {
+      return originalApis.scrollIntoView.call(this, options as any)
+    }
+
+    // 水平滚动容器内的元素（如图片轮播）：直接放行
+    let el: Element | null = this.parentElement
+    while (el) {
+      if (el.scrollWidth > el.clientWidth && el.scrollHeight <= el.clientHeight + 10) {
+        return originalApis.scrollIntoView.call(this, options as any)
+      }
+      el = el.parentElement
+    }
+
     if (getPositionLockTarget() !== null && !shouldBypass) {
       recordPositionLockBlock()
       return
@@ -117,6 +132,11 @@ export function injectScrollLock(): void {
         return descriptor.get ? descriptor.get.call(this) : 0
       },
       set: function (value: number) {
+        // 水平滚动容器（如图片轮播）：直接放行
+        if (this.scrollWidth > this.clientWidth && this.scrollHeight <= this.clientHeight + 10) {
+          if (descriptor.set) descriptor.set.call(this, value)
+          return
+        }
         const lockTarget = getPositionLockTarget()
         if (lockTarget !== null) {
           if (Math.abs(value - lockTarget) > 10) {
@@ -155,6 +175,16 @@ export function injectScrollLock(): void {
     optionsOrX?: ScrollToOptions | number,
     y?: number,
   ) {
+    // 纯水平滚动（仅设置 left，无 top），直接放行
+    if (typeof optionsOrX === "object" && optionsOrX !== null) {
+      if (optionsOrX.left !== undefined && optionsOrX.top === undefined) {
+        return originalElementScrollTo.apply(this, arguments as any)
+      }
+    }
+    // 水平滚动容器直接放行
+    if (this.scrollWidth > this.clientWidth && this.scrollHeight <= this.clientHeight + 10) {
+      return originalElementScrollTo.apply(this, arguments as any)
+    }
     if (getPositionLockTarget() !== null) {
       recordPositionLockBlock()
       return
@@ -186,6 +216,16 @@ export function injectScrollLock(): void {
     optionsOrX?: ScrollToOptions | number,
     y?: number,
   ) {
+    // 纯水平滚动（仅设置 left，无 top），直接放行
+    if (typeof optionsOrX === "object" && optionsOrX !== null) {
+      if (optionsOrX.left !== undefined && optionsOrX.top === undefined) {
+        return originalElementScroll.apply(this, arguments as any)
+      }
+    }
+    // 水平滚动容器直接放行
+    if (this.scrollWidth > this.clientWidth && this.scrollHeight <= this.clientHeight + 10) {
+      return originalElementScroll.apply(this, arguments as any)
+    }
     if (getPositionLockTarget() !== null) {
       recordPositionLockBlock()
       return
@@ -217,6 +257,16 @@ export function injectScrollLock(): void {
     optionsOrX?: ScrollToOptions | number,
     y?: number,
   ) {
+    // 纯水平滚动（仅设置 left，无 top），直接放行
+    if (typeof optionsOrX === "object" && optionsOrX !== null) {
+      if (optionsOrX.left !== undefined && optionsOrX.top === undefined) {
+        return originalElementScrollBy.apply(this, arguments as any)
+      }
+    }
+    // 水平滚动容器直接放行
+    if (this.scrollWidth > this.clientWidth && this.scrollHeight <= this.clientHeight + 10) {
+      return originalElementScrollBy.apply(this, arguments as any)
+    }
     if (getPositionLockTarget() !== null) {
       recordPositionLockBlock()
       return

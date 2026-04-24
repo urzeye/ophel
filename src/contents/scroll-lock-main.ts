@@ -71,19 +71,19 @@ if (!(window as any).__ophelScrollLockInitialized) {
     // 精确位置锁激活时，仅允许带 __bypassLock 的调用
     const shouldBypass = options && typeof options === "object" && (options as any).__bypassLock
 
-    // 水平滚动容器内的元素（如图片轮播）：直接放行，不拦截
-    const isInHorizontalContainer = (() => {
-      let el: Element | null = this.parentElement
-      while (el) {
-        if (el.scrollWidth > el.clientWidth && el.scrollHeight <= el.clientHeight + 10) {
-          return true
-        }
-        el = el.parentElement
-      }
-      return false
-    })()
-    if (isInHorizontalContainer) {
+    // 快速路径：锁未激活则直接调用原始 API
+    if (!(window as any).__ophelScrollLockEnabled && getPositionLockTarget() === null) {
       return originalApis.scrollIntoView.call(this, options as any)
+    }
+
+    // 水平滚动容器内的元素（如图片轮播）：直接放行，不拦截
+    // 仅在锁生效时才做 DOM 父链遍历，避免频繁不必要的开销
+    let el: Element | null = this.parentElement
+    while (el) {
+      if (el.scrollWidth > el.clientWidth && el.scrollHeight <= el.clientHeight + 10) {
+        return originalApis.scrollIntoView.call(this, options as any)
+      }
+      el = el.parentElement
     }
 
     if (getPositionLockTarget() !== null && !shouldBypass) {
