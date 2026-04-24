@@ -1396,6 +1396,8 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   "featureTip-panel-mode-toggle-desc":
     "Schnell zwischen schwebendem und eingebettetem Modus wechseln",
   "featureTip-panel-mode-toggle-path":
+    "{shortcut} drücken oder Doppelklick auf die Titelleiste zum schnellen Wechsel des Panel-Anzeigemodus",
+  "featureTip-panel-mode-toggle-path-dblclick":
     "Doppelklick auf die Titelleiste zum schnellen Wechsel des Panel-Anzeigemodus",
   "featureTip-shortcuts-title": "Tastaturkürzel-Übersicht",
   "featureTip-shortcuts-desc": "Alle Tastaturkürzel anzeigen und anpassen",

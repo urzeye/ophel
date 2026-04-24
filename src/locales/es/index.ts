@@ -1396,6 +1396,8 @@ Dame el código y luego un resumen de mejoras.`,
   "featureTip-panel-mode-toggle-desc":
     "Cambia rápidamente entre el modo flotante y el modo de anclaje",
   "featureTip-panel-mode-toggle-path":
+    "Pulsa {shortcut} o haz doble clic en la barra de título para cambiar rápidamente el modo del panel",
+  "featureTip-panel-mode-toggle-path-dblclick":
     "Doble clic en la barra de título para cambiar rápidamente el modo de visualización del panel",
   "featureTip-shortcuts-title": "Atajos de teclado",
   "featureTip-shortcuts-desc": "Ver y personalizar todos los atajos de teclado",

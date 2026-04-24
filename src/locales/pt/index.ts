@@ -1390,6 +1390,8 @@ Dê o código e depois um resumo de melhorias.`,
   "featureTip-panel-mode-toggle-desc":
     "Alterne rapidamente entre o modo flutuante e o modo de encaixe",
   "featureTip-panel-mode-toggle-path":
+    "Pressione {shortcut} ou clique duplo na barra de título para alternar rapidamente o modo do painel",
+  "featureTip-panel-mode-toggle-path-dblclick":
     "Clique duplo na barra de título para alternar rapidamente o modo de exibição do painel",
   "featureTip-shortcuts-title": "Visão Geral dos Atalhos",
   "featureTip-shortcuts-desc": "Visualize e personalize todos os atalhos de teclado",

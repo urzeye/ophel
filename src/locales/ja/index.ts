@@ -1399,6 +1399,8 @@ export const ja = {
   "featureTip-panel-mode-toggle-desc":
     "フローティングモードとエッジスナップモードを素早く切り替える",
   "featureTip-panel-mode-toggle-path":
+    "{shortcut}を押すかタイトルバーをダブルクリックしてパネル表示モードを素早く切り替え",
+  "featureTip-panel-mode-toggle-path-dblclick":
     "タイトルバーをダブルクリックしてパネル表示モードを素早く切り替え",
   "featureTip-shortcuts-title": "キーボードショートカット一覧",
   "featureTip-shortcuts-desc": "すべてのキーボードショートカットを確認・カスタマイズ",
