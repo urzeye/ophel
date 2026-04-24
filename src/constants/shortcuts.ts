@@ -95,7 +95,11 @@ export const SHORTCUT_META: Record<
 
   // 面板类
   togglePanel: { labelKey: "shortcutTogglePanel", label: "展开/收起面板", category: "panel" },
-  togglePanelMode: { labelKey: "shortcutTogglePanelMode", label: "切换面板模式（吸附/悬浮）", category: "panel" },
+  togglePanelMode: {
+    labelKey: "shortcutTogglePanelMode",
+    label: "切换面板模式（吸附/悬浮）",
+    category: "panel",
+  },
   toggleTheme: { labelKey: "shortcutToggleTheme", label: "切换主题", category: "panel" },
   switchTab1: { labelKey: "shortcutSwitchTab1", label: "切换到第 1 个标签", category: "panel" },
   switchTab2: { labelKey: "shortcutSwitchTab2", label: "切换到第 2 个标签", category: "panel" },
