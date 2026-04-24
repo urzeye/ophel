@@ -122,6 +122,11 @@ if (!(window as any).__ophelScrollLockInitialized) {
         return descriptor.get ? descriptor.get.call(this) : 0
       },
       set: function (value: number) {
+        // 水平滚动容器（如图片轮播）：直接放行，不干扰水平滚动组件
+        if (this.scrollWidth > this.clientWidth && this.scrollHeight <= this.clientHeight + 10) {
+          if (descriptor.set) descriptor.set.call(this, value)
+          return
+        }
         // 精确位置锁：强制回到目标位置
         const lockTarget = getPositionLockTarget()
         if (lockTarget !== null) {
@@ -164,6 +169,16 @@ if (!(window as any).__ophelScrollLockInitialized) {
     optionsOrX?: ScrollToOptions | number,
     y?: number,
   ) {
+    // 如果是纯水平滚动（仅设置 left，无 top），直接放行
+    if (typeof optionsOrX === "object" && optionsOrX !== null) {
+      if (optionsOrX.left !== undefined && optionsOrX.top === undefined) {
+        return originalElementScrollTo.apply(this, arguments as any)
+      }
+    }
+    // 水平滚动容器直接放行
+    if (this.scrollWidth > this.clientWidth && this.scrollHeight <= this.clientHeight + 10) {
+      return originalElementScrollTo.apply(this, arguments as any)
+    }
     // 如果劫持未启用，直接调用原始 API
     if (getPositionLockTarget() !== null) {
       recordPositionLockBlock()
@@ -199,6 +214,16 @@ if (!(window as any).__ophelScrollLockInitialized) {
     optionsOrX?: ScrollToOptions | number,
     y?: number,
   ) {
+    // 如果是纯水平滚动（仅设置 left，无 top），直接放行
+    if (typeof optionsOrX === "object" && optionsOrX !== null) {
+      if (optionsOrX.left !== undefined && optionsOrX.top === undefined) {
+        return originalElementScroll.apply(this, arguments as any)
+      }
+    }
+    // 水平滚动容器直接放行
+    if (this.scrollWidth > this.clientWidth && this.scrollHeight <= this.clientHeight + 10) {
+      return originalElementScroll.apply(this, arguments as any)
+    }
     // 如果劫持未启用，直接调用原始 API
     if (getPositionLockTarget() !== null) {
       recordPositionLockBlock()
@@ -234,6 +259,16 @@ if (!(window as any).__ophelScrollLockInitialized) {
     optionsOrX?: ScrollToOptions | number,
     y?: number,
   ) {
+    // 如果是纯水平滚动（仅设置 left，无 top），直接放行
+    if (typeof optionsOrX === "object" && optionsOrX !== null) {
+      if (optionsOrX.left !== undefined && optionsOrX.top === undefined) {
+        return originalElementScrollBy.apply(this, arguments as any)
+      }
+    }
+    // 水平滚动容器直接放行
+    if (this.scrollWidth > this.clientWidth && this.scrollHeight <= this.clientHeight + 10) {
+      return originalElementScrollBy.apply(this, arguments as any)
+    }
     // 如果劫持未启用，直接调用原始 API
     if (getPositionLockTarget() !== null) {
       recordPositionLockBlock()
