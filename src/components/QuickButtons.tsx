@@ -168,6 +168,12 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const anchorPosition = useSyncExternalStore(anchorStore.subscribe, anchorStore.getSnapshot)
   const hasAnchor = anchorPosition !== null
   const [anchorTapId, setAnchorTapId] = useState(0)
+  // prefers-reduced-motion 下 animation 为 none，不会触发 animationend；用 timeout 充当兜底重置
+  useEffect(() => {
+    if (anchorTapId === 0) return
+    const timer = setTimeout(() => setAnchorTapId(0), 400)
+    return () => clearTimeout(timer)
+  }, [anchorTapId])
 
   // 悬浮隐藏状态
   const [_isHovered, setIsHovered] = useState(false)

@@ -395,6 +395,12 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const hasAnchor = anchorPosition !== null
   // 使用递增 id 而非 boolean，确保快速连续点击时每次都能重播动画
   const [anchorTapId, setAnchorTapId] = useState(0)
+  // prefers-reduced-motion 下 animation 为 none，不会触发 animationend；用 timeout 充当兄底重置
+  useEffect(() => {
+    if (anchorTapId === 0) return
+    const timer = setTimeout(() => setAnchorTapId(0), 400)
+    return () => clearTimeout(timer)
+  }, [anchorTapId])
 
   // === 加载状态（遮罩） ===
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
@@ -929,7 +935,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
           {/* 锚点按钮（返回之前位置，双向跳转） */}
           <Tooltip
-            content={hasAnchor ? t("jumpToAnchor") : t("noAnchor") || "暂无锚点"}
+            content={hasAnchor ? t("jumpToAnchor") : t("noAnchor")}
             triggerStyle={{ flex: "0 0 32px" }}>
             <button
               className="gh-interactive scroll-nav-btn anchor-btn"
