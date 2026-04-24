@@ -12,27 +12,22 @@ const DEFAULT_VIEWPORT_PADDING = 10
 // 触发 onFocus → showTooltip，导致 tooltip 凭空出现。
 // 用模块级 flag 标记“刚从 window.focus 恢复”，在此期间屏蔽 element focus 事件。
 // 广播防重：用 window 属性标记，避免 HMR/多次导入时重复注册。
-type TooltipWindow = Window & {
-  __ophelTooltipWindowFocusListenerRegistered__?: boolean
-  __ophelTooltipSuppressFocusFromWindowRestoration__?: boolean
-}
-
 function isFocusFromWindowRestoration(): boolean {
-  return (window as TooltipWindow).__ophelTooltipSuppressFocusFromWindowRestoration__ === true
+  return window.__ophelTooltipSuppressFocusFromWindowRestoration__ === true
 }
 
 ;(function registerWindowFocusSuppressionListener() {
   if (typeof window === "undefined") return
-  const win = window as TooltipWindow
+  const win = window
   if (typeof win.__ophelTooltipSuppressFocusFromWindowRestoration__ !== "boolean") {
     win.__ophelTooltipSuppressFocusFromWindowRestoration__ = false
   }
   if (win.__ophelTooltipWindowFocusListenerRegistered__) return
   win.__ophelTooltipWindowFocusListenerRegistered__ = true
   window.addEventListener("focus", () => {
-    ;(window as TooltipWindow).__ophelTooltipSuppressFocusFromWindowRestoration__ = true
+    window.__ophelTooltipSuppressFocusFromWindowRestoration__ = true
     requestAnimationFrame(() => {
-      ;(window as TooltipWindow).__ophelTooltipSuppressFocusFromWindowRestoration__ = false
+      window.__ophelTooltipSuppressFocusFromWindowRestoration__ = false
     })
   })
 })()
