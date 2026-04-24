@@ -585,6 +585,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
     // 交换位置
     anchorStore.set(currentPos)
+
+    showToast(t("backToAnchor") || "返回锚点", 1500)
   }, [adapter])
 
   // 手动锚点：设置（支持图文并茂模式）

@@ -148,6 +148,8 @@ export function useShortcuts({
 
     // 交换位置（双向跳转）
     anchorStore.set(currentPos)
+
+    showToast(t("backToAnchor") || "返回锚点", 1500)
   }, [adapter])
 
   // 刷新大纲

@@ -479,6 +479,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
     // 交换位置
     anchorStore.set(currentPos)
+
+    showToast(t("backToAnchor") || "返回锚点", 1500)
   }, [adapter])
 
   // 记录锚点位置（每次跳转大纲时调用）
@@ -924,7 +926,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
           {/* 锚点按钮（返回之前位置，双向跳转） */}
           <Tooltip
-            content={hasAnchor ? t("jumpToAnchor") : "暂无锚点"}
+            content={hasAnchor ? t("jumpToAnchor") : t("noAnchor") || "暂无锚点"}
             triggerStyle={{ flex: "0 0 32px" }}>
             <button
               className="gh-interactive scroll-nav-btn anchor-btn"
