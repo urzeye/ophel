@@ -15,6 +15,8 @@
 
 ### 🐛 问题修复
 
+- **Tooltip 切标签页后幽灵显示**：修复鼠标悬停触发 tooltip 后，在 300ms 延迟内切换浏览器标签页再切回，tooltip 无端出现的问题。根本原因是 `blur`/`visibilitychange` 监听器仅在 tooltip 可见时才挂载，计时期间切走不会取消 timer。现改为始终挂载关闭监听器，确保切标签/失焦时无论计时是否完成都能立即取消。(#427)
+
 - **防自动滚动兼容横向轮播**：开启「防止自动滚动」后，ChatGPT 等页面中的横排图片轮播无法左右翻页的问题已修复。滚动锁定脚本新增两类豁免：①纯水平方向的滚动调用（`left !== undefined && top === undefined`）直接放行；②典型横向滚动容器（`scrollWidth > clientWidth && scrollHeight ≤ clientHeight + 10`）上的所有滚动调用直接放行。垂直方向的防下拉功能不受任何影响。(#424)
 
 ---
