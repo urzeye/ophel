@@ -1428,11 +1428,11 @@
   0% {
     transform: scale(1);
   }
-  20% {
-    transform: scale(0.74);
+  25% {
+    transform: scale(0.88);
   }
   65% {
-    transform: scale(1.2);
+    transform: scale(1.08);
   }
   100% {
     transform: scale(1);
