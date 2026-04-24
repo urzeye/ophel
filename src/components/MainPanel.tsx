@@ -393,7 +393,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   // === 锚点状态（使用全局存储） ===
   const anchorPosition = useSyncExternalStore(anchorStore.subscribe, anchorStore.getSnapshot)
   const hasAnchor = anchorPosition !== null
-  const anchorBtnRef = useRef<HTMLButtonElement>(null)
+  const [anchorTapping, setAnchorTapping] = useState(false)
 
   // === 加载状态（遮罩） ===
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
@@ -472,13 +472,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     if (savedAnchor === null) return
 
     // 触发按钮弹性动画
-    if (anchorBtnRef.current) {
-      const btn = anchorBtnRef.current
-      btn.classList.add("is-tapping")
-      btn.addEventListener("animationend", () => btn.classList.remove("is-tapping"), {
-        once: true,
-      })
-    }
+    setAnchorTapping(true)
 
     // 获取当前位置
     const scrollInfo = await getScrollInfo(adapter || null)
@@ -937,9 +931,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             content={hasAnchor ? t("jumpToAnchor") : t("noAnchor") || "暂无锚点"}
             triggerStyle={{ flex: "0 0 32px" }}>
             <button
-              ref={anchorBtnRef}
-              className="gh-interactive scroll-nav-btn anchor-btn"
+              className={`gh-interactive scroll-nav-btn anchor-btn${anchorTapping ? " is-tapping" : ""}`}
               onClick={goToAnchor}
+              onAnimationEnd={() => setAnchorTapping(false)}
               disabled={!hasAnchor}
               style={{
                 width: "32px",
