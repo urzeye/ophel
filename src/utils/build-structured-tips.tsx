@@ -49,10 +49,26 @@ export function buildStructuredTips(
     }
     return shortcut ? formatShortcut(shortcut, isMac) : shortcutNotSetLabel
   }
+  // 返回快捷键字符串；若快捷键被用户清除（null）或默认绑定缺失，返回 null
+  const fmtOrNull = (id: string): string | null => {
+    const shortcut = kb[id]
+    if (shortcut === undefined) {
+      const defaultShortcut = DEFAULT_KEYBINDINGS[id]
+      return defaultShortcut ? formatShortcut(defaultShortcut, isMac) : null
+    }
+    return shortcut ? formatShortcut(shortcut, isMac) : null
+  }
+
+  const panelModeShortcut = fmtOrNull("togglePanelMode")
 
   return [
     { icon: "👻", text: renderTip("tip1", "modifier", isMac ? "⌘ Cmd" : "Ctrl") },
-    { icon: "↔️", text: t("featureTip-panel-mode-toggle-path") },
+    {
+      icon: "↔️",
+      text: panelModeShortcut
+        ? renderTip("featureTip-panel-mode-toggle-path", "shortcut", panelModeShortcut)
+        : t("featureTip-panel-mode-toggle-path-dblclick"),
+    },
     { icon: "🔍", text: renderTip("tip4", "shortcut", fmt("openGlobalSearch")) },
     { icon: "🚀", text: renderTip("tip3", "shortcut", fmt("showShortcuts")) },
     { icon: "📋", text: renderTip("tip5", "shortcut", fmt("copyLatestReply")) },

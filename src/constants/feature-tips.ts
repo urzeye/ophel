@@ -24,6 +24,7 @@ export const FEATURE_TIPS: FeatureTip[] = [
   {
     id: "panel-mode-toggle",
     highlightTarget: "header-title",
+    shortcutIds: ["togglePanelMode"],
   },
   {
     id: "shortcuts",
