@@ -394,6 +394,17 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const anchorPosition = useSyncExternalStore(anchorStore.subscribe, anchorStore.getSnapshot)
   const hasAnchor = anchorPosition !== null
   const [anchorTapping, setAnchorTapping] = useState(false)
+  const anchorBtnRef = useRef<HTMLButtonElement>(null)
+
+  // 弹性动画开始时清除 JS 内联 transform，否则内联样式会覆盖 CSS animation
+  useEffect(() => {
+    if (!anchorTapping || !anchorBtnRef.current) return
+    const btn = anchorBtnRef.current
+    btn.style.transform = ""
+    btn.style.boxShadow = ""
+    const div = btn.querySelector<HTMLElement>("div")
+    if (div) div.style.transform = ""
+  }, [anchorTapping])
 
   // === 加载状态（遮罩） ===
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
@@ -931,6 +942,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             content={hasAnchor ? t("jumpToAnchor") : t("noAnchor") || "暂无锚点"}
             triggerStyle={{ flex: "0 0 32px" }}>
             <button
+              ref={anchorBtnRef}
               className={`gh-interactive scroll-nav-btn anchor-btn${anchorTapping ? " is-tapping" : ""}`}
               onClick={goToAnchor}
               onAnimationEnd={() => setAnchorTapping(false)}
@@ -953,7 +965,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                 opacity: hasAnchor ? 1 : 0.4,
               }}
               onMouseEnter={(e) => {
-                if (hasAnchor) {
+                if (hasAnchor && !anchorTapping) {
                   e.currentTarget.style.transform = "scale(1.1)"
                   e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
                   // 旋转特效
