@@ -484,7 +484,9 @@ export const Tooltip: React.FC<TooltipProps> = ({
       if (timerRef.current) {
         clearTimeout(timerRef.current)
       }
+      setHasPendingTimer(true)
       timerRef.current = setTimeout(() => {
+        setHasPendingTimer(false)
         setIsVisible(true)
         setIsMeasuring(true)
       }, delay)
