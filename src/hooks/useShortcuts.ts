@@ -514,10 +514,6 @@ export function useShortcuts({
       const current = liveSettings?.panel?.panelMode ?? "edge-snap"
       const next = current === "edge-snap" ? "floating" : "edge-snap"
       updateNestedSetting("panel", "panelMode", next)
-      showToast(
-        t(next === "edge-snap" ? "panelModeEdgeSnap" : "panelModeFloating") ||
-          (next === "edge-snap" ? "已切换为自动吸附" : "已切换为悬浮"),
-      )
     }
   }, [onTogglePanelMode])
 
