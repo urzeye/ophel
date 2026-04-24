@@ -14,19 +14,25 @@ const DEFAULT_VIEWPORT_PADDING = 10
 // 广播防重：用 window 属性标记，避免 HMR/多次导入时重复注册。
 type TooltipWindow = Window & {
   __ophelTooltipWindowFocusListenerRegistered__?: boolean
+  __ophelTooltipSuppressFocusFromWindowRestoration__?: boolean
 }
 
-let _suppressFocusFromWindowRestoration = false
+function isFocusFromWindowRestoration(): boolean {
+  return (window as TooltipWindow).__ophelTooltipSuppressFocusFromWindowRestoration__ === true
+}
 
 ;(function registerWindowFocusSuppressionListener() {
   if (typeof window === "undefined") return
   const win = window as TooltipWindow
+  if (typeof win.__ophelTooltipSuppressFocusFromWindowRestoration__ !== "boolean") {
+    win.__ophelTooltipSuppressFocusFromWindowRestoration__ = false
+  }
   if (win.__ophelTooltipWindowFocusListenerRegistered__) return
   win.__ophelTooltipWindowFocusListenerRegistered__ = true
   window.addEventListener("focus", () => {
-    _suppressFocusFromWindowRestoration = true
+    ;(window as TooltipWindow).__ophelTooltipSuppressFocusFromWindowRestoration__ = true
     requestAnimationFrame(() => {
-      _suppressFocusFromWindowRestoration = false
+      ;(window as TooltipWindow).__ophelTooltipSuppressFocusFromWindowRestoration__ = false
     })
   })
 })()
@@ -396,16 +402,20 @@ export const Tooltip: React.FC<TooltipProps> = ({
     }
     setHasPendingTimer(true)
     timerRef.current = setTimeout(() => {
+      timerRef.current = null
       setHasPendingTimer(false)
-      setIsVisible(true)
-      setIsMeasuring(true)
+      // 二次检查：timer 到期时确认页面仍在前台且仍在 hover/focus 状态
+      if (!document.hidden && isHoveringRef.current) {
+        setIsVisible(true)
+        setIsMeasuring(true)
+      }
     }, delay)
   }, [delay, disabled])
 
   // 针对切标签页/窗口回来时浏览器自动恢复焦点的场景，
   // 屏蔽由页面恢复焦点触发的 showTooltip（非用户主动键盘导航）
   const showTooltipFromFocus = useCallback(() => {
-    if (_suppressFocusFromWindowRestoration) return
+    if (isFocusFromWindowRestoration()) return
     showTooltip()
   }, [showTooltip])
 
@@ -486,9 +496,12 @@ export const Tooltip: React.FC<TooltipProps> = ({
       }
       setHasPendingTimer(true)
       timerRef.current = setTimeout(() => {
+        timerRef.current = null
         setHasPendingTimer(false)
-        setIsVisible(true)
-        setIsMeasuring(true)
+        if (!document.hidden && isHoveringRef.current) {
+          setIsVisible(true)
+          setIsMeasuring(true)
+        }
       }, delay)
     }
   }, [delay, disabled, hideTooltip])
