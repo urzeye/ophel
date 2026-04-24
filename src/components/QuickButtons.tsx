@@ -167,6 +167,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   // 锚点状态（使用全局存储）
   const anchorPosition = useSyncExternalStore(anchorStore.subscribe, anchorStore.getSnapshot)
   const hasAnchor = anchorPosition !== null
+  const [anchorBouncing, setAnchorBouncing] = useState(false)
 
   // 悬浮隐藏状态
   const [_isHovered, setIsHovered] = useState(false)
@@ -576,6 +577,9 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     const savedAnchor = anchorStore.get()
     if (savedAnchor === null) return
 
+    // 触发弹性动画
+    setAnchorBouncing(true)
+
     // 获取当前位置
     const scrollInfo = await getScrollInfo(adapter)
     const currentPos = scrollInfo.scrollTop
@@ -585,8 +589,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
     // 交换位置
     anchorStore.set(currentPos)
-
-    showToast(t("backToAnchor") || "返回锚点", 1500)
   }, [adapter])
 
   // 手动锚点：设置（支持图文并茂模式）
@@ -719,8 +721,9 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return (
       <Tooltip key={id} content={tooltipContent}>
         <button
-          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isPanelBtn ? "panel-btn" : ""} ${isActive ? "active" : ""} ${isFloatingToolbarBtn ? "tools-trigger-btn" : ""} ${isZenModeBtn ? "zen-mode-btn" : ""}`}
+          className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isPanelBtn ? "panel-btn" : ""} ${isActive ? "active" : ""} ${isFloatingToolbarBtn ? "tools-trigger-btn" : ""} ${isZenModeBtn ? "zen-mode-btn" : ""} ${isAnchorBtn && anchorBouncing ? "is-tapping" : ""}`}
           onClick={(e) => buttonActions[id]?.(e)}
+          onAnimationEnd={() => isAnchorBtn && setAnchorBouncing(false)}
           data-tip-target={
             id === "globalSearch"
               ? "search-btn"

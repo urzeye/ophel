@@ -1423,6 +1423,28 @@
   box-shadow: none;
 }
 
+/* 锚点按钮点击弹性反馈（模拟触觉）*/
+@keyframes gh-anchor-tap {
+  0% {
+    transform: scale(1);
+  }
+  20% {
+    transform: scale(0.74);
+  }
+  65% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.scroll-nav-btn.anchor-btn.is-tapping,
+.quick-prompt-btn.is-tapping {
+  animation: gh-anchor-tap 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: none !important;
+}
+
 /* ============= 提示词 Tab 样式 ============= */
 
 /* 提示词卡片悬停效果 */
