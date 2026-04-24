@@ -410,24 +410,32 @@ export const Tooltip: React.FC<TooltipProps> = ({
       updatePosition()
     }
 
+    window.addEventListener("scroll", handleWindowChange, true)
+    window.addEventListener("resize", handleWindowChange)
+
+    return () => {
+      window.removeEventListener("scroll", handleWindowChange, true)
+      window.removeEventListener("resize", handleWindowChange)
+    }
+  }, [isMeasuring, isVisible, updatePosition])
+
+  // 无论 tooltip 是否可见，切标签页或窗口失焦时都要取消计时并隐藏
+  // 否则在 300ms 延迟计时期间切走，timer 仍会触发，导致切回来时 tooltip 凭空出现
+  useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
         hideTooltip()
       }
     }
 
-    window.addEventListener("scroll", handleWindowChange, true)
-    window.addEventListener("resize", handleWindowChange)
     window.addEventListener("blur", hideTooltip)
     document.addEventListener("visibilitychange", handleVisibilityChange)
 
     return () => {
-      window.removeEventListener("scroll", handleWindowChange, true)
-      window.removeEventListener("resize", handleWindowChange)
       window.removeEventListener("blur", hideTooltip)
       document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
-  }, [hideTooltip, isMeasuring, isVisible, updatePosition])
+  }, [hideTooltip])
 
   useEffect(() => {
     return () => {
