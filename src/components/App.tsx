@@ -879,10 +879,17 @@ export const App = () => {
   }, [isSettingsHydrated, settings])
 
   // 悬浮模式下，持久化面板开关状态
+  // 用 ref 追踪上一次 panelMode，排除"模式刚切换到 floating"这一帧——
+  // 此时 isPanelOpen 还是 edge-snap 的旧值（false），若立即保存会污染 lastPanelOpen
+  const prevSavePanelModeRef = useRef(settings?.panel?.panelMode)
   useEffect(() => {
     if (!isInitializedRef.current) return
     const panelMode = settings?.panel?.panelMode ?? "edge-snap"
-    if (panelMode === "floating") {
+    const prevMode = prevSavePanelModeRef.current
+    prevSavePanelModeRef.current = panelMode
+    // 仅在"已处于悬浮模式时 isPanelOpen 发生变化"才保存，
+    // 跳过模式由 edge-snap 切入 floating 的那一帧（此时 isPanelOpen 尚未被 mode-switch effect 更新）
+    if (panelMode === "floating" && prevMode === "floating") {
       updateNestedSetting("panel", "lastPanelOpen", isPanelOpen)
     }
   }, [isPanelOpen, settings?.panel?.panelMode, updateNestedSetting])
