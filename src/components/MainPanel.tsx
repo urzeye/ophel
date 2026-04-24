@@ -395,7 +395,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const hasAnchor = anchorPosition !== null
   // 使用递增 id 而非 boolean，确保快速连续点击时每次都能重播动画
   const [anchorTapId, setAnchorTapId] = useState(0)
-  // prefers-reduced-motion 下 animation 为 none，不会触发 animationend；用 timeout 充当兄底重置
+  // prefers-reduced-motion 下 animation 为 none，不会触发 animationend；用 timeout 充当兜底重置
   useEffect(() => {
     if (anchorTapId === 0) return
     const timer = setTimeout(() => setAnchorTapId(0), 400)
