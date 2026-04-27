@@ -506,7 +506,7 @@ export const zhTW = {
   outlineFollowLatestDesc: "自動滾動到最新訊息",
   outlineFollowManualDesc: "不自動滾動，用戶手動控制",
   outlineShowWordCountLabel: "顯示字數",
-  outlineShowWordCountDesc: "在工具提示中顯示每個段落的字數統計，長對話中可能影響擴充功能效能。",
+  outlineShowWordCountDesc: "在工具提示中顯示每個段落的字數統計，長對話中可能影響擴充功能效能",
   words: "字",
   // 頁面顯示設置
   pageDisplaySettings: "頁面顯示",
@@ -1061,6 +1061,8 @@ export const zhTW = {
   zenModeEnabledToast: "已啟用禪模式",
   zenModeDisabledToast: "已關閉禪模式",
   browserNotSupported: "當前瀏覽器不支援自訂擴充功能快捷鍵",
+  firefoxShortcutsGuide:
+    "在網址列輸入 about:addons，進入擴充功能頁面 → 點擊齒輪圖示 → 管理擴充功能快捷鍵",
   inputFocused: "已聚焦輸入框",
   generationStopped: "已停止生成",
   notGenerating: "當前未在生成",

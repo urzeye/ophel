@@ -651,7 +651,7 @@ export const zhCN = {
   outlineFollowLatestDesc: "自动滚动到最新消息",
   outlineFollowManualDesc: "不自动滚动，用户手动控制",
   outlineShowWordCountLabel: "悬浮显示字数",
-  outlineShowWordCountDesc: "大纲悬浮提示中显示该章节的字数，长对话中可能影响插件性能。",
+  outlineShowWordCountDesc: "大纲悬浮提示中显示该章节的字数，长对话中可能影响插件性能",
   words: "字",
   // 页面显示设置
   pageDisplaySettings: "页面显示",
@@ -1077,6 +1077,7 @@ export const zhCN = {
   zenModeEnabledToast: "已开启禅模式",
   zenModeDisabledToast: "已关闭禅模式",
   browserNotSupported: "当前浏览器不支持自定义扩展快捷键",
+  firefoxShortcutsGuide: "在地址栏输入 about:addons，进入扩展页面 → 点击齿轮图标 → 管理扩展快捷键",
   inputFocused: "已聚焦输入框",
   generationStopped: "已停止生成",
   notGenerating: "当前未在生成",

@@ -1047,6 +1047,8 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   zenModeEnabledToast: "Zen-Modus aktiviert",
   zenModeDisabledToast: "Zen-Modus deaktiviert",
   browserNotSupported: "Browser inkompatibel",
+  firefoxShortcutsGuide:
+    "Gib about:addons in die Adressleiste ein → Zahnrad-Symbol klicken → Erweiterungskurzbefehle verwalten",
   inputFocused: "Bereit zum Tippen",
   generationStopped: "Gestoppt",
   notGenerating: "KI schweigt",

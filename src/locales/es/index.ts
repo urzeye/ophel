@@ -1045,6 +1045,8 @@ Dame el código y luego un resumen de mejoras.`,
   zenModeEnabledToast: "Modo Zen activado",
   zenModeDisabledToast: "Modo Zen desactivado",
   browserNotSupported: "Navegador no compatible",
+  firefoxShortcutsGuide:
+    "Escribe about:addons en la barra de direcciones → haz clic en el engranaje → Gestionar accesos directos",
   inputFocused: "Escribiendo ya",
   generationStopped: "Parado",
   notGenerating: "No está hablando",

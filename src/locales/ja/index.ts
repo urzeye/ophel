@@ -1088,6 +1088,8 @@ export const ja = {
   zenModeEnabledToast: "禅モードを有効化しました",
   zenModeDisabledToast: "禅モードを無効化しました",
   browserNotSupported: "このブラウザでは拡張機能のショートカット設定をサポートしていません",
+  firefoxShortcutsGuide:
+    "アドレスバーに about:addons と入力 → 歯車アイコンをクリック → 拡張機能のショートカットを管理",
   inputFocused: "入力欄へフォーカスしました",
   generationStopped: "生成を停止しました",
   notGenerating: "現在生成を行っていません",

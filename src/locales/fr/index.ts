@@ -1047,6 +1047,8 @@ Donnez le code puis un résumé des améliorations.`,
   zenModeEnabledToast: "Mode Zen activé",
   zenModeDisabledToast: "Mode Zen désactivé",
   browserNotSupported: "Navigateur incompatible",
+  firefoxShortcutsGuide:
+    "Tapez about:addons dans la barre d'adresse → cliquez sur la roue dentée → Gérer les raccourcis d'extensions",
   inputFocused: "Saisie prête",
   generationStopped: "Arrêté",
   notGenerating: "IA muette",

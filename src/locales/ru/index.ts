@@ -1042,6 +1042,8 @@ export const ru = {
   zenModeEnabledToast: "Дзен-режим включен",
   zenModeDisabledToast: "Дзен-режим выключен",
   browserNotSupported: "Браузер не потянет",
+  firefoxShortcutsGuide:
+    "Введите about:addons в адресную строку → нажмите на шестерёнку → Управление горячими клавишами расширений",
   inputFocused: "Пишите сейчас",
   generationStopped: "Стоп",
   notGenerating: "ИИ молчит",

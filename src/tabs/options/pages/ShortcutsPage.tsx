@@ -335,7 +335,22 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
 
                 let url = "chrome://extensions/shortcuts"
                 if (isEdge) url = "edge://extensions/shortcuts"
-                else if (isFirefox) url = "about:addons"
+
+                // Firefox does not allow extensions to open about:addons via tabs.create.
+                // Show inline guidance text instead.
+                if (isFirefox) {
+                  return (
+                    <span
+                      style={{
+                        fontSize: "13px",
+                        color: "var(--gh-text-secondary)",
+                        lineHeight: "1.5",
+                      }}>
+                      {t("firefoxShortcutsGuide") ||
+                        "在地址栏输入 about:addons，进入扩展页面 → 点击齿轮图标 → 管理扩展快捷键"}
+                    </span>
+                  )
+                }
 
                 return (
                   <button

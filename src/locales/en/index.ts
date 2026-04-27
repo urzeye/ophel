@@ -1112,6 +1112,8 @@ Please output the optimized code block directly, followed by a brief summary of 
   zenModeEnabledToast: "Zen Mode enabled",
   zenModeDisabledToast: "Zen Mode disabled",
   browserNotSupported: "This browser does not support custom extension shortcuts",
+  firefoxShortcutsGuide:
+    "Type about:addons in the address bar → click the gear icon → Manage Extension Shortcuts",
   inputFocused: "Input focused",
   cleanup: "Clear Invalid Bookmarks",
   generationStopped: "Generation stopped",
