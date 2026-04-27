@@ -16,6 +16,100 @@ function safeDecodeURIComponent(str: string) {
   }
 }
 
+// WebDAV 服务商标识
+export type WebDAVProvider =
+  | "jianguoyun"
+  | "nextcloud"
+  | "synology"
+  | "seafile"
+  | "infinicloud"
+  | "pcloud"
+  | "custom"
+
+// 服务商预设信息
+export interface WebDAVProviderPreset {
+  id: WebDAVProvider
+  /** i18n key for display name */
+  labelKey: string
+  /** 固定 URL（空字符串表示用户自填） */
+  urlTemplate: string
+  /** URL 输入框 placeholder */
+  urlPlaceholder?: string
+  /** i18n key for platform-specific hint */
+  hintKey?: string
+  /** 帮助文档链接 */
+  helpUrl?: string
+  /** 密码 placeholder i18n key */
+  passwordPlaceholderKey?: string
+}
+
+export const WEBDAV_PROVIDER_PRESETS: WebDAVProviderPreset[] = [
+  {
+    id: "jianguoyun",
+    labelKey: "providerJianguoyun",
+    urlTemplate: "https://dav.jianguoyun.com/dav/",
+    hintKey: "providerJianguoyunHint",
+    helpUrl: "https://help.jianguoyun.com/?p=2064",
+    passwordPlaceholderKey: "providerJianguoyunPasswordPlaceholder",
+  },
+  {
+    id: "infinicloud",
+    labelKey: "providerInfinicloud",
+    urlTemplate: "https://connect.infini.cloud/dav",
+    hintKey: "providerInfinicloudHint",
+  },
+  {
+    id: "pcloud",
+    labelKey: "providerPcloud",
+    urlTemplate: "https://webdav.pcloud.com",
+    hintKey: "providerPcloudHint",
+    helpUrl: "https://docs.pcloud.com/protocols/webdav_protocol/",
+  },
+  {
+    id: "nextcloud",
+    labelKey: "providerNextcloud",
+    urlTemplate: "",
+    urlPlaceholder: "https://your-domain.com/remote.php/dav/files/username/",
+    hintKey: "providerNextcloudHint",
+  },
+  {
+    id: "synology",
+    labelKey: "providerSynology",
+    urlTemplate: "",
+    urlPlaceholder: "https://your-nas.example.com/webdav/",
+    hintKey: "providerSynologyHint",
+    helpUrl: "https://kb.synology.com/en-global/DSM/help/DSM/AdminCenter/file_webdav",
+  },
+  {
+    id: "seafile",
+    labelKey: "providerSeafile",
+    urlTemplate: "",
+    urlPlaceholder: "https://your-seafile-domain.com/seafdav",
+    hintKey: "providerSeafileHint",
+  },
+  {
+    id: "custom",
+    labelKey: "providerCustom",
+    urlTemplate: "",
+    urlPlaceholder: "https://dav.example.com/dav/",
+  },
+]
+
+/**
+ * 根据 URL 特征推断服务商（用于老用户静默迁移）
+ */
+export function detectProviderFromUrl(url: string): WebDAVProvider {
+  if (!url) return "custom"
+  const lower = url.toLowerCase()
+  if (lower.includes("jianguoyun.com") || lower.includes("nutscloud.com")) return "jianguoyun"
+  if (lower.includes("infini.cloud")) return "infinicloud"
+  if (lower.includes("pcloud.com")) return "pcloud"
+  if (lower.includes("/remote.php/")) return "nextcloud"
+  if (lower.includes("/seafdav") || lower.includes("/seafile-webdav")) return "seafile"
+  if (lower.includes("/webdav")) return "synology"
+  return "custom"
+}
+
 // WebDAV 配置接口
 export interface WebDAVConfig {
   enabled: boolean
@@ -25,6 +119,7 @@ export interface WebDAVConfig {
   syncMode: "manual" | "auto"
   syncInterval: number // 自动同步间隔（分钟）
   remoteDir: string // 远程备份目录，如 /backup
+  provider?: WebDAVProvider // 服务商标识（可选，兼容旧数据）
   lastSyncTime?: number // 上次同步时间戳
   lastSyncStatus?: "success" | "failed" | "syncing"
 }
@@ -94,7 +189,16 @@ export class WebDAVSyncManager {
     const { getSettingsState } = await import("~stores/settings-store")
     const settings = getSettingsState()
     if (settings?.webdav) {
-      this.config = { ...DEFAULT_WEBDAV_CONFIG, ...settings.webdav }
+      const config: WebDAVConfig = {
+        ...DEFAULT_WEBDAV_CONFIG,
+        ...settings.webdav,
+        provider: settings.webdav.provider as WebDAVProvider | undefined,
+      }
+      // 静默迁移：老用户没有 provider 字段时，根据 URL 自动识别
+      if (!config.provider && config.url) {
+        config.provider = detectProviderFromUrl(config.url)
+      }
+      this.config = config
     }
     return this.config
   }

@@ -828,6 +828,25 @@ export const ru = {
   // WebDAV Sync
   webdavSectionTitle: "Облако (WebDAV)",
   webdavDesc: "Nextcloud, Owncloud и т.д.",
+  webdavProvider: "Провайдер",
+  providerJianguoyun: "Nutstore (坚果云)",
+  providerJianguoyunHint:
+    "Создайте пароль для стороннего приложения в настройках безопасности Nutstore. Не используйте пароль входа.",
+  providerJianguoyunPasswordPlaceholder: "Пароль для стороннего приложения",
+  providerInfinicloud: "InfiniCloud",
+  providerInfinicloudHint: "Подключитесь с помощью email и пароля аккаунта InfiniCloud.",
+  providerPcloud: "pCloud",
+  providerPcloudHint: "Подключитесь с помощью email и пароля аккаунта pCloud.",
+  providerNextcloud: "Nextcloud (Собственный хостинг)",
+  providerNextcloudHint:
+    "Формат URL: https://your-domain.com/remote.php/dav/files/{имя пользователя}/",
+  providerSynology: "Synology NAS (Собственный хостинг)",
+  providerSynologyHint:
+    "Включите WebDAV в DSM 'Панель управления → Файловые службы → WebDAV'. URL: https://your-nas/webdav/",
+  providerSeafile: "Seafile (Собственный хостинг)",
+  providerSeafileHint: "Формат URL: https://your-seafile-domain.com/seafdav",
+  providerCustom: "Пользовательский",
+  learnMore: "Узнать больше",
   webdavUrlLabel: "URL",
   webdavUsernameLabel: "Имя",
   webdavUsernamePlaceholder: "E-mail",

@@ -866,6 +866,25 @@ export const ja = {
   // WebDAV Sync
   webdavSectionTitle: "WebDAV クラウド同期",
   webdavDesc: "データをWebDAVサーバー（Nextcloud, Owncloudなど）と同期します",
+  webdavProvider: "プロバイダー",
+  providerJianguoyun: "Nutstore (堅果雲)",
+  providerJianguoyunHint:
+    "Nutstoreの「セキュリティ設定」でサードパーティアプリパスワードを生成してください。ログインパスワードは使用しないでください。",
+  providerJianguoyunPasswordPlaceholder: "サードパーティアプリパスワード",
+  providerInfinicloud: "InfiniCloud",
+  providerInfinicloudHint: "InfiniCloudアカウントのメールアドレスとパスワードで接続します。",
+  providerPcloud: "pCloud",
+  providerPcloudHint: "pCloudアカウントのメールアドレスとパスワードで接続します。",
+  providerNextcloud: "Nextcloud（自己ホスト）",
+  providerNextcloudHint:
+    "サーバーURL形式：https://your-domain.com/remote.php/dav/files/{ユーザー名}/",
+  providerSynology: "Synology NAS（自己ホスト）",
+  providerSynologyHint:
+    "DSM「コントロールパネル → ファイルサービス → WebDAV」でWebDAVを有効にします。URL形式：https://your-nas/webdav/",
+  providerSeafile: "Seafile（自己ホスト）",
+  providerSeafileHint: "サーバーURL形式：https://your-seafile-domain.com/seafdav",
+  providerCustom: "カスタム",
+  learnMore: "詳細を見る",
   webdavUrlLabel: "サーバーURL",
   webdavUsernameLabel: "ユーザー名",
   webdavUsernamePlaceholder: "メールアドレスなど",

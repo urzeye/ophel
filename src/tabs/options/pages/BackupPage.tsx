@@ -15,7 +15,13 @@ import {
   getDefaultPrompts,
 } from "~constants/defaults"
 import type { Conversation } from "~core/conversation/types"
-import { getWebDAVSyncManager, type BackupFile } from "~core/webdav-sync"
+import {
+  WEBDAV_PROVIDER_PRESETS,
+  detectProviderFromUrl,
+  getWebDAVSyncManager,
+  type BackupFile,
+  type WebDAVProvider,
+} from "~core/webdav-sync"
 import { platform } from "~platform"
 import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
@@ -41,6 +47,7 @@ interface WebDAVFormState {
   username: string
   password: string
   remoteDir: string
+  provider: WebDAVProvider
 }
 
 // 辅助函数：格式化文件大小
@@ -684,14 +691,20 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
     username: "",
     password: "",
     remoteDir: "ophel",
+    provider: "custom",
   })
 
   // 初始化表单
   useEffect(() => {
     if (settings?.webdav) {
+      const webdav = settings.webdav
+      const resolvedProvider =
+        (webdav.provider as WebDAVProvider | undefined) ??
+        (webdav.url ? detectProviderFromUrl(webdav.url) : "custom")
       setWebdavForm((prev) => ({
         ...prev,
-        ...settings.webdav,
+        ...webdav,
+        provider: resolvedProvider,
       }))
     }
   }, [settings?.webdav])
@@ -1613,15 +1626,87 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
           <div style={{ lineHeight: 1.5, opacity: 0.9 }}>{t("restoreTipContent")}</div>
         </div>
 
+        <SettingRow label={t("webdavProvider") || "服务商"}>
+          <select
+            className="settings-input settings-select"
+            value={webdavForm.provider || "custom"}
+            onChange={(e) => {
+              const provider = e.target.value as WebDAVProvider
+              const preset = WEBDAV_PROVIDER_PRESETS.find((p) => p.id === provider)
+              setWebdavForm((prev) => ({
+                ...prev,
+                provider,
+                // 有固定 URL 的服务商自动预填（可编辑）
+                ...(preset?.urlTemplate ? { url: preset.urlTemplate } : {}),
+              }))
+            }}
+            style={{ width: "280px" }}>
+            {WEBDAV_PROVIDER_PRESETS.map((p) => (
+              <option key={p.id} value={p.id}>
+                {t(p.labelKey) || p.id}
+              </option>
+            ))}
+          </select>
+        </SettingRow>
+
+        {/* 服务商专属提示 */}
+        {(() => {
+          const preset = WEBDAV_PROVIDER_PRESETS.find(
+            (p) => p.id === (webdavForm.provider || "custom"),
+          )
+          if (!preset?.hintKey) return null
+          return (
+            <div
+              style={{
+                background: "var(--gh-primary-light-bg, rgba(66, 133, 244, 0.05))",
+                border: "1px solid var(--gh-primary-border, rgba(66, 133, 244, 0.2))",
+                borderRadius: "8px",
+                padding: "10px 12px",
+                marginBottom: "4px",
+                fontSize: "12px",
+                color: "var(--gh-text-secondary)",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "8px",
+              }}>
+              <span style={{ flexShrink: 0 }}>ℹ️</span>
+              <div>
+                {t(preset.hintKey)}
+                {preset.helpUrl && (
+                  <a
+                    href={preset.helpUrl}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    style={{
+                      marginLeft: "6px",
+                      color: "var(--gh-primary, #4285f4)",
+                      textDecoration: "underline",
+                    }}>
+                    {t("learnMore") || "了解更多"}
+                  </a>
+                )}
+              </div>
+            </div>
+          )
+        })()}
+
         <SettingRow label={t("webdavAddress") || "服务器地址"}>
-          <input
-            type="text"
-            className="settings-input"
-            placeholder="https://dav.example.com/dav/"
-            value={webdavForm.url}
-            onChange={(e) => setWebdavForm({ ...webdavForm, url: e.target.value })}
-            style={{ width: "280px" }}
-          />
+          {(() => {
+            const preset = WEBDAV_PROVIDER_PRESETS.find(
+              (p) => p.id === (webdavForm.provider || "custom"),
+            )
+            const placeholder = preset?.urlPlaceholder || "https://dav.example.com/dav/"
+            return (
+              <input
+                type="text"
+                className="settings-input"
+                placeholder={placeholder}
+                value={webdavForm.url}
+                onChange={(e) => setWebdavForm({ ...webdavForm, url: e.target.value })}
+                style={{ width: "280px" }}
+              />
+            )
+          })()}
         </SettingRow>
 
         <SettingRow label={t("username") || "用户名"}>
@@ -1635,13 +1720,24 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
         </SettingRow>
 
         <SettingRow label={t("password") || "密码"}>
-          <input
-            type="password"
-            className="settings-input"
-            value={webdavForm.password}
-            onChange={(e) => setWebdavForm({ ...webdavForm, password: e.target.value })}
-            style={{ width: "280px" }}
-          />
+          {(() => {
+            const preset = WEBDAV_PROVIDER_PRESETS.find(
+              (p) => p.id === (webdavForm.provider || "custom"),
+            )
+            const pwdPlaceholder = preset?.passwordPlaceholderKey
+              ? t(preset.passwordPlaceholderKey) || ""
+              : t("webdavPasswordPlaceholder") || "应用专用密码"
+            return (
+              <input
+                type="password"
+                className="settings-input"
+                placeholder={pwdPlaceholder}
+                value={webdavForm.password}
+                onChange={(e) => setWebdavForm({ ...webdavForm, password: e.target.value })}
+                style={{ width: "280px" }}
+              />
+            )
+          })()}
         </SettingRow>
 
         <SettingRow label={t("defaultDir") || "默认目录"}>

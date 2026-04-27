@@ -290,6 +290,7 @@ export interface Settings {
     syncMode: "manual" | "auto"
     syncInterval: number
     remoteDir: string
+    provider?: string // 服务商标识（可选，兼容旧数据）
     dataSources?: Array<"settings" | "conversations" | "prompts" | "claudeSessionKeys"> // 可备份的数据源
     lastSyncTime?: number // 上次同步时间戳
     lastSyncStatus?: "success" | "failed" | "syncing"

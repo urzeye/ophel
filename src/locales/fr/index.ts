@@ -832,6 +832,26 @@ export const fr = {
   // WebDAV Sync
   webdavSectionTitle: "Synchro Nuage (WebDAV)",
   webdavDesc: "Utiliser Nextcloud, Owncloud, etc.",
+  webdavProvider: "Fournisseur",
+  providerJianguoyun: "Nutstore (Jianguoyun)",
+  providerJianguoyunHint:
+    "Générez un mot de passe d'application tiers dans les paramètres de sécurité de Nutstore. N'utilisez pas votre mot de passe de connexion.",
+  providerJianguoyunPasswordPlaceholder: "Mot de passe d'app tiers",
+  providerInfinicloud: "InfiniCloud",
+  providerInfinicloudHint:
+    "Connectez-vous avec l'e-mail et le mot de passe de votre compte InfiniCloud.",
+  providerPcloud: "pCloud",
+  providerPcloudHint: "Connectez-vous avec l'e-mail et le mot de passe de votre compte pCloud.",
+  providerNextcloud: "Nextcloud (Auto-hébergé)",
+  providerNextcloudHint:
+    "Format d'URL : https://your-domain.com/remote.php/dav/files/{nom d'utilisateur}/",
+  providerSynology: "Synology NAS (Auto-hébergé)",
+  providerSynologyHint:
+    "Activez WebDAV dans DSM 'Panneau de configuration → Services de fichiers → WebDAV'. URL : https://your-nas/webdav/",
+  providerSeafile: "Seafile (Auto-hébergé)",
+  providerSeafileHint: "Format d'URL : https://your-seafile-domain.com/seafdav",
+  providerCustom: "Personnalisé",
+  learnMore: "En savoir plus",
   webdavUrlLabel: "URL",
   webdavUsernameLabel: "Utilisateur",
   webdavUsernamePlaceholder: "E-mail",
