@@ -334,7 +334,7 @@ export class ReadingHistoryManager {
     let restoredSuccessfully = false
 
     try {
-      // 1. 精确恢复：尝试通过内容锚点定位
+      // 1. 精确恢复（快速路径）：内容已在视口时尝试锚点定位
       if (data.type && this.adapter.restoreScroll) {
         try {
           const contentRestored = await this.adapter.restoreScroll(data as any)
@@ -346,7 +346,7 @@ export class ReadingHistoryManager {
             restoredSuccessfully = true
           }
         } catch {
-          // 精确恢复失败，继续尝试位置恢复
+          // 精确恢复失败，继续尝试加载历史后恢复
         }
       }
 
@@ -369,18 +369,36 @@ export class ReadingHistoryManager {
             return false
           }
 
-          // 计算新的滚动位置
-          // 注意：无需加上 heightAdded，因为 savedTop 本身就是相对于完整内容（或当时加载的内容）的绝对坐标
-          // 只有在"保持相对位置"（Anchor）且内容被挤下去时才需要修正，但这里我们是想"回到原来的绝对位置"
-          const newScrollTop = data.top!
+          // 加载完内容后，如有锚点数据再次尝试精确恢复（内容现在应已全部渲染）
+          if (data.type && this.adapter.restoreScroll) {
+            try {
+              const contentRestored = await this.adapter.restoreScroll(data as any)
+              if (contentRestored) {
+                const scrollContainer =
+                  this.adapter.getScrollContainer() || document.documentElement
+                this.restoredTop = (scrollContainer as HTMLElement).scrollTop || window.scrollY
+                document.documentElement.dataset.ophelPositionLock = String(this.restoredTop)
+                restoredSuccessfully = true
+              }
+            } catch {
+              // 精确恢复仍失败，继续用绝对坐标
+            }
+          }
 
-          // 同步设置 DOM 属性，主世界立即可见，拦截平台自动滚动
-          document.documentElement.dataset.ophelPositionLock = String(newScrollTop)
+          if (!restoredSuccessfully) {
+            // 计算新的滚动位置
+            // 注意：无需加上 heightAdded，因为 savedTop 本身就是相对于完整内容（或当时加载的内容）的绝对坐标
+            // 只有在"保持相对位置"（Anchor）且内容被挤下去时才需要修正，但这里我们是想"回到原来的绝对位置"
+            const newScrollTop = data.top!
 
-          // 滚动到目标位置（content script 的 scrollTo 走原始原型链，不受主世界劫持影响）
-          await smartScrollTo(this.adapter, newScrollTop)
-          this.restoredTop = newScrollTop
-          restoredSuccessfully = true
+            // 同步设置 DOM 属性，主世界立即可见，拦截平台自动滚动
+            document.documentElement.dataset.ophelPositionLock = String(newScrollTop)
+
+            // 滚动到目标位置（content script 的 scrollTo 走原始原型链，不受主世界劫持影响）
+            await smartScrollTo(this.adapter, newScrollTop)
+            this.restoredTop = newScrollTop
+            restoredSuccessfully = true
+          }
         } catch {
           // 恢复失败，清除位置锁
           delete document.documentElement.dataset.ophelPositionLock
