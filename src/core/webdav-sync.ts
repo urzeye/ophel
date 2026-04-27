@@ -106,7 +106,13 @@ export function detectProviderFromUrl(url: string): WebDAVProvider {
   if (lower.includes("pcloud.com")) return "pcloud"
   if (lower.includes("/remote.php/")) return "nextcloud"
   if (lower.includes("/seafdav") || lower.includes("/seafile-webdav")) return "seafile"
-  if (lower.includes("/webdav")) return "synology"
+  // /webdav path alone is too generic; require QuickConnect-style domain or /webdav/ sub-path common to DSM
+  if (
+    lower.includes(".quickconnect.to") ||
+    lower.includes(".synology.me") ||
+    /\/webdav\//.test(lower)
+  )
+    return "synology"
   return "custom"
 }
 

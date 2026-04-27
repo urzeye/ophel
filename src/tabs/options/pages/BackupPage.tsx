@@ -615,7 +615,7 @@ const RemoteBackupModal: React.FC<{
               <button
                 onClick={loadBackups}
                 className="settings-btn settings-btn-secondary"
-                aria-label={t("refreshBackupList") || "刷新备份列表"}
+                aria-label={t("refresh") || "刷新"}
                 style={{ padding: "6px", display: "flex", alignItems: "center" }}>
                 <RefreshIcon size={16} />
               </button>
