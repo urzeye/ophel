@@ -96,6 +96,13 @@ export const WEBDAV_PROVIDER_PRESETS: WebDAVProviderPreset[] = [
 ]
 
 /**
+ * 校验 provider 是否为已知的合法值
+ */
+export function isValidWebDAVProvider(value: unknown): value is WebDAVProvider {
+  return WEBDAV_PROVIDER_PRESETS.some((p) => p.id === value)
+}
+
+/**
  * 根据 URL 特征推断服务商（用于老用户静默迁移）
  */
 export function detectProviderFromUrl(url: string): WebDAVProvider {
@@ -198,7 +205,9 @@ export class WebDAVSyncManager {
       const config: WebDAVConfig = {
         ...DEFAULT_WEBDAV_CONFIG,
         ...settings.webdav,
-        provider: settings.webdav.provider as WebDAVProvider | undefined,
+        provider: isValidWebDAVProvider(settings.webdav.provider)
+          ? settings.webdav.provider
+          : undefined,
       }
       // 静默迁移：老用户没有 provider 字段时，根据 URL 自动识别
       if (!config.provider && config.url) {

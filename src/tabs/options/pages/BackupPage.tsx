@@ -27,6 +27,7 @@ import type { Conversation } from "~core/conversation/types"
 import {
   WEBDAV_PROVIDER_PRESETS,
   detectProviderFromUrl,
+  isValidWebDAVProvider,
   getWebDAVSyncManager,
   type BackupFile,
   type WebDAVProvider,
@@ -687,19 +688,25 @@ const RemoteBackupModal: React.FC<{
                           alignItems: "center",
                           justifyContent: "center",
                           borderRadius: "7px",
-                          border: "1px solid rgba(66, 133, 244, 0.25)",
-                          background: "rgba(66, 133, 244, 0.08)",
+                          border:
+                            "1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 25%, transparent)",
+                          background:
+                            "color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent)",
                           color: "var(--gh-primary, #4285f4)",
                           cursor: "pointer",
                           transition: "background 0.15s, border-color 0.15s",
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "rgba(66, 133, 244, 0.16)"
-                          e.currentTarget.style.borderColor = "rgba(66, 133, 244, 0.4)"
+                          e.currentTarget.style.background =
+                            "color-mix(in srgb, var(--gh-primary, #4285f4) 16%, transparent)"
+                          e.currentTarget.style.borderColor =
+                            "color-mix(in srgb, var(--gh-primary, #4285f4) 40%, transparent)"
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "rgba(66, 133, 244, 0.08)"
-                          e.currentTarget.style.borderColor = "rgba(66, 133, 244, 0.25)"
+                          e.currentTarget.style.background =
+                            "color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent)"
+                          e.currentTarget.style.borderColor =
+                            "color-mix(in srgb, var(--gh-primary, #4285f4) 25%, transparent)"
                         }}>
                         <FileRestoreIcon size={16} color="currentColor" />
                       </button>
@@ -714,19 +721,25 @@ const RemoteBackupModal: React.FC<{
                           alignItems: "center",
                           justifyContent: "center",
                           borderRadius: "7px",
-                          border: "1px solid rgba(239, 68, 68, 0.2)",
-                          background: "rgba(239, 68, 68, 0.07)",
+                          border:
+                            "1px solid color-mix(in srgb, var(--gh-danger, #ef4444) 20%, transparent)",
+                          background:
+                            "color-mix(in srgb, var(--gh-danger, #ef4444) 7%, transparent)",
                           color: "var(--gh-danger, #ef4444)",
                           cursor: "pointer",
                           transition: "background 0.15s, border-color 0.15s",
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "rgba(239, 68, 68, 0.14)"
-                          e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.35)"
+                          e.currentTarget.style.background =
+                            "color-mix(in srgb, var(--gh-danger, #ef4444) 14%, transparent)"
+                          e.currentTarget.style.borderColor =
+                            "color-mix(in srgb, var(--gh-danger, #ef4444) 35%, transparent)"
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "rgba(239, 68, 68, 0.07)"
-                          e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.2)"
+                          e.currentTarget.style.background =
+                            "color-mix(in srgb, var(--gh-danger, #ef4444) 7%, transparent)"
+                          e.currentTarget.style.borderColor =
+                            "color-mix(in srgb, var(--gh-danger, #ef4444) 20%, transparent)"
                         }}>
                         <DeleteIcon size={16} color="currentColor" />
                       </button>
@@ -767,9 +780,11 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
   useEffect(() => {
     if (settings?.webdav) {
       const webdav = settings.webdav
-      const resolvedProvider =
-        (webdav.provider as WebDAVProvider | undefined) ??
-        (webdav.url ? detectProviderFromUrl(webdav.url) : "custom")
+      const resolvedProvider: WebDAVProvider = isValidWebDAVProvider(webdav.provider)
+        ? webdav.provider
+        : webdav.url
+          ? detectProviderFromUrl(webdav.url)
+          : "custom"
       setWebdavForm((prev) => ({
         ...prev,
         ...webdav,
@@ -952,7 +967,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
             <div>{t("importConfirm") || "确定导入？"}</div>
             <div
               style={{
-                border: "1px solid rgba(66, 133, 244, 0.15)",
+                border: "1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 15%, transparent)",
                 background: "var(--gh-hover, #f8fafc)",
                 borderRadius: "8px",
                 padding: "10px 12px",
@@ -1129,7 +1144,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
             </div>
             <div
               style={{
-                border: "1px solid rgba(66, 133, 244, 0.15)",
+                border: "1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 15%, transparent)",
                 background: "var(--gh-hover, #f8fafc)",
                 borderRadius: "8px",
                 padding: "10px 12px",
@@ -1590,7 +1605,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
                 padding: "10px 12px",
                 borderRadius: "8px",
                 background: "var(--gh-bg-secondary)",
-                border: "1px solid rgba(66, 133, 244, 0.15)",
+                border: "1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 15%, transparent)",
               }}>
               {isGeminiPage
                 ? t("voyagerImportGeminiHint") ||
@@ -1607,7 +1622,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
                 padding: "10px 12px",
                 borderRadius: "8px",
                 background: "var(--gh-bg-secondary)",
-                border: "1px solid rgba(66, 133, 244, 0.15)",
+                border: "1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 15%, transparent)",
               }}>
               {t("voyagerImportMergeNotice") ||
                 "为避免覆盖现有整理结果，已在其他 Ophel 文件夹中的会话会保留原位；仅收件箱和已导入的 Voyager 文件夹会被重新归类。"}
@@ -1621,7 +1636,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
                 padding: "10px 12px",
                 borderRadius: "8px",
                 background: "var(--gh-bg-secondary)",
-                border: "1px solid rgba(66, 133, 244, 0.15)",
+                border: "1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 15%, transparent)",
               }}>
               {t("voyagerImportFlattenNotice") || "层级文件夹会压平成路径名称，例如“父级 / 子级”。"}
             </div>
