@@ -1314,11 +1314,12 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
     const deadline = Date.now() + 60000
     while (Date.now() < deadline) {
       try {
-        const checkResult: { hasPermission?: boolean } = await chrome.runtime.sendMessage({
-          type: MSG_CHECK_PERMISSION,
-          origin,
-        })
-        if (checkResult.hasPermission) return true
+        const checkResult: { success?: boolean; hasPermission?: boolean } =
+          await chrome.runtime.sendMessage({
+            type: MSG_CHECK_PERMISSION,
+            origin,
+          })
+        if (checkResult.success && checkResult.hasPermission) return true
       } catch {
         // sendMessage may fail transiently; continue polling
       }
@@ -1361,20 +1362,20 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
                   permType: "allUrls",
                 })
               if (!requestResult.success) {
-                showDomToast(requestResult.error || t("permissionRequired") || "需要权限")
+                showDomToast(requestResult.error || t("permissionRequired"))
                 return
               }
 
-              const granted = await waitForWebDAVPermission(origin)
+              const granted = await waitForWebDAVPermission("<all_urls>")
               if (!granted) {
-                showDomToast(t("permissionRequired") || "需要权限")
+                showDomToast(t("permissionRequired"))
                 return
               }
 
               await onGranted()
             } catch (error) {
               console.warn("WebDAV permission request failed:", error)
-              showDomToast(t("permissionRequired") || "需要权限")
+              showDomToast(t("permissionRequired"))
             }
           },
         })
