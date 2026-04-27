@@ -396,53 +396,6 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
         </div>
       </SettingCard>
 
-      <SettingCard
-        title={t("shortcutsInteractionGroup") || "独立设置"}
-        description={
-          t("shortcutsInteractionGroupDesc") || "此分组设置始终生效，不受“启用自定义快捷键”开关影响"
-        }>
-        <SettingRow
-          label={
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "4px",
-              }}>
-              <span>{t("promptSubmitShortcutLabel") || "Send shortcut"}</span>
-              <span style={{ fontSize: "13px", color: "var(--gh-text-secondary)" }}>
-                {(
-                  t("promptSubmitShortcutDesc") ||
-                  "Applies to both manual send and prompt auto-send"
-                ).replace(/[\u3002.]$/, "")}
-              </span>
-            </div>
-          }
-          settingId="shortcuts-prompt-submit-shortcut">
-          <select
-            className="settings-select"
-            value={settings.features?.prompts?.submitShortcut ?? "enter"}
-            onChange={(e) =>
-              setSettings({
-                features: {
-                  ...settings.features,
-                  prompts: {
-                    enabled: settings.features?.prompts?.enabled ?? true,
-                    doubleClickToSend: settings.features?.prompts?.doubleClickToSend ?? false,
-                    submitShortcut: e.target.value as "enter" | "ctrlEnter",
-                    promptQueue: settings.features?.prompts?.promptQueue ?? false,
-                  },
-                },
-              })
-            }>
-            <option value="enter">{t("promptSubmitShortcutEnter") || "Enter"}</option>
-            <option value="ctrlEnter">
-              {t("promptSubmitShortcutCtrlEnter") || "Ctrl + Enter"}
-            </option>
-          </select>
-        </SettingRow>
-      </SettingCard>
-
       {groupedActions.map(({ categoryId, categoryMeta, actions }) => (
         <SettingCard key={categoryId} title={t(categoryMeta.labelKey) || categoryMeta.label}>
           {actions.map(([actionId, meta]) => {

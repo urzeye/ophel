@@ -1413,6 +1413,25 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             }
           />
 
+          <SettingRow
+            label={t("promptSubmitShortcutLabel") || "Send shortcut"}
+            description={
+              t("promptSubmitShortcutDesc") || "Applies to both manual send and prompt auto-send"
+            }
+            settingId="prompt-submit-shortcut">
+            <select
+              className="settings-select"
+              value={settings.features?.prompts?.submitShortcut ?? "enter"}
+              onChange={(e) =>
+                updateDeepSetting("features", "prompts", "submitShortcut", e.target.value)
+              }>
+              <option value="enter">{t("promptSubmitShortcutEnter") || "Enter"}</option>
+              <option value="ctrlEnter">
+                {t("promptSubmitShortcutCtrlEnter") || "Ctrl + Enter"}
+              </option>
+            </select>
+          </SettingRow>
+
           <ToggleRow
             label={t("queueSettingLabel") || "Prompt Queue"}
             description={
