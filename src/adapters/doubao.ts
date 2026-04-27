@@ -727,11 +727,13 @@ export class DoubaoAdapter extends SiteAdapter {
     }
     this.simulateClick(deleteMenuItem)
 
-    const confirmButton = await this.waitForDeleteConfirmButton(2500)
-    if (!confirmButton) {
-      return false
+    // The confirmation dialog is optional: newer Doubao versions may delete directly
+    // without a confirmation step. Try to find and click the confirm button; if it
+    // does not appear but the conversation disappears anyway, treat it as success.
+    const confirmButton = await this.waitForDeleteConfirmButton(1500)
+    if (confirmButton) {
+      this.simulateClick(confirmButton)
     }
-    this.simulateClick(confirmButton)
 
     return this.waitForConversationRemoved(id, 7000)
   }
@@ -815,16 +817,6 @@ export class DoubaoAdapter extends SiteAdapter {
     const start = Date.now()
 
     while (Date.now() - start < timeout) {
-      const direct = document.querySelector(
-        '[data-radix-popper-content-wrapper] [data-testid="chat_item_menu_remove_icon"]',
-      ) as HTMLElement | null
-      const directItem = direct?.closest(
-        '[role="menuitem"][data-slot="dropdown-menu-item"]',
-      ) as HTMLElement | null
-      if (this.isVisible(directItem)) {
-        return directItem
-      }
-
       const items = Array.from(
         document.querySelectorAll(
           '[data-radix-popper-content-wrapper] [role="menuitem"][data-slot="dropdown-menu-item"]',
@@ -833,7 +825,20 @@ export class DoubaoAdapter extends SiteAdapter {
 
       for (const item of items) {
         if (!this.isVisible(item)) continue
-        if (this.getSignalText(item).includes("删除")) {
+
+        // Primary: the delete item is styled in danger/red color (text-dbx-function-danger)
+        // This is the most reliable signal after data-testid attributes were removed from the new DOM
+        if (item.querySelector(".text-dbx-function-danger")) {
+          return item
+        }
+
+        // Fallback: text-based matching (Chinese "删除" or English "delete")
+        const signalText = this.getSignalText(item)
+        if (
+          signalText.includes("删除") ||
+          signalText.includes("刪除") ||
+          signalText.includes("delete")
+        ) {
           return item
         }
       }
