@@ -1313,12 +1313,16 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
   const waitForWebDAVPermission = async (origin: string): Promise<boolean> => {
     const deadline = Date.now() + 60000
     while (Date.now() < deadline) {
-      const checkResult: { hasPermission?: boolean } = await chrome.runtime.sendMessage({
-        type: MSG_CHECK_PERMISSION,
-        origin,
-      })
-      if (checkResult.hasPermission) return true
-      await new Promise((resolve) => setTimeout(resolve, 400))
+      try {
+        const checkResult: { hasPermission?: boolean } = await chrome.runtime.sendMessage({
+          type: MSG_CHECK_PERMISSION,
+          origin,
+        })
+        if (checkResult.hasPermission) return true
+      } catch {
+        // sendMessage may fail transiently; continue polling
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000))
     }
     return false
   }

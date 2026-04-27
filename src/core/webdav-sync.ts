@@ -17,16 +17,12 @@ function safeDecodeURIComponent(str: string) {
 }
 
 function getElementTextByLocalName(parent: Element, localName: string): string | null {
-  const targetName = localName.toLowerCase()
-  const elements = Array.from(parent.getElementsByTagName("*"))
-  const element = elements.find((item) => item.localName.toLowerCase() === targetName)
+  const element = parent.getElementsByTagNameNS("*", localName)[0]
   return element?.textContent?.trim() || null
 }
 
 function hasXmlParserError(document: Document): boolean {
-  return Array.from(document.getElementsByTagName("*")).some(
-    (element) => element.localName.toLowerCase() === "parsererror",
-  )
+  return document.getElementsByTagName("parsererror").length > 0
 }
 
 function createBackupFileFromProps(
@@ -61,8 +57,7 @@ function parseBackupFilesWithDomParser(xmlText: string): BackupFile[] | null {
     const document = new DOMParser().parseFromString(xmlText, "application/xml")
     if (hasXmlParserError(document)) return null
 
-    return Array.from(document.getElementsByTagName("*"))
-      .filter((element) => element.localName.toLowerCase() === "response")
+    return Array.from(document.getElementsByTagNameNS("*", "response"))
       .map((response) =>
         createBackupFileFromProps(
           getElementTextByLocalName(response, "href"),
