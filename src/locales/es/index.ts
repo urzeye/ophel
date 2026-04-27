@@ -911,6 +911,8 @@ export const es = {
   webdavRemoteDirLabel: "Ruta",
   backupManagement: "Gestor",
   backupNow: "Copiar ahora",
+  defaultDirHint: "Predeterminado: ophel",
+  unsavedChanges: "Sin guardar",
   restore: "Restaurar",
   localBackup: "Local",
   exportToFile: "Fichero",

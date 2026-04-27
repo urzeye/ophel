@@ -885,6 +885,8 @@ export const zhTW = {
   webdavRemoteDirLabel: "路徑",
   backupManagement: "備份管理",
   backupNow: "立即備份",
+  defaultDirHint: "預設: ophel",
+  unsavedChanges: "未儲存",
   restore: "恢復",
   localBackup: "本地備份",
   exportToFile: "匯出為檔案",

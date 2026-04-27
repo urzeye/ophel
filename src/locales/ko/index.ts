@@ -907,6 +907,8 @@ export const ko = {
   webdavRemoteDirLabel: "경로",
   backupManagement: "백업 관리",
   backupNow: "지금 백업",
+  defaultDirHint: "기본값: ophel",
+  unsavedChanges: "저장 안 됨",
   restore: "복원",
   localBackup: "로컬 백업",
   exportToFile: "파일로 내보내기",

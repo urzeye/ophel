@@ -909,6 +909,8 @@ export const ru = {
   webdavRemoteDirLabel: "Путь",
   backupManagement: "Менеджер",
   backupNow: "Сделать сейчас",
+  defaultDirHint: "По умолчанию: ophel",
+  unsavedChanges: "Не сохранено",
   restore: "Вернуть",
   localBackup: "Файл",
   exportToFile: "Экспорт",

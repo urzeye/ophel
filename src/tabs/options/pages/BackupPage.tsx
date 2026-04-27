@@ -5,7 +5,17 @@
 import React, { useEffect, useRef, useState } from "react"
 
 import { GeminiAdapter } from "~adapters/gemini"
-import { CloudIcon } from "~components/icons"
+import {
+  CloudIcon,
+  SaveIcon,
+  LinkIcon,
+  BackupIcon,
+  CloudUploadIcon,
+  FileRestoreIcon,
+  DeleteIcon,
+  RefreshIcon,
+  InfoIcon,
+} from "~components/icons"
 import { ConfirmDialog, Tooltip } from "~components/ui"
 import { PRESET_EMOJIS, SITE_IDS, type Folder } from "~constants"
 import {
@@ -606,8 +616,8 @@ const RemoteBackupModal: React.FC<{
               <button
                 onClick={loadBackups}
                 className="settings-btn settings-btn-secondary"
-                style={{ padding: "6px" }}>
-                🔄
+                style={{ padding: "6px", display: "flex", alignItems: "center" }}>
+                <RefreshIcon size={16} />
               </button>
             </Tooltip>
             <button
@@ -650,18 +660,22 @@ const RemoteBackupModal: React.FC<{
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: "8px" }}>
-                    <button
-                      onClick={() => handleRestoreClick(file)}
-                      className="settings-btn settings-btn-primary"
-                      style={{ padding: "6px 12px", fontSize: "12px" }}>
-                      {t("restore") || "恢复"}
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick(file)}
-                      className="settings-btn settings-btn-danger"
-                      style={{ padding: "6px 12px", fontSize: "12px" }}>
-                      🗑️
-                    </button>
+                    <Tooltip content={t("restore") || "恢复"}>
+                      <button
+                        onClick={() => handleRestoreClick(file)}
+                        className="settings-btn settings-btn-primary"
+                        style={{ padding: "6px 10px", display: "flex", alignItems: "center" }}>
+                        <FileRestoreIcon size={16} color="currentColor" />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content={t("delete") || "删除"}>
+                      <button
+                        onClick={() => handleDeleteClick(file)}
+                        className="settings-btn settings-btn-danger"
+                        style={{ padding: "6px 10px", display: "flex", alignItems: "center" }}>
+                        <DeleteIcon size={16} color="currentColor" />
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
               ))}
@@ -1299,6 +1313,17 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
     })
   }
 
+  const isWebDAVUnsaved = (() => {
+    const base = settings.webdav ?? DEFAULT_SETTINGS.webdav
+    return (
+      webdavForm.url !== base.url ||
+      webdavForm.username !== base.username ||
+      webdavForm.password !== base.password ||
+      webdavForm.remoteDir !== base.remoteDir ||
+      webdavForm.provider !== base.provider
+    )
+  })()
+
   return (
     <div className="settings-content">
       <PageTitle title={t("navBackup") || "备份与同步"} Icon={CloudIcon} />
@@ -1620,8 +1645,15 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
             fontSize: "13px",
             color: "var(--gh-primary, #4285f4)",
           }}>
-          <div style={{ fontWeight: 600, marginBottom: "4px" }}>
-            ℹ️ {t("restoreTip") || "恢复提示"}
+          <div
+            style={{
+              fontWeight: 600,
+              marginBottom: "4px",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}>
+            <InfoIcon size={14} /> {t("restoreTip") || "恢复提示"}
           </div>
           <div style={{ lineHeight: 1.5, opacity: 0.9 }}>{t("restoreTipContent")}</div>
         </div>
@@ -1669,7 +1701,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
                 alignItems: "flex-start",
                 gap: "8px",
               }}>
-              <span style={{ flexShrink: 0 }}>ℹ️</span>
+              <InfoIcon size={14} style={{ flexShrink: 0, marginTop: "1px" }} />
               <div>
                 {t(preset.hintKey)}
                 {preset.helpUrl && (
@@ -1740,7 +1772,9 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
           })()}
         </SettingRow>
 
-        <SettingRow label={t("defaultDir") || "默认目录"}>
+        <SettingRow
+          label={t("defaultDir") || "默认目录"}
+          description={t("defaultDirHint") || "默认: ophel"}>
           <input
             type="text"
             className="settings-input"
@@ -1758,43 +1792,96 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
             borderTop: "1px solid var(--gh-border)",
             display: "flex",
             gap: "12px",
-            flexWrap: "wrap",
+            flexWrap: "nowrap",
             alignItems: "center",
           }}>
-          <button
-            className="settings-btn settings-btn-primary"
-            onClick={handleSaveConfig}
-            style={{ padding: "6px 20px" }}>
-            💾 {t("saveConfig") || "保存配置"}
-          </button>
+          {/* 左侧组（可伸缩）：测试连接 | 保存配置（含悬浮未保存 tip） */}
           <div
             style={{
-              width: "1px",
-              height: "20px",
-              background: "var(--gh-border)",
-              margin: "0 8px",
-            }}></div>
-          <button className="settings-btn settings-btn-secondary" onClick={testWebDAVConnection}>
-            🔗 {t("webdavTestBtn") || "测试连接"}
-          </button>
-          <button
-            className="settings-btn settings-btn-secondary"
-            onClick={async () => {
-              await checkAndRequestWebDAVPermission(async () => {
-                // 临时应用配置
-                const manager = getWebDAVSyncManager()
-                await manager.setConfig(webdavForm, false)
-                setShowRemoteBackups(true)
-              })
+              display: "flex",
+              gap: "12px",
+              alignItems: "center",
+              flex: "1 1 auto",
+              minWidth: 0,
             }}>
-            📂 {t("restore") || "恢复/下载"}
-          </button>
-          <button
-            className="settings-btn settings-btn-success"
-            onClick={uploadToWebDAV}
-            style={{ marginLeft: "auto" }}>
-            ☁️ {t("backupNow") || "立即上传备份"}
-          </button>
+            <button
+              className="settings-btn settings-btn-secondary"
+              onClick={testWebDAVConnection}
+              style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+              <LinkIcon size={16} /> {t("webdavTestBtn") || "测试连接"}
+            </button>
+            <div
+              style={{
+                width: "1px",
+                height: "20px",
+                background: "var(--gh-border)",
+                flexShrink: 0,
+              }}
+            />
+            {/* 保存配置 + 绝对定位的未保存 tip（不撑高父容器） */}
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <button
+                className="settings-btn settings-btn-primary"
+                onClick={handleSaveConfig}
+                style={{
+                  padding: "6px 20px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}>
+                <SaveIcon size={16} /> {t("saveConfig") || "保存配置"}
+              </button>
+              {isWebDAVUnsaved && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 3px)",
+                    left: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    fontSize: "11px",
+                    lineHeight: 1,
+                    color: "var(--gh-warning, #f59e0b)",
+                    whiteSpace: "nowrap",
+                    pointerEvents: "none",
+                  }}>
+                  <span
+                    style={{
+                      width: "5px",
+                      height: "5px",
+                      borderRadius: "50%",
+                      flexShrink: 0,
+                      backgroundColor: "var(--gh-warning, #f59e0b)",
+                    }}
+                  />
+                  {t("unsavedChanges") || "未保存"}
+                </span>
+              )}
+            </div>
+          </div>
+          {/* 右侧组（不换行）：恢复 + 立即备份 */}
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", flexShrink: 0 }}>
+            <button
+              className="settings-btn settings-btn-secondary"
+              style={{ display: "flex", alignItems: "center", gap: "6px" }}
+              onClick={async () => {
+                await checkAndRequestWebDAVPermission(async () => {
+                  // 临时应用配置
+                  const manager = getWebDAVSyncManager()
+                  await manager.setConfig(webdavForm, false)
+                  setShowRemoteBackups(true)
+                })
+              }}>
+              <FileRestoreIcon size={16} color="currentColor" /> {t("restore") || "恢复/下载"}
+            </button>
+            <button
+              className="settings-btn settings-btn-success"
+              style={{ display: "flex", alignItems: "center", gap: "6px" }}
+              onClick={uploadToWebDAV}>
+              <CloudUploadIcon size={16} color="currentColor" /> {t("backupNow") || "立即上传备份"}
+            </button>
+          </div>
         </div>
       </SettingCard>
 
