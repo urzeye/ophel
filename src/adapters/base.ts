@@ -702,27 +702,6 @@ export abstract class SiteAdapter {
     return null
   }
 
-  /**
-   * 获取元素相对于滚动容器顶部的实际偏移量
-   * 通过累加 offsetTop 链直到到达滚动容器，保证坐标系一致。
-   * 若 offsetParent 链未经过 container，则回退到 getBoundingClientRect 差值。
-   */
-  private getElementTopInContainer(el: HTMLElement, container: HTMLElement): number {
-    let top = 0
-    let current: HTMLElement | null = el
-    while (current && current !== container) {
-      top += current.offsetTop
-      current = current.offsetParent as HTMLElement | null
-    }
-    if (current === container) {
-      return top
-    }
-    // offsetParent 链未经过 container，用 BoundingClientRect 差值
-    return (
-      el.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop
-    )
-  }
-
   /** 获取当前视口中可见的锚点元素信息 */
   getVisibleAnchorElement(): AnchorData | null {
     const container = this.getScrollContainer()
@@ -739,7 +718,7 @@ export abstract class SiteAdapter {
 
     for (let i = 0; i < candidates.length; i++) {
       const el = candidates[i] as HTMLElement
-      const top = this.getElementTopInContainer(el, container)
+      const top = el.offsetTop
 
       if (top <= scrollTop + 100) {
         bestElement = el
@@ -751,8 +730,7 @@ export abstract class SiteAdapter {
     if (!bestElement && candidates.length > 0) bestElement = candidates[0]
 
     if (bestElement) {
-      const offset =
-        scrollTop - this.getElementTopInContainer(bestElement as HTMLElement, container)
+      const offset = scrollTop - (bestElement as HTMLElement).offsetTop
       const id = bestElement.getAttribute("data-message-id") || bestElement.id
 
       if (id) {
@@ -804,9 +782,7 @@ export abstract class SiteAdapter {
     }
 
     if (targetElement) {
-      const targetTop =
-        this.getElementTopInContainer(targetElement as HTMLElement, container) +
-        (anchorData.offset || 0)
+      const targetTop = (targetElement as HTMLElement).offsetTop + (anchorData.offset || 0)
       container.scrollTo({
         top: targetTop,
         behavior: "instant" as ScrollBehavior,
