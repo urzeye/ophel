@@ -535,7 +535,7 @@ export const DEFAULT_SETTINGS: Settings = {
   readingHistory: {
     persistence: true,
     autoRestore: true,
-    cleanupDays: 30,
+    cleanupDays: 3,
   },
 
   quickButtons: {
