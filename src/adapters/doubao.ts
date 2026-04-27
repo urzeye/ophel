@@ -727,10 +727,10 @@ export class DoubaoAdapter extends SiteAdapter {
     }
     this.simulateClick(deleteMenuItem)
 
-    // The confirmation dialog is optional: newer Doubao versions may delete directly
-    // without a confirmation step. Try to find and click the confirm button; if it
-    // does not appear but the conversation disappears anyway, treat it as success.
-    const confirmButton = await this.waitForDeleteConfirmButton(1500)
+    // The confirmation dialog is optional: try to find and click the confirm button;
+    // if it does not appear (e.g. future versions with no confirm step) but the
+    // conversation disappears anyway, treat it as success.
+    const confirmButton = await this.waitForDeleteConfirmButton(2500)
     if (confirmButton) {
       this.simulateClick(confirmButton)
     }
@@ -855,15 +855,25 @@ export class DoubaoAdapter extends SiteAdapter {
     while (Date.now() - start < timeout) {
       const dialog = this.findVisibleDeleteDialog()
       if (dialog) {
-        const explicit = dialog.querySelector('button[aria-label="confirm"]') as HTMLElement | null
-        if (this.isVisible(explicit)) {
-          return explicit
+        // Primary: the confirm button has bg-dbx-function-danger (danger/red background)
+        // This is reliable regardless of locale (works for Simplified, Traditional, English)
+        const dangerBtn = dialog.querySelector(
+          'button[class*="bg-dbx-function-danger"]',
+        ) as HTMLElement | null
+        if (this.isVisible(dangerBtn)) {
+          return dangerBtn
         }
 
+        // Fallback: text-based matching for Simplified (\u5220\u9664), Traditional (\u5220\u9664 / \u522a\u9664) or English
         const buttons = Array.from(dialog.querySelectorAll("button")) as HTMLElement[]
         for (const button of buttons) {
           if (!this.isVisible(button)) continue
-          if (this.getSignalText(button).includes("删除")) {
+          const signalText = this.getSignalText(button)
+          if (
+            signalText.includes("\u5220\u9664") || // 删除 (Simplified)
+            signalText.includes("\u522a\u9664") || // 刪除 (Traditional)
+            signalText.includes("delete")
+          ) {
             return button
           }
         }
@@ -876,13 +886,27 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   private findVisibleDeleteDialog(): HTMLElement | null {
+    // Primary: match by the new Radix dialog slot attribute and open state
+    const newDialogs = Array.from(
+      document.querySelectorAll('[role="dialog"][data-state="open"][data-slot="dialog-content"]'),
+    ) as HTMLElement[]
+    const newDialog = newDialogs.find((dialog) => this.isVisible(dialog))
+    if (newDialog) return newDialog
+
+    // Fallback: legacy structure — match by text content for Simplified, Traditional or English
     const dialogs = Array.from(
       document.querySelectorAll('[role="dialog"][aria-modal="true"], [role="dialog"]'),
     ) as HTMLElement[]
     return (
-      dialogs.find(
-        (dialog) => this.isVisible(dialog) && this.getSignalText(dialog).includes("删除"),
-      ) || null
+      dialogs.find((dialog) => {
+        if (!this.isVisible(dialog)) return false
+        const text = this.getSignalText(dialog)
+        return (
+          text.includes("\u5220\u9664") || // 删除 (Simplified)
+          text.includes("\u522a\u9664") || // 刪除 (Traditional)
+          text.includes("delete")
+        )
+      }) || null
     )
   }
 
