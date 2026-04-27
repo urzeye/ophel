@@ -9,7 +9,6 @@ import {
   CloudIcon,
   SaveIcon,
   LinkIcon,
-  BackupIcon,
   CloudUploadIcon,
   FileRestoreIcon,
   DeleteIcon,
@@ -616,6 +615,7 @@ const RemoteBackupModal: React.FC<{
               <button
                 onClick={loadBackups}
                 className="settings-btn settings-btn-secondary"
+                aria-label={t("refreshBackupList") || "刷新备份列表"}
                 style={{ padding: "6px", display: "flex", alignItems: "center" }}>
                 <RefreshIcon size={16} />
               </button>
@@ -680,6 +680,7 @@ const RemoteBackupModal: React.FC<{
                     <Tooltip content={t("restore") || "恢复"}>
                       <button
                         onClick={() => handleRestoreClick(file)}
+                        aria-label={t("restore") || "恢复"}
                         style={{
                           padding: "7px",
                           display: "flex",
@@ -706,6 +707,7 @@ const RemoteBackupModal: React.FC<{
                     <Tooltip content={t("delete") || "删除"}>
                       <button
                         onClick={() => handleDeleteClick(file)}
+                        aria-label={t("delete") || "删除"}
                         style={{
                           padding: "7px",
                           display: "flex",
@@ -1368,12 +1370,14 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
 
   const isWebDAVUnsaved = (() => {
     const base = settings.webdav ?? DEFAULT_SETTINGS.webdav
+    const normalizedBaseProvider =
+      base.provider ?? (base.url ? detectProviderFromUrl(base.url) : "custom")
     return (
       webdavForm.url !== base.url ||
       webdavForm.username !== base.username ||
       webdavForm.password !== base.password ||
       webdavForm.remoteDir !== base.remoteDir ||
-      webdavForm.provider !== base.provider
+      webdavForm.provider !== normalizedBaseProvider
     )
   })()
 
