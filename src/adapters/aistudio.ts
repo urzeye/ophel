@@ -563,7 +563,10 @@ export class AIStudioAdapter extends SiteAdapter {
       return []
     }
 
-    // 4. 抓取模型列表
+    // 4. 确保先切换到"All"分类（默认打开的可能是"Featured"，导致模型列表不全）
+    await this.ensureAllModelsCategory(sidebar)
+
+    // 5. 抓取模型列表
     const models = this.extractModelsFromSidebar(sidebar)
 
     // 5. 关闭模型选择侧边栏（ESC 键或点击关闭按钮）
@@ -609,6 +612,27 @@ export class AIStudioAdapter extends SiteAdapter {
     }
 
     return null
+  }
+
+  /**
+   * 确保模型侧边栏已切换到"All"分类，避免仅显示 Featured 等子集
+   */
+  private async ensureAllModelsCategory(sidebar: HTMLElement): Promise<void> {
+    const categoryButtons = Array.from(
+      sidebar.querySelectorAll("[data-test-category-button]"),
+    ) as HTMLElement[]
+    if (categoryButtons.length === 0) return
+
+    // 找到"All"按钮
+    const allBtn = categoryButtons.find((btn) => btn.textContent?.trim() === "All")
+    if (!allBtn) return
+
+    // 如果已经是"All"，不做任何操作
+    if (allBtn.getAttribute("aria-selected") === "true") return
+
+    // 点击"All"并等待列表刷新
+    allBtn.click()
+    await new Promise((r) => setTimeout(r, 400))
   }
 
   /**
