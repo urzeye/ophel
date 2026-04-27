@@ -1785,49 +1785,28 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
           />
         </SettingRow>
 
+        {/* 操作按钮行：左=配置操作，右=数据同步 */}
         <div
           style={{
-            marginTop: "24px",
-            paddingTop: "24px",
-            borderTop: "1px solid var(--gh-border)",
+            marginTop: "16px",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            gap: "8px",
           }}>
-          <div style={{ color: "var(--gh-text-secondary, #6b7280)", fontSize: "13px" }}>
-            {t("webdavSettingsHint") || "配置完成后，请点击「保存配置」使设置生效"}
-          </div>
-          <div
-            style={{
-              display: "flex",
-              gap: "12px",
-              alignItems: "center",
-            }}>
+          {/* 左侧：测试连接 + 保存配置 */}
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             <button
               className="settings-btn settings-btn-secondary"
               onClick={testWebDAVConnection}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "6px 16px",
-              }}>
+              style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 16px" }}>
               <LinkIcon size={16} /> {t("webdavTestBtn") || "测试连接"}
             </button>
             <div style={{ position: "relative" }}>
               <button
-                className="settings-btn settings-btn-primary"
+                className={`settings-btn ${isWebDAVUnsaved ? "settings-btn-primary" : "settings-btn-secondary"}`}
                 onClick={handleSaveConfig}
-                disabled={!isWebDAVUnsaved}
-                style={{
-                  padding: "6px 16px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  opacity: isWebDAVUnsaved ? 1 : 0.7,
-                  cursor: isWebDAVUnsaved ? "pointer" : "not-allowed",
-                  transition: "opacity 0.2s",
-                }}>
+                style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 16px" }}>
                 <SaveIcon size={16} /> {t("saveConfig") || "保存配置"}
               </button>
               {isWebDAVUnsaved && (
@@ -1846,43 +1825,11 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
               )}
             </div>
           </div>
-        </div>
-
-        {/* 独立的数据同步操作面板 */}
-        <div
-          style={{
-            marginTop: "24px",
-            background: "var(--gh-bg-secondary, #f9fafb)",
-            border: "1px solid var(--gh-border, #e5e7eb)",
-            borderRadius: "8px",
-            padding: "16px 20px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}>
-          <div>
-            <div
-              style={{
-                fontWeight: 600,
-                color: "var(--gh-text, #374151)",
-                fontSize: "14px",
-                marginBottom: "4px",
-              }}>
-              {t("dataSync") || "数据同步"}
-            </div>
-            <div style={{ fontSize: "13px", color: "var(--gh-text-secondary, #6b7280)" }}>
-              {t("dataSyncDesc") || "随时将本地数据备份到 WebDAV 服务器，或从服务器恢复"}
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          {/* 右侧：恢复 + 立即备份 */}
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             <button
               className="settings-btn settings-btn-secondary"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "6px 16px",
-              }}
+              style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 16px" }}
               onClick={async () => {
                 await checkAndRequestWebDAVPermission(async () => {
                   // 临时应用配置
@@ -1891,18 +1838,13 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
                   setShowRemoteBackups(true)
                 })
               }}>
-              <FileRestoreIcon size={16} color="currentColor" /> {t("restore") || "从云端恢复"}
+              <FileRestoreIcon size={16} color="currentColor" /> {t("restore") || "恢复"}
             </button>
             <button
-              className="settings-btn settings-btn-primary"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "6px 16px",
-              }}
+              className={`settings-btn ${!isWebDAVUnsaved ? "settings-btn-primary" : "settings-btn-secondary"}`}
+              style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 16px" }}
               onClick={uploadToWebDAV}>
-              <CloudUploadIcon size={16} color="currentColor" /> {t("backupNow") || "立即上传备份"}
+              <CloudUploadIcon size={16} color="currentColor" /> {t("backupNow") || "立即备份"}
             </button>
           </div>
         </div>
