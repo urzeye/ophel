@@ -897,7 +897,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
             <div>{t("importConfirm") || "确定导入？"}</div>
             <div
               style={{
-                border: "1px solid var(--gh-border, #e5e7eb)",
+                border: "1px solid rgba(66, 133, 244, 0.15)",
                 background: "var(--gh-hover, #f8fafc)",
                 borderRadius: "8px",
                 padding: "10px 12px",
@@ -1074,7 +1074,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
             </div>
             <div
               style={{
-                border: "1px solid var(--gh-border, #e5e7eb)",
+                border: "1px solid rgba(66, 133, 244, 0.15)",
                 background: "var(--gh-hover, #f8fafc)",
                 borderRadius: "8px",
                 padding: "10px 12px",
@@ -1533,7 +1533,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
                 padding: "10px 12px",
                 borderRadius: "8px",
                 background: "var(--gh-bg-secondary)",
-                border: "1px solid var(--gh-border, #e5e7eb)",
+                border: "1px solid rgba(66, 133, 244, 0.15)",
               }}>
               {isGeminiPage
                 ? t("voyagerImportGeminiHint") ||
@@ -1550,7 +1550,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
                 padding: "10px 12px",
                 borderRadius: "8px",
                 background: "var(--gh-bg-secondary)",
-                border: "1px solid var(--gh-border, #e5e7eb)",
+                border: "1px solid rgba(66, 133, 244, 0.15)",
               }}>
               {t("voyagerImportMergeNotice") ||
                 "为避免覆盖现有整理结果，已在其他 Ophel 文件夹中的会话会保留原位；仅收件箱和已导入的 Voyager 文件夹会被重新归类。"}
@@ -1564,7 +1564,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
                 padding: "10px 12px",
                 borderRadius: "8px",
                 background: "var(--gh-bg-secondary)",
-                border: "1px solid var(--gh-border, #e5e7eb)",
+                border: "1px solid rgba(66, 133, 244, 0.15)",
               }}>
               {t("voyagerImportFlattenNotice") || "层级文件夹会压平成路径名称，例如“父级 / 子级”。"}
             </div>
@@ -1787,47 +1787,46 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
 
         <div
           style={{
-            marginTop: "16px",
-            paddingTop: "16px",
+            marginTop: "24px",
+            paddingTop: "24px",
             borderTop: "1px solid var(--gh-border)",
             display: "flex",
-            gap: "12px",
-            flexWrap: "nowrap",
+            justifyContent: "space-between",
             alignItems: "center",
           }}>
-          {/* 左侧组（可伸缩）：测试连接 | 保存配置（含悬浮未保存 tip） */}
+          <div style={{ color: "var(--gh-text-secondary, #6b7280)", fontSize: "13px" }}>
+            {t("webdavSettingsHint") || "配置完成后，请点击「保存配置」使设置生效"}
+          </div>
           <div
             style={{
               display: "flex",
               gap: "12px",
               alignItems: "center",
-              flex: "1 1 auto",
-              minWidth: 0,
             }}>
             <button
               className="settings-btn settings-btn-secondary"
               onClick={testWebDAVConnection}
-              style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 16px",
+              }}>
               <LinkIcon size={16} /> {t("webdavTestBtn") || "测试连接"}
             </button>
-            <div
-              style={{
-                width: "1px",
-                height: "20px",
-                background: "var(--gh-border)",
-                flexShrink: 0,
-              }}
-            />
-            {/* 保存配置 + 绝对定位的未保存 tip（不撑高父容器） */}
-            <div style={{ position: "relative", flexShrink: 0 }}>
+            <div style={{ position: "relative" }}>
               <button
                 className="settings-btn settings-btn-primary"
                 onClick={handleSaveConfig}
+                disabled={!isWebDAVUnsaved}
                 style={{
-                  padding: "6px 20px",
+                  padding: "6px 16px",
                   display: "flex",
                   alignItems: "center",
                   gap: "6px",
+                  opacity: isWebDAVUnsaved ? 1 : 0.7,
+                  cursor: isWebDAVUnsaved ? "pointer" : "not-allowed",
+                  transition: "opacity 0.2s",
                 }}>
                 <SaveIcon size={16} /> {t("saveConfig") || "保存配置"}
               </button>
@@ -1835,36 +1834,55 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
                 <span
                   style={{
                     position: "absolute",
-                    top: "calc(100% + 3px)",
-                    left: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    fontSize: "11px",
-                    lineHeight: 1,
-                    color: "var(--gh-warning, #f59e0b)",
-                    whiteSpace: "nowrap",
-                    pointerEvents: "none",
-                  }}>
-                  <span
-                    style={{
-                      width: "5px",
-                      height: "5px",
-                      borderRadius: "50%",
-                      flexShrink: 0,
-                      backgroundColor: "var(--gh-warning, #f59e0b)",
-                    }}
-                  />
-                  {t("unsavedChanges") || "未保存"}
-                </span>
+                    top: "-4px",
+                    right: "-4px",
+                    width: "8px",
+                    height: "8px",
+                    backgroundColor: "var(--gh-warning, #f59e0b)",
+                    borderRadius: "50%",
+                    boxShadow: "0 0 0 2px var(--gh-bg, #ffffff)",
+                  }}
+                />
               )}
             </div>
           </div>
-          {/* 右侧组（不换行）：恢复 + 立即备份 */}
-          <div style={{ display: "flex", gap: "8px", alignItems: "center", flexShrink: 0 }}>
+        </div>
+
+        {/* 独立的数据同步操作面板 */}
+        <div
+          style={{
+            marginTop: "24px",
+            background: "var(--gh-bg-secondary, #f9fafb)",
+            border: "1px solid var(--gh-border, #e5e7eb)",
+            borderRadius: "8px",
+            padding: "16px 20px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}>
+          <div>
+            <div
+              style={{
+                fontWeight: 600,
+                color: "var(--gh-text, #374151)",
+                fontSize: "14px",
+                marginBottom: "4px",
+              }}>
+              {t("dataSync") || "数据同步"}
+            </div>
+            <div style={{ fontSize: "13px", color: "var(--gh-text-secondary, #6b7280)" }}>
+              {t("dataSyncDesc") || "随时将本地数据备份到 WebDAV 服务器，或从服务器恢复"}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
             <button
               className="settings-btn settings-btn-secondary"
-              style={{ display: "flex", alignItems: "center", gap: "6px" }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 16px",
+              }}
               onClick={async () => {
                 await checkAndRequestWebDAVPermission(async () => {
                   // 临时应用配置
@@ -1873,11 +1891,16 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
                   setShowRemoteBackups(true)
                 })
               }}>
-              <FileRestoreIcon size={16} color="currentColor" /> {t("restore") || "恢复/下载"}
+              <FileRestoreIcon size={16} color="currentColor" /> {t("restore") || "从云端恢复"}
             </button>
             <button
-              className="settings-btn settings-btn-success"
-              style={{ display: "flex", alignItems: "center", gap: "6px" }}
+              className="settings-btn settings-btn-primary"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 16px",
+              }}
               onClick={uploadToWebDAV}>
               <CloudUploadIcon size={16} color="currentColor" /> {t("backupNow") || "立即上传备份"}
             </button>
