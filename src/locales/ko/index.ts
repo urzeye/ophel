@@ -960,7 +960,7 @@ export const ko = {
   enableShortcuts: "사용자 정의 단축키 활성화",
   enableShortcutsDesc: "모든 사용자 정의 키보드 단축키를 활성화 또는 비활성화",
   globalShortcutUrl: "글로벌 단축키 URL",
-  globalShortcutUrlDesc: "글로벌 단축키 Alt+O (Mac: ⌥O)를 누를 때 열리는 URL",
+  globalShortcutUrlDesc: "글로벌 단축키 {shortcut}를 누를 때 열리는 URL",
   resetShortcuts: "기본값으로 재설정",
   resetShortcutsConfirm: "모든 단축키를 기본값으로 재설정하시겠습니까?",
   pressAnyKey: "키를 누르세요...",

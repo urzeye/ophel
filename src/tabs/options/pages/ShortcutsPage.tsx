@@ -163,6 +163,7 @@ const ShortcutInput: React.FC<{
 const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
   const { settings, setSettings } = useSettingsStore()
   const shortcuts = settings?.shortcuts
+  const isMac = React.useMemo(() => isMacOS(), [])
 
   // 检测快捷键冲突
   const checkConflict = useCallback(
@@ -290,7 +291,8 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
             <SettingRow
               label={t("globalShortcutUrl") || "全局快捷键打开的 URL"}
               description={
-                t("globalShortcutUrlDesc") || "按下全局快捷键 Alt+O（Mac：⌥O）时打开的网址"
+                t("globalShortcutUrlDesc", { shortcut: isMac ? "⌥O" : "Alt+O" }) ||
+                (isMac ? "按下全局快捷键 ⌥O 时打开的网址" : "按下全局快捷键 Alt+O 时打开的网址")
               }
               settingId="shortcuts-global-url">
               <input

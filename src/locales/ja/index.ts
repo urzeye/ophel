@@ -1004,7 +1004,7 @@ export const ja = {
   enableShortcuts: "カスタムショートカットを有効化",
   enableShortcutsDesc: "すべてのカスタムキーボードショートカットを有効または無効にします",
   globalShortcutUrl: "グローバルショートカットURL",
-  globalShortcutUrlDesc: "グローバルショートカット Alt+O（Mac：⌥O）を押したときに開くURL",
+  globalShortcutUrlDesc: "グローバルショートカット {shortcut} を押したときに開くURL",
   resetShortcuts: "デフォルトに戻す",
   resetShortcutsConfirm: "すべてのショートカットを初期値に戻しますか？",
   pressAnyKey: "キーを押してください...",

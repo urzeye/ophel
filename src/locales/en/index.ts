@@ -1025,7 +1025,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   enableShortcuts: "Enable Custom Shortcuts",
   enableShortcutsDesc: "Enable or disable all custom keyboard shortcuts",
   globalShortcutUrl: "Global Shortcut URL",
-  globalShortcutUrlDesc: "URL to open when pressing global shortcut Alt+O (Mac: ⌥O)",
+  globalShortcutUrlDesc: "URL to open when pressing global shortcut {shortcut}",
   resetShortcuts: "Reset to Defaults",
   resetShortcutsConfirm: "Are you sure you want to reset all shortcuts to default values?",
   pressAnyKey: "Press any key...",
