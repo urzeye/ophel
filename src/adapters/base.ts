@@ -703,12 +703,24 @@ export abstract class SiteAdapter {
   }
 
   /**
-   * 获取元素相对于滚动容器顶部的实际偏移量（offsetTop 不可靠，因为 offsetParent 不一定是滚动容器）
+   * 获取元素相对于滚动容器顶部的实际偏移量
+   * 通过累加 offsetTop 链直到到达滚动容器，保证坐标系一致。
+   * 若 offsetParent 链未经过 container，则回退到 getBoundingClientRect 差值。
    */
   private getElementTopInContainer(el: HTMLElement, container: HTMLElement): number {
-    const elRect = el.getBoundingClientRect()
-    const containerRect = container.getBoundingClientRect()
-    return elRect.top - containerRect.top + container.scrollTop
+    let top = 0
+    let current: HTMLElement | null = el
+    while (current && current !== container) {
+      top += current.offsetTop
+      current = current.offsetParent as HTMLElement | null
+    }
+    if (current === container) {
+      return top
+    }
+    // offsetParent 链未经过 container，用 BoundingClientRect 差值
+    return (
+      el.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop
+    )
   }
 
   /** 获取当前视口中可见的锚点元素信息 */
