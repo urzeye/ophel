@@ -638,7 +638,8 @@ export const en = {
   outlineFollowLatestDesc: "Auto-scroll to latest message",
   outlineFollowManualDesc: "No auto-scroll, user controls manually",
   outlineShowWordCountLabel: "Show Word Count",
-  outlineShowWordCountDesc: "Display word count for each section in outline tooltip",
+  outlineShowWordCountDesc:
+    "Display word count for each section in outline tooltip. May affect extension performance in long conversations.",
   words: "words",
   // Page Display Settings
   pageDisplaySettings: "Page Display",

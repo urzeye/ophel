@@ -601,7 +601,8 @@ export const ko = {
   outlineFollowLatestDesc: "최신 메시지로 자동 스크롤",
   outlineFollowManualDesc: "자동 스크롤 없음, 사용자가 수동으로 제어",
   outlineShowWordCountLabel: "단어 수 표시",
-  outlineShowWordCountDesc: "개요 툴팁에 각 섹션의 단어 수를 표시합니다",
+  outlineShowWordCountDesc:
+    "개요 툴팁에 각 섹션의 단어 수를 표시합니다. 긴 대화에서는 확장 프로그램 성능에 영향을 줄 수 있습니다.",
   words: "단어",
   // Page Display Settings
   pageDisplaySettings: "페이지 표시",

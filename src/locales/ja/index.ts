@@ -618,7 +618,8 @@ export const ja = {
   outlineFollowLatestDesc: "新しいメッセージが来たら自動スクロールします",
   outlineFollowManualDesc: "自動スクロールせず、手動で操作します",
   outlineShowWordCountLabel: "文字数を表示",
-  outlineShowWordCountDesc: "ツールチップで各セクションの文字数を表示します",
+  outlineShowWordCountDesc:
+    "ツールチップで各セクションの文字数を表示します。長い会話では拡張機能のパフォーマンスに影響する場合があります。",
   words: "文字",
   // Page Display Settings
   pageDisplaySettings: "表示設定",

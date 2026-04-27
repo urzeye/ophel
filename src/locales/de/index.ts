@@ -601,7 +601,8 @@ export const de = {
   outlineFollowLatestDesc: "Nur bei neuen Nachrichten scrollen",
   outlineFollowManualDesc: "Kein Auto-Scroll, Sie steuern",
   outlineShowWordCountLabel: "Wortzahl anzeigen",
-  outlineShowWordCountDesc: "Wortzahl für jeden Abschnitt im Verzeichnis-Tooltip anzeigen",
+  outlineShowWordCountDesc:
+    "Wortzahl für jeden Abschnitt im Verzeichnis-Tooltip anzeigen. Bei langen Gesprächen kann dies die Erweiterungsleistung beeinträchtigen.",
   words: "Wörter",
   // Page Display Settings
   pageDisplaySettings: "Anzeige",

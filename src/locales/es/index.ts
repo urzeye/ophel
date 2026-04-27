@@ -601,7 +601,8 @@ export const es = {
   outlineFollowLatestDesc: "Bajar solo con mensajes nuevos",
   outlineFollowManualDesc: "Sin auto-bajada, tú mandas",
   outlineShowWordCountLabel: "Mostrar recuento",
-  outlineShowWordCountDesc: "Mostrar número de palabras por sección en el tooltip",
+  outlineShowWordCountDesc:
+    "Mostrar número de palabras por sección en el tooltip. Puede afectar el rendimiento de la extensión en conversaciones largas.",
   words: "palabras",
   // Page Display Settings
   pageDisplaySettings: "Visualización",

@@ -601,7 +601,8 @@ export const fr = {
   outlineFollowLatestDesc: "Descendre avec les nouveaux messages",
   outlineFollowManualDesc: "Sans auto-descente, vous décidez",
   outlineShowWordCountLabel: "Afficher le nombre de mots",
-  outlineShowWordCountDesc: "Afficher le nombre de mots pour chaque section dans le sommaire",
+  outlineShowWordCountDesc:
+    "Afficher le nombre de mots pour chaque section dans le sommaire. Peut affecter les performances de l'extension dans les longues conversations.",
   words: "mots",
   // Page Display Settings
   pageDisplaySettings: "Affichage",

@@ -598,7 +598,8 @@ export const ru = {
   outlineFollowLatestDesc: "Скроллить вниз вместе с ИИ",
   outlineFollowManualDesc: "Без авто-скролла",
   outlineShowWordCountLabel: "Показать количество слов",
-  outlineShowWordCountDesc: "Отображать количество слов для каждого раздела в оглавлении",
+  outlineShowWordCountDesc:
+    "Отображать количество слов для каждого раздела в оглавлении. Может снижать производительность расширения в длинных диалогах.",
   words: "слов",
   // Page Display Settings
   pageDisplaySettings: "Отображение",
