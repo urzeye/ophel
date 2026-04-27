@@ -1756,7 +1756,11 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
                 alignItems: "flex-start",
                 gap: "8px",
               }}>
-              <InfoIcon size={14} style={{ flexShrink: 0, marginTop: "1px" }} />
+              <InfoIcon
+                size={14}
+                color="var(--gh-primary, #4285f4)"
+                style={{ flexShrink: 0, marginTop: "1px" }}
+              />
               <div>
                 {t(preset.hintKey)}
                 {preset.helpUrl && (
