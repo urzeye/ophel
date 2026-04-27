@@ -702,6 +702,15 @@ export abstract class SiteAdapter {
     return null
   }
 
+  /**
+   * 获取元素相对于滚动容器顶部的实际偏移量（offsetTop 不可靠，因为 offsetParent 不一定是滚动容器）
+   */
+  private getElementTopInContainer(el: HTMLElement, container: HTMLElement): number {
+    const elRect = el.getBoundingClientRect()
+    const containerRect = container.getBoundingClientRect()
+    return elRect.top - containerRect.top + container.scrollTop
+  }
+
   /** 获取当前视口中可见的锚点元素信息 */
   getVisibleAnchorElement(): AnchorData | null {
     const container = this.getScrollContainer()
@@ -718,7 +727,7 @@ export abstract class SiteAdapter {
 
     for (let i = 0; i < candidates.length; i++) {
       const el = candidates[i] as HTMLElement
-      const top = el.offsetTop
+      const top = this.getElementTopInContainer(el, container)
 
       if (top <= scrollTop + 100) {
         bestElement = el
@@ -730,7 +739,8 @@ export abstract class SiteAdapter {
     if (!bestElement && candidates.length > 0) bestElement = candidates[0]
 
     if (bestElement) {
-      const offset = scrollTop - (bestElement as HTMLElement).offsetTop
+      const offset =
+        scrollTop - this.getElementTopInContainer(bestElement as HTMLElement, container)
       const id = bestElement.getAttribute("data-message-id") || bestElement.id
 
       if (id) {
@@ -782,7 +792,9 @@ export abstract class SiteAdapter {
     }
 
     if (targetElement) {
-      const targetTop = (targetElement as HTMLElement).offsetTop + (anchorData.offset || 0)
+      const targetTop =
+        this.getElementTopInContainer(targetElement as HTMLElement, container) +
+        (anchorData.offset || 0)
       container.scrollTo({
         top: targetTop,
         behavior: "instant" as ScrollBehavior,
