@@ -41,7 +41,12 @@ import { useSettingsStore } from "~stores/settings-store"
 import { useTagsStore } from "~stores/tags-store"
 import { validateBackupData } from "~utils/backup-validator"
 import { t } from "~utils/i18n"
-import { MSG_CLEAR_ALL_DATA, MSG_RESTORE_DATA } from "~utils/messaging"
+import {
+  MSG_CHECK_PERMISSION,
+  MSG_CLEAR_ALL_DATA,
+  MSG_REQUEST_PERMISSIONS,
+  MSG_RESTORE_DATA,
+} from "~utils/messaging"
 import { CLEAR_ALL_FLAG_KEY, DEFAULT_SETTINGS, RESTORE_FLAG_KEY } from "~utils/storage"
 import { showToast as showDomToast } from "~utils/toast"
 
@@ -1305,7 +1310,22 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
 
   // -------------------- WebDAV 功能 --------------------
 
-  const checkAndRequestWebDAVPermission = async (onGranted: () => void): Promise<boolean> => {
+  const waitForWebDAVPermission = async (origin: string): Promise<boolean> => {
+    const deadline = Date.now() + 60000
+    while (Date.now() < deadline) {
+      const checkResult: { hasPermission?: boolean } = await chrome.runtime.sendMessage({
+        type: MSG_CHECK_PERMISSION,
+        origin,
+      })
+      if (checkResult.hasPermission) return true
+      await new Promise((resolve) => setTimeout(resolve, 400))
+    }
+    return false
+  }
+
+  const checkAndRequestWebDAVPermission = async (
+    onGranted: () => void | Promise<void>,
+  ): Promise<boolean> => {
     const url = webdavForm.url // 使用表单值检查权限
     if (!url) {
       showDomToast(t("webdavConfigIncomplete") || "请填写完整的 WebDAV 配置")
@@ -1322,7 +1342,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
       const urlObj = new URL(url)
       const origin = urlObj.origin + "/*"
       const checkResult: { hasPermission?: boolean } = await chrome.runtime.sendMessage({
-        type: "CHECK_PERMISSION",
+        type: MSG_CHECK_PERMISSION,
         origin,
       })
       if (!checkResult.hasPermission) {
@@ -1330,10 +1350,28 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
           show: true,
           onConfirm: async () => {
             setPermissionConfirm((prev) => ({ ...prev, show: false }))
-            await chrome.runtime.sendMessage({
-              type: "REQUEST_PERMISSIONS",
-              permType: "allUrls",
-            })
+            try {
+              const requestResult: { success?: boolean; error?: string } =
+                await chrome.runtime.sendMessage({
+                  type: MSG_REQUEST_PERMISSIONS,
+                  permType: "allUrls",
+                })
+              if (!requestResult.success) {
+                showDomToast(requestResult.error || t("permissionRequired") || "需要权限")
+                return
+              }
+
+              const granted = await waitForWebDAVPermission(origin)
+              if (!granted) {
+                showDomToast(t("permissionRequired") || "需要权限")
+                return
+              }
+
+              await onGranted()
+            } catch (error) {
+              console.warn("WebDAV permission request failed:", error)
+              showDomToast(t("permissionRequired") || "需要权限")
+            }
           },
         })
         return false

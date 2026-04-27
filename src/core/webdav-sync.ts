@@ -16,6 +16,106 @@ function safeDecodeURIComponent(str: string) {
   }
 }
 
+function getElementTextByLocalName(parent: Element, localName: string): string | null {
+  const targetName = localName.toLowerCase()
+  const elements = Array.from(parent.getElementsByTagName("*"))
+  const element = elements.find((item) => item.localName.toLowerCase() === targetName)
+  return element?.textContent?.trim() || null
+}
+
+function hasXmlParserError(document: Document): boolean {
+  return Array.from(document.getElementsByTagName("*")).some(
+    (element) => element.localName.toLowerCase() === "parsererror",
+  )
+}
+
+function createBackupFileFromProps(
+  hrefText: string | null,
+  sizeText: string | null,
+  lastModifiedText: string | null,
+): BackupFile | null {
+  if (!hrefText) return null
+
+  const href = safeDecodeURIComponent(hrefText.trim())
+  if (!href.endsWith(".json") || !href.includes(`${APP_NAME}_backup_`)) return null
+
+  const parsedSize = sizeText ? parseInt(sizeText.trim(), 10) : 0
+  const size = Number.isFinite(parsedSize) ? parsedSize : 0
+
+  const parsedDate = lastModifiedText ? new Date(lastModifiedText.trim()) : new Date(0)
+  const lastModified = Number.isNaN(parsedDate.getTime()) ? new Date(0) : parsedDate
+  const name = href.split("/").pop() || href
+
+  return {
+    name,
+    path: href,
+    size,
+    lastModified,
+  }
+}
+
+function parseBackupFilesWithDomParser(xmlText: string): BackupFile[] | null {
+  if (typeof DOMParser === "undefined") return null
+
+  try {
+    const document = new DOMParser().parseFromString(xmlText, "application/xml")
+    if (hasXmlParserError(document)) return null
+
+    return Array.from(document.getElementsByTagName("*"))
+      .filter((element) => element.localName.toLowerCase() === "response")
+      .map((response) =>
+        createBackupFileFromProps(
+          getElementTextByLocalName(response, "href"),
+          getElementTextByLocalName(response, "getcontentlength"),
+          getElementTextByLocalName(response, "getlastmodified"),
+        ),
+      )
+      .filter((file): file is BackupFile => Boolean(file))
+  } catch {
+    return null
+  }
+}
+
+function parseBackupFilesWithRegex(xmlText: string): BackupFile[] {
+  const namespacePrefix = `(?:[a-zA-Z0-9_-]+:)?`
+  const responseRegex = new RegExp(
+    `<${namespacePrefix}response[^>]*>([\\s\\S]*?)<\\/${namespacePrefix}response>`,
+    "gi",
+  )
+  const responses = Array.from(xmlText.matchAll(responseRegex))
+
+  return responses
+    .map((match) => {
+      const content = match[1]
+      const hrefMatch = content.match(
+        new RegExp(`<${namespacePrefix}href[^>]*>([^<]+)<\\/${namespacePrefix}href>`, "i"),
+      )
+      const sizeMatch = content.match(
+        new RegExp(
+          `<${namespacePrefix}getcontentlength[^>]*>([^<]+)<\\/${namespacePrefix}getcontentlength>`,
+          "i",
+        ),
+      )
+      const timeMatch = content.match(
+        new RegExp(
+          `<${namespacePrefix}getlastmodified[^>]*>([^<]+)<\\/${namespacePrefix}getlastmodified>`,
+          "i",
+        ),
+      )
+
+      return createBackupFileFromProps(
+        hrefMatch?.[1] ?? null,
+        sizeMatch?.[1] ?? null,
+        timeMatch?.[1] ?? null,
+      )
+    })
+    .filter((file): file is BackupFile => Boolean(file))
+}
+
+function parseBackupFilesFromWebDAVXml(xmlText: string): BackupFile[] {
+  return parseBackupFilesWithDomParser(xmlText) ?? parseBackupFilesWithRegex(xmlText)
+}
+
 // WebDAV 服务商标识
 export type WebDAVProvider =
   | "jianguoyun"
@@ -409,48 +509,7 @@ export class WebDAVSyncManager {
       if (!response.ok) return []
 
       const text = await response.text()
-      // 简单正则解析 XML
-      // 匹配 <D:response> 块（支持不同命名空间前缀或无前缀）
-      const NS = `(?:[a-zA-Z0-9_-]+:)?` // 可选的命名空间前缀
-      const responseRegex = new RegExp(`<${NS}response[^>]*>([\\s\\S]*?)<\\/${NS}response>`, "gi")
-      const responses = Array.from(text.matchAll(responseRegex))
-
-      const files: BackupFile[] = []
-
-      for (const match of responses) {
-        const content = match[1]
-
-        // 解析 href（支持不同命名空间前缀或无前缀）
-        const hrefMatch = content.match(new RegExp(`<${NS}href[^>]*>([^<]+)<\\/${NS}href>`, "i"))
-        if (!hrefMatch) continue
-        const href = safeDecodeURIComponent(hrefMatch[1])
-
-        // 排除目录本身（通常以斜杠结尾，或者是请求的根路径）
-        // 这里简单判断：如果是 json 文件且包含 backup 关键字
-        if (!href.endsWith(".json") || !href.includes(`${APP_NAME}_backup_`)) continue
-
-        // 解析大小
-        const sizeMatch = content.match(
-          new RegExp(`<${NS}getcontentlength[^>]*>([^<]+)<\\/${NS}getcontentlength>`, "i"),
-        )
-        const size = sizeMatch ? parseInt(sizeMatch[1], 10) : 0
-
-        // 解析时间
-        const timeMatch = content.match(
-          new RegExp(`<${NS}getlastmodified[^>]*>([^<]+)<\\/${NS}getlastmodified>`, "i"),
-        )
-        const lastModified = timeMatch ? new Date(timeMatch[1]) : new Date(0)
-
-        // 提取文件名
-        const name = href.split("/").pop() || href
-
-        files.push({
-          name,
-          path: href,
-          size,
-          lastModified,
-        })
-      }
+      const files = parseBackupFilesFromWebDAVXml(text)
 
       // 按时间倒序
       files.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime())
