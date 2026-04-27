@@ -641,38 +641,91 @@ const RemoteBackupModal: React.FC<{
               {t("noBackupsFound") || "未找到备份文件"}
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {backups.map((file) => (
                 <div
                   key={file.name}
                   style={{
-                    padding: "12px",
-                    background: "var(--gh-bg-secondary, #f9fafb)",
+                    padding: "12px 14px",
+                    background: "var(--gh-bg, #ffffff)",
+                    border: "1px solid var(--gh-border, #e5e7eb)",
                     borderRadius: "8px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
+                    transition: "border-color 0.15s",
                   }}>
-                  <div>
-                    <div style={{ fontSize: "14px", fontWeight: 500 }}>{file.name}</div>
-                    <div style={{ fontSize: "12px", color: "var(--gh-text-secondary)" }}>
+                  <div style={{ minWidth: 0, flex: 1, marginRight: "12px" }}>
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        fontWeight: 500,
+                        color: "var(--gh-text, #1f2937)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}>
+                      {file.name}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "12px",
+                        color: "var(--gh-text-secondary)",
+                        marginTop: "2px",
+                      }}>
                       {formatSize(file.size)} • {file.lastModified.toLocaleString()}
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: "8px" }}>
+                  <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
                     <Tooltip content={t("restore") || "恢复"}>
                       <button
                         onClick={() => handleRestoreClick(file)}
-                        className="settings-btn settings-btn-primary"
-                        style={{ padding: "6px 10px", display: "flex", alignItems: "center" }}>
+                        style={{
+                          padding: "7px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderRadius: "7px",
+                          border: "1px solid rgba(66, 133, 244, 0.25)",
+                          background: "rgba(66, 133, 244, 0.08)",
+                          color: "var(--gh-primary, #4285f4)",
+                          cursor: "pointer",
+                          transition: "background 0.15s, border-color 0.15s",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "rgba(66, 133, 244, 0.16)"
+                          e.currentTarget.style.borderColor = "rgba(66, 133, 244, 0.4)"
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "rgba(66, 133, 244, 0.08)"
+                          e.currentTarget.style.borderColor = "rgba(66, 133, 244, 0.25)"
+                        }}>
                         <FileRestoreIcon size={16} color="currentColor" />
                       </button>
                     </Tooltip>
                     <Tooltip content={t("delete") || "删除"}>
                       <button
                         onClick={() => handleDeleteClick(file)}
-                        className="settings-btn settings-btn-danger"
-                        style={{ padding: "6px 10px", display: "flex", alignItems: "center" }}>
+                        style={{
+                          padding: "7px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderRadius: "7px",
+                          border: "1px solid rgba(239, 68, 68, 0.2)",
+                          background: "rgba(239, 68, 68, 0.07)",
+                          color: "var(--gh-danger, #ef4444)",
+                          cursor: "pointer",
+                          transition: "background 0.15s, border-color 0.15s",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "rgba(239, 68, 68, 0.14)"
+                          e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.35)"
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "rgba(239, 68, 68, 0.07)"
+                          e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.2)"
+                        }}>
                         <DeleteIcon size={16} color="currentColor" />
                       </button>
                     </Tooltip>
