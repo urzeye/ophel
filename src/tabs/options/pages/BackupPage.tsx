@@ -1690,13 +1690,13 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
         {/* 提示信息 */}
         <div
           style={{
-            background: "var(--gh-primary-light-bg, rgba(66, 133, 244, 0.05))",
-            border: "1px solid var(--gh-primary-border, rgba(66, 133, 244, 0.2))",
+            background: "var(--gh-bg-secondary, #f8f9fa)",
+            border: "1px solid var(--gh-border, #e0e0e0)",
             borderRadius: "8px",
             padding: "12px",
             marginBottom: "20px",
             fontSize: "13px",
-            color: "var(--gh-primary, #4285f4)",
+            color: "var(--gh-text-secondary)",
           }}>
           <div
             style={{
@@ -1705,10 +1705,12 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
               display: "flex",
               alignItems: "center",
               gap: "6px",
+              color: "var(--gh-text)",
             }}>
-            <InfoIcon size={14} /> {t("restoreTip") || "恢复提示"}
+            <InfoIcon size={14} color="var(--gh-primary, #4285f4)" />{" "}
+            {t("restoreTip") || "恢复提示"}
           </div>
-          <div style={{ lineHeight: 1.5, opacity: 0.9 }}>{t("restoreTipContent")}</div>
+          <div style={{ lineHeight: 1.5 }}>{t("restoreTipContent")}</div>
         </div>
 
         <SettingRow label={t("webdavProvider") || "服务商"}>
