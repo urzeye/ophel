@@ -632,7 +632,7 @@ export class AIStudioAdapter extends SiteAdapter {
 
     // 点击"All"并等待列表刷新
     allBtn.click()
-    await new Promise((r) => setTimeout(r, 400))
+    await this.sleep(400)
   }
 
   /**

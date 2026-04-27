@@ -1418,7 +1418,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             description={
               t("promptSubmitShortcutDesc") || "Applies to both manual send and prompt auto-send"
             }
-            settingId="prompt-submit-shortcut">
+            settingId="shortcuts-prompt-submit-shortcut">
             <select
               className="settings-select"
               value={settings.features?.prompts?.submitShortcut ?? "enter"}
