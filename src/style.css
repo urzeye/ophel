@@ -964,9 +964,7 @@
     0 12px 32px color-mix(in srgb, var(--gh-text) 8%, transparent),
     inset 0 1px 1px color-mix(in srgb, var(--gh-bg) 80%, transparent);
 
-  transition:
-    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: grab;
   user-select: none;
   touch-action: none;
@@ -976,6 +974,9 @@
   cursor: grabbing;
   box-shadow: 0 16px 40px color-mix(in srgb, var(--gh-text) 12%, transparent);
   transform: scale(1.02); /* Slight scale when grabbed */
+  transition:
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 /* ============= 液态折叠 (Liquid Collapse) ============= */
