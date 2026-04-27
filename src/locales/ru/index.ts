@@ -957,7 +957,7 @@ export const ru = {
   enableShortcuts: "Включить пользовательские сочетания",
   enableShortcutsDesc: "Включить или отключить все пользовательские клавиатурные сочетания",
   globalShortcutUrl: "Глобальная ссылка",
-  globalShortcutUrlDesc: "Что открывать через Alt+G",
+  globalShortcutUrlDesc: "Что открывать через Alt+O (Mac: ⌥O)",
   resetShortcuts: "Сброс в ноль",
   resetShortcutsConfirm: "Сбросить все клавиши?",
   pressAnyKey: "Жми на любую...",

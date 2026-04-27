@@ -289,7 +289,9 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
           <>
             <SettingRow
               label={t("globalShortcutUrl") || "全局快捷键打开的 URL"}
-              description={t("globalShortcutUrlDesc") || "按下全局快捷键 Alt+G 时打开的网址"}
+              description={
+                t("globalShortcutUrlDesc") || "按下全局快捷键 Alt+O（Mac：⌥O）时打开的网址"
+              }
               settingId="shortcuts-global-url">
               <input
                 type="text"

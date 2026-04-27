@@ -147,8 +147,8 @@
     "commands": {
       "open-global-url": {
         "suggested_key": {
-          "default": "Alt+G",
-          "mac": "Alt+G"
+          "default": "Alt+O",
+          "mac": "Alt+O"
         },
         "description": "Open Global URL"
       }

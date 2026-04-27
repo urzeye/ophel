@@ -977,7 +977,7 @@ export const zhTW = {
   enableShortcuts: "啟用自訂快捷鍵",
   enableShortcutsDesc: "啟用或禁用所有自訂鍵盤快捷鍵",
   globalShortcutUrl: "全域快捷鍵開啟的 URL",
-  globalShortcutUrlDesc: "按下全域快捷鍵 Alt+G 時開啟的網址",
+  globalShortcutUrlDesc: "按下全域快捷鍵 Alt+O（Mac：⌥O）時開啟的網址",
   resetShortcuts: "恢復預設快捷鍵",
   resetShortcutsConfirm: "確定要恢復所有快捷鍵為預設值嗎？",
   pressAnyKey: "請按下快捷鍵...",

@@ -990,7 +990,7 @@ export const zhCN = {
   enableShortcuts: "启用自定义快捷键",
   enableShortcutsDesc: "启用或禁用所有自定义键盘快捷键",
   globalShortcutUrl: "全局快捷键打开的 URL",
-  globalShortcutUrlDesc: "按下全局快捷键 Alt+G 时打开的网址",
+  globalShortcutUrlDesc: "按下全局快捷键 Alt+O（Mac：⌥O）时打开的网址",
   resetShortcuts: "恢复默认快捷键",
   resetShortcutsConfirm: "确定要恢复所有快捷键为默认值吗？",
   pressAnyKey: "请按下快捷键...",

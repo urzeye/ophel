@@ -807,7 +807,7 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   {
     settingId: "shortcuts-global-url",
     title: "全局快捷键 URL",
-    keywords: ["shortcuts", "global url", "alt+g", "快捷键", "url"],
+    keywords: ["shortcuts", "global url", "alt+o", "快捷键", "url"],
   },
   {
     settingId: "shortcuts-browser-shortcuts",
