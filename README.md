@@ -242,7 +242,7 @@ pnpm package:all
   </tbody>
 </table>
 
-### 🤝 Supporters
+### 🌟 Supporters
 
 <table align="center">
   <tbody>
@@ -270,6 +270,8 @@ pnpm package:all
   </tr>
   </tbody>
 </table>
+
+---
 
 <!-- supporters:end -->
 

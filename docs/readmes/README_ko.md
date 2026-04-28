@@ -198,7 +198,7 @@ pnpm package:all
   </tbody>
 </table>
 
-### 🤝 후원자
+### 🌟 후원자
 
 <table align="center">
   <tbody>
@@ -226,6 +226,8 @@ pnpm package:all
   </tr>
   </tbody>
 </table>
+
+---
 
 <!-- supporters:end -->
 
