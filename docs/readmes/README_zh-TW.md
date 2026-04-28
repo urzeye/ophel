@@ -230,9 +230,6 @@ pnpm package:all
 ---
 
 <!-- supporters:end -->
-
-## 🤝 參與共建
-
 <p align="center">
   <em>「一個人可以走得很快，但一群人可以走得更遠。」</em>
 </p>
@@ -241,6 +238,7 @@ pnpm package:all
   感謝 <a href="https://linux.do/">Linux.do</a> 社群的交流與支持，專案的許多想法與改進都來自社群成員的回饋。
 </p>
 
+## 🤝 參與共建
 歡迎以任何形式參與共建 —— 無論是提交程式碼、回報問題，還是分享想法。不熟悉程式碼庫？先用 AI 問答快速上手：
 
 <p align="center">

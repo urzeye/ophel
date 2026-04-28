@@ -222,9 +222,6 @@ pnpm package:all
 ---
 
 <!-- supporters:end -->
-
-## 🤝 Mitmachen
-
 <p align="center">
   <em>„Wenn du schnell gehen willst, geh allein. Wenn du weit gehen willst, geh gemeinsam."</em>
 </p>
@@ -233,6 +230,7 @@ pnpm package:all
   Vielen Dank an die <a href="https://linux.do/">Linux.do</a>-Community für den Austausch und die Unterstützung. Viele Ideen und Verbesserungen dieses Projekts stammen aus dem Feedback der Community-Mitglieder.
 </p>
 
+## 🤝 Mitmachen
 Beiträge sind in jeder Form willkommen — Codebeiträge, Fehlermeldungen oder Ideen. Neu im Projekt? Lerne den Code mit KI kennen:
 
 <p align="center">

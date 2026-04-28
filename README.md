@@ -274,9 +274,6 @@ pnpm package:all
 ---
 
 <!-- supporters:end -->
-
-## 🤝 Get Involved
-
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
 </p>
@@ -284,6 +281,8 @@ pnpm package:all
 <p align="center">
   Thanks to the <a href="https://linux.do/">Linux.do</a> community for the discussions and support. Many ideas and improvements in this project came from feedback shared by community members.
 </p>
+
+## 🤝 Get Involved
 
 Welcome to contribute in any form — whether submitting code, reporting issues, or sharing ideas. New to the codebase? Get up to speed with AI:
 
