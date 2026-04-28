@@ -212,7 +212,7 @@ pnpm package:all
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/joevalleyfield"><img src="https://avatars.githubusercontent.com/u/14796422?v=4?s=80" width="80px;" alt="joevalleyfield"/><br /><sub><b>joevalleyfield</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=joevalleyfield" title="Code">💻</a></td>
     </tr>
     <tr>
-      <td align="center" valign="top" width="12.5%"><a href="https://github.com/hugo1120"><img src="https://github.com/hugo1120.png?s=80" width="80px;" alt="hugo2233"/><br /><sub><b>hugo2233</b></sub></a><br /><a href="#blog-hugo1120" title="Blogposts">📝</a></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/hugo1120"><img src="https://github.com/hugo1120.png?s=80" width="80px;" alt="hugo2233"/><br /><sub><b>hugo2233</b></sub></a><br /><a href="#promotion-hugo1120" title="Promotion">📣</a></td>
     </tr>
   </tbody>
 </table>
