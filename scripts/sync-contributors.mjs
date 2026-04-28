@@ -337,9 +337,7 @@ async function main() {
     ensureContributorsSection(readmePath, config)
   }
 
-  console.log(
-    `[contributors] Synced ${contributors.length} contributors to .all-contributorsrc`,
-  )
+  console.log(`[contributors] Synced ${contributors.length} contributors to .all-contributorsrc`)
   console.log(`[contributors] Run 'npx all-contributors-cli generate' to refresh README tables`)
 }
 

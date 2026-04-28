@@ -273,7 +273,47 @@ pnpm package:all
 
 ---
 
+<p align="center">
+  <em>If <strong>Ophel Atlas</strong> has sparked joy in your workflow or saved you valuable time, consider fueling its journey with a <strong>Star</strong> or a <strong>Sponsor</strong>.</em> ☕️
+</p>
+
+<p align="center">
+  <strong>Sharing is just as powerful:</strong> We'd be thrilled if you shared your experience on <strong>Linux.do, Reddit, X, or YouTube</strong>. Every piece of feedback and every shoutout helps Ophel grow!
+</p>
+
+<p align="center">
+  <a href="https://ko-fi.com/urzeye">
+    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Buy Me a Coffee at ko-fi.com" />
+  </a>
+</p>
+
+<table align="center" border="0" cellpadding="16" cellspacing="0">
+  <tr>
+    <td align="center">
+      <img src="./docs/media/support/wechat-pay.jpg" width="160" height="160" alt="WeChat Pay" /><br />
+      <sub><b>WeChat Pay</b></sub>
+    </td>
+    <td align="center">
+      <img src="./docs/media/support/alipay.png" width="160" height="160" alt="Alipay" /><br />
+      <sub><b>Alipay</b></sub>
+    </td>
+    <td align="center">
+      <a href="https://www.ifdian.net/a/urzeye">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="https://afdian-connect.deno.dev/profile.svg?slug=urzeye&bg_color=%230d1117&text_color=%23dedbd7&border_color=%232e343d" />
+          <source media="(prefers-color-scheme: light)" srcset="https://afdian-connect.deno.dev/profile.svg?slug=urzeye" />
+          <img alt="urzeye's Afdian Profile" src="https://afdian-connect.deno.dev/profile.svg?slug=urzeye" height="160" />
+        </picture>
+      </a><br />
+      <sub><b>Afdian</b></sub>
+    </td>
+  </tr>
+</table>
+
 <!-- supporters:end -->
+
+## 🤝 Get Involved
+
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
 </p>
@@ -281,8 +321,6 @@ pnpm package:all
 <p align="center">
   Thanks to the <a href="https://linux.do/">Linux.do</a> community for the discussions and support. Many ideas and improvements in this project came from feedback shared by community members.
 </p>
-
-## 🤝 Get Involved
 
 Welcome to contribute in any form — whether submitting code, reporting issues, or sharing ideas. New to the codebase? Get up to speed with AI:
 
@@ -355,43 +393,6 @@ Welcome to contribute in any form — whether submitting code, reporting issues,
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 <br>
-
-<p align="center">
-  <em>If <strong>Ophel Atlas</strong> has sparked joy in your workflow or saved you valuable time, consider fueling its journey with a <strong>Star</strong> or a <strong>Sponsor</strong>.</em> ☕️
-</p>
-
-<p align="center">
-  <strong>Sharing is just as powerful:</strong> We'd be thrilled if you shared your experience on <strong>Linux.do, Reddit, X, or YouTube</strong>. Every piece of feedback and every shoutout helps Ophel grow!
-</p>
-
-<p align="center">
-  <a href="https://ko-fi.com/urzeye">
-    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Buy Me a Coffee at ko-fi.com" />
-  </a>
-</p>
-
-<table align="center" border="0" cellpadding="16" cellspacing="0">
-  <tr>
-    <td align="center">
-      <img src="./docs/media/support/wechat-pay.jpg" width="160" height="160" alt="WeChat Pay" /><br />
-      <sub><b>WeChat Pay</b></sub>
-    </td>
-    <td align="center">
-      <img src="./docs/media/support/alipay.png" width="160" height="160" alt="Alipay" /><br />
-      <sub><b>Alipay</b></sub>
-    </td>
-    <td align="center">
-      <a href="https://www.ifdian.net/a/urzeye">
-        <picture>
-          <source media="(prefers-color-scheme: dark)" srcset="https://afdian-connect.deno.dev/profile.svg?slug=urzeye&bg_color=%230d1117&text_color=%23dedbd7&border_color=%232e343d" />
-          <source media="(prefers-color-scheme: light)" srcset="https://afdian-connect.deno.dev/profile.svg?slug=urzeye" />
-          <img alt="urzeye's Afdian Profile" src="https://afdian-connect.deno.dev/profile.svg?slug=urzeye" height="160" />
-        </picture>
-      </a><br />
-      <sub><b>Afdian</b></sub>
-    </td>
-  </tr>
-</table>
 
 ### ⭐ Star History
 

@@ -276,9 +276,17 @@ pnpm package:all
   </tbody>
 </table>
 
+<!-- supporters:end -->
+
 ---
 
-<!-- supporters:end -->
+<p align="center">
+  <em>如果 <strong>Ophel Atlas</strong> 点亮了你的工作流，或为你节省了宝贵的时间，欢迎用一颗 <strong>Star</strong> 或 <strong>Sponsor</strong> 来为它续航。</em> ☕️
+</p>
+
+<p align="center">
+  <strong>传播也是一种力量：</strong>期待你将使用体验分享至 <strong>Linux.do、X、小红书、Bilibili</strong> 及更多平台。每一份反馈与口碑，都在帮助 Ophel 成长！
+</p>
 
 <br>
 <p align="center">
@@ -309,13 +317,6 @@ pnpm package:all
     </td>
   </tr>
 </table>
-<p align="center">
-  <em>如果 <strong>Ophel Atlas</strong> 点亮了你的工作流，或为你节省了宝贵的时间，欢迎用一颗 <strong>Star</strong> 或 <strong>Sponsor</strong> 来为它续航。</em> ☕️
-</p>
-
-<p align="center">
-  <strong>传播也是一种力量：</strong>期待你将使用体验分享至 <strong>Linux.do、X、小红书、Bilibili</strong> 及更多平台。每一份反馈与口碑，都在帮助 Ophel 成长！
-</p>
 
 ## 🤝 参与共建
 
