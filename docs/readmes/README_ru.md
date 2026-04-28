@@ -284,9 +284,9 @@ pnpm package:all
 
 <p align="center">
   <strong>🛠️ Обратная связь:</strong>
-  <a href="https://github.com/urzeye/ophel/issues/new/choose"><img src="https://img.shields.io/badge/Сообщить_о_проблеме-D73A49?style=flat-square&logo=github&logoColor=white" alt="Report Issue" style="vertical-align: middle;"/></a>
+  <a href="https://github.com/urzeye/ophel/issues/new/choose"><img src="https://img.shields.io/badge/Сообщить_о_проблеме-181717?style=flat-square&logo=github&logoColor=white" alt="Report Issue" style="vertical-align: middle;"/></a>
   &nbsp;
-  <a href="https://github.com/urzeye/ophel/pulls"><img src="https://img.shields.io/badge/Предложить_код-0366D6?style=flat-square&logo=github&logoColor=white" alt="Submit PR" style="vertical-align: middle;"/></a>
+  <a href="https://github.com/urzeye/ophel/pulls"><img src="https://img.shields.io/badge/Предложить_код-181717?style=flat-square&logo=github&logoColor=white" alt="Submit PR" style="vertical-align: middle;"/></a>
 </p>
 
 <details>

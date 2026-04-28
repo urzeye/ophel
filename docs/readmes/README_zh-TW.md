@@ -264,9 +264,9 @@
 
 <p align="center">
   <strong>🛠️ 參與回饋：</strong>
-  <a href="https://github.com/urzeye/ophel/issues/new/choose"><img src="https://img.shields.io/badge/回饋問題-D73A49?style=flat-square&logo=github&logoColor=white" alt="Report Issue" style="vertical-align: middle;"/></a>
+  <a href="https://github.com/urzeye/ophel/issues/new/choose"><img src="https://img.shields.io/badge/回饋問題-181717?style=flat-square&logo=github&logoColor=white" alt="Report Issue" style="vertical-align: middle;"/></a>
   &nbsp;
-  <a href="https://github.com/urzeye/ophel/pulls"><img src="https://img.shields.io/badge/貢獻代碼-0366D6?style=flat-square&logo=github&logoColor=white" alt="Submit PR" style="vertical-align: middle;"/></a>
+  <a href="https://github.com/urzeye/ophel/pulls"><img src="https://img.shields.io/badge/貢獻代碼-181717?style=flat-square&logo=github&logoColor=white" alt="Submit PR" style="vertical-align: middle;"/></a>
 </p>
 
 <details>

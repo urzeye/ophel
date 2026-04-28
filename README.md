@@ -305,9 +305,9 @@
 
 <p align="center">
   <strong>🛠️ Feedback:</strong>
-  <a href="https://github.com/urzeye/ophel/issues/new/choose"><img src="https://img.shields.io/badge/Report_Issue-D73A49?style=flat-square&logo=github&logoColor=white" alt="Report Issue" style="vertical-align: middle;"/></a>
+  <a href="https://github.com/urzeye/ophel/issues/new/choose"><img src="https://img.shields.io/badge/Report_Issue-181717?style=flat-square&logo=github&logoColor=white" alt="Report Issue" style="vertical-align: middle;"/></a>
   &nbsp;
-  <a href="https://github.com/urzeye/ophel/pulls"><img src="https://img.shields.io/badge/Submit_PR-0366D6?style=flat-square&logo=github&logoColor=white" alt="Submit PR" style="vertical-align: middle;"/></a>
+  <a href="https://github.com/urzeye/ophel/pulls"><img src="https://img.shields.io/badge/Submit_PR-181717?style=flat-square&logo=github&logoColor=white" alt="Submit PR" style="vertical-align: middle;"/></a>
 </p>
 
 <details>
