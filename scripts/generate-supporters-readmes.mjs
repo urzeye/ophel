@@ -141,20 +141,20 @@ function renderFeaturedSection(featuredSupporters, config, readmePath) {
     return ""
   }
 
-  const rows = chunk(featuredSupporters, 5)
-    .map(
-      (row) =>
-        `  <tr>\n${row.map((supporter) => renderPersonCell(supporter, readmePath, { width: "20%", avatarSize: 100 })).join("\n")}\n  </tr>`,
-    )
-    .join("\n")
+  const person = featuredSupporters[0]
+  const avatarSize = 100
+  const resolvedAvatar = getAvatarUrl(person.name, person.avatar, person.source, person.date)
+  const avatarPath = resolveAvatarPath(readmePath, resolvedAvatar)
 
-  return `${config.featuredTitle}
+  const imgHtml = `<img src="${escapeHtml(avatarPath)}" width="${avatarSize}px;" alt="${escapeHtml(person.name)}" />`
+  const nameHtml = `<sub><b>${escapeHtml(person.name)}</b></sub>`
 
-<table align="center">
-  <tbody>
-${rows}
-  </tbody>
-</table>`
+  let innerContent = `${imgHtml}<br />\n  ${nameHtml}`
+  if (person.url) {
+    innerContent = `<a href="${escapeHtml(person.url)}">\n    ${imgHtml}<br />\n    ${nameHtml}\n  </a>`
+  }
+
+  return `${config.featuredTitle}\n\n<p align="center">\n  ${innerContent}\n</p>`
 }
 
 function renderSupportersGrid(supporters, config, readmePath) {

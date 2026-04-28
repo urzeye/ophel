@@ -148,18 +148,12 @@
 
 ### 💖 Besonderer Dank
 
-<table align="center">
-  <tbody>
-  <tr>
-    <td align="center" valign="top" width="20%">
-      <a href="https://github.com/treasuresure">
-        <img src="https://github.com/treasuresure.png?size=160" width="100px;" alt="treasuresure" /><br />
-        <sub><b>treasuresure</b></sub>
-      </a>
-    </td>
-  </tr>
-  </tbody>
-</table>
+<p align="center">
+  <a href="https://github.com/treasuresure">
+    <img src="https://github.com/treasuresure.png?size=160" width="100px;" alt="treasuresure" /><br />
+    <sub><b>treasuresure</b></sub>
+  </a>
+</p>
 
 ### 🌟 Unterstützer
 
