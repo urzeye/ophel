@@ -16,7 +16,6 @@
     "docs/readmes/README_zh-TW.md"
   ],
   "_contributionTypesRef": "https://allcontributors.org/docs/en/emoji-key — common: code, bug, doc, design, ideas, review, test, infra, translation, tutorial, talk, video, blog, example, question, userTesting, plugin, tool, maintenance, mentoring, projectManagement, eventOrganizing, fundingFinding, data",
-  "imageSize": 64,
   "commit": false,
   "commitConvention": "angular",
   "contributors": [
@@ -77,6 +76,7 @@
       "contributions": ["code"]
     }
   ],
-  "contributorsPerLine": 8,
+  "contributorsPerLine": 5,
+  "imageSize": 100,
   "linkToUsage": false
 }

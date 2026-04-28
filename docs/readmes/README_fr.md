@@ -186,6 +186,8 @@ Pour des problèmes ou suggestions, visitez [GitHub Issues](https://github.com/u
 
 Merci à tous les développeurs qui ont contribué à ce projet :
 
+<div align="center">
+
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
@@ -208,6 +210,8 @@ Merci à tous les développeurs qui ont contribué à ce projet :
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+
+</div>
 
 <!-- supporters:start -->
 

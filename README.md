@@ -238,6 +238,8 @@ For issues or suggestions, please visit [GitHub Issues](https://github.com/urzey
 
 Thanks to all the developers who have contributed to this project:
 
+<div align="center">
+
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
@@ -260,6 +262,8 @@ Thanks to all the developers who have contributed to this project:
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+
+</div>
 
 <!-- supporters:start -->
 

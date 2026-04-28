@@ -194,6 +194,8 @@ pnpm package:all
 
 이 프로젝트에 기여한 모든 개발자에게 감사드립니다：
 
+<div align="center">
+
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
@@ -216,6 +218,8 @@ pnpm package:all
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+
+</div>
 
 <!-- supporters:start -->
 

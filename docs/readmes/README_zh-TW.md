@@ -194,6 +194,8 @@ pnpm package:all
 
 感謝所有為本專案做出貢獻的開發者：
 
+<div align="center">
+
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
@@ -216,6 +218,8 @@ pnpm package:all
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+
+</div>
 
 <!-- supporters:start -->
 

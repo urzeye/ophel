@@ -186,6 +186,8 @@ Para problemas o sugerencias, visita [GitHub Issues](https://github.com/urzeye/o
 
 Gracias a todos los desarrolladores que han contribuido a este proyecto:
 
+<div align="center">
+
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
@@ -208,6 +210,8 @@ Gracias a todos los desarrolladores que han contribuido a este proyecto:
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+
+</div>
 
 <!-- supporters:start -->
 
