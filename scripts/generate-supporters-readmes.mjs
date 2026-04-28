@@ -95,16 +95,22 @@ function resolveAvatarPath(readmePath, avatar) {
  * 当 avatar 未设置时，用 DiceBear identicon 按名字+来源+日期生成确定性头像
  * 避免大量 "anonymous" 用户共享同一头像
  */
-function getAvatarUrl(name, avatar, source, date) {
+function getAvatarUrl(name, avatar, source, date, remark) {
         if (avatar) return avatar
-        const seed = encodeURIComponent(`${name || "anonymous"}|${source || ""}|${date || ""}`)
-        // 使用 DiceBear 的 bottts (机器人) 风格，契合 AI 助手主题，并且彻底解决文字排版和颜色突兀的问题
+
+        // 特殊处理 anonymous - 提供一个统一的、专属的“神秘守护者”形象
+        if (!name || name.toLowerCase() === "anonymous") {
+                return `https://api.dicebear.com/7.x/bottts/svg?seed=Lucky&radius=20&backgroundColor=f1f5f9`
+        }
+
+        // 即使名字重复，结合源、日期甚至备注(赞助金额/寄语等)，也能保证每个人的机器人独一无二！
+        const seed = encodeURIComponent(`${name}|${source || ""}|${date || ""}|${remark || ""}`)
         return `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}&radius=20&backgroundColor=f1f5f9`
 }
 
 function renderPersonCell(person, readmePath, options = {}) {
 	const { width = "14.28%", avatarSize = 84 } = options
-	const resolvedAvatar = getAvatarUrl(person.name, person.avatar, person.source, person.date)
+	const resolvedAvatar = getAvatarUrl(person.name, person.avatar, person.source, person.date, person.remark)
 	const avatarPath = resolveAvatarPath(readmePath, resolvedAvatar)
 
 	const imgHtml = `<img src="${escapeHtml(avatarPath)}" width="${avatarSize}px;" alt="${escapeHtml(person.name)}" />`
@@ -137,7 +143,7 @@ function renderFeaturedSection(featuredSupporters, config, readmePath) {
 
 	const person = featuredSupporters[0]
 	const avatarSize = 100
-	const resolvedAvatar = getAvatarUrl(person.name, person.avatar, person.source, person.date)
+	const resolvedAvatar = getAvatarUrl(person.name, person.avatar, person.source, person.date, person.remark)
 	const avatarPath = resolveAvatarPath(readmePath, resolvedAvatar)
 
 	const imgHtml = `<img src="${escapeHtml(avatarPath)}" width="${avatarSize}px;" alt="${escapeHtml(person.name)}" />`
