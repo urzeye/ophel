@@ -65,14 +65,27 @@ function decodeNotifId(notifId: string): { tabId: number; windowId: number } | n
   return { tabId, windowId }
 }
 
+async function focusTab(tabId: number, fallbackWindowId?: number) {
+  try {
+    const tab = await chrome.tabs.get(tabId)
+    const windowId = tab.windowId ?? fallbackWindowId
+
+    if (windowId != null) {
+      await chrome.windows.update(windowId, { focused: true })
+    }
+    await chrome.tabs.update(tabId, { active: true })
+  } catch (error) {
+    console.warn("[Ophel] Failed to focus notification tab:", error)
+  }
+}
+
 // 点击通知时激活对应标签页并聚焦窗口
 // 注意：notifications 是可选权限，需要安全访问以避免 Service Worker 初始化失败
 if (chrome.notifications?.onClicked) {
   chrome.notifications.onClicked.addListener((notifId) => {
     const tab = decodeNotifId(notifId)
     if (tab) {
-      chrome.tabs.update(tab.tabId, { active: true }).catch(() => {})
-      chrome.windows.update(tab.windowId, { focused: true }).catch(() => {})
+      void focusTab(tab.tabId, tab.windowId)
     }
     // MV3 returns Promise at runtime; cast to handle both callback/Promise signatures
     void Promise.resolve(chrome.notifications.clear(notifId)).catch(() => {
@@ -263,10 +276,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
 
     case MSG_FOCUS_TAB:
       if (sender.tab?.id) {
-        chrome.tabs.update(sender.tab.id, { active: true })
-        if (sender.tab.windowId) {
-          chrome.windows.update(sender.tab.windowId, { focused: true })
-        }
+        void focusTab(sender.tab.id, sender.tab.windowId)
       }
       sendResponse({ success: true })
       break

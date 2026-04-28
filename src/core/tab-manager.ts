@@ -647,8 +647,8 @@ export class TabManager {
       }
     }
 
-    // 播放通知声音（独立于桌面通知）
-    if (this.settings.notificationSound) {
+    // 播放通知声音（仅在发送桌面通知时随通知播放）
+    if (this.settings.showNotification && this.settings.notificationSound) {
       this.playNotificationSound()
     }
 
