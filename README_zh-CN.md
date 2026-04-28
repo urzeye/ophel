@@ -332,10 +332,10 @@ pnpm package:all
 <br>
 
 <p align="center">
-  <img src="./docs/media/support/wechat-pay.jpg" width="220" alt="微信赞赏码" />&emsp;&emsp;&emsp;<img src="./docs/media/support/alipay.png" width="220" alt="支付宝" />&emsp;&emsp;&emsp;<img src="./docs/media/support/afdian.png" width="220" alt="爱发电" />
+  <img src="./docs/media/support/wechat-pay.jpg" width="220" alt="微信赞赏码" />&emsp;&emsp;&emsp;<img src="./docs/media/support/alipay.png" width="220" alt="支付宝" />&emsp;&emsp;&emsp;<a href="https://www.ifdian.net/a/urzeye"><img src="./docs/media/support/afdian.png" width="220" alt="爱发电" /></a>
 </p>
 <p align="center">
-  <code>微信赞赏码</code>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<code>支付宝</code>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<code>爱发电</code>
+  <code>微信赞赏码</code>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<code>支付宝</code>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<a href="https://www.ifdian.net/a/urzeye"><code>爱发电 ↗</code></a>
 </p>
 
 ### ⭐ Star History

@@ -327,10 +327,10 @@ For issues or suggestions, please visit [GitHub Issues](https://github.com/urzey
 <br>
 
 <p align="center">
-  <img src="./docs/media/support/wechat-pay.jpg" width="220" alt="WeChat Pay" />&emsp;&emsp;&emsp;<img src="./docs/media/support/alipay.png" width="220" alt="Alipay" />&emsp;&emsp;&emsp;<img src="./docs/media/support/afdian.png" width="220" alt="Afdian" />
+  <img src="./docs/media/support/wechat-pay.jpg" width="220" alt="WeChat Pay" />&emsp;&emsp;&emsp;<img src="./docs/media/support/alipay.png" width="220" alt="Alipay" />&emsp;&emsp;&emsp;<a href="https://www.ifdian.net/a/urzeye"><img src="./docs/media/support/afdian.png" width="220" alt="Afdian" /></a>
 </p>
 <p align="center">
-  <code>WeChat Pay</code>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<code>Alipay</code>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<code>Afdian</code>
+  <code>WeChat Pay</code>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<code>Alipay</code>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<a href="https://www.ifdian.net/a/urzeye"><code>Afdian ↗</code></a>
 </p>
 
 ### ⭐ Star History
