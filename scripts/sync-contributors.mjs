@@ -275,26 +275,26 @@ function buildContributorsSkeleton(config) {
  */
 function ensureContributorsSection(readmePath, config) {
 	const content = fs.readFileSync(readmePath, "utf-8")
-	const supportersEndIdx = content.indexOf(supportersEndMarker)
 
-	if (supportersEndIdx === -1) {
+	// If markers already exist anywhere in the file, nothing to do
+	if (content.includes(allContribStartMarker)) {
+		return
+	}
+
+	const supportersStartMarker = "<!-- supporters:start -->"
+	const supportersStartIdx = content.indexOf(supportersStartMarker)
+
+	if (supportersStartIdx === -1) {
 		console.warn(
-			`[contributors] Missing '${supportersEndMarker}' in ${path.basename(readmePath)}, skipping`,
+			`[contributors] Missing '${supportersStartMarker}' in ${path.basename(readmePath)}, skipping`,
 		)
 		return
 	}
 
-	const afterSupporters = content.slice(supportersEndIdx + supportersEndMarker.length)
-
-	if (afterSupporters.includes(allContribStartMarker)) {
-		// Markers already in place — `all-contributors generate` will handle the table
-		return
-	}
-
-	// First time: insert skeleton after supporters:end
-	const insertPos = supportersEndIdx + supportersEndMarker.length
-	const skeleton = "\n\n" + buildContributorsSkeleton(config) + "\n"
-	const updatedContent = content.slice(0, insertPos) + skeleton + content.slice(insertPos)
+	// Insert skeleton BEFORE supporters:start so contributors appear above sponsors
+	const skeleton = buildContributorsSkeleton(config) + "\n\n"
+	const updatedContent =
+		content.slice(0, supportersStartIdx) + skeleton + content.slice(supportersStartIdx)
 
 	fs.writeFileSync(readmePath, updatedContent, "utf-8")
 	console.log(`[contributors] Inserted contributors skeleton into ${path.basename(readmePath)}`)
