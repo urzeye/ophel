@@ -234,7 +234,7 @@ pnpm package:all
 ## 🤝 參與共建
 
 <p align="center">
-  <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
+  <em>「一個人可以走得很快，但一群人可以走得更遠。」</em>
 </p>
 
 <p align="center">

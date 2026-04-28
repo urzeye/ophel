@@ -234,7 +234,7 @@ pnpm package:all
 ## 🤝 참여하기
 
 <p align="center">
-  <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
+  <em>"빨리 가고 싶다면 혼자 가라. 멀리 가고 싶다면 함께 가라."</em>
 </p>
 
 <p align="center">

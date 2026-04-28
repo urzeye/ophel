@@ -226,7 +226,7 @@ pnpm package:all
 ## 🤝 Mitmachen
 
 <p align="center">
-  <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
+  <em>„Wenn du schnell gehen willst, geh allein. Wenn du weit gehen willst, geh gemeinsam."</em>
 </p>
 
 <p align="center">

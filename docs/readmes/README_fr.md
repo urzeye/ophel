@@ -226,7 +226,7 @@ pnpm package:all
 ## 🤝 Participer
 
 <p align="center">
-  <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
+  <em>« Si tu veux aller vite, pars seul. Si tu veux aller loin, partons ensemble. »</em>
 </p>
 
 <p align="center">

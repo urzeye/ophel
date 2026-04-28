@@ -234,7 +234,7 @@ pnpm package:all
 ## 🤝 参加する
 
 <p align="center">
-  <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
+  <em>「速く行きたければ一人で行け。遠くへ行きたければみんなで行け。」</em>
 </p>
 
 <p align="center">
