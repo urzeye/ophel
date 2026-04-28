@@ -127,7 +127,7 @@
 <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=Greasy%20Fork&color=black&labelColor=black" alt="Greasy Fork"></a>
 
 <details>
-<summary><strong>🛠️ Instalação Manual (Offline ou Desenvolvedor)</strong></summary>
+<summary><strong>Instalação Manual (Ambiente offline ou acesso restrito à loja)</strong></summary>
 
 
 #### Extensão do Navegador
