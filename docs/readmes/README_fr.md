@@ -221,6 +221,10 @@ Pour des problèmes ou suggestions, visitez [GitHub Issues](https://github.com/u
   </tr>
 </table>
 
+---
+
+<!-- supporters:end -->
+
 ### 🌟 Contributeurs
 
 Merci à tous les développeurs qui ont contribué à ce projet :
@@ -248,9 +252,6 @@ Merci à tous les développeurs qui ont contribué à ce projet :
 <!-- prettier-ignore-end -->
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
----
-
-<!-- supporters:end -->
 
 <p align="center">
   Si <strong>Ophel Atlas</strong> améliore ton travail ou ton apprentissage, n'hésite pas à nous soutenir avec une <strong>Star</strong> ou en devenant <strong>Sponsor</strong>.

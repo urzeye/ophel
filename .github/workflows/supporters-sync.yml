@@ -1,0 +1,52 @@
+name: "🤝 Sync Supporters & Contributors"
+
+on:
+  schedule:
+    # 每周一 UTC 02:00 自动同步
+    - cron: "0 2 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    name: "Sync READMEs"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # 使用 PAT 推送时触发其他工作流（可选，默认 GITHUB_TOKEN 不触发）
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync supporters & contributors
+        run: pnpm supporters:sync
+
+      - name: Commit changes (if any)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md README_zh-CN.md docs/readmes/ .all-contributorsrc
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(docs): sync supporters and contributors [skip ci]"
+            git push
+          else
+            echo "No changes to commit"
+          fi

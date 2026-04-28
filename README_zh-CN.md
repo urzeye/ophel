@@ -278,6 +278,10 @@ pnpm package:all
   </tr>
 </table>
 
+---
+
+<!-- supporters:end -->
+
 ### 🌟 贡献者
 
 感谢所有为本项目做出贡献的开发者：
@@ -304,10 +308,6 @@ pnpm package:all
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
 <!-- ALL-CONTRIBUTORS-LIST:END -->
-
----
-
-<!-- supporters:end -->
 
 <p align="center">
   如果 <strong>Ophel Atlas</strong> 提升了你的工作或学习效率，欢迎通过 <strong>Star</strong> 或 <strong>Sponsor</strong> 来支持我们。

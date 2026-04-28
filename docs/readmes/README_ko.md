@@ -229,6 +229,10 @@ pnpm package:all
   </tr>
 </table>
 
+---
+
+<!-- supporters:end -->
+
 ### 🌟 기여자
 
 이 프로젝트에 기여한 모든 개발자에게 감사드립니다：
@@ -256,9 +260,6 @@ pnpm package:all
 <!-- prettier-ignore-end -->
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
----
-
-<!-- supporters:end -->
 
 <p align="center">
   <strong>Ophel Atlas</strong>가 여러분의 일이나 학습 효율을 높여 주었다면, <strong>Star</strong> 또는 <strong>Sponsor</strong>로 응원해 주세요.

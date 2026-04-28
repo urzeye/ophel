@@ -221,6 +221,10 @@ pnpm package:all
   </tr>
 </table>
 
+---
+
+<!-- supporters:end -->
+
 ### 🌟 Участники
 
 Спасибо всем разработчикам, внёсшим вклад в этот проект:
@@ -248,9 +252,6 @@ pnpm package:all
 <!-- prettier-ignore-end -->
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
----
-
-<!-- supporters:end -->
 
 <p align="center">
   Если <strong>Ophel Atlas</strong> сделал вашу работу или обучение эффективнее, вы можете поддержать нас через <strong>Star</strong> или <strong>Sponsor</strong>.

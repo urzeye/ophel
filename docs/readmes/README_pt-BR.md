@@ -221,6 +221,10 @@ Para problemas ou sugestões, visite [GitHub Issues](https://github.com/urzeye/o
   </tr>
 </table>
 
+---
+
+<!-- supporters:end -->
+
 ### 🌟 Contribuidores
 
 Obrigado a todos os desenvolvedores que contribuíram para este projeto:
@@ -248,9 +252,6 @@ Obrigado a todos os desenvolvedores que contribuíram para este projeto:
 <!-- prettier-ignore-end -->
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
----
-
-<!-- supporters:end -->
 
 <p align="center">
   Se <strong>Ophel Atlas</strong> aumentou a sua eficiência no trabalho ou nos estudos, apoie-nos com uma <strong>Star</strong> ou como <strong>Sponsor</strong>.
