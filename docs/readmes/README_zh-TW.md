@@ -211,6 +211,9 @@ pnpm package:all
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/RyanLin-InfEvo"><img src="https://avatars.githubusercontent.com/u/121378653?v=4?s=80" width="80px;" alt="Lin Zit Ting"/><br /><sub><b>Lin Zit Ting</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=RyanLin-InfEvo" title="Code">💻</a></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/joevalleyfield"><img src="https://avatars.githubusercontent.com/u/14796422?v=4?s=80" width="80px;" alt="joevalleyfield"/><br /><sub><b>joevalleyfield</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=joevalleyfield" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/hugo1120"><img src="https://github.com/hugo1120.png?s=80" width="80px;" alt="hugo2233"/><br /><sub><b>hugo2233</b></sub></a><br /><a href="#blog-hugo1120" title="Blogposts">📝</a></td>
+    </tr>
   </tbody>
 </table>
 
@@ -241,11 +244,6 @@ pnpm package:all
       <img src="https://lh3.googleusercontent.com/a-/ALV-UjVwv0jFS2TRGiNOMB4xl4BXF5j1D5jRIlR6t-4xgaUSpNIsYWc=s96-w96-h96" width="72" height="72" alt="Hugh" />
       <br />
       <sub>Hugh</sub>
-    </td>
-    <td align="center" width="110">
-      <a href="https://github.com/hugo1120"><img src="https://github.com/hugo1120.png?size=160" width="72" height="72" alt="hugo2233" /></a>
-      <br />
-      <sub><a href="https://github.com/hugo1120">hugo2233</a></sub>
     </td>
     <td align="center" width="110">
       <img src="https://ui-avatars.com/api/?name=%E5%8D%97&amp;background=random" width="72" height="72" alt="**南" />
