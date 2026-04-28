@@ -10,52 +10,52 @@ const readmeConfigs = [
   {
     file: "README.md",
     featuredTitle: "### 💖 Angel Support",
-    supportersTitle: "### 🤝 Supporters",
+    supportersTitle: "### 🌟 Supporters",
   },
   {
     file: "README_zh-CN.md",
     featuredTitle: "### 💖 天使投资特别鸣谢",
-    supportersTitle: "### 🤝 支持者",
+    supportersTitle: "### 🌟 支持者",
   },
   {
     file: "docs/readmes/README_de.md",
     featuredTitle: "### 💖 Besonderer Dank",
-    supportersTitle: "### 🤝 Unterstützer",
+    supportersTitle: "### 🌟 Unterstützer",
   },
   {
     file: "docs/readmes/README_es.md",
     featuredTitle: "### 💖 Agradecimiento especial",
-    supportersTitle: "### 🤝 Patrocinadores",
+    supportersTitle: "### 🌟 Patrocinadores",
   },
   {
     file: "docs/readmes/README_fr.md",
     featuredTitle: "### 💖 Remerciement special",
-    supportersTitle: "### 🤝 Soutiens",
+    supportersTitle: "### 🌟 Soutiens",
   },
   {
     file: "docs/readmes/README_ja.md",
     featuredTitle: "### 💖 特別な感謝",
-    supportersTitle: "### 🤝 支援者",
+    supportersTitle: "### 🌟 支援者",
   },
   {
     file: "docs/readmes/README_ko.md",
     featuredTitle: "### 💖 특별한 감사",
-    supportersTitle: "### 🤝 후원자",
+    supportersTitle: "### 🌟 후원자",
   },
   {
     file: "docs/readmes/README_pt-BR.md",
     featuredTitle: "### 💖 Agradecimento especial",
-    supportersTitle: "### 🤝 Apoiadores",
+    supportersTitle: "### 🌟 Apoiadores",
   },
   {
     file: "docs/readmes/README_ru.md",
     featuredTitle: "### 💖 Особая благодарность",
-    supportersTitle: "### 🤝 Поддержавшие",
+    supportersTitle: "### 🌟 Поддержавшие",
   },
   {
     file: "docs/readmes/README_zh-TW.md",
     featuredTitle: "### 💖 天使支持特別鳴謝",
-    supportersTitle: "### 🤝 支持者",
+    supportersTitle: "### 🌟 支持者",
   },
 ]
 
@@ -115,7 +115,7 @@ function renderPersonCell(person, readmePath, options = {}) {
 
   const imgHtml = `<img src="${escapeHtml(avatarPath)}" width="${avatarSize}px;" alt="${escapeHtml(person.name)}" />`;
   const nameHtml = `<sub><b>${escapeHtml(person.name)}</b></sub>`;
-  
+
   let innerContent = `${imgHtml}<br />\n      ${nameHtml}`;
   if (person.url) {
     innerContent = `<a href="${escapeHtml(person.url)}">\n        ${imgHtml}<br />\n        ${nameHtml}\n      </a>`;

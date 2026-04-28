@@ -225,7 +225,7 @@ pnpm package:all
 
 For issues or suggestions, please visit [GitHub Issues](https://github.com/urzeye/ophel/issues).
 
-## 🌟 Contributors
+## 🤝 Get Involved
 
 > 🌌 _Open source is powered by the stars of its community._
 >

@@ -79,7 +79,7 @@
   <a href="#-核心功能">核心功能</a> •
   <a href="#-快速开始">快速开始</a> •
   <a href="#-贡献者">贡献者</a> •
-  <a href="#-支持与致谢">支持与致谢</a>
+  <a href="#-support-ophel-atlas">支持 Ophel Atlas</a>
 </p>
 
 <p align="center">
@@ -230,47 +230,7 @@ pnpm package:all
 
 如有问题或建议，欢迎在 [GitHub Issues](https://github.com/urzeye/ophel/issues) 反馈。
 
-## 🌟 贡献者
-
-> 🌌 _开源的璀璨，源于社区中每一颗闪耀的星。_
->
-> 诚挚致敬以下每一位同行者。因为你们的无私开源与智慧，这个项目才得以不断破浪前行。
-
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-<table>
-  <tbody>
-    <tr>
-      <td align="center" valign="top" width="12.5%"><a href="https://github.com/urzeye"><img src="https://avatars.githubusercontent.com/u/20869204?v=4?s=80" width="80px;" alt="小 i 同学"/><br /><sub><b>小 i 同学</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=urzeye" title="Code">💻</a> <a href="#ideas-urzeye" title="Ideas, Planning, & Feedback">🤔</a> <a href="#infra-urzeye" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
-      <td align="center" valign="top" width="12.5%"><a href="https://github.com/treasuresure"><img src="https://avatars.githubusercontent.com/u/50103468?v=4?s=80" width="80px;" alt="treasuresure"/><br /><sub><b>treasuresure</b></sub></a><br /><a href="#design-treasuresure" title="Design">🎨</a> <a href="#financial-treasuresure" title="Financial">💵</a></td>
-      <td align="center" valign="top" width="12.5%"><a href="https://www.tjsky.net/"><img src="https://avatars.githubusercontent.com/u/7272911?v=4?s=80" width="80px;" alt="去年夏天"/><br /><sub><b>去年夏天</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=tjsky" title="Code">💻</a></td>
-      <td align="center" valign="top" width="12.5%"><a href="https://github.com/lanvent"><img src="https://avatars.githubusercontent.com/u/26515464?v=4?s=80" width="80px;" alt="Jianglang"/><br /><sub><b>Jianglang</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=lanvent" title="Code">💻</a> <a href="https://github.com/urzeye/ophel/issues?q=author%3Alanvent" title="Bug reports">🐛</a></td>
-      <td align="center" valign="top" width="12.5%"><a href="https://github.com/Felix3322"><img src="https://avatars.githubusercontent.com/u/115849429?v=4?s=80" width="80px;" alt="Felix Liu"/><br /><sub><b>Felix Liu</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=Felix3322" title="Code">💻</a></td>
-      <td align="center" valign="top" width="12.5%"><a href="https://github.com/KanameMadoka520"><img src="https://avatars.githubusercontent.com/u/90090108?v=4?s=80" width="80px;" alt="Madoka"/><br /><sub><b>Madoka</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=KanameMadoka520" title="Code">💻</a></td>
-      <td align="center" valign="top" width="12.5%"><a href="https://github.com/RyanLin-InfEvo"><img src="https://avatars.githubusercontent.com/u/121378653?v=4?s=80" width="80px;" alt="Lin Zit Ting"/><br /><sub><b>Lin Zit Ting</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=RyanLin-InfEvo" title="Code">💻</a></td>
-      <td align="center" valign="top" width="12.5%"><a href="https://github.com/joevalleyfield"><img src="https://avatars.githubusercontent.com/u/14796422?v=4?s=80" width="80px;" alt="joevalleyfield"/><br /><sub><b>joevalleyfield</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=joevalleyfield" title="Code">💻</a></td>
-    </tr>
-    <tr>
-      <td align="center" valign="top" width="12.5%"><a href="https://github.com/hugo1120"><img src="https://github.com/hugo1120.png?s=80" width="80px;" alt="hugo2233"/><br /><sub><b>hugo2233</b></sub></a><br /><a href="#promotion-hugo1120" title="Promotion">📣</a></td>
-    </tr>
-  </tbody>
-</table>
-
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->
-
-## 🙌 支持与致谢
-
-<p align="center">
-  <em>"一个人可以走得很快，但一群人可以走得更远。"</em>
-</p>
-
-<p align="center">
-  感谢 <a href="https://linux.do/">Linux.do</a> 社区的交流与支持，项目的许多想法和改进都来自社区成员的反馈。
-</p>
+## 🙌 支持 Ophel Atlas
 
 <!-- supporters:start -->
 
@@ -362,6 +322,46 @@ pnpm package:all
     </td>
   </tr>
 </table>
+
+## 🤝 参与共建
+
+<p align="center">
+  <em>"一个人可以走得很快，但一群人可以走得更远。"</em>
+</p>
+
+<p align="center">
+  感谢 <a href="https://linux.do/">Linux.do</a> 社区的交流与支持，项目的许多想法和改进都来自社区成员的反馈。
+</p>
+
+> 🌌 _开源的璀璨，源于社区中每一颗闪耀的星。_
+>
+> 诚挚致敬以下每一位同行者。因为你们的无私开源与智慧，这个项目才得以不断破浪前行。
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/urzeye"><img src="https://avatars.githubusercontent.com/u/20869204?v=4?s=80" width="80px;" alt="小 i 同学"/><br /><sub><b>小 i 同学</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=urzeye" title="Code">💻</a> <a href="#ideas-urzeye" title="Ideas, Planning, & Feedback">🤔</a> <a href="#infra-urzeye" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/treasuresure"><img src="https://avatars.githubusercontent.com/u/50103468?v=4?s=80" width="80px;" alt="treasuresure"/><br /><sub><b>treasuresure</b></sub></a><br /><a href="#design-treasuresure" title="Design">🎨</a> <a href="#financial-treasuresure" title="Financial">💵</a></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://www.tjsky.net/"><img src="https://avatars.githubusercontent.com/u/7272911?v=4?s=80" width="80px;" alt="去年夏天"/><br /><sub><b>去年夏天</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=tjsky" title="Code">💻</a></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/lanvent"><img src="https://avatars.githubusercontent.com/u/26515464?v=4?s=80" width="80px;" alt="Jianglang"/><br /><sub><b>Jianglang</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=lanvent" title="Code">💻</a> <a href="https://github.com/urzeye/ophel/issues?q=author%3Alanvent" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/Felix3322"><img src="https://avatars.githubusercontent.com/u/115849429?v=4?s=80" width="80px;" alt="Felix Liu"/><br /><sub><b>Felix Liu</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=Felix3322" title="Code">💻</a></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/KanameMadoka520"><img src="https://avatars.githubusercontent.com/u/90090108?v=4?s=80" width="80px;" alt="Madoka"/><br /><sub><b>Madoka</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=KanameMadoka520" title="Code">💻</a></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/RyanLin-InfEvo"><img src="https://avatars.githubusercontent.com/u/121378653?v=4?s=80" width="80px;" alt="Lin Zit Ting"/><br /><sub><b>Lin Zit Ting</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=RyanLin-InfEvo" title="Code">💻</a></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/joevalleyfield"><img src="https://avatars.githubusercontent.com/u/14796422?v=4?s=80" width="80px;" alt="joevalleyfield"/><br /><sub><b>joevalleyfield</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=joevalleyfield" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/hugo1120"><img src="https://github.com/hugo1120.png?s=80" width="80px;" alt="hugo2233"/><br /><sub><b>hugo2233</b></sub></a><br /><a href="#promotion-hugo1120" title="Promotion">📣</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ### ⭐ Star History
 
