@@ -65,6 +65,7 @@
   <a href="#-démo">Démo</a> •
   <a href="#-fonctionnalités-clés">Fonctionnalités Clés</a> •
   <a href="#-démarrage-rapide">Démarrage Rapide</a> •
+  <a href="#-contributeurs">Contributeurs</a> •
   <a href="#-soutien-et-remerciements">Soutien et remerciements</a>
 </p>
 
@@ -172,17 +173,7 @@ pnpm package:all
 
 Pour des problèmes ou suggestions, visitez [GitHub Issues](https://github.com/urzeye/ophel/issues).
 
-## 🙌 Soutien et remerciements
-
-<p align="center">
-  <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
-</p>
-
-<p align="center">
-  Merci à la communauté <a href="https://linux.do/">Linux.do</a> pour ses échanges et son soutien. De nombreuses idées et améliorations du projet viennent des retours de ses membres.
-</p>
-
-### 🌟 Contributeurs
+## 🌟 Contributeurs
 
 > 🌌 *L'open source est alimenté par les étoiles de sa communauté.*
 >
@@ -214,7 +205,15 @@ Pour des problèmes ou suggestions, visitez [GitHub Issues](https://github.com/u
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-</div>
+## 🙌 Soutien et remerciements
+
+<p align="center">
+  <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
+</p>
+
+<p align="center">
+  Merci à la communauté <a href="https://linux.do/">Linux.do</a> pour ses échanges et son soutien. De nombreuses idées et améliorations du projet viennent des retours de ses membres.
+</p>
 
 <!-- supporters:start -->
 

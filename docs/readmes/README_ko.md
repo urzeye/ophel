@@ -73,6 +73,7 @@
   <a href="#-기능-데모">기능 데모</a> •
   <a href="#-핵심-기능">핵심 기능</a> •
   <a href="#-시작하기">시작하기</a> •
+  <a href="#-기여자">기여자</a> •
   <a href="#-지원과-감사">지원과 감사</a>
 </p>
 
@@ -180,17 +181,7 @@ pnpm package:all
 
 문제가 있거나 제안 사항이 있으면 [GitHub Issues](https://github.com/urzeye/ophel/issues) 에 피드백을 남겨주세요.
 
-## 🙌 지원과 감사
-
-<p align="center">
-  <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
-</p>
-
-<p align="center">
-  <a href="https://linux.do/">Linux.do</a> 커뮤니티의 교류와 지원에 감사드립니다. 프로젝트의 많은 아이디어와 개선점은 커뮤니티 구성원들의 피드백에서 나왔습니다.
-</p>
-
-### 🌟 기여자
+## 🌟 기여자
 
 > 🌌 *오픈 소스는 커뮤니티의 별들에 의해 빛납니다.*
 >
@@ -222,7 +213,15 @@ pnpm package:all
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-</div>
+## 🙌 지원과 감사
+
+<p align="center">
+  <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
+</p>
+
+<p align="center">
+  <a href="https://linux.do/">Linux.do</a> 커뮤니티의 교류와 지원에 감사드립니다. 프로젝트의 많은 아이디어와 개선점은 커뮤니티 구성원들의 피드백에서 나왔습니다.
+</p>
 
 <!-- supporters:start -->
 

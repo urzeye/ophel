@@ -73,7 +73,8 @@
   <a href="#-功能演示">功能演示</a> •
   <a href="#-核心功能">核心功能</a> •
   <a href="#-快速開始">快速開始</a> •
-  <a href="#-支持項目">支持項目</a>
+  <a href="#-貢獻者">貢獻者</a> •
+  <a href="#-支持與致謝">支持與致謝</a>
 </p>
 
 <p align="center">
@@ -180,17 +181,7 @@ pnpm package:all
 
 如有問題或建議，歡迎在 [GitHub Issues](https://github.com/urzeye/ophel/issues) 反饋。
 
-## 🙌 支持與致謝
-
-<p align="center">
-  <em>"一個人可以走得很快，但一群人可以走得更遠。"</em>
-</p>
-
-<p align="center">
-  感謝 <a href="https://linux.do/">Linux.do</a> 社群的交流與支持，專案的許多想法與改進都來自社群成員的回饋。
-</p>
-
-### 🌟 貢獻者
+## 🌟 貢獻者
 
 > 🌌 *開源的璀璨，源於社群中每一顆閃耀的星。*
 >
@@ -222,7 +213,15 @@ pnpm package:all
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-</div>
+## 🙌 支持與致謝
+
+<p align="center">
+  <em>"一個人可以走得很快，但一群人可以走得更遠。"</em>
+</p>
+
+<p align="center">
+  感謝 <a href="https://linux.do/">Linux.do</a> 社群的交流與支持，專案的許多想法與改進都來自社群成員的回饋。
+</p>
 
 <!-- supporters:start -->
 

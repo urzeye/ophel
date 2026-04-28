@@ -73,6 +73,7 @@
   <a href="#-デモ">デモ</a> •
   <a href="#-主な機能">主な機能</a> •
   <a href="#-今すぐ始める">今すぐ始める</a> •
+  <a href="#-コントリビューター">コントリビューター</a> •
   <a href="#-支援と謝辞">支援と謝辞</a>
 </p>
 
@@ -180,17 +181,7 @@ pnpm package:all
 
 問題や提案がある場合は、[GitHub Issues](https://github.com/urzeye/ophel/issues) でフィードバックしてください。
 
-## 🙌 支援と謝辞
-
-<p align="center">
-  <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
-</p>
-
-<p align="center">
-  <a href="https://linux.do/">Linux.do</a> コミュニティの交流と支援に感謝します。プロジェクトの多くのアイデアや改善は、コミュニティメンバーからのフィードバックに支えられています。
-</p>
-
-### 🌟 コントリビューター
+## 🌟 コントリビューター
 
 > 🌌 *オープンソースは、コミュニティの星々によって輝いています。*
 >
@@ -222,7 +213,15 @@ pnpm package:all
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-</div>
+## 🙌 支援と謝辞
+
+<p align="center">
+  <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
+</p>
+
+<p align="center">
+  <a href="https://linux.do/">Linux.do</a> コミュニティの交流と支援に感謝します。プロジェクトの多くのアイデアや改善は、コミュニティメンバーからのフィードバックに支えられています。
+</p>
 
 <!-- supporters:start -->
 
