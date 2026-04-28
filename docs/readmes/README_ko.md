@@ -229,6 +229,45 @@ pnpm package:all
 
 ---
 
+<p align="center">
+  <em><strong>Ophel Atlas</strong>가 당신의 워크플로우에 즐거움을 선사하거나 소중한 시간을 절약해 드렸다면, <strong>Star</strong>나 <strong>Sponsor</strong>로 그 여정을 응원해 주세요.</em> ☕️
+</p>
+
+<p align="center">
+  <strong>공유도 마찬가지로 강력합니다:</strong> <strong>Linux.do, Reddit, X, YouTube</strong>에서 경험을 공유해 주시면 정말 기쁠 것 같습니다. 모든 피드백과 응원이 Ophel의 성장을 돕습니다!
+</p>
+
+<p align="center">
+  <a href="https://ko-fi.com/urzeye">
+    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Buy Me a Coffee at ko-fi.com" />
+  </a>
+</p>
+
+<br>
+
+<table align="center" border="0" cellpadding="16" cellspacing="0">
+  <tr>
+    <td align="center">
+      <img src="../media/support/wechat-pay.jpg" width="160" height="160" alt="WeChat Pay" /><br />
+      <sub><b>WeChat Pay</b></sub>
+    </td>
+    <td align="center">
+      <img src="../media/support/alipay.png" width="160" height="160" alt="Alipay" /><br />
+      <sub><b>Alipay</b></sub>
+    </td>
+    <td align="center">
+      <a href="https://www.ifdian.net/a/urzeye">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="https://afdian-connect.deno.dev/profile.svg?slug=urzeye&bg_color=%230d1117&text_color=%23dedbd7&border_color=%232e343d" />
+          <source media="(prefers-color-scheme: light)" srcset="https://afdian-connect.deno.dev/profile.svg?slug=urzeye" />
+          <img alt="urzeye Afdian Profile" src="https://afdian-connect.deno.dev/profile.svg?slug=urzeye" height="160" />
+        </picture>
+      </a><br />
+      <sub><b>Afdian</b></sub>
+    </td>
+  </tr>
+</table>
+
 <!-- supporters:end -->
 
 ## 🤝 참여하기
@@ -311,45 +350,7 @@ pnpm package:all
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-
-<p align="center">
-  <em><strong>Ophel Atlas</strong>가 당신의 워크플로우에 즐거움을 선사하거나 소중한 시간을 절약해 드렸다면, <strong>Star</strong>나 <strong>Sponsor</strong>로 그 여정을 응원해 주세요.</em> ☕️
-</p>
-
-<p align="center">
-  <strong>공유도 마찬가지로 강력합니다:</strong> <strong>Linux.do, Reddit, X, YouTube</strong>에서 경험을 공유해 주시면 정말 기쁠 것 같습니다. 모든 피드백과 응원이 Ophel의 성장을 돕습니다!
-</p>
-
-<p align="center">
-  <a href="https://ko-fi.com/urzeye">
-    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Buy Me a Coffee at ko-fi.com" />
-  </a>
-</p>
-
 <br>
-
-<table align="center" border="0" cellpadding="16" cellspacing="0">
-  <tr>
-    <td align="center">
-      <img src="../media/support/wechat-pay.jpg" width="160" height="160" alt="WeChat Pay" /><br />
-      <sub><b>WeChat Pay</b></sub>
-    </td>
-    <td align="center">
-      <img src="../media/support/alipay.png" width="160" height="160" alt="Alipay" /><br />
-      <sub><b>Alipay</b></sub>
-    </td>
-    <td align="center">
-      <a href="https://www.ifdian.net/a/urzeye">
-        <picture>
-          <source media="(prefers-color-scheme: dark)" srcset="https://afdian-connect.deno.dev/profile.svg?slug=urzeye&bg_color=%230d1117&text_color=%23dedbd7&border_color=%232e343d" />
-          <source media="(prefers-color-scheme: light)" srcset="https://afdian-connect.deno.dev/profile.svg?slug=urzeye" />
-          <img alt="urzeye Afdian Profile" src="https://afdian-connect.deno.dev/profile.svg?slug=urzeye" height="160" />
-        </picture>
-      </a><br />
-      <sub><b>Afdian</b></sub>
-    </td>
-  </tr>
-</table>
 
 ### ⭐ Star History
 

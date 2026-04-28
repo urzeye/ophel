@@ -268,6 +268,8 @@ pnpm package:all
       <sub><b>愛發電</b></sub>
     </td>
   </tr>
+  </tbody>
+</table>
 
 ## 🤝 參與共建
 
