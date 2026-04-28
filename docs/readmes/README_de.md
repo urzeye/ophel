@@ -126,7 +126,9 @@
 <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=Firefox%20Add-ons&color=FF7139&labelColor=FF7139" alt="Firefox Add-ons"></a>
 <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=Greasy%20Fork&color=black&labelColor=black" alt="Greasy Fork"></a>
 
-### Manuelle Installation
+<details>
+<summary><strong>🛠️ Manuelle Installation (Offline oder Entwickler)</strong></summary>
+
 
 #### Browser Erweiterung
 
@@ -139,6 +141,9 @@
 1. Installieren Sie [Tampermonkey](https://www.tampermonkey.net/)
 2. Laden Sie die `.user.js` Datei von [Releases](https://github.com/urzeye/ophel/releases) herunter
 3. Ziehen Sie sie in den Browser oder klicken Sie auf den Link zur Installation
+
+
+</details>
 
 ## 🙌 Support Ophel Atlas
 

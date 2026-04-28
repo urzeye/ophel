@@ -172,13 +172,14 @@
 >
 > **We highly recommend using the Browser Extension version** for a more complete feature set, better experience, and higher compatibility. The Userscript version has limitations.
 
-### Web Store
+### One-click Install (Recommended)
 
 <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=Chrome%20Web%20Store&color=4285F4&labelColor=4285F4" alt="Chrome Web Store"></a>
 <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=Firefox%20Add-ons&color=FF7139&labelColor=FF7139" alt="Firefox Add-ons"></a>
 <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=Greasy%20Fork&color=black&labelColor=black" alt="Greasy Fork"></a>
 
-### Manual Installation
+<details>
+<summary><strong>🛠️ Manual Installation (Offline or Developer)</strong></summary>
 
 #### Browser Extension
 
@@ -191,6 +192,8 @@
 1. Install [Tampermonkey](https://www.tampermonkey.net/)
 2. Download `.user.js` file from [Releases](https://github.com/urzeye/ophel/releases)
 3. Drag into browser or click the link to install
+
+</details>
 
 ## 🙌 Support Ophel Atlas
 

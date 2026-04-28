@@ -128,13 +128,15 @@
 >
 > **ブラウザ拡張機能（Extension）版の使用を推奨します**。機能が充実しており、体験も優れ、互換性も高いです。Tampermonkey（Userscript）版は機能が制限されています。
 
-### アプリストア
+### ワンクリックインストール (推奨)
 
 <a href="https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd"><img src="https://img.shields.io/chrome-web-store/users/lpcohdfbomkgepfladogodgeoppclakd?logo=google-chrome&logoColor=white&label=Chrome%20Web%20Store&color=4285F4&labelColor=4285F4" alt="Chrome Web Store"></a>
 <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=Firefox%20Add-ons&color=FF7139&labelColor=FF7139" alt="Firefox Add-ons"></a>
 <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=Greasy%20Fork&color=black&labelColor=black" alt="Greasy Fork"></a>
 
-### 手動インストール
+<details>
+<summary><strong>🛠️ 手動インストール (オフラインまたは開発者)</strong></summary>
+
 
 #### ブラウザ拡張機能
 
@@ -148,32 +150,6 @@
 2. [Releases](https://github.com/urzeye/ophel/releases) から `.user.js` ファイルをダウンロードします
 3. ブラウザにドラッグするか、リンクをクリックしてインストールします
 
-### ローカルビルド
-
-<details>
-<summary>ビルド手順を展開</summary>
-
-**要件**: Node.js >= 18.x, pnpm >= 9.x
-
-```bash
-git clone https://github.com/urzeye/ophel.git
-cd ophel
-
-pnpm install
-
-pnpm dev
-pnpm build
-pnpm build:firefox
-pnpm build:all
-
-pnpm build:userscript
-pnpm build:userscript:local
-pnpm serve:userscript:assets
-
-pnpm package
-pnpm package:firefox
-pnpm package:all
-```
 
 </details>
 

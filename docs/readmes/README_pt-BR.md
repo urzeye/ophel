@@ -126,7 +126,9 @@
 <a href="https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/"><img src="https://img.shields.io/amo/users/ophel-ai-chat-enhancer?logo=firefox&logoColor=white&label=Firefox%20Add-ons&color=FF7139&labelColor=FF7139" alt="Firefox Add-ons"></a>
 <a href="https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer"><img src="https://img.shields.io/greasyfork/dt/563646?logo=tampermonkey&logoColor=white&label=Greasy%20Fork&color=black&labelColor=black" alt="Greasy Fork"></a>
 
-### Instalação Manual
+<details>
+<summary><strong>🛠️ Instalação Manual (Offline ou Desenvolvedor)</strong></summary>
+
 
 #### Extensão do Navegador
 
@@ -140,32 +142,6 @@
 2. Baixe o arquivo `.user.js` de [Releases](https://github.com/urzeye/ophel/releases)
 3. Arraste para o navegador ou clique no link para instalar
 
-### Build Local
-
-<details>
-<summary>Clique para expandir os passos de build</summary>
-
-**Requisitos**: Node.js >= 18.x, pnpm >= 9.x
-
-```bash
-git clone https://github.com/urzeye/ophel.git
-cd ophel
-
-pnpm install
-
-pnpm dev
-pnpm build
-pnpm build:firefox
-pnpm build:all
-
-pnpm build:userscript
-pnpm build:userscript:local
-pnpm serve:userscript:assets
-
-pnpm package
-pnpm package:firefox
-pnpm package:all
-```
 
 </details>
 
