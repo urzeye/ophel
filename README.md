@@ -67,8 +67,8 @@
   <a href="#-demo">Demo</a> •
   <a href="#-core-features">Core Features</a> •
   <a href="#-quick-start">Quick Start</a> •
-  <a href="#-get-involved">Get Involved</a> •
-  <a href="#-support-ophel-atlas">Support Ophel Atlas</a>
+  <a href="#-support-ophel-atlas">Support Ophel Atlas</a> •
+  <a href="#-get-involved">Get Involved</a>
 </p>
 
 <p align="center">

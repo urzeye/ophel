@@ -73,8 +73,8 @@
   <a href="#-功能演示">功能演示</a> •
   <a href="#-核心功能">核心功能</a> •
   <a href="#-快速開始">快速開始</a> •
-  <a href="#-參與共建">參與共建</a> •
-  <a href="#-support-ophel-atlas">Support Ophel Atlas</a>
+  <a href="#-支持-ophel-atlas">支持 Ophel Atlas</a> •
+  <a href="#-參與共建">參與共建</a>
 </p>
 
 <p align="center">
@@ -151,7 +151,7 @@
 
 </details>
 
-## 🙌 Support Ophel Atlas
+## 🙌 支持 Ophel Atlas
 
 <!-- supporters:start -->
 

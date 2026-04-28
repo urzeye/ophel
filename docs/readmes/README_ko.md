@@ -73,8 +73,8 @@
   <a href="#-기능-데모">기능 데모</a> •
   <a href="#-핵심-기능">핵심 기능</a> •
   <a href="#-시작하기">시작하기</a> •
-  <a href="#-참여하기">참여하기</a> •
-  <a href="#-support-ophel-atlas">Support Ophel Atlas</a>
+  <a href="#-ophel-atlas-지원하기">Ophel Atlas 지원하기</a> •
+  <a href="#-참여하기">참여하기</a>
 </p>
 
 <p align="center">
@@ -151,7 +151,7 @@
 
 </details>
 
-## 🙌 Support Ophel Atlas
+## 🙌 Ophel Atlas 지원하기
 
 <!-- supporters:start -->
 

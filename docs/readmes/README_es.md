@@ -65,8 +65,8 @@
   <a href="#-demo">Demo</a> •
   <a href="#-características-principales">Características Principales</a> •
   <a href="#-inicio-rápido">Inicio Rápido</a> •
-  <a href="#-participa">Participa</a> •
-  <a href="#-support-ophel-atlas">Support Ophel Atlas</a>
+  <a href="#-apoyar-a-ophel-atlas">Apoyar a Ophel Atlas</a> •
+  <a href="#-participa">Participa</a>
 </p>
 
 <p align="center">
@@ -145,7 +145,7 @@
 
 </details>
 
-## 🙌 Support Ophel Atlas
+## 🙌 Apoyar a Ophel Atlas
 
 <!-- supporters:start -->
 

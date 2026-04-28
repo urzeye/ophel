@@ -73,8 +73,8 @@
   <a href="#-デモ">デモ</a> •
   <a href="#-主な機能">主な機能</a> •
   <a href="#-今すぐ始める">今すぐ始める</a> •
-  <a href="#-参加する">参加する</a> •
-  <a href="#-support-ophel-atlas">Support Ophel Atlas</a>
+  <a href="#-ophel-atlas-をサポート">Ophel Atlas をサポート</a> •
+  <a href="#-参加する">参加する</a>
 </p>
 
 <p align="center">
@@ -151,7 +151,7 @@
 
 </details>
 
-## 🙌 Support Ophel Atlas
+## 🙌 Ophel Atlas をサポート
 
 <!-- supporters:start -->
 
