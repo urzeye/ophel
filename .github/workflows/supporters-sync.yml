@@ -36,7 +36,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Sync supporters
-        run: pnpm supporters:sync
+        run: pnpm sync:supporters
 
       - name: Commit changes (if any)
         run: |
@@ -44,8 +44,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add README.md README_zh-CN.md docs/readmes/
           if ! git diff --cached --quiet; then
-            git commit -m "chore(docs): sync supporters [skip ci]"
-            git push
+            git commit -m "chore(docs): sync supporte
           else
             echo "No changes to commit"
           fi

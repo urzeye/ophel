@@ -2,8 +2,8 @@ name: "🌟 Sync Contributors"
 
 on:
   schedule:
-    # 每周二 UTC 02:00 自动同步贡献者数据（赞助者同步之后一天）
-    - cron: "0 2 * * 2"
+    # 每周一 UTC 03:00 自动同步贡献者数据
+    - cron: "0 3 * * 1"
   workflow_dispatch:
 
 permissions:
@@ -36,7 +36,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Sync contributors (.all-contributorsrc + README markers)
-        run: pnpm contributors:sync
+        run: pnpm sync:contributors
 
       - name: Commit changes (if any)
         run: |
