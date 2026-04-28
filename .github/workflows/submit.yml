@@ -1,27 +1,73 @@
-name: "🏪 Submit to Web Store"
+name: "🏪 Submit to Chrome Web Store"
+
 on:
+  # Release 工作流成功后自动触发
+  workflow_run:
+    workflows: ["🚀 Build & Release Extension"]
+    types:
+      - completed
+  # 也支持手动触发（会重新构建）
   workflow_dispatch:
 
 jobs:
-  build:
+  submit:
+    # workflow_run 时仅在 Release 成功后运行；手动触发时始终运行
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup pnpm
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      # --- Release 触发：直接下载 Release 工作流生成的 CWS zip ---
+      - name: Download CWS zip from Release workflow
+        if: ${{ github.event_name == 'workflow_run' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: cws-upload
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: build/
+
+      # --- 手动触发：重新构建并打包 CWS zip ---
+      - name: Setup pnpm (manual trigger only)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: pnpm/action-setup@v4
-      - name: Setup Node.js
+
+      - name: Setup Node.js (manual trigger only)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: "20"
           cache: "pnpm"
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Build the extension
-        run: pnpm build
-      - name: Package the extension into a zip artifact
-        run: pnpm package
-      - name: Browser Platform Publish
+
+      - name: Build & package for CWS (manual trigger only)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+          cp -r build/chrome-mv3-prod build/chrome-mv3-cws
+          node -e "
+            const fs = require('fs'), path = require('path');
+            const dir = 'build/chrome-mv3-cws';
+            const mf = path.join(dir, 'manifest.json');
+            const pkg = JSON.parse(fs.readFileSync(mf, 'utf8'));
+            if (pkg.key) delete pkg.key;
+            if (pkg.web_accessible_resources) {
+              pkg.web_accessible_resources = pkg.web_accessible_resources
+                .map(e => ({ ...e, resources: e.resources.filter(r =>
+                  r.includes('*') || r.startsWith('__') || fs.existsSync(path.join(dir, r))
+                )}))
+                .filter(e => e.resources.length > 0);
+            }
+            fs.writeFileSync(mf, JSON.stringify(pkg, null, 2));
+          "
+          cd build/chrome-mv3-cws && zip -r ../ophel-atlas-cws-upload.zip . && cd ../..
+
+      # --- 提交到 Chrome Web Store ---
+      - name: Submit to Chrome Web Store
         uses: PlasmoHQ/bpp@v3
         with:
           keys: ${{ secrets.SUBMIT_KEYS }}
-          artifact: build/chrome-mv3-prod.zip
+          artifact: build/ophel-atlas-cws-upload.zip

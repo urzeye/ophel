@@ -63,7 +63,7 @@ jobs:
           fi
 
       - name: Sync supporters sections
-        run: pnpm supporters:sync
+        run: pnpm sync:supporters
 
       - name: Build all platforms
         run: pnpm build:all
@@ -157,6 +157,13 @@ jobs:
           user_name: "github-actions[bot]"
           user_email: "github-actions[bot]@users.noreply.github.com"
           commit_message: "Publish userscript assets ${{ steps.get_version.outputs.VERSION }} [skip ci]"
+
+      - name: Upload CWS zip as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cws-upload
+          path: build/ophel-atlas-cws-upload.zip
+          retention-days: 7
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
