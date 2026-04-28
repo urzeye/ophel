@@ -219,6 +219,8 @@ pnpm package:all
   </tbody>
 </table>
 
+<!-- supporters:end -->
+
 ---
 
 <p align="center">
@@ -259,8 +261,6 @@ pnpm package:all
     </td>
   </tr>
 </table>
-
-<!-- supporters:end -->
 
 ## 🤝 Mitmachen
 
