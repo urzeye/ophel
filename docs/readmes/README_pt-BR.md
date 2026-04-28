@@ -267,7 +267,7 @@ Obrigado a todos os desenvolvedores que contribuíram para este projeto:
   </a>
 </p>
 
-⭐ Star History
+### ⭐ Star History
 
 <div align="center">
 <a href="https://star-history.com/#urzeye/ophel&Date">
