@@ -219,8 +219,6 @@ pnpm package:all
   </tbody>
 </table>
 
----
-
 <!-- supporters:end -->
 
 ---
