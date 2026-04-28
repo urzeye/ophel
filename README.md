@@ -217,7 +217,7 @@
       <sub><b>Hugh</b></sub>
     </td>
     <td align="center" valign="top" width="14.28%">
-      <img src="https://ui-avatars.com/api/?name=%E5%8D%97&amp;background=random" width="84px;" alt="**南" /><br />
+      <img src="https://api.dicebear.com/7.x/bottts/svg?seed=**%E5%8D%97%7Calipay%7C2026-04-04&amp;radius=20&amp;backgroundColor=f1f5f9" width="84px;" alt="**南" /><br />
       <sub><b>**南</b></sub>
     </td>
     <td align="center" valign="top" width="14.28%">
@@ -225,11 +225,11 @@
       <sub><b>anonymous</b></sub>
     </td>
     <td align="center" valign="top" width="14.28%">
-      <img src="https://ui-avatars.com/api/?name=%E7%8B%B7%E5%AE%A2%E8%A1%8C%E8%88%9F%F0%9F%8D%9C%E7%8B%82%EF%BC%9F&amp;background=random" width="84px;" alt="狷客行舟🍜狂？" /><br />
+      <img src="https://api.dicebear.com/7.x/bottts/svg?seed=%E7%8B%B7%E5%AE%A2%E8%A1%8C%E8%88%9F%F0%9F%8D%9C%E7%8B%82%EF%BC%9F%7Cwechat%7C2026-04-17&amp;radius=20&amp;backgroundColor=f1f5f9" width="84px;" alt="狷客行舟🍜狂？" /><br />
       <sub><b>狷客行舟🍜狂？</b></sub>
     </td>
     <td align="center" valign="top" width="14.28%">
-      <img src="https://ui-avatars.com/api/?name=%E7%85%9C&amp;background=random" width="84px;" alt="**煜" /><br />
+      <img src="https://api.dicebear.com/7.x/bottts/svg?seed=**%E7%85%9C%7Calipay%7C2026-04-27&amp;radius=20&amp;backgroundColor=f1f5f9" width="84px;" alt="**煜" /><br />
       <sub><b>**煜</b></sub>
     </td>
   </tr>

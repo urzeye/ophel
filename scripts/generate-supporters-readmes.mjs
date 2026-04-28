@@ -96,16 +96,10 @@ function resolveAvatarPath(readmePath, avatar) {
  * 避免大量 "anonymous" 用户共享同一头像
  */
 function getAvatarUrl(name, avatar, source, date) {
-	if (avatar) return avatar
-	if (name && name.startsWith("*") && !name.endsWith("*")) {
-		const lastChar = name.slice(-1)
-		return `https://ui-avatars.com/api/?name=${encodeURIComponent(lastChar)}&background=random`
-	}
-	if (name && name !== "anonymous") {
-		return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
-	}
-	const seed = encodeURIComponent(`${name || "anonymous"}|${source || ""}|${date || ""}`)
-	return `https://api.dicebear.com/7.x/identicon/svg?seed=${seed}`
+        if (avatar) return avatar
+        const seed = encodeURIComponent(`${name || "anonymous"}|${source || ""}|${date || ""}`)
+        // 使用 DiceBear 的 bottts (机器人) 风格，契合 AI 助手主题，并且彻底解决文字排版和颜色突兀的问题
+        return `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}&radius=20&backgroundColor=f1f5f9`
 }
 
 function renderPersonCell(person, readmePath, options = {}) {
