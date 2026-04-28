@@ -333,8 +333,8 @@ pnpm serve:userscript:assets   # 아이콘/스타일 등 정적 어셋을 로컬
 
 </details>
 
-[!TIP]
-💡 **기여 가이드라인**: PR을 제출하기 전에 저장소를 포크하고 새 브랜치에서 작업하며 `pnpm lint:check` 및 `pnpm typecheck`를 통과하는지 확인하세요.
+> [!TIP]
+> 💡 **기여 가이드라인**: PR을 제출하기 전에 저장소를 포크하고 새 브랜치에서 작업하며 `pnpm lint:check` 및 `pnpm typecheck`를 통과하는지 확인하세요.
 
 ---
 

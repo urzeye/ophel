@@ -325,8 +325,8 @@ pnpm serve:userscript:assets   # Servir les ressources statiques localement
 
 </details>
 
-[!TIP]
-💡 **Directives de contribution** : Avant de soumettre une PR, il est recommandé de forker le dépôt, de créer une nouvelle branche et de s'assurer que le code passe `pnpm lint:check` et `pnpm typecheck`.
+> [!TIP]
+> 💡 **Directives de contribution** : Avant de soumettre une PR, il est recommandé de forker le dépôt, de créer une nouvelle branche et de s'assurer que le code passe `pnpm lint:check` et `pnpm typecheck`.
 
 ---
 

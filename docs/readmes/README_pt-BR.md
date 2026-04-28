@@ -306,8 +306,8 @@ Contribuições de qualquer forma são bem-vindas — código, relatos de bugs o
   </tr>
 </table>
 
-[!TIP]
-💡 **Diretrizes de Contribuição**: Antes de enviar um PR, recomendamos fazer um fork do repositório, criar uma nova branch e certificar-se de que seu código passe em `pnpm lint:check` e `pnpm typecheck`.
+> [!TIP]
+> 💡 **Diretrizes de Contribuição**: Antes de enviar um PR, recomendamos fazer um fork do repositório, criar uma nova branch e certificar-se de que seu código passe em `pnpm lint:check` e `pnpm typecheck`.
 
 ---
 

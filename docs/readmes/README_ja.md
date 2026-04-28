@@ -333,8 +333,8 @@ pnpm serve:userscript:assets   # 静的アセット（アイコン/スタイル�
 
 </details>
 
-[!TIP]
-💡 **コントリビューション規約**: PR を送信する前に、リポジトリをフォークして新しいブランチで開発し、`pnpm lint:check` と `pnpm typecheck` をパスしていることを確認してください。
+> [!TIP]
+> 💡 **コントリビューション規約**: PR を送信する前に、リポジトリをフォークして新しいブランチで開発し、`pnpm lint:check` と `pnpm typecheck` をパスしていることを確認してください。
 
 ---
 

@@ -325,8 +325,8 @@ pnpm serve:userscript:assets   # Servir recursos estáticos localmente
 
 </details>
 
-[!TIP]
-💡 **Directrices de contribución**: Antes de enviar un PR, recomendamos hacer un fork del repositorio, crear una nueva rama y asegurarte de que tu código pase `pnpm lint:check` y `pnpm typecheck`.
+> [!TIP]
+> 💡 **Directrices de contribución**: Antes de enviar un PR, recomendamos hacer un fork del repositorio, crear una nueva rama y asegurarte de que tu código pase `pnpm lint:check` y `pnpm typecheck`.
 
 ---
 

@@ -305,8 +305,8 @@ pnpm serve:userscript:assets   # 本地啟動伺服器提供圖示/樣式等靜�
 
 </details>
 
-[!TIP]
-💡 **提交規範**：發起 PR 前，建議先 Fork 倉庫並在新分支開發，同時確認代碼通過了 `pnpm lint:check` 和 `pnpm typecheck`。
+> [!TIP]
+> 💡 **提交規範**：發起 PR 前，建議先 Fork 倉庫並在新分支開發，同時確認代碼通過了 `pnpm lint:check` 和 `pnpm typecheck`。
 
 ---
 

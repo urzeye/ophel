@@ -296,8 +296,8 @@ pnpm serve:userscript:assets   # Lokales Serving von statischen Assets (Icons/St
 
 </details>
 
-[!TIP]
-💡 **Beitragsrichtlinien**: Bevor Sie einen PR einreichen, empfehlen wir, das Repo zu forken, einen neuen Branch zu erstellen und sicherzustellen, dass Ihr Code `pnpm lint:check` und `pnpm typecheck` besteht.
+> [!TIP]
+> 💡 **Beitragsrichtlinien**: Bevor Sie einen PR einreichen, empfehlen wir, das Repo zu forken, einen neuen Branch zu erstellen und sicherzustellen, dass Ihr Code `pnpm lint:check` und `pnpm typecheck` besteht.
 
 ---
 

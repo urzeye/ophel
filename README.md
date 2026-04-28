@@ -346,8 +346,8 @@ pnpm serve:userscript:assets   # Serve static assets locally
 
 </details>
 
-[!TIP]
-💡 **Contribution Guidelines**: Before submitting a PR, we recommend forking the repo, creating a new branch, and ensuring your code passes `pnpm lint:check` and `pnpm typecheck`.
+> [!TIP]
+> 💡 **Contribution Guidelines**: Before submitting a PR, we recommend forking the repo, creating a new branch, and ensuring your code passes `pnpm lint:check` and `pnpm typecheck`.
 
 ---
 
