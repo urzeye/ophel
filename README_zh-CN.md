@@ -329,14 +329,28 @@ pnpm package:all
   </a>
 </p>
 
-<br>
-
-<p align="center">
-  <img src="./docs/media/support/wechat-pay.jpg" width="220" alt="微信赞赏码" />&emsp;&emsp;&emsp;<img src="./docs/media/support/alipay.png" width="220" alt="支付宝" />&emsp;&emsp;&emsp;<a href="https://www.ifdian.net/a/urzeye"><img src="./docs/media/support/afdian.png" width="220" alt="爱发电" /></a>
-</p>
-<p align="center">
-  <code>微信赞赏码</code>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<code>支付宝</code>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<a href="https://www.ifdian.net/a/urzeye"><code>爱发电 ↗</code></a>
-</p>
+<table align="center" border="0" cellpadding="16" cellspacing="0">
+  <tr>
+    <td align="center">
+      <img src="./docs/media/support/wechat-pay.jpg" width="160" height="160" alt="微信赞赏码" /><br />
+      <sub><b>微信赞赏码</b></sub>
+    </td>
+    <td align="center">
+      <img src="./docs/media/support/alipay.png" width="160" height="160" alt="支付宝" /><br />
+      <sub><b>支付宝</b></sub>
+    </td>
+    <td align="center">
+      <a href="https://www.ifdian.net/a/urzeye">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="https://afdian-connect.deno.dev/profile.svg?slug=urzeye&bg_color=%230d1117&text_color=%23dedbd7&border_color=%232e343d" />
+          <source media="(prefers-color-scheme: light)" srcset="https://afdian-connect.deno.dev/profile.svg?slug=urzeye" />
+          <img alt="urzeye 的爱发电主页" src="https://afdian-connect.deno.dev/profile.svg?slug=urzeye" height="160" />
+        </picture>
+      </a><br />
+      <sub><b>爱发电 ↗</b></sub>
+    </td>
+  </tr>
+</table>
 
 ### ⭐ Star History
 

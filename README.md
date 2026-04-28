@@ -324,14 +324,28 @@ For issues or suggestions, please visit [GitHub Issues](https://github.com/urzey
   </a>
 </p>
 
-<br>
-
-<p align="center">
-  <img src="./docs/media/support/wechat-pay.jpg" width="220" alt="WeChat Pay" />&emsp;&emsp;&emsp;<img src="./docs/media/support/alipay.png" width="220" alt="Alipay" />&emsp;&emsp;&emsp;<a href="https://www.ifdian.net/a/urzeye"><img src="./docs/media/support/afdian.png" width="220" alt="Afdian" /></a>
-</p>
-<p align="center">
-  <code>WeChat Pay</code>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<code>Alipay</code>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<a href="https://www.ifdian.net/a/urzeye"><code>Afdian ↗</code></a>
-</p>
+<table align="center" border="0" cellpadding="16" cellspacing="0">
+  <tr>
+    <td align="center">
+      <img src="./docs/media/support/wechat-pay.jpg" width="160" height="160" alt="WeChat Pay" /><br />
+      <sub><b>WeChat Pay</b></sub>
+    </td>
+    <td align="center">
+      <img src="./docs/media/support/alipay.png" width="160" height="160" alt="Alipay" /><br />
+      <sub><b>Alipay</b></sub>
+    </td>
+    <td align="center">
+      <a href="https://www.ifdian.net/a/urzeye">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="https://afdian-connect.deno.dev/profile.svg?slug=urzeye&bg_color=%230d1117&text_color=%23dedbd7&border_color=%232e343d" />
+          <source media="(prefers-color-scheme: light)" srcset="https://afdian-connect.deno.dev/profile.svg?slug=urzeye" />
+          <img alt="urzeye's Afdian Profile" src="https://afdian-connect.deno.dev/profile.svg?slug=urzeye" height="160" />
+        </picture>
+      </a><br />
+      <sub><b>Afdian ↗</b></sub>
+    </td>
+  </tr>
+</table>
 
 ### ⭐ Star History
 
