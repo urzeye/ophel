@@ -3,7 +3,19 @@
   "projectOwner": "urzeye",
   "repoType": "github",
   "repoHost": "https://github.com",
-  "files": ["README_zh-CN.md"],
+  "files": [
+    "README.md",
+    "README_zh-CN.md",
+    "docs/readmes/README_de.md",
+    "docs/readmes/README_es.md",
+    "docs/readmes/README_fr.md",
+    "docs/readmes/README_ja.md",
+    "docs/readmes/README_ko.md",
+    "docs/readmes/README_pt-BR.md",
+    "docs/readmes/README_ru.md",
+    "docs/readmes/README_zh-TW.md"
+  ],
+  "_contributionTypesRef": "https://allcontributors.org/docs/en/emoji-key — common: code, bug, doc, design, ideas, review, test, infra, translation, tutorial, talk, video, blog, example, question, userTesting, plugin, tool, maintenance, mentoring, projectManagement, eventOrganizing, fundingFinding, data",
   "imageSize": 64,
   "commit": false,
   "commitConvention": "angular",
@@ -13,7 +25,19 @@
       "name": "小 i 同学",
       "avatar_url": "https://avatars.githubusercontent.com/u/20869204?v=4",
       "profile": "https://github.com/urzeye",
-      "contributions": ["code"]
+      "contributions": [
+        "code",
+        "bug",
+        "doc",
+        "design",
+        "ideas",
+        "infra",
+        "maintenance",
+        "platform",
+        "projectManagement",
+        "review",
+        "tool"
+      ]
     },
     {
       "login": "treasuresure",
@@ -41,7 +65,7 @@
       "name": "Jianglang",
       "avatar_url": "https://avatars.githubusercontent.com/u/26515464?v=4",
       "profile": "https://github.com/lanvent",
-      "contributions": ["code"]
+      "contributions": ["bug"]
     },
     {
       "login": "KanameMadoka520",
