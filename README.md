@@ -308,12 +308,14 @@ For issues or suggestions, please visit [GitHub Issues](https://github.com/urzey
 
 <!-- supporters:end -->
 
+<br>
+
 <p align="center">
-  If <strong>Ophel Atlas</strong> has improved your work or learning efficiency, you are welcome to support us with a <strong>Star</strong> or <strong>Sponsor</strong>.
+  <em>If <strong>Ophel Atlas</strong> has sparked joy in your workflow or saved you valuable time, consider fueling its journey with a <strong>Star</strong> or a <strong>Sponsor</strong>.</em> ☕️
 </p>
 
 <p align="center">
-  <strong>Sharing is support too</strong>: we'd also love for you to share it on <strong>Linux.do, Reddit, X, Youtube</strong>, and more. Every bit of feedback and every share helps make Ophel better!
+  <strong>Sharing is just as powerful:</strong> We'd be thrilled if you shared your experience on <strong>Linux.do, Reddit, X, or YouTube</strong>. Every piece of feedback and every shoutout helps Ophel grow!
 </p>
 
 <p align="center">
@@ -322,24 +324,14 @@ For issues or suggestions, please visit [GitHub Issues](https://github.com/urzey
   </a>
 </p>
 
-<table align="center">
-  <tr>
-    <td align="center"><strong>WeChat</strong></td>
-    <td align="center"><strong>Alipay</strong></td>
-    <td align="center"><strong>Afdian</strong></td>
-  </tr>
-  <tr>
-    <td align="center">
-      <img src="./docs/media/support/wechat-pay.jpg" width="220" alt="WeChat donation QR code" />
-    </td>
-    <td align="center">
-      <img src="./docs/media/support/alipay.png" width="220" alt="Alipay donation QR code" />
-    </td>
-    <td align="center">
-      <img src="./docs/media/support/afdian.png" width="220" alt="Afdian support" />
-    </td>
-  </tr>
-</table>
+<br>
+
+<p align="center">
+  <img src="./docs/media/support/wechat-pay.jpg" width="220" alt="WeChat Pay" />&emsp;&emsp;&emsp;<img src="./docs/media/support/alipay.png" width="220" alt="Alipay" />&emsp;&emsp;&emsp;<img src="./docs/media/support/afdian.png" width="220" alt="Afdian" />
+</p>
+<p align="center">
+  <code>WeChat Pay</code>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<code>Alipay</code>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<code>Afdian</code>
+</p>
 
 ### ⭐ Star History
 

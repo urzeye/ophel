@@ -313,12 +313,14 @@ pnpm package:all
 
 <!-- supporters:end -->
 
+<br>
+
 <p align="center">
-  如果 <strong>Ophel Atlas</strong> 提升了你的工作或学习效率，欢迎通过 <strong>Star</strong> 或 <strong>Sponsor</strong> 来支持我们。
+  <em>如果 <strong>Ophel Atlas</strong> 点亮了你的工作流，或为你节省了宝贵的时间，欢迎用一颗 <strong>Star</strong> 或 <strong>Sponsor</strong> 来为它续航。</em> ☕️
 </p>
 
 <p align="center">
-  <strong>传播也是一种力量</strong>：期待你将它分享至 <strong>Linux.do、X、小红书、Bilibili</strong> 及更多平台。你的每一份反馈与传播，都在让 Ophel 变得更好！
+  <strong>传播也是一种力量：</strong>期待你将使用体验分享至 <strong>Linux.do、X、小红书、Bilibili</strong> 及更多平台。每一份反馈与口碑，都在帮助 Ophel 成长！
 </p>
 
 <p align="center">
@@ -327,24 +329,14 @@ pnpm package:all
   </a>
 </p>
 
-<table align="center">
-  <tr>
-    <td align="center"><strong>微信赞赏码</strong></td>
-    <td align="center"><strong>支付宝</strong></td>
-    <td align="center"><strong>爱发电</strong></td>
-  </tr>
-  <tr>
-    <td align="center">
-      <img src="./docs/media/support/wechat-pay.jpg" width="220" alt="微信赞赏码" />
-    </td>
-    <td align="center">
-      <img src="./docs/media/support/alipay.png" width="220" alt="支付宝赞赏码" />
-    </td>
-    <td align="center">
-      <img src="./docs/media/support/afdian.png" width="220" alt="爱发电" />
-    </td>
-  </tr>
-</table>
+<br>
+
+<p align="center">
+  <img src="./docs/media/support/wechat-pay.jpg" width="220" alt="微信赞赏码" />&emsp;&emsp;&emsp;<img src="./docs/media/support/alipay.png" width="220" alt="支付宝" />&emsp;&emsp;&emsp;<img src="./docs/media/support/afdian.png" width="220" alt="爱发电" />
+</p>
+<p align="center">
+  <code>微信赞赏码</code>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<code>支付宝</code>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<code>爱发电</code>
+</p>
 
 ### ⭐ Star History
 
