@@ -279,21 +279,27 @@ pnpm package:all
   </a>
 </p>
 
-<table align="center">
-  <tr>
-    <td align="center"><strong>微信讚賞碼</strong></td>
-    <td align="center"><strong>支付寶</strong></td>
-    <td align="center"><strong>愛發電</strong></td>
-  </tr>
+<br>
+
+<table align="center" border="0" cellpadding="16" cellspacing="0">
   <tr>
     <td align="center">
-      <img src="../media/support/wechat-pay.jpg" width="220" alt="微信讚賞碼" />
+      <img src="../media/support/wechat-pay.jpg" width="160" height="160" alt="微信贊賞碼" /><br />
+      <sub><b>微信贊賞碼</b></sub>
     </td>
     <td align="center">
-      <img src="../media/support/alipay.png" width="220" alt="支付寶讚賞碼" />
+      <img src="../media/support/alipay.png" width="160" height="160" alt="支付寶" /><br />
+      <sub><b>支付寶</b></sub>
     </td>
     <td align="center">
-      <img src="../media/support/afdian.png" width="220" alt="愛發電" />
+      <a href="https://www.ifdian.net/a/urzeye">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="https://afdian-connect.deno.dev/profile.svg?slug=urzeye&bg_color=%230d1117&text_color=%23dedbd7&border_color=%232e343d" />
+          <source media="(prefers-color-scheme: light)" srcset="https://afdian-connect.deno.dev/profile.svg?slug=urzeye" />
+          <img alt="urzeye Afdian Profile" src="https://afdian-connect.deno.dev/profile.svg?slug=urzeye" height="160" />
+        </picture>
+      </a><br />
+      <sub><b>愛發電</b></sub>
     </td>
   </tr>
 </table>
