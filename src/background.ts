@@ -65,15 +65,11 @@ function decodeNotifId(notifId: string): { tabId: number; windowId: number } | n
   return { tabId, windowId }
 }
 
-async function focusTab(tabId: number, fallbackWindowId?: number) {
+async function focusTab(tabId: number) {
   try {
     const tab = await chrome.tabs.get(tabId)
-    const windowId = tab.windowId ?? fallbackWindowId
-
-    if (windowId != null) {
-      await chrome.windows.update(windowId, { focused: true })
-    }
     await chrome.tabs.update(tabId, { active: true })
+    await chrome.windows.update(tab.windowId, { focused: true })
   } catch (error) {
     console.warn("[Ophel] Failed to focus notification tab:", error)
   }
@@ -85,7 +81,7 @@ if (chrome.notifications?.onClicked) {
   chrome.notifications.onClicked.addListener((notifId) => {
     const tab = decodeNotifId(notifId)
     if (tab) {
-      void focusTab(tab.tabId, tab.windowId)
+      void focusTab(tab.tabId)
     }
     // MV3 returns Promise at runtime; cast to handle both callback/Promise signatures
     void Promise.resolve(chrome.notifications.clear(notifId)).catch(() => {
@@ -276,7 +272,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
 
     case MSG_FOCUS_TAB:
       if (sender.tab?.id) {
-        void focusTab(sender.tab.id, sender.tab.windowId)
+        void focusTab(sender.tab.id)
       }
       sendResponse({ success: true })
       break
