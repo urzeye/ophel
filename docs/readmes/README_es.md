@@ -65,8 +65,8 @@
   <a href="#-demo">Demo</a> •
   <a href="#-características-principales">Características Principales</a> •
   <a href="#-inicio-rápido">Inicio Rápido</a> •
-  <a href="#-colaboradores">Colaboradores</a> •
-  <a href="#-soporte-y-agradecimientos">Soporte y agradecimientos</a>
+  <a href="#-participa">Participa</a> •
+  <a href="#-support-ophel-atlas">Support Ophel Atlas</a>
 </p>
 
 <p align="center">
@@ -169,51 +169,7 @@ pnpm package:all
 
 </details>
 
-### 🐛 Reportar Error
-
-Para problemas o sugerencias, visita [GitHub Issues](https://github.com/urzeye/ophel/issues).
-
-## 🌟 Colaboradores
-
-> 🌌 *El código abierto es impulsado por las estrellas de su comunidad.*
->
-> Nuestro más profundo agradecimiento a los increíbles colaboradores. Sus contribuciones hacen brillar este repositorio.
-
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-<table>
-  <tbody>
-    <tr>
-      <td align="center" valign="top" width="12.5%"><a href="https://github.com/urzeye"><img src="https://avatars.githubusercontent.com/u/20869204?v=4?s=80" width="80px;" alt="小 i 同学"/><br /><sub><b>小 i 同学</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=urzeye" title="Code">💻</a> <a href="#ideas-urzeye" title="Ideas, Planning, & Feedback">🤔</a> <a href="#infra-urzeye" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
-      <td align="center" valign="top" width="12.5%"><a href="https://github.com/treasuresure"><img src="https://avatars.githubusercontent.com/u/50103468?v=4?s=80" width="80px;" alt="treasuresure"/><br /><sub><b>treasuresure</b></sub></a><br /><a href="#design-treasuresure" title="Design">🎨</a> <a href="#financial-treasuresure" title="Financial">💵</a></td>
-      <td align="center" valign="top" width="12.5%"><a href="https://www.tjsky.net/"><img src="https://avatars.githubusercontent.com/u/7272911?v=4?s=80" width="80px;" alt="去年夏天"/><br /><sub><b>去年夏天</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=tjsky" title="Code">💻</a></td>
-      <td align="center" valign="top" width="12.5%"><a href="https://github.com/lanvent"><img src="https://avatars.githubusercontent.com/u/26515464?v=4?s=80" width="80px;" alt="Jianglang"/><br /><sub><b>Jianglang</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=lanvent" title="Code">💻</a> <a href="https://github.com/urzeye/ophel/issues?q=author%3Alanvent" title="Bug reports">🐛</a></td>
-      <td align="center" valign="top" width="12.5%"><a href="https://github.com/Felix3322"><img src="https://avatars.githubusercontent.com/u/115849429?v=4?s=80" width="80px;" alt="Felix Liu"/><br /><sub><b>Felix Liu</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=Felix3322" title="Code">💻</a></td>
-      <td align="center" valign="top" width="12.5%"><a href="https://github.com/KanameMadoka520"><img src="https://avatars.githubusercontent.com/u/90090108?v=4?s=80" width="80px;" alt="Madoka"/><br /><sub><b>Madoka</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=KanameMadoka520" title="Code">💻</a></td>
-      <td align="center" valign="top" width="12.5%"><a href="https://github.com/RyanLin-InfEvo"><img src="https://avatars.githubusercontent.com/u/121378653?v=4?s=80" width="80px;" alt="Lin Zit Ting"/><br /><sub><b>Lin Zit Ting</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=RyanLin-InfEvo" title="Code">💻</a></td>
-      <td align="center" valign="top" width="12.5%"><a href="https://github.com/joevalleyfield"><img src="https://avatars.githubusercontent.com/u/14796422?v=4?s=80" width="80px;" alt="joevalleyfield"/><br /><sub><b>joevalleyfield</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=joevalleyfield" title="Code">💻</a></td>
-    </tr>
-    <tr>
-      <td align="center" valign="top" width="12.5%"><a href="https://github.com/hugo1120"><img src="https://github.com/hugo1120.png?s=80" width="80px;" alt="hugo2233"/><br /><sub><b>hugo2233</b></sub></a><br /><a href="#promotion-hugo1120" title="Promotion">📣</a></td>
-    </tr>
-  </tbody>
-</table>
-
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->
-
-## 🙌 Soporte y agradecimientos
-
-<p align="center">
-  <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
-</p>
-
-<p align="center">
-  Gracias a la comunidad de <a href="https://linux.do/">Linux.do</a> por el intercambio y el apoyo. Muchas ideas y mejoras del proyecto surgieron de los comentarios de sus miembros.
-</p>
+## 🙌 Support Ophel Atlas
 
 <!-- supporters:start -->
 
@@ -266,6 +222,86 @@ Para problemas o sugerencias, visita [GitHub Issues](https://github.com/urzeye/o
 ---
 
 <!-- supporters:end -->
+
+## 🤝 Participa
+
+> 🌌 *El código abierto es impulsado por las estrellas de su comunidad.*
+>
+> Nuestro más profundo agradecimiento a los increíbles colaboradores. Sus contribuciones hacen brillar este repositorio.
+
+<p align="center">
+  <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
+</p>
+
+<p align="center">
+  Gracias a la comunidad de <a href="https://linux.do/">Linux.do</a> por el intercambio y el apoyo. Muchas ideas y mejoras del proyecto surgieron de los comentarios de sus miembros.
+</p>
+
+Las contribuciones de cualquier forma son bienvenidas — código, informes de errores o ideas. ¿Nuevo en el proyecto? Aprende el código con IA:
+
+<p align="center">
+  <a href="https://deepwiki.com/urzeye/ophel"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" /></a>
+  &nbsp;
+  <a href="https://zread.ai/urzeye/ophel"><img src="https://img.shields.io/badge/Ask_Zread-_.svg?style=flat&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff" alt="Ask Zread" /></a>
+</p>
+
+<table>
+  <tr>
+    <td width="33%" align="center">
+      <h3>🐛 Reportar un Error</h3>
+      <p>¿Encontraste un bug? ¿Tienes una sugerencia?<br/>Cuéntanos en GitHub Issues</p>
+      <a href="https://github.com/urzeye/ophel/issues/new/choose">
+        <img src="https://img.shields.io/badge/New%20Issue-Submit-red?style=for-the-badge&logo=github" alt="New Issue" />
+      </a>
+    </td>
+    <td width="33%" align="center">
+      <h3>🔀 Enviar un Pull Request</h3>
+      <p>¿Corregiste un bug o desarrollaste una función?<br/>Envía un PR y crezcamos juntos</p>
+      <a href="https://github.com/urzeye/ophel/pulls">
+        <img src="https://img.shields.io/badge/Submit%20PR-Contribute-blue?style=for-the-badge&logo=github" alt="Pull Requests" />
+      </a>
+    </td>
+    <td width="33%" align="center">
+      <h3>🛠️ Desarrollo Local</h3>
+      <p>Clona el repositorio y empieza a trabajar<br/>Requisitos: Node.js ≥ 18, pnpm ≥ 9</p>
+      <a href="https://github.com/urzeye/ophel/blob/main/docs/readmes/README_es.md#-inicio-r%C3%A1pido">
+        <img src="https://img.shields.io/badge/Local%20Build-Dev%20Guide-green?style=for-the-badge&logo=node.js" alt="Local Dev" />
+      </a>
+    </td>
+  </tr>
+</table>
+
+> [!TIP]
+>
+> Antes de enviar un PR, haz fork del repositorio, realiza los cambios en una nueva rama y asegúrate de que `pnpm lint:check` y `pnpm typecheck` pasen.
+
+---
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/urzeye"><img src="https://avatars.githubusercontent.com/u/20869204?v=4?s=80" width="80px;" alt="小 i 同学"/><br /><sub><b>小 i 同学</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=urzeye" title="Code">💻</a> <a href="#ideas-urzeye" title="Ideas, Planning, & Feedback">🤔</a> <a href="#infra-urzeye" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/treasuresure"><img src="https://avatars.githubusercontent.com/u/50103468?v=4?s=80" width="80px;" alt="treasuresure"/><br /><sub><b>treasuresure</b></sub></a><br /><a href="#design-treasuresure" title="Design">🎨</a> <a href="#financial-treasuresure" title="Financial">💵</a></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://www.tjsky.net/"><img src="https://avatars.githubusercontent.com/u/7272911?v=4?s=80" width="80px;" alt="去年夏天"/><br /><sub><b>去年夏天</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=tjsky" title="Code">💻</a></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/lanvent"><img src="https://avatars.githubusercontent.com/u/26515464?v=4?s=80" width="80px;" alt="Jianglang"/><br /><sub><b>Jianglang</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=lanvent" title="Code">💻</a> <a href="https://github.com/urzeye/ophel/issues?q=author%3Alanvent" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/Felix3322"><img src="https://avatars.githubusercontent.com/u/115849429?v=4?s=80" width="80px;" alt="Felix Liu"/><br /><sub><b>Felix Liu</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=Felix3322" title="Code">💻</a></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/KanameMadoka520"><img src="https://avatars.githubusercontent.com/u/90090108?v=4?s=80" width="80px;" alt="Madoka"/><br /><sub><b>Madoka</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=KanameMadoka520" title="Code">💻</a></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/RyanLin-InfEvo"><img src="https://avatars.githubusercontent.com/u/121378653?v=4?s=80" width="80px;" alt="Lin Zit Ting"/><br /><sub><b>Lin Zit Ting</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=RyanLin-InfEvo" title="Code">💻</a></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/joevalleyfield"><img src="https://avatars.githubusercontent.com/u/14796422?v=4?s=80" width="80px;" alt="joevalleyfield"/><br /><sub><b>joevalleyfield</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=joevalleyfield" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/hugo1120"><img src="https://github.com/hugo1120.png?s=80" width="80px;" alt="hugo2233"/><br /><sub><b>hugo2233</b></sub></a><br /><a href="#promotion-hugo1120" title="Promotion">📣</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
 
 <p align="center">
