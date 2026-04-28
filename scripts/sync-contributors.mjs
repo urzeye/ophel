@@ -33,61 +33,61 @@ const readmeConfigs = [
     file: "README.md",
     contributorsTitle: "### 🌟 Contributors",
     contributorsIntro:
-      "> 🌌 *Open source is powered by the stars of its community.*\n>\n> Our deepest gratitude to the amazing individuals below. Your contributions make this repository shine brighter.",
+      "> \u{1F30C} *Open source is powered by the stars of its community.*\n>\n> Our deepest gratitude to the amazing individuals below. Your contributions make this repository shine brighter.",
   },
   {
     file: "README_zh-CN.md",
     contributorsTitle: "### 🌟 贡献者",
     contributorsIntro:
-      "> 🌌 *开源的璀璨，源于社区中每一颗闪耀的星。*\n>\n> 诚挚致敬以下每一位同行者。因为你们的无私开源与智慧，这个项目才得以不断破浪前行。",
+      "> \u{1F30C} *开源的璀璨，源于社区中每一颗闪耀的星。*\n>\n> 诚挚致敬以下每一位同行者。因为你们的无私开源与智慧，这个项目才得以不断破浪前行。",
   },
   {
     file: "docs/readmes/README_de.md",
     contributorsTitle: "### 🌟 Mitwirkende",
     contributorsIntro:
-      "> 🌌 *Open Source wird von den Sternen seiner Gemeinschaft angetrieben.*\n>\n> Tiefer Dank gilt den folgenden großartigen Personen. Eure Beiträge lassen dieses Projekt heller leuchten.",
+      "> \u{1F30C} *Open Source wird von den Sternen seiner Gemeinschaft angetrieben.*\n>\n> Tiefer Dank gilt den folgenden großartigen Personen. Eure Beiträge lassen dieses Projekt heller leuchten.",
   },
   {
     file: "docs/readmes/README_es.md",
     contributorsTitle: "### 🌟 Colaboradores",
     contributorsIntro:
-      "> 🌌 *El código abierto es impulsado por las estrellas de su comunidad.*\n>\n> Nuestro más profundo agradecimiento a los increíbles colaboradores. Sus contribuciones hacen brillar este repositorio.",
+      "> \u{1F30C} *El código abierto es impulsado por las estrellas de su comunidad.*\n>\n> Nuestro más profundo agradecimiento a los increíbles colaboradores. Sus contribuciones hacen brillar este repositorio.",
   },
   {
     file: "docs/readmes/README_fr.md",
     contributorsTitle: "### 🌟 Contributeurs",
     contributorsIntro:
-      "> 🌌 *L'open source est alimenté par les étoiles de sa communauté.*\n>\n> Notre plus profonde gratitude aux personnes remarquables ci-dessous. Vos contributions font briller ce dépôt.",
+      "> \u{1F30C} *L'open source est alimenté par les étoiles de sa communauté.*\n>\n> Notre plus profonde gratitude aux personnes remarquables ci-dessous. Vos contributions font briller ce dépôt.",
   },
   {
     file: "docs/readmes/README_ja.md",
     contributorsTitle: "### 🌟 コントリビューター",
     contributorsIntro:
-      "> 🌌 *オープンソースは、コミュニティの星々によって輝いています。*\n>\n> 以下の素晴らしい方々へ、心よりの感謝を捧げます。皆さんの貢献がこのリポジトリをより輝かせています。",
+      "> \u{1F30C} *オープンソースは、コミュニティの星々によって輝いています。*\n>\n> 以下の素晴らしい方々へ、心よりの感謝を捧げます。皆さんの貢献がこのリポジトリをより輝かせています。",
   },
   {
     file: "docs/readmes/README_ko.md",
     contributorsTitle: "### 🌟 기여자",
     contributorsIntro:
-      "> 🌌 *오픈 소스는 커뮤니티의 별들에 의해 빛납니다.*\n>\n> 아래의 놀라운 분들께 깊은 감사를 드립니다. 여러분의 기여가 이 저장소를 더욱 빛나게 합니다.",
+      "> \u{1F30C} *오픈 소스는 커뮤니티의 별들에 의해 빛납니다.*\n>\n> 아래의 놀라운 분들께 깊은 감사를 드립니다. 여러분의 기여가 이 저장소를 더욱 빛나게 합니다.",
   },
   {
     file: "docs/readmes/README_pt-BR.md",
     contributorsTitle: "### 🌟 Contribuidores",
     contributorsIntro:
-      "> 🌌 *O código aberto é alimentado pelas estrelas de sua comunidade.*\n>\n> Nossa mais profunda gratidão às incríveis pessoas abaixo. Suas contribuições fazem este repositório brilhar mais.",
+      "> \u{1F30C} *O código aberto é alimentado pelas estrelas de sua comunidade.*\n>\n> Nossa mais profunda gratidão às incríveis pessoas abaixo. Suas contribuições fazem este repositório brilhar mais.",
   },
   {
     file: "docs/readmes/README_ru.md",
     contributorsTitle: "### 🌟 Участники",
     contributorsIntro:
-      "> 🌌 *Открытый исходный код питается звёздами своего сообщества.*\n>\n> Наша искренняя благодарность замечательным людям ниже. Ваш вклад делает этот репозиторий ярче.",
+      "> \u{1F30C} *Открытый исходный код питается звёздами своего сообщества.*\n>\n> Наша искренняя благодарность замечательным людям ниже. Ваш вклад делает этот репозиторий ярче.",
   },
   {
     file: "docs/readmes/README_zh-TW.md",
     contributorsTitle: "### 🌟 貢獻者",
     contributorsIntro:
-      "> 🌌 *開源的璀璨，源於社群中每一顆閃耀的星。*\n>\n> 誠摯致敬以下每一位同行者。因為你們的無私開源與智慧，這個專案才得以不斷破浪前行。",
+      "> \u{1F30C} *開源的璀璨，源於社群中每一顆閃耀的星。*\n>\n> 誠摯致敬以下每一位同行者。因為你們的無私開源與智慧，這個專案才得以不斷破浪前行。",
   },
 ]
 

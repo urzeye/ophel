@@ -192,7 +192,7 @@ pnpm package:all
 
 ### 🌟 貢獻者
 
-> ��� *開源的璀璨，源於社群中每一顆閃耀的星。*
+> 🌌 *開源的璀璨，源於社群中每一顆閃耀的星。*
 >
 > 誠摯致敬以下每一位同行者。因為你們的無私開源與智慧，這個專案才得以不斷破浪前行。
 
@@ -205,7 +205,7 @@ pnpm package:all
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/urzeye"><img src="https://avatars.githubusercontent.com/u/20869204?v=4?s=80" width="80px;" alt="小 i 同学"/><br /><sub><b>小 i 同学</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=urzeye" title="Code">💻</a> <a href="#ideas-urzeye" title="Ideas, Planning, & Feedback">🤔</a> <a href="#infra-urzeye" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/treasuresure"><img src="https://avatars.githubusercontent.com/u/50103468?v=4?s=80" width="80px;" alt="treasuresure"/><br /><sub><b>treasuresure</b></sub></a><br /><a href="#design-treasuresure" title="Design">🎨</a> <a href="#financial-treasuresure" title="Financial">💵</a></td>
       <td align="center" valign="top" width="12.5%"><a href="https://www.tjsky.net/"><img src="https://avatars.githubusercontent.com/u/7272911?v=4?s=80" width="80px;" alt="去年夏天"/><br /><sub><b>去年夏天</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=tjsky" title="Code">💻</a></td>
-      <td align="center" valign="top" width="12.5%"><a href="https://github.com/lanvent"><img src="https://avatars.githubusercontent.com/u/26515464?v=4?s=80" width="80px;" alt="Jianglang"/><br /><sub><b>Jianglang</b></sub></a><br /><a href="https://github.com/urzeye/ophel/issues?q=author%3Alanvent" title="Bug reports">🐛</a> <a href="https://github.com/urzeye/ophel/commits?author=lanvent" title="Code">💻</a></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/lanvent"><img src="https://avatars.githubusercontent.com/u/26515464?v=4?s=80" width="80px;" alt="Jianglang"/><br /><sub><b>Jianglang</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=lanvent" title="Code">💻</a> <a href="https://github.com/urzeye/ophel/issues?q=author%3Alanvent" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/Felix3322"><img src="https://avatars.githubusercontent.com/u/115849429?v=4?s=80" width="80px;" alt="Felix Liu"/><br /><sub><b>Felix Liu</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=Felix3322" title="Code">💻</a></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/KanameMadoka520"><img src="https://avatars.githubusercontent.com/u/90090108?v=4?s=80" width="80px;" alt="Madoka"/><br /><sub><b>Madoka</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=KanameMadoka520" title="Code">💻</a></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/RyanLin-InfEvo"><img src="https://avatars.githubusercontent.com/u/121378653?v=4?s=80" width="80px;" alt="Lin Zit Ting"/><br /><sub><b>Lin Zit Ting</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=RyanLin-InfEvo" title="Code">💻</a></td>
