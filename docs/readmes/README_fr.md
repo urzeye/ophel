@@ -184,9 +184,9 @@ Pour des problèmes ou suggestions, visitez [GitHub Issues](https://github.com/u
 
 ### 🌟 Contributeurs
 
-Merci à tous les développeurs qui ont contribué à ce projet :
-
-<div align="center">
+> ��� *L'open source est alimenté par les étoiles de sa communauté.*
+>
+> Notre plus profonde gratitude aux personnes remarquables ci-dessous. Vos contributions font briller ce dépôt.
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

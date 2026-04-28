@@ -184,9 +184,9 @@ Para problemas ou sugestões, visite [GitHub Issues](https://github.com/urzeye/o
 
 ### 🌟 Contribuidores
 
-Obrigado a todos os desenvolvedores que contribuíram para este projeto:
-
-<div align="center">
+> ��� *O código aberto é alimentado pelas estrelas de sua comunidade.*
+>
+> Nossa mais profunda gratidão às incríveis pessoas abaixo. Suas contribuições fazem este repositório brilhar mais.
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

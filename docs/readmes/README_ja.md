@@ -192,9 +192,9 @@ pnpm package:all
 
 ### 🌟 コントリビューター
 
-このプロジェクトに貢献してくれたすべての開発者に感謝します：
-
-<div align="center">
+> ��� *オープンソースは、コミュニティの星々によって輝いています。*
+>
+> 以下の素晴らしい方々へ、心よりの感謝を捧げます。皆さんの貢献がこのリポジトリをより輝かせています。
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

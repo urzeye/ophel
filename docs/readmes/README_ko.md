@@ -192,9 +192,9 @@ pnpm package:all
 
 ### 🌟 기여자
 
-이 프로젝트에 기여한 모든 개발자에게 감사드립니다：
-
-<div align="center">
+> ��� *오픈 소스는 커뮤니티의 별들에 의해 빛납니다.*
+>
+> 아래의 놀라운 분들께 깊은 감사를 드립니다. 여러분의 기여가 이 저장소를 더욱 빛나게 합니다.
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

@@ -241,9 +241,9 @@ pnpm package:all
 
 ### 🌟 贡献者
 
-感谢所有为本项目做出贡献的开发者：
-
-<div align="center">
+> ��� _开源的璀璨，源于社区中每一颗闪耀的星。_
+>
+> 诚挚致敬以下每一位同行者。因为你们的无私开源与智慧，这个项目才得以不断破浪前行。
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

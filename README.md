@@ -236,9 +236,9 @@ For issues or suggestions, please visit [GitHub Issues](https://github.com/urzey
 
 ### 🌟 Contributors
 
-Thanks to all the developers who have contributed to this project:
-
-<div align="center">
+> ��� _Open source is powered by the stars of its community._
+>
+> Our deepest gratitude to the amazing individuals below. Your contributions make this repository shine brighter.
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

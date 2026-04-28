@@ -184,9 +184,9 @@ Bei Problemen oder Vorschlägen besuchen Sie bitte [GitHub Issues](https://githu
 
 ### 🌟 Mitwirkende
 
-Dank an alle Entwickler, die zu diesem Projekt beigetragen haben:
-
-<div align="center">
+> ��� *Open Source wird von den Sternen seiner Gemeinschaft angetrieben.*
+>
+> Tiefer Dank gilt den folgenden großartigen Personen. Eure Beiträge lassen dieses Projekt heller leuchten.
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
