@@ -239,7 +239,6 @@ pnpm package:all
   </a>
 </p>
 
-<br>
 
 <table align="center" border="0" cellpadding="16" cellspacing="0">
   <tr>
