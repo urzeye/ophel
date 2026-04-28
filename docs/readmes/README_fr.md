@@ -99,20 +99,17 @@
 - 🎭 **Amélioration Claude** — Gestion de clé de session, changement multi-compte
 - 🔒 **Confidentialité d'Abord** — Stockage local, sync WebDAV, aucune collecte de données
 
-<details>
-<summary>Confidentialité & données (déplier)</summary>
-
-**Ophel Atlas** place la confidentialité au premier plan : stockage local par défaut, vos données restent sous votre contrôle.
-
-- **Stockage local par défaut :** réglages, prompts et données de gestion des conversations sont stockés dans le navigateur
-- **Sans compte :** aucune inscription nécessaire
-- **Permissions à la demande :** permissions optionnelles demandées uniquement si nécessaire, révocables à tout moment (voir la page Permissions de l’extension)
-- **Synchronisation WebDAV optionnelle :** utilisez votre propre WebDAV pour plusieurs appareils (contrôlable, portable)
-- **Export & sauvegarde :** export et migration pour éviter le verrouillage
-
-</details>
-
-> Note : la prise en charge de sites d’IA spécifiques dépend du matching du site et des changements de structure des pages.
+> [!IMPORTANT]
+>
+> **Ophel Atlas** place la confidentialité au premier plan : stockage local par défaut, vos données restent sous votre contrôle.
+>
+> - **Stockage local par défaut :** réglages, prompts et données de gestion des conversations sont stockés dans le navigateur
+> - **Sans compte :** aucune inscription nécessaire
+> - **Permissions à la demande :** permissions optionnelles demandées uniquement si nécessaire, révocables à tout moment (voir la page Permissions de l’extension)
+> - **Synchronisation WebDAV optionnelle :** utilisez votre propre WebDAV pour plusieurs appareils (contrôlable, portable)
+> - **Export & sauvegarde :** export et migration pour éviter le verrouillage
+>
+> _Note : la prise en charge de sites d’IA spécifiques dépend du matching du site et des changements de structure des pages._
 
 ## 🚀 Démarrage Rapide
 

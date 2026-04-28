@@ -99,20 +99,17 @@
 - 🎭 **Melhoria Claude** — Gestão de chave de sessão, troca multi-conta
 - 🔒 **Privacidade Primeiro** — Armazenamento local, sincronização WebDAV, sem coleta de dados
 
-<details>
-<summary>Privacidade e dados (expandir)</summary>
-
-**Ophel Atlas** prioriza a privacidade: por padrão é tudo local e seus dados ficam sob seu controle.
-
-- **Armazenamento local por padrão:** configurações, prompts e dados de gestão de conversas ficam no navegador
-- **Sem conta:** não é necessário registro
-- **Permissões sob demanda:** permissões opcionais só quando necessário, revogáveis (ver página Permissions na extensão)
-- **Sincronização WebDAV opcional:** use seu próprio WebDAV para múltiplos dispositivos (controlável, portátil)
-- **Exportar e fazer backup:** exportação e migração para evitar lock-in
-
-</details>
-
-> Nota: o suporte a sites de IA específicos depende do matching do site e de mudanças na estrutura da página.
+> [!IMPORTANT]
+>
+> **Ophel Atlas** prioriza a privacidade: por padrão é tudo local e seus dados ficam sob seu controle.
+>
+> - **Armazenamento local por padrão:** configurações, prompts e dados de gestão de conversas ficam no navegador
+> - **Sem conta:** não é necessário registro
+> - **Permissões sob demanda:** permissões opcionais só quando necessário, revogáveis (ver página Permissions na extensão)
+> - **Sincronização WebDAV opcional:** use seu próprio WebDAV para múltiplos dispositivos (controlável, portátil)
+> - **Exportar e fazer backup:** exportação e migração para evitar lock-in
+>
+> _Nota: o suporte a sites de IA específicos depende do matching do site e de mudanças na estrutura da página._
 
 ## 🚀 Início Rápido
 

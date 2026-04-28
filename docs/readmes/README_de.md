@@ -99,20 +99,17 @@
 - 🎭 **Claude Erweiterung** — Session Key Management, Multi-Account-Switching
 - 🔒 **Datenschutz First** — Lokaler Speicher, WebDAV-Sync, keine Datensammlung
 
-<details>
-<summary>Datenschutz & Daten (aufklappen)</summary>
-
-**Ophel Atlas** stellt Datenschutz an erste Stelle: Standardmäßig lokal gespeichert, deine Daten bleiben unter deiner Kontrolle.
-
-- **Standardmäßig lokal gespeichert:** Einstellungen, Prompts und Gesprächsverwaltung liegen im Browser
-- **Kein Konto erforderlich:** Nutzung ohne Registrierung
-- **Berechtigungen nach Bedarf:** optionale Berechtigungen nur bei Bedarf, jederzeit widerrufbar (siehe Permissions-Seite in der Erweiterung)
-- **Optionaler WebDAV-Sync:** Multi-Device-Sync über deinen eigenen WebDAV-Server (kontrollierbar, portabel)
-- **Export & Backup:** Export und Migration, kein Lock-in
-
-</details>
-
-> Hinweis: Die Unterstützung einzelner KI-Websites hängt vom Site-Matching und von Änderungen der Seitenstruktur ab.
+> [!IMPORTANT]
+>
+> **Ophel Atlas** stellt Datenschutz an erste Stelle: Standardmäßig lokal gespeichert, deine Daten bleiben unter deiner Kontrolle.
+>
+> - **Standardmäßig lokal gespeichert:** Einstellungen, Prompts und Gesprächsverwaltung liegen im Browser
+> - **Kein Konto erforderlich:** Nutzung ohne Registrierung
+> - **Berechtigungen nach Bedarf:** optionale Berechtigungen nur bei Bedarf, jederzeit widerrufbar (siehe Permissions-Seite in der Erweiterung)
+> - **Optionaler WebDAV-Sync:** Multi-Device-Sync über deinen eigenen WebDAV-Server (kontrollierbar, portabel)
+> - **Export & Backup:** Export und Migration, kein Lock-in
+>
+> _Hinweis: Die Unterstützung einzelner KI-Websites hängt vom Site-Matching und von Änderungen der Seitenstruktur ab._
 
 ## 🚀 Schnellstart
 
