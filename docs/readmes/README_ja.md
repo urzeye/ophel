@@ -233,10 +233,6 @@ pnpm package:all
 
 ## 🤝 参加する
 
-> 🌌 *オープンソースは、コミュニティの星々によって輝いています。*
->
-> 以下の素晴らしい方々へ、心よりの感謝を捧げます。皆さんの貢献がこのリポジトリをより輝かせています。
-
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
 </p>
@@ -284,6 +280,10 @@ pnpm package:all
 > PRを送る前に、リポジトリをフォークして新しいブランチで変更を行い、`pnpm lint:check` と `pnpm typecheck` が通ることを確認してください。
 
 ---
+
+> 🌌 *オープンソースは、コミュニティの星々によって輝いています。*
+>
+> 以下の素晴らしい方々へ、心よりの感謝を捧げます。皆さんの貢献がこのリポジトリをより輝かせています。
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

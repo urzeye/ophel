@@ -233,10 +233,6 @@ pnpm package:all
 
 ## 🤝 參與共建
 
-> 🌌 *開源的璀璨，源於社群中每一顆閃耀的星。*
->
-> 誠摯致敬以下每一位同行者。因為你們的無私開源與智慧，這個專案才得以不斷破浪前行。
-
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
 </p>
@@ -284,6 +280,10 @@ pnpm package:all
 > 提交 PR 前，建議先 Fork 倉庫，在新分支上進行修改，並確認通過了 `pnpm lint:check` 與 `pnpm typecheck`。
 
 ---
+
+> 🌌 *開源的璀璨，源於社群中每一顆閃耀的星。*
+>
+> 誠摯致敬以下每一位同行者。因為你們的無私開源與智慧，這個專案才得以不斷破浪前行。
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

@@ -225,10 +225,6 @@ pnpm package:all
 
 ## 🤝 Mitmachen
 
-> 🌌 *Open Source wird von den Sternen seiner Gemeinschaft angetrieben.*
->
-> Tiefer Dank gilt den folgenden großartigen Personen. Eure Beiträge lassen dieses Projekt heller leuchten.
-
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
 </p>
@@ -276,6 +272,10 @@ Beiträge sind in jeder Form willkommen — Codebeiträge, Fehlermeldungen oder 
 > Bevor du einen PR einreichst, bitte das Repository forken, Änderungen auf einem neuen Branch vornehmen und sicherstellen, dass `pnpm lint:check` und `pnpm typecheck` bestanden werden.
 
 ---
+
+> 🌌 *Open Source wird von den Sternen seiner Gemeinschaft angetrieben.*
+>
+> Tiefer Dank gilt den folgenden großartigen Personen. Eure Beiträge lassen dieses Projekt heller leuchten.
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

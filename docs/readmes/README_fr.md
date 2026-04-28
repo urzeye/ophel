@@ -225,10 +225,6 @@ pnpm package:all
 
 ## 🤝 Participer
 
-> 🌌 *L'open source est alimenté par les étoiles de sa communauté.*
->
-> Notre plus profonde gratitude aux personnes remarquables ci-dessous. Vos contributions font briller ce dépôt.
-
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
 </p>
@@ -276,6 +272,10 @@ Toutes les contributions sont les bienvenues — code, signalement de bugs ou id
 > Avant de soumettre un PR, fais un fork du dépôt, effectue tes modifications sur une nouvelle branche et vérifie que `pnpm lint:check` et `pnpm typecheck` réussissent.
 
 ---
+
+> 🌌 *L'open source est alimenté par les étoiles de sa communauté.*
+>
+> Notre plus profonde gratitude aux personnes remarquables ci-dessous. Vos contributions font briller ce dépôt.
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

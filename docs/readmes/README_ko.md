@@ -233,10 +233,6 @@ pnpm package:all
 
 ## 🤝 참여하기
 
-> 🌌 *오픈 소스는 커뮤니티의 별들에 의해 빛납니다.*
->
-> 아래의 놀라운 분들께 깊은 감사를 드립니다. 여러분의 기여가 이 저장소를 더욱 빛나게 합니다.
-
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
 </p>
@@ -284,6 +280,10 @@ pnpm package:all
 > PR을 제출하기 전에 저장소를 포크하고 새 브랜치에서 변경사항을 만든 뒤 `pnpm lint:check`와 `pnpm typecheck`를 통과하는지 확인해 주세요.
 
 ---
+
+> 🌌 *오픈 소스는 커뮤니티의 별들에 의해 빛납니다.*
+>
+> 아래의 놀라운 분들께 깊은 감사를 드립니다. 여러분의 기여가 이 저장소를 더욱 빛나게 합니다.
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

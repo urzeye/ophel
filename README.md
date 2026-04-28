@@ -277,10 +277,6 @@ pnpm package:all
 
 ## 🤝 Get Involved
 
-> 🌌 _Open source is powered by the stars of its community._
->
-> Our deepest gratitude to the amazing individuals below. Your contributions make this repository shine brighter.
-
 <p align="center">
   <em>"If you want to go fast, go alone. If you want to go far, go together."</em>
 </p>
@@ -328,6 +324,10 @@ Welcome to contribute in any form — whether submitting code, reporting issues,
 > Before submitting a PR, fork the repo, make your changes on a new branch, and make sure `pnpm lint:check` and `pnpm typecheck` pass.
 
 ---
+
+> 🌌 _Open source is powered by the stars of its community._
+>
+> Our deepest gratitude to the amazing individuals below. Your contributions make this repository shine brighter.
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
