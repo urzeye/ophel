@@ -37,7 +37,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Sync supporters & contributors
-        run: pnpm supporters:sync
+        run: pnpm contributors:sync
 
       - name: Commit changes (if any)
         run: |

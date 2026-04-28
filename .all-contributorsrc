@@ -25,33 +25,14 @@
       "name": "小 i 同学",
       "avatar_url": "https://avatars.githubusercontent.com/u/20869204?v=4",
       "profile": "https://github.com/urzeye",
-      "contributions": [
-        "code",
-        "bug",
-        "doc",
-        "design",
-        "ideas",
-        "infra",
-        "maintenance",
-        "platform",
-        "projectManagement",
-        "review",
-        "tool"
-      ]
+      "contributions": ["code", "design", "ideas", "infra", "maintenance"]
     },
     {
       "login": "treasuresure",
       "name": "treasuresure",
       "avatar_url": "https://avatars.githubusercontent.com/u/50103468?v=4",
       "profile": "https://github.com/treasuresure",
-      "contributions": ["code"]
-    },
-    {
-      "login": "joevalleyfield",
-      "name": "joevalleyfield",
-      "avatar_url": "https://avatars.githubusercontent.com/u/14796422?v=4",
-      "profile": "https://github.com/joevalleyfield",
-      "contributions": ["code"]
+      "contributions": ["code", "ideas", "financial"]
     },
     {
       "login": "tjsky",
@@ -65,14 +46,7 @@
       "name": "Jianglang",
       "avatar_url": "https://avatars.githubusercontent.com/u/26515464?v=4",
       "profile": "https://github.com/lanvent",
-      "contributions": ["bug"]
-    },
-    {
-      "login": "KanameMadoka520",
-      "name": "Madoka",
-      "avatar_url": "https://avatars.githubusercontent.com/u/90090108?v=4",
-      "profile": "https://github.com/KanameMadoka520",
-      "contributions": ["code"]
+      "contributions": ["bug", "code"]
     },
     {
       "login": "Felix3322",
@@ -82,10 +56,24 @@
       "contributions": ["code"]
     },
     {
+      "login": "KanameMadoka520",
+      "name": "Madoka",
+      "avatar_url": "https://avatars.githubusercontent.com/u/90090108?v=4",
+      "profile": "https://github.com/KanameMadoka520",
+      "contributions": ["code", "ideas"]
+    },
+    {
       "login": "RyanLin-InfEvo",
       "name": "Lin Zit Ting",
       "avatar_url": "https://avatars.githubusercontent.com/u/121378653?v=4",
       "profile": "https://github.com/RyanLin-InfEvo",
+      "contributions": ["code"]
+    },
+    {
+      "login": "joevalleyfield",
+      "name": "joevalleyfield",
+      "avatar_url": "https://avatars.githubusercontent.com/u/14796422?v=4",
+      "profile": "https://github.com/joevalleyfield",
       "contributions": ["code"]
     }
   ],
