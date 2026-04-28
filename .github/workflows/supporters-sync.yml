@@ -1,8 +1,8 @@
-name: "💖 Sync Supporters"
+name: "💖 Sync Supporters & 🌟 Contributors"
 
 on:
   schedule:
-    # 每周一 UTC 02:00 自动同步赞助者数据
+    # 每周一 UTC 02:00 自动同步
     - cron: "0 2 * * 1"
   workflow_dispatch:
 
@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   sync:
-    name: "Sync Supporters"
+    name: "Sync All"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -35,16 +35,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Sync supporters
-        run: pnpm sync:supporters
+      - name: Sync supporters & contributors
+        run: pnpm sync:all
 
       - name: Commit changes (if any)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add README.md README_zh-CN.md docs/readmes/
+          git add README.md README_zh-CN.md docs/readmes/ .all-contributorsrc
           if ! git diff --cached --quiet; then
-            git commit -m "chore(docs): sync supporte
+            git commit -m "chore(docs): sync supporters and contributors [skip ci]"
+            git push
           else
             echo "No changes to commit"
           fi
+
