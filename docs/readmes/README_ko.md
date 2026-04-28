@@ -282,7 +282,6 @@ pnpm package:all
 </p>
 
 <p align="center">
-  <strong>📖 문서 및 AI:</strong>
   <a href="https://urzeye.mintlify.app"><img src="https://img.shields.io/badge/공식_문서-Mintlify-10B981?style=flat-square&logo=mintlify&logoColor=white" alt="공식 문서" style="vertical-align: middle;"></a>
   &nbsp;
   <a href="https://deepwiki.com/urzeye/ophel"><img src="https://img.shields.io/badge/DeepWiki에게_묻기-555555?style=flat-square&logo=openai&logoColor=white" alt="DeepWiki에게 묻기" style="vertical-align: middle;"/></a>
@@ -291,7 +290,6 @@ pnpm package:all
 </p>
 
 <p align="center">
-  <strong>🛠️ 피드백:</strong>
   <a href="https://github.com/urzeye/ophel/issues/new/choose"><img src="https://img.shields.io/badge/문제_보고-181717?style=flat-square&logo=github&logoColor=white" alt="Report Issue" style="vertical-align: middle;"/></a>
   &nbsp;
   <a href="https://github.com/urzeye/ophel/pulls"><img src="https://img.shields.io/badge/코드_기여-181717?style=flat-square&logo=github&logoColor=white" alt="Submit PR" style="vertical-align: middle;"/></a>
@@ -335,14 +333,14 @@ pnpm serve:userscript:assets   # 아이콘/스타일 등 정적 어셋을 로컬
 
 </details>
 
-> [!TIP]
-> 💡 **기여 가이드라인**: PR을 제출하기 전에 저장소를 포크하고 새 브랜치에서 작업하며 `pnpm lint:check` 및 `pnpm typecheck`를 통과하는지 확인하세요.
+[!TIP]
+💡 **기여 가이드라인**: PR을 제출하기 전에 저장소를 포크하고 새 브랜치에서 작업하며 `pnpm lint:check` 및 `pnpm typecheck`를 통과하는지 확인하세요.
 
 ---
 
-> 🌌 *오픈 소스는 커뮤니티의 별들에 의해 빛납니다.*
->
-> 아래의 놀라운 분들께 깊은 감사를 드립니다. 여러분의 기여가 이 저장소를 더욱 빛나게 합니다.
+🌌 *오픈 소스는 커뮤니티의 별들에 의해 빛납니다.*
+
+아래의 놀라운 분들께 깊은 감사를 드립니다. 여러분의 기여가 이 저장소를 더욱 빛나게 합니다.
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

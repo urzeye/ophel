@@ -295,7 +295,6 @@
 </p>
 
 <p align="center">
-  <strong>📖 Docs & AI:</strong>
   <a href="https://urzeye.mintlify.app"><img src="https://img.shields.io/badge/Official_Docs-Mintlify-10B981?style=flat-square&logo=mintlify&logoColor=white" alt="Official Docs" style="vertical-align: middle;"></a>
   &nbsp;
   <a href="https://deepwiki.com/urzeye/ophel"><img src="https://img.shields.io/badge/Ask_DeepWiki-555555?style=flat-square&logo=openai&logoColor=white" alt="Ask DeepWiki" style="vertical-align: middle;"/></a>
@@ -304,7 +303,6 @@
 </p>
 
 <p align="center">
-  <strong>🛠️ Feedback:</strong>
   <a href="https://github.com/urzeye/ophel/issues/new/choose"><img src="https://img.shields.io/badge/Report_Issue-181717?style=flat-square&logo=github&logoColor=white" alt="Report Issue" style="vertical-align: middle;"/></a>
   &nbsp;
   <a href="https://github.com/urzeye/ophel/pulls"><img src="https://img.shields.io/badge/Submit_PR-181717?style=flat-square&logo=github&logoColor=white" alt="Submit PR" style="vertical-align: middle;"/></a>
@@ -348,14 +346,14 @@ pnpm serve:userscript:assets   # Serve static assets locally
 
 </details>
 
-> [!TIP]
-> 💡 **Contribution Guidelines**: Before submitting a PR, we recommend forking the repo, creating a new branch, and ensuring your code passes `pnpm lint:check` and `pnpm typecheck`.
+[!TIP]
+💡 **Contribution Guidelines**: Before submitting a PR, we recommend forking the repo, creating a new branch, and ensuring your code passes `pnpm lint:check` and `pnpm typecheck`.
 
 ---
 
-> 🌌 _Open source is powered by the stars of its community._
->
-> Our deepest gratitude to the amazing individuals below. Your contributions make this repository shine brighter.
+🌌 _Open source is powered by the stars of its community._
+
+Our deepest gratitude to the amazing individuals below. Your contributions make this repository shine brighter.
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

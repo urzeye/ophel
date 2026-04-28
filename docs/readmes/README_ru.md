@@ -274,7 +274,6 @@ pnpm package:all
 </p>
 
 <p align="center">
-  <strong>📖 Доки и ИИ:</strong>
   <a href="https://urzeye.mintlify.app"><img src="https://img.shields.io/badge/Официальная_документация-Mintlify-10B981?style=flat-square&logo=mintlify&logoColor=white" alt="Официальная документация" style="vertical-align: middle;"></a>
   &nbsp;
   <a href="https://deepwiki.com/urzeye/ophel"><img src="https://img.shields.io/badge/Спросить_DeepWiki-555555?style=flat-square&logo=openai&logoColor=white" alt="Спросить DeepWiki" style="vertical-align: middle;"/></a>
@@ -283,7 +282,6 @@ pnpm package:all
 </p>
 
 <p align="center">
-  <strong>🛠️ Обратная связь:</strong>
   <a href="https://github.com/urzeye/ophel/issues/new/choose"><img src="https://img.shields.io/badge/Сообщить_о_проблеме-181717?style=flat-square&logo=github&logoColor=white" alt="Report Issue" style="vertical-align: middle;"/></a>
   &nbsp;
   <a href="https://github.com/urzeye/ophel/pulls"><img src="https://img.shields.io/badge/Предложить_код-181717?style=flat-square&logo=github&logoColor=white" alt="Submit PR" style="vertical-align: middle;"/></a>
@@ -327,14 +325,14 @@ pnpm serve:userscript:assets   # Запуск сервера для статич
 
 </details>
 
-> [!TIP]
-> 💡 **Руководство по участию**: Перед отправкой PR рекомендуется сделать форк репозитория, создать новую ветку и убедиться, что ваш код проходит проверки `pnpm lint:check` и `pnpm typecheck`.
+[!TIP]
+💡 **Руководство по участию**: Перед отправкой PR рекомендуется сделать форк репозитория, создать новую ветку и убедиться, что ваш код проходит проверки `pnpm lint:check` и `pnpm typecheck`.
 
 ---
 
-> 🌌 *Открытый исходный код питается звёздами своего сообщества.*
->
-> Наша искренняя благодарность замечательным людям ниже. Ваш вклад делает этот репозиторий ярче.
+🌌 *Открытый исходный код питается звёздами своего сообщества.*
+
+Наша искренняя благодарность замечательным людям ниже. Ваш вклад делает этот репозиторий ярче.
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

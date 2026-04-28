@@ -245,7 +245,6 @@
 </p>
 
 <p align="center">
-  <strong>📖 Docs & KI:</strong>
   <a href="https://urzeye.mintlify.app"><img src="https://img.shields.io/badge/Offizielle_Dokumentation-Mintlify-10B981?style=flat-square&logo=mintlify&logoColor=white" alt="Offizielle Dokumentation" style="vertical-align: middle;"></a>
   &nbsp;
   <a href="https://deepwiki.com/urzeye/ophel"><img src="https://img.shields.io/badge/DeepWiki_fragen-555555?style=flat-square&logo=openai&logoColor=white" alt="DeepWiki fragen" style="vertical-align: middle;"/></a>
@@ -254,7 +253,6 @@
 </p>
 
 <p align="center">
-  <strong>🛠️ Feedback:</strong>
   <a href="https://github.com/urzeye/ophel/issues/new/choose"><img src="https://img.shields.io/badge/Issue_melden-181717?style=flat-square&logo=github&logoColor=white" alt="Report Issue" style="vertical-align: middle;"/></a>
   &nbsp;
   <a href="https://github.com/urzeye/ophel/pulls"><img src="https://img.shields.io/badge/Code_beitragen-181717?style=flat-square&logo=github&logoColor=white" alt="Submit PR" style="vertical-align: middle;"/></a>
@@ -298,14 +296,14 @@ pnpm serve:userscript:assets   # Lokales Serving von statischen Assets (Icons/St
 
 </details>
 
-> [!TIP]
-> 💡 **Beitragsrichtlinien**: Bevor Sie einen PR einreichen, empfehlen wir, das Repo zu forken, einen neuen Branch zu erstellen und sicherzustellen, dass Ihr Code `pnpm lint:check` und `pnpm typecheck` besteht.
+[!TIP]
+💡 **Beitragsrichtlinien**: Bevor Sie einen PR einreichen, empfehlen wir, das Repo zu forken, einen neuen Branch zu erstellen und sicherzustellen, dass Ihr Code `pnpm lint:check` und `pnpm typecheck` besteht.
 
 ---
 
-> 🌌 *Open Source wird von den Sternen seiner Gemeinschaft angetrieben.*
->
-> Tiefer Dank gilt den folgenden großartigen Personen. Eure Beiträge lassen dieses Projekt heller leuchten.
+🌌 *Open Source wird von den Sternen seiner Gemeinschaft angetrieben.*
+
+Tiefer Dank gilt den folgenden großartigen Personen. Eure Beiträge lassen dieses Projekt heller leuchten.
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

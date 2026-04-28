@@ -282,7 +282,6 @@ pnpm package:all
 </p>
 
 <p align="center">
-  <strong>📖 ドキュメント＆AI：</strong>
   <a href="https://urzeye.mintlify.app"><img src="https://img.shields.io/badge/公式ドキュメント-Mintlify-10B981?style=flat-square&logo=mintlify&logoColor=white" alt="公式ドキュメント" style="vertical-align: middle;"></a>
   &nbsp;
   <a href="https://deepwiki.com/urzeye/ophel"><img src="https://img.shields.io/badge/DeepWikiに聞く-555555?style=flat-square&logo=openai&logoColor=white" alt="DeepWikiに聞く" style="vertical-align: middle;"/></a>
@@ -291,7 +290,6 @@ pnpm package:all
 </p>
 
 <p align="center">
-  <strong>🛠️ フィードバック：</strong>
   <a href="https://github.com/urzeye/ophel/issues/new/choose"><img src="https://img.shields.io/badge/問題を報告-181717?style=flat-square&logo=github&logoColor=white" alt="Report Issue" style="vertical-align: middle;"/></a>
   &nbsp;
   <a href="https://github.com/urzeye/ophel/pulls"><img src="https://img.shields.io/badge/コードを提供する-181717?style=flat-square&logo=github&logoColor=white" alt="Submit PR" style="vertical-align: middle;"/></a>
@@ -335,14 +333,14 @@ pnpm serve:userscript:assets   # 静的アセット（アイコン/スタイル�
 
 </details>
 
-> [!TIP]
-> 💡 **コントリビューション規約**: PR を送信する前に、リポジトリをフォークして新しいブランチで開発し、`pnpm lint:check` と `pnpm typecheck` をパスしていることを確認してください。
+[!TIP]
+💡 **コントリビューション規約**: PR を送信する前に、リポジトリをフォークして新しいブランチで開発し、`pnpm lint:check` と `pnpm typecheck` をパスしていることを確認してください。
 
 ---
 
-> 🌌 *オープンソースは、コミュニティの星々によって輝いています。*
->
-> 以下の素晴らしい方々へ、心よりの感謝を捧げます。皆さんの貢献がこのリポジトリをより輝かせています。
+🌌 *オープンソースは、コミュニティの星々によって輝いています。*
+
+以下の素晴らしい方々へ、心よりの感謝を捧げます。皆さんの貢献がこのリポジトリをより輝かせています。
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

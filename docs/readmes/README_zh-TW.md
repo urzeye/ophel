@@ -254,7 +254,6 @@
 </p>
 
 <p align="center">
-  <strong>📖 查閱指引：</strong>
   <a href="https://urzeye.mintlify.app"><img src="https://img.shields.io/badge/官方文件-Mintlify-10B981?style=flat-square&logo=mintlify&logoColor=white" alt="官方文件" style="vertical-align: middle;"></a>
   &nbsp;
   <a href="https://deepwiki.com/urzeye/ophel"><img src="https://img.shields.io/badge/詢問_DeepWiki-555555?style=flat-square&logo=openai&logoColor=white" alt="詢問 DeepWiki" style="vertical-align: middle;"/></a>
@@ -263,7 +262,6 @@
 </p>
 
 <p align="center">
-  <strong>🛠️ 參與回饋：</strong>
   <a href="https://github.com/urzeye/ophel/issues/new/choose"><img src="https://img.shields.io/badge/回饋問題-181717?style=flat-square&logo=github&logoColor=white" alt="Report Issue" style="vertical-align: middle;"/></a>
   &nbsp;
   <a href="https://github.com/urzeye/ophel/pulls"><img src="https://img.shields.io/badge/貢獻代碼-181717?style=flat-square&logo=github&logoColor=white" alt="Submit PR" style="vertical-align: middle;"/></a>
@@ -307,14 +305,14 @@ pnpm serve:userscript:assets   # 本地啟動伺服器提供圖示/樣式等靜�
 
 </details>
 
-> [!TIP]
-> 💡 **提交規範**：發起 PR 前，建議先 Fork 倉庫並在新分支開發，同時確認代碼通過了 `pnpm lint:check` 和 `pnpm typecheck`。
+[!TIP]
+💡 **提交規範**：發起 PR 前，建議先 Fork 倉庫並在新分支開發，同時確認代碼通過了 `pnpm lint:check` 和 `pnpm typecheck`。
 
 ---
 
-> 🌌 *開源的璀璨，源於社群中每一顆閃耀的星。*
->
-> 誠摯致敬以下每一位同行者。因為你們的無私開源與智慧，這個專案才得以不斷破浪前行。
+🌌 *開源的璀璨，源於社群中每一顆閃耀的星。*
+
+誠摯致敬以下每一位同行者。因為你們的無私開源與智慧，這個專案才得以不斷破浪前行。
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

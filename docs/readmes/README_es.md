@@ -274,7 +274,6 @@ pnpm package:all
 </p>
 
 <p align="center">
-  <strong>📖 Docs e IA:</strong>
   <a href="https://urzeye.mintlify.app"><img src="https://img.shields.io/badge/Documentación_oficial-Mintlify-10B981?style=flat-square&logo=mintlify&logoColor=white" alt="Documentación oficial" style="vertical-align: middle;"></a>
   &nbsp;
   <a href="https://deepwiki.com/urzeye/ophel"><img src="https://img.shields.io/badge/Preguntar_a_DeepWiki-555555?style=flat-square&logo=openai&logoColor=white" alt="Preguntar a DeepWiki" style="vertical-align: middle;"/></a>
@@ -283,7 +282,6 @@ pnpm package:all
 </p>
 
 <p align="center">
-  <strong>🛠️ Comentarios:</strong>
   <a href="https://github.com/urzeye/ophel/issues/new/choose"><img src="https://img.shields.io/badge/Reportar_problema-181717?style=flat-square&logo=github&logoColor=white" alt="Report Issue" style="vertical-align: middle;"/></a>
   &nbsp;
   <a href="https://github.com/urzeye/ophel/pulls"><img src="https://img.shields.io/badge/Contribuir_código-181717?style=flat-square&logo=github&logoColor=white" alt="Submit PR" style="vertical-align: middle;"/></a>
@@ -327,14 +325,14 @@ pnpm serve:userscript:assets   # Servir recursos estáticos localmente
 
 </details>
 
-> [!TIP]
-> 💡 **Directrices de contribución**: Antes de enviar un PR, recomendamos hacer un fork del repositorio, crear una nueva rama y asegurarte de que tu código pase `pnpm lint:check` y `pnpm typecheck`.
+[!TIP]
+💡 **Directrices de contribución**: Antes de enviar un PR, recomendamos hacer un fork del repositorio, crear una nueva rama y asegurarte de que tu código pase `pnpm lint:check` y `pnpm typecheck`.
 
 ---
 
-> 🌌 *El código abierto es impulsado por las estrellas de su comunidad.*
->
-> Nuestro más profundo agradecimiento a los increíbles colaboradores. Sus contribuciones hacen brillar este repositorio.
+🌌 *El código abierto es impulsado por las estrellas de su comunidad.*
+
+Nuestro más profundo agradecimiento a los increíbles colaboradores. Sus contribuciones hacen brillar este repositorio.
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
