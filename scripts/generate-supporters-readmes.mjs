@@ -97,6 +97,10 @@ function resolveAvatarPath(readmePath, avatar) {
  */
 function getAvatarUrl(name, avatar, source, date) {
   if (avatar) return avatar
+  if (name && name.startsWith("*") && !name.endsWith("*")) {
+    const lastChar = name.slice(-1)
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(lastChar)}&background=random`
+  }
   if (name && name !== "anonymous") {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
   }

@@ -248,6 +248,11 @@ pnpm package:all
       <sub><a href="https://github.com/hugo1120">hugo2233</a></sub>
     </td>
     <td align="center" width="110">
+      <img src="https://ui-avatars.com/api/?name=%E5%8D%97&amp;background=random" width="72" height="72" alt="**南" />
+      <br />
+      <sub>**南</sub>
+    </td>
+    <td align="center" width="110">
       <img src="https://api.dicebear.com/7.x/identicon/svg?seed=Lucky" width="72" height="72" alt="anonymous" />
       <br />
       <sub>anonymous</sub>
@@ -256,6 +261,11 @@ pnpm package:all
       <img src="https://ui-avatars.com/api/?name=%E7%8B%B7%E5%AE%A2%E8%A1%8C%E8%88%9F%F0%9F%8D%9C%E7%8B%82%EF%BC%9F&amp;background=random" width="72" height="72" alt="狷客行舟🍜狂？" />
       <br />
       <sub>狷客行舟🍜狂？</sub>
+    </td>
+    <td align="center" width="110">
+      <img src="https://ui-avatars.com/api/?name=%E7%85%9C&amp;background=random" width="72" height="72" alt="**煜" />
+      <br />
+      <sub>**煜</sub>
     </td>
   </tr>
 </table>
