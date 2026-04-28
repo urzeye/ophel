@@ -342,7 +342,7 @@ For issues or suggestions, please visit [GitHub Issues](https://github.com/urzey
           <img alt="urzeye's Afdian Profile" src="https://afdian-connect.deno.dev/profile.svg?slug=urzeye" height="160" />
         </picture>
       </a><br />
-      <sub><b>Afdian ↗</b></sub>
+      <sub><b>Afdian</b></sub>
     </td>
   </tr>
 </table>

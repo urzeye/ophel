@@ -347,7 +347,7 @@ pnpm package:all
           <img alt="urzeye 的爱发电主页" src="https://afdian-connect.deno.dev/profile.svg?slug=urzeye" height="160" />
         </picture>
       </a><br />
-      <sub><b>爱发电 ↗</b></sub>
+      <sub><b>爱发电</b></sub>
     </td>
   </tr>
 </table>

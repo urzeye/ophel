@@ -258,11 +258,11 @@ Para problemas ou sugestões, visite [GitHub Issues](https://github.com/urzeye/o
 
 
 <p align="center">
-  Se <strong>Ophel Atlas</strong> aumentou a sua eficiência no trabalho ou nos estudos, apoie-nos com uma <strong>Star</strong> ou como <strong>Sponsor</strong>.
+  <em>Se o <strong>Ophel Atlas</strong> trouxe alegria ao seu fluxo de trabalho ou economizou seu tempo precioso, considere impulsionar sua jornada com uma <strong>Star</strong> ou um <strong>Sponsor</strong>.</em> ☕️
 </p>
 
 <p align="center">
-  <strong>Divulgar também é uma forma de apoiar</strong>: ficaremos felizes se você compartilhar no <strong>Linux.do, X, Xiaohongshu, Bilibili</strong> e em outras plataformas. Cada feedback e cada compartilhamento ajudam a tornar o Ophel ainda melhor!
+  <strong>Compartilhar é igualmente poderoso:</strong> Adoraríamos que você compartilhasse sua experiência no <strong>Linux.do, Reddit, X ou YouTube</strong>. Cada feedback e cada divulgação ajudam o Ophel a crescer!
 </p>
 
 <p align="center">

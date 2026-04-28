@@ -266,11 +266,11 @@ pnpm package:all
 
 
 <p align="center">
-  <strong>Ophel Atlas</strong>가 여러분의 일이나 학습 효율을 높여 주었다면, <strong>Star</strong> 또는 <strong>Sponsor</strong>로 응원해 주세요.
+  <em><strong>Ophel Atlas</strong>가 당신의 워크플로우에 즐거움을 선사하거나 소중한 시간을 절약해 드렸다면, <strong>Star</strong>나 <strong>Sponsor</strong>로 그 여정을 응원해 주세요.</em> ☕️
 </p>
 
 <p align="center">
-  <strong>널리 알려 주시는 것 역시 큰 힘이 됩니다</strong>: <strong>Linux.do, X, Xiaohongshu, Bilibili</strong> 등 더 많은 플랫폼에 공유해 주시면 정말 큰 도움이 됩니다. 여러분의 모든 피드백과 공유가 Ophel을 더 좋게 만듭니다.
+  <strong>공유도 마찬가지로 강력합니다:</strong> <strong>Linux.do, Reddit, X, YouTube</strong>에서 경험을 공유해 주시면 정말 기쁠 것 같습니다. 모든 피드백과 응원이 Ophel의 성장을 돕습니다!
 </p>
 
 <p align="center">

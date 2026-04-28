@@ -266,11 +266,11 @@ pnpm package:all
 
 
 <p align="center">
-  <strong>Ophel Atlas</strong> が仕事や学習の効率向上に役立っているなら、<strong>Star</strong> や <strong>Sponsor</strong> で応援していただけるとうれしいです。
+  <em><strong>Ophel Atlas</strong> があなたのワークフローに喜びをもたらしたり、貴重な時間を節約できたなら、<strong>Star</strong> や <strong>Sponsor</strong> でその旅を応援していただけると嬉しいです。</em> ☕️
 </p>
 
 <p align="center">
-  <strong>広めていただくことも大きな力です</strong>：<strong>Linux.do、X、Xiaohongshu、Bilibili</strong> など、さまざまなプラットフォームでシェアしてもらえるのも大歓迎です。あなたのフィードバックとシェアの一つひとつが、Ophel をより良くしてくれます。
+  <strong>シェアも同じくらい力になります：</strong><strong>Linux.do、Reddit、X、YouTube</strong> などで体験を共有していただけると嬉しいです。すべてのフィードバックと応援が Ophel の成長を支えています！
 </p>
 
 <p align="center">
