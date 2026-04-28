@@ -336,7 +336,7 @@ pnpm serve:userscript:assets   # 本地啟動伺服器提供圖示/樣式等靜�
 
 </table>
 
-### ⭐ Star History
+## ⭐ Star History
 
 <div align="center">
 <a href="https://star-history.com/#urzeye/ophel&Date">

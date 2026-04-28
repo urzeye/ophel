@@ -378,7 +378,7 @@ Our deepest gratitude to the amazing individuals below. Your contributions make 
 
 <br>
 
-### ⭐ Star History
+## ⭐ Star History
 
 <div align="center">
 <a href="https://star-history.com/#urzeye/ophel&Date">

@@ -328,7 +328,7 @@ Tiefer Dank gilt den folgenden großartigen Personen. Eure Beiträge lassen dies
 
 <br>
 
-### ⭐ Star History
+## ⭐ Star History
 
 <div align="center">
 <a href="https://star-history.com/#urzeye/ophel&Date">

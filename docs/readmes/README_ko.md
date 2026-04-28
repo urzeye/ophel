@@ -334,7 +334,7 @@ pnpm serve:userscript:assets   # 아이콘/스타일 등 정적 어셋을 로컬
 
 <br>
 
-### ⭐ Star History
+## ⭐ Star History
 
 <div align="center">
 <a href="https://star-history.com/#urzeye/ophel&Date">

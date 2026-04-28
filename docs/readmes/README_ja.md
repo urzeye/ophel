@@ -334,7 +334,7 @@ pnpm serve:userscript:assets   # 静的アセット（アイコン/スタイル�
 
 <br>
 
-### ⭐ Star History
+## ⭐ Star History
 
 <div align="center">
 <a href="https://star-history.com/#urzeye/ophel&Date">

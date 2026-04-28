@@ -328,7 +328,7 @@ pnpm serve:userscript:assets   # Запуск сервера для статич
 
 <br>
 
-### ⭐ Star History
+## ⭐ Star History
 
 <div align="center">
 <a href="https://star-history.com/#urzeye/ophel&Date">

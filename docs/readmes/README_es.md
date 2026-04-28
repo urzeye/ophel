@@ -328,7 +328,7 @@ Nuestro más profundo agradecimiento a los increíbles colaboradores. Sus contri
 
 <br>
 
-### ⭐ Star History
+## ⭐ Star History
 
 <div align="center">
 <a href="https://star-history.com/#urzeye/ophel&Date">

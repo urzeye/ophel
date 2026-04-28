@@ -390,7 +390,7 @@ _🌌 开源的璀璨，源于社区中每一颗闪耀的星。_
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-### ⭐ Star History
+## ⭐ Star History
 
 <div align="center">
 <a href="https://star-history.com/#urzeye/ophel&Date">
