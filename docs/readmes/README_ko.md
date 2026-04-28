@@ -231,50 +231,30 @@ pnpm package:all
 
 ### 🌟 기여자
 
-<table align="center" border="0" cellpadding="0" cellspacing="0">
-  <tr>
-    <td align="center" width="90">
-      <a href="https://github.com/urzeye"><img src="https://avatars.githubusercontent.com/u/20869204?s=64&amp;v=4" width="56" height="56" alt="urzeye" /></a>
-      <br />
-      <sub><a href="https://github.com/urzeye">urzeye</a></sub>
-    </td>
-    <td align="center" width="90">
-      <a href="https://github.com/treasuresure"><img src="https://avatars.githubusercontent.com/u/50103468?s=64&amp;v=4" width="56" height="56" alt="treasuresure" /></a>
-      <br />
-      <sub><a href="https://github.com/treasuresure">treasuresure</a></sub>
-    </td>
-    <td align="center" width="90">
-      <a href="https://github.com/joevalleyfield"><img src="https://avatars.githubusercontent.com/u/14796422?s=64&amp;v=4" width="56" height="56" alt="joevalleyfield" /></a>
-      <br />
-      <sub><a href="https://github.com/joevalleyfield">joevalleyfield</a></sub>
-    </td>
-    <td align="center" width="90">
-      <a href="https://github.com/tjsky"><img src="https://avatars.githubusercontent.com/u/7272911?s=64&amp;v=4" width="56" height="56" alt="tjsky" /></a>
-      <br />
-      <sub><a href="https://github.com/tjsky">tjsky</a></sub>
-    </td>
-    <td align="center" width="90">
-      <a href="https://github.com/lanvent"><img src="https://avatars.githubusercontent.com/u/26515464?s=64&amp;v=4" width="56" height="56" alt="lanvent" /></a>
-      <br />
-      <sub><a href="https://github.com/lanvent">lanvent</a></sub>
-    </td>
-    <td align="center" width="90">
-      <a href="https://github.com/KanameMadoka520"><img src="https://avatars.githubusercontent.com/u/90090108?s=64&amp;v=4" width="56" height="56" alt="KanameMadoka520" /></a>
-      <br />
-      <sub><a href="https://github.com/KanameMadoka520">KanameMadoka520</a></sub>
-    </td>
-    <td align="center" width="90">
-      <a href="https://github.com/Felix3322"><img src="https://avatars.githubusercontent.com/u/115849429?s=64&amp;v=4" width="56" height="56" alt="Felix3322" /></a>
-      <br />
-      <sub><a href="https://github.com/Felix3322">Felix3322</a></sub>
-    </td>
-    <td align="center" width="90">
-      <a href="https://github.com/RyanLin-InfEvo"><img src="https://avatars.githubusercontent.com/u/121378653?s=64&amp;v=4" width="56" height="56" alt="RyanLin-InfEvo" /></a>
-      <br />
-      <sub><a href="https://github.com/RyanLin-InfEvo">RyanLin-InfEvo</a></sub>
-    </td>
-  </tr>
+이 프로젝트에 기여한 모든 개발자에게 감사드립니다：
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/urzeye"><img src="https://avatars.githubusercontent.com/u/20869204?s=64" width="64px;" alt="urzeye"/><br /><sub><b>urzeye</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=urzeye" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/treasuresure"><img src="https://avatars.githubusercontent.com/u/50103468?s=64" width="64px;" alt="treasuresure"/><br /><sub><b>treasuresure</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=treasuresure" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/joevalleyfield"><img src="https://avatars.githubusercontent.com/u/14796422?s=64" width="64px;" alt="joevalleyfield"/><br /><sub><b>joevalleyfield</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=joevalleyfield" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/tjsky"><img src="https://avatars.githubusercontent.com/u/7272911?s=64" width="64px;" alt="tjsky"/><br /><sub><b>tjsky</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=tjsky" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/lanvent"><img src="https://avatars.githubusercontent.com/u/26515464?s=64" width="64px;" alt="lanvent"/><br /><sub><b>lanvent</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=lanvent" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/KanameMadoka520"><img src="https://avatars.githubusercontent.com/u/90090108?s=64" width="64px;" alt="KanameMadoka520"/><br /><sub><b>KanameMadoka520</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=KanameMadoka520" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Felix3322"><img src="https://avatars.githubusercontent.com/u/115849429?s=64" width="64px;" alt="Felix3322"/><br /><sub><b>Felix3322</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=Felix3322" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/RyanLin-InfEvo"><img src="https://avatars.githubusercontent.com/u/121378653?s=64" width="64px;" alt="RyanLin-InfEvo"/><br /><sub><b>RyanLin-InfEvo</b></sub></a><br /><a href="https://github.com/urzeye/ophel/commits?author=RyanLin-InfEvo" title="Code">💻</a></td>
+    </tr>
+  </tbody>
 </table>
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ---
 
