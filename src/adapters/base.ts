@@ -35,6 +35,12 @@ export interface ConversationDeleteTarget {
   url?: string
 }
 
+export interface ConversationRenameTarget {
+  id: string
+  title?: string
+  url?: string
+}
+
 export interface SiteDeleteConversationResult {
   id: string
   success: boolean
@@ -86,7 +92,10 @@ export interface ConversationObserverConfig {
   selector: string
   shadow: boolean
   extractInfo: (el: Element) => ConversationInfo | null
+  extractRemovedInfo?: (el: Element) => ConversationInfo | null
   getTitleElement: (el: Element) => Element | null
+  enablePolling?: boolean
+  pollIntervalMs?: number
 }
 
 export interface AnchorData {
@@ -204,6 +213,17 @@ export function normalizeAssistantMermaidSource(source: string): string {
   if (!normalized) return ""
 
   const lines = normalized.split("\n")
+
+  // Some sites wrap code blocks as:
+  // text\nflowchart TD ...
+  // Strip a leading plain-text language marker before Mermaid detection.
+  if (lines.length > 1) {
+    const firstLine = lines[0].trim().toLowerCase()
+    if (/^(text|plain(?:\s|-)?text|text\/plain|markdown|text\/markdown|md|txt)$/.test(firstLine)) {
+      return normalizeAssistantMermaidSource(lines.slice(1).join("\n"))
+    }
+  }
+
   const firstMeaningfulLineIndex = getFirstMeaningfulMermaidLineIndex(lines)
   if (firstMeaningfulLineIndex === -1) {
     return normalized
@@ -383,6 +403,14 @@ export abstract class SiteAdapter {
     return []
   }
 
+  /**
+   * Whether getConversationList currently includes a complete enough remote snapshot
+   * to safely prune local conversations that disappeared from the site.
+   */
+  hasAuthoritativeConversationList(): boolean {
+    return false
+  }
+
   /** 获取当前页面会话的基础元数据 */
   getCurrentConversationInfo(): ConversationInfo | null {
     const id = this.getSessionId()
@@ -446,6 +474,17 @@ export abstract class SiteAdapter {
     return results
   }
 
+  async renameConversationOnSite(
+    _target: ConversationRenameTarget,
+    _newTitle: string,
+  ): Promise<{ success: boolean; method: "api" | "ui" | "none"; reason?: string }> {
+    return {
+      success: false,
+      method: "none",
+      reason: "not_supported",
+    }
+  }
+
   async loadAllConversations(): Promise<void> {
     const container = this.getSidebarScrollContainer()
     if (!container) return
@@ -500,6 +539,44 @@ export abstract class SiteAdapter {
     return selectorBtn?.textContent || selectorBtn?.innerText || ""
   }
 
+  /**
+   * Whether the site's model selector menu is currently open.
+   * Adapters can override this so the shared model locker avoids
+   * interfering with a manually opened model menu.
+   */
+  isModelSelectorOpen(): boolean {
+    return false
+  }
+
+  /**
+   * Some sites need a persistent model-lock monitor rather than a short
+   * relock window after route changes.
+   */
+  usesPersistentModelLockMonitor(): boolean {
+    return false
+  }
+
+  getModelLockMonitorInterval(): number {
+    return 1000
+  }
+
+  getModelLockMonitorRoot(): Node | null {
+    return typeof document !== "undefined" ? document.body : null
+  }
+
+  getModelLockMutationDebounce(): number {
+    return 120
+  }
+
+  /**
+   * Whether the site's model-lock UI is currently available.
+   * Sites with temporary mode/tool menus instead of a model selector can
+   * return false so the shared locker waits for the selector to come back.
+   */
+  isModelLockUiReady(): boolean {
+    return true
+  }
+
   /** 获取网络监控配置 */
   getNetworkMonitorConfig(): NetworkMonitorConfig | null {
     return null
@@ -548,6 +625,10 @@ export abstract class SiteAdapter {
     return null
   }
 
+  onZenModeChanged(_enabled: boolean): void {
+    // Optional hook for site-specific layout calibration.
+  }
+
   /** 返回净化模式配置（隐藏免责声明、广告、下载按钮等冗余元素） */
   getCleanModeConfig(): ZenModeConfig | null {
     return null
@@ -579,8 +660,18 @@ export abstract class SiteAdapter {
   }
 
   /**
-   * 精准查找提交按钮
-   * 当站点存在多个相邻 icon button，且仅靠通用选择器/距离判断容易误判时使用
+   * Provide a custom anchor for mounting the usage monitor.
+   * Override when the default placement near the editor would break layout.
+   */
+  getUsageCounterMountAnchor(
+    _editor: HTMLElement,
+    _submitButton: HTMLElement | null,
+  ): HTMLElement | null {
+    return null
+  }
+
+  /**
+   * Precisely locate the submit button when generic selectors are ambiguous.
    */
   findSubmitButton(_editor: HTMLElement | null): HTMLElement | null {
     return null

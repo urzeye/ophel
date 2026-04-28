@@ -837,6 +837,11 @@ export class UsageCounterManager {
     const submitButton =
       this.adapter.findSubmitButton(editor) || this.findSubmitButtonBySelectors(editor)
 
+    const customAnchor = this.adapter.getUsageCounterMountAnchor(editor, submitButton)
+    if (customAnchor?.parentElement) {
+      return customAnchor
+    }
+
     const strongCandidates = [
       DOMToolkit.closestComposed(editor, "form"),
       submitButton ? DOMToolkit.closestComposed(submitButton, "form") : null,
@@ -1230,12 +1235,7 @@ export class UsageCounterManager {
       }
     }
 
-    let nodes: Element[] = []
-    try {
-      nodes = (DOMToolkit.query(selectors, { all: true, shadow: true }) as Element[]) || []
-    } catch {
-      nodes = []
-    }
+    const nodes = this.queryAllSelectors(selectors)
 
     if (nodes.length === 0) {
       return {
@@ -1248,12 +1248,10 @@ export class UsageCounterManager {
     }
 
     const userSelector = this.adapter.getUserQuerySelector()
-    const uniqueNodes = Array.from(new Set(nodes))
+    const uniqueNodes = this.sortElementsInDomOrder(Array.from(new Set(nodes)))
     const conversationChunks: string[] = []
     const outputChunks: string[] = []
 
-    // 这里只统计当前页面 DOM 中“已经加载出来”的会话内容。
-    // 如果站点做了懒加载或折叠隐藏，未出现在 DOM 中的历史内容不会被计入。
     uniqueNodes.forEach((node) => {
       const isUser = userSelector ? this.matchesSelector(node, userSelector) : false
       const text = isUser
@@ -1278,6 +1276,40 @@ export class UsageCounterManager {
       outputChars: outputText.length,
       outputTokens: this.estimateTokens(outputText),
     }
+  }
+
+  private queryAllSelectors(selectors: string[]): Element[] {
+    const results: Element[] = []
+    const seen = new Set<Element>()
+
+    selectors.forEach((selector) => {
+      let matched: Element[] = []
+      try {
+        matched = (DOMToolkit.query(selector, { all: true, shadow: true }) as Element[]) || []
+      } catch {
+        matched = []
+      }
+
+      matched.forEach((element) => {
+        if (!seen.has(element)) {
+          seen.add(element)
+          results.push(element)
+        }
+      })
+    })
+
+    return results
+  }
+
+  private sortElementsInDomOrder(elements: Element[]): Element[] {
+    return [...elements].sort((left, right) => {
+      if (left === right) return 0
+
+      const position = left.compareDocumentPosition(right)
+      if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1
+      if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1
+      return 0
+    })
   }
 
   private matchesSelector(element: Element, selector: string): boolean {

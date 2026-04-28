@@ -2351,6 +2351,34 @@ export const App = () => {
   }, [promptManager, conversationManager, outlineManager])
 
   useEffect(() => {
+    if (!conversationManager) return
+
+    const pendingTimers = new Set<ReturnType<typeof setTimeout>>()
+    const clearPendingTimers = () => {
+      pendingTimers.forEach((timer) => clearTimeout(timer))
+      pendingTimers.clear()
+    }
+
+    const scheduleConversationSync = () => {
+      clearPendingTimers()
+      ;[0, 250, 800, 1600, 3000].forEach((delay) => {
+        let timer: ReturnType<typeof setTimeout>
+        timer = setTimeout(() => {
+          pendingTimers.delete(timer)
+          conversationManager.syncCurrentConversationNow()
+        }, delay)
+        pendingTimers.add(timer)
+      })
+    }
+
+    window.addEventListener("gh-url-change", scheduleConversationSync)
+    return () => {
+      window.removeEventListener("gh-url-change", scheduleConversationSync)
+      clearPendingTimers()
+    }
+  }, [conversationManager])
+
+  useEffect(() => {
     if (!conversationManager || typeof chrome === "undefined") return
 
     const handler = (

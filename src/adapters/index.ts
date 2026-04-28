@@ -16,6 +16,7 @@ import { GeminiEnterpriseAdapter } from "./gemini-enterprise"
 import { GrokAdapter } from "./grok"
 import { ImaAdapter } from "./ima"
 import { KimiAdapter } from "./kimi"
+import { PerplexityAdapter } from "./perplexity"
 import { QianwenAdapter } from "./qianwen"
 import { QwenAiAdapter } from "./qwen-studio"
 import { YuanbaoAdapter } from "./yuanbao"
@@ -32,6 +33,7 @@ const adapters: SiteAdapter[] = [
   new DeepSeekAdapter(),
   new DoubaoAdapter(),
   new ImaAdapter(),
+  new PerplexityAdapter(),
   new ChatGLMAdapter(),
   new KimiAdapter(),
   new QwenAiAdapter(),

@@ -690,6 +690,11 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     keywords: ["model lock", "grok", "模型锁定"],
   },
   {
+    settingId: "model-lock-perplexity",
+    title: "模型锁定：Perplexity",
+    keywords: ["model lock", "perplexity", "perplexity.ai", "模型锁定"],
+  },
+  {
     settingId: "model-lock-qianwen",
     title: "模型锁定：Qianwen",
     keywords: ["model lock", "qianwen", "tongyi", "通义千问", "模型锁定"],

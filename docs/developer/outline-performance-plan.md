@@ -1,6 +1,6 @@
 # 大纲系统性能优化与 Bug 修复计划
 
-> 创建日期：2026-04-20  
+> 创建日期：2026-04-20
 > 分析范围：`src/core/outline-manager.ts`、`src/adapters/gemini.ts`、`src/components/OutlineTab.tsx`
 
 ---

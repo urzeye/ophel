@@ -1,7 +1,7 @@
 import { normalizeAssistantMermaidSource, type SiteAdapter } from "~adapters/base"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
-import { showToast } from "~utils/toast"
+import { showToast, showToastThrottled } from "~utils/toast"
 import { setSafeScriptSrc } from "~utils/trusted-types"
 
 const STYLE_ID = "gh-assistant-mermaid-style"
@@ -492,7 +492,25 @@ export class AssistantMermaidRenderer {
   }
 
   private getAssistantSelector(): string | null {
-    return this.adapter.getExportConfig()?.assistantResponseSelector || null
+    const exportSelector = this.adapter.getExportConfig()?.assistantResponseSelector || null
+    if (exportSelector && !exportSelector.includes("data-gh-")) {
+      return exportSelector
+    }
+
+    const chatSelectors = this.adapter.getChatContentSelectors?.() || []
+    const userQuerySelector = this.adapter.getUserQuerySelector?.()
+    const assistantSelectors = chatSelectors.filter(
+      (selector) => Boolean(selector) && selector !== userQuerySelector,
+    )
+    if (assistantSelectors.length > 0) {
+      return assistantSelectors[assistantSelectors.length - 1] || exportSelector
+    }
+
+    if (chatSelectors.length > 0) {
+      return chatSelectors[chatSelectors.length - 1] || exportSelector
+    }
+
+    return exportSelector
   }
 
   private initClickHandler() {
@@ -720,6 +738,20 @@ export class AssistantMermaidRenderer {
       }
 
       console.warn("[AssistantMermaidRenderer] Mermaid render skipped:", error)
+      if (
+        this.adapter.getSiteId() === "perplexity" &&
+        this.isPerplexityMermaidDebugToastEnabled()
+      ) {
+        const message =
+          error instanceof Error ? error.message : typeof error === "string" ? error : "unknown"
+        showToastThrottled(
+          `[Perplexity Debug] Mermaid render skipped: ${message}`,
+          2600,
+          { maxWidth: 520 },
+          2000,
+          "perplexity-mermaid-skip",
+        )
+      }
       if (shouldRetryMermaidRender(error)) {
         this.processedBlocks.delete(block)
         this.cleanupPanel(block)
@@ -727,6 +759,14 @@ export class AssistantMermaidRenderer {
         this.processedBlocks.set(block, processedKey)
         this.applyRenderFallback(block, panel, renderSource)
       }
+    }
+  }
+
+  private isPerplexityMermaidDebugToastEnabled(): boolean {
+    try {
+      return localStorage.getItem("ophel:perplexity-mermaid-debug") === "1"
+    } catch {
+      return false
     }
   }
 

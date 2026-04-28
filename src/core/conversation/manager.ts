@@ -3,6 +3,7 @@ import type {
   ConversationDeleteTarget,
   ConversationInfo,
   ConversationObserverConfig,
+  ConversationRenameTarget,
   ExportLifecycleContext,
   SiteDeleteConversationResult,
 } from "~adapters/base"
@@ -57,9 +58,13 @@ export class ConversationManager {
   // Observer state
   private observerConfig: ConversationObserverConfig | null = null
   private sidebarObserverStop: (() => void) | null = null
+  private sidebarMutationSyncStop: (() => void) | null = null
   private observerContainer: Node | null = null
   private titleWatcher: any = null // DOMToolkit watcher instance
   private pollInterval: ReturnType<typeof setTimeout> | null = null
+  private currentConversationSyncTimer: ReturnType<typeof setTimeout> | null = null
+  private remoteSnapshotSyncTimer: ReturnType<typeof setTimeout> | null = null
+  private remoteSnapshotSyncInFlight: Promise<void> | null = null
   private geminiMigrationTimer: ReturnType<typeof setTimeout> | null = null
   private geminiMigrationRetryCount = 0
 
@@ -137,6 +142,8 @@ export class ConversationManager {
     }
 
     this.startSidebarObserver()
+    this.startCurrentConversationSync()
+    this.scheduleRemoteConversationSnapshotSync(300)
   }
 
   // Gemini 老数据迁移：数字 cid(0/1/2...) -> 当前邮箱 cid
@@ -317,6 +324,8 @@ export class ConversationManager {
   destroy() {
     this.stopGeminiMigrationRetry()
     this.stopSidebarObserver()
+    this.stopCurrentConversationSync()
+    this.stopRemoteConversationSnapshotSync()
   }
 
   updateSettings(settings: { syncUnpin: boolean; syncDelete?: boolean }) {
@@ -367,11 +376,13 @@ export class ConversationManager {
         },
         { parent: sidebarContainer, shadow: config.shadow },
       )
+
+      this.startSidebarMutationSync(sidebarContainer)
     }
 
     startObserverRetry()
 
-    if (config.shadow) {
+    if (config.shadow || config.enablePolling) {
       this.startPolling()
     }
   }
@@ -382,6 +393,10 @@ export class ConversationManager {
       this.sidebarObserverStop = null
     }
     this.observerContainer = null
+    if (this.sidebarMutationSyncStop) {
+      this.sidebarMutationSyncStop()
+      this.sidebarMutationSyncStop = null
+    }
 
     if (this.titleWatcher) {
       // DOMToolkit Watcher doesnt explicitly expose stop on the object returned by watchMultiple?
@@ -405,7 +420,8 @@ export class ConversationManager {
 
       if (info?.id) {
         this.updateConversationFromObservation(info, isNew)
-        this.monitorConversationTitle(el as HTMLElement, info.id)
+        const titleElement = config.getTitleElement(el) || el
+        this.monitorConversationTitle(titleElement as HTMLElement, info.id, el)
       } else if (retries > 0) {
         setTimeout(() => tryAdd(retries - 1), 500)
       }
@@ -436,7 +452,7 @@ export class ConversationManager {
       let needsUpdate = false
       const updates: Partial<Conversation> = {}
 
-      if (info.title && info.title !== existing.title) {
+      if (this.shouldUpdateConversationTitle(existing.title, info.title, existing.siteId)) {
         updates.title = info.title
         needsUpdate = true
       }
@@ -470,6 +486,7 @@ export class ConversationManager {
 
   private startPolling() {
     if (this.pollInterval) return
+    const intervalMs = this.observerConfig?.pollIntervalMs || 3000
     this.pollInterval = setInterval(() => {
       if (!this.observerConfig) return
       const config = this.observerConfig
@@ -490,17 +507,18 @@ export class ConversationManager {
           if (!existing) {
             // 新会话
             this.updateConversationFromObservation(info, true)
-            this.monitorConversationTitle(el as HTMLElement, info.id)
+            const titleElement = config.getTitleElement(el) || el
+            this.monitorConversationTitle(titleElement as HTMLElement, info.id, el)
           } else {
             // 检测标题变更
-            if (info.title && info.title !== existing.title) {
+            if (this.shouldUpdateConversationTitle(existing.title, info.title, existing.siteId)) {
               getConversationsStore().updateConversation(info.id, { title: info.title })
               this.notifyDataChange()
             }
           }
         })
       }
-    }, 3000)
+    }, intervalMs)
   }
 
   private stopPolling() {
@@ -510,7 +528,296 @@ export class ConversationManager {
     }
   }
 
-  private monitorConversationTitle(el: HTMLElement, id: string) {
+  syncCurrentConversationNow(): boolean {
+    const currentChanged = this.syncCurrentConversation()
+    const { newCount, updatedCount } = this.syncConversations(null, true)
+    const listChanged = newCount > 0 || updatedCount > 0
+
+    if (listChanged) {
+      this.notifyDataChange()
+    }
+
+    this.scheduleRemoteConversationSnapshotSync(500)
+
+    return currentChanged || listChanged
+  }
+
+  private startSidebarMutationSync(container: Node) {
+    if (this.siteAdapter.getSiteId() !== SITE_IDS.PERPLEXITY) return
+    if (this.sidebarMutationSyncStop) return
+    if (!container || typeof MutationObserver === "undefined") return
+    let syncTimer: ReturnType<typeof setTimeout> | null = null
+    const pendingRemovedConversationIds = new Set<string>()
+    const scheduleSync = () => {
+      if (syncTimer) return
+      syncTimer = setTimeout(() => {
+        syncTimer = null
+        const removedIds = Array.from(pendingRemovedConversationIds)
+        pendingRemovedConversationIds.clear()
+        const { newCount, updatedCount } = this.syncConversations(null, true)
+        void this.syncDeletedConversationsFromRemovedIds(removedIds).then((deletedCount) => {
+          if (deletedCount > 0) {
+            this.notifyDataChange()
+          }
+        })
+        if (newCount > 0 || updatedCount > 0) {
+          this.notifyDataChange()
+        }
+        this.scheduleRemoteConversationSnapshotSync(800)
+      }, 800)
+    }
+
+    const collectRemovedConversationIds = (mutations: MutationRecord[]): string[] => {
+      const selector = this.observerConfig?.selector
+      const extractRemovedInfo =
+        this.observerConfig?.extractRemovedInfo || this.observerConfig?.extractInfo
+      if (!selector || !extractRemovedInfo) return []
+
+      const ids = new Set<string>()
+      const inspectElement = (element: Element | null) => {
+        if (!element) return
+
+        const candidates: Element[] = []
+        try {
+          if (element.matches(selector)) {
+            candidates.push(element)
+          }
+          candidates.push(...Array.from(element.querySelectorAll(selector)))
+        } catch {
+          candidates.push(element)
+        }
+
+        candidates.forEach((candidate) => {
+          const info = extractRemovedInfo(candidate)
+          if (info?.id) ids.add(info.id)
+        })
+      }
+
+      mutations.forEach((mutation) => {
+        Array.from(mutation.removedNodes).forEach((node) => {
+          if (node instanceof Element) {
+            inspectElement(node)
+          } else if (node instanceof CharacterData) {
+            inspectElement(node.parentElement)
+          }
+        })
+      })
+
+      return Array.from(ids)
+    }
+
+    const isConversationListMutation = (mutations: MutationRecord[]): boolean => {
+      const selector = this.observerConfig?.selector
+      if (!selector) return true
+
+      const matchesConversationSelector = (node: Node | null): boolean => {
+        const element =
+          node instanceof Element ? node : node instanceof CharacterData ? node.parentElement : null
+        if (!element) return false
+
+        try {
+          return Boolean(element.closest(selector) || element.querySelector(selector))
+        } catch {
+          return true
+        }
+      }
+
+      return mutations.some((mutation) => {
+        if (matchesConversationSelector(mutation.target)) return true
+        return (
+          Array.from(mutation.addedNodes).some(matchesConversationSelector) ||
+          Array.from(mutation.removedNodes).some(matchesConversationSelector)
+        )
+      })
+    }
+
+    const observer = new MutationObserver((mutations) => {
+      collectRemovedConversationIds(mutations).forEach((id) => {
+        pendingRemovedConversationIds.add(id)
+      })
+      if (isConversationListMutation(mutations)) {
+        scheduleSync()
+      }
+    })
+    try {
+      observer.observe(container, {
+        attributes: true,
+        childList: true,
+        characterData: true,
+        subtree: true,
+      })
+    } catch {
+      if (!(document.body instanceof Node)) return
+      observer.observe(document.body, {
+        attributes: true,
+        childList: true,
+        characterData: true,
+        subtree: true,
+      })
+    }
+
+    this.sidebarMutationSyncStop = () => {
+      if (syncTimer) clearTimeout(syncTimer)
+      syncTimer = null
+      pendingRemovedConversationIds.clear()
+      observer.disconnect()
+    }
+  }
+
+  private async syncDeletedConversationsFromRemovedIds(ids: string[]): Promise<number> {
+    if (!this.syncDelete || ids.length === 0) return 0
+
+    const uniqueIds = Array.from(new Set(ids.filter(Boolean)))
+    if (uniqueIds.length === 0) return 0
+
+    try {
+      await this.siteAdapter.loadAllConversations?.()
+    } catch {
+      return 0
+    }
+
+    if (!this.siteAdapter.hasAuthoritativeConversationList()) {
+      return 0
+    }
+
+    const siteIds = new Set(this.siteAdapter.getConversationList().map((item) => item.id))
+    const currentId =
+      this.siteAdapter.getCurrentConversationInfo()?.id || this.siteAdapter.getSessionId()
+    const store = getConversationsStore()
+    let deletedCount = 0
+
+    uniqueIds.forEach((id) => {
+      if (siteIds.has(id) || currentId === id) return
+
+      const existing = this.conversations[id]
+      if (!existing) return
+      if (existing.siteId && existing.siteId !== this.siteAdapter.getSiteId()) return
+
+      store.deleteConversation(id)
+      deletedCount++
+    })
+
+    return deletedCount
+  }
+
+  private scheduleRemoteConversationSnapshotSync(delayMs: number) {
+    if (this.siteAdapter.getSiteId() !== SITE_IDS.PERPLEXITY) return
+    if (!this.siteAdapter.loadAllConversations) return
+
+    if (this.remoteSnapshotSyncTimer) {
+      clearTimeout(this.remoteSnapshotSyncTimer)
+    }
+
+    this.remoteSnapshotSyncTimer = setTimeout(() => {
+      this.remoteSnapshotSyncTimer = null
+      void this.refreshRemoteConversationSnapshot()
+    }, delayMs)
+  }
+
+  private async refreshRemoteConversationSnapshot(): Promise<void> {
+    if (this.siteAdapter.getSiteId() !== SITE_IDS.PERPLEXITY) return
+    if (!this.siteAdapter.loadAllConversations) return
+    if (this.remoteSnapshotSyncInFlight) return this.remoteSnapshotSyncInFlight
+
+    this.remoteSnapshotSyncInFlight = (async () => {
+      try {
+        await this.siteAdapter.loadAllConversations()
+        const { newCount, updatedCount } = this.syncConversations(null, true)
+        if (newCount > 0 || updatedCount > 0) {
+          this.notifyDataChange()
+        }
+      } catch {
+        // Best-effort only. DOM/sidebar sync still handles visible rows.
+      } finally {
+        this.remoteSnapshotSyncInFlight = null
+      }
+    })()
+
+    return this.remoteSnapshotSyncInFlight
+  }
+
+  private stopRemoteConversationSnapshotSync() {
+    if (this.remoteSnapshotSyncTimer) {
+      clearTimeout(this.remoteSnapshotSyncTimer)
+      this.remoteSnapshotSyncTimer = null
+    }
+    this.remoteSnapshotSyncInFlight = null
+  }
+
+  private startCurrentConversationSync() {
+    if (this.currentConversationSyncTimer) return
+
+    this.syncCurrentConversation()
+    this.currentConversationSyncTimer = setInterval(() => {
+      this.syncCurrentConversation()
+    }, 1500)
+  }
+
+  private syncCurrentConversation(): boolean {
+    const info = this.siteAdapter.getCurrentConversationInfo()
+    if (!info?.id) return false
+
+    const existing = this.conversations[info.id]
+    if (!existing && !info.title?.trim()) {
+      return false
+    }
+    if (!existing) {
+      getConversationsStore().addConversation({
+        id: info.id,
+        siteId: this.siteAdapter.getSiteId(),
+        cid: info.cid,
+        title: info.title || t("untitledConversation"),
+        url: info.url || window.location.href,
+        folderId: this.lastUsedFolderId || "inbox",
+        pinned: info.isPinned || false,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+      this.notifyDataChange()
+      return true
+    }
+
+    const updates: Partial<Conversation> = {}
+    let needsUpdate = false
+
+    if (this.shouldUpdateConversationTitle(existing.title, info.title, existing.siteId)) {
+      updates.title = info.title
+      needsUpdate = true
+    }
+    if (info.url && info.url !== existing.url) {
+      updates.url = info.url
+      needsUpdate = true
+    }
+    if (info.cid !== undefined && info.cid !== existing.cid) {
+      updates.cid = info.cid
+      needsUpdate = true
+    }
+    if (info.isPinned !== undefined && info.isPinned !== existing.pinned) {
+      if (info.isPinned) {
+        updates.pinned = true
+        needsUpdate = true
+      } else if (this.syncUnpin) {
+        updates.pinned = false
+        needsUpdate = true
+      }
+    }
+
+    if (needsUpdate) {
+      getConversationsStore().updateConversation(info.id, updates)
+      this.notifyDataChange()
+      return true
+    }
+
+    return false
+  }
+
+  private stopCurrentConversationSync() {
+    if (!this.currentConversationSyncTimer) return
+    clearInterval(this.currentConversationSyncTimer)
+    this.currentConversationSyncTimer = null
+  }
+
+  private monitorConversationTitle(el: HTMLElement, id: string, sourceElement?: Element) {
     if (el.dataset.ghTitleObserver) return
     el.dataset.ghTitleObserver = "true"
 
@@ -518,6 +825,7 @@ export class ConversationManager {
       const container = this.siteAdapter.getSidebarScrollContainer() || document.body
       this.titleWatcher = DOMToolkit.watchMultiple(container as Node, {
         debounce: 500,
+        attributes: true,
       })
     }
 
@@ -525,7 +833,7 @@ export class ConversationManager {
       const config = this.observerConfig
       if (!config) return
 
-      const currentInfo = config.extractInfo(el)
+      const currentInfo = config.extractInfo(sourceElement || el)
       const currentId = currentInfo?.id
 
       if (!currentId || currentId !== id) return
@@ -536,7 +844,7 @@ export class ConversationManager {
       let needsUpdate = false
       const updates: Partial<Conversation> = {}
 
-      if (currentInfo.title && currentInfo.title !== existing.title) {
+      if (this.shouldUpdateConversationTitle(existing.title, currentInfo.title, existing.siteId)) {
         updates.title = currentInfo.title
         needsUpdate = true
       }
@@ -685,6 +993,7 @@ export class ConversationManager {
       const remoteMethod = remoteItem?.method || "none"
       const remoteAttempted = remoteEnabled && remoteResultMap.has(id) && remoteMethod !== "none"
       const remoteSuccess = remoteAttempted && (remoteItem?.success || false)
+      const shouldDeleteLocal = exists && (!remoteAttempted || remoteSuccess)
 
       if (remoteAttempted) {
         remoteAttemptedCount++
@@ -695,14 +1004,14 @@ export class ConversationManager {
         }
       }
 
-      if (exists) {
+      if (shouldDeleteLocal) {
         getConversationsStore().deleteConversation(id)
         localDeletedCount++
       }
 
       results.push({
         id,
-        localDeleted: exists,
+        localDeleted: shouldDeleteLocal,
         remoteEnabled,
         remoteAttempted,
         remoteSuccess,
@@ -764,9 +1073,29 @@ export class ConversationManager {
     return getConversationsStore().togglePin(convId)
   }
 
-  renameConversation(convId: string, newTitle: string) {
-    if (newTitle) {
-      getConversationsStore().updateConversation(convId, { title: newTitle })
+  async renameConversation(convId: string, newTitle: string) {
+    const normalizedTitle = newTitle.trim()
+    if (!normalizedTitle) return
+
+    const conv = this.conversations[convId]
+    const previousTitle = conv?.title
+    if (conv) {
+      getConversationsStore().updateConversation(convId, { title: normalizedTitle })
+      this.notifyDataChange()
+    }
+
+    const target: ConversationRenameTarget = {
+      id: convId,
+      title: conv?.title,
+      url: conv?.url,
+    }
+    const result = await this.siteAdapter.renameConversationOnSite(target, normalizedTitle)
+    if (!result.success && result.method !== "none") {
+      if (conv) {
+        getConversationsStore().updateConversation(convId, { title: previousTitle || "" })
+        this.notifyDataChange()
+      }
+      showToast(`云端重命名失败，已恢复面板标题${result.reason ? `: ${result.reason}` : ""}`)
     }
   }
 
@@ -826,7 +1155,7 @@ export class ConversationManager {
         const updates: Partial<Conversation> = {}
         let needsUpdate = false
 
-        if (existing.title !== item.title) {
+        if (this.shouldUpdateConversationTitle(existing.title, item.title, existing.siteId)) {
           updates.title = item.title
           needsUpdate = true
         }
@@ -922,6 +1251,35 @@ export class ConversationManager {
     if (diff < 604800000) return Math.floor(diff / 86400000) + t("daysAgo")
 
     return date.toLocaleDateString()
+  }
+
+  private shouldUpdateConversationTitle(
+    existingTitle: string | undefined,
+    incomingTitle: string | undefined,
+    siteId?: string,
+  ): boolean {
+    const current = existingTitle?.trim() || ""
+    const next = incomingTitle?.trim() || ""
+
+    if (!next || next === current) return false
+    if (!current) return true
+
+    if ((siteId || this.siteAdapter.getSiteId()) === SITE_IDS.PERPLEXITY) {
+      const currentIsSlug = this.isPerplexitySlugTitle(current)
+      const nextIsSlug = this.isPerplexitySlugTitle(next)
+
+      if (!currentIsSlug && nextIsSlug) return false
+      if (currentIsSlug && !nextIsSlug) return true
+    }
+
+    return true
+  }
+
+  private isPerplexitySlugTitle(title: string): boolean {
+    const normalized = title.trim().toLowerCase()
+    if (!normalized) return true
+    if (/[\u3400-\u9fff]/.test(normalized)) return false
+    return /^[a-z0-9]+(?:-[a-z0-9]+){2,}(?:-[a-z0-9_-]{4,})?$/i.test(normalized)
   }
 
   private resolveConversationForExport(convId: string): Conversation | null {

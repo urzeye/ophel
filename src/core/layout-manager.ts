@@ -107,6 +107,7 @@ export class LayoutManager {
     if (!this.zenModeEnabled) {
       this.cleanupZenModeRootClass()
       this.unmountZenModeExitButton()
+      this.siteAdapter.onZenModeChanged(false)
       this.refreshShadowInjection()
       return
     }
@@ -118,6 +119,7 @@ export class LayoutManager {
       this.zenModeStyle = this.injectStyle(STYLE_IDS.ZEN_MODE, css)
     }
     this.mountZenModeExitButton()
+    this.siteAdapter.onZenModeChanged(true)
     this.refreshShadowInjection()
   }
 

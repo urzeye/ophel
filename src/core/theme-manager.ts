@@ -193,6 +193,35 @@ export class ThemeManager {
           )
           return true
         }
+        case SITE_IDS.PERPLEXITY: {
+          localStorage.setItem("theme", "system")
+          localStorage.setItem("appearance", "system")
+          document.documentElement.setAttribute("data-color-scheme", targetMode)
+          document.documentElement.classList.toggle("dark", targetMode === "dark")
+          document.documentElement.classList.toggle("light", targetMode === "light")
+          document.documentElement.style.colorScheme = targetMode
+          if (document.body) {
+            document.body.setAttribute("data-color-scheme", targetMode)
+            document.body.classList.toggle("dark", targetMode === "dark")
+            document.body.classList.toggle("light", targetMode === "light")
+            document.body.style.colorScheme = targetMode
+          }
+          window.dispatchEvent(
+            new StorageEvent("storage", {
+              key: "theme",
+              newValue: "system",
+              storageArea: localStorage,
+            }),
+          )
+          window.dispatchEvent(
+            new StorageEvent("storage", {
+              key: "appearance",
+              newValue: "system",
+              storageArea: localStorage,
+            }),
+          )
+          return true
+        }
         case SITE_IDS.QWENAI: {
           const previousTheme = localStorage.getItem("theme")
           localStorage.setItem("theme", "system")
@@ -513,6 +542,15 @@ export class ThemeManager {
       return "light"
     }
 
+    const dataColorScheme =
+      document.documentElement.getAttribute("data-color-scheme") ||
+      document.body.getAttribute("data-color-scheme")
+    if (dataColorScheme === "dark") {
+      return "dark"
+    } else if (dataColorScheme === "light") {
+      return "light"
+    }
+
     // 4. Style colorScheme (Gemini Enterprise 使用这种方式)
     if (document.body.style.colorScheme === "dark") {
       return "dark"
@@ -536,6 +574,21 @@ export class ThemeManager {
           const storedTheme = localStorage.getItem("theme")
           if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system") {
             return storedTheme
+          }
+          return null
+        }
+        case SITE_IDS.PERPLEXITY: {
+          const storedTheme = localStorage.getItem("appearance") || localStorage.getItem("theme")
+          if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system") {
+            return storedTheme
+          }
+          if (storedTheme === "auto") {
+            return "system"
+          }
+
+          const colorScheme = document.documentElement.getAttribute("data-color-scheme")
+          if (colorScheme === "light" || colorScheme === "dark") {
+            return colorScheme
           }
           return null
         }
@@ -793,12 +846,12 @@ ${cssVars}
       // 重新观察 body 和 html 元素
       this.hostThemeObserver.observe(document.body, {
         attributes: true,
-        attributeFilter: ["class", "data-theme", "style"],
+        attributeFilter: ["class", "data-theme", "data-color-scheme", "style"],
       })
       // 同时监听 html 元素的 class 和 data-theme 属性（ChatGPT 使用 html.dark/light）
       this.hostThemeObserver.observe(document.documentElement, {
         attributes: true,
-        attributeFilter: ["class", "data-theme"],
+        attributeFilter: ["class", "data-theme", "data-color-scheme"],
       })
     }
   }
@@ -862,13 +915,13 @@ ${cssVars}
       // 监听 body 的 class、data-theme、style 属性变化
       this.hostThemeObserver.observe(document.body, {
         attributes: true,
-        attributeFilter: ["class", "data-theme", "style"],
+        attributeFilter: ["class", "data-theme", "data-color-scheme", "style"],
       })
 
       // 同时监听 html 元素的 class 和 data-theme 属性（ChatGPT 使用 html.dark/light）
       this.hostThemeObserver.observe(document.documentElement, {
         attributes: true,
-        attributeFilter: ["class", "data-theme"],
+        attributeFilter: ["class", "data-theme", "data-color-scheme"],
       })
     }
   }

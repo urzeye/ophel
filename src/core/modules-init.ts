@@ -229,7 +229,7 @@ export function initMarkdownFixer(ctx: ModulesContext): void {
   if (config && enabled) {
     modules.markdownFixer = new MarkdownFixer(config)
     modules.markdownFixer.start()
-    console.warn(`[Ophel] MarkdownFixer started for ${adapter.getName()}`)
+    console.info(`[Ophel] MarkdownFixer started for ${adapter.getName()}`)
   }
 }
 
@@ -637,7 +637,7 @@ export function initUrlChangeObserver(ctx: ModulesContext): void {
     const currentPathname = window.location.pathname
     if (currentPathname !== lastPathname) {
       lastPathname = currentPathname
-      console.warn("[Ophel] URL changed, reinitializing modules...")
+      console.info("[Ophel] URL changed, reinitializing modules...")
 
       // 1. 阅读历史：停止录制 → 延迟恢复并重启
       if (readingHistoryRestoreTimeoutId) {
@@ -681,7 +681,7 @@ export function initUrlChangeObserver(ctx: ModulesContext): void {
       modules.usageCounterManager?.handleUrlChange()
 
       // 6. 模型锁定重新触发（新对话/新页面可能重置模型）
-      modules.modelLocker?.relock(300)
+      modules.modelLocker?.relock(80)
     }
   }
 

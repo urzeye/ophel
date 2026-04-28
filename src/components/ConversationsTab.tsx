@@ -1145,12 +1145,19 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                         try {
                           const result = await manager.deleteConversations(Array.from(selectedIds))
                           if (result.localDeletedCount === 0) {
-                            showToast(t("deleteError") || "删除失败")
+                            const firstReason =
+                              result.results.find((item) => item.reason)?.reason || undefined
+                            showToast(
+                              `${t("deleteError") || "删除失败"}${firstReason ? `: ${firstReason}` : ""}`,
+                            )
                             return
                           }
                           if (result.remoteAttemptedCount > 0 && result.remoteFailedCount > 0) {
+                            const firstReason =
+                              result.results.find((item) => !item.remoteSuccess && item.reason)
+                                ?.reason || undefined
                             showToast(
-                              `已删除 ${result.localDeletedCount} 个，本地成功，云端失败 ${result.remoteFailedCount} 个`,
+                              `已删除 ${result.localDeletedCount} 个，本地成功，云端失败 ${result.remoteFailedCount} 个${firstReason ? `: ${firstReason}` : ""}`,
                             )
                           }
                           clearSelection()
@@ -1350,11 +1357,15 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                 try {
                   const result = await manager.deleteConversation(menu.conv.id)
                   if (!result.localDeleted) {
-                    showToast(t("deleteError") || "删除失败")
+                    showToast(
+                      `${t("deleteError") || "删除失败"}${result.reason ? `: ${result.reason}` : ""}`,
+                    )
                     return
                   }
                   if (result.remoteAttempted && !result.remoteSuccess) {
-                    showToast("已从面板删除，但云端删除失败")
+                    showToast(
+                      `已从面板删除，但云端删除失败${result.reason ? `: ${result.reason}` : ""}`,
+                    )
                   }
                   await loadData()
                 } finally {

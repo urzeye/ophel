@@ -93,6 +93,7 @@ export const SITE_IDS = {
   IMA: "ima",
   DEEPSEEK: "deepseek",
   KIMI: "kimi",
+  PERPLEXITY: "perplexity",
   QIANWEN: "qianwen",
   QWENAI: "qwenai",
   YUANBAO: "yuanbao",
@@ -170,6 +171,13 @@ export const SUPPORTED_AI_PLATFORMS: SupportedAiPlatform[] = [
     pattern: /www\.kimi\.com/,
     url: "https://www.kimi.com",
     icon: "🌙",
+  },
+  {
+    id: SITE_IDS.PERPLEXITY,
+    name: "Perplexity",
+    pattern: /(?:www\.)?perplexity\.ai/,
+    url: "https://www.perplexity.ai",
+    icon: "P",
   },
   {
     id: SITE_IDS.ZAI,

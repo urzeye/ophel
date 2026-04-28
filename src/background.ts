@@ -44,6 +44,8 @@ const OPHEL_TARGET_URLS = [
   "https://www.doubao.com/*",
   "https://ima.qq.com/*",
   "https://chat.deepseek.com/*",
+  "https://www.perplexity.ai/*",
+  "https://perplexity.ai/*",
   "https://chatglm.cn/*",
   "https://chat.qwen.ai/*",
   "https://yuanbao.tencent.com/*",

@@ -104,6 +104,7 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
       { id: SITE_IDS.IMA, label: "ima" },
       { id: SITE_IDS.CHATGLM, label: "ChatGLM" },
       { id: SITE_IDS.KIMI, label: "Kimi" },
+      { id: SITE_IDS.PERPLEXITY, label: "Perplexity" },
       { id: SITE_IDS.QIANWEN, label: "Qianwen" },
       { id: SITE_IDS.QWENAI, label: "Qwen Studio" },
       { id: SITE_IDS.ZAI, label: "Z.ai" },

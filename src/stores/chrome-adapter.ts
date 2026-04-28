@@ -96,6 +96,11 @@ const userscriptStorageAdapter: StateStorage = {
 const extensionStorageAdapter: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {
     return new Promise((resolve) => {
+      if (typeof chrome === "undefined" || !chrome.storage?.local) {
+        resolve(null)
+        return
+      }
+
       chrome.storage.local.get(name, (result) => {
         const value = result[name]
         if (value === undefined) {
@@ -116,6 +121,11 @@ const extensionStorageAdapter: StateStorage = {
 
   setItem: async (name: string, value: string): Promise<void> => {
     return new Promise((resolve) => {
+      if (typeof chrome === "undefined" || !chrome.storage?.local) {
+        resolve()
+        return
+      }
+
       // 存储 JSON 字符串
       chrome.storage.local.set({ [name]: value }, () => {
         resolve()
@@ -125,6 +135,11 @@ const extensionStorageAdapter: StateStorage = {
 
   removeItem: async (name: string): Promise<void> => {
     return new Promise((resolve) => {
+      if (typeof chrome === "undefined" || !chrome.storage?.local) {
+        resolve()
+        return
+      }
+
       chrome.storage.local.remove(name, () => {
         resolve()
       })
