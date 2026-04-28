@@ -277,46 +277,66 @@ pnpm package:all
 </p>
 
 <p align="center">
-  <a href="https://linux.do/">Linux.do</a> コミュニティの交流と支援に感謝します。プロジェクトの多くのアイデアや改善は、コミュニティメンバーからのフィードバックに支えられています。
+  <a href="https://linux.do/">Linux.do</a> コミュニティの議論とサポートに感謝します。多くのアイデアや改善はコミュニティからの熱心なフィードバックに由来しています。<br>
+  より多くの開発者の参加を歓迎します。コードベースに不慣れな場合は、開発ドキュメントや AI アシスタントを利用して素早く始めることができます：
 </p>
-
-どんな形でも貢献を歓迎します — コード提出、問題報告、アイデアのシェアなど。コードベースに不慣れですか？AIで素早くキャッチアップ：
 
 <p align="center">
-  <a href="https://deepwiki.com/urzeye/ophel"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" /></a>
+  <strong>📖 ドキュメント＆AI：</strong>
+  <a href="https://urzeye.mintlify.app"><img src="https://img.shields.io/badge/公式ドキュメント-Mintlify-10B981?style=flat-square&logo=mintlify&logoColor=white" alt="公式ドキュメント" style="vertical-align: middle;"></a>
   &nbsp;
-  <a href="https://zread.ai/urzeye/ophel"><img src="https://img.shields.io/badge/Ask_Zread-_.svg?style=flat&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff" alt="Ask Zread" /></a>
+  <a href="https://deepwiki.com/urzeye/ophel"><img src="https://img.shields.io/badge/DeepWikiに聞く-555555?style=flat-square&logo=openai&logoColor=white" alt="DeepWikiに聞く" style="vertical-align: middle;"/></a>
+  &nbsp;
+  <a href="https://zread.ai/urzeye/ophel"><img src="https://img.shields.io/badge/Zreadに聞く-_.svg?style=flat-square&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff" alt="Zreadに聞く" style="vertical-align: middle;"/></a>
 </p>
 
-<table>
-  <tr>
-    <td width="33%" align="center">
-      <h3>🐛 Issue を報告</h3>
-      <p>バグを見つけた？機能リクエストがある？<br/>GitHub Issues に教えてください</p>
-      <a href="https://github.com/urzeye/ophel/issues/new/choose">
-        <img src="https://img.shields.io/badge/New%20Issue-Submit-red?style=for-the-badge&logo=github" alt="New Issue" />
-      </a>
-    </td>
-    <td width="33%" align="center">
-      <h3>🔀 Pull Request を送る</h3>
-      <p>バグ修正や新機能を開発したら？<br/>PRを送ってプロジェクトを一緒に成長させよう</p>
-      <a href="https://github.com/urzeye/ophel/pulls">
-        <img src="https://img.shields.io/badge/Submit%20PR-Contribute-blue?style=for-the-badge&logo=github" alt="Pull Requests" />
-      </a>
-    </td>
-    <td width="33%" align="center">
-      <h3>🛠️ ローカル開発</h3>
-      <p>リポジトリをクローンして開発を始めよう<br/>要件：Node.js ≥ 18, pnpm ≥ 9</p>
-      <a href="https://github.com/urzeye/ophel/blob/main/docs/readmes/README_ja.md#-%E4%BB%8A%E3%81%99%E3%81%90%E5%A7%8B%E3%82%81%E3%82%8B">
-        <img src="https://img.shields.io/badge/Local%20Build-Dev%20Guide-green?style=for-the-badge&logo=node.js" alt="Local Dev" />
-      </a>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <strong>🛠️ フィードバック：</strong>
+  <a href="https://github.com/urzeye/ophel/issues/new/choose"><img src="https://img.shields.io/badge/問題を報告-D73A49?style=flat-square&logo=github&logoColor=white" alt="Report Issue" style="vertical-align: middle;"/></a>
+  &nbsp;
+  <a href="https://github.com/urzeye/ophel/pulls"><img src="https://img.shields.io/badge/コードを提供する-0366D6?style=flat-square&logo=github&logoColor=white" alt="Submit PR" style="vertical-align: middle;"/></a>
+</p>
+
+<details>
+<summary><strong>💻 ローカル開発ビルドガイド</strong></summary>
+
+<br>
+
+**環境要件**: `Node.js >= 18.x`, `pnpm >= 9.x`
+
+```bash
+# 1. リポジトリをクローンし、プロジェクト・ディレクトリに入る
+git clone https://github.com/urzeye/ophel.git
+cd ophel
+
+# 2. 依存関係のインストール
+pnpm install
+
+# 3. 開発サーバーの起動（ブラウザ拡張機能のホットリロードをサポート）
+pnpm dev
+
+# ======== ビルドとパッケージ化 ========
+
+# 各ブラウザ用のプロダクション版をビルド
+pnpm build              # Chrome 拡張機能のビルド
+pnpm build:firefox      # Firefox 拡張機能のビルド
+pnpm build:all          # メインブラウザ向け拡張機能を一括ビルド
+
+# 配布用アーカイブ (.zip) の作成
+pnpm package            # 既存のビルドから Chrome 拡張機能をパッケージ化
+pnpm package:firefox    # 既存のビルドから Firefox 拡張機能をパッケージ化
+pnpm package:all        # すべてのプラットフォームを一括パッケージ化
+
+# ======== ユーザースクリプト開発 ========
+
+pnpm build:userscript:local    # ローカルデバッグ用のユーザースクリプトのビルド
+pnpm serve:userscript:assets   # 静的アセット（アイコン/スタイルなど）をローカルでサーバー提供
+```
+
+</details>
 
 > [!TIP]
->
-> PRを送る前に、リポジトリをフォークして新しいブランチで変更を行い、`pnpm lint:check` と `pnpm typecheck` が通ることを確認してください。
+> 💡 **コントリビューション規約**: PR を送信する前に、リポジトリをフォークして新しいブランチで開発し、`pnpm lint:check` と `pnpm typecheck` をパスしていることを確認してください。
 
 ---
 

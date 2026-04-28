@@ -269,46 +269,66 @@ pnpm package:all
 </p>
 
 <p align="center">
-  Спасибо сообществу <a href="https://linux.do/">Linux.do</a> за общение и поддержку. Многие идеи и улучшения проекта появились благодаря отзывам участников сообщества.
+  Спасибо сообществу <a href="https://linux.do/">Linux.do</a> за обсуждения и поддержку. Многие идеи и улучшения в этом проекте основаны на энтузиазме и отзывах сообщества.<br>
+  Мы также с нетерпением ждем новых разработчиков. Если вы не знакомы с кодом, обратитесь к документации для разработчиков или ИИ-помощникам для быстрого старта:
 </p>
-
-Вклад в любой форме приветствуется — код, сообщения об ошибках или идеи. Новичок в проекте? Изучи код с помощью ИИ:
 
 <p align="center">
-  <a href="https://deepwiki.com/urzeye/ophel"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" /></a>
+  <strong>📖 Доки и ИИ:</strong>
+  <a href="https://urzeye.mintlify.app"><img src="https://img.shields.io/badge/Официальная_документация-Mintlify-10B981?style=flat-square&logo=mintlify&logoColor=white" alt="Официальная документация" style="vertical-align: middle;"></a>
   &nbsp;
-  <a href="https://zread.ai/urzeye/ophel"><img src="https://img.shields.io/badge/Ask_Zread-_.svg?style=flat&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff" alt="Ask Zread" /></a>
+  <a href="https://deepwiki.com/urzeye/ophel"><img src="https://img.shields.io/badge/Спросить_DeepWiki-555555?style=flat-square&logo=openai&logoColor=white" alt="Спросить DeepWiki" style="vertical-align: middle;"/></a>
+  &nbsp;
+  <a href="https://zread.ai/urzeye/ophel"><img src="https://img.shields.io/badge/Спросить_Zread-_.svg?style=flat-square&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff" alt="Спросить Zread" style="vertical-align: middle;"/></a>
 </p>
 
-<table>
-  <tr>
-    <td width="33%" align="center">
-      <h3>🐛 Сообщить об Ошибке</h3>
-      <p>Нашли баг? Есть предложение?<br/>Сообщите нам через GitHub Issues</p>
-      <a href="https://github.com/urzeye/ophel/issues/new/choose">
-        <img src="https://img.shields.io/badge/New%20Issue-Submit-red?style=for-the-badge&logo=github" alt="New Issue" />
-      </a>
-    </td>
-    <td width="33%" align="center">
-      <h3>🔀 Отправить Pull Request</h3>
-      <p>Исправили баг или разработали функцию?<br/>Отправьте PR — развиваемся вместе</p>
-      <a href="https://github.com/urzeye/ophel/pulls">
-        <img src="https://img.shields.io/badge/Submit%20PR-Contribute-blue?style=for-the-badge&logo=github" alt="Pull Requests" />
-      </a>
-    </td>
-    <td width="33%" align="center">
-      <h3>🛠️ Локальная Разработка</h3>
-      <p>Клонируйте репозиторий и начните разработку<br/>Требования: Node.js ≥ 18, pnpm ≥ 9</p>
-      <a href="https://github.com/urzeye/ophel/blob/main/docs/readmes/README_ru.md#-%D0%B1%D1%8B%D1%81%D1%82%D1%80%D1%8B%D0%B9-%D1%81%D1%82%D0%B0%D1%80%D1%82">
-        <img src="https://img.shields.io/badge/Local%20Build-Dev%20Guide-green?style=for-the-badge&logo=node.js" alt="Local Dev" />
-      </a>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <strong>🛠️ Обратная связь:</strong>
+  <a href="https://github.com/urzeye/ophel/issues/new/choose"><img src="https://img.shields.io/badge/Сообщить_о_проблеме-D73A49?style=flat-square&logo=github&logoColor=white" alt="Report Issue" style="vertical-align: middle;"/></a>
+  &nbsp;
+  <a href="https://github.com/urzeye/ophel/pulls"><img src="https://img.shields.io/badge/Предложить_код-0366D6?style=flat-square&logo=github&logoColor=white" alt="Submit PR" style="vertical-align: middle;"/></a>
+</p>
+
+<details>
+<summary><strong>💻 Руководство по локальной разработке и сборке</strong></summary>
+
+<br>
+
+**Требования**: `Node.js >= 18.x`, `pnpm >= 9.x`
+
+```bash
+# 1. Клонируйте репозиторий и перейдите в папку проекта
+git clone https://github.com/urzeye/ophel.git
+cd ophel
+
+# 2. Установите зависимости
+pnpm install
+
+# 3. Запустите локальный сервер (поддерживает HMR для расширений)
+pnpm dev
+
+# ======== Сборка и упаковка ========
+
+# Соберите production версии для браузеров
+pnpm build              # Сборка расширения для Chrome
+pnpm build:firefox      # Сборка расширения для Firefox
+pnpm build:all          # Сборка для всех платформ
+
+# Создание архивов для распространения (.zip)
+pnpm package            # Упаковка Chrome из текущей сборки
+pnpm package:firefox    # Упаковка Firefox из текущей сборки
+pnpm package:all        # Упаковка всех платформ
+
+# ======== Разработка Userscript ========
+
+pnpm build:userscript:local    # Сборка userscript для локальной отладки
+pnpm serve:userscript:assets   # Запуск сервера для статических ресурсов
+```
+
+</details>
 
 > [!TIP]
->
-> Перед отправкой PR, сделайте форк репозитория, внесите изменения в новую ветку и убедитесь, что `pnpm lint:check` и `pnpm typecheck` проходят.
+> 💡 **Руководство по участию**: Перед отправкой PR рекомендуется сделать форк репозитория, создать новую ветку и убедиться, что ваш код проходит проверки `pnpm lint:check` и `pnpm typecheck`.
 
 ---
 

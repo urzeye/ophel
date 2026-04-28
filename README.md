@@ -192,35 +192,6 @@
 2. Download `.user.js` file from [Releases](https://github.com/urzeye/ophel/releases)
 3. Drag into browser or click the link to install
 
-### Local Build
-
-<details>
-<summary>Click to expand build steps</summary>
-
-**Requirements**: Node.js >= 18.x, pnpm >= 9.x
-
-```bash
-git clone https://github.com/urzeye/ophel.git
-cd ophel
-
-pnpm install
-
-pnpm dev
-pnpm build
-pnpm build:firefox
-pnpm build:all
-
-pnpm build:userscript
-pnpm build:userscript:local
-pnpm serve:userscript:assets
-
-pnpm package
-pnpm package:firefox
-pnpm package:all
-```
-
-</details>
-
 ## 🙌 Support Ophel Atlas
 
 <!-- supporters:start -->
@@ -319,46 +290,66 @@ pnpm package:all
 </p>
 
 <p align="center">
-  Thanks to the <a href="https://linux.do/">Linux.do</a> community for the discussions and support. Many ideas and improvements in this project came from feedback shared by community members.
+  Thanks to the <a href="https://linux.do/">Linux.do</a> community for the discussions and support. Many ideas and improvements in this project came from feedback shared by community members.<br>
+  We also look forward to more developers joining us. If you are not familiar with the codebase, check out the documentation or use AI assistants to get up to speed quickly:
 </p>
-
-Welcome to contribute in any form — whether submitting code, reporting issues, or sharing ideas. New to the codebase? Get up to speed with AI:
 
 <p align="center">
-  <a href="https://deepwiki.com/urzeye/ophel"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" /></a>
+  <strong>📖 Docs & AI:</strong>
+  <a href="https://urzeye.mintlify.app"><img src="https://img.shields.io/badge/Official_Docs-Mintlify-10B981?style=flat-square&logo=mintlify&logoColor=white" alt="Official Docs" style="vertical-align: middle;"></a>
   &nbsp;
-  <a href="https://zread.ai/urzeye/ophel"><img src="https://img.shields.io/badge/Ask_Zread-_.svg?style=flat&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff" alt="Ask Zread" /></a>
+  <a href="https://deepwiki.com/urzeye/ophel"><img src="https://img.shields.io/badge/Ask_DeepWiki-555555?style=flat-square&logo=openai&logoColor=white" alt="Ask DeepWiki" style="vertical-align: middle;"/></a>
+  &nbsp;
+  <a href="https://zread.ai/urzeye/ophel"><img src="https://img.shields.io/badge/Ask_Zread-_.svg?style=flat-square&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff" alt="Ask Zread" style="vertical-align: middle;"/></a>
 </p>
 
-<table>
-  <tr>
-    <td width="33%" align="center">
-      <h3>🐛 Report an Issue</h3>
-      <p>Found a bug? Have a feature request?<br/>Tell us on GitHub Issues</p>
-      <a href="https://github.com/urzeye/ophel/issues/new/choose">
-        <img src="https://img.shields.io/badge/New%20Issue-Submit-red?style=for-the-badge&logo=github" alt="New Issue" />
-      </a>
-    </td>
-    <td width="33%" align="center">
-      <h3>🔀 Submit a Pull Request</h3>
-      <p>Fixed a bug or built a new feature?<br/>Open a PR and grow the project</p>
-      <a href="https://github.com/urzeye/ophel/pulls">
-        <img src="https://img.shields.io/badge/Submit%20PR-Contribute-blue?style=for-the-badge&logo=github" alt="Pull Requests" />
-      </a>
-    </td>
-    <td width="33%" align="center">
-      <h3>🛠️ Local Development</h3>
-      <p>Clone the repo and start hacking<br/>Requires Node.js ≥ 18, pnpm ≥ 9</p>
-      <a href="https://github.com/urzeye/ophel#-quick-start">
-        <img src="https://img.shields.io/badge/Local%20Build-Dev%20Guide-green?style=for-the-badge&logo=node.js" alt="Local Dev" />
-      </a>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <strong>🛠️ Feedback:</strong>
+  <a href="https://github.com/urzeye/ophel/issues/new/choose"><img src="https://img.shields.io/badge/Report_Issue-D73A49?style=flat-square&logo=github&logoColor=white" alt="Report Issue" style="vertical-align: middle;"/></a>
+  &nbsp;
+  <a href="https://github.com/urzeye/ophel/pulls"><img src="https://img.shields.io/badge/Submit_PR-0366D6?style=flat-square&logo=github&logoColor=white" alt="Submit PR" style="vertical-align: middle;"/></a>
+</p>
+
+<details>
+<summary><strong>💻 Local Development Guide</strong></summary>
+
+<br>
+
+**Requirements**: `Node.js >= 18.x`, `pnpm >= 9.x`
+
+```bash
+# 1. Clone the repo and enter the project directory
+git clone https://github.com/urzeye/ophel.git
+cd ophel
+
+# 2. Install dependencies
+pnpm install
+
+# 3. Start development server (supports browser extension HMR)
+pnpm dev
+
+# ======== Build and Package ========
+
+# Build production versions for respective browsers
+pnpm build              # Build Chrome extension
+pnpm build:firefox      # Build Firefox extension
+pnpm build:all          # Build for all platforms
+
+# Package into distributeable archives (.zip)
+pnpm package            # Package Chrome extension from existing build
+pnpm package:firefox    # Package Firefox extension from existing build
+pnpm package:all        # Package all platforms
+
+# ======== Userscript Development ========
+
+pnpm build:userscript:local    # Build userscript for local debugging
+pnpm serve:userscript:assets   # Serve static assets locally
+```
+
+</details>
 
 > [!TIP]
->
-> Before submitting a PR, fork the repo, make your changes on a new branch, and make sure `pnpm lint:check` and `pnpm typecheck` pass.
+> 💡 **Contribution Guidelines**: Before submitting a PR, we recommend forking the repo, creating a new branch, and ensuring your code passes `pnpm lint:check` and `pnpm typecheck`.
 
 ---
 

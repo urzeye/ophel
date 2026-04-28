@@ -277,46 +277,66 @@ pnpm package:all
 </p>
 
 <p align="center">
-  <a href="https://linux.do/">Linux.do</a> 커뮤니티의 교류와 지원에 감사드립니다. 프로젝트의 많은 아이디어와 개선점은 커뮤니티 구성원들의 피드백에서 나왔습니다.
+  논의와 지원을 아끼지 않은 <a href="https://linux.do/">Linux.do</a> 커뮤니티에 감사드립니다. 프로젝트의 많은 아이디어와 개선 사항이 커뮤니티의 열정적인 피드백에서 비롯되었습니다.<br>
+  더 많은 개발자분들의 참여를 기대합니다. 코드베이스에 익숙하지 않다면 개발 문서나 AI 어시스턴트를 활용하여 빠르게 시작할 수 있습니다:
 </p>
-
-코드 제출, 버그 보고, 아이디어 공유 등 어떤 형태로든 기여를 환영합니다. 코드베이스가 처음인가요? AI로 빠르게 파악하세요:
 
 <p align="center">
-  <a href="https://deepwiki.com/urzeye/ophel"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" /></a>
+  <strong>📖 문서 및 AI:</strong>
+  <a href="https://urzeye.mintlify.app"><img src="https://img.shields.io/badge/공식_문서-Mintlify-10B981?style=flat-square&logo=mintlify&logoColor=white" alt="공식 문서" style="vertical-align: middle;"></a>
   &nbsp;
-  <a href="https://zread.ai/urzeye/ophel"><img src="https://img.shields.io/badge/Ask_Zread-_.svg?style=flat&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff" alt="Ask Zread" /></a>
+  <a href="https://deepwiki.com/urzeye/ophel"><img src="https://img.shields.io/badge/DeepWiki에게_묻기-555555?style=flat-square&logo=openai&logoColor=white" alt="DeepWiki에게 묻기" style="vertical-align: middle;"/></a>
+  &nbsp;
+  <a href="https://zread.ai/urzeye/ophel"><img src="https://img.shields.io/badge/Zread에게_묻기-_.svg?style=flat-square&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff" alt="Zread에게 묻기" style="vertical-align: middle;"/></a>
 </p>
 
-<table>
-  <tr>
-    <td width="33%" align="center">
-      <h3>🐛 이슈 제보</h3>
-      <p>버그를 발견했나요? 기능 제안이 있나요?<br/>GitHub Issues에서 알려주세요</p>
-      <a href="https://github.com/urzeye/ophel/issues/new/choose">
-        <img src="https://img.shields.io/badge/New%20Issue-Submit-red?style=for-the-badge&logo=github" alt="New Issue" />
-      </a>
-    </td>
-    <td width="33%" align="center">
-      <h3>🔀 Pull Request 제출</h3>
-      <p>버그를 수정하거나 새 기능을 개발했나요?<br/>PR을 보내 함께 프로젝트를 발전시켜요</p>
-      <a href="https://github.com/urzeye/ophel/pulls">
-        <img src="https://img.shields.io/badge/Submit%20PR-Contribute-blue?style=for-the-badge&logo=github" alt="Pull Requests" />
-      </a>
-    </td>
-    <td width="33%" align="center">
-      <h3>🛠️ 로컬 개발</h3>
-      <p>저장소를 클론하고 개발을 시작하세요<br/>요구사항: Node.js ≥ 18, pnpm ≥ 9</p>
-      <a href="https://github.com/urzeye/ophel/blob/main/docs/readmes/README_ko.md#-%EC%8B%9C%EC%9E%91%ED%95%98%EA%B8%B0">
-        <img src="https://img.shields.io/badge/Local%20Build-Dev%20Guide-green?style=for-the-badge&logo=node.js" alt="Local Dev" />
-      </a>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <strong>🛠️ 피드백:</strong>
+  <a href="https://github.com/urzeye/ophel/issues/new/choose"><img src="https://img.shields.io/badge/문제_보고-D73A49?style=flat-square&logo=github&logoColor=white" alt="Report Issue" style="vertical-align: middle;"/></a>
+  &nbsp;
+  <a href="https://github.com/urzeye/ophel/pulls"><img src="https://img.shields.io/badge/코드_기여-0366D6?style=flat-square&logo=github&logoColor=white" alt="Submit PR" style="vertical-align: middle;"/></a>
+</p>
+
+<details>
+<summary><strong>💻 로컬 개발 및 빌드 가이드</strong></summary>
+
+<br>
+
+**요구 사항**: `Node.js >= 18.x`, `pnpm >= 9.x`
+
+```bash
+# 1. 저장소 복제 및 프로젝트 폴더로 이동
+git clone https://github.com/urzeye/ophel.git
+cd ophel
+
+# 2. 종속성 설치
+pnpm install
+
+# 3. 개발 서버 시작 (브라우저 확장 HMR 지원)
+pnpm dev
+
+# ======== 빌드 및 패키징 ========
+
+# 각 브라우저용 프로덕션 버전 빌드
+pnpm build              # Chrome 확장 프로그램 빌드
+pnpm build:firefox      # Firefox 확장 프로그램 빌드
+pnpm build:all          # 주요 브라우저 확장 프로그램 일괄 빌드
+
+# 배포용 아카이브(.zip) 생성
+pnpm package            # 기존 빌드 결과물로 Chrome 패키징
+pnpm package:firefox    # 기존 빌드 결과물로 Firefox 패키징
+pnpm package:all        # 모든 플랫폼 일괄 패키징
+
+# ======== 유저스크립트 개발 ========
+
+pnpm build:userscript:local    # 로컬 디버깅용 유저스크립트 빌드
+pnpm serve:userscript:assets   # 아이콘/스타일 등 정적 어셋을 로컬에서 서빙
+```
+
+</details>
 
 > [!TIP]
->
-> PR을 제출하기 전에 저장소를 포크하고 새 브랜치에서 변경사항을 만든 뒤 `pnpm lint:check`와 `pnpm typecheck`를 통과하는지 확인해 주세요.
+> 💡 **기여 가이드라인**: PR을 제출하기 전에 저장소를 포크하고 새 브랜치에서 작업하며 `pnpm lint:check` 및 `pnpm typecheck`를 통과하는지 확인하세요.
 
 ---
 

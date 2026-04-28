@@ -307,8 +307,7 @@ Contribuições de qualquer forma são bem-vindas — código, relatos de bugs o
 </table>
 
 > [!TIP]
->
-> Antes de enviar um PR, faça fork do repositório, faça suas mudanças em um novo branch e certifique-se de que `pnpm lint:check` e `pnpm typecheck` passem.
+> 💡 **Diretrizes de Contribuição**: Antes de enviar um PR, recomendamos fazer um fork do repositório, criar uma nova branch e certificar-se de que seu código passe em `pnpm lint:check` e `pnpm typecheck`.
 
 ---
 
