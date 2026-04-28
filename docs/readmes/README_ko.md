@@ -229,42 +229,46 @@ pnpm package:all
 
 ### 💖 특별한 감사
 
-<p align="center">
-  <a href="https://github.com/treasuresure"><img src="https://github.com/treasuresure.png?size=160" width="96" height="96" alt="treasuresure" /></a>
-  <br />
-  <a href="https://github.com/treasuresure"><strong>treasuresure</strong></a>
-</p>
+<table align="center">
+  <tbody>
+  <tr>
+    <td align="center" valign="top" width="20%">
+      <a href="https://github.com/treasuresure">
+        <img src="https://github.com/treasuresure.png?size=160" width="100px;" alt="treasuresure" /><br />
+        <sub><b>treasuresure</b></sub>
+      </a>
+    </td>
+  </tr>
+  </tbody>
+</table>
 
 ### 🤝 후원자
 
-<table align="center" border="0" cellpadding="0" cellspacing="0">
+<table align="center">
+  <tbody>
   <tr>
-    <td align="center" width="110">
-      <img src="https://lh3.googleusercontent.com/a-/ALV-UjVwv0jFS2TRGiNOMB4xl4BXF5j1D5jRIlR6t-4xgaUSpNIsYWc=s96-w96-h96" width="72" height="72" alt="Hugh" />
-      <br />
-      <sub>Hugh</sub>
+    <td align="center" valign="top" width="14.28%">
+      <img src="https://lh3.googleusercontent.com/a-/ALV-UjVwv0jFS2TRGiNOMB4xl4BXF5j1D5jRIlR6t-4xgaUSpNIsYWc=s96-w96-h96" width="84px;" alt="Hugh" /><br />
+      <sub><b>Hugh</b></sub>
     </td>
-    <td align="center" width="110">
-      <img src="https://ui-avatars.com/api/?name=%E5%8D%97&amp;background=random" width="72" height="72" alt="**南" />
-      <br />
-      <sub>**南</sub>
+    <td align="center" valign="top" width="14.28%">
+      <img src="https://ui-avatars.com/api/?name=%E5%8D%97&amp;background=random" width="84px;" alt="**南" /><br />
+      <sub><b>**南</b></sub>
     </td>
-    <td align="center" width="110">
-      <img src="https://api.dicebear.com/7.x/identicon/svg?seed=Lucky" width="72" height="72" alt="anonymous" />
-      <br />
-      <sub>anonymous</sub>
+    <td align="center" valign="top" width="14.28%">
+      <img src="https://api.dicebear.com/7.x/identicon/svg?seed=Lucky" width="84px;" alt="anonymous" /><br />
+      <sub><b>anonymous</b></sub>
     </td>
-    <td align="center" width="110">
-      <img src="https://ui-avatars.com/api/?name=%E7%8B%B7%E5%AE%A2%E8%A1%8C%E8%88%9F%F0%9F%8D%9C%E7%8B%82%EF%BC%9F&amp;background=random" width="72" height="72" alt="狷客行舟🍜狂？" />
-      <br />
-      <sub>狷客行舟🍜狂？</sub>
+    <td align="center" valign="top" width="14.28%">
+      <img src="https://ui-avatars.com/api/?name=%E7%8B%B7%E5%AE%A2%E8%A1%8C%E8%88%9F%F0%9F%8D%9C%E7%8B%82%EF%BC%9F&amp;background=random" width="84px;" alt="狷客行舟🍜狂？" /><br />
+      <sub><b>狷客行舟🍜狂？</b></sub>
     </td>
-    <td align="center" width="110">
-      <img src="https://ui-avatars.com/api/?name=%E7%85%9C&amp;background=random" width="72" height="72" alt="**煜" />
-      <br />
-      <sub>**煜</sub>
+    <td align="center" valign="top" width="14.28%">
+      <img src="https://ui-avatars.com/api/?name=%E7%85%9C&amp;background=random" width="84px;" alt="**煜" /><br />
+      <sub><b>**煜</b></sub>
     </td>
   </tr>
+  </tbody>
 </table>
 
 ---
