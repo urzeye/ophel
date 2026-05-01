@@ -33,7 +33,7 @@ jobs:
       # --- 手动触发：重新构建并打包 CWS zip ---
       - name: Setup pnpm (manual trigger only)
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node.js (manual trigger only)
         if: ${{ github.event_name == 'workflow_dispatch' }}
