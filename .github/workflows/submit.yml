@@ -37,7 +37,7 @@ jobs:
 
       - name: Setup Node.js (manual trigger only)
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "20"
           cache: "pnpm"
