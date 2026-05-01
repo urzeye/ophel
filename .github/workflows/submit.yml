@@ -23,7 +23,7 @@ jobs:
       # --- Release 触发：直接下载 Release 工作流生成的 CWS zip ---
       - name: Download CWS zip from Release workflow
         if: ${{ github.event_name == 'workflow_run' }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: cws-upload
           run-id: ${{ github.event.workflow_run.id }}
