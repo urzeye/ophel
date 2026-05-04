@@ -3200,7 +3200,11 @@ export const App = () => {
         onPanelToggle={() => {
           if (!isPanelOpen) {
             // 展开面板：如果处于吸附状态，进入 peek 模式
-            if (edgeSnapState && settings?.panel?.panelMode === "edge-snap") {
+            if (settings?.panel?.panelMode === "edge-snap") {
+              // 若 edgeSnapState 为 null（拖拽脱吸附后关闭了面板），恢复到默认边缘位置
+              if (!edgeSnapState) {
+                setEdgeSnapState((settings?.panel?.defaultPosition ?? "right") as "left" | "right")
+              }
               setIsEdgePeeking(true)
             }
           } else {
