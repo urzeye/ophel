@@ -1084,6 +1084,9 @@ export const App = () => {
   // 模式刚切换到 edge-snap，压制 MutationObserver 的初始 overlay 检查
   // 让面板先收缩作为预览，而不是因为设置模态框仍在打开而强制 peek
   const suppressEdgePeekInitRef = useRef(false)
+  // 通过 logo 按钮打开面板后，等待 React 完成渲染再同步实际 hover 状态
+  // 防止鼠标不在面板上时 peeking 状态永久保持
+  const shouldSyncEdgePeekAfterOpenRef = useRef(false)
 
   const getEdgePeekQueryRoots = useCallback((): Array<Element | ShadowRoot> => {
     const roots: Array<Element | ShadowRoot> = []
@@ -2803,6 +2806,16 @@ export const App = () => {
     }
   }, [edgeSnapState, settings?.panel?.panelMode, syncEdgePeekWithPanelHover])
 
+  // 通过 QuickButtons logo 打开面板后（isEdgePeeking = true），若鼠标不在面板上，
+  // 因无法触发 onMouseLeave，peeking 状态会永久保持。
+  // 在 React 渲染完成后，延迟 1.5 秒同步实际 hover 状态，让面板能够自动吸附回去。
+  useEffect(() => {
+    if (!shouldSyncEdgePeekAfterOpenRef.current) return
+    if (!isPanelOpen || !edgeSnapState || settings?.panel?.panelMode !== "edge-snap") return
+    shouldSyncEdgePeekAfterOpenRef.current = false
+    scheduleEdgePeekHoverSync(1500)
+  }, [isPanelOpen, edgeSnapState, settings?.panel?.panelMode, scheduleEdgePeekHoverSync])
+
   const showAiStudioSubmitShortcutSyncToast = useCallback(
     (submitShortcut: "enter" | "ctrlEnter") => {
       if (!adapter || adapter.getSiteId() !== SITE_IDS.AISTUDIO) return
@@ -3206,6 +3219,8 @@ export const App = () => {
                 setEdgeSnapState((settings?.panel?.defaultPosition ?? "right") as "left" | "right")
               }
               setIsEdgePeeking(true)
+              // 标记：面板打开后需延迟同步 hover，防止鼠标不在面板上时 peeking 永久保持
+              shouldSyncEdgePeekAfterOpenRef.current = true
             }
           } else {
             // 关闭面板：重置 peek 状态
