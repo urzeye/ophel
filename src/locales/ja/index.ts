@@ -703,6 +703,7 @@ export const ja = {
   conversationsDelete: "削除",
   conversationsDeleteConfirm: "フォルダ「{folder}」を削除しますか？会話は{inbox}に移動されます。",
   conversationsDeleteConvMsg: "会話「{title}」を削除しますか？",
+  confirmDeleteSelectedConvs: "選択した {count} 件の会話を削除しますか？",
   conversationsInbox: "受信トレイ",
   conversationsFolderCreated: "フォルダを作成しました",
   conversationsFolderRenamed: "名前を変更しました",

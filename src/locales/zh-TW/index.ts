@@ -136,8 +136,8 @@ export const zhTW = {
   selectFileOrPasteFirst: "請先選擇文件或貼上內容",
   restoreError: "還原失敗",
   backupRestoreConfirmMsg:
-    '確定要還原備份 "{name}" 嗎？當前數据將被覆蓋，已打開的 AI 頁面將被刷新。',
-  backupDeleteCloudConfirmMsg: '確定要删除雲端備份 "{name}" 嗎？此操作不可逆。',
+    '確定要還原備份 "{name}" 嗎？當前數據將被覆蓋，已打開的 AI 頁面將被刷新。',
+  backupDeleteCloudConfirmMsg: '確定要刪除雲端備份 "{name}" 嗎？此操作不可逆。',
   insertFailed: "插入失敗",
   maximize: "最大化",
   browse: "瀏覽...",
@@ -624,6 +624,7 @@ export const zhTW = {
   conversationsDelete: "刪除",
   conversationsDeleteConfirm: '確定刪除此資料夾 "{folder}" 嗎？其中的會話將移到{inbox}。',
   conversationsDeleteConvMsg: '確定刪除會話 "{title}" 嗎？',
+  confirmDeleteSelectedConvs: "確定刪除選取的 {count} 個會話嗎？",
   conversationsInbox: "收件箱",
   conversationsFolderCreated: "資料夾已建立",
   conversationsFolderRenamed: "資料夾已重新命名",

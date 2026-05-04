@@ -633,7 +633,6 @@ export async function downloadFile(
     return true
   } catch (err: unknown) {
     console.error("[Exporter] Download failed:", err)
-    const errorMessage = err instanceof Error ? err.message : String(err)
     showToast(t("exportFailed"))
     return false
   }
