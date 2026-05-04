@@ -1171,6 +1171,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       <div
         ref={groupRef}
         className={`quick-btn-group gh-interactive ${!isPanelOpen ? "collapsed" : ""} ${isDragging ? "dragging" : ""} ${isPressing ? "pressing" : ""} ${isScrolling ? "scroll-hidden" : ""} ${isLiquidCollapsed ? "liquid-collapsed" : ""} ${isGroupHidden ? "group-hidden" : ""}`}
+        aria-hidden={isGroupHidden}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
