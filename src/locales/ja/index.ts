@@ -240,6 +240,8 @@ export const ja = {
   quickButtonsHideWhenPanelOpenDesc:
     "パネルを展開したときにクイックボタングループを自動的に非表示にし、パネルを閉じると元に戻します",
 
+  quickButtonsBehaviorTitle: "クイックボタンの動作",
+  quickButtonsBehaviorDesc: "クイックボタングループの外観と動作を調整します",
   // ======== Continue existing translations ========
   searchPlaceholder: "プロンプトを検索...",
   addPrompt: "新規プロンプト",

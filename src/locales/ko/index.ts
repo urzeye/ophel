@@ -236,6 +236,8 @@ export const ko = {
   quickButtonsHideWhenPanelOpenDesc:
     "패널이 열릴 때 빠른 버튼 그룹을 자동으로 숨기고, 패널이 닫히면 다시 표시합니다",
 
+  quickButtonsBehaviorTitle: "빠른 버튼 동작",
+  quickButtonsBehaviorDesc: "빠른 버튼 그룹의 외관 및 동작 설정을 조절합니다",
   // ======== Continue existing translations ========
   searchPlaceholder: "프롬프트 검색...",
   addPrompt: "새 프롬프트 추가",

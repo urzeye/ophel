@@ -235,6 +235,8 @@ export const pt = {
   quickButtonsHideWhenPanelOpenDesc:
     "Oculta automaticamente o grupo de botões rápidos quando o painel está expandido; restaurado ao fechar o painel",
 
+  quickButtonsBehaviorTitle: "Comportamento dos botões rápidos",
+  quickButtonsBehaviorDesc: "Ajuste a aparência e o comportamento do grupo de botões rápidos",
   // ======== Continue existing translations ========
   searchPlaceholder: "Buscar prompts...",
   addPrompt: "Novo Prompt",

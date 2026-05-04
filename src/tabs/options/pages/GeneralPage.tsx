@@ -470,76 +470,82 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
 
       {/* ========== 快捷按钮 Tab ========== */}
       {activeTab === "shortcuts" && (
-        <SettingCard
-          title={t("collapsedButtonsOrderTitle") || "快捷按钮组"}
-          description={t("collapsedButtonsOrderDesc") || "快捷按钮组排序与启用 (拖拽排序)"}>
-          {settings.quickButtons?.collapsed?.map((btn, index) => {
-            // 暂时隐藏“手动锚点”设置项，避免对用户造成困扰
-            if (btn.id === "manualAnchor") return null
-            const def = COLLAPSED_BUTTON_DEFS[btn.id]
-            if (!def) return null
-            return (
-              <SortableItem
-                key={btn.id}
-                iconNode={
-                  def.IconComponent ? (
-                    <def.IconComponent size={18} color="currentColor" />
-                  ) : (
-                    def.icon
-                  )
-                }
-                label={t(def.labelKey) || btn.id}
-                index={index}
-                total={settings.quickButtons.collapsed.length}
-                enabled={btn.enabled}
-                showToggle={def.canToggle}
-                onToggle={() => toggleButton(index)}
-                onDragStart={(e) => handleDragStart(e, "button", index)}
-                onDragOver={handleDragOver}
-                onDragEnd={handleDragEnd}
-                onDrop={handleButtonDrop}
-                isDragging={draggedItem?.type === "button" && draggedItem?.index === index}
-              />
-            )
-          })}
-          <SettingRow
-            label={t("quickButtonsOpacityLabel") || "快捷按钮透明度"}
-            description={t("quickButtonsOpacityDesc") || "调整快捷按钮组整体透明度"}
-            settingId="quick-buttons-opacity">
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <input
-                type="range"
-                min="0.4"
-                max="1"
-                step="0.05"
-                value={settings.quickButtons?.opacity ?? 1}
-                onChange={(e) =>
-                  updateNestedSetting("quickButtons", "opacity", parseFloat(e.target.value))
-                }
-                style={{ width: "120px" }}
-              />
-              <span style={{ fontSize: "12px", minWidth: "36px" }}>
-                {Math.round((settings.quickButtons?.opacity ?? 1) * 100)}%
-              </span>
-            </div>
-          </SettingRow>
-          <ToggleRow
-            label={t("quickButtonsHideWhenPanelOpenLabel") || "面板展开时隐藏快捷按钮组"}
-            description={
-              t("quickButtonsHideWhenPanelOpenDesc") ||
-              "面板展开后自动隐藏快捷按钮组，关闭面板时恢复显示"
-            }
-            settingId="quick-buttons-hide-when-panel-open"
-            checked={settings.quickButtons?.hideWhenPanelOpen ?? false}
-            onChange={() =>
-              updateNestedSetting(
-                "quickButtons",
-                "hideWhenPanelOpen",
-                !(settings.quickButtons?.hideWhenPanelOpen ?? false),
+        <>
+          <SettingCard
+            title={t("quickButtonsBehaviorTitle") || "快捷按钮行为"}
+            description={t("quickButtonsBehaviorDesc") || "调整快捷按钮组的外观与交互行为"}>
+            <ToggleRow
+              label={t("quickButtonsHideWhenPanelOpenLabel") || "面板展开时隐藏快捷按钮组"}
+              description={
+                t("quickButtonsHideWhenPanelOpenDesc") ||
+                "面板展开后自动隐藏快捷按钮组，关闭面板时恢复显示"
+              }
+              settingId="quick-buttons-hide-when-panel-open"
+              checked={settings.quickButtons?.hideWhenPanelOpen ?? false}
+              onChange={() =>
+                updateNestedSetting(
+                  "quickButtons",
+                  "hideWhenPanelOpen",
+                  !(settings.quickButtons?.hideWhenPanelOpen ?? false),
+                )
+              }
+            />
+            <SettingRow
+              label={t("quickButtonsOpacityLabel") || "快捷按钮透明度"}
+              description={t("quickButtonsOpacityDesc") || "调整快捷按钮组整体透明度"}
+              settingId="quick-buttons-opacity">
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <input
+                  type="range"
+                  min="0.4"
+                  max="1"
+                  step="0.05"
+                  value={settings.quickButtons?.opacity ?? 1}
+                  onChange={(e) =>
+                    updateNestedSetting("quickButtons", "opacity", parseFloat(e.target.value))
+                  }
+                  style={{ width: "120px" }}
+                />
+                <span style={{ fontSize: "12px", minWidth: "36px" }}>
+                  {Math.round((settings.quickButtons?.opacity ?? 1) * 100)}%
+                </span>
+              </div>
+            </SettingRow>
+          </SettingCard>
+          <SettingCard
+            title={t("collapsedButtonsOrderTitle") || "快捷按钮组"}
+            description={t("collapsedButtonsOrderDesc") || "快捷按钮组排序与启用 (拖拽排序)"}>
+            {settings.quickButtons?.collapsed?.map((btn, index) => {
+              // 暂时隐藏"手动锚点"设置项，避免对用户造成困扰
+              if (btn.id === "manualAnchor") return null
+              const def = COLLAPSED_BUTTON_DEFS[btn.id]
+              if (!def) return null
+              return (
+                <SortableItem
+                  key={btn.id}
+                  iconNode={
+                    def.IconComponent ? (
+                      <def.IconComponent size={18} color="currentColor" />
+                    ) : (
+                      def.icon
+                    )
+                  }
+                  label={t(def.labelKey) || btn.id}
+                  index={index}
+                  total={settings.quickButtons.collapsed.length}
+                  enabled={btn.enabled}
+                  showToggle={def.canToggle}
+                  onToggle={() => toggleButton(index)}
+                  onDragStart={(e) => handleDragStart(e, "button", index)}
+                  onDragOver={handleDragOver}
+                  onDragEnd={handleDragEnd}
+                  onDrop={handleButtonDrop}
+                  isDragging={draggedItem?.type === "button" && draggedItem?.index === index}
+                />
               )
-            }
-          />
-        </SettingCard>
+            })}
+          </SettingCard>
+        </>
       )}
 
       {/* ========== 工具箱菜单 Tab ========== */}

@@ -236,6 +236,8 @@ export const fr = {
   quickButtonsHideWhenPanelOpenDesc:
     "Masque automatiquement le groupe de boutons rapides quand le panneau est ouvert ; restauré à la fermeture du panneau",
 
+  quickButtonsBehaviorTitle: "Comportement des boutons rapides",
+  quickButtonsBehaviorDesc: "Ajustez l'apparence et le comportement du groupe de boutons rapides",
   // ======== Continue existing translations ========
   searchPlaceholder: "Chercher des prompts...",
   addPrompt: "Nouveau Prompt",

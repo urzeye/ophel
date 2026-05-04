@@ -243,6 +243,9 @@ export const en = {
   quickButtonsHideWhenPanelOpenDesc:
     "Automatically hide the quick buttons group when the panel is expanded; restores when the panel is closed",
 
+  quickButtonsBehaviorTitle: "Quick Buttons Behavior",
+  quickButtonsBehaviorDesc:
+    "Adjust the appearance and interaction behavior of the quick buttons group",
   // ======== Continue existing translations ========
   searchPlaceholder: "Search prompts...",
   addPrompt: "Add New Prompt",

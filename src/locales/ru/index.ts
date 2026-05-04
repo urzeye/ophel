@@ -233,6 +233,8 @@ export const ru = {
   quickButtonsHideWhenPanelOpenDesc:
     "Автоматически скрывает группу быстрых кнопок при открытии панели; восстанавливается при закрытии",
 
+  quickButtonsBehaviorTitle: "Поведение быстрых кнопок",
+  quickButtonsBehaviorDesc: "Настройка внешнего вида и поведения группы быстрых кнопок",
   // ======== Continue existing translations ========
   searchPlaceholder: "Поиск промптов...",
   addPrompt: "Новый промпт",

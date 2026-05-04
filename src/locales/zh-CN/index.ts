@@ -266,6 +266,8 @@ export const zhCN = {
   quickButtonsHideWhenPanelOpenLabel: "面板展开时隐藏快捷按钮组",
   quickButtonsHideWhenPanelOpenDesc: "面板展开后自动隐藏快捷按钮组，关闭面板时恢复显示",
 
+  quickButtonsBehaviorTitle: "快捷按钮行为",
+  quickButtonsBehaviorDesc: "调整快捷按钮组的外观与交互行为",
   // ======== 继续原有翻译 ========
   searchPlaceholder: "搜索提示词...",
   addPrompt: "添加提示词",

@@ -235,6 +235,8 @@ export const de = {
   quickButtonsHideWhenPanelOpenDesc:
     "Schnelltastengruppe automatisch ausblenden, wenn das Panel geöffnet ist; wird beim Schließen wieder eingeblendet",
 
+  quickButtonsBehaviorTitle: "Schnelltasten-Verhalten",
+  quickButtonsBehaviorDesc: "Darstellung und Verhalten der Schnelltastengruppe anpassen",
   // ======== Continue existing translations ========
   searchPlaceholder: "Prompts suchen...",
   addPrompt: "Neuer Prompt",
