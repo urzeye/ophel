@@ -40,6 +40,13 @@ export const getStyle = () => {
   font-weight: 100 900;
   font-display: swap;
   src: url('${interFontUrl}') format('woff2');
+  unicode-range:
+    U+0000-02FF, U+0304, U+0308, U+0329,
+    U+0370-03FF, U+1D00-1DBF, U+1E00-1EFF, U+1F00-1FFF,
+    U+0400-052F, U+1C80-1C88, U+2116, U+2DE0-2DFF, U+A640-A69F,
+    U+1EA0-1EF9, U+20AB,
+    U+2000-206F, U+20A0-20C0, U+20AC, U+2113, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
 }
 `
 
