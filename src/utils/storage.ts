@@ -359,6 +359,7 @@ export const DEFAULT_QUICK_BUTTONS_SETTINGS: QuickButtonsSettings = {
   floatingToolbar: {
     open: true,
   },
+  hideWhenPanelOpen: false,
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -548,6 +549,7 @@ export const DEFAULT_SETTINGS: Settings = {
     floatingToolbar: {
       ...DEFAULT_QUICK_BUTTONS_SETTINGS.floatingToolbar,
     },
+    hideWhenPanelOpen: DEFAULT_QUICK_BUTTONS_SETTINGS.hideWhenPanelOpen,
   },
 
   claude: {

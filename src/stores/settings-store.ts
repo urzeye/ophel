@@ -118,6 +118,8 @@ const normalizeQuickButtons = (settings: SettingsInput): Settings["quickButtons"
       quickButtons.opacity ??
       settings.quickButtonsOpacity ??
       DEFAULT_QUICK_BUTTONS_SETTINGS.opacity,
+    hideWhenPanelOpen:
+      quickButtons.hideWhenPanelOpen ?? DEFAULT_QUICK_BUTTONS_SETTINGS.hideWhenPanelOpen,
     toolsMenu: quickButtons.toolsMenu ?? settings.toolsMenu,
     floatingToolbar: {
       ...DEFAULT_QUICK_BUTTONS_SETTINGS.floatingToolbar,
