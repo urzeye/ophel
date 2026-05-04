@@ -230,8 +230,8 @@ export const ko = {
   enablePrerequisiteToast: '먼저 "{setting}"을(를) 켜 주세요',
   privacyModeTitle: "개인정보 보호 모드",
   collapsedButtonsOrderTitle: "퀵 버튼",
-  quickButtonsOpacityLabel: "빠른 버튼 투명도",
-  quickButtonsOpacityDesc: "빠른 버튼 그룹 전체의 투명도를 조절합니다",
+  quickButtonsOpacityLabel: "빠른 버튼 불투명도",
+  quickButtonsOpacityDesc: "빠른 버튼 그룹 전체의 불투명도를 조절합니다",
   quickButtonsHideWhenPanelOpenLabel: "패널 열릴 때 빠른 버튼 숨기기",
   quickButtonsHideWhenPanelOpenDesc:
     "패널이 열릴 때 빠른 버튼 그룹을 자동으로 숨기고, 패널이 닫히면 다시 표시합니다",

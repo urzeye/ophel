@@ -600,8 +600,8 @@ export const zhTW = {
   privacyModeTitle: "隱私模式",
   // 介面排版開關
   collapsedButtonsOrderTitle: "快捷按鈕組",
-  quickButtonsOpacityLabel: "快捷按鈕透明度",
-  quickButtonsOpacityDesc: "調整快捷按鈕組整體透明度",
+  quickButtonsOpacityLabel: "快捷按鈕不透明度",
+  quickButtonsOpacityDesc: "調整快捷按鈕組整體不透明度",
   quickButtonsHideWhenPanelOpenLabel: "面板展開時隱藏快捷按鈕組",
   quickButtonsHideWhenPanelOpenDesc: "面板展開後自動隱藏快捷按鈕組，關閉面板時恢復顯示",
   quickButtonsBehaviorTitle: "快捷按鈕行為",

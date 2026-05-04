@@ -491,8 +491,8 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
               }
             />
             <SettingRow
-              label={t("quickButtonsOpacityLabel") || "快捷按钮透明度"}
-              description={t("quickButtonsOpacityDesc") || "调整快捷按钮组整体透明度"}
+              label={t("quickButtonsOpacityLabel") || "快捷按钮不透明度"}
+              description={t("quickButtonsOpacityDesc") || "调整快捷按钮组整体不透明度"}
               settingId="quick-buttons-opacity">
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <input

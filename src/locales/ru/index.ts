@@ -227,8 +227,8 @@ export const ru = {
   enablePrerequisiteToast: "Сначала включите «{setting}»",
   privacyModeTitle: "Приватность",
   collapsedButtonsOrderTitle: "Кнопки",
-  quickButtonsOpacityLabel: "Прозрачность быстрых кнопок",
-  quickButtonsOpacityDesc: "Настройте общую прозрачность группы быстрых кнопок",
+  quickButtonsOpacityLabel: "Непрозрачность быстрых кнопок",
+  quickButtonsOpacityDesc: "Настройте общую непрозрачность группы быстрых кнопок",
   quickButtonsHideWhenPanelOpenLabel: "Скрыть кнопки при открытой панели",
   quickButtonsHideWhenPanelOpenDesc:
     "Автоматически скрывает группу быстрых кнопок при открытии панели; восстанавливается при закрытии",
