@@ -132,6 +132,9 @@ const normalizeQuickButtons = (settings: SettingsInput): Settings["quickButtons"
 
 type WidthConfigKind = "PAGE_WIDTH" | "USER_QUERY_WIDTH"
 
+type SiteThemeRecord = NonNullable<Settings["theme"]["sites"]>
+type SiteConfigRecord<T> = Record<string, Partial<T>>
+
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value))
 
@@ -170,6 +173,41 @@ const normalizeWidthRecord = (
   // 归一化时同时保留已保存的站点键，避免新增/未列入默认表的站点配置被覆盖丢失。
   siteIds.forEach((siteId) => {
     result[siteId] = normalizePercentWidthConfig(record?.[siteId] ?? fallback[siteId], kind)
+  })
+
+  return result
+}
+
+const normalizeSiteThemeRecord = (record: SiteThemeRecord | undefined): SiteThemeRecord => {
+  const result: SiteThemeRecord = { ...DEFAULT_SETTINGS.theme.sites }
+  const siteIds = new Set([
+    ...Object.keys(DEFAULT_SETTINGS.theme.sites),
+    ...Object.keys(record ?? {}),
+  ])
+
+  siteIds.forEach((siteId) => {
+    result[siteId as keyof SiteThemeRecord] = {
+      ...(DEFAULT_SETTINGS.theme.sites[siteId as keyof SiteThemeRecord] ??
+        DEFAULT_SETTINGS.theme.sites._default),
+      ...(record?.[siteId as keyof SiteThemeRecord] ?? {}),
+    }
+  })
+
+  return result
+}
+
+const normalizeSiteConfigRecord = <T extends object>(
+  record: SiteConfigRecord<T> | undefined,
+  fallback: Record<string, T>,
+): Record<string, T> => {
+  const result: Record<string, T> = { ...fallback }
+  const siteIds = new Set([...Object.keys(fallback), ...Object.keys(record ?? {})])
+
+  siteIds.forEach((siteId) => {
+    result[siteId] = {
+      ...(fallback[siteId] ?? fallback._default ?? {}),
+      ...(record?.[siteId] ?? {}),
+    } as T
   })
 
   return result
@@ -239,10 +277,7 @@ const normalizeSettings = (settings: SettingsInput): Settings => {
     theme: {
       ...DEFAULT_SETTINGS.theme,
       ...settings.theme,
-      sites: {
-        ...DEFAULT_SETTINGS.theme.sites,
-        ...settings.theme?.sites,
-      },
+      sites: normalizeSiteThemeRecord(settings.theme?.sites),
       customStyles: settings.theme?.customStyles ?? DEFAULT_SETTINGS.theme.customStyles,
     },
     layout: {
@@ -258,18 +293,68 @@ const normalizeSettings = (settings: SettingsInput): Settings => {
         "USER_QUERY_WIDTH",
         DEFAULT_SETTINGS.layout.userQueryWidth,
       ),
-      zenMode: {
-        ...DEFAULT_SETTINGS.layout.zenMode,
-        ...settings.layout?.zenMode,
-      },
+      zenMode: normalizeSiteConfigRecord(settings.layout?.zenMode, DEFAULT_SETTINGS.layout.zenMode),
+      cleanMode: normalizeSiteConfigRecord(
+        settings.layout?.cleanMode,
+        DEFAULT_SETTINGS.layout.cleanMode,
+      ),
     },
-    modelLock: {
-      ...DEFAULT_SETTINGS.modelLock,
-      ...settings.modelLock,
+    modelLock: normalizeSiteConfigRecord(settings.modelLock, DEFAULT_SETTINGS.modelLock),
+    globalSearch: {
+      ...DEFAULT_SETTINGS.globalSearch,
+      ...settings.globalSearch,
     },
     usageMonitor: {
       ...DEFAULT_SETTINGS.usageMonitor,
       ...settings.usageMonitor,
+    },
+    features: {
+      ...DEFAULT_SETTINGS.features,
+      ...settings.features,
+      outline: {
+        ...DEFAULT_SETTINGS.features.outline,
+        ...settings.features?.outline,
+      },
+      prompts: {
+        ...DEFAULT_SETTINGS.features.prompts,
+        ...settings.features?.prompts,
+      },
+      conversations: {
+        ...DEFAULT_SETTINGS.features.conversations,
+        ...settings.features?.conversations,
+      },
+    },
+    tab: {
+      ...DEFAULT_SETTINGS.tab,
+      ...settings.tab,
+    },
+    readingHistory: {
+      ...DEFAULT_SETTINGS.readingHistory,
+      ...settings.readingHistory,
+    },
+    export: {
+      ...DEFAULT_SETTINGS.export,
+      ...settings.export,
+    },
+    geminiEnterprise: {
+      ...DEFAULT_SETTINGS.geminiEnterprise,
+      ...settings.geminiEnterprise,
+      policyRetry: {
+        ...DEFAULT_SETTINGS.geminiEnterprise?.policyRetry,
+        ...settings.geminiEnterprise?.policyRetry,
+      },
+    },
+    webdav: {
+      ...DEFAULT_SETTINGS.webdav,
+      ...settings.webdav,
+    },
+    aistudio: {
+      ...DEFAULT_SETTINGS.aistudio,
+      ...settings.aistudio,
+    },
+    chatgpt: {
+      ...DEFAULT_SETTINGS.chatgpt,
+      ...settings.chatgpt,
     },
     shortcuts: normalizeShortcutsSettings(settings.shortcuts) || DEFAULT_SETTINGS.shortcuts,
     quickButtons: normalizeQuickButtons(settings),
