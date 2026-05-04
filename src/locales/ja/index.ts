@@ -236,6 +236,9 @@ export const ja = {
   collapsedButtonsOrderTitle: "クイックボタン",
   quickButtonsOpacityLabel: "クイックボタンの不透明度",
   quickButtonsOpacityDesc: "クイックボタングループ全体の不透明度を調整します",
+  quickButtonsHideWhenPanelOpenLabel: "パネル展開時にクイックボタンを隠す",
+  quickButtonsHideWhenPanelOpenDesc:
+    "パネルを展開したときにクイックボタングループを自動的に非表示にし、パネルを閉じると元に戻します",
 
   // ======== Continue existing translations ========
   searchPlaceholder: "プロンプトを検索...",

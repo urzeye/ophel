@@ -239,6 +239,9 @@ export const en = {
   collapsedButtonsOrderTitle: "Quick Buttons",
   quickButtonsOpacityLabel: "Quick buttons opacity",
   quickButtonsOpacityDesc: "Adjust overall opacity of the quick buttons",
+  quickButtonsHideWhenPanelOpenLabel: "Hide quick buttons when panel is open",
+  quickButtonsHideWhenPanelOpenDesc:
+    "Automatically hide the quick buttons group when the panel is expanded; restores when the panel is closed",
 
   // ======== Continue existing translations ========
   searchPlaceholder: "Search prompts...",

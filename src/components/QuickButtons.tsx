@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -113,7 +114,10 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const currentSettings = settings || DEFAULT_SETTINGS
   const adapter = getAdapter()
   const quickButtonsSettings = currentSettings.quickButtons || DEFAULT_SETTINGS.quickButtons
-  const collapsedButtonsOrder = quickButtonsSettings.collapsed || []
+  const collapsedButtonsOrder = useMemo(
+    () => quickButtonsSettings.collapsed || [],
+    [quickButtonsSettings.collapsed],
+  )
   const quickButtonsSide = currentSettings.panel?.defaultPosition ?? "right"
   const quickButtonsPositionStyle =
     quickButtonsSide === "left" ? { left: "16px", right: "auto" } : { right: "16px", left: "auto" }
@@ -279,6 +283,46 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   // 用 ref 追踪 isLiquidCollapsed，避免 ResizeObserver 的 useLayoutEffect 因它变化而反复 teardown/recreate
   const isLiquidCollapsedRef = useRef(isLiquidCollapsed)
   isLiquidCollapsedRef.current = isLiquidCollapsed
+
+  // 当快捷按钮组内没有任何可见按钮时，隐藏整个容器（含拖拽手柄和外轮廓）
+  // 触发条件1（设置开关）：用户开启了"面板展开时隐藏快捷按钮组"且面板当前展开
+  // 触发条件2（兜底）：非拖拽/按压、工具菜单关闭、非液态折叠（液态折叠态必有 logo），且遍历后无可见按钮
+  const isGroupHidden = useMemo(() => {
+    if (isDragging || isPressing || isToolsMenuOpen) return false
+    // 液态折叠态必然包含 panel logo（且 isLiquidCollapsed 隐含 !isPanelOpen），不隐藏
+    if (isLiquidCollapsed) return false
+
+    // 用户明确开启"面板展开时隐藏快捷按钮组"设置
+    if ((quickButtonsSettings.hideWhenPanelOpen ?? false) && isPanelOpen) return true
+
+    // 兜底：当所有按钮均不可见时，自动隐藏空容器
+    const isFloatingOpen =
+      isPanelOpen && (currentSettings.panel?.panelMode ?? "edge-snap") !== "edge-snap"
+
+    for (const btnConfig of collapsedButtonsOrder) {
+      // manualAnchor 暂时禁用，跳过
+      if (btnConfig.id === "manualAnchor") continue
+      const def = COLLAPSED_BUTTON_DEFS[btnConfig.id]
+      if (!def) continue
+      const isEnabled = def.canToggle ? btnConfig.enabled : true
+      if (!isEnabled) continue
+      if (def.isPanelOnly && isPanelOpen) continue
+      if (def.hideWhenPanelOpen && isFloatingOpen) continue
+      // 找到至少一个可见按钮，不隐藏
+      return false
+    }
+
+    return true
+  }, [
+    isDragging,
+    isPressing,
+    isToolsMenuOpen,
+    isLiquidCollapsed,
+    isPanelOpen,
+    collapsedButtonsOrder,
+    currentSettings.panel?.panelMode,
+    quickButtonsSettings.hideWhenPanelOpen,
+  ])
 
   // 跟踪是否处于 Flutter 模式（图文并茂）
   const [_isFlutterMode, setIsFlutterMode] = useState(false)
@@ -1126,7 +1170,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       <LoadingOverlay isVisible={isLoadingHistory} text={loadingText} onStop={stopLoading} />
       <div
         ref={groupRef}
-        className={`quick-btn-group gh-interactive ${!isPanelOpen ? "collapsed" : ""} ${isDragging ? "dragging" : ""} ${isPressing ? "pressing" : ""} ${isScrolling ? "scroll-hidden" : ""} ${isLiquidCollapsed ? "liquid-collapsed" : ""}`}
+        className={`quick-btn-group gh-interactive ${!isPanelOpen ? "collapsed" : ""} ${isDragging ? "dragging" : ""} ${isPressing ? "pressing" : ""} ${isScrolling ? "scroll-hidden" : ""} ${isLiquidCollapsed ? "liquid-collapsed" : ""} ${isGroupHidden ? "group-hidden" : ""}`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -1145,7 +1189,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
             : quickButtonsPositionStyle.left,
           right: resolvedGroupPosition ? "auto" : quickButtonsPositionStyle.right,
           transform: resolvedGroupPosition || defaultTopPx !== null ? "none" : "translateY(-50%)",
-          opacity: quickButtonsOpacity,
+          opacity: isGroupHidden ? 0 : quickButtonsOpacity,
+          pointerEvents: isGroupHidden ? "none" : undefined,
         }}>
         <div
           className="quick-btn-drag-handle"

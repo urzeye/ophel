@@ -145,6 +145,8 @@ export interface QuickButtonsSettings {
     open: boolean
   }
   position?: QuickButtonsPosition
+  /** 面板展开时隐藏整个快捷按钮组（默认 false） */
+  hideWhenPanelOpen?: boolean
 }
 
 export interface Settings {

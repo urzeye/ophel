@@ -231,6 +231,9 @@ export const pt = {
   collapsedButtonsOrderTitle: "Botões Rápidos",
   quickButtonsOpacityLabel: "Opacidade dos botões rápidos",
   quickButtonsOpacityDesc: "Ajusta a opacidade geral do grupo de botões rápidos",
+  quickButtonsHideWhenPanelOpenLabel: "Ocultar botões rápidos quando o painel estiver aberto",
+  quickButtonsHideWhenPanelOpenDesc:
+    "Oculta automaticamente o grupo de botões rápidos quando o painel está expandido; restaurado ao fechar o painel",
 
   // ======== Continue existing translations ========
   searchPlaceholder: "Buscar prompts...",

@@ -523,6 +523,22 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
               </span>
             </div>
           </SettingRow>
+          <ToggleRow
+            label={t("quickButtonsHideWhenPanelOpenLabel") || "面板展开时隐藏快捷按钮组"}
+            description={
+              t("quickButtonsHideWhenPanelOpenDesc") ||
+              "面板展开后自动隐藏快捷按钮组，关闭面板时恢复显示"
+            }
+            settingId="quick-buttons-hide-when-panel-open"
+            checked={settings.quickButtons?.hideWhenPanelOpen ?? false}
+            onChange={() =>
+              updateNestedSetting(
+                "quickButtons",
+                "hideWhenPanelOpen",
+                !(settings.quickButtons?.hideWhenPanelOpen ?? false),
+              )
+            }
+          />
         </SettingCard>
       )}
 

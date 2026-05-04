@@ -263,6 +263,8 @@ export const zhCN = {
   collapsedButtonsOrderTitle: "快捷按钮组",
   quickButtonsOpacityLabel: "快捷按钮透明度",
   quickButtonsOpacityDesc: "调整快捷按钮组整体透明度",
+  quickButtonsHideWhenPanelOpenLabel: "面板展开时隐藏快捷按钮组",
+  quickButtonsHideWhenPanelOpenDesc: "面板展开后自动隐藏快捷按钮组，关闭面板时恢复显示",
 
   // ======== 继续原有翻译 ========
   searchPlaceholder: "搜索提示词...",
