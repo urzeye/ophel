@@ -21,7 +21,7 @@ import { UsageCounterManager } from "~core/usage-counter-manager"
 import { UserQueryMarkdownRenderer } from "~core/user-query-markdown"
 import { WatermarkRemover } from "~core/watermark-remover"
 import { getSettingsState, subscribeSettings } from "~stores/settings-store"
-import { setLanguage } from "~utils/i18n"
+import { setLanguage, t } from "~utils/i18n"
 import {
   getSiteModelLock,
   getSitePageWidth,
@@ -352,7 +352,7 @@ export async function initReadingHistoryManager(ctx: ModulesContext): Promise<vo
         .restoreProgress((msg) => showToast(msg, 3000))
         .then((restored) => {
           if (restored) {
-            showToast("阅读进度已恢复", 2000)
+            showToast(t("restoredPosition"), 2000)
           }
         })
     }
@@ -656,7 +656,7 @@ export function initUrlChangeObserver(ctx: ModulesContext): void {
               showToast(msg, 3000),
             )
             if (restored) {
-              showToast("阅读进度已恢复", 2000)
+              showToast(t("restoredPosition"), 2000)
             }
           }
           modules.readingHistoryManager?.startRecording()

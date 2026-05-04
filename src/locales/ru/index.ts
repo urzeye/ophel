@@ -276,7 +276,13 @@ export const ru = {
   operationFailed: "Операция не удалась",
   deleteSuccess: "Удалено успешно",
   deleteError: "Не удалось удалить",
+  loadFailed: "Не удалось загрузить",
+  selectFileOrPasteFirst: "Сначала выберите файл или вставьте содержимое",
   restoreError: "Не удалось восстановить",
+  backupRestoreConfirmMsg:
+    'Восстановить резервную копию "{name}"? Текущие данные будут перезаписаны, открытые страницы ИИ будут обновлены.',
+  backupDeleteCloudConfirmMsg:
+    'Удалить облачную резервную копию "{name}"? Это действие необратимо.',
   insertFailed: "Не удалось вставить",
   maximize: "Развернуть",
   browse: "Обзор...",
@@ -666,6 +672,8 @@ export const ru = {
   conversationsRename: "Имя",
   conversationsDelete: "Удалить",
   conversationsDeleteConfirm: 'Удалить папку "{folder}"? Чаты будут перемещены в {inbox}.',
+  conversationsDeleteConvMsg: "Удалить сеанс «{title}»?",
+  confirmDeleteSelectedConvs: "Удалить {count} выбранных сеанса?",
   conversationsInbox: "Входящие",
   conversationsFolderCreated: "Создана",
   conversationsFolderRenamed: "Имя изменено",
@@ -699,6 +707,7 @@ export const ru = {
   conversationsMoved: "Ушло в: ",
   conversationsSyncDeleteTitle: "Синхро удаления",
   conversationsSyncDeleteMsg: "Удалено {count} чатов в облаке. Удалить и здесь?",
+  deleteConvRemoteError: "Удалено из панели, но удаление в облаке не удалось",
   conversationsDeleted: "Убрано",
   // Conversation Settings
   conversationsSettingsTitle: "Настройки чатов",

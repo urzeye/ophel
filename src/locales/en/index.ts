@@ -287,7 +287,12 @@ export const en = {
   operationFailed: "Operation failed",
   deleteSuccess: "Deleted successfully",
   deleteError: "Delete failed",
+  loadFailed: "Load failed",
+  selectFileOrPasteFirst: "Please select a file or paste content first",
   restoreError: "Restore failed",
+  backupRestoreConfirmMsg:
+    'Restore backup "{name}"? Current data will be overwritten, and open AI pages will refresh.',
+  backupDeleteCloudConfirmMsg: 'Delete cloud backup "{name}"? This action is irreversible.',
   insertFailed: "Insert failed",
   maximize: "Maximize",
   browse: "Browse...",
@@ -718,6 +723,8 @@ export const en = {
   conversationsRename: "Rename",
   conversationsDelete: "Delete",
   conversationsDeleteConfirm: 'Delete folder "{folder}"? Conversations will be moved to {inbox}.',
+  conversationsDeleteConvMsg: 'Delete session "{title}"?',
+  confirmDeleteSelectedConvs: "Delete {count} selected session(s)?",
   conversationsInbox: "Inbox",
   conversationsFolderCreated: "Folder created",
   conversationsFolderRenamed: "Folder renamed",
@@ -751,6 +758,7 @@ export const en = {
   conversationsSyncDeleteTitle: "Sync Delete",
   conversationsSyncDeleteMsg:
     "Detected {count} conversations deleted in cloud. Sync delete local records?",
+  deleteConvRemoteError: "Removed from panel, but cloud deletion failed",
   conversationsDeleted: "Removed",
   // Conversation Settings
   conversationsSettingsTitle: "Conversation Settings",

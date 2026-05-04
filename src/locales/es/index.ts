@@ -278,7 +278,13 @@ export const es = {
   operationFailed: "Operaci?n fallida",
   deleteSuccess: "Eliminado con ?xito",
   deleteError: "Error al eliminar",
+  loadFailed: "Error al cargar",
+  selectFileOrPasteFirst: "Primero seleccione un archivo o pegue contenido",
   restoreError: "Error al restaurar",
+  backupRestoreConfirmMsg:
+    '¿Restaurar la copia de seguridad "{name}"? Los datos actuales serán sobrescritos y las páginas de IA abiertas se actualizarán.',
+  backupDeleteCloudConfirmMsg:
+    '¿Eliminar la copia de seguridad en la nube "{name}"? Esta acción es irreversible.',
   insertFailed: "Error al insertar",
   maximize: "Maximizar",
   browse: "Buscar...",
@@ -669,6 +675,8 @@ export const es = {
   conversationsRename: "Renombrar",
   conversationsDelete: "Borrar",
   conversationsDeleteConfirm: '¿Eliminar la carpeta "{folder}"? Los chats se moverán a {inbox}.',
+  conversationsDeleteConvMsg: '¿Eliminar la sesión "{title}"?',
+  confirmDeleteSelectedConvs: "¿Eliminar {count} sesión(es) seleccionada(s)?",
   conversationsInbox: "Entrada",
   conversationsFolderCreated: "Creada",
   conversationsFolderRenamed: "Renombrada",
@@ -702,6 +710,7 @@ export const es = {
   conversationsMoved: "Movido a: ",
   conversationsSyncDeleteTitle: "Sincro de Borrado",
   conversationsSyncDeleteMsg: "Detectados {count} borrados arriba. ¿Borrar aquí también?",
+  deleteConvRemoteError: "Eliminado del panel, pero no se pudo eliminar en la nube",
   conversationsDeleted: "Quitado",
   // Conversation Settings
   conversationsSettingsTitle: "Ajustes de Chats",

@@ -731,8 +731,8 @@ export function useShortcuts({
           )
         }
       }
-    } catch (error) {
-      showToast("切换失败: " + (error as Error).message, 2000)
+    } catch {
+      showToast(t("operationFailed"), 2000)
     }
   }, [])
 

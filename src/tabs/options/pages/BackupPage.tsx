@@ -491,7 +491,7 @@ const RemoteBackupModal: React.FC<{
       const files = await manager.getBackupList()
       setBackups(files)
     } catch (e) {
-      showDomToast("加载失败: " + String(e))
+      showDomToast(t("loadFailed") + ": " + String(e))
     } finally {
       setLoading(false)
     }
@@ -505,7 +505,7 @@ const RemoteBackupModal: React.FC<{
     setConfirmConfig({
       show: true,
       title: t("restore") || "恢复",
-      message: `确定要恢复备份 "${file.name}" 吗？当前数据将被覆盖，${t("openAiPagesWillRefresh") || "已打开的 AI 页面将被刷新。"}`,
+      message: t("backupRestoreConfirmMsg", { name: file.name }),
       danger: true,
       onConfirm: async () => {
         setConfirmConfig((prev) => ({ ...prev, show: false }))
@@ -535,7 +535,7 @@ const RemoteBackupModal: React.FC<{
             setLoading(false)
           }
         } catch (e) {
-          showDomToast("恢复失败: " + String(e))
+          showDomToast(t("restoreError") + ": " + String(e))
           setLoading(false)
         }
       },
@@ -546,7 +546,7 @@ const RemoteBackupModal: React.FC<{
     setConfirmConfig({
       show: true,
       title: t("delete") || "删除",
-      message: `确定要删除云端备份 "${file.name}" 吗？此操作不可逆。`,
+      message: t("backupDeleteCloudConfirmMsg", { name: file.name }),
       danger: true,
       onConfirm: async () => {
         setConfirmConfig((prev) => ({ ...prev, show: false }))
@@ -562,7 +562,7 @@ const RemoteBackupModal: React.FC<{
             setLoading(false)
           }
         } catch (e) {
-          showDomToast("删除失败: " + String(e))
+          showDomToast(t("deleteError") + ": " + String(e))
           setLoading(false)
         }
       },
@@ -1099,7 +1099,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ siteId, onNavigate: _onNavigate
 
   const handleImportClick = () => {
     if (!pasteContent.trim()) {
-      showDomToast("请先选择文件或粘贴内容")
+      showDomToast(t("selectFileOrPasteFirst"))
       return
     }
     processImport(pasteContent)

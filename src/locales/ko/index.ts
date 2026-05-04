@@ -278,7 +278,13 @@ export const ko = {
   operationFailed: "작업에 실패했습니다",
   deleteSuccess: "삭제되었습니다",
   deleteError: "삭제에 실패했습니다",
+  loadFailed: "로드에 실패했습니다",
+  selectFileOrPasteFirst: "먼저 파일을 선택하거나 내용을 붙여넣으세요",
   restoreError: "복원에 실패했습니다",
+  backupRestoreConfirmMsg:
+    '백업 "{name}"(을)를 복원하시겠습니까? 현재 데이터가 덮어쓰여지고 열린 AI 페이지가 새로고침됩니다.',
+  backupDeleteCloudConfirmMsg:
+    '클라우드 백업 "{name}"(을)를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
   insertFailed: "삽입에 실패했습니다",
   maximize: "최대화",
   browse: "찾아보기...",
@@ -669,6 +675,8 @@ export const ko = {
   conversationsRename: "이름 바꾸기",
   conversationsDelete: "삭제",
   conversationsDeleteConfirm: '"{folder}" 폴더를 삭제하시겠습니까? 대화는 {inbox}로 이동됩니다.',
+  conversationsDeleteConvMsg: '세션 "{title}"을(를) 삭제하시겠습니까?',
+  confirmDeleteSelectedConvs: "선택한 {count}개의 대화를 삭제하시겠습니까?",
   conversationsInbox: "받은 편지함",
   conversationsFolderCreated: "폴더가 생성되었습니다",
   conversationsFolderRenamed: "폴더 이름이 변경되었습니다",
@@ -701,6 +709,7 @@ export const ko = {
   conversationsSyncDeleteTitle: "삭제 동기화",
   conversationsSyncDeleteMsg:
     "클라우드에서 {count}개의 대화가 삭제된 것을 감지했습니다. 로컬 기록도 동기화하여 삭제하시겠습니까?",
+  deleteConvRemoteError: "패널에서 제거됨, 하지만 클라우드 삭제 실패",
   conversationsDeleted: "삭제됨",
   // Conversation Settings
   conversationsSettingsTitle: "대화 설정",

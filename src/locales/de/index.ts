@@ -277,8 +277,14 @@ export const de = {
   error: "Fehler",
   operationFailed: "Vorgang fehlgeschlagen",
   deleteSuccess: "Erfolgreich gel?scht",
-  deleteError: "L?schen fehlgeschlagen",
+  deleteError: "Löschen fehlgeschlagen",
+  loadFailed: "Laden fehlgeschlagen",
+  selectFileOrPasteFirst: "Bitte zuerst eine Datei auswählen oder Inhalt einfügen",
   restoreError: "Wiederherstellen fehlgeschlagen",
+  backupRestoreConfirmMsg:
+    'Backup "{name}" wiederherstellen? Aktuelle Daten werden überschrieben, offene KI-Seiten werden aktualisiert.',
+  backupDeleteCloudConfirmMsg:
+    'Cloud-Backup "{name}" löschen? Diese Aktion ist nicht rückgängig zu machen.',
   insertFailed: "Einf?gen fehlgeschlagen",
   maximize: "Maximieren",
   browse: "Durchsuchen...",
@@ -670,6 +676,8 @@ export const de = {
   conversationsRename: "Umbenennen",
   conversationsDelete: "Löschen",
   conversationsDeleteConfirm: 'Ordner "{folder}" löschen? Chats werden nach {inbox} verschoben.',
+  conversationsDeleteConvMsg: 'Sitzung "{title}" löschen?',
+  confirmDeleteSelectedConvs: "{count} ausgewählte Sitzungen löschen?",
   conversationsInbox: "Posteingang",
   conversationsFolderCreated: "Erstellt",
   conversationsFolderRenamed: "Umbenannt",
@@ -704,6 +712,7 @@ export const de = {
   conversationsMoved: "Verschoben nach: ",
   conversationsSyncDeleteTitle: "Lösch-Synchro",
   conversationsSyncDeleteMsg: "{count} Löschungen oben erkannt. Hier auch löschen?",
+  deleteConvRemoteError: "Aus dem Panel entfernt, aber Cloud-Löschung fehlgeschlagen",
   conversationsDeleted: "Entfernt",
   // Conversation Settings
   conversationsSettingsTitle: "Chat-Einstellungen",

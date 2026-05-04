@@ -283,7 +283,13 @@ export const ja = {
   operationFailed: "操作に失敗しました",
   deleteSuccess: "削除しました",
   deleteError: "削除に失敗しました",
+  loadFailed: "読み込みに失敗しました",
+  selectFileOrPasteFirst: "ファイルを選択するか内容を貼り付けてください",
   restoreError: "復元に失敗しました",
+  backupRestoreConfirmMsg:
+    'バックアップ "{name}" を復元しますか？現在のデータは上書きされ、開いているAIページが更新されます。',
+  backupDeleteCloudConfirmMsg:
+    'クラウドバックアップ "{name}" を削除しますか？この操作は元に戻せません。',
   insertFailed: "挿入に失敗しました",
   maximize: "最大化",
   browse: "参照...",
@@ -696,6 +702,7 @@ export const ja = {
   conversationsRename: "名前変更",
   conversationsDelete: "削除",
   conversationsDeleteConfirm: "フォルダ「{folder}」を削除しますか？会話は{inbox}に移動されます。",
+  conversationsDeleteConvMsg: "会話「{title}」を削除しますか？",
   conversationsInbox: "受信トレイ",
   conversationsFolderCreated: "フォルダを作成しました",
   conversationsFolderRenamed: "名前を変更しました",
@@ -731,6 +738,7 @@ export const ja = {
   conversationsSyncDeleteTitle: "同期削除",
   conversationsSyncDeleteMsg:
     "クラウドで {count} 件の削除を検出しました。ローカルからも削除しますか？",
+  deleteConvRemoteError: "パネルから削除しましたが、クラウドの削除に失敗しました",
   conversationsDeleted: "削除完了",
   // Conversation Settings
   conversationsSettingsTitle: "会話設定",

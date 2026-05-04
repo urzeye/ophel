@@ -132,7 +132,12 @@ export const zhTW = {
   operationFailed: "操作失敗",
   deleteSuccess: "刪除成功",
   deleteError: "刪除失敗",
+  loadFailed: "載入失敗",
+  selectFileOrPasteFirst: "請先選擇文件或貼上內容",
   restoreError: "還原失敗",
+  backupRestoreConfirmMsg:
+    '確定要還原備份 "{name}" 嗎？當前數据將被覆蓋，已打開的 AI 頁面將被刷新。',
+  backupDeleteCloudConfirmMsg: '確定要删除雲端備份 "{name}" 嗎？此操作不可逆。',
   insertFailed: "插入失敗",
   maximize: "最大化",
   browse: "瀏覽...",
@@ -618,6 +623,7 @@ export const zhTW = {
   conversationsRename: "重新命名",
   conversationsDelete: "刪除",
   conversationsDeleteConfirm: '確定刪除此資料夾 "{folder}" 嗎？其中的會話將移到{inbox}。',
+  conversationsDeleteConvMsg: '確定刪除會話 "{title}" 嗎？',
   conversationsInbox: "收件箱",
   conversationsFolderCreated: "資料夾已建立",
   conversationsFolderRenamed: "資料夾已重新命名",
@@ -647,6 +653,7 @@ export const zhTW = {
   conversationsMoved: "已移動到",
   conversationsSyncDeleteTitle: "同步刪除",
   conversationsSyncDeleteMsg: "檢測到 {count} 個會話已在雲端刪除，是否同步刪除本地記錄？",
+  deleteConvRemoteError: "已從面板刪除，但雲端刪除失敗",
   conversationsDeleted: "已移除",
   // 會話設置
   conversationsSettingsTitle: "會話設置",

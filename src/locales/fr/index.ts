@@ -278,8 +278,14 @@ export const fr = {
   error: "Erreur",
   operationFailed: "Op?ration ?chou?e",
   deleteSuccess: "Suppression r?ussie",
-  deleteError: "?chec de la suppression",
-  restoreError: "?chec de la restauration",
+  deleteError: "Échec de la suppression",
+  loadFailed: "Échec du chargement",
+  selectFileOrPasteFirst: "Veuillez d'abord sélectionner un fichier ou coller du contenu",
+  restoreError: "Échec de la restauration",
+  backupRestoreConfirmMsg:
+    'Restaurer la sauvegarde "{name}" ? Les données actuelles seront écrasées et les pages IA ouvertes seront actualisées.',
+  backupDeleteCloudConfirmMsg:
+    'Supprimer la sauvegarde cloud "{name}" ? Cette action est irréversible.',
   insertFailed: "?chec de l?insertion",
   maximize: "Maximiser",
   browse: "Parcourir...",
@@ -669,6 +675,8 @@ export const fr = {
   conversationsRename: "Renommer",
   conversationsDelete: "Supprimer",
   conversationsDeleteConfirm: 'Supprimer le dossier "{folder}" ? Les chats iront dans {inbox}.',
+  conversationsDeleteConvMsg: 'Supprimer la session "{title}" ?',
+  confirmDeleteSelectedConvs: "Supprimer {count} session(s) sélectionnée(s) ?",
   conversationsInbox: "Entrée",
   conversationsFolderCreated: "Créé",
   conversationsFolderRenamed: "Renommé",
@@ -703,6 +711,7 @@ export const fr = {
   conversationsMoved: "Déplacé vers : ",
   conversationsSyncDeleteTitle: "Synchro de Suppression",
   conversationsSyncDeleteMsg: "{count} suppressions détectées là-haut. Supprimer ici aussi ?",
+  deleteConvRemoteError: "Supprimé du panneau, mais la suppression dans le cloud a échoué",
   conversationsDeleted: "Retiré",
   // Conversation Settings
   conversationsSettingsTitle: "Réglages de Chats",

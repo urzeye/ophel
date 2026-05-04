@@ -1135,7 +1135,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                     setDialog({
                       type: "confirm",
                       title: t("batchDelete") || "批量删除",
-                      message: `确定删除选中的 ${selectedIds.size} 个会话吗？`,
+                      message: t("confirmDeleteSelectedConvs", { count: String(selectedIds.size) }),
                       danger: true,
                       onConfirm: async () => {
                         if (isDeleting) return
@@ -1340,7 +1340,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             setDialog({
               type: "confirm",
               title: t("conversationsDelete") || "删除",
-              message: `确定删除会话 "${menu.conv.title}" 吗？`,
+              message: t("conversationsDeleteConvMsg", { title: menu.conv.title }),
               danger: true,
               onConfirm: async () => {
                 if (isDeleting) return
@@ -1354,7 +1354,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                     return
                   }
                   if (result.remoteAttempted && !result.remoteSuccess) {
-                    showToast("已从面板删除，但云端删除失败")
+                    showToast(t("deleteConvRemoteError"))
                   }
                   await loadData()
                 } finally {
