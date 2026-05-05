@@ -204,8 +204,8 @@ export function useDraggable(options: UseDraggableOptions = {}) {
   }, [edgeSnapHide, onEdgeSnap, snapThreshold, animateToPosition])
 
   // 边界检测：确保面板在视口内可见
-  // 若已有保存的位置比例（拖拽后或之前 clamp 写入），先用比例等比恢复
-  // 再统一 clamp 到视口边界，防止 Ctrl/Cmd +/- 缩放时单向向中央漂移
+  // positionRatioRef 代表用户意图位置，只能由拖拽或初次像素定位接管时写入。
+  // resize/zoom 只根据意图计算当前显示坐标，不能把 clamp 后的坐标写回意图。
   const clampToViewport = useCallback(() => {
     const panel = panelRef.current
     if (!panel) return
@@ -217,6 +217,22 @@ export function useDraggable(options: UseDraggableOptions = {}) {
     const vh = window.innerHeight
     const margin = 10
     const rect = panel.getBoundingClientRect()
+
+    if (!positionRatioRef.current) {
+      const leftStyle = panel.style.left
+      const isDomManagedPixelPosition = Boolean(
+        leftStyle && leftStyle !== "auto" && panel.style.transform === "none",
+      )
+
+      if (!isDomManagedPixelPosition) {
+        // CSS 贴边定位（如 right: 0/left: auto，或默认 left: 0 + translateY）本身会随 layout viewport 正确变化。
+        // 此时不要为了 margin clamp 写入 left/top，否则会把贴边意图改成像素定位，
+        // 最大化/缩放往返后就会被比例计算拉向中间。
+        return
+      }
+
+      positionRatioRef.current = { xRatio: rect.left / vw, yRatio: rect.top / vh }
+    }
 
     const ratio = positionRatioRef.current
     let newLeft = ratio ? ratio.xRatio * vw : rect.left
@@ -234,17 +250,6 @@ export function useDraggable(options: UseDraggableOptions = {}) {
       panel.style.top = newTop + "px"
       panel.style.right = "auto"
       panel.style.transform = "none"
-      // 写入后更新比例，保证后续缩放步骤仍能正确还原
-      positionRatioRef.current = { xRatio: newLeft / vw, yRatio: newTop / vh }
-    } else if (!ratio) {
-      // ratio 尚未初始化（如 edge-snap → floating 切换后首次 resize）。
-      // 检查面板是否已处于像素定位模式（style.left 为像素值而非 auto/空）：
-      // 只有像素定位的面板才需要保存比例；CSS 百分比定位的面板自行随视口缩放，无需干预。
-      const leftStyle = panel.style.left
-      const hasPixelPosition = Boolean(leftStyle && leftStyle !== "auto")
-      if (hasPixelPosition) {
-        positionRatioRef.current = { xRatio: newLeft / vw, yRatio: newTop / vh }
-      }
     }
   }, [edgeSnapState])
 

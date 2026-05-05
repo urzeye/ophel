@@ -522,20 +522,10 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         return
       }
 
-      // Metrics 变化（如 collapsed ↔ expanded 切换、液态收缩等）时，
-      // 从 DOM rect 反推 ratio 以保持 logo 视觉位置不变，但**不持久化**。
-      // 持久化仅在拖拽结束时进行，避免跨刷新的累积漂移。
-      const nextPosition = toLogicalGroupPosition(rect.left, rect.top, viewport, nextMetrics)
-      const prevPosition = groupPositionRef.current
-
-      if (
-        prevPosition.xRatio !== nextPosition.xRatio ||
-        prevPosition.yRatio !== nextPosition.yRatio
-      ) {
-        groupPositionRef.current = nextPosition
-        setGroupPosition(nextPosition)
-        // 注意：此处不调用 scheduleGroupPositionPersist()
-      }
+      // groupPositionRef 代表用户意图位置，只能由拖拽或外部持久化设置改变。
+      // ResizeObserver 在浏览器缩放、窗口最大化切换、按钮折叠/展开时都会触发；
+      // 如果此处从 DOM rect 反推 ratio，就会把当前被 clamp 后的显示坐标写回意图，
+      // 下一次缩放/恢复时位置会逐步向中间漂移。这里仅同步 metrics，渲染层会用原始意图重算显示坐标。
     }
 
     syncGroupMetrics()
@@ -549,7 +539,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return () => {
       resizeObserver.disconnect()
     }
-  }, [clampPixelGroupPosition, toLogicalGroupPosition])
+  }, [clampPixelGroupPosition])
 
   // 滚动到顶部（支持图文并茂模式）
   const scrollToTop = useCallback(async () => {
