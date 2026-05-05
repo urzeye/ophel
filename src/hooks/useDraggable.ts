@@ -20,6 +20,9 @@ interface UseDraggableOptions {
   onUnsnap?: () => void
 }
 
+const PANEL_HORIZONTAL_MARGIN = 0
+const PANEL_VERTICAL_MARGIN = 10
+
 export function useDraggable(options: UseDraggableOptions = {}) {
   const { edgeSnapHide = false, edgeSnapState, snapThreshold = 30, onEdgeSnap, onUnsnap } = options
 
@@ -36,9 +39,35 @@ export function useDraggable(options: UseDraggableOptions = {}) {
   const pendingUnsnapRef = useRef<"left" | "right" | null>(null)
   // 动画 RAF ID，用于组件卸载时取消
   const animationRafRef = useRef<number | null>(null)
-  // 面板位置比例（相对于布局视口），用于在缩放时等比恢复位置，防止累积漂移
+  // 面板位置比例（相对于可移动轨道），用于在缩放时等比恢复位置，防止累积漂移
   // 仅在非吸附的 floating 模式下，拖拽结束后保存；吸附模式由 CSS class 控制，不需要
   const positionRatioRef = useRef<{ xRatio: number; yRatio: number } | null>(null)
+
+  const toTrackRatio = useCallback(
+    (value: number, viewport: number, size: number, margin: number) => {
+      const max = Math.max(margin, viewport - size - margin)
+      const usable = Math.max(1, max - margin)
+      return Math.min(1, Math.max(0, (value - margin) / usable))
+    },
+    [],
+  )
+
+  const fromTrackRatio = useCallback(
+    (ratio: number, viewport: number, size: number, margin: number) => {
+      const max = Math.max(margin, viewport - size - margin)
+      const usable = Math.max(1, max - margin)
+      return margin + ratio * usable
+    },
+    [],
+  )
+
+  const readPositionRatio = useCallback(
+    (rect: DOMRect, vw = window.innerWidth, vh = window.innerHeight) => ({
+      xRatio: toTrackRatio(rect.left, vw, rect.width, PANEL_HORIZONTAL_MARGIN),
+      yRatio: toTrackRatio(rect.top, vh, rect.height, PANEL_VERTICAL_MARGIN),
+    }),
+    [toTrackRatio],
+  )
 
   // 开始拖拽
   const handleMouseDown = useCallback(
@@ -172,10 +201,7 @@ export function useDraggable(options: UseDraggableOptions = {}) {
     // 拖拽完成后将位置存为比例，供 resize/zoom 时等比恢复
     if (hasMoved && panel && !edgeSnapHide) {
       const rect = panel.getBoundingClientRect()
-      positionRatioRef.current = {
-        xRatio: rect.left / window.innerWidth,
-        yRatio: rect.top / window.innerHeight,
-      }
+      positionRatioRef.current = readPositionRatio(rect)
     }
 
     // 边缘吸附检测
@@ -195,13 +221,10 @@ export function useDraggable(options: UseDraggableOptions = {}) {
         })
       } else {
         // 未触发吸附，面板停留在当前位置，保存比例用于 zoom 恢复
-        positionRatioRef.current = {
-          xRatio: rect.left / vw,
-          yRatio: rect.top / window.innerHeight,
-        }
+        positionRatioRef.current = readPositionRatio(rect, vw, window.innerHeight)
       }
     }
-  }, [edgeSnapHide, onEdgeSnap, snapThreshold, animateToPosition])
+  }, [edgeSnapHide, onEdgeSnap, snapThreshold, animateToPosition, readPositionRatio])
 
   // 边界检测：确保面板在视口内可见
   // positionRatioRef 代表用户意图位置，只能由拖拽或初次像素定位接管时写入。
@@ -215,7 +238,6 @@ export function useDraggable(options: UseDraggableOptions = {}) {
 
     const vw = window.innerWidth
     const vh = window.innerHeight
-    const margin = 10
     const rect = panel.getBoundingClientRect()
 
     if (!positionRatioRef.current) {
@@ -225,24 +247,43 @@ export function useDraggable(options: UseDraggableOptions = {}) {
       )
 
       if (!isDomManagedPixelPosition) {
-        // CSS 贴边定位（如 right: 0/left: auto，或默认 left: 0 + translateY）本身会随 layout viewport 正确变化。
-        // 此时不要为了 margin clamp 写入 left/top，否则会把贴边意图改成像素定位，
-        // 最大化/缩放往返后就会被比例计算拉向中间。
+        // CSS 横向贴边定位本身会随 layout viewport 正确变化。
+        // 此时不要写入 left/right，只在已经是像素 top 的状态下做纵向 clamp。
+        if (panel.style.transform !== "none") return
+
+        let nextTop = rect.top
+        if (nextTop + rect.height + PANEL_VERTICAL_MARGIN > vh) {
+          nextTop = vh - rect.height - PANEL_VERTICAL_MARGIN
+        }
+        if (nextTop < PANEL_VERTICAL_MARGIN) nextTop = PANEL_VERTICAL_MARGIN
+
+        if (Math.abs(nextTop - rect.top) > 0.5) {
+          panel.style.top = nextTop + "px"
+          panel.style.transform = "none"
+        }
         return
       }
 
-      positionRatioRef.current = { xRatio: rect.left / vw, yRatio: rect.top / vh }
+      positionRatioRef.current = readPositionRatio(rect, vw, vh)
     }
 
     const ratio = positionRatioRef.current
-    let newLeft = ratio ? ratio.xRatio * vw : rect.left
-    let newTop = ratio ? ratio.yRatio * vh : rect.top
+    let newLeft = ratio
+      ? fromTrackRatio(ratio.xRatio, vw, rect.width, PANEL_HORIZONTAL_MARGIN)
+      : rect.left
+    let newTop = ratio
+      ? fromTrackRatio(ratio.yRatio, vh, rect.height, PANEL_VERTICAL_MARGIN)
+      : rect.top
 
     // 统一 clamp 到视口边界
-    if (newLeft + rect.width + margin > vw) newLeft = vw - rect.width - margin
-    if (newTop + rect.height + margin > vh) newTop = vh - rect.height - margin
-    if (newLeft < margin) newLeft = margin
-    if (newTop < margin) newTop = margin
+    if (newLeft + rect.width + PANEL_HORIZONTAL_MARGIN > vw) {
+      newLeft = vw - rect.width - PANEL_HORIZONTAL_MARGIN
+    }
+    if (newTop + rect.height + PANEL_VERTICAL_MARGIN > vh) {
+      newTop = vh - rect.height - PANEL_VERTICAL_MARGIN
+    }
+    if (newLeft < PANEL_HORIZONTAL_MARGIN) newLeft = PANEL_HORIZONTAL_MARGIN
+    if (newTop < PANEL_VERTICAL_MARGIN) newTop = PANEL_VERTICAL_MARGIN
 
     // 只有位置确实变化才写入 DOM（避免无效写入打断 CSS 动画）
     if (Math.abs(newLeft - rect.left) > 0.5 || Math.abs(newTop - rect.top) > 0.5) {
@@ -251,7 +292,7 @@ export function useDraggable(options: UseDraggableOptions = {}) {
       panel.style.right = "auto"
       panel.style.transform = "none"
     }
-  }, [edgeSnapState])
+  }, [edgeSnapState, fromTrackRatio, readPositionRatio])
 
   // 进入 edge-snap 时清空 positionRatioRef。
   // 退出 edge-snap 切回 floating 后，MainPanel 会把面板定位到新位置，

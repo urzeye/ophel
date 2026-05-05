@@ -140,7 +140,16 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const groupRef = useRef<HTMLDivElement>(null)
   const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false)
   const [viewportSize, setViewportSize] = useState<ViewportSize>(readViewportSize)
+  const viewportSizeRef = useRef<ViewportSize>(viewportSize)
+  const metricsViewportRef = useRef<ViewportSize>(viewportSize)
   const [groupMetrics, setGroupMetrics] = useState<GroupMetrics>({ width: 0, height: 0 })
+
+  const syncViewportSizeState = useCallback((next: ViewportSize) => {
+    viewportSizeRef.current = next
+    setViewportSize((prev) =>
+      prev.width === next.width && prev.height === next.height ? prev : next,
+    )
+  }, [])
 
   // 点击外部关闭菜单
   useEffect(() => {
@@ -502,6 +511,18 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       setGroupMetrics(nextMetrics)
 
       const viewport = readViewportSize()
+      const lastMetricsViewport = metricsViewportRef.current
+      const viewportChangedSinceLastMetrics =
+        lastMetricsViewport.width !== viewport.width ||
+        lastMetricsViewport.height !== viewport.height
+      metricsViewportRef.current = viewport
+
+      if (
+        viewportSizeRef.current.width !== viewport.width ||
+        viewportSizeRef.current.height !== viewport.height
+      ) {
+        syncViewportSizeState(viewport)
+      }
 
       if (!groupPositionRef.current) {
         const fallbackTop = defaultTopPxRef.current ?? rect.top
@@ -515,17 +536,26 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         return
       }
 
-      if (draggingRef.current || isInitialMetricsSync) {
+      if (draggingRef.current || isInitialMetricsSync || viewportChangedSinceLastMetrics) {
         // 首次挂载时，持久化位置仍按 0x0 尺寸参与了首帧定位。
         // 这时如果直接用当前 rect 反推 ratio，会把这个“临时偏低”的像素位置写回，
-        // 导致刷新一次就下移一点。先只更新 metrics，让下一帧用真实尺寸重算位置。
+        // 导致刷新一次就下移一点。viewport 变化时也不能从当前 rect 反推 ratio，
+        // 否则会把缩放/窗口变化后的临时显示坐标写回意图。
         return
       }
 
-      // groupPositionRef 代表用户意图位置，只能由拖拽或外部持久化设置改变。
-      // ResizeObserver 在浏览器缩放、窗口最大化切换、按钮折叠/展开时都会触发；
-      // 如果此处从 DOM rect 反推 ratio，就会把当前被 clamp 后的显示坐标写回意图，
-      // 下一次缩放/恢复时位置会逐步向中间漂移。这里仅同步 metrics，渲染层会用原始意图重算显示坐标。
+      // 纯 metrics 变化（collapsed ↔ expanded、液态收缩/展开）时，视口没有变化，
+      // 可以从 DOM rect 反推 ratio 保持 logo 视觉位置不动；该值不持久化。
+      const nextPosition = toLogicalGroupPosition(rect.left, rect.top, viewport, nextMetrics)
+      const prevPosition = groupPositionRef.current
+
+      if (
+        prevPosition.xRatio !== nextPosition.xRatio ||
+        prevPosition.yRatio !== nextPosition.yRatio
+      ) {
+        groupPositionRef.current = nextPosition
+        setGroupPosition(nextPosition)
+      }
     }
 
     syncGroupMetrics()
@@ -539,7 +569,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return () => {
       resizeObserver.disconnect()
     }
-  }, [clampPixelGroupPosition])
+  }, [clampPixelGroupPosition, syncViewportSizeState, toLogicalGroupPosition])
 
   // 滚动到顶部（支持图文并茂模式）
   const scrollToTop = useCallback(async () => {
@@ -992,9 +1022,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
     const syncViewport = () => {
       const next = readViewportSize()
-      setViewportSize((prev) =>
-        prev.width === next.width && prev.height === next.height ? prev : next,
-      )
+      syncViewportSizeState(next)
 
       if (groupPositionRef.current || defaultTopPxRef.current === null) return
 
@@ -1050,7 +1078,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       if (rafId !== null) cancelAnimationFrame(rafId)
       if (debounceId !== null) window.clearTimeout(debounceId)
     }
-  }, [clampPixelGroupPosition])
+  }, [clampPixelGroupPosition, syncViewportSizeState])
 
   const clearDragTimer = () => {
     if (dragTimerRef.current) {
@@ -1129,11 +1157,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     const nextX = e.clientX - offset.x
     const nextY = e.clientY - offset.y
     const nextPosition = toLogicalGroupPosition(nextX, nextY, currentViewport)
-    setViewportSize((prev) =>
-      prev.width === currentViewport.width && prev.height === currentViewport.height
-        ? prev
-        : currentViewport,
-    )
+    syncViewportSizeState(currentViewport)
     groupPositionRef.current = nextPosition
     setGroupPosition(nextPosition)
   }
