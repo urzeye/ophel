@@ -248,6 +248,16 @@ export function useDraggable(options: UseDraggableOptions = {}) {
     }
   }, [edgeSnapState])
 
+  // 进入 edge-snap 时清空 positionRatioRef。
+  // 退出 edge-snap 切回 floating 后，MainPanel 会把面板定位到新位置，
+  // 此时 ratio 为 null，下次 resize/zoom 触发 clampToViewport 时
+  // 由 hasPixelPosition 分支从当前新位置重新初始化，避免跳回旧 floating 坐标。
+  useEffect(() => {
+    if (edgeSnapState) {
+      positionRatioRef.current = null
+    }
+  }, [edgeSnapState])
+
   // 绑定事件
   useEffect(() => {
     const header = headerRef.current
