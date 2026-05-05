@@ -14,6 +14,7 @@
 
 ### 🐛 问题修复
 
+- **快捷按钮组和面板在缩放时逐渐向屏幕中央漂移**：修复使用触摸板捏合缩放或浏览器 Ctrl/Cmd +/- 快捷键缩放时，快捷按钮组和主面板位置逐渐偏移到屏幕中央的问题。根本原因有两处：① 快捷按钮组位置计算使用了 `window.visualViewport.width`，但 `position: fixed` 元素基于布局视口（`window.innerWidth`）定位，捏合缩放改变视觉视口但不改变布局视口，导致坐标空间错配；② 面板的 `clampToViewport` 在浏览器缩小视口时单向压缩面板位置但无"反向拉回"逻辑，每次缩放循环累积漂移。修复方式：① `readViewportSize()` 统一改用 `window.innerWidth/innerHeight`；② 在 `useDraggable` 中新增 `positionRatioRef` 存储面板相对视口的位置比例，resize 时先按比例恢复坐标再 clamp，确保缩放 in/out 后面板能回到相对正确位置。（#458）
 - **快捷按钮设置保存异常**：修复部分设置项（如「面板展开时隐藏」开关）在修改后刷新页面会被重置的问题。
 - **多语言文案缺失（国际化补全）**：修复俄语、英语、德语等 10 种语言下，以下界面文本未翻译、显示为中文的问题：删除/批量删除会话确认弹窗、云端删除失败 Toast、备份恢复/删除确认弹窗、加载失败/删除失败提示、导入前未选文件提示、导出失败 Toast、阅读进度恢复 Toast、Claude 账号切换失败 Toast。
 - **韩文/CJK 文字在面板中显示异常**：修复在系统安装了 Inter 字体（如通过 Figma、Electron 应用等）的 Windows 用户中，面板内韩文等非 Latin 文字显示为方块或乱码的问题。根本原因是 `font-family` 首选 Inter，但浏览器对缺失字形的回退行为在各平台不一致。修复方式：为扩展版的 `@font-face` 和油猴版的系统字体 `@font-face` 均添加 `unicode-range`，将 Inter 限定在其实际支持的字符范围（Latin、Greek、Cyrillic），韩文/汉字/假名等自动回退至系统字体。（感谢 @Apious 报告 #432）

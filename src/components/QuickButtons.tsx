@@ -61,8 +61,12 @@ type GroupMetrics = {
 }
 
 const readViewportSize = (): ViewportSize => ({
-  width: window.visualViewport?.width ?? window.innerWidth,
-  height: window.visualViewport?.height ?? window.innerHeight,
+  // 使用布局视口（layout viewport），而非视觉视口（visual viewport）。
+  // position: fixed 元素相对布局视口定位。
+  // 若使用 window.visualViewport.width，捏合缩放时视觉视口缩小会触发
+  // 错误的位置重算，导致按钮组逐渐向屏幕中央漂移。
+  width: window.innerWidth,
+  height: window.innerHeight,
 })
 
 const areGroupPositionsEqual = (

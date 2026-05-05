@@ -36,6 +36,9 @@ export function useDraggable(options: UseDraggableOptions = {}) {
   const pendingUnsnapRef = useRef<"left" | "right" | null>(null)
   // 动画 RAF ID，用于组件卸载时取消
   const animationRafRef = useRef<number | null>(null)
+  // 面板位置比例（相对于布局视口），用于在缩放时等比恢复位置，防止累积漂移
+  // 仅在非吸附的 floating 模式下，拖拽结束后保存；吸附模式由 CSS class 控制，不需要
+  const positionRatioRef = useRef<{ xRatio: number; yRatio: number } | null>(null)
 
   // 开始拖拽
   const handleMouseDown = useCallback(
@@ -166,6 +169,15 @@ export function useDraggable(options: UseDraggableOptions = {}) {
     // 移除 dragging 类（但保持 left/top 样式，面板会停留在当前位置）
     panel?.classList.remove("dragging")
 
+    // 拖拽完成后将位置存为比例，供 resize/zoom 时等比恢复
+    if (hasMoved && panel && !edgeSnapHide) {
+      const rect = panel.getBoundingClientRect()
+      positionRatioRef.current = {
+        xRatio: rect.left / window.innerWidth,
+        yRatio: rect.top / window.innerHeight,
+      }
+    }
+
     // 边缘吸附检测
     if (edgeSnapHide && hasMoved && panel) {
       const rect = panel.getBoundingClientRect()
@@ -181,11 +193,19 @@ export function useDraggable(options: UseDraggableOptions = {}) {
         animateToPosition(vw - 12, pTop, 250, () => {
           onEdgeSnap?.("right")
         })
+      } else {
+        // 未触发吸附，面板停留在当前位置，保存比例用于 zoom 恢复
+        positionRatioRef.current = {
+          xRatio: rect.left / vw,
+          yRatio: rect.top / window.innerHeight,
+        }
       }
     }
   }, [edgeSnapHide, onEdgeSnap, snapThreshold, animateToPosition])
 
   // 边界检测：确保面板在视口内可见
+  // 若已有保存的位置比例（拖拽后或之前 clamp 写入），先用比例等比恢复
+  // 再统一 clamp 到视口边界，防止 Ctrl/Cmd +/- 缩放时单向向中央漂移
   const clampToViewport = useCallback(() => {
     const panel = panelRef.current
     if (!panel) return
@@ -193,25 +213,29 @@ export function useDraggable(options: UseDraggableOptions = {}) {
     // 跳过条件：处于吸附状态
     if (edgeSnapState) return
 
-    const rect = panel.getBoundingClientRect()
     const vw = window.innerWidth
     const vh = window.innerHeight
     const margin = 10
+    const rect = panel.getBoundingClientRect()
 
-    let newLeft = rect.left
-    let newTop = rect.top
+    const ratio = positionRatioRef.current
+    let newLeft = ratio ? ratio.xRatio * vw : rect.left
+    let newTop = ratio ? ratio.yRatio * vh : rect.top
 
-    // 超出边界检测
-    if (rect.right > vw) newLeft = vw - rect.width - margin
-    if (rect.bottom > vh) newTop = vh - rect.height - margin
-    if (rect.left < 0) newLeft = margin
-    if (rect.top < 0) newTop = margin
+    // 统一 clamp 到视口边界
+    if (newLeft + rect.width + margin > vw) newLeft = vw - rect.width - margin
+    if (newTop + rect.height + margin > vh) newTop = vh - rect.height - margin
+    if (newLeft < margin) newLeft = margin
+    if (newTop < margin) newTop = margin
 
-    if (newLeft !== rect.left || newTop !== rect.top) {
+    // 只有位置确实变化才写入 DOM（避免无效写入打断 CSS 动画）
+    if (Math.abs(newLeft - rect.left) > 0.5 || Math.abs(newTop - rect.top) > 0.5) {
       panel.style.left = newLeft + "px"
       panel.style.top = newTop + "px"
       panel.style.right = "auto"
       panel.style.transform = "none"
+      // 写入后更新比例，保证后续缩放步骤仍能正确还原
+      positionRatioRef.current = { xRatio: newLeft / vw, yRatio: newTop / vh }
     }
   }, [edgeSnapState])
 
