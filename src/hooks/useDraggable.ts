@@ -39,6 +39,7 @@ export function useDraggable(options: UseDraggableOptions = {}) {
   const pendingUnsnapRef = useRef<"left" | "right" | null>(null)
   // 动画 RAF ID，用于组件卸载时取消
   const animationRafRef = useRef<number | null>(null)
+  const cssVerticalCenterClampedRef = useRef(false)
   // 面板位置比例（相对于可移动轨道），用于在缩放时等比恢复位置，防止累积漂移
   // 仅在非吸附的 floating 模式下，拖拽结束后保存；吸附模式由 CSS class 控制，不需要
   const positionRatioRef = useRef<{ xRatio: number; yRatio: number } | null>(null)
@@ -127,6 +128,7 @@ export function useDraggable(options: UseDraggableOptions = {}) {
         // 切换 CSS 定位从 right+transform 为 left+top，避免后续拖拽跳动
         panel.style.right = "auto"
         panel.style.transform = "none"
+        cssVerticalCenterClampedRef.current = false
 
         // 添加 dragging 类，通过 CSS !important 确保拖拽时定位不会被 React 重渲染覆盖
         panel.classList.add("dragging")
@@ -248,8 +250,25 @@ export function useDraggable(options: UseDraggableOptions = {}) {
 
       if (!isDomManagedPixelPosition) {
         // CSS 横向贴边定位本身会随 layout viewport 正确变化。
-        // 此时不要写入 left/right，只在已经是像素 top 的状态下做纵向 clamp。
-        if (panel.style.transform !== "none") return
+        // 此时不要写入 left/right；纵向若从默认居中被临时 clamp，空间恢复后要还原居中意图。
+        const isDefaultVerticalCenter = panel.style.transform !== "none"
+        const canFitWhenCentered = rect.height + PANEL_VERTICAL_MARGIN * 2 <= vh
+
+        if (
+          (isDefaultVerticalCenter || cssVerticalCenterClampedRef.current) &&
+          canFitWhenCentered
+        ) {
+          if (cssVerticalCenterClampedRef.current) {
+            panel.style.top = "50%"
+            panel.style.transform = "translateY(-50%)"
+            cssVerticalCenterClampedRef.current = false
+          }
+          return
+        }
+
+        if (isDefaultVerticalCenter) {
+          cssVerticalCenterClampedRef.current = true
+        }
 
         let nextTop = rect.top
         if (nextTop + rect.height + PANEL_VERTICAL_MARGIN > vh) {
