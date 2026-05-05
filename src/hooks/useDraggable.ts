@@ -236,6 +236,15 @@ export function useDraggable(options: UseDraggableOptions = {}) {
       panel.style.transform = "none"
       // 写入后更新比例，保证后续缩放步骤仍能正确还原
       positionRatioRef.current = { xRatio: newLeft / vw, yRatio: newTop / vh }
+    } else if (!ratio) {
+      // ratio 尚未初始化（如 edge-snap → floating 切换后首次 resize）。
+      // 检查面板是否已处于像素定位模式（style.left 为像素值而非 auto/空）：
+      // 只有像素定位的面板才需要保存比例；CSS 百分比定位的面板自行随视口缩放，无需干预。
+      const leftStyle = panel.style.left
+      const hasPixelPosition = Boolean(leftStyle && leftStyle !== "auto")
+      if (hasPixelPosition) {
+        positionRatioRef.current = { xRatio: newLeft / vw, yRatio: newTop / vh }
+      }
     }
   }, [edgeSnapState])
 
