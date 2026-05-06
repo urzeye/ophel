@@ -80,22 +80,45 @@ jobs:
           VERSION=${{ steps.get_version.outputs.VERSION }}
           VERSION_NO_V=${VERSION#v}
 
-          # 使用 awk 提取对应版本的更新日志
-          # 匹配 "## [1.0.1]" 开头，到下一个 "## [" 之前的内容
+          # Extract English changelog section
           awk -v ver="\\[${VERSION_NO_V}\\]" '
             /^## \[/ {
               if (p) exit;
               if ($0 ~ ver) { p=1; next }
             }
             p
-          ' CHANGELOG.md > RELEASE_NOTE.md
+          ' CHANGELOG.md > RELEASE_NOTE_EN.md
 
-          # 如果没有找到对应版本的日志，使用占位符
-          if [ ! -s RELEASE_NOTE.md ]; then
-            echo "详见 CHANGELOG.md" > RELEASE_NOTE.md
+          if [ ! -s RELEASE_NOTE_EN.md ]; then
+            echo "See CHANGELOG.md for details." > RELEASE_NOTE_EN.md
           fi
 
-          # 输出到 GITHUB_OUTPUT (支持多行)
+          # Extract Chinese changelog section
+          awk -v ver="\\[${VERSION_NO_V}\\]" '
+            /^## \[/ {
+              if (p) exit;
+              if ($0 ~ ver) { p=1; next }
+            }
+            p
+          ' CHANGELOG.zh-CN.md > RELEASE_NOTE_ZH.md
+
+          if [ ! -s RELEASE_NOTE_ZH.md ]; then
+            echo "详见 CHANGELOG.zh-CN.md" > RELEASE_NOTE_ZH.md
+          fi
+
+          # Combine both into final release note
+          {
+            cat RELEASE_NOTE_EN.md
+            echo ""
+            echo "<details>"
+            echo "<summary>中文版本 / Chinese Version</summary>"
+            echo ""
+            cat RELEASE_NOTE_ZH.md
+            echo ""
+            echo "</details>"
+          } > RELEASE_NOTE.md
+
+          # Output to GITHUB_OUTPUT (multi-line)
           echo "notes<<EOF" >> $GITHUB_OUTPUT
           cat RELEASE_NOTE.md >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -192,7 +215,7 @@ jobs:
 
             [Full Changelog](https://github.com/urzeye/ophel/compare/${{ steps.get_version.outputs.PREV_VERSION }}...${{ steps.get_version.outputs.VERSION }})
 
-            *Changelog File: [CHANGELOG.md](https://github.com/urzeye/ophel/blob/main/CHANGELOG.md)*
+            *Changelog: [CHANGELOG.md](https://github.com/urzeye/ophel/blob/main/CHANGELOG.md) · [中文版 CHANGELOG.zh-CN.md](https://github.com/urzeye/ophel/blob/main/CHANGELOG.zh-CN.md)*
           files: |
             build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-chrome.zip
             build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-edge.zip
