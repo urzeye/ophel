@@ -154,8 +154,8 @@ export class LayoutManager {
     const selectors = this.siteAdapter.getWidthSelectors()
     const mainCss = this.buildCSSFromSelectors(selectors, width, true)
 
-    // 仅对百分比单位添加窄屏响应式处理：
-    // px/vw 单位的 max-width 在窄屏下已能自然适应，无需额外处理
+    // 当配置单位为 "%" 时，追加窄屏兜底媒体查询
+    // （当前设置归一化后 pageWidthConfig.unit 仅会是 "%"）
     if (this.pageWidthConfig.unit === "%") {
       const narrowCss = this.buildCSSFromSelectors(selectors, "95%", true)
       return `${mainCss}\n@media (max-width: ${NARROW_SCREEN_BREAKPOINT}px) {\n${narrowCss}\n}`
@@ -539,11 +539,13 @@ export class LayoutManager {
 
       // 页面宽度
       if (this.pageWidthConfig?.enabled) {
-        const css = this.buildCSSFromSelectors(
-          siteAdapter.getWidthSelectors(),
-          `${this.pageWidthConfig.value}${this.pageWidthConfig.unit}`,
-          false,
-        )
+        const width = `${this.pageWidthConfig.value}${this.pageWidthConfig.unit}`
+        const selectors = siteAdapter.getWidthSelectors()
+        let css = this.buildCSSFromSelectors(selectors, width, false)
+        if (this.pageWidthConfig.unit === "%") {
+          const narrowCss = this.buildCSSFromSelectors(selectors, "95%", false)
+          css = `${css}\n@media (max-width: ${NARROW_SCREEN_BREAKPOINT}px) {\n${narrowCss}\n}`
+        }
         DOMToolkit.cssToShadow(shadowRoot, css, STYLE_IDS.PAGE_WIDTH_SHADOW)
       } else {
         this.removeStyleFromShadow(shadowRoot, STYLE_IDS.PAGE_WIDTH_SHADOW)
