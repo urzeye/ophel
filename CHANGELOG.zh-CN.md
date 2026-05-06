@@ -943,6 +943,31 @@
 
 ---
 
+[1.0.45]: https://github.com/urzeye/ophel/releases/tag/v1.0.45
+[1.0.44]: https://github.com/urzeye/ophel/releases/tag/v1.0.44
+[1.0.43]: https://github.com/urzeye/ophel/releases/tag/v1.0.43
+[1.0.42]: https://github.com/urzeye/ophel/releases/tag/v1.0.42
+[1.0.41]: https://github.com/urzeye/ophel/releases/tag/v1.0.41
+[1.0.40]: https://github.com/urzeye/ophel/releases/tag/v1.0.40
+[1.0.39]: https://github.com/urzeye/ophel/releases/tag/v1.0.39
+[1.0.38]: https://github.com/urzeye/ophel/releases/tag/v1.0.38
+[1.0.37]: https://github.com/urzeye/ophel/releases/tag/v1.0.37
+[1.0.36]: https://github.com/urzeye/ophel/releases/tag/v1.0.36
+[1.0.35]: https://github.com/urzeye/ophel/releases/tag/v1.0.35
+[1.0.34]: https://github.com/urzeye/ophel/releases/tag/v1.0.34
+[1.0.33]: https://github.com/urzeye/ophel/releases/tag/v1.0.33
+[1.0.32]: https://github.com/urzeye/ophel/releases/tag/v1.0.32
+[1.0.31]: https://github.com/urzeye/ophel/releases/tag/v1.0.31
+[1.0.30]: https://github.com/urzeye/ophel/releases/tag/v1.0.30
+[1.0.29]: https://github.com/urzeye/ophel/releases/tag/v1.0.29
+[1.0.28]: https://github.com/urzeye/ophel/releases/tag/v1.0.28
+[1.0.27]: https://github.com/urzeye/ophel/releases/tag/v1.0.27
+[1.0.26]: https://github.com/urzeye/ophel/releases/tag/v1.0.26
+[1.0.25]: https://github.com/urzeye/ophel/releases/tag/v1.0.25
+[1.0.24]: https://github.com/urzeye/ophel/releases/tag/v1.0.24
+[1.0.23]: https://github.com/urzeye/ophel/releases/tag/v1.0.23
+[1.0.22]: https://github.com/urzeye/ophel/releases/tag/v1.0.22
+[1.0.21]: https://github.com/urzeye/ophel/releases/tag/v1.0.21
 [1.0.20]: https://github.com/urzeye/ophel/releases/tag/v1.0.20
 [1.0.19]: https://github.com/urzeye/ophel/releases/tag/v1.0.19
 [1.0.18]: https://github.com/urzeye/ophel/releases/tag/v1.0.18

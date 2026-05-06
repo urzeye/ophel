@@ -300,11 +300,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-- **Gemini watermark removal (standard)**: Fixed the copy/download pipeline still getting watermarked or non-full-size images in some scenarios; unified to prioritize full-size watermark-removed results, with safe fallback for the copy pipeline when fullsize is unavailable, preventing operation errors.
-- **Gemini watermark removal compatibility**: Improved interception strategy for extension and userscript (main-world `fetch` and Userscript `unsafeWindow.fetch` cooperation), cleaned up debug remnants, improved stability and consistency.
-- Added `.gh-dialog-overlay` recognition to panel auto-hide and Portal active detection, preventing the panel from being incorrectly retracted when a dialog is open in Tampermonkey environment.
-- Fixed global search `ArrowUp` navigation being covered by floating group titles.
-- Fixed global search results area showing a horizontal scrollbar at certain widths.
+- **Gemini Enterprise export noise cleanup**: Cleaned up unexpected noise content (extra style and status text) appearing in some Gemini Enterprise export results, improving output consistency and readability.
+- **Input focus stealing on native sites**: Fixed an issue where Ophel could steal input focus on native sites like ChatGPT in Firefox, causing the first character typed in the outline search box to lose focus and prevent continuous input. (#304)
+- **Unified focus protection**: Unified input focus protection logic across Settings, Global Search, Prompt Queue, and the main panel, while preserving local keyboard interactions (`Enter`, `Escape`, etc.) inside queue and modal dialogs.
+- **Duplicate update notification**: Fixed an issue where after extension updates, multiple notifications appeared simultaneously (Ophel's own notification, a fallback notice, and Plasmo's default "Context Invalidated, Press to Reload"), consolidated into a single update notification card.
 
 ## [1.0.27]
 
@@ -944,6 +943,31 @@ This is the first official release of Ophel, providing comprehensive enhancement
 
 ---
 
+[1.0.45]: https://github.com/urzeye/ophel/releases/tag/v1.0.45
+[1.0.44]: https://github.com/urzeye/ophel/releases/tag/v1.0.44
+[1.0.43]: https://github.com/urzeye/ophel/releases/tag/v1.0.43
+[1.0.42]: https://github.com/urzeye/ophel/releases/tag/v1.0.42
+[1.0.41]: https://github.com/urzeye/ophel/releases/tag/v1.0.41
+[1.0.40]: https://github.com/urzeye/ophel/releases/tag/v1.0.40
+[1.0.39]: https://github.com/urzeye/ophel/releases/tag/v1.0.39
+[1.0.38]: https://github.com/urzeye/ophel/releases/tag/v1.0.38
+[1.0.37]: https://github.com/urzeye/ophel/releases/tag/v1.0.37
+[1.0.36]: https://github.com/urzeye/ophel/releases/tag/v1.0.36
+[1.0.35]: https://github.com/urzeye/ophel/releases/tag/v1.0.35
+[1.0.34]: https://github.com/urzeye/ophel/releases/tag/v1.0.34
+[1.0.33]: https://github.com/urzeye/ophel/releases/tag/v1.0.33
+[1.0.32]: https://github.com/urzeye/ophel/releases/tag/v1.0.32
+[1.0.31]: https://github.com/urzeye/ophel/releases/tag/v1.0.31
+[1.0.30]: https://github.com/urzeye/ophel/releases/tag/v1.0.30
+[1.0.29]: https://github.com/urzeye/ophel/releases/tag/v1.0.29
+[1.0.28]: https://github.com/urzeye/ophel/releases/tag/v1.0.28
+[1.0.27]: https://github.com/urzeye/ophel/releases/tag/v1.0.27
+[1.0.26]: https://github.com/urzeye/ophel/releases/tag/v1.0.26
+[1.0.25]: https://github.com/urzeye/ophel/releases/tag/v1.0.25
+[1.0.24]: https://github.com/urzeye/ophel/releases/tag/v1.0.24
+[1.0.23]: https://github.com/urzeye/ophel/releases/tag/v1.0.23
+[1.0.22]: https://github.com/urzeye/ophel/releases/tag/v1.0.22
+[1.0.21]: https://github.com/urzeye/ophel/releases/tag/v1.0.21
 [1.0.20]: https://github.com/urzeye/ophel/releases/tag/v1.0.20
 [1.0.19]: https://github.com/urzeye/ophel/releases/tag/v1.0.19
 [1.0.18]: https://github.com/urzeye/ophel/releases/tag/v1.0.18
