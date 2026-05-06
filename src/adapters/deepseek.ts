@@ -729,7 +729,6 @@ export class DeepSeekAdapter extends SiteAdapter {
         noCenter: true,
       },
       {
-        // 虚拟列表本身仍然需要基于该变量重算左右 padding，保持内容居中。
         selector: MESSAGE_LIST_ITEMS_SELECTOR,
         property: "--message-list-max-width",
         noCenter: true,
