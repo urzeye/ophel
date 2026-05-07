@@ -2598,13 +2598,33 @@ export const App = () => {
     return settings.modelLock?.[siteId]?.enabled || false
   }, [adapter, settings])
 
+  // 面板统一切换：快捷键与快捷按钮组共用，确保 edge-snap 模式下同步进入 peek 状态
+  const handlePanelToggle = useCallback(() => {
+    const expanding = !isPanelExpandedRef.current
+    if (expanding && settingsRef.current?.panel?.panelMode === "edge-snap") {
+      // 若 edgeSnapState 为 null（拖拽脱吸附后关闭了面板），恢复到默认边缘位置
+      if (!edgeSnapState) {
+        setEdgeSnapState(
+          (settingsRef.current?.panel?.defaultPosition ?? "right") as "left" | "right",
+        )
+      }
+      setIsEdgePeeking(true)
+      // 标记：面板打开后需延迟同步 hover，防止鼠标不在面板上时 peeking 永久保持
+      shouldSyncEdgePeekAfterOpenRef.current = true
+    } else if (!expanding) {
+      // 关闭面板：重置 peek 状态
+      setIsEdgePeeking(false)
+    }
+    persistPanelExpanded(expanding)
+  }, [edgeSnapState, setEdgeSnapState, setIsEdgePeeking, persistPanelExpanded])
+
   // 快捷键管理
   useShortcuts({
     settings,
     adapter,
     outlineManager,
     conversationManager,
-    onPanelToggle: togglePanelExpanded,
+    onPanelToggle: handlePanelToggle,
     onThemeToggle: handleThemeToggle,
     onOpenSettings: openSettingsModal,
     onOpenGlobalSearch: openGlobalSearchByShortcut,
@@ -3214,24 +3234,7 @@ export const App = () => {
 
       <QuickButtons
         isPanelExpanded={isPanelExpanded}
-        onPanelToggle={() => {
-          if (!isPanelExpanded) {
-            // 展开面板：如果处于吸附状态，进入 peek 模式
-            if (settings?.panel?.panelMode === "edge-snap") {
-              // 若 edgeSnapState 为 null（拖拽脱吸附后关闭了面板），恢复到默认边缘位置
-              if (!edgeSnapState) {
-                setEdgeSnapState((settings?.panel?.defaultPosition ?? "right") as "left" | "right")
-              }
-              setIsEdgePeeking(true)
-              // 标记：面板打开后需延迟同步 hover，防止鼠标不在面板上时 peeking 永久保持
-              shouldSyncEdgePeekAfterOpenRef.current = true
-            }
-          } else {
-            // 关闭面板：重置 peek 状态
-            setIsEdgePeeking(false)
-          }
-          persistPanelExpanded(!isPanelExpanded)
-        }}
+        onPanelToggle={handlePanelToggle}
         onThemeToggle={handleThemeToggle}
         themeMode={themeMode}
         onExport={handleFloatingToolbarExport}
