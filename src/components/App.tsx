@@ -1153,7 +1153,13 @@ export const App = () => {
       return
     }
 
-    setIsEdgePeeking(panel.matches(":hover"))
+    const root = panel.getRootNode()
+    const activeElement = root instanceof ShadowRoot ? root.activeElement : document.activeElement
+    const hasFocusWithin =
+      panel.matches(":focus-within") ||
+      (activeElement instanceof Element && panel.contains(activeElement))
+
+    setIsEdgePeeking(panel.matches(":hover") || hasFocusWithin)
   }, [edgeSnapState, findUiElement, hasOpenEdgePeekOverlay])
 
   const scheduleEdgePeekHoverSync = useCallback(
