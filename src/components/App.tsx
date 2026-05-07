@@ -2826,13 +2826,33 @@ export const App = () => {
       }
     }
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return
+
+      const outlineSearchInput = e
+        .composedPath()
+        .find(
+          (node): node is HTMLInputElement =>
+            node instanceof HTMLInputElement && node.classList.contains("outline-search-input"),
+        )
+      if (!outlineSearchInput) return
+
+      e.preventDefault()
+      e.stopImmediatePropagation()
+      isInputFocusedRef.current = false
+      outlineSearchInput.blur()
+      window.setTimeout(syncEdgePeekWithPanelHover, 0)
+    }
+
     // 监听 Shadow DOM 内的焦点事件
     shadowRoot.addEventListener("focusin", handleFocusIn, true)
     shadowRoot.addEventListener("focusout", handleFocusOut, true)
+    shadowRoot.addEventListener("keydown", handleKeyDown, true)
 
     return () => {
       shadowRoot.removeEventListener("focusin", handleFocusIn, true)
       shadowRoot.removeEventListener("focusout", handleFocusOut, true)
+      shadowRoot.removeEventListener("keydown", handleKeyDown, true)
     }
   }, [edgeSnapState, settings?.panel?.panelMode, syncEdgePeekWithPanelHover])
 
