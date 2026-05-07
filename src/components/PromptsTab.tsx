@@ -732,7 +732,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     setDraggedId(id)
     dragNodeRef.current = node
     e.dataTransfer.effectAllowed = "move"
-    // 必须调用 setData，部分站点在拖拽平辟 bubbling 阶段会检测 dataTransfer 为空并取消拖拽
+    // 必须调用 setData，部分站点在拖拽冒泡（bubbling）阶段会检测 dataTransfer 为空并取消拖拽
     e.dataTransfer.setData("text/plain", id)
     node.classList.add("dragging")
   }

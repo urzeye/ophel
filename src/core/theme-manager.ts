@@ -350,6 +350,8 @@ export class ThemeManager {
               storageArea: localStorage,
             }),
           )
+          // 清除之前 toggleTheme 写入的 colorScheme，让浏览器跟随系统
+          document.documentElement.style.colorScheme = ""
           return true
         }
         default:
@@ -497,13 +499,14 @@ export class ThemeManager {
 
   /**
    * 检测当前宿主页实际呈现出的亮/暗模式。
-   * 优先级：html Class (ChatGPT) > body Class (Gemini) > Data Attribute > Style (colorScheme)
+   * 优先级：html[yb-theme-mode]（值为 system 时按当前系统偏好解析） > html Class (ChatGPT) > body Class (Gemini) > Data Attribute > Style (colorScheme)
    */
   private detectHostThemeMode(): ThemeMode {
-    // 0. html[yb-theme-mode] 属性（元宝使用自定义属性而非 class）
+    // 0. html[yb-theme-mode] 属性（元宝使用自定义属性而非 class；system 需解析为当前实际模式）
     const ybThemeMode = document.documentElement.getAttribute("yb-theme-mode")
     if (ybThemeMode === "dark") return "dark"
     if (ybThemeMode === "light") return "light"
+    if (ybThemeMode === "system") return this.getSystemMode()
 
     // 1. html 元素的 class（ChatGPT 使用 html.dark / html.light）
     const htmlClass = document.documentElement.className
