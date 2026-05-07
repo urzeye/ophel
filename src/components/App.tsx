@@ -2633,10 +2633,10 @@ export const App = () => {
     onShowSnappedPanel: () => {
       // 强制显示吸附的面板
       setIsEdgePeeking(true)
-      // 启动 3 秒延迟缩回计时器
+      // 启动 3 秒延迟同步计时器；若面板内输入框仍聚焦，则保持显示
       cancelShortcutPeekTimer()
       shortcutPeekTimerRef.current = setTimeout(() => {
-        setIsEdgePeeking(false)
+        syncEdgePeekWithPanelHover()
         shortcutPeekTimerRef.current = null
       }, 3000)
     },
