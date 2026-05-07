@@ -28,7 +28,7 @@ import { DEFAULT_SETTINGS, getSiteTheme, type QuickButtonsPosition } from "~util
 import { showToast } from "~utils/toast"
 
 interface QuickButtonsProps {
-  isPanelOpen: boolean
+  isPanelExpanded: boolean
   onPanelToggle: () => void
   onThemeToggle?: (event?: ThemeTransitionOrigin) => void
   themeMode?: "light" | "dark"
@@ -88,7 +88,7 @@ const ACTIVITY_PROTECT_MS = 4000
 const LEAVE_WINDOW_RETAIN_MS = 1500
 
 export const QuickButtons: React.FC<QuickButtonsProps> = ({
-  isPanelOpen,
+  isPanelExpanded,
   onPanelToggle,
   onThemeToggle,
   themeMode,
@@ -223,7 +223,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
   // 监听组件活跃状态：包括拖拽、按压、面板展开、工具菜单打开
   useEffect(() => {
-    const isActive = isDragging || isPressing || isPanelOpen || isToolsMenuOpen
+    const isActive = isDragging || isPressing || isPanelExpanded || isToolsMenuOpen
     isActiveRef.current = isActive
     if (isActive) {
       setIsProximate(true)
@@ -235,7 +235,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       // 从活跃变成不活跃时，给保护时间（尤其是刚拖拽完）
       retainActivity(ACTIVITY_PROTECT_MS)
     }
-  }, [isDragging, isPressing, isPanelOpen, isToolsMenuOpen, retainActivity])
+  }, [isDragging, isPressing, isPanelExpanded, isToolsMenuOpen, retainActivity])
 
   useEffect(() => {
     let rafId: number | null = null
@@ -291,7 +291,12 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   }, [retainActivity, shortenCountdown])
 
   const isLiquidCollapsed =
-    !isProximate && !_isHovered && !isToolsMenuOpen && !isPanelOpen && !isDragging && !isPressing
+    !isProximate &&
+    !_isHovered &&
+    !isToolsMenuOpen &&
+    !isPanelExpanded &&
+    !isDragging &&
+    !isPressing
 
   // 用 ref 追踪 isLiquidCollapsed，避免 ResizeObserver 的 useLayoutEffect 因它变化而反复 teardown/recreate
   const isLiquidCollapsedRef = useRef(isLiquidCollapsed)
@@ -302,15 +307,15 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   // 触发条件2（兜底）：非拖拽/按压、工具菜单关闭、非液态折叠（液态折叠态必有 logo），且遍历后无可见按钮
   const isGroupHidden = useMemo(() => {
     if (isDragging || isPressing || isToolsMenuOpen) return false
-    // 液态折叠态必然包含 panel logo（且 isLiquidCollapsed 隐含 !isPanelOpen），不隐藏
+    // 液态折叠态必然包含 panel logo（且 isLiquidCollapsed 隐含 !isPanelExpanded），不隐藏
     if (isLiquidCollapsed) return false
 
     // 用户明确开启"面板展开时隐藏快捷按钮组"设置
-    if ((quickButtonsSettings.hideWhenPanelOpen ?? false) && isPanelOpen) return true
+    if ((quickButtonsSettings.hideWhenPanelOpen ?? false) && isPanelExpanded) return true
 
     // 兜底：当所有按钮均不可见时，自动隐藏空容器
     const isFloatingOpen =
-      isPanelOpen && (currentSettings.panel?.panelMode ?? "edge-snap") !== "edge-snap"
+      isPanelExpanded && (currentSettings.panel?.panelMode ?? "edge-snap") !== "edge-snap"
 
     for (const btnConfig of collapsedButtonsOrder) {
       // manualAnchor 暂时禁用，跳过
@@ -319,7 +324,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       if (!def) continue
       const isEnabled = def.canToggle ? btnConfig.enabled : true
       if (!isEnabled) continue
-      if (def.isPanelOnly && isPanelOpen) continue
+      if (def.isPanelOnly && isPanelExpanded) continue
       if (def.hideWhenPanelOpen && isFloatingOpen) continue
       // 找到至少一个可见按钮，不隐藏
       return false
@@ -331,7 +336,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     isPressing,
     isToolsMenuOpen,
     isLiquidCollapsed,
-    isPanelOpen,
+    isPanelExpanded,
     collapsedButtonsOrder,
     currentSettings.panel?.panelMode,
     quickButtonsSettings.hideWhenPanelOpen,
@@ -761,9 +766,9 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     // hideWhenPanelOpen 按钮：仅在悬浮模式且面板展开时隐藏（edge-snap 模式下始终显示，因为面板收在边缘不便操作）
     // 禁用的按钮：永远隐藏
     const isFloatingOpen =
-      isPanelOpen && (settings?.panel?.panelMode ?? "edge-snap") !== "edge-snap"
+      isPanelExpanded && (settings?.panel?.panelMode ?? "edge-snap") !== "edge-snap"
     const shouldHide =
-      isDisabled || (isPanelOnly && isPanelOpen) || (def.hideWhenPanelOpen && isFloatingOpen)
+      isDisabled || (isPanelOnly && isPanelExpanded) || (def.hideWhenPanelOpen && isFloatingOpen)
     if (shouldHide) return null
 
     // 优先使用 IconComponent，否则用 emoji
@@ -854,7 +859,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   // 渲染分隔线
   const renderDivider = (isPanelOnly: boolean, key: string) => {
     // panel-only 分隔线：面板展开时隐藏
-    if (isPanelOnly && isPanelOpen) return null
+    if (isPanelOnly && isPanelExpanded) return null
     return <div key={key} className={`divider ${isPanelOnly ? "panel-only" : ""}`} />
   }
 
@@ -878,9 +883,9 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         const isEnabled = def.canToggle ? btnConfig.enabled : true
         if (!isEnabled) return null
 
-        if (def.isPanelOnly && isPanelOpen) return null
+        if (def.isPanelOnly && isPanelExpanded) return null
         const isFloatingOpen =
-          isPanelOpen && (settings?.panel?.panelMode ?? "edge-snap") !== "edge-snap"
+          isPanelExpanded && (settings?.panel?.panelMode ?? "edge-snap") !== "edge-snap"
         if (def.hideWhenPanelOpen && isFloatingOpen) return null
 
         return {
@@ -1188,7 +1193,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       <LoadingOverlay isVisible={isLoadingHistory} text={loadingText} onStop={stopLoading} />
       <div
         ref={groupRef}
-        className={`quick-btn-group gh-interactive ${!isPanelOpen ? "collapsed" : ""} ${isDragging ? "dragging" : ""} ${isPressing ? "pressing" : ""} ${isScrolling ? "scroll-hidden" : ""} ${isLiquidCollapsed ? "liquid-collapsed" : ""} ${isGroupHidden ? "group-hidden" : ""}`}
+        className={`quick-btn-group gh-interactive ${!isPanelExpanded ? "collapsed" : ""} ${isDragging ? "dragging" : ""} ${isPressing ? "pressing" : ""} ${isScrolling ? "scroll-hidden" : ""} ${isLiquidCollapsed ? "liquid-collapsed" : ""} ${isGroupHidden ? "group-hidden" : ""}`}
         aria-hidden={isGroupHidden}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}

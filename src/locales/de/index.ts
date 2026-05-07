@@ -651,8 +651,8 @@ export const de = {
   edgeSnapThresholdLabel: "Sensibilität",
   edgeSnapThresholdDesc: "Abstand für Magnet-Aktivierung",
   // Panel Position Settings
-  defaultPositionLabel: "Startseite",
-  defaultPositionDesc: "Wo das Panel beim Laden erscheint",
+  defaultPositionLabel: "Standardseite",
+  defaultPositionDesc: "Bevorzugte Seite beim Öffnen; auch Fallback für Auto-Snap",
   defaultPositionLeft: "Links",
   defaultPositionRight: "Rechts",
   defaultEdgeDistanceLabel: "Abstand",

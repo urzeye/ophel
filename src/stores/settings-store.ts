@@ -213,39 +213,25 @@ const normalizeSiteConfigRecord = <T extends object>(
   return result
 }
 
-/**
- * 处理旧三态 panelMode（always-open/manual）到二态的迁移，
- * 并在缺少 panelMode 时从更旧的 defaultOpen/edgeSnap 字段推导 panelMode
- */
-const migratePanelMode = (panel?: Partial<Settings["panel"]>): "edge-snap" | "floating" => {
-  // 处理旧三态 panelMode 到二态的迁移
-  const oldMode = panel?.panelMode as string | undefined
-  if (oldMode === "always-open" || oldMode === "manual") return "floating"
-  if (oldMode === "edge-snap" || oldMode === "floating") return oldMode
+const normalizePanelSettings = (panel?: Partial<Settings["panel"]>): Settings["panel"] => {
+  const defaults = DEFAULT_SETTINGS.panel
 
-  // 从更旧的三字段推导
-  const defaultOpen = panel?.defaultOpen ?? true
-  const edgeSnap = panel?.edgeSnap ?? true
-
-  if (!defaultOpen) return "floating"
-  if (edgeSnap) return "edge-snap"
-  return "floating"
-}
-
-/**
- * 从旧数据推导 lastPanelOpen 初始值
- */
-const migrateLastPanelOpen = (panel?: Partial<Settings["panel"]>): boolean => {
-  // 如果已有 lastPanelOpen 字段，直接用
-  if (panel?.lastPanelOpen !== undefined) return panel.lastPanelOpen
-
-  // 旧三态 panelMode 迁移
-  const oldMode = panel?.panelMode as string | undefined
-  if (oldMode === "manual") return false
-  if (oldMode === "always-open") return true
-
-  // 从更旧的字段推导
-  return panel?.defaultOpen ?? true
+  return {
+    panelExpanded: panel?.panelExpanded ?? defaults.panelExpanded,
+    panelMode:
+      panel?.panelMode === "edge-snap" || panel?.panelMode === "floating"
+        ? panel.panelMode
+        : defaults.panelMode,
+    preventAutoScroll: panel?.preventAutoScroll ?? defaults.preventAutoScroll,
+    defaultPosition:
+      panel?.defaultPosition === "left" || panel?.defaultPosition === "right"
+        ? panel.defaultPosition
+        : defaults.defaultPosition,
+    defaultEdgeDistance: panel?.defaultEdgeDistance ?? defaults.defaultEdgeDistance,
+    edgeSnapThreshold: panel?.edgeSnapThreshold ?? defaults.edgeSnapThreshold,
+    height: panel?.height ?? defaults.height,
+    width: panel?.width ?? defaults.width,
+  }
 }
 
 const normalizeSettings = (settings: SettingsInput): Settings => {
@@ -261,15 +247,7 @@ const normalizeSettings = (settings: SettingsInput): Settings => {
   return {
     ...DEFAULT_SETTINGS,
     ...rest,
-    panel: {
-      ...DEFAULT_SETTINGS.panel,
-      ...settings.panel,
-      panelMode:
-        settings.panel?.panelMode === "edge-snap" || settings.panel?.panelMode === "floating"
-          ? settings.panel.panelMode
-          : migratePanelMode(settings.panel),
-      lastPanelOpen: migrateLastPanelOpen(settings.panel),
-    },
+    panel: normalizePanelSettings(settings.panel),
     content: {
       ...DEFAULT_SETTINGS.content,
       ...settings.content,

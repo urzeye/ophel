@@ -279,10 +279,13 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
             </div>
           </SettingRow>
 
-          {/* 默认位置 */}
+          {/* 默认侧边 */}
           <SettingRow
-            label={t("defaultPositionLabel") || "默认位置"}
-            description={t("defaultPositionDesc") || "页面刷新后面板显示在哪一侧"}
+            label={t("defaultPositionLabel") || "默认侧边"}
+            description={
+              t("defaultPositionDesc") ||
+              "面板展开时优先使用的侧边；自动吸附没有当前侧边时也作为兜底"
+            }
             settingId="panel-default-position">
             <div
               style={{

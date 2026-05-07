@@ -688,8 +688,8 @@ export const en = {
   edgeSnapThresholdLabel: "Snap Threshold",
   edgeSnapThresholdDesc: "How close to edge triggers snap when dragging",
   // Panel Position Settings
-  defaultPositionLabel: "Default Position",
-  defaultPositionDesc: "Which side the panel appears after page refresh",
+  defaultPositionLabel: "Default Side",
+  defaultPositionDesc: "Preferred side when the panel expands; also used as the auto-snap fallback",
   defaultPositionLeft: "Left",
   defaultPositionRight: "Right",
   defaultEdgeDistanceLabel: "Default Margin",

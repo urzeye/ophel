@@ -846,8 +846,26 @@ export const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在 adapter 变化时重新创建
   }, [adapter, updateDeepSetting])
 
-  // 面板状态 - 初始值来自设置
-  const [isPanelOpen, setIsPanelOpen] = useState(false)
+  // 面板展开状态：true 表示面板没有收进快捷按钮组，和悬浮/吸附模式无关
+  const [isPanelExpanded, setIsPanelExpandedState] = useState(false)
+  const isPanelExpandedRef = useRef(false)
+
+  const setPanelExpandedState = useCallback((expanded: boolean) => {
+    isPanelExpandedRef.current = expanded
+    setIsPanelExpandedState(expanded)
+  }, [])
+
+  const persistPanelExpanded = useCallback(
+    (expanded: boolean) => {
+      setPanelExpandedState(expanded)
+      updateNestedSetting("panel", "panelExpanded", expanded)
+    },
+    [setPanelExpandedState, updateNestedSetting],
+  )
+
+  const togglePanelExpanded = useCallback(() => {
+    persistPanelExpanded(!isPanelExpandedRef.current)
+  }, [persistPanelExpanded])
 
   // 使用 ref 保持 settings 的最新引用，避免闭包捕获过期值
   const settingsRef = useRef(settings)
@@ -863,36 +881,24 @@ export const App = () => {
       const panelMode = settings.panel?.panelMode ?? "edge-snap"
       const defaultPosition = settings.panel?.defaultPosition ?? "right"
 
-      switch (panelMode) {
-        case "edge-snap":
-          setIsPanelOpen(true)
-          setEdgeSnapState(defaultPosition)
-          break
-        case "floating": {
-          // 悬浮模式：恢复上次的开关状态
-          const lastOpen = settings.panel?.lastPanelOpen ?? true
-          setIsPanelOpen(lastOpen)
-          break
-        }
+      setPanelExpandedState(settings.panel?.panelExpanded ?? true)
+
+      if (panelMode === "edge-snap") {
+        setEdgeSnapState(defaultPosition)
+      } else {
+        setEdgeSnapState(null)
       }
     }
-  }, [isSettingsHydrated, settings])
+  }, [isSettingsHydrated, setPanelExpandedState, settings])
 
-  // 悬浮模式下，持久化面板开关状态
-  // 用 ref 追踪上一次 panelMode，排除"模式刚切换到 floating"这一帧——
-  // 此时 isPanelOpen 还是 edge-snap 的旧值（false），若立即保存会污染 lastPanelOpen
-  const prevSavePanelModeRef = useRef(settings?.panel?.panelMode)
+  // 外部恢复/同步设置时，只跟随新的统一展开字段，不再从模式推导展开状态
   useEffect(() => {
-    if (!isInitializedRef.current) return
-    const panelMode = settings?.panel?.panelMode ?? "edge-snap"
-    const prevMode = prevSavePanelModeRef.current
-    prevSavePanelModeRef.current = panelMode
-    // 仅在"已处于悬浮模式时 isPanelOpen 发生变化"才保存，
-    // 跳过模式由 edge-snap 切入 floating 的那一帧（此时 isPanelOpen 尚未被 mode-switch effect 更新）
-    if (panelMode === "floating" && prevMode === "floating") {
-      updateNestedSetting("panel", "lastPanelOpen", isPanelOpen)
+    if (!isInitializedRef.current || !settings) return
+    const panelExpanded = settings.panel?.panelExpanded ?? true
+    if (panelExpanded !== isPanelExpandedRef.current) {
+      setPanelExpandedState(panelExpanded)
     }
-  }, [isPanelOpen, settings?.panel?.panelMode, updateNestedSetting])
+  }, [setPanelExpandedState, settings])
 
   // 全局防遮挡状态 (防遮挡体验升级)
   const [isPassThrough, setIsPassThrough] = useState(false)
@@ -1777,7 +1783,7 @@ export const App = () => {
         }
 
         const openPromptsTab = () => {
-          setIsPanelOpen(true)
+          persistPanelExpanded(true)
 
           const tabOrder = settings?.features?.order || DEFAULT_SETTINGS.features.order
           const promptsTabIndex = tabOrder.indexOf(TAB_IDS.PROMPTS)
@@ -1866,6 +1872,7 @@ export const App = () => {
       closeGlobalSettingsSearch,
       findUiElement,
       outlineManager,
+      persistPanelExpanded,
       promptManager,
       promptsSnapshot,
       settings,
@@ -2597,11 +2604,11 @@ export const App = () => {
     adapter,
     outlineManager,
     conversationManager,
-    onPanelToggle: () => setIsPanelOpen((prev) => !prev),
+    onPanelToggle: togglePanelExpanded,
     onThemeToggle: handleThemeToggle,
     onOpenSettings: openSettingsModal,
     onOpenGlobalSearch: openGlobalSearchByShortcut,
-    isPanelVisible: isPanelOpen,
+    isPanelVisible: isPanelExpanded,
     isSnapped: !!edgeSnapState && !isEdgePeeking, // 吸附且未显示
     onShowSnappedPanel: () => {
       // 强制显示吸附的面板
@@ -2630,20 +2637,17 @@ export const App = () => {
     prevPanelModeForSwitchRef.current = panelMode
 
     if (panelMode === "edge-snap") {
-      // 切换到吸附模式：初始化吸附到默认位置，立即收缩作为预览
+      // 切换到吸附模式：只初始化吸附侧边，不改变统一的展开/收起状态
       const defaultPosition = settings?.panel?.defaultPosition ?? "right"
-      suppressEdgePeekInitRef.current = true
+      suppressEdgePeekInitRef.current = isPanelExpandedRef.current
       setEdgeSnapState(defaultPosition)
       setIsEdgePeeking(false)
-      setIsPanelOpen(true)
     } else {
-      // 切换离开吸附模式：清除吸附状态，恢复悬浮模式的上次开关记忆
+      // 切换离开吸附模式：清除吸附视觉状态，不改变统一的展开/收起状态
       setEdgeSnapState(null)
       setIsEdgePeeking(false)
-      const lastOpen = settings?.panel?.lastPanelOpen ?? true
-      setIsPanelOpen(lastOpen)
     }
-  }, [settings?.panel?.panelMode, settings?.panel?.defaultPosition, settings?.panel?.lastPanelOpen])
+  }, [settings?.panel?.panelMode, settings?.panel?.defaultPosition])
 
   // 监听默认位置变化，重置吸附状态
   // 当用户切换默认位置（如从左到右）时，如果是吸附状态，需要重置以便面板能跳转到新位置
@@ -2811,10 +2815,10 @@ export const App = () => {
   // 在 React 渲染完成后，延迟 1.5 秒同步实际 hover 状态，让面板能够自动吸附回去。
   useEffect(() => {
     if (!shouldSyncEdgePeekAfterOpenRef.current) return
-    if (!isPanelOpen || !edgeSnapState || settings?.panel?.panelMode !== "edge-snap") return
+    if (!isPanelExpanded || !edgeSnapState || settings?.panel?.panelMode !== "edge-snap") return
     shouldSyncEdgePeekAfterOpenRef.current = false
     scheduleEdgePeekHoverSync(1500)
-  }, [isPanelOpen, edgeSnapState, settings?.panel?.panelMode, scheduleEdgePeekHoverSync])
+  }, [isPanelExpanded, edgeSnapState, settings?.panel?.panelMode, scheduleEdgePeekHoverSync])
 
   const showAiStudioSubmitShortcutSyncToast = useCallback(
     (submitShortcut: "enter" | "ctrlEnter") => {
@@ -3157,8 +3161,8 @@ export const App = () => {
   return (
     <div className={`gh-root ${isPassThrough ? "gh-pass-through" : ""}`}>
       <MainPanel
-        isOpen={isPanelOpen}
-        onClose={() => setIsPanelOpen(false)}
+        isOpen={isPanelExpanded}
+        onClose={() => persistPanelExpanded(false)}
         promptManager={promptManager}
         conversationManager={conversationManager}
         outlineManager={outlineManager}
@@ -3209,9 +3213,9 @@ export const App = () => {
       />
 
       <QuickButtons
-        isPanelOpen={isPanelOpen}
+        isPanelExpanded={isPanelExpanded}
         onPanelToggle={() => {
-          if (!isPanelOpen) {
+          if (!isPanelExpanded) {
             // 展开面板：如果处于吸附状态，进入 peek 模式
             if (settings?.panel?.panelMode === "edge-snap") {
               // 若 edgeSnapState 为 null（拖拽脱吸附后关闭了面板），恢复到默认边缘位置
@@ -3226,7 +3230,7 @@ export const App = () => {
             // 关闭面板：重置 peek 状态
             setIsEdgePeeking(false)
           }
-          setIsPanelOpen(!isPanelOpen)
+          persistPanelExpanded(!isPanelExpanded)
         }}
         onThemeToggle={handleThemeToggle}
         themeMode={themeMode}

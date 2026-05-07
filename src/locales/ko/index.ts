@@ -650,8 +650,9 @@ export const ko = {
   edgeSnapThresholdLabel: "스냅 임계값",
   edgeSnapThresholdDesc: "드래그 시 가장자리에 얼마나 가까워지면 스냅되는지",
   // Panel Position Settings
-  defaultPositionLabel: "기본 위치",
-  defaultPositionDesc: "페이지 새로고침 후 패널이 표시되는 쪽",
+  defaultPositionLabel: "기본 측면",
+  defaultPositionDesc:
+    "패널이 펼쳐질 때 우선 사용할 측면이며, 자동 스냅의 현재 측면이 없을 때도 사용됩니다",
   defaultPositionLeft: "왼쪽",
   defaultPositionRight: "오른쪽",
   defaultEdgeDistanceLabel: "기본 여백",

@@ -667,8 +667,9 @@ export const ja = {
   edgeSnapThresholdLabel: "吸着感度",
   edgeSnapThresholdDesc: "ドラッグ時にどれくらい端に近づけば吸着するか",
   // Panel Position Settings
-  defaultPositionLabel: "基準位置",
-  defaultPositionDesc: "ページ読み込み時のパネルの左右位置",
+  defaultPositionLabel: "既定のサイド",
+  defaultPositionDesc:
+    "パネル展開時に優先する側。自動スナップの現在位置がない場合の予備にも使います",
   defaultPositionLeft: "左側",
   defaultPositionRight: "右側",
   defaultEdgeDistanceLabel: "基本マージン",

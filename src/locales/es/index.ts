@@ -650,8 +650,8 @@ export const es = {
   edgeSnapThresholdLabel: "Sensibilidad",
   edgeSnapThresholdDesc: "Distancia para que salte el imán",
   // Panel Position Settings
-  defaultPositionLabel: "Lado de Inicio",
-  defaultPositionDesc: "Dónde aparece al cargar",
+  defaultPositionLabel: "Lado Predeterminado",
+  defaultPositionDesc: "Lado preferido al expandir; también se usa como respaldo del auto-ajuste",
   defaultPositionLeft: "Izquierda",
   defaultPositionRight: "Derecha",
   defaultEdgeDistanceLabel: "Margen",

@@ -7,6 +7,15 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 > 中文版本: [CHANGELOG.zh-CN.md](./CHANGELOG.zh-CN.md)
 
+## [Unreleased]
+
+### ✨ Improvements
+
+- **Panel state remembered in auto-snap mode**: Both floating and auto-snap modes now remember whether the panel was open or closed across page refreshes. Previously, auto-snap mode always reopened the panel expanded after a refresh.
+- **"Default Position" renamed to "Default Side"**: The setting label and description now clearly reflect its actual behavior — the preferred side the panel expands to, also used as the fallback when auto-snap has no previous position.
+
+---
+
 ## [1.0.46]
 
 ### 🐛 Bug Fixes

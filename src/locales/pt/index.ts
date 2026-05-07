@@ -649,8 +649,9 @@ export const pt = {
   edgeSnapThresholdLabel: "Sensibilidade",
   edgeSnapThresholdDesc: "Distância para ativar o ímã",
   // Panel Position Settings
-  defaultPositionLabel: "Lado Inicial",
-  defaultPositionDesc: "Onde aparece ao carregar",
+  defaultPositionLabel: "Lado Padrão",
+  defaultPositionDesc:
+    "Lado preferido ao expandir; também é usado como fallback do ajuste automático",
   defaultPositionLeft: "Esquerda",
   defaultPositionRight: "Direita",
   defaultEdgeDistanceLabel: "Margem",

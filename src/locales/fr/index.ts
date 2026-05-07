@@ -650,8 +650,8 @@ export const fr = {
   edgeSnapThresholdLabel: "Sensibilité",
   edgeSnapThresholdDesc: "Distance pour déclencher l'aimant",
   // Panel Position Settings
-  defaultPositionLabel: "Côté Initial",
-  defaultPositionDesc: "Où apparaît le panneau au chargement",
+  defaultPositionLabel: "Côté par Défaut",
+  defaultPositionDesc: "Côté préféré à l'ouverture ; sert aussi de repli pour l'accrochage auto",
   defaultPositionLeft: "Gauche",
   defaultPositionRight: "Droite",
   defaultEdgeDistanceLabel: "Marge",

@@ -821,8 +821,8 @@ export const zhCN = {
   edgeSnapThresholdLabel: "吸附触发距离",
   edgeSnapThresholdDesc: "拖拽面板到边缘多近时触发吸附",
   // 面板位置设置
-  defaultPositionLabel: "默认位置",
-  defaultPositionDesc: "页面刷新后面板显示在哪一侧",
+  defaultPositionLabel: "默认侧边",
+  defaultPositionDesc: "面板展开时优先使用的侧边；自动吸附没有当前侧边时也作为兜底",
   defaultPositionLeft: "左侧",
   defaultPositionRight: "右侧",
   defaultEdgeDistanceLabel: "默认边距",

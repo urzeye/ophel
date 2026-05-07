@@ -647,8 +647,9 @@ export const ru = {
   edgeSnapThresholdLabel: "Чувствительность",
   edgeSnapThresholdDesc: "Дистанция срабатывания",
   // Panel Position Settings
-  defaultPositionLabel: "Сторона",
-  defaultPositionDesc: "Где панель при загрузке",
+  defaultPositionLabel: "Сторона по умолчанию",
+  defaultPositionDesc:
+    "Предпочтительная сторона при раскрытии; также запасной вариант для автоприлипания",
   defaultPositionLeft: "Слева",
   defaultPositionRight: "Справа",
   defaultEdgeDistanceLabel: "Отступ",
