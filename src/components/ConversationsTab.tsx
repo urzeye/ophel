@@ -307,19 +307,10 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
       dialog ||
       showTagFilterMenu ||
       isFolderSelectOpen ||
-      batchMode ||
       isDeleting
     )
     onInteractionStateChange?.(isInteracting)
-  }, [
-    menu,
-    dialog,
-    showTagFilterMenu,
-    isFolderSelectOpen,
-    batchMode,
-    isDeleting,
-    onInteractionStateChange,
-  ])
+  }, [menu, dialog, showTagFilterMenu, isFolderSelectOpen, isDeleting, onInteractionStateChange])
 
   // 防抖搜索
   const handleSearchInput = (value: string) => {

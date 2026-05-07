@@ -15,6 +15,7 @@ import { OutlineManager, type OutlineNode } from "~core/outline-manager"
 import { AI_STUDIO_SHORTCUT_SYNC_EVENT, PromptManager } from "~core/prompt-manager"
 import { QueueDispatcher } from "~core/queue-dispatcher"
 import { ensureGlobalThemeManager, type ThemeTransitionOrigin } from "~core/theme-manager"
+import { useEdgePeekController } from "~hooks/useEdgePeekController"
 import { useShortcuts } from "~hooks/useShortcuts"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { useConversationsStore } from "~stores/conversations-store"
@@ -146,15 +147,6 @@ const isLikelyMacPlatform = () => {
 
 const PASS_THROUGH_META_KEY_ALIASES = new Set(["Meta", "OS", "Command", "Cmd"])
 const PASS_THROUGH_CONTROL_KEY_ALIASES = new Set(["Control", "Ctrl"])
-const EDGE_PEEK_OVERLAY_SELECTOR = [
-  ".conversations-dialog-overlay",
-  ".conversations-folder-menu",
-  ".conversations-tag-filter-menu",
-  ".prompt-modal",
-  ".gh-dialog-overlay",
-  ".settings-modal-overlay",
-  ".settings-search-overlay",
-].join(", ")
 
 const GLOBAL_SEARCH_CATEGORY_DEFINITIONS: GlobalSearchCategoryDefinition[] = [
   {
@@ -1067,28 +1059,12 @@ export const App = () => {
 
   // 边缘吸附状态
   const [edgeSnapState, setEdgeSnapState] = useState<"left" | "right" | null>(null)
-  // 临时显示状态（当鼠标悬停在面板上时）
-  const [isEdgePeeking, setIsEdgePeeking] = useState(false)
-  // 是否有活跃的交互（如打开了菜单/对话框），此时即使鼠标移出也不隐藏面板
-  // 使用 useRef 避免闭包陷阱和不必要的重渲染
-  const isInteractionActiveRef = useRef(false)
-  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // 快捷键触发的面板显示延迟缩回计时器
-  const shortcutPeekTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // 使用 ref 跟踪设置模态框状态，避免闭包捕获过期值
   const isSettingsOpenRef = useRef(false)
   // 标记全局搜索是否由设置页切换而来（用于 Esc 返回）
   const searchOpenedFromSettingsRef = useRef(false)
-  // 追踪面板内输入框是否聚焦（解决 IME 输入法弹出时 CSS :hover 失效的问题）
-  const isInputFocusedRef = useRef(false)
   // 追踪是否已完成初始化，防止重复执行
   const isInitializedRef = useRef(false)
-  // 模式刚切换到 edge-snap，压制 MutationObserver 的初始 overlay 检查
-  // 让面板先收缩作为预览，而不是因为设置模态框仍在打开而强制 peek
-  const suppressEdgePeekInitRef = useRef(false)
-  // 通过 logo 按钮打开面板后，等待 React 完成渲染再同步实际 hover 状态
-  // 防止鼠标不在面板上时 peeking 状态永久保持
-  const shouldSyncEdgePeekAfterOpenRef = useRef(false)
 
   const getEdgePeekQueryRoots = useCallback((): Array<Element | ShadowRoot> => {
     const roots: Array<Element | ShadowRoot> = []
@@ -1121,56 +1097,25 @@ export const App = () => {
     [getEdgePeekQueryRoots],
   )
 
-  const hasOpenEdgePeekOverlay = useCallback(
-    () =>
-      getEdgePeekQueryRoots().some((root) =>
-        Boolean(root.querySelector(EDGE_PEEK_OVERLAY_SELECTOR)),
-      ),
-    [getEdgePeekQueryRoots],
-  )
-
-  const syncEdgePeekWithPanelHover = useCallback(() => {
-    const currentSettings = settingsRef.current
-
-    if (!edgeSnapState || currentSettings?.panel?.panelMode !== "edge-snap") {
-      return
-    }
-
-    if (isSettingsOpenRef.current || isInteractionActiveRef.current || isInputFocusedRef.current) {
-      return
-    }
-
-    if (hasOpenEdgePeekOverlay()) {
-      return
-    }
-
-    const panel = findUiElement(".gh-main-panel")
-    if (!panel) {
-      return
-    }
-
-    const root = panel.getRootNode()
-    const activeElement = root instanceof ShadowRoot ? root.activeElement : document.activeElement
-    const hasFocusWithin =
-      panel.matches(":focus-within") ||
-      (activeElement instanceof Element && panel.contains(activeElement))
-
-    setIsEdgePeeking(panel.matches(":hover") || hasFocusWithin)
-  }, [edgeSnapState, findUiElement, hasOpenEdgePeekOverlay])
-
-  const scheduleEdgePeekHoverSync = useCallback(
-    (delayMs: number = 0) => {
-      if (hideTimerRef.current) {
-        clearTimeout(hideTimerRef.current)
-      }
-
-      hideTimerRef.current = setTimeout(() => {
-        hideTimerRef.current = null
-        syncEdgePeekWithPanelHover()
-      }, delayMs)
-    },
-    [syncEdgePeekWithPanelHover],
-  )
+  const {
+    isEdgePeeking,
+    showEdgePeek,
+    hideEdgePeek,
+    scheduleEdgePeekSync,
+    showEdgePeekFromShortcut,
+    markSuppressOverlayInit,
+    markSyncAfterOpen,
+    handlePanelMouseEnter,
+    handlePanelMouseLeave,
+    handleInteractionChange,
+  } = useEdgePeekController({
+    edgeSnapState,
+    panelMode: settings?.panel?.panelMode,
+    isPanelExpanded,
+    findUiElement,
+    getQueryRoots: getEdgePeekQueryRoots,
+    isSettingsOpenRef,
+  })
 
   // 接收到设置导航事件时，自动打开设置弹窗
   useEffect(() => {
@@ -1197,7 +1142,7 @@ export const App = () => {
         isSettingsOpenRef.current = true
 
         if (edgeSnapState && settingsRef.current?.panel?.panelMode === "edge-snap") {
-          setIsEdgePeeking(true)
+          showEdgePeek()
         }
 
         setIsSettingsOpen(true)
@@ -1211,7 +1156,12 @@ export const App = () => {
         "ophel:navigateSettingsPage",
         handleNavigateSettings as EventListener,
       )
-  }, [clearSettingsSearchInputDebounceTimer, edgeSnapState, isGlobalSettingsSearchOpen])
+  }, [
+    clearSettingsSearchInputDebounceTimer,
+    edgeSnapState,
+    isGlobalSettingsSearchOpen,
+    showEdgePeek,
+  ])
 
   const conversationsSnapshot = useConversationsStore((state) => state.conversations)
   const foldersSnapshot = useFoldersStore((state) => state.folders)
@@ -1582,8 +1532,8 @@ export const App = () => {
       }
     }
 
-    scheduleEdgePeekHoverSync()
-  }, [findUiElement, scheduleEdgePeekHoverSync])
+    scheduleEdgePeekSync()
+  }, [findUiElement, scheduleEdgePeekSync])
 
   const openGlobalSettingsSearch = useCallback(
     (source: GlobalSearchOpenSource = "ui") => {
@@ -1597,7 +1547,7 @@ export const App = () => {
       }
 
       if (edgeSnapState && settingsRef.current?.panel?.panelMode === "edge-snap") {
-        setIsEdgePeeking(true)
+        showEdgePeek()
       }
 
       const activeElement = document.activeElement
@@ -1620,7 +1570,7 @@ export const App = () => {
       settingsSearchWheelFreezeUntilRef.current = 0
       setIsGlobalSettingsSearchOpen(true)
     },
-    [clearSettingsSearchInputDebounceTimer, closeSettingsModal, edgeSnapState],
+    [clearSettingsSearchInputDebounceTimer, closeSettingsModal, edgeSnapState, showEdgePeek],
   )
 
   const closeGlobalSettingsSearch = useCallback(
@@ -1648,14 +1598,14 @@ export const App = () => {
         isSettingsOpenRef.current = true
 
         if (edgeSnapState && settingsRef.current?.panel?.panelMode === "edge-snap") {
-          setIsEdgePeeking(true)
+          showEdgePeek()
         }
 
         setIsSettingsOpen(true)
         return
       }
 
-      scheduleEdgePeekHoverSync()
+      scheduleEdgePeekSync()
 
       if (!shouldRestoreFocus || !restoreElement || !restoreElement.isConnected) {
         return
@@ -1673,7 +1623,7 @@ export const App = () => {
         }
       })
     },
-    [clearSettingsSearchInputDebounceTimer, edgeSnapState, scheduleEdgePeekHoverSync],
+    [clearSettingsSearchInputDebounceTimer, edgeSnapState, scheduleEdgePeekSync, showEdgePeek],
   )
 
   const openSettingsModal = useCallback(() => {
@@ -1685,11 +1635,11 @@ export const App = () => {
     isSettingsOpenRef.current = true
 
     if (edgeSnapState && settingsRef.current?.panel?.panelMode === "edge-snap") {
-      setIsEdgePeeking(true)
+      showEdgePeek()
     }
 
     setIsSettingsOpen(true)
-  }, [closeGlobalSettingsSearch, edgeSnapState, isGlobalSettingsSearchOpen])
+  }, [closeGlobalSettingsSearch, edgeSnapState, isGlobalSettingsSearchOpen, showEdgePeek])
 
   const navigateToSearchResult = useCallback(
     async (item: GlobalSearchResultItem) => {
@@ -2138,18 +2088,6 @@ export const App = () => {
     keyboardSafeTop: GLOBAL_SEARCH_KEYBOARD_SAFE_TOP,
     keyboardSafeBottom: GLOBAL_SEARCH_KEYBOARD_SAFE_BOTTOM,
   })
-
-  // 取消快捷键触发的延迟缩回计时器
-  const cancelShortcutPeekTimer = useCallback(() => {
-    if (shortcutPeekTimerRef.current) {
-      clearTimeout(shortcutPeekTimerRef.current)
-      shortcutPeekTimerRef.current = null
-    }
-  }, [])
-
-  const handleInteractionChange = useCallback((isActive: boolean) => {
-    isInteractionActiveRef.current = isActive
-  }, [])
 
   // 当设置中的语言变化时，同步更新 i18n
   useEffect(() => {
@@ -2610,15 +2548,13 @@ export const App = () => {
           (settingsRef.current?.panel?.defaultPosition ?? "right") as "left" | "right",
         )
       }
-      setIsEdgePeeking(true)
-      // 标记：面板打开后需延迟同步 hover，防止鼠标不在面板上时 peeking 永久保持
-      shouldSyncEdgePeekAfterOpenRef.current = true
+      showEdgePeek()
+      markSyncAfterOpen()
     } else if (!expanding) {
-      // 关闭面板：重置 peek 状态
-      setIsEdgePeeking(false)
+      hideEdgePeek()
     }
     persistPanelExpanded(expanding)
-  }, [edgeSnapState, setEdgeSnapState, setIsEdgePeeking, persistPanelExpanded])
+  }, [edgeSnapState, hideEdgePeek, markSyncAfterOpen, persistPanelExpanded, showEdgePeek])
 
   // 快捷键管理
   useShortcuts({
@@ -2632,16 +2568,7 @@ export const App = () => {
     onOpenGlobalSearch: openGlobalSearchByShortcut,
     isPanelVisible: isPanelExpanded,
     isSnapped: !!edgeSnapState && !isEdgePeeking, // 吸附且未显示
-    onShowSnappedPanel: () => {
-      // 强制显示吸附的面板
-      setIsEdgePeeking(true)
-      // 启动 3 秒延迟同步计时器；若面板内输入框仍聚焦，则保持显示
-      cancelShortcutPeekTimer()
-      shortcutPeekTimerRef.current = setTimeout(() => {
-        syncEdgePeekWithPanelHover()
-        shortcutPeekTimerRef.current = null
-      }, 3000)
-    },
+    onShowSnappedPanel: showEdgePeekFromShortcut,
     onToggleScrollLock: handleToggleScrollLock,
   })
 
@@ -2661,15 +2588,20 @@ export const App = () => {
     if (panelMode === "edge-snap") {
       // 切换到吸附模式：只初始化吸附侧边，不改变统一的展开/收起状态
       const defaultPosition = settings?.panel?.defaultPosition ?? "right"
-      suppressEdgePeekInitRef.current = isPanelExpandedRef.current
+      markSuppressOverlayInit(isPanelExpandedRef.current)
       setEdgeSnapState(defaultPosition)
-      setIsEdgePeeking(false)
+      hideEdgePeek()
     } else {
       // 切换离开吸附模式：清除吸附视觉状态，不改变统一的展开/收起状态
       setEdgeSnapState(null)
-      setIsEdgePeeking(false)
+      hideEdgePeek()
     }
-  }, [settings?.panel?.panelMode, settings?.panel?.defaultPosition])
+  }, [
+    hideEdgePeek,
+    markSuppressOverlayInit,
+    settings?.panel?.defaultPosition,
+    settings?.panel?.panelMode,
+  ])
 
   // 监听默认位置变化，重置吸附状态
   // 当用户切换默认位置（如从左到右）时，如果是吸附状态，需要重置以便面板能跳转到新位置
@@ -2688,182 +2620,10 @@ export const App = () => {
       if (edgeSnapState) {
         // 保持吸附状态，但切换方向
         setEdgeSnapState(currentPos)
-        setIsEdgePeeking(false)
+        hideEdgePeek()
       }
     }
-  }, [settings?.panel?.defaultPosition, edgeSnapState])
-
-  // 使用 MutationObserver 监听 Portal 元素（菜单/对话框/设置模态框）的存在
-  // 当 Portal 元素存在时，强制设置 isEdgePeeking 为 true，防止 CSS :hover 失效导致面板隐藏
-  useEffect(() => {
-    const panelMode = settings?.panel?.panelMode ?? "edge-snap"
-    if (!edgeSnapState || panelMode !== "edge-snap") return
-
-    // 检查当前是否有 Portal 元素存在
-    const checkPortalExists = () => hasOpenEdgePeekOverlay()
-
-    // 追踪之前的 Portal 状态，用于检测 Portal 关闭
-    let prevHasPortal = checkPortalExists()
-
-    // 创建 MutationObserver 监听 document.body 的子元素变化
-    const observer = new MutationObserver(() => {
-      const hasPortal = checkPortalExists()
-
-      if (hasPortal && !prevHasPortal) {
-        // Portal 元素刚出现，强制保持面板显示
-        // 因为 Portal 覆盖层会导致 CSS :hover 失效
-        setIsEdgePeeking(true)
-
-        // 清除隐藏定时器
-        if (hideTimerRef.current) {
-          clearTimeout(hideTimerRef.current)
-          hideTimerRef.current = null
-        }
-      } else if (!hasPortal && prevHasPortal) {
-        // Portal 元素刚消失，延迟后检查是否需要隐藏
-        scheduleEdgePeekHoverSync(500)
-      }
-
-      prevHasPortal = hasPortal
-    })
-
-    for (const root of getEdgePeekQueryRoots()) {
-      observer.observe(root, {
-        childList: true,
-        // ShadowRoot 内 overlay 嵌套较深需要 subtree；body 上的 portal 是直接子节点，无需 subtree 避免聊天页频繁 DOM 变动触发回调
-        subtree: root !== document.body,
-      })
-    }
-
-    // 初始检查（模式刚切换到 edge-snap 时跳过，让面板先收缩作为预览）
-    if (suppressEdgePeekInitRef.current) {
-      suppressEdgePeekInitRef.current = false
-    } else if (checkPortalExists()) {
-      setIsEdgePeeking(true)
-    }
-
-    return () => {
-      observer.disconnect()
-      suppressEdgePeekInitRef.current = false
-    }
-  }, [
-    edgeSnapState,
-    getEdgePeekQueryRoots,
-    hasOpenEdgePeekOverlay,
-    scheduleEdgePeekHoverSync,
-    settings?.panel?.panelMode,
-  ])
-
-  // 监听面板内输入框的聚焦状态
-  // 解决问题：当用户在输入框中打字时，IME 输入法弹出会导致浏览器丢失 CSS :hover 状态
-  // 方案：在输入框聚焦时主动设置 isEdgePeeking = true，不依赖纯 CSS :hover
-  useEffect(() => {
-    const panelMode = settings?.panel?.panelMode ?? "edge-snap"
-    if (!edgeSnapState || panelMode !== "edge-snap") return
-
-    // 获取 Shadow DOM 根节点
-    const shadowHost = document.querySelector("plasmo-csui, #ophel-userscript-root")
-    const shadowRoot = shadowHost?.shadowRoot
-    if (!shadowRoot) return
-
-    const handleFocusIn = (e: Event) => {
-      const target = e.target as HTMLElement
-      // 检查是否是输入元素（input、textarea 或可编辑区域）
-      const isInputElement =
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.getAttribute("contenteditable") === "true"
-
-      if (isInputElement) {
-        // 排除设置模态框内的输入框
-        // 设置模态框有自己的状态管理（isSettingsOpenRef），不需要在这里处理
-        if (target.closest(".settings-modal-overlay, .settings-modal")) {
-          return
-        }
-
-        isInputFocusedRef.current = true
-        // 确保面板保持显示状态
-        setIsEdgePeeking(true)
-        // 清除任何隐藏计时器
-        if (hideTimerRef.current) {
-          clearTimeout(hideTimerRef.current)
-          hideTimerRef.current = null
-        }
-      }
-    }
-
-    const handleFocusOut = (e: Event) => {
-      const target = e.target as HTMLElement
-      const isInputElement =
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.getAttribute("contenteditable") === "true"
-
-      if (isInputElement) {
-        // 排除设置模态框内的输入框
-        if (target.closest(".settings-modal-overlay, .settings-modal")) {
-          return
-        }
-
-        isInputFocusedRef.current = false
-        // 延迟检查是否需要隐藏
-        // 给用户一点时间可能重新聚焦到其他输入框
-        if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
-        hideTimerRef.current = setTimeout(() => {
-          // 如果没有其他保持显示的条件，则隐藏
-          if (
-            !isInputFocusedRef.current &&
-            !isSettingsOpenRef.current &&
-            !isInteractionActiveRef.current
-          ) {
-            syncEdgePeekWithPanelHover()
-          }
-        }, 300)
-      }
-    }
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return
-
-      const panelSearchInput = e
-        .composedPath()
-        .find(
-          (node): node is HTMLInputElement =>
-            node instanceof HTMLInputElement &&
-            (node.classList.contains("outline-search-input") ||
-              node.classList.contains("conversations-search-input") ||
-              node.classList.contains("prompt-search-input")),
-        )
-      if (!panelSearchInput) return
-
-      e.preventDefault()
-      e.stopImmediatePropagation()
-      isInputFocusedRef.current = false
-      panelSearchInput.blur()
-      window.setTimeout(syncEdgePeekWithPanelHover, 0)
-    }
-
-    // 监听 Shadow DOM 内的焦点事件
-    shadowRoot.addEventListener("focusin", handleFocusIn, true)
-    shadowRoot.addEventListener("focusout", handleFocusOut, true)
-    shadowRoot.addEventListener("keydown", handleKeyDown, true)
-
-    return () => {
-      shadowRoot.removeEventListener("focusin", handleFocusIn, true)
-      shadowRoot.removeEventListener("focusout", handleFocusOut, true)
-      shadowRoot.removeEventListener("keydown", handleKeyDown, true)
-    }
-  }, [edgeSnapState, settings?.panel?.panelMode, syncEdgePeekWithPanelHover])
-
-  // 通过 QuickButtons logo 打开面板后（isEdgePeeking = true），若鼠标不在面板上，
-  // 因无法触发 onMouseLeave，peeking 状态会永久保持。
-  // 在 React 渲染完成后，延迟 1.5 秒同步实际 hover 状态，让面板能够自动吸附回去。
-  useEffect(() => {
-    if (!shouldSyncEdgePeekAfterOpenRef.current) return
-    if (!isPanelExpanded || !edgeSnapState || settings?.panel?.panelMode !== "edge-snap") return
-    shouldSyncEdgePeekAfterOpenRef.current = false
-    scheduleEdgePeekHoverSync(1500)
-  }, [isPanelExpanded, edgeSnapState, settings?.panel?.panelMode, scheduleEdgePeekHoverSync])
+  }, [edgeSnapState, hideEdgePeek, settings?.panel?.defaultPosition])
 
   const showAiStudioSubmitShortcutSyncToast = useCallback(
     (submitShortcut: "enter" | "ctrlEnter") => {
@@ -3207,7 +2967,10 @@ export const App = () => {
     <div className={`gh-root ${isPassThrough ? "gh-pass-through" : ""}`}>
       <MainPanel
         isOpen={isPanelExpanded}
-        onClose={() => persistPanelExpanded(false)}
+        onClose={() => {
+          hideEdgePeek()
+          persistPanelExpanded(false)
+        }}
         promptManager={promptManager}
         conversationManager={conversationManager}
         outlineManager={outlineManager}
@@ -3221,40 +2984,14 @@ export const App = () => {
         onEdgeSnap={(side) => setEdgeSnapState(side)}
         onUnsnap={() => {
           setEdgeSnapState(null)
-          setIsEdgePeeking(false)
+          hideEdgePeek()
         }}
         onInteractionStateChange={handleInteractionChange}
         onOpenSettings={() => {
           openSettingsModal()
         }}
-        onMouseEnter={() => {
-          if (hideTimerRef.current) {
-            clearTimeout(hideTimerRef.current)
-            hideTimerRef.current = null
-          }
-          // 取消快捷键触发的延迟缩回计时器
-          cancelShortcutPeekTimer()
-          // 当处于吸附状态时，鼠标进入面板应设置 isEdgePeeking = true
-          // 这样 onMouseLeave 时才能正确隐藏
-          if (edgeSnapState && settings?.panel?.panelMode === "edge-snap" && !isEdgePeeking) {
-            setIsEdgePeeking(true)
-          }
-        }}
-        onMouseLeave={() => {
-          // 边缘吸附恢复逻辑：鼠标移出面板时结束 peek 状态
-          // 增加 200ms 缓冲，防止移动到外部菜单（Portal）时瞬间隐藏
-          if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
-
-          hideTimerRef.current = setTimeout(() => {
-            // 优先检查设置模态框状态（使用 ref 确保读取到最新的值）
-            if (isSettingsOpenRef.current) return
-
-            // 检查是否有输入框正在聚焦（防止 IME 输入法弹出时隐藏）
-            if (isInputFocusedRef.current) return
-
-            syncEdgePeekWithPanelHover()
-          }, 200)
-        }}
+        onMouseEnter={handlePanelMouseEnter}
+        onMouseLeave={handlePanelMouseLeave}
       />
 
       <QuickButtons
