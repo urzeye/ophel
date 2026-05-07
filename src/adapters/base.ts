@@ -5,9 +5,12 @@
  */
 
 import { SITE_IDS } from "~constants/defaults"
+import type { MarkdownFixerConfig } from "~core/markdown-fixer"
 import { DOMToolkit } from "~utils/dom-toolkit"
 
 // ==================== 类型定义 ====================
+
+export type { MarkdownFixerConfig }
 
 export interface OutlineItem {
   level: number
@@ -95,15 +98,6 @@ export interface AnchorData {
   index?: number
   offset: number
   textSignature?: string
-}
-
-export interface MarkdownFixerConfig {
-  /** 查找段落的选择器，如 "message-content p" */
-  selector: string
-  /** 是否修复 <span> 内部的内容（AI Studio 需要） */
-  fixSpanContent?: boolean
-  /** 判断是否应跳过当前元素的修复（例如正在流式生成时） */
-  shouldSkip?: (element: HTMLElement) => boolean
 }
 
 export interface ZenModeStyleRule {

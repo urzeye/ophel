@@ -23,6 +23,8 @@ export interface MarkdownFixerConfig {
   selector: string
   /** 是否修复 <span> 内部的内容（AI Studio 需要） */
   fixSpanContent?: boolean
+  /** 判断是否应永久忽略当前元素（例如包含站点原生交互控件时） */
+  shouldIgnore?: (element: HTMLElement) => boolean
   /** 判断是否应跳过当前元素的修复（例如正在流式生成时） */
   shouldSkip?: (element: HTMLElement) => boolean
 }
@@ -82,6 +84,11 @@ export class MarkdownFixer {
    */
   fixParagraph(p: HTMLElement) {
     if (!p.isConnected) return
+
+    if (this.config.shouldIgnore?.(p)) {
+      delete p.dataset.mdFixerHash
+      return
+    }
 
     // 检查是否应跳过（例如正在流式生成）
     if (this.config.shouldSkip?.(p)) {

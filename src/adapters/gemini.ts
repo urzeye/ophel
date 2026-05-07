@@ -111,6 +111,72 @@ const GEMINI_MYSTUFF_SYNC_TIMEOUT_MS = 12000
 const GEMINI_MYSTUFF_ROUTE_EVENT = "gh-url-change"
 const GEMINI_GOOGLEUSERCONTENT_HOST_REGEX = /^https:\/\/lh\d+\.googleusercontent\.com\//i
 const GEMINI_MYSTUFF_TOOLTIP_DELAY_MS = 300
+const GEMINI_MARKDOWN_FIXER_SOURCE_ATTRIBUTE_KEYWORDS = [
+  "source",
+  "sources",
+  "citation",
+  "citations",
+  "reference",
+  "references",
+  "grounding",
+  "footnote",
+  "link",
+  "fonte",
+  "fontes",
+  "fuente",
+  "fuentes",
+  "quelle",
+  "quellen",
+  "referencia",
+  "referencias",
+  "referência",
+  "referências",
+  "riferimento",
+  "riferimenti",
+  "来源",
+  "引用",
+  "链接",
+  "出典",
+  "参照",
+  "출처",
+  "참조",
+  "источник",
+  "источники",
+  "ссылка",
+  "ссылки",
+]
+const GEMINI_MARKDOWN_FIXER_SOURCE_SELECTOR = [
+  "source-chip",
+  "source-card",
+  "source-footnote",
+  "citation-source",
+  "citation-chip",
+  "citation-marker",
+  "grounding-chip",
+  "grounding-source",
+  "web-source",
+  "[data-source]",
+  "[data-source-id]",
+  "[data-citation]",
+  "[data-citation-id]",
+  "[data-ved]",
+  "[decode-data-ved]",
+  "[cdkoverlayorigin]",
+  "[mattooltip]",
+  "[data-mdc-tooltip]",
+  "mat-icon[fonticon]",
+  "mat-icon[data-mat-icon-name]",
+  "[fonticon*='link' i]",
+  "[data-mat-icon-name*='link' i]",
+  "sup a",
+  "sup button",
+  "sup [role='button']",
+  ...GEMINI_MARKDOWN_FIXER_SOURCE_ATTRIBUTE_KEYWORDS.flatMap((keyword) => [
+    `[aria-label*='${keyword}' i]`,
+    `[title*='${keyword}' i]`,
+    `[data-test-id*='${keyword}' i]`,
+  ]),
+].join(",")
 
 class GeminiMyStuffEnhancer {
   private started = false
@@ -1605,7 +1671,12 @@ export class GeminiAdapter extends SiteAdapter {
     return {
       selector: "message-content p",
       fixSpanContent: false,
+      shouldIgnore: (element) => this.shouldIgnoreMarkdownFixElement(element),
     }
+  }
+
+  private shouldIgnoreMarkdownFixElement(element: HTMLElement): boolean {
+    return element.querySelector(GEMINI_MARKDOWN_FIXER_SOURCE_SELECTOR) !== null
   }
 
   getAssistantMermaidSupportMode() {
