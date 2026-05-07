@@ -911,6 +911,13 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     [manager],
   )
 
+  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Escape") return
+    e.preventDefault()
+    e.stopPropagation()
+    e.currentTarget.blur()
+  }, [])
+
   const handleSearchClear = useCallback(() => {
     manager.setSearchQuery("")
   }, [manager])
@@ -1210,6 +1217,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               placeholder={t("outlineSearch") || "搜索..."}
               value={searchQuery}
               onChange={handleSearchChange}
+              onKeyDown={handleSearchKeyDown}
               style={{
                 width: "100%",
                 padding: "4px 24px 4px 8px",
