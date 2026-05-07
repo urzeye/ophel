@@ -460,23 +460,6 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     }
   }, [])
 
-  useEffect(() => {
-    const input = inputRef.current
-    if (!input) return
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return
-      event.preventDefault()
-      event.stopImmediatePropagation()
-      input.blur()
-    }
-
-    input.addEventListener("keydown", handleKeyDown, true)
-    return () => {
-      input.removeEventListener("keydown", handleKeyDown, true)
-    }
-  }, [])
-
   // 订阅 Manager 更新
   useEffect(() => {
     const update = () => {
@@ -928,6 +911,13 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     [manager],
   )
 
+  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Escape") return
+    e.preventDefault()
+    e.stopPropagation()
+    e.currentTarget.blur()
+  }, [])
+
   const handleSearchClear = useCallback(() => {
     manager.setSearchQuery("")
   }, [manager])
@@ -1227,6 +1217,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               placeholder={t("outlineSearch") || "搜索..."}
               value={searchQuery}
               onChange={handleSearchChange}
+              onKeyDown={handleSearchKeyDown}
               style={{
                 width: "100%",
                 padding: "4px 24px 4px 8px",
