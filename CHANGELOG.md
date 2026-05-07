@@ -15,8 +15,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-- **Auto-snap panel not collapsing after batch-selecting conversations**: Fixed the panel staying open after entering or exiting batch-select mode in the conversations tab. The panel now snaps closed normally when the cursor leaves.
-- **Checking a checkbox preventing auto-snap**: Fixed clicking a checkbox (e.g. conversation multi-select) being mistakenly treated as text-input focus, causing the edge-snap panel to remain open indefinitely.
+- **Yuanbao theme sync broken**: Fixed theme detection failing when Yuanbao updated their dark mode implementation from a CSS class to a custom `html[yb-theme-mode]` attribute. The MutationObserver now watches the new attribute, and switching between dark, light, and system modes now works in both directions.
+- **Drag-to-sort broken on Yuanbao**: Fixed tab order and quick button drag sorting in the settings modal, and prompt item drag sorting in the prompts tab, failing on Yuanbao. Yuanbao's page-level JS was cancelling drags with an empty `dataTransfer`; adding `setData()` in the drag handler prevents the cancellation.
 
 ---
 
