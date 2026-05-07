@@ -155,6 +155,8 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
   const handleDragStart = (e: React.DragEvent, type: "tab" | "button", index: number) => {
     setDraggedItem({ type, index })
     e.dataTransfer.effectAllowed = "move"
+    // 必须调用 setData，部分站点在拖拽平辟 bubbling 阶段会检测 dataTransfer 为空并取消拖拽
+    e.dataTransfer.setData("text/plain", `${type}:${index}`)
   }
 
   // 处理拖拽经过

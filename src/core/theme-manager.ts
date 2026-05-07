@@ -341,6 +341,17 @@ export class ThemeManager {
         case SITE_IDS.DOUBAO:
           // 豆包不支持深色模式
           return false
+        case SITE_IDS.YUANBAO: {
+          localStorage.setItem("yb_web_theme_mode", "system")
+          window.dispatchEvent(
+            new StorageEvent("storage", {
+              key: "yb_web_theme_mode",
+              newValue: "system",
+              storageArea: localStorage,
+            }),
+          )
+          return true
+        }
         default:
           return false
       }
@@ -489,6 +500,11 @@ export class ThemeManager {
    * 优先级：html Class (ChatGPT) > body Class (Gemini) > Data Attribute > Style (colorScheme)
    */
   private detectHostThemeMode(): ThemeMode {
+    // 0. html[yb-theme-mode] 属性（元宝使用自定义属性而非 class）
+    const ybThemeMode = document.documentElement.getAttribute("yb-theme-mode")
+    if (ybThemeMode === "dark") return "dark"
+    if (ybThemeMode === "light") return "light"
+
     // 1. html 元素的 class（ChatGPT 使用 html.dark / html.light）
     const htmlClass = document.documentElement.className
     if (/\bdark\b/i.test(htmlClass)) {
@@ -625,6 +641,13 @@ export class ThemeManager {
         }
         case SITE_IDS.DOUBAO:
           return "light"
+        case SITE_IDS.YUANBAO: {
+          const storedTheme = localStorage.getItem("yb_web_theme_mode")
+          if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system") {
+            return storedTheme
+          }
+          return null
+        }
         default:
           return null
       }
@@ -795,10 +818,11 @@ ${cssVars}
         attributes: true,
         attributeFilter: ["class", "data-theme", "style"],
       })
-      // 同时监听 html 元素的 class 和 data-theme 属性（ChatGPT 使用 html.dark/light）
+      // 同时监听 html 元素的 class、data-theme、yb-theme-mode 属性
+      // yb-theme-mode 是元宝新版使用的自定义主题属性
       this.hostThemeObserver.observe(document.documentElement, {
         attributes: true,
-        attributeFilter: ["class", "data-theme"],
+        attributeFilter: ["class", "data-theme", "yb-theme-mode"],
       })
     }
   }
@@ -865,10 +889,11 @@ ${cssVars}
         attributeFilter: ["class", "data-theme", "style"],
       })
 
-      // 同时监听 html 元素的 class 和 data-theme 属性（ChatGPT 使用 html.dark/light）
+      // 同时监听 html 元素的 class、data-theme、yb-theme-mode 属性
+      // yb-theme-mode 是元宝新版使用的自定义主题属性
       this.hostThemeObserver.observe(document.documentElement, {
         attributes: true,
-        attributeFilter: ["class", "data-theme"],
+        attributeFilter: ["class", "data-theme", "yb-theme-mode"],
       })
     }
   }
