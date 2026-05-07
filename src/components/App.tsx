@@ -863,10 +863,6 @@ export const App = () => {
     [setPanelExpandedState, updateNestedSetting],
   )
 
-  const togglePanelExpanded = useCallback(() => {
-    persistPanelExpanded(!isPanelExpandedRef.current)
-  }, [persistPanelExpanded])
-
   // 使用 ref 保持 settings 的最新引用，避免闭包捕获过期值
   const settingsRef = useRef(settings)
   useEffect(() => {
@@ -2829,18 +2825,21 @@ export const App = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return
 
-      const outlineSearchInput = e
+      const panelSearchInput = e
         .composedPath()
         .find(
           (node): node is HTMLInputElement =>
-            node instanceof HTMLInputElement && node.classList.contains("outline-search-input"),
+            node instanceof HTMLInputElement &&
+            (node.classList.contains("outline-search-input") ||
+              node.classList.contains("conversations-search-input") ||
+              node.classList.contains("prompt-search-input")),
         )
-      if (!outlineSearchInput) return
+      if (!panelSearchInput) return
 
       e.preventDefault()
       e.stopImmediatePropagation()
       isInputFocusedRef.current = false
-      outlineSearchInput.blur()
+      panelSearchInput.blur()
       window.setTimeout(syncEdgePeekWithPanelHover, 0)
     }
 
