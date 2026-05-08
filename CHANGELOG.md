@@ -11,6 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
+- **Gemini Markdown Bold Fix now defaults to off**: The "Markdown Bold Fix" toggle for Gemini is now disabled by default for both the browser extension and userscript. The fix can still be enabled manually in Settings → Site Settings → Gemini. This reduces interference with Gemini's native rendering for users who don't need it.
 - **Panel state remembered in auto-snap mode**: Both floating and auto-snap modes now remember whether the panel was open or closed across page refreshes. Previously, auto-snap mode always reopened the panel expanded after a refresh.
 
 ### 🐛 Bug Fixes

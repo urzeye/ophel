@@ -687,7 +687,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
             label={t("markdownFixLabel") || "Markdown 加粗修复"}
             description={t("markdownFixDesc") || "修复 Gemini 响应中未渲染的加粗文本"}
             settingId="gemini-markdown-fix"
-            checked={settings.content?.markdownFix ?? true}
+            checked={settings.content?.markdownFix ?? false}
             onChange={() =>
               updateNestedSetting("content", "markdownFix", !settings.content?.markdownFix)
             }
