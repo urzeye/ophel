@@ -17,6 +17,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Yuanbao theme sync broken**: Fixed theme detection failing when Yuanbao updated their dark mode implementation from a CSS class to a custom `html[yb-theme-mode]` attribute. The MutationObserver now watches the new attribute, and switching between dark, light, and system modes now works in both directions.
 - **Drag-to-sort broken on Yuanbao**: Fixed tab order and quick button drag sorting in the settings modal, and prompt item drag sorting in the prompts tab, failing on Yuanbao. Yuanbao's page-level JS was cancelling drags with an empty `dataTransfer`; adding `setData()` in the drag handler prevents the cancellation.
+- **Gemini bold text font regression**: Fixed bold text falling back to Times New Roman (browser default) in Gemini. The Markdown bold fixer was stripping Angular's `_ngcontent-*` CSS scoping attributes from existing `<strong>` elements by converting them to `**...**` and back. Angular uses these attributes for component-scoped CSS (`strong[_ngcontent-abc] { font-family: "Google Sans" }`), so stripping them caused the font to fall back. The fixer now preserves all original attributes when marking elements, instead of round-tripping through raw Markdown. (#474)
 
 ---
 

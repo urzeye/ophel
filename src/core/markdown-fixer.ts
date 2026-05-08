@@ -14,6 +14,8 @@ const REGEX_BOLD_TAG = /<b\b[^>]*>([\s\S]*?)<\/b>/gi
 const REGEX_STRONG_TAG = /<strong\b[^>]*>([\s\S]*?)<\/strong>/gi
 const REGEX_MD_BOLD = /\*\*([^*]+(?:\*(?!\*)[^*]*)*)\*\*/g
 const REGEX_PLACEHOLDER = /###OPHEL_CODE_(\d+)###/g
+/** 检测开标签属性串中是否已存在 data-original-markdown 属性名（精确匹配，避免误匹配同前缀属性名） */
+const REGEX_ATTR_PROCESSED = /(^|\s)data-original-markdown(?=[=\s]|$)/i
 
 /**
  * MarkdownFixer 配置
@@ -123,17 +125,35 @@ export class MarkdownFixer {
       return `###OPHEL_CODE_${codeBlocks.length - 1}###`
     })
 
-    // 步骤 2: 将 <strong> 和 <b> 统一转为 **（标准化）
-    // 注意：必须先处理 <strong>，再处理 <b>，因为 ChatGPT 可能混用这两种标签
-    let processedHtml = protectedHtml.replace(REGEX_STRONG_TAG, "**$1**")
-    processedHtml = processedHtml.replace(REGEX_BOLD_TAG, "**$1**")
-
-    // 步骤 3: 将 ** 转为 <strong>
+    // 步骤 2: 将原始 Markdown **...** 转为 <strong>
+    // 属性值使用 "bold" 而非 "**"，防止重新扫描时 REGEX_MD_BOLD 误匹配已处理属性值中的星号
     let hasChanges = false
-    processedHtml = processedHtml.replace(REGEX_MD_BOLD, (_match, content) => {
+    let processedHtml = protectedHtml.replace(REGEX_MD_BOLD, (_match, content) => {
       hasChanges = true
-      return `<strong data-original-markdown="**">${content}</strong>`
+      return `<strong data-original-markdown="bold">${content}</strong>`
     })
+
+    // 步骤 3: 将已有 <strong>/<b> 标准化，保留原始 HTML 属性
+    // 不经由 ** 中间格式转换，直接添加 data-original-markdown 标记——
+    // 保留 Angular 的 _ngcontent-* 等作用域属性，避免组件 CSS 失效（字体回退 Times New Roman）
+    // 使用模块级正则 REGEX_ATTR_PROCESSED 检查开标签属性（attrsMatch[1]），
+    // 避免内容文本干扰、避免误匹配 data-original-markdown-other 等同前缀属性名
+    // 注意：必须先处理 <strong>，再处理 <b>，因为 ChatGPT 可能混用这两种标签
+    processedHtml = processedHtml
+      .replace(REGEX_STRONG_TAG, (match, content) => {
+        const attrsMatch = match.match(/^<strong([^>]*)>/i)
+        const originalAttrs = attrsMatch?.[1] ?? ""
+        if (REGEX_ATTR_PROCESSED.test(originalAttrs)) return match
+        hasChanges = true
+        return `<strong${originalAttrs} data-original-markdown="bold">${content}</strong>`
+      })
+      .replace(REGEX_BOLD_TAG, (match, content) => {
+        const attrsMatch = match.match(/^<b([^>]*)>/i)
+        const originalAttrs = attrsMatch?.[1] ?? ""
+        if (REGEX_ATTR_PROCESSED.test(originalAttrs)) return match
+        hasChanges = true
+        return `<strong${originalAttrs} data-original-markdown="bold">${content}</strong>`
+      })
 
     // 只有真正发生了替换才更新 DOM
     if (hasChanges) {

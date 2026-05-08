@@ -16,6 +16,7 @@
 
 - **元宝主题同步失效**：修复元宝将深色模式实现从 CSS class 改为自定义属性 `html[yb-theme-mode]` 后，主题联动失效的问题。MutationObserver 现在监听新属性，深色/浅色/系统三种模式之间的双向切换均已正常。
 - **元宝拖拽排序失效**：修复设置弹窗中界面排版/快捷按钮拖拽排序，以及提示词 Tab 中提示词拖拽排序在元宝站点完全失效的问题。根因是元宝的页面级 JS 在 dragstart 冒泡阶段检测到空 dataTransfer 后会取消拖拽，在拖拽处理器中添加 setData() 调用即可绕过。
+- **Gemini 加粗文字字体回退**：修复 Gemini 中加粗文字字体回退为 Times New Roman 的问题。Markdown 加粗修复器会将现有 `<strong>` 转为 `**...**` 再重建，导致 Angular 的 `_ngcontent-*` CSS 作用域属性丢失。Angular 依赖这些属性实现组件作用域样式（`strong[_ngcontent-abc] { font-family: "Google Sans" }`），属性一旦丢失，字体即回退到浏览器默认值。修复后，修复器在标记元素时保留所有原始属性，不再经由 Markdown 格式中转。（#474）
 
 ---
 
