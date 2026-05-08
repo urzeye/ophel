@@ -1253,8 +1253,11 @@ export class ClaudeAdapter extends SiteAdapter {
   getNetworkMonitorConfig(): NetworkMonitorConfig {
     return {
       // Claude API 请求模式
-      // 主要是 /api/organizations/.../completion
-      urlPatterns: ["/api/", "/completion"],
+      // 精确匹配路径以 /completion 结尾的端点（如 /api/organizations/.../chat_conversations/.../completion）
+      // 使用 urlPathEndsWith 而非 urlPatterns，避免误匹配 Claude.ai 的后台轮询请求（如 /api/chat_conversations、/api/feature_flags 等）
+      // 这些后台轮询 URL 也包含 "/api/"，若用 urlPatterns 的 OR 逻辑会不断触发误通知
+      urlPatterns: ["/api/"],
+      urlPathEndsWith: ["/completion"],
       silenceThreshold: 500,
     }
   }

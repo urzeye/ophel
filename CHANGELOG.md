@@ -15,6 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Claude reply notifications repeating endlessly**: Fixed notifications firing on every background API poll after a reply was completed on Claude.ai. The network monitor URL pattern `["/api/", "/completion"]` used OR logic, matching all `/api/*` background requests (conversation sync, feature flags, etc.) and re-triggering a generation cycle each time. Changed to an AND match (`urlPatterns: ["/api/"]` + `urlPathEndsWith: ["/completion"]`) so only the actual streaming completion endpoint `/api/organizations/.../chat_conversations/.../completion` is intercepted. (#470)
 - **Yuanbao theme sync broken**: Fixed theme detection failing when Yuanbao updated their dark mode implementation from a CSS class to a custom `html[yb-theme-mode]` attribute. The MutationObserver now watches the new attribute, and switching between dark, light, and system modes now works in both directions.
 - **Drag-to-sort broken on Yuanbao**: Fixed tab order and quick button drag sorting in the settings modal, and prompt item drag sorting in the prompts tab, failing on Yuanbao. Yuanbao's page-level JS was cancelling drags with an empty `dataTransfer`; adding `setData()` in the drag handler prevents the cancellation.
 
