@@ -18,25 +18,6 @@ You can export your data as a JSON file for backup or migration to another devic
 
 > Import **overwrites** existing data. We recommend exporting a backup of your current data before importing.
 
-## Import from Gemini Voyager
-
-**Settings → Backup & Sync → Import from Gemini Voyager**
-
-[Gemini Voyager](https://chromewebstore.google.com/detail/gemini-voyager/pgmfbpioicfjbfghalhcjkfdlkadamep) is another Gemini conversation management extension. If you have already organized your conversations into folders with it, you can import that folder structure directly into Ophel.
-
-**Steps**:
-
-1. Export your folder data from Gemini Voyager (JSON format, filename looks like `gemini-voyager.folders.v1...`)
-2. Copy the contents of the exported JSON file
-3. In Ophel Settings, find **Import from Gemini Voyager**, paste the JSON into the input field, and click **Start import**
-4. Ophel shows a preview (new folders added, conversations moved, etc.) — confirm to proceed
-
-**How the import works**:
-
-- **Incremental merge**: The import does not overwrite folders you have already organized in Ophel. Only conversations in your inbox or in previously imported Voyager folders will be re-categorized
-- **Folder flattening**: Nested Voyager folders are flattened into path names (e.g. “Parent / Child”) — Ophel does not support nested folder hierarchies
-- **Gemini only**: The import uses your currently signed-in Gemini account. Run it from a Gemini page
-
 ## Clear All Data
 
 **Settings → Backup & Sync → Clear all data**
