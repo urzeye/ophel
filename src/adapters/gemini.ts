@@ -2324,6 +2324,24 @@ export class GeminiAdapter extends SiteAdapter {
       return false
     }
 
+    // 继承 Angular _ngcontent-* 作用域属性
+    // Gemini 是 Angular 应用，CSS 通过属性选择器（如 p[_ngcontent-xxx]）实现组件作用域
+    // 注入的新节点若缺少这些属性，Angular CSS 将不匹配，导致字体回退为浏览器默认值
+    const ngAttrs = Array.from(textContainer.attributes).filter((attr) =>
+      attr.name.startsWith("_ngcontent-"),
+    )
+    if (ngAttrs.length > 0) {
+      const propagateNgAttrs = (el: Element) => {
+        for (const attr of ngAttrs) {
+          el.setAttribute(attr.name, attr.value)
+        }
+        for (const child of Array.from(el.children)) {
+          propagateNgAttrs(child)
+        }
+      }
+      propagateNgAttrs(rendered)
+    }
+
     // 隐藏原内容
     ;(textContainer as HTMLElement).style.display = "none"
 

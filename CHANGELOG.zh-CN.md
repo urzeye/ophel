@@ -6,6 +6,14 @@
 
 > English version: [CHANGELOG.md](./CHANGELOG.md)
 
+## [Unreleased]
+
+### 🐛 问题修复
+
+- **Gemini 用户消息包含反引号时字体回退为 Times New Roman**：修复 `UserQueryMarkdownRenderer` 注入替换容器时未携带 Angular `_ngcontent-*` 作用域属性的问题。新注入的节点及其所有子孙元素现在会从被隐藏的原始节点继承作用域属性，使 Gemini 的组件级 CSS 选择器能够正确匹配，字体保持为 Google Sans/Roboto。（#474）
+
+---
+
 ## [1.0.47]
 
 ### ✨ 功能优化

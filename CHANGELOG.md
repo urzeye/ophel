@@ -7,6 +7,14 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 > 中文版本: [CHANGELOG.zh-CN.md](./CHANGELOG.zh-CN.md)
 
+## [Unreleased]
+
+### 🐛 Bug Fixes
+
+- **Gemini: font reverts to Times New Roman when user message contains backticks**: Fixed the font regression caused by `UserQueryMarkdownRenderer` injecting a new container div without Angular's `_ngcontent-*` scoping attributes. The injected element and all its descendants now inherit the scoping attributes from the original hidden node, so Gemini's component-scoped CSS rules match correctly and the font stays as Google Sans/Roboto. (#474)
+
+---
+
 ## [1.0.47]
 
 ### ✨ Improvements
