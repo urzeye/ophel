@@ -27,3 +27,13 @@ export const INTER_LOCAL_FONT_FACE = `@font-face {
     U+1EA0-1EF9, U+20AB, U+2000-206F, U+20A0-20C0, U+20AC, U+2113, U+2122,
     U+2191, U+2193, U+2212, U+2215, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
 }`
+
+/**
+ * CJK-first font-family stack for inline React styles.
+ *
+ * Matches the :host and .settings-layout declarations in style.css / settings.css.
+ * Use wherever fontFamily cannot be inherited from a parent Shadow Root rule,
+ * e.g. inline React style={{ fontFamily }} overrides on panel/page root elements.
+ */
+export const INTER_CJK_FONT_FAMILY =
+  '"Inter", "PingFang SC", "Hiragino Sans SC", "Apple SD Gothic Neo", "Malgun Gothic", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif'

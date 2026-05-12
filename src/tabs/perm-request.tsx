@@ -8,6 +8,7 @@
 import React, { useEffect, useState } from "react"
 
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
+import { INTER_CJK_FONT_FAMILY } from "~utils/font"
 import { setLanguage, t } from "~utils/i18n"
 
 import "~styles/settings.css"
@@ -141,7 +142,7 @@ const PermissionRequestPage: React.FC = () => {
         alignItems: "center",
         justifyContent: "center",
         background: "var(--gh-bg, #ffffff)",
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        fontFamily: INTER_CJK_FONT_FAMILY,
         padding: "20px",
         overflow: "hidden",
       }}>
