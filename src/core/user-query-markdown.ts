@@ -48,18 +48,66 @@ const USER_QUERY_MARKDOWN_CSS = `
 .gh-user-query-markdown {
   font-size: 15px;
   line-height: 1.6;
+  --gh-user-query-code-bg: #1e1e1e;
+  --gh-user-query-code-fg: #e6edf3;
+  --gh-user-query-code-comment: #8b949e;
+  --gh-user-query-code-keyword: #ff7b72;
+  --gh-user-query-code-string: #a5d6ff;
+  --gh-user-query-code-number: #79c0ff;
+  --gh-user-query-code-title: #d2a8ff;
+  --gh-user-query-code-type: #7ee787;
+  --gh-user-query-code-variable: #ffa657;
+  --gh-user-query-code-scrollbar: rgba(255, 255, 255, 0.2);
+  --gh-user-query-code-scrollbar-hover: rgba(255, 255, 255, 0.35);
 }
+
+.gh-user-query-markdown.gh-user-query-markdown-gemini {
+  font-family: 'Google Sans', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  --gh-user-query-code-bg: #f6f8fa;
+  --gh-user-query-code-fg: #24292e;
+  --gh-user-query-code-comment: #6a737d;
+  --gh-user-query-code-keyword: #d73a49;
+  --gh-user-query-code-string: #032f62;
+  --gh-user-query-code-number: #005cc5;
+  --gh-user-query-code-title: #6f42c1;
+  --gh-user-query-code-type: #d73a49;
+  --gh-user-query-code-variable: #e36209;
+  --gh-user-query-code-scrollbar: rgba(0, 0, 0, 0.2);
+  --gh-user-query-code-scrollbar-hover: rgba(0, 0, 0, 0.35);
+}
+
+body.dark-theme .gh-user-query-markdown.gh-user-query-markdown-gemini,
+html[dark-theme] .gh-user-query-markdown.gh-user-query-markdown-gemini {
+  --gh-user-query-code-bg: #1e1e1e;
+  --gh-user-query-code-fg: #e6edf3;
+  --gh-user-query-code-comment: #8b949e;
+  --gh-user-query-code-keyword: #ff7b72;
+  --gh-user-query-code-string: #a5d6ff;
+  --gh-user-query-code-number: #79c0ff;
+  --gh-user-query-code-title: #d2a8ff;
+  --gh-user-query-code-type: #7ee787;
+  --gh-user-query-code-variable: #ffa657;
+  --gh-user-query-code-scrollbar: rgba(255, 255, 255, 0.2);
+  --gh-user-query-code-scrollbar-hover: rgba(255, 255, 255, 0.35);
+}
+
+.gh-user-query-markdown.gh-user-query-markdown-gemini pre,
+.gh-user-query-markdown.gh-user-query-markdown-gemini code {
+  font-family: 'Roboto Mono', 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace !important;
+}
+
 /* 图片宽度不大于消息气泡 */
 .gh-user-query-markdown img {
   max-width: 100%;
 }
 
-/* 代码块样式 - 紧凑、自动换行 */
+/* 代码块样式 - 背景与当前代码高亮配色匹配，不跟随 Ophel 主题色 */
 .gh-user-query-markdown pre {
   margin: 0.5em 0;
   padding: 0.75em;
   padding-right: 0.5em;
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--gh-user-query-code-bg);
+  color: var(--gh-user-query-code-fg);
   border-radius: 6px;
   font-size: 0.95em;
   max-height: 200px;
@@ -76,24 +124,60 @@ const USER_QUERY_MARKDOWN_CSS = `
   background: transparent;
 }
 .gh-user-query-markdown pre::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--gh-user-query-code-scrollbar);
   border-radius: 3px;
 }
 .gh-user-query-markdown pre::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--gh-user-query-code-scrollbar-hover);
 }
 
 .gh-user-query-markdown pre code {
-  background: transparent;
+  background: transparent !important;
+  color: var(--gh-user-query-code-fg);
   padding: 0;
+  display: block;
   white-space: pre-wrap;
   word-wrap: break-word;
   word-break: break-all;
   overflow: visible; /* 覆盖 .hljs 的 overflow-x: auto，让 pre 控制滚动 */
 }
 
+.gh-user-query-markdown pre .hljs-comment,
+.gh-user-query-markdown pre .hljs-quote {
+  color: var(--gh-user-query-code-comment);
+}
+.gh-user-query-markdown pre .hljs-keyword,
+.gh-user-query-markdown pre .hljs-selector-tag,
+.gh-user-query-markdown pre .hljs-doctag {
+  color: var(--gh-user-query-code-keyword);
+}
+.gh-user-query-markdown pre .hljs-string,
+.gh-user-query-markdown pre .hljs-regexp {
+  color: var(--gh-user-query-code-string);
+}
+.gh-user-query-markdown pre .hljs-number,
+.gh-user-query-markdown pre .hljs-literal,
+.gh-user-query-markdown pre .hljs-attr,
+.gh-user-query-markdown pre .hljs-attribute {
+  color: var(--gh-user-query-code-number);
+}
+.gh-user-query-markdown pre .hljs-title,
+.gh-user-query-markdown pre .hljs-section,
+.gh-user-query-markdown pre .hljs-selector-id {
+  color: var(--gh-user-query-code-title);
+}
+.gh-user-query-markdown pre .hljs-type,
+.gh-user-query-markdown pre .hljs-class .hljs-title {
+  color: var(--gh-user-query-code-type);
+}
+.gh-user-query-markdown pre .hljs-variable,
+.gh-user-query-markdown pre .hljs-template-variable,
+.gh-user-query-markdown pre .hljs-built_in {
+  color: var(--gh-user-query-code-variable);
+}
+
 /* 行内代码 */
-.gh-user-query-markdown code {
+.gh-user-query-markdown :not(pre) > code {
   background: rgba(0, 0, 0, 0.05);
   padding: 0.2em 0.4em;
   border-radius: 4px;
@@ -180,16 +264,9 @@ const USER_QUERY_MARKDOWN_CSS = `
   border-top: 1px solid #e5e7eb;
 }
 
-/* 深色模式适配 - 检测 Gemini 的 dark-theme 类 */
-body.dark-theme .gh-user-query-markdown pre,
-body.dark-theme .gh-user-query-markdown code {
-  background: rgba(255, 255, 255, 0.08);
-}
-body.dark-theme .gh-user-query-markdown pre::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-}
-body.dark-theme .gh-user-query-markdown pre::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+/* 深色模式适配 */
+body.dark-theme .gh-user-query-markdown :not(pre) > code {
+  background: rgba(255, 255, 255, 0.12);
 }
 body.dark-theme .gh-user-query-markdown .gh-code-copy-btn {
   background: rgba(0, 0, 0, 0.5);
@@ -204,15 +281,8 @@ body.dark-theme .gh-user-query-markdown hr {
 }
 
 /* Gemini Enterprise 深色模式 */
-html[dark-theme] .gh-user-query-markdown pre,
-html[dark-theme] .gh-user-query-markdown code {
-  background: rgba(255, 255, 255, 0.08);
-}
-html[dark-theme] .gh-user-query-markdown pre::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-}
-html[dark-theme] .gh-user-query-markdown pre::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+html[dark-theme] .gh-user-query-markdown :not(pre) > code {
+  background: rgba(255, 255, 255, 0.12);
 }
 html[dark-theme] .gh-user-query-markdown .gh-code-copy-btn {
   background: rgba(0, 0, 0, 0.5);
@@ -227,15 +297,8 @@ html[dark-theme] .gh-user-query-markdown hr {
 }
 
 /* ChatGPT 深色模式（使用 html.dark 类） */
-html.dark .gh-user-query-markdown pre,
-html.dark .gh-user-query-markdown code {
-  background: rgba(255, 255, 255, 0.08);
-}
-html.dark .gh-user-query-markdown pre::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-}
-html.dark .gh-user-query-markdown pre::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+html.dark .gh-user-query-markdown :not(pre) > code {
+  background: rgba(255, 255, 255, 0.12);
 }
 html.dark .gh-user-query-markdown .gh-code-copy-btn {
   background: rgba(0, 0, 0, 0.5);

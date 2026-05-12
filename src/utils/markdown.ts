@@ -155,7 +155,9 @@ export const getMathStyles = (): string => getKatexStylesText()
  * 返回 GitHub Dark 风格的样式
  */
 export const getHighlightStyles = (): string => `
-/* highlight.js GitHub Dark 主题 */
+/* highlight.js GitHub Dark 主题
+   面板（Shadow DOM）通过 var() 跟随 Ophel 主题变量；
+   主文档注入（用户提问）var() 不可用，fallback 为 #1e1e1e */
 .hljs {
   background: var(--gh-bg-tertiary, #1e1e1e);
   color: var(--gh-text, #e6edf3);
@@ -217,7 +219,7 @@ export const getHighlightStyles = (): string => `
 .gh-markdown-preview h2 { font-size: 1.3em; }
 .gh-markdown-preview h3 { font-size: 1.1em; }
 .gh-markdown-preview p { margin: 8px 0; }
-.gh-markdown-preview code:not(.hljs) {
+.gh-markdown-preview :not(pre) > code:not(.hljs) {
   background: var(--gh-bg-tertiary, #343942);
   padding: 2px 6px;
   border-radius: 4px;

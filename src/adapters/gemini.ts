@@ -2319,28 +2319,25 @@ export class GeminiAdapter extends SiteAdapter {
 
     // 创建渲染容器
     const rendered = document.createElement("div")
-    rendered.className = "gh-user-query-markdown gh-markdown-preview"
+    rendered.className = "gh-user-query-markdown gh-user-query-markdown-gemini gh-markdown-preview"
     if (!setSafeHTML(rendered, html)) {
       return false
     }
 
-    // 继承 Angular _ngcontent-* 作用域属性
-    // Gemini 是 Angular 应用，CSS 通过属性选择器（如 p[_ngcontent-xxx]）实现组件作用域
-    // 注入的新节点若缺少这些属性，Angular CSS 将不匹配，导致字体回退为浏览器默认值
-    const ngAttrs = Array.from(textContainer.attributes).filter((attr) =>
-      attr.name.startsWith("_ngcontent-"),
-    )
-    if (ngAttrs.length > 0) {
-      const propagateNgAttrs = (el: Element) => {
-        for (const attr of ngAttrs) {
-          el.setAttribute(attr.name, attr.value)
-        }
-        for (const child of Array.from(el.children)) {
-          propagateNgAttrs(child)
-        }
-      }
-      propagateNgAttrs(rendered)
-    }
+    // Gemini 使用 Angular ViewEncapsulation，其 [_ngcontent-*] pre { background !important }
+    // 特异性高于任何样式表规则，只有内联 important 能可靠覆盖
+    rendered.querySelectorAll("pre").forEach((pre) => {
+      const preElement = pre as HTMLElement
+      preElement.style.setProperty("background", "var(--gh-user-query-code-bg)", "important")
+      preElement.style.setProperty("background-color", "var(--gh-user-query-code-bg)", "important")
+      preElement.style.setProperty("color", "var(--gh-user-query-code-fg)", "important")
+      preElement.querySelectorAll("code").forEach((code) => {
+        const codeElement = code as HTMLElement
+        codeElement.style.setProperty("background", "transparent", "important")
+        codeElement.style.setProperty("background-color", "transparent", "important")
+        codeElement.style.setProperty("color", "var(--gh-user-query-code-fg)", "important")
+      })
+    })
 
     // 隐藏原内容
     ;(textContainer as HTMLElement).style.display = "none"
