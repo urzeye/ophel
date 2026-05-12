@@ -60,6 +60,8 @@ export class ChatGPTAdapter extends SiteAdapter {
   private lastModelLockAttemptAt = 0
   private lastModelLockAttemptKeyword = ""
   private cachedModelDisplayNamesBySlug = new Map<string, string>()
+  // 菜单打开时读到的当前选中模型 slug，菜单关闭后仍可用于本地化匹配（如 "think" vs "思考"）
+  private lastKnownModelSlug: string | null = null
 
   match(): boolean {
     return window.location.hostname.includes("chatgpt.com")
@@ -1412,6 +1414,9 @@ export class ChatGPTAdapter extends SiteAdapter {
       }
     }
 
+    // 菜单关闭后仍需要 slug 来做本地化匹配，持久化到字段
+    if (selectedSlug) this.lastKnownModelSlug = selectedSlug
+
     return {
       name: selectedName,
       slug: selectedSlug,
@@ -1443,6 +1448,10 @@ export class ChatGPTAdapter extends SiteAdapter {
     const signals = [
       selectedModelFromMenu?.name,
       selectedModelFromMenu?.slug,
+      // 菜单关闭后仍保留 slug，解决本地化名称（如"思考"）与关键词（如"think"）不匹配的循环
+      this.lastKnownModelSlug,
+      // 最新消息的模型 slug（对话中已有消息时可用）
+      this.getLatestMessageModelSlug(),
       selectorBtn ? this.extractModelNameFromSelectorButton(selectorBtn) : null,
     ]
 
