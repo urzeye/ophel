@@ -1552,6 +1552,10 @@ html[data-theme="dark"] .about-link-card {
   width: 100%;
 }
 
+.about-link-header > svg {
+  flex-shrink: 0;
+}
+
 .about-link-desc {
   font-size: 13px;
   line-height: 1.5;
