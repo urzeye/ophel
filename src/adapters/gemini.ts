@@ -1823,8 +1823,22 @@ export class GeminiAdapter extends SiteAdapter {
       if (line.querySelector("br") && line.textContent?.trim() === "") {
         return ""
       }
-      return line.textContent?.trim() || ""
+      // 只去行尾空格，保留行首空格（代码缩进）
+      return line.textContent?.trimEnd() ?? ""
     })
+
+    // Gemini 会在每行 textContent 前统一加若干个前导空格作为包装，
+    // 通过 dedent（去掉所有行共有的最小前导空格数）抵消，保留相对缩进
+    const nonEmptyLines = textLines.filter((l) => l.trim() !== "")
+    if (nonEmptyLines.length > 0) {
+      const minIndent = nonEmptyLines.reduce((min, line) => {
+        const match = line.match(/^(\s*)/)
+        return Math.min(min, match ? match[1].length : 0)
+      }, Infinity)
+      if (minIndent > 0 && isFinite(minIndent)) {
+        return textLines.map((line) => (line === "" ? "" : line.slice(minIndent))).join("\n")
+      }
+    }
 
     return textLines.join("\n")
   }
