@@ -44,33 +44,21 @@ const DELETE_REASON = {
 } as const
 
 const CHATGPT_MODEL_SELECTOR_BUTTON_SELECTORS = [
-  'button[data-testid="model-switcher-dropdown-button"][aria-label="模型选择器"]',
-  'button[data-testid="model-switcher-dropdown-button"][aria-label*="model"]',
-  'button[data-testid="model-switcher-dropdown-button"][aria-haspopup="menu"]',
-  'button[id^="radix-"][data-testid="model-switcher-dropdown-button"]',
-  'header button[data-testid="model-switcher-dropdown-button"]',
-  'button[data-testid="model-switcher-dropdown-button"]',
-  '[aria-haspopup="menu"][aria-label*="模型"]',
-  '[aria-haspopup="menu"][aria-label*="model"]',
+  // 新版 ChatGPT（2025 改版）：Composer 区域的 Pill 模型切换按钮
+  'button[class*="__composer-pill"][aria-haspopup="menu"]',
 ] as const
 
-const CHATGPT_SELECTED_MODEL_CACHE_TTL_MS = 30_000
-const CHATGPT_MODEL_LOCK_CHECK_SELECTED_MODEL_MAX_AGE_MS = 3_500
 const CHATGPT_MODEL_LOCK_REENTRY_COOLDOWN_MS = 1_200
 const CHATGPT_MODEL_MENU_SELECTOR =
   '[data-radix-popper-content-wrapper] [role="menu"][data-radix-menu-content]'
-const CHATGPT_MODEL_MENU_ITEM_SELECTOR = `${CHATGPT_MODEL_MENU_SELECTOR} [role="menuitem"][data-testid^="model-switcher-"]`
+// 新版菜单项 role 为 menuitemradio，data-testid^="model-switcher-" 仍保留
+const CHATGPT_MODEL_MENU_ITEM_SELECTOR = `${CHATGPT_MODEL_MENU_SELECTOR} [data-testid^="model-switcher-"]`
 
 export class ChatGPTAdapter extends SiteAdapter {
   private sessionAccessToken: string | null = null
   private sessionAccessTokenExpiresAt = 0
   private lastModelLockAttemptAt = 0
   private lastModelLockAttemptKeyword = ""
-  private cachedSelectedModelName: string | null = null
-  private cachedSelectedModelSlug: string | null = null
-  private cachedSelectedModelExpiresAt = 0
-  private cachedSelectedModelContextKey = ""
-  private cachedSelectedModelObservedAt = 0
   private cachedModelDisplayNamesBySlug = new Map<string, string>()
 
   match(): boolean {
@@ -1373,58 +1361,6 @@ export class ChatGPTAdapter extends SiteAdapter {
     return this.findElementBySelectors([...CHATGPT_MODEL_SELECTOR_BUTTON_SELECTORS])
   }
 
-  private getModelStateContextKey(): string {
-    const cid = this.getCurrentCid() || "default"
-    const sessionId = this.getSessionId() || window.location.pathname || "root"
-    return `${cid}::${sessionId}`
-  }
-
-  private rememberSelectedModelState(name: string | null, slug: string | null) {
-    const normalizedName = name?.trim() || null
-    const normalizedSlug = slug?.trim() || null
-    if (!normalizedName && !normalizedSlug) return
-
-    this.cachedSelectedModelName = normalizedName
-    this.cachedSelectedModelSlug = normalizedSlug
-    this.cachedSelectedModelContextKey = this.getModelStateContextKey()
-    this.cachedSelectedModelObservedAt = Date.now()
-    this.cachedSelectedModelExpiresAt = Date.now() + CHATGPT_SELECTED_MODEL_CACHE_TTL_MS
-  }
-
-  private getRememberedSelectedModelState(): { name: string | null; slug: string | null } | null {
-    if (
-      this.cachedSelectedModelContextKey === this.getModelStateContextKey() &&
-      this.cachedSelectedModelExpiresAt > Date.now() &&
-      (this.cachedSelectedModelName || this.cachedSelectedModelSlug)
-    ) {
-      return {
-        name: this.cachedSelectedModelName,
-        slug: this.cachedSelectedModelSlug,
-      }
-    }
-
-    this.cachedSelectedModelName = null
-    this.cachedSelectedModelSlug = null
-    this.cachedSelectedModelContextKey = ""
-    this.cachedSelectedModelObservedAt = 0
-    this.cachedSelectedModelExpiresAt = 0
-    return null
-  }
-
-  private getRecentSelectedModelState(): { name: string | null; slug: string | null } | null {
-    const rememberedState = this.getRememberedSelectedModelState()
-    if (!rememberedState) return null
-
-    if (
-      Date.now() - this.cachedSelectedModelObservedAt >
-      CHATGPT_MODEL_LOCK_CHECK_SELECTED_MODEL_MAX_AGE_MS
-    ) {
-      return null
-    }
-
-    return rememberedState
-  }
-
   private getLatestMessageModelSlug(): string | null {
     const lastMsg = Array.from(document.querySelectorAll("[data-message-model-slug]")).at(-1)
     return lastMsg?.getAttribute("data-message-model-slug")?.trim() || null
@@ -1441,26 +1377,40 @@ export class ChatGPTAdapter extends SiteAdapter {
     let selectedSlug: string | null = null
 
     for (const item of items) {
+      // slug：从 data-testid 提取（如 "model-switcher-gpt-5-3" → "gpt-5-3"）
       const dataTestId = item.getAttribute("data-testid") || ""
       const slug = dataTestId.startsWith("model-switcher-")
         ? dataTestId.replace(/^model-switcher-/, "").trim()
         : ""
 
-      const name =
-        item.querySelector(".min-w-0 > span")?.textContent?.replace(/\s+/g, " ").trim() || ""
+      // 名称：菜单项结构为 <span class="flex min-w-0 ...">Instant<span ...></span></span>
+      // 模型名是 .min-w-0 span 的直接文本节点，不能直接用 textContent（会包含子 span 文本）
+      const nameSpan = item.querySelector(".min-w-0")
+      const name = nameSpan
+        ? Array.from(nameSpan.childNodes)
+            .filter((n) => n.nodeType === Node.TEXT_NODE)
+            .map((n) => n.textContent?.trim())
+            .find(Boolean) ||
+          nameSpan.textContent?.replace(/\s+/g, " ").trim() ||
+          ""
+        : item.textContent?.replace(/\s+/g, " ").trim() || ""
 
       if (slug && name) {
         this.cachedModelDisplayNamesBySlug.set(slug, name)
       }
 
-      const isSelected = Boolean(item.querySelector(".trailing svg, .trailing use"))
+      // 选中判断：依次尝试多种 Radix / 自定义指示器
+      const isSelected =
+        Boolean(item.querySelector(".trailing svg, .trailing use")) ||
+        item.getAttribute("data-state") === "checked" ||
+        item.getAttribute("aria-checked") === "true" ||
+        item.getAttribute("aria-selected") === "true"
+
       if (isSelected) {
         selectedName = name || null
         selectedSlug = slug || null
       }
     }
-
-    this.rememberSelectedModelState(selectedName, selectedSlug)
 
     return {
       name: selectedName,
@@ -1469,18 +1419,10 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   private extractModelNameFromSelectorButton(modelBtn: HTMLElement): string | null {
-    const ariaLabel = modelBtn.getAttribute("aria-label")
-    if (ariaLabel) {
-      const match = ariaLabel.match(/(?:模型为|model is)\s*(.+)/i)
-      if (match) return match[1].trim()
-    }
-
-    const versionSpanText = modelBtn.querySelector(".text-token-text-tertiary")?.textContent?.trim()
-    if (versionSpanText) {
-      return versionSpanText
-    }
-
-    return null
+    // Pill 按钮直接在 truncate span 中显示当前模型名（如 "Instant", "Thinking"）
+    return (
+      modelBtn.querySelector("span.truncate, span[class*='truncate']")?.textContent?.trim() || null
+    )
   }
 
   private getReliableCurrentModelSignals(): string[] {
@@ -1497,13 +1439,10 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   private getCurrentModelSignalsForLockCheck(): string[] {
     const selectedModelFromMenu = this.readModelStateFromOpenMenu()
-    const recentSelectedModel = this.getRecentSelectedModelState()
     const selectorBtn = this.findModelSelectorButton()
     const signals = [
       selectedModelFromMenu?.name,
       selectedModelFromMenu?.slug,
-      recentSelectedModel?.name,
-      recentSelectedModel?.slug,
       selectorBtn ? this.extractModelNameFromSelectorButton(selectorBtn) : null,
     ]
 
@@ -1519,11 +1458,6 @@ export class ChatGPTAdapter extends SiteAdapter {
     const messageModel = this.getLatestMessageModelSlug()
     if (messageModel) {
       return this.cachedModelDisplayNamesBySlug.get(messageModel) || messageModel
-    }
-
-    const rememberedSelectedModel = this.getRememberedSelectedModelState()
-    if (rememberedSelectedModel?.name) {
-      return rememberedSelectedModel.name
     }
 
     const modelBtn = this.findModelSelectorButton()
@@ -1622,9 +1556,9 @@ export class ChatGPTAdapter extends SiteAdapter {
     return {
       targetModelKeyword: keyword,
       selectorButtonSelectors: [...CHATGPT_MODEL_SELECTOR_BUTTON_SELECTORS],
-      // ChatGPT 使用 Radix UI，菜单项带有 data-radix-collection-item 属性
+      // 新版 ChatGPT：模型选项 role 为 menuitemradio，data-testid^="model-switcher-" 精确匹配
       menuItemSelector:
-        '[data-radix-collection-item][role="menuitem"], [role="menuitem"], [role="option"]',
+        '[data-radix-collection-item][data-testid^="model-switcher-"], [role="menuitemradio"], [role="menuitem"][data-testid^="model-switcher-"]',
       checkInterval: 1000,
       maxAttempts: 15,
       menuRenderDelay: 500, // ChatGPT 菜单渲染较慢，增加延迟
@@ -1638,7 +1572,7 @@ export class ChatGPTAdapter extends SiteAdapter {
    */
   protected simulateClick(element: HTMLElement): void {
     const isModelSelectorTrigger = element.matches(
-      'button[data-testid="model-switcher-dropdown-button"][aria-haspopup="menu"]',
+      'button[class*="__composer-pill"][aria-haspopup="menu"]',
     )
 
     if (isModelSelectorTrigger) {
