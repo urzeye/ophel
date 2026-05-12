@@ -2,14 +2,21 @@
 @import "./styles/theme-variables.css";
 
 /*
- * Restrict system-installed Inter to its supported unicode ranges.
- * This ensures Hangul / CJK / Arabic etc. fall back to system fonts
- * rather than rendering as tofu on systems where Inter is installed
- * (e.g. via Figma, Electron apps). Mirrors Google Fonts' Inter distribution.
+ * Restrict Inter (or its system-font stand-ins) to Latin / common unicode ranges.
+ * This ensures Hangul / CJK / Arabic etc. fall back to system fonts rather than
+ * rendering as tofu on systems where Inter is installed (e.g. via Figma, Electron).
+ * Mirrors Google Fonts' Inter distribution.
+ *
+ * Extension: ui-entry.tsx injects InterVariable.woff2 *before* this sheet, so the
+ *   woff2 face wins for Latin glyphs and this local() rule is a secondary fallback.
+ * Userscript: no woff2 is bundled; the local() chain covers Latin glyphs with
+ *   whatever system sans-serif is available (Helvetica Neue → Arial → Roboto …),
+ *   keeping CJK glyphs falling through to the CJK fonts in the :host stack below.
  */
 @font-face {
   font-family: "Inter";
-  src: local("Inter"), local("InterVariable");
+  src: local("Inter"), local("InterVariable"), local("Helvetica Neue"), local("Arial"),
+    local("Roboto"), local("Liberation Sans");
   font-style: normal;
   font-weight: 100 900;
   unicode-range: U+0000-02FF, U+0304, U+0308, U+0329, U+0370-03FF, U+1D00-1DBF, U+1E00-1EFF,
