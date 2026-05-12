@@ -220,6 +220,7 @@ html[dark-theme] .gh-user-query-markdown.gh-user-query-markdown-gemini {
   font-size: 12px;
   cursor: pointer;
   opacity: 0.2;
+  pointer-events: none;
   transition: opacity 0.2s, background 0.2s;
   display: flex;
   align-items: center;
@@ -228,6 +229,7 @@ html[dark-theme] .gh-user-query-markdown.gh-user-query-markdown-gemini {
 }
 .gh-user-query-markdown pre:hover .gh-code-copy-btn {
   opacity: 1;
+  pointer-events: auto;
 }
 .gh-user-query-markdown .gh-code-copy-btn:hover {
   background: #4285f4;
