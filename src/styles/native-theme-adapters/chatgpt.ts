@@ -51,11 +51,6 @@ export const chatgptNativeThemeCss = `
   --gray-100: var(--gh-bg-tertiary) !important;
 }
 
-/* 用户提问 */
-.user-message-bubble-color {
-  background-color: color-mix(in srgb, var(--gh-primary) 10%, var(--gh-bg)) !important;
-}
-
 /* 按钮颜色 */
 .composer-btn {
   color: var(--gh-primary) !important;

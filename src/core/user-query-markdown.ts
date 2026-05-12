@@ -133,7 +133,7 @@ html[dark-theme] .gh-user-query-markdown.gh-user-query-markdown-gemini {
 
 .gh-user-query-markdown pre code {
   background: transparent !important;
-  color: var(--gh-user-query-code-fg);
+  color: var(--gh-user-query-code-fg) !important;
   padding: 0;
   display: block;
   white-space: pre-wrap;
@@ -144,36 +144,36 @@ html[dark-theme] .gh-user-query-markdown.gh-user-query-markdown-gemini {
 
 .gh-user-query-markdown pre .hljs-comment,
 .gh-user-query-markdown pre .hljs-quote {
-  color: var(--gh-user-query-code-comment);
+  color: var(--gh-user-query-code-comment) !important;
 }
 .gh-user-query-markdown pre .hljs-keyword,
 .gh-user-query-markdown pre .hljs-selector-tag,
 .gh-user-query-markdown pre .hljs-doctag {
-  color: var(--gh-user-query-code-keyword);
+  color: var(--gh-user-query-code-keyword) !important;
 }
 .gh-user-query-markdown pre .hljs-string,
 .gh-user-query-markdown pre .hljs-regexp {
-  color: var(--gh-user-query-code-string);
+  color: var(--gh-user-query-code-string) !important;
 }
 .gh-user-query-markdown pre .hljs-number,
 .gh-user-query-markdown pre .hljs-literal,
 .gh-user-query-markdown pre .hljs-attr,
 .gh-user-query-markdown pre .hljs-attribute {
-  color: var(--gh-user-query-code-number);
+  color: var(--gh-user-query-code-number) !important;
 }
 .gh-user-query-markdown pre .hljs-title,
 .gh-user-query-markdown pre .hljs-section,
 .gh-user-query-markdown pre .hljs-selector-id {
-  color: var(--gh-user-query-code-title);
+  color: var(--gh-user-query-code-title) !important;
 }
 .gh-user-query-markdown pre .hljs-type,
 .gh-user-query-markdown pre .hljs-class .hljs-title {
-  color: var(--gh-user-query-code-type);
+  color: var(--gh-user-query-code-type) !important;
 }
 .gh-user-query-markdown pre .hljs-variable,
 .gh-user-query-markdown pre .hljs-template-variable,
 .gh-user-query-markdown pre .hljs-built_in {
-  color: var(--gh-user-query-code-variable);
+  color: var(--gh-user-query-code-variable) !important;
 }
 
 /* 行内代码 */

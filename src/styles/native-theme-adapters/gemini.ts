@@ -12,8 +12,7 @@ export const geminiNativeThemeCss = `
 
   /* 2. 侧边栏与浮动层：使用极其微弱的主色调混合背景，避免大面积色块导致“太亮”或“太腻” */
   --bard-color-sidenav-background-desktop: color-mix(in srgb, var(--gh-primary) 5%, var(--gh-bg)) !important;
-  --gem-sys-color--surface-container: color-mix(in srgb, var(--gh-primary) 5%, var(--gh-bg)) !important;
-  --gem-sys-color--surface-container-high: color-mix(in srgb, var(--gh-primary) 8%, var(--gh-bg)) !important;
+
   --bard-color-icon-container-background: color-mix(in srgb, var(--gh-primary) 6%, var(--gh-bg)) !important;
 
   /* 3. 全局核心文字 */
@@ -41,4 +40,10 @@ export const geminiNativeThemeCss = `
   /* 图标颜色 */
   --mat-icon-color: var(--gh-primary) !important;
 }
-`
+
+/* 用户气泡背景不受 Ophel 主题色影响：
+ * 将 surface-container-high 重置为 initial（guaranteed-invalid），
+ * 让 Gemini 的 MD3 组件回退到自身内置的 fallback 颜色 */
+.user-query-bubble-with-background {
+  --gem-sys-color--surface-container-high: initial !important;
+}`

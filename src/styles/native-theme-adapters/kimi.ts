@@ -21,9 +21,6 @@ export const kimiNativeThemeCss = `
   --Colors-KMBlue: var(--gh-primary) !important;
   --Colors-KMBlue-hover: color-mix(in srgb, var(--gh-primary) 85%, white) !important;
   --Colors-KMBlue-active: color-mix(in srgb, var(--gh-primary) 85%, black) !important;
-  --Others-BubbleBlue: var(--gh-primary) !important;
-  --Others-BubbleBlue-hover: color-mix(in srgb, var(--gh-primary) 85%, white) !important;
-  --Others-BubbleBlue-active: color-mix(in srgb, var(--gh-primary) 85%, black) !important;
   --Others-KMBlue10: color-mix(in srgb, var(--gh-primary) 10%, transparent) !important;
 
   /* 4. 辅助状态的高亮 */
