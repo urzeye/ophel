@@ -61,7 +61,9 @@ export class ChatGPTAdapter extends SiteAdapter {
   private lastModelLockAttemptKeyword = ""
   private cachedModelDisplayNamesBySlug = new Map<string, string>()
   // 菜单打开时读到的当前选中模型 slug，菜单关闭后仍可用于本地化匹配（如 "think" vs "思考"）
+  // 绑定 contextKey，切换对话/账号后自动失效
   private lastKnownModelSlug: string | null = null
+  private lastKnownModelSlugContextKey = ""
 
   match(): boolean {
     return window.location.hostname.includes("chatgpt.com")
@@ -1363,8 +1365,15 @@ export class ChatGPTAdapter extends SiteAdapter {
     return this.findElementBySelectors([...CHATGPT_MODEL_SELECTOR_BUTTON_SELECTORS])
   }
 
+  private getModelStateContextKey(): string {
+    const cid = this.getCurrentCid() || "default"
+    const sessionId = this.getSessionId() || window.location.pathname || "root"
+    return `${cid}::${sessionId}`
+  }
+
   private getLatestMessageModelSlug(): string | null {
-    const lastMsg = Array.from(document.querySelectorAll("[data-message-model-slug]")).at(-1)
+    const nodes = document.querySelectorAll("[data-message-model-slug]")
+    const lastMsg = nodes[nodes.length - 1]
     return lastMsg?.getAttribute("data-message-model-slug")?.trim() || null
   }
 
@@ -1415,7 +1424,10 @@ export class ChatGPTAdapter extends SiteAdapter {
     }
 
     // 菜单关闭后仍需要 slug 来做本地化匹配，持久化到字段
-    if (selectedSlug) this.lastKnownModelSlug = selectedSlug
+    if (selectedSlug) {
+      this.lastKnownModelSlug = selectedSlug
+      this.lastKnownModelSlugContextKey = this.getModelStateContextKey()
+    }
 
     return {
       name: selectedName,
@@ -1449,7 +1461,10 @@ export class ChatGPTAdapter extends SiteAdapter {
       selectedModelFromMenu?.name,
       selectedModelFromMenu?.slug,
       // 菜单关闭后仍保留 slug，解决本地化名称（如"思考"）与关键词（如"think"）不匹配的循环
-      this.lastKnownModelSlug,
+      // 仅在同一会话上下文下有效，切换对话/账号后自动失效
+      this.lastKnownModelSlugContextKey === this.getModelStateContextKey()
+        ? this.lastKnownModelSlug
+        : null,
       // 最新消息的模型 slug（对话中已有消息时可用）
       this.getLatestMessageModelSlug(),
       selectorBtn ? this.extractModelNameFromSelectorButton(selectorBtn) : null,
