@@ -153,6 +153,7 @@ export const es = {
   rateDesc: "Si te gusta Ophel, ¡por favor califícanos con 5 estrellas! Nos ayuda mucho.",
   chromeStore: "Chrome Store",
   firefoxAddons: "Complemento de Firefox",
+  edgeAddons: "Complemento de Edge",
   greasyFork: "Greasy Fork",
   reviewBtn: "Calificar",
   starBtn: "Star",

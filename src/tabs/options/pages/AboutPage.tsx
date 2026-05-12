@@ -8,6 +8,7 @@ import {
   AboutIcon,
   ChromeIcon,
   DiscordIcon,
+  EdgeIcon,
   FirefoxIcon,
   GithubIcon,
   GlobeIcon,
@@ -26,7 +27,6 @@ import { PageTitle } from "../components"
 
 const AboutPage: React.FC = () => {
   const supportedPlatformsCount = String(SUPPORTED_AI_PLATFORMS.length)
-
   return (
     <div>
       <PageTitle title={t("navAbout") || "关于"} Icon={AboutIcon} />
@@ -80,6 +80,20 @@ const AboutPage: React.FC = () => {
           <div className="about-link-header">
             <ChromeIcon size={24} color="var(--card-color)" />
             <span style={{ fontWeight: 600 }}>{t("chromeStore") || "Chrome 商店"}</span>
+          </div>
+          <button className="about-link-btn">{t("reviewBtn") || "Review"}</button>
+        </a>
+
+        {/* Edge Add-ons */}
+        <a
+          href="https://microsoftedge.microsoft.com/addons/detail/ophel-atlas-ai-chat-navi/ffpenkdeifijngifjmbbpijfpdhlolga"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="about-link-card"
+          style={{ "--card-color": "#0078D7" } as React.CSSProperties}>
+          <div className="about-link-header">
+            <EdgeIcon size={24} />
+            <span style={{ fontWeight: 600 }}>{t("edgeAddons") || "Edge 加载项"}</span>
           </div>
           <button className="about-link-btn">{t("reviewBtn") || "Review"}</button>
         </a>

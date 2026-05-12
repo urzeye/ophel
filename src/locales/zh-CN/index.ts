@@ -191,6 +191,7 @@ export const zhCN = {
   rateDesc: "如果您喜欢 Ophel，请在应用商店给我们一个五星好评，这是我们更新的最大动力！",
   chromeStore: "Chrome 商店",
   firefoxAddons: "Firefox 扩展",
+  edgeAddons: "Edge 扩展",
   greasyFork: "Greasy Fork",
   reviewBtn: "评分",
   starBtn: "Star",

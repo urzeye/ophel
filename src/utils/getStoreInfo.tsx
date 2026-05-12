@@ -1,6 +1,6 @@
 import React from "react"
 
-import { ChromeIcon, FirefoxIcon, GreasyForkIcon } from "~components/icons/StoreIcons"
+import { ChromeIcon, EdgeIcon, FirefoxIcon, GreasyForkIcon } from "~components/icons/StoreIcons"
 import type { ReactNode } from "react"
 import { t } from "~utils/i18n"
 
@@ -11,6 +11,11 @@ export interface StoreInfo {
   url: string
   icon: ReactNode
   label: string
+}
+
+export const isEdgeBrowser = (): boolean => {
+  const userAgent = navigator.userAgent.toLowerCase()
+  return userAgent.indexOf("edg/") > -1
 }
 
 export const getStoreInfo = (): StoreInfo => {
@@ -31,8 +36,15 @@ export const getStoreInfo = (): StoreInfo => {
       icon: <FirefoxIcon size={14} />,
       label: t("reviewBtn") || "Review",
     }
+  } else if (userAgent.indexOf("edg/") > -1) {
+    // Microsoft Edge (Chromium-based) — UA contains "Edg/" not "Edge"
+    return {
+      url: "https://microsoftedge.microsoft.com/addons/detail/ophel-atlas-ai-chat-navi/ffpenkdeifijngifjmbbpijfpdhlolga",
+      icon: <EdgeIcon size={14} />,
+      label: t("reviewBtn") || "Review",
+    }
   } else {
-    // Default to Chrome (includes Edge, Brave etc)
+    // Default to Chrome (includes Brave etc)
     return {
       url: "https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd",
       icon: <ChromeIcon size={14} />,

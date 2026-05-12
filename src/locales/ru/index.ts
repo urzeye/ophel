@@ -152,6 +152,7 @@ export const ru = {
   rateDesc: "Если вам нравится Ophel, пожалуйста, поставьте нам 5 звезд! Это очень помогает нам.",
   chromeStore: "Интернет-магазин Chrome",
   firefoxAddons: "Дополнение Firefox",
+  edgeAddons: "Дополнение Edge",
   greasyFork: "Greasy Fork",
   reviewBtn: "Оценить",
   starBtn: "Star",

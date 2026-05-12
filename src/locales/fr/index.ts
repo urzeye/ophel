@@ -154,6 +154,7 @@ export const fr = {
     "Si vous appréciez Ophel, merci de nous donner 5 étoiles sur le store ! Cela nous aide beaucoup.",
   chromeStore: "Chrome Store",
   firefoxAddons: "Extension Firefox",
+  edgeAddons: "Extension Edge",
   greasyFork: "Greasy Fork",
   reviewBtn: "Noter",
   starBtn: "Star",

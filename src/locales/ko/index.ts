@@ -155,6 +155,7 @@ export const ko = {
   rateDesc: "Ophel이 마음에 드신다면 스토어에서 별 5개 평가를 부탁드립니다! 개발에 큰 힘이 됩니다.",
   chromeStore: "Chrome 스토어",
   firefoxAddons: "Firefox 애드온",
+  edgeAddons: "Edge 애드온",
   greasyFork: "Greasy Fork",
   reviewBtn: "평가",
   starBtn: "스타",

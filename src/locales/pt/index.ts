@@ -153,6 +153,7 @@ export const pt = {
     "Se você gosta do Ophel, por favor nos dê uma avaliação de 5 estrelas! Isso nos ajuda muito.",
   chromeStore: "Chrome Store",
   firefoxAddons: "Extensão Firefox",
+  edgeAddons: "Extensão Edge",
   greasyFork: "Greasy Fork",
   reviewBtn: "Avaliar",
   starBtn: "Star",

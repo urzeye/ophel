@@ -97,6 +97,7 @@ export const zhTW = {
 
   chromeStore: "Chrome 商店",
   firefoxAddons: "Firefox 擴充功能",
+  edgeAddons: "Edge 擴充功能",
   greasyFork: "Greasy Fork",
   reviewBtn: "評分",
   starBtn: "Star",
