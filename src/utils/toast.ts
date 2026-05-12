@@ -2,6 +2,8 @@
  * 显示 Toast 提示
  * 从用户脚本迁移的轻量级提示组件
  */
+import { INTER_LOCAL_FONT_FACE } from "~utils/font"
+
 type ToastOptions = {
   className?: string
   maxWidth?: number
@@ -51,6 +53,7 @@ export function showToast(message: string, duration = 2000, options: ToastOption
     const style = document.createElement("style")
     style.id = "gh-toast-style"
     style.textContent = `
+${INTER_LOCAL_FONT_FACE}
       .gh-toast {
         position: fixed !important;
         left: 50% !important;

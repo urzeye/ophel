@@ -3,6 +3,7 @@ import { useSettingsStore } from "~stores/settings-store"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { createSafeHTML } from "~utils/trusted-types"
 import { t } from "~utils/i18n"
+import { INTER_LOCAL_FONT_FACE } from "~utils/font"
 import type { PageWidthConfig } from "~utils/storage"
 
 // ==================== 样式 ID 常量 ====================
@@ -331,6 +332,7 @@ export class LayoutManager {
     const shadowRoot = host.attachShadow({ mode: "open" })
     shadowRoot.innerHTML = createSafeHTML(`
       <style>
+        ${INTER_LOCAL_FONT_FACE}
         :host {
           all: initial;
           display: block; /* 必须是 block 或 flex，否则 transform 在 inline 元素上不生效 */

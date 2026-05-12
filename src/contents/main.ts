@@ -17,6 +17,7 @@ import {
   type ModulesContext,
 } from "~core/modules-init"
 import { APP_DISPLAY_NAME } from "~utils/config"
+import { INTER_LOCAL_FONT_FACE } from "~utils/font"
 import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
 import { usePromptsStore } from "~stores/prompts-store"
@@ -170,6 +171,7 @@ function renderFallbackExtensionUpdateNotice(version?: string): void {
   const shadowRoot = host.attachShadow({ mode: "open" })
   shadowRoot.innerHTML = `
     <style>
+      ${INTER_LOCAL_FONT_FACE}
       :host {
         all: initial;
       }
