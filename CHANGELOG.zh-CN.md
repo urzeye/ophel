@@ -10,7 +10,8 @@
 
 ### 🐛 问题修复
 
-- **Gemini 用户提问代码块缩进丢失**：修复 `extractUserQueryMarkdown` 对每行 `query-text-line` 使用 `.trim()` 导致所有行首空格被删除、代码缩进丢失的问题。现改用 dedent 逻辑，仅去除 Gemini 统一添加的包装前导空格，保留代码块内的相对缩进。
+- **ChatGPT 模型锁定在非英文界面下失效**：修复本地化显示名（如「思考」）与用户输入关键词（如 `think`）不匹配导致无限循环切换模型的问题。适配器现在在菜单关闭后仍会保留上次读取的模型 slug，使锁定检测不受界面语言影响。
+- **ChatGPT 改版后模型锁定失效**：2025 年 ChatGPT 改版移除了顶部模型切换按钮。已更新适配器以匹配 Composer 区域的 Pill 按钮（`__composer-pill`），修正菜单项检测逻辑（`menuitemradio` role + `data-testid^=model-switcher-`），并从 Pill 按钮的 `span.truncate` 文本节点读取当前模型名。同时移除了约 90 行针对旧版二次点击交互的过时状态缓存代码。修复 `extractUserQueryMarkdown` 对每行 `query-text-line` 使用 `.trim()` 导致所有行首空格被删除、代码缩进丢失的问题。现改用 dedent 逻辑，仅去除 Gemini 统一添加的包装前导空格，保留代码块内的相对缩进。
 - **用户提问代码块在复制按钮附近过早换行**：修复用户提问 Markdown 代码块的复制按钮参与代码文本排版、压缩第一行可用宽度的问题。现在复制按钮会覆盖在代码块右上角，不再强制代码提前换行。
 - **Gemini 使用代码块后字体回退到 Times New Roman**：修复用户提问包含反引号或代码块时，Gemini 字体退回到浏览器默认（Times New Roman）的问题。渲染容器现已通过内联 `!important` 样式覆盖 Angular 的组件作用域 CSS 规则，确保字体和代码块背景色正常显示。主要影响 Firefox/Zen Browser 用户。（#474）
 - **用户提问气泡背景色被站点主题覆盖**：修复 ChatGPT、Kimi、Gemini 的「原生主题同步」功能错误地将主题色应用到用户提问气泡背景的问题。现在启用主题同步时，用户气泡会保留各平台原有的背景色。
