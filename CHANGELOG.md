@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-- **Gemini font reverts to Times New Roman when using code blocks**: Fixed font regression on Gemini when user messages contain backticks or code blocks. The injected markdown container now correctly inherits Angular's `_ngcontent-*` scoping attributes, preserving Google Sans/Roboto font. Primarily affects Firefox/Zen Browser users. (#474)
+- **Gemini font reverts to Times New Roman when using code blocks**: Fixed font regression on Gemini when user messages contain backticks or code blocks. The injected markdown container now explicitly applies `font-family` and forced inline `background`/`color` styles to override Angular's component-scoped CSS rules, preserving Google Sans/Roboto font. Primarily affects Firefox/Zen Browser users. (#474)
 - **User query bubble background overridden by site theme**: Fixed native theme sync on ChatGPT, Kimi, and Gemini incorrectly applying theme colors to the user message bubble background. User bubbles now retain their original platform colors when theme sync is enabled.
 - **Syntax highlighting broken in user query code blocks**: Fixed hljs token colors (keywords, strings, comments, etc.) being overridden by site CSS on some platforms.
 

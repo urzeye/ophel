@@ -48,6 +48,25 @@ const USER_QUERY_MARKDOWN_CSS = `
 .gh-user-query-markdown {
   font-size: 15px;
   line-height: 1.6;
+  /* 默认：GitHub Light 浅色主题（适用于所有非 Gemini 站点的浅色模式） */
+  --gh-user-query-code-bg: #f6f8fa;
+  --gh-user-query-code-fg: #24292e;
+  --gh-user-query-code-comment: #6a737d;
+  --gh-user-query-code-keyword: #d73a49;
+  --gh-user-query-code-string: #032f62;
+  --gh-user-query-code-number: #005cc5;
+  --gh-user-query-code-title: #6f42c1;
+  --gh-user-query-code-type: #d73a49;
+  --gh-user-query-code-variable: #e36209;
+  --gh-user-query-code-scrollbar: rgba(0, 0, 0, 0.2);
+  --gh-user-query-code-scrollbar-hover: rgba(0, 0, 0, 0.35);
+}
+
+/* 通用深色模式覆盖（覆盖非 Gemini 站点） */
+html.dark .gh-user-query-markdown,
+html[data-theme='dark'] .gh-user-query-markdown,
+body[data-theme='dark'] .gh-user-query-markdown,
+html[yb-theme-mode='dark'] .gh-user-query-markdown {
   --gh-user-query-code-bg: #1e1e1e;
   --gh-user-query-code-fg: #e6edf3;
   --gh-user-query-code-comment: #8b949e;

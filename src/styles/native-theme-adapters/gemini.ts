@@ -35,15 +35,13 @@ export const geminiNativeThemeCss = `
   --bard-color-zero-state-prompt-chip-background: var(--gh-hover) !important;
 
   /* 6. 其他元素 */
-  --gem-sys-color--surface-container-high: var(--gh-bg-tertiary) !important;
   --gem-sys-color--primary: var(--gh-primary) !important;
   /* 图标颜色 */
   --mat-icon-color: var(--gh-primary) !important;
 }
 
-/* 用户气泡背景不受 Ophel 主题色影响：
- * 将 surface-container-high 重置为 initial（guaranteed-invalid），
- * 让 Gemini 的 MD3 组件回退到自身内置的 fallback 颜色 */
-.user-query-bubble-with-background {
-  --gem-sys-color--surface-container-high: initial !important;
+/* 仅在 AI 回复容器内覆盖 surface-container-high（用于代码块背景），
+ * 不在 :root 全局设置，以免影响用户气泡等其他使用该变量的元素 */
+model-response, .model-response-container {
+  --gem-sys-color--surface-container-high: var(--gh-bg-tertiary) !important;
 }`
