@@ -367,7 +367,7 @@ export class LayoutManager {
           display: inline-flex;
           align-items: center;
           gap: 12px;
-          font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "PingFang SC", "Microsoft YaHei", sans-serif;
+          font-family: "Inter", "PingFang SC", "Hiragino Sans SC", "Apple SD Gothic Neo", "Malgun Gothic", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
           font-size: 14px;
           font-weight: 500;
           line-height: 1;

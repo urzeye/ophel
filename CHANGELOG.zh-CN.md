@@ -17,6 +17,7 @@
 - **Gemini 使用代码块后字体回退到 Times New Roman**：修复用户提问包含反引号或代码块时，Gemini 字体退回到浏览器默认（Times New Roman）的问题。渲染容器现已通过内联 `!important` 样式覆盖 Angular 的组件作用域 CSS 规则，确保字体和代码块背景色正常显示。主要影响 Firefox/Zen Browser 用户。（#474）
 - **用户提问气泡背景色被站点主题覆盖**：修复 ChatGPT、Kimi、Gemini 的「原生主题同步」功能错误地将主题色应用到用户提问气泡背景的问题。现在启用主题同步时，用户气泡会保留各平台原有的背景色。
 - **用户提问代码块语法高亮失效**：修复部分站点 CSS 覆盖 hljs token 颜色（关键字、字符串、注释等）导致代码块语法高亮显示异常的问题。
+- **macOS 英文环境下 CJK 字体回落为日文字形**：修复各 UI 层面的 `font-family` 将 `system-ui`/`BlinkMacSystemFont` 排在 CJK 字体之前，导致 Blink 引擎在英文语言环境的 macOS 上优先使用 Hiragino（日文字体）而非 PingFang SC，造成同一段文字中字形混杂、字符度量不一致的问题。现已将 CJK 字体（`PingFang SC`、`Hiragino Sans SC` 等）移至 `system-ui` 前方。（#486）
 
 ---
 

@@ -18,6 +18,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Gemini font reverts to Times New Roman when using code blocks**: Fixed font regression on Gemini when user messages contain backticks or code blocks. The injected markdown container now explicitly applies `font-family` and forced inline `background`/`color` styles to override Angular's component-scoped CSS rules, preserving Google Sans/Roboto font. Primarily affects Firefox/Zen Browser users. (#474)
 - **User query bubble background overridden by site theme**: Fixed native theme sync on ChatGPT, Kimi, and Gemini incorrectly applying theme colors to the user message bubble background. User bubbles now retain their original platform colors when theme sync is enabled.
 - **Syntax highlighting broken in user query code blocks**: Fixed hljs token colors (keywords, strings, comments, etc.) being overridden by site CSS on some platforms.
+- **CJK font falls back to Hiragino (Japanese glyphs) on macOS in English locale**: Fixed the font-family stack across all UI surfaces placing `system-ui`/`BlinkMacSystemFont` before explicit CJK fonts. Blink's CJK fallback logic would select Hiragino instead of PingFang SC on English-locale macOS, causing mixed glyph shapes and inconsistent character metrics within the same text. CJK fonts (`PingFang SC`, `Hiragino Sans SC`, etc.) are now declared before `system-ui` to ensure correct Simplified Chinese rendering. (#486)
 
 ---
 
