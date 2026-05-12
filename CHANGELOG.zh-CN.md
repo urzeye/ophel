@@ -6,6 +6,16 @@
 
 > English version: [CHANGELOG.md](./CHANGELOG.md)
 
+## [Unreleased]
+
+### 🐛 问题修复
+
+- **Gemini 使用代码块后字体回退到 Times New Roman**：修复用户提问包含反引号或代码块时，Gemini 字体退回到浏览器默认（Times New Roman）的问题。渲染容器现已正确继承 Angular 的 `_ngcontent-*` 作用域属性，确保 Google Sans/Roboto 字体正常显示。主要影响 Firefox/Zen Browser 用户。（#474）
+- **用户提问气泡背景色被站点主题覆盖**：修复 ChatGPT、Kimi、Gemini 的「原生主题同步」功能错误地将主题色应用到用户提问气泡背景的问题。现在启用主题同步时，用户气泡会保留各平台原有的背景色。
+- **用户提问代码块语法高亮失效**：修复部分站点 CSS 覆盖 hljs token 颜色（关键字、字符串、注释等）导致代码块语法高亮显示异常的问题。
+
+---
+
 ## [1.0.47]
 
 ### ✨ 功能优化
