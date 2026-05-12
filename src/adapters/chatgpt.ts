@@ -1567,7 +1567,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       selectorButtonSelectors: [...CHATGPT_MODEL_SELECTOR_BUTTON_SELECTORS],
       // 新版 ChatGPT：模型选项 role 为 menuitemradio，data-testid^="model-switcher-" 精确匹配
       menuItemSelector:
-        '[data-radix-collection-item][data-testid^="model-switcher-"], [role="menuitemradio"], [role="menuitem"][data-testid^="model-switcher-"]',
+        '[data-radix-collection-item][data-testid^="model-switcher-"], [role="menuitemradio"][data-testid^="model-switcher-"], [role="menuitem"][data-testid^="model-switcher-"]',
       checkInterval: 1000,
       maxAttempts: 15,
       menuRenderDelay: 500, // ChatGPT 菜单渲染较慢，增加延迟
