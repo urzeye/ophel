@@ -19,6 +19,7 @@ import { platform } from "~platform"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { APP_DISPLAY_NAME, APP_ICON_URL } from "~utils/config"
 import { SidebarCommunityLinks } from "~components/SidebarCommunityLinks"
+import { getOphelPlatformFontClassName } from "~utils/font"
 import { setLanguage, t } from "~utils/i18n"
 
 import AboutPage from "./options/pages/AboutPage"
@@ -186,6 +187,7 @@ const OptionsPage = () => {
   }, [])
   const { settings } = useSettingsStore()
   const isHydrated = useSettingsHydrated()
+  const platformFontClassName = getOphelPlatformFontClassName()
 
   // 语言初始化状态
   // 确保在语言设置完成后才渲染内容，避免首次渲染显示默认语言
@@ -206,7 +208,7 @@ const OptionsPage = () => {
   // 等待 hydration 和语言初始化完成
   if (!settings || !isHydrated || !languageReady) {
     return (
-      <div className="settings-layout">
+      <div className={`settings-layout ${platformFontClassName}`}>
         <div style={{ padding: 40, textAlign: "center" }}>{t("loading") || "加载中..."}</div>
       </div>
     )
@@ -247,7 +249,7 @@ const OptionsPage = () => {
   })
 
   return (
-    <div className="settings-layout">
+    <div className={`settings-layout ${platformFontClassName}`}>
       {/* 侧边栏 */}
       <aside className="settings-sidebar">
         <div className="settings-sidebar-header">

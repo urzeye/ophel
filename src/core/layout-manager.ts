@@ -3,7 +3,7 @@ import { useSettingsStore } from "~stores/settings-store"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { createSafeHTML } from "~utils/trusted-types"
 import { t } from "~utils/i18n"
-import { INTER_LOCAL_FONT_FACE } from "~utils/font"
+import { INTER_LOCAL_FONT_FACE, getPlatformFontFamily } from "~utils/font"
 import type { PageWidthConfig } from "~utils/storage"
 
 // ==================== 样式 ID 常量 ====================
@@ -369,7 +369,7 @@ export class LayoutManager {
           display: inline-flex;
           align-items: center;
           gap: 12px;
-          font-family: "Inter", "PingFang SC", "Hiragino Sans SC", "Apple SD Gothic Neo", "Malgun Gothic", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          font-family: ${getPlatformFontFamily()};
           font-size: 14px;
           font-weight: 500;
           line-height: 1;

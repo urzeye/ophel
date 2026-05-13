@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **Windows UI font regression after the macOS CJK fallback fix**: Restored `system-ui` priority on Windows and other non-macOS platforms while keeping CJK fonts before `system-ui` on macOS. Also removed Arial/Roboto local aliases from the Inter fallback so environments without bundled Inter fall back to the native system UI font instead of mixing unrelated fonts.
+
 ---
 
 ## [1.0.48]

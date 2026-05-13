@@ -1,6 +1,7 @@
 import { GithubIcon, ShieldCheckIcon } from "~components/icons"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { APP_ICON_URL } from "~utils/config"
+import { OPHEL_FONT_FAMILY_CSS_VAR } from "~utils/font"
 import { getStoreInfo } from "~utils/getStoreInfo"
 import { t } from "~utils/i18n"
 
@@ -121,7 +122,7 @@ export const DisclaimerModal: React.FC = () => {
           align-items: center;
           justify-content: center;
           z-index: 99999;
-          font-family: 'Inter', 'PingFang SC', 'Hiragino Sans SC', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Microsoft YaHei', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-family: ${OPHEL_FONT_FAMILY_CSS_VAR};
           pointer-events: auto;
         }
 

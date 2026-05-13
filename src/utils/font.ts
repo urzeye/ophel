@@ -1,24 +1,9 @@
 /**
- * Latin-only @font-face for "Inter" that works without a bundled woff2.
- *
- * This provides the same unicode-range restriction as the woff2 rule injected by
- * ui-entry.tsx (extension), ensuring:
- *   - Latin glyphs → resolved via local system fonts (Helvetica Neue, Arial, …)
- *   - CJK glyphs  → fall through to the explicit CJK fonts in the :host stack
- *
- * Include this in every isolated Shadow Root (zen exit button, update-notice card,
- * toast fallback, options page …) that does NOT inherit styles from the main
- * Ophel Shadow DOM where style.css already declares this @font-face.
+ * 限制本机 Inter 只处理拉丁等常用字符，避免 CJK/韩文误用 Inter 导致缺字。
  */
 export const INTER_LOCAL_FONT_FACE = `@font-face {
   font-family: "Inter";
-  src:
-    local("Inter"),
-    local("InterVariable"),
-    local("Helvetica Neue"),
-    local("Arial"),
-    local("Roboto"),
-    local("Liberation Sans");
+  src: local("Inter"), local("InterVariable");
   font-style: normal;
   font-weight: 100 900;
   unicode-range:
@@ -28,12 +13,50 @@ export const INTER_LOCAL_FONT_FACE = `@font-face {
     U+2191, U+2193, U+2212, U+2215, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
 }`
 
-/**
- * CJK-first font-family stack for inline React styles.
- *
- * Matches the :host and .settings-layout declarations in style.css / settings.css.
- * Use wherever fontFamily cannot be inherited from a parent Shadow Root rule,
- * e.g. inline React style={{ fontFamily }} overrides on panel/page root elements.
- */
-export const INTER_CJK_FONT_FAMILY =
-  '"Inter", "PingFang SC", "Hiragino Sans SC", "Apple SD Gothic Neo", "Malgun Gothic", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif'
+export type OphelRuntimePlatform = "macos" | "windows" | "other"
+
+export const OPHEL_PLATFORM_FONT_CLASSES = [
+  "gh-platform-macos",
+  "gh-platform-windows",
+  "gh-platform-other",
+] as const
+
+export const INTER_SYSTEM_FONT_FAMILY =
+  '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft YaHei", "PingFang SC", "Hiragino Sans SC", "Apple SD Gothic Neo", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif'
+
+export const INTER_MACOS_CJK_FONT_FAMILY =
+  '"Inter", "PingFang SC", "Hiragino Sans SC", "Apple SD Gothic Neo", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft YaHei", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif'
+
+export const OPHEL_FONT_FAMILY_CSS_VAR = `var(--gh-font-family, ${INTER_SYSTEM_FONT_FAMILY})`
+
+export function getOphelRuntimePlatform(): OphelRuntimePlatform {
+  if (typeof navigator === "undefined") return "other"
+
+  const userAgentDataPlatform = (navigator as Navigator & { userAgentData?: { platform?: string } })
+    .userAgentData?.platform
+  const platformText = [navigator.platform, userAgentDataPlatform, navigator.userAgent]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+
+  if (/mac|iphone|ipad|ipod/.test(platformText)) return "macos"
+  if (/win/.test(platformText)) return "windows"
+  return "other"
+}
+
+export function getPlatformFontFamily(platform = getOphelRuntimePlatform()): string {
+  return platform === "macos" ? INTER_MACOS_CJK_FONT_FAMILY : INTER_SYSTEM_FONT_FAMILY
+}
+
+export function getOphelPlatformFontClassName(
+  platform = getOphelRuntimePlatform(),
+): (typeof OPHEL_PLATFORM_FONT_CLASSES)[number] {
+  return `gh-platform-${platform}` as (typeof OPHEL_PLATFORM_FONT_CLASSES)[number]
+}
+
+export function applyOphelPlatformFontClass(element: Element): void {
+  element.classList.remove(...OPHEL_PLATFORM_FONT_CLASSES)
+  element.classList.add(getOphelPlatformFontClassName())
+}
+
+export const INTER_CJK_FONT_FAMILY = getPlatformFontFamily()

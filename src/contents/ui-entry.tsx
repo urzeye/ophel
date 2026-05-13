@@ -5,6 +5,7 @@ import type { PlasmoCSConfig, PlasmoMountShadowHost } from "plasmo"
 import React from "react"
 
 import { App } from "~components/App"
+import { applyOphelPlatformFontClass } from "~utils/font"
 
 export const config: PlasmoCSConfig = {
   matches: [
@@ -82,6 +83,7 @@ export const mountShadowHost: PlasmoMountShadowHost = ({
   mountState: _mountState,
 }) => {
   const hostname = window.location.hostname
+  applyOphelPlatformFontClass(shadowHost)
   if (hostname.includes("chatglm.cn")) {
     shadowHost.classList.add("gh-site-chatglm")
   }

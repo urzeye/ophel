@@ -1,22 +1,10 @@
 /* 导入主题变量 */
 @import "./styles/theme-variables.css";
 
-/*
- * Restrict Inter (or its system-font stand-ins) to Latin / common unicode ranges.
- * This ensures Hangul / CJK / Arabic etc. fall back to system fonts rather than
- * rendering as tofu on systems where Inter is installed (e.g. via Figma, Electron).
- * Mirrors Google Fonts' Inter distribution.
- *
- * Extension: ui-entry.tsx injects InterVariable.woff2 *before* this sheet, so the
- *   woff2 face wins for Latin glyphs and this local() rule is a secondary fallback.
- * Userscript: no woff2 is bundled; the local() chain covers Latin glyphs with
- *   whatever system sans-serif is available (Helvetica Neue → Arial → Roboto …),
- *   keeping CJK glyphs falling through to the CJK fonts in the :host stack below.
- */
+/* 限制本机 Inter 只处理拉丁等常用字符，CJK/韩文继续交给系统字体回退。 */
 @font-face {
   font-family: "Inter";
-  src: local("Inter"), local("InterVariable"), local("Helvetica Neue"), local("Arial"),
-    local("Roboto"), local("Liberation Sans");
+  src: local("Inter"), local("InterVariable");
   font-style: normal;
   font-weight: 100 900;
   unicode-range: U+0000-02FF, U+0304, U+0308, U+0329, U+0370-03FF, U+1D00-1DBF, U+1E00-1EFF,
@@ -26,28 +14,21 @@
 }
 
 :host {
-  font-family:
-    "Inter",
-    "PingFang SC",
-    "Hiragino Sans SC",
-    "Apple SD Gothic Neo",
-    "Malgun Gothic",
-    "Microsoft YaHei",
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    "Helvetica Neue",
-    "Apple Color Emoji",
-    "Segoe UI Emoji",
-    "Segoe UI Symbol",
-    sans-serif;
+  --gh-font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", "Microsoft YaHei", "PingFang SC", "Hiragino Sans SC", "Apple SD Gothic Neo",
+    "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  font-family: var(--gh-font-family);
   font-size: 14px;
   line-height: 1.5;
   color: var(--gh-text, #333);
   /* Allow tooltips and popups to overflow the shadow host boundaries */
   overflow: visible !important;
+}
+
+:host(.gh-platform-macos) {
+  --gh-font-family: "Inter", "PingFang SC", "Hiragino Sans SC", "Apple SD Gothic Neo", system-ui,
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft YaHei",
+    "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
 }
 
 :host(.gh-site-chatglm) {

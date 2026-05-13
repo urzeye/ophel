@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+### 🐛 问题修复
+
+- **macOS CJK 字体修复后 Windows UI 字体回退异常**：在 Windows 与其他非 macOS 平台恢复 `system-ui` 优先，仅在 macOS 上保留 CJK 字体位于 `system-ui` 前方。同时移除 Inter 本地回退中的 Arial/Roboto 别名，避免未内置 Inter 的环境混用不相关字体，改为回落到原生系统 UI 字体。
+
 ---
 
 ## [1.0.48]

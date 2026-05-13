@@ -17,7 +17,7 @@ import {
   type ModulesContext,
 } from "~core/modules-init"
 import { APP_DISPLAY_NAME } from "~utils/config"
-import { INTER_LOCAL_FONT_FACE } from "~utils/font"
+import { INTER_LOCAL_FONT_FACE, getPlatformFontFamily } from "~utils/font"
 import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
 import { usePromptsStore } from "~stores/prompts-store"
@@ -184,7 +184,7 @@ function renderFallbackExtensionUpdateNotice(version?: string): void {
         -webkit-backdrop-filter: blur(24px) saturate(180%);
         box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.15), 0 0 0 1.5px inset rgba(255, 255, 255, 0.5);
         color: #111827;
-        font-family: "Inter", "PingFang SC", "Hiragino Sans SC", "Apple SD Gothic Neo", "Malgun Gothic", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-family: ${getPlatformFontFamily()};
         padding: 20px 24px;
         position: relative;
         overflow: hidden;

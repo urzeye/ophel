@@ -42,7 +42,7 @@ import { t } from "~utils/i18n"
 import { getScrollInfo, smartScrollTo, smartScrollToBottom } from "~utils/scroll-helper"
 import { DEFAULT_SETTINGS, getSiteTheme, type Prompt } from "~utils/storage"
 import { showToast } from "~utils/toast"
-import { INTER_CJK_FONT_FAMILY } from "~utils/font"
+import { OPHEL_FONT_FAMILY_CSS_VAR } from "~utils/font"
 import { anchorStore } from "~stores/anchor-store"
 
 import { ConversationsTab } from "./ConversationsTab"
@@ -564,7 +564,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           overflow: "hidden",
           border: "1px solid var(--gh-border, #e5e7eb)",
           zIndex: 9999,
-          fontFamily: INTER_CJK_FONT_FAMILY,
+          fontFamily: OPHEL_FONT_FAMILY_CSS_VAR,
           // 位置现在由 useDraggable 通过直接 DOM 操作控制，不再通过 React state
         }}>
         {/* 自定义 CSS 注入：根据当前站点的样式 ID 查找自定义样式 */}

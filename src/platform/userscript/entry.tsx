@@ -4,6 +4,7 @@ import ReactDOM from "react-dom/client"
 import { USERSCRIPT_RESOURCE_DEFINITIONS } from "./resource-manifest"
 import { getInitialUserscriptLanguage, primeUserscriptLocales, subscribeI18nChanges } from "./i18n"
 import { injectScrollLock } from "./scroll-lock-inject"
+import { applyOphelPlatformFontClass } from "~utils/font"
 
 const USERSCRIPT_OBJECT_URLS = new Set<string>()
 
@@ -346,6 +347,7 @@ async function init() {
     try {
       const shadowHost = document.createElement("div")
       shadowHost.id = "ophel-userscript-root"
+      applyOphelPlatformFontClass(shadowHost)
       shadowHost.style.cssText =
         "all: initial; display: block; position: fixed; inset: 0; width: 0; height: 0; overflow: visible; pointer-events: none; z-index: 2147483647;"
 

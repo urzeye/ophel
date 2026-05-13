@@ -4,17 +4,10 @@
  * 此文件用于独立的 Options 页面，采用侧边栏导航 + 顶部标签页布局
  */
 
-/*
- * Latin-only @font-face for "Inter" (local system-font fallback).
- * The options / perm-request pages are standalone HTML pages that do not
- * receive the InterVariable.woff2 injected by ui-entry.tsx, so we provide
- * local() fallbacks here to keep Latin chars out of CJK fonts.
- * See src/utils/font.ts for the rationale and src/style.css for the primary rule.
- */
+/* 限制本机 Inter 只处理拉丁等常用字符，CJK/韩文继续交给系统字体回退。 */
 @font-face {
   font-family: "Inter";
-  src: local("Inter"), local("InterVariable"), local("Helvetica Neue"), local("Arial"),
-    local("Roboto"), local("Liberation Sans");
+  src: local("Inter"), local("InterVariable");
   font-style: normal;
   font-weight: 100 900;
   unicode-range: U+0000-02FF, U+0304, U+0308, U+0329, U+0370-03FF, U+1D00-1DBF, U+1E00-1EFF,
@@ -26,27 +19,20 @@
 /* ==================== 布局结构 ==================== */
 
 .settings-layout {
+  --gh-font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", "Microsoft YaHei", "PingFang SC", "Hiragino Sans SC", "Apple SD Gothic Neo",
+    "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
   display: flex;
   height: 100vh;
   background: var(--gh-bg, #f9fafb);
   color: var(--gh-text, #374151);
-  font-family:
-    "Inter",
-    "PingFang SC",
-    "Hiragino Sans SC",
-    "Apple SD Gothic Neo",
-    "Malgun Gothic",
-    "Microsoft YaHei",
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    "Helvetica Neue",
-    "Apple Color Emoji",
-    "Segoe UI Emoji",
-    "Segoe UI Symbol",
-    sans-serif;
+  font-family: var(--gh-font-family);
+}
+
+.settings-layout.gh-platform-macos {
+  --gh-font-family: "Inter", "PingFang SC", "Hiragino Sans SC", "Apple SD Gothic Neo", system-ui,
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft YaHei",
+    "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
 }
 
 /* 侧边栏 */
