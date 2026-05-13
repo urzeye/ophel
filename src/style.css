@@ -26,7 +26,7 @@
 }
 
 :host(.gh-platform-macos) {
-  --gh-font-family: "Inter", "PingFang SC", "Hiragino Sans SC", "Apple SD Gothic Neo", system-ui,
+  --gh-font-family: "Inter", "Hiragino Sans SC", "PingFang SC", "Apple SD Gothic Neo", system-ui,
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft YaHei",
     "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
 }

@@ -25,7 +25,7 @@ export const INTER_SYSTEM_FONT_FAMILY =
   '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft YaHei", "PingFang SC", "Hiragino Sans SC", "Apple SD Gothic Neo", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif'
 
 export const INTER_MACOS_CJK_FONT_FAMILY =
-  '"Inter", "PingFang SC", "Hiragino Sans SC", "Apple SD Gothic Neo", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft YaHei", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif'
+  '"Inter", "Hiragino Sans SC", "PingFang SC", "Apple SD Gothic Neo", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft YaHei", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif'
 
 export const OPHEL_FONT_FAMILY_CSS_VAR = `var(--gh-font-family, ${INTER_SYSTEM_FONT_FAMILY})`
 
