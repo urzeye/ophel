@@ -128,12 +128,6 @@ html[dark-theme] .gh-user-query-markdown.gh-user-query-markdown-gemini {
   --gh-user-query-code-scrollbar-hover: rgba(255, 255, 255, 0.35);
 }
 
-/* Gemini 深色模式下同步气泡底色（非通用选择器覆盖） */
-body.dark-theme .gh-user-query-markdown:not(.gh-user-query-markdown-gemini),
-html[dark-theme] .gh-user-query-markdown:not(.gh-user-query-markdown-gemini) {
-  background: rgba(255, 255, 255, 0.05);
-}
-
 .gh-user-query-markdown.gh-user-query-markdown-gemini pre,
 .gh-user-query-markdown.gh-user-query-markdown-gemini code {
   font-family: 'Roboto Mono', 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace !important;
