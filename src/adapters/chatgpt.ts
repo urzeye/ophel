@@ -1257,7 +1257,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       merged.push({
         level: entry.level,
         text: entry.text,
-        element: anchor.element,
+        element: null,
         isUserQuery: entry.isUserQuery,
         isTruncated: entry.isTruncated,
         id: entry.id,
@@ -1285,6 +1285,30 @@ export class ChatGPTAdapter extends SiteAdapter {
         return a.originalIndex - b.originalIndex
       })
       .map(({ item }) => item)
+  }
+
+  private resolveCachedChatGPTOutlineTarget(id: string | undefined): Element | null {
+    if (!id) return null
+
+    this.ensureOutlineCacheSession()
+
+    const entry = this.outlineItemCache.get(id)
+    if (!entry?.turnId) return null
+
+    const container = document.querySelector(this.getResponseContainerSelector())
+    if (!container) return null
+
+    return this.getOrderedChatGPTTurnAnchors(container).get(entry.turnId)?.element ?? null
+  }
+
+  async resolveOutlineTarget(
+    item: Pick<OutlineItem, "level" | "text" | "isUserQuery" | "id">,
+    queryIndex?: number,
+  ): Promise<Element | null> {
+    return (
+      this.resolveCachedChatGPTOutlineTarget(item.id) ||
+      super.resolveOutlineTarget(item, queryIndex)
+    )
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
