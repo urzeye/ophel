@@ -63,6 +63,12 @@ const USER_QUERY_MARKDOWN_CSS = `
   --gh-user-query-code-scrollbar-hover: rgba(0, 0, 0, 0.35);
 }
 
+/* 为无原生气泡背景的站点（DeepSeek、Kimi 等）提供统一气泡底色
+ * Gemini 的用户气泡由外层原生元素（user-query）提供背景，排除在外 */
+.gh-user-query-markdown:not(.gh-user-query-markdown-gemini) {
+  background: rgba(0, 0, 0, 0.04);
+}
+
 /* 通用深色模式覆盖（覆盖非 Gemini 站点） */
 html.dark .gh-user-query-markdown,
 body.dark .gh-user-query-markdown,
@@ -81,6 +87,13 @@ html[yb-theme-mode='dark'] .gh-user-query-markdown {
   --gh-user-query-code-variable: #ffa657;
   --gh-user-query-code-scrollbar: rgba(255, 255, 255, 0.2);
   --gh-user-query-code-scrollbar-hover: rgba(255, 255, 255, 0.35);
+}
+html.dark .gh-user-query-markdown:not(.gh-user-query-markdown-gemini),
+body.dark .gh-user-query-markdown:not(.gh-user-query-markdown-gemini),
+html[data-theme='dark'] .gh-user-query-markdown:not(.gh-user-query-markdown-gemini),
+body[data-theme='dark'] .gh-user-query-markdown:not(.gh-user-query-markdown-gemini),
+html[yb-theme-mode='dark'] .gh-user-query-markdown:not(.gh-user-query-markdown-gemini) {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .gh-user-query-markdown.gh-user-query-markdown-gemini {
@@ -113,6 +126,12 @@ html[dark-theme] .gh-user-query-markdown.gh-user-query-markdown-gemini {
   --gh-user-query-code-variable: #ffa657;
   --gh-user-query-code-scrollbar: rgba(255, 255, 255, 0.2);
   --gh-user-query-code-scrollbar-hover: rgba(255, 255, 255, 0.35);
+}
+
+/* Gemini 深色模式下同步气泡底色（非通用选择器覆盖） */
+body.dark-theme .gh-user-query-markdown:not(.gh-user-query-markdown-gemini),
+html[dark-theme] .gh-user-query-markdown:not(.gh-user-query-markdown-gemini) {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .gh-user-query-markdown.gh-user-query-markdown-gemini pre,
