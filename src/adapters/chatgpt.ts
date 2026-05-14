@@ -58,7 +58,6 @@ interface ChatGPTOutlineCacheEntry {
   id: string
   level: number
   text: string
-  element: Element | null
   turnId: string | null
   orderInTurn: number
   isUserQuery?: boolean
@@ -1187,8 +1186,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       index += 1
     }
 
-    container.querySelectorAll("[data-turn-id-container]").forEach(addAnchor)
-    container.querySelectorAll("[data-turn-id]").forEach(addAnchor)
+    container.querySelectorAll("[data-turn-id-container], [data-turn-id]").forEach(addAnchor)
 
     return anchors
   }
@@ -1220,7 +1218,6 @@ export class ChatGPTAdapter extends SiteAdapter {
         id: item.id,
         level: item.level,
         text: item.text,
-        element: item.element,
         turnId,
         orderInTurn,
         isUserQuery: item.isUserQuery,
