@@ -54,6 +54,23 @@ const CHATGPT_MODEL_MENU_SELECTOR =
 // 新版菜单项 role 为 menuitemradio，data-testid^="model-switcher-" 仍保留
 const CHATGPT_MODEL_MENU_ITEM_SELECTOR = `${CHATGPT_MODEL_MENU_SELECTOR} [data-testid^="model-switcher-"]`
 
+interface ChatGPTOutlineCacheEntry {
+  id: string
+  level: number
+  text: string
+  element: Element | null
+  turnId: string | null
+  orderInTurn: number
+  isUserQuery?: boolean
+  isTruncated?: boolean
+  wordCount?: number
+}
+
+interface ChatGPTTurnAnchor {
+  element: Element
+  index: number
+}
+
 export class ChatGPTAdapter extends SiteAdapter {
   private sessionAccessToken: string | null = null
   private sessionAccessTokenExpiresAt = 0
@@ -65,6 +82,8 @@ export class ChatGPTAdapter extends SiteAdapter {
   private lastKnownModelSlug: string | null = null
   private lastKnownModelSlugContextKey = ""
   private lastKnownModelSlugObservedAt = 0
+  private outlineCacheSessionKey = ""
+  private outlineItemCache = new Map<string, ChatGPTOutlineCacheEntry>()
 
   match(): boolean {
     return window.location.hostname.includes("chatgpt.com")
@@ -1129,10 +1148,154 @@ export class ChatGPTAdapter extends SiteAdapter {
     return "native" as const
   }
 
+  private getOutlineCacheSessionKey(): string {
+    const cid = this.getCurrentCid() || "default"
+    const sessionId = this.getSessionId() || "default"
+    return `${cid}:${sessionId}:${window.location.pathname}`
+  }
+
+  private ensureOutlineCacheSession(): void {
+    const sessionKey = this.getOutlineCacheSessionKey()
+    if (sessionKey === this.outlineCacheSessionKey) return
+
+    this.outlineCacheSessionKey = sessionKey
+    this.outlineItemCache.clear()
+  }
+
+  private getChatGPTTurnId(element: Element | null): string | null {
+    if (!element) return null
+
+    const turnElement =
+      element.closest("[data-turn-id]") || element.closest("[data-turn-id-container]")
+    return (
+      turnElement?.getAttribute("data-turn-id") ||
+      turnElement?.getAttribute("data-turn-id-container") ||
+      null
+    )
+  }
+
+  private getOrderedChatGPTTurnAnchors(container: Element): Map<string, ChatGPTTurnAnchor> {
+    const anchors = new Map<string, ChatGPTTurnAnchor>()
+    let index = 0
+
+    const addAnchor = (element: Element): void => {
+      const turnId =
+        element.getAttribute("data-turn-id-container") || element.getAttribute("data-turn-id")
+      if (!turnId || anchors.has(turnId)) return
+
+      anchors.set(turnId, { element, index })
+      index += 1
+    }
+
+    container.querySelectorAll("[data-turn-id-container]").forEach(addAnchor)
+    container.querySelectorAll("[data-turn-id]").forEach(addAnchor)
+
+    return anchors
+  }
+
+  private isChatGPTOutlinePartiallyUnmounted(
+    container: Element,
+    turnAnchors: Map<string, ChatGPTTurnAnchor>,
+  ): boolean {
+    if (turnAnchors.size === 0) return false
+
+    const roleCount = container.querySelectorAll(
+      '[data-message-author-role="user"], [data-message-author-role="assistant"]',
+    ).length
+    return roleCount > 0 && turnAnchors.size > roleCount
+  }
+
+  private updateChatGPTOutlineCache(outline: OutlineItem[]): void {
+    const orderByTurn = new Map<string, number>()
+
+    for (const item of outline) {
+      if (!item.id) continue
+
+      const turnId = this.getChatGPTTurnId(item.element)
+      const orderKey = turnId || item.id
+      const orderInTurn = orderByTurn.get(orderKey) || 0
+      orderByTurn.set(orderKey, orderInTurn + 1)
+
+      this.outlineItemCache.set(item.id, {
+        id: item.id,
+        level: item.level,
+        text: item.text,
+        element: item.element,
+        turnId,
+        orderInTurn,
+        isUserQuery: item.isUserQuery,
+        isTruncated: item.isTruncated,
+        wordCount: item.wordCount,
+      })
+    }
+  }
+
+  private pruneChatGPTOutlineCache(turnAnchors: Map<string, ChatGPTTurnAnchor>): void {
+    for (const [id, entry] of this.outlineItemCache) {
+      if (entry.turnId && !turnAnchors.has(entry.turnId)) {
+        this.outlineItemCache.delete(id)
+      }
+    }
+  }
+
+  private mergeCachedChatGPTOutlineItems(
+    outline: OutlineItem[],
+    turnAnchors: Map<string, ChatGPTTurnAnchor>,
+    maxLevel: number,
+    includeUserQueries: boolean,
+    showWordCount: boolean,
+  ): OutlineItem[] {
+    const currentIds = new Set(outline.map((item) => item.id).filter((id): id is string => !!id))
+    const merged = [...outline]
+
+    for (const entry of this.outlineItemCache.values()) {
+      if (currentIds.has(entry.id)) continue
+      if (entry.isUserQuery && !includeUserQueries) continue
+      if (!entry.isUserQuery && entry.level > maxLevel) continue
+      if (!entry.turnId) continue
+
+      const anchor = turnAnchors.get(entry.turnId)
+      if (!anchor) continue
+
+      merged.push({
+        level: entry.level,
+        text: entry.text,
+        element: anchor.element,
+        isUserQuery: entry.isUserQuery,
+        isTruncated: entry.isTruncated,
+        id: entry.id,
+        wordCount: showWordCount ? entry.wordCount : undefined,
+      })
+    }
+
+    if (merged.length === outline.length) return outline
+
+    return merged
+      .map((item, originalIndex) => {
+        const cached = item.id ? this.outlineItemCache.get(item.id) : undefined
+        const turnId = cached?.turnId || this.getChatGPTTurnId(item.element)
+        const turnIndex = turnId ? turnAnchors.get(turnId)?.index : undefined
+        return {
+          item,
+          originalIndex,
+          orderInTurn: cached?.orderInTurn ?? originalIndex,
+          turnIndex: turnIndex ?? Number.MAX_SAFE_INTEGER,
+        }
+      })
+      .sort((a, b) => {
+        if (a.turnIndex !== b.turnIndex) return a.turnIndex - b.turnIndex
+        if (a.orderInTurn !== b.orderInTurn) return a.orderInTurn - b.orderInTurn
+        return a.originalIndex - b.originalIndex
+      })
+      .map(({ item }) => item)
+  }
+
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const outline: OutlineItem[] = []
     const container = document.querySelector(this.getResponseContainerSelector())
     if (!container) return outline
+
+    this.ensureOutlineCacheSession()
 
     // 辅助函数：查找最近的消息容器并获取 message-id
     const getMessageId = (el: Element): string | null => {
@@ -1345,7 +1508,21 @@ export class ChatGPTAdapter extends SiteAdapter {
       }
     })
 
-    return outline
+    const turnAnchors = this.getOrderedChatGPTTurnAnchors(container)
+    this.updateChatGPTOutlineCache(outline)
+    this.pruneChatGPTOutlineCache(turnAnchors)
+
+    if (!this.isChatGPTOutlinePartiallyUnmounted(container, turnAnchors)) {
+      return outline
+    }
+
+    return this.mergeCachedChatGPTOutlineItems(
+      outline,
+      turnAnchors,
+      maxLevel,
+      includeUserQueries,
+      showWordCount,
+    )
   }
 
   // ==================== 生成状态检测 ====================

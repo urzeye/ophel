@@ -762,6 +762,9 @@ export class OutlineManager {
       this.flatNodes = this.flattenTree(this.tree)
       this.updateScrollPositions()
     } else {
+      if (this.siteAdapter.getSiteId() === SITE_IDS.CHATGPT) {
+        this.syncFlatNodeRuntimeData(outlineData)
+      }
       this.scrollPositionsStale = true
       return
     }
@@ -847,6 +850,31 @@ export class OutlineManager {
     })
 
     return tree
+  }
+
+  private syncFlatNodeRuntimeData(outline: OutlineItem[]): void {
+    this.flatItems = outline
+
+    outline.forEach((item, index) => {
+      const node = this.flatNodes[index]
+      if (!node) return
+
+      const extItem = item as ExtendedOutlineItem
+
+      node.element = item.element
+      node.id = item.id
+      node.context = item.context
+      node.wordCount = item.wordCount
+      node.isTruncated = item.isTruncated
+      node.isUserQuery = item.isUserQuery
+      node.isBookmarked = extItem.isBookmarked
+      node.isGhost = extItem.isGhost
+      node.bookmarkId = extItem.bookmarkId
+
+      if (extItem.scrollTop !== undefined) {
+        node.scrollTop = extItem.scrollTop
+      }
+    })
   }
 
   // Flatten tree in pre-order to match outline order
