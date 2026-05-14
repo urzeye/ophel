@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **Code copy button disappears when scrolling inside user-query code block**: Wrapped each `<pre>` with a `<div class="gh-code-wrapper">` and moved the copy button outside the scroll container. The button is now `position: absolute` relative to the non-scrolling wrapper, so it stays visible at the top-right corner regardless of how far the user scrolls inside the code block. This also resolves the previous `float: right` line-wrap regression (#484) without reintroducing it.
+
 ---
 
 ## [1.0.49] - 2026-05-13

@@ -120,9 +120,15 @@ html[dark-theme] .gh-user-query-markdown.gh-user-query-markdown-gemini {
   max-width: 100%;
 }
 
+/* 代码块外层包裹器 - 作为定位祖先，不参与滚动，使复制按钮始终固定在右上角 */
+.gh-user-query-markdown .gh-code-wrapper {
+  position: relative;
+  margin: 0.5em 0;
+}
+
 /* 代码块样式 - 背景与当前代码高亮配色匹配，不跟随 Ophel 主题色 */
 .gh-user-query-markdown pre {
-  margin: 0.5em 0;
+  margin: 0;
   padding: 0.75em;
   padding-right: 0.5em;
   background: var(--gh-user-query-code-bg);
@@ -131,7 +137,6 @@ html[dark-theme] .gh-user-query-markdown.gh-user-query-markdown-gemini {
   font-size: 0.95em;
   max-height: 200px;
   overflow: auto;
-  position: relative;
 }
 
 /* 美化滚动条 */
@@ -203,13 +208,11 @@ html[dark-theme] .gh-user-query-markdown.gh-user-query-markdown-gemini {
   font-size: 0.9em;
 }
 
-/* 代码块复制按钮 - 覆盖在右上角，避免参与代码文本排版 */
+/* 代码块复制按钮 - 绝对定位于 .gh-code-wrapper 右上角，wrapper 不滚动故按钮始终可见 */
 .gh-user-query-markdown .gh-code-copy-btn {
   position: absolute;
   top: 6px;
   right: 6px;
-  float: none;
-  margin: 0;
   width: 24px;
   height: 24px;
   padding: 0;
@@ -227,7 +230,7 @@ html[dark-theme] .gh-user-query-markdown.gh-user-query-markdown-gemini {
   justify-content: center;
   z-index: 1;
 }
-.gh-user-query-markdown pre:hover .gh-code-copy-btn {
+.gh-user-query-markdown .gh-code-wrapper:hover .gh-code-copy-btn {
   opacity: 1;
   pointer-events: auto;
 }

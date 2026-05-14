@@ -140,10 +140,12 @@ export const renderMarkdown = (
   }
 
   // 在代码块中添加复制按钮（使用 data 属性标记，SVG 图标由组件初始化）
+  // 用 .gh-code-wrapper 包裹，使按钮作为 pre 的兄弟节点，脱离滚动容器，滚动时始终可见
   html = html.replace(
     /<pre><code/g,
-    '<pre><button class="gh-code-copy-btn" data-copy-code="true"></button><code',
+    '<div class="gh-code-wrapper"><button class="gh-code-copy-btn" data-copy-code="true"></button><pre><code',
   )
+  html = html.replace(/<\/pre>/g, "</pre></div>")
 
   return html
 }
@@ -225,9 +227,12 @@ export const getHighlightStyles = (): string => `
   border-radius: 4px;
   font-size: 13px;
 }
-.gh-markdown-preview pre {
-  margin: 12px 0;
+.gh-markdown-preview .gh-code-wrapper {
   position: relative;
+  margin: 12px 0;
+}
+.gh-markdown-preview pre {
+  margin: 0;
   max-width: 100%;
   overflow: hidden;
 }
@@ -254,7 +259,7 @@ export const getHighlightStyles = (): string => `
   opacity: 0;
   transition: opacity 0.2s;
 }
-.gh-markdown-preview pre:hover .gh-code-copy-btn {
+.gh-markdown-preview .gh-code-wrapper:hover .gh-code-copy-btn {
   opacity: 1;
 }
 .gh-code-copy-btn:hover {
