@@ -59,11 +59,32 @@ const CONVERSATION_TITLE_SELECTOR = "span.chat-name"
 const HISTORY_TITLE_SELECTOR = ".history-chat .title-wrapper .title"
 
 const CHAT_LIST_SELECTOR = ".chat-content-list"
+const CHAT_LIST_WIDTH_SELECTOR = [
+  CHAT_LIST_SELECTOR,
+  `${CHAT_LIST_SELECTOR}${CHAT_LIST_SELECTOR}`,
+  `${CHAT_LIST_SELECTOR}${CHAT_LIST_SELECTOR}${CHAT_LIST_SELECTOR}`,
+  `.chat-detail-content ${CHAT_LIST_SELECTOR}`,
+  `.chat-detail-content ${CHAT_LIST_SELECTOR}${CHAT_LIST_SELECTOR}`,
+].join(", ")
 const CHAT_ITEM_SELECTOR = ".chat-content-item"
 const USER_ITEM_SELECTOR = ".chat-content-item-user"
 const ASSISTANT_ITEM_SELECTOR = ".chat-content-item-assistant"
 const USER_SEGMENT_SELECTOR = ".segment.segment-user"
-const USER_CONTENT_SELECTOR = ".segment-user .segment-content-box"
+const USER_QUERY_WRAPPER_SELECTOR = [
+  ".segment-user .segment-content",
+  `${USER_ITEM_SELECTOR} .segment-content`,
+  ".segment-container:has(.user-content) > .segment-content",
+].join(", ")
+const USER_CONTENT_SELECTOR = [
+  ".segment-user .segment-content-box",
+  `${USER_ITEM_SELECTOR} .segment-content-box`,
+  ".segment-content-box:has(> .user-content)",
+].join(", ")
+const USER_QUERY_CONTENT_SELECTOR = [
+  ".segment-user .user-content",
+  `${USER_ITEM_SELECTOR} .user-content`,
+  ".segment-content-box > .user-content",
+].join(", ")
 const ASSISTANT_MARKDOWN_SELECTOR = ".segment-assistant .markdown"
 
 const THEME_STORAGE_KEY = "CUSTOM_THEME"
@@ -813,17 +834,30 @@ export class KimiAdapter extends SiteAdapter {
 
   getWidthSelectors() {
     return [
-      { selector: ".chat-content-container", property: "max-width" },
+      {
+        selector: ".chat-detail-content",
+        property: "width",
+        value: "100%",
+        noCenter: true,
+        extraCss: "max-width: 100% !important; min-width: 0 !important;",
+      },
+      {
+        selector: ".chat-content-container",
+        property: "max-width",
+        extraCss: "width: 100% !important; min-width: 0 !important;",
+      },
       {
         // 不依赖 Vue scoped data-v-*，通过提高 class 选择器优先级覆盖站点限宽规则
-        selector:
-          ".chat-content-list, .chat-content-list.chat-content-list, .chat-content-list.chat-content-list.chat-content-list, .chat-detail-content .chat-content-list.chat-content-list",
+        selector: CHAT_LIST_WIDTH_SELECTOR,
         property: "max-width",
+        value: "100%",
+        noCenter: true,
+        extraCss:
+          "width: 100% !important; min-width: 0 !important; padding-left: 0 !important; padding-right: 0 !important;",
       },
       {
         // 同步覆盖 width，避免仅修改 max-width 仍被布局约束
-        selector:
-          ".chat-content-list, .chat-content-list.chat-content-list, .chat-content-list.chat-content-list.chat-content-list, .chat-detail-content .chat-content-list.chat-content-list",
+        selector: CHAT_LIST_WIDTH_SELECTOR,
         property: "width",
         value: "100%",
         noCenter: true,
@@ -832,6 +866,55 @@ export class KimiAdapter extends SiteAdapter {
         // 输入框宽度
         selector: ".chat-editor",
         property: "max-width",
+      },
+    ]
+  }
+
+  getUserQueryWidthSelectors(): Array<{
+    selector: string
+    property: string
+    value?: string
+    extraCss?: string
+    noCenter?: boolean
+  }> {
+    const alignRightCss = "margin-left: auto !important; margin-right: 0 !important;"
+    const wrapperCss = [
+      alignRightCss,
+      "max-width: 100% !important;",
+      "box-sizing: border-box !important;",
+    ].join(" ")
+    const contentBoxCss = [
+      "max-width: 100% !important;",
+      "margin-left: 0 !important;",
+      "margin-right: 0 !important;",
+      "box-sizing: border-box !important;",
+    ].join(" ")
+    const contentCss = [
+      "max-width: 100% !important;",
+      "box-sizing: border-box !important;",
+      "overflow-wrap: anywhere !important;",
+    ].join(" ")
+
+    return [
+      {
+        selector: USER_QUERY_WRAPPER_SELECTOR,
+        property: "width",
+        extraCss: wrapperCss,
+        noCenter: true,
+      },
+      {
+        selector: USER_CONTENT_SELECTOR,
+        property: "width",
+        value: "100%",
+        extraCss: contentBoxCss,
+        noCenter: true,
+      },
+      {
+        selector: USER_QUERY_CONTENT_SELECTOR,
+        property: "width",
+        value: "100%",
+        extraCss: contentCss,
+        noCenter: true,
       },
     ]
   }

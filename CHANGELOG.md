@@ -11,6 +11,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Kimi page width adjustment alignment**: Kimi's main conversation list kept horizontal padding after page width adjustment, making the visible conversation area narrower than the widened input box. The Kimi adapter now removes that horizontal padding when applying the width override so the conversation body and input edges align.
+
+- **Kimi user query width adjustment**: Kimi did not provide user-query width selectors, so the user question width setting had no effect on the current `.segment-content-box > .user-content` DOM. The adapter now targets the current user bubble structure, keeps the bubble right-aligned, and applies the configured width consistently across different prompts instead of shrinking each bubble to its text length.
+
 - **Qianwen page width adjustment with the new centered wrapper**: Qianwen's conversation area stayed capped at the site's default 664px because the new `.auto-center-wrapper-*` element used `--max-message-list-width` after the outer message list was widened. Page width adjustment now also targets that wrapper and resets the min/max message-list variables, avoids applying the page-width percentage twice to the nested input wrapper, and user-query width adjustment now covers the new question card without shrinking its inner text card while keeping the question bubble right-aligned. The user-query selector was also narrowed to the real question card so inline bookmark icons are not injected twice.
 
 - **Qianwen user query Markdown rendering after DOM update**: Qianwen's user messages moved to the new `.chat-question-wrap` / `.question-text-card` structure, so the user-query style enhancement no longer detected prompts and inline code, code blocks, and math stayed as plain text. The adapter now recognizes the new question wrapper, targets the real text card for replacement, and normalizes non-breaking spaces before Markdown rendering.
