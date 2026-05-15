@@ -147,6 +147,19 @@ interface AIStudioExportMessageSnapshot {
   content: string
 }
 
+interface AIStudioScrollbarQueryEntry {
+  turnId: string
+  text: string
+  button: HTMLElement
+  element: Element | null
+  index: number
+}
+
+interface AIStudioOutlineSortEntry {
+  item: OutlineItem
+  order: number
+}
+
 export class AIStudioAdapter extends SiteAdapter {
   // ==================== 缓存属性 ====================
 
@@ -208,23 +221,152 @@ export class AIStudioAdapter extends SiteAdapter {
     return ""
   }
 
+  private normalizeTurnId(turnId: string): string {
+    return turnId.replace(/^turn-/, "").trim()
+  }
+
+  private getTurnControlId(turnId: string): string {
+    const normalizedTurnId = this.normalizeTurnId(turnId)
+    return normalizedTurnId ? `turn-${normalizedTurnId}` : ""
+  }
+
+  private normalizeScrollbarQueryText(text: string): string {
+    return text.replace(/\s+/g, " ").trim()
+  }
+
+  private isSameOutlineText(source: string, target: string): boolean {
+    const normalizedSource = this.normalizeScrollbarQueryText(source)
+    const normalizedTarget = this.normalizeScrollbarQueryText(target)
+
+    return (
+      normalizedSource === normalizedTarget ||
+      normalizedSource.startsWith(normalizedTarget) ||
+      normalizedTarget.startsWith(normalizedSource)
+    )
+  }
+
+  private findUserQueryElementByTurnId(turnId: string): Element | null {
+    const turnControlId = this.getTurnControlId(turnId)
+    if (!turnControlId) return null
+
+    const directTurn = document.getElementById(turnControlId)
+    const directUserQuery = directTurn?.querySelector(".chat-turn-container.user")
+    if (directUserQuery) {
+      return directUserQuery
+    }
+
+    const normalizedTurnId = this.normalizeTurnId(turnId)
+    const candidates = Array.from(document.querySelectorAll(".chat-turn-container.user"))
+    return (
+      candidates.find((candidate) => {
+        const candidateTurnId = candidate.closest("ms-chat-turn")?.id || ""
+        return this.normalizeTurnId(candidateTurnId) === normalizedTurnId
+      }) || null
+    )
+  }
+
+  private getScrollbarQueryEntries(): AIStudioScrollbarQueryEntry[] {
+    const buttons = Array.from(
+      document.querySelectorAll(
+        [
+          "ms-items-scrollbar button[aria-controls]",
+          "ms-items-scrollbar button[data-test-item-id]",
+          "ms-prompt-scrollbar button[aria-controls]",
+          "ms-prompt-scrollbar button[data-test-item-id]",
+        ].join(", "),
+      ),
+    ).filter((button): button is HTMLElement => button instanceof HTMLElement)
+
+    const seenTurnIds = new Set<string>()
+    const entries: AIStudioScrollbarQueryEntry[] = []
+
+    buttons.forEach((button) => {
+      const rawTurnId =
+        button.getAttribute("aria-controls") || button.getAttribute("data-test-item-id") || ""
+      const turnId = this.normalizeTurnId(rawTurnId)
+      if (!turnId || seenTurnIds.has(turnId)) return
+
+      const text = this.normalizeScrollbarQueryText(
+        button.getAttribute("aria-label") || button.getAttribute("title") || "",
+      )
+      if (!text) return
+
+      seenTurnIds.add(turnId)
+      entries.push({
+        turnId,
+        text,
+        button,
+        element: this.findUserQueryElementByTurnId(turnId),
+        index: entries.length,
+      })
+    })
+
+    return entries
+  }
+
   /**
-   * 从侧边栏 (ms-prompt-scrollbar) 获取文本
-   * 利用 aria-controls="turn-ID" 关联
+   * 从时间线滚动条获取用户提问文本。
+   * AI Studio 新版使用 ms-items-scrollbar，旧版使用 ms-prompt-scrollbar。
    */
   private getTextFromScrollbar(turnId: string): string | null {
-    // 查找侧边栏中控制该 turn 的按钮
-    // Selector: ms-prompt-scrollbar button[aria-controls="turn-ID"]
-    const selector = `ms-prompt-scrollbar button[aria-controls="${turnId}"]`
-    const btn = document.querySelector(selector)
+    const normalizedTurnId = this.normalizeTurnId(turnId)
+    if (!normalizedTurnId) return null
 
-    if (btn) {
-      const label = btn.getAttribute("aria-label")
-      if (label) {
-        return label.trim()
+    const entry = this.getScrollbarQueryEntries().find(
+      (candidate) => candidate.turnId === normalizedTurnId,
+    )
+    return entry?.text || null
+  }
+
+  private async waitForUserQueryElementByTurnId(
+    turnId: string,
+    text: string,
+    timeout = 1600,
+  ): Promise<Element | null> {
+    const startTime = Date.now()
+    while (Date.now() - startTime < timeout) {
+      const candidate = this.findUserQueryElementByTurnId(turnId)
+      if (candidate) {
+        const candidateText = this.extractUserQueryText(candidate)
+        if (!text || this.isSameOutlineText(candidateText, text)) {
+          return candidate
+        }
       }
+
+      await this.sleep(80)
     }
-    return null
+
+    return this.findUserQueryElementByTurnId(turnId)
+  }
+
+  private revealUserQueryThroughScrollbar(turnId: string): boolean {
+    const normalizedTurnId = this.normalizeTurnId(turnId)
+    const entry = this.getScrollbarQueryEntries().find(
+      (candidate) => candidate.turnId === normalizedTurnId,
+    )
+    if (!entry) return false
+
+    entry.button.scrollIntoView({ block: "nearest", inline: "nearest" })
+    entry.button.click()
+    return true
+  }
+
+  private resolveScrollbarTurnIdForOutlineItem(
+    item: Pick<OutlineItem, "text" | "id">,
+    queryIndex?: number,
+  ): string | null {
+    const itemId = item.id || ""
+    const idMatch = itemId.match(/^aistudio-user:(.+)$/)
+    if (idMatch?.[1]) {
+      return this.normalizeTurnId(idMatch[1])
+    }
+
+    const entries = this.getScrollbarQueryEntries()
+    if (queryIndex !== undefined) {
+      return entries[queryIndex - 1]?.turnId || null
+    }
+
+    return entries.find((entry) => this.isSameOutlineText(entry.text, item.text))?.turnId || null
   }
 
   private getCurrentConversationTitleFromSources(): string | null {
@@ -1500,6 +1642,19 @@ export class AIStudioAdapter extends SiteAdapter {
     return ".chat-turn-container.user"
   }
 
+  findUserQueryElement(queryIndex: number, text: string): Element | null {
+    const scrollbarEntry = this.getScrollbarQueryEntries()[queryIndex - 1]
+    if (scrollbarEntry) {
+      const target = this.findUserQueryElementByTurnId(scrollbarEntry.turnId)
+      if (!target) return null
+
+      const targetText = this.extractUserQueryText(target)
+      return !text || this.isSameOutlineText(targetText, text) ? target : null
+    }
+
+    return super.findUserQueryElement(queryIndex, text)
+  }
+
   // 用户文本缓存（解决虚拟滚动导致的文本丢失）
   private textCache = new Map<string, string>()
   // 字数缓存（解决虚拟滚动导致的字数统计丢失）
@@ -1609,6 +1764,76 @@ export class AIStudioAdapter extends SiteAdapter {
   extractUserQueryExportContent(element: Element): string {
     const markdown = this.extractUserQueryMarkdown(element).trim()
     return markdown || this.extractUserQueryText(element)
+  }
+
+  private createAIStudioUserQueryOutlineItem(
+    text: string,
+    element: Element | null,
+    turnId?: string,
+    wordCount?: number,
+  ): OutlineItem {
+    let queryText = this.normalizeScrollbarQueryText(text)
+    let isTruncated = false
+    if (queryText.length > 200) {
+      queryText = queryText.substring(0, 200)
+      isTruncated = true
+    }
+
+    const normalizedTurnId = turnId ? this.normalizeTurnId(turnId) : ""
+    const item: OutlineItem = {
+      level: 0,
+      text: queryText,
+      element,
+      isUserQuery: true,
+      isTruncated,
+    }
+
+    if (normalizedTurnId) {
+      item.id = `aistudio-user:${normalizedTurnId}`
+    }
+
+    if (wordCount !== undefined) {
+      item.wordCount = wordCount
+    }
+
+    const context = element ? this.getNextTurnContextForUserQuery(element) : undefined
+    if (context) {
+      item.context = context
+    }
+
+    return item
+  }
+
+  private getNextTurnContextForUserQuery(element: Element): string | undefined {
+    const currentTurn = element.closest("ms-chat-turn")
+    const nextTurn = currentTurn?.nextElementSibling
+    if (!nextTurn || nextTurn.tagName.toLowerCase() !== "ms-chat-turn") {
+      return undefined
+    }
+
+    const responseText = this.extractTextWithLineBreaks(nextTurn).trim().substring(0, 50)
+    return responseText || undefined
+  }
+
+  private findPreviousUserTurnIdForElement(element: Element): string | null {
+    const currentTurn = element.closest("ms-chat-turn")
+    if (!currentTurn) return null
+
+    const sameTurnUserQuery = currentTurn.querySelector(".chat-turn-container.user")
+    if (sameTurnUserQuery && !sameTurnUserQuery.contains(element)) {
+      return this.normalizeTurnId(currentTurn.id)
+    }
+
+    let previousTurn = currentTurn.previousElementSibling
+    while (previousTurn) {
+      const previousUserQuery = previousTurn.querySelector(".chat-turn-container.user")
+      if (previousUserQuery) {
+        return this.normalizeTurnId(previousTurn.id)
+      }
+      previousTurn = previousTurn.previousElementSibling
+    }
+
+    return null
   }
 
   private findUserContentChunk(element: Element): Element | null {
@@ -1832,10 +2057,135 @@ export class AIStudioAdapter extends SiteAdapter {
       return outline
     }
 
-    // 包含用户提问的模式
+    // 包含用户提问的模式。AI Studio 会虚拟滚动聊天 DOM，时间线滚动条更适合作为完整用户问题来源。
     const headingSelectors: string[] = []
-    for (let i = 1; i <= maxLevel; i++) {
-      headingSelectors.push(`h${i}`)
+    for (let headingLevel = 1; headingLevel <= maxLevel; headingLevel++) {
+      headingSelectors.push(`h${headingLevel}`)
+    }
+
+    const scrollbarEntries = this.getScrollbarQueryEntries()
+    if (scrollbarEntries.length > 0) {
+      const scrollbarOrderByTurnId = new Map<string, number>()
+      const sortedEntries: AIStudioOutlineSortEntry[] = []
+
+      const getElementRenderOrder = (element: Element): number => {
+        const target = (element.closest("ms-chat-turn") || element) as HTMLElement
+        const targetRect = target.getBoundingClientRect()
+        if (container instanceof HTMLElement) {
+          const containerRect = container.getBoundingClientRect()
+          return container.scrollTop + (targetRect.top - containerRect.top)
+        }
+        return window.scrollY + targetRect.top
+      }
+
+      const visibleUserAnchors = scrollbarEntries
+        .filter((entry): entry is AIStudioScrollbarQueryEntry & { element: Element } =>
+          Boolean(entry.element),
+        )
+        .map((entry) => ({
+          index: entry.index,
+          renderOrder: getElementRenderOrder(entry.element),
+        }))
+        .sort((left, right) => left.renderOrder - right.renderOrder)
+
+      const activeScrollbarEntry = scrollbarEntries.find(
+        (entry) =>
+          entry.button.getAttribute("aria-pressed") === "true" ||
+          entry.button.classList.contains("ms-button-active"),
+      )
+
+      const estimateUserOrderForHeading = (heading: Element): number => {
+        const headingOrder = getElementRenderOrder(heading)
+        let previousAnchor: { index: number; renderOrder: number } | undefined
+        let nextAnchor: { index: number; renderOrder: number } | undefined
+
+        for (const anchor of visibleUserAnchors) {
+          if (anchor.renderOrder <= headingOrder) {
+            previousAnchor = anchor
+          } else {
+            nextAnchor = anchor
+            break
+          }
+        }
+
+        if (previousAnchor) return previousAnchor.index
+        if (nextAnchor) return Math.max(0, nextAnchor.index - 1)
+        return activeScrollbarEntry?.index ?? 0
+      }
+
+      scrollbarEntries.forEach((entry) => {
+        scrollbarOrderByTurnId.set(entry.turnId, entry.index)
+        const visibleText = entry.element ? this.extractUserQueryText(entry.element) : ""
+        const item = this.createAIStudioUserQueryOutlineItem(
+          visibleText || entry.text,
+          entry.element,
+          entry.turnId,
+          showWordCount && entry.element ? calculateUserQueryWordCount(entry.element) : undefined,
+        )
+
+        sortedEntries.push({
+          item,
+          order: entry.index * 100000,
+        })
+      })
+
+      const headingElements = Array.from(container.querySelectorAll(headingSelectors.join(", ")))
+      headingElements.forEach((heading, headingIndex) => {
+        if (heading.closest(".user-prompt-container") || heading.closest("textarea")) return
+        if (this.isInRenderedMarkdownContainer(heading)) return
+
+        const tagName = heading.tagName.toLowerCase()
+        const level = parseInt(tagName.charAt(1), 10)
+        if (level > maxLevel) return
+
+        const item: OutlineItem = {
+          level,
+          text: heading.textContent?.trim() || "",
+          element: heading,
+        }
+
+        const turnId = getTurnId(heading)
+        if (turnId) {
+          item.id = generateHeaderId(turnId, tagName, item.text)
+        }
+
+        if (showWordCount) {
+          let nextBoundaryEl: Element | null = null
+          for (
+            let nextHeadingIndex = headingIndex + 1;
+            nextHeadingIndex < headingElements.length;
+            nextHeadingIndex++
+          ) {
+            const candidate = headingElements[nextHeadingIndex]
+            const candidateLevel = parseInt(candidate.tagName.charAt(1), 10)
+            if (candidateLevel <= item.level) {
+              nextBoundaryEl = candidate
+              break
+            }
+          }
+
+          const turnContainer = heading.closest("ms-chat-turn")
+          item.wordCount = this.calculateRangeWordCount(
+            heading,
+            nextBoundaryEl,
+            turnContainer || container,
+          )
+        }
+
+        const previousUserTurnId = this.findPreviousUserTurnIdForElement(heading)
+        const previousUserOrder = previousUserTurnId
+          ? scrollbarOrderByTurnId.get(previousUserTurnId)
+          : undefined
+        const orderBase =
+          previousUserOrder !== undefined ? previousUserOrder : estimateUserOrderForHeading(heading)
+
+        sortedEntries.push({
+          item,
+          order: orderBase * 100000 + 50000 + headingIndex,
+        })
+      })
+
+      return sortedEntries.sort((left, right) => left.order - right.order).map(({ item }) => item)
     }
 
     const combinedSelector = `${userQuerySelector}, ${headingSelectors.join(", ")}`
@@ -1849,36 +2199,13 @@ export class AIStudioAdapter extends SiteAdapter {
         element.classList.contains("user") && element.classList.contains("chat-turn-container")
 
       if (isUserQuery) {
-        let queryText = this.extractUserQueryText(element)
-        let isTruncated = false
-        if (queryText.length > 200) {
-          queryText = queryText.substring(0, 200)
-          isTruncated = true
-        }
-
-        const item: OutlineItem = {
-          level: 0,
-          text: queryText,
-          element,
-          isUserQuery: true,
-          isTruncated,
-        }
-
-        // Context Injection: 预取下一个 AI 回复作为上下文 (解决重复提问无法区分的问题)
-        // 查找下一个 ms-chat-turn
         const currentTurn = element.closest("ms-chat-turn")
-        const nextTurn = currentTurn?.nextElementSibling
-        if (nextTurn && nextTurn.tagName.toLowerCase() === "ms-chat-turn") {
-          // 尝试提取 AI 回复文本预览 (前50字符)
-          const responseText = this.extractTextWithLineBreaks(nextTurn).trim().substring(0, 50)
-          if (responseText) {
-            item.context = responseText
-          }
-        }
-
-        if (showWordCount) {
-          item.wordCount = calculateUserQueryWordCount(element)
-        }
+        const item = this.createAIStudioUserQueryOutlineItem(
+          this.extractUserQueryText(element),
+          element,
+          currentTurn?.id,
+          showWordCount ? calculateUserQueryWordCount(element) : undefined,
+        )
 
         outline.push(item)
       } else if (/^h[1-6]$/.test(tagName)) {
@@ -1932,6 +2259,39 @@ export class AIStudioAdapter extends SiteAdapter {
     })
 
     return outline
+  }
+
+  async resolveOutlineTarget(
+    item: Pick<OutlineItem, "level" | "text" | "isUserQuery"> & { id?: string },
+    queryIndex?: number,
+  ): Promise<Element | null> {
+    if (item.isUserQuery && item.level === 0) {
+      const scrollbarTurnId = this.resolveScrollbarTurnIdForOutlineItem(item, queryIndex)
+      if (scrollbarTurnId) {
+        const directTarget = this.findUserQueryElementByTurnId(scrollbarTurnId)
+        if (directTarget) {
+          return directTarget
+        }
+
+        const revealed = this.revealUserQueryThroughScrollbar(scrollbarTurnId)
+        if (revealed) {
+          const resolvedTarget = await this.waitForUserQueryElementByTurnId(
+            scrollbarTurnId,
+            item.text,
+          )
+          if (resolvedTarget) {
+            return resolvedTarget
+          }
+        }
+      }
+    }
+
+    const directTarget = await super.resolveOutlineTarget(item, queryIndex)
+    if (directTarget) {
+      return directTarget
+    }
+
+    return null
   }
 
   // ==================== 生成状态检测 ====================
