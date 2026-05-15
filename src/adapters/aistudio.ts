@@ -565,6 +565,48 @@ export class AIStudioAdapter extends SiteAdapter {
     }
   }
 
+  private getAIStudioModelSelectorButton(requireVisible = false): HTMLElement | null {
+    const selectors = ["button.model-selector-card", ".model-selector-card"]
+
+    for (const selector of selectors) {
+      const candidate = document.querySelector(selector)
+      if (candidate instanceof HTMLElement && (!requireVisible || this.isVisible(candidate))) {
+        return candidate
+      }
+    }
+
+    const modelName = document.querySelector('[data-test-id="model-name"]')
+    const modelButton = modelName?.closest("button")
+    return modelButton instanceof HTMLElement && (!requireVisible || this.isVisible(modelButton))
+      ? modelButton
+      : null
+  }
+
+  private getRunSettingsToggleButton(requireVisible = false): HTMLElement | null {
+    const toggleButton = document.querySelector('button[aria-label="Toggle run settings panel"]')
+    return toggleButton instanceof HTMLElement && (!requireVisible || this.isVisible(toggleButton))
+      ? toggleButton
+      : null
+  }
+
+  clickModelSelector(): boolean {
+    const modelSelectorButton = this.getAIStudioModelSelectorButton()
+    if (modelSelectorButton) {
+      this.simulateClick(modelSelectorButton)
+      return true
+    }
+
+    const toggleButton = this.getRunSettingsToggleButton()
+    if (!toggleButton) return false
+
+    this.simulateClick(toggleButton)
+    const expandedModelSelectorButton = this.getAIStudioModelSelectorButton()
+    if (!expandedModelSelectorButton) return false
+
+    this.simulateClick(expandedModelSelectorButton)
+    return true
+  }
+
   // ==================== 模型列表抓取 ====================
 
   /**
@@ -584,7 +626,7 @@ export class AIStudioAdapter extends SiteAdapter {
 
     const waitForButton = setInterval(async () => {
       attempts++
-      const selectorBtn = document.querySelector("button.model-selector-card") as HTMLElement
+      const selectorBtn = this.getAIStudioModelSelectorButton()
 
       if (selectorBtn) {
         clearInterval(waitForButton)
@@ -599,6 +641,8 @@ export class AIStudioAdapter extends SiteAdapter {
           this.closeModelSidebar()
           return
         }
+
+        await this.ensureAllModelsCategory(sidebar)
 
         // 3. 查找目标模型（通过 ID）
         // ID 格式: model-carousel-row-models/{model-id}
@@ -644,9 +688,7 @@ export class AIStudioAdapter extends SiteAdapter {
         }
       } else {
         // 如果找不到模型选择按钮，尝试检查是否是因为面板被收起了
-        const toggleBtn = document.querySelector(
-          'button[aria-label="Toggle run settings panel"]',
-        ) as HTMLElement
+        const toggleBtn = this.getRunSettingsToggleButton()
         if (toggleBtn) {
           // 此时不要关闭 interval，点击后等待下一次检查
           toggleBtn.click()
@@ -663,13 +705,10 @@ export class AIStudioAdapter extends SiteAdapter {
   async getModelList(): Promise<{ id: string; name: string }[]> {
     let wasCollapsed = false
     // 1. 获取模型选择按钮
-    let modelSelectorBtn = document.querySelector("button.model-selector-card") as HTMLElement
-
+    let modelSelectorBtn = this.getAIStudioModelSelectorButton()
     // 如果按钮不存在，尝试检查是否是因为面板被收起了
     if (!modelSelectorBtn) {
-      const toggleBtn = document.querySelector(
-        'button[aria-label="Toggle run settings panel"]',
-      ) as HTMLElement
+      const toggleBtn = this.getRunSettingsToggleButton()
       if (toggleBtn) {
         wasCollapsed = true
         toggleBtn.click()
@@ -677,7 +716,7 @@ export class AIStudioAdapter extends SiteAdapter {
         // 等待面板展开和按钮出现
         for (let i = 0; i < 20; i++) {
           await new Promise((r) => setTimeout(r, 200))
-          modelSelectorBtn = document.querySelector("button.model-selector-card") as HTMLElement
+          modelSelectorBtn = this.getAIStudioModelSelectorButton()
           if (modelSelectorBtn) break
         }
       }
@@ -2349,7 +2388,7 @@ export class AIStudioAdapter extends SiteAdapter {
   /** 获取当前使用的模型名称 */
   getModelName(): string | null {
     // 1. 尝试从 DOM 获取 (最准确)
-    const selectorBtn = document.querySelector("button.model-selector-card")
+    const selectorBtn = this.getAIStudioModelSelectorButton()
     if (selectorBtn) {
       const titleSpan = selectorBtn.querySelector("span.title") || selectorBtn.querySelector("span")
       const name = titleSpan?.textContent?.trim()

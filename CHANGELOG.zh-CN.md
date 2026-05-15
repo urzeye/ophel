@@ -10,6 +10,8 @@
 
 ### 🐛 问题修复
 
+- **AI Studio 中 `Alt + /` 快捷键找不到模型选择器**：AI Studio 未给通用 `clickModelSelector()` 快捷键路径提供模型切换配置，导致页面上明明存在可见的 `button.model-selector-card`，按 `Alt + /` 仍提示「未找到模型选择器」。现在 AI Studio 适配器会直接处理该快捷键，复用当前 `model-selector-card` / `data-test-id="model-name"` DOM 锚点；即使禅模式隐藏运行设置面板，也可以程序化点击原生模型选择器。模型锁定也会在查找目标模型前将模型选择器切换到「All」分类，与模型列表同步流程保持一致，避免侧栏默认停留在 Featured 时误判用户选择的模型不存在。
+
 - **AI Studio 虚拟滚动长会话中大纲漏掉用户提问**：AI Studio 现在通过 `ms-items-scrollbar` 暴露对话轮次导航，同时会虚拟化卸载视口外的聊天 turn。此前兜底逻辑只从旧版 `ms-prompt-scrollbar` 按钮读取 `aria-label`，并且用户提问大纲仍主要依赖已挂载 DOM，长会话中可能只显示当前渲染出来的少数提问。AI Studio 适配器现在同时兼容新旧时间线组件；当时间线可用时，以时间线作为完整用户提问列表来源，并按顺序合并当前可见的 AI 回复标题；点击离屏提问时会先通过原生时间线按钮让目标 turn 回挂，再解析大纲跳转目标。
 
 - **ChatGPT 长会话滚动后大纲缩水为仅显示当前可见消息**：ChatGPT 在长对话中会对视口外的消息做懒卸载，仅保留 `data-turn-id-container` 占位外壳；原先的大纲抽取逻辑使用 `querySelectorAll('[data-message-author-role]')` 只能扫到已挂载节点，导致大纲折叠为滚动位置附近的少数条目。修复方案：在 `ChatGPTAdapter` 内按 `data-message-id` 缓存大纲项，当 turn 外壳数大于实际 role 节点数时自动将缓存条目合并回大纲列表；点击缓存条目时跳转到对应占位外壳，ChatGPT 随即重新挂载真实内容。同时修复次要问题：树结构未重建（文本未变）时 `node.element` 仍持有旧的断开引用，导致点击出现「收藏内容已被删除或折叠」提示。DOM 引用同步逻辑仅限 ChatGPT 适配器，不影响其他站点。（修复 #402）
