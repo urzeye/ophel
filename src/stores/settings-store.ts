@@ -127,7 +127,12 @@ const normalizeQuickButtons = (settings: SettingsInput): Settings["quickButtons"
       ...(quickButtons.floatingToolbar || {}),
     },
     position: normalizeQuickButtonsPosition(quickButtons.position),
-    proximityRadius: quickButtons.proximityRadius ?? DEFAULT_QUICK_BUTTONS_SETTINGS.proximityRadius,
+    proximityRadius: (() => {
+      const n = Number(quickButtons.proximityRadius)
+      return Number.isFinite(n)
+        ? Math.min(300, Math.max(0, n))
+        : DEFAULT_QUICK_BUTTONS_SETTINGS.proximityRadius
+    })(),
   }
 }
 

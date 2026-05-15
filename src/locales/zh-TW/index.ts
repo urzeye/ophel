@@ -610,7 +610,7 @@ export const zhTW = {
   quickButtonsOpacityDesc: "調整快捷按鈕組整體不透明度",
   quickButtonsProximityRadiusLabel: "感應喚醒距離",
   quickButtonsProximityRadiusDesc:
-    "滑鼠進入此範圍（像素）時自動展開快捷按鈕組。設為 0 則僅在直接悬停時展開",
+    "滑鼠進入此範圍（像素）時自動展開快捷按鈕組。設為 0 則僅在直接懸停時展開",
   quickButtonsHideWhenPanelOpenLabel: "面板展開時隱藏快捷按鈕組",
   quickButtonsHideWhenPanelOpenDesc: "面板展開後自動隱藏快捷按鈕組，關閉面板時恢復顯示",
   quickButtonsBehaviorTitle: "快捷按鈕行為",

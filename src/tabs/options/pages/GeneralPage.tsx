@@ -496,11 +496,8 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
               }
             />
             <SettingRow
-              label={t("quickButtonsProximityRadiusLabel") || "感应唤醒距离"}
-              description={
-                t("quickButtonsProximityRadiusDesc") ||
-                "鼠标进入此范围（像素）时自动展开快捷按钮组。设为 0 则仅在直接悬停时展开"
-              }
+              label={t("quickButtonsProximityRadiusLabel")}
+              description={t("quickButtonsProximityRadiusDesc")}
               settingId="quick-buttons-proximity-radius">
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <input

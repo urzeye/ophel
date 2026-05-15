@@ -243,7 +243,8 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     let rafId: number | null = null
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (rafId !== null) return
+      // 感应距离为 0 时不需要近距离检测，直接短路
+      if (rafId !== null || proximityRadius === 0) return
 
       rafId = requestAnimationFrame(() => {
         rafId = null
