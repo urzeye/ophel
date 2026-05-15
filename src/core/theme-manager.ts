@@ -30,7 +30,7 @@ declare global {
   }
 
   interface Document {
-    startViewTransition(callback?: () => void | Promise<void>): ViewTransition
+    startViewTransition?(callback?: () => void | Promise<void>): ViewTransition
   }
 }
 
@@ -1023,8 +1023,8 @@ ${cssVars}
       })
     } catch {
       action()
-      this.startThemeMonitoring()
       transitionTarget.cleanup()
+      this.startThemeMonitoring()
       return false
     }
 
