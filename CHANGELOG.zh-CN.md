@@ -10,6 +10,8 @@
 
 ### 🐛 问题修复
 
+- **ChatGLM、Ima、Kimi 净化模式选择器适配**：更新多个站点的净化模式隐藏规则，覆盖新版页面中新出现的推广/活动区域，包括 ChatGLM 的 slogan banner、Ima 的活动横幅内容和 Kimi 的活动区域。
+
 - **ChatGLM 开启页面宽度调整后代码块宽度不一致**：ChatGLM 的页面宽度规则会同时限制嵌套的 `.markdown-body.md-code`，导致代码内容区域比顶部复制栏更窄。现在代码块内部的代码内容、语言容器和 `<pre>` 会与站点原生复制栏保持同宽，同时仍然受外层对话宽度控制。
 
 - **AI Studio 中 `Alt + /` 快捷键找不到模型选择器**：AI Studio 未给通用 `clickModelSelector()` 快捷键路径提供模型切换配置，导致页面上明明存在可见的 `button.model-selector-card`，按 `Alt + /` 仍提示「未找到模型选择器」。现在 AI Studio 适配器会直接处理该快捷键，复用当前 `model-selector-card` / `data-test-id="model-name"` DOM 锚点；即使禅模式隐藏运行设置面板，也可以程序化点击原生模型选择器。模型锁定也会在查找目标模型前将模型选择器切换到「All」分类，与模型列表同步流程保持一致，避免侧栏默认停留在 Featured 时误判用户选择的模型不存在。

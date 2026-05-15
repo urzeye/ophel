@@ -497,6 +497,7 @@ export class ImaAdapter extends SiteAdapter {
         '[class*="_downloadContainer_"]',
         IMA_FOOT_TIPS_SELECTOR,
         '[class*="_activityBanner"]',
+        '[class*="_activityBannerContent"]',
       ],
     }
   }

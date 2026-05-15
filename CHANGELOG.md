@@ -11,6 +11,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Clean mode selectors for ChatGLM, Ima, and Kimi**: Updated site-specific clean mode hiding rules to cover newly surfaced promotional/activity elements, including ChatGLM's slogan banner, Ima's activity banner content, and Kimi's activity area.
+
 - **ChatGLM code block width with page width adjustment**: Code block bodies were narrower than their copy headers because the ChatGLM page-width rule also constrained nested `.markdown-body.md-code` nodes. Code blocks now keep their inner code body, language wrapper, and `<pre>` width aligned with the native copy header while still respecting the outer conversation width.
 
 - **AI Studio Alt+/ shortcut cannot find the model selector**: AI Studio did not provide a model-switcher config for the shared `clickModelSelector()` shortcut path, so `Alt+/` returned "Model selector not found" even when the page had a visible `button.model-selector-card`. The AI Studio adapter now handles the shortcut directly, reuses the current `model-selector-card` / `data-test-id="model-name"` DOM anchors, and can programmatically click the native model selector even when Zen Mode hides the run settings panel. Model locking also switches the model picker to the "All" category before searching for the target model, matching the model-list sync flow and avoiding false "model not found" failures when the picker opens on Featured.

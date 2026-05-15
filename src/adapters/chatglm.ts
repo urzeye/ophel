@@ -683,7 +683,7 @@ export class ChatGLMAdapter extends SiteAdapter {
 
   getCleanModeConfig() {
     return {
-      hide: [".policy-wrap, .policy-wrap *", ".vip-btn"],
+      hide: [".policy-wrap, .policy-wrap *", ".vip-btn", ".slogan-banner"],
     }
   }
 }

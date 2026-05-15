@@ -852,6 +852,7 @@ export class KimiAdapter extends SiteAdapter {
         ".chat-bottom .legal-footer, .legal-footer",
         ".membership-upgrade",
         ".download-app-btn",
+        ".activity-area",
       ],
     }
   }
