@@ -612,6 +612,13 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   getWidthSelectors() {
+    const codeBlockStretchCss = [
+      "width: 100% !important;",
+      "margin-left: 0 !important;",
+      "margin-right: 0 !important;",
+      "box-sizing: border-box !important;",
+    ].join(" ")
+
     return [
       { selector: ".conversation-container", property: "max-width" },
       { selector: ".conversation-inner", property: "max-width" },
@@ -625,6 +632,21 @@ export class ChatGLMAdapter extends SiteAdapter {
         selector:
           ".markdown-body, .markdown-body.markdown-body, .answer-content-wrap .markdown-body",
         property: "max-width",
+      },
+      {
+        selector: ".code-no-artifacts .markdown-body.md-code, .code-no-artifacts .md-code",
+        property: "max-width",
+        value: "100%",
+        extraCss: codeBlockStretchCss,
+        noCenter: true,
+      },
+      {
+        selector:
+          ".code-no-artifacts .markdown-body.md-code > .language, .code-no-artifacts .markdown-body.md-code pre",
+        property: "max-width",
+        value: "100%",
+        extraCss: "width: 100% !important; box-sizing: border-box !important;",
+        noCenter: true,
       },
       {
         selector: ".markdown-body table, .answer-content-wrap .markdown-body table",
