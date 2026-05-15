@@ -232,6 +232,9 @@ export const de = {
   collapsedButtonsOrderTitle: "Schnelltasten",
   quickButtonsOpacityLabel: "Deckkraft der Schnellschaltflächen",
   quickButtonsOpacityDesc: "Die Gesamtsichtbarkeit der Schnellschaltflächen anpassen",
+  quickButtonsProximityRadiusLabel: "Näherungsbereich",
+  quickButtonsProximityRadiusDesc:
+    "Klappt die Schnellschaltflächen automatisch aus, wenn der Cursor diesen Bereich (px) betritt. 0 = nur beim direkten Hovern",
   quickButtonsHideWhenPanelOpenLabel: "Schnelltasten bei geöffnetem Panel ausblenden",
   quickButtonsHideWhenPanelOpenDesc:
     "Schnelltastengruppe automatisch ausblenden, wenn das Panel geöffnet ist; wird beim Schließen wieder eingeblendet",

@@ -264,6 +264,9 @@ export const zhCN = {
   collapsedButtonsOrderTitle: "快捷按钮组",
   quickButtonsOpacityLabel: "快捷按钮不透明度",
   quickButtonsOpacityDesc: "调整快捷按钮组整体不透明度",
+  quickButtonsProximityRadiusLabel: "感应唤醒距离",
+  quickButtonsProximityRadiusDesc:
+    "鼠标进入此范围（像素）时自动展开快捷按钮组。设为 0 则仅在直接悬停时展开",
   quickButtonsHideWhenPanelOpenLabel: "面板展开时隐藏快捷按钮组",
   quickButtonsHideWhenPanelOpenDesc: "面板展开后自动隐藏快捷按钮组，关闭面板时恢复显示",
 

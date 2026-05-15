@@ -230,6 +230,9 @@ export const ru = {
   collapsedButtonsOrderTitle: "Кнопки",
   quickButtonsOpacityLabel: "Непрозрачность быстрых кнопок",
   quickButtonsOpacityDesc: "Настройте общую непрозрачность группы быстрых кнопок",
+  quickButtonsProximityRadiusLabel: "Дальность обнаружения",
+  quickButtonsProximityRadiusDesc:
+    "Автоматически разворачивает кнопки, когда курсор входит в эту зону (px). 0 — только при прямом наведении",
   quickButtonsHideWhenPanelOpenLabel: "Скрыть кнопки при открытой панели",
   quickButtonsHideWhenPanelOpenDesc:
     "Автоматически скрывает группу быстрых кнопок при открытии панели; восстанавливается при закрытии",

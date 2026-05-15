@@ -82,10 +82,11 @@ const DRAG_LONG_PRESS_MS = 220
 const DRAG_THRESHOLD_PX = 6
 const DRAG_PADDING_PX = 8
 const POSITION_PERSIST_DEBOUNCE_MS = 220
-const PROXIMITY_RADIUS_PX = 150
 const PROXIMITY_RETAIN_MS = 3000
 const ACTIVITY_PROTECT_MS = 4000
 const LEAVE_WINDOW_RETAIN_MS = 1500
+// 感应距离为 0 时，鼠标须在水滴上停留该时长才展开（防止划过触发）
+const HOVER_DWELL_MS = 300
 
 export const QuickButtons: React.FC<QuickButtonsProps> = ({
   isPanelExpanded,
@@ -127,6 +128,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     quickButtonsSide === "left" ? { left: "16px", right: "auto" } : { right: "16px", left: "auto" }
   const quickButtonsOpacity = Math.min(Math.max(quickButtonsSettings.opacity ?? 1, 0.4), 1)
   const persistedGroupPosition = quickButtonsSettings.position ?? null
+  const proximityRadius = quickButtonsSettings.proximityRadius ?? 150
   const siteId = adapter?.getSiteId() || "_default"
   const siteTheme = getSiteTheme(currentSettings, siteId)
   const resolvedThemeMode = themeMode || (siteTheme.mode === "dark" ? "dark" : "light")
@@ -253,7 +255,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         const dy = Math.max(rect.top - e.clientY, 0, e.clientY - rect.bottom)
         const distance = Math.sqrt(dx * dx + dy * dy)
 
-        if (distance <= PROXIMITY_RADIUS_PX) {
+        if (proximityRadius > 0 && distance <= proximityRadius) {
           // 在引力场内：保持唤醒并重置收缩倒计时
           retainActivity(PROXIMITY_RETAIN_MS)
         }
@@ -288,7 +290,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         window.clearTimeout(activityTimerRef.current)
       }
     }
-  }, [retainActivity, shortenCountdown])
+  }, [retainActivity, shortenCountdown, proximityRadius])
 
   const isLiquidCollapsed =
     !isProximate &&
@@ -994,16 +996,28 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     if (!groupRef.current) return
 
     let hideTimer: number | null = null
+    let enterTimer: number | null = null
 
     const handleMouseEnter = () => {
       if (hideTimer) {
         clearTimeout(hideTimer)
         hideTimer = null
       }
-      setIsHovered(true)
+      if (proximityRadius === 0) {
+        // 感应距离为 0：需停留 HOVER_DWELL_MS 才展开，防止划过触发
+        enterTimer = window.setTimeout(() => {
+          setIsHovered(true)
+        }, HOVER_DWELL_MS)
+      } else {
+        setIsHovered(true)
+      }
     }
 
     const handleMouseLeave = () => {
+      if (enterTimer) {
+        clearTimeout(enterTimer)
+        enterTimer = null
+      }
       hideTimer = window.setTimeout(() => {
         setIsHovered(false)
       }, 300)
@@ -1017,8 +1031,9 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       el.removeEventListener("mouseenter", handleMouseEnter)
       el.removeEventListener("mouseleave", handleMouseLeave)
       if (hideTimer) clearTimeout(hideTimer)
+      if (enterTimer) clearTimeout(enterTimer)
     }
-  }, [clampPixelGroupPosition])
+  }, [clampPixelGroupPosition, proximityRadius])
 
   useEffect(() => {
     let rafId: number | null = null

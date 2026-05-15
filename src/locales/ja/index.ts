@@ -237,6 +237,9 @@ export const ja = {
   collapsedButtonsOrderTitle: "クイックボタン",
   quickButtonsOpacityLabel: "クイックボタンの不透明度",
   quickButtonsOpacityDesc: "クイックボタングループ全体の不透明度を調整します",
+  quickButtonsProximityRadiusLabel: "近接検知距離",
+  quickButtonsProximityRadiusDesc:
+    "マウスがこの範囲（px）に入るとクイックボタンを自動展開。０に設定すると直接ホバー時のみ展開",
   quickButtonsHideWhenPanelOpenLabel: "パネル展開時にクイックボタンを隠す",
   quickButtonsHideWhenPanelOpenDesc:
     "パネルを展開したときにクイックボタングループを自動的に非表示にし、パネルを閉じると元に戻します",

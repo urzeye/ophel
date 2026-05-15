@@ -232,6 +232,9 @@ export const pt = {
   collapsedButtonsOrderTitle: "Botões Rápidos",
   quickButtonsOpacityLabel: "Opacidade dos botões rápidos",
   quickButtonsOpacityDesc: "Ajusta a opacidade geral do grupo de botões rápidos",
+  quickButtonsProximityRadiusLabel: "Distância de detecção",
+  quickButtonsProximityRadiusDesc:
+    "Expande os botões rápidos automaticamente quando o cursor entra neste intervalo (px). 0 = apenas ao passar o mouse diretamente",
   quickButtonsHideWhenPanelOpenLabel: "Ocultar botões rápidos quando o painel estiver aberto",
   quickButtonsHideWhenPanelOpenDesc:
     "Oculta automaticamente o grupo de botões rápidos quando o painel está expandido; restaurado ao fechar o painel",

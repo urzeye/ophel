@@ -147,6 +147,8 @@ export interface QuickButtonsSettings {
   position?: QuickButtonsPosition
   /** 面板展开时隐藏整个快捷按钮组（默认 false） */
   hideWhenPanelOpen?: boolean
+  /** 感应唤醒距离（像素），鼠标在此范围内自动展开水滴，默认 150；0 = 仅直接悬停才展开 */
+  proximityRadius?: number
 }
 
 export interface Settings {
@@ -357,6 +359,7 @@ export const DEFAULT_QUICK_BUTTONS_SETTINGS: QuickButtonsSettings = {
     open: true,
   },
   hideWhenPanelOpen: false,
+  proximityRadius: 150,
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -544,6 +547,7 @@ export const DEFAULT_SETTINGS: Settings = {
       ...DEFAULT_QUICK_BUTTONS_SETTINGS.floatingToolbar,
     },
     hideWhenPanelOpen: DEFAULT_QUICK_BUTTONS_SETTINGS.hideWhenPanelOpen,
+    proximityRadius: DEFAULT_QUICK_BUTTONS_SETTINGS.proximityRadius,
   },
 
   claude: {

@@ -233,6 +233,9 @@ export const fr = {
   collapsedButtonsOrderTitle: "Boutons Rapides",
   quickButtonsOpacityLabel: "Opacité des boutons rapides",
   quickButtonsOpacityDesc: "Ajuster l'opacité globale du groupe de boutons rapides",
+  quickButtonsProximityRadiusLabel: "Distance de détection",
+  quickButtonsProximityRadiusDesc:
+    "Déplie automatiquement les boutons rapides quand le curseur entre dans cette zone (px). 0 = seulement au survol direct",
   quickButtonsHideWhenPanelOpenLabel: "Masquer les boutons rapides quand le panneau est ouvert",
   quickButtonsHideWhenPanelOpenDesc:
     "Masque automatiquement le groupe de boutons rapides quand le panneau est ouvert ; restauré à la fermeture du panneau",

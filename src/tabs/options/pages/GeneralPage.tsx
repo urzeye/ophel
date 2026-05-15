@@ -496,6 +496,34 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
               }
             />
             <SettingRow
+              label={t("quickButtonsProximityRadiusLabel") || "感应唤醒距离"}
+              description={
+                t("quickButtonsProximityRadiusDesc") ||
+                "鼠标进入此范围（像素）时自动展开快捷按钮组。设为 0 则仅在直接悬停时展开"
+              }
+              settingId="quick-buttons-proximity-radius">
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <input
+                  type="range"
+                  min="0"
+                  max="300"
+                  step="10"
+                  value={settings.quickButtons?.proximityRadius ?? 150}
+                  onChange={(e) =>
+                    updateNestedSetting(
+                      "quickButtons",
+                      "proximityRadius",
+                      parseInt(e.target.value, 10),
+                    )
+                  }
+                  style={{ width: "120px" }}
+                />
+                <span style={{ fontSize: "12px", minWidth: "36px" }}>
+                  {settings.quickButtons?.proximityRadius ?? 150}px
+                </span>
+              </div>
+            </SettingRow>
+            <SettingRow
               label={t("quickButtonsOpacityLabel") || "快捷按钮不透明度"}
               description={t("quickButtonsOpacityDesc") || "调整快捷按钮组整体不透明度"}
               settingId="quick-buttons-opacity">

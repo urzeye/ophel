@@ -233,6 +233,9 @@ export const ko = {
   collapsedButtonsOrderTitle: "퀵 버튼",
   quickButtonsOpacityLabel: "빠른 버튼 불투명도",
   quickButtonsOpacityDesc: "빠른 버튼 그룹 전체의 불투명도를 조절합니다",
+  quickButtonsProximityRadiusLabel: "근접 감지 거리",
+  quickButtonsProximityRadiusDesc:
+    "마우스가 이 범위(px)에 들어오면 빠른 버튼을 자동으로 펼칩니다. 0으로 설정하면 직접 호버 시에만 펼칩니다",
   quickButtonsHideWhenPanelOpenLabel: "패널 열릴 때 빠른 버튼 숨기기",
   quickButtonsHideWhenPanelOpenDesc:
     "패널이 열릴 때 빠른 버튼 그룹을 자동으로 숨기고, 패널이 닫히면 다시 표시합니다",
