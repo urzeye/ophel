@@ -25,10 +25,15 @@ const GROUP_PATH_PATTERN = /\/group\/([a-f0-9]+)/i
 const THEME_STORAGE_KEY = "tongyi-theme-preference"
 const CID_STORAGE_KEY = "qianwen-uniq-id"
 const MODEL_EXPANDED_KEY = "model-select-expanded"
-const QUESTION_ITEM_SELECTOR =
-  '[class*="questionItem"], .chat-question-wrap, [data-chat-question-wrap$="-question"]'
+const QUESTION_ITEM_SELECTOR = '[class*="questionItem"], [data-chat-question-wrap$="-question"]'
+const QUESTION_LAYOUT_SELECTOR = '[class*="questionItem"], .chat-question-wrap'
+const QUESTION_CARD_SELECTOR = '[data-chat-question-wrap$="-question"]'
 const ANSWER_ITEM_SELECTOR = '[class*="answerItem"]'
 const BUBBLE_SELECTOR = '[class*="bubble"]'
+const QUESTION_CARD_INNER_SELECTOR = [
+  `${QUESTION_CARD_SELECTOR} .message-card-wrap.question`,
+  `${QUESTION_CARD_SELECTOR} .question-text-card`,
+].join(", ")
 const CHAT_INPUT_SELECTOR = '[class*="chatInput"]'
 const CHAT_TEXTAREA_SELECTOR = '[class*="chatTextarea"]'
 const MESSAGE_LIST_SELECTOR = ".message-list-scroll-container, #message-list-scroller"
@@ -690,6 +695,13 @@ export class QianwenAdapter extends SiteAdapter {
   getWidthSelectors() {
     // 千问整体宽度由 scrollOutWrapper 的 max-width: 896px + width: calc(100%-48px) 控制
     // 需要同时覆盖 max-width 和 width
+    const messageListWidthVarsCss = [
+      "width: 100% !important;",
+      "min-width: 0 !important;",
+      "--max-message-list-width: 100% !important;",
+      "--min-message-list-width: 0px !important;",
+    ].join(" ")
+
     return [
       {
         selector: '[class*="scrollOutWrapper"]',
@@ -704,6 +716,11 @@ export class QianwenAdapter extends SiteAdapter {
         noCenter: true,
       },
       {
+        selector: '[class*="auto-center-wrapper"]',
+        property: "max-width",
+        extraCss: messageListWidthVarsCss,
+      },
+      {
         selector: '[class*="inputMotionCarrier"]',
         property: "max-width",
         extraCss: "width: 100% !important;",
@@ -711,24 +728,48 @@ export class QianwenAdapter extends SiteAdapter {
       {
         selector: '[class*="inputOutWrap"]',
         property: "max-width",
+        value: "100%",
+        extraCss: "width: 100% !important;",
       },
       {
         selector: '[class*="answerItem"] [class*="containerWrap"]',
         property: "max-width",
       },
       {
-        selector: `${QUESTION_ITEM_SELECTOR}`,
+        selector: `${QUESTION_LAYOUT_SELECTOR}`,
         property: "width",
         extraCss: "margin-right: 0 !important",
+      },
+      {
+        selector: QUESTION_CARD_INNER_SELECTOR,
+        property: "width",
+        value: "100%",
+        extraCss: "max-width: 100% !important; box-sizing: border-box !important;",
+        noCenter: true,
       },
     ]
   }
 
-  getUserQueryWidthSelectors(): Array<{ selector: string; property: string }> {
+  getUserQueryWidthSelectors(): Array<{
+    selector: string
+    property: string
+    extraCss?: string
+    noCenter?: boolean
+  }> {
+    const alignRightCss = "margin-left: auto !important; margin-right: 0 !important;"
+
     return [
       {
         selector: `${QUESTION_ITEM_SELECTOR} ${BUBBLE_SELECTOR}`,
         property: "max-width",
+        extraCss: alignRightCss,
+        noCenter: true,
+      },
+      {
+        selector: QUESTION_CARD_SELECTOR,
+        property: "max-width",
+        extraCss: alignRightCss,
+        noCenter: true,
       },
     ]
   }
