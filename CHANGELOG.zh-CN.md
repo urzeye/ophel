@@ -14,6 +14,7 @@
 
 - **用户提问代码块内向下滚动后复制按钮消失**：为每个 `<pre>` 外层增加 `<div class="gh-code-wrapper">` 包裹层，并将复制按钮移至 `pre` 滚动容器之外。按钮现在以不参与滚动的 wrapper 为定位祖先，无论代码块内容多长，右上角复制按钮始终可见。同时彻底消除了 #484 修复中 `float: right` 换行回退问题的根因。
 - **部分站点（Kimi、DeepSeek 等）代码块背景色与用户问题气泡背景色完全一致**：将代码块背景由固定颜色（`#f6f8fa` / `#1e1e1e`）改为半透明叠加层（浅色模式 `rgba(0,0,0,0.06)`，深色模式 `rgba(255,255,255,0.09)`）。叠加层始终在气泡实际背景之上渲染，代码块在任意站点、任意 Ophel 主题预设及是否开启原生主题同步的情况下均保持可区分。同时补充了同色系细边框以增强轮廓感，并补全了 DeepSeek 缺失的深色模式选择器 `body.dark`。对于用户问题气泡本身无背景色的站点（DeepSeek、Kimi 等），现在为渲染容器补充轻量气泡底色（`rgba(0,0,0,0.04)` / `rgba(255,255,255,0.05)`），在气泡与代码块之间形成双层视觉层次。Gemini 的气泡背景由外层原生元素提供，排除在外。
+- **ChatGPT 切换主题时圆形扩散动画失效**：ChatGPT 近期改版在页面 header 与按钮上引入了 `view-transition-name` CSS，导致 `::view-transition-new(root)` 的 `clip-path` 动画完全无法产生视觉效果（动画正常跑完但不可见）。排查过程：隔离验证 View Transitions API 层，确认 `transition.ready` 仍正常 resolve、`element.animate()` 正常执行完毕，但圆形始终不显示。修复方案：在每次主题切换前临时给 `document.body` 设置 `view-transition-name: gh-page`，将圆形揭示动画目标从 `root` 切换为 `::view-transition-new(gh-page)`；`transition.finished` 后恢复原 inline 值。全局 VT 样式表同步补充 `::view-transition-old/new(gh-page)` 规则，使旧快照在圆形扩散期间保持冻结。此修改仅影响 ChatGPT，其它站点继续使用 `::view-transition-new(root)`。
 
 ---
 

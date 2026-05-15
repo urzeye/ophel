@@ -22,8 +22,15 @@ export type ThemeTransitionOrigin = Pick<MouseEvent, "clientX" | "clientY">
 
 // Extend Document interface for View Transitions API
 declare global {
+  interface ViewTransition {
+    readonly finished: Promise<void>
+    readonly ready: Promise<void>
+    readonly updateCallbackDone: Promise<void>
+    skipTransition(): void
+  }
+
   interface Document {
-    startViewTransition(callback?: any): any
+    startViewTransition(callback?: () => void | Promise<void>): ViewTransition
   }
 }
 
@@ -373,11 +380,14 @@ export class ThemeManager {
     style.id = "gh-global-styles"
     style.textContent = `
       ::view-transition-old(root),
-      ::view-transition-new(root) {
+      ::view-transition-new(root),
+      ::view-transition-old(gh-page),
+      ::view-transition-new(gh-page) {
         animation: none;
         mix-blend-mode: normal;
       }
 
+      ::view-transition-new(gh-page),
       ::view-transition-new(root) {
         clip-path: circle(0px at var(--theme-x, 50%) var(--theme-y, 50%));
       }
@@ -930,6 +940,33 @@ ${cssVars}
     return { x, y }
   }
 
+  /**
+   * ChatGPT 新版页面中裁剪 root 快照不会产生圆形扩散效果。
+   * 临时给 body 设置独立的 view-transition-name，改为裁剪这个命名快照。
+   */
+  private prepareTransitionSnapshotTarget(): { pseudoElement: string; cleanup: () => void } {
+    if (this.adapter?.getSiteId() !== SITE_IDS.CHATGPT || !document.body) {
+      return {
+        pseudoElement: "::view-transition-new(root)",
+        cleanup: () => {},
+      }
+    }
+
+    const previousName = document.body.style.getPropertyValue("view-transition-name")
+    document.body.style.setProperty("view-transition-name", "gh-page")
+
+    return {
+      pseudoElement: "::view-transition-new(gh-page)",
+      cleanup: () => {
+        if (previousName) {
+          document.body.style.setProperty("view-transition-name", previousName)
+        } else {
+          document.body.style.removeProperty("view-transition-name")
+        }
+      },
+    }
+  }
+
   private async applyWithTransition(
     action: () => void,
     event?: ThemeTransitionOrigin,
@@ -950,6 +987,8 @@ ${cssVars}
       }
       return false
     }
+
+    const transitionTarget = this.prepareTransitionSnapshotTarget()
 
     try {
       const transition = document.startViewTransition(() => {
@@ -973,7 +1012,7 @@ ${cssVars}
           {
             duration: 500,
             easing: "ease-in",
-            pseudoElement: "::view-transition-new(root)",
+            pseudoElement: transitionTarget.pseudoElement,
             fill: "forwards",
           },
         )
@@ -985,9 +1024,11 @@ ${cssVars}
     } catch {
       action()
       this.startThemeMonitoring()
+      transitionTarget.cleanup()
       return false
     }
 
+    transitionTarget.cleanup()
     this.skipNextDetection = true
     this.startThemeMonitoring()
     return true
@@ -1053,10 +1094,22 @@ ${cssVars}
       return nextMode
     }
 
-    // 执行动画切换
-    const transition = document.startViewTransition(() => {
+    const transitionTarget = this.prepareTransitionSnapshotTarget()
+
+    let transition: ViewTransition
+    try {
+      // 执行动画切换
+      transition = document.startViewTransition(() => {
+        doToggle()
+      })
+    } catch {
+      transitionTarget.cleanup()
       doToggle()
-    })
+      this.mode = nextMode
+      this.emitChange()
+      this.startThemeMonitoring()
+      return nextMode
+    }
 
     // 等待伪元素创建后，执行自定义动画
     transition.ready.then(() => {
@@ -1080,7 +1133,7 @@ ${cssVars}
         {
           duration: 500,
           easing: "ease-in",
-          pseudoElement: "::view-transition-new(root)",
+          pseudoElement: transitionTarget.pseudoElement,
           fill: "forwards",
         },
       )
@@ -1091,6 +1144,8 @@ ${cssVars}
     await transition.finished.catch(() => {
       // 忽略动画错误
     })
+
+    transitionTarget.cleanup()
 
     // 标记跳过下一次检测，防止 observer 立即根据中间态把结果回写掉
     this.skipNextDetection = true
