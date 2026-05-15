@@ -11,6 +11,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **DeepSeek native user query width adjustment**: DeepSeek's user question width setting only applied `max-width` to the native random-class content node, so long unrendered plain-text prompts could keep their intrinsic width and ignore the setting unless the user-query Markdown enhancement replaced the node. The DeepSeek adapter now applies the configured width directly to the native and enhanced user-content nodes, keeps them right-aligned, and adds shrink/wrapping safeguards for long code-like prompts.
+
 - **Kimi page width adjustment alignment**: Kimi's main conversation list kept horizontal padding after page width adjustment, making the visible conversation area narrower than the widened input box. The Kimi adapter now removes that horizontal padding when applying the width override so the conversation body and input edges align.
 
 - **Kimi user query width adjustment**: Kimi did not provide user-query width selectors, so the user question width setting had no effect on the current `.segment-content-box > .user-content` DOM. The adapter now targets the current user bubble structure, keeps the bubble right-aligned, and applies the configured width consistently across different prompts instead of shrinking each bubble to its text length.

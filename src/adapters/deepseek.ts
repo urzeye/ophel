@@ -737,11 +737,22 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   getUserQueryWidthSelectors() {
+    const userQueryWidthCss = [
+      "max-width: 100% !important;",
+      "min-width: 0 !important;",
+      "box-sizing: border-box !important;",
+      "margin-left: auto !important;",
+      "margin-right: 0 !important;",
+      "overflow-wrap: anywhere !important;",
+      "word-break: break-word !important;",
+    ].join(" ")
+
     return [
       {
         // 用户问题内容节点使用随机哈希类名，改为匹配 ds-message 下稳定的直接内容 div。
         selector: USER_MESSAGE_CONTENT_SELECTOR,
-        property: "max-width",
+        property: "width",
+        extraCss: userQueryWidthCss,
         noCenter: true,
       },
     ]
