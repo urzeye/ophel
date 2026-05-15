@@ -11,6 +11,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Qianwen user query Markdown rendering after DOM update**: Qianwen's user messages moved to the new `.chat-question-wrap` / `.question-text-card` structure, so the user-query style enhancement no longer detected prompts and inline code, code blocks, and math stayed as plain text. The adapter now recognizes the new question wrapper, targets the real text card for replacement, and normalizes non-breaking spaces before Markdown rendering.
+
 - **Clean mode selectors for ChatGLM, Ima, and Kimi**: Updated site-specific clean mode hiding rules to cover newly surfaced promotional/activity elements, including ChatGLM's slogan banner, Ima's activity banner content, and Kimi's activity area.
 
 - **ChatGLM code block width with page width adjustment**: Code block bodies were narrower than their copy headers because the ChatGLM page-width rule also constrained nested `.markdown-body.md-code` nodes. Code blocks now keep their inner code body, language wrapper, and `<pre>` width aligned with the native copy header while still respecting the outer conversation width.

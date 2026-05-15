@@ -19,14 +19,14 @@ import {
   type NetworkMonitorConfig,
   type OutlineItem,
 } from "./base"
-import { property } from "effect/FastCheck"
 
 const CHAT_PATH_PATTERN = /\/chat\/([a-f0-9]+)/i
 const GROUP_PATH_PATTERN = /\/group\/([a-f0-9]+)/i
 const THEME_STORAGE_KEY = "tongyi-theme-preference"
 const CID_STORAGE_KEY = "qianwen-uniq-id"
 const MODEL_EXPANDED_KEY = "model-select-expanded"
-const QUESTION_ITEM_SELECTOR = '[class*="questionItem"]'
+const QUESTION_ITEM_SELECTOR =
+  '[class*="questionItem"], .chat-question-wrap, [data-chat-question-wrap$="-question"]'
 const ANSWER_ITEM_SELECTOR = '[class*="answerItem"]'
 const BUBBLE_SELECTOR = '[class*="bubble"]'
 const CHAT_INPUT_SELECTOR = '[class*="chatInput"]'
@@ -337,7 +337,7 @@ export class QianwenAdapter extends SiteAdapter {
       )
       .forEach((node) => node.remove())
 
-    return this.extractTextWithLineBreaks(clone).trim()
+    return this.normalizeUserQueryText(this.extractTextWithLineBreaks(clone)).trim()
   }
 
   extractUserQueryMarkdown(element: Element): string {
@@ -814,10 +814,19 @@ export class QianwenAdapter extends SiteAdapter {
   }
 
   private findUserQueryContentRoot(element: Element): HTMLElement | null {
+    if (element.matches(".question-text-card")) return element as HTMLElement
+
+    const questionTextCard = element.querySelector(".question-text-card")
+    if (questionTextCard instanceof HTMLElement) return questionTextCard
+
     if (element.matches(BUBBLE_SELECTOR)) return element as HTMLElement
     return (
       (element.querySelector(BUBBLE_SELECTOR) as HTMLElement | null) || (element as HTMLElement)
     )
+  }
+
+  private normalizeUserQueryText(text: string): string {
+    return text.replace(/\u00a0/g, " ")
   }
 
   private findModelSelectorTrigger(): HTMLElement | null {
