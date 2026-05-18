@@ -183,6 +183,10 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const [draggedFolderId, setDraggedFolderId] = useState<string | null>(null)
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null)
 
+  // 会话拖拽移动
+  const [draggedConvId, setDraggedConvId] = useState<string | null>(null)
+  const [dragOverFolderForConvId, setDragOverFolderForConvId] = useState<string | null>(null)
+
   // Refs
   const contentRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -666,7 +670,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
       <LoadingOverlay isVisible={isDeleting} text={`${t("delete") || "删除"}...`} />
       <div
         ref={contentRef}
-        className={`conversations-content ${isNarrowLayout ? "is-narrow" : ""}`}
+        className={`conversations-content ${isNarrowLayout ? "is-narrow" : ""} ${draggedConvId || draggedFolderId ? "is-dragging-any" : ""}`}
         style={{
           display: "flex",
           flexDirection: "column",
@@ -888,56 +892,82 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                       dragOverFolderId === folder.id && draggedFolderId !== folder.id
                         ? "is-drag-over"
                         : "",
+                      dragOverFolderForConvId === folder.id ? "is-drag-over-conv" : "",
                     ]
                       .filter(Boolean)
                       .join(" ")}
                     data-folder-id={folder.id}
                     style={{ background: bgVar }}
                     onClick={() => handleFolderClick(folder.id)}
-                    onDragEnter={
-                      !folder.isDefault
-                        ? (e) => {
-                            if (!draggedFolderId || folder.id === draggedFolderId) return
-                            e.preventDefault()
-                            setDragOverFolderId(folder.id)
-                          }
-                        : undefined
-                    }
-                    onDragOver={
-                      !folder.isDefault
-                        ? (e) => {
-                            if (!draggedFolderId || folder.id === draggedFolderId) return
-                            e.preventDefault()
-                            e.dataTransfer.dropEffect = "move"
-                          }
-                        : undefined
-                    }
-                    onDrop={
-                      !folder.isDefault
-                        ? (e) => {
-                            e.preventDefault()
-                            if (!draggedFolderId || folder.id === draggedFolderId) return
-                            const displayedNonDefault = folders
-                              .filter(shouldShowFolder)
-                              .filter((f) => !f.isDefault)
-                            const fromIdx = displayedNonDefault.findIndex(
-                              (f) => f.id === draggedFolderId,
-                            )
-                            const toIdx = displayedNonDefault.findIndex((f) => f.id === folder.id)
-                            if (fromIdx === -1 || toIdx === -1) return
-                            const reordered = [...displayedNonDefault]
-                            const [moved] = reordered.splice(fromIdx, 1)
-                            reordered.splice(toIdx, 0, moved)
-                            const notDisplayed = folders
-                              .filter((f) => !f.isDefault)
-                              .filter((f) => !reordered.some((r) => r.id === f.id))
-                            manager.reorderFolders([...reordered, ...notDisplayed].map((f) => f.id))
-                            loadData()
-                            setDraggedFolderId(null)
-                            setDragOverFolderId(null)
-                          }
-                        : undefined
-                    }>
+                    onDragEnter={(e) => {
+                      if (draggedFolderId) {
+                        if (folder.isDefault || folder.id === draggedFolderId) return
+                        e.preventDefault()
+                        setDragOverFolderId(folder.id)
+                      } else if (draggedConvId) {
+                        const conv = conversations[draggedConvId]
+                        if (conv && conv.folderId !== folder.id) {
+                          e.preventDefault()
+                          setDragOverFolderForConvId(folder.id)
+                        }
+                      }
+                    }}
+                    onDragOver={(e) => {
+                      if (draggedFolderId) {
+                        if (folder.isDefault || folder.id === draggedFolderId) return
+                        e.preventDefault()
+                        e.dataTransfer.dropEffect = "move"
+                      } else if (draggedConvId) {
+                        const conv = conversations[draggedConvId]
+                        if (conv && conv.folderId !== folder.id) {
+                          e.preventDefault()
+                          e.dataTransfer.dropEffect = "move"
+                        }
+                      }
+                    }}
+                    onDragLeave={(e) => {
+                      // 只有当离开容器本身（而不是进入子元素）时才清除
+                      const relatedTarget = e.relatedTarget as HTMLElement
+                      if (relatedTarget && e.currentTarget.contains(relatedTarget)) return
+
+                      if (draggedFolderId) {
+                        setDragOverFolderId(null)
+                      } else if (draggedConvId) {
+                        setDragOverFolderForConvId(null)
+                      }
+                    }}
+                    onDrop={async (e) => {
+                      e.preventDefault()
+                      if (draggedFolderId) {
+                        if (folder.isDefault || folder.id === draggedFolderId) return
+                        const displayedNonDefault = folders
+                          .filter(shouldShowFolder)
+                          .filter((f) => !f.isDefault)
+                        const fromIdx = displayedNonDefault.findIndex(
+                          (f) => f.id === draggedFolderId,
+                        )
+                        const toIdx = displayedNonDefault.findIndex((f) => f.id === folder.id)
+                        if (fromIdx === -1 || toIdx === -1) return
+                        const reordered = [...displayedNonDefault]
+                        const [moved] = reordered.splice(fromIdx, 1)
+                        reordered.splice(toIdx, 0, moved)
+                        const notDisplayed = folders
+                          .filter((f) => !f.isDefault)
+                          .filter((f) => !reordered.some((r) => r.id === f.id))
+                        manager.reorderFolders([...reordered, ...notDisplayed].map((f) => f.id))
+                        loadData()
+                        setDraggedFolderId(null)
+                        setDragOverFolderId(null)
+                      } else if (draggedConvId) {
+                        const conv = conversations[draggedConvId]
+                        if (conv && conv.folderId !== folder.id) {
+                          await manager.moveConversation(draggedConvId, folder.id)
+                          loadData()
+                        }
+                        setDraggedConvId(null)
+                        setDragOverFolderForConvId(null)
+                      }
+                    }}>
                     <div className="conversations-folder-info">
                       {/* 批量模式复选框 */}
                       {batchMode && (
@@ -973,13 +1003,11 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                           className="conversations-folder-drag-handle"
                           draggable
                           onDragStart={(e) => {
-                            e.stopPropagation()
                             setDraggedFolderId(folder.id)
                             e.dataTransfer.effectAllowed = "move"
                             e.dataTransfer.setData("text/plain", folder.id)
                           }}
-                          onDragEnd={(e) => {
-                            e.stopPropagation()
+                          onDragEnd={() => {
                             setDraggedFolderId(null)
                             setDragOverFolderId(null)
                           }}
@@ -1037,10 +1065,16 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                                 searchQuery={searchQuery}
                                 searchResult={searchResult}
                                 tagMap={tagMap}
+                                draggedConvId={draggedConvId}
                                 onConversationClick={handleConversationClick}
                                 onSelectionChange={setSelectedIds}
                                 onInteractionStateChange={onInteractionStateChange}
                                 onMenuChange={setMenu}
+                                onDragStart={setDraggedConvId}
+                                onDragEnd={() => {
+                                  setDraggedConvId(null)
+                                  setDragOverFolderForConvId(null)
+                                }}
                               />
                             ))}
                             {hasMore && (
@@ -1412,10 +1446,13 @@ interface ConversationItemProps {
   searchQuery: string
   searchResult: SearchResult | null
   tagMap: Map<string, Tag>
+  draggedConvId: string | null
   onConversationClick: (conv: Conversation) => void
   onSelectionChange: React.Dispatch<React.SetStateAction<Set<string>>>
   onInteractionStateChange?: (isActive: boolean) => void
   onMenuChange: React.Dispatch<React.SetStateAction<MenuType>>
+  onDragStart: (convId: string) => void
+  onDragEnd: () => void
 }
 
 const ConversationItem = React.memo<ConversationItemProps>(
@@ -1427,10 +1464,13 @@ const ConversationItem = React.memo<ConversationItemProps>(
     searchQuery,
     searchResult,
     tagMap,
+    draggedConvId,
     onConversationClick,
     onSelectionChange,
     onInteractionStateChange,
     onMenuChange,
+    onDragStart,
+    onDragEnd,
   }) => {
     const tagIds = conv.tagIds || []
     const maxVisibleTags = isNarrowLayout ? 1 : 2
@@ -1441,8 +1481,15 @@ const ConversationItem = React.memo<ConversationItemProps>(
 
     return (
       <div
-        className="conversations-item"
+        className={`conversations-item ${draggedConvId === conv.id ? "is-dragging" : ""}`}
         data-id={conv.id}
+        draggable
+        onDragStart={(e) => {
+          onDragStart(conv.id)
+          e.dataTransfer.effectAllowed = "move"
+          e.dataTransfer.setData("text/plain", conv.id)
+        }}
+        onDragEnd={onDragEnd}
         onClick={() => onConversationClick(conv)}>
         {batchMode && (
           <input
