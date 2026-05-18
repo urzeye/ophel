@@ -72,6 +72,11 @@
   overflow-y: auto;
 }
 
+/* 拖拽进行中时禁止文本选择，避免拖拽会话时误选文字 */
+.conversations-content.is-dragging-any {
+  user-select: none;
+}
+
 .conversations-toolbar {
   display: flex;
   gap: 6px;

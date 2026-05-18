@@ -12,6 +12,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### ✨ New Features
 
 - **Quick Buttons proximity wake radius** (`Settings → Quick Buttons`): A new slider controls how close the cursor must be before the floating widget auto-expands (default 150 px, matching previous behavior). Set it to **0** for a true dwell-hover mode — the widget only expands after the cursor rests on the water-drop for 300 ms, preventing accidental expansion from the cursor passing through. (#492)
+- **Drag conversations into folders**: In the Conversations tab, you can now drag a chat onto any folder to move it there. Thanks @t0ny-peng (#512)
 
 ---
 

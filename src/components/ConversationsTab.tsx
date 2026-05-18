@@ -186,6 +186,9 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   // 会话拖拽移动
   const [draggedConvId, setDraggedConvId] = useState<string | null>(null)
   const [dragOverFolderForConvId, setDragOverFolderForConvId] = useState<string | null>(null)
+  // Ref 跟踪实际拖拽悬停目标，避免浏览器 dragenter/dragleave 事件顺序不一致导致的高亮闪烁
+  const dragOverConvTargetRef = useRef<string | null>(null)
+  const dragOverFolderTargetRef = useRef<string | null>(null)
 
   // Refs
   const contentRef = useRef<HTMLDivElement>(null)
@@ -903,11 +906,13 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                       if (draggedFolderId) {
                         if (folder.isDefault || folder.id === draggedFolderId) return
                         e.preventDefault()
+                        dragOverFolderTargetRef.current = folder.id
                         setDragOverFolderId(folder.id)
                       } else if (draggedConvId) {
                         const conv = conversations[draggedConvId]
                         if (conv && conv.folderId !== folder.id) {
                           e.preventDefault()
+                          dragOverConvTargetRef.current = folder.id
                           setDragOverFolderForConvId(folder.id)
                         }
                       }
@@ -917,26 +922,42 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                         if (folder.isDefault || folder.id === draggedFolderId) return
                         e.preventDefault()
                         e.dataTransfer.dropEffect = "move"
+                        dragOverFolderTargetRef.current = folder.id
+                        setDragOverFolderId(folder.id)
                       } else if (draggedConvId) {
                         const conv = conversations[draggedConvId]
                         if (conv && conv.folderId !== folder.id) {
                           e.preventDefault()
                           e.dataTransfer.dropEffect = "move"
+                          dragOverConvTargetRef.current = folder.id
+                          setDragOverFolderForConvId(folder.id)
                         }
                       }
                     }}
                     onDragLeave={(e) => {
-                      // 只有当离开容器本身（而不是进入子元素）时才清除
+                      // 只有当离开容器本身（而不是进入子元素）时才处理
                       const relatedTarget = e.relatedTarget as HTMLElement
                       if (relatedTarget && e.currentTarget.contains(relatedTarget)) return
 
+                      // 使用 setTimeout 延迟清除，让目标元素的 dragenter 先更新 ref，
+                      // 从而避免浏览器 dragenter/dragleave 事件顺序不一致导致的高亮闪烁
                       if (draggedFolderId) {
-                        setDragOverFolderId(null)
+                        const leavingFolderId = folder.id
+                        setTimeout(() => {
+                          if (dragOverFolderTargetRef.current === leavingFolderId) {
+                            setDragOverFolderId(null)
+                          }
+                        }, 0)
                       } else if (draggedConvId) {
-                        setDragOverFolderForConvId(null)
+                        const leavingFolderId = folder.id
+                        setTimeout(() => {
+                          if (dragOverConvTargetRef.current === leavingFolderId) {
+                            setDragOverFolderForConvId(null)
+                          }
+                        }, 0)
                       }
                     }}
-                    onDrop={async (e) => {
+                    onDrop={(e) => {
                       e.preventDefault()
                       if (draggedFolderId) {
                         if (folder.isDefault || folder.id === draggedFolderId) return
@@ -958,14 +979,16 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                         loadData()
                         setDraggedFolderId(null)
                         setDragOverFolderId(null)
+                        dragOverFolderTargetRef.current = null
                       } else if (draggedConvId) {
                         const conv = conversations[draggedConvId]
                         if (conv && conv.folderId !== folder.id) {
-                          await manager.moveConversation(draggedConvId, folder.id)
+                          manager.moveConversation(draggedConvId, folder.id)
                           loadData()
                         }
                         setDraggedConvId(null)
                         setDragOverFolderForConvId(null)
+                        dragOverConvTargetRef.current = null
                       }
                     }}>
                     <div className="conversations-folder-info">
@@ -1010,6 +1033,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                           onDragEnd={() => {
                             setDraggedFolderId(null)
                             setDragOverFolderId(null)
+                            dragOverFolderTargetRef.current = null
                           }}
                           onClick={(e) => e.stopPropagation()}
                           title={t("drag")}>
@@ -1070,10 +1094,14 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                                 onSelectionChange={setSelectedIds}
                                 onInteractionStateChange={onInteractionStateChange}
                                 onMenuChange={setMenu}
-                                onDragStart={setDraggedConvId}
+                                onDragStart={(convId: string) => {
+                                  setDraggedConvId(convId)
+                                  dragOverConvTargetRef.current = null
+                                }}
                                 onDragEnd={() => {
                                   setDraggedConvId(null)
                                   setDragOverFolderForConvId(null)
+                                  dragOverConvTargetRef.current = null
                                 }}
                               />
                             ))}
