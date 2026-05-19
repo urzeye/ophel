@@ -119,6 +119,9 @@ export class ChatGPTAdapter extends SiteAdapter {
   // turn 首次出现的 DOM 顺序，用于 turn-shell 被完全卸载后仍能维持稳定排序
   private outlineTurnFirstSeenIndex = new Map<string, number>()
   private outlineTurnFirstSeenCounter = 0
+  // SPA 切换会话后的过渡期截止时刻：在此之前 extractOutline 不写 cache 也不
+  // merge cache，避免把上一个会话残留的 DOM 内容污染到新会话的 cache 里。
+  private outlineCacheTransitionEndAt = 0
 
   // 导出快照（参考 deepseek / aistudio 方案）：避免虚拟滚动导致漏抓或重复抓取
   private exportSnapshotRoot: HTMLElement | null = null
@@ -1797,10 +1800,22 @@ export class ChatGPTAdapter extends SiteAdapter {
     const sessionKey = this.getOutlineCacheSessionKey()
     if (sessionKey === this.outlineCacheSessionKey) return
 
+    const isFirstSession = this.outlineCacheSessionKey === ""
     this.outlineCacheSessionKey = sessionKey
     this.outlineItemCache.clear()
     this.outlineTurnFirstSeenIndex.clear()
     this.outlineTurnFirstSeenCounter = 0
+    // SPA 切换会话时（不是首次初始化）进入过渡期：ChatGPT 的 URL 同步切换、但
+    // DOM 替换是异步的；此时 extractOutline 抓到的仍是上一个会话的残留节点，
+    // 若立刻当成"新会话 cache"写进去，等 DOM 完成切换、新会话内容到位时再做
+    // merge 就会把上一个会话的条目追加到末尾。
+    // 过渡期内 extractOutline 跳过 cache 写入与合并，只返回 DOM 实时内容；
+    // 等过了过渡期再恢复正常的"虚拟滚动兜底"行为。
+    this.outlineCacheTransitionEndAt = isFirstSession ? 0 : Date.now() + 2000
+  }
+
+  private isInOutlineCacheTransition(): boolean {
+    return Date.now() < this.outlineCacheTransitionEndAt
   }
 
   private getChatGPTTurnId(element: Element | null): string | null {
@@ -2315,6 +2330,15 @@ export class ChatGPTAdapter extends SiteAdapter {
     })
 
     const turnAnchors = this.getOrderedChatGPTTurnAnchors(container)
+
+    // SPA 切换过渡期：跳过 cache 写入与合并，仅返回当前 DOM 真实可见的内容。
+    // ChatGPT 在 URL 改变后还会异步把旧会话的 DOM 替换为新会话的，提前写 cache
+    // 会把旧会话节点污染进新会话；提前 merge 又会把上次留存的 cache（如果有）
+    // 追加到末尾。等过渡期结束再让 cache 介入即可。
+    if (this.isInOutlineCacheTransition()) {
+      return outline
+    }
+
     this.recordTurnDocumentOrders(turnAnchors)
     this.updateChatGPTOutlineCache(outline, turnAnchors)
 
