@@ -44,6 +44,62 @@ const DELETE_REASON = {
   API_NOT_FOUND_BUT_VISIBLE: "delete_api_not_found_but_visible",
 } as const
 
+const KNOWN_LANGUAGES = new Set([
+  "yaml",
+  "yml",
+  "json",
+  "js",
+  "javascript",
+  "ts",
+  "typescript",
+  "py",
+  "python",
+  "bash",
+  "sh",
+  "shell",
+  "html",
+  "css",
+  "sql",
+  "cpp",
+  "c++",
+  "c",
+  "cs",
+  "csharp",
+  "java",
+  "go",
+  "rust",
+  "php",
+  "rb",
+  "ruby",
+  "pl",
+  "perl",
+  "swift",
+  "kotlin",
+  "scala",
+  "xml",
+  "md",
+  "markdown",
+  "diff",
+  "dockerfile",
+  "ini",
+  "toml",
+  "powershell",
+  "ps1",
+  "r",
+  "dart",
+  "groovy",
+  "haskell",
+  "lua",
+  "objectivec",
+  "objc",
+  "ocaml",
+  "tex",
+  "latex",
+  "vhdl",
+  "verilog",
+  "wasm",
+])
+
 const CHATGPT_MODEL_SELECTOR_BUTTON_SELECTORS = [
   // 新版 ChatGPT（2025 改版）：Composer 区域的 Pill 模型切换按钮
   'button[class*="__composer-pill"][aria-haspopup="menu"]',
@@ -1071,6 +1127,27 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     const clone = textContainer.cloneNode(true) as HTMLElement
     clone.querySelectorAll(".sr-only").forEach((node) => node.remove())
+
+    // 纠正 ChatGPT 官方对用户问题中代码块的不规范渲染：
+    // 新版 ChatGPT 可能会把 ```yaml 渲染为 <code>yaml\nflag: false</code> 且无 language-* 类名。
+    clone.querySelectorAll("pre code").forEach((codeEl) => {
+      if (codeEl.className.includes("language-")) {
+        return
+      }
+
+      const text = codeEl.textContent || ""
+      const lines = text.split("\n")
+      if (lines.length > 1) {
+        const firstLine = lines[0].trim().toLowerCase()
+        const secondLine = lines[1].trim().toLowerCase()
+
+        // 首行是已知语言，且第二行不是已知语言（为了防范列举语言的普通列表如 python\njava\njs 被误伤）
+        if (KNOWN_LANGUAGES.has(firstLine) && !KNOWN_LANGUAGES.has(secondLine)) {
+          codeEl.className = `language-${firstLine}`
+          codeEl.textContent = lines.slice(1).join("\n")
+        }
+      }
+    })
 
     const markdown = htmlToMarkdown(clone).trim()
     if (markdown) {
