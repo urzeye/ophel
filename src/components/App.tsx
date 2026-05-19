@@ -2293,8 +2293,14 @@ export const App = () => {
       const refreshInterval = setInterval(() => {
         outlineManager.refresh()
       }, 2000)
+      // SPA 路由变化：立刻让大纲面板清掉上一个会话的内容、并安排几次错峰 refresh，
+      // 避免切换到新对话后大纲面板仍在显示旧对话条目。modules-init.ts 会在
+      // popstate / pushState / replaceState 时 dispatch "gh-url-change"。
+      const onUrlChange = () => outlineManager.handleUrlChange()
+      window.addEventListener("gh-url-change", onUrlChange)
       return () => {
         clearInterval(refreshInterval)
+        window.removeEventListener("gh-url-change", onUrlChange)
         conversationManager?.destroy()
       }
     }

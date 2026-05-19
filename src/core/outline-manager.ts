@@ -584,6 +584,29 @@ export class OutlineManager {
     }
   }
 
+  /**
+   * SPA 路由变化时调用：立即清空当前 tree，避免 UI 上一闪而过的旧对话大纲；
+   * 然后用几次错峰 refresh 适配 ChatGPT 等站点 DOM 切换的异步性
+   * （pushState 是同步的，但 React 重新渲染新对话的 DOM 是异步的——
+   * 立即 refresh 抓到的还是旧 DOM，所以排几个延迟点）。
+   */
+  handleUrlChange(): void {
+    this.tree = []
+    this.flatItems = []
+    this.flatNodes = []
+    this.scrollNodes = []
+    this.scrollPositions = []
+    this.scrollHeights = []
+    this.scrollPositionsStale = true
+    this.treeKey = ""
+    this.levelCounts = {}
+    this.notify()
+    // 几次延迟 refresh：覆盖站点从慢到快的 DOM 渲染节奏
+    for (const delay of [80, 250, 600, 1200]) {
+      setTimeout(() => this.refresh(), delay)
+    }
+  }
+
   private _doRefresh(overrideLevel?: number) {
     // Read showWordCount from live settings store to pick up changes without page refresh
     const liveSettings = useSettingsStore.getState().settings

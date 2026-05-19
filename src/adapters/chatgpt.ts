@@ -1297,20 +1297,42 @@ export class ChatGPTAdapter extends SiteAdapter {
         // 罕见兜底：连一个 turn shell 都找不到（站点结构变更/旧版）。退回到当前可见快照。
         recordSnapshots(this.readVisibleExportMessageSnapshots(scrollContainer))
       } else {
+        // First pass：按 conversation-turn-N 顺序逐个滚动 / 抓取
         for (const turn of turns) {
           if (!this.turnHasMountedMessage(turn)) {
-            try {
-              turn.scrollIntoView({
-                block: "center",
-                behavior: "instant",
-              } as ScrollIntoViewOptions)
-            } catch {
-              turn.scrollIntoView({ block: "center" })
-            }
+            this.scrollTurnIntoView(turn)
             scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
-            await this.waitForTurnMessageMounted(turn, 600)
+            await this.waitForTurnMessageMounted(turn, 900)
           }
-          recordSnapshots(this.extractTurnExportSnapshots(turn, null))
+          if (this.turnHasMountedMessage(turn)) {
+            recordSnapshots(this.extractTurnExportSnapshots(turn, null))
+            // **关键**：每个 turn 在挂载状态下立即把 user / heading 写入大纲缓存，
+            // 不能等到全部 collect 完再统一抓——ChatGPT 在抓取过程中会 mount + unmount，
+            // 等到 finally 时大量 turn 已经被卸载，extractOutline 抓不到了。
+            this.absorbTurnIntoOutlineCache(turn)
+          }
+        }
+
+        // Retry pass：第一遍没挂载成功的 turn 给更长 timeout 再试一次
+        const collectedTurnIds = this.extractCollectedTurnIds(collected)
+        const missingTurns = turns.filter((turn) => {
+          const turnId =
+            turn.getAttribute("data-turn-id") || turn.getAttribute("data-turn-id-container") || ""
+          return turnId.length > 0 && !collectedTurnIds.has(turnId)
+        })
+
+        if (missingTurns.length > 0) {
+          // 给 ChatGPT 喘口气；连续快速滚动可能让 IntersectionObserver 处理不过来
+          await this.sleep(200)
+          for (const turn of missingTurns) {
+            this.scrollTurnIntoView(turn)
+            scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
+            await this.waitForTurnMessageMounted(turn, 1800)
+            if (this.turnHasMountedMessage(turn)) {
+              recordSnapshots(this.extractTurnExportSnapshots(turn, null))
+              this.absorbTurnIntoOutlineCache(turn)
+            }
+          }
         }
       }
     } finally {
@@ -1377,6 +1399,121 @@ export class ChatGPTAdapter extends SiteAdapter {
       await this.sleep(50)
     }
     return false
+  }
+
+  /** 容错地把 turn 滚到视口中央。 */
+  private scrollTurnIntoView(turn: HTMLElement): void {
+    try {
+      turn.scrollIntoView({
+        block: "center",
+        behavior: "instant",
+      } as ScrollIntoViewOptions)
+    } catch {
+      turn.scrollIntoView({ block: "center" })
+    }
+  }
+
+  /** 从已 collected 的 snapshot.turnKey（形如 `user:turn:<id>` / `assistant:turn:<id>`）反查出 turnId 集合。 */
+  private extractCollectedTurnIds(
+    collected: Map<string, ChatGPTExportMessageSnapshot>,
+  ): Set<string> {
+    const ids = new Set<string>()
+    for (const key of collected.keys()) {
+      const match = /^(?:user|assistant):turn:(.+)$/.exec(key)
+      if (match) ids.add(match[1])
+    }
+    return ids
+  }
+
+  /**
+   * 把当前 turn 的用户提问 / 标题节点写入 OutlineManager 共享的缓存。
+   *
+   * 关键点：必须在每个 turn 仍处于挂载状态时立刻写入，**不能等到 collect 全部
+   * 结束后再统一 extractOutline()**。ChatGPT 在 collect 流程中会一边 mount
+   * 我们刚滚到的 turn、一边 unmount 上一个 turn；等遍历完，大部分 turn 的真实
+   * message 节点已经被卸载到只剩空 section 占位，extractOutline 抓不到，
+   * 大纲就缺一大段（用户报告的"导出后仍少 13 轮"由此而来）。
+   * 写进 outlineItemCache 之后，OutlineManager 下次 refresh 时通过
+   * mergeCachedChatGPTOutlineItems 就能拼回完整大纲。
+   */
+  private absorbTurnIntoOutlineCache(turn: HTMLElement): void {
+    const turnId =
+      turn.getAttribute("data-turn-id") || turn.getAttribute("data-turn-id-container") || null
+
+    if (turnId && !this.outlineTurnFirstSeenIndex.has(turnId)) {
+      this.outlineTurnFirstSeenIndex.set(turnId, this.outlineTurnFirstSeenCounter++)
+    }
+    const firstSeenTurnIndex =
+      turnId && this.outlineTurnFirstSeenIndex.has(turnId)
+        ? (this.outlineTurnFirstSeenIndex.get(turnId) as number)
+        : Number.MAX_SAFE_INTEGER
+
+    // user query：用 data-message-id 作为缓存 key，与 extractOutline 同结构
+    const userMessages = Array.from(
+      turn.querySelectorAll('[data-message-author-role="user"]'),
+    ).filter((element): element is HTMLElement => element instanceof HTMLElement)
+    for (const message of userMessages) {
+      const msgId =
+        message.getAttribute("data-message-id") ||
+        message.closest("[data-message-id]")?.getAttribute("data-message-id") ||
+        ""
+      if (!msgId) continue
+      const rawText = this.extractUserQueryText(message).trim()
+      if (!rawText) continue
+      let text = rawText
+      let isTruncated = false
+      if (text.length > 200) {
+        text = text.substring(0, 200)
+        isTruncated = true
+      }
+      this.outlineItemCache.set(msgId, {
+        id: msgId,
+        level: 0,
+        text,
+        turnId,
+        firstSeenTurnIndex,
+        orderInTurn: 0,
+        isUserQuery: true,
+        isTruncated,
+      })
+    }
+
+    // assistant 内的 heading：ID 形如 `msgId::tag-text::count`
+    const assistantMessages = Array.from(
+      turn.querySelectorAll('[data-message-author-role="assistant"]'),
+    ).filter((element): element is HTMLElement => element instanceof HTMLElement)
+    for (const message of assistantMessages) {
+      const msgId =
+        message.getAttribute("data-message-id") ||
+        message.closest("[data-message-id]")?.getAttribute("data-message-id") ||
+        ""
+      if (!msgId) continue
+
+      const headings = Array.from(message.querySelectorAll("h1,h2,h3,h4,h5,h6"))
+      const counts: Record<string, number> = {}
+      let orderInTurn = 0
+      for (const heading of headings) {
+        if (this.shouldSkipElement(heading)) continue
+        if (this.isInRenderedMarkdownContainer(heading)) continue
+        const tagName = heading.tagName.toLowerCase()
+        const text = (heading.textContent || "").trim()
+        if (!text) continue
+
+        const key = `${tagName}-${text}`
+        const count = counts[key] || 0
+        counts[key] = count + 1
+        const headingId = `${msgId}::${key}::${count}`
+        this.outlineItemCache.set(headingId, {
+          id: headingId,
+          level: parseInt(tagName.charAt(1), 10),
+          text,
+          turnId,
+          firstSeenTurnIndex,
+          orderInTurn: orderInTurn++,
+          isUserQuery: false,
+        })
+      }
+    }
   }
 
   private readVisibleExportMessageSnapshots(container: ParentNode): ChatGPTExportMessageSnapshot[] {
