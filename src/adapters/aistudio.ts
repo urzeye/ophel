@@ -2677,76 +2677,120 @@ export class AIStudioAdapter extends SiteAdapter {
   ): Promise<AIStudioExportMessageSnapshot[]> {
     const originalScrollTop = scrollContainer.scrollTop
     const collected = new Map<string, AIStudioExportMessageSnapshot>()
+    const includeThoughts = this.shouldIncludeThoughtsInExport()
 
-    const recordSnapshots = (
-      snapshots: AIStudioExportMessageSnapshot[],
-      forcedOrder?: number,
-    ): void => {
-      for (const snapshot of snapshots) {
-        const next =
-          typeof forcedOrder === "number"
-            ? {
-                ...snapshot,
-                order:
-                  snapshot.role === AISTUDIO_EXPORT_ROLE_USER ? forcedOrder : forcedOrder + 0.5,
-              }
-            : snapshot
-        const existing = collected.get(next.turnKey)
-        if (!existing) {
-          collected.set(next.turnKey, next)
-          continue
+    const recordSnapshot = (snapshot: AIStudioExportMessageSnapshot): void => {
+      if (!snapshot.content) return
+      const existing = collected.get(snapshot.turnKey)
+      if (!existing) {
+        collected.set(snapshot.turnKey, snapshot)
+        return
+      }
+      collected.set(snapshot.turnKey, {
+        ...existing,
+        order: Math.min(existing.order, snapshot.order),
+        content: this.mergeSnapshotContent(existing.content, snapshot.content),
+      })
+    }
+
+    /**
+     * 抓一个 user entry 关联的所有内容：当前 user turn 自己 + 它后面、下一个
+     * user entry 之前的所有 model turn。后者可能由多个独立的 ms-chat-turn 组成
+     * （AI Studio 的"已思考"过程被渲染为一个 thought-only model turn，紧跟一个
+     * 真正的 reply model turn——demo.html 中明确可见）。
+     */
+    const captureEntry = async (
+      entry: AIStudioScrollbarQueryEntry,
+      nextEntry: AIStudioScrollbarQueryEntry | undefined,
+      userTimeoutMs: number,
+      modelDelayMs: number,
+    ): Promise<void> => {
+      let userTurn = this.getMountedTurnForEntry(entry)
+      if (!userTurn) {
+        userTurn = await this.revealAndWaitForEntry(entry, userTimeoutMs)
+      }
+      if (!userTurn) return
+
+      // user snapshot
+      const userContainer = this.getUserContainerForTurn(userTurn)
+      if (userContainer) {
+        const userContent = this.normalizeExportMessageContent(
+          this.extractUserQueryMarkdown(userContainer),
+        )
+        if (userContent) {
+          recordSnapshot({
+            role: AISTUDIO_EXPORT_ROLE_USER,
+            turnKey: `user:${entry.turnId}`,
+            order: entry.index,
+            content: userContent,
+          })
         }
-        collected.set(next.turnKey, {
-          ...existing,
-          order: Math.min(existing.order, next.order),
-          content: this.mergeSnapshotContent(existing.content, next.content),
+      }
+
+      // 给 CDK 一些时间把当前 user 紧邻的 model turn 也挂载好——`click(entry.button)`
+      // 通常会把 user 滚到视口顶部，model turn 在它下方需要 1~2 帧才能进入 viewport。
+      await this.sleep(modelDelayMs)
+
+      const modelTurns = this.collectModelTurnsAfterUser(userTurn, nextEntry)
+      const assistantContent = this.buildAssistantContentFromModelTurns(modelTurns, includeThoughts)
+      if (assistantContent) {
+        recordSnapshot({
+          role: AISTUDIO_EXPORT_ROLE_ASSISTANT,
+          turnKey: `assistant:${entry.turnId}`,
+          order: entry.index + 0.5,
+          content: assistantContent,
         })
       }
     }
 
     try {
-      // First pass：按 entry 顺序逐个挂载并抓取
-      for (const entry of entries) {
-        const turn = this.getMountedTurnForEntry(entry)
-        if (turn) {
-          recordSnapshots(this.extractExportSnapshotsFromTurn(turn, scrollContainer), entry.index)
-          continue
-        }
+      // First pass：按 entry 顺序逐个挂载并抓取（user + 它后面的所有 model turn）
+      for (let i = 0; i < entries.length; i += 1) {
+        await captureEntry(entries[i], entries[i + 1], 900, 150)
+      }
 
-        const mounted = await this.revealAndWaitForEntry(entry, 900)
-        if (mounted) {
-          recordSnapshots(
-            this.extractExportSnapshotsFromTurn(mounted, scrollContainer),
-            entry.index,
-          )
+      // Retry pass：第一遍 user 没拿到的 entry 给更长 timeout 再试
+      const missingUserEntries = entries.filter((entry) => !collected.has(`user:${entry.turnId}`))
+      if (missingUserEntries.length > 0) {
+        await this.sleep(200)
+        for (const entry of missingUserEntries) {
+          const idx = entries.indexOf(entry)
+          await captureEntry(entry, entries[idx + 1], 2000, 250)
         }
       }
 
-      // Retry pass：第一遍没挂载成功的 entry 给更长 timeout 再试
-      const missingEntries = entries.filter(
-        (entry) => !this.hasEntryBeenCollected(collected, entry),
+      // Assistant retry：user 抓到但 assistant 空（model turn 没挂载完整）的 entry，
+      // 再尝试一次，给 model turn 更长的等待时间。
+      const missingAssistantEntries = entries.filter(
+        (entry) =>
+          collected.has(`user:${entry.turnId}`) && !collected.has(`assistant:${entry.turnId}`),
       )
-      if (missingEntries.length > 0) {
-        await this.sleep(200)
-        for (const entry of missingEntries) {
-          const turn = this.getMountedTurnForEntry(entry)
-          if (turn) {
-            recordSnapshots(this.extractExportSnapshotsFromTurn(turn, scrollContainer), entry.index)
-            continue
-          }
-          const mounted = await this.revealAndWaitForEntry(entry, 2000)
-          if (mounted) {
-            recordSnapshots(
-              this.extractExportSnapshotsFromTurn(mounted, scrollContainer),
-              entry.index,
-            )
-          }
+      for (const entry of missingAssistantEntries) {
+        const idx = entries.indexOf(entry)
+        const nextEntry = entries[idx + 1]
+        // 主动 reveal 一次确保 user 在视口里，CDK 会把后面紧邻的 model 一并挂载
+        await this.revealAndWaitForEntry(entry, 1500)
+        await this.sleep(350)
+        const userTurn = this.getMountedTurnForEntry(entry)
+        if (!userTurn) continue
+        const modelTurns = this.collectModelTurnsAfterUser(userTurn, nextEntry)
+        const assistantContent = this.buildAssistantContentFromModelTurns(
+          modelTurns,
+          includeThoughts,
+        )
+        if (assistantContent) {
+          recordSnapshot({
+            role: AISTUDIO_EXPORT_ROLE_ASSISTANT,
+            turnKey: `assistant:${entry.turnId}`,
+            order: entry.index + 0.5,
+            content: assistantContent,
+          })
         }
       }
 
       // Fallback pass：仍然挂载失败的 entry，用 scrollbar aria-label 文本兜底，
       // 避免某条 user 提问从导出中彻底消失。
-      const stillMissing = entries.filter((entry) => !this.hasEntryBeenCollected(collected, entry))
+      const stillMissing = entries.filter((entry) => !collected.has(`user:${entry.turnId}`))
       for (const entry of stillMissing) {
         const fallbackText = this.buildFallbackUserContentFromEntry(entry)
         if (!fallbackText) continue
@@ -2763,6 +2807,119 @@ export class AIStudioAdapter extends SiteAdapter {
     }
 
     return Array.from(collected.values()).sort((a, b) => a.order - b.order)
+  }
+
+  /**
+   * 从给定的 user ms-chat-turn 起，沿 nextElementSibling 遍历，收集所有紧接其后
+   * 的 model ms-chat-turn，遇到下一个 user ms-chat-turn（或 stopEntry 对应的
+   * 已挂载 turn）就停。中间被 CDK 卸载的 turn 在 DOM 里直接不存在，nextElementSibling
+   * 自动跳过它们——这是 AI Studio 不像 ChatGPT 留 shell 占位带来的副作用。
+   */
+  private collectModelTurnsAfterUser(
+    userTurn: HTMLElement,
+    stopEntry: AIStudioScrollbarQueryEntry | undefined,
+  ): HTMLElement[] {
+    const modelTurns: HTMLElement[] = []
+    const stopId = stopEntry ? this.getTurnControlId(stopEntry.turnId) : ""
+
+    let current = userTurn.nextElementSibling
+    while (current) {
+      if (!(current instanceof HTMLElement)) {
+        current = current.nextElementSibling
+        continue
+      }
+      if (current.tagName.toLowerCase() !== "ms-chat-turn") {
+        current = current.nextElementSibling
+        continue
+      }
+
+      if (stopId && current.id === stopId) break
+
+      // 已被快照模式接管的占位节点不算
+      if (current.closest(`[${AISTUDIO_EXPORT_ROOT_ATTR}]`)) {
+        current = current.nextElementSibling
+        continue
+      }
+
+      const isUser = !!current.querySelector(".chat-turn-container.user")
+      if (isUser) {
+        // 遇到另一个 user turn（如 stopEntry 的 user，或意外插入的 user）——结束
+        break
+      }
+
+      const isModel = !!current.querySelector(".chat-turn-container.model")
+      if (isModel) {
+        modelTurns.push(current)
+      }
+
+      current = current.nextElementSibling
+    }
+
+    return modelTurns
+  }
+
+  /**
+   * 把 user 后面跟随的一组 model turn 合并成单条 assistant 内容。
+   *
+   * AI Studio 把"思考过程"和"正式回复"切成**两个独立的 ms-chat-turn**：
+   *   - 前者是 thought-only turn：`<ms-prompt-chunk>` 直接子级只有 `<ms-thought-chunk>`，
+   *     没有 `<ms-text-chunk>`；
+   *   - 后者是 reply turn：内部有非 thought 的 `<ms-text-chunk>` 承载正文。
+   *
+   * 如果按旧逻辑每个 turn 各产出一条 assistant snapshot，用户会在导出里看到同一个
+   * 提问下挂着两个连续的"AI 回复"。这里把它们合并：
+   *   - includeThoughts=false：跳过 thought-only turn，只保留 reply 正文；
+   *   - includeThoughts=true：thought 用 blockquote 形式拼到 reply 前面。
+   */
+  private buildAssistantContentFromModelTurns(
+    turns: HTMLElement[],
+    includeThoughts: boolean,
+  ): string {
+    if (turns.length === 0) return ""
+
+    const parts: string[] = []
+    for (const turn of turns) {
+      const modelContainer = turn.querySelector(".chat-turn-container.model") as HTMLElement | null
+      if (!modelContainer) continue
+
+      const isThoughtOnly = this.isThoughtOnlyModelTurn(modelContainer)
+      if (isThoughtOnly) {
+        if (!includeThoughts) continue
+        const thoughtBlocks = this.extractThoughtBlockquotesFromElement(modelContainer)
+        thoughtBlocks.forEach((block) => parts.push(block))
+        continue
+      }
+
+      // reply turn：走 extractAssistantResponseText（它自身会处理 thought 过滤，
+      // 但这里 model container 没有 thought-chunk，等同于纯正文提取）。
+      const fragments = this.getAssistantFragmentsForTurn(turn)
+      const fragmentParts: string[] = []
+      for (const fragment of fragments) {
+        const content = this.normalizeExportMessageContent(
+          this.extractAssistantResponseText(fragment),
+        )
+        if (content) fragmentParts.push(content)
+      }
+      if (fragmentParts.length > 0) {
+        parts.push(fragmentParts.join("\n\n"))
+      }
+    }
+
+    return parts.join("\n\n")
+  }
+
+  /**
+   * 判断 model turn 是否只包含思考内容（无正文）。
+   * 检查依据：model container 内全部 ms-text-chunk 是否都嵌套在 ms-thought-chunk 内。
+   * 见 demo.html turn 2 (thought-only) 与 turn 3 (reply) 的结构对比。
+   */
+  private isThoughtOnlyModelTurn(modelContainer: HTMLElement): boolean {
+    const textChunks = Array.from(modelContainer.querySelectorAll("ms-text-chunk"))
+    if (textChunks.length === 0) {
+      // 完全空 turn（streaming 中？）：也按 thought-only 处理，至少不会让它产出空内容
+      return true
+    }
+    return textChunks.every((chunk) => chunk.closest(AISTUDIO_THOUGHT_SELECTOR) !== null)
   }
 
   /** 时间线不可用时的兜底：保留旧版 step 扫描 + repair 流程。 */
@@ -2829,14 +2986,6 @@ export class AIStudioAdapter extends SiteAdapter {
       await this.sleep(60)
     }
     return null
-  }
-
-  private hasEntryBeenCollected(
-    collected: Map<string, AIStudioExportMessageSnapshot>,
-    entry: AIStudioScrollbarQueryEntry,
-  ): boolean {
-    const userKey = `user:${entry.turnId}`
-    return collected.has(userKey) && Boolean(collected.get(userKey)?.content)
   }
 
   /**
@@ -2908,6 +3057,18 @@ export class AIStudioAdapter extends SiteAdapter {
 
     const assistantFragments = this.getAssistantFragmentsForTurn(turn)
     if (assistantFragments.length > 0) {
+      // step-sweep fallback 路径不像 scrollbar 路径那样能把整组 model turn 一起处理，
+      // 这里只能逐 turn 来。AI Studio 把"思考"放在独立的 thought-only ms-chat-turn 里，
+      // 在 includeThoughts=false 时这种 turn 应当被丢弃；否则它会变成一条独立的
+      // "AI 回复"夹在 user 和真正回复中间。
+      // includeThoughts=true 时仍按现行行为产出 thought blockquote（用户至少能拿到内容）。
+      const modelContainer = turn.querySelector(".chat-turn-container.model") as HTMLElement | null
+      if (modelContainer && this.isThoughtOnlyModelTurn(modelContainer)) {
+        if (!this.shouldIncludeThoughtsInExport()) {
+          return snapshots
+        }
+      }
+
       let content = ""
       assistantFragments.forEach((fragment) => {
         const fragmentContent = this.normalizeExportMessageContent(

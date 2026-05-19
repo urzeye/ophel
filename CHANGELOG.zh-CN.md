@@ -18,6 +18,7 @@
 - **修复了 ChatGPT 大纲显示不全及跳转异常的问题**：解决了在长对话中大纲内容缺失、点击大纲条目无法正确跳转的问题；同时修复了切换不同对话时，大纲显示延迟、内容错乱或出现空白占位标题的情况。(#402)
 - **解决了 ChatGPT 导出长对话时内容重复、乱序或大段缺失的问题**：优化了导出机制，确保长达数十轮的对话能够按正确的先后顺序被完整导出，不再出现内容遗漏、顺序错乱或同一条消息被重复导出的现象。
 - **AI Studio 长会话导出有 turn 缺漏**：AI Studio 把卸出视口的 `ms-chat-turn` 整个从 DOM 移除（连占位空壳都不留），原先的 `scrollTop` 步进扫描遇到一屏装不下的大 turn 时容易直接跳过整轮对话。现在改用 AI Studio 自带的侧边时间线（`ms-items-scrollbar` / `ms-prompt-scrollbar`）作为对话全集——每条用户提问都在时间线里有稳定 entry 和"点击跳转"按钮。导出按 entry 顺序逐个 click 按钮（这是 AI Studio 自己用的导航接口，比手动设 scrollTop 可靠得多）触发虚拟列表挂载、轮询直到 `ms-chat-turn` 子树就绪、再抓取。第二轮 retry 用更长超时覆盖挂载慢的 turn；最终仍没挂载到的 entry 用缓存 / `aria-label` 文本生成兜底 snapshot，不再让某轮对话从导出里彻底消失。排序键直接用每条 entry 的单调时间线 index，不再用受虚拟列表布局变化干扰的 `scrollTop + rect.top`，避免长会话乱序。短到不渲染时间线的会话仍走原来的步进扫描兜底。
+- **AI Studio 导出出现重复 AI 回复 + 用户提问丢失**：时间线驱动版本落地后又冒出两个新问题：AI Studio 把"已思考"折叠面板和真正的回复渲染成**两个并列的 `ms-chat-turn`**（thought-only turn → reply turn 紧挨着）。之前的时间线 collector 只对当前 user turn 调用 `extractExportSnapshotsFromTurn`，根本没访问后续 model turn，所以回复整段丢失；旧版步进扫描则把 thought-only turn 和 reply turn 当成两条独立的 assistant 快照——用户因此看到同一个提问下挂着两条连续的"AI 回复"。用户提问也"看似消失"，是因为它对应的回复没了，破坏了用户视觉上的成对关系。现在 collector 从每个 user turn 出发沿 `nextElementSibling` 一直走到下一个 user（或时间线 `stopEntry`），把中间的所有 model turn 合并成**一条** assistant 快照：`includeThoughts=false` 直接丢弃 thought-only turn；`includeThoughts=true` 把 thought 内容以 `> [Thoughts]` blockquote 拼到正式回复前面。步进扫描兜底路径也加上了同样的 thought-only 过滤，短会话不再出现两条连发的 AI 回复。
 
 ---
 
