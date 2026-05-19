@@ -15,14 +15,8 @@
 
 ### 🐛 问题修复
 
-- **ChatGPT 大纲在 1.0.50 虚拟滚动兜底后仍然不全**：原缓存合并仅在「外壳数量 > 角色节点数量」时触发，无法覆盖外壳自身也被卸载的情况。现在缓存会记录每个 turn 首次出现的 DOM 顺序，外壳消失后仍能维持稳定排序；点击大纲条目时优先用 `[data-message-id]` 找回真实节点，找不到再滚动到 shell 等待 ChatGPT 重新挂载，避免跳转到失效占位符。(#402)
-- **ChatGPT 导出出现用户提问 / AI 回复重复**：2025 年 ChatGPT 改版后，一个 `<section data-turn="assistant">` 内会同时存在多个 `[data-message-author-role="assistant"]` 节点（「已思考 Ns」折叠按钮前后各一个），原先按节点抓取会把同一条回复导出多次。导出前现在会滚动遍历整个会话、按 `turnId` 去重收集快照，并把同一 turn 内的 assistant 文本按顺序合并成一条；右侧 side rail 的深度思考内容本就不在主 DOM 中，会被自动过滤掉。
-- **ChatGPT 导出在长会话中顺序错乱**：原先按 `scrollTop + rect.top` 排序，但虚拟滚动期间外壳折叠到 `--last-known-height` 后 `scrollHeight` 会缩水，浏览器 scroll anchoring 又会重新对齐 `scrollTop`，导致同一坐标在不同采样时刻指向不同的 turn。在 20 轮以上的对话里表现为导出文档里突然出现连续几条用户提问或连续几条 AI 回复、整体顺序乱套。现在直接使用 ChatGPT 自带的 `data-testid="conversation-turn-N"` 编号排序——它由 ChatGPT 分配、单调递增、不受虚拟滚动影响。若极少数 turn 缺少该属性，则用 collect 阶段维护的 first-seen 计数器兜底。
-- **ChatGPT 导出在长会话中大段缺失**：约 60+ 轮的会话即使用了 v1.0.50 的大纲修复，导出时也只能抓到 20–30 条。原因是 ChatGPT 把每个 turn 的 `<section data-turn data-testid="conversation-turn-N">` 占位连同 `data-is-intersecting="false"` 的高度占位都保留在 DOM，但卸载了内部 `[data-message-author-role]` 内容。按 `scrollTop` 步进扫描需要依赖浏览器把每个落点保持稳定，但实际上 scroll anchoring 会反复修正位置，导致大量 shell 没机会被滚到视口中心、内容也就没机会被挂载。现在改为：导出前先一次性枚举所有 turn shell、按 `conversation-turn-N` 排序，然后逐个 `scrollIntoView({ block: "center" })` 触发挂载、等待真实消息节点出现、再抓取。已挂载的 turn 直接抓不需要滚动。采集完成后还会主动跑一次 `extractOutline`，把每个 turn 的用户提问 / 标题都写入大纲缓存——导出结束后大纲面板会立刻显示完整内容，不用再等下一轮扫描。
-- **ChatGPT 导出后大纲仍然漏掉一部分对话**：collect 走到第 N 个 turn 时，ChatGPT 会默默把前面已经看过的 turn 卸载掉；之前依赖 collect 结束后再统一跑一次 `extractOutline`，那一刻 DOM 里只剩当前视口附近的 turn，缓存还是不完整（实测 65 条用户提问只能恢复 52 条）。现在每个 turn 在挂载状态下立刻把它的用户提问 / 标题写进 `outlineItemCache`，赶在 ChatGPT 卸载它之前。另外加了一轮 retry，对第一次没能在 900ms 内挂载的 turn 用更长的 1.8s 超时再试一次。
-- **SPA 切换对话后大纲面板还显示上一个对话**：从对话 A 切到对话 B（侧边栏点击、浏览器后退等）后，大纲要等下一轮 2s 轮询 refresh 才更新，期间仍在显示 A 的树。`modules-init.ts` 早就在 `popstate` / `pushState` / `replaceState` 时 dispatch 了 `gh-url-change`，但大纲流程并没有监听。OutlineManager 现在提供 `handleUrlChange()`：立即清空 tree/flat 状态并通知订阅者，然后排几次错峰的 refresh 覆盖 ChatGPT 这种异步 DOM 切换。`App.tsx` 把它接到 `gh-url-change` 事件上。
-- **SPA 切换对话后新会话大纲后面追加了上一个对话的条目**：上一条修复后又出现一个更隐蔽的问题——ChatGPT 切换 URL 是同步的，但替换会话 DOM 是异步的。URL 一变 cache key（依赖 `pathname`）就跟着变到新会话，但前几次 refresh 抓到的还是旧会话 DOM 的节点，于是旧会话的用户提问 / 标题就被写进了"新会话的 cache"。等真正的新会话内容到位时，`mergeCachedChatGPTOutlineItems` 会把这些孤儿 entry 再追加到大纲末尾，造成"新对话内容 + 旧对话内容"的拼接。现在 cache session 每次 rotate（仅 SPA 切换会触发，首次初始化不会）都会开启 2 秒过渡期，期间 `extractOutline` 只返回当前 DOM 内容、不读不写 cache，让旧 DOM 帧无法污染 cache。
-- **ChatGPT 大纲出现一个空白的一级标题**：ChatGPT 流式渲染时会先插入空 `<h2></h2>` 占位再写入文本，那一瞬间被抓到的「空 heading」会因为缓存 ID 含文本而与后来真正的标题不匹配，残留在缓存里、被回填到大纲，让后续 h3 被错误地挂在这个无名节点下。现在收集大纲与缓存合并时都会跳过空文本 heading。
+- **修复了 ChatGPT 大纲显示不全及跳转异常的问题**：解决了在长对话中大纲内容缺失、点击大纲条目无法正确跳转的问题；同时修复了切换不同对话时，大纲显示延迟、内容错乱或出现空白占位标题的情况。(#402)
+- **解决了 ChatGPT 导出长对话时内容重复、乱序或大段缺失的问题**：优化了导出机制，确保长达数十轮的对话能够按正确的先后顺序被完整导出，不再出现内容遗漏、顺序错乱或同一条消息被重复导出的现象。
 
 ---
 
