@@ -1247,47 +1247,85 @@ export class ChatGPTAdapter extends SiteAdapter {
     this.exportIncludeThoughtsOverride = null
   }
 
+  /**
+   * 按 turn shell 目标驱动的快照采集。
+   *
+   * 关键观察（参考 new4.html，一段约 60 轮的会话有 135 个 turn 全部在 DOM 里）：
+   * - 即便是离屏 turn，ChatGPT 也保留它的 `<section data-turn data-testid="conversation-turn-N">` 占位
+   *   以及外层 `data-is-intersecting="false"` + `--last-known-height` 的高度占位 div；
+   * - 离屏 turn 的 section **是空的**，`[data-message-author-role]` 节点不在 DOM 里——
+   *   仅当用户滚动到附近 ChatGPT 才会真正挂载内容。
+   * - 旧方案按 `scrollTop = top` 步进扫描，受 scroll anchoring 干扰会跳过大量 turn
+   *   （60 轮的会话只抓到 30 条 user 提问就是这样来的）。
+   *
+   * 因此改成：先一次性把所有 turn shell 拉出来按 conversation-turn-N 排序，
+   * 然后逐个 `scrollIntoView({ block: "center" })` 触发挂载，每个 turn 单独等待
+   * 内容出现再抓取。已挂载的 turn 跳过滚动直接抓，把 N 次滚动开销摊平到不滚的部分。
+   */
   private async collectExportMessageSnapshots(
     scrollContainer: HTMLElement,
   ): Promise<ChatGPTExportMessageSnapshot[]> {
-    const positions = this.buildExportSnapshotPositions(scrollContainer)
     const originalScrollTop = scrollContainer.scrollTop
     const collected = new Map<string, ChatGPTExportMessageSnapshot>()
-    // 兜底排序键：每个 turnKey 在 collect 期间第一次被看到时分配一个单调递增序号。
-    // 仅在 turn 缺少 conversation-turn-N（snapshot.order === MAX_SAFE_INTEGER）时使用，
-    // 用来确保即便 scroll anchoring 让 first-seen 顺序与对话顺序不一致也能稳定排序。
+    // 兜底排序键：仅在某 turn 缺少 conversation-turn-N（snapshot.order === MAX_SAFE_INTEGER）时使用
     const firstSeenOrder = new Map<string, number>()
     let firstSeenCounter = 0
 
+    const recordSnapshots = (snapshots: ChatGPTExportMessageSnapshot[]): void => {
+      for (const snapshot of snapshots) {
+        if (!firstSeenOrder.has(snapshot.turnKey)) {
+          firstSeenOrder.set(snapshot.turnKey, firstSeenCounter++)
+        }
+        const existing = collected.get(snapshot.turnKey)
+        if (!existing) {
+          collected.set(snapshot.turnKey, snapshot)
+          continue
+        }
+        const order = Math.min(existing.order, snapshot.order)
+        if (snapshot.content.length > existing.content.length) {
+          collected.set(snapshot.turnKey, { ...snapshot, order })
+        } else if (order !== existing.order) {
+          collected.set(snapshot.turnKey, { ...existing, order })
+        }
+      }
+    }
+
     try {
-      for (const top of positions) {
-        scrollContainer.scrollTop = top
-        scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
-        scrollContainer.getBoundingClientRect()
-        await this.sleep(120)
+      const turns = this.getAllTurnShellsSorted()
 
-        const batch = this.readVisibleExportMessageSnapshots(scrollContainer)
-        for (const snapshot of batch) {
-          if (!firstSeenOrder.has(snapshot.turnKey)) {
-            firstSeenOrder.set(snapshot.turnKey, firstSeenCounter++)
+      if (turns.length === 0) {
+        // 罕见兜底：连一个 turn shell 都找不到（站点结构变更/旧版）。退回到当前可见快照。
+        recordSnapshots(this.readVisibleExportMessageSnapshots(scrollContainer))
+      } else {
+        for (const turn of turns) {
+          if (!this.turnHasMountedMessage(turn)) {
+            try {
+              turn.scrollIntoView({
+                block: "center",
+                behavior: "instant",
+              } as ScrollIntoViewOptions)
+            } catch {
+              turn.scrollIntoView({ block: "center" })
+            }
+            scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
+            await this.waitForTurnMessageMounted(turn, 600)
           }
-
-          const existing = collected.get(snapshot.turnKey)
-          if (!existing) {
-            collected.set(snapshot.turnKey, snapshot)
-            continue
-          }
-          // 已存在：保留内容更长（更完整）的版本；order 取两次中"更具体"的（更小的，
-          // 因为 conversation-turn-N 一定小于 MAX_SAFE_INTEGER 这个 fallback）。
-          const order = Math.min(existing.order, snapshot.order)
-          if (snapshot.content.length > existing.content.length) {
-            collected.set(snapshot.turnKey, { ...snapshot, order })
-          } else if (order !== existing.order) {
-            collected.set(snapshot.turnKey, { ...existing, order })
-          }
+          recordSnapshots(this.extractTurnExportSnapshots(turn, null))
         }
       }
     } finally {
+      // 退出前主动让大纲缓存吸收一次本轮被 mount 过的所有 turn——
+      // 我们刚滚过每个 turn 的内容，这是最完整的状态；恢复 scrollTop 后 ChatGPT 会
+      // 重新卸载远端 turn，下一次 OutlineManager extract 时仅靠当前 DOM 又会变少，
+      // 这里主动跑一次 extractOutline 让 outlineItemCache 把每个 turn 的 user 提问 /
+      // heading 都记下来，大纲就能在导出后立即显示完整内容。
+      // includeUserQueries=true：写入所有 user query；mergeCachedChatGPTOutlineItems
+      // 会按调用方传入的 includeUserQueries 过滤渲染，所以不会污染显示。
+      try {
+        this.extractOutline(6, true, false)
+      } catch {
+        /* 不影响导出主流程 */
+      }
       scrollContainer.scrollTop = originalScrollTop
       scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
     }
@@ -1302,23 +1340,43 @@ export class ChatGPTAdapter extends SiteAdapter {
     })
   }
 
-  private buildExportSnapshotPositions(scrollContainer: HTMLElement): number[] {
-    const maxScroll = Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight)
-    const currentScrollTop = scrollContainer.scrollTop
+  /** 列出当前 DOM 中所有 turn 的 section，按 conversation-turn-N 升序。 */
+  private getAllTurnShellsSorted(): HTMLElement[] {
+    // scrollContainer 在 ChatGPT 上未必包含 #thread（它可能是后者的祖先 / 兄弟节点），
+    // 用响应容器选择器作为查询根更稳。
+    const root: ParentNode = document.querySelector(this.getResponseContainerSelector()) || document
+    const candidates = Array.from(
+      root.querySelectorAll('section[data-turn], [data-testid^="conversation-turn"]'),
+    ).filter((element): element is HTMLElement => {
+      if (!(element instanceof HTMLElement)) return false
+      if (element.closest(`[${CHATGPT_EXPORT_ROOT_ATTR}]`)) return false
+      if (element.closest(".gh-root, .gh-main-panel")) return false
+      return true
+    })
 
-    if (maxScroll <= 0) {
-      return [currentScrollTop]
+    // 嵌套去重：若候选 A 包含另一个候选 B，则保留 B
+    const innermost = candidates.filter(
+      (candidate) => !candidates.some((other) => other !== candidate && candidate.contains(other)),
+    )
+
+    return innermost.sort((a, b) => this.getExportTurnSortIndex(a) - this.getExportTurnSortIndex(b))
+  }
+
+  /** turn 是否已挂载真实内容（不是只剩 shell）。 */
+  private turnHasMountedMessage(turn: HTMLElement): boolean {
+    const message = turn.querySelector("[data-message-author-role]")
+    if (!(message instanceof HTMLElement)) return false
+    return Boolean(message.textContent && message.textContent.trim().length > 0)
+  }
+
+  /** scrollIntoView 触发后轮询等待 turn 内的真实 message 节点挂载好。 */
+  private async waitForTurnMessageMounted(turn: HTMLElement, timeoutMs: number): Promise<boolean> {
+    const deadline = Date.now() + timeoutMs
+    while (Date.now() < deadline) {
+      if (this.turnHasMountedMessage(turn)) return true
+      await this.sleep(50)
     }
-
-    const step = Math.max(160, Math.floor(scrollContainer.clientHeight * 0.75))
-    const positions = new Set<number>([0, currentScrollTop, maxScroll])
-
-    for (let top = 0; top < maxScroll; top += step) {
-      positions.add(top)
-    }
-    positions.add(maxScroll)
-
-    return Array.from(positions).sort((a, b) => a - b)
+    return false
   }
 
   private readVisibleExportMessageSnapshots(container: ParentNode): ChatGPTExportMessageSnapshot[] {
