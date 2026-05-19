@@ -2638,7 +2638,135 @@ export class AIStudioAdapter extends SiteAdapter {
     return element.hasAttribute(AISTUDIO_EXPORT_ROLE_ATTR)
   }
 
+  /**
+   * 收集导出快照。
+   *
+   * 长会话场景下 AI Studio 把卸载的 ms-chat-turn **整个**从 DOM 移除（不像
+   * ChatGPT 留空 section 占位），按 `scrollTop` 步进扫描很容易整段 turn 漏掉。
+   * 好在 AI Studio 自带 ms-items-scrollbar / ms-prompt-scrollbar 时间线，
+   * 上面有**所有 user 提问的全集**：每条 entry 有稳定 turnId、可点击的按钮
+   * （点了 AI Studio 会自己滚到并挂载对应 turn）、aria-label 文本快照。
+   *
+   * 因此策略：
+   *   1) 优先用时间线驱动——按 entry 顺序，未挂载就 click 按钮 + 等挂载，
+   *      抓 turn 内的 user / assistant snapshot；
+   *   2) 第一遍超时挂载的 turn 走 retry pass，timeout 拉长；
+   *   3) 仍挂载不到的 entry，用 scrollbar aria-label 兜底，给一条带"截断"标记
+   *      的 user-only snapshot——比直接吞掉这一轮要好；
+   *   4) 时间线不可用（短会话不渲染 scrollbar / 自定义版本无该组件）退回原
+   *      `scrollTop` step 扫描。
+   *
+   * order 直接用 entry.index（scrollbar 自然顺序，单调递增），不再用
+   * `scrollTop + rect.top`——后者在虚拟列表下不稳定。
+   */
   private async collectExportMessageSnapshots(
+    scrollContainer: HTMLElement,
+  ): Promise<AIStudioExportMessageSnapshot[]> {
+    const entries = this.getScrollbarQueryEntries()
+    if (entries.length === 0) {
+      // 没有时间线，退回原 step 扫描；保持长会话以外场景的兼容性
+      return this.collectExportMessageSnapshotsByScrollSweep(scrollContainer)
+    }
+
+    return this.collectExportMessageSnapshotsByScrollbar(scrollContainer, entries)
+  }
+
+  private async collectExportMessageSnapshotsByScrollbar(
+    scrollContainer: HTMLElement,
+    entries: AIStudioScrollbarQueryEntry[],
+  ): Promise<AIStudioExportMessageSnapshot[]> {
+    const originalScrollTop = scrollContainer.scrollTop
+    const collected = new Map<string, AIStudioExportMessageSnapshot>()
+
+    const recordSnapshots = (
+      snapshots: AIStudioExportMessageSnapshot[],
+      forcedOrder?: number,
+    ): void => {
+      for (const snapshot of snapshots) {
+        const next =
+          typeof forcedOrder === "number"
+            ? {
+                ...snapshot,
+                order:
+                  snapshot.role === AISTUDIO_EXPORT_ROLE_USER ? forcedOrder : forcedOrder + 0.5,
+              }
+            : snapshot
+        const existing = collected.get(next.turnKey)
+        if (!existing) {
+          collected.set(next.turnKey, next)
+          continue
+        }
+        collected.set(next.turnKey, {
+          ...existing,
+          order: Math.min(existing.order, next.order),
+          content: this.mergeSnapshotContent(existing.content, next.content),
+        })
+      }
+    }
+
+    try {
+      // First pass：按 entry 顺序逐个挂载并抓取
+      for (const entry of entries) {
+        const turn = this.getMountedTurnForEntry(entry)
+        if (turn) {
+          recordSnapshots(this.extractExportSnapshotsFromTurn(turn, scrollContainer), entry.index)
+          continue
+        }
+
+        const mounted = await this.revealAndWaitForEntry(entry, 900)
+        if (mounted) {
+          recordSnapshots(
+            this.extractExportSnapshotsFromTurn(mounted, scrollContainer),
+            entry.index,
+          )
+        }
+      }
+
+      // Retry pass：第一遍没挂载成功的 entry 给更长 timeout 再试
+      const missingEntries = entries.filter(
+        (entry) => !this.hasEntryBeenCollected(collected, entry),
+      )
+      if (missingEntries.length > 0) {
+        await this.sleep(200)
+        for (const entry of missingEntries) {
+          const turn = this.getMountedTurnForEntry(entry)
+          if (turn) {
+            recordSnapshots(this.extractExportSnapshotsFromTurn(turn, scrollContainer), entry.index)
+            continue
+          }
+          const mounted = await this.revealAndWaitForEntry(entry, 2000)
+          if (mounted) {
+            recordSnapshots(
+              this.extractExportSnapshotsFromTurn(mounted, scrollContainer),
+              entry.index,
+            )
+          }
+        }
+      }
+
+      // Fallback pass：仍然挂载失败的 entry，用 scrollbar aria-label 文本兜底，
+      // 避免某条 user 提问从导出中彻底消失。
+      const stillMissing = entries.filter((entry) => !this.hasEntryBeenCollected(collected, entry))
+      for (const entry of stillMissing) {
+        const fallbackText = this.buildFallbackUserContentFromEntry(entry)
+        if (!fallbackText) continue
+        collected.set(`user:${entry.turnId}`, {
+          role: AISTUDIO_EXPORT_ROLE_USER,
+          turnKey: `user:${entry.turnId}`,
+          order: entry.index,
+          content: fallbackText,
+        })
+      }
+    } finally {
+      scrollContainer.scrollTop = originalScrollTop
+      scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
+    }
+
+    return Array.from(collected.values()).sort((a, b) => a.order - b.order)
+  }
+
+  /** 时间线不可用时的兜底：保留旧版 step 扫描 + repair 流程。 */
+  private async collectExportMessageSnapshotsByScrollSweep(
     scrollContainer: HTMLElement,
   ): Promise<AIStudioExportMessageSnapshot[]> {
     const positions = this.buildExportSnapshotPositions(scrollContainer)
@@ -2661,6 +2789,70 @@ export class AIStudioAdapter extends SiteAdapter {
     }
 
     return this.repairLikelyTruncatedUserSnapshots(collected, scrollContainer)
+  }
+
+  /** 给定 scrollbar entry，返回当前已挂载的 ms-chat-turn，没挂载就返回 null。 */
+  private getMountedTurnForEntry(entry: AIStudioScrollbarQueryEntry): HTMLElement | null {
+    const turnControlId = this.getTurnControlId(entry.turnId)
+    if (turnControlId) {
+      const turn = document.getElementById(turnControlId)
+      if (turn instanceof HTMLElement) return turn
+    }
+    return null
+  }
+
+  /**
+   * 点击 scrollbar 按钮触发 AI Studio 自带的滚动 + 挂载，再轮询等 turn 挂载好。
+   * AI Studio 的 reveal 操作比手动设置 scrollTop 更可靠：CDK virtual scroll
+   * 内部由它自己驱动，不会被浏览器 scroll anchoring 干扰。
+   */
+  private async revealAndWaitForEntry(
+    entry: AIStudioScrollbarQueryEntry,
+    timeoutMs: number,
+  ): Promise<HTMLElement | null> {
+    try {
+      entry.button.scrollIntoView({ block: "nearest", inline: "nearest" })
+      entry.button.click()
+    } catch {
+      // 防御性：极少数情况下 button 已被 detach，忽略点击错误
+    }
+
+    const deadline = Date.now() + timeoutMs
+    while (Date.now() < deadline) {
+      const turn = this.getMountedTurnForEntry(entry)
+      if (turn) {
+        // 等待 turn 子树挂载到位（避免抓到只有外壳没有内容的瞬态）
+        if (turn.querySelector(".chat-turn-container")) {
+          return turn
+        }
+      }
+      await this.sleep(60)
+    }
+    return null
+  }
+
+  private hasEntryBeenCollected(
+    collected: Map<string, AIStudioExportMessageSnapshot>,
+    entry: AIStudioScrollbarQueryEntry,
+  ): boolean {
+    const userKey = `user:${entry.turnId}`
+    return collected.has(userKey) && Boolean(collected.get(userKey)?.content)
+  }
+
+  /**
+   * 用 scrollbar entry 自带的 aria-label 文本构造兜底 user snapshot。
+   * 优先使用 textCache（一般比 aria-label 更完整），再回退 aria-label。
+   */
+  private buildFallbackUserContentFromEntry(entry: AIStudioScrollbarQueryEntry): string {
+    const cached = this.textCache.get(this.getTurnControlId(entry.turnId))
+    const base = (cached || entry.text || "").trim()
+    if (!base) return ""
+
+    // aria-label 经常被截断（尾部带 ... 或 …）；标记一下让用户知道
+    const looksTruncated = /(?:\.{3}|…)\s*$/.test(base) && !cached
+    return looksTruncated
+      ? `${base}\n\n_[Ophel: this turn was not mounted in time; text recovered from sidebar timeline and may be truncated.]_`
+      : base
   }
 
   private buildExportSnapshotPositions(scrollContainer: HTMLElement): number[] {
