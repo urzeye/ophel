@@ -14,6 +14,12 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Quick Buttons proximity wake radius** (`Settings → Quick Buttons`): A new slider controls how close the cursor must be before the floating widget auto-expands (default 150 px, matching previous behavior). Set it to **0** for a true dwell-hover mode — the widget only expands after the cursor rests on the water-drop for 300 ms, preventing accidental expansion from the cursor passing through. (#492)
 - **Drag conversations into folders**: In the Conversations tab, you can now drag a chat onto any folder to move it there. Thanks @t0ny-peng (#512)
 
+### 🐛 Bug Fixes
+
+- **ChatGPT outline still incomplete after the v1.0.50 virtualization fix**: The cached-merge path previously only fired when "turn-shell count > role-node count", which still missed cases where the shell itself was unloaded. Caching now records each turn's first-seen DOM order so merging stays stable even after the shell is gone, and outline clicks resolve back to the live `[data-message-id]` element (or scroll into the shell and wait for ChatGPT to re-mount real content) instead of jumping to a stale placeholder. (#402)
+- **ChatGPT export duplicates user / assistant messages**: The 2025 ChatGPT redesign places multiple `[data-message-author-role="assistant"]` nodes inside a single `<section data-turn="assistant">` turn (one before the "Thought for Ns" toggle and one after), making the same reply appear several times in the exported transcript. The adapter now collects export snapshots by scrolling through the conversation, deduplicates per `turnId`, merges all assistant messages within a turn into a single entry, and mounts a hidden DOM that the export pipeline reads from — preserving the model's intro text and final body while filtering out the side-rail reasoning content that never lives in the main DOM.
+- **Blank top-level entry in ChatGPT outline**: ChatGPT streams headings by inserting an empty `<h2></h2>` first and then writing the text in a later frame. The previous outline cache treated that empty-text snapshot as a distinct entry (different cache key from the populated heading) and kept replaying it after the text arrived, producing an unnamed parent that absorbed subsequent `h3` children. Empty headings are now skipped both on extraction and in the cache-merge fallback.
+
 ---
 
 ## [1.0.50] - 2026-05-15
