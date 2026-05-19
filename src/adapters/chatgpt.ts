@@ -74,9 +74,13 @@ const CHATGPT_EXPORT_ASSISTANT_SELECTOR = `[${CHATGPT_EXPORT_ROOT_ATTR}="1"] [${
 
 interface ChatGPTExportMessageSnapshot {
   role: "user" | "assistant"
-  /** 去重键：优先用 messageId，没有时回退到 role + 内容前缀 */
+  /** 去重键：优先用 turnId */
   turnKey: string
-  /** 排序键：以滚动容器为参照系的纵向偏移 */
+  /**
+   * 排序键：优先用 ChatGPT 自带的 `data-testid="conversation-turn-N"` 的 N
+   * （全局单调、虚拟滚动期间也不变）；缺失时为 Number.MAX_SAFE_INTEGER，
+   * 由 collect 阶段的 first-seen 兜底计数器二次排序。
+   */
   order: number
   content: string
 }
@@ -1249,6 +1253,11 @@ export class ChatGPTAdapter extends SiteAdapter {
     const positions = this.buildExportSnapshotPositions(scrollContainer)
     const originalScrollTop = scrollContainer.scrollTop
     const collected = new Map<string, ChatGPTExportMessageSnapshot>()
+    // 兜底排序键：每个 turnKey 在 collect 期间第一次被看到时分配一个单调递增序号。
+    // 仅在 turn 缺少 conversation-turn-N（snapshot.order === MAX_SAFE_INTEGER）时使用，
+    // 用来确保即便 scroll anchoring 让 first-seen 顺序与对话顺序不一致也能稳定排序。
+    const firstSeenOrder = new Map<string, number>()
+    let firstSeenCounter = 0
 
     try {
       for (const top of positions) {
@@ -1259,14 +1268,22 @@ export class ChatGPTAdapter extends SiteAdapter {
 
         const batch = this.readVisibleExportMessageSnapshots(scrollContainer)
         for (const snapshot of batch) {
+          if (!firstSeenOrder.has(snapshot.turnKey)) {
+            firstSeenOrder.set(snapshot.turnKey, firstSeenCounter++)
+          }
+
           const existing = collected.get(snapshot.turnKey)
           if (!existing) {
             collected.set(snapshot.turnKey, snapshot)
             continue
           }
-          // 已存在：保留内容更长（更完整）的版本
+          // 已存在：保留内容更长（更完整）的版本；order 取两次中"更具体"的（更小的，
+          // 因为 conversation-turn-N 一定小于 MAX_SAFE_INTEGER 这个 fallback）。
+          const order = Math.min(existing.order, snapshot.order)
           if (snapshot.content.length > existing.content.length) {
-            collected.set(snapshot.turnKey, { ...snapshot, order: existing.order })
+            collected.set(snapshot.turnKey, { ...snapshot, order })
+          } else if (order !== existing.order) {
+            collected.set(snapshot.turnKey, { ...existing, order })
           }
         }
       }
@@ -1275,7 +1292,14 @@ export class ChatGPTAdapter extends SiteAdapter {
       scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
     }
 
-    return Array.from(collected.values()).sort((a, b) => a.order - b.order)
+    // 排序：先按 conversation-turn-N（snapshot.order）；两个 turn 同 N（不应发生）
+    // 或都缺失 N 时，用 first-seen 计数器兜底。
+    return Array.from(collected.values()).sort((a, b) => {
+      if (a.order !== b.order) return a.order - b.order
+      const aFallback = firstSeenOrder.get(a.turnKey) ?? Number.MAX_SAFE_INTEGER
+      const bFallback = firstSeenOrder.get(b.turnKey) ?? Number.MAX_SAFE_INTEGER
+      return aFallback - bFallback
+    })
   }
 
   private buildExportSnapshotPositions(scrollContainer: HTMLElement): number[] {
@@ -1367,7 +1391,7 @@ export class ChatGPTAdapter extends SiteAdapter {
    */
   private extractTurnExportSnapshots(
     turn: HTMLElement,
-    referenceContainer: HTMLElement | null,
+    _referenceContainer: HTMLElement | null,
   ): ChatGPTExportMessageSnapshot[] {
     const messages = this.collectOwnAuthorMessagesForTurn(turn)
     if (messages.length === 0) return []
@@ -1381,6 +1405,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     const turnId =
       turn.getAttribute("data-turn-id") || turn.getAttribute("data-turn-id-container") || ""
+    const order = this.getExportTurnSortIndex(turn)
 
     if (role === CHATGPT_EXPORT_ROLE_USER) {
       // user turn：通常一条；若有多条同样按顺序拼接
@@ -1400,7 +1425,7 @@ export class ChatGPTAdapter extends SiteAdapter {
           turnKey: turnId
             ? `user:turn:${turnId}`
             : `user:content:${content.replace(/\s+/g, " ").slice(0, 120)}`,
-          order: this.getExportMessageOrder(messages[0], referenceContainer),
+          order,
           content,
         },
       ]
@@ -1423,7 +1448,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       {
         role: CHATGPT_EXPORT_ROLE_ASSISTANT,
         turnKey,
-        order: this.getExportMessageOrder(messages[0], referenceContainer),
+        order,
         content: combinedContent,
       },
     ]
@@ -1449,7 +1474,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   private extractExportMessageSnapshot(
     message: HTMLElement,
-    referenceContainer: HTMLElement | null,
+    _referenceContainer: HTMLElement | null,
   ): ChatGPTExportMessageSnapshot | null {
     const role =
       message.getAttribute("data-message-author-role") === "assistant"
@@ -1471,10 +1496,16 @@ export class ChatGPTAdapter extends SiteAdapter {
       ? `${role}:${messageId}`
       : `${role}:content:${content.replace(/\s+/g, " ").slice(0, 120)}`
 
+    // 从父链中找最近的 conversation-turn-N 作为稳定排序键
+    const ownerTurn = message.closest(
+      'section[data-turn], [data-testid^="conversation-turn"]',
+    ) as HTMLElement | null
+    const order = ownerTurn ? this.getExportTurnSortIndex(ownerTurn) : Number.MAX_SAFE_INTEGER
+
     return {
       role,
       turnKey,
-      order: this.getExportMessageOrder(message, referenceContainer),
+      order,
       content,
     }
   }
@@ -1496,13 +1527,21 @@ export class ChatGPTAdapter extends SiteAdapter {
     return this.extractTextWithLineBreaks(clone)
   }
 
-  private getExportMessageOrder(message: HTMLElement, container: HTMLElement | null): number {
-    const rect = message.getBoundingClientRect()
-    if (container) {
-      const containerRect = container.getBoundingClientRect()
-      return container.scrollTop + (rect.top - containerRect.top)
-    }
-    return window.scrollY + rect.top
+  /**
+   * 解析 turn 的稳定全局排序键。
+   *
+   * ChatGPT 每个 turn 都有 `data-testid="conversation-turn-N"`，N 是该会话内
+   * 从开始往后的 1-based 单调序号，**与虚拟滚动当前的滚动状态、shell 高度变化
+   * 完全无关**。相比之前用 `scrollTop + rect.top` 算出来的坐标，这个 N 不会
+   * 因为 scroll anchoring、shell 卸载、`--last-known-height` 误差而漂移。
+   *
+   * 拿不到 N（理论上极少见，比如更老的 ChatGPT 或自定义版本）时返回 MAX，
+   * 由 collect 层的 first-seen 计数器兜底。
+   */
+  private getExportTurnSortIndex(turn: HTMLElement): number {
+    const testid = turn.getAttribute("data-testid") || ""
+    const match = /^conversation-turn-(\d+)/.exec(testid)
+    return match ? parseInt(match[1], 10) : Number.MAX_SAFE_INTEGER
   }
 
   private normalizeExportMessageContent(content: string): string {

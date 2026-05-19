@@ -17,6 +17,7 @@
 
 - **ChatGPT 大纲在 1.0.50 虚拟滚动兜底后仍然不全**：原缓存合并仅在「外壳数量 > 角色节点数量」时触发，无法覆盖外壳自身也被卸载的情况。现在缓存会记录每个 turn 首次出现的 DOM 顺序，外壳消失后仍能维持稳定排序；点击大纲条目时优先用 `[data-message-id]` 找回真实节点，找不到再滚动到 shell 等待 ChatGPT 重新挂载，避免跳转到失效占位符。(#402)
 - **ChatGPT 导出出现用户提问 / AI 回复重复**：2025 年 ChatGPT 改版后，一个 `<section data-turn="assistant">` 内会同时存在多个 `[data-message-author-role="assistant"]` 节点（「已思考 Ns」折叠按钮前后各一个），原先按节点抓取会把同一条回复导出多次。导出前现在会滚动遍历整个会话、按 `turnId` 去重收集快照，并把同一 turn 内的 assistant 文本按顺序合并成一条；右侧 side rail 的深度思考内容本就不在主 DOM 中，会被自动过滤掉。
+- **ChatGPT 导出在长会话中顺序错乱**：原先按 `scrollTop + rect.top` 排序，但虚拟滚动期间外壳折叠到 `--last-known-height` 后 `scrollHeight` 会缩水，浏览器 scroll anchoring 又会重新对齐 `scrollTop`，导致同一坐标在不同采样时刻指向不同的 turn。在 20 轮以上的对话里表现为导出文档里突然出现连续几条用户提问或连续几条 AI 回复、整体顺序乱套。现在直接使用 ChatGPT 自带的 `data-testid="conversation-turn-N"` 编号排序——它由 ChatGPT 分配、单调递增、不受虚拟滚动影响。若极少数 turn 缺少该属性，则用 collect 阶段维护的 first-seen 计数器兜底。
 - **ChatGPT 大纲出现一个空白的一级标题**：ChatGPT 流式渲染时会先插入空 `<h2></h2>` 占位再写入文本，那一瞬间被抓到的「空 heading」会因为缓存 ID 含文本而与后来真正的标题不匹配，残留在缓存里、被回填到大纲，让后续 h3 被错误地挂在这个无名节点下。现在收集大纲与缓存合并时都会跳过空文本 heading。
 
 ---
