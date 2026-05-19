@@ -2705,8 +2705,13 @@ export class AIStudioAdapter extends SiteAdapter {
       userTimeoutMs: number,
       modelDelayMs: number,
     ): Promise<void> => {
+      // 关键：必须用 "turn 内有真实内容" 判定挂载，而不是 "shell 存在"。
+      // AI Studio 的虚拟化是两级的——ms-chat-turn 外壳在 buffer 区可以保留较久，
+      // 但内部 `.turn-content` / `ms-prompt-chunk` 才是 CDK 真正 mount/unmount
+      // 的部分。若只看 shell，viewport 周围的 entries 全跳过 click，整个导出
+      // 不滚动、内容抓空。
       let userTurn = this.getMountedTurnForEntry(entry)
-      if (!userTurn) {
+      if (!userTurn || !this.turnHasMountedContent(userTurn)) {
         userTurn = await this.revealAndWaitForEntry(entry, userTimeoutMs)
       }
       if (!userTurn) return
@@ -2731,7 +2736,15 @@ export class AIStudioAdapter extends SiteAdapter {
       // 通常会把 user 滚到视口顶部，model turn 在它下方需要 1~2 帧才能进入 viewport。
       await this.sleep(modelDelayMs)
 
-      const modelTurns = this.collectModelTurnsAfterUser(userTurn, nextEntry)
+      let modelTurns = this.collectModelTurnsAfterUser(userTurn, nextEntry)
+      // 如果一条 model turn 都没找到，多半是它还没挂载——再 reveal + 等更久重试一次，
+      // 避免出现"连续多个 user 提问没有回复"的导出结果。
+      if (modelTurns.length === 0) {
+        await this.revealAndWaitForEntry(entry, Math.max(userTimeoutMs, 1500))
+        await this.sleep(Math.max(modelDelayMs, 350))
+        modelTurns = this.collectModelTurnsAfterUser(userTurn, nextEntry)
+      }
+
       const assistantContent = this.buildAssistantContentFromModelTurns(modelTurns, includeThoughts)
       if (assistantContent) {
         recordSnapshot({
@@ -2768,11 +2781,13 @@ export class AIStudioAdapter extends SiteAdapter {
       for (const entry of missingAssistantEntries) {
         const idx = entries.indexOf(entry)
         const nextEntry = entries[idx + 1]
-        // 主动 reveal 一次确保 user 在视口里，CDK 会把后面紧邻的 model 一并挂载
-        await this.revealAndWaitForEntry(entry, 1500)
-        await this.sleep(350)
-        const userTurn = this.getMountedTurnForEntry(entry)
+        // 主动 reveal 一次确保 user 在视口里，CDK 会把后面紧邻的 model 一并挂载。
+        // revealAndWaitForEntry 内部已经等到 turn 真有内容（不是只 shell），所以
+        // 这里抓 model turn 之前再 sleep 一段时间让相邻 model turn 也挂载。
+        const userTurn =
+          (await this.revealAndWaitForEntry(entry, 2000)) || this.getMountedTurnForEntry(entry)
         if (!userTurn) continue
+        await this.sleep(350)
         const modelTurns = this.collectModelTurnsAfterUser(userTurn, nextEntry)
         const assistantContent = this.buildAssistantContentFromModelTurns(
           modelTurns,
@@ -2962,6 +2977,12 @@ export class AIStudioAdapter extends SiteAdapter {
    * 点击 scrollbar 按钮触发 AI Studio 自带的滚动 + 挂载，再轮询等 turn 挂载好。
    * AI Studio 的 reveal 操作比手动设置 scrollTop 更可靠：CDK virtual scroll
    * 内部由它自己驱动，不会被浏览器 scroll anchoring 干扰。
+   *
+   * 注意：mount 判定不能只看 ms-chat-turn shell 是否在 DOM——AI Studio 的虚拟化是
+   * **两级**的，外层 shell 可以在 buffer 区保留较久，但内层 `.turn-content` /
+   * `ms-prompt-chunk` 才是 CDK 真正 mount/unmount 的部分。如果只看 shell，导出
+   * 启动时 viewport 周围的 entries 全部"已挂载"（shell 在）就跳过 click，整个
+   * 导出过程根本不滚动，结果就是 user / assistant 大段抓空。
    */
   private async revealAndWaitForEntry(
     entry: AIStudioScrollbarQueryEntry,
@@ -2977,15 +2998,21 @@ export class AIStudioAdapter extends SiteAdapter {
     const deadline = Date.now() + timeoutMs
     while (Date.now() < deadline) {
       const turn = this.getMountedTurnForEntry(entry)
-      if (turn) {
-        // 等待 turn 子树挂载到位（避免抓到只有外壳没有内容的瞬态）
-        if (turn.querySelector(".chat-turn-container")) {
-          return turn
-        }
+      if (turn && this.turnHasMountedContent(turn)) {
+        return turn
       }
       await this.sleep(60)
     }
     return null
+  }
+
+  /**
+   * 严格判定 turn 内部"真有内容"，用来抵消 AI Studio 两级虚拟化里 shell 仍在但
+   * `.turn-content` 未挂载的中间状态。这条目下的真正可抓内容必须命中 `ms-prompt-chunk`
+   * 或 `ms-text-chunk` / `ms-thought-chunk`。
+   */
+  private turnHasMountedContent(turn: HTMLElement): boolean {
+    return Boolean(turn.querySelector("ms-prompt-chunk, ms-text-chunk, ms-thought-chunk"))
   }
 
   /**
