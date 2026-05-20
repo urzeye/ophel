@@ -147,6 +147,11 @@ export class QwenAiAdapter extends SiteAdapter {
     return path === "/"
   }
 
+  isSharePage(): boolean {
+    // 自有会话：/chat/...    分享会话：/s/ID
+    return window.location.pathname.startsWith("/s/")
+  }
+
   getCurrentCid(): string | null {
     const fromCookie = this.readCookieValue("aui") || this.readCookieValue("cnaui")
     if (fromCookie) return fromCookie

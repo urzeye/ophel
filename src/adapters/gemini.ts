@@ -1561,19 +1561,30 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   getSessionName(): string | null {
+    // 自有会话：页面标题在 .conversation-title 中
     const titleEl = document.querySelector(".conversation-title")
     if (titleEl) {
       const name = titleEl.textContent?.trim()
+      if (name) return name
+    }
+    // 分享页面（/share/...）：标题在 h1.headline 中，如 <h1 class="headline gds-headline-m"><strong>询问模型身份</strong></h1>
+    const shareTitle = document.querySelector("h1.headline, h1[class*='headline']")
+    if (shareTitle) {
+      const name = shareTitle.textContent?.trim()
       if (name) return name
     }
     return super.getSessionName()
   }
 
   getConversationTitle(): string | null {
-    // 尝试从侧边栏获取选中项
+    // 侧边栏选中项（自有会话）
     const selected = document.querySelector(".conversation.selected .conversation-title")
-    if (selected) return selected.textContent?.trim() || null
-    return null
+    if (selected) {
+      const title = selected.textContent?.trim()
+      if (title) return title
+    }
+    // 回退到页面标题（覆盖自有 + 分享两种页面）
+    return this.getSessionName()
   }
 
   getNewChatButtonSelectors(): string[] {

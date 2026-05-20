@@ -308,6 +308,11 @@ export class ChatGLMAdapter extends SiteAdapter {
     return new URL(NEW_TAB_PATH, window.location.origin).toString()
   }
 
+  isSharePage(): boolean {
+    // 自有会话：/chat/...    分享会话：/glmsShare?is_share=1&...
+    return window.location.pathname.startsWith("/glmsShare")
+  }
+
   getSessionName(): string | null {
     const conversationTitle = this.getConversationTitle()
     if (conversationTitle) return conversationTitle
@@ -325,6 +330,12 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   getConversationTitle(): string | null {
+    // 自有页面：<p class="conversation-name ...">打印hello代码</p>
+    const nameEl = document.querySelector(".conversation-name")
+    if (nameEl) {
+      const name = nameEl.textContent?.trim()
+      if (name) return name
+    }
     return null
   }
 

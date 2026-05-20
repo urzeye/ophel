@@ -19,7 +19,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Fixed ChatGPT outline display and navigation issues**: Resolved cases where the outline was incomplete or clicks failed to navigate to the message in long chats, and fixed routing issues where switching conversations caused the outline to lag, display incorrect entries, or show empty headings. (#402)
 - **Resolved ChatGPT export duplication, scrambling, and truncation issues in long conversations**: Re-engineered the export process to handle virtualization, ensuring all turns are fully loaded, ordered correctly, and deduplicated without missing segments or repeating messages.
 - **AI Studio export missed turns and could loop in long conversations**: Rewrote the export collector to iterate the DOM-resident `ms-chat-turn` list directly so every user prompt and assistant reply (including attachments and the separate "thoughts" turn) is captured in a single pass.
-- **AI Studio shared conversation export title was wrong**: The export's first-line heading previously relied solely on library/sidebar links, which don't exist for shared (non-owned) conversations. It now reads the visible page `<h1 class="page-title">` heading as a fallback, ensuring shared conversations get the correct title instead of "Untitled conversation".
+- **Fixed conversation title missing or wrong on shared pages across 12 sites**: Added `isSharePage()` detection and page-heading fallbacks so the browser tab title and export Markdown heading work correctly on shared (non-owned) conversation pages.
 
 ---
 

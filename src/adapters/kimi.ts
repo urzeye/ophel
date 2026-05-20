@@ -154,7 +154,11 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   isSharePage(): boolean {
-    return window.location.pathname.startsWith("/kimiplus/")
+    // 自有会话：/chat/ID    分享会话：/share/ID 或 /kimiplus/ID
+    return (
+      window.location.pathname.startsWith("/share/") ||
+      window.location.pathname.startsWith("/kimiplus/")
+    )
   }
 
   getSessionName(): string | null {
@@ -164,7 +168,11 @@ export class KimiAdapter extends SiteAdapter {
     const title = document.title.trim()
     if (!title || title === "Kimi") return null
 
-    const normalized = title.replace(/\s*-\s*Kimi$/i, "").trim()
+    // 自有页格式："Title - Kimi"    分享页格式："Kimi | Title"
+    const normalized = title
+      .replace(/^Kimi\s*\|\s*/i, "")
+      .replace(/\s*-\s*Kimi$/i, "")
+      .trim()
     return normalized || null
   }
 

@@ -290,6 +290,11 @@ export class YuanbaoAdapter extends SiteAdapter {
     return path === "" || path === "/"
   }
 
+  isSharePage(): boolean {
+    // 自有会话：/chat/ID    分享会话：/s/ID
+    return window.location.pathname.startsWith("/s/")
+  }
+
   getNewTabUrl(): string {
     const agentId = this.getAgentId()
     return agentId ? `https://${HOSTNAME}/chat/${agentId}` : `https://${HOSTNAME}/`

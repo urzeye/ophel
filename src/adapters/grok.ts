@@ -89,6 +89,11 @@ export class GrokAdapter extends SiteAdapter {
     return path === "/" || path === ""
   }
 
+  isSharePage(): boolean {
+    // 自有会话：/c/ID    分享会话：/share/ID
+    return window.location.pathname.startsWith("/share/")
+  }
+
   // 缓存弹窗中的会话数据（用于同步时弹窗已关闭的情况）
   private cachedDialogConversations: Map<string, ConversationInfo> | null = null
 
@@ -1081,11 +1086,30 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   getSessionName(): string | null {
-    return this.getCurrentConversationTitleFromSources() || this.getConversationTitleFromPage()
+    return (
+      this.getCurrentConversationTitleFromSources() ||
+      this.getConversationTitleFromPage() ||
+      this.getCleanedDocumentTitle()
+    )
   }
 
   getConversationTitle(): string | null {
-    return this.getCurrentConversationTitleFromSources() || this.getConversationTitleFromPage()
+    return (
+      this.getCurrentConversationTitleFromSources() ||
+      this.getConversationTitleFromPage() ||
+      this.getCleanedDocumentTitle()
+    )
+  }
+
+  /** 从 document.title 提取并去掉 Grok 特有后缀（分享页 " | Shared Grok Conversation" 等） */
+  private getCleanedDocumentTitle(): string | null {
+    const rawTitle = super.getSessionName()
+    if (!rawTitle) return null
+    const cleaned = rawTitle
+      .replace(/\s*[|]\s*Shared Grok Conversation$/i, "")
+      .replace(/\s*[|]\s*Grok$/i, "")
+      .trim()
+    return cleaned || null
   }
 
   getNewChatButtonSelectors(): string[] {

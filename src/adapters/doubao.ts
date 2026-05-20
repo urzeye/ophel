@@ -294,6 +294,11 @@ export class DoubaoAdapter extends SiteAdapter {
     return /^(?:\/code)?\/chat\/(new\/?)?$/.test(window.location.pathname)
   }
 
+  isSharePage(): boolean {
+    // 自有会话：/chat/ID 或 /code/chat/ID    分享会话：/thread/ID
+    return window.location.pathname.startsWith("/thread/")
+  }
+
   getNewTabUrl(): string {
     const prefix = window.location.pathname.startsWith("/code/") ? "/code" : ""
     return `https://www.doubao.com${prefix}/chat/`

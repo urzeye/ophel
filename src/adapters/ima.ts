@@ -88,6 +88,11 @@ export class ImaAdapter extends SiteAdapter {
     return path === "/"
   }
 
+  isSharePage(): boolean {
+    // 自有会话：/ai-chat/ID    分享会话：/share/
+    return window.location.pathname.startsWith("/share/")
+  }
+
   getCurrentCid(): string | null {
     const raw = window.localStorage.getItem(IMA_CID_STORAGE_KEY)
     if (!raw) return null
@@ -498,6 +503,7 @@ export class ImaAdapter extends SiteAdapter {
         IMA_FOOT_TIPS_SELECTOR,
         '[class*="_activityBanner"]',
         '[class*="_activityBannerContent"]',
+        '[class*="_qaDownloadGuide"]',
       ],
     }
   }

@@ -177,6 +177,11 @@ export class DeepSeekAdapter extends SiteAdapter {
     )
   }
 
+  isSharePage(): boolean {
+    // 自有会话：/a/chat/s/ID    分享会话：/share/ID
+    return window.location.pathname.startsWith("/share/")
+  }
+
   getNewTabUrl(): string {
     return "https://chat.deepseek.com/"
   }
