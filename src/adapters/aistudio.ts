@@ -1728,7 +1728,10 @@ export class AIStudioAdapter extends SiteAdapter {
     // 必须精确定位到 ms-prompt-chunk.text-chunk，避免抓取按钮和标签文本
     const contentChunk = this.findUserContentChunk(element)
     if (contentChunk) {
-      extractedText = this.extractTextWithLineBreaks(contentChunk).trim()
+      // 即使找到 chunk，也可能是 ms-prompt-chunk 包了文字 + image-chunk 的混合 turn——
+      // 直接 extractTextWithLineBreaks 会把 image-chunk 内的 "download" / "fullscreen"
+      // 按钮文字一起算进来污染大纲。统一用 extractCleanTextFromChunk 剥装饰元素。
+      extractedText = this.extractCleanTextFromChunk(contentChunk)
     } else {
       // 没有 ms-text-chunk —— 通常是纯附件（图片/文件）turn。
       // fallback 时必须把 `.actions-container`、`button`、`svg`、`aria-hidden`
@@ -1938,13 +1941,31 @@ export class AIStudioAdapter extends SiteAdapter {
       const candidate = element.querySelector(selector)
       if (!candidate) continue
 
-      const text = this.extractTextWithLineBreaks(candidate).trim()
+      // 判定 chunk 是否"真有文字内容"前必须排除装饰元素——纯图片附件的
+      // `<ms-prompt-chunk>` 里包着 `<ms-image-chunk>` + 一堆 download/fullscreen
+      // 按钮，原本 textContent 非空就会被误判为"有文字"，结果按钮文字被当成
+      // 用户提问写进大纲（实测大纲显示成 "downloadfullscreen"）。
+      const text = this.extractCleanTextFromChunk(candidate)
       if (text) {
         return candidate
       }
     }
 
     return null
+  }
+
+  /**
+   * 提取 chunk 内的"干净"文字——剥掉装饰元素（按钮 / svg / aria-hidden）和
+   * 附件元素（ms-image-chunk / ms-file-chunk）后的纯用户输入文字。
+   */
+  private extractCleanTextFromChunk(chunk: Element): string {
+    const clone = chunk.cloneNode(true) as Element
+    clone
+      .querySelectorAll(
+        '.actions-container, button, [role="button"], svg, [aria-hidden="true"], ms-image-chunk, ms-file-chunk',
+      )
+      .forEach((n) => n.remove())
+    return this.extractTextWithLineBreaks(clone).trim()
   }
 
   getExportConfig(): ExportConfig | null {
