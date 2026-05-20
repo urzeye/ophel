@@ -17,6 +17,7 @@
 
 - **修复了 ChatGPT 大纲显示不全及跳转异常的问题**：解决了在长对话中大纲内容缺失、点击大纲条目无法正确跳转的问题；同时修复了切换不同对话时，大纲显示延迟、内容错乱或出现空白占位标题的情况。(#402)
 - **解决了 ChatGPT 导出长对话时内容重复、乱序或大段缺失的问题**：优化了导出机制，确保长达数十轮的对话能够按正确的先后顺序被完整导出，不再出现内容遗漏、顺序错乱或同一条消息被重复导出的现象。
+- **AI Studio 长会话导出有 turn 缺漏，甚至会反复滚动卡死**：之前多次尝试修复长对话导出（侧边时间线驱动、CDK lookahead-click、scrollIntoView 强制等）全部失败，因为都基于"AI Studio 用 CDK Virtual Scroll"的错误假设。实测一个 100 轮的真实会话有 358 个 `ms-chat-turn` **全部常驻 DOM**——AI Studio 根本**没有** `<cdk-virtual-scroll-viewport>`，外层 turn 列表不虚拟化，只有每个 turn 内部的 `.turn-content` 被 Angular 虚拟化、离视口远时被卸载只剩高度占位。现在导出直接遍历 DOM 中的 `ms-chat-turn` 列表：如果某个 turn 的 `.turn-content` 没挂载，就 `scrollIntoView({block:"center"})` 让它进视口（普通浏览器滚动，没有 CDK 干扰）并轮询等内容出现、再抓取。状态机把每个 user turn 和它后面的 model turn 配对，AI Studio 把"思考过程"和"正式回复"渲染成的两个独立 ms-chat-turn 在导出里合并为一条 assistant 快照。排序键用 turn 的 DOM 索引，不受任何虚拟化 / scroll 影响。**单 pass、无 retry**。
 
 ---
 
