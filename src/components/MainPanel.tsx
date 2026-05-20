@@ -226,6 +226,48 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     panelRef,
   ])
 
+  const prevEdgeDistanceRef = useRef(currentSettings.panel?.defaultEdgeDistance)
+  const prevPositionRef = useRef(currentSettings.panel?.defaultPosition)
+
+  useLayoutEffect(() => {
+    const currentDist = currentSettings.panel?.defaultEdgeDistance
+    const prevDist = prevEdgeDistanceRef.current
+    prevEdgeDistanceRef.current = currentDist
+
+    const currentPos = currentSettings.panel?.defaultPosition
+    const prevPos = prevPositionRef.current
+    prevPositionRef.current = currentPos
+
+    const isDistChanged = currentDist !== prevDist
+    const isPosChanged = currentPos !== prevPos
+
+    // 只有当默认边距或默认位置发生变化，且处于悬浮模式时，才重置 DOM 样式进行实时预览
+    if (
+      (isDistChanged || isPosChanged) &&
+      panelRef.current &&
+      currentSettings.panel?.panelMode === "floating"
+    ) {
+      const panel = panelRef.current
+      const pos = currentPos ?? "right"
+      const dist = currentDist ?? 0
+
+      if (pos === "left") {
+        panel.style.left = `${dist}px`
+        panel.style.right = "auto"
+      } else {
+        panel.style.right = `${dist}px`
+        panel.style.left = "auto"
+      }
+      panel.style.top = "50%"
+      panel.style.transform = "translateY(-50%)"
+    }
+  }, [
+    currentSettings.panel?.defaultEdgeDistance,
+    currentSettings.panel?.defaultPosition,
+    currentSettings.panel?.panelMode,
+    panelRef,
+  ])
+
   // 计算默认位置样式
   const defaultPosition = currentSettings.panel?.defaultPosition ?? "right"
   const defaultEdgeDistance = currentSettings.panel?.defaultEdgeDistance ?? 40
