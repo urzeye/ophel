@@ -16,6 +16,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Floating panel settings UX and positioning preview**: Moved the default edge distance margin setting to only display under Floating panel mode, and updated the description across all 10 locales. Also fixed an issue where adjusting default margin/position settings failed to update the panel position in real-time. (#519)
 - **Fixed ChatGPT outline display and navigation issues**: Resolved cases where the outline was incomplete or clicks failed to navigate to the message in long chats, and fixed routing issues where switching conversations caused the outline to lag, display incorrect entries, or show empty headings. (#402)
 - **Resolved ChatGPT export duplication, scrambling, and truncation issues in long conversations**: Re-engineered the export process to handle virtualization, ensuring all turns are fully loaded, ordered correctly, and deduplicated without missing segments or repeating messages.
 
