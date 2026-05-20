@@ -15,7 +15,6 @@ import { DOMToolkit } from "~utils/dom-toolkit"
 import {
   createExportMetadata,
   downloadFile,
-  ensureUtf8Bom,
   formatToJSON,
   formatToMarkdown,
   formatToTXT,
@@ -1107,7 +1106,7 @@ export class ConversationManager {
         showToast(t("copySuccess"))
         return true
       } else if (format === "markdown") {
-        content = ensureUtf8Bom(formatToMarkdown(metadata, messages))
+        content = formatToMarkdown(metadata, messages)
         filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.md`
         mimeType = "text/markdown;charset=utf-8"
       } else if (format === "json") {
