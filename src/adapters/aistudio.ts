@@ -2698,6 +2698,18 @@ export class AIStudioAdapter extends SiteAdapter {
      * user entry 之前的所有 model turn。后者可能由多个独立的 ms-chat-turn 组成
      * （AI Studio 的"已思考"过程被渲染为一个 thought-only model turn，紧跟一个
      * 真正的 reply model turn——demo.html 中明确可见）。
+     *
+     * 实现策略（单 pass + lookahead-click）：
+     *   1) Mount + 抓 user 自己；
+     *   2) 短时间 poll 看 entry 的 model turn 是否已挂载——通常 CDK 的 buffer
+     *      足以涵盖当前 user 紧邻的 model；
+     *   3) 如果没挂载，立刻 click **下一个 entry 的 button**，让 CDK 主动滚到
+     *      nextEntry。CDK 滚动时会把 entry[i] 的 model turn 也挂载（它在
+     *      nextEntry 之前的 DOM 位置上），同时下一轮迭代时 nextEntry user 已
+     *      mounted，不需要再 click——每个 entry 总共仅 click 1 次，整体只滚 1 圈；
+     *   4) 抓 model：因为 click nextEntry 后 entry[i] user 可能被卸载，
+     *      `collectModelTurnsBetween` 兼容 forward + backward 两种 sibling 遍历，
+     *      detached userTurn 也能从 nextUser previousSibling 反向找回 model turn。
      */
     const captureEntry = async (
       entry: AIStudioScrollbarQueryEntry,
@@ -2705,18 +2717,13 @@ export class AIStudioAdapter extends SiteAdapter {
       userTimeoutMs: number,
       modelPollTimeoutMs: number,
     ): Promise<void> => {
-      // 关键：必须用 "turn 内有真实内容" 判定挂载，而不是 "shell 存在"。
-      // AI Studio 的虚拟化是两级的——ms-chat-turn 外壳在 buffer 区可以保留较久，
-      // 但内部 `.turn-content` / `ms-prompt-chunk` 才是 CDK 真正 mount/unmount
-      // 的部分。若只看 shell，viewport 周围的 entries 全跳过 click，整个导出
-      // 不滚动、内容抓空。
+      // 1) Mount + 抓 user
       let userTurn = this.getMountedTurnForEntry(entry)
       if (!userTurn || !this.turnHasMountedContent(userTurn)) {
         userTurn = await this.revealAndWaitForEntry(entry, userTimeoutMs)
       }
       if (!userTurn) return
 
-      // user snapshot
       const userContainer = this.getUserContainerForTurn(userTurn)
       if (userContainer) {
         const userContent = this.normalizeExportMessageContent(
@@ -2732,21 +2739,36 @@ export class AIStudioAdapter extends SiteAdapter {
         }
       }
 
-      // 关键修复：click(entry.button) 把 user 滚到视口中部，model turn 在视口下方
-      // 还没进 CDK 挂载窗口。强制把 user turn 顶到视口顶部，给 model 留出挂载空间。
-      try {
-        userTurn.scrollIntoView({ block: "start", behavior: "instant" })
-      } catch {
-        // 防御性：极少数情况下 turn 已被 detach
-      }
+      // 2) 短时间 poll 看 model 是否已经在 DOM——CDK buffer 通常涵盖当前 user
+      //    紧邻的 model turn，多数情况会直接命中、不需要 click nextEntry。
+      let modelTurns = await this.waitForModelTurnsToMount(entry, nextEntry, 350)
 
-      // 轮询等 model turn 真正挂载到 DOM（不再盲目 sleep 固定时间）。
-      // 如果 nextEntry 的 user turn 已挂载，说明 CDK 已经把中间的 model turn 也挂载了。
-      const modelTurns = await this.waitForModelTurnsToMount(
-        userTurn,
-        nextEntry,
-        modelPollTimeoutMs,
-      )
+      // 3) 如果没挂载，主动 click 下一个 entry 让 CDK 滚到那里——entry[i] 的
+      //    model turn 在 nextEntry 之前的位置上会被 CDK 一并挂载。
+      //
+      //    关键点：scrollIntoView 在 CDK Virtual Scroll viewport 内不会触发 CDK 的
+      //    挂载逻辑（CDK 监听自己内部的 scroll 事件、按维护的 index range 决定
+      //    mount/unmount）。**只有让 CDK 自己驱动滚动**——通过它自己绑定到 sidebar
+      //    button 的 click handler——才能可靠挂载。
+      if (modelTurns.length === 0 && nextEntry) {
+        try {
+          nextEntry.button.scrollIntoView({ block: "nearest", inline: "nearest" })
+          nextEntry.button.click()
+        } catch {
+          // 防御性：极少数情况下 button 已被 detach
+        }
+        modelTurns = await this.waitForModelTurnsToMount(entry, nextEntry, modelPollTimeoutMs)
+      } else if (modelTurns.length === 0 && !nextEntry) {
+        // 最后一个 entry：没有 nextEntry 可以借力。直接把滚动容器拉到末尾让
+        // CDK 把会话尾巴所有 turn 都挂载出来。
+        try {
+          scrollContainer.scrollTop = scrollContainer.scrollHeight
+          scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
+        } catch {
+          // 防御性
+        }
+        modelTurns = await this.waitForModelTurnsToMount(entry, undefined, modelPollTimeoutMs)
+      }
 
       const assistantContent = this.buildAssistantContentFromModelTurns(modelTurns, includeThoughts)
       if (assistantContent) {
@@ -2760,24 +2782,24 @@ export class AIStudioAdapter extends SiteAdapter {
     }
 
     try {
-      // First pass：按 entry 顺序逐个挂载并抓取（user + 它后面的所有 model turn）
+      // Single pass + lookahead：每个 entry 只 click 1 次（处理 i 时如有需要 click
+      // i+1），整个导出只滚 1 圈。
       for (let i = 0; i < entries.length; i += 1) {
-        await captureEntry(entries[i], entries[i + 1], 900, 1200)
+        await captureEntry(entries[i], entries[i + 1], 900, 1500)
       }
 
-      // Retry pass：第一遍 user 没拿到的 entry 给更长 timeout 再试
+      // Retry pass：第一遍 user 没拿到的 entry 给更长 timeout 再试。
+      // First pass 已经走过单 pass + lookahead，所以这里很少触发。
       const missingUserEntries = entries.filter((entry) => !collected.has(`user:${entry.turnId}`))
       if (missingUserEntries.length > 0) {
         await this.sleep(200)
         for (const entry of missingUserEntries) {
           const idx = entries.indexOf(entry)
-          await captureEntry(entry, entries[idx + 1], 2000, 1500)
+          await captureEntry(entry, entries[idx + 1], 2000, 2000)
         }
       }
 
-      // Assistant retry：user 抓到但 assistant 空（model turn 没挂载完整）的 entry，
-      // 再尝试一次，给 model turn 更长的等待时间。First pass 已经用 poll 等待了，
-      // 这里应该很少触发。
+      // Assistant retry：user 抓到但 assistant 空的 entry，再尝试一次。
       const missingAssistantEntries = entries.filter(
         (entry) =>
           collected.has(`user:${entry.turnId}`) && !collected.has(`assistant:${entry.turnId}`),
@@ -2786,7 +2808,7 @@ export class AIStudioAdapter extends SiteAdapter {
         await this.sleep(200)
         for (const entry of missingAssistantEntries) {
           const idx = entries.indexOf(entry)
-          await captureEntry(entry, entries[idx + 1], 2000, 2000)
+          await captureEntry(entry, entries[idx + 1], 2000, 2500)
         }
       }
 
@@ -2858,6 +2880,90 @@ export class AIStudioAdapter extends SiteAdapter {
     }
 
     return modelTurns
+  }
+
+  /**
+   * 反向遍历：从 nextUserTurn.previousElementSibling 倒着走，收集所有 model turn，
+   * 遇到 stopEntry（= 当前 entry）的 user turn 时停止。
+   *
+   * 用途：当 click nextEntry.button 后，当前 entry 的 user turn 可能被 CDK 卸载，
+   * `userTurn.nextElementSibling` 失效（detached 元素无 parent → 无兄弟）。此时
+   * 通过 nextUserTurn 反向遍历可以拿到中间的 model turn。
+   */
+  private collectModelTurnsBeforeUser(
+    nextUserTurn: HTMLElement,
+    stopEntry: AIStudioScrollbarQueryEntry,
+  ): HTMLElement[] {
+    const modelTurns: HTMLElement[] = []
+    const stopId = this.getTurnControlId(stopEntry.turnId)
+
+    let current = nextUserTurn.previousElementSibling
+    while (current) {
+      if (!(current instanceof HTMLElement)) {
+        current = current.previousElementSibling
+        continue
+      }
+      if (current.tagName.toLowerCase() !== "ms-chat-turn") {
+        current = current.previousElementSibling
+        continue
+      }
+
+      if (stopId && current.id === stopId) break
+
+      if (current.closest(`[${AISTUDIO_EXPORT_ROOT_ATTR}]`)) {
+        current = current.previousElementSibling
+        continue
+      }
+
+      const isUser = !!current.querySelector(".chat-turn-container.user")
+      if (isUser) {
+        // 撞到另一个不期而至的 user turn（不是 stopEntry）——停止
+        break
+      }
+
+      const isModel = !!current.querySelector(".chat-turn-container.model")
+      if (isModel) {
+        // 反向遍历，所以用 unshift 保持顺序
+        modelTurns.unshift(current)
+      }
+
+      current = current.previousElementSibling
+    }
+
+    return modelTurns
+  }
+
+  /**
+   * 收集 entry 与 nextEntry 之间的所有 model turn。
+   *
+   * 优先：entry 的 user turn 已挂载 → 正向 `collectModelTurnsAfterUser`；
+   * 回退：entry user 已被 CDK 卸载但 nextEntry user 已挂载 → 用
+   *       `collectModelTurnsBeforeUser` 从 nextEntry 反向走。
+   * 这两种结合保证了"click nextEntry 卸载了 entry user 但 model turn 已进入 DOM"
+   * 的关键场景能正确抓到内容。
+   */
+  private collectModelTurnsBetween(
+    entry: AIStudioScrollbarQueryEntry,
+    nextEntry: AIStudioScrollbarQueryEntry | undefined,
+  ): HTMLElement[] {
+    const userTurn = this.getMountedTurnForEntry(entry)
+    if (userTurn && userTurn.isConnected) {
+      const forwardResult = this.collectModelTurnsAfterUser(userTurn, nextEntry)
+      if (forwardResult.length > 0) return forwardResult
+    }
+
+    // user 已卸载或正向找不到——若有 nextEntry，从它倒着找
+    if (nextEntry) {
+      const nextUserTurn = this.getMountedTurnForEntry(nextEntry)
+      if (nextUserTurn && nextUserTurn.isConnected) {
+        const backwardResult = this.collectModelTurnsBeforeUser(nextUserTurn, entry)
+        if (backwardResult.length > 0) return backwardResult
+      }
+    }
+
+    return userTurn && userTurn.isConnected
+      ? this.collectModelTurnsAfterUser(userTurn, nextEntry)
+      : []
   }
 
   /**
@@ -2951,18 +3057,19 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   /**
-   * 轮询等待 user turn 后面的 model turn 真正挂载到 DOM。
+   * 轮询等待 entry 对应 user turn 后面的 model turn 真正挂载到 DOM。
    *
    * AI Studio 的 CDK 虚拟滚动在 user turn 滚到视口后，model turn 可能还在视口下方
-   * 未进入挂载窗口。如果立即 `collectModelTurnsAfterUser`，nextElementSibling 遍历
+   * 未进入挂载窗口。如果立即 `collectModelTurnsBetween`，nextElementSibling 遍历
    * 会直接跳到下一个 user（或 DOM 末尾），导致 model turn 全丢。
    *
-   * 策略：每 80ms 轮询一次 `collectModelTurnsAfterUser`，直到找到至少一条 model turn
-   * 或超时。如果 nextEntry 的 user turn 已挂载（说明 CDK 已经把中间的 model turn
-   * 也挂载了），立即返回。
+   * 策略：每 80ms 轮询一次 `collectModelTurnsBetween`（兼容 forward+backward 两种
+   * sibling 遍历，对当前 userTurn detached 的场景仍能从 nextEntry 反向找回），直到
+   * 找到至少一条 model turn 或超时。如果 nextEntry 的 user turn 已挂载且整段间隔
+   * 都没 model turn，提前返回空（说明真没回复）。
    */
   private async waitForModelTurnsToMount(
-    userTurn: HTMLElement,
+    entry: AIStudioScrollbarQueryEntry,
     nextEntry: AIStudioScrollbarQueryEntry | undefined,
     timeoutMs: number,
   ): Promise<HTMLElement[]> {
@@ -2970,18 +3077,18 @@ export class AIStudioAdapter extends SiteAdapter {
     let modelTurns: HTMLElement[] = []
 
     while (Date.now() < deadline) {
-      modelTurns = this.collectModelTurnsAfterUser(userTurn, nextEntry)
+      modelTurns = this.collectModelTurnsBetween(entry, nextEntry)
       if (modelTurns.length > 0) {
         return modelTurns
       }
 
-      // 如果 nextEntry 的 user turn 已经挂载了（说明 CDK 已经把中间的 model turn
-      // 也挂载了），但 collectModelTurnsAfterUser 还是找不到，说明这个 user 后面
-      // 真的没有 model turn（可能是会话最后一条 user 还没回复）。
+      // 如果 nextEntry 的 user turn 已经挂载且内容到位，说明 CDK 已经把中间段全部
+      // 挂载过——若此时仍 0 model turn，那是真没回复（或被卸载得很彻底）。
       if (nextEntry) {
         const nextUserTurn = this.getMountedTurnForEntry(nextEntry)
         if (nextUserTurn && this.turnHasMountedContent(nextUserTurn)) {
-          return modelTurns
+          // 再 final 一次以防 race
+          return this.collectModelTurnsBetween(entry, nextEntry)
         }
       }
 
