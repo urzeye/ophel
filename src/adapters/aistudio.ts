@@ -2757,7 +2757,7 @@ export class AIStudioAdapter extends SiteAdapter {
           } catch {
             turn.scrollIntoView({ block: "center" })
           }
-          await this.waitForTurnContentMounted(turn, 800)
+          await this.waitForTurnContentMounted(turn, 1800)
         }
 
         // 分类
@@ -2813,14 +2813,57 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   /** turn 内部是否已经渲染出真实内容（不是只剩高度占位）。 */
+  /**
+   * 严格判定 turn 内部是否真的渲染出了可抓取的实际内容。
+   *
+   * AI Studio 的内层虚拟化会先挂载 `<ms-prompt-chunk>` 外壳、再异步填充内部的
+   * `<ms-text-chunk>` / `<ms-thought-chunk>` / `<ms-image-chunk>`。如果只检测
+   * `<ms-prompt-chunk>` 是否存在，会在内部 chunk 还没渲染时就误以为"已挂载"，
+   * 然后 `extractUserQueryMarkdown` 抓到空字符串——这就是用户报告里 9 条 user 提问
+   * 缺失的原因（实测 158 个 user shell 在 DOM、156 个内部是空的）。
+   *
+   * 现在要求 `<ms-prompt-chunk>` 内部至少有一个真实内容 chunk
+   * （text / thought / image / file）才算挂载好。
+   */
   private turnHasMountedContent(turn: HTMLElement): boolean {
-    return Boolean(turn.querySelector("ms-prompt-chunk, ms-text-chunk, ms-thought-chunk"))
+    const promptChunk = turn.querySelector("ms-prompt-chunk")
+    if (!promptChunk) return false
+    if (
+      promptChunk.querySelector(
+        "ms-text-chunk, ms-thought-chunk, ms-image-chunk, ms-file-chunk, img",
+      )
+    ) {
+      return true
+    }
+    // 罕见 fallback：自定义 chunk 类型——若 prompt-chunk 已有较长 textContent 也算
+    const text = (promptChunk.textContent || "").trim()
+    return text.length > 0
   }
 
-  /** scrollIntoView 后轮询等待 turn 内 `.turn-content` 真实挂载。 */
+  /**
+   * scrollIntoView 后轮询等待 turn 内部真正挂载好。
+   *
+   * 给一次"重新滚动"重试机会：第一次 scrollIntoView 后 turn 进入视口可能因 turn
+   * 高度大或 Angular 渲染压力没在 timeout 内挂载好；再 scrollIntoView 一次（block:
+   * "start" 让 turn 顶部贴齐，给后续内容更多渲染时间）并等更久。
+   */
   private async waitForTurnContentMounted(turn: HTMLElement, timeoutMs: number): Promise<boolean> {
-    const deadline = Date.now() + timeoutMs
-    while (Date.now() < deadline) {
+    const halfDeadline = Date.now() + Math.floor(timeoutMs / 2)
+    while (Date.now() < halfDeadline) {
+      if (this.turnHasMountedContent(turn)) return true
+      await this.sleep(60)
+    }
+
+    // 一半时间过了还没挂载——再 scrollIntoView 一次（block: start，让 turn 在视口
+    // 顶部触发 Angular 重新计算并补渲染），剩下的时间继续轮询。
+    try {
+      turn.scrollIntoView({ block: "start", behavior: "instant" })
+    } catch {
+      turn.scrollIntoView({ block: "start" })
+    }
+
+    const finalDeadline = Date.now() + Math.floor(timeoutMs / 2)
+    while (Date.now() < finalDeadline) {
       if (this.turnHasMountedContent(turn)) return true
       await this.sleep(60)
     }
