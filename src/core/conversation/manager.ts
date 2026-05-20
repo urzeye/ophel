@@ -923,6 +923,17 @@ export class ConversationManager {
     return date.toLocaleDateString()
   }
 
+  /**
+   * 剥离标签页重命名功能写入标题中的残留物。
+   * 状态图标（✅/⏳）在最前面，模型标记（[Flash]）在末尾——由 tab-manager 格式化产生。
+   */
+  private stripTabManagerArtifacts(rawTitle: string): string {
+    return rawTitle
+      .replace(/^[⏳✅]\s+/u, "")
+      .replace(/\[[\w\s.]+\]\s*$/g, "")
+      .trim()
+  }
+
   private resolveConversationForExport(convId: string): Conversation | null {
     const existing = this.conversations[convId]
     const currentInfo = this.siteAdapter.getCurrentConversationInfo()
@@ -935,9 +946,8 @@ export class ConversationManager {
     // 污染过的历史缓存标题（如旧模型标记 [Flash] 残留在 store 中）。
     const currentDomTitle = currentInfo.title?.trim()
     const storedTitle = existing?.title?.trim()
-    const title =
-      (currentDomTitle ? currentDomTitle : storedTitle ? storedTitle : t("untitledConversation")) ||
-      t("untitledConversation")
+    const rawTitle = currentDomTitle || storedTitle || t("untitledConversation") || "Untitled"
+    const title = this.stripTabManagerArtifacts(rawTitle)
     const url = currentInfo.url || existing?.url || window.location.href
     const cid = currentInfo.cid ?? existing?.cid
     const pinned = currentInfo.isPinned ?? existing?.pinned ?? false
