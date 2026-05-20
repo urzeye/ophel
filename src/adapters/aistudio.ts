@@ -2696,6 +2696,11 @@ export class AIStudioAdapter extends SiteAdapter {
     const includeThoughts = this.shouldIncludeThoughtsInExport()
     const collected: AIStudioExportMessageSnapshot[] = []
     let pendingThoughts: HTMLElement[] = []
+    // 用户附件（图片 / 文件）在 AI Studio 里被渲染成独立的 ms-chat-turn，与紧跟其后的
+    // 文字 turn **本质上是同一次用户提问**。这里像处理 thought-only turn 一样累积
+    // 多个连续的 user turn，等遇到下一个 model turn 时再合并 flush 成一条 user
+    // snapshot——避免一次提问被导出成多条 user 消息。
+    let pendingUserTurns: HTMLElement[] = []
 
     const flushPendingThoughtsAsAssistant = (orderHint: number): void => {
       if (pendingThoughts.length === 0 || !includeThoughts) {
@@ -2713,6 +2718,30 @@ export class AIStudioAdapter extends SiteAdapter {
         })
       }
       pendingThoughts = []
+    }
+
+    const flushPendingUserTurnsAsUser = (): void => {
+      if (pendingUserTurns.length === 0) return
+      const parts: string[] = []
+      for (const userTurn of pendingUserTurns) {
+        const userContainer = this.getUserContainerForTurn(userTurn)
+        if (!userContainer) continue
+        const content = this.normalizeExportMessageContent(
+          this.extractUserQueryMarkdown(userContainer),
+        )
+        if (content) parts.push(content)
+      }
+      if (parts.length > 0) {
+        const firstTurn = pendingUserTurns[0]
+        const firstIdx = allTurns.indexOf(firstTurn)
+        collected.push({
+          role: AISTUDIO_EXPORT_ROLE_USER,
+          turnKey: `user:${firstTurn.id || `idx:${firstIdx}`}`,
+          order: firstIdx,
+          content: parts.join("\n\n"),
+        })
+      }
+      pendingUserTurns = []
     }
 
     try {
@@ -2738,17 +2767,9 @@ export class AIStudioAdapter extends SiteAdapter {
           // turn 已经吸收过；这里是兜底防止 thought 内容彻底丢失）
           flushPendingThoughtsAsAssistant(i - 0.5)
 
-          const content = this.normalizeExportMessageContent(
-            this.extractUserQueryMarkdown(userContainer),
-          )
-          if (content) {
-            collected.push({
-              role: AISTUDIO_EXPORT_ROLE_USER,
-              turnKey: `user:${turn.id || `idx:${i}`}`,
-              order: i,
-              content,
-            })
-          }
+          // 不立即输出——可能后面还跟着同次提问的附件 / 文字 turn。先暂存，
+          // 等遇到 model turn 时再合并 flush。
+          pendingUserTurns.push(turn)
           continue
         }
 
@@ -2756,6 +2777,9 @@ export class AIStudioAdapter extends SiteAdapter {
           ".chat-turn-container.model",
         ) as HTMLElement | null
         if (!modelContainer) continue
+
+        // 遇到 model turn：把累积的连续 user turn 合并 flush 成一条 user snapshot
+        flushPendingUserTurnsAsUser()
 
         if (this.isThoughtOnlyModelTurn(modelContainer)) {
           // 暂存——等紧随其后的 reply turn 把它一并合并
@@ -2777,8 +2801,8 @@ export class AIStudioAdapter extends SiteAdapter {
         }
       }
 
-      // 末尾残留的 thought 序列（最后一组对话只有 thinking 没 reply——通常是导出
-      // 时 AI 还在生成的 corner case）
+      // 末尾残留兜底
+      flushPendingUserTurnsAsUser()
       flushPendingThoughtsAsAssistant(allTurns.length)
     } finally {
       scrollContainer.scrollTop = originalScrollTop
