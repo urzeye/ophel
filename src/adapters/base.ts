@@ -384,16 +384,9 @@ export abstract class SiteAdapter {
       return null
     }
 
-    const rawTitle = this.getConversationTitle() || this.getSessionName() || ""
-    // 剥离标签页重命名功能写入 document.title 的状态前缀和模型标记
-    const title = rawTitle
-      .replace(/^[⏳✅]\s+/u, "")
-      .replace(/^\[[\w\s.]+\]\s*/, "")
-      .trim()
-
     return {
       id,
-      title,
+      title: this.getConversationTitle() || "",
       url: window.location.href,
       cid: this.getCurrentCid() || undefined,
     }

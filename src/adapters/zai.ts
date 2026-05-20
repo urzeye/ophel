@@ -641,7 +641,8 @@ export class ZaiAdapter extends SiteAdapter {
     if (!sessionId) return null
     const list = this.getConversationList()
     const matched = list.find((item) => item.id === sessionId)
-    return matched?.title || null
+    // Z.ai 页面无标题 DOM 元素可提取，回退到 document.title
+    return matched?.title || super.getSessionName() || null
   }
 
   getConversationList(): ConversationInfo[] {
