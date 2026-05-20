@@ -931,8 +931,13 @@ export class ConversationManager {
       return existing || null
     }
 
-    // 导出时优先保留已同步到会话库中的原始标题，避免当前页面被标签页重命名后的 title 回写污染。
-    const title = existing?.title?.trim() || currentInfo.title?.trim() || t("untitledConversation")
+    // 导出标题优先用当前页面提取的（来自 DOM），避免使用被标签页重命名
+    // 污染过的历史缓存标题（如旧模型标记 [Flash] 残留在 store 中）。
+    const currentDomTitle = currentInfo.title?.trim()
+    const storedTitle = existing?.title?.trim()
+    const title =
+      (currentDomTitle ? currentDomTitle : storedTitle ? storedTitle : t("untitledConversation")) ||
+      t("untitledConversation")
     const url = currentInfo.url || existing?.url || window.location.href
     const cid = currentInfo.cid ?? existing?.cid
     const pinned = currentInfo.isPinned ?? existing?.pinned ?? false
@@ -941,7 +946,11 @@ export class ConversationManager {
       const updates: Partial<Conversation> = {}
       let needsUpdate = false
 
-      if (!existing.title?.trim() && title !== existing.title) {
+      // 当前页面提取到标题时，回写到 store 修复历史缓存中的污染数据
+      if (currentDomTitle && currentDomTitle !== existing.title?.trim()) {
+        updates.title = currentDomTitle
+        needsUpdate = true
+      } else if (!existing.title?.trim() && title !== existing.title) {
         updates.title = title
         needsUpdate = true
       }
