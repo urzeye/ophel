@@ -660,7 +660,8 @@ export const de = {
   defaultPositionLeft: "Links",
   defaultPositionRight: "Rechts",
   defaultEdgeDistanceLabel: "Abstand",
-  defaultEdgeDistanceDesc: "Abstand zum Rand",
+  defaultEdgeDistanceDesc:
+    "Standardabstand zum Browserfensterrand nach dem Aktualisieren der Seite",
   panelWidthLabel: "Panelbreite",
   panelWidthDesc: "Breite des Panels (px)",
   panelHeightLabel: "Höhe",

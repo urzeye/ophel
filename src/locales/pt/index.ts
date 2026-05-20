@@ -659,7 +659,8 @@ export const pt = {
   defaultPositionLeft: "Esquerda",
   defaultPositionRight: "Direita",
   defaultEdgeDistanceLabel: "Margem",
-  defaultEdgeDistanceDesc: "Distância da borda",
+  defaultEdgeDistanceDesc:
+    "Distância padrão da borda da janela do navegador após atualizar a página",
   panelWidthLabel: "Largura do painel",
   panelWidthDesc: "Largura do painel (px)",
   panelHeightLabel: "Altura",

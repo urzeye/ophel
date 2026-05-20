@@ -677,7 +677,7 @@ export const ja = {
   defaultPositionLeft: "左側",
   defaultPositionRight: "右側",
   defaultEdgeDistanceLabel: "基本マージン",
-  defaultEdgeDistanceDesc: "画面端からの初期距離",
+  defaultEdgeDistanceDesc: "ページ更新後、ブラウザウィンドウの端からのデフォルトの距離",
   panelWidthLabel: "パネルの幅",
   panelWidthDesc: "パネルの幅 (px)",
   panelHeightLabel: "パネルの高さ",

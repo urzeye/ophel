@@ -697,7 +697,7 @@ export const en = {
   defaultPositionLeft: "Left",
   defaultPositionRight: "Right",
   defaultEdgeDistanceLabel: "Default Margin",
-  defaultEdgeDistanceDesc: "Initial distance from screen edge",
+  defaultEdgeDistanceDesc: "Default distance from the browser window edge after page refresh",
   panelWidthLabel: "Panel Width",
   panelWidthDesc: "Width of the panel (px)",
   panelHeightLabel: "Panel Height",

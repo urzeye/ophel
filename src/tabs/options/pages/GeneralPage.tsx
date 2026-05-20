@@ -338,26 +338,6 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
             </div>
           </SettingRow>
 
-          {/* 默认边距 */}
-          <SettingRow
-            label={t("defaultEdgeDistanceLabel") || "默认边距"}
-            description={t("defaultEdgeDistanceDesc") || "面板距离屏幕边缘的初始距离"}
-            settingId="panel-edge-distance">
-            <Slider
-              value={settings.panel?.defaultEdgeDistance ?? 0}
-              onChange={handleEdgeDistanceChange}
-              onPreviewChange={handleEdgeDistancePreview}
-              onCancelPreview={clearPreviewSettings}
-              min={0}
-              max={400}
-              step={5}
-              unit="px"
-              defaultValue={0}
-              formatValue={(value) => `${value}px`}
-              ariaLabel={t("defaultEdgeDistanceLabel") || "默认边距"}
-            />
-          </SettingRow>
-
           {/* 面板宽度 */}
           <SettingRow
             label={t("panelWidthLabel") || "面板宽度"}
@@ -416,6 +396,30 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
                 defaultValue={30}
                 formatValue={(value) => `${value}px`}
                 ariaLabel={t("edgeSnapThresholdLabel") || "吸附触发距离"}
+              />
+            </SettingRow>
+          )}
+
+          {/* 默认边距 - 仅在悬浮模式下显示 */}
+          {(settings.panel?.panelMode ?? "edge-snap") === "floating" && (
+            <SettingRow
+              label={t("defaultEdgeDistanceLabel") || "默认边距"}
+              description={
+                t("defaultEdgeDistanceDesc") || "页面刷新后，悬浮面板距离浏览器窗口边缘的初始距离"
+              }
+              settingId="panel-edge-distance">
+              <Slider
+                value={settings.panel?.defaultEdgeDistance ?? 0}
+                onChange={handleEdgeDistanceChange}
+                onPreviewChange={handleEdgeDistancePreview}
+                onCancelPreview={clearPreviewSettings}
+                min={0}
+                max={400}
+                step={5}
+                unit="px"
+                defaultValue={0}
+                formatValue={(value) => `${value}px`}
+                ariaLabel={t("defaultEdgeDistanceLabel") || "默认边距"}
               />
             </SettingRow>
           )}

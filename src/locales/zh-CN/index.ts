@@ -830,7 +830,7 @@ export const zhCN = {
   defaultPositionLeft: "左侧",
   defaultPositionRight: "右侧",
   defaultEdgeDistanceLabel: "默认边距",
-  defaultEdgeDistanceDesc: "面板距离屏幕边缘的初始距离",
+  defaultEdgeDistanceDesc: "页面刷新后，悬浮面板距离浏览器窗口边缘的初始距离",
   panelWidthLabel: "面板宽度",
   panelWidthDesc: "面板的宽度 (px)",
   panelHeightLabel: "面板高度",

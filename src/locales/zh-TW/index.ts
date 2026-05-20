@@ -751,7 +751,7 @@ export const zhTW = {
   defaultPositionLeft: "左側",
   defaultPositionRight: "右側",
   defaultEdgeDistanceLabel: "預設邊距",
-  defaultEdgeDistanceDesc: "面板距離螢幕邊緣的初始距離",
+  defaultEdgeDistanceDesc: "頁面重新整理後，懸浮面板距離瀏覽器視窗邊緣的初始距離",
   panelWidthLabel: "面板寬度",
   panelWidthDesc: "面板的寬度 (px)",
   panelHeightLabel: "面板高度",

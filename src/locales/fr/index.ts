@@ -659,7 +659,8 @@ export const fr = {
   defaultPositionLeft: "Gauche",
   defaultPositionRight: "Droite",
   defaultEdgeDistanceLabel: "Marge",
-  defaultEdgeDistanceDesc: "Distance du bord",
+  defaultEdgeDistanceDesc:
+    "Distance par défaut par rapport au bord de la fenêtre du navigateur après actualisation de la page",
   panelWidthLabel: "Largeur du panneau",
   panelWidthDesc: "Largeur du panneau (px)",
   panelHeightLabel: "Hauteur",

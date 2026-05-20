@@ -660,7 +660,7 @@ export const ko = {
   defaultPositionLeft: "왼쪽",
   defaultPositionRight: "오른쪽",
   defaultEdgeDistanceLabel: "기본 여백",
-  defaultEdgeDistanceDesc: "화면 가장자리에서의 초기 거리",
+  defaultEdgeDistanceDesc: "페이지 새로고침 후 브라우저 창 가장자리로부터의 기본 거리",
   panelWidthLabel: "패널 너비",
   panelWidthDesc: "패널의 너비 (px)",
   panelHeightLabel: "패널 높이",

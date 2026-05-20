@@ -657,7 +657,8 @@ export const ru = {
   defaultPositionLeft: "Слева",
   defaultPositionRight: "Справа",
   defaultEdgeDistanceLabel: "Отступ",
-  defaultEdgeDistanceDesc: "Расстояние от края",
+  defaultEdgeDistanceDesc:
+    "Расстояние по умолчанию от края окна браузера после обновления страницы",
   panelWidthLabel: "Ширина панели",
   panelWidthDesc: "Ширина панели (px)",
   panelHeightLabel: "Высота",
