@@ -2804,12 +2804,159 @@ export class AIStudioAdapter extends SiteAdapter {
       // 末尾残留兜底
       flushPendingUserTurnsAsUser()
       flushPendingThoughtsAsAssistant(allTurns.length)
+
+      // Retry pass：first pass 走过一遍后，少数 turn 因为内层挂载特别慢（图片大、
+      // 内容长、CPU 抖动等）没能在 1.8s 内抓到——这里把缺失的 user / assistant turn
+      // 单独逐个处理一次，给极宽的 5s timeout + 多轮 scroll 重试。
+      await this.retryMissingTurns(allTurns, collected, includeThoughts)
     } finally {
       scrollContainer.scrollTop = originalScrollTop
       scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
     }
 
     return collected.sort((a, b) => a.order - b.order)
+  }
+
+  /**
+   * 把 first pass 漏掉的 turn 单独再处理一次。
+   *
+   * 漏抓的 turn 通常是因为 1.8s 内部挂载没渲染完（图片大、长正文、CPU 高负载）。
+   * 这里用 5s 的宽 timeout + 多次重 scroll，最大化恢复机会。慢一些但保证完整。
+   */
+  private async retryMissingTurns(
+    allTurns: HTMLElement[],
+    collected: AIStudioExportMessageSnapshot[],
+    includeThoughts: boolean,
+  ): Promise<void> {
+    const collectedUserTurnIds = new Set(
+      collected
+        .filter((s) => s.role === AISTUDIO_EXPORT_ROLE_USER)
+        .map((s) => s.turnKey.replace(/^user:/, "")),
+    )
+    const collectedAssistantTurnIds = new Set(
+      collected
+        .filter((s) => s.role === AISTUDIO_EXPORT_ROLE_ASSISTANT)
+        .map((s) => s.turnKey.replace(/^assistant:/, "")),
+    )
+
+    // 找 missing user：DOM 里的 user turn 但 id（包括"被合并到下一个 user 组"的
+    // 第一个 turn id）没出现在 collected 内。
+    const missingUserTurns: HTMLElement[] = []
+    let pendingUserGroupHead: HTMLElement | null = null
+    for (let i = 0; i < allTurns.length; i += 1) {
+      const turn = allTurns[i]
+      const isUser = !!turn.querySelector(".chat-turn-container.user")
+      const isModel = !!turn.querySelector(".chat-turn-container.model")
+
+      if (isUser) {
+        if (!pendingUserGroupHead) pendingUserGroupHead = turn
+        continue
+      }
+
+      if (isModel && pendingUserGroupHead) {
+        const headId = pendingUserGroupHead.id || `idx:${allTurns.indexOf(pendingUserGroupHead)}`
+        if (!collectedUserTurnIds.has(headId)) {
+          missingUserTurns.push(pendingUserGroupHead)
+        }
+        pendingUserGroupHead = null
+      }
+    }
+    if (pendingUserGroupHead) {
+      const headId = pendingUserGroupHead.id || `idx:${allTurns.indexOf(pendingUserGroupHead)}`
+      if (!collectedUserTurnIds.has(headId)) {
+        missingUserTurns.push(pendingUserGroupHead)
+      }
+    }
+
+    // 找 missing assistant：reply model turn（非 thought-only）的 id 不在 collected。
+    const missingAssistantTurns: HTMLElement[] = []
+    for (const turn of allTurns) {
+      const modelContainer = turn.querySelector(".chat-turn-container.model") as HTMLElement | null
+      if (!modelContainer) continue
+      if (this.isThoughtOnlyModelTurn(modelContainer)) continue
+      const id = turn.id || `idx:${allTurns.indexOf(turn)}`
+      if (!collectedAssistantTurnIds.has(id)) {
+        missingAssistantTurns.push(turn)
+      }
+    }
+
+    if (missingUserTurns.length === 0 && missingAssistantTurns.length === 0) return
+
+    // 处理 missing user：重新 reveal + 等 5s + 抓自己 + 下一个连续 user（合并）
+    for (const headTurn of missingUserTurns) {
+      const headIdx = allTurns.indexOf(headTurn)
+      if (headIdx < 0) continue
+
+      // 收集这组连续 user turn
+      const groupTurns: HTMLElement[] = []
+      for (let j = headIdx; j < allTurns.length; j += 1) {
+        const t = allTurns[j]
+        if (!t.querySelector(".chat-turn-container.user")) break
+        groupTurns.push(t)
+      }
+
+      // 对每个 turn 强制 reveal + 等到挂载好
+      const parts: string[] = []
+      for (const t of groupTurns) {
+        try {
+          t.scrollIntoView({ block: "start", behavior: "instant" })
+        } catch {
+          t.scrollIntoView({ block: "start" })
+        }
+        await this.waitForTurnContentMounted(t, 5000)
+        const userContainer = this.getUserContainerForTurn(t)
+        if (!userContainer) continue
+        const content = this.normalizeExportMessageContent(
+          this.extractUserQueryMarkdown(userContainer),
+        )
+        if (content) parts.push(content)
+      }
+
+      if (parts.length > 0) {
+        collected.push({
+          role: AISTUDIO_EXPORT_ROLE_USER,
+          turnKey: `user:${headTurn.id || `idx:${headIdx}`}`,
+          order: headIdx,
+          content: parts.join("\n\n"),
+        })
+      }
+    }
+
+    // 处理 missing assistant：找 reply turn 前面紧邻的 thought-only turn 一起合并
+    for (const replyTurn of missingAssistantTurns) {
+      const replyIdx = allTurns.indexOf(replyTurn)
+      if (replyIdx < 0) continue
+
+      const groupTurns: HTMLElement[] = []
+      // 向前找连续的 thought-only model turn
+      for (let j = replyIdx - 1; j >= 0; j -= 1) {
+        const t = allTurns[j]
+        const mc = t.querySelector(".chat-turn-container.model") as HTMLElement | null
+        if (!mc || !this.isThoughtOnlyModelTurn(mc)) break
+        groupTurns.unshift(t)
+      }
+      groupTurns.push(replyTurn)
+
+      // 强制 reveal + 等
+      for (const t of groupTurns) {
+        try {
+          t.scrollIntoView({ block: "start", behavior: "instant" })
+        } catch {
+          t.scrollIntoView({ block: "start" })
+        }
+        await this.waitForTurnContentMounted(t, 5000)
+      }
+
+      const content = this.buildAssistantContentFromModelTurns(groupTurns, includeThoughts)
+      if (content) {
+        collected.push({
+          role: AISTUDIO_EXPORT_ROLE_ASSISTANT,
+          turnKey: `assistant:${replyTurn.id || `idx:${replyIdx}`}`,
+          order: replyIdx,
+          content,
+        })
+      }
+    }
   }
 
   /** turn 内部是否已经渲染出真实内容（不是只剩高度占位）。 */
