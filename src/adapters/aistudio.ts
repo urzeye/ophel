@@ -1730,35 +1730,32 @@ export class AIStudioAdapter extends SiteAdapter {
     if (contentChunk) {
       // 即使找到 chunk，也可能是 ms-prompt-chunk 包了文字 + image-chunk 的混合 turn——
       // 直接 extractTextWithLineBreaks 会把 image-chunk 内的 "download" / "fullscreen"
-      // 按钮文字一起算进来污染大纲。统一用 extractCleanTextFromChunk 剥装饰元素。
+      // 按钮文字一起算进来污染大纲。统一用 extractCleanTextFromChunk 剥装饰元素 +
+      // 附件 chunk，只保留用户输入的真实文字。
       extractedText = this.extractCleanTextFromChunk(contentChunk)
     } else {
-      // 没有 ms-text-chunk —— 通常是纯附件（图片/文件）turn。
-      // fallback 时必须把 `.actions-container`、`button`、`svg`、`aria-hidden`
-      // 等装饰元素全部排除，否则 `ms-image-chunk` 内的 "download"、"fullscreen"
-      // 按钮文字会被当成 user 提问污染到大纲里（用户实测大纲显示成"downloadfullscreen"）。
+      // 没有 ms-text-chunk —— 通常是纯附件（图片/文件）turn 或挂载未完成。
+      // 同样剥所有装饰 + 附件 chunk，避免按钮文字污染大纲（实测显示成
+      // "downloadfullscreen"）。注意：**不**在这里输出 `[Image: alt]` 占位——
+      // 用户要求大纲只显示文字内容，与 AI Studio 原生时间线保持一致；纯附件
+      // turn 让后面的 sidebar fallback 接管文字摘要（或者干脆留空）。
       const turnContent = element.querySelector(".turn-content")
       if (turnContent) {
         const clone = turnContent.cloneNode(true) as Element
         clone
           .querySelectorAll(
-            '.author-label, .actions-container, button, [role="button"], svg, [aria-hidden="true"]',
+            '.author-label, .actions-container, button, [role="button"], svg, [aria-hidden="true"], ms-image-chunk, ms-file-chunk',
           )
           .forEach((node) => node.remove())
         extractedText = (clone.textContent || "").trim()
       } else {
         extractedText = this.extractTextWithLineBreaks(element)
       }
-      // 清理后仍然为空——若有图片 / 文件附件，输出占位文本，避免 user turn
-      // 在大纲里显示成空，或在导出里整条消失。
-      if (!extractedText) {
-        extractedText = this.extractAttachmentPlaceholderFromUserTurn(element)
-      }
     }
 
     // --- Side-Channel Hydration (Using Scrollbar) ---
-    // 如果 DOM 提取文本失败（懒加载/Shadow DOM/渲染延迟），尝试从侧边栏获取
-    // 侧边栏按钮通常包含 aria-control="turn-ID" 和 aria-label="Full Text"
+    // 如果 DOM 提取文本失败（懒加载/Shadow DOM/渲染延迟、或纯附件 turn），
+    // 尝试从侧边栏获取 AI Studio 自己生成的摘要文本——保持大纲与原生时间线一致。
     if (!extractedText && turnId) {
       const scrollbarText = this.getTextFromScrollbar(turnId)
       if (scrollbarText) {
