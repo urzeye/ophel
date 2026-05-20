@@ -1789,15 +1789,9 @@ export class AIStudioAdapter extends SiteAdapter {
     const source = (contentChunk || element).cloneNode(true) as HTMLElement
     source
       .querySelectorAll(
-        '.author-label, .actions-container, button, [role="button"], svg, [aria-hidden="true"]',
+        '.author-label, .actions-container, button, [role="button"], svg, [aria-hidden="true"], ms-image-chunk, ms-file-chunk',
       )
       .forEach((node) => node.remove())
-
-    // 用户提问内的图片在导出滚动时往往还没加载完——`src` 是 "" 或 `blob:` URL。
-    // htmlToMarkdown 会输出 `![alt]()`，下游 markdown 渲染显示成 "Preview unavailable"；
-    // 而 blob URL 即便有值，导出文件用其他工具打开时也已失效。直接换成
-    // `[Image: alt]` 文本占位最稳。
-    this.replaceTransientImagesWithPlaceholder(source)
 
     this.normalizeAssistantExportDom(source)
 
@@ -1807,48 +1801,6 @@ export class AIStudioAdapter extends SiteAdapter {
     }
 
     return this.extractTextWithLineBreaks(source).trim()
-  }
-
-  /**
-   * 把 markdown 抓取里的"瞬时"图片节点替换成纯文本占位。
-   * 适用：`src` 为空（图片还没加载完）、blob: URL（导出后失效）、data:image base64。
-   */
-  private replaceTransientImagesWithPlaceholder(root: HTMLElement): void {
-    const imgs = Array.from(root.querySelectorAll("img"))
-    for (const img of imgs) {
-      const src = (img.getAttribute("src") || "").trim()
-      const alt = (img.getAttribute("alt") || "").trim()
-      const isTransient = !src || src.startsWith("blob:") || src.startsWith("data:image")
-      if (!isTransient) continue
-      const text = alt ? `[Image: ${alt}]` : "[Image]"
-      const placeholder = (root.ownerDocument || document).createTextNode(text)
-      img.parentNode?.replaceChild(placeholder, img)
-    }
-  }
-
-  /**
-   * 仅含附件（图片 / 文件）的 user turn，构造一段占位文本作为 user 内容，
-   * 避免大纲 / 导出里整条 user 消失。
-   * 占位文本只来自 alt / filename，**绝不**包括 ms-image-chunk 内的按钮文字
-   * （否则会污染成 "downloadfullscreen" 之类）。
-   */
-  private extractAttachmentPlaceholderFromUserTurn(element: Element): string {
-    const parts: string[] = []
-    element.querySelectorAll("ms-image-chunk img[alt], img[alt]").forEach((img) => {
-      const alt = (img.getAttribute("alt") || "").trim()
-      parts.push(alt ? `[Image: ${alt}]` : "[Image]")
-    })
-    element.querySelectorAll("ms-file-chunk").forEach((file) => {
-      // 文件 chunk 内常有 filename span，但选择器不确定——取整体 textContent 去掉
-      // 按钮、svg 后的首行作为文件名近似。
-      const clone = file.cloneNode(true) as HTMLElement
-      clone
-        .querySelectorAll('button, [role="button"], svg, [aria-hidden="true"]')
-        .forEach((n) => n.remove())
-      const name = (clone.textContent || "").replace(/\s+/g, " ").trim().slice(0, 80)
-      parts.push(name ? `[File: ${name}]` : "[File]")
-    })
-    return parts.join("\n")
   }
 
   extractUserQueryExportContent(element: Element): string {
