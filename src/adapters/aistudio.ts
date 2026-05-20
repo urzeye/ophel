@@ -373,11 +373,20 @@ export class AIStudioAdapter extends SiteAdapter {
     const sessionId = this.getSessionId()
     if (!sessionId) return null
 
+    // ① 优先从会话列表（library / sidebar）按 ID 精确匹配
     const matched = this.getConversationList().find((item) => item.id === sessionId)
     if (matched?.title?.trim()) {
       return matched.title.trim()
     }
 
+    // ② 回退到页面 H1 标题——自有会话和分享会话都有 <h1 class="page-title">
+    const pageHeading = document.querySelector("h1.page-title, h1[class*='page-title']")
+    const headingText = pageHeading?.textContent?.trim()
+    if (headingText) {
+      return headingText
+    }
+
+    // ③ 再次回退：DOM 中的会话链接（分享页可能匹配不到或匹配到错误元素）
     const link = document.querySelector(
       `a.prompt-link[href*="/prompts/${sessionId}"], a.name-btn[href*="/prompts/${sessionId}"], a[href*="/prompts/${sessionId}"]`,
     )
