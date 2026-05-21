@@ -252,7 +252,7 @@ export class TabManager {
     const statusPrefix = this.computeStatusPrefix(isGenerating)
 
     const siteName = this.adapter.getName()
-    const format = this.settings.titleFormat || "{status}{title}"
+    const format = this.settings.titleFormat ?? "{status}{title}"
 
     // 获取模型名称（如果格式中包含 {model}）
     const modelName = format.includes("{model}") ? this.adapter.getModelName?.() || "" : ""

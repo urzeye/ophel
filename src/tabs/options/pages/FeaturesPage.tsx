@@ -6,7 +6,7 @@
 import React, { useCallback, useEffect, useState } from "react"
 
 import { FeaturesIcon } from "~components/icons"
-import { Button, NumberInput, TokenizedInput } from "~components/ui"
+import { Button, NumberInput, PlaceholderInput } from "~components/ui"
 import { FEATURES_TAB_IDS, NOTIFICATION_SOUND_PRESETS, SITE_IDS } from "~constants"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
@@ -1060,13 +1060,13 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               settingId="tab-title-format"
               disabled={!settings.tab?.autoRename}
               onDisabledClick={() => showPrerequisiteToast(autoRenameLabel)}>
-              <TokenizedInput
-                value={settings.tab?.titleFormat || "{status}{title}"}
+              <PlaceholderInput
+                value={settings.tab?.titleFormat ?? "{status}{title}"}
                 onChange={(val) => updateNestedSetting("tab", "titleFormat", val)}
-                tokens={["{status}", "{title}", "{model}"]}
+                placeholders={["{status}", "{title}", "{model}"]}
                 placeholder="{status}{title}"
                 disabled={!settings.tab?.autoRename}
-                style={{ width: "220px" }}
+                style={{ width: "260px" }}
               />
             </SettingRow>
 

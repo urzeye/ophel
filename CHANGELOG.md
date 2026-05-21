@@ -12,17 +12,13 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### ✨ New Features
 
 - **Title format token chips** — The title format input in Settings now renders `{status}`, `{title}`, and `{model}` placeholders as styled blue chips, making the format template easier to read and edit at a glance.
-
 - **Tab status indicator: "hide checkmark when read"** — A new option keeps the ✅ completion icon visible only until you view the tab, then hides it automatically. (#520)
 
 ### 🐛 Bug Fixes
 
 - **Gemini Library page: fix "Open in New Tab"** — Adapted to the new `/library` path (renamed from `/mystuff`) and adjusted button position to avoid overlap with Gemini's native delete button.
-
 - **Zen mode exit button text unreadable due to transparency**: Replaced the button background from translucent glass-morphism variables with the theme's primary background color, preventing underlying page text from bleeding through and making both layers unreadable. (#431)
-
 - **Tab title: prevent `->` duplication** — Fixed a race condition where the auto-rename title format could repeatedly append `->` to the tab title when the model name was temporarily unavailable, resulting in chains like `标题->->->->`.
-
 - **Gemini adapter: adapt to new sidebar structure** — Updated selectors and navigation logic to support the new `gem-nav-list-item[data-test-id="conversation"]` sidebar items; added a scroll-to-load helper and fixed conversation ID/title extraction and navigation to restore compatibility with the Gemini sidebar redesign.
 
 ---

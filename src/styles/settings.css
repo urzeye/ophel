@@ -677,54 +677,131 @@
   border-color: var(--gh-primary, #4285f4);
 }
 
-/* ==================== TokenizedInput 芯片样式 ==================== */
+/* ==================== PlaceholderInput 模板占位符输入 ==================== */
 
-.tokenized-input {
-  min-height: 34px;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-all;
-  cursor: text;
+.placeholder-input-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.placeholder-input-surface {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  overflow: hidden;
+  border: 1px solid var(--gh-input-border, #d1d5db);
+  border-radius: 6px;
+  background: var(--gh-input-bg, #ffffff);
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+  --placeholder-input-font-family: "Menlo", "Monaco", "Consolas", monospace;
+  --placeholder-input-font-size: 13px;
+  --placeholder-input-line-height: 20px;
+  --placeholder-input-padding: 6px 12px;
+}
+
+.placeholder-input-field:focus-within .placeholder-input-surface {
+  border-color: var(--gh-primary, #4285f4);
+}
+
+.placeholder-input-mirror {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  padding: var(--placeholder-input-padding);
+  color: var(--gh-text, #374151);
+  font-family: var(--placeholder-input-font-family);
+  font-size: var(--placeholder-input-font-size);
+  font-weight: 400;
+  font-kerning: none;
+  font-variant-ligatures: none;
+  letter-spacing: 0;
+  line-height: var(--placeholder-input-line-height);
+  pointer-events: none;
+  white-space: pre;
+  box-sizing: border-box;
+}
+
+.placeholder-input-mirror-scroll {
+  display: inline-block;
+  min-width: 100%;
+  will-change: transform;
+}
+
+.placeholder-input-native {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: var(--placeholder-input-padding);
+  border: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--gh-text, #374151);
+  font-family: var(--placeholder-input-font-family);
+  font-size: var(--placeholder-input-font-size);
+  font-weight: 400;
+  font-kerning: none;
+  font-variant-ligatures: none;
+  letter-spacing: 0;
+  line-height: var(--placeholder-input-line-height);
   direction: ltr;
   text-align: left;
+  outline: none;
+  box-sizing: border-box;
 }
 
-/* 隐藏浏览器自动插入的 <br>，保持空状态干净 */
-.tokenized-input br {
-  display: none;
-}
-
-/* 空状态显示 placeholder */
-.tokenized-input:empty::before {
-  content: attr(data-placeholder);
+.placeholder-input-native::placeholder {
   color: #9ca3af;
-  pointer-events: none;
+  opacity: 1;
 }
 
-.tokenized-input-disabled {
+.placeholder-input-chip {
+  border-radius: 3px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  box-shadow: inset 0 0 0 1px #bfdbfe;
+}
+
+.placeholder-input-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.placeholder-input-button {
+  appearance: none;
+  border: 1px solid #bfdbfe;
+  border-radius: 4px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  padding: 2px 6px;
+  font-family: "Menlo", "Monaco", "Consolas", monospace;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.placeholder-input-button:hover:not(:disabled) {
+  border-color: #93c5fd;
+  background: #bfdbfe;
+}
+
+.placeholder-input-disabled {
   opacity: 0.5;
   cursor: not-allowed;
   user-select: none;
 }
 
-.token-chip {
-  display: inline;
-  padding: 1px 5px;
-  margin: 0 1px;
-  border-radius: 4px;
-  background: #dbeafe;
-  color: #1d4ed8;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.6;
-  user-select: all;
-  cursor: default;
-  white-space: nowrap;
-}
-
-.token-chip::selection {
-  background: #93c5fd;
-  color: #1e40af;
+.placeholder-input-button:disabled {
+  cursor: not-allowed;
 }
 
 .settings-slider {
