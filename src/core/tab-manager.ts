@@ -376,6 +376,8 @@ export class TabManager {
       if (/\[[\w\s.]+\]/.test(name)) return true
       // 被隐私标题污染
       if (name === (this.settings.privacyTitle || "Google")) return true
+      // 被格式分隔符 -> 污染（末尾含 -> 说明标题已被格式化过）
+      if (/->\s*$/.test(name)) return true
       return false
     }
 
