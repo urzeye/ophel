@@ -687,6 +687,12 @@
   cursor: text;
 }
 
+/* 隐藏浏览器自动插入的 <br>，保持空状态干净 */
+.tokenized-input br {
+  display: none;
+}
+
+/* 空状态显示 placeholder */
 .tokenized-input:empty::before {
   content: attr(data-placeholder);
   color: #9ca3af;
