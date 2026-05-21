@@ -1002,9 +1002,7 @@ export class GeminiAdapter extends SiteAdapter {
     const section = this.getChatsExpandableSection()
     if (!section) return false
 
-    if (!this.isChatsExpandableSectionExpanded(section)) {
-      section.click()
-    }
+    section.click()
 
     const start = Date.now()
     while (Date.now() - start < timeout) {
@@ -1012,7 +1010,7 @@ export class GeminiAdapter extends SiteAdapter {
       await this.sleep(100)
     }
 
-    return this.isChatsExpandableSectionExpanded(section)
+    return this.getConversationList().length > 0
   }
 
   private getChatsExpandableSection(): HTMLElement | null {
@@ -1032,15 +1030,8 @@ export class GeminiAdapter extends SiteAdapter {
     const section = conversationList?.closest("expandable-section")
     if (section instanceof HTMLElement) return section
 
-    return null
-  }
-
-  private isChatsExpandableSectionExpanded(section: HTMLElement): boolean {
-    const toggle = section.querySelector('[data-test-id="expandable-section-toggle"]')
-    const ariaExpanded = toggle?.getAttribute("aria-expanded")
-    if (ariaExpanded === "true") return true
-    if (ariaExpanded === "false") return false
-    return section.classList.contains("expanded") || section.hasAttribute("expanded")
+    const firstExpandableSection = document.getElementsByTagName("expandable-section")[0]
+    return firstExpandableSection instanceof HTMLElement ? firstExpandableSection : null
   }
 
   private isConversationHistoryLoading(): boolean {
