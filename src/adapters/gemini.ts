@@ -299,19 +299,19 @@ class GeminiMyStuffEnhancer {
 
       .${GEMINI_MYSTUFF_ACTIVE_CLASS} .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS} {
         position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 32px;
-        height: 32px;
+        top: 4px;
+        right: 42px;
+        width: 36px;
+        height: 36px;
         border: none;
         border-radius: 999px;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 0;
-        background: rgba(15, 23, 42, 0.68);
+        background: rgba(15, 23, 42, 0.45);
         color: #ffffff;
-        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
         backdrop-filter: blur(6px);
         cursor: pointer;
         opacity: 0;
@@ -337,7 +337,7 @@ class GeminiMyStuffEnhancer {
       }
 
       .${GEMINI_MYSTUFF_ACTIVE_CLASS} .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS}:hover {
-        background: rgba(15, 23, 42, 0.82);
+        background: rgba(15, 23, 42, 0.60);
         color: #ffffff;
       }
 
@@ -360,7 +360,7 @@ class GeminiMyStuffEnhancer {
       body.dark-theme .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
       html[dark-theme] .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS},
       html.dark .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS} {
-        background: rgba(15, 23, 42, 0.68);
+        background: rgba(15, 23, 42, 0.45);
         color: #f9fafb;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.32);
       }
@@ -368,7 +368,7 @@ class GeminiMyStuffEnhancer {
       body.dark-theme .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS}:hover,
       html[dark-theme] .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS}:hover,
       html.dark .${GEMINI_MYSTUFF_OPEN_BUTTON_CLASS}:hover {
-        background: rgba(15, 23, 42, 0.82);
+        background: rgba(15, 23, 42, 0.60);
         color: #ffffff;
       }
 
@@ -417,12 +417,19 @@ class GeminiMyStuffEnhancer {
 
   private isMyStuffPath(): boolean {
     const path = this.getNormalizedPath()
-    return path === "/mystuff" || path === "/mystuff/" || path.startsWith("/mystuff/")
+    return (
+      path === "/mystuff" ||
+      path === "/mystuff/" ||
+      path.startsWith("/mystuff/") ||
+      path === "/library" ||
+      path === "/library/" ||
+      path.startsWith("/library/")
+    )
   }
 
   private getKindsForCurrentPath(): GeminiMyStuffKind[] {
     const path = this.getNormalizedPath()
-    if (path.startsWith("/mystuff/documents")) {
+    if (path.startsWith("/mystuff/documents") || path.startsWith("/library/documents")) {
       return ["document"]
     }
     return ["media", "document"]
