@@ -10,8 +10,6 @@ import {
 } from "~utils/messaging"
 import { type Settings } from "~utils/storage"
 
-import { clearPristineTitle, setPristineTitle } from "./pristine-title-store"
-
 export class TabManager {
   private adapter: SiteAdapter
   private settings: Settings["tab"]
@@ -176,7 +174,6 @@ export class TabManager {
     this.stopNotificationPlayback()
     this.resetGenerationConfirmationState()
     this.stopTitleObserver()
-    clearPristineTitle()
     window.removeEventListener("message", this.boundHandleMessage)
     document.removeEventListener("visibilitychange", this.boundVisibilityHandler)
     window.removeEventListener("focus", this.boundFocusHandler)
@@ -296,17 +293,7 @@ export class TabManager {
   }
 
   private applyManagedTitle(title: string, force = false) {
-    const previousManagedTitle = this.expectedTitle
     this.expectedTitle = title
-
-    // 在覆盖前捕获"未被装饰的真实 document.title"：
-    // - 当前 title 等于上一次的装饰值（previousManagedTitle）→ 是我们自己写入的，不捕获
-    // - 当前 title 等于即将写入的装饰值（title）→ 同样是装饰，不捕获
-    // - 其他情况下，document.title 来源于站点初始值或外部修改，是干净的原始标题
-    const currentDocTitle = document.title
-    if (currentDocTitle && currentDocTitle !== previousManagedTitle && currentDocTitle !== title) {
-      setPristineTitle(currentDocTitle)
-    }
 
     if (!force && document.title === title) {
       return
@@ -339,10 +326,6 @@ export class TabManager {
       if (this.isApplyingManagedTitle) return
       if (!this.expectedTitle) return
       if (document.title === this.expectedTitle) return
-
-      // 外部（站点或其他扩展）修改了 title：此时 document.title 是站点视角的真实标题，
-      // 在我们回写装饰前先存入 pristine store，保证后续会话标题的兜底读取拿到的是干净值。
-      setPristineTitle(document.title)
 
       if (this.titleSyncTimer !== null) {
         window.clearTimeout(this.titleSyncTimer)
