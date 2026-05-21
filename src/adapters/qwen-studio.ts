@@ -152,6 +152,10 @@ export class QwenAiAdapter extends SiteAdapter {
     return window.location.pathname.startsWith("/s/")
   }
 
+  isUserConversationPage(): boolean {
+    return !this.isSharePage() && QWENAI_CHAT_PATH_PATTERN.test(window.location.pathname)
+  }
+
   getCurrentCid(): string | null {
     const fromCookie = this.readCookieValue("aui") || this.readCookieValue("cnaui")
     if (fromCookie) return fromCookie

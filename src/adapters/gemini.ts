@@ -913,6 +913,14 @@ export class GeminiAdapter extends SiteAdapter {
     return false
   }
 
+  isUserConversationPage(): boolean {
+    const path = window.location.pathname.replace(/^\/u\/\d+(?=\/)/, "")
+    return (
+      !this.isSharePage() &&
+      (/^\/app\/[^/?#]+(?:\/|$)/i.test(path) || /^\/gem\/[^/?#]+\/[^/?#]+(?:\/|$)/i.test(path))
+    )
+  }
+
   // ==================== 会话管理 ====================
 
   getConversationList(): ConversationInfo[] {

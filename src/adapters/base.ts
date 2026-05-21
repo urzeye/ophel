@@ -363,6 +363,17 @@ export abstract class SiteAdapter {
     return window.location.pathname.startsWith("/share/")
   }
 
+  /** 判断当前是否为用户自己的历史会话页 */
+  isUserConversationPage(): boolean {
+    const sessionId = this.getSessionId()?.trim()
+    return (
+      Boolean(sessionId) &&
+      sessionId !== "default" &&
+      !this.isSharePage() &&
+      !this.isNewConversation()
+    )
+  }
+
   /**
    * 获取当前团队 ID（用于会话隔离）
    * 仅在支持多团队的站点（如 Gemini Enterprise）中实现

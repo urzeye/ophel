@@ -313,6 +313,11 @@ export class ChatGLMAdapter extends SiteAdapter {
     return window.location.pathname.startsWith("/glmsShare")
   }
 
+  isUserConversationPage(): boolean {
+    const cid = new URLSearchParams(window.location.search).get(SESSION_ID_PARAM)?.trim()
+    return !this.isSharePage() && Boolean(cid) && cid === this.getSessionId()
+  }
+
   getSessionName(): string | null {
     const conversationTitle = this.getConversationTitle()
     if (conversationTitle) return conversationTitle

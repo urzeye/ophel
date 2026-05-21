@@ -226,6 +226,10 @@ export class ChatGPTAdapter extends SiteAdapter {
     return window.location.pathname.startsWith("/share/")
   }
 
+  isUserConversationPage(): boolean {
+    return !this.isSharePage() && /^\/c\/[a-z0-9-]+(?:\/|$)/i.test(window.location.pathname)
+  }
+
   /**
    * 获取当前账户标识（用于会话隔离）
    * ChatGPT 通过 localStorage._account 区分不同账户/团队

@@ -94,6 +94,10 @@ export class GrokAdapter extends SiteAdapter {
     return window.location.pathname.startsWith("/share/")
   }
 
+  isUserConversationPage(): boolean {
+    return !this.isSharePage() && /^\/c\/[^/?#]+(?:\/|$)/i.test(window.location.pathname)
+  }
+
   // 缓存弹窗中的会话数据（用于同步时弹窗已关闭的情况）
   private cachedDialogConversations: Map<string, ConversationInfo> | null = null
 

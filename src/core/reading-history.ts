@@ -219,6 +219,10 @@ export class ReadingHistoryManager {
     return this.adapter.getSessionId()?.trim() || ""
   }
 
+  private canUseCurrentSession(sessionId = this.getSessionId()): boolean {
+    return !!sessionId && this.adapter.isUserConversationPage()
+  }
+
   private lockCurrentSessionId(sessionId: string) {
     if (!sessionId) return
     if (!this.currentSessionId) {
@@ -233,7 +237,7 @@ export class ReadingHistoryManager {
 
     while (Date.now() <= deadline) {
       const sessionId = this.getSessionId()
-      if (sessionId && !this.adapter.isNewConversation()) {
+      if (this.canUseCurrentSession(sessionId)) {
         return sessionId
       }
 
@@ -243,7 +247,7 @@ export class ReadingHistoryManager {
     }
 
     const sessionId = this.getSessionId()
-    if (sessionId && !this.adapter.isNewConversation()) {
+    if (this.canUseCurrentSession(sessionId)) {
       return sessionId
     }
 
@@ -263,7 +267,7 @@ export class ReadingHistoryManager {
     if (Date.now() < this.ignoreScrollUntil) {
       return
     }
-    if (!sessionId || this.adapter.isNewConversation()) {
+    if (!this.canUseCurrentSession(sessionId)) {
       return
     }
 

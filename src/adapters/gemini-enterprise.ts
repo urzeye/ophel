@@ -91,6 +91,10 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     return window.location.pathname.includes("/r/share/")
   }
 
+  isUserConversationPage(): boolean {
+    return !this.isSharePage() && /\/session\/[^/?#]+(?:\/|$)/i.test(window.location.pathname)
+  }
+
   supportsTabRename(): boolean {
     return true
   }

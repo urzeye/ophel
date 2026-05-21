@@ -92,6 +92,10 @@ export class QianwenAdapter extends SiteAdapter {
     return window.location.pathname.startsWith("/share/")
   }
 
+  isUserConversationPage(): boolean {
+    return !this.isSharePage() && CHAT_PATH_PATTERN.test(window.location.pathname)
+  }
+
   getCurrentCid(): string | null {
     const raw = localStorage.getItem(CID_STORAGE_KEY)
     if (!raw) return null

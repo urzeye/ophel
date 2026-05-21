@@ -120,6 +120,10 @@ export class ClaudeAdapter extends SiteAdapter {
     return window.location.pathname.startsWith("/public/")
   }
 
+  isUserConversationPage(): boolean {
+    return !this.isSharePage() && /^\/chat\/[a-f0-9-]+(?:\/|$)/i.test(window.location.pathname)
+  }
+
   // ==================== 会话管理 ====================
 
   getConversationList(): ConversationInfo[] {

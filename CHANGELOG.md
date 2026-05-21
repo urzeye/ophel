@@ -16,6 +16,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Reading history restore scope** — Reading history now saves and resumes positions only on owned conversation pages. Shared pages, new-chat pages, and other site routes no longer trigger auto-resume; page eligibility now lives in each site adapter for clearer maintenance.
 - **Conversation sync cleanup** — Manual sync now removes conversations that were deleted on the same site/account and opens Gemini's recent chats section when needed before syncing.
 - **Gemini Library page: fix "Open in New Tab"** — Adapted to the new `/library` path (renamed from `/mystuff`) and adjusted button position to avoid overlap with Gemini's native delete button.
 - **Zen mode exit button text unreadable due to transparency**: Replaced the button background from translucent glass-morphism variables with the theme's primary background color, preventing underlying page text from bleeding through and making both layers unreadable. (#431)
