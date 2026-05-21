@@ -544,6 +544,9 @@ export const en = {
   toggleTheme: "Toggle Light/Dark Theme",
 
   showStatusDesc: "Display generation status icon in tab title (⏳/✅)",
+  hideStatusWhenReadLabel: "Only show checkmark when unread",
+  hideStatusWhenReadDesc:
+    "When enabled, ✅ only shows when the tab is inactive and hides once you view it",
   showNotificationLabel: "Desktop Notification",
   showNotificationDesc: "Send system notification when generation completes",
   notificationSoundLabel: "Notification Sound",

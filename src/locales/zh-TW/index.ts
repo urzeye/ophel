@@ -398,6 +398,8 @@ export const zhTW = {
   secondsValueLabel: "{val} 秒",
   showStatusLabel: "顯示生成狀態",
   showStatusDesc: "在標籤頁標題中顯示生成狀態圖示（⏳/✅）",
+  hideStatusWhenReadLabel: "僅在未讀時顯示完成標記",
+  hideStatusWhenReadDesc: "開啟後 ✅ 僅在標籤頁未啟用時顯示，一旦檢視即自動隱藏",
   showNotificationLabel: "傳送桌面通知",
   showNotificationDesc: "生成完成時傳送系统通知",
   notificationSoundLabel: "通知聲音",

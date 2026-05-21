@@ -11,6 +11,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ New Features
 
+- **Tab status indicator: "hide checkmark when read"** — A new option keeps the ✅ completion icon visible only until you view the tab, then hides it automatically. (#520)
+
 ### 🐛 Bug Fixes
 
 ---

@@ -254,6 +254,7 @@ export interface Settings {
     autoRename: boolean
     renameInterval: number
     showStatus: boolean
+    hideStatusWhenRead: boolean
     titleFormat: string
     showNotification: boolean
     notificationSound: boolean
@@ -519,6 +520,7 @@ export const DEFAULT_SETTINGS: Settings = {
     autoRename: true,
     renameInterval: 3,
     showStatus: true,
+    hideStatusWhenRead: false,
     titleFormat: "{status}{title}->{model}",
     // 油猴脚本环境默认开启（GM_notification 已通过 @grant 声明）
     showNotification: isUserscript,

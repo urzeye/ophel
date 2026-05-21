@@ -521,6 +521,9 @@ export const ru = {
   secondsValueLabel: "{val} с",
   showStatusLabel: "Статус в иконке",
   showStatusDesc: "Иконка загрузки вкладки (⏳/✅)",
+  hideStatusWhenReadLabel: "Галочка только для непрочитанных",
+  hideStatusWhenReadDesc:
+    "При включении ✅ показывается только когда вкладка неактивна и скрывается после просмотра",
   showNotificationLabel: "Уведомление на раб. стол",
   showNotificationDesc: "Сказать, когда ИИ закончит писать",
   notificationSoundLabel: "Звук",

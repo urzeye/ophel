@@ -523,6 +523,9 @@ export const es = {
   secondsValueLabel: "{val} s",
   showStatusLabel: "Mostrar Estado",
   showStatusDesc: "Icono de carga en pestaña (⏳/✅)",
+  hideStatusWhenReadLabel: "Mostrar ✅ solo cuando no leído",
+  hideStatusWhenReadDesc:
+    "Al activar, ✅ solo aparece con la pestaña inactiva y se oculta al visualizarla",
   showNotificationLabel: "Notificación Escritorio",
   showNotificationDesc: "Avisar cuando termine de escribir",
   notificationSoundLabel: "Sonido de Aviso",

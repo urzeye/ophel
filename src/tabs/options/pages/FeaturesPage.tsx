@@ -672,6 +672,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
     showToastThrottled(prerequisiteToastTemplate.replace("{setting}", label), 2000, {}, 1500, label)
   const autoRenameLabel = t("autoRenameTabLabel") || "自动重命名"
   const showNotificationLabel = t("showNotificationLabel") || "桌面通知"
+  const showStatusLabel = t("showStatusLabel") || "显示生成状态"
   const privacyModeLabel = t("privacyModeLabel") || "隐私模式"
   const readingHistoryLabel = t("readingHistoryPersistenceLabel") || "启用阅读历史"
   const formulaCopyLabel = t("formulaCopyLabel") || "双击复制公式"
@@ -1076,6 +1077,21 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               settingId="tab-show-status"
               checked={settings.tab?.showStatus ?? true}
               onChange={() => updateNestedSetting("tab", "showStatus", !settings.tab?.showStatus)}
+            />
+
+            <ToggleRow
+              label={t("hideStatusWhenReadLabel") || "仅在未读时显示完成标记"}
+              description={
+                t("hideStatusWhenReadDesc") ||
+                "开启后 ✅ 仅在标签页未激活时显示，一旦查看即自动隐藏"
+              }
+              settingId="tab-hide-status-when-read"
+              disabled={!settings.tab?.showStatus}
+              onDisabledClick={() => showPrerequisiteToast(showStatusLabel)}
+              checked={settings.tab?.hideStatusWhenRead ?? false}
+              onChange={() =>
+                updateNestedSetting("tab", "hideStatusWhenRead", !settings.tab?.hideStatusWhenRead)
+              }
             />
           </SettingCard>
 

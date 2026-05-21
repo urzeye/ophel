@@ -524,6 +524,9 @@ export const fr = {
   secondsValueLabel: "{val} s",
   showStatusLabel: "Afficher le Statut",
   showStatusDesc: "Icône de chargement dans l'onglet (⏳/✅)",
+  hideStatusWhenReadLabel: "Afficher ✅ seulement si non lu",
+  hideStatusWhenReadDesc:
+    "Activé, ✅ s'affiche uniquement quand l'onglet est inactif et disparaît dès consultation",
   showNotificationLabel: "Notification de Bureau",
   showNotificationDesc: "Prévenir quand l'IA a fini d'écrire",
   notificationSoundLabel: "Son d'Alerte",

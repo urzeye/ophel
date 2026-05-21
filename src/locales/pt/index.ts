@@ -522,6 +522,8 @@ export const pt = {
   secondsValueLabel: "{val} s",
   showStatusLabel: "Mostrar Status",
   showStatusDesc: "Ícone de carregamento na aba (⏳/✅)",
+  hideStatusWhenReadLabel: "Mostrar ✅ apenas quando não lido",
+  hideStatusWhenReadDesc: "Ao ativar, ✅ aparece só com a aba inativa e some ao visualizar",
   showNotificationLabel: "Notificação de Desktop",
   showNotificationDesc: "Avisar quando a IA terminar de escrever",
   notificationSoundLabel: "Som de Aviso",

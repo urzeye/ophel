@@ -524,6 +524,9 @@ export const de = {
   secondsValueLabel: "{val} Sek.",
   showStatusLabel: "Status anzeigen",
   showStatusDesc: "Ladesymbol im Tab (⏳/✅)",
+  hideStatusWhenReadLabel: "Nur bei ungelesen anzeigen",
+  hideStatusWhenReadDesc:
+    "Wenn aktiviert, wird ✅ nur angezeigt, wenn der Tab inaktiv ist, und verschwindet beim Anzeigen",
   showNotificationLabel: "Desktop-Benachrichtigung",
   showNotificationDesc: "Informieren, wenn die KI fertig ist",
   notificationSoundLabel: "Hinweiston",

@@ -536,6 +536,9 @@ export const ja = {
   secondsValueLabel: "{val}秒",
   showStatusLabel: "状態を表示",
   showStatusDesc: "タブ名の先頭に生成状態アイコンを表示 (⏳/✅)",
+  hideStatusWhenReadLabel: "未読時のみ完了マークを表示",
+  hideStatusWhenReadDesc:
+    "有効にすると ✅ はタブが非アクティブの時のみ表示され、表示すると自動的に消えます",
   showNotificationLabel: "デスクトップ通知",
   showNotificationDesc: "AIの回答完了時にシステムの通知を送信します",
   notificationSoundLabel: "通知音",

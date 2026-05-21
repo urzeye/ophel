@@ -516,6 +516,8 @@ export const zhCN = {
   toggleTheme: "切换亮/暗主题",
   // 面板设置
   showStatusDesc: "在标签页标题中显示生成状态图标（⏳/✅）",
+  hideStatusWhenReadLabel: "仅在未读时显示完成标记",
+  hideStatusWhenReadDesc: "开启后 ✅ 仅在标签页未激活时显示，一旦查看即自动隐藏",
   showNotificationLabel: "发送桌面通知",
   showNotificationDesc: "生成完成时发送系统通知",
   notificationSoundLabel: "通知声音",

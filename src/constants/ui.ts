@@ -384,6 +384,16 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     keywords: ["quick buttons", "opacity", "透明度"],
   },
   {
+    settingId: "quick-buttons-hide-when-panel-open",
+    title: "面板展开时隐藏快捷按钮组",
+    keywords: ["quick buttons", "hide", "panel open", "快捷按钮", "隐藏", "面板展开"],
+  },
+  {
+    settingId: "quick-buttons-proximity-radius",
+    title: "感应唤醒距离",
+    keywords: ["quick buttons", "proximity", "radius", "唤醒距离", "感应"],
+  },
+  {
     settingId: "tools-menu-export",
     title: "工具箱：显示导出按钮",
     keywords: ["tools menu", "export", "工具箱", "导出"],
@@ -447,6 +457,11 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     settingId: "tab-show-status",
     title: "显示状态图标",
     keywords: ["tab", "status", "状态图标"],
+  },
+  {
+    settingId: "tab-hide-status-when-read",
+    title: "仅在未读时显示完成标记",
+    keywords: ["tab", "hide status", "unread", "未读", "完成标记", "✅"],
   },
   {
     settingId: "tab-show-notification",
