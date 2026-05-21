@@ -440,9 +440,9 @@ export abstract class SiteAdapter {
     return results
   }
 
-  async loadAllConversations(): Promise<void> {
+  async loadAllConversations(): Promise<boolean | void> {
     const container = this.getSidebarScrollContainer()
-    if (!container) return
+    if (!container) return false
 
     let lastCount = 0
     let stableRounds = 0
@@ -463,6 +463,8 @@ export abstract class SiteAdapter {
         stableRounds = 0
       }
     }
+
+    return true
   }
 
   // ==================== 生成状态检测 ====================

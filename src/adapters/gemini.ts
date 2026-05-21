@@ -113,6 +113,7 @@ const GEMINI_GOOGLEUSERCONTENT_HOST_REGEX = /^https:\/\/lh\d+\.googleusercontent
 const GEMINI_MYSTUFF_TOOLTIP_DELAY_MS = 300
 const GEMINI_CHATS_EXPANDABLE_SECTION_SELECTOR =
   'expandable-section[data-test-id="chats-expandable-section"]'
+const GEMINI_CHATS_EXPANDABLE_SECTION_FALLBACK_SELECTOR = 'expandable-section[storagekey="chats"]'
 const GEMINI_MARKDOWN_FIXER_SOURCE_ATTRIBUTE_KEYWORDS = [
   "source",
   "sources",
@@ -952,54 +953,99 @@ export class GeminiAdapter extends SiteAdapter {
     )
   }
 
-  async loadAllConversations(): Promise<void> {
-    await this.ensureChatsExpandableSectionOpen()
+  async loadAllConversations(): Promise<boolean> {
+    const sectionReady = await this.ensureChatsExpandableSectionOpen()
+    if (!sectionReady) return false
 
     const container = this.getSidebarScrollContainer()
-    if (!container) return
+    if (!container) return false
 
     let lastCount = 0
     let stableRounds = 0
-    const maxStableRounds = 3
+    let noLoadingRounds = 0
+    const maxStableRounds = 4
+    const maxRounds = 40
     const selector = 'gem-nav-list-item[data-test-id="conversation"]'
 
-    while (stableRounds < maxStableRounds) {
+    for (let round = 0; round < maxRounds; round++) {
       container.scrollTop = container.scrollHeight
-      await new Promise((r) => setTimeout(r, 500))
+      await this.sleep(900)
 
       const conversations =
         (DOMToolkit.query(selector, { all: true, shadow: true }) as Element[]) || []
       const currentCount = conversations.length
+
       if (currentCount === lastCount) {
         stableRounds++
       } else {
         lastCount = currentCount
         stableRounds = 0
       }
+
+      if (this.isConversationHistoryLoading()) {
+        noLoadingRounds = 0
+      } else {
+        noLoadingRounds++
+      }
+
+      if (stableRounds >= maxStableRounds && noLoadingRounds >= 2) {
+        return currentCount > 0
+      }
     }
+
+    return false
   }
 
-  private async ensureChatsExpandableSectionOpen(timeout = 2500): Promise<void> {
-    if (this.getConversationList().length > 0) return
+  private async ensureChatsExpandableSectionOpen(timeout = 2500): Promise<boolean> {
+    if (this.getConversationList().length > 0) return true
 
     const section = this.getChatsExpandableSection()
-    if (!section) return
+    if (!section) return false
 
-    section.click()
+    if (!this.isChatsExpandableSectionExpanded(section)) {
+      section.click()
+    }
 
     const start = Date.now()
     while (Date.now() - start < timeout) {
-      if (this.getConversationList().length > 0) return
+      if (this.getConversationList().length > 0) return true
       await this.sleep(100)
     }
+
+    return this.isChatsExpandableSectionExpanded(section)
   }
 
   private getChatsExpandableSection(): HTMLElement | null {
-    const section = document.querySelector(GEMINI_CHATS_EXPANDABLE_SECTION_SELECTOR)
+    const selectors = [
+      GEMINI_CHATS_EXPANDABLE_SECTION_SELECTOR,
+      GEMINI_CHATS_EXPANDABLE_SECTION_FALLBACK_SELECTOR,
+    ]
+
+    for (const selector of selectors) {
+      const section = document.querySelector(selector)
+      if (section instanceof HTMLElement) return section
+    }
+
+    const conversationList = document.querySelector(
+      'conversations-list[data-test-id="all-conversations"]',
+    )
+    const section = conversationList?.closest("expandable-section")
     if (section instanceof HTMLElement) return section
 
-    const firstExpandableSection = document.getElementsByTagName("expandable-section")[0]
-    return firstExpandableSection instanceof HTMLElement ? firstExpandableSection : null
+    return null
+  }
+
+  private isChatsExpandableSectionExpanded(section: HTMLElement): boolean {
+    const toggle = section.querySelector('[data-test-id="expandable-section-toggle"]')
+    const ariaExpanded = toggle?.getAttribute("aria-expanded")
+    if (ariaExpanded === "true") return true
+    if (ariaExpanded === "false") return false
+    return section.classList.contains("expanded") || section.hasAttribute("expanded")
+  }
+
+  private isConversationHistoryLoading(): boolean {
+    const loadingSpinner = document.querySelector('[data-test-id="loading-history-spinner"]')
+    return loadingSpinner instanceof HTMLElement && this.isVisible(loadingSpinner)
   }
 
   private getChatsScrollableContainer(): Element | null {
@@ -1007,6 +1053,7 @@ export class GeminiAdapter extends SiteAdapter {
       [
         'conversations-list[data-test-id="all-conversations"]',
         GEMINI_CHATS_EXPANDABLE_SECTION_SELECTOR,
+        GEMINI_CHATS_EXPANDABLE_SECTION_FALLBACK_SELECTOR,
         'gem-nav-list-item[data-test-id="conversation"]',
       ].join(","),
     )
