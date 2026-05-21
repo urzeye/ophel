@@ -15,6 +15,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Zen mode exit button text unreadable due to transparency**: Replaced the button background from translucent glass-morphism variables with the theme's primary background color, preventing underlying page text from bleeding through and making both layers unreadable. (#431)
+
 ---
 
 ## [1.0.51] - 2026-05-20
