@@ -906,23 +906,29 @@ export class GeminiAdapter extends SiteAdapter {
   // ==================== 会话管理 ====================
 
   getConversationList(): ConversationInfo[] {
-    const items = (DOMToolkit.query(".conversation", { all: true }) as Element[]) || []
+    const items =
+      (DOMToolkit.query('gem-nav-list-item[data-test-id="conversation"]', {
+        all: true,
+      }) as Element[]) || []
     const cid = this.getCurrentCid()
     const prefix = this.getUserPathPrefix()
     return Array.from(items)
       .map((el) => {
-        const jslog = el.getAttribute("jslog") || ""
+        // 新版侧边栏：jslog 在内部 <a> 上，标题在 .title-text 中
+        const anchor = el.querySelector("a")
+        const jslog = anchor?.getAttribute("jslog") || el.getAttribute("jslog") || ""
         const idMatch = jslog.match(/\["c_([^"]+)"/)
         const id = idMatch ? idMatch[1] : ""
-        const title = el.querySelector(".conversation-title")?.textContent?.trim() || ""
+        const title = el.querySelector(".title-text")?.textContent?.trim() || ""
         const isPinned = !!el.querySelector('mat-icon[fonticon="push_pin"]')
+        const isActive = anchor?.classList.contains("mdc-list-item--activated") || false
 
         return {
           id,
           cid,
           title,
           url: id ? `https://gemini.google.com${prefix}/app/${id}` : "",
-          isActive: el.classList.contains("selected"),
+          isActive,
           isPinned,
         }
       })
@@ -936,16 +942,43 @@ export class GeminiAdapter extends SiteAdapter {
     )
   }
 
+  async loadAllConversations(): Promise<void> {
+    const container = this.getSidebarScrollContainer()
+    if (!container) return
+
+    let lastCount = 0
+    let stableRounds = 0
+    const maxStableRounds = 3
+    const selector = 'gem-nav-list-item[data-test-id="conversation"]'
+
+    while (stableRounds < maxStableRounds) {
+      container.scrollTop = container.scrollHeight
+      await new Promise((r) => setTimeout(r, 500))
+
+      const conversations =
+        (DOMToolkit.query(selector, { all: true, shadow: true }) as Element[]) || []
+      const currentCount = conversations.length
+      if (currentCount === lastCount) {
+        stableRounds++
+      } else {
+        lastCount = currentCount
+        stableRounds = 0
+      }
+    }
+  }
+
   getConversationObserverConfig(): ConversationObserverConfig {
     return {
-      selector: ".conversation",
+      selector: 'gem-nav-list-item[data-test-id="conversation"]',
       shadow: false,
       extractInfo: (el) => {
-        const jslog = el.getAttribute("jslog") || ""
+        // 新版侧边栏：jslog 在内部 <a> 上，标题在 .title-text 中
+        const anchor = el.querySelector("a")
+        const jslog = anchor?.getAttribute("jslog") || el.getAttribute("jslog") || ""
         const idMatch = jslog.match(/\["c_([^"]+)"/)
         const id = idMatch ? idMatch[1] : ""
         if (!id) return null
-        const title = el.querySelector(".conversation-title")?.textContent?.trim() || ""
+        const title = el.querySelector(".title-text")?.textContent?.trim() || ""
         const isPinned = !!el.querySelector('mat-icon[fonticon="push_pin"]')
         const cid = this.getCurrentCid()
         const prefix = this.getUserPathPrefix()
@@ -957,20 +990,17 @@ export class GeminiAdapter extends SiteAdapter {
           isPinned,
         }
       },
-      getTitleElement: (el) => el.querySelector(".conversation-title") || el,
+      getTitleElement: (el) => el.querySelector(".title-text") || el,
     }
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    // 通过 jslog 属性查找侧边栏会话元素
-    const sidebarItem = document.querySelector(
-      `.conversation[jslog*="${id}"]`,
+    // 新版侧边栏：通过 jslog 属性在内部 <a> 上查找会话元素
+    const anchor = document.querySelector(
+      `gem-nav-list-item[data-test-id="conversation"] a[jslog*="${id}"]`,
     ) as HTMLElement | null
-    if (sidebarItem) {
-      const btn =
-        sidebarItem.querySelector("button.list-item") || sidebarItem.querySelector("button")
-      if (btn) (btn as HTMLElement).click()
-      else sidebarItem.click()
+    if (anchor) {
+      anchor.click()
       return true
     }
     // 降级：页面刷新
@@ -1133,14 +1163,16 @@ export class GeminiAdapter extends SiteAdapter {
 
   private findConversationRow(id: string): HTMLElement | null {
     const expected = this.normalizeConversationId(id)
-    const rows = this.findAllElementsBySelector(".conversation") as HTMLElement[]
+    // 新版侧边栏：使用 gem-nav-list-item
+    const rows = this.findAllElementsBySelector(
+      'gem-nav-list-item[data-test-id="conversation"]',
+    ) as HTMLElement[]
     for (const row of rows) {
       const rowId = this.normalizeConversationId(this.extractConversationIdFromElement(row))
       if (rowId && rowId === expected) {
         return row
       }
     }
-
     const hrefCandidates = [
       `a[href*="/app/${expected}"]`,
       `a[href*="/app/c_${expected}"]`,
@@ -1151,7 +1183,7 @@ export class GeminiAdapter extends SiteAdapter {
     for (const selector of hrefCandidates) {
       const anchor = document.querySelector(selector) as HTMLElement | null
       if (!anchor) continue
-      const container = (anchor.closest(".conversation") ||
+      const container = (anchor.closest('gem-nav-list-item[data-test-id="conversation"]') ||
         anchor.closest("li") ||
         anchor.parentElement) as HTMLElement | null
       if (container) return container
@@ -1162,7 +1194,9 @@ export class GeminiAdapter extends SiteAdapter {
 
   private extractConversationIdFromElement(element: Element | null): string {
     if (!element) return ""
-    const jslog = element.getAttribute("jslog") || ""
+    // 新版侧边栏：jslog 在内部 <a> 上
+    const anchor = element.querySelector("a")
+    const jslog = anchor?.getAttribute("jslog") || element.getAttribute("jslog") || ""
     const idMatch = jslog.match(/\["c_([^"]+)"/)
     return idMatch ? idMatch[1] : ""
   }
@@ -1211,7 +1245,6 @@ export class GeminiAdapter extends SiteAdapter {
         (scope) => Array.from(scope.querySelectorAll(actionSelectors)) as HTMLElement[],
       )
       const candidates = allCandidates.filter((candidate) => {
-        if (candidate.classList.contains("list-item")) return false
         if (candidate instanceof HTMLButtonElement && candidate.disabled) return false
         return true
       })
@@ -1266,7 +1299,6 @@ export class GeminiAdapter extends SiteAdapter {
 
   private isLikelyMenuButton(button: HTMLElement, row: HTMLElement): boolean {
     if (!row.contains(button)) return false
-    if (button.classList.contains("list-item")) return false
 
     const hasMenuPopup = button.getAttribute("aria-haspopup") === "menu"
     if (hasMenuPopup) return true
@@ -1561,10 +1593,10 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   getSessionName(): string | null {
-    // 自有会话：页面标题在 .conversation-title 中
-    const titleEl = document.querySelector(".conversation-title")
-    if (titleEl) {
-      const name = titleEl.textContent?.trim()
+    // 新版侧边栏：激活项标题在 a.mdc-list-item--activated .title-text 中
+    const activeTitle = document.querySelector("a.mdc-list-item--activated .title-text")
+    if (activeTitle) {
+      const name = activeTitle.textContent?.trim()
       if (name) return name
     }
     // 分享页面（/share/...）：标题在 h1.headline 中，如 <h1 class="headline gds-headline-m"><strong>询问模型身份</strong></h1>
@@ -1577,10 +1609,10 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   getConversationTitle(): string | null {
-    // 侧边栏选中项（自有会话）
-    const selected = document.querySelector(".conversation.selected .conversation-title")
-    if (selected) {
-      const title = selected.textContent?.trim()
+    // 新版侧边栏：激活项标题
+    const activeTitle = document.querySelector("a.mdc-list-item--activated .title-text")
+    if (activeTitle) {
+      const title = activeTitle.textContent?.trim()
       if (title) return title
     }
     // 回退到页面标题（覆盖自有 + 分享两种页面）
@@ -1589,8 +1621,7 @@ export class GeminiAdapter extends SiteAdapter {
 
   getNewChatButtonSelectors(): string[] {
     return [
-      ".new-chat-button",
-      ".chat-history-new-chat-button",
+      'gem-nav-list-item[data-test-id="new-chat-button"] a',
       '[aria-label="New chat"]',
       '[aria-label="新对话"]',
       '[aria-label="发起新对话"]',
@@ -1668,7 +1699,7 @@ export class GeminiAdapter extends SiteAdapter {
 
   getZenModeConfig() {
     return {
-      hide: ["bard-sidenav", "side-nav-menu-button", ".top-bar-actions", "bard-logo"],
+      hide: ["bard-sidenav", "div.sidenav-with-history-container"],
     }
   }
 
