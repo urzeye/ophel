@@ -685,6 +685,8 @@
   white-space: pre-wrap;
   word-break: break-all;
   cursor: text;
+  direction: ltr;
+  text-align: left;
 }
 
 /* 隐藏浏览器自动插入的 <br>，保持空状态干净 */

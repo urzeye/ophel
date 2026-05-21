@@ -5,66 +5,93 @@
  * 渲染为蓝色芯片样式，用户可直接编辑普通文本，芯片作为不可编辑的原子单元。
  *
  * 设计要点：
+ * - 纯 DOM 操作构建节点，不使用 innerHTML，兼容 CSP / Trusted Types
  * - handleInput 中即时 tokenize DOM，用户手打 {model} 立刻变芯片
  * - useLayoutEffect 仅在外部 value 变更时重渲染（如重置），内部编辑不触发
- * - 空内容不使用 ZWS，允许彻底清空
+ * - 空内容允许彻底清空
  * - onChange 输出纯文本字符串，与旧版 <input> 存储格式完全兼容
  */
 import React, { useCallback, useEffect, useLayoutEffect, useRef } from "react"
 
 export interface TokenizedInputProps {
-  /** 原始格式字符串（含 {status} 等占位符） */
   value: string
-  /** 值变更回调，返回原始格式字符串 */
   onChange: (value: string) => void
-  /** 占位符 token 列表 */
   tokens: string[]
-  /** placeholder 文本 */
   placeholder?: string
-  /** 额外的 className */
   className?: string
-  /** 额外的 style */
   style?: React.CSSProperties
-  /** 是否禁用 */
   disabled?: boolean
 }
 
 const TOKEN_CHIP_CLASS = "token-chip"
 
+// ============ 纯 DOM 节点构建（无 innerHTML，CSP 安全） ============
+
 /**
- * 将文本中的 token 占位符转为 HTML 芯片
+ * 创建 token 芯片 span 元素
  */
-function tokenizeHTML(text: string, tokens: string[]): string {
-  if (!text) return ""
-
-  let html = text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-
-  for (const token of tokens) {
-    const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    html = html.replace(
-      new RegExp(escaped, "g"),
-      `<span class="${TOKEN_CHIP_CLASS}" contenteditable="false" data-token="${token}">${token}</span>`,
-    )
-  }
-
-  return html
+function createTokenChip(token: string): HTMLSpanElement {
+  const span = document.createElement("span")
+  span.className = TOKEN_CHIP_CLASS
+  span.setAttribute("contenteditable", "false")
+  span.setAttribute("data-token", token)
+  span.textContent = token
+  return span
 }
 
 /**
- * 从容器的 textContent 提取原始格式字符串
- * （token 芯片的文本内容就是占位符原文，所以直接取 textContent 即可）
+ * 将原始文本解析为 DOM 节点数组（Text 节点 + token <span> 节点）
+ * 不使用 innerHTML，兼容 CSP / Trusted Types 限制
  */
+function buildTokenNodes(text: string, tokens: string[]): (Text | HTMLSpanElement)[] {
+  if (!text) return []
+
+  // 构建匹配任意 token 的正则
+  const escapedTokens = tokens.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+  const pattern = new RegExp(`(${escapedTokens.join("|")})`, "g")
+
+  const nodes: (Text | HTMLSpanElement)[] = []
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = pattern.exec(text)) !== null) {
+    // 匹配前的纯文本
+    if (match.index > lastIndex) {
+      nodes.push(document.createTextNode(text.slice(lastIndex, match.index)))
+    }
+    // token 芯片
+    nodes.push(createTokenChip(match[0]))
+    lastIndex = pattern.lastIndex
+  }
+
+  // 末尾剩余文本
+  if (lastIndex < text.length) {
+    nodes.push(document.createTextNode(text.slice(lastIndex)))
+  }
+
+  return nodes
+}
+
+/**
+ * 用 DOM 节点列表替换容器内容
+ */
+function replaceContainerContent(container: HTMLElement, nodes: (Text | HTMLSpanElement)[]): void {
+  // 清空现有子节点
+  while (container.firstChild) {
+    container.removeChild(container.firstChild)
+  }
+  // 填入新节点
+  for (const node of nodes) {
+    container.appendChild(node)
+  }
+}
+
+// ============ 光标位置保存 / 恢复 ============
+
 function extractRawText(container: HTMLElement): string {
   return container.textContent || ""
 }
 
-/**
- * 保存光标在容器内的字符偏移位置（仅计算可编辑文本节点）
- */
 function saveCaretOffset(container: HTMLElement): number {
   const sel = window.getSelection()
   if (!sel || !sel.rangeCount) return -1
@@ -76,9 +103,6 @@ function saveCaretOffset(container: HTMLElement): number {
   return preRange.toString().length
 }
 
-/**
- * 恢复光标到容器内指定字符偏移位置
- */
 function restoreCaretOffset(container: HTMLElement, offset: number): void {
   if (offset < 0) return
 
@@ -87,8 +111,7 @@ function restoreCaretOffset(container: HTMLElement, offset: number): void {
 
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
     acceptNode: (node) => {
-      const parent = node.parentElement
-      if (parent?.classList.contains(TOKEN_CHIP_CLASS)) {
+      if ((node.parentElement as HTMLElement | null)?.classList.contains(TOKEN_CHIP_CLASS)) {
         return NodeFilter.FILTER_REJECT
       }
       return NodeFilter.FILTER_ACCEPT
@@ -111,7 +134,6 @@ function restoreCaretOffset(container: HTMLElement, offset: number): void {
     currentOffset += len
   }
 
-  // 回退：放到末尾
   sel.removeAllRanges()
   const lastChild = container.lastChild
   if (lastChild) {
@@ -123,14 +145,16 @@ function restoreCaretOffset(container: HTMLElement, offset: number): void {
 }
 
 /**
- * 将容器内文本 token 化并保留光标位置
+ * 将容器内文本 token 化并保留光标位置（纯 DOM 操作，无 innerHTML）
  */
 function applyTokenization(container: HTMLElement, tokens: string[]): void {
   const rawText = extractRawText(container)
   const caretOffset = saveCaretOffset(container)
-  container.innerHTML = tokenizeHTML(rawText, tokens)
+  replaceContainerContent(container, buildTokenNodes(rawText, tokens))
   restoreCaretOffset(container, caretOffset)
 }
+
+// ============ React 组件 ============
 
 export const TokenizedInput: React.FC<TokenizedInputProps> = ({
   value,
@@ -144,10 +168,8 @@ export const TokenizedInput: React.FC<TokenizedInputProps> = ({
   const editorRef = useRef<HTMLDivElement>(null)
   const valueRef = useRef(value)
   const composingRef = useRef(false)
-  // 标记是否为内部编辑触发，用于跳过 useLayoutEffect 的重渲染
   const internalUpdateRef = useRef(false)
 
-  // 同步外部 value 引用
   useEffect(() => {
     valueRef.current = value
   }, [value])
@@ -166,14 +188,12 @@ export const TokenizedInput: React.FC<TokenizedInputProps> = ({
     const currentRaw = extractRawText(editor)
     if (currentRaw === value) return
 
-    editor.innerHTML = tokenizeHTML(value, tokens)
+    replaceContainerContent(editor, buildTokenNodes(value, tokens))
   }, [value, tokens])
 
-  // 内部编辑：提取原始文本 → 通知外部 → 即时 tokenize DOM
   const handleInput = useCallback(() => {
     const editor = editorRef.current
     if (!editor) return
-
     if (composingRef.current) return
 
     const rawText = extractRawText(editor)
@@ -183,7 +203,6 @@ export const TokenizedInput: React.FC<TokenizedInputProps> = ({
       onChange(rawText)
     }
 
-    // 即时 tokenize，让用户手打 {model} 也能立刻看到芯片
     applyTokenization(editor, tokens)
   }, [onChange, tokens])
 
@@ -204,16 +223,13 @@ export const TokenizedInput: React.FC<TokenizedInputProps> = ({
     applyTokenization(editor, tokens)
   }, [onChange, tokens])
 
-  // 阻止粘贴富文本
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     e.preventDefault()
     const text = e.clipboardData.getData("text/plain")
     document.execCommand("insertText", false, text)
   }, [])
 
-  // 退格/删除键：光标紧邻芯片时，选中芯片使其一键整体删除
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    // 先让浏览器处理默认行为，在 keyup 后再 tokenize
     const sel = window.getSelection()
     if (!sel || !sel.rangeCount) return
 
@@ -252,13 +268,11 @@ export const TokenizedInput: React.FC<TokenizedInputProps> = ({
     }
   }, [])
 
-  // keyup 后补一次 tokenize（处理 Backspace/Delete 删除芯片后的 DOM 状态）
   const handleKeyUp = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "Backspace" || e.key === "Delete") {
         const editor = editorRef.current
         if (!editor) return
-        // 延迟到下一个微任务，确保浏览器已完成 DOM 修改
         queueMicrotask(() => {
           if (!editorRef.current) return
           const rawText = extractRawText(editorRef.current)
