@@ -301,6 +301,7 @@ export const TokenizedInput: React.FC<TokenizedInputProps> = ({
     <div
       ref={editorRef}
       contentEditable={!disabled}
+      dir="ltr"
       className={mergedClassName}
       style={style}
       onInput={handleInput}
