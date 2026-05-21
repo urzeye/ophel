@@ -11,6 +11,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ New Features
 
+- **Title format token chips** — The title format input in Settings now renders `{status}`, `{title}`, and `{model}` placeholders as styled blue chips, making the format template easier to read and edit at a glance.
+
 - **Tab status indicator: "hide checkmark when read"** — A new option keeps the ✅ completion icon visible only until you view the tab, then hides it automatically. (#520)
 
 ### 🐛 Bug Fixes

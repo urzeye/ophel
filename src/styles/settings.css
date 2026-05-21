@@ -677,6 +677,48 @@
   border-color: var(--gh-primary, #4285f4);
 }
 
+/* ==================== TokenizedInput 芯片样式 ==================== */
+
+.tokenized-input {
+  min-height: 34px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  cursor: text;
+}
+
+.tokenized-input:empty::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.tokenized-input-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  user-select: none;
+}
+
+.token-chip {
+  display: inline;
+  padding: 1px 5px;
+  margin: 0 1px;
+  border-radius: 4px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.6;
+  user-select: all;
+  cursor: default;
+  white-space: nowrap;
+}
+
+.token-chip::selection {
+  background: #93c5fd;
+  color: #1e40af;
+}
+
 .settings-slider {
   width: min(280px, 100%);
 }
