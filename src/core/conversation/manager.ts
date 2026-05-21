@@ -48,6 +48,16 @@ export interface ConversationBatchDeleteResult {
   results: ConversationDeleteResult[]
 }
 
+export interface ConversationSyncResult {
+  newCount: number
+  updatedCount: number
+  deletedCount: number
+}
+
+interface ConversationSyncOptions {
+  syncDeleted?: boolean
+}
+
 type GeminiCidMigrationResult = "migrated" | "pending_email" | "noop"
 
 export class ConversationManager {
@@ -802,19 +812,22 @@ export class ConversationManager {
   syncConversations(
     targetFolderId: string | null = null,
     _silent = false,
-  ): { newCount: number; updatedCount: number } {
+    options: ConversationSyncOptions = {},
+  ): ConversationSyncResult {
     const sidebarItems = this.siteAdapter.getConversationList()
 
     if (!sidebarItems || sidebarItems.length === 0) {
-      return { newCount: 0, updatedCount: 0 }
+      return { newCount: 0, updatedCount: 0, deletedCount: 0 }
     }
 
     const conversations = this.conversations
     let newCount = 0
     let updatedCount = 0
+    let deletedCount = 0
     const now = Date.now()
     const folderId = targetFolderId || this.lastUsedFolderId || "inbox"
     const store = getConversationsStore()
+    const sidebarIds = new Set(sidebarItems.map((item) => item.id))
 
     sidebarItems.forEach((item) => {
       const storageKey = item.id
@@ -866,12 +879,26 @@ export class ConversationManager {
       }
     })
 
+    if (options.syncDeleted) {
+      const currentSiteId = this.siteAdapter.getSiteId()
+      const currentCid = this.siteAdapter.getCurrentCid?.() || null
+
+      Object.entries(conversations).forEach(([id, conv]) => {
+        if (conv.siteId !== currentSiteId) return
+        if (!this.matchesCid(conv, currentCid)) return
+        if (sidebarIds.has(id)) return
+
+        store.deleteConversation(id)
+        deletedCount++
+      })
+    }
+
     // 记住用户选择
     if (targetFolderId) {
       store.setLastUsedFolderId(targetFolderId)
     }
 
-    return { newCount, updatedCount }
+    return { newCount, updatedCount, deletedCount }
   }
 
   /**

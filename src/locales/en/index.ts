@@ -744,7 +744,8 @@ export const en = {
   conversationsSyncNoChange: "No new conversations",
   conversationsSyncNoSidebarItems:
     "No conversations detected in sidebar. Expand/open the sidebar and try again.",
-  conversationsSyncResult: "Sync complete: {scanned} scanned, {added} added, {updated} updated",
+  conversationsSyncResult:
+    "Sync complete: {scanned} scanned, {added} added, {updated} updated, {deleted} deleted",
   conversationsUnsupportedTitle: "{site} conversations not supported",
   conversationsUnsupportedDesc:
     "Current site restrictions prevent reliably fetching the conversation list.",

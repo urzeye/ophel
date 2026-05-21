@@ -699,7 +699,7 @@ export const de = {
   conversationsSyncNoSidebarItems:
     "Keine Konversationen in der Seitenleiste erkannt. Öffne die Seitenleiste und versuche es erneut.",
   conversationsSyncResult:
-    "Synchronisierung abgeschlossen: {scanned} geprüft, {added} hinzugefügt, {updated} aktualisiert",
+    "Synchronisierung abgeschlossen: {scanned} geprüft, {added} hinzugefügt, {updated} aktualisiert, {deleted} gelöscht",
   conversationsUnsupportedTitle: "{site}-Unterhaltungen nicht unterstützt",
   conversationsUnsupportedDesc:
     "Aufgrund von Einschränkungen der Website kann die Gesprächsliste nicht zuverlässig geladen werden.",

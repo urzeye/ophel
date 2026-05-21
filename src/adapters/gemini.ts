@@ -111,6 +111,8 @@ const GEMINI_MYSTUFF_SYNC_TIMEOUT_MS = 12000
 const GEMINI_MYSTUFF_ROUTE_EVENT = "gh-url-change"
 const GEMINI_GOOGLEUSERCONTENT_HOST_REGEX = /^https:\/\/lh\d+\.googleusercontent\.com\//i
 const GEMINI_MYSTUFF_TOOLTIP_DELAY_MS = 300
+const GEMINI_CHATS_EXPANDABLE_SECTION_SELECTOR =
+  'expandable-section[data-test-id="chats-expandable-section"]'
 const GEMINI_MARKDOWN_FIXER_SOURCE_ATTRIBUTE_KEYWORDS = [
   "source",
   "sources",
@@ -945,11 +947,14 @@ export class GeminiAdapter extends SiteAdapter {
   getSidebarScrollContainer(): Element | null {
     return (
       (DOMToolkit.query('infinite-scroller[scrollable="true"]') as Element) ||
-      (DOMToolkit.query("infinite-scroller") as Element)
+      (DOMToolkit.query("infinite-scroller") as Element) ||
+      this.getChatsScrollableContainer()
     )
   }
 
   async loadAllConversations(): Promise<void> {
+    await this.ensureChatsExpandableSectionOpen()
+
     const container = this.getSidebarScrollContainer()
     if (!container) return
 
@@ -972,6 +977,53 @@ export class GeminiAdapter extends SiteAdapter {
         stableRounds = 0
       }
     }
+  }
+
+  private async ensureChatsExpandableSectionOpen(timeout = 2500): Promise<void> {
+    if (this.getConversationList().length > 0) return
+
+    const section = this.getChatsExpandableSection()
+    if (!section) return
+
+    section.click()
+
+    const start = Date.now()
+    while (Date.now() - start < timeout) {
+      if (this.getConversationList().length > 0) return
+      await this.sleep(100)
+    }
+  }
+
+  private getChatsExpandableSection(): HTMLElement | null {
+    const section = document.querySelector(GEMINI_CHATS_EXPANDABLE_SECTION_SELECTOR)
+    if (section instanceof HTMLElement) return section
+
+    const firstExpandableSection = document.getElementsByTagName("expandable-section")[0]
+    return firstExpandableSection instanceof HTMLElement ? firstExpandableSection : null
+  }
+
+  private getChatsScrollableContainer(): Element | null {
+    const anchor = document.querySelector(
+      [
+        'conversations-list[data-test-id="all-conversations"]',
+        GEMINI_CHATS_EXPANDABLE_SECTION_SELECTOR,
+        'gem-nav-list-item[data-test-id="conversation"]',
+      ].join(","),
+    )
+    if (!(anchor instanceof HTMLElement)) return null
+
+    let current: HTMLElement | null = anchor
+    while (current && current !== document.body) {
+      const style = window.getComputedStyle(current)
+      const canScroll =
+        /(auto|scroll|overlay)/i.test(style.overflowY) || current.classList.contains("chat-history")
+      if (canScroll && current.scrollHeight > current.clientHeight) {
+        return current
+      }
+      current = current.parentElement
+    }
+
+    return null
   }
 
   getConversationObserverConfig(): ConversationObserverConfig {

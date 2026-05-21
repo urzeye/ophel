@@ -696,7 +696,7 @@ export const ru = {
   conversationsSyncNoSidebarItems:
     "В боковой панели не найдено разговоров. Откройте боковую панель и повторите попытку.",
   conversationsSyncResult:
-    "Синхронизация завершена: проверено {scanned}, добавлено {added}, обновлено {updated}",
+    "Синхронизация завершена: проверено {scanned}, добавлено {added}, обновлено {updated}, удалено {deleted}",
   conversationsUnsupportedTitle: "Диалоги {site} не поддерживаются",
   conversationsUnsupportedDesc:
     "Ограничения сайта не позволяют стабильно получать список диалогов.",

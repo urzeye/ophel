@@ -698,7 +698,7 @@ export const es = {
   conversationsSyncNoSidebarItems:
     "No se detectaron conversaciones en la barra lateral. Ábrela y vuelve a intentarlo.",
   conversationsSyncResult:
-    "Sincronización completa: {scanned} revisadas, {added} añadidas, {updated} actualizadas",
+    "Sincronización completa: {scanned} revisadas, {added} añadidas, {updated} actualizadas, {deleted} eliminadas",
   conversationsUnsupportedTitle: "Conversaciones de {site} no compatibles",
   conversationsUnsupportedDesc:
     "Las restricciones del sitio impiden obtener la lista de conversaciones de forma estable.",

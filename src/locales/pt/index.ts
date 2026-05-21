@@ -697,7 +697,7 @@ export const pt = {
   conversationsSyncNoSidebarItems:
     "Nenhuma conversa detectada na barra lateral. Abra a barra e tente novamente.",
   conversationsSyncResult:
-    "Sincronização concluída: {scanned} verificadas, {added} adicionadas, {updated} atualizadas",
+    "Sincronização concluída: {scanned} verificadas, {added} adicionadas, {updated} atualizadas, {deleted} excluídas",
   conversationsUnsupportedTitle: "Conversas do {site} não suportadas",
   conversationsUnsupportedDesc:
     "As restrições do site impedem obter a lista de conversas de forma estável.",

@@ -16,6 +16,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Conversation sync cleanup** — Manual sync now removes conversations that were deleted on the same site/account and opens Gemini's recent chats section when needed before syncing.
 - **Gemini Library page: fix "Open in New Tab"** — Adapted to the new `/library` path (renamed from `/mystuff`) and adjusted button position to avoid overlap with Gemini's native delete button.
 - **Zen mode exit button text unreadable due to transparency**: Replaced the button background from translucent glass-morphism variables with the theme's primary background color, preventing underlying page text from bleeding through and making both layers unreadable. (#431)
 - **Tab title: prevent `->` duplication** — Fixed a race condition where the auto-rename title format could repeatedly append `->` to the tab title when the model name was temporarily unavailable, resulting in chains like `标题->->->->`.

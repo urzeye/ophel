@@ -404,7 +404,11 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     try {
       await manager.siteAdapter?.loadAllConversations?.()
       const sidebarCount = manager.siteAdapter?.getConversationList?.()?.length || 0
-      const { newCount, updatedCount } = await manager.syncConversations(lastUsedFolderId, false)
+      const { newCount, updatedCount, deletedCount } = await manager.syncConversations(
+        lastUsedFolderId,
+        false,
+        { syncDeleted: true },
+      )
       loadData()
       if (sidebarCount === 0) {
         showToast(t("conversationsSyncNoSidebarItems"))
@@ -413,7 +417,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           t("conversationsSyncResult")
             .replace("{scanned}", String(sidebarCount))
             .replace("{added}", String(newCount))
-            .replace("{updated}", String(updatedCount)),
+            .replace("{updated}", String(updatedCount))
+            .replace("{deleted}", String(deletedCount)),
         )
       }
     } finally {

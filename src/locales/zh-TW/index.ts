@@ -642,7 +642,8 @@ export const zhTW = {
   conversationsSyncEmpty: "未找到會話",
   conversationsSyncNoChange: "無新會話",
   conversationsSyncNoSidebarItems: "未在側邊欄偵測到會話。請先展開/開啟側邊欄後再試一次。",
-  conversationsSyncResult: "同步完成：掃描 {scanned} 筆，新增 {added} 筆，更新 {updated} 筆",
+  conversationsSyncResult:
+    "同步完成：掃描 {scanned} 筆，新增 {added} 筆，更新 {updated} 筆，刪除 {deleted} 筆",
   conversationsUnsupportedTitle: "{site} 會話暫不支援",
   conversationsUnsupportedDesc: "目前站點限制導致會話列表無法穩定取得",
   conversationsUnsupportedSync: "{site} 會話暫不支援同步",

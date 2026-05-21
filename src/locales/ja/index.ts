@@ -724,7 +724,8 @@ export const ja = {
   conversationsSyncNoChange: "新しい会話はありません",
   conversationsSyncNoSidebarItems:
     "サイドバーで会話が検出できませんでした。サイドバーを開いて再試行してください。",
-  conversationsSyncResult: "同期完了: {scanned} 件確認、{added} 件追加、{updated} 件更新",
+  conversationsSyncResult:
+    "同期完了: {scanned} 件確認、{added} 件追加、{updated} 件更新、{deleted} 件削除",
   conversationsUnsupportedTitle: "{site} の会話は未対応",
   conversationsUnsupportedDesc: "サイト側の制限により会話一覧を安定して取得できません",
   conversationsUnsupportedSync: "{site} の会話同期は未対応です",

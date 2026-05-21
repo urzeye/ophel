@@ -697,7 +697,8 @@ export const ko = {
   conversationsSyncNoChange: "새로운 대화가 없습니다",
   conversationsSyncNoSidebarItems:
     "사이드바에서 대화를 찾지 못했습니다. 사이드바를 열고 다시 시도해 주세요.",
-  conversationsSyncResult: "동기화 완료: {scanned}개 확인, {added}개 추가, {updated}개 업데이트",
+  conversationsSyncResult:
+    "동기화 완료: {scanned}개 확인, {added}개 추가, {updated}개 업데이트, {deleted}개 삭제",
   conversationsUnsupportedTitle: "{site} 대화 미지원",
   conversationsUnsupportedDesc: "사이트 제한으로 대화 목록을 안정적으로 가져올 수 없습니다",
   conversationsUnsupportedSync: "{site} 대화 동기화는 지원되지 않습니다",
