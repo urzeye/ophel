@@ -358,8 +358,8 @@ export class LayoutManager {
 
         .zen-exit-btn {
           appearance: none;
-          background: var(--gh-glass-bg, rgba(255, 255, 255, 0.25));
-          border: 1px solid var(--gh-border, rgba(255, 255, 255, 0.15));
+          background: var(--gh-bg, rgba(255, 255, 255, 0.92));
+          border: 1px solid var(--gh-border, rgba(128, 128, 128, 0.25));
           border-radius: 9999px;
           box-shadow:
             var(--gh-shadow-lg, 0 10px 40px rgba(0, 0, 0, 0.15)),
@@ -385,7 +385,7 @@ export class LayoutManager {
             var(--gh-shadow-lg, 0 20px 60px rgba(0, 0, 0, 0.2)),
             0 0 0 1px var(--gh-primary, ${primary}) inset,
             0 0 20px rgba(255, 255, 255, 0.1) inset;
-          background: var(--gh-glass-bg-hover, rgba(255, 255, 255, 0.4));
+          background: var(--gh-bg, rgba(255, 255, 255, 0.97));
         }
 
         .zen-exit-btn:active {
