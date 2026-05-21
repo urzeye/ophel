@@ -48,12 +48,19 @@ function isGeminiHost(): boolean {
   return window.location.hostname === "gemini.google.com"
 }
 
-function isMyStuffPath(pathname = window.location.pathname): boolean {
-  const normalizedPath = pathname.replace(/^\/u\/\d+/, "")
+function getNormalizedPath(pathname = window.location.pathname): string {
+  return pathname.replace(/^\/u\/\d+/, "")
+}
+
+function isMyStuffOrLibraryPath(pathname = window.location.pathname): boolean {
+  const normalizedPath = getNormalizedPath(pathname)
   return (
     normalizedPath === "/mystuff" ||
     normalizedPath === "/mystuff/" ||
-    normalizedPath.startsWith("/mystuff/")
+    normalizedPath.startsWith("/mystuff/") ||
+    normalizedPath === "/library" ||
+    normalizedPath === "/library/" ||
+    normalizedPath.startsWith("/library/")
   )
 }
 
@@ -156,7 +163,7 @@ function resolveRuntimeTokens(): GeminiMyStuffRuntimeTokens | null {
 function buildRequestUrl(tokens: GeminiMyStuffRuntimeTokens): string {
   const requestUrl = new URL("/_/BardChatUi/data/batchexecute", window.location.origin)
   requestUrl.searchParams.set("rpcids", "jGArJ")
-  requestUrl.searchParams.set("source-path", "/mystuff")
+  requestUrl.searchParams.set("source-path", getNormalizedPath())
   requestUrl.searchParams.set("bl", tokens.bl)
   requestUrl.searchParams.set("f.sid", tokens.fSid)
   requestUrl.searchParams.set("hl", tokens.hl)
@@ -336,7 +343,7 @@ function emitCacheSync(payload: GeminiMyStuffCachePayload): void {
 async function handleSyncRequest(
   payload: GeminiMyStuffSyncRequestPayload | undefined,
 ): Promise<void> {
-  if (!payload?.requestId || !isMyStuffPath()) return
+  if (!payload?.requestId || !isMyStuffOrLibraryPath()) return
 
   const kinds = normalizeKinds(payload.kinds)
   const shouldSync = payload.force || kinds.some((kind) => getCache(kind).size === 0)
