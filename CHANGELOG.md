@@ -15,9 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-- **Gemini Library page: restore "Open in New Tab" functionality** — Updated the mystuff bridge and adapter to recognize the new `/library` path (renamed from `/mystuff`), and corrected the API `source-path` parameter so conversation metadata can be fetched and the open-in-new-tab button works again.
-
-- **Gemini Library page: avoid button overlap with native delete button** — Moved the "Open in New Tab" button from `right:8px` to `right:42px` to prevent it from overlapping Gemini's new delete button on media cards.
+- **Gemini Library page: fix "Open in New Tab"** — Adapted to the new `/library` path (renamed from `/mystuff`) and adjusted button position to avoid overlap with Gemini's native delete button.
 
 - **Zen mode exit button text unreadable due to transparency**: Replaced the button background from translucent glass-morphism variables with the theme's primary background color, preventing underlying page text from bleeding through and making both layers unreadable. (#431)
 
