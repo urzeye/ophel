@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **Gemini Canvas freeze with table Markdown copy** — Table copy buttons are no longer injected into Gemini Canvas editor tables, preventing ProseMirror DOM update loops that could freeze or crash the page when a Canvas document contains tables. (#535)
+
 ---
 
 ## [1.0.52] - 2026-05-22

@@ -7,6 +7,14 @@ import { showToast } from "~utils/toast"
 
 // 表格扫描间隔（毫秒）
 const TABLE_RESCAN_INTERVAL = 1000
+const TABLE_COPY_PROCESSED_ATTR = "ghTableCopy"
+const TABLE_COPY_EDITABLE_HOST_CLASSES = [
+  ".ProseMirror",
+  ".ql-editor",
+  ".cm-editor",
+  ".monaco-editor",
+]
+const TABLE_COPY_EXTENSION_PREVIEW_SELECTOR = ".gh-user-query-markdown, .gh-markdown-preview"
 
 /**
  * 复制功能管理器
@@ -332,12 +340,11 @@ export class CopyManager {
   }
 
   private injectTableButton(table: HTMLTableElement) {
-    if (table.dataset.ghTableCopy) return
-    table.dataset.ghTableCopy = "true"
+    if (table.dataset[TABLE_COPY_PROCESSED_ATTR]) return
 
     // 检查是否在用户提问或提示词预览区域
-    const isInMarkdownPreview =
-      table.closest(".gh-user-query-markdown") || table.closest(".gh-markdown-preview")
+    const isInMarkdownPreview = !!table.closest(TABLE_COPY_EXTENSION_PREVIEW_SELECTOR)
+    if (!isInMarkdownPreview && this.isTableInsideEditableHost(table)) return
 
     try {
       // 尝试找到原生表格容器
@@ -420,9 +427,48 @@ export class CopyManager {
       })
 
       container.appendChild(btn)
+      table.dataset[TABLE_COPY_PROCESSED_ATTR] = "true"
     } catch (err) {
       console.error("[TableCopy] Error injecting button:", err)
     }
+  }
+
+  private isTableInsideEditableHost(table: HTMLTableElement): boolean {
+    let current: Node | null = table
+
+    while (current) {
+      if (current instanceof HTMLElement) {
+        if (current.matches(TABLE_COPY_EXTENSION_PREVIEW_SELECTOR)) {
+          return false
+        }
+        if (this.isEditableHost(current)) {
+          return true
+        }
+      }
+
+      current = DOMToolkit.getComposedParent(current)
+    }
+
+    return false
+  }
+
+  private isEditableHost(element: HTMLElement): boolean {
+    if (element.isContentEditable) return true
+    if (element.getAttribute("role") === "textbox") return true
+    if (
+      TABLE_COPY_EDITABLE_HOST_CLASSES.some((selector) => {
+        try {
+          return element.matches(selector)
+        } catch {
+          return false
+        }
+      })
+    ) {
+      return true
+    }
+
+    const contentEditable = element.getAttribute("contenteditable")
+    return !!contentEditable && contentEditable.toLowerCase() !== "false"
   }
 
   /**

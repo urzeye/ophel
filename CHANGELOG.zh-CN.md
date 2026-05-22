@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+### 🐛 问题修复
+
+- **Gemini Canvas 开启表格复制 Markdown 后页面卡死** — 不再向 Gemini Canvas 编辑器内的表格注入复制按钮，避免与 ProseMirror 编辑器形成 DOM 更新循环，导致包含表格的 Canvas 文档卡死或崩溃。(#535)
+
 ---
 
 ## [1.0.52] - 2026-05-22
