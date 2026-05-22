@@ -30,7 +30,7 @@ import { showToast } from "~utils/toast"
 interface QuickButtonsProps {
   isPanelExpanded: boolean
   onPanelToggle: () => void
-  onPanelLogoHoverStart?: (anchorRect: DOMRect) => void
+  onPanelLogoHoverStart?: (anchorRect: DOMRect, options?: { waitForGroupDwell?: boolean }) => void
   onPanelLogoHoverEnd?: () => void
   onThemeToggle?: (event?: ThemeTransitionOrigin) => void
   themeMode?: "light" | "dark"
@@ -811,7 +811,9 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
           onClick={(e) => buttonActions[id]?.(e)}
           onMouseEnter={(event) => {
             if (!isPanelBtn) return
-            onPanelLogoHoverStart?.(event.currentTarget.getBoundingClientRect())
+            onPanelLogoHoverStart?.(event.currentTarget.getBoundingClientRect(), {
+              waitForGroupDwell: isLiquidCollapsed && proximityRadius === 0,
+            })
           }}
           onMouseLeave={() => {
             if (!isPanelBtn) return

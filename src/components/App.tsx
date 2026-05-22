@@ -1173,7 +1173,7 @@ export const App = () => {
   }, [clearLauncherPeekDwellTimer, clearLauncherPeekHideTimer])
 
   const handlePanelLogoHoverStart = useCallback(
-    (anchorRect: DOMRect) => {
+    (anchorRect: DOMRect, options?: { waitForGroupDwell?: boolean }) => {
       if (isPanelExpandedRef.current) return
 
       clearLauncherPeekDwellTimer()
@@ -1193,13 +1193,16 @@ export const App = () => {
         return
       }
 
+      const dwellMs =
+        LAUNCHER_PEEK_DWELL_MS + (options?.waitForGroupDwell ? LAUNCHER_PEEK_DWELL_MS : 0)
+
       launcherPeekDwellTimerRef.current = setTimeout(() => {
         launcherPeekDwellTimerRef.current = null
         if (isPanelExpandedRef.current) return
         setLauncherPeekAnchorRect(nextAnchorRect)
         isLauncherPeekingRef.current = true
         setIsLauncherPeeking(true)
-      }, LAUNCHER_PEEK_DWELL_MS)
+      }, dwellMs)
     },
     [clearLauncherPeekDwellTimer, clearLauncherPeekHideTimer],
   )
