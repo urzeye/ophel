@@ -11,6 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ New Features
 
+- **Hover Ophel logo to temporarily preview the panel** — When the panel is collapsed into the Quick Buttons logo, hovering the logo now opens a temporary panel preview anchored beside the Quick Buttons group. The preview does not persist the panel's expanded state, and clicking the logo still performs the regular panel toggle. (#524)
 - **Title format token chips** — The title format input in Settings now renders `{status}`, `{title}`, and `{model}` placeholders as styled blue chips, making the format template easier to read and edit at a glance.
 - **Tab status indicator: "hide checkmark when read"** — A new option keeps the ✅ completion icon visible only until you view the tab, then hides it automatically. (#520)
 

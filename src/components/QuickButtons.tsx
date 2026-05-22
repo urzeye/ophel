@@ -30,6 +30,8 @@ import { showToast } from "~utils/toast"
 interface QuickButtonsProps {
   isPanelExpanded: boolean
   onPanelToggle: () => void
+  onPanelLogoHoverStart?: (anchorRect: DOMRect) => void
+  onPanelLogoHoverEnd?: () => void
   onThemeToggle?: (event?: ThemeTransitionOrigin) => void
   themeMode?: "light" | "dark"
   // 工具栏功能
@@ -91,6 +93,8 @@ const HOVER_DWELL_MS = 300
 export const QuickButtons: React.FC<QuickButtonsProps> = ({
   isPanelExpanded,
   onPanelToggle,
+  onPanelLogoHoverStart,
+  onPanelLogoHoverEnd,
   onThemeToggle,
   themeMode,
   onExport,
@@ -805,6 +809,14 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         <button
           className={`quick-prompt-btn gh-interactive ${isPanelOnly ? "panel-only" : ""} ${isPanelBtn ? "panel-btn" : ""} ${isActive ? "active" : ""} ${isFloatingToolbarBtn ? "tools-trigger-btn" : ""} ${isZenModeBtn ? "zen-mode-btn" : ""}`}
           onClick={(e) => buttonActions[id]?.(e)}
+          onMouseEnter={(event) => {
+            if (!isPanelBtn) return
+            onPanelLogoHoverStart?.(event.currentTarget.getBoundingClientRect())
+          }}
+          onMouseLeave={() => {
+            if (!isPanelBtn) return
+            onPanelLogoHoverEnd?.()
+          }}
           data-tip-target={
             id === "globalSearch"
               ? "search-btn"

@@ -54,6 +54,8 @@ import { Tooltip } from "~components/ui/Tooltip"
 interface MainPanelProps {
   onClose: () => void
   isOpen: boolean
+  isLauncherPeeking?: boolean
+  launcherPeekAnchorRect?: LauncherPeekAnchorRect | null
   isScrolling?: boolean
   promptManager: PromptManager
   conversationManager: ConversationManager
@@ -73,9 +75,20 @@ interface MainPanelProps {
   onMouseLeave?: React.MouseEventHandler<HTMLDivElement>
 }
 
+interface LauncherPeekAnchorRect {
+  left: number
+  right: number
+  top: number
+  bottom: number
+  width: number
+  height: number
+}
+
 export const MainPanel: React.FC<MainPanelProps> = ({
   onClose,
   isOpen,
+  isLauncherPeeking = false,
+  launcherPeekAnchorRect = null,
   isScrolling,
   promptManager,
   conversationManager,
@@ -121,8 +134,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
   // 拖拽功能（高性能版本：直接 DOM 操作，不触发 React 渲染）
   const { panelRef, headerRef } = useDraggable({
-    edgeSnapHide: currentSettings.panel?.panelMode === "edge-snap",
-    edgeSnapState, // 传递当前吸附状态
+    edgeSnapHide: !isLauncherPeeking && currentSettings.panel?.panelMode === "edge-snap",
+    edgeSnapState: isLauncherPeeking ? null : edgeSnapState, // 传递当前吸附状态
     snapThreshold: currentSettings.panel?.edgeSnapThreshold ?? 30,
     onEdgeSnap,
     onUnsnap,
@@ -272,6 +285,47 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const defaultPosition = currentSettings.panel?.defaultPosition ?? "right"
   const defaultEdgeDistance = currentSettings.panel?.defaultEdgeDistance ?? 40
   const isEdgeSnapMode = (currentSettings.panel?.panelMode ?? "edge-snap") === "edge-snap"
+  const panelWidth = currentSettings.panel?.width ?? 320
+  const panelHeightVh = currentSettings.panel?.height ?? 85
+
+  const launcherPeekPositionStyle = useMemo<React.CSSProperties>(() => {
+    if (!isLauncherPeeking || !launcherPeekAnchorRect || typeof window === "undefined") {
+      return {}
+    }
+
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+    const viewportMargin = 10
+    const estimatedPanelHeight = Math.max(500, (viewportHeight * panelHeightVh) / 100)
+    const anchorCenterX = launcherPeekAnchorRect.left + launcherPeekAnchorRect.width / 2
+    const anchorCenterY = launcherPeekAnchorRect.top + launcherPeekAnchorRect.height / 2
+    const shouldOpenLeft = anchorCenterX > viewportWidth / 2
+
+    const rawLeft = shouldOpenLeft
+      ? launcherPeekAnchorRect.left - panelWidth
+      : launcherPeekAnchorRect.right
+    const maxLeft = Math.max(viewportMargin, viewportWidth - panelWidth - viewportMargin)
+    const left = Math.min(Math.max(rawLeft, viewportMargin), maxLeft)
+
+    const rawTop = anchorCenterY - estimatedPanelHeight / 2
+    const maxTop = Math.max(viewportMargin, viewportHeight - estimatedPanelHeight - viewportMargin)
+    const top = Math.min(Math.max(rawTop, viewportMargin), maxTop)
+
+    return {
+      left: `${left}px`,
+      right: "auto",
+      top: `${top}px`,
+      transform: "none",
+    }
+  }, [isLauncherPeeking, launcherPeekAnchorRect, panelHeightVh, panelWidth])
+
+  const panelPositionStyle = isLauncherPeeking
+    ? launcherPeekPositionStyle
+    : !isEdgeSnapMode
+      ? defaultPosition === "left"
+        ? { left: `${defaultEdgeDistance}px`, right: "auto" }
+        : { right: `${defaultEdgeDistance}px`, left: "auto" }
+      : { left: "", right: "" }
 
   const [showCodex, setShowCodex] = useState(false)
   const [isHeaderPressed, setIsHeaderPressed] = useState(false)
@@ -577,23 +631,19 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         ref={panelRef}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
-        className={`gh-main-panel gh-interactive ${edgeSnapState ? `edge-snapped-${edgeSnapState}` : ""} ${isEdgePeeking ? "edge-peek" : ""} ${isScrolling ? "scroll-hidden" : ""}`}
+        className={`gh-main-panel gh-interactive ${!isLauncherPeeking && edgeSnapState ? `edge-snapped-${edgeSnapState}` : ""} ${isLauncherPeeking ? "launcher-peek" : ""} ${isEdgePeeking ? "edge-peek" : ""} ${isScrolling ? "scroll-hidden" : ""}`}
         style={{
           position: "fixed",
           top: "50%",
           // 仅在 floating 模式下通过 React style prop 设置位置；
           // edge-snap 模式下由 useLayoutEffect + CSS class 控制，避免切换首帧
           // 与后续重渲染写回 inline style 覆盖 CSS transition，导致动画抖动
-          ...(!isEdgeSnapMode
-            ? defaultPosition === "left"
-              ? { left: `${defaultEdgeDistance}px`, right: "auto" }
-              : { right: `${defaultEdgeDistance}px`, left: "auto" }
-            : { left: "", right: "" }),
-          transform: "translateY(-50%)",
-          width: `${currentSettings.panel?.width ?? 320}px`,
-          height: `${currentSettings.panel?.height ?? 85}vh`,
+          ...panelPositionStyle,
+          transform: isLauncherPeeking ? "none" : "translateY(-50%)",
+          width: `${panelWidth}px`,
+          height: `${panelHeightVh}vh`,
           // @ts-ignore - 注入 CSS 变量供吸附计算使用
-          "--panel-width": `${currentSettings.panel?.width ?? 320}px`,
+          "--panel-width": `${panelWidth}px`,
           minHeight: "500px",
           backgroundColor: "var(--gh-bg, #ffffff)",
           backgroundImage: "var(--gh-bg-image, none)",

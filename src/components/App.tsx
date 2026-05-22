@@ -81,6 +81,18 @@ interface LocalizedLabelDefinition {
   fallback: string
 }
 
+interface LauncherPeekAnchorRect {
+  left: number
+  right: number
+  top: number
+  bottom: number
+  width: number
+  height: number
+}
+
+const LAUNCHER_PEEK_DWELL_MS = 300
+const LAUNCHER_PEEK_HIDE_DELAY_MS = 250
+
 const SETTINGS_PAGE_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinition> = {
   [NAV_IDS.GENERAL]: { key: "navGeneral", fallback: "General" },
   [NAV_IDS.FEATURES]: { key: "navFeatures", fallback: "Features" },
@@ -1119,6 +1131,125 @@ export const App = () => {
     getQueryRoots: getEdgePeekQueryRoots,
     isSettingsOpenRef,
   })
+
+  const [isLauncherPeeking, setIsLauncherPeeking] = useState(false)
+  const [launcherPeekAnchorRect, setLauncherPeekAnchorRect] =
+    useState<LauncherPeekAnchorRect | null>(null)
+  const isLauncherPeekingRef = useRef(false)
+  const launcherPeekDwellTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const launcherPeekHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearLauncherPeekDwellTimer = useCallback(() => {
+    if (launcherPeekDwellTimerRef.current) {
+      clearTimeout(launcherPeekDwellTimerRef.current)
+      launcherPeekDwellTimerRef.current = null
+    }
+  }, [])
+
+  const clearLauncherPeekHideTimer = useCallback(() => {
+    if (launcherPeekHideTimerRef.current) {
+      clearTimeout(launcherPeekHideTimerRef.current)
+      launcherPeekHideTimerRef.current = null
+    }
+  }, [])
+
+  const hideLauncherPeek = useCallback(() => {
+    clearLauncherPeekDwellTimer()
+    clearLauncherPeekHideTimer()
+    isLauncherPeekingRef.current = false
+    setIsLauncherPeeking(false)
+    setLauncherPeekAnchorRect(null)
+  }, [clearLauncherPeekDwellTimer, clearLauncherPeekHideTimer])
+
+  const scheduleLauncherPeekHide = useCallback(() => {
+    clearLauncherPeekDwellTimer()
+    clearLauncherPeekHideTimer()
+    launcherPeekHideTimerRef.current = setTimeout(() => {
+      launcherPeekHideTimerRef.current = null
+      isLauncherPeekingRef.current = false
+      setIsLauncherPeeking(false)
+      setLauncherPeekAnchorRect(null)
+    }, LAUNCHER_PEEK_HIDE_DELAY_MS)
+  }, [clearLauncherPeekDwellTimer, clearLauncherPeekHideTimer])
+
+  const handlePanelLogoHoverStart = useCallback(
+    (anchorRect: DOMRect) => {
+      if (isPanelExpandedRef.current) return
+
+      clearLauncherPeekDwellTimer()
+      clearLauncherPeekHideTimer()
+
+      const nextAnchorRect: LauncherPeekAnchorRect = {
+        left: anchorRect.left,
+        right: anchorRect.right,
+        top: anchorRect.top,
+        bottom: anchorRect.bottom,
+        width: anchorRect.width,
+        height: anchorRect.height,
+      }
+
+      setLauncherPeekAnchorRect(nextAnchorRect)
+      if (isLauncherPeekingRef.current) {
+        return
+      }
+
+      launcherPeekDwellTimerRef.current = setTimeout(() => {
+        launcherPeekDwellTimerRef.current = null
+        if (isPanelExpandedRef.current) return
+        setLauncherPeekAnchorRect(nextAnchorRect)
+        isLauncherPeekingRef.current = true
+        setIsLauncherPeeking(true)
+      }, LAUNCHER_PEEK_DWELL_MS)
+    },
+    [clearLauncherPeekDwellTimer, clearLauncherPeekHideTimer],
+  )
+
+  const handlePanelLogoHoverEnd = useCallback(() => {
+    if (!isLauncherPeekingRef.current) {
+      clearLauncherPeekDwellTimer()
+      return
+    }
+
+    scheduleLauncherPeekHide()
+  }, [clearLauncherPeekDwellTimer, scheduleLauncherPeekHide])
+
+  const handleMainPanelMouseEnter = useCallback(
+    (_event: React.MouseEvent<HTMLDivElement>) => {
+      if (isLauncherPeekingRef.current) {
+        clearLauncherPeekDwellTimer()
+        clearLauncherPeekHideTimer()
+        return
+      }
+
+      handlePanelMouseEnter()
+    },
+    [clearLauncherPeekDwellTimer, clearLauncherPeekHideTimer, handlePanelMouseEnter],
+  )
+
+  const handleMainPanelMouseLeave = useCallback(
+    (_event: React.MouseEvent<HTMLDivElement>) => {
+      if (isLauncherPeekingRef.current) {
+        scheduleLauncherPeekHide()
+        return
+      }
+
+      handlePanelMouseLeave()
+    },
+    [handlePanelMouseLeave, scheduleLauncherPeekHide],
+  )
+
+  useEffect(() => {
+    if (isPanelExpanded && isLauncherPeeking) {
+      hideLauncherPeek()
+    }
+  }, [hideLauncherPeek, isLauncherPeeking, isPanelExpanded])
+
+  useEffect(() => {
+    return () => {
+      clearLauncherPeekDwellTimer()
+      clearLauncherPeekHideTimer()
+    }
+  }, [clearLauncherPeekDwellTimer, clearLauncherPeekHideTimer])
 
   // 接收到设置导航事件时，自动打开设置弹窗
   useEffect(() => {
@@ -2549,6 +2680,7 @@ export const App = () => {
 
   // 面板统一切换：快捷键与快捷按钮组共用，确保 edge-snap 模式下同步进入 peek 状态
   const handlePanelToggle = useCallback(() => {
+    hideLauncherPeek()
     const expanding = !isPanelExpandedRef.current
     if (expanding && settingsRef.current?.panel?.panelMode === "edge-snap") {
       // 若 edgeSnapState 为 null（拖拽脱吸附后关闭了面板），恢复到默认边缘位置
@@ -2563,7 +2695,14 @@ export const App = () => {
       hideEdgePeek()
     }
     persistPanelExpanded(expanding)
-  }, [edgeSnapState, hideEdgePeek, markSyncAfterOpen, persistPanelExpanded, showEdgePeek])
+  }, [
+    edgeSnapState,
+    hideEdgePeek,
+    hideLauncherPeek,
+    markSyncAfterOpen,
+    persistPanelExpanded,
+    showEdgePeek,
+  ])
 
   // 快捷键管理
   useShortcuts({
@@ -2975,8 +3114,11 @@ export const App = () => {
   return (
     <div className={`gh-root ${isPassThrough ? "gh-pass-through" : ""}`}>
       <MainPanel
-        isOpen={isPanelExpanded}
+        isOpen={isPanelExpanded || isLauncherPeeking}
+        isLauncherPeeking={isLauncherPeeking}
+        launcherPeekAnchorRect={launcherPeekAnchorRect}
         onClose={() => {
+          hideLauncherPeek()
           hideEdgePeek()
           persistPanelExpanded(false)
         }}
@@ -2999,13 +3141,15 @@ export const App = () => {
         onOpenSettings={() => {
           openSettingsModal()
         }}
-        onMouseEnter={handlePanelMouseEnter}
-        onMouseLeave={handlePanelMouseLeave}
+        onMouseEnter={handleMainPanelMouseEnter}
+        onMouseLeave={handleMainPanelMouseLeave}
       />
 
       <QuickButtons
         isPanelExpanded={isPanelExpanded}
         onPanelToggle={handlePanelToggle}
+        onPanelLogoHoverStart={handlePanelLogoHoverStart}
+        onPanelLogoHoverEnd={handlePanelLogoHoverEnd}
         onThemeToggle={handleThemeToggle}
         themeMode={themeMode}
         onExport={handleFloatingToolbarExport}
