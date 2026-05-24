@@ -786,7 +786,8 @@ export class OutlineManager {
       this.updateScrollPositions()
     } else {
       let runtimeDataChanged = false
-      if (this.siteAdapter.getSiteId() === SITE_IDS.CHATGPT) {
+      const siteId = this.siteAdapter.getSiteId()
+      if (siteId === SITE_IDS.CHATGPT || siteId === SITE_IDS.DOUBAO) {
         runtimeDataChanged = this.syncFlatNodeRuntimeData(outlineData)
       }
       this.scrollPositionsStale = true
