@@ -45,7 +45,7 @@ function getBottomScrollPosition(container: HTMLElement, isReverse: boolean): nu
     return 0
   }
 
-  return Math.max(0, container.scrollHeight - container.clientHeight)
+  return container.scrollHeight
 }
 
 /**
