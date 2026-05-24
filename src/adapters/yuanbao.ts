@@ -144,6 +144,10 @@ export class YuanbaoAdapter extends SiteAdapter {
     return { primary: "#1677ff", secondary: "#0b5bd3" }
   }
 
+  supportsFormulaCopy(): boolean {
+    return false
+  }
+
   getTextareaSelectors(): string[] {
     return [TEXTAREA_SELECTOR]
   }
