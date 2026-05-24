@@ -9,8 +9,13 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### ✨ New Features
+
+- **Formula copy format setting** — Double-click formula copy can now output either LaTeX source or MathML source. LaTeX delimiter wrapping remains available for LaTeX mode, while MathML mode copies the serialized `<math>` source when the site exposes one.
+
 ### 🐛 Bug Fixes
 
+- **Formula copy site compatibility** — Added Qwen Studio support for its non-standard formula DOM where LaTeX source is embedded as direct text inside `<math>`. Kimi and Yuanbao now explicitly show an unsupported-site message instead of attempting unreliable extraction from visual-only KaTeX HTML.
 - **Gemini Canvas freeze with table Markdown copy** — Table copy buttons are no longer injected into Gemini Canvas editor tables, preventing ProseMirror DOM update loops that could freeze or crash the page when a Canvas document contains tables. (#535)
 
 ---

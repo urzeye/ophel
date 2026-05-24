@@ -8,8 +8,13 @@
 
 ## [Unreleased]
 
+### ✨ 新功能
+
+- **公式复制格式设置** — 双击复制公式现在可选择输出 LaTeX 源码或 MathML 源码。LaTeX 模式仍支持自动添加分隔符；MathML 模式会在站点提供 `<math>` 源码时复制序列化后的 MathML。
+
 ### 🐛 问题修复
 
+- **公式复制站点兼容性** — 适配 Qwen Studio 的非标准公式 DOM，可从 `<math>` 内直接文本节点提取 LaTeX 源码；Kimi 和元宝现在会明确提示当前站点暂不支持，而不是尝试从仅用于视觉渲染的 KaTeX HTML 中不可靠地反推源码。
 - **Gemini Canvas 开启表格复制 Markdown 后页面卡死** — 不再向 Gemini Canvas 编辑器内的表格注入复制按钮，避免与 ProseMirror 编辑器形成 DOM 更新循环，导致包含表格的 Canvas 文档卡死或崩溃。(#535)
 
 ---
