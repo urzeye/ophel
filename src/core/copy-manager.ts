@@ -89,10 +89,11 @@ export class CopyManager {
   initFormulaCopy() {
     if (this.formulaCopyInitialized) return
     this.formulaCopyInitialized = true
+    const formulaCopySupported = this.siteAdapter?.supportsFormulaCopy() !== false
 
     // 注入 CSS（同时支持 Gemini 和 ChatGPT 的公式选择器）
     const styleId = "gh-formula-copy-style"
-    if (!document.getElementById(styleId)) {
+    if (formulaCopySupported && !document.getElementById(styleId)) {
       const style = document.createElement("style")
       style.id = styleId
       style.textContent = `
@@ -127,6 +128,13 @@ export class CopyManager {
       try {
         const formulaHost = target.closest(CopyManager.FORMULA_HOST_SELECTOR)
         if (!formulaHost) return
+
+        if (!formulaCopySupported) {
+          showToast(t("formulaFormatUnsupported") || t("copyFailed"))
+          e.preventDefault()
+          e.stopPropagation()
+          return
+        }
 
         const payload = this.extractFormulaCopyPayload(target, formulaHost)
         if (payload?.latex || payload?.mathml) {

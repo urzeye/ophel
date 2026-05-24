@@ -128,6 +128,10 @@ export class KimiAdapter extends SiteAdapter {
     return kimiNativeThemeCss
   }
 
+  supportsFormulaCopy(): boolean {
+    return false
+  }
+
   getNewTabUrl(): string {
     return "https://www.kimi.com/"
   }

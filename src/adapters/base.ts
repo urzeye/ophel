@@ -326,6 +326,11 @@ export abstract class SiteAdapter {
     return null
   }
 
+  /** 当前站点是否支持从页面 DOM 稳定提取公式源码 */
+  supportsFormulaCopy(): boolean {
+    return true
+  }
+
   // ==================== 会话相关 ====================
 
   /** 获取当前会话 ID */
