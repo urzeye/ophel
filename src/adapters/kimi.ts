@@ -361,14 +361,25 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    const selector = `${CONVERSATION_SELECTOR}[href*="/chat/${id}"]`
-    const link = document.querySelector(selector) as HTMLElement | null
+    const targetUrl = this.buildConversationUrl(id, url)
+    const link = this.findConversationLinkById(id)
     if (link) {
+      const beforeSessionId = this.getSessionId()
       link.click()
+
+      window.setTimeout(() => {
+        if (this.getSessionId() !== id && this.getSessionId() === beforeSessionId) {
+          this.navigateToKimiConversationRoute(targetUrl)
+        }
+      }, 120)
       return true
     }
 
-    return super.navigateToConversation(id, url || `https://www.kimi.com/chat/${id}`)
+    if (this.navigateToKimiConversationRoute(targetUrl)) {
+      return true
+    }
+
+    return super.navigateToConversation(id, targetUrl)
   }
 
   getConversationTitle(): string | null {
@@ -383,9 +394,7 @@ export class KimiAdapter extends SiteAdapter {
 
     const sessionId = this.getSessionId()
     if (sessionId) {
-      const currentLink = document.querySelector(
-        `${CONVERSATION_SELECTOR}[href*="/chat/${sessionId}"]`,
-      )
+      const currentLink = this.findConversationLinkById(sessionId)
       if (currentLink) {
         const title = this.extractConversationTitle(currentLink)
         if (title) return title
@@ -1412,6 +1421,65 @@ export class KimiAdapter extends SiteAdapter {
     }
   }
 
+  private buildConversationUrl(id: string, url?: string): string {
+    if (url) {
+      try {
+        const target = new URL(url, window.location.origin)
+        if (this.extractConversationIdFromHref(target.href) === id) {
+          if (!target.search) {
+            target.searchParams.set("chat_enter_method", "history")
+          }
+          return target.toString()
+        }
+      } catch {
+        // fallback to canonical Kimi chat URL below
+      }
+    }
+
+    return new URL(`/chat/${id}?chat_enter_method=history`, window.location.origin).toString()
+  }
+
+  private findConversationLinkById(id: string): HTMLElement | null {
+    const links = document.querySelectorAll(CONVERSATION_SELECTOR)
+
+    for (const link of Array.from(links)) {
+      const href = link.getAttribute("href") || ""
+      if (this.extractConversationIdFromHref(href) === id) {
+        return link as HTMLElement
+      }
+    }
+
+    return null
+  }
+
+  private navigateToKimiConversationRoute(url: string): boolean {
+    let target: URL
+    try {
+      target = new URL(url, window.location.origin)
+    } catch {
+      return false
+    }
+
+    if (target.origin !== window.location.origin) return false
+    if (!this.extractConversationIdFromHref(target.href)) return false
+
+    const targetPath = `${target.pathname}${target.search}${target.hash}`
+    const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
+    if (targetPath === currentPath) return true
+
+    try {
+      window.history.pushState(window.history.state, "", targetPath)
+      const event =
+        typeof PopStateEvent === "function"
+          ? new PopStateEvent("popstate", { state: window.history.state })
+          : new Event("popstate")
+      window.dispatchEvent(event)
+      return true
+    } catch {
+      return false
+    }
+  }
+
   private findScrollableParent(element: Element | null): HTMLElement | null {
     let current = element as HTMLElement | null
     while (current && current !== document.body) {
@@ -1433,11 +1501,10 @@ export class KimiAdapter extends SiteAdapter {
     )
     if (activeLink) return activeLink
 
-    const currentPath = window.location.pathname
-    const normalized = currentPath.endsWith("/") ? currentPath.slice(0, -1) : currentPath
-    if (!normalized) return null
+    if (window.location.pathname === "/" || window.location.pathname === "") return null
 
-    return document.querySelector(`${SIDEBAR_CONVERSATION_SELECTOR}[href="${normalized}"]`)
+    const sessionId = this.getSessionId()
+    return sessionId ? this.findConversationLinkById(sessionId) : null
   }
 
   private isHistoryPath(pathname = window.location.pathname): boolean {

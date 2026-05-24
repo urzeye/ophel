@@ -15,6 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Kimi conversation navigation** — Fixed the Conversations tab failing to switch Kimi chats when clicking history items from Kimi's sidebar. Kimi chat links are now matched by parsed conversation ID instead of a broad selector, with an SPA route fallback when the native link is not mounted.
 - **Ima user prompt extraction** — Restored user-question detection for Ima's updated chat DOM, so prompts inside the new `userBubbleWrap` / `chatMainBubble` structure are included in outline, export, usage stats, and user-query Markdown rendering again.
 - **Formula copy site compatibility** — Added Qwen Studio support for its non-standard formula DOM where LaTeX source is embedded as direct text inside `<math>`. Kimi and Yuanbao now explicitly show an unsupported-site message instead of attempting unreliable extraction from visual-only KaTeX HTML.
 - **Gemini Canvas freeze with table Markdown copy** — Table copy buttons are no longer injected into Gemini Canvas editor tables, preventing ProseMirror DOM update loops that could freeze or crash the page when a Canvas document contains tables. (#535)

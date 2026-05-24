@@ -14,6 +14,7 @@
 
 ### 🐛 问题修复
 
+- **Kimi 会话跳转** — 修复在「会话」面板中点击 Kimi 侧边栏历史项时无法切换聊天的问题。现在会按解析出的会话 ID 精确匹配 Kimi 聊天链接，并在原生链接未挂载时使用 SPA 路由兜底。
 - **Ima 用户问题抽取** — 适配 Ima 新版聊天 DOM，恢复对 `userBubbleWrap` / `chatMainBubble` 结构中用户提问的识别，确保大纲、导出、用量统计和用户提问 Markdown 渲染都能重新包含这些内容。
 - **公式复制站点兼容性** — 适配 Qwen Studio 的非标准公式 DOM，可从 `<math>` 内直接文本节点提取 LaTeX 源码；Kimi 和元宝现在会明确提示当前站点暂不支持，而不是尝试从仅用于视觉渲染的 KaTeX HTML 中不可靠地反推源码。
 - **Gemini Canvas 开启表格复制 Markdown 后页面卡死** — 不再向 Gemini Canvas 编辑器内的表格注入复制按钮，避免与 ProseMirror 编辑器形成 DOM 更新循环，导致包含表格的 Canvas 文档卡死或崩溃。(#535)
