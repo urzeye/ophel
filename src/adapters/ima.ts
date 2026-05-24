@@ -24,9 +24,22 @@ const IMA_CID_STORAGE_KEY = "ima-official-website-uid"
 
 const IMA_SCROLL_CONTAINER_SELECTOR = "#scrollContainer"
 const IMA_RESPONSE_CONTAINER_SELECTOR = `${IMA_SCROLL_CONTAINER_SELECTOR} [class*="scrollWrap"]`
-const IMA_USER_BUBBLE_CONTAINER_SELECTOR = 'div[class*="userBubbleContainer"]'
-const IMA_USER_BUBBLE_SELECTOR = `${IMA_USER_BUBBLE_CONTAINER_SELECTOR} [class*="userBubble"]`
-const IMA_USER_TEXT_SELECTOR = `${IMA_USER_BUBBLE_SELECTOR} [class*="content"]`
+const IMA_LEGACY_USER_BUBBLE_CONTAINER_SELECTOR = 'div[class*="userBubbleContainer"]'
+const IMA_USER_BUBBLE_WRAP_SELECTOR = 'div[class*="userBubbleWrap"]'
+const IMA_USER_BUBBLE_CONTAINER_SELECTOR = [
+  IMA_LEGACY_USER_BUBBLE_CONTAINER_SELECTOR,
+  IMA_USER_BUBBLE_WRAP_SELECTOR,
+].join(", ")
+const IMA_LEGACY_USER_BUBBLE_SELECTOR = `${IMA_LEGACY_USER_BUBBLE_CONTAINER_SELECTOR} [class*="userBubble"]`
+const IMA_USER_MAIN_BUBBLE_SELECTOR = '[class*="chatMainBubble"]'
+const IMA_USER_BUBBLE_SELECTOR = [
+  IMA_LEGACY_USER_BUBBLE_SELECTOR,
+  `${IMA_USER_BUBBLE_WRAP_SELECTOR} ${IMA_USER_MAIN_BUBBLE_SELECTOR}`,
+].join(", ")
+const IMA_USER_TEXT_SELECTOR = [
+  `${IMA_LEGACY_USER_BUBBLE_SELECTOR} [class*="content"]`,
+  IMA_USER_MAIN_BUBBLE_SELECTOR,
+].join(", ")
 const IMA_AI_CONTAINER_SELECTOR = 'div[class*="aiContainer"]'
 const IMA_AI_BUBBLE_SELECTOR = `${IMA_AI_CONTAINER_SELECTOR} [class*="bubble"]`
 const IMA_MARKDOWN_SELECTOR = `${IMA_AI_BUBBLE_SELECTOR} [class*="markdown"]`
@@ -515,6 +528,7 @@ export class ImaAdapter extends SiteAdapter {
   }
 
   private findUserContentRoot(element: Element): Element | null {
+    if (element.matches(IMA_USER_TEXT_SELECTOR)) return element
     return element.querySelector(IMA_USER_TEXT_SELECTOR) || element.querySelector("p") || element
   }
 
