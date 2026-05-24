@@ -15,6 +15,7 @@ import {
   type ConversationObserverConfig,
   type ExportLifecycleContext,
   type ExportConfig,
+  type FormulaCopySource,
   type MarkdownFixerConfig,
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
@@ -86,6 +87,7 @@ const QWENAI_MODEL_MENU_ITEM_SELECTOR = [
   ".ant-select-dropdown .ant-select-item-option",
 ].join(", ")
 const QWENAI_MARKDOWN_PARAGRAPH_SELECTOR = ".qwen-markdown-paragraph"
+const QWENAI_LATEX_SELECTOR = ".qwen-markdown-latex"
 const QWENAI_DISCLAIMER_SELECTOR = ".chat-container-statement"
 const QWENAI_CONVERSATION_SNAPSHOT_TTL_MS = 30_000
 const QWENAI_FETCH_PAGE_LIMIT = 100
@@ -326,6 +328,25 @@ export class QwenAiAdapter extends SiteAdapter {
 
   getAssistantMermaidSupportMode() {
     return "native" as const
+  }
+
+  extractFormulaCopySource(target: Element, formulaHost: Element): FormulaCopySource | null {
+    const latexHost =
+      target.closest(QWENAI_LATEX_SELECTOR) || formulaHost.closest(QWENAI_LATEX_SELECTOR)
+    if (!latexHost) return null
+
+    const math = latexHost.querySelector("math")
+    if (!math) return null
+
+    const latex = this.extractQwenLatexFromMath(math)
+    const mathml = this.serializeQwenMathml(math)
+    if (!latex && !mathml) return null
+
+    return {
+      latex,
+      mathml,
+      isBlock: !!latexHost.closest(".katex-display") || math.getAttribute("display") === "block",
+    }
   }
 
   getChatContentSelectors(): string[] {
@@ -891,6 +912,28 @@ export class QwenAiAdapter extends SiteAdapter {
     }
 
     return null
+  }
+
+  private extractQwenLatexFromMath(math: Element): string {
+    return Array.from(math.childNodes)
+      .filter((node) => node.nodeType === Node.TEXT_NODE)
+      .map((node) => node.textContent?.trim() || "")
+      .filter(Boolean)
+      .join(" ")
+      .trim()
+  }
+
+  private serializeQwenMathml(math: Element): string {
+    const clone = math.cloneNode(true) as Element
+    Array.from(clone.childNodes).forEach((node) => {
+      if (node.nodeType === Node.TEXT_NODE) node.remove()
+    })
+
+    try {
+      return new XMLSerializer().serializeToString(clone).trim()
+    } catch {
+      return clone instanceof HTMLElement ? clone.outerHTML.trim() : ""
+    }
   }
 
   private extractConversationIdFromText(value: string | null | undefined): string | null {
