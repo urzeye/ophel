@@ -151,6 +151,8 @@ export interface QuickButtonsSettings {
   proximityRadius?: number
 }
 
+export type FormulaCopyFormat = "latex" | "mathml"
+
 export interface Settings {
   language: string
   hasAgreedToTerms: boolean // 用户是否同意免责声明
@@ -182,6 +184,7 @@ export interface Settings {
     markdownFix: boolean
     watermarkRemoval: boolean
     formulaCopy: boolean
+    formulaCopyFormat: FormulaCopyFormat
     formulaDelimiter: boolean
     tableCopy: boolean
     exportImagesToBase64: boolean
@@ -392,6 +395,7 @@ export const DEFAULT_SETTINGS: Settings = {
     // 油猴脚本环境默认开启（GM_xmlhttpRequest 已通过 @grant 声明）
     watermarkRemoval: isUserscript,
     formulaCopy: true,
+    formulaCopyFormat: "latex",
     formulaDelimiter: true,
     tableCopy: true,
     exportImagesToBase64: false,

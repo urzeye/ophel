@@ -100,6 +100,12 @@ export interface AnchorData {
   textSignature?: string
 }
 
+export interface FormulaCopySource {
+  latex?: string
+  mathml?: string
+  isBlock?: boolean
+}
+
 export interface ZenModeStyleRule {
   selector: string
   property: string
@@ -311,6 +317,14 @@ export abstract class SiteAdapter {
 
   /** 向输入框插入内容 */
   abstract insertPrompt(content: string): boolean
+
+  /**
+   * 站点特定公式源码提取扩展点。
+   * 未适配站点返回 null，CopyManager 会继续使用通用 DOM/KaTeX 兜底。
+   */
+  extractFormulaCopySource(_target: Element, _formulaHost: Element): FormulaCopySource | null {
+    return null
+  }
 
   // ==================== 会话相关 ====================
 

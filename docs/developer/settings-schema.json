@@ -16,6 +16,7 @@
     "markdownFix": true,
     "watermarkRemoval": true,
     "formulaCopy": true,
+    "formulaCopyFormat": "latex",
     "formulaDelimiter": true,
     "tableCopy": true,
     "exportImagesToBase64": false,

@@ -1,4 +1,5 @@
-import type { SiteAdapter } from "~adapters/base"
+import type { FormulaCopySource, SiteAdapter } from "~adapters/base"
+import { renderKatexToString } from "~platform/katex"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 import { createCopyIcon, showCopySuccess } from "~utils/icons"
@@ -15,6 +16,12 @@ const TABLE_COPY_EDITABLE_HOST_CLASSES = [
   ".monaco-editor",
 ]
 const TABLE_COPY_EXTENSION_PREVIEW_SELECTOR = ".gh-user-query-markdown, .gh-markdown-preview"
+
+type FormulaCopyPayload = {
+  latex?: string
+  mathml?: string
+  isBlock: boolean
+}
 
 /**
  * 复制功能管理器
@@ -94,9 +101,14 @@ export class CopyManager {
             cursor: pointer !important;
         }
         .math-block:hover, .math-inline:hover, .katex:hover {
-            outline: 2px solid #4285f4;
-            outline-offset: 2px;
+            outline: none !important;
+            box-shadow: inset 0 0 0 2px #4285f4;
             border-radius: 4px;
+        }
+        .math-block:hover .katex,
+        .math-inline:hover .katex {
+            outline: none !important;
+            box-shadow: none !important;
         }
       `
       document.head.appendChild(style)
@@ -116,53 +128,15 @@ export class CopyManager {
         const formulaHost = target.closest(CopyManager.FORMULA_HOST_SELECTOR)
         if (!formulaHost) return
 
-        // 优先匹配 Gemini/Doubao 这类直接携带源码的节点
-        const structuredMathEl = formulaHost.closest(
-          ".math-block, .math-inline, [data-math], [data-custom-copy-text]",
-        ) as HTMLElement | null
-        if (structuredMathEl) {
-          let latex =
-            structuredMathEl.getAttribute("data-math") ||
-            structuredMathEl.getAttribute("data-custom-copy-text")
-
-          if (latex) {
-            latex = this.unwrapMathDelimiters(latex)
-            if (latex) {
-              this.copyLatex(
-                latex,
-                structuredMathEl.classList.contains("math-block") ||
-                  structuredMathEl.matches(".math-block"),
-              )
-              e.preventDefault()
-              e.stopPropagation()
-              return
-            }
-          }
-        }
-
-        // 匹配 KaTeX / MathML 格式，兼容 annotation 本身被双击命中的情况
-        const katexEl =
-          formulaHost.closest(".katex, .katex-display") || target.closest(".katex, .katex-display")
-        const mathEl =
-          formulaHost.closest("math") ||
-          target.closest("math") ||
-          katexEl?.querySelector("math") ||
-          null
-        const annotation = formulaHost.matches('annotation[encoding="application/x-tex"]')
-          ? formulaHost
-          : katexEl?.querySelector('annotation[encoding="application/x-tex"]') ||
-            mathEl?.querySelector('annotation[encoding="application/x-tex"]') ||
-            null
-
-        if (annotation?.textContent) {
-          const isBlock = !!katexEl?.closest(".katex-display")
-          this.copyLatex(annotation.textContent, isBlock)
+        const payload = this.extractFormulaCopyPayload(target, formulaHost)
+        if (payload?.latex || payload?.mathml) {
+          this.copyFormula(payload)
           e.preventDefault()
           e.stopPropagation()
           return
         }
 
-        // 命中了公式节点，但页面本身没有提供可提取的 LaTeX 源码
+        // 命中了公式节点，但页面本身没有提供可提取或可转换的公式源码
         showToast(t("formulaSourceUnavailable") || t("copyFailed"))
         e.preventDefault()
         e.stopPropagation()
@@ -173,6 +147,99 @@ export class CopyManager {
     }
 
     document.addEventListener("dblclick", this.formulaDblClickHandler, true)
+  }
+
+  private extractFormulaCopyPayload(
+    target: Element,
+    formulaHost: Element,
+  ): FormulaCopyPayload | null {
+    const adapterSource = this.siteAdapter?.extractFormulaCopySource(target, formulaHost)
+    const normalizedAdapterSource = this.normalizeFormulaCopySource(adapterSource)
+    if (normalizedAdapterSource) return normalizedAdapterSource
+
+    // 优先匹配 Gemini/Doubao/Ophel 渲染预览这类直接携带源码的节点
+    const structuredMathEl = formulaHost.closest(
+      ".math-block, .math-inline, [data-math], [data-custom-copy-text]",
+    ) as HTMLElement | null
+    if (structuredMathEl) {
+      const latex = this.unwrapMathDelimiters(
+        structuredMathEl.getAttribute("data-math") ||
+          structuredMathEl.getAttribute("data-custom-copy-text") ||
+          structuredMathEl.getAttribute("copy-text") ||
+          "",
+      )
+      const mathml = this.serializeMathElement(structuredMathEl.querySelector("math"))
+
+      if (latex || mathml) {
+        return {
+          latex,
+          mathml,
+          isBlock:
+            structuredMathEl.classList.contains("math-block") ||
+            structuredMathEl.matches(".math-block") ||
+            this.isBlockMathElement(structuredMathEl),
+        }
+      }
+    }
+
+    // 匹配 KaTeX / MathML 格式，兼容 annotation 本身被双击命中的情况
+    const katexEl =
+      formulaHost.closest(".katex, .katex-display") || target.closest(".katex, .katex-display")
+    const mathEl =
+      formulaHost.closest("math") ||
+      target.closest("math") ||
+      katexEl?.querySelector("math") ||
+      null
+    const annotation = formulaHost.matches('annotation[encoding="application/x-tex"]')
+      ? formulaHost
+      : katexEl?.querySelector('annotation[encoding="application/x-tex"]') ||
+        mathEl?.querySelector('annotation[encoding="application/x-tex"]') ||
+        null
+
+    const latex = this.unwrapMathDelimiters(annotation?.textContent || "")
+    const mathml = this.serializeMathElement(mathEl)
+
+    if (!latex && !mathml) return null
+
+    return {
+      latex,
+      mathml,
+      isBlock: !!katexEl?.closest(".katex-display") || this.isBlockMathElement(mathEl),
+    }
+  }
+
+  private normalizeFormulaCopySource(source: FormulaCopySource | null): FormulaCopyPayload | null {
+    if (!source) return null
+
+    const latex = this.unwrapMathDelimiters(source.latex || "")
+    const mathml = source.mathml?.trim() || ""
+    if (!latex && !mathml) return null
+
+    return {
+      latex,
+      mathml,
+      isBlock: source.isBlock ?? this.isBlockMathml(mathml),
+    }
+  }
+
+  private isBlockMathElement(element: Element | null): boolean {
+    if (!element) return false
+    return element.getAttribute("display") === "block"
+  }
+
+  private isBlockMathml(mathml: string): boolean {
+    return /\sdisplay=(["'])block\1/i.test(mathml)
+  }
+
+  private serializeMathElement(element: Element | null): string {
+    if (!element) return ""
+
+    try {
+      return new XMLSerializer().serializeToString(element).trim()
+    } catch (err) {
+      console.warn("[FormulaCopy] Failed to serialize MathML:", err)
+      return element instanceof HTMLElement ? element.outerHTML.trim() : ""
+    }
   }
 
   private unwrapMathDelimiters(latex: string): string {
@@ -202,6 +269,28 @@ export class CopyManager {
   /**
    * 复制 LaTeX 公式
    */
+  private copyFormula(payload: FormulaCopyPayload) {
+    const format = this.settings.formulaCopyFormat === "mathml" ? "mathml" : "latex"
+
+    if (format === "latex") {
+      if (!payload.latex) {
+        showToast(t("formulaSourceUnavailable") || t("copyFailed"))
+        return
+      }
+
+      this.copyLatex(payload.latex, payload.isBlock)
+      return
+    }
+
+    const mathml = payload.mathml || this.renderLatexToMathml(payload.latex || "", payload.isBlock)
+    if (!mathml) {
+      showToast(t("formulaFormatUnsupported") || t("formulaSourceUnavailable") || t("copyFailed"))
+      return
+    }
+
+    this.copyText(mathml)
+  }
+
   private copyLatex(latex: string, isBlock: boolean) {
     const normalizedLatex = latex.replace(/\r\n?/g, "\n").trim()
     let copyText = normalizedLatex
@@ -217,13 +306,32 @@ export class CopyManager {
         : `$${normalizedLatex}$`
     }
 
+    this.copyText(copyText)
+  }
+
+  private renderLatexToMathml(latex: string, isBlock: boolean): string {
+    const normalizedLatex = latex.replace(/\r\n?/g, "\n").trim()
+    if (!normalizedLatex) return ""
+
+    try {
+      const html = renderKatexToString(normalizedLatex, { displayMode: isBlock })
+      const template = document.createElement("template")
+      template.innerHTML = html
+      return this.serializeMathElement(template.content.querySelector("math"))
+    } catch (err) {
+      console.warn("[FormulaCopy] Failed to convert LaTeX to MathML:", err)
+      return ""
+    }
+  }
+
+  private copyText(text: string) {
     if (!navigator.clipboard?.writeText) {
       showToast(t("copyFailed"))
       return
     }
 
     navigator.clipboard
-      .writeText(copyText)
+      .writeText(text)
       .then(() => showToast(t("formulaCopied")))
       .catch((err) => {
         console.error("[FormulaCopy] Copy failed:", err)

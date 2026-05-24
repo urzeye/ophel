@@ -6,12 +6,13 @@
 import React, { useCallback, useEffect, useState } from "react"
 
 import { FeaturesIcon } from "~components/icons"
-import { Button, NumberInput, PlaceholderInput } from "~components/ui"
+import { Button, NumberInput, PlaceholderInput, SelectDropdown } from "~components/ui"
 import { FEATURES_TAB_IDS, NOTIFICATION_SOUND_PRESETS, SITE_IDS } from "~constants"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
 import { MSG_CHECK_PERMISSIONS, MSG_REQUEST_PERMISSIONS, sendToBackground } from "~utils/messaging"
+import type { FormulaCopyFormat } from "~utils/storage"
 import {
   aggregateUsageEvents,
   getUsageEvents,
@@ -676,6 +677,25 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
   const privacyModeLabel = t("privacyModeLabel") || "隐私模式"
   const readingHistoryLabel = t("readingHistoryPersistenceLabel") || "启用阅读历史"
   const formulaCopyLabel = t("formulaCopyLabel") || "双击复制公式"
+  const formulaCopyFormat = settings.content?.formulaCopyFormat === "mathml" ? "mathml" : "latex"
+  const formulaCopyFormatOptions = [
+    { value: "latex", label: t("formulaCopyFormatLatex") || "LaTeX 源码" },
+    { value: "mathml", label: t("formulaCopyFormatMathml") || "MathML 源码" },
+  ]
+  const showFormulaDelimiterPrerequisiteToast = () => {
+    if (!settings.content?.formulaCopy) {
+      showPrerequisiteToast(formulaCopyLabel)
+      return
+    }
+
+    showToastThrottled(
+      t("formulaDelimiterLatexOnlyToast") || "请先将公式复制格式切换为「LaTeX 源码」",
+      2000,
+      {},
+      1500,
+      "formula-delimiter-latex-only",
+    )
+  }
   const hasMultipleNotificationSoundPresets = NOTIFICATION_SOUND_PRESETS.length > 1
   const formatSecondsOptionLabel = (value: number) =>
     t("secondsValueLabel", { val: String(value) }) || `${value} 秒`
@@ -1565,7 +1585,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
 
           <ToggleRow
             label={t("formulaCopyLabel") || "双击复制公式"}
-            description={t("formulaCopyDesc") || "双击数学公式即可复制其 LaTeX 源码"}
+            description={t("formulaCopyDesc") || "双击数学公式即可复制为指定格式"}
             settingId="content-formula-copy"
             checked={settings.content?.formulaCopy ?? true}
             onChange={() =>
@@ -1573,13 +1593,32 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             }
           />
 
+          <SettingRow
+            label={t("formulaCopyFormatLabel") || "公式复制格式"}
+            description={t("formulaCopyFormatDesc") || "选择双击公式后复制 LaTeX 或 MathML 源码"}
+            settingId="content-formula-copy-format"
+            disabled={!settings.content?.formulaCopy}
+            onDisabledClick={() => showPrerequisiteToast(formulaCopyLabel)}>
+            <SelectDropdown
+              className="settings-select-dropdown"
+              buttonClassName="settings-select"
+              options={formulaCopyFormatOptions}
+              value={formulaCopyFormat}
+              ariaLabel={t("formulaCopyFormatLabel") || "公式复制格式"}
+              disabled={!settings.content?.formulaCopy}
+              onChange={(value) =>
+                updateNestedSetting("content", "formulaCopyFormat", value as FormulaCopyFormat)
+              }
+            />
+          </SettingRow>
+
           <ToggleRow
             label={t("formulaDelimiterLabel") || "公式分隔符转换"}
             description={t("formulaDelimiterDesc") || "复制时将括号分隔符转为美元符号"}
             settingId="content-formula-delimiter"
             checked={settings.content?.formulaDelimiter ?? true}
-            disabled={!settings.content?.formulaCopy}
-            onDisabledClick={() => showPrerequisiteToast(formulaCopyLabel)}
+            disabled={!settings.content?.formulaCopy || formulaCopyFormat !== "latex"}
+            onDisabledClick={showFormulaDelimiterPrerequisiteToast}
             onChange={() =>
               updateNestedSetting(
                 "content",

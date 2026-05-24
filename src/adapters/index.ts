@@ -71,4 +71,5 @@ export type {
   ConversationObserverConfig,
   SiteDeleteConversationResult,
   AnchorData,
+  FormulaCopySource,
 } from "./base"
