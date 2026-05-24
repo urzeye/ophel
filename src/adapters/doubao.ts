@@ -37,9 +37,9 @@ const SIDEBAR_HISTORY_SELECTOR = `${SIDEBAR_ROOT_SELECTOR} [data-history-contain
 const CONVERSATION_ROW_SELECTOR = `${SIDEBAR_ROOT_SELECTOR} a[id^="conversation_"][href*="/chat/"]`
 const CONVERSATION_TITLE_SELECTOR = '[class*="overallTitle-"], [class*="title-"]'
 const NEW_CHAT_BUTTON_SELECTOR = `${SIDEBAR_ROOT_SELECTOR} > div:nth-child(2)`
-const MESSAGE_LIST_SELECTOR =
-  '[data-table-spillover="true"][data-table-spillover-force-disable="true"]'
-const MESSAGE_SCROLL_SELECTOR = '[class^="scrollable-"], [class*=" scrollable-"]'
+const VIRTUAL_SCROLL_SELECTOR = '[class*="v_list_scroller"]'
+const VIRTUAL_ROW_SELECTOR = ".v_list_row"
+const VIRTUAL_SCROLL_HOLDER_SELECTOR = '[data-name="scroll_holder"]'
 const MESSAGE_BLOCK_SELECTOR = '[data-target-id="message-box-target-id"]'
 const USER_QUERY_SELECTOR = "[data-message-id].justify-end"
 const RAW_USER_QUERY_TEXT_SELECTOR =
@@ -54,10 +54,6 @@ const DOUBAO_DELETE_REASON = {
 } as const
 
 export class DoubaoAdapter extends SiteAdapter {
-  // 滚动补偿状态记录
-  private lastScrollHeight = 0
-  private lastScrollTop = 0
-
   // ===== 必选抽象方法 =====
 
   match(): boolean {
@@ -249,14 +245,31 @@ export class DoubaoAdapter extends SiteAdapter {
     )
   }
 
-  private getMessageListContainer(): HTMLElement | null {
-    const candidates = Array.from(document.querySelectorAll(MESSAGE_LIST_SELECTOR)) as HTMLElement[]
-    if (candidates.length === 0) return null
+  private getVirtualScrollContainer(): HTMLElement | null {
+    const candidates = Array.from(
+      document.querySelectorAll(VIRTUAL_SCROLL_SELECTOR),
+    ) as HTMLElement[]
 
     return (
-      candidates.find((candidate) =>
-        candidate.querySelector(`${USER_QUERY_SELECTOR}, ${ASSISTANT_CONTENT_SELECTOR}`),
-      ) || candidates[0]
+      candidates.find((candidate) => {
+        if (!candidate.isConnected) return false
+
+        const hasVirtualList =
+          candidate.querySelector(VIRTUAL_SCROLL_HOLDER_SELECTOR) ||
+          candidate.querySelector(VIRTUAL_ROW_SELECTOR) ||
+          candidate.querySelector(MESSAGE_BLOCK_SELECTOR)
+        if (!hasVirtualList) return false
+
+        const style = window.getComputedStyle(candidate)
+        const isScrollable =
+          style.overflowY === "auto" ||
+          style.overflowY === "scroll" ||
+          style.overflow === "auto" ||
+          style.overflow === "scroll" ||
+          candidate.scrollHeight > candidate.clientHeight
+
+        return isScrollable && candidate.clientHeight > 0
+      }) || null
     )
   }
 
@@ -461,35 +474,15 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getScrollContainer(): HTMLElement | null {
-    const messageList = this.getMessageListContainer()
-    if (messageList) {
-      const nestedScrollable = messageList.querySelector(
-        MESSAGE_SCROLL_SELECTOR,
-      ) as HTMLElement | null
-      if (nestedScrollable) {
-        return nestedScrollable
-      }
+    return this.getVirtualScrollContainer()
+  }
 
-      const scrollableAncestor = this.findScrollableAncestor(messageList)
-      if (scrollableAncestor) return scrollableAncestor
-    }
-
-    const scrollContainers = document.querySelectorAll(MESSAGE_SCROLL_SELECTOR)
-    for (const el of scrollContainers) {
-      const style = window.getComputedStyle(el)
-      if (
-        (style.overflowY === "scroll" || style.overflowY === "auto") &&
-        (el.scrollHeight > el.clientHeight || el.clientHeight > 0)
-      ) {
-        return el as HTMLElement
-      }
-    }
-
-    return null
+  getObserveTarget(): Element | null {
+    return this.getVirtualScrollContainer() || super.getObserveTarget()
   }
 
   getResponseContainerSelector(): string {
-    return MESSAGE_LIST_SELECTOR
+    return VIRTUAL_SCROLL_SELECTOR
   }
 
   getUserQuerySelector(): string | null {
@@ -1034,7 +1027,7 @@ export class DoubaoAdapter extends SiteAdapter {
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const items: OutlineItem[] = []
-    const container = this.getMessageListContainer()
+    const container = this.getVirtualScrollContainer()
     if (!container) return items
 
     const collectHeadings = (root: ParentNode, parentBlock?: Element | null) => {
@@ -1193,9 +1186,9 @@ export class DoubaoAdapter extends SiteAdapter {
     ]
   }
 
-  // ===== 专用滚动补偿与历史隔离机制 (针对豆包 column-reverse 特殊处理) =====
+  // ===== 专用滚动补偿与历史隔离机制 =====
 
-  // 豆包采用 column-reverse 逆向布局，基类的 scrollTop 与 offsetTop 记录与恢复策略全盘失效。
+  // 豆包新版采用虚拟列表，基类的 offsetTop 记录与恢复策略容易失效。
   // 因此我们独立覆写历史记录读取和恢复方法：
   // 1. 获取屏幕最顶部的一个可见对话段落，记录其前 50 字为特征签名
   // 2. 恢复时，在页面重寻此段落并将其对齐至屏幕顶部。
@@ -1249,6 +1242,23 @@ export class DoubaoAdapter extends SiteAdapter {
     return null
   }
 
+  scrollToOutlineTarget(element: HTMLElement): void {
+    const container = this.getScrollContainer()
+    if (!container) {
+      super.scrollToOutlineTarget(element)
+      return
+    }
+
+    const containerRect = container.getBoundingClientRect()
+    const elementRect = element.getBoundingClientRect()
+    const targetScrollTop = container.scrollTop + elementRect.top - containerRect.top
+    container.scrollTo({
+      top: Math.max(0, targetScrollTop),
+      behavior: "instant",
+      __bypassLock: true,
+    } as any)
+  }
+
   restoreScroll(anchorData: AnchorData): boolean {
     const container = this.getScrollContainer()
     if (!container || !anchorData) return false
@@ -1279,13 +1289,7 @@ export class DoubaoAdapter extends SiteAdapter {
     }
 
     if (targetElement) {
-      targetElement.scrollIntoView({ block: "start", behavior: "instant" })
-
-      // 因为豆包反向滚动的复杂性，执行 scrollIntoView 后立刻同步历史高度避免 ResizeObserver 误报
-      setTimeout(() => {
-        this.lastScrollHeight = container.scrollHeight
-        this.lastScrollTop = container.scrollTop
-      }, 50)
+      this.scrollToOutlineTarget(targetElement as HTMLElement)
       return true
     }
     return false
