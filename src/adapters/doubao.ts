@@ -73,6 +73,13 @@ interface DoubaoOutlineCacheEntry {
   wordCount?: number
 }
 
+interface DoubaoVirtualAnchorData extends AnchorData {
+  site?: "doubao"
+  messageId?: string | null
+  rowIndex?: number
+  virtualScrollTop?: number
+}
+
 export class DoubaoAdapter extends SiteAdapter {
   private outlineCacheSessionKey = ""
   private outlineCacheTransitionEndAt = 0
@@ -1588,25 +1595,112 @@ export class DoubaoAdapter extends SiteAdapter {
 
   // ===== 专用滚动补偿与历史隔离机制 =====
 
-  // 豆包新版采用虚拟列表，基类的 offsetTop 记录与恢复策略容易失效。
-  // 因此我们独立覆写历史记录读取和恢复方法：
-  // 1. 获取屏幕最顶部的一个可见对话段落，记录其前 50 字为特征签名
-  // 2. 恢复时，在页面重寻此段落并将其对齐至屏幕顶部。
+  private getReadingAnchorCandidates(root: ParentNode): HTMLElement[] {
+    const selectors = this.getChatContentSelectors()
+    if (!selectors.length) return []
+
+    const candidates: HTMLElement[] = []
+    const push = (element: Element | null) => {
+      if (element instanceof HTMLElement && !candidates.includes(element)) {
+        candidates.push(element)
+      }
+    }
+
+    if (root instanceof HTMLElement) {
+      if (root.matches(ASSISTANT_CONTENT_SELECTOR) || root.matches(USER_QUERY_TEXT_SELECTOR)) {
+        push(root)
+      }
+
+      if (root.matches(USER_QUERY_SELECTOR)) {
+        push(this.getUserMessageTextContainer(root))
+      }
+    }
+
+    Array.from(root.querySelectorAll(selectors.join(", "))).forEach(push)
+    return candidates
+  }
+
+  private getReadingAnchorTextSignature(element: Element | null): string {
+    return (element?.textContent || "").trim().substring(0, 50)
+  }
+
+  private findReadingAnchorTarget(
+    container: HTMLElement,
+    anchorData: DoubaoVirtualAnchorData,
+  ): HTMLElement | null {
+    const matchesSignature = (candidate: Element) => {
+      if (!anchorData.textSignature) return true
+      return this.getReadingAnchorTextSignature(candidate) === anchorData.textSignature
+    }
+
+    if (anchorData.messageId) {
+      const escaped = this.escapeAttributeValue(anchorData.messageId)
+      const messageElement = container.querySelector(
+        `[data-message-id="${escaped}"]`,
+      ) as HTMLElement | null
+      if (messageElement) {
+        const candidates = this.getReadingAnchorCandidates(messageElement)
+        return (
+          candidates.find(matchesSignature) ||
+          candidates[0] ||
+          (matchesSignature(messageElement) ? messageElement : null)
+        )
+      }
+    }
+
+    if (typeof anchorData.rowIndex === "number") {
+      const rows = Array.from(container.querySelectorAll(VIRTUAL_ROW_SELECTOR)) as HTMLElement[]
+      const row = rows.find(
+        (candidate) => this.getVirtualRowIndex(candidate, -1) === anchorData.rowIndex,
+      )
+      if (row) {
+        const candidates = this.getReadingAnchorCandidates(row)
+        return candidates.find(matchesSignature) || candidates[0] || null
+      }
+    }
+
+    const candidates = this.getReadingAnchorCandidates(container)
+    if (anchorData.textSignature) {
+      const found = candidates.find(matchesSignature)
+      if (found) return found
+    }
+
+    if (anchorData.type === "index" && typeof anchorData.index === "number") {
+      return candidates[anchorData.index] || null
+    }
+
+    return null
+  }
+
+  private async waitForReadingAnchorTarget(
+    container: HTMLElement,
+    anchorData: DoubaoVirtualAnchorData,
+    timeoutMs = 1500,
+  ): Promise<HTMLElement | null> {
+    const deadline = Date.now() + timeoutMs
+    while (Date.now() < deadline) {
+      const target = this.findReadingAnchorTarget(container, anchorData)
+      if (target) return target
+      await this.sleep(60)
+    }
+    return null
+  }
+
+  // 豆包新版采用虚拟列表，基类的 offsetTop / DOM index 恢复策略不可靠。
+  // 保存时记录当前可见内容所属 message-id、虚拟 row index 和容器 scrollTop；
+  // 恢复时先滚到虚拟位置触发 row 挂载，再用 message-id / 文本签名校准目标。
   getVisibleAnchorElement(): AnchorData | null {
     const container = this.getScrollContainer()
     if (!container) return null
 
-    const selectors = this.getChatContentSelectors()
-    if (!selectors.length) return null
-
-    const candidates = Array.from(container.querySelectorAll(selectors.join(", ")))
+    const candidates = this.getReadingAnchorCandidates(container)
     if (!candidates.length) return null
 
     const containerRect = container.getBoundingClientRect()
-    let bestElement: Element | null = null
+    let bestElement: HTMLElement | null = null
 
     for (let i = 0; i < candidates.length; i++) {
-      const el = candidates[i] as HTMLElement
+      const el = candidates[i]
       const rect = el.getBoundingClientRect()
 
       // 寻找顶部边缘正好在滚动容器可视区内（或略上方交界）的元素
@@ -1622,7 +1716,7 @@ export class DoubaoAdapter extends SiteAdapter {
     if (!bestElement) {
       // 如果屏幕内全都是一个超长元素的内部，直接取处于可视区的该元素
       for (let i = 0; i < candidates.length; i++) {
-        const el = candidates[i] as HTMLElement
+        const el = candidates[i]
         const rect = el.getBoundingClientRect()
         if (rect.top < containerRect.top && rect.bottom > containerRect.bottom) {
           bestElement = el
@@ -1634,9 +1728,21 @@ export class DoubaoAdapter extends SiteAdapter {
     if (bestElement) {
       const globalIndex = candidates.indexOf(bestElement)
       if (globalIndex !== -1) {
-        const textSignature = (bestElement.textContent || "").trim().substring(0, 50)
-        // 在豆包的隔离策略中，忽略 offset，全靠元素对齐
-        return { type: "index", index: globalIndex, offset: 0, textSignature }
+        const meta = this.getVirtualMessageMeta(bestElement, globalIndex)
+        const textSignature = this.getReadingAnchorTextSignature(bestElement)
+        const offset = bestElement.getBoundingClientRect().top - containerRect.top
+
+        const anchorData: DoubaoVirtualAnchorData = {
+          type: "index",
+          index: globalIndex,
+          offset,
+          textSignature,
+          site: "doubao",
+          messageId: meta.messageId,
+          rowIndex: meta.rowIndex,
+          virtualScrollTop: Math.max(0, container.scrollTop),
+        }
+        return anchorData
       }
     }
     return null
@@ -1659,39 +1765,29 @@ export class DoubaoAdapter extends SiteAdapter {
     } as any)
   }
 
-  restoreScroll(anchorData: AnchorData): boolean {
+  async restoreScroll(anchorData: AnchorData): Promise<boolean> {
     const container = this.getScrollContainer()
     if (!container || !anchorData) return false
 
-    let targetElement: Element | null = null
+    const doubaoAnchorData = anchorData as DoubaoVirtualAnchorData
+    let targetElement = this.findReadingAnchorTarget(container, doubaoAnchorData)
 
-    if (anchorData.type === "index" && typeof anchorData.index === "number") {
-      const selectors = this.getChatContentSelectors()
-      const candidates = Array.from(container.querySelectorAll(selectors.join(", ")))
-
-      if (candidates[anchorData.index]) {
-        targetElement = candidates[anchorData.index]
-        if (anchorData.textSignature) {
-          const currentText = (targetElement.textContent || "").trim().substring(0, 50)
-          if (currentText !== anchorData.textSignature) {
-            const found = candidates.find(
-              (c) => (c.textContent || "").trim().substring(0, 50) === anchorData.textSignature,
-            )
-            if (found) targetElement = found
-          }
-        }
-      } else if (anchorData.textSignature) {
-        const found = candidates.find(
-          (c) => (c.textContent || "").trim().substring(0, 50) === anchorData.textSignature,
-        )
-        if (found) targetElement = found
-      }
+    if (!targetElement && typeof doubaoAnchorData.virtualScrollTop === "number") {
+      this.scrollVirtualContainerTo(container, doubaoAnchorData.virtualScrollTop)
+      targetElement = await this.waitForReadingAnchorTarget(container, doubaoAnchorData)
     }
 
     if (targetElement) {
-      this.scrollToOutlineTarget(targetElement as HTMLElement)
+      if (typeof doubaoAnchorData.virtualScrollTop === "number") {
+        const offset = typeof doubaoAnchorData.offset === "number" ? doubaoAnchorData.offset : 0
+        const targetScrollTop = this.getElementVirtualScrollTop(container, targetElement) - offset
+        this.scrollVirtualContainerTo(container, targetScrollTop)
+      } else {
+        this.scrollToOutlineTarget(targetElement)
+      }
       return true
     }
+
     return false
   }
 }

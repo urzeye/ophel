@@ -775,7 +775,7 @@ export abstract class SiteAdapter {
   }
 
   /** 根据保存的锚点信息恢复滚动 */
-  restoreScroll(anchorData: AnchorData): boolean {
+  restoreScroll(anchorData: AnchorData): boolean | Promise<boolean> {
     const container = this.getScrollContainer()
     if (!container || !anchorData) return false
 

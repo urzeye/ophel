@@ -20,6 +20,10 @@ export interface ReadingPosition {
   index?: number
   offset?: number
   scrollHeight?: number // 保存时的容器高度
+  site?: string
+  messageId?: string | null
+  rowIndex?: number
+  virtualScrollTop?: number
 }
 
 // ==================== Store 类型定义 ====================
