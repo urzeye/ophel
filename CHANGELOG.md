@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ New Features
 
-- **Prompt queue and library integration** — Prompt Library actions can now add prompts to the queue, and the queue batch dialog can add prompts directly from the library. (#547)
+- **Prompt queue and library integration** — Prompt Library actions can now add prompts to the queue, and the queue batch dialog can add prompts directly from the library. (#547, @mrpops2ko)
 
 ---
 
