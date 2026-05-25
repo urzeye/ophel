@@ -1167,6 +1167,10 @@ export class ClaudeAdapter extends SiteAdapter {
       // 跳过侧边栏分组标题
       if (h.classList.contains("pointer-events-none")) return
 
+      // 跳过屏幕阅读器专用元素（如 "You said:" / "Claude responded:" 提示文本）
+      // 使用类名定位而非文本匹配，以支持多语言
+      if (h.classList.contains("sr-only")) return
+
       const text = h.textContent?.trim() || ""
       if (!text) return
 
