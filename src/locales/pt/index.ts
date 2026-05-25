@@ -1384,6 +1384,13 @@ Dê o código e depois um resumo de melhorias.`,
   queueBatchImportAction: "Importar para a fila",
   queueBatchImportSuccess: "{count} prompt(s) importados",
   queueBatchImportEmpty: "Nenhum prompt para importar",
+  promptEnqueueToQueue: "Adicionar à fila",
+  promptEnqueueSplitQueue: "Dividir fila",
+  promptEnqueueSplitQueueTip:
+    "Quando ativado, cada linha não vazia de um prompt é adicionada como um item de fila separado.",
+  promptEnqueueSuccess: "{count} prompt(s) na fila",
+  promptEnqueueDisabled: "Ative a fila de prompts nas configurações",
+  promptEnqueueEmpty: "Nada para enfileirar",
   zenModeTitle: "Modo Zen",
   zenModeLabel: "Ativar Modo Zen",
   zenModeDesc:

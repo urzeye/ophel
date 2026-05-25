@@ -1407,6 +1407,13 @@ Please output the optimized code block directly, followed by a brief summary of 
   queueBatchImportAction: "Import to Queue",
   queueBatchImportSuccess: "Imported {count} prompt(s)",
   queueBatchImportEmpty: "No prompts available to import",
+  promptEnqueueToQueue: "Add to queue",
+  promptEnqueueSplitQueue: "Split queue",
+  promptEnqueueSplitQueueTip:
+    "When enabled, each non-empty line in a prompt is added as a separate queue item.",
+  promptEnqueueSuccess: "Queued {count} prompt(s)",
+  promptEnqueueDisabled: "Enable Prompt Queue in settings",
+  promptEnqueueEmpty: "Nothing to queue",
   zenModeTitle: "Zen Mode",
   zenModeLabel: "Enable Zen Mode",
   zenModeDesc:

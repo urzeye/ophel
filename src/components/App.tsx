@@ -13,6 +13,7 @@ import { ConversationManager } from "~core/conversation-manager"
 import { InlineBookmarkManager } from "~core/inline-bookmark-manager"
 import { OutlineManager, type OutlineNode } from "~core/outline-manager"
 import { AI_STUDIO_SHORTCUT_SYNC_EVENT, PromptManager } from "~core/prompt-manager"
+import { QUEUE_ITEMS_ADDED_EVENT } from "~core/queue-inject"
 import { QueueDispatcher } from "~core/queue-dispatcher"
 import { ensureGlobalThemeManager, type ThemeTransitionOrigin } from "~core/theme-manager"
 import { useEdgePeekController } from "~hooks/useEdgePeekController"
@@ -828,6 +829,22 @@ export const App = () => {
     }
     return () => queueDispatcher.stop()
   }, [queueDispatcher, settings?.features?.prompts?.promptQueue])
+
+  useEffect(() => {
+    if (!queueDispatcher || !adapter) return
+
+    const handleQueueItemsAdded = () => {
+      if (!queueDispatcher.isRunning()) {
+        queueDispatcher.start()
+      }
+      if (!adapter.isGenerating()) {
+        void queueDispatcher.processNextNow()
+      }
+    }
+
+    window.addEventListener(QUEUE_ITEMS_ADDED_EVENT, handleQueueItemsAdded)
+    return () => window.removeEventListener(QUEUE_ITEMS_ADDED_EVENT, handleQueueItemsAdded)
+  }, [adapter, queueDispatcher])
 
   const conversationManager = useMemo(() => {
     return adapter ? new ConversationManager(adapter) : null

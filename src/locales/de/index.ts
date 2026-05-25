@@ -1390,6 +1390,13 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   queueBatchImportAction: "In Warteschlange importieren",
   queueBatchImportSuccess: "{count} Prompt(s) importiert",
   queueBatchImportEmpty: "Keine Prompts zum Importieren vorhanden",
+  promptEnqueueToQueue: "Zur Warteschlange hinzufügen",
+  promptEnqueueSplitQueue: "Warteschlange aufteilen",
+  promptEnqueueSplitQueueTip:
+    "Wenn aktiviert, wird jede nicht leere Zeile eines Prompts als separater Warteschlangeneintrag hinzugefügt.",
+  promptEnqueueSuccess: "{count} Prompt(s) in die Warteschlange gestellt",
+  promptEnqueueDisabled: "Aktivieren Sie die Prompt-Warteschlange in den Einstellungen",
+  promptEnqueueEmpty: "Nichts zum Einreihen vorhanden",
   zenModeTitle: "Zen-Modus",
   zenModeLabel: "Zen-Modus aktivieren",
   zenModeDesc:
