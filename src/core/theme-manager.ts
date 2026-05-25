@@ -44,6 +44,42 @@ const DEFAULT_LIGHT_PRESET_ID = "google-gradient"
 const DEFAULT_DARK_PRESET_ID = "classic-dark"
 const HOST_THEME_OVERRIDE_STYLE_ID = "ophel-native-adaptive-style"
 
+function applyClaudeThemeDomHints(mode: ThemeMode) {
+  const root = document.documentElement
+  const body = document.body
+
+  root.classList.toggle("dark", mode === "dark")
+  root.classList.toggle("light", mode === "light")
+  root.setAttribute("data-theme", mode)
+  root.style.colorScheme = mode
+
+  if (!body) return
+
+  body.classList.toggle("dark", mode === "dark")
+  body.classList.toggle("light", mode === "light")
+  body.setAttribute("data-theme", mode)
+  body.style.colorScheme = mode
+
+  const colorSchemeMeta = document.querySelector('meta[name="color-scheme"]')
+  if (colorSchemeMeta) {
+    colorSchemeMeta.setAttribute("content", mode)
+  }
+}
+
+function getClaudeThemeTabId(): string {
+  try {
+    const raw = localStorage.getItem("LSS-userThemeMode")
+    if (raw) {
+      const parsed = JSON.parse(raw) as { tabId?: unknown }
+      if (typeof parsed.tabId === "string" && parsed.tabId.trim()) {
+        return parsed.tabId
+      }
+    }
+  } catch {}
+
+  return crypto.randomUUID()
+}
+
 export interface GlobalThemeManagerOptions {
   mode: ThemePreference | string
   onModeChange?: ThemeModeChangeCallback
@@ -317,17 +353,21 @@ export class ThemeManager {
           return true
         }
         case SITE_IDS.CLAUDE: {
+          const previousValue = localStorage.getItem("LSS-userThemeMode")
           const themeData = {
             value: "auto",
-            tabId: crypto.randomUUID(),
+            tabId: getClaudeThemeTabId(),
             timestamp: Date.now(),
           }
           const nextValue = JSON.stringify(themeData)
           localStorage.setItem("LSS-userThemeMode", nextValue)
+          applyClaudeThemeDomHints(targetMode)
           window.dispatchEvent(
             new StorageEvent("storage", {
               key: "LSS-userThemeMode",
+              oldValue: previousValue,
               newValue: nextValue,
+              storageArea: localStorage,
             }),
           )
           return true

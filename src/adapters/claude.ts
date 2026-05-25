@@ -64,6 +64,42 @@ const CLAUDE_INLINE_MATH_PATTERNS = [
   /\\\([^\n]+?\\\)/,
 ]
 
+function applyClaudeThemeDomHints(mode: "light" | "dark") {
+  const root = document.documentElement
+  const body = document.body
+
+  root.classList.toggle("dark", mode === "dark")
+  root.classList.toggle("light", mode === "light")
+  root.setAttribute("data-theme", mode)
+  root.style.colorScheme = mode
+
+  if (!body) return
+
+  body.classList.toggle("dark", mode === "dark")
+  body.classList.toggle("light", mode === "light")
+  body.setAttribute("data-theme", mode)
+  body.style.colorScheme = mode
+
+  const colorSchemeMeta = document.querySelector('meta[name="color-scheme"]')
+  if (colorSchemeMeta) {
+    colorSchemeMeta.setAttribute("content", mode)
+  }
+}
+
+function getClaudeThemeTabId(): string {
+  try {
+    const raw = localStorage.getItem("LSS-userThemeMode")
+    if (raw) {
+      const parsed = JSON.parse(raw) as { tabId?: unknown }
+      if (typeof parsed.tabId === "string" && parsed.tabId.trim()) {
+        return parsed.tabId
+      }
+    }
+  } catch {}
+
+  return crypto.randomUUID()
+}
+
 function stripClaudeCodeContent(text: string): string {
   return text.replace(/```[\s\S]*?```/g, "").replace(/`[^`\n]*`/g, "")
 }
@@ -1529,18 +1565,23 @@ export class ClaudeAdapter extends SiteAdapter {
     try {
       // Claude 使用 localStorage.LSS-userThemeMode 存储主题
       // 格式: {"value":"dark","tabId":"xxx","timestamp":xxx}
+      const previousValue = localStorage.getItem("LSS-userThemeMode")
       const themeData = {
         value: targetMode,
-        tabId: crypto.randomUUID(),
+        tabId: getClaudeThemeTabId(),
         timestamp: Date.now(),
       }
-      localStorage.setItem("LSS-userThemeMode", JSON.stringify(themeData))
+      const nextValue = JSON.stringify(themeData)
+      localStorage.setItem("LSS-userThemeMode", nextValue)
+      applyClaudeThemeDomHints(targetMode)
 
       // 触发 storage 事件通知其他组件
       window.dispatchEvent(
         new StorageEvent("storage", {
           key: "LSS-userThemeMode",
-          newValue: JSON.stringify(themeData),
+          oldValue: previousValue,
+          newValue: nextValue,
+          storageArea: localStorage,
         }),
       )
 
