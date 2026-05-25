@@ -15,14 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-- **Claude adapter overhaul** — Comprehensive adaptation to Claude's recent page redesign:
-
-  - **Outline sr-only filter** — Screen-reader-only heading elements (`sr-only` class, e.g. "You said:" / "Claude responded:" hints) are now filtered from outline extraction using class selectors instead of text matching, supporting all 10 languages.
-  - **Share page URL support** — `isSharePage()` now recognizes the new `/share/` URL format alongside the legacy `/public/artifacts/` format.
-  - **Theme toggle fix** — Directly sets `html`/`body` classes (`dark`/`light`), `data-theme`, `style.colorScheme`, and `meta[name="color-scheme"]` when toggling themes, since Claude no longer reacts to `LSS-userThemeMode` localStorage changes alone. Also reuses the existing `tabId` from localStorage instead of generating a new random UUID on each toggle to avoid state conflicts.
-  - **Model locker fix** — Updated menu item selector to also match `[role="menuitemradio"]` for the new Radix UI structure.
-  - **Simulate click rewrite** — Rewrote `simulateClick()` with proper PointerEvent init, hover pre-events, and sub-menu trigger detection to work with Claude's updated Radix UI components.
-
+- **Claude adapter** — Adapted to Claude's recent page redesign: outline no longer picks up screen-reader-only headings, share links with new URL format are now recognized, theme switching works again, model locking and click simulation are compatible with the new UI components.
 - **Doubao virtual scroll navigation** — Adapted Doubao to its new virtual-list chat DOM so outline jumps, return anchors, and top/bottom navigation now use the real `v_list_scroller` container. The outline also keeps an in-memory cache of headings and user prompts that have entered the viewport, preventing previously seen outline items from disappearing when Doubao unloads them from the DOM.
 - **Kimi conversation navigation** — Fixed the Conversations tab failing to switch Kimi chats when clicking history items from Kimi's sidebar. Kimi chat links are now matched by parsed conversation ID instead of a broad selector, with an SPA route fallback when the native link is not mounted.
 - **Ima user prompt extraction** — Restored user-question detection for Ima's updated chat DOM, so prompts inside the new `userBubbleWrap` / `chatMainBubble` structure are included in outline, export, usage stats, and user-query Markdown rendering again.

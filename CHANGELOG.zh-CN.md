@@ -14,14 +14,7 @@
 
 ### 🐛 问题修复
 
-- **Claude 适配器全面升级** — 系统性适配 Claude 近期页面改版：
-
-  - **大纲 sr-only 过滤** — 屏幕阅读器专用标题元素（`sr-only` 类，如 "You said:" / "Claude responded:" 提示）现已从大纲提取中过滤，使用类名选择器而非文本匹配，支持全部 10 种语言。
-  - **分享页面 URL 支持** — `isSharePage()` 现可识别新的 `/share/` 路径格式，同时保留对旧的 `/public/artifacts/` 格式的兼容。
-  - **主题切换修复** — 由于 Claude 不再仅通过 `LSS-userThemeMode` localStorage 变更响应主题切换，现在切换主题时会直接设置 `html`/`body` 的 class（`dark`/`light`）、`data-theme`、`style.colorScheme` 以及 `meta[name="color-scheme"]`。同时复用 localStorage 中已有的 `tabId`，避免每次切换生成随机 UUID 导致状态冲突。
-  - **模型锁定修复** — 更新菜单项选择器以匹配 `[role="menuitemradio"]`，适配新版 Radix UI 结构。
-  - **点击模拟重写** — 重写 `simulateClick()` 方法，添加正确的 PointerEvent 初始化、hover 前置事件和子菜单触发器检测，以兼容 Claude 更新的 Radix UI 组件。
-
+- **Claude 适配器** — 适配 Claude 页面改版：大纲不再误抓屏幕阅读器专用标题、识别新格式分享链接、修复主题切换、模型锁定和点击模拟兼容新版 UI 组件。
 - **豆包虚拟滚动导航** — 适配豆包新版虚拟列表聊天 DOM，现在大纲跳转、返回锚点、去顶部/去底部会使用真实的 `v_list_scroller` 滚动容器。大纲还会在内存中缓存进入过视口的标题和用户问题，避免豆包将不可见内容从 DOM 卸载后，已浏览过的大纲条目从面板中消失。
 - **Kimi 会话跳转** — 修复在「会话」面板中点击 Kimi 侧边栏历史项时无法切换聊天的问题。现在会按解析出的会话 ID 精确匹配 Kimi 聊天链接，并在原生链接未挂载时使用 SPA 路由兜底。
 - **Ima 用户问题抽取** — 适配 Ima 新版聊天 DOM，恢复对 `userBubbleWrap` / `chatMainBubble` 结构中用户提问的识别，确保大纲、导出、用量统计和用户提问 Markdown 渲染都能重新包含这些内容。
