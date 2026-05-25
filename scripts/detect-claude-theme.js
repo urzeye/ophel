@@ -208,13 +208,103 @@
         true,
       )
     }
-    if (e.key === "theme" || (e.key && (e.key.includes("theme") || e.key.includes("Theme")))) {
-      log('storage 事件 (key="' + e.key + '")', {
+    // 监控所有与 theme 相关的 storage key
+    if (
+      e.key &&
+      (e.key.toLowerCase().includes("theme") ||
+        e.key.toLowerCase().includes("color") ||
+        e.key.toLowerCase().includes("dark") ||
+        e.key.toLowerCase().includes("light") ||
+        e.key.toLowerCase().includes("mode"))
+    ) {
+      log('🔎 storage 事件 (key="' + e.key + '")', {
         oldValue: e.oldValue,
         newValue: e.newValue,
       })
     }
   })
+
+  // ─── 5b. 扫描所有 localStorage 中可能的主题相关 key ─────
+  function scanThemeKeys() {
+    console.group(PREFIX + " 扫描 localStorage 中的主题相关 key")
+    var found = []
+    var suspiciousPatterns = [
+      "theme",
+      "color",
+      "dark",
+      "light",
+      "mode",
+      "appearance",
+      "display",
+      "LSS",
+      "claude",
+      "anthropic",
+      "pref",
+    ]
+    for (var i = 0; i < localStorage.length; i++) {
+      var key = localStorage.key(i)
+      if (!key) continue
+      var lower = key.toLowerCase()
+      for (var j = 0; j < suspiciousPatterns.length; j++) {
+        if (lower.indexOf(suspiciousPatterns[j]) !== -1) {
+          var val = localStorage.getItem(key)
+          var truncated = val && val.length > 200 ? val.slice(0, 200) + "..." : val
+          found.push({ key: key, value: truncated })
+          break
+        }
+      }
+    }
+    if (found.length === 0) {
+      console.log("  未找到主题相关 key")
+    } else {
+      console.table(found)
+    }
+    console.groupEnd()
+    return found
+  }
+
+  // ─── 5c. 手动设置主题的测试函数 ──────────────────────────
+  function testSetTheme(value) {
+    console.group(PREFIX + ' 手动测试：写入 value="' + value + '"')
+    var currentRaw = localStorage.getItem(LS_KEY)
+    var currentData = null
+    try {
+      currentData = currentRaw ? JSON.parse(currentRaw) : {}
+    } catch (e) {
+      currentData = {}
+    }
+    var testData = {
+      value: value,
+      tabId: currentData.tabId || "test-manual",
+      timestamp: Date.now(),
+    }
+    console.log("写入前 body.className:", document.body.className)
+    console.log("写入前 html.className:", document.documentElement.className)
+    console.log("写入数据:", testData)
+
+    localStorage.setItem(LS_KEY, JSON.stringify(testData))
+    window.dispatchEvent(
+      new StorageEvent("storage", {
+        key: LS_KEY,
+        newValue: JSON.stringify(testData),
+        storageArea: localStorage,
+      }),
+    )
+
+    // 等待 500ms 后检查结果
+    setTimeout(function () {
+      console.log("--- 500ms 后 ---")
+      console.log("写入后 body.className:", document.body.className)
+      console.log("写入后 html.className:", document.documentElement.className)
+      console.log("localStorage[" + LS_KEY + "]:", localStorage.getItem(LS_KEY))
+      var bodyBgClass = ""
+      document.body.classList.forEach(function (c) {
+        if (c.indexOf("bg-") === 0) bodyBgClass += c + " "
+      })
+      console.log("body 背景色 class:", bodyBgClass || "(无)")
+      console.groupEnd()
+    }, 500)
+  }
 
   // ─── 6. 监控 prefers-color-scheme ──────────────────────
   if (window.matchMedia) {
@@ -234,7 +324,13 @@
     "%c" + PREFIX + " 监控已启动！现在操作 Ophel 主题切换，观察上方日志",
     "color: #ffd700; font-size: 14px; font-weight: bold;",
   )
-  console.log("%c" + PREFIX + " 停止监控：执行 detectClaudeTheme.stop()", "color: #888;")
+  console.log("%c" + PREFIX + " 可用命令：", "color: #ffd700;")
+  console.log("  detectClaudeTheme.snapshot()            — 重新打印当前状态")
+  console.log("  detectClaudeTheme.scanThemeKeys()      — 扫描所有主题相关 localStorage key")
+  console.log("  detectClaudeTheme.testSetTheme('light') — 手动测试写入 light")
+  console.log("  detectClaudeTheme.testSetTheme('dark')  — 手动测试写入 dark")
+  console.log("  detectClaudeTheme.testSetTheme('auto')  — 手动测试写入 auto")
+  console.log("  detectClaudeTheme.stop()               — 停止监控")
 
   // ─── 8. 停止方法 ──────────────────────────────────────
   return {
@@ -246,5 +342,7 @@
       console.log("%c" + PREFIX + " 监控已停止", "color: #ff6b35;")
     },
     snapshot: snapshot,
+    scanThemeKeys: scanThemeKeys,
+    testSetTheme: testSetTheme,
   }
 })()
