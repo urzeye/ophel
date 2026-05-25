@@ -369,30 +369,6 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   flex-shrink: 0;
 }
 
-.conversations-folder-drag-handle {
-  visibility: hidden;
-  cursor: grab;
-  display: flex;
-  align-items: center;
-  padding: 0 1px;
-  color: var(--gh-text-tertiary, #9ca3af);
-  transition: color 0.15s;
-  flex-shrink: 0;
-  user-select: none;
-}
-
-.conversations-folder-item:hover .conversations-folder-drag-handle {
-  visibility: visible;
-}
-
-.conversations-folder-drag-handle:hover {
-  color: var(--gh-text-secondary, #6b7280);
-}
-
-.conversations-folder-drag-handle:active {
-  cursor: grabbing;
-}
-
 .conversations-folder-item.is-dragging {
   opacity: 0.45;
 }

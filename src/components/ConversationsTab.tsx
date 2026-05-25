@@ -37,7 +37,6 @@ import {
   HourglassIcon,
   LocateIcon,
   MoreHorizontalIcon,
-  DragIcon,
   PinIcon,
   SyncIcon,
   TagIcon,
@@ -907,6 +906,32 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                       .join(" ")}
                     data-folder-id={folder.id}
                     style={{ background: bgVar }}
+                    draggable={!folder.isDefault}
+                    onDragStart={(e) => {
+                      if (folder.isDefault) {
+                        e.preventDefault()
+                        return
+                      }
+
+                      const target = e.target as HTMLElement
+                      if (
+                        target.closest(
+                          'button, input, textarea, select, [role="button"], [data-no-row-drag="true"]',
+                        )
+                      ) {
+                        e.preventDefault()
+                        return
+                      }
+
+                      setDraggedFolderId(folder.id)
+                      e.dataTransfer.effectAllowed = "move"
+                      e.dataTransfer.setData("text/plain", folder.id)
+                    }}
+                    onDragEnd={() => {
+                      setDraggedFolderId(null)
+                      setDragOverFolderId(null)
+                      dragOverFolderTargetRef.current = null
+                    }}
                     onClick={() => handleFolderClick(folder.id)}
                     onDragEnter={(e) => {
                       if (draggedFolderId) {
@@ -1026,27 +1051,6 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                     </div>
 
                     <div className="conversations-folder-controls">
-                      {/* 拖拽排序手柄 */}
-                      {!folder.isDefault && (
-                        <div
-                          className="conversations-folder-drag-handle"
-                          draggable
-                          onDragStart={(e) => {
-                            setDraggedFolderId(folder.id)
-                            e.dataTransfer.effectAllowed = "move"
-                            e.dataTransfer.setData("text/plain", folder.id)
-                          }}
-                          onDragEnd={() => {
-                            setDraggedFolderId(null)
-                            setDragOverFolderId(null)
-                            dragOverFolderTargetRef.current = null
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                          title={t("drag")}>
-                          <DragIcon size={17} />
-                        </div>
-                      )}
-
                       <span className="conversations-folder-count">({count})</span>
 
                       <button

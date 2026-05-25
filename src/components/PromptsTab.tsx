@@ -7,7 +7,6 @@ import {
   ClearIcon,
   CopyIcon,
   DeleteIcon,
-  DragIcon,
   EditIcon,
   ExportIcon,
   EyeIcon,
@@ -846,6 +845,14 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
   // === 拖拽排序 ===
   const handleDragStart = (e: React.DragEvent, id: string, node: HTMLDivElement) => {
+    const target = e.target as HTMLElement
+    if (
+      target.closest('button, input, textarea, select, [role="button"], [data-no-row-drag="true"]')
+    ) {
+      e.preventDefault()
+      return
+    }
+
     setDraggedId(id)
     dragNodeRef.current = node
     e.dataTransfer.effectAllowed = "move"
@@ -1832,7 +1839,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 className={`prompt-item ${isHighlighted ? "selected" : ""} ${isLocated ? "located" : ""} ${draggedId === p.id ? "dragging" : ""}`}
                 onClick={() => handlePromptClick(p)}
                 onDoubleClick={() => handlePromptDoubleClick(p)}
-                draggable={false}
+                draggable
                 onDragStart={(e) => handleDragStart(e, p.id, e.currentTarget as HTMLDivElement)}
                 onDragOver={(e) => handleDragOver(e, p.id)}
                 onDragEnd={handleDragEnd}
@@ -1911,22 +1918,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       onClick={(e) => handleTogglePin(p.id, e)}
                       className={`prompt-action-btn${p.pinned ? " active" : ""}`}>
                       <PinIcon size={16} filled={p.pinned} />
-                    </button>
-                  </Tooltip>
-                  <Tooltip content="拖动排序">
-                    <button
-                      onMouseDown={(e) => {
-                        e.stopPropagation()
-                        const item = e.currentTarget.closest(".prompt-item") as HTMLDivElement
-                        if (item) item.draggable = true
-                      }}
-                      onMouseUp={(e) => {
-                        const item = e.currentTarget.closest(".prompt-item") as HTMLDivElement
-                        if (item) item.draggable = false
-                      }}
-                      className="prompt-action-btn"
-                      style={{ cursor: "grab" }}>
-                      <DragIcon size={16} />
                     </button>
                   </Tooltip>
                   {/* ⭐ 预览按钮 */}
