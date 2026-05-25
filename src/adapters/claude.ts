@@ -1007,7 +1007,7 @@ export class ClaudeAdapter extends SiteAdapter {
     return {
       targetModelKeyword: keyword,
       selectorButtonSelectors: ['button[data-testid="model-selector-dropdown"]'],
-      menuItemSelector: 'div[role="menuitem"]',
+      menuItemSelector: '[role="menuitem"], [role="menuitemradio"]',
       checkInterval: 1000,
       maxAttempts: 20,
       // 语言无关：通过 aria-haspopup 检测子菜单触发器
@@ -1021,19 +1021,55 @@ export class ClaudeAdapter extends SiteAdapter {
    * Claude 使用 Radix UI，可能需要模拟 PointerEvent
    */
   protected simulateClick(element: HTMLElement): void {
-    // 尝试标准点击，如果不行再切 PointerEvent (参考 ChatGPT 实现)
-    // 目前先用标准点击，若有问题需参考 ChatGPTAdapter 的 simulateClick
-    const eventTypes = ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]
-    for (const type of eventTypes) {
+    const rect = element.getBoundingClientRect()
+    const clientX = rect.left + Math.max(1, Math.min(rect.width / 2, Math.max(rect.width - 1, 1)))
+    const clientY = rect.top + Math.max(1, Math.min(rect.height / 2, Math.max(rect.height - 1, 1)))
+    const commonInit = {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      view: window,
+      button: 0,
+      buttons: 1,
+      clientX,
+      clientY,
+    }
+    const dispatchPointer = (type: string) => {
+      if (typeof PointerEvent !== "function") return
       element.dispatchEvent(
         new PointerEvent(type, {
-          bubbles: true,
-          cancelable: true,
-          view: window,
+          ...commonInit,
           pointerId: 1,
+          pointerType: "mouse",
+          isPrimary: true,
         }),
       )
     }
+    const dispatchHover = () => {
+      dispatchPointer("pointerenter")
+      dispatchPointer("pointerover")
+      dispatchPointer("pointermove")
+      element.dispatchEvent(new MouseEvent("mouseenter", commonInit))
+      element.dispatchEvent(new MouseEvent("mouseover", commonInit))
+      element.dispatchEvent(new MouseEvent("mousemove", commonInit))
+    }
+
+    dispatchHover()
+
+    const role = element.getAttribute("role")
+    const text = (element.textContent || "").toLowerCase()
+    const isSubMenuTrigger =
+      role === "menuitem" &&
+      (element.matches('[aria-haspopup="menu"]') ||
+        text.includes("more models") ||
+        text.includes("更多模型"))
+    if (isSubMenuTrigger) return
+
+    dispatchPointer("pointerdown")
+    element.dispatchEvent(new MouseEvent("mousedown", commonInit))
+    dispatchPointer("pointerup")
+    element.dispatchEvent(new MouseEvent("mouseup", commonInit))
+    element.dispatchEvent(new MouseEvent("click", commonInit))
   }
 
   // ==================== 杂项 ====================
