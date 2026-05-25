@@ -1,6 +1,6 @@
 /**
- * SVG 图标组件 - 大纲 (文档列表)
- * 风格：Outline (stroke-based)
+ * SVG 图标组件 - 大纲（层级结构）
+ * 风格：Fill-based，1024×1024 viewBox
  */
 import React from "react"
 
@@ -8,29 +8,47 @@ interface IconProps {
   size?: number
   color?: string
   className?: string
+  style?: React.CSSProperties
 }
 
 export const OutlineIcon: React.FC<IconProps> = ({
   size = 18,
   color = "currentColor",
   className = "",
+  style,
 }) => (
   <svg
-    viewBox="0 0 24 24"
+    viewBox="0 0 1024 1024"
     width={size}
     height={size}
-    fill="none"
-    stroke={color}
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
+    xmlns="http://www.w3.org/2000/svg"
     className={className}
-    style={{ display: "block" }}>
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-    <polyline points="14 2 14 8 20 8" />
-    <line x1="16" y1="13" x2="8" y2="13" />
-    <line x1="16" y1="17" x2="8" y2="17" />
-    <line x1="10" y1="9" x2="8" y2="9" />
+    style={{ display: "block", flexShrink: 0, ...style }}>
+    <path
+      d="M192 192m32 0l0 0q32 0 32 32l0 640q0 32-32 32l0 0q-32 0-32-32l0-640q0-32 32-32Z"
+      fill={color}
+    />
+    <path
+      d="M192 832m32 0l256 0q32 0 32 32l0 0q0 32-32 32l-256 0q-32 0-32-32l0 0q0-32 32-32Z"
+      fill={color}
+    />
+    <path
+      d="M192 512m32 0l256 0q32 0 32 32l0 0q0 32-32 32l-256 0q-32 0-32-32l0 0q0-32 32-32Z"
+      fill={color}
+    />
+    <path
+      d="M448 192m64 0l320 0q64 0 64 64l0 0q0 64-64 64l-320 0q-64 0-64-64l0 0q0-64 64-64Z"
+      fill={color}
+    />
+    <path
+      d="M640 480m64 0l128 0q64 0 64 64l0 0q0 64-64 64l-128 0q-64 0-64-64l0 0q0-64 64-64Z"
+      fill={color}
+    />
+    <path
+      d="M640 768m64 0l128 0q64 0 64 64l0 0q0 64-64 64l-128 0q-64 0-64-64l0 0q0-64 64-64Z"
+      fill={color}
+    />
+    <path d="M224 224m-96 0a96 96 0 1 0 192 0 96 96 0 1 0-192 0Z" fill={color} />
   </svg>
 )
 

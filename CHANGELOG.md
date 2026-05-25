@@ -13,6 +13,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Prompt queue and library integration** — Prompt Library actions can now add prompts to the queue, and the queue batch dialog can add prompts directly from the library. (#547, @mrpops2ko)
 
+### 🔧 Improvements
+
+- **Clearer outline tab icon** — Updated the Outline tab and tab-order settings icon to better communicate the outline hierarchy while keeping the previous document-style icon for empty states.
+
 ---
 
 ## [1.0.53] - 2026-05-25
