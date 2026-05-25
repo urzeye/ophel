@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
+import type { SiteAdapter } from "~adapters/base"
 import {
+  AddToQueueIcon,
   ClearIcon,
   CopyIcon,
   DeleteIcon,
@@ -10,10 +12,13 @@ import {
   ExportIcon,
   EyeIcon,
   ImportIcon,
+  MoreHorizontalIcon,
   PinIcon,
+  SplitLinesToQueueIcon,
   SettingsIcon,
   TimeIcon,
 } from "~components/icons"
+import { ContextMenu, MenuButton } from "~components/ConversationMenus"
 import { Button, ConfirmDialog, InputDialog, Tooltip } from "~components/ui"
 import {
   extractVariables,
@@ -22,6 +27,7 @@ import {
   VariableInputDialog,
 } from "~components/VariableInputDialog"
 import { VIRTUAL_CATEGORY } from "~constants"
+import { enqueuePrompt, sendOrQueuePrompt } from "~core/prompt-actions"
 import type { PromptManager } from "~core/prompt-manager"
 import { useSettingsStore } from "~stores/settings-store"
 import { APP_NAME } from "~utils/config"
@@ -34,6 +40,7 @@ import { createSafeHTML } from "~utils/trusted-types"
 
 interface PromptsTabProps {
   manager: PromptManager
+  adapter?: SiteAdapter | null
   onPromptSelect?: (prompt: Prompt | null) => void
   selectedPromptId?: string | null
 }
@@ -74,6 +81,7 @@ const getCategoryColorIndex = (categoryName: string): number => {
 
 export const PromptsTab: React.FC<PromptsTabProps> = ({
   manager,
+  adapter,
   onPromptSelect,
   selectedPromptId,
 }) => {
@@ -123,7 +131,16 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     prompt: Prompt | null
     variables: ParsedVariable[]
     submitAfterInsert: boolean
-  }>({ show: false, prompt: null, variables: [], submitAfterInsert: false })
+    enqueueAfterResolve: boolean
+    enqueueSplitByLine: boolean
+  }>({
+    show: false,
+    prompt: null,
+    variables: [],
+    submitAfterInsert: false,
+    enqueueAfterResolve: false,
+    enqueueSplitByLine: false,
+  })
 
   // 导入确认弹窗状态
   const [importDialogState, setImportDialogState] = useState<{
@@ -144,6 +161,10 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const locateHighlightTimerRef = useRef<number | null>(null)
   const promptListRef = useRef<HTMLDivElement | null>(null)
   const [locatedPromptId, setLocatedPromptId] = useState<string | null>(null)
+  const [promptActionMenu, setPromptActionMenu] = useState<{
+    prompt: Prompt
+    anchorEl: HTMLElement
+  } | null>(null)
 
   // 预览容器 refs（用于初始化 SVG 图标）
   const editPreviewRef = useRef<HTMLDivElement>(null)
@@ -184,6 +205,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         prompt: targetPrompt,
         variables,
         submitAfterInsert,
+        enqueueAfterResolve: false,
+        enqueueSplitByLine: false,
       })
       return true
     },
@@ -366,49 +389,127 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         prompt,
         variables,
         submitAfterInsert,
+        enqueueAfterResolve: false,
+        enqueueSplitByLine: false,
       })
     } else {
-      // No variables; insert (and optionally submit) directly
-      await doInsert(prompt, prompt.content, submitAfterInsert)
+      // No variables; insert or send directly.
+      if (submitAfterInsert) {
+        await doSend(prompt, prompt.content)
+        return
+      }
+
+      await doInsert(prompt, prompt.content)
     }
   }
 
-  const doInsert = async (prompt: Prompt, content: string, submitAfterInsert = false) => {
+  const doInsert = async (prompt: Prompt, content: string) => {
     const success = await manager.insertPrompt(content)
     if (success) {
-      let submitSuccess = true
-      if (submitAfterInsert) {
-        submitSuccess = await manager.submitPrompt(submitShortcut)
-        if (!submitSuccess) {
-          showToast(t("promptSendFailed") || "发送失败，提示词已保留在输入框中")
-        }
-      }
-
       manager.updateLastUsed(prompt.id)
-      if (submitAfterInsert) {
-        onPromptSelect?.(submitSuccess ? null : prompt)
-      } else {
-        onPromptSelect?.(prompt)
-      }
-
-      if (submitAfterInsert) {
-        if (submitSuccess) {
-          showToast(`${t("promptSent") || "已发送"}: ${prompt.title}`)
-        }
-      } else {
-        showToast(`${t("inserted") || "已插入"}: ${prompt.title}`)
-      }
+      onPromptSelect?.(prompt)
+      showToast(`${t("inserted") || "已插入"}: ${prompt.title}`)
     } else {
       showToast(t("insertFailed") || "未找到输入框，请点击输入框后重试")
     }
   }
 
+  const doSend = async (prompt: Prompt, content: string) => {
+    const result = await sendOrQueuePrompt({
+      adapter,
+      manager,
+      content,
+      submitShortcut,
+      context: {
+        source: "prompt-library",
+        prompt,
+      },
+    })
+
+    if (result.status === "insert-failed") {
+      showToast(t("insertFailed") || "未找到输入框，请点击输入框后重试")
+      return
+    }
+
+    manager.updateLastUsed(prompt.id)
+
+    if (result.status === "send-failed") {
+      showToast(t("promptSendFailed") || "发送失败，提示词已保留在输入框中")
+      onPromptSelect?.(prompt)
+      return
+    }
+
+    onPromptSelect?.(null)
+
+    if (result.status === "queued") {
+      showToast(
+        t("promptQueued", { count: String(result.count) }) || `已加入队列 ${result.count} 条`,
+        2500,
+      )
+      return
+    }
+
+    showToast(`${t("promptSent") || "已发送"}: ${prompt.title}`)
+  }
+
+  const enqueueResolvedPrompt = (prompt: Prompt, content: string, splitByLine = false) => {
+    const result = enqueuePrompt({
+      content,
+      splitByLine,
+      context: {
+        source: "prompt-library",
+        prompt,
+      },
+    })
+
+    if (result.status === "disabled") {
+      showToast(t("promptQueueEnableHint") || "Enable Prompt Queue to add prompts to queue", 3000)
+      return
+    }
+
+    if (result.status === "empty") {
+      showToast(t("promptEnqueueEmpty") || "Nothing to queue", 2500)
+      return
+    }
+
+    manager.updateLastUsed(prompt.id)
+    showToast(
+      t("promptQueued", { count: String(result.count) }) || `已加入队列 ${result.count} 条`,
+      2500,
+    )
+  }
+
+  const doEnqueuePrompt = (prompt: Prompt, splitByLine = false) => {
+    const variables = extractVariables(prompt.content)
+    if (variables.length > 0) {
+      setVariableDialogState({
+        show: true,
+        prompt,
+        variables,
+        submitAfterInsert: false,
+        enqueueAfterResolve: true,
+        enqueueSplitByLine: splitByLine,
+      })
+      return
+    }
+
+    enqueueResolvedPrompt(prompt, prompt.content, splitByLine)
+  }
+
   const handleVariableConfirm = async (values: Record<string, string>) => {
-    const { prompt, submitAfterInsert } = variableDialogState
+    const { prompt, submitAfterInsert, enqueueAfterResolve, enqueueSplitByLine } =
+      variableDialogState
     if (!prompt) return
 
     const replacedContent = replaceVariables(prompt.content, values)
-    setVariableDialogState({ show: false, prompt: null, variables: [], submitAfterInsert: false })
+    setVariableDialogState({
+      show: false,
+      prompt: null,
+      variables: [],
+      submitAfterInsert: false,
+      enqueueAfterResolve: false,
+      enqueueSplitByLine: false,
+    })
 
     await new Promise<void>((resolve) => {
       window.requestAnimationFrame(() => {
@@ -416,7 +517,17 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       })
     })
 
-    await doInsert(prompt, replacedContent, submitAfterInsert)
+    if (submitAfterInsert) {
+      await doSend(prompt, replacedContent)
+      return
+    }
+
+    if (enqueueAfterResolve) {
+      enqueueResolvedPrompt(prompt, replacedContent, enqueueSplitByLine)
+      return
+    }
+
+    await doInsert(prompt, replacedContent)
   }
 
   const handlePromptClick = (prompt: Prompt) => {
@@ -634,7 +745,13 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       prompt: null,
       variables: [],
       submitAfterInsert: false,
+      enqueueAfterResolve: false,
+      enqueueSplitByLine: false,
     })
+  }, [])
+
+  const closePromptActionMenu = useCallback(() => {
+    setPromptActionMenu(null)
   }, [])
 
   // 删除提示词
@@ -1829,6 +1946,17 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       <CopyIcon size={16} />
                     </button>
                   </Tooltip>
+                  <Tooltip content={t("more") || "More"}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        e.preventDefault()
+                        setPromptActionMenu({ prompt: p, anchorEl: e.currentTarget })
+                      }}
+                      className="prompt-action-btn">
+                      <MoreHorizontalIcon size={16} />
+                    </button>
+                  </Tooltip>
                   <Tooltip content={t("edit")}>
                     <button
                       onClick={(e) => {
@@ -1928,6 +2056,30 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           onConfirm={handleVariableConfirm}
           onCancel={closeVariableDialog}
         />
+      )}
+      {promptActionMenu && (
+        <ContextMenu anchorEl={promptActionMenu.anchorEl} onClose={closePromptActionMenu}>
+          <MenuButton
+            onClick={() => {
+              doEnqueuePrompt(promptActionMenu.prompt)
+              closePromptActionMenu()
+            }}>
+            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <AddToQueueIcon size={14} />
+              <span>{t("promptAddToQueue") || "Add to queue"}</span>
+            </span>
+          </MenuButton>
+          <MenuButton
+            onClick={() => {
+              doEnqueuePrompt(promptActionMenu.prompt, true)
+              closePromptActionMenu()
+            }}>
+            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <SplitLinesToQueueIcon size={14} />
+              <span>{t("promptSplitLinesToQueue") || "Split lines and add to queue"}</span>
+            </span>
+          </MenuButton>
+        </ContextMenu>
       )}
       <style>{`
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

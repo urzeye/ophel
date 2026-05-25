@@ -962,6 +962,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           {activeTab === TAB_IDS.PROMPTS && (
             <PromptsTab
               manager={promptManager}
+              adapter={adapter}
               selectedPromptId={selectedPromptId}
               onPromptSelect={onPromptSelect}
             />

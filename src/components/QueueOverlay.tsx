@@ -11,13 +11,16 @@ import { createPortal } from "react-dom"
 
 import type { SiteAdapter } from "~adapters/base"
 import { CleanupIcon, ImportIcon, PromptQueueIcon } from "~components/icons"
-import { DialogOverlay } from "~components/ui"
+import { DialogOverlay, Tooltip } from "~components/ui"
+import { extractVariables } from "~components/VariableInputDialog"
 import { formatShortcut, normalizeShortcutBinding } from "~constants/shortcuts"
 import type { QueueDispatcher } from "~core/queue-dispatcher"
+import { usePromptsStore } from "~stores/prompts-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { useQueueItems, useQueueStore } from "~stores/queue-store"
 import { attachEditableKeyboardFocusGuard } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
+import { parseQueueBatchInput, splitQueueLines, type QueueBatchSplitMode } from "~utils/queue-batch"
 import { showToast } from "~utils/toast"
 
 import "~styles/queue-overlay.css"
@@ -27,45 +30,9 @@ interface QueueOverlayProps {
   dispatcher: QueueDispatcher
 }
 
-type QueueBatchSplitMode = "line" | "delimiter"
-
 const BATCH_PREVIEW_LIMIT = 5
-
-const normalizeBatchInput = (input: string) => input.replace(/\r\n?/g, "\n")
-
-const decodeQueueDelimiter = (delimiter: string) =>
-  delimiter.replace(/\\(\\|n|r|t)/g, (_match, token: string) => {
-    switch (token) {
-      case "n":
-        return "\n"
-      case "r":
-        return "\r"
-      case "t":
-        return "\t"
-      case "\\":
-        return "\\"
-      default:
-        return token
-    }
-  })
-
-const parseQueueBatchInput = (
-  input: string,
-  splitMode: QueueBatchSplitMode,
-  delimiter: string,
-): string[] => {
-  const normalizedInput = normalizeBatchInput(input)
-  const normalizedDelimiter = normalizeBatchInput(decodeQueueDelimiter(delimiter))
-
-  const segments =
-    splitMode === "line"
-      ? normalizedInput.split("\n")
-      : normalizedDelimiter
-        ? normalizedInput.split(normalizedDelimiter)
-        : []
-
-  return segments.map((item) => item.trim()).filter(Boolean)
-}
+type QueueBatchSource = "text" | "library"
+type QueueLibraryMode = "single" | "line"
 
 export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher }) => {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -73,8 +40,12 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
   const [inputValue, setInputValue] = useState("")
   const [isBatchDialogOpen, setIsBatchDialogOpen] = useState(false)
   const [batchInputValue, setBatchInputValue] = useState("")
+  const [batchSource, setBatchSource] = useState<QueueBatchSource>("library")
   const [batchSplitMode, setBatchSplitMode] = useState<QueueBatchSplitMode>("line")
   const [batchDelimiter, setBatchDelimiter] = useState("")
+  const [librarySearchQuery, setLibrarySearchQuery] = useState("")
+  const [libraryMode, setLibraryMode] = useState<QueueLibraryMode>("single")
+  const [selectedPromptIds, setSelectedPromptIds] = useState<string[]>([])
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState("")
   const [position, setPosition] = useState<{
@@ -85,6 +56,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
   const items = useQueueItems()
   const store = useQueueStore()
+  const prompts = usePromptsStore((state) => state.prompts)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const batchTextareaRef = useRef<HTMLTextAreaElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -110,10 +82,45 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
     return isMac ? "⌥J" : "Alt+J"
   }, [queueBinding])
 
-  const batchPreviewItems = React.useMemo(
+  const filteredLibraryPrompts = React.useMemo(() => {
+    const query = librarySearchQuery.trim().toLowerCase()
+    const source = query
+      ? prompts.filter(
+          (prompt) =>
+            prompt.title.toLowerCase().includes(query) ||
+            prompt.content.toLowerCase().includes(query) ||
+            prompt.category?.toLowerCase().includes(query),
+        )
+      : prompts
+
+    return [...source].sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1
+      if (!a.pinned && b.pinned) return 1
+      return (b.lastUsedAt || 0) - (a.lastUsedAt || 0)
+    })
+  }, [librarySearchQuery, prompts])
+
+  const selectedLibraryPrompts = React.useMemo(() => {
+    const selectedIds = new Set(selectedPromptIds)
+    return prompts.filter(
+      (prompt) => selectedIds.has(prompt.id) && extractVariables(prompt.content).length === 0,
+    )
+  }, [prompts, selectedPromptIds])
+
+  const libraryPreviewItems = React.useMemo(() => {
+    return selectedLibraryPrompts.flatMap((prompt) =>
+      libraryMode === "line"
+        ? splitQueueLines(prompt.content)
+        : [prompt.content.trim()].filter(Boolean),
+    )
+  }, [libraryMode, selectedLibraryPrompts])
+
+  const textPreviewItems = React.useMemo(
     () => parseQueueBatchInput(batchInputValue, batchSplitMode, batchDelimiter),
     [batchDelimiter, batchInputValue, batchSplitMode],
   )
+
+  const batchPreviewItems = batchSource === "library" ? libraryPreviewItems : textPreviewItems
 
   // ==================== 位置计算 ====================
 
@@ -231,10 +238,10 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
   }, [isExpanded])
 
   useEffect(() => {
-    if (!isBatchDialogOpen) return
+    if (!isBatchDialogOpen || batchSource !== "text") return
     const timeoutId = window.setTimeout(() => batchTextareaRef.current?.focus(), 60)
     return () => window.clearTimeout(timeoutId)
-  }, [isBatchDialogOpen])
+  }, [batchSource, isBatchDialogOpen])
 
   useEffect(() => {
     const panel = panelRef.current
@@ -334,13 +341,23 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
   const resetBatchImportState = useCallback(() => {
     setBatchInputValue("")
+    setBatchSource("library")
     setBatchSplitMode("line")
     setBatchDelimiter("")
+    setLibrarySearchQuery("")
+    setLibraryMode("single")
+    setSelectedPromptIds([])
     setIsBatchDialogOpen(false)
   }, [])
 
+  const toggleLibraryPrompt = useCallback((promptId: string) => {
+    setSelectedPromptIds((prev) =>
+      prev.includes(promptId) ? prev.filter((id) => id !== promptId) : [...prev, promptId],
+    )
+  }, [])
+
   const handleBatchImportConfirm = useCallback(async () => {
-    if (batchSplitMode === "delimiter" && !batchDelimiter.trim()) {
+    if (batchSource === "text" && batchSplitMode === "delimiter" && !batchDelimiter.trim()) {
       showToast(t("queueBatchDelimiterRequired") || "请输入分隔符", 2500)
       return
     }
@@ -374,6 +391,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
     adapter,
     batchDelimiter,
     batchPreviewItems,
+    batchSource,
     batchSplitMode,
     dispatcher,
     resetBatchImportState,
@@ -439,19 +457,18 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
   // 折叠态：胶囊
   if (!isExpanded) {
     return createPortal(
-      <div
-        className="gh-queue-capsule"
-        style={capsuleStyle}
-        onClick={() => setIsExpanded(true)}
-        title={shortcutText}>
-        <span className="gh-queue-capsule-icon">
-          <PromptQueueIcon size={15} color="currentColor" />
-        </span>
-        <span>
-          {activeCount > 0 ? t("queueInQueue", { count: String(activeCount) }) : t("queueQuickAsk")}
-        </span>
-        {activeCount > 0 && <span className="gh-queue-capsule-badge">{activeCount}</span>}
-      </div>,
+      <Tooltip content={shortcutText || t("queueQuickAsk") || "Prompt Queue"}>
+        <div className="gh-queue-capsule" style={capsuleStyle} onClick={() => setIsExpanded(true)}>
+          <span className="gh-queue-capsule-icon">
+            <PromptQueueIcon size={18} color="currentColor" />
+          </span>
+          <span>
+            {activeCount > 0
+              ? t("queueInQueue", { count: String(activeCount) })
+              : t("queueQuickAsk")}
+          </span>
+        </div>
+      </Tooltip>,
       targetContainer,
     )
   }
@@ -471,37 +488,34 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
               {pendingCount > 0 && <span className="gh-queue-capsule-badge">{pendingCount}</span>}
             </div>
             <div className="gh-queue-header-actions">
-              <button
-                className="gh-queue-header-btn"
-                onClick={() => setIsBatchDialogOpen(true)}
-                title={t("queueBatchImport") || "批量导入"}>
-                <ImportIcon size={16} color="currentColor" />
-              </button>
-              {displayCount > 0 && (
-                <button
-                  className="gh-queue-header-btn"
-                  onClick={handleClearAll}
-                  title={t("queueClearAll")}>
-                  <CleanupIcon size={16} color="currentColor" />
+              <Tooltip content={t("queueBatchImport") || "Batch add"}>
+                <button className="gh-queue-header-btn" onClick={() => setIsBatchDialogOpen(true)}>
+                  <ImportIcon size={16} color="currentColor" />
                 </button>
+              </Tooltip>
+              {displayCount > 0 && (
+                <Tooltip content={t("queueClearAll")}>
+                  <button className="gh-queue-header-btn" onClick={handleClearAll}>
+                    <CleanupIcon size={16} color="currentColor" />
+                  </button>
+                </Tooltip>
               )}
-              <button
-                className="gh-queue-header-btn"
-                onClick={() => setIsExpanded(false)}
-                title="Esc">
-                <svg
-                  viewBox="0 0 24 24"
-                  width="16"
-                  height="16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
+              <Tooltip content={t("collapse") || "Collapse"}>
+                <button className="gh-queue-header-btn" onClick={() => setIsExpanded(false)}>
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="16"
+                    height="16"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </Tooltip>
             </div>
           </div>
 
@@ -701,52 +715,155 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
             {t("queueBatchImportDesc") || "粘贴多条提示词后，按所选规则拆分并加入队列。"}
           </div>
 
-          <div className="gh-queue-batch-section">
-            <div className="gh-queue-batch-label">
-              {t("queueBatchSplitModeLabel") || "拆分方式"}
-            </div>
-            <div className="gh-queue-batch-mode-group">
-              <button
-                className="gh-queue-batch-mode-btn"
-                data-active={batchSplitMode === "line"}
-                onClick={() => setBatchSplitMode("line")}>
-                {t("queueBatchSplitModeLine") || "按行拆分"}
-              </button>
-              <button
-                className="gh-queue-batch-mode-btn"
-                data-active={batchSplitMode === "delimiter"}
-                onClick={() => setBatchSplitMode("delimiter")}>
-                {t("queueBatchSplitModeDelimiter") || "自定义分隔符"}
-              </button>
-            </div>
+          <div className="gh-queue-batch-tabs">
+            <button
+              className="gh-queue-batch-tab"
+              data-active={batchSource === "library"}
+              onClick={() => setBatchSource("library")}>
+              {t("queueBatchLibraryTab") || "Prompt Library"}
+            </button>
+            <button
+              className="gh-queue-batch-tab"
+              data-active={batchSource === "text"}
+              onClick={() => setBatchSource("text")}>
+              {t("queueBatchTextTab") || "Text"}
+            </button>
           </div>
 
-          {batchSplitMode === "delimiter" && (
-            <div className="gh-queue-batch-section">
-              <div className="gh-queue-batch-label">
-                {t("queueBatchDelimiterLabel") || "分隔符"}
+          {batchSource === "text" && (
+            <>
+              <div className="gh-queue-batch-section">
+                <div className="gh-queue-batch-label">
+                  {t("queueBatchSplitModeLabel") || "拆分方式"}
+                </div>
+                <div className="gh-queue-batch-mode-group">
+                  <button
+                    className="gh-queue-batch-mode-btn"
+                    data-active={batchSplitMode === "line"}
+                    onClick={() => setBatchSplitMode("line")}>
+                    {t("queueBatchSplitModeLine") || "按行拆分"}
+                  </button>
+                  <button
+                    className="gh-queue-batch-mode-btn"
+                    data-active={batchSplitMode === "delimiter"}
+                    onClick={() => setBatchSplitMode("delimiter")}>
+                    {t("queueBatchSplitModeDelimiter") || "自定义分隔符"}
+                  </button>
+                </div>
               </div>
-              <input
-                className="gh-dialog-input gh-queue-batch-delimiter-input"
-                value={batchDelimiter}
-                onChange={(e) => setBatchDelimiter(e.target.value)}
-                placeholder={t("queueBatchDelimiterPlaceholder") || "例如：\\n、---"}
-              />
-            </div>
+
+              {batchSplitMode === "delimiter" && (
+                <div className="gh-queue-batch-section">
+                  <div className="gh-queue-batch-label">
+                    {t("queueBatchDelimiterLabel") || "分隔符"}
+                  </div>
+                  <input
+                    className="gh-dialog-input gh-queue-batch-delimiter-input"
+                    value={batchDelimiter}
+                    onChange={(e) => setBatchDelimiter(e.target.value)}
+                    placeholder={t("queueBatchDelimiterPlaceholder") || "例如：\\n、---"}
+                  />
+                </div>
+              )}
+
+              <div className="gh-queue-batch-section">
+                <div className="gh-queue-batch-label">
+                  {t("queueBatchInputLabel") || "批量内容"}
+                </div>
+                <textarea
+                  ref={batchTextareaRef}
+                  className="gh-queue-batch-textarea"
+                  value={batchInputValue}
+                  onChange={(e) => setBatchInputValue(e.target.value)}
+                  placeholder={
+                    t("queueBatchInputPlaceholder") || "粘贴多条提示词，每条按规则拆分后入队"
+                  }
+                />
+              </div>
+            </>
           )}
 
-          <div className="gh-queue-batch-section">
-            <div className="gh-queue-batch-label">{t("queueBatchInputLabel") || "批量内容"}</div>
-            <textarea
-              ref={batchTextareaRef}
-              className="gh-queue-batch-textarea"
-              value={batchInputValue}
-              onChange={(e) => setBatchInputValue(e.target.value)}
-              placeholder={
-                t("queueBatchInputPlaceholder") || "粘贴多条提示词，每条按规则拆分后入队"
-              }
-            />
-          </div>
+          {batchSource === "library" && (
+            <>
+              <div className="gh-queue-batch-section">
+                <div className="gh-queue-batch-label">
+                  {t("queueBatchLibraryModeLabel") || "Add mode"}
+                </div>
+                <div className="gh-queue-batch-mode-group">
+                  <button
+                    className="gh-queue-batch-mode-btn"
+                    data-active={libraryMode === "single"}
+                    onClick={() => setLibraryMode("single")}>
+                    {t("queueBatchLibraryModeSingle") || "Each prompt as one item"}
+                  </button>
+                  <button
+                    className="gh-queue-batch-mode-btn"
+                    data-active={libraryMode === "line"}
+                    onClick={() => setLibraryMode("line")}>
+                    {t("queueBatchSplitModeLine") || "Split by Line"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="gh-queue-batch-section">
+                <div className="gh-queue-batch-label">
+                  {t("queueBatchLibrarySearchLabel") || "Prompt Library"}
+                </div>
+                <input
+                  className="gh-dialog-input gh-queue-batch-library-search"
+                  value={librarySearchQuery}
+                  onChange={(e) => setLibrarySearchQuery(e.target.value)}
+                  placeholder={t("queueBatchLibrarySearchPlaceholder") || "Search prompts"}
+                />
+                <div className="gh-queue-batch-library-list">
+                  {filteredLibraryPrompts.length === 0 ? (
+                    <div className="gh-queue-batch-library-empty">
+                      {t("queueBatchLibraryEmpty") || "No prompts found"}
+                    </div>
+                  ) : (
+                    filteredLibraryPrompts.slice(0, 80).map((prompt) => {
+                      const hasVariables = extractVariables(prompt.content).length > 0
+                      return (
+                        <label
+                          key={prompt.id}
+                          className="gh-queue-batch-library-item"
+                          data-disabled={hasVariables ? "true" : "false"}
+                          title={
+                            hasVariables
+                              ? t("queueBatchLibraryVariablePrompt") ||
+                                "Fill variables from the Prompt tab before adding to queue"
+                              : undefined
+                          }>
+                          <input
+                            type="checkbox"
+                            disabled={hasVariables}
+                            checked={!hasVariables && selectedPromptIds.includes(prompt.id)}
+                            onChange={() => {
+                              if (!hasVariables) {
+                                toggleLibraryPrompt(prompt.id)
+                              }
+                            }}
+                          />
+                          <span className="gh-queue-batch-library-main">
+                            <span className="gh-queue-batch-library-title">{prompt.title}</span>
+                            <span className="gh-queue-batch-library-content">
+                              {hasVariables
+                                ? t("queueBatchLibraryVariablePrompt") ||
+                                  "Fill variables from the Prompt tab before adding to queue"
+                                : prompt.content}
+                            </span>
+                          </span>
+                          <span className="gh-queue-batch-library-category">
+                            {prompt.category || t("uncategorized") || "Uncategorized"}
+                          </span>
+                        </label>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="gh-queue-batch-preview">
             <div className="gh-queue-batch-preview-header">
@@ -796,7 +913,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
               onClick={() => void handleBatchImportConfirm()}
               disabled={
                 batchPreviewItems.length === 0 ||
-                (batchSplitMode === "delimiter" && !batchDelimiter.trim())
+                (batchSource === "text" && batchSplitMode === "delimiter" && !batchDelimiter.trim())
               }>
               {t("queueBatchImportAction") || "导入队列"}
             </button>

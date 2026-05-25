@@ -429,6 +429,34 @@
   margin-bottom: 16px;
 }
 
+.gh-queue-batch-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 12px 0 16px;
+  padding: 3px;
+  border: 1px solid var(--gh-border-light, #e5e7eb);
+  border-radius: 8px;
+  background: var(--gh-bg-secondary, #f9fafb);
+}
+
+.gh-queue-batch-tab {
+  flex: 1;
+  height: 30px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gh-text-secondary, #6b7280);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.gh-queue-batch-tab[data-active="true"] {
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text, #1f2937);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
 .gh-queue-batch-label {
   margin-bottom: 8px;
   font-size: 13px;
@@ -466,6 +494,88 @@
 
 .gh-queue-batch-delimiter-input {
   margin-bottom: 0;
+}
+
+.gh-queue-batch-library-search {
+  margin-bottom: 10px;
+}
+
+.gh-queue-batch-library-list {
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--gh-border-light, #e5e7eb);
+  border-radius: 10px;
+  background: var(--gh-bg, #ffffff);
+}
+
+.gh-queue-batch-library-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--gh-border-light, #e5e7eb);
+  cursor: pointer;
+}
+
+.gh-queue-batch-library-item:last-child {
+  border-bottom: none;
+}
+
+.gh-queue-batch-library-item:hover {
+  background: var(--gh-hover, #f3f4f6);
+}
+
+.gh-queue-batch-library-item[data-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.gh-queue-batch-library-item[data-disabled="true"]:hover {
+  background: var(--gh-bg, #ffffff);
+}
+
+.gh-queue-batch-library-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.gh-queue-batch-library-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gh-text, #1f2937);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gh-queue-batch-library-content {
+  font-size: 12px;
+  color: var(--gh-text-secondary, #6b7280);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gh-queue-batch-library-category {
+  max-width: 90px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--gh-hover, #f3f4f6);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gh-queue-batch-library-empty {
+  padding: 24px 12px;
+  color: var(--gh-text-tertiary, #9ca3af);
+  font-size: 13px;
+  text-align: center;
 }
 
 .gh-queue-batch-textarea {
