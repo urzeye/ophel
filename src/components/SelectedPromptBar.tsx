@@ -12,6 +12,7 @@ interface SelectedPromptBarProps {
 }
 
 const DEFAULT_BOTTOM_POSITION = 120
+const DEFAULT_LEFT_POSITION = "50%"
 const INPUT_CONTAINER_GAP_PX = 6
 const VIEWPORT_SAFE_MARGIN_PX = 50
 
@@ -21,6 +22,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
   adapter,
 }) => {
   const [bottomPosition, setBottomPosition] = useState(DEFAULT_BOTTOM_POSITION)
+  const [leftPosition, setLeftPosition] = useState(DEFAULT_LEFT_POSITION)
   const resizeObserverRef = useRef<ResizeObserver | null>(null)
   const observedElementRef = useRef<Element | null>(null)
 
@@ -46,6 +48,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
     // 如果没有输入框引用或输入框不在 DOM 中，使用默认位置
     if (!textarea || !textarea.isConnected) {
       setBottomPosition(DEFAULT_BOTTOM_POSITION)
+      setLeftPosition(DEFAULT_LEFT_POSITION)
       return
     }
 
@@ -62,6 +65,10 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
       Math.min(desiredBottom, viewportHeight - VIEWPORT_SAFE_MARGIN_PX),
     )
     setBottomPosition(clampedBottom)
+
+    // 横向跟随输入容器中心，避免在有侧边栏时按整个页面居中。
+    const inputCenterX = containerRect.left + containerRect.width / 2
+    setLeftPosition(`${inputCenterX}px`)
 
     // 如果容器元素变了，需要重新建立 ResizeObserver 监听
     if (inputContainer !== observedElementRef.current && resizeObserverRef.current) {
@@ -119,7 +126,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
       style={{
         position: "fixed",
         bottom: `${bottomPosition}px`,
-        left: "50%",
+        left: leftPosition,
         transform: "translateX(-50%)",
         zIndex: 999998,
       }}>
