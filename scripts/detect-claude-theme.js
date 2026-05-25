@@ -13,7 +13,7 @@
  *   6. html style 属性（--theme-x, --theme-y）变化
  */
 
-;(function detectClaudeTheme() {
+;(function () {
   "use strict"
 
   var LS_KEY = "LSS-userThemeMode"
@@ -332,8 +332,8 @@
   console.log("  detectClaudeTheme.testSetTheme('auto')  — 手动测试写入 auto")
   console.log("  detectClaudeTheme.stop()               — 停止监控")
 
-  // ─── 8. 停止方法 ──────────────────────────────────────
-  return {
+  // ─── 8. 暴露 API 到全局 ────────────────────────────────
+  window.detectClaudeTheme = {
     stop: function () {
       bodyClassObserver.disconnect()
       htmlObserver.disconnect()
