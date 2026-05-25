@@ -116,8 +116,13 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   isSharePage(): boolean {
-    // Claude 分享链接示例：https://claude.ai/public/artifacts/xxx
-    return window.location.pathname.startsWith("/public/")
+    // Claude 分享链接支持两种格式：
+    // 旧版：https://claude.ai/public/artifacts/xxx
+    // 新版：https://claude.ai/share/xxx
+    return (
+      window.location.pathname.startsWith("/public/") ||
+      window.location.pathname.startsWith("/share/")
+    )
   }
 
   isUserConversationPage(): boolean {
