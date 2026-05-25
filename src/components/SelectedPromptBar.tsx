@@ -11,6 +11,14 @@ interface SelectedPromptBarProps {
   adapter?: SiteAdapter | null
 }
 
+interface InputLayoutSnapshot {
+  left: number
+  top: number
+  width: number
+  height: number
+  viewportHeight: number
+}
+
 const DEFAULT_BOTTOM_POSITION = 120
 const DEFAULT_LEFT_POSITION = "50%"
 const INPUT_CONTAINER_GAP_PX = 6
@@ -25,6 +33,7 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
   const [leftPosition, setLeftPosition] = useState(DEFAULT_LEFT_POSITION)
   const resizeObserverRef = useRef<ResizeObserver | null>(null)
   const observedElementRef = useRef<Element | null>(null)
+  const lastLayoutSnapshotRef = useRef<InputLayoutSnapshot | null>(null)
 
   // 查找输入框容器（向上遍历找到有圆角边框的容器）
   const findInputContainer = useCallback((textarea: HTMLElement): Element => {
@@ -47,28 +56,30 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
 
     // 如果没有输入框引用或输入框不在 DOM 中，使用默认位置
     if (!textarea || !textarea.isConnected) {
-      setBottomPosition(DEFAULT_BOTTOM_POSITION)
-      setLeftPosition(DEFAULT_LEFT_POSITION)
+      setBottomPosition((current) =>
+        current === DEFAULT_BOTTOM_POSITION ? current : DEFAULT_BOTTOM_POSITION,
+      )
+      setLeftPosition((current) =>
+        current === DEFAULT_LEFT_POSITION ? current : DEFAULT_LEFT_POSITION,
+      )
+      lastLayoutSnapshotRef.current = null
       return
     }
 
-    const inputContainer = findInputContainer(textarea)
+    const observedElement = observedElementRef.current
+    const inputContainer =
+      observedElement && observedElement.isConnected && observedElement.contains(textarea)
+        ? observedElement
+        : findInputContainer(textarea)
     const containerRect = inputContainer.getBoundingClientRect()
     const viewportHeight = window.innerHeight
-
-    // 悬浮条紧贴输入容器上方，避免遮挡输入框上方的站点原生提示文案。
-    const desiredBottom = viewportHeight - containerRect.top + INPUT_CONTAINER_GAP_PX
-
-    // 确保不会太靠近顶部（最小 50px 距顶），也不会太靠近底部
-    const clampedBottom = Math.max(
-      VIEWPORT_SAFE_MARGIN_PX,
-      Math.min(desiredBottom, viewportHeight - VIEWPORT_SAFE_MARGIN_PX),
-    )
-    setBottomPosition(clampedBottom)
-
-    // 横向跟随输入容器中心，避免在有侧边栏时按整个页面居中。
-    const inputCenterX = containerRect.left + containerRect.width / 2
-    setLeftPosition(`${inputCenterX}px`)
+    const layoutSnapshot: InputLayoutSnapshot = {
+      left: Math.round(containerRect.left),
+      top: Math.round(containerRect.top),
+      width: Math.round(containerRect.width),
+      height: Math.round(containerRect.height),
+      viewportHeight,
+    }
 
     // 如果容器元素变了，需要重新建立 ResizeObserver 监听
     if (inputContainer !== observedElementRef.current && resizeObserverRef.current) {
@@ -78,6 +89,33 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
       resizeObserverRef.current.observe(inputContainer)
       observedElementRef.current = inputContainer
     }
+
+    const lastLayoutSnapshot = lastLayoutSnapshotRef.current
+    if (
+      lastLayoutSnapshot &&
+      lastLayoutSnapshot.left === layoutSnapshot.left &&
+      lastLayoutSnapshot.top === layoutSnapshot.top &&
+      lastLayoutSnapshot.width === layoutSnapshot.width &&
+      lastLayoutSnapshot.height === layoutSnapshot.height &&
+      lastLayoutSnapshot.viewportHeight === layoutSnapshot.viewportHeight
+    ) {
+      return
+    }
+    lastLayoutSnapshotRef.current = layoutSnapshot
+
+    // 悬浮条紧贴输入容器上方，避免遮挡输入框上方的站点原生提示文案。
+    const desiredBottom = viewportHeight - layoutSnapshot.top + INPUT_CONTAINER_GAP_PX
+
+    // 确保不会太靠近顶部（最小 50px 距顶），也不会太靠近底部
+    const clampedBottom = Math.max(
+      VIEWPORT_SAFE_MARGIN_PX,
+      Math.min(desiredBottom, viewportHeight - VIEWPORT_SAFE_MARGIN_PX),
+    )
+    setBottomPosition((current) => (current === clampedBottom ? current : clampedBottom))
+
+    // 横向跟随输入容器中心，避免在有侧边栏时按整个页面居中。
+    const nextLeftPosition = `${Math.round(layoutSnapshot.left + layoutSnapshot.width / 2)}px`
+    setLeftPosition((current) => (current === nextLeftPosition ? current : nextLeftPosition))
   }, [adapter, findInputContainer])
 
   useEffect(() => {
@@ -104,17 +142,29 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
     const delays = [50, 200, 400]
     const timeoutIds = delays.map((delay) => setTimeout(updatePosition, delay))
 
+    // 跟随 CSS transition / transform 引起的位置变化，例如站点侧边栏展开收起。
+    let animationFrameId: number | null = null
+    const trackPosition = () => {
+      updatePosition()
+      animationFrameId = window.requestAnimationFrame(trackPosition)
+    }
+    animationFrameId = window.requestAnimationFrame(trackPosition)
+
     // 监听窗口大小变化
     window.addEventListener("resize", updatePosition)
 
     return () => {
       window.removeEventListener("resize", updatePosition)
       timeoutIds.forEach((id) => clearTimeout(id))
+      if (animationFrameId !== null) {
+        window.cancelAnimationFrame(animationFrameId)
+      }
       if (resizeObserverRef.current) {
         resizeObserverRef.current.disconnect()
         resizeObserverRef.current = null
       }
       observedElementRef.current = null
+      lastLayoutSnapshotRef.current = null
     }
   }, [title, adapter, findInputContainer, updatePosition])
 
