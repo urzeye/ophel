@@ -114,87 +114,18 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
         bottom: `${bottomPosition}px`,
         left: "50%",
         transform: "translateX(-50%)",
-        // 使用渐变背景
-        background: "var(--gh-brand-gradient)",
-        color: "var(--gh-text-on-primary, white)",
-        padding: "8px 16px",
-        borderRadius: "20px",
-        boxShadow: "var(--gh-shadow-brand)",
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
         zIndex: 999998,
-        maxWidth: "80%",
-        animation: "slideInUp 0.3s ease",
-        userSelect: "none",
-        transition: "bottom 0.2s ease",
       }}>
-      <style>{`
-        @keyframes slideInUp {
-          from {
-            transform: translate(-50%, 20px);
-            opacity: 0;
-          }
-          to {
-            transform: translate(-50%, 0);
-            opacity: 1;
-          }
-        }
-      `}</style>
-      <span
-        style={{
-          fontSize: "12px",
-          color: "var(--gh-text-on-primary, rgba(255,255,255,0.8))",
-          whiteSpace: "nowrap",
-          userSelect: "none",
-        }}>
-        {t("currentPrompt") || "当前提示词"}
-      </span>
+      <span className="selected-prompt-label">{t("currentPrompt") || "当前提示词"}</span>
       <Tooltip content={title}>
-        <span
-          className="selected-prompt-text"
-          style={{
-            fontSize: "13px",
-            fontWeight: 500,
-            color: "var(--gh-text-on-primary, white)",
-            maxWidth: "300px",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            userSelect: "none",
-          }}>
-          {title}
-        </span>
+        <span className="selected-prompt-text">{title}</span>
       </Tooltip>
       <Tooltip content={t("clear") || "清除"}>
         <button
           className="clear-prompt-btn"
-          onClick={onClear}
-          style={{
-            background: "var(--gh-glass-bg, rgba(255,255,255,0.2))",
-            border: "none",
-            color: "var(--gh-text-on-primary, white)",
-            width: "20px",
-            height: "20px",
-            borderRadius: "50%",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "14px",
-            lineHeight: "1",
-            padding: 0,
-            marginLeft: "4px",
-            transition: "all 0.2s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "var(--gh-glass-bg-hover, rgba(255,255,255,0.3))"
-            e.currentTarget.style.transform = "scale(1.1)"
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "var(--gh-glass-bg, rgba(255,255,255,0.2))"
-            e.currentTarget.style.transform = "scale(1)"
-          }}>
+          type="button"
+          aria-label={t("clear") || "清除"}
+          onClick={onClear}>
           <ClearIcon size={14} />
         </button>
       </Tooltip>

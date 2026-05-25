@@ -52,6 +52,104 @@
   pointer-events: auto;
 }
 
+/* ============= 已选提示词悬浮条 ============= */
+.selected-prompt-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(80vw, 520px);
+  padding: 7px 8px 7px 14px;
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 24%, var(--gh-border, #e5e7eb));
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--gh-primary, #4285f4) 10%, var(--gh-bg, #ffffff)) 0%,
+    color-mix(in srgb, var(--gh-secondary, #34a853) 8%, var(--gh-bg, #ffffff)) 100%
+  );
+  color: var(--gh-text, #1f2937);
+  box-shadow:
+    0 10px 28px rgba(15, 23, 42, 0.12),
+    0 2px 8px color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent);
+  user-select: none;
+  animation: selected-prompt-slide-in 0.25s ease-out;
+  transition:
+    bottom 0.2s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.selected-prompt-label {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gh-text-secondary, #6b7280);
+  white-space: nowrap;
+}
+
+.selected-prompt-text {
+  display: block;
+  min-width: 0;
+  max-width: 300px;
+  overflow: hidden;
+  color: var(--gh-text, #1f2937);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clear-prompt-btn {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-left: 2px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 16%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, var(--gh-bg, #ffffff));
+  color: var(--gh-text-secondary, #6b7280);
+  cursor: pointer;
+  line-height: 1;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.clear-prompt-btn:hover {
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 34%, transparent);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 16%, var(--gh-bg, #ffffff));
+  color: var(--gh-primary, #4285f4);
+  transform: scale(1.06);
+}
+
+.clear-prompt-btn:active {
+  transform: scale(0.96);
+}
+
+.clear-prompt-btn:focus-visible {
+  outline: 2px solid var(--gh-primary, #4285f4);
+  outline-offset: 2px;
+}
+
+@keyframes selected-prompt-slide-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 16px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
 /* ============= 穿透与幽灵模式 (防遮挡体验升级) ============= */
 .gh-root.gh-pass-through .gh-interactive {
   pointer-events: none !important;
