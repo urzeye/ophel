@@ -31,6 +31,7 @@ interface QueueOverlayProps {
 }
 
 const BATCH_PREVIEW_LIMIT = 5
+const INPUT_CONTAINER_GAP_PX = 6
 type QueueBatchSource = "text" | "library"
 type QueueLibraryMode = "single" | "line"
 
@@ -124,6 +125,22 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
   // ==================== 位置计算 ====================
 
+  const findInputContainer = useCallback((textarea: HTMLElement): Element => {
+    let inputContainer: Element = textarea
+    let parent = textarea.parentElement
+
+    for (let i = 0; i < 10 && parent && parent !== document.body; i++) {
+      const style = window.getComputedStyle(parent)
+      if (style.borderRadius && parseFloat(style.borderRadius) > 0) {
+        inputContainer = parent
+        break
+      }
+      parent = parent.parentElement
+    }
+
+    return inputContainer
+  }, [])
+
   const updatePosition = useCallback(() => {
     const inputEl = adapter.getTextareaElement()
 
@@ -132,7 +149,8 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
       return
     }
 
-    const rect = inputEl.getBoundingClientRect()
+    const inputContainer = findInputContainer(inputEl)
+    const rect = inputContainer.getBoundingClientRect()
 
     // 胶囊/面板中心对齐到输入框右缘内侧 20px 处
     // 因为悬浮层不是被挂载在 document.body，而是放在 App 的容器里
@@ -148,7 +166,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
     // 如果它挂在 .gh-root，而 .gh-root 本身是 fixed 的（占满全屏），那么 bottom/right 的表现等同于 window 视口
 
     // 下面恢复基于窗口绝对视口的计算方式（最稳定）
-    const bottomPos = window.innerHeight - rect.top + 12
+    const bottomPos = window.innerHeight - rect.top + INPUT_CONTAINER_GAP_PX
 
     // 修复定位偏移 bug: 使用 left 定位，避免右侧滚动条出现/消失导致的 right 坐标跳动。
     const overlayWidth = Math.min(420, window.innerWidth - 40)
@@ -165,23 +183,25 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
       right: finalRight,
       width: overlayWidth,
     })
-  }, [adapter])
+  }, [adapter, findInputContainer])
 
   // ResizeObserver 精准监听输入框位置/大小变化
   useEffect(() => {
     updatePosition()
 
     let observer: ResizeObserver | null = null
-    let targetEl: Element | null = null
+    let targetEl: HTMLElement | null = null
 
     const initObserver = () => {
       targetEl = adapter.getTextareaElement()
 
       if (targetEl) {
+        const inputContainer = findInputContainer(targetEl)
         observer = new ResizeObserver(() => {
           updatePosition()
         })
         observer.observe(targetEl)
+        observer.observe(inputContainer)
         if (targetEl.parentElement) {
           observer.observe(targetEl.parentElement) // 监听父级尺寸变化
         }
@@ -208,7 +228,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
         observer.disconnect()
       }
     }
-  }, [updatePosition, adapter])
+  }, [updatePosition, adapter, findInputContainer])
 
   // ==================== 生成状态监控 ====================
 
