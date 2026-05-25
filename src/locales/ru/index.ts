@@ -1386,6 +1386,13 @@ export const ru = {
   queueBatchImportAction: "Импортировать в очередь",
   queueBatchImportSuccess: "Импортировано {count} промпт(ов)",
   queueBatchImportEmpty: "Нет промптов для импорта",
+  promptEnqueueToQueue: "Добавить в очередь",
+  promptEnqueueSplitQueue: "Разделить очередь",
+  promptEnqueueSplitQueueTip:
+    "Если включено, каждая непустая строка промпта добавляется как отдельный элемент очереди.",
+  promptEnqueueSuccess: "В очередь добавлено: {count}",
+  promptEnqueueDisabled: "Включите очередь промптов в настройках",
+  promptEnqueueEmpty: "Нечего добавлять в очередь",
   zenModeTitle: "Дзен-режим",
   zenModeLabel: "Включить дзен-режим",
   zenModeDesc:

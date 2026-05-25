@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### ✨ New Features
+
+- **Prompt library: enqueue to queue** — Add a queue action on prompt cards and an optional "split by line" toggle so multi-line prompts can be queued as separate items. Closes #547.
+
 ---
 
 ## [1.0.53] - 2026-05-25

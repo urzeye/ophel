@@ -1398,6 +1398,13 @@ export const ja = {
   queueBatchImportAction: "キューに追加",
   queueBatchImportSuccess: "{count}件のプロンプトをインポートしました",
   queueBatchImportEmpty: "インポートできるプロンプトがありません",
+  promptEnqueueToQueue: "キューに追加",
+  promptEnqueueSplitQueue: "キューを分割",
+  promptEnqueueSplitQueueTip:
+    "有効にすると、プロンプト内の空でない各行が個別のキュー項目として追加されます。",
+  promptEnqueueSuccess: "{count} 件をキューに追加しました",
+  promptEnqueueDisabled: "設定でプロンプトキューを有効にしてください",
+  promptEnqueueEmpty: "キューに追加する内容がありません",
   zenModeTitle: "禅モード",
   zenModeLabel: "禅モードを有効にする",
   zenModeDesc:

@@ -11,6 +11,7 @@ import {
   EyeIcon,
   ImportIcon,
   PinIcon,
+  PromptQueueIcon,
   SettingsIcon,
   TimeIcon,
 } from "~components/icons"
@@ -23,6 +24,7 @@ import {
 } from "~components/VariableInputDialog"
 import { VIRTUAL_CATEGORY } from "~constants"
 import type { PromptManager } from "~core/prompt-manager"
+import { injectContentToQueue } from "~core/queue-inject"
 import { useSettingsStore } from "~stores/settings-store"
 import { APP_NAME } from "~utils/config"
 import { t } from "~utils/i18n"
@@ -85,7 +87,13 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const submitShortcut = useSettingsStore(
     (state) => state.settings.features?.prompts?.submitShortcut ?? "enter",
   )
-
+  const promptQueueEnabled = useSettingsStore(
+    (state) => state.settings.features?.prompts?.promptQueue ?? false,
+  )
+  const queueInjectSplitByLine = useSettingsStore(
+    (state) => state.settings.features?.prompts?.queueInjectSplitByLine ?? false,
+  )
+  const updateDeepSetting = useSettingsStore((state) => state.updateDeepSetting)
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>(VIRTUAL_CATEGORY.ALL)
@@ -123,7 +131,14 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     prompt: Prompt | null
     variables: ParsedVariable[]
     submitAfterInsert: boolean
-  }>({ show: false, prompt: null, variables: [], submitAfterInsert: false })
+    enqueueAfterResolve: boolean
+  }>({
+    show: false,
+    prompt: null,
+    variables: [],
+    submitAfterInsert: false,
+    enqueueAfterResolve: false,
+  })
 
   // 导入确认弹窗状态
   const [importDialogState, setImportDialogState] = useState<{
@@ -184,6 +199,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         prompt: targetPrompt,
         variables,
         submitAfterInsert,
+        enqueueAfterResolve: false,
       })
       return true
     },
@@ -366,11 +382,60 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         prompt,
         variables,
         submitAfterInsert,
+        enqueueAfterResolve: false,
       })
     } else {
       // No variables; insert (and optionally submit) directly
       await doInsert(prompt, prompt.content, submitAfterInsert)
     }
+  }
+
+  const doEnqueue = (content: string) => {
+    const result = injectContentToQueue(content, { splitByLine: queueInjectSplitByLine })
+    if (result.ok === false) {
+      if (result.reason === "disabled") {
+        showToast(
+          `${t("promptEnqueueDisabled") || "Enable Prompt Queue in settings"}. ${t("queueDisableHint") || ""}`,
+          3000,
+        )
+        return
+      }
+      showToast(t("promptEnqueueEmpty") || "Nothing to queue", 2500)
+      return
+    }
+    showToast(
+      t("promptEnqueueSuccess", { count: String(result.count) }) ||
+        `Queued ${result.count} prompt(s)`,
+      2500,
+    )
+  }
+
+  const handleEnqueueToQueue = (prompt: Prompt, e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+
+    if (!promptQueueEnabled) {
+      showToast(
+        `${t("promptEnqueueDisabled") || "Enable Prompt Queue in settings"}. ${t("queueDisableHint") || ""}`,
+        3000,
+      )
+      return
+    }
+
+    const variables = extractVariables(prompt.content)
+    if (variables.length > 0) {
+      setVariableDialogState({
+        show: true,
+        prompt,
+        variables,
+        submitAfterInsert: false,
+        enqueueAfterResolve: true,
+      })
+      return
+    }
+
+    doEnqueue(prompt.content)
+    manager.updateLastUsed(prompt.id)
   }
 
   const doInsert = async (prompt: Prompt, content: string, submitAfterInsert = false) => {
@@ -404,17 +469,29 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }
 
   const handleVariableConfirm = async (values: Record<string, string>) => {
-    const { prompt, submitAfterInsert } = variableDialogState
+    const { prompt, submitAfterInsert, enqueueAfterResolve } = variableDialogState
     if (!prompt) return
 
     const replacedContent = replaceVariables(prompt.content, values)
-    setVariableDialogState({ show: false, prompt: null, variables: [], submitAfterInsert: false })
+    setVariableDialogState({
+      show: false,
+      prompt: null,
+      variables: [],
+      submitAfterInsert: false,
+      enqueueAfterResolve: false,
+    })
 
     await new Promise<void>((resolve) => {
       window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => resolve())
       })
     })
+
+    if (enqueueAfterResolve) {
+      doEnqueue(replacedContent)
+      manager.updateLastUsed(prompt.id)
+      return
+    }
 
     await doInsert(prompt, replacedContent, submitAfterInsert)
   }
@@ -634,6 +711,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       prompt: null,
       variables: [],
       submitAfterInsert: false,
+      enqueueAfterResolve: false,
     })
   }, [])
 
@@ -1547,6 +1625,41 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             <ExportIcon size={16} />
           </button>
         </Tooltip>
+        {promptQueueEnabled && (
+          <Tooltip
+            content={
+              t("promptEnqueueSplitQueueTip") ||
+              "When enabled, each non-empty line in a prompt is added as a separate queue item."
+            }>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+                fontSize: "12px",
+                color: "var(--gh-text-secondary, #6b7280)",
+                flexShrink: 0,
+                cursor: "pointer",
+                userSelect: "none",
+              }}
+              onClick={(e) => e.stopPropagation()}>
+              <input
+                type="checkbox"
+                checked={queueInjectSplitByLine}
+                onChange={(e) =>
+                  updateDeepSetting(
+                    "features",
+                    "prompts",
+                    "queueInjectSplitByLine",
+                    e.target.checked,
+                  )
+                }
+                style={{ margin: 0, cursor: "pointer", flexShrink: 0 }}
+              />
+              <span>{t("promptEnqueueSplitQueue") || "Split queue"}</span>
+            </label>
+          </Tooltip>
+        )}
       </div>
 
       {/* 分类标签栏：左侧可滚动 + 右侧固定 */}
@@ -1824,6 +1937,15 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                       <EyeIcon size={16} />
                     </button>
                   </Tooltip>
+                  {promptQueueEnabled && (
+                    <Tooltip content={t("promptEnqueueToQueue") || "Add to queue"}>
+                      <button
+                        onClick={(e) => handleEnqueueToQueue(p, e)}
+                        className="prompt-action-btn">
+                        <PromptQueueIcon size={16} />
+                      </button>
+                    </Tooltip>
+                  )}
                   <Tooltip content={t("copy")}>
                     <button onClick={(e) => handleCopy(p.content, e)} className="prompt-action-btn">
                       <CopyIcon size={16} />

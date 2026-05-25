@@ -1400,6 +1400,13 @@ Donnez le code puis un résumé des améliorations.`,
   queueBatchImportAction: "Importer dans la file",
   queueBatchImportSuccess: "{count} prompt(s) importés",
   queueBatchImportEmpty: "Aucun prompt à importer",
+  promptEnqueueToQueue: "Ajouter à la file",
+  promptEnqueueSplitQueue: "Diviser la file",
+  promptEnqueueSplitQueueTip:
+    "Lorsque cette option est activée, chaque ligne non vide d'un prompt est ajoutée comme élément de file distinct.",
+  promptEnqueueSuccess: "{count} prompt(s) mis en file",
+  promptEnqueueDisabled: "Activez la file de prompts dans les paramètres",
+  promptEnqueueEmpty: "Rien à mettre en file",
   zenModeTitle: "Mode Zen",
   zenModeLabel: "Activer le mode Zen",
   zenModeDesc:

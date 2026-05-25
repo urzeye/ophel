@@ -18,6 +18,7 @@ import { useSettingsStore } from "~stores/settings-store"
 import { useQueueItems, useQueueStore } from "~stores/queue-store"
 import { attachEditableKeyboardFocusGuard } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
+import { parseQueueBatchInput, type QueueBatchSplitMode } from "~utils/queue-batch"
 import { showToast } from "~utils/toast"
 
 import "~styles/queue-overlay.css"
@@ -27,45 +28,7 @@ interface QueueOverlayProps {
   dispatcher: QueueDispatcher
 }
 
-type QueueBatchSplitMode = "line" | "delimiter"
-
 const BATCH_PREVIEW_LIMIT = 5
-
-const normalizeBatchInput = (input: string) => input.replace(/\r\n?/g, "\n")
-
-const decodeQueueDelimiter = (delimiter: string) =>
-  delimiter.replace(/\\(\\|n|r|t)/g, (_match, token: string) => {
-    switch (token) {
-      case "n":
-        return "\n"
-      case "r":
-        return "\r"
-      case "t":
-        return "\t"
-      case "\\":
-        return "\\"
-      default:
-        return token
-    }
-  })
-
-const parseQueueBatchInput = (
-  input: string,
-  splitMode: QueueBatchSplitMode,
-  delimiter: string,
-): string[] => {
-  const normalizedInput = normalizeBatchInput(input)
-  const normalizedDelimiter = normalizeBatchInput(decodeQueueDelimiter(delimiter))
-
-  const segments =
-    splitMode === "line"
-      ? normalizedInput.split("\n")
-      : normalizedDelimiter
-        ? normalizedInput.split(normalizedDelimiter)
-        : []
-
-  return segments.map((item) => item.trim()).filter(Boolean)
-}
 
 export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher }) => {
   const [isExpanded, setIsExpanded] = useState(false)

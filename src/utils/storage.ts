@@ -230,6 +230,8 @@ export interface Settings {
       doubleClickToSend: boolean
       submitShortcut: "enter" | "ctrlEnter"
       promptQueue: boolean
+      /** Split multi-line prompts into separate queue items when enqueueing from library */
+      queueInjectSplitByLine: boolean
     }
     conversations: {
       enabled: boolean
@@ -498,6 +500,7 @@ export const DEFAULT_SETTINGS: Settings = {
       doubleClickToSend: false,
       submitShortcut: "enter",
       promptQueue: false,
+      queueInjectSplitByLine: false,
     },
     conversations: {
       enabled: true,

@@ -1390,6 +1390,13 @@ Dame el código y luego un resumen de mejoras.`,
   queueBatchImportAction: "Importar a la cola",
   queueBatchImportSuccess: "Se importaron {count} prompt(s)",
   queueBatchImportEmpty: "No hay prompts para importar",
+  promptEnqueueToQueue: "Añadir a la cola",
+  promptEnqueueSplitQueue: "Dividir cola",
+  promptEnqueueSplitQueueTip:
+    "Si está activado, cada línea no vacía de un prompt se añade como un elemento de cola separado.",
+  promptEnqueueSuccess: "{count} prompt(s) en cola",
+  promptEnqueueDisabled: "Activa la cola de prompts en la configuración",
+  promptEnqueueEmpty: "No hay nada para poner en cola",
   zenModeTitle: "Modo Zen",
   zenModeLabel: "Habilitar modo Zen",
   zenModeDesc:

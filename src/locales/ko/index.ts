@@ -1384,6 +1384,13 @@ export const ko = {
   queueBatchImportAction: "대기열에 추가",
   queueBatchImportSuccess: "{count}개의 프롬프트를 가져왔습니다",
   queueBatchImportEmpty: "가져올 프롬프트가 없습니다",
+  promptEnqueueToQueue: "대기열에 추가",
+  promptEnqueueSplitQueue: "대기열 분할",
+  promptEnqueueSplitQueueTip:
+    "활성화하면 프롬프트의 각 비어 있지 않은 줄이 별도의 대기열 항목으로 추가됩니다.",
+  promptEnqueueSuccess: "{count}개를 대기열에 추가했습니다",
+  promptEnqueueDisabled: "설정에서 프롬프트 대기열을 활성화하세요",
+  promptEnqueueEmpty: "대기열에 추가할 내용이 없습니다",
   zenModeTitle: "선(Zen) 모드",
   zenModeLabel: "선 모드 활성화",
   zenModeDesc: "사이드바 및 내비게이션 요소를 숨겨 현재 대화에 집중합니다 (각 사이트별 개별 설정)",
