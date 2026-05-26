@@ -110,6 +110,8 @@ const CHATGPT_MODEL_MENU_SELECTOR =
   '[data-radix-popper-content-wrapper] [role="menu"][data-radix-menu-content]'
 // 新版菜单项 role 为 menuitemradio，data-testid^="model-switcher-" 仍保留
 const CHATGPT_MODEL_MENU_ITEM_SELECTOR = `${CHATGPT_MODEL_MENU_SELECTOR} [data-testid^="model-switcher-"]`
+const CHATGPT_SPONSORED_AD_SELECTOR =
+  'div.border-token-border-default.border-t.py-4.text-sm:has(button[aria-label="Ad options"]):has([role="link"][tabindex="0"])'
 
 // ==================== 导出快照 ====================
 // ChatGPT 长会话采用虚拟滚动：滚出视口的消息内容会被卸载，
@@ -966,7 +968,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   getCleanModeConfig(): ZenModeConfig | null {
     return {
-      hide: ["div.select-none:has(> .pointer-events-auto)"],
+      hide: ["div.select-none:has(> .pointer-events-auto)", CHATGPT_SPONSORED_AD_SELECTOR],
     }
   }
 
