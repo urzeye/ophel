@@ -46,8 +46,11 @@ const RAW_USER_QUERY_TEXT_SELECTOR =
   ".whitespace-pre-wrap.wrap-anywhere:not(.gh-user-query-markdown)"
 const USER_QUERY_TEXT_SELECTOR = `${USER_QUERY_SELECTOR} ${RAW_USER_QUERY_TEXT_SELECTOR}`
 const ASSISTANT_MESSAGE_SELECTOR = "[data-message-id]:not(.justify-end)"
-const ASSISTANT_MARKDOWN_SELECTOR = ".flow-markdown-body"
-const ASSISTANT_CONTENT_SELECTOR = `${ASSISTANT_MESSAGE_SELECTOR} ${ASSISTANT_MARKDOWN_SELECTOR}`
+const ASSISTANT_MARKDOWN_SELECTORS = [".flow-markdown-body", ".md-box-root"] as const
+const ASSISTANT_MARKDOWN_SELECTOR = ASSISTANT_MARKDOWN_SELECTORS.join(", ")
+const ASSISTANT_CONTENT_SELECTOR = ASSISTANT_MARKDOWN_SELECTORS.map(
+  (selector) => `${ASSISTANT_MESSAGE_SELECTOR} ${selector}`,
+).join(", ")
 const DOUBAO_DELETE_REASON = {
   UI_FAILED: "delete_ui_failed",
   BATCH_ABORTED_AFTER_UI_FAILURE: "delete_batch_aborted_after_ui_failure",
@@ -313,6 +316,14 @@ export class DoubaoAdapter extends SiteAdapter {
     return roots
   }
 
+  private getAssistantContentRoot(element: Element): Element {
+    if (element.matches(ASSISTANT_MARKDOWN_SELECTOR)) {
+      return element
+    }
+
+    return element.querySelector(ASSISTANT_MARKDOWN_SELECTOR) || element
+  }
+
   getConversationTitle(): string | null {
     const activeLink = this.getActiveConversationRow()
     if (!activeLink) return null
@@ -518,10 +529,7 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   private extractAssistantMarkdown(element: Element): string {
-    const markdown = element.matches(ASSISTANT_MARKDOWN_SELECTOR)
-      ? element
-      : element.querySelector(ASSISTANT_MARKDOWN_SELECTOR)
-    const target = (markdown || element).cloneNode(true) as HTMLElement
+    const target = this.getAssistantContentRoot(element).cloneNode(true) as HTMLElement
 
     target
       .querySelectorAll(

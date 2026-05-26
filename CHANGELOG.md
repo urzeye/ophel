@@ -22,6 +22,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### 🐛 Bug Fixes
 
 - **ChatGPT clean mode sponsored cards** — Clean Mode now hides ChatGPT sponsored recommendation cards, including the new ad blocks with "Ad options" menus.
+- **Doubao outline extraction** — Doubao outlines now recognize the newer `md-box-root` answer DOM, restoring headings for conversations that previously showed an empty outline. (#565)
 - **Conversation folder selector icon spacing** — Tightened the sync-folder selector padding and gave folder emoji icons a stable centered box so they no longer look clipped in the Conversations toolbar.
 - **Attachment-only submit shortcut** — Pressing Enter or Ctrl+Enter can now send messages that contain only images or attachments. (#555)
 - **Temporary panel preview interactions** — Dialogs, menus, dropdowns, and Prompt tab popups opened from the temporary Quick Buttons panel preview now keep the preview available while you interact with them, then close the preview automatically once the interaction ends.
