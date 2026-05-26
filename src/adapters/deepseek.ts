@@ -58,6 +58,9 @@ const DEEPSEEK_EXPORT_ASSISTANT_SELECTOR = `[${DEEPSEEK_EXPORT_ROOT_ATTR}="1"] [
 const STOP_ICON_PATH_PREFIX = "M2 4.88"
 const SEND_ICON_PATH =
   "M8.3125 0.981587C8.66767 1.0545 8.97902 1.20558 9.2627 1.43374C9.48724 1.61438 9.73029 1.85933 9.97949 2.10854L14.707 6.83608L13.293 8.25014L9 3.95717V15.0431H7V3.95717L2.70703 8.25014L1.29297 6.83608L6.02051 2.10854C6.26971 1.85933 6.51277 1.61438 6.7373 1.43374C6.97662 1.24126 7.28445 1.04542 7.6875 0.981587C7.8973 0.94841 8.1031 0.956564 8.3125 0.981587Z"
+const NATIVE_OUTLINE_SETTLE_MS = 120
+const USER_QUERY_REVEAL_TIMEOUT_MS = 3200
+const USER_QUERY_REVEAL_INTERVAL_MS = 80
 
 const DEEPSEEK_DELETE_REASON = {
   MISSING_AUTH_TOKEN: "delete_api_missing_auth_token",
@@ -85,6 +88,7 @@ interface DeepSeekExportMessageSnapshot {
 
 export class DeepSeekAdapter extends SiteAdapter {
   private nativeOutlineCache: DeepSeekNativeOutlineCache | null = null
+  private nativeOutlineRevealRequestId = 0
   private exportSnapshotRoot: HTMLElement | null = null
   private exportSnapshotActive = false
   private exportIncludeThoughtsOverride: boolean | null = null
@@ -379,8 +383,31 @@ export class DeepSeekAdapter extends SiteAdapter {
     return USER_MESSAGE_SELECTOR
   }
 
+  findUserQueryElement(queryIndex: number, text: string): Element | null {
+    const elements = this.getVisibleUserQueryElements()
+    if (elements.length === 0) return null
+
+    if (queryIndex > 0 && elements.length >= queryIndex) {
+      const candidate = elements[queryIndex - 1]
+      if (this.isEquivalentUserQueryText(this.extractUserQueryText(candidate), text)) {
+        return candidate
+      }
+    }
+
+    return (
+      elements.find((element) =>
+        this.isEquivalentUserQueryText(this.extractUserQueryText(element), text),
+      ) || null
+    )
+  }
+
   getChatContentSelectors(): string[] {
     return [ASSISTANT_MESSAGE_SELECTOR, USER_MESSAGE_SELECTOR]
+  }
+
+  scrollToOutlineTarget(element: HTMLElement): void {
+    this.nativeOutlineRevealRequestId += 1
+    super.scrollToOutlineTarget(element)
   }
 
   extractUserQueryText(element: Element): string {
@@ -538,21 +565,30 @@ export class DeepSeekAdapter extends SiteAdapter {
     item: Pick<OutlineItem, "level" | "text" | "isUserQuery">,
     queryIndex?: number,
   ): Promise<Element | null> {
+    const isUserQueryTarget = item.isUserQuery && item.level === 0 && queryIndex !== undefined
+    const revealRequestId = isUserQueryTarget
+      ? ++this.nativeOutlineRevealRequestId
+      : this.nativeOutlineRevealRequestId
+
     const directTarget = await super.resolveOutlineTarget(item, queryIndex)
     if (directTarget) {
       return directTarget
     }
 
-    if (!item.isUserQuery || item.level !== 0 || queryIndex === undefined) {
+    if (!isUserQueryTarget) {
       return null
     }
 
-    const jumped = await this.revealUserQueryThroughNativeOutline(queryIndex, item.text)
+    const jumped = await this.revealUserQueryThroughNativeOutline(
+      queryIndex,
+      item.text,
+      revealRequestId,
+    )
     if (!jumped) {
       return null
     }
 
-    return this.waitForUserQueryElement(queryIndex, item.text)
+    return this.waitForUserQueryElement(queryIndex, item.text, revealRequestId)
   }
 
   private createUserQueryOutlineItem(
@@ -1454,6 +1490,10 @@ export class DeepSeekAdapter extends SiteAdapter {
     const normalizedLeft = this.normalizeUserQueryMatchText(left)
     const normalizedRight = this.normalizeUserQueryMatchText(right)
 
+    if (!normalizedLeft || !normalizedRight) {
+      return false
+    }
+
     return (
       normalizedLeft === normalizedRight ||
       normalizedLeft.startsWith(normalizedRight) ||
@@ -1462,7 +1502,7 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   private normalizeUserQueryMatchText(text: string): string {
-    return this.normalizeOutlineText(text).replace(/\.{3}$/, "")
+    return this.normalizeOutlineText(text).replace(/(?:\.{3}|…)$/u, "")
   }
 
   private normalizeOutlineText(text: string): string {
@@ -1472,6 +1512,7 @@ export class DeepSeekAdapter extends SiteAdapter {
   private async revealUserQueryThroughNativeOutline(
     queryIndex: number,
     text: string,
+    requestId: number,
   ): Promise<boolean> {
     const list = this.findNativeOutlineList()
     if (!list) {
@@ -1502,9 +1543,17 @@ export class DeepSeekAdapter extends SiteAdapter {
     )
 
     for (const top of candidateScrollTops) {
+      if (requestId !== this.nativeOutlineRevealRequestId) {
+        return false
+      }
+
       scrollContainer.scrollTop = top
       scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
-      await this.sleep(80)
+      await this.sleep(NATIVE_OUTLINE_SETTLE_MS)
+
+      if (requestId !== this.nativeOutlineRevealRequestId) {
+        return false
+      }
 
       const targetItem = this.findVisibleNativeOutlineItem(list, targetEntry, text)
       if (!targetItem) {
@@ -1606,22 +1655,46 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   private dispatchNativeOutlineClick(element: HTMLElement): void {
-    element.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }))
-    element.dispatchEvent(new MouseEvent("mouseup", { bubbles: true, cancelable: true }))
-    element.click()
+    const target =
+      (element.querySelector('button, [role="button"], a') as HTMLElement | null) || element
+
+    target.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }))
+    target.dispatchEvent(new MouseEvent("mouseup", { bubbles: true, cancelable: true }))
+    target.click()
   }
 
-  private async waitForUserQueryElement(queryIndex: number, text: string): Promise<Element | null> {
-    for (let attempt = 0; attempt < 8; attempt += 1) {
+  private async waitForUserQueryElement(
+    queryIndex: number,
+    text: string,
+    requestId: number,
+  ): Promise<Element | null> {
+    const startedAt = Date.now()
+
+    while (Date.now() - startedAt < USER_QUERY_REVEAL_TIMEOUT_MS) {
+      if (requestId !== this.nativeOutlineRevealRequestId) {
+        return null
+      }
+
       const found = this.findUserQueryElement(queryIndex, text)
       if (found) {
         return found
       }
 
-      await this.sleep(80)
+      await this.sleep(USER_QUERY_REVEAL_INTERVAL_MS)
     }
 
-    return null
+    if (requestId !== this.nativeOutlineRevealRequestId) {
+      return null
+    }
+
+    return this.findUserQueryElement(queryIndex, text)
+  }
+
+  private getVisibleUserQueryElements(): Element[] {
+    return Array.from(document.querySelectorAll(USER_MESSAGE_SELECTOR)).filter(
+      (element) =>
+        element instanceof HTMLElement && !element.parentElement?.closest(MESSAGE_SELECTOR),
+    )
   }
 
   private sleep(ms: number): Promise<void> {

@@ -421,6 +421,12 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   const activeIndexRef = useRef<number | null>(null)
   const visibleHighlightRef = useRef<number | null>(null)
   const itemRefMap = useRef<Map<number, HTMLElement>>(new Map())
+  const jumpRequestIdRef = useRef(0)
+  const locateHighlightRef = useRef<{
+    element: Element
+    timer: ReturnType<typeof setTimeout>
+  } | null>(null)
+  const locateHighlightRequestIdRef = useRef(0)
   const userScrollingOutlineRef = useRef(false)
   const userScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const visibilityMapsRef = useRef<{
@@ -532,36 +538,92 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     }
   }, [tree]) // 依赖 tree，当 tree 变化（渲染完成）后执行
 
+  const removeOutlineItemClasses = useCallback((...classNames: string[]) => {
+    if (classNames.length === 0) return
+
+    const removeClasses = (item: Element) => {
+      item.classList.remove(...classNames)
+    }
+
+    itemRefMap.current.forEach(removeClasses)
+    const selector = classNames.map((className) => `.outline-item.${className}`).join(", ")
+    listRef.current?.querySelectorAll(selector).forEach(removeClasses)
+  }, [])
+
+  const removeOutlineItemClass = useCallback(
+    (className: string) => {
+      removeOutlineItemClasses(className)
+    },
+    [removeOutlineItemClasses],
+  )
+
+  const applySingleSyncHighlight = useCallback((idx: number | null) => {
+    const target = idx !== null ? itemRefMap.current.get(idx) || null : null
+    itemRefMap.current.forEach((item) => {
+      if (item !== target) item.classList.remove("sync-highlight", "sync-highlight-visible")
+    })
+    listRef.current
+      ?.querySelectorAll(".outline-item.sync-highlight, .outline-item.sync-highlight-visible")
+      .forEach((item) => {
+        if (item !== target) item.classList.remove("sync-highlight", "sync-highlight-visible")
+      })
+
+    if (target) {
+      target.classList.remove("sync-highlight-visible")
+      target.classList.add("sync-highlight")
+    }
+  }, [])
+
   // 滚动同步高亮：直接操作 DOM class，不触发 React re-render
   const updateActiveIndex = useCallback((idx: number | null) => {
-    const prevIdx = activeIndexRef.current
-    if (prevIdx === idx) return
-    const map = itemRefMap.current
-    if (prevIdx !== null) map.get(prevIdx)?.classList.remove("sync-highlight")
-    if (idx !== null) map.get(idx)?.classList.add("sync-highlight")
     activeIndexRef.current = idx
   }, [])
 
-  const updateVisibleHighlightIndex = useCallback((idx: number | null) => {
-    const prevIdx = visibleHighlightRef.current
-    if (prevIdx === idx) return
-    const map = itemRefMap.current
-    if (prevIdx !== null) map.get(prevIdx)?.classList.remove("sync-highlight-visible")
-    if (idx !== null) map.get(idx)?.classList.add("sync-highlight-visible")
-    visibleHighlightRef.current = idx
-  }, [])
+  const updateVisibleHighlightIndex = useCallback(
+    (idx: number | null) => {
+      applySingleSyncHighlight(idx)
+      visibleHighlightRef.current = idx
+    },
+    [applySingleSyncHighlight],
+  )
 
-  const setItemRef = useCallback((index: number, el: HTMLElement | null) => {
-    const map = itemRefMap.current
-    if (el) {
-      map.set(index, el)
-      // 树重建后 DOM 元素更新，重新应用当前高亮 class
-      if (index === activeIndexRef.current) el.classList.add("sync-highlight")
-      if (index === visibleHighlightRef.current) el.classList.add("sync-highlight-visible")
-    } else {
-      map.delete(index)
-    }
-  }, [])
+  const setItemRef = useCallback(
+    (index: number, el: HTMLElement | null) => {
+      const map = itemRefMap.current
+      if (el) {
+        map.set(index, el)
+        if (index !== visibleHighlightRef.current) {
+          el.classList.remove("sync-highlight", "sync-highlight-visible")
+        }
+        // 树重建后 DOM 元素更新，重新应用当前高亮 class
+        if (index === visibleHighlightRef.current) {
+          applySingleSyncHighlight(index)
+        }
+      } else {
+        map.delete(index)
+      }
+    },
+    [applySingleSyncHighlight],
+  )
+
+  const clearLocateHighlight = useCallback(
+    (options?: { clearForceVisible?: boolean }) => {
+      locateHighlightRequestIdRef.current += 1
+
+      const current = locateHighlightRef.current
+      if (current) {
+        clearTimeout(current.timer)
+        locateHighlightRef.current = null
+      }
+
+      removeOutlineItemClass("highlight")
+
+      if (options?.clearForceVisible) {
+        manager.clearForceVisible()
+      }
+    },
+    [manager, removeOutlineItemClass],
+  )
 
   const getVisibleHighlightIndex = useCallback((idx: number | null): number | null => {
     if (idx === null) return null
@@ -840,6 +902,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
   const handleClick = useCallback(
     async (node: OutlineNode) => {
+      const jumpRequestId = ++jumpRequestIdRef.current
+      clearLocateHighlight({ clearForceVisible: true })
+      updateVisibleHighlightIndex(getVisibleHighlightIndex(activeIndexRef.current))
       let targetElement = node.element
       let anchorCaptured = false
 
@@ -857,14 +922,25 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         }
       }
 
+      if (jumpRequestId !== jumpRequestIdRef.current) {
+        return
+      }
+
       if (targetElement && targetElement.isConnected) {
         // 等待锚点保存完成后再跳转（instant 模式必须）
         if (onJumpBefore && !anchorCaptured) {
           await onJumpBefore()
         }
+
+        if (jumpRequestId !== jumpRequestIdRef.current) {
+          return
+        }
+
         // 通过 adapter 滚动——避免 scrollIntoView 在 Shadow DOM 场景下
         // 意外滚动外层容器（如 Gemini Enterprise 的 mat-sidenav-content）
         manager.scrollToOutlineTarget(targetElement as HTMLElement)
+        updateActiveIndex(node.index)
+        updateVisibleHighlightIndex(getVisibleHighlightIndex(node.index))
 
         // 若阅读历史 Position Keeper 正在锁定位置，同步更新锁目标到新位置
         // 这样 Position Keeper 继续保护新位置，不会跳回旧位置或被平台自动滚动覆盖
@@ -883,13 +959,20 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         const scrollContainer = manager.getScrollContainer()
         if (scrollContainer) {
           scrollContainer.scrollTo({ top: node.scrollTop, behavior: "smooth" })
+          updateActiveIndex(node.index)
+          updateVisibleHighlightIndex(getVisibleHighlightIndex(node.index))
           showToast(t("bookmarkContentMissing") || "收藏内容不存在，已跳转到保存位置", 3000)
         }
-      } else {
-        showToast(t("bookmarkContentMissing") || "收藏内容已被删除或折叠", 2000)
       }
     },
-    [manager, onJumpBefore],
+    [
+      clearLocateHighlight,
+      getVisibleHighlightIndex,
+      manager,
+      onJumpBefore,
+      updateActiveIndex,
+      updateVisibleHighlightIndex,
+    ],
   )
 
   const handleCopy = useCallback((e: React.MouseEvent, node: OutlineNode) => {
@@ -1010,11 +1093,16 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
     if (!currentItem) return
 
+    clearLocateHighlight({ clearForceVisible: true })
+
     // 3. 展开目标项的所有父级节点
     manager.revealNode(currentItem.index)
+    const locateHighlightRequestId = ++locateHighlightRequestIdRef.current
 
     // 4. 延迟滚动和高亮（等待 DOM 更新）
     setTimeout(() => {
+      if (locateHighlightRequestId !== locateHighlightRequestIdRef.current) return
+
       const listContainer = listRef.current
       if (!listContainer) return
 
@@ -1026,14 +1114,22 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       // 滚动大纲面板到该项（居中显示）
       outlineItem.scrollIntoView({ behavior: "instant", block: "center" })
 
-      // 高亮该大纲项（3秒后消失并清除 forceVisible）
       outlineItem.classList.add("highlight")
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         outlineItem.classList.remove("highlight")
         manager.clearForceVisible()
+        locateHighlightRef.current = null
       }, 3000)
+      locateHighlightRef.current = { element: outlineItem, timer }
     }, 50)
-  }, [tree, searchQuery, manager])
+  }, [tree, searchQuery, manager, clearLocateHighlight])
+
+  useEffect(
+    () => () => {
+      clearLocateHighlight({ clearForceVisible: true })
+    },
+    [clearLocateHighlight],
+  )
 
   const handleLevelClick = useCallback(
     (level: number) => {

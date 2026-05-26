@@ -25,6 +25,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Conversation folder selector icon spacing** — Tightened the sync-folder selector padding and gave folder emoji icons a stable centered box so they no longer look clipped in the Conversations toolbar.
 - **Attachment-only submit shortcut** — Pressing Enter or Ctrl+Enter can now send messages that contain only images or attachments. (#555)
 - **Temporary panel preview interactions** — Dialogs, menus, dropdowns, and Prompt tab popups opened from the temporary Quick Buttons panel preview now keep the preview available while you interact with them, then close the preview automatically once the interaction ends.
+- **DeepSeek outline navigation** — Outline jumps to user questions in long DeepSeek conversations now use DeepSeek's native timeline when the message is outside the mounted DOM, avoid stale jump results during rapid clicks, and keep only the current outline item highlighted without showing bookmark-missing notices for normal outline jumps.
 
 ---
 

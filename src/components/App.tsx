@@ -1053,6 +1053,7 @@ export const App = () => {
   const globalSearchOpenSourceRef = useRef<GlobalSearchOpenSource>("ui")
   const lastShiftPressedAtRef = useRef(0)
   const [outlineSearchVersion, setOutlineSearchVersion] = useState(0)
+  const outlineSearchNavigationRequestIdRef = useRef(0)
   const settingsSearchRestoreFocusRef = useRef<HTMLElement | null>(null)
 
   const {
@@ -1965,6 +1966,7 @@ export const App = () => {
 
   const navigateToSearchResult = useCallback(
     async (item: GlobalSearchResultItem) => {
+      const navigationRequestId = ++outlineSearchNavigationRequestIdRef.current
       closeGlobalSettingsSearch({ restoreFocus: false })
 
       if (item.tipId) {
@@ -2027,6 +2029,10 @@ export const App = () => {
           }
         }
 
+        if (navigationRequestId !== outlineSearchNavigationRequestIdRef.current) {
+          return
+        }
+
         if (targetElement && targetElement.isConnected) {
           outlineManager.scrollToOutlineTarget(targetElement as HTMLElement)
           targetElement.classList.add("outline-highlight")
@@ -2046,7 +2052,6 @@ export const App = () => {
           }
         }
 
-        showToast(t("bookmarkContentMissing") || "收藏内容已被删除或折叠", 2000)
         return
       }
 
