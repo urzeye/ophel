@@ -19,6 +19,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Clearer outline tab icon** — Updated the Outline tab and tab-order settings icon to better communicate the outline hierarchy while keeping the previous document-style icon for empty states.
 - **Prompt floating controls** — Softened the selected-prompt bar styling and aligned it with the prompt queue above the input box.
 
+### 🐛 Bug Fixes
+
+- **Attachment-only submit shortcut** — Pressing Enter or Ctrl+Enter can now send messages that contain only images or attachments. (#555)
+
 ---
 
 ## [1.0.53] - 2026-05-25

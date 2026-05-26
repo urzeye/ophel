@@ -387,11 +387,9 @@ export class PromptManager {
     const editor = this.adapter.getTextareaElement() || this.adapter.findTextarea()
     const initialContent = this.getEditorContent(editor)
 
-    // 安全检查：如果编辑器为空，不执行提交（防止误触语音按钮等非发送控件）
+    // 安全检查：如果编辑器为空，后面只允许点击已启用的真实发送按钮。
+    // 这保留纯空输入保护，同时放行图片/附件-only 发送。
     const trimmedContent = initialContent.replace(/[\u200B\u200C\u200D\uFEFF]/g, "").trim()
-    if (!trimmedContent) {
-      return false
-    }
 
     let triggered = false
     let clickedButton: HTMLElement | null = null
@@ -426,6 +424,8 @@ export class PromptManager {
     }
 
     if (!triggered) {
+      if (!trimmedContent) return false
+
       const activeEditor =
         editor || this.adapter.getTextareaElement() || this.adapter.findTextarea()
       if (!activeEditor) return false
