@@ -1147,6 +1147,7 @@ export const App = () => {
   const launcherPeekDwellTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const launcherPeekHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastLauncherPeekPointerPositionRef = useRef<PointerPosition | null>(null)
+  const isLauncherPeekPointerStaleRef = useRef(false)
 
   const clearLauncherPeekDwellTimer = useCallback(() => {
     if (launcherPeekDwellTimerRef.current) {
@@ -1172,6 +1173,10 @@ export const App = () => {
   }, [clearLauncherPeekDwellTimer, clearLauncherPeekHideTimer])
 
   const isLauncherPeekRetainedByPointer = useCallback(() => {
+    if (isLauncherPeekPointerStaleRef.current) {
+      return false
+    }
+
     const retainedSelectors = [".gh-main-panel", ".quick-btn-group"]
     const pointerPosition = lastLauncherPeekPointerPositionRef.current
 
@@ -1261,6 +1266,7 @@ export const App = () => {
     (anchorRect: DOMRect, options?: { waitForGroupDwell?: boolean }) => {
       if (isPanelExpandedRef.current) return
 
+      isLauncherPeekPointerStaleRef.current = false
       clearLauncherPeekDwellTimer()
       clearLauncherPeekHideTimer()
 
@@ -1334,20 +1340,57 @@ export const App = () => {
 
   useEffect(() => {
     const updatePointerPosition = (event: PointerEvent) => {
+      isLauncherPeekPointerStaleRef.current = false
       lastLauncherPeekPointerPositionRef.current = {
         clientX: event.clientX,
         clientY: event.clientY,
       }
     }
 
+    const invalidatePointerPosition = () => {
+      isLauncherPeekPointerStaleRef.current = true
+      lastLauncherPeekPointerPositionRef.current = null
+      clearLauncherPeekDwellTimer()
+
+      if (isLauncherPeekingRef.current) {
+        scheduleLauncherPeekHide()
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        invalidatePointerPosition()
+      }
+    }
+
+    const handlePointerOut = (event: PointerEvent) => {
+      if (event.relatedTarget === null) {
+        invalidatePointerPosition()
+      }
+    }
+
+    const handleMouseOut = (event: MouseEvent) => {
+      if (event.relatedTarget === null) {
+        invalidatePointerPosition()
+      }
+    }
+
     window.addEventListener("pointermove", updatePointerPosition, true)
     window.addEventListener("pointerdown", updatePointerPosition, true)
+    window.addEventListener("blur", invalidatePointerPosition)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    document.addEventListener("pointerout", handlePointerOut, true)
+    document.addEventListener("mouseout", handleMouseOut, true)
 
     return () => {
       window.removeEventListener("pointermove", updatePointerPosition, true)
       window.removeEventListener("pointerdown", updatePointerPosition, true)
+      window.removeEventListener("blur", invalidatePointerPosition)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      document.removeEventListener("pointerout", handlePointerOut, true)
+      document.removeEventListener("mouseout", handleMouseOut, true)
     }
-  }, [])
+  }, [clearLauncherPeekDwellTimer, scheduleLauncherPeekHide])
 
   useEffect(() => {
     if (!isLauncherPeeking) {
