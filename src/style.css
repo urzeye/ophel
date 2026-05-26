@@ -171,7 +171,21 @@
   /* 使用 CSS 变量，支持动态主题切换 */
   background: var(--gh-header-bg, linear-gradient(135deg, #4285f4 0%, #34a853 100%));
   color: white;
-  /* ⭐ 整个 header 区域统一使用 pointer 光标，避免不同子区域光标不一致导致的视觉跳动 */
+  /* 整个 header 区域可拖动，按住后切换为抓取手势 */
+  cursor: grab;
+}
+
+.gh-panel-header:active,
+.gh-main-panel.dragging .gh-panel-header {
+  cursor: grabbing;
+}
+
+.gh-panel-header .gh-panel-controls {
+  cursor: auto;
+}
+
+.gh-panel-header .gh-panel-controls .gh-header-icon-btn,
+.gh-panel-header .gh-panel-controls .gh-header-icon-btn * {
   cursor: pointer;
 }
 
@@ -1568,6 +1582,13 @@
   transform: translateY(-2px);
 }
 
+.prompt-item.drop-above,
+.prompt-item.drop-below,
+.prompt-item.dragging,
+.prompt-item:active {
+  cursor: grabbing !important;
+}
+
 /* 悬浮操作按钮 - 默认隐藏 */
 .prompt-item .prompt-item-actions {
   display: none;
@@ -1594,15 +1615,61 @@
 
 /* 拖拽状态 */
 .prompt-item.dragging {
-  opacity: 0.5;
+  opacity: 0.74;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 9%, var(--gh-bg, #fff)) !important;
+  border: 1px dashed var(--gh-primary, #4285f4) !important;
+  box-shadow:
+    0 8px 18px rgba(66, 133, 244, 0.18),
+    inset 0 0 0 1px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent) !important;
+  transform: scale(0.985) !important;
 }
 
 .prompt-item.drop-above {
-  border-top: 2px solid var(--gh-primary, #4285f4) !important;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg, #fff)) !important;
+  outline: 2px dashed color-mix(in srgb, var(--gh-primary, #4285f4) 70%, transparent);
+  outline-offset: -3px;
+  box-shadow:
+    inset 0 3px 0 var(--gh-primary, #4285f4),
+    0 6px 16px rgba(66, 133, 244, 0.16) !important;
+  transform: translateY(-1px);
+}
+
+.prompt-item.drop-above::after,
+.prompt-item.drop-below::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 36px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--gh-primary, #4285f4);
+  box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3);
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.prompt-item.drop-above::after {
+  top: -3px;
 }
 
 .prompt-item.drop-below {
-  border-bottom: 2px solid var(--gh-primary, #4285f4) !important;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg, #fff)) !important;
+  outline: 2px dashed color-mix(in srgb, var(--gh-primary, #4285f4) 70%, transparent);
+  outline-offset: -3px;
+  box-shadow:
+    inset 0 -3px 0 var(--gh-primary, #4285f4),
+    0 6px 16px rgba(66, 133, 244, 0.16) !important;
+  transform: translateY(1px);
+}
+
+.prompt-item.drop-below::after {
+  bottom: -3px;
+}
+
+.prompt-item.dragging .prompt-item-actions,
+.prompt-item.drop-above .prompt-item-actions,
+.prompt-item.drop-below .prompt-item-actions {
+  display: none !important;
 }
 
 /* 分类标签悬停效果 */
@@ -1653,6 +1720,32 @@
  */
 .prompt-item.selected {
   background: var(--gh-selected-gradient) !important;
+  box-shadow:
+    inset 3px 0 0 var(--gh-primary, #4285f4),
+    inset -3px 0 0 var(--gh-primary, #4285f4),
+    0 3px 10px rgba(66, 133, 244, 0.12);
+}
+
+.prompt-item.selected.dragging {
+  box-shadow:
+    0 8px 18px rgba(66, 133, 244, 0.18),
+    inset 0 0 0 1px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent) !important;
+}
+
+.prompt-item.selected.drop-above {
+  box-shadow:
+    inset 3px 0 0 var(--gh-primary, #4285f4),
+    inset -3px 0 0 var(--gh-primary, #4285f4),
+    inset 0 3px 0 var(--gh-primary, #4285f4),
+    0 6px 16px rgba(66, 133, 244, 0.16) !important;
+}
+
+.prompt-item.selected.drop-below {
+  box-shadow:
+    inset 3px 0 0 var(--gh-primary, #4285f4),
+    inset -3px 0 0 var(--gh-primary, #4285f4),
+    inset 0 -3px 0 var(--gh-primary, #4285f4),
+    0 6px 16px rgba(66, 133, 244, 0.16) !important;
 }
 
 .prompt-action-btn {

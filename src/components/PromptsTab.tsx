@@ -123,6 +123,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   // 拖拽状态
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const dragNodeRef = useRef<HTMLDivElement | null>(null)
+  const dropIndicatorRootRef = useRef<ParentNode | null>(null)
 
   // 变量输入弹窗状态
   const [variableDialogState, setVariableDialogState] = useState<{
@@ -844,6 +845,25 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }
 
   // === 拖拽排序 ===
+  const clearPromptDropIndicators = useCallback(() => {
+    const roots = [
+      dropIndicatorRootRef.current,
+      dragNodeRef.current?.getRootNode() as ParentNode | undefined,
+      document,
+    ]
+    const seenRoots = new Set<ParentNode>()
+
+    roots.forEach((root) => {
+      if (!root || seenRoots.has(root)) return
+      seenRoots.add(root)
+      root.querySelectorAll(".drop-above, .drop-below").forEach((el) => {
+        el.classList.remove("drop-above", "drop-below")
+      })
+    })
+
+    dropIndicatorRootRef.current = null
+  }, [])
+
   const handleDragStart = (e: React.DragEvent, id: string, node: HTMLDivElement) => {
     const target = e.target as HTMLElement
     if (
@@ -855,6 +875,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
     setDraggedId(id)
     dragNodeRef.current = node
+    dropIndicatorRootRef.current = node.getRootNode() as ParentNode
     e.dataTransfer.effectAllowed = "move"
     // 必须调用 setData，部分站点在拖拽冒泡（bubbling）阶段会检测 dataTransfer 为空并取消拖拽
     e.dataTransfer.setData("text/plain", id)
@@ -870,25 +891,24 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     const target = e.currentTarget as HTMLElement
     const rect = target.getBoundingClientRect()
     const midpoint = rect.top + rect.height / 2
+    const targetRoot = target.getRootNode() as ParentNode
 
-    document.querySelectorAll(".drop-above, .drop-below").forEach((el) => {
-      el.classList.remove("drop-above", "drop-below")
-    })
+    dropIndicatorRootRef.current = targetRoot
+    clearPromptDropIndicators()
 
     if (e.clientY < midpoint) {
       target.classList.add("drop-above")
     } else {
       target.classList.add("drop-below")
     }
+    dropIndicatorRootRef.current = targetRoot
   }
 
   const handleDragEnd = () => {
     if (dragNodeRef.current) {
       dragNodeRef.current.classList.remove("dragging")
     }
-    document.querySelectorAll(".drop-above, .drop-below").forEach((el) => {
-      el.classList.remove("drop-above", "drop-below")
-    })
+    clearPromptDropIndicators()
     setDraggedId(null)
     dragNodeRef.current = null
   }

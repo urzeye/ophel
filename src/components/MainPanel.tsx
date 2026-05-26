@@ -678,7 +678,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            // cursor 由 CSS (.gh-panel-header) 统一控制为 pointer
+            // cursor 由 CSS (.gh-panel-header) 统一控制为 grab/grabbing
             userSelect: "none",
           }}>
           {/* 左侧：图标 + 标题悬停展示高级指南 */}
