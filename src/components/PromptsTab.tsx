@@ -33,6 +33,7 @@ import { APP_NAME } from "~utils/config"
 import { t } from "~utils/i18n"
 import { initCopyButtons, showCopySuccess } from "~utils/icons"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
+import { OPHEL_INTERACTION_LAYER_PROPS } from "~utils/dom-toolkit"
 import type { Prompt } from "~utils/storage"
 import { showToast } from "~utils/toast"
 import { createSafeHTML } from "~utils/trusted-types"
@@ -1083,6 +1084,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     return createPortal(
       <div
         className="prompt-modal gh-interactive"
+        {...OPHEL_INTERACTION_LAYER_PROPS}
         style={{
           position: "fixed",
           top: 0,
@@ -1330,6 +1332,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     return createPortal(
       <div
         className="prompt-modal gh-interactive"
+        {...OPHEL_INTERACTION_LAYER_PROPS}
         style={{
           position: "fixed",
           top: 0,
@@ -1442,6 +1445,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     return createPortal(
       <div
         className="prompt-preview-modal gh-interactive"
+        {...OPHEL_INTERACTION_LAYER_PROPS}
         onClick={(e) => {
           if (e.target === e.currentTarget) {
             closePreviewModal()
@@ -1551,6 +1555,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     return createPortal(
       <div
         className="import-dialog gh-interactive"
+        {...OPHEL_INTERACTION_LAYER_PROPS}
         onClick={(e) => {
           if (e.target === e.currentTarget) {
             closeImportDialog()

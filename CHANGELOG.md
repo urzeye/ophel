@@ -22,6 +22,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### 🐛 Bug Fixes
 
 - **Attachment-only submit shortcut** — Pressing Enter or Ctrl+Enter can now send messages that contain only images or attachments. (#555)
+- **Temporary panel preview interactions** — Dialogs, menus, dropdowns, and Prompt tab popups opened from the temporary Quick Buttons panel preview now keep the preview available while you interact with them, then close the preview automatically once the interaction ends.
 
 ---
 

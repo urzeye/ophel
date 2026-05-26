@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
-import { attachEditableKeyboardFocusGuard } from "~utils/dom-toolkit"
+import { attachEditableKeyboardFocusGuard, OPHEL_INTERACTION_LAYER_PROPS } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 
 // ==================== 对话框样式 ====================
@@ -146,6 +146,7 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
     <div
       ref={overlayRef}
       className="gh-dialog-overlay gh-interactive"
+      {...OPHEL_INTERACTION_LAYER_PROPS}
       onClick={closeOnOverlayClick ? onClose : undefined}>
       <div
         className={dialogClassName ? `gh-dialog ${dialogClassName}` : "gh-dialog"}

@@ -38,7 +38,7 @@ import PermissionsPage from "~tabs/options/pages/PermissionsPage"
 import ShortcutsPage from "~tabs/options/pages/ShortcutsPage"
 import SiteSettingsPage from "~tabs/options/pages/SiteSettingsPage"
 import { APP_DISPLAY_NAME, APP_ICON_URL } from "~utils/config"
-import { attachEditableKeyboardFocusGuard } from "~utils/dom-toolkit"
+import { attachEditableKeyboardFocusGuard, OPHEL_INTERACTION_LAYER_PROPS } from "~utils/dom-toolkit"
 import { setLanguage, t } from "~utils/i18n"
 
 const getLocalizedLabel = (labelKey: string, fallback: string): string => {
@@ -300,7 +300,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
   }
 
   return (
-    <div className="settings-modal-overlay" onClick={onClose}>
+    <div className="settings-modal-overlay" {...OPHEL_INTERACTION_LAYER_PROPS} onClick={onClose}>
       <div
         ref={containerRef}
         className={`settings-modal-container ${isMaximized ? "maximized" : ""}`}

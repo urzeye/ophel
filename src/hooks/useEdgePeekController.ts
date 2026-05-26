@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react"
 
+import { hasOphelInteractionLayer, isEditableKeyboardTarget } from "~utils/dom-toolkit"
+
 type EdgeSnapSide = "left" | "right" | null
 type PanelMode = "edge-snap" | "floating" | undefined
 
@@ -12,43 +14,11 @@ interface UseEdgePeekControllerOptions {
   isSettingsOpenRef: MutableRefObject<boolean>
 }
 
-const EDGE_PEEK_OVERLAY_SELECTOR = [
-  ".conversations-dialog-overlay",
-  ".conversations-folder-menu",
-  ".conversations-tag-filter-menu",
-  ".prompt-modal",
-  ".gh-dialog-overlay",
-  ".settings-modal-overlay",
-  ".settings-search-overlay",
-].join(", ")
-
 const PANEL_SEARCH_INPUT_CLASSES = new Set([
   "outline-search-input",
   "conversations-search-input",
   "prompt-search-input",
 ])
-
-const TEXT_INPUT_TYPES = new Set([
-  "",
-  "date",
-  "datetime-local",
-  "email",
-  "month",
-  "number",
-  "password",
-  "search",
-  "tel",
-  "text",
-  "time",
-  "url",
-  "week",
-])
-
-const isEditableElement = (element: HTMLElement): boolean => {
-  if (element instanceof HTMLTextAreaElement) return true
-  if (element instanceof HTMLInputElement) return TEXT_INPUT_TYPES.has(element.type)
-  return element.getAttribute("contenteditable") === "true"
-}
 
 const getFirstHtmlElementFromEvent = (event: Event): HTMLElement | null => {
   const target = event
@@ -119,7 +89,7 @@ export function useEdgePeekController({
   }, [])
 
   const hasOpenEdgePeekOverlay = useCallback(
-    () => getQueryRoots().some((root) => Boolean(root.querySelector(EDGE_PEEK_OVERLAY_SELECTOR))),
+    () => hasOphelInteractionLayer(getQueryRoots()),
     [getQueryRoots],
   )
 
@@ -266,7 +236,7 @@ export function useEdgePeekController({
 
     const handleFocusIn = (event: Event) => {
       const target = getFirstHtmlElementFromEvent(event)
-      if (!target || !isEditableElement(target)) return
+      if (!target || !isEditableKeyboardTarget(target)) return
 
       if (target.closest(".settings-modal-overlay, .settings-modal")) {
         return
@@ -279,7 +249,7 @@ export function useEdgePeekController({
 
     const handleFocusOut = (event: Event) => {
       const target = getFirstHtmlElementFromEvent(event)
-      if (!target || !isEditableElement(target)) return
+      if (!target || !isEditableKeyboardTarget(target)) return
 
       if (target.closest(".settings-modal-overlay, .settings-modal")) {
         return

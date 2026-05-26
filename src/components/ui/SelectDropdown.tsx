@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
 
 import { ChevronDownIcon } from "~components/icons"
+import { OPHEL_INTERACTION_LAYER_PROPS } from "~utils/dom-toolkit"
 
 export interface SelectDropdownOption {
   value: string
@@ -281,6 +282,7 @@ export const SelectDropdown: React.FC<SelectDropdownProps> = ({
           role="listbox"
           tabIndex={-1}
           className={menuClassName}
+          {...OPHEL_INTERACTION_LAYER_PROPS}
           onKeyDown={handleMenuKeyDown}
           style={{
             position: "absolute",

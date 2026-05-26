@@ -5,6 +5,7 @@ import { ArrowDownIcon, ChevronDownIcon, ClearIcon, EditIcon } from "~components
 import { Button, Tooltip } from "~components/ui"
 import { PRESET_EMOJIS, TAG_COLORS } from "~constants"
 import type { Conversation, Folder, Tag } from "~core/conversation-manager"
+import { OPHEL_INTERACTION_LAYER_PROPS } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 
 // ==================== 对话框样式 (从油猴脚本迁移) ====================
@@ -150,7 +151,10 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({ children, onClose 
 
   // 对话框内容
   const dialogContent = (
-    <div className="conversations-dialog-overlay" onClick={onClose}>
+    <div
+      className="conversations-dialog-overlay"
+      {...OPHEL_INTERACTION_LAYER_PROPS}
+      onClick={onClose}>
       <div className="conversations-dialog" onClick={(e) => e.stopPropagation()}>
         {children}
       </div>

@@ -95,6 +95,33 @@ export const EDITABLE_KEYBOARD_GUARD_EVENTS: readonly EditableKeyboardGuardEvent
   "keyup",
 ]
 
+export const OPHEL_INTERACTION_LAYER_ATTR = "data-ophel-interaction-layer"
+export const OPHEL_INTERACTION_LAYER_PROPS = {
+  [OPHEL_INTERACTION_LAYER_ATTR]: "true",
+} as const
+
+export const OPHEL_INTERACTION_LAYER_SELECTOR = [
+  `[${OPHEL_INTERACTION_LAYER_ATTR}="true"]`,
+  ".gh-dialog-overlay",
+  ".conversations-dialog-overlay",
+  ".conversations-folder-menu",
+  ".conversations-tag-filter-menu",
+  ".prompt-modal",
+  ".prompt-preview-modal",
+  ".import-dialog",
+  ".settings-modal-overlay",
+  ".settings-search-overlay",
+  ".quick-menu-popover",
+].join(", ")
+
+export const hasOphelInteractionLayer = (roots?: Array<Element | ShadowRoot>): boolean => {
+  const queryRoots =
+    roots ??
+    (typeof document !== "undefined" && document.body ? ([document.body] as Element[]) : [])
+
+  return queryRoots.some((root) => Boolean(root.querySelector(OPHEL_INTERACTION_LAYER_SELECTOR)))
+}
+
 export const isEditableKeyboardTarget = (target: EventTarget | null): target is HTMLElement => {
   if (!(target instanceof HTMLElement)) {
     return false

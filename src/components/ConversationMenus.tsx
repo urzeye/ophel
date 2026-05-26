@@ -15,6 +15,7 @@ import { PinIcon } from "~components/icons/PinIcon"
 import { RenameIcon } from "~components/icons/RenameIcon"
 import { TagIcon } from "~components/icons/TagIcon"
 import type { Conversation, Folder } from "~core/conversation-manager"
+import { OPHEL_INTERACTION_LAYER_PROPS } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 
 // ==================== 菜单样式  ====================
@@ -146,6 +147,7 @@ export const ContextMenu: React.FC<MenuProps> = ({ anchorEl, onClose, children }
     <div
       ref={menuRef}
       className="conversations-folder-menu"
+      {...OPHEL_INTERACTION_LAYER_PROPS}
       style={{
         position: "fixed",
         top: menuPosition ? `${menuPosition.top}px` : "-9999px",
