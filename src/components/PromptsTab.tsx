@@ -92,6 +92,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const submitShortcut = useSettingsStore(
     (state) => state.settings.features?.prompts?.submitShortcut ?? "enter",
   )
+  const promptQueueEnabled = useSettingsStore(
+    (state) => state.settings.features?.prompts?.promptQueue ?? false,
+  )
 
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [categories, setCategories] = useState<string[]>([])
@@ -463,7 +466,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     })
 
     if (result.status === "disabled") {
-      showToast(t("promptQueueEnableHint") || "Enable Prompt Queue to add prompts to queue", 3000)
+      showToast(t("promptQueueEnableHint") || "Please enable Prompt Queue first", 3000)
       return
     }
 
@@ -480,6 +483,11 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }
 
   const doEnqueuePrompt = (prompt: Prompt, splitByLine = false) => {
+    if (!promptQueueEnabled) {
+      showToast(t("promptQueueEnableHint") || "Please enable Prompt Queue first", 3000)
+      return
+    }
+
     const variables = extractVariables(prompt.content)
     if (variables.length > 0) {
       setVariableDialogState({

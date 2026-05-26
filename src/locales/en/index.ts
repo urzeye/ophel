@@ -354,7 +354,7 @@ export const en = {
   promptQueued: "Added {count} prompt(s) to queue",
   promptAddToQueue: "Add to queue",
   promptSplitLinesToQueue: "Split lines and add to queue",
-  promptQueueEnableHint: "Enable Prompt Queue to add prompts to queue",
+  promptQueueEnableHint: "Please enable Prompt Queue first",
   promptEnqueueEmpty: "Nothing to queue",
   copied: "Copied to clipboard",
   cleared: "Content cleared",

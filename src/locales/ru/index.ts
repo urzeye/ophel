@@ -341,6 +341,7 @@ export const ru = {
   promptSent: "Промпт отправлен",
   promptSendFailed: "Не удалось отправить, промпт сохранен в поле ввода",
   promptQueued: "В очередь добавлено: {count}",
+  promptQueueEnableHint: "Сначала включите очередь промптов",
   copied: "Скопировано",
   cleared: "Очищено",
   refreshed: "Обновлено",

@@ -344,6 +344,7 @@ export const fr = {
   promptSent: "Prompt envoyé",
   promptSendFailed: "Échec de l'envoi, le prompt reste dans le champ de saisie",
   promptQueued: "{count} prompt(s) ajoutés à la file",
+  promptQueueEnableHint: "Veuillez d'abord activer la file d'attente des prompts",
   copied: "Copié dans le presse-papiers",
   cleared: "Effacé",
   refreshed: "Actualisé",

@@ -342,6 +342,7 @@ export const pt = {
   promptSent: "Prompt enviado",
   promptSendFailed: "Falha ao enviar, o prompt permanece na caixa de entrada",
   promptQueued: "{count} prompt(s) adicionados à fila",
+  promptQueueEnableHint: "Ative primeiro a fila de prompts",
   copied: "Copiado para a área de transferência",
   cleared: "Limpo",
   refreshed: "Atualizado",

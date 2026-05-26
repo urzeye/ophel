@@ -343,6 +343,7 @@ export const es = {
   promptSent: "Prompt enviado",
   promptSendFailed: "No se pudo enviar; el prompt permanece en el cuadro de entrada",
   promptQueued: "{count} prompt(s) añadidos a la cola",
+  promptQueueEnableHint: "Activa primero la cola de prompts",
   copied: "Copiado al portapapeles",
   cleared: "Limpio",
   refreshed: "Actualizado",

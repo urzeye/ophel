@@ -215,7 +215,7 @@ export const zhTW = {
   promptQueued: "已加入隊列 {count} 條",
   promptAddToQueue: "加入隊列",
   promptSplitLinesToQueue: "按行拆分並加入隊列",
-  promptQueueEnableHint: "啟用提示詞隊列後可加入隊列",
+  promptQueueEnableHint: "請先啟用提示詞隊列功能",
   promptEnqueueEmpty: "沒有可加入隊列的內容",
   copied: "已複製到剪貼簿",
   cleared: "已清除內容",

@@ -344,6 +344,7 @@ export const ko = {
   promptSent: "프롬프트 전송됨",
   promptSendFailed: "전송에 실패했습니다. 프롬프트는 입력창에 유지됩니다",
   promptQueued: "{count}개의 프롬프트를 대기열에 추가했습니다",
+  promptQueueEnableHint: "먼저 프롬프트 대기열 기능을 활성화하세요",
   copied: "클립보드에 복사됨",
   cleared: "내용이 지워짐",
   refreshed: "새로고침됨",

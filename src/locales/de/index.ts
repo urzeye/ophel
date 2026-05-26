@@ -344,6 +344,7 @@ export const de = {
   promptSent: "Prompt gesendet",
   promptSendFailed: "Senden fehlgeschlagen, Prompt bleibt im Eingabefeld",
   promptQueued: "{count} Prompt(s) zur Warteschlange hinzugefügt",
+  promptQueueEnableHint: "Bitte aktivieren Sie zuerst die Prompt-Warteschlange",
   copied: "In Zwischenablage kopiert",
   cleared: "Geleert",
   refreshed: "Aktualisiert",

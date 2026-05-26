@@ -349,6 +349,7 @@ export const ja = {
   promptSent: "プロンプトを送信しました",
   promptSendFailed: "送信に失敗しました。プロンプトは入力欄に残りました",
   promptQueued: "{count} 件をキューに追加しました",
+  promptQueueEnableHint: "先にプロンプトキュー機能を有効にしてください",
   copied: "クリップボードにコピーしました",
   cleared: "内容を消去しました",
   refreshed: "更新しました",
