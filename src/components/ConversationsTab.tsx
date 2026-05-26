@@ -661,7 +661,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         title: optionLabel,
         label: (
           <>
-            {folder.icon && <span style={{ flexShrink: 0 }}>{folder.icon}</span>}
+            {folder.icon && <span className="conversations-folder-select-icon">{folder.icon}</span>}
             <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
               {folderName}
             </span>

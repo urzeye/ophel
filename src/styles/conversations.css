@@ -139,7 +139,7 @@
 }
 
 .conversations-folder-select {
-  padding: 5px 8px;
+  padding: 4px 8px;
   border: 1px solid var(--gh-input-border, #d1d5db);
   border-radius: 6px;
   background: var(--gh-bg-secondary, #f9fafb);
@@ -149,10 +149,22 @@
   min-width: 80px;
   height: 32px;
   width: 100%;
-  line-height: 1;
+  line-height: 1.35;
   font-family: inherit;
   appearance: none;
   -webkit-appearance: none;
+}
+
+.conversations-folder-select-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  min-width: 16px;
+  height: 18px;
+  font-size: 15px;
+  line-height: 1;
 }
 
 .conversations-folder-select:hover {
