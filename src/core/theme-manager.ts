@@ -165,12 +165,16 @@ export class ThemeManager {
     return preference
   }
 
+  private isHostThemeSyncActive(): boolean {
+    return this.hostThemeSyncEnabled && (this.adapter?.supportsHostThemeSync() ?? true)
+  }
+
   /**
    * 将 Ophel 的主题偏好同步到宿主页。
    * 这一步可能调用站点 adapter 的原生切换逻辑，也可能退回到通用 DOM fallback。
    */
   private syncHostTheme(targetMode: ThemeMode, preference: ThemePreference = targetMode) {
-    if (!this.hostThemeSyncEnabled) {
+    if (!this.isHostThemeSyncActive()) {
       this.applyTheme(targetMode)
       return
     }
@@ -440,7 +444,7 @@ export class ThemeManager {
    * 由各站点 adapter 自行声明，初始化时一次性挂载。
    */
   private injectNativeThemeOverrideCss() {
-    if (!this.adapter || !this.hostThemeSyncEnabled) return
+    if (!this.adapter || !this.isHostThemeSyncActive()) return
 
     // 如果 adapter 未声明覆盖样式或已注入，则跳过
     const cssContent = this.adapter.getNativeThemeCss()
@@ -459,7 +463,7 @@ export class ThemeManager {
   }
 
   private syncNativeThemeOverrideCssState() {
-    if (!this.hostThemeSyncEnabled) {
+    if (!this.isHostThemeSyncActive()) {
       this.removeNativeThemeOverrideCss()
       return
     }
@@ -472,6 +476,11 @@ export class ThemeManager {
   setAdapter(adapter: SiteAdapter | null) {
     this.adapter = adapter
     this.syncNativeThemeOverrideCssState()
+
+    if (!this.isHostThemeSyncActive()) {
+      this.stopThemeMonitoring()
+      this.syncPluginUiTheme(this.mode)
+    }
   }
 
   /**
@@ -497,7 +506,7 @@ export class ThemeManager {
       return
     }
 
-    if (!nextEnabled) {
+    if (!this.isHostThemeSyncActive()) {
       this.stopThemeMonitoring()
       this.syncPluginUiTheme(this.mode)
       return
@@ -716,7 +725,7 @@ export class ThemeManager {
   applyTheme(targetMode?: ThemeMode) {
     const mode = targetMode || this.mode
 
-    if (this.hostThemeSyncEnabled && (!this.adapter || !this.adapter.hasCustomToggleTheme())) {
+    if (this.isHostThemeSyncActive() && (!this.adapter || !this.adapter.hasCustomToggleTheme())) {
       this.applyGenericHostThemeFallback(mode)
     }
 
@@ -885,7 +894,7 @@ ${cssVars}
    * 当站点自身主题变化时，会把变化同步回 Ophel 的内部主题状态。
    */
   startThemeMonitoring() {
-    if (!this.hostThemeSyncEnabled) {
+    if (!this.isHostThemeSyncActive()) {
       this.stopThemeMonitoring()
       this.syncPluginUiTheme(this.mode)
       return
@@ -1081,7 +1090,7 @@ ${cssVars}
   async toggle(event?: ThemeTransitionOrigin): Promise<ThemeMode> {
     // 使用 detectHostThemeMode 统一检测当前宿主页状态
     const currentMode =
-      this.preference === "system" || !this.hostThemeSyncEnabled
+      this.preference === "system" || !this.isHostThemeSyncActive()
         ? this.mode
         : this.detectHostThemeMode()
     const nextMode: ThemeMode = currentMode === "dark" ? "light" : "dark"
@@ -1114,7 +1123,11 @@ ${cssVars}
     // 执行主题切换的核心逻辑
     const doToggle = () => {
       // 优先使用适配器的原生切换逻辑 (针对 Gemini Enterprise)
-      if (this.adapter && typeof this.adapter.toggleTheme === "function") {
+      if (
+        this.isHostThemeSyncActive() &&
+        this.adapter &&
+        typeof this.adapter.toggleTheme === "function"
+      ) {
         this.adapter.toggleTheme(nextMode).catch(() => {})
       }
       // 同步应用主题（包括 Shadow DOM）
@@ -1189,6 +1202,16 @@ ${cssVars}
 
     // 标记跳过下一次检测，防止 observer 立即根据中间态把结果回写掉
     this.skipNextDetection = true
+    if (!this.isHostThemeSyncActive()) {
+      this.mode = nextMode
+      this.emitChange()
+      if (this.onModeChange) {
+        this.onModeChange(nextMode, this.preference)
+      }
+      this.startThemeMonitoring()
+      return nextMode
+    }
+
     // 触发回调通知 React 更新状态（动画完成后）
     if (this.onModeChange) {
       this.onModeChange(nextMode, this.preference)
@@ -1234,6 +1257,9 @@ ${cssVars}
       if (modeChanged) {
         this.mode = resolved
         this.emitChange()
+        if (!this.isHostThemeSyncActive()) {
+          this.syncPluginUiTheme(resolved)
+        }
       }
       if (this.onModeChange) {
         this.onModeChange(resolved, this.preference)
@@ -1241,7 +1267,7 @@ ${cssVars}
       return { mode: resolved, animated }
     }
 
-    const currentMode = this.hostThemeSyncEnabled ? this.detectHostThemeMode() : this.mode
+    const currentMode = this.isHostThemeSyncActive() ? this.detectHostThemeMode() : this.mode
 
     // 如果已经是目标模式，仅更新偏好
     if (currentMode === normalizedPreference) {

@@ -170,7 +170,7 @@ export async function syncHostThemeWithSettings(ctx: ModulesContext): Promise<vo
         ? "dark"
         : "light"
 
-  if (!(settings.theme?.syncNativePageTheme ?? true)) {
+  if (!(settings.theme?.syncNativePageTheme ?? true) || !adapter.supportsHostThemeSync()) {
     modules.themeManager?.applyTheme(targetTheme)
     return
   }

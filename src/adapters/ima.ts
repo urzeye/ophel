@@ -91,6 +91,10 @@ export class ImaAdapter extends SiteAdapter {
     return { primary: "#07a45f", secondary: "#05854d" }
   }
 
+  supportsHostThemeSync(): boolean {
+    return false
+  }
+
   getSessionId(): string {
     const match = window.location.pathname.match(IMA_CHAT_PATH_PATTERN)
     return match?.[1] || ""

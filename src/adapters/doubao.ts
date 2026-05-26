@@ -99,6 +99,10 @@ export class DoubaoAdapter extends SiteAdapter {
     return { primary: "#315efb", secondary: "#0f6eff" }
   }
 
+  supportsHostThemeSync(): boolean {
+    return false
+  }
+
   getTextareaSelectors(): string[] {
     return [
       '[data-slate-editor="true"]',

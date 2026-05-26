@@ -532,6 +532,14 @@ export abstract class SiteAdapter {
   }
 
   /**
+   * 当前站点是否支持由 Ophel 联动宿主页主题。
+   * 不支持的站点仍可独立切换 Ophel 面板主题。
+   */
+  supportsHostThemeSync(): boolean {
+    return true
+  }
+
+  /**
    * 切换站点主题（子类可覆盖以实现站点特定的主题切换逻辑）
    * @param targetMode 目标主题模式
    * @returns 是否成功切换

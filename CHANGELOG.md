@@ -21,6 +21,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Doubao and Ima panel theme switching** — Ophel's panel theme now switches independently on sites that do not support native page theme changes, fixing Doubao getting stuck in dark mode and keeping rendered user-query code blocks readable.
 - **ChatGPT clean mode sponsored cards** — Clean Mode now hides ChatGPT sponsored recommendation cards, including the new ad blocks with "Ad options" menus.
 - **Doubao outline extraction** — Doubao outlines now recognize the newer `md-box-root` answer DOM, restoring headings for conversations that previously showed an empty outline. (#565)
 - **Conversation folder selector icon spacing** — Tightened the sync-folder selector padding and gave folder emoji icons a stable centered box so they no longer look clipped in the Conversations toolbar.

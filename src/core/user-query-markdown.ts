@@ -48,6 +48,7 @@ const USER_QUERY_MARKDOWN_CSS = `
 .gh-user-query-markdown {
   font-size: 15px;
   line-height: 1.6;
+  color: inherit;
   /* 默认：浅色主题代码块（透明叠加，叠加在气泡背景之上，适配任意站点/主题） */
   --gh-user-query-code-bg: rgba(0, 0, 0, 0.06);
   --gh-user-query-code-border: rgba(0, 0, 0, 0.08);
@@ -61,6 +62,10 @@ const USER_QUERY_MARKDOWN_CSS = `
   --gh-user-query-code-variable: #e36209;
   --gh-user-query-code-scrollbar: rgba(0, 0, 0, 0.2);
   --gh-user-query-code-scrollbar-hover: rgba(0, 0, 0, 0.35);
+}
+
+.gh-user-query-markdown.gh-markdown-preview {
+  color: inherit;
 }
 
 /* 为无原生气泡背景的站点（DeepSeek、Kimi 等）提供统一气泡底色
@@ -220,8 +225,10 @@ html[dark-theme] .gh-user-query-markdown.gh-user-query-markdown-gemini {
 }
 
 /* 行内代码 */
+.gh-user-query-markdown.gh-markdown-preview :not(pre) > code:not(.hljs),
 .gh-user-query-markdown :not(pre) > code {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--gh-user-query-code-bg) !important;
+  color: var(--gh-user-query-code-fg) !important;
   padding: 0.2em 0.4em;
   border-radius: 4px;
   font-size: 0.9em;
@@ -291,6 +298,7 @@ html[dark-theme] .gh-user-query-markdown.gh-user-query-markdown-gemini {
   padding: 0.5em 1em;
   border-left: 3px solid #4285f4;
   background: rgba(0, 0, 0, 0.03);
+  color: inherit;
   border-radius: 0 4px 4px 0;
 }
 
