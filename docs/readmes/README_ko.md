@@ -344,6 +344,7 @@ pnpm serve:userscript:assets   # 아이콘/스타일 등 정적 어셋을 로컬
     <tr>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/hugo1120"><img src="https://avatars.githubusercontent.com/u/69150726?v=4&amp;s=80" width="80px;" alt="hugo2233"/><br /><sub><b>hugo2233</b></sub></a><br /><span title="Promotion">📣</span></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/t0ny-peng"><img src="https://avatars.githubusercontent.com/u/4816327?v=4&amp;s=80" width="80px;" alt="t0ny-peng"/><br /><sub><b>t0ny-peng</b></sub></a><br /><span title="Code">💻</span></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/mrpops2ko"><img src="https://avatars.githubusercontent.com/u/34683587?v=4&amp;s=80" width="80px;" alt="mrpops2ko"/><br /><sub><b>mrpops2ko</b></sub></a><br /><span title="Code">💻</span></td>
     </tr>
   </tbody>
 </table>
