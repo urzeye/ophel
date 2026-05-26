@@ -15,6 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🔧 Improvements
 
+- **Direct row drag sorting** — Prompt items and conversation folders can now be reordered by long-press dragging the row itself, matching the existing conversation-item interaction without requiring a dedicated drag handle.
 - **Clearer outline tab icon** — Updated the Outline tab and tab-order settings icon to better communicate the outline hierarchy while keeping the previous document-style icon for empty states.
 - **Prompt floating controls** — Softened the selected-prompt bar styling and aligned it with the prompt queue above the input box.
 
