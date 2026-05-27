@@ -1798,7 +1798,13 @@ export class GeminiAdapter extends SiteAdapter {
 
   getCleanModeConfig() {
     return {
-      hide: ["hallucination-disclaimer", "g1-dynamic-upsell-button"],
+      hide: [
+        "hallucination-disclaimer",
+        "g1-dynamic-upsell-button",
+        ".share-viewer_footer_disclaimer",
+        ".share-landing-page_footer",
+        'share-landing-page immersive-share-landing-page .page:has(structured-content-container[data-test-id="deep-research-block"]) > .footer',
+      ],
     }
   }
 
