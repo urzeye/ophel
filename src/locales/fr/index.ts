@@ -1197,6 +1197,11 @@ Donnez le code puis un résumé des améliorations.`,
   exportIncludeThoughtsDesc:
     "Inclure et déplier automatiquement le raisonnement lors de l'export (en blocs de citation)",
   exportAttachmentsLabel: "Pièces jointes",
+  exportPackagingLabel: "Conditionnement de l'export",
+  exportPackagingDesc:
+    "Choisissez un fichier Markdown unique ou une archive ZIP. ZIP place les pièces jointes téléchargeables dans assets et les référence avec des chemins relatifs.",
+  exportPackagingMarkdown: "Fichier Markdown unique",
+  exportPackagingZip: "Archive ZIP",
 
   // ======== Popup ========
   popupCurrentSite: "Site Actuel",

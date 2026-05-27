@@ -289,6 +289,7 @@ const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "export-filename-timestamp": "exportFilenameTimestamp",
   "export-include-thoughts": "exportIncludeThoughtsLabel",
   "export-images-base64": "exportImagesToBase64Label",
+  "export-packaging": "exportPackagingLabel",
   "gemini-markdown-fix": "markdownFixLabel",
   "gemini-policy-max-retries": "maxRetriesLabel",
   "gemini-policy-retry": "policyRetryLabel",

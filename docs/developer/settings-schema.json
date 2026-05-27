@@ -23,6 +23,14 @@
     "userQueryMarkdown": false
   },
 
+  "export": {
+    "customUserName": "",
+    "customModelName": "",
+    "exportFilenameTimestamp": false,
+    "includeThoughts": true,
+    "packaging": "markdown"
+  },
+
   "theme": {
     "sites": {
       "gemini": {

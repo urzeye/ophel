@@ -1350,6 +1350,11 @@ export const ru = {
   exportIncludeThoughtsDesc:
     "Включать и автоматически разворачивать рассуждения при экспорте (в виде цитатных блоков)",
   exportAttachmentsLabel: "Вложения",
+  exportPackagingLabel: "Упаковка экспорта",
+  exportPackagingDesc:
+    "Выберите один файл Markdown или ZIP-архив. ZIP сохраняет загружаемые вложения в assets и ссылается на них относительными путями.",
+  exportPackagingMarkdown: "Один файл Markdown",
+  exportPackagingZip: "ZIP-архив",
 
   // ==================== Prompt Queue ====================
   queueTitle: "Очередь промптов",

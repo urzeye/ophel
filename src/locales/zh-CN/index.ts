@@ -652,6 +652,11 @@ export const zhCN = {
   exportIncludeThoughtsLabel: "导出包含思维链",
   exportIncludeThoughtsDesc: "导出时包含并自动展开思维链内容（使用引用块区分）",
   exportAttachmentsLabel: "附件",
+  exportPackagingLabel: "导出打包方式",
+  exportPackagingDesc:
+    "选择 Markdown 单文件或 ZIP 压缩包；ZIP 会把可下载附件放入 assets 并用相对路径引用",
+  exportPackagingMarkdown: "Markdown 单文件",
+  exportPackagingZip: "ZIP 压缩包",
   // 大纲高级设置
   outlineAutoUpdateLabel: "对话期间自动更新大纲",
   outlineAutoUpdateDesc: "AI 生成内容时自动刷新目录结构",

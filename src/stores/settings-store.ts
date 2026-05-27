@@ -240,6 +240,22 @@ const normalizePanelSettings = (panel?: Partial<Settings["panel"]>): Settings["p
   }
 }
 
+const normalizeExportSettings = (
+  exportSettings?: Partial<Settings["export"]>,
+): Settings["export"] => {
+  const defaults = DEFAULT_SETTINGS.export
+  const packaging =
+    exportSettings?.packaging === "zip" || exportSettings?.packaging === "markdown"
+      ? exportSettings.packaging
+      : defaults.packaging
+
+  return {
+    ...defaults,
+    ...exportSettings,
+    packaging,
+  }
+}
+
 const normalizeSettings = (settings: SettingsInput): Settings => {
   const {
     collapsedButtons: _legacyCollapsedButtons,
@@ -316,10 +332,7 @@ const normalizeSettings = (settings: SettingsInput): Settings => {
       ...DEFAULT_SETTINGS.readingHistory,
       ...settings.readingHistory,
     },
-    export: {
-      ...DEFAULT_SETTINGS.export,
-      ...settings.export,
-    },
+    export: normalizeExportSettings(settings.export),
     geminiEnterprise: {
       ...DEFAULT_SETTINGS.geminiEnterprise,
       ...settings.geminiEnterprise,

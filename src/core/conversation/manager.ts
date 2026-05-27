@@ -1052,11 +1052,13 @@ export class ConversationManager {
     const initialScrollTop = scrollContainer?.scrollTop ?? null
     const initialWindowScrollY = window.scrollY
     const settings = useSettingsStore.getState().settings
+    const exportPackaging = settings.export?.packaging === "zip" ? "zip" : "markdown"
 
     const exportContext: ExportLifecycleContext = {
       conversationId: convId,
       format,
       includeThoughts: settings.export?.includeThoughts ?? true,
+      packaging: exportPackaging,
     }
 
     let exportLifecycleEnabled = false
@@ -1088,9 +1090,11 @@ export class ConversationManager {
       exportLifecycleEnabled = true
       exportLifecycleState = await this.siteAdapter.prepareConversationExport(exportContext)
 
-      // 提取对话内容。未接入附件导出的站点会返回 null，继续走旧的单文件路径。
-      const exportBundle =
-        format === "markdown" ? await this.siteAdapter.extractExportBundle(exportContext) : null
+      // 只有 ZIP 模式才收集附件资产；Markdown 模式保持单文件导出路径。
+      const shouldPackageAssets = format === "markdown" && exportPackaging === "zip"
+      const exportBundle = shouldPackageAssets
+        ? await this.siteAdapter.extractExportBundle(exportContext)
+        : null
       const messages =
         exportBundle?.messages || (await this.extractConversationMessages(exportContext))
       if (messages.length === 0) {
@@ -1143,12 +1147,11 @@ export class ConversationManager {
         filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.md`
         mimeType = "text/markdown;charset=utf-8"
 
-        const assets = this.normalizeExportAssets(exportBundle)
-        if (assets.length > 0) {
+        if (shouldPackageAssets) {
           const downloaded = await downloadExportPackage({
             markdownFilename: filename,
             markdownContent: content,
-            assets,
+            assets: this.normalizeExportAssets(exportBundle),
             packageFilename: `${filenamePrefix}${safeTitle}${timestampSuffix}.zip`,
             metadata,
           })

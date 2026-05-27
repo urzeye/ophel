@@ -1191,6 +1191,11 @@ export const ko = {
   exportIncludeThoughtsLabel: "내보내기에 사고 과정 포함",
   exportIncludeThoughtsDesc: "내보낼 때 사고 과정을 포함하고 자동으로 펼칩니다(인용 블록으로 구분)",
   exportAttachmentsLabel: "첨부 파일",
+  exportPackagingLabel: "내보내기 패키징",
+  exportPackagingDesc:
+    "단일 Markdown 파일 또는 ZIP 패키지를 선택합니다. ZIP은 다운로드 가능한 첨부 파일을 assets에 저장하고 상대 경로로 참조합니다",
+  exportPackagingMarkdown: "Markdown 단일 파일",
+  exportPackagingZip: "ZIP 패키지",
 
   // ======== Popup ========
   popupCurrentSite: "현재 사이트",

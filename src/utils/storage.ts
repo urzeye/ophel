@@ -52,6 +52,7 @@ export type SiteId =
 
 // 主题模式
 export type ThemeMode = "light" | "dark" | "system"
+export type ExportPackaging = "markdown" | "zip"
 
 // 站点主题配置
 export interface SiteThemeConfig {
@@ -92,6 +93,7 @@ export interface ExportSettings {
   customModelName?: string // 自定义 AI 名称
   exportFilenameTimestamp?: boolean // 导出文件名包含时间戳
   includeThoughts?: boolean // 导出包含思维链
+  packaging?: ExportPackaging // 导出打包方式
 }
 
 // AI Studio 设置
@@ -407,6 +409,7 @@ export const DEFAULT_SETTINGS: Settings = {
     customModelName: "",
     exportFilenameTimestamp: false,
     includeThoughts: true,
+    packaging: "markdown",
   },
 
   theme: {

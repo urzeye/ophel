@@ -257,7 +257,9 @@ export const SETTING_ID_ALIASES: Record<string, string> = {
   "features.outline.panelBookmarkMode": "outline-panel-bookmark-mode",
   "features.outline.preventAutoScroll": "outline-prevent-auto-scroll",
   "features.prompts.promptQueue": "prompt-queue",
+  "features.export.packaging": "export-packaging",
   "features.export.includeThoughts": "export-include-thoughts",
+  "export.packaging": "export-packaging",
   "features.readingHistory.persistence": "reading-history-persistence",
   "features.content.assistantMermaid": "content-assistant-mermaid",
   "features.content.formulaCopy": "content-formula-copy",
@@ -574,6 +576,11 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     settingId: "conversation-sync-delete",
     title: "删除时同步删除云端",
     keywords: ["conversation", "sync", "delete", "cloud", "删除", "云端"],
+  },
+  {
+    settingId: "export-packaging",
+    title: "导出打包方式",
+    keywords: ["export", "packaging", "markdown", "zip", "assets", "导出", "附件"],
   },
   {
     settingId: "export-custom-user-name",

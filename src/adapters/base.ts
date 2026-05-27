@@ -8,6 +8,7 @@ import { SITE_IDS } from "~constants/defaults"
 import type { MarkdownFixerConfig } from "~core/markdown-fixer"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import type { ExportBundle, ExportFormat, ExportMessage } from "~utils/exporter"
+import type { ExportPackaging } from "~utils/storage"
 
 // ==================== 类型定义 ====================
 
@@ -84,6 +85,7 @@ export interface ExportLifecycleContext {
   conversationId: string
   format: ExportFormat
   includeThoughts: boolean
+  packaging: ExportPackaging
 }
 
 export interface ConversationObserverConfig {
