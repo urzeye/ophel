@@ -2714,15 +2714,20 @@ export const App = () => {
 
   // 初始化页面内收藏图标
   useEffect(() => {
-    if (!outlineManager || !adapter || !hasSettings) return
+    if (!isSettingsHydrated || !outlineManager || !adapter || !hasSettings) return
 
     const mode = inlineBookmarkMode || "always"
+    if (mode === "hidden") {
+      InlineBookmarkManager.cleanupInjectedArtifacts()
+      return
+    }
+
     const inlineBookmarkManager = new InlineBookmarkManager(outlineManager, adapter, mode)
 
     return () => {
       inlineBookmarkManager.cleanup()
     }
-  }, [outlineManager, adapter, inlineBookmarkMode, hasSettings])
+  }, [outlineManager, adapter, inlineBookmarkMode, hasSettings, isSettingsHydrated])
 
   // 滚动锁定切换
   const handleToggleScrollLock = useCallback(() => {

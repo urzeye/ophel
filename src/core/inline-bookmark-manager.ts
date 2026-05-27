@@ -43,6 +43,8 @@ export class InlineBookmarkManager {
 
     // 1. 注入全局 CSS 变量定义（Head）
     this.injectGlobalStyles()
+    // 设置初始显示模式
+    this.setDisplayMode(displayMode)
 
     // 订阅大纲变化
     this.unsubscribe = outlineManager.subscribe(() => {
@@ -56,8 +58,6 @@ export class InlineBookmarkManager {
 
     // 初始注入
     this.injectBookmarkIcons()
-    // 设置初始显示模式
-    this.setDisplayMode(displayMode)
   }
 
   /**
@@ -190,12 +190,21 @@ export class InlineBookmarkManager {
     )
     // 这会触发全局 CSS 变量的更新，进而通过继承影响所有 Shadow DOM 内的图标
     document.body.classList.add(`gh-inline-bookmark-mode-${mode}`)
+
+    if (mode === "hidden") {
+      this.removeInjectedIcons()
+    }
   }
 
   /**
    * 注入收藏图标到所有标题元素
    */
   injectBookmarkIcons() {
+    if (this.displayMode === "hidden") {
+      this.removeInjectedIcons()
+      return
+    }
+
     const flatItems = this.outlineManager.getFlatItems()
     const sessionId = this.adapter.getSessionId()
     const bookmarkStore = useBookmarkStore.getState()
@@ -303,6 +312,11 @@ export class InlineBookmarkManager {
    * 更新所有图标状态
    */
   updateAllIconStates() {
+    if (this.displayMode === "hidden") {
+      this.removeInjectedIcons()
+      return
+    }
+
     const bookmarkStore = useBookmarkStore.getState()
     const sessionId = this.adapter.getSessionId()
 
@@ -332,24 +346,30 @@ export class InlineBookmarkManager {
   }
 
   /**
-   * 清理
+   * 移除已注入的页面图标和容器标记，保留当前实例的订阅关系。
    */
-  cleanup() {
-    if (this.unsubscribe) {
-      this.unsubscribe()
-      this.unsubscribe = null
-    }
-    if (this.unsubscribeBookmarks) {
-      this.unsubscribeBookmarks()
-      this.unsubscribeBookmarks = null
-    }
+  private removeInjectedIcons() {
+    const icons = DOMToolkit.query(`.${ICON_CLASS}`, {
+      all: true,
+      shadow: true,
+    }) as Element[]
+    icons.forEach((el) => el.remove())
 
-    // 清理全局样式
+    const containers = DOMToolkit.query(".gh-has-inline-bookmark", {
+      all: true,
+      shadow: true,
+    }) as Element[]
+    containers.forEach((el) => {
+      el.classList.remove("gh-has-inline-bookmark")
+    })
+
+    this.injectedElements = new WeakSet()
+  }
+
+  static cleanupInjectedArtifacts() {
     document.getElementById(GLOBAL_STYLE_ID)?.remove()
-    document.getElementById(SCOPED_STYLE_ID)?.remove() // 清理 Doc 上的 Scoped
+    document.getElementById(SCOPED_STYLE_ID)?.remove()
 
-    // 清理 Shadow DOM 中的 Styles 和 Icons
-    // 注意：我们也需要清理 Shadow Root 里的 style 标签
     const scopedStyles = DOMToolkit.query(`#${SCOPED_STYLE_ID}`, {
       all: true,
       shadow: true,
@@ -375,6 +395,22 @@ export class InlineBookmarkManager {
       "gh-inline-bookmark-mode-hover",
       "gh-inline-bookmark-mode-hidden",
     )
+  }
+
+  /**
+   * 清理
+   */
+  cleanup() {
+    if (this.unsubscribe) {
+      this.unsubscribe()
+      this.unsubscribe = null
+    }
+    if (this.unsubscribeBookmarks) {
+      this.unsubscribeBookmarks()
+      this.unsubscribeBookmarks = null
+    }
+
+    InlineBookmarkManager.cleanupInjectedArtifacts()
     this.injectedElements = new WeakSet()
     this.injectedRoots = new WeakSet()
   }
