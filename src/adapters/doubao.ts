@@ -1355,6 +1355,7 @@ export class DoubaoAdapter extends SiteAdapter {
     const currentIds = new Set<string>()
     const isInTransition = this.isInOutlineCacheTransition()
     const refreshedCacheKeys = new Set<string>()
+    const previousCacheEntries = new Map<string, DoubaoOutlineCacheEntry>()
 
     const prepareCacheRefresh = (meta: DoubaoVirtualMessageMeta) => {
       if (isInTransition) return
@@ -1363,6 +1364,14 @@ export class DoubaoAdapter extends SiteAdapter {
       if (refreshedCacheKeys.has(key)) return
 
       refreshedCacheKeys.add(key)
+      for (const [id, entry] of this.outlineItemCache) {
+        if (
+          (meta.messageId && entry.messageId === meta.messageId) ||
+          (!entry.messageId && entry.rowIndex === meta.rowIndex)
+        ) {
+          previousCacheEntries.set(id, entry)
+        }
+      }
       this.clearOutlineCacheForMeta(meta)
     }
 
@@ -1380,8 +1389,8 @@ export class DoubaoAdapter extends SiteAdapter {
 
       if (isInTransition) return
 
+      const cached = this.outlineItemCache.get(id) ?? previousCacheEntries.get(id)
       prepareCacheRefresh(meta)
-      const cached = this.outlineItemCache.get(id)
       this.outlineItemCache.set(id, {
         id,
         level: item.level,

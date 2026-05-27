@@ -2535,6 +2535,7 @@ export const App = () => {
   const themeSites = settings?.theme?.sites
   const syncUnpin = settings?.features?.conversations?.syncUnpin
   const syncDelete = settings?.features?.conversations?.syncDelete
+  const outlineEnabled = settings?.features?.outline?.enabled ?? true
   const inlineBookmarkMode = settings?.features?.outline?.inlineBookmarkMode
   const hasSettings = Boolean(settings)
   const quickButtonsSettings = settings?.quickButtons || DEFAULT_SETTINGS.quickButtons
@@ -2717,7 +2718,7 @@ export const App = () => {
     if (!isSettingsHydrated || !outlineManager || !adapter || !hasSettings) return
 
     const mode = inlineBookmarkMode || "always"
-    if (mode === "hidden") {
+    if (!outlineEnabled || mode === "hidden") {
       InlineBookmarkManager.cleanupInjectedArtifacts()
       return
     }
@@ -2727,7 +2728,7 @@ export const App = () => {
     return () => {
       inlineBookmarkManager.cleanup()
     }
-  }, [outlineManager, adapter, inlineBookmarkMode, hasSettings, isSettingsHydrated])
+  }, [outlineManager, adapter, outlineEnabled, inlineBookmarkMode, hasSettings, isSettingsHydrated])
 
   // 滚动锁定切换
   const handleToggleScrollLock = useCallback(() => {
