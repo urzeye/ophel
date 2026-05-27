@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **Inline bookmark visibility** — Page inline bookmark icons now fully respect the hidden setting and no longer depend on the Outline tab's "show user questions" filter, fixing stale or missing stars on virtual-scroll sites such as ChatGPT, DeepSeek, AI Studio, and Doubao. (#570)
+
 ---
 
 ## [1.0.54] - 2026-05-26
