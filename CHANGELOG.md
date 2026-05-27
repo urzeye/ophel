@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Gemini Deep Research export** — Gemini Deep Research exports now cover owned app conversations, conversation share pages, and generated report share pages; closed report panels are opened during export and restored afterward, with uploaded file labels included in exported user prompts. (#573)
+
 ### 🐛 Bug Fixes
 
 - **Inline bookmark visibility** — Page inline bookmark icons now fully respect the hidden setting and no longer depend on the Outline tab's "show user questions" filter, fixing stale or missing stars on virtual-scroll sites such as ChatGPT, DeepSeek, AI Studio, and Doubao. (#570)

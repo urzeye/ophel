@@ -92,11 +92,26 @@ const GEMINI_DEEP_RESEARCH_ARTIFACT_SHARE_SELECTOR =
   'share-landing-page structured-content-container[data-test-id="immersive-artifact-content"]'
 const GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR = "message-content .markdown"
 const GEMINI_DEEP_RESEARCH_CONFIRMATION_SELECTOR = "deep-research-confirmation-widget"
+const GEMINI_DEEP_RESEARCH_IMMERSIVE_PANEL_SELECTOR =
+  "immersive-panel deep-research-immersive-panel"
+const GEMINI_DEEP_RESEARCH_APP_DOCUMENT_MARKDOWN_SELECTOR = [
+  `${GEMINI_DEEP_RESEARCH_IMMERSIVE_PANEL_SELECTOR} #extended-response-markdown-content`,
+  `${GEMINI_DEEP_RESEARCH_IMMERSIVE_PANEL_SELECTOR} message-content .markdown`,
+].join(", ")
+const GEMINI_DEEP_RESEARCH_APP_DOCUMENT_TRIGGER_SELECTOR =
+  'model-response [data-test-id="gem-processing-card"], model-response immersive-entry-chip'
+const GEMINI_DEEP_RESEARCH_ICON_SELECTOR = [
+  'mat-icon[data-mat-icon-name="travel_explore"]',
+  'mat-icon[fonticon="travel_explore"]',
+].join(", ")
 const GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_FOOTER_SELECTOR =
   'share-landing-page immersive-share-landing-page .page:has(structured-content-container[data-test-id="deep-research-block"]) > .footer'
 const GEMINI_ASSISTANT_EXPORT_NOISE_SELECTOR = [
   ".cdk-visually-hidden",
   "model-thoughts",
+  "immersive-entry-chip",
+  "gem-processing-card",
+  '[data-test-id="gem-processing-card"]',
   '[data-test-id="time-estimation-message"]',
   ".time-estimation-message",
   "source-footnote",
@@ -123,6 +138,10 @@ interface GeminiMyStuffLocator {
 
 interface GeminiMyStuffEnhancerOptions {
   getUserPathPrefix: () => string
+}
+
+interface GeminiExportLifecycleState {
+  openedDeepResearchPanel: boolean
 }
 
 const GEMINI_MYSTUFF_ACTIVE_CLASS = "ophel-gemini-mystuff-active"
@@ -2041,14 +2060,27 @@ export class GeminiAdapter extends SiteAdapter {
 
   async prepareConversationExport(_context: ExportLifecycleContext): Promise<unknown> {
     await this.prepareImagesForExport()
-    return null
+
+    const state: GeminiExportLifecycleState = {
+      openedDeepResearchPanel: false,
+    }
+
+    if (this.isDeepResearchAppPage() && !this.getDeepResearchAppDocumentElement()) {
+      state.openedDeepResearchPanel = await this.openDeepResearchAppDocumentPanel()
+    }
+
+    return state
   }
 
   async restoreConversationAfterExport(
     _context: ExportLifecycleContext,
-    _state: unknown,
+    state: unknown,
   ): Promise<void> {
     this.clearPreparedExportImageMetadata()
+
+    if (this.isGeminiExportLifecycleState(state) && state.openedDeepResearchPanel) {
+      await this.closeDeepResearchAppDocumentPanel()
+    }
   }
 
   private async prepareImagesForExport(): Promise<void> {
@@ -2408,7 +2440,94 @@ export class GeminiAdapter extends SiteAdapter {
       return this.extractDeepResearchConversationShareMessages()
     }
 
+    if (this.isDeepResearchAppPage()) {
+      return this.extractDeepResearchAppMessages()
+    }
+
     return null
+  }
+
+  private isDeepResearchAppPage(): boolean {
+    return (
+      !this.isSharePage() &&
+      (this.getDeepResearchAppDocumentElement() !== null ||
+        this.getDeepResearchAppDocumentTrigger() !== null ||
+        document.querySelector(`model-response ${GEMINI_DEEP_RESEARCH_CONFIRMATION_SELECTOR}`) !==
+          null)
+    )
+  }
+
+  private getDeepResearchAppDocumentElement(): Element | null {
+    return document.querySelector(GEMINI_DEEP_RESEARCH_APP_DOCUMENT_MARKDOWN_SELECTOR)
+  }
+
+  private hasDeepResearchAppDocumentTrigger(): boolean {
+    return this.getDeepResearchAppDocumentTrigger() !== null
+  }
+
+  private getDeepResearchAppDocumentTrigger(): HTMLElement | null {
+    const candidates = Array.from(
+      document.querySelectorAll(GEMINI_DEEP_RESEARCH_APP_DOCUMENT_TRIGGER_SELECTOR),
+    ).filter((node): node is HTMLElement => node instanceof HTMLElement)
+
+    return (
+      candidates.find((candidate) => {
+        const card = candidate.matches('[data-test-id="gem-processing-card"]')
+          ? candidate
+          : candidate.querySelector('[data-test-id="gem-processing-card"]')
+        if (!card?.querySelector(GEMINI_DEEP_RESEARCH_ICON_SELECTOR)) return false
+        return candidate.closest("model-response") !== null
+      }) || null
+    )
+  }
+
+  private async openDeepResearchAppDocumentPanel(): Promise<boolean> {
+    const trigger = this.getDeepResearchAppDocumentTrigger()
+    if (!trigger) return false
+
+    trigger.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" })
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    trigger.click()
+    if (await this.waitForDeepResearchAppDocumentElement()) return true
+
+    const card = trigger.matches('[data-test-id="gem-processing-card"]')
+      ? trigger
+      : trigger.querySelector('[data-test-id="gem-processing-card"]')
+    if (card instanceof HTMLElement && card !== trigger) {
+      card.click()
+      return this.waitForDeepResearchAppDocumentElement()
+    }
+
+    return false
+  }
+
+  private async closeDeepResearchAppDocumentPanel(): Promise<void> {
+    const closeButton = document.querySelector(
+      `${GEMINI_DEEP_RESEARCH_IMMERSIVE_PANEL_SELECTOR} [data-test-id="close-button"], immersive-panel [data-test-id="close-button"]`,
+    )
+    if (!(closeButton instanceof HTMLElement)) return
+
+    closeButton.click()
+    await new Promise((resolve) => setTimeout(resolve, 150))
+  }
+
+  private async waitForDeepResearchAppDocumentElement(timeoutMs = 3000): Promise<boolean> {
+    const startedAt = Date.now()
+    while (Date.now() - startedAt < timeoutMs) {
+      if (this.getDeepResearchAppDocumentElement()) return true
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+
+    return this.getDeepResearchAppDocumentElement() !== null
+  }
+
+  private isGeminiExportLifecycleState(state: unknown): state is GeminiExportLifecycleState {
+    return (
+      typeof state === "object" &&
+      state !== null &&
+      "openedDeepResearchPanel" in state &&
+      typeof (state as GeminiExportLifecycleState).openedDeepResearchPanel === "boolean"
+    )
   }
 
   private isDeepResearchDocumentSharePage(): boolean {
@@ -2431,6 +2550,51 @@ export class GeminiAdapter extends SiteAdapter {
     )
     const content = markdown ? this.extractAssistantResponseText(markdown) : ""
     return content ? [{ role: "assistant", content }] : []
+  }
+
+  private extractDeepResearchAppMessages(): ExportMessage[] {
+    const documentElement = this.getDeepResearchAppDocumentElement()
+    if (this.hasDeepResearchAppDocumentTrigger() && !documentElement) {
+      console.warn("[GeminiAdapter] Deep Research report panel is not available for export")
+      return []
+    }
+
+    const messages: ExportMessage[] = []
+    const collectedElements = new Set<Element>()
+    const root = this.getScrollContainer() || document
+
+    const messageElements = Array.from(root.querySelectorAll("user-query, model-response")).sort(
+      (left, right) => this.compareDomOrder(left, right),
+    )
+
+    messageElements.forEach((element) => {
+      if (element.closest("immersive-panel")) return
+
+      const role = element.tagName.toLowerCase() === "user-query" ? "user" : "assistant"
+      const content =
+        role === "user"
+          ? this.extractUserQueryExportContent(element).trim()
+          : this.extractDeepResearchAppAssistantResponseContent(element).trim()
+
+      if (!content) return
+
+      collectedElements.add(element)
+      messages.push({ role, content })
+    })
+
+    if (documentElement && !collectedElements.has(documentElement)) {
+      const content = this.extractAssistantResponseText(documentElement).trim()
+      if (content) {
+        messages.push({ role: "assistant", content })
+      }
+    }
+
+    return this.dedupeAdjacentExportMessages(messages)
+  }
+
+  private extractDeepResearchAppAssistantResponseContent(element: Element): string {
+    const markdown = element.querySelector(GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR)
+    return this.extractAssistantResponseText(markdown || element)
   }
 
   private extractDeepResearchConversationShareMessages(): ExportMessage[] {
