@@ -1234,11 +1234,11 @@ export const ja = {
   exportIncludeThoughtsLabel: "エクスポートに思考過程を含める",
   exportIncludeThoughtsDesc: "エクスポート時に思考過程を含めて自動展開します（引用ブロックで区別）",
   exportAttachmentsLabel: "添付ファイル",
-  exportPackagingLabel: "エクスポート形式",
+  exportPackagingLabel: "Markdownエクスポート方式",
   exportPackagingDesc:
-    "Markdown単一ファイルまたはZIPパッケージを選択します。ZIPではダウンロード可能な添付ファイルをassetsに保存し、相対パスで参照します",
-  exportPackagingMarkdown: "Markdown単一ファイル",
-  exportPackagingZip: "ZIPパッケージ",
+    "ZIPにはMarkdownファイルとダウンロード可能な添付ファイルが含まれ、添付ファイルはassetsに保存され相対パスで参照されます",
+  exportPackagingMarkdown: "Markdown",
+  exportPackagingZip: "ZIP",
 
   // ======== Popup ========
   popupCurrentSite: "現在のサイト",

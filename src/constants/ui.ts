@@ -579,7 +579,7 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
   },
   {
     settingId: "export-packaging",
-    title: "导出打包方式",
+    title: "Markdown 导出方式",
     keywords: ["export", "packaging", "markdown", "zip", "assets", "导出", "附件"],
   },
   {

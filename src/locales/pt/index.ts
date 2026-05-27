@@ -1320,11 +1320,11 @@ Dê o código e depois um resumo de melhorias.`,
   exportIncludeThoughtsDesc:
     "Incluir e expandir automaticamente o raciocínio ao exportar (em blocos de citação)",
   exportAttachmentsLabel: "Anexos",
-  exportPackagingLabel: "Empacotamento da exportação",
+  exportPackagingLabel: "Método de exportação Markdown",
   exportPackagingDesc:
-    "Escolha um único arquivo Markdown ou um pacote ZIP. O ZIP salva anexos baixáveis em assets e os referencia com caminhos relativos.",
-  exportPackagingMarkdown: "Arquivo Markdown único",
-  exportPackagingZip: "Pacote ZIP",
+    "O ZIP inclui o arquivo Markdown e anexos baixáveis, salva os anexos em assets e os referencia com caminhos relativos.",
+  exportPackagingMarkdown: "Markdown",
+  exportPackagingZip: "ZIP",
 
   // ======== Popup ========
   popupCurrentSite: "Site Atual",

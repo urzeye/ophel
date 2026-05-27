@@ -682,8 +682,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       ? settings.export.packaging
       : "markdown"
   const exportPackagingOptions = [
-    { value: "markdown", label: t("exportPackagingMarkdown") || "Markdown 单文件" },
-    { value: "zip", label: t("exportPackagingZip") || "ZIP 压缩包" },
+    { value: "markdown", label: t("exportPackagingMarkdown") || "Markdown" },
+    { value: "zip", label: t("exportPackagingZip") || "ZIP" },
   ]
   const formulaCopyFormat = settings.content?.formulaCopyFormat === "mathml" ? "mathml" : "latex"
   const formulaCopyFormatOptions = [
@@ -1360,10 +1360,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           {/* 导出设置卡片 */}
           <SettingCard title={t("exportSettings") || "导出设置"}>
             <SettingRow
-              label={t("exportPackagingLabel") || "导出打包方式"}
+              label={t("exportPackagingLabel") || "Markdown 导出方式"}
               description={
                 t("exportPackagingDesc") ||
-                "Markdown 保持单文件导出；ZIP 会把可下载附件放入 assets 并用相对路径引用"
+                "ZIP 会包含 Markdown 文件和可下载附件，附件放入 assets 并用相对路径引用"
               }
               settingId="export-packaging">
               <SelectDropdown
@@ -1371,38 +1371,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
                 buttonClassName="settings-select"
                 options={exportPackagingOptions}
                 value={exportPackaging}
-                ariaLabel={t("exportPackagingLabel") || "导出打包方式"}
+                ariaLabel={t("exportPackagingLabel") || "Markdown 导出方式"}
                 onChange={(value) =>
                   updateNestedSetting("export", "packaging", value as ExportPackaging)
                 }
-              />
-            </SettingRow>
-
-            <SettingRow
-              label={t("exportCustomUserName") || "自定义用户名称"}
-              description={t("exportCustomUserNameDesc") || "导出时使用的用户显示名称 (默认: User)"}
-              settingId="export-custom-user-name">
-              <LazyInput
-                className="settings-input"
-                value={settings.export?.customUserName || ""}
-                onChange={(val) => updateNestedSetting("export", "customUserName", val)}
-                placeholder="User"
-                style={{ width: "180px" }}
-              />
-            </SettingRow>
-
-            <SettingRow
-              label={t("exportCustomModelName") || "自定义 AI 名称"}
-              description={
-                t("exportCustomModelNameDesc") || "导出时使用的 AI 显示名称 (默认: 站点名称)"
-              }
-              settingId="export-custom-model-name">
-              <LazyInput
-                className="settings-input"
-                value={settings.export?.customModelName || ""}
-                onChange={(val) => updateNestedSetting("export", "customModelName", val)}
-                placeholder="Site Name"
-                style={{ width: "180px" }}
               />
             </SettingRow>
 
@@ -1433,6 +1405,34 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
                 )
               }
             />
+
+            <SettingRow
+              label={t("exportCustomUserName") || "自定义用户名称"}
+              description={t("exportCustomUserNameDesc") || "导出时使用的用户显示名称 (默认: User)"}
+              settingId="export-custom-user-name">
+              <LazyInput
+                className="settings-input"
+                value={settings.export?.customUserName || ""}
+                onChange={(val) => updateNestedSetting("export", "customUserName", val)}
+                placeholder="User"
+                style={{ width: "180px" }}
+              />
+            </SettingRow>
+
+            <SettingRow
+              label={t("exportCustomModelName") || "自定义 AI 名称"}
+              description={
+                t("exportCustomModelNameDesc") || "导出时使用的 AI 显示名称 (默认: 站点名称)"
+              }
+              settingId="export-custom-model-name">
+              <LazyInput
+                className="settings-input"
+                value={settings.export?.customModelName || ""}
+                onChange={(val) => updateNestedSetting("export", "customModelName", val)}
+                placeholder="Site Name"
+                style={{ width: "180px" }}
+              />
+            </SettingRow>
 
             {/* TODO: exportImagesToBase64 is not yet implemented in the exporter.
             <ToggleRow
