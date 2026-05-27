@@ -14,7 +14,9 @@ import { getTagsStore, useTagsStore } from "~stores/tags-store"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import {
   createExportMetadata,
+  downloadExportPackage,
   downloadFile,
+  type ExportBundle,
   type ExportMessage,
   formatToJSON,
   formatToMarkdown,
@@ -1086,8 +1088,11 @@ export class ConversationManager {
       exportLifecycleEnabled = true
       exportLifecycleState = await this.siteAdapter.prepareConversationExport(exportContext)
 
-      // 提取对话内容
-      const messages = await this.extractConversationMessages(exportContext)
+      // 提取对话内容。未接入附件导出的站点会返回 null，继续走旧的单文件路径。
+      const exportBundle =
+        format === "markdown" ? await this.siteAdapter.extractExportBundle(exportContext) : null
+      const messages =
+        exportBundle?.messages || (await this.extractConversationMessages(exportContext))
       if (messages.length === 0) {
         console.error("[ConversationManager] No messages found")
         return false
@@ -1137,6 +1142,20 @@ export class ConversationManager {
         content = formatToMarkdown(metadata, messages)
         filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.md`
         mimeType = "text/markdown;charset=utf-8"
+
+        const assets = this.normalizeExportAssets(exportBundle)
+        if (assets.length > 0) {
+          const downloaded = await downloadExportPackage({
+            markdownFilename: filename,
+            markdownContent: content,
+            assets,
+            packageFilename: `${filenamePrefix}${safeTitle}${timestampSuffix}.zip`,
+            metadata,
+          })
+          if (!downloaded) return false
+          showToast(t("exportSuccess"))
+          return true
+        }
       } else if (format === "json") {
         content = formatToJSON(metadata, messages)
         filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.json`
@@ -1147,7 +1166,8 @@ export class ConversationManager {
         mimeType = "text/plain;charset=utf-8"
       }
 
-      await downloadFile(content, filename, mimeType)
+      const downloaded = await downloadFile(content, filename, mimeType)
+      if (!downloaded) return false
       showToast(t("exportSuccess"))
       return true
     } catch (error) {
@@ -1311,5 +1331,14 @@ export class ConversationManager {
     }
 
     return messages
+  }
+
+  private normalizeExportAssets(bundle: ExportBundle | null): NonNullable<ExportBundle["assets"]> {
+    if (!bundle?.assets) return []
+
+    return bundle.assets.filter((asset) => {
+      if (!asset.name?.trim()) return false
+      return asset.content !== undefined || Boolean(asset.sourceUrl)
+    })
   }
 }

@@ -6,7 +6,13 @@ import { SITE_IDS } from "~constants"
 import { platform } from "~platform"
 import { geminiNativeThemeCss } from "~styles/native-theme-adapters/gemini"
 import { DOMToolkit } from "~utils/dom-toolkit"
-import { htmlToMarkdown, type ExportMessage } from "~utils/exporter"
+import {
+  createUniqueExportAssetPath,
+  htmlToMarkdown,
+  type ExportAsset,
+  type ExportBundle,
+  type ExportMessage,
+} from "~utils/exporter"
 import { t } from "~utils/i18n"
 import { createOpenInNewTabIcon } from "~utils/icons"
 import {
@@ -126,6 +132,17 @@ const GEMINI_ASSISTANT_EXPORT_NOISE_SELECTOR = [
   ".generated-image-controls",
   ".loader",
 ].join(", ")
+const GEMINI_DECORATIVE_IMAGE_SELECTOR = [
+  "img.katex-svg",
+  "img.favicon",
+  "img.google-icon",
+  'img[data-test-id="favicon"]',
+  'img[data-test-id="file-icon"]',
+  'img[data-test-id="luminous-file-icon"]',
+  'img[src*="faviconV2"]',
+  'img[src*="drive-thirdparty.googleusercontent.com/32/type/"]',
+  'img[src*="google_logo_icon"]',
+].join(", ")
 
 interface GeminiMyStuffLocator {
   kind: GeminiMyStuffKind
@@ -142,6 +159,12 @@ interface GeminiMyStuffEnhancerOptions {
 
 interface GeminiExportLifecycleState {
   openedDeepResearchPanel: boolean
+}
+
+interface GeminiExportAssetCollector {
+  assets: ExportAsset[]
+  imagePathsBySource: Map<string, string>
+  usedPaths: Set<string>
 }
 
 const GEMINI_MYSTUFF_ACTIVE_CLASS = "ophel-gemini-mystuff-active"
@@ -2040,8 +2063,15 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   extractUserQueryExportContent(element: Element): string {
+    return this.extractUserQueryExportContentWithAssets(element)
+  }
+
+  private extractUserQueryExportContentWithAssets(
+    element: Element,
+    collector?: GeminiExportAssetCollector,
+  ): string {
     const sanitized = this.sanitizeUserQueryElement(element)
-    const imageMarkdown = this.extractUserQueryImageMarkdown(sanitized)
+    const imageMarkdown = this.extractUserQueryImageMarkdown(sanitized, collector)
     const fileMarkdown = this.extractUserQueryFileMarkdown(sanitized)
     const markdown = this.extractUserQueryMarkdown(sanitized).trim()
     const textContent = markdown || this.extractUserQueryText(sanitized).trim()
@@ -2109,7 +2139,10 @@ export class GeminiAdapter extends SiteAdapter {
     })
   }
 
-  private extractUserQueryImageMarkdown(element: Element): string[] {
+  private extractUserQueryImageMarkdown(
+    element: Element,
+    collector?: GeminiExportAssetCollector,
+  ): string[] {
     const images = Array.from(
       element.querySelectorAll("img[data-test-id='uploaded-img'], .preview-image"),
     ).filter((node): node is HTMLImageElement => node instanceof HTMLImageElement)
@@ -2123,10 +2156,94 @@ export class GeminiAdapter extends SiteAdapter {
       seenSources.add(source)
       const alt = (image.alt || "uploaded image").replace(/\s+/g, " ").trim()
       const escapedAlt = alt.replace(/[[\]]/g, "\\$&")
-      imageMarkdown.push(`![${escapedAlt || "uploaded image"}](${source})`)
+      const assetPath = collector
+        ? this.addImageExportAsset(collector, source, escapedAlt || "uploaded image")
+        : source
+      imageMarkdown.push(`![${escapedAlt || "uploaded image"}](${assetPath})`)
     }
 
     return imageMarkdown
+  }
+
+  private addImageExportAsset(
+    collector: GeminiExportAssetCollector,
+    source: string,
+    alt: string,
+  ): string {
+    const existingPath = collector.imagePathsBySource.get(source)
+    if (existingPath) return existingPath
+
+    const index = collector.imagePathsBySource.size + 1
+    const extension = this.getImageExportExtension(source)
+    const requestedName = `gemini-image-${String(index).padStart(3, "0")}.${extension}`
+    const path = this.createUniqueGeminiExportPath(`assets/images/${requestedName}`, collector)
+    const name = path.split("/").pop() || requestedName
+
+    collector.imagePathsBySource.set(source, path)
+    collector.assets.push({
+      id: `gemini-image-${index}`,
+      name,
+      relativePath: path,
+      mimeType: this.getImageExportMimeType(source, extension),
+      kind: "image",
+      content: source.startsWith("data:image/") ? this.dataUrlToExportBlob(source) : undefined,
+      sourceUrl: source.startsWith("data:image/") ? undefined : source,
+      description: alt,
+    })
+
+    return path
+  }
+
+  private getImageExportExtension(source: string): string {
+    if (source.startsWith("data:image/")) {
+      const match = source.match(/^data:image\/([a-zA-Z0-9.+-]+)[;,]/)
+      return this.normalizeImageExtension(match?.[1] || "png")
+    }
+
+    try {
+      const pathname = new URL(source, window.location.href).pathname
+      const extension = pathname.match(/\.([a-zA-Z0-9]+)$/)?.[1]
+      return this.normalizeImageExtension(extension || "png")
+    } catch {
+      return "png"
+    }
+  }
+
+  private normalizeImageExtension(value: string): string {
+    const extension = value
+      .toLowerCase()
+      .replace(/^jpg$/, "jpeg")
+      .replace(/^svg\+xml$/, "svg")
+    if (["png", "jpeg", "webp", "gif", "avif", "svg"].includes(extension)) {
+      return extension === "jpeg" ? "jpg" : extension
+    }
+    return "png"
+  }
+
+  private getImageExportMimeType(source: string, extension: string): string {
+    if (source.startsWith("data:image/")) {
+      return source.slice(5, source.indexOf(";"))
+    }
+
+    if (extension === "svg") return "image/svg+xml"
+    return extension === "jpg" ? "image/jpeg" : `image/${extension}`
+  }
+
+  private dataUrlToExportBlob(dataUrl: string): Blob {
+    const [header, payload = ""] = dataUrl.split(",", 2)
+    const mimeType = header.match(/^data:([^;]+)/)?.[1] || "application/octet-stream"
+    const isBase64 = /;base64/i.test(header)
+
+    if (!isBase64) {
+      return new Blob([decodeURIComponent(payload)], { type: mimeType })
+    }
+
+    const binary = atob(payload)
+    const bytes = new Uint8Array(binary.length)
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index)
+    }
+    return new Blob([bytes], { type: mimeType })
   }
 
   private extractUserQueryFileMarkdown(element: Element): string[] {
@@ -2373,6 +2490,8 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private normalizeAssistantGeneratedImagesForExport(root: Element): void {
+    root.querySelectorAll(GEMINI_DECORATIVE_IMAGE_SELECTOR).forEach((node) => node.remove())
+
     root.querySelectorAll(`img[${GEMINI_EXPORT_IMAGE_SRC_ATTR}]`).forEach((node) => {
       if (!(node instanceof HTMLImageElement)) return
 
@@ -2427,7 +2546,17 @@ export class GeminiAdapter extends SiteAdapter {
    * Gemini 导出：优先转 Markdown，并过滤辅助可访问性标题（如 “Gemini says”）和思维链节点。
    */
   extractAssistantResponseText(element: Element): string {
+    return this.extractAssistantResponseTextWithAssets(element)
+  }
+
+  private extractAssistantResponseTextWithAssets(
+    element: Element,
+    collector?: GeminiExportAssetCollector,
+  ): string {
     const sanitized = this.sanitizeAssistantExportElement(element)
+    if (collector) {
+      this.replaceAssistantImageSourcesWithExportAssets(sanitized, collector)
+    }
     return this.extractMarkdownExportContent(sanitized)
   }
 
@@ -2445,6 +2574,88 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     return null
+  }
+
+  async extractExportBundle(context: ExportLifecycleContext): Promise<ExportBundle | null> {
+    const collector: GeminiExportAssetCollector = {
+      assets: [],
+      imagePathsBySource: new Map<string, string>(),
+      usedPaths: new Set<string>(),
+    }
+
+    const messages = await this.extractExportMessagesWithAssets(context, collector)
+    if (!messages) return null
+
+    return {
+      messages,
+      assets: collector.assets,
+    }
+  }
+
+  private async extractExportMessagesWithAssets(
+    _context: ExportLifecycleContext,
+    collector: GeminiExportAssetCollector,
+  ): Promise<ExportMessage[] | null> {
+    if (this.isDeepResearchDocumentSharePage()) {
+      return this.extractDeepResearchDocumentShareMessages(collector)
+    }
+
+    if (this.isDeepResearchConversationSharePage()) {
+      return this.extractDeepResearchConversationShareMessages(collector)
+    }
+
+    if (this.isDeepResearchAppPage()) {
+      return this.extractDeepResearchAppMessages(collector)
+    }
+
+    return null
+  }
+
+  private replaceAssistantImageSourcesWithExportAssets(
+    root: Element,
+    collector: GeminiExportAssetCollector,
+  ): void {
+    const images = Array.from(root.querySelectorAll("img")).filter(
+      (node): node is HTMLImageElement => node instanceof HTMLImageElement,
+    )
+
+    images.forEach((image) => {
+      if (this.isDecorativeExportImage(image)) return
+
+      const source = this.getPreparedExportImageSrc(image)
+      if (!source) return
+
+      const alt = (image.alt || "image").replace(/\s+/g, " ").trim()
+      const assetPath = this.addImageExportAsset(collector, source, alt)
+      image.setAttribute("src", assetPath)
+      image.removeAttribute("srcset")
+    })
+  }
+
+  private isDecorativeExportImage(image: HTMLImageElement): boolean {
+    if (image.matches(GEMINI_DECORATIVE_IMAGE_SELECTOR)) return true
+
+    const source = this.getPreparedExportImageSrc(image)
+    if (!source) return true
+
+    const className = image.className || ""
+    const testId = image.getAttribute("data-test-id") || ""
+    const role = image.getAttribute("role") || ""
+    if (
+      role === "presentation" &&
+      /(^|\s)(favicon|icon|google-icon)(\s|$)/.test(String(className)) &&
+      /favicon|icon|file/i.test(testId)
+    ) {
+      return true
+    }
+
+    const mimeType = source.startsWith("data:image/")
+      ? source.slice(5, source.indexOf(";")).toLowerCase()
+      : ""
+
+    if (mimeType === "image/svg+xml" && image.classList.contains("katex-svg")) return true
+
+    return false
   }
 
   private isDeepResearchAppPage(): boolean {
@@ -2544,15 +2755,25 @@ export class GeminiAdapter extends SiteAdapter {
     )
   }
 
-  private extractDeepResearchDocumentShareMessages(): ExportMessage[] {
+  private extractDeepResearchDocumentShareMessages(
+    collector?: GeminiExportAssetCollector,
+  ): ExportMessage[] {
     const markdown = document.querySelector(
       `${GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_SELECTOR} ${GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR}`,
     )
-    const content = markdown ? this.extractAssistantResponseText(markdown) : ""
-    return content ? [{ role: "assistant", content }] : []
+    const content = markdown ? this.extractAssistantResponseTextWithAssets(markdown, collector) : ""
+    const exportContent =
+      content && collector
+        ? this.appendDeepResearchReportAssetLink(
+            collector,
+            content,
+            this.getDeepResearchDocumentShareTitle(),
+          )
+        : content
+    return exportContent ? [{ role: "assistant", content: exportContent }] : []
   }
 
-  private extractDeepResearchAppMessages(): ExportMessage[] {
+  private extractDeepResearchAppMessages(collector?: GeminiExportAssetCollector): ExportMessage[] {
     const documentElement = this.getDeepResearchAppDocumentElement()
     if (this.hasDeepResearchAppDocumentTrigger() && !documentElement) {
       console.warn("[GeminiAdapter] Deep Research report panel is not available for export")
@@ -2573,8 +2794,8 @@ export class GeminiAdapter extends SiteAdapter {
       const role = element.tagName.toLowerCase() === "user-query" ? "user" : "assistant"
       const content =
         role === "user"
-          ? this.extractUserQueryExportContent(element).trim()
-          : this.extractDeepResearchAppAssistantResponseContent(element).trim()
+          ? this.extractUserQueryExportContentWithAssets(element, collector).trim()
+          : this.extractDeepResearchAppAssistantResponseContent(element, collector).trim()
 
       if (!content) return
 
@@ -2583,21 +2804,29 @@ export class GeminiAdapter extends SiteAdapter {
     })
 
     if (documentElement && !collectedElements.has(documentElement)) {
-      const content = this.extractAssistantResponseText(documentElement).trim()
+      const content = this.extractAssistantResponseTextWithAssets(documentElement, collector).trim()
       if (content) {
-        messages.push({ role: "assistant", content })
+        messages.push({
+          role: "assistant",
+          content: collector ? this.appendDeepResearchReportAssetLink(collector, content) : content,
+        })
       }
     }
 
     return this.dedupeAdjacentExportMessages(messages)
   }
 
-  private extractDeepResearchAppAssistantResponseContent(element: Element): string {
+  private extractDeepResearchAppAssistantResponseContent(
+    element: Element,
+    collector?: GeminiExportAssetCollector,
+  ): string {
     const markdown = element.querySelector(GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR)
-    return this.extractAssistantResponseText(markdown || element)
+    return this.extractAssistantResponseTextWithAssets(markdown || element, collector)
   }
 
-  private extractDeepResearchConversationShareMessages(): ExportMessage[] {
+  private extractDeepResearchConversationShareMessages(
+    collector?: GeminiExportAssetCollector,
+  ): ExportMessage[] {
     const messages: ExportMessage[] = []
     const turns = Array.from(document.querySelectorAll(GEMINI_SHARE_TURN_SELECTOR))
     const collectedElements = new Set<Element>()
@@ -2619,23 +2848,26 @@ export class GeminiAdapter extends SiteAdapter {
       turnMessages.forEach(({ role, element }) => {
         const content =
           role === "user"
-            ? this.extractUserQueryExportContent(element).trim()
-            : this.extractAssistantResponseText(element).trim()
+            ? this.extractUserQueryExportContentWithAssets(element, collector).trim()
+            : this.extractAssistantResponseTextWithAssets(element, collector).trim()
         if (!content) return
         collectedElements.add(element)
         messages.push({ role, content })
       })
     })
 
-    this.collectDetachedDeepResearchArtifactMessages(collectedElements).forEach((message) => {
-      messages.push(message)
-    })
+    this.collectDetachedDeepResearchArtifactMessages(collectedElements, collector).forEach(
+      (message) => {
+        messages.push(message)
+      },
+    )
 
     return this.dedupeAdjacentExportMessages(messages)
   }
 
   private collectDetachedDeepResearchArtifactMessages(
     collectedElements: Set<Element>,
+    collector?: GeminiExportAssetCollector,
   ): ExportMessage[] {
     return Array.from(
       document.querySelectorAll(
@@ -2644,9 +2876,82 @@ export class GeminiAdapter extends SiteAdapter {
     ).flatMap((element) => {
       if (collectedElements.has(element)) return []
 
-      const content = this.extractAssistantResponseText(element).trim()
-      return content ? [{ role: "assistant", content }] : []
+      const content = this.extractAssistantResponseTextWithAssets(element, collector).trim()
+      const exportContent =
+        content && collector
+          ? this.appendDeepResearchReportAssetLink(
+              collector,
+              content,
+              this.getDeepResearchArtifactShareTitle(),
+            )
+          : content
+      return exportContent ? [{ role: "assistant", content: exportContent }] : []
     })
+  }
+
+  private appendDeepResearchReportAssetLink(
+    collector: GeminiExportAssetCollector,
+    content: string,
+    title?: string | null,
+  ): string {
+    const asset = this.addDeepResearchReportAsset(collector, content, title)
+    return `${content}\n\n[${this.escapeMarkdownLinkText(asset.name)}](${asset.path})`
+  }
+
+  private addDeepResearchReportAsset(
+    collector: GeminiExportAssetCollector,
+    content: string,
+    title?: string | null,
+  ): { name: string; path: string } {
+    const titleText = title || this.extractMarkdownTitle(content)
+    const existing = collector.assets.find(
+      (asset) =>
+        asset.kind === "document" &&
+        asset.content === content &&
+        asset.description === (title || undefined),
+    )
+    if (existing?.relativePath) {
+      return { name: existing.name, path: existing.relativePath }
+    }
+
+    const name = this.buildDeepResearchReportFilename(titleText)
+    const path = this.createUniqueGeminiExportPath(`assets/documents/${name}`, collector)
+
+    collector.assets.push({
+      id: `gemini-deep-research-report-${collector.assets.length + 1}`,
+      name,
+      relativePath: path,
+      mimeType: "text/markdown;charset=utf-8",
+      kind: "document",
+      content,
+      description: title || undefined,
+    })
+
+    return { name, path }
+  }
+
+  private extractMarkdownTitle(content: string): string {
+    const titleLine = content
+      .replace(/\r\n/g, "\n")
+      .split("\n")
+      .find((line) => /^#\s+/.test(line.trim()))
+    return titleLine?.replace(/^#\s+/, "").trim() || "deep-research-report"
+  }
+
+  private buildDeepResearchReportFilename(title: string): string {
+    const sanitized = title
+      .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_")
+      .replace(/\s+/g, " ")
+      .trim()
+      .substring(0, 80)
+    return `${sanitized || "deep-research-report"}.md`
+  }
+
+  private createUniqueGeminiExportPath(
+    path: string,
+    collector: GeminiExportAssetCollector,
+  ): string {
+    return createUniqueExportAssetPath(path, collector.usedPaths)
   }
 
   private extractMarkdownExportContent(element: Element): string {

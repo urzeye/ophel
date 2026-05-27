@@ -19,6 +19,24 @@ export interface ExportMessage {
   content: string
 }
 
+export type ExportAssetKind = "image" | "document" | "file" | "reference"
+
+export interface ExportAsset {
+  id?: string
+  name: string
+  relativePath?: string
+  mimeType?: string
+  kind?: ExportAssetKind
+  content?: string | Blob | ArrayBuffer | Uint8Array
+  sourceUrl?: string
+  description?: string
+}
+
+export interface ExportBundle {
+  messages: ExportMessage[]
+  assets?: ExportAsset[]
+}
+
 export interface ExportMetadata {
   title: string
   id?: string
@@ -30,6 +48,40 @@ export interface ExportMetadata {
 }
 
 export type ExportFormat = "markdown" | "json" | "txt" | "clipboard"
+
+interface ZipFileInput {
+  path: string
+  data: string | Blob | ArrayBuffer | Uint8Array
+  mimeType?: string
+}
+
+interface ZipFileEntry {
+  path: string
+  data: Uint8Array
+  crc32: number
+  dosTime: number
+  dosDate: number
+  localHeaderOffset: number
+}
+
+interface ExportPackageInput {
+  markdownFilename: string
+  markdownContent: string
+  assets: ExportAsset[]
+  packageFilename: string
+  metadata: ExportMetadata
+}
+
+interface ExportAssetManifestItem {
+  name: string
+  path: string
+  kind?: ExportAssetKind
+  mimeType?: string
+  sourceUrl?: string
+  description?: string
+  included: boolean
+  error?: string
+}
 
 // ==================== HTML 转 Markdown ====================
 
@@ -613,6 +665,249 @@ export function formatToTXT(metadata: ExportMetadata, messages: ExportMessage[])
 
 // ==================== 文件操作 ====================
 
+const textEncoder = new TextEncoder()
+let crc32Table: Uint32Array | null = null
+
+function getCrc32Table(): Uint32Array {
+  if (crc32Table) return crc32Table
+
+  const table = new Uint32Array(256)
+  for (let i = 0; i < 256; i += 1) {
+    let value = i
+    for (let bit = 0; bit < 8; bit += 1) {
+      value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1
+    }
+    table[i] = value >>> 0
+  }
+  crc32Table = table
+  return table
+}
+
+function calculateCrc32(data: Uint8Array): number {
+  const table = getCrc32Table()
+  let crc = 0xffffffff
+  for (const byte of data) {
+    crc = table[(crc ^ byte) & 0xff] ^ (crc >>> 8)
+  }
+  return (crc ^ 0xffffffff) >>> 0
+}
+
+function writeUint16LE(target: Uint8Array, offset: number, value: number): number {
+  target[offset] = value & 0xff
+  target[offset + 1] = (value >>> 8) & 0xff
+  return offset + 2
+}
+
+function writeUint32LE(target: Uint8Array, offset: number, value: number): number {
+  target[offset] = value & 0xff
+  target[offset + 1] = (value >>> 8) & 0xff
+  target[offset + 2] = (value >>> 16) & 0xff
+  target[offset + 3] = (value >>> 24) & 0xff
+  return offset + 4
+}
+
+function concatUint8Arrays(chunks: Uint8Array[]): Uint8Array {
+  const length = chunks.reduce((total, chunk) => total + chunk.length, 0)
+  const result = new Uint8Array(length)
+  let offset = 0
+  chunks.forEach((chunk) => {
+    result.set(chunk, offset)
+    offset += chunk.length
+  })
+  return result
+}
+
+function getZipDosDateTime(date = new Date()): { dosDate: number; dosTime: number } {
+  const year = Math.max(1980, date.getFullYear())
+  return {
+    dosTime: (date.getHours() << 11) | (date.getMinutes() << 5) | Math.floor(date.getSeconds() / 2),
+    dosDate: ((year - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate(),
+  }
+}
+
+async function toUint8Array(data: string | Blob | ArrayBuffer | Uint8Array): Promise<Uint8Array> {
+  if (typeof data === "string") {
+    return textEncoder.encode(data)
+  }
+  if (data instanceof Uint8Array) {
+    return data
+  }
+  if (data instanceof ArrayBuffer) {
+    return new Uint8Array(data)
+  }
+  return new Uint8Array(await data.arrayBuffer())
+}
+
+function sanitizeZipPathSegment(value: string, fallback: string): string {
+  const sanitized = value
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_")
+    .replace(/\s+/g, " ")
+    .trim()
+  return sanitized || fallback
+}
+
+function normalizeZipPath(value: string, fallback: string): string {
+  const segments = value
+    .replace(/\\/g, "/")
+    .replace(/^[a-zA-Z]:\//, "")
+    .replace(/^\/+/, "")
+    .split("/")
+    .map((segment) => sanitizeZipPathSegment(segment, "asset"))
+    .filter((segment) => segment !== "." && segment !== "..")
+
+  return segments.length > 0 ? segments.join("/") : fallback
+}
+
+export function normalizeExportAssetPath(value: string, fallback = "assets/asset"): string {
+  return normalizeZipPath(value, fallback)
+}
+
+function ensureUniqueZipPath(path: string, usedPaths: Set<string>): string {
+  if (!usedPaths.has(path)) {
+    usedPaths.add(path)
+    return path
+  }
+
+  const slashIndex = path.lastIndexOf("/")
+  const directory = slashIndex >= 0 ? `${path.slice(0, slashIndex + 1)}` : ""
+  const filename = slashIndex >= 0 ? path.slice(slashIndex + 1) : path
+  const dotIndex = filename.lastIndexOf(".")
+  const basename = dotIndex > 0 ? filename.slice(0, dotIndex) : filename
+  const extension = dotIndex > 0 ? filename.slice(dotIndex) : ""
+
+  for (let index = 2; index < 10000; index += 1) {
+    const candidate = `${directory}${basename}-${index}${extension}`
+    if (!usedPaths.has(candidate)) {
+      usedPaths.add(candidate)
+      return candidate
+    }
+  }
+
+  throw new Error(`Unable to create unique zip path for ${path}`)
+}
+
+export function createUniqueExportAssetPath(
+  path: string,
+  usedPaths: Set<string>,
+  fallback = "assets/asset",
+): string {
+  return ensureUniqueZipPath(normalizeExportAssetPath(path, fallback), usedPaths)
+}
+
+function getDefaultAssetPath(asset: ExportAsset): string {
+  return `assets/${sanitizeZipPathSegment(asset.name, asset.id || "asset")}`
+}
+
+async function resolveAssetData(
+  asset: ExportAsset,
+): Promise<string | Blob | ArrayBuffer | Uint8Array> {
+  if (asset.content !== undefined) {
+    return asset.content
+  }
+
+  if (!asset.sourceUrl) {
+    throw new Error("Asset has no content or source URL")
+  }
+
+  const response = await fetch(asset.sourceUrl, { credentials: "include" })
+  if (!response.ok) {
+    throw new Error(`Asset fetch failed with HTTP ${response.status}`)
+  }
+
+  return response.blob()
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message
+  return String(error)
+}
+
+async function createZipBlob(files: ZipFileInput[]): Promise<Blob> {
+  const entries: ZipFileEntry[] = []
+  const chunks: Uint8Array[] = []
+  const { dosDate, dosTime } = getZipDosDateTime()
+  let offset = 0
+
+  for (const file of files) {
+    const path = normalizeZipPath(file.path, "file")
+    const nameBytes = textEncoder.encode(path)
+    const data = await toUint8Array(file.data)
+    const crc32 = calculateCrc32(data)
+    const localHeader = new Uint8Array(30 + nameBytes.length)
+    let cursor = 0
+
+    cursor = writeUint32LE(localHeader, cursor, 0x04034b50)
+    cursor = writeUint16LE(localHeader, cursor, 20)
+    cursor = writeUint16LE(localHeader, cursor, 0x0800)
+    cursor = writeUint16LE(localHeader, cursor, 0)
+    cursor = writeUint16LE(localHeader, cursor, dosTime)
+    cursor = writeUint16LE(localHeader, cursor, dosDate)
+    cursor = writeUint32LE(localHeader, cursor, crc32)
+    cursor = writeUint32LE(localHeader, cursor, data.length)
+    cursor = writeUint32LE(localHeader, cursor, data.length)
+    cursor = writeUint16LE(localHeader, cursor, nameBytes.length)
+    cursor = writeUint16LE(localHeader, cursor, 0)
+    localHeader.set(nameBytes, cursor)
+
+    entries.push({
+      path,
+      data,
+      crc32,
+      dosTime,
+      dosDate,
+      localHeaderOffset: offset,
+    })
+    chunks.push(localHeader, data)
+    offset += localHeader.length + data.length
+  }
+
+  const centralDirectoryOffset = offset
+
+  entries.forEach((entry) => {
+    const nameBytes = textEncoder.encode(entry.path)
+    const centralHeader = new Uint8Array(46 + nameBytes.length)
+    let cursor = 0
+
+    cursor = writeUint32LE(centralHeader, cursor, 0x02014b50)
+    cursor = writeUint16LE(centralHeader, cursor, 20)
+    cursor = writeUint16LE(centralHeader, cursor, 20)
+    cursor = writeUint16LE(centralHeader, cursor, 0x0800)
+    cursor = writeUint16LE(centralHeader, cursor, 0)
+    cursor = writeUint16LE(centralHeader, cursor, entry.dosTime)
+    cursor = writeUint16LE(centralHeader, cursor, entry.dosDate)
+    cursor = writeUint32LE(centralHeader, cursor, entry.crc32)
+    cursor = writeUint32LE(centralHeader, cursor, entry.data.length)
+    cursor = writeUint32LE(centralHeader, cursor, entry.data.length)
+    cursor = writeUint16LE(centralHeader, cursor, nameBytes.length)
+    cursor = writeUint16LE(centralHeader, cursor, 0)
+    cursor = writeUint16LE(centralHeader, cursor, 0)
+    cursor = writeUint16LE(centralHeader, cursor, 0)
+    cursor = writeUint16LE(centralHeader, cursor, 0)
+    cursor = writeUint32LE(centralHeader, cursor, 0)
+    cursor = writeUint32LE(centralHeader, cursor, entry.localHeaderOffset)
+    centralHeader.set(nameBytes, cursor)
+
+    chunks.push(centralHeader)
+    offset += centralHeader.length
+  })
+
+  const centralDirectorySize = offset - centralDirectoryOffset
+  const endRecord = new Uint8Array(22)
+  let cursor = 0
+
+  cursor = writeUint32LE(endRecord, cursor, 0x06054b50)
+  cursor = writeUint16LE(endRecord, cursor, 0)
+  cursor = writeUint16LE(endRecord, cursor, 0)
+  cursor = writeUint16LE(endRecord, cursor, entries.length)
+  cursor = writeUint16LE(endRecord, cursor, entries.length)
+  cursor = writeUint32LE(endRecord, cursor, centralDirectorySize)
+  cursor = writeUint32LE(endRecord, cursor, centralDirectoryOffset)
+  writeUint16LE(endRecord, cursor, 0)
+  chunks.push(endRecord)
+
+  return new Blob([concatUint8Arrays(chunks)], { type: "application/zip" })
+}
+
 /**
  * 下载文件
  * 使用 Blob + createObjectURL 直接下载到默认下载目录
@@ -624,6 +919,16 @@ export async function downloadFile(
 ): Promise<boolean> {
   try {
     const blob = new Blob([content], { type: mimeType })
+    return await downloadBlob(blob, filename)
+  } catch (err: unknown) {
+    console.error("[Exporter] Download failed:", err)
+    showToast(t("exportFailed"))
+    return false
+  }
+}
+
+export async function downloadBlob(blob: Blob, filename: string): Promise<boolean> {
+  try {
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
@@ -633,6 +938,89 @@ export async function downloadFile(
     return true
   } catch (err: unknown) {
     console.error("[Exporter] Download failed:", err)
+    showToast(t("exportFailed"))
+    return false
+  }
+}
+
+export async function downloadExportPackage(input: ExportPackageInput): Promise<boolean> {
+  const usedPaths = new Set<string>()
+  const markdownPath = ensureUniqueZipPath(
+    normalizeZipPath(input.markdownFilename, "conversation.md"),
+    usedPaths,
+  )
+  const files: ZipFileInput[] = [
+    {
+      path: markdownPath,
+      data: input.markdownContent,
+      mimeType: "text/markdown;charset=utf-8",
+    },
+  ]
+  const manifestAssets: ExportAssetManifestItem[] = []
+
+  for (const asset of input.assets) {
+    const assetPath = createUniqueExportAssetPath(
+      asset.relativePath || getDefaultAssetPath(asset),
+      usedPaths,
+    )
+
+    try {
+      const data = await resolveAssetData(asset)
+      files.push({
+        path: assetPath,
+        data,
+        mimeType: asset.mimeType,
+      })
+      manifestAssets.push({
+        name: asset.name,
+        path: assetPath,
+        kind: asset.kind,
+        mimeType: asset.mimeType,
+        sourceUrl: asset.sourceUrl,
+        description: asset.description,
+        included: true,
+      })
+    } catch (error) {
+      console.warn("[Exporter] Failed to include export asset:", asset.name, error)
+      manifestAssets.push({
+        name: asset.name,
+        path: assetPath,
+        kind: asset.kind,
+        mimeType: asset.mimeType,
+        sourceUrl: asset.sourceUrl,
+        description: asset.description,
+        included: false,
+        error: getErrorMessage(error),
+      })
+    }
+  }
+
+  files.push({
+    path: ensureUniqueZipPath("manifest.json", usedPaths),
+    data: JSON.stringify(
+      {
+        version: 1,
+        metadata: {
+          title: input.metadata.title,
+          id: input.metadata.id,
+          url: input.metadata.url,
+          exportTime: input.metadata.exportTime,
+          source: input.metadata.source,
+        },
+        markdown: markdownPath,
+        assets: manifestAssets,
+      },
+      null,
+      2,
+    ),
+    mimeType: "application/json;charset=utf-8",
+  })
+
+  try {
+    const zipBlob = await createZipBlob(files)
+    return await downloadBlob(zipBlob, input.packageFilename)
+  } catch (error) {
+    console.error("[Exporter] Package download failed:", error)
     showToast(t("exportFailed"))
     return false
   }

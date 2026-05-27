@@ -7,7 +7,7 @@
 import { SITE_IDS } from "~constants/defaults"
 import type { MarkdownFixerConfig } from "~core/markdown-fixer"
 import { DOMToolkit } from "~utils/dom-toolkit"
-import type { ExportFormat, ExportMessage } from "~utils/exporter"
+import type { ExportBundle, ExportFormat, ExportMessage } from "~utils/exporter"
 
 // ==================== 类型定义 ====================
 
@@ -1133,6 +1133,16 @@ export abstract class SiteAdapter {
    * 返回 null 表示继续使用通用 selector 导出逻辑。
    */
   async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
+    return null
+  }
+
+  /**
+   * 站点自定义导出包抽取。
+   *
+   * 用于导出消息之外的附件资产（图片、文档、Artifact 等）。
+   * 返回 null 表示站点尚未接入附件导出，核心逻辑会继续使用旧的文本导出路径。
+   */
+  async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
     return null
   }
 
