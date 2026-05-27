@@ -29,7 +29,9 @@ export class InlineBookmarkManager {
   private displayMode: InlineBookmarkDisplayMode = "always"
   private unsubscribe: (() => void) | null = null
   private unsubscribeBookmarks: (() => void) | null = null
-  private injectedElements = new WeakSet<Element>()
+  private observer: MutationObserver | null = null
+  private injectDebounceTimer: ReturnType<typeof setTimeout> | null = null
+  private injectedSignatures = new WeakMap<Element, string>()
   private injectedRoots = new WeakSet<Node>()
 
   constructor(
@@ -55,6 +57,8 @@ export class InlineBookmarkManager {
     this.unsubscribeBookmarks = useBookmarkStore.subscribe(() => {
       this.updateAllIconStates()
     })
+
+    this.startDomObserver()
 
     // 初始注入
     this.injectBookmarkIcons()
@@ -205,7 +209,7 @@ export class InlineBookmarkManager {
       return
     }
 
-    const flatItems = this.outlineManager.getFlatItems()
+    const flatItems = this.getInlineBookmarkItems()
     const sessionId = this.adapter.getSessionId()
     const bookmarkStore = useBookmarkStore.getState()
 
@@ -221,12 +225,22 @@ export class InlineBookmarkManager {
         this.injectScopedStyles(root)
       }
 
-      // 2. 注入图标 (同前，防止重复)
-      if (this.injectedElements.has(element)) continue
-      if (element.querySelector(`.${ICON_CLASS}`)) {
-        this.injectedElements.add(element)
+      // 生成签名和检查是否已收藏
+      const signature = this.outlineManager.getSignature(item)
+      const isBookmarked = bookmarkStore.getBookmarkId(sessionId, signature) !== null
+
+      // 2. 注入图标。虚拟滚动可能复用 DOM 元素承载不同消息，
+      // 所以不能只按元素去重，还要确认签名仍然一致。
+      const existingIcon = element.querySelector(`.${ICON_CLASS}`) as HTMLElement | null
+      if (
+        existingIcon &&
+        this.injectedSignatures.get(element) === signature &&
+        existingIcon.dataset.signature === signature
+      ) {
         continue
       }
+
+      existingIcon?.remove()
 
       // 确保元素有 position: relative
       element.classList.add("gh-has-inline-bookmark")
@@ -234,10 +248,6 @@ export class InlineBookmarkManager {
       // 创建图标容器
       const iconWrapper = document.createElement("span")
       iconWrapper.className = ICON_CLASS
-
-      // 生成签名和检查是否已收藏
-      const signature = this.outlineManager.getSignature(item)
-      const isBookmarked = bookmarkStore.getBookmarkId(sessionId, signature) !== null
 
       if (isBookmarked) {
         iconWrapper.classList.add(ICON_BOOKMARKED_CLASS)
@@ -257,8 +267,54 @@ export class InlineBookmarkManager {
       })
 
       element.insertBefore(iconWrapper, element.firstChild)
-      this.injectedElements.add(element)
+      this.injectedSignatures.set(element, signature)
     }
+  }
+
+  private startDomObserver() {
+    const target = this.adapter.getObserveTarget() ?? document.body
+    if (!target) return
+
+    this.observer = new MutationObserver(() => {
+      this.scheduleInjectBookmarkIcons()
+    })
+
+    this.observer.observe(target, {
+      childList: true,
+      subtree: true,
+    })
+  }
+
+  private scheduleInjectBookmarkIcons() {
+    if (this.displayMode === "hidden") return
+    if (this.injectDebounceTimer) {
+      clearTimeout(this.injectDebounceTimer)
+    }
+
+    this.injectDebounceTimer = setTimeout(() => {
+      this.injectDebounceTimer = null
+      this.injectBookmarkIcons()
+    }, 120)
+  }
+
+  private getInlineBookmarkItems(): OutlineItem[] {
+    const items: OutlineItem[] = []
+    const seenElements = new Set<Element>()
+
+    const pushItems = (candidates: OutlineItem[]) => {
+      candidates.forEach((item) => {
+        const element = item.element
+        if (!element || seenElements.has(element)) return
+
+        seenElements.add(element)
+        items.push(item)
+      })
+    }
+
+    pushItems(this.adapter.getInlineBookmarkItems())
+    pushItems(this.outlineManager.getFlatItems())
+
+    return items
   }
 
   /**
@@ -363,7 +419,7 @@ export class InlineBookmarkManager {
       el.classList.remove("gh-has-inline-bookmark")
     })
 
-    this.injectedElements = new WeakSet()
+    this.injectedSignatures = new WeakMap()
   }
 
   static cleanupInjectedArtifacts() {
@@ -409,9 +465,17 @@ export class InlineBookmarkManager {
       this.unsubscribeBookmarks()
       this.unsubscribeBookmarks = null
     }
+    if (this.observer) {
+      this.observer.disconnect()
+      this.observer = null
+    }
+    if (this.injectDebounceTimer) {
+      clearTimeout(this.injectDebounceTimer)
+      this.injectDebounceTimer = null
+    }
 
     InlineBookmarkManager.cleanupInjectedArtifacts()
-    this.injectedElements = new WeakSet()
+    this.injectedSignatures = new WeakMap()
     this.injectedRoots = new WeakSet()
   }
 }

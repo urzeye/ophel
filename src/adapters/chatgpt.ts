@@ -1990,6 +1990,7 @@ export class ChatGPTAdapter extends SiteAdapter {
         turnId && this.outlineTurnFirstSeenIndex.has(turnId)
           ? (this.outlineTurnFirstSeenIndex.get(turnId) as number)
           : turnAnchors.get(turnId || "")?.index ?? Number.MAX_SAFE_INTEGER
+      const cached = this.outlineItemCache.get(item.id)
 
       this.outlineItemCache.set(item.id, {
         id: item.id,
@@ -2000,7 +2001,7 @@ export class ChatGPTAdapter extends SiteAdapter {
         orderInTurn,
         isUserQuery: item.isUserQuery,
         isTruncated: item.isTruncated,
-        wordCount: item.wordCount,
+        wordCount: item.wordCount ?? cached?.wordCount,
       })
     }
   }

@@ -1020,6 +1020,17 @@ export abstract class SiteAdapter {
   }
 
   /**
+   * 返回只用于页内收藏图标的额外候选项。
+   * 页内收藏需要独立于大纲面板的 showUserQueries 过滤。
+   * 默认复用站点自身的大纲抽取逻辑，以保持用户提问的文本、ID 和签名一致。
+   */
+  getInlineBookmarkItems(): OutlineItem[] {
+    return this.extractOutline(6, true, false).filter(
+      (item) => item.isUserQuery && item.element?.isConnected,
+    )
+  }
+
+  /**
    * 根据标题级别和文本查找元素（支持 Shadow DOM 穿透）
    * 用于大纲跳转时元素失效后的重新查找
    * @param level 标题级别 (1-6)

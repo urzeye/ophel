@@ -1381,6 +1381,7 @@ export class DoubaoAdapter extends SiteAdapter {
       if (isInTransition) return
 
       prepareCacheRefresh(meta)
+      const cached = this.outlineItemCache.get(id)
       this.outlineItemCache.set(id, {
         id,
         level: item.level,
@@ -1392,7 +1393,7 @@ export class DoubaoAdapter extends SiteAdapter {
         headingMatchIndex,
         isUserQuery: item.isUserQuery,
         isTruncated: item.isTruncated,
-        wordCount: item.wordCount,
+        wordCount: item.wordCount ?? cached?.wordCount,
       })
     }
 
