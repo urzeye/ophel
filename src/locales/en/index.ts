@@ -501,6 +501,7 @@ export const en = {
   exportIncludeThoughtsLabel: "Include Thoughts in Export",
   exportIncludeThoughtsDesc:
     "Include and auto-expand thoughts when exporting (rendered as blockquotes)",
+  exportAttachmentsLabel: "Attachments",
   userQueryMarkdownLabel: "User Query Style Enhancement",
   userQueryMarkdownDesc: "Apply Markdown formatting and LaTeX math rendering to user queries",
   assistantMermaidPreviewTab: "Diagram",

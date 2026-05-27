@@ -1196,6 +1196,7 @@ Donnez le code puis un résumé des améliorations.`,
   exportIncludeThoughtsLabel: "Inclure le raisonnement à l'export",
   exportIncludeThoughtsDesc:
     "Inclure et déplier automatiquement le raisonnement lors de l'export (en blocs de citation)",
+  exportAttachmentsLabel: "Pièces jointes",
 
   // ======== Popup ========
   popupCurrentSite: "Site Actuel",

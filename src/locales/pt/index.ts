@@ -1319,6 +1319,7 @@ Dê o código e depois um resumo de melhorias.`,
   exportIncludeThoughtsLabel: "Incluir raciocínio na exportação",
   exportIncludeThoughtsDesc:
     "Incluir e expandir automaticamente o raciocínio ao exportar (em blocos de citação)",
+  exportAttachmentsLabel: "Anexos",
 
   // ======== Popup ========
   popupCurrentSite: "Site Atual",

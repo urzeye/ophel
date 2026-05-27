@@ -1190,6 +1190,7 @@ export const ko = {
   exportFilenameTimestampDesc: "내보낸 파일명 끝에 타임스탬프를 추가합니다",
   exportIncludeThoughtsLabel: "내보내기에 사고 과정 포함",
   exportIncludeThoughtsDesc: "내보낼 때 사고 과정을 포함하고 자동으로 펼칩니다(인용 블록으로 구분)",
+  exportAttachmentsLabel: "첨부 파일",
 
   // ======== Popup ========
   popupCurrentSite: "현재 사이트",

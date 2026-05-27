@@ -6,7 +6,7 @@ import { SITE_IDS } from "~constants"
 import { platform } from "~platform"
 import { geminiNativeThemeCss } from "~styles/native-theme-adapters/gemini"
 import { DOMToolkit } from "~utils/dom-toolkit"
-import { htmlToMarkdown } from "~utils/exporter"
+import { htmlToMarkdown, type ExportMessage } from "~utils/exporter"
 import { t } from "~utils/i18n"
 import { createOpenInNewTabIcon } from "~utils/icons"
 import {
@@ -71,6 +71,8 @@ const GEMINI_EXPORT_IMAGE_SRC_ATTR = "data-ophel-export-image-src"
 const GEMINI_EMAIL_REGEX = /([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i
 const GEMINI_ACCOUNT_HINT_REGEX =
   /(google|account|账号|帳號|conta|compte|cuenta|konto|アカウント|계정|учет)/i
+const GEMINI_UNAVAILABLE_SHARED_FILE_HINT_REGEX =
+  /(unable|cannot|can't|can not|无法|無法|不可).*(view|preview|download|共享|分享|shared|查看|预览|預覽|下载|下載)|shared.*(file|download|preview)|共享对话中的文件|共享對話中的文件/i
 const GEMINI_EXPORT_IMAGE_SCOPE_SELECTOR = [
   ".attachment-container.generated-images",
   "response-element",
@@ -82,6 +84,32 @@ const GEMINI_EXPORT_IMAGE_SCOPE_SELECTOR = [
 const GEMINI_USER_QUERY_IMAGE_SELECTOR = [
   "user-query img[data-test-id='uploaded-img']",
   "user-query .preview-image",
+].join(", ")
+const GEMINI_SHARE_TURN_SELECTOR = "share-landing-page .share-turn-viewer"
+const GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_SELECTOR =
+  'share-landing-page immersive-share-landing-page structured-content-container[data-test-id="deep-research-block"]'
+const GEMINI_DEEP_RESEARCH_ARTIFACT_SHARE_SELECTOR =
+  'share-landing-page structured-content-container[data-test-id="immersive-artifact-content"]'
+const GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR = "message-content .markdown"
+const GEMINI_DEEP_RESEARCH_CONFIRMATION_SELECTOR = "deep-research-confirmation-widget"
+const GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_FOOTER_SELECTOR =
+  'share-landing-page immersive-share-landing-page .page:has(structured-content-container[data-test-id="deep-research-block"]) > .footer'
+const GEMINI_ASSISTANT_EXPORT_NOISE_SELECTOR = [
+  ".cdk-visually-hidden",
+  "model-thoughts",
+  '[data-test-id="time-estimation-message"]',
+  ".time-estimation-message",
+  "source-footnote",
+  "sources-carousel-inline",
+  "sources-carousel",
+  ".gh-inline-bookmark",
+  ".gh-table-copy-btn",
+  "mat-icon",
+  "share-button",
+  "copy-button",
+  "download-generated-image-button",
+  ".generated-image-controls",
+  ".loader",
 ].join(", ")
 
 interface GeminiMyStuffLocator {
@@ -1698,11 +1726,19 @@ export class GeminiAdapter extends SiteAdapter {
       const name = activeTitle.textContent?.trim()
       if (name) return name
     }
+    const deepResearchDocumentTitle = this.getDeepResearchDocumentShareTitle()
+    if (deepResearchDocumentTitle) {
+      return deepResearchDocumentTitle
+    }
     // 分享页面（/share/...）：标题在 h1.headline 中，如 <h1 class="headline gds-headline-m"><strong>询问模型身份</strong></h1>
     const shareTitle = document.querySelector("h1.headline, h1[class*='headline']")
     if (shareTitle) {
       const name = shareTitle.textContent?.trim()
       if (name) return name
+    }
+    const deepResearchArtifactTitle = this.getDeepResearchArtifactShareTitle()
+    if (deepResearchArtifactTitle) {
+      return deepResearchArtifactTitle
     }
     return super.getSessionName()
   }
@@ -1803,7 +1839,7 @@ export class GeminiAdapter extends SiteAdapter {
         "g1-dynamic-upsell-button",
         ".share-viewer_footer_disclaimer",
         ".share-landing-page_footer",
-        'share-landing-page immersive-share-landing-page .page:has(structured-content-container[data-test-id="deep-research-block"]) > .footer',
+        GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_FOOTER_SELECTOR,
       ],
     }
   }
@@ -1987,14 +2023,20 @@ export class GeminiAdapter extends SiteAdapter {
   extractUserQueryExportContent(element: Element): string {
     const sanitized = this.sanitizeUserQueryElement(element)
     const imageMarkdown = this.extractUserQueryImageMarkdown(sanitized)
+    const fileMarkdown = this.extractUserQueryFileMarkdown(sanitized)
     const markdown = this.extractUserQueryMarkdown(sanitized).trim()
     const textContent = markdown || this.extractUserQueryText(sanitized).trim()
 
-    if (imageMarkdown.length === 0) {
+    if (imageMarkdown.length === 0 && fileMarkdown.length === 0) {
       return textContent
     }
 
-    return [imageMarkdown.join("\n\n"), textContent].filter(Boolean).join("\n\n")
+    const fileBlock =
+      fileMarkdown.length > 0
+        ? `${t("exportAttachmentsLabel") || "Attachments"}:\n${fileMarkdown.join("\n")}`
+        : ""
+
+    return [imageMarkdown.join("\n\n"), fileBlock, textContent].filter(Boolean).join("\n\n")
   }
 
   async prepareConversationExport(_context: ExportLifecycleContext): Promise<unknown> {
@@ -2053,6 +2095,88 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     return imageMarkdown
+  }
+
+  private extractUserQueryFileMarkdown(element: Element): string[] {
+    const files = Array.from(element.querySelectorAll('[data-test-id="uploaded-file"]'))
+    const fileMarkdown: string[] = []
+    const seenFiles = new Set<string>()
+
+    for (const file of files) {
+      const name = this.extractUserQueryFileName(file)
+      if (!name) continue
+
+      const type = this.extractUserQueryFileType(file)
+      const label = type && !this.fileNameEndsWithType(name, type) ? `${name} (${type})` : name
+      const href = this.extractUserQueryFileHref(file)
+      const markdown = href ? `- [${this.escapeMarkdownLinkText(label)}](${href})` : `- ${label}`
+
+      if (seenFiles.has(markdown)) continue
+
+      seenFiles.add(markdown)
+      fileMarkdown.push(markdown)
+    }
+
+    return fileMarkdown
+  }
+
+  private extractUserQueryFileName(file: Element): string {
+    const ariaName = this.extractUserQueryFileAriaName(file)
+    if (ariaName) return ariaName
+
+    const visibleCandidates = [
+      this.getNormalizedText(file.querySelector('[data-test-id="filename-label"]')),
+      this.getNormalizedText(file.querySelector(".filename-label")),
+      this.getNormalizedText(file.querySelector(".new-file-name")),
+    ]
+
+    return visibleCandidates.find(Boolean) || ""
+  }
+
+  private extractUserQueryFileAriaName(file: Element): string {
+    const candidates = Array.from(file.querySelectorAll("a[aria-label], button[aria-label]"))
+      .map((node) => node.getAttribute("aria-label") || "")
+      .map((value) => value.replace(/\s+/g, " ").trim())
+      .filter(Boolean)
+
+    return (
+      candidates.find((candidate) => !GEMINI_UNAVAILABLE_SHARED_FILE_HINT_REGEX.test(candidate)) ||
+      ""
+    )
+  }
+
+  private extractUserQueryFileType(file: Element): string {
+    const explicitType = this.getNormalizedText(file.querySelector(".new-file-type"))
+    if (explicitType) return explicitType
+
+    const iconAlt = file.querySelector('[data-test-id="luminous-file-icon"]')?.getAttribute("alt")
+    return (iconAlt || "")
+      .replace(/icon|图标|圖標|アイコン|아이콘|símbolo|ícone|symbol|значок/gi, "")
+      .replace(/\s+/g, " ")
+      .trim()
+  }
+
+  private fileNameEndsWithType(name: string, type: string): boolean {
+    const normalizedName = name.toLowerCase()
+    const normalizedType = type.replace(/^\./, "").toLowerCase()
+    return normalizedType ? normalizedName.endsWith(`.${normalizedType}`) : false
+  }
+
+  private extractUserQueryFileHref(file: Element): string {
+    const links = Array.from(file.querySelectorAll("a[href]")).filter(
+      (node): node is HTMLAnchorElement => node instanceof HTMLAnchorElement,
+    )
+
+    for (const link of links) {
+      const href = this.normalizeExportImageUrl(link.href || link.getAttribute("href") || "")
+      if (this.isStablePreparedExportImageUrl(href)) return href
+    }
+
+    return ""
+  }
+
+  private escapeMarkdownLinkText(value: string): string {
+    return value.replace(/[[\]]/g, "\\$&")
   }
 
   private getPreparedExportImageSrc(image: HTMLImageElement): string {
@@ -2147,11 +2271,73 @@ export class GeminiAdapter extends SiteAdapter {
    */
   private sanitizeAssistantExportElement(element: Element): Element {
     const clone = element.cloneNode(true) as Element
-    const hiddenNodes = clone.querySelectorAll(".cdk-visually-hidden")
-    hiddenNodes.forEach((node) => node.remove())
+    clone.querySelectorAll(GEMINI_ASSISTANT_EXPORT_NOISE_SELECTOR).forEach((node) => node.remove())
+    this.normalizeDeepResearchConfirmationWidgetsForExport(clone)
     this.normalizeAssistantGeneratedImagesForExport(clone)
 
     return clone
+  }
+
+  private normalizeDeepResearchConfirmationWidgetsForExport(root: Element): void {
+    root.querySelectorAll(GEMINI_DEEP_RESEARCH_CONFIRMATION_SELECTOR).forEach((widget) => {
+      const replacement = document.createElement("div")
+      replacement.className = "ophel-gemini-deep-research-plan"
+
+      const title = this.getNormalizedText(widget.querySelector('[data-test-id="title"]'))
+      if (title) {
+        const heading = document.createElement("h3")
+        heading.textContent = title
+        replacement.appendChild(heading)
+      }
+
+      const steps = Array.from(
+        widget.querySelectorAll('[data-test-id="research-steps"] .research-step'),
+      )
+      steps.forEach((step, index) => {
+        const stepTitle = this.extractDeepResearchStepTitle(step)
+        if (stepTitle) {
+          const heading = document.createElement("h4")
+          heading.textContent = `${index + 1}. ${stepTitle}`
+          replacement.appendChild(heading)
+        }
+
+        const description = this.normalizeExportMultilineText(
+          step.querySelector(".research-step-description")?.textContent || "",
+        )
+        if (description) {
+          const paragraph = document.createElement("p")
+          paragraph.textContent = description
+          replacement.appendChild(paragraph)
+        }
+      })
+
+      if (replacement.childNodes.length > 0) {
+        widget.replaceWith(replacement)
+      }
+    })
+  }
+
+  private extractDeepResearchStepTitle(step: Element): string {
+    const titleContainer = step.querySelector(".research-step-title")
+    const titleElement = Array.from(titleContainer?.children || []).find(
+      (child) => child.tagName.toLowerCase() !== "mat-icon",
+    )
+    return this.getNormalizedText(titleElement || titleContainer)
+  }
+
+  private getNormalizedText(element: Element | null | undefined): string {
+    return (element?.textContent || "").replace(/\s+/g, " ").trim()
+  }
+
+  private normalizeExportMultilineText(value: string): string {
+    return value
+      .replace(/\r\n?/g, "\n")
+      .split("\n")
+      .map((line) => line.trimEnd())
+      .join("\n")
+      .replace(/[ \t]+\n/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
   }
 
   private normalizeAssistantGeneratedImagesForExport(root: Element): void {
@@ -2210,12 +2396,128 @@ export class GeminiAdapter extends SiteAdapter {
    */
   extractAssistantResponseText(element: Element): string {
     const sanitized = this.sanitizeAssistantExportElement(element)
+    return this.extractMarkdownExportContent(sanitized)
+  }
 
-    // Gemini 新版页面不再需要导出思维链，直接排除相关节点。
-    sanitized.querySelectorAll("model-thoughts").forEach((node) => node.remove())
+  async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
+    if (this.isDeepResearchDocumentSharePage()) {
+      return this.extractDeepResearchDocumentShareMessages()
+    }
 
-    const bodyMarkdown = htmlToMarkdown(sanitized) || this.extractTextWithLineBreaks(sanitized)
+    if (this.isDeepResearchConversationSharePage()) {
+      return this.extractDeepResearchConversationShareMessages()
+    }
+
+    return null
+  }
+
+  private isDeepResearchDocumentSharePage(): boolean {
+    return (
+      this.isSharePage() &&
+      document.querySelector(GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_SELECTOR) !== null
+    )
+  }
+
+  private isDeepResearchConversationSharePage(): boolean {
+    return (
+      this.isSharePage() &&
+      document.querySelector(GEMINI_DEEP_RESEARCH_ARTIFACT_SHARE_SELECTOR) !== null
+    )
+  }
+
+  private extractDeepResearchDocumentShareMessages(): ExportMessage[] {
+    const markdown = document.querySelector(
+      `${GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_SELECTOR} ${GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR}`,
+    )
+    const content = markdown ? this.extractAssistantResponseText(markdown) : ""
+    return content ? [{ role: "assistant", content }] : []
+  }
+
+  private extractDeepResearchConversationShareMessages(): ExportMessage[] {
+    const messages: ExportMessage[] = []
+    const turns = Array.from(document.querySelectorAll(GEMINI_SHARE_TURN_SELECTOR))
+    const collectedElements = new Set<Element>()
+
+    turns.forEach((turn) => {
+      const turnMessages = [
+        ...Array.from(turn.querySelectorAll("user-query")).map((element) => ({
+          role: "user" as const,
+          element,
+        })),
+        ...Array.from(turn.querySelectorAll(GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR)).map(
+          (element) => ({
+            role: "assistant" as const,
+            element,
+          }),
+        ),
+      ].sort((left, right) => this.compareDomOrder(left.element, right.element))
+
+      turnMessages.forEach(({ role, element }) => {
+        const content =
+          role === "user"
+            ? this.extractUserQueryExportContent(element).trim()
+            : this.extractAssistantResponseText(element).trim()
+        if (!content) return
+        collectedElements.add(element)
+        messages.push({ role, content })
+      })
+    })
+
+    this.collectDetachedDeepResearchArtifactMessages(collectedElements).forEach((message) => {
+      messages.push(message)
+    })
+
+    return this.dedupeAdjacentExportMessages(messages)
+  }
+
+  private collectDetachedDeepResearchArtifactMessages(
+    collectedElements: Set<Element>,
+  ): ExportMessage[] {
+    return Array.from(
+      document.querySelectorAll(
+        `${GEMINI_DEEP_RESEARCH_ARTIFACT_SHARE_SELECTOR} ${GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR}`,
+      ),
+    ).flatMap((element) => {
+      if (collectedElements.has(element)) return []
+
+      const content = this.extractAssistantResponseText(element).trim()
+      return content ? [{ role: "assistant", content }] : []
+    })
+  }
+
+  private extractMarkdownExportContent(element: Element): string {
+    const bodyMarkdown = htmlToMarkdown(element) || this.extractTextWithLineBreaks(element)
     return bodyMarkdown.trim()
+  }
+
+  private compareDomOrder(left: Element, right: Element): number {
+    if (left === right) return 0
+    const position = left.compareDocumentPosition(right)
+    if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1
+    if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1
+    return 0
+  }
+
+  private dedupeAdjacentExportMessages(messages: ExportMessage[]): ExportMessage[] {
+    const deduped: ExportMessage[] = []
+    messages.forEach((message) => {
+      const previous = deduped[deduped.length - 1]
+      if (previous?.role === message.role && previous.content === message.content) {
+        return
+      }
+      deduped.push(message)
+    })
+    return deduped
+  }
+
+  private getDeepResearchDocumentShareTitle(): string | null {
+    const title = document.querySelector(`${GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_SELECTOR} h1`)
+    return title?.textContent?.trim() || null
+  }
+
+  private getDeepResearchArtifactShareTitle(): string | null {
+    const title = document.querySelector(`${GEMINI_DEEP_RESEARCH_ARTIFACT_SHARE_SELECTOR} h1`)
+    return title?.textContent?.trim() || null
   }
 
   /**

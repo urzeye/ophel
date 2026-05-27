@@ -1191,6 +1191,7 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   exportIncludeThoughtsLabel: "Gedankengang beim Export einbeziehen",
   exportIncludeThoughtsDesc:
     "Gedankengang beim Export einbeziehen und automatisch erweitern (als Zitatblöcke)",
+  exportAttachmentsLabel: "Anhänge",
 
   // ======== Popup ========
   popupCurrentSite: "Aktuelle Seite",

@@ -1233,6 +1233,7 @@ export const ja = {
   exportFilenameTimestampDesc: "エクスポートしたファイル名の末尾にタイムスタンプを追加します",
   exportIncludeThoughtsLabel: "エクスポートに思考過程を含める",
   exportIncludeThoughtsDesc: "エクスポート時に思考過程を含めて自動展開します（引用ブロックで区別）",
+  exportAttachmentsLabel: "添付ファイル",
 
   // ======== Popup ========
   popupCurrentSite: "現在のサイト",

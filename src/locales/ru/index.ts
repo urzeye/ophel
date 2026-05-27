@@ -1349,6 +1349,7 @@ export const ru = {
   exportIncludeThoughtsLabel: "Включать рассуждения при экспорте",
   exportIncludeThoughtsDesc:
     "Включать и автоматически разворачивать рассуждения при экспорте (в виде цитатных блоков)",
+  exportAttachmentsLabel: "Вложения",
 
   // ==================== Prompt Queue ====================
   queueTitle: "Очередь промптов",

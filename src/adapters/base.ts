@@ -7,6 +7,7 @@
 import { SITE_IDS } from "~constants/defaults"
 import type { MarkdownFixerConfig } from "~core/markdown-fixer"
 import { DOMToolkit } from "~utils/dom-toolkit"
+import type { ExportFormat, ExportMessage } from "~utils/exporter"
 
 // ==================== 类型定义 ====================
 
@@ -81,7 +82,7 @@ export interface ExportConfig {
 
 export interface ExportLifecycleContext {
   conversationId: string
-  format: "markdown" | "json" | "txt" | "clipboard"
+  format: ExportFormat
   includeThoughts: boolean
 }
 
@@ -1121,6 +1122,17 @@ export abstract class SiteAdapter {
 
   /** 获取导出配置 */
   getExportConfig(): ExportConfig | null {
+    return null
+  }
+
+  /**
+   * 站点自定义导出消息抽取。
+   *
+   * 适用于普通 turn/user/assistant selector 无法表达的页面形态，
+   * 例如分享文档、Canvas、Artifact、虚拟列表快照等。
+   * 返回 null 表示继续使用通用 selector 导出逻辑。
+   */
+  async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
     return null
   }
 

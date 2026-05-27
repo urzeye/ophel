@@ -1191,6 +1191,7 @@ Dame el código y luego un resumen de mejoras.`,
   exportIncludeThoughtsLabel: "Incluir razonamiento en la exportación",
   exportIncludeThoughtsDesc:
     "Incluir y expandir automáticamente el razonamiento al exportar (como bloques de cita)",
+  exportAttachmentsLabel: "Archivos adjuntos",
 
   // ======== Popup ========
   popupCurrentSite: "Sitio Actual",

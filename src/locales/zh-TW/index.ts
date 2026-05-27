@@ -1204,6 +1204,7 @@ export const zhTW = {
   exportFilenameTimestampDesc: "在導出文件名末尾添加時間戳",
   exportIncludeThoughtsLabel: "匯出包含思維鏈",
   exportIncludeThoughtsDesc: "匯出時包含並自動展開思維鏈內容（使用引用區塊區分）",
+  exportAttachmentsLabel: "附件",
 
   // ======== Popup 頁面 ========
   popupCurrentSite: "目前站點",

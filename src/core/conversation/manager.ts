@@ -15,6 +15,7 @@ import { DOMToolkit } from "~utils/dom-toolkit"
 import {
   createExportMetadata,
   downloadFile,
+  type ExportMessage,
   formatToJSON,
   formatToMarkdown,
   formatToTXT,
@@ -1086,7 +1087,7 @@ export class ConversationManager {
       exportLifecycleState = await this.siteAdapter.prepareConversationExport(exportContext)
 
       // 提取对话内容
-      const messages = this.extractConversationMessages()
+      const messages = await this.extractConversationMessages(exportContext)
       if (messages.length === 0) {
         console.error("[ConversationManager] No messages found")
         return false
@@ -1173,11 +1174,15 @@ export class ConversationManager {
   /**
    * 提取当前页面的对话消息
    */
-  private extractConversationMessages(): Array<{
-    role: "user" | "assistant"
-    content: string
-  }> {
-    const messages: Array<{ role: "user" | "assistant"; content: string }> = []
+  private async extractConversationMessages(
+    context: ExportLifecycleContext,
+  ): Promise<ExportMessage[]> {
+    const adapterMessages = await this.siteAdapter.extractExportMessages(context)
+    if (adapterMessages !== null) {
+      return adapterMessages
+    }
+
+    const messages: ExportMessage[] = []
 
     const config = this.siteAdapter.getExportConfig?.()
     if (!config) {
