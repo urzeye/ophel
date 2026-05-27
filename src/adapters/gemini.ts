@@ -2090,6 +2090,32 @@ export class GeminiAdapter extends SiteAdapter {
     return [imageMarkdown.join("\n\n"), fileBlock, textContent].filter(Boolean).join("\n\n")
   }
 
+  private async extractUserQueryExportContentWithResolvedAssets(
+    element: Element,
+    collector: GeminiExportAssetCollector,
+  ): Promise<string> {
+    const sanitized = this.sanitizeUserQueryElement(element)
+    const imageMarkdown = this.extractUserQueryImageMarkdown(sanitized, collector)
+    const fileMarkdown = await this.extractUserQueryFileMarkdownWithResolvedAssets(
+      element,
+      sanitized,
+      collector,
+    )
+    const markdown = this.extractUserQueryMarkdown(sanitized).trim()
+    const textContent = markdown || this.extractUserQueryText(sanitized).trim()
+
+    if (imageMarkdown.length === 0 && fileMarkdown.length === 0) {
+      return textContent
+    }
+
+    const fileBlock =
+      fileMarkdown.length > 0
+        ? `${t("exportAttachmentsLabel") || "Attachments"}:\n${fileMarkdown.join("\n")}`
+        : ""
+
+    return [imageMarkdown.join("\n\n"), fileBlock, textContent].filter(Boolean).join("\n\n")
+  }
+
   async prepareConversationExport(_context: ExportLifecycleContext): Promise<unknown> {
     await this.prepareImagesForExport()
 
@@ -2276,6 +2302,210 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     return fileMarkdown
+  }
+
+  private async extractUserQueryFileMarkdownWithResolvedAssets(
+    sourceElement: Element,
+    sanitizedElement: Element,
+    collector: GeminiExportAssetCollector,
+  ): Promise<string[]> {
+    const sourceFiles = Array.from(sourceElement.querySelectorAll(GEMINI_UPLOADED_FILE_SELECTOR))
+    const sanitizedFiles = Array.from(
+      sanitizedElement.querySelectorAll(GEMINI_UPLOADED_FILE_SELECTOR),
+    )
+    const fileMarkdown: string[] = []
+    const seenFiles = new Set<string>()
+
+    for (let index = 0; index < sanitizedFiles.length; index += 1) {
+      const file = sanitizedFiles[index]
+      const sourceFile = sourceFiles[index] || null
+      const name = this.extractUserQueryFileName(file)
+      if (!name) continue
+
+      const type = this.extractUserQueryFileType(file)
+      const label = type && !this.fileNameEndsWithType(name, type) ? `${name} (${type})` : name
+      const href = this.extractUserQueryFileHref(file)
+      let assetPath = href ? this.addFileExportAsset(collector, href, name, type || undefined) : ""
+
+      if (!assetPath && sourceFile) {
+        const viewerDocument = await this.extractUserQueryViewerDocument(sourceFile, name)
+        if (viewerDocument) {
+          assetPath = this.addInlineDocumentExportAsset(
+            collector,
+            viewerDocument.content,
+            viewerDocument.name || name,
+            viewerDocument.mimeType,
+          )
+        }
+      }
+
+      const markdown = assetPath
+        ? `- [${this.escapeMarkdownLinkText(label)}](${assetPath})`
+        : `- ${label}`
+
+      if (seenFiles.has(markdown)) continue
+
+      seenFiles.add(markdown)
+      fileMarkdown.push(markdown)
+    }
+
+    return fileMarkdown
+  }
+
+  private addInlineDocumentExportAsset(
+    collector: GeminiExportAssetCollector,
+    content: string,
+    requestedName: string,
+    mimeType?: string,
+  ): string {
+    const filename = this.ensureExportFilenameExtension(
+      this.sanitizeGeminiExportFilename(requestedName || "gemini-document"),
+      "",
+      mimeType || "text/plain",
+    )
+    const existing = collector.assets.find(
+      (asset) => asset.kind === "document" && asset.name === filename && asset.content === content,
+    )
+    if (existing?.relativePath) return existing.relativePath
+
+    const path = this.createUniqueGeminiExportPath(`assets/files/${filename}`, collector)
+    const name = path.split("/").pop() || filename
+
+    collector.assets.push({
+      id: `gemini-document-${collector.assets.length + 1}`,
+      name,
+      relativePath: path,
+      mimeType: mimeType || this.getExportAssetMimeType("", name, "document"),
+      kind: "document",
+      content,
+      description: requestedName || undefined,
+    })
+
+    return path
+  }
+
+  private async extractUserQueryViewerDocument(
+    file: Element,
+    fallbackName: string,
+  ): Promise<{ name: string; mimeType?: string; content: string } | null> {
+    const trigger = this.getUserQueryFilePreviewTrigger(file)
+    if (!trigger) return null
+
+    const previousViewer = document.querySelector("immersive-panel .drive-viewer")
+    trigger.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" })
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    this.simulateClick(trigger)
+
+    const viewer = (await this.waitForDriveViewer(previousViewer)) || previousViewer
+    if (!viewer) return null
+
+    const viewerDocument = await this.waitForDriveViewerDocument(viewer)
+    const result = viewerDocument
+      ? {
+          name: viewerDocument.name || fallbackName,
+          mimeType: viewerDocument.mimeType,
+          content: viewerDocument.content,
+        }
+      : null
+
+    await this.closeDriveViewer(viewer)
+    return result
+  }
+
+  private getUserQueryFilePreviewTrigger(file: Element): HTMLElement | null {
+    const candidates = [
+      file.matches("button, [role='button']") ? file : null,
+      file.querySelector("button"),
+      file.querySelector("[role='button']"),
+    ]
+
+    return (
+      candidates.find((candidate): candidate is HTMLElement => candidate instanceof HTMLElement) ||
+      null
+    )
+  }
+
+  private async waitForDriveViewer(
+    previousViewer: Element | null,
+    timeoutMs = 3000,
+  ): Promise<Element | null> {
+    const startedAt = Date.now()
+    while (Date.now() - startedAt < timeoutMs) {
+      const viewers = Array.from(document.querySelectorAll("immersive-panel .drive-viewer"))
+      const viewer = viewers.find((candidate) => candidate !== previousViewer)
+      if (viewer) return viewer
+      if (!previousViewer && viewers[0]) return viewers[0]
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+
+    return null
+  }
+
+  private async waitForDriveViewerDocument(
+    viewer: Element,
+    timeoutMs = 5000,
+  ): Promise<{ name: string; mimeType?: string; content: string } | null> {
+    const startedAt = Date.now()
+    while (Date.now() - startedAt < timeoutMs) {
+      const contentElement = viewer.querySelector(".drive-viewer-text-content pre")
+      const content = this.decodeDriveViewerText(contentElement?.textContent || "")
+      if (content) {
+        return {
+          name: this.extractDriveViewerDocumentName(viewer),
+          mimeType: this.extractDriveViewerDocumentMimeType(viewer),
+          content,
+        }
+      }
+
+      const error = viewer.querySelector(".drive-viewer-msg-error")
+      if (error && window.getComputedStyle(error).display !== "none") {
+        return null
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+
+    return null
+  }
+
+  private decodeDriveViewerText(value: string): string {
+    return value.replace(/\r\n/g, "\n").trim()
+  }
+
+  private extractDriveViewerDocumentName(viewer: Element): string {
+    const info = this.parseDriveActiveItemInfo(viewer)
+    const toolstripName = this.getNormalizedText(
+      viewer.querySelector(".drive-viewer-toolstrip-name"),
+    )
+    return info?.title || toolstripName || ""
+  }
+
+  private extractDriveViewerDocumentMimeType(viewer: Element): string | undefined {
+    return this.parseDriveActiveItemInfo(viewer)?.mimeType
+  }
+
+  private parseDriveActiveItemInfo(viewer: Element): { title?: string; mimeType?: string } | null {
+    const info = Array.from(
+      viewer.querySelectorAll('[id="drive-active-item-info"], div[style*="display:none"]'),
+    )
+      .map((node) => node.textContent?.trim() || "")
+      .find((text) => text.startsWith("{") && text.includes('"title"'))
+    if (!info) return null
+
+    try {
+      const parsed = JSON.parse(info) as { title?: string; mimeType?: string }
+      return parsed && typeof parsed === "object" ? parsed : null
+    } catch {
+      return null
+    }
+  }
+
+  private async closeDriveViewer(viewer: Element): Promise<void> {
+    const closeButton = viewer.querySelector(".drive-viewer-close-button")
+    if (closeButton instanceof HTMLElement) {
+      this.simulateClick(closeButton)
+      await new Promise((resolve) => setTimeout(resolve, 150))
+    }
   }
 
   private addFileExportAsset(
@@ -2790,9 +3020,9 @@ export class GeminiAdapter extends SiteAdapter {
     return this.extractGeminiConversationMessagesWithAssets(collector)
   }
 
-  private extractGeminiConversationMessagesWithAssets(
+  private async extractGeminiConversationMessagesWithAssets(
     collector: GeminiExportAssetCollector,
-  ): ExportMessage[] | null {
+  ): Promise<ExportMessage[] | null> {
     const root =
       document.querySelector(this.getResponseContainerSelector()) || this.getScrollContainer()
     if (!root) return null
@@ -2803,18 +3033,18 @@ export class GeminiAdapter extends SiteAdapter {
     if (messageElements.length === 0) return null
 
     const messages: ExportMessage[] = []
-    messageElements.forEach((element) => {
-      if (element.closest("immersive-panel")) return
+    for (const element of messageElements) {
+      if (element.closest("immersive-panel")) continue
 
       const role = element.tagName.toLowerCase() === "user-query" ? "user" : "assistant"
       const content =
         role === "user"
-          ? this.extractUserQueryExportContentWithAssets(element, collector).trim()
+          ? (await this.extractUserQueryExportContentWithResolvedAssets(element, collector)).trim()
           : this.extractAssistantResponseTextWithAssets(element, collector).trim()
 
-      if (!content) return
+      if (!content) continue
       messages.push({ role, content })
-    })
+    }
 
     const deduped = this.dedupeAdjacentExportMessages(messages)
     return deduped.length > 0 ? deduped : null
