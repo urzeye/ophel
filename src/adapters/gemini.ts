@@ -91,6 +91,7 @@ const GEMINI_USER_QUERY_IMAGE_SELECTOR = [
   "user-query img[data-test-id='uploaded-img']",
   "user-query .preview-image",
 ].join(", ")
+const GEMINI_UPLOADED_FILE_SELECTOR = '[data-test-id="uploaded-file"]'
 const GEMINI_SHARE_TURN_SELECTOR = "share-landing-page .share-turn-viewer"
 const GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_SELECTOR =
   'share-landing-page immersive-share-landing-page structured-content-container[data-test-id="deep-research-block"]'
@@ -164,6 +165,7 @@ interface GeminiExportLifecycleState {
 interface GeminiExportAssetCollector {
   assets: ExportAsset[]
   imagePathsBySource: Map<string, string>
+  filePathsBySource: Map<string, string>
   usedPaths: Set<string>
 }
 
@@ -2072,7 +2074,7 @@ export class GeminiAdapter extends SiteAdapter {
   ): string {
     const sanitized = this.sanitizeUserQueryElement(element)
     const imageMarkdown = this.extractUserQueryImageMarkdown(sanitized, collector)
-    const fileMarkdown = this.extractUserQueryFileMarkdown(sanitized)
+    const fileMarkdown = this.extractUserQueryFileMarkdown(sanitized, collector)
     const markdown = this.extractUserQueryMarkdown(sanitized).trim()
     const textContent = markdown || this.extractUserQueryText(sanitized).trim()
 
@@ -2246,8 +2248,11 @@ export class GeminiAdapter extends SiteAdapter {
     return new Blob([bytes], { type: mimeType })
   }
 
-  private extractUserQueryFileMarkdown(element: Element): string[] {
-    const files = Array.from(element.querySelectorAll('[data-test-id="uploaded-file"]'))
+  private extractUserQueryFileMarkdown(
+    element: Element,
+    collector?: GeminiExportAssetCollector,
+  ): string[] {
+    const files = Array.from(element.querySelectorAll(GEMINI_UPLOADED_FILE_SELECTOR))
     const fileMarkdown: string[] = []
     const seenFiles = new Set<string>()
 
@@ -2258,7 +2263,11 @@ export class GeminiAdapter extends SiteAdapter {
       const type = this.extractUserQueryFileType(file)
       const label = type && !this.fileNameEndsWithType(name, type) ? `${name} (${type})` : name
       const href = this.extractUserQueryFileHref(file)
-      const markdown = href ? `- [${this.escapeMarkdownLinkText(label)}](${href})` : `- ${label}`
+      const assetPath =
+        href && collector ? this.addFileExportAsset(collector, href, name, type || undefined) : href
+      const markdown = assetPath
+        ? `- [${this.escapeMarkdownLinkText(label)}](${assetPath})`
+        : `- ${label}`
 
       if (seenFiles.has(markdown)) continue
 
@@ -2267,6 +2276,145 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     return fileMarkdown
+  }
+
+  private addFileExportAsset(
+    collector: GeminiExportAssetCollector,
+    source: string,
+    requestedName: string,
+    mimeHint?: string,
+    kind: ExportAsset["kind"] = "file",
+  ): string {
+    const existingPath = collector.filePathsBySource.get(source)
+    if (existingPath) return existingPath
+
+    const filename = this.ensureExportFilenameExtension(
+      this.sanitizeGeminiExportFilename(requestedName || "gemini-file"),
+      source,
+      mimeHint,
+    )
+    const path = this.createUniqueGeminiExportPath(`assets/files/${filename}`, collector)
+    const name = path.split("/").pop() || filename
+    const mimeType = this.getExportAssetMimeType(source, mimeHint || name, kind)
+
+    collector.filePathsBySource.set(source, path)
+    collector.assets.push({
+      id: `gemini-${kind || "file"}-${collector.filePathsBySource.size}`,
+      name,
+      relativePath: path,
+      mimeType,
+      kind,
+      content: source.startsWith("data:") ? this.dataUrlToExportBlob(source) : undefined,
+      sourceUrl: source.startsWith("data:") ? undefined : source,
+      description: requestedName || undefined,
+    })
+
+    return path
+  }
+
+  private sanitizeGeminiExportFilename(value: string): string {
+    return value
+      .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_")
+      .replace(/\s+/g, " ")
+      .trim()
+      .substring(0, 120)
+  }
+
+  private ensureExportFilenameExtension(
+    filename: string,
+    source: string,
+    mimeHint?: string,
+  ): string {
+    const cleanName = filename || "gemini-file"
+    if (/\.[A-Za-z0-9]{1,10}$/.test(cleanName)) return cleanName
+
+    const extension =
+      this.getExportAssetExtension(source) || this.getExtensionFromMimeType(mimeHint || "")
+    return extension ? `${cleanName}.${extension}` : cleanName
+  }
+
+  private getExportAssetExtension(source: string): string {
+    if (source.startsWith("data:")) {
+      const mimeType = source.match(/^data:([^;,]+)/)?.[1] || ""
+      return this.getExtensionFromMimeType(mimeType)
+    }
+
+    try {
+      const pathname = new URL(source, window.location.href).pathname
+      return pathname.match(/\.([A-Za-z0-9]{1,10})$/)?.[1]?.toLowerCase() || ""
+    } catch {
+      return ""
+    }
+  }
+
+  private getExportAssetMimeType(
+    source: string,
+    hint: string,
+    kind: ExportAsset["kind"],
+  ): string | undefined {
+    if (source.startsWith("data:")) {
+      return source.match(/^data:([^;,]+)/)?.[1] || undefined
+    }
+
+    const lowerHint = hint.toLowerCase()
+    const extension = lowerHint.match(/\.([a-z0-9]{1,10})$/)?.[1] || lowerHint
+    const fromExtension = extension ? this.getMimeTypeFromExtension(extension) : ""
+    if (fromExtension) return fromExtension
+
+    if (kind === "audio") return "audio/mpeg"
+    if (kind === "video") return "video/mp4"
+    return undefined
+  }
+
+  private getMimeTypeFromExtension(extension: string): string {
+    const normalized = extension.toLowerCase()
+    const mimeTypes: Record<string, string> = {
+      avif: "image/avif",
+      csv: "text/csv",
+      gif: "image/gif",
+      htm: "text/html",
+      html: "text/html",
+      jpeg: "image/jpeg",
+      jpg: "image/jpeg",
+      json: "application/json",
+      m4a: "audio/mp4",
+      md: "text/markdown;charset=utf-8",
+      mp3: "audio/mpeg",
+      mp4: "video/mp4",
+      ogg: "audio/ogg",
+      pdf: "application/pdf",
+      png: "image/png",
+      txt: "text/plain;charset=utf-8",
+      wav: "audio/wav",
+      webm: "video/webm",
+      webp: "image/webp",
+    }
+    return mimeTypes[normalized] || ""
+  }
+
+  private getExtensionFromMimeType(mimeType: string): string {
+    const normalized = mimeType.toLowerCase().split(";")[0].trim()
+    const extensions: Record<string, string> = {
+      "application/json": "json",
+      "application/pdf": "pdf",
+      "audio/mpeg": "mp3",
+      "audio/mp4": "m4a",
+      "audio/ogg": "ogg",
+      "audio/wav": "wav",
+      "image/avif": "avif",
+      "image/gif": "gif",
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/svg+xml": "svg",
+      "image/webp": "webp",
+      "text/csv": "csv",
+      "text/html": "html",
+      "text/markdown": "md",
+      "text/plain": "txt",
+      "video/mp4": "mp4",
+      "video/webm": "webm",
+    }
+    return extensions[normalized] || ""
   }
 
   private extractUserQueryFileName(file: Element): string {
@@ -2317,8 +2465,8 @@ export class GeminiAdapter extends SiteAdapter {
     )
 
     for (const link of links) {
-      const href = this.normalizeExportImageUrl(link.href || link.getAttribute("href") || "")
-      if (this.isStablePreparedExportImageUrl(href)) return href
+      const href = this.normalizeExportAssetUrl(link.href || link.getAttribute("href") || "")
+      if (this.isDownloadableExportAssetUrl(href)) return href
     }
 
     return ""
@@ -2387,6 +2535,34 @@ export class GeminiAdapter extends SiteAdapter {
       return new URL(value, window.location.href).toString()
     } catch {
       return value
+    }
+  }
+
+  private normalizeExportAssetUrl(value: string): string {
+    if (!value) return ""
+    if (/^(blob:|data:)/i.test(value)) return value
+
+    try {
+      return new URL(value, window.location.href).toString()
+    } catch {
+      return value
+    }
+  }
+
+  private isDownloadableExportAssetUrl(value: string): boolean {
+    if (!value) return false
+    if (/^(blob:|data:)/i.test(value)) return true
+    if (!/^https?:\/\//i.test(value)) return false
+
+    try {
+      const url = new URL(value)
+      if (url.hostname === window.location.hostname && /^\/?(app|share)(\/|$)/.test(url.pathname)) {
+        return false
+      }
+      if (/faviconV2|google_logo_icon|\/32\/type\//i.test(url.href)) return false
+      return true
+    } catch {
+      return false
     }
   }
 
@@ -2556,6 +2732,8 @@ export class GeminiAdapter extends SiteAdapter {
     const sanitized = this.sanitizeAssistantExportElement(element)
     if (collector) {
       this.replaceAssistantImageSourcesWithExportAssets(sanitized, collector)
+      this.replaceAssistantMediaSourcesWithExportAssets(sanitized, collector)
+      this.replaceAssistantDownloadLinksWithExportAssets(sanitized, collector)
     }
     return this.extractMarkdownExportContent(sanitized)
   }
@@ -2580,6 +2758,7 @@ export class GeminiAdapter extends SiteAdapter {
     const collector: GeminiExportAssetCollector = {
       assets: [],
       imagePathsBySource: new Map<string, string>(),
+      filePathsBySource: new Map<string, string>(),
       usedPaths: new Set<string>(),
     }
 
@@ -2608,7 +2787,37 @@ export class GeminiAdapter extends SiteAdapter {
       return this.extractDeepResearchAppMessages(collector)
     }
 
-    return null
+    return this.extractGeminiConversationMessagesWithAssets(collector)
+  }
+
+  private extractGeminiConversationMessagesWithAssets(
+    collector: GeminiExportAssetCollector,
+  ): ExportMessage[] | null {
+    const root =
+      document.querySelector(this.getResponseContainerSelector()) || this.getScrollContainer()
+    if (!root) return null
+
+    const messageElements = Array.from(root.querySelectorAll("user-query, model-response")).sort(
+      (left, right) => this.compareDomOrder(left, right),
+    )
+    if (messageElements.length === 0) return null
+
+    const messages: ExportMessage[] = []
+    messageElements.forEach((element) => {
+      if (element.closest("immersive-panel")) return
+
+      const role = element.tagName.toLowerCase() === "user-query" ? "user" : "assistant"
+      const content =
+        role === "user"
+          ? this.extractUserQueryExportContentWithAssets(element, collector).trim()
+          : this.extractAssistantResponseTextWithAssets(element, collector).trim()
+
+      if (!content) return
+      messages.push({ role, content })
+    })
+
+    const deduped = this.dedupeAdjacentExportMessages(messages)
+    return deduped.length > 0 ? deduped : null
   }
 
   private replaceAssistantImageSourcesWithExportAssets(
@@ -2630,6 +2839,155 @@ export class GeminiAdapter extends SiteAdapter {
       image.setAttribute("src", assetPath)
       image.removeAttribute("srcset")
     })
+  }
+
+  private replaceAssistantMediaSourcesWithExportAssets(
+    root: Element,
+    collector: GeminiExportAssetCollector,
+  ): void {
+    const mediaElements = Array.from(root.querySelectorAll("audio, video")).filter(
+      (node): node is HTMLMediaElement => node instanceof HTMLMediaElement,
+    )
+
+    mediaElements.forEach((media) => {
+      const mediaSource = this.extractAssistantMediaSource(media)
+      if (!mediaSource) return
+
+      const kind: ExportAsset["kind"] = media.tagName.toLowerCase() === "video" ? "video" : "audio"
+      const label = this.buildAssistantMediaAssetName(media, kind, mediaSource.source)
+      const assetPath = this.addFileExportAsset(
+        collector,
+        mediaSource.source,
+        label,
+        mediaSource.mimeType,
+        kind,
+      )
+
+      media.replaceWith(this.createExportAssetLinkElement(label, assetPath))
+    })
+  }
+
+  private replaceAssistantDownloadLinksWithExportAssets(
+    root: Element,
+    collector: GeminiExportAssetCollector,
+  ): void {
+    const links = Array.from(root.querySelectorAll("a[href]")).filter(
+      (node): node is HTMLAnchorElement => node instanceof HTMLAnchorElement,
+    )
+
+    links.forEach((link) => {
+      if (!this.isAssistantExportDownloadLink(link)) return
+
+      const source = this.normalizeExportAssetUrl(link.getAttribute("href") || link.href || "")
+      if (!this.isDownloadableExportAssetUrl(source)) return
+
+      const label = this.buildAssistantDownloadAssetName(link, source)
+      const kind = this.inferExportAssetKind(source, label)
+      const assetPath = this.addFileExportAsset(collector, source, label, undefined, kind)
+      link.setAttribute("href", assetPath)
+      link.removeAttribute("target")
+      link.removeAttribute("rel")
+    })
+  }
+
+  private extractAssistantMediaSource(
+    media: HTMLMediaElement,
+  ): { source: string; mimeType?: string } | null {
+    const directCandidates = [
+      media.currentSrc || "",
+      media.getAttribute("src") || "",
+      "src" in media ? String(media.src || "") : "",
+    ]
+
+    const sourceElements = Array.from(media.querySelectorAll("source[src]")).filter(
+      (node): node is HTMLSourceElement => node instanceof HTMLSourceElement,
+    )
+    const candidates = [
+      ...directCandidates.map((source) => ({ source, mimeType: media.getAttribute("type") || "" })),
+      ...sourceElements.map((sourceElement) => ({
+        source: sourceElement.getAttribute("src") || sourceElement.src || "",
+        mimeType: sourceElement.type || "",
+      })),
+    ]
+
+    for (const candidate of candidates) {
+      const source = this.normalizeExportAssetUrl(candidate.source)
+      if (this.isDownloadableExportAssetUrl(source)) {
+        return {
+          source,
+          mimeType: candidate.mimeType || undefined,
+        }
+      }
+    }
+
+    return null
+  }
+
+  private buildAssistantMediaAssetName(
+    media: HTMLMediaElement,
+    kind: ExportAsset["kind"],
+    source: string,
+  ): string {
+    const label =
+      media.getAttribute("aria-label") ||
+      media.getAttribute("title") ||
+      (kind === "video" ? "gemini-video" : "gemini-audio")
+    return this.ensureExportFilenameExtension(this.sanitizeGeminiExportFilename(label), source)
+  }
+
+  private buildAssistantDownloadAssetName(link: HTMLAnchorElement, source: string): string {
+    const downloadName = link.getAttribute("download")
+    const label =
+      downloadName ||
+      link.getAttribute("aria-label") ||
+      link.getAttribute("title") ||
+      link.textContent ||
+      "gemini-file"
+    return this.ensureExportFilenameExtension(this.sanitizeGeminiExportFilename(label), source)
+  }
+
+  private createExportAssetLinkElement(label: string, href: string): HTMLElement {
+    const paragraph = document.createElement("p")
+    const link = document.createElement("a")
+    link.href = href
+    link.textContent = label
+    paragraph.appendChild(link)
+    return paragraph
+  }
+
+  private isAssistantExportDownloadLink(link: HTMLAnchorElement): boolean {
+    if (link.getAttribute("href")?.startsWith("assets/")) return false
+    if (link.hasAttribute("download")) return true
+
+    const signal = [
+      link.getAttribute("data-test-id") || "",
+      link.getAttribute("data-testid") || "",
+      link.getAttribute("aria-label") || "",
+      link.getAttribute("title") || "",
+      link.className || "",
+    ]
+      .join(" ")
+      .toLowerCase()
+
+    if (!/(download|attachment|file|document|audio|video|下载|下載)/i.test(signal)) {
+      return false
+    }
+
+    const source = this.normalizeExportAssetUrl(link.getAttribute("href") || link.href || "")
+    return this.isDownloadableExportAssetUrl(source)
+  }
+
+  private inferExportAssetKind(source: string, label: string): ExportAsset["kind"] {
+    const extension = (
+      this.getExportAssetExtension(source) ||
+      label.match(/\.([A-Za-z0-9]{1,10})$/)?.[1] ||
+      ""
+    ).toLowerCase()
+
+    if (["mp3", "m4a", "ogg", "wav"].includes(extension)) return "audio"
+    if (["mp4", "webm"].includes(extension)) return "video"
+    if (["md", "pdf", "txt", "csv", "json", "html", "htm"].includes(extension)) return "document"
+    return "file"
   }
 
   private isDecorativeExportImage(image: HTMLImageElement): boolean {

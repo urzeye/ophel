@@ -19,7 +19,7 @@ export interface ExportMessage {
   content: string
 }
 
-export type ExportAssetKind = "image" | "document" | "file" | "reference"
+export type ExportAssetKind = "image" | "document" | "file" | "audio" | "video" | "reference"
 
 export interface ExportAsset {
   id?: string
@@ -514,7 +514,7 @@ export function htmlToMarkdown(el: Element): string {
         case "i":
           return `*${renderChildren(element, context)}*`
         case "a":
-          return `[${renderChildren(element, context)}](${(element as HTMLAnchorElement).href || ""})`
+          return `[${renderChildren(element, context)}](${element.getAttribute("href") || (element as HTMLAnchorElement).href || ""})`
         case "li":
           return renderListItem(
             element,
