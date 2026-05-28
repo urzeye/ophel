@@ -526,11 +526,7 @@ export class ThemeManager {
     this.preference = normalizedPreference
     this.mode = this.resolveMode(normalizedPreference)
     this.emitChange()
-    if (this.preference === "system") {
-      this.syncHostTheme(this.mode, "system")
-      return
-    }
-    this.applyTheme(this.mode)
+    this.syncHostTheme(this.mode, this.preference)
   }
 
   /**
@@ -1273,6 +1269,10 @@ ${cssVars}
     if (currentMode === normalizedPreference) {
       this.preference = normalizedPreference
       this.syncHostTheme(normalizedPreference, normalizedPreference)
+      if (this.mode !== normalizedPreference) {
+        this.mode = normalizedPreference
+        this.emitChange()
+      }
       if (this.onModeChange) {
         this.onModeChange(normalizedPreference, this.preference)
       }
@@ -1369,10 +1369,8 @@ export function ensureGlobalThemeManager(options: GlobalThemeManagerOptions): Th
   const normalizedPreference: ThemePreference =
     mode === "system" ? "system" : mode === "dark" ? "dark" : "light"
 
-  if (themeManager.getPreference() !== normalizedPreference) {
+  if (themeManager.getPreference() !== normalizedPreference || apply) {
     themeManager.applyModePreference(normalizedPreference)
-  } else if (apply) {
-    themeManager.applyTheme()
   }
 
   return themeManager

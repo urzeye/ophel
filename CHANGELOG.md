@@ -21,6 +21,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Userscript native page theme sync** — Theme changes in the userscript build now apply to the host page again instead of only updating Ophel's panel, while keeping panel-only behavior for sites that do not support native theme changes.
 - **Claude export order and outline cleanup** — Claude assistant exports now keep text and artifact links in their original reply order, and page/sidebar headings such as "Recents" are no longer pulled into the conversation outline. (#588)
 - **Inline bookmark visibility** — Page inline bookmark icons now fully respect the hidden setting and no longer depend on the Outline tab's "show user questions" filter, fixing stale or missing stars on virtual-scroll sites such as ChatGPT, DeepSeek, AI Studio, and Doubao. (#570)
 
