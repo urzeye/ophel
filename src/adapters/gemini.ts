@@ -2399,17 +2399,18 @@ export class GeminiAdapter extends SiteAdapter {
     const viewer = (await this.waitForDriveViewer(previousViewer)) || previousViewer
     if (!viewer) return null
 
-    const viewerDocument = await this.waitForDriveViewerDocument(viewer)
-    const result = viewerDocument
-      ? {
-          name: viewerDocument.name || fallbackName,
-          mimeType: viewerDocument.mimeType,
-          content: viewerDocument.content,
-        }
-      : null
-
-    await this.closeDriveViewer(viewer)
-    return result
+    try {
+      const viewerDocument = await this.waitForDriveViewerDocument(viewer)
+      return viewerDocument
+        ? {
+            name: viewerDocument.name || fallbackName,
+            mimeType: viewerDocument.mimeType,
+            content: viewerDocument.content,
+          }
+        : null
+    } finally {
+      await this.closeDriveViewer(viewer)
+    }
   }
 
   private getUserQueryFilePreviewTrigger(file: Element): HTMLElement | null {
@@ -2447,7 +2448,9 @@ export class GeminiAdapter extends SiteAdapter {
   ): Promise<{ name: string; mimeType?: string; content: string } | null> {
     const startedAt = Date.now()
     while (Date.now() - startedAt < timeoutMs) {
-      const contentElement = viewer.querySelector(".drive-viewer-text-content pre")
+      const contentElement =
+        viewer.querySelector(".drive-viewer-text-content pre") ||
+        viewer.querySelector(".drive-viewer-text-content")
       const content = this.decodeDriveViewerText(contentElement?.textContent || "")
       if (content) {
         return {
@@ -2457,8 +2460,10 @@ export class GeminiAdapter extends SiteAdapter {
         }
       }
 
-      const error = viewer.querySelector(".drive-viewer-msg-error")
-      if (error && window.getComputedStyle(error).display !== "none") {
+      const error = Array.from(viewer.querySelectorAll(".drive-viewer-msg-error")).find((node) =>
+        this.isVisible(node),
+      )
+      if (error) {
         return null
       }
 
