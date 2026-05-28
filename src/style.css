@@ -361,6 +361,50 @@
   padding: 4px 0;
 }
 
+.outline-source-switch {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  margin: 7px 8px 0;
+  padding: 3px;
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 18%, var(--gh-border, #e5e7eb));
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg, #fff));
+}
+
+.outline-source-switch-option {
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--gh-text-secondary, #6b7280);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 650;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.outline-source-switch-option:hover {
+  color: var(--gh-primary, #4285f4);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, transparent);
+}
+
+.outline-source-switch-option.active {
+  color: var(--gh-primary, #4285f4);
+  background: var(--gh-bg, #fff);
+  box-shadow: var(--gh-shadow-sm);
+}
+
 /* 单个大纲项 */
 .outline-item {
   padding: 6px 10px;

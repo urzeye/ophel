@@ -476,6 +476,8 @@ export const zhTW = {
   outlineLocateCurrent: "定位到當前位置",
   outlineSearch: "搜尋大綱...",
   outlineSearchResult: "個結果",
+  outlineSourceConversation: "對話",
+  outlineSourceDocument: "文件",
   outlineLevelHint: "級標題",
   // Tab 順序設置
   tabOrderSettings: "介面排版",

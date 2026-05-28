@@ -1,4 +1,4 @@
-import type { OutlineItem, SiteAdapter } from "~adapters/base"
+import type { OutlineItem, OutlineSource, SiteAdapter } from "~adapters/base"
 import { SITE_IDS } from "~constants"
 import type { Settings } from "~utils/storage"
 import { useBookmarkStore } from "~stores/bookmarks-store"
@@ -57,6 +57,8 @@ export class OutlineManager {
   private scrollPositions: number[] = []
   private scrollHeights: number[] = []
   private scrollPositionsStale: boolean = true
+  private sources: OutlineSource[] = []
+  private activeSourceId: string = "conversation"
 
   // State
   private minLevel: number = 1
@@ -115,6 +117,7 @@ export class OutlineManager {
     this.settings = settings
     this.onExpandLevelChange = onExpandLevelChange
     this.onShowUserQueriesChange = onShowUserQueriesChange
+    this.sources = this.normalizeSources(this.siteAdapter.getOutlineSources())
 
     // 从设置中读取保存的层级
     this.expandLevel = settings.expandLevel ?? 6
@@ -156,6 +159,15 @@ export class OutlineManager {
     } else if (!shouldEnable && this.isAutoUpdating) {
       this.stopAutoUpdate()
     }
+
+    const shouldObserveSources =
+      this.settings.enabled && this.isActive && this.siteAdapter.supportsDynamicOutlineSources()
+
+    if (shouldObserveSources && !this.sourceObserver) {
+      this.startSourceObserver()
+    } else if (!shouldObserveSources && this.sourceObserver) {
+      this.stopSourceObserver()
+    }
     // 否则保持当前状态不变
   }
 
@@ -173,6 +185,9 @@ export class OutlineManager {
   // State for Auto Update
   private observer: MutationObserver | null = null
   private updateDebounceTimer: ReturnType<typeof setTimeout> | null = null
+  private sourceObserver: MutationObserver | null = null
+  private sourceRefreshTimer: ReturnType<typeof setTimeout> | null = null
+  private outlineSourcesSignature: string = ""
 
   private handleMessage(event: MessageEvent) {
     if (event.source !== window) return
@@ -220,6 +235,40 @@ export class OutlineManager {
       this.updateDebounceTimer = null
     }
     this.isAutoUpdating = false
+  }
+
+  private startSourceObserver() {
+    if (this.sourceObserver) return
+
+    this.outlineSourcesSignature = this.siteAdapter.getOutlineSourcesSignature()
+
+    this.sourceObserver = new MutationObserver(() => {
+      if (this.sourceRefreshTimer) return
+      this.sourceRefreshTimer = setTimeout(() => {
+        this.sourceRefreshTimer = null
+        const nextSignature = this.siteAdapter.getOutlineSourcesSignature()
+        if (nextSignature !== this.outlineSourcesSignature) {
+          this.outlineSourcesSignature = nextSignature
+          this.refresh()
+        }
+      }, 500)
+    })
+
+    this.sourceObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+    })
+  }
+
+  private stopSourceObserver() {
+    if (this.sourceObserver) {
+      this.sourceObserver.disconnect()
+      this.sourceObserver = null
+    }
+    if (this.sourceRefreshTimer) {
+      clearTimeout(this.sourceRefreshTimer)
+      this.sourceRefreshTimer = null
+    }
   }
 
   private triggerAutoUpdate() {
@@ -300,6 +349,31 @@ export class OutlineManager {
     this.listeners.forEach((l) => l())
   }
 
+  private normalizeSources(sources: OutlineSource[]): OutlineSource[] {
+    const normalized = sources.filter((source) => source.available)
+    if (normalized.length > 0) return normalized
+    return [{ id: "conversation", kind: "conversation", label: "对话", available: true }]
+  }
+
+  private updateSources(): boolean {
+    const nextSources = this.normalizeSources(this.siteAdapter.getOutlineSources())
+    const nextKey = nextSources
+      .map((source) => `${source.id}:${source.kind}:${source.label}:${source.count ?? ""}`)
+      .join("|")
+    const currentKey = this.sources
+      .map((source) => `${source.id}:${source.kind}:${source.label}:${source.count ?? ""}`)
+      .join("|")
+
+    this.sources = nextSources
+
+    if (!this.sources.some((source) => source.id === this.activeSourceId)) {
+      this.activeSourceId = this.sources[0]?.id ?? "conversation"
+      this.treeKey = ""
+    }
+
+    return nextKey !== currentKey
+  }
+
   getTree(): OutlineNode[] {
     return this.tree
   }
@@ -310,6 +384,37 @@ export class OutlineManager {
    */
   getFlatItems(): OutlineItem[] {
     return this.flatItems
+  }
+
+  getSources(): OutlineSource[] {
+    return this.sources
+  }
+
+  getActiveSourceId(): string {
+    return this.activeSourceId
+  }
+
+  setActiveSource(sourceId: string): void {
+    if (sourceId === this.activeSourceId) return
+
+    const target = this.sources.find((source) => source.id === sourceId && source.available)
+    if (!target) return
+
+    this.activeSourceId = sourceId
+    this.tree = []
+    this.flatItems = []
+    this.flatNodes = []
+    this.scrollNodes = []
+    this.scrollPositions = []
+    this.scrollHeights = []
+    this.scrollPositionsStale = true
+    this.treeKey = ""
+    this.preSearchState = null
+    this.preSearchExpandLevel = null
+    this.searchLevelManual = false
+    this.matchCount = 0
+    this.refresh()
+    this.notify()
   }
 
   /**
@@ -325,7 +430,7 @@ export class OutlineManager {
   }
 
   getScrollContainer(): HTMLElement | null {
-    return this.siteAdapter.getScrollContainer()
+    return this.siteAdapter.getOutlineScrollContainer(this.activeSourceId)
   }
 
   markScrollPositionsStale() {
@@ -457,11 +562,11 @@ export class OutlineManager {
     item: Pick<OutlineItem, "level" | "text" | "isUserQuery">,
     queryIndex?: number,
   ): Promise<Element | null> {
-    return this.siteAdapter.resolveOutlineTarget(item, queryIndex)
+    return this.siteAdapter.resolveOutlineTarget(item, queryIndex, this.activeSourceId)
   }
 
   scrollToOutlineTarget(element: HTMLElement): void {
-    this.siteAdapter.scrollToOutlineTarget(element)
+    this.siteAdapter.scrollToOutlineSourceTarget(element, this.activeSourceId)
   }
 
   getState() {
@@ -492,6 +597,8 @@ export class OutlineManager {
       searchLevelManual: this.searchLevelManual,
       matchCount: this.matchCount,
       bookmarkMode: this.bookmarkMode,
+      sources: this.sources,
+      activeSourceId: this.activeSourceId,
     }
   }
 
@@ -514,7 +621,7 @@ export class OutlineManager {
   private generateSignature(item: OutlineItem): string {
     // 1. 优先使用稳定 ID (message-id)
     if (item.id) {
-      return item.id
+      return this.activeSourceId === "conversation" ? item.id : `${this.activeSourceId}:${item.id}`
     }
 
     // 2. 回退方案 (text::context)
@@ -534,7 +641,10 @@ export class OutlineManager {
       }
     }
 
-    return `${item.text}::${context}`
+    const signature = `${item.text}::${context}`
+    return this.activeSourceId === "conversation"
+      ? signature
+      : `${this.activeSourceId}:${signature}`
   }
 
   // Helper public method for UI
@@ -608,16 +718,18 @@ export class OutlineManager {
   }
 
   private _doRefresh(overrideLevel?: number) {
+    const sourcesChanged = this.updateSources()
+
     // Read showWordCount from live settings store to pick up changes without page refresh
     const liveSettings = useSettingsStore.getState().settings
     const showWordCount = liveSettings?.features?.outline?.showWordCount ?? false
 
-    let outlineData = this.siteAdapter.extractOutline(
+    let outlineData = this.siteAdapter.extractOutlineForSource(
+      this.activeSourceId,
       this.settings.maxLevel,
       this.settings.showUserQueries,
       showWordCount,
     )
-
     // --- Merge Bookmarks ---
     const sessionId = this.siteAdapter.getSessionId()
     const bookmarks = useBookmarkStore.getState().getBookmarksBySession(sessionId)
@@ -745,6 +857,8 @@ export class OutlineManager {
         this.scrollHeights = []
         this.scrollPositionsStale = true
         this.notify()
+      } else if (sourcesChanged) {
+        this.notify()
       }
       return
     }
@@ -763,7 +877,7 @@ export class OutlineManager {
     const showWordCountFlag = showWordCount ? "wc:1" : "wc:0"
     const sessionIdForKey = this.siteAdapter.getSessionId() || "no-session"
     const pathname = typeof window !== "undefined" ? window.location.pathname : ""
-    const sessionScopeKey = `${this.siteAdapter.getSiteId()}:${sessionIdForKey}:${pathname}`
+    const sessionScopeKey = `${this.siteAdapter.getSiteId()}:${sessionIdForKey}:${pathname}:${this.activeSourceId}`
     const rawKey =
       sessionScopeKey +
       "|" +
@@ -792,6 +906,8 @@ export class OutlineManager {
       }
       this.scrollPositionsStale = true
       if (runtimeDataChanged) {
+        this.notify()
+      } else if (sourcesChanged) {
         this.notify()
       }
       return
@@ -978,10 +1094,12 @@ export class OutlineManager {
 
       let element = node.element
       if (!element || !element.isConnected) {
-        if (node.isUserQuery && node.level === 0 && node.queryIndex !== undefined) {
-          element = this.findUserQueryElement(node.queryIndex, node.text) as HTMLElement
-        } else {
-          element = this.findElementByHeading(node.level, node.text) as HTMLElement
+        if (this.activeSourceId === "conversation") {
+          if (node.isUserQuery && node.level === 0 && node.queryIndex !== undefined) {
+            element = this.findUserQueryElement(node.queryIndex, node.text) as HTMLElement
+          } else {
+            element = this.findElementByHeading(node.level, node.text) as HTMLElement
+          }
         }
         if (element) {
           node.element = element

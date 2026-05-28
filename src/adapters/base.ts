@@ -25,6 +25,16 @@ export interface OutlineItem {
   wordCount?: number
 }
 
+export type OutlineSourceKind = "conversation" | "document"
+
+export interface OutlineSource {
+  id: string
+  kind: OutlineSourceKind
+  label: string
+  available: boolean
+  count?: number
+}
+
 export interface ConversationInfo {
   id: string
   title: string
@@ -1022,6 +1032,30 @@ export abstract class SiteAdapter {
     return []
   }
 
+  getOutlineSources(): OutlineSource[] {
+    return [{ id: "conversation", kind: "conversation", label: "对话", available: true }]
+  }
+
+  supportsDynamicOutlineSources(): boolean {
+    return false
+  }
+
+  getOutlineSourcesSignature(): string {
+    return this.getOutlineSources()
+      .map((source) => `${source.id}:${source.kind}:${source.available}:${source.count ?? ""}`)
+      .join("|")
+  }
+
+  extractOutlineForSource(
+    sourceId: string,
+    maxLevel = 6,
+    includeUserQueries = false,
+    showWordCount = false,
+  ): OutlineItem[] {
+    if (sourceId !== "conversation") return []
+    return this.extractOutline(maxLevel, includeUserQueries, showWordCount)
+  }
+
   /**
    * 返回只用于页内收藏图标的额外候选项。
    * 页内收藏需要独立于大纲面板的 showUserQueries 过滤。
@@ -1097,6 +1131,7 @@ export abstract class SiteAdapter {
   async resolveOutlineTarget(
     item: Pick<OutlineItem, "level" | "text" | "isUserQuery">,
     queryIndex?: number,
+    _sourceId = "conversation",
   ): Promise<Element | null> {
     if (item.isUserQuery && item.level === 0 && queryIndex !== undefined) {
       return this.findUserQueryElement(queryIndex, item.text)
@@ -1115,6 +1150,15 @@ export abstract class SiteAdapter {
       block: "start",
       __bypassLock: true,
     } as any)
+  }
+
+  getOutlineScrollContainer(_sourceId = "conversation"): HTMLElement | null {
+    return this.getScrollContainer()
+  }
+
+  scrollToOutlineSourceTarget(element: HTMLElement, sourceId = "conversation"): void {
+    void sourceId
+    this.scrollToOutlineTarget(element)
   }
 
   /** 是否支持滚动锁定功能 */

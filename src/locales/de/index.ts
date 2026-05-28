@@ -586,6 +586,8 @@ export const de = {
   outlineLocateCurrent: "Aktuelle Position finden",
   outlineSearch: "Im Verzeichnis suchen...",
   outlineSearchResult: " Ergebnis(se)",
+  outlineSourceConversation: "Chat",
+  outlineSourceDocument: "Dokument",
   outlineLevelHint: "Überschriften",
   // Refresh button hints
   refreshConversations: "Chats aktualisieren",

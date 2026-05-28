@@ -587,6 +587,8 @@ export const zhCN = {
   outlineLocateCurrent: "定位到当前位置",
   outlineSearch: "搜索大纲...",
   outlineSearchResult: "个结果",
+  outlineSourceConversation: "对话",
+  outlineSourceDocument: "文档",
   outlineLevelHint: "级标题",
   // 刷新按钮提示
   refreshPrompts: "刷新提示词",

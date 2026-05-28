@@ -10,6 +10,7 @@
 
 ### 🚀 新增功能
 
+- **Gemini Deep Research 文档大纲** — 大纲标签页现在会在 Gemini Deep Research 报告打开时显示「对话 / 文档」来源切换，可单独浏览右侧报告的标题结构并跳转到报告面板内的对应章节，避免与左侧对话大纲混在一起。(#585)
 - **Gemini Deep Research 报告面板 Markdown 快捷操作** — 在 Gemini Deep Research 右侧报告面板工具栏新增复制 Markdown 和下载 Markdown 按钮，可直接导出当前报告内容，不影响普通会话导出流程。(#579)
 - **Markdown 附件导出包** — 当站点适配器提供附件资源时，Markdown 导出现在可生成包含主文档、附件和 manifest 的 zip 包，并使用稳定的相对路径引用文件；Gemini Deep Research 打包导出会将生成报告放入 `assets/reports/`、图片放入 `assets/images/`、用户上传附件放入 `assets/files/`，并按普通 Gemini 会话同样的方式解析用户上传文档。(#580)
 - **Gemini Deep Research 导出** — Gemini Deep Research 现在可导出用户自己的应用内会话、会话分享页和生成报告分享页；报告侧栏关闭时会在导出期间自动打开并在结束后恢复，同时把用户提问中的上传文件标签纳入导出内容。(#573)

@@ -51,6 +51,7 @@ import {
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type OutlineSource,
   type SiteDeleteConversationResult,
 } from "./base"
 
@@ -134,6 +135,7 @@ const GEMINI_DEEP_RESEARCH_PANEL_ACTIONS_CLASS = "gh-gemini-deep-research-panel-
 const GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS = "gh-gemini-deep-research-panel-action"
 const GEMINI_DEEP_RESEARCH_PANEL_ACTIONS_STYLE_ID = "gh-gemini-deep-research-panel-actions-style"
 const GEMINI_DEEP_RESEARCH_PANEL_ACTIONS_ATTR = "data-ophel-deep-research-panel-actions"
+const GEMINI_DOCUMENT_OUTLINE_SOURCE_ID = "document"
 const GEMINI_ASSISTANT_EXPORT_NOISE_SELECTOR = [
   ".cdk-visually-hidden",
   "model-thoughts",
@@ -2319,6 +2321,47 @@ export class GeminiAdapter extends SiteAdapter {
     return "user-query"
   }
 
+  getOutlineSources(): OutlineSource[] {
+    const sources: OutlineSource[] = [
+      { id: "conversation", kind: "conversation", label: "对话", available: true },
+    ]
+
+    const documentOutline = this.extractDeepResearchDocumentOutline(6, false)
+    if (documentOutline.length > 0) {
+      sources.push({
+        id: GEMINI_DOCUMENT_OUTLINE_SOURCE_ID,
+        kind: "document",
+        label: "文档",
+        available: true,
+        count: documentOutline.length,
+      })
+    }
+
+    return sources
+  }
+
+  supportsDynamicOutlineSources(): boolean {
+    return true
+  }
+
+  getOutlineSourcesSignature(): string {
+    const hasDocument = this.getDeepResearchDocumentOutlineRoot() !== null
+    return `conversation:1|${GEMINI_DOCUMENT_OUTLINE_SOURCE_ID}:${hasDocument ? 1 : 0}`
+  }
+
+  extractOutlineForSource(
+    sourceId: string,
+    maxLevel = 6,
+    includeUserQueries = false,
+    showWordCount = false,
+  ): OutlineItem[] {
+    if (sourceId === GEMINI_DOCUMENT_OUTLINE_SOURCE_ID) {
+      return this.extractDeepResearchDocumentOutline(maxLevel, showWordCount)
+    }
+
+    return this.extractOutline(maxLevel, includeUserQueries, showWordCount)
+  }
+
   /**
    * 清理用户提问元素，移除辅助可访问性节点。
    */
@@ -3338,6 +3381,126 @@ export class GeminiAdapter extends SiteAdapter {
     if (heading.classList.contains("cdk-visually-hidden")) return true
 
     return false
+  }
+
+  private getDeepResearchDocumentOutlineRoot(): Element | null {
+    const appDocument = this.getDeepResearchAppDocumentElement()
+    if (appDocument) return appDocument
+
+    if (this.isDeepResearchDocumentSharePage()) {
+      return document.querySelector(
+        `${GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_SELECTOR} ${GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR}`,
+      )
+    }
+
+    if (this.isDeepResearchConversationSharePage()) {
+      return document.querySelector(
+        `${GEMINI_DEEP_RESEARCH_ARTIFACT_SHARE_SELECTOR} ${GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR}`,
+      )
+    }
+
+    return null
+  }
+
+  private extractDeepResearchDocumentOutline(maxLevel = 6, showWordCount = false): OutlineItem[] {
+    const root = this.getDeepResearchDocumentOutlineRoot()
+    if (!root) return []
+
+    const headingSelector = Array.from({ length: maxLevel }, (_, index) => `h${index + 1}`).join(
+      ", ",
+    )
+    const headings = Array.from(root.querySelectorAll(headingSelector)).filter(
+      (heading) => !this.shouldSkipOutlineHeading(heading),
+    )
+
+    return headings.map((heading, index) => {
+      const level = parseInt(heading.tagName.charAt(1), 10)
+      const text = heading.textContent?.trim() || ""
+      const item: OutlineItem = {
+        level,
+        text,
+        element: heading,
+        id: `gemini-document:${level}:${text}:${index}`,
+      }
+
+      if (showWordCount) {
+        let nextBoundaryEl: Element | null = null
+        for (let i = index + 1; i < headings.length; i += 1) {
+          const candidate = headings[i]
+          const candidateLevel = parseInt(candidate.tagName.charAt(1), 10)
+          if (candidateLevel <= level) {
+            nextBoundaryEl = candidate
+            break
+          }
+        }
+        item.wordCount = this.calculateRangeWordCount(heading, nextBoundaryEl, root)
+      }
+
+      return item
+    })
+  }
+
+  private findDeepResearchDocumentHeading(level: number, text: string): Element | null {
+    const root = this.getDeepResearchDocumentOutlineRoot()
+    if (!root) return null
+
+    const headings = Array.from(root.querySelectorAll(`h${level}`))
+    return headings.find((heading) => heading.textContent?.trim() === text) || null
+  }
+
+  private findScrollableAncestor(element: Element | null): HTMLElement | null {
+    let current = element?.parentElement || null
+    while (current && current !== document.body) {
+      const style = window.getComputedStyle(current)
+      const overflowY = style.overflowY
+      const canScroll =
+        current.scrollHeight > current.clientHeight &&
+        (overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay")
+
+      if (canScroll) return current
+      current = current.parentElement
+    }
+
+    return null
+  }
+
+  getOutlineScrollContainer(sourceId = "conversation"): HTMLElement | null {
+    if (sourceId === GEMINI_DOCUMENT_OUTLINE_SOURCE_ID) {
+      const root = this.getDeepResearchDocumentOutlineRoot()
+      return this.findScrollableAncestor(root) || null
+    }
+
+    return this.getScrollContainer()
+  }
+
+  async resolveOutlineTarget(
+    item: Pick<OutlineItem, "level" | "text" | "isUserQuery">,
+    queryIndex?: number,
+    sourceId = "conversation",
+  ): Promise<Element | null> {
+    if (sourceId === GEMINI_DOCUMENT_OUTLINE_SOURCE_ID) {
+      return this.findDeepResearchDocumentHeading(item.level, item.text)
+    }
+
+    return super.resolveOutlineTarget(item, queryIndex, sourceId)
+  }
+
+  scrollToOutlineSourceTarget(element: HTMLElement, sourceId = "conversation"): void {
+    if (sourceId === GEMINI_DOCUMENT_OUTLINE_SOURCE_ID) {
+      const container =
+        this.findScrollableAncestor(element) || this.getOutlineScrollContainer(sourceId)
+      if (container && container !== element) {
+        const containerRect = container.getBoundingClientRect()
+        const targetRect = element.getBoundingClientRect()
+        container.scrollTo({
+          top: container.scrollTop + targetRect.top - containerRect.top - 12,
+          behavior: "instant" as ScrollBehavior,
+        })
+        return
+      }
+    }
+
+    this.scrollToOutlineTarget(element)
   }
 
   /**

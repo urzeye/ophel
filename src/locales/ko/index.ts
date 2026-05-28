@@ -586,6 +586,8 @@ export const ko = {
   outlineLocateCurrent: "현재 위치 찾기",
   outlineSearch: "개요 검색...",
   outlineSearchResult: "개의 결과",
+  outlineSourceConversation: "대화",
+  outlineSourceDocument: "문서",
   outlineLevelHint: "제목",
   // Refresh button hints
   refreshConversations: "대화 새로고침",

@@ -19,6 +19,7 @@ import {
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
+import type { OutlineSource } from "~adapters/base"
 import { useSettingsStore } from "~stores/settings-store"
 import { t, getCurrentLang } from "~utils/i18n"
 import { formatWordCount } from "~utils/format"
@@ -28,6 +29,27 @@ interface OutlineTabProps {
   manager: OutlineManager
   onJumpBefore?: () => void
   isCodexOpen?: boolean
+}
+
+const countOutlineNodes = (nodes: OutlineNode[]): number => {
+  let count = 0
+  for (const node of nodes) {
+    count += 1
+    if (node.children.length > 0) {
+      count += countOutlineNodes(node.children)
+    }
+  }
+  return count
+}
+
+const getOutlineSourceLabel = (source: OutlineSource): string => {
+  if (source.kind === "conversation") {
+    return t("outlineSourceConversation") || source.label || "对话"
+  }
+  if (source.kind === "document") {
+    return t("outlineSourceDocument") || source.label || "文档"
+  }
+  return source.label
 }
 
 const buildVisibilityMaps = (
@@ -411,6 +433,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   const [searchLevelManual, setSearchLevelManual] = useState(initialState.searchLevelManual)
   const [matchCount, setMatchCount] = useState(initialState.matchCount)
   const [bookmarkMode, setBookmarkMode] = useState(initialState.bookmarkMode)
+  const [outlineSources, setOutlineSources] = useState<OutlineSource[]>(initialState.sources)
+  const [activeSourceId, setActiveSourceId] = useState(initialState.activeSourceId)
 
   // const { bookmarks } = useBookmarkStore() // Removed unused bookmarks
 
@@ -480,19 +504,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
       const state = manager.getState()
 
-      // 递归计算所有节点数量（包括子节点）
-      const countNodes = (nodes: OutlineNode[]): number => {
-        let count = 0
-        for (const node of nodes) {
-          count += 1
-          if (node.children && node.children.length > 0) {
-            count += countNodes(node.children)
-          }
-        }
-        return count
-      }
-
-      const newTotalNodes = countNodes(state.tree)
+      const newTotalNodes = countOutlineNodes(state.tree)
       const prevTotalNodes = prevTreeLengthRef.current
 
       // 根据 followMode 决定是否自动滚动
@@ -518,6 +530,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       setSearchLevelManual(state.searchLevelManual)
       setMatchCount(state.matchCount)
       setBookmarkMode(state.bookmarkMode)
+      setOutlineSources(state.sources)
+      setActiveSourceId(state.activeSourceId)
 
       // 更新 ref 以供下次比较（现在是总节点数）
       prevTreeLengthRef.current = newTotalNodes
@@ -651,6 +665,10 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   )
 
   const { parentMap, visibleMap } = visibilityMaps
+  const outlineSourceOptions = useMemo(
+    () => outlineSources.filter((source) => source.available),
+    [outlineSources],
+  )
 
   const hasVisibleNodes = useMemo(() => {
     const checkVisible = (nodes: OutlineNode[]): boolean => {
@@ -1452,6 +1470,22 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             flexShrink: 0, // 防止被压缩
           }}>
           {matchCount} {t("outlineSearchResult") || "个结果"}
+        </div>
+      )}
+
+      {outlineSourceOptions.length > 1 && !searchQuery && (
+        <div className="outline-source-switch" aria-label="大纲来源">
+          {outlineSourceOptions.map((source) => (
+            <button
+              key={source.id}
+              type="button"
+              className={`outline-source-switch-option ${
+                activeSourceId === source.id ? "active" : ""
+              }`}
+              onClick={() => manager.setActiveSource(source.id)}>
+              <span>{getOutlineSourceLabel(source)}</span>
+            </button>
+          ))}
         </div>
       )}
 
