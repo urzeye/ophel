@@ -10,13 +10,16 @@
 
 ### 🚀 新增功能
 
+- **Claude 文档 Artifact 与文档大纲** — Claude 生成的 Markdown 文档 Artifact 现在可在 Markdown zip 导出中作为 `assets/documents/` 下的独立文件引用；当 Claude 右侧文档面板打开时，大纲标签页也会显示独立的「文档」来源用于浏览和跳转。(#588)
+- **Claude 用户附件导出** — Claude Markdown zip 导出现在会保留用户提问中的上传图片和可链接文件，并分别打包到 `assets/images/` 与 `assets/files/`，在 Markdown 中使用稳定相对路径引用。(#588)
 - **Gemini Deep Research 文档大纲** — 大纲标签页现在会在 Gemini Deep Research 报告打开时显示「对话 / 文档」来源切换，可单独浏览右侧报告的标题结构并跳转到报告面板内的对应章节，避免与左侧对话大纲混在一起。(#585)
 - **Gemini Deep Research 报告面板 Markdown 快捷操作** — 在 Gemini Deep Research 右侧报告面板工具栏新增复制 Markdown 和下载 Markdown 按钮，可直接导出当前报告内容，不影响普通会话导出流程。(#579)
-- **Markdown 附件导出包** — 当站点适配器提供附件资源时，Markdown 导出现在可生成包含主文档、附件和 manifest 的 zip 包，并使用稳定的相对路径引用文件；Gemini Deep Research 打包导出会将生成报告放入 `assets/reports/`、图片放入 `assets/images/`、用户上传附件放入 `assets/files/`，并按普通 Gemini 会话同样的方式解析用户上传文档。(#580)
+- **Markdown 附件导出包** — 当站点适配器提供附件资源时，Markdown 导出现在可生成包含主文档、附件和 manifest 的 zip 包，并使用稳定的相对路径引用文件；生成的 Markdown 文档统一放入 `assets/documents/`、图片放入 `assets/images/`、用户上传附件放入 `assets/files/`，并按普通 Gemini 会话同样的方式解析用户上传文档。(#580)
 - **Gemini Deep Research 导出** — Gemini Deep Research 现在可导出用户自己的应用内会话、会话分享页和生成报告分享页；报告侧栏关闭时会在导出期间自动打开并在结束后恢复，同时把用户提问中的上传文件标签纳入导出内容。(#573)
 
 ### 🐛 问题修复
 
+- **Claude 导出顺序与大纲清理** — Claude AI 回复导出现在会保留正文与 Artifact 链接在原回复中的先后顺序，同时不再把「Recents」这类页面/侧边栏标题误纳入对话大纲。(#588)
 - **页内收藏图标显示** — 页内收藏星号现在会完整遵循隐藏设置，并且不再依赖「大纲」标签页的「展示用户提问」过滤，修复 ChatGPT、DeepSeek、AI Studio、豆包等虚拟滚动站点上星号残留或漏显示的问题。(#570)
 
 ---

@@ -11,13 +11,16 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
+- **Claude document artifacts and outline** — Claude Markdown document artifacts can now be exported as linked files in Markdown zip packages under `assets/documents/`, and the Outline tab shows a separate Document source when Claude's right-side document panel is open. (#588)
+- **Claude user attachments in exports** — Claude Markdown zip exports now preserve uploaded images and linked files from user prompts, packaging them under `assets/images/` and `assets/files/` with stable Markdown references. (#588)
 - **Gemini Deep Research document outline** — The Outline tab now shows a "Chat / Document" source switch when a Gemini Deep Research report is open, letting you browse and jump through the right-side report outline separately from the left-side conversation outline. (#585)
 - **Gemini Deep Research report panel Markdown shortcuts** — Added Copy Markdown and Download Markdown buttons to the Gemini Deep Research right-side report panel toolbar, exporting only the current report without changing regular conversation exports. (#579)
-- **Markdown export packages** — Markdown exports can now be delivered as a zip package when a site adapter provides assets, including a manifest and stable relative paths for referenced files. Gemini Deep Research packages now include generated reports under `assets/reports/`, images under `assets/images/`, and user-uploaded attachments under `assets/files/`, with uploaded documents resolved the same way as regular Gemini conversations. (#580)
+- **Markdown export packages** — Markdown exports can now be delivered as a zip package when a site adapter provides assets, including a manifest and stable relative paths for referenced files. Generated Markdown documents are packaged under `assets/documents/`, images under `assets/images/`, and user-uploaded attachments under `assets/files/`, with uploaded documents resolved the same way as regular Gemini conversations. (#580)
 - **Gemini Deep Research export** — Gemini Deep Research exports now cover owned app conversations, conversation share pages, and generated report share pages; closed report panels are opened during export and restored afterward, with uploaded file labels included in exported user prompts. (#573)
 
 ### 🐛 Bug Fixes
 
+- **Claude export order and outline cleanup** — Claude assistant exports now keep text and artifact links in their original reply order, and page/sidebar headings such as "Recents" are no longer pulled into the conversation outline. (#588)
 - **Inline bookmark visibility** — Page inline bookmark icons now fully respect the hidden setting and no longer depend on the Outline tab's "show user questions" filter, fixing stale or missing stars on virtual-scroll sites such as ChatGPT, DeepSeek, AI Studio, and Doubao. (#570)
 
 ---
