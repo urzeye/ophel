@@ -9,11 +9,17 @@ import {
   scrollElementInContainer,
 } from "~core/outline/dom-outline"
 import {
+  addFileExportAsset,
+  addImageExportAsset,
   appendMarkdownDocumentAssetLink,
   createExportAssetCollector,
+  escapeMarkdownLinkText,
+  isDownloadableExportAssetUrl,
+  normalizeExportAssetUrl,
   type ExportAssetCollector,
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
+import { t } from "~utils/i18n"
 import { renderMarkdown } from "~utils/markdown"
 
 import {
@@ -82,6 +88,7 @@ const CLAUDE_DOCUMENT_ROOT_SELECTOR = "#wiggle-file-content"
 const CLAUDE_DOCUMENT_MARKDOWN_SELECTOR =
   "#wiggle-file-content .standard-markdown, #wiggle-file-content .progressive-markdown"
 const CLAUDE_ARTIFACT_CELL_SELECTOR = ".artifact-block-cell"
+const CLAUDE_USER_FILE_THUMBNAIL_SELECTOR = '[data-testid="file-thumbnail"]'
 
 interface ClaudeExportLifecycleState {
   documentPanelWasOpen: boolean
@@ -97,6 +104,14 @@ interface ClaudeDocumentExportCacheEntry {
   title: string
   artifactTitle: string
   signature: string
+}
+
+interface ClaudeUserAttachment {
+  kind: "image" | "file"
+  name: string
+  type?: string
+  source?: string
+  alt?: string
 }
 
 function applyClaudeThemeDomHints(mode: "light" | "dark") {
@@ -1721,7 +1736,7 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
-    if (this.exportDocumentCache.length === 0) {
+    if (!this.hasClaudeExportAssets()) {
       return null
     }
 
@@ -1734,7 +1749,11 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
-    if (this.exportDocumentCache.length === 0 && !this.isClaudeDocumentPanelOpen()) {
+    if (
+      this.exportDocumentCache.length === 0 &&
+      !this.isClaudeDocumentPanelOpen() &&
+      !this.hasClaudeUserAttachments()
+    ) {
       return null
     }
 
@@ -1757,6 +1776,20 @@ export class ClaudeAdapter extends SiteAdapter {
 
   extractUserQueryText(element: Element): string {
     return element.textContent?.trim() || ""
+  }
+
+  extractUserQueryExportContent(element: Element): string {
+    return this.extractClaudeUserQueryExportContent(element)
+  }
+
+  private hasClaudeExportAssets(): boolean {
+    return this.exportDocumentCache.length > 0 || this.hasClaudeUserAttachments()
+  }
+
+  private hasClaudeUserAttachments(): boolean {
+    const root = this.getOutlineRoot()
+    const userMessages = Array.from(root.querySelectorAll(this.getUserQuerySelector()))
+    return userMessages.some((message) => this.extractClaudeUserAttachments(message).length > 0)
   }
 
   extractUserQueryMarkdown(element: Element): string {
@@ -1828,6 +1861,212 @@ export class ClaudeAdapter extends SiteAdapter {
     return hasChanges
   }
 
+  private extractClaudeUserQueryExportContent(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string {
+    const textContent = this.extractUserQueryText(element).trim()
+    const attachments = this.extractClaudeUserAttachments(element)
+    if (attachments.length === 0) return textContent
+
+    const imageMarkdown = this.formatClaudeUserImageAttachments(attachments, collector)
+    const fileMarkdown = this.formatClaudeUserFileAttachments(attachments, collector)
+    const fileBlock =
+      fileMarkdown.length > 0
+        ? `${t("exportAttachmentsLabel") || "Attachments"}:\n${fileMarkdown.join("\n")}`
+        : ""
+
+    return [imageMarkdown.join("\n\n"), fileBlock, textContent].filter(Boolean).join("\n\n")
+  }
+
+  private extractClaudeUserAttachments(userMessage: Element): ClaudeUserAttachment[] {
+    const container = this.getClaudeUserMessageContainer(userMessage)
+    if (!container) return []
+
+    const attachments: ClaudeUserAttachment[] = []
+    const seen = new Set<string>()
+
+    this.extractClaudeUserImageAttachments(container).forEach((attachment) => {
+      const key = `image:${attachment.source || attachment.name}`
+      if (seen.has(key)) return
+      seen.add(key)
+      attachments.push(attachment)
+    })
+
+    this.extractClaudeUserFileAttachments(container).forEach((attachment) => {
+      const key = `file:${attachment.source || attachment.name}:${attachment.type || ""}`
+      if (seen.has(key)) return
+      seen.add(key)
+      attachments.push(attachment)
+    })
+
+    return attachments
+  }
+
+  private getClaudeUserMessageContainer(userMessage: Element): Element | null {
+    const bubble = userMessage.closest('[data-user-message-bubble="true"]')
+    if (!bubble) return userMessage
+
+    let best: Element | null = null
+    let current = bubble.parentElement
+    while (
+      current &&
+      current !== document.body &&
+      !current.matches(".font-claude-response, main, [role='main']")
+    ) {
+      if (current.querySelectorAll(this.getUserQuerySelector()).length > 1) break
+      if (
+        current.querySelector(CLAUDE_USER_FILE_THUMBNAIL_SELECTOR) ||
+        current.querySelector("img")
+      ) {
+        best = current
+      }
+      current = current.parentElement
+    }
+
+    return best || bubble
+  }
+
+  private extractClaudeUserImageAttachments(container: Element): ClaudeUserAttachment[] {
+    const images = Array.from(container.querySelectorAll("img")).filter(
+      (node): node is HTMLImageElement =>
+        node instanceof HTMLImageElement && !node.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR),
+    )
+
+    return images.flatMap((image) => {
+      if (image.closest(CLAUDE_USER_FILE_THUMBNAIL_SELECTOR)) return []
+
+      const source = normalizeExportAssetUrl(
+        image.currentSrc || image.src || image.getAttribute("src") || "",
+      )
+      if (!source || !isDownloadableExportAssetUrl(source)) return []
+
+      const alt = (image.alt || "uploaded image").replace(/\s+/g, " ").trim()
+      return [
+        {
+          kind: "image" as const,
+          name: alt || "uploaded image",
+          alt,
+          source,
+        },
+      ]
+    })
+  }
+
+  private extractClaudeUserFileAttachments(container: Element): ClaudeUserAttachment[] {
+    const files = Array.from(container.querySelectorAll(CLAUDE_USER_FILE_THUMBNAIL_SELECTOR))
+
+    return files.flatMap((file) => {
+      const name = this.extractClaudeUserFileName(file)
+      if (!name) return []
+
+      const type = this.extractClaudeUserFileType(file)
+      const source = this.extractClaudeUserFileSource(file)
+      return [
+        {
+          kind: "file" as const,
+          name,
+          type,
+          source,
+        },
+      ]
+    })
+  }
+
+  private extractClaudeUserFileName(file: Element): string {
+    const visibleTitle = file.querySelector("h1, h2, h3, h4, h5, h6")?.textContent?.trim()
+    if (visibleTitle) return visibleTitle
+
+    const ariaLabel = file.querySelector("[aria-label]")?.getAttribute("aria-label") || ""
+    return ariaLabel.split(",")[0]?.trim() || ""
+  }
+
+  private extractClaudeUserFileType(file: Element): string {
+    const badge = Array.from(file.querySelectorAll("p"))
+      .map((node) => node.textContent?.trim() || "")
+      .find((text) => /^[A-Za-z0-9.+-]{1,12}$/.test(text))
+    if (badge) return badge.toLowerCase()
+
+    const ariaLabel = file.querySelector("[aria-label]")?.getAttribute("aria-label") || ""
+    return ariaLabel.split(",")[1]?.trim().toLowerCase() || ""
+  }
+
+  private extractClaudeUserFileSource(file: Element): string {
+    const links = Array.from(file.querySelectorAll("a[href]")).filter(
+      (node): node is HTMLAnchorElement => node instanceof HTMLAnchorElement,
+    )
+
+    for (const link of links) {
+      const href = normalizeExportAssetUrl(link.href || link.getAttribute("href") || "")
+      if (isDownloadableExportAssetUrl(href)) return href
+    }
+
+    const image = file.querySelector("img")
+    if (image instanceof HTMLImageElement) {
+      const source = normalizeExportAssetUrl(
+        image.currentSrc || image.src || image.getAttribute("src") || "",
+      )
+      if (isDownloadableExportAssetUrl(source)) return source
+    }
+
+    return ""
+  }
+
+  private formatClaudeUserImageAttachments(
+    attachments: ClaudeUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind === "image" && attachment.source)
+      .map((attachment) => {
+        const alt = escapeMarkdownLinkText(attachment.alt || attachment.name || "uploaded image")
+        const source = attachment.source || ""
+        const assetPath = collector
+          ? addImageExportAsset(collector, {
+              source,
+              alt: attachment.alt || attachment.name,
+              extensionHint: attachment.name || attachment.alt,
+              idPrefix: "claude-user-image",
+              filenamePrefix: "claude-user-image",
+            })
+          : source
+        return assetPath ? `![${alt || "uploaded image"}](${assetPath})` : ""
+      })
+      .filter(Boolean)
+  }
+
+  private formatClaudeUserFileAttachments(
+    attachments: ClaudeUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind === "file")
+      .map((attachment) => {
+        const label =
+          attachment.type && !this.fileNameEndsWithType(attachment.name, attachment.type)
+            ? `${attachment.name} (${attachment.type})`
+            : attachment.name
+        const source = attachment.source || ""
+        const assetPath =
+          source && collector
+            ? addFileExportAsset(collector, {
+                source,
+                name: attachment.name,
+                mimeHint: attachment.type,
+                idPrefix: "claude-user-file",
+              })
+            : source
+
+        return assetPath ? `- [${escapeMarkdownLinkText(label)}](${assetPath})` : `- ${label}`
+      })
+  }
+
+  private fileNameEndsWithType(name: string, type: string): boolean {
+    const normalizedName = name.toLowerCase()
+    const normalizedType = type.replace(/^\./, "").toLowerCase()
+    return normalizedType ? normalizedName.endsWith(`.${normalizedType}`) : false
+  }
+
   private async collectClaudeDocumentArtifacts(): Promise<ClaudeDocumentExportCacheEntry[]> {
     const results: ClaudeDocumentExportCacheEntry[] = []
     const artifacts = this.getClaudeDocumentArtifactCells()
@@ -1892,7 +2131,10 @@ export class ClaudeAdapter extends SiteAdapter {
     const maxLen = Math.max(userMessages.length, assistantMessages.length)
     for (let index = 0; index < maxLen; index += 1) {
       if (userMessages[index]) {
-        const content = this.extractUserQueryExportContent(userMessages[index]).trim()
+        const content = this.extractClaudeUserQueryExportContent(
+          userMessages[index],
+          collector,
+        ).trim()
         if (content) messages.push({ role: "user", content })
       }
 
