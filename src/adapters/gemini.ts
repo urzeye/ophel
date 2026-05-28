@@ -8,6 +8,7 @@ import { geminiNativeThemeCss } from "~styles/native-theme-adapters/gemini"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import {
   createUniqueExportAssetPath,
+  EXPORT_MARKDOWN_HREF_ATTR,
   htmlToMarkdown,
   type ExportAsset,
   type ExportBundle,
@@ -3207,6 +3208,7 @@ export class GeminiAdapter extends SiteAdapter {
       const kind = this.inferExportAssetKind(source, label)
       const assetPath = this.addFileExportAsset(collector, source, label, undefined, kind)
       link.setAttribute("href", assetPath)
+      link.setAttribute(EXPORT_MARKDOWN_HREF_ATTR, assetPath)
       link.removeAttribute("target")
       link.removeAttribute("rel")
     })
@@ -3271,7 +3273,8 @@ export class GeminiAdapter extends SiteAdapter {
   private createExportAssetLinkElement(label: string, href: string): HTMLElement {
     const paragraph = document.createElement("p")
     const link = document.createElement("a")
-    link.href = href
+    link.setAttribute("href", href)
+    link.setAttribute(EXPORT_MARKDOWN_HREF_ATTR, href)
     link.textContent = label
     paragraph.appendChild(link)
     return paragraph

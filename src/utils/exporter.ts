@@ -14,6 +14,7 @@ import { platform } from "~platform"
 const EMOJI_EXPORT = String.fromCodePoint(0x1f4e4) // 📤
 const EMOJI_USER = String.fromCodePoint(0x1f64b) // 🙋
 const EMOJI_ASSISTANT = String.fromCodePoint(0x1f916) // 🤖
+export const EXPORT_MARKDOWN_HREF_ATTR = "data-ophel-export-markdown-href"
 
 export interface ExportMessage {
   role: "user" | "assistant" | string
@@ -515,7 +516,7 @@ export function htmlToMarkdown(el: Element): string {
         case "i":
           return `*${renderChildren(element, context)}*`
         case "a":
-          return `[${renderChildren(element, context)}](${element.getAttribute("href") || (element as HTMLAnchorElement).href || ""})`
+          return `[${renderChildren(element, context)}](${element.getAttribute(EXPORT_MARKDOWN_HREF_ATTR) || (element as HTMLAnchorElement).href || ""})`
         case "li":
           return renderListItem(
             element,
