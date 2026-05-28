@@ -8,9 +8,21 @@ import {
   DOWNLOAD_ICON_TRAY_PATH,
 } from "~components/icons/DownloadIcon"
 import { SITE_IDS } from "~constants"
+import {
+  extractHeadingOutline,
+  findHeadingByText,
+  findScrollableAncestor,
+  scrollElementInContainer,
+} from "~core/outline/dom-outline"
 import { platform } from "~platform"
 import { geminiNativeThemeCss } from "~styles/native-theme-adapters/gemini"
 import { DOMToolkit } from "~utils/dom-toolkit"
+import {
+  appendMarkdownDocumentAssetLink,
+  buildMarkdownFilename,
+  extractMarkdownTitle,
+  type ExportAssetCollector,
+} from "~utils/export-assets"
 import {
   createUniqueExportAssetPath,
   copyToClipboard,
@@ -185,11 +197,9 @@ interface GeminiExportLifecycleState {
   openedDeepResearchPanel: boolean
 }
 
-interface GeminiExportAssetCollector {
-  assets: ExportAsset[]
+interface GeminiExportAssetCollector extends ExportAssetCollector {
   imagePathsBySource: Map<string, string>
   filePathsBySource: Map<string, string>
-  usedPaths: Set<string>
 }
 
 const GEMINI_MYSTUFF_ACTIVE_CLASS = "ophel-gemini-mystuff-active"
@@ -1189,8 +1199,10 @@ export class GeminiAdapter extends SiteAdapter {
 
     const downloaded = await downloadFile(
       ensureUtf8Bom(content),
-      this.buildDeepResearchReportFilename(
-        this.getDeepResearchPanelTitle(panel) || this.extractMarkdownTitle(content),
+      buildMarkdownFilename(
+        this.getDeepResearchPanelTitle(panel) ||
+          extractMarkdownTitle(content, "deep-research-report"),
+        "deep-research-report",
       ),
       "text/markdown;charset=utf-8",
     )
@@ -3406,37 +3418,14 @@ export class GeminiAdapter extends SiteAdapter {
     const root = this.getDeepResearchDocumentOutlineRoot()
     if (!root) return []
 
-    const headingSelector = Array.from({ length: maxLevel }, (_, index) => `h${index + 1}`).join(
-      ", ",
-    )
-    const headings = Array.from(root.querySelectorAll(headingSelector)).filter(
-      (heading) => !this.shouldSkipOutlineHeading(heading),
-    )
-
-    return headings.map((heading, index) => {
-      const level = parseInt(heading.tagName.charAt(1), 10)
-      const text = heading.textContent?.trim() || ""
-      const item: OutlineItem = {
-        level,
-        text,
-        element: heading,
-        id: `gemini-document:${level}:${text}:${index}`,
-      }
-
-      if (showWordCount) {
-        let nextBoundaryEl: Element | null = null
-        for (let i = index + 1; i < headings.length; i += 1) {
-          const candidate = headings[i]
-          const candidateLevel = parseInt(candidate.tagName.charAt(1), 10)
-          if (candidateLevel <= level) {
-            nextBoundaryEl = candidate
-            break
-          }
-        }
-        item.wordCount = this.calculateRangeWordCount(heading, nextBoundaryEl, root)
-      }
-
-      return item
+    return extractHeadingOutline(root, {
+      maxLevel,
+      showWordCount,
+      idPrefix: "gemini-document",
+      shouldSkipHeading: (heading) => this.shouldSkipOutlineHeading(heading),
+      calculateWordCount: (heading, nextBoundary, outlineRoot) => {
+        return this.calculateRangeWordCount(heading, nextBoundary, outlineRoot)
+      },
     })
   }
 
@@ -3444,30 +3433,13 @@ export class GeminiAdapter extends SiteAdapter {
     const root = this.getDeepResearchDocumentOutlineRoot()
     if (!root) return null
 
-    const headings = Array.from(root.querySelectorAll(`h${level}`))
-    return headings.find((heading) => heading.textContent?.trim() === text) || null
-  }
-
-  private findScrollableAncestor(element: Element | null): HTMLElement | null {
-    let current = element?.parentElement || null
-    while (current && current !== document.body) {
-      const style = window.getComputedStyle(current)
-      const overflowY = style.overflowY
-      const canScroll =
-        current.scrollHeight > current.clientHeight &&
-        (overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay")
-
-      if (canScroll) return current
-      current = current.parentElement
-    }
-
-    return null
+    return findHeadingByText(root, level, text, (heading) => this.shouldSkipOutlineHeading(heading))
   }
 
   getOutlineScrollContainer(sourceId = "conversation"): HTMLElement | null {
     if (sourceId === GEMINI_DOCUMENT_OUTLINE_SOURCE_ID) {
       const root = this.getDeepResearchDocumentOutlineRoot()
-      return this.findScrollableAncestor(root) || null
+      return findScrollableAncestor(root) || null
     }
 
     return this.getScrollContainer()
@@ -3487,15 +3459,8 @@ export class GeminiAdapter extends SiteAdapter {
 
   scrollToOutlineSourceTarget(element: HTMLElement, sourceId = "conversation"): void {
     if (sourceId === GEMINI_DOCUMENT_OUTLINE_SOURCE_ID) {
-      const container =
-        this.findScrollableAncestor(element) || this.getOutlineScrollContainer(sourceId)
-      if (container && container !== element) {
-        const containerRect = container.getBoundingClientRect()
-        const targetRect = element.getBoundingClientRect()
-        container.scrollTo({
-          top: container.scrollTop + targetRect.top - containerRect.top - 12,
-          behavior: "instant" as ScrollBehavior,
-        })
+      const container = findScrollableAncestor(element) || this.getOutlineScrollContainer(sourceId)
+      if (scrollElementInContainer(element, container)) {
         return
       }
     }
@@ -4077,57 +4042,12 @@ export class GeminiAdapter extends SiteAdapter {
     content: string,
     title?: string | null,
   ): string {
-    const asset = this.addDeepResearchReportAsset(collector, content, title)
-    return `${content}\n\n[${this.escapeMarkdownLinkText(asset.name)}](${asset.path})`
-  }
-
-  private addDeepResearchReportAsset(
-    collector: GeminiExportAssetCollector,
-    content: string,
-    title?: string | null,
-  ): { name: string; path: string } {
-    const titleText = title || this.extractMarkdownTitle(content)
-    const existing = collector.assets.find(
-      (asset) =>
-        asset.kind === "document" &&
-        asset.content === content &&
-        asset.description === (title || undefined),
-    )
-    if (existing?.relativePath) {
-      return { name: existing.name, path: existing.relativePath }
-    }
-
-    const name = this.buildDeepResearchReportFilename(titleText)
-    const path = this.createUniqueGeminiExportPath(`assets/reports/${name}`, collector)
-
-    collector.assets.push({
-      id: `gemini-deep-research-report-${collector.assets.length + 1}`,
-      name,
-      relativePath: path,
-      mimeType: "text/markdown;charset=utf-8",
-      kind: "document",
-      content,
-      description: title || undefined,
+    return appendMarkdownDocumentAssetLink(collector, content, {
+      title,
+      fallbackTitle: "deep-research-report",
+      directory: "assets/reports",
+      idPrefix: "gemini-deep-research-report",
     })
-
-    return { name, path }
-  }
-
-  private extractMarkdownTitle(content: string): string {
-    const titleLine = content
-      .replace(/\r\n/g, "\n")
-      .split("\n")
-      .find((line) => /^#\s+/.test(line.trim()))
-    return titleLine?.replace(/^#\s+/, "").trim() || "deep-research-report"
-  }
-
-  private buildDeepResearchReportFilename(title: string): string {
-    const sanitized = title
-      .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_")
-      .replace(/\s+/g, " ")
-      .trim()
-      .substring(0, 80)
-    return `${sanitized || "deep-research-report"}.md`
   }
 
   private createUniqueGeminiExportPath(
