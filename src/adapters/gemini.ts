@@ -2,12 +2,20 @@
  * Gemini 标准版适配器 (gemini.google.com)
  */
 import { bindDomTooltip, type DomTooltipBinding } from "~components/ui/Tooltip"
+import {
+  DOWNLOAD_ICON_ARROW_PATH,
+  DOWNLOAD_ICON_CHEVRON_PATH,
+  DOWNLOAD_ICON_TRAY_PATH,
+} from "~components/icons/DownloadIcon"
 import { SITE_IDS } from "~constants"
 import { platform } from "~platform"
 import { geminiNativeThemeCss } from "~styles/native-theme-adapters/gemini"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import {
   createUniqueExportAssetPath,
+  copyToClipboard,
+  downloadFile,
+  ensureUtf8Bom,
   EXPORT_MARKDOWN_HREF_ATTR,
   htmlToMarkdown,
   type ExportAsset,
@@ -15,7 +23,12 @@ import {
   type ExportMessage,
 } from "~utils/exporter"
 import { t } from "~utils/i18n"
-import { createOpenInNewTabIcon } from "~utils/icons"
+import {
+  createCopyIcon,
+  createSVGElement,
+  createOpenInNewTabIcon,
+  showCopySuccess,
+} from "~utils/icons"
 import {
   EVENT_GEMINI_MYSTUFF_CACHE_SYNC,
   EVENT_GEMINI_MYSTUFF_SYNC_REQUEST,
@@ -103,6 +116,8 @@ const GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR = GEMINI_SHARE_ASSISTANT_MARKDOWN_S
 const GEMINI_DEEP_RESEARCH_CONFIRMATION_SELECTOR = "deep-research-confirmation-widget"
 const GEMINI_DEEP_RESEARCH_IMMERSIVE_PANEL_SELECTOR =
   "immersive-panel deep-research-immersive-panel"
+const GEMINI_DEEP_RESEARCH_PANEL_MARKDOWN_SELECTOR =
+  "#extended-response-markdown-content, message-content .markdown"
 const GEMINI_DEEP_RESEARCH_APP_DOCUMENT_MARKDOWN_SELECTOR = [
   `${GEMINI_DEEP_RESEARCH_IMMERSIVE_PANEL_SELECTOR} #extended-response-markdown-content`,
   `${GEMINI_DEEP_RESEARCH_IMMERSIVE_PANEL_SELECTOR} message-content .markdown`,
@@ -115,6 +130,10 @@ const GEMINI_DEEP_RESEARCH_ICON_SELECTOR = [
 ].join(", ")
 const GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_FOOTER_SELECTOR =
   'share-landing-page immersive-share-landing-page .page:has(structured-content-container[data-test-id="deep-research-block"]) > .footer'
+const GEMINI_DEEP_RESEARCH_PANEL_ACTIONS_CLASS = "gh-gemini-deep-research-panel-actions"
+const GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS = "gh-gemini-deep-research-panel-action"
+const GEMINI_DEEP_RESEARCH_PANEL_ACTIONS_STYLE_ID = "gh-gemini-deep-research-panel-actions-style"
+const GEMINI_DEEP_RESEARCH_PANEL_ACTIONS_ATTR = "data-ophel-deep-research-panel-actions"
 const GEMINI_ASSISTANT_EXPORT_NOISE_SELECTOR = [
   ".cdk-visually-hidden",
   "model-thoughts",
@@ -861,6 +880,9 @@ export class GeminiAdapter extends SiteAdapter {
   private cachedAccountEmail: string | null = null
   private accountEmailLastDetectAt = 0
   private myStuffEnhancer: GeminiMyStuffEnhancer | null = null
+  private deepResearchPanelWatchStop: (() => void) | null = null
+  private deepResearchPanelObservers = new WeakMap<Element, () => void>()
+  private deepResearchPanelTooltipBindings = new WeakMap<HTMLElement, DomTooltipBinding>()
 
   private getUserPathPrefix(): string {
     // Gemini 多账号路径格式：/u/2/app/...
@@ -915,6 +937,291 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     return this.cachedAccountEmail
+  }
+
+  private startDeepResearchPanelActions(): void {
+    if (this.deepResearchPanelWatchStop) return
+
+    this.injectDeepResearchPanelActionStyles()
+    this.deepResearchPanelWatchStop = DOMToolkit.each(
+      GEMINI_DEEP_RESEARCH_IMMERSIVE_PANEL_SELECTOR,
+      (panel) => this.watchDeepResearchPanel(panel),
+      { shadow: true },
+    )
+  }
+
+  private watchDeepResearchPanel(panel: Element): void {
+    this.syncDeepResearchPanelActions(panel)
+    if (this.deepResearchPanelObservers.has(panel)) return
+
+    let stop: (() => void) | null = null
+    stop = DOMToolkit.watch(
+      panel,
+      () => {
+        if (!panel.isConnected) {
+          stop?.()
+          this.deepResearchPanelObservers.delete(panel)
+          return
+        }
+        this.syncDeepResearchPanelActions(panel)
+      },
+      {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["aria-busy"],
+        debounce: 100,
+      },
+    )
+    this.deepResearchPanelObservers.set(panel, stop)
+  }
+
+  private injectDeepResearchPanelActionStyles(): void {
+    DOMToolkit.css(
+      `
+        .${GEMINI_DEEP_RESEARCH_PANEL_ACTIONS_CLASS} {
+          display: inline-flex;
+          align-items: center;
+          gap: 2px;
+          margin-inline-end: 4px;
+        }
+
+        .${GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS} {
+          width: 40px;
+          height: 40px;
+          border: 0;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          background: transparent;
+          color: var(--bard-color-on-surface-variant, #5f6368);
+          cursor: pointer;
+          transition:
+            background-color 0.16s ease,
+            color 0.16s ease,
+            opacity 0.16s ease;
+        }
+
+        .${GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS}:hover:not(:disabled),
+        .${GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS}:focus-visible:not(:disabled) {
+          background: rgba(60, 64, 67, 0.08);
+          color: var(--bard-color-on-surface, #202124);
+          outline: none;
+        }
+
+        .${GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS}:disabled {
+          cursor: default;
+          opacity: 0.38;
+        }
+
+        .${GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS} svg {
+          width: 18px;
+          height: 18px;
+          stroke: currentColor;
+        }
+
+        body.dark-theme .${GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS},
+        html.dark .${GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS},
+        html[dark-theme] .${GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS} {
+          color: rgba(232, 234, 237, 0.86);
+        }
+
+        body.dark-theme .${GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS}:hover:not(:disabled),
+        body.dark-theme .${GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS}:focus-visible:not(:disabled),
+        html.dark .${GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS}:hover:not(:disabled),
+        html.dark .${GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS}:focus-visible:not(:disabled),
+        html[dark-theme] .${GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS}:hover:not(:disabled),
+        html[dark-theme] .${GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS}:focus-visible:not(:disabled) {
+          background: rgba(232, 234, 237, 0.12);
+          color: #ffffff;
+        }
+      `,
+      GEMINI_DEEP_RESEARCH_PANEL_ACTIONS_STYLE_ID,
+    )
+  }
+
+  private syncDeepResearchPanelActions(panel: Element): void {
+    const markdown = this.getDeepResearchPanelMarkdownElement(panel)
+    const toolbarActions = panel.querySelector("toolbar .action-buttons")
+    if (!(toolbarActions instanceof HTMLElement) || !markdown) {
+      this.removeDeepResearchPanelActions(panel)
+      return
+    }
+
+    const existing = panel.querySelector(
+      `[${GEMINI_DEEP_RESEARCH_PANEL_ACTIONS_ATTR}="1"]`,
+    ) as HTMLElement | null
+    if (existing) {
+      this.updateDeepResearchPanelActionDisabledState(panel)
+      return
+    }
+
+    const actions = this.createDeepResearchPanelActions(panel)
+    const exportButton = toolbarActions.querySelector('[data-test-id="export-menu-button"]')
+    if (exportButton?.parentElement === toolbarActions) {
+      toolbarActions.insertBefore(actions, exportButton)
+    } else {
+      toolbarActions.prepend(actions)
+    }
+
+    this.updateDeepResearchPanelActionDisabledState(panel)
+  }
+
+  private removeDeepResearchPanelActions(panel: Element): void {
+    panel.querySelectorAll(`[${GEMINI_DEEP_RESEARCH_PANEL_ACTIONS_ATTR}="1"]`).forEach((node) => {
+      node.querySelectorAll(`.${GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS}`).forEach((button) => {
+        if (button instanceof HTMLElement) {
+          this.deepResearchPanelTooltipBindings.get(button)?.destroy()
+        }
+      })
+      node.remove()
+    })
+  }
+
+  private createDeepResearchPanelActions(panel: Element): HTMLElement {
+    const actions = document.createElement("div")
+    actions.className = GEMINI_DEEP_RESEARCH_PANEL_ACTIONS_CLASS
+    actions.setAttribute(GEMINI_DEEP_RESEARCH_PANEL_ACTIONS_ATTR, "1")
+
+    const copyButton = this.createDeepResearchPanelActionButton("copy")
+    const downloadButton = this.createDeepResearchPanelActionButton("download")
+
+    copyButton.addEventListener("click", (event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      void this.copyDeepResearchPanelMarkdown(panel, copyButton)
+    })
+
+    downloadButton.addEventListener("click", (event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      void this.downloadDeepResearchPanelMarkdown(panel)
+    })
+
+    actions.append(copyButton, downloadButton)
+    return actions
+  }
+
+  private createDeepResearchPanelActionButton(action: "copy" | "download"): HTMLButtonElement {
+    const button = document.createElement("button")
+    button.type = "button"
+    button.className = GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS
+    button.setAttribute("aria-label", this.getDeepResearchPanelActionLabel(action))
+    button.title = this.getDeepResearchPanelActionLabel(action)
+    button.appendChild(
+      action === "copy" ? createCopyIcon({ size: 18 }) : this.createDeepResearchPanelDownloadIcon(),
+    )
+
+    const binding = bindDomTooltip(button, {
+      getContent: () => this.getDeepResearchPanelActionLabel(action),
+      preferredPlacement: "bottom",
+    })
+    this.deepResearchPanelTooltipBindings.set(button, binding)
+
+    return button
+  }
+
+  private createDeepResearchPanelDownloadIcon(): SVGSVGElement {
+    const svg = createSVGElement("svg", {
+      xmlns: "http://www.w3.org/2000/svg",
+      width: "18",
+      height: "18",
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": "2",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    }) as SVGSVGElement
+
+    ;[DOWNLOAD_ICON_ARROW_PATH, DOWNLOAD_ICON_CHEVRON_PATH, DOWNLOAD_ICON_TRAY_PATH].forEach(
+      (path) => {
+        svg.appendChild(createSVGElement("path", { d: path }))
+      },
+    )
+
+    return svg
+  }
+
+  private getDeepResearchPanelActionLabel(action: "copy" | "download"): string {
+    if (action === "copy") {
+      return t("exportToClipboard")
+    }
+    return `${t("webdavDownloadBtn")} ${t("exportToMarkdown")}`
+  }
+
+  private updateDeepResearchPanelActionDisabledState(panel: Element): void {
+    const hasContent = this.hasDeepResearchPanelContent(panel)
+    panel.querySelectorAll(`.${GEMINI_DEEP_RESEARCH_PANEL_ACTION_CLASS}`).forEach((button) => {
+      if (button instanceof HTMLButtonElement) {
+        button.disabled = !hasContent
+      }
+    })
+  }
+
+  private async copyDeepResearchPanelMarkdown(panel: Element, button: HTMLElement): Promise<void> {
+    const content = this.getDeepResearchPanelMarkdown(panel)
+    if (!content) {
+      showToast(t("exportNoContent"))
+      return
+    }
+
+    const copied = await copyToClipboard(content)
+    if (!copied) {
+      showToast(t("copyFailed"))
+      return
+    }
+
+    showCopySuccess(button, { size: 18 })
+    showToast(t("copySuccess"))
+  }
+
+  private async downloadDeepResearchPanelMarkdown(panel: Element): Promise<void> {
+    const content = this.getDeepResearchPanelMarkdown(panel)
+    if (!content) {
+      showToast(t("exportNoContent"))
+      return
+    }
+
+    const downloaded = await downloadFile(
+      ensureUtf8Bom(content),
+      this.buildDeepResearchReportFilename(
+        this.getDeepResearchPanelTitle(panel) || this.extractMarkdownTitle(content),
+      ),
+      "text/markdown;charset=utf-8",
+    )
+    if (downloaded) {
+      showToast(t("exportSuccess"))
+    }
+  }
+
+  private getDeepResearchPanelMarkdown(panel: Element): string {
+    const markdown = this.getDeepResearchPanelMarkdownElement(panel)
+    return markdown ? this.extractAssistantResponseTextWithAssets(markdown).trim() : ""
+  }
+
+  private hasDeepResearchPanelContent(panel: Element): boolean {
+    const markdown = this.getDeepResearchPanelMarkdownElement(panel)
+    return Boolean(markdown?.textContent?.trim())
+  }
+
+  private getDeepResearchPanelMarkdownElement(panel: Element): Element | null {
+    const candidates = Array.from(
+      panel.querySelectorAll(GEMINI_DEEP_RESEARCH_PANEL_MARKDOWN_SELECTOR),
+    )
+    return candidates.find((candidate) => candidate.closest("thinking-panel") === null) || null
+  }
+
+  private getDeepResearchPanelTitle(panel: Element): string | null {
+    const toolbarTitle = this.getNormalizedText(panel.querySelector("toolbar h2.title-text"))
+    if (toolbarTitle) return toolbarTitle
+
+    const heading = this.getNormalizedText(
+      this.getDeepResearchPanelMarkdownElement(panel)?.querySelector("h1"),
+    )
+    return heading || null
   }
 
   private extractEmailFromAttr(
@@ -4030,6 +4337,8 @@ export class GeminiAdapter extends SiteAdapter {
       })
       this.myStuffEnhancer.start()
     }
+
+    this.startDeepResearchPanelActions()
   }
 
   // ==================== 模型锁定 ====================
