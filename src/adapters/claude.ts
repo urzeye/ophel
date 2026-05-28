@@ -87,6 +87,7 @@ const CLAUDE_DOCUMENT_OUTLINE_SOURCE_ID = "document"
 const CLAUDE_DOCUMENT_ROOT_SELECTOR = "#wiggle-file-content"
 const CLAUDE_DOCUMENT_MARKDOWN_SELECTOR =
   "#wiggle-file-content .standard-markdown, #wiggle-file-content .progressive-markdown"
+const CLAUDE_RESPONSE_MARKDOWN_SELECTOR = ".standard-markdown, .progressive-markdown"
 const CLAUDE_ARTIFACT_CELL_SELECTOR = ".artifact-block-cell"
 const CLAUDE_USER_FILE_THUMBNAIL_SELECTOR = '[data-testid="file-thumbnail"]'
 
@@ -2154,36 +2155,79 @@ export class ClaudeAdapter extends SiteAdapter {
     element: Element,
     collector?: ExportAssetCollector,
   ): string {
-    let result = ""
-    const artifacts = this.getClaudeArtifactCells(element)
+    const parts: string[] = []
+    const blocks = this.getClaudeAssistantExportBlocks(element)
 
-    artifacts.forEach((artifact) => {
-      const title = this.getClaudeArtifactTitle(artifact)
-      const cached = this.findCachedClaudeDocumentForArtifact(artifact)
-
-      if (cached?.content) {
-        const content = collector
-          ? appendMarkdownDocumentAssetLink(collector, cached.content, {
-              title: cached.title || title,
-              fallbackTitle: "claude-document",
-              directory: "assets/documents",
-              idPrefix: "claude-document",
-            })
-          : this.formatClaudeDocumentInlineContent(cached.content, cached.title || title)
-        result += `\n${content}\n\n`
+    blocks.forEach((block) => {
+      if (block.matches(CLAUDE_ARTIFACT_CELL_SELECTOR)) {
+        parts.push(this.formatClaudeArtifactExportContent(block, collector))
         return
       }
 
-      result += `\n${this.formatClaudeArtifactPlaceholder(artifact)}\n\n`
+      const markdown =
+        htmlToMarkdown(
+          this.prepareClaudeAssistantMarkdownBlockForExport(block, collector),
+        ).trim() ||
+        block.textContent?.trim() ||
+        ""
+      parts.push(markdown)
     })
 
-    const markdownContent = element.querySelector(".standard-markdown, .progressive-markdown")
-    if (markdownContent) {
-      const markdown = htmlToMarkdown(markdownContent)
-      result += markdown || markdownContent.textContent?.trim() || ""
+    return parts.filter(Boolean).join("\n\n").trim()
+  }
+
+  private getClaudeAssistantExportBlocks(element: Element): Element[] {
+    const candidates = Array.from(
+      element.querySelectorAll(
+        `${CLAUDE_RESPONSE_MARKDOWN_SELECTOR}, ${CLAUDE_ARTIFACT_CELL_SELECTOR}`,
+      ),
+    ).filter((block) => !block.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR))
+
+    return candidates.filter((block) => {
+      const parentBlock = block.parentElement?.closest(
+        `${CLAUDE_RESPONSE_MARKDOWN_SELECTOR}, ${CLAUDE_ARTIFACT_CELL_SELECTOR}`,
+      )
+      return !parentBlock || !element.contains(parentBlock)
+    })
+  }
+
+  private prepareClaudeAssistantMarkdownBlockForExport(
+    block: Element,
+    collector?: ExportAssetCollector,
+  ): Element {
+    const sourceArtifacts = this.getClaudeArtifactCells(block)
+    const clone = block.cloneNode(true) as Element
+    const artifacts = Array.from(clone.querySelectorAll(CLAUDE_ARTIFACT_CELL_SELECTOR))
+
+    artifacts.forEach((artifact, index) => {
+      const sourceArtifact = sourceArtifacts[index] || artifact
+      const replacement = document.createElement("p")
+      replacement.textContent = this.formatClaudeArtifactExportContent(sourceArtifact, collector)
+      artifact.replaceWith(replacement)
+    })
+
+    return clone
+  }
+
+  private formatClaudeArtifactExportContent(
+    artifact: Element,
+    collector?: ExportAssetCollector,
+  ): string {
+    const title = this.getClaudeArtifactTitle(artifact)
+    const cached = this.findCachedClaudeDocumentForArtifact(artifact)
+
+    if (!cached?.content) {
+      return this.formatClaudeArtifactPlaceholder(artifact)
     }
 
-    return result.trim()
+    return collector
+      ? appendMarkdownDocumentAssetLink(collector, cached.content, {
+          title: cached.title || title,
+          fallbackTitle: "claude-document",
+          directory: "assets/documents",
+          idPrefix: "claude-document",
+        })
+      : this.formatClaudeDocumentInlineContent(cached.content, cached.title || title)
   }
 
   private formatClaudeDocumentInlineContent(content: string, title: string): string {
@@ -2204,29 +2248,7 @@ export class ClaudeAdapter extends SiteAdapter {
    * Claude特有:Artifacts以卡片形式嵌入在回复中,需要特殊处理
    */
   extractAssistantResponseText(element: Element): string {
-    let result = ""
-
-    // 检查是否有Artifacts卡片
-    const artifacts = element.querySelectorAll(".artifact-block-cell")
-    if (artifacts.length > 0) {
-      artifacts.forEach((artifact) => {
-        // 尝试查找下载链接(可能在同级或父级元素的菜单中)
-        // 下载菜单通常需要点击才会出现,所以可能找不到
-        const downloadLink = element.querySelector('a[download][href^="blob:"]')
-        const link = downloadLink?.getAttribute("href")
-
-        result += `\n${this.formatClaudeArtifactPlaceholder(artifact, link || "")}\n\n`
-      })
-    }
-
-    // 提取正常回复内容(在.standard-markdown或.progressive-markdown中)
-    const markdownContent = element.querySelector(".standard-markdown, .progressive-markdown")
-    if (markdownContent) {
-      const markdown = htmlToMarkdown(markdownContent)
-      result += markdown || markdownContent.textContent?.trim() || ""
-    }
-
-    return result.trim()
+    return this.extractClaudeAssistantResponseTextWithDocuments(element)
   }
 
   // ==================== 会话观察器 ====================
