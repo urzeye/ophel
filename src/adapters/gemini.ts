@@ -93,11 +93,12 @@ const GEMINI_USER_QUERY_IMAGE_SELECTOR = [
 ].join(", ")
 const GEMINI_UPLOADED_FILE_SELECTOR = '[data-test-id="uploaded-file"]'
 const GEMINI_SHARE_TURN_SELECTOR = "share-landing-page .share-turn-viewer"
+const GEMINI_SHARE_ASSISTANT_MARKDOWN_SELECTOR = "message-content .markdown"
 const GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_SELECTOR =
   'share-landing-page immersive-share-landing-page structured-content-container[data-test-id="deep-research-block"]'
 const GEMINI_DEEP_RESEARCH_ARTIFACT_SHARE_SELECTOR =
   'share-landing-page structured-content-container[data-test-id="immersive-artifact-content"]'
-const GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR = "message-content .markdown"
+const GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR = GEMINI_SHARE_ASSISTANT_MARKDOWN_SELECTOR
 const GEMINI_DEEP_RESEARCH_CONFIRMATION_SELECTOR = "deep-research-confirmation-widget"
 const GEMINI_DEEP_RESEARCH_IMMERSIVE_PANEL_SELECTOR =
   "immersive-panel deep-research-immersive-panel"
@@ -3021,6 +3022,10 @@ export class GeminiAdapter extends SiteAdapter {
       return this.extractDeepResearchConversationShareMessages()
     }
 
+    if (this.isGeminiConversationSharePage()) {
+      return this.extractGeminiConversationShareMessages()
+    }
+
     if (this.isDeepResearchAppPage()) {
       return this.extractDeepResearchAppMessages()
     }
@@ -3055,6 +3060,10 @@ export class GeminiAdapter extends SiteAdapter {
 
     if (this.isDeepResearchConversationSharePage()) {
       return this.extractDeepResearchConversationShareMessages(collector)
+    }
+
+    if (this.isGeminiConversationSharePage()) {
+      return this.extractGeminiConversationShareMessages(collector)
     }
 
     if (this.isDeepResearchAppPage()) {
@@ -3387,6 +3396,10 @@ export class GeminiAdapter extends SiteAdapter {
     )
   }
 
+  private isGeminiConversationSharePage(): boolean {
+    return this.isSharePage() && document.querySelector(GEMINI_SHARE_TURN_SELECTOR) !== null
+  }
+
   private extractDeepResearchDocumentShareMessages(
     collector?: GeminiExportAssetCollector,
   ): ExportMessage[] {
@@ -3459,9 +3472,30 @@ export class GeminiAdapter extends SiteAdapter {
   private extractDeepResearchConversationShareMessages(
     collector?: GeminiExportAssetCollector,
   ): ExportMessage[] {
+    const { messages, collectedElements } = this.collectGeminiShareTurnMessages(collector)
+
+    this.collectDetachedDeepResearchArtifactMessages(collectedElements, collector).forEach(
+      (message) => {
+        messages.push(message)
+      },
+    )
+
+    return this.dedupeAdjacentExportMessages(messages)
+  }
+
+  private extractGeminiConversationShareMessages(
+    collector?: GeminiExportAssetCollector,
+  ): ExportMessage[] {
+    return this.collectGeminiShareTurnMessages(collector).messages
+  }
+
+  private collectGeminiShareTurnMessages(collector?: GeminiExportAssetCollector): {
+    messages: ExportMessage[]
+    collectedElements: Set<Element>
+  } {
     const messages: ExportMessage[] = []
-    const turns = Array.from(document.querySelectorAll(GEMINI_SHARE_TURN_SELECTOR))
     const collectedElements = new Set<Element>()
+    const turns = Array.from(document.querySelectorAll(GEMINI_SHARE_TURN_SELECTOR))
 
     turns.forEach((turn) => {
       const turnMessages = [
@@ -3469,7 +3503,7 @@ export class GeminiAdapter extends SiteAdapter {
           role: "user" as const,
           element,
         })),
-        ...Array.from(turn.querySelectorAll(GEMINI_DEEP_RESEARCH_MARKDOWN_SELECTOR)).map(
+        ...Array.from(turn.querySelectorAll(GEMINI_SHARE_ASSISTANT_MARKDOWN_SELECTOR)).map(
           (element) => ({
             role: "assistant" as const,
             element,
@@ -3488,13 +3522,10 @@ export class GeminiAdapter extends SiteAdapter {
       })
     })
 
-    this.collectDetachedDeepResearchArtifactMessages(collectedElements, collector).forEach(
-      (message) => {
-        messages.push(message)
-      },
-    )
-
-    return this.dedupeAdjacentExportMessages(messages)
+    return {
+      messages: this.dedupeAdjacentExportMessages(messages),
+      collectedElements,
+    }
   }
 
   private collectDetachedDeepResearchArtifactMessages(
