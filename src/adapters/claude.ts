@@ -1426,10 +1426,11 @@ export class ClaudeAdapter extends SiteAdapter {
       return totalLength
     }
 
-    // Claude 的标题在 AI 回复中，有 text-text-100 class
-    // 排除侧边栏的 H3 (RecentsHide 等)
+    // Claude 对话大纲只收 AI 回复里的标题；侧边栏、导航等页面标题不应进入对话大纲。
     const headings = Array.from(outlineRoot.querySelectorAll("h1, h2, h3, h4, h5, h6")).filter(
-      (heading) => !heading.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR),
+      (heading) =>
+        !heading.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR) &&
+        heading.closest(".font-claude-response") !== null,
     )
 
     headings.forEach((h, index) => {
