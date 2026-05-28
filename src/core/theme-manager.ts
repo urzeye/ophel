@@ -1118,16 +1118,7 @@ ${cssVars}
 
     // 执行主题切换的核心逻辑
     const doToggle = () => {
-      // 优先使用适配器的原生切换逻辑 (针对 Gemini Enterprise)
-      if (
-        this.isHostThemeSyncActive() &&
-        this.adapter &&
-        typeof this.adapter.toggleTheme === "function"
-      ) {
-        this.adapter.toggleTheme(nextMode).catch(() => {})
-      }
-      // 同步应用主题（包括 Shadow DOM）
-      this.applyTheme(nextMode)
+      this.syncHostTheme(nextMode, nextMode)
     }
 
     // 检查是否支持 View Transitions API
