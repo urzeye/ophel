@@ -107,13 +107,6 @@ interface ClaudeDocumentExportCacheEntry {
   signature: string
 }
 
-interface ClaudeArtifactFileReference {
-  source: string
-  name: string
-  title: string
-  type: string
-}
-
 interface ClaudeUserAttachment {
   kind: "image" | "file"
   name: string
@@ -1091,11 +1084,9 @@ export class ClaudeAdapter extends SiteAdapter {
 
   private getClaudeArtifactButton(artifact: Element): HTMLElement | null {
     const container = artifact.closest(".group\\/artifact-block, [class*='group/artifact-block']")
-    const root = container || artifact
-    const button = Array.from(root.querySelectorAll("button[aria-label]")).find((item) => {
-      const label = item.getAttribute("aria-label")?.trim() || ""
-      return /^View\b/i.test(label)
-    })
+    const button =
+      container?.querySelector('button[aria-label="View Document"]') ||
+      artifact.querySelector('button[aria-label="View Document"]')
     return button instanceof HTMLElement ? button : null
   }
 
@@ -1794,24 +1785,13 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private hasClaudeExportAssets(): boolean {
-    return (
-      this.exportDocumentCache.length > 0 ||
-      this.hasClaudeUserAttachments() ||
-      this.hasClaudeDownloadableArtifactFiles()
-    )
+    return this.exportDocumentCache.length > 0 || this.hasClaudeUserAttachments()
   }
 
   private hasClaudeUserAttachments(): boolean {
     const root = this.getOutlineRoot()
     const userMessages = Array.from(root.querySelectorAll(this.getUserQuerySelector()))
     return userMessages.some((message) => this.extractClaudeUserAttachments(message).length > 0)
-  }
-
-  private hasClaudeDownloadableArtifactFiles(): boolean {
-    return this.getClaudeArtifactCells().some((artifact) => {
-      if (this.isMarkdownDocumentArtifact(artifact)) return false
-      return this.getClaudeArtifactFileReference(artifact) !== null
-    })
   }
 
   extractUserQueryMarkdown(element: Element): string {
@@ -2237,135 +2217,18 @@ export class ClaudeAdapter extends SiteAdapter {
     const title = this.getClaudeArtifactTitle(artifact)
     const cached = this.findCachedClaudeDocumentForArtifact(artifact)
 
-    if (cached?.content) {
-      return collector
-        ? createMarkdownDocumentAssetLink(collector, cached.content, {
-            title: cached.title || title,
-            fallbackTitle: "claude-document",
-            directory: "assets/documents",
-            idPrefix: "claude-document",
-          })
-        : this.formatClaudeDocumentInlineContent(cached.content, cached.title || title)
-    }
-
-    const file = this.getClaudeArtifactFileReference(artifact)
-    if (!file) {
+    if (!cached?.content) {
       return this.formatClaudeArtifactPlaceholder(artifact)
     }
 
-    const target = collector
-      ? addFileExportAsset(collector, {
-          source: file.source,
-          name: file.name,
-          mimeHint: file.type,
-          idPrefix: "claude-artifact-file",
+    return collector
+      ? createMarkdownDocumentAssetLink(collector, cached.content, {
+          title: cached.title || title,
+          fallbackTitle: "claude-document",
+          directory: "assets/documents",
+          idPrefix: "claude-document",
         })
-      : file.source
-
-    return target
-      ? `[${escapeMarkdownLinkText(file.title || file.name)}](${target})`
-      : this.formatClaudeArtifactPlaceholder(artifact)
-  }
-
-  private getClaudeArtifactFileReference(artifact: Element): ClaudeArtifactFileReference | null {
-    const source = this.extractClaudeArtifactFileSource(artifact)
-    if (!source) return null
-
-    const title = this.getClaudeArtifactTitle(artifact)
-    const type = this.getClaudeArtifactFileType(artifact, source)
-    const name = this.ensureClaudeArtifactFileName(title, type)
-
-    return {
-      source,
-      name,
-      title,
-      type,
-    }
-  }
-
-  private extractClaudeArtifactFileSource(artifact: Element): string {
-    const container = artifact.closest(".group\\/artifact-block, [class*='group/artifact-block']")
-    const roots = [artifact, container].filter(
-      (item, index, array): item is Element => Boolean(item) && array.indexOf(item) === index,
-    )
-
-    for (const root of roots) {
-      if (root instanceof HTMLAnchorElement) {
-        const href = normalizeExportAssetUrl(root.href || root.getAttribute("href") || "")
-        if (isDownloadableExportAssetUrl(href)) return href
-      }
-
-      const links = Array.from(root.querySelectorAll("a[href]")).filter(
-        (node): node is HTMLAnchorElement => node instanceof HTMLAnchorElement,
-      )
-
-      for (const link of links) {
-        const href = normalizeExportAssetUrl(link.href || link.getAttribute("href") || "")
-        if (isDownloadableExportAssetUrl(href)) return href
-      }
-
-      const source = this.extractClaudeArtifactFileSourceFromAttributes(root)
-      if (source) return source
-    }
-
-    return ""
-  }
-
-  private extractClaudeArtifactFileSourceFromAttributes(root: Element): string {
-    const attributeNames = ["data-download-url", "data-file-url", "data-url", "data-src"]
-    const nodes = [root, ...Array.from(root.querySelectorAll("*"))]
-
-    for (const node of nodes) {
-      for (const attributeName of attributeNames) {
-        const value = node.getAttribute(attributeName)
-        if (!value) continue
-
-        const source = normalizeExportAssetUrl(value)
-        if (isDownloadableExportAssetUrl(source)) return source
-      }
-    }
-
-    return ""
-  }
-
-  private getClaudeArtifactFileType(artifact: Element, source: string): string {
-    const metadata = this.getClaudeArtifactMetadata(artifact)
-    const metadataType = metadata
-      .split(/[^A-Za-z0-9.+-]+/)
-      .map((part) => part.trim().toLowerCase())
-      .find((part) => this.isKnownClaudeArtifactFileType(part))
-    if (metadataType) return metadataType
-
-    const titleExtension = this.getClaudeFilenameExtension(this.getClaudeArtifactTitle(artifact))
-    if (titleExtension) return titleExtension
-
-    return this.getClaudeFilenameExtension(source)
-  }
-
-  private isKnownClaudeArtifactFileType(value: string): boolean {
-    return [
-      "csv",
-      "doc",
-      "docx",
-      "html",
-      "json",
-      "pdf",
-      "ppt",
-      "pptx",
-      "txt",
-      "xls",
-      "xlsx",
-    ].includes(value)
-  }
-
-  private ensureClaudeArtifactFileName(title: string, type: string): string {
-    const name = title.trim() || "claude-artifact"
-    if (this.getClaudeFilenameExtension(name)) return name
-    return type ? `${name}.${type}` : name
-  }
-
-  private getClaudeFilenameExtension(value: string): string {
-    return value.match(/\.([A-Za-z0-9]{1,10})(?:[?#].*)?$/)?.[1]?.toLowerCase() || ""
+      : this.formatClaudeDocumentInlineContent(cached.content, cached.title || title)
   }
 
   private formatClaudeDocumentInlineContent(content: string, title: string): string {
