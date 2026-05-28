@@ -2400,7 +2400,18 @@ export class GeminiAdapter extends SiteAdapter {
     if (!viewer) return null
 
     try {
-      const viewerDocument = await this.waitForDriveViewerDocument(viewer)
+      const viewerDocument = await this.waitForDriveViewerDocument(viewer, fallbackName)
+      if (!viewerDocument) {
+        console.warn("[GeminiAdapter] Failed to extract uploaded file viewer document", {
+          name: fallbackName,
+          viewerTextContainers: document.querySelectorAll(
+            "immersive-panel .drive-viewer-text-content",
+          ).length,
+          visibleViewers: Array.from(
+            document.querySelectorAll("immersive-panel .drive-viewer"),
+          ).filter((panel) => this.isVisible(panel)).length,
+        })
+      }
       return viewerDocument
         ? {
             name: viewerDocument.name || fallbackName,
@@ -2444,18 +2455,18 @@ export class GeminiAdapter extends SiteAdapter {
 
   private async waitForDriveViewerDocument(
     viewer: Element,
+    expectedName: string,
     timeoutMs = 5000,
   ): Promise<{ name: string; mimeType?: string; content: string } | null> {
     const startedAt = Date.now()
     while (Date.now() - startedAt < timeoutMs) {
-      const contentElement =
-        viewer.querySelector(".drive-viewer-text-content pre") ||
-        viewer.querySelector(".drive-viewer-text-content")
+      const contentElement = this.findActiveDriveViewerTextContent(expectedName) || null
       const content = this.decodeDriveViewerText(contentElement?.textContent || "")
       if (content) {
+        const owner = contentElement?.closest(".drive-viewer") || viewer
         return {
-          name: this.extractDriveViewerDocumentName(viewer),
-          mimeType: this.extractDriveViewerDocumentMimeType(viewer),
+          name: this.extractDriveViewerDocumentName(owner),
+          mimeType: this.extractDriveViewerDocumentMimeType(owner),
           content,
         }
       }
@@ -2471,6 +2482,34 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     return null
+  }
+
+  private findActiveDriveViewerTextContent(expectedName: string): Element | null {
+    const panels = Array.from(document.querySelectorAll("immersive-panel .drive-viewer"))
+    const expectedBaseName = expectedName.replace(/\.[A-Za-z0-9]{1,10}$/, "")
+
+    const matchingPanel =
+      panels.find((panel) => {
+        const name = this.extractDriveViewerDocumentName(panel)
+        return (
+          name === expectedName ||
+          name === expectedBaseName ||
+          name.startsWith(`${expectedBaseName}.`) ||
+          expectedName.startsWith(`${name}.`)
+        )
+      }) || panels[panels.length - 1]
+
+    const candidates = Array.from(
+      (matchingPanel || document).querySelectorAll(
+        ".drive-viewer-text-content pre, .drive-viewer-text-content",
+      ),
+    )
+
+    return (
+      candidates.find((candidate) => this.isVisible(candidate)) ||
+      candidates.find((candidate) => this.decodeDriveViewerText(candidate.textContent || "")) ||
+      null
+    )
   }
 
   private decodeDriveViewerText(value: string): string {
