@@ -10,6 +10,7 @@
 
 ### 🚀 新增功能
 
+- **ChatGPT Deep Research 导出** — ChatGPT Markdown zip 导出现在会保留用户提问中的上传图片和可链接文件，并将 Deep Research 报告以标题和链接形式写入 Markdown；扩展版同时补充 `oaiusercontent.com` 资源权限以支持分享页图片打包。(#579)
 - **Claude 文档 Artifact 与文档大纲** — Claude 生成的 Markdown 文档 Artifact 现在可在 Markdown zip 导出中作为 `assets/documents/` 下的独立文件引用；当 Claude 右侧文档面板打开时，大纲标签页也会显示独立的「文档」来源用于浏览和跳转。(#588)
 - **Claude 用户附件导出** — Claude Markdown zip 导出现在会保留用户提问中的上传图片和可链接文件，并分别打包到 `assets/images/` 与 `assets/files/`，在 Markdown 中使用稳定相对路径引用。(#588)
 - **Gemini Deep Research 文档大纲** — 大纲标签页现在会在 Gemini Deep Research 报告打开时显示「对话 / 文档」来源切换，可单独浏览右侧报告的标题结构并跳转到报告面板内的对应章节，避免与左侧对话大纲混在一起。(#585)

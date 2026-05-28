@@ -3,7 +3,16 @@
  */
 import { SITE_IDS } from "~constants"
 import { chatgptNativeThemeCss } from "~styles/native-theme-adapters/chatgpt"
-import { htmlToMarkdown } from "~utils/exporter"
+import {
+  addFileExportAsset,
+  addImageExportAsset,
+  createExportAssetCollector,
+  escapeMarkdownLinkText,
+  isDownloadableExportAssetUrl,
+  normalizeExportAssetUrl,
+  type ExportAssetCollector,
+} from "~utils/export-assets"
+import { htmlToMarkdown, type ExportBundle } from "~utils/exporter"
 
 import {
   SiteAdapter,
@@ -129,6 +138,8 @@ const CHATGPT_EXPORT_ROLE_ASSISTANT = "assistant"
 const CHATGPT_EXPORT_TURN_SELECTOR = `[${CHATGPT_EXPORT_ROOT_ATTR}="1"] [${CHATGPT_EXPORT_TURN_ATTR}="1"]`
 const CHATGPT_EXPORT_USER_SELECTOR = `[${CHATGPT_EXPORT_ROOT_ATTR}="1"] [${CHATGPT_EXPORT_ROLE_ATTR}="${CHATGPT_EXPORT_ROLE_USER}"]`
 const CHATGPT_EXPORT_ASSISTANT_SELECTOR = `[${CHATGPT_EXPORT_ROOT_ATTR}="1"] [${CHATGPT_EXPORT_ROLE_ATTR}="${CHATGPT_EXPORT_ROLE_ASSISTANT}"]`
+const CHATGPT_DEEP_RESEARCH_IFRAME_SELECTOR =
+  'iframe[title="internal://deep-research"], iframe[src*="connector_openai_deep_research"]'
 
 interface ChatGPTExportMessageSnapshot {
   role: "user" | "assistant"
@@ -185,6 +196,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   private exportSnapshotRoot: HTMLElement | null = null
   private exportSnapshotActive = false
   private exportIncludeThoughtsOverride: boolean | null = null
+  private exportBundle: ExportBundle | null = null
 
   match(): boolean {
     return window.location.hostname.includes("chatgpt.com")
@@ -1311,23 +1323,49 @@ export class ChatGPTAdapter extends SiteAdapter {
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
     this.exportIncludeThoughtsOverride = context.includeThoughts
     this.clearExportSnapshot()
+    this.exportBundle = null
+
+    const exportAssetCollector =
+      context.format === "markdown" && context.packaging === "zip"
+        ? createExportAssetCollector()
+        : null
 
     const responseRoot =
       (document.querySelector(this.getResponseContainerSelector()) as HTMLElement | null) ||
       (document.body as HTMLElement)
     const scrollContainer = this.getScrollContainer() || responseRoot
 
-    const messages =
+    let messages =
       scrollContainer instanceof HTMLElement
-        ? await this.collectExportMessageSnapshots(scrollContainer)
-        : this.readVisibleExportMessageSnapshots(responseRoot)
+        ? await this.collectExportMessageSnapshots(scrollContainer, exportAssetCollector)
+        : this.readVisibleExportMessageSnapshots(responseRoot, exportAssetCollector)
+
+    if (messages.length === 0 && scrollContainer !== responseRoot) {
+      messages = this.readVisibleExportMessageSnapshots(responseRoot, exportAssetCollector)
+    }
+
+    if (messages.length === 0 && responseRoot !== document.body) {
+      messages = this.readVisibleExportMessageSnapshots(document, exportAssetCollector)
+    }
 
     if (messages.length === 0) {
       return null
     }
 
     this.mountExportSnapshot(messages)
+
+    if (exportAssetCollector) {
+      this.exportBundle = {
+        messages: messages.map(({ role, content }) => ({ role, content })),
+        assets: exportAssetCollector.assets,
+      }
+    }
+
     return { count: messages.length }
+  }
+
+  async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
+    return this.exportBundle
   }
 
   async restoreConversationAfterExport(
@@ -1336,6 +1374,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   ): Promise<void> {
     this.clearExportSnapshot()
     this.exportIncludeThoughtsOverride = null
+    this.exportBundle = null
   }
 
   /**
@@ -1355,6 +1394,7 @@ export class ChatGPTAdapter extends SiteAdapter {
    */
   private async collectExportMessageSnapshots(
     scrollContainer: HTMLElement,
+    collector?: ExportAssetCollector | null,
   ): Promise<ChatGPTExportMessageSnapshot[]> {
     const originalScrollTop = scrollContainer.scrollTop
     const collected = new Map<string, ChatGPTExportMessageSnapshot>()
@@ -1386,7 +1426,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
       if (turns.length === 0) {
         // 罕见兜底：连一个 turn shell 都找不到（站点结构变更/旧版）。退回到当前可见快照。
-        recordSnapshots(this.readVisibleExportMessageSnapshots(scrollContainer))
+        recordSnapshots(this.readVisibleExportMessageSnapshots(scrollContainer, collector))
       } else {
         // First pass：按 conversation-turn-N 顺序逐个滚动 / 抓取
         for (const turn of turns) {
@@ -1396,7 +1436,7 @@ export class ChatGPTAdapter extends SiteAdapter {
             await this.waitForTurnMessageMounted(turn, 900)
           }
           if (this.turnHasMountedMessage(turn)) {
-            recordSnapshots(this.extractTurnExportSnapshots(turn, null))
+            recordSnapshots(this.extractTurnExportSnapshots(turn, null, collector))
             // **关键**：每个 turn 在挂载状态下立即把 user / heading 写入大纲缓存，
             // 不能等到全部 collect 完再统一抓——ChatGPT 在抓取过程中会 mount + unmount，
             // 等到 finally 时大量 turn 已经被卸载，extractOutline 抓不到了。
@@ -1420,7 +1460,7 @@ export class ChatGPTAdapter extends SiteAdapter {
             scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
             await this.waitForTurnMessageMounted(turn, 1800)
             if (this.turnHasMountedMessage(turn)) {
-              recordSnapshots(this.extractTurnExportSnapshots(turn, null))
+              recordSnapshots(this.extractTurnExportSnapshots(turn, null, collector))
               this.absorbTurnIntoOutlineCache(turn)
             }
           }
@@ -1478,8 +1518,11 @@ export class ChatGPTAdapter extends SiteAdapter {
   /** turn 是否已挂载真实内容（不是只剩 shell）。 */
   private turnHasMountedMessage(turn: HTMLElement): boolean {
     const message = turn.querySelector("[data-message-author-role]")
-    if (!(message instanceof HTMLElement)) return false
-    return Boolean(message.textContent && message.textContent.trim().length > 0)
+    if (message instanceof HTMLElement && message.textContent && message.textContent.trim()) {
+      return true
+    }
+
+    return this.getDeepResearchIframe(turn) !== null
   }
 
   /** scrollIntoView 触发后轮询等待 turn 内的真实 message 节点挂载好。 */
@@ -1607,7 +1650,10 @@ export class ChatGPTAdapter extends SiteAdapter {
     }
   }
 
-  private readVisibleExportMessageSnapshots(container: ParentNode): ChatGPTExportMessageSnapshot[] {
+  private readVisibleExportMessageSnapshots(
+    container: ParentNode,
+    collector?: ExportAssetCollector | null,
+  ): ChatGPTExportMessageSnapshot[] {
     const referenceContainer =
       container instanceof HTMLElement
         ? container
@@ -1627,13 +1673,13 @@ export class ChatGPTAdapter extends SiteAdapter {
           if (element.closest(".gh-root, .gh-main-panel")) return false
           return true
         })
-        .map((message) => this.extractExportMessageSnapshot(message, referenceContainer))
+        .map((message) => this.extractExportMessageSnapshot(message, referenceContainer, collector))
         .filter((message): message is ChatGPTExportMessageSnapshot => message !== null)
     }
 
     const snapshots: ChatGPTExportMessageSnapshot[] = []
     for (const turn of turns) {
-      const turnSnapshots = this.extractTurnExportSnapshots(turn, referenceContainer)
+      const turnSnapshots = this.extractTurnExportSnapshots(turn, referenceContainer, collector)
       snapshots.push(...turnSnapshots)
     }
     return snapshots
@@ -1678,9 +1724,12 @@ export class ChatGPTAdapter extends SiteAdapter {
   private extractTurnExportSnapshots(
     turn: HTMLElement,
     _referenceContainer: HTMLElement | null,
+    collector?: ExportAssetCollector | null,
   ): ChatGPTExportMessageSnapshot[] {
     const messages = this.collectOwnAuthorMessagesForTurn(turn)
-    if (messages.length === 0) return []
+    if (messages.length === 0) {
+      return this.extractDeepResearchTurnExportSnapshot(turn)
+    }
 
     const firstRole = messages[0].getAttribute("data-message-author-role")
     const turnRoleAttr = turn.getAttribute("data-turn")
@@ -1698,7 +1747,8 @@ export class ChatGPTAdapter extends SiteAdapter {
       const parts = messages
         .map((message) =>
           this.normalizeExportMessageContent(
-            this.extractUserQueryMarkdown(message) || this.extractUserQueryText(message),
+            this.extractUserQueryExportContentWithAssets(message, collector) ||
+              this.extractUserQueryText(message),
           ),
         )
         .filter((text) => text.length > 0)
@@ -1761,6 +1811,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   private extractExportMessageSnapshot(
     message: HTMLElement,
     _referenceContainer: HTMLElement | null,
+    collector?: ExportAssetCollector | null,
   ): ChatGPTExportMessageSnapshot | null {
     const role =
       message.getAttribute("data-message-author-role") === "assistant"
@@ -1770,7 +1821,8 @@ export class ChatGPTAdapter extends SiteAdapter {
     const content = this.normalizeExportMessageContent(
       role === CHATGPT_EXPORT_ROLE_ASSISTANT
         ? this.extractAssistantResponseTextFromLiveDom(message)
-        : this.extractUserQueryMarkdown(message) || this.extractUserQueryText(message),
+        : this.extractUserQueryExportContentWithAssets(message, collector) ||
+            this.extractUserQueryText(message),
     )
     if (!content) return null
 
@@ -1811,6 +1863,166 @@ export class ChatGPTAdapter extends SiteAdapter {
     const markdown = htmlToMarkdown(clone).trim()
     if (markdown) return markdown
     return this.extractTextWithLineBreaks(clone)
+  }
+
+  private extractUserQueryExportContentWithAssets(
+    element: Element,
+    collector?: ExportAssetCollector | null,
+  ): string {
+    const parts = [
+      ...this.extractUserQueryImageMarkdown(element, collector),
+      ...this.extractUserQueryFileMarkdown(element, collector),
+    ]
+    const body = this.extractUserQueryMarkdown(element).trim()
+    if (body) parts.push(body)
+    return parts.join("\n\n").trim()
+  }
+
+  private extractUserQueryImageMarkdown(
+    element: Element,
+    collector?: ExportAssetCollector | null,
+  ): string[] {
+    const images = Array.from(element.querySelectorAll("img")).filter(
+      (node): node is HTMLImageElement =>
+        node instanceof HTMLImageElement && this.isExportableChatGPTImage(node),
+    )
+    const seenSources = new Set<string>()
+    const imageMarkdown: string[] = []
+
+    for (const image of images) {
+      const source = this.getChatGPTImageExportSource(image)
+      if (!source || seenSources.has(source)) continue
+
+      seenSources.add(source)
+      const alt = (image.alt || image.getAttribute("aria-label") || "uploaded image")
+        .replace(/\s+/g, " ")
+        .trim()
+      const assetPath = collector
+        ? addImageExportAsset(collector, {
+            source,
+            alt,
+            directory: "assets/images",
+            idPrefix: "chatgpt-image",
+            filenamePrefix: "chatgpt-image",
+          })
+        : source
+
+      if (assetPath) {
+        imageMarkdown.push(`![${escapeMarkdownLinkText(alt || "uploaded image")}](${assetPath})`)
+      }
+    }
+
+    return imageMarkdown
+  }
+
+  private extractUserQueryFileMarkdown(
+    element: Element,
+    collector?: ExportAssetCollector | null,
+  ): string[] {
+    const fileTiles = Array.from(
+      element.querySelectorAll('[role="group"][aria-label], [class*="file-tile"]'),
+    ).filter((node): node is HTMLElement => node instanceof HTMLElement)
+    const seenFiles = new Set<string>()
+    const fileMarkdown: string[] = []
+
+    for (const tile of fileTiles) {
+      const name = this.extractChatGPTFileName(tile)
+      if (!name) continue
+
+      const href = this.extractChatGPTFileHref(tile)
+      const assetPath =
+        href && collector
+          ? addFileExportAsset(collector, {
+              source: href,
+              name,
+              mimeHint: name,
+              directory: "assets/files",
+              idPrefix: "chatgpt-file",
+            })
+          : href
+      const label = escapeMarkdownLinkText(name)
+      const markdown = assetPath ? `- [${label}](${assetPath})` : `- ${label}`
+
+      if (seenFiles.has(markdown)) continue
+
+      seenFiles.add(markdown)
+      fileMarkdown.push(markdown)
+    }
+
+    return fileMarkdown.length > 0 ? ["**Attachments:**\n\n" + fileMarkdown.join("\n")] : []
+  }
+
+  private extractDeepResearchTurnExportSnapshot(turn: HTMLElement): ChatGPTExportMessageSnapshot[] {
+    const iframe = this.getDeepResearchIframe(turn)
+    if (!iframe) return []
+
+    const source = iframe.getAttribute("src") || iframe.src || ""
+    const rawTitle = iframe.getAttribute("title") || ""
+    const title =
+      rawTitle && !rawTitle.startsWith("internal://") ? rawTitle : "ChatGPT Deep Research"
+    const content = source ? `[${escapeMarkdownLinkText(title)}](${source})` : title
+    const turnId =
+      turn.getAttribute("data-turn-id") || turn.getAttribute("data-turn-id-container") || ""
+
+    return [
+      {
+        role: CHATGPT_EXPORT_ROLE_ASSISTANT,
+        turnKey: turnId ? `assistant:turn:${turnId}` : `assistant:deep-research:${source}`,
+        order: this.getExportTurnSortIndex(turn),
+        content,
+      },
+    ]
+  }
+
+  private getDeepResearchIframe(root: Element): HTMLIFrameElement | null {
+    const iframe = root.querySelector(CHATGPT_DEEP_RESEARCH_IFRAME_SELECTOR)
+    return iframe instanceof HTMLIFrameElement ? iframe : null
+  }
+
+  private isExportableChatGPTImage(image: HTMLImageElement): boolean {
+    const source = this.getChatGPTImageExportSource(image)
+    if (!source) return false
+    if (source.includes("/cdn/assets/")) return false
+    if (source.startsWith("data:image/svg+xml")) return false
+    return isDownloadableExportAssetUrl(source) || source.startsWith("data:image/")
+  }
+
+  private getChatGPTImageExportSource(image: HTMLImageElement): string {
+    const candidates = [image.currentSrc || "", image.src || "", image.getAttribute("src") || ""]
+
+    for (const candidate of candidates) {
+      const source = normalizeExportAssetUrl(candidate)
+      if (source) return source
+    }
+
+    return ""
+  }
+
+  private extractChatGPTFileName(tile: Element): string {
+    const candidates = [
+      tile.getAttribute("aria-label") || "",
+      tile.querySelector("[aria-label]")?.getAttribute("aria-label") || "",
+      tile.querySelector(".truncate.font-semibold")?.textContent || "",
+      tile.textContent || "",
+    ]
+      .map((value) => value.replace(/\s+/g, " ").trim())
+      .filter(Boolean)
+
+    const filename = candidates.find((value) => /\.[A-Za-z0-9]{1,10}(\s|$)/.test(value))
+    return filename?.match(/[^/\\]+?\.[A-Za-z0-9]{1,10}/)?.[0] || ""
+  }
+
+  private extractChatGPTFileHref(tile: Element): string {
+    const links = Array.from(tile.querySelectorAll("a[href]")).filter(
+      (node): node is HTMLAnchorElement => node instanceof HTMLAnchorElement,
+    )
+
+    for (const link of links) {
+      const href = normalizeExportAssetUrl(link.getAttribute("href") || link.href || "")
+      if (isDownloadableExportAssetUrl(href)) return href
+    }
+
+    return ""
   }
 
   /**

@@ -11,6 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
+- **ChatGPT Deep Research export** — ChatGPT Markdown zip exports now preserve uploaded images and linked files from user prompts, and include Deep Research reports as a title and link in Markdown. The extension build also allows `oaiusercontent.com` assets so shared-page images can be packaged. (#579)
 - **Claude document artifacts and outline** — Claude Markdown document artifacts can now be exported as linked files in Markdown zip packages under `assets/documents/`, and the Outline tab shows a separate Document source when Claude's right-side document panel is open. (#588)
 - **Claude user attachments in exports** — Claude Markdown zip exports now preserve uploaded images and linked files from user prompts, packaging them under `assets/images/` and `assets/files/` with stable Markdown references. (#588)
 - **Gemini Deep Research document outline** — The Outline tab now shows a "Chat / Document" source switch when a Gemini Deep Research report is open, letting you browse and jump through the right-side report outline separately from the left-side conversation outline. (#585)
