@@ -2118,7 +2118,7 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   async prepareConversationExport(_context: ExportLifecycleContext): Promise<unknown> {
-    await this.prepareImagesForExport()
+    await this.prepareImagesForExport(_context)
 
     const state: GeminiExportLifecycleState = {
       openedDeepResearchPanel: false,
@@ -2142,7 +2142,7 @@ export class GeminiAdapter extends SiteAdapter {
     }
   }
 
-  private async prepareImagesForExport(): Promise<void> {
+  private async prepareImagesForExport(context: ExportLifecycleContext): Promise<void> {
     this.clearPreparedExportImageMetadata()
 
     const images = Array.from(
@@ -2153,7 +2153,7 @@ export class GeminiAdapter extends SiteAdapter {
 
     for (const image of images) {
       try {
-        const exportSrc = await this.resolvePreparedExportImageSrc(image)
+        const exportSrc = await this.resolvePreparedExportImageSrc(image, context)
         if (!exportSrc) continue
         image.setAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR, exportSrc)
       } catch (error) {
@@ -2770,7 +2770,10 @@ export class GeminiAdapter extends SiteAdapter {
     return ""
   }
 
-  private async resolvePreparedExportImageSrc(image: HTMLImageElement): Promise<string> {
+  private async resolvePreparedExportImageSrc(
+    image: HTMLImageElement,
+    context: ExportLifecycleContext,
+  ): Promise<string> {
     const directCandidates = [this.getPreparedExportImageSrc(image)]
     const fallbackCandidates = [
       image.getAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR) || "",
@@ -2783,6 +2786,10 @@ export class GeminiAdapter extends SiteAdapter {
     for (const rawCandidate of directCandidates) {
       const candidate = this.normalizeExportImageUrl(rawCandidate)
       if (!candidate) continue
+
+      if (this.shouldInlineUserQueryImageForExport(image, context)) {
+        return this.resolveExportImageDataUrl(candidate)
+      }
 
       if (this.isStablePreparedExportImageUrl(candidate)) {
         return candidate
@@ -2798,6 +2805,35 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     return this.convertBlobUrlToDataUrl(blobCandidate)
+  }
+
+  private shouldInlineUserQueryImageForExport(
+    image: HTMLImageElement,
+    context: ExportLifecycleContext,
+  ): boolean {
+    return (
+      context.format === "markdown" &&
+      context.packaging === "markdown" &&
+      image.closest("user-query") !== null
+    )
+  }
+
+  private async resolveExportImageDataUrl(source: string): Promise<string> {
+    if (source.startsWith("data:image/")) return source
+    if (source.startsWith("blob:")) return this.convertBlobUrlToDataUrl(source)
+    if (!/^https?:\/\//i.test(source)) return ""
+
+    try {
+      const response = await platform.fetch(source)
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+      const blob = await response.blob()
+      return this.convertBlobToDataUrl(blob)
+    } catch (error) {
+      console.warn("[GeminiAdapter] Failed to inline user query image for Markdown export", error)
+      return source
+    }
   }
 
   private normalizeExportImageUrl(value: string): string {
@@ -2851,7 +2887,10 @@ export class GeminiAdapter extends SiteAdapter {
   private async convertBlobUrlToDataUrl(blobUrl: string): Promise<string> {
     const response = await fetch(blobUrl)
     const blob = await response.blob()
+    return this.convertBlobToDataUrl(blob)
+  }
 
+  private async convertBlobToDataUrl(blob: Blob): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
       reader.onload = () => {
