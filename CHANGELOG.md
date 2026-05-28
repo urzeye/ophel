@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
-- **Markdown export packages** — Markdown exports can now be delivered as a zip package when a site adapter provides assets, including a manifest and stable relative paths for referenced files; Gemini Deep Research is the first adapter to include generated report Markdown and resolvable images as assets while keeping unavailable shared files as labels or links.
+- **Markdown export packages** — Markdown exports can now be delivered as a zip package when a site adapter provides assets, including a manifest and stable relative paths for referenced files. Gemini Deep Research packages now include generated reports under `assets/reports/`, images under `assets/images/`, and user-uploaded attachments under `assets/files/`, with uploaded documents resolved the same way as regular Gemini conversations. (#580)
 - **Gemini Deep Research export** — Gemini Deep Research exports now cover owned app conversations, conversation share pages, and generated report share pages; closed report panels are opened during export and restored afterward, with uploaded file labels included in exported user prompts. (#573)
 
 ### 🐛 Bug Fixes

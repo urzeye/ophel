@@ -3457,7 +3457,9 @@ export class GeminiAdapter extends SiteAdapter {
     return exportContent ? [{ role: "assistant", content: exportContent }] : []
   }
 
-  private extractDeepResearchAppMessages(collector?: GeminiExportAssetCollector): ExportMessage[] {
+  private async extractDeepResearchAppMessages(
+    collector?: GeminiExportAssetCollector,
+  ): Promise<ExportMessage[]> {
     const documentElement = this.getDeepResearchAppDocumentElement()
     if (this.hasDeepResearchAppDocumentTrigger() && !documentElement) {
       console.warn("[GeminiAdapter] Deep Research report panel is not available for export")
@@ -3472,20 +3474,23 @@ export class GeminiAdapter extends SiteAdapter {
       (left, right) => this.compareDomOrder(left, right),
     )
 
-    messageElements.forEach((element) => {
-      if (element.closest("immersive-panel")) return
+    for (const element of messageElements) {
+      if (element.closest("immersive-panel")) continue
 
       const role = element.tagName.toLowerCase() === "user-query" ? "user" : "assistant"
       const content =
         role === "user"
-          ? this.extractUserQueryExportContentWithAssets(element, collector).trim()
+          ? (collector
+              ? await this.extractUserQueryExportContentWithResolvedAssets(element, collector)
+              : this.extractUserQueryExportContentWithAssets(element)
+            ).trim()
           : this.extractDeepResearchAppAssistantResponseContent(element, collector).trim()
 
-      if (!content) return
+      if (!content) continue
 
       collectedElements.add(element)
       messages.push({ role, content })
-    })
+    }
 
     if (documentElement && !collectedElements.has(documentElement)) {
       const content = this.extractAssistantResponseTextWithAssets(documentElement, collector).trim()
@@ -3508,10 +3513,10 @@ export class GeminiAdapter extends SiteAdapter {
     return this.extractAssistantResponseTextWithAssets(markdown || element, collector)
   }
 
-  private extractDeepResearchConversationShareMessages(
+  private async extractDeepResearchConversationShareMessages(
     collector?: GeminiExportAssetCollector,
-  ): ExportMessage[] {
-    const { messages, collectedElements } = this.collectGeminiShareTurnMessages(collector)
+  ): Promise<ExportMessage[]> {
+    const { messages, collectedElements } = await this.collectGeminiShareTurnMessages(collector)
 
     this.collectDetachedDeepResearchArtifactMessages(collectedElements, collector).forEach(
       (message) => {
@@ -3522,21 +3527,21 @@ export class GeminiAdapter extends SiteAdapter {
     return this.dedupeAdjacentExportMessages(messages)
   }
 
-  private extractGeminiConversationShareMessages(
+  private async extractGeminiConversationShareMessages(
     collector?: GeminiExportAssetCollector,
-  ): ExportMessage[] {
-    return this.collectGeminiShareTurnMessages(collector).messages
+  ): Promise<ExportMessage[]> {
+    return (await this.collectGeminiShareTurnMessages(collector)).messages
   }
 
-  private collectGeminiShareTurnMessages(collector?: GeminiExportAssetCollector): {
+  private async collectGeminiShareTurnMessages(collector?: GeminiExportAssetCollector): Promise<{
     messages: ExportMessage[]
     collectedElements: Set<Element>
-  } {
+  }> {
     const messages: ExportMessage[] = []
     const collectedElements = new Set<Element>()
     const turns = Array.from(document.querySelectorAll(GEMINI_SHARE_TURN_SELECTOR))
 
-    turns.forEach((turn) => {
+    for (const turn of turns) {
       const turnMessages = [
         ...Array.from(turn.querySelectorAll("user-query")).map((element) => ({
           role: "user" as const,
@@ -3550,16 +3555,19 @@ export class GeminiAdapter extends SiteAdapter {
         ),
       ].sort((left, right) => this.compareDomOrder(left.element, right.element))
 
-      turnMessages.forEach(({ role, element }) => {
+      for (const { role, element } of turnMessages) {
         const content =
           role === "user"
-            ? this.extractUserQueryExportContentWithAssets(element, collector).trim()
+            ? (collector
+                ? await this.extractUserQueryExportContentWithResolvedAssets(element, collector)
+                : this.extractUserQueryExportContentWithAssets(element)
+              ).trim()
             : this.extractAssistantResponseTextWithAssets(element, collector).trim()
-        if (!content) return
+        if (!content) continue
         collectedElements.add(element)
         messages.push({ role, content })
-      })
-    })
+      }
+    }
 
     return {
       messages: this.dedupeAdjacentExportMessages(messages),
@@ -3617,7 +3625,7 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     const name = this.buildDeepResearchReportFilename(titleText)
-    const path = this.createUniqueGeminiExportPath(`assets/documents/${name}`, collector)
+    const path = this.createUniqueGeminiExportPath(`assets/reports/${name}`, collector)
 
     collector.assets.push({
       id: `gemini-deep-research-report-${collector.assets.length + 1}`,
