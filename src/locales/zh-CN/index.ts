@@ -589,6 +589,7 @@ export const zhCN = {
   outlineSearchResult: "个结果",
   outlineSourceConversation: "对话",
   outlineSourceDocument: "文档",
+  outlineSourceSwitchLabel: "大纲来源",
   outlineLevelHint: "级标题",
   // 刷新按钮提示
   refreshPrompts: "刷新提示词",

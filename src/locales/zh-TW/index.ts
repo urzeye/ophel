@@ -478,6 +478,7 @@ export const zhTW = {
   outlineSearchResult: "個結果",
   outlineSourceConversation: "對話",
   outlineSourceDocument: "文件",
+  outlineSourceSwitchLabel: "大綱來源",
   outlineLevelHint: "級標題",
   // Tab 順序設置
   tabOrderSettings: "介面排版",

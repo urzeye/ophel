@@ -374,6 +374,12 @@ export class OutlineManager {
     return nextKey !== currentKey
   }
 
+  private getBookmarkSessionId(): string {
+    const sessionId = this.siteAdapter.getSessionId()
+    if (this.activeSourceId === "conversation") return sessionId
+    return `${sessionId}::${this.activeSourceId}`
+  }
+
   getTree(): OutlineNode[] {
     return this.tree
   }
@@ -649,7 +655,7 @@ export class OutlineManager {
 
   // Helper public method for UI
   toggleBookmark(node: OutlineNode) {
-    const sessionId = this.siteAdapter.getSessionId()
+    const sessionId = this.getBookmarkSessionId()
     const siteId = this.siteAdapter.getSiteId() // 站点标识
     const cid = this.siteAdapter.getCurrentCid() || "" // 账号 ID
     const signature = this.generateSignature(node)
@@ -731,7 +737,7 @@ export class OutlineManager {
       showWordCount,
     )
     // --- Merge Bookmarks ---
-    const sessionId = this.siteAdapter.getSessionId()
+    const sessionId = this.getBookmarkSessionId()
     const bookmarks = useBookmarkStore.getState().getBookmarksBySession(sessionId)
     this.ghostBookmarkIds = new Set()
 

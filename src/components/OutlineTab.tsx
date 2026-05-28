@@ -1474,7 +1474,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       )}
 
       {outlineSourceOptions.length > 1 && !searchQuery && (
-        <div className="outline-source-switch" aria-label="大纲来源">
+        <div
+          className="outline-source-switch"
+          aria-label={t("outlineSourceSwitchLabel") || "大纲来源"}>
           {outlineSourceOptions.map((source) => (
             <button
               key={source.id}

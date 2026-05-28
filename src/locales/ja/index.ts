@@ -606,6 +606,7 @@ export const ja = {
   outlineSearchResult: " 個の結果",
   outlineSourceConversation: "会話",
   outlineSourceDocument: "文書",
+  outlineSourceSwitchLabel: "目次のソース",
   outlineLevelHint: "見出し",
   // Refresh button hints
   refreshConversations: "会話一覧を更新",

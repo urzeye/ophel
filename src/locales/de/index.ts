@@ -588,6 +588,7 @@ export const de = {
   outlineSearchResult: " Ergebnis(se)",
   outlineSourceConversation: "Chat",
   outlineSourceDocument: "Dokument",
+  outlineSourceSwitchLabel: "Gliederungsquelle",
   outlineLevelHint: "Überschriften",
   // Refresh button hints
   refreshConversations: "Chats aktualisieren",
