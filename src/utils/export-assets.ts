@@ -386,3 +386,13 @@ export function appendMarkdownDocumentAssetLink(
   const asset = addMarkdownDocumentAsset(collector, content, options)
   return `${content}\n\n[${escapeMarkdownLinkText(asset.name)}](${asset.path})`
 }
+
+export function createMarkdownDocumentAssetLink(
+  collector: ExportAssetCollector,
+  content: string,
+  options: MarkdownDocumentAssetOptions = {},
+): string {
+  const asset = addMarkdownDocumentAsset(collector, content, options)
+  const label = options.title || asset.name
+  return `[${escapeMarkdownLinkText(label)}](${asset.path})`
+}

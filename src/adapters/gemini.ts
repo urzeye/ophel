@@ -18,8 +18,8 @@ import { platform } from "~platform"
 import { geminiNativeThemeCss } from "~styles/native-theme-adapters/gemini"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import {
-  appendMarkdownDocumentAssetLink,
   buildMarkdownFilename,
+  createMarkdownDocumentAssetLink,
   extractMarkdownTitle,
   type ExportAssetCollector,
 } from "~utils/export-assets"
@@ -4042,7 +4042,7 @@ export class GeminiAdapter extends SiteAdapter {
     content: string,
     title?: string | null,
   ): string {
-    return appendMarkdownDocumentAssetLink(collector, content, {
+    return createMarkdownDocumentAssetLink(collector, content, {
       title,
       fallbackTitle: "deep-research-report",
       directory: "assets/reports",

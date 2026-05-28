@@ -11,8 +11,8 @@ import {
 import {
   addFileExportAsset,
   addImageExportAsset,
-  appendMarkdownDocumentAssetLink,
   createExportAssetCollector,
+  createMarkdownDocumentAssetLink,
   escapeMarkdownLinkText,
   isDownloadableExportAssetUrl,
   normalizeExportAssetUrl,
@@ -2221,7 +2221,7 @@ export class ClaudeAdapter extends SiteAdapter {
     }
 
     return collector
-      ? appendMarkdownDocumentAssetLink(collector, cached.content, {
+      ? createMarkdownDocumentAssetLink(collector, cached.content, {
           title: cached.title || title,
           fallbackTitle: "claude-document",
           directory: "assets/documents",
