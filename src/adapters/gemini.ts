@@ -2732,7 +2732,7 @@ export class GeminiAdapter extends SiteAdapter {
     )
     if (existing?.relativePath) return existing.relativePath
 
-    const path = this.createUniqueGeminiExportPath(`assets/files/${filename}`, collector)
+    const path = this.createUniqueGeminiExportPath(`assets/documents/${filename}`, collector)
     const name = path.split("/").pop() || filename
 
     collector.assets.push({
@@ -4045,7 +4045,7 @@ export class GeminiAdapter extends SiteAdapter {
     return createMarkdownDocumentAssetLink(collector, content, {
       title,
       fallbackTitle: "deep-research-report",
-      directory: "assets/reports",
+      directory: "assets/documents",
       idPrefix: "gemini-deep-research-report",
     })
   }
