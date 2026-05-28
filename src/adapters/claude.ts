@@ -2,7 +2,18 @@
  * Claude.ai 适配器
  */
 import { SITE_IDS } from "~constants"
-import { htmlToMarkdown } from "~utils/exporter"
+import {
+  extractHeadingOutline,
+  findHeadingByText,
+  findScrollableAncestor,
+  scrollElementInContainer,
+} from "~core/outline/dom-outline"
+import {
+  appendMarkdownDocumentAssetLink,
+  createExportAssetCollector,
+  type ExportAssetCollector,
+} from "~utils/export-assets"
+import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import { renderMarkdown } from "~utils/markdown"
 
 import {
@@ -12,9 +23,11 @@ import {
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportConfig,
+  type ExportLifecycleContext,
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type OutlineSource,
   type SiteDeleteConversationResult,
 } from "./base"
 
@@ -63,6 +76,28 @@ const CLAUDE_INLINE_MATH_PATTERNS = [
   /((^|[^\\$])\$[^\s$](?:[^$\n]*[^\s$])?\$(?!\$))/,
   /\\\([^\n]+?\\\)/,
 ]
+
+const CLAUDE_DOCUMENT_OUTLINE_SOURCE_ID = "document"
+const CLAUDE_DOCUMENT_ROOT_SELECTOR = "#wiggle-file-content"
+const CLAUDE_DOCUMENT_MARKDOWN_SELECTOR =
+  "#wiggle-file-content .standard-markdown, #wiggle-file-content .progressive-markdown"
+const CLAUDE_ARTIFACT_CELL_SELECTOR = ".artifact-block-cell"
+
+interface ClaudeExportLifecycleState {
+  documentPanelWasOpen: boolean
+  documentSignature?: string
+  documentTitle?: string | null
+  documentArtifactIndex?: number | null
+}
+
+interface ClaudeDocumentExportCacheEntry {
+  element: Element
+  index: number
+  content: string
+  title: string
+  artifactTitle: string
+  signature: string
+}
 
 function applyClaudeThemeDomHints(mode: "light" | "dark") {
   const root = document.documentElement
@@ -122,6 +157,7 @@ function shouldEnhanceClaudeParagraph(text: string): boolean {
 export class ClaudeAdapter extends SiteAdapter {
   private activeOrganizationId: string | null = null
   private activeOrganizationIdExpiresAt = 0
+  private exportDocumentCache: ClaudeDocumentExportCacheEntry[] = []
 
   match(): boolean {
     return (
@@ -917,9 +953,9 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private findClaudeScrollContainer(): HTMLElement | null {
-    const conversationAnchor = document.querySelector(
-      '.font-claude-response, [data-testid="user-message"]',
-    ) as HTMLElement | null
+    const conversationAnchor = Array.from(
+      document.querySelectorAll('.font-claude-response, [data-testid="user-message"]'),
+    ).find((element) => !element.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR)) as HTMLElement | undefined
 
     const isScrollable = (element: HTMLElement | null): boolean => {
       if (!element) return false
@@ -935,7 +971,7 @@ export class ClaudeAdapter extends SiteAdapter {
       return element.scrollHeight > element.clientHeight + 4
     }
 
-    let current: HTMLElement | null = conversationAnchor
+    let current: HTMLElement | null = conversationAnchor || null
     while (current && current !== document.body) {
       if (isScrollable(current)) {
         return current
@@ -990,6 +1026,105 @@ export class ClaudeAdapter extends SiteAdapter {
 
   getChatContentSelectors(): string[] {
     return ['div[data-testid="user-message"]', "div.font-claude-response"]
+  }
+
+  private isClaudeDocumentPanelOpen(): boolean {
+    return this.getClaudeDocumentMarkdownElement() !== null
+  }
+
+  private getClaudeDocumentRoot(): HTMLElement | null {
+    return document.querySelector(CLAUDE_DOCUMENT_ROOT_SELECTOR) as HTMLElement | null
+  }
+
+  private getClaudeDocumentMarkdownElement(): Element | null {
+    return document.querySelector(CLAUDE_DOCUMENT_MARKDOWN_SELECTOR)
+  }
+
+  private getClaudeDocumentTitle(): string | null {
+    const title = this.getClaudeDocumentRoot()?.querySelector("h1")?.textContent?.trim() || ""
+    return title || null
+  }
+
+  private getClaudeArtifactCells(root: ParentNode = document): Element[] {
+    return Array.from(root.querySelectorAll(CLAUDE_ARTIFACT_CELL_SELECTOR))
+  }
+
+  private getClaudeDocumentArtifactCells(root: ParentNode = document): Element[] {
+    return this.getClaudeArtifactCells(root).filter((cell) => this.isMarkdownDocumentArtifact(cell))
+  }
+
+  private isMarkdownDocumentArtifact(artifact: Element): boolean {
+    return /\bMD\b/i.test(this.getClaudeArtifactMetadata(artifact))
+  }
+
+  private getClaudeArtifactMetadata(artifact: Element): string {
+    return artifact.querySelector(".text-text-400")?.textContent?.trim() || ""
+  }
+
+  private getClaudeArtifactTitle(artifact: Element): string {
+    const title = artifact.querySelector(".line-clamp-1")?.textContent?.trim() || ""
+    return title || "Document"
+  }
+
+  private getClaudeArtifactButton(artifact: Element): HTMLElement | null {
+    const container = artifact.closest(".group\\/artifact-block, [class*='group/artifact-block']")
+    const button =
+      container?.querySelector('button[aria-label="View Document"]') ||
+      artifact.querySelector('button[aria-label="View Document"]')
+    return button instanceof HTMLElement ? button : null
+  }
+
+  private async openClaudeArtifactDocument(artifact: Element): Promise<Element | null> {
+    const button = this.getClaudeArtifactButton(artifact)
+    if (!button) return null
+
+    const previousSignature = this.getClaudeDocumentSignature()
+    button.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" })
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    this.simulateClick(button)
+
+    return this.waitForClaudeDocumentMarkdown(previousSignature)
+  }
+
+  private getClaudeDocumentSignature(markdown = this.getClaudeDocumentMarkdownElement()): string {
+    const text = markdown?.textContent?.trim() || ""
+    return text ? `${text.length}:${text.slice(0, 160)}:${text.slice(-160)}` : ""
+  }
+
+  private async waitForClaudeDocumentMarkdown(
+    previousSignature = "",
+    timeoutMs = 3000,
+  ): Promise<Element | null> {
+    const startedAt = Date.now()
+    while (Date.now() - startedAt < timeoutMs) {
+      const markdown = this.getClaudeDocumentMarkdownElement()
+      const signature = this.getClaudeDocumentSignature()
+      if (markdown && signature && signature !== previousSignature) return markdown
+      if (markdown && !previousSignature) return markdown
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+
+    return this.getClaudeDocumentMarkdownElement()
+  }
+
+  private closeClaudeDocumentPanel(): void {
+    const backButton = this.findClaudeDocumentPanelButton('button[aria-label="Go back"]')
+    if (backButton instanceof HTMLElement) {
+      this.simulateClick(backButton)
+    }
+  }
+
+  private findClaudeDocumentPanelButton(selector: string): HTMLElement | null {
+    const root = this.getClaudeDocumentRoot()
+    let current = root?.parentElement || null
+
+    while (current && current !== document.body) {
+      const button = current.querySelector(selector)
+      if (button instanceof HTMLElement) return button
+      current = current.parentElement
+    }
+
+    return null
   }
 
   // ==================== 模型管理 ====================
@@ -1184,6 +1319,46 @@ export class ClaudeAdapter extends SiteAdapter {
 
   // ==================== 大纲功能 ====================
 
+  getOutlineSources(): OutlineSource[] {
+    const sources: OutlineSource[] = [
+      { id: "conversation", kind: "conversation", label: "对话", available: true },
+    ]
+    const documentOutline = this.extractClaudeDocumentOutline(6, false)
+    if (documentOutline.length > 0) {
+      sources.push({
+        id: CLAUDE_DOCUMENT_OUTLINE_SOURCE_ID,
+        kind: "document",
+        label: "文档",
+        available: true,
+        count: documentOutline.length,
+      })
+    }
+
+    return sources
+  }
+
+  supportsDynamicOutlineSources(): boolean {
+    return true
+  }
+
+  getOutlineSourcesSignature(): string {
+    const documentSignature = this.getClaudeDocumentSignature()
+    return `conversation:1|${CLAUDE_DOCUMENT_OUTLINE_SOURCE_ID}:${documentSignature || "0"}`
+  }
+
+  extractOutlineForSource(
+    sourceId: string,
+    maxLevel = 6,
+    includeUserQueries = false,
+    showWordCount = false,
+  ): OutlineItem[] {
+    if (sourceId === CLAUDE_DOCUMENT_OUTLINE_SOURCE_ID) {
+      return this.extractClaudeDocumentOutline(maxLevel, showWordCount)
+    }
+
+    return this.extractOutline(maxLevel, includeUserQueries, showWordCount)
+  }
+
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const outline: OutlineItem[] = []
     const outlineRoot = this.getOutlineRoot()
@@ -1201,7 +1376,9 @@ export class ClaudeAdapter extends SiteAdapter {
       // Claude 结构：用户消息和AI回复在同一滚动容器中，不是严格的siblings
       // 需要向下遍历找到下一个用户消息之前的所有AI回复
       const allUserQueries = Array.from(outlineRoot.querySelectorAll(userQuerySelector))
-      const allResponses = Array.from(outlineRoot.querySelectorAll(".font-claude-response"))
+      const allResponses = Array.from(outlineRoot.querySelectorAll(".font-claude-response")).filter(
+        (response) => !response.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR),
+      )
 
       const startIndex = allUserQueries.indexOf(startEl)
       if (startIndex === -1) return 0
@@ -1235,7 +1412,9 @@ export class ClaudeAdapter extends SiteAdapter {
 
     // Claude 的标题在 AI 回复中，有 text-text-100 class
     // 排除侧边栏的 H3 (RecentsHide 等)
-    const headings = Array.from(outlineRoot.querySelectorAll("h1, h2, h3, h4, h5, h6"))
+    const headings = Array.from(outlineRoot.querySelectorAll("h1, h2, h3, h4, h5, h6")).filter(
+      (heading) => !heading.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR),
+    )
 
     headings.forEach((h, index) => {
       const level = parseInt(h.tagName[1])
@@ -1317,6 +1496,65 @@ export class ClaudeAdapter extends SiteAdapter {
     return outline
   }
 
+  private extractClaudeDocumentOutline(maxLevel = 6, showWordCount = false): OutlineItem[] {
+    const root = this.getClaudeDocumentMarkdownElement()
+    if (!(root instanceof Element)) return []
+
+    return extractHeadingOutline(root, {
+      maxLevel,
+      showWordCount,
+      idPrefix: "claude-document",
+      shouldSkipHeading: (heading) => this.shouldSkipClaudeDocumentHeading(heading),
+      calculateWordCount: (heading, nextBoundary, outlineRoot) => {
+        return this.calculateRangeWordCount(heading, nextBoundary, outlineRoot)
+      },
+    })
+  }
+
+  private shouldSkipClaudeDocumentHeading(heading: Element): boolean {
+    return heading.classList.contains("sr-only") || this.isInRenderedMarkdownContainer(heading)
+  }
+
+  private findClaudeDocumentHeading(level: number, text: string): Element | null {
+    const root = this.getClaudeDocumentMarkdownElement()
+    if (!root) return null
+    return findHeadingByText(root, level, text, (heading) =>
+      this.shouldSkipClaudeDocumentHeading(heading),
+    )
+  }
+
+  getOutlineScrollContainer(sourceId = "conversation"): HTMLElement | null {
+    if (sourceId === CLAUDE_DOCUMENT_OUTLINE_SOURCE_ID) {
+      const root = this.getClaudeDocumentMarkdownElement()
+      return findScrollableAncestor(root) || this.getClaudeDocumentRoot()
+    }
+
+    return this.getScrollContainer()
+  }
+
+  async resolveOutlineTarget(
+    item: Pick<OutlineItem, "level" | "text" | "isUserQuery">,
+    queryIndex?: number,
+    sourceId = "conversation",
+  ): Promise<Element | null> {
+    if (sourceId === CLAUDE_DOCUMENT_OUTLINE_SOURCE_ID) {
+      return this.findClaudeDocumentHeading(item.level, item.text)
+    }
+
+    return super.resolveOutlineTarget(item, queryIndex, sourceId)
+  }
+
+  scrollToOutlineSourceTarget(element: HTMLElement, sourceId = "conversation"): void {
+    if (sourceId === CLAUDE_DOCUMENT_OUTLINE_SOURCE_ID) {
+      const container = findScrollableAncestor(element) || this.getOutlineScrollContainer(sourceId)
+      if (scrollElementInContainer(element, container)) {
+        return
+      }
+    }
+
+    this.scrollToOutlineTarget(element)
+  }
+
   // ==================== 生成状态 ====================
 
   isGenerating(): boolean {
@@ -1363,7 +1601,9 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   getLatestReplyText(): string | null {
-    const responses = document.querySelectorAll(".font-claude-response")
+    const responses = Array.from(document.querySelectorAll(".font-claude-response")).filter(
+      (element) => !element.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR),
+    )
     if (responses.length === 0) return null
 
     const lastResponse = responses[responses.length - 1]
@@ -1381,6 +1621,124 @@ export class ClaudeAdapter extends SiteAdapter {
 
   getResponseContainerSelector(): string {
     return ".font-claude-response"
+  }
+
+  async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
+    this.exportDocumentCache = []
+    const state: ClaudeExportLifecycleState = {
+      documentPanelWasOpen: this.isClaudeDocumentPanelOpen(),
+      documentSignature: this.getClaudeDocumentSignature(),
+      documentTitle: this.getClaudeDocumentTitle(),
+      documentArtifactIndex: null,
+    }
+
+    if (!this.shouldCollectClaudeDocumentsForExport(context)) {
+      return state
+    }
+
+    this.exportDocumentCache = await this.collectClaudeDocumentArtifacts()
+
+    if (state.documentPanelWasOpen && state.documentSignature) {
+      const originalDocument = this.findCachedClaudeDocumentByState(state)
+      state.documentArtifactIndex = originalDocument?.index ?? null
+    }
+
+    return state
+  }
+
+  async restoreConversationAfterExport(
+    _context: ExportLifecycleContext,
+    state: unknown,
+  ): Promise<void> {
+    try {
+      if (!this.isClaudeExportLifecycleState(state)) return
+
+      if (state.documentPanelWasOpen) {
+        await this.restoreClaudeDocumentPanel(state)
+        return
+      }
+
+      this.closeClaudeDocumentPanel()
+    } finally {
+      this.exportDocumentCache = []
+    }
+  }
+
+  private isClaudeExportLifecycleState(state: unknown): state is ClaudeExportLifecycleState {
+    return (
+      typeof state === "object" &&
+      state !== null &&
+      "documentPanelWasOpen" in state &&
+      typeof (state as ClaudeExportLifecycleState).documentPanelWasOpen === "boolean"
+    )
+  }
+
+  private shouldCollectClaudeDocumentsForExport(context: ExportLifecycleContext): boolean {
+    return context.format === "markdown" || context.format === "clipboard"
+  }
+
+  private async restoreClaudeDocumentPanel(state: ClaudeExportLifecycleState): Promise<void> {
+    if (!state.documentSignature || this.getClaudeDocumentSignature() === state.documentSignature) {
+      return
+    }
+
+    const originalDocument = this.findCachedClaudeDocumentByState(state)
+    const artifact =
+      originalDocument?.element.isConnected === true
+        ? originalDocument.element
+        : this.getClaudeDocumentArtifactCells()[originalDocument?.index ?? -1]
+
+    if (artifact) {
+      await this.openClaudeArtifactDocument(artifact)
+    }
+  }
+
+  private findCachedClaudeDocumentByState(
+    state: ClaudeExportLifecycleState,
+  ): ClaudeDocumentExportCacheEntry | null {
+    if (state.documentArtifactIndex !== null && state.documentArtifactIndex !== undefined) {
+      const byIndex = this.exportDocumentCache.find(
+        (item) => item.index === state.documentArtifactIndex,
+      )
+      if (byIndex) return byIndex
+    }
+
+    if (state.documentSignature) {
+      const bySignature = this.exportDocumentCache.find(
+        (item) => item.signature === state.documentSignature,
+      )
+      if (bySignature) return bySignature
+    }
+
+    if (state.documentTitle) {
+      const titleMatches = this.exportDocumentCache.filter(
+        (item) => item.title === state.documentTitle,
+      )
+      if (titleMatches.length === 1) return titleMatches[0]
+    }
+
+    return null
+  }
+
+  async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
+    if (this.exportDocumentCache.length === 0) {
+      return null
+    }
+
+    const collector = createExportAssetCollector()
+    const messages = this.extractClaudeExportMessages(collector)
+    return {
+      messages,
+      assets: collector.assets,
+    }
+  }
+
+  async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
+    if (this.exportDocumentCache.length === 0 && !this.isClaudeDocumentPanelOpen()) {
+      return null
+    }
+
+    return this.extractClaudeExportMessages()
   }
 
   /**
@@ -1470,6 +1828,135 @@ export class ClaudeAdapter extends SiteAdapter {
     return hasChanges
   }
 
+  private async collectClaudeDocumentArtifacts(): Promise<ClaudeDocumentExportCacheEntry[]> {
+    const results: ClaudeDocumentExportCacheEntry[] = []
+    const artifacts = this.getClaudeDocumentArtifactCells()
+
+    for (let index = 0; index < artifacts.length; index += 1) {
+      const artifact = artifacts[index]
+      const artifactTitle = this.getClaudeArtifactTitle(artifact)
+      const markdownRoot = await this.openClaudeArtifactDocument(artifact)
+      if (!markdownRoot) continue
+
+      const content = this.extractClaudeDocumentMarkdown(markdownRoot)
+      if (!content) continue
+
+      results.push({
+        element: artifact,
+        index,
+        content,
+        title: this.getClaudeDocumentTitle() || artifactTitle,
+        artifactTitle,
+        signature: this.getClaudeDocumentSignature(markdownRoot),
+      })
+    }
+
+    return results
+  }
+
+  private extractClaudeDocumentMarkdown(markdownRoot: Element): string {
+    const markdown = htmlToMarkdown(markdownRoot).trim()
+    return markdown || markdownRoot.textContent?.trim() || ""
+  }
+
+  private findCachedClaudeDocumentForArtifact(
+    artifact: Element,
+  ): ClaudeDocumentExportCacheEntry | null {
+    const cached = this.exportDocumentCache.find((item) => item.element === artifact)
+    if (cached) return cached
+    if (!this.isMarkdownDocumentArtifact(artifact)) return null
+
+    const artifactIndex = this.getClaudeDocumentArtifactCells().indexOf(artifact)
+    if (artifactIndex >= 0) {
+      const byIndex = this.exportDocumentCache.find((item) => item.index === artifactIndex)
+      if (byIndex) return byIndex
+    }
+
+    const artifactTitle = this.getClaudeArtifactTitle(artifact)
+    const titleMatches = this.exportDocumentCache.filter(
+      (item) => item.artifactTitle === artifactTitle || item.title === artifactTitle,
+    )
+    if (titleMatches.length === 1) return titleMatches[0]
+
+    return this.exportDocumentCache.length === 1 ? this.exportDocumentCache[0] : null
+  }
+
+  private extractClaudeExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
+    const messages: ExportMessage[] = []
+    const root = this.getOutlineRoot()
+    const userMessages = Array.from(root.querySelectorAll(this.getUserQuerySelector()))
+    const assistantMessages = Array.from(root.querySelectorAll(".font-claude-response")).filter(
+      (element) => !element.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR),
+    )
+
+    const maxLen = Math.max(userMessages.length, assistantMessages.length)
+    for (let index = 0; index < maxLen; index += 1) {
+      if (userMessages[index]) {
+        const content = this.extractUserQueryExportContent(userMessages[index]).trim()
+        if (content) messages.push({ role: "user", content })
+      }
+
+      if (assistantMessages[index]) {
+        const content = this.extractClaudeAssistantResponseTextWithDocuments(
+          assistantMessages[index],
+          collector,
+        ).trim()
+        if (content) messages.push({ role: "assistant", content })
+      }
+    }
+
+    return messages
+  }
+
+  private extractClaudeAssistantResponseTextWithDocuments(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string {
+    let result = ""
+    const artifacts = this.getClaudeArtifactCells(element)
+
+    artifacts.forEach((artifact) => {
+      const title = this.getClaudeArtifactTitle(artifact)
+      const cached = this.findCachedClaudeDocumentForArtifact(artifact)
+
+      if (cached?.content) {
+        const content = collector
+          ? appendMarkdownDocumentAssetLink(collector, cached.content, {
+              title: cached.title || title,
+              fallbackTitle: "claude-document",
+              directory: "assets/documents",
+              idPrefix: "claude-document",
+            })
+          : this.formatClaudeDocumentInlineContent(cached.content, cached.title || title)
+        result += `\n${content}\n\n`
+        return
+      }
+
+      result += `\n${this.formatClaudeArtifactPlaceholder(artifact)}\n\n`
+    })
+
+    const markdownContent = element.querySelector(".standard-markdown, .progressive-markdown")
+    if (markdownContent) {
+      const markdown = htmlToMarkdown(markdownContent)
+      result += markdown || markdownContent.textContent?.trim() || ""
+    }
+
+    return result.trim()
+  }
+
+  private formatClaudeDocumentInlineContent(content: string, title: string): string {
+    const trimmed = content.trim()
+    if (!trimmed) return ""
+    if (/^#{1,6}\s+/m.test(trimmed)) return trimmed
+    return `### ${title}\n\n${trimmed}`
+  }
+
+  private formatClaudeArtifactPlaceholder(artifact: Element, downloadHref = ""): string {
+    const title = this.getClaudeArtifactTitle(artifact)
+    const metadata = this.getClaudeArtifactMetadata(artifact)
+    return `[Artifact: ${title}${metadata ? ` - ${metadata}` : ""}${downloadHref ? ` | Download: ${downloadHref}` : ""}]`
+  }
+
   /**
    * 提取AI回复文本,过滤Artifact卡片但标注其存在
    * Claude特有:Artifacts以卡片形式嵌入在回复中,需要特殊处理
@@ -1481,25 +1968,12 @@ export class ClaudeAdapter extends SiteAdapter {
     const artifacts = element.querySelectorAll(".artifact-block-cell")
     if (artifacts.length > 0) {
       artifacts.forEach((artifact) => {
-        // 提取标题
-        const titleElem = artifact.querySelector(".line-clamp-1")
-        const title = titleElem?.textContent?.trim() || "Untitled"
-
-        // 提取版本信息
-        const versionElem = artifact.querySelector(".text-text-400")
-        const version = versionElem?.textContent?.trim()
-
         // 尝试查找下载链接(可能在同级或父级元素的菜单中)
         // 下载菜单通常需要点击才会出现,所以可能找不到
         const downloadLink = element.querySelector('a[download][href^="blob:"]')
         const link = downloadLink?.getAttribute("href")
 
-        // 构建Artifact标注
-        if (link) {
-          result += `\n[Artifact: ${title}${version ? ` - ${version}` : ""} | Download: ${link}]\n\n`
-        } else {
-          result += `\n[Artifact: ${title}${version ? ` - ${version}` : ""}]\n\n`
-        }
+        result += `\n${this.formatClaudeArtifactPlaceholder(artifact, link || "")}\n\n`
       })
     }
 
