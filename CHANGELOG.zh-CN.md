@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+### 🚀 新增功能
+
+- **ChatGPT 生成图片导出** — ChatGPT Markdown 导出现在会包含仅含生成图片的 AI 回复，并在普通 Markdown 与 zip 附件包导出中保留生成图片。
+
 ---
 
 ## [1.0.55] - 2026-05-29

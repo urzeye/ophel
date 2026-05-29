@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **ChatGPT generated image export** — ChatGPT Markdown exports now include generated image-only assistant turns, preserving generated images in both regular Markdown output and zip asset packages.
+
 ---
 
 ## [1.0.55] - 2026-05-29

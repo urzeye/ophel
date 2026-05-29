@@ -1354,11 +1354,9 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     this.mountExportSnapshot(messages)
 
-    if (exportAssetCollector) {
-      this.exportBundle = {
-        messages: messages.map(({ role, content }) => ({ role, content })),
-        assets: exportAssetCollector.assets,
-      }
+    this.exportBundle = {
+      messages: messages.map(({ role, content }) => ({ role, content })),
+      assets: exportAssetCollector?.assets,
     }
 
     return { count: messages.length }
@@ -1366,6 +1364,10 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
     return this.exportBundle
+  }
+
+  async extractExportMessages(_context: ExportLifecycleContext) {
+    return this.exportBundle?.messages ?? null
   }
 
   async restoreConversationAfterExport(
@@ -1518,9 +1520,17 @@ export class ChatGPTAdapter extends SiteAdapter {
   /** turn 是否已挂载真实内容（不是只剩 shell）。 */
   private turnHasMountedMessage(turn: HTMLElement): boolean {
     const message = turn.querySelector("[data-message-author-role]")
-    if (message instanceof HTMLElement && message.textContent && message.textContent.trim()) {
-      return true
+    if (message instanceof HTMLElement) {
+      if (message.textContent && message.textContent.trim()) {
+        return true
+      }
+
+      if (this.hasExportableChatGPTImage(message)) {
+        return true
+      }
     }
+
+    if (this.hasExportableChatGPTImage(turn)) return true
 
     return this.getDeepResearchIframe(turn) !== null
   }
@@ -1728,6 +1738,29 @@ export class ChatGPTAdapter extends SiteAdapter {
   ): ChatGPTExportMessageSnapshot[] {
     const messages = this.collectOwnAuthorMessagesForTurn(turn)
     if (messages.length === 0) {
+      const imageParts = this.extractChatGPTImageMarkdown(turn, collector, {
+        fallbackAlt: "generated image",
+      })
+        .map((content) => this.normalizeExportMessageContent(content))
+        .filter((text) => text.length > 0)
+
+      if (imageParts.length > 0) {
+        const content = imageParts.join("\n\n")
+        const turnId =
+          turn.getAttribute("data-turn-id") || turn.getAttribute("data-turn-id-container") || ""
+
+        return [
+          {
+            role: CHATGPT_EXPORT_ROLE_ASSISTANT,
+            turnKey: turnId
+              ? `assistant:turn:${turnId}`
+              : `assistant:images:${content.replace(/\s+/g, " ").slice(0, 120)}`,
+            order: this.getExportTurnSortIndex(turn),
+            content,
+          },
+        ]
+      }
+
       return this.extractDeepResearchTurnExportSnapshot(turn)
     }
 
@@ -1773,6 +1806,14 @@ export class ChatGPTAdapter extends SiteAdapter {
         this.normalizeExportMessageContent(this.extractAssistantResponseTextFromLiveDom(message)),
       )
       .filter((text) => text.length > 0)
+    parts.push(
+      ...this.extractChatGPTImageMarkdown(turn, collector, {
+        fallbackAlt: "generated image",
+        onlyOutsideAuthorMessages: true,
+      })
+        .map((content) => this.normalizeExportMessageContent(content))
+        .filter((text) => text.length > 0),
+    )
     if (parts.length === 0) return []
 
     const combinedContent = parts.join("\n\n")
@@ -1882,10 +1923,26 @@ export class ChatGPTAdapter extends SiteAdapter {
     element: Element,
     collector?: ExportAssetCollector | null,
   ): string[] {
-    const images = Array.from(element.querySelectorAll("img")).filter(
-      (node): node is HTMLImageElement =>
-        node instanceof HTMLImageElement && this.isExportableChatGPTImage(node),
-    )
+    return this.extractChatGPTImageMarkdown(element, collector, {
+      fallbackAlt: "uploaded image",
+    })
+  }
+
+  private extractChatGPTImageMarkdown(
+    element: Element,
+    collector?: ExportAssetCollector | null,
+    options: { fallbackAlt: string; onlyOutsideAuthorMessages?: boolean } = {
+      fallbackAlt: "image",
+    },
+  ): string[] {
+    const images = this.getChatGPTExportImages(element).filter((node): node is HTMLImageElement => {
+      if (!(node instanceof HTMLImageElement)) return false
+      if (!this.isExportableChatGPTImage(node)) return false
+      if (options.onlyOutsideAuthorMessages && node.closest("[data-message-author-role]")) {
+        return false
+      }
+      return true
+    })
     const seenSources = new Set<string>()
     const imageMarkdown: string[] = []
 
@@ -1894,7 +1951,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       if (!source || seenSources.has(source)) continue
 
       seenSources.add(source)
-      const alt = (image.alt || image.getAttribute("aria-label") || "uploaded image")
+      const alt = (image.alt || image.getAttribute("aria-label") || options.fallbackAlt)
         .replace(/\s+/g, " ")
         .trim()
       const assetPath = collector
@@ -1908,11 +1965,38 @@ export class ChatGPTAdapter extends SiteAdapter {
         : source
 
       if (assetPath) {
-        imageMarkdown.push(`![${escapeMarkdownLinkText(alt || "uploaded image")}](${assetPath})`)
+        imageMarkdown.push(`![${escapeMarkdownLinkText(alt || options.fallbackAlt)}](${assetPath})`)
       }
     }
 
     return imageMarkdown
+  }
+
+  private getChatGPTExportImages(element: Element): HTMLImageElement[] {
+    const imagegenImages = Array.from(
+      element.querySelectorAll('[class*="imagegen-image"], [data-testid*="image-gen"]'),
+    )
+      .map((container) => {
+        const images = Array.from(container.querySelectorAll("img")).filter(
+          (node): node is HTMLImageElement => node instanceof HTMLImageElement,
+        )
+        return (
+          images.find((image) => {
+            const className = image.className || ""
+            return !className.includes("absolute") && !className.includes("blur")
+          }) ||
+          images.find((image) => image.width > 0 && image.height > 0) ||
+          images[0] ||
+          null
+        )
+      })
+      .filter((image): image is HTMLImageElement => image instanceof HTMLImageElement)
+
+    if (imagegenImages.length > 0) return imagegenImages
+
+    return Array.from(element.querySelectorAll("img")).filter(
+      (node): node is HTMLImageElement => node instanceof HTMLImageElement,
+    )
   }
 
   private extractUserQueryFileMarkdown(
@@ -1985,6 +2069,10 @@ export class ChatGPTAdapter extends SiteAdapter {
     if (source.includes("/cdn/assets/")) return false
     if (source.startsWith("data:image/svg+xml")) return false
     return isDownloadableExportAssetUrl(source) || source.startsWith("data:image/")
+  }
+
+  private hasExportableChatGPTImage(root: Element): boolean {
+    return this.getChatGPTExportImages(root).some((node) => this.isExportableChatGPTImage(node))
   }
 
   private getChatGPTImageExportSource(image: HTMLImageElement): string {
