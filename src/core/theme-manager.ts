@@ -86,7 +86,7 @@ export interface GlobalThemeManagerOptions {
   adapter?: SiteAdapter | null
   lightPresetId?: string
   darkPresetId?: string
-  // 沿用 settings 里的历史字段名；在 ThemeManager 内部统一称为 host theme sync。
+  // 沿用 settings 里的历史字段名；仅控制站点原生颜色覆盖 CSS。
   syncNativePageTheme?: boolean
   apply?: boolean
 }
@@ -99,7 +99,7 @@ export class ThemeManager {
   private hostThemeObserver: MutationObserver | null = null
   private onModeChange?: ThemeModeChangeCallback
   private adapter?: SiteAdapter | null
-  private hostThemeSyncEnabled: boolean
+  private nativeThemeOverrideEnabled: boolean
   private customStyles: CustomStyle[] = [] // 存储自定义样式列表
   private skipNextDetection = false // 标志：跳过下一次主题检测，避免 toggle 后被 observer 立即反写
   private listeners: Set<Listener> = new Set() // 订阅者集合
@@ -132,7 +132,7 @@ export class ThemeManager {
     this.darkPresetId = darkPresetId
     this.onModeChange = onModeChange
     this.adapter = adapter
-    this.hostThemeSyncEnabled = syncNativePageTheme
+    this.nativeThemeOverrideEnabled = syncNativePageTheme
 
     // 注入全局动画样式 (View Transitions 需要在主文档生效)
     this.injectGlobalStyles()
@@ -166,7 +166,11 @@ export class ThemeManager {
   }
 
   private isHostThemeSyncActive(): boolean {
-    return this.hostThemeSyncEnabled && (this.adapter?.supportsHostThemeSync() ?? true)
+    return this.adapter?.supportsHostThemeSync() ?? true
+  }
+
+  private isNativeThemeOverrideActive(): boolean {
+    return this.nativeThemeOverrideEnabled && this.isHostThemeSyncActive()
   }
 
   /**
@@ -444,7 +448,7 @@ export class ThemeManager {
    * 由各站点 adapter 自行声明，初始化时一次性挂载。
    */
   private injectNativeThemeOverrideCss() {
-    if (!this.adapter || !this.isHostThemeSyncActive()) return
+    if (!this.adapter || !this.isNativeThemeOverrideActive()) return
 
     // 如果 adapter 未声明覆盖样式或已注入，则跳过
     const cssContent = this.adapter.getNativeThemeCss()
@@ -463,7 +467,7 @@ export class ThemeManager {
   }
 
   private syncNativeThemeOverrideCssState() {
-    if (!this.isHostThemeSyncActive()) {
+    if (!this.isNativeThemeOverrideActive()) {
       this.removeNativeThemeOverrideCss()
       return
     }
@@ -492,28 +496,14 @@ export class ThemeManager {
   }
 
   /**
-   * 控制是否启用宿主页主题联动。
-   * 开启后会同步宿主页主题、启动监听，并按需注入站点声明的覆盖 CSS。
+   * 控制是否注入站点声明的原生颜色覆盖 CSS。
+   * 不影响宿主页亮/暗模式联动；联动能力由 adapter.supportsHostThemeSync() 决定。
    */
-  setHostThemeSyncEnabled(enabled: boolean) {
+  setNativeThemeOverrideEnabled(enabled: boolean) {
     const nextEnabled = enabled !== false
-    const hasChanged = this.hostThemeSyncEnabled !== nextEnabled
 
-    this.hostThemeSyncEnabled = nextEnabled
+    this.nativeThemeOverrideEnabled = nextEnabled
     this.syncNativeThemeOverrideCssState()
-
-    if (!hasChanged) {
-      return
-    }
-
-    if (!this.isHostThemeSyncActive()) {
-      this.stopThemeMonitoring()
-      this.syncPluginUiTheme(this.mode)
-      return
-    }
-
-    this.syncHostTheme(this.mode, this.preference)
-    this.startThemeMonitoring()
   }
 
   /**
@@ -1359,7 +1349,7 @@ export function ensureGlobalThemeManager(options: GlobalThemeManagerOptions): Th
   }
 
   themeManager.setAdapter(adapter ?? null)
-  themeManager.setHostThemeSyncEnabled(syncNativePageTheme)
+  themeManager.setNativeThemeOverrideEnabled(syncNativePageTheme)
   themeManager.setPresets(lightPresetId, darkPresetId)
 
   if (onModeChange !== undefined) {

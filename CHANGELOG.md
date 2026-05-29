@@ -21,6 +21,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Theme sync regression** — Turning off Sync Native Page Colors no longer prevents supported host pages from following Ophel's light/dark theme toggle. The setting now only controls native color override CSS, while Doubao and Ima remain panel-only because their adapters declare host theme sync unsupported.
 - **Claude export order and outline cleanup** — Claude assistant exports now keep text and artifact links in their original reply order, and page/sidebar headings such as "Recents" are no longer pulled into the conversation outline. (#588)
 - **Inline bookmark visibility** — Page inline bookmark icons now fully respect the hidden setting and no longer depend on the Outline tab's "show user questions" filter, fixing stale or missing stars on virtual-scroll sites such as ChatGPT, DeepSeek, AI Studio, and Doubao. (#570)
 

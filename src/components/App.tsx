@@ -2579,7 +2579,7 @@ export const App = () => {
 
   useEffect(() => {
     if (!isSettingsHydrated) return
-    themeManager.setHostThemeSyncEnabled(settings?.theme?.syncNativePageTheme ?? true)
+    themeManager.setNativeThemeOverrideEnabled(settings?.theme?.syncNativePageTheme ?? true)
   }, [settings?.theme?.syncNativePageTheme, themeManager, isSettingsHydrated])
 
   // 主题切换（异步处理，支持 View Transitions API 动画）

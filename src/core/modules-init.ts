@@ -170,7 +170,7 @@ export async function syncHostThemeWithSettings(ctx: ModulesContext): Promise<vo
         ? "dark"
         : "light"
 
-  if (!(settings.theme?.syncNativePageTheme ?? true) || !adapter.supportsHostThemeSync()) {
+  if (!adapter.supportsHostThemeSync()) {
     modules.themeManager?.applyTheme(targetTheme)
     return
   }
@@ -473,7 +473,9 @@ export function subscribeModuleUpdates(ctx: ModulesContext): void {
     // 1. Theme Manager - 只更新主题预置
     const newSiteTheme = getSiteTheme(newSettings, siteId)
     if (newSiteTheme && modules.themeManager) {
-      modules.themeManager.setHostThemeSyncEnabled(newSettings.theme?.syncNativePageTheme ?? true)
+      modules.themeManager.setNativeThemeOverrideEnabled(
+        newSettings.theme?.syncNativePageTheme ?? true,
+      )
       modules.themeManager.setPresets(
         newSiteTheme.lightStyleId || "google-gradient",
         newSiteTheme.darkStyleId || "classic-dark",
