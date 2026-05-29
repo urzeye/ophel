@@ -39,7 +39,7 @@ function navigateConversation(
   const conversations = conversationManager.getConversations()
 
   if (conversations.length === 0) {
-    showToast(t("noConversations") || "暂无会话")
+    showToast(t("noConversations"))
     return
   }
 
@@ -62,7 +62,7 @@ function navigateConversation(
   const target = sorted[targetIndex]
   if (target) {
     adapter.navigateToConversation(target.id, target.url)
-    showToast(target.title || t("untitledConversation") || "未命名会话")
+    showToast(target.title || t("untitledConversation"))
   }
 }
 
@@ -116,7 +116,7 @@ export function useShortcuts({
     })
     await smartScrollToTop(adapter)
 
-    showToast(t("scrolledToTop") || "已滚动到顶部")
+    showToast(t("scrolledToTop"))
   }, [adapter])
 
   // 去底部
@@ -129,7 +129,7 @@ export function useShortcuts({
 
     await smartScrollToBottom(adapter)
 
-    showToast(t("scrolledToBottom") || "已滚动到底部")
+    showToast(t("scrolledToBottom"))
   }, [adapter])
 
   // 返回锚点
@@ -137,7 +137,7 @@ export function useShortcuts({
     if (!adapter) return
     const savedAnchor = anchorStore.get()
     if (savedAnchor === null) {
-      showToast(t("noAnchor") || "无可用锚点")
+      showToast(t("noAnchor"))
       return
     }
 
@@ -156,7 +156,7 @@ export function useShortcuts({
   const refreshOutline = useCallback(() => {
     if (!outlineManager) return
     outlineManager.refresh()
-    showToast(t("outlineRefreshed") || "大纲已刷新")
+    showToast(t("outlineRefreshed"))
   }, [outlineManager])
 
   // 展开/折叠大纲
@@ -299,10 +299,7 @@ export function useShortcuts({
 
         if (element && element.isConnected) {
           element.scrollIntoView({ behavior: "smooth", block: "start" })
-          const toastText =
-            targetItem.text?.replace(/\s+/g, " ").trim() ||
-            t("locatingOutline") ||
-            "正在定位大纲位置..."
+          const toastText = targetItem.text?.replace(/\s+/g, " ").trim() || t("locatingOutline")
           showToast(toastText, 1000, { className: "gh-toast--outline-nav", maxWidth: 360 })
         }
       }
@@ -315,7 +312,7 @@ export function useShortcuts({
 
   // 刷新会话列表
   const refreshConversations = useCallback(() => {
-    showToast(t("syncingConversations") || "正在同步会话列表...")
+    showToast(t("syncingConversations"))
     // 触发事件，ConversationsTab 会监听并执行同步
     window.dispatchEvent(new CustomEvent("ophel:refreshConversations"))
   }, [])
@@ -357,7 +354,7 @@ export function useShortcuts({
   const locateOutline = useCallback(() => {
     // 检查大纲功能是否启用
     if (!settings?.features?.outline?.enabled) {
-      showToast(t("outlineDisabled") || "大纲功能已禁用")
+      showToast(t("outlineDisabled"))
       return
     }
 
@@ -375,14 +372,14 @@ export function useShortcuts({
     ;(window as any).__ophelPendingLocateOutline = true
     window.dispatchEvent(new CustomEvent("ophel:locateOutline"))
 
-    showToast(t("locatingOutline") || "正在定位大纲位置...")
+    showToast(t("locatingOutline"))
   }, [settings, isPanelVisible, isSnapped, onPanelToggle, onShowSnappedPanel])
 
   // 搜索大纲（Alt+F）
   const searchOutline = useCallback(() => {
     // 检查大纲功能是否启用
     if (!settings?.features?.outline?.enabled) {
-      showToast(t("outlineDisabled") || "大纲功能已禁用")
+      showToast(t("outlineDisabled"))
       return
     }
 
@@ -408,13 +405,13 @@ export function useShortcuts({
   const locateConversation = useCallback(() => {
     // 检查会话功能是否启用
     if (!settings?.features?.conversations?.enabled) {
-      showToast(t("conversationsDisabled") || "会话功能已禁用")
+      showToast(t("conversationsDisabled"))
       return
     }
 
     // 分享页面或新对话页面不执行定位
     if (adapter?.isSharePage() || adapter?.isNewConversation()) {
-      showToast(t("noConversationToLocate") || "当前无会话可定位")
+      showToast(t("noConversationToLocate"))
       return
     }
 
@@ -431,7 +428,7 @@ export function useShortcuts({
     ;(window as any).__ophelPendingLocateConversation = true
     window.dispatchEvent(new CustomEvent("ophel:locateConversation"))
 
-    showToast(t("locatingConversation") || "正在定位当前会话...")
+    showToast(t("locatingConversation"))
   }, [adapter, settings, isPanelVisible, isSnapped, onPanelToggle, onShowSnappedPanel])
 
   // 新会话（主修饰键 + Shift + O）
@@ -459,21 +456,18 @@ export function useShortcuts({
 
     const sessionId = adapter.getSessionId()
     if (!sessionId) {
-      showToast(t("exportNeedOpenFirst") || "请先打开要导出的会话")
+      showToast(t("exportNeedOpenFirst"))
       return
     }
 
-    showToast(
-      t("exportStarted") || "正在导出会话，请勿操作当前页面...",
-      EXPORT_START_TOAST_DURATION,
-    )
+    showToast(t("exportStarted"), EXPORT_START_TOAST_DURATION)
     try {
       // 默认导出为 Markdown 文件
       await conversationManager.exportConversation(sessionId, "markdown")
-      showToast(t("exportSuccess") || "导出成功")
+      showToast(t("exportSuccess"))
     } catch (error) {
       console.error("Export failed:", error)
-      showToast(t("exportFailed") || "导出失败")
+      showToast(t("exportFailed"))
     }
   }, [conversationManager, adapter])
 
@@ -483,15 +477,15 @@ export function useShortcuts({
 
     const text = adapter.getLatestReplyText()
     if (!text) {
-      showToast(t("noReplyToCopy") || "无可复制内容")
+      showToast(t("noReplyToCopy"))
       return
     }
 
     try {
       await navigator.clipboard.writeText(text)
-      showToast(t("replyCopied") || "已复制最新回复")
+      showToast(t("replyCopied"))
     } catch {
-      showToast(t("copyFailed") || "复制失败")
+      showToast(t("copyFailed"))
     }
   }, [adapter])
 
@@ -501,7 +495,7 @@ export function useShortcuts({
       onToggleScrollLock()
     } else {
       // Fallback 仅提示
-      showToast(t("scrollLockToggled") || "滚动锁定已切换")
+      showToast(t("scrollLockToggled"))
     }
   }, [onToggleScrollLock])
 
@@ -530,10 +524,7 @@ export function useShortcuts({
       .getState()
       .updateDeepSetting("layout", "zenMode", siteId, { enabled: nextEnabled })
 
-    showToast(
-      t(nextEnabled ? "zenModeEnabledToast" : "zenModeDisabledToast") ||
-        (nextEnabled ? "已开启禅模式" : "已关闭禅模式"),
-    )
+    showToast(t(nextEnabled ? "zenModeEnabledToast" : "zenModeDisabledToast"))
   }, [adapter])
 
   // 聚焦输入框 (Alt+I)
@@ -542,9 +533,9 @@ export function useShortcuts({
     const textarea = adapter.findTextarea()
     if (textarea) {
       textarea.focus()
-      showToast(t("inputFocused") || "已聚焦输入框")
+      showToast(t("inputFocused"))
     } else {
-      showToast(t("noTextarea") || "未找到输入框")
+      showToast(t("noTextarea"))
     }
   }, [adapter])
 
@@ -553,7 +544,7 @@ export function useShortcuts({
     if (!adapter) return
 
     if (adapter.stopGeneration()) {
-      showToast(t("generationStopped") || "已停止生成")
+      showToast(t("generationStopped"))
       return
     }
 
@@ -569,11 +560,11 @@ export function useShortcuts({
       const btn = document.querySelector(selector) as HTMLElement
       if (btn && btn.offsetParent !== null) {
         btn.click()
-        showToast(t("generationStopped") || "已停止生成")
+        showToast(t("generationStopped"))
         return
       }
     }
-    showToast(t("notGenerating") || "当前未在生成")
+    showToast(t("notGenerating"))
   }, [adapter])
 
   // 上一个会话 (Alt+[)
@@ -594,9 +585,9 @@ export function useShortcuts({
     if (adapterCode.trim()) {
       try {
         await navigator.clipboard.writeText(adapterCode)
-        showToast(t("codeBlockCopied") || "代码块已复制")
+        showToast(t("codeBlockCopied"))
       } catch {
-        showToast(t("copyFailed") || "复制失败")
+        showToast(t("copyFailed"))
       }
       return
     }
@@ -608,7 +599,7 @@ export function useShortcuts({
       (element) => !element.closest(".gh-root, .gh-user-query-markdown, .gh-markdown-preview"),
     )
     if (codeBlocks.length === 0) {
-      showToast(t("noCodeBlock") || "未找到代码块")
+      showToast(t("noCodeBlock"))
       return
     }
 
@@ -620,14 +611,14 @@ export function useShortcuts({
 
     const code = (clone.textContent || "").replace(/\r\n/g, "\n").replace(/\n+$/, "")
     if (!code.trim()) {
-      showToast(t("noCodeBlock") || "未找到代码块")
+      showToast(t("noCodeBlock"))
       return
     }
     try {
       await navigator.clipboard.writeText(code)
-      showToast(t("codeBlockCopied") || "代码块已复制")
+      showToast(t("codeBlockCopied"))
     } catch {
-      showToast(t("copyFailed") || "复制失败")
+      showToast(t("copyFailed"))
     }
   }, [adapter])
 
@@ -653,7 +644,7 @@ export function useShortcuts({
     // 使用适配器的 clickModelSelector 方法，确保使用正确的点击模拟
     const success = adapter.clickModelSelector()
     if (!success) {
-      showToast(t("modelSelectorNotFound") || "未找到模型选择器")
+      showToast(t("modelSelectorNotFound"))
     }
   }, [adapter])
 
@@ -703,7 +694,7 @@ export function useShortcuts({
     // 仅在 Claude 站点生效 (简单判断)
     // 仅在 Claude 站点生效
     if (!location.hostname.includes("claude.ai") && !location.hostname.includes("claude.com")) {
-      showToast(t("claudeShortcutOnlyOnSite") || "快捷键仅在 Claude 站点可用", 2000)
+      showToast(t("claudeShortcutOnlyOnSite"), 2000)
       return
     }
 
@@ -714,12 +705,12 @@ export function useShortcuts({
       const result = await platform.switchNextClaudeKey()
 
       if (result.success) {
-        showToast((t("claudeKeySwitched") || "Session Key 已切换") + `: ${result.keyName}`, 2000)
+        showToast(t("claudeKeySwitched") + `: ${result.keyName}`, 2000)
       } else {
         if (result.error === "claudeOnlyOneKey") {
-          showToast(t("claudeOnlyOneKeyTip") || "当前只有一个可用 Key，且正在使用中", 2000)
+          showToast(t("claudeOnlyOneKeyTip"), 2000)
         } else if (result.error === "noClaudeKeys") {
-          showToast(t("noClaudeKeys") || "未配置任何 Session Key", 2000)
+          showToast(t("noClaudeKeys"), 2000)
         } else {
           // 尝试翻译错误信息，如果没有翻译则显示原始错误
           const translatedError = t(result.error as any)

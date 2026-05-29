@@ -130,7 +130,7 @@ export class CopyManager {
         if (!formulaHost) return
 
         if (!formulaCopySupported) {
-          showToast(t("formulaFormatUnsupported") || t("copyFailed"))
+          showToast(t("formulaFormatUnsupported"))
           e.preventDefault()
           e.stopPropagation()
           return
@@ -145,7 +145,7 @@ export class CopyManager {
         }
 
         // 命中了公式节点，但页面本身没有提供可提取或可转换的公式源码
-        showToast(t("formulaSourceUnavailable") || t("copyFailed"))
+        showToast(t("formulaSourceUnavailable"))
         e.preventDefault()
         e.stopPropagation()
       } catch (err) {
@@ -282,7 +282,7 @@ export class CopyManager {
 
     if (format === "latex") {
       if (!payload.latex) {
-        showToast(t("formulaSourceUnavailable") || t("copyFailed"))
+        showToast(t("formulaSourceUnavailable"))
         return
       }
 
@@ -292,7 +292,7 @@ export class CopyManager {
 
     const mathml = payload.mathml || this.renderLatexToMathml(payload.latex || "", payload.isBlock)
     if (!mathml) {
-      showToast(t("formulaFormatUnsupported") || t("formulaSourceUnavailable") || t("copyFailed"))
+      showToast(t("formulaFormatUnsupported"))
       return
     }
 

@@ -192,10 +192,10 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       <div className="conversations-dialog-message">{message}</div>
       <div className="conversations-dialog-buttons">
         <Button variant="secondary" onClick={onCancel}>
-          {cancelText || t("cancel") || "取消"}
+          {cancelText || t("cancel")}
         </Button>
         <Button variant={danger ? "danger" : "primary"} onClick={onConfirm}>
-          {confirmText || t("confirm") || "确定"}
+          {confirmText || t("confirm")}
         </Button>
       </div>
     </DialogOverlay>
@@ -255,14 +255,12 @@ export const FolderDialog: React.FC<FolderDialogProps> = ({ folder, onConfirm, o
   return (
     <DialogOverlay onClose={onCancel}>
       <div className="conversations-dialog-title">
-        {folder
-          ? t("conversationsRename") || "重命名"
-          : t("conversationsAddFolder") || "新建文件夹"}
+        {folder ? t("conversationsRename") : t("conversationsAddFolder")}
       </div>
 
       {/* 图标选择器 (先显示) */}
       <div className="conversations-dialog-section">
-        <label>{t("conversationsIcon") || "图标"}</label>
+        <label>{t("conversationsIcon")}</label>
 
         {/* 自定义输入区域 */}
         <div
@@ -278,7 +276,7 @@ export const FolderDialog: React.FC<FolderDialogProps> = ({ folder, onConfirm, o
           }}>
           <span
             style={{ fontSize: "12px", color: "var(--gh-text-secondary, #6b7280)", flexShrink: 0 }}>
-            {t("conversationsCustomIcon") || "自定义图标"}
+            {t("conversationsCustomIcon")}
           </span>
           <input
             type="text"
@@ -349,24 +347,24 @@ export const FolderDialog: React.FC<FolderDialogProps> = ({ folder, onConfirm, o
 
       {/* 名称输入 (后显示) */}
       <div className="conversations-dialog-section">
-        <label>{t("conversationsFolderName") || "名称"}</label>
+        <label>{t("conversationsFolderName")}</label>
         <input
           ref={inputRef}
           type="text"
           className="conversations-dialog-input"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder={t("conversationsFolderNamePlaceholder") || "输入文件夹名称"}
+          placeholder={t("conversationsFolderNamePlaceholder")}
           onKeyDown={(e) => e.key === "Enter" && handleConfirm()}
         />
       </div>
 
       <div className="conversations-dialog-buttons">
         <Button variant="secondary" onClick={onCancel}>
-          {t("cancel") || "取消"}
+          {t("cancel")}
         </Button>
         <Button variant="primary" onClick={handleConfirm}>
-          {t("confirm") || "确定"}
+          {t("confirm")}
         </Button>
       </div>
     </DialogOverlay>
@@ -423,10 +421,10 @@ export const RenameDialog: React.FC<RenameDialogProps> = ({
       </div>
       <div className="conversations-dialog-buttons">
         <Button variant="secondary" onClick={onCancel}>
-          {t("cancel") || "取消"}
+          {t("cancel")}
         </Button>
         <Button variant="primary" onClick={handleConfirm}>
-          {t("confirm") || "确定"}
+          {t("confirm")}
         </Button>
       </div>
     </DialogOverlay>
@@ -484,9 +482,7 @@ export const FolderSelectDialog: React.FC<FolderSelectDialogProps> = ({
 
   return (
     <DialogOverlay onClose={onCancel}>
-      <div className="conversations-dialog-title">
-        {title || t("conversationsMoveTo") || "移动到..."}
-      </div>
+      <div className="conversations-dialog-title">{title || t("conversationsMoveTo")}</div>
 
       <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
         <input
@@ -494,7 +490,7 @@ export const FolderSelectDialog: React.FC<FolderSelectDialogProps> = ({
           type="text"
           className="conversations-dialog-input"
           style={{ flex: 1 }}
-          placeholder={t("conversationsSearchFolder") || "搜索文件夹..."}
+          placeholder={t("conversationsSearchFolder")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -506,7 +502,7 @@ export const FolderSelectDialog: React.FC<FolderSelectDialogProps> = ({
               onCancel()
               onCreateFolder()
             }}
-            title={t("conversationsAddFolder") || "新建文件夹"}>
+            title={t("conversationsAddFolder")}>
             +
           </Button>
         )}
@@ -529,14 +525,14 @@ export const FolderSelectDialog: React.FC<FolderSelectDialogProps> = ({
               textAlign: "center",
               color: "var(--gh-text-tertiary, #9ca3af)",
             }}>
-            {t("conversationsNoSearchResult") || "未找到匹配结果"}
+            {t("conversationsNoSearchResult")}
           </div>
         )}
       </div>
 
       <div className="conversations-dialog-buttons">
         <Button variant="secondary" onClick={onCancel}>
-          {t("cancel") || "取消"}
+          {t("cancel")}
         </Button>
       </div>
     </DialogOverlay>
@@ -685,8 +681,8 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
       <div
         className="conversations-dialog-title"
         style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span>{t("conversationsManageTags") || "管理标签"}</span>
-        <Tooltip content={t("close") || "关闭"}>
+        <span>{t("conversationsManageTags")}</span>
+        <Tooltip content={t("close")}>
           <span
             style={{
               cursor: "pointer",
@@ -748,7 +744,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                 textAlign: "center",
                 color: "var(--gh-text-secondary, #9ca3af)",
               }}>
-              {t("conversationsNoTags") || "暂无标签，在下方创建"}
+              {t("conversationsNoTags")}
             </div>
           ) : (
             tags.map((tag) => {
@@ -825,7 +821,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
 
                   {/* 右侧：操作按钮 - 常驻显示 */}
                   <div style={{ display: "flex", gap: "2px" }}>
-                    <Tooltip content={t("edit") || "编辑"}>
+                    <Tooltip content={t("edit")}>
                       <button
                         style={{
                           background: isEditing ? "#fed7aa" : "transparent",
@@ -856,7 +852,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                         <EditIcon size={14} />
                       </button>
                     </Tooltip>
-                    <Tooltip content={t("delete") || "删除"}>
+                    <Tooltip content={t("delete")}>
                       <button
                         style={{
                           background: "transparent",
@@ -913,11 +909,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
             justifyContent: "space-between",
             alignItems: "center",
           }}>
-          <span>
-            {editingId
-              ? t("conversationsEditTag") || "编辑标签"
-              : t("conversationsNewTag") || "新建标签"}
-          </span>
+          <span>{editingId ? t("conversationsEditTag") : t("conversationsNewTag")}</span>
           {editingId && (
             <button
               style={{
@@ -933,7 +925,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
                 setTagName("")
                 updateColorSelection(TAG_COLORS[0])
               }}>
-              {t("conversationsCancelEdit") || "取消编辑"}
+              {t("conversationsCancelEdit")}
             </button>
           )}
         </div>
@@ -943,7 +935,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
           ref={nameInputRef}
           type="text"
           className="conversations-dialog-input"
-          placeholder={t("conversationsTagName") || "标签名称"}
+          placeholder={t("conversationsTagName")}
           value={tagName}
           onChange={(e) => setTagName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
@@ -988,9 +980,7 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
               }}
             />
             <span style={{ fontSize: "12px", color: "var(--gh-text-secondary, #666)", flex: 1 }}>
-              {colorExpanded
-                ? t("conversationsCollapseColor") || "收起颜色"
-                : t("conversationsSelectColor") || "选择颜色"}
+              {colorExpanded ? t("conversationsCollapseColor") : t("conversationsSelectColor")}
             </span>
             {/* SVG 箭头图标 */}
             <ChevronDownIcon
@@ -1162,19 +1152,17 @@ export const TagManagerDialog: React.FC<TagManagerDialogProps> = ({
           }}
           disabled={!tagName.trim() || loading}
           onClick={handleSubmit}>
-          {editingId
-            ? t("conversationsUpdateTag") || "更新标签"
-            : t("conversationsNewTag") || "新建标签"}
+          {editingId ? t("conversationsUpdateTag") : t("conversationsNewTag")}
         </Button>
       </div>
 
       {/* 删除确认弹窗 */}
       {deletingTagId && (
         <ConfirmDialog
-          title={t("conversationsDeleteTag") || "删除标签"}
-          message={t("confirmDelete") || "确定删除这个标签吗？此操作不可撤销。"}
-          confirmText={t("delete") || "删除"}
-          cancelText={t("cancel") || "取消"}
+          title={t("conversationsDeleteTag")}
+          message={t("confirmDelete")}
+          confirmText={t("delete")}
+          cancelText={t("cancel")}
           danger={true}
           onConfirm={confirmDelete}
           onCancel={() => setDeletingTagId(null)}

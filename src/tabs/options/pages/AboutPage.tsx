@@ -29,7 +29,7 @@ const AboutPage: React.FC = () => {
   const supportedPlatformsCount = String(SUPPORTED_AI_PLATFORMS.length)
   return (
     <div>
-      <PageTitle title={t("navAbout") || "关于"} Icon={AboutIcon} />
+      <PageTitle title={t("navAbout")} Icon={AboutIcon} />
       <div
         style={{
           display: "flex",
@@ -39,7 +39,7 @@ const AboutPage: React.FC = () => {
         }}>
         <div className="about-slogan-badge">
           <span style={{ marginRight: 6 }}>✨</span>
-          {t("aboutPageDesc") || "AI 之益，触手可及"}
+          {t("aboutPageDesc")}
           <span style={{ marginLeft: 6 }}>✨</span>
         </div>
       </div>
@@ -60,13 +60,12 @@ const AboutPage: React.FC = () => {
             <span className="about-hero-version">v{APP_VERSION}</span>
           </div>
           <div className="about-hero-desc">
-            {t("aboutDescription", { appName: APP_DISPLAY_NAME }) ||
-              `${APP_DISPLAY_NAME} 是一款面向 Gemini、ChatGPT、Claude、AI Studio、Grok 等 AI 平台的浏览器增强扩展。它集中展示账号与余额、提供智能排序和当前站点识别，并提供自动刷新与临口防火墙绕过等自动化能力；支持数据导入导出工具。`}
+            {t("aboutDescription", { appName: APP_DISPLAY_NAME })}
           </div>
         </div>
       </div>
 
-      <div className="about-section-title">{t("rateAndReview") || "好评鼓励"}</div>
+      <div className="about-section-title">{t("rateAndReview")}</div>
       <div
         className="about-links-grid"
         style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
@@ -79,9 +78,9 @@ const AboutPage: React.FC = () => {
           style={{ "--card-color": "#4285F4" } as React.CSSProperties}>
           <div className="about-link-header">
             <ChromeIcon size={24} color="var(--card-color)" />
-            <span style={{ fontWeight: 600 }}>{t("chromeStore") || "Chrome 商店"}</span>
+            <span style={{ fontWeight: 600 }}>{t("chromeStore")}</span>
           </div>
-          <button className="about-link-btn">{t("reviewBtn") || "Review"}</button>
+          <button className="about-link-btn">{t("reviewBtn")}</button>
         </a>
 
         {/* Edge Add-ons */}
@@ -93,9 +92,9 @@ const AboutPage: React.FC = () => {
           style={{ "--card-color": "#0078D7" } as React.CSSProperties}>
           <div className="about-link-header">
             <EdgeIcon size={24} />
-            <span style={{ fontWeight: 600 }}>{t("edgeAddons") || "Edge 加载项"}</span>
+            <span style={{ fontWeight: 600 }}>{t("edgeAddons")}</span>
           </div>
-          <button className="about-link-btn">{t("reviewBtn") || "Review"}</button>
+          <button className="about-link-btn">{t("reviewBtn")}</button>
         </a>
 
         {/* Firefox Add-on */}
@@ -107,9 +106,9 @@ const AboutPage: React.FC = () => {
           style={{ "--card-color": "#FF7139" } as React.CSSProperties}>
           <div className="about-link-header">
             <FirefoxIcon size={24} color="var(--card-color)" />
-            <span style={{ fontWeight: 600 }}>{t("firefoxAddons") || "Firefox 扩展"}</span>
+            <span style={{ fontWeight: 600 }}>{t("firefoxAddons")}</span>
           </div>
-          <button className="about-link-btn">{t("reviewBtn") || "Review"}</button>
+          <button className="about-link-btn">{t("reviewBtn")}</button>
         </a>
 
         {/* GreasyFork */}
@@ -121,15 +120,13 @@ const AboutPage: React.FC = () => {
           style={{ "--card-color": "#4b5563" } as React.CSSProperties}>
           <div className="about-link-header">
             <GreasyForkIcon size={24} color="currentColor" />
-            <span style={{ fontWeight: 600, color: "var(--gh-text)" }}>
-              {t("greasyFork") || "Greasy Fork"}
-            </span>
+            <span style={{ fontWeight: 600, color: "var(--gh-text)" }}>{t("greasyFork")}</span>
           </div>
-          <button className="about-link-btn">{t("reviewBtn") || "Review"}</button>
+          <button className="about-link-btn">{t("reviewBtn")}</button>
         </a>
       </div>
 
-      <div className="about-section-title">{t("communityAndSupport") || "社区与支持"}</div>
+      <div className="about-section-title">{t("communityAndSupport")}</div>
       <div
         style={{
           fontSize: "13px",
@@ -153,15 +150,13 @@ const AboutPage: React.FC = () => {
           style={{ "--card-color": "#111827" } as React.CSSProperties}>
           <div className="about-link-header">
             <GithubIcon size={22} />
-            <span style={{ fontWeight: 600 }}>{t("githubRepository") || "GitHub 仓库"}</span>
+            <span style={{ fontWeight: 600 }}>{t("githubRepository")}</span>
           </div>
-          <div className="about-link-desc">
-            {t("githubDesc") || "查看源代码、提交问题或参与项目开发"}
-          </div>
+          <div className="about-link-desc">{t("githubDesc")}</div>
           <button className="about-link-btn about-star-btn">
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <StarIcon size={15} color="currentColor" filled={true} />
-              {t("giveStar") || "点个 Star"}
+              {t("giveStar")}
             </span>
           </button>
         </a>
@@ -175,15 +170,15 @@ const AboutPage: React.FC = () => {
           style={{ "--card-color": "#FF5E5B" } as React.CSSProperties}>
           <div className="about-link-header" style={{ color: "var(--card-color)" }}>
             <KofiIcon size={22} color="var(--card-color)" />
-            <span style={{ fontWeight: 600 }}>{t("kofiSupport") || "Buy Me a Coffee"}</span>
+            <span style={{ fontWeight: 600 }}>{t("kofiSupport")}</span>
           </div>
           <div className="about-link-desc" style={{ color: "var(--gh-text-secondary)" }}>
-            {t("kofiDesc") || "如果 Ophel 对你有帮助，请考虑赞助一杯咖啡支持开发者"}
+            {t("kofiDesc")}
           </div>
           <button className="about-link-btn">
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <KofiIcon size={14} color="currentColor" />
-              {t("kofiBtn") || "赞助支持"}
+              {t("kofiBtn")}
             </span>
           </button>
         </a>
@@ -198,16 +193,14 @@ const AboutPage: React.FC = () => {
           <div className="about-link-header">
             <GlobeIcon size={22} color="var(--card-color)" />
             <span style={{ fontWeight: 600, color: "var(--card-color)" }}>
-              {t("projectWebsite") || "项目官网"}
+              {t("projectWebsite")}
             </span>
           </div>
-          <div className="about-link-desc">
-            {t("websiteDesc") || "查看详细文档、使用指南和更多信息"}
-          </div>
+          <div className="about-link-desc">{t("websiteDesc")}</div>
           <button className="about-link-btn">
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <GlobeIcon size={14} color="currentColor" />
-              {t("visitWebsite") || "访问官网"}
+              {t("visitWebsite")}
             </span>
           </button>
         </a>
@@ -221,26 +214,25 @@ const AboutPage: React.FC = () => {
           style={{ "--card-color": "#5865F2" } as React.CSSProperties}>
           <div className="about-link-header" style={{ color: "var(--card-color)" }}>
             <DiscordIcon size={22} color="var(--card-color)" />
-            <span style={{ fontWeight: 600 }}>{t("discordCommunity") || "Discord 社区"}</span>
+            <span style={{ fontWeight: 600 }}>{t("discordCommunity")}</span>
           </div>
           <div className="about-link-desc" style={{ color: "var(--gh-text-secondary)" }}>
-            {t("discordDesc") || "加入社区，与其他用户交流、反馈问题、获取最新动态"}
+            {t("discordDesc")}
           </div>
           <button className="about-link-btn">
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <DiscordIcon size={14} color="currentColor" />
-              {t("joinDiscord") || "加入群组"}
+              {t("joinDiscord")}
             </span>
           </button>
         </a>
       </div>
 
-      <div className="about-section-title">{t("aboutSupportedPlatforms") || "支持平台"}</div>
+      <div className="about-section-title">{t("aboutSupportedPlatforms")}</div>
       <div className="about-platforms-card">
         <div className="about-platforms-header">
           <div className="about-platforms-desc">
-            {t("aboutSupportedPlatformsDesc", { count: supportedPlatformsCount }) ||
-              `当前已深度集成 ${supportedPlatformsCount} 个主流 AI 平台，并持续扩充中。这些平台在主界面弹窗中也支持智能状态识别与一键捷径入口。`}
+            {t("aboutSupportedPlatformsDesc", { count: supportedPlatformsCount })}
           </div>
           <span className="about-platforms-count">{supportedPlatformsCount}</span>
         </div>
@@ -270,34 +262,22 @@ const AboutPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="about-section-title">{t("techStack") || "技术栈"}</div>
+      <div className="about-section-title">{t("techStack")}</div>
 
       <div className="about-tech-grid">
-        <TechCard
-          name="Plasmo"
-          version="v0.89.0"
-          desc={t("tsPlasmoDesc") || "Browser Extension Framework"}
-        />
-        <TechCard
-          name="React"
-          version="v18.2.0"
-          desc={t("tsReactDesc") || "User Interface Library"}
-        />
-        <TechCard
-          name="TypeScript"
-          version="v5.3.3"
-          desc={t("tsTypescriptDesc") || "Typed JavaScript"}
-        />
-        <TechCard name="Zustand" version="v5.0.3" desc={t("tsZustandDesc") || "State Management"} />
-        <TechCard name="Vite" version="v5.0.0" desc={t("tsViteDesc") || "Frontend Tooling"} />
+        <TechCard name="Plasmo" version="v0.89.0" desc={t("tsPlasmoDesc")} />
+        <TechCard name="React" version="v18.2.0" desc={t("tsReactDesc")} />
+        <TechCard name="TypeScript" version="v5.3.3" desc={t("tsTypescriptDesc")} />
+        <TechCard name="Zustand" version="v5.0.3" desc={t("tsZustandDesc")} />
+        <TechCard name="Vite" version="v5.0.0" desc={t("tsViteDesc")} />
       </div>
 
-      <div className="about-section-title">{t("credits") || "版权与致谢"}</div>
+      <div className="about-section-title">{t("credits")}</div>
 
       <div className="about-simple-card">
         <div className="about-simple-header">
           <HeartIcon size={18} style={{ color: "#ef4444" }} />
-          {t("devAndMaintain") || "开发与维护"}
+          {t("devAndMaintain")}
         </div>
         <p
           style={{
@@ -306,8 +286,7 @@ const AboutPage: React.FC = () => {
             lineHeight: 1.6,
             marginBottom: 16,
           }}>
-          {t("creditsDesc") ||
-            "感谢所有为开源社区做出贡献的开发者们，本插件的开发得益于这些优秀的开源项目和工具。"}
+          {t("creditsDesc")}
         </p>
         <div style={{ display: "flex", gap: 8 }}>
           <Badge text={`Made with ❤️`} />
@@ -323,11 +302,8 @@ const AboutPage: React.FC = () => {
       <div className="about-privacy-banner">
         <ShieldCheckIcon size={24} className="about-privacy-icon" />
         <div>
-          <div className="about-privacy-title">{t("privacyTitle") || "隐私保护"}</div>
-          <div className="about-privacy-desc">
-            {t("privacyText") ||
-              "本插件所有数据均存储在本地浏览器中，不会主动上传到任何服务器。您的账号信息和使用数据完全由您自己掌控，确保隐私安全。"}
-          </div>
+          <div className="about-privacy-title">{t("privacyTitle")}</div>
+          <div className="about-privacy-desc">{t("privacyText")}</div>
         </div>
       </div>
     </div>

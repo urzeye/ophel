@@ -364,7 +364,7 @@ export class WatermarkRemover {
       const indicator = document.createElement("div")
       indicator.className = "ophel-wm-loading-indicator"
       indicator.setAttribute("aria-hidden", "true")
-      indicator.title = t("watermarkProcessing") || "Processing image..."
+      indicator.title = t("watermarkProcessing")
       host.appendChild(indicator)
     }
 

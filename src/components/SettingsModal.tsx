@@ -272,7 +272,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
   // 渲染当前页面
   const renderPage = () => {
     if (!settings || !isHydrated) {
-      return <div style={{ padding: 40, textAlign: "center" }}>{t("loading") || "加载中..."}</div>
+      return <div style={{ padding: 40, textAlign: "center" }}>{t("loading")}</div>
     }
 
     switch (activePage) {
@@ -307,14 +307,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
         onClick={(e) => e.stopPropagation()}>
         {/* 关闭按钮 */}
         <div className="settings-modal-actions">
-          <Tooltip content={isMaximized ? t("restore") || "还原" : t("maximize") || "最大化"}>
+          <Tooltip content={isMaximized ? t("restore") : t("maximize")}>
             <button
               className="settings-modal-action-btn"
               onClick={() => setIsMaximized(!isMaximized)}>
               {isMaximized ? <RestoreIcon size={16} /> : <MaximizeIcon size={16} />}
             </button>
           </Tooltip>
-          <Tooltip content={t("close") || "关闭"}>
+          <Tooltip content={t("close")}>
             <button className="settings-modal-action-btn close" onClick={onClose}>
               <ClearIcon size={16} />
             </button>

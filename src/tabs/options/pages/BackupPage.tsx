@@ -77,10 +77,10 @@ const getErrorMessage = (error: unknown): string => {
 }
 
 const formatBackupTypeLabel = (type: unknown): string => {
-  if (type === "full") return t("fullBackup") || "完整备份"
-  if (type === "prompts") return t("promptsBackup") || "仅提示词"
-  if (type === "settings") return t("settingsBackup") || "仅设置"
-  return String(type || t("unknown") || "未知")
+  if (type === "full") return t("fullBackup")
+  if (type === "prompts") return t("promptsBackup")
+  if (type === "settings") return t("settingsBackup")
+  return String(type || t("unknown"))
 }
 
 // ==================== 远程备份列表模态框 (保持原有逻辑) ====================
@@ -123,7 +123,7 @@ const RemoteBackupModal: React.FC<{
   const handleRestoreClick = (file: BackupFile) => {
     setConfirmConfig({
       show: true,
-      title: t("restore") || "恢复",
+      title: t("restore"),
       message: t("backupRestoreConfirmMsg", { name: file.name }),
       danger: true,
       onConfirm: async () => {
@@ -145,12 +145,12 @@ const RemoteBackupModal: React.FC<{
             } catch {
               // ignore
             }
-            showDomToast(t("restoreSuccess") || "恢复成功，即将刷新页面...")
+            showDomToast(t("restoreSuccess"))
             setTimeout(() => {
               onRestore()
             }, 1500)
           } else {
-            showDomToast(t("restoreError") || "恢复失败: " + result.messageKey)
+            showDomToast(t("restoreError"))
             setLoading(false)
           }
         } catch (e) {
@@ -164,7 +164,7 @@ const RemoteBackupModal: React.FC<{
   const handleDeleteClick = (file: BackupFile) => {
     setConfirmConfig({
       show: true,
-      title: t("delete") || "删除",
+      title: t("delete"),
       message: t("backupDeleteCloudConfirmMsg", { name: file.name }),
       danger: true,
       onConfirm: async () => {
@@ -174,10 +174,10 @@ const RemoteBackupModal: React.FC<{
           const manager = getWebDAVSyncManager()
           const result = await manager.deleteFile(file.name)
           if (result.success) {
-            showDomToast(t("deleteSuccess") || "删除成功")
+            showDomToast(t("deleteSuccess"))
             loadBackups()
           } else {
-            showDomToast(t("deleteError") || "删除失败")
+            showDomToast(t("deleteError"))
             setLoading(false)
           }
         } catch (e) {
@@ -232,15 +232,13 @@ const RemoteBackupModal: React.FC<{
             justifyContent: "space-between",
             alignItems: "center",
           }}>
-          <div style={{ fontWeight: 600, fontSize: "16px" }}>
-            {t("webdavBackupList") || "WebDAV 备份列表"}
-          </div>
+          <div style={{ fontWeight: 600, fontSize: "16px" }}>{t("webdavBackupList")}</div>
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <Tooltip content={t("refresh") || "刷新"}>
+            <Tooltip content={t("refresh")}>
               <button
                 onClick={loadBackups}
                 className="settings-btn settings-btn-secondary"
-                aria-label={t("refresh") || "刷新"}
+                aria-label={t("refresh")}
                 style={{ padding: "6px", display: "flex", alignItems: "center" }}>
                 <RefreshIcon size={16} />
               </button>
@@ -258,12 +256,12 @@ const RemoteBackupModal: React.FC<{
           {loading ? (
             <div
               style={{ textAlign: "center", padding: "20px", color: "var(--gh-text-secondary)" }}>
-              {t("loading") || "加载中..."}
+              {t("loading")}
             </div>
           ) : backups.length === 0 ? (
             <div
               style={{ textAlign: "center", padding: "20px", color: "var(--gh-text-secondary)" }}>
-              {t("noBackupsFound") || "未找到备份文件"}
+              {t("noBackupsFound")}
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -302,10 +300,10 @@ const RemoteBackupModal: React.FC<{
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
-                    <Tooltip content={t("restore") || "恢复"}>
+                    <Tooltip content={t("restore")}>
                       <button
                         onClick={() => handleRestoreClick(file)}
-                        aria-label={t("restore") || "恢复"}
+                        aria-label={t("restore")}
                         style={{
                           padding: "7px",
                           display: "flex",
@@ -335,10 +333,10 @@ const RemoteBackupModal: React.FC<{
                         <FileRestoreIcon size={16} color="currentColor" />
                       </button>
                     </Tooltip>
-                    <Tooltip content={t("delete") || "删除"}>
+                    <Tooltip content={t("delete")}>
                       <button
                         onClick={() => handleDeleteClick(file)}
-                        aria-label={t("delete") || "删除"}
+                        aria-label={t("delete")}
                         style={{
                           padding: "7px",
                           display: "flex",
@@ -559,9 +557,9 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
       a.download = filename
       a.click()
       URL.revokeObjectURL(url)
-      showDomToast(t("exportSuccess") || "导出成功！")
+      showDomToast(t("exportSuccess"))
     } catch (err) {
-      showDomToast(t("exportError") || "导出失败：" + String(err))
+      showDomToast(t("exportError"))
     }
   }
 
@@ -574,18 +572,18 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
       // 数据格式验证
       const validation = validateBackupData(data)
       if (!validation.valid) {
-        const errorMsgs = validation.errorKeys.map((key) => t(key) || key).join(", ")
+        const errorMsgs = validation.errorKeys.map((key) => t(key)).join(", ")
         console.error("Backup validation failed:", validation.errorKeys)
-        showDomToast(t("invalidBackupFile") || "无效的格式: " + errorMsgs)
+        showDomToast(t("invalidBackupFile"))
         return
       }
 
       setConfirmConfig({
         show: true,
-        title: t("importData") || "导入数据",
+        title: t("importData"),
         message: (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div>{t("importConfirm") || "确定导入？"}</div>
+            <div>{t("importConfirm")}</div>
             <div
               style={{
                 border: "1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 15%, transparent)",
@@ -601,22 +599,18 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
                   columnGap: "10px",
                   alignItems: "start",
                 }}>
-                <div style={{ color: "var(--gh-text-secondary, #6b7280)" }}>
-                  {t("backupTime") || "备份时间"}
-                </div>
+                <div style={{ color: "var(--gh-text-secondary, #6b7280)" }}>{t("backupTime")}</div>
                 <div style={{ color: "var(--gh-text, #111827)", fontWeight: 500 }}>
                   {String(data.timestamp || "-")}
                 </div>
-                <div style={{ color: "var(--gh-text-secondary, #6b7280)" }}>
-                  {t("backupType") || "类型"}
-                </div>
+                <div style={{ color: "var(--gh-text-secondary, #6b7280)" }}>{t("backupType")}</div>
                 <div style={{ color: "var(--gh-text, #111827)", fontWeight: 500 }}>
                   {formatBackupTypeLabel(data.type)}
                 </div>
               </div>
             </div>
             <div style={{ fontSize: "12px", color: "var(--gh-text-secondary, #6b7280)" }}>
-              {t("openAiPagesWillRefresh") || "已打开的 AI 页面将被刷新。"}
+              {t("openAiPagesWillRefresh")}
             </div>
           </div>
         ),
@@ -690,17 +684,17 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
             await writeStorageUpdates(updates)
             await notifyPagesToReload()
 
-            showDomToast(t("importSuccess") || "导入成功")
+            showDomToast(t("importSuccess"))
             setTimeout(() => window.location.reload(), 1000)
           } catch (err) {
             console.error("[Backup] import storage write failed:", err)
-            showDomToast(`${t("importError") || "导入失败："}${getErrorMessage(err)}`)
+            showDomToast(`${t("importError")}${getErrorMessage(err)}`)
           }
         },
       })
     } catch (e) {
       console.error("[Backup] import parse failed:", e)
-      showDomToast(`${t("importError") || "导入失败："}${getErrorMessage(e)}`)
+      showDomToast(`${t("importError")}${getErrorMessage(e)}`)
     }
   }
 
@@ -734,10 +728,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
   const handleClearAll = () => {
     setConfirmConfig({
       show: true,
-      title: t("clearAllData") || "清除全部数据",
-      message:
-        t("clearAllDataConfirm") ||
-        "确定要清除所有数据吗？此操作不可逆，所有设置、提示词、会话等数据都将被删除！",
+      title: t("clearAllData"),
+      message: t("clearAllDataConfirm"),
       danger: true,
       onConfirm: async () => {
         setConfirmConfig((prev) => ({ ...prev, show: false }))
@@ -768,7 +760,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
             ),
           )
           resetLocalStores()
-          showDomToast(t("clearSuccess") || "数据已清除，即将刷新...")
+          showDomToast(t("clearSuccess"))
           setTimeout(() => window.location.reload(), 1500)
         } catch (err) {
           showDomToast(t("error") + ": " + String(err))
@@ -802,7 +794,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
   ): Promise<boolean> => {
     const url = webdavForm.url // 使用表单值检查权限
     if (!url) {
-      showDomToast(t("webdavConfigIncomplete") || "请填写完整的 WebDAV 配置")
+      showDomToast(t("webdavConfigIncomplete"))
       return false
     }
 
@@ -868,7 +860,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
         ...webdavForm,
       },
     })
-    showDomToast(t("saveSuccess") || "配置已保存")
+    showDomToast(t("saveSuccess"))
   }
 
   const testWebDAVConnection = async () => {
@@ -878,8 +870,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
       await manager.setConfig(webdavForm, false)
 
       const res = await manager.testConnection()
-      if (res.success) showDomToast(t("webdavConnectionSuccess") || "连接成功")
-      else showDomToast(t("webdavConnectionFailed") || "连接失败: " + res.messageKey)
+      if (res.success) showDomToast(t("webdavConnectionSuccess"))
+      else showDomToast(t("webdavConnectionFailed"))
     })
   }
 
@@ -890,8 +882,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
       await manager.setConfig(webdavForm, false)
 
       const res = await manager.upload()
-      if (res.success) showDomToast(t("webdavUploadSuccess") || "备份上传成功")
-      else showDomToast(t("webdavUploadFailed") || "上传失败: " + res.messageKey)
+      if (res.success) showDomToast(t("webdavUploadSuccess"))
+      else showDomToast(t("webdavUploadFailed"))
     })
   }
 
@@ -910,7 +902,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
 
   return (
     <div className="settings-content">
-      <PageTitle title={t("navBackup") || "备份与同步"} Icon={CloudIcon} />
+      <PageTitle title={t("navBackup")} Icon={CloudIcon} />
 
       {/* 确认弹窗 */}
       {confirmConfig.show && (
@@ -926,8 +918,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
       {/* 权限确认弹窗 */}
       {permissionConfirm.show && (
         <ConfirmDialog
-          title={t("permissionRequired") || "需要权限"}
-          message={t("webdavPermissionDesc") || "需要访问该域名的权限才能进行 WebDAV 备份。"}
+          title={t("permissionRequired")}
+          message={t("webdavPermissionDesc")}
           onConfirm={permissionConfirm.onConfirm}
           onCancel={() => setPermissionConfirm((prev) => ({ ...prev, show: false }))}
         />
@@ -951,9 +943,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
           marginBottom: "24px",
         }}>
         {/* 左侧：导出 */}
-        <SettingCard
-          title={t("exportData") || "导出数据"}
-          description={t("exportDataDesc") || "将数据导出为 JSON 文件进行备份"}>
+        <SettingCard title={t("exportData")} description={t("exportDataDesc")}>
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {/* 完整备份 */}
             <div
@@ -966,18 +956,16 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
                 borderRadius: "8px",
               }}>
               <div>
-                <div style={{ fontWeight: 500, fontSize: "14px" }}>
-                  {t("fullBackup") || "完整备份"}
-                </div>
+                <div style={{ fontWeight: 500, fontSize: "14px" }}>{t("fullBackup")}</div>
                 <div style={{ fontSize: "12px", color: "var(--gh-text-secondary)" }}>
-                  {t("fullBackupDesc") || "推荐用于完整迁移"}
+                  {t("fullBackupDesc")}
                 </div>
               </div>
               <button
                 onClick={() => handleExport("full")}
                 className="settings-btn settings-btn-success"
                 style={{ padding: "6px 16px" }}>
-                {t("export") || "导出"}
+                {t("export")}
               </button>
             </div>
 
@@ -992,18 +980,16 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
                 borderRadius: "8px",
               }}>
               <div>
-                <div style={{ fontWeight: 500, fontSize: "14px" }}>
-                  {t("promptsBackup") || "仅提示词"}
-                </div>
+                <div style={{ fontWeight: 500, fontSize: "14px" }}>{t("promptsBackup")}</div>
                 <div style={{ fontSize: "12px", color: "var(--gh-text-secondary)" }}>
-                  {t("promptsBackupDesc") || "仅导出提示词数据"}
+                  {t("promptsBackupDesc")}
                 </div>
               </div>
               <button
                 onClick={() => handleExport("prompts")}
                 className="settings-btn settings-btn-primary"
                 style={{ padding: "6px 16px" }}>
-                {t("export") || "导出"}
+                {t("export")}
               </button>
             </div>
 
@@ -1018,38 +1004,32 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
                 borderRadius: "8px",
               }}>
               <div>
-                <div style={{ fontWeight: 500, fontSize: "14px" }}>
-                  {t("settingsBackup") || "仅设置"}
-                </div>
+                <div style={{ fontWeight: 500, fontSize: "14px" }}>{t("settingsBackup")}</div>
                 <div style={{ fontSize: "12px", color: "var(--gh-text-secondary)" }}>
-                  {t("settingsBackupDesc") || "仅导出配置项"}
+                  {t("settingsBackupDesc")}
                 </div>
               </div>
               <button
                 onClick={() => handleExport("settings")}
                 className="settings-btn settings-btn-secondary"
                 style={{ padding: "6px 16px" }}>
-                {t("export") || "导出"}
+                {t("export")}
               </button>
             </div>
           </div>
         </SettingCard>
 
         {/* 右侧：导入 */}
-        <SettingCard
-          title={t("importData") || "导入数据"}
-          description={t("importDataDesc") || "从备份文件恢复数据"}>
+        <SettingCard title={t("importData")} description={t("importDataDesc")}>
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {/* 文件选择 */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ fontSize: "14px", fontWeight: 500 }}>
-                {t("selectFile") || "选择文件"}
-              </div>
+              <div style={{ fontSize: "14px", fontWeight: 500 }}>{t("selectFile")}</div>
               <button
                 className="settings-btn settings-btn-secondary"
                 onClick={() => fileInputRef.current?.click()}
                 style={{ padding: "6px 12px" }}>
-                {t("browse") || "浏览..."}
+                {t("browse")}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -1068,13 +1048,13 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
                   color: "var(--gh-text-secondary)",
                   marginBottom: "4px",
                 }}>
-                {t("dataPreview") || "数据预览 (可直接粘贴)"}
+                {t("dataPreview")}
               </div>
               <textarea
                 className="settings-input"
                 value={pasteContent}
                 onChange={(e) => setPasteContent(e.target.value)}
-                placeholder={t("pastePlaceholder") || "粘贴 JSON 数据..."}
+                placeholder={t("pastePlaceholder")}
                 style={{
                   width: "100%",
                   height: "120px",
@@ -1091,16 +1071,14 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
               className="settings-btn settings-btn-primary"
               style={{ width: "100%", justifyContent: "center", padding: "8px" }}
               disabled={!pasteContent.trim()}>
-              {t("importBtn") || "确认导入"}
+              {t("importBtn")}
             </button>
           </div>
         </SettingCard>
       </div>
 
       {/* WebDAV 设置与操作 */}
-      <SettingCard
-        title={t("webdavConfig") || "WebDAV 备份与同步"}
-        description={t("webdavConfigDesc") || "配置 WebDAV 服务器以启用云端同步"}>
+      <SettingCard title={t("webdavConfig")} description={t("webdavConfigDesc")}>
         {/* 提示信息 */}
         <div
           style={{
@@ -1121,13 +1099,12 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
               gap: "6px",
               color: "var(--gh-text)",
             }}>
-            <InfoIcon size={14} color="var(--gh-primary, #4285f4)" />{" "}
-            {t("restoreTip") || "恢复提示"}
+            <InfoIcon size={14} color="var(--gh-primary, #4285f4)" /> {t("restoreTip")}
           </div>
           <div style={{ lineHeight: 1.5 }}>{t("restoreTipContent")}</div>
         </div>
 
-        <SettingRow label={t("webdavProvider") || "服务商"}>
+        <SettingRow label={t("webdavProvider")}>
           <select
             className="settings-input settings-select"
             value={webdavForm.provider || "custom"}
@@ -1144,7 +1121,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
             style={{ width: "280px" }}>
             {WEBDAV_PROVIDER_PRESETS.map((p) => (
               <option key={p.id} value={p.id}>
-                {t(p.labelKey) || p.id}
+                {t(p.labelKey)}
               </option>
             ))}
           </select>
@@ -1187,7 +1164,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
                       color: "var(--gh-primary, #4285f4)",
                       textDecoration: "underline",
                     }}>
-                    {t("learnMore") || "了解更多"}
+                    {t("learnMore")}
                   </a>
                 )}
               </div>
@@ -1195,7 +1172,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
           )
         })()}
 
-        <SettingRow label={t("webdavAddress") || "服务器地址"}>
+        <SettingRow label={t("webdavAddress")}>
           {(() => {
             const preset = WEBDAV_PROVIDER_PRESETS.find(
               (p) => p.id === (webdavForm.provider || "custom"),
@@ -1214,7 +1191,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
           })()}
         </SettingRow>
 
-        <SettingRow label={t("username") || "用户名"}>
+        <SettingRow label={t("username")}>
           <input
             type="text"
             className="settings-input"
@@ -1224,14 +1201,14 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
           />
         </SettingRow>
 
-        <SettingRow label={t("password") || "密码"}>
+        <SettingRow label={t("password")}>
           {(() => {
             const preset = WEBDAV_PROVIDER_PRESETS.find(
               (p) => p.id === (webdavForm.provider || "custom"),
             )
             const pwdPlaceholder = preset?.passwordPlaceholderKey
-              ? t(preset.passwordPlaceholderKey) || ""
-              : t("webdavPasswordPlaceholder") || "应用专用密码"
+              ? t(preset.passwordPlaceholderKey)
+              : t("webdavPasswordPlaceholder")
             return (
               <input
                 type="password"
@@ -1245,9 +1222,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
           })()}
         </SettingRow>
 
-        <SettingRow
-          label={t("defaultDir") || "默认目录"}
-          description={t("defaultDirHint") || "默认: ophel"}>
+        <SettingRow label={t("defaultDir")} description={t("defaultDirHint")}>
           <input
             type="text"
             className="settings-input"
@@ -1273,14 +1248,14 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
               className="settings-btn settings-btn-secondary"
               onClick={testWebDAVConnection}
               style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 16px" }}>
-              <LinkIcon size={16} /> {t("webdavTestBtn") || "测试连接"}
+              <LinkIcon size={16} /> {t("webdavTestBtn")}
             </button>
             <div style={{ position: "relative" }}>
               <button
                 className={`settings-btn ${isWebDAVUnsaved ? "settings-btn-primary" : "settings-btn-secondary"}`}
                 onClick={handleSaveConfig}
                 style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 16px" }}>
-                <SaveIcon size={16} /> {t("saveConfig") || "保存配置"}
+                <SaveIcon size={16} /> {t("saveConfig")}
               </button>
               {isWebDAVUnsaved && (
                 <span
@@ -1311,13 +1286,13 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
                   setShowRemoteBackups(true)
                 })
               }}>
-              <FileRestoreIcon size={16} color="currentColor" /> {t("restore") || "恢复"}
+              <FileRestoreIcon size={16} color="currentColor" /> {t("restore")}
             </button>
             <button
               className={`settings-btn ${!isWebDAVUnsaved ? "settings-btn-primary" : "settings-btn-secondary"}`}
               style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 16px" }}
               onClick={uploadToWebDAV}>
-              <CloudUploadIcon size={16} color="currentColor" /> {t("backupNow") || "立即备份"}
+              <CloudUploadIcon size={16} color="currentColor" /> {t("backupNow")}
             </button>
           </div>
         </div>
@@ -1325,8 +1300,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
 
       {/* 危险操作区 */}
       <SettingCard
-        title={t("dangerZone") || "危险区域"}
-        description={t("dangerZoneDesc") || "破坏性操作（不可恢复）"}
+        title={t("dangerZone")}
+        description={t("dangerZoneDesc")}
         className="danger-zone-card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
@@ -1336,17 +1311,17 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
                 fontWeight: 500,
                 color: "var(--gh-danger, #ef4444)",
               }}>
-              {t("clearAllData") || "清除全部数据"}
+              {t("clearAllData")}
             </div>
             <div style={{ fontSize: "12px", color: "var(--gh-text-secondary)" }}>
-              {t("clearAllDataDesc") || "慎重操作：这将清除本地所有设置、提示词和会话数据"}
+              {t("clearAllDataDesc")}
             </div>
           </div>
           <button
             className="settings-btn settings-btn-danger"
             onClick={handleClearAll}
             style={{ padding: "8px 16px", fontSize: "13px" }}>
-            {t("clearAllData") || "清除全部数据"}
+            {t("clearAllData")}
           </button>
         </div>
       </SettingCard>

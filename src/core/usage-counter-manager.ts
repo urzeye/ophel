@@ -671,22 +671,19 @@ export class UsageCounterManager {
       this.root.dataset.level = level
       this.root.dataset.theme = this.detectThemeMode()
 
-      const title = t("usageMonitorSettingsTitle") || "高级模型本地计数与预估"
+      const title = t("usageMonitorSettingsTitle")
       const usageLabel = this.settings.autoResetEnabled
-        ? t("usageMonitorTodayUsed") || "今日已用"
-        : t("usageMonitorLocallyUsed") || "本地已记"
-      const inputCharsLabel = t("usageMonitorInputChars") || "输入字符"
-      const loadedConversationLabel = t("usageMonitorLoadedConversationTokens") || "已加载对话"
-      const loadedOutputLabel = t("usageMonitorLoadedOutputTokens") || "已加载输出"
-      const requestTokensLabel = t("usageMonitorRequestTokens") || "当前请求"
-      const roundTripLabel = t("usageMonitorRoundTripTokens") || "单轮往返"
-      const roundTripDesc =
-        t("usageMonitorRoundTripDesc") || "单轮往返 = 当前请求 + 一次预计回复的总消耗粗估区间"
-      const resetButtonLabel = t("usageMonitorResetButton") || "清零"
-      const manualModeLabel = this.settings.autoResetEnabled
-        ? null
-        : t("usageMonitorManualMode") || "手动模式"
-      const contextCharsLabel = t("usageMonitorContextChars") || "上下文字符"
+        ? t("usageMonitorTodayUsed")
+        : t("usageMonitorLocallyUsed")
+      const inputCharsLabel = t("usageMonitorInputChars")
+      const loadedConversationLabel = t("usageMonitorLoadedConversationTokens")
+      const loadedOutputLabel = t("usageMonitorLoadedOutputTokens")
+      const requestTokensLabel = t("usageMonitorRequestTokens")
+      const roundTripLabel = t("usageMonitorRoundTripTokens")
+      const roundTripDesc = t("usageMonitorRoundTripDesc")
+      const resetButtonLabel = t("usageMonitorResetButton")
+      const manualModeLabel = this.settings.autoResetEnabled ? null : t("usageMonitorManualMode")
+      const contextCharsLabel = t("usageMonitorContextChars")
 
       this.root.replaceChildren(
         this.buildUsageMonitorPanel({

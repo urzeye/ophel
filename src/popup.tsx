@@ -272,7 +272,7 @@ function IndexPopup() {
       <div className="popup-footer">
         <span className="popup-version">v{version}</span>
         <div className="popup-footer-actions">
-          <Tooltip content={t("rateAndReview") || "Love Ophel?"}>
+          <Tooltip content={t("rateAndReview")}>
             <button
               className="popup-action-pill review-btn icon-only"
               onClick={() => openUrl(storeInfo.url)}>
@@ -280,7 +280,7 @@ function IndexPopup() {
             </button>
           </Tooltip>
 
-          <Tooltip content={t("giveStar") || "Star on GitHub"}>
+          <Tooltip content={t("giveStar")}>
             <button
               className="popup-action-pill star-btn icon-only"
               onClick={() => openUrl("https://github.com/urzeye/ophel")}>
@@ -288,7 +288,7 @@ function IndexPopup() {
             </button>
           </Tooltip>
 
-          <Tooltip content={t("kofiSupport") || "Buy Me a Coffee"}>
+          <Tooltip content={t("kofiSupport")}>
             <button
               className="popup-action-pill kofi-btn icon-only"
               onClick={() => openUrl("https://ko-fi.com/urzeye")}>
@@ -296,7 +296,7 @@ function IndexPopup() {
             </button>
           </Tooltip>
 
-          <Tooltip content={t("discordCommunity") || "Discord 社区"}>
+          <Tooltip content={t("discordCommunity")}>
             <button
               className="popup-action-pill discord-btn icon-only"
               onClick={() => openUrl("https://discord.gg/rmPzb6Cx9u")}>
@@ -310,7 +310,7 @@ function IndexPopup() {
             target="_blank"
             rel="noopener noreferrer"
             className="popup-feedback-link">
-            {t("popupFeedback") || "反馈"}
+            {t("popupFeedback")}
           </a>
         </div>
       </div>

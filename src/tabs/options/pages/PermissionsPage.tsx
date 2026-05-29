@@ -241,17 +241,12 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
 
   // 点击撤销按钮
   const handleRevokeClick = (perm: { id: string; origins?: string[]; permissions?: string[] }) => {
-    let confirmMsg =
-      t("revokeConfirmDefault") || "确定要撤销此权限吗？撤销后，依赖该权限的功能将会自动关闭。"
+    let confirmMsg = t("revokeConfirmDefault")
 
     if (perm.id === "notifications") {
-      confirmMsg =
-        t("revokeConfirmNotifications") ||
-        "确定要撤销通知权限吗？\n\n撤销后，【桌面通知】功能将自动关闭。如需再次使用，需重新授权。"
+      confirmMsg = t("revokeConfirmNotifications")
     } else if (perm.id === "webdav") {
-      confirmMsg =
-        t("revokeConfirmWebdav") ||
-        "确定要撤销高级访问权限吗？\n\n撤销后，【水印移除】和【WebDAV 同步】功能将自动关闭。如需再次使用，需重新授权。"
+      confirmMsg = t("revokeConfirmWebdav")
     }
 
     setConfirmDialog({
@@ -263,13 +258,11 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
 
   return (
     <div>
-      <PageTitle title={t("navPermissions") || "权限管理"} Icon={PermissionsIcon} />
-      <p className="settings-page-desc">{t("permissionsPageDesc") || "查看和管理扩展的权限。"}</p>
+      <PageTitle title={t("navPermissions")} Icon={PermissionsIcon} />
+      <p className="settings-page-desc">{t("permissionsPageDesc")}</p>
 
       {/* 可选权限 */}
-      <SettingCard
-        title={t("optionalPermissions") || "可选权限"}
-        description={t("optionalPermissionsDesc") || "这些权限可以按需授予或撤销"}>
+      <SettingCard title={t("optionalPermissions")} description={t("optionalPermissionsDesc")}>
         {/* 同步提示 + 刷新按钮 */}
         <div
           style={{
@@ -281,7 +274,7 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
             borderBottom: "1px solid var(--gh-border, #e5e7eb)",
           }}>
           <span style={{ fontSize: "13px", color: "var(--gh-text-secondary, #9ca3af)" }}>
-            {t("permissionsSyncHint") || "权限状态与浏览器同步，如在此页面外修改请点击刷新。"}
+            {t("permissionsSyncHint")}
           </span>
           <button
             className="settings-btn settings-btn-secondary"
@@ -289,11 +282,11 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
               e.preventDefault()
               e.stopPropagation()
               await checkOptionalPermissions()
-              showToast(t("permissionsRefreshed") || "权限状态已刷新", 1500)
+              showToast(t("permissionsRefreshed"), 1500)
             }}
             disabled={loading}
             style={{ fontSize: "12px", padding: "4px 12px", flexShrink: 0 }}>
-            {loading ? t("refreshing") || "刷新中..." : t("refreshStatus") || "刷新状态"}
+            {loading ? t("refreshing") : t("refreshStatus")}
           </button>
         </div>
 
@@ -303,10 +296,10 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
             label={
               <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span style={{ fontSize: "18px" }}>{perm.icon}</span>
-                <span>{t(perm.nameKey) || perm.name}</span>
+                <span>{t(perm.nameKey)}</span>
               </span>
             }
-            description={t(perm.description) || perm.description}
+            description={t(perm.description)}
             style={index === arr.length - 1 ? { borderBottom: "none" } : {}}>
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
               {optionalPermissionStatus[perm.id] ? (
@@ -319,7 +312,7 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
                       background: "rgba(16, 185, 129, 0.1)",
                       color: "#10b981",
                     }}>
-                    {t("granted") || "已授予"}
+                    {t("granted")}
                   </span>
                   <button
                     className="settings-btn settings-btn-secondary"
@@ -329,7 +322,7 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
                       e.stopPropagation()
                       handleRevokeClick(perm)
                     }}>
-                    {t("revoke") || "撤销"}
+                    {t("revoke")}
                   </button>
                 </>
               ) : (
@@ -342,7 +335,7 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
                       background: "rgba(239, 68, 68, 0.1)",
                       color: "#ef4444",
                     }}>
-                    {t("notGranted") || "未授予"}
+                    {t("notGranted")}
                   </span>
                   <button
                     className="settings-btn settings-btn-primary"
@@ -352,7 +345,7 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
                       e.stopPropagation()
                       requestPermission(perm)
                     }}>
-                    {t("allowRecommended") || "允许（推荐）"}
+                    {t("allowRecommended")}
                   </button>
                 </>
               )}
@@ -362,19 +355,17 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
       </SettingCard>
 
       {/* 必需权限（只读展示） */}
-      <SettingCard
-        title={t("requiredPermissions") || "必需权限"}
-        description={t("requiredPermissionsDesc") || "这些权限是扩展正常运行所必需的，无法关闭"}>
+      <SettingCard title={t("requiredPermissions")} description={t("requiredPermissionsDesc")}>
         {REQUIRED_PERMISSIONS.map((perm, index) => (
           <SettingRow
             key={perm.id}
             label={
               <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span style={{ fontSize: "18px" }}>{perm.icon}</span>
-                <span>{t(perm.nameKey) || perm.name}</span>
+                <span>{t(perm.nameKey)}</span>
               </span>
             }
-            description={t(perm.description) || perm.description}
+            description={t(perm.description)}
             style={index === REQUIRED_PERMISSIONS.length - 1 ? { borderBottom: "none" } : {}}>
             <span
               style={{
@@ -384,7 +375,7 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
                 background: "rgba(107, 114, 128, 0.1)",
                 color: "var(--gh-text-secondary, #6b7280)",
               }}>
-              {t("required") || "必需"}
+              {t("required")}
             </span>
           </SettingRow>
         ))}
@@ -393,10 +384,10 @@ const PermissionsPage: React.FC<PermissionsPageProps> = () => {
       {/* 确认弹窗 */}
       {confirmDialog.open && (
         <ConfirmDialog
-          title={t("warning") || "警告"}
+          title={t("warning")}
           message={confirmDialog.message}
-          confirmText={t("confirm") || "确定"}
-          cancelText={t("cancel") || "取消"}
+          confirmText={t("confirm")}
+          cancelText={t("cancel")}
           danger={true}
           onConfirm={confirmDialog.onConfirm}
           onCancel={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}

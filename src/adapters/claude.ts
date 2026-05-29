@@ -1874,9 +1874,7 @@ export class ClaudeAdapter extends SiteAdapter {
     const imageMarkdown = this.formatClaudeUserImageAttachments(attachments, collector)
     const fileMarkdown = this.formatClaudeUserFileAttachments(attachments, collector)
     const fileBlock =
-      fileMarkdown.length > 0
-        ? `${t("exportAttachmentsLabel") || "Attachments"}:\n${fileMarkdown.join("\n")}`
-        : ""
+      fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
 
     return [imageMarkdown.join("\n\n"), fileBlock, textContent].filter(Boolean).join("\n\n")
   }

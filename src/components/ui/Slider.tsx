@@ -184,8 +184,8 @@ export const Slider: React.FC<SliderProps> = ({
             className="settings-slider-reset"
             onClick={handleReset}
             disabled={disabled || isDefaultValue}
-            title={t("restore") || "恢复默认"}
-            aria-label={t("restore") || "恢复默认"}>
+            title={t("restore")}
+            aria-label={t("restore")}>
             <RestoreIcon size={14} />
           </button>
         )}

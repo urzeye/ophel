@@ -44,10 +44,10 @@ const countOutlineNodes = (nodes: OutlineNode[]): number => {
 
 const getOutlineSourceLabel = (source: OutlineSource): string => {
   if (source.kind === "conversation") {
-    return t("outlineSourceConversation") || source.label || "对话"
+    return t("outlineSourceConversation")
   }
   if (source.kind === "document") {
-    return t("outlineSourceDocument") || source.label || "文档"
+    return t("outlineSourceDocument")
   }
   return source.label
 }
@@ -296,7 +296,7 @@ const OutlineNodeView: React.FC<{
             <div>
               {node.text}
               <div style={{ fontSize: "12px", opacity: 0.8, marginTop: "2px" }}>
-                ({formatWordCount(node.wordCount, getCurrentLang())} {t("words") || "words"})
+                ({formatWordCount(node.wordCount, getCurrentLang())} {t("words")})
               </div>
             </div>
           ) : (
@@ -340,12 +340,7 @@ const OutlineNodeView: React.FC<{
 
           {/* Bookmark Button (Hover or Bookmarked) */}
           <span className={`outline-item-bookmark-wrapper ${node.isBookmarked ? "active" : ""}`}>
-            <Tooltip
-              content={
-                node.isBookmarked
-                  ? t("removeBookmark") || "Remove Bookmark"
-                  : t("addBookmark") || "Add Bookmark"
-              }>
+            <Tooltip content={node.isBookmarked ? t("removeBookmark") : t("addBookmark")}>
               <span
                 className={`outline-item-bookmark-btn ${node.isBookmarked ? "active" : ""}`}
                 onClick={(e) => onToggleBookmark(e, node)}
@@ -362,7 +357,7 @@ const OutlineNodeView: React.FC<{
 
           {/* 复制按钮 (所有节点显示) */}
           {true && (
-            <Tooltip content={t("copy") || "复制"}>
+            <Tooltip content={t("copy")}>
               <span
                 className="outline-item-copy-btn"
                 onClick={handleCopy}
@@ -410,7 +405,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   const { settings } = useSettingsStore()
   const currentSettings = settings
   const isMac = React.useMemo(() => isMacOS(), [])
-  const shortcutNotSetLabel = t("shortcutNotSet") || "未设置"
+  const shortcutNotSetLabel = t("shortcutNotSet")
 
   const structuredTips = React.useMemo(
     () => buildStructuredTips(currentSettings.shortcuts?.keybindings, isMac, shortcutNotSetLabel),
@@ -979,7 +974,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
           scrollContainer.scrollTo({ top: node.scrollTop, behavior: "smooth" })
           updateActiveIndex(node.index)
           updateVisibleHighlightIndex(getVisibleHighlightIndex(node.index))
-          showToast(t("bookmarkContentMissing") || "收藏内容不存在，已跳转到保存位置", 3000)
+          showToast(t("bookmarkContentMissing"), 3000)
         }
       }
     },
@@ -1202,11 +1197,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
           <div style={{ display: "flex", gap: "2px" }}>
             {/* Group Mode */}
             <Tooltip
-              content={
-                showUserQueries
-                  ? t("outlineOnlyUserQueries") || "仅显示提问"
-                  : t("outlineShowUserQueries") || "显示所有"
-              }>
+              content={showUserQueries ? t("outlineOnlyUserQueries") : t("outlineShowUserQueries")}>
               <button
                 onClick={handleGroupModeToggle}
                 className={`outline-toolbar-btn ${showUserQueries ? "active-subtle" : ""}`}>
@@ -1215,7 +1206,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             </Tooltip>
 
             {/* Bookmark Mode Toggle */}
-            <Tooltip content={t("bookmarkMode") || "收藏"}>
+            <Tooltip content={t("bookmarkMode")}>
               <button
                 onClick={handleToggleBookmarkMode}
                 className={`outline-toolbar-btn ${bookmarkMode ? "active-subtle" : ""}`}>
@@ -1227,7 +1218,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             <Tooltip
               content={
                 bookmarkMode
-                  ? t("bookmarkModeDisabled") || "收藏模式下不可用"
+                  ? t("bookmarkModeDisabled")
                   : isAllExpanded
                     ? t("outlineCollapseAll")
                     : t("outlineExpandAll")
@@ -1256,7 +1247,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             </Tooltip>
 
             {/* Locate Current */}
-            <Tooltip content={t("outlineLocateCurrent") || "定位到当前位置"}>
+            <Tooltip content={t("outlineLocateCurrent")}>
               <button
                 onClick={handleLocateCurrent}
                 style={{
@@ -1278,11 +1269,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
             {/* Dynamic Scroll (Top/Bottom) */}
             <Tooltip
-              content={
-                scrollState === "bottom"
-                  ? t("outlineScrollBottom") || "滚动到底部"
-                  : t("outlineScrollTop") || "回到顶部"
-              }>
+              content={scrollState === "bottom" ? t("outlineScrollBottom") : t("outlineScrollTop")}>
               <button
                 onClick={handleDynamicScroll}
                 style={{
@@ -1321,7 +1308,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               ref={inputRef}
               type="text"
               className="outline-search-input"
-              placeholder={t("outlineSearch") || "搜索..."}
+              placeholder={t("outlineSearch")}
               value={searchQuery}
               onChange={handleSearchChange}
               style={{
@@ -1408,11 +1395,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               // Tooltip Text
               let title = ""
               if (bookmarkMode) {
-                title = t("bookmarkModeDisabled") || "收藏模式下不可用"
+                title = t("bookmarkModeDisabled")
               } else if (lvl === 0) {
-                title = showUserQueries
-                  ? t("outlineOnlyUserQueries") || "仅显示提问"
-                  : t("outlineCollapseAll") || "折叠全部"
+                title = showUserQueries ? t("outlineOnlyUserQueries") : t("outlineCollapseAll")
               } else {
                 title = `H${lvl}: ${levelCounts[lvl] || 0}`
               }
@@ -1469,14 +1454,12 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             border: matchCount === 0 ? "1px dashed var(--gh-border, #e5e7eb)" : "none",
             flexShrink: 0, // 防止被压缩
           }}>
-          {matchCount} {t("outlineSearchResult") || "个结果"}
+          {matchCount} {t("outlineSearchResult")}
         </div>
       )}
 
       {outlineSourceOptions.length > 1 && !searchQuery && (
-        <div
-          className="outline-source-switch"
-          aria-label={t("outlineSourceSwitchLabel") || "大纲来源"}>
+        <div className="outline-source-switch" aria-label={t("outlineSourceSwitchLabel")}>
           {outlineSourceOptions.map((source) => (
             <button
               key={source.id}
@@ -1516,10 +1499,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
           const isOutlineVisuallyEmpty = !searchQuery && (isTreeEmpty || !hasVisibleNodes)
           const emptyDescription =
             showUserQueries && displayLevel === 0
-              ? t("outlineEmptyDescUserQueryOnly") ||
-                "Only user queries are shown. Send a message to build the outline."
-              : t("outlineEmptyDescDefault") ||
-                "Outline items will appear as the conversation grows."
+              ? t("outlineEmptyDescUserQueryOnly")
+              : t("outlineEmptyDescDefault")
           const zhCommaIndex = emptyDescription.indexOf("，")
           const enCommaIndex = emptyDescription.indexOf(",")
           let splitIndex = -1
@@ -1543,12 +1524,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                   aria-hidden="true">
                   <StarIcon size={20} filled={true} color="#f59e0b" />
                 </div>
-                <div className="outline-empty-state-title">
-                  {t("outlineNoBookmarks") || "暂无收藏"}
-                </div>
-                <div className="outline-empty-state-desc">
-                  {t("outlineAddBookmarkHint") || "点击条目旁的星号添加收藏"}
-                </div>
+                <div className="outline-empty-state-title">{t("outlineNoBookmarks")}</div>
+                <div className="outline-empty-state-desc">{t("outlineAddBookmarkHint")}</div>
 
                 <div
                   style={{
@@ -1576,9 +1553,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                 <div className="outline-empty-state-icon" aria-hidden="true">
                   <OutlineDocumentIcon size={20} color="currentColor" />
                 </div>
-                <div className="outline-empty-state-title">
-                  {t("outlineEmpty") || "暂无大纲内容"}
-                </div>
+                <div className="outline-empty-state-title">{t("outlineEmpty")}</div>
                 <div className="outline-empty-state-desc">
                   <span className="outline-empty-state-desc-line">{emptyDescriptionFirstLine}</span>
                   {emptyDescriptionSecondLine && (

@@ -103,10 +103,10 @@ const ShortcutInput: React.FC<{
 
   // 如果 binding 为 null，显示"未设置"
   const displayText = isRecording
-    ? t("pressAnyKey") || "请按下快捷键..."
+    ? t("pressAnyKey")
     : binding
       ? formatShortcut(binding, isMac)
-      : t("shortcutNotSet") || "未设置"
+      : t("shortcutNotSet")
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -134,7 +134,7 @@ const ShortcutInput: React.FC<{
         {displayText}
       </button>
       {binding && (
-        <Tooltip content={t("shortcutRemove") || "移除"}>
+        <Tooltip content={t("shortcutRemove")}>
           <button
             onClick={onRemove}
             style={{
@@ -189,8 +189,8 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
           !!normalizedExistingBinding.shift === !!normalizedBinding.shift
         ) {
           const conflictParts = [
-            t("shortcutConflictWith") || "与",
-            `"${t(meta.labelKey) || meta.label}"`,
+            t("shortcutConflictWith"),
+            `"${t(meta.labelKey)}"`,
             t("shortcutConflict"),
           ].filter(Boolean)
           return conflictParts.join(" ")
@@ -263,15 +263,13 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
 
   return (
     <div>
-      <PageTitle title={t("navShortcuts") || "快捷键"} Icon={KeyboardIcon} />
-      <p className="settings-page-desc">
-        {t("shortcutsPageDesc") || "配置键盘快捷键以快速执行操作"}
-      </p>
+      <PageTitle title={t("navShortcuts")} Icon={KeyboardIcon} />
+      <p className="settings-page-desc">{t("shortcutsPageDesc")}</p>
 
-      <SettingCard title={t("shortcutsGlobalSettings") || "快捷键设置"}>
+      <SettingCard title={t("shortcutsGlobalSettings")}>
         <ToggleRow
-          label={t("enableShortcuts") || "启用自定义快捷键"}
-          description={t("enableShortcutsDesc") || "启用或禁用所有自定义键盘快捷键"}
+          label={t("enableShortcuts")}
+          description={t("enableShortcutsDesc")}
           checked={shortcuts?.enabled ?? true}
           settingId="shortcuts-enabled"
           onChange={() =>
@@ -289,7 +287,7 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
         {platform.hasCapability("commands") && (
           <>
             <SettingRow
-              label={t("globalShortcutUrl") || "全局快捷键打开的 URL"}
+              label={t("globalShortcutUrl")}
               description={(() => {
                 const translated = t("globalShortcutUrlDesc", {
                   shortcut: isMac ? "⌥O" : "Alt+O",
@@ -321,11 +319,8 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
             </SettingRow>
 
             <SettingRow
-              label={t("globalShortcutsTitle") || "全局快捷键"}
-              description={
-                t("globalShortcutsDesc") ||
-                "在浏览器任何页面都可使用，需要在浏览器扩展设置页面配置。"
-              }
+              label={t("globalShortcutsTitle")}
+              description={t("globalShortcutsDesc")}
               settingId="shortcuts-browser-shortcuts">
               {(() => {
                 const ua = navigator.userAgent
@@ -338,7 +333,7 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
                 if (!isSupported) {
                   return (
                     <span style={{ fontSize: "13px", color: "var(--gh-text-tertiary)" }}>
-                      {t("browserNotSupported") || "当前浏览器不支持自定义扩展快捷键"}
+                      {t("browserNotSupported")}
                     </span>
                   )
                 }
@@ -356,8 +351,7 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
                         color: "var(--gh-text-secondary)",
                         lineHeight: "1.5",
                       }}>
-                      {t("firefoxShortcutsGuide") ||
-                        "在地址栏输入 about:addons，进入扩展页面 → 点击齿轮图标 → 管理扩展快捷键"}
+                      {t("firefoxShortcutsGuide")}
                     </span>
                   )
                 }
@@ -375,7 +369,7 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
                       cursor: "pointer",
                       whiteSpace: "nowrap",
                     }}>
-                    {t("openBrowserShortcuts") || "打开浏览器快捷键设置"}
+                    {t("openBrowserShortcuts")}
                   </button>
                 )
               })()}
@@ -401,13 +395,13 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
               color: "var(--gh-text-secondary)",
               cursor: "pointer",
             }}>
-            {t("resetShortcuts") || "恢复默认快捷键"}
+            {t("resetShortcuts")}
           </button>
         </div>
       </SettingCard>
 
       {groupedActions.map(({ categoryId, categoryMeta, actions }) => (
-        <SettingCard key={categoryId} title={t(categoryMeta.labelKey) || categoryMeta.label}>
+        <SettingCard key={categoryId} title={t(categoryMeta.labelKey)}>
           {actions.map(([actionId, meta]) => {
             // 获取绑定：用户设置 > 默认设置（若用户设置为 null 则为已移除）
             const userBinding = shortcuts?.keybindings?.[actionId]
@@ -418,7 +412,7 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
             return (
               <SettingRow
                 key={actionId}
-                label={t(meta.labelKey) || meta.label}
+                label={t(meta.labelKey)}
                 disabled={!shortcuts?.enabled}
                 settingId={`shortcut-binding-${actionId}`}>
                 <ShortcutInput
@@ -435,8 +429,8 @@ const ShortcutsPage: React.FC<ShortcutsPageProps> = ({ siteId: _siteId }) => {
 
       {showResetConfirm && (
         <ConfirmDialog
-          title={t("resetShortcuts") || "恢复默认快捷键"}
-          message={t("resetShortcutsConfirm") || "确定要恢复所有快捷键为默认值吗？"}
+          title={t("resetShortcuts")}
+          message={t("resetShortcutsConfirm")}
           danger
           onConfirm={resetToDefault}
           onCancel={() => setShowResetConfirm(false)}

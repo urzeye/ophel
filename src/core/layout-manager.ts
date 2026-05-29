@@ -328,7 +328,7 @@ export class LayoutManager {
     )
 
     const primary = this.siteAdapter.getThemeColors().primary || "#2563eb"
-    const exitLabel = t("zenModeExitButton") || ZEN_MODE_EXIT_LABEL
+    const exitLabel = t("zenModeExitButton")
     const shadowRoot = host.attachShadow({ mode: "open" })
     shadowRoot.innerHTML = createSafeHTML(`
       <style>
@@ -480,7 +480,7 @@ export class LayoutManager {
   refreshLocalizedTexts() {
     if (!this.zenModeEnabled || !this.zenModeExitHost?.shadowRoot) return
 
-    const exitLabel = t("zenModeExitButton") || ZEN_MODE_EXIT_LABEL
+    const exitLabel = t("zenModeExitButton")
     const textSpan = this.zenModeExitHost.shadowRoot.querySelector(".zen-exit-text")
     const btn = this.zenModeExitHost.shadowRoot.querySelector(".zen-exit-btn")
 

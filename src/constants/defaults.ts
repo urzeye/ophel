@@ -25,16 +25,15 @@ export const MULTI_PROP_STORES: string[] = ["conversations", "readingHistory"]
 export const getDefaultPrompts = (): Prompt[] => [
   {
     id: "default_1",
-    title: t("defaultPromptCodeOptTitle") || "代码优化",
-    content: t("defaultPromptCodeOptContent") || "请帮我优化以下代码，提高性能和可读性：\n\n",
-    category: t("defaultPromptCodeOptCategory") || "编程",
+    title: t("defaultPromptCodeOptTitle"),
+    content: t("defaultPromptCodeOptContent"),
+    category: t("defaultPromptCodeOptCategory"),
   },
   {
     id: "default_2",
-    title: t("defaultPromptTranslateTitle") || "翻译助手",
-    content:
-      t("defaultPromptTranslateContent") || "请将以下内容翻译成中文，保持专业术语的准确性：\n\n",
-    category: t("defaultPromptTranslateCategory") || "翻译",
+    title: t("defaultPromptTranslateTitle"),
+    content: t("defaultPromptTranslateContent"),
+    category: t("defaultPromptTranslateCategory"),
   },
 ]
 

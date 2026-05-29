@@ -1823,9 +1823,7 @@ export class KimiAdapter extends SiteAdapter {
     }
 
     const fileBlock =
-      fileMarkdown.length > 0
-        ? `${t("exportAttachmentsLabel") || "Attachments"}:\n${fileMarkdown.join("\n")}`
-        : ""
+      fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
 
     return [imageMarkdown.join("\n\n"), fileBlock, body].filter(Boolean).join("\n\n")
   }

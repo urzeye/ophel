@@ -464,8 +464,7 @@ export const App = () => {
     },
     [globalSearchShortcutHintLabel, isMacLike, resolvedShortcutSettings],
   )
-  const globalSearchOverlayHotkeyLabel =
-    globalSearchShortcutHintLabel || t("shortcutNotSet") || "未设置"
+  const globalSearchOverlayHotkeyLabel = globalSearchShortcutHintLabel || t("shortcutNotSet")
   const isGlobalSearchFuzzySearchEnabled =
     settings?.globalSearch?.enableFuzzySearch ?? DEFAULT_SETTINGS.globalSearch.enableFuzzySearch
 
@@ -2048,7 +2047,7 @@ export const App = () => {
               top: item.outlineTarget.scrollTop,
               behavior: "smooth",
             })
-            showToast(t("bookmarkContentMissing") || "收藏内容不存在，已跳转到保存位置", 3000)
+            showToast(t("bookmarkContentMissing"), 3000)
             return
           }
         }
@@ -2132,12 +2131,12 @@ export const App = () => {
           if (inserted) {
             promptManager.updateLastUsed(targetPrompt.id)
             setSelectedPrompt(targetPrompt)
-            showToast(`${t("inserted") || "已插入"}: ${targetPrompt.title}`)
+            showToast(`${t("inserted")}: ${targetPrompt.title}`)
             return
           }
 
           locatePrompt()
-          showToast(t("insertFailed") || "未找到输入框，请点击输入框后重试")
+          showToast(t("insertFailed"))
         })()
 
         return
@@ -2753,16 +2752,13 @@ export const App = () => {
     if (!conversationManager || !adapter) return
     const sessionId = adapter.getSessionId()
     if (!sessionId) {
-      showToast(t("exportNeedOpenFirst") || "请先打开要导出的会话")
+      showToast(t("exportNeedOpenFirst"))
       return
     }
-    showToast(
-      t("exportStarted") || "正在导出会话，请勿操作当前页面...",
-      EXPORT_START_TOAST_DURATION,
-    )
+    showToast(t("exportStarted"), EXPORT_START_TOAST_DURATION)
     const success = await conversationManager.exportConversation(sessionId, "markdown")
     if (!success) {
-      showToast(t("exportFailed") || "导出失败")
+      showToast(t("exportFailed"))
     }
   }, [conversationManager, adapter])
 
@@ -2770,7 +2766,7 @@ export const App = () => {
     if (!conversationManager || !adapter) return
     const sessionId = adapter.getSessionId()
     if (!sessionId) {
-      showToast(t("noConversationToLocate") || "未找到会话")
+      showToast(t("noConversationToLocate"))
       return
     }
     const conv = conversationManager.getConversation(sessionId)
@@ -2784,10 +2780,10 @@ export const App = () => {
     if (!outlineManager) return
     const cleared = outlineManager.clearGhostBookmarks()
     if (cleared === 0) {
-      showToast(t("floatingToolbarClearGhostEmpty") || "没有需要清理的无效收藏")
+      showToast(t("floatingToolbarClearGhostEmpty"))
       return
     }
-    showToast(`${t("cleared") || "已清理"} (${cleared})`)
+    showToast(`${t("cleared")} (${cleared})`)
   }, [outlineManager])
 
   // 复制为 Markdown 处理器
@@ -2795,13 +2791,13 @@ export const App = () => {
     if (!conversationManager || !adapter) return
     const sessionId = adapter.getSessionId()
     if (!sessionId) {
-      showToast(t("exportNeedOpenFirst") || "请先打开要导出的会话")
+      showToast(t("exportNeedOpenFirst"))
       return
     }
-    showToast(t("exportLoading") || "正在加载...")
+    showToast(t("exportLoading"))
     const success = await conversationManager.exportConversation(sessionId, "clipboard")
     if (!success) {
-      showToast(t("exportFailed") || "导出失败")
+      showToast(t("exportFailed"))
     }
   }, [conversationManager, adapter])
 
@@ -2827,10 +2823,10 @@ export const App = () => {
             },
           },
         })
-        showToast(t("modelLockDisabled") || "模型锁定已关闭")
+        showToast(t("modelLockDisabled"))
       } else {
         // 用户意图是开启 → 自动开启开关 + 跳转设置让用户配置
-        showToast(t("modelLockNoKeyword") || "请先在设置中配置模型关键词")
+        showToast(t("modelLockNoKeyword"))
         setSettings({
           modelLock: {
             ...current.modelLock,
@@ -2864,11 +2860,7 @@ export const App = () => {
       },
     })
 
-    showToast(
-      newEnabled
-        ? t("modelLockEnabled") || "模型锁定已开启"
-        : t("modelLockDisabled") || "模型锁定已关闭",
-    )
+    showToast(newEnabled ? t("modelLockEnabled") : t("modelLockDisabled"))
   }, [adapter, openSettingsModal, setSettings])
 
   // 获取当前站点的模型锁定状态
@@ -3222,7 +3214,7 @@ export const App = () => {
     if (!conversationManager || !adapter) return
     const sessionId = adapter.getSessionId()
     if (!sessionId) {
-      showToast(t("noConversationToLocate") || "未找到当前会话")
+      showToast(t("noConversationToLocate"))
       return
     }
     setFloatingToolbarTagState({
@@ -3260,7 +3252,7 @@ export const App = () => {
     key: "extensionUpdateNoticeAction",
     fallback: "Reload page",
   })
-  const extensionUpdateCloseLabel = t("close") || "关闭"
+  const extensionUpdateCloseLabel = t("close")
 
   const outlineRoleLabels = useMemo(
     () => ({
@@ -3371,7 +3363,7 @@ export const App = () => {
         scrollLocked={isScrollLockActive}
         onCleanup={() => {
           if (ghostBookmarkCount === 0) {
-            showToast(t("floatingToolbarClearGhostEmpty") || "没有需要清理的无效收藏")
+            showToast(t("floatingToolbarClearGhostEmpty"))
             return
           }
           setIsFloatingToolbarClearOpen(true)
@@ -3669,10 +3661,11 @@ export const App = () => {
       )}
       {isFloatingToolbarClearOpen && (
         <ConfirmDialog
-          title={t("floatingToolbarClearGhost") || "清除无效收藏"}
-          message={(
-            t("floatingToolbarClearGhostConfirm") || "是否清除本会话中的 {count} 个无效收藏？"
-          ).replace("{count}", String(ghostBookmarkCount))}
+          title={t("floatingToolbarClearGhost")}
+          message={t("floatingToolbarClearGhostConfirm").replace(
+            "{count}",
+            String(ghostBookmarkCount),
+          )}
           danger
           onConfirm={() => {
             setIsFloatingToolbarClearOpen(false)

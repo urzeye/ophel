@@ -164,7 +164,7 @@ const PermissionRequestPage: React.FC = () => {
                 marginBottom: "12px",
                 color: "var(--gh-text, #1f2937)",
               }}>
-              {t(config.titleKey) || "需要授权"}
+              {t(config.titleKey)}
             </h1>
 
             {/* 描述 */}
@@ -175,7 +175,7 @@ const PermissionRequestPage: React.FC = () => {
                 marginBottom: "24px",
                 lineHeight: 1.5,
               }}>
-              {t(config.descKey) || "此功能需要额外权限才能正常工作。"}
+              {t(config.descKey)}
             </p>
 
             {/* 按钮 */}
@@ -191,7 +191,7 @@ const PermissionRequestPage: React.FC = () => {
                   fontSize: "14px",
                   cursor: "pointer",
                 }}>
-                {t("cancel") || "取消"}
+                {t("cancel")}
               </button>
               <button
                 onClick={handleRequest}
@@ -205,7 +205,7 @@ const PermissionRequestPage: React.FC = () => {
                   fontWeight: 500,
                   cursor: "pointer",
                 }}>
-                {t("allow") || "允许"}
+                {t("allow")}
               </button>
             </div>
           </>
@@ -220,7 +220,7 @@ const PermissionRequestPage: React.FC = () => {
                 fontWeight: 600,
                 color: "#10b981",
               }}>
-              {t("permissionGranted") || "授权成功"}
+              {t("permissionGranted")}
             </h1>
             <p
               style={{
@@ -228,7 +228,7 @@ const PermissionRequestPage: React.FC = () => {
                 color: "var(--gh-text-secondary, #6b7280)",
                 marginTop: "8px",
               }}>
-              {t("windowClosing") || "窗口即将关闭..."}
+              {t("windowClosing")}
             </p>
           </>
         )}
@@ -242,7 +242,7 @@ const PermissionRequestPage: React.FC = () => {
                 fontWeight: 600,
                 color: "#ef4444",
               }}>
-              {t("permissionDenied") || "授权已取消"}
+              {t("permissionDenied")}
             </h1>
           </>
         )}

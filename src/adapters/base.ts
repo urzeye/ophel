@@ -1719,17 +1719,14 @@ export abstract class SiteAdapter {
       let message: string
       switch (reason) {
         case "button_not_found":
-          message = t("modelLockFailedNoButton") || `模型选择器未找到`
+          message = t("modelLockFailedNoButton")
           break
         case "menu_empty":
-          message = t("modelLockFailedMenuEmpty") || `模型菜单加载失败`
+          message = t("modelLockFailedMenuEmpty")
           break
         case "not_found":
         default:
-          message = (t("modelLockFailedNotFound") || `未找到模型 "{model}"`).replace(
-            "{model}",
-            keyword,
-          )
+          message = t("modelLockFailedNotFound").replace("{model}", keyword)
       }
 
       showToast(message, 3000)

@@ -94,8 +94,8 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
   if (!settings) return null
 
   const tabs = [
-    { id: APPEARANCE_TAB_IDS.PRESETS, label: t("themePresetsTab") || "主题预置" },
-    { id: APPEARANCE_TAB_IDS.CUSTOM, label: t("customStylesTab") || "自定义样式" },
+    { id: APPEARANCE_TAB_IDS.PRESETS, label: t("themePresetsTab") },
+    { id: APPEARANCE_TAB_IDS.CUSTOM, label: t("customStylesTab") },
   ]
 
   // 选择浅色主题预置
@@ -157,7 +157,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
     if (!editingStyle) return
 
     if (!editingStyle.name.trim()) {
-      showDomToast(t("pleaseEnterStyleName") || "请输入样式名称")
+      showDomToast(t("pleaseEnterStyleName"))
       return
     }
 
@@ -183,14 +183,12 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
       },
     })
     setShowStyleEditor(false)
-    showDomToast(
-      editingStyle.id ? t("styleUpdated") || "样式已更新" : t("styleCreated") || "样式已创建",
-    )
+    showDomToast(editingStyle.id ? t("styleUpdated") : t("styleCreated"))
   }
 
   // 删除自定义样式
   const deleteCustomStyle = (styleId: string, styleName: string) => {
-    if (confirm(t("confirmDeleteStyle") || `确认删除样式「${styleName}」？`)) {
+    if (confirm(t("confirmDeleteStyle"))) {
       const newStyles = (settings?.theme?.customStyles || []).filter((s) => s.id !== styleId)
       setSettings({
         theme: {
@@ -241,18 +239,13 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
 
   return (
     <div>
-      <PageTitle title={t("navAppearance") || "外观主题"} Icon={AppearanceIcon} />
-      <p className="settings-page-desc">
-        {t("appearancePageDesc") || "自定义扩展的视觉样式和主题"}
-      </p>
+      <PageTitle title={t("navAppearance")} Icon={AppearanceIcon} />
+      <p className="settings-page-desc">{t("appearancePageDesc")}</p>
 
       <SettingCard settingId="appearance-theme-sync">
         <ToggleRow
-          label={t("syncNativePageThemeLabel") || "同步原生页面颜色"}
-          description={
-            t("syncNativePageThemeDesc") ||
-            "当前网站的亮暗模式始终跟随 Ophel；开启后还会同步调整部分原生元素颜色（仅对部分站点生效）"
-          }
+          label={t("syncNativePageThemeLabel")}
+          description={t("syncNativePageThemeDesc")}
           checked={settings?.theme?.syncNativePageTheme ?? true}
           onChange={() =>
             setSettings({
@@ -272,8 +265,8 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
         <>
           {/* 浅色模式预置 */}
           <SettingCard
-            title={t("lightModePreset") || "浅色模式预置"}
-            description={t("lightModePresetDesc") || "仅在浅色模式生效"}
+            title={t("lightModePreset")}
+            description={t("lightModePresetDesc")}
             settingId="appearance-preset-light">
             <div className="settings-theme-grid">
               {displayLightPresets.map((preset) => (
@@ -289,8 +282,8 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
 
           {/* 深色模式预置 */}
           <SettingCard
-            title={t("darkModePreset") || "深色模式预置"}
-            description={t("darkModePresetDesc") || "仅在深色模式生效"}
+            title={t("darkModePreset")}
+            description={t("darkModePresetDesc")}
             settingId="appearance-preset-dark">
             <div className="settings-theme-grid">
               {displayDarkPresets.map((preset) => (
@@ -309,8 +302,8 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
       {activeTab === APPEARANCE_TAB_IDS.CUSTOM && (
         <>
           <SettingCard
-            title={t("customCSS") || "自定义样式"}
-            description={t("customCSSDesc") || "创建自定义 CSS 样式，可在主题选择器中使用"}
+            title={t("customCSS")}
+            description={t("customCSSDesc")}
             settingId="appearance-custom-styles">
             <button
               className="settings-btn settings-btn-primary"
@@ -324,7 +317,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
                 setShowStyleEditor(true)
               }}
               style={{ marginBottom: "16px" }}>
-              ➕ {t("addCustomStyle") || "添加样式"}
+              ➕ {t("addCustomStyle")}
             </button>
 
             {(settings?.theme?.customStyles || []).length === 0 ? (
@@ -337,7 +330,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
                   border: "1px dashed var(--gh-border, #e5e7eb)",
                   borderRadius: "8px",
                 }}>
-                {t("noCustomStyles") || "暂无自定义样式，点击上方「添加」按钮创建"}
+                {t("noCustomStyles")}
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -367,7 +360,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
                         {style.mode === "light" ? "☀️" : "🌙"}
                       </span>
                       <span style={{ fontSize: "14px", fontWeight: 500 }}>
-                        {style.name || t("unnamedStyle") || "未命名样式"}
+                        {style.name || t("unnamedStyle")}
                       </span>
                     </div>
                     <div style={{ display: "flex", gap: "8px" }}>
@@ -378,7 +371,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
                           setShowStyleEditor(true)
                         }}
                         style={{ padding: "6px 12px", fontSize: "12px" }}>
-                        ✏️ {t("edit") || "编辑"}
+                        ✏️ {t("edit")}
                       </button>
                       <button
                         className="settings-btn settings-btn-danger"
@@ -431,7 +424,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
                 alignItems: "center",
               }}>
               <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 600 }}>
-                {editingStyle.id ? t("editStyle") || "编辑样式" : t("newStyle") || "新建样式"}
+                {editingStyle.id ? t("editStyle") : t("newStyle")}
               </h3>
               <button
                 onClick={() => setShowStyleEditor(false)}
@@ -464,14 +457,14 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
                     marginBottom: "6px",
                     display: "block",
                   }}>
-                  {t("styleNameLabel") || "样式名称"}
+                  {t("styleNameLabel")}
                 </label>
                 <input
                   type="text"
                   className="settings-input"
                   value={editingStyle.name}
                   onChange={(e) => setEditingStyle({ ...editingStyle, name: e.target.value })}
-                  placeholder={t("enterStyleName") || "输入样式名称"}
+                  placeholder={t("enterStyleName")}
                   style={{ width: "100%" }}
                 />
               </div>
@@ -485,7 +478,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
                     marginBottom: "6px",
                     display: "block",
                   }}>
-                  {t("styleModeLabel") || "适用模式"}
+                  {t("styleModeLabel")}
                 </label>
                 <div style={{ display: "flex", gap: "12px" }}>
                   <label
@@ -500,7 +493,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
                       checked={editingStyle.mode === "light"}
                       onChange={() => setEditingStyle({ ...editingStyle, mode: "light" })}
                     />
-                    <span>☀️ {t("lightMode") || "浅色模式"}</span>
+                    <span>☀️ {t("lightMode")}</span>
                   </label>
                   <label
                     style={{
@@ -514,7 +507,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
                       checked={editingStyle.mode === "dark"}
                       onChange={() => setEditingStyle({ ...editingStyle, mode: "dark" })}
                     />
-                    <span>🌙 {t("darkMode") || "深色模式"}</span>
+                    <span>🌙 {t("darkMode")}</span>
                   </label>
                 </div>
               </div>
@@ -528,7 +521,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
                     marginBottom: "6px",
                     display: "block",
                   }}>
-                  CSS {t("code") || "代码"}
+                  CSS {t("code")}
                 </label>
                 <div
                   className="settings-textarea"
@@ -569,10 +562,10 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
               <button
                 className="settings-btn settings-btn-secondary"
                 onClick={() => setShowStyleEditor(false)}>
-                {t("cancel") || "取消"}
+                {t("cancel")}
               </button>
               <button className="settings-btn settings-btn-primary" onClick={saveCustomStyle}>
-                {editingStyle.id ? t("save") || "保存" : t("create") || "创建"}
+                {editingStyle.id ? t("save") : t("create")}
               </button>
             </div>
           </div>

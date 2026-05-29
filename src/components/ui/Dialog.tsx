@@ -214,12 +214,12 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         )}
         <div style={{ display: "flex", gap: "8px" }}>
           <button className="gh-dialog-btn gh-dialog-btn-secondary" onClick={onCancel}>
-            {cancelText || t("cancel") || "取消"}
+            {cancelText || t("cancel")}
           </button>
           <button
             className={`gh-dialog-btn ${danger ? "gh-dialog-btn-danger" : "gh-dialog-btn-primary"}`}
             onClick={onConfirm}>
-            {confirmText || t("confirm") || "确定"}
+            {confirmText || t("confirm")}
           </button>
         </div>
       </div>
@@ -279,10 +279,10 @@ export const InputDialog: React.FC<InputDialogProps> = ({
       />
       <div className="gh-dialog-buttons">
         <button className="gh-dialog-btn gh-dialog-btn-secondary" onClick={onCancel}>
-          {cancelText || t("cancel") || "取消"}
+          {cancelText || t("cancel")}
         </button>
         <button className="gh-dialog-btn gh-dialog-btn-primary" onClick={handleConfirm}>
-          {confirmText || t("confirm") || "确定"}
+          {confirmText || t("confirm")}
         </button>
       </div>
     </DialogOverlay>

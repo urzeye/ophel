@@ -801,7 +801,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
             {/* 新标签页按钮 - 受 openInNewTab 设置控制 */}
             {currentSettings.tab?.openInNewTab && (
-              <Tooltip content={t("newTabTooltip") || "新标签页打开"}>
+              <Tooltip content={t("newTabTooltip")}>
                 <button
                   onClick={() => window.open(window.location.origin, "_blank")}
                   className="gh-header-icon-btn">

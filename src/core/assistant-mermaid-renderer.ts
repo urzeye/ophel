@@ -535,7 +535,7 @@ export class AssistantMermaidRenderer {
       if (action === "fullscreen") {
         this.togglePreviewFullscreen(panel).catch((error) => {
           console.error("[AssistantMermaidRenderer] Fullscreen failed:", error)
-          showToast(t("assistantMermaidFullscreenFailed") || t("exportFailed"), 2000)
+          showToast(t("assistantMermaidFullscreenFailed"), 2000)
         })
         return
       }
@@ -550,7 +550,7 @@ export class AssistantMermaidRenderer {
       if (action === "download") {
         this.downloadMermaidPng(panel).catch((error) => {
           console.error("[AssistantMermaidRenderer] PNG download failed:", error)
-          showToast(t("assistantMermaidDownloadFailed") || t("exportFailed"), 2000)
+          showToast(t("assistantMermaidDownloadFailed"), 2000)
         })
       }
     }
@@ -1144,7 +1144,7 @@ export class AssistantMermaidRenderer {
       URL.revokeObjectURL(url)
     }
 
-    showToast(t("assistantMermaidDownloadSuccess") || t("exportSuccess"), 1500)
+    showToast(t("assistantMermaidDownloadSuccess"), 1500)
   }
 
   private getSvgExportDimensions(svg: SVGSVGElement): { width: number; height: number } {

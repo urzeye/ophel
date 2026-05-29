@@ -209,7 +209,7 @@ const OptionsPage = () => {
   if (!settings || !isHydrated || !languageReady) {
     return (
       <div className={`settings-layout ${platformFontClassName}`}>
-        <div style={{ padding: 40, textAlign: "center" }}>{t("loading") || "加载中..."}</div>
+        <div style={{ padding: 40, textAlign: "center" }}>{t("loading")}</div>
       </div>
     )
   }
@@ -271,7 +271,7 @@ const OptionsPage = () => {
               <span className="settings-nav-item-icon">
                 <item.Icon size={22} />
               </span>
-              <span>{t(item.labelKey) || item.label}</span>
+              <span>{t(item.labelKey)}</span>
             </button>
           ))}
 

@@ -118,7 +118,7 @@ export class GrokAdapter extends SiteAdapter {
       // 显示同步提示
       const { showToast } = await import("~utils/toast")
       const { t } = await import("~utils/i18n")
-      showToast(t("grokSyncingConversations") || "正在同步会话，请稍候...")
+      showToast(t("grokSyncingConversations"))
       ;(viewAllBtn as HTMLElement).click()
 
       // 轮询等待对话框出现（最多 3 秒）

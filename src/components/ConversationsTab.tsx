@@ -163,14 +163,9 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const siteId = manager.siteAdapter?.getSiteId?.()
   const isConversationUnsupported = !!(siteId && unsupportedSiteLabels[siteId])
   const unsupportedSiteLabel = siteId ? unsupportedSiteLabels[siteId] || siteId : ""
-  const unsupportedTitle =
-    t("conversationsUnsupportedTitle", { site: unsupportedSiteLabel }) ||
-    `${unsupportedSiteLabel} 会话暂不支持`
-  const unsupportedDesc =
-    t("conversationsUnsupportedDesc") || "当前站点限制导致会话列表无法稳定获取"
-  const unsupportedSync =
-    t("conversationsUnsupportedSync", { site: unsupportedSiteLabel }) ||
-    `${unsupportedSiteLabel} 会话暂不支持同步`
+  const unsupportedTitle = t("conversationsUnsupportedTitle", { site: unsupportedSiteLabel })
+  const unsupportedDesc = t("conversationsUnsupportedDesc")
+  const unsupportedSync = t("conversationsUnsupportedSync", { site: unsupportedSiteLabel })
 
   const showUnsupportedMask = isConversationUnsupported
 
@@ -675,7 +670,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
   return (
     <>
-      <LoadingOverlay isVisible={isDeleting} text={`${t("delete") || "删除"}...`} />
+      <LoadingOverlay isVisible={isDeleting} text={`${t("delete")}...`} />
       <div
         ref={contentRef}
         className={`conversations-content ${isNarrowLayout ? "is-narrow" : ""} ${draggedConvId || draggedFolderId ? "is-dragging-any" : ""}`}
@@ -698,9 +693,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         {/* 工具栏 */}
         <div className="conversations-toolbar">
           {/* 1. 同步目标选择 */}
-          <Tooltip
-            content={t("conversationsSelectFolder") || "选择文件夹"}
-            triggerStyle={{ flex: 1, minWidth: 0 }}>
+          <Tooltip content={t("conversationsSelectFolder")} triggerStyle={{ flex: 1, minWidth: 0 }}>
             <SelectDropdown
               className="conversations-folder-select-dropdown"
               buttonClassName="conversations-folder-select"
@@ -708,7 +701,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
               optionClassName="conversations-folder-select-option"
               options={folderSelectOptions}
               value={lastUsedFolderId}
-              ariaLabel={t("conversationsSelectFolder") || "选择文件夹"}
+              ariaLabel={t("conversationsSelectFolder")}
               onOpenChange={setIsFolderSelectOpen}
               onChange={(selectedFolderId) => {
                 setLastUsedFolderId(selectedFolderId)
@@ -718,7 +711,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           </Tooltip>
 
           {/* 2. 同步按钮 */}
-          <Tooltip content={t("conversationsSync") || "同步"}>
+          <Tooltip content={t("conversationsSync")}>
             <button
               className="conversations-toolbar-btn sync"
               disabled={syncing || isConversationUnsupported}
@@ -728,14 +721,14 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           </Tooltip>
 
           {/* 3. 定位按钮 */}
-          <Tooltip content={t("conversationsLocate") || "定位当前对话"}>
+          <Tooltip content={t("conversationsLocate")}>
             <button className="conversations-toolbar-btn locate" onClick={handleLocate}>
               <LocateIcon size={18} />
             </button>
           </Tooltip>
 
           {/* 4. 批量模式 */}
-          <Tooltip content={t("conversationsBatchMode") || "批量操作"}>
+          <Tooltip content={t("conversationsBatchMode")}>
             <button
               className={`conversations-toolbar-btn batch-mode ${batchMode ? "active" : ""}`}
               onClick={toggleBatchMode}>
@@ -744,7 +737,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           </Tooltip>
 
           {/* 5. 新建文件夹 */}
-          <Tooltip content={t("conversationsAddFolder") || "新建文件夹"}>
+          <Tooltip content={t("conversationsAddFolder")}>
             <button
               className="conversations-toolbar-btn add-folder"
               onClick={() => {
@@ -764,14 +757,14 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                 ref={searchInputRef}
                 type="text"
                 className="conversations-search-input"
-                placeholder={t("conversationsSearchPlaceholder") || "搜索会话..."}
+                placeholder={t("conversationsSearchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => handleSearchInput(e.target.value)}
               />
             </div>
 
             {/* 置顶筛选 */}
-            <Tooltip content={t("conversationsFilterPinned") || "筛选置顶"}>
+            <Tooltip content={t("conversationsFilterPinned")}>
               <div
                 className={`conversations-pin-filter-btn ${filterPinned ? "active" : ""}`}
                 style={{ userSelect: "none" }}
@@ -781,7 +774,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             </Tooltip>
 
             {/* 标签筛选 */}
-            <Tooltip content={t("conversationsFilterByTags") || "按标签筛选"}>
+            <Tooltip content={t("conversationsFilterByTags")}>
               <div
                 ref={tagFilterBtnRef}
                 className={`conversations-tag-search-btn ${filterTagIds.size > 0 ? "active" : ""}`}
@@ -805,7 +798,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                     <div
                       className="conversations-tag-filter-item"
                       style={{ color: "var(--gh-text-tertiary, #9ca3af)", cursor: "default" }}>
-                      {t("conversationsNoTags") || "暂无标签"}
+                      {t("conversationsNoTags")}
                     </div>
                   ) : (
                     tags.map((tag) => (
@@ -836,14 +829,14 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                       onInteractionStateChange?.(true)
                       setDialog({ type: "tagManager", conv: undefined })
                     }}>
-                    {t("conversationsManageTags") || "管理标签"}
+                    {t("conversationsManageTags")}
                   </div>
                 </div>
               </div>
             )}
 
             {/* 清除按钮 */}
-            <Tooltip content={t("conversationsClearAll") || "清除所有筛选"}>
+            <Tooltip content={t("conversationsClearAll")}>
               <div
                 className={`conversations-search-clear ${!hasFilters ? "disabled" : ""}`}
                 onClick={hasFilters ? clearFilters : undefined}>
@@ -855,7 +848,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           {/* 搜索结果计数 */}
           {searchQuery && searchResult && (
             <div className="conversations-result-bar visible">
-              {searchResult.totalCount} {t("conversationsSearchResult") || "个结果"}
+              {searchResult.totalCount} {t("conversationsSearchResult")}
             </div>
           )}
         </div>
@@ -864,9 +857,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         <div className="conversations-folder-list">
           {folders.filter(shouldShowFolder).length === 0 ? (
             <div className="conversations-empty">
-              {searchResult
-                ? t("conversationsNoSearchResult") || "未找到匹配结果"
-                : t("conversationsEmpty") || "暂无会话"}
+              {searchResult ? t("conversationsNoSearchResult") : t("conversationsEmpty")}
             </div>
           ) : (
             folders.filter(shouldShowFolder).map((folder, index) => {
@@ -1078,7 +1069,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                         if (allConvs.length === 0) {
                           return (
                             <div className="conversations-list-empty">
-                              {t("conversationsEmpty") || "暂无会话"}
+                              {t("conversationsEmpty")}
                             </div>
                           )
                         }
@@ -1153,10 +1144,10 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         {batchMode && selectedIds.size > 0 && (
           <div className="conversations-batch-bar">
             <span className="conversations-batch-info">
-              {(t("batchSelected") || "已选 {n} 个").replace("{n}", String(selectedIds.size))}
+              {t("batchSelected").replace("{n}", String(selectedIds.size))}
             </span>
             <div className="conversations-batch-btns">
-              <Tooltip content={t("exportToClipboard") || "复制 Markdown"}>
+              <Tooltip content={t("exportToClipboard")}>
                 <button
                   className="conversations-batch-btn"
                   style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
@@ -1167,7 +1158,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                   <CopyIcon size={16} />
                 </button>
               </Tooltip>
-              <Tooltip content={t("batchExport") || "导出"}>
+              <Tooltip content={t("batchExport")}>
                 <button
                   className="conversations-batch-btn"
                   style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
@@ -1178,7 +1169,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                   <ExportIcon size={16} />
                 </button>
               </Tooltip>
-              <Tooltip content={t("batchMove") || "移动"}>
+              <Tooltip content={t("batchMove")}>
                 <button
                   className="conversations-batch-btn"
                   style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
@@ -1189,7 +1180,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                   <FolderMoveIcon size={16} />
                 </button>
               </Tooltip>
-              <Tooltip content={t("batchDelete") || "删除"}>
+              <Tooltip content={t("batchDelete")}>
                 <button
                   className="conversations-batch-btn danger"
                   style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
@@ -1197,7 +1188,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                     onInteractionStateChange?.(true)
                     setDialog({
                       type: "confirm",
-                      title: t("batchDelete") || "批量删除",
+                      title: t("batchDelete"),
                       message: t("confirmDeleteSelectedConvs", { count: String(selectedIds.size) }),
                       danger: true,
                       onConfirm: async () => {
@@ -1208,7 +1199,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                         try {
                           const result = await manager.deleteConversations(Array.from(selectedIds))
                           if (result.localDeletedCount === 0) {
-                            showToast(t("deleteError") || "删除失败")
+                            showToast(t("deleteError"))
                             return
                           }
                           if (result.remoteAttemptedCount > 0 && result.remoteFailedCount > 0) {
@@ -1227,7 +1218,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                   <DeleteIcon size={16} />
                 </button>
               </Tooltip>
-              <Tooltip content={t("batchExit") || "退出"}>
+              <Tooltip content={t("batchExit")}>
                 <button
                   className="conversations-batch-btn cancel"
                   style={{ padding: "4px 6px", minWidth: "auto", marginLeft: "4px" }}
@@ -1285,7 +1276,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
       )}
       {dialog?.type === "rename" && (
         <RenameDialog
-          title={t("conversationsRename") || "重命名"}
+          title={t("conversationsRename")}
           currentValue={dialog.conv.title}
           onConfirm={async (newTitle) => {
             await manager.renameConversation(dialog.conv.id, newTitle)
@@ -1356,7 +1347,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             })
             setDialog({
               type: "confirm",
-              title: t("conversationsDelete") || "删除",
+              title: t("conversationsDelete"),
               message:
                 deleteMessage === "conversationsDeleteConfirm"
                   ? `Delete folder "${folderName}"? Conversations will be moved to ${inboxName}.`
@@ -1402,7 +1393,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             setMenu(null)
             setDialog({
               type: "confirm",
-              title: t("conversationsDelete") || "删除",
+              title: t("conversationsDelete"),
               message: t("conversationsDeleteConvMsg", { title: menu.conv.title }),
               danger: true,
               onConfirm: async () => {
@@ -1413,7 +1404,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
                 try {
                   const result = await manager.deleteConversation(menu.conv.id)
                   if (!result.localDeleted) {
-                    showToast(t("deleteError") || "删除失败")
+                    showToast(t("deleteError"))
                     return
                   }
                   if (result.remoteAttempted && !result.remoteSuccess) {
@@ -1615,7 +1606,7 @@ const ConversationItem = React.memo<ConversationItemProps>(
         <div className="conversations-item-meta">
           <button
             className="conversations-item-menu-btn"
-            title={t("more") || "更多操作"}
+            title={t("more")}
             onClick={(e) => {
               e.stopPropagation()
               onInteractionStateChange?.(true)

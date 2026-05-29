@@ -209,7 +209,7 @@ export const FolderMenu: React.FC<FolderMenuProps> = ({
             justifyContent: "space-between",
             gap: "16px",
           }}>
-          <span>{t("conversationsRename") || "重命名"}</span>
+          <span>{t("conversationsRename")}</span>
           <RenameIcon size={13} />
         </span>
       </MenuButton>
@@ -226,7 +226,7 @@ export const FolderMenu: React.FC<FolderMenuProps> = ({
             justifyContent: "space-between",
             gap: "16px",
           }}>
-          <span>{t("conversationsDelete") || "删除"}</span>
+          <span>{t("conversationsDelete")}</span>
           <DeleteIcon size={13} />
         </span>
       </MenuButton>
@@ -273,7 +273,7 @@ export const ConversationMenu: React.FC<ConversationMenuProps> = ({
             justifyContent: "space-between",
             gap: "16px",
           }}>
-          <span>{t("conversationsRename") || "重命名"}</span>
+          <span>{t("conversationsRename")}</span>
           <RenameIcon size={13} />
         </span>
       </MenuButton>
@@ -289,11 +289,7 @@ export const ConversationMenu: React.FC<ConversationMenuProps> = ({
             justifyContent: "space-between",
             gap: "16px",
           }}>
-          <span>
-            {conversation.pinned
-              ? t("conversationsUnpin") || "取消置顶"
-              : t("conversationsPin") || "置顶"}
-          </span>
+          <span>{conversation.pinned ? t("conversationsUnpin") : t("conversationsPin")}</span>
           <PinIcon size={13} filled={conversation.pinned} />
         </span>
       </MenuButton>
@@ -309,7 +305,7 @@ export const ConversationMenu: React.FC<ConversationMenuProps> = ({
             justifyContent: "space-between",
             gap: "16px",
           }}>
-          <span>{t("conversationsSetTags") || "设置标签"}</span>
+          <span>{t("conversationsSetTags")}</span>
           <TagIcon size={13} />
         </span>
       </MenuButton>
@@ -325,7 +321,7 @@ export const ConversationMenu: React.FC<ConversationMenuProps> = ({
             justifyContent: "space-between",
             gap: "16px",
           }}>
-          <span>{t("conversationsMoveTo") || "移动到..."}</span>
+          <span>{t("conversationsMoveTo")}</span>
           <FolderMoveIcon size={13} />
         </span>
       </MenuButton>
@@ -341,7 +337,7 @@ export const ConversationMenu: React.FC<ConversationMenuProps> = ({
             justifyContent: "space-between",
             gap: "16px",
           }}>
-          <span>{t("export") || "导出"}</span>
+          <span>{t("export")}</span>
           <ExportIcon size={13} />
         </span>
       </MenuButton>
@@ -358,7 +354,7 @@ export const ConversationMenu: React.FC<ConversationMenuProps> = ({
             justifyContent: "space-between",
             gap: "16px",
           }}>
-          <span>{t("conversationsDelete") || "删除"}</span>
+          <span>{t("conversationsDelete")}</span>
           <DeleteIcon size={13} />
         </span>
       </MenuButton>
@@ -392,7 +388,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
         }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <MarkdownIcon size={14} />
-          <span>{t("exportToMarkdown") || "Markdown"}</span>
+          <span>{t("exportToMarkdown")}</span>
         </div>
       </MenuButton>
       <MenuButton
@@ -402,7 +398,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
         }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <JSONFileIcon size={14} />
-          <span>{t("exportToJSON") || "JSON"}</span>
+          <span>{t("exportToJSON")}</span>
         </div>
       </MenuButton>
       <MenuButton
@@ -412,7 +408,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
         }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <TXTFileIcon size={14} />
-          <span>{t("exportToTXT") || "TXT"}</span>
+          <span>{t("exportToTXT")}</span>
         </div>
       </MenuButton>
     </ContextMenu>

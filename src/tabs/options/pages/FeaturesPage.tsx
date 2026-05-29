@@ -93,7 +93,7 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
 
   const siteOptions = React.useMemo(
     () => [
-      { id: "all", label: t("usageMonitorChartSiteAll") || "全部站点" },
+      { id: "all", label: t("usageMonitorChartSiteAll") },
       { id: SITE_IDS.GEMINI, label: "Gemini" },
       { id: SITE_IDS.GEMINI_ENTERPRISE, label: "Gemini Enterprise" },
       { id: SITE_IDS.CHATGPT, label: "ChatGPT" },
@@ -113,9 +113,7 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
   )
 
   const selectedSiteLabel =
-    siteOptions.find((site) => site.id === selectedSiteId)?.label ||
-    t("usageMonitorChartSiteAll") ||
-    "全部站点"
+    siteOptions.find((site) => site.id === selectedSiteId)?.label || t("usageMonitorChartSiteAll")
 
   const refresh = React.useCallback(async () => {
     setLoading(true)
@@ -156,14 +154,14 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
   const latestValue = values[values.length - 1] ?? 0
   const metricLabel =
     metric === "requestTokens"
-      ? t("usageMonitorChartMetricRequest") || "请求 Tokens"
+      ? t("usageMonitorChartMetricRequest")
       : metric === "roundTripTokens"
-        ? t("usageMonitorChartMetricRoundTrip") || "往返 Tokens"
+        ? t("usageMonitorChartMetricRoundTrip")
         : metric === "loadedConversationTokens"
-          ? t("usageMonitorChartMetricConversation") || "已加载对话 Tokens"
+          ? t("usageMonitorChartMetricConversation")
           : metric === "loadedOutputTokens"
-            ? t("usageMonitorChartMetricOutput") || "输出 Tokens"
-            : t("usageMonitorChartMetricCount") || "次数"
+            ? t("usageMonitorChartMetricOutput")
+            : t("usageMonitorChartMetricCount")
   const bucketPixelWidth = granularity === "month" ? 72 : granularity === "hour" ? 48 : 44
   const chartWidth =
     buckets.length > 1 ? Math.max(640, 40 + (buckets.length - 1) * bucketPixelWidth + 48) : 640
@@ -275,7 +273,7 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
         style={{ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
         <div>
           <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--gh-text, #374151)" }}>
-            {t("usageMonitorChartTitle") || "历史统计曲线"}
+            {t("usageMonitorChartTitle")}
           </div>
           <div
             style={{
@@ -283,8 +281,7 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
               color: "var(--gh-text-secondary, #6b7280)",
               marginTop: "4px",
             }}>
-            {t("usageMonitorChartDesc") ||
-              "基于本地记录的发送事件聚合，可按小时、天、月查看次数或粗估 Tokens。"}
+            {t("usageMonitorChartDesc")}
           </div>
           <div
             style={{
@@ -295,7 +292,7 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
               flexWrap: "wrap",
             }}>
             <span style={{ fontSize: "12px", color: "var(--gh-text-secondary, #6b7280)" }}>
-              {t("usageMonitorChartSiteLabel") || "统计站点"}
+              {t("usageMonitorChartSiteLabel")}
             </span>
             <select
               className="settings-select"
@@ -314,9 +311,9 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
           <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
             {(
               [
-                ["hour", t("usageMonitorChartHour") || "小时"],
-                ["day", t("usageMonitorChartDay") || "天"],
-                ["month", t("usageMonitorChartMonth") || "月"],
+                ["hour", t("usageMonitorChartHour")],
+                ["day", t("usageMonitorChartDay")],
+                ["month", t("usageMonitorChartMonth")],
               ] as Array<[UsageHistoryGranularity, string]>
             ).map(([value, label]) => (
               <Button
@@ -331,14 +328,11 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
           <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
             {(
               [
-                ["count", t("usageMonitorChartMetricCount") || "次数"],
-                ["requestTokens", t("usageMonitorChartMetricRequest") || "请求 Tokens"],
-                ["roundTripTokens", t("usageMonitorChartMetricRoundTrip") || "往返 Tokens"],
-                [
-                  "loadedConversationTokens",
-                  t("usageMonitorChartMetricConversation") || "已加载对话 Tokens",
-                ],
-                ["loadedOutputTokens", t("usageMonitorChartMetricOutput") || "输出 Tokens"],
+                ["count", t("usageMonitorChartMetricCount")],
+                ["requestTokens", t("usageMonitorChartMetricRequest")],
+                ["roundTripTokens", t("usageMonitorChartMetricRoundTrip")],
+                ["loadedConversationTokens", t("usageMonitorChartMetricConversation")],
+                ["loadedOutputTokens", t("usageMonitorChartMetricOutput")],
               ] as Array<[UsageHistoryMetric, string]>
             ).map(([value, label]) => (
               <Button
@@ -366,7 +360,7 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
           <strong style={{ color: "var(--gh-text, #374151)" }}>{latestValue}</strong>
         </div>
         <div style={{ fontSize: "12px", color: "var(--gh-text-secondary, #6b7280)" }}>
-          <span>{t("usageMonitorChartCurrentSite") || "当前统计站点"}: </span>
+          <span>{t("usageMonitorChartCurrentSite")}: </span>
           <strong style={{ color: "var(--gh-text, #374151)" }}>{selectedSiteLabel}</strong>
         </div>
         <div style={{ fontSize: "12px", color: "var(--gh-text-secondary, #6b7280)" }}>
@@ -374,7 +368,7 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
           <strong style={{ color: "var(--gh-text, #374151)" }}>{maxValue}</strong>
         </div>
         <div style={{ fontSize: "12px", color: "var(--gh-text-secondary, #6b7280)" }}>
-          <span>{t("usageMonitorChartScrollHint") || "可左右滚动查看完整时间轴"}</span>
+          <span>{t("usageMonitorChartScrollHint")}</span>
         </div>
       </div>
 
@@ -506,7 +500,7 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
                 color: chartColors.axis,
                 fontSize: "13px",
               }}>
-              {t("usageMonitorChartEmpty") || "暂无统计数据"}
+              {t("usageMonitorChartEmpty")}
             </div>
           )}
         </div>
@@ -540,7 +534,7 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
                 {metricLabel}: {hoveredMetricValue}
                 {" · "}
                 {hoveredDelta >= 0 ? "+" : ""}
-                {hoveredDelta} {t("usageMonitorChartDelta") || "较上一桶"}
+                {hoveredDelta} {t("usageMonitorChartDelta")}
               </div>
             )}
             <div
@@ -550,41 +544,29 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
                 gap: "6px 10px",
                 fontSize: "12px",
               }}>
-              <span style={{ color: chartColors.axis }}>
-                {t("usageMonitorChartMetricCount") || "次数"}
-              </span>
+              <span style={{ color: chartColors.axis }}>{t("usageMonitorChartMetricCount")}</span>
               <strong>{hoveredBucket.count}</strong>
-              <span style={{ color: chartColors.axis }}>
-                {t("usageMonitorChartMetricRequest") || "请求 Tokens"}
-              </span>
+              <span style={{ color: chartColors.axis }}>{t("usageMonitorChartMetricRequest")}</span>
               <strong>{hoveredBucket.requestTokens}</strong>
               <span style={{ color: chartColors.axis }}>
-                {t("usageMonitorChartMetricRoundTrip") || "往返 Tokens"}
+                {t("usageMonitorChartMetricRoundTrip")}
               </span>
               <strong>{hoveredBucket.roundTripTokens}</strong>
               <span style={{ color: chartColors.axis }}>
-                {t("usageMonitorChartMetricConversation") || "已加载对话 Tokens"}
+                {t("usageMonitorChartMetricConversation")}
               </span>
               <strong>{hoveredBucket.loadedConversationTokens}</strong>
-              <span style={{ color: chartColors.axis }}>
-                {t("usageMonitorChartMetricOutput") || "输出 Tokens"}
-              </span>
+              <span style={{ color: chartColors.axis }}>{t("usageMonitorChartMetricOutput")}</span>
               <strong>{hoveredBucket.loadedOutputTokens}</strong>
               <span style={{ color: chartColors.axis }}>
-                {t("usageMonitorChartMaxConversation") || "最大单次已加载对话"}
+                {t("usageMonitorChartMaxConversation")}
               </span>
               <strong>{hoveredBucket.maxLoadedConversationTokens}</strong>
-              <span style={{ color: chartColors.axis }}>
-                {t("usageMonitorChartMaxRequest") || "最大单次请求"}
-              </span>
+              <span style={{ color: chartColors.axis }}>{t("usageMonitorChartMaxRequest")}</span>
               <strong>{hoveredBucket.maxRequestTokens}</strong>
-              <span style={{ color: chartColors.axis }}>
-                {t("usageMonitorChartMaxRoundTrip") || "最大单次往返"}
-              </span>
+              <span style={{ color: chartColors.axis }}>{t("usageMonitorChartMaxRoundTrip")}</span>
               <strong>{hoveredBucket.maxRoundTripTokens}</strong>
-              <span style={{ color: chartColors.axis }}>
-                {t("usageMonitorChartMaxOutput") || "最大单次输出"}
-              </span>
+              <span style={{ color: chartColors.axis }}>{t("usageMonitorChartMaxOutput")}</span>
               <strong>{hoveredBucket.maxLoadedOutputTokens}</strong>
             </div>
           </div>
@@ -596,13 +578,13 @@ const UsageHistoryChart: React.FC<{ siteId: string }> = ({ siteId }) => {
 
 const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
   const tabs = [
-    { id: FEATURES_TAB_IDS.OUTLINE, label: t("tabOutline") || "大纲" },
-    { id: FEATURES_TAB_IDS.CONVERSATIONS, label: t("tabConversations") || "会话" },
-    { id: FEATURES_TAB_IDS.PROMPTS, label: t("tabPrompts") || "Prompts" },
-    { id: FEATURES_TAB_IDS.TAB_SETTINGS, label: t("tabSettingsTab") || "标签页" },
-    { id: FEATURES_TAB_IDS.REMINDER, label: t("reminderTab") || "提醒" },
-    { id: FEATURES_TAB_IDS.CONTENT, label: t("navContent") || "内容交互" },
-    { id: FEATURES_TAB_IDS.READING_HISTORY, label: t("readingHistoryTitle") || "阅读历史" },
+    { id: FEATURES_TAB_IDS.OUTLINE, label: t("tabOutline") },
+    { id: FEATURES_TAB_IDS.CONVERSATIONS, label: t("tabConversations") },
+    { id: FEATURES_TAB_IDS.PROMPTS, label: t("tabPrompts") },
+    { id: FEATURES_TAB_IDS.TAB_SETTINGS, label: t("tabSettingsTab") },
+    { id: FEATURES_TAB_IDS.REMINDER, label: t("reminderTab") },
+    { id: FEATURES_TAB_IDS.CONTENT, label: t("navContent") },
+    { id: FEATURES_TAB_IDS.READING_HISTORY, label: t("readingHistoryTitle") },
   ]
 
   const [activeTab, setActiveTab] = useState<string>(initialTab || tabs[0].id)
@@ -668,27 +650,27 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
 
   if (!settings) return null
 
-  const prerequisiteToastTemplate = t("enablePrerequisiteToast") || "请先开启「{setting}」"
+  const prerequisiteToastTemplate = t("enablePrerequisiteToast")
   const showPrerequisiteToast = (label: string) =>
     showToastThrottled(prerequisiteToastTemplate.replace("{setting}", label), 2000, {}, 1500, label)
-  const autoRenameLabel = t("autoRenameTabLabel") || "自动重命名"
-  const showNotificationLabel = t("showNotificationLabel") || "桌面通知"
-  const showStatusLabel = t("showStatusLabel") || "显示生成状态"
-  const privacyModeLabel = t("privacyModeLabel") || "隐私模式"
-  const readingHistoryLabel = t("readingHistoryPersistenceLabel") || "启用阅读历史"
-  const formulaCopyLabel = t("formulaCopyLabel") || "双击复制公式"
+  const autoRenameLabel = t("autoRenameTabLabel")
+  const showNotificationLabel = t("showNotificationLabel")
+  const showStatusLabel = t("showStatusLabel")
+  const privacyModeLabel = t("privacyModeLabel")
+  const readingHistoryLabel = t("readingHistoryPersistenceLabel")
+  const formulaCopyLabel = t("formulaCopyLabel")
   const exportPackaging =
     settings.export?.packaging === "zip" || settings.export?.packaging === "markdown"
       ? settings.export.packaging
       : "markdown"
   const exportPackagingOptions = [
-    { value: "markdown", label: t("exportPackagingMarkdown") || "Markdown" },
-    { value: "zip", label: t("exportPackagingZip") || "ZIP" },
+    { value: "markdown", label: t("exportPackagingMarkdown") },
+    { value: "zip", label: t("exportPackagingZip") },
   ]
   const formulaCopyFormat = settings.content?.formulaCopyFormat === "mathml" ? "mathml" : "latex"
   const formulaCopyFormatOptions = [
-    { value: "latex", label: t("formulaCopyFormatLatex") || "LaTeX 源码" },
-    { value: "mathml", label: t("formulaCopyFormatMathml") || "MathML 源码" },
+    { value: "latex", label: t("formulaCopyFormatLatex") },
+    { value: "mathml", label: t("formulaCopyFormatMathml") },
   ]
   const showFormulaDelimiterPrerequisiteToast = () => {
     if (!settings.content?.formulaCopy) {
@@ -697,7 +679,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
     }
 
     showToastThrottled(
-      t("formulaDelimiterLatexOnlyToast") || "请先将公式复制格式切换为「LaTeX 源码」",
+      t("formulaDelimiterLatexOnlyToast"),
       2000,
       {},
       1500,
@@ -705,17 +687,16 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
     )
   }
   const hasMultipleNotificationSoundPresets = NOTIFICATION_SOUND_PRESETS.length > 1
-  const formatSecondsOptionLabel = (value: number) =>
-    t("secondsValueLabel", { val: String(value) }) || `${value} 秒`
+  const formatSecondsOptionLabel = (value: number) => t("secondsValueLabel", { val: String(value) })
   const formatRepeatCountOptionLabel = (value: number) => `${value}x`
-  const previewSoundButtonLabel = t("notificationSoundPreviewButtonLabel") || "试听"
+  const previewSoundButtonLabel = t("notificationSoundPreviewButtonLabel")
   const playNotificationSoundPreview = (presetId?: string) => {
     const targetPresetId =
       presetId || settings.tab?.notificationSoundPreset || NOTIFICATION_SOUND_PRESETS[0].id
     const sourceUrl = platform.getNotificationSoundUrl(targetPresetId)
 
     if (!sourceUrl) {
-      showToast(t("notificationSoundPreviewFailed") || "提示音试听失败", 2000)
+      showToast(t("notificationSoundPreviewFailed"), 2000)
       return
     }
 
@@ -738,21 +719,21 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
     previewAudio.onerror = () => {
       clearPreviewAudioHandlers()
       setIsPreviewPlaying(false)
-      showToast(t("notificationSoundPreviewFailed") || "提示音试听失败", 2000)
+      showToast(t("notificationSoundPreviewFailed"), 2000)
     }
 
     setIsPreviewPlaying(true)
     previewAudio.play().catch(() => {
       clearPreviewAudioHandlers()
       setIsPreviewPlaying(false)
-      showToast(t("notificationSoundPreviewFailed") || "提示音试听失败", 2000)
+      showToast(t("notificationSoundPreviewFailed"), 2000)
     })
   }
   const notificationSettingsCard = (
-    <SettingCard title={t("notificationSettings") || "完成后操作"}>
+    <SettingCard title={t("notificationSettings")}>
       <ToggleRow
-        label={t("showNotificationLabel") || "桌面通知"}
-        description={t("showNotificationDesc") || "生成完成时发送桌面通知"}
+        label={t("showNotificationLabel")}
+        description={t("showNotificationDesc")}
         settingId="tab-show-notification"
         checked={settings.tab?.showNotification ?? false}
         onChange={async () => {
@@ -784,7 +765,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
                   type: MSG_REQUEST_PERMISSIONS,
                   permType: "notifications",
                 })
-                showToast(t("permissionRequestToast") || "请在弹出的窗口中授予权限", 3000)
+                showToast(t("permissionRequestToast"), 3000)
               }
             }
           } else {
@@ -794,8 +775,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       />
 
       <ToggleRow
-        label={t("notificationSoundLabel") || "通知声音"}
-        description={t("notificationSoundDesc") || "生成完成时播放提示音"}
+        label={t("notificationSoundLabel")}
+        description={t("notificationSoundDesc")}
         settingId="tab-notification-sound"
         checked={settings.tab?.notificationSound ?? false}
         disabled={!settings.tab?.showNotification}
@@ -807,7 +788,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
 
       {hasMultipleNotificationSoundPresets && (
         <SettingRow
-          label={t("notificationSoundPresetLabel") || "提示音预设"}
+          label={t("notificationSoundPresetLabel")}
           settingId="tab-notification-sound-preset"
           disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
           onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
@@ -824,7 +805,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               style={{ flex: 1 }}>
               {NOTIFICATION_SOUND_PRESETS.map((preset) => (
                 <option key={preset.id} value={preset.id}>
-                  {t(preset.labelKey) || preset.fallback}
+                  {t(preset.labelKey)}
                 </option>
               ))}
             </select>
@@ -842,7 +823,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       )}
 
       <SettingRow
-        label={t("notificationVolumeLabel") || "声音音量"}
+        label={t("notificationVolumeLabel")}
         settingId="tab-notification-volume"
         disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
         onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
@@ -866,7 +847,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       </SettingRow>
 
       <SettingRow
-        label={t("notificationRepeatCountLabel") || "播放次数"}
+        label={t("notificationRepeatCountLabel")}
         settingId="tab-notification-repeat-count"
         disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
         onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
@@ -886,7 +867,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       </SettingRow>
 
       <SettingRow
-        label={t("notificationRepeatIntervalLabel") || "播放间隔"}
+        label={t("notificationRepeatIntervalLabel")}
         settingId="tab-notification-repeat-interval"
         disabled={!settings.tab?.showNotification || !settings.tab?.notificationSound}
         onDisabledClick={() => showPrerequisiteToast(showNotificationLabel)}>
@@ -906,8 +887,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       </SettingRow>
 
       <ToggleRow
-        label={t("notifyWhenFocusedLabel") || "前台时也通知"}
-        description={t("notifyWhenFocusedDesc") || "窗口在前台时也发送通知"}
+        label={t("notifyWhenFocusedLabel")}
+        description={t("notifyWhenFocusedDesc")}
         settingId="tab-notify-when-focused"
         checked={settings.tab?.notifyWhenFocused ?? false}
         disabled={!settings.tab?.showNotification}
@@ -918,8 +899,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       />
 
       <ToggleRow
-        label={t("autoFocusLabel") || "自动置顶窗口"}
-        description={t("autoFocusDesc") || "生成完成后自动激活窗口"}
+        label={t("autoFocusLabel")}
+        description={t("autoFocusDesc")}
         settingId="tab-auto-focus"
         checked={settings.tab?.autoFocus ?? false}
         onChange={() => updateNestedSetting("tab", "autoFocus", !settings.tab?.autoFocus)}
@@ -927,12 +908,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
     </SettingCard>
   )
   const usageMonitorCard = (
-    <SettingCard
-      title={t("usageMonitorSettingsTitle") || "高级模型本地计数与预估"}
-      description={
-        t("usageMonitorSettingsDesc") ||
-        "在输入框附近显示本地发送计数、阈值进度和粗略 Token 预估，不影响站点原有发送逻辑"
-      }>
+    <SettingCard title={t("usageMonitorSettingsTitle")} description={t("usageMonitorSettingsDesc")}>
       <div
         style={{
           marginBottom: "12px",
@@ -944,25 +920,14 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           fontSize: "12px",
           lineHeight: 1.6,
         }}>
-        <div>
-          {t("usageMonitorExplainLocalOnly") ||
-            "说明：这是纯本地估算能力。插件不会读取官方剩余额度，也不会知道服务端真实剩余次数。"}
-        </div>
-        <div>
-          {t("usageMonitorExplainNoBackend") ||
-            "行为：仅在本地存储里记录计数，并在页面输入区附近展示面板；不会额外改写站点后端状态。"}
-        </div>
-        <div>
-          {t("usageMonitorExplainReset") ||
-            "归零：平台实际额度重置时间可能不是固定 00:00。自动归零默认关闭，建议在平台真实重置后手动清零校准。"}
-        </div>
+        <div>{t("usageMonitorExplainLocalOnly")}</div>
+        <div>{t("usageMonitorExplainNoBackend")}</div>
+        <div>{t("usageMonitorExplainReset")}</div>
       </div>
 
       <ToggleRow
-        label={t("usageMonitorEnabledLabel") || "启用高级模型对话本地计数与预估"}
-        description={
-          t("usageMonitorEnabledDesc") || "通过本地计数和输入框附近的轻量面板，辅助估算当日使用情况"
-        }
+        label={t("usageMonitorEnabledLabel")}
+        description={t("usageMonitorEnabledDesc")}
         settingId="usage-monitor-enabled"
         checked={settings.usageMonitor?.enabled ?? false}
         onChange={() =>
@@ -982,20 +947,15 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           fontSize: "12px",
           lineHeight: 1.55,
         }}>
-        {t("usageMonitorExplainRender") ||
-          "面板会显示在当前输入区上方并为正文预留空间；如果开启后出现渲染异常，请刷新页面即可。"}
+        {t("usageMonitorExplainRender")}
       </div>
 
       <SettingRow
-        label={t("usageMonitorDailyLimitLabel") || "每日对话次数预估上限"}
-        description={
-          t("usageMonitorDailyLimitDesc") || "用于计算 80% / 100% 阈值提醒，仅为本地估算值"
-        }
+        label={t("usageMonitorDailyLimitLabel")}
+        description={t("usageMonitorDailyLimitDesc")}
         settingId="usage-monitor-daily-limit"
         disabled={!(settings.usageMonitor?.enabled ?? false)}
-        onDisabledClick={() =>
-          showPrerequisiteToast(t("usageMonitorEnabledLabel") || "启用高级模型对话本地计数与预估")
-        }>
+        onDisabledClick={() => showPrerequisiteToast(t("usageMonitorEnabledLabel"))}>
         <NumberInput
           value={settings.usageMonitor?.dailyLimit ?? 100}
           onChange={(val) => updateNestedSetting("usageMonitor", "dailyLimit", val)}
@@ -1008,17 +968,12 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       </SettingRow>
 
       <ToggleRow
-        label={t("usageMonitorAutoResetLabel") || "启用自动归零"}
-        description={
-          t("usageMonitorAutoResetDesc") ||
-          "实验性：按本地日期切换自动归零。由于平台实际重置时间可能变化，默认关闭。"
-        }
+        label={t("usageMonitorAutoResetLabel")}
+        description={t("usageMonitorAutoResetDesc")}
         settingId="usage-monitor-auto-reset"
         checked={settings.usageMonitor?.autoResetEnabled ?? false}
         disabled={!(settings.usageMonitor?.enabled ?? false)}
-        onDisabledClick={() =>
-          showPrerequisiteToast(t("usageMonitorEnabledLabel") || "启用高级模型对话本地计数与预估")
-        }
+        onDisabledClick={() => showPrerequisiteToast(t("usageMonitorEnabledLabel"))}
         onChange={() =>
           updateNestedSetting(
             "usageMonitor",
@@ -1034,8 +989,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
 
   return (
     <div>
-      <PageTitle title={t("navFeatures") || "功能模块"} Icon={FeaturesIcon} />
-      <p className="settings-page-desc">{t("featuresPageDesc") || "配置扩展的各项功能模块"}</p>
+      <PageTitle title={t("navFeatures")} Icon={FeaturesIcon} />
+      <p className="settings-page-desc">{t("featuresPageDesc")}</p>
 
       <TabGroup tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
@@ -1043,10 +998,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       {activeTab === FEATURES_TAB_IDS.TAB_SETTINGS && (
         <>
           {/* 标签页行为卡片 */}
-          <SettingCard title={t("tabBehaviorTitle") || "标签页行为"}>
+          <SettingCard title={t("tabBehaviorTitle")}>
             <ToggleRow
-              label={t("openNewTabLabel") || "新标签页打开"}
-              description={t("openNewTabDesc") || "在新标签页中打开新对话"}
+              label={t("openNewTabLabel")}
+              description={t("openNewTabDesc")}
               settingId="tab-open-new"
               checked={settings.tab?.openInNewTab ?? true}
               onChange={() =>
@@ -1055,15 +1010,15 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             />
 
             <ToggleRow
-              label={t("autoRenameTabLabel") || "自动重命名"}
-              description={t("autoRenameTabDesc") || "根据对话内容自动更新标签页标题"}
+              label={t("autoRenameTabLabel")}
+              description={t("autoRenameTabDesc")}
               settingId="tab-auto-rename"
               checked={settings.tab?.autoRename ?? false}
               onChange={() => updateNestedSetting("tab", "autoRename", !settings.tab?.autoRename)}
             />
 
             <SettingRow
-              label={t("renameIntervalLabel") || "检测频率"}
+              label={t("renameIntervalLabel")}
               settingId="tab-rename-interval"
               disabled={!settings.tab?.autoRename}
               onDisabledClick={() => showPrerequisiteToast(autoRenameLabel)}>
@@ -1083,8 +1038,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             </SettingRow>
 
             <SettingRow
-              label={t("titleFormatLabel") || "标题格式"}
-              description={t("titleFormatDesc") || "支持占位符：{status}、{title}、{model}"}
+              label={t("titleFormatLabel")}
+              description={t("titleFormatDesc")}
               settingId="tab-title-format"
               disabled={!settings.tab?.autoRename}
               onDisabledClick={() => showPrerequisiteToast(autoRenameLabel)}>
@@ -1099,19 +1054,16 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             </SettingRow>
 
             <ToggleRow
-              label={t("showStatusLabel") || "显示生成状态"}
-              description={t("showStatusDesc") || "在标签页标题中显示生成状态"}
+              label={t("showStatusLabel")}
+              description={t("showStatusDesc")}
               settingId="tab-show-status"
               checked={settings.tab?.showStatus ?? true}
               onChange={() => updateNestedSetting("tab", "showStatus", !settings.tab?.showStatus)}
             />
 
             <ToggleRow
-              label={t("hideStatusWhenReadLabel") || "仅在未读时显示完成标记"}
-              description={
-                t("hideStatusWhenReadDesc") ||
-                "开启后 ✅ 仅在标签页未激活时显示，一旦查看即自动隐藏"
-              }
+              label={t("hideStatusWhenReadLabel")}
+              description={t("hideStatusWhenReadDesc")}
               settingId="tab-hide-status-when-read"
               disabled={!settings.tab?.showStatus}
               onDisabledClick={() => showPrerequisiteToast(showStatusLabel)}
@@ -1123,17 +1075,17 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           </SettingCard>
 
           {/* 隐私模式卡片 */}
-          <SettingCard title={t("privacyModeTitle") || "隐私模式"}>
+          <SettingCard title={t("privacyModeTitle")}>
             <ToggleRow
-              label={t("privacyModeLabel") || "启用隐私模式"}
-              description={t("privacyModeDesc") || "使用伪装标题隐藏真实内容"}
+              label={t("privacyModeLabel")}
+              description={t("privacyModeDesc")}
               settingId="tab-privacy-mode"
               checked={settings.tab?.privacyMode ?? false}
               onChange={() => updateNestedSetting("tab", "privacyMode", !settings.tab?.privacyMode)}
             />
 
             <SettingRow
-              label={t("privacyTitleLabel") || "伪装标题"}
+              label={t("privacyTitleLabel")}
               settingId="tab-privacy-title"
               disabled={!settings.tab?.privacyMode}
               onDisabledClick={() => showPrerequisiteToast(privacyModeLabel)}>
@@ -1162,12 +1114,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       {/* ========== 大纲 Tab ========== */}
       {activeTab === FEATURES_TAB_IDS.OUTLINE && (
         <>
-          <SettingCard
-            title={t("outlineSettings") || "大纲设置"}
-            description={t("outlineSettingsDesc") || "配置大纲生成和跟随行为"}>
+          <SettingCard title={t("outlineSettings")} description={t("outlineSettingsDesc")}>
             <ToggleRow
-              label={t("outlineAutoUpdateLabel") || "自动更新"}
-              description={t("outlineAutoUpdateDesc") || "在对话进行时自动刷新大纲"}
+              label={t("outlineAutoUpdateLabel")}
+              description={t("outlineAutoUpdateDesc")}
               settingId="outline-auto-update"
               checked={settings.features?.outline?.autoUpdate ?? true}
               onChange={() =>
@@ -1181,8 +1131,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             />
 
             <SettingRow
-              label={t("outlineUpdateIntervalLabel") || "更新检测间隔"}
-              description={t("outlineUpdateIntervalDesc") || "大纲自动更新的时间间隔（秒）"}
+              label={t("outlineUpdateIntervalLabel")}
+              description={t("outlineUpdateIntervalDesc")}
               settingId="outline-update-interval">
               <NumberInput
                 value={settings.features?.outline?.updateInterval ?? 2}
@@ -1195,13 +1145,13 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             </SettingRow>
 
             <SettingRow
-              label={t("outlineFollowModeLabel") || "大纲跟随模式"}
+              label={t("outlineFollowModeLabel")}
               description={
                 settings.features?.outline?.followMode === "current"
-                  ? t("outlineFollowCurrentDesc") || "滚动页面时自动定位高亮大纲项"
+                  ? t("outlineFollowCurrentDesc")
                   : settings.features?.outline?.followMode === "latest"
-                    ? t("outlineFollowLatestDesc") || "大纲始终自动滚动到底部"
-                    : t("outlineFollowManualDesc") || "不自动滚动大纲"
+                    ? t("outlineFollowLatestDesc")
+                    : t("outlineFollowManualDesc")
               }
               settingId="outline-follow-mode">
               <select
@@ -1215,15 +1165,15 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
                     e.target.value as "current" | "latest" | "manual",
                   )
                 }>
-                <option value="current">{t("outlineFollowCurrent") || "跟随当前位置"}</option>
-                <option value="latest">{t("outlineFollowLatest") || "跟随最新消息"}</option>
-                <option value="manual">{t("outlineFollowManual") || "手动控制"}</option>
+                <option value="current">{t("outlineFollowCurrent")}</option>
+                <option value="latest">{t("outlineFollowLatest")}</option>
+                <option value="manual">{t("outlineFollowManual")}</option>
               </select>
             </SettingRow>
 
             <ToggleRow
-              label={t("outlineShowWordCountLabel") || "悬浮显示字数"}
-              description={t("outlineShowWordCountDesc") || "在大纲悬浮提示中显示该章节的字数"}
+              label={t("outlineShowWordCountLabel")}
+              description={t("outlineShowWordCountDesc")}
               settingId="outline-show-word-count"
               checked={settings.features?.outline?.showWordCount ?? false}
               onChange={() =>
@@ -1238,12 +1188,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           </SettingCard>
 
           {/* 收藏图标设置卡片 */}
-          <SettingCard
-            title={t("bookmarkSettings") || "收藏"}
-            description={t("bookmarkSettingsDesc") || "配置页内收藏功能"}>
+          <SettingCard title={t("bookmarkSettings")} description={t("bookmarkSettingsDesc")}>
             <SettingRow
-              label={t("inlineBookmarkModeLabel") || "页内收藏图标"}
-              description={t("inlineBookmarkModeDesc") || "控制页面标题旁的收藏图标显示方式"}
+              label={t("inlineBookmarkModeLabel")}
+              description={t("inlineBookmarkModeDesc")}
               settingId="outline-inline-bookmark-mode">
               <select
                 className="settings-select"
@@ -1256,15 +1204,15 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
                     e.target.value as "always" | "hover" | "hidden",
                   )
                 }>
-                <option value="always">{t("inlineBookmarkModeAlways") || "固定显示"}</option>
-                <option value="hover">{t("inlineBookmarkModeHover") || "悬浮显示"}</option>
-                <option value="hidden">{t("inlineBookmarkModeHidden") || "隐藏"}</option>
+                <option value="always">{t("inlineBookmarkModeAlways")}</option>
+                <option value="hover">{t("inlineBookmarkModeHover")}</option>
+                <option value="hidden">{t("inlineBookmarkModeHidden")}</option>
               </select>
             </SettingRow>
 
             <SettingRow
-              label={t("panelBookmarkModeLabel") || "面板收藏图标"}
-              description={t("panelBookmarkModeDesc") || "控制大纲面板中的收藏图标显示方式"}
+              label={t("panelBookmarkModeLabel")}
+              description={t("panelBookmarkModeDesc")}
               settingId="outline-panel-bookmark-mode">
               <select
                 className="settings-select"
@@ -1277,18 +1225,18 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
                     e.target.value as "always" | "hover" | "hidden",
                   )
                 }>
-                <option value="always">{t("inlineBookmarkModeAlways") || "固定显示"}</option>
-                <option value="hover">{t("inlineBookmarkModeHover") || "悬浮显示"}</option>
-                <option value="hidden">{t("inlineBookmarkModeHidden") || "隐藏"}</option>
+                <option value="always">{t("inlineBookmarkModeAlways")}</option>
+                <option value="hover">{t("inlineBookmarkModeHover")}</option>
+                <option value="hidden">{t("inlineBookmarkModeHidden")}</option>
               </select>
             </SettingRow>
           </SettingCard>
 
           {/* 滚动设置卡片 */}
-          <SettingCard title={t("scrollSettings") || "滚动设置"}>
+          <SettingCard title={t("scrollSettings")}>
             <ToggleRow
-              label={t("preventAutoScrollLabel") || "防止自动滚动"}
-              description={t("preventAutoScrollDesc") || "阻止页面自动滚动到底部"}
+              label={t("preventAutoScrollLabel")}
+              description={t("preventAutoScrollDesc")}
               settingId="outline-prevent-auto-scroll"
               checked={settings.panel?.preventAutoScroll ?? false}
               onChange={() =>
@@ -1307,11 +1255,11 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       {activeTab === FEATURES_TAB_IDS.CONVERSATIONS && (
         <>
           <SettingCard
-            title={t("conversationsSettingsTitle") || "会话管理"}
-            description={t("conversationsSettingsDesc") || "配置会话同步和显示行为"}>
+            title={t("conversationsSettingsTitle")}
+            description={t("conversationsSettingsDesc")}>
             <ToggleRow
-              label={t("folderRainbowLabel") || "文件夹彩虹色"}
-              description={t("folderRainbowDesc") || "为不同文件夹使用不同颜色"}
+              label={t("folderRainbowLabel")}
+              description={t("folderRainbowDesc")}
               settingId="conversation-folder-rainbow"
               checked={settings.features?.conversations?.folderRainbow ?? true}
               onChange={() =>
@@ -1325,8 +1273,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             />
 
             <ToggleRow
-              label={t("conversationsSyncUnpinLabel") || "同步时取消置顶"}
-              description={t("conversationsSyncUnpinDesc") || "同步会话时自动取消置顶"}
+              label={t("conversationsSyncUnpinLabel")}
+              description={t("conversationsSyncUnpinDesc")}
               settingId="conversation-sync-unpin"
               checked={settings.features?.conversations?.syncUnpin ?? false}
               onChange={() =>
@@ -1339,11 +1287,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               }
             />
             <ToggleRow
-              label={t("conversationsSyncDeleteLabel") || "Sync Delete Cloud"}
-              description={
-                t("conversationsSyncDeleteDesc") ||
-                "Delete cloud conversation on supported sites when deleting local record"
-              }
+              label={t("conversationsSyncDeleteLabel")}
+              description={t("conversationsSyncDeleteDesc")}
               settingId="conversation-sync-delete"
               checked={settings.features?.conversations?.syncDelete ?? true}
               onChange={() =>
@@ -1358,20 +1303,17 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           </SettingCard>
 
           {/* 导出设置卡片 */}
-          <SettingCard title={t("exportSettings") || "导出设置"}>
+          <SettingCard title={t("exportSettings")}>
             <SettingRow
-              label={t("exportPackagingLabel") || "Markdown 导出方式"}
-              description={
-                t("exportPackagingDesc") ||
-                "ZIP 会包含 Markdown 文件和可下载附件，附件放入 assets 并用相对路径引用"
-              }
+              label={t("exportPackagingLabel")}
+              description={t("exportPackagingDesc")}
               settingId="export-packaging">
               <SelectDropdown
                 className="settings-select-dropdown"
                 buttonClassName="settings-select"
                 options={exportPackagingOptions}
                 value={exportPackaging}
-                ariaLabel={t("exportPackagingLabel") || "Markdown 导出方式"}
+                ariaLabel={t("exportPackagingLabel")}
                 onChange={(value) =>
                   updateNestedSetting("export", "packaging", value as ExportPackaging)
                 }
@@ -1379,8 +1321,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             </SettingRow>
 
             <ToggleRow
-              label={t("exportFilenameTimestamp") || "导出文件名包含时间戳"}
-              description={t("exportFilenameTimestampDesc") || "在导出文件名末尾添加时间戳"}
+              label={t("exportFilenameTimestamp")}
+              description={t("exportFilenameTimestampDesc")}
               settingId="export-filename-timestamp"
               checked={settings.export?.exportFilenameTimestamp ?? false}
               onChange={() =>
@@ -1393,8 +1335,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             />
 
             <ToggleRow
-              label={t("exportIncludeThoughtsLabel") || "导出包含思维链"}
-              description={t("exportIncludeThoughtsDesc") || "导出时包含并自动展开思维链内容"}
+              label={t("exportIncludeThoughtsLabel")}
+              description={t("exportIncludeThoughtsDesc")}
               settingId="export-include-thoughts"
               checked={settings.export?.includeThoughts ?? true}
               onChange={() =>
@@ -1407,8 +1349,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             />
 
             <SettingRow
-              label={t("exportCustomUserName") || "自定义用户名称"}
-              description={t("exportCustomUserNameDesc") || "导出时使用的用户显示名称 (默认: User)"}
+              label={t("exportCustomUserName")}
+              description={t("exportCustomUserNameDesc")}
               settingId="export-custom-user-name">
               <LazyInput
                 className="settings-input"
@@ -1420,10 +1362,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
             </SettingRow>
 
             <SettingRow
-              label={t("exportCustomModelName") || "自定义 AI 名称"}
-              description={
-                t("exportCustomModelNameDesc") || "导出时使用的 AI 显示名称 (默认: 站点名称)"
-              }
+              label={t("exportCustomModelName")}
+              description={t("exportCustomModelNameDesc")}
               settingId="export-custom-model-name">
               <LazyInput
                 className="settings-input"
@@ -1454,15 +1394,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       )}
       {/* ========== Prompt Tab ========== */}
       {activeTab === FEATURES_TAB_IDS.PROMPTS && (
-        <SettingCard
-          title={t("promptSettingsTitle") || "Prompts Settings"}
-          description={t("promptSettingsDesc") || "Configure interactions in the prompts tab"}>
+        <SettingCard title={t("promptSettingsTitle")} description={t("promptSettingsDesc")}>
           <ToggleRow
-            label={t("promptDoubleClickSendLabel") || "Double-click to send prompt"}
-            description={
-              t("promptDoubleClickSendDesc") ||
-              "When enabled, double-click sends the prompt directly. Prompts with variables are sent after confirmation."
-            }
+            label={t("promptDoubleClickSendLabel")}
+            description={t("promptDoubleClickSendDesc")}
             settingId="prompt-double-click-send"
             checked={settings.features?.prompts?.doubleClickToSend ?? false}
             onChange={() =>
@@ -1476,10 +1411,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           />
 
           <SettingRow
-            label={t("promptSubmitShortcutLabel") || "Send shortcut"}
-            description={
-              t("promptSubmitShortcutDesc") || "Applies to both manual send and prompt auto-send"
-            }
+            label={t("promptSubmitShortcutLabel")}
+            description={t("promptSubmitShortcutDesc")}
             settingId="shortcuts-prompt-submit-shortcut">
             <select
               className="settings-select"
@@ -1487,19 +1420,14 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               onChange={(e) =>
                 updateDeepSetting("features", "prompts", "submitShortcut", e.target.value)
               }>
-              <option value="enter">{t("promptSubmitShortcutEnter") || "Enter"}</option>
-              <option value="ctrlEnter">
-                {t("promptSubmitShortcutCtrlEnter") || "Ctrl + Enter"}
-              </option>
+              <option value="enter">{t("promptSubmitShortcutEnter")}</option>
+              <option value="ctrlEnter">{t("promptSubmitShortcutCtrlEnter")}</option>
             </select>
           </SettingRow>
 
           <ToggleRow
-            label={t("queueSettingLabel") || "Prompt Queue"}
-            description={
-              t("queueSettingDesc") ||
-              "Show queue overlay above input for queuing prompts while AI generates"
-            }
+            label={t("queueSettingLabel")}
+            description={t("queueSettingDesc")}
             settingId="prompt-queue"
             checked={settings.features?.prompts?.promptQueue ?? false}
             onChange={() =>
@@ -1516,12 +1444,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
 
       {/* ========== Reading History Tab ========== */}
       {activeTab === FEATURES_TAB_IDS.READING_HISTORY && (
-        <SettingCard
-          title={t("readingHistoryTitle") || "阅读历史"}
-          description={t("readingHistoryDesc") || "记录和恢复会话阅读位置"}>
+        <SettingCard title={t("readingHistoryTitle")} description={t("readingHistoryDesc")}>
           <ToggleRow
-            label={t("readingHistoryPersistenceLabel") || "启用阅读历史"}
-            description={t("readingHistoryPersistenceDesc") || "记录每个会话的阅读位置"}
+            label={t("readingHistoryPersistenceLabel")}
+            description={t("readingHistoryPersistenceDesc")}
             settingId="reading-history-persistence"
             checked={settings.readingHistory?.persistence ?? true}
             onChange={() =>
@@ -1534,8 +1460,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           />
 
           <ToggleRow
-            label={t("readingHistoryAutoRestoreLabel") || "自动恢复位置"}
-            description={t("readingHistoryAutoRestoreDesc") || "打开会话时自动跳转到上次阅读位置"}
+            label={t("readingHistoryAutoRestoreLabel")}
+            description={t("readingHistoryAutoRestoreDesc")}
             settingId="reading-history-auto-restore"
             checked={settings.readingHistory?.autoRestore ?? true}
             disabled={!settings.readingHistory?.persistence}
@@ -1550,7 +1476,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           />
 
           <SettingRow
-            label={t("readingHistoryCleanup") || "历史保留时间"}
+            label={t("readingHistoryCleanup")}
             settingId="reading-history-cleanup-days"
             disabled={!settings.readingHistory?.persistence}
             onDisabledClick={() => showPrerequisiteToast(readingHistoryLabel)}>
@@ -1561,12 +1487,12 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
                 updateNestedSetting("readingHistory", "cleanupDays", parseInt(e.target.value))
               }
               disabled={!settings.readingHistory?.persistence}>
-              <option value={1}>1 {t("day") || "天"}</option>
-              <option value={3}>3 {t("days") || "天"}</option>
-              <option value={7}>7 {t("days") || "天"}</option>
-              <option value={30}>30 {t("days") || "天"}</option>
-              <option value={90}>90 {t("days") || "天"}</option>
-              <option value={-1}>{t("forever") || "永久"}</option>
+              <option value={1}>1 {t("day")}</option>
+              <option value={3}>3 {t("days")}</option>
+              <option value={7}>7 {t("days")}</option>
+              <option value={30}>30 {t("days")}</option>
+              <option value={90}>90 {t("days")}</option>
+              <option value={-1}>{t("forever")}</option>
             </select>
           </SettingRow>
         </SettingCard>
@@ -1574,15 +1500,10 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
 
       {/* ========== 内容交互 Tab ========== */}
       {activeTab === FEATURES_TAB_IDS.CONTENT && (
-        <SettingCard
-          title={t("interactionEnhance") || "交互增强"}
-          description={t("interactionEnhanceDesc") || "增强 Mermaid、公式和表格的交互功能"}>
+        <SettingCard title={t("interactionEnhance")} description={t("interactionEnhanceDesc")}>
           <ToggleRow
-            label={t("assistantMermaidLabel") || "AI 回复 Mermaid 渲染"}
-            description={
-              t("assistantMermaidDesc") ||
-              "为未原生支持 Mermaid 的站点自动渲染 AI 回复中的 Mermaid 图表"
-            }
+            label={t("assistantMermaidLabel")}
+            description={t("assistantMermaidDesc")}
             settingId="content-assistant-mermaid"
             checked={settings.content?.assistantMermaid ?? true}
             onChange={() =>
@@ -1595,10 +1516,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           />
 
           <ToggleRow
-            label={t("userQueryMarkdownLabel") || "用户提问样式优化"}
-            description={
-              t("userQueryMarkdownDesc") || "为用户提问启用 Markdown 排版与 LaTeX 数学公式渲染"
-            }
+            label={t("userQueryMarkdownLabel")}
+            description={t("userQueryMarkdownDesc")}
             settingId="content-user-query-markdown"
             checked={settings.content?.userQueryMarkdown ?? true}
             onChange={() =>
@@ -1611,8 +1530,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           />
 
           <ToggleRow
-            label={t("formulaCopyLabel") || "双击复制公式"}
-            description={t("formulaCopyDesc") || "双击数学公式即可复制为指定格式"}
+            label={t("formulaCopyLabel")}
+            description={t("formulaCopyDesc")}
             settingId="content-formula-copy"
             checked={settings.content?.formulaCopy ?? true}
             onChange={() =>
@@ -1621,8 +1540,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           />
 
           <SettingRow
-            label={t("formulaCopyFormatLabel") || "公式复制格式"}
-            description={t("formulaCopyFormatDesc") || "选择双击公式后复制 LaTeX 或 MathML 源码"}
+            label={t("formulaCopyFormatLabel")}
+            description={t("formulaCopyFormatDesc")}
             settingId="content-formula-copy-format"
             disabled={!settings.content?.formulaCopy}
             onDisabledClick={() => showPrerequisiteToast(formulaCopyLabel)}>
@@ -1631,7 +1550,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
               buttonClassName="settings-select"
               options={formulaCopyFormatOptions}
               value={formulaCopyFormat}
-              ariaLabel={t("formulaCopyFormatLabel") || "公式复制格式"}
+              ariaLabel={t("formulaCopyFormatLabel")}
               disabled={!settings.content?.formulaCopy}
               onChange={(value) =>
                 updateNestedSetting("content", "formulaCopyFormat", value as FormulaCopyFormat)
@@ -1640,8 +1559,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           </SettingRow>
 
           <ToggleRow
-            label={t("formulaDelimiterLabel") || "公式分隔符转换"}
-            description={t("formulaDelimiterDesc") || "复制时将括号分隔符转为美元符号"}
+            label={t("formulaDelimiterLabel")}
+            description={t("formulaDelimiterDesc")}
             settingId="content-formula-delimiter"
             checked={settings.content?.formulaDelimiter ?? true}
             disabled={!settings.content?.formulaCopy || formulaCopyFormat !== "latex"}
@@ -1656,8 +1575,8 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
           />
 
           <ToggleRow
-            label={t("tableCopyLabel") || "表格复制 Markdown"}
-            description={t("tableCopyDesc") || "表格右上角添加复制按钮"}
+            label={t("tableCopyLabel")}
+            description={t("tableCopyDesc")}
             settingId="content-table-copy"
             checked={settings.content?.tableCopy ?? true}
             onChange={() =>

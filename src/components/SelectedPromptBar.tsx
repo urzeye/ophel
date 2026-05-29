@@ -180,15 +180,15 @@ export const SelectedPromptBar: React.FC<SelectedPromptBarProps> = ({
         transform: "translateX(-50%)",
         zIndex: 999998,
       }}>
-      <span className="selected-prompt-label">{t("currentPrompt") || "当前提示词"}</span>
+      <span className="selected-prompt-label">{t("currentPrompt")}</span>
       <Tooltip content={title}>
         <span className="selected-prompt-text">{title}</span>
       </Tooltip>
-      <Tooltip content={t("clear") || "清除"}>
+      <Tooltip content={t("clear")}>
         <button
           className="clear-prompt-btn"
           type="button"
-          aria-label={t("clear") || "清除"}
+          aria-label={t("clear")}
           onClick={onClear}>
           <ClearIcon size={14} />
         </button>

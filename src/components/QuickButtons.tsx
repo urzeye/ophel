@@ -801,9 +801,9 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
     const tooltipContent = isAnchorBtn
       ? hasAnchor
-        ? t("goToAnchor") || "返回锚点"
-        : t("noAnchor") || "暂无锚点"
-      : t(def.labelKey) || def.labelKey
+        ? t("goToAnchor")
+        : t("noAnchor")
+      : t(def.labelKey)
 
     return (
       <Tooltip key={id} content={tooltipContent}>
@@ -863,7 +863,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     return (
       <React.Fragment key="manualAnchor">
         {/* 设置锚点（手动） */}
-        <Tooltip content={t("setAnchor") || "设置锚点"}>
+        <Tooltip content={t("setAnchor")}>
           <button
             className="quick-prompt-btn manual-anchor-btn set-btn gh-interactive"
             onClick={setAnchorManually}>
@@ -991,7 +991,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       const buttonClass = `quick-menu-btn ${isActive ? "active" : ""} ${item.isDanger ? "danger" : ""}`
 
       elements.push(
-        <Tooltip key={item.id} content={t(item.labelKey) || item.defaultLabel}>
+        <Tooltip key={item.id} content={t(item.labelKey)}>
           <button
             className={buttonClass}
             onClick={() => {

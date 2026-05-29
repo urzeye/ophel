@@ -27,7 +27,7 @@ export const DisclaimerModal: React.FC = () => {
             <span className="sparkle" aria-hidden="true">
               ✨
             </span>
-            <h2 className="disclaimer-title">{t("welcomeSlogan") || "AI 之益，触手可及"}</h2>
+            <h2 className="disclaimer-title">{t("welcomeSlogan")}</h2>
             <span className="sparkle" aria-hidden="true">
               ✨
             </span>
@@ -36,31 +36,20 @@ export const DisclaimerModal: React.FC = () => {
 
         <div className="disclaimer-content">
           <div className="disclaimer-section">
-            <p>
-              {t("disclaimerText") ||
-                "本插件为通用辅助工具，依赖于第三方站点的页面结构和布局。如果原网站更新导致功能失效，恳请前往 GitHub 提交 Issue 反馈，我们将尽快修复。"}
-            </p>
-            <p className="disclaimer-warning">
-              {t("disclaimerWarning") ||
-                "请勿因第三方站点改版导致的问题在应用商店给出差评，感谢您的理解与支持！"}
-            </p>
+            <p>{t("disclaimerText")}</p>
+            <p className="disclaimer-warning">{t("disclaimerWarning")}</p>
           </div>
 
           <div className="disclaimer-section privacy-section">
             <div className="privacy-header">
               <ShieldCheckIcon size={20} className="privacy-icon" />
-              <h3 className="privacy-title">{t("privacyTitle") || "隐私保护"}</h3>
+              <h3 className="privacy-title">{t("privacyTitle")}</h3>
             </div>
-            <p className="privacy-content">
-              {t("privacyText") ||
-                "本插件所有数据均存储在本地浏览器中，不会主动上传到任何服务器。您的账号信息和使用数据完全由您自己掌控，确保隐私安全。"}
-            </p>
+            <p className="privacy-content">{t("privacyText")}</p>
           </div>
 
           <div className="disclaimer-section quote-section">
-            <p className="disclaimer-quote-text">
-              {t("communityMotto") || "一个人可以走的更快，但一群人可以走得更远。"}
-            </p>
+            <p className="disclaimer-quote-text">{t("communityMotto")}</p>
 
             <div className="action-row">
               <a
@@ -69,7 +58,7 @@ export const DisclaimerModal: React.FC = () => {
                 rel="noopener noreferrer"
                 className="star-btn">
                 <GithubIcon size={18} />
-                <span>{t("giveStar") || "点个 Star"}</span>
+                <span>{t("giveStar")}</span>
               </a>
 
               <a
@@ -104,7 +93,7 @@ export const DisclaimerModal: React.FC = () => {
 
         <div className="disclaimer-footer">
           <button className="disclaimer-agree-btn" onClick={handleAgree}>
-            {t("agreeButton") || "我已知晓并同意"}
+            {t("agreeButton")}
           </button>
         </div>
       </div>

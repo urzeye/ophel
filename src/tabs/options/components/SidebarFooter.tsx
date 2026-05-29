@@ -168,34 +168,34 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
         <div
           ref={themeSegmentRef}
           className={`settings-theme-segmented ${themeSegmentState === "compact" ? "is-compact" : ""} ${themeSegmentState === "icon" ? "is-icon" : ""}`}>
-          <Tooltip content={t("themeLight") || "浅色"} triggerStyle={{ flex: 1 }}>
+          <Tooltip content={t("themeLight")} triggerStyle={{ flex: 1 }}>
             <button
               className={`settings-theme-segment ${currentThemePreference === "light" ? "active" : ""}`}
               onClick={(event) => handleThemeModeToggle("light", event)}>
               <span className="segment-icon">
                 <ThemeLightIcon size={16} />
               </span>
-              <span className="segment-label">{t("themeLight") || "浅色"}</span>
+              <span className="segment-label">{t("themeLight")}</span>
             </button>
           </Tooltip>
-          <Tooltip content={t("themeDark") || "深色"} triggerStyle={{ flex: 1 }}>
+          <Tooltip content={t("themeDark")} triggerStyle={{ flex: 1 }}>
             <button
               className={`settings-theme-segment ${currentThemePreference === "dark" ? "active" : ""}`}
               onClick={(event) => handleThemeModeToggle("dark", event)}>
               <span className="segment-icon">
                 <ThemeDarkIcon size={16} />
               </span>
-              <span className="segment-label">{t("themeDark") || "深色"}</span>
+              <span className="segment-label">{t("themeDark")}</span>
             </button>
           </Tooltip>
-          <Tooltip content={t("themeSystem") || "系统"} triggerStyle={{ flex: 1 }}>
+          <Tooltip content={t("themeSystem")} triggerStyle={{ flex: 1 }}>
             <button
               className={`settings-theme-segment ${currentThemePreference === "system" ? "active" : ""}`}
               onClick={(event) => handleThemeModeToggle("system", event)}>
               <span className="segment-icon">
                 <ThemeSystemIcon size={16} />
               </span>
-              <span className="segment-label">{t("themeSystem") || "系统"}</span>
+              <span className="segment-label">{t("themeSystem")}</span>
             </button>
           </Tooltip>
         </div>
@@ -232,7 +232,7 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
         </span>
 
         {/* 右侧更多语言 */}
-        <Tooltip content={t("moreLanguages") || "More Languages"}>
+        <Tooltip content={t("moreLanguages")}>
           <button
             ref={moreBtnRef}
             className={`lang-more-btn ${isMenuOpen ? "active" : ""}`}

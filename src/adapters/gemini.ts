@@ -658,7 +658,7 @@ class GeminiMyStuffEnhancer {
         kind,
         locator: this.extractLocator(host, kind),
       })
-      showToast(t("geminiMystuffLocateFailed") || "未找到原始会话定位信息", 2500)
+      showToast(t("geminiMystuffLocateFailed"), 2500)
       return
     }
 
@@ -861,7 +861,7 @@ class GeminiMyStuffEnhancer {
   }
 
   private getOpenInNewTabLabel(): string {
-    return t("geminiMystuffOpenInNewTab") || "在新标签页中打开"
+    return t("geminiMystuffOpenInNewTab")
   }
 
   private dismissActionButtonVisualState(button: HTMLElement): void {
@@ -2447,9 +2447,7 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     const fileBlock =
-      fileMarkdown.length > 0
-        ? `${t("exportAttachmentsLabel") || "Attachments"}:\n${fileMarkdown.join("\n")}`
-        : ""
+      fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
 
     return [imageMarkdown.join("\n\n"), fileBlock, textContent].filter(Boolean).join("\n\n")
   }
@@ -2473,9 +2471,7 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     const fileBlock =
-      fileMarkdown.length > 0
-        ? `${t("exportAttachmentsLabel") || "Attachments"}:\n${fileMarkdown.join("\n")}`
-        : ""
+      fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
 
     return [imageMarkdown.join("\n\n"), fileBlock, textContent].filter(Boolean).join("\n\n")
   }

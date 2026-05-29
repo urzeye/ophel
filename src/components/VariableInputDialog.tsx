@@ -119,7 +119,7 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
               fontWeight: 600,
               color: "var(--gh-text, #374151)",
             }}>
-            {t("promptVariableTitle") || "填写变量"}
+            {t("promptVariableTitle")}
           </h3>
           <button
             onClick={onCancel}
@@ -195,8 +195,8 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
                   onChange={(e) => updateValue(index, e.target.value)}
                   placeholder={
                     parsedVar.defaultValue
-                      ? `${t("promptVariablePlaceholder") || "请输入"} (${t("default") || "默认"}: ${parsedVar.defaultValue})`
-                      : t("promptVariablePlaceholder") || "请输入"
+                      ? `${t("promptVariablePlaceholder")} (${t("default")}: ${parsedVar.defaultValue})`
+                      : t("promptVariablePlaceholder")
                   }
                   style={{
                     width: "100%",
@@ -244,7 +244,7 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
               fontSize: "14px",
               cursor: "pointer",
             }}>
-            {t("cancel") || "取消"}
+            {t("cancel")}
           </button>
           <button
             onClick={handleSubmit}
@@ -258,7 +258,7 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
               cursor: "pointer",
               fontWeight: 500,
             }}>
-            {t("confirm") || "确认"}
+            {t("confirm")}
           </button>
         </div>
       </div>

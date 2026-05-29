@@ -24,7 +24,7 @@ export const getStoreInfo = (): StoreInfo => {
     return {
       url: "https://greasyfork.org/zh-CN/scripts/563646-ophel-ai-chat-page-enhancer",
       icon: <GreasyForkIcon size={14} />,
-      label: t("reviewBtn") || "Review",
+      label: t("reviewBtn"),
     }
   }
 
@@ -34,21 +34,21 @@ export const getStoreInfo = (): StoreInfo => {
     return {
       url: "https://addons.mozilla.org/zh-CN/firefox/addon/ophel-ai-chat-enhancer/",
       icon: <FirefoxIcon size={14} />,
-      label: t("reviewBtn") || "Review",
+      label: t("reviewBtn"),
     }
   } else if (userAgent.indexOf("edg/") > -1) {
     // Microsoft Edge (Chromium-based) — UA contains "Edg/" not "Edge"
     return {
       url: "https://microsoftedge.microsoft.com/addons/detail/ophel-atlas-ai-chat-navi/ffpenkdeifijngifjmbbpijfpdhlolga",
       icon: <EdgeIcon size={14} />,
-      label: t("reviewBtn") || "Review",
+      label: t("reviewBtn"),
     }
   } else {
     // Default to Chrome (includes Brave etc)
     return {
       url: "https://chromewebstore.google.com/detail/ophel-ai-%E5%AF%B9%E8%AF%9D%E5%A2%9E%E5%BC%BA%E5%B7%A5%E5%85%B7/lpcohdfbomkgepfladogodgeoppclakd",
       icon: <ChromeIcon size={14} />,
-      label: t("reviewBtn") || "Review",
+      label: t("reviewBtn"),
     }
   }
 }

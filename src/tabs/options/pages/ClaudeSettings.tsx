@@ -503,10 +503,7 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
               </div>
             )}
             {/* 快捷切换下拉 */}
-            <Tooltip
-              content={
-                !isClaudeSite ? t("claudeNotOnSiteHint") || "请在 Claude 站点使用此功能" : ""
-              }>
+            <Tooltip content={!isClaudeSite ? t("claudeNotOnSiteHint") : ""}>
               <select
                 className="settings-select"
                 value={currentKeyId}
