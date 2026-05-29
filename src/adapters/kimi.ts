@@ -7,7 +7,17 @@
  */
 import { SITE_IDS } from "~constants"
 import { kimiNativeThemeCss } from "~styles/native-theme-adapters/kimi"
-import { htmlToMarkdown } from "~utils/exporter"
+import {
+  addFileExportAsset,
+  addImageExportAsset,
+  createExportAssetCollector,
+  escapeMarkdownLinkText,
+  isDownloadableExportAssetUrl,
+  normalizeExportAssetUrl,
+  type ExportAssetCollector,
+} from "~utils/export-assets"
+import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
+import { t } from "~utils/i18n"
 
 import {
   SiteAdapter,
@@ -15,6 +25,7 @@ import {
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportConfig,
+  type ExportLifecycleContext,
   type MarkdownFixerConfig,
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
@@ -23,6 +34,7 @@ import {
 } from "./base"
 
 const CHAT_PATH_PATTERN = /^\/chat\/([a-z0-9-]+)(?:\/|$)/i
+const SHARE_PATH_PATTERN = /^\/(?:share|kimiplus)\/([a-z0-9-]+)(?:\/|$)/i
 const NON_CHAT_PATH_PREFIXES = ["/docs/", "/website/", "/table/"]
 const TOKEN_STORAGE_PREFIX = "__tea_cache_tokens_"
 const KIMI_DELETE_API_PATH = "/apiv2/kimi.chat.v1.ChatService/DeleteChat"
@@ -59,6 +71,9 @@ const CONVERSATION_TITLE_SELECTOR = "span.chat-name"
 const HISTORY_TITLE_SELECTOR = ".history-chat .title-wrapper .title"
 
 const CHAT_LIST_SELECTOR = ".chat-content-list"
+const SHARE_LIST_SELECTOR = ".share-content-list"
+const RESPONSE_LIST_SELECTOR = `${CHAT_LIST_SELECTOR}, ${SHARE_LIST_SELECTOR}`
+const SHARE_SCROLL_CONTAINER_SELECTOR = ".share-detail"
 const CHAT_LIST_WIDTH_SELECTOR = [
   CHAT_LIST_SELECTOR,
   `${CHAT_LIST_SELECTOR}${CHAT_LIST_SELECTOR}`,
@@ -70,6 +85,7 @@ const CHAT_ITEM_SELECTOR = ".chat-content-item"
 const USER_ITEM_SELECTOR = ".chat-content-item-user"
 const ASSISTANT_ITEM_SELECTOR = ".chat-content-item-assistant"
 const USER_SEGMENT_SELECTOR = ".segment.segment-user"
+const ASSISTANT_SEGMENT_SELECTOR = ".segment.segment-assistant"
 const USER_QUERY_WRAPPER_SELECTOR = [
   ".segment-user .segment-content",
   `${USER_ITEM_SELECTOR} .segment-content`,
@@ -85,7 +101,19 @@ const USER_QUERY_CONTENT_SELECTOR = [
   `${USER_ITEM_SELECTOR} .user-content`,
   ".segment-content-box > .user-content",
 ].join(", ")
-const ASSISTANT_MARKDOWN_SELECTOR = ".segment-assistant .markdown"
+const ASSISTANT_BODY_MARKDOWN_SELECTOR = [
+  ".segment-assistant .segment-content-box > .markdown-container > .markdown",
+  `${ASSISTANT_ITEM_SELECTOR} .segment-content-box > .markdown-container > .markdown`,
+].join(", ")
+const KIMI_THINKING_CONTAINER_SELECTOR =
+  ".toolcall-container.thinking-container, .thinking-container"
+const KIMI_TOOLCALL_CONTAINER_SELECTOR = ".toolcall-container, .container-block"
+const KIMI_EXPORT_DECORATION_SELECTOR =
+  "button, [role='button'], svg, canvas, [aria-hidden='true'], .segment-avatar, .okc-cards-container"
+const KIMI_USER_ATTACHMENT_LIST_SELECTOR = ".attachment-list"
+const KIMI_USER_ATTACHMENT_IMAGE_SELECTOR =
+  ".attachment-list-image img, .image-thumbnail img.image-main, .image-wrapper img.image-main"
+const KIMI_USER_FILE_CARD_SELECTOR = ".attachment-list-file .file-card-container"
 
 const THEME_STORAGE_KEY = "CUSTOM_THEME"
 const FULL_LIST_SNAPSHOT_TTL_MS = 15_000
@@ -103,6 +131,7 @@ export class KimiAdapter extends SiteAdapter {
   private fullListSnapshot: ConversationInfo[] = []
   private fullListSnapshotExpiresAt = 0
   private fullListSnapshotUsesLeft = 0
+  private exportIncludeThoughts: boolean | undefined = undefined
 
   match(): boolean {
     const matched = window.location.hostname === "www.kimi.com"
@@ -146,8 +175,13 @@ export class KimiAdapter extends SiteAdapter {
       return ""
     }
 
-    const match = path.match(CHAT_PATH_PATTERN)
-    return match ? match[1] : ""
+    const chatMatch = path.match(CHAT_PATH_PATTERN)
+    if (chatMatch?.[1]) {
+      return chatMatch[1]
+    }
+
+    const shareMatch = path.match(SHARE_PATH_PATTERN)
+    return shareMatch?.[1] || ""
   }
 
   isNewConversation(): boolean {
@@ -612,6 +646,13 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   getScrollContainer(): HTMLElement | null {
+    const shareDetail = document.querySelector(
+      SHARE_SCROLL_CONTAINER_SELECTOR,
+    ) as HTMLElement | null
+    if (shareDetail && shareDetail.scrollHeight > shareDetail.clientHeight) {
+      return shareDetail
+    }
+
     const detail = document.querySelector(".chat-detail-content") as HTMLElement | null
     if (detail && detail.scrollHeight > detail.clientHeight) {
       return detail
@@ -627,11 +668,11 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   getResponseContainerSelector(): string {
-    return CHAT_LIST_SELECTOR
+    return RESPONSE_LIST_SELECTOR
   }
 
   getChatContentSelectors(): string[] {
-    return [ASSISTANT_MARKDOWN_SELECTOR, USER_CONTENT_SELECTOR]
+    return [ASSISTANT_BODY_MARKDOWN_SELECTOR, USER_CONTENT_SELECTOR]
   }
 
   getUserQuerySelector(): string {
@@ -645,6 +686,10 @@ export class KimiAdapter extends SiteAdapter {
 
   extractUserQueryMarkdown(element: Element): string {
     return this.extractUserQueryText(element)
+  }
+
+  extractUserQueryExportContent(element: Element): string {
+    return this.extractKimiUserQueryExportContent(element)
   }
 
   replaceUserQueryContent(element: Element, html: string): boolean {
@@ -670,15 +715,30 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   extractAssistantResponseText(element: Element): string {
-    const markdown = element.matches(".markdown") ? element : element.querySelector(".markdown")
-    if (!markdown) return ""
-    const content = htmlToMarkdown(markdown).trim()
-    if (content) return content
-    return this.extractTextWithLineBreaks(markdown).trim()
+    const clone = element.cloneNode(true) as HTMLElement
+    clone.querySelectorAll(KIMI_EXPORT_DECORATION_SELECTOR).forEach((node) => node.remove())
+
+    const includeThoughts = this.shouldIncludeThoughtsInExport()
+    const thoughtBlocks = includeThoughts ? this.extractThoughtBlockquotes(clone) : []
+
+    clone.querySelectorAll(KIMI_TOOLCALL_CONTAINER_SELECTOR).forEach((node) => node.remove())
+
+    const bodyRoot = this.findAssistantBodyMarkdownRoot(clone)
+    if (!bodyRoot) {
+      if (thoughtBlocks.length > 0) return thoughtBlocks.join("\n\n")
+      return ""
+    }
+
+    const content = (htmlToMarkdown(bodyRoot) || this.extractTextWithLineBreaks(bodyRoot)).trim()
+    if (thoughtBlocks.length > 0) {
+      const thoughtSection = thoughtBlocks.join("\n\n")
+      return content ? `${thoughtSection}\n\n${content}` : thoughtSection
+    }
+    return content
   }
 
   getLatestReplyText(): string | null {
-    const replies = document.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR)
+    const replies = document.querySelectorAll(ASSISTANT_BODY_MARKDOWN_SELECTOR)
     if (replies.length === 0) return null
     const last = replies[replies.length - 1]
     const text = this.extractAssistantResponseText(last)
@@ -686,7 +746,7 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
-    const container = document.querySelector(CHAT_LIST_SELECTOR)
+    const container = document.querySelector(RESPONSE_LIST_SELECTOR)
     if (!container) return []
 
     const outline: OutlineItem[] = []
@@ -694,7 +754,9 @@ export class KimiAdapter extends SiteAdapter {
 
     items.forEach((item, itemIndex) => {
       const isUserItem =
-        item.matches(USER_ITEM_SELECTOR) || item.querySelector(USER_SEGMENT_SELECTOR)
+        item.matches(USER_ITEM_SELECTOR) ||
+        item.matches(USER_SEGMENT_SELECTOR) ||
+        item.querySelector(USER_SEGMENT_SELECTOR)
 
       if (isUserItem) {
         if (!includeUserQueries) return
@@ -722,12 +784,13 @@ export class KimiAdapter extends SiteAdapter {
 
       if (
         !item.matches(ASSISTANT_ITEM_SELECTOR) &&
-        !item.querySelector(ASSISTANT_MARKDOWN_SELECTOR)
+        !item.matches(ASSISTANT_SEGMENT_SELECTOR) &&
+        !item.querySelector(ASSISTANT_BODY_MARKDOWN_SELECTOR)
       ) {
         return
       }
 
-      const markdown = item.querySelector(".markdown")
+      const markdown = this.findAssistantBodyMarkdownRoot(item)
       if (!markdown) return
 
       const headings = Array.from(markdown.querySelectorAll("h1, h2, h3, h4, h5, h6"))
@@ -767,10 +830,38 @@ export class KimiAdapter extends SiteAdapter {
   getExportConfig(): ExportConfig {
     return {
       userQuerySelector: USER_SEGMENT_SELECTOR,
-      assistantResponseSelector: ASSISTANT_MARKDOWN_SELECTOR,
+      assistantResponseSelector: ASSISTANT_SEGMENT_SELECTOR,
       turnSelector: null,
       useShadowDOM: false,
     }
+  }
+
+  async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
+    const messages = this.extractKimiExportMessages()
+    return messages.length > 0 ? messages : null
+  }
+
+  async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
+    const collector = createExportAssetCollector()
+    const messages = this.extractKimiExportMessages(collector)
+    if (messages.length === 0) return null
+
+    return {
+      messages,
+      assets: collector.assets,
+    }
+  }
+
+  async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
+    this.exportIncludeThoughts = context.includeThoughts
+    return null
+  }
+
+  async restoreConversationAfterExport(
+    _context: ExportLifecycleContext,
+    _state: unknown,
+  ): Promise<void> {
+    this.exportIncludeThoughts = undefined
   }
 
   isGenerating(): boolean {
@@ -1676,6 +1767,323 @@ export class KimiAdapter extends SiteAdapter {
     }
   }
 
+  private extractKimiExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
+    const container = document.querySelector(RESPONSE_LIST_SELECTOR)
+    if (!container) return []
+
+    const messages: ExportMessage[] = []
+    const items = this.getChatItems(container)
+
+    for (const item of items) {
+      const userRoot = this.findKimiUserMessageRoot(item)
+      if (userRoot) {
+        const content = this.extractKimiUserQueryExportContent(userRoot, collector).trim()
+        if (content) {
+          messages.push({ role: "user", content })
+        }
+        continue
+      }
+
+      const assistantRoot = this.findKimiAssistantMessageRoot(item)
+      if (assistantRoot) {
+        const content = this.extractAssistantResponseText(assistantRoot).trim()
+        if (content) {
+          messages.push({ role: "assistant", content })
+        }
+      }
+    }
+
+    return messages
+  }
+
+  private findKimiUserMessageRoot(element: Element): Element | null {
+    if (element.matches(USER_SEGMENT_SELECTOR)) return element
+    return element.querySelector(USER_SEGMENT_SELECTOR)
+  }
+
+  private findKimiAssistantMessageRoot(element: Element): Element | null {
+    if (element.matches(ASSISTANT_SEGMENT_SELECTOR)) return element
+    const segment = element.querySelector(ASSISTANT_SEGMENT_SELECTOR)
+    if (segment) return segment
+
+    const markdown = this.findAssistantBodyMarkdownRoot(element)
+    return markdown?.closest(ASSISTANT_SEGMENT_SELECTOR) || null
+  }
+
+  private extractKimiUserQueryExportContent(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string {
+    const imageMarkdown = this.extractKimiUserImageMarkdown(element, collector)
+    const fileMarkdown = this.extractKimiUserFileMarkdown(element, collector)
+    const body = this.extractKimiUserBodyMarkdown(element)
+
+    if (imageMarkdown.length === 0 && fileMarkdown.length === 0) {
+      return body
+    }
+
+    const fileBlock =
+      fileMarkdown.length > 0
+        ? `${t("exportAttachmentsLabel") || "Attachments"}:\n${fileMarkdown.join("\n")}`
+        : ""
+
+    return [imageMarkdown.join("\n\n"), fileBlock, body].filter(Boolean).join("\n\n")
+  }
+
+  private extractKimiUserBodyMarkdown(element: Element): string {
+    const clone = element.cloneNode(true) as HTMLElement
+    clone.querySelectorAll(KIMI_USER_ATTACHMENT_LIST_SELECTOR).forEach((node) => node.remove())
+    clone.querySelectorAll(KIMI_EXPORT_DECORATION_SELECTOR).forEach((node) => node.remove())
+
+    const contentBox = clone.querySelector(".segment-content-box")
+    return this.extractTextWithLineBreaks(contentBox || clone).trim()
+  }
+
+  private extractKimiUserImageMarkdown(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string[] {
+    const images = Array.from(element.querySelectorAll(KIMI_USER_ATTACHMENT_IMAGE_SELECTOR)).filter(
+      (node): node is HTMLImageElement => node instanceof HTMLImageElement,
+    )
+    const seenSources = new Set<string>()
+    const imageMarkdown: string[] = []
+
+    for (const image of images) {
+      const source = this.getKimiImageExportSource(image)
+      if (!source || seenSources.has(source)) continue
+
+      seenSources.add(source)
+      const alt = this.extractKimiImageAlt(image, source)
+      const assetPath = collector
+        ? addImageExportAsset(collector, {
+            source,
+            alt,
+            extensionHint: alt,
+            directory: "assets/images",
+            idPrefix: "kimi-image",
+            filenamePrefix: "kimi-image",
+          })
+        : source
+
+      if (assetPath) {
+        imageMarkdown.push(`![${escapeMarkdownLinkText(alt)}](${assetPath})`)
+      }
+    }
+
+    return imageMarkdown
+  }
+
+  private getKimiImageExportSource(image: HTMLImageElement): string {
+    const candidates = [image.currentSrc || "", image.src || "", image.getAttribute("src") || ""]
+
+    for (const candidate of candidates) {
+      const source = normalizeExportAssetUrl(candidate)
+      if (!source) continue
+      if (source.startsWith("data:image/svg+xml")) continue
+      if (isDownloadableExportAssetUrl(source)) return source
+    }
+
+    return ""
+  }
+
+  private extractKimiImageAlt(image: HTMLImageElement, source: string): string {
+    const candidates = [
+      image.alt || "",
+      image.getAttribute("title") || "",
+      image.getAttribute("aria-label") || "",
+      this.extractKimiFilenameFromUrl(source),
+      "uploaded image",
+    ]
+
+    return (
+      candidates.map((value) => value.replace(/\s+/g, " ").trim()).find(Boolean) || "uploaded image"
+    )
+  }
+
+  private extractKimiUserFileMarkdown(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string[] {
+    const cards = Array.from(element.querySelectorAll(KIMI_USER_FILE_CARD_SELECTOR))
+    const seenFiles = new Set<string>()
+    const fileMarkdown: string[] = []
+
+    for (const card of cards) {
+      const name = this.extractKimiFileName(card)
+      if (!name) continue
+
+      const type = this.extractKimiFileType(card)
+      const size = this.extractKimiFileSize(card)
+      const label = this.formatKimiFileLabel(name, type, size)
+      const href = this.extractKimiFileHref(card)
+      const assetPath =
+        href && collector
+          ? addFileExportAsset(collector, {
+              source: href,
+              name,
+              mimeHint: type || name,
+              directory: "assets/files",
+              idPrefix: "kimi-file",
+            })
+          : href
+      const markdown = assetPath
+        ? `- [${escapeMarkdownLinkText(label)}](${assetPath})`
+        : `- ${escapeMarkdownLinkText(label)}`
+
+      if (seenFiles.has(markdown)) continue
+
+      seenFiles.add(markdown)
+      fileMarkdown.push(markdown)
+    }
+
+    return fileMarkdown
+  }
+
+  private extractKimiFileName(card: Element): string {
+    const candidates = [
+      card.querySelector(".file-card-info-name")?.textContent || "",
+      card.getAttribute("download") || "",
+      card.getAttribute("title") || "",
+      card.getAttribute("aria-label") || "",
+      card.textContent || "",
+    ]
+      .map((value) => value.replace(/\s+/g, " ").trim())
+      .filter(Boolean)
+
+    const filename = candidates.find((value) => /[^/\\]+\.[A-Za-z0-9]{1,10}(\s|$)/.test(value))
+    if (filename) {
+      return filename.match(/[^/\\]+?\.[A-Za-z0-9]{1,10}/)?.[0] || ""
+    }
+
+    return candidates[0] || ""
+  }
+
+  private extractKimiFileType(card: Element): string {
+    return card.querySelector(".file-ext")?.textContent?.replace(/\s+/g, " ").trim() || ""
+  }
+
+  private extractKimiFileSize(card: Element): string {
+    return card.querySelector(".file-size")?.textContent?.replace(/\s+/g, " ").trim() || ""
+  }
+
+  private formatKimiFileLabel(name: string, type: string, size: string): string {
+    const details = [type && !this.fileNameEndsWithExtension(name, type) ? type : "", size].filter(
+      Boolean,
+    )
+
+    return details.length > 0 ? `${name} (${details.join(", ")})` : name
+  }
+
+  private fileNameEndsWithExtension(name: string, extension: string): boolean {
+    const normalizedExtension = extension.toLowerCase().replace(/^\./, "").trim()
+    if (!normalizedExtension) return false
+    return name.toLowerCase().endsWith(`.${normalizedExtension}`)
+  }
+
+  private extractKimiFileHref(card: Element): string {
+    const links = Array.from(card.querySelectorAll("a[href]"))
+    const parentLink = card.closest("a[href]")
+    if (parentLink) links.unshift(parentLink)
+
+    for (const link of links) {
+      if (!(link instanceof HTMLAnchorElement)) continue
+      const href = normalizeExportAssetUrl(link.getAttribute("href") || link.href || "")
+      if (isDownloadableExportAssetUrl(href)) return href
+    }
+
+    return ""
+  }
+
+  private extractKimiFilenameFromUrl(value: string): string {
+    try {
+      const url = new URL(value, window.location.href)
+      const filename = url.searchParams.get("filename")
+      if (filename?.trim()) return filename.trim()
+
+      const pathname = decodeURIComponent(url.pathname)
+      return pathname.split("/").pop()?.trim() || ""
+    } catch {
+      return ""
+    }
+  }
+
+  private shouldIncludeThoughtsInExport(): boolean {
+    if (this.exportIncludeThoughts !== undefined) {
+      return this.exportIncludeThoughts
+    }
+    return false
+  }
+
+  private findAssistantBodyMarkdownRoot(element: Element): Element | null {
+    if (element.matches(".markdown") && !this.isInsideAssistantToolcall(element)) {
+      return element
+    }
+
+    const directBody = element.querySelector(ASSISTANT_BODY_MARKDOWN_SELECTOR)
+    if (directBody && !this.isInsideAssistantToolcall(directBody)) {
+      return directBody
+    }
+
+    return (
+      Array.from(element.querySelectorAll(".markdown")).find(
+        (markdown) => !this.isInsideAssistantToolcall(markdown),
+      ) || null
+    )
+  }
+
+  private isInsideAssistantToolcall(element: Element): boolean {
+    return (
+      element.closest(KIMI_TOOLCALL_CONTAINER_SELECTOR) !== null ||
+      element.closest(".markdown-container.toolcall-content-text") !== null
+    )
+  }
+
+  private extractThoughtBlockquotes(element: Element): string[] {
+    const thoughtNodes = this.collectTopLevelBlocks(
+      Array.from(element.querySelectorAll(KIMI_THINKING_CONTAINER_SELECTOR)),
+    )
+    const blocks: string[] = []
+
+    for (const thought of thoughtNodes) {
+      const clone = thought.cloneNode(true) as HTMLElement
+      clone.querySelectorAll(KIMI_EXPORT_DECORATION_SELECTOR).forEach((node) => node.remove())
+
+      const contentMarkdowns = Array.from(clone.querySelectorAll(".markdown"))
+      const content =
+        contentMarkdowns.length > 0
+          ? contentMarkdowns
+              .map(
+                (markdown) => htmlToMarkdown(markdown) || this.extractTextWithLineBreaks(markdown),
+              )
+              .join("\n\n")
+          : htmlToMarkdown(clone) || this.extractTextWithLineBreaks(clone)
+
+      const normalized = content.trim()
+      if (!normalized) continue
+
+      blocks.push(this.formatAsThoughtBlockquote(normalized))
+    }
+
+    return blocks
+  }
+
+  private formatAsThoughtBlockquote(markdown: string): string {
+    const lines = markdown
+      .replace(/\r\n/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .split("\n")
+    const quotedLines = lines.map((line) => (line.trim().length > 0 ? `> ${line}` : ">"))
+    return ["> [Thoughts]", ...quotedLines].join("\n")
+  }
+
+  private collectTopLevelBlocks(blocks: Element[]): Element[] {
+    if (blocks.length <= 1) return blocks
+    return blocks.filter(
+      (block) => !blocks.some((other) => other !== block && other.contains(block)),
+    )
+  }
+
   private getChatItems(container: Element): Element[] {
     const directItems = Array.from(container.querySelectorAll(CHAT_ITEM_SELECTOR)).filter(
       (item) => !item.parentElement?.closest(CHAT_ITEM_SELECTOR),
@@ -1686,14 +2094,16 @@ export class KimiAdapter extends SiteAdapter {
       (child) =>
         child.matches(USER_ITEM_SELECTOR) ||
         child.matches(ASSISTANT_ITEM_SELECTOR) ||
+        child.matches(USER_SEGMENT_SELECTOR) ||
+        child.matches(ASSISTANT_SEGMENT_SELECTOR) ||
         child.querySelector(USER_SEGMENT_SELECTOR) !== null ||
-        child.querySelector(ASSISTANT_MARKDOWN_SELECTOR) !== null,
+        child.querySelector(ASSISTANT_BODY_MARKDOWN_SELECTOR) !== null,
     )
   }
 
   private findNextAssistantMarkdown(items: Element[], fromIndex: number): Element | null {
     for (let i = fromIndex + 1; i < items.length; i++) {
-      const markdown = items[i].querySelector(".markdown")
+      const markdown = this.findAssistantBodyMarkdownRoot(items[i])
       if (markdown) return markdown
     }
     return null
