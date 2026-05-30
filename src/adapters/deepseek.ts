@@ -10,7 +10,17 @@
  */
 import { SITE_IDS } from "~constants"
 import { deepseekNativeThemeCss } from "~styles/native-theme-adapters/deepseek"
-import { htmlToMarkdown } from "~utils/exporter"
+import {
+  addFileExportAsset,
+  addImageExportAsset,
+  createExportAssetCollector,
+  escapeMarkdownLinkText,
+  isDownloadableExportAssetUrl,
+  normalizeExportAssetUrl,
+  type ExportAssetCollector,
+} from "~utils/export-assets"
+import { htmlToMarkdown, type ExportBundle } from "~utils/exporter"
+import { t } from "~utils/i18n"
 
 import {
   SiteAdapter,
@@ -86,12 +96,21 @@ interface DeepSeekExportMessageSnapshot {
   content: string
 }
 
+interface DeepSeekUserAttachment {
+  kind: "image" | "file"
+  name: string
+  type: string
+  size: string
+  source: string
+}
+
 export class DeepSeekAdapter extends SiteAdapter {
   private nativeOutlineCache: DeepSeekNativeOutlineCache | null = null
   private nativeOutlineRevealRequestId = 0
   private exportSnapshotRoot: HTMLElement | null = null
   private exportSnapshotActive = false
   private exportIncludeThoughtsOverride: boolean | null = null
+  private exportBundleCache: ExportBundle | null = null
 
   match(): boolean {
     const isMatch = window.location.hostname === "chat.deepseek.com"
@@ -415,7 +434,14 @@ export class DeepSeekAdapter extends SiteAdapter {
       return element.textContent?.trim() || ""
     }
 
-    const source = this.findUserContentRoot(element) || element
+    const source = this.findUserContentRoot(element)
+    if (!source) {
+      if (this.resolveUserMessageElement(element)) {
+        return ""
+      }
+      return this.extractTextWithLineBreaks(element).trim()
+    }
+
     const clone = source.cloneNode(true) as HTMLElement
 
     clone
@@ -429,6 +455,10 @@ export class DeepSeekAdapter extends SiteAdapter {
 
   extractUserQueryMarkdown(element: Element): string {
     return this.extractUserQueryText(element)
+  }
+
+  extractUserQueryExportContent(element: Element): string {
+    return this.extractDeepSeekUserQueryExportContent(element)
   }
 
   replaceUserQueryContent(element: Element, html: string): boolean {
@@ -629,7 +659,25 @@ export class DeepSeekAdapter extends SiteAdapter {
 
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
     this.exportIncludeThoughtsOverride = context.includeThoughts
+    this.exportBundleCache = null
     this.clearExportSnapshot()
+
+    const collector =
+      context.format === "markdown" && context.packaging === "zip"
+        ? createExportAssetCollector()
+        : undefined
+    const shareMessages = await this.collectShareExportMessageSnapshots(collector)
+    if (shareMessages?.length) {
+      if (collector) {
+        this.exportBundleCache = {
+          messages: shareMessages,
+          assets: collector.assets,
+        }
+      }
+
+      this.mountExportSnapshot(shareMessages)
+      return { count: shareMessages.length }
+    }
 
     const scrollContainer =
       this.getScrollContainer() || document.querySelector(this.getResponseContainerSelector())
@@ -637,13 +685,24 @@ export class DeepSeekAdapter extends SiteAdapter {
       return null
     }
 
-    const messages = await this.collectExportMessageSnapshots(scrollContainer)
+    const messages = await this.collectExportMessageSnapshots(scrollContainer, collector)
     if (messages.length === 0) {
       return null
     }
 
+    if (collector) {
+      this.exportBundleCache = {
+        messages,
+        assets: collector.assets,
+      }
+    }
+
     this.mountExportSnapshot(messages)
     return { count: messages.length }
+  }
+
+  async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
+    return this.exportBundleCache
   }
 
   async restoreConversationAfterExport(
@@ -652,6 +711,7 @@ export class DeepSeekAdapter extends SiteAdapter {
   ): Promise<void> {
     this.clearExportSnapshot()
     this.exportIncludeThoughtsOverride = null
+    this.exportBundleCache = null
   }
 
   getLatestReplyText(): string | null {
@@ -1705,8 +1765,534 @@ export class DeepSeekAdapter extends SiteAdapter {
     return element.hasAttribute(DEEPSEEK_EXPORT_ROLE_ATTR)
   }
 
+  private async collectShareExportMessageSnapshots(
+    collector?: ExportAssetCollector,
+  ): Promise<DeepSeekExportMessageSnapshot[] | null> {
+    if (!this.isSharePage()) {
+      return null
+    }
+
+    const shareId = this.getSessionId()
+    if (!shareId) {
+      return null
+    }
+
+    try {
+      const response = await fetch(
+        `/api/v0/share/content?share_id=${encodeURIComponent(shareId)}`,
+        {
+          credentials: "include",
+        },
+      )
+      if (!response.ok) {
+        return null
+      }
+
+      const payload = await response.json()
+      const messages = this.extractShareExportMessagesFromPayload(payload, collector)
+      return messages.length > 0 ? messages : null
+    } catch (error) {
+      console.warn("[DeepSeekAdapter] Failed to collect share export payload:", error)
+      return null
+    }
+  }
+
+  private extractShareExportMessagesFromPayload(
+    payload: unknown,
+    collector?: ExportAssetCollector,
+  ): DeepSeekExportMessageSnapshot[] {
+    const bizData = this.getNestedRecord(payload, ["data", "biz_data"])
+    const rawMessages = bizData?.messages
+    if (!Array.isArray(rawMessages)) {
+      return []
+    }
+
+    const messages: DeepSeekExportMessageSnapshot[] = []
+
+    rawMessages.forEach((rawMessage) => {
+      const message = this.toRecord(rawMessage)
+      if (!message) return
+
+      const role = typeof message.role === "string" ? message.role.toUpperCase() : ""
+      const fragments = Array.isArray(message.fragments) ? message.fragments : []
+      if (role === "USER") {
+        const attachments: DeepSeekUserAttachment[] = []
+        const requestParts: string[] = []
+
+        fragments.forEach((rawFragment) => {
+          const fragment = this.toRecord(rawFragment)
+          if (!fragment) return
+
+          const type = typeof fragment.type === "string" ? fragment.type.toUpperCase() : ""
+          if (type === "FILE") {
+            attachments.push(...this.extractShareUserAttachments(fragment))
+            return
+          }
+
+          if (type === "REQUEST" && typeof fragment.content === "string") {
+            requestParts.push(fragment.content)
+          }
+        })
+
+        const content = this.normalizeExportMessageContent(
+          this.formatUserQueryExportContent(requestParts.join("\n\n"), attachments, collector),
+        )
+        if (content) {
+          messages.push({ role: DEEPSEEK_EXPORT_ROLE_USER, content })
+        }
+        return
+      }
+
+      if (role === "ASSISTANT") {
+        const responseParts: string[] = []
+        const thoughtParts: string[] = []
+
+        fragments.forEach((rawFragment) => {
+          const fragment = this.toRecord(rawFragment)
+          if (!fragment || typeof fragment.content !== "string") return
+
+          const type = typeof fragment.type === "string" ? fragment.type.toUpperCase() : ""
+          if (type === "THINK") {
+            thoughtParts.push(fragment.content)
+          } else if (type === "RESPONSE") {
+            responseParts.push(fragment.content)
+          }
+        })
+
+        const thoughtBlocks = this.shouldIncludeThoughtsInExport()
+          ? thoughtParts
+              .map((content) => content.trim())
+              .filter(Boolean)
+              .map((content) => this.formatAsThoughtBlockquote(content))
+          : []
+        const content = this.normalizeExportMessageContent(
+          [...thoughtBlocks, ...responseParts.map((content) => content.trim()).filter(Boolean)]
+            .filter(Boolean)
+            .join("\n\n"),
+        )
+        if (content) {
+          messages.push({ role: DEEPSEEK_EXPORT_ROLE_ASSISTANT, content })
+        }
+      }
+    })
+
+    return messages
+  }
+
+  private extractShareUserAttachments(fragment: Record<string, unknown>): DeepSeekUserAttachment[] {
+    const files = Array.isArray(fragment.files) ? fragment.files : []
+
+    return files.flatMap((rawFile) => {
+      const file = this.toRecord(rawFile)
+      if (!file) return []
+
+      const name = typeof file.file_name === "string" ? file.file_name.trim() : ""
+      if (!name) return []
+
+      const signedPath = typeof file.signed_path === "string" ? file.signed_path.trim() : ""
+      const size = typeof file.file_size === "number" ? this.formatFileSize(file.file_size) : ""
+      const isImage = file.is_image === true
+
+      return [
+        {
+          kind: isImage ? "image" : "file",
+          name,
+          type: this.extractFileTypeFromName(name),
+          size,
+          source: signedPath ? normalizeExportAssetUrl(signedPath) : "",
+        },
+      ]
+    })
+  }
+
+  private getNestedRecord(source: unknown, path: string[]): Record<string, unknown> | null {
+    let current = this.toRecord(source)
+    for (const key of path) {
+      if (!current) return null
+      current = this.toRecord(current[key])
+    }
+    return current
+  }
+
+  private toRecord(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === "object" ? (value as Record<string, unknown>) : null
+  }
+
+  private extractDeepSeekUserQueryExportContent(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string {
+    if (this.isExportSnapshotElement(element)) {
+      return element.textContent?.trim() || ""
+    }
+
+    const attachments = this.extractDomUserAttachments(element)
+    const body = this.extractUserQueryText(element)
+    return this.formatUserQueryExportContent(body, attachments, collector)
+  }
+
+  private resolveUserMessageElement(element: Element): HTMLElement | null {
+    if (element.matches(USER_MESSAGE_SELECTOR)) {
+      return element as HTMLElement
+    }
+
+    const message = element.closest(USER_MESSAGE_SELECTOR)
+    return message instanceof HTMLElement ? message : null
+  }
+
+  private extractDomUserAttachments(element: Element): DeepSeekUserAttachment[] {
+    const message = this.resolveUserMessageElement(element)
+    if (!message) {
+      return []
+    }
+
+    const attachments: DeepSeekUserAttachment[] = []
+    const seen = new Set<string>()
+
+    this.extractDomUserImageAttachments(message).forEach((attachment) => {
+      const key = `image:${attachment.source || attachment.name}`
+      if (seen.has(key)) return
+      seen.add(key)
+      attachments.push(attachment)
+    })
+
+    this.extractDomUserFileAttachments(message).forEach((attachment) => {
+      const key = `file:${attachment.source || attachment.name}:${attachment.type}:${attachment.size}`
+      if (seen.has(key)) return
+      seen.add(key)
+      attachments.push(attachment)
+    })
+
+    return attachments
+  }
+
+  private extractDomUserImageAttachments(message: Element): DeepSeekUserAttachment[] {
+    const images = Array.from(message.querySelectorAll("img")).filter(
+      (node): node is HTMLImageElement =>
+        node instanceof HTMLImageElement && !node.closest(".gh-user-query-markdown"),
+    )
+
+    return images.flatMap((image) => {
+      const source = this.getDeepSeekImageExportSource(image)
+      if (!source) return []
+
+      const name = this.extractImageAttachmentName(image, source)
+      return [
+        {
+          kind: "image",
+          name,
+          type: this.extractFileTypeFromName(name) || "image",
+          size: "",
+          source,
+        },
+      ]
+    })
+  }
+
+  private extractDomUserFileAttachments(message: Element): DeepSeekUserAttachment[] {
+    const cards = Array.from(message.querySelectorAll("div")).filter((node) =>
+      this.isLikelyUserAttachmentCard(node, message),
+    )
+
+    return cards.flatMap((card) => {
+      const name = this.extractAttachmentCardName(card)
+      if (!name) return []
+
+      const source = this.extractAttachmentCardSource(card)
+      const type = this.extractAttachmentCardType(card) || this.extractFileTypeFromName(name)
+      const kind = this.isImageAttachmentName(name, type) ? "image" : "file"
+
+      return [
+        {
+          kind,
+          name,
+          type,
+          size: this.extractAttachmentCardSize(card),
+          source,
+        },
+      ]
+    })
+  }
+
+  private formatUserQueryExportContent(
+    body: string,
+    attachments: DeepSeekUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string {
+    if (attachments.length === 0) {
+      return body
+    }
+
+    const imageMarkdown = this.formatUserImageAttachments(attachments, collector)
+    const fileMarkdown = this.formatUserFileAttachments(attachments, collector)
+    const fileBlock =
+      fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
+
+    return [imageMarkdown.join("\n\n"), fileBlock, body].filter(Boolean).join("\n\n")
+  }
+
+  private formatUserImageAttachments(
+    attachments: DeepSeekUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind === "image" && attachment.source)
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(attachment.name || "uploaded image")
+        const source = attachment.source
+
+        const assetPath = collector
+          ? addImageExportAsset(collector, {
+              source,
+              alt: attachment.name,
+              extensionHint: attachment.name || attachment.type,
+              directory: "assets/images",
+              idPrefix: "deepseek-user-image",
+              filenamePrefix: "deepseek-user-image",
+            })
+          : source
+
+        return assetPath ? `![${label}](${assetPath})` : ""
+      })
+      .filter(Boolean)
+  }
+
+  private formatUserFileAttachments(
+    attachments: DeepSeekUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind !== "image" || !attachment.source)
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(this.formatAttachmentLabel(attachment))
+        const source = attachment.source
+        const assetPath =
+          source && collector
+            ? addFileExportAsset(collector, {
+                source,
+                name: attachment.name,
+                mimeHint: attachment.type || attachment.name,
+                directory: "assets/files",
+                idPrefix: "deepseek-user-file",
+              })
+            : source
+
+        return assetPath ? `- [${label}](${assetPath})` : `- ${label}`
+      })
+  }
+
+  private formatAttachmentLabel(attachment: DeepSeekUserAttachment): string {
+    const details = this.formatAttachmentDetails(attachment)
+    return details ? `${attachment.name} (${details})` : attachment.name
+  }
+
+  private formatAttachmentDetails(attachment: DeepSeekUserAttachment): string {
+    return [
+      attachment.type && !this.fileNameEndsWithExtension(attachment.name, attachment.type)
+        ? attachment.type
+        : "",
+      attachment.size,
+    ]
+      .filter(Boolean)
+      .join(", ")
+  }
+
+  private getDeepSeekImageExportSource(image: HTMLImageElement): string {
+    const candidates = [image.currentSrc || "", image.src || "", image.getAttribute("src") || ""]
+
+    for (const candidate of candidates) {
+      const source = normalizeExportAssetUrl(candidate)
+      if (!source) continue
+      if (source.startsWith("data:image/svg+xml")) continue
+      if (isDownloadableExportAssetUrl(source)) return source
+    }
+
+    return ""
+  }
+
+  private extractImageAttachmentName(image: HTMLImageElement, source: string): string {
+    const candidates = [
+      image.alt || "",
+      image.getAttribute("title") || "",
+      image.getAttribute("aria-label") || "",
+      this.extractFilenameFromUrl(source),
+      "uploaded image",
+    ]
+
+    return candidates.map((value) => this.normalizeAttachmentText(value)).find(Boolean) || "image"
+  }
+
+  private isLikelyUserAttachmentCard(card: Element, message: Element): boolean {
+    if (card === message) return false
+    if (card.closest(".gh-user-query-markdown")) return false
+    if (!this.isWithinUserAttachmentContainer(card, message)) return false
+    if (!card.querySelector("svg, img")) return false
+
+    const name = this.extractAttachmentCardName(card)
+    if (!name) return false
+
+    const text = this.normalizeAttachmentText(card.textContent || "")
+    return text !== name
+  }
+
+  private isWithinUserAttachmentContainer(card: Element, message: Element): boolean {
+    let current: Element | null = card
+    while (current && current !== message) {
+      if (current.parentElement === message) {
+        return this.isLikelyUserAttachmentContainer(current)
+      }
+      current = current.parentElement
+    }
+    return false
+  }
+
+  private isLikelyUserAttachmentContainer(element: Element): boolean {
+    if (element.matches(".gh-inline-bookmark, .gh-user-query-raw, .gh-user-query-markdown")) {
+      return false
+    }
+    if (element.matches("button, [role=button], .ds-icon-button, .ds-focus-ring")) {
+      return false
+    }
+    if (element.querySelector("img")) return true
+
+    const text = this.normalizeAttachmentText(element.textContent || "")
+    if (!text) return false
+    if (!element.querySelector("svg")) return false
+    return this.extractAttachmentCardName(element) !== ""
+  }
+
+  private extractAttachmentCardName(card: Element): string {
+    const textNodes = Array.from(card.querySelectorAll("div, span, p")).filter(
+      (node) => !node.querySelector("svg, img"),
+    )
+    const leafCandidates = textNodes
+      .filter((node) => node.children.length === 0)
+      .map((node) => this.normalizeAttachmentText(node.textContent || ""))
+      .filter(Boolean)
+    const candidates = textNodes
+      .map((node) => this.normalizeAttachmentText(node.textContent || ""))
+      .filter(Boolean)
+
+    const filename = [...leafCandidates, ...candidates].find((value) =>
+      this.looksLikeFilename(value),
+    )
+    if (filename) {
+      return filename
+    }
+
+    const ariaLabel = this.normalizeAttachmentText(card.getAttribute("aria-label") || "")
+    if (this.looksLikeFilename(ariaLabel)) {
+      return ariaLabel
+    }
+
+    const title = this.normalizeAttachmentText(card.getAttribute("title") || "")
+    if (this.looksLikeFilename(title)) {
+      return title
+    }
+
+    return ""
+  }
+
+  private extractAttachmentCardType(card: Element): string {
+    const textParts = Array.from(card.querySelectorAll("div, span, p"))
+      .map((node) => this.normalizeAttachmentText(node.textContent || ""))
+      .filter(Boolean)
+
+    const info = textParts.find(
+      (value) =>
+        !this.looksLikeFilename(value) &&
+        /^[A-Za-z0-9.+-]{1,12}(?:\s+\d+(?:\.\d+)?\s*[KMGT]?B)?$/i.test(value),
+    )
+    return info?.match(/^[A-Za-z0-9.+-]{1,12}/)?.[0]?.toUpperCase() || ""
+  }
+
+  private extractAttachmentCardSize(card: Element): string {
+    const text = this.normalizeAttachmentText(card.textContent || "")
+    return text.match(/\b\d+(?:\.\d+)?\s*[KMGT]?B\b/i)?.[0] || ""
+  }
+
+  private extractAttachmentCardSource(card: Element): string {
+    const links = Array.from(card.querySelectorAll("a[href]"))
+    const parentLink = card.closest("a[href]")
+    if (parentLink) links.unshift(parentLink)
+
+    for (const link of links) {
+      if (!(link instanceof HTMLAnchorElement)) continue
+      const href = normalizeExportAssetUrl(link.getAttribute("href") || link.href || "")
+      if (isDownloadableExportAssetUrl(href)) return href
+    }
+
+    const image = card.querySelector("img")
+    if (image instanceof HTMLImageElement) {
+      return this.getDeepSeekImageExportSource(image)
+    }
+
+    return ""
+  }
+
+  private looksLikeFilename(value: string): boolean {
+    const normalized = this.normalizeAttachmentText(value)
+    if (this.isFileMetaText(normalized)) {
+      return false
+    }
+
+    return /[^/\\]+\.[A-Za-z0-9]{1,10}$/.test(normalized)
+  }
+
+  private isFileMetaText(value: string): boolean {
+    return /^[A-Za-z0-9.+-]{1,12}\s+\d+(?:\.\d+)?\s*[KMGT]?B$/i.test(value)
+  }
+
+  private isImageAttachmentName(name: string, type: string): boolean {
+    const extension = (this.extractFileTypeFromName(name) || type).toLowerCase()
+    return ["avif", "gif", "jpg", "jpeg", "png", "svg", "webp"].includes(extension)
+  }
+
+  private extractFileTypeFromName(name: string): string {
+    return name.match(/\.([A-Za-z0-9]{1,10})$/)?.[1]?.toUpperCase() || ""
+  }
+
+  private formatFileSize(bytes: number): string {
+    if (!Number.isFinite(bytes) || bytes <= 0) return ""
+
+    const units = ["B", "KB", "MB", "GB", "TB"]
+    let value = bytes
+    let unitIndex = 0
+    while (value >= 1024 && unitIndex < units.length - 1) {
+      value /= 1024
+      unitIndex += 1
+    }
+
+    const precision = value >= 10 || unitIndex === 0 ? 0 : 2
+    return `${value.toFixed(precision)}${units[unitIndex]}`
+  }
+
+  private extractFilenameFromUrl(value: string): string {
+    try {
+      const url = new URL(value, window.location.href)
+      const filename = url.searchParams.get("filename") || url.searchParams.get("file_name")
+      if (filename?.trim()) return filename.trim()
+
+      const pathname = decodeURIComponent(url.pathname)
+      return pathname.split("/").pop()?.trim() || ""
+    } catch {
+      return ""
+    }
+  }
+
+  private normalizeAttachmentText(value: string): string {
+    return value.replace(/\s+/g, " ").trim()
+  }
+
+  private fileNameEndsWithExtension(name: string, extension: string): boolean {
+    const normalizedExtension = extension.toLowerCase().replace(/^\./, "").trim()
+    if (!normalizedExtension) return false
+    return name.toLowerCase().endsWith(`.${normalizedExtension}`)
+  }
+
   private async collectExportMessageSnapshots(
     scrollContainer: HTMLElement,
+    collector?: ExportAssetCollector,
   ): Promise<DeepSeekExportMessageSnapshot[]> {
     const positions = this.buildExportSnapshotPositions(scrollContainer)
     const originalScrollTop = scrollContainer.scrollTop
@@ -1719,7 +2305,7 @@ export class DeepSeekAdapter extends SiteAdapter {
         scrollContainer.getBoundingClientRect()
         await this.sleep(80)
 
-        const batch = this.readVisibleExportMessageSnapshots(scrollContainer)
+        const batch = this.readVisibleExportMessageSnapshots(scrollContainer, collector)
         collected = this.mergeExportMessageBatch(collected, batch)
       }
     } finally {
@@ -1933,6 +2519,7 @@ export class DeepSeekAdapter extends SiteAdapter {
 
   private readVisibleExportMessageSnapshots(
     container: ParentNode,
+    collector?: ExportAssetCollector,
   ): DeepSeekExportMessageSnapshot[] {
     const messages = Array.from(container.querySelectorAll(MESSAGE_SELECTOR)).filter(
       (message): message is HTMLElement =>
@@ -1942,11 +2529,14 @@ export class DeepSeekAdapter extends SiteAdapter {
     )
 
     return messages
-      .map((message) => this.extractExportMessageSnapshot(message))
+      .map((message) => this.extractExportMessageSnapshot(message, collector))
       .filter((message): message is DeepSeekExportMessageSnapshot => message !== null)
   }
 
-  private extractExportMessageSnapshot(message: Element): DeepSeekExportMessageSnapshot | null {
+  private extractExportMessageSnapshot(
+    message: Element,
+    collector?: ExportAssetCollector,
+  ): DeepSeekExportMessageSnapshot | null {
     const markdown = this.getAssistantBodyMarkdown(message)
     if (markdown) {
       const content = this.normalizeExportMessageContent(this.extractAssistantResponseText(message))
@@ -1958,7 +2548,9 @@ export class DeepSeekAdapter extends SiteAdapter {
         : null
     }
 
-    const content = this.normalizeExportMessageContent(this.extractUserQueryMarkdown(message))
+    const content = this.normalizeExportMessageContent(
+      this.extractDeepSeekUserQueryExportContent(message, collector),
+    )
     return content
       ? {
           role: DEEPSEEK_EXPORT_ROLE_USER,
@@ -2393,22 +2985,22 @@ export class DeepSeekAdapter extends SiteAdapter {
   }
 
   private findUserContentRoot(element: Element): Element | null {
-    if (!element.matches(USER_MESSAGE_SELECTOR) && !element.closest(USER_MESSAGE_SELECTOR)) {
-      return null
-    }
-
-    const message = element.matches(USER_MESSAGE_SELECTOR)
-      ? element
-      : (element.closest(USER_MESSAGE_SELECTOR) as Element | null)
-
+    const message = this.resolveUserMessageElement(element)
     if (!message) return null
 
     const candidates = Array.from(message.children).filter((child) => {
       if (!(child instanceof HTMLElement)) return false
-      if (child.matches("button, [role=button], .ds-icon-button")) return false
-      return child.innerText?.trim().length
+      if (this.isLikelyUserMessageDecoration(child)) return false
+      if (this.isLikelyUserAttachmentContainer(child)) return false
+      return Boolean(child.innerText?.trim())
     })
 
-    return candidates[0] || message
+    return candidates[0] || null
+  }
+
+  private isLikelyUserMessageDecoration(element: Element): boolean {
+    return element.matches(
+      ".gh-inline-bookmark, .gh-user-query-raw, .gh-user-query-markdown, button, [role=button], .ds-icon-button, .ds-focus-ring",
+    )
   }
 }

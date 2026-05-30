@@ -11,6 +11,7 @@
 ### 🚀 新增功能
 
 - **ChatGPT 生成图片导出** — ChatGPT Markdown 导出现在会包含仅含生成图片的 AI 回复，并在普通 Markdown 与 zip 附件包导出中保留生成图片。
+- **DeepSeek 用户附件导出** — DeepSeek Markdown 导出现在会保留用户提问中的图片和文件，包含分享页；zip 附件包会把可下载的分享附件解析到 `assets/images/` 与 `assets/files/`，并在 Markdown 中使用稳定相对路径引用。
 - **Kimi 分享会话导出** — Kimi 分享页现在支持会话导出、大纲和滚动导航；导出会保留用户上传图片，并在 Markdown 与 zip 附件包中引用，同时纳入可见文件附件标签，确保用户提问与对应 AI 回复保持正确顺序。
 
 ---
