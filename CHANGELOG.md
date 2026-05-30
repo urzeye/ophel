@@ -11,6 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
+- **AI Studio user attachments in exports** — AI Studio Markdown exports now include images and files from user prompts; zip packages preserve downloadable user images under `assets/images/`, while file-only cards keep their visible filename and token details in Markdown.
 - **ChatGPT generated image export** — ChatGPT Markdown exports now include generated image-only assistant turns, preserving generated images in both regular Markdown output and zip asset packages.
 - **DeepSeek user attachments in exports** — DeepSeek Markdown exports now include images and files from user prompts, including share pages; zip packages resolve downloadable share attachments into `assets/images/` and `assets/files/` with stable Markdown references.
 - **Kimi share conversation export** — Kimi share pages are now supported in conversation export, outline, and scroll navigation. Exports preserve user-uploaded images in Markdown and zip asset packages, include visible file attachment labels, and keep user prompts aligned with the correct assistant replies.

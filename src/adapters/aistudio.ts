@@ -12,7 +12,17 @@
  */
 import { SITE_IDS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
-import { htmlToMarkdown } from "~utils/exporter"
+import {
+  addFileExportAsset,
+  addImageExportAsset,
+  createExportAssetCollector,
+  escapeMarkdownLinkText,
+  isDownloadableExportAssetUrl,
+  normalizeExportAssetUrl,
+  type ExportAssetCollector,
+} from "~utils/export-assets"
+import { htmlToMarkdown, type ExportBundle } from "~utils/exporter"
+import { t } from "~utils/i18n"
 import type { AIStudioSettings } from "~utils/storage"
 
 import {
@@ -147,6 +157,14 @@ interface AIStudioExportMessageSnapshot {
   content: string
 }
 
+interface AIStudioUserAttachment {
+  kind: "image" | "file"
+  name: string
+  source: string
+  details?: string
+  mimeHint?: string
+}
+
 interface AIStudioScrollbarQueryEntry {
   turnId: string
   text: string
@@ -170,6 +188,7 @@ export class AIStudioAdapter extends SiteAdapter {
   private exportSnapshotRoot: HTMLElement | null = null
   private exportSnapshotActive = false
   private exportIncludeThoughtsOverride: boolean | null = null
+  private exportBundleCache: ExportBundle | null = null
 
   // ==================== 基础信息 ====================
 
@@ -1825,8 +1844,194 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   extractUserQueryExportContent(element: Element): string {
+    return this.extractUserQueryExportContentWithAttachments(element)
+  }
+
+  private extractUserQueryExportContentWithAttachments(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string {
+    if (this.isExportSnapshotElement(element)) {
+      return element.textContent?.trim() || ""
+    }
+
+    const attachments = this.extractAIStudioUserAttachments(element)
     const markdown = this.extractUserQueryMarkdown(element).trim()
-    return markdown || this.extractUserQueryText(element)
+    const body = markdown || (attachments.length === 0 ? this.extractUserQueryText(element) : "")
+
+    if (attachments.length === 0) {
+      return body
+    }
+
+    const imageMarkdown = this.formatAIStudioUserImageAttachments(attachments, collector)
+    const fileMarkdown = this.formatAIStudioUserFileAttachments(attachments, collector)
+    const fileBlock =
+      fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
+
+    return [imageMarkdown.join("\n\n"), fileBlock, body].filter(Boolean).join("\n\n")
+  }
+
+  private extractAIStudioUserAttachments(element: Element): AIStudioUserAttachment[] {
+    const attachments: AIStudioUserAttachment[] = []
+    const seen = new Set<string>()
+
+    this.extractAIStudioUserImageAttachments(element).forEach((attachment) => {
+      const key = `image:${attachment.source || attachment.name}`
+      if (seen.has(key)) return
+      seen.add(key)
+      attachments.push(attachment)
+    })
+
+    this.extractAIStudioUserFileAttachments(element).forEach((attachment) => {
+      const key = `file:${attachment.source || attachment.name}:${attachment.details || ""}`
+      if (seen.has(key)) return
+      seen.add(key)
+      attachments.push(attachment)
+    })
+
+    return attachments
+  }
+
+  private extractAIStudioUserImageAttachments(element: Element): AIStudioUserAttachment[] {
+    const images = Array.from(element.querySelectorAll("ms-image-chunk img")).filter(
+      (node): node is HTMLImageElement => node instanceof HTMLImageElement,
+    )
+
+    return images.flatMap((image) => {
+      const source = this.extractAIStudioImageSource(image)
+      if (!source) return []
+
+      const name = (image.alt || image.getAttribute("title") || "uploaded image")
+        .replace(/\s+/g, " ")
+        .trim()
+
+      return [
+        {
+          kind: "image" as const,
+          name: name || "uploaded image",
+          source,
+          mimeHint: name,
+        },
+      ]
+    })
+  }
+
+  private extractAIStudioImageSource(image: HTMLImageElement): string {
+    const candidates = [image.currentSrc || "", image.src || "", image.getAttribute("src") || ""]
+
+    for (const candidate of candidates) {
+      const source = normalizeExportAssetUrl(candidate)
+      if (!source) continue
+      if (source.startsWith("data:image/svg+xml")) continue
+      if (isDownloadableExportAssetUrl(source)) return source
+    }
+
+    return ""
+  }
+
+  private extractAIStudioUserFileAttachments(element: Element): AIStudioUserAttachment[] {
+    const files = Array.from(element.querySelectorAll("ms-file-chunk"))
+
+    return files.flatMap((file) => {
+      const name = this.extractAIStudioFileName(file)
+      if (!name) return []
+
+      return [
+        {
+          kind: "file" as const,
+          name,
+          source: this.extractAIStudioFileSource(file),
+          details: this.extractAIStudioFileDetails(file),
+          mimeHint: name,
+        },
+      ]
+    })
+  }
+
+  private extractAIStudioFileName(file: Element): string {
+    const nameElement = file.querySelector(".name")
+    const title = nameElement?.getAttribute("title")?.trim()
+    if (title) return title
+
+    const visibleName = nameElement?.textContent?.trim()
+    if (visibleName) return visibleName
+
+    const ariaLabel =
+      file.getAttribute("aria-label") ||
+      file.querySelector("[aria-label]")?.getAttribute("aria-label")
+    return ariaLabel?.split(",")[0]?.trim() || ""
+  }
+
+  private extractAIStudioFileDetails(file: Element): string {
+    const details = Array.from(file.querySelectorAll(".token-count"))
+      .map((node) => node.textContent?.replace(/\s+/g, " ").trim() || "")
+      .find(Boolean)
+
+    return details || ""
+  }
+
+  private extractAIStudioFileSource(file: Element): string {
+    const links = Array.from(file.querySelectorAll("a[href]")).filter(
+      (node): node is HTMLAnchorElement => node instanceof HTMLAnchorElement,
+    )
+
+    for (const link of links) {
+      const source = normalizeExportAssetUrl(link.href || link.getAttribute("href") || "")
+      if (isDownloadableExportAssetUrl(source)) return source
+    }
+
+    return ""
+  }
+
+  private formatAIStudioUserImageAttachments(
+    attachments: AIStudioUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind === "image" && attachment.source)
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(attachment.name || "uploaded image")
+        const assetPath = collector
+          ? addImageExportAsset(collector, {
+              source: attachment.source,
+              alt: attachment.name,
+              extensionHint: attachment.mimeHint || attachment.name,
+              directory: "assets/images",
+              idPrefix: "aistudio-user-image",
+              filenamePrefix: "aistudio-user-image",
+            })
+          : attachment.source
+
+        return assetPath ? `![${label || "uploaded image"}](${assetPath})` : ""
+      })
+      .filter(Boolean)
+  }
+
+  private formatAIStudioUserFileAttachments(
+    attachments: AIStudioUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind === "file")
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(this.formatAIStudioFileLabel(attachment))
+        const assetPath =
+          attachment.source && collector
+            ? addFileExportAsset(collector, {
+                source: attachment.source,
+                name: attachment.name,
+                mimeHint: attachment.mimeHint || attachment.name,
+                directory: "assets/files",
+                idPrefix: "aistudio-user-file",
+              })
+            : attachment.source
+
+        return assetPath ? `- [${label}](${assetPath})` : `- ${label}`
+      })
+  }
+
+  private formatAIStudioFileLabel(attachment: AIStudioUserAttachment): string {
+    return attachment.details ? `${attachment.name} (${attachment.details})` : attachment.name
   }
 
   private createAIStudioUserQueryOutlineItem(
@@ -1963,7 +2168,12 @@ export class AIStudioAdapter extends SiteAdapter {
 
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
     this.exportIncludeThoughtsOverride = context.includeThoughts
+    this.exportBundleCache = null
     this.clearExportSnapshot()
+    const collector =
+      context.format === "markdown" && context.packaging === "zip"
+        ? createExportAssetCollector()
+        : undefined
 
     const scrollContainer =
       this.getScrollContainer() || document.querySelector(this.getResponseContainerSelector())
@@ -1974,15 +2184,26 @@ export class AIStudioAdapter extends SiteAdapter {
 
     const messages =
       scrollContainer instanceof HTMLElement
-        ? await this.collectExportMessageSnapshots(scrollContainer)
-        : this.readVisibleExportMessageSnapshots(exportRoot)
+        ? await this.collectExportMessageSnapshots(scrollContainer, collector)
+        : this.readVisibleExportMessageSnapshots(exportRoot, collector)
 
     if (messages.length === 0) {
       return null
     }
 
+    if (collector) {
+      this.exportBundleCache = {
+        messages: messages.map(({ role, content }) => ({ role, content })),
+        assets: collector.assets,
+      }
+    }
+
     this.mountExportSnapshot(messages)
     return { count: messages.length }
+  }
+
+  async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
+    return this.exportBundleCache
   }
 
   async restoreConversationAfterExport(
@@ -1991,6 +2212,7 @@ export class AIStudioAdapter extends SiteAdapter {
   ): Promise<void> {
     this.clearExportSnapshot()
     this.exportIncludeThoughtsOverride = null
+    this.exportBundleCache = null
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
@@ -2701,6 +2923,7 @@ export class AIStudioAdapter extends SiteAdapter {
    */
   private async collectExportMessageSnapshots(
     scrollContainer: HTMLElement,
+    collector?: ExportAssetCollector,
   ): Promise<AIStudioExportMessageSnapshot[]> {
     const allTurns = Array.from(
       (scrollContainer.querySelector("ms-chat-session") || document).querySelectorAll(
@@ -2715,10 +2938,10 @@ export class AIStudioAdapter extends SiteAdapter {
 
     if (allTurns.length === 0) {
       // 极端兜底：完全找不到 turn（站点结构变更），退回原来的 step-sweep + repair
-      return this.collectExportMessageSnapshotsByScrollSweep(scrollContainer)
+      return this.collectExportMessageSnapshotsByScrollSweep(scrollContainer, collector)
     }
 
-    return this.collectExportMessageSnapshotsByDomIteration(scrollContainer, allTurns)
+    return this.collectExportMessageSnapshotsByDomIteration(scrollContainer, allTurns, collector)
   }
 
   /**
@@ -2733,6 +2956,7 @@ export class AIStudioAdapter extends SiteAdapter {
   private async collectExportMessageSnapshotsByDomIteration(
     scrollContainer: HTMLElement,
     allTurns: HTMLElement[],
+    collector?: ExportAssetCollector,
   ): Promise<AIStudioExportMessageSnapshot[]> {
     const originalScrollTop = scrollContainer.scrollTop
     const includeThoughts = this.shouldIncludeThoughtsInExport()
@@ -2769,7 +2993,7 @@ export class AIStudioAdapter extends SiteAdapter {
         const userContainer = this.getUserContainerForTurn(userTurn)
         if (!userContainer) continue
         const content = this.normalizeExportMessageContent(
-          this.extractUserQueryMarkdown(userContainer),
+          this.extractUserQueryExportContentWithAttachments(userContainer, collector),
         )
         if (content) parts.push(content)
       }
@@ -2850,7 +3074,7 @@ export class AIStudioAdapter extends SiteAdapter {
       // Retry pass：first pass 走过一遍后，少数 turn 因为内层挂载特别慢（图片大、
       // 内容长、CPU 抖动等）没能在 1.8s 内抓到——这里把缺失的 user / assistant turn
       // 单独逐个处理一次，给极宽的 5s timeout + 多轮 scroll 重试。
-      await this.retryMissingTurns(allTurns, collected, includeThoughts)
+      await this.retryMissingTurns(allTurns, collected, includeThoughts, collector)
     } finally {
       scrollContainer.scrollTop = originalScrollTop
       scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
@@ -2869,6 +3093,7 @@ export class AIStudioAdapter extends SiteAdapter {
     allTurns: HTMLElement[],
     collected: AIStudioExportMessageSnapshot[],
     includeThoughts: boolean,
+    collector?: ExportAssetCollector,
   ): Promise<void> {
     const collectedUserTurnIds = new Set(
       collected
@@ -2949,7 +3174,7 @@ export class AIStudioAdapter extends SiteAdapter {
         const userContainer = this.getUserContainerForTurn(t)
         if (!userContainer) continue
         const content = this.normalizeExportMessageContent(
-          this.extractUserQueryMarkdown(userContainer),
+          this.extractUserQueryExportContentWithAttachments(userContainer, collector),
         )
         if (content) parts.push(content)
       }
@@ -3117,6 +3342,7 @@ export class AIStudioAdapter extends SiteAdapter {
   /** 时间线驱动方案已废弃后保留的兜底：找不到任何 ms-chat-turn 时退回原 step-sweep。 */
   private async collectExportMessageSnapshotsByScrollSweep(
     scrollContainer: HTMLElement,
+    collector?: ExportAssetCollector,
   ): Promise<AIStudioExportMessageSnapshot[]> {
     const positions = this.buildExportSnapshotPositions(scrollContainer)
     const originalScrollTop = scrollContainer.scrollTop
@@ -3129,7 +3355,7 @@ export class AIStudioAdapter extends SiteAdapter {
         scrollContainer.getBoundingClientRect()
         await this.sleep(80)
 
-        const batch = this.readVisibleExportMessageSnapshots(scrollContainer)
+        const batch = this.readVisibleExportMessageSnapshots(scrollContainer, collector)
         collected = this.mergeExportMessageBatch(collected, batch)
       }
     } finally {
@@ -3137,7 +3363,7 @@ export class AIStudioAdapter extends SiteAdapter {
       scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
     }
 
-    return this.repairLikelyTruncatedUserSnapshots(collected, scrollContainer)
+    return this.repairLikelyTruncatedUserSnapshots(collected, scrollContainer, collector)
   }
 
   private buildExportSnapshotPositions(scrollContainer: HTMLElement): number[] {
@@ -3160,18 +3386,20 @@ export class AIStudioAdapter extends SiteAdapter {
 
   private readVisibleExportMessageSnapshots(
     container: ParentNode,
+    collector?: ExportAssetCollector,
   ): AIStudioExportMessageSnapshot[] {
     const turns = Array.from(container.querySelectorAll(AISTUDIO_TURN_SELECTOR)).filter(
       (turn): turn is HTMLElement =>
         turn instanceof HTMLElement && !turn.closest(`[${AISTUDIO_EXPORT_ROOT_ATTR}]`),
     )
 
-    return turns.flatMap((turn) => this.extractExportSnapshotsFromTurn(turn, container))
+    return turns.flatMap((turn) => this.extractExportSnapshotsFromTurn(turn, container, collector))
   }
 
   private extractExportSnapshotsFromTurn(
     turn: HTMLElement,
     container: ParentNode,
+    collector?: ExportAssetCollector,
   ): AIStudioExportMessageSnapshot[] {
     const snapshots: AIStudioExportMessageSnapshot[] = []
     const baseOrder = this.getTurnRenderOrder(turn, container)
@@ -3179,7 +3407,7 @@ export class AIStudioAdapter extends SiteAdapter {
     const userContainer = this.getUserContainerForTurn(turn)
     if (userContainer) {
       const content = this.normalizeExportMessageContent(
-        this.extractUserQueryMarkdown(userContainer),
+        this.extractUserQueryExportContentWithAttachments(userContainer, collector),
       )
       if (content) {
         snapshots.push({
@@ -3293,6 +3521,7 @@ export class AIStudioAdapter extends SiteAdapter {
   private async repairLikelyTruncatedUserSnapshots(
     collected: AIStudioExportMessageSnapshot[],
     scrollContainer: HTMLElement,
+    collector?: ExportAssetCollector,
   ): Promise<AIStudioExportMessageSnapshot[]> {
     const targets = collected.filter((snapshot) => this.isLikelyTruncatedUserSnapshot(snapshot))
     if (targets.length === 0) {
@@ -3314,7 +3543,7 @@ export class AIStudioAdapter extends SiteAdapter {
           scrollContainer.getBoundingClientRect()
           await this.sleep(120)
 
-          const batch = this.readVisibleExportMessageSnapshots(scrollContainer)
+          const batch = this.readVisibleExportMessageSnapshots(scrollContainer, collector)
           const candidate = batch.find((item) => item.turnKey === target.turnKey)
           if (!candidate) {
             continue
