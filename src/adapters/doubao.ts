@@ -15,7 +15,17 @@
  * - 统一使用 chatPathPattern 提取会话 ID
  */
 import { SITE_IDS } from "~constants"
-import { htmlToMarkdown } from "~utils/exporter"
+import {
+  addFileExportAsset,
+  addImageExportAsset,
+  createExportAssetCollector,
+  escapeMarkdownLinkText,
+  isDownloadableExportAssetUrl,
+  normalizeExportAssetUrl,
+  type ExportAssetCollector,
+} from "~utils/export-assets"
+import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
+import { t } from "~utils/i18n"
 
 import {
   SiteAdapter,
@@ -23,6 +33,7 @@ import {
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportConfig,
+  type ExportLifecycleContext,
   type ModelSwitcherConfig,
   type OutlineItem,
   type AnchorData,
@@ -51,6 +62,25 @@ const ASSISTANT_MARKDOWN_SELECTOR = ASSISTANT_MARKDOWN_SELECTORS.join(", ")
 const ASSISTANT_CONTENT_SELECTOR = ASSISTANT_MARKDOWN_SELECTORS.map(
   (selector) => `${ASSISTANT_MESSAGE_SELECTOR} ${selector}`,
 ).join(", ")
+const DOUBAO_USER_ATTACHMENT_BLOCK_SELECTOR = '[data-plugin-identifier="block_type:10052"]'
+const DOUBAO_USER_ATTACHMENT_CARD_SELECTOR = '[data-available="true"]'
+const DOUBAO_GENERATED_IMAGE_BLOCK_SELECTOR = '[data-plugin-identifier="block_type:2074"]'
+const DOUBAO_IMAGE_WRAPPER_SELECTOR =
+  '[class*="image-wrapper"], [class*="image-box-grid-item"], [class*="image-box-grid"]'
+const DOUBAO_ATTACHMENT_SOURCE_ATTRS = [
+  "href",
+  "src",
+  "data-src",
+  "data-url",
+  "data-download-url",
+  "data-file-url",
+  "data-source-url",
+  "data-origin-url",
+  "data-original-url",
+  "data-thumbnail-url",
+  "data-image-url",
+  "data-image-src",
+]
 const DOUBAO_DELETE_REASON = {
   UI_FAILED: "delete_ui_failed",
   BATCH_ABORTED_AFTER_UI_FAILURE: "delete_batch_aborted_after_ui_failure",
@@ -74,6 +104,24 @@ interface DoubaoOutlineCacheEntry {
   isUserQuery?: boolean
   isTruncated?: boolean
   wordCount?: number
+}
+
+interface DoubaoUserAttachment {
+  kind: "image" | "file"
+  name: string
+  source: string
+  type: string
+}
+
+interface DoubaoAssistantImage {
+  source: string
+  alt: string
+}
+
+interface DoubaoAssistantImageFallbackState {
+  sources: string[]
+  nextIndex: number
+  usedSources: Set<string>
 }
 
 export class DoubaoAdapter extends SiteAdapter {
@@ -542,6 +590,10 @@ export class DoubaoAdapter extends SiteAdapter {
           "[role='button']",
           "svg",
           "[aria-hidden='true']",
+          "picture",
+          "img",
+          DOUBAO_GENERATED_IMAGE_BLOCK_SELECTOR,
+          DOUBAO_IMAGE_WRAPPER_SELECTOR,
           '[data-foundation-type="receive-message-action-bar"]',
           '[data-foundation-type="receive-message-suggest-foundation"]',
         ].join(", "),
@@ -554,6 +606,24 @@ export class DoubaoAdapter extends SiteAdapter {
     }
 
     return this.extractTextWithLineBreaks(target).trim()
+  }
+
+  extractAssistantResponseText(element: Element): string {
+    return this.extractAssistantResponseTextWithAssets(element)
+  }
+
+  private extractAssistantResponseTextWithAssets(
+    element: Element,
+    collector?: ExportAssetCollector,
+    fallbackState?: DoubaoAssistantImageFallbackState,
+  ): string {
+    const body = this.extractAssistantMarkdown(element)
+    const imageMarkdown = this.formatDoubaoAssistantImages(
+      this.extractDoubaoAssistantImages(element, fallbackState),
+      collector,
+    )
+
+    return [body, imageMarkdown.join("\n\n")].filter(Boolean).join("\n\n")
   }
 
   getLatestReplyText(): string | null {
@@ -591,15 +661,402 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   extractUserQueryExportContent(element: Element): string {
-    const textContainer = this.getUserMessageTextContainer(element)
-    if (!textContainer) {
-      return this.extractUserQueryText(element)
-    }
+    return this.extractUserQueryExportContentWithAssets(element)
+  }
 
+  private extractUserQueryExportContentWithAssets(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string {
+    const textContainer = this.getUserMessageTextContainer(element)
     // 豆包会保留一份隐藏的原始用户输入文本，导出时直接读取这份源文本，
     // 避免从我们注入的渲染结果反推 Markdown，减少回归风险。
-    const rawText = textContainer.textContent?.trim()
-    return rawText || this.extractUserQueryText(textContainer)
+    const rawText = textContainer?.textContent?.trim() || ""
+    const body = rawText || (textContainer ? this.extractUserQueryText(textContainer) : "")
+    const attachments = this.extractDoubaoUserAttachments(element)
+
+    if (attachments.length === 0) {
+      return body || this.extractUserQueryText(element)
+    }
+
+    const imageMarkdown = this.formatDoubaoUserImageAttachments(attachments, collector)
+    const fileMarkdown = this.formatDoubaoUserFileAttachments(attachments, collector)
+    const fileBlock =
+      fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
+
+    return [imageMarkdown.join("\n\n"), fileBlock, body].filter(Boolean).join("\n\n")
+  }
+
+  private extractDoubaoUserAttachments(element: Element): DoubaoUserAttachment[] {
+    const cards = Array.from(
+      element.querySelectorAll(
+        `${DOUBAO_USER_ATTACHMENT_BLOCK_SELECTOR} ${DOUBAO_USER_ATTACHMENT_CARD_SELECTOR}`,
+      ),
+    )
+
+    const attachments: DoubaoUserAttachment[] = []
+    const seen = new Set<string>()
+
+    cards.forEach((card) => {
+      const attachment = this.extractDoubaoUserAttachment(card)
+      if (!attachment) return
+
+      const key = `${attachment.kind}:${attachment.source || attachment.name}:${attachment.type}`
+      if (seen.has(key)) return
+
+      seen.add(key)
+      attachments.push(attachment)
+    })
+
+    return attachments
+  }
+
+  private extractDoubaoUserAttachment(card: Element): DoubaoUserAttachment | null {
+    const source = this.extractDoubaoDownloadableSource(card)
+    const textParts = this.extractDoubaoCleanTextParts(card)
+    const { name, type } = this.parseDoubaoAttachmentLabel(textParts)
+    if (!name && !source) return null
+
+    const safeName = name || "attachment"
+    const kind = this.isDoubaoImageAttachment(safeName, type, source) ? "image" : "file"
+
+    return {
+      kind,
+      name: safeName,
+      source,
+      type,
+    }
+  }
+
+  private parseDoubaoAttachmentLabel(textParts: string[]): { name: string; type: string } {
+    const normalizedParts = textParts
+      .map((part) => part.replace(/\s+/g, " ").trim())
+      .filter(Boolean)
+    const typeKeywords = [
+      "image",
+      "图片",
+      "圖像",
+      "图像",
+      "file",
+      "文件",
+      "附件",
+      "document",
+      "文档",
+      "音频",
+      "视频",
+    ]
+
+    let type = ""
+    let nameParts = normalizedParts
+
+    const last = normalizedParts[normalizedParts.length - 1] || ""
+    if (typeKeywords.some((keyword) => keyword.toLowerCase() === last.toLowerCase())) {
+      type = last
+      nameParts = normalizedParts.slice(0, -1)
+    }
+
+    let name = nameParts.join(" ").trim()
+    if (!name && normalizedParts.length > 0) {
+      const combined = normalizedParts.join(" ").trim()
+      const suffix = typeKeywords.find((keyword) =>
+        combined.toLowerCase().endsWith(keyword.toLowerCase()),
+      )
+      if (suffix && combined.length > suffix.length) {
+        type = suffix
+        name = combined.slice(0, -suffix.length).trim()
+      } else {
+        name = combined
+      }
+    }
+
+    return { name, type }
+  }
+
+  private extractDoubaoCleanTextParts(root: Element): string[] {
+    const clone = root.cloneNode(true) as HTMLElement
+    clone
+      .querySelectorAll("button, [role='button'], svg, [aria-hidden='true'], style, script")
+      .forEach((node) => node.remove())
+
+    const parts: string[] = []
+    const walker = document.createTreeWalker(clone, NodeFilter.SHOW_TEXT)
+    let current = walker.nextNode()
+    while (current) {
+      const text = current.textContent?.replace(/\s+/g, " ").trim()
+      if (text && parts[parts.length - 1] !== text) {
+        parts.push(text)
+      }
+      current = walker.nextNode()
+    }
+
+    const combined = parts.join("")
+    if (parts.length <= 1 && combined) {
+      return [combined]
+    }
+
+    return parts
+  }
+
+  private isDoubaoImageAttachment(name: string, type: string, source: string): boolean {
+    const signal = `${name} ${type} ${source}`.toLowerCase()
+    return (
+      /\bimage\b/.test(signal) ||
+      /图片|圖像|图像/.test(signal) ||
+      /\.(png|jpe?g|webp|gif|avif|svg)(?:$|[?#\s])/.test(signal) ||
+      /^data:image\//i.test(source)
+    )
+  }
+
+  private formatDoubaoUserImageAttachments(
+    attachments: DoubaoUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind === "image" && attachment.source)
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(attachment.name || "uploaded image")
+        const assetPath = collector
+          ? addImageExportAsset(collector, {
+              source: attachment.source,
+              alt: attachment.name,
+              extensionHint: attachment.name || attachment.type,
+              directory: "assets/images",
+              idPrefix: "doubao-user-image",
+              filenamePrefix: "doubao-user-image",
+            })
+          : attachment.source
+
+        return assetPath ? `![${label || "uploaded image"}](${assetPath})` : ""
+      })
+      .filter(Boolean)
+  }
+
+  private formatDoubaoUserFileAttachments(
+    attachments: DoubaoUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind === "file" || !attachment.source)
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(this.formatDoubaoAttachmentLabel(attachment))
+        const assetPath =
+          attachment.source && collector
+            ? addFileExportAsset(collector, {
+                source: attachment.source,
+                name: attachment.name,
+                mimeHint: attachment.type || attachment.name,
+                directory: "assets/files",
+                idPrefix: "doubao-user-file",
+              })
+            : attachment.source
+
+        return assetPath ? `- [${label}](${assetPath})` : `- ${label}`
+      })
+  }
+
+  private formatDoubaoAttachmentLabel(attachment: DoubaoUserAttachment): string {
+    if (!attachment.type) return attachment.name
+    if (attachment.name.toLowerCase().endsWith(attachment.type.toLowerCase())) {
+      return attachment.name
+    }
+    return `${attachment.name} (${attachment.type})`
+  }
+
+  private formatDoubaoAssistantImages(
+    images: DoubaoAssistantImage[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return images
+      .map((image) => {
+        const alt = escapeMarkdownLinkText(image.alt || "generated image")
+        const assetPath = collector
+          ? addImageExportAsset(collector, {
+              source: image.source,
+              alt: image.alt,
+              directory: "assets/images",
+              idPrefix: "doubao-assistant-image",
+              filenamePrefix: "doubao-assistant-image",
+            })
+          : image.source
+
+        return assetPath ? `![${alt || "generated image"}](${assetPath})` : ""
+      })
+      .filter(Boolean)
+  }
+
+  private extractDoubaoAssistantImages(
+    element: Element,
+    fallbackState?: DoubaoAssistantImageFallbackState,
+  ): DoubaoAssistantImage[] {
+    const images: DoubaoAssistantImage[] = []
+    const seen = new Set<string>()
+
+    const addImage = (source: string, alt: string) => {
+      const normalized = this.normalizeDoubaoImageSource(source)
+      if (!normalized || seen.has(normalized)) return
+      seen.add(normalized)
+      fallbackState?.usedSources.add(normalized)
+      images.push({ source: normalized, alt: alt || `generated image ${images.length + 1}` })
+    }
+
+    const imageElements = Array.from(element.querySelectorAll("img")).filter(
+      (node): node is HTMLImageElement => node instanceof HTMLImageElement,
+    )
+
+    imageElements.forEach((image) => {
+      const source = this.extractDoubaoImageSource(image)
+      if (!source) return
+
+      const alt = (image.alt || image.getAttribute("aria-label") || "generated image")
+        .replace(/\s+/g, " ")
+        .trim()
+      addImage(source, alt)
+    })
+
+    const expectedCount = this.countDoubaoGeneratedImageSlots(element)
+    while (fallbackState && images.length < expectedCount) {
+      const fallbackSource = this.takeNextDoubaoFallbackImageSource(fallbackState)
+      if (!fallbackSource) break
+      addImage(fallbackSource, `generated image ${images.length + 1}`)
+    }
+
+    return images
+  }
+
+  private countDoubaoGeneratedImageSlots(element: Element): number {
+    const generatedBlocks = Array.from(
+      element.querySelectorAll(DOUBAO_GENERATED_IMAGE_BLOCK_SELECTOR),
+    )
+
+    if (generatedBlocks.length === 0) {
+      const wrappers = element.querySelectorAll('[class*="image-wrapper"]').length
+      if (wrappers > 0) return wrappers
+    }
+
+    return generatedBlocks.reduce((sum, block) => {
+      const gridItems = block.querySelectorAll('[class*="image-box-grid-item"]').length
+      if (gridItems > 0) return sum + gridItems
+
+      const wrappers = block.querySelectorAll('[class*="image-wrapper"]').length
+      if (wrappers > 0) return sum + wrappers
+
+      return sum + block.querySelectorAll("img").length
+    }, 0)
+  }
+
+  private extractDoubaoImageSource(image: HTMLImageElement): string {
+    const candidates = [
+      image.currentSrc || "",
+      image.src || "",
+      image.getAttribute("src") || "",
+      ...this.extractDoubaoSrcsetCandidates(image.getAttribute("srcset") || ""),
+      ...Array.from(image.closest("picture")?.querySelectorAll("source") || []).flatMap((source) =>
+        this.extractDoubaoSrcsetCandidates(
+          source.getAttribute("srcset") || source.getAttribute("src") || "",
+        ),
+      ),
+    ]
+
+    for (const candidate of candidates) {
+      const source = this.normalizeDoubaoImageSource(candidate)
+      if (source) return source
+    }
+
+    return ""
+  }
+
+  private extractDoubaoSrcsetCandidates(srcset: string): string[] {
+    if (!srcset) return []
+    return srcset
+      .split(",")
+      .map((item) => item.trim().split(/\s+/)[0] || "")
+      .filter(Boolean)
+  }
+
+  private normalizeDoubaoImageSource(value: string): string {
+    const source = normalizeExportAssetUrl(value)
+    if (!source) return ""
+    if (/^data:image\/svg\+xml/i.test(source)) return ""
+    if (/^data:image\//i.test(source)) return source
+    if (!isDownloadableExportAssetUrl(source)) return ""
+    return source
+  }
+
+  private extractDoubaoDownloadableSource(root: Element): string {
+    const candidates: string[] = []
+    const elements = [root, ...Array.from(root.querySelectorAll("*"))]
+
+    elements.forEach((element) => {
+      if (element instanceof HTMLAnchorElement) {
+        candidates.push(element.href || element.getAttribute("href") || "")
+      }
+
+      if (element instanceof HTMLImageElement) {
+        candidates.push(this.extractDoubaoImageSource(element))
+      }
+
+      DOUBAO_ATTACHMENT_SOURCE_ATTRS.forEach((attr) => {
+        candidates.push(element.getAttribute(attr) || "")
+      })
+    })
+
+    for (const candidate of candidates) {
+      const source = normalizeExportAssetUrl(candidate)
+      if (/^data:image\/svg\+xml/i.test(source)) continue
+      if (this.normalizeDoubaoImageSource(source) || isDownloadableExportAssetUrl(source)) {
+        return source
+      }
+    }
+
+    return ""
+  }
+
+  private createDoubaoAssistantImageFallbackState(): DoubaoAssistantImageFallbackState {
+    return {
+      sources: this.getDoubaoPerformanceImageSources(),
+      nextIndex: 0,
+      usedSources: new Set<string>(),
+    }
+  }
+
+  private takeNextDoubaoFallbackImageSource(
+    fallbackState: DoubaoAssistantImageFallbackState,
+  ): string {
+    while (fallbackState.nextIndex < fallbackState.sources.length) {
+      const source = fallbackState.sources[fallbackState.nextIndex]
+      fallbackState.nextIndex += 1
+      if (!fallbackState.usedSources.has(source)) return source
+    }
+
+    return ""
+  }
+
+  private getDoubaoPerformanceImageSources(): string[] {
+    if (typeof performance === "undefined") return []
+
+    const sources: string[] = []
+    const seen = new Set<string>()
+
+    performance.getEntriesByType("resource").forEach((entry) => {
+      const source = this.normalizeDoubaoImageSource(entry.name)
+      if (!source || seen.has(source)) return
+
+      try {
+        const url = new URL(source)
+        const isGeneratedImage =
+          /(^|\.)byteimg\.com$/i.test(url.hostname) &&
+          (/\/rc_gen_image\//i.test(url.pathname) || /flow-imagex-sign/i.test(url.hostname))
+
+        if (!isGeneratedImage) return
+      } catch {
+        return
+      }
+
+      seen.add(source)
+      sources.push(source)
+    })
+
+    return sources
   }
 
   replaceUserQueryContent(element: Element, html: string): boolean {
@@ -1301,7 +1758,7 @@ export class DoubaoAdapter extends SiteAdapter {
       top,
       behavior: "instant",
       __bypassLock: true,
-    } as any)
+    } as ScrollToOptions & { __bypassLock: true })
     container.dispatchEvent(new Event("scroll", { bubbles: true }))
   }
 
@@ -1555,6 +2012,94 @@ export class DoubaoAdapter extends SiteAdapter {
     }
   }
 
+  async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
+    const messages = this.extractDoubaoExportMessages()
+    return messages.length > 0 ? messages : null
+  }
+
+  async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
+    const collector = createExportAssetCollector()
+    const messages = this.extractDoubaoExportMessages(collector)
+    if (messages.length === 0) return null
+
+    return {
+      messages,
+      assets: collector.assets,
+    }
+  }
+
+  private extractDoubaoExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
+    const messages: ExportMessage[] = []
+    const fallbackState = this.createDoubaoAssistantImageFallbackState()
+    const turns = Array.from(document.querySelectorAll(MESSAGE_BLOCK_SELECTOR)).filter(
+      (turn): turn is HTMLElement => turn instanceof HTMLElement,
+    )
+
+    if (turns.length > 0) {
+      turns.forEach((turn) => {
+        this.getOrderedDoubaoMessages(turn).forEach(({ role, element }) => {
+          messages.push({
+            role,
+            content:
+              role === "user"
+                ? this.extractUserQueryExportContentWithAssets(element, collector)
+                : this.extractAssistantResponseTextWithAssets(element, collector, fallbackState),
+          })
+        })
+      })
+
+      return messages
+    }
+
+    const orderedMessages = this.getOrderedDoubaoMessages(document)
+    orderedMessages.forEach(({ role, element }) => {
+      messages.push({
+        role,
+        content:
+          role === "user"
+            ? this.extractUserQueryExportContentWithAssets(element, collector)
+            : this.extractAssistantResponseTextWithAssets(element, collector, fallbackState),
+      })
+    })
+
+    return messages
+  }
+
+  private getOrderedDoubaoMessages(root: ParentNode): Array<{
+    role: "user" | "assistant"
+    element: Element
+  }> {
+    const messages: Array<{ role: "user" | "assistant"; element: Element }> = []
+    const seen = new Set<Element>()
+
+    const addMessage = (role: "user" | "assistant", element: Element | null) => {
+      if (!element || seen.has(element)) return
+      seen.add(element)
+      messages.push({ role, element })
+    }
+
+    if (root instanceof Element) {
+      if (root.matches(USER_QUERY_SELECTOR)) {
+        addMessage("user", root)
+      } else if (root.matches(ASSISTANT_MESSAGE_SELECTOR)) {
+        addMessage("assistant", root)
+      }
+    }
+
+    root.querySelectorAll(USER_QUERY_SELECTOR).forEach((element) => addMessage("user", element))
+    root
+      .querySelectorAll(ASSISTANT_MESSAGE_SELECTOR)
+      .forEach((element) => addMessage("assistant", element))
+
+    return messages.sort((left, right) => {
+      if (left.element === right.element) return 0
+      const position = left.element.compareDocumentPosition(right.element)
+      if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1
+      if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1
+      return 0
+    })
+  }
+
   // ===== 主题 =====
 
   toggleTheme(): Promise<boolean> {
@@ -1678,7 +2223,7 @@ export class DoubaoAdapter extends SiteAdapter {
       top: Math.max(0, targetScrollTop),
       behavior: "instant",
       __bypassLock: true,
-    } as any)
+    } as ScrollToOptions & { __bypassLock: true })
   }
 
   restoreScroll(anchorData: AnchorData): boolean {
