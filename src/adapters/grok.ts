@@ -14,7 +14,17 @@
  */
 import { SITE_IDS } from "~constants"
 import { grokNativeThemeCss } from "~styles/native-theme-adapters/grok"
-import { htmlToMarkdown } from "~utils/exporter"
+import {
+  addFileExportAsset,
+  addImageExportAsset,
+  createExportAssetCollector,
+  escapeMarkdownLinkText,
+  isDownloadableExportAssetUrl,
+  normalizeExportAssetUrl,
+  type ExportAssetCollector,
+} from "~utils/export-assets"
+import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
+import { t } from "~utils/i18n"
 
 import {
   SiteAdapter,
@@ -22,6 +32,7 @@ import {
   type ConversationInfo,
   type ConversationObserverConfig,
   type ExportConfig,
+  type ExportLifecycleContext,
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
@@ -54,6 +65,26 @@ const DELETE_KEYWORDS = [
 ]
 
 const CONFIRM_KEYWORDS = ["confirm", "ok", "yes", "确定", "確認", "确认", "確定", "check"]
+
+interface GrokUserAttachment {
+  kind: "image" | "file"
+  name: string
+  source: string
+  type: string
+  size: string
+}
+
+interface GrokFileAttachmentMetadata {
+  fileMetadataId?: unknown
+  fileMimeType?: unknown
+  fileName?: unknown
+  fileUri?: unknown
+}
+
+interface GrokShareResponseItem {
+  responseId?: unknown
+  fileAttachmentsMetadata?: unknown
+}
 
 export class GrokAdapter extends SiteAdapter {
   match(): boolean {
@@ -100,6 +131,8 @@ export class GrokAdapter extends SiteAdapter {
 
   // 缓存弹窗中的会话数据（用于同步时弹窗已关闭的情况）
   private cachedDialogConversations: Map<string, ConversationInfo> | null = null
+
+  private exportUserAttachmentsByResponseId: Map<string, GrokUserAttachment[]> | null = null
 
   private reloadScheduled = false
 
@@ -1399,13 +1432,573 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   extractUserQueryExportContent(element: Element): string {
+    return this.extractGrokUserQueryExportContent(element)
+  }
+
+  private extractGrokExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
+    const root = document.querySelector(this.getResponseContainerSelector()) || document.body
+    const items = this.getGrokExportMessageItems(root)
+    const messages: ExportMessage[] = []
+
+    for (const item of items) {
+      const userRoot = this.findGrokUserMessageRoot(item)
+      if (userRoot) {
+        const content = this.extractGrokUserQueryExportContent(userRoot, collector, item).trim()
+        if (content) {
+          messages.push({ role: "user", content })
+        }
+        continue
+      }
+
+      const assistantRoot = this.findGrokAssistantMessageRoot(item)
+      if (assistantRoot) {
+        const content = this.extractGrokAssistantExportContent(assistantRoot, collector).trim()
+        if (content) {
+          messages.push({ role: "assistant", content })
+        }
+      }
+    }
+
+    return messages
+  }
+
+  private getGrokExportMessageItems(root: ParentNode): Element[] {
+    const responseContainers = Array.from(root.querySelectorAll('[id^="response-"]')).filter(
+      (element) => element.querySelector(".message-bubble") && !element.closest(".gh-main-panel"),
+    )
+    if (responseContainers.length > 0) {
+      return responseContainers
+    }
+
+    return Array.from(root.querySelectorAll(".message-bubble")).filter(
+      (element) => !element.closest(".gh-main-panel"),
+    )
+  }
+
+  private findGrokUserMessageRoot(element: Element): Element | null {
+    const selector = this.getUserQuerySelector()
+    if (element.matches(selector)) return element
+    return element.querySelector(selector)
+  }
+
+  private findGrokAssistantMessageRoot(element: Element): Element | null {
+    const selector = ".message-bubble:not(.rounded-br-lg)"
+    if (element.matches(selector)) return element
+    return element.querySelector(selector)
+  }
+
+  private extractGrokUserQueryExportContent(
+    element: Element,
+    collector?: ExportAssetCollector,
+    attachmentScope?: Element,
+  ): string {
+    const attachments = this.extractGrokUserAttachments(element, attachmentScope)
+    const body = this.extractGrokUserBodyMarkdown(element)
+
+    if (attachments.length === 0) {
+      return body || this.extractUserQueryText(element)
+    }
+
+    const imageMarkdown = this.formatGrokUserImageAttachments(attachments, collector)
+    const fileMarkdown = this.formatGrokUserFileAttachments(attachments, collector)
+    const fileBlock =
+      fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
+
+    return [imageMarkdown.join("\n\n"), fileBlock, body].filter(Boolean).join("\n\n")
+  }
+
+  private extractGrokUserBodyMarkdown(element: Element): string {
     const source = this.cloneUserQuerySource(element)
     if (!source) {
       return this.extractUserQueryText(element)
     }
 
+    this.removeGrokUserAttachmentNodes(source)
+    this.removeGrokExportDecorations(source, { removeImages: true })
     const markdown = this.extractUserQueryMarkdownFromSource(source)
-    return markdown || this.extractUserQueryText(element)
+    return markdown || this.extractTextWithLineBreaks(source).trim()
+  }
+
+  private extractGrokAssistantExportContent(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string {
+    const body = this.extractGrokAssistantBodyMarkdown(element)
+    const imageMarkdown = this.extractGrokImageMarkdown(element, collector, {
+      fallbackAlt: "generated image",
+      idPrefix: "grok-assistant-image",
+      filenamePrefix: "grok-assistant-image",
+    })
+
+    return [body, imageMarkdown.join("\n\n")].filter(Boolean).join("\n\n")
+  }
+
+  private extractGrokAssistantBodyMarkdown(element: Element): string {
+    const source = element.matches(".response-content-markdown")
+      ? element
+      : element.querySelector(".response-content-markdown") || element
+    const clone = source.cloneNode(true) as HTMLElement
+
+    this.removeGrokExportDecorations(clone, { removeImages: true })
+
+    const markdown = htmlToMarkdown(clone).trim()
+    if (markdown) return markdown
+
+    return this.extractTextWithLineBreaks(clone).trim()
+  }
+
+  private removeGrokExportDecorations(
+    root: HTMLElement,
+    options: { removeImages?: boolean } = {},
+  ): void {
+    const selectors = [
+      "button",
+      '[role="button"]',
+      "svg",
+      '[aria-hidden="true"]',
+      ".gh-user-query-markdown",
+    ]
+    if (options.removeImages) {
+      selectors.push("img", "picture", "video")
+    }
+
+    root.querySelectorAll(selectors.join(", ")).forEach((node) => node.remove())
+  }
+
+  private removeGrokUserAttachmentNodes(root: HTMLElement): void {
+    const candidates = Array.from(
+      root.querySelectorAll(
+        'a[href], [role="group"], [aria-label], [title], [class*="file"], [class*="attachment"]',
+      ),
+    )
+
+    candidates.forEach((node) => {
+      if (this.isLikelyGrokAttachmentCard(node, root)) {
+        node.remove()
+      }
+    })
+  }
+
+  private extractGrokUserAttachments(
+    element: Element,
+    attachmentScope?: Element,
+  ): GrokUserAttachment[] {
+    const message = this.resolveGrokUserAttachmentScope(element, attachmentScope)
+    if (!message) return []
+
+    const attachments: GrokUserAttachment[] = []
+    const seen = new Set<string>()
+
+    const addAttachment = (attachment: GrokUserAttachment): void => {
+      if (this.hasEquivalentGrokAttachment(attachments, attachment)) return
+
+      const key = this.getGrokAttachmentDedupKey(attachment)
+      if (seen.has(key)) return
+      seen.add(key)
+      attachments.push(attachment)
+    }
+
+    this.getCachedGrokUserAttachments(message).forEach(addAttachment)
+    this.extractGrokUserImageAttachments(message).forEach(addAttachment)
+    this.extractGrokUserFileAttachments(message).forEach(addAttachment)
+
+    return attachments
+  }
+
+  private getGrokAttachmentDedupKey(attachment: GrokUserAttachment): string {
+    const assetId = this.extractGrokAssetIdFromSource(attachment.source)
+    if (assetId) return `${attachment.kind}:asset:${assetId}`
+
+    const normalizedName = attachment.name.toLowerCase()
+    if (normalizedName) return `${attachment.kind}:name:${normalizedName}`
+
+    return `${attachment.kind}:${attachment.source}:${attachment.type}:${attachment.size}`
+  }
+
+  private hasEquivalentGrokAttachment(
+    attachments: GrokUserAttachment[],
+    candidate: GrokUserAttachment,
+  ): boolean {
+    const candidateAssetId = this.extractGrokAssetIdFromSource(candidate.source)
+    const candidateName = candidate.name.toLowerCase()
+
+    return attachments.some((attachment) => {
+      if (attachment.kind !== candidate.kind) return false
+
+      const assetId = this.extractGrokAssetIdFromSource(attachment.source)
+      if (assetId && candidateAssetId && assetId === candidateAssetId) return true
+
+      return Boolean(candidateName && attachment.name.toLowerCase() === candidateName)
+    })
+  }
+
+  private getCachedGrokUserAttachments(message: Element): GrokUserAttachment[] {
+    if (!this.exportUserAttachmentsByResponseId) return []
+
+    const responseId = this.extractGrokResponseId(message)
+    if (!responseId) return []
+
+    return this.exportUserAttachmentsByResponseId.get(responseId) || []
+  }
+
+  private extractGrokResponseId(element: Element): string {
+    const response = element.closest('[id^="response-"]')
+    const id = response?.id || (element.id.startsWith("response-") ? element.id : "")
+    return id.replace(/^response-/, "")
+  }
+
+  private resolveGrokUserAttachmentScope(
+    element: Element,
+    attachmentScope?: Element,
+  ): HTMLElement | null {
+    if (attachmentScope instanceof HTMLElement) {
+      return attachmentScope
+    }
+
+    const responseContainer = element.closest('[id^="response-"]')
+    if (responseContainer instanceof HTMLElement) {
+      return responseContainer
+    }
+
+    const nearestMessageContainer = element.closest(".message-bubble")?.parentElement
+    if (nearestMessageContainer instanceof HTMLElement) {
+      return nearestMessageContainer
+    }
+
+    const message = element.closest(this.getUserQuerySelector())
+    return message instanceof HTMLElement ? message : null
+  }
+
+  private extractGrokUserImageAttachments(message: Element): GrokUserAttachment[] {
+    const images = this.getGrokExportImages(message).filter(
+      (image) => !image.closest(".gh-user-query-markdown"),
+    )
+
+    return images.flatMap((image) => {
+      const source = this.getGrokImageExportSource(image)
+      if (!this.isExportableGrokImageSource(source)) return []
+
+      const name = this.extractGrokImageAlt(image, source, "uploaded image")
+      return [
+        {
+          kind: "image" as const,
+          name,
+          source,
+          type: this.extractFileTypeFromName(name) || "image",
+          size: "",
+        },
+      ]
+    })
+  }
+
+  private extractGrokUserFileAttachments(message: Element): GrokUserAttachment[] {
+    const cards = Array.from(
+      message.querySelectorAll(
+        'a[href], [role="group"], [aria-label], [title], [class*="file"], [class*="attachment"]',
+      ),
+    ).filter((node) => this.isLikelyGrokAttachmentCard(node, message))
+
+    return cards.flatMap((card) => {
+      const name = this.extractGrokAttachmentCardName(card)
+      if (!name) return []
+
+      const source = this.extractGrokAttachmentCardSource(card)
+      const type = this.extractFileTypeFromName(name)
+      const kind = this.isImageAttachmentName(name, type) ? "image" : "file"
+
+      return [
+        {
+          kind,
+          name,
+          source,
+          type,
+          size: this.extractGrokAttachmentCardSize(card),
+        },
+      ]
+    })
+  }
+
+  private isLikelyGrokAttachmentCard(card: Element, message: Element): boolean {
+    if (card === message) return false
+    if (card.closest(".gh-user-query-markdown")) return false
+    if (card.closest("pre, code")) return false
+    if (card.closest(".response-content-markdown p")) return false
+
+    const name = this.extractGrokAttachmentCardName(card)
+    if (!name) return false
+
+    return Boolean(
+      card.querySelector("a[href], img, svg") ||
+        card.matches("a[href]") ||
+        this.extractGrokAttachmentCardSource(card),
+    )
+  }
+
+  private extractGrokImageMarkdown(
+    element: Element,
+    collector: ExportAssetCollector | undefined,
+    options: { fallbackAlt: string; idPrefix: string; filenamePrefix: string },
+  ): string[] {
+    const seenSources = new Set<string>()
+    const imageMarkdown: string[] = []
+
+    for (const image of this.getGrokExportImages(element)) {
+      const source = this.getGrokImageExportSource(image)
+      if (!this.isExportableGrokImageSource(source) || seenSources.has(source)) continue
+
+      seenSources.add(source)
+      const alt = this.extractGrokImageAlt(image, source, options.fallbackAlt)
+      const assetPath = collector
+        ? addImageExportAsset(collector, {
+            source,
+            alt,
+            extensionHint: alt,
+            directory: "assets/images",
+            idPrefix: options.idPrefix,
+            filenamePrefix: options.filenamePrefix,
+          })
+        : source
+
+      if (assetPath) {
+        imageMarkdown.push(`![${escapeMarkdownLinkText(alt)}](${assetPath})`)
+      }
+    }
+
+    return imageMarkdown
+  }
+
+  private getGrokExportImages(element: Element): HTMLImageElement[] {
+    return Array.from(element.querySelectorAll("img")).filter(
+      (node): node is HTMLImageElement => node instanceof HTMLImageElement,
+    )
+  }
+
+  private getGrokImageExportSource(image: HTMLImageElement): string {
+    const candidates = [
+      image.currentSrc || "",
+      image.src || "",
+      image.getAttribute("src") || "",
+      image.closest("a[href]")?.getAttribute("href") || "",
+    ]
+
+    for (const candidate of candidates) {
+      const source = normalizeExportAssetUrl(candidate)
+      if (source) return source
+    }
+
+    return ""
+  }
+
+  private isExportableGrokImageSource(source: string): boolean {
+    if (!source) return false
+    if (source.startsWith("data:image/svg+xml")) return false
+    if (/\/images\/(?:favicon|apple-touch-icon|android-chrome)/i.test(source)) return false
+    return isDownloadableExportAssetUrl(source) || source.startsWith("data:image/")
+  }
+
+  private extractGrokImageAlt(image: HTMLImageElement, source: string, fallback: string): string {
+    const candidates = [
+      image.alt || "",
+      image.getAttribute("title") || "",
+      image.getAttribute("aria-label") || "",
+      this.extractFilenameFromUrl(source),
+      fallback,
+    ]
+
+    return candidates.map((value) => this.normalizeAttachmentText(value)).find(Boolean) || fallback
+  }
+
+  private formatGrokUserImageAttachments(
+    attachments: GrokUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind === "image" && attachment.source)
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(attachment.name || "uploaded image")
+        const assetPath = collector
+          ? addImageExportAsset(collector, {
+              source: attachment.source,
+              alt: attachment.name,
+              extensionHint: attachment.name || attachment.type,
+              directory: "assets/images",
+              idPrefix: "grok-user-image",
+              filenamePrefix: "grok-user-image",
+            })
+          : attachment.source
+
+        return assetPath ? `![${label}](${assetPath})` : ""
+      })
+      .filter(Boolean)
+  }
+
+  private formatGrokUserFileAttachments(
+    attachments: GrokUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind !== "image" || !attachment.source)
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(this.formatGrokAttachmentLabel(attachment))
+        const assetPath =
+          attachment.source && collector
+            ? addFileExportAsset(collector, {
+                source: attachment.source,
+                name: attachment.name,
+                mimeHint: attachment.type || attachment.name,
+                directory: "assets/files",
+                idPrefix: "grok-user-file",
+              })
+            : attachment.source
+
+        return assetPath ? `- [${label}](${assetPath})` : `- ${label}`
+      })
+  }
+
+  private formatGrokAttachmentLabel(attachment: GrokUserAttachment): string {
+    const details = this.formatGrokAttachmentDetails(attachment)
+    return details ? `${attachment.name} (${details})` : attachment.name
+  }
+
+  private formatGrokAttachmentDetails(attachment: GrokUserAttachment): string {
+    return [
+      attachment.type && !this.fileNameEndsWithExtension(attachment.name, attachment.type)
+        ? attachment.type
+        : "",
+      attachment.size,
+    ]
+      .filter(Boolean)
+      .join(", ")
+  }
+
+  private extractGrokAttachmentCardName(card: Element): string {
+    const candidates = [
+      ...this.extractGrokAttachmentLeafTexts(card),
+      card.getAttribute("aria-label") || "",
+      card.getAttribute("title") || "",
+      card instanceof HTMLAnchorElement ? card.download || "" : "",
+      card.textContent || "",
+      this.extractFilenameFromUrl(this.extractGrokAttachmentCardSource(card)),
+    ]
+
+    for (const candidate of candidates) {
+      const filename = this.extractFilenameFromText(candidate)
+      if (filename) return filename
+    }
+
+    return ""
+  }
+
+  private extractGrokAttachmentLeafTexts(card: Element): string[] {
+    return Array.from(card.querySelectorAll("div, span, p"))
+      .filter((node) => node.children.length === 0 && !node.querySelector("svg, img"))
+      .map((node) => this.normalizeAttachmentText(node.textContent || ""))
+      .filter(Boolean)
+  }
+
+  private extractGrokAttachmentCardSource(card: Element): string {
+    const candidates: string[] = []
+
+    if (card instanceof HTMLAnchorElement) {
+      candidates.push(card.getAttribute("href") || card.href || "")
+    }
+
+    const closestLink = card.closest("a[href]")
+    if (closestLink instanceof HTMLAnchorElement) {
+      candidates.push(closestLink.getAttribute("href") || closestLink.href || "")
+    }
+
+    card.querySelectorAll("a[href]").forEach((node) => {
+      if (node instanceof HTMLAnchorElement) {
+        candidates.push(node.getAttribute("href") || node.href || "")
+      }
+    })
+
+    for (const attr of ["data-url", "data-src", "data-file-url", "data-download-url"]) {
+      candidates.push((card as HTMLElement).getAttribute(attr) || "")
+    }
+
+    const image = card.querySelector("img")
+    if (image instanceof HTMLImageElement) {
+      candidates.push(this.getGrokImageExportSource(image))
+    }
+
+    for (const candidate of candidates) {
+      const source = normalizeExportAssetUrl(candidate)
+      if (isDownloadableExportAssetUrl(source) || source.startsWith("data:")) {
+        return source
+      }
+    }
+
+    return ""
+  }
+
+  private extractGrokAttachmentCardSize(card: Element): string {
+    const text = this.normalizeAttachmentText(card.textContent || "")
+    return text.match(/\b\d+(?:\.\d+)?\s*[KMGT]?B\b/i)?.[0] || ""
+  }
+
+  private extractFilenameFromText(value: string): string {
+    const normalized = this.normalizeAttachmentText(value)
+      .replace(/^(attached\s+file|attachment|file|附件|文件)[:：]?\s+/i, "")
+      .trim()
+    if (!normalized || this.isFileMetaText(normalized)) return ""
+
+    if (/^[^/\\]+\.[A-Za-z0-9]{1,10}$/.test(normalized)) {
+      return normalized
+    }
+
+    const match = normalized.match(/(?:^|[\s([{])([^/\\]+?\.[A-Za-z0-9]{1,10})(?=$|[\s)\]}])/)
+    return match?.[1]?.trim() || ""
+  }
+
+  private isFileMetaText(value: string): boolean {
+    return /^[A-Za-z0-9.+-]{1,12}\s+\d+(?:\.\d+)?\s*[KMGT]?B$/i.test(value)
+  }
+
+  private isImageAttachmentName(name: string, type: string): boolean {
+    const extension = (this.extractFileTypeFromName(name) || type).toLowerCase()
+    return ["avif", "gif", "jpg", "jpeg", "png", "svg", "webp"].includes(extension)
+  }
+
+  private extractFileTypeFromName(name: string): string {
+    return name.match(/\.([A-Za-z0-9]{1,10})$/)?.[1]?.toUpperCase() || ""
+  }
+
+  private extractFilenameFromUrl(value: string): string {
+    try {
+      const url = new URL(value, window.location.href)
+      const filename = url.searchParams.get("filename") || url.searchParams.get("file_name")
+      if (filename?.trim()) return filename.trim()
+
+      return decodeURIComponent(url.pathname).split("/").pop()?.trim() || ""
+    } catch {
+      return ""
+    }
+  }
+
+  private extractGrokAssetIdFromSource(value: string): string {
+    if (!value) return ""
+
+    try {
+      const pathname = new URL(value, window.location.href).pathname
+      const segments = pathname.split("/").filter(Boolean)
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+      return segments.reverse().find((segment) => uuidPattern.test(segment)) || ""
+    } catch {
+      return ""
+    }
+  }
+
+  private normalizeAttachmentText(value: string): string {
+    return value.replace(/\s+/g, " ").trim()
+  }
+
+  private fileNameEndsWithExtension(name: string, extension: string): boolean {
+    const normalizedExtension = extension.toLowerCase().replace(/^\./, "").trim()
+    if (!normalizedExtension) return false
+    return name.toLowerCase().endsWith(`.${normalizedExtension}`)
   }
 
   replaceUserQueryContent(element: Element, html: string): boolean {
@@ -1450,6 +2043,134 @@ export class GrokAdapter extends SiteAdapter {
       assistantResponseSelector: ".message-bubble:not(.rounded-br-lg) .response-content-markdown",
       turnSelector: "", // 不使用 turn 选择器，直接通过 user/assistant 选择器匹配
       useShadowDOM: false,
+    }
+  }
+
+  async prepareConversationExport(_context: ExportLifecycleContext): Promise<unknown> {
+    this.exportUserAttachmentsByResponseId = await this.collectGrokShareUserAttachments()
+    return null
+  }
+
+  async restoreConversationAfterExport(
+    _context: ExportLifecycleContext,
+    _state: unknown,
+  ): Promise<void> {
+    this.exportUserAttachmentsByResponseId = null
+  }
+
+  private async collectGrokShareUserAttachments(): Promise<Map<
+    string,
+    GrokUserAttachment[]
+  > | null> {
+    const shareId = this.extractGrokShareId()
+    if (!shareId) return null
+
+    try {
+      const response = await fetch(`/rest/app-chat/share_links/${encodeURIComponent(shareId)}`, {
+        credentials: "include",
+        headers: { accept: "application/json" },
+      })
+      if (!response.ok) {
+        console.warn("[GrokAdapter] Failed to load share attachment metadata:", response.status)
+        return null
+      }
+
+      return this.parseGrokShareUserAttachments(await response.json())
+    } catch (error) {
+      console.warn("[GrokAdapter] Failed to load share attachment metadata:", error)
+      return null
+    }
+  }
+
+  private extractGrokShareId(): string {
+    const match = window.location.pathname.match(/^\/share\/([^/?#]+)/)
+    return match?.[1] ? decodeURIComponent(match[1]) : ""
+  }
+
+  private parseGrokShareUserAttachments(
+    payload: unknown,
+  ): Map<string, GrokUserAttachment[]> | null {
+    const record = this.toGrokRecord(payload)
+    const responses = record?.responses
+    if (!Array.isArray(responses)) return null
+
+    const attachmentsByResponseId = new Map<string, GrokUserAttachment[]>()
+    for (const item of responses) {
+      const response = this.toGrokRecord(item) as GrokShareResponseItem | null
+      const responseId = this.readGrokString(response?.responseId)
+      if (!responseId) continue
+
+      const metadataItems = response?.fileAttachmentsMetadata
+      if (!Array.isArray(metadataItems)) continue
+
+      const attachments = metadataItems
+        .map((metadata) => this.parseGrokFileAttachmentMetadata(metadata))
+        .filter((attachment): attachment is GrokUserAttachment => attachment !== null)
+      if (attachments.length > 0) {
+        attachmentsByResponseId.set(responseId, attachments)
+      }
+    }
+
+    return attachmentsByResponseId.size > 0 ? attachmentsByResponseId : null
+  }
+
+  private parseGrokFileAttachmentMetadata(metadata: unknown): GrokUserAttachment | null {
+    const record = this.toGrokRecord(metadata) as GrokFileAttachmentMetadata | null
+    if (!record) return null
+
+    const name =
+      this.readGrokString(record.fileName) || this.readGrokString(record.fileMetadataId) || "file"
+    const type = this.readGrokString(record.fileMimeType) || this.extractFileTypeFromName(name)
+    const source = this.buildGrokAssetSource(this.readGrokString(record.fileUri))
+    const kind =
+      type.toLowerCase().startsWith("image/") || this.isImageAttachmentName(name, type)
+        ? "image"
+        : "file"
+
+    return {
+      kind,
+      name,
+      source,
+      type,
+      size: "",
+    }
+  }
+
+  private buildGrokAssetSource(value: string): string {
+    const source = value.trim()
+    if (!source) return ""
+    if (/^(blob:|data:|https?:\/\/)/i.test(source)) return normalizeExportAssetUrl(source)
+    if (source.startsWith("//")) return `https:${source}`
+    if (source.startsWith("assets.grok.com/")) return `https://${source}`
+    const path = source.replace(/^\/+/, "")
+    if (/^(users|generated)\//i.test(path)) {
+      return `https://assets.grok.com/${path}`
+    }
+
+    return normalizeExportAssetUrl(source)
+  }
+
+  private toGrokRecord(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === "object" ? (value as Record<string, unknown>) : null
+  }
+
+  private readGrokString(value: unknown): string {
+    return typeof value === "string" ? value.trim() : ""
+  }
+
+  async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
+    const messages = this.extractGrokExportMessages()
+    return messages.length > 0 ? messages : null
+  }
+
+  async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
+    const collector = createExportAssetCollector()
+    const messages = this.extractGrokExportMessages(collector)
+    if (messages.length === 0) return null
+
+    return {
+      messages,
+      assets: collector.assets,
     }
   }
 
