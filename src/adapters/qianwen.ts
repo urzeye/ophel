@@ -8,7 +8,17 @@
  */
 import { SITE_IDS } from "~constants"
 import { qianwenNativeThemeCss } from "~styles/native-theme-adapters/qianwen"
-import { htmlToMarkdown } from "~utils/exporter"
+import {
+  addFileExportAsset,
+  addImageExportAsset,
+  createExportAssetCollector,
+  escapeMarkdownLinkText,
+  isDownloadableExportAssetUrl,
+  normalizeExportAssetUrl,
+  type ExportAssetCollector,
+} from "~utils/export-assets"
+import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
+import { t } from "~utils/i18n"
 
 import {
   SiteAdapter,
@@ -25,15 +35,76 @@ const GROUP_PATH_PATTERN = /\/group\/([a-f0-9]+)/i
 const THEME_STORAGE_KEY = "tongyi-theme-preference"
 const CID_STORAGE_KEY = "qianwen-uniq-id"
 const MODEL_EXPANDED_KEY = "model-select-expanded"
-const QUESTION_ITEM_SELECTOR = '[class*="questionItem"], [data-chat-question-wrap$="-question"]'
+const QUESTION_ITEM_SELECTOR =
+  '[class*="questionItem"], .chat-question-wrap, [class*="message-select-wrapper-question"]'
 const QUESTION_LAYOUT_SELECTOR = '[class*="questionItem"], .chat-question-wrap'
-const QUESTION_CARD_SELECTOR = '[data-chat-question-wrap$="-question"]'
-const ANSWER_ITEM_SELECTOR = '[class*="answerItem"]'
+const QUESTION_CARD_SELECTOR = "[data-chat-question-wrap]"
+const ANSWER_ITEM_SELECTOR =
+  '[class*="answerItem"], [data-chat-answers-wrap], .chat-answers-card-wrap'
 const BUBBLE_SELECTOR = '[class*="bubble"]'
 const QUESTION_CARD_INNER_SELECTOR = [
   `${QUESTION_CARD_SELECTOR} .message-card-wrap.question`,
   `${QUESTION_CARD_SELECTOR} .question-text-card`,
 ].join(", ")
+const TURN_SELECTOR = ".chat-round[data-chat], [data-chat-list-key]"
+const USER_CARD_SELECTOR = ".message-card-wrap.question"
+const USER_TEXT_CARD_SELECTOR = ".question-text-card"
+const USER_IMAGE_CARD_SELECTOR = `${USER_CARD_SELECTOR}[data-mt*="image"]`
+const USER_FILE_CARD_SELECTOR = [
+  `${USER_CARD_SELECTOR}[data-mt*="doc"]`,
+  `${USER_CARD_SELECTOR}[data-mt*="file"]`,
+  `${USER_CARD_SELECTOR}[data-mt*="office"]`,
+  `${USER_CARD_SELECTOR}:has([class*="office-card"])`,
+].join(", ")
+const ASSISTANT_CONTENT_SELECTOR = [
+  ".answer-common-card .qk-markdown",
+  ".markdown-pc-special-class .qk-markdown",
+  "#qk-markdown-react",
+  ".answer-common-card",
+].join(", ")
+const ASSISTANT_GENERATED_IMAGE_SELECTOR = [
+  '[data-card-type="ai_generate_image_list"] img',
+  ".card_card_ai_generate_image img",
+  '[data-tpl*="card_ai_generate_image"] img',
+  'img[data-image-menu-items*="download"]',
+  'img[class*="image-"][data-image-resource-id]',
+].join(", ")
+const ASSISTANT_GENERATED_IMAGE_CARD_SELECTOR = [
+  '[data-card-type="ai_generate_image_list"]',
+  ".card_card_ai_generate_image",
+  '[data-tpl*="card_ai_generate_image"]',
+].join(", ")
+const EXPORT_DECORATION_SELECTOR = [
+  ".gh-root",
+  ".gh-user-query-markdown",
+  "button",
+  "[role='button']",
+  "svg",
+  "[aria-hidden='true']",
+  ".qk-md-table-action",
+  ".qk-md-copy-icon",
+  "[class*='answerToolsContent']",
+  "[class*='functionArea']",
+  "[class*='recommend-query']",
+  ".q-item",
+  ".qs-bottom",
+  "style",
+  "script",
+].join(", ")
+const ATTACHMENT_SOURCE_ATTRS = [
+  "href",
+  "src",
+  "data-src",
+  "data-url",
+  "data-download-url",
+  "data-file-url",
+  "data-source-url",
+  "data-origin-url",
+  "data-original-url",
+  "data-thumbnail-url",
+  "data-image-url",
+  "data-image-src",
+]
 const CHAT_INPUT_SELECTOR = '[class*="chatInput"]'
 const CHAT_TEXTAREA_SELECTOR = '[class*="chatTextarea"]'
 const MESSAGE_LIST_SELECTOR = ".message-list-scroll-container, #message-list-scroller"
@@ -51,6 +122,19 @@ const MODEL_DIALOG_ITEM_SELECTOR = [
   "[data-radix-popper-content-wrapper] .group.rounded-8",
 ].join(", ")
 const FOOTNOTE_SELECTOR = "#ice-container .root-G6nVVr"
+
+interface QianwenUserAttachment {
+  kind: "image" | "file"
+  name: string
+  source: string
+  type: string
+  sizeLabel?: string
+}
+
+interface QianwenAssistantImage {
+  source: string
+  alt: string
+}
 
 export class QianwenAdapter extends SiteAdapter {
   private exportIncludeThoughts: boolean | undefined = undefined
@@ -336,6 +420,11 @@ export class QianwenAdapter extends SiteAdapter {
   // ==================== 文本提取 / 大纲 / 导出 ====================
 
   extractUserQueryText(element: Element): string {
+    const textParts = this.extractUserTextParts(element)
+    if (textParts.length > 0) {
+      return textParts.join("\n\n")
+    }
+
     const contentRoot = this.findUserQueryContentRoot(element)
     if (!contentRoot) return ""
 
@@ -351,6 +440,10 @@ export class QianwenAdapter extends SiteAdapter {
 
   extractUserQueryMarkdown(element: Element): string {
     return this.extractUserQueryText(element)
+  }
+
+  extractUserQueryExportContent(element: Element): string {
+    return this.extractUserQueryExportContentWithAssets(element)
   }
 
   replaceUserQueryContent(element: Element, html: string): boolean {
@@ -381,37 +474,7 @@ export class QianwenAdapter extends SiteAdapter {
    * 4. 拼接：思维链引用块 + 正文
    */
   extractAssistantResponseText(element: Element): string {
-    const clone = element.cloneNode(true) as HTMLElement
-
-    // 移除 UI 装饰（工具栏、按钮、SVG、复制按钮等）
-    clone
-      .querySelectorAll(
-        'button, [role="button"], svg, .qk-md-table-action, .qk-md-copy-icon, [aria-hidden="true"], [class*="answerToolsContent"], [class*="functionArea"]',
-      )
-      .forEach((node) => node.remove())
-
-    // 提取思维链内容（如果设置允许）
-    const includeThoughts = this.shouldIncludeThoughtsInExport()
-    let thoughtBlocks: string[] = []
-
-    if (includeThoughts) {
-      thoughtBlocks = this.extractThoughtBlockquotes(clone)
-    }
-
-    // 始终从 clone 中移除思维链相关节点（避免正文重复）
-    const thinkingSelectors = `${THINKING_SELECTOR}, [class*="thinkingTitle"]`
-    clone.querySelectorAll(thinkingSelectors).forEach((node) => node.remove())
-
-    // 正文：htmlToMarkdown 保留 markdown 格式
-    const bodyMarkdown = htmlToMarkdown(clone) || this.extractTextWithLineBreaks(clone)
-    const normalizedBody = bodyMarkdown.trim()
-
-    if (includeThoughts && thoughtBlocks.length > 0) {
-      const thoughtSection = thoughtBlocks.join("\n\n")
-      return normalizedBody ? `${thoughtSection}\n\n${normalizedBody}` : thoughtSection
-    }
-
-    return normalizedBody
+    return this.extractAssistantResponseTextWithAssets(element)
   }
 
   /** 导出前钩子：记录 includeThoughts 设置供 extractAssistantResponseText 使用 */
@@ -426,6 +489,22 @@ export class QianwenAdapter extends SiteAdapter {
     _state: unknown,
   ): Promise<void> {
     this.exportIncludeThoughts = undefined
+  }
+
+  async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
+    const messages = this.extractQianwenExportMessages()
+    return messages.length > 0 ? messages : null
+  }
+
+  async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
+    const collector = createExportAssetCollector()
+    const messages = this.extractQianwenExportMessages(collector)
+    if (messages.length === 0) return null
+
+    return {
+      messages,
+      assets: collector.assets,
+    }
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
@@ -805,6 +884,530 @@ export class QianwenAdapter extends SiteAdapter {
   }
 
   // ==================== 内部辅助方法 ====================
+
+  private extractQianwenExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
+    const root = this.getExportRoot()
+    const turns = this.collectQianwenExportTurns(root)
+    const sources = turns.length > 0 ? turns : [root]
+    const messages: ExportMessage[] = []
+
+    sources.forEach((source) => {
+      this.getOrderedQianwenMessages(source).forEach(({ role, element }) => {
+        const content =
+          role === "user"
+            ? this.extractUserQueryExportContentWithAssets(element, collector)
+            : this.extractAssistantResponseTextWithAssets(element, collector)
+        const normalized = content.trim()
+        if (normalized) {
+          messages.push({ role, content: normalized })
+        }
+      })
+    })
+
+    return messages
+  }
+
+  private getExportRoot(): HTMLElement {
+    return (
+      (document.querySelector(MESSAGE_LIST_AREA_SELECTOR) as HTMLElement | null) ||
+      (document.querySelector(MESSAGE_LIST_SELECTOR) as HTMLElement | null) ||
+      document.body
+    )
+  }
+
+  private collectQianwenExportTurns(root: Element): Element[] {
+    const candidates = this.queryElementsIncludingSelf(root, TURN_SELECTOR)
+    return this.collectTopLevelBlocks(candidates).filter(
+      (turn) => this.getOrderedQianwenMessages(turn).length > 0,
+    )
+  }
+
+  private getOrderedQianwenMessages(root: ParentNode): Array<{
+    role: "user" | "assistant"
+    element: Element
+  }> {
+    const messages: Array<{ role: "user" | "assistant"; element: Element }> = []
+    const seen = new Set<Element>()
+
+    const addMessage = (role: "user" | "assistant", element: Element | null) => {
+      if (!element || seen.has(element) || this.shouldSkipExportElement(element)) return
+      seen.add(element)
+      messages.push({ role, element })
+    }
+
+    const userRoots = this.collectTopLevelBlocks(
+      this.queryElementsIncludingSelf(root, `${QUESTION_ITEM_SELECTOR}, [data-chat-question-wrap]`),
+    )
+    const assistantRoots = this.collectTopLevelBlocks(
+      this.queryElementsIncludingSelf(root, ANSWER_ITEM_SELECTOR),
+    )
+
+    ;[
+      ...userRoots.map((element) => ({ role: "user" as const, element })),
+      ...assistantRoots.map((element) => ({ role: "assistant" as const, element })),
+    ]
+      .sort((left, right) => this.compareDomOrder(left.element, right.element))
+      .forEach(({ role, element }) => addMessage(role, element))
+
+    return messages
+  }
+
+  private extractUserQueryExportContentWithAssets(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string {
+    const body = this.extractUserTextParts(element).join("\n\n").trim()
+    const attachments = this.extractQianwenUserAttachments(element)
+
+    if (attachments.length === 0) {
+      return body || this.extractUserQueryText(element)
+    }
+
+    const imageMarkdown = this.formatQianwenUserImageAttachments(attachments, collector)
+    const fileMarkdown = this.formatQianwenUserFileAttachments(attachments, collector)
+    const fileBlock =
+      fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
+
+    return [imageMarkdown.join("\n\n"), fileBlock, body].filter(Boolean).join("\n\n")
+  }
+
+  private extractAssistantResponseTextWithAssets(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string {
+    const body = this.extractAssistantMarkdown(element)
+    const imageMarkdown = this.formatQianwenAssistantImages(
+      this.extractQianwenAssistantImages(element),
+      collector,
+    )
+
+    return [body, imageMarkdown.join("\n\n")].filter(Boolean).join("\n\n")
+  }
+
+  private extractAssistantMarkdown(element: Element): string {
+    const includeThoughts = this.shouldIncludeThoughtsInExport()
+    const thoughtBlocks = includeThoughts ? this.extractThoughtBlockquotes(element) : []
+    const contentRoot = this.findAssistantContentRoot(element)
+    const clone = contentRoot.cloneNode(true) as HTMLElement
+
+    clone
+      .querySelectorAll(
+        [
+          EXPORT_DECORATION_SELECTOR,
+          ASSISTANT_GENERATED_IMAGE_CARD_SELECTOR,
+          "picture",
+          "img",
+        ].join(", "),
+      )
+      .forEach((node) => node.remove())
+
+    const thinkingSelectors = `${THINKING_SELECTOR}, [class*="thinkingTitle"]`
+    clone.querySelectorAll(thinkingSelectors).forEach((node) => node.remove())
+
+    const bodyMarkdown = htmlToMarkdown(clone) || this.extractTextWithLineBreaks(clone)
+    const normalizedBody = bodyMarkdown.trim()
+
+    if (thoughtBlocks.length > 0) {
+      const thoughtSection = thoughtBlocks.join("\n\n")
+      return normalizedBody ? `${thoughtSection}\n\n${normalizedBody}` : thoughtSection
+    }
+
+    return normalizedBody
+  }
+
+  private extractUserTextParts(element: Element): string[] {
+    const scope = this.findUserMessageScope(element)
+    const textCards = this.queryElementsIncludingSelf(scope, USER_TEXT_CARD_SELECTOR)
+    const parts: string[] = []
+    const seen = new Set<string>()
+
+    textCards.forEach((card) => {
+      if (card.closest(".gh-user-query-markdown")) return
+      const clone = card.cloneNode(true) as HTMLElement
+      clone
+        .querySelectorAll(
+          ".gh-user-query-markdown, button, [role='button'], svg, [aria-hidden='true']",
+        )
+        .forEach((node) => node.remove())
+
+      const text = this.normalizeUserQueryText(this.extractTextWithLineBreaks(clone)).trim()
+      if (!text || seen.has(text)) return
+      seen.add(text)
+      parts.push(text)
+    })
+
+    return parts
+  }
+
+  private extractQianwenUserAttachments(element: Element): QianwenUserAttachment[] {
+    const scope = this.findUserMessageScope(element)
+    const attachments: QianwenUserAttachment[] = []
+    const seen = new Set<string>()
+
+    const addAttachment = (attachment: QianwenUserAttachment | null) => {
+      if (!attachment) return
+      const key = [
+        attachment.kind,
+        this.getAttachmentSourceKey(attachment.source),
+        attachment.name.trim().toLowerCase(),
+        attachment.type.trim().toLowerCase(),
+        attachment.sizeLabel || "",
+      ].join(":")
+      if (seen.has(key)) return
+      seen.add(key)
+      attachments.push(attachment)
+    }
+
+    this.queryElementsIncludingSelf(scope, USER_IMAGE_CARD_SELECTOR).forEach((card) =>
+      addAttachment(this.extractQianwenUserImageAttachment(card)),
+    )
+    this.queryElementsIncludingSelf(scope, USER_FILE_CARD_SELECTOR).forEach((card) =>
+      addAttachment(this.extractQianwenUserFileAttachment(card)),
+    )
+
+    return attachments
+  }
+
+  private extractQianwenUserImageAttachment(card: Element): QianwenUserAttachment | null {
+    const image = card.querySelector("img")
+    if (!(image instanceof HTMLImageElement)) return null
+
+    const source = this.extractQianwenImageSource(image)
+    if (!source) return null
+
+    const name =
+      image.alt?.trim() ||
+      image.getAttribute("title")?.trim() ||
+      this.extractFilenameFromUrl(source) ||
+      "uploaded image"
+    const type = this.extractExtension(name) || this.extractExtensionFromUrl(source)
+
+    return {
+      kind: "image",
+      name,
+      source,
+      type,
+    }
+  }
+
+  private extractQianwenUserFileAttachment(card: Element): QianwenUserAttachment | null {
+    const textParts = this.extractCleanTextParts(card)
+    const { name, type, sizeLabel } = this.parseFileAttachmentText(textParts)
+    const source = this.extractQianwenDownloadableSource(card, {
+      allowDataImage: false,
+      includeImages: false,
+    })
+    const fallbackName = name || this.extractFilenameFromUrl(source) || "attachment"
+
+    if (!fallbackName && !source) return null
+
+    return {
+      kind: "file",
+      name: fallbackName,
+      source,
+      type: type || this.extractExtension(fallbackName) || this.extractExtensionFromUrl(source),
+      sizeLabel,
+    }
+  }
+
+  private formatQianwenUserImageAttachments(
+    attachments: QianwenUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind === "image" && attachment.source)
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(attachment.name || "uploaded image")
+        const assetPath = collector
+          ? addImageExportAsset(collector, {
+              source: attachment.source,
+              alt: attachment.name,
+              extensionHint: attachment.name || attachment.type,
+              directory: "assets/images",
+              idPrefix: "qianwen-user-image",
+              filenamePrefix: "qianwen-user-image",
+            })
+          : attachment.source
+
+        return assetPath ? `![${label || "uploaded image"}](${assetPath})` : ""
+      })
+      .filter(Boolean)
+  }
+
+  private formatQianwenUserFileAttachments(
+    attachments: QianwenUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind === "file")
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(this.formatQianwenAttachmentLabel(attachment))
+        const assetPath =
+          attachment.source && collector
+            ? addFileExportAsset(collector, {
+                source: attachment.source,
+                name: attachment.name,
+                mimeHint: attachment.type || attachment.name,
+                directory: "assets/files",
+                idPrefix: "qianwen-user-file",
+              })
+            : attachment.source
+
+        return assetPath ? `- [${label}](${assetPath})` : `- ${label}`
+      })
+  }
+
+  private extractQianwenAssistantImages(element: Element): QianwenAssistantImage[] {
+    const contentRoot = this.findAssistantContentRoot(element)
+    const images: QianwenAssistantImage[] = []
+    const seen = new Set<string>()
+
+    this.queryElementsIncludingSelf(contentRoot, ASSISTANT_GENERATED_IMAGE_SELECTOR).forEach(
+      (node) => {
+        if (!(node instanceof HTMLImageElement)) return
+
+        const source = this.extractQianwenImageSource(node)
+        if (!source || seen.has(source)) return
+
+        seen.add(source)
+        images.push({
+          source,
+          alt:
+            node.alt?.trim() ||
+            node.getAttribute("aria-label")?.trim() ||
+            `generated image ${images.length + 1}`,
+        })
+      },
+    )
+
+    return images
+  }
+
+  private formatQianwenAssistantImages(
+    images: QianwenAssistantImage[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return images
+      .map((image) => {
+        const alt = escapeMarkdownLinkText(image.alt || "generated image")
+        const assetPath = collector
+          ? addImageExportAsset(collector, {
+              source: image.source,
+              alt: image.alt,
+              directory: "assets/images",
+              idPrefix: "qianwen-assistant-image",
+              filenamePrefix: "qianwen-assistant-image",
+            })
+          : image.source
+
+        return assetPath ? `![${alt || "generated image"}](${assetPath})` : ""
+      })
+      .filter(Boolean)
+  }
+
+  private findUserMessageScope(element: Element): Element {
+    if (element.matches(QUESTION_ITEM_SELECTOR) || element.matches("[data-chat-question-wrap]")) {
+      return element
+    }
+
+    return (
+      element.closest(QUESTION_ITEM_SELECTOR) ||
+      element.closest("[data-chat-question-wrap]") ||
+      element
+    )
+  }
+
+  private findAssistantContentRoot(element: Element): Element {
+    if (element.matches(ASSISTANT_CONTENT_SELECTOR)) return element
+    return element.querySelector(ASSISTANT_CONTENT_SELECTOR) || element
+  }
+
+  private shouldSkipExportElement(element: Element): boolean {
+    if (element.closest(".gh-root")) return true
+    if (element.closest(".gh-user-query-markdown")) return true
+    return false
+  }
+
+  private queryElementsIncludingSelf(root: ParentNode, selector: string): Element[] {
+    const elements: Element[] = []
+    if (root instanceof Element && root.matches(selector)) {
+      elements.push(root)
+    }
+
+    root.querySelectorAll(selector).forEach((element) => {
+      if (!elements.includes(element)) {
+        elements.push(element)
+      }
+    })
+
+    return elements
+  }
+
+  private collectTopLevelBlocks(blocks: Element[]): Element[] {
+    if (blocks.length <= 1) return blocks
+    return blocks.filter(
+      (block) => !blocks.some((other) => other !== block && other.contains(block)),
+    )
+  }
+
+  private compareDomOrder(left: Element, right: Element): number {
+    if (left === right) return 0
+    const position = left.compareDocumentPosition(right)
+    if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1
+    if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1
+    return 0
+  }
+
+  private extractQianwenImageSource(image: HTMLImageElement): string {
+    const candidates = [
+      image.currentSrc || "",
+      image.src || "",
+      image.getAttribute("src") || "",
+      image.getAttribute("data-src") || "",
+      image.getAttribute("data-image-url") || "",
+      image.getAttribute("data-original-url") || "",
+      image.getAttribute("data-origin-url") || "",
+    ]
+
+    for (const candidate of candidates) {
+      const source = this.normalizeQianwenExportSource(candidate, { allowDataImage: true })
+      if (source) return source
+    }
+
+    return ""
+  }
+
+  private extractQianwenDownloadableSource(
+    root: Element,
+    options: { allowDataImage: boolean; includeImages: boolean },
+  ): string {
+    const candidates: string[] = []
+    const elements = [root, ...Array.from(root.querySelectorAll("*"))]
+
+    elements.forEach((element) => {
+      if (element instanceof HTMLAnchorElement) {
+        candidates.push(element.href || element.getAttribute("href") || "")
+      }
+
+      if (options.includeImages && element instanceof HTMLImageElement) {
+        candidates.push(this.extractQianwenImageSource(element))
+      }
+
+      ATTACHMENT_SOURCE_ATTRS.forEach((attr) => {
+        if (!options.includeImages && element instanceof HTMLImageElement && attr === "src") {
+          return
+        }
+        candidates.push(element.getAttribute(attr) || "")
+      })
+    })
+
+    for (const candidate of candidates) {
+      const source = this.normalizeQianwenExportSource(candidate, {
+        allowDataImage: options.allowDataImage,
+      })
+      if (source) return source
+    }
+
+    return ""
+  }
+
+  private normalizeQianwenExportSource(
+    value: string,
+    options: { allowDataImage: boolean },
+  ): string {
+    const source = normalizeExportAssetUrl(value)
+    if (!source) return ""
+    if (/^data:image\/svg\+xml/i.test(source)) return ""
+    if (/^data:image\//i.test(source)) return options.allowDataImage ? source : ""
+    if (!isDownloadableExportAssetUrl(source)) return ""
+
+    try {
+      const url = new URL(source)
+      if (/^g\.alicdn\.com$/i.test(url.hostname)) return ""
+      if (/\/static\//i.test(url.pathname) && !/\.(png|jpe?g|webp|gif|avif)$/i.test(url.pathname)) {
+        return ""
+      }
+    } catch {
+      return ""
+    }
+
+    return source
+  }
+
+  private extractCleanTextParts(root: Element): string[] {
+    const clone = root.cloneNode(true) as HTMLElement
+    clone
+      .querySelectorAll("button, [role='button'], svg, [aria-hidden='true'], style, script")
+      .forEach((node) => node.remove())
+
+    const parts: string[] = []
+    const walker = document.createTreeWalker(clone, NodeFilter.SHOW_TEXT)
+    let current = walker.nextNode()
+
+    while (current) {
+      const text = current.textContent?.replace(/\s+/g, " ").trim()
+      if (text && parts[parts.length - 1] !== text) {
+        parts.push(text)
+      }
+      current = walker.nextNode()
+    }
+
+    return parts
+  }
+
+  private parseFileAttachmentText(textParts: string[]): {
+    name: string
+    type: string
+    sizeLabel: string
+  } {
+    const parts = textParts.map((part) => part.replace(/\s+/g, " ").trim()).filter(Boolean)
+    const name = parts.find((part) => /\.[A-Za-z0-9]{1,10}$/.test(part)) || parts[0] || ""
+    const sizeLabel = parts.find((part) => /^\d+(?:\.\d+)?\s*(?:B|KB|MB|GB|TB)$/i.test(part)) || ""
+    const type = this.extractExtension(name)
+
+    return { name, type, sizeLabel }
+  }
+
+  private formatQianwenAttachmentLabel(attachment: QianwenUserAttachment): string {
+    const details = [
+      attachment.type && !attachment.name.toLowerCase().endsWith(`.${attachment.type}`)
+        ? attachment.type
+        : "",
+      attachment.sizeLabel || "",
+    ].filter(Boolean)
+
+    return details.length > 0 ? `${attachment.name} (${details.join(", ")})` : attachment.name
+  }
+
+  private getAttachmentSourceKey(source: string): string {
+    if (!source) return ""
+    if (/^(blob:|data:)/i.test(source)) return source
+
+    try {
+      const url = new URL(source, window.location.href)
+      return `${url.hostname}${url.pathname}`.toLowerCase()
+    } catch {
+      return source.split("?")[0].toLowerCase()
+    }
+  }
+
+  private extractFilenameFromUrl(source: string): string {
+    if (!source) return ""
+    try {
+      const pathname = new URL(source, window.location.href).pathname
+      return decodeURIComponent(pathname.split("/").pop() || "")
+    } catch {
+      return ""
+    }
+  }
+
+  private extractExtension(value: string): string {
+    return value.match(/\.([A-Za-z0-9]{1,10})$/)?.[1]?.toLowerCase() || ""
+  }
+
+  private extractExtensionFromUrl(source: string): string {
+    return this.extractExtension(this.extractFilenameFromUrl(source))
+  }
 
   /** 是否在导出中包含思维链（导出期间由 prepareConversationExport 设置） */
   private shouldIncludeThoughtsInExport(): boolean {
