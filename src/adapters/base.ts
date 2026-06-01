@@ -7,6 +7,7 @@
 import { SITE_IDS } from "~constants/defaults"
 import type { MarkdownFixerConfig } from "~core/markdown-fixer"
 import { DOMToolkit } from "~utils/dom-toolkit"
+import { createExportAssetCollector, type ExportAssetCollector } from "~utils/export-assets"
 import type { ExportBundle, ExportFormat, ExportMessage } from "~utils/exporter"
 import type { ExportPackaging } from "~utils/storage"
 
@@ -1190,6 +1191,21 @@ export abstract class SiteAdapter {
    */
   async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
     return null
+  }
+
+  protected async createExportBundleFromMessages(
+    extractMessages: (
+      collector: ExportAssetCollector,
+    ) => ExportMessage[] | Promise<ExportMessage[]>,
+  ): Promise<ExportBundle | null> {
+    const collector = createExportAssetCollector()
+    const messages = await extractMessages(collector)
+    if (messages.length === 0) return null
+
+    return {
+      messages,
+      assets: collector.assets,
+    }
   }
 
   /**

@@ -8,12 +8,16 @@
  */
 import { SITE_IDS } from "~constants"
 import {
-  addFileExportAsset,
-  addImageExportAsset,
-  createExportAssetCollector,
-  escapeMarkdownLinkText,
+  extractExportExtension,
+  extractExportExtensionFromUrl,
+  extractExportFilenameFromUrl,
+  formatExportFileAttachments,
+  formatExportImageAttachments,
+  formatExportImageMarkdownList,
+  getExportAttachmentSourceKey,
   isDownloadableExportAssetUrl,
   normalizeExportAssetUrl,
+  parseExportFileAttachmentText,
   type ExportAssetCollector,
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
@@ -744,14 +748,9 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
-    const collector = createExportAssetCollector()
-    const messages = this.extractYuanbaoExportMessages(collector)
-    if (messages.length === 0) return null
-
-    return {
-      messages,
-      assets: collector.assets,
-    }
+    return this.createExportBundleFromMessages((collector) =>
+      this.extractYuanbaoExportMessages(collector),
+    )
   }
 
   isGenerating(): boolean {
@@ -1088,9 +1087,9 @@ export class YuanbaoAdapter extends SiteAdapter {
     const name =
       image.alt?.trim() ||
       image.getAttribute("title")?.trim() ||
-      this.extractFilenameFromUrl(source) ||
+      extractExportFilenameFromUrl(source, { ignoreGenericDownload: true }) ||
       "uploaded image"
-    const type = this.extractExtension(name) || this.extractExtensionFromUrl(source) || "image"
+    const type = extractExportExtension(name) || extractExportExtensionFromUrl(source) || "image"
 
     return {
       kind: "image",
@@ -1106,7 +1105,7 @@ export class YuanbaoAdapter extends SiteAdapter {
     }
 
     const textParts = this.extractCleanTextParts(card)
-    const { name, type, sizeLabel } = this.parseFileAttachmentText(textParts)
+    const { name, type, sizeLabel } = parseExportFileAttachmentText(textParts)
     const source = this.extractYuanbaoDownloadableSource(card, {
       allowDataImage: false,
       includeImages: false,
@@ -1116,7 +1115,7 @@ export class YuanbaoAdapter extends SiteAdapter {
 
     const fallbackName =
       name ||
-      this.extractFilenameFromUrl(source) ||
+      extractExportFilenameFromUrl(source, { ignoreGenericDownload: true }) ||
       this.extractResourceIdFilename(source) ||
       "attachment"
 
@@ -1124,7 +1123,7 @@ export class YuanbaoAdapter extends SiteAdapter {
       kind: "file",
       name: fallbackName,
       source,
-      type: type || this.extractExtension(fallbackName) || this.extractExtensionFromUrl(source),
+      type: type || extractExportExtension(fallbackName) || extractExportExtensionFromUrl(source),
       sizeLabel,
     }
   }
@@ -1133,47 +1132,14 @@ export class YuanbaoAdapter extends SiteAdapter {
     attachments: YuanbaoUserAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return attachments
-      .filter((attachment) => attachment.kind === "image" && attachment.source)
-      .map((attachment) => {
-        const label = escapeMarkdownLinkText(attachment.name || "uploaded image")
-        const assetPath = collector
-          ? addImageExportAsset(collector, {
-              source: attachment.source,
-              alt: attachment.name,
-              extensionHint: attachment.name || attachment.type,
-              directory: "assets/images",
-              idPrefix: "yuanbao-user-image",
-              filenamePrefix: "yuanbao-user-image",
-            })
-          : attachment.source
-
-        return assetPath ? `![${label || "uploaded image"}](${assetPath})` : ""
-      })
-      .filter(Boolean)
+    return formatExportImageAttachments(attachments, collector, { siteId: this.getSiteId() })
   }
 
   private formatYuanbaoUserFileAttachments(
     attachments: YuanbaoUserAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return attachments
-      .filter((attachment) => attachment.kind === "file")
-      .map((attachment) => {
-        const label = escapeMarkdownLinkText(this.formatYuanbaoAttachmentLabel(attachment))
-        const assetPath =
-          attachment.source && collector
-            ? addFileExportAsset(collector, {
-                source: attachment.source,
-                name: attachment.name,
-                mimeHint: attachment.type || attachment.name,
-                directory: "assets/files",
-                idPrefix: "yuanbao-user-file",
-              })
-            : attachment.source
-
-        return assetPath ? `- [${label}](${assetPath})` : `- ${label}`
-      })
+    return formatExportFileAttachments(attachments, collector, { siteId: this.getSiteId() })
   }
 
   private extractYuanbaoAssistantImages(element: Element): YuanbaoAssistantImage[] {
@@ -1186,7 +1152,7 @@ export class YuanbaoAdapter extends SiteAdapter {
         if (!(node instanceof HTMLImageElement)) return
 
         const source = this.extractYuanbaoImageSource(node)
-        const sourceKey = this.getAttachmentSourceKey(source)
+        const sourceKey = getExportAttachmentSourceKey(source)
         if (!source || seen.has(sourceKey)) return
 
         seen.add(sourceKey)
@@ -1208,23 +1174,12 @@ export class YuanbaoAdapter extends SiteAdapter {
     images: YuanbaoAssistantImage[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return images
-      .map((image) => {
-        const alt = escapeMarkdownLinkText(image.alt || "generated image")
-        const assetPath = collector
-          ? addImageExportAsset(collector, {
-              source: image.source,
-              alt: image.alt,
-              extensionHint: image.extensionHint || image.alt,
-              directory: "assets/images",
-              idPrefix: "yuanbao-generated-image",
-              filenamePrefix: "yuanbao-generated-image",
-            })
-          : image.source
-
-        return assetPath ? `![${alt || "generated image"}](${assetPath})` : ""
-      })
-      .filter(Boolean)
+    return formatExportImageMarkdownList(images, collector, {
+      siteId: this.getSiteId(),
+      role: "assistant",
+      category: "generated-image",
+      fallbackAlt: "generated image",
+    })
   }
 
   private extractYuanbaoImageSource(image: HTMLImageElement): string {
@@ -1315,7 +1270,7 @@ export class YuanbaoAdapter extends SiteAdapter {
         image.closest("[data-card-url]")?.getAttribute("data-card-url") || "",
         image.alt || "",
       ]
-        .map((value) => this.extractExtensionFromUrl(value) || this.extractExtension(value))
+        .map((value) => extractExportExtensionFromUrl(value) || extractExportExtension(value))
         .find(Boolean) || ""
     )
   }
@@ -1384,22 +1339,9 @@ export class YuanbaoAdapter extends SiteAdapter {
     return parts
   }
 
-  private parseFileAttachmentText(textParts: string[]): {
-    name: string
-    type: string
-    sizeLabel: string
-  } {
-    const parts = textParts.map((part) => part.replace(/\s+/g, " ").trim()).filter(Boolean)
-    const name = parts.find((part) => /\.[A-Za-z0-9]{1,10}$/.test(part)) || parts[0] || ""
-    const sizeLabel = parts.find((part) => /^\d+(?:\.\d+)?\s*(?:B|KB|MB|GB|TB)$/i.test(part)) || ""
-    const type = this.extractExtension(name)
-
-    return { name, type, sizeLabel }
-  }
-
   private getYuanbaoAttachmentKeys(attachment: YuanbaoUserAttachment): string[] {
     const keys: string[] = []
-    const sourceKey = this.getAttachmentSourceKey(attachment.source)
+    const sourceKey = getExportAttachmentSourceKey(attachment.source)
     const name = attachment.name.trim().toLowerCase()
     const type = attachment.type.trim().toLowerCase()
     const size = attachment.sizeLabel?.trim().toLowerCase() || ""
@@ -1411,41 +1353,6 @@ export class YuanbaoAdapter extends SiteAdapter {
     return keys.length > 0 ? keys : [`${attachment.kind}:fallback:${name}:${type}`]
   }
 
-  private getAttachmentSourceKey(source: string): string {
-    if (!source) return ""
-    if (/^(blob:|data:)/i.test(source)) return source
-
-    try {
-      const url = new URL(source, window.location.href)
-      return `${url.hostname}${url.pathname}`.toLowerCase()
-    } catch {
-      return source.split("?")[0].toLowerCase()
-    }
-  }
-
-  private formatYuanbaoAttachmentLabel(attachment: YuanbaoUserAttachment): string {
-    const details = [
-      attachment.type && !attachment.name.toLowerCase().endsWith(`.${attachment.type}`)
-        ? attachment.type
-        : "",
-      attachment.sizeLabel || "",
-    ].filter(Boolean)
-
-    return details.length > 0 ? `${attachment.name} (${details.join(", ")})` : attachment.name
-  }
-
-  private extractFilenameFromUrl(source: string): string {
-    if (!source) return ""
-
-    try {
-      const pathname = new URL(source, window.location.href).pathname
-      const filename = decodeURIComponent(pathname.split("/").pop() || "")
-      return filename && filename !== "download" ? filename : ""
-    } catch {
-      return ""
-    }
-  }
-
   private extractResourceIdFilename(source: string): string {
     if (!source) return ""
 
@@ -1455,14 +1362,6 @@ export class YuanbaoAdapter extends SiteAdapter {
     } catch {
       return ""
     }
-  }
-
-  private extractExtension(value: string): string {
-    return value.match(/\.([A-Za-z0-9]{1,10})(?:$|[?#\s])/)?.[1]?.toLowerCase() || ""
-  }
-
-  private extractExtensionFromUrl(source: string): string {
-    return this.extractExtension(this.extractFilenameFromUrl(source))
   }
 
   private extractAssistantPlainText(element: Element): string {

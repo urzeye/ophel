@@ -7,10 +7,8 @@
  */
 import { SITE_IDS } from "~constants"
 import {
-  addFileExportAsset,
-  addImageExportAsset,
-  createExportAssetCollector,
-  escapeMarkdownLinkText,
+  formatExportFileAttachments,
+  formatExportImageAttachments,
   isDownloadableExportAssetUrl,
   normalizeExportAssetUrl,
   type ExportAssetCollector,
@@ -377,14 +375,9 @@ export class ZaiAdapter extends SiteAdapter {
   }
 
   async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
-    const collector = createExportAssetCollector()
-    const messages = this.extractZaiExportMessages(collector)
-    if (messages.length === 0) return null
-
-    return {
-      messages,
-      assets: collector.assets,
-    }
+    return this.createExportBundleFromMessages((collector) =>
+      this.extractZaiExportMessages(collector),
+    )
   }
 
   private clearExportMarkers(): void {
@@ -1484,56 +1477,24 @@ export class ZaiAdapter extends SiteAdapter {
     attachments: ZaiUserAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return attachments
-      .filter((attachment) => attachment.kind === "image" && attachment.source)
-      .map((attachment) => {
-        const label = escapeMarkdownLinkText(attachment.name || "uploaded image")
-        const assetPath = collector
-          ? addImageExportAsset(collector, {
-              source: attachment.source,
-              alt: attachment.name,
-              extensionHint: attachment.name || attachment.type,
-              directory: "assets/images",
-              idPrefix: "zai-user-image",
-              filenamePrefix: "zai-user-image",
-            })
-          : attachment.source
-
-        return assetPath ? `![${label || "uploaded image"}](${assetPath})` : ""
-      })
-      .filter(Boolean)
+    return formatExportImageAttachments(attachments, collector, { siteId: this.getSiteId() })
   }
 
   private formatZaiUserFileAttachments(
     attachments: ZaiUserAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return attachments
-      .filter((attachment) => attachment.kind === "file")
-      .map((attachment) => {
-        const label = escapeMarkdownLinkText(this.formatZaiAttachmentLabel(attachment))
-        const assetPath =
-          attachment.source && collector
-            ? addFileExportAsset(collector, {
-                source: attachment.source,
-                name: attachment.name,
-                mimeHint: attachment.type || attachment.name,
-                directory: "assets/files",
-                idPrefix: "zai-user-file",
-              })
-            : attachment.source
-
-        return assetPath ? `- [${label}](${assetPath})` : `- ${label}`
-      })
-  }
-
-  private formatZaiAttachmentLabel(attachment: ZaiUserAttachment): string {
-    const sizeLabel = attachment.size ? `, ${this.formatZaiFileSize(attachment.size)}` : ""
-    if (!attachment.type) return `${attachment.name}${sizeLabel}`
-    if (attachment.name.toLowerCase().endsWith(attachment.type.toLowerCase())) {
-      return `${attachment.name}${sizeLabel}`
-    }
-    return `${attachment.name} (${attachment.type}${sizeLabel})`
+    return formatExportFileAttachments(attachments, collector, {
+      siteId: this.getSiteId(),
+      getLabel: (attachment) => {
+        const sizeLabel = attachment.size ? `, ${this.formatZaiFileSize(attachment.size)}` : ""
+        if (!attachment.type) return `${attachment.name}${sizeLabel}`
+        if (attachment.name.toLowerCase().endsWith(attachment.type.toLowerCase())) {
+          return `${attachment.name}${sizeLabel}`
+        }
+        return `${attachment.name} (${attachment.type}${sizeLabel})`
+      },
+    })
   }
 
   private parseZaiSizeLabel(value: string): number | undefined {

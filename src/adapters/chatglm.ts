@@ -7,10 +7,8 @@
  */
 import { SITE_IDS } from "~constants"
 import {
-  addFileExportAsset,
-  addImageExportAsset,
-  createExportAssetCollector,
-  escapeMarkdownLinkText,
+  formatExportFileAttachments,
+  formatExportImageAttachments,
   isDownloadableExportAssetUrl,
   normalizeExportAssetUrl,
   type ExportAssetCollector,
@@ -714,14 +712,9 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
-    const collector = createExportAssetCollector()
-    const messages = this.extractChatGLMExportMessages(collector)
-    if (messages.length === 0) return null
-
-    return {
-      messages,
-      assets: collector.assets,
-    }
+    return this.createExportBundleFromMessages((collector) =>
+      this.extractChatGLMExportMessages(collector),
+    )
   }
 
   private async fetchShareApiMessages(): Promise<ChatGLMApiMessage[] | null> {
@@ -1177,80 +1170,36 @@ export class ChatGLMAdapter extends SiteAdapter {
     attachments: ChatGLMExportAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return attachments
-      .filter((attachment) => attachment.kind === "image" && attachment.source)
-      .map((attachment) => {
-        const label = escapeMarkdownLinkText(attachment.name || "uploaded image")
-        const assetPath = collector
-          ? addImageExportAsset(collector, {
-              source: attachment.source,
-              alt: attachment.name,
-              extensionHint: attachment.name || attachment.type,
-              directory: "assets/images",
-              idPrefix: "chatglm-user-image",
-              filenamePrefix: "chatglm-user-image",
-            })
-          : attachment.source
-
-        return assetPath ? `![${label || "uploaded image"}](${assetPath})` : ""
-      })
-      .filter(Boolean)
+    return formatExportImageAttachments(attachments, collector, { siteId: this.getSiteId() })
   }
 
   private formatChatGLMAssistantImageAttachments(
     attachments: ChatGLMExportAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return this.dedupeChatGLMAttachments(attachments)
-      .filter((attachment) => attachment.kind === "image" && attachment.source)
-      .map((attachment) => {
-        const label = escapeMarkdownLinkText(attachment.name || "generated image")
-        const assetPath = collector
-          ? addImageExportAsset(collector, {
-              source: attachment.source,
-              alt: attachment.name,
-              extensionHint: attachment.name || attachment.type,
-              directory: "assets/images",
-              idPrefix: "chatglm-generated-image",
-              filenamePrefix: "chatglm-generated-image",
-            })
-          : attachment.source
-
-        return assetPath ? `![${label || "generated image"}](${assetPath})` : ""
-      })
-      .filter(Boolean)
+    return formatExportImageAttachments(this.dedupeChatGLMAttachments(attachments), collector, {
+      siteId: this.getSiteId(),
+      role: "assistant",
+      category: "generated-image",
+      fallbackAlt: "generated image",
+    })
   }
 
   private formatChatGLMUserFileAttachments(
     attachments: ChatGLMExportAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return attachments
-      .filter((attachment) => attachment.kind === "file")
-      .map((attachment) => {
-        const label = escapeMarkdownLinkText(this.formatChatGLMAttachmentLabel(attachment))
-        const assetPath =
-          attachment.source && collector
-            ? addFileExportAsset(collector, {
-                source: attachment.source,
-                name: attachment.name,
-                mimeHint: attachment.type || attachment.name,
-                directory: "assets/files",
-                idPrefix: "chatglm-user-file",
-              })
-            : attachment.source
-
-        return assetPath ? `- [${label}](${assetPath})` : `- ${label}`
-      })
-  }
-
-  private formatChatGLMAttachmentLabel(attachment: ChatGLMExportAttachment): string {
-    const sizeLabel = attachment.size ? `, ${this.formatChatGLMFileSize(attachment.size)}` : ""
-    if (!attachment.type) return `${attachment.name}${sizeLabel}`
-    if (attachment.name.toLowerCase().endsWith(attachment.type.toLowerCase())) {
-      return `${attachment.name}${sizeLabel}`
-    }
-    return `${attachment.name} (${attachment.type}${sizeLabel})`
+    return formatExportFileAttachments(attachments, collector, {
+      siteId: this.getSiteId(),
+      getLabel: (attachment) => {
+        const sizeLabel = attachment.size ? `, ${this.formatChatGLMFileSize(attachment.size)}` : ""
+        if (!attachment.type) return `${attachment.name}${sizeLabel}`
+        if (attachment.name.toLowerCase().endsWith(attachment.type.toLowerCase())) {
+          return `${attachment.name}${sizeLabel}`
+        }
+        return `${attachment.name} (${attachment.type}${sizeLabel})`
+      },
+    })
   }
 
   private dedupeChatGLMAttachments(

@@ -8,10 +8,8 @@
 import { SITE_IDS } from "~constants"
 import { kimiNativeThemeCss } from "~styles/native-theme-adapters/kimi"
 import {
-  addFileExportAsset,
-  addImageExportAsset,
-  createExportAssetCollector,
-  escapeMarkdownLinkText,
+  formatExportFileAttachments,
+  formatExportImageMarkdown,
   isDownloadableExportAssetUrl,
   normalizeExportAssetUrl,
   type ExportAssetCollector,
@@ -842,14 +840,9 @@ export class KimiAdapter extends SiteAdapter {
   }
 
   async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
-    const collector = createExportAssetCollector()
-    const messages = this.extractKimiExportMessages(collector)
-    if (messages.length === 0) return null
-
-    return {
-      messages,
-      assets: collector.assets,
-    }
+    return this.createExportBundleFromMessages((collector) =>
+      this.extractKimiExportMessages(collector),
+    )
   }
 
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
@@ -1853,20 +1846,14 @@ export class KimiAdapter extends SiteAdapter {
 
       seenSources.add(source)
       const alt = this.extractKimiImageAlt(image, source)
-      const assetPath = collector
-        ? addImageExportAsset(collector, {
-            source,
-            alt,
-            extensionHint: alt,
-            directory: "assets/images",
-            idPrefix: "kimi-image",
-            filenamePrefix: "kimi-image",
-          })
-        : source
+      const markdown = formatExportImageMarkdown({ source, alt, extensionHint: alt }, collector, {
+        siteId: this.getSiteId(),
+        role: "user",
+        category: "image",
+        fallbackAlt: "uploaded image",
+      })
 
-      if (assetPath) {
-        imageMarkdown.push(`![${escapeMarkdownLinkText(alt)}](${assetPath})`)
-      }
+      if (markdown) imageMarkdown.push(markdown)
     }
 
     return imageMarkdown
@@ -1915,19 +1902,14 @@ export class KimiAdapter extends SiteAdapter {
       const size = this.extractKimiFileSize(card)
       const label = this.formatKimiFileLabel(name, type, size)
       const href = this.extractKimiFileHref(card)
-      const assetPath =
-        href && collector
-          ? addFileExportAsset(collector, {
-              source: href,
-              name,
-              mimeHint: type || name,
-              directory: "assets/files",
-              idPrefix: "kimi-file",
-            })
-          : href
-      const markdown = assetPath
-        ? `- [${escapeMarkdownLinkText(label)}](${assetPath})`
-        : `- ${escapeMarkdownLinkText(label)}`
+      const markdown = formatExportFileAttachments(
+        [{ kind: "file", name, source: href, type, sizeLabel: size }],
+        collector,
+        {
+          siteId: this.getSiteId(),
+          getLabel: () => label,
+        },
+      )[0]
 
       if (seenFiles.has(markdown)) continue
 

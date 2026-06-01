@@ -7,6 +7,29 @@ export interface ExportAssetCollector {
   filePathsBySource?: Map<string, string>
 }
 
+export type ExportAttachmentKind = "image" | "file"
+export type ExportAssetRole = "user" | "assistant"
+
+export interface ExportAttachment {
+  kind: ExportAttachmentKind
+  name: string
+  source?: string
+  type?: string
+  sizeLabel?: string
+}
+
+export interface ExportImageReference {
+  source: string
+  alt?: string
+  extensionHint?: string
+}
+
+export interface ParsedExportFileAttachmentText {
+  name: string
+  type: string
+  sizeLabel: string
+}
+
 export interface MarkdownDocumentAssetOptions {
   title?: string | null
   fallbackTitle?: string
@@ -38,6 +61,44 @@ export interface ExportFileAssetOptions {
   kind?: ExportAsset["kind"]
 }
 
+export interface ExportImageMarkdownOptions<T extends ExportImageReference = ExportImageReference> {
+  siteId: string
+  role: ExportAssetRole
+  category?: string
+  fallbackAlt?: string
+  directory?: string
+  prefix?: string
+  getAlt?: (image: T) => string
+  getExtensionHint?: (image: T) => string
+}
+
+export interface ExportAttachmentImageMarkdownOptions<
+  T extends ExportAttachment = ExportAttachment,
+> {
+  siteId: string
+  role?: ExportAssetRole
+  category?: string
+  fallbackAlt?: string
+  directory?: string
+  prefix?: string
+  getAlt?: (attachment: T) => string
+  getExtensionHint?: (attachment: T) => string
+}
+
+export interface ExportAttachmentFileMarkdownOptions<
+  T extends ExportAttachment = ExportAttachment,
+> {
+  siteId: string
+  role?: ExportAssetRole
+  category?: string
+  directory?: string
+  prefix?: string
+  fallbackName?: string
+  getLabel?: (attachment: T) => string
+  getMimeHint?: (attachment: T) => string | undefined
+  includeAttachment?: (attachment: T) => boolean
+}
+
 export function createExportAssetCollector(): ExportAssetCollector {
   return {
     assets: [],
@@ -58,6 +119,101 @@ export function sanitizeExportFilename(value: string, fallback = "file", maxLeng
 
 export function escapeMarkdownLinkText(value: string): string {
   return value.replace(/[[\]]/g, "\\$&")
+}
+
+export function sanitizeExportAssetPrefixPart(value: string, fallback = "asset"): string {
+  const sanitized = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+  return sanitized || fallback
+}
+
+export function createExportAssetPrefix(
+  parts: Array<string | null | undefined | false>,
+  fallback = "asset",
+): string {
+  const prefix = parts
+    .filter((part): part is string => Boolean(part))
+    .map((part) => sanitizeExportAssetPrefixPart(part, ""))
+    .filter(Boolean)
+    .join("-")
+  return prefix || fallback
+}
+
+export function getExportAttachmentSourceKey(source: string): string {
+  if (!source) return ""
+  if (/^(blob:|data:)/i.test(source)) return source
+
+  try {
+    const url = new URL(source, window.location.href)
+    return `${url.hostname}${url.pathname}`.toLowerCase()
+  } catch {
+    return source.split("?")[0].toLowerCase()
+  }
+}
+
+export function extractExportFilenameFromUrl(
+  source: string,
+  options: { ignoreGenericDownload?: boolean } = {},
+): string {
+  if (!source) return ""
+
+  try {
+    const pathname = new URL(source, window.location.href).pathname
+    const filename = decodeURIComponent(pathname.split("/").pop() || "")
+    if (options.ignoreGenericDownload && filename === "download") return ""
+    return filename
+  } catch {
+    return ""
+  }
+}
+
+export function extractExportExtension(value: string): string {
+  return value.match(/\.([A-Za-z0-9]{1,10})(?:$|[?#\s])/)?.[1]?.toLowerCase() || ""
+}
+
+export function extractExportExtensionFromUrl(source: string): string {
+  return extractExportExtension(extractExportFilenameFromUrl(source))
+}
+
+export function parseExportFileAttachmentText(textParts: string[]): ParsedExportFileAttachmentText {
+  const parts = textParts.map((part) => part.replace(/\s+/g, " ").trim()).filter(Boolean)
+  let name = ""
+
+  for (let index = 0; index < parts.length - 1; index += 1) {
+    if (/^\.[A-Za-z0-9]{1,10}$/.test(parts[index + 1])) {
+      name = `${parts[index]}${parts[index + 1]}`
+      break
+    }
+  }
+
+  if (!name) {
+    name = parts.find((part) => /^[^.\s].*\.[A-Za-z0-9]{1,10}$/.test(part)) || ""
+  }
+
+  const extensionPart = parts.find((part) => /^\.[A-Za-z0-9]{1,10}$/.test(part)) || ""
+  const sizeLabel = parts.find((part) => /^\d+(?:\.\d+)?\s*(?:B|KB|MB|GB|TB)$/i.test(part)) || ""
+  const fallbackName =
+    name ||
+    parts.find((part) => part !== sizeLabel && !/^\.[A-Za-z0-9]{1,10}$/.test(part)) ||
+    extensionPart
+  const type = extractExportExtension(fallbackName) || (extensionPart ? extensionPart.slice(1) : "")
+
+  return { name: fallbackName, type, sizeLabel }
+}
+
+export function formatExportAttachmentLabel(
+  attachment: Pick<ExportAttachment, "name" | "type" | "sizeLabel">,
+): string {
+  const name = attachment.name || "attachment"
+  const type = attachment.type?.trim() || ""
+  const details = [
+    type && !name.toLowerCase().endsWith(`.${type.toLowerCase()}`) ? type : "",
+    attachment.sizeLabel || "",
+  ].filter(Boolean)
+
+  return details.length > 0 ? `${name} (${details.join(", ")})` : name
 }
 
 export function extractMarkdownTitle(content: string, fallback = "document"): string {
@@ -342,6 +498,106 @@ export function addFileExportAsset(
   })
 
   return path
+}
+
+export function formatExportImageMarkdown<T extends ExportImageReference>(
+  image: T,
+  collector: ExportAssetCollector | undefined,
+  options: ExportImageMarkdownOptions<T>,
+): string {
+  if (!image.source) return ""
+
+  const fallbackAlt = options.fallbackAlt || "image"
+  const alt = (options.getAlt?.(image) || image.alt || fallbackAlt).trim() || fallbackAlt
+  const label = escapeMarkdownLinkText(alt)
+  const prefix =
+    options.prefix ||
+    createExportAssetPrefix([options.siteId, options.role, options.category || "image"])
+  const assetPath = collector
+    ? addImageExportAsset(collector, {
+        source: image.source,
+        alt,
+        extensionHint:
+          options.getExtensionHint?.(image) || image.extensionHint || image.alt || fallbackAlt,
+        directory: options.directory || "assets/images",
+        idPrefix: prefix,
+        filenamePrefix: prefix,
+      })
+    : image.source
+
+  return assetPath ? `![${label}](${assetPath})` : ""
+}
+
+export function formatExportImageMarkdownList<T extends ExportImageReference>(
+  images: T[],
+  collector: ExportAssetCollector | undefined,
+  options: ExportImageMarkdownOptions<T>,
+): string[] {
+  return images.map((image) => formatExportImageMarkdown(image, collector, options)).filter(Boolean)
+}
+
+export function formatExportImageAttachments<T extends ExportAttachment>(
+  attachments: T[],
+  collector: ExportAssetCollector | undefined,
+  options: ExportAttachmentImageMarkdownOptions<T>,
+): string[] {
+  return attachments
+    .filter((attachment) => attachment.kind === "image" && Boolean(attachment.source))
+    .map((attachment) =>
+      formatExportImageMarkdown(
+        {
+          source: attachment.source || "",
+          alt: options.getAlt?.(attachment) || attachment.name,
+          extensionHint:
+            options.getExtensionHint?.(attachment) || attachment.name || attachment.type || "",
+        },
+        collector,
+        {
+          siteId: options.siteId,
+          role: options.role || "user",
+          category: options.category || "image",
+          fallbackAlt: options.fallbackAlt || "uploaded image",
+          directory: options.directory,
+          prefix: options.prefix,
+        },
+      ),
+    )
+    .filter(Boolean)
+}
+
+export function formatExportFileAttachments<T extends ExportAttachment>(
+  attachments: T[],
+  collector: ExportAssetCollector | undefined,
+  options: ExportAttachmentFileMarkdownOptions<T>,
+): string[] {
+  const prefix =
+    options.prefix ||
+    createExportAssetPrefix([options.siteId, options.role || "user", options.category || "file"])
+  const fallbackName = options.fallbackName || "attachment"
+
+  return attachments
+    .filter((attachment) =>
+      options.includeAttachment
+        ? options.includeAttachment(attachment)
+        : attachment.kind === "file",
+    )
+    .map((attachment) => {
+      const label = escapeMarkdownLinkText(
+        options.getLabel?.(attachment) || formatExportAttachmentLabel(attachment) || fallbackName,
+      )
+      const assetPath =
+        attachment.source && collector
+          ? addFileExportAsset(collector, {
+              source: attachment.source,
+              name: attachment.name || fallbackName,
+              mimeHint: options.getMimeHint?.(attachment) || attachment.type || attachment.name,
+              directory: options.directory || "assets/files",
+              idPrefix: prefix,
+            })
+          : attachment.source
+
+      return assetPath ? `- [${label}](${assetPath})` : `- ${label}`
+    })
 }
 
 export function addMarkdownDocumentAsset(

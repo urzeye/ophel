@@ -13,10 +13,9 @@
 import { SITE_IDS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import {
-  addFileExportAsset,
-  addImageExportAsset,
   createExportAssetCollector,
-  escapeMarkdownLinkText,
+  formatExportFileAttachments,
+  formatExportImageAttachments,
   isDownloadableExportAssetUrl,
   normalizeExportAssetUrl,
   type ExportAssetCollector,
@@ -1987,47 +1986,21 @@ export class AIStudioAdapter extends SiteAdapter {
     attachments: AIStudioUserAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return attachments
-      .filter((attachment) => attachment.kind === "image" && attachment.source)
-      .map((attachment) => {
-        const label = escapeMarkdownLinkText(attachment.name || "uploaded image")
-        const assetPath = collector
-          ? addImageExportAsset(collector, {
-              source: attachment.source,
-              alt: attachment.name,
-              extensionHint: attachment.mimeHint || attachment.name,
-              directory: "assets/images",
-              idPrefix: "aistudio-user-image",
-              filenamePrefix: "aistudio-user-image",
-            })
-          : attachment.source
-
-        return assetPath ? `![${label || "uploaded image"}](${assetPath})` : ""
-      })
-      .filter(Boolean)
+    return formatExportImageAttachments(attachments, collector, {
+      siteId: this.getSiteId(),
+      getExtensionHint: (attachment) => attachment.mimeHint || attachment.name,
+    })
   }
 
   private formatAIStudioUserFileAttachments(
     attachments: AIStudioUserAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return attachments
-      .filter((attachment) => attachment.kind === "file")
-      .map((attachment) => {
-        const label = escapeMarkdownLinkText(this.formatAIStudioFileLabel(attachment))
-        const assetPath =
-          attachment.source && collector
-            ? addFileExportAsset(collector, {
-                source: attachment.source,
-                name: attachment.name,
-                mimeHint: attachment.mimeHint || attachment.name,
-                directory: "assets/files",
-                idPrefix: "aistudio-user-file",
-              })
-            : attachment.source
-
-        return assetPath ? `- [${label}](${assetPath})` : `- ${label}`
-      })
+    return formatExportFileAttachments(attachments, collector, {
+      siteId: this.getSiteId(),
+      getLabel: (attachment) => this.formatAIStudioFileLabel(attachment),
+      getMimeHint: (attachment) => attachment.mimeHint || attachment.name,
+    })
   }
 
   private formatAIStudioFileLabel(attachment: AIStudioUserAttachment): string {

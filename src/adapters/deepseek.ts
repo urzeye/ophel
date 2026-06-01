@@ -11,10 +11,9 @@
 import { SITE_IDS } from "~constants"
 import { deepseekNativeThemeCss } from "~styles/native-theme-adapters/deepseek"
 import {
-  addFileExportAsset,
-  addImageExportAsset,
   createExportAssetCollector,
-  escapeMarkdownLinkText,
+  formatExportFileAttachments,
+  formatExportImageAttachments,
   isDownloadableExportAssetUrl,
   normalizeExportAssetUrl,
   type ExportAssetCollector,
@@ -2035,50 +2034,18 @@ export class DeepSeekAdapter extends SiteAdapter {
     attachments: DeepSeekUserAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return attachments
-      .filter((attachment) => attachment.kind === "image" && attachment.source)
-      .map((attachment) => {
-        const label = escapeMarkdownLinkText(attachment.name || "uploaded image")
-        const source = attachment.source
-
-        const assetPath = collector
-          ? addImageExportAsset(collector, {
-              source,
-              alt: attachment.name,
-              extensionHint: attachment.name || attachment.type,
-              directory: "assets/images",
-              idPrefix: "deepseek-user-image",
-              filenamePrefix: "deepseek-user-image",
-            })
-          : source
-
-        return assetPath ? `![${label}](${assetPath})` : ""
-      })
-      .filter(Boolean)
+    return formatExportImageAttachments(attachments, collector, { siteId: this.getSiteId() })
   }
 
   private formatUserFileAttachments(
     attachments: DeepSeekUserAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return attachments
-      .filter((attachment) => attachment.kind !== "image" || !attachment.source)
-      .map((attachment) => {
-        const label = escapeMarkdownLinkText(this.formatAttachmentLabel(attachment))
-        const source = attachment.source
-        const assetPath =
-          source && collector
-            ? addFileExportAsset(collector, {
-                source,
-                name: attachment.name,
-                mimeHint: attachment.type || attachment.name,
-                directory: "assets/files",
-                idPrefix: "deepseek-user-file",
-              })
-            : source
-
-        return assetPath ? `- [${label}](${assetPath})` : `- ${label}`
-      })
+    return formatExportFileAttachments(attachments, collector, {
+      siteId: this.getSiteId(),
+      includeAttachment: (attachment) => attachment.kind !== "image" || !attachment.source,
+      getLabel: (attachment) => this.formatAttachmentLabel(attachment),
+    })
   }
 
   private formatAttachmentLabel(attachment: DeepSeekUserAttachment): string {

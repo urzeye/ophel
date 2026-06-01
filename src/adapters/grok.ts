@@ -15,10 +15,9 @@
 import { SITE_IDS } from "~constants"
 import { grokNativeThemeCss } from "~styles/native-theme-adapters/grok"
 import {
-  addFileExportAsset,
-  addImageExportAsset,
-  createExportAssetCollector,
-  escapeMarkdownLinkText,
+  formatExportFileAttachments,
+  formatExportImageAttachments,
+  formatExportImageMarkdown,
   isDownloadableExportAssetUrl,
   normalizeExportAssetUrl,
   type ExportAssetCollector,
@@ -1524,11 +1523,7 @@ export class GrokAdapter extends SiteAdapter {
     collector?: ExportAssetCollector,
   ): string {
     const body = this.extractGrokAssistantBodyMarkdown(element)
-    const imageMarkdown = this.extractGrokImageMarkdown(element, collector, {
-      fallbackAlt: "generated image",
-      idPrefix: "grok-assistant-image",
-      filenamePrefix: "grok-assistant-image",
-    })
+    const imageMarkdown = this.extractGrokImageMarkdown(element, collector, "generated image")
 
     return [body, imageMarkdown.join("\n\n")].filter(Boolean).join("\n\n")
   }
@@ -1737,7 +1732,7 @@ export class GrokAdapter extends SiteAdapter {
   private extractGrokImageMarkdown(
     element: Element,
     collector: ExportAssetCollector | undefined,
-    options: { fallbackAlt: string; idPrefix: string; filenamePrefix: string },
+    fallbackAlt: string,
   ): string[] {
     const seenSources = new Set<string>()
     const imageMarkdown: string[] = []
@@ -1747,21 +1742,15 @@ export class GrokAdapter extends SiteAdapter {
       if (!this.isExportableGrokImageSource(source) || seenSources.has(source)) continue
 
       seenSources.add(source)
-      const alt = this.extractGrokImageAlt(image, source, options.fallbackAlt)
-      const assetPath = collector
-        ? addImageExportAsset(collector, {
-            source,
-            alt,
-            extensionHint: alt,
-            directory: "assets/images",
-            idPrefix: options.idPrefix,
-            filenamePrefix: options.filenamePrefix,
-          })
-        : source
+      const alt = this.extractGrokImageAlt(image, source, fallbackAlt)
+      const markdown = formatExportImageMarkdown({ source, alt, extensionHint: alt }, collector, {
+        siteId: this.getSiteId(),
+        role: "assistant",
+        category: "generated-image",
+        fallbackAlt,
+      })
 
-      if (assetPath) {
-        imageMarkdown.push(`![${escapeMarkdownLinkText(alt)}](${assetPath})`)
-      }
+      if (markdown) imageMarkdown.push(markdown)
     }
 
     return imageMarkdown
@@ -1812,47 +1801,18 @@ export class GrokAdapter extends SiteAdapter {
     attachments: GrokUserAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return attachments
-      .filter((attachment) => attachment.kind === "image" && attachment.source)
-      .map((attachment) => {
-        const label = escapeMarkdownLinkText(attachment.name || "uploaded image")
-        const assetPath = collector
-          ? addImageExportAsset(collector, {
-              source: attachment.source,
-              alt: attachment.name,
-              extensionHint: attachment.name || attachment.type,
-              directory: "assets/images",
-              idPrefix: "grok-user-image",
-              filenamePrefix: "grok-user-image",
-            })
-          : attachment.source
-
-        return assetPath ? `![${label}](${assetPath})` : ""
-      })
-      .filter(Boolean)
+    return formatExportImageAttachments(attachments, collector, { siteId: this.getSiteId() })
   }
 
   private formatGrokUserFileAttachments(
     attachments: GrokUserAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return attachments
-      .filter((attachment) => attachment.kind !== "image" || !attachment.source)
-      .map((attachment) => {
-        const label = escapeMarkdownLinkText(this.formatGrokAttachmentLabel(attachment))
-        const assetPath =
-          attachment.source && collector
-            ? addFileExportAsset(collector, {
-                source: attachment.source,
-                name: attachment.name,
-                mimeHint: attachment.type || attachment.name,
-                directory: "assets/files",
-                idPrefix: "grok-user-file",
-              })
-            : attachment.source
-
-        return assetPath ? `- [${label}](${assetPath})` : `- ${label}`
-      })
+    return formatExportFileAttachments(attachments, collector, {
+      siteId: this.getSiteId(),
+      includeAttachment: (attachment) => attachment.kind !== "image" || !attachment.source,
+      getLabel: (attachment) => this.formatGrokAttachmentLabel(attachment),
+    })
   }
 
   private formatGrokAttachmentLabel(attachment: GrokUserAttachment): string {
@@ -2164,14 +2124,9 @@ export class GrokAdapter extends SiteAdapter {
   }
 
   async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
-    const collector = createExportAssetCollector()
-    const messages = this.extractGrokExportMessages(collector)
-    if (messages.length === 0) return null
-
-    return {
-      messages,
-      assets: collector.assets,
-    }
+    return this.createExportBundleFromMessages((collector) =>
+      this.extractGrokExportMessages(collector),
+    )
   }
 
   getAssistantMermaidSupportMode() {

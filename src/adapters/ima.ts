@@ -8,12 +8,16 @@
  */
 import { SITE_IDS } from "~constants"
 import {
-  addFileExportAsset,
-  addImageExportAsset,
-  createExportAssetCollector,
-  escapeMarkdownLinkText,
+  extractExportExtension,
+  extractExportExtensionFromUrl,
+  extractExportFilenameFromUrl,
+  formatExportFileAttachments,
+  formatExportImageAttachments,
+  formatExportImageMarkdownList,
+  getExportAttachmentSourceKey,
   isDownloadableExportAssetUrl,
   normalizeExportAssetUrl,
+  parseExportFileAttachmentText,
   type ExportAssetCollector,
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
@@ -500,14 +504,9 @@ export class ImaAdapter extends SiteAdapter {
   }
 
   async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
-    const collector = createExportAssetCollector()
-    const messages = this.extractImaExportMessages(collector)
-    if (messages.length === 0) return null
-
-    return {
-      messages,
-      assets: collector.assets,
-    }
+    return this.createExportBundleFromMessages((collector) =>
+      this.extractImaExportMessages(collector),
+    )
   }
 
   isGenerating(): boolean {
@@ -726,9 +725,9 @@ export class ImaAdapter extends SiteAdapter {
     const name =
       image.alt?.trim() ||
       image.getAttribute("title")?.trim() ||
-      this.extractFilenameFromUrl(source) ||
+      extractExportFilenameFromUrl(source, { ignoreGenericDownload: true }) ||
       "uploaded image"
-    const type = this.extractExtension(name) || this.extractExtensionFromUrl(source) || "image"
+    const type = extractExportExtension(name) || extractExportExtensionFromUrl(source) || "image"
 
     return {
       kind: "image",
@@ -748,13 +747,15 @@ export class ImaAdapter extends SiteAdapter {
     }
 
     const textParts = this.extractCleanTextParts(card)
-    const { name, type, sizeLabel } = this.parseFileAttachmentText(textParts)
+    const { name, type, sizeLabel } = parseExportFileAttachmentText(textParts)
     const source = this.extractImaDownloadableSource(card, {
       allowDataImage: false,
       includeImages: false,
     })
     const inferredName =
-      name || this.extractFilenameFromUrl(source) || this.extractDataAttributeFilename(card)
+      name ||
+      extractExportFilenameFromUrl(source, { ignoreGenericDownload: true }) ||
+      this.extractDataAttributeFilename(card)
 
     if (!inferredName && !source) return null
 
@@ -764,7 +765,7 @@ export class ImaAdapter extends SiteAdapter {
       kind: "file",
       name: fallbackName,
       source,
-      type: type || this.extractExtension(fallbackName) || this.extractExtensionFromUrl(source),
+      type: type || extractExportExtension(fallbackName) || extractExportExtensionFromUrl(source),
       sizeLabel,
     }
   }
@@ -773,47 +774,14 @@ export class ImaAdapter extends SiteAdapter {
     attachments: ImaUserAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return attachments
-      .filter((attachment) => attachment.kind === "image" && attachment.source)
-      .map((attachment) => {
-        const label = escapeMarkdownLinkText(attachment.name || "uploaded image")
-        const assetPath = collector
-          ? addImageExportAsset(collector, {
-              source: attachment.source,
-              alt: attachment.name,
-              extensionHint: attachment.name || attachment.type,
-              directory: "assets/images",
-              idPrefix: "ima-user-image",
-              filenamePrefix: "ima-user-image",
-            })
-          : attachment.source
-
-        return assetPath ? `![${label || "uploaded image"}](${assetPath})` : ""
-      })
-      .filter(Boolean)
+    return formatExportImageAttachments(attachments, collector, { siteId: this.getSiteId() })
   }
 
   private formatImaUserFileAttachments(
     attachments: ImaUserAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return attachments
-      .filter((attachment) => attachment.kind === "file")
-      .map((attachment) => {
-        const label = escapeMarkdownLinkText(this.formatImaAttachmentLabel(attachment))
-        const assetPath =
-          attachment.source && collector
-            ? addFileExportAsset(collector, {
-                source: attachment.source,
-                name: attachment.name,
-                mimeHint: attachment.type || attachment.name,
-                directory: "assets/files",
-                idPrefix: "ima-user-file",
-              })
-            : attachment.source
-
-        return assetPath ? `- [${label}](${assetPath})` : `- ${label}`
-      })
+    return formatExportFileAttachments(attachments, collector, { siteId: this.getSiteId() })
   }
 
   private extractImaAssistantImages(element: Element): ImaAssistantImage[] {
@@ -827,7 +795,7 @@ export class ImaAdapter extends SiteAdapter {
         if (node.closest(".gh-root, .gh-user-query-markdown")) return
 
         const source = this.extractImaImageSource(node)
-        const sourceKey = this.getAttachmentSourceKey(source)
+        const sourceKey = getExportAttachmentSourceKey(source)
         if (!source || seen.has(sourceKey)) return
 
         seen.add(sourceKey)
@@ -849,23 +817,12 @@ export class ImaAdapter extends SiteAdapter {
     images: ImaAssistantImage[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return images
-      .map((image) => {
-        const alt = escapeMarkdownLinkText(image.alt || "generated image")
-        const assetPath = collector
-          ? addImageExportAsset(collector, {
-              source: image.source,
-              alt: image.alt,
-              extensionHint: image.extensionHint || image.alt,
-              directory: "assets/images",
-              idPrefix: "ima-generated-image",
-              filenamePrefix: "ima-generated-image",
-            })
-          : image.source
-
-        return assetPath ? `![${alt || "generated image"}](${assetPath})` : ""
-      })
-      .filter(Boolean)
+    return formatExportImageMarkdownList(images, collector, {
+      siteId: this.getSiteId(),
+      role: "assistant",
+      category: "generated-image",
+      fallbackAlt: "generated image",
+    })
   }
 
   private extractImaImageSource(image: HTMLImageElement): string {
@@ -968,7 +925,7 @@ export class ImaAdapter extends SiteAdapter {
         image.closest("[data-card-url]")?.getAttribute("data-card-url") || "",
         image.alt || "",
       ]
-        .map((value) => this.extractExtensionFromUrl(value) || this.extractExtension(value))
+        .map((value) => extractExportExtensionFromUrl(value) || extractExportExtension(value))
         .find(Boolean) || ""
     )
   }
@@ -993,40 +950,9 @@ export class ImaAdapter extends SiteAdapter {
     return parts
   }
 
-  private parseFileAttachmentText(textParts: string[]): {
-    name: string
-    type: string
-    sizeLabel: string
-  } {
-    const parts = textParts.map((part) => part.replace(/\s+/g, " ").trim()).filter(Boolean)
-    let name = ""
-
-    for (let index = 0; index < parts.length - 1; index += 1) {
-      if (/^\.[A-Za-z0-9]{1,10}$/.test(parts[index + 1])) {
-        name = `${parts[index]}${parts[index + 1]}`
-        break
-      }
-    }
-
-    if (!name) {
-      name = parts.find((part) => /^[^.\s].*\.[A-Za-z0-9]{1,10}$/.test(part)) || ""
-    }
-
-    const extensionPart = parts.find((part) => /^\.[A-Za-z0-9]{1,10}$/.test(part)) || ""
-    const sizeLabel = parts.find((part) => /^\d+(?:\.\d+)?\s*(?:B|KB|MB|GB|TB)$/i.test(part)) || ""
-    const fallbackName =
-      name ||
-      parts.find((part) => part !== sizeLabel && !/^\.[A-Za-z0-9]{1,10}$/.test(part)) ||
-      extensionPart
-    const type =
-      this.extractExtension(fallbackName) || (extensionPart ? extensionPart.slice(1) : "")
-
-    return { name: fallbackName, type, sizeLabel }
-  }
-
   private getImaAttachmentKeys(attachment: ImaUserAttachment): string[] {
     const keys: string[] = []
-    const sourceKey = this.getAttachmentSourceKey(attachment.source)
+    const sourceKey = getExportAttachmentSourceKey(attachment.source)
     const name = attachment.name.trim().toLowerCase()
     const type = attachment.type.trim().toLowerCase()
     const size = attachment.sizeLabel?.trim().toLowerCase() || ""
@@ -1036,41 +962,6 @@ export class ImaAdapter extends SiteAdapter {
     if (name && size) keys.push(`${attachment.kind}:name-size:${name}:${size}`)
 
     return keys.length > 0 ? keys : [`${attachment.kind}:fallback:${name}:${type}`]
-  }
-
-  private getAttachmentSourceKey(source: string): string {
-    if (!source) return ""
-    if (/^(blob:|data:)/i.test(source)) return source
-
-    try {
-      const url = new URL(source, window.location.href)
-      return `${url.hostname}${url.pathname}`.toLowerCase()
-    } catch {
-      return source.split("?")[0].toLowerCase()
-    }
-  }
-
-  private formatImaAttachmentLabel(attachment: ImaUserAttachment): string {
-    const details = [
-      attachment.type && !attachment.name.toLowerCase().endsWith(`.${attachment.type}`)
-        ? attachment.type
-        : "",
-      attachment.sizeLabel || "",
-    ].filter(Boolean)
-
-    return details.length > 0 ? `${attachment.name} (${details.join(", ")})` : attachment.name
-  }
-
-  private extractFilenameFromUrl(source: string): string {
-    if (!source) return ""
-
-    try {
-      const pathname = new URL(source, window.location.href).pathname
-      const filename = decodeURIComponent(pathname.split("/").pop() || "")
-      return filename && filename !== "download" ? filename : ""
-    } catch {
-      return ""
-    }
   }
 
   private extractDataAttributeFilename(element: Element): string {
@@ -1091,14 +982,6 @@ export class ImaAdapter extends SiteAdapter {
     }
 
     return ""
-  }
-
-  private extractExtension(value: string): string {
-    return value.match(/\.([A-Za-z0-9]{1,10})(?:$|[?#\s])/)?.[1]?.toLowerCase() || ""
-  }
-
-  private extractExtensionFromUrl(source: string): string {
-    return this.extractExtension(this.extractFilenameFromUrl(source))
   }
 
   private findUserMessageScope(element: Element): Element {

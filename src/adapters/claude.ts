@@ -9,11 +9,9 @@ import {
   scrollElementInContainer,
 } from "~core/outline/dom-outline"
 import {
-  addFileExportAsset,
-  addImageExportAsset,
-  createExportAssetCollector,
   createMarkdownDocumentAssetLink,
-  escapeMarkdownLinkText,
+  formatExportFileAttachments,
+  formatExportImageAttachments,
   isDownloadableExportAssetUrl,
   normalizeExportAssetUrl,
   type ExportAssetCollector,
@@ -1766,12 +1764,9 @@ export class ClaudeAdapter extends SiteAdapter {
       return null
     }
 
-    const collector = createExportAssetCollector()
-    const messages = this.extractClaudeExportMessages(collector)
-    return {
-      messages,
-      assets: collector.assets,
-    }
+    return this.createExportBundleFromMessages((collector) =>
+      this.extractClaudeExportMessages(collector),
+    )
   }
 
   async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
@@ -2068,49 +2063,23 @@ export class ClaudeAdapter extends SiteAdapter {
     attachments: ClaudeUserAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return attachments
-      .filter((attachment) => attachment.kind === "image" && attachment.source)
-      .map((attachment) => {
-        const alt = escapeMarkdownLinkText(attachment.alt || attachment.name || "uploaded image")
-        const source = attachment.source || ""
-        const assetPath = collector
-          ? addImageExportAsset(collector, {
-              source,
-              alt: attachment.alt || attachment.name,
-              extensionHint: attachment.name || attachment.alt,
-              idPrefix: "claude-user-image",
-              filenamePrefix: "claude-user-image",
-            })
-          : source
-        return assetPath ? `![${alt || "uploaded image"}](${assetPath})` : ""
-      })
-      .filter(Boolean)
+    return formatExportImageAttachments(attachments, collector, {
+      siteId: this.getSiteId(),
+      getAlt: (attachment) => attachment.alt || attachment.name || "uploaded image",
+    })
   }
 
   private formatClaudeUserFileAttachments(
     attachments: ClaudeUserAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return attachments
-      .filter((attachment) => attachment.kind === "file")
-      .map((attachment) => {
-        const label =
-          attachment.type && !this.fileNameEndsWithType(attachment.name, attachment.type)
-            ? `${attachment.name} (${attachment.type})`
-            : attachment.name
-        const source = attachment.source || ""
-        const assetPath =
-          source && collector
-            ? addFileExportAsset(collector, {
-                source,
-                name: attachment.name,
-                mimeHint: attachment.type,
-                idPrefix: "claude-user-file",
-              })
-            : source
-
-        return assetPath ? `- [${escapeMarkdownLinkText(label)}](${assetPath})` : `- ${label}`
-      })
+    return formatExportFileAttachments(attachments, collector, {
+      siteId: this.getSiteId(),
+      getLabel: (attachment) =>
+        attachment.type && !this.fileNameEndsWithType(attachment.name, attachment.type)
+          ? `${attachment.name} (${attachment.type})`
+          : attachment.name,
+    })
   }
 
   private fileNameEndsWithType(name: string, type: string): boolean {

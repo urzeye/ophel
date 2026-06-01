@@ -16,10 +16,9 @@
  */
 import { SITE_IDS } from "~constants"
 import {
-  addFileExportAsset,
-  addImageExportAsset,
-  createExportAssetCollector,
-  escapeMarkdownLinkText,
+  formatExportFileAttachments,
+  formatExportImageAttachments,
+  formatExportImageMarkdownList,
   isDownloadableExportAssetUrl,
   normalizeExportAssetUrl,
   type ExportAssetCollector,
@@ -811,77 +810,36 @@ export class DoubaoAdapter extends SiteAdapter {
     attachments: DoubaoUserAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return attachments
-      .filter((attachment) => attachment.kind === "image" && attachment.source)
-      .map((attachment) => {
-        const label = escapeMarkdownLinkText(attachment.name || "uploaded image")
-        const assetPath = collector
-          ? addImageExportAsset(collector, {
-              source: attachment.source,
-              alt: attachment.name,
-              extensionHint: attachment.name || attachment.type,
-              directory: "assets/images",
-              idPrefix: "doubao-user-image",
-              filenamePrefix: "doubao-user-image",
-            })
-          : attachment.source
-
-        return assetPath ? `![${label || "uploaded image"}](${assetPath})` : ""
-      })
-      .filter(Boolean)
+    return formatExportImageAttachments(attachments, collector, { siteId: this.getSiteId() })
   }
 
   private formatDoubaoUserFileAttachments(
     attachments: DoubaoUserAttachment[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return attachments
-      .filter((attachment) => attachment.kind === "file" || !attachment.source)
-      .map((attachment) => {
-        const label = escapeMarkdownLinkText(this.formatDoubaoAttachmentLabel(attachment))
-        const assetPath =
-          attachment.source && collector
-            ? addFileExportAsset(collector, {
-                source: attachment.source,
-                name: attachment.name,
-                mimeHint: attachment.type || attachment.name,
-                directory: "assets/files",
-                idPrefix: "doubao-user-file",
-              })
-            : attachment.source
-
-        return assetPath ? `- [${label}](${assetPath})` : `- ${label}`
-      })
-  }
-
-  private formatDoubaoAttachmentLabel(attachment: DoubaoUserAttachment): string {
-    if (!attachment.type) return attachment.name
-    if (attachment.name.toLowerCase().endsWith(attachment.type.toLowerCase())) {
-      return attachment.name
-    }
-    return `${attachment.name} (${attachment.type})`
+    return formatExportFileAttachments(attachments, collector, {
+      siteId: this.getSiteId(),
+      includeAttachment: (attachment) => attachment.kind === "file" || !attachment.source,
+      getLabel: (attachment) => {
+        if (!attachment.type) return attachment.name
+        if (attachment.name.toLowerCase().endsWith(attachment.type.toLowerCase())) {
+          return attachment.name
+        }
+        return `${attachment.name} (${attachment.type})`
+      },
+    })
   }
 
   private formatDoubaoAssistantImages(
     images: DoubaoAssistantImage[],
     collector?: ExportAssetCollector,
   ): string[] {
-    return images
-      .map((image) => {
-        const alt = escapeMarkdownLinkText(image.alt || "generated image")
-        const assetPath = collector
-          ? addImageExportAsset(collector, {
-              source: image.source,
-              alt: image.alt,
-              directory: "assets/images",
-              idPrefix: "doubao-assistant-image",
-              filenamePrefix: "doubao-assistant-image",
-            })
-          : image.source
-
-        return assetPath ? `![${alt || "generated image"}](${assetPath})` : ""
-      })
-      .filter(Boolean)
+    return formatExportImageMarkdownList(images, collector, {
+      siteId: this.getSiteId(),
+      role: "assistant",
+      category: "generated-image",
+      fallbackAlt: "generated image",
+    })
   }
 
   private extractDoubaoAssistantImages(
@@ -2018,14 +1976,9 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
-    const collector = createExportAssetCollector()
-    const messages = this.extractDoubaoExportMessages(collector)
-    if (messages.length === 0) return null
-
-    return {
-      messages,
-      assets: collector.assets,
-    }
+    return this.createExportBundleFromMessages((collector) =>
+      this.extractDoubaoExportMessages(collector),
+    )
   }
 
   private extractDoubaoExportMessages(collector?: ExportAssetCollector): ExportMessage[] {

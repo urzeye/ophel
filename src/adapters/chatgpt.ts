@@ -4,10 +4,10 @@
 import { SITE_IDS } from "~constants"
 import { chatgptNativeThemeCss } from "~styles/native-theme-adapters/chatgpt"
 import {
-  addFileExportAsset,
-  addImageExportAsset,
   createExportAssetCollector,
   escapeMarkdownLinkText,
+  formatExportFileAttachments,
+  formatExportImageMarkdown,
   isDownloadableExportAssetUrl,
   normalizeExportAssetUrl,
   type ExportAssetCollector,
@@ -1954,19 +1954,14 @@ export class ChatGPTAdapter extends SiteAdapter {
       const alt = (image.alt || image.getAttribute("aria-label") || options.fallbackAlt)
         .replace(/\s+/g, " ")
         .trim()
-      const assetPath = collector
-        ? addImageExportAsset(collector, {
-            source,
-            alt,
-            directory: "assets/images",
-            idPrefix: "chatgpt-image",
-            filenamePrefix: "chatgpt-image",
-          })
-        : source
+      const markdown = formatExportImageMarkdown({ source, alt }, collector || undefined, {
+        siteId: this.getSiteId(),
+        role: "assistant",
+        category: "generated-image",
+        fallbackAlt: options.fallbackAlt,
+      })
 
-      if (assetPath) {
-        imageMarkdown.push(`![${escapeMarkdownLinkText(alt || options.fallbackAlt)}](${assetPath})`)
-      }
+      if (markdown) imageMarkdown.push(markdown)
     }
 
     return imageMarkdown
@@ -2014,18 +2009,15 @@ export class ChatGPTAdapter extends SiteAdapter {
       if (!name) continue
 
       const href = this.extractChatGPTFileHref(tile)
-      const assetPath =
-        href && collector
-          ? addFileExportAsset(collector, {
-              source: href,
-              name,
-              mimeHint: name,
-              directory: "assets/files",
-              idPrefix: "chatgpt-file",
-            })
-          : href
-      const label = escapeMarkdownLinkText(name)
-      const markdown = assetPath ? `- [${label}](${assetPath})` : `- ${label}`
+      const markdown = formatExportFileAttachments(
+        [{ kind: "file", name, source: href, type: name }],
+        collector || undefined,
+        {
+          siteId: this.getSiteId(),
+          getLabel: () => name,
+          getMimeHint: () => name,
+        },
+      )[0]
 
       if (seenFiles.has(markdown)) continue
 
