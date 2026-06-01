@@ -2312,16 +2312,27 @@ export class ClaudeAdapter extends SiteAdapter {
 
   private getClaudeThoughtBlockContainer(element: Element): HTMLElement | null {
     const response = element.closest(".font-claude-response")
+    let fallback: HTMLElement | null = null
     let current = element.parentElement
 
     while (current && current !== response && current !== document.body) {
       const hasStatus = current.querySelector(CLAUDE_THOUGHT_STATUS_SELECTOR) !== null
       const hasToggle = current.querySelector(CLAUDE_THOUGHT_TOGGLE_SELECTOR) !== null
-      if (hasStatus && hasToggle) return current
+      if (hasStatus && hasToggle) {
+        fallback = current
+        if (this.isClaudeThoughtRootCandidate(current)) {
+          return current
+        }
+      }
       current = current.parentElement
     }
 
-    return null
+    return fallback
+  }
+
+  private isClaudeThoughtRootCandidate(element: HTMLElement): boolean {
+    const className = typeof element.className === "string" ? element.className : ""
+    return className.includes("grid-rows") || element.querySelector(".row-start-2") !== null
   }
 
   private isInsideClaudeThoughtBlock(element: Element): boolean {
