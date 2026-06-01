@@ -442,7 +442,6 @@ export class DeepSeekAdapter extends SiteAdapter {
     }
 
     const clone = source.cloneNode(true) as HTMLElement
-    this.removeUserAttachmentContent(clone)
 
     clone
       .querySelectorAll(
@@ -1991,7 +1990,7 @@ export class DeepSeekAdapter extends SiteAdapter {
 
   private extractDomUserFileAttachments(message: Element): DeepSeekUserAttachment[] {
     const cards = Array.from(message.querySelectorAll("div")).filter((node) =>
-      this.isLikelyUserAttachmentCard(node, message),
+      this.isLikelyUserFileAttachmentCard(node, message),
     )
 
     return cards.flatMap((card) => {
@@ -2091,11 +2090,11 @@ export class DeepSeekAdapter extends SiteAdapter {
     return candidates.map((value) => this.normalizeAttachmentText(value)).find(Boolean) || "image"
   }
 
-  private isLikelyUserAttachmentCard(card: Element, message: Element): boolean {
+  private isLikelyUserFileAttachmentCard(card: Element, message: Element): boolean {
     if (card === message) return false
     if (card.closest(".gh-user-query-markdown")) return false
     if (!this.isWithinUserAttachmentContainer(card, message)) return false
-    if (!card.querySelector("svg, img")) return false
+    if (!card.querySelector("svg") || card.querySelector("img")) return false
 
     const name = this.extractAttachmentCardName(card)
     if (!name) return false
@@ -2128,31 +2127,6 @@ export class DeepSeekAdapter extends SiteAdapter {
     if (!text) return false
     if (!element.querySelector("svg")) return false
     return this.extractAttachmentCardName(element) !== ""
-  }
-
-  private removeUserAttachmentContent(root: HTMLElement): void {
-    const candidates = Array.from(root.querySelectorAll("div, a, span"))
-
-    candidates.forEach((candidate) => {
-      if (!(candidate instanceof HTMLElement) || !candidate.isConnected) return
-      if (!this.isStandaloneUserAttachmentContent(candidate)) return
-
-      candidate.remove()
-    })
-  }
-
-  private isStandaloneUserAttachmentContent(element: Element): boolean {
-    if (!this.isLikelyUserAttachmentContainer(element)) return false
-
-    const name = this.extractAttachmentCardName(element)
-    if (!name) return false
-
-    const type = this.extractAttachmentCardType(element, name) || this.extractFileTypeFromName(name)
-    const size = this.extractAttachmentCardSize(element)
-    const text = this.normalizeAttachmentComparisonText(element.textContent || "")
-    const expectedText = this.normalizeAttachmentComparisonText([name, type, size].join(" "))
-
-    return Boolean(expectedText) && text.length <= expectedText.length + 12
   }
 
   private stripUserAttachmentBodyText(body: string, attachments: DeepSeekUserAttachment[]): string {
@@ -2248,11 +2222,6 @@ export class DeepSeekAdapter extends SiteAdapter {
       if (!(link instanceof HTMLAnchorElement)) continue
       const href = normalizeExportAssetUrl(link.getAttribute("href") || link.href || "")
       if (isDownloadableExportAssetUrl(href)) return href
-    }
-
-    const image = card.querySelector("img")
-    if (image instanceof HTMLImageElement) {
-      return this.getDeepSeekImageExportSource(image)
     }
 
     return ""
