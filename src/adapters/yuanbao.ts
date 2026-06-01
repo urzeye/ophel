@@ -7,7 +7,17 @@
  * - 输入框基于 Quill 的 `.ql-editor[contenteditable="true"]`
  */
 import { SITE_IDS } from "~constants"
-import { htmlToMarkdown } from "~utils/exporter"
+import {
+  addFileExportAsset,
+  addImageExportAsset,
+  createExportAssetCollector,
+  escapeMarkdownLinkText,
+  isDownloadableExportAssetUrl,
+  normalizeExportAssetUrl,
+  type ExportAssetCollector,
+} from "~utils/export-assets"
+import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
+import { t } from "~utils/i18n"
 
 import {
   SiteAdapter,
@@ -55,6 +65,53 @@ const ASSISTANT_TOOLBAR_SELECTOR =
   ".agent-chat__toolbar, .agent-chat__toolbar_new, .agent-chat__question-toolbar, .hyc-common-markdown__code__hd__r"
 const ASSISTANT_DECORATION_SELECTOR =
   ".hyc-card-box-process-list, .hyc-common-markdown__replace-appCard"
+const USER_ATTACHMENT_IMAGE_SELECTOR = [
+  ".hyc-component-multi-modal__image img",
+  ".agent-chat__bubble--human .hyc-content-img img",
+].join(", ")
+const USER_ATTACHMENT_FILE_SELECTOR = [
+  ".hyc-component-multi-modal__file",
+  ".hyc-component-multi-modal__doc",
+  ".hyc-component-multi-modal__document",
+  ".hyc-content-file",
+  ".hyc-content-doc",
+  ".hyc-file-card",
+  ".hyc-doc-card",
+  "[data-file-id]",
+  "[data-doc-id]",
+  "[data-resource-id]",
+  "a[href*='/api/resource/download']",
+  ".agent-chat__bubble--human [class*='file']",
+  ".agent-chat__bubble--human [class*='doc']",
+].join(", ")
+const ASSISTANT_GENERATED_IMAGE_SELECTOR = [
+  '[data-card-type="image"] img',
+  '[data-box-type="loadingImage"] img',
+  ".hyc-media-box--loadingImage img",
+  ".loading-image-box img",
+].join(", ")
+const ASSISTANT_GENERATED_IMAGE_CARD_SELECTOR = [
+  '[data-card-type="image"]',
+  '[data-box-type="loadingImage"]',
+  ".hyc-media-box--loadingImage",
+  ".loading-image-box",
+].join(", ")
+const ATTACHMENT_SOURCE_ATTRS = [
+  "href",
+  "src",
+  "data-src",
+  "data-url",
+  "data-card-url",
+  "data-download-url",
+  "data-file-url",
+  "data-resource-url",
+  "data-source-url",
+  "data-origin-url",
+  "data-original-url",
+  "data-thumbnail-url",
+  "data-image-url",
+  "data-image-src",
+]
 const MODEL_BUTTON_SELECTOR = ".ybc-model-select-button"
 const MODEL_TEXT_SELECTOR = ".ybc-model-select-button .t-button__text"
 const MODEL_MENU_ITEM_SELECTOR =
@@ -124,6 +181,20 @@ const YUANBAO_DELETE_REASON = {
 } as const
 
 const MAX_OUTLINE_TEXT_LENGTH = 80
+
+interface YuanbaoUserAttachment {
+  kind: "image" | "file"
+  name: string
+  source: string
+  type: string
+  sizeLabel?: string
+}
+
+interface YuanbaoAssistantImage {
+  source: string
+  alt: string
+  extensionHint?: string
+}
 
 export class YuanbaoAdapter extends SiteAdapter {
   private exportIncludeThoughtsOverride: boolean | null = null
@@ -537,6 +608,10 @@ export class YuanbaoAdapter extends SiteAdapter {
     return this.extractUserQueryText(element)
   }
 
+  extractUserQueryExportContent(element: Element): string {
+    return this.extractUserQueryExportContentWithAssets(element)
+  }
+
   replaceUserQueryContent(element: Element, html: string): boolean {
     const contentRoot = this.findUserContentRoot(element)
     if (!contentRoot) return false
@@ -558,26 +633,7 @@ export class YuanbaoAdapter extends SiteAdapter {
   }
 
   extractAssistantResponseText(element: Element): string {
-    const includeThoughts = this.shouldIncludeThoughtsInExport()
-    const clone = element.cloneNode(true) as HTMLElement
-    clone
-      .querySelectorAll(`${ASSISTANT_DECORATION_SELECTOR}, ${ASSISTANT_TOOLBAR_SELECTOR}`)
-      .forEach((node) => node.remove())
-    clone.querySelectorAll("button, [role='button'], svg").forEach((node) => node.remove())
-
-    const thoughtBlocks = includeThoughts ? this.extractThoughtBlockquotes(clone) : []
-    clone.querySelectorAll(THOUGHT_CONTAINER_SELECTOR).forEach((node) => node.remove())
-
-    const bodyRoot = this.findAssistantBodyRoot(clone) || clone
-    const markdown = htmlToMarkdown(bodyRoot).trim()
-    const normalizedBody = markdown || this.extractTextWithLineBreaks(bodyRoot).trim()
-
-    if (includeThoughts && thoughtBlocks.length > 0) {
-      const thoughtSection = thoughtBlocks.join("\n\n")
-      return normalizedBody ? `${thoughtSection}\n\n${normalizedBody}` : thoughtSection
-    }
-
-    return normalizedBody
+    return this.extractAssistantResponseTextWithAssets(element)
   }
 
   getLatestReplyText(): string | null {
@@ -680,6 +736,22 @@ export class YuanbaoAdapter extends SiteAdapter {
     _state: unknown,
   ): Promise<void> {
     this.exportIncludeThoughtsOverride = null
+  }
+
+  async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
+    const messages = this.extractYuanbaoExportMessages()
+    return messages.length > 0 ? messages : null
+  }
+
+  async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
+    const collector = createExportAssetCollector()
+    const messages = this.extractYuanbaoExportMessages(collector)
+    if (messages.length === 0) return null
+
+    return {
+      messages,
+      assets: collector.assets,
+    }
   }
 
   isGenerating(): boolean {
@@ -896,6 +968,501 @@ export class YuanbaoAdapter extends SiteAdapter {
 
     const markdownRoots = Array.from(element.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR))
     return markdownRoots.find((node) => !this.isThoughtElement(node)) || markdownRoots[0] || null
+  }
+
+  private extractYuanbaoExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
+    const root =
+      (document.querySelector(RESPONSE_CONTAINER_SELECTOR) as ParentNode | null) ||
+      this.getScrollContainer() ||
+      document.body
+    const blocks = this.collectTopLevelBlocks(
+      Array.from(root.querySelectorAll(`${USER_MESSAGE_SELECTOR}, ${ASSISTANT_MESSAGE_SELECTOR}`)),
+    )
+      .filter((element) => !this.shouldSkipExportElement(element))
+      .sort((left, right) => this.compareDomOrder(left, right))
+
+    return blocks
+      .map((element): ExportMessage => {
+        const role = element.matches(USER_MESSAGE_SELECTOR) ? "user" : "assistant"
+        const content =
+          role === "user"
+            ? this.extractUserQueryExportContentWithAssets(element, collector)
+            : this.extractAssistantResponseTextWithAssets(element, collector)
+
+        return { role, content: content.trim() }
+      })
+      .filter((message) => message.content.length > 0)
+  }
+
+  private extractUserQueryExportContentWithAssets(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string {
+    const body = this.extractUserQueryText(element)
+    const attachments = this.extractYuanbaoUserAttachments(element)
+
+    if (attachments.length === 0) {
+      return body
+    }
+
+    const imageMarkdown = this.formatYuanbaoUserImageAttachments(attachments, collector)
+    const fileMarkdown = this.formatYuanbaoUserFileAttachments(attachments, collector)
+    const fileBlock =
+      fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
+
+    return [imageMarkdown.join("\n\n"), fileBlock, body].filter(Boolean).join("\n\n")
+  }
+
+  private extractAssistantResponseTextWithAssets(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string {
+    const body = this.extractAssistantMarkdown(element)
+    const imageMarkdown = this.formatYuanbaoAssistantImages(
+      this.extractYuanbaoAssistantImages(element),
+      collector,
+    )
+
+    return [body, imageMarkdown.join("\n\n")].filter(Boolean).join("\n\n")
+  }
+
+  private extractAssistantMarkdown(element: Element): string {
+    const includeThoughts = this.shouldIncludeThoughtsInExport()
+    const clone = element.cloneNode(true) as HTMLElement
+    clone
+      .querySelectorAll(
+        [
+          ASSISTANT_DECORATION_SELECTOR,
+          ASSISTANT_TOOLBAR_SELECTOR,
+          ASSISTANT_GENERATED_IMAGE_CARD_SELECTOR,
+        ].join(", "),
+      )
+      .forEach((node) => node.remove())
+    clone.querySelectorAll("button, [role='button'], svg").forEach((node) => node.remove())
+
+    const thoughtBlocks = includeThoughts ? this.extractThoughtBlockquotes(clone) : []
+    clone.querySelectorAll(THOUGHT_CONTAINER_SELECTOR).forEach((node) => node.remove())
+
+    const bodyRoot = this.findAssistantBodyRoot(clone) || clone
+    const markdown = htmlToMarkdown(bodyRoot).trim()
+    const normalizedBody = markdown || this.extractTextWithLineBreaks(bodyRoot).trim()
+
+    if (includeThoughts && thoughtBlocks.length > 0) {
+      const thoughtSection = thoughtBlocks.join("\n\n")
+      return normalizedBody ? `${thoughtSection}\n\n${normalizedBody}` : thoughtSection
+    }
+
+    return normalizedBody
+  }
+
+  private extractYuanbaoUserAttachments(element: Element): YuanbaoUserAttachment[] {
+    const scope = this.findUserMessageScope(element)
+    const attachments: YuanbaoUserAttachment[] = []
+    const seen = new Set<string>()
+
+    const addAttachment = (attachment: YuanbaoUserAttachment | null) => {
+      if (!attachment) return
+      const keys = this.getYuanbaoAttachmentKeys(attachment)
+      if (keys.some((key) => seen.has(key))) return
+      keys.forEach((key) => seen.add(key))
+      attachments.push(attachment)
+    }
+
+    scope.querySelectorAll(USER_ATTACHMENT_IMAGE_SELECTOR).forEach((node) => {
+      if (node instanceof HTMLImageElement) {
+        addAttachment(this.extractYuanbaoUserImageAttachment(node))
+      }
+    })
+
+    this.queryElementsIncludingSelf(scope, USER_ATTACHMENT_FILE_SELECTOR).forEach((card) => {
+      addAttachment(this.extractYuanbaoUserFileAttachment(card))
+    })
+
+    return attachments
+  }
+
+  private extractYuanbaoUserImageAttachment(image: HTMLImageElement): YuanbaoUserAttachment | null {
+    const source = this.extractYuanbaoImageSource(image)
+    if (!source) return null
+
+    const name =
+      image.alt?.trim() ||
+      image.getAttribute("title")?.trim() ||
+      this.extractFilenameFromUrl(source) ||
+      "uploaded image"
+    const type = this.extractExtension(name) || this.extractExtensionFromUrl(source) || "image"
+
+    return {
+      kind: "image",
+      name,
+      source,
+      type,
+    }
+  }
+
+  private extractYuanbaoUserFileAttachment(card: Element): YuanbaoUserAttachment | null {
+    if (card.closest(".hyc-component-multi-modal__image, .hyc-content-img")) {
+      return null
+    }
+
+    const textParts = this.extractCleanTextParts(card)
+    const { name, type, sizeLabel } = this.parseFileAttachmentText(textParts)
+    const source = this.extractYuanbaoDownloadableSource(card, {
+      allowDataImage: false,
+      includeImages: false,
+    })
+
+    if (!name && !source) return null
+
+    const fallbackName =
+      name ||
+      this.extractFilenameFromUrl(source) ||
+      this.extractResourceIdFilename(source) ||
+      "attachment"
+
+    return {
+      kind: "file",
+      name: fallbackName,
+      source,
+      type: type || this.extractExtension(fallbackName) || this.extractExtensionFromUrl(source),
+      sizeLabel,
+    }
+  }
+
+  private formatYuanbaoUserImageAttachments(
+    attachments: YuanbaoUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind === "image" && attachment.source)
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(attachment.name || "uploaded image")
+        const assetPath = collector
+          ? addImageExportAsset(collector, {
+              source: attachment.source,
+              alt: attachment.name,
+              extensionHint: attachment.name || attachment.type,
+              directory: "assets/images",
+              idPrefix: "yuanbao-user-image",
+              filenamePrefix: "yuanbao-user-image",
+            })
+          : attachment.source
+
+        return assetPath ? `![${label || "uploaded image"}](${assetPath})` : ""
+      })
+      .filter(Boolean)
+  }
+
+  private formatYuanbaoUserFileAttachments(
+    attachments: YuanbaoUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind === "file")
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(this.formatYuanbaoAttachmentLabel(attachment))
+        const assetPath =
+          attachment.source && collector
+            ? addFileExportAsset(collector, {
+                source: attachment.source,
+                name: attachment.name,
+                mimeHint: attachment.type || attachment.name,
+                directory: "assets/files",
+                idPrefix: "yuanbao-user-file",
+              })
+            : attachment.source
+
+        return assetPath ? `- [${label}](${assetPath})` : `- ${label}`
+      })
+  }
+
+  private extractYuanbaoAssistantImages(element: Element): YuanbaoAssistantImage[] {
+    const contentRoot = this.findAssistantContentRoot(element)
+    const images: YuanbaoAssistantImage[] = []
+    const seen = new Set<string>()
+
+    this.queryElementsIncludingSelf(contentRoot, ASSISTANT_GENERATED_IMAGE_SELECTOR).forEach(
+      (node) => {
+        if (!(node instanceof HTMLImageElement)) return
+
+        const source = this.extractYuanbaoImageSource(node)
+        const sourceKey = this.getAttachmentSourceKey(source)
+        if (!source || seen.has(sourceKey)) return
+
+        seen.add(sourceKey)
+        images.push({
+          source,
+          alt:
+            node.alt?.trim() ||
+            node.getAttribute("aria-label")?.trim() ||
+            `generated image ${images.length + 1}`,
+          extensionHint: this.extractYuanbaoImageExtensionHint(node),
+        })
+      },
+    )
+
+    return images
+  }
+
+  private formatYuanbaoAssistantImages(
+    images: YuanbaoAssistantImage[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return images
+      .map((image) => {
+        const alt = escapeMarkdownLinkText(image.alt || "generated image")
+        const assetPath = collector
+          ? addImageExportAsset(collector, {
+              source: image.source,
+              alt: image.alt,
+              extensionHint: image.extensionHint || image.alt,
+              directory: "assets/images",
+              idPrefix: "yuanbao-generated-image",
+              filenamePrefix: "yuanbao-generated-image",
+            })
+          : image.source
+
+        return assetPath ? `![${alt || "generated image"}](${assetPath})` : ""
+      })
+      .filter(Boolean)
+  }
+
+  private extractYuanbaoImageSource(image: HTMLImageElement): string {
+    const cardUrl = image.closest("[data-card-url]")?.getAttribute("data-card-url") || ""
+    const candidates = [
+      cardUrl,
+      image.currentSrc || "",
+      image.src || "",
+      image.getAttribute("src") || "",
+      image.getAttribute("data-src") || "",
+      image.getAttribute("data-image-url") || "",
+      image.getAttribute("data-original-url") || "",
+      image.getAttribute("data-origin-url") || "",
+    ]
+
+    for (const candidate of candidates) {
+      const source = this.normalizeYuanbaoExportSource(candidate, { allowDataImage: true })
+      if (source) return source
+    }
+
+    return ""
+  }
+
+  private extractYuanbaoDownloadableSource(
+    root: Element,
+    options: { allowDataImage: boolean; includeImages: boolean },
+  ): string {
+    const candidates: string[] = []
+    const elements = [root, ...Array.from(root.querySelectorAll("*"))]
+
+    elements.forEach((element) => {
+      if (element instanceof HTMLAnchorElement) {
+        candidates.push(element.href || element.getAttribute("href") || "")
+      }
+
+      if (options.includeImages && element instanceof HTMLImageElement) {
+        candidates.push(this.extractYuanbaoImageSource(element))
+      }
+
+      ATTACHMENT_SOURCE_ATTRS.forEach((attr) => {
+        if (!options.includeImages && element instanceof HTMLImageElement && attr === "src") {
+          return
+        }
+        candidates.push(element.getAttribute(attr) || "")
+      })
+    })
+
+    for (const candidate of candidates) {
+      const source = this.normalizeYuanbaoExportSource(candidate, {
+        allowDataImage: options.allowDataImage,
+      })
+      if (source) return source
+    }
+
+    return ""
+  }
+
+  private normalizeYuanbaoExportSource(
+    value: string,
+    options: { allowDataImage: boolean },
+  ): string {
+    const source = normalizeExportAssetUrl(value)
+    if (!source) return ""
+    if (/^data:image\/svg\+xml/i.test(source)) return ""
+    if (/^data:image\//i.test(source)) return options.allowDataImage ? source : ""
+    if (!isDownloadableExportAssetUrl(source)) return ""
+
+    try {
+      const url = new URL(source, window.location.href)
+      if (url.hostname === HOSTNAME && /\/(?:static|assets)\//i.test(url.pathname)) return ""
+      if (/\.(?:svg|ico)$/i.test(url.pathname) && /(?:icon|logo|sprite)/i.test(url.pathname)) {
+        return ""
+      }
+    } catch {
+      return ""
+    }
+
+    return source
+  }
+
+  private extractYuanbaoImageExtensionHint(image: HTMLImageElement): string {
+    return (
+      [
+        image.currentSrc || "",
+        image.src || "",
+        image.getAttribute("src") || "",
+        image.getAttribute("data-src") || "",
+        image.closest("[data-card-url]")?.getAttribute("data-card-url") || "",
+        image.alt || "",
+      ]
+        .map((value) => this.extractExtensionFromUrl(value) || this.extractExtension(value))
+        .find(Boolean) || ""
+    )
+  }
+
+  private findUserMessageScope(element: Element): Element {
+    if (element.matches(USER_MESSAGE_SELECTOR)) return element
+    return element.closest(USER_MESSAGE_SELECTOR) || element
+  }
+
+  private shouldSkipExportElement(element: Element): boolean {
+    if (element.closest(".gh-root")) return true
+    if (element.closest(".gh-user-query-markdown")) return true
+    return false
+  }
+
+  private queryElementsIncludingSelf(root: ParentNode, selector: string): Element[] {
+    const elements: Element[] = []
+    if (root instanceof Element && root.matches(selector)) {
+      elements.push(root)
+    }
+
+    root.querySelectorAll(selector).forEach((element) => {
+      if (!elements.includes(element)) {
+        elements.push(element)
+      }
+    })
+
+    return elements
+  }
+
+  private collectTopLevelBlocks(blocks: Element[]): Element[] {
+    if (blocks.length <= 1) return blocks
+    return blocks.filter(
+      (block) => !blocks.some((other) => other !== block && other.contains(block)),
+    )
+  }
+
+  private compareDomOrder(left: Element, right: Element): number {
+    if (left === right) return 0
+    const position = left.compareDocumentPosition(right)
+    if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1
+    if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1
+    return 0
+  }
+
+  private extractCleanTextParts(root: Element): string[] {
+    const clone = root.cloneNode(true) as HTMLElement
+    clone
+      .querySelectorAll(
+        ".gh-user-query-markdown, button, [role='button'], svg, [aria-hidden='true'], style, script",
+      )
+      .forEach((node) => node.remove())
+
+    const parts: string[] = []
+    const walker = document.createTreeWalker(clone, NodeFilter.SHOW_TEXT)
+    let current = walker.nextNode()
+
+    while (current) {
+      const text = current.textContent?.replace(/\s+/g, " ").trim()
+      if (text && parts[parts.length - 1] !== text) {
+        parts.push(text)
+      }
+      current = walker.nextNode()
+    }
+
+    return parts
+  }
+
+  private parseFileAttachmentText(textParts: string[]): {
+    name: string
+    type: string
+    sizeLabel: string
+  } {
+    const parts = textParts.map((part) => part.replace(/\s+/g, " ").trim()).filter(Boolean)
+    const name = parts.find((part) => /\.[A-Za-z0-9]{1,10}$/.test(part)) || parts[0] || ""
+    const sizeLabel = parts.find((part) => /^\d+(?:\.\d+)?\s*(?:B|KB|MB|GB|TB)$/i.test(part)) || ""
+    const type = this.extractExtension(name)
+
+    return { name, type, sizeLabel }
+  }
+
+  private getYuanbaoAttachmentKeys(attachment: YuanbaoUserAttachment): string[] {
+    const keys: string[] = []
+    const sourceKey = this.getAttachmentSourceKey(attachment.source)
+    const name = attachment.name.trim().toLowerCase()
+    const type = attachment.type.trim().toLowerCase()
+    const size = attachment.sizeLabel?.trim().toLowerCase() || ""
+
+    if (sourceKey) keys.push(`${attachment.kind}:source:${sourceKey}`)
+    if (name && type) keys.push(`${attachment.kind}:name-type:${name}:${type}`)
+    if (name && size) keys.push(`${attachment.kind}:name-size:${name}:${size}`)
+
+    return keys.length > 0 ? keys : [`${attachment.kind}:fallback:${name}:${type}`]
+  }
+
+  private getAttachmentSourceKey(source: string): string {
+    if (!source) return ""
+    if (/^(blob:|data:)/i.test(source)) return source
+
+    try {
+      const url = new URL(source, window.location.href)
+      return `${url.hostname}${url.pathname}`.toLowerCase()
+    } catch {
+      return source.split("?")[0].toLowerCase()
+    }
+  }
+
+  private formatYuanbaoAttachmentLabel(attachment: YuanbaoUserAttachment): string {
+    const details = [
+      attachment.type && !attachment.name.toLowerCase().endsWith(`.${attachment.type}`)
+        ? attachment.type
+        : "",
+      attachment.sizeLabel || "",
+    ].filter(Boolean)
+
+    return details.length > 0 ? `${attachment.name} (${details.join(", ")})` : attachment.name
+  }
+
+  private extractFilenameFromUrl(source: string): string {
+    if (!source) return ""
+
+    try {
+      const pathname = new URL(source, window.location.href).pathname
+      const filename = decodeURIComponent(pathname.split("/").pop() || "")
+      return filename && filename !== "download" ? filename : ""
+    } catch {
+      return ""
+    }
+  }
+
+  private extractResourceIdFilename(source: string): string {
+    if (!source) return ""
+
+    try {
+      const resourceId = new URL(source, window.location.href).searchParams.get("resourceId")
+      return resourceId ? `attachment-${resourceId.slice(0, 12)}` : ""
+    } catch {
+      return ""
+    }
+  }
+
+  private extractExtension(value: string): string {
+    return value.match(/\.([A-Za-z0-9]{1,10})(?:$|[?#\s])/)?.[1]?.toLowerCase() || ""
+  }
+
+  private extractExtensionFromUrl(source: string): string {
+    return this.extractExtension(this.extractFilenameFromUrl(source))
   }
 
   private extractAssistantPlainText(element: Element): string {
