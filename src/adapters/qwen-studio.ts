@@ -7,7 +7,17 @@
  * - 输入框、导出、主题、模型选择器均基于 qwen.html 快照中的稳定类名和结构锚点
  */
 import { SITE_IDS } from "~constants"
-import { htmlToMarkdown } from "~utils/exporter"
+import {
+  addFileExportAsset,
+  addImageExportAsset,
+  createExportAssetCollector,
+  escapeMarkdownLinkText,
+  isDownloadableExportAssetUrl,
+  normalizeExportAssetUrl,
+  type ExportAssetCollector,
+} from "~utils/export-assets"
+import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
+import { t } from "~utils/i18n"
 
 import {
   SiteAdapter,
@@ -32,6 +42,7 @@ const QWENAI_SIDEBAR_TITLE_SELECTOR = ".chat-item-drag-link-content-tip-text"
 const QWENAI_NEW_CHAT_BUTTON_SELECTOR = ".sidebar-entry-fixed-list-content"
 const QWENAI_MESSAGE_SCROLL_SELECTOR = "#chat-messages-scroll-container"
 const QWENAI_MESSAGE_CONTAINER_SELECTOR = "#chat-message-container"
+const QWENAI_USER_MESSAGE_ROOT_SELECTOR = ".qwen-chat-message-user"
 const QWENAI_USER_MESSAGE_SELECTOR = ".qwen-chat-message-user, .chat-user-message-wrapper"
 const QWENAI_ASSISTANT_MESSAGE_SELECTOR = ".qwen-chat-message-assistant"
 const QWENAI_USER_CONTENT_SELECTOR = ".user-message-content"
@@ -53,14 +64,65 @@ const QWENAI_THINKING_CARD_SELECTOR =
 const QWENAI_THOUGHT_TRIGGER_SELECTOR =
   ".qwen-chat-thinking-tool-status-card-wraper .qwen-chat-tool-status-card, .qwen-chat-thinking-tool-status-card-wraper .qwen-chat-thinking-status-card-completed"
 const QWENAI_THOUGHT_TITLE_SELECTOR = ".qwen-chat-thinking-status-card-title-text"
-const QWENAI_THOUGHT_PANEL_SELECTOR =
-  ".splitter-container-right-panel .qwen-chat-thinking-and-sources"
+const QWENAI_THOUGHT_PANEL_SELECTOR = [
+  ".splitter-container-right-panel .qwen-chat-thinking-and-sources",
+  ".share-layout-right-panel .qwen-chat-thinking-and-sources",
+  ".qwen-chat-thinking-and-sources-share",
+].join(", ")
 const QWENAI_THOUGHT_PANEL_CONTENT_SELECTOR =
   ".qwen-chat-thinking-and-sources-content-thinking-container"
 const QWENAI_THOUGHT_PANEL_CLOSE_SELECTOR =
   ".qwen-chat-thinking-and-sources-header .anticon, .qwen-chat-thinking-and-sources-header [role='img']"
 const QWENAI_RESPONSE_TOOLBAR_SELECTOR =
   ".response-message-footer, .copy-response-button, .message-hoc-container"
+const QWENAI_EXPORT_DECORATION_SELECTOR = [
+  ".gh-root",
+  ".gh-user-query-markdown",
+  QWENAI_THINKING_CARD_SELECTOR,
+  QWENAI_RESPONSE_TOOLBAR_SELECTOR,
+  "button",
+  "[role='button']",
+  "svg",
+  "[aria-hidden='true']",
+  "style",
+  "script",
+].join(", ")
+const QWENAI_USER_IMAGE_CARD_SELECTOR = [
+  ".user-image-item",
+  ".user-image-list .qwen-image",
+  "[class*='file-message-image'] .qwen-image",
+  ".qwen-markdown-image:has(img)",
+].join(", ")
+const QWENAI_USER_FILE_CARD_SELECTOR =
+  ".fileitem-btn, [class*='file-message-document'], .file-content-info"
+const QWENAI_ASSISTANT_GENERATED_IMAGE_SELECTOR = [
+  ".chat-response-media-render img",
+  ".qwen-chat-response-control-card img",
+  ".response-message-content img",
+  ".qwen-markdown-image img",
+  "img.qwen-image",
+].join(", ")
+const QWENAI_ASSISTANT_GENERATED_IMAGE_CARD_SELECTOR = [
+  ".chat-response-media-render",
+  ".qwen-chat-response-control-card",
+  ".qwen-markdown-image",
+  "picture",
+  "img",
+].join(", ")
+const QWENAI_ATTACHMENT_SOURCE_ATTRS = [
+  "href",
+  "src",
+  "data-src",
+  "data-url",
+  "data-download-url",
+  "data-file-url",
+  "data-source-url",
+  "data-origin-url",
+  "data-original-url",
+  "data-thumbnail-url",
+  "data-image-url",
+  "data-image-src",
+]
 const QWENAI_MODEL_TRIGGER_SELECTOR =
   '#qwen-chat-header-left .ant-dropdown-trigger:has([class*="model-selector-text"])'
 const QWENAI_MODEL_TEXT_SELECTOR = '#qwen-chat-header-left [class*="model-selector-text"]'
@@ -105,6 +167,19 @@ interface QwenAiSettingsUpdateResponse {
 
 interface QwenAiExportLifecycleState {
   shouldCloseThoughtPanel: boolean
+}
+
+interface QwenAiUserAttachment {
+  kind: "image" | "file"
+  name: string
+  source: string
+  type: string
+  sizeLabel?: string
+}
+
+interface QwenAiAssistantImage {
+  source: string
+  alt: string
 }
 
 type QwenAiModelLockFailureReason = "button_not_found" | "menu_empty" | "not_found"
@@ -381,6 +456,10 @@ export class QwenAiAdapter extends SiteAdapter {
     return this.extractUserQueryText(element)
   }
 
+  extractUserQueryExportContent(element: Element): string {
+    return this.extractUserQueryExportContentWithAssets(element)
+  }
+
   replaceUserQueryContent(element: Element, html: string): boolean {
     const contentRoot = this.findUserContentRoot(element)
     if (!contentRoot) return false
@@ -402,6 +481,10 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   extractAssistantResponseText(element: Element): string {
+    return this.extractAssistantResponseTextWithAssets(element)
+  }
+
+  private extractAssistantMarkdown(element: Element): string {
     const contentRoot = this.findAssistantContentRoot(element)
     if (!contentRoot) return ""
 
@@ -413,7 +496,7 @@ export class QwenAiAdapter extends SiteAdapter {
 
     clone
       .querySelectorAll(
-        `${QWENAI_THINKING_CARD_SELECTOR}, ${QWENAI_RESPONSE_TOOLBAR_SELECTOR}, button, [role='button'], svg, [aria-hidden='true']`,
+        `${QWENAI_EXPORT_DECORATION_SELECTOR}, ${QWENAI_ASSISTANT_GENERATED_IMAGE_CARD_SELECTOR}`,
       )
       .forEach((node) => node.remove())
 
@@ -426,6 +509,19 @@ export class QwenAiAdapter extends SiteAdapter {
     }
 
     return normalizedBody
+  }
+
+  private extractAssistantResponseTextWithAssets(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string {
+    const body = this.extractAssistantMarkdown(element)
+    const imageMarkdown = this.formatQwenAssistantImages(
+      this.extractQwenAssistantImages(element),
+      collector,
+    )
+
+    return [body, imageMarkdown.join("\n\n")].filter(Boolean).join("\n\n")
   }
 
   getLastCodeBlockText(): string | null {
@@ -571,6 +667,22 @@ export class QwenAiAdapter extends SiteAdapter {
     } finally {
       this.exportIncludeThoughtsOverride = null
       this.clearThoughtExportCache()
+    }
+  }
+
+  async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
+    const messages = this.extractQwenExportMessages()
+    return messages.length > 0 ? messages : null
+  }
+
+  async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
+    const collector = createExportAssetCollector()
+    const messages = this.extractQwenExportMessages(collector)
+    if (messages.length === 0) return null
+
+    return {
+      messages,
+      assets: collector.assets,
     }
   }
 
@@ -958,6 +1070,520 @@ export class QwenAiAdapter extends SiteAdapter {
     return Array.from(merged.values())
   }
 
+  private extractQwenExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
+    const root = this.getQwenExportRoot()
+    return this.getOrderedQwenMessages(root)
+      .map(({ role, element }) => {
+        const content =
+          role === "user"
+            ? this.extractUserQueryExportContentWithAssets(element, collector)
+            : this.extractAssistantResponseTextWithAssets(element, collector)
+
+        return {
+          role,
+          content: content.trim(),
+        }
+      })
+      .filter((message) => message.content.length > 0)
+  }
+
+  private getQwenExportRoot(): HTMLElement {
+    return (
+      (document.querySelector(QWENAI_MESSAGE_CONTAINER_SELECTOR) as HTMLElement | null) ||
+      (document.querySelector(QWENAI_MESSAGE_SCROLL_SELECTOR) as HTMLElement | null) ||
+      document.body
+    )
+  }
+
+  private getOrderedQwenMessages(root: ParentNode): Array<{
+    role: "user" | "assistant"
+    element: Element
+  }> {
+    const userRoots = this.collectTopLevelBlocks(
+      this.queryElementsIncludingSelf(root, QWENAI_USER_MESSAGE_SELECTOR),
+    ).filter((element) => !this.shouldSkipExportElement(element))
+    const assistantRoots = this.collectTopLevelBlocks(
+      this.queryElementsIncludingSelf(root, QWENAI_ASSISTANT_MESSAGE_SELECTOR),
+    ).filter((element) => !this.shouldSkipExportElement(element))
+
+    return [
+      ...userRoots.map((element) => ({ role: "user" as const, element })),
+      ...assistantRoots.map((element) => ({ role: "assistant" as const, element })),
+    ].sort((left, right) => this.compareDomOrder(left.element, right.element))
+  }
+
+  private extractUserQueryExportContentWithAssets(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string {
+    const body =
+      this.extractQwenUserTextParts(element).join("\n\n").trim() ||
+      this.extractUserQueryText(element)
+    const attachments = this.extractQwenUserAttachments(element)
+
+    if (attachments.length === 0) {
+      return body
+    }
+
+    const imageMarkdown = this.formatQwenUserImageAttachments(attachments, collector)
+    const fileMarkdown = this.formatQwenUserFileAttachments(attachments, collector)
+    const fileBlock =
+      fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
+
+    return [imageMarkdown.join("\n\n"), fileBlock, body].filter(Boolean).join("\n\n")
+  }
+
+  private extractQwenUserTextParts(element: Element): string[] {
+    const scope = this.findUserMessageScope(element)
+    const roots = this.collectTopLevelBlocks(
+      this.queryElementsIncludingSelf(scope, QWENAI_USER_CONTENT_SELECTOR),
+    )
+    const parts: string[] = []
+    const seen = new Set<string>()
+
+    roots.forEach((root) => {
+      if (root.closest(".gh-user-query-markdown")) return
+
+      const clone = root.cloneNode(true) as HTMLElement
+      clone.querySelectorAll(QWENAI_EXPORT_DECORATION_SELECTOR).forEach((node) => node.remove())
+
+      const text = this.extractTextWithLineBreaks(clone).trim()
+      if (!text || seen.has(text)) return
+
+      seen.add(text)
+      parts.push(text)
+    })
+
+    return parts
+  }
+
+  private extractQwenUserAttachments(element: Element): QwenAiUserAttachment[] {
+    const scope = this.findUserMessageScope(element)
+    const attachments: QwenAiUserAttachment[] = []
+    const seen = new Set<string>()
+
+    const addAttachment = (attachment: QwenAiUserAttachment | null) => {
+      if (!attachment) return
+
+      const keys = this.getQwenAttachmentKeys(attachment)
+      if (keys.some((key) => seen.has(key))) return
+
+      keys.forEach((key) => seen.add(key))
+      attachments.push(attachment)
+    }
+
+    this.collectTopLevelBlocks(
+      this.queryElementsIncludingSelf(scope, QWENAI_USER_IMAGE_CARD_SELECTOR),
+    ).forEach((card) => addAttachment(this.extractQwenUserImageAttachment(card)))
+
+    this.collectTopLevelBlocks(
+      this.queryElementsIncludingSelf(scope, QWENAI_USER_FILE_CARD_SELECTOR),
+    ).forEach((card) => addAttachment(this.extractQwenUserFileAttachment(card)))
+
+    return attachments
+  }
+
+  private extractQwenUserImageAttachment(card: Element): QwenAiUserAttachment | null {
+    const image =
+      card instanceof HTMLImageElement
+        ? card
+        : (card.querySelector("img") as HTMLImageElement | null)
+    if (!(image instanceof HTMLImageElement)) return null
+
+    const source = this.extractQwenImageSource(image)
+    if (!source) return null
+
+    const name =
+      image.alt?.trim() ||
+      image.getAttribute("title")?.trim() ||
+      this.extractFilenameFromUrl(source) ||
+      "uploaded image"
+    const type = this.extractExtension(name) || this.extractExtensionFromUrl(source) || "image"
+
+    return {
+      kind: "image",
+      name,
+      source,
+      type,
+    }
+  }
+
+  private extractQwenUserFileAttachment(card: Element): QwenAiUserAttachment | null {
+    const textParts = this.extractCleanTextParts(card)
+    const { name, type, sizeLabel } = this.parseFileAttachmentText(textParts)
+    const source = this.extractQwenDownloadableSource(card, {
+      allowDataImage: false,
+      includeImages: false,
+    })
+    const fallbackName = name || this.extractFilenameFromUrl(source) || "attachment"
+
+    if (!fallbackName && !source) return null
+
+    return {
+      kind: "file",
+      name: fallbackName,
+      source,
+      type: type || this.extractExtension(fallbackName) || this.extractExtensionFromUrl(source),
+      sizeLabel,
+    }
+  }
+
+  private formatQwenUserImageAttachments(
+    attachments: QwenAiUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind === "image" && attachment.source)
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(attachment.name || "uploaded image")
+        const assetPath = collector
+          ? addImageExportAsset(collector, {
+              source: attachment.source,
+              alt: attachment.name,
+              extensionHint: attachment.name || attachment.type,
+              directory: "assets/images",
+              idPrefix: "qwenai-user-image",
+              filenamePrefix: "qwenai-user-image",
+            })
+          : attachment.source
+
+        return assetPath ? `![${label || "uploaded image"}](${assetPath})` : ""
+      })
+      .filter(Boolean)
+  }
+
+  private formatQwenUserFileAttachments(
+    attachments: QwenAiUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind === "file")
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(this.formatQwenAttachmentLabel(attachment))
+        const assetPath =
+          attachment.source && collector
+            ? addFileExportAsset(collector, {
+                source: attachment.source,
+                name: attachment.name,
+                mimeHint: attachment.type || attachment.name,
+                directory: "assets/files",
+                idPrefix: "qwenai-user-file",
+              })
+            : attachment.source
+
+        return assetPath ? `- [${label}](${assetPath})` : `- ${label}`
+      })
+  }
+
+  private extractQwenAssistantImages(element: Element): QwenAiAssistantImage[] {
+    const scope = element.closest(QWENAI_ASSISTANT_MESSAGE_SELECTOR) || element
+    const images: QwenAiAssistantImage[] = []
+    const seen = new Set<string>()
+
+    this.queryElementsIncludingSelf(scope, QWENAI_ASSISTANT_GENERATED_IMAGE_SELECTOR).forEach(
+      (node) => {
+        if (!(node instanceof HTMLImageElement)) return
+        if (node.closest(".gh-root, .gh-user-query-markdown")) return
+        if (node.closest(".response-message-footer, .copy-response-button")) return
+
+        const source = this.extractQwenImageSource(node)
+        if (!source || seen.has(source)) return
+
+        seen.add(source)
+        images.push({
+          source,
+          alt:
+            node.alt?.trim() ||
+            node.getAttribute("aria-label")?.trim() ||
+            `generated image ${images.length + 1}`,
+        })
+      },
+    )
+
+    return images
+  }
+
+  private formatQwenAssistantImages(
+    images: QwenAiAssistantImage[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return images
+      .map((image) => {
+        const alt = escapeMarkdownLinkText(image.alt || "generated image")
+        const assetPath = collector
+          ? addImageExportAsset(collector, {
+              source: image.source,
+              alt: image.alt,
+              directory: "assets/images",
+              idPrefix: "qwenai-generated-image",
+              filenamePrefix: "qwenai-generated-image",
+            })
+          : image.source
+
+        return assetPath ? `![${alt || "generated image"}](${assetPath})` : ""
+      })
+      .filter(Boolean)
+  }
+
+  private findUserMessageScope(element: Element): Element {
+    const root = element.closest(QWENAI_USER_MESSAGE_ROOT_SELECTOR)
+    if (root) return root
+    if (element.matches(QWENAI_USER_MESSAGE_SELECTOR)) return element
+    return element.closest(QWENAI_USER_MESSAGE_SELECTOR) || element
+  }
+
+  private shouldSkipExportElement(element: Element): boolean {
+    if (element.closest(".gh-root")) return true
+    if (element.closest(".gh-user-query-markdown")) return true
+    return false
+  }
+
+  private queryElementsIncludingSelf(root: ParentNode, selector: string): Element[] {
+    const elements: Element[] = []
+
+    if (root instanceof Element && root.matches(selector)) {
+      elements.push(root)
+    }
+
+    root.querySelectorAll(selector).forEach((element) => {
+      if (!elements.includes(element)) {
+        elements.push(element)
+      }
+    })
+
+    return elements
+  }
+
+  private collectTopLevelBlocks(blocks: Element[]): Element[] {
+    if (blocks.length <= 1) return blocks
+
+    return blocks.filter(
+      (block) => !blocks.some((other) => other !== block && other.contains(block)),
+    )
+  }
+
+  private compareDomOrder(left: Element, right: Element): number {
+    if (left === right) return 0
+    const position = left.compareDocumentPosition(right)
+    if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1
+    if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1
+    return 0
+  }
+
+  private extractQwenImageSource(image: HTMLImageElement): string {
+    const candidates = [
+      image.currentSrc || "",
+      image.src || "",
+      image.getAttribute("src") || "",
+      image.getAttribute("data-src") || "",
+      image.getAttribute("data-image-url") || "",
+      image.getAttribute("data-original-url") || "",
+      image.getAttribute("data-origin-url") || "",
+    ]
+
+    for (const candidate of candidates) {
+      const source = this.normalizeQwenExportSource(candidate, { allowDataImage: true })
+      if (source) return this.preferOriginalQwenImageUrl(source)
+    }
+
+    return ""
+  }
+
+  private extractQwenDownloadableSource(
+    root: Element,
+    options: { allowDataImage: boolean; includeImages: boolean },
+  ): string {
+    const candidates: string[] = []
+    const elements = [root, ...Array.from(root.querySelectorAll("*"))]
+
+    elements.forEach((element) => {
+      if (element instanceof HTMLAnchorElement) {
+        candidates.push(element.href || element.getAttribute("href") || "")
+      }
+
+      if (options.includeImages && element instanceof HTMLImageElement) {
+        candidates.push(this.extractQwenImageSource(element))
+      }
+
+      QWENAI_ATTACHMENT_SOURCE_ATTRS.forEach((attr) => {
+        if (!options.includeImages && element instanceof HTMLImageElement && attr === "src") {
+          return
+        }
+        candidates.push(element.getAttribute(attr) || "")
+      })
+    })
+
+    for (const candidate of candidates) {
+      const source = this.normalizeQwenExportSource(candidate, {
+        allowDataImage: options.allowDataImage,
+      })
+      if (source) return source
+    }
+
+    return ""
+  }
+
+  private normalizeQwenExportSource(value: string, options: { allowDataImage: boolean }): string {
+    const raw = value.trim()
+    if (!raw || raw.startsWith("#") || /^javascript:/i.test(raw)) return ""
+
+    const source = normalizeExportAssetUrl(raw)
+    if (!source) return ""
+    if (/^data:image\/svg\+xml/i.test(source)) return ""
+    if (/^data:image\//i.test(source)) return options.allowDataImage ? source : ""
+    if (/^data:/i.test(source)) return source
+    if (!isDownloadableExportAssetUrl(source)) return ""
+
+    try {
+      const url = new URL(source, window.location.href)
+      if (url.hostname === window.location.hostname) {
+        if (
+          QWENAI_CHAT_PATH_PATTERN.test(url.pathname) ||
+          /^\/(?:c|s)(?:\/|$)/i.test(url.pathname)
+        ) {
+          return ""
+        }
+      }
+      if (
+        /^img\.alicdn\.com$/i.test(url.hostname) &&
+        /\.(?:apng|svg)(?:$|[?#])/i.test(url.pathname)
+      ) {
+        return ""
+      }
+      if (
+        /\/(?:static|assets)\//i.test(url.pathname) &&
+        !/\.(png|jpe?g|webp|gif|avif|pdf|docx?|xlsx?|pptx?|json|txt|csv)(?:$|[?#])/i.test(
+          url.pathname,
+        )
+      ) {
+        return ""
+      }
+    } catch {
+      return ""
+    }
+
+    return source
+  }
+
+  private preferOriginalQwenImageUrl(source: string): string {
+    if (!/^https?:\/\//i.test(source)) return source
+
+    try {
+      const url = new URL(source)
+      if (url.searchParams.has("x-oss-process")) {
+        url.searchParams.delete("x-oss-process")
+        return url.toString()
+      }
+    } catch {
+      return source
+    }
+
+    return source
+  }
+
+  private extractCleanTextParts(root: Element): string[] {
+    const clone = root.cloneNode(true) as HTMLElement
+    clone
+      .querySelectorAll("button, [role='button'], svg, [aria-hidden='true'], style, script")
+      .forEach((node) => node.remove())
+
+    const parts: string[] = []
+    const walker = document.createTreeWalker(clone, NodeFilter.SHOW_TEXT)
+    let current = walker.nextNode()
+
+    while (current) {
+      const text = current.textContent?.replace(/\s+/g, " ").trim()
+      if (text && parts[parts.length - 1] !== text) {
+        parts.push(text)
+      }
+      current = walker.nextNode()
+    }
+
+    return parts
+  }
+
+  private parseFileAttachmentText(textParts: string[]): {
+    name: string
+    type: string
+    sizeLabel: string
+  } {
+    const parts = textParts.map((part) => part.replace(/\s+/g, " ").trim()).filter(Boolean)
+    let name = ""
+
+    for (let index = 0; index < parts.length - 1; index += 1) {
+      if (/^\.[A-Za-z0-9]{1,10}$/.test(parts[index + 1])) {
+        name = `${parts[index]}${parts[index + 1]}`
+        break
+      }
+    }
+
+    if (!name) {
+      name = parts.find((part) => /^[^.\s].*\.[A-Za-z0-9]{1,10}$/.test(part)) || ""
+    }
+
+    const extensionPart = parts.find((part) => /^\.[A-Za-z0-9]{1,10}$/.test(part)) || ""
+    const sizeLabel = parts.find((part) => /^\d+(?:\.\d+)?\s*(?:B|KB|MB|GB|TB)$/i.test(part)) || ""
+    const fallbackName =
+      name ||
+      parts.find((part) => part !== sizeLabel && !/^\.[A-Za-z0-9]{1,10}$/.test(part)) ||
+      extensionPart
+    const type =
+      this.extractExtension(fallbackName) || (extensionPart ? extensionPart.slice(1) : "")
+
+    return { name: fallbackName, type, sizeLabel }
+  }
+
+  private formatQwenAttachmentLabel(attachment: QwenAiUserAttachment): string {
+    const details = [
+      attachment.type && !attachment.name.toLowerCase().endsWith(`.${attachment.type}`)
+        ? attachment.type
+        : "",
+      attachment.sizeLabel || "",
+    ].filter(Boolean)
+
+    return details.length > 0 ? `${attachment.name} (${details.join(", ")})` : attachment.name
+  }
+
+  private getQwenAttachmentKeys(attachment: QwenAiUserAttachment): string[] {
+    const sourceKey = this.getAttachmentSourceKey(attachment.source)
+    const nameKey = attachment.name.trim().toLowerCase()
+    const typeKey = attachment.type.trim().toLowerCase()
+    const sizeKey = attachment.sizeLabel?.trim().toLowerCase() || ""
+
+    if (sourceKey) return [`${attachment.kind}:source:${sourceKey}`]
+    return [`${attachment.kind}:meta:${nameKey}:${typeKey}:${sizeKey}`]
+  }
+
+  private getAttachmentSourceKey(source: string): string {
+    if (!source) return ""
+    if (/^(blob:|data:)/i.test(source)) return source
+
+    try {
+      const url = new URL(source, window.location.href)
+      return `${url.hostname}${url.pathname}`.toLowerCase()
+    } catch {
+      return source.split("?")[0].toLowerCase()
+    }
+  }
+
+  private extractFilenameFromUrl(source: string): string {
+    if (!source) return ""
+    try {
+      const pathname = new URL(source, window.location.href).pathname
+      return decodeURIComponent(pathname.split("/").pop() || "")
+    } catch {
+      return ""
+    }
+  }
+
+  private extractExtension(value: string): string {
+    return value.match(/\.([A-Za-z0-9]{1,10})$/)?.[1]?.toLowerCase() || ""
+  }
+
+  private extractExtensionFromUrl(source: string): string {
+    return this.extractExtension(this.extractFilenameFromUrl(source))
+  }
+
   private normalizeQwenCodeBlocks(root: HTMLElement): void {
     const codeBlocks = Array.from(root.querySelectorAll(QWENAI_CODE_BLOCK_SELECTOR))
 
@@ -1289,8 +1915,9 @@ export class QwenAiAdapter extends SiteAdapter {
 
     this.simulateClick(trigger)
 
-    const panel = await this.waitForThoughtPanelUpdate(previousSignature)
-    if (!panel) return
+    const panel =
+      (await this.waitForThoughtPanelUpdate(previousSignature)) || this.getVisibleThoughtPanel()
+    if (!panel || !this.isThoughtPanelForMessage(panel, message)) return
 
     const blocks = this.extractThoughtBlockquotesFromPanel(panel)
     if (blocks.length > 0) {
@@ -1320,9 +1947,39 @@ export class QwenAiAdapter extends SiteAdapter {
     return null
   }
 
+  private isThoughtPanelForMessage(panel: Element, message: Element): boolean {
+    const messageId = this.extractQwenAssistantMessageId(message)
+    if (!messageId) return true
+
+    const phaseIds = Array.from(panel.querySelectorAll("[data-phase-id]"))
+      .map((node) => node.getAttribute("data-phase-id")?.trim() || "")
+      .filter(Boolean)
+
+    if (phaseIds.length === 0) return true
+    return phaseIds.some((phaseId) => phaseId.includes(messageId))
+  }
+
+  private extractQwenAssistantMessageId(message: Element): string {
+    const candidates = [
+      message.id || "",
+      message.querySelector("[id^='chat-response-message-']")?.id || "",
+      message.querySelector("[id^='qwen-chat-message-assistant-']")?.id || "",
+    ]
+
+    for (const candidate of candidates) {
+      const match = candidate.match(/(?:qwen-chat-message-assistant|chat-response-message)-(.+)$/)
+      if (match?.[1]) return match[1]
+    }
+
+    return ""
+  }
+
   private getVisibleThoughtPanel(): HTMLElement | null {
-    const panel = document.querySelector(QWENAI_THOUGHT_PANEL_SELECTOR)
-    return this.isQwenElementVisible(panel) ? (panel as HTMLElement) : null
+    const panels = document.querySelectorAll(QWENAI_THOUGHT_PANEL_SELECTOR)
+    for (const panel of Array.from(panels)) {
+      if (this.isQwenElementVisible(panel)) return panel as HTMLElement
+    }
+    return null
   }
 
   private getThoughtPanelSignature(panel?: Element | null): string | null {
