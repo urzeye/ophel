@@ -12,6 +12,7 @@
 
 - **AI Studio 用户附件导出** — AI Studio Markdown 导出现在会包含用户提问中的图片和文件；zip 附件包会把可下载的用户图片保存在 `assets/images/`，仅文件卡片则在 Markdown 中保留可见文件名和 token 信息。
 - **ChatGPT 生成图片导出** — ChatGPT Markdown 导出现在会包含仅含生成图片的 AI 回复，并在普通 Markdown 与 zip 附件包导出中保留生成图片。
+- **Claude 附件与思维链导出** — Claude Markdown 导出现在会保留用户提问中的图片和文件，支持普通 Markdown 与 zip 附件包；开启「导出包含思维链」后，也会展开并导出 Claude 的思考过程。
 - **DeepSeek 用户附件导出** — DeepSeek Markdown 导出现在会保留用户提问中的图片和文件，包含分享页；zip 附件包会把可下载的分享附件解析到 `assets/images/` 与 `assets/files/`，并在 Markdown 中使用稳定相对路径引用。
 - **豆包图片与附件导出** — 豆包 Markdown 导出现在会包含用户提问中的图片和文件，以及 AI 回复中的图片；zip 附件包会把可下载资源保存到 `assets/images/` 与 `assets/files/`，并在页面 DOM 只保留占位图时兜底导出生成图片。
 - **Grok 图片与附件导出** — Grok Markdown 导出现在会包含 AI 回复中的生成图片，以及用户提问中的图片和文件；zip 附件包会把可下载图片保存到 `assets/images/`、用户文件保存到 `assets/files/`，并在 Markdown 中使用稳定相对路径引用。
