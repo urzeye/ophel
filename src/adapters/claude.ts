@@ -98,7 +98,7 @@ interface ClaudeExportLifecycleState {
   documentSignature?: string
   documentTitle?: string | null
   documentArtifactIndex?: number | null
-  thoughtButtonsExpandedForExport?: HTMLElement[]
+  thoughtContainersExpandedForExport?: HTMLElement[]
 }
 
 interface ClaudeDocumentExportCacheEntry {
@@ -179,6 +179,7 @@ export class ClaudeAdapter extends SiteAdapter {
   private exportDocumentCache: ClaudeDocumentExportCacheEntry[] = []
   private exportIncludeThoughtsOverride: boolean | null = null
   private exportThoughtBlocks = new WeakMap<Element, string[]>()
+  private exportThoughtBlocksByAssistantIndex = new Map<number, string[]>()
 
   match(): boolean {
     return (
@@ -1649,8 +1650,9 @@ export class ClaudeAdapter extends SiteAdapter {
     this.exportIncludeThoughtsOverride = context.includeThoughts
     this.exportDocumentCache = []
     this.exportThoughtBlocks = new WeakMap<Element, string[]>()
+    this.exportThoughtBlocksByAssistantIndex = new Map<number, string[]>()
 
-    const thoughtButtonsExpandedForExport = context.includeThoughts
+    const thoughtContainersExpandedForExport = context.includeThoughts
       ? await this.expandClaudeThoughtBlocksForExport()
       : []
     if (context.includeThoughts) {
@@ -1662,7 +1664,7 @@ export class ClaudeAdapter extends SiteAdapter {
       documentSignature: this.getClaudeDocumentSignature(),
       documentTitle: this.getClaudeDocumentTitle(),
       documentArtifactIndex: null,
-      thoughtButtonsExpandedForExport,
+      thoughtContainersExpandedForExport,
     }
 
     if (!this.shouldCollectClaudeDocumentsForExport(context)) {
@@ -1699,6 +1701,7 @@ export class ClaudeAdapter extends SiteAdapter {
       this.exportDocumentCache = []
       this.exportIncludeThoughtsOverride = null
       this.exportThoughtBlocks = new WeakMap<Element, string[]>()
+      this.exportThoughtBlocksByAssistantIndex = new Map<number, string[]>()
     }
   }
 
@@ -1775,7 +1778,8 @@ export class ClaudeAdapter extends SiteAdapter {
     if (
       this.exportDocumentCache.length === 0 &&
       !this.isClaudeDocumentPanelOpen() &&
-      !this.hasClaudeUserAttachments()
+      !this.hasClaudeUserAttachments() &&
+      !this.hasClaudeThoughtExportCache()
     ) {
       return null
     }
@@ -2190,6 +2194,7 @@ export class ClaudeAdapter extends SiteAdapter {
         const content = this.extractClaudeAssistantResponseTextWithDocuments(
           assistantMessages[index],
           collector,
+          index,
         ).trim()
         if (content) messages.push({ role: "assistant", content })
       }
@@ -2201,9 +2206,12 @@ export class ClaudeAdapter extends SiteAdapter {
   private extractClaudeAssistantResponseTextWithDocuments(
     element: Element,
     collector?: ExportAssetCollector,
+    assistantIndex?: number,
   ): string {
     const includeThoughts = this.shouldIncludeThoughtsInExport()
-    const thoughtBlocks = includeThoughts ? this.getClaudeThoughtBlocksForElement(element) : []
+    const thoughtBlocks = includeThoughts
+      ? this.getClaudeThoughtBlocksForElement(element, assistantIndex)
+      : []
     const parts: string[] = []
     const blocks = this.getClaudeAssistantExportBlocks(element)
 
@@ -2275,40 +2283,70 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private async expandClaudeThoughtBlocksForExport(): Promise<HTMLElement[]> {
-    const root = this.getOutlineRoot()
-    const buttons = this.getClaudeThoughtToggleButtons(root)
-    const expanded: HTMLElement[] = []
+    const buttons = this.getClaudeThoughtToggleButtons(document)
+    const expandedContainers: HTMLElement[] = []
 
     for (const button of buttons) {
       if (button.getAttribute("aria-expanded") === "true") continue
 
-      this.simulateClick(button)
-      expanded.push(button)
-      await this.waitForClaudeThoughtBlockExpanded(button)
+      const container = this.getClaudeThoughtBlockContainer(button)
+      if (!container) continue
+
+      const expanded = await this.openClaudeThoughtBlock(button, container)
+      if (expanded) {
+        expandedContainers.push(container)
+      }
     }
 
-    return expanded
+    return expandedContainers
+  }
+
+  private async openClaudeThoughtBlock(
+    button: HTMLElement,
+    container: HTMLElement,
+  ): Promise<boolean> {
+    try {
+      button.scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" })
+    } catch {
+      button.scrollIntoView({ block: "center", inline: "nearest" })
+    }
+
+    this.simulateClick(button)
+    if (await this.waitForClaudeThoughtBlockExpanded(container, 900)) {
+      return true
+    }
+
+    if (button.isConnected && button.getAttribute("aria-expanded") !== "true") {
+      button.click()
+      return this.waitForClaudeThoughtBlockExpanded(container, 1800)
+    }
+
+    return this.waitForClaudeThoughtBlockExpanded(container, 1800)
   }
 
   private async waitForClaudeThoughtBlockExpanded(
-    button: HTMLElement,
-    timeoutMs = 2500,
-  ): Promise<void> {
-    const container = this.getClaudeThoughtBlockContainer(button)
+    container: HTMLElement,
+    timeoutMs: number,
+  ): Promise<boolean> {
     const startedAt = Date.now()
 
     while (Date.now() - startedAt < timeoutMs) {
-      if (button.getAttribute("aria-expanded") === "true") {
-        const markdown = container ? this.extractClaudeThoughtMarkdown(container).trim() : ""
-        if (markdown) return
+      if (!container.isConnected) return false
+      const markdown = this.extractClaudeThoughtMarkdown(container).trim()
+      if (markdown) {
+        return true
       }
       await this.sleep(80)
     }
+
+    return false
   }
 
   private restoreClaudeThoughtBlocksAfterExport(state: ClaudeExportLifecycleState): void {
-    state.thoughtButtonsExpandedForExport?.forEach((button) => {
-      if (!button.isConnected) return
+    state.thoughtContainersExpandedForExport?.forEach((container) => {
+      if (!container.isConnected) return
+      const button = container.querySelector(CLAUDE_THOUGHT_TOGGLE_SELECTOR)
+      if (!(button instanceof HTMLElement)) return
       if (button.getAttribute("aria-expanded") !== "true") return
       this.simulateClick(button)
     })
@@ -2361,20 +2399,29 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private captureClaudeThoughtBlocksForExport(): void {
-    const root = this.getOutlineRoot()
-    const responses = Array.from(root.querySelectorAll(".font-claude-response")).filter(
+    const responses = Array.from(document.querySelectorAll(".font-claude-response")).filter(
       (element) => !element.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR),
     )
 
-    responses.forEach((response) => {
+    responses.forEach((response, index) => {
       const blocks = this.extractClaudeThoughtBlockquotes(response)
       if (blocks.length > 0) {
         this.exportThoughtBlocks.set(response, blocks)
+        this.exportThoughtBlocksByAssistantIndex.set(index, blocks)
       }
     })
   }
 
-  private getClaudeThoughtBlocksForElement(element: Element): string[] {
+  private hasClaudeThoughtExportCache(): boolean {
+    return this.exportThoughtBlocksByAssistantIndex.size > 0
+  }
+
+  private getClaudeThoughtBlocksForElement(element: Element, assistantIndex?: number): string[] {
+    if (assistantIndex !== undefined) {
+      const byIndex = this.exportThoughtBlocksByAssistantIndex.get(assistantIndex)
+      if (byIndex) return byIndex
+    }
+
     const cached = this.exportThoughtBlocks.get(element)
     if (cached) return cached
 
@@ -2384,7 +2431,24 @@ export class ClaudeAdapter extends SiteAdapter {
       if (responseCached) return responseCached
     }
 
+    const currentIndex = this.getClaudeAssistantResponseIndex(element)
+    if (currentIndex >= 0) {
+      const byIndex = this.exportThoughtBlocksByAssistantIndex.get(currentIndex)
+      if (byIndex) return byIndex
+    }
+
     return this.extractClaudeThoughtBlockquotes(element)
+  }
+
+  private getClaudeAssistantResponseIndex(element: Element): number {
+    const response = element.matches(".font-claude-response")
+      ? element
+      : element.closest(".font-claude-response")
+    if (!response) return -1
+
+    return Array.from(document.querySelectorAll(".font-claude-response"))
+      .filter((candidate) => !candidate.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR))
+      .indexOf(response)
   }
 
   private extractClaudeThoughtBlockquotes(element: Element): string[] {
