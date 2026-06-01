@@ -1925,13 +1925,20 @@ export class ChatGPTAdapter extends SiteAdapter {
   ): string[] {
     return this.extractChatGPTImageMarkdown(element, collector, {
       fallbackAlt: "uploaded image",
+      role: "user",
+      category: "image",
     })
   }
 
   private extractChatGPTImageMarkdown(
     element: Element,
     collector?: ExportAssetCollector | null,
-    options: { fallbackAlt: string; onlyOutsideAuthorMessages?: boolean } = {
+    options: {
+      fallbackAlt: string
+      onlyOutsideAuthorMessages?: boolean
+      role?: "user" | "assistant"
+      category?: string
+    } = {
       fallbackAlt: "image",
     },
   ): string[] {
@@ -1956,8 +1963,8 @@ export class ChatGPTAdapter extends SiteAdapter {
         .trim()
       const markdown = formatExportImageMarkdown({ source, alt }, collector || undefined, {
         siteId: this.getSiteId(),
-        role: "assistant",
-        category: "generated-image",
+        role: options.role || "assistant",
+        category: options.category || "generated-image",
         fallbackAlt: options.fallbackAlt,
       })
 
