@@ -6,7 +6,17 @@
  * - 会话列表缺少稳定 ID，列表解析为 best-effort
  */
 import { SITE_IDS } from "~constants"
-import { htmlToMarkdown } from "~utils/exporter"
+import {
+  addFileExportAsset,
+  addImageExportAsset,
+  createExportAssetCollector,
+  escapeMarkdownLinkText,
+  isDownloadableExportAssetUrl,
+  normalizeExportAssetUrl,
+  type ExportAssetCollector,
+} from "~utils/export-assets"
+import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
+import { t } from "~utils/i18n"
 
 import {
   SiteAdapter,
@@ -19,7 +29,8 @@ import {
 } from "./base"
 
 const HOSTNAME = "chat.z.ai"
-const CHAT_PATH_PATTERN = /\/c\/([a-z0-9-]+)(?:\/|$)/i
+const CHAT_PATH_PATTERN = /\/(?:c|s)\/([a-z0-9-]+)(?:\/|$)/i
+const SHARE_PATH_PATTERN = /\/s\/([a-z0-9-]+)(?:\/|$)/i
 const TEXTAREA_SELECTORS = ["#chat-input", "textarea#chat-input"]
 const SUBMIT_BUTTON_SELECTOR = "#send-message-button"
 const NEW_CHAT_BUTTON_SELECTORS = ["#sidebar-new-chat-button", "#new-chat-button"]
@@ -40,6 +51,9 @@ const CHAT_SCROLL_CONTAINER_SELECTOR = [
   `${CHAT_CONTAINER_SELECTOR} [data-pane-id] .scrollbar-none`,
 ].join(", ")
 const USER_QUERY_SELECTOR = [
+  '[id^="message-"].user-message',
+  ".user-message .chat-user.markdown-prose",
+  ".user-message .chat-user",
   `${CHAT_CONTAINER_SELECTOR} .chat-user.markdown-prose`,
   `${CHAT_CONTAINER_SELECTOR} .chat-user`,
   `${CHAT_CONTAINER_SELECTOR} [data-message-author-role="user"]`,
@@ -49,7 +63,7 @@ const USER_QUERY_SELECTOR = [
   `${CHAT_CONTAINER_SELECTOR} .chat-message-user`,
   `${CHAT_CONTAINER_SELECTOR} .message.user`,
 ].join(", ")
-const ASSISTANT_MARKDOWN_SELECTOR = [
+const ASSISTANT_BODY_SELECTOR = [
   `${CHAT_CONTAINER_SELECTOR} .markdown-prose:not(.chat-user)`,
   `${CHAT_CONTAINER_SELECTOR} [data-message-author-role="assistant"]`,
   `${CHAT_CONTAINER_SELECTOR} [data-role="assistant"]`,
@@ -61,6 +75,13 @@ const ASSISTANT_MARKDOWN_SELECTOR = [
   `${CHAT_CONTAINER_SELECTOR} .prose`,
   `${CHAT_CONTAINER_SELECTOR} article`,
   `${CHAT_CONTAINER_SELECTOR} [data-markdown]`,
+  '[id^="message-"]:not(.user-message) .markdown-prose:not(.chat-user)',
+  '[id^="message-"]:not(.user-message) .markdown-body',
+  '[id^="message-"]:not(.user-message) [data-markdown]',
+].join(", ")
+const ASSISTANT_MARKDOWN_SELECTOR = [
+  '[id^="message-"]:not(.user-message)',
+  ASSISTANT_BODY_SELECTOR,
 ].join(", ")
 const EXPORT_ROLE_ATTR = "data-gh-export-role"
 const EXPORT_USER_QUERY_SELECTOR = `[${EXPORT_ROLE_ATTR}="user"]`
@@ -81,6 +102,30 @@ const USER_CONTENT_CANDIDATE_SELECTORS = [
   'div[dir="auto"]',
   "p",
 ]
+const EXPORT_DECORATION_SELECTOR = [
+  ".gh-root",
+  ".gh-user-query-markdown",
+  "button",
+  "[role='button']",
+  "svg",
+  "[aria-hidden='true']",
+  "style",
+  "script",
+].join(", ")
+const ZAI_ATTACHMENT_SOURCE_ATTRS = [
+  "href",
+  "src",
+  "data-src",
+  "data-url",
+  "data-download-url",
+  "data-file-url",
+  "data-source-url",
+  "data-origin-url",
+  "data-original-url",
+  "data-thumbnail-url",
+  "data-image-url",
+  "data-image-src",
+]
 const STOP_BUTTON_SELECTOR = [
   'div[aria-label="停止"] button',
   "button:has(span.rounded-xs):has(span.size-3)",
@@ -97,9 +142,68 @@ const THEME_COLORS = {
   dark: "#141618",
 }
 const CONVERSATION_ID_PATTERN = /[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/i
+const MESSAGE_ID_PATTERN = /^message-([a-f0-9-]{36})$/i
+
+interface ZaiApiMessageRef {
+  id?: string
+  role?: string
+  parentId?: string | null
+  childrenIds?: string[]
+}
+
+interface ZaiShareResponse {
+  title?: string
+  chat?: {
+    history?: {
+      messages?: Record<string, ZaiApiMessageRef>
+      currentId?: string
+    }
+  }
+}
+
+interface ZaiApiFileMeta {
+  name?: string
+  content_type?: string
+  size?: number
+  cdn_url?: string
+}
+
+interface ZaiApiFileAttachment {
+  type?: string
+  id?: string
+  url?: string
+  name?: string
+  size?: number
+  media?: string
+  file?: {
+    id?: string
+    filename?: string
+    meta?: ZaiApiFileMeta
+  }
+}
+
+interface ZaiApiMessage {
+  id?: string
+  role?: string
+  files?: ZaiApiFileAttachment[] | null
+}
+
+interface ZaiBatchResponse {
+  data?: Record<string, ZaiApiMessage>
+}
+
+interface ZaiUserAttachment {
+  kind: "image" | "file"
+  name: string
+  source: string
+  type: string
+  size?: number
+}
 
 export class ZaiAdapter extends SiteAdapter {
   private exportIncludeThoughtsOverride: boolean | null = null
+  private exportUserAttachmentsByMessageId = new Map<string, ZaiUserAttachment[]>()
+  private exportShareTitle: string | null = null
 
   match(): boolean {
     return window.location.hostname === HOSTNAME
@@ -196,6 +300,10 @@ export class ZaiAdapter extends SiteAdapter {
     return this.extractUserQueryText(element)
   }
 
+  extractUserQueryExportContent(element: Element): string {
+    return this.extractZaiUserQueryExportContent(element)
+  }
+
   replaceUserQueryContent(element: Element, html: string): boolean {
     const contentRoot = this.findUserContentRoot(element)
     if (!contentRoot) return false
@@ -242,6 +350,7 @@ export class ZaiAdapter extends SiteAdapter {
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
     this.exportIncludeThoughtsOverride = context.includeThoughts
     this.clearExportMarkers()
+    this.clearExportAttachmentCache()
 
     const container =
       document.querySelector(this.getResponseContainerSelector()) ||
@@ -249,6 +358,7 @@ export class ZaiAdapter extends SiteAdapter {
       document.body
 
     this.markExportMessages(container)
+    await this.prepareExportAttachmentCache(container)
     return null
   }
 
@@ -258,6 +368,23 @@ export class ZaiAdapter extends SiteAdapter {
   ): Promise<void> {
     this.clearExportMarkers()
     this.exportIncludeThoughtsOverride = null
+    this.clearExportAttachmentCache()
+  }
+
+  async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
+    const messages = this.extractZaiExportMessages()
+    return messages.length > 0 ? messages : null
+  }
+
+  async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
+    const collector = createExportAssetCollector()
+    const messages = this.extractZaiExportMessages(collector)
+    if (messages.length === 0) return null
+
+    return {
+      messages,
+      assets: collector.assets,
+    }
   }
 
   private clearExportMarkers(): void {
@@ -296,6 +423,36 @@ export class ZaiAdapter extends SiteAdapter {
     const { users, assistants } = this.collectExportMessages(container)
     users.forEach((el) => el.setAttribute(EXPORT_ROLE_ATTR, "user"))
     assistants.forEach((el) => el.setAttribute(EXPORT_ROLE_ATTR, "assistant"))
+  }
+
+  private extractZaiExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
+    const container =
+      document.querySelector(this.getResponseContainerSelector()) ||
+      document.querySelector(CHAT_CONTAINER_SELECTOR) ||
+      document.body
+    const { users, assistants } = this.collectExportMessages(container)
+    const ordered = [
+      ...users.map((element) => ({ role: "user" as const, element })),
+      ...assistants.map((element) => ({ role: "assistant" as const, element })),
+    ].sort((left, right) => this.compareDomOrder(left.element, right.element))
+
+    return ordered
+      .map(({ role, element }) => {
+        const content =
+          role === "user"
+            ? this.extractZaiUserQueryExportContent(element, collector)
+            : this.extractAssistantResponseText(element)
+        return { role, content: content.trim() }
+      })
+      .filter((message) => message.content.length > 0)
+  }
+
+  private compareDomOrder(left: Element, right: Element): number {
+    if (left === right) return 0
+    const position = left.compareDocumentPosition(right)
+    if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1
+    if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1
+    return 0
   }
 
   private shouldIncludeThoughtsInExport(): boolean {
@@ -388,7 +545,11 @@ export class ZaiAdapter extends SiteAdapter {
     // 兜底：再次清理残留的思维链元素
     sanitized.querySelectorAll(THINKING_CONTAINER_SELECTOR).forEach((node) => node.remove())
 
-    const bodyMarkdown = htmlToMarkdown(sanitized) || this.extractTextWithLineBreaks(sanitized)
+    const bodyRoot = this.findAssistantBodyRoot(sanitized)
+    const bodyClone = bodyRoot.cloneNode(true) as Element
+    bodyClone.querySelectorAll(EXPORT_DECORATION_SELECTOR).forEach((node) => node.remove())
+
+    const bodyMarkdown = htmlToMarkdown(bodyClone) || this.extractTextWithLineBreaks(bodyClone)
     const normalizedBody = bodyMarkdown.trim()
 
     if (thoughtBlocks.length > 0) {
@@ -397,6 +558,27 @@ export class ZaiAdapter extends SiteAdapter {
     }
 
     return normalizedBody
+  }
+
+  private findAssistantBodyRoot(element: Element): Element {
+    if (this.isAssistantBodyElement(element)) return element
+
+    const candidates = Array.from(element.querySelectorAll(ASSISTANT_BODY_SELECTOR)).filter(
+      (candidate) =>
+        !candidate.closest(USER_QUERY_SELECTOR) &&
+        !candidate.closest(THINKING_CONTAINER_SELECTOR) &&
+        !candidate.closest(".gh-root"),
+    )
+    const topLevel = this.collectTopLevelBlocks(candidates)
+    return topLevel[0] || element
+  }
+
+  private isAssistantBodyElement(element: Element): boolean {
+    return (
+      element.matches(ASSISTANT_BODY_SELECTOR) &&
+      !element.closest(USER_QUERY_SELECTOR) &&
+      !element.closest(THINKING_CONTAINER_SELECTOR)
+    )
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
@@ -620,6 +802,10 @@ export class ZaiAdapter extends SiteAdapter {
     return path === "/" || path === "" || !CHAT_PATH_PATTERN.test(path)
   }
 
+  isSharePage(): boolean {
+    return SHARE_PATH_PATTERN.test(window.location.pathname)
+  }
+
   getCurrentCid(): string | null {
     try {
       const raw = localStorage.getItem(CID_STORAGE_KEY)
@@ -637,6 +823,10 @@ export class ZaiAdapter extends SiteAdapter {
   }
 
   getConversationTitle(): string | null {
+    if (this.isSharePage()) {
+      return this.exportShareTitle || this.getSharePageTitle()
+    }
+
     const sessionId = this.getSessionId()
     if (!sessionId) return null
     const list = this.getConversationList()
@@ -815,6 +1005,14 @@ export class ZaiAdapter extends SiteAdapter {
     return titleEl?.textContent?.trim() || ""
   }
 
+  private getSharePageTitle(): string | null {
+    const title = document.title.trim()
+    if (!title) return this.getSessionName()
+
+    const conversationTitle = title.split(" | ")[0]?.trim()
+    return conversationTitle || this.getSessionName()
+  }
+
   private collectScrollAnchorRoots(): Element[] {
     const roots = Array.from(
       document.querySelectorAll(`${USER_QUERY_SELECTOR}, ${ASSISTANT_MARKDOWN_SELECTOR}`),
@@ -947,6 +1145,446 @@ export class ZaiAdapter extends SiteAdapter {
 
     const rect = element.getBoundingClientRect()
     return rect.width > 0 && rect.height > 0
+  }
+
+  private clearExportAttachmentCache(): void {
+    this.exportUserAttachmentsByMessageId.clear()
+    this.exportShareTitle = null
+  }
+
+  private async prepareExportAttachmentCache(container: Element): Promise<void> {
+    const sessionId = this.getSessionId()
+    if (!sessionId) return
+
+    try {
+      const ids = await this.collectExportMessageIds(container)
+      if (ids.length === 0) return
+
+      const response = await fetch(
+        `/api/v1/chats/${encodeURIComponent(sessionId)}/messages/batch`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "content-type": "application/json",
+            accept: "application/json",
+          },
+          body: JSON.stringify({ ids }),
+        },
+      )
+
+      if (!response.ok) {
+        throw new Error(`messages/batch failed with ${response.status}`)
+      }
+
+      const payload = (await response.json()) as ZaiBatchResponse
+      const data = payload?.data || {}
+      Object.values(data).forEach((message) => {
+        if (!message?.id || message.role !== "user") return
+        const attachments = this.extractZaiApiUserAttachments(message.files || [])
+        if (attachments.length > 0) {
+          this.exportUserAttachmentsByMessageId.set(message.id, attachments)
+        }
+      })
+    } catch (error) {
+      console.warn("[ZaiAdapter] Failed to load export attachment metadata:", error)
+    }
+  }
+
+  private async collectExportMessageIds(container: Element): Promise<string[]> {
+    const fromShare = this.isSharePage() ? await this.fetchShareMessageIds() : []
+    const fromDom = this.collectDomMessageIds(container)
+    return Array.from(new Set([...fromShare, ...fromDom]))
+  }
+
+  private async fetchShareMessageIds(): Promise<string[]> {
+    const shareId = this.getSessionId()
+    if (!shareId) return []
+
+    const response = await fetch(`/api/v1/chats/share/${encodeURIComponent(shareId)}`, {
+      credentials: "include",
+      headers: { accept: "application/json" },
+    })
+
+    if (!response.ok) {
+      throw new Error(`share metadata failed with ${response.status}`)
+    }
+
+    const payload = (await response.json()) as ZaiShareResponse
+    this.exportShareTitle = payload?.title || null
+    const messages = payload?.chat?.history?.messages || {}
+    return Object.keys(messages)
+  }
+
+  private collectDomMessageIds(container: Element): string[] {
+    const ids: string[] = []
+    const nodes = Array.from(container.querySelectorAll('[id^="message-"]'))
+
+    nodes.forEach((node) => {
+      const id = this.extractZaiMessageId(node)
+      if (id) ids.push(id)
+    })
+
+    return ids
+  }
+
+  private extractZaiMessageId(element: Element): string {
+    const messageRoot = element.id?.startsWith("message-")
+      ? element
+      : element.closest('[id^="message-"]')
+    const id = messageRoot?.id || ""
+    const match = id.match(MESSAGE_ID_PATTERN)
+    return match?.[1] || ""
+  }
+
+  private extractZaiApiUserAttachments(files: ZaiApiFileAttachment[]): ZaiUserAttachment[] {
+    return files
+      .map((item) => this.extractZaiApiUserAttachment(item))
+      .filter((item): item is ZaiUserAttachment => Boolean(item))
+  }
+
+  private extractZaiApiUserAttachment(item: ZaiApiFileAttachment): ZaiUserAttachment | null {
+    const meta = item.file?.meta
+    const rawName = meta?.name || item.file?.filename || item.name || item.id || "attachment"
+    const name = this.decodeZaiAttachmentName(rawName) || "attachment"
+    const type = meta?.content_type || item.media || item.type || ""
+    const source = normalizeExportAssetUrl(meta?.cdn_url || item.url || "")
+    const kind = this.isZaiImageAttachment(name, type, source) ? "image" : "file"
+
+    return {
+      kind,
+      name,
+      source: isDownloadableExportAssetUrl(source) ? source : "",
+      type,
+      size: meta?.size || item.size,
+    }
+  }
+
+  private extractZaiUserQueryExportContent(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string {
+    const body = this.extractUserQueryText(element)
+    const attachments = this.extractZaiUserAttachments(element)
+
+    if (attachments.length === 0) {
+      return body
+    }
+
+    const imageMarkdown = this.formatZaiUserImageAttachments(attachments, collector)
+    const fileMarkdown = this.formatZaiUserFileAttachments(attachments, collector)
+    const fileBlock =
+      fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
+
+    return [imageMarkdown.join("\n\n"), fileBlock, body].filter(Boolean).join("\n\n")
+  }
+
+  private extractZaiUserAttachments(element: Element): ZaiUserAttachment[] {
+    const messageId = this.extractZaiMessageId(element)
+    const cached = messageId ? this.exportUserAttachmentsByMessageId.get(messageId) || [] : []
+    const fromDom = this.extractZaiUserAttachmentsFromDom(element)
+    const attachments: ZaiUserAttachment[] = []
+    const seen = new Set<string>()
+
+    const add = (attachment: ZaiUserAttachment) => {
+      const keys = this.getZaiAttachmentKeys(attachment)
+      if (keys.some((key) => seen.has(key))) return
+      keys.forEach((key) => seen.add(key))
+      attachments.push(attachment)
+    }
+
+    cached.forEach(add)
+    fromDom.forEach(add)
+
+    return attachments
+  }
+
+  private getZaiAttachmentKeys(attachment: ZaiUserAttachment): string[] {
+    const keys: string[] = []
+    const kind = attachment.kind
+    const name = attachment.name.trim().toLowerCase()
+    const type = this.getZaiAttachmentTypeKey(attachment)
+    const size = attachment.size ? this.formatZaiFileSize(attachment.size).toLowerCase() : ""
+    const sourceKey = this.getZaiAttachmentSourceKey(attachment.source)
+
+    if (sourceKey) keys.push(`${kind}:source:${sourceKey}`)
+    if (name && type) keys.push(`${kind}:name-type:${name}:${type}`)
+    if (name && size) keys.push(`${kind}:name-size:${name}:${size}`)
+
+    return keys.length > 0 ? keys : [`${kind}:fallback:${name}:${type}`]
+  }
+
+  private getZaiAttachmentTypeKey(attachment: ZaiUserAttachment): string {
+    const filenameExtension = attachment.name.match(/\.([a-z0-9]{1,10})$/i)?.[1]
+    if (filenameExtension) return filenameExtension.toLowerCase()
+
+    const normalizedType = attachment.type.trim().toLowerCase()
+    const mimeExtension = normalizedType.match(/\/([a-z0-9.+-]+)$/i)?.[1]
+    if (mimeExtension) return mimeExtension.replace(/^plain$/, "txt").replace(/^jpeg$/, "jpg")
+
+    return normalizedType
+  }
+
+  private getZaiAttachmentSourceKey(source: string): string {
+    if (!source) return ""
+    if (/^(blob:|data:)/i.test(source)) return source
+
+    try {
+      const url = new URL(source, window.location.href)
+      return `${url.hostname}${url.pathname}`.toLowerCase()
+    } catch {
+      return source.split("?")[0].toLowerCase()
+    }
+  }
+
+  private extractZaiUserAttachmentsFromDom(element: Element): ZaiUserAttachment[] {
+    const scope = element.matches(USER_QUERY_SELECTOR)
+      ? element
+      : element.closest(USER_QUERY_SELECTOR)
+    if (!scope) return []
+
+    const cards = Array.from(scope.querySelectorAll("button")).filter((button) => {
+      const text = button.textContent?.replace(/\s+/g, " ").trim() || ""
+      if (!text) return false
+      if (!this.looksLikeZaiAttachmentCard(button, text)) return false
+      return !button.closest(".gh-root, .gh-user-query-markdown")
+    })
+
+    const attachments: ZaiUserAttachment[] = []
+    const seen = new Set<string>()
+
+    cards.forEach((card) => {
+      const attachment = this.extractZaiDomUserAttachment(card)
+      if (!attachment) return
+      const keys = this.getZaiAttachmentKeys(attachment)
+      if (keys.some((key) => seen.has(key))) return
+      keys.forEach((key) => seen.add(key))
+      attachments.push(attachment)
+    })
+
+    return attachments
+  }
+
+  private looksLikeZaiAttachmentCard(card: Element, text: string): boolean {
+    if (card.querySelector("img[data-cy='image'], img.not-prose")) return true
+    if (!/\.[A-Za-z0-9]{1,10}\b/.test(text)) return false
+    return /\b(?:B|KB|MB|GB|TB)\b/i.test(text) || Boolean(card.querySelector("img[src*='/icons/']"))
+  }
+
+  private extractZaiDomUserAttachment(card: Element): ZaiUserAttachment | null {
+    const textParts = this.extractZaiCleanTextParts(card)
+    const { name, type, sizeLabel } = this.parseZaiAttachmentLabel(textParts)
+    const source = this.extractZaiDownloadableSource(card)
+    const fallbackName = name || this.extractZaiFilenameFromUrl(source) || "attachment"
+    if (!fallbackName && !source) return null
+
+    const kind = this.isZaiImageAttachment(fallbackName, type, source) ? "image" : "file"
+    return {
+      kind,
+      name: fallbackName,
+      source,
+      type,
+      size: this.parseZaiSizeLabel(sizeLabel),
+    }
+  }
+
+  private parseZaiAttachmentLabel(textParts: string[]): {
+    name: string
+    type: string
+    sizeLabel: string
+  } {
+    const parts = textParts.map((part) => part.replace(/\s+/g, " ").trim()).filter(Boolean)
+    const name = parts.find((part) => /\.[A-Za-z0-9]{1,10}$/.test(part)) || parts[0] || ""
+    const type =
+      parts.find((part) => /^[A-Za-z0-9.+-]{1,16}$/.test(part) && !/\d/.test(part)) ||
+      name.match(/\.([A-Za-z0-9]{1,10})$/)?.[1] ||
+      ""
+    const sizeLabel = parts.find((part) => /^\d+(?:\.\d+)?\s*(?:B|KB|MB|GB|TB)$/i.test(part)) || ""
+
+    return { name, type, sizeLabel }
+  }
+
+  private extractZaiCleanTextParts(root: Element): string[] {
+    const clone = root.cloneNode(true) as HTMLElement
+    clone
+      .querySelectorAll("svg, [aria-hidden='true'], style, script")
+      .forEach((node) => node.remove())
+
+    const parts: string[] = []
+    const walker = document.createTreeWalker(clone, NodeFilter.SHOW_TEXT)
+    let current = walker.nextNode()
+    while (current) {
+      const text = current.textContent?.replace(/\s+/g, " ").trim()
+      if (text && parts[parts.length - 1] !== text) {
+        parts.push(text)
+      }
+      current = walker.nextNode()
+    }
+
+    return parts
+  }
+
+  private extractZaiDownloadableSource(root: Element): string {
+    const image = Array.from(root.querySelectorAll("img")).find(
+      (node): node is HTMLImageElement =>
+        node instanceof HTMLImageElement &&
+        Boolean(
+          this.normalizeZaiAttachmentSource(
+            node.currentSrc || node.src || node.getAttribute("src") || "",
+          ),
+        ),
+    )
+
+    if (image) {
+      const source = this.normalizeZaiAttachmentSource(
+        image.currentSrc || image.src || image.getAttribute("src") || "",
+      )
+      if (source) return source
+    }
+
+    const nodes = [root, ...Array.from(root.querySelectorAll("*"))]
+    for (const node of nodes) {
+      for (const attr of ZAI_ATTACHMENT_SOURCE_ATTRS) {
+        const source = this.normalizeZaiAttachmentSource(node.getAttribute(attr) || "")
+        if (source) return source
+      }
+    }
+
+    return ""
+  }
+
+  private normalizeZaiAttachmentSource(value: string): string {
+    const source = normalizeExportAssetUrl(value)
+    if (!source || !isDownloadableExportAssetUrl(source)) return ""
+
+    try {
+      const url = new URL(source, window.location.href)
+      if (url.hostname === HOSTNAME && /^\/icons\//i.test(url.pathname)) return ""
+      if (url.hostname === "z-cdn.chatglm.cn" && /\/z-ai\/static\/logo\.svg$/i.test(url.pathname)) {
+        return ""
+      }
+    } catch {
+      return ""
+    }
+
+    return source
+  }
+
+  private isZaiImageAttachment(name: string, type: string, source: string): boolean {
+    const signal = `${name} ${type} ${source}`.toLowerCase()
+    return (
+      /\bimage\b/.test(signal) ||
+      /图片|圖像|图像/.test(signal) ||
+      /\.(png|jpe?g|webp|gif|avif|svg)(?:$|[?#\s])/.test(signal) ||
+      /^data:image\//i.test(source)
+    )
+  }
+
+  private formatZaiUserImageAttachments(
+    attachments: ZaiUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind === "image" && attachment.source)
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(attachment.name || "uploaded image")
+        const assetPath = collector
+          ? addImageExportAsset(collector, {
+              source: attachment.source,
+              alt: attachment.name,
+              extensionHint: attachment.name || attachment.type,
+              directory: "assets/images",
+              idPrefix: "zai-user-image",
+              filenamePrefix: "zai-user-image",
+            })
+          : attachment.source
+
+        return assetPath ? `![${label || "uploaded image"}](${assetPath})` : ""
+      })
+      .filter(Boolean)
+  }
+
+  private formatZaiUserFileAttachments(
+    attachments: ZaiUserAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind === "file")
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(this.formatZaiAttachmentLabel(attachment))
+        const assetPath =
+          attachment.source && collector
+            ? addFileExportAsset(collector, {
+                source: attachment.source,
+                name: attachment.name,
+                mimeHint: attachment.type || attachment.name,
+                directory: "assets/files",
+                idPrefix: "zai-user-file",
+              })
+            : attachment.source
+
+        return assetPath ? `- [${label}](${assetPath})` : `- ${label}`
+      })
+  }
+
+  private formatZaiAttachmentLabel(attachment: ZaiUserAttachment): string {
+    const sizeLabel = attachment.size ? `, ${this.formatZaiFileSize(attachment.size)}` : ""
+    if (!attachment.type) return `${attachment.name}${sizeLabel}`
+    if (attachment.name.toLowerCase().endsWith(attachment.type.toLowerCase())) {
+      return `${attachment.name}${sizeLabel}`
+    }
+    return `${attachment.name} (${attachment.type}${sizeLabel})`
+  }
+
+  private parseZaiSizeLabel(value: string): number | undefined {
+    const match = value.trim().match(/^(\d+(?:\.\d+)?)\s*(B|KB|MB|GB|TB)$/i)
+    if (!match) return undefined
+    const amount = Number(match[1])
+    if (!Number.isFinite(amount)) return undefined
+    const unit = match[2].toUpperCase()
+    const multiplier =
+      unit === "TB"
+        ? 1024 ** 4
+        : unit === "GB"
+          ? 1024 ** 3
+          : unit === "MB"
+            ? 1024 ** 2
+            : unit === "KB"
+              ? 1024
+              : 1
+    return Math.round(amount * multiplier)
+  }
+
+  private formatZaiFileSize(size: number): string {
+    if (!Number.isFinite(size) || size <= 0) return ""
+    const units = ["B", "KB", "MB", "GB", "TB"]
+    let value = size
+    let unitIndex = 0
+    while (value >= 1024 && unitIndex < units.length - 1) {
+      value /= 1024
+      unitIndex += 1
+    }
+    const formatted =
+      value >= 10 || unitIndex === 0 ? Math.round(value).toString() : value.toFixed(1)
+    return `${formatted} ${units[unitIndex]}`
+  }
+
+  private extractZaiFilenameFromUrl(source: string): string {
+    if (!source) return ""
+    try {
+      const path = new URL(source, window.location.href).pathname
+      return decodeURIComponent(path.split("/").pop() || "")
+    } catch {
+      return ""
+    }
+  }
+
+  private decodeZaiAttachmentName(value: string): string {
+    try {
+      return decodeURIComponent(value)
+    } catch {
+      return value
+    }
   }
 
   private findUserContentRoot(element: Element): Element | null {
