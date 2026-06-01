@@ -12,6 +12,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### 🚀 New Features
 
 - **AI Studio user attachments in exports** — AI Studio Markdown exports now include images and files from user prompts; zip packages preserve downloadable user images under `assets/images/`, while file-only cards keep their visible filename and token details in Markdown.
+- **ChatGLM attachment, image, and thought export** — ChatGLM exports now preserve user-uploaded images and files plus AI-generated images in Markdown and zip packages. Share-page exports also recognize ChatGLM's current thinking payloads and format included thoughts as `> [Thought]` blockquotes when "Include Thoughts in Export" is enabled, while filtering user avatars from exported assets.
 - **ChatGPT generated image export** — ChatGPT Markdown exports now include generated image-only assistant turns, preserving generated images in both regular Markdown output and zip asset packages.
 - **Claude export attachments and thoughts** — Claude Markdown exports now preserve images and files from user prompts in both Markdown and zip package modes, and can include expanded Claude thinking blocks when "Include Thoughts in Export" is enabled.
 - **DeepSeek user attachments in exports** — DeepSeek Markdown exports now include images and files from user prompts, including share pages; zip packages resolve downloadable share attachments into `assets/images/` and `assets/files/` with stable Markdown references.

@@ -6,11 +6,22 @@
  * - 避免依赖 data-v-* 等构建时生成属性
  */
 import { SITE_IDS } from "~constants"
-import { htmlToMarkdown } from "~utils/exporter"
+import {
+  addFileExportAsset,
+  addImageExportAsset,
+  createExportAssetCollector,
+  escapeMarkdownLinkText,
+  isDownloadableExportAssetUrl,
+  normalizeExportAssetUrl,
+  type ExportAssetCollector,
+} from "~utils/export-assets"
+import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
+import { t } from "~utils/i18n"
 
 import {
   SiteAdapter,
   type ExportConfig,
+  type ExportLifecycleContext,
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
@@ -18,6 +29,8 @@ import {
 
 const CHATGLM_HOSTS = new Set(["chatglm.cn"])
 const SESSION_ID_PARAM = "cid"
+const SHARE_SESSION_ID_PARAM = "share_conversation_id"
+const SHARE_ID_PARAM = "share_id"
 const NEW_TAB_PATH = "/main/alltoolsdetail?lang=zh"
 const MAX_OUTLINE_TEXT_LENGTH = 80
 const SKIN_MODE_KEY = "SKIN_MODE"
@@ -39,7 +52,42 @@ const RESPONSE_CONTAINER_SELECTOR = ".conversation-list"
 const CONVERSATION_ITEM_SELECTOR = ".conversation-item"
 const USER_QUERY_SELECTOR = ".conversation.question"
 const USER_TEXT_SELECTOR = ".question-txt"
+const ASSISTANT_RESPONSE_SELECTOR = ".answer-content-wrap"
 const ASSISTANT_MARKDOWN_SELECTOR = ".answer-content-wrap .markdown-body"
+const THINKING_CONTAINER_SELECTOR = [
+  ".advanced-thinking",
+  ".advanced-thinking-data",
+  ".thinking-chain-container",
+  ".thinking-block",
+  "[class*='thinking']",
+  "[class*='think']",
+  "[class*='reason']",
+  "[class*='cot']",
+].join(", ")
+const EXPORT_DECORATION_SELECTOR = [
+  ".gh-root",
+  ".gh-user-query-markdown",
+  "button",
+  "[role='button']",
+  "svg",
+  "[aria-hidden='true']",
+  "style",
+  "script",
+].join(", ")
+const CHATGLM_ATTACHMENT_SOURCE_ATTRS = [
+  "href",
+  "src",
+  "data-src",
+  "data-url",
+  "data-download-url",
+  "data-file-url",
+  "data-source-url",
+  "data-origin-url",
+  "data-original-url",
+  "data-thumbnail-url",
+  "data-image-url",
+  "data-image-src",
+]
 
 const TEXTAREA_SELECTORS = [
   "#search-input-box textarea",
@@ -49,7 +97,96 @@ const TEXTAREA_SELECTORS = [
 
 const SUBMIT_BUTTON_SELECTOR = ".enter-icon-container"
 
+interface ChatGLMApiAttachment {
+  file_name?: string
+  file_id?: string
+  image_url?: string
+  file_url?: string
+  file_size?: number
+  file_type?: string
+  type?: string
+}
+
+interface ChatGLMApiInputContent {
+  type?: string
+  text?: string
+  image?: ChatGLMApiAttachment[]
+  file?: ChatGLMApiAttachment[]
+}
+
+interface ChatGLMApiOutputImage {
+  image_url?: string
+  aspect_ratio?: string
+}
+
+interface ChatGLMApiOutputContent {
+  answer?: string
+  answer_type?: string
+  type?: string
+  text?: string
+  think?: string
+  code?: string
+  content?: string
+  intent_original_output?: string
+  image?: ChatGLMApiOutputImage[]
+  advancedThinkingData?: ChatGLMApiOutputContent[]
+  meta_data?: ChatGLMApiOutputPart["meta_data"]
+  tool_calls?: {
+    name?: string
+    arguments?: string
+  }
+}
+
+interface ChatGLMApiOutputPart {
+  answer?: string
+  answer_type?: string
+  content?: ChatGLMApiOutputContent[]
+  text?: string
+  think?: string
+  advancedThinkingData?: ChatGLMApiOutputContent[]
+  meta_data?: {
+    show_type?: string
+    engine?: {
+      type?: string
+      node?: string
+      tool_call?: string
+    }
+    tool_result_extra?: {
+      tool_nickname?: string
+      tool_call_name?: string
+    }
+  }
+}
+
+interface ChatGLMApiMessage {
+  id?: string
+  input?: {
+    content?: ChatGLMApiInputContent[]
+  }
+  output?: {
+    parts?: ChatGLMApiOutputPart[]
+    image_list?: string[]
+  }
+}
+
+interface ChatGLMShareResponse {
+  result?: {
+    messages?: ChatGLMApiMessage[]
+  }
+}
+
+interface ChatGLMExportAttachment {
+  kind: "image" | "file"
+  name: string
+  source: string
+  type: string
+  size?: number
+}
+
 export class ChatGLMAdapter extends SiteAdapter {
+  private exportIncludeThoughtsOverride: boolean | null = null
+  private exportApiMessages: ChatGLMApiMessage[] | null = null
+
   match(): boolean {
     return CHATGLM_HOSTS.has(window.location.hostname)
   }
@@ -292,6 +429,15 @@ export class ChatGLMAdapter extends SiteAdapter {
 
   getSessionId(): string {
     const params = new URLSearchParams(window.location.search)
+    if (this.isSharePage()) {
+      return (
+        params.get(SHARE_SESSION_ID_PARAM)?.trim() ||
+        params.get(SHARE_ID_PARAM)?.trim() ||
+        window.location.pathname.match(/^\/share\/([^/?#]+)/)?.[1]?.trim() ||
+        ""
+      )
+    }
+
     const cid = params.get(SESSION_ID_PARAM)
     return cid ? cid.trim() : ""
   }
@@ -310,7 +456,11 @@ export class ChatGLMAdapter extends SiteAdapter {
 
   isSharePage(): boolean {
     // 自有会话：/chat/...    分享会话：/glmsShare?is_share=1&...
-    return window.location.pathname.startsWith("/glmsShare")
+    return (
+      window.location.pathname.startsWith("/glmsShare") ||
+      window.location.pathname.startsWith("/share/") ||
+      new URLSearchParams(window.location.search).get("is_share") === "1"
+    )
   }
 
   isUserConversationPage(): boolean {
@@ -390,6 +540,10 @@ export class ChatGLMAdapter extends SiteAdapter {
     return this.extractUserQueryText(element)
   }
 
+  extractUserQueryExportContent(element: Element): string {
+    return this.extractChatGLMUserQueryExportContent(element)
+  }
+
   replaceUserQueryContent(element: Element, html: string): boolean {
     const contentRoot = element.querySelector(USER_TEXT_SELECTOR) as HTMLElement | null
     if (!contentRoot) return false
@@ -426,15 +580,7 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   extractAssistantResponseText(element: Element): string {
-    const markdown = element.matches(".markdown-body")
-      ? element
-      : element.querySelector(".markdown-body")
-    if (!markdown) return ""
-
-    const content = htmlToMarkdown(markdown).trim()
-    if (content) return content
-
-    return this.extractTextWithLineBreaks(markdown).trim()
+    return this.extractChatGLMAssistantExportContent(element).trim()
   }
 
   getLatestReplyText(): string | null {
@@ -532,9 +678,740 @@ export class ChatGLMAdapter extends SiteAdapter {
   getExportConfig(): ExportConfig {
     return {
       userQuerySelector: USER_QUERY_SELECTOR,
-      assistantResponseSelector: ASSISTANT_MARKDOWN_SELECTOR,
+      assistantResponseSelector: ASSISTANT_RESPONSE_SELECTOR,
       turnSelector: null,
       useShadowDOM: false,
+    }
+  }
+
+  async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
+    this.exportIncludeThoughtsOverride = context.includeThoughts
+    this.exportApiMessages = null
+
+    if (this.isSharePage()) {
+      this.exportApiMessages = await this.fetchShareApiMessages()
+    }
+
+    return null
+  }
+
+  async restoreConversationAfterExport(
+    _context: ExportLifecycleContext,
+    _state: unknown,
+  ): Promise<void> {
+    this.exportIncludeThoughtsOverride = null
+    this.exportApiMessages = null
+  }
+
+  async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
+    const messages = this.extractChatGLMExportMessages()
+    return messages.length > 0 ? messages : null
+  }
+
+  async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
+    const collector = createExportAssetCollector()
+    const messages = this.extractChatGLMExportMessages(collector)
+    if (messages.length === 0) return null
+
+    return {
+      messages,
+      assets: collector.assets,
+    }
+  }
+
+  private async fetchShareApiMessages(): Promise<ChatGLMApiMessage[] | null> {
+    const shareConversationId = this.getShareConversationId()
+    if (!shareConversationId) return null
+
+    try {
+      const response = await fetch(
+        `/chatglm/share-api/conversation/info/${encodeURIComponent(shareConversationId)}`,
+        {
+          credentials: "include",
+          headers: { accept: "application/json" },
+        },
+      )
+
+      if (!response.ok) {
+        throw new Error(`share conversation info failed with ${response.status}`)
+      }
+
+      const payload = (await response.json()) as ChatGLMShareResponse
+      const messages = payload?.result?.messages
+      return Array.isArray(messages) ? messages : null
+    } catch (error) {
+      console.warn("[ChatGLMAdapter] Failed to load share export metadata:", error)
+      return null
+    }
+  }
+
+  private getShareConversationId(): string {
+    return new URLSearchParams(window.location.search).get(SHARE_SESSION_ID_PARAM)?.trim() || ""
+  }
+
+  private extractChatGLMExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
+    if (this.exportApiMessages?.length) {
+      return this.extractChatGLMApiExportMessages(this.exportApiMessages, collector)
+    }
+
+    return this.extractChatGLMDomExportMessages(collector)
+  }
+
+  private extractChatGLMApiExportMessages(
+    apiMessages: ChatGLMApiMessage[],
+    collector?: ExportAssetCollector,
+  ): ExportMessage[] {
+    const messages: ExportMessage[] = []
+
+    apiMessages.forEach((message) => {
+      const userContent = this.extractChatGLMApiUserContent(message, collector).trim()
+      if (userContent) {
+        messages.push({ role: "user", content: userContent })
+      }
+
+      const assistantContent = this.extractChatGLMApiAssistantContent(message, collector).trim()
+      if (assistantContent) {
+        messages.push({ role: "assistant", content: assistantContent })
+      }
+    })
+
+    return messages
+  }
+
+  private extractChatGLMApiUserContent(
+    message: ChatGLMApiMessage,
+    collector?: ExportAssetCollector,
+  ): string {
+    const bodyParts: string[] = []
+    const attachments: ChatGLMExportAttachment[] = []
+
+    message.input?.content?.forEach((content) => {
+      if (content.type === "text" && content.text?.trim()) {
+        bodyParts.push(content.text.trim())
+      }
+
+      content.image?.forEach((item) => {
+        const attachment = this.createChatGLMApiAttachment(item, "image")
+        if (attachment) attachments.push(attachment)
+      })
+
+      content.file?.forEach((item) => {
+        const attachment = this.createChatGLMApiAttachment(item, "file")
+        if (attachment) attachments.push(attachment)
+      })
+    })
+
+    return this.formatChatGLMUserExportContent(bodyParts.join("\n\n"), attachments, collector)
+  }
+
+  private extractChatGLMApiAssistantContent(
+    message: ChatGLMApiMessage,
+    collector?: ExportAssetCollector,
+  ): string {
+    const includeThoughts = this.shouldIncludeThoughtsInExport()
+    const thoughtBlocks: string[] = []
+    const bodyParts: string[] = []
+    const imageAttachments: ChatGLMExportAttachment[] = []
+
+    message.output?.parts?.forEach((part) => {
+      const partThought = this.extractChatGLMApiThought(part, part)
+      if (partThought) {
+        if (includeThoughts) {
+          thoughtBlocks.push(this.formatAsThoughtBlockquote(partThought))
+        }
+        return
+      }
+
+      part.content?.forEach((content) => {
+        const thought = this.extractChatGLMApiThought(content, part)
+        if (thought) {
+          if (includeThoughts) {
+            thoughtBlocks.push(this.formatAsThoughtBlockquote(thought))
+          }
+          return
+        }
+
+        content.image?.forEach((image) => {
+          const attachment = this.createChatGLMGeneratedImageAttachment(image.image_url || "")
+          if (attachment) imageAttachments.push(attachment)
+        })
+
+        const text = this.extractChatGLMApiBodyText(content)
+        if (text) bodyParts.push(text)
+      })
+    })
+
+    message.output?.image_list?.forEach((source) => {
+      const attachment = this.createChatGLMGeneratedImageAttachment(source)
+      if (attachment) imageAttachments.push(attachment)
+    })
+
+    const imageMarkdown = this.formatChatGLMAssistantImageAttachments(imageAttachments, collector)
+    return [thoughtBlocks.join("\n\n"), imageMarkdown.join("\n\n"), bodyParts.join("\n\n")]
+      .filter(Boolean)
+      .join("\n\n")
+  }
+
+  private extractChatGLMApiThought(
+    content: ChatGLMApiOutputContent | ChatGLMApiOutputPart,
+    part: ChatGLMApiOutputPart,
+  ): string {
+    const thoughtText = this.extractChatGLMApiThoughtText(content)
+    if (!thoughtText) return ""
+
+    const contentType = "type" in content ? content.type || "" : ""
+    const answerType = content.answer_type || ""
+    if (/^(think|text_thinking|advanced_thinking)$/i.test(contentType || answerType)) {
+      return thoughtText
+    }
+
+    const showType = content.meta_data?.show_type || part.meta_data?.show_type || ""
+    const engineType = content.meta_data?.engine?.type || part.meta_data?.engine?.type || ""
+    if (/think|thought|reason|cot/i.test(`${showType} ${engineType}`)) {
+      return thoughtText
+    }
+
+    return ""
+  }
+
+  private extractChatGLMApiBodyText(content: ChatGLMApiOutputContent): string {
+    if (content.type === "tool_calls") return ""
+    if (this.extractChatGLMApiThought(content, { meta_data: content.meta_data })) return ""
+    return this.extractChatGLMApiContentText(content)
+  }
+
+  private extractChatGLMApiThoughtText(
+    content: ChatGLMApiOutputContent | ChatGLMApiOutputPart,
+  ): string {
+    const advancedThinkingText = content.advancedThinkingData
+      ?.map((item) => this.extractChatGLMApiContentText(item))
+      .filter(Boolean)
+      .join("\n\n")
+
+    return advancedThinkingText || this.extractChatGLMApiContentText(content)
+  }
+
+  private extractChatGLMApiContentText(
+    content: ChatGLMApiOutputContent | ChatGLMApiOutputPart,
+  ): string {
+    return (
+      content.think?.trim() ||
+      content.text?.trim() ||
+      content.answer?.trim() ||
+      ("content" in content && typeof content.content === "string" ? content.content.trim() : "") ||
+      ("intent_original_output" in content ? content.intent_original_output?.trim() || "" : "") ||
+      ("type" in content && content.type === "code" ? content.code?.trim() || "" : "")
+    )
+  }
+
+  private createChatGLMApiAttachment(
+    item: ChatGLMApiAttachment,
+    fallbackKind: ChatGLMExportAttachment["kind"],
+  ): ChatGLMExportAttachment | null {
+    const name = this.decodeChatGLMAttachmentName(
+      item.file_name || item.file_id || (fallbackKind === "image" ? "uploaded image" : "file"),
+    )
+    const source = this.normalizeChatGLMAttachmentSource(item.file_url || item.image_url || "")
+    const type = item.file_type || item.type || name.match(/\.([A-Za-z0-9]{1,10})$/)?.[1] || ""
+    const kind = this.isChatGLMImageAttachment(name, type, source) ? "image" : fallbackKind
+
+    if (!name && !source) return null
+
+    return {
+      kind,
+      name: name || (kind === "image" ? "uploaded image" : "file"),
+      source,
+      type,
+      size: item.file_size,
+    }
+  }
+
+  private createChatGLMGeneratedImageAttachment(
+    sourceValue: string,
+  ): ChatGLMExportAttachment | null {
+    const source = this.normalizeChatGLMAttachmentSource(sourceValue)
+    if (!source) return null
+
+    return {
+      kind: "image",
+      name: this.extractChatGLMFilenameFromUrl(source) || "generated image",
+      source,
+      type: "image",
+    }
+  }
+
+  private extractChatGLMDomExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
+    const container = document.querySelector(RESPONSE_CONTAINER_SELECTOR) || document.body
+    const blocks = [
+      ...Array.from(container.querySelectorAll(USER_QUERY_SELECTOR)).map((element) => ({
+        role: "user" as const,
+        element,
+      })),
+      ...Array.from(container.querySelectorAll(ASSISTANT_RESPONSE_SELECTOR)).map((element) => ({
+        role: "assistant" as const,
+        element,
+      })),
+    ]
+      .filter(({ element }) => !element.closest(".gh-root, .gh-user-query-markdown"))
+      .sort((left, right) => this.compareDomOrder(left.element, right.element))
+
+    const messages: ExportMessage[] = []
+    blocks.forEach(({ role, element }) => {
+      const content =
+        role === "user"
+          ? this.extractChatGLMUserQueryExportContent(element, collector)
+          : this.extractChatGLMAssistantExportContent(element, collector)
+      const normalized = content.trim()
+      if (!normalized) return
+
+      const previous = messages[messages.length - 1]
+      if (previous?.role === role) {
+        previous.content = `${previous.content}\n\n${normalized}`
+        return
+      }
+
+      messages.push({ role, content: normalized })
+    })
+
+    return messages
+  }
+
+  private compareDomOrder(left: Element, right: Element): number {
+    if (left === right) return 0
+    const position = left.compareDocumentPosition(right)
+    if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1
+    if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1
+    return 0
+  }
+
+  private extractChatGLMUserQueryExportContent(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string {
+    const body = this.extractUserQueryMarkdown(element).trim()
+    const attachments = this.extractChatGLMUserAttachmentsFromDom(element)
+    return this.formatChatGLMUserExportContent(body, attachments, collector)
+  }
+
+  private extractChatGLMAssistantExportContent(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string {
+    const includeThoughts = this.shouldIncludeThoughtsInExport()
+    const clone = element.cloneNode(true) as HTMLElement
+    const thoughtResult = this.extractThoughtBlockquotes(clone)
+    const thoughtBlocks = includeThoughts ? thoughtResult.blocks : []
+    thoughtResult.removalNodes.forEach((node) => node.remove())
+    clone.querySelectorAll(THINKING_CONTAINER_SELECTOR).forEach((node) => node.remove())
+
+    const imageMarkdown = this.extractChatGLMAssistantImageMarkdown(element, collector)
+    const markdownRoot = clone.matches(".markdown-body")
+      ? clone
+      : clone.querySelector(".markdown-body") || clone
+    const bodyClone = markdownRoot.cloneNode(true) as HTMLElement
+    bodyClone.querySelectorAll(EXPORT_DECORATION_SELECTOR).forEach((node) => node.remove())
+    bodyClone.querySelectorAll("img").forEach((node) => {
+      if (node instanceof HTMLImageElement && this.isExportableChatGLMImage(node)) {
+        node.remove()
+      }
+    })
+
+    const bodyMarkdown = (
+      htmlToMarkdown(bodyClone) || this.extractTextWithLineBreaks(bodyClone)
+    ).trim()
+
+    return [thoughtBlocks.join("\n\n"), imageMarkdown.join("\n\n"), bodyMarkdown]
+      .filter(Boolean)
+      .join("\n\n")
+  }
+
+  private formatChatGLMUserExportContent(
+    body: string,
+    attachments: ChatGLMExportAttachment[],
+    collector?: ExportAssetCollector,
+  ): string {
+    if (attachments.length === 0) return body
+
+    const uniqueAttachments = this.dedupeChatGLMAttachments(attachments)
+    const imageMarkdown = this.formatChatGLMUserImageAttachments(uniqueAttachments, collector)
+    const fileMarkdown = this.formatChatGLMUserFileAttachments(uniqueAttachments, collector)
+    const fileBlock =
+      fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
+
+    return [imageMarkdown.join("\n\n"), fileBlock, body].filter(Boolean).join("\n\n")
+  }
+
+  private extractChatGLMUserAttachmentsFromDom(element: Element): ChatGLMExportAttachment[] {
+    const scope = element.matches(USER_QUERY_SELECTOR)
+      ? element
+      : element.closest(USER_QUERY_SELECTOR)
+    if (!scope) return []
+
+    const attachments: ChatGLMExportAttachment[] = []
+
+    Array.from(scope.querySelectorAll("img")).forEach((image) => {
+      if (!(image instanceof HTMLImageElement)) return
+      const source = this.extractChatGLMImageSource(image)
+      if (!source) return
+      const name =
+        this.extractChatGLMAttachmentNameFromElement(image) || image.alt || "uploaded image"
+      attachments.push({
+        kind: "image",
+        name,
+        source,
+        type: name.match(/\.([A-Za-z0-9]{1,10})$/)?.[1] || "image",
+      })
+    })
+
+    const candidates = Array.from(
+      scope.querySelectorAll("a[href], button, [class*='file'], [class*='image-with-text']"),
+    )
+    candidates.forEach((candidate) => {
+      if (candidate.closest(".gh-root, .gh-user-query-markdown")) return
+      const attachment = this.extractChatGLMDomAttachment(candidate)
+      if (attachment) attachments.push(attachment)
+    })
+
+    return this.dedupeChatGLMAttachments(attachments)
+  }
+
+  private extractChatGLMDomAttachment(element: Element): ChatGLMExportAttachment | null {
+    const text = this.extractTextWithLineBreaks(element).replace(/\s+/g, " ").trim()
+    const source = this.extractChatGLMDownloadableSource(element)
+    const name =
+      this.extractChatGLMAttachmentNameFromText(text) || this.extractChatGLMFilenameFromUrl(source)
+    if (!name) return null
+
+    const type = name.match(/\.([A-Za-z0-9]{1,10})$/)?.[1] || ""
+    const kind = this.isChatGLMImageAttachment(name, type, source) ? "image" : "file"
+    return {
+      kind,
+      name,
+      source,
+      type,
+      size: this.parseChatGLMSizeLabel(text),
+    }
+  }
+
+  private extractChatGLMAttachmentNameFromElement(element: Element): string {
+    const text = this.extractTextWithLineBreaks(
+      element.closest("button, a, [class*='file']") || element,
+    )
+    return this.extractChatGLMAttachmentNameFromText(text)
+  }
+
+  private extractChatGLMAttachmentNameFromText(text: string): string {
+    const normalized = text.replace(/\s+/g, " ").trim()
+    return normalized.match(/[^\s/\\]+\.[A-Za-z0-9]{1,10}/)?.[0] || ""
+  }
+
+  private extractChatGLMAssistantImageMarkdown(
+    element: Element,
+    collector?: ExportAssetCollector,
+  ): string[] {
+    const attachments = Array.from(element.querySelectorAll("img"))
+      .filter(
+        (node): node is HTMLImageElement =>
+          node instanceof HTMLImageElement && this.isExportableChatGLMImage(node),
+      )
+      .map((image) => ({
+        kind: "image" as const,
+        name:
+          image.alt ||
+          this.extractChatGLMFilenameFromUrl(this.extractChatGLMImageSource(image)) ||
+          "generated image",
+        source: this.extractChatGLMImageSource(image),
+        type: "image",
+      }))
+
+    return this.formatChatGLMAssistantImageAttachments(attachments, collector)
+  }
+
+  private formatChatGLMUserImageAttachments(
+    attachments: ChatGLMExportAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind === "image" && attachment.source)
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(attachment.name || "uploaded image")
+        const assetPath = collector
+          ? addImageExportAsset(collector, {
+              source: attachment.source,
+              alt: attachment.name,
+              extensionHint: attachment.name || attachment.type,
+              directory: "assets/images",
+              idPrefix: "chatglm-user-image",
+              filenamePrefix: "chatglm-user-image",
+            })
+          : attachment.source
+
+        return assetPath ? `![${label || "uploaded image"}](${assetPath})` : ""
+      })
+      .filter(Boolean)
+  }
+
+  private formatChatGLMAssistantImageAttachments(
+    attachments: ChatGLMExportAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return this.dedupeChatGLMAttachments(attachments)
+      .filter((attachment) => attachment.kind === "image" && attachment.source)
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(attachment.name || "generated image")
+        const assetPath = collector
+          ? addImageExportAsset(collector, {
+              source: attachment.source,
+              alt: attachment.name,
+              extensionHint: attachment.name || attachment.type,
+              directory: "assets/images",
+              idPrefix: "chatglm-generated-image",
+              filenamePrefix: "chatglm-generated-image",
+            })
+          : attachment.source
+
+        return assetPath ? `![${label || "generated image"}](${assetPath})` : ""
+      })
+      .filter(Boolean)
+  }
+
+  private formatChatGLMUserFileAttachments(
+    attachments: ChatGLMExportAttachment[],
+    collector?: ExportAssetCollector,
+  ): string[] {
+    return attachments
+      .filter((attachment) => attachment.kind === "file")
+      .map((attachment) => {
+        const label = escapeMarkdownLinkText(this.formatChatGLMAttachmentLabel(attachment))
+        const assetPath =
+          attachment.source && collector
+            ? addFileExportAsset(collector, {
+                source: attachment.source,
+                name: attachment.name,
+                mimeHint: attachment.type || attachment.name,
+                directory: "assets/files",
+                idPrefix: "chatglm-user-file",
+              })
+            : attachment.source
+
+        return assetPath ? `- [${label}](${assetPath})` : `- ${label}`
+      })
+  }
+
+  private formatChatGLMAttachmentLabel(attachment: ChatGLMExportAttachment): string {
+    const sizeLabel = attachment.size ? `, ${this.formatChatGLMFileSize(attachment.size)}` : ""
+    if (!attachment.type) return `${attachment.name}${sizeLabel}`
+    if (attachment.name.toLowerCase().endsWith(attachment.type.toLowerCase())) {
+      return `${attachment.name}${sizeLabel}`
+    }
+    return `${attachment.name} (${attachment.type}${sizeLabel})`
+  }
+
+  private dedupeChatGLMAttachments(
+    attachments: ChatGLMExportAttachment[],
+  ): ChatGLMExportAttachment[] {
+    const seen = new Set<string>()
+    const unique: ChatGLMExportAttachment[] = []
+
+    attachments.forEach((attachment) => {
+      const sourceKey = this.getChatGLMAttachmentSourceKey(attachment.source)
+      const nameKey = `${attachment.kind}:${attachment.name.trim().toLowerCase()}:${attachment.type.trim().toLowerCase()}`
+      const key = sourceKey ? `${attachment.kind}:source:${sourceKey}` : nameKey
+      if (seen.has(key)) return
+      seen.add(key)
+      unique.push(attachment)
+    })
+
+    return unique
+  }
+
+  private extractThoughtBlockquotes(element: Element): {
+    blocks: string[]
+    removalNodes: Element[]
+  } {
+    const thoughtNodes = Array.from(element.querySelectorAll(THINKING_CONTAINER_SELECTOR)).filter(
+      (node) => !node.parentElement?.closest(THINKING_CONTAINER_SELECTOR),
+    )
+
+    const blocks: string[] = []
+    const removalNodes: Element[] = []
+
+    thoughtNodes.forEach((node) => {
+      const target = node.querySelector("blockquote[slot='content'], blockquote") || node
+      const clone = target.cloneNode(true) as HTMLElement
+      clone.querySelectorAll(EXPORT_DECORATION_SELECTOR).forEach((child) => child.remove())
+
+      const wrapper = document.createElement("div")
+      Array.from(clone.childNodes).forEach((child) => wrapper.appendChild(child.cloneNode(true)))
+      const markdown = (htmlToMarkdown(wrapper) || this.extractTextWithLineBreaks(clone)).trim()
+      if (markdown) blocks.push(this.formatAsThoughtBlockquote(markdown))
+      removalNodes.push(node)
+    })
+
+    return { blocks, removalNodes }
+  }
+
+  private shouldIncludeThoughtsInExport(): boolean {
+    if (typeof this.exportIncludeThoughtsOverride === "boolean") {
+      return this.exportIncludeThoughtsOverride
+    }
+    return false
+  }
+
+  private formatAsThoughtBlockquote(markdown: string): string {
+    const cleaned = markdown.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n")
+    const quotedLines = cleaned.split("\n").map((line) => (line.trim() ? `> ${line}` : ">"))
+    return ["> [Thought]", ...quotedLines].join("\n")
+  }
+
+  private isExportableChatGLMImage(image: HTMLImageElement): boolean {
+    const source = this.extractChatGLMImageSource(image)
+    if (!source) return false
+    if (!isDownloadableExportAssetUrl(source)) return false
+    if (source.startsWith("data:image/svg+xml")) return false
+
+    try {
+      const url = new URL(source, window.location.href)
+      if (url.hostname === "chatglm.cn" && /^\/(assets|icon)\//i.test(url.pathname)) {
+        return false
+      }
+      if (/image_loading|newLogo|avatar|favicon|icon/i.test(url.pathname)) return false
+      if (/\/(chat\/image|testpath|file)\//i.test(url.pathname)) return true
+    } catch {
+      return false
+    }
+
+    const rect = image.getBoundingClientRect()
+    return (
+      Math.max(image.naturalWidth || 0, rect.width) >= 80 &&
+      Math.max(image.naturalHeight || 0, rect.height) >= 80
+    )
+  }
+
+  private extractChatGLMImageSource(image: HTMLImageElement): string {
+    if (this.isChatGLMAvatarImage(image)) return ""
+
+    const candidates = [image.currentSrc || "", image.src || "", image.getAttribute("src") || ""]
+    for (const candidate of candidates) {
+      const source = this.normalizeChatGLMAttachmentSource(candidate)
+      if (source) return source
+    }
+    return ""
+  }
+
+  private isChatGLMAvatarImage(image: HTMLImageElement): boolean {
+    if (image.classList.contains("user-img") || image.classList.contains("avatar")) return true
+    if (image.closest(".user-img, .avatar, .user-avatar, .userInfoBar-header")) return true
+
+    const source = image.currentSrc || image.src || image.getAttribute("src") || ""
+    return /\/wechat_avatar\//i.test(source)
+  }
+
+  private extractChatGLMDownloadableSource(root: Element): string {
+    const image = Array.from(root.querySelectorAll("img")).find(
+      (node): node is HTMLImageElement =>
+        node instanceof HTMLImageElement && Boolean(this.extractChatGLMImageSource(node)),
+    )
+    if (image) return this.extractChatGLMImageSource(image)
+
+    const nodes = [root, ...Array.from(root.querySelectorAll("*"))]
+    for (const node of nodes) {
+      for (const attr of CHATGLM_ATTACHMENT_SOURCE_ATTRS) {
+        const source = this.normalizeChatGLMAttachmentSource(node.getAttribute(attr) || "")
+        if (source) return source
+      }
+    }
+
+    return ""
+  }
+
+  private normalizeChatGLMAttachmentSource(value: string): string {
+    const source = normalizeExportAssetUrl(value)
+    if (!source || !isDownloadableExportAssetUrl(source)) return ""
+
+    try {
+      const url = new URL(source, window.location.href)
+      if (url.hostname === "chatglm.cn" && /^\/(assets|icon)\//i.test(url.pathname)) return ""
+      if (/wechat_avatar|image_loading|newLogo|avatar|favicon|iconfont/i.test(url.pathname)) {
+        return ""
+      }
+    } catch {
+      return ""
+    }
+
+    return source
+  }
+
+  private isChatGLMImageAttachment(name: string, type: string, source: string): boolean {
+    const signal = `${name} ${type} ${source}`.toLowerCase()
+    return (
+      /\bimage\b/.test(signal) ||
+      /图片|圖像|图像/.test(signal) ||
+      /\.(png|jpe?g|webp|gif|avif|svg)(?:$|[?#\s])/.test(signal) ||
+      /^data:image\//i.test(source)
+    )
+  }
+
+  private parseChatGLMSizeLabel(value: string): number | undefined {
+    const match = value.match(/(\d+(?:\.\d+)?)\s*(B|KB|MB|GB|TB)/i)
+    if (!match) return undefined
+    const amount = Number(match[1])
+    if (!Number.isFinite(amount)) return undefined
+    const unit = match[2].toUpperCase()
+    const multiplier =
+      unit === "TB"
+        ? 1024 ** 4
+        : unit === "GB"
+          ? 1024 ** 3
+          : unit === "MB"
+            ? 1024 ** 2
+            : unit === "KB"
+              ? 1024
+              : 1
+    return Math.round(amount * multiplier)
+  }
+
+  private formatChatGLMFileSize(size: number): string {
+    if (!Number.isFinite(size) || size <= 0) return ""
+    const units = ["B", "KB", "MB", "GB", "TB"]
+    let value = size
+    let unitIndex = 0
+    while (value >= 1024 && unitIndex < units.length - 1) {
+      value /= 1024
+      unitIndex += 1
+    }
+    const formatted =
+      value >= 10 || unitIndex === 0 ? Math.round(value).toString() : value.toFixed(1)
+    return `${formatted} ${units[unitIndex]}`
+  }
+
+  private extractChatGLMFilenameFromUrl(source: string): string {
+    if (!source) return ""
+    try {
+      const path = new URL(source, window.location.href).pathname
+      return this.decodeChatGLMAttachmentName(path.split("/").pop() || "")
+    } catch {
+      return ""
+    }
+  }
+
+  private getChatGLMAttachmentSourceKey(source: string): string {
+    if (!source) return ""
+    if (/^(blob:|data:)/i.test(source)) return source
+
+    try {
+      const url = new URL(source, window.location.href)
+      return `${url.hostname}${url.pathname}`.toLowerCase()
+    } catch {
+      return source.split("?")[0].toLowerCase()
+    }
+  }
+
+  private decodeChatGLMAttachmentName(value: string): string {
+    try {
+      return decodeURIComponent(value)
+    } catch {
+      return value
     }
   }
 
