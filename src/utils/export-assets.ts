@@ -147,9 +147,9 @@ export function getExportAttachmentSourceKey(source: string): string {
 
   try {
     const url = new URL(source, window.location.href)
-    return `${url.hostname}${url.pathname}`.toLowerCase()
+    return `${url.host.toLowerCase()}${url.pathname}${url.search}`
   } catch {
-    return source.split("?")[0].toLowerCase()
+    return source.split("#")[0]
   }
 }
 

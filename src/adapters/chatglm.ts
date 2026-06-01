@@ -986,6 +986,9 @@ export class ChatGLMAdapter extends SiteAdapter {
       if (candidate.closest(".gh-root, .gh-user-query-markdown")) return
 
       const thoughtRoot = this.findChatGLMThoughtRoot(candidate)
+      const containingAnswer = thoughtRoot?.closest(ASSISTANT_RESPONSE_SELECTOR)
+      if (thoughtRoot && containingAnswer && containingAnswer !== thoughtRoot) return
+
       const target = thoughtRoot || candidate
       if (!thoughtRoot && candidate.closest(THINKING_CONTAINER_SELECTOR)) return
       if (seen.has(target)) return
