@@ -55,10 +55,15 @@ const USER_TEXT_SELECTOR = ".question-txt"
 const ASSISTANT_RESPONSE_SELECTOR = ".answer-content-wrap"
 const ASSISTANT_MARKDOWN_SELECTOR = ".answer-content-wrap .markdown-body"
 const THINKING_CONTAINER_SELECTOR = [
+  ".advance-thinking",
+  ".advance-thinking-area",
   ".advanced-thinking",
   ".advanced-thinking-data",
+  ".text-advance-thinking-content",
   ".thinking-chain-container",
   ".thinking-block",
+  ".thinking-content",
+  ".thinking-item",
   "[class*='thinking']",
   "[class*='think']",
   "[class*='reason']",
@@ -942,12 +947,13 @@ export class ChatGLMAdapter extends SiteAdapter {
 
   private extractChatGLMDomExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
     const container = document.querySelector(RESPONSE_CONTAINER_SELECTOR) || document.body
+    const assistantElements = this.collectChatGLMAssistantExportElements(container)
     const blocks = [
       ...Array.from(container.querySelectorAll(USER_QUERY_SELECTOR)).map((element) => ({
         role: "user" as const,
         element,
       })),
-      ...Array.from(container.querySelectorAll(ASSISTANT_RESPONSE_SELECTOR)).map((element) => ({
+      ...assistantElements.map((element) => ({
         role: "assistant" as const,
         element,
       })),
@@ -976,6 +982,43 @@ export class ChatGLMAdapter extends SiteAdapter {
     return messages
   }
 
+  private collectChatGLMAssistantExportElements(container: Element): Element[] {
+    const elements: Element[] = []
+    const seen = new Set<Element>()
+    const candidates = Array.from(
+      container.querySelectorAll(`${ASSISTANT_RESPONSE_SELECTOR}, ${THINKING_CONTAINER_SELECTOR}`),
+    )
+
+    candidates.forEach((candidate) => {
+      if (candidate.closest(".gh-root, .gh-user-query-markdown")) return
+
+      const thoughtRoot = this.findChatGLMThoughtRoot(candidate)
+      const target = thoughtRoot || candidate
+      if (!thoughtRoot && candidate.closest(THINKING_CONTAINER_SELECTOR)) return
+      if (seen.has(target)) return
+
+      seen.add(target)
+      elements.push(target)
+    })
+
+    return elements.sort((left, right) => this.compareDomOrder(left, right))
+  }
+
+  private findChatGLMThoughtRoot(element: Element): Element | null {
+    let root: Element | null = element.matches(THINKING_CONTAINER_SELECTOR)
+      ? element
+      : element.closest(THINKING_CONTAINER_SELECTOR)
+    if (!root) return null
+
+    let parent = root.parentElement?.closest(THINKING_CONTAINER_SELECTOR) || null
+    while (parent) {
+      root = parent
+      parent = root.parentElement?.closest(THINKING_CONTAINER_SELECTOR) || null
+    }
+
+    return root
+  }
+
   private compareDomOrder(left: Element, right: Element): number {
     if (left === right) return 0
     const position = left.compareDocumentPosition(right)
@@ -998,9 +1041,12 @@ export class ChatGLMAdapter extends SiteAdapter {
     collector?: ExportAssetCollector,
   ): string {
     const includeThoughts = this.shouldIncludeThoughtsInExport()
+    const isThoughtOnlyElement = element.matches(THINKING_CONTAINER_SELECTOR)
     const clone = element.cloneNode(true) as HTMLElement
     const thoughtResult = this.extractThoughtBlockquotes(clone)
     const thoughtBlocks = includeThoughts ? thoughtResult.blocks : []
+    if (isThoughtOnlyElement) return thoughtBlocks.join("\n\n")
+
     thoughtResult.removalNodes.forEach((node) => node.remove())
     clone.querySelectorAll(THINKING_CONTAINER_SELECTOR).forEach((node) => node.remove())
 
@@ -1229,7 +1275,11 @@ export class ChatGLMAdapter extends SiteAdapter {
     blocks: string[]
     removalNodes: Element[]
   } {
-    const thoughtNodes = Array.from(element.querySelectorAll(THINKING_CONTAINER_SELECTOR)).filter(
+    const candidates = [
+      ...(element.matches(THINKING_CONTAINER_SELECTOR) ? [element] : []),
+      ...Array.from(element.querySelectorAll(THINKING_CONTAINER_SELECTOR)),
+    ]
+    const thoughtNodes = candidates.filter(
       (node) => !node.parentElement?.closest(THINKING_CONTAINER_SELECTOR),
     )
 
@@ -1237,7 +1287,10 @@ export class ChatGLMAdapter extends SiteAdapter {
     const removalNodes: Element[] = []
 
     thoughtNodes.forEach((node) => {
-      const target = node.querySelector("blockquote[slot='content'], blockquote") || node
+      const target =
+        node.querySelector(
+          "blockquote[slot='content'], blockquote, .text-advance-thinking-content .markdown-body, .thinking-content .markdown-body, .advance-thinking-area .markdown-body, .markdown-body",
+        ) || node
       const clone = target.cloneNode(true) as HTMLElement
       clone.querySelectorAll(EXPORT_DECORATION_SELECTOR).forEach((child) => child.remove())
 
