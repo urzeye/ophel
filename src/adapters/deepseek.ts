@@ -442,6 +442,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     }
 
     const clone = source.cloneNode(true) as HTMLElement
+    this.removeUserAttachmentContent(clone)
 
     clone
       .querySelectorAll(
@@ -1998,7 +1999,7 @@ export class DeepSeekAdapter extends SiteAdapter {
       if (!name) return []
 
       const source = this.extractAttachmentCardSource(card)
-      const type = this.extractAttachmentCardType(card) || this.extractFileTypeFromName(name)
+      const type = this.extractAttachmentCardType(card, name) || this.extractFileTypeFromName(name)
       const kind = this.isImageAttachmentName(name, type) ? "image" : "file"
 
       return [
@@ -2018,8 +2019,9 @@ export class DeepSeekAdapter extends SiteAdapter {
     attachments: DeepSeekUserAttachment[],
     collector?: ExportAssetCollector,
   ): string {
+    const cleanBody = this.stripUserAttachmentBodyText(body, attachments)
     if (attachments.length === 0) {
-      return body
+      return cleanBody
     }
 
     const imageMarkdown = this.formatUserImageAttachments(attachments, collector)
@@ -2027,7 +2029,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     const fileBlock =
       fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
 
-    return [imageMarkdown.join("\n\n"), fileBlock, body].filter(Boolean).join("\n\n")
+    return [imageMarkdown.join("\n\n"), fileBlock, cleanBody].filter(Boolean).join("\n\n")
   }
 
   private formatUserImageAttachments(
@@ -2128,6 +2130,63 @@ export class DeepSeekAdapter extends SiteAdapter {
     return this.extractAttachmentCardName(element) !== ""
   }
 
+  private removeUserAttachmentContent(root: HTMLElement): void {
+    const candidates = Array.from(root.querySelectorAll("div, a, span"))
+
+    candidates.forEach((candidate) => {
+      if (!(candidate instanceof HTMLElement) || !candidate.isConnected) return
+      if (!this.isStandaloneUserAttachmentContent(candidate)) return
+
+      candidate.remove()
+    })
+  }
+
+  private isStandaloneUserAttachmentContent(element: Element): boolean {
+    if (!this.isLikelyUserAttachmentContainer(element)) return false
+
+    const name = this.extractAttachmentCardName(element)
+    if (!name) return false
+
+    const type = this.extractAttachmentCardType(element, name) || this.extractFileTypeFromName(name)
+    const size = this.extractAttachmentCardSize(element)
+    const text = this.normalizeAttachmentComparisonText(element.textContent || "")
+    const expectedText = this.normalizeAttachmentComparisonText([name, type, size].join(" "))
+
+    return Boolean(expectedText) && text.length <= expectedText.length + 12
+  }
+
+  private stripUserAttachmentBodyText(body: string, attachments: DeepSeekUserAttachment[]): string {
+    if (!body || attachments.length === 0) return body
+
+    return body
+      .replace(/\r\n/g, "\n")
+      .split("\n")
+      .filter((line) => !this.isUserAttachmentBodyLine(line, attachments))
+      .join("\n")
+      .trim()
+  }
+
+  private isUserAttachmentBodyLine(line: string, attachments: DeepSeekUserAttachment[]): boolean {
+    const normalizedLine = this.normalizeAttachmentComparisonText(line)
+    if (!normalizedLine) return false
+
+    return attachments.some((attachment) => {
+      const name = this.normalizeAttachmentComparisonText(attachment.name)
+      if (!name || !normalizedLine.includes(name)) return false
+
+      const size = this.normalizeAttachmentComparisonText(attachment.size)
+      if (size && normalizedLine.includes(size)) return true
+
+      const type =
+        attachment.type && !this.fileNameEndsWithExtension(attachment.name, attachment.type)
+          ? this.normalizeAttachmentComparisonText(attachment.type)
+          : ""
+      if (type && normalizedLine.includes(type)) return true
+
+      return normalizedLine === name
+    })
+  }
+
   private extractAttachmentCardName(card: Element): string {
     const textNodes = Array.from(card.querySelectorAll("div, span, p")).filter(
       (node) => !node.querySelector("svg, img"),
@@ -2160,13 +2219,15 @@ export class DeepSeekAdapter extends SiteAdapter {
     return ""
   }
 
-  private extractAttachmentCardType(card: Element): string {
+  private extractAttachmentCardType(card: Element, name = ""): string {
+    const normalizedName = this.normalizeAttachmentText(name).toLowerCase()
     const textParts = Array.from(card.querySelectorAll("div, span, p"))
       .map((node) => this.normalizeAttachmentText(node.textContent || ""))
       .filter(Boolean)
 
     const info = textParts.find(
       (value) =>
+        (!normalizedName || !value.toLowerCase().includes(normalizedName)) &&
         !this.looksLikeFilename(value) &&
         /^[A-Za-z0-9.+-]{1,12}(?:\s+\d+(?:\.\d+)?\s*[KMGT]?B)?$/i.test(value),
     )
@@ -2249,6 +2310,14 @@ export class DeepSeekAdapter extends SiteAdapter {
 
   private normalizeAttachmentText(value: string): string {
     return value.replace(/\s+/g, " ").trim()
+  }
+
+  private normalizeAttachmentComparisonText(value: string): string {
+    return this.normalizeAttachmentText(value)
+      .toLowerCase()
+      .replace(/[（]/g, "(")
+      .replace(/[）]/g, ")")
+      .replace(/\s+/g, "")
   }
 
   private fileNameEndsWithExtension(name: string, extension: string): boolean {
