@@ -178,6 +178,7 @@ export class ClaudeAdapter extends SiteAdapter {
   private activeOrganizationIdExpiresAt = 0
   private exportDocumentCache: ClaudeDocumentExportCacheEntry[] = []
   private exportIncludeThoughtsOverride: boolean | null = null
+  private exportThoughtBlocks = new WeakMap<Element, string[]>()
 
   match(): boolean {
     return (
@@ -1647,14 +1648,21 @@ export class ClaudeAdapter extends SiteAdapter {
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
     this.exportIncludeThoughtsOverride = context.includeThoughts
     this.exportDocumentCache = []
+    this.exportThoughtBlocks = new WeakMap<Element, string[]>()
+
+    const thoughtButtonsExpandedForExport = context.includeThoughts
+      ? await this.expandClaudeThoughtBlocksForExport()
+      : []
+    if (context.includeThoughts) {
+      this.captureClaudeThoughtBlocksForExport()
+    }
+
     const state: ClaudeExportLifecycleState = {
       documentPanelWasOpen: this.isClaudeDocumentPanelOpen(),
       documentSignature: this.getClaudeDocumentSignature(),
       documentTitle: this.getClaudeDocumentTitle(),
       documentArtifactIndex: null,
-      thoughtButtonsExpandedForExport: context.includeThoughts
-        ? await this.expandClaudeThoughtBlocksForExport()
-        : [],
+      thoughtButtonsExpandedForExport,
     }
 
     if (!this.shouldCollectClaudeDocumentsForExport(context)) {
@@ -1690,6 +1698,7 @@ export class ClaudeAdapter extends SiteAdapter {
       }
       this.exportDocumentCache = []
       this.exportIncludeThoughtsOverride = null
+      this.exportThoughtBlocks = new WeakMap<Element, string[]>()
     }
   }
 
@@ -2194,7 +2203,7 @@ export class ClaudeAdapter extends SiteAdapter {
     collector?: ExportAssetCollector,
   ): string {
     const includeThoughts = this.shouldIncludeThoughtsInExport()
-    const thoughtBlocks = includeThoughts ? this.extractClaudeThoughtBlockquotes(element) : []
+    const thoughtBlocks = includeThoughts ? this.getClaudeThoughtBlocksForElement(element) : []
     const parts: string[] = []
     const blocks = this.getClaudeAssistantExportBlocks(element)
 
@@ -2275,14 +2284,26 @@ export class ClaudeAdapter extends SiteAdapter {
 
       this.simulateClick(button)
       expanded.push(button)
-      await this.sleep(50)
-    }
-
-    if (expanded.length > 0) {
-      await this.sleep(250)
+      await this.waitForClaudeThoughtBlockExpanded(button)
     }
 
     return expanded
+  }
+
+  private async waitForClaudeThoughtBlockExpanded(
+    button: HTMLElement,
+    timeoutMs = 2500,
+  ): Promise<void> {
+    const container = this.getClaudeThoughtBlockContainer(button)
+    const startedAt = Date.now()
+
+    while (Date.now() - startedAt < timeoutMs) {
+      if (button.getAttribute("aria-expanded") === "true") {
+        const markdown = container ? this.extractClaudeThoughtMarkdown(container).trim() : ""
+        if (markdown) return
+      }
+      await this.sleep(80)
+    }
   }
 
   private restoreClaudeThoughtBlocksAfterExport(state: ClaudeExportLifecycleState): void {
@@ -2339,6 +2360,33 @@ export class ClaudeAdapter extends SiteAdapter {
     return this.getClaudeThoughtBlockContainer(element) !== null
   }
 
+  private captureClaudeThoughtBlocksForExport(): void {
+    const root = this.getOutlineRoot()
+    const responses = Array.from(root.querySelectorAll(".font-claude-response")).filter(
+      (element) => !element.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR),
+    )
+
+    responses.forEach((response) => {
+      const blocks = this.extractClaudeThoughtBlockquotes(response)
+      if (blocks.length > 0) {
+        this.exportThoughtBlocks.set(response, blocks)
+      }
+    })
+  }
+
+  private getClaudeThoughtBlocksForElement(element: Element): string[] {
+    const cached = this.exportThoughtBlocks.get(element)
+    if (cached) return cached
+
+    const response = element.closest(".font-claude-response")
+    if (response) {
+      const responseCached = this.exportThoughtBlocks.get(response)
+      if (responseCached) return responseCached
+    }
+
+    return this.extractClaudeThoughtBlockquotes(element)
+  }
+
   private extractClaudeThoughtBlockquotes(element: Element): string[] {
     const buttons = this.getClaudeThoughtToggleButtons(element)
     const blocks: string[] = []
@@ -2371,10 +2419,10 @@ export class ClaudeAdapter extends SiteAdapter {
 
   private formatAsThoughtBlockquote(markdown: string, title = ""): string {
     const normalizedTitle = title.replace(/\s+/g, " ").trim()
-    const heading = normalizedTitle ? `> [Thoughts] ${normalizedTitle}` : "> [Thoughts]"
+    const titleLines = normalizedTitle ? [`> **${normalizedTitle}**`, ">"] : []
     const lines = markdown.replace(/\r\n/g, "\n").split("\n")
     const quotedLines = lines.map((line) => (line.trim().length > 0 ? `> ${line}` : ">"))
-    return [heading, ...quotedLines].join("\n")
+    return ["> [Thoughts]", ...titleLines, ...quotedLines].join("\n")
   }
 
   private formatClaudeArtifactExportContent(
