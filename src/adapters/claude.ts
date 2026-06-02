@@ -121,21 +121,14 @@ function applyClaudeThemeDomHints(mode: "light" | "dark") {
   const body = document.body
 
   root.classList.toggle("dark", mode === "dark")
-  root.classList.toggle("light", mode === "light")
-  root.setAttribute("data-theme", mode)
+  root.classList.remove("light")
   root.style.colorScheme = mode
 
   if (!body) return
 
-  body.classList.toggle("dark", mode === "dark")
-  body.classList.toggle("light", mode === "light")
-  body.setAttribute("data-theme", mode)
-  body.style.colorScheme = mode
-
-  const colorSchemeMeta = document.querySelector('meta[name="color-scheme"]')
-  if (colorSchemeMeta) {
-    colorSchemeMeta.setAttribute("content", mode)
-  }
+  body.classList.remove("dark", "light")
+  body.removeAttribute("data-theme")
+  body.style.removeProperty("color-scheme")
 }
 
 function getClaudeThemeTabId(): string {
@@ -2584,19 +2577,25 @@ export class ClaudeAdapter extends SiteAdapter {
 
   // ==================== 主题切换 ====================
 
-  async toggleTheme(targetMode: "light" | "dark"): Promise<boolean> {
+  async toggleTheme(targetMode: "light" | "dark" | "system"): Promise<boolean> {
     try {
       // Claude 使用 localStorage.LSS-userThemeMode 存储主题
       // 格式: {"value":"dark","tabId":"xxx","timestamp":xxx}
       const previousValue = localStorage.getItem("LSS-userThemeMode")
+      const resolvedMode =
+        targetMode === "system"
+          ? window.matchMedia?.("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light"
+          : targetMode
       const themeData = {
-        value: targetMode,
+        value: targetMode === "system" ? "auto" : targetMode,
         tabId: getClaudeThemeTabId(),
         timestamp: Date.now(),
       }
       const nextValue = JSON.stringify(themeData)
       localStorage.setItem("LSS-userThemeMode", nextValue)
-      applyClaudeThemeDomHints(targetMode)
+      applyClaudeThemeDomHints(resolvedMode)
 
       // 触发 storage 事件通知其他组件
       window.dispatchEvent(

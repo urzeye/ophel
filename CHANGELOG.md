@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **Claude theme mode sync** — Claude theme switching now keeps Claude-specific DOM hints inside the Claude adapter and avoids writing extra page-level `light` / `data-theme` / `color-scheme` markers that could diverge from Claude's native theme state.
+
 ---
 
 ## [1.0.56] - 2026-06-02
