@@ -122,7 +122,6 @@ function applyClaudeThemeDomHints(mode: "light" | "dark") {
 
   root.classList.toggle("dark", mode === "dark")
   root.classList.remove("light")
-  root.removeAttribute("data-theme")
   root.style.colorScheme = mode
 
   if (!body) return
