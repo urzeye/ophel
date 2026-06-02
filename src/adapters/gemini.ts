@@ -4153,7 +4153,7 @@ export class GeminiAdapter extends SiteAdapter {
       }
 
       const handleMessage = (event: MessageEvent) => {
-        if (event.source !== window) return
+        if (event.origin && event.origin !== window.location.origin) return
         const data = event.data as {
           type?: unknown
           requestId?: unknown
