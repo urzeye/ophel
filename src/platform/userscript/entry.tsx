@@ -2,6 +2,7 @@ import React from "react"
 import ReactDOM from "react-dom/client"
 
 import { USERSCRIPT_RESOURCE_DEFINITIONS } from "./resource-manifest"
+import { injectGeminiCanvasCodeBridge } from "./gemini-canvas-inject"
 import { getInitialUserscriptLanguage, primeUserscriptLocales, subscribeI18nChanges } from "./i18n"
 import { injectScrollLock } from "./scroll-lock-inject"
 import { applyOphelPlatformFontClass } from "~utils/font"
@@ -307,6 +308,7 @@ if ((window as any).ophelUserscriptInitialized) {
 // 必须在 document-start 时同步执行，在页面代码加载前劫持滚动 API
 // 否则 ChatGPT 等平台可能缓存原始 API 引用，导致位置锁被绕过
 injectScrollLock()
+injectGeminiCanvasCodeBridge()
 
 // 注意：Flutter 滚动容器现在在 scroll-helper.ts 中直接通过 unsafeWindow 访问
 // 不再需要在这里注入 Main World 监听器
