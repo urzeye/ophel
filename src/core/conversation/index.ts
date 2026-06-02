@@ -3,4 +3,8 @@
  */
 
 export * from "./types"
-export { ConversationManager } from "./manager"
+export {
+  ConversationManager,
+  type ConversationExportProgress,
+  type ConversationExportStage,
+} from "./manager"

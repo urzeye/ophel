@@ -17,6 +17,7 @@ import {
   downloadExportPackage,
   downloadFile,
   type ExportBundle,
+  type ExportFormat,
   type ExportMessage,
   formatToJSON,
   formatToMarkdown,
@@ -30,6 +31,21 @@ import { showToast } from "~utils/toast"
 import type { Conversation, ConversationData, Tag } from "./types"
 
 export type { Conversation, ConversationData, Folder, Tag }
+
+export type ConversationExportStage =
+  | "loading-history"
+  | "preparing"
+  | "extracting"
+  | "packaging"
+  | "downloading"
+  | "copying"
+  | "restoring"
+
+export interface ConversationExportProgress {
+  conversationId: string
+  format: ExportFormat
+  stage: ConversationExportStage
+}
 
 export interface ConversationDeleteResult {
   id: string
@@ -81,6 +97,8 @@ export class ConversationManager {
 
   // 数据变更回调（用于通知 UI 刷新）
   private onChangeCallbacks: Array<() => void> = []
+  private onExportProgressCallbacks: Array<(progress: ConversationExportProgress | null) => void> =
+    []
 
   constructor(adapter: SiteAdapter) {
     this.siteAdapter = adapter
@@ -115,11 +133,24 @@ export class ConversationManager {
     }
   }
 
+  onExportProgress(callback: (progress: ConversationExportProgress | null) => void): () => void {
+    this.onExportProgressCallbacks.push(callback)
+    return () => {
+      this.onExportProgressCallbacks = this.onExportProgressCallbacks.filter(
+        (cb) => cb !== callback,
+      )
+    }
+  }
+
   /**
    * 触发数据变更通知
    */
   notifyDataChange() {
     this.onChangeCallbacks.forEach((cb) => cb())
+  }
+
+  private notifyExportProgress(progress: ConversationExportProgress | null) {
+    this.onExportProgressCallbacks.forEach((cb) => cb(progress))
   }
 
   async init() {
@@ -1031,10 +1062,7 @@ export class ConversationManager {
   /**
    * 导出会话
    */
-  async exportConversation(
-    convId: string,
-    format: "markdown" | "json" | "txt" | "clipboard",
-  ): Promise<boolean> {
+  async exportConversation(convId: string, format: ExportFormat): Promise<boolean> {
     // 检查是否为当前会话
     const currentSessionId = this.siteAdapter.getSessionId()
     if (currentSessionId !== convId) {
@@ -1063,8 +1091,17 @@ export class ConversationManager {
 
     let exportLifecycleEnabled = false
     let exportLifecycleState: unknown = null
+    const notifyProgress = (stage: ConversationExportStage) => {
+      this.notifyExportProgress({
+        conversationId: convId,
+        format,
+        stage,
+      })
+    }
 
     try {
+      notifyProgress("loading-history")
+
       // 加载完整历史（滚动到顶部）
       if (scrollContainer) {
         let prevHeight = 0
@@ -1087,10 +1124,12 @@ export class ConversationManager {
       }
 
       // 导出前钩子（站点可选实现）
+      notifyProgress("preparing")
       exportLifecycleEnabled = true
       exportLifecycleState = await this.siteAdapter.prepareConversationExport(exportContext)
 
       // 只有 ZIP 模式才收集附件资产；Markdown 模式保持单文件导出路径。
+      notifyProgress("extracting")
       const shouldPackageAssets = format === "markdown" && exportPackaging === "zip"
       const exportBundle = shouldPackageAssets
         ? await this.siteAdapter.extractExportBundle(exportContext)
@@ -1138,6 +1177,7 @@ export class ConversationManager {
       const filenamePrefix = `${safeSiteName} - `
 
       if (format === "clipboard") {
+        notifyProgress("copying")
         content = formatToMarkdown(metadata, messages)
         await navigator.clipboard.writeText(content)
         showToast(t("copySuccess"))
@@ -1148,6 +1188,7 @@ export class ConversationManager {
         mimeType = "text/markdown;charset=utf-8"
 
         if (shouldPackageAssets) {
+          notifyProgress("packaging")
           const downloaded = await downloadExportPackage({
             markdownFilename: filename,
             markdownContent: content,
@@ -1169,6 +1210,7 @@ export class ConversationManager {
         mimeType = "text/plain;charset=utf-8"
       }
 
+      notifyProgress("downloading")
       const downloaded = await downloadFile(content, filename, mimeType)
       if (!downloaded) return false
       showToast(t("exportSuccess"))
@@ -1177,6 +1219,8 @@ export class ConversationManager {
       console.error("[ConversationManager] Export failed:", error)
       return false
     } finally {
+      notifyProgress("restoring")
+
       if (exportLifecycleEnabled) {
         try {
           await this.siteAdapter.restoreConversationAfterExport(exportContext, exportLifecycleState)
@@ -1191,6 +1235,8 @@ export class ConversationManager {
       } else {
         window.scrollTo({ top: initialWindowScrollY, behavior: "auto" })
       }
+
+      this.notifyExportProgress(null)
     }
   }
 

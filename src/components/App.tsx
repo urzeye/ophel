@@ -9,7 +9,11 @@ import React, {
 
 import { getAdapter } from "~adapters/index"
 import { SITE_IDS } from "~constants/defaults"
-import { ConversationManager } from "~core/conversation-manager"
+import {
+  ConversationManager,
+  type ConversationExportProgress,
+  type ConversationExportStage,
+} from "~core/conversation-manager"
 import { InlineBookmarkManager } from "~core/inline-bookmark-manager"
 import { OutlineManager, type OutlineNode } from "~core/outline-manager"
 import { AI_STUDIO_SHORTCUT_SYNC_EVENT, PromptManager } from "~core/prompt-manager"
@@ -24,7 +28,7 @@ import { usePromptsStore } from "~stores/prompts-store"
 import { APP_DISPLAY_NAME } from "~utils/config"
 import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
 import { EVENT_EXTENSION_UPDATE_AVAILABLE, MSG_CLEAR_ALL_DATA } from "~utils/messaging"
-import { EXPORT_START_TOAST_DURATION, showToast } from "~utils/toast"
+import { showToast } from "~utils/toast"
 import { setLanguage, t } from "~utils/i18n"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 import { createSafeHTML } from "~utils/trusted-types"
@@ -33,6 +37,7 @@ import { hasOphelInteractionLayer } from "~utils/dom-toolkit"
 
 import { ConfirmDialog, FolderSelectDialog, TagManagerDialog } from "./ConversationDialogs"
 import { DisclaimerModal } from "./DisclaimerModal"
+import { LoadingOverlay } from "./LoadingOverlay"
 import { MainPanel } from "./MainPanel"
 import { QueueOverlay } from "./QueueOverlay"
 import { QuickButtons } from "./QuickButtons"
@@ -98,6 +103,16 @@ interface PointerPosition {
 
 const LAUNCHER_PEEK_DWELL_MS = 300
 const LAUNCHER_PEEK_HIDE_DELAY_MS = 250
+
+const EXPORT_STAGE_TEXT_KEYS: Record<ConversationExportStage, string> = {
+  "loading-history": "exportOverlayLoadingHistory",
+  preparing: "exportOverlayPreparing",
+  extracting: "exportOverlayExtracting",
+  packaging: "exportOverlayPackaging",
+  downloading: "exportOverlayDownloading",
+  copying: "exportOverlayCopying",
+  restoring: "exportOverlayRestoring",
+}
 
 const SETTINGS_PAGE_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinition> = {
   [NAV_IDS.GENERAL]: { key: "navGeneral", fallback: "General" },
@@ -838,6 +853,17 @@ export const App = () => {
   const conversationManager = useMemo(() => {
     return adapter ? new ConversationManager(adapter) : null
   }, [adapter])
+  const [exportProgress, setExportProgress] = useState<ConversationExportProgress | null>(null)
+
+  useEffect(() => {
+    if (!conversationManager) {
+      setExportProgress(null)
+      return
+    }
+
+    setExportProgress(null)
+    return conversationManager.onExportProgress(setExportProgress)
+  }, [conversationManager])
 
   const outlineManager = useMemo(() => {
     if (!adapter) return null
@@ -2755,7 +2781,6 @@ export const App = () => {
       showToast(t("exportNeedOpenFirst"))
       return
     }
-    showToast(t("exportStarted"), EXPORT_START_TOAST_DURATION)
     const success = await conversationManager.exportConversation(sessionId, "markdown")
     if (!success) {
       showToast(t("exportFailed"))
@@ -2794,7 +2819,6 @@ export const App = () => {
       showToast(t("exportNeedOpenFirst"))
       return
     }
-    showToast(t("exportLoading"))
     const success = await conversationManager.exportConversation(sessionId, "clipboard")
     if (!success) {
       showToast(t("exportFailed"))
@@ -3253,6 +3277,8 @@ export const App = () => {
     fallback: "Reload page",
   })
   const extensionUpdateCloseLabel = t("close")
+  const exportOverlayText = exportProgress ? t(EXPORT_STAGE_TEXT_KEYS[exportProgress.stage]) : ""
+  const exportOverlayHint = t("exportOverlayHint")
 
   const outlineRoleLabels = useMemo(
     () => ({
@@ -3677,6 +3703,13 @@ export const App = () => {
       {adapter && queueDispatcher && (settings?.features?.prompts?.promptQueue ?? false) && (
         <QueueOverlay adapter={adapter} dispatcher={queueDispatcher} />
       )}
+      <LoadingOverlay
+        isVisible={Boolean(exportProgress)}
+        text={exportOverlayText}
+        hint={exportOverlayHint}
+        tone="export"
+        blockPageInteraction
+      />
       {showExtensionUpdateNotice && (
         <section className="gh-update-notice gh-interactive" role="status" aria-live="polite">
           <button

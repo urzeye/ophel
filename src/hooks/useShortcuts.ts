@@ -22,7 +22,7 @@ import {
   smartScrollToTop,
 } from "~utils/scroll-helper"
 import { getSiteZenMode, type Settings } from "~utils/storage"
-import { EXPORT_START_TOAST_DURATION, showToast } from "~utils/toast"
+import { showToast } from "~utils/toast"
 
 /**
  * 辅助函数：导航到上/下一个会话
@@ -460,11 +460,12 @@ export function useShortcuts({
       return
     }
 
-    showToast(t("exportStarted"), EXPORT_START_TOAST_DURATION)
     try {
       // 默认导出为 Markdown 文件
-      await conversationManager.exportConversation(sessionId, "markdown")
-      showToast(t("exportSuccess"))
+      const success = await conversationManager.exportConversation(sessionId, "markdown")
+      if (!success) {
+        showToast(t("exportFailed"))
+      }
     } catch (error) {
       console.error("Export failed:", error)
       showToast(t("exportFailed"))

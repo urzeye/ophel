@@ -26,6 +26,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Yuanbao attachment, generated image, and thought export** — Yuanbao Markdown exports now include images and files from user prompts, preserve AI-generated images in regular Markdown and zip asset packages, and include visible thinking content when "Include Thoughts in Export" is enabled.
 - **Z.ai attachment and thought export** — Z.ai conversation and share-page exports now preserve user-uploaded images and files in Markdown and zip packages, deduplicate signed CDN links from API and DOM sources, and include reasoning blocks when "Include Thoughts in Export" is enabled.
 
+### ✨ Improvements
+
+- **Export progress overlay** — Long conversation exports now show a full-page progress overlay with the current export stage, blocking accidental clicks, scrolling, and typing while Ophel loads history, extracts content, packages assets, saves files, and restores the page.
+
 ---
 
 ## [1.0.55] - 2026-05-29
