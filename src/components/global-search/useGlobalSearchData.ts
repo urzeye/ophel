@@ -1076,6 +1076,7 @@ export const useGlobalSearchData = ({
               level: node.level,
               text: title,
               isUserQuery: Boolean(node.isUserQuery),
+              id: node.id,
               queryIndex: node.queryIndex,
               isGhost: Boolean(node.isGhost),
               scrollTop: node.scrollTop,

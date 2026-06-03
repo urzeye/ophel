@@ -140,6 +140,8 @@ const CHATGPT_EXPORT_USER_SELECTOR = `[${CHATGPT_EXPORT_ROOT_ATTR}="1"] [${CHATG
 const CHATGPT_EXPORT_ASSISTANT_SELECTOR = `[${CHATGPT_EXPORT_ROOT_ATTR}="1"] [${CHATGPT_EXPORT_ROLE_ATTR}="${CHATGPT_EXPORT_ROLE_ASSISTANT}"]`
 const CHATGPT_DEEP_RESEARCH_IFRAME_SELECTOR =
   'iframe[title="internal://deep-research"], iframe[src*="connector_openai_deep_research"]'
+const CHATGPT_NATIVE_TOC_ID_PREFIX = "chatgpt-native-user-query::"
+const CHATGPT_NATIVE_TOC_ID_RE = /^chatgpt-native-user-query::(\d+)::/
 
 interface ChatGPTExportMessageSnapshot {
   role: "user" | "assistant"
@@ -2194,15 +2196,30 @@ export class ChatGPTAdapter extends SiteAdapter {
     return text.replace(/\s+/g, " ").trim()
   }
 
-  private isSameNativeTocText(source: string, target: string): boolean {
+  private isCompatibleNativeTocText(source: string, target: string): boolean {
     const normalizedSource = this.normalizeNativeTocText(source)
     const normalizedTarget = this.normalizeNativeTocText(target)
+    if (!normalizedSource || !normalizedTarget) return false
+    if (normalizedSource === normalizedTarget) return true
+
+    const shorterLength = Math.min(normalizedSource.length, normalizedTarget.length)
+    if (shorterLength < 200) return false
 
     return (
-      normalizedSource === normalizedTarget ||
-      normalizedSource.startsWith(normalizedTarget) ||
-      normalizedTarget.startsWith(normalizedSource)
+      normalizedSource.startsWith(normalizedTarget) || normalizedTarget.startsWith(normalizedSource)
     )
+  }
+
+  private isNativeTocOutlineId(id: string | undefined): boolean {
+    return Boolean(id?.startsWith(CHATGPT_NATIVE_TOC_ID_PREFIX))
+  }
+
+  private getNativeTocButtonIndex(button: HTMLElement, fallbackIndex: number): number {
+    const match = /^Prompt\s+(\d+)$/i.exec((button.getAttribute("aria-label") || "").trim())
+    if (!match?.[1]) return fallbackIndex
+
+    const parsed = Number.parseInt(match[1], 10)
+    return Number.isNaN(parsed) ? fallbackIndex : Math.max(0, parsed - 1)
   }
 
   private getNativeTocButtons(): HTMLElement[] {
@@ -2230,41 +2247,36 @@ export class ChatGPTAdapter extends SiteAdapter {
     })
   }
 
-  private revealNativeTocMenu(buttons: HTMLElement[]): void {
-    const firstButton = buttons[0]
-    const rail = firstButton?.closest(".no-scrollbar")
-    const wrapper =
-      firstButton?.closest(".relative.flex.items-start") || rail?.parentElement || rail
-    const targets = [wrapper, rail, firstButton].filter(
-      (target): target is Element => target instanceof Element,
-    )
-
-    targets.forEach((target) => {
-      target.dispatchEvent(new MouseEvent("pointerenter", { bubbles: true }))
-      target.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }))
-      target.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }))
-    })
-  }
-
   private getNativeTocTexts(buttons: HTMLElement[]): string[] {
     const firstButton = buttons[0]
     const scope =
-      firstButton?.closest(".relative.flex.items-start") ||
-      firstButton?.closest(".fixed") ||
-      document
+      firstButton?.closest(".relative.flex.items-start") || firstButton?.closest(".fixed")
+    const scopedTitleElements = scope
+      ? Array.from(
+          scope.querySelectorAll(
+            [
+              "button[data-fill] [title]",
+              'button[class*="__menu-item"] [title]',
+              "ul button [title]",
+              "[role='menu'] [title]",
+              ".absolute [title]",
+            ].join(", "),
+          ),
+        )
+      : []
     const titleElements = Array.from(
-      scope.querySelectorAll(
-        [
-          "button[data-fill] [title]",
-          'button[class*="__menu-item"] [title]',
-          "ul button [title]",
-          "[role='menu'] [title]",
-          ".absolute [title]",
-        ].join(", "),
+      document.querySelectorAll(
+        "[data-radix-popper-content-wrapper] [title], [role='menu'] [title]",
       ),
-    ).filter((element): element is HTMLElement => element instanceof HTMLElement)
+    )
+    const seen = new Set<Element>()
+    const uniqueTitleElements = [...scopedTitleElements, ...titleElements].filter((element) => {
+      if (seen.has(element)) return false
+      seen.add(element)
+      return element instanceof HTMLElement
+    })
 
-    return titleElements
+    return uniqueTitleElements
       .map((element) =>
         this.normalizeNativeTocText(element.getAttribute("title") || element.textContent || ""),
       )
@@ -2275,33 +2287,74 @@ export class ChatGPTAdapter extends SiteAdapter {
     const buttons = this.getNativeTocButtons()
     if (buttons.length === 0) return []
 
-    this.revealNativeTocMenu(buttons)
-
     const texts = this.getNativeTocTexts(buttons)
-    if (texts.length === 0) return []
+    if (texts.length !== buttons.length) return []
+
+    const textCounts = new Map<string, number>()
+    texts.forEach((text) => {
+      const normalized = this.normalizeNativeTocText(text)
+      textCounts.set(normalized, (textCounts.get(normalized) || 0) + 1)
+    })
+
+    const hasPrefixConflict = (text: string): boolean => {
+      const normalized = this.normalizeNativeTocText(text)
+      if (!normalized) return true
+
+      return texts.some((otherText) => {
+        const other = this.normalizeNativeTocText(otherText)
+        if (!other || other === normalized) return false
+        return normalized.startsWith(other) || other.startsWith(normalized)
+      })
+    }
+
+    const visibleUserQueriesByText = new Map<string, Element[]>()
+    Array.from(document.querySelectorAll(this.getUserQuerySelector())).forEach((element) => {
+      const normalized = this.normalizeNativeTocText(this.extractUserQueryText(element))
+      if (!normalized) return
+
+      const queries = visibleUserQueriesByText.get(normalized) || []
+      queries.push(element)
+      visibleUserQueriesByText.set(normalized, queries)
+    })
 
     const entries: ChatGPTNativeTocEntry[] = []
-    const visibleUserQueries = Array.from(document.querySelectorAll(this.getUserQuerySelector()))
-
-    buttons.forEach((button, index) => {
-      const text = texts[index]
+    buttons.forEach((button, fallbackIndex) => {
+      const text = texts[fallbackIndex]
       if (!text) return
-
-      const visibleElement =
-        visibleUserQueries.find((element) =>
-          this.isSameNativeTocText(this.extractUserQueryText(element), text),
-        ) || null
+      const normalizedText = this.normalizeNativeTocText(text)
+      const visibleCandidates = visibleUserQueriesByText.get(normalizedText) || []
+      const canBindElement =
+        textCounts.get(normalizedText) === 1 &&
+        !hasPrefixConflict(text) &&
+        visibleCandidates.length === 1
 
       entries.push({
-        index,
+        index: this.getNativeTocButtonIndex(button, fallbackIndex),
         text,
         button,
-        element: visibleElement,
+        element: canBindElement ? visibleCandidates[0] : null,
         isActive: button.hasAttribute("data-toc-active"),
       })
     })
 
     return entries
+  }
+
+  private getNativeTocButtonEntryForIndex(index: number): ChatGPTNativeTocEntry | null {
+    const buttons = this.getNativeTocButtons()
+    const button = buttons.find(
+      (candidate, fallbackIndex) =>
+        this.getNativeTocButtonIndex(candidate, fallbackIndex) === index,
+    )
+    if (!button) return null
+
+    return {
+      index,
+      text: "",
+      button,
+      element: null,
+      isActive: button.hasAttribute("data-toc-active"),
+    }
   }
 
   private createNativeTocUserQueryOutlineItem(
@@ -2331,19 +2384,22 @@ export class ChatGPTAdapter extends SiteAdapter {
     queryIndex?: number,
   ): ChatGPTNativeTocEntry | null {
     const id = item.id || ""
-    const idMatch = id.match(/^chatgpt-native-user-query::(\d+)::/)
-    const entries = this.getNativeTocEntries()
+    const idMatch = id.match(CHATGPT_NATIVE_TOC_ID_RE)
 
     if (idMatch?.[1]) {
       const index = Number.parseInt(idMatch[1], 10)
-      return entries[index] || null
+      if (!Number.isNaN(index)) {
+        return this.getNativeTocButtonEntryForIndex(index)
+      }
     }
 
     if (queryIndex !== undefined) {
-      return entries[queryIndex - 1] || null
+      return this.getNativeTocButtonEntryForIndex(queryIndex - 1)
     }
 
-    return entries.find((entry) => this.isSameNativeTocText(entry.text, item.text)) || null
+    const entries = this.getNativeTocEntries()
+    const matches = entries.filter((entry) => this.isCompatibleNativeTocText(entry.text, item.text))
+    return matches.length === 1 ? matches[0] : null
   }
 
   private async waitForNativeTocUserQuery(
@@ -2356,7 +2412,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       await this.sleep(80)
       const candidate = Array.from(document.querySelectorAll(this.getUserQuerySelector())).find(
         (element) =>
-          this.isSameNativeTocText(this.extractUserQueryText(element), text || entry.text),
+          this.isCompatibleNativeTocText(this.extractUserQueryText(element), text || entry.text),
       )
       if (candidate) return candidate
     }
@@ -2482,6 +2538,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     for (const item of outline) {
       if (!item.id) continue
+      if (this.isNativeTocOutlineId(item.id)) continue
 
       const turnId = this.getChatGPTTurnId(item.element)
       const orderKey = turnId || item.id
@@ -2518,13 +2575,12 @@ export class ChatGPTAdapter extends SiteAdapter {
     if (this.outlineItemCache.size === 0) return outline
 
     const currentIds = new Set(outline.map((item) => item.id).filter((id): id is string => !!id))
-    const hasNativeTocUserQueries = outline.some((item) =>
-      item.id?.startsWith("chatgpt-native-user-query::"),
-    )
+    const hasNativeTocUserQueries = outline.some((item) => this.isNativeTocOutlineId(item.id))
     let appended = 0
     const merged: OutlineItem[] = [...outline]
 
     for (const entry of this.outlineItemCache.values()) {
+      if (this.isNativeTocOutlineId(entry.id)) continue
       if (currentIds.has(entry.id)) continue
       if (entry.isUserQuery && (!includeUserQueries || hasNativeTocUserQueries)) continue
       if (!entry.isUserQuery && entry.level > maxLevel) continue
@@ -2940,6 +2996,24 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     if (nativeTocEntries.length > 0) {
       const sortedEntries: ChatGPTOutlineSortEntry[] = []
+      const lastNativeTocIndex = nativeTocEntries.reduce(
+        (maxIndex, entry) => Math.max(maxIndex, entry.index),
+        -1,
+      )
+      const calculateNativeTocWordCount = (entry: ChatGPTNativeTocEntry): number | undefined => {
+        if (!showWordCount || !entry.element) return undefined
+
+        const nextEntry = nativeTocEntries.find((candidate) => candidate.index > entry.index)
+        if (nextEntry?.element) {
+          return calculateWordCount(entry.element, nextEntry.element, true)
+        }
+
+        if (!nextEntry && entry.index === lastNativeTocIndex) {
+          return calculateWordCount(entry.element, null, true)
+        }
+
+        return undefined
+      }
       const visibleUserAnchors = nativeTocEntries
         .filter((entry): entry is ChatGPTNativeTocEntry & { element: Element } =>
           Boolean(entry.element),
@@ -2972,12 +3046,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
       nativeTocEntries.forEach((entry) => {
         sortedEntries.push({
-          item: this.createNativeTocUserQueryOutlineItem(
-            entry,
-            showWordCount && entry.element
-              ? calculateWordCount(entry.element, null, true)
-              : undefined,
-          ),
+          item: this.createNativeTocUserQueryOutlineItem(entry, calculateNativeTocWordCount(entry)),
           order: entry.index * 100000,
         })
       })

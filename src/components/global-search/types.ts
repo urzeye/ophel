@@ -42,6 +42,7 @@ export interface GlobalSearchOutlineTarget {
   level: number
   text: string
   isUserQuery: boolean
+  id?: string
   queryIndex?: number
   isGhost?: boolean
   scrollTop?: number
