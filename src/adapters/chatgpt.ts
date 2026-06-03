@@ -2357,6 +2357,15 @@ export class ChatGPTAdapter extends SiteAdapter {
     }
   }
 
+  private getActiveNativeTocIndex(): number | null {
+    const buttons = this.getNativeTocButtons()
+    const activeButton = buttons.find((button) => button.hasAttribute("data-toc-active"))
+    if (!activeButton) return null
+
+    const fallbackIndex = buttons.indexOf(activeButton)
+    return this.getNativeTocButtonIndex(activeButton, fallbackIndex)
+  }
+
   private createNativeTocUserQueryOutlineItem(
     entry: ChatGPTNativeTocEntry,
     wordCount?: number,
@@ -2374,7 +2383,9 @@ export class ChatGPTAdapter extends SiteAdapter {
       element: entry.element,
       isUserQuery: true,
       isTruncated,
-      id: `chatgpt-native-user-query::${entry.index}::${this.normalizeNativeTocText(entry.text)}`,
+      id:
+        this.getChatGPTMessageId(entry.element) ||
+        `chatgpt-native-user-query::${entry.index}::${this.normalizeNativeTocText(entry.text)}`,
       wordCount,
     }
   }
@@ -2410,14 +2421,68 @@ export class ChatGPTAdapter extends SiteAdapter {
     const deadline = Date.now() + timeoutMs
     while (Date.now() < deadline) {
       await this.sleep(80)
-      const candidate = Array.from(document.querySelectorAll(this.getUserQuerySelector())).find(
-        (element) =>
-          this.isCompatibleNativeTocText(this.extractUserQueryText(element), text || entry.text),
+      const candidate = this.findNativeTocUserQueryCandidate(
+        text || entry.text,
+        this.getActiveNativeTocIndex() === entry.index,
       )
       if (candidate) return candidate
     }
 
     return null
+  }
+
+  private findNativeTocUserQueryCandidate(
+    text: string,
+    activeIndexMatched: boolean,
+  ): Element | null {
+    const container = document.querySelector(this.getResponseContainerSelector())
+    const candidates = Array.from(document.querySelectorAll(this.getUserQuerySelector())).filter(
+      (element) => this.isVisible(element) && this.isElementInViewport(element, container),
+    )
+
+    if (candidates.length === 0) return null
+
+    if (activeIndexMatched) {
+      return this.getClosestVisibleElementToViewportCenter(candidates, container)
+    }
+
+    const textMatches = candidates.filter((element) =>
+      this.isCompatibleNativeTocText(this.extractUserQueryText(element), text),
+    )
+    return textMatches.length === 1 ? textMatches[0] : null
+  }
+
+  private isElementInViewport(element: Element, container: Element | null): boolean {
+    const rect = element.getBoundingClientRect()
+    const viewportTop = container instanceof HTMLElement ? container.getBoundingClientRect().top : 0
+    const viewportBottom =
+      container instanceof HTMLElement
+        ? container.getBoundingClientRect().bottom
+        : window.innerHeight
+
+    return rect.bottom > viewportTop && rect.top < viewportBottom
+  }
+
+  private getClosestVisibleElementToViewportCenter(
+    elements: Element[],
+    container: Element | null,
+  ): Element | null {
+    const viewportRect = container instanceof HTMLElement ? container.getBoundingClientRect() : null
+    const viewportCenter = viewportRect
+      ? viewportRect.top + viewportRect.height / 2
+      : window.innerHeight / 2
+
+    return (
+      elements
+        .map((element) => {
+          const rect = element.getBoundingClientRect()
+          return {
+            element,
+            distance: Math.abs(rect.top + rect.height / 2 - viewportCenter),
+          }
+        })
+        .sort((left, right) => left.distance - right.distance)[0]?.element || null
+    )
   }
 
   private getElementRenderOrder(element: Element, container: Element): number {
@@ -2472,6 +2537,16 @@ export class ChatGPTAdapter extends SiteAdapter {
     return (
       turnElement?.getAttribute("data-turn-id") ||
       turnElement?.getAttribute("data-turn-id-container") ||
+      null
+    )
+  }
+
+  private getChatGPTMessageId(element: Element | null): string | null {
+    if (!element) return null
+
+    return (
+      element.getAttribute("data-message-id") ||
+      element.closest("[data-message-id]")?.getAttribute("data-message-id") ||
       null
     )
   }
@@ -2777,15 +2852,6 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     this.ensureOutlineCacheSession()
 
-    // 辅助函数：查找最近的消息容器并获取 message-id
-    const getMessageId = (el: Element): string | null => {
-      const msgContainer = el.closest("[data-message-id]")
-      if (msgContainer) {
-        return msgContainer.getAttribute("data-message-id")
-      }
-      return null
-    }
-
     // 辅助函数：生成标题的稳定 ID
     // 格式: msgId::h2-标题文本-0
     // 需要在遍历过程中维护计数器
@@ -2950,7 +3016,7 @@ export class ChatGPTAdapter extends SiteAdapter {
         }
 
         // 添加 ID
-        const msgId = getMessageId(element)
+        const msgId = this.getChatGPTMessageId(element)
         if (msgId) {
           if (isUserQuery) {
             item.id = msgId
@@ -3078,6 +3144,10 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     this.recordTurnDocumentOrders(turnAnchors)
     this.updateChatGPTOutlineCache(outline, turnAnchors)
+
+    if (nativeTocEntries.length > 0) {
+      return outline
+    }
 
     // 始终尝试与缓存合并：虚拟滚动可能让 shell 数量也缩水，仅靠"shell > role 数"
     // 的判定会漏掉只剩当前视口可见的极端情况。合并函数自身在没有可追加项时是 no-op。
