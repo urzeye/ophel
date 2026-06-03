@@ -2214,6 +2214,14 @@ export class ChatGPTAdapter extends SiteAdapter {
     return Boolean(id?.startsWith(CHATGPT_NATIVE_TOC_ID_PREFIX))
   }
 
+  private getNativeTocOutlineIndex(id: string | undefined): number | null {
+    const idMatch = (id || "").match(CHATGPT_NATIVE_TOC_ID_RE)
+    if (!idMatch?.[1]) return null
+
+    const index = Number.parseInt(idMatch[1], 10)
+    return Number.isNaN(index) ? null : index
+  }
+
   private getNativeTocButtonIndex(button: HTMLElement, fallbackIndex: number): number {
     const match = /^Prompt\s+(\d+)$/i.exec((button.getAttribute("aria-label") || "").trim())
     if (!match?.[1]) return fallbackIndex
@@ -2392,25 +2400,13 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   private resolveNativeTocEntryForOutlineItem(
     item: Pick<OutlineItem, "text" | "id">,
-    queryIndex?: number,
   ): ChatGPTNativeTocEntry | null {
-    const id = item.id || ""
-    const idMatch = id.match(CHATGPT_NATIVE_TOC_ID_RE)
-
-    if (idMatch?.[1]) {
-      const index = Number.parseInt(idMatch[1], 10)
-      if (!Number.isNaN(index)) {
-        return this.getNativeTocButtonEntryForIndex(index)
-      }
+    const index = this.getNativeTocOutlineIndex(item.id)
+    if (index !== null) {
+      return this.getNativeTocButtonEntryForIndex(index)
     }
 
-    if (queryIndex !== undefined) {
-      return this.getNativeTocButtonEntryForIndex(queryIndex - 1)
-    }
-
-    const entries = this.getNativeTocEntries()
-    const matches = entries.filter((entry) => this.isCompatibleNativeTocText(entry.text, item.text))
-    return matches.length === 1 ? matches[0] : null
+    return null
   }
 
   private async waitForNativeTocUserQuery(
@@ -2442,13 +2438,15 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     if (candidates.length === 0) return null
 
-    if (activeIndexMatched) {
-      return this.getClosestVisibleElementToViewportCenter(candidates, container)
-    }
-
     const textMatches = candidates.filter((element) =>
       this.isCompatibleNativeTocText(this.extractUserQueryText(element), text),
     )
+    if (textMatches.length === 0) return null
+
+    if (activeIndexMatched) {
+      return this.getClosestVisibleElementToViewportCenter(textMatches, container)
+    }
+
     return textMatches.length === 1 ? textMatches[0] : null
   }
 
@@ -2646,11 +2644,13 @@ export class ChatGPTAdapter extends SiteAdapter {
     maxLevel: number,
     includeUserQueries: boolean,
     showWordCount: boolean,
+    hasNativeTocEntries = false,
   ): OutlineItem[] {
     if (this.outlineItemCache.size === 0) return outline
 
     const currentIds = new Set(outline.map((item) => item.id).filter((id): id is string => !!id))
-    const hasNativeTocUserQueries = outline.some((item) => this.isNativeTocOutlineId(item.id))
+    const hasNativeTocUserQueries =
+      hasNativeTocEntries || outline.some((item) => this.isNativeTocOutlineId(item.id))
     let appended = 0
     const merged: OutlineItem[] = [...outline]
 
@@ -2680,11 +2680,13 @@ export class ChatGPTAdapter extends SiteAdapter {
       .map((item, originalIndex) => {
         const cached = item.id ? this.outlineItemCache.get(item.id) : undefined
         const turnId = cached?.turnId || this.getChatGPTTurnId(item.element)
-        const turnIndex = this.getTurnSortIndex(turnId, turnAnchors)
+        const nativeTocIndex = this.getNativeTocOutlineIndex(item.id)
+        const turnIndex =
+          nativeTocIndex !== null ? nativeTocIndex * 2 : this.getTurnSortIndex(turnId, turnAnchors)
         return {
           item,
           originalIndex,
-          orderInTurn: cached?.orderInTurn ?? originalIndex,
+          orderInTurn: nativeTocIndex !== null ? 0 : cached?.orderInTurn ?? originalIndex,
           turnIndex,
         }
       })
@@ -2788,7 +2790,7 @@ export class ChatGPTAdapter extends SiteAdapter {
     queryIndex?: number,
   ): Promise<Element | null> {
     if (item.isUserQuery && item.level === 0) {
-      const nativeTocEntry = this.resolveNativeTocEntryForOutlineItem(item, queryIndex)
+      const nativeTocEntry = this.resolveNativeTocEntryForOutlineItem(item)
       if (nativeTocEntry) {
         if (nativeTocEntry.element) return nativeTocEntry.element
 
@@ -3145,10 +3147,6 @@ export class ChatGPTAdapter extends SiteAdapter {
     this.recordTurnDocumentOrders(turnAnchors)
     this.updateChatGPTOutlineCache(outline, turnAnchors)
 
-    if (nativeTocEntries.length > 0) {
-      return outline
-    }
-
     // 始终尝试与缓存合并：虚拟滚动可能让 shell 数量也缩水，仅靠"shell > role 数"
     // 的判定会漏掉只剩当前视口可见的极端情况。合并函数自身在没有可追加项时是 no-op。
     return this.mergeCachedChatGPTOutlineItems(
@@ -3157,6 +3155,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       maxLevel,
       includeUserQueries,
       showWordCount,
+      nativeTocEntries.length > 0,
     )
   }
 
