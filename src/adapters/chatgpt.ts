@@ -172,6 +172,19 @@ interface ChatGPTTurnAnchor {
   index: number
 }
 
+interface ChatGPTNativeTocEntry {
+  index: number
+  text: string
+  button: HTMLElement
+  element: Element | null
+  isActive: boolean
+}
+
+interface ChatGPTOutlineSortEntry {
+  item: OutlineItem
+  order: number
+}
+
 export class ChatGPTAdapter extends SiteAdapter {
   private sessionAccessToken: string | null = null
   private sessionAccessTokenExpiresAt = 0
@@ -2177,6 +2190,196 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   // ==================== 大纲缓存（虚拟滚动兜底） ====================
 
+  private normalizeNativeTocText(text: string): string {
+    return text.replace(/\s+/g, " ").trim()
+  }
+
+  private isSameNativeTocText(source: string, target: string): boolean {
+    const normalizedSource = this.normalizeNativeTocText(source)
+    const normalizedTarget = this.normalizeNativeTocText(target)
+
+    return (
+      normalizedSource === normalizedTarget ||
+      normalizedSource.startsWith(normalizedTarget) ||
+      normalizedTarget.startsWith(normalizedSource)
+    )
+  }
+
+  private getNativeTocButtons(): HTMLElement[] {
+    const buttons = Array.from(document.querySelectorAll('button[aria-label^="Prompt "]')).filter(
+      (button): button is HTMLElement => {
+        if (!(button instanceof HTMLElement)) return false
+        const label = button.getAttribute("aria-label") || ""
+        if (!/^Prompt \d+$/i.test(label.trim())) return false
+
+        const rail = button.closest(".no-scrollbar")
+        return Boolean(rail?.querySelectorAll('button[aria-label^="Prompt "]').length)
+      },
+    )
+
+    return buttons.sort((left, right) => {
+      const leftIndex = Number.parseInt(
+        (left.getAttribute("aria-label") || "").replace(/\D+/g, ""),
+        10,
+      )
+      const rightIndex = Number.parseInt(
+        (right.getAttribute("aria-label") || "").replace(/\D+/g, ""),
+        10,
+      )
+      return (Number.isNaN(leftIndex) ? 0 : leftIndex) - (Number.isNaN(rightIndex) ? 0 : rightIndex)
+    })
+  }
+
+  private revealNativeTocMenu(buttons: HTMLElement[]): void {
+    const firstButton = buttons[0]
+    const rail = firstButton?.closest(".no-scrollbar")
+    const wrapper =
+      firstButton?.closest(".relative.flex.items-start") || rail?.parentElement || rail
+    const targets = [wrapper, rail, firstButton].filter(
+      (target): target is Element => target instanceof Element,
+    )
+
+    targets.forEach((target) => {
+      target.dispatchEvent(new MouseEvent("pointerenter", { bubbles: true }))
+      target.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }))
+      target.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }))
+    })
+  }
+
+  private getNativeTocTexts(buttons: HTMLElement[]): string[] {
+    const firstButton = buttons[0]
+    const scope =
+      firstButton?.closest(".relative.flex.items-start") ||
+      firstButton?.closest(".fixed") ||
+      document
+    const titleElements = Array.from(
+      scope.querySelectorAll(
+        [
+          "button[data-fill] [title]",
+          'button[class*="__menu-item"] [title]',
+          "ul button [title]",
+          "[role='menu'] [title]",
+          ".absolute [title]",
+        ].join(", "),
+      ),
+    ).filter((element): element is HTMLElement => element instanceof HTMLElement)
+
+    return titleElements
+      .map((element) =>
+        this.normalizeNativeTocText(element.getAttribute("title") || element.textContent || ""),
+      )
+      .filter((text) => text.length > 0)
+  }
+
+  private getNativeTocEntries(): ChatGPTNativeTocEntry[] {
+    const buttons = this.getNativeTocButtons()
+    if (buttons.length === 0) return []
+
+    this.revealNativeTocMenu(buttons)
+
+    const texts = this.getNativeTocTexts(buttons)
+    if (texts.length === 0) return []
+
+    const entries: ChatGPTNativeTocEntry[] = []
+    const visibleUserQueries = Array.from(document.querySelectorAll(this.getUserQuerySelector()))
+
+    buttons.forEach((button, index) => {
+      const text = texts[index]
+      if (!text) return
+
+      const visibleElement =
+        visibleUserQueries.find((element) =>
+          this.isSameNativeTocText(this.extractUserQueryText(element), text),
+        ) || null
+
+      entries.push({
+        index,
+        text,
+        button,
+        element: visibleElement,
+        isActive: button.hasAttribute("data-toc-active"),
+      })
+    })
+
+    return entries
+  }
+
+  private createNativeTocUserQueryOutlineItem(
+    entry: ChatGPTNativeTocEntry,
+    wordCount?: number,
+  ): OutlineItem {
+    let text = entry.element ? this.extractUserQueryText(entry.element) : entry.text
+    let isTruncated = false
+    if (text.length > 200) {
+      text = text.substring(0, 200)
+      isTruncated = true
+    }
+
+    return {
+      level: 0,
+      text,
+      element: entry.element,
+      isUserQuery: true,
+      isTruncated,
+      id: `chatgpt-native-user-query::${entry.index}::${this.normalizeNativeTocText(entry.text)}`,
+      wordCount,
+    }
+  }
+
+  private resolveNativeTocEntryForOutlineItem(
+    item: Pick<OutlineItem, "text" | "id">,
+    queryIndex?: number,
+  ): ChatGPTNativeTocEntry | null {
+    const id = item.id || ""
+    const idMatch = id.match(/^chatgpt-native-user-query::(\d+)::/)
+    const entries = this.getNativeTocEntries()
+
+    if (idMatch?.[1]) {
+      const index = Number.parseInt(idMatch[1], 10)
+      return entries[index] || null
+    }
+
+    if (queryIndex !== undefined) {
+      return entries[queryIndex - 1] || null
+    }
+
+    return entries.find((entry) => this.isSameNativeTocText(entry.text, item.text)) || null
+  }
+
+  private async waitForNativeTocUserQuery(
+    entry: ChatGPTNativeTocEntry,
+    text: string,
+    timeoutMs = 1600,
+  ): Promise<Element | null> {
+    const deadline = Date.now() + timeoutMs
+    while (Date.now() < deadline) {
+      await this.sleep(80)
+      const candidate = Array.from(document.querySelectorAll(this.getUserQuerySelector())).find(
+        (element) =>
+          this.isSameNativeTocText(this.extractUserQueryText(element), text || entry.text),
+      )
+      if (candidate) return candidate
+    }
+
+    return null
+  }
+
+  private getElementRenderOrder(element: Element, container: Element): number {
+    const target = (
+      this.getChatGPTTurnId(element)
+        ? element.closest("[data-turn-id], [data-turn-id-container]") || element
+        : element
+    ) as HTMLElement
+    const targetRect = target.getBoundingClientRect()
+
+    if (container instanceof HTMLElement) {
+      const containerRect = container.getBoundingClientRect()
+      return container.scrollTop + (targetRect.top - containerRect.top)
+    }
+
+    return window.scrollY + targetRect.top
+  }
+
   private getOutlineCacheSessionKey(): string {
     const cid = this.getCurrentCid() || "default"
     const sessionId = this.getSessionId() || "default"
@@ -2315,12 +2518,15 @@ export class ChatGPTAdapter extends SiteAdapter {
     if (this.outlineItemCache.size === 0) return outline
 
     const currentIds = new Set(outline.map((item) => item.id).filter((id): id is string => !!id))
+    const hasNativeTocUserQueries = outline.some((item) =>
+      item.id?.startsWith("chatgpt-native-user-query::"),
+    )
     let appended = 0
     const merged: OutlineItem[] = [...outline]
 
     for (const entry of this.outlineItemCache.values()) {
       if (currentIds.has(entry.id)) continue
-      if (entry.isUserQuery && !includeUserQueries) continue
+      if (entry.isUserQuery && (!includeUserQueries || hasNativeTocUserQueries)) continue
       if (!entry.isUserQuery && entry.level > maxLevel) continue
       // 二次防御：缓存里若残留空文本条目（例如来自更早版本写入的脏数据），不要再回填到大纲
       if (!entry.text || !entry.text.trim()) continue
@@ -2450,6 +2656,19 @@ export class ChatGPTAdapter extends SiteAdapter {
     item: Pick<OutlineItem, "level" | "text" | "isUserQuery" | "id">,
     queryIndex?: number,
   ): Promise<Element | null> {
+    if (item.isUserQuery && item.level === 0) {
+      const nativeTocEntry = this.resolveNativeTocEntryForOutlineItem(item, queryIndex)
+      if (nativeTocEntry) {
+        if (nativeTocEntry.element) return nativeTocEntry.element
+
+        nativeTocEntry.button.scrollIntoView({ block: "nearest", inline: "nearest" })
+        nativeTocEntry.button.click()
+
+        const resolvedTarget = await this.waitForNativeTocUserQuery(nativeTocEntry, item.text)
+        if (resolvedTarget) return resolvedTarget
+      }
+    }
+
     const cachedTarget = this.resolveCachedChatGPTOutlineTarget(item.id)
     if (cachedTarget) {
       // 若拿到的是 turn-shell 而非真实消息节点，主动滚动让 ChatGPT 重新挂载真实内容，
@@ -2496,7 +2715,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
-    const outline: OutlineItem[] = []
+    let outline: OutlineItem[] = []
     const container = document.querySelector(this.getResponseContainerSelector())
     if (!container) return outline
 
@@ -2624,6 +2843,8 @@ export class ChatGPTAdapter extends SiteAdapter {
     // 获取所有潜在的节点（按文档顺序）
     const allElements = Array.from(container.querySelectorAll(combinedSelector))
 
+    const nativeTocEntries = includeUserQueries ? this.getNativeTocEntries() : []
+
     allElements.forEach((element, index) => {
       const tagName = element.tagName.toLowerCase()
       const isUserQuery = element.matches(userQuerySelector)
@@ -2716,6 +2937,65 @@ export class ChatGPTAdapter extends SiteAdapter {
         outline.push(item)
       }
     })
+
+    if (nativeTocEntries.length > 0) {
+      const sortedEntries: ChatGPTOutlineSortEntry[] = []
+      const visibleUserAnchors = nativeTocEntries
+        .filter((entry): entry is ChatGPTNativeTocEntry & { element: Element } =>
+          Boolean(entry.element),
+        )
+        .map((entry) => ({
+          index: entry.index,
+          renderOrder: this.getElementRenderOrder(entry.element, container),
+        }))
+        .sort((left, right) => left.renderOrder - right.renderOrder)
+
+      const activeTocEntry = nativeTocEntries.find((entry) => entry.isActive)
+      const estimateUserOrderForElement = (element: Element): number => {
+        const elementOrder = this.getElementRenderOrder(element, container)
+        let previousAnchor: { index: number; renderOrder: number } | undefined
+        let nextAnchor: { index: number; renderOrder: number } | undefined
+
+        for (const anchor of visibleUserAnchors) {
+          if (anchor.renderOrder <= elementOrder) {
+            previousAnchor = anchor
+          } else {
+            nextAnchor = anchor
+            break
+          }
+        }
+
+        if (previousAnchor) return previousAnchor.index
+        if (nextAnchor) return Math.max(0, nextAnchor.index - 1)
+        return activeTocEntry?.index ?? 0
+      }
+
+      nativeTocEntries.forEach((entry) => {
+        sortedEntries.push({
+          item: this.createNativeTocUserQueryOutlineItem(
+            entry,
+            showWordCount && entry.element
+              ? calculateWordCount(entry.element, null, true)
+              : undefined,
+          ),
+          order: entry.index * 100000,
+        })
+      })
+
+      outline
+        .filter((item) => !item.isUserQuery)
+        .forEach((item, index) => {
+          const orderBase = item.element ? estimateUserOrderForElement(item.element) : 0
+          sortedEntries.push({
+            item,
+            order: orderBase * 100000 + 50000 + index,
+          })
+        })
+
+      outline = sortedEntries
+        .sort((left, right) => left.order - right.order)
+        .map(({ item }) => item)
+    }
 
     const turnAnchors = this.getOrderedChatGPTTurnAnchors(container)
 
