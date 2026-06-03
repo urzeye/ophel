@@ -22,6 +22,8 @@ export interface OutlineItem {
   isUserQuery?: boolean
   isTruncated?: boolean
   id?: string
+  /** Navigation-only target id; bookmark signatures should continue to use id. */
+  navigationId?: string
   context?: string
   wordCount?: number
 }
@@ -1130,7 +1132,7 @@ export abstract class SiteAdapter {
    * 默认仅做同步 DOM 查找，子类可覆盖以支持虚拟列表/原生导航等异步定位。
    */
   async resolveOutlineTarget(
-    item: Pick<OutlineItem, "level" | "text" | "isUserQuery" | "id">,
+    item: Pick<OutlineItem, "level" | "text" | "isUserQuery" | "id" | "navigationId">,
     queryIndex?: number,
     _sourceId = "conversation",
   ): Promise<Element | null> {

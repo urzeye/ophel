@@ -43,6 +43,7 @@ export interface GlobalSearchOutlineTarget {
   text: string
   isUserQuery: boolean
   id?: string
+  navigationId?: string
   queryIndex?: number
   isGhost?: boolean
   scrollTop?: number

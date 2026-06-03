@@ -2258,8 +2258,10 @@ export class ChatGPTAdapter extends SiteAdapter {
   private getNativeTocTexts(buttons: HTMLElement[]): string[] {
     const firstButton = buttons[0]
     const scope =
-      firstButton?.closest(".relative.flex.items-start") || firstButton?.closest(".fixed")
-    const scopedTitleElements = scope
+      firstButton?.closest(".no-scrollbar")?.parentElement ||
+      firstButton?.closest(".relative.flex.items-start") ||
+      firstButton?.closest(".fixed")
+    const titleElements = scope
       ? Array.from(
           scope.querySelectorAll(
             [
@@ -2272,13 +2274,8 @@ export class ChatGPTAdapter extends SiteAdapter {
           ),
         )
       : []
-    const titleElements = Array.from(
-      document.querySelectorAll(
-        "[data-radix-popper-content-wrapper] [title], [role='menu'] [title]",
-      ),
-    )
     const seen = new Set<Element>()
-    const uniqueTitleElements = [...scopedTitleElements, ...titleElements].filter((element) => {
+    const uniqueTitleElements = titleElements.filter((element) => {
       if (seen.has(element)) return false
       seen.add(element)
       return element instanceof HTMLElement
@@ -2384,6 +2381,8 @@ export class ChatGPTAdapter extends SiteAdapter {
       text = text.substring(0, 200)
       isTruncated = true
     }
+    const navigationId = `chatgpt-native-user-query::${entry.index}::${this.normalizeNativeTocText(entry.text)}`
+    const messageId = this.getChatGPTMessageId(entry.element)
 
     return {
       level: 0,
@@ -2391,17 +2390,16 @@ export class ChatGPTAdapter extends SiteAdapter {
       element: entry.element,
       isUserQuery: true,
       isTruncated,
-      id:
-        this.getChatGPTMessageId(entry.element) ||
-        `chatgpt-native-user-query::${entry.index}::${this.normalizeNativeTocText(entry.text)}`,
+      id: messageId || navigationId,
+      navigationId,
       wordCount,
     }
   }
 
   private resolveNativeTocEntryForOutlineItem(
-    item: Pick<OutlineItem, "text" | "id">,
+    item: Pick<OutlineItem, "id" | "navigationId">,
   ): ChatGPTNativeTocEntry | null {
-    const index = this.getNativeTocOutlineIndex(item.id)
+    const index = this.getNativeTocOutlineIndex(item.navigationId || item.id)
     if (index !== null) {
       return this.getNativeTocButtonEntryForIndex(index)
     }
@@ -2431,7 +2429,8 @@ export class ChatGPTAdapter extends SiteAdapter {
     text: string,
     activeIndexMatched: boolean,
   ): Element | null {
-    const container = document.querySelector(this.getResponseContainerSelector())
+    const container =
+      this.getScrollContainer() || document.querySelector(this.getResponseContainerSelector())
     const candidates = Array.from(document.querySelectorAll(this.getUserQuerySelector())).filter(
       (element) => this.isVisible(element) && this.isElementInViewport(element, container),
     )
@@ -2680,7 +2679,7 @@ export class ChatGPTAdapter extends SiteAdapter {
       .map((item, originalIndex) => {
         const cached = item.id ? this.outlineItemCache.get(item.id) : undefined
         const turnId = cached?.turnId || this.getChatGPTTurnId(item.element)
-        const nativeTocIndex = this.getNativeTocOutlineIndex(item.id)
+        const nativeTocIndex = this.getNativeTocOutlineIndex(item.navigationId || item.id)
         const turnIndex =
           nativeTocIndex !== null ? nativeTocIndex * 2 : this.getTurnSortIndex(turnId, turnAnchors)
         return {
@@ -2786,7 +2785,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   async resolveOutlineTarget(
-    item: Pick<OutlineItem, "level" | "text" | "isUserQuery" | "id">,
+    item: Pick<OutlineItem, "level" | "text" | "isUserQuery" | "id" | "navigationId">,
     queryIndex?: number,
   ): Promise<Element | null> {
     if (item.isUserQuery && item.level === 0) {
