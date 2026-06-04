@@ -13,6 +13,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Conversation title isolation** — Browser tab renaming now keeps Ophel-managed status/model labels separate from raw conversation titles, preventing exported conversation titles and filenames from inheriting tab status, model names, or repeated `->` separators when a page cannot expose its model name.
 - **Doubao share-page export and outline** — Doubao share links under `/thread/` are now recognized as exportable conversations, and share-page message lists can now feed the Outline tab instead of requiring the regular chat-page virtual list.
+- **Z.ai share-page outline** — Z.ai share pages now reuse the same conversation content container detection as export, so Outline extraction works when the share DOM does not include the regular `#chat-container` wrapper.
+- **ChatGLM code-block export** — ChatGLM assistant replies split around code blocks now export the full answer instead of stopping at the first rendered Markdown segment.
 
 ---
 

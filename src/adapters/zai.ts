@@ -274,6 +274,27 @@ export class ZaiAdapter extends SiteAdapter {
     return CHAT_SCROLL_CONTAINER_SELECTOR
   }
 
+  private getConversationContentContainer(options?: {
+    allowBodyFallback?: boolean
+  }): Element | null {
+    const explicitContainer =
+      document.querySelector(this.getResponseContainerSelector()) ||
+      document.querySelector(CHAT_CONTAINER_SELECTOR)
+    if (explicitContainer) return explicitContainer
+
+    const scrollContainer = this.getScrollContainer()
+    if (scrollContainer) return scrollContainer
+
+    const hasMessages = Boolean(
+      document.body.querySelector(`${USER_QUERY_SELECTOR}, ${ASSISTANT_MARKDOWN_SELECTOR}`),
+    )
+    if (hasMessages && (this.isSharePage() || options?.allowBodyFallback)) {
+      return document.body
+    }
+
+    return options?.allowBodyFallback ? document.body : null
+  }
+
   getChatContentSelectors(): string[] {
     return [USER_QUERY_SELECTOR, ASSISTANT_MARKDOWN_SELECTOR]
   }
@@ -351,10 +372,7 @@ export class ZaiAdapter extends SiteAdapter {
     this.clearExportAttachmentCache()
 
     const container =
-      document.querySelector(this.getResponseContainerSelector()) ||
-      document.querySelector(CHAT_CONTAINER_SELECTOR) ||
-      document.body
-
+      this.getConversationContentContainer({ allowBodyFallback: true }) || document.body
     this.markExportMessages(container)
     await this.prepareExportAttachmentCache(container)
     return null
@@ -420,9 +438,7 @@ export class ZaiAdapter extends SiteAdapter {
 
   private extractZaiExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
     const container =
-      document.querySelector(this.getResponseContainerSelector()) ||
-      document.querySelector(CHAT_CONTAINER_SELECTOR) ||
-      document.body
+      this.getConversationContentContainer({ allowBodyFallback: true }) || document.body
     const { users, assistants } = this.collectExportMessages(container)
     const ordered = [
       ...users.map((element) => ({ role: "user" as const, element })),
@@ -576,9 +592,7 @@ export class ZaiAdapter extends SiteAdapter {
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     const outline: OutlineItem[] = []
-    const container =
-      document.querySelector(this.getResponseContainerSelector()) ||
-      document.querySelector(CHAT_CONTAINER_SELECTOR)
+    const container = this.getConversationContentContainer()
     if (!container) return outline
 
     const userQuerySelector = this.getUserQuerySelector()
@@ -761,9 +775,7 @@ export class ZaiAdapter extends SiteAdapter {
 
   getLatestReplyText(): string | null {
     const container =
-      document.querySelector(this.getResponseContainerSelector()) ||
-      document.querySelector(CHAT_CONTAINER_SELECTOR) ||
-      document.body
+      this.getConversationContentContainer({ allowBodyFallback: true }) || document.body
 
     const { assistants } = this.collectExportMessages(container)
     if (assistants.length === 0) return null

@@ -70,6 +70,10 @@ const THINKING_CONTAINER_SELECTOR = [
 const EXPORT_DECORATION_SELECTOR = [
   ".gh-root",
   ".gh-user-query-markdown",
+  ".assistant-name",
+  ".interact-container",
+  ".code-no-artifacts .top-outer",
+  ".code-no-artifacts .copy-button",
   "button",
   "[role='button']",
   "svg",
@@ -587,10 +591,11 @@ export class ChatGLMAdapter extends SiteAdapter {
   }
 
   getLatestReplyText(): string | null {
-    const replies = document.querySelectorAll(ASSISTANT_MARKDOWN_SELECTOR)
-    if (replies.length === 0) return null
-
+    const container = document.querySelector(RESPONSE_CONTAINER_SELECTOR) || document.body
+    const replies = this.collectChatGLMAssistantExportElements(container)
     const last = replies[replies.length - 1]
+    if (!last) return null
+
     const text = this.extractAssistantResponseText(last)
     return text || null
   }
@@ -1047,9 +1052,11 @@ export class ChatGLMAdapter extends SiteAdapter {
     clone.querySelectorAll(THINKING_CONTAINER_SELECTOR).forEach((node) => node.remove())
 
     const imageMarkdown = this.extractChatGLMAssistantImageMarkdown(element, collector)
-    const markdownRoot = clone.matches(".markdown-body")
+    const markdownRoot = clone.matches(ASSISTANT_RESPONSE_SELECTOR)
       ? clone
-      : clone.querySelector(".markdown-body") || clone
+      : clone.matches(".markdown-body")
+        ? clone
+        : clone.querySelector(".markdown-body") || clone
     const bodyClone = markdownRoot.cloneNode(true) as HTMLElement
     bodyClone.querySelectorAll(EXPORT_DECORATION_SELECTOR).forEach((node) => node.remove())
     bodyClone.querySelectorAll("img").forEach((node) => {
