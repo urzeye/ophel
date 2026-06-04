@@ -18,6 +18,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Localized untitled exports** — Untitled export titles now follow the current UI language even when an older fallback title was saved in another language.
 - **Qianwen user-query Markdown contrast** — Rendered user-query Markdown on Qianwen now uses a dedicated readable bubble style instead of inheriting low-contrast native question-card colors.
 - **Qianwen/Qwen Studio Outline duplicates** — User questions wrapped by nested site containers now appear once in the Outline while preserving the correct export output.
+- **Custom tab-title formats** — Missing model names and previously managed tab titles are now resolved from the configured placeholder structure instead of separator-specific cleanup, preventing recursive title growth with arbitrary custom formats.
 
 ---
 

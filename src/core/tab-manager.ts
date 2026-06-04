@@ -369,6 +369,10 @@ export class TabManager {
       return null
     }
 
+    if (this.expectedTitle && document.title === this.expectedTitle && this.lastConversationTitle) {
+      return this.lastConversationTitle
+    }
+
     // 优先使用 getConversationTitle，其次使用 getSessionName
     const rawTitle = this.adapter.getConversationTitle?.() || this.adapter.getSessionName?.()
     const conversationTitle = sanitizeConversationTitleCandidate(rawTitle, {

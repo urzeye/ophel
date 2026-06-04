@@ -1,4 +1,7 @@
 const MANAGED_TAB_TITLE_ATTR = "data-ophel-managed-tab-title"
+const MAX_MANAGED_TITLE_STRIP_PASSES = 20
+const PLACEHOLDER_PATTERN = /\{(?:status|title|model|site)\}/g
+const MODEL_PLACEHOLDER = "{model}"
 
 interface TitleSanitizeOptions {
   expectedManagedTitle?: string | null
@@ -20,10 +23,12 @@ export function normalizeConversationTitle(value: string | null | undefined): st
 }
 
 export function rememberManagedTabTitle(title: string): void {
+  if (typeof document === "undefined") return
   document.documentElement?.setAttribute(MANAGED_TAB_TITLE_ATTR, title)
 }
 
 export function getRememberedManagedTabTitle(): string | null {
+  if (typeof document === "undefined") return null
   return document.documentElement?.getAttribute(MANAGED_TAB_TITLE_ATTR) || null
 }
 
@@ -64,6 +69,7 @@ export function sanitizeConversationTitleCandidate(
 
   const cleaned = stripManagedTabTitleDecorations(title, {
     hasManagedSignal: isExactManagedTitle,
+    siteName: options.siteName,
     titleFormat: options.titleFormat,
   })
 
@@ -95,17 +101,40 @@ export function extractConversationTitleFromDocumentTitle(
 }
 
 function removeEmptyModelPlaceholderSegment(format: string): string {
-  return format
-    .replace(/\s*[\[\(（【]\s*\{model\}\s*[\]\)）】]\s*/g, " ")
-    .replace(/\s*(?:模型|model)\s*[:：]\s*\{model\}\s*/gi, " ")
-    .replace(/\s*(?:->|→|[-–—|:：/\\>]+)\s*\{model\}\s*$/g, "")
-    .replace(/^\s*\{model\}\s*(?:->|→|[-–—|:：/\\>]+)\s*/g, "")
-    .replace(/\{model\}/g, "")
+  let cleaned = format
+
+  while (cleaned.includes(MODEL_PLACEHOLDER)) {
+    const next = removeOneEmptyModelPlaceholderSegment(cleaned)
+    if (next === cleaned) {
+      return cleaned.replace(/\{model\}/g, "")
+    }
+    cleaned = next
+  }
+
+  return cleaned
+}
+
+function removeOneEmptyModelPlaceholderSegment(format: string): string {
+  const placeholders = Array.from(format.matchAll(PLACEHOLDER_PATTERN))
+  const modelIndex = placeholders.findIndex(
+    (match) => match[0] === MODEL_PLACEHOLDER && match.index !== undefined,
+  )
+
+  if (modelIndex < 0) return format
+
+  const previous = placeholders[modelIndex - 1]
+  const next = placeholders[modelIndex + 1]
+  const removeStart = previous?.index !== undefined ? previous.index + previous[0].length : 0
+  const removeEnd = next?.index ?? format.length
+
+  return `${format.slice(0, removeStart)}${format.slice(removeEnd)}`
 }
 
 function stripManagedTabTitleDecorations(
   title: string,
-  options: Pick<TitleSanitizeOptions, "titleFormat"> & { hasManagedSignal: boolean },
+  options: Pick<TitleSanitizeOptions, "siteName" | "titleFormat"> & {
+    hasManagedSignal: boolean
+  },
 ): string | null {
   let cleaned = title
   let hasManagedSignal = options.hasManagedSignal
@@ -115,22 +144,145 @@ function stripManagedTabTitleDecorations(
     hasManagedSignal = true
   }
 
-  if (/(?:\s*(?:->|→)\s*)+$/u.test(cleaned)) {
-    cleaned = cleaned.replace(/(?:\s*(?:->|→)\s*)+$/u, "")
+  const templateCleaned = stripManagedTitleFormatDecorations(cleaned, {
+    hasManagedSignal,
+    siteName: options.siteName,
+    titleFormat: options.titleFormat,
+  })
+  if (templateCleaned && templateCleaned !== cleaned) {
+    cleaned = templateCleaned
     hasManagedSignal = true
   }
 
-  if (hasManagedSignal) {
-    cleaned = cleaned.replace(/\s*(?:->|→|[-–—|:：])\s*\[[^\]]{1,80}\]\s*$/u, "")
-  } else if (options.titleFormat?.includes("{model}")) {
-    cleaned = cleaned.replace(/\s*(?:->|→)\s*\[[^\]]{1,80}\]\s*$/u, "")
-  }
-
-  if (hasManagedSignal) {
-    cleaned = cleaned.replace(/\s*\[[^\]]{1,80}\]\s*$/u, "")
-  }
-
   return normalizeConversationTitle(cleaned)
+}
+
+function stripManagedTitleFormatDecorations(
+  title: string,
+  options: Pick<TitleSanitizeOptions, "siteName" | "titleFormat"> & {
+    hasManagedSignal: boolean
+  },
+): string | null {
+  const titleFormat = options.titleFormat || ""
+  if (!titleFormat.includes("{title}")) return null
+
+  const regexes = createManagedTitleFormatRegexes(titleFormat, options.siteName)
+  if (regexes.length === 0) return null
+
+  let cleaned = title
+  let didStrip = false
+  let hasManagedSignal = options.hasManagedSignal
+
+  for (let pass = 0; pass < MAX_MANAGED_TITLE_STRIP_PASSES; pass += 1) {
+    const parsed = parseManagedTitleByFormat(cleaned, regexes)
+    if (!parsed) break
+
+    if (!hasManagedSignal && !parsed.hasManagedSignal) {
+      break
+    }
+
+    if (!parsed.title || parsed.title === cleaned) {
+      break
+    }
+
+    cleaned = parsed.title
+    didStrip = true
+    hasManagedSignal = true
+  }
+
+  return didStrip ? normalizeConversationTitle(cleaned) : null
+}
+
+function createManagedTitleFormatRegexes(titleFormat: string, siteName?: string | null): RegExp[] {
+  const formats = [titleFormat]
+  const emptyModelFormat = removeEmptyModelPlaceholderSegment(titleFormat)
+
+  if (emptyModelFormat !== titleFormat) {
+    formats.push(emptyModelFormat)
+  }
+
+  const regexes: RegExp[] = []
+
+  formats.forEach((format) => {
+    const regex = createManagedTitleFormatRegex(format, siteName)
+    if (regex) regexes.push(regex)
+  })
+
+  return regexes
+}
+
+function createManagedTitleFormatRegex(
+  titleFormat: string,
+  siteName?: string | null,
+): RegExp | null {
+  const placeholders = /\{(status|title|model|site)\}/g
+  let source = "^\\s*"
+  let lastIndex = 0
+  let titleSeen = false
+  let groupIndex = 0
+
+  for (const match of titleFormat.matchAll(placeholders)) {
+    source += literalToFlexiblePattern(titleFormat.slice(lastIndex, match.index))
+
+    const placeholder = match[1]
+    if (placeholder === "title") {
+      source += titleSeen ? "[\\s\\S]*?" : "(?<ophelTitle>[\\s\\S]+?)"
+      titleSeen = true
+    } else if (placeholder === "status") {
+      source += `(?<ophelStatus${groupIndex}>(?:[⏳✅]\\s*)*)`
+      groupIndex += 1
+    } else if (placeholder === "model") {
+      source += `(?<ophelModel${groupIndex}>\\[[^\\]]{1,160}\\])?`
+      groupIndex += 1
+    } else if (placeholder === "site") {
+      const normalizedSiteName = normalizeConversationTitle(siteName)
+      source += normalizedSiteName
+        ? `(?<ophelSite${groupIndex}>${literalToFlexiblePattern(normalizedSiteName)})`
+        : `(?<ophelSite${groupIndex}>[\\s\\S]*?)`
+      groupIndex += 1
+    }
+
+    lastIndex = match.index + match[0].length
+  }
+
+  source += literalToFlexiblePattern(titleFormat.slice(lastIndex))
+  source += "\\s*$"
+
+  if (!titleSeen) return null
+
+  try {
+    return new RegExp(source, "u")
+  } catch {
+    return null
+  }
+}
+
+function parseManagedTitleByFormat(
+  title: string,
+  regexes: RegExp[],
+): { title: string; hasManagedSignal: boolean } | null {
+  for (const regex of regexes) {
+    const match = regex.exec(title)
+    const parsedTitle = normalizeConversationTitle(match?.groups?.ophelTitle)
+    if (!match || !parsedTitle) continue
+
+    const groups = match.groups || {}
+    const hasManagedSignal = Object.entries(groups).some(([key, value]) => {
+      if (key === "ophelTitle") return false
+      return Boolean(value?.trim())
+    })
+
+    return {
+      title: parsedTitle,
+      hasManagedSignal,
+    }
+  }
+
+  return null
+}
+
+function literalToFlexiblePattern(value: string): string {
+  return escapeRegExp(value).replace(/\s+/g, "\\s+")
 }
 
 function escapeRegExp(value: string): string {
