@@ -16,6 +16,7 @@ const WRAPPER_PAIRS: Record<string, string> = {
 
 interface TitleSanitizeOptions {
   expectedManagedTitle?: string | null
+  hasManagedTitleSignal?: boolean
   privacyTitle?: string | null
   siteName?: string | null
   titleFormat?: string | null
@@ -78,13 +79,14 @@ export function sanitizeConversationTitleCandidate(
   const isExactManagedTitle =
     Boolean(expectedManagedTitle && title === expectedManagedTitle) ||
     Boolean(rememberedTitle && title === rememberedTitle)
+  const hasManagedTitleSignal = isExactManagedTitle || options.hasManagedTitleSignal === true
 
   if (privacyTitle && title === privacyTitle) {
     return null
   }
 
   const cleaned = stripManagedTabTitleDecorations(title, {
-    hasManagedSignal: isExactManagedTitle,
+    hasManagedSignal: hasManagedTitleSignal,
     siteName: options.siteName,
     titleFormat: options.titleFormat,
   })
@@ -198,9 +200,8 @@ function stripManagedTabTitleDecorations(
   let cleaned = title
   let hasManagedSignal = options.hasManagedSignal
 
-  if (/^(?:[⏳✅]\s*)+/u.test(cleaned)) {
+  if (hasManagedSignal && /^(?:[⏳✅]\s*)+/u.test(cleaned)) {
     cleaned = cleaned.replace(/^(?:[⏳✅]\s*)+/u, "")
-    hasManagedSignal = true
   }
 
   const templateCleaned = stripManagedTitleFormatDecorations(cleaned, {
@@ -325,14 +326,9 @@ function parseManagedTitleByFormat(
     const parsedTitle = normalizeConversationTitle(match?.groups?.ophelTitle)
     if (!match || !parsedTitle) continue
 
-    const groups = match.groups || {}
-    const hasManagedSignal = Object.entries(groups).some(([key, value]) => {
-      return key.startsWith("ophelStatus") && Boolean(value?.trim())
-    })
-
     return {
       title: parsedTitle,
-      hasManagedSignal,
+      hasManagedSignal: false,
     }
   }
 

@@ -968,14 +968,34 @@ export class ConversationManager {
 
   private sanitizeConversationTitleForUse(
     title?: string | null,
-    options: { dropLocalizedFallback?: boolean } = {},
+    options: { dropLocalizedFallback?: boolean; managedTitleReference?: string | null } = {},
   ): string | null {
     const settings = useSettingsStore.getState().settings
-    const sanitized = sanitizeConversationTitleCandidate(title, {
+    const sanitizeOptions = {
       privacyTitle: settings.tab?.privacyTitle || "Google",
       siteName: this.siteAdapter.getName(),
       titleFormat: settings.tab?.titleFormat,
-    })
+    }
+    let sanitized = sanitizeConversationTitleCandidate(title, sanitizeOptions)
+    const referenceTitle = sanitizeConversationTitleCandidate(
+      options.managedTitleReference,
+      sanitizeOptions,
+    )
+
+    if (referenceTitle) {
+      const managedSanitized = sanitizeConversationTitleCandidate(title, {
+        ...sanitizeOptions,
+        hasManagedTitleSignal: true,
+      })
+      if (
+        managedSanitized &&
+        managedSanitized !== sanitized &&
+        managedSanitized === referenceTitle
+      ) {
+        sanitized = managedSanitized
+      }
+    }
+
     if (options.dropLocalizedFallback && this.isLocalizedFallbackConversationTitle(sanitized)) {
       return null
     }
@@ -1022,7 +1042,10 @@ export class ConversationManager {
 
     // 导出时优先保留已同步到会话库中的原始标题，但本次导出要清理历史污染标题。
     const title =
-      this.sanitizeConversationTitleForUse(existing?.title, { dropLocalizedFallback: true }) ||
+      this.sanitizeConversationTitleForUse(existing?.title, {
+        dropLocalizedFallback: true,
+        managedTitleReference: currentInfo.title,
+      }) ||
       this.sanitizeConversationTitleForUse(currentInfo.title) ||
       t("untitledConversation")
     const url = currentInfo.url || existing?.url || window.location.href
