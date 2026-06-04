@@ -12,7 +12,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### 🐛 Bug Fixes
 
 - **Conversation title isolation** — Browser tab renaming now keeps Ophel-managed status/model labels separate from raw conversation titles, preventing exported conversation titles and filenames from inheriting tab status, model names, or repeated `->` separators when a page cannot expose its model name.
-- **Doubao share-page export** — Doubao share links under `/thread/` are now recognized as exportable conversations, so exporting the current shared conversation no longer stops with a "Please open the conversation first" prompt.
+- **Doubao share-page export and outline** — Doubao share links under `/thread/` are now recognized as exportable conversations, and share-page message lists can now feed the Outline tab instead of requiring the regular chat-page virtual list.
 
 ---
 
