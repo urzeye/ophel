@@ -2,6 +2,17 @@ const MANAGED_TAB_TITLE_ATTR = "data-ophel-managed-tab-title"
 const MAX_MANAGED_TITLE_STRIP_PASSES = 20
 const PLACEHOLDER_PATTERN = /\{(?:status|title|model|site)\}/g
 const MODEL_PLACEHOLDER = "{model}"
+const WRAPPER_PAIRS: Record<string, string> = {
+  "(": ")",
+  "[": "]",
+  "{": "}",
+  "<": ">",
+  "（": "）",
+  "【": "】",
+  "《": "》",
+  "「": "」",
+  "『": "』",
+}
 
 interface TitleSanitizeOptions {
   expectedManagedTitle?: string | null
@@ -124,10 +135,53 @@ function removeOneEmptyModelPlaceholderSegment(format: string): string {
 
   const previous = placeholders[modelIndex - 1]
   const next = placeholders[modelIndex + 1]
-  const removeStart = previous?.index !== undefined ? previous.index + previous[0].length : 0
-  const removeEnd = next?.index ?? format.length
+  const model = placeholders[modelIndex]
+  const modelStart = model.index ?? 0
+  const modelEnd = modelStart + model[0].length
+  const previousEnd = previous?.index !== undefined ? previous.index + previous[0].length : 0
+  const nextStart = next?.index ?? format.length
+  const joinLiteral =
+    previous && next && previous[0] !== "{status}" && next[0] !== "{status}"
+      ? joinEmptyModelNeighborLiterals(
+          format.slice(previousEnd, modelStart),
+          format.slice(modelEnd, nextStart),
+        )
+      : ""
 
-  return `${format.slice(0, removeStart)}${format.slice(removeEnd)}`
+  return `${format.slice(0, previousEnd)}${joinLiteral}${format.slice(nextStart)}`
+}
+
+function joinEmptyModelNeighborLiterals(left: string, right: string): string {
+  const unwrapped = unwrapMatchingModelLiterals(left, right)
+  if (unwrapped !== null) return unwrapped
+
+  const leftHasText = hasTextLiteral(left)
+  const rightHasText = hasTextLiteral(right)
+
+  if (leftHasText && !rightHasText) return right
+  if (!leftHasText && rightHasText) return left
+
+  if (left.trim() && left.trim() === right.trim()) return left
+  if (!left.trim()) return right
+  if (!right.trim()) return left
+
+  return left
+}
+
+function unwrapMatchingModelLiterals(left: string, right: string): string | null {
+  const leftMatch = left.match(/^(.*?)([\[({<（【《「『])\s*$/u)
+  const rightMatch = right.match(/^\s*([\])}>）】》」』])(.*)$/u)
+  if (!leftMatch || !rightMatch) return null
+
+  const opening = leftMatch[2]
+  const closing = rightMatch[1]
+  if (WRAPPER_PAIRS[opening] !== closing) return null
+
+  return `${leftMatch[1]}${rightMatch[2]}`
+}
+
+function hasTextLiteral(value: string): boolean {
+  return /[\p{L}\p{N}]/u.test(value)
 }
 
 function stripManagedTabTitleDecorations(
