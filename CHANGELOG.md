@@ -15,6 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Doubao share-page export and outline** — Doubao share links under `/thread/` are now recognized as exportable conversations, and share-page message lists can now feed the Outline tab instead of requiring the regular chat-page virtual list.
 - **Z.ai share-page outline** — Z.ai share pages now reuse the same conversation content container detection as export, so Outline extraction works when the share DOM does not include the regular `#chat-container` wrapper.
 - **ChatGLM code-block export** — ChatGLM assistant replies split around code blocks now export the full answer instead of stopping at the first rendered Markdown segment.
+- **Localized untitled exports** — Untitled export titles now follow the current UI language even when an older fallback title was saved in another language.
 
 ---
 

@@ -25,7 +25,7 @@ import {
   formatToTXT,
   htmlToMarkdown,
 } from "~utils/exporter"
-import { t } from "~utils/i18n"
+import { getAllLocalizedTexts, t } from "~utils/i18n"
 import { consumeRestoreFlag } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
@@ -968,11 +968,25 @@ export class ConversationManager {
 
   private sanitizeConversationTitleForUse(title?: string | null): string | null {
     const settings = useSettingsStore.getState().settings
-    return sanitizeConversationTitleCandidate(title, {
+    const sanitized = sanitizeConversationTitleCandidate(title, {
       privacyTitle: settings.tab?.privacyTitle || "Google",
       siteName: this.siteAdapter.getName(),
       titleFormat: settings.tab?.titleFormat,
     })
+    if (this.isLocalizedFallbackConversationTitle(sanitized)) return null
+    return sanitized
+  }
+
+  private isLocalizedFallbackConversationTitle(title?: string | null): boolean {
+    const normalized = title?.replace(/\s+/g, " ").trim()
+    if (!normalized) return false
+
+    const fallbackTitles = [
+      ...getAllLocalizedTexts("untitledConversation"),
+      ...getAllLocalizedTexts("exportUntitled"),
+    ].map((value) => value.replace(/\s+/g, " ").trim())
+
+    return fallbackTitles.includes(normalized)
   }
 
   // ================= Utility Methods =================
@@ -1158,19 +1172,15 @@ export class ConversationManager {
       }
 
       // 格式化
-      const safeTitle = (conv.title || "conversation")
-        .replace(/[<>:"/\\|?*]/g, "_")
-        .substring(0, 50)
+      const localizedUntitledConversation = t("untitledConversation")
+      const exportTitle =
+        this.sanitizeConversationTitleForUse(conv.title) || localizedUntitledConversation
+      const safeTitle = exportTitle.replace(/[<>:"/\\|?*]/g, "_").substring(0, 50)
 
-      const metadata = createExportMetadata(
-        conv.title || "未命名",
-        this.siteAdapter.getName(),
-        conv.id,
-        {
-          customUserName: settings.export?.customUserName,
-          customModelName: settings.export?.customModelName,
-        },
-      )
+      const metadata = createExportMetadata(exportTitle, this.siteAdapter.getName(), conv.id, {
+        customUserName: settings.export?.customUserName,
+        customModelName: settings.export?.customModelName,
+      })
 
       let content: string
       let filename: string

@@ -51,6 +51,16 @@ export function t(key: string, params?: Record<string, string>): string {
   return text
 }
 
+export function getAllLocalizedTexts(key: string): string[] {
+  return Array.from(
+    new Set(
+      Object.values(resources)
+        .map((resource) => resource[key as keyof typeof resource])
+        .filter((value): value is string => typeof value === "string" && value.trim().length > 0),
+    ),
+  )
+}
+
 export function getCurrentLang(): string {
   return currentLang
 }
