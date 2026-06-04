@@ -327,8 +327,7 @@ function parseManagedTitleByFormat(
 
     const groups = match.groups || {}
     const hasManagedSignal = Object.entries(groups).some(([key, value]) => {
-      if (key === "ophelTitle") return false
-      return Boolean(value?.trim())
+      return key.startsWith("ophelStatus") && Boolean(value?.trim())
     })
 
     return {

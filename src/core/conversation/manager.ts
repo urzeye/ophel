@@ -966,14 +966,19 @@ export class ConversationManager {
       .filter((id): id is string => Boolean(id))
   }
 
-  private sanitizeConversationTitleForUse(title?: string | null): string | null {
+  private sanitizeConversationTitleForUse(
+    title?: string | null,
+    options: { dropLocalizedFallback?: boolean } = {},
+  ): string | null {
     const settings = useSettingsStore.getState().settings
     const sanitized = sanitizeConversationTitleCandidate(title, {
       privacyTitle: settings.tab?.privacyTitle || "Google",
       siteName: this.siteAdapter.getName(),
       titleFormat: settings.tab?.titleFormat,
     })
-    if (this.isLocalizedFallbackConversationTitle(sanitized)) return null
+    if (options.dropLocalizedFallback && this.isLocalizedFallbackConversationTitle(sanitized)) {
+      return null
+    }
     return sanitized
   }
 
@@ -981,10 +986,9 @@ export class ConversationManager {
     const normalized = title?.replace(/\s+/g, " ").trim()
     if (!normalized) return false
 
-    const fallbackTitles = [
-      ...getAllLocalizedTexts("untitledConversation"),
-      ...getAllLocalizedTexts("exportUntitled"),
-    ].map((value) => value.replace(/\s+/g, " ").trim())
+    const fallbackTitles = getAllLocalizedTexts("untitledConversation").map((value) =>
+      value.replace(/\s+/g, " ").trim(),
+    )
 
     return fallbackTitles.includes(normalized)
   }
@@ -1018,7 +1022,7 @@ export class ConversationManager {
 
     // 导出时优先保留已同步到会话库中的原始标题，但本次导出要清理历史污染标题。
     const title =
-      this.sanitizeConversationTitleForUse(existing?.title) ||
+      this.sanitizeConversationTitleForUse(existing?.title, { dropLocalizedFallback: true }) ||
       this.sanitizeConversationTitleForUse(currentInfo.title) ||
       t("untitledConversation")
     const url = currentInfo.url || existing?.url || window.location.href
