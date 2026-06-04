@@ -2,7 +2,10 @@ import { type SiteAdapter } from "~adapters/base"
 import { NOTIFICATION_SOUND_PRESETS } from "~constants"
 import { platform } from "~platform"
 import {
+  forgetManagedTabTitle,
   formatManagedTabTitle,
+  getRememberedManagedTabTitle,
+  normalizeConversationTitle,
   rememberManagedTabTitle,
   sanitizeConversationTitleCandidate,
 } from "~utils/conversation-title"
@@ -45,6 +48,8 @@ export class TabManager {
 
   // 对话标题缓存（避免读取被污染的标签页标题）
   private lastConversationTitle: string | null = null
+  private staleManagedTitleAfterRouteChange: string | null = null
+  private staleConversationTitleAfterRouteChange: string | null = null
 
   // 通知声音
   private notificationAudio: HTMLAudioElement | null = null
@@ -164,6 +169,9 @@ export class TabManager {
     this.resetGenerationConfirmationState()
     this.stopTitleObserver()
     this.expectedTitle = null
+    this.staleManagedTitleAfterRouteChange = null
+    this.staleConversationTitleAfterRouteChange = null
+    forgetManagedTabTitle()
 
     if (this.intervalId) {
       clearInterval(this.intervalId)
@@ -212,7 +220,33 @@ export class TabManager {
    * 用于 SPA 切换对话时清除旧的对话标题
    */
   resetConversationTitleCache() {
+    const currentDocumentTitle = normalizeConversationTitle(document.title)
+    const previousManagedTitle =
+      normalizeConversationTitle(this.expectedTitle) ||
+      normalizeConversationTitle(getRememberedManagedTabTitle())
+    const previousConversationTitle = normalizeConversationTitle(this.lastConversationTitle)
+    const parsedPreviousConversationTitle =
+      currentDocumentTitle && currentDocumentTitle === previousManagedTitle
+        ? sanitizeConversationTitleCandidate(currentDocumentTitle, {
+            expectedManagedTitle: previousManagedTitle,
+            privacyTitle: this.settings.privacyTitle || "Google",
+            siteName: this.adapter.getName(),
+            titleFormat: this.settings.titleFormat,
+          })
+        : null
+
     this.lastConversationTitle = null
+    this.expectedTitle = null
+    forgetManagedTabTitle()
+
+    if (currentDocumentTitle && currentDocumentTitle === previousManagedTitle) {
+      this.staleManagedTitleAfterRouteChange = currentDocumentTitle
+      this.staleConversationTitleAfterRouteChange =
+        previousConversationTitle || parsedPreviousConversationTitle
+    } else {
+      this.staleManagedTitleAfterRouteChange = null
+      this.staleConversationTitleAfterRouteChange = null
+    }
   }
 
   /**
@@ -375,6 +409,11 @@ export class TabManager {
 
     // 优先使用 getConversationTitle，其次使用 getSessionName
     const rawTitle = this.adapter.getConversationTitle?.() || this.adapter.getSessionName?.()
+
+    if (this.shouldIgnoreStaleManagedTitle(rawTitle)) {
+      return this.lastConversationTitle
+    }
+
     const conversationTitle = sanitizeConversationTitleCandidate(rawTitle, {
       expectedManagedTitle: this.expectedTitle,
       privacyTitle: this.settings.privacyTitle || "Google",
@@ -384,12 +423,43 @@ export class TabManager {
 
     // 如果获取到有效且非污染的标题，更新缓存并返回
     if (conversationTitle) {
+      this.clearStaleManagedTitleAfterRouteChange()
       this.lastConversationTitle = conversationTitle
       return conversationTitle
     }
 
     // 否则返回缓存的标题（可能为 null）
     return this.lastConversationTitle
+  }
+
+  private shouldIgnoreStaleManagedTitle(rawTitle: string | null | undefined): boolean {
+    if (!this.staleManagedTitleAfterRouteChange) return false
+
+    if (normalizeConversationTitle(document.title) !== this.staleManagedTitleAfterRouteChange) {
+      this.clearStaleManagedTitleAfterRouteChange()
+      return false
+    }
+
+    const title = normalizeConversationTitle(rawTitle)
+    if (!title) return false
+    if (title === this.staleManagedTitleAfterRouteChange) return true
+
+    const cleanedTitle = sanitizeConversationTitleCandidate(title, {
+      expectedManagedTitle: this.staleManagedTitleAfterRouteChange,
+      privacyTitle: this.settings.privacyTitle || "Google",
+      siteName: this.adapter.getName(),
+      titleFormat: this.settings.titleFormat,
+    })
+
+    return Boolean(
+      this.staleConversationTitleAfterRouteChange &&
+        cleanedTitle === this.staleConversationTitleAfterRouteChange,
+    )
+  }
+
+  private clearStaleManagedTitleAfterRouteChange() {
+    this.staleManagedTitleAfterRouteChange = null
+    this.staleConversationTitleAfterRouteChange = null
   }
 
   /**

@@ -38,6 +38,11 @@ export function rememberManagedTabTitle(title: string): void {
   document.documentElement?.setAttribute(MANAGED_TAB_TITLE_ATTR, title)
 }
 
+export function forgetManagedTabTitle(): void {
+  if (typeof document === "undefined") return
+  document.documentElement?.removeAttribute(MANAGED_TAB_TITLE_ATTR)
+}
+
 export function getRememberedManagedTabTitle(): string | null {
   if (typeof document === "undefined") return null
   return document.documentElement?.getAttribute(MANAGED_TAB_TITLE_ATTR) || null
