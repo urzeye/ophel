@@ -222,7 +222,7 @@ export class ImaAdapter extends SiteAdapter {
     const sidebarTitle = this.getActiveHistoryTitle()
     if (sidebarTitle) return sidebarTitle
 
-    const title = document.title.trim()
+    const title = this.getDocumentConversationTitle() || ""
     if (!title) return null
 
     const cleaned = title

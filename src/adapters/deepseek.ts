@@ -212,7 +212,7 @@ export class DeepSeekAdapter extends SiteAdapter {
     const conversationTitle = this.getConversationTitle()
     if (conversationTitle) return conversationTitle
 
-    const title = document.title.trim()
+    const title = this.getDocumentConversationTitle() || ""
     if (!title || title === "DeepSeek") return null
 
     return title.replace(/\s*[-|]\s*DeepSeek$/i, "").trim() || null

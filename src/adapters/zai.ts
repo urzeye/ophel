@@ -999,7 +999,7 @@ export class ZaiAdapter extends SiteAdapter {
   }
 
   private getSharePageTitle(): string | null {
-    const title = document.title.trim()
+    const title = this.getDocumentConversationTitle() || ""
     if (!title) return this.getSessionName()
 
     const conversationTitle = title.split(" | ")[0]?.trim()

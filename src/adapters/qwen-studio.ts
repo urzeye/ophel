@@ -244,7 +244,7 @@ export class QwenAiAdapter extends SiteAdapter {
   }
 
   getSessionName(): string | null {
-    const title = document.title.trim()
+    const title = this.getDocumentConversationTitle() || ""
     if (!title) return null
 
     const cleaned = title

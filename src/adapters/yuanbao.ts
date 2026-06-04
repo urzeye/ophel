@@ -383,7 +383,7 @@ export class YuanbaoAdapter extends SiteAdapter {
     const conversationTitle = this.getConversationTitle()
     if (conversationTitle) return conversationTitle
 
-    const title = document.title.trim()
+    const title = this.getDocumentConversationTitle() || ""
     if (!title) return null
 
     const cleaned = title.replace(/\s*[-|]\s*(腾讯元宝|元宝)$/i, "").trim()

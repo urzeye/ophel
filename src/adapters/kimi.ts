@@ -201,7 +201,7 @@ export class KimiAdapter extends SiteAdapter {
     const conversationTitle = this.getConversationTitle()
     if (conversationTitle) return conversationTitle
 
-    const title = document.title.trim()
+    const title = this.getDocumentConversationTitle() || ""
     if (!title || title === "Kimi") return null
 
     // 自有页格式："Title - Kimi"    分享页格式："Kimi | Title"

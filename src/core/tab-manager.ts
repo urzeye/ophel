@@ -1,6 +1,11 @@
 import { type SiteAdapter } from "~adapters/base"
 import { NOTIFICATION_SOUND_PRESETS } from "~constants"
 import { platform } from "~platform"
+import {
+  formatManagedTabTitle,
+  rememberManagedTabTitle,
+  sanitizeConversationTitleCandidate,
+} from "~utils/conversation-title"
 import { t } from "~utils/i18n"
 import {
   EVENT_MONITOR_COMPLETE,
@@ -38,8 +43,8 @@ export class TabManager {
   // true = 用户已查看，不应再显示 ✅；false = 用户尚未查看，可显示 ✅
   private completionViewed = false
 
-  // 会话名称缓存（避免读取被污染的标题）
-  private lastSessionName: string | null = null
+  // 对话标题缓存（避免读取被污染的标签页标题）
+  private lastConversationTitle: string | null = null
 
   // 通知声音
   private notificationAudio: HTMLAudioElement | null = null
@@ -203,11 +208,11 @@ export class TabManager {
   }
 
   /**
-   * 重置会话名称缓存
-   * 用于 SPA 切换会话时清除旧的会话标题
+   * 重置对话标题缓存
+   * 用于 SPA 切换对话时清除旧的对话标题
    */
-  resetSessionCache() {
-    this.lastSessionName = null
+  resetConversationTitleCache() {
+    this.lastConversationTitle = null
   }
 
   /**
@@ -229,8 +234,8 @@ export class TabManager {
       return
     }
 
-    // 获取会话名称（防止读取被污染的 title）
-    const sessionName = this.getCleanSessionName()
+    // 获取对话标题（防止读取被污染的 title）
+    const conversationTitle = this.getCleanConversationTitle()
 
     // 检查生成状态
     const isGenerating = this.isCurrentlyGenerating()
@@ -257,13 +262,12 @@ export class TabManager {
     // 获取模型名称（如果格式中包含 {model}）
     const modelName = format.includes("{model}") ? this.adapter.getModelName?.() || "" : ""
 
-    let finalTitle = format
-      .replace("{status}", statusPrefix)
-      .replace("{title}", sessionName || siteName)
-      .replace("{model}", modelName ? `[${modelName}] ` : "")
-      .replace("{site}", siteName)
-      .replace(/\s+/g, " ")
-      .trim()
+    const finalTitle = formatManagedTabTitle(format, {
+      statusPrefix,
+      conversationTitle: conversationTitle || siteName,
+      modelName,
+      siteName,
+    })
 
     if (finalTitle) {
       this.applyManagedTitle(finalTitle, force)
@@ -294,6 +298,7 @@ export class TabManager {
 
   private applyManagedTitle(title: string, force = false) {
     this.expectedTitle = title
+    rememberManagedTabTitle(title)
 
     if (!force && document.title === title) {
       return
@@ -355,40 +360,32 @@ export class TabManager {
   }
 
   /**
-   * 获取干净的会话名称（过滤被污染的标题）
+   * 获取干净的对话标题（过滤被污染的标签页标题）
    */
-  private getCleanSessionName(): string | null {
+  private getCleanConversationTitle(): string | null {
     // 新对话页面：清除旧会话标题，避免使用之前的标题
     if (this.adapter.isNewConversation?.()) {
-      this.lastSessionName = null
+      this.lastConversationTitle = null
       return null
     }
 
     // 优先使用 getConversationTitle，其次使用 getSessionName
-    let sessionName = this.adapter.getConversationTitle?.() || this.adapter.getSessionName?.()
-
-    // 检测污染
-    const isPolluted = (name: string | null): boolean => {
-      if (!name) return false
-      // 被状态图标污染
-      if (/^[⏳✅]/.test(name)) return true
-      // 被模型名称标记污染
-      if (/\[[\w\s.]+\]/.test(name)) return true
-      // 被隐私标题污染
-      if (name === (this.settings.privacyTitle || "Google")) return true
-      // 被格式分隔符 -> 污染（末尾含 -> 说明标题已被格式化过）
-      if (/->\s*$/.test(name)) return true
-      return false
-    }
+    const rawTitle = this.adapter.getConversationTitle?.() || this.adapter.getSessionName?.()
+    const conversationTitle = sanitizeConversationTitleCandidate(rawTitle, {
+      expectedManagedTitle: this.expectedTitle,
+      privacyTitle: this.settings.privacyTitle || "Google",
+      siteName: this.adapter.getName(),
+      titleFormat: this.settings.titleFormat,
+    })
 
     // 如果获取到有效且非污染的标题，更新缓存并返回
-    if (sessionName && !isPolluted(sessionName)) {
-      this.lastSessionName = sessionName
-      return sessionName
+    if (conversationTitle) {
+      this.lastConversationTitle = conversationTitle
+      return conversationTitle
     }
 
     // 否则返回缓存的标题（可能为 null）
-    return this.lastSessionName
+    return this.lastConversationTitle
   }
 
   /**
@@ -697,7 +694,14 @@ export class TabManager {
         // 使用国际化翻译，支持10种语言
         const title = t("notificationTitle").replace("{site}", siteName)
         const message =
-          this.lastSessionName || this.adapter.getConversationTitle?.() || t("notificationBody")
+          this.lastConversationTitle ||
+          sanitizeConversationTitleCandidate(this.adapter.getConversationTitle?.(), {
+            expectedManagedTitle: this.expectedTitle,
+            privacyTitle: this.settings.privacyTitle || "Google",
+            siteName: this.adapter.getName(),
+            titleFormat: this.settings.titleFormat,
+          }) ||
+          t("notificationBody")
         platform.notify({ title, message })
       } catch (e) {
         console.error("[TabManager] 通知发送失败:", e)

@@ -475,7 +475,7 @@ export class ChatGLMAdapter extends SiteAdapter {
     const conversationTitle = this.getConversationTitle()
     if (conversationTitle) return conversationTitle
 
-    const title = document.title.trim()
+    const title = this.getDocumentConversationTitle() || ""
     if (!title) return null
 
     const normalized = title.replace(/\s*[-|]\s*(智谱清言|ChatGLM(?:\s*\d+)?)\s*$/i, "").trim()

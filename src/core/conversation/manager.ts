@@ -11,6 +11,7 @@ import { getConversationsStore, useConversationsStore } from "~stores/conversati
 import { getFoldersStore, useFoldersStore } from "~stores/folders-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { getTagsStore, useTagsStore } from "~stores/tags-store"
+import { sanitizeConversationTitleCandidate } from "~utils/conversation-title"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import {
   createExportMetadata,
@@ -965,6 +966,15 @@ export class ConversationManager {
       .filter((id): id is string => Boolean(id))
   }
 
+  private sanitizeConversationTitleForUse(title?: string | null): string | null {
+    const settings = useSettingsStore.getState().settings
+    return sanitizeConversationTitleCandidate(title, {
+      privacyTitle: settings.tab?.privacyTitle || "Google",
+      siteName: this.siteAdapter.getName(),
+      titleFormat: settings.tab?.titleFormat,
+    })
+  }
+
   // ================= Utility Methods =================
 
   /**
@@ -992,8 +1002,11 @@ export class ConversationManager {
       return existing || null
     }
 
-    // 导出时优先保留已同步到会话库中的原始标题，避免当前页面被标签页重命名后的 title 回写污染。
-    const title = existing?.title?.trim() || currentInfo.title?.trim() || t("untitledConversation")
+    // 导出时优先保留已同步到会话库中的原始标题，但本次导出要清理历史污染标题。
+    const title =
+      this.sanitizeConversationTitleForUse(existing?.title) ||
+      this.sanitizeConversationTitleForUse(currentInfo.title) ||
+      t("untitledConversation")
     const url = currentInfo.url || existing?.url || window.location.href
     const cid = currentInfo.cid ?? existing?.cid
     const pinned = currentInfo.isPinned ?? existing?.pinned ?? false
@@ -1025,14 +1038,17 @@ export class ConversationManager {
       if (needsUpdate) {
         getConversationsStore().updateConversation(convId, updates)
         this.notifyDataChange()
-        return {
+        const updatedConversation = {
           ...existing,
           ...updates,
           updatedAt: Date.now(),
         }
+        return updatedConversation.title === title
+          ? updatedConversation
+          : { ...updatedConversation, title }
       }
 
-      return existing
+      return existing.title === title ? existing : { ...existing, title }
     }
 
     const now = Date.now()

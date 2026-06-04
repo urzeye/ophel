@@ -6,6 +6,7 @@
 
 import { SITE_IDS } from "~constants/defaults"
 import type { MarkdownFixerConfig } from "~core/markdown-fixer"
+import { extractConversationTitleFromDocumentTitle } from "~utils/conversation-title"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { createExportAssetCollector, type ExportAssetCollector } from "~utils/export-assets"
 import type { ExportBundle, ExportFormat, ExportMessage } from "~utils/exporter"
@@ -371,17 +372,15 @@ export abstract class SiteAdapter {
     return true
   }
 
-  /** 获取当前会话名称（用于标签页重命名） */
+  /** 获取当前对话标题（用于标签页重命名的兼容回退） */
   getSessionName(): string | null {
-    const title = document.title
-    if (title) {
-      const parts = title.split(" - ")
-      if (parts.length > 1) {
-        return parts.slice(0, -1).join(" - ").trim()
-      }
-      return title.trim()
-    }
-    return null
+    return this.getDocumentConversationTitle()
+  }
+
+  protected getDocumentConversationTitle(siteName = this.getName()): string | null {
+    return extractConversationTitleFromDocumentTitle(document.title, {
+      siteName,
+    })
   }
 
   /** 获取当前侧边栏选中会话的标题 */

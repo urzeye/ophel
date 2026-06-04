@@ -670,7 +670,7 @@ export function initUrlChangeObserver(ctx: ModulesContext): void {
 
       // 3. 标签页标题更新
       if (modules.tabManager) {
-        modules.tabManager.resetSessionCache()
+        modules.tabManager.resetConversationTitleCache()
         ;[300, 800, 1500].forEach((delay) =>
           setTimeout(() => modules.tabManager?.updateTabName(true), delay),
         )

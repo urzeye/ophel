@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **Conversation title isolation** — Browser tab renaming now keeps Ophel-managed status/model labels separate from raw conversation titles, preventing exported conversation titles and filenames from inheriting tab status, model names, or repeated `->` separators when a page cannot expose its model name.
+
 ---
 
 ## [1.0.57] - 2026-06-03

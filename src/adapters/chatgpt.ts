@@ -916,7 +916,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   getSessionName(): string | null {
     // 尝试从页面标题获取
-    const title = document.title
+    const title = this.getDocumentConversationTitle(DEFAULT_TITLE)
     if (title && title !== DEFAULT_TITLE) {
       return title.replace(` | ${DEFAULT_TITLE}`, "").replace(` - ${DEFAULT_TITLE}`, "").trim()
     }
