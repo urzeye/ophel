@@ -513,9 +513,11 @@ export class QianwenAdapter extends SiteAdapter {
       document.querySelector(this.getResponseContainerSelector())
     if (!container) return items
 
-    const blocks = Array.from(
-      container.querySelectorAll(`${QUESTION_ITEM_SELECTOR}, ${ANSWER_ITEM_SELECTOR}`),
-    ).filter((el) => !el.closest(".gh-root"))
+    const blocks = this.collectTopLevelBlocks(
+      Array.from(
+        container.querySelectorAll(`${QUESTION_ITEM_SELECTOR}, ${ANSWER_ITEM_SELECTOR}`),
+      ).filter((el) => !el.closest(".gh-root")),
+    )
 
     blocks.forEach((block, index) => {
       const isUserBlock = block.matches(QUESTION_ITEM_SELECTOR)

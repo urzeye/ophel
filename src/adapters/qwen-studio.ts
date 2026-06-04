@@ -552,11 +552,13 @@ export class QwenAiAdapter extends SiteAdapter {
       document.querySelector(QWENAI_MESSAGE_SCROLL_SELECTOR)
     if (!container) return items
 
-    const blocks = Array.from(
-      container.querySelectorAll(
-        `${QWENAI_USER_MESSAGE_SELECTOR}, ${QWENAI_ASSISTANT_MESSAGE_SELECTOR}`,
-      ),
-    ).filter((el) => !el.closest(".gh-root"))
+    const blocks = this.collectTopLevelBlocks(
+      Array.from(
+        container.querySelectorAll(
+          `${QWENAI_USER_MESSAGE_SELECTOR}, ${QWENAI_ASSISTANT_MESSAGE_SELECTOR}`,
+        ),
+      ).filter((el) => !el.closest(".gh-root")),
+    )
 
     blocks.forEach((block, index) => {
       const isUserBlock = block.matches(QWENAI_USER_MESSAGE_SELECTOR)

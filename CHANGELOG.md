@@ -17,6 +17,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **ChatGLM code-block export** — ChatGLM assistant replies split around code blocks now export the full answer instead of stopping at the first rendered Markdown segment.
 - **Localized untitled exports** — Untitled export titles now follow the current UI language even when an older fallback title was saved in another language.
 - **Qianwen user-query Markdown contrast** — Rendered user-query Markdown on Qianwen now uses a dedicated readable bubble style instead of inheriting low-contrast native question-card colors.
+- **Qianwen/Qwen Studio Outline duplicates** — User questions wrapped by nested site containers now appear once in the Outline while preserving the correct export output.
 
 ---
 
