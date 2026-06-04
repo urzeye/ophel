@@ -457,7 +457,7 @@ export class QianwenAdapter extends SiteAdapter {
 
     const rendered = document.createElement("div")
     rendered.className =
-      `${contentRoot instanceof HTMLElement ? contentRoot.className : ""} gh-user-query-markdown gh-markdown-preview`.trim()
+      `${contentRoot instanceof HTMLElement ? contentRoot.className : ""} gh-user-query-markdown gh-user-query-markdown-qianwen gh-markdown-preview`.trim()
     rendered.innerHTML = html
 
     if (contentRoot instanceof HTMLElement) {

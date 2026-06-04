@@ -16,6 +16,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Z.ai share-page outline** — Z.ai share pages now reuse the same conversation content container detection as export, so Outline extraction works when the share DOM does not include the regular `#chat-container` wrapper.
 - **ChatGLM code-block export** — ChatGLM assistant replies split around code blocks now export the full answer instead of stopping at the first rendered Markdown segment.
 - **Localized untitled exports** — Untitled export titles now follow the current UI language even when an older fallback title was saved in another language.
+- **Qianwen user-query Markdown contrast** — Rendered user-query Markdown on Qianwen now uses a dedicated readable bubble style instead of inheriting low-contrast native question-card colors.
 
 ---
 

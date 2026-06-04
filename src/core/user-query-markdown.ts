@@ -101,6 +101,52 @@ html[yb-theme-mode='dark'] .gh-user-query-markdown:not(.gh-user-query-markdown-g
   background: rgba(255, 255, 255, 0.05);
 }
 
+.gh-user-query-markdown.gh-user-query-markdown-qianwen {
+  color: #111827 !important;
+  background: #f3f6fb !important;
+  border: 1px solid rgba(17, 24, 39, 0.06) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  --gh-user-query-code-bg: rgba(15, 23, 42, 0.07);
+  --gh-user-query-code-border: rgba(15, 23, 42, 0.12);
+  --gh-user-query-code-fg: #111827;
+  --gh-user-query-code-comment: #64748b;
+  --gh-user-query-code-keyword: #b91c1c;
+  --gh-user-query-code-string: #075985;
+  --gh-user-query-code-number: #1d4ed8;
+  --gh-user-query-code-title: #6d28d9;
+  --gh-user-query-code-type: #047857;
+  --gh-user-query-code-variable: #c2410c;
+}
+
+.gh-user-query-markdown.gh-user-query-markdown-qianwen,
+.gh-user-query-markdown.gh-user-query-markdown-qianwen *:not(pre):not(code):not(svg):not(path) {
+  color: #111827 !important;
+}
+
+html.dark .gh-user-query-markdown.gh-user-query-markdown-qianwen,
+body.dark .gh-user-query-markdown.gh-user-query-markdown-qianwen,
+html[data-theme='dark'] .gh-user-query-markdown.gh-user-query-markdown-qianwen,
+body[data-theme='dark'] .gh-user-query-markdown.gh-user-query-markdown-qianwen {
+  color: #f8fafc !important;
+  background: #1f2937 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18) !important;
+  --gh-user-query-code-bg: rgba(255, 255, 255, 0.1);
+  --gh-user-query-code-border: rgba(255, 255, 255, 0.14);
+  --gh-user-query-code-fg: #f8fafc;
+}
+
+html.dark .gh-user-query-markdown.gh-user-query-markdown-qianwen,
+html.dark .gh-user-query-markdown.gh-user-query-markdown-qianwen *:not(pre):not(code):not(svg):not(path),
+body.dark .gh-user-query-markdown.gh-user-query-markdown-qianwen,
+body.dark .gh-user-query-markdown.gh-user-query-markdown-qianwen *:not(pre):not(code):not(svg):not(path),
+html[data-theme='dark'] .gh-user-query-markdown.gh-user-query-markdown-qianwen,
+html[data-theme='dark'] .gh-user-query-markdown.gh-user-query-markdown-qianwen *:not(pre):not(code):not(svg):not(path),
+body[data-theme='dark'] .gh-user-query-markdown.gh-user-query-markdown-qianwen,
+body[data-theme='dark'] .gh-user-query-markdown.gh-user-query-markdown-qianwen *:not(pre):not(code):not(svg):not(path) {
+  color: #f8fafc !important;
+}
+
 .gh-user-query-markdown.gh-user-query-markdown-gemini {
   font-family: 'Google Sans', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
   --gh-user-query-code-bg: rgba(0, 0, 0, 0.06);
