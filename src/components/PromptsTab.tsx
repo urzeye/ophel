@@ -82,6 +82,257 @@ type ChainDraft = Omit<PromptChain, "id" | "createdAt" | "updatedAt"> & {
   id?: string
 }
 
+const CHAIN_EDITOR_PORTAL_STYLES = `
+.gh-chain-editor {
+  width: min(680px, 92vw);
+  max-height: 86vh;
+  padding: 0 !important;
+  border-radius: 12px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text, #1f2937);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  box-shadow: var(--gh-shadow-lg, 0 20px 50px rgba(0, 0, 0, 0.3));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.25s ease-out;
+}
+
+.gh-chain-editor-header,
+.gh-chain-editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--gh-border, #e5e7eb);
+}
+
+.gh-chain-editor-footer {
+  justify-content: flex-end;
+  border-top: 1px solid var(--gh-border, #e5e7eb);
+  border-bottom: none;
+}
+
+.gh-chain-editor-title {
+  color: var(--gh-text, #1f2937);
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.gh-chain-editor-subtitle,
+.gh-chain-section-subtitle,
+.gh-chain-field-help {
+  color: var(--gh-text-tertiary, #9ca3af);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.gh-chain-editor-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: var(--gh-hover, #f3f4f6);
+  color: var(--gh-text-secondary, #6b7280);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gh-chain-editor-scroll {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 18px;
+}
+
+.gh-chain-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.gh-chain-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  color: var(--gh-text, #374151);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.gh-chain-field input,
+.gh-chain-field textarea,
+.gh-chain-step-row select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--gh-input-border, #d1d5db);
+  border-radius: 7px;
+  background: var(--gh-input-bg, var(--gh-bg, #ffffff));
+  color: var(--gh-text, #1f2937);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.gh-chain-field input,
+.gh-chain-step-row select {
+  height: 34px;
+  padding: 0 10px;
+}
+
+.gh-chain-field textarea {
+  min-height: 74px;
+  padding: 8px 10px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.gh-chain-field input:focus,
+.gh-chain-field textarea:focus,
+.gh-chain-step-row select:focus {
+  border-color: var(--gh-primary, #4285f4);
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.12);
+}
+
+.gh-chain-toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin-bottom: 16px;
+}
+
+.gh-chain-toggle-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--gh-text, #374151);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.gh-chain-editor-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--gh-border, #e5e7eb);
+}
+
+.gh-chain-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.gh-chain-section-title {
+  color: var(--gh-text, #1f2937);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.gh-chain-step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gh-chain-step-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--gh-bg-secondary, #f9fafb);
+}
+
+.gh-chain-step-index {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text-secondary, #6b7280);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.gh-chain-step-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.gh-chain-step-empty {
+  padding: 14px;
+  border: 1px dashed var(--gh-border, #d1d5db);
+  border-radius: 8px;
+  color: var(--gh-text-tertiary, #9ca3af);
+  font-size: 13px;
+  text-align: center;
+}
+
+.gh-chain-variable-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.gh-chain-variable-chip,
+.gh-chain-variable-muted {
+  padding: 4px 7px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.gh-chain-variable-chip {
+  border: 1px solid rgba(66, 133, 244, 0.25);
+  background: rgba(66, 133, 244, 0.08);
+  color: var(--gh-primary, #4285f4);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.gh-chain-variable-chip.custom {
+  border-color: var(--gh-border, #e5e7eb);
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.gh-chain-variable-muted {
+  color: var(--gh-text-tertiary, #9ca3af);
+}
+
+.prompt-action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+@media (max-width: 520px) {
+  .gh-chain-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gh-chain-step-row {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+
+  .gh-chain-step-actions {
+    grid-column: 2;
+    justify-content: flex-end;
+  }
+}
+`
+
 // 根据分类名称哈希自动分配颜色索引 1-7
 const getCategoryColorIndex = (categoryName: string): number => {
   let hash = 0
@@ -1367,178 +1618,183 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     const variables = getChainVariables(draft)
 
     return createPortal(
-      <div
-        className="prompt-modal gh-interactive"
-        {...OPHEL_INTERACTION_LAYER_PROPS}
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: "var(--gh-overlay-bg)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 2147483646,
-          animation: "fadeIn 0.2s",
-        }}>
-        <div className="prompt-modal-content gh-chain-editor" onClick={(e) => e.stopPropagation()}>
-          <div className="gh-chain-editor-header">
-            <div>
-              <div className="gh-chain-editor-title">
-                {draft.id ? t("chainEditorEditTitle") : t("chainEditorNewTitle")}
-              </div>
-              <div className="gh-chain-editor-subtitle">{t("chainEditorSubtitle")}</div>
-            </div>
-            <button className="gh-chain-editor-close" onClick={closeChainEditor}>
-              <ClearIcon size={18} />
-            </button>
-          </div>
-
-          <div className="gh-chain-editor-scroll">
-            <div className="gh-chain-form-grid">
-              <label className="gh-chain-field">
-                <span>{t("chainName")}</span>
-                <input
-                  type="text"
-                  value={draft.title}
-                  onChange={(e) => updateChainDraft({ title: e.target.value })}
-                  placeholder={t("chainNamePlaceholder")}
-                />
-              </label>
-
-              <label className="gh-chain-field">
-                <span>{t("chainDescription")}</span>
-                <input
-                  type="text"
-                  value={draft.description || ""}
-                  onChange={(e) => updateChainDraft({ description: e.target.value })}
-                  placeholder={t("chainDescriptionPlaceholder")}
-                />
-              </label>
-            </div>
-
-            <label className="gh-chain-field">
-              <span>{t("chainIconSvg")}</span>
-              <textarea
-                value={draft.iconSvg || ""}
-                onChange={(e) => updateChainDraft({ iconSvg: e.target.value })}
-                placeholder={t("chainIconSvgPlaceholder")}
-                rows={3}
-              />
-              <span className="gh-chain-field-help">{t("chainIconSvgHelp")}</span>
-            </label>
-
-            <div className="gh-chain-toggle-row">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={draft.enabled !== false}
-                  onChange={(e) => updateChainDraft({ enabled: e.target.checked })}
-                />
-                <span>{t("chainEnabled")}</span>
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={draft.showInSelectionPopover !== false}
-                  onChange={(e) => updateChainDraft({ showInSelectionPopover: e.target.checked })}
-                />
-                <span>{t("chainShowInPopover")}</span>
-              </label>
-            </div>
-
-            <div className="gh-chain-editor-section">
-              <div className="gh-chain-section-header">
-                <div>
-                  <div className="gh-chain-section-title">{t("chainSteps")}</div>
-                  <div className="gh-chain-section-subtitle">{t("chainStepsHelp")}</div>
+      <>
+        <style>{CHAIN_EDITOR_PORTAL_STYLES}</style>
+        <div
+          className="prompt-modal gh-interactive"
+          {...OPHEL_INTERACTION_LAYER_PROPS}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "var(--gh-overlay-bg, rgba(0, 0, 0, 0.5))",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2147483646,
+            animation: "fadeIn 0.2s",
+          }}>
+          <div
+            className="prompt-modal-content gh-chain-editor"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="gh-chain-editor-header">
+              <div>
+                <div className="gh-chain-editor-title">
+                  {draft.id ? t("chainEditorEditTitle") : t("chainEditorNewTitle")}
                 </div>
-                <Button variant="ghost" size="sm" onClick={addChainStep}>
-                  {t("chainAddStep")}
-                </Button>
+                <div className="gh-chain-editor-subtitle">{t("chainEditorSubtitle")}</div>
+              </div>
+              <button className="gh-chain-editor-close" onClick={closeChainEditor}>
+                <ClearIcon size={18} />
+              </button>
+            </div>
+
+            <div className="gh-chain-editor-scroll">
+              <div className="gh-chain-form-grid">
+                <label className="gh-chain-field">
+                  <span>{t("chainName")}</span>
+                  <input
+                    type="text"
+                    value={draft.title}
+                    onChange={(e) => updateChainDraft({ title: e.target.value })}
+                    placeholder={t("chainNamePlaceholder")}
+                  />
+                </label>
+
+                <label className="gh-chain-field">
+                  <span>{t("chainDescription")}</span>
+                  <input
+                    type="text"
+                    value={draft.description || ""}
+                    onChange={(e) => updateChainDraft({ description: e.target.value })}
+                    placeholder={t("chainDescriptionPlaceholder")}
+                  />
+                </label>
               </div>
 
-              <div className="gh-chain-step-list">
-                {draft.steps.length === 0 ? (
-                  <div className="gh-chain-step-empty">{t("chainNoSteps")}</div>
-                ) : (
-                  draft.steps.map((step, index) => (
-                    <div key={step.id} className="gh-chain-step-row">
-                      <div className="gh-chain-step-index">{index + 1}</div>
-                      <select
-                        value={step.promptId}
-                        onChange={(e) => updateChainStep(step.id, { promptId: e.target.value })}>
-                        <option value="">{t("chainSelectPrompt")}</option>
-                        {prompts.map((prompt) => (
-                          <option key={prompt.id} value={prompt.id}>
-                            {prompt.title}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="gh-chain-step-actions">
-                        <Tooltip content={t("moveUp")}>
-                          <button
-                            className="prompt-action-btn"
-                            disabled={index === 0}
-                            onClick={() => moveChainStep(step.id, -1)}>
-                            <ArrowUpIcon size={15} />
-                          </button>
-                        </Tooltip>
-                        <Tooltip content={t("moveDown")}>
-                          <button
-                            className="prompt-action-btn"
-                            disabled={index === draft.steps.length - 1}
-                            onClick={() => moveChainStep(step.id, 1)}>
-                            <ArrowDownIcon size={15} />
-                          </button>
-                        </Tooltip>
-                        <Tooltip content={t("delete")}>
-                          <button
-                            className="prompt-action-btn danger"
-                            onClick={() => removeChainStep(step.id)}>
-                            <DeleteIcon size={15} />
-                          </button>
-                        </Tooltip>
+              <label className="gh-chain-field">
+                <span>{t("chainIconSvg")}</span>
+                <textarea
+                  value={draft.iconSvg || ""}
+                  onChange={(e) => updateChainDraft({ iconSvg: e.target.value })}
+                  placeholder={t("chainIconSvgPlaceholder")}
+                  rows={3}
+                />
+                <span className="gh-chain-field-help">{t("chainIconSvgHelp")}</span>
+              </label>
+
+              <div className="gh-chain-toggle-row">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={draft.enabled !== false}
+                    onChange={(e) => updateChainDraft({ enabled: e.target.checked })}
+                  />
+                  <span>{t("chainEnabled")}</span>
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={draft.showInSelectionPopover !== false}
+                    onChange={(e) => updateChainDraft({ showInSelectionPopover: e.target.checked })}
+                  />
+                  <span>{t("chainShowInPopover")}</span>
+                </label>
+              </div>
+
+              <div className="gh-chain-editor-section">
+                <div className="gh-chain-section-header">
+                  <div>
+                    <div className="gh-chain-section-title">{t("chainSteps")}</div>
+                    <div className="gh-chain-section-subtitle">{t("chainStepsHelp")}</div>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={addChainStep}>
+                    {t("chainAddStep")}
+                  </Button>
+                </div>
+
+                <div className="gh-chain-step-list">
+                  {draft.steps.length === 0 ? (
+                    <div className="gh-chain-step-empty">{t("chainNoSteps")}</div>
+                  ) : (
+                    draft.steps.map((step, index) => (
+                      <div key={step.id} className="gh-chain-step-row">
+                        <div className="gh-chain-step-index">{index + 1}</div>
+                        <select
+                          value={step.promptId}
+                          onChange={(e) => updateChainStep(step.id, { promptId: e.target.value })}>
+                          <option value="">{t("chainSelectPrompt")}</option>
+                          {prompts.map((prompt) => (
+                            <option key={prompt.id} value={prompt.id}>
+                              {prompt.title}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="gh-chain-step-actions">
+                          <Tooltip content={t("moveUp")}>
+                            <button
+                              className="prompt-action-btn"
+                              disabled={index === 0}
+                              onClick={() => moveChainStep(step.id, -1)}>
+                              <ArrowUpIcon size={15} />
+                            </button>
+                          </Tooltip>
+                          <Tooltip content={t("moveDown")}>
+                            <button
+                              className="prompt-action-btn"
+                              disabled={index === draft.steps.length - 1}
+                              onClick={() => moveChainStep(step.id, 1)}>
+                              <ArrowDownIcon size={15} />
+                            </button>
+                          </Tooltip>
+                          <Tooltip content={t("delete")}>
+                            <button
+                              className="prompt-action-btn danger"
+                              onClick={() => removeChainStep(step.id)}>
+                              <DeleteIcon size={15} />
+                            </button>
+                          </Tooltip>
+                        </div>
                       </div>
-                    </div>
-                  ))
-                )}
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="gh-chain-editor-section">
+                <div className="gh-chain-section-title">{t("chainVariablesPreview")}</div>
+                <div className="gh-chain-variable-preview">
+                  <span className="gh-chain-variable-chip">{`{{selection}}`}</span>
+                  <span className="gh-chain-variable-chip">{`{{quote}}`}</span>
+                  {variables.length === 0 ? (
+                    <span className="gh-chain-variable-muted">{t("chainVariablesNone")}</span>
+                  ) : (
+                    variables.map((variable) => (
+                      <span key={variable.raw} className="gh-chain-variable-chip custom">
+                        {`{{${variable.raw}}}`}
+                      </span>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="gh-chain-editor-section">
-              <div className="gh-chain-section-title">{t("chainVariablesPreview")}</div>
-              <div className="gh-chain-variable-preview">
-                <span className="gh-chain-variable-chip">{`{{selection}}`}</span>
-                <span className="gh-chain-variable-chip">{`{{quote}}`}</span>
-                {variables.length === 0 ? (
-                  <span className="gh-chain-variable-muted">{t("chainVariablesNone")}</span>
-                ) : (
-                  variables.map((variable) => (
-                    <span key={variable.raw} className="gh-chain-variable-chip custom">
-                      {`{{${variable.raw}}}`}
-                    </span>
-                  ))
-                )}
-              </div>
+            <div className="gh-chain-editor-footer">
+              <Button
+                variant="ghost"
+                onClick={closeChainEditor}
+                style={{ background: "var(--gh-hover, #f3f4f6)" }}>
+                {t("cancel")}
+              </Button>
+              <Button variant="primary" onClick={saveChainDraft}>
+                {draft.id ? t("save") : t("add")}
+              </Button>
             </div>
-          </div>
-
-          <div className="gh-chain-editor-footer">
-            <Button
-              variant="ghost"
-              onClick={closeChainEditor}
-              style={{ background: "var(--gh-hover, #f3f4f6)" }}>
-              {t("cancel")}
-            </Button>
-            <Button variant="primary" onClick={saveChainDraft}>
-              {draft.id ? t("save") : t("add")}
-            </Button>
           </div>
         </div>
-      </div>,
+      </>,
       document.body,
     )
   }
