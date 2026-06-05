@@ -11,11 +11,13 @@ export default [
       "build/**",
       ".plasmo/**",
       "node_modules/**",
+      "docs/site/.vitepress/.temp/**",
+      "docs/site/.vitepress/cache/**",
+      "docs/site/.vitepress/dist/**",
       "assets/assistant-mermaid-vendor.js",
       ".spec-workflow/**",
       ".claude/**",
       "CLAUDE.md",
-
     ],
   },
   {

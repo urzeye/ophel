@@ -46,6 +46,18 @@ export function validateBackupData(data: any): ValidationResult {
     }
   }
 
+  if (backupData.promptChains !== undefined) {
+    if (!Array.isArray(backupData.promptChains)) {
+      errorKeys.push("backupValidationPromptChainsType")
+    }
+  }
+
+  if (backupData.quickQuoteReferences !== undefined) {
+    if (!Array.isArray(backupData.quickQuoteReferences)) {
+      errorKeys.push("backupValidationQuickQuoteReferencesType")
+    }
+  }
+
   if (backupData.folders !== undefined) {
     if (!Array.isArray(backupData.folders)) {
       errorKeys.push("backupValidationFoldersType")

@@ -606,7 +606,7 @@ export class WebDAVSyncManager {
 
           // 处理 Zustand stores
           if (ZUSTAND_KEYS.includes(k)) {
-            let state: Record<string, any>
+            let state: Record<string, unknown>
             if (MULTI_PROP_STORES.includes(k)) {
               // 多属性 store（如 conversations, readingHistory）
               // 通过检查 v 中是否包含与 store 同名的属性来区分格式
@@ -614,13 +614,13 @@ export class WebDAVSyncManager {
                 const obj = v as Record<string, unknown>
                 if (k === "conversations" && obj.conversations !== undefined) {
                   // 已包装格式：{ conversations: {...}, lastUsedFolderId: "..." }
-                  state = v
+                  state = obj
                 } else if (
                   k === "readingHistory" &&
                   (obj.history !== undefined || obj.lastCleanupRun !== undefined)
                 ) {
                   // 已包装格式：{ history: {...}, lastCleanupRun: number }
-                  state = v
+                  state = obj
                 } else {
                   // 扁平化格式（旧版本导出）
                   state = k === "readingHistory" ? { history: v } : { [k]: v }
@@ -628,6 +628,30 @@ export class WebDAVSyncManager {
               } else {
                 // 扁平化格式（旧版本导出）：v 直接是主数据
                 state = k === "readingHistory" ? { history: v } : { [k]: v }
+              }
+            } else if (k === "promptChains") {
+              if (Array.isArray(v)) {
+                state = { chains: v }
+              } else if (
+                typeof v === "object" &&
+                !Array.isArray(v) &&
+                (v as Record<string, unknown>).chains !== undefined
+              ) {
+                state = v as Record<string, unknown>
+              } else {
+                state = { chains: [] }
+              }
+            } else if (k === "quickQuoteReferences") {
+              if (Array.isArray(v)) {
+                state = { references: v }
+              } else if (
+                typeof v === "object" &&
+                !Array.isArray(v) &&
+                (v as Record<string, unknown>).references !== undefined
+              ) {
+                state = v as Record<string, unknown>
+              } else {
+                state = { references: [] }
               }
             } else {
               // 单属性 store

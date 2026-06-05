@@ -7,6 +7,8 @@
 
 import { create } from "zustand"
 
+import type { PromptQuoteReference } from "~core/prompt-action-types"
+
 // ==================== 类型定义 ====================
 
 export interface QueueItem {
@@ -16,6 +18,24 @@ export interface QueueItem {
   status: "pending" | "sending" | "sent" | "failed"
   /** 预留扩展：队列项类型，默认 'prompt' */
   type?: "prompt" | "bookmark" | "shortcut"
+  metadata?: QueueItemMetadata
+}
+
+export interface QueueItemMetadata {
+  source?: "prompt-library" | "prompt-queue" | "quick-follow-up" | "inline-selection"
+  promptId?: string
+  promptTitle?: string
+  chainId?: string
+  chainTitle?: string
+  stepId?: string
+  stepIndex?: number
+  stepTotal?: number
+  quoteRef?: PromptQuoteReference
+}
+
+export interface QueueEnqueueInput {
+  content: string
+  metadata?: QueueItemMetadata
 }
 
 interface QueueState {
@@ -25,8 +45,8 @@ interface QueueState {
   isPaused: boolean
 
   // Actions
-  enqueue: (content: string) => QueueItem
-  enqueueMany: (contents: string[]) => QueueItem[]
+  enqueue: (content: string, metadata?: QueueItemMetadata) => QueueItem
+  enqueueMany: (contents: Array<string | QueueEnqueueInput>) => QueueItem[]
   dequeue: () => QueueItem | null
   remove: (id: string) => void
   updateContent: (id: string, content: string) => void
@@ -38,21 +58,33 @@ interface QueueState {
 
 // ==================== Store 创建 ====================
 
-const createQueueItem = (content: string): QueueItem => ({
+const createQueueItem = (content: string, metadata?: QueueItemMetadata): QueueItem => ({
   id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
   content,
   createdAt: Date.now(),
   status: "pending",
   type: "prompt",
+  metadata,
 })
+
+const normalizeQueueInput = (input: string | QueueEnqueueInput): QueueEnqueueInput | null => {
+  const content = typeof input === "string" ? input : input.content
+  const trimmed = content.trim()
+  if (!trimmed) return null
+
+  return {
+    content: trimmed,
+    metadata: typeof input === "string" ? undefined : input.metadata,
+  }
+}
 
 export const useQueueStore = create<QueueState>()((set, get) => ({
   items: [],
   isProcessing: false,
   isPaused: false,
 
-  enqueue: (content) => {
-    const item = createQueueItem(content)
+  enqueue: (content, metadata) => {
+    const item = createQueueItem(content.trim(), metadata)
     set((state) => ({
       items: [...state.items, item],
     }))
@@ -61,9 +93,9 @@ export const useQueueStore = create<QueueState>()((set, get) => ({
 
   enqueueMany: (contents) => {
     const items = contents
-      .map((content) => content.trim())
-      .filter(Boolean)
-      .map((content) => createQueueItem(content))
+      .map(normalizeQueueInput)
+      .filter((input): input is QueueEnqueueInput => input !== null)
+      .map((input) => createQueueItem(input.content, input.metadata))
 
     if (items.length === 0) return []
 

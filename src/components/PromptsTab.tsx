@@ -4,6 +4,9 @@ import { createPortal } from "react-dom"
 import type { SiteAdapter } from "~adapters/base"
 import {
   AddToQueueIcon,
+  ArrowDownIcon,
+  ArrowUpIcon,
+  CheckIcon,
   ClearIcon,
   CopyIcon,
   DeleteIcon,
@@ -26,14 +29,17 @@ import {
   VariableInputDialog,
 } from "~components/VariableInputDialog"
 import { VIRTUAL_CATEGORY } from "~constants"
+import type { PromptChain, PromptChainStep } from "~core/prompt-action-types"
 import { enqueuePrompt, sendOrQueuePrompt } from "~core/prompt-actions"
 import type { PromptManager } from "~core/prompt-manager"
+import { usePromptChainsStore } from "~stores/prompt-chains-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { APP_NAME } from "~utils/config"
 import { t } from "~utils/i18n"
 import { initCopyButtons, showCopySuccess } from "~utils/icons"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 import { OPHEL_INTERACTION_LAYER_PROPS } from "~utils/dom-toolkit"
+import { sanitizeSvgIcon } from "~utils/svg-sanitizer"
 import type { Prompt } from "~utils/storage"
 import { showToast } from "~utils/toast"
 import { createSafeHTML } from "~utils/trusted-types"
@@ -70,6 +76,12 @@ interface LocatePromptDetail {
   promptId?: string
 }
 
+type PromptLibraryView = "prompts" | "chains"
+
+type ChainDraft = Omit<PromptChain, "id" | "createdAt" | "updatedAt"> & {
+  id?: string
+}
+
 // 根据分类名称哈希自动分配颜色索引 1-7
 const getCategoryColorIndex = (categoryName: string): number => {
   let hash = 0
@@ -101,10 +113,20 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const [categories, setCategories] = useState<string[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>(VIRTUAL_CATEGORY.ALL)
   const [searchQuery, setSearchQuery] = useState("")
+  const [activeLibraryView, setActiveLibraryView] = useState<PromptLibraryView>("prompts")
+  const chains = usePromptChainsStore((state) => state.chains)
+  const addChain = usePromptChainsStore((state) => state.addChain)
+  const updateChain = usePromptChainsStore((state) => state.updateChain)
+  const deleteChain = usePromptChainsStore((state) => state.deleteChain)
+  const duplicateChain = usePromptChainsStore((state) => state.duplicateChain)
 
   // 模态弹窗状态
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingPrompt, setEditingPrompt] = useState<Partial<Prompt> | null>(null)
+  const [chainEditorState, setChainEditorState] = useState<{
+    show: boolean
+    draft: ChainDraft | null
+  }>({ show: false, draft: null })
 
   // 分类管理弹窗状态
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
@@ -380,6 +402,141 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   ) => {
     setPromptInputState({ show: true, title, defaultValue, onConfirm })
   }
+
+  const createDefaultChainStep = (): PromptChainStep => ({
+    id: `step_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    promptId: prompts[0]?.id || "",
+    runMode: "enqueue",
+    splitMode: "none",
+  })
+
+  const createDefaultChainDraft = (): ChainDraft => ({
+    title: "",
+    description: "",
+    iconSvg: "",
+    enabled: true,
+    showInSelectionPopover: true,
+    steps: prompts[0] ? [createDefaultChainStep()] : [],
+    lastUsedAt: undefined,
+  })
+
+  const openChainEditor = (chain?: PromptChain) => {
+    setChainEditorState({
+      show: true,
+      draft: chain
+        ? { ...chain, steps: chain.steps.map((step) => ({ ...step })) }
+        : createDefaultChainDraft(),
+    })
+  }
+
+  const closeChainEditor = useCallback(() => {
+    setChainEditorState({ show: false, draft: null })
+  }, [])
+
+  const updateChainDraft = (updates: Partial<ChainDraft>) => {
+    setChainEditorState((state) =>
+      state.draft ? { ...state, draft: { ...state.draft, ...updates } } : state,
+    )
+  }
+
+  const updateChainStep = (stepId: string, updates: Partial<PromptChainStep>) => {
+    setChainEditorState((state) => {
+      if (!state.draft) return state
+      return {
+        ...state,
+        draft: {
+          ...state.draft,
+          steps: state.draft.steps.map((step) =>
+            step.id === stepId ? { ...step, ...updates } : step,
+          ),
+        },
+      }
+    })
+  }
+
+  const addChainStep = () => {
+    setChainEditorState((state) => {
+      if (!state.draft) return state
+      return {
+        ...state,
+        draft: {
+          ...state.draft,
+          steps: [...state.draft.steps, createDefaultChainStep()],
+        },
+      }
+    })
+  }
+
+  const removeChainStep = (stepId: string) => {
+    setChainEditorState((state) => {
+      if (!state.draft) return state
+      return {
+        ...state,
+        draft: {
+          ...state.draft,
+          steps: state.draft.steps.filter((step) => step.id !== stepId),
+        },
+      }
+    })
+  }
+
+  const moveChainStep = (stepId: string, direction: -1 | 1) => {
+    setChainEditorState((state) => {
+      if (!state.draft) return state
+      const index = state.draft.steps.findIndex((step) => step.id === stepId)
+      const nextIndex = index + direction
+      if (index < 0 || nextIndex < 0 || nextIndex >= state.draft.steps.length) return state
+      const steps = [...state.draft.steps]
+      const [step] = steps.splice(index, 1)
+      steps.splice(nextIndex, 0, step)
+      return { ...state, draft: { ...state.draft, steps } }
+    })
+  }
+
+  const saveChainDraft = () => {
+    const draft = chainEditorState.draft
+    if (!draft) return
+
+    const title = draft.title.trim()
+    const steps = draft.steps.filter((step) => step.promptId)
+    if (!title) {
+      showToast(t("chainTitleRequired"), 2200)
+      return
+    }
+    if (steps.length === 0) {
+      showToast(t("chainStepRequired"), 2200)
+      return
+    }
+
+    const payload = {
+      title,
+      description: draft.description?.trim() || "",
+      iconSvg: draft.iconSvg?.trim() || "",
+      enabled: draft.enabled !== false,
+      showInSelectionPopover: draft.showInSelectionPopover !== false,
+      steps,
+      lastUsedAt: draft.lastUsedAt,
+    }
+
+    if (draft.id) {
+      updateChain(draft.id, payload)
+      showToast(t("chainUpdated"), 1800)
+    } else {
+      addChain(payload)
+      showToast(t("chainAdded"), 1800)
+    }
+    closeChainEditor()
+  }
+
+  const getPromptTitle = (promptId: string) =>
+    prompts.find((prompt) => prompt.id === promptId)?.title || t("chainMissingPrompt")
+
+  const filteredChains = chains.filter((chain) => {
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) return true
+    const stepTitles = chain.steps.map((step) => getPromptTitle(step.promptId)).join(" ")
+    return `${chain.title} ${chain.description || ""} ${stepTitles}`.toLowerCase().includes(query)
+  })
 
   // 选中提示词并插入
   const handleSelect = async (prompt: Prompt, submitAfterInsert = false) => {
@@ -948,6 +1105,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       confirmState.show ||
       isCategoryModalOpen ||
       isModalOpen ||
+      chainEditorState.show ||
       previewModal.show ||
       importDialogState.show ||
       variableDialogState.show
@@ -990,6 +1148,11 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         return
       }
 
+      if (chainEditorState.show) {
+        closeChainEditor()
+        return
+      }
+
       if (previewModal.show) {
         closePreviewModal()
         return
@@ -1007,11 +1170,13 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }, [
     closeCategoryModal,
     closeConfirmDialog,
+    closeChainEditor,
     closeEditModal,
     closeImportDialog,
     closePreviewModal,
     closePromptInputDialog,
     closeVariableDialog,
+    chainEditorState.show,
     confirmState.show,
     importDialogState.show,
     isCategoryModalOpen,
@@ -1054,6 +1219,329 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       locateHighlightTimerRef.current = null
     }, 2200)
   }, [locatedPromptId, prompts, searchQuery, selectedCategory])
+
+  const renderChainIcon = (iconSvg?: string) => {
+    const safeSvg = sanitizeSvgIcon(iconSvg || "")
+    if (safeSvg) {
+      return (
+        <span
+          className="gh-chain-icon-svg"
+          dangerouslySetInnerHTML={{ __html: createSafeHTML(safeSvg) }}
+        />
+      )
+    }
+
+    return <span className="gh-chain-icon-fallback">C</span>
+  }
+
+  const getChainVariables = (draft: ChainDraft | PromptChain): ParsedVariable[] => {
+    const seen = new Set<string>()
+    const variables: ParsedVariable[] = []
+
+    draft.steps.forEach((step) => {
+      const prompt = prompts.find((item) => item.id === step.promptId)
+      if (!prompt) return
+
+      extractVariables(prompt.content).forEach((variable) => {
+        if (variable.raw === "selection" || variable.raw === "quote" || seen.has(variable.raw)) {
+          return
+        }
+        seen.add(variable.raw)
+        variables.push(variable)
+      })
+    })
+
+    return variables
+  }
+
+  const getChainStepPreview = (chain: PromptChain): string => {
+    if (chain.steps.length === 0) return t("chainNoSteps")
+    return chain.steps.map((step) => getPromptTitle(step.promptId)).join(" -> ")
+  }
+
+  const renderChainsView = () => {
+    if (prompts.length === 0) {
+      return (
+        <div className="gh-chain-empty">
+          <div className="gh-chain-empty-title">{t("chainNoPrompts")}</div>
+          <div className="gh-chain-empty-description">{t("chainNoPromptsDescription")}</div>
+        </div>
+      )
+    }
+
+    if (filteredChains.length === 0) {
+      return (
+        <div className="gh-chain-empty">
+          <div className="gh-chain-empty-title">{t("chainEmpty")}</div>
+          <div className="gh-chain-empty-description">{t("chainEmptyDescription")}</div>
+        </div>
+      )
+    }
+
+    return filteredChains.map((chain) => {
+      const variables = getChainVariables(chain)
+      return (
+        <div key={chain.id} className="gh-chain-card">
+          <div className="gh-chain-card-main" onClick={() => openChainEditor(chain)}>
+            <div className="gh-chain-icon">{renderChainIcon(chain.iconSvg)}</div>
+            <div className="gh-chain-body">
+              <div className="gh-chain-title-row">
+                <div className="gh-chain-title">{chain.title}</div>
+                <span className={`gh-chain-status ${chain.enabled ? "enabled" : "disabled"}`}>
+                  {chain.enabled ? t("chainEnabled") : t("chainDisabled")}
+                </span>
+              </div>
+              {chain.description && <div className="gh-chain-description">{chain.description}</div>}
+              <div className="gh-chain-preview">{getChainStepPreview(chain)}</div>
+              <div className="gh-chain-meta">
+                <span>{t("chainStepCount", { count: String(chain.steps.length) })}</span>
+                <span>
+                  {chain.showInSelectionPopover
+                    ? t("chainShownInPopover")
+                    : t("chainHiddenInPopover")}
+                </span>
+                <span>
+                  {variables.length > 0
+                    ? t("chainVariablesCount", { count: String(variables.length) })
+                    : t("chainVariablesNone")}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="gh-chain-card-actions">
+            <Tooltip content={chain.enabled ? t("chainDisable") : t("chainEnable")}>
+              <button
+                className={`prompt-action-btn${chain.enabled ? " active" : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  updateChain(chain.id, { enabled: !chain.enabled })
+                }}>
+                <CheckIcon size={16} />
+              </button>
+            </Tooltip>
+            <Tooltip content={t("copy")}>
+              <button
+                className="prompt-action-btn"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const copy = duplicateChain(chain.id)
+                  if (copy) showToast(t("chainDuplicated"), 1800)
+                }}>
+                <CopyIcon size={16} />
+              </button>
+            </Tooltip>
+            <Tooltip content={t("edit")}>
+              <button
+                className="prompt-action-btn"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  openChainEditor(chain)
+                }}>
+                <EditIcon size={16} />
+              </button>
+            </Tooltip>
+            <Tooltip content={t("delete")}>
+              <button
+                className="prompt-action-btn danger"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  showConfirm(t("confirmDelete"), t("chainDeleteConfirm"), () => {
+                    deleteChain(chain.id)
+                    showToast(t("deleted"), 1800)
+                  })
+                }}>
+                <DeleteIcon size={16} />
+              </button>
+            </Tooltip>
+          </div>
+        </div>
+      )
+    })
+  }
+
+  const renderChainEditorModal = () => {
+    if (!chainEditorState.show || !chainEditorState.draft) return null
+
+    const draft = chainEditorState.draft
+    const variables = getChainVariables(draft)
+
+    return createPortal(
+      <div
+        className="prompt-modal gh-interactive"
+        {...OPHEL_INTERACTION_LAYER_PROPS}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "var(--gh-overlay-bg)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 2147483646,
+          animation: "fadeIn 0.2s",
+        }}>
+        <div className="prompt-modal-content gh-chain-editor" onClick={(e) => e.stopPropagation()}>
+          <div className="gh-chain-editor-header">
+            <div>
+              <div className="gh-chain-editor-title">
+                {draft.id ? t("chainEditorEditTitle") : t("chainEditorNewTitle")}
+              </div>
+              <div className="gh-chain-editor-subtitle">{t("chainEditorSubtitle")}</div>
+            </div>
+            <button className="gh-chain-editor-close" onClick={closeChainEditor}>
+              <ClearIcon size={18} />
+            </button>
+          </div>
+
+          <div className="gh-chain-editor-scroll">
+            <div className="gh-chain-form-grid">
+              <label className="gh-chain-field">
+                <span>{t("chainName")}</span>
+                <input
+                  type="text"
+                  value={draft.title}
+                  onChange={(e) => updateChainDraft({ title: e.target.value })}
+                  placeholder={t("chainNamePlaceholder")}
+                />
+              </label>
+
+              <label className="gh-chain-field">
+                <span>{t("chainDescription")}</span>
+                <input
+                  type="text"
+                  value={draft.description || ""}
+                  onChange={(e) => updateChainDraft({ description: e.target.value })}
+                  placeholder={t("chainDescriptionPlaceholder")}
+                />
+              </label>
+            </div>
+
+            <label className="gh-chain-field">
+              <span>{t("chainIconSvg")}</span>
+              <textarea
+                value={draft.iconSvg || ""}
+                onChange={(e) => updateChainDraft({ iconSvg: e.target.value })}
+                placeholder={t("chainIconSvgPlaceholder")}
+                rows={3}
+              />
+              <span className="gh-chain-field-help">{t("chainIconSvgHelp")}</span>
+            </label>
+
+            <div className="gh-chain-toggle-row">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={draft.enabled !== false}
+                  onChange={(e) => updateChainDraft({ enabled: e.target.checked })}
+                />
+                <span>{t("chainEnabled")}</span>
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={draft.showInSelectionPopover !== false}
+                  onChange={(e) => updateChainDraft({ showInSelectionPopover: e.target.checked })}
+                />
+                <span>{t("chainShowInPopover")}</span>
+              </label>
+            </div>
+
+            <div className="gh-chain-editor-section">
+              <div className="gh-chain-section-header">
+                <div>
+                  <div className="gh-chain-section-title">{t("chainSteps")}</div>
+                  <div className="gh-chain-section-subtitle">{t("chainStepsHelp")}</div>
+                </div>
+                <Button variant="ghost" size="sm" onClick={addChainStep}>
+                  {t("chainAddStep")}
+                </Button>
+              </div>
+
+              <div className="gh-chain-step-list">
+                {draft.steps.length === 0 ? (
+                  <div className="gh-chain-step-empty">{t("chainNoSteps")}</div>
+                ) : (
+                  draft.steps.map((step, index) => (
+                    <div key={step.id} className="gh-chain-step-row">
+                      <div className="gh-chain-step-index">{index + 1}</div>
+                      <select
+                        value={step.promptId}
+                        onChange={(e) => updateChainStep(step.id, { promptId: e.target.value })}>
+                        <option value="">{t("chainSelectPrompt")}</option>
+                        {prompts.map((prompt) => (
+                          <option key={prompt.id} value={prompt.id}>
+                            {prompt.title}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="gh-chain-step-actions">
+                        <Tooltip content={t("moveUp")}>
+                          <button
+                            className="prompt-action-btn"
+                            disabled={index === 0}
+                            onClick={() => moveChainStep(step.id, -1)}>
+                            <ArrowUpIcon size={15} />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content={t("moveDown")}>
+                          <button
+                            className="prompt-action-btn"
+                            disabled={index === draft.steps.length - 1}
+                            onClick={() => moveChainStep(step.id, 1)}>
+                            <ArrowDownIcon size={15} />
+                          </button>
+                        </Tooltip>
+                        <Tooltip content={t("delete")}>
+                          <button
+                            className="prompt-action-btn danger"
+                            onClick={() => removeChainStep(step.id)}>
+                            <DeleteIcon size={15} />
+                          </button>
+                        </Tooltip>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="gh-chain-editor-section">
+              <div className="gh-chain-section-title">{t("chainVariablesPreview")}</div>
+              <div className="gh-chain-variable-preview">
+                <span className="gh-chain-variable-chip">{`{{selection}}`}</span>
+                <span className="gh-chain-variable-chip">{`{{quote}}`}</span>
+                {variables.length === 0 ? (
+                  <span className="gh-chain-variable-muted">{t("chainVariablesNone")}</span>
+                ) : (
+                  variables.map((variable) => (
+                    <span key={variable.raw} className="gh-chain-variable-chip custom">
+                      {`{{${variable.raw}}}`}
+                    </span>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="gh-chain-editor-footer">
+            <Button
+              variant="ghost"
+              onClick={closeChainEditor}
+              style={{ background: "var(--gh-hover, #f3f4f6)" }}>
+              {t("cancel")}
+            </Button>
+            <Button variant="primary" onClick={saveChainDraft}>
+              {draft.id ? t("save") : t("add")}
+            </Button>
+          </div>
+        </div>
+      </div>,
+      document.body,
+    )
+  }
 
   // 编辑/新增弹窗
   const renderEditModal = () => {
@@ -1625,10 +2113,28 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           gap: "8px",
           alignItems: "center",
         }}>
+        <div className="gh-prompt-library-switch" role="tablist">
+          <button
+            type="button"
+            className="gh-prompt-library-switch-btn"
+            data-active={activeLibraryView === "prompts"}
+            onClick={() => setActiveLibraryView("prompts")}>
+            {t("promptsViewPrompts")}
+          </button>
+          <button
+            type="button"
+            className="gh-prompt-library-switch-btn"
+            data-active={activeLibraryView === "chains"}
+            onClick={() => setActiveLibraryView("chains")}>
+            {t("promptsViewChains")}
+          </button>
+        </div>
         <input
           type="text"
           className="prompt-search-input"
-          placeholder={t("searchPlaceholder")}
+          placeholder={
+            activeLibraryView === "chains" ? t("chainSearchPlaceholder") : t("searchPlaceholder")
+          }
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{
@@ -1642,192 +2148,200 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             color: "var(--gh-text, #1f2937)",
           }}
         />
-        {/* 导入按钮 */}
-        <Tooltip content={t("promptImport")}>
-          <button
-            onClick={handleImport}
-            style={{
-              width: "32px",
-              height: "32px",
-              border: "1px solid var(--gh-border, #d1d5db)",
-              background: "var(--gh-bg, white)",
-              borderRadius: "6px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "16px",
-              flexShrink: 0,
-            }}>
-            <ImportIcon size={16} />
-          </button>
-        </Tooltip>
-        {/* 导出按钮 */}
-        <Tooltip content={t("promptExport")}>
-          <button
-            onClick={handleExport}
-            style={{
-              width: "32px",
-              height: "32px",
-              border: "1px solid var(--gh-border, #d1d5db)",
-              background: "var(--gh-bg, white)",
-              borderRadius: "6px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "16px",
-              flexShrink: 0,
-            }}>
-            <ExportIcon size={16} />
-          </button>
-        </Tooltip>
+        {activeLibraryView === "prompts" && (
+          <>
+            {/* 导入按钮 */}
+            <Tooltip content={t("promptImport")}>
+              <button
+                onClick={handleImport}
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  border: "1px solid var(--gh-border, #d1d5db)",
+                  background: "var(--gh-bg, white)",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "16px",
+                  flexShrink: 0,
+                }}>
+                <ImportIcon size={16} />
+              </button>
+            </Tooltip>
+            {/* 导出按钮 */}
+            <Tooltip content={t("promptExport")}>
+              <button
+                onClick={handleExport}
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  border: "1px solid var(--gh-border, #d1d5db)",
+                  background: "var(--gh-bg, white)",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "16px",
+                  flexShrink: 0,
+                }}>
+                <ExportIcon size={16} />
+              </button>
+            </Tooltip>
+          </>
+        )}
       </div>
 
       {/* 分类标签栏：左侧可滚动 + 右侧固定 */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          background: "var(--gh-bg, white)",
-          borderBottom: "1px solid var(--gh-border, #e5e7eb)",
-          userSelect: "none",
-        }}>
-        {/* 左侧可滚动分类列表 */}
-        <div
-          className="prompt-category-bar"
-          style={{
-            flex: 1,
-            minWidth: 0,
-            padding: "6px 0 6px 10px",
-            display: "flex",
-            gap: "5px",
-            flexWrap: "nowrap",
-            overflowX: "auto",
-            scrollbarWidth: "none",
-          }}
-          onWheel={(e) => {
-            // 将竖向滚轮转为横向滚动（Shadow DOM 内 wheel 事件不自动横滚）
-            if (e.deltaY !== 0) {
-              e.currentTarget.scrollLeft += e.deltaY
-            }
-          }}>
-          <span
-            onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.ALL)}
-            style={{
-              padding: "4px 10px",
-              background:
-                selectedCategory === VIRTUAL_CATEGORY.ALL
-                  ? "var(--gh-primary, #4285f4)"
-                  : "var(--gh-hover, #f3f4f6)",
-              borderRadius: "12px",
-              fontSize: "12px",
-              color: selectedCategory === VIRTUAL_CATEGORY.ALL ? "white" : "#4b5563",
-              cursor: "pointer",
-              flexShrink: 0,
-              border:
-                selectedCategory === VIRTUAL_CATEGORY.ALL
-                  ? "1px solid var(--gh-primary, #4285f4)"
-                  : "1px solid transparent",
-            }}>
-            {t("allCategory")}
-          </span>
-
-          {categories.map((cat) => {
-            const colorIndex = getCategoryColorIndex(cat)
-            return (
-              <Tooltip key={cat} content={cat}>
-                <span
-                  onClick={() => setSelectedCategory(cat)}
-                  style={{
-                    padding: "4px 10px",
-                    background:
-                      selectedCategory === cat
-                        ? "var(--gh-primary, #4285f4)"
-                        : `var(--gh-category-${colorIndex})`,
-                    borderRadius: "12px",
-                    fontSize: "12px",
-                    color: selectedCategory === cat ? "white" : "#4b5563",
-                    cursor: "pointer",
-                    flexShrink: 0,
-                    border:
-                      selectedCategory === cat
-                        ? "1px solid var(--gh-primary, #4285f4)"
-                        : "1px solid transparent",
-                    maxWidth: "80px",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}>
-                  {cat}
-                </span>
-              </Tooltip>
-            )
-          })}
-        </div>
-
-        {/* 右侧固定：最近使用 + 管理（仅图标） */}
+      {activeLibraryView === "prompts" && (
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "4px",
-            padding: "6px 8px",
-            flexShrink: 0,
-            borderLeft: "1px solid var(--gh-border, #e5e7eb)",
+            background: "var(--gh-bg, white)",
+            borderBottom: "1px solid var(--gh-border, #e5e7eb)",
+            userSelect: "none",
           }}>
-          {/* ⭐ 最近使用（仅图标） */}
-          <Tooltip content={t("promptRecentUsed")}>
+          {/* 左侧可滚动分类列表 */}
+          <div
+            className="prompt-category-bar"
+            style={{
+              flex: 1,
+              minWidth: 0,
+              padding: "6px 0 6px 10px",
+              display: "flex",
+              gap: "5px",
+              flexWrap: "nowrap",
+              overflowX: "auto",
+              scrollbarWidth: "none",
+            }}
+            onWheel={(e) => {
+              // 将竖向滚轮转为横向滚动（Shadow DOM 内 wheel 事件不自动横滚）
+              if (e.deltaY !== 0) {
+                e.currentTarget.scrollLeft += e.deltaY
+              }
+            }}>
             <span
-              onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.RECENT)}
+              onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.ALL)}
               style={{
-                padding: "3px 6px",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                lineHeight: 1,
+                padding: "4px 10px",
                 background:
-                  selectedCategory === VIRTUAL_CATEGORY.RECENT
+                  selectedCategory === VIRTUAL_CATEGORY.ALL
                     ? "var(--gh-primary, #4285f4)"
                     : "var(--gh-hover, #f3f4f6)",
-                borderRadius: "10px",
-                color: selectedCategory === VIRTUAL_CATEGORY.RECENT ? "white" : "#4b5563",
+                borderRadius: "12px",
+                fontSize: "12px",
+                color: selectedCategory === VIRTUAL_CATEGORY.ALL ? "white" : "#4b5563",
                 cursor: "pointer",
+                flexShrink: 0,
                 border:
-                  selectedCategory === VIRTUAL_CATEGORY.RECENT
+                  selectedCategory === VIRTUAL_CATEGORY.ALL
                     ? "1px solid var(--gh-primary, #4285f4)"
                     : "1px solid transparent",
               }}>
-              <TimeIcon size={14} />
+              {t("allCategory")}
             </span>
-          </Tooltip>
-          {categories.length > 0 && (
-            <Tooltip content={t("manageCategory")}>
-              <button
-                onClick={() => setIsCategoryModalOpen(true)}
+
+            {categories.map((cat) => {
+              const colorIndex = getCategoryColorIndex(cat)
+              return (
+                <Tooltip key={cat} content={cat}>
+                  <span
+                    onClick={() => setSelectedCategory(cat)}
+                    style={{
+                      padding: "4px 10px",
+                      background:
+                        selectedCategory === cat
+                          ? "var(--gh-primary, #4285f4)"
+                          : `var(--gh-category-${colorIndex})`,
+                      borderRadius: "12px",
+                      fontSize: "12px",
+                      color: selectedCategory === cat ? "white" : "#4b5563",
+                      cursor: "pointer",
+                      flexShrink: 0,
+                      border:
+                        selectedCategory === cat
+                          ? "1px solid var(--gh-primary, #4285f4)"
+                          : "1px solid transparent",
+                      maxWidth: "80px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}>
+                    {cat}
+                  </span>
+                </Tooltip>
+              )
+            })}
+          </div>
+
+          {/* 右侧固定：最近使用 + 管理（仅图标） */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              padding: "6px 8px",
+              flexShrink: 0,
+              borderLeft: "1px solid var(--gh-border, #e5e7eb)",
+            }}>
+            {/* ⭐ 最近使用（仅图标） */}
+            <Tooltip content={t("promptRecentUsed")}>
+              <span
+                onClick={() => setSelectedCategory(VIRTUAL_CATEGORY.RECENT)}
                 style={{
                   padding: "3px 6px",
-                  background: "transparent",
-                  border: "1px dashed var(--gh-border, #d1d5db)",
-                  borderRadius: "10px",
-                  color: "var(--gh-text-secondary, #9ca3af)",
-                  cursor: "pointer",
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  lineHeight: 1,
+                  background:
+                    selectedCategory === VIRTUAL_CATEGORY.RECENT
+                      ? "var(--gh-primary, #4285f4)"
+                      : "var(--gh-hover, #f3f4f6)",
+                  borderRadius: "10px",
+                  color: selectedCategory === VIRTUAL_CATEGORY.RECENT ? "white" : "#4b5563",
+                  cursor: "pointer",
+                  border:
+                    selectedCategory === VIRTUAL_CATEGORY.RECENT
+                      ? "1px solid var(--gh-primary, #4285f4)"
+                      : "1px solid transparent",
                 }}>
-                <SettingsIcon size={13} />
-              </button>
+                <TimeIcon size={14} />
+              </span>
             </Tooltip>
-          )}
+            {categories.length > 0 && (
+              <Tooltip content={t("manageCategory")}>
+                <button
+                  onClick={() => setIsCategoryModalOpen(true)}
+                  style={{
+                    padding: "3px 6px",
+                    background: "transparent",
+                    border: "1px dashed var(--gh-border, #d1d5db)",
+                    borderRadius: "10px",
+                    color: "var(--gh-text-secondary, #9ca3af)",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}>
+                  <SettingsIcon size={13} />
+                </button>
+              </Tooltip>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 提示词列表 */}
       <div
         ref={promptListRef}
         style={{ flex: 1, overflowY: "auto", padding: "8px", scrollbarWidth: "none" }}>
-        {filtered.length === 0 ? (
+        {activeLibraryView === "chains" ? (
+          renderChainsView()
+        ) : filtered.length === 0 ? (
           <div
             style={{
               textAlign: "center",
@@ -1986,7 +2500,13 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       {/* 添加按钮 */}
       <div style={{ padding: "12px" }}>
         <button
-          onClick={() => openEditModal()}
+          onClick={() => {
+            if (activeLibraryView === "chains") {
+              openChainEditor()
+              return
+            }
+            openEditModal()
+          }}
           style={{
             width: "100%",
             padding: "10px",
@@ -2013,7 +2533,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             e.currentTarget.style.boxShadow = "var(--gh-btn-shadow)"
           }}>
           <span>+</span>
-          <span>{t("addPrompt")}</span>
+          <span>{activeLibraryView === "chains" ? t("chainAdd") : t("addPrompt")}</span>
         </button>
       </div>
 
@@ -2022,6 +2542,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       {renderCategoryModal()}
       {renderPreviewModal()}
       {renderImportDialog()}
+      {renderChainEditorModal()}
 
       {/* 公共对话框组件 */}
       {confirmState.show && (

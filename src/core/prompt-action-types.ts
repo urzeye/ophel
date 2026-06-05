@@ -23,12 +23,43 @@ export type PromptActionRunMode = "insert" | "send-or-queue" | "enqueue"
 
 export type PromptActionSplitMode = "none" | "line"
 
+export interface PromptSelectionAnchor {
+  siteId: string
+  sessionId: string
+  cid?: string
+  selectedText: string
+  textSignature: string
+  beforeText?: string
+  afterText?: string
+  rootSelector?: string
+  rootIndex?: number
+  rootTextSignature?: string
+  scrollTop?: number
+  createdAt: number
+}
+
+export interface PromptQuoteReference {
+  id: string
+  selectedText: string
+  quoteText: string
+  anchor: PromptSelectionAnchor
+  consumerContentHash?: string
+  chainId?: string
+  chainTitle?: string
+  stepId?: string
+  stepIndex?: number
+  stepTotal?: number
+  createdAt: number
+}
+
 export interface PromptActionVariableContext {
   /**
    * Future Quick Follow-up entry point: selected conversation text can be passed
    * as a template variable instead of introducing a separate follow-up renderer.
    */
   selectedText?: string
+  quoteText?: string
+  quoteRef?: PromptQuoteReference
   /**
    * Variables resolved from Prompt Library templates, VariableInputDialog, or a
    * future Quick Follow-up action form.
@@ -43,6 +74,8 @@ export interface PromptActionContext {
 }
 
 export interface PromptActionStep {
+  id?: string
+  promptId?: string
   template: string
   runMode: PromptActionRunMode
   splitMode?: PromptActionSplitMode
@@ -51,8 +84,34 @@ export interface PromptActionStep {
 export interface PromptActionDefinition {
   id: string
   title: string
+  description?: string
+  iconSvg?: string
+  enabled?: boolean
+  showInSelectionPopover?: boolean
   source: PromptActionSource
   steps: PromptActionStep[]
+  createdAt?: number
+  updatedAt?: number
+}
+
+export interface PromptChainStep {
+  id: string
+  promptId: string
+  runMode: PromptActionRunMode
+  splitMode?: PromptActionSplitMode
+}
+
+export interface PromptChain {
+  id: string
+  title: string
+  description?: string
+  iconSvg?: string
+  enabled: boolean
+  showInSelectionPopover: boolean
+  steps: PromptChainStep[]
+  createdAt: number
+  updatedAt: number
+  lastUsedAt?: number
 }
 
 export interface PromptActionExecutionInput {

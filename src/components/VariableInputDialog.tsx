@@ -13,18 +13,17 @@ import React, { useEffect, useRef, useState } from "react"
 import { ClearIcon } from "~components/icons"
 import { DialogOverlay } from "~components/ui"
 import { t } from "~utils/i18n"
+export {
+  buildPromptVariableValueMap,
+  extractVariables,
+  formatMarkdownQuote,
+  parseVariable,
+  replaceVariables,
+  type ParsedVariable,
+} from "~utils/prompt-variables"
+import type { ParsedVariable } from "~utils/prompt-variables"
 
 // ==================== 类型定义 ====================
-
-/**
- * 解析后的变量结构
- */
-export interface ParsedVariable {
-  raw: string // 原始占位符内文本，如 "语言:中文" 或 "风格:正式|轻松|幽默"
-  name: string // 变量名，如 "语言"、"风格"
-  defaultValue?: string // 默认值，如 "中文"
-  options?: string[] // 下拉选项，如 ["正式", "轻松", "幽默"]
-}
 
 interface Variable {
   name: string
@@ -264,66 +263,4 @@ export const VariableInputDialog: React.FC<VariableInputDialogProps> = ({
       </div>
     </DialogOverlay>
   )
-}
-
-// ==================== 工具函数 ====================
-
-/**
- * 解析变量占位符内的文本
- *
- * - "主题"           → { raw: "主题", name: "主题" }
- * - "语言:中文"       → { raw: "语言:中文", name: "语言", defaultValue: "中文" }
- * - "风格:正式|轻松|幽默" → { raw: "风格:正式|轻松|幽默", name: "风格", options: ["正式", "轻松", "幽默"] }
- */
-export const parseVariable = (raw: string): ParsedVariable => {
-  const colonIndex = raw.indexOf(":")
-  if (colonIndex === -1) {
-    return { raw, name: raw }
-  }
-
-  const name = raw.substring(0, colonIndex)
-  const rest = raw.substring(colonIndex + 1)
-
-  // 含 "|" 则为选项列表，否则为默认值
-  if (rest.includes("|")) {
-    const options = rest.split("|").filter((o) => o.length > 0)
-    return { raw, name, options }
-  }
-
-  return { raw, name, defaultValue: rest }
-}
-
-/**
- * 提取提示词中的变量（解析后）
- * @param content 提示词内容
- * @returns 解析后的变量数组（按 name 去重）
- */
-export const extractVariables = (content: string): ParsedVariable[] => {
-  const regex = /\{\{([^\s{}]+)\}\}/g
-  const seen = new Set<string>()
-  const variables: ParsedVariable[] = []
-  let match
-  while ((match = regex.exec(content)) !== null) {
-    const raw = match[1]
-    if (!seen.has(raw)) {
-      seen.add(raw)
-      variables.push(parseVariable(raw))
-    }
-  }
-  return variables
-}
-
-/**
- * 替换提示词中的变量
- * @param content 原始内容
- * @param values 变量值映射（key 为 raw 字段）
- * @returns 替换后的内容
- */
-export const replaceVariables = (content: string, values: Record<string, string>): string => {
-  return content.replace(/\{\{([^\s{}]+)\}\}/g, (fullMatch, raw) => {
-    if (raw in values) {
-      return values[raw]
-    }
-    return fullMatch
-  })
 }

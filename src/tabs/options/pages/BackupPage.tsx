@@ -32,7 +32,9 @@ import {
 import { platform } from "~platform"
 import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
+import { usePromptChainsStore } from "~stores/prompt-chains-store"
 import { usePromptsStore } from "~stores/prompts-store"
+import { useQuickQuotesStore } from "~stores/quick-quotes-store"
 import { useReadingHistoryStore } from "~stores/reading-history-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { useTagsStore } from "~stores/tags-store"
@@ -498,17 +500,24 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
           data: hydratedData,
         }
       } else if (type === "prompts") {
-        // 2. 仅提示词导出 (KEY: prompts)
+        // 2. 仅提示词导出 (KEY: prompts + promptChains)
         // 注意：不包含 folders 和 tags，按需求
         const raw = await new Promise<Record<string, unknown>>((resolve) =>
-          chrome.storage.local.get("prompts", resolve),
+          chrome.storage.local.get(["prompts", "promptChains"], resolve),
         )
         // 解析 Zustand 结构
         let promptsData = []
+        let promptChainsData = []
         try {
           const parsed = typeof raw.prompts === "string" ? JSON.parse(raw.prompts) : raw.prompts
           if (parsed?.state?.prompts) {
             promptsData = parsed.state.prompts
+          }
+
+          const parsedChains =
+            typeof raw.promptChains === "string" ? JSON.parse(raw.promptChains) : raw.promptChains
+          if (parsedChains?.state?.chains) {
+            promptChainsData = parsedChains.state.chains
           }
         } catch (e) {
           console.error(e)
@@ -518,7 +527,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
           version: 3,
           timestamp,
           type: "prompts",
-          data: { prompts: promptsData },
+          data: { prompts: promptsData, promptChains: promptChainsData },
         }
         filename = `ophel-prompts-${timestamp.slice(0, 10)}.json`
       } else if (type === "settings") {
@@ -558,7 +567,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
       a.click()
       URL.revokeObjectURL(url)
       showDomToast(t("exportSuccess"))
-    } catch (err) {
+    } catch {
       showDomToast(t("exportError"))
     }
   }
@@ -572,7 +581,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
       // 数据格式验证
       const validation = validateBackupData(data)
       if (!validation.valid) {
-        const errorMsgs = validation.errorKeys.map((key) => t(key)).join(", ")
+        const _errorMsgs = validation.errorKeys.map((key) => t(key)).join(", ")
         console.error("Backup validation failed:", validation.errorKeys)
         showDomToast(t("invalidBackupFile"))
         return
@@ -652,6 +661,30 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
                     // 扁平化格式（旧版本导出）：v 直接是主数据
                     stateContent = k === "readingHistory" ? { history: v } : { [k]: v }
                   }
+                } else if (k === "promptChains") {
+                  if (Array.isArray(v)) {
+                    stateContent = { chains: v }
+                  } else if (
+                    typeof v === "object" &&
+                    !Array.isArray(v) &&
+                    (v as Record<string, unknown>).chains !== undefined
+                  ) {
+                    stateContent = v
+                  } else {
+                    stateContent = { chains: [] }
+                  }
+                } else if (k === "quickQuoteReferences") {
+                  if (Array.isArray(v)) {
+                    stateContent = { references: v }
+                  } else if (
+                    typeof v === "object" &&
+                    !Array.isArray(v) &&
+                    (v as Record<string, unknown>).references !== undefined
+                  ) {
+                    stateContent = v
+                  } else {
+                    stateContent = { references: [] }
+                  }
                 } else {
                   // prompts, settings 等通常 state key = store name
                   // 但旧版本可能不同，这里统一假设 state = { [key]: value } 是安全的默认值
@@ -718,6 +751,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
   const resetLocalStores = () => {
     resetSettings()
     usePromptsStore.getState().setPrompts(getDefaultPrompts())
+    usePromptChainsStore.getState().setChains([])
+    useQuickQuotesStore.getState().clearAllReferences()
     useFoldersStore.setState({ folders: DEFAULT_FOLDERS })
     useTagsStore.setState({ tags: [] })
     useConversationsStore.setState({ conversations: {}, lastUsedFolderId: "inbox" })

@@ -18,6 +18,7 @@ import { InlineBookmarkManager } from "~core/inline-bookmark-manager"
 import { OutlineManager, type OutlineNode } from "~core/outline-manager"
 import { AI_STUDIO_SHORTCUT_SYNC_EVENT, PromptManager } from "~core/prompt-manager"
 import { QueueDispatcher } from "~core/queue-dispatcher"
+import { QuickQuoteActions } from "~components/QuickQuoteActions"
 import { ensureGlobalThemeManager, type ThemeTransitionOrigin } from "~core/theme-manager"
 import { useEdgePeekController } from "~hooks/useEdgePeekController"
 import { useShortcuts } from "~hooks/useShortcuts"
@@ -3702,6 +3703,9 @@ export const App = () => {
       )}
       {adapter && queueDispatcher && (settings?.features?.prompts?.promptQueue ?? false) && (
         <QueueOverlay adapter={adapter} dispatcher={queueDispatcher} />
+      )}
+      {adapter && promptManager && (
+        <QuickQuoteActions adapter={adapter} promptManager={promptManager} />
       )}
       <LoadingOverlay
         isVisible={Boolean(exportProgress)}

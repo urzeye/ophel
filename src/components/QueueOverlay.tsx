@@ -605,7 +605,18 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
                       </div>
                     ) : (
                       <>
-                        <span className="gh-queue-item-content">{item.content}</span>
+                        <span className="gh-queue-item-main">
+                          {item.metadata?.chainTitle && (
+                            <span className="gh-queue-item-chain">
+                              {t("quickQuoteChainQueueSource", {
+                                title: item.metadata.chainTitle,
+                                index: String(item.metadata.stepIndex || index + 1),
+                                total: String(item.metadata.stepTotal || 1),
+                              })}
+                            </span>
+                          )}
+                          <span className="gh-queue-item-content">{item.content}</span>
+                        </span>
                         <div className="gh-queue-item-actions">
                           {item.status === "pending" && (
                             <button

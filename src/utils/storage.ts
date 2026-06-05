@@ -29,6 +29,8 @@ export const STORAGE_KEYS = {
   CONVERSATIONS: "conversations",
   READING_HISTORY: "readingHistory",
   CLAUDE_SESSION_KEYS: "claudeSessionKeys", // Claude SessionKey管理
+  PROMPT_CHAINS: "promptChains",
+  QUICK_QUOTE_REFERENCES: "quickQuoteReferences",
 } as const
 
 // 清除全部数据标记（用于跳过首次自动恢复/自动同步）

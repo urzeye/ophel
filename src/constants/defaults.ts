@@ -10,6 +10,8 @@ import type { Prompt } from "~utils/storage"
 export const ZUSTAND_KEYS: string[] = [
   "settings",
   "prompts",
+  "promptChains",
+  "quickQuoteReferences",
   "folders",
   "tags",
   "conversations",
