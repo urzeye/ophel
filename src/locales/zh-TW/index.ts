@@ -264,7 +264,7 @@ export const zhTW = {
   quickQuoteInserted: "引用已插入",
   quickQuoteChainQueued: "已加入隊列 {count} 條",
   quickQuoteQuote: "引用",
-  quickQuoteReply: "回覆",
+  quickQuoteReply: "引用回覆",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   copied: "已複製到剪貼簿",
   cleared: "已清除內容",

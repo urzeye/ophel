@@ -397,7 +397,7 @@ export const fr = {
   quickQuoteInserted: "Citation insérée",
   quickQuoteChainQueued: "{count} élément(s) ajoutés à la file",
   quickQuoteQuote: "Citer",
-  quickQuoteReply: "Répondre",
+  quickQuoteReply: "Répondre avec citation",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   copied: "Copié dans le presse-papiers",
   cleared: "Effacé",

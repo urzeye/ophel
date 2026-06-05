@@ -404,7 +404,7 @@ export const en = {
   quickQuoteInserted: "Quote inserted",
   quickQuoteChainQueued: "Added {count} item(s) to queue",
   quickQuoteQuote: "Quote",
-  quickQuoteReply: "Reply",
+  quickQuoteReply: "Quote Reply",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   copied: "Copied to clipboard",
   cleared: "Content cleared",

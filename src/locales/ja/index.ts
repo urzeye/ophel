@@ -401,7 +401,7 @@ export const ja = {
   quickQuoteInserted: "引用を挿入しました",
   quickQuoteChainQueued: "{count} 件をキューに追加しました",
   quickQuoteQuote: "引用",
-  quickQuoteReply: "返信",
+  quickQuoteReply: "引用返信",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   copied: "クリップボードにコピーしました",
   cleared: "内容を消去しました",

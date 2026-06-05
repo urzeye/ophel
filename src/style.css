@@ -158,13 +158,18 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  max-width: calc(100vw - 20px);
+  width: max-content;
+  max-width: min(calc(100vw - 20px), 520px);
   padding: 6px;
-  border: 1px solid var(--gh-border, rgba(148, 163, 184, 0.35));
-  border-radius: 8px;
-  background: var(--gh-bg, #ffffff);
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #6366f1) 22%, var(--gh-border, #d1d5db));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gh-bg, #ffffff) 90%, var(--gh-primary, #6366f1) 10%);
   color: var(--gh-text, #111827);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+  box-shadow:
+    var(--gh-shadow-lg, 0 8px 32px rgba(0, 0, 0, 0.35)),
+    0 0 0 1px inset color-mix(in srgb, var(--gh-primary, #6366f1) 14%, transparent);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;

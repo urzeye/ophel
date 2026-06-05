@@ -394,7 +394,7 @@ export const ru = {
   quickQuoteInserted: "Цитата вставлена",
   quickQuoteChainQueued: "Добавлено в очередь: {count}",
   quickQuoteQuote: "Цитата",
-  quickQuoteReply: "Ответ",
+  quickQuoteReply: "Ответ с цитатой",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   copied: "Скопировано",
   cleared: "Очищено",

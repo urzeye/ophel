@@ -46,7 +46,6 @@ interface PendingChainRun {
 }
 
 const MAX_SELECTION_LENGTH = 8000
-const POPOVER_WIDTH = 320
 const POPOVER_MARGIN = 10
 const QUICK_QUOTE_STYLE_ID = "gh-quick-quote-host-styles"
 
@@ -104,8 +103,6 @@ const SafeSvgIcon: React.FC<{ svg?: string; fallback: React.ReactNode }> = ({ sv
     />
   )
 }
-
-const getQuoteContent = (text: string) => `${formatMarkdownQuote(text)}\n\n`
 
 const getReplyContent = (text: string) =>
   replaceVariables(t("quickQuoteReplyTemplate"), {
@@ -264,6 +261,7 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
   const enqueueMany = useQueueStore((state) => state.enqueueMany)
   const [selectionState, setSelectionState] = useState<SelectionState | null>(null)
   const [pendingChainRun, setPendingChainRun] = useState<PendingChainRun | null>(null)
+  const isMouseSelectingRef = useRef(false)
 
   const visibleChains = useMemo(
     () => chains.filter((chain) => chain.enabled && chain.showInSelectionPopover),
@@ -305,19 +303,41 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
   }, [adapter])
 
   useEffect(() => {
-    const scheduleRefresh = () => window.setTimeout(refreshSelection, 0)
-    document.addEventListener("selectionchange", scheduleRefresh)
-    document.addEventListener("mouseup", scheduleRefresh)
-    document.addEventListener("keyup", scheduleRefresh)
-    window.addEventListener("scroll", scheduleRefresh, true)
-    window.addEventListener("resize", scheduleRefresh)
+    const clearCollapsedSelection = () => {
+      const selection = window.getSelection()
+      if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+        setSelectionState(null)
+      }
+    }
+    const hidePopover = () => setSelectionState(null)
+    const handleMouseDown = (event: MouseEvent) => {
+      if (event.button !== 0) return
+      const target = event.target instanceof Element ? event.target : null
+      if (isInsideOphel(target)) return
+      isMouseSelectingRef.current = true
+      setSelectionState(null)
+    }
+    const handleMouseUp = (event: MouseEvent) => {
+      if (event.button !== 0 || !isMouseSelectingRef.current) return
+      isMouseSelectingRef.current = false
+      window.setTimeout(refreshSelection, 0)
+    }
+    const scheduleKeyboardRefresh = () => window.setTimeout(refreshSelection, 0)
+
+    document.addEventListener("selectionchange", clearCollapsedSelection)
+    document.addEventListener("mousedown", handleMouseDown)
+    document.addEventListener("mouseup", handleMouseUp)
+    document.addEventListener("keyup", scheduleKeyboardRefresh)
+    window.addEventListener("scroll", hidePopover, true)
+    window.addEventListener("resize", hidePopover)
 
     return () => {
-      document.removeEventListener("selectionchange", scheduleRefresh)
-      document.removeEventListener("mouseup", scheduleRefresh)
-      document.removeEventListener("keyup", scheduleRefresh)
-      window.removeEventListener("scroll", scheduleRefresh, true)
-      window.removeEventListener("resize", scheduleRefresh)
+      document.removeEventListener("selectionchange", clearCollapsedSelection)
+      document.removeEventListener("mousedown", handleMouseDown)
+      document.removeEventListener("mouseup", handleMouseUp)
+      document.removeEventListener("keyup", scheduleKeyboardRefresh)
+      window.removeEventListener("scroll", hidePopover, true)
+      window.removeEventListener("resize", hidePopover)
     }
   }, [refreshSelection])
 
@@ -340,27 +360,21 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
     [adapter, selectionState],
   )
 
-  const handleInsertBuiltIn = useCallback(
-    async (kind: "quote" | "reply") => {
-      if (!selectionState) return
+  const handleInsertBuiltIn = useCallback(async () => {
+    if (!selectionState) return
 
-      const content =
-        kind === "quote"
-          ? getQuoteContent(selectionState.text)
-          : getReplyContent(selectionState.text)
-      const selection = createSelectionContext(content)
-      const inserted = await promptManager.insertPrompt(content)
-      if (!inserted) {
-        showToast(t("insertFailed"))
-        return
-      }
+    const content = getReplyContent(selectionState.text)
+    const selection = createSelectionContext(content)
+    const inserted = await promptManager.insertPrompt(content)
+    if (!inserted) {
+      showToast(t("insertFailed"))
+      return
+    }
 
-      addQuoteReferenceForContent(selection?.quoteRef || null, content)
-      showToast(t("quickQuoteInserted"), 1800)
-      clearSelection()
-    },
-    [clearSelection, createSelectionContext, promptManager, selectionState],
-  )
+    addQuoteReferenceForContent(selection?.quoteRef || null, content)
+    showToast(t("quickQuoteInserted"), 1800)
+    clearSelection()
+  }, [clearSelection, createSelectionContext, promptManager, selectionState])
 
   const runChain = useCallback(
     (
@@ -417,7 +431,7 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
       Math.max(POPOVER_MARGIN, selectionState.rect.left + selectionState.rect.width / 2),
     )
     const top = Math.max(POPOVER_MARGIN, selectionState.rect.top - 48)
-    return { left, top, width: POPOVER_WIDTH }
+    return { left, top }
   }, [selectionState])
 
   if (!selectionState && !pendingChainRun) return <QuickQuoteRenderer adapter={adapter} />
@@ -429,16 +443,11 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
         <div
           className="gh-quick-quote-popover gh-interactive"
           style={popoverStyle}
-          onMouseDown={(event) => event.preventDefault()}>
-          <button
-            className="gh-quick-quote-action"
-            onClick={() => void handleInsertBuiltIn("quote")}>
-            <span>Q</span>
-            <span>{t("quickQuoteQuote")}</span>
-          </button>
-          <button
-            className="gh-quick-quote-action"
-            onClick={() => void handleInsertBuiltIn("reply")}>
+          onMouseDown={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+          }}>
+          <button className="gh-quick-quote-action" onClick={() => void handleInsertBuiltIn()}>
             <span>R</span>
             <span>{t("quickQuoteReply")}</span>
           </button>

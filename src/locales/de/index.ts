@@ -398,7 +398,7 @@ export const de = {
   quickQuoteInserted: "Zitat eingefügt",
   quickQuoteChainQueued: "{count} Element(e) zur Warteschlange hinzugefügt",
   quickQuoteQuote: "Zitat",
-  quickQuoteReply: "Antwort",
+  quickQuoteReply: "Zitatantwort",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   copied: "In Zwischenablage kopiert",
   cleared: "Geleert",

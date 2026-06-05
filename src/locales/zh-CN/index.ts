@@ -423,7 +423,7 @@ export const zhCN = {
   quickQuoteInserted: "引用已插入",
   quickQuoteChainQueued: "已加入队列 {count} 条",
   quickQuoteQuote: "引用",
-  quickQuoteReply: "回复",
+  quickQuoteReply: "引用回复",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   copied: "已复制到剪贴板",
   cleared: "已清理",

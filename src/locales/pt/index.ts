@@ -395,7 +395,7 @@ export const pt = {
   quickQuoteInserted: "Citação inserida",
   quickQuoteChainQueued: "{count} item(ns) adicionados à fila",
   quickQuoteQuote: "Citar",
-  quickQuoteReply: "Responder",
+  quickQuoteReply: "Responder com citação",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
   copied: "Copiado para a área de transferência",
   cleared: "Limpo",
