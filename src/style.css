@@ -1922,11 +1922,12 @@
 }
 
 .gh-chain-card {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 8px;
+  align-items: center;
   margin-bottom: 8px;
-  padding: 12px;
+  padding: 8px 10px;
   border: 1px solid var(--gh-border, #e5e7eb);
   border-radius: 8px;
   background: var(--gh-bg, #ffffff);
@@ -1944,16 +1945,17 @@
 
 .gh-chain-card-main {
   display: flex;
-  gap: 10px;
+  grid-column: 1;
+  gap: 8px;
+  align-items: center;
   min-width: 0;
-  flex: 1;
   cursor: pointer;
 }
 
 .gh-chain-icon {
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1978,18 +1980,22 @@
 .gh-chain-body {
   min-width: 0;
   flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
 }
 
 .gh-chain-title-row {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: baseline;
+  gap: 6px;
   min-width: 0;
 }
 
 .gh-chain-title {
   min-width: 0;
-  flex: 1;
+  flex: 0 1 auto;
   overflow: hidden;
   color: var(--gh-text, #1f2937);
   font-size: 14px;
@@ -2024,7 +2030,8 @@
 }
 
 .gh-chain-description {
-  margin-top: 4px;
+  min-width: 24px;
+  flex: 1 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2032,20 +2039,21 @@
 
 .gh-chain-flow {
   display: flex;
+  grid-column: 1 / -1;
   align-items: center;
   flex-wrap: wrap;
   gap: 4px;
-  margin-top: 7px;
-  padding: 5px 6px;
+  padding: 4px 6px;
   border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 16%, var(--gh-border, #e5e7eb));
   border-radius: 7px;
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 5%, var(--gh-bg-secondary, #f9fafb));
+  cursor: pointer;
   line-height: 1.25;
 }
 
 .gh-chain-flow-chip {
   min-width: 0;
-  max-width: min(132px, 42%);
+  max-width: min(190px, 58%);
   padding: 2px 6px;
   border: 1px solid var(--gh-border, #e5e7eb);
   border-radius: 6px;
@@ -2081,7 +2089,6 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 4px;
-  margin-top: 6px;
   font-size: 11px;
   line-height: 1.25;
 }
@@ -2110,15 +2117,19 @@
 
 .gh-chain-variable-list {
   display: inline-flex;
+  grid-column: 1 / -1;
   min-width: 0;
   max-width: 100%;
   flex-wrap: wrap;
   gap: 3px;
+  font-size: 11px;
+  line-height: 1.25;
+  cursor: pointer;
 }
 
 .gh-chain-variable-chip {
   min-width: 0;
-  max-width: 86px;
+  max-width: min(180px, 48%);
   border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 12%, var(--gh-border, #e5e7eb));
   background: transparent;
   overflow: hidden;
@@ -2133,8 +2144,17 @@
 
 .gh-chain-card-actions {
   display: flex;
+  grid-column: 2;
+  grid-row: 1;
   flex: 0 0 auto;
   gap: 2px;
+  align-self: center;
+  justify-self: end;
+}
+
+.gh-chain-card-actions .prompt-action-btn {
+  width: 24px;
+  height: 24px;
 }
 
 .gh-chain-empty {
@@ -2392,11 +2412,24 @@
   }
 
   .gh-chain-card {
-    flex-direction: column;
+    grid-template-columns: 1fr;
+  }
+
+  .gh-chain-card-main,
+  .gh-chain-card-actions,
+  .gh-chain-flow,
+  .gh-chain-variable-list {
+    grid-column: 1;
+  }
+
+  .gh-chain-body {
+    grid-template-columns: 1fr;
   }
 
   .gh-chain-card-actions {
+    grid-row: auto;
     align-self: flex-end;
+    justify-self: end;
   }
 
   .gh-chain-step-row {

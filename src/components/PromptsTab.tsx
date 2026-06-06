@@ -1530,9 +1530,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     return filteredChains.map((chain) => {
       const variables = getChainVariables(chain)
       const stepTitles = getChainStepTitles(chain)
-      const visibleStepTitles = stepTitles.slice(0, 4)
+      const visibleStepTitles = stepTitles.slice(0, 6)
       const remainingStepCount = stepTitles.length - visibleStepTitles.length
-      const visibleVariables = variables.slice(0, 2)
+      const visibleVariables = variables.slice(0, 5)
       const remainingVariableCount = variables.length - visibleVariables.length
       const chainStepTitle = stepTitles.length > 0 ? stepTitles.join(" -> ") : t("chainNoSteps")
       const variableTitle = variables.map((variable) => variable.name || variable.raw).join(", ")
@@ -1544,27 +1544,14 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             <div className="gh-chain-body">
               <div className="gh-chain-title-row">
                 <div className="gh-chain-title">{chain.title}</div>
-                <span className={`gh-chain-status ${chain.enabled ? "enabled" : "disabled"}`}>
-                  {chain.enabled ? t("chainEnabled") : t("chainDisabled")}
-                </span>
-              </div>
-              {chain.description && <div className="gh-chain-description">{chain.description}</div>}
-              <div className="gh-chain-flow" title={chainStepTitle}>
-                {visibleStepTitles.length > 0 ? (
-                  visibleStepTitles.map((title, index) => (
-                    <React.Fragment key={chain.steps[index]?.id || `${chain.id}-${index}`}>
-                      {index > 0 && <span className="gh-chain-flow-arrow">→</span>}
-                      <span className="gh-chain-flow-chip">{title}</span>
-                    </React.Fragment>
-                  ))
-                ) : (
-                  <span className="gh-chain-flow-empty">{t("chainNoSteps")}</span>
-                )}
-                {remainingStepCount > 0 && (
-                  <span className="gh-chain-flow-more">+{remainingStepCount}</span>
+                {chain.description && (
+                  <div className="gh-chain-description">{chain.description}</div>
                 )}
               </div>
               <div className="gh-chain-compact-meta">
+                <span className={`gh-chain-status ${chain.enabled ? "enabled" : "disabled"}`}>
+                  {chain.enabled ? t("chainEnabled") : t("chainDisabled")}
+                </span>
                 <span className="gh-chain-meta-item">
                   {t("chainStepsShort", { count: String(chain.steps.length) })}
                 </span>
@@ -1579,18 +1566,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 <span className="gh-chain-meta-item">
                   {t("chainVariablesShort", { count: String(variables.length) })}
                 </span>
-                {visibleVariables.length > 0 && (
-                  <span className="gh-chain-variable-list" title={variableTitle}>
-                    {visibleVariables.map((variable) => (
-                      <span key={variable.raw} className="gh-chain-variable-chip">
-                        {variable.name || variable.raw}
-                      </span>
-                    ))}
-                    {remainingVariableCount > 0 && (
-                      <span className="gh-chain-variable-more">+{remainingVariableCount}</span>
-                    )}
-                  </span>
-                )}
               </div>
             </div>
           </div>
@@ -1641,6 +1616,41 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               </button>
             </Tooltip>
           </div>
+
+          <div
+            className="gh-chain-flow"
+            title={chainStepTitle}
+            onClick={() => openChainEditor(chain)}>
+            {visibleStepTitles.length > 0 ? (
+              visibleStepTitles.map((title, index) => (
+                <React.Fragment key={chain.steps[index]?.id || `${chain.id}-${index}`}>
+                  {index > 0 && <span className="gh-chain-flow-arrow">→</span>}
+                  <span className="gh-chain-flow-chip">{title}</span>
+                </React.Fragment>
+              ))
+            ) : (
+              <span className="gh-chain-flow-empty">{t("chainNoSteps")}</span>
+            )}
+            {remainingStepCount > 0 && (
+              <span className="gh-chain-flow-more">+{remainingStepCount}</span>
+            )}
+          </div>
+
+          {visibleVariables.length > 0 && (
+            <div
+              className="gh-chain-variable-list"
+              title={variableTitle}
+              onClick={() => openChainEditor(chain)}>
+              {visibleVariables.map((variable) => (
+                <span key={variable.raw} className="gh-chain-variable-chip">
+                  {variable.name || variable.raw}
+                </span>
+              ))}
+              {remainingVariableCount > 0 && (
+                <span className="gh-chain-variable-more">+{remainingVariableCount}</span>
+              )}
+            </div>
+          )}
         </div>
       )
     })
