@@ -1980,10 +1980,6 @@
 .gh-chain-body {
   min-width: 0;
   flex: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 6px;
-  align-items: center;
 }
 
 .gh-chain-title-row {
@@ -2004,27 +2000,8 @@
   white-space: nowrap;
 }
 
-.gh-chain-status {
-  flex: 0 0 auto;
-  padding: 2px 6px;
-  border-radius: 5px;
-  font-size: 11px;
-  line-height: 1.35;
-}
-
-.gh-chain-status.enabled {
-  background: color-mix(in srgb, var(--gh-success, #16a34a) 13%, transparent);
-  color: var(--gh-success, #16a34a);
-}
-
-.gh-chain-status.disabled {
-  background: var(--gh-hover, #f3f4f6);
-  color: var(--gh-text-tertiary, #9ca3af);
-}
-
 .gh-chain-description,
-.gh-chain-flow,
-.gh-chain-compact-meta {
+.gh-chain-flow {
   color: var(--gh-text-secondary, #6b7280);
   font-size: 12px;
 }
@@ -2084,16 +2061,6 @@
   font-weight: 650;
 }
 
-.gh-chain-compact-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
-  font-size: 11px;
-  line-height: 1.25;
-}
-
-.gh-chain-meta-item,
 .gh-chain-variable-chip,
 .gh-chain-variable-more {
   display: inline-flex;
@@ -2104,15 +2071,6 @@
   background: var(--gh-hover, #f3f4f6);
   color: var(--gh-text-secondary, #6b7280);
   white-space: nowrap;
-}
-
-.gh-chain-meta-item.is-on {
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, transparent);
-  color: var(--gh-primary, #4285f4);
-}
-
-.gh-chain-meta-item.is-off {
-  color: var(--gh-text-tertiary, #9ca3af);
 }
 
 .gh-chain-variable-list {
@@ -2129,9 +2087,9 @@
 
 .gh-chain-variable-chip {
   min-width: 0;
-  max-width: min(180px, 48%);
-  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 12%, var(--gh-border, #e5e7eb));
-  background: transparent;
+  max-width: min(150px, 48%);
+  border: 1px solid var(--gh-border, #e5e7eb);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 4%, var(--gh-bg, #ffffff));
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -2420,10 +2378,6 @@
   .gh-chain-flow,
   .gh-chain-variable-list {
     grid-column: 1;
-  }
-
-  .gh-chain-body {
-    grid-template-columns: 1fr;
   }
 
   .gh-chain-card-actions {

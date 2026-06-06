@@ -366,10 +366,6 @@ export const de = {
   chainHiddenInPopover: "Im Auswahl-Popover verborgen",
   chainVariablesCount: "{count} Variable(n)",
   chainVariablesNone: "Keine zusätzlichen Variablen",
-  chainStepsShort: "{count} Schritte",
-  chainPopoverShownShort: "Popover an",
-  chainPopoverHiddenShort: "Popover aus",
-  chainVariablesShort: "{count} Var.",
   chainNoPrompts: "Zuerst Prompts erstellen",
   chainNoPromptsDescription:
     "Chains bestehen aus vorhandenen Prompts und benötigen mindestens einen Prompt.",

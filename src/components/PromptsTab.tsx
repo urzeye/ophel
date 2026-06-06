@@ -1530,9 +1530,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     return filteredChains.map((chain) => {
       const variables = getChainVariables(chain)
       const stepTitles = getChainStepTitles(chain)
-      const visibleStepTitles = stepTitles.slice(0, 6)
+      const visibleStepTitles = stepTitles.slice(0, 8)
       const remainingStepCount = stepTitles.length - visibleStepTitles.length
-      const visibleVariables = variables.slice(0, 5)
+      const visibleVariables = variables.slice(0, 2)
       const remainingVariableCount = variables.length - visibleVariables.length
       const chainStepTitle = stepTitles.length > 0 ? stepTitles.join(" -> ") : t("chainNoSteps")
       const variableTitle = variables.map((variable) => variable.name || variable.raw).join(", ")
@@ -1547,25 +1547,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 {chain.description && (
                   <div className="gh-chain-description">{chain.description}</div>
                 )}
-              </div>
-              <div className="gh-chain-compact-meta">
-                <span className={`gh-chain-status ${chain.enabled ? "enabled" : "disabled"}`}>
-                  {chain.enabled ? t("chainEnabled") : t("chainDisabled")}
-                </span>
-                <span className="gh-chain-meta-item">
-                  {t("chainStepsShort", { count: String(chain.steps.length) })}
-                </span>
-                <span
-                  className={`gh-chain-meta-item ${
-                    chain.showInSelectionPopover ? "is-on" : "is-off"
-                  }`}>
-                  {chain.showInSelectionPopover
-                    ? t("chainPopoverShownShort")
-                    : t("chainPopoverHiddenShort")}
-                </span>
-                <span className="gh-chain-meta-item">
-                  {t("chainVariablesShort", { count: String(variables.length) })}
-                </span>
               </div>
             </div>
           </div>

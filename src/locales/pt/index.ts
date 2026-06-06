@@ -364,10 +364,6 @@ export const pt = {
   chainHiddenInPopover: "Oculta do painel de seleção",
   chainVariablesCount: "{count} variável(is)",
   chainVariablesNone: "Sem variáveis extras",
-  chainStepsShort: "{count} etapas",
-  chainPopoverShownShort: "Painel ativo",
-  chainPopoverHiddenShort: "Painel oculto",
-  chainVariablesShort: "{count} var.",
   chainNoPrompts: "Crie prompts primeiro",
   chainNoPromptsDescription:
     "Chains são criadas a partir de prompts existentes e precisam de pelo menos um prompt.",

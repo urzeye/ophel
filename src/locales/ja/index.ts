@@ -371,10 +371,6 @@ export const ja = {
   chainHiddenInPopover: "選択ポップオーバーに非表示",
   chainVariablesCount: "{count} 個の変数",
   chainVariablesNone: "追加変数なし",
-  chainStepsShort: "{count} 手順",
-  chainPopoverShownShort: "ポップオーバーON",
-  chainPopoverHiddenShort: "ポップオーバーOFF",
-  chainVariablesShort: "{count} 変数",
   chainNoPrompts: "先にプロンプトを作成してください",
   chainNoPromptsDescription:
     "Chain は既存のプロンプトから作成されるため、少なくとも 1 つのプロンプトが必要です。",

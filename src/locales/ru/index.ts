@@ -363,10 +363,6 @@ export const ru = {
   chainHiddenInPopover: "Скрыта из панели выделения",
   chainVariablesCount: "{count} переменных",
   chainVariablesNone: "Нет дополнительных переменных",
-  chainStepsShort: "{count} шаг.",
-  chainPopoverShownShort: "Панель вкл.",
-  chainPopoverHiddenShort: "Панель выкл.",
-  chainVariablesShort: "{count} пер.",
   chainNoPrompts: "Сначала создайте промпты",
   chainNoPromptsDescription:
     "Chains строятся из существующих промптов и требуют хотя бы один промпт.",
