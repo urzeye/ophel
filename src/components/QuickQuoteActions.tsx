@@ -124,34 +124,68 @@ const injectQuickQuoteHostStyles = (root: Document | ShadowRoot) => {
   const style = document.createElement("style")
   style.id = QUICK_QUOTE_STYLE_ID
   style.textContent = `
-    .gh-quick-quote-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      max-width: min(420px, 90%);
-      margin: 0 0 6px;
-      padding: 5px 8px;
-      border: 1px solid rgba(66, 133, 244, 0.25);
-      border-radius: 7px;
-      background: rgba(66, 133, 244, 0.08);
-      color: inherit;
-      font: 12px/1.4 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      cursor: pointer;
-      user-select: none;
+    button.gh-quick-quote-chip {
+      all: unset !important;
+      box-sizing: border-box !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      width: fit-content !important;
+      max-width: min(360px, 100%) !important;
+      margin: 0 0 8px !important;
+      padding: 4px 8px !important;
+      border: 1px solid rgba(66, 133, 244, 0.28) !important;
+      border-radius: 8px !important;
+      background: rgba(66, 133, 244, 0.07) !important;
+      color: #2563eb !important;
+      font: 500 12px/1.35 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+      letter-spacing: 0 !important;
+      vertical-align: baseline !important;
+      cursor: pointer !important;
+      user-select: none !important;
     }
-    .gh-quick-quote-chip:hover {
-      background: rgba(66, 133, 244, 0.14);
-      border-color: rgba(66, 133, 244, 0.38);
+    button.gh-quick-quote-chip::before {
+      content: "";
+      width: 2px;
+      height: 14px;
+      flex: 0 0 2px;
+      border-radius: 999px;
+      background: rgba(66, 133, 244, 0.72);
+    }
+    button.gh-quick-quote-chip:hover {
+      background: rgba(66, 133, 244, 0.12) !important;
+      border-color: rgba(66, 133, 244, 0.45) !important;
+      color: #1d4ed8 !important;
     }
     .gh-quick-quote-chip-text {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      min-width: 0 !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
     }
     .gh-quick-quote-source-highlight {
       outline: 2px solid rgba(66, 133, 244, 0.75) !important;
       outline-offset: 4px !important;
       animation: gh-quick-quote-source-pulse 2.4s ease;
+    }
+    ::highlight(gh-quick-quote-source-text) {
+      background: rgba(66, 133, 244, 0.28);
+      color: inherit;
+    }
+    @media (prefers-color-scheme: dark) {
+      button.gh-quick-quote-chip {
+        background: rgba(96, 165, 250, 0.13) !important;
+        border-color: rgba(147, 197, 253, 0.34) !important;
+        color: #bfdbfe !important;
+      }
+      button.gh-quick-quote-chip:hover {
+        background: rgba(96, 165, 250, 0.2) !important;
+        color: #dbeafe !important;
+      }
+      ::highlight(gh-quick-quote-source-text) {
+        background: rgba(96, 165, 250, 0.34);
+        color: inherit;
+      }
     }
     @keyframes gh-quick-quote-source-pulse {
       0%, 100% { box-shadow: 0 0 0 rgba(66, 133, 244, 0); }
@@ -215,12 +249,10 @@ export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter }> = ({ adapter
       chip.type = "button"
       chip.className = "gh-quick-quote-chip"
       chip.title = t("quickQuoteJumpToSource")
-      const icon = document.createElement("span")
-      icon.textContent = "<"
       const label = document.createElement("span")
       label.className = "gh-quick-quote-chip-text"
       label.textContent = truncateText(reference.selectedText)
-      chip.append(icon, label)
+      chip.append(label)
       chip.addEventListener("click", (event) => {
         event.preventDefault()
         event.stopPropagation()
