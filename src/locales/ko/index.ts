@@ -366,6 +366,10 @@ export const ko = {
   chainHiddenInPopover: "선택 팝오버에서 숨김",
   chainVariablesCount: "{count}개 변수",
   chainVariablesNone: "추가 변수가 없습니다",
+  chainStepsShort: "{count}단계",
+  chainPopoverShownShort: "팝오버 켬",
+  chainPopoverHiddenShort: "팝오버 끔",
+  chainVariablesShort: "{count} 변수",
   chainNoPrompts: "먼저 프롬프트를 만드세요",
   chainNoPromptsDescription:
     "Chain은 기존 프롬프트로 구성되므로 하나 이상의 프롬프트가 필요합니다.",

@@ -1505,10 +1505,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     return variables
   }
 
-  const getChainStepPreview = (chain: PromptChain): string => {
-    if (chain.steps.length === 0) return t("chainNoSteps")
-    return chain.steps.map((step) => getPromptTitle(step.promptId)).join(" -> ")
-  }
+  const getChainStepTitles = (chain: PromptChain): string[] =>
+    chain.steps.map((step) => getPromptTitle(step.promptId))
 
   const renderChainsView = () => {
     if (prompts.length === 0) {
@@ -1531,6 +1529,14 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
     return filteredChains.map((chain) => {
       const variables = getChainVariables(chain)
+      const stepTitles = getChainStepTitles(chain)
+      const visibleStepTitles = stepTitles.slice(0, 4)
+      const remainingStepCount = stepTitles.length - visibleStepTitles.length
+      const visibleVariables = variables.slice(0, 2)
+      const remainingVariableCount = variables.length - visibleVariables.length
+      const chainStepTitle = stepTitles.length > 0 ? stepTitles.join(" -> ") : t("chainNoSteps")
+      const variableTitle = variables.map((variable) => variable.name || variable.raw).join(", ")
+
       return (
         <div key={chain.id} className="gh-chain-card">
           <div className="gh-chain-card-main" onClick={() => openChainEditor(chain)}>
@@ -1543,19 +1549,48 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 </span>
               </div>
               {chain.description && <div className="gh-chain-description">{chain.description}</div>}
-              <div className="gh-chain-preview">{getChainStepPreview(chain)}</div>
-              <div className="gh-chain-meta">
-                <span>{t("chainStepCount", { count: String(chain.steps.length) })}</span>
-                <span>
+              <div className="gh-chain-flow" title={chainStepTitle}>
+                {visibleStepTitles.length > 0 ? (
+                  visibleStepTitles.map((title, index) => (
+                    <React.Fragment key={chain.steps[index]?.id || `${chain.id}-${index}`}>
+                      {index > 0 && <span className="gh-chain-flow-arrow">→</span>}
+                      <span className="gh-chain-flow-chip">{title}</span>
+                    </React.Fragment>
+                  ))
+                ) : (
+                  <span className="gh-chain-flow-empty">{t("chainNoSteps")}</span>
+                )}
+                {remainingStepCount > 0 && (
+                  <span className="gh-chain-flow-more">+{remainingStepCount}</span>
+                )}
+              </div>
+              <div className="gh-chain-compact-meta">
+                <span className="gh-chain-meta-item">
+                  {t("chainStepsShort", { count: String(chain.steps.length) })}
+                </span>
+                <span
+                  className={`gh-chain-meta-item ${
+                    chain.showInSelectionPopover ? "is-on" : "is-off"
+                  }`}>
                   {chain.showInSelectionPopover
-                    ? t("chainShownInPopover")
-                    : t("chainHiddenInPopover")}
+                    ? t("chainPopoverShownShort")
+                    : t("chainPopoverHiddenShort")}
                 </span>
-                <span>
-                  {variables.length > 0
-                    ? t("chainVariablesCount", { count: String(variables.length) })
-                    : t("chainVariablesNone")}
+                <span className="gh-chain-meta-item">
+                  {t("chainVariablesShort", { count: String(variables.length) })}
                 </span>
+                {visibleVariables.length > 0 && (
+                  <span className="gh-chain-variable-list" title={variableTitle}>
+                    {visibleVariables.map((variable) => (
+                      <span key={variable.raw} className="gh-chain-variable-chip">
+                        {variable.name || variable.raw}
+                      </span>
+                    ))}
+                    {remainingVariableCount > 0 && (
+                      <span className="gh-chain-variable-more">+{remainingVariableCount}</span>
+                    )}
+                  </span>
+                )}
               </div>
             </div>
           </div>
