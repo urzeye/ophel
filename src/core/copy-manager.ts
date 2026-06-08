@@ -83,7 +83,7 @@ export class CopyManager {
 
   /**
    * 初始化公式双击复制功能
-   * 禁用公式文字选择，双击复制 LaTeX 源码
+   * 保持公式可选中，同时支持双击复制 LaTeX 源码
    * 支持 Gemini (.math-block/.math-inline) 和 ChatGPT (.katex)
    */
   initFormulaCopy() {
@@ -98,7 +98,6 @@ export class CopyManager {
       style.id = styleId
       style.textContent = `
         .math-block, .math-inline, .katex {
-            user-select: none !important;
             cursor: pointer !important;
         }
         .math-block:hover, .math-inline:hover, .katex:hover {

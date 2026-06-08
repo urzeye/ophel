@@ -11,6 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Formula text selection** — Formulas can now stay selectable inside regular text ranges while preserving double-click formula copy, so page selections and quotes can include LaTeX formulas again. (#622)
 - **Gemini watermark removal** — Replaced the legacy Gemini/Nano Banana remover with the SDK-backed implementation and fixed user-uploaded image handling plus generated-image removal regressions. (#593, #625)
 
 ---
