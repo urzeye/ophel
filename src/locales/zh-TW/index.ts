@@ -634,6 +634,7 @@ export const zhTW = {
   grokSyncingConversations: "正在同步會話，請勿操作...",
   conversationsSynced: "同步完成",
   conversationsAddFolder: "新建資料夾",
+  conversationsOpenInNewTab: "在新分頁中開啟",
   conversationsRename: "重新命名",
   conversationsDelete: "刪除",
   conversationsDeleteConfirm: '確定刪除此資料夾 "{folder}" 嗎？其中的會話將移到{inbox}。',

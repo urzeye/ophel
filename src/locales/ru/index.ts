@@ -686,6 +686,7 @@ export const ru = {
   conversationsSyncing: "Процесс...",
   conversationsSynced: "Готово",
   conversationsAddFolder: "Папка",
+  conversationsOpenInNewTab: "Открыть в новой вкладке",
   conversationsRename: "Имя",
   conversationsDelete: "Удалить",
   conversationsDeleteConfirm: 'Удалить папку "{folder}"? Чаты будут перемещены в {inbox}.',

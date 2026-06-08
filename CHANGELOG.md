@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Conversations quick open** — Conversation rows can now be opened from the context menu in a new tab, so older sessions can be reopened without replacing the current chat. (#578)
+
 ### 🐛 Bug Fixes
 
 - **Gemini watermark removal** — Replaced the legacy Gemini/Nano Banana remover with the SDK-backed implementation and fixed user-uploaded image handling plus generated-image removal regressions. (#593, #625)

@@ -688,6 +688,7 @@ export const ko = {
   conversationsSyncing: "동기화 중...",
   conversationsSynced: "동기화됨",
   conversationsAddFolder: "새 폴더",
+  conversationsOpenInNewTab: "새 탭에서 열기",
   conversationsRename: "이름 바꾸기",
   conversationsDelete: "삭제",
   conversationsDeleteConfirm: '"{folder}" 폴더를 삭제하시겠습니까? 대화는 {inbox}로 이동됩니다.',

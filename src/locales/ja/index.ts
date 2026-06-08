@@ -715,6 +715,7 @@ export const ja = {
   conversationsSyncing: "同期中...",
   conversationsSynced: "同期完了",
   conversationsAddFolder: "新規フォルダ",
+  conversationsOpenInNewTab: "新しいタブで開く",
   conversationsRename: "名前変更",
   conversationsDelete: "削除",
   conversationsDeleteConfirm: "フォルダ「{folder}」を削除しますか？会話は{inbox}に移動されます。",

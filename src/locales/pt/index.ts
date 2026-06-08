@@ -687,6 +687,7 @@ export const pt = {
   conversationsSyncing: "Sincronizando...",
   conversationsSynced: "Pronto",
   conversationsAddFolder: "Pasta",
+  conversationsOpenInNewTab: "Abrir em nova aba",
   conversationsRename: "Renomear",
   conversationsDelete: "Excluir",
   conversationsDeleteConfirm: 'Excluir a pasta "{folder}"? Os chats serão movidos para a {inbox}.',

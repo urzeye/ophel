@@ -741,6 +741,7 @@ export const en = {
   conversationsSyncing: "Syncing...",
   conversationsSynced: "Synced",
   conversationsAddFolder: "New Folder",
+  conversationsOpenInNewTab: "Open in new tab",
   conversationsRename: "Rename",
   conversationsDelete: "Delete",
   conversationsDeleteConfirm: 'Delete folder "{folder}"? Conversations will be moved to {inbox}.',

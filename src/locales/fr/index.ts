@@ -688,6 +688,7 @@ export const fr = {
   conversationsSyncing: "Synchronisation...",
   conversationsSynced: "Prêt",
   conversationsAddFolder: "Dossier",
+  conversationsOpenInNewTab: "Ouvrir dans un nouvel onglet",
   conversationsRename: "Renommer",
   conversationsDelete: "Supprimer",
   conversationsDeleteConfirm: 'Supprimer le dossier "{folder}" ? Les chats iront dans {inbox}.',

@@ -726,6 +726,7 @@ export const zhCN = {
   conversationsSyncing: "正在同步...",
   conversationsSynced: "同步完成",
   conversationsAddFolder: "新建文件夹",
+  conversationsOpenInNewTab: "在新标签页打开",
   conversationsRename: "重命名",
   conversationsDelete: "删除",
   conversationsDeleteConfirm: '确定删除文件夹 "{folder}" 吗？其中的会话将移到{inbox}。',
