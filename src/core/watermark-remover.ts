@@ -379,8 +379,8 @@ export class WatermarkRemover {
     }
   }
 
-  private getFetchSkippedSourceCacheKey(sourceUrl: string): string {
-    return `fetch:${sourceUrl}`
+  private getRemoteSkippedSourceCacheKey(sourceUrl: string, scene: WatermarkProcessScene): string {
+    return `${scene}:${sourceUrl}`
   }
 
   private extractSupportedUrlFromNode(node: Element): string {
@@ -516,9 +516,7 @@ export class WatermarkRemover {
     }
 
     const normalizedSourceUrl = this.replaceWithNormalSize(sourceUrl)
-    const skippedCacheKey = sourceArrayBuffer
-      ? this.getFetchSkippedSourceCacheKey(normalizedSourceUrl)
-      : normalizedSourceUrl
+    const skippedCacheKey = this.getRemoteSkippedSourceCacheKey(normalizedSourceUrl, "fetch")
     if (this.skippedSourceCache.has(skippedCacheKey)) {
       this.postMainWorldProcessResponse({
         requestId,
@@ -1297,13 +1295,17 @@ export class WatermarkRemover {
     },
   ): Promise<string> {
     const normalizedSourceUrl = this.replaceWithNormalSize(sourceUrl)
+    const skipCacheKey = this.getRemoteSkippedSourceCacheKey(
+      normalizedSourceUrl,
+      options?.scene ?? "download",
+    )
 
     if (!options?.bypassCache) {
       const cached = this.processedDataUrlCache.get(normalizedSourceUrl)
       if (cached) return cached
     }
 
-    this.throwIfSourceSkipped(normalizedSourceUrl)
+    this.throwIfSourceSkipped(skipCacheKey)
 
     if (!options?.bypassCache) {
       const inFlight = this.processingMap.get(normalizedSourceUrl)
@@ -1327,7 +1329,7 @@ export class WatermarkRemover {
         return processedDataUrl
       } catch (error) {
         if (error instanceof Error && error.message === WATERMARK_NOT_DETECTED_ERROR) {
-          this.rememberSkippedSource(normalizedSourceUrl)
+          this.rememberSkippedSource(skipCacheKey)
         }
         throw error
       }
@@ -1417,10 +1419,12 @@ export class WatermarkRemover {
     }
 
     const normalizedSourceUrl = this.replaceWithNormalSize(sourceUrl)
-    this.throwIfSourceSkipped(normalizedSourceUrl)
+    const skipCacheKey = this.getRemoteSkippedSourceCacheKey(normalizedSourceUrl, "display")
 
     const cached = this.processedDataUrlCache.get(normalizedSourceUrl)
     if (cached) return cached
+
+    this.throwIfSourceSkipped(skipCacheKey)
 
     const processingKey = `display:${normalizedSourceUrl}`
     const inFlight = this.processingMap.get(processingKey)
@@ -1439,7 +1443,7 @@ export class WatermarkRemover {
         return processedDataUrl
       } catch (error) {
         if (error instanceof Error && error.message === WATERMARK_NOT_DETECTED_ERROR) {
-          this.rememberSkippedSource(normalizedSourceUrl)
+          this.rememberSkippedSource(skipCacheKey)
         }
         throw error
       }
