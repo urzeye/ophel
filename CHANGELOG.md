@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **Gemini Banana watermark removal** — Gemini generated images now reuse the same SDK-backed watermark removal result across preview display, large-image reopening, copy, download, and conversation export. Markdown exports no longer keep temporary `blob:` image URLs, and zip exports skip non-Banana images without console errors instead of interrupting asset preparation.
+
 ---
 
 ## [1.0.58] - 2026-06-04

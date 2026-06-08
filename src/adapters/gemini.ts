@@ -56,6 +56,7 @@ import {
   GEMINI_CANVAS_CODE_REQUEST_EVENT,
   GEMINI_CANVAS_CODE_RESPONSE_EVENT,
 } from "~core/gemini-canvas-code-bridge"
+import { WatermarkRemover } from "~core/watermark-remover"
 import {
   SiteAdapter,
   type ConversationDeleteTarget,
@@ -2535,7 +2536,11 @@ export class GeminiAdapter extends SiteAdapter {
 
     const images = Array.from(
       document.querySelectorAll(
-        `model-response ${GEMINI_EXPORT_IMAGE_SCOPE_SELECTOR} img, ${GEMINI_USER_QUERY_IMAGE_SELECTOR}`,
+        [
+          "model-response img",
+          `share-landing-page ${GEMINI_SHARE_ASSISTANT_MARKDOWN_SELECTOR} img`,
+          GEMINI_USER_QUERY_IMAGE_SELECTOR,
+        ].join(", "),
       ),
     ).filter((node): node is HTMLImageElement => node instanceof HTMLImageElement)
 
@@ -3140,6 +3145,9 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private getPreparedExportImageSrc(image: HTMLImageElement): string {
+    const displayedProcessedSource = this.getDisplayedProcessedImageDataUrl(image)
+    if (displayedProcessedSource) return displayedProcessedSource
+
     const directCandidates = [
       image.getAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR) || "",
       image.getAttribute("data-ophel-wm-source") || "",
@@ -3162,6 +3170,11 @@ export class GeminiAdapter extends SiteAdapter {
     image: HTMLImageElement,
     context: ExportLifecycleContext,
   ): Promise<string> {
+    const watermarkRemovedSource = await this.resolveWatermarkRemovedExportImageSrc(image)
+    if (watermarkRemovedSource) {
+      return watermarkRemovedSource
+    }
+
     const directCandidates = [this.getPreparedExportImageSrc(image)]
     const fallbackCandidates = [
       image.getAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR) || "",
@@ -3193,6 +3206,60 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     return this.convertBlobUrlToDataUrl(blobCandidate)
+  }
+
+  private shouldTryWatermarkRemovalForExport(image: HTMLImageElement): boolean {
+    if (image.closest("user-query")) return false
+    if (image.closest("model-response")) {
+      return image.closest(GEMINI_EXPORT_IMAGE_SCOPE_SELECTOR) !== null
+    }
+    return image.closest(`share-landing-page ${GEMINI_SHARE_ASSISTANT_MARKDOWN_SELECTOR}`) !== null
+  }
+
+  private getDisplayedProcessedImageDataUrl(image: HTMLImageElement): string {
+    if (image.getAttribute("data-ophel-wm-processed") !== "1") return ""
+
+    const candidates = [image.currentSrc || "", image.src || "", image.getAttribute("src") || ""]
+    return (
+      candidates
+        .map((candidate) => this.normalizeExportImageUrl(candidate))
+        .find((candidate) => candidate.startsWith("data:image/")) || ""
+    )
+  }
+
+  private async resolveWatermarkRemovedExportImageSrc(image: HTMLImageElement): Promise<string> {
+    if (!this.shouldTryWatermarkRemovalForExport(image)) return ""
+
+    const displayedProcessedSource = this.getDisplayedProcessedImageDataUrl(image)
+    if (displayedProcessedSource) return displayedProcessedSource
+
+    const watermarkRemover = WatermarkRemover.getActiveInstance()
+    if (!watermarkRemover) return ""
+
+    const candidates = [
+      image.getAttribute("data-ophel-wm-source") || "",
+      image.currentSrc || "",
+      image.src || "",
+      image.getAttribute("src") || "",
+      image.getAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR) || "",
+    ]
+    const seenCandidates = new Set<string>()
+
+    for (const rawCandidate of candidates) {
+      const candidate = this.normalizeExportImageUrl(rawCandidate)
+      if (!candidate || seenCandidates.has(candidate)) continue
+      seenCandidates.add(candidate)
+      if (candidate.startsWith("data:image/")) continue
+
+      const processedDataUrl = await watermarkRemover.resolveProcessedImageDataUrl(candidate, {
+        scene: "export",
+      })
+      if (processedDataUrl?.startsWith("data:image/")) {
+        return processedDataUrl
+      }
+    }
+
+    return ""
   }
 
   private shouldInlineUserQueryImageForExport(

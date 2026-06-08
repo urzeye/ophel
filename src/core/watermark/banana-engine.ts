@@ -12,7 +12,7 @@ type ImageDataLike = {
 export type BananaWatermarkDecision = {
   meta: WatermarkMeta
   sourceUrl?: string
-  scene?: "display" | "download" | "copy" | "fetch"
+  scene?: "display" | "download" | "copy" | "fetch" | "export"
 }
 
 export type BananaWatermarkProcessResult =

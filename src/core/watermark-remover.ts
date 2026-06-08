@@ -1,6 +1,10 @@
 import { MSG_PROXY_FETCH, sendToBackground } from "~utils/messaging"
 import { t } from "~utils/i18n"
 import { processBananaWatermarkImageData } from "~core/watermark/banana-engine"
+import {
+  isGeminiGeneratedImageUrl,
+  normalizeGeminiImageUrl,
+} from "~core/watermark/gemini-asset-url"
 
 // 平台检测
 declare const __PLATFORM__: "extension" | "userscript" | undefined
@@ -10,11 +14,8 @@ declare const unsafeWindow: Window | undefined
 const OPHEL_WATERMARK_FETCH_TOGGLE = "OPHEL_WATERMARK_FETCH_TOGGLE"
 const OPHEL_WATERMARK_PROCESS_REQUEST = "OPHEL_WATERMARK_PROCESS_REQUEST"
 const OPHEL_WATERMARK_PROCESS_RESPONSE = "OPHEL_WATERMARK_PROCESS_RESPONSE"
-const GEMINI_GENERATED_IMAGE_URL_PATTERN =
-  /^https:\/\/lh3\.googleusercontent\.com\/(?:gg(?:\/|-)|rd-[^/]+\/)/i
 const OPHEL_WATERMARK_LOADING_STYLE_ID = "ophel-watermark-loading-style"
 const WATERMARK_NOT_DETECTED_ERROR = "watermark-not-detected"
-const OPHEL_WATERMARK_PREVIEW_OVERLAY_CLASS = "ophel-wm-preview-overlay"
 const GEMINI_IMAGE_LOADING_HOST_SELECTOR = [
   "[data-image-attachment-index]",
   "single-image.generated-image",
@@ -24,7 +25,7 @@ const GEMINI_IMAGE_LOADING_HOST_SELECTOR = [
 ].join(", ")
 
 type GeminiImageAction = "copy" | "download"
-type WatermarkProcessScene = "display" | "download" | "copy" | "fetch"
+export type WatermarkProcessScene = "display" | "download" | "copy" | "fetch" | "export"
 
 // 油猴脚本的 GM_xmlhttpRequest 声明
 declare function GM_xmlhttpRequest(details: {
@@ -62,6 +63,7 @@ async function fetchImageAsBlob(url: string): Promise<Blob> {
  * Watermark Remover
  */
 export class WatermarkRemover {
+  private static activeInstance: WatermarkRemover | null = null
   private processingQueue = new Set<string>()
   private processingMap = new Map<string, Promise<string>>()
   private processedDataUrlCache = new Map<string, string>()
@@ -71,20 +73,22 @@ export class WatermarkRemover {
   private mainWorldMessageListener: ((event: MessageEvent) => void) | null = null
   private actionButtonListener: ((event: MouseEvent) => void) | null = null
   private userscriptOriginalFetch: typeof fetch | null = null
-  private imageOverlayMap = new WeakMap<HTMLImageElement, HTMLElement>()
-  private imageOverlayIdCounter = 0
 
   constructor() {
     this.processingQueue = new Set()
     this.processingMap = new Map()
     this.processedDataUrlCache = new Map()
     this.skippedSourceCache = new Set()
-    this.imageOverlayMap = new WeakMap()
+  }
+
+  static getActiveInstance(): WatermarkRemover | null {
+    return WatermarkRemover.activeInstance
   }
 
   start() {
     if (this.enabled) return
     this.enabled = true
+    WatermarkRemover.activeInstance = this
 
     if (!isUserscript) {
       this.setupMainWorldBridge()
@@ -115,8 +119,10 @@ export class WatermarkRemover {
     this.processingQueue.clear()
     this.skippedSourceCache.clear()
     this.clearAllProcessingIndicators()
-    this.clearAllProcessedImageOverlays()
     this.removeProcessingIndicatorStyles()
+    if (WatermarkRemover.activeInstance === this) {
+      WatermarkRemover.activeInstance = null
+    }
 
     if (this.stopObserver) {
       this.stopObserver()
@@ -129,7 +135,7 @@ export class WatermarkRemover {
   }
 
   private shouldInterceptGeminiImageUrl(url: string): boolean {
-    return GEMINI_GENERATED_IMAGE_URL_PATTERN.test(url)
+    return isGeminiGeneratedImageUrl(url)
   }
 
   private isLikelyGeneratedImage(img: HTMLImageElement): boolean {
@@ -217,7 +223,7 @@ export class WatermarkRemover {
       return this.userscriptOriginalFetch !== null
     }
 
-    return false
+    return this.isGeminiStandardSite()
   }
 
   private ensureProcessingIndicatorStyles() {
@@ -229,15 +235,6 @@ export class WatermarkRemover {
     style.textContent = `
       [data-ophel-wm-loading="1"] {
         isolation: isolate;
-      }
-
-      .${OPHEL_WATERMARK_PREVIEW_OVERLAY_CLASS} {
-        position: absolute;
-        pointer-events: none;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-size: contain;
-        z-index: 1;
       }
 
       .ophel-wm-loading-indicator {
@@ -299,9 +296,7 @@ export class WatermarkRemover {
     host.querySelector(".ophel-wm-loading-indicator")?.remove()
 
     if (host.dataset.ophelWmLoadingManagedPosition === "1") {
-      if (!host.querySelector(`.${OPHEL_WATERMARK_PREVIEW_OVERLAY_CLASS}`)) {
-        host.style.position = host.dataset.ophelWmLoadingOriginalPosition || ""
-      }
+      host.style.position = host.dataset.ophelWmLoadingOriginalPosition || ""
       delete host.dataset.ophelWmLoadingManagedPosition
       delete host.dataset.ophelWmLoadingOriginalPosition
     }
@@ -361,123 +356,16 @@ export class WatermarkRemover {
     return this.shouldInterceptGeminiImageUrl(source) ? this.replaceWithNormalSize(source) : source
   }
 
-  private ensureOverlayHostPosition(host: HTMLElement) {
-    if (window.getComputedStyle(host).position !== "static") return
-
-    if (host.dataset.ophelWmOverlayManagedPosition !== "1") {
-      host.dataset.ophelWmOverlayManagedPosition = "1"
-      host.dataset.ophelWmOverlayOriginalPosition =
-        host.dataset.ophelWmLoadingManagedPosition === "1"
-          ? host.dataset.ophelWmLoadingOriginalPosition || ""
-          : host.style.position || ""
-    }
-
-    host.style.position = "relative"
-  }
-
-  private restoreOverlayHostPosition(host: HTMLElement) {
-    if (host.dataset.ophelWmOverlayManagedPosition !== "1") return
-    if (host.querySelector(`.${OPHEL_WATERMARK_PREVIEW_OVERLAY_CLASS}`)) return
-    if (host.getAttribute("data-ophel-wm-loading") === "1") return
-
-    host.style.position = host.dataset.ophelWmOverlayOriginalPosition || ""
-    delete host.dataset.ophelWmOverlayManagedPosition
-    delete host.dataset.ophelWmOverlayOriginalPosition
-  }
-
-  private resolveImageOverlayBox(img: HTMLImageElement, host: HTMLElement) {
-    const imageRect = img.getBoundingClientRect()
-    const hostRect = host.getBoundingClientRect()
-    if (imageRect.width <= 0 || imageRect.height <= 0) return null
-    if (hostRect.width <= 0 || hostRect.height <= 0) return null
-
-    return {
-      left: imageRect.left - hostRect.left,
-      top: imageRect.top - hostRect.top,
-      width: imageRect.width,
-      height: imageRect.height,
-    }
-  }
-
-  private removeProcessedImageOverlay(img: HTMLImageElement) {
-    const overlay = this.imageOverlayMap.get(img)
-    if (!overlay) return
-
-    const host = overlay.parentElement
-    overlay.remove()
-    this.imageOverlayMap.delete(img)
-
-    if (host instanceof HTMLElement) {
-      this.restoreOverlayHostPosition(host)
-    }
-  }
-
-  private clearAllProcessedImageOverlays() {
-    document
-      .querySelectorAll<HTMLElement>(`.${OPHEL_WATERMARK_PREVIEW_OVERLAY_CLASS}`)
-      .forEach((overlay) => {
-        const host = overlay.parentElement
-        overlay.remove()
-        if (host instanceof HTMLElement) {
-          this.restoreOverlayHostPosition(host)
-        }
-      })
-    document.querySelectorAll<HTMLImageElement>("[data-ophel-wm-processed='1']").forEach((img) => {
-      img.removeAttribute("data-ophel-wm-processed")
-      img.removeAttribute("data-ophel-wm-source")
-      delete img.dataset.watermarkProcessed
-    })
-  }
-
-  private applyProcessedImageOverlay(
-    img: HTMLImageElement,
-    processedDataUrl: string,
-    sourceForProcessing: string,
-  ) {
-    const host = this.findProcessingIndicatorHost(img)
-    if (!host) {
-      img.src = processedDataUrl
+  private resetProcessedImageStateIfSourceChanged(img: HTMLImageElement, source: string) {
+    if (img.getAttribute("data-ophel-wm-processed") === "1" && source.startsWith("data:image/")) {
       return
     }
 
-    this.ensureProcessingIndicatorStyles()
-    this.removeProcessedImageOverlay(img)
-    this.ensureOverlayHostPosition(host)
-
-    const overlay = document.createElement("div")
-    const overlayBox = this.resolveImageOverlayBox(img, host)
-    overlay.className = OPHEL_WATERMARK_PREVIEW_OVERLAY_CLASS
-    overlay.dataset.ophelWmPreviewOverlay = "1"
-    overlay.dataset.ophelWmSource = sourceForProcessing
-    overlay.dataset.ophelWmOverlayId = String(++this.imageOverlayIdCounter)
-    overlay.setAttribute("aria-hidden", "true")
-
-    Object.assign(overlay.style, {
-      inset: overlayBox ? "auto" : "0",
-      left: overlayBox ? `${overlayBox.left}px` : "0",
-      top: overlayBox ? `${overlayBox.top}px` : "0",
-      width: overlayBox ? `${overlayBox.width}px` : "100%",
-      height: overlayBox ? `${overlayBox.height}px` : "100%",
-      backgroundImage: `url("${processedDataUrl}")`,
-    })
-
-    const controls = host.querySelector(".generated-image-controls")
-    if (controls?.parentElement === host) {
-      host.insertBefore(overlay, controls)
-    } else {
-      host.appendChild(overlay)
-    }
-
-    this.imageOverlayMap.set(img, overlay)
-  }
-
-  private resetProcessedImageStateIfSourceChanged(img: HTMLImageElement, source: string) {
     const comparableSource = this.getComparableProcessingSource(source)
     const processedSource = img.getAttribute("data-ophel-wm-source") || ""
     const skippedSource = img.getAttribute("data-ophel-wm-skip-source") || ""
 
     if (processedSource && processedSource !== comparableSource) {
-      this.removeProcessedImageOverlay(img)
       img.removeAttribute("data-ophel-wm-source")
       img.removeAttribute("data-ophel-wm-processed")
       delete img.dataset.watermarkProcessed
@@ -923,7 +811,7 @@ export class WatermarkRemover {
     }
 
     if (source.startsWith("data:image/")) {
-      return this.processImageSourceToDataUrl(source, { scene })
+      return source
     }
 
     if (source.startsWith("blob:")) {
@@ -931,6 +819,39 @@ export class WatermarkRemover {
     }
 
     return this.getProcessedDataUrl(source, { scene })
+  }
+
+  async resolveProcessedImageDataUrl(
+    source: string,
+    options?: {
+      bypassCache?: boolean
+      requireNonPreviewSource?: boolean
+      scene?: WatermarkProcessScene
+    },
+  ): Promise<string | null> {
+    const normalizedSource = this.normalizePossibleUrl(source)
+    if (!normalizedSource || !this.isSupportedGeminiImageSource(normalizedSource)) return null
+
+    try {
+      if (normalizedSource.startsWith("data:image/")) {
+        return await this.resolveActionDataUrl(normalizedSource, options?.scene ?? "export")
+      }
+
+      if (normalizedSource.startsWith("blob:")) {
+        return await this.resolveActionDataUrl(normalizedSource, options?.scene ?? "export")
+      }
+
+      return await this.getProcessedDataUrl(normalizedSource, {
+        bypassCache: options?.bypassCache,
+        requireNonPreviewSource: options?.requireNonPreviewSource,
+        scene: options?.scene ?? "export",
+      })
+    } catch (error) {
+      if (error instanceof Error && error.message === WATERMARK_NOT_DETECTED_ERROR) {
+        return null
+      }
+      return null
+    }
   }
 
   private async writeImageToClipboard(dataUrl: string) {
@@ -972,7 +893,7 @@ export class WatermarkRemover {
     action: GeminiImageAction,
   ): Promise<string> {
     if (source.startsWith("data:image/")) {
-      return this.resolveActionDataUrl(source, action)
+      return source
     }
 
     if (source.startsWith("blob:")) {
@@ -1101,20 +1022,21 @@ export class WatermarkRemover {
     }
 
     const buildOptionVariants = (candidateUrl: string): string[] => {
+      const normalizedCandidateUrl = normalizeGeminiImageUrl(candidateUrl)
       const suffixIndex = candidateUrl.search(/[?#]/)
       const endIndex = suffixIndex === -1 ? candidateUrl.length : suffixIndex
       const lastSlashIndex = candidateUrl.lastIndexOf("/", endIndex)
       const optionStartIndex = candidateUrl.lastIndexOf("=", endIndex)
 
       if (optionStartIndex === -1 || optionStartIndex < lastSlashIndex) {
-        return [candidateUrl]
+        return [normalizedCandidateUrl]
       }
 
       const rawOptions = candidateUrl.slice(optionStartIndex + 1, endIndex)
-      if (!rawOptions) return [candidateUrl]
+      if (!rawOptions) return [normalizedCandidateUrl]
 
       const optionTokens = rawOptions.split("-").filter(Boolean)
-      const keptTokens = optionTokens.filter((token) => {
+      const tokensWithoutSize = optionTokens.filter((token) => {
         const normalizedToken = token.toLowerCase()
         if (/^s\d+$/.test(normalizedToken)) return false
         if (/^w\d+$/.test(normalizedToken)) return false
@@ -1122,16 +1044,27 @@ export class WatermarkRemover {
         return true
       })
 
-      const withoutD = keptTokens.filter((token) => token.toLowerCase() !== "d")
+      const withoutD = tokensWithoutSize.filter((token) => token.toLowerCase() !== "d")
+      const withoutRj = tokensWithoutSize.filter((token) => token.toLowerCase() !== "rj")
       const withoutDRj = withoutD.filter((token) => token.toLowerCase() !== "rj")
+      const hasDownloadToken = tokensWithoutSize.some((token) => token.toLowerCase() === "d")
+      const hasRjToken = tokensWithoutSize.some((token) => token.toLowerCase() === "rj")
+
       const variants = [
-        ["s0", "d", ...withoutDRj],
-        ["s0", ...withoutDRj],
-        ["s0", "d", ...withoutD],
-        ["s0", ...withoutD],
+        ["s0", ...tokensWithoutSize],
+        hasDownloadToken ? ["s0", ...withoutD] : ["s0", "d", ...tokensWithoutSize],
+        ...(hasRjToken
+          ? [
+              ["s0", ...withoutRj],
+              hasDownloadToken ? ["s0", ...withoutDRj] : ["s0", "d", ...withoutDRj],
+            ]
+          : []),
       ]
 
       const rebuilt: string[] = []
+      if (!rebuilt.includes(normalizedCandidateUrl)) {
+        rebuilt.push(normalizedCandidateUrl)
+      }
       for (const tokens of variants) {
         const optionString = tokens.join("-")
         const variantUrl = `${candidateUrl.slice(0, optionStartIndex + 1)}${optionString}${candidateUrl.slice(endIndex)}`
@@ -1150,15 +1083,15 @@ export class WatermarkRemover {
     }
 
     if (normalized.includes("/gg/")) {
+      addPathVariants(normalized)
       addPathVariants(normalized.replace("/gg/", "/rd-gg-dl/"))
       addPathVariants(normalized.replace("/gg/", "/rd-gg/"))
-      addPathVariants(normalized)
       return candidates
     }
 
     if (normalized.includes("/rd-gg/")) {
-      addPathVariants(normalized.replace("/rd-gg/", "/rd-gg-dl/"))
       addPathVariants(normalized)
+      addPathVariants(normalized.replace("/rd-gg/", "/rd-gg-dl/"))
       addPathVariants(normalized.replace("/rd-gg/", "/gg/"))
       return candidates
     }
@@ -1485,11 +1418,12 @@ export class WatermarkRemover {
 
     try {
       const newUrl = await this.getProcessedDisplayDataUrl(sourceForProcessing)
-      this.applyProcessedImageOverlay(img, newUrl, sourceForProcessing)
       img.dataset.watermarkProcessed = "true"
       img.setAttribute("data-ophel-wm-source", sourceForProcessing)
       img.setAttribute("data-ophel-wm-processed", "1")
       img.removeAttribute("data-ophel-wm-skip-source")
+      img.removeAttribute("srcset")
+      img.src = newUrl
     } catch (error) {
       const message = error instanceof Error ? error.message : ""
       if (message === WATERMARK_NOT_DETECTED_ERROR) {
@@ -1515,31 +1449,7 @@ export class WatermarkRemover {
     if (!src) return src
     if (src.startsWith("data:image/") || src.startsWith("blob:")) return src
     if (!this.shouldInterceptGeminiImageUrl(src)) return src
-
-    const suffixIndex = src.search(/[?#]/)
-    const endIndex = suffixIndex === -1 ? src.length : suffixIndex
-    const lastSlashIndex = src.lastIndexOf("/", endIndex)
-    const optionStartIndex = src.lastIndexOf("=", endIndex)
-
-    if (optionStartIndex === -1 || optionStartIndex < lastSlashIndex) {
-      return src
-    }
-
-    const rawOptions = src.slice(optionStartIndex + 1, endIndex)
-    if (!rawOptions) return src
-
-    const optionTokens = rawOptions.split("-").filter(Boolean)
-    const keptTokens = optionTokens.filter((token) => {
-      const normalized = token.toLowerCase()
-      if (/^s\d+$/.test(normalized)) return false
-      if (/^w\d+$/.test(normalized)) return false
-      if (/^h\d+$/.test(normalized)) return false
-      if (normalized === "rj") return false
-      return true
-    })
-
-    const normalizedOptions = ["s0", ...keptTokens].join("-")
-    return `${src.slice(0, optionStartIndex + 1)}${normalizedOptions}${src.slice(endIndex)}`
+    return normalizeGeminiImageUrl(src)
   }
 
   private startObserver() {
