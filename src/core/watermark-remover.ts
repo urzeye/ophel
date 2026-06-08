@@ -2,6 +2,8 @@ import { MSG_PROXY_FETCH, sendToBackground } from "~utils/messaging"
 import { t } from "~utils/i18n"
 import { processBananaWatermarkImageData } from "~core/watermark/banana-engine"
 import {
+  classifyGeminiAssetUrl,
+  isGeminiDisplayPreviewImageUrl,
   isGeminiGeneratedImageUrl,
   normalizeGeminiImageUrl,
 } from "~core/watermark/gemini-asset-url"
@@ -377,6 +379,10 @@ export class WatermarkRemover {
     }
   }
 
+  private getFetchSkippedSourceCacheKey(sourceUrl: string): string {
+    return `fetch:${sourceUrl}`
+  }
+
   private extractSupportedUrlFromNode(node: Element): string {
     const remoteCandidates: string[] = []
     const blobCandidates: string[] = []
@@ -510,7 +516,10 @@ export class WatermarkRemover {
     }
 
     const normalizedSourceUrl = this.replaceWithNormalSize(sourceUrl)
-    if (this.skippedSourceCache.has(normalizedSourceUrl)) {
+    const skippedCacheKey = sourceArrayBuffer
+      ? this.getFetchSkippedSourceCacheKey(normalizedSourceUrl)
+      : normalizedSourceUrl
+    if (this.skippedSourceCache.has(skippedCacheKey)) {
       this.postMainWorldProcessResponse({
         requestId,
         success: false,
@@ -537,7 +546,7 @@ export class WatermarkRemover {
       })
     } catch (error) {
       if (error instanceof Error && error.message === WATERMARK_NOT_DETECTED_ERROR) {
-        this.rememberSkippedSource(normalizedSourceUrl)
+        this.rememberSkippedSource(skippedCacheKey)
       }
 
       this.postMainWorldProcessResponse({
@@ -1082,10 +1091,84 @@ export class WatermarkRemover {
       }
     }
 
+    const getFirstPathSegment = (candidateUrl: string): string => {
+      try {
+        const parsed = new URL(candidateUrl)
+        return parsed.pathname.split("/").filter(Boolean)[0] || ""
+      } catch {
+        return ""
+      }
+    }
+
+    const replaceFirstPathSegment = (candidateUrl: string, nextSegment: string): string => {
+      if (!nextSegment) return candidateUrl
+
+      try {
+        const parsed = new URL(candidateUrl)
+        const parts = parsed.pathname.split("/")
+        const firstSegmentIndex = parts.findIndex(Boolean)
+        if (firstSegmentIndex === -1) return candidateUrl
+        parts[firstSegmentIndex] = nextSegment
+        parsed.pathname = parts.join("/")
+        return parsed.toString()
+      } catch {
+        return candidateUrl
+      }
+    }
+
+    const getPreviewSegmentFromRdVariant = (variant: string): string => {
+      if (!variant) return "gg"
+      if (variant === "gg" || variant.startsWith("gg-")) return variant
+      return `gg-${variant}`
+    }
+
+    const addSegmentVariants = (segment: string) => {
+      addPathVariants(replaceFirstPathSegment(normalized, segment))
+    }
+
+    const classification = classifyGeminiAssetUrl(normalized)
+    if (classification) {
+      const currentSegment = getFirstPathSegment(normalized)
+
+      if (classification.family === "gg") {
+        const previewSegment = classification.variant ? `gg-${classification.variant}` : "gg"
+        const downloadSegment = classification.variant ? `gg-${classification.variant}-dl` : "gg-dl"
+        const rdSegment = classification.variant ? `rd-gg-${classification.variant}` : "rd-gg"
+        const rdDownloadSegment = `${rdSegment}-dl`
+
+        if (classification.isPreview) {
+          addSegmentVariants(rdDownloadSegment)
+          addSegmentVariants(rdSegment)
+          addSegmentVariants(downloadSegment)
+          addSegmentVariants(previewSegment)
+          return candidates
+        }
+
+        addSegmentVariants(currentSegment || downloadSegment)
+        addSegmentVariants(rdDownloadSegment)
+        addSegmentVariants(rdSegment)
+        addSegmentVariants(previewSegment)
+        return candidates
+      }
+
+      const rdSegment = `rd-${classification.variant}`
+      const rdDownloadSegment = `${rdSegment}-dl`
+      const previewSegment = getPreviewSegmentFromRdVariant(classification.variant)
+      const downloadSegment = previewSegment === "gg" ? "gg-dl" : `${previewSegment}-dl`
+
+      addSegmentVariants(
+        currentSegment || (classification.isDownload ? rdDownloadSegment : rdSegment),
+      )
+      addSegmentVariants(classification.isDownload ? rdSegment : rdDownloadSegment)
+      addSegmentVariants(downloadSegment)
+      addSegmentVariants(previewSegment)
+      return candidates
+    }
+
     if (normalized.includes("/gg/")) {
-      addPathVariants(normalized)
       addPathVariants(normalized.replace("/gg/", "/rd-gg-dl/"))
       addPathVariants(normalized.replace("/gg/", "/rd-gg/"))
+      addPathVariants(normalized)
       return candidates
     }
 
@@ -1136,7 +1219,7 @@ export class WatermarkRemover {
     for (const candidateUrl of fetchCandidates) {
       try {
         const blob = await this.fetchOriginalBlobSingle(candidateUrl)
-        if (options?.requireNonPreviewSource && /\/gg\//.test(candidateUrl)) {
+        if (options?.requireNonPreviewSource && isGeminiDisplayPreviewImageUrl(candidateUrl)) {
           throw new Error("fullsize-source-unavailable")
         }
         return blob
@@ -1214,12 +1297,13 @@ export class WatermarkRemover {
     },
   ): Promise<string> {
     const normalizedSourceUrl = this.replaceWithNormalSize(sourceUrl)
-    this.throwIfSourceSkipped(normalizedSourceUrl)
 
     if (!options?.bypassCache) {
       const cached = this.processedDataUrlCache.get(normalizedSourceUrl)
       if (cached) return cached
     }
+
+    this.throwIfSourceSkipped(normalizedSourceUrl)
 
     if (!options?.bypassCache) {
       const inFlight = this.processingMap.get(normalizedSourceUrl)
@@ -1272,6 +1356,7 @@ export class WatermarkRemover {
 
   private rememberSkippedSource(cacheKey: string) {
     if (!cacheKey) return
+    if (this.processedDataUrlCache.has(cacheKey)) return
     this.skippedSourceCache.add(cacheKey)
     if (this.skippedSourceCache.size <= 120) return
 
@@ -1282,6 +1367,7 @@ export class WatermarkRemover {
   }
 
   private throwIfSourceSkipped(cacheKey: string) {
+    if (this.processedDataUrlCache.has(cacheKey)) return
     if (cacheKey && this.skippedSourceCache.has(cacheKey)) {
       throw new Error(WATERMARK_NOT_DETECTED_ERROR)
     }

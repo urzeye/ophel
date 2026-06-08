@@ -373,6 +373,10 @@ export default defineConfig({
       react: path.resolve(__dirname, "src/platform/userscript/react-global.ts"),
       // 替换 @plasmohq/storage 为 GM_* 实现
       "@plasmohq/storage": path.resolve(__dirname, "src/platform/userscript/storage-polyfill.ts"),
+      "@pilio/gemini-watermark-remover": path.resolve(
+        __dirname,
+        "node_modules/@pilio/gemini-watermark-remover/src/sdk/index.js",
+      ),
       fuzzysort: path.resolve(__dirname, "src/platform/userscript/fuzzysort-global.ts"),
       "~utils/i18n": path.resolve(__dirname, "src/platform/userscript/i18n.ts"),
       "~platform/katex": path.resolve(__dirname, "src/platform/userscript/katex.ts"),
