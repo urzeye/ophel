@@ -3,7 +3,8 @@ import type { PlasmoCSConfig } from "plasmo"
 const OPHEL_WATERMARK_FETCH_TOGGLE = "OPHEL_WATERMARK_FETCH_TOGGLE"
 const OPHEL_WATERMARK_PROCESS_REQUEST = "OPHEL_WATERMARK_PROCESS_REQUEST"
 const OPHEL_WATERMARK_PROCESS_RESPONSE = "OPHEL_WATERMARK_PROCESS_RESPONSE"
-const GEMINI_MAIN_IMAGE_URL_PATTERN = /^https:\/\/lh3\.googleusercontent\.com\//i
+const GEMINI_MAIN_IMAGE_URL_PATTERN =
+  /^https:\/\/lh3\.googleusercontent\.com\/(?:gg(?:\/|-)|rd-[^/]+\/)/i
 
 export const config: PlasmoCSConfig = {
   matches: ["https://gemini.google.com/*"],
