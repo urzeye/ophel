@@ -35,8 +35,8 @@ declare function GM_xmlhttpRequest(details: {
   url: string
   headers?: Record<string, string>
   responseType?: string
-  onload?: (response: any) => void
-  onerror?: (error: any) => void
+  onload?: (response: { status: number; response: Blob }) => void
+  onerror?: (error?: { message?: string }) => void
 }): void
 
 async function fetchImageAsBlob(url: string): Promise<Blob> {
@@ -185,44 +185,9 @@ export class WatermarkRemover {
     }
   }
 
-  private getNormalizedGeminiPath(pathname = window.location.pathname): string {
-    return pathname.replace(/^\/u\/\d+/, "")
-  }
-
-  private isGeminiConversationPath(pathname = this.getNormalizedGeminiPath()): boolean {
-    return pathname === "/app" || pathname === "/app/" || pathname.startsWith("/app/")
-  }
-
-  private isGeminiSharedImagePath(pathname = this.getNormalizedGeminiPath()): boolean {
-    return pathname === "/share" || pathname === "/share/" || pathname.startsWith("/share/")
-  }
-
-  private isGeminiInlineDisplayPath(pathname = this.getNormalizedGeminiPath()): boolean {
-    return this.isGeminiConversationPath(pathname) || this.isGeminiSharedImagePath(pathname)
-  }
-
-  private isUserscriptInlineDisplaySource(sourceUrl?: string): boolean {
-    return (
-      !!sourceUrl &&
-      isUserscript &&
-      this.isGeminiInlineDisplayPath() &&
-      (sourceUrl.startsWith("blob:") || sourceUrl.startsWith("data:image/"))
-    )
-  }
-
   private shouldSkipAutoProcessingSource(source: string): boolean {
     if (!source.startsWith("blob:") && !source.startsWith("data:image/")) {
       return false
-    }
-
-    if (isUserscript) {
-      // userscript 的 Gemini /app 与 /share 页面里的 inline 图不能直接跳过，
-      // 否则首屏已有图和放大图都没有机会进入自动去水印流程。
-      if (this.isUserscriptInlineDisplaySource(source)) {
-        return false
-      }
-
-      return this.userscriptOriginalFetch !== null
     }
 
     return this.isGeminiStandardSite()
@@ -516,25 +481,13 @@ export class WatermarkRemover {
     }
 
     const normalizedSourceUrl = this.replaceWithNormalSize(sourceUrl)
-    const skippedCacheKey = this.getRemoteSkippedSourceCacheKey(normalizedSourceUrl, "fetch")
-    if (this.skippedSourceCache.has(skippedCacheKey)) {
-      this.postMainWorldProcessResponse({
-        requestId,
-        success: false,
-        error: WATERMARK_NOT_DETECTED_ERROR,
-      })
-      return
-    }
-
     try {
       const sourceBlob = sourceArrayBuffer
         ? new Blob([sourceArrayBuffer], { type: sourceMimeType || "image/png" })
         : undefined
 
       const dataUrl = sourceBlob
-        ? await this.processImageBlobToDataUrl(sourceBlob, normalizedSourceUrl, {
-            scene: "fetch",
-          })
+        ? await this.processFetchBlobToDataUrl(sourceBlob, normalizedSourceUrl)
         : await this.getProcessedDataUrl(normalizedSourceUrl, { scene: "fetch" })
 
       this.postMainWorldProcessResponse({
@@ -543,10 +496,6 @@ export class WatermarkRemover {
         dataUrl,
       })
     } catch (error) {
-      if (error instanceof Error && error.message === WATERMARK_NOT_DETECTED_ERROR) {
-        this.rememberSkippedSource(skippedCacheKey)
-      }
-
       this.postMainWorldProcessResponse({
         requestId,
         success: false,
@@ -562,6 +511,36 @@ export class WatermarkRemover {
     return window
   }
 
+  private buildFetchArgsWithSourceUrl(
+    args: Parameters<typeof fetch>,
+    sourceUrl: string,
+    targetWindow: Window,
+  ): Parameters<typeof fetch> {
+    const nextArgs = [...args] as Parameters<typeof fetch>
+    const input = nextArgs[0]
+
+    if (typeof input === "string") {
+      nextArgs[0] = sourceUrl
+      return nextArgs
+    }
+
+    const RequestCtor =
+      (targetWindow as Window & typeof globalThis).Request ||
+      (typeof Request !== "undefined" ? Request : null)
+    if (RequestCtor && input && typeof input === "object" && "url" in input) {
+      try {
+        nextArgs[0] = new RequestCtor(sourceUrl, input as Request)
+        return nextArgs
+      } catch {
+        nextArgs[0] = sourceUrl
+        return nextArgs
+      }
+    }
+
+    nextArgs[0] = sourceUrl
+    return nextArgs
+  }
+
   private enableUserscriptFetchInterception() {
     if (!isUserscript || this.userscriptOriginalFetch || !this.isGeminiStandardSite()) {
       return
@@ -573,21 +552,42 @@ export class WatermarkRemover {
     pageWindow.fetch = (async (...args: Parameters<typeof fetch>) => {
       const requestUrl = this.getRequestUrl(args[0])
       if (!this.enabled || !requestUrl || !this.shouldInterceptGeminiImageUrl(requestUrl)) {
-        return this.userscriptOriginalFetch!.apply(pageWindow, args as any)
+        return this.userscriptOriginalFetch!(...args)
       }
 
+      const normalizedUrl = this.replaceWithNormalSize(requestUrl)
+      const nextArgs = this.buildFetchArgsWithSourceUrl(args, normalizedUrl, pageWindow)
+      let originalResponse: Response | null = null
+      let originalBlob: Blob | null = null
+
       try {
-        const dataUrl = await this.getProcessedDataUrl(requestUrl, { scene: "fetch" })
+        originalResponse = await this.userscriptOriginalFetch!(...nextArgs)
+        if (!originalResponse.ok) {
+          return originalResponse
+        }
+
+        originalBlob = await originalResponse.blob()
+
+        const dataUrl = await this.processFetchBlobToDataUrl(originalBlob, normalizedUrl)
         const processedBlob = await this.dataUrlToBlob(dataUrl)
+
         return new Response(processedBlob, {
-          status: 200,
-          statusText: "OK",
+          status: originalResponse.status,
+          statusText: originalResponse.statusText,
           headers: new Headers({
             "Content-Type": processedBlob.type || "image/png",
           }),
         })
       } catch {
-        return this.userscriptOriginalFetch!.apply(pageWindow, args as any)
+        if (originalResponse && originalBlob) {
+          return new Response(originalBlob, {
+            status: originalResponse.status,
+            statusText: originalResponse.statusText,
+            headers: originalResponse.headers,
+          })
+        }
+
+        return this.userscriptOriginalFetch!(...args)
       }
     }) as typeof fetch
   }
@@ -600,7 +600,7 @@ export class WatermarkRemover {
   }
 
   private setupActionButtonInterception() {
-    if (isUserscript || this.actionButtonListener || !this.isGeminiStandardSite()) return
+    if (this.actionButtonListener || !this.isGeminiStandardSite()) return
 
     this.actionButtonListener = (event: MouseEvent) => {
       this.handleActionButtonClick(event)
@@ -813,10 +813,6 @@ export class WatermarkRemover {
     source: string,
     scene: WatermarkProcessScene = "display",
   ): Promise<string> {
-    if (this.isUserscriptInlineDisplaySource(source)) {
-      return this.getProcessedInlineDisplayDataUrl(source)
-    }
-
     if (source.startsWith("data:image/")) {
       return source
     }
@@ -1286,6 +1282,24 @@ export class WatermarkRemover {
     }
   }
 
+  private async processFetchBlobToDataUrl(blob: Blob, sourceUrl: string): Promise<string> {
+    const normalizedSourceUrl = this.replaceWithNormalSize(sourceUrl)
+    const skipCacheKey = this.getRemoteSkippedSourceCacheKey(normalizedSourceUrl, "fetch")
+
+    this.throwIfSourceSkipped(skipCacheKey)
+
+    try {
+      return await this.processImageBlobToDataUrl(blob, normalizedSourceUrl, {
+        scene: "fetch",
+      })
+    } catch (error) {
+      if (error instanceof Error && error.message === WATERMARK_NOT_DETECTED_ERROR) {
+        this.rememberSkippedSource(skipCacheKey)
+      }
+      throw error
+    }
+  }
+
   private async getProcessedDataUrl(
     sourceUrl: string,
     options?: {
@@ -1375,86 +1389,8 @@ export class WatermarkRemover {
     }
   }
 
-  private async getProcessedInlineDisplayDataUrl(sourceUrl: string): Promise<string> {
-    const cacheKey = `inline-display:${sourceUrl}`
-    this.throwIfSourceSkipped(cacheKey)
-
-    const cached = this.processedDataUrlCache.get(cacheKey)
-    if (cached) return cached
-
-    const inFlight = this.processingMap.get(cacheKey)
-    if (inFlight) return inFlight
-
-    const processing = (async () => {
-      try {
-        const processedDataUrl = await this.processImageSourceToDataUrl(sourceUrl, {
-          scene: "display",
-        })
-        this.processedDataUrlCache.set(cacheKey, processedDataUrl)
-        this.trimProcessedDataUrlCache()
-        return processedDataUrl
-      } catch (error) {
-        if (error instanceof Error && error.message === WATERMARK_NOT_DETECTED_ERROR) {
-          this.rememberSkippedSource(cacheKey)
-        }
-        throw error
-      }
-    })()
-
-    this.processingMap.set(cacheKey, processing)
-    try {
-      return await processing
-    } finally {
-      this.processingMap.delete(cacheKey)
-    }
-  }
-
   private async getProcessedDisplayDataUrl(sourceUrl: string): Promise<string> {
-    if (this.isUserscriptInlineDisplaySource(sourceUrl)) {
-      return this.getProcessedInlineDisplayDataUrl(sourceUrl)
-    }
-
-    if (!isUserscript || !this.shouldInterceptGeminiImageUrl(sourceUrl)) {
-      return this.resolveActionDataUrl(sourceUrl)
-    }
-
-    const normalizedSourceUrl = this.replaceWithNormalSize(sourceUrl)
-    const skipCacheKey = this.getRemoteSkippedSourceCacheKey(normalizedSourceUrl, "display")
-
-    const cached = this.processedDataUrlCache.get(normalizedSourceUrl)
-    if (cached) return cached
-
-    this.throwIfSourceSkipped(skipCacheKey)
-
-    const processingKey = `display:${normalizedSourceUrl}`
-    const inFlight = this.processingMap.get(processingKey)
-    if (inFlight) return inFlight
-
-    const processing = (async () => {
-      try {
-        const originalBlob = await this.fetchOriginalBlobSingle(normalizedSourceUrl)
-        const processedDataUrl = await this.processImageBlobToDataUrl(
-          originalBlob,
-          normalizedSourceUrl,
-          { scene: "display" },
-        )
-        this.processedDataUrlCache.set(normalizedSourceUrl, processedDataUrl)
-        this.trimProcessedDataUrlCache()
-        return processedDataUrl
-      } catch (error) {
-        if (error instanceof Error && error.message === WATERMARK_NOT_DETECTED_ERROR) {
-          this.rememberSkippedSource(skipCacheKey)
-        }
-        throw error
-      }
-    })()
-
-    this.processingMap.set(processingKey, processing)
-    try {
-      return await processing
-    } finally {
-      this.processingMap.delete(processingKey)
-    }
+    return this.resolveActionDataUrl(sourceUrl)
   }
 
   private isValidGeminiImage(img: HTMLImageElement) {

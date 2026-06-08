@@ -3189,7 +3189,7 @@ export class GeminiAdapter extends SiteAdapter {
       if (!candidate) continue
 
       if (this.shouldInlineUserQueryImageForExport(image, context)) {
-        return this.resolveExportImageDataUrl(candidate)
+        return this.resolveExportImageDataUrl(candidate, image)
       }
 
       if (this.isStablePreparedExportImageUrl(candidate)) {
@@ -3205,7 +3205,7 @@ export class GeminiAdapter extends SiteAdapter {
       return ""
     }
 
-    return this.convertBlobUrlToDataUrl(blobCandidate)
+    return this.convertBlobUrlToDataUrl(blobCandidate, image)
   }
 
   private shouldTryWatermarkRemovalForExport(image: HTMLImageElement): boolean {
@@ -3273,9 +3273,12 @@ export class GeminiAdapter extends SiteAdapter {
     )
   }
 
-  private async resolveExportImageDataUrl(source: string): Promise<string> {
+  private async resolveExportImageDataUrl(
+    source: string,
+    image?: HTMLImageElement,
+  ): Promise<string> {
     if (source.startsWith("data:image/")) return source
-    if (source.startsWith("blob:")) return this.convertBlobUrlToDataUrl(source)
+    if (source.startsWith("blob:")) return this.convertBlobUrlToDataUrl(source, image)
     if (!/^https?:\/\//i.test(source)) return ""
 
     try {
@@ -3339,7 +3342,41 @@ export class GeminiAdapter extends SiteAdapter {
     return /^https?:\/\//i.test(value)
   }
 
-  private async convertBlobUrlToDataUrl(blobUrl: string): Promise<string> {
+  private async convertImageElementToDataUrl(image: HTMLImageElement): Promise<string> {
+    if (!image.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0) {
+      await image.decode()
+    }
+
+    const width = image.naturalWidth || image.width || image.clientWidth
+    const height = image.naturalHeight || image.height || image.clientHeight
+    if (width <= 0 || height <= 0) {
+      throw new Error("Image has no exportable size")
+    }
+
+    const canvas = document.createElement("canvas")
+    canvas.width = width
+    canvas.height = height
+    const context = canvas.getContext("2d")
+    if (!context) {
+      throw new Error("2D canvas context unavailable")
+    }
+
+    context.drawImage(image, 0, 0, width, height)
+    return canvas.toDataURL("image/png")
+  }
+
+  private async convertBlobUrlToDataUrl(
+    blobUrl: string,
+    image?: HTMLImageElement,
+  ): Promise<string> {
+    if (image) {
+      try {
+        return await this.convertImageElementToDataUrl(image)
+      } catch {
+        // Fall back to fetch for extension pages where blob: fetch is allowed.
+      }
+    }
+
     const response = await fetch(blobUrl)
     const blob = await response.blob()
     return this.convertBlobToDataUrl(blob)

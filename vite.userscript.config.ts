@@ -3,7 +3,7 @@ import { createHash } from "crypto"
 import * as fs from "fs"
 import * as path from "path"
 import react from "@vitejs/plugin-react"
-import { defineConfig, type Plugin } from "vite"
+import { build as viteBuild, defineConfig, type Plugin } from "vite"
 import monkey from "vite-plugin-monkey"
 
 import {
@@ -13,6 +13,7 @@ import {
   type UserscriptLocale,
   type UserscriptLocaleResourceMetaName,
   type UserscriptResourceMetaName,
+  getUserscriptAssetBaseUrl,
   getUserscriptLocaleResourceUrls,
   getUserscriptResourceUrls,
 } from "./src/platform/userscript/resource-manifest"
@@ -31,13 +32,21 @@ const reactPkg = JSON.parse(
 const reactDomPkg = JSON.parse(
   fs.readFileSync(path.resolve(__dirname, "node_modules/react-dom/package.json"), "utf-8"),
 )
+const geminiWatermarkRemoverPkg = JSON.parse(
+  fs.readFileSync(
+    path.resolve(__dirname, "node_modules/@pilio/gemini-watermark-remover/package.json"),
+    "utf-8",
+  ),
+)
 const author: string = pkg.author
 const version: string = pkg.version
 const license: string = pkg.license
 const reactVersion: string = reactPkg.version
 const reactDomVersion: string = reactDomPkg.version
+const geminiWatermarkRemoverVersion: string = geminiWatermarkRemoverPkg.version
 const reactCdnUrl = `https://cdn.jsdelivr.net/npm/react@${reactVersion}/umd/react.production.min.js`
 const reactDomCdnUrl = `https://cdn.jsdelivr.net/npm/react-dom@${reactDomVersion}/umd/react-dom.production.min.js`
+const geminiWatermarkRemoverGlobalName = "__OphelGeminiWatermarkRemover"
 
 type UserscriptMetadata = {
   name: Record<string, string>
@@ -94,6 +103,9 @@ const userscriptBuildOutDir = path.resolve(__dirname, "build/userscript")
 const userscriptAssetOutDirName = "userscript-assets"
 const userscriptAssetOutDir = path.join(userscriptBuildOutDir, userscriptAssetOutDirName)
 const userscriptAssetManifestFileName = "manifest.json"
+const userscriptGeminiWatermarkVendorFileName = `ophel-gemini-watermark-remover-${geminiWatermarkRemoverVersion}-ophel-${version}.js`
+const userscriptGeminiWatermarkVendorRelativePath = `${userscriptAssetOutDirName}/${userscriptGeminiWatermarkVendorFileName}`
+const userscriptGeminiWatermarkVendorUrl = `${getUserscriptAssetBaseUrl()}/${userscriptGeminiWatermarkVendorRelativePath}`
 
 const userscriptAssetSources = {
   icon: path.resolve(__dirname, "assets/icon.png"),
@@ -161,6 +173,35 @@ function readUserscriptAssetContent(
   }
 
   return fs.readFileSync(userscriptAssetSources[key])
+}
+
+async function buildGeminiWatermarkVendor(): Promise<void> {
+  await viteBuild({
+    configFile: false,
+    publicDir: false,
+    define: {
+      __PLATFORM__: JSON.stringify("userscript"),
+    },
+    build: {
+      outDir: userscriptAssetOutDir,
+      emptyOutDir: false,
+      minify: "terser",
+      lib: {
+        entry: path.resolve(
+          __dirname,
+          "src/platform/userscript/gemini-watermark-remover-vendor.ts",
+        ),
+        name: "OphelGeminiWatermarkRemoverVendor",
+        formats: ["iife"],
+        fileName: () => userscriptGeminiWatermarkVendorFileName,
+      },
+      rollupOptions: {
+        output: {
+          inlineDynamicImports: true,
+        },
+      },
+    },
+  })
 }
 
 const localUserscriptResourceEntries = Object.entries(USERSCRIPT_RESOURCE_DEFINITIONS).filter(
@@ -238,7 +279,7 @@ const userscriptLocaleResourcePaths = Object.fromEntries(
 function emitUserscriptAssets(): Plugin {
   return {
     name: "ophel-userscript-assets",
-    writeBundle() {
+    async writeBundle() {
       fs.mkdirSync(userscriptAssetOutDir, { recursive: true })
 
       for (const { relativePath, content } of Object.values(userscriptResourceFiles)) {
@@ -249,6 +290,8 @@ function emitUserscriptAssets(): Plugin {
         fs.writeFileSync(path.join(userscriptBuildOutDir, relativePath), content)
       }
 
+      await buildGeminiWatermarkVendor()
+
       fs.writeFileSync(
         path.join(userscriptAssetOutDir, userscriptAssetManifestFileName),
         JSON.stringify(
@@ -256,10 +299,24 @@ function emitUserscriptAssets(): Plugin {
             generatedAt: new Date().toISOString(),
             version,
             resources: Object.fromEntries(
-              [...Object.values(userscriptResourceFiles), ...Object.values(userscriptLocaleResourceFiles)].map(
-                ({ metaName, fileName, relativePath }) => [metaName, { fileName, relativePath }],
-              ),
+              [
+                ...Object.values(userscriptResourceFiles),
+                ...Object.values(userscriptLocaleResourceFiles),
+              ].map(({ metaName, fileName, relativePath }) => [
+                metaName,
+                { fileName, relativePath },
+              ]),
             ),
+            requires: {
+              geminiWatermarkRemover: {
+                fileName: userscriptGeminiWatermarkVendorFileName,
+                relativePath: userscriptGeminiWatermarkVendorRelativePath,
+                version: geminiWatermarkRemoverVersion,
+              },
+            },
+            requireUrls: {
+              geminiWatermarkRemover: userscriptGeminiWatermarkVendorUrl,
+            },
           },
           null,
           2,
@@ -348,6 +405,7 @@ export default defineConfig({
           reactDomCdnUrl,
           "https://cdn.jsdelivr.net/npm/fuzzysort@3.1.0/fuzzysort.min.js",
           KATEX_CDN_JS_URL,
+          userscriptGeminiWatermarkVendorUrl,
         ],
         resource: {
           ...userscriptResourceUrls,
@@ -358,6 +416,9 @@ export default defineConfig({
       build: {
         // CSS 自动注入到 head
         autoGrant: true,
+        externalGlobals: {
+          "@pilio/gemini-watermark-remover": geminiWatermarkRemoverGlobalName,
+        },
       },
     }),
   ],
@@ -373,10 +434,6 @@ export default defineConfig({
       react: path.resolve(__dirname, "src/platform/userscript/react-global.ts"),
       // 替换 @plasmohq/storage 为 GM_* 实现
       "@plasmohq/storage": path.resolve(__dirname, "src/platform/userscript/storage-polyfill.ts"),
-      "@pilio/gemini-watermark-remover": path.resolve(
-        __dirname,
-        "node_modules/@pilio/gemini-watermark-remover/src/sdk/index.js",
-      ),
       fuzzysort: path.resolve(__dirname, "src/platform/userscript/fuzzysort-global.ts"),
       "~utils/i18n": path.resolve(__dirname, "src/platform/userscript/i18n.ts"),
       "~platform/katex": path.resolve(__dirname, "src/platform/userscript/katex.ts"),
