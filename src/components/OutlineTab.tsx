@@ -1314,7 +1314,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                 onClick={bookmarkMode ? undefined : handleExpandAll}
                 disabled={bookmarkMode}
                 className="outline-toolbar-btn">
-                {isAllExpanded ? <CollapseAllIcon size={16} /> : <ExpandAllIcon size={16} />}
+                {isAllExpanded ? <CollapseAllIcon size={18} /> : <ExpandAllIcon size={18} />}
               </button>
             </Tooltip>
 
@@ -1328,7 +1328,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                 {fullOutlineCopySuccess ? (
                   <CheckIcon size={14} color="#10b981" />
                 ) : (
-                  <CopyOutlineIcon size={15} />
+                  <CopyOutlineIcon size={16} />
                 )}
               </button>
             </Tooltip>
