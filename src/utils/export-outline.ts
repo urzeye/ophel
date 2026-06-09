@@ -17,8 +17,6 @@ interface ExportOutlineItem {
 
 const MAX_MARKDOWN_HEADING_LEVEL = 6
 const USER_QUERY_HEADING_LEVEL = 1
-const ASSISTANT_HEADING_OFFSET_WITH_USER_QUERIES = 1
-const ASSISTANT_HEADING_OFFSET = 0
 const MAX_USER_QUERY_PREVIEW_LENGTH = 120
 
 function clampHeadingLevel(level: number | undefined): number {
@@ -85,18 +83,13 @@ function getMarkdownHeadingPrefix(level: number): string {
   return "#".repeat(Math.min(MAX_MARKDOWN_HEADING_LEVEL, Math.max(1, level)))
 }
 
-function formatAssistantHeadings(
-  headings: ExportOutlineItem[],
-  maxHeadingLevel: number,
-  headingOffset: number,
-): string[] {
+function formatAssistantHeadings(headings: ExportOutlineItem[], maxHeadingLevel: number): string[] {
   if (headings.length === 0 || maxHeadingLevel < 1) return []
 
   return headings.flatMap((item) => {
     if (item.level > maxHeadingLevel) return []
 
-    const headingLevel = item.level + headingOffset
-    return [`${getMarkdownHeadingPrefix(headingLevel)} ${item.text}`]
+    return [`${getMarkdownHeadingPrefix(item.level)} ${item.text}`]
   })
 }
 
@@ -105,10 +98,8 @@ export function createOutlineTextFromExportMessages(
   options: ExportMessagesOutlineOptions,
 ): ExportMessagesOutlineResult {
   const maxHeadingLevel = clampHeadingLevel(options.maxHeadingLevel)
-  const assistantHeadingOffset = options.includeUserQueries
-    ? ASSISTANT_HEADING_OFFSET_WITH_USER_QUERIES
-    : ASSISTANT_HEADING_OFFSET
   const lines: string[] = []
+  let userQueryCount = 0
 
   for (const message of messages) {
     const role = message.role.toLowerCase()
@@ -118,13 +109,16 @@ export function createOutlineTextFromExportMessages(
 
       const text = normalizeOutlineText(message.content, MAX_USER_QUERY_PREVIEW_LENGTH)
       if (text) {
-        lines.push(`${getMarkdownHeadingPrefix(USER_QUERY_HEADING_LEVEL)} ${text}`)
+        userQueryCount += 1
+        lines.push(
+          `${getMarkdownHeadingPrefix(USER_QUERY_HEADING_LEVEL)} Q${userQueryCount}. ${text}`,
+        )
       }
       continue
     }
 
     const headings = extractMarkdownHeadings(message.content)
-    lines.push(...formatAssistantHeadings(headings, maxHeadingLevel, assistantHeadingOffset))
+    lines.push(...formatAssistantHeadings(headings, maxHeadingLevel))
   }
 
   if (lines.length === 0) {
