@@ -70,6 +70,46 @@ interface LocatePromptDetail {
   promptId?: string
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null
+
+const isPromptLike = (value: unknown): value is Prompt => {
+  if (!isRecord(value)) return false
+
+  return (
+    typeof value.id === "string" &&
+    typeof value.title === "string" &&
+    typeof value.content === "string" &&
+    typeof value.category === "string" &&
+    (value.pinned === undefined || typeof value.pinned === "boolean") &&
+    (value.lastUsedAt === undefined || typeof value.lastUsedAt === "number")
+  )
+}
+
+const parseImportedPrompts = (value: unknown): Prompt[] | null => {
+  const promptList = (() => {
+    if (Array.isArray(value)) return value
+
+    if (!isRecord(value)) return null
+
+    if (Array.isArray(value.prompts)) return value.prompts
+
+    if (isRecord(value.data) && Array.isArray(value.data.prompts)) {
+      return value.data.prompts
+    }
+
+    if (isRecord(value.state) && Array.isArray(value.state.prompts)) {
+      return value.state.prompts
+    }
+
+    return null
+  })()
+
+  if (!promptList || !promptList.every(isPromptLike)) return null
+
+  return promptList
+}
+
 // 根据分类名称哈希自动分配颜色索引 1-7
 const getCategoryColorIndex = (categoryName: string): number => {
   let hash = 0
@@ -598,16 +638,18 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
       try {
         const text = await file.text()
-        const imported = JSON.parse(text) as Prompt[]
+        const imported = parseImportedPrompts(JSON.parse(text))
 
-        if (!Array.isArray(imported)) {
+        if (!imported) {
+          console.error("[Ophel] prompt import failed: unsupported prompt file format")
           showToast(t("promptImportFailed"))
           return
         }
 
         // 显示导入确认弹窗（支持覆盖/合并/取消）
         setImportDialogState({ show: true, prompts: imported })
-      } catch {
+      } catch (error) {
+        console.error("[Ophel] prompt import failed:", error)
         showToast(t("promptImportFailed"))
       }
     }
