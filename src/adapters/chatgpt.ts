@@ -208,8 +208,11 @@ export class ChatGPTAdapter extends SiteAdapter {
   // merge cache，避免把上一个会话残留的 DOM 内容污染到新会话的 cache 里。
   private outlineCacheTransitionEndAt = 0
   private nativeTocTextCache: string[] = []
-  private nativeTocRevealAttempted = false
+  private nativeTocButtonElementSignatureCache = ""
+  private nativeTocRevealAttemptedSignature = ""
   private nativeTocRefreshScheduled = false
+  private nativeTocButtonElementIds = new WeakMap<HTMLElement, number>()
+  private nativeTocButtonElementIdCounter = 0
 
   // 导出快照（参考 deepseek / aistudio 方案）：避免虚拟滚动导致漏抓或重复抓取
   private exportSnapshotRoot: HTMLElement | null = null
@@ -2283,6 +2286,34 @@ export class ChatGPTAdapter extends SiteAdapter {
     })
   }
 
+  private getNativeTocButtonElementSignature(buttons: HTMLElement[]): string {
+    return buttons
+      .map((button) => {
+        let id = this.nativeTocButtonElementIds.get(button)
+        if (id === undefined) {
+          id = this.nativeTocButtonElementIdCounter
+          this.nativeTocButtonElementIdCounter += 1
+          this.nativeTocButtonElementIds.set(button, id)
+        }
+        return id
+      })
+      .join("|")
+  }
+
+  private cacheNativeTocTexts(buttons: HTMLElement[], texts: string[]): void {
+    this.nativeTocTextCache = texts
+    this.nativeTocButtonElementSignatureCache = this.getNativeTocButtonElementSignature(buttons)
+  }
+
+  private hasUsableNativeTocTextCache(buttons: HTMLElement[]): boolean {
+    if (this.nativeTocTextCache.length !== buttons.length) return false
+
+    const buttonSignature = this.getNativeTocButtonElementSignature(buttons)
+    return (
+      buttonSignature.length > 0 && buttonSignature === this.nativeTocButtonElementSignatureCache
+    )
+  }
+
   private revealNativeTocTextLayer(buttons: HTMLElement[]): void {
     const targets = this.getNativeTocHoverTargets(buttons)
 
@@ -2371,34 +2402,52 @@ export class ChatGPTAdapter extends SiteAdapter {
   private scheduleNativeTocRefresh(buttons: HTMLElement[]): void {
     if (this.nativeTocRefreshScheduled) return
 
+    const scheduledSessionKey = this.outlineCacheSessionKey
+    const scheduledButtonSignature = this.getNativeTocButtonElementSignature(buttons)
     this.nativeTocRefreshScheduled = true
     window.setTimeout(() => {
-      const latestButtons = this.getNativeTocButtons()
-      const texts = this.readNativeTocButtonLabels(latestButtons)
-      if (texts.length === latestButtons.length && texts.length > 0) {
-        this.nativeTocTextCache = texts
-        window.dispatchEvent(new CustomEvent("ophel:refreshOutline"))
-      }
+      try {
+        if (
+          scheduledSessionKey !== this.outlineCacheSessionKey ||
+          scheduledSessionKey !== this.getOutlineCacheSessionKey()
+        ) {
+          return
+        }
 
-      this.concealNativeTocTextLayer(latestButtons.length > 0 ? latestButtons : buttons)
-      this.nativeTocRefreshScheduled = false
+        const latestButtons = this.getNativeTocButtons()
+        const latestButtonSignature = this.getNativeTocButtonElementSignature(latestButtons)
+        if (latestButtonSignature !== scheduledButtonSignature) return
+
+        const texts = this.readNativeTocButtonLabels(latestButtons)
+        if (texts.length === latestButtons.length && texts.length > 0) {
+          this.cacheNativeTocTexts(latestButtons, texts)
+          window.dispatchEvent(new CustomEvent("ophel:refreshOutline"))
+        }
+      } finally {
+        this.concealNativeTocTextLayer(buttons.filter((button) => button.isConnected))
+        this.nativeTocRefreshScheduled = false
+      }
     }, 250)
   }
 
   private getNativeTocTexts(buttons: HTMLElement[]): string[] {
     const labels = this.readNativeTocButtonLabels(buttons)
     if (labels.length === buttons.length) {
-      this.nativeTocTextCache = labels
+      this.cacheNativeTocTexts(buttons, labels)
       return labels
     }
 
-    if (!this.nativeTocRevealAttempted && this.nativeTocTextCache.length !== buttons.length) {
-      this.nativeTocRevealAttempted = true
+    const buttonSignature = this.getNativeTocButtonElementSignature(buttons)
+    if (
+      !this.hasUsableNativeTocTextCache(buttons) &&
+      this.nativeTocRevealAttemptedSignature !== buttonSignature
+    ) {
+      this.nativeTocRevealAttemptedSignature = buttonSignature
       this.revealNativeTocTextLayer(buttons)
 
       const revealedLabels = this.readNativeTocButtonLabels(buttons)
       if (revealedLabels.length === buttons.length) {
-        this.nativeTocTextCache = revealedLabels
+        this.cacheNativeTocTexts(buttons, revealedLabels)
         this.concealNativeTocTextLayer(buttons)
         return revealedLabels
       }
@@ -2438,11 +2487,11 @@ export class ChatGPTAdapter extends SiteAdapter {
       .filter((text) => text.length > 0)
 
     if (texts.length === buttons.length) {
-      this.nativeTocTextCache = texts
+      this.cacheNativeTocTexts(buttons, texts)
       return texts
     }
 
-    if (this.nativeTocTextCache.length === buttons.length) {
+    if (this.hasUsableNativeTocTextCache(buttons)) {
       return this.nativeTocTextCache
     }
 
@@ -2675,8 +2724,11 @@ export class ChatGPTAdapter extends SiteAdapter {
     this.outlineTurnFirstSeenIndex.clear()
     this.outlineTurnFirstSeenCounter = 0
     this.nativeTocTextCache = []
-    this.nativeTocRevealAttempted = false
+    this.nativeTocButtonElementSignatureCache = ""
+    this.nativeTocRevealAttemptedSignature = ""
     this.nativeTocRefreshScheduled = false
+    this.nativeTocButtonElementIds = new WeakMap()
+    this.nativeTocButtonElementIdCounter = 0
     // SPA 切换会话时（不是首次初始化）进入过渡期：ChatGPT 的 URL 同步切换、但
     // DOM 替换是异步的；此时 extractOutline 抓到的仍是上一个会话的残留节点，
     // 若立刻当成"新会话 cache"写进去，等 DOM 完成切换、新会话内容到位时再做
