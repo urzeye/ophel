@@ -16,6 +16,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **ChatGPT native TOC outline** — ChatGPT outlines now recover the full user-question list when the native TOC only exposes real prompt text after hover, cache the extracted labels per TOC instance, and avoid userscript crashes from cross-realm pointer events. (#642)
 - **ChatGPT tab status** — ChatGPT tabs no longer show `⏳` while idle when a sidebar conversation title contains "Stop" or "停止". The generation detector now only uses visible stop buttons from the composer area. (#630)
 - **Gemini tab renaming** — Gemini tabs no longer flicker back to the native page title during active replies when automatic tab renaming is enabled.
 - **Gemini watermark removal** — Replaced the legacy Gemini/Nano Banana remover with the SDK-backed implementation and fixed user-uploaded image handling plus generated-image removal regressions. (#593, #625)

@@ -2314,23 +2314,29 @@ export class ChatGPTAdapter extends SiteAdapter {
     )
   }
 
+  private getElementWindow(element: Element): Window & typeof globalThis {
+    return (element.ownerDocument.defaultView || window) as Window & typeof globalThis
+  }
+
   private revealNativeTocTextLayer(buttons: HTMLElement[]): void {
     const targets = this.getNativeTocHoverTargets(buttons)
 
     targets.forEach((target) => {
       const rect = target.getBoundingClientRect()
+      const eventWindow = this.getElementWindow(target)
       const eventInit = {
         bubbles: true,
         cancelable: true,
         composed: true,
-        view: window,
+        view: eventWindow,
         clientX: Math.round(rect.left + rect.width / 2),
         clientY: Math.round(rect.top + rect.height / 2),
       }
 
-      if (typeof PointerEvent !== "undefined") {
+      const PointerEventCtor = eventWindow.PointerEvent
+      if (PointerEventCtor) {
         target.dispatchEvent(
-          new PointerEvent("pointerover", {
+          new PointerEventCtor("pointerover", {
             ...eventInit,
             pointerId: 1,
             pointerType: "mouse",
@@ -2338,7 +2344,7 @@ export class ChatGPTAdapter extends SiteAdapter {
           }),
         )
         target.dispatchEvent(
-          new PointerEvent("pointerenter", {
+          new PointerEventCtor("pointerenter", {
             ...eventInit,
             pointerId: 1,
             pointerType: "mouse",
@@ -2347,9 +2353,10 @@ export class ChatGPTAdapter extends SiteAdapter {
         )
       }
 
-      target.dispatchEvent(new MouseEvent("mouseover", eventInit))
-      target.dispatchEvent(new MouseEvent("mouseenter", eventInit))
-      target.dispatchEvent(new MouseEvent("mousemove", eventInit))
+      const MouseEventCtor = eventWindow.MouseEvent
+      target.dispatchEvent(new MouseEventCtor("mouseover", eventInit))
+      target.dispatchEvent(new MouseEventCtor("mouseenter", eventInit))
+      target.dispatchEvent(new MouseEventCtor("mousemove", eventInit))
     })
   }
 
@@ -2358,18 +2365,20 @@ export class ChatGPTAdapter extends SiteAdapter {
 
     targets.forEach((target) => {
       const rect = target.getBoundingClientRect()
+      const eventWindow = this.getElementWindow(target)
       const eventInit = {
         bubbles: true,
         cancelable: true,
         composed: true,
-        view: window,
+        view: eventWindow,
         clientX: Math.max(0, Math.round(rect.left - 8)),
         clientY: Math.max(0, Math.round(rect.top - 8)),
       }
 
-      if (typeof PointerEvent !== "undefined") {
+      const PointerEventCtor = eventWindow.PointerEvent
+      if (PointerEventCtor) {
         target.dispatchEvent(
-          new PointerEvent("pointerout", {
+          new PointerEventCtor("pointerout", {
             ...eventInit,
             pointerId: 1,
             pointerType: "mouse",
@@ -2377,7 +2386,7 @@ export class ChatGPTAdapter extends SiteAdapter {
           }),
         )
         target.dispatchEvent(
-          new PointerEvent("pointerleave", {
+          new PointerEventCtor("pointerleave", {
             ...eventInit,
             pointerId: 1,
             pointerType: "mouse",
@@ -2386,8 +2395,9 @@ export class ChatGPTAdapter extends SiteAdapter {
         )
       }
 
-      target.dispatchEvent(new MouseEvent("mouseout", eventInit))
-      target.dispatchEvent(new MouseEvent("mouseleave", eventInit))
+      const MouseEventCtor = eventWindow.MouseEvent
+      target.dispatchEvent(new MouseEventCtor("mouseout", eventInit))
+      target.dispatchEvent(new MouseEventCtor("mouseleave", eventInit))
     })
   }
 
@@ -3641,24 +3651,37 @@ export class ChatGPTAdapter extends SiteAdapter {
         return
       }
 
-      element.dispatchEvent(
-        new PointerEvent("pointerdown", {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-          pointerId: 1,
-          button: 0,
-          buttons: 1,
-          pointerType: "mouse",
-          isPrimary: true,
-        }),
-      )
+      const eventWindow = this.getElementWindow(element)
+      const PointerEventCtor = eventWindow.PointerEvent
+      if (PointerEventCtor) {
+        element.dispatchEvent(
+          new PointerEventCtor("pointerdown", {
+            bubbles: true,
+            cancelable: true,
+            view: eventWindow,
+            pointerId: 1,
+            button: 0,
+            buttons: 1,
+            pointerType: "mouse",
+            isPrimary: true,
+          }),
+        )
+      } else {
+        element.dispatchEvent(
+          new eventWindow.MouseEvent("mousedown", {
+            bubbles: true,
+            cancelable: true,
+            view: eventWindow,
+            button: 0,
+            buttons: 1,
+          }),
+        )
+      }
       return
     }
 
     element.click()
   }
-
   // ==================== 主题切换 ====================
 
   /**
