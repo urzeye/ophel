@@ -1037,7 +1037,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
       const result = createOutlineTextFromExportMessages(messages, {
         includeUserQueries: showUserQueries,
-        maxRelativeLevel: displayLevel,
+        maxHeadingLevel: expandLevel,
       })
 
       if (!result.text) {
@@ -1055,7 +1055,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     } finally {
       setIsCopyingFullOutline(false)
     }
-  }, [conversationManager, displayLevel, isCopyingFullOutline, showUserQueries])
+  }, [conversationManager, expandLevel, isCopyingFullOutline, showUserQueries])
 
   // 用于提取完整用户提问文本（当显示被截断时）
   const extractUserQueryText = useCallback(

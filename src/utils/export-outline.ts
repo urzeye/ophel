@@ -2,7 +2,7 @@ import type { ExportMessage } from "~utils/exporter"
 
 export interface ExportMessagesOutlineOptions {
   includeUserQueries: boolean
-  maxRelativeLevel?: number
+  maxHeadingLevel?: number
 }
 
 export interface ExportMessagesOutlineResult {
@@ -16,12 +16,12 @@ interface ExportOutlineItem {
 }
 
 const MAX_MARKDOWN_HEADING_LEVEL = 6
-const USER_QUERY_HEADING_LEVEL = 2
-const ASSISTANT_HEADING_BASE_WITH_USER_QUERIES = 3
-const ASSISTANT_HEADING_BASE = 2
+const USER_QUERY_HEADING_LEVEL = 1
+const ASSISTANT_HEADING_OFFSET_WITH_USER_QUERIES = 1
+const ASSISTANT_HEADING_OFFSET = 0
 const MAX_USER_QUERY_PREVIEW_LENGTH = 120
 
-function clampRelativeLevel(level: number | undefined): number {
+function clampHeadingLevel(level: number | undefined): number {
   if (typeof level !== "number" || !Number.isFinite(level)) return MAX_MARKDOWN_HEADING_LEVEL
   return Math.min(MAX_MARKDOWN_HEADING_LEVEL, Math.max(0, Math.floor(level)))
 }
@@ -87,18 +87,15 @@ function getMarkdownHeadingPrefix(level: number): string {
 
 function formatAssistantHeadings(
   headings: ExportOutlineItem[],
-  maxRelativeLevel: number,
-  headingBase: number,
+  maxHeadingLevel: number,
+  headingOffset: number,
 ): string[] {
-  if (headings.length === 0 || maxRelativeLevel < 1) return []
-
-  const minHeadingLevel = Math.min(...headings.map((item) => item.level))
+  if (headings.length === 0 || maxHeadingLevel < 1) return []
 
   return headings.flatMap((item) => {
-    const relativeLevel = item.level - minHeadingLevel + 1
-    if (relativeLevel > maxRelativeLevel) return []
+    if (item.level > maxHeadingLevel) return []
 
-    const headingLevel = headingBase + relativeLevel - 1
+    const headingLevel = item.level + headingOffset
     return [`${getMarkdownHeadingPrefix(headingLevel)} ${item.text}`]
   })
 }
@@ -107,10 +104,10 @@ export function createOutlineTextFromExportMessages(
   messages: ExportMessage[],
   options: ExportMessagesOutlineOptions,
 ): ExportMessagesOutlineResult {
-  const maxRelativeLevel = clampRelativeLevel(options.maxRelativeLevel)
-  const assistantHeadingBase = options.includeUserQueries
-    ? ASSISTANT_HEADING_BASE_WITH_USER_QUERIES
-    : ASSISTANT_HEADING_BASE
+  const maxHeadingLevel = clampHeadingLevel(options.maxHeadingLevel)
+  const assistantHeadingOffset = options.includeUserQueries
+    ? ASSISTANT_HEADING_OFFSET_WITH_USER_QUERIES
+    : ASSISTANT_HEADING_OFFSET
   const lines: string[] = []
 
   for (const message of messages) {
@@ -127,7 +124,7 @@ export function createOutlineTextFromExportMessages(
     }
 
     const headings = extractMarkdownHeadings(message.content)
-    lines.push(...formatAssistantHeadings(headings, maxRelativeLevel, assistantHeadingBase))
+    lines.push(...formatAssistantHeadings(headings, maxHeadingLevel, assistantHeadingOffset))
   }
 
   if (lines.length === 0) {
