@@ -11,6 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
+- **Full outline copy** — The Outline toolbar can now copy a complete conversation outline by reusing the export pipeline, so virtual-scroll conversations are loaded and restored safely before headings and user queries are copied. (#539)
 - **Conversations quick open** — Conversation rows can now be opened from the context menu in a new tab, so older sessions can be reopened without replacing the current chat. (#578)
 
 ### 🐛 Bug Fixes

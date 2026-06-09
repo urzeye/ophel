@@ -976,6 +976,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           {activeTab === TAB_IDS.OUTLINE && (
             <OutlineTab
               manager={outlineManager}
+              conversationManager={conversationManager}
               onJumpBefore={saveAnchor}
               isCodexOpen={showCodex}
             />

@@ -589,6 +589,9 @@ export const en = {
   outlineEmptyDescDefault: "Outline items will appear as the conversation grows.",
   outlineEmptyDescUserQueryOnly:
     "Only user queries are shown right now. Send a message to generate outline items.",
+  outlineCopyFull: "Copy full outline",
+  outlineCopyFullRunning: "Copying full outline...",
+  outlineFullCopySuccess: "Copied {count} outline items",
   outlineRefresh: "Refresh",
   outlineSettings: "Outline Settings",
   outlineSettingsTitle: "Outline Settings",

@@ -78,6 +78,14 @@ interface ConversationSyncOptions {
   syncDeleted?: boolean
 }
 
+interface ConversationExportData {
+  conv: Conversation
+  messages: ExportMessage[]
+  exportBundle: ExportBundle | null
+  exportPackaging: ExportLifecycleContext["packaging"]
+  notifyProgress: (stage: ConversationExportStage) => void
+}
+
 type GeminiCidMigrationResult = "migrated" | "pending_email" | "noop"
 
 export class ConversationManager {
@@ -1116,21 +1124,21 @@ export class ConversationManager {
 
   // ================= Export Functionality =================
 
-  /**
-   * 导出会话
-   */
-  async exportConversation(convId: string, format: ExportFormat): Promise<boolean> {
-    // 检查是否为当前会话
+  private async withConversationExportData<T>(
+    convId: string,
+    format: ExportFormat,
+    handleExportData: (data: ConversationExportData) => Promise<T> | T,
+  ): Promise<T | null> {
     const currentSessionId = this.siteAdapter.getSessionId()
     if (currentSessionId !== convId) {
       showToast(t("exportNeedOpenFirst"))
-      return false
+      return null
     }
 
     const conv = this.resolveConversationForExport(convId)
     if (!conv) {
       console.error("[ConversationManager] Conversation not found:", convId)
-      return false
+      return null
     }
 
     const scrollContainer = this.siteAdapter.getScrollContainer?.() || null
@@ -1195,82 +1203,19 @@ export class ConversationManager {
         exportBundle?.messages || (await this.extractConversationMessages(exportContext))
       if (messages.length === 0) {
         console.error("[ConversationManager] No messages found")
-        return false
+        return null
       }
 
-      // 格式化
-      const localizedUntitledConversation = t("untitledConversation")
-      const exportTitle =
-        this.sanitizeConversationTitleForUse(conv.title) || localizedUntitledConversation
-      const safeTitle = exportTitle.replace(/[<>:"/\\|?*]/g, "_").substring(0, 50)
-
-      const metadata = createExportMetadata(exportTitle, this.siteAdapter.getName(), conv.id, {
-        customUserName: settings.export?.customUserName,
-        customModelName: settings.export?.customModelName,
+      return await handleExportData({
+        conv,
+        messages,
+        exportBundle,
+        exportPackaging,
+        notifyProgress,
       })
-
-      let content: string
-      let filename: string
-      let mimeType: string
-
-      let timestampSuffix = ""
-      if (settings.export?.exportFilenameTimestamp) {
-        const now = new Date()
-        const year = now.getFullYear()
-        const month = String(now.getMonth() + 1).padStart(2, "0")
-        const day = String(now.getDate()).padStart(2, "0")
-        const hours = String(now.getHours()).padStart(2, "0")
-        const minutes = String(now.getMinutes()).padStart(2, "0")
-        const seconds = String(now.getSeconds()).padStart(2, "0")
-        timestampSuffix = `_${year}-${month}-${day}_${hours}-${minutes}-${seconds}`
-      }
-
-      const siteName = this.siteAdapter.getName()
-      const safeSiteName = siteName.replace(/[<>:"/\\|?*]/g, "_")
-      const filenamePrefix = `${safeSiteName} - `
-
-      if (format === "clipboard") {
-        notifyProgress("copying")
-        content = formatToMarkdown(metadata, messages)
-        await navigator.clipboard.writeText(content)
-        showToast(t("copySuccess"))
-        return true
-      } else if (format === "markdown") {
-        content = formatToMarkdown(metadata, messages)
-        filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.md`
-        mimeType = "text/markdown;charset=utf-8"
-
-        if (shouldPackageAssets) {
-          notifyProgress("packaging")
-          const downloaded = await downloadExportPackage({
-            markdownFilename: filename,
-            markdownContent: content,
-            assets: this.normalizeExportAssets(exportBundle),
-            packageFilename: `${filenamePrefix}${safeTitle}${timestampSuffix}.zip`,
-            metadata,
-          })
-          if (!downloaded) return false
-          showToast(t("exportSuccess"))
-          return true
-        }
-      } else if (format === "json") {
-        content = formatToJSON(metadata, messages)
-        filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.json`
-        mimeType = "application/json;charset=utf-8"
-      } else {
-        content = formatToTXT(metadata, messages)
-        filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.txt`
-        mimeType = "text/plain;charset=utf-8"
-      }
-
-      notifyProgress("downloading")
-      const downloaded = await downloadFile(content, filename, mimeType)
-      if (!downloaded) return false
-      showToast(t("exportSuccess"))
-      return true
     } catch (error) {
       console.error("[ConversationManager] Export failed:", error)
-      return false
+      return null
     } finally {
       notifyProgress("restoring")
 
@@ -1291,6 +1236,105 @@ export class ConversationManager {
 
       this.notifyExportProgress(null)
     }
+  }
+
+  async collectCurrentConversationExportMessages(
+    format: ExportFormat = "clipboard",
+  ): Promise<ExportMessage[] | null> {
+    const currentSessionId = this.siteAdapter.getSessionId()
+    if (!currentSessionId) {
+      showToast(t("exportNeedOpenFirst"))
+      return null
+    }
+
+    return this.withConversationExportData(currentSessionId, format, ({ messages }) => messages)
+  }
+
+  /**
+   * 导出会话
+   */
+  async exportConversation(convId: string, format: ExportFormat): Promise<boolean> {
+    const result = await this.withConversationExportData(
+      convId,
+      format,
+      async ({ conv, messages, exportBundle, exportPackaging, notifyProgress }) => {
+        const settings = useSettingsStore.getState().settings
+
+        // 格式化
+        const localizedUntitledConversation = t("untitledConversation")
+        const exportTitle =
+          this.sanitizeConversationTitleForUse(conv.title) || localizedUntitledConversation
+        const safeTitle = exportTitle.replace(/[<>:"/\\|?*]/g, "_").substring(0, 50)
+
+        const metadata = createExportMetadata(exportTitle, this.siteAdapter.getName(), conv.id, {
+          customUserName: settings.export?.customUserName,
+          customModelName: settings.export?.customModelName,
+        })
+
+        let content: string
+        let filename: string
+        let mimeType: string
+
+        let timestampSuffix = ""
+        if (settings.export?.exportFilenameTimestamp) {
+          const now = new Date()
+          const year = now.getFullYear()
+          const month = String(now.getMonth() + 1).padStart(2, "0")
+          const day = String(now.getDate()).padStart(2, "0")
+          const hours = String(now.getHours()).padStart(2, "0")
+          const minutes = String(now.getMinutes()).padStart(2, "0")
+          const seconds = String(now.getSeconds()).padStart(2, "0")
+          timestampSuffix = `_${year}-${month}-${day}_${hours}-${minutes}-${seconds}`
+        }
+
+        const siteName = this.siteAdapter.getName()
+        const safeSiteName = siteName.replace(/[<>:"/\\|?*]/g, "_")
+        const filenamePrefix = `${safeSiteName} - `
+
+        if (format === "clipboard") {
+          notifyProgress("copying")
+          content = formatToMarkdown(metadata, messages)
+          await navigator.clipboard.writeText(content)
+          showToast(t("copySuccess"))
+          return true
+        } else if (format === "markdown") {
+          content = formatToMarkdown(metadata, messages)
+          filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.md`
+          mimeType = "text/markdown;charset=utf-8"
+
+          const shouldPackageAssets = exportPackaging === "zip"
+          if (shouldPackageAssets) {
+            notifyProgress("packaging")
+            const downloaded = await downloadExportPackage({
+              markdownFilename: filename,
+              markdownContent: content,
+              assets: this.normalizeExportAssets(exportBundle),
+              packageFilename: `${filenamePrefix}${safeTitle}${timestampSuffix}.zip`,
+              metadata,
+            })
+            if (!downloaded) return false
+            showToast(t("exportSuccess"))
+            return true
+          }
+        } else if (format === "json") {
+          content = formatToJSON(metadata, messages)
+          filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.json`
+          mimeType = "application/json;charset=utf-8"
+        } else {
+          content = formatToTXT(metadata, messages)
+          filename = `${filenamePrefix}${safeTitle}${timestampSuffix}.txt`
+          mimeType = "text/plain;charset=utf-8"
+        }
+
+        notifyProgress("downloading")
+        const downloaded = await downloadFile(content, filename, mimeType)
+        if (!downloaded) return false
+        showToast(t("exportSuccess"))
+        return true
+      },
+    )
+
+    return result === true
   }
 
   /**

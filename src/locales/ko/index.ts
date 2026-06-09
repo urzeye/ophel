@@ -563,6 +563,9 @@ export const ko = {
   outlineEmptyDescDefault: "대화가 진행되면 개요 항목이 자동으로 표시됩니다.",
   outlineEmptyDescUserQueryOnly:
     "현재 사용자 질문만 표시 중입니다. 메시지를 보내면 개요 항목이 생성됩니다.",
+  outlineCopyFull: "전체 개요 복사",
+  outlineCopyFullRunning: "전체 개요 복사 중...",
+  outlineFullCopySuccess: "개요 항목 {count}개를 복사했습니다",
   outlineRefresh: "새로고침",
   outlineSettings: "개요 설정",
   bookmarkSettings: "북마크 설정",

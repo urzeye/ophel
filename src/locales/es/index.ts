@@ -563,6 +563,9 @@ export const es = {
     "Los elementos del índice aparecerán automáticamente a medida que avance la conversación.",
   outlineEmptyDescUserQueryOnly:
     "Por ahora solo se muestran las preguntas del usuario. Envía un mensaje para generar elementos del índice.",
+  outlineCopyFull: "Copiar índice completo",
+  outlineCopyFullRunning: "Copiando índice completo...",
+  outlineFullCopySuccess: "{count} elementos del índice copiados",
   outlineRefresh: "Recargar",
   outlineSettings: "Ajustes de Índice",
   bookmarkSettings: "Ajustes de Marcadores",
