@@ -205,15 +205,18 @@
 .outline-toolbar-btn {
   width: 26px;
   height: 26px;
+  padding: 0;
   border: 1px solid var(--gh-input-border, #d1d5db);
   border-radius: 6px;
   background: var(--gh-bg, #fff);
-  color: var(--gh-text-secondary, #6b7280);
+  color: var(--gh-primary, #4285f4);
+  box-sizing: border-box;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
+  line-height: 1;
   transition: all 0.2s;
   flex-shrink: 0;
 }
@@ -222,6 +225,17 @@
   border-color: var(--gh-primary, #4285f4);
   color: var(--gh-primary, #4285f4);
   background: var(--gh-hover, #f3f4f6);
+}
+
+.outline-toolbar-btn:disabled {
+  color: var(--gh-text-disabled, #9ca3af);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.outline-toolbar-btn.is-busy:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 /* 选中状态使用强烈的蓝色背景 + 白色文字 */

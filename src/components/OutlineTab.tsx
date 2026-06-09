@@ -1313,22 +1313,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               <button
                 onClick={bookmarkMode ? undefined : handleExpandAll}
                 disabled={bookmarkMode}
-                style={{
-                  width: "26px",
-                  height: "26px",
-                  padding: 0,
-                  border: "1px solid var(--gh-input-border, #d1d5db)",
-                  borderRadius: "4px",
-                  backgroundColor: "var(--gh-bg, #fff)",
-                  color: bookmarkMode
-                    ? "var(--gh-text-disabled, #9ca3af)"
-                    : "var(--gh-text, #374151)",
-                  cursor: bookmarkMode ? "not-allowed" : "pointer",
-                  opacity: bookmarkMode ? 0.5 : 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}>
+                className="outline-toolbar-btn">
                 {isAllExpanded ? <CollapseAllIcon size={16} /> : <ExpandAllIcon size={16} />}
               </button>
             </Tooltip>
@@ -1339,20 +1324,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               <button
                 onClick={handleCopyFullOutline}
                 disabled={isCopyingFullOutline}
-                style={{
-                  width: "26px",
-                  height: "26px",
-                  padding: 0,
-                  border: "1px solid var(--gh-input-border, #d1d5db)",
-                  borderRadius: "4px",
-                  backgroundColor: "var(--gh-bg, #fff)",
-                  color: "var(--gh-text, #374151)",
-                  cursor: isCopyingFullOutline ? "wait" : "pointer",
-                  opacity: isCopyingFullOutline ? 0.65 : 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}>
+                className={`outline-toolbar-btn ${isCopyingFullOutline ? "is-busy" : ""}`}>
                 {fullOutlineCopySuccess ? (
                   <CheckIcon size={14} color="#10b981" />
                 ) : (
@@ -1363,21 +1335,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
             {/* Locate Current */}
             <Tooltip content={t("outlineLocateCurrent")}>
-              <button
-                onClick={handleLocateCurrent}
-                style={{
-                  width: "26px",
-                  height: "26px",
-                  padding: 0,
-                  border: "1px solid var(--gh-input-border, #d1d5db)",
-                  borderRadius: "4px",
-                  backgroundColor: "var(--gh-bg, #fff)",
-                  color: "var(--gh-text, #374151)",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}>
+              <button onClick={handleLocateCurrent} className="outline-toolbar-btn">
                 <LocateIcon size={16} />
               </button>
             </Tooltip>
@@ -1385,22 +1343,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             {/* Dynamic Scroll (Top/Bottom) */}
             <Tooltip
               content={scrollState === "bottom" ? t("outlineScrollBottom") : t("outlineScrollTop")}>
-              <button
-                onClick={handleDynamicScroll}
-                style={{
-                  width: "26px",
-                  height: "26px",
-                  padding: 0,
-                  border: "1px solid var(--gh-input-border, #d1d5db)",
-                  borderRadius: "4px",
-                  backgroundColor: "var(--gh-bg, #fff)",
-                  color: "var(--gh-text, #374151)",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "14px",
-                }}>
+              <button onClick={handleDynamicScroll} className="outline-toolbar-btn">
                 {scrollState === "bottom" ? (
                   <ScrollBottomIcon size={16} />
                 ) : (
