@@ -107,6 +107,22 @@ const userscriptStyleText = getUserscriptResourceText(
   USERSCRIPT_RESOURCE_DEFINITIONS.styles.metaName,
 )
 
+window.__OPHEL_MARKDOWN_PREVIEW_STYLES__ = getUserscriptResourceText(
+  USERSCRIPT_RESOURCE_DEFINITIONS.markdownPreviewStyles.metaName,
+)
+window.__OPHEL_USER_QUERY_MARKDOWN_STYLES__ = getUserscriptResourceText(
+  USERSCRIPT_RESOURCE_DEFINITIONS.userQueryMarkdownStyles.metaName,
+)
+try {
+  const siteIconsText = getUserscriptResourceText(
+    USERSCRIPT_RESOURCE_DEFINITIONS.siteIcons.metaName,
+  )
+  window.__OPHEL_SITE_ICONS__ = siteIconsText ? JSON.parse(siteIconsText) : {}
+} catch (error) {
+  console.warn("[Ophel] Failed to load userscript site icons", error)
+  window.__OPHEL_SITE_ICONS__ = {}
+}
+
 const notificationSoundUrls = {
   default: getUserscriptResourceUrl(USERSCRIPT_RESOURCE_DEFINITIONS.notificationDefault.metaName),
   softChime: getUserscriptResourceUrl(

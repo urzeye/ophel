@@ -41,9 +41,16 @@ const RESCAN_INTERVAL = 2000 // Shadow DOM 站点重扫描间隔
 const INITIAL_DELAY = 1000 // 首次扫描延迟
 const STYLE_ID = "gh-user-query-markdown-style"
 
-// 用户提问 Markdown 渲染样式（注入到页面 document.head）
-// 如果把 CSS 抽离到单独的 .css 文件：需要使用 data-text: 导入为字符串，然后仍然需要在 JS 中拼接并手动注入
-const USER_QUERY_MARKDOWN_CSS = `
+function getUserscriptUserQueryMarkdownStyles(): string {
+  if (typeof window === "undefined" || __PLATFORM__ !== "userscript") return ""
+  return (
+    (window as typeof window & { __OPHEL_USER_QUERY_MARKDOWN_STYLES__?: string })
+      .__OPHEL_USER_QUERY_MARKDOWN_STYLES__ || ""
+  )
+}
+
+function getInlineUserQueryMarkdownStyles(): string {
+  return `
 /* ============= 用户提问 Markdown 渲染样式 ============= */
 .gh-user-query-markdown {
   font-size: 15px;
@@ -423,6 +430,15 @@ html.dark .gh-user-query-markdown hr {
   border-top-color: #4b5563;
 }
 `
+}
+
+function getUserQueryMarkdownStyles(): string {
+  if (__PLATFORM__ === "userscript") {
+    return getUserscriptUserQueryMarkdownStyles()
+  }
+
+  return getInlineUserQueryMarkdownStyles()
+}
 
 /**
  * 检测文本是否看起来像 Markdown
@@ -550,7 +566,7 @@ export class UserQueryMarkdownRenderer {
   }
 
   private getStyleText(): string {
-    return [getHighlightStyles(), getMathStyles(), USER_QUERY_MARKDOWN_CSS]
+    return [getHighlightStyles(), getMathStyles(), getUserQueryMarkdownStyles()]
       .filter(Boolean)
       .join("\n")
   }
