@@ -3161,14 +3161,16 @@ export class ChatGPTAdapter extends SiteAdapter {
   // ==================== 生成状态检测 ====================
 
   isGenerating(): boolean {
-    return this.findElementBySelectors(this.getStopButtonSelectors()) !== null
+    return this.findVisibleElementBySelectors(this.getStopButtonSelectors()) !== null
   }
 
   getStopButtonSelectors(): string[] {
     return [
       '[data-testid="stop-button"]',
-      'button[aria-label*="Stop"]',
-      'button[aria-label*="停止"]',
+      'form[data-type="unified-composer"] #composer-submit-button[aria-label*="Stop"]',
+      'form[data-type="unified-composer"] #composer-submit-button[aria-label*="停止"]',
+      'form[data-type="unified-composer"] button.composer-submit-btn[aria-label*="Stop"]',
+      'form[data-type="unified-composer"] button.composer-submit-btn[aria-label*="停止"]',
     ]
   }
 
