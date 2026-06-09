@@ -575,8 +575,8 @@ export const ja = {
   outlineEmptyDescDefault: "会話が進むと目次項目が自動で表示されます。",
   outlineEmptyDescUserQueryOnly:
     "現在はユーザーの質問のみ表示中です。メッセージ送信後に目次項目が表示されます。",
-  outlineCopyFull: "完全な目次をコピー",
-  outlineCopyFullRunning: "完全な目次をコピー中...",
+  outlineCopyFull: "目次をコピー",
+  outlineCopyFullRunning: "目次をコピー中...",
   outlineFullCopySuccess: "{count} 件の目次項目をコピーしました",
   outlineRefresh: "リロード",
   outlineSettings: "目次設定",

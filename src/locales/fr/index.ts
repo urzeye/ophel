@@ -563,8 +563,8 @@ export const fr = {
   outlineEmptyDescDefault: "Les éléments du sommaire apparaîtront au fil de la conversation.",
   outlineEmptyDescUserQueryOnly:
     "Seules les questions utilisateur sont affichées pour le moment. Envoyez un message pour générer le sommaire.",
-  outlineCopyFull: "Copier le sommaire complet",
-  outlineCopyFullRunning: "Copie du sommaire complet...",
+  outlineCopyFull: "Copier le sommaire",
+  outlineCopyFullRunning: "Copie du sommaire...",
   outlineFullCopySuccess: "{count} éléments du sommaire copiés",
   outlineRefresh: "Recharger",
   outlineSettings: "Réglages de Sommaire",

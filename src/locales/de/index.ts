@@ -563,8 +563,8 @@ export const de = {
   outlineEmptyDescDefault: "Verzeichnispunkte erscheinen automatisch, sobald das Gespräch wächst.",
   outlineEmptyDescUserQueryOnly:
     "Derzeit werden nur Nutzerfragen angezeigt. Senden Sie eine Nachricht, um Verzeichnispunkte zu erzeugen.",
-  outlineCopyFull: "Vollständige Gliederung kopieren",
-  outlineCopyFullRunning: "Vollständige Gliederung wird kopiert...",
+  outlineCopyFull: "Gliederung kopieren",
+  outlineCopyFullRunning: "Gliederung wird kopiert...",
   outlineFullCopySuccess: "{count} Gliederungspunkte kopiert",
   outlineRefresh: "Neu laden",
   outlineSettings: "Verzeichnis-Optionen",

@@ -9,6 +9,7 @@ import {
   ClearIcon,
   CollapseAllIcon,
   CopyIcon,
+  CopyOutlineIcon,
   ExpandAllIcon,
   LocateIcon,
   OutlineDocumentIcon,
@@ -1050,7 +1051,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       showToast(t("outlineFullCopySuccess").replace("{count}", String(result.count)))
       window.setTimeout(() => setFullOutlineCopySuccess(false), 1500)
     } catch (error) {
-      console.error("[OutlineTab] Failed to copy full outline:", error)
+      console.error("[OutlineTab] Failed to copy outline:", error)
       showToast(t("copyFailed"))
     } finally {
       setIsCopyingFullOutline(false)
@@ -1309,7 +1310,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               </button>
             </Tooltip>
 
-            {/* Copy Full Outline */}
+            {/* Copy Outline */}
             <Tooltip
               content={isCopyingFullOutline ? t("outlineCopyFullRunning") : t("outlineCopyFull")}>
               <button
@@ -1332,7 +1333,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                 {fullOutlineCopySuccess ? (
                   <CheckIcon size={14} color="#10b981" />
                 ) : (
-                  <CopyIcon size={15} />
+                  <CopyOutlineIcon size={15} />
                 )}
               </button>
             </Tooltip>

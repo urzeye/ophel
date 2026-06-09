@@ -560,8 +560,8 @@ export const ru = {
   outlineEmptyDescDefault: "Пункты содержания появятся автоматически по мере развития диалога.",
   outlineEmptyDescUserQueryOnly:
     "Сейчас отображаются только вопросы пользователя. Отправьте сообщение, чтобы появились пункты содержания.",
-  outlineCopyFull: "Копировать полный план",
-  outlineCopyFullRunning: "Копирование полного плана...",
+  outlineCopyFull: "Копировать план",
+  outlineCopyFullRunning: "Копирование плана...",
   outlineFullCopySuccess: "Скопировано пунктов плана: {count}",
   outlineRefresh: "Перезагрузить",
   outlineSettings: "Настройки содержания",
