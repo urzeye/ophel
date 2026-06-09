@@ -2,7 +2,7 @@ import type { ExportMessage } from "~utils/exporter"
 
 export interface ExportMessagesOutlineOptions {
   includeUserQueries: boolean
-  maxLevel?: number
+  maxRelativeLevel?: number
 }
 
 export interface ExportMessagesOutlineResult {
@@ -13,18 +13,26 @@ export interface ExportMessagesOutlineResult {
 interface ExportOutlineItem {
   level: number
   text: string
-  isUserQuery?: boolean
 }
 
-const MAX_USER_QUERY_PREVIEW_LENGTH = 200
+const MAX_MARKDOWN_HEADING_LEVEL = 6
+const USER_QUERY_HEADING_LEVEL = 2
+const ASSISTANT_HEADING_BASE_WITH_USER_QUERIES = 3
+const ASSISTANT_HEADING_BASE = 2
+const MAX_USER_QUERY_PREVIEW_LENGTH = 120
 
-function clampHeadingLevel(level: number | undefined): number {
-  if (typeof level !== "number" || !Number.isFinite(level)) return 6
-  return Math.min(6, Math.max(0, Math.floor(level)))
+function clampRelativeLevel(level: number | undefined): number {
+  if (typeof level !== "number" || !Number.isFinite(level)) return MAX_MARKDOWN_HEADING_LEVEL
+  return Math.min(MAX_MARKDOWN_HEADING_LEVEL, Math.max(0, Math.floor(level)))
+}
+
+function stripBlockquoteMarkers(value: string): string {
+  return value.replace(/(^|\n)\s*>+\s?/g, "$1")
 }
 
 function stripInlineMarkdown(value: string): string {
-  return value
+  return stripBlockquoteMarkers(value)
+    .replace(/^\s{0,3}#{1,6}\s+/, "")
     .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
     .replace(/\\([\\`*_[\]{}()#+\-.!|>])/g, "$1")
@@ -34,14 +42,14 @@ function stripInlineMarkdown(value: string): string {
 }
 
 function normalizeOutlineText(value: string, maxLength?: number): string {
-  const normalized = stripInlineMarkdown(value.replace(/\r\n?/g, "\n").replace(/\n+/g, " "))
+  const normalized = stripInlineMarkdown(
+    stripBlockquoteMarkers(value.replace(/\r\n?/g, "\n")).replace(/\n+/g, " "),
+  )
   if (!maxLength || normalized.length <= maxLength) return normalized
   return `${normalized.slice(0, maxLength).trim()}...`
 }
 
-function extractMarkdownHeadings(content: string, maxLevel: number): ExportOutlineItem[] {
-  if (maxLevel < 1) return []
-
+function extractMarkdownHeadings(content: string): ExportOutlineItem[] {
   const items: ExportOutlineItem[] = []
   const lines = content.replace(/\r\n?/g, "\n").split("\n")
   let fenceMarker: string | null = null
@@ -64,8 +72,6 @@ function extractMarkdownHeadings(content: string, maxLevel: number): ExportOutli
     if (!headingMatch) continue
 
     const level = headingMatch[1].length
-    if (level > maxLevel) continue
-
     const text = normalizeOutlineText(headingMatch[2])
     if (!text) continue
 
@@ -75,12 +81,37 @@ function extractMarkdownHeadings(content: string, maxLevel: number): ExportOutli
   return items
 }
 
+function getMarkdownHeadingPrefix(level: number): string {
+  return "#".repeat(Math.min(MAX_MARKDOWN_HEADING_LEVEL, Math.max(1, level)))
+}
+
+function formatAssistantHeadings(
+  headings: ExportOutlineItem[],
+  maxRelativeLevel: number,
+  headingBase: number,
+): string[] {
+  if (headings.length === 0 || maxRelativeLevel < 1) return []
+
+  const minHeadingLevel = Math.min(...headings.map((item) => item.level))
+
+  return headings.flatMap((item) => {
+    const relativeLevel = item.level - minHeadingLevel + 1
+    if (relativeLevel > maxRelativeLevel) return []
+
+    const headingLevel = headingBase + relativeLevel - 1
+    return [`${getMarkdownHeadingPrefix(headingLevel)} ${item.text}`]
+  })
+}
+
 export function createOutlineTextFromExportMessages(
   messages: ExportMessage[],
   options: ExportMessagesOutlineOptions,
 ): ExportMessagesOutlineResult {
-  const maxLevel = clampHeadingLevel(options.maxLevel)
-  const items: ExportOutlineItem[] = []
+  const maxRelativeLevel = clampRelativeLevel(options.maxRelativeLevel)
+  const assistantHeadingBase = options.includeUserQueries
+    ? ASSISTANT_HEADING_BASE_WITH_USER_QUERIES
+    : ASSISTANT_HEADING_BASE
+  const lines: string[] = []
 
   for (const message of messages) {
     const role = message.role.toLowerCase()
@@ -90,33 +121,21 @@ export function createOutlineTextFromExportMessages(
 
       const text = normalizeOutlineText(message.content, MAX_USER_QUERY_PREVIEW_LENGTH)
       if (text) {
-        items.push({ level: 0, text, isUserQuery: true })
+        lines.push(`${getMarkdownHeadingPrefix(USER_QUERY_HEADING_LEVEL)} ${text}`)
       }
       continue
     }
 
-    items.push(...extractMarkdownHeadings(message.content, maxLevel))
+    const headings = extractMarkdownHeadings(message.content)
+    lines.push(...formatAssistantHeadings(headings, maxRelativeLevel, assistantHeadingBase))
   }
 
-  if (items.length === 0) {
+  if (lines.length === 0) {
     return { text: "", count: 0 }
   }
 
-  const headingLevels = items.filter((item) => !item.isUserQuery).map((item) => item.level)
-  const minHeadingLevel = headingLevels.length > 0 ? Math.min(...headingLevels) : 1
-
-  const lines = items.map((item) => {
-    const depth = item.isUserQuery
-      ? 0
-      : options.includeUserQueries
-        ? Math.max(1, item.level - minHeadingLevel + 1)
-        : Math.max(0, item.level - minHeadingLevel)
-
-    return `${"  ".repeat(depth)}- ${item.text}`
-  })
-
   return {
-    text: lines.join("\n"),
+    text: lines.join("\n\n"),
     count: lines.length,
   }
 }

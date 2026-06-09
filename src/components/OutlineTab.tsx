@@ -1037,7 +1037,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
       const result = createOutlineTextFromExportMessages(messages, {
         includeUserQueries: showUserQueries,
-        maxLevel: displayLevel,
+        maxRelativeLevel: displayLevel,
       })
 
       if (!result.text) {
