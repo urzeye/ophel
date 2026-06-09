@@ -2661,10 +2661,13 @@ export const App = () => {
       // 避免切换到新对话后大纲面板仍在显示旧对话条目。modules-init.ts 会在
       // popstate / pushState / replaceState 时 dispatch "gh-url-change"。
       const onUrlChange = () => outlineManager.handleUrlChange()
+      const onRefreshOutline = () => outlineManager.refresh()
       window.addEventListener("gh-url-change", onUrlChange)
+      window.addEventListener("ophel:refreshOutline", onRefreshOutline)
       return () => {
         clearInterval(refreshInterval)
         window.removeEventListener("gh-url-change", onUrlChange)
+        window.removeEventListener("ophel:refreshOutline", onRefreshOutline)
         conversationManager?.destroy()
       }
     }

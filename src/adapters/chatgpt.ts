@@ -142,6 +142,7 @@ const CHATGPT_DEEP_RESEARCH_IFRAME_SELECTOR =
   'iframe[title="internal://deep-research"], iframe[src*="connector_openai_deep_research"]'
 const CHATGPT_NATIVE_TOC_ID_PREFIX = "chatgpt-native-user-query::"
 const CHATGPT_NATIVE_TOC_ID_RE = /^chatgpt-native-user-query::(\d+)::/
+const CHATGPT_NATIVE_TOC_PROMPT_LABEL_RE = /^Prompt\s+\d+$/i
 
 interface ChatGPTExportMessageSnapshot {
   role: "user" | "assistant"
@@ -206,6 +207,9 @@ export class ChatGPTAdapter extends SiteAdapter {
   // SPA 切换会话后的过渡期截止时刻：在此之前 extractOutline 不写 cache 也不
   // merge cache，避免把上一个会话残留的 DOM 内容污染到新会话的 cache 里。
   private outlineCacheTransitionEndAt = 0
+  private nativeTocTextCache: string[] = []
+  private nativeTocRevealAttempted = false
+  private nativeTocRefreshScheduled = false
 
   // 导出快照（参考 deepseek / aistudio 方案）：避免虚拟滚动导致漏抓或重复抓取
   private exportSnapshotRoot: HTMLElement | null = null
@@ -2230,32 +2234,178 @@ export class ChatGPTAdapter extends SiteAdapter {
     return Number.isNaN(parsed) ? fallbackIndex : Math.max(0, parsed - 1)
   }
 
+  private isNativeTocButton(button: Element): button is HTMLElement {
+    if (!(button instanceof HTMLElement)) return false
+    if (button.tagName.toLowerCase() !== "button") return false
+
+    const label = this.normalizeNativeTocText(button.getAttribute("aria-label") || "")
+    if (!label) return false
+
+    const className = String(button.className || "")
+    return className.includes("h-0.5") && className.includes("w-4.5")
+  }
+
   private getNativeTocButtons(): HTMLElement[] {
-    const buttons = Array.from(document.querySelectorAll('button[aria-label^="Prompt "]')).filter(
-      (button): button is HTMLElement => {
-        if (!(button instanceof HTMLElement)) return false
-        const label = button.getAttribute("aria-label") || ""
-        if (!/^Prompt \d+$/i.test(label.trim())) return false
-
-        const rail = button.closest(".no-scrollbar")
-        return Boolean(rail?.querySelectorAll('button[aria-label^="Prompt "]').length)
-      },
-    )
-
-    return buttons.sort((left, right) => {
-      const leftIndex = Number.parseInt(
-        (left.getAttribute("aria-label") || "").replace(/\D+/g, ""),
-        10,
+    const rails = Array.from(document.querySelectorAll(".no-scrollbar"))
+    const railButtons = rails
+      .map((rail) =>
+        Array.from(rail.querySelectorAll("button[aria-label]")).filter(
+          (button): button is HTMLElement => this.isNativeTocButton(button),
+        ),
       )
-      const rightIndex = Number.parseInt(
-        (right.getAttribute("aria-label") || "").replace(/\D+/g, ""),
-        10,
-      )
-      return (Number.isNaN(leftIndex) ? 0 : leftIndex) - (Number.isNaN(rightIndex) ? 0 : rightIndex)
+      .filter((buttons) => buttons.length > 0)
+      .sort((left, right) => right.length - left.length)[0]
+
+    const buttons = railButtons || []
+
+    return buttons
+      .map((button, fallbackIndex) => ({
+        button,
+        index: this.getNativeTocButtonIndex(button, fallbackIndex),
+      }))
+      .sort((left, right) => left.index - right.index)
+      .map(({ button }) => button)
+  }
+
+  private getNativeTocHoverTargets(buttons: HTMLElement[]): HTMLElement[] {
+    const firstButton = buttons[0]
+    if (!firstButton) return []
+
+    const rail = firstButton.closest(".no-scrollbar")
+    return [
+      rail,
+      rail?.parentElement,
+      firstButton.closest(".relative.flex.items-start"),
+      firstButton.closest(".fixed"),
+      firstButton,
+    ].filter((element, index, all): element is HTMLElement => {
+      return element instanceof HTMLElement && all.indexOf(element) === index
     })
   }
 
+  private revealNativeTocTextLayer(buttons: HTMLElement[]): void {
+    const targets = this.getNativeTocHoverTargets(buttons)
+
+    targets.forEach((target) => {
+      const rect = target.getBoundingClientRect()
+      const eventInit = {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        view: window,
+        clientX: Math.round(rect.left + rect.width / 2),
+        clientY: Math.round(rect.top + rect.height / 2),
+      }
+
+      if (typeof PointerEvent !== "undefined") {
+        target.dispatchEvent(
+          new PointerEvent("pointerover", {
+            ...eventInit,
+            pointerId: 1,
+            pointerType: "mouse",
+            isPrimary: true,
+          }),
+        )
+        target.dispatchEvent(
+          new PointerEvent("pointerenter", {
+            ...eventInit,
+            pointerId: 1,
+            pointerType: "mouse",
+            isPrimary: true,
+          }),
+        )
+      }
+
+      target.dispatchEvent(new MouseEvent("mouseover", eventInit))
+      target.dispatchEvent(new MouseEvent("mouseenter", eventInit))
+      target.dispatchEvent(new MouseEvent("mousemove", eventInit))
+    })
+  }
+
+  private concealNativeTocTextLayer(buttons: HTMLElement[]): void {
+    const targets = this.getNativeTocHoverTargets(buttons)
+
+    targets.forEach((target) => {
+      const rect = target.getBoundingClientRect()
+      const eventInit = {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        view: window,
+        clientX: Math.max(0, Math.round(rect.left - 8)),
+        clientY: Math.max(0, Math.round(rect.top - 8)),
+      }
+
+      if (typeof PointerEvent !== "undefined") {
+        target.dispatchEvent(
+          new PointerEvent("pointerout", {
+            ...eventInit,
+            pointerId: 1,
+            pointerType: "mouse",
+            isPrimary: true,
+          }),
+        )
+        target.dispatchEvent(
+          new PointerEvent("pointerleave", {
+            ...eventInit,
+            pointerId: 1,
+            pointerType: "mouse",
+            isPrimary: true,
+          }),
+        )
+      }
+
+      target.dispatchEvent(new MouseEvent("mouseout", eventInit))
+      target.dispatchEvent(new MouseEvent("mouseleave", eventInit))
+    })
+  }
+
+  private readNativeTocButtonLabels(buttons: HTMLElement[]): string[] {
+    const labels = buttons
+      .map((button) => this.normalizeNativeTocText(button.getAttribute("aria-label") || ""))
+      .filter((label) => label && !CHATGPT_NATIVE_TOC_PROMPT_LABEL_RE.test(label))
+
+    return labels.length === buttons.length ? labels : []
+  }
+
+  private scheduleNativeTocRefresh(buttons: HTMLElement[]): void {
+    if (this.nativeTocRefreshScheduled) return
+
+    this.nativeTocRefreshScheduled = true
+    window.setTimeout(() => {
+      const latestButtons = this.getNativeTocButtons()
+      const texts = this.readNativeTocButtonLabels(latestButtons)
+      if (texts.length === latestButtons.length && texts.length > 0) {
+        this.nativeTocTextCache = texts
+        window.dispatchEvent(new CustomEvent("ophel:refreshOutline"))
+      }
+
+      this.concealNativeTocTextLayer(latestButtons.length > 0 ? latestButtons : buttons)
+      this.nativeTocRefreshScheduled = false
+    }, 250)
+  }
+
   private getNativeTocTexts(buttons: HTMLElement[]): string[] {
+    const labels = this.readNativeTocButtonLabels(buttons)
+    if (labels.length === buttons.length) {
+      this.nativeTocTextCache = labels
+      return labels
+    }
+
+    if (!this.nativeTocRevealAttempted && this.nativeTocTextCache.length !== buttons.length) {
+      this.nativeTocRevealAttempted = true
+      this.revealNativeTocTextLayer(buttons)
+
+      const revealedLabels = this.readNativeTocButtonLabels(buttons)
+      if (revealedLabels.length === buttons.length) {
+        this.nativeTocTextCache = revealedLabels
+        this.concealNativeTocTextLayer(buttons)
+        return revealedLabels
+      }
+
+      this.scheduleNativeTocRefresh(buttons)
+    }
+
     const firstButton = buttons[0]
     const scope =
       firstButton?.closest(".no-scrollbar")?.parentElement ||
@@ -2281,11 +2431,22 @@ export class ChatGPTAdapter extends SiteAdapter {
       return element instanceof HTMLElement
     })
 
-    return uniqueTitleElements
+    const texts = uniqueTitleElements
       .map((element) =>
         this.normalizeNativeTocText(element.getAttribute("title") || element.textContent || ""),
       )
       .filter((text) => text.length > 0)
+
+    if (texts.length === buttons.length) {
+      this.nativeTocTextCache = texts
+      return texts
+    }
+
+    if (this.nativeTocTextCache.length === buttons.length) {
+      return this.nativeTocTextCache
+    }
+
+    return texts
   }
 
   private getNativeTocEntries(): ChatGPTNativeTocEntry[] {
@@ -2513,6 +2674,9 @@ export class ChatGPTAdapter extends SiteAdapter {
     this.outlineItemCache.clear()
     this.outlineTurnFirstSeenIndex.clear()
     this.outlineTurnFirstSeenCounter = 0
+    this.nativeTocTextCache = []
+    this.nativeTocRevealAttempted = false
+    this.nativeTocRefreshScheduled = false
     // SPA 切换会话时（不是首次初始化）进入过渡期：ChatGPT 的 URL 同步切换、但
     // DOM 替换是异步的；此时 extractOutline 抓到的仍是上一个会话的残留节点，
     // 若立刻当成"新会话 cache"写进去，等 DOM 完成切换、新会话内容到位时再做
