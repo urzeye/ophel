@@ -585,8 +585,8 @@ export const de = {
   refreshSettings: "Aktualisierung",
   jumpToAnchor: "Zurückspringen",
   // Outline advanced toolbar
-  outlineScrollBottom: "Nach unten",
-  outlineScrollTop: "Nach oben",
+  outlineScrollBottom: "Zum Ende der Gliederung",
+  outlineScrollTop: "Zum Anfang der Gliederung",
   outlineExpandAll: "Alles ausklappen",
   outlineCollapseAll: "Alles einklappen",
   outlineLocateCurrent: "Aktuelle Position finden",

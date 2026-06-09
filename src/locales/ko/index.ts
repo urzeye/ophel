@@ -585,8 +585,8 @@ export const ko = {
   refreshSettings: "새로고침 설정",
   jumpToAnchor: "이전 위치로 돌아가기",
   // Outline advanced toolbar
-  outlineScrollBottom: "하단으로 스크롤",
-  outlineScrollTop: "상단으로 스크롤",
+  outlineScrollBottom: "개요 하단으로 스크롤",
+  outlineScrollTop: "개요 상단으로 스크롤",
   outlineExpandAll: "모두 확장",
   outlineCollapseAll: "모두 접기",
   outlineLocateCurrent: "현재 위치 찾기",

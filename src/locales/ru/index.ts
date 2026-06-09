@@ -582,8 +582,8 @@ export const ru = {
   refreshSettings: "Обновление",
   jumpToAnchor: "Вернуться назад",
   // Outline advanced toolbar
-  outlineScrollBottom: "В самый низ",
-  outlineScrollTop: "В самый верх",
+  outlineScrollBottom: "В конец структуры",
+  outlineScrollTop: "В начало структуры",
   outlineExpandAll: "Раскрыть всё",
   outlineCollapseAll: "Свернуть всё",
   outlineLocateCurrent: "Найти текущее место",

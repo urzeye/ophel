@@ -603,8 +603,8 @@ export const ja = {
   anchorUpdated: "アンカーを更新しました",
 
   // Outline advanced toolbar
-  outlineScrollBottom: "一番下へ",
-  outlineScrollTop: "一番上へ",
+  outlineScrollBottom: "アウトラインの一番下へ",
+  outlineScrollTop: "アウトラインの一番上へ",
   outlineExpandAll: "すべて展開",
   outlineCollapseAll: "すべて折りたたむ",
   outlineLocateCurrent: "現在の位置を特定",

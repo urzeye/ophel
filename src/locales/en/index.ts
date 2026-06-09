@@ -617,8 +617,8 @@ export const en = {
   anchorUpdated: "Anchor updated",
   // Outline advanced toolbar
 
-  outlineScrollBottom: "Scroll to bottom",
-  outlineScrollTop: "Scroll to top",
+  outlineScrollBottom: "Scroll to outline bottom",
+  outlineScrollTop: "Scroll to outline top",
   outlineExpandAll: "Expand all",
   outlineCollapseAll: "Collapse all",
   outlineLocateCurrent: "Locate current position",

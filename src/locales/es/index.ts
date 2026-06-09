@@ -585,8 +585,8 @@ export const es = {
   refreshSettings: "Actualización",
   jumpToAnchor: "Volver atrás",
   // Outline advanced toolbar
-  outlineScrollBottom: "Ir al final",
-  outlineScrollTop: "Ir al inicio",
+  outlineScrollBottom: "Ir al final del esquema",
+  outlineScrollTop: "Ir al inicio del esquema",
   outlineExpandAll: "Expandir todo",
   outlineCollapseAll: "Contraer todo",
   outlineLocateCurrent: "Ubicar posición actual",

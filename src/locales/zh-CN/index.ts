@@ -583,8 +583,8 @@ export const zhCN = {
   jumpToAnchor: "返回跳转前位置",
   anchorUpdated: "锚点已更新",
   // 大纲高级工具栏
-  outlineScrollBottom: "滚动到底部",
-  outlineScrollTop: "滚动到顶部",
+  outlineScrollBottom: "滚动到大纲底部",
+  outlineScrollTop: "滚动到大纲顶部",
   outlineExpandAll: "展开全部",
   outlineCollapseAll: "折叠全部",
   outlineLocateCurrent: "定位到当前位置",

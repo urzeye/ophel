@@ -583,8 +583,8 @@ export const pt = {
   refreshSettings: "Atualização",
   jumpToAnchor: "Voltar atrás",
   // Outline advanced toolbar
-  outlineScrollBottom: "Ir para o fim",
-  outlineScrollTop: "Ir para o início",
+  outlineScrollBottom: "Ir para o fim do esquema",
+  outlineScrollTop: "Ir para o início do esquema",
   outlineExpandAll: "Expandir tudo",
   outlineCollapseAll: "Recolher tudo",
   outlineLocateCurrent: "Localizar posição atual",

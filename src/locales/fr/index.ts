@@ -585,8 +585,8 @@ export const fr = {
   refreshSettings: "Mise à jour",
   jumpToAnchor: "Retourner en arrière",
   // Outline advanced toolbar
-  outlineScrollBottom: "Aller au bas",
-  outlineScrollTop: "Aller au haut",
+  outlineScrollBottom: "Aller en bas du plan",
+  outlineScrollTop: "Aller en haut du plan",
   outlineExpandAll: "Tout étendre",
   outlineCollapseAll: "Tout replier",
   outlineLocateCurrent: "Localiser position actuelle",

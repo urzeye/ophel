@@ -472,8 +472,8 @@ export const zhTW = {
   refreshOutline: "刷新大綱",
   refreshSettings: "刷新設置",
   // 大綱高級工具欄
-  outlineScrollBottom: "滾動到底部",
-  outlineScrollTop: "滾動到頂部",
+  outlineScrollBottom: "滾動到大綱底部",
+  outlineScrollTop: "滾動到大綱頂部",
   outlineExpandAll: "展開全部",
   outlineCollapseAll: "折叠全部",
   outlineLocateCurrent: "定位到當前位置",
