@@ -1351,6 +1351,7 @@ export const ru = {
   outlineSettingsTitle: "Оглавление",
   outlineEnabledLabel: "Показать оглавление",
   outlineShowUserQueriesLabel: "Показать мои вопросы",
+  outlineUserQueryRoleLabel: "Вопросы пользователя",
   anchorUpdated: "Якорь обновлен",
   loadingHistory: "Загрузка истории...",
   historyLoaded: "История загружена",

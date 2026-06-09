@@ -597,6 +597,7 @@ export const en = {
   outlineSettingsTitle: "Outline Settings",
   outlineEnabledLabel: "Enable Outline View",
   outlineShowUserQueriesLabel: "Show User Queries",
+  outlineUserQueryRoleLabel: "User queries",
   bookmarkSettings: "Bookmark Settings",
 
   bookmarkModeDisableLevel: "Cannot adjust levels in bookmark mode",

@@ -583,6 +583,7 @@ export const ja = {
   outlineSettingsTitle: "アウトライン設定",
   outlineEnabledLabel: "アウトライン表示を有効化",
   outlineShowUserQueriesLabel: "ユーザーの質問を表示",
+  outlineUserQueryRoleLabel: "ユーザーの質問",
 
   bookmarkSettings: "ブックマーク設定",
   bookmarkModeDisableLevel: "ブックマークモードではレベルを調整できません",

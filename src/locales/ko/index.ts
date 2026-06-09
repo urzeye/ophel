@@ -1361,6 +1361,7 @@ export const ko = {
   outlineSettingsTitle: "개요 설정",
   outlineEnabledLabel: "Enable Outline",
   outlineShowUserQueriesLabel: "사용자 질문 표시",
+  outlineUserQueryRoleLabel: "사용자 질문",
   anchorUpdated: "Anchor Updated",
   loadingHistory: "Loading History...",
   historyLoaded: "History Loaded",

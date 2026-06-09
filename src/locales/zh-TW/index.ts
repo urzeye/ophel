@@ -444,6 +444,7 @@ export const zhTW = {
   outlineSettingsTitle: "大綱設置",
   outlineEnabledLabel: "啟用大綱視圖",
   outlineShowUserQueriesLabel: "顯示用戶提問",
+  outlineUserQueryRoleLabel: "用戶提問",
 
   bookmarkSettings: "收藏設置",
   bookmarkModeDisableLevel: "收藏模式下無法調整層級",

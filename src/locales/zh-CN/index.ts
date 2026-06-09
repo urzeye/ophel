@@ -573,6 +573,7 @@ export const zhCN = {
   outlineSettingsTitle: "大纲设置",
   outlineEnabledLabel: "启用大纲视图",
   outlineShowUserQueriesLabel: "显示用户提问",
+  outlineUserQueryRoleLabel: "用户提问",
 
   outlineMaxLevel: "显示标题级别",
   outlineLevelAll: "全部 (1-6级)",

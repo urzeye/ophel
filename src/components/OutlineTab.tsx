@@ -1454,7 +1454,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               if (bookmarkMode) {
                 title = t("bookmarkModeDisabled")
               } else if (lvl === 0) {
-                title = showUserQueries ? t("outlineShowUserQueriesLabel") : t("outlineCollapseAll")
+                title = showUserQueries ? t("outlineUserQueryRoleLabel") : t("outlineCollapseAll")
               } else {
                 title = `H${lvl}: ${levelCounts[lvl] || 0}`
               }
