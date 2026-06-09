@@ -18,6 +18,11 @@ import { platform } from "~platform"
 import { geminiNativeThemeCss } from "~styles/native-theme-adapters/gemini"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import {
+  extractConversationTitleFromDocumentTitle,
+  GEMINI_NATIVE_TAB_TITLE_ATTR,
+  GEMINI_NATIVE_TAB_TITLE_PATH_ATTR,
+} from "~utils/conversation-title"
+import {
   buildMarkdownFilename,
   createMarkdownDocumentAssetLink,
   extractMarkdownTitle,
@@ -2131,7 +2136,23 @@ export class GeminiAdapter extends SiteAdapter {
     if (deepResearchArtifactTitle) {
       return deepResearchArtifactTitle
     }
+    const nativeTitle = this.getGeminiNativeDocumentTitle()
+    if (nativeTitle) {
+      return nativeTitle
+    }
     return super.getSessionName()
+  }
+
+  private getGeminiNativeDocumentTitle(): string | null {
+    const root = document.documentElement
+    const title = root?.getAttribute(GEMINI_NATIVE_TAB_TITLE_ATTR)
+    const path = root?.getAttribute(GEMINI_NATIVE_TAB_TITLE_PATH_ATTR)
+
+    if (!title || path !== window.location.pathname) return null
+
+    return extractConversationTitleFromDocumentTitle(title, {
+      siteName: this.getName(),
+    })
   }
 
   getConversationTitle(): string | null {

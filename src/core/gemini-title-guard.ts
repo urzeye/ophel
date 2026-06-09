@@ -1,4 +1,8 @@
-import { MANAGED_TAB_TITLE_ATTR } from "~utils/conversation-title"
+import {
+  GEMINI_NATIVE_TAB_TITLE_ATTR,
+  GEMINI_NATIVE_TAB_TITLE_PATH_ATTR,
+  MANAGED_TAB_TITLE_ATTR,
+} from "~utils/conversation-title"
 
 declare const unsafeWindow: Window | undefined
 
@@ -24,6 +28,16 @@ function getManagedTitle(): string | null {
   return title || null
 }
 
+function rememberNativeTitle(title: string): void {
+  const normalizedTitle = title.trim()
+  if (!normalizedTitle) return
+
+  const pageWindow = getPageWindow()
+  const root = pageWindow.document.documentElement
+  root?.setAttribute(GEMINI_NATIVE_TAB_TITLE_ATTR, normalizedTitle)
+  root?.setAttribute(GEMINI_NATIVE_TAB_TITLE_PATH_ATTR, pageWindow.location.pathname)
+}
+
 function applyManagedTitle(): void {
   if (isApplyingManagedTitle) return
 
@@ -32,6 +46,7 @@ function applyManagedTitle(): void {
   const managedTitle = getManagedTitle()
   if (!managedTitle || pageDocument.title === managedTitle) return
 
+  rememberNativeTitle(pageDocument.title)
   isApplyingManagedTitle = true
   pageDocument.title = managedTitle
   pageWindow.queueMicrotask(() => {
@@ -63,11 +78,15 @@ function installDocumentTitleSetterGuard(): void {
       if (this === pageWindow.document) {
         const managedTitle = getManagedTitle()
         if (managedTitle && nextTitle !== managedTitle) {
+          rememberNativeTitle(nextTitle)
           descriptor.set?.call(this, managedTitle)
           return
         }
       }
 
+      if (this === pageWindow.document && nextTitle !== getManagedTitle()) {
+        rememberNativeTitle(nextTitle)
+      }
       descriptor.set?.call(this, nextTitle)
     },
   })
