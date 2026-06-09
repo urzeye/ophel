@@ -49,6 +49,7 @@ const USER_QUERY_MARKDOWN_CSS = `
   font-size: 15px;
   line-height: 1.6;
   color: inherit;
+  white-space: normal !important;
   /* 默认：浅色主题代码块（透明叠加，叠加在气泡背景之上，适配任意站点/主题） */
   --gh-user-query-code-bg: rgba(0, 0, 0, 0.06);
   --gh-user-query-code-border: rgba(0, 0, 0, 0.08);
@@ -504,33 +505,55 @@ export class UserQueryMarkdownRenderer {
    * 注入样式到 document.head
    */
   private injectGlobalStyles() {
-    if (document.getElementById(STYLE_ID)) return
+    const styleText = this.getStyleText()
+    let style = document.getElementById(STYLE_ID)
 
-    const style = document.createElement("style")
-    style.id = STYLE_ID
-    style.textContent = [getHighlightStyles(), getMathStyles(), USER_QUERY_MARKDOWN_CSS]
-      .filter(Boolean)
-      .join("\n")
-    document.head.appendChild(style)
+    if (!style) {
+      style = document.createElement("style")
+      style.id = STYLE_ID
+      document.head.appendChild(style)
+    }
+
+    if (style.textContent !== styleText) {
+      style.textContent = styleText
+    }
   }
 
   /**
    * 注入样式到 Shadow DOM（用于 Gemini Enterprise）
    */
   private injectStyleToShadowRoot(shadowRoot: ShadowRoot) {
-    if (this.injectedShadowRoots.has(shadowRoot)) return
-    if (shadowRoot.querySelector(`#${STYLE_ID}`)) return
+    const styleText = this.getStyleText()
+    const existingStyle = shadowRoot.querySelector(`#${STYLE_ID}`)
+    if (existingStyle) {
+      if (existingStyle.textContent !== styleText) {
+        existingStyle.textContent = styleText
+      }
+      this.injectedShadowRoots.add(shadowRoot)
+      return
+    }
 
     const style = document.createElement("style")
     style.id = STYLE_ID
-    style.textContent = [getHighlightStyles(), getMathStyles(), USER_QUERY_MARKDOWN_CSS]
-      .filter(Boolean)
-      .join("\n")
+    style.textContent = styleText
     shadowRoot.prepend(style)
-    this.injectedShadowRoots.add(shadowRoot)
 
     // Shadow DOM 内的事件监听（因为 document 级别的事件无法穿透 Shadow DOM）
-    shadowRoot.addEventListener("click", (e: Event) => this.handleCodeCopy(e))
+    if (!this.injectedShadowRoots.has(shadowRoot)) {
+      shadowRoot.addEventListener("click", (e: Event) => this.handleCodeCopy(e))
+      this.injectedShadowRoots.add(shadowRoot)
+    }
+  }
+
+  private getStyleText(): string {
+    return [getHighlightStyles(), getMathStyles(), USER_QUERY_MARKDOWN_CSS]
+      .filter(Boolean)
+      .join("\n")
+  }
+
+  private normalizeRenderedContainer(container: Element) {
+    if (!(container instanceof HTMLElement)) return
+    container.style.setProperty("white-space", "normal", "important")
   }
 
   /**
@@ -636,6 +659,7 @@ export class UserQueryMarkdownRenderer {
       }
     }
     if (container) {
+      this.normalizeRenderedContainer(container)
       initCopyButtons(container, { size: 14, color: "#6b7280" })
       this.processedElements.set(element, rawMarkdown)
       return
