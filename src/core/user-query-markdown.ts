@@ -69,6 +69,10 @@ const USER_QUERY_MARKDOWN_CSS = `
   color: inherit;
 }
 
+.gh-user-query-markdown.gh-user-query-markdown-deepseek {
+  color: var(--dsw-alias-label-primary, var(--dsr-input-label-primary, #111827)) !important;
+}
+
 /* 为无原生气泡背景的站点（DeepSeek、Kimi 等）提供统一气泡底色
  * Gemini 的用户气泡由外层原生元素（user-query）提供背景，排除在外 */
 .gh-user-query-markdown:not(.gh-user-query-markdown-gemini) {
