@@ -114,6 +114,16 @@ const EXPORT_STAGE_TEXT_KEYS: Record<ConversationExportStage, string> = {
   restoring: "exportOverlayRestoring",
 }
 
+const OUTLINE_COPY_STAGE_TEXT_KEYS: Record<ConversationExportStage, string> = {
+  "loading-history": "outlineCopyOverlayLoadingHistory",
+  preparing: "outlineCopyOverlayPreparing",
+  extracting: "outlineCopyOverlayExtracting",
+  packaging: "exportOverlayPackaging",
+  downloading: "exportOverlayDownloading",
+  copying: "outlineCopyOverlayCopying",
+  restoring: "outlineCopyOverlayRestoring",
+}
+
 const SETTINGS_PAGE_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinition> = {
   [NAV_IDS.GENERAL]: { key: "navGeneral", fallback: "General" },
   [NAV_IDS.FEATURES]: { key: "navFeatures", fallback: "Features" },
@@ -3277,8 +3287,16 @@ export const App = () => {
     fallback: "Reload page",
   })
   const extensionUpdateCloseLabel = t("close")
-  const exportOverlayText = exportProgress ? t(EXPORT_STAGE_TEXT_KEYS[exportProgress.stage]) : ""
-  const exportOverlayHint = t("exportOverlayHint")
+  const exportOverlayText = exportProgress
+    ? t(
+        (exportProgress.operation === "outline-copy"
+          ? OUTLINE_COPY_STAGE_TEXT_KEYS
+          : EXPORT_STAGE_TEXT_KEYS)[exportProgress.stage],
+      )
+    : ""
+  const exportOverlayHint = t(
+    exportProgress?.operation === "outline-copy" ? "outlineCopyOverlayHint" : "exportOverlayHint",
+  )
 
   const outlineRoleLabels = useMemo(
     () => ({

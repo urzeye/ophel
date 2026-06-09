@@ -1077,6 +1077,13 @@ export const ru = {
   exportOverlayCopying: "Копируем Markdown...",
   exportOverlayRestoring: "Восстанавливаем страницу...",
   exportOverlayHint: "Во время экспорта не нажимайте, не прокручивайте и не вводите текст.",
+  outlineCopyOverlayLoadingHistory: "Загружаем весь диалог...",
+  outlineCopyOverlayPreparing: "Готовим план...",
+  outlineCopyOverlayExtracting: "Извлекаем план...",
+  outlineCopyOverlayCopying: "Копируем план...",
+  outlineCopyOverlayRestoring: "Восстанавливаем позицию страницы...",
+  outlineCopyOverlayHint:
+    "Во время копирования плана не нажимайте, не прокручивайте и не вводите текст.",
   replyCopied: "Ответ скопирован",
   noReplyToCopy: "Нечего копить",
   scrollLockToggled: "Скролл изменен",

@@ -15,6 +15,19 @@ interface ExportOutlineItem {
   text: string
 }
 
+export interface OutlineTextNode {
+  level: number
+  text: string
+  isUserQuery?: boolean
+  index?: number
+  children?: OutlineTextNode[]
+}
+
+export interface OutlineTextTreeOptions {
+  includeUserQueries: boolean
+  isIncluded?: (node: OutlineTextNode) => boolean
+}
+
 const MAX_MARKDOWN_HEADING_LEVEL = 6
 const USER_QUERY_HEADING_LEVEL = 1
 const MAX_USER_QUERY_PREVIEW_LENGTH = 120
@@ -50,15 +63,16 @@ function normalizeOutlineText(value: string, maxLength?: number): string {
 function extractMarkdownHeadings(content: string): ExportOutlineItem[] {
   const items: ExportOutlineItem[] = []
   const lines = content.replace(/\r\n?/g, "\n").split("\n")
-  let fenceMarker: string | null = null
+  let fenceMarker: { char: string; length: number } | null = null
 
   for (const line of lines) {
     const fenceMatch = /^\s{0,3}(```+|~~~+)/.exec(line)
     if (fenceMatch) {
-      const marker = fenceMatch[1][0]
+      const marker = fenceMatch[1]
+      const markerChar = marker[0]
       if (!fenceMarker) {
-        fenceMarker = marker
-      } else if (fenceMarker === marker) {
+        fenceMarker = { char: markerChar, length: marker.length }
+      } else if (fenceMarker.char === markerChar && marker.length >= fenceMarker.length) {
         fenceMarker = null
       }
       continue
@@ -66,7 +80,7 @@ function extractMarkdownHeadings(content: string): ExportOutlineItem[] {
 
     if (fenceMarker) continue
 
-    const headingMatch = /^\s{0,3}(#{1,6})(?:\s+|$)(.*?)\s*#*\s*$/.exec(line)
+    const headingMatch = /^\s{0,3}(#{1,6})(?:\s+|$)(.*?)(?:\s+#+\s*)?$/.exec(line)
     if (!headingMatch) continue
 
     const level = headingMatch[1].length
@@ -93,6 +107,10 @@ function formatAssistantHeadings(headings: ExportOutlineItem[], maxHeadingLevel:
   })
 }
 
+function formatUserQueryHeading(text: string, count: number): string {
+  return `${getMarkdownHeadingPrefix(USER_QUERY_HEADING_LEVEL)} Q${count}. ${text}`
+}
+
 export function createOutlineTextFromExportMessages(
   messages: ExportMessage[],
   options: ExportMessagesOutlineOptions,
@@ -110,9 +128,7 @@ export function createOutlineTextFromExportMessages(
       const text = normalizeOutlineText(message.content, MAX_USER_QUERY_PREVIEW_LENGTH)
       if (text) {
         userQueryCount += 1
-        lines.push(
-          `${getMarkdownHeadingPrefix(USER_QUERY_HEADING_LEVEL)} Q${userQueryCount}. ${text}`,
-        )
+        lines.push(formatUserQueryHeading(text, userQueryCount))
       }
       continue
     }
@@ -120,6 +136,49 @@ export function createOutlineTextFromExportMessages(
     const headings = extractMarkdownHeadings(message.content)
     lines.push(...formatAssistantHeadings(headings, maxHeadingLevel))
   }
+
+  if (lines.length === 0) {
+    return { text: "", count: 0 }
+  }
+
+  return {
+    text: lines.join("\n\n"),
+    count: lines.length,
+  }
+}
+
+export function createOutlineTextFromOutlineTree(
+  nodes: OutlineTextNode[],
+  options: OutlineTextTreeOptions,
+): ExportMessagesOutlineResult {
+  const lines: string[] = []
+  let userQueryCount = 0
+
+  const traverse = (node: OutlineTextNode) => {
+    const included = options.isIncluded ? options.isIncluded(node) : true
+
+    if (included) {
+      const text = normalizeOutlineText(
+        node.text,
+        node.isUserQuery ? MAX_USER_QUERY_PREVIEW_LENGTH : undefined,
+      )
+
+      if (text) {
+        if (node.isUserQuery) {
+          if (options.includeUserQueries) {
+            userQueryCount += 1
+            lines.push(formatUserQueryHeading(text, userQueryCount))
+          }
+        } else {
+          lines.push(`${getMarkdownHeadingPrefix(node.level)} ${text}`)
+        }
+      }
+    }
+
+    node.children?.forEach(traverse)
+  }
+
+  nodes.forEach(traverse)
 
   if (lines.length === 0) {
     return { text: "", count: 0 }

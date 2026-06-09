@@ -23,7 +23,10 @@ import type { ConversationManager } from "~core/conversation-manager"
 import type { OutlineManager, OutlineNode } from "~core/outline-manager"
 import type { OutlineSource } from "~adapters/base"
 import { useSettingsStore } from "~stores/settings-store"
-import { createOutlineTextFromExportMessages } from "~utils/export-outline"
+import {
+  createOutlineTextFromExportMessages,
+  createOutlineTextFromOutlineTree,
+} from "~utils/export-outline"
 import { t, getCurrentLang } from "~utils/i18n"
 import { formatWordCount } from "~utils/format"
 import { showToast } from "~utils/toast"
@@ -189,6 +192,9 @@ const buildVisibilityMaps = (
 
   return { parentMap, visibleMap }
 }
+
+const getConversationCopyHeadingLevel = (expandLevel: number, showUserQueries: boolean): number =>
+  showUserQueries ? expandLevel : Math.max(1, expandLevel)
 
 // 递归渲染大纲树节点
 // 使用 outline-hidden 类而非条件渲染
@@ -1030,16 +1036,25 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
     setIsCopyingFullOutline(true)
     try {
-      const messages = await conversationManager.collectCurrentConversationExportMessages()
-      if (!messages || messages.length === 0) {
-        showToast(t("outlineEmpty"))
-        return
-      }
+      let result: ReturnType<typeof createOutlineTextFromExportMessages>
 
-      const result = createOutlineTextFromExportMessages(messages, {
-        includeUserQueries: showUserQueries,
-        maxHeadingLevel: expandLevel,
-      })
+      if (activeSourceId === "conversation") {
+        const messages = await conversationManager.collectCurrentConversationExportMessages()
+        if (!messages || messages.length === 0) {
+          showToast(t("outlineEmpty"))
+          return
+        }
+
+        result = createOutlineTextFromExportMessages(messages, {
+          includeUserQueries: showUserQueries,
+          maxHeadingLevel: getConversationCopyHeadingLevel(expandLevel, showUserQueries),
+        })
+      } else {
+        result = createOutlineTextFromOutlineTree(tree, {
+          includeUserQueries: showUserQueries,
+          isIncluded: (node) => visibleMap[node.index ?? -1] ?? true,
+        })
+      }
 
       if (!result.text) {
         showToast(t("outlineEmpty"))
@@ -1056,7 +1071,15 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     } finally {
       setIsCopyingFullOutline(false)
     }
-  }, [conversationManager, expandLevel, isCopyingFullOutline, showUserQueries])
+  }, [
+    activeSourceId,
+    conversationManager,
+    expandLevel,
+    isCopyingFullOutline,
+    showUserQueries,
+    tree,
+    visibleMap,
+  ])
 
   // 用于提取完整用户提问文本（当显示被截断时）
   const extractUserQueryText = useCallback(

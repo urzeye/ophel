@@ -1153,6 +1153,13 @@ Please output the optimized code block directly, followed by a brief summary of 
   exportOverlayCopying: "Copying Markdown...",
   exportOverlayRestoring: "Restoring page...",
   exportOverlayHint: "Keep the page still during export. Do not click, scroll, or type.",
+  outlineCopyOverlayLoadingHistory: "Loading full conversation...",
+  outlineCopyOverlayPreparing: "Preparing outline...",
+  outlineCopyOverlayExtracting: "Extracting outline...",
+  outlineCopyOverlayCopying: "Copying outline...",
+  outlineCopyOverlayRestoring: "Restoring page position...",
+  outlineCopyOverlayHint:
+    "Keep the page still while copying the outline. Do not click, scroll, or type.",
   replyCopied: "Latest reply copied",
   noReplyToCopy: "No reply to copy",
   scrollLockToggled: "Scroll lock toggled",

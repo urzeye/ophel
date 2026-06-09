@@ -1083,6 +1083,13 @@ Donnez le code puis un résumé des améliorations.`,
   exportOverlayRestoring: "Restauration de la page...",
   exportOverlayHint:
     "Pendant l'export, ne cliquez pas, ne faites pas défiler et ne saisissez rien.",
+  outlineCopyOverlayLoadingHistory: "Chargement de toute la conversation...",
+  outlineCopyOverlayPreparing: "Préparation du sommaire...",
+  outlineCopyOverlayExtracting: "Extraction du sommaire...",
+  outlineCopyOverlayCopying: "Copie du sommaire...",
+  outlineCopyOverlayRestoring: "Restauration de la position de la page...",
+  outlineCopyOverlayHint:
+    "Pendant la copie du sommaire, ne cliquez pas, ne faites pas défiler et ne saisissez rien.",
   replyCopied: "Réponse copiée",
   noReplyToCopy: "Rien à copier",
   scrollLockToggled: "Scroll changé",

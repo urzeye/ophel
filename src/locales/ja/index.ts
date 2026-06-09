@@ -1126,6 +1126,13 @@ export const ja = {
   exportOverlayRestoring: "ページ状態を復元しています...",
   exportOverlayHint:
     "エクスポート中はページを動かさず、クリック・スクロール・入力をしないでください。",
+  outlineCopyOverlayLoadingHistory: "会話全体を読み込んでいます...",
+  outlineCopyOverlayPreparing: "目次を準備しています...",
+  outlineCopyOverlayExtracting: "目次を抽出しています...",
+  outlineCopyOverlayCopying: "目次をコピーしています...",
+  outlineCopyOverlayRestoring: "ページ位置を復元しています...",
+  outlineCopyOverlayHint:
+    "目次のコピー中はページを動かさず、クリック・スクロール・入力をしないでください。",
   replyCopied: "最新の回答をコピーしました",
   noReplyToCopy: "コピーできる回答がありません",
   scrollLockToggled: "スクロールロックを切り替えました",

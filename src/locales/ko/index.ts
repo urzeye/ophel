@@ -1083,6 +1083,13 @@ export const ko = {
   exportOverlayCopying: "Markdown 복사 중...",
   exportOverlayRestoring: "페이지 상태를 복원하는 중...",
   exportOverlayHint: "내보내는 동안 페이지를 그대로 두고 클릭, 스크롤, 입력하지 마세요.",
+  outlineCopyOverlayLoadingHistory: "전체 대화를 불러오는 중...",
+  outlineCopyOverlayPreparing: "개요를 준비하는 중...",
+  outlineCopyOverlayExtracting: "개요를 추출하는 중...",
+  outlineCopyOverlayCopying: "개요 복사 중...",
+  outlineCopyOverlayRestoring: "페이지 위치를 복원하는 중...",
+  outlineCopyOverlayHint:
+    "개요를 복사하는 동안 페이지를 그대로 두고 클릭, 스크롤, 입력하지 마세요.",
   replyCopied: "최신 응답이 복사되었습니다",
   noReplyToCopy: "복사할 응답이 없습니다",
   scrollLockToggled: "스크롤 잠금이 전환되었습니다",

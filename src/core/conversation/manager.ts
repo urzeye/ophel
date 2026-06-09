@@ -42,10 +42,13 @@ export type ConversationExportStage =
   | "copying"
   | "restoring"
 
+export type ConversationExportOperation = "export" | "outline-copy"
+
 export interface ConversationExportProgress {
   conversationId: string
   format: ExportFormat
   stage: ConversationExportStage
+  operation: ConversationExportOperation
 }
 
 export interface ConversationDeleteResult {
@@ -1128,6 +1131,7 @@ export class ConversationManager {
     convId: string,
     format: ExportFormat,
     handleExportData: (data: ConversationExportData) => Promise<T> | T,
+    operation: ConversationExportOperation = "export",
   ): Promise<T | null> {
     const currentSessionId = this.siteAdapter.getSessionId()
     if (currentSessionId !== convId) {
@@ -1161,6 +1165,7 @@ export class ConversationManager {
         conversationId: convId,
         format,
         stage,
+        operation,
       })
     }
 
@@ -1247,7 +1252,12 @@ export class ConversationManager {
       return null
     }
 
-    return this.withConversationExportData(currentSessionId, format, ({ messages }) => messages)
+    return this.withConversationExportData(
+      currentSessionId,
+      format,
+      ({ messages }) => messages,
+      "outline-copy",
+    )
   }
 
   /**
