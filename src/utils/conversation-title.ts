@@ -1,4 +1,4 @@
-const MANAGED_TAB_TITLE_ATTR = "data-ophel-managed-tab-title"
+export const MANAGED_TAB_TITLE_ATTR = "data-ophel-managed-tab-title"
 const MAX_MANAGED_TITLE_STRIP_PASSES = 20
 const PLACEHOLDER_PATTERN = /\{(?:status|title|model|site)\}/g
 const MODEL_PLACEHOLDER = "{model}"

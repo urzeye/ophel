@@ -16,6 +16,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Gemini tab renaming** — Gemini tabs no longer flicker back to the native page title during active replies when automatic tab renaming is enabled.
 - **Gemini watermark removal** — Replaced the legacy Gemini/Nano Banana remover with the SDK-backed implementation and fixed user-uploaded image handling plus generated-image removal regressions. (#593, #625)
 - **Rendered user-query spacing** — Rendered Markdown in user questions now ignores native plain-text whitespace classes, preventing large blank gaps between paragraphs and quoted text on DeepSeek, Doubao, Z.ai, ChatGLM, Qwen, and similar sites.
 

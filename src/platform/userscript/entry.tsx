@@ -318,11 +318,15 @@ injectGeminiCanvasCodeBridge()
  * document-start 时 DOM 尚未就绪，需等待 document.readyState 变化
  */
 async function init() {
-  const [{ getAdapter }, { App }, { initNetworkMonitor }] = await Promise.all([
-    import("~adapters"),
-    import("~components/App"),
-    import("~core/network-monitor"),
-  ])
+  const [{ getAdapter }, { App }, { initNetworkMonitor }, { initGeminiTitleGuard }] =
+    await Promise.all([
+      import("~adapters"),
+      import("~components/App"),
+      import("~core/network-monitor"),
+      import("~core/gemini-title-guard"),
+    ])
+
+  initGeminiTitleGuard()
 
   const adapter = getAdapter()
 

@@ -1,5 +1,6 @@
 import type { PlasmoCSConfig } from "plasmo"
 
+import { initGeminiTitleGuard } from "~core/gemini-title-guard"
 import { initNetworkMonitor } from "../core/network-monitor"
 
 export const config: PlasmoCSConfig = {
@@ -25,4 +26,5 @@ export const config: PlasmoCSConfig = {
 
 // 初始化 NetworkMonitor
 // 此文件作为 Main World Sciprt 注入，运行在页面上下文中
+initGeminiTitleGuard()
 initNetworkMonitor()
