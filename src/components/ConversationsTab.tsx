@@ -1483,6 +1483,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
       {menu?.type === "export-conv" && (
         <ExportMenu
           anchorEl={menu.anchorEl}
+          anchorPoint={menu.anchorPoint}
           onClose={() => setMenu(null)}
           onExportMarkdown={async () => {
             setMenu(null)
