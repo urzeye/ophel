@@ -633,7 +633,6 @@ export const ja = {
   outlineUpdateIntervalLabel: "更新間隔 (秒)",
   outlineShowUserQueries: "ユーザーの発言を含める",
   outlineShowUserQueriesTooltip: "ユーザーの質問を見出しとして表示",
-  outlineOnlyUserQueries: "質問のみ",
   globalSearchOutlineReplies: "回答",
   outlineIntervalUpdated: "間隔を {val} 秒に設定しました",
   outlineSyncScrollLabel: "スクロール同期",

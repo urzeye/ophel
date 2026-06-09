@@ -1283,8 +1283,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
           <div style={{ display: "flex", gap: "2px" }}>
             {/* Group Mode */}
-            <Tooltip
-              content={showUserQueries ? t("outlineOnlyUserQueries") : t("outlineShowUserQueries")}>
+            <Tooltip content={t("outlineShowUserQueries")}>
               <button
                 onClick={handleGroupModeToggle}
                 className={`outline-toolbar-btn ${showUserQueries ? "active-subtle" : ""}`}>
@@ -1455,7 +1454,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               if (bookmarkMode) {
                 title = t("bookmarkModeDisabled")
               } else if (lvl === 0) {
-                title = showUserQueries ? t("outlineOnlyUserQueries") : t("outlineCollapseAll")
+                title = showUserQueries ? t("outlineShowUserQueriesLabel") : t("outlineCollapseAll")
               } else {
                 title = `H${lvl}: ${levelCounts[lvl] || 0}`
               }

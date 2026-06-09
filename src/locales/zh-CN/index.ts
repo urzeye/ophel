@@ -585,8 +585,8 @@ export const zhCN = {
   // 大纲高级工具栏
   outlineScrollBottom: "滚动到大纲底部",
   outlineScrollTop: "滚动到大纲顶部",
-  outlineExpandAll: "展开全部",
-  outlineCollapseAll: "折叠全部",
+  outlineExpandAll: "全部展开",
+  outlineCollapseAll: "全部折叠",
   outlineLocateCurrent: "定位到当前位置",
   outlineSearch: "搜索大纲...",
   outlineSearchResult: "个结果",
@@ -669,7 +669,6 @@ export const zhCN = {
   outlineUpdateIntervalLabel: "更新检测间隔 (秒)",
   outlineShowUserQueries: "展示用户提问",
   outlineShowUserQueriesTooltip: "展示用户提问",
-  outlineOnlyUserQueries: "提问",
   globalSearchOutlineReplies: "回复",
   outlineIntervalUpdated: "间隔已设为 {val} 秒",
   outlineSyncScrollLabel: "同步滚动",

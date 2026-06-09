@@ -3300,7 +3300,7 @@ export const App = () => {
 
   const outlineRoleLabels = useMemo(
     () => ({
-      query: getLocalizedText({ key: "outlineOnlyUserQueries", fallback: "Query" }),
+      query: getLocalizedText({ key: "outlineShowUserQueriesLabel", fallback: "User queries" }),
       reply: getLocalizedText({ key: "globalSearchOutlineReplies", fallback: "Replies" }),
     }),
     [getLocalizedText],

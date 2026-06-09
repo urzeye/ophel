@@ -988,8 +988,8 @@ export const useGlobalSearchData = ({
       fallback: "Outline",
     })
     const outlineQueryLabel = getLocalizedText({
-      key: "outlineOnlyUserQueries",
-      fallback: "Queries",
+      key: "outlineShowUserQueriesLabel",
+      fallback: "User queries",
     })
     const outlineReplyLabel = getLocalizedText({
       key: "globalSearchOutlineReplies",

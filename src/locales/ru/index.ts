@@ -613,7 +613,6 @@ export const ru = {
   outlineUpdateIntervalLabel: "Секунды",
   outlineShowUserQueries: "Мои вопросы",
   outlineShowUserQueriesTooltip: "Видеть мои вопросы",
-  outlineOnlyUserQueries: "Вопросы",
   globalSearchOutlineReplies: "Ответы",
   outlineIntervalUpdated: "Сет: {val}с",
   outlineSyncScrollLabel: "Синхро-скролл",

@@ -474,8 +474,8 @@ export const zhTW = {
   // 大綱高級工具欄
   outlineScrollBottom: "滾動到大綱底部",
   outlineScrollTop: "滾動到大綱頂部",
-  outlineExpandAll: "展開全部",
-  outlineCollapseAll: "折叠全部",
+  outlineExpandAll: "全部展開",
+  outlineCollapseAll: "全部折疊",
   outlineLocateCurrent: "定位到當前位置",
   outlineSearch: "搜尋大綱...",
   outlineSearchResult: "個結果",
@@ -511,7 +511,6 @@ export const zhTW = {
   outlineUpdateIntervalLabel: "更新檢測間隔 (秒)",
   outlineShowUserQueries: "展示用戶提問",
   outlineShowUserQueriesTooltip: "展示用戶提問",
-  outlineOnlyUserQueries: "提問",
   globalSearchOutlineReplies: "回覆",
   outlineIntervalUpdated: "間隔已設為 {val} 秒",
   outlineSyncScrollLabel: "同步滾動",

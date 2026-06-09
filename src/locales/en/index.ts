@@ -659,7 +659,6 @@ export const en = {
   outlineUpdateIntervalLabel: "Update interval (seconds)",
   outlineShowUserQueries: "Show user queries",
   outlineShowUserQueriesTooltip: "Show user queries",
-  outlineOnlyUserQueries: "Queries",
   globalSearchOutlineReplies: "Replies",
   outlineIntervalUpdated: "Interval set to {val} seconds",
   outlineSyncScrollLabel: "Sync scroll",

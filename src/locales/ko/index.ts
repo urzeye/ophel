@@ -616,7 +616,6 @@ export const ko = {
   outlineUpdateIntervalLabel: "업데이트 간격 (초)",
   outlineShowUserQueries: "사용자 쿼리 표시",
   outlineShowUserQueriesTooltip: "사용자 쿼리 표시",
-  outlineOnlyUserQueries: "쿼리만",
   globalSearchOutlineReplies: "응답",
   outlineIntervalUpdated: "간격이 {val}초로 설정되었습니다",
   outlineSyncScrollLabel: "스크롤 동기화",

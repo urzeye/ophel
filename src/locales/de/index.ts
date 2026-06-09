@@ -616,7 +616,6 @@ export const de = {
   outlineUpdateIntervalLabel: "Sekunden",
   outlineShowUserQueries: "Eigene Fragen zeigen",
   outlineShowUserQueriesTooltip: "Eigene Fragen zeigen",
-  outlineOnlyUserQueries: "Nur Fragen",
   globalSearchOutlineReplies: "Antworten",
   outlineIntervalUpdated: "Auf {val}s gesetzt",
   outlineSyncScrollLabel: "Scroll-Synchro",
