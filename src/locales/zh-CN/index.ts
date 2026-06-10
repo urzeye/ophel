@@ -1407,6 +1407,9 @@ export const zhCN = {
   zenModeLabel: "启用禅模式",
   zenModeDesc: "隐藏侧边栏和导航元素，专注于当前对话（每个站点独立配置）",
   zenModeExitButton: "退出禅模式",
+  zenModeExitButtonVisibleLabel: "显示退出按钮",
+  zenModeExitButtonVisibleDesc:
+    "关闭后会隐藏页面上的“退出禅模式”按钮；仍可通过快捷按钮或快捷键退出禅模式。",
   cleanModeTitle: "净化模式 (Clean Mode)",
   cleanModeLabel: "启用净化模式",
   cleanModeDesc:

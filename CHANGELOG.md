@@ -12,6 +12,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### ✨ Improvements
 
 - **Userscript bundle size** — Split Markdown rendering code, Markdown styles, user-query Markdown styles, and site icons into external userscript assets so Greasy Fork sync has less inline code to process while preserving the existing rendering injection path.
+- **Zen Mode exit button** — Added a "Show exit button" setting for Zen Mode, so the on-page exit button can be hidden while keeping the quick button and shortcut exit paths available. (#645)
 
 ### 🐛 Bug Fixes
 

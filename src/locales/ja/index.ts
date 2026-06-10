@@ -1445,6 +1445,9 @@ export const ja = {
   zenModeDesc:
     "サイドバーとナビゲーション要素を非表示にして、現在の会話に集中します（各サイトごとに個別に設定）",
   zenModeExitButton: "禅モードを終了",
+  zenModeExitButtonVisibleLabel: "終了ボタンを表示",
+  zenModeExitButtonVisibleDesc:
+    "オフにすると、ページ上の「禅モードを終了」ボタンを非表示にします。クイックボタンまたはショートカットから引き続き禅モードを終了できます。",
   cleanModeTitle: "クリーンモード",
   cleanModeLabel: "クリーンモードを有効にする",
   cleanModeDesc:

@@ -1429,6 +1429,9 @@ export const ko = {
   zenModeLabel: "선 모드 활성화",
   zenModeDesc: "사이드바 및 내비게이션 요소를 숨겨 현재 대화에 집중합니다 (각 사이트별 개별 설정)",
   zenModeExitButton: "선 모드 종료",
+  zenModeExitButtonVisibleLabel: "종료 버튼 표시",
+  zenModeExitButtonVisibleDesc:
+    "끄면 페이지의 선 모드 종료 버튼이 숨겨집니다. 빠른 버튼이나 단축키로 계속 선 모드를 종료할 수 있습니다.",
   cleanModeTitle: "클린 모드",
   cleanModeLabel: "클린 모드 활성화",
   cleanModeDesc:

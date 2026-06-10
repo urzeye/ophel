@@ -1407,6 +1407,9 @@ export const zhTW = {
   zenModeLabel: "啟用禪模式",
   zenModeDesc: "隱藏側邊欄和導航元素，專注於當前對話（每個站點獨立配置）",
   zenModeExitButton: "退出禪模式",
+  zenModeExitButtonVisibleLabel: "顯示退出按鈕",
+  zenModeExitButtonVisibleDesc:
+    "關閉後會隱藏頁面上的「退出禪模式」按鈕；仍可透過快捷按鈕或快捷鍵退出禪模式。",
   cleanModeTitle: "淨化模式 (Clean Mode)",
   cleanModeLabel: "啟用淨化模式",
   cleanModeDesc:

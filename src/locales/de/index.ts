@@ -1437,6 +1437,9 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   zenModeDesc:
     "Seitenleiste und Navigationselemente ausblenden, um sich auf das aktuelle Gespräch zu konzentrieren (individuell für jede Website konfiguriert)",
   zenModeExitButton: "Zen-Modus beenden",
+  zenModeExitButtonVisibleLabel: "Beenden-Schaltfläche anzeigen",
+  zenModeExitButtonVisibleDesc:
+    "Wenn deaktiviert, wird die Schaltfläche zum Beenden des Zen-Modus auf der Seite ausgeblendet; der Zen-Modus kann weiterhin über die Schnellschaltfläche oder das Tastenkürzel beendet werden.",
   cleanModeTitle: "Reinigungsmodus",
   cleanModeLabel: "Reinigungsmodus aktivieren",
   cleanModeDesc:

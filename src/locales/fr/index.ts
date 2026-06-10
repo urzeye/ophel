@@ -1448,6 +1448,9 @@ Donnez le code puis un résumé des améliorations.`,
   zenModeDesc:
     "Masquez la barre latérale et les éléments de navigation pour vous concentrer sur la conversation en cours (configuré indépendamment pour chaque site)",
   zenModeExitButton: "Quitter le mode Zen",
+  zenModeExitButtonVisibleLabel: "Afficher le bouton de sortie",
+  zenModeExitButtonVisibleDesc:
+    "Une fois désactivé, le bouton de sortie du mode Zen sur la page est masqué ; vous pouvez toujours quitter le mode Zen avec le bouton rapide ou le raccourci.",
   cleanModeTitle: "Mode Nettoyage",
   cleanModeLabel: "Activer le mode Nettoyage",
   cleanModeDesc:

@@ -4,7 +4,7 @@ import { DOMToolkit } from "~utils/dom-toolkit"
 import { createSafeHTML } from "~utils/trusted-types"
 import { t } from "~utils/i18n"
 import { INTER_LOCAL_FONT_FACE, getPlatformFontFamily } from "~utils/font"
-import type { PageWidthConfig } from "~utils/storage"
+import type { PageWidthConfig, ZenModeConfig } from "~utils/storage"
 
 // ==================== 样式 ID 常量 ====================
 const STYLE_IDS = {
@@ -19,7 +19,10 @@ const STYLE_IDS = {
 } as const
 
 const ZEN_MODE_EXIT_HOST_ID = "gh-zen-mode-exit-host"
-const ZEN_MODE_EXIT_LABEL = "退出禅模式"
+const DEFAULT_ZEN_MODE_CONFIG: ZenModeConfig = {
+  enabled: false,
+  showExitButton: true,
+}
 
 /** 窄屏断点（CSS 逻辑像素），低于此值时内容宽度自动切换为近满屏，避免百分比宽度在手机上过窄 */
 const NARROW_SCREEN_BREAKPOINT = 480
@@ -36,6 +39,7 @@ export class LayoutManager {
   private pageWidthStyle: HTMLStyleElement | null = null
   private userQueryWidthStyle: HTMLStyleElement | null = null
   private zenModeStyle: HTMLStyleElement | null = null
+  private zenModeConfig: ZenModeConfig = DEFAULT_ZEN_MODE_CONFIG
   private zenModeEnabled = false
   private zenModeExitHost: HTMLElement | null = null
   private zenModeRootClassState: {
@@ -99,8 +103,12 @@ export class LayoutManager {
 
   // ==================== Zen Mode ====================
 
-  updateZenMode(enabled: boolean) {
-    this.zenModeEnabled = enabled
+  updateZenMode(config: boolean | ZenModeConfig) {
+    this.zenModeConfig =
+      typeof config === "boolean"
+        ? { ...this.zenModeConfig, enabled: config }
+        : { ...DEFAULT_ZEN_MODE_CONFIG, ...config }
+    this.zenModeEnabled = this.zenModeConfig.enabled
     this.applyZenMode()
   }
 
@@ -121,7 +129,11 @@ export class LayoutManager {
     if (css) {
       this.zenModeStyle = this.injectStyle(STYLE_IDS.ZEN_MODE, css)
     }
-    this.mountZenModeExitButton()
+    if (this.zenModeConfig.showExitButton === false) {
+      this.unmountZenModeExitButton()
+    } else {
+      this.mountZenModeExitButton()
+    }
     this.refreshShadowInjection()
   }
 
@@ -471,8 +483,9 @@ export class LayoutManager {
 
   private handleZenModeExit = () => {
     const siteId = this.siteAdapter.getSiteId()
-    this.updateZenMode(false)
-    useSettingsStore.getState().updateDeepSetting("layout", "zenMode", siteId, { enabled: false })
+    const nextZenMode = { ...this.zenModeConfig, enabled: false }
+    this.updateZenMode(nextZenMode)
+    useSettingsStore.getState().updateDeepSetting("layout", "zenMode", siteId, nextZenMode)
   }
 
   // ==================== 国际化支持 ====================

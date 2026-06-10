@@ -85,6 +85,7 @@ export interface ModelLockConfig {
 // 禅模式配置
 export interface ZenModeConfig {
   enabled: boolean
+  showExitButton?: boolean
 }
 
 // 导出设置
@@ -338,6 +339,7 @@ const DEFAULT_USER_QUERY_WIDTH: PageWidthConfig = {
 // 默认禅模式配置
 const DEFAULT_ZEN_MODE: ZenModeConfig = {
   enabled: false,
+  showExitButton: true,
 }
 
 // 默认净化模式配置

@@ -297,6 +297,8 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
   const currentUserQueryWidth =
     settings?.layout?.userQueryWidth?.[siteId as keyof typeof settings.layout.userQueryWidth] ||
     settings?.layout?.userQueryWidth?._default
+  const currentZenMode = settings?.layout?.zenMode?.[siteId] ||
+    settings?.layout?.zenMode?._default || { enabled: false, showExitButton: true }
 
   const parseWidthValue = (value: string | undefined, fallback: string) => {
     const parsed = Number.parseInt(value ?? fallback, 10)
@@ -467,15 +469,8 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
               label={t("zenModeLabel")}
               description={t("zenModeDesc")}
               settingId="layout-zen-mode-enabled"
-              checked={
-                settings.layout?.zenMode?.[siteId as keyof typeof settings.layout.zenMode]
-                  ?.enabled ?? false
-              }
+              checked={currentZenMode.enabled}
               onChange={() => {
-                const currentZenMode = settings.layout?.zenMode?.[
-                  siteId as keyof typeof settings.layout.zenMode
-                ] || { enabled: false }
-
                 const newZenEnabled = !currentZenMode.enabled
                 const updatedLayout: typeof settings.layout = {
                   ...settings.layout,
@@ -495,6 +490,26 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({ siteId, initialTab 
                   }
                 }
                 setSettings({ layout: updatedLayout })
+              }}
+            />
+            <ToggleRow
+              label={t("zenModeExitButtonVisibleLabel")}
+              description={t("zenModeExitButtonVisibleDesc")}
+              settingId="layout-zen-mode-exit-button-visible"
+              checked={currentZenMode.showExitButton ?? true}
+              onChange={() => {
+                setSettings({
+                  layout: {
+                    ...settings.layout,
+                    zenMode: {
+                      ...settings.layout?.zenMode,
+                      [siteId]: {
+                        ...currentZenMode,
+                        showExitButton: !(currentZenMode.showExitButton ?? true),
+                      },
+                    },
+                  },
+                })
               }}
             />
           </SettingCard>

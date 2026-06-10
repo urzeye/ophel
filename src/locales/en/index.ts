@@ -1453,6 +1453,9 @@ Please output the optimized code block directly, followed by a brief summary of 
   zenModeDesc:
     "Hide sidebar and navigation elements to focus on the current conversation (configured independently for each site)",
   zenModeExitButton: "Exit Zen Mode",
+  zenModeExitButtonVisibleLabel: "Show exit button",
+  zenModeExitButtonVisibleDesc:
+    "When off, the on-page Exit Zen Mode button is hidden; you can still leave Zen Mode from the quick button or shortcut.",
   cleanModeTitle: "Clean Mode",
   cleanModeLabel: "Enable Clean Mode",
   cleanModeDesc:

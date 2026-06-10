@@ -1430,6 +1430,9 @@ Dê o código e depois um resumo de melhorias.`,
   zenModeDesc:
     "Oculte a barra lateral e os elementos de navegação para focar na conversa atual (configurado de forma independente para cada site)",
   zenModeExitButton: "Sair do Modo Zen",
+  zenModeExitButtonVisibleLabel: "Mostrar botão de saída",
+  zenModeExitButtonVisibleDesc:
+    "Quando desativado, o botão de saída do Modo Zen na página fica oculto; você ainda pode sair do Modo Zen pelo botão rápido ou atalho.",
   cleanModeTitle: "Modo Limpeza",
   cleanModeLabel: "Ativar Modo Limpeza",
   cleanModeDesc:
