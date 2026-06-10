@@ -152,8 +152,12 @@ export const renderMarkdown = (
 
 export const getMathStyles = (): string => getKatexStylesText()
 
+function isUserscriptPlatform(): boolean {
+  return typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
+}
+
 function getUserscriptMarkdownPreviewStyles(): string {
-  if (typeof window === "undefined" || __PLATFORM__ !== "userscript") return ""
+  if (typeof window === "undefined" || !isUserscriptPlatform()) return ""
   return (
     (window as typeof window & { __OPHEL_MARKDOWN_PREVIEW_STYLES__?: string })
       .__OPHEL_MARKDOWN_PREVIEW_STYLES__ || ""
@@ -335,7 +339,7 @@ function getInlineHighlightStyles(): string {
  * 返回 GitHub Dark 风格的样式
  */
 export const getHighlightStyles = (): string => {
-  if (__PLATFORM__ === "userscript") {
+  if (isUserscriptPlatform()) {
     return getUserscriptMarkdownPreviewStyles()
   }
 

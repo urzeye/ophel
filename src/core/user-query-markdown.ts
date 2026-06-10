@@ -41,8 +41,12 @@ const RESCAN_INTERVAL = 2000 // Shadow DOM 站点重扫描间隔
 const INITIAL_DELAY = 1000 // 首次扫描延迟
 const STYLE_ID = "gh-user-query-markdown-style"
 
+function isUserscriptPlatform(): boolean {
+  return typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
+}
+
 function getUserscriptUserQueryMarkdownStyles(): string {
-  if (typeof window === "undefined" || __PLATFORM__ !== "userscript") return ""
+  if (typeof window === "undefined" || !isUserscriptPlatform()) return ""
   return (
     (window as typeof window & { __OPHEL_USER_QUERY_MARKDOWN_STYLES__?: string })
       .__OPHEL_USER_QUERY_MARKDOWN_STYLES__ || ""
@@ -433,7 +437,7 @@ html.dark .gh-user-query-markdown hr {
 }
 
 function getUserQueryMarkdownStyles(): string {
-  if (__PLATFORM__ === "userscript") {
+  if (isUserscriptPlatform()) {
     return getUserscriptUserQueryMarkdownStyles()
   }
 
