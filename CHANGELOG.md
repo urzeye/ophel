@@ -15,6 +15,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **AI Studio mobile Enter key** — AI Studio on Android and other mobile devices now lets the soft-keyboard Enter key insert a newline instead of triggering an accidental send, while Ophel-driven sends still use the native send button or the safe keyboard fallback. (#646)
+- **AI Studio mobile history sync** — AI Studio conversation sync now recognizes the mobile Library card layout, so mobile pages no longer report that no sidebar conversations were found when history is available.
 - **Conversation sync loading** — Conversation sync now uses each adapter's own conversation source to decide when sidebar history has finished loading, waits longer for slow lazy-loaded sidebars, and disables sync-delete when a complete load cannot be confirmed. Doubao and Yuanbao now share the safer base loader. (#639)
 
 ---

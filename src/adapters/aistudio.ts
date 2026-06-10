@@ -148,6 +148,19 @@ const AISTUDIO_EXPORT_ROLE_ASSISTANT = "assistant"
 const AISTUDIO_EXPORT_TURN_SELECTOR = `[${AISTUDIO_EXPORT_ROOT_ATTR}="1"] [${AISTUDIO_EXPORT_TURN_ATTR}="1"]`
 const AISTUDIO_EXPORT_USER_SELECTOR = `[${AISTUDIO_EXPORT_ROOT_ATTR}="1"] [${AISTUDIO_EXPORT_ROLE_ATTR}="${AISTUDIO_EXPORT_ROLE_USER}"]`
 const AISTUDIO_EXPORT_ASSISTANT_SELECTOR = `[${AISTUDIO_EXPORT_ROOT_ATTR}="1"] [${AISTUDIO_EXPORT_ROLE_ATTR}="${AISTUDIO_EXPORT_ROLE_ASSISTANT}"]`
+const AISTUDIO_LIBRARY_ROOT_SELECTOR = "ms-library-table"
+const AISTUDIO_LIBRARY_CONVERSATION_LINK_SELECTOR = [
+  'ms-library-table table a[href*="/prompts/"]:not([href*="new_chat"])',
+  'ms-library-table .prompt-card a[href*="/prompts/"]:not([href*="new_chat"])',
+].join(", ")
+const AISTUDIO_LIBRARY_EMPTY_STATE_SELECTOR = [
+  "ms-library-table .empty-state",
+  'ms-library-table [class*="empty" i]',
+  'ms-library-table [class*="no-results" i]',
+  'ms-library-table [class*="no-prompts" i]',
+  'ms-library-table [data-test-id*="empty" i]',
+  'ms-library-table [aria-label*="empty" i]',
+].join(", ")
 
 interface AIStudioExportMessageSnapshot {
   role: "user" | "assistant"
@@ -898,7 +911,7 @@ export class AIStudioAdapter extends SiteAdapter {
 
   /**
    * 加载全部会话（从 library 页面抓取）
-   * 跳转到 /library 页面，等待表格加载，抓取所有会话数据后缓存
+   * 跳转到 /library 页面，等待桌面表格或移动端卡片列表加载后缓存。
    */
   async loadAllConversations(): Promise<void> {
     const currentPath = window.location.pathname
@@ -914,7 +927,7 @@ export class AIStudioAdapter extends SiteAdapter {
       }
     }
 
-    // 抓取表格数据
+    // 抓取 library 数据
     const conversations = this.extractLibraryConversations()
     if (conversations.length > 0) {
       this.cachedLibraryConversations = conversations
@@ -952,26 +965,26 @@ export class AIStudioAdapter extends SiteAdapter {
 
     if (isRouterLink && candidate) {
       candidate.click()
-      return this.waitForLibraryTable()
+      return this.waitForLibraryContent()
     }
 
     // 方法 2: 使用 history.pushState + popstate 触发 Angular 路由器
     window.history.pushState(null, "", "/library")
     window.dispatchEvent(new PopStateEvent("popstate", { state: null }))
-    return this.waitForLibraryTable()
+    return this.waitForLibraryContent()
   }
 
   /**
-   * 等待 library 页面表格加载完成
+   * 等待 library 页面内容加载完成
    */
-  private async waitForLibraryTable(): Promise<boolean> {
+  private async waitForLibraryContent(): Promise<boolean> {
     // 最多等待 5 秒
-    // 以 ms-library-table table 出现为就绪信号（而非必须有 tbody tr），
-    // 避免历史列表为空时误判为导航失败
+    // 以桌面表格、移动端卡片列表、真实会话链接或明确空状态为就绪信号。
+    // 不把裸 ms-library-table 当作完成信号，避免 Angular shell 阶段提前返回。
     for (let i = 0; i < 50; i++) {
       await new Promise((resolve) => setTimeout(resolve, 100))
-      const table = document.querySelector("ms-library-table table")
-      if (table) {
+      const content = this.getLibraryContentElement()
+      if (content) {
         // 额外等待 200ms 确保数据渲染完成
         await new Promise((resolve) => setTimeout(resolve, 200))
         return true
@@ -981,34 +994,81 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   /**
-   * 从 library 页面表格提取会话列表
+   * 从 library 页面提取会话列表，兼容桌面表格和移动端卡片布局。
    */
   private extractLibraryConversations(): ConversationInfo[] {
-    const conversations: ConversationInfo[] = []
-    const rows = document.querySelectorAll("ms-library-table table tbody tr")
+    const conversations = new Map<string, ConversationInfo>()
+    const links = Array.from(
+      document.querySelectorAll(AISTUDIO_LIBRARY_CONVERSATION_LINK_SELECTOR),
+    ) as HTMLAnchorElement[]
 
-    rows.forEach((row) => {
-      // 表格中的会话链接：a.name-btn[href*="/prompts/"]
-      const link = row.querySelector('a[href*="/prompts/"]') as HTMLAnchorElement
-      if (!link) return
-
-      const href = link.getAttribute("href") || ""
-      const match = href.match(/\/prompts\/([^/]+)/)
-      if (!match) return
-
-      const id = match[1]
-      const title = link.getAttribute("title")?.trim() || link.textContent?.trim() || "Untitled"
-
-      conversations.push({
-        id,
-        title,
-        url: href,
-        isActive: window.location.pathname.includes(id),
-        isPinned: false,
-      })
+    links.forEach((link) => {
+      const info = this.extractLibraryConversationInfo(link)
+      if (!info || conversations.has(info.id)) return
+      conversations.set(info.id, info)
     })
 
-    return conversations
+    return Array.from(conversations.values())
+  }
+
+  private getLibraryContentElement(): Element | null {
+    return (
+      document.querySelector(`${AISTUDIO_LIBRARY_ROOT_SELECTOR} table`) ||
+      document.querySelector(`${AISTUDIO_LIBRARY_ROOT_SELECTOR} .prompt-cards-container`) ||
+      document.querySelector(AISTUDIO_LIBRARY_CONVERSATION_LINK_SELECTOR) ||
+      this.getLibraryEmptyStateElement()
+    )
+  }
+
+  private getLibraryEmptyStateElement(): HTMLElement | null {
+    const candidates = Array.from(
+      document.querySelectorAll(AISTUDIO_LIBRARY_EMPTY_STATE_SELECTOR),
+    ) as HTMLElement[]
+    return candidates.find((candidate) => this.isVisible(candidate)) || null
+  }
+
+  private getLibraryScrollContainer(): Element | null {
+    const tableWrapper = document.querySelector(
+      `${AISTUDIO_LIBRARY_ROOT_SELECTOR} .lib-table-wrapper`,
+    )
+    if (tableWrapper) return tableWrapper
+
+    const mobileCards = document.querySelector(
+      `${AISTUDIO_LIBRARY_ROOT_SELECTOR} .prompt-cards-container`,
+    )
+    if (mobileCards) {
+      return document.scrollingElement || document.documentElement || mobileCards
+    }
+
+    return document.querySelector(AISTUDIO_LIBRARY_ROOT_SELECTOR)
+  }
+
+  private extractLibraryConversationInfo(link: HTMLAnchorElement): ConversationInfo | null {
+    const href = link.getAttribute("href") || ""
+    if (!href || href.includes("new_chat")) return null
+
+    const match = href.match(/\/prompts\/([^/?#]+)/)
+    if (!match) return null
+
+    const id = match[1]
+    const card = link.closest(".prompt-card") as HTMLElement | null
+    const cardLabel = card
+      ?.getAttribute("aria-label")
+      ?.replace(/^Open\s+/i, "")
+      .trim()
+    const title =
+      link.getAttribute("title")?.trim() ||
+      link.textContent?.replace(/\s+/g, " ").trim() ||
+      cardLabel ||
+      "Untitled"
+
+    return {
+      id,
+      title,
+      url: href,
+      isActive: window.location.pathname.includes(id),
+      isPinned: false,
+    }
   }
 
   /**
@@ -1050,7 +1110,7 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   getConversationList(): ConversationInfo[] {
-    // 如果在 library 页面，直接从表格抓取
+    // 如果在 library 页面，直接从页面列表抓取
     if (window.location.pathname === "/library") {
       return this.extractLibraryConversations()
     }
@@ -1067,7 +1127,7 @@ export class AIStudioAdapter extends SiteAdapter {
   getSidebarScrollContainer(): Element | null {
     // /library 页面返回真实的会话列表滚动容器
     if (window.location.pathname === "/library") {
-      return document.querySelector("ms-library-table .lib-table-wrapper") || null
+      return this.getLibraryScrollContainer()
     }
 
     // 非 /library 页面：新版 AI Studio（ms-navbar-v2）侧边栏不再包含可滚动的历史列表，
@@ -1087,19 +1147,10 @@ export class AIStudioAdapter extends SiteAdapter {
     // 会话列表仅通过 /library 页面获取，无需 DOM 观察器
     if (window.location.pathname === "/library") {
       return {
-        selector: 'ms-library-table a.name-btn[href*="/prompts/"]:not([href*="new_chat"])',
+        selector: AISTUDIO_LIBRARY_CONVERSATION_LINK_SELECTOR,
         shadow: false,
         extractInfo: (el: Element) => {
-          const href = el.getAttribute("href")
-          if (!href) return null
-
-          const match = href.match(/\/prompts\/([^/]+)/)
-          if (!match) return null
-
-          const id = match[1]
-          const title = el.getAttribute("title")?.trim() || el.textContent?.trim() || "Untitled"
-
-          return { id, title, url: href, isPinned: false }
+          return this.extractLibraryConversationInfo(el as HTMLAnchorElement)
         },
         getTitleElement: (el: Element) => el,
       }
@@ -1109,9 +1160,9 @@ export class AIStudioAdapter extends SiteAdapter {
   }
 
   navigateToConversation(id: string, url?: string): boolean {
-    // 优先在 ms-library-table 内查找 a.name-btn，避免误命中页面其他区域的同 URL 链接
+    // 优先在 ms-library-table 内查找，避免误命中页面其他区域的同 URL 链接
     const link = document.querySelector(
-      `ms-library-table a.name-btn[href*="/prompts/${id}"]`,
+      `${AISTUDIO_LIBRARY_ROOT_SELECTOR} a[href*="/prompts/${id}"]:not([href*="new_chat"])`,
     ) as HTMLAnchorElement | null
     if (link) {
       link.click()
@@ -1491,6 +1542,7 @@ export class AIStudioAdapter extends SiteAdapter {
     const selectors = [
       `a.prompt-link[href*="/prompts/${id}"]`,
       `a.name-btn[href*="/prompts/${id}"]`,
+      `a.name-link[href*="/prompts/${id}"]`,
       `a[href*="/prompts/${id}"]`,
     ]
     selectors.forEach((selector) => {
@@ -1500,6 +1552,7 @@ export class AIStudioAdapter extends SiteAdapter {
           (anchor.closest("tr") as HTMLElement | null) ||
           (anchor.closest("li") as HTMLElement | null) ||
           (anchor.closest("mat-row") as HTMLElement | null) ||
+          (anchor.closest(".prompt-card") as HTMLElement | null) ||
           anchor
         container.remove()
       })
@@ -1509,7 +1562,7 @@ export class AIStudioAdapter extends SiteAdapter {
   private isConversationVisible(id: string): boolean {
     return Boolean(
       document.querySelector(
-        `a.prompt-link[href*="/prompts/${id}"], a.name-btn[href*="/prompts/${id}"], a[href*="/prompts/${id}"]`,
+        `a.prompt-link[href*="/prompts/${id}"], a.name-btn[href*="/prompts/${id}"], a.name-link[href*="/prompts/${id}"], a[href*="/prompts/${id}"]`,
       ),
     )
   }
@@ -1584,10 +1637,13 @@ export class AIStudioAdapter extends SiteAdapter {
     const start = Date.now()
     while (Date.now() - start < timeout) {
       const anchor = document.querySelector(
-        `ms-library-table a[href*="/prompts/${id}"], a.name-btn[href*="/prompts/${id}"]`,
+        `${AISTUDIO_LIBRARY_ROOT_SELECTOR} a[href*="/prompts/${id}"]:not([href*="new_chat"])`,
       ) as HTMLElement | null
       if (anchor) {
-        const row = (anchor.closest("tr") || anchor.closest("mat-row") || anchor) as HTMLElement
+        const row = (anchor.closest("tr") ||
+          anchor.closest("mat-row") ||
+          anchor.closest(".prompt-card") ||
+          anchor) as HTMLElement
         if (row && this.isVisible(row)) return row
       }
       await this.sleep(80)

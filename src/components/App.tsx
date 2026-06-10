@@ -34,6 +34,7 @@ import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 import { createSafeHTML } from "~utils/trusted-types"
 import { initCopyButtons, showCopySuccess } from "~utils/icons"
 import { hasOphelInteractionLayer } from "~utils/dom-toolkit"
+import { isLikelyMobileDevice } from "~utils/device"
 
 import { ConfirmDialog, FolderSelectDialog, TagManagerDialog } from "./ConversationDialogs"
 import { DisclaimerModal } from "./DisclaimerModal"
@@ -3033,7 +3034,14 @@ export const App = () => {
     if (!adapter || adapter.getSiteId() !== SITE_IDS.AISTUDIO) return
 
     const handleShortcutSync = (event: Event) => {
-      const detail = (event as CustomEvent<{ submitShortcut?: "enter" | "ctrlEnter" }>).detail
+      const detail = (
+        event as CustomEvent<{
+          submitShortcut?: "enter" | "ctrlEnter"
+          forcedByMobile?: boolean
+        }>
+      ).detail
+      if (detail?.forcedByMobile) return
+
       const submitShortcut = detail?.submitShortcut
       if (submitShortcut === "enter" || submitShortcut === "ctrlEnter") {
         showAiStudioSubmitShortcutSyncToast(submitShortcut)
@@ -3118,6 +3126,13 @@ export const App = () => {
 
       const hasPrimaryModifier = e.ctrlKey || e.metaKey
       const hasAnyModifier = hasPrimaryModifier || e.altKey
+      const isAiStudioMobilePlainEnter =
+        adapter.getSiteId() === SITE_IDS.AISTUDIO &&
+        isLikelyMobileDevice() &&
+        !hasAnyModifier &&
+        !e.shiftKey
+      if (isAiStudioMobilePlainEnter) return
+
       const isSubmitKey =
         promptSubmitShortcut === "ctrlEnter"
           ? hasPrimaryModifier && !e.altKey && !e.shiftKey
