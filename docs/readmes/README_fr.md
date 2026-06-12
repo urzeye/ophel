@@ -80,25 +80,62 @@
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
-## 🎯 Cas d’usage
-
-- Apprentissage et recherche : raisonnement sur longues conversations, organiser les connaissances, relire les conclusions, extraire des notes
-- Travail au quotidien : découpage des besoins, rédaction de solutions, analyse concurrentielle, comptes rendus de réunion, workflows de conseil et de management
-- Développement et rédaction technique : longues discussions de code, triage de bugs, exploration d’architecture, documentation/blog
-- Création de contenu : itérer scripts/plans/révisions, revenir vite aux passages clés et exporter pour retravailler
-- Utilisateurs intensifs d’IA : besoin de structure, d’ordre et de réutilisation, pas seulement de chats ponctuels
-
 ## ✨ Fonctionnalités Clés
 
-- 🧠 **Smart Outline** — Analyse automatique des requêtes utilisateur et réponses IA en structure navigable
-- 💬 **Conversation Manager** — Dossiers, tags, recherche, opérations par lot
-- ⌨️ **Prompt Library** — Variables, prévisualisation Markdown, catégories, insertion en un clic
-- 🎨 **Personnalisation de Thème** — 20+ thèmes sombres/clairs, CSS personnalisé
-- 🔧 **Optimisation UI** — Mode écran large, contrôle de largeur, mise en page latérale
-- 📖 **Expérience de Lecture** — Verrouillage du défilement, restauration de l'historique, rendu Markdown
-- ⚡ **Outils de Productivité** — Raccourcis, verrouillage de modèle, renommage automatique, notifications
-- 🎭 **Amélioration Claude** — Gestion de clé de session, changement multi-compte
-- 🔒 **Confidentialité d'Abord** — Stockage local, sync WebDAV, aucune collecte de données
+> Idéal pour l’apprentissage, la recherche, l’analyse de besoins, les discussions de code, la création de contenu — toute conversation IA nécessitant structure, ordre et réutilisation.
+
+<table>
+  <thead>
+    <tr>
+      <th width="200">Fonctionnalité</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>🧭 <a href="https://ophel.app/docs/features/outline">Smart Outline</a></td>
+      <td>Analyse automatique de la structure de conversation en sommaire navigable avec repli hiérarchique, recherche, ancres, favoris et compteur de mots</td>
+    </tr>
+    <tr>
+      <td>💬 <a href="https://ophel.app/docs/features/conversations">Conversations</a></td>
+      <td>Dossiers + tags pour une gestion bidimensionnelle, synchronisation automatique, recherche, opérations par lot et export multi-format (Markdown/JSON/TXT)</td>
+    </tr>
+    <tr>
+      <td>🪄 <a href="https://ophel.app/docs/features/prompts">Bibliothèque de Prompts</a></td>
+      <td>Templates à variables, catégorisation, insertion en un clic, envoi par double-clic, file d’attente de prompts pour envoi séquentiel automatique</td>
+    </tr>
+    <tr>
+      <td>🔍 <a href="https://ophel.app/docs/features/global-search">Recherche Globale</a></td>
+      <td>Recherche unifiée conversations, outlines, prompts et paramètres avec filtres <code>folder:</code> <code>tag:</code> <code>date:</code> et correspondance floue</td>
+    </tr>
+    <tr>
+      <td>📖 <a href="https://ophel.app/docs/enhancements/content">Lecture</a></td>
+      <td>Rendu de diagrammes Mermaid, support de formules LaTeX, mise en forme Markdown des questions utilisateur, verrouillage du défilement</td>
+    </tr>
+    <tr>
+      <td>⌨️ <a href="https://ophel.app/docs/customization/shortcuts">Productivité</a></td>
+      <td>Restauration de l’historique de lecture, raccourcis personnalisés, verrouillage de modèle, nommage d’onglets amélioré, notifications de complétion IA</td>
+    </tr>
+    <tr>
+      <td>🎨 <a href="https://ophel.app/docs/customization/appearance">Thèmes</a></td>
+      <td>20+ thèmes, CSS personnalisé, mode écran large, mode Zen, <code>Option+D</code> pour basculer sombre/clair</td>
+    </tr>
+    <tr>
+      <td>📊 <a href="https://ophel.app/docs/panel-overview">Statistiques</a></td>
+      <td>Compteur de conversations local, estimations de tokens, graphiques d’historique (par site et par période)</td>
+    </tr>
+    <tr>
+      <td>🎭 <a href="https://ophel.app/docs/customization/site-settings">Claude</a></td>
+      <td>Gestion de Session Key et changement rapide de multi-comptes</td>
+    </tr>
+    <tr>
+      <td>🔒 <a href="https://ophel.app/docs/data/privacy">Confidentialité & Données</a></td>
+      <td>Stockage local par défaut, synchronisation WebDAV multi-appareils, import/export de fichiers, aucune collecte de données</td>
+    </tr>
+  </tbody>
+</table>
+
+<p align="right"><a href="https://ophel.app/docs/introduction">📖 Documentation complète →</a></p>
 
 > [!IMPORTANT]
 >

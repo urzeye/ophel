@@ -88,25 +88,62 @@
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
-## 🎯 想定される利用シーン
-
-- 学習・研究：長文対話での推論、知識の整理、結論の振り返り、ノート抽出
-- 日常業務：要件分解、提案書作成、競合分析、議事録、相談・マネジメントのワークフロー
-- 開発・技術執筆：長いコード議論、バグ調査、アーキテクチャ検討、ドキュメント/ブログ執筆
-- コンテンツ制作：台本/アウトライン/推敲の反復、重要箇所へ素早く戻り、書き出して再編集
-- AIを高頻度で使う人：一時的なチャットではなく「構造・秩序・再利用性」が必要
-
 ## ✨ 主な機能
 
-- 🧠 **スマートアウトライン** — ユーザーの質問と AI の回答を自動解析し、ナビゲーション可能な目次を生成
-- 💬 **会話管理** — フォルダ分類、タグ付け、検索、一括操作
-- ⌨️ **プロンプトライブラリ** — 変数サポート、Markdown プレビュー、分類管理、ワンクリック入力
-- 🎨 **テーマカスタマイズ** — 20種類以上のダーク/ライトテーマ、カスタムCSS
-- 🔧 **インターフェース最適化** — ワイドスクリーンモード、ページと質問幅の調整、サイドバーレイアウト制御
-- 📖 **読書体験** — スクロールロック、読書履歴の復元、Markdown レンダリングの最適化
-- ⚡ **効率化ツール** — ショートカットキー、モデルロック、タブ自動リネーム、完了通知
-- 🎭 **Claude 拡張** — Session Key 管理、マルチアカウント切り替え
-- 🔒 **プライバシー優先** — ローカルストレージ、WebDAV 同期、データ収集なし
+> 学習・研究、要件分析、コード議論、コンテンツ制作など、「構造・秩序・再利用」が求められるあらゆる AI 対話シーンに最適です。
+
+<table>
+  <thead>
+    <tr>
+      <th width="200">機能</th>
+      <th>説明</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>🧭 <a href="https://ophel.app/docs/features/outline">スマートアウトライン</a></td>
+      <td>対話構造をリアルタイム解析しナビゲーション可能な目次を生成。階層折りたたみ、検索ジャンプ、アンカー、ブックマーク、文字数カウントに対応</td>
+    </tr>
+    <tr>
+      <td>💬 <a href="https://ophel.app/docs/features/conversations">会話管理</a></td>
+      <td>フォルダ + タグの二次元管理、ソースサイトとの自動同期、検索・一括操作・複数形式エクスポート（Markdown/JSON/TXT）</td>
+    </tr>
+    <tr>
+      <td>🪄 <a href="https://ophel.app/docs/features/prompts">プロンプトライブラリ</a></td>
+      <td>変数テンプレート、分類管理、ワンクリック入力、ダブルクリック送信、プロンプトキューによる自動連続送信</td>
+    </tr>
+    <tr>
+      <td>🔍 <a href="https://ophel.app/docs/features/global-search">グローバル検索</a></td>
+      <td>会話/アウトライン/プロンプト/設定を横断検索、<code>folder:</code> <code>tag:</code> <code>date:</code> 構文フィルターとあいまい検索に対応</td>
+    </tr>
+    <tr>
+      <td>📖 <a href="https://ophel.app/docs/enhancements/content">読書体験</a></td>
+      <td>Mermaid 図表レンダリング、LaTeX 数式サポート、ユーザー質問の Markdown 整形、スクロールロック</td>
+    </tr>
+    <tr>
+      <td>⌨️ <a href="https://ophel.app/docs/customization/shortcuts">効率化ツール</a></td>
+      <td>読書履歴の復元、カスタムショートカット、モデルロック、タブ名の拡張、AI 完了通知</td>
+    </tr>
+    <tr>
+      <td>🎨 <a href="https://ophel.app/docs/customization/appearance">テーマ</a></td>
+      <td>20+ テーマ、カスタム CSS、ワイドスクリーンモード、禅モード、<code>Option+D</code> でダーク/ライト切替</td>
+    </tr>
+    <tr>
+      <td>📊 <a href="https://ophel.app/docs/panel-overview">データ統計</a></td>
+      <td>ローカル対話カウンター、トークン概算、履歴チャート（サイト別/時間別）</td>
+    </tr>
+    <tr>
+      <td>🎭 <a href="https://ophel.app/docs/customization/site-settings">Claude 拡張</a></td>
+      <td>Session Key 管理とマルチアカウント切り替え</td>
+    </tr>
+    <tr>
+      <td>🔒 <a href="https://ophel.app/docs/data/privacy">プライバシーとデータ</a></td>
+      <td>デフォルトでローカル保存、WebDAV マルチデバイス同期、ファイルインポート/エクスポート、データ収集なし</td>
+    </tr>
+  </tbody>
+</table>
+
+<p align="right"><a href="https://ophel.app/docs/introduction">📖 完全なドキュメント →</a></p>
 
 > [!IMPORTANT]
 >
