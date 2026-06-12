@@ -148,7 +148,7 @@
   </tbody>
 </table>
 
-<p align=”right"><a href="https://ophel.app/docs/zh/introduction">📖 完整功能文档 →</a></p>
+<p align="right"><a href="https://ophel.app/docs/zh/introduction">📖 完整功能文档 →</a></p>
 
 > [!IMPORTANT]
 >
