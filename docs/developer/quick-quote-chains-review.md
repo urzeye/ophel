@@ -188,7 +188,7 @@ Chains 视图有"暂无链式提示词"的空状态（`PromptsTab.tsx:1522-1528`
 | P1 | UI | 3.2 切换器存在感 | ✅ 已完成 | segmented control 风格、加大尺寸、hover 态高亮 |
 | P1 | UI | 空状态 CTA 引导 | ✅ 已完成 | Chains 为空时显示"创建链式提示词"按钮 |
 | P1 | UI | 3.3 SVG 图标简化 | ✅ 已完成 | 预设图标选择网格 + 自定义 SVG 折叠输入 |
-| P2 | 功能 | 2.1 步骤支持内联内容 | 🔲 待做 | 每步可选"引用已有 prompt / 直接输入" |
+| P2 | 功能 | 2.1 步骤支持内联内容 | 🚧 进行中 | 类型已扩展 `inlineContent` 字段，编辑器 UI 和 runner 待适配 |
 | P2 | 功能 | 2.3 队列未开启时的 fallback | 🔲 待做 | 单步 chain 直接插入，多步提示启用队列 |
 | P2 | UI | 3.5 步骤排序体验 | 🔲 待做 | 步骤行左侧添加 drag handle 视觉暗示 |
 | P3 | 功能 | 2.4 引用 chip 渲染优化 | 🔲 待做 | 去掉 2s 定时轮询，仅依赖 MutationObserver |

@@ -94,9 +94,13 @@ export interface PromptActionDefinition {
   updatedAt?: number
 }
 
+export type PromptChainStepMode = "prompt" | "inline"
+
 export interface PromptChainStep {
   id: string
+  mode?: PromptChainStepMode
   promptId: string
+  inlineContent?: string
   runMode: PromptActionRunMode
   splitMode?: PromptActionSplitMode
 }
