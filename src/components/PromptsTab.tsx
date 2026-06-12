@@ -82,6 +82,41 @@ type ChainDraft = Omit<PromptChain, "id" | "createdAt" | "updatedAt"> & {
   id?: string
 }
 
+const CHAIN_PRESET_ICONS: { label: string; svg: string }[] = [
+  {
+    label: "Translate",
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l6 0"/><path d="M4 5l0 3"/><path d="M8 5l0 3"/><path d="M3 15l4 -4.5l4 4.5"/><path d="M13 20l2.5 -7l2.5 7"/><path d="M14 18l4 0"/></svg>',
+  },
+  {
+    label: "Summary",
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 10h16"/><path d="M4 14h10"/><path d="M4 18h7"/></svg>',
+  },
+  {
+    label: "Analyze",
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l4 4"/></svg>',
+  },
+  {
+    label: "Code",
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+  },
+  {
+    label: "Expand",
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/><path d="M17 6l3 0"/><path d="M17 18l3 0"/></svg>',
+  },
+  {
+    label: "Question",
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a3 3 0 0 1 5 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r="0.5"/></svg>',
+  },
+  {
+    label: "Fix",
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10"/><path d="M17 7l-10 10"/><circle cx="12" cy="12" r="9"/></svg>',
+  },
+  {
+    label: "Rewrite",
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  },
+]
+
 const CHAIN_EDITOR_PORTAL_STYLES = `
 .gh-chain-editor {
   width: min(680px, 92vw);
@@ -1523,30 +1558,42 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         <div className="gh-chain-empty">
           <div className="gh-chain-empty-title">{t("chainEmpty")}</div>
           <div className="gh-chain-empty-description">{t("chainEmptyDescription")}</div>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => openChainEditor()}
+            style={{ marginTop: "14px" }}>
+            + {t("chainAdd")}
+          </Button>
         </div>
       )
     }
 
     return filteredChains.map((chain) => {
-      const variables = getChainVariables(chain)
       const stepTitles = getChainStepTitles(chain)
-      const visibleStepTitles = stepTitles.slice(0, 8)
-      const remainingStepCount = stepTitles.length - visibleStepTitles.length
-      const visibleVariables = variables.slice(0, 2)
-      const remainingVariableCount = variables.length - visibleVariables.length
-      const chainStepTitle = stepTitles.length > 0 ? stepTitles.join(" -> ") : t("chainNoSteps")
-      const variableTitle = variables.map((variable) => variable.name || variable.raw).join(", ")
+      const flowText = stepTitles.length > 0 ? stepTitles.join(" → ") : t("chainNoSteps")
 
       return (
-        <div key={chain.id} className="gh-chain-card">
-          <div className="gh-chain-card-main" onClick={() => openChainEditor(chain)}>
+        <div
+          key={chain.id}
+          className={`gh-chain-card${chain.enabled ? "" : " disabled"}`}
+          onClick={() => openChainEditor(chain)}>
+          <div className="gh-chain-card-main">
+            <span
+              className="gh-chain-status-dot"
+              data-enabled={chain.enabled}
+              title={chain.enabled ? t("chainEnabled") : t("chainDisabled")}
+            />
             <div className="gh-chain-icon">{renderChainIcon(chain.iconSvg)}</div>
             <div className="gh-chain-body">
               <div className="gh-chain-title-row">
-                <div className="gh-chain-title">{chain.title}</div>
-                {chain.description && (
-                  <div className="gh-chain-description">{chain.description}</div>
-                )}
+                <span className="gh-chain-title">{chain.title}</span>
+                <span className="gh-chain-step-badge">
+                  {t("chainStepCount", { count: String(chain.steps.length) })}
+                </span>
+              </div>
+              <div className="gh-chain-flow" title={flowText}>
+                {flowText}
               </div>
             </div>
           </div>
@@ -1559,7 +1606,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                   e.stopPropagation()
                   updateChain(chain.id, { enabled: !chain.enabled })
                 }}>
-                <CheckIcon size={16} />
+                <CheckIcon size={15} />
               </button>
             </Tooltip>
             <Tooltip content={t("copy")}>
@@ -1570,17 +1617,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                   const copy = duplicateChain(chain.id)
                   if (copy) showToast(t("chainDuplicated"), 1800)
                 }}>
-                <CopyIcon size={16} />
-              </button>
-            </Tooltip>
-            <Tooltip content={t("edit")}>
-              <button
-                className="prompt-action-btn"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  openChainEditor(chain)
-                }}>
-                <EditIcon size={16} />
+                <CopyIcon size={15} />
               </button>
             </Tooltip>
             <Tooltip content={t("delete")}>
@@ -1593,45 +1630,10 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     showToast(t("deleted"), 1800)
                   })
                 }}>
-                <DeleteIcon size={16} />
+                <DeleteIcon size={15} />
               </button>
             </Tooltip>
           </div>
-
-          <div
-            className="gh-chain-flow"
-            title={chainStepTitle}
-            onClick={() => openChainEditor(chain)}>
-            {visibleStepTitles.length > 0 ? (
-              visibleStepTitles.map((title, index) => (
-                <React.Fragment key={chain.steps[index]?.id || `${chain.id}-${index}`}>
-                  {index > 0 && <span className="gh-chain-flow-arrow">→</span>}
-                  <span className="gh-chain-flow-chip">{title}</span>
-                </React.Fragment>
-              ))
-            ) : (
-              <span className="gh-chain-flow-empty">{t("chainNoSteps")}</span>
-            )}
-            {remainingStepCount > 0 && (
-              <span className="gh-chain-flow-more">+{remainingStepCount}</span>
-            )}
-          </div>
-
-          {visibleVariables.length > 0 && (
-            <div
-              className="gh-chain-variable-list"
-              title={variableTitle}
-              onClick={() => openChainEditor(chain)}>
-              {visibleVariables.map((variable) => (
-                <span key={variable.raw} className="gh-chain-variable-chip">
-                  {variable.name || variable.raw}
-                </span>
-              ))}
-              {remainingVariableCount > 0 && (
-                <span className="gh-chain-variable-more">+{remainingVariableCount}</span>
-              )}
-            </div>
-          )}
         </div>
       )
     })
@@ -1700,16 +1702,36 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 </label>
               </div>
 
-              <label className="gh-chain-field">
+              <div className="gh-chain-field">
                 <span>{t("chainIconSvg")}</span>
-                <textarea
-                  value={draft.iconSvg || ""}
-                  onChange={(e) => updateChainDraft({ iconSvg: e.target.value })}
-                  placeholder={t("chainIconSvgPlaceholder")}
-                  rows={3}
-                />
-                <span className="gh-chain-field-help">{t("chainIconSvgHelp")}</span>
-              </label>
+                <div className="gh-chain-icon-presets">
+                  {CHAIN_PRESET_ICONS.map((preset, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={`gh-chain-icon-preset-btn${draft.iconSvg === preset.svg ? " active" : ""}`}
+                      title={preset.label}
+                      onClick={() => updateChainDraft({ iconSvg: preset.svg })}
+                      dangerouslySetInnerHTML={{ __html: createSafeHTML(preset.svg) }}
+                    />
+                  ))}
+                  <button
+                    type="button"
+                    className={`gh-chain-icon-preset-btn${!CHAIN_PRESET_ICONS.some((p) => p.svg === draft.iconSvg) && draft.iconSvg ? " active" : ""}`}
+                    title={t("chainIconCustom")}
+                    onClick={() => updateChainDraft({ iconSvg: "" })}>
+                    <span style={{ fontSize: "11px", fontWeight: 700 }}>...</span>
+                  </button>
+                </div>
+                {!CHAIN_PRESET_ICONS.some((p) => p.svg === draft.iconSvg) && (
+                  <textarea
+                    value={draft.iconSvg || ""}
+                    onChange={(e) => updateChainDraft({ iconSvg: e.target.value })}
+                    placeholder={t("chainIconSvgPlaceholder")}
+                    rows={2}
+                  />
+                )}
+              </div>
 
               <div className="gh-chain-toggle-row">
                 <label>

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { SiteAdapter } from "~adapters/base"
+import { QuoteIcon, ReplyIcon } from "~components/icons/QuoteIcon"
 import { VariableInputDialog } from "~components/VariableInputDialog"
 import {
   buildPromptChainQueueInputs,
@@ -103,6 +104,31 @@ const SafeSvgIcon: React.FC<{ svg?: string; fallback: React.ReactNode }> = ({ sv
     />
   )
 }
+
+const LETTER_COLORS = [
+  "#4285f4",
+  "#ea4335",
+  "#fbbc04",
+  "#34a853",
+  "#ff6d01",
+  "#46bdc6",
+  "#7b61ff",
+  "#e91e63",
+]
+
+const ChainLetterFallback: React.FC<{ title: string }> = ({ title }) => {
+  const letter = title.trim().charAt(0) || "C"
+  let hash = 0
+  for (let i = 0; i < title.length; i++) hash = title.charCodeAt(i) + ((hash << 5) - hash)
+  const color = LETTER_COLORS[Math.abs(hash) % LETTER_COLORS.length]
+  return (
+    <span className="gh-quick-quote-letter" style={{ background: color }}>
+      {letter}
+    </span>
+  )
+}
+
+const getQuoteContent = (text: string) => formatMarkdownQuote(text) + "\n\n"
 
 const getReplyContent = (text: string) =>
   replaceVariables(t("quickQuoteReplyTemplate"), {
@@ -392,6 +418,22 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
     [adapter, selectionState],
   )
 
+  const handleQuote = useCallback(async () => {
+    if (!selectionState) return
+
+    const content = formatMarkdownQuote(selectionState.text) + "\n\n"
+    const selection = createSelectionContext(content)
+    const inserted = await promptManager.insertPrompt(content)
+    if (!inserted) {
+      showToast(t("insertFailed"))
+      return
+    }
+
+    addQuoteReferenceForContent(selection?.quoteRef || null, content)
+    showToast(t("quickQuoteInserted"), 1800)
+    clearSelection()
+  }, [clearSelection, createSelectionContext, promptManager, selectionState])
+
   const handleInsertBuiltIn = useCallback(async () => {
     if (!selectionState) return
 
@@ -479,17 +521,31 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
             event.preventDefault()
             event.stopPropagation()
           }}>
-          <button className="gh-quick-quote-action" onClick={() => void handleInsertBuiltIn()}>
-            <span>R</span>
+          <button
+            className="gh-quick-quote-action"
+            title={t("quickQuoteQuote")}
+            onClick={() => void handleQuote()}>
+            <QuoteIcon size={15} />
+            <span>{t("quickQuoteQuote")}</span>
+          </button>
+          <button
+            className="gh-quick-quote-action"
+            title={t("quickQuoteReply")}
+            onClick={() => void handleInsertBuiltIn()}>
+            <ReplyIcon size={15} />
             <span>{t("quickQuoteReply")}</span>
           </button>
+          {visibleChains.length > 0 && <span className="gh-quick-quote-divider" />}
           {visibleChains.map((chain) => (
             <button
               key={chain.id}
               className="gh-quick-quote-action icon-only"
               title={chain.title}
               onClick={() => handleRunChain(chain)}>
-              <SafeSvgIcon svg={chain.iconSvg} fallback={<span>*</span>} />
+              <SafeSvgIcon
+                svg={chain.iconSvg}
+                fallback={<ChainLetterFallback title={chain.title} />}
+              />
               <span>{chain.title}</span>
             </button>
           ))}
