@@ -100,25 +100,25 @@
 <table>
   <thead>
     <tr>
-      <th width=”200”>功能</th>
+      <th width=”200">功能</th>
       <th>描述</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>🧭 <a href=”https://ophel.app/docs/zh/features/outline”>智能大纲</a></td>
+      <td>🧭 <a href="https://ophel.app/docs/zh/features/outline">智能大纲</a></td>
       <td>实时解析对话结构生成可导航目录，支持层级折叠、搜索跳转、锚点定位、收藏书签与字数统计</td>
     </tr>
     <tr>
-      <td>💬 <a href=”https://ophel.app/docs/zh/features/conversations”>会话管理</a></td>
+      <td>💬 <a href="https://ophel.app/docs/zh/features/conversations">会话管理</a></td>
       <td>文件夹 + 标签双维度管理，自动同步源站会话，支持搜索、批量操作与多格式导出（Markdown/JSON/TXT）</td>
     </tr>
     <tr>
-      <td>🪄 <a href=”https://ophel.app/docs/zh/features/prompts”>提示词库</a></td>
+      <td>🪄 <a href="https://ophel.app/docs/zh/features/prompts">提示词库</a></td>
       <td>变量模板、分类管理、一键填充、双击发送，支持提示词队列自动排队发送</td>
     </tr>
     <tr>
-      <td>🔍 <a href=”https://ophel.app/docs/zh/features/global-search”>全局搜索</a></td>
+      <td>🔍 <a href="https://ophel.app/docs/zh/features/global-search">全局搜索</a></td>
       <td>跨会话/大纲/提示词/设置统一搜索，支持 <code>folder:</code> <code>tag:</code> <code>date:</code> 等语法过滤与模糊匹配</td>
     </tr>
     <tr>
@@ -148,7 +148,7 @@
   </tbody>
 </table>
 
-<p align=”right”><a href=”https://ophel.app/docs/zh/introduction”>📖 完整功能文档 →</a></p>
+<p align=”right"><a href="https://ophel.app/docs/zh/introduction">📖 完整功能文档 →</a></p>
 
 > [!IMPORTANT]
 >
