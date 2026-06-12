@@ -114,7 +114,7 @@
       <td>文件夹 + 标签双维度管理，自动同步源站会话，支持搜索、批量操作与多格式导出（Markdown/JSON/TXT）</td>
     </tr>
     <tr>
-      <td>🪄 <a href="https://ophel.app/docs/zh/features/prompts">提示词库</a></td>
+      <td>💡 <a href="https://ophel.app/docs/zh/features/prompts">提示词库</a></td>
       <td>变量模板、分类管理、一键填充、双击发送，支持提示词队列自动排队发送</td>
     </tr>
     <tr>

@@ -101,7 +101,7 @@
       <td>Ordner + Tags für zweidimensionale Verwaltung, automatische Synchronisierung, Suche, Stapeloperationen und Multi-Format-Export (Markdown/JSON/TXT)</td>
     </tr>
     <tr>
-      <td>🪄 <a href="https://ophel.app/docs/features/prompts">Prompt-Bibliothek</a></td>
+      <td>💡 <a href="https://ophel.app/docs/features/prompts">Prompt-Bibliothek</a></td>
       <td>Variablen-Templates, Kategorisierung, Ein-Klick-Einfügung, Doppelklick-Senden, Prompt-Warteschlange für automatisches sequenzielles Senden</td>
     </tr>
     <tr>

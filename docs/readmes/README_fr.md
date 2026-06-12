@@ -101,7 +101,7 @@
       <td>Dossiers + tags pour une gestion bidimensionnelle, synchronisation automatique, recherche, opérations par lot et export multi-format (Markdown/JSON/TXT)</td>
     </tr>
     <tr>
-      <td>🪄 <a href="https://ophel.app/docs/features/prompts">Bibliothèque de Prompts</a></td>
+      <td>💡 <a href="https://ophel.app/docs/features/prompts">Bibliothèque de Prompts</a></td>
       <td>Templates à variables, catégorisation, insertion en un clic, envoi par double-clic, file d’attente de prompts pour envoi séquentiel automatique</td>
     </tr>
     <tr>

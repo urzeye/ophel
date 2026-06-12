@@ -101,7 +101,7 @@
       <td>Carpetas + etiquetas para gestión bidimensional, sincronización automática, búsqueda, operaciones por lotes y exportación multi-formato (Markdown/JSON/TXT)</td>
     </tr>
     <tr>
-      <td>🪄 <a href="https://ophel.app/docs/features/prompts">Biblioteca de Prompts</a></td>
+      <td>💡 <a href="https://ophel.app/docs/features/prompts">Biblioteca de Prompts</a></td>
       <td>Plantillas con variables, categorización, inserción con un clic, envío con doble clic, cola de prompts para envío secuencial automático</td>
     </tr>
     <tr>

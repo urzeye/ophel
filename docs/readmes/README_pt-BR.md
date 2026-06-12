@@ -101,7 +101,7 @@
       <td>Pastas + etiquetas para gestão bidimensional, sincronização automática, busca, operações em lote e exportação multi-formato (Markdown/JSON/TXT)</td>
     </tr>
     <tr>
-      <td>🪄 <a href="https://ophel.app/docs/features/prompts">Biblioteca de Prompts</a></td>
+      <td>💡 <a href="https://ophel.app/docs/features/prompts">Biblioteca de Prompts</a></td>
       <td>Templates com variáveis, categorização, inserção com um clique, envio com duplo clique, fila de prompts para envio sequencial automático</td>
     </tr>
     <tr>

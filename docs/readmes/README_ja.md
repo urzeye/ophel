@@ -109,7 +109,7 @@
       <td>フォルダ + タグの二次元管理、ソースサイトとの自動同期、検索・一括操作・複数形式エクスポート（Markdown/JSON/TXT）</td>
     </tr>
     <tr>
-      <td>🪄 <a href="https://ophel.app/docs/features/prompts">プロンプトライブラリ</a></td>
+      <td>💡 <a href="https://ophel.app/docs/features/prompts">プロンプトライブラリ</a></td>
       <td>変数テンプレート、分類管理、ワンクリック入力、ダブルクリック送信、プロンプトキューによる自動連続送信</td>
     </tr>
     <tr>

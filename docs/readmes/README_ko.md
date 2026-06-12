@@ -109,7 +109,7 @@
       <td>폴더 + 태그 이중 관리, 소스 사이트 자동 동기화, 검색·일괄 작업·다중 형식 내보내기(Markdown/JSON/TXT)</td>
     </tr>
     <tr>
-      <td>🪄 <a href="https://ophel.app/docs/features/prompts">프롬프트 라이브러리</a></td>
+      <td>💡 <a href="https://ophel.app/docs/features/prompts">프롬프트 라이브러리</a></td>
       <td>변수 템플릿, 분류 관리, 원클릭 입력, 더블클릭 전송, 프롬프트 큐 자동 순차 전송</td>
     </tr>
     <tr>

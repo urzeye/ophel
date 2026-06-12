@@ -103,7 +103,7 @@
       <td>Folders + tags for dual-dimension management, auto-sync from source sites, search, batch ops, and multi-format export (Markdown/JSON/TXT)</td>
     </tr>
     <tr>
-      <td>🪄 <a href="https://ophel.app/docs/features/prompts">Prompt Library</a></td>
+      <td>💡 <a href="https://ophel.app/docs/features/prompts">Prompt Library</a></td>
       <td>Variable templates, categorization, one-click insert, double-click send, prompt queue for automated sequential sending</td>
     </tr>
     <tr>

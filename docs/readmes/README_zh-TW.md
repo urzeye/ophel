@@ -109,7 +109,7 @@
       <td>文件夾 + 標籤雙維度管理，自動同步源站會話，支援搜尋、批量操作與多格式匯出（Markdown/JSON/TXT）</td>
     </tr>
     <tr>
-      <td>🪄 <a href="https://ophel.app/docs/zh/features/prompts">提示詞庫</a></td>
+      <td>💡 <a href="https://ophel.app/docs/zh/features/prompts">提示詞庫</a></td>
       <td>變數模板、分類管理、一鍵填充、雙擊發送，支援提示詞佇列自動排隊發送</td>
     </tr>
     <tr>
