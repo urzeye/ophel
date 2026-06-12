@@ -122,27 +122,27 @@
       <td>跨会话/大纲/提示词/设置统一搜索，支持 <code>folder:</code> <code>tag:</code> <code>date:</code> 等语法过滤与模糊匹配</td>
     </tr>
     <tr>
-      <td>📖 阅读增强</td>
+      <td>📖 <a href="https://ophel.app/docs/zh/enhancements/content">阅读增强</a></td>
       <td>Mermaid 图表渲染、LaTeX 公式支持、用户问题 Markdown 排版、滚动锁定</td>
     </tr>
     <tr>
-      <td>⌨️ 效率工具</td>
+      <td>⌨️ <a href="https://ophel.app/docs/zh/customization/shortcuts">效率工具</a></td>
       <td>阅读历史恢复、自定义快捷键、模型锁定、标签页增强命名、AI 完成通知</td>
     </tr>
     <tr>
-      <td>🎨 界面定制</td>
+      <td>🎨 <a href="https://ophel.app/docs/zh/customization/appearance">界面定制</a></td>
       <td>20+ 主题、自定义 CSS、宽屏模式、禅模式，<code>Option+D</code> 一键切换明暗</td>
     </tr>
     <tr>
-      <td>📊 数据统计</td>
+      <td>📊 <a href="https://ophel.app/docs/zh/panel-overview">数据统计</a></td>
       <td>本地对话计数、Token 粗估、历史曲线（按站点/时间维度）</td>
     </tr>
     <tr>
-      <td>🎭 Claude 增强</td>
+      <td>🎭 <a href="https://ophel.app/docs/zh/customization/site-settings">Claude 增强</a></td>
       <td>Session Key 管理与多账号快速切换</td>
     </tr>
     <tr>
-      <td>🔒 隐私与数据</td>
+      <td>🔒 <a href="https://ophel.app/docs/zh/data/privacy">隐私与数据</a></td>
       <td>默认本地存储、WebDAV 多设备同步、文件导入导出、零数据收集</td>
     </tr>
   </tbody>
