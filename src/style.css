@@ -2394,12 +2394,6 @@
   flex-shrink: 0;
 }
 
-.gh-chain-step-mode-switch {
-  display: flex;
-  gap: 12px;
-  flex: 1;
-}
-
 .gh-chain-step-delete-btn {
   width: 26px;
   height: 26px;
@@ -2460,6 +2454,7 @@
 .gh-chain-step-mode-switch {
   display: flex;
   gap: 14px;
+  flex: 1;
 }
 
 .gh-chain-step-mode-switch label {
