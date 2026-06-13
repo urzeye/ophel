@@ -691,7 +691,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
   const createDefaultChainStep = (): PromptChainStep => ({
     id: `step_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    mode: "prompt",
     promptId: prompts[0]?.id || "",
+    inlineContent: "",
     runMode: "enqueue",
     splitMode: "none",
   })
@@ -784,7 +786,13 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     if (!draft) return
 
     const title = draft.title.trim()
-    const steps = draft.steps.filter((step) => step.promptId)
+    // 验证步骤：prompt 模式需要 promptId，inline 模式需要 inlineContent
+    const steps = draft.steps.filter((step) => {
+      if (step.mode === "inline") {
+        return step.inlineContent?.trim()
+      }
+      return step.promptId
+    })
     if (!title) {
       showToast(t("chainTitleRequired"), 2200)
       return
@@ -1525,10 +1533,19 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     const variables: ParsedVariable[] = []
 
     draft.steps.forEach((step) => {
-      const prompt = prompts.find((item) => item.id === step.promptId)
-      if (!prompt) return
+      let content = ""
 
-      extractVariables(prompt.content).forEach((variable) => {
+      if (step.mode === "inline" && step.inlineContent) {
+        // 内联模式：从 inlineContent 提取变量
+        content = step.inlineContent
+      } else {
+        // Prompt 模式：从已有 prompt 提取变量
+        const prompt = prompts.find((item) => item.id === step.promptId)
+        if (!prompt) return
+        content = prompt.content
+      }
+
+      extractVariables(content).forEach((variable) => {
         if (variable.raw === "selection" || variable.raw === "quote" || seen.has(variable.raw)) {
           return
         }
@@ -1541,7 +1558,14 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }
 
   const getChainStepTitles = (chain: PromptChain): string[] =>
-    chain.steps.map((step) => getPromptTitle(step.promptId))
+    chain.steps.map((step) => {
+      if (step.mode === "inline" && step.inlineContent) {
+        // 内联模式：截取前 30 个字符作为标题
+        const text = step.inlineContent.trim().replace(/\s+/g, " ")
+        return text.length > 30 ? `${text.slice(0, 30)}...` : text
+      }
+      return getPromptTitle(step.promptId)
+    })
 
   const renderChainsView = () => {
     if (prompts.length === 0) {
@@ -1769,17 +1793,63 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                   ) : (
                     draft.steps.map((step, index) => (
                       <div key={step.id} className="gh-chain-step-row">
+                        <div className="gh-chain-step-drag-handle" title={t("drag")}>
+                          <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <circle cx="6" cy="4" r="1.2" />
+                            <circle cx="10" cy="4" r="1.2" />
+                            <circle cx="6" cy="8" r="1.2" />
+                            <circle cx="10" cy="8" r="1.2" />
+                            <circle cx="6" cy="12" r="1.2" />
+                            <circle cx="10" cy="12" r="1.2" />
+                          </svg>
+                        </div>
                         <div className="gh-chain-step-index">{index + 1}</div>
-                        <select
-                          value={step.promptId}
-                          onChange={(e) => updateChainStep(step.id, { promptId: e.target.value })}>
-                          <option value="">{t("chainSelectPrompt")}</option>
-                          {prompts.map((prompt) => (
-                            <option key={prompt.id} value={prompt.id}>
-                              {prompt.title}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="gh-chain-step-content">
+                          <div className="gh-chain-step-mode-switch">
+                            <label>
+                              <input
+                                type="radio"
+                                name={`step-mode-${step.id}`}
+                                checked={step.mode !== "inline"}
+                                onChange={() => updateChainStep(step.id, { mode: "prompt" })}
+                              />
+                              <span>{t("chainStepModePrompt")}</span>
+                            </label>
+                            <label>
+                              <input
+                                type="radio"
+                                name={`step-mode-${step.id}`}
+                                checked={step.mode === "inline"}
+                                onChange={() => updateChainStep(step.id, { mode: "inline" })}
+                              />
+                              <span>{t("chainStepModeInline")}</span>
+                            </label>
+                          </div>
+                          {step.mode === "inline" ? (
+                            <textarea
+                              className="gh-chain-step-inline-input"
+                              value={step.inlineContent || ""}
+                              onChange={(e) =>
+                                updateChainStep(step.id, { inlineContent: e.target.value })
+                              }
+                              placeholder={t("chainStepInlinePlaceholder")}
+                              rows={3}
+                            />
+                          ) : (
+                            <select
+                              value={step.promptId}
+                              onChange={(e) =>
+                                updateChainStep(step.id, { promptId: e.target.value })
+                              }>
+                              <option value="">{t("chainSelectPrompt")}</option>
+                              {prompts.map((prompt) => (
+                                <option key={prompt.id} value={prompt.id}>
+                                  {prompt.title}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
                         <div className="gh-chain-step-actions">
                           <Tooltip content={t("moveUp")}>
                             <button

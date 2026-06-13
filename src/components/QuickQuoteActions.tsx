@@ -451,23 +451,43 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
   }, [clearSelection, createSelectionContext, promptManager, selectionState])
 
   const runChain = useCallback(
-    (
+    async (
       chain: PromptChain,
       selection: PromptChainSelectionContext,
       values: Record<string, string>,
     ) => {
-      if (!promptQueueEnabled) {
-        showToast(t("promptQueueEnableHint"), 3000)
-        return
-      }
-
       const resolvedSteps = resolvePromptChainSteps({ chain, prompts, selection, values })
-      const queueInputs = buildPromptChainQueueInputs(chain, resolvedSteps)
-      if (queueInputs.length === 0) {
+      if (resolvedSteps.length === 0) {
         showToast(t("promptEnqueueEmpty"), 2500)
         return
       }
 
+      // 队列未开启时的 fallback 策略
+      if (!promptQueueEnabled) {
+        if (resolvedSteps.length === 1) {
+          // 单步 Chain：直接插入输入框
+          const step = resolvedSteps[0]
+          const inserted = await promptManager.insertPrompt(step.content)
+          if (!inserted) {
+            showToast(t("insertFailed"))
+            return
+          }
+          if (step.quoteRef) {
+            useQuickQuotesStore.getState().addReference(step.quoteRef)
+          }
+          updateChainLastUsed(chain.id)
+          showToast(t("quickQuoteInserted"), 1800)
+          clearSelection()
+          return
+        } else {
+          // 多步 Chain：提示启用队列
+          showToast(t("promptQueueEnableHint"), 3000)
+          return
+        }
+      }
+
+      // 队列已开启：正常入队
+      const queueInputs = buildPromptChainQueueInputs(chain, resolvedSteps)
       const items = enqueueMany(queueInputs)
       resolvedSteps.forEach((step) => {
         if (step.quoteRef) useQuickQuotesStore.getState().addReference(step.quoteRef)
@@ -476,7 +496,7 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
       showToast(t("quickQuoteChainQueued", { count: String(items.length) }), 2500)
       clearSelection()
     },
-    [clearSelection, enqueueMany, promptQueueEnabled, prompts, updateChainLastUsed],
+    [clearSelection, enqueueMany, promptManager, promptQueueEnabled, prompts, updateChainLastUsed],
   )
 
   const handleRunChain = useCallback(

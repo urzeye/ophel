@@ -395,6 +395,10 @@ export const en = {
   chainShowInPopover: "Show in selection popover",
   chainSteps: "Steps",
   chainStepsHelp: "Each step selects an existing prompt and is queued in order.",
+  chainStepModePrompt: "Use existing prompt",
+  chainStepModeInline: "Direct input",
+  chainStepInlinePlaceholder:
+    "Enter prompt content directly (supports {{selection}} and {{quote}} variables)",
   chainAddStep: "Add step",
   chainSelectPrompt: "Select prompt",
   chainVariablesPreview: "Variables preview",

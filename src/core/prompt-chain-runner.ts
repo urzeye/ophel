@@ -55,7 +55,12 @@ export const buildPromptChainAutoValues = (
 
 export const getPromptChainTemplates = (chain: PromptChain, prompts: Prompt[]): string[] =>
   chain.steps
-    .map((step) => (step.promptId ? getPromptById(prompts, step.promptId)?.content || "" : ""))
+    .map((step) => {
+      if (step.mode === "inline" && step.inlineContent) {
+        return step.inlineContent
+      }
+      return step.promptId ? getPromptById(prompts, step.promptId)?.content || "" : ""
+    })
     .filter(Boolean)
 
 export const extractPromptChainVariables = (
@@ -86,10 +91,27 @@ export const resolvePromptChainSteps = ({
 
   return chain.steps
     .map((step, index): ResolvedPromptChainStep | null => {
-      const prompt = getPromptById(prompts, step.promptId)
-      if (!prompt) return null
+      let prompt: Prompt | null = null
+      let template = ""
 
-      const content = replaceVariables(prompt.content, variableValues).trim()
+      if (step.mode === "inline" && step.inlineContent) {
+        // 内联模式：使用 inlineContent 作为模板
+        template = step.inlineContent
+        // 创建一个虚拟 prompt 对象用于显示
+        prompt = {
+          id: step.id,
+          title: `Inline Step ${index + 1}`,
+          content: step.inlineContent,
+          category: "",
+        }
+      } else {
+        // Prompt 模式：从已有 prompt 获取
+        prompt = getPromptById(prompts, step.promptId)
+        if (!prompt) return null
+        template = prompt.content
+      }
+
+      const content = replaceVariables(template, variableValues).trim()
       if (!content) return null
 
       let quoteRef = selection.quoteRef
@@ -109,7 +131,7 @@ export const resolvePromptChainSteps = ({
         step: {
           id: step.id,
           promptId: prompt.id,
-          template: prompt.content,
+          template,
           runMode: step.runMode,
           splitMode: step.splitMode,
         },

@@ -2317,13 +2317,33 @@
 
 .gh-chain-step-row {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) auto;
-  align-items: center;
+  grid-template-columns: 20px 28px minmax(0, 1fr) auto;
+  align-items: start;
   gap: 8px;
   padding: 8px;
   border: 1px solid var(--gh-border, #e5e7eb);
   border-radius: 8px;
   background: var(--gh-bg-secondary, #f9fafb);
+}
+
+.gh-chain-step-drag-handle {
+  width: 20px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gh-text-tertiary, #9ca3af);
+  cursor: grab;
+  user-select: none;
+  margin-top: 5px;
+}
+
+.gh-chain-step-drag-handle:hover {
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.gh-chain-step-drag-handle:active {
+  cursor: grabbing;
 }
 
 .gh-chain-step-index {
@@ -2337,11 +2357,72 @@
   justify-content: center;
   font-size: 12px;
   font-weight: 650;
+  margin-top: 5px;
+}
+
+.gh-chain-step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.gh-chain-step-mode-switch {
+  display: flex;
+  gap: 14px;
+}
+
+.gh-chain-step-mode-switch label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+}
+
+.gh-chain-step-mode-switch input[type="radio"] {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.gh-chain-step-mode-switch input[type="radio"]:checked + span {
+  color: var(--gh-text, #1f2937);
+  font-weight: 600;
+}
+
+.gh-chain-step-inline-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--gh-input-border, #d1d5db);
+  border-radius: 7px;
+  background: var(--gh-input-bg, var(--gh-bg, #ffffff));
+  color: var(--gh-text, #1f2937);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  padding: 8px 10px;
+  resize: vertical;
+  outline: none;
+}
+
+.gh-chain-step-inline-input:focus {
+  border-color: var(--gh-primary, #4285f4);
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.12);
+}
+
+.gh-chain-step-inline-input::placeholder {
+  color: var(--gh-text-tertiary, #9ca3af);
 }
 
 .gh-chain-step-actions {
   display: flex;
   gap: 2px;
+  margin-top: 5px;
 }
 
 .gh-chain-step-empty {
