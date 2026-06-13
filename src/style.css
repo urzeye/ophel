@@ -2087,14 +2087,31 @@
 }
 
 .gh-chain-flow {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: var(--gh-text-secondary, #6b7280);
   font-size: 12px;
   line-height: 1.4;
+  margin-top: 4px;
+}
+
+.gh-chain-flow-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding-left: 36px;
+  flex: 1;
+  min-width: 0;
+}
+
+.gh-chain-step-badge {
+  flex-shrink: 0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--gh-bg-secondary, #f3f4f6);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .gh-chain-flow-empty {
@@ -2324,6 +2341,17 @@
   border: 1px solid var(--gh-border, #e5e7eb);
   border-radius: 8px;
   background: var(--gh-bg-secondary, #f9fafb);
+  transition: all 0.15s;
+}
+
+.gh-chain-step-row.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.gh-chain-step-row:hover {
+  background: var(--gh-bg, #ffffff);
+  border-color: var(--gh-border-hover, #d1d5db);
 }
 
 .gh-chain-step-drag-handle {
@@ -2342,7 +2370,7 @@
   color: var(--gh-text-secondary, #6b7280);
 }
 
-.gh-chain-step-drag-handle:active {
+.gh-chain-step-row.dragging .gh-chain-step-drag-handle {
   cursor: grabbing;
 }
 
@@ -2357,6 +2385,10 @@
   justify-content: center;
   font-size: 12px;
   font-weight: 650;
+  margin-top: 5px;
+}
+
+.gh-chain-step-delete {
   margin-top: 5px;
 }
 
@@ -2417,12 +2449,6 @@
 
 .gh-chain-step-inline-input::placeholder {
   color: var(--gh-text-tertiary, #9ca3af);
-}
-
-.gh-chain-step-actions {
-  display: flex;
-  gap: 2px;
-  margin-top: 5px;
 }
 
 .gh-chain-step-empty {
@@ -2511,11 +2537,45 @@
   color: var(--gh-text, #1f2937);
   font-size: 13px;
   line-height: 1.5;
-  white-space: pre-wrap;
   word-break: break-word;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  max-height: 200px;
+  max-height: 400px;
   overflow-y: auto;
+}
+
+.gh-chain-preview-step-body p {
+  margin: 0 0 0.75em;
+}
+
+.gh-chain-preview-step-body p:last-child {
+  margin-bottom: 0;
+}
+
+.gh-chain-preview-step-body code {
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: var(--gh-bg-secondary, #f3f4f6);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.gh-chain-preview-step-body pre {
+  margin: 0.75em 0;
+  padding: 10px;
+  border-radius: 6px;
+  background: var(--gh-bg-secondary, #f3f4f6);
+  overflow-x: auto;
+}
+
+.gh-chain-preview-step-body pre code {
+  padding: 0;
+  background: none;
+}
+
+.gh-chain-preview-step-body blockquote {
+  margin: 0.75em 0;
+  padding-left: 12px;
+  border-left: 3px solid var(--gh-border, #e5e7eb);
+  color: var(--gh-text-secondary, #6b7280);
 }
 
 .gh-chain-preview-empty {

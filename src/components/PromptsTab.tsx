@@ -347,6 +347,44 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
   color: var(--gh-text-tertiary, #9ca3af);
 }
 
+.gh-chain-icon-presets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.gh-chain-icon-preset-btn {
+  width: 42px;
+  height: 42px;
+  border: 1.5px solid var(--gh-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text-secondary, #6b7280);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.gh-chain-icon-preset-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.gh-chain-icon-preset-btn:hover {
+  border-color: var(--gh-primary, #4285f4);
+  background: rgba(66, 133, 244, 0.05);
+}
+
+.gh-chain-icon-preset-btn.active {
+  border-color: var(--gh-primary, #4285f4);
+  background: rgba(66, 133, 244, 0.1);
+  color: var(--gh-primary, #4285f4);
+}
+
 .prompt-action-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
@@ -413,7 +451,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     show: boolean
     draft: ChainDraft | null
     showExecutionPreview: boolean
-  }>({ show: false, draft: null, showExecutionPreview: false })
+    draggedStepId: string | null
+  }>({ show: false, draft: null, showExecutionPreview: false, draggedStepId: null })
 
   // 分类管理弹窗状态
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
@@ -716,11 +755,17 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         ? { ...chain, steps: chain.steps.map((step) => ({ ...step })) }
         : createDefaultChainDraft(),
       showExecutionPreview: false,
+      draggedStepId: null,
     })
   }
 
   const closeChainEditor = useCallback(() => {
-    setChainEditorState({ show: false, draft: null, showExecutionPreview: false })
+    setChainEditorState({
+      show: false,
+      draft: null,
+      showExecutionPreview: false,
+      draggedStepId: null,
+    })
   }, [])
 
   const updateChainDraft = (updates: Partial<ChainDraft>) => {
@@ -781,6 +826,32 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       steps.splice(nextIndex, 0, step)
       return { ...state, draft: { ...state.draft, steps } }
     })
+  }
+
+  const handleStepDragStart = (stepId: string) => {
+    setChainEditorState((state) => ({ ...state, draggedStepId: stepId }))
+  }
+
+  const handleStepDragOver = (e: React.DragEvent, targetStepId: string) => {
+    e.preventDefault()
+    const draggedId = chainEditorState.draggedStepId
+    if (!draggedId || draggedId === targetStepId) return
+
+    setChainEditorState((state) => {
+      if (!state.draft) return state
+      const steps = [...state.draft.steps]
+      const draggedIndex = steps.findIndex((s) => s.id === draggedId)
+      const targetIndex = steps.findIndex((s) => s.id === targetStepId)
+      if (draggedIndex === -1 || targetIndex === -1) return state
+
+      const [draggedStep] = steps.splice(draggedIndex, 1)
+      steps.splice(targetIndex, 0, draggedStep)
+      return { ...state, draft: { ...state.draft, steps } }
+    })
+  }
+
+  const handleStepDragEnd = () => {
+    setChainEditorState((state) => ({ ...state, draggedStepId: null }))
   }
 
   const saveChainDraft = () => {
@@ -1645,13 +1716,15 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             <div className="gh-chain-body">
               <div className="gh-chain-title-row">
                 <span className="gh-chain-title">{chain.title}</span>
-                <span className="gh-chain-step-badge">
-                  {t("chainStepCount", { count: String(chain.steps.length) })}
-                </span>
               </div>
-              <div className="gh-chain-flow" title={flowText}>
-                {flowText}
-              </div>
+              <Tooltip content={flowText}>
+                <div className="gh-chain-flow">
+                  <span className="gh-chain-step-badge">
+                    {t("chainStepCount", { count: String(chain.steps.length) })}
+                  </span>
+                  <span className="gh-chain-flow-text">{flowText}</span>
+                </div>
+              </Tooltip>
             </div>
           </div>
 
@@ -1825,7 +1898,13 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     <div className="gh-chain-step-empty">{t("chainNoSteps")}</div>
                   ) : (
                     draft.steps.map((step, index) => (
-                      <div key={step.id} className="gh-chain-step-row">
+                      <div
+                        key={step.id}
+                        className={`gh-chain-step-row${chainEditorState.draggedStepId === step.id ? " dragging" : ""}`}
+                        draggable
+                        onDragStart={() => handleStepDragStart(step.id)}
+                        onDragOver={(e) => handleStepDragOver(e, step.id)}
+                        onDragEnd={handleStepDragEnd}>
                         <div className="gh-chain-step-drag-handle" title={t("drag")}>
                           <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
                             <circle cx="6" cy="4" r="1.2" />
@@ -1883,31 +1962,16 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                             </select>
                           )}
                         </div>
-                        <div className="gh-chain-step-actions">
-                          <Tooltip content={t("moveUp")}>
-                            <button
-                              className="prompt-action-btn"
-                              disabled={index === 0}
-                              onClick={() => moveChainStep(step.id, -1)}>
-                              <ArrowUpIcon size={15} />
-                            </button>
-                          </Tooltip>
-                          <Tooltip content={t("moveDown")}>
-                            <button
-                              className="prompt-action-btn"
-                              disabled={index === draft.steps.length - 1}
-                              onClick={() => moveChainStep(step.id, 1)}>
-                              <ArrowDownIcon size={15} />
-                            </button>
-                          </Tooltip>
-                          <Tooltip content={t("delete")}>
-                            <button
-                              className="prompt-action-btn danger"
-                              onClick={() => removeChainStep(step.id)}>
-                              <DeleteIcon size={15} />
-                            </button>
-                          </Tooltip>
-                        </div>
+                        <Tooltip content={t("delete")}>
+                          <button
+                            className="prompt-action-btn danger gh-chain-step-delete"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              removeChainStep(step.id)
+                            }}>
+                            <DeleteIcon size={15} />
+                          </button>
+                        </Tooltip>
                       </div>
                     ))
                   )}
@@ -1954,13 +2018,16 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                           <div className="gh-chain-preview-step-header">
                             {t("chainStep")} {index + 1}
                           </div>
-                          <div className="gh-chain-preview-step-body">
-                            {content || (
-                              <span className="gh-chain-preview-empty">
-                                {t("chainStepContentEmpty")}
-                              </span>
-                            )}
-                          </div>
+                          <div
+                            className="gh-chain-preview-step-body"
+                            dangerouslySetInnerHTML={{
+                              __html: content
+                                ? createSafeHTML(renderMarkdown(content))
+                                : createSafeHTML(
+                                    `<span class="gh-chain-preview-empty">${t("chainStepContentEmpty")}</span>`,
+                                  ),
+                            }}
+                          />
                         </div>
                       ))}
                     </div>
