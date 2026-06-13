@@ -2333,14 +2333,13 @@
 }
 
 .gh-chain-step-row {
-  display: grid;
-  grid-template-columns: 20px 28px minmax(0, 1fr);
-  align-items: start;
-  gap: 8px;
-  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 12px;
   border: 1px solid var(--gh-border, #e5e7eb);
   border-radius: 8px;
-  background: var(--gh-bg-secondary, #f9fafb);
+  background: var(--gh-bg, #ffffff);
   transition: all 0.15s;
 }
 
@@ -2350,20 +2349,27 @@
 }
 
 .gh-chain-step-row:hover {
-  background: var(--gh-bg, #ffffff);
   border-color: var(--gh-border-hover, #d1d5db);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.gh-chain-step-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 .gh-chain-step-drag-handle {
-  width: 20px;
-  height: 24px;
+  width: 16px;
+  height: 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: var(--gh-text-tertiary, #9ca3af);
   cursor: grab;
   user-select: none;
-  margin-top: 5px;
+  flex-shrink: 0;
 }
 
 .gh-chain-step-drag-handle:hover {
@@ -2378,14 +2384,62 @@
   width: 24px;
   height: 24px;
   border-radius: 6px;
-  background: var(--gh-bg, #ffffff);
+  background: var(--gh-bg-secondary, #f3f4f6);
   color: var(--gh-text-secondary, #6b7280);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
   font-weight: 650;
-  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.gh-chain-step-mode-switch {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+}
+
+.gh-chain-step-delete-btn {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.gh-chain-step-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.gh-chain-step-input-row {
+  width: 100%;
+}
+
+.gh-chain-step-inline-input,
+.gh-chain-step-prompt-select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 6px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text, #1f2937);
+  font-size: 13px;
+  line-height: 1.5;
+  transition: all 0.15s;
+}
+
+.gh-chain-step-inline-input:focus,
+.gh-chain-step-prompt-select:focus {
+  outline: none;
+  border-color: var(--gh-primary, #4285f4);
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+}
+
+.gh-chain-step-inline-input {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
 }
 
 .gh-chain-step-content {
@@ -2394,25 +2448,6 @@
   flex-direction: column;
   gap: 10px;
   min-width: 0;
-}
-
-.gh-chain-step-delete-btn {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 26px;
-  height: 26px;
-  opacity: 0;
-  transition: opacity 0.15s;
-  border-radius: 6px;
-}
-
-.gh-chain-step-delete-btn:hover {
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.gh-chain-step-row:hover .gh-chain-step-delete-btn {
-  opacity: 1;
 }
 
 .gh-chain-step-content {
@@ -2536,19 +2571,20 @@
 
 .gh-chain-preview-nav {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   align-items: center;
 }
 
 .gh-chain-preview-nav-btn {
-  width: 26px;
-  height: 26px;
+  min-width: 32px;
+  height: 28px;
+  padding: 0 8px;
   border: 1px solid var(--gh-border, #e5e7eb);
   border-radius: 6px;
   background: var(--gh-bg, #ffffff);
   color: var(--gh-text-secondary, #6b7280);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -2560,6 +2596,8 @@
   background: var(--gh-primary, #4285f4);
   border-color: var(--gh-primary, #4285f4);
   color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(66, 133, 244, 0.2);
 }
 
 .gh-chain-preview-content {
@@ -2577,22 +2615,22 @@
 }
 
 .gh-chain-preview-step-header {
-  padding: 8px 12px;
+  padding: 10px 14px;
   background: var(--gh-bg-secondary, #f9fafb);
   border-bottom: 1px solid var(--gh-border, #e5e7eb);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .gh-chain-preview-step-number {
-  width: 22px;
-  height: 22px;
-  border-radius: 5px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   background: var(--gh-primary, #4285f4);
   color: #ffffff;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2601,7 +2639,7 @@
 
 .gh-chain-preview-step-title {
   color: var(--gh-text, #1f2937);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   flex: 1;
   overflow: hidden;

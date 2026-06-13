@@ -1905,18 +1905,18 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                         onDragStart={() => handleStepDragStart(step.id)}
                         onDragOver={(e) => handleStepDragOver(e, step.id)}
                         onDragEnd={handleStepDragEnd}>
-                        <div className="gh-chain-step-drag-handle" title={t("drag")}>
-                          <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
-                            <circle cx="6" cy="4" r="1.2" />
-                            <circle cx="10" cy="4" r="1.2" />
-                            <circle cx="6" cy="8" r="1.2" />
-                            <circle cx="10" cy="8" r="1.2" />
-                            <circle cx="6" cy="12" r="1.2" />
-                            <circle cx="10" cy="12" r="1.2" />
-                          </svg>
-                        </div>
-                        <div className="gh-chain-step-index">{index + 1}</div>
-                        <div className="gh-chain-step-content">
+                        <div className="gh-chain-step-header-row">
+                          <div className="gh-chain-step-drag-handle" title={t("drag")}>
+                            <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                              <circle cx="6" cy="4" r="1.2" />
+                              <circle cx="10" cy="4" r="1.2" />
+                              <circle cx="6" cy="8" r="1.2" />
+                              <circle cx="10" cy="8" r="1.2" />
+                              <circle cx="6" cy="12" r="1.2" />
+                              <circle cx="10" cy="12" r="1.2" />
+                            </svg>
+                          </div>
+                          <div className="gh-chain-step-index">{index + 1}</div>
                           <div className="gh-chain-step-mode-switch">
                             <label>
                               <input
@@ -1937,6 +1937,18 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                               <span>{t("chainStepModeInline")}</span>
                             </label>
                           </div>
+                          <Tooltip content={t("delete")}>
+                            <button
+                              className="prompt-action-btn danger gh-chain-step-delete-btn"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                removeChainStep(step.id)
+                              }}>
+                              <DeleteIcon size={15} />
+                            </button>
+                          </Tooltip>
+                        </div>
+                        <div className="gh-chain-step-input-row">
                           {step.mode === "inline" ? (
                             <textarea
                               className="gh-chain-step-inline-input"
@@ -1945,10 +1957,11 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                                 updateChainStep(step.id, { inlineContent: e.target.value })
                               }
                               placeholder={t("chainStepInlinePlaceholder")}
-                              rows={3}
+                              rows={4}
                             />
                           ) : (
                             <select
+                              className="gh-chain-step-prompt-select"
                               value={step.promptId}
                               onChange={(e) =>
                                 updateChainStep(step.id, { promptId: e.target.value })
@@ -1961,16 +1974,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                               ))}
                             </select>
                           )}
-                          <Tooltip content={t("delete")}>
-                            <button
-                              className="prompt-action-btn danger gh-chain-step-delete-btn"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                removeChainStep(step.id)
-                              }}>
-                              <DeleteIcon size={15} />
-                            </button>
-                          </Tooltip>
                         </div>
                       </div>
                     ))
