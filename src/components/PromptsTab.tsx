@@ -85,7 +85,7 @@ type ChainDraft = Omit<PromptChain, "id" | "createdAt" | "updatedAt"> & {
 const CHAIN_PRESET_ICONS: { label: string; svg: string }[] = [
   {
     label: "Translate",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l6 0"/><path d="M4 5l0 3"/><path d="M8 5l0 3"/><path d="M3 15l4 -4.5l4 4.5"/><path d="M13 20l2.5 -7l2.5 7"/><path d="M14 18l4 0"/></svg>',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h7"/><path d="M9 3v2c0 4.418-2.239 8-5 8"/><path d="M5 9c0 2.144 2.952 3.908 6.7 4"/><path d="M12 20l4-9 4 9"/><path d="M19.1 18h-6.2"/></svg>',
   },
   {
     label: "Summary",
@@ -1630,7 +1630,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     return variables
   }
 
-  const getChainStepTitles = (chain: PromptChain): string[] =>
+  const getChainStepTitles = (chain: PromptChain | ChainDraft): string[] =>
     chain.steps.map((step) => {
       if (step.mode === "inline" && step.inlineContent) {
         // 内联模式：截取前 30 个字符作为标题
@@ -1961,17 +1961,17 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                               ))}
                             </select>
                           )}
+                          <Tooltip content={t("delete")}>
+                            <button
+                              className="prompt-action-btn danger gh-chain-step-delete-btn"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                removeChainStep(step.id)
+                              }}>
+                              <DeleteIcon size={15} />
+                            </button>
+                          </Tooltip>
                         </div>
-                        <Tooltip content={t("delete")}>
-                          <button
-                            className="prompt-action-btn danger gh-chain-step-delete"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              removeChainStep(step.id)
-                            }}>
-                            <DeleteIcon size={15} />
-                          </button>
-                        </Tooltip>
                       </div>
                     ))
                   )}
@@ -1999,24 +1999,53 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 <div className="gh-chain-editor-section">
                   <div className="gh-chain-section-header" style={{ marginBottom: 0 }}>
                     <div className="gh-chain-section-title">{t("chainExecutionPreview")}</div>
-                    <button
-                      type="button"
-                      className="gh-chain-preview-toggle"
-                      onClick={() =>
-                        setChainEditorState((state) => ({
-                          ...state,
-                          showExecutionPreview: !state.showExecutionPreview,
-                        }))
-                      }>
-                      {chainEditorState.showExecutionPreview ? t("collapse") : t("expand")}
-                    </button>
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                      {chainEditorState.showExecutionPreview && (
+                        <div className="gh-chain-preview-nav">
+                          {draft.steps.map((step, idx) => {
+                            const title = getChainStepTitles(draft)[idx] || `Step ${idx + 1}`
+                            return (
+                              <Tooltip key={step.id} content={title}>
+                                <button
+                                  type="button"
+                                  className="gh-chain-preview-nav-btn"
+                                  onClick={() => {
+                                    document
+                                      .getElementById(`chain-preview-step-${idx}`)
+                                      ?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+                                  }}>
+                                  {idx + 1}
+                                </button>
+                              </Tooltip>
+                            )
+                          })}
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        className="gh-chain-preview-toggle"
+                        onClick={() =>
+                          setChainEditorState((state) => ({
+                            ...state,
+                            showExecutionPreview: !state.showExecutionPreview,
+                          }))
+                        }>
+                        {chainEditorState.showExecutionPreview ? t("collapse") : t("expand")}
+                      </button>
+                    </div>
                   </div>
                   {chainEditorState.showExecutionPreview && (
                     <div className="gh-chain-preview-content">
                       {getChainExecutionPreview(draft).map((content, index) => (
-                        <div key={index} className="gh-chain-preview-step">
+                        <div
+                          key={index}
+                          id={`chain-preview-step-${index}`}
+                          className="gh-chain-preview-step">
                           <div className="gh-chain-preview-step-header">
-                            {t("chainStep")} {index + 1}
+                            <span className="gh-chain-preview-step-number">{index + 1}</span>
+                            <span className="gh-chain-preview-step-title">
+                              {getChainStepTitles(draft)[index] || t("chainStep")}
+                            </span>
                           </div>
                           <div
                             className="gh-chain-preview-step-body"
