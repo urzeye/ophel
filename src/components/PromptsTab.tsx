@@ -412,7 +412,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const [chainEditorState, setChainEditorState] = useState<{
     show: boolean
     draft: ChainDraft | null
-  }>({ show: false, draft: null })
+    showExecutionPreview: boolean
+  }>({ show: false, draft: null, showExecutionPreview: false })
 
   // 分类管理弹窗状态
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
@@ -714,11 +715,12 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       draft: chain
         ? { ...chain, steps: chain.steps.map((step) => ({ ...step })) }
         : createDefaultChainDraft(),
+      showExecutionPreview: false,
     })
   }
 
   const closeChainEditor = useCallback(() => {
-    setChainEditorState({ show: false, draft: null })
+    setChainEditorState({ show: false, draft: null, showExecutionPreview: false })
   }, [])
 
   const updateChainDraft = (updates: Partial<ChainDraft>) => {
@@ -1567,6 +1569,37 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       return getPromptTitle(step.promptId)
     })
 
+  const getChainExecutionPreview = (draft: ChainDraft | PromptChain): string[] => {
+    const exampleSelection = "Selected text from conversation"
+    const exampleQuote = "> Selected text from conversation"
+    const exampleValues: Record<string, string> = {
+      selection: exampleSelection,
+      quote: exampleQuote,
+    }
+
+    // 添加自定义变量的示例值
+    const variables = getChainVariables(draft)
+    variables.forEach((variable) => {
+      exampleValues[variable.raw] = `{{${variable.raw}}}`
+    })
+
+    return draft.steps.map((step) => {
+      let template = ""
+
+      if (step.mode === "inline" && step.inlineContent) {
+        template = step.inlineContent
+      } else {
+        const prompt = prompts.find((item) => item.id === step.promptId)
+        template = prompt?.content || ""
+      }
+
+      if (!template) return ""
+
+      // 替换变量
+      return replaceVariables(template, exampleValues).trim()
+    })
+  }
+
   const renderChainsView = () => {
     if (prompts.length === 0) {
       return (
@@ -1897,6 +1930,43 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                   )}
                 </div>
               </div>
+
+              {draft.steps.length > 0 && (
+                <div className="gh-chain-editor-section">
+                  <div className="gh-chain-section-header" style={{ marginBottom: 0 }}>
+                    <div className="gh-chain-section-title">{t("chainExecutionPreview")}</div>
+                    <button
+                      type="button"
+                      className="gh-chain-preview-toggle"
+                      onClick={() =>
+                        setChainEditorState((state) => ({
+                          ...state,
+                          showExecutionPreview: !state.showExecutionPreview,
+                        }))
+                      }>
+                      {chainEditorState.showExecutionPreview ? t("collapse") : t("expand")}
+                    </button>
+                  </div>
+                  {chainEditorState.showExecutionPreview && (
+                    <div className="gh-chain-preview-content">
+                      {getChainExecutionPreview(draft).map((content, index) => (
+                        <div key={index} className="gh-chain-preview-step">
+                          <div className="gh-chain-preview-step-header">
+                            {t("chainStep")} {index + 1}
+                          </div>
+                          <div className="gh-chain-preview-step-body">
+                            {content || (
+                              <span className="gh-chain-preview-empty">
+                                {t("chainStepContentEmpty")}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="gh-chain-editor-footer">

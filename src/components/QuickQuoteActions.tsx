@@ -229,82 +229,125 @@ const injectQuickQuoteHostStyles = (root: Document | ShadowRoot) => {
 export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter }> = ({ adapter }) => {
   const references = useQuickQuotesStore((state) => state.references)
   const referencesRef = useRef(references)
+  const renderTimeoutRef = useRef<number | null>(null)
+  const isRenderingRef = useRef(false)
 
   useEffect(() => {
     referencesRef.current = references
   }, [references])
 
   const renderReferenceChips = useCallback(() => {
-    const userQuerySelector = adapter.getUserQuerySelector()
-    if (!userQuerySelector) return
+    // 防止并发渲染
+    if (isRenderingRef.current) return
+    isRenderingRef.current = true
 
-    injectQuickQuoteHostStyles(document)
+    try {
+      const userQuerySelector = adapter.getUserQuerySelector()
+      if (!userQuerySelector) return
 
-    const referencesForSession = referencesRef.current.filter(
-      (reference) =>
-        reference.anchor.siteId === adapter.getSiteId() &&
-        reference.anchor.sessionId === adapter.getSessionId(),
-    )
-    if (referencesForSession.length === 0) return
+      injectQuickQuoteHostStyles(document)
 
-    const userMessages =
-      (DOMToolkit.query(userQuerySelector, { all: true, shadow: true }) as Element[]) || []
-    userMessages.forEach((message) => {
-      if (!(message instanceof HTMLElement)) return
-      const renderedIds = new Set(
-        (message.dataset.ghQuickQuoteRefs || "").split(",").filter(Boolean),
+      const referencesForSession = referencesRef.current.filter(
+        (reference) =>
+          reference.anchor.siteId === adapter.getSiteId() &&
+          reference.anchor.sessionId === adapter.getSessionId(),
       )
-      const messageText = adapter.extractUserQueryText(message)
-      const textHash = djb2ContentHash(messageText)
-      const normalizedText = normalizeContentForHash(messageText)
+      if (referencesForSession.length === 0) return
 
-      const reference = referencesForSession.find((candidate) => {
-        if (renderedIds.has(candidate.id)) return false
-        if (candidate.consumerContentHash && candidate.consumerContentHash === textHash) return true
-        return normalizedText.includes(normalizeContentForHash(candidate.selectedText))
+      const userMessages =
+        (DOMToolkit.query(userQuerySelector, { all: true, shadow: true }) as Element[]) || []
+
+      userMessages.forEach((message) => {
+        if (!(message instanceof HTMLElement)) return
+
+        // 跳过已完全处理的消息
+        if (message.dataset.ghQuickQuoteProcessed === "true") return
+
+        const renderedIds = new Set(
+          (message.dataset.ghQuickQuoteRefs || "").split(",").filter(Boolean),
+        )
+        const messageText = adapter.extractUserQueryText(message)
+        const textHash = djb2ContentHash(messageText)
+        const normalizedText = normalizeContentForHash(messageText)
+
+        const reference = referencesForSession.find((candidate) => {
+          if (renderedIds.has(candidate.id)) return false
+          if (candidate.consumerContentHash && candidate.consumerContentHash === textHash)
+            return true
+          return normalizedText.includes(normalizeContentForHash(candidate.selectedText))
+        })
+
+        if (!reference) {
+          // 没有匹配的引用，标记为已处理
+          message.dataset.ghQuickQuoteProcessed = "true"
+          return
+        }
+
+        const root = message.getRootNode()
+        if (root instanceof Document || root instanceof ShadowRoot) {
+          injectQuickQuoteHostStyles(root)
+        }
+
+        const chip = document.createElement("button")
+        chip.type = "button"
+        chip.className = "gh-quick-quote-chip"
+        chip.title = t("quickQuoteJumpToSource")
+        const label = document.createElement("span")
+        label.className = "gh-quick-quote-chip-text"
+        label.textContent = truncateText(reference.selectedText)
+        chip.append(label)
+        chip.addEventListener("click", (event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          const ok = scrollToQuoteReference(reference, adapter)
+          if (!ok) showToast(t("quickQuoteSourceNotFound"), 2400)
+        })
+
+        message.prepend(chip)
+        renderedIds.add(reference.id)
+        message.dataset.ghQuickQuoteRefs = Array.from(renderedIds).join(",")
+        // 注意：这里不设置 processed=true，因为可能有多个引用需要渲染
       })
-
-      if (!reference) return
-
-      const root = message.getRootNode()
-      if (root instanceof Document || root instanceof ShadowRoot) {
-        injectQuickQuoteHostStyles(root)
-      }
-
-      const chip = document.createElement("button")
-      chip.type = "button"
-      chip.className = "gh-quick-quote-chip"
-      chip.title = t("quickQuoteJumpToSource")
-      const label = document.createElement("span")
-      label.className = "gh-quick-quote-chip-text"
-      label.textContent = truncateText(reference.selectedText)
-      chip.append(label)
-      chip.addEventListener("click", (event) => {
-        event.preventDefault()
-        event.stopPropagation()
-        const ok = scrollToQuoteReference(reference, adapter)
-        if (!ok) showToast(t("quickQuoteSourceNotFound"), 2400)
-      })
-
-      message.prepend(chip)
-      renderedIds.add(reference.id)
-      message.dataset.ghQuickQuoteRefs = Array.from(renderedIds).join(",")
-    })
+    } finally {
+      isRenderingRef.current = false
+    }
   }, [adapter])
 
+  // 防抖渲染函数
+  const debouncedRender = useCallback(() => {
+    if (renderTimeoutRef.current !== null) {
+      window.clearTimeout(renderTimeoutRef.current)
+    }
+    renderTimeoutRef.current = window.setTimeout(() => {
+      renderTimeoutRef.current = null
+      renderReferenceChips()
+    }, 100)
+  }, [renderReferenceChips])
+
   useEffect(() => {
+    // 初始渲染
     renderReferenceChips()
 
     const target = document.querySelector(adapter.getResponseContainerSelector()) || document.body
-    const observer = new MutationObserver(() => renderReferenceChips())
+
+    // 使用 MutationObserver 监听 DOM 变化
+    const observer = new MutationObserver((mutations) => {
+      // 只在有新增节点时触发
+      const hasAddedNodes = mutations.some((mutation) => mutation.addedNodes.length > 0)
+      if (hasAddedNodes) {
+        debouncedRender()
+      }
+    })
+
     observer.observe(target, { childList: true, subtree: true })
-    const interval = window.setInterval(renderReferenceChips, 2000)
 
     return () => {
       observer.disconnect()
-      window.clearInterval(interval)
+      if (renderTimeoutRef.current !== null) {
+        window.clearTimeout(renderTimeoutRef.current)
+      }
     }
-  }, [adapter, renderReferenceChips])
+  }, [adapter, debouncedRender, renderReferenceChips])
 
   return null
 }
