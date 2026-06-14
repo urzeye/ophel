@@ -274,31 +274,175 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 .gh-chain-step-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .gh-chain-step-row {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 14px;
   border: 1px solid var(--gh-border, #e5e7eb);
-  border-radius: 8px;
-  background: var(--gh-bg-secondary, #f9fafb);
+  border-radius: 10px;
+  background: var(--gh-bg, #ffffff);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
 }
 
-.gh-chain-step-index {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  background: var(--gh-bg, #ffffff);
-  color: var(--gh-text-secondary, #6b7280);
+.gh-chain-step-row:hover {
+  border-color: var(--gh-border-hover, #d1d5db);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.gh-chain-step-row.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.gh-chain-step-header-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.gh-chain-step-drag-handle {
+  width: 16px;
+  height: 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  color: var(--gh-text-tertiary, #c5c8cc);
+  cursor: grab;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.gh-chain-step-drag-handle:hover {
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.gh-chain-step-row.dragging .gh-chain-step-drag-handle {
+  cursor: grabbing;
+}
+
+.gh-chain-step-index {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--gh-primary, #4285f4);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.gh-chain-step-mode-switch {
+  display: flex;
+  padding: 2px;
+  border-radius: 7px;
+  background: var(--gh-bg-secondary, #f3f4f6);
+  border: 1px solid var(--gh-border, #e5e7eb);
+  gap: 0;
+  flex: 0 0 auto;
+}
+
+.gh-chain-step-mode-btn {
+  padding: 4px 10px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--gh-text-tertiary, #9ca3af);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.gh-chain-step-mode-btn:hover {
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.gh-chain-step-mode-btn.active {
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text, #1f2937);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.gh-chain-step-delete-btn {
+  width: 26px;
+  height: 26px;
+  margin-left: auto;
+  flex-shrink: 0;
+  border-radius: 6px;
+  opacity: 0;
+  transition: all 0.15s;
+}
+
+.gh-chain-step-row:hover .gh-chain-step-delete-btn {
+  opacity: 1;
+}
+
+.gh-chain-step-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.gh-chain-step-input-row {
+  width: 100%;
+}
+
+.gh-chain-step-inline-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 80px;
+  padding: 10px 12px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text, #1f2937);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  resize: vertical;
+  outline: none;
+  transition: all 0.15s;
+}
+
+.gh-chain-step-inline-input:focus {
+  border-color: var(--gh-primary, #4285f4);
+  background: var(--gh-bg, #ffffff);
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.08);
+}
+
+.gh-chain-step-inline-input::placeholder {
+  color: var(--gh-text-tertiary, #9ca3af);
+}
+
+.gh-chain-step-prompt-select {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text, #1f2937);
+  font-size: 13px;
+  outline: none;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.gh-chain-step-prompt-select:focus {
+  border-color: var(--gh-primary, #4285f4);
+  background: var(--gh-bg, #ffffff);
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.08);
 }
 
 .gh-chain-step-actions {
@@ -307,9 +451,9 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 }
 
 .gh-chain-step-empty {
-  padding: 14px;
-  border: 1px dashed var(--gh-border, #d1d5db);
-  border-radius: 8px;
+  padding: 20px;
+  border: 1.5px dashed var(--gh-border, #d1d5db);
+  border-radius: 10px;
   color: var(--gh-text-tertiary, #9ca3af);
   font-size: 13px;
   text-align: center;
@@ -385,6 +529,213 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
   color: var(--gh-primary, #4285f4);
 }
 
+.gh-chain-preview-section {
+  position: relative;
+}
+
+.gh-chain-preview-toggle {
+  padding: 5px 12px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 6px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.gh-chain-preview-toggle:hover {
+  background: var(--gh-hover, #f3f4f6);
+  color: var(--gh-text, #1f2937);
+}
+
+.gh-chain-preview-nav-float {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  margin: 12px 0 0;
+  border-radius: 8px;
+  background: var(--gh-bg, rgba(255, 255, 255, 0.92));
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--gh-border, #e5e7eb);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  flex-wrap: wrap;
+}
+
+.gh-chain-preview-nav-label {
+  color: var(--gh-text-tertiary, #9ca3af);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+.gh-chain-preview-nav-btn {
+  min-width: 28px;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  gap: 4px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gh-chain-preview-nav-btn:hover {
+  background: rgba(66, 133, 244, 0.08);
+  color: var(--gh-primary, #4285f4);
+}
+
+.gh-chain-preview-nav-btn .nav-btn-num {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--gh-bg-secondary, #f3f4f6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.gh-chain-preview-nav-btn .nav-btn-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.gh-chain-preview-nav-btn:hover .nav-btn-num {
+  background: rgba(66, 133, 244, 0.15);
+  color: var(--gh-primary, #4285f4);
+}
+
+.gh-chain-preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+  padding-bottom: 4px;
+}
+
+.gh-chain-preview-step {
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--gh-bg, #ffffff);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.15s;
+}
+
+.gh-chain-preview-step:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.gh-chain-preview-step-header {
+  padding: 10px 14px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  border-bottom: 1px solid var(--gh-border, #e5e7eb);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gh-chain-preview-step-number {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--gh-primary, #4285f4);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gh-chain-preview-step-title {
+  color: var(--gh-text, #1f2937);
+  font-size: 13px;
+  font-weight: 600;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gh-chain-preview-step-body {
+  padding: 14px;
+  color: var(--gh-text, #1f2937);
+  font-size: 13px;
+  line-height: 1.6;
+  word-break: break-word;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.gh-chain-preview-step-body p {
+  margin: 0 0 0.75em;
+}
+
+.gh-chain-preview-step-body p:last-child {
+  margin-bottom: 0;
+}
+
+.gh-chain-preview-step-body code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--gh-bg-secondary, #f3f4f6);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+}
+
+.gh-chain-preview-step-body pre {
+  margin: 0.75em 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--gh-bg-secondary, #f3f4f6);
+  overflow-x: auto;
+}
+
+.gh-chain-preview-step-body pre code {
+  padding: 0;
+  background: none;
+}
+
+.gh-chain-preview-step-body blockquote {
+  margin: 0.75em 0;
+  padding: 8px 14px;
+  border-left: 3px solid var(--gh-primary, #4285f4);
+  background: rgba(66, 133, 244, 0.04);
+  border-radius: 0 6px 6px 0;
+  color: var(--gh-text-secondary, #6b7280);
+}
+
+.gh-chain-preview-empty {
+  color: var(--gh-text-tertiary, #9ca3af);
+  font-style: italic;
+}
+
 .prompt-action-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
@@ -395,13 +746,19 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
     grid-template-columns: 1fr;
   }
 
-  .gh-chain-step-row {
-    grid-template-columns: 24px minmax(0, 1fr);
+  .gh-chain-step-header-row {
+    flex-wrap: wrap;
   }
 
-  .gh-chain-step-actions {
-    grid-column: 2;
-    justify-content: flex-end;
+  .gh-chain-step-mode-switch {
+    order: 10;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .gh-chain-preview-nav-float {
+    position: static;
+    backdrop-filter: none;
   }
 }
 `
@@ -1918,24 +2275,18 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                           </div>
                           <div className="gh-chain-step-index">{index + 1}</div>
                           <div className="gh-chain-step-mode-switch">
-                            <label>
-                              <input
-                                type="radio"
-                                name={`step-mode-${step.id}`}
-                                checked={step.mode !== "inline"}
-                                onChange={() => updateChainStep(step.id, { mode: "prompt" })}
-                              />
-                              <span>{t("chainStepModePrompt")}</span>
-                            </label>
-                            <label>
-                              <input
-                                type="radio"
-                                name={`step-mode-${step.id}`}
-                                checked={step.mode === "inline"}
-                                onChange={() => updateChainStep(step.id, { mode: "inline" })}
-                              />
-                              <span>{t("chainStepModeInline")}</span>
-                            </label>
+                            <button
+                              type="button"
+                              className={`gh-chain-step-mode-btn${step.mode !== "inline" ? " active" : ""}`}
+                              onClick={() => updateChainStep(step.id, { mode: "prompt" })}>
+                              {t("chainStepModePrompt")}
+                            </button>
+                            <button
+                              type="button"
+                              className={`gh-chain-step-mode-btn${step.mode === "inline" ? " active" : ""}`}
+                              onClick={() => updateChainStep(step.id, { mode: "inline" })}>
+                              {t("chainStepModeInline")}
+                            </button>
                           </div>
                           <Tooltip content={t("delete")}>
                             <button
@@ -1944,7 +2295,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                                 e.stopPropagation()
                                 removeChainStep(step.id)
                               }}>
-                              <DeleteIcon size={15} />
+                              <DeleteIcon size={14} />
                             </button>
                           </Tooltip>
                         </div>
@@ -1999,70 +2350,70 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               </div>
 
               {draft.steps.length > 0 && (
-                <div className="gh-chain-editor-section">
+                <div className="gh-chain-editor-section gh-chain-preview-section">
                   <div className="gh-chain-section-header" style={{ marginBottom: 0 }}>
                     <div className="gh-chain-section-title">{t("chainExecutionPreview")}</div>
-                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                      {chainEditorState.showExecutionPreview && (
-                        <div className="gh-chain-preview-nav">
-                          {draft.steps.map((step, idx) => {
-                            const title = getChainStepTitles(draft)[idx] || `Step ${idx + 1}`
-                            return (
-                              <Tooltip key={step.id} content={title}>
-                                <button
-                                  type="button"
-                                  className="gh-chain-preview-nav-btn"
-                                  onClick={() => {
-                                    document
-                                      .getElementById(`chain-preview-step-${idx}`)
-                                      ?.scrollIntoView({ behavior: "smooth", block: "nearest" })
-                                  }}>
-                                  {idx + 1}
-                                </button>
-                              </Tooltip>
-                            )
-                          })}
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        className="gh-chain-preview-toggle"
-                        onClick={() =>
-                          setChainEditorState((state) => ({
-                            ...state,
-                            showExecutionPreview: !state.showExecutionPreview,
-                          }))
-                        }>
-                        {chainEditorState.showExecutionPreview ? t("collapse") : t("expand")}
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      className="gh-chain-preview-toggle"
+                      onClick={() =>
+                        setChainEditorState((state) => ({
+                          ...state,
+                          showExecutionPreview: !state.showExecutionPreview,
+                        }))
+                      }>
+                      {chainEditorState.showExecutionPreview ? t("collapse") : t("expand")}
+                    </button>
                   </div>
                   {chainEditorState.showExecutionPreview && (
-                    <div className="gh-chain-preview-content">
-                      {getChainExecutionPreview(draft).map((content, index) => (
-                        <div
-                          key={index}
-                          id={`chain-preview-step-${index}`}
-                          className="gh-chain-preview-step">
-                          <div className="gh-chain-preview-step-header">
-                            <span className="gh-chain-preview-step-number">{index + 1}</span>
-                            <span className="gh-chain-preview-step-title">
-                              {getChainStepTitles(draft)[index] || t("chainStep")}
-                            </span>
-                          </div>
+                    <>
+                      <div className="gh-chain-preview-nav-float">
+                        <span className="gh-chain-preview-nav-label">{t("chainSteps")}</span>
+                        {draft.steps.map((step, idx) => {
+                          const title = getChainStepTitles(draft)[idx] || `Step ${idx + 1}`
+                          return (
+                            <Tooltip key={step.id} content={title}>
+                              <button
+                                type="button"
+                                className="gh-chain-preview-nav-btn"
+                                onClick={() => {
+                                  document
+                                    .getElementById(`chain-preview-step-${idx}`)
+                                    ?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+                                }}>
+                                <span className="nav-btn-num">{idx + 1}</span>
+                                <span className="nav-btn-title">{title}</span>
+                              </button>
+                            </Tooltip>
+                          )
+                        })}
+                      </div>
+                      <div className="gh-chain-preview-content">
+                        {getChainExecutionPreview(draft).map((content, index) => (
                           <div
-                            className="gh-chain-preview-step-body"
-                            dangerouslySetInnerHTML={{
-                              __html: content
-                                ? createSafeHTML(renderMarkdown(content))
-                                : createSafeHTML(
-                                    `<span class="gh-chain-preview-empty">${t("chainStepContentEmpty")}</span>`,
-                                  ),
-                            }}
-                          />
-                        </div>
-                      ))}
-                    </div>
+                            key={index}
+                            id={`chain-preview-step-${index}`}
+                            className="gh-chain-preview-step">
+                            <div className="gh-chain-preview-step-header">
+                              <span className="gh-chain-preview-step-number">{index + 1}</span>
+                              <span className="gh-chain-preview-step-title">
+                                {getChainStepTitles(draft)[index] || t("chainStep")}
+                              </span>
+                            </div>
+                            <div
+                              className="gh-chain-preview-step-body"
+                              dangerouslySetInnerHTML={{
+                                __html: content
+                                  ? createSafeHTML(renderMarkdown(content))
+                                  : createSafeHTML(
+                                      `<span class="gh-chain-preview-empty">${t("chainStepContentEmpty")}</span>`,
+                                    ),
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </>
                   )}
                 </div>
               )}
