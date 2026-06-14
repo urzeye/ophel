@@ -106,6 +106,19 @@ export class QueueDispatcher {
         return
       }
 
+      // 检查 runMode
+      const runMode = item.metadata?.runMode ?? "enqueue"
+
+      // "insert" 模式：只插入不发送
+      if (runMode === "insert") {
+        store.updateStatus(item.id, "sent")
+        if (item.metadata?.quoteRef) {
+          useQuickQuotesStore.getState().addReference(item.metadata.quoteRef)
+        }
+        return
+      }
+
+      // "enqueue" 或 "send-or-queue" 模式：插入后自动发送
       // 获取当前用户的快捷键设置
       const submitShortcut =
         useSettingsStore.getState().settings.features?.prompts?.submitShortcut ?? "enter"

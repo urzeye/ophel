@@ -159,5 +159,6 @@ export const buildPromptChainQueueInputs = (
       stepIndex: index + 1,
       stepTotal: resolvedSteps.length,
       quoteRef: resolvedStep.quoteRef,
+      runMode: resolvedStep.step.runMode,
     },
   }))

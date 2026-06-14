@@ -7,7 +7,7 @@
 
 import { create } from "zustand"
 
-import type { PromptQuoteReference } from "~core/prompt-action-types"
+import type { PromptActionRunMode, PromptQuoteReference } from "~core/prompt-action-types"
 
 // ==================== 类型定义 ====================
 
@@ -31,6 +31,7 @@ export interface QueueItemMetadata {
   stepIndex?: number
   stepTotal?: number
   quoteRef?: PromptQuoteReference
+  runMode?: PromptActionRunMode
 }
 
 export interface QueueEnqueueInput {
