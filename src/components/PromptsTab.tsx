@@ -28,6 +28,7 @@ import {
   replaceVariables,
   VariableInputDialog,
 } from "~components/VariableInputDialog"
+import { ChainIconPicker } from "~components/ChainIconPicker"
 import { VIRTUAL_CATEGORY } from "~constants"
 import type { PromptChain, PromptChainStep } from "~core/prompt-action-types"
 import { enqueuePrompt, sendOrQueuePrompt } from "~core/prompt-actions"
@@ -831,6 +832,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     showExecutionPreview: boolean
     draggedStepId: string | null
   }>({ show: false, draft: null, showExecutionPreview: false, draggedStepId: null })
+
+  // 图标选择器弹窗状态
+  const [showChainIconPicker, setShowChainIconPicker] = useState(false)
 
   // 分类管理弹窗状态
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
@@ -2212,33 +2216,56 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
               <div className="gh-chain-field">
                 <span>{t("chainIconSvg")}</span>
-                <div className="gh-chain-icon-presets">
-                  {CHAIN_PRESET_ICONS.map((preset, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      className={`gh-chain-icon-preset-btn${draft.iconSvg === preset.svg ? " active" : ""}`}
-                      title={preset.label}
-                      onClick={() => updateChainDraft({ iconSvg: preset.svg })}
-                      dangerouslySetInnerHTML={{ __html: createSafeHTML(preset.svg) }}
-                    />
-                  ))}
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  {/* 当前选中的图标预览 */}
+                  {draft.iconSvg ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "8px 12px",
+                        border: "1px solid var(--gh-border, #e5e7eb)",
+                        borderRadius: "6px",
+                        flex: 1,
+                      }}>
+                      <div
+                        style={{ width: "20px", height: "20px", display: "flex" }}
+                        dangerouslySetInnerHTML={{ __html: createSafeHTML(draft.iconSvg) }}
+                      />
+                      <span style={{ fontSize: "14px", color: "var(--gh-text-secondary)" }}>
+                        已选择图标
+                      </span>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        padding: "8px 12px",
+                        border: "1px solid var(--gh-border, #e5e7eb)",
+                        borderRadius: "6px",
+                        flex: 1,
+                        color: "var(--gh-text-secondary)",
+                        fontSize: "14px",
+                      }}>
+                      未选择图标
+                    </div>
+                  )}
                   <button
                     type="button"
-                    className={`gh-chain-icon-preset-btn${!CHAIN_PRESET_ICONS.some((p) => p.svg === draft.iconSvg) && draft.iconSvg ? " active" : ""}`}
-                    title={t("chainIconCustom")}
-                    onClick={() => updateChainDraft({ iconSvg: "" })}>
-                    <span style={{ fontSize: "11px", fontWeight: 700 }}>...</span>
+                    onClick={() => setShowChainIconPicker(true)}
+                    style={{
+                      padding: "8px 16px",
+                      border: "1px solid var(--gh-border, #e5e7eb)",
+                      borderRadius: "6px",
+                      background: "var(--gh-bg, #ffffff)",
+                      color: "var(--gh-text, #1f2937)",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      whiteSpace: "nowrap",
+                    }}>
+                    选择图标
                   </button>
                 </div>
-                {!CHAIN_PRESET_ICONS.some((p) => p.svg === draft.iconSvg) && (
-                  <textarea
-                    value={draft.iconSvg || ""}
-                    onChange={(e) => updateChainDraft({ iconSvg: e.target.value })}
-                    placeholder={t("chainIconSvgPlaceholder")}
-                    rows={2}
-                  />
-                )}
               </div>
 
               <div className="gh-chain-toggle-row">
@@ -3575,6 +3602,51 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           </MenuButton>
         </ContextMenu>
       )}
+
+      {/* 图标选择器弹窗 */}
+      {showChainIconPicker &&
+        chainEditorState.draft &&
+        createPortal(
+          <div
+            className="prompt-modal gh-interactive"
+            {...OPHEL_INTERACTION_LAYER_PROPS}
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: "var(--gh-overlay-bg, rgba(0, 0, 0, 0.5))",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 2147483647,
+            }}
+            onClick={() => setShowChainIconPicker(false)}>
+            <div
+              style={{
+                width: "90%",
+                maxWidth: "600px",
+                maxHeight: "80vh",
+                background: "var(--gh-bg, #ffffff)",
+                borderRadius: "12px",
+                overflow: "hidden",
+                boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+              }}
+              onClick={(e) => e.stopPropagation()}>
+              <ChainIconPicker
+                value={chainEditorState.draft.iconSvg}
+                onChange={(iconId, svg) => {
+                  updateChainDraft({ iconSvg: svg })
+                  setShowChainIconPicker(false)
+                }}
+                onClose={() => setShowChainIconPicker(false)}
+              />
+            </div>
+          </div>,
+          document.body,
+        )}
+
       <style>{`
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

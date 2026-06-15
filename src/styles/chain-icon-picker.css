@@ -1,0 +1,200 @@
+/* Chain 图标选择器样式 - 简洁实用版 */
+
+.gh-chain-icon-picker {
+  display: flex;
+  flex-direction: column;
+  height: 460px;
+  max-height: 70vh;
+  background: var(--gh-bg, #ffffff);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.gh-chain-icon-picker-header {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--gh-border, #e5e7eb);
+  flex-shrink: 0;
+}
+
+.gh-chain-icon-picker-search {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--gh-input-bg, #ffffff);
+  color: var(--gh-text, #1f2937);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.gh-chain-icon-picker-search:focus {
+  border-color: var(--gh-primary, #3b82f6);
+}
+
+.gh-chain-icon-picker-close {
+  padding: 8px 16px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 6px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text, #1f2937);
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.gh-chain-icon-picker-close:hover {
+  background: var(--gh-bg-hover, #f9fafb);
+  border-color: var(--gh-primary, #3b82f6);
+}
+
+.gh-chain-icon-picker-categories {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--gh-border, #e5e7eb);
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  scrollbar-width: thin;
+}
+
+.gh-chain-icon-picker-categories::-webkit-scrollbar {
+  height: 4px;
+}
+
+.gh-chain-icon-picker-categories::-webkit-scrollbar-thumb {
+  background: var(--gh-border, #e5e7eb);
+  border-radius: 2px;
+}
+
+.gh-chain-icon-picker-category {
+  padding: 6px 12px;
+  font-size: 13px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 6px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text-secondary, #6b7280);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.gh-chain-icon-picker-category:hover {
+  border-color: var(--gh-primary, #3b82f6);
+  color: var(--gh-primary, #3b82f6);
+}
+
+.gh-chain-icon-picker-category.active {
+  background: var(--gh-primary, #3b82f6);
+  border-color: var(--gh-primary, #3b82f6);
+  color: #ffffff;
+}
+
+.gh-chain-icon-picker-grid {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 8px;
+  align-content: start;
+}
+
+.gh-chain-icon-picker-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.gh-chain-icon-picker-grid::-webkit-scrollbar-thumb {
+  background: var(--gh-border, #e5e7eb);
+  border-radius: 4px;
+}
+
+.gh-chain-icon-picker-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--gh-text-secondary, #6b7280);
+}
+
+.gh-chain-icon-picker-empty {
+  grid-column: 1 / -1;
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 14px;
+}
+
+.gh-chain-icon-picker-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 6px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text, #1f2937);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.gh-chain-icon-picker-item:hover {
+  border-color: var(--gh-primary, #3b82f6);
+  background: var(--gh-bg-hover, #f9fafb);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.gh-chain-icon-picker-item.active {
+  border-color: var(--gh-primary, #3b82f6);
+  background: var(--gh-primary-bg, #eff6ff);
+  color: var(--gh-primary, #3b82f6);
+  box-shadow: 0 0 0 2px var(--gh-primary-light, #bfdbfe);
+}
+
+.gh-chain-icon-picker-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gh-chain-icon-picker-icon svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.gh-chain-icon-picker-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-align: center;
+  color: var(--gh-text-secondary, #6b7280);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  line-height: 1.2;
+}
+
+.gh-chain-icon-picker-item:hover .gh-chain-icon-picker-label {
+  color: var(--gh-primary, #3b82f6);
+}
+
+.gh-chain-icon-picker-item.active .gh-chain-icon-picker-label {
+  color: var(--gh-primary, #3b82f6);
+  font-weight: 600;
+}
+
+.gh-chain-icon-picker-footer {
+  padding: 10px 12px;
+  border-top: 1px solid var(--gh-border, #e5e7eb);
+  font-size: 13px;
+  color: var(--gh-text-secondary, #6b7280);
+  text-align: center;
+  flex-shrink: 0;
+}

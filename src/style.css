@@ -1,5 +1,6 @@
 /* 导入主题变量 */
 @import "./styles/theme-variables.css";
+@import "./styles/chain-icon-picker.css";
 
 /* 限制本机 Inter 只处理拉丁等常用字符，CJK/韩文继续交给系统字体回退。 */
 @font-face {
