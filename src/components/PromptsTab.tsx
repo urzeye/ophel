@@ -872,6 +872,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const updateChain = usePromptChainsStore((state) => state.updateChain)
   const deleteChain = usePromptChainsStore((state) => state.deleteChain)
   const duplicateChain = usePromptChainsStore((state) => state.duplicateChain)
+  const updateChainOrder = usePromptChainsStore((state) => state.updateOrder)
 
   // 模态弹窗状态
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -908,6 +909,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const dragNodeRef = useRef<HTMLDivElement | null>(null)
   const dropIndicatorRootRef = useRef<ParentNode | null>(null)
+  const [draggedChainId, setDraggedChainId] = useState<string | null>(null)
+  const chainDragNodeRef = useRef<HTMLDivElement | null>(null)
+  const chainDropIndicatorRootRef = useRef<ParentNode | null>(null)
 
   // 变量输入弹窗状态
   const [variableDialogState, setVariableDialogState] = useState<{
@@ -1907,6 +1911,110 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     handleDragEnd()
   }
 
+  const clearChainDropIndicators = useCallback(() => {
+    const roots = [
+      chainDropIndicatorRootRef.current,
+      chainDragNodeRef.current?.getRootNode() as ParentNode | undefined,
+      document,
+    ]
+    const seenRoots = new Set<ParentNode>()
+
+    roots.forEach((root) => {
+      if (!root || seenRoots.has(root)) return
+      seenRoots.add(root)
+      root.querySelectorAll(".drop-above, .drop-below").forEach((el) => {
+        el.classList.remove("drop-above", "drop-below")
+      })
+    })
+
+    chainDropIndicatorRootRef.current = null
+  }, [])
+
+  const handleChainDragStart = (e: React.DragEvent, id: string, node: HTMLDivElement) => {
+    const target = e.target as HTMLElement
+    if (
+      target.closest('button, input, textarea, select, [role="button"], [data-no-row-drag="true"]')
+    ) {
+      e.preventDefault()
+      return
+    }
+
+    setDraggedChainId(id)
+    chainDragNodeRef.current = node
+    chainDropIndicatorRootRef.current = node.getRootNode() as ParentNode
+    e.dataTransfer.effectAllowed = "move"
+    e.dataTransfer.setData("text/plain", id)
+    node.classList.add("dragging")
+  }
+
+  const handleChainDragOver = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+
+    if (!draggedChainId || draggedChainId === targetId) return
+
+    const target = e.currentTarget as HTMLElement
+    const rect = target.getBoundingClientRect()
+    const midpoint = rect.top + rect.height / 2
+    const targetRoot = target.getRootNode() as ParentNode
+
+    chainDropIndicatorRootRef.current = targetRoot
+    clearChainDropIndicators()
+
+    if (e.clientY < midpoint) {
+      target.classList.add("drop-above")
+    } else {
+      target.classList.add("drop-below")
+    }
+    chainDropIndicatorRootRef.current = targetRoot
+  }
+
+  const handleChainDragEnd = () => {
+    if (chainDragNodeRef.current) {
+      chainDragNodeRef.current.classList.remove("dragging")
+    }
+    clearChainDropIndicators()
+    setDraggedChainId(null)
+    chainDragNodeRef.current = null
+  }
+
+  const handleChainDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault()
+
+    if (!draggedChainId || draggedChainId === targetId) {
+      handleChainDragEnd()
+      return
+    }
+
+    const draggedIndex = chains.findIndex((chain) => chain.id === draggedChainId)
+    const targetIndex = chains.findIndex((chain) => chain.id === targetId)
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      handleChainDragEnd()
+      return
+    }
+
+    const newOrder = [...chains]
+    const [removed] = newOrder.splice(draggedIndex, 1)
+
+    const target = e.currentTarget as HTMLElement
+    const rect = target.getBoundingClientRect()
+    const insertBefore = e.clientY < rect.top + rect.height / 2
+
+    let insertIndex = chains.findIndex((chain) => chain.id === targetId)
+    if (draggedIndex < insertIndex) {
+      insertIndex--
+    }
+    if (!insertBefore) {
+      insertIndex++
+    }
+
+    newOrder.splice(insertIndex, 0, removed)
+    updateChainOrder(newOrder.map((chain) => chain.id))
+    showToast(t("orderUpdated"))
+    handleChainDragEnd()
+  }
+
   const filtered = getFilteredPrompts()
 
   useEffect(() => {
@@ -2148,9 +2256,14 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       return (
         <div
           key={chain.id}
-          className="gh-chain-card"
+          className={`gh-chain-card${draggedChainId === chain.id ? " dragging" : ""}`}
           data-disabled={!showInSelectionPopover}
-          onClick={() => openChainEditor(chain)}>
+          onClick={() => openChainEditor(chain)}
+          draggable
+          onDragStart={(e) => handleChainDragStart(e, chain.id, e.currentTarget as HTMLDivElement)}
+          onDragOver={(e) => handleChainDragOver(e, chain.id)}
+          onDragEnd={handleChainDragEnd}
+          onDrop={(e) => handleChainDrop(e, chain.id)}>
           <div className="gh-chain-card-main">
             <div className="gh-chain-icon" data-enabled={showInSelectionPopover}>
               {renderChainIcon(chain.iconSvg)}
