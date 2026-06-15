@@ -200,20 +200,132 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
   box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.12);
 }
 
-.gh-chain-toggle-row {
+.gh-chain-icon-header {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px 18px;
-  margin-bottom: 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.gh-chain-toggle-row label {
+.gh-chain-visibility-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 5px 8px 5px 6px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 999px;
+  background: var(--gh-bg-secondary, #f9fafb);
   color: var(--gh-text, #374151);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
+  cursor: pointer;
+}
+
+.gh-chain-visibility-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gh-chain-visibility-switch {
+  position: relative;
+  width: 28px;
+  height: 16px;
+  flex: 0 0 28px;
+  border-radius: 999px;
+  background: var(--gh-border, #d1d5db);
+  transition: background 0.16s;
+}
+
+.gh-chain-visibility-switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.18);
+  transition: transform 0.16s;
+}
+
+.gh-chain-visibility-toggle input:checked + .gh-chain-visibility-switch {
+  background: var(--gh-primary, #4285f4);
+}
+
+.gh-chain-visibility-toggle input:checked + .gh-chain-visibility-switch::after {
+  transform: translateX(12px);
+}
+
+.gh-chain-visibility-toggle-text {
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.gh-chain-icon-control-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gh-chain-icon-preview {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 14px;
+  box-sizing: border-box;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--gh-bg-secondary, #f9fafb);
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.gh-chain-icon-preview.empty {
+  color: var(--gh-text-tertiary, #9ca3af);
+  font-weight: 400;
+}
+
+.gh-chain-icon-preview-svg {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gh-chain-icon-preview-svg svg {
+  width: 22px;
+  height: 22px;
+}
+
+.gh-chain-icon-select-btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-primary, #3b82f6);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background 0.16s,
+    border-color 0.16s;
+}
+
+.gh-chain-icon-select-btn:hover {
+  border-color: var(--gh-primary, #3b82f6);
+  background: var(--gh-primary-light, #eff6ff);
 }
 
 .gh-chain-editor-section {
@@ -692,6 +804,18 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 @media (max-width: 520px) {
   .gh-chain-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .gh-chain-icon-header,
+  .gh-chain-icon-control-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .gh-chain-visibility-toggle,
+  .gh-chain-icon-select-btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .gh-chain-step-header-row {
@@ -2156,84 +2280,42 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               </div>
 
               <div className="gh-chain-field">
-                <span>{t("chainIconSvg")}</span>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div className="gh-chain-icon-header">
+                  <span>{t("chainIconSvg")}</span>
+                  <label className="gh-chain-visibility-toggle">
+                    <input
+                      type="checkbox"
+                      checked={draft.showInSelectionPopover !== false}
+                      onChange={(e) =>
+                        updateChainDraft({ showInSelectionPopover: e.target.checked })
+                      }
+                    />
+                    <span className="gh-chain-visibility-switch" aria-hidden="true" />
+                    <span className="gh-chain-visibility-toggle-text">
+                      {t("chainShowInPopover")}
+                    </span>
+                  </label>
+                </div>
+                <div className="gh-chain-icon-control-row">
                   {/* 当前选中的图标预览 */}
                   {draft.iconSvg ? (
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
-                        padding: "10px 14px",
-                        border: "1px solid var(--gh-border, #e5e7eb)",
-                        borderRadius: "8px",
-                        flex: 1,
-                        background: "var(--gh-bg-secondary, #f9fafb)",
-                      }}>
+                    <div className="gh-chain-icon-preview">
                       <div
-                        style={{ width: "22px", height: "22px", display: "flex", flexShrink: 0 }}
+                        className="gh-chain-icon-preview-svg"
                         dangerouslySetInnerHTML={{ __html: createSafeHTML(draft.iconSvg) }}
                       />
-                      <span
-                        style={{
-                          fontSize: "14px",
-                          color: "var(--gh-text-secondary)",
-                          fontWeight: 500,
-                        }}>
-                        {t("chainIconSelected")}
-                      </span>
+                      <span>{t("chainIconSelected")}</span>
                     </div>
                   ) : (
-                    <div
-                      style={{
-                        padding: "10px 14px",
-                        border: "1px solid var(--gh-border, #e5e7eb)",
-                        borderRadius: "8px",
-                        flex: 1,
-                        color: "var(--gh-text-tertiary, #9ca3af)",
-                        fontSize: "14px",
-                      }}>
-                      {t("chainIconNotSelected")}
-                    </div>
+                    <div className="gh-chain-icon-preview empty">{t("chainIconNotSelected")}</div>
                   )}
                   <button
                     type="button"
                     onClick={() => setShowChainIconPicker(true)}
-                    style={{
-                      padding: "10px 18px",
-                      border: "1px solid var(--gh-border, #e5e7eb)",
-                      borderRadius: "8px",
-                      background: "var(--gh-bg, #ffffff)",
-                      color: "var(--gh-primary, #3b82f6)",
-                      cursor: "pointer",
-                      fontSize: "14px",
-                      fontWeight: 500,
-                      whiteSpace: "nowrap",
-                      transition: "all 0.2s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "var(--gh-primary-light, #eff6ff)"
-                      e.currentTarget.style.borderColor = "var(--gh-primary, #3b82f6)"
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "var(--gh-bg, #ffffff)"
-                      e.currentTarget.style.borderColor = "var(--gh-border, #e5e7eb)"
-                    }}>
+                    className="gh-chain-icon-select-btn">
                     {t("chainIconSelect")}
                   </button>
                 </div>
-              </div>
-
-              <div className="gh-chain-toggle-row">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={draft.showInSelectionPopover !== false}
-                    onChange={(e) => updateChainDraft({ showInSelectionPopover: e.target.checked })}
-                  />
-                  <span>{t("chainShowInPopover")}</span>
-                </label>
               </div>
 
               <div className="gh-chain-editor-section">

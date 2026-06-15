@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { SiteAdapter } from "~adapters/base"
+import { MoreHorizontalIcon } from "~components/icons"
 import { QuoteIcon, ReplyIcon } from "~components/icons/QuoteIcon"
 import { VariableInputDialog } from "~components/VariableInputDialog"
 import {
@@ -49,6 +50,7 @@ interface PendingChainRun {
 const MAX_SELECTION_LENGTH = 8000
 const POPOVER_MARGIN = 10
 const QUICK_QUOTE_STYLE_ID = "gh-quick-quote-host-styles"
+const QUICK_QUOTE_PRIMARY_CHAIN_LIMIT = 3
 
 const isInsideOphel = (element: Element | null): boolean =>
   Boolean(element?.closest(".gh-root, .gh-main-panel, " + OPHEL_INTERACTION_LAYER_SELECTOR))
@@ -360,12 +362,23 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
   const enqueueMany = useQueueStore((state) => state.enqueueMany)
   const [selectionState, setSelectionState] = useState<SelectionState | null>(null)
   const [pendingChainRun, setPendingChainRun] = useState<PendingChainRun | null>(null)
+  const [chainMenuOpen, setChainMenuOpen] = useState(false)
   const isMouseSelectingRef = useRef(false)
 
   const visibleChains = useMemo(
-    () => chains.filter((chain) => chain.showInSelectionPopover),
+    () =>
+      chains
+        .map((chain, index) => ({ chain, index }))
+        .filter(({ chain }) => chain.showInSelectionPopover)
+        .sort((a, b) => {
+          const lastUsedDiff = (b.chain.lastUsedAt ?? 0) - (a.chain.lastUsedAt ?? 0)
+          return lastUsedDiff || a.index - b.index
+        })
+        .map(({ chain }) => chain),
     [chains],
   )
+  const primaryChains = visibleChains.slice(0, QUICK_QUOTE_PRIMARY_CHAIN_LIMIT)
+  const overflowChains = visibleChains.slice(QUICK_QUOTE_PRIMARY_CHAIN_LIMIT)
 
   const clearSelection = useCallback(() => {
     setSelectionState(null)
@@ -400,6 +413,12 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
 
     setSelectionState({ text, range, rect })
   }, [adapter])
+
+  useEffect(() => {
+    if (!selectionState || overflowChains.length === 0) {
+      setChainMenuOpen(false)
+    }
+  }, [overflowChains.length, selectionState])
 
   useEffect(() => {
     const clearCollapsedSelection = () => {
@@ -543,6 +562,7 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
   const handleRunChain = useCallback(
     (chain: PromptChain) => {
       if (!selectionState) return
+      setChainMenuOpen(false)
 
       const selection = createSelectionContext()
       if (!selection) return
@@ -581,6 +601,9 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
           onMouseDown={(event) => {
             event.preventDefault()
             event.stopPropagation()
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setChainMenuOpen(false)
           }}>
           <button
             className="gh-quick-quote-action"
@@ -596,8 +619,8 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
             <ReplyIcon size={15} />
             <span>{t("quickQuoteReply")}</span>
           </button>
-          {visibleChains.length > 0 && <span className="gh-quick-quote-divider" />}
-          {visibleChains.map((chain) => (
+          {primaryChains.length > 0 && <span className="gh-quick-quote-divider" />}
+          {primaryChains.map((chain) => (
             <button
               key={chain.id}
               className="gh-quick-quote-action icon-only"
@@ -610,6 +633,41 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
               <span>{chain.title}</span>
             </button>
           ))}
+          {overflowChains.length > 0 && (
+            <span className="gh-quick-quote-more-wrap">
+              <button
+                type="button"
+                className={`gh-quick-quote-action gh-quick-quote-more-trigger${
+                  chainMenuOpen ? " active" : ""
+                }`}
+                title={`${t("floatingToolbarMore")} (${overflowChains.length})`}
+                aria-haspopup="menu"
+                aria-expanded={chainMenuOpen}
+                onClick={() => setChainMenuOpen((open) => !open)}>
+                <MoreHorizontalIcon size={15} />
+                <span>+{overflowChains.length}</span>
+              </button>
+              {chainMenuOpen && (
+                <div className="gh-quick-quote-more-menu" role="menu">
+                  {overflowChains.map((chain) => (
+                    <button
+                      key={chain.id}
+                      type="button"
+                      className="gh-quick-quote-more-item"
+                      title={chain.title}
+                      role="menuitem"
+                      onClick={() => handleRunChain(chain)}>
+                      <SafeSvgIcon
+                        svg={chain.iconSvg}
+                        fallback={<ChainLetterFallback title={chain.title} />}
+                      />
+                      <span>{chain.title}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </span>
+          )}
         </div>
       )}
 
