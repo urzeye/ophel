@@ -1,10 +1,10 @@
-import type { PromptQuoteReference } from "~core/prompt-action-types"
+import type { PromptQuoteReference, PromptSelectionAnchor } from "~core/prompt-action-types"
 
 const QUICK_QUOTE_MARKER_LABEL = "\u2063"
 const QUICK_QUOTE_MARKER_HREF = "#ophel-quick-quote"
 const QUICK_QUOTE_MARKER_TITLE_PREFIX = "ophel-quick-quote:"
 const LEGACY_QUICK_QUOTE_MARKER_URL = "https://ophel.local/quick-quote#"
-const QUICK_QUOTE_MARKER_VERSION = 1
+const QUICK_QUOTE_MARKER_VERSION = 2
 const MAX_MARKER_PAYLOAD_LENGTH = 20000
 const MAX_MARKER_SELECTED_TEXT_LENGTH = 1200
 
@@ -13,29 +13,75 @@ const LEGACY_MARKER_MARKDOWN_RE = /\[\u2063\]\(https:\/\/ophel\.local\/quick-quo
 const MARKER_LINK_PREFIX_RE = /\[\u2063\]\($/
 const MARKER_LINK_SUFFIX_RE = /^(?:"ophel-quick-quote:[^"]+")?\)/
 
+/**
+ * Compact anchor for URL embedding - only essential fields for relocation.
+ */
+interface CompactSelectionAnchor {
+  siteId: string
+  sessionId: string
+  selectedText: string
+  textSignature: string
+  beforeText?: string
+  afterText?: string
+  rootSelector?: string // CSS selector for precise message identification
+  rootIndex?: number
+  rootTextSignature?: string
+  selectionIndex?: number
+}
+
 interface QuickQuoteMarkerPayload {
   v: typeof QUICK_QUOTE_MARKER_VERSION
+  ref: {
+    id: string
+    selectedText: string
+    anchor: CompactSelectionAnchor
+    chainId?: string
+    chainTitle?: string
+    stepIndex?: number
+    stepTotal?: number
+  }
+}
+
+/**
+ * Legacy v1 payload structure for backward compatibility.
+ */
+interface LegacyQuickQuoteMarkerPayload {
+  v: 1
   ref: PromptQuoteReference
 }
 
-const compactReferenceForMarker = (reference: PromptQuoteReference): PromptQuoteReference => {
-  if (reference.selectedText.length <= MAX_MARKER_SELECTED_TEXT_LENGTH) {
-    return reference
+/**
+ * Compact the reference for URL embedding - drop unnecessary fields.
+ */
+const compactReferenceForMarker = (
+  reference: PromptQuoteReference,
+): QuickQuoteMarkerPayload["ref"] => {
+  const selectedText =
+    reference.selectedText.length <= MAX_MARKER_SELECTED_TEXT_LENGTH
+      ? reference.selectedText
+      : reference.selectedText.slice(0, MAX_MARKER_SELECTED_TEXT_LENGTH).trimEnd()
+
+  const anchor: CompactSelectionAnchor = {
+    siteId: reference.anchor.siteId,
+    sessionId: reference.anchor.sessionId,
+    selectedText,
+    textSignature: reference.anchor.textSignature,
+    beforeText: reference.anchor.beforeText,
+    afterText: reference.anchor.afterText,
+    rootSelector: reference.anchor.rootSelector,
+    rootIndex: reference.anchor.rootIndex,
+    rootTextSignature: reference.anchor.rootTextSignature,
+    selectionIndex: reference.anchor.selectionIndex,
   }
 
-  const selectedText = reference.selectedText.slice(0, MAX_MARKER_SELECTED_TEXT_LENGTH).trimEnd()
-
   return {
-    ...reference,
+    id: reference.id,
     selectedText,
-    quoteText: selectedText
-      .split("\n")
-      .map((line) => `> ${line}`)
-      .join("\n"),
-    anchor: {
-      ...reference.anchor,
-      selectedText,
-    },
+    anchor,
+    chainId: reference.chainId,
+    chainTitle: reference.chainTitle,
+    stepIndex: reference.stepIndex,
+    stepTotal: reference.stepTotal,
   }
 }
 
@@ -56,27 +102,89 @@ const hasQuickQuoteMarker = (content: string): boolean => {
   return hasMarker
 }
 
+/**
+ * Reconstruct full PromptQuoteReference from compact payload.
+ */
+const expandCompactReference = (compact: QuickQuoteMarkerPayload["ref"]): PromptQuoteReference => {
+  const fullAnchor: PromptSelectionAnchor = {
+    siteId: compact.anchor.siteId,
+    sessionId: compact.anchor.sessionId,
+    cid: undefined,
+    selectedText: compact.anchor.selectedText,
+    textSignature: compact.anchor.textSignature,
+    beforeText: compact.anchor.beforeText,
+    afterText: compact.anchor.afterText,
+    rootSelector: compact.anchor.rootSelector,
+    rootIndex: compact.anchor.rootIndex,
+    rootTextSignature: compact.anchor.rootTextSignature,
+    selectionIndex: compact.anchor.selectionIndex,
+    scrollTop: undefined,
+    createdAt: Date.now(),
+  }
+
+  return {
+    id: compact.id,
+    selectedText: compact.selectedText,
+    quoteText: compact.selectedText
+      .split("\n")
+      .map((line) => `> ${line}`)
+      .join("\n"),
+    anchor: fullAnchor,
+    chainId: compact.chainId,
+    chainTitle: compact.chainTitle,
+    stepId: undefined,
+    stepIndex: compact.stepIndex,
+    stepTotal: compact.stepTotal,
+    createdAt: Date.now(),
+  }
+}
+
 const decodeMarkerPayload = (encoded: string): PromptQuoteReference | null => {
   if (!encoded || encoded.length > MAX_MARKER_PAYLOAD_LENGTH) return null
 
   try {
-    const payload = JSON.parse(decodeURIComponent(encoded)) as Partial<QuickQuoteMarkerPayload>
-    if (payload.v !== QUICK_QUOTE_MARKER_VERSION) return null
+    const payload = JSON.parse(decodeURIComponent(encoded)) as
+      | Partial<QuickQuoteMarkerPayload>
+      | Partial<LegacyQuickQuoteMarkerPayload>
 
-    const reference = payload.ref
-    if (
-      !reference ||
-      typeof reference.id !== "string" ||
-      typeof reference.selectedText !== "string" ||
-      typeof reference.quoteText !== "string" ||
-      !reference.anchor ||
-      typeof reference.anchor.siteId !== "string" ||
-      typeof reference.anchor.sessionId !== "string"
-    ) {
-      return null
+    // Handle v1 (legacy full payload)
+    if (payload.v === 1) {
+      const legacyPayload = payload as Partial<LegacyQuickQuoteMarkerPayload>
+      const reference = legacyPayload.ref
+      if (
+        !reference ||
+        typeof reference.id !== "string" ||
+        typeof reference.selectedText !== "string" ||
+        typeof reference.quoteText !== "string" ||
+        !reference.anchor ||
+        typeof reference.anchor.siteId !== "string" ||
+        typeof reference.anchor.sessionId !== "string"
+      ) {
+        return null
+      }
+      return reference
     }
 
-    return reference
+    // Handle v2 (compact payload)
+    if (payload.v === 2) {
+      const v2Payload = payload as Partial<QuickQuoteMarkerPayload>
+      const ref = v2Payload.ref
+      if (
+        !ref ||
+        typeof ref.id !== "string" ||
+        typeof ref.selectedText !== "string" ||
+        !ref.anchor ||
+        typeof ref.anchor.siteId !== "string" ||
+        typeof ref.anchor.sessionId !== "string" ||
+        typeof ref.anchor.selectedText !== "string" ||
+        typeof ref.anchor.textSignature !== "string"
+      ) {
+        return null
+      }
+      return expandCompactReference(ref)
+    }
+
+    return null
   } catch {
     return null
   }

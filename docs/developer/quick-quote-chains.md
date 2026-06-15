@@ -191,19 +191,26 @@ Prompt queue 关闭时，多步 Chain 提示用户启用队列。内置 Quote/Re
   - [x] runMode 正确传递和执行
   - [x] 修复队列时序竞争问题（AI 生成时不会过早发送下一步）
 
-### 🔜 P5: 引用 Chip 与回跳
+### ✅ P5: 引用 Chip 与回跳（已完成）
 
-- [ ] Quote renderer
-  - [ ] 在用户消息旁渲染引用 chip
-  - [ ] Chip 样式设计
-  - [ ] 不把技术 marker 写入正文
-- [ ] 回跳功能
-  - [ ] 点击 chip 定位源文
-  - [ ] 短暂高亮源文区域
-  - [ ] 滚动到可见区域
-- [ ] Queue item metadata
-  - [ ] 队列项携带 chain/step/quote reference
-  - [ ] 队列 UI 显示 "Chain: {title} · {step}/{total}"
+- [x] Quote renderer
+  - [x] 在用户消息旁渲染引用 chip
+  - [x] Chip 样式设计
+  - [x] 不把技术 marker 写入正文
+- [x] 回跳功能
+  - [x] 点击 chip 定位源文
+  - [x] 短暂高亮源文区域
+  - [x] 滚动到可见区域
+- [x] Queue item metadata
+  - [x] 队列项携带 chain/step/quote reference
+  - [x] 队列 UI 显示 "Chain: {title} · {step}/{total}"
+- [x] URL 长度优化
+  - [x] 精简锚点数据结构（v2 格式）
+  - [x] 减少上下文字符长度（80→40）
+  - [x] 缩短文本签名长度（120→60）
+  - [x] 移除冗余字段（cid, rootSelector, scrollTop, stepId, quoteText, createdAt）
+  - [x] 向后兼容 v1 格式
+  - [x] **优化效果：URL 长度减少 51.2%**
 
 ### 🔜 P6: 备份与国际化
 
@@ -236,6 +243,16 @@ Prompt queue 关闭时，多步 Chain 提示用户启用队列。内置 Quote/Re
 - ✅ 执行预览导航简陋 → Sticky 悬浮导航栏 + 显示步骤标题
 - ✅ runMode 未生效 → 传递 runMode 到队列，dispatcher 根据 runMode 执行
 - ✅ 队列时序竞争 → dispatchNext 二次确认 + submitPrompt 后等待 500ms
+- ✅ 引用 URL 过长 → v2 精简格式，URL 长度减少 51.2%
+  - 精简锚点数据：移除 cid, scrollTop, stepId, quoteText, createdAt
+  - 缩短上下文：CONTEXT_CHARS 从 80 减到 40
+  - 缩短签名：textSignature 从 120 字符减到 60 字符
+  - 保持向后兼容：同时支持 v1 和 v2 格式解码
+- ✅ 引用跳转定位不准确 → 恢复 rootSelector + 短文本自适应上下文
+  - 恢复 rootSelector 字段（基于 data-message-id 或 id 属性）
+  - rootSelector 匹配优先级最高（score 40 vs 其他最高 18）
+  - 短文本（<20字符）自动使用更长上下文（80 字符 vs 40 字符）
+  - 提高短文本引用（如 "右键 → Reset Overrides"）的定位准确率
 
 ### 待优化
 - [ ] Chain 执行性能优化

@@ -2,7 +2,9 @@ import type { SiteAdapter } from "~adapters/base"
 import type { PromptQuoteReference, PromptSelectionAnchor } from "~core/prompt-action-types"
 import { formatMarkdownQuote } from "~utils/prompt-variables"
 
-const CONTEXT_CHARS = 80
+const CONTEXT_CHARS = 40
+const CONTEXT_CHARS_SHORT_TEXT = 80 // For short selections, use more context
+const SHORT_TEXT_THRESHOLD = 20 // Text shorter than this is considered "short"
 const HIGHLIGHT_CLASS = "gh-quick-quote-source-highlight"
 const TEXT_HIGHLIGHT_NAME = "gh-quick-quote-source-text"
 
@@ -20,7 +22,7 @@ const escapeAttr = (value: string): string => {
   return value.replace(/["\\]/g, "\\$&")
 }
 
-const getTextSignature = (text: string): string => text.replace(/\s+/g, " ").trim().slice(0, 120)
+const getTextSignature = (text: string): string => text.replace(/\s+/g, " ").trim().slice(0, 60)
 
 const normalizeText = (text: string): string => text.replace(/\s+/g, " ").trim()
 
@@ -166,15 +168,20 @@ export const createPromptSelectionAnchor = ({
   const rootText = textIndex.text
   const normalizedSelection = normalizeText(selectedText)
   const selectionIndex = findSelectionIndexInRoot(textIndex, range, normalizedSelection)
+
+  // Use longer context for short text to improve matching accuracy
+  const contextChars =
+    selectedText.length < SHORT_TEXT_THRESHOLD ? CONTEXT_CHARS_SHORT_TEXT : CONTEXT_CHARS
+
   const beforeText =
     selectionIndex >= 0
-      ? rootText.slice(Math.max(0, selectionIndex - CONTEXT_CHARS), selectionIndex)
+      ? rootText.slice(Math.max(0, selectionIndex - contextChars), selectionIndex)
       : ""
   const afterText =
     selectionIndex >= 0
       ? rootText.slice(
           selectionIndex + normalizedSelection.length,
-          selectionIndex + normalizedSelection.length + CONTEXT_CHARS,
+          selectionIndex + normalizedSelection.length + contextChars,
         )
       : ""
 
