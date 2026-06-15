@@ -99,6 +99,15 @@ export class QueueDispatcher {
     if (!item) return
 
     try {
+      // 二次确认：插入前再次检查 AI 是否真的空闲
+      // 防止从 tick() 到这里的时间差内 AI 开始生成
+      if (this.adapter.isGenerating()) {
+        // AI 已经在生成了，把项目放回队列
+        store.updateStatus(item.id, "pending")
+        this.idleCount = 0
+        return
+      }
+
       // 插入提示词到输入框
       const insertOk = await this.promptManager.insertPrompt(item.content)
       if (!insertOk) {
@@ -129,6 +138,10 @@ export class QueueDispatcher {
         store.updateStatus(item.id, "failed")
         return
       }
+
+      // 发送成功后等待一小段时间，确保 AI 开始生成
+      // 这样下次 tick() 时 isGenerating() 会正确返回 true
+      await new Promise((resolve) => setTimeout(resolve, 500))
 
       // 发送成功
       store.updateStatus(item.id, "sent")
