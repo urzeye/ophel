@@ -4,8 +4,6 @@ import { createPortal } from "react-dom"
 import type { SiteAdapter } from "~adapters/base"
 import {
   AddToQueueIcon,
-  ArrowDownIcon,
-  ArrowUpIcon,
   CheckIcon,
   ClearIcon,
   CopyIcon,
@@ -30,6 +28,7 @@ import {
 } from "~components/VariableInputDialog"
 import { ChainIconPicker } from "~components/ChainIconPicker"
 import { VIRTUAL_CATEGORY } from "~constants"
+import { CHAIN_ICON_PRESETS } from "~constants/chain-icons"
 import type { PromptChain, PromptChainStep } from "~core/prompt-action-types"
 import { enqueuePrompt, sendOrQueuePrompt } from "~core/prompt-actions"
 import type { PromptManager } from "~core/prompt-manager"
@@ -82,41 +81,6 @@ type PromptLibraryView = "prompts" | "chains"
 type ChainDraft = Omit<PromptChain, "id" | "createdAt" | "updatedAt"> & {
   id?: string
 }
-
-const CHAIN_PRESET_ICONS: { label: string; svg: string }[] = [
-  {
-    label: "Translate",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h7"/><path d="M9 3v2c0 4.418-2.239 8-5 8"/><path d="M5 9c0 2.144 2.952 3.908 6.7 4"/><path d="M12 20l4-9 4 9"/><path d="M19.1 18h-6.2"/></svg>',
-  },
-  {
-    label: "Summary",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 10h16"/><path d="M4 14h10"/><path d="M4 18h7"/></svg>',
-  },
-  {
-    label: "Analyze",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l4 4"/></svg>',
-  },
-  {
-    label: "Code",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
-  },
-  {
-    label: "Expand",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/><path d="M17 6l3 0"/><path d="M17 18l3 0"/></svg>',
-  },
-  {
-    label: "Question",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a3 3 0 0 1 5 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r="0.5"/></svg>',
-  },
-  {
-    label: "Fix",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10"/><path d="M17 7l-10 10"/><circle cx="12" cy="12" r="9"/></svg>',
-  },
-  {
-    label: "Rewrite",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
-  },
-]
 
 const CHAIN_EDITOR_PORTAL_STYLES = `
 .gh-chain-editor {
@@ -511,44 +475,6 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 
 .gh-chain-variable-muted {
   color: var(--gh-text-tertiary, #9ca3af);
-}
-
-.gh-chain-icon-presets {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.gh-chain-icon-preset-btn {
-  width: 42px;
-  height: 42px;
-  border: 1.5px solid var(--gh-border, #e5e7eb);
-  border-radius: 8px;
-  background: var(--gh-bg, #ffffff);
-  color: var(--gh-text-secondary, #6b7280);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-  padding: 0;
-}
-
-.gh-chain-icon-preset-btn svg {
-  width: 20px;
-  height: 20px;
-}
-
-.gh-chain-icon-preset-btn:hover {
-  border-color: var(--gh-primary, #4285f4);
-  background: rgba(66, 133, 244, 0.05);
-}
-
-.gh-chain-icon-preset-btn.active {
-  border-color: var(--gh-primary, #4285f4);
-  background: rgba(66, 133, 244, 0.1);
-  color: var(--gh-primary, #4285f4);
 }
 
 .gh-chain-preview-section {
@@ -1127,7 +1053,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const createDefaultChainDraft = (): ChainDraft => ({
     title: "",
     description: "",
-    iconSvg: "",
+    iconSvg: CHAIN_ICON_PRESETS[0]?.svg || "",
     enabled: true,
     showInSelectionPopover: true,
     steps: prompts[0] ? [createDefaultChainStep()] : [],
@@ -1198,19 +1124,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           steps: state.draft.steps.filter((step) => step.id !== stepId),
         },
       }
-    })
-  }
-
-  const moveChainStep = (stepId: string, direction: -1 | 1) => {
-    setChainEditorState((state) => {
-      if (!state.draft) return state
-      const index = state.draft.steps.findIndex((step) => step.id === stepId)
-      const nextIndex = index + direction
-      if (index < 0 || nextIndex < 0 || nextIndex >= state.draft.steps.length) return state
-      const steps = [...state.draft.steps]
-      const [step] = steps.splice(index, 1)
-      steps.splice(nextIndex, 0, step)
-      return { ...state, draft: { ...state.draft, steps } }
     })
   }
 
@@ -2216,54 +2129,70 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
               <div className="gh-chain-field">
                 <span>{t("chainIconSvg")}</span>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   {/* 当前选中的图标预览 */}
                   {draft.iconSvg ? (
                     <div
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: "8px",
-                        padding: "8px 12px",
+                        gap: "10px",
+                        padding: "10px 14px",
                         border: "1px solid var(--gh-border, #e5e7eb)",
-                        borderRadius: "6px",
+                        borderRadius: "8px",
                         flex: 1,
+                        background: "var(--gh-bg-secondary, #f9fafb)",
                       }}>
                       <div
-                        style={{ width: "20px", height: "20px", display: "flex" }}
+                        style={{ width: "22px", height: "22px", display: "flex", flexShrink: 0 }}
                         dangerouslySetInnerHTML={{ __html: createSafeHTML(draft.iconSvg) }}
                       />
-                      <span style={{ fontSize: "14px", color: "var(--gh-text-secondary)" }}>
-                        已选择图标
+                      <span
+                        style={{
+                          fontSize: "14px",
+                          color: "var(--gh-text-secondary)",
+                          fontWeight: 500,
+                        }}>
+                        {t("chainIconSelected")}
                       </span>
                     </div>
                   ) : (
                     <div
                       style={{
-                        padding: "8px 12px",
+                        padding: "10px 14px",
                         border: "1px solid var(--gh-border, #e5e7eb)",
-                        borderRadius: "6px",
+                        borderRadius: "8px",
                         flex: 1,
-                        color: "var(--gh-text-secondary)",
+                        color: "var(--gh-text-tertiary, #9ca3af)",
                         fontSize: "14px",
                       }}>
-                      未选择图标
+                      {t("chainIconNotSelected")}
                     </div>
                   )}
                   <button
                     type="button"
                     onClick={() => setShowChainIconPicker(true)}
                     style={{
-                      padding: "8px 16px",
+                      padding: "10px 18px",
                       border: "1px solid var(--gh-border, #e5e7eb)",
-                      borderRadius: "6px",
+                      borderRadius: "8px",
                       background: "var(--gh-bg, #ffffff)",
-                      color: "var(--gh-text, #1f2937)",
+                      color: "var(--gh-primary, #3b82f6)",
                       cursor: "pointer",
                       fontSize: "14px",
+                      fontWeight: 500,
                       whiteSpace: "nowrap",
+                      transition: "all 0.2s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "var(--gh-primary-light, #eff6ff)"
+                      e.currentTarget.style.borderColor = "var(--gh-primary, #3b82f6)"
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "var(--gh-bg, #ffffff)"
+                      e.currentTarget.style.borderColor = "var(--gh-border, #e5e7eb)"
                     }}>
-                    选择图标
+                    {t("chainIconSelect")}
                   </button>
                 </div>
               </div>
@@ -3616,27 +3545,17 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               left: 0,
               right: 0,
               bottom: 0,
-              background: "var(--gh-overlay-bg, rgba(0, 0, 0, 0.5))",
+              background: "rgba(0, 0, 0, 0.5)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               zIndex: 2147483647,
             }}
             onClick={() => setShowChainIconPicker(false)}>
-            <div
-              style={{
-                width: "90%",
-                maxWidth: "600px",
-                maxHeight: "80vh",
-                background: "var(--gh-bg, #ffffff)",
-                borderRadius: "12px",
-                overflow: "hidden",
-                boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-              }}
-              onClick={(e) => e.stopPropagation()}>
+            <div onClick={(e) => e.stopPropagation()}>
               <ChainIconPicker
                 value={chainEditorState.draft.iconSvg}
-                onChange={(iconId, svg) => {
+                onChange={(_iconId, svg) => {
                   updateChainDraft({ iconSvg: svg })
                   setShowChainIconPicker(false)
                 }}

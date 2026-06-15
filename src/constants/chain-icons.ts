@@ -8,7 +8,7 @@
  * - 办公人员：文档处理、会议纪要、报告撰写
  * - 程序员：代码审查、技术文档、问题排查
  *
- * 图标来源：Lucide Icons（精选最通用的 40 个）
+ * 图标来源：Lucide Icons（精选通用 action 图标）
  */
 
 export interface ChainIconPreset {
@@ -20,7 +20,14 @@ export interface ChainIconPreset {
 }
 
 export const CHAIN_ICON_PRESETS: ChainIconPreset[] = [
-  // ===== 常用通用（10 个）=====
+  // ===== 常用通用 =====
+  {
+    id: "run",
+    label: "运行",
+    labelEn: "Run",
+    category: "common",
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>',
+  },
   {
     id: "translate",
     label: "翻译",
@@ -54,7 +61,7 @@ export const CHAIN_ICON_PRESETS: ChainIconPreset[] = [
     label: "解释",
     labelEn: "Explain",
     category: "common",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>',
   },
   {
     id: "question",
@@ -82,7 +89,7 @@ export const CHAIN_ICON_PRESETS: ChainIconPreset[] = [
     label: "优化",
     labelEn: "Optimize",
     category: "common",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 3 9-3 9 19-9Z"/><path d="M6 12h16"/></svg>',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>',
   },
   {
     id: "compare",
@@ -147,7 +154,7 @@ export const CHAIN_ICON_PRESETS: ChainIconPreset[] = [
     label: "计划",
     labelEn: "Plan",
     category: "work",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M12 2v2"/><path d="M12 22v-2"/><path d="m17 20.66-1-1.73"/><path d="M11 10.27 7 3.34"/><path d="m20.66 17-1.73-1"/><path d="m3.34 7 1.73 1"/><path d="M14 12h8"/><path d="M2 12h2"/><path d="m20.66 7-1.73 1"/><path d="m3.34 17 1.73-1"/><path d="m17 3.34-1 1.73"/><path d="m11 13.73-4 6.93"/></svg>',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/><rect width="6" height="6" x="3" y="4" rx="1"/></svg>',
   },
   {
     id: "archive",
@@ -161,7 +168,7 @@ export const CHAIN_ICON_PRESETS: ChainIconPreset[] = [
     label: "审批",
     labelEn: "Approval",
     category: "work",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M19.3 13.7A2.5 2.5 0 0 0 17.5 13H16V6a4 4 0 0 0-8 0v7H6.5A2.5 2.5 0 0 0 4 15.5V17h16v-1.5a2.5 2.5 0 0 0-.7-1.8Z"/><path d="M8 17v5"/><path d="M16 17v5"/></svg>',
   },
 
   // ===== 学习研究（10 个）=====
@@ -191,28 +198,28 @@ export const CHAIN_ICON_PRESETS: ChainIconPreset[] = [
     label: "实验",
     labelEn: "Experiment",
     category: "learning",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v7.4"/><path d="M12 2v7.4"/><path d="M16 2v7.4"/><path d="m8.6 20-1.4-6.8h9.6L15.4 20Z"/><circle cx="12" cy="10" r="8"/></svg>',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.3"/><path d="M14 2v7.3"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><path d="M5.5 16h13"/></svg>',
   },
   {
     id: "thesis",
     label: "论文",
     labelEn: "Thesis",
     category: "learning",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><path d="M8 8v1"/><path d="M12 8v1"/><path d="M16 8v1"/><rect width="20" height="12" x="2" y="9" rx="2"/><circle cx="8" cy="15" r="2"/><circle cx="16" cy="15" r="2"/></svg>',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 12h-5"/><path d="M15 8h-5"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/></svg>',
   },
   {
     id: "formula",
     label: "公式",
     labelEn: "Formula",
     category: "learning",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 17 5-5-5-5"/><path d="M13 19h7"/></svg>',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 7V4H6l6 8-6 8h12v-3"/></svg>',
   },
   {
     id: "quiz",
     label: "测验",
     labelEn: "Quiz",
     category: "learning",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M8 8v-2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><circle cx="8.5" cy="14.5" r=".5"/><circle cx="15.5" cy="14.5" r=".5"/></svg>',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>',
   },
   {
     id: "homework",
@@ -233,7 +240,7 @@ export const CHAIN_ICON_PRESETS: ChainIconPreset[] = [
     label: "教程",
     labelEn: "Tutorial",
     category: "learning",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 10.9a1 1 0 0 0 0-1.8l-8.6-3.9a2 2 0 0 0-1.6 0L2.6 9.1a1 1 0 0 0 0 1.8l8.6 3.9a2 2 0 0 0 1.6 0Z"/><path d="M22 10v6"/><path d="M6 12.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-3.5"/></svg>',
   },
 
   // ===== 创意设计（5 个）=====
