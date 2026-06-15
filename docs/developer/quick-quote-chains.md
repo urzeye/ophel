@@ -171,23 +171,25 @@ Prompt queue 关闭时，多步 Chain 提示用户启用队列。内置 Quote/Re
   - [x] 用分段控制器完全替换单选按钮
   - [x] iOS 风格的切换效果（灰色背景 + 白色活动按钮）
 
-### 🚧 P4: 选区悬浮层与执行（进行中）
+### 🚧 P4: 选区悬浮层与执行（已完成）
 
-- [ ] Selection controller
-  - [ ] 监听选区变化
-  - [ ] 过滤无效选区（编辑器、Ophel UI）
-  - [ ] 生成 selection context（{{selection}}, {{quote}}）
-  - [ ] 生成 quote reference（源文锚点）
-- [ ] 悬浮层 UI
-  - [ ] 内置 Quote/Reply 按钮
-  - [ ] Chain 快捷按钮（显示已启用的 Chains）
-  - [ ] 横向滚动支持
-  - [ ] 响应式定位
-- [ ] Chain 执行
-  - [ ] 变量收集（复用现有变量弹窗）
-  - [ ] 渲染所有步骤
-  - [ ] 加入提示词队列
-  - [ ] Prompt queue 关闭时的提示
+- [x] Selection controller
+  - [x] 监听选区变化
+  - [x] 过滤无效选区（编辑器、Ophel UI）
+  - [x] 生成 selection context（{{selection}}, {{quote}}）
+  - [x] 生成 quote reference（源文锚点）
+- [x] 悬浮层 UI
+  - [x] 内置 Quote/Reply 按钮
+  - [x] Chain 快捷按钮（显示已启用的 Chains）
+  - [x] 横向滚动支持
+  - [x] 响应式定位
+- [x] Chain 执行
+  - [x] 变量收集（复用现有变量弹窗）
+  - [x] 渲染所有步骤
+  - [x] 加入提示词队列
+  - [x] Prompt queue 关闭时的提示
+  - [x] runMode 正确传递和执行
+  - [x] 修复队列时序竞争问题（AI 生成时不会过早发送下一步）
 
 ### 🔜 P5: 引用 Chip 与回跳
 
@@ -230,12 +232,14 @@ Prompt queue 关闭时，多步 Chain 提示用户启用队列。内置 Quote/Re
 ### 已解决
 - ✅ SVG 图标不显示 → 添加样式到 PORTAL_STYLES
 - ✅ 拖拽排序无效 → 实现真实拖拽功能
+- ✅ 步骤行 UI 粗糙 → 用分段控制器替换单选按钮，白色卡片设计
+- ✅ 执行预览导航简陋 → Sticky 悬浮导航栏 + 显示步骤标题
+- ✅ runMode 未生效 → 传递 runMode 到队列，dispatcher 根据 runMode 执行
+- ✅ 队列时序竞争 → dispatchNext 二次确认 + submitPrompt 后等待 500ms
 
 ### 待优化
 - [ ] Chain 执行性能优化
 - [ ] 变量提取算法优化
 - [ ] 悬浮层定位算法优化
 - [ ] 引用 chip 匹配算法优化
-- [ ] 步骤样式问题
-- [ ] 预览样式优化，导航功能开发
 ---
