@@ -377,13 +377,21 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 }
 
 .gh-chain-step-delete-btn {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   margin-left: auto;
   flex-shrink: 0;
-  border-radius: 6px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--gh-text-tertiary, #d1d5db);
   opacity: 0;
-  transition: all 0.15s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
 }
 
 .gh-chain-step-row:hover .gh-chain-step-delete-btn {
@@ -391,7 +399,20 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
 }
 
 .gh-chain-step-delete-btn:hover {
-  background: rgba(239, 68, 68, 0.1) !important;
+  background: rgba(254, 226, 226, 1);
+  color: var(--gh-text-danger, #ef4444);
+  transform: scale(1.05);
+}
+
+.gh-chain-step-delete-btn:active {
+  transform: scale(0.95);
+  background: rgba(254, 202, 202, 1);
+}
+
+.gh-chain-step-delete-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.5;
 }
 
 .gh-chain-step-input-row {
@@ -856,6 +877,10 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     show: boolean
     prompts: Prompt[]
   }>({ show: false, prompts: [] })
+
+  // 导入导出菜单状态
+  const [importExportMenuOpen, setImportExportMenuOpen] = useState(false)
+  const importExportButtonRef = useRef<HTMLButtonElement>(null)
 
   // Markdown 预览开关
   const [showPreview, setShowPreview] = useState(false)
@@ -2064,21 +2089,17 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           className={`gh-chain-card${chain.enabled ? "" : " disabled"}`}
           onClick={() => openChainEditor(chain)}>
           <div className="gh-chain-card-main">
-            <span
-              className="gh-chain-status-dot"
-              data-enabled={chain.enabled}
-              title={chain.enabled ? t("chainEnabled") : t("chainDisabled")}
-            />
-            <div className="gh-chain-icon">{renderChainIcon(chain.iconSvg)}</div>
+            <div className="gh-chain-icon" data-enabled={chain.enabled}>
+              {renderChainIcon(chain.iconSvg)}
+              <span className="gh-chain-icon-status-dot" data-enabled={chain.enabled} />
+            </div>
             <div className="gh-chain-body">
               <div className="gh-chain-title-row">
                 <span className="gh-chain-title">{chain.title}</span>
               </div>
               <Tooltip content={flowText}>
                 <div className="gh-chain-flow">
-                  <span className="gh-chain-step-badge">
-                    {t("chainStepCount", { count: String(chain.steps.length) })}
-                  </span>
+                  <span className="gh-chain-meta-badge">{chain.steps.length}</span>
                   <span className="gh-chain-flow-text">{flowText}</span>
                 </div>
               </Tooltip>
@@ -2290,7 +2311,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                           </div>
                           <Tooltip content={t("delete")}>
                             <button
-                              className="prompt-action-btn danger gh-chain-step-delete-btn"
+                              className="gh-chain-step-delete-btn"
                               onClick={(e) => {
                                 e.stopPropagation()
                                 removeChainStep(step.id)
@@ -2997,14 +3018,14 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     <div
       className="gh-prompts-tab"
       style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {/* 搜索栏 + 导入导出按钮 */}
+      {/* 搜索栏 + 操作按钮 */}
       <div
         style={{
           padding: "8px 12px",
           borderBottom: "1px solid var(--gh-border, #e5e7eb)",
           background: "var(--gh-bg-secondary, #f9fafb)",
           display: "flex",
-          gap: "8px",
+          gap: "6px",
           alignItems: "center",
         }}>
         <div className="gh-prompt-library-switch" role="tablist">
@@ -3032,7 +3053,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{
-            flex: 1,
+            flex: "1 1 auto",
+            minWidth: "120px",
             padding: "6px 10px",
             border: "1px solid var(--gh-border, #d1d5db)",
             borderRadius: "8px",
@@ -3043,11 +3065,11 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           }}
         />
         {activeLibraryView === "prompts" && (
-          <>
-            {/* 导入按钮 */}
-            <Tooltip content={t("promptImport")}>
+          <div style={{ position: "relative" }}>
+            <Tooltip content={t("promptImport") + " / " + t("promptExport")}>
               <button
-                onClick={handleImport}
+                ref={importExportButtonRef}
+                onClick={() => setImportExportMenuOpen(!importExportMenuOpen)}
                 style={{
                   width: "32px",
                   height: "32px",
@@ -3064,27 +3086,83 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                 <ImportIcon size={16} />
               </button>
             </Tooltip>
-            {/* 导出按钮 */}
-            <Tooltip content={t("promptExport")}>
-              <button
-                onClick={handleExport}
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  border: "1px solid var(--gh-border, #d1d5db)",
-                  background: "var(--gh-bg, white)",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "16px",
-                  flexShrink: 0,
-                }}>
-                <ExportIcon size={16} />
-              </button>
-            </Tooltip>
-          </>
+            {importExportMenuOpen && (
+              <>
+                <div
+                  style={{
+                    position: "fixed",
+                    inset: 0,
+                    zIndex: 99,
+                  }}
+                  onClick={() => setImportExportMenuOpen(false)}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 4px)",
+                    right: 0,
+                    zIndex: 100,
+                    minWidth: "140px",
+                    background: "var(--gh-bg, #ffffff)",
+                    border: "1px solid var(--gh-border, #e5e7eb)",
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.12)",
+                    overflow: "hidden",
+                  }}>
+                  <button
+                    onClick={() => {
+                      setImportExportMenuOpen(false)
+                      handleImport()
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      border: "none",
+                      background: "transparent",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      fontSize: "13px",
+                      color: "var(--gh-text, #1f2937)",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = "var(--gh-hover, #f3f4f6)")
+                    }
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                    <ImportIcon size={14} />
+                    {t("promptImport")}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setImportExportMenuOpen(false)
+                      handleExport()
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      border: "none",
+                      background: "transparent",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      fontSize: "13px",
+                      color: "var(--gh-text, #1f2937)",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = "var(--gh-hover, #f3f4f6)")
+                    }
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                    <ExportIcon size={14} />
+                    {t("promptExport")}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
 

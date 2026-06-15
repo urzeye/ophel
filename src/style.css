@@ -1943,17 +1943,18 @@
 .gh-prompt-library-switch {
   display: inline-flex;
   flex: 0 0 auto;
-  padding: 3px;
-  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 18%, var(--gh-border, #e5e7eb));
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 5%, var(--gh-bg, #ffffff));
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  gap: 4px;
 }
 
 .gh-prompt-library-switch-btn {
-  min-width: 64px;
+  min-width: 44px;
   height: 28px;
-  padding: 0 11px;
-  border: none;
+  padding: 0 9px;
+  border: 1px solid transparent;
   border-radius: 6px;
   background: transparent;
   color: var(--gh-text-secondary, #6b7280);
@@ -1965,6 +1966,7 @@
   transition:
     background 0.15s,
     color 0.15s,
+    border-color 0.15s,
     box-shadow 0.15s;
 }
 
@@ -1976,6 +1978,7 @@
 .gh-prompt-library-switch-btn[data-active="true"] {
   background: var(--gh-primary, #4285f4);
   color: var(--gh-text-on-primary, #ffffff);
+  border-color: var(--gh-primary, #4285f4);
   box-shadow: 0 1px 4px rgba(66, 133, 244, 0.25);
 }
 
@@ -2021,6 +2024,28 @@
   border-radius: 7px;
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, var(--gh-bg, #ffffff));
   color: var(--gh-primary, #4285f4);
+  position: relative;
+}
+
+.gh-chain-icon-status-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gh-success, #22c55e);
+  border: 2px solid var(--gh-bg, #ffffff);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.gh-chain-icon[data-enabled="true"] .gh-chain-icon-status-dot {
+  opacity: 1;
+}
+
+.gh-chain-icon[data-enabled="false"] {
+  opacity: 0.5;
 }
 
 .gh-chain-icon-svg,
@@ -2039,8 +2064,16 @@
   min-width: 0;
   flex: 1;
   display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 8px; /* 仅为操作按钮右侧留小间距 */
+}
+
+.gh-chain-title-row {
+  display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .gh-chain-title {
@@ -2061,17 +2094,24 @@
   flex-shrink: 0;
 }
 
+.gh-chain-meta .gh-chain-status-dot {
+  width: 5px;
+  height: 5px;
+}
+
 .gh-chain-meta-badge {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: var(--gh-hover, #f3f4f6);
+  padding: 0 5px;
+  height: 16px;
+  border-radius: 3px;
+  background: var(--gh-bg-secondary, #f3f4f6);
   color: var(--gh-text-tertiary, #9ca3af);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   white-space: nowrap;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 .gh-chain-status-dot {
@@ -2093,7 +2133,8 @@
   color: var(--gh-text-secondary, #6b7280);
   font-size: 12px;
   line-height: 1.4;
-  margin-top: 4px;
+  min-width: 0;
+  padding-right: 8px; /* 操作按钮浮动层不遮挡文字 */
 }
 
 .gh-chain-flow-text {
@@ -2121,12 +2162,17 @@
 
 .gh-chain-card-actions {
   position: absolute;
-  top: 6px;
+  top: 8px;
   right: 8px;
   display: flex;
   gap: 2px;
   opacity: 0;
   transition: opacity 0.15s;
+  z-index: 1;
+  background: var(--gh-bg, #ffffff);
+  border-radius: 6px;
+  padding: 2px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .gh-chain-card:hover .gh-chain-card-actions {
@@ -2398,21 +2444,42 @@
 }
 
 .gh-chain-step-delete-btn {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   margin-left: auto;
   flex-shrink: 0;
-  border-radius: 6px;
-  opacity: 0;
-  transition: all 0.15s;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--gh-text-tertiary, #d1d5db);
+  opacity: 0 !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
 }
 
 .gh-chain-step-row:hover .gh-chain-step-delete-btn {
-  opacity: 1;
+  opacity: 1 !important;
 }
 
 .gh-chain-step-delete-btn:hover {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(254, 226, 226, 1);
+  color: var(--gh-text-danger, #ef4444);
+  transform: scale(1.05);
+}
+
+.gh-chain-step-delete-btn:active {
+  transform: scale(0.95);
+  background: rgba(254, 202, 202, 1);
+}
+
+.gh-chain-step-delete-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.5;
 }
 
 .gh-chain-step-input-row {
