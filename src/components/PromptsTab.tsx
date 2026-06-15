@@ -1193,7 +1193,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       title,
       description: draft.description?.trim() || "",
       iconSvg: draft.iconSvg?.trim() || "",
-      enabled: draft.enabled !== false,
+      enabled: true,
       showInSelectionPopover: draft.showInSelectionPopover !== false,
       steps,
       lastUsedAt: draft.lastUsedAt,
@@ -2017,18 +2017,20 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     }
 
     return filteredChains.map((chain) => {
+      const showInSelectionPopover = chain.showInSelectionPopover !== false
       const stepTitles = getChainStepTitles(chain)
       const flowText = stepTitles.length > 0 ? stepTitles.join(" → ") : t("chainNoSteps")
 
       return (
         <div
           key={chain.id}
-          className={`gh-chain-card${chain.enabled ? "" : " disabled"}`}
+          className="gh-chain-card"
+          data-disabled={!showInSelectionPopover}
           onClick={() => openChainEditor(chain)}>
           <div className="gh-chain-card-main">
-            <div className="gh-chain-icon" data-enabled={chain.enabled}>
+            <div className="gh-chain-icon" data-enabled={showInSelectionPopover}>
               {renderChainIcon(chain.iconSvg)}
-              <span className="gh-chain-icon-status-dot" data-enabled={chain.enabled} />
+              <span className="gh-chain-icon-status-dot" data-enabled={showInSelectionPopover} />
             </div>
             <div className="gh-chain-body">
               <div className="gh-chain-title-row">
@@ -2044,12 +2046,18 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           </div>
 
           <div className="gh-chain-card-actions">
-            <Tooltip content={chain.enabled ? t("chainDisable") : t("chainEnable")}>
+            <Tooltip
+              content={
+                showInSelectionPopover ? t("chainShownInPopover") : t("chainHiddenInPopover")
+              }>
               <button
-                className={`prompt-action-btn${chain.enabled ? " active" : ""}`}
+                className={`prompt-action-btn${showInSelectionPopover ? " active" : ""}`}
                 onClick={(e) => {
                   e.stopPropagation()
-                  updateChain(chain.id, { enabled: !chain.enabled })
+                  updateChain(chain.id, {
+                    enabled: true,
+                    showInSelectionPopover: !showInSelectionPopover,
+                  })
                 }}>
                 <CheckIcon size={15} />
               </button>
@@ -2218,14 +2226,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               </div>
 
               <div className="gh-chain-toggle-row">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={draft.enabled !== false}
-                    onChange={(e) => updateChainDraft({ enabled: e.target.checked })}
-                  />
-                  <span>{t("chainEnabled")}</span>
-                </label>
                 <label>
                   <input
                     type="checkbox"

@@ -355,8 +355,6 @@ export const ru = {
   chainMissingPrompt: "Промпт не найден",
   chainEmpty: "Chains пока нет",
   chainEmptyDescription: "Создайте chain, чтобы добавить несколько промптов в очередь по порядку.",
-  chainEnabled: "Включена",
-  chainDisabled: "Отключена",
   chainNoSteps: "Нет шагов",
   chainStepCount: "{count} шаг(ов)",
   chainShownInPopover: "Показана в панели выделения",
@@ -367,8 +365,6 @@ export const ru = {
   chainNoPromptsDescription:
     "Chains строятся из существующих промптов и требуют хотя бы один промпт.",
   chainDuplicated: "Chain дублирована",
-  chainDisable: "Отключить",
-  chainEnable: "Включить",
   chainDeleteConfirm: "Удалить эту chain?",
   chainAdd: "Добавить Chain",
   chainEditorEditTitle: "Изменить Chain",

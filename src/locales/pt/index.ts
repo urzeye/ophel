@@ -356,8 +356,6 @@ export const pt = {
   chainMissingPrompt: "Prompt ausente",
   chainEmpty: "Ainda não há chains",
   chainEmptyDescription: "Crie uma chain para adicionar vários prompts à fila em ordem.",
-  chainEnabled: "Ativada",
-  chainDisabled: "Desativada",
   chainNoSteps: "Sem etapas",
   chainStepCount: "{count} etapa(s)",
   chainShownInPopover: "Visível no painel de seleção",
@@ -368,8 +366,6 @@ export const pt = {
   chainNoPromptsDescription:
     "Chains são criadas a partir de prompts existentes e precisam de pelo menos um prompt.",
   chainDuplicated: "Chain duplicada",
-  chainDisable: "Desativar",
-  chainEnable: "Ativar",
   chainDeleteConfirm: "Excluir esta chain?",
   chainAdd: "Adicionar Chain",
   chainEditorEditTitle: "Editar Chain",

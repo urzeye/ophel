@@ -358,8 +358,6 @@ export const ko = {
   chainMissingPrompt: "프롬프트를 찾을 수 없음",
   chainEmpty: "아직 Chains가 없습니다",
   chainEmptyDescription: "Chain을 만들어 여러 프롬프트를 순서대로 대기열에 추가하세요.",
-  chainEnabled: "활성화됨",
-  chainDisabled: "비활성화됨",
   chainNoSteps: "단계 없음",
   chainStepCount: "{count}개 단계",
   chainShownInPopover: "선택 팝오버에 표시",
@@ -370,8 +368,6 @@ export const ko = {
   chainNoPromptsDescription:
     "Chain은 기존 프롬프트로 구성되므로 하나 이상의 프롬프트가 필요합니다.",
   chainDuplicated: "Chain이 복제되었습니다",
-  chainDisable: "비활성화",
-  chainEnable: "활성화",
   chainDeleteConfirm: "이 Chain을 삭제하시겠습니까?",
   chainAdd: "Chain 추가",
   chainEditorEditTitle: "Chain 편집",

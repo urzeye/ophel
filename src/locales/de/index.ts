@@ -358,8 +358,6 @@ export const de = {
   chainMissingPrompt: "Prompt fehlt",
   chainEmpty: "Noch keine Chains",
   chainEmptyDescription: "Erstellen Sie eine Chain, um mehrere Prompts der Reihe nach einzureihen.",
-  chainEnabled: "Aktiviert",
-  chainDisabled: "Deaktiviert",
   chainNoSteps: "Keine Schritte",
   chainStepCount: "{count} Schritt(e)",
   chainShownInPopover: "Im Auswahl-Popover sichtbar",
@@ -370,8 +368,6 @@ export const de = {
   chainNoPromptsDescription:
     "Chains bestehen aus vorhandenen Prompts und benötigen mindestens einen Prompt.",
   chainDuplicated: "Chain dupliziert",
-  chainDisable: "Deaktivieren",
-  chainEnable: "Aktivieren",
   chainDeleteConfirm: "Diese Chain löschen?",
   chainAdd: "Chain hinzufügen",
   chainEditorEditTitle: "Chain bearbeiten",

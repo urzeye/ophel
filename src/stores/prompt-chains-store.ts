@@ -19,15 +19,20 @@ interface PromptChainsState {
   setHasHydrated: (state: boolean) => void
 }
 
-const normalizeChain = (chain: PromptChain): PromptChain => ({
-  ...chain,
-  iconSvg: chain.iconSvg ? sanitizeSvgIcon(chain.iconSvg) : "",
-  enabled: chain.enabled !== false,
-  showInSelectionPopover: chain.showInSelectionPopover !== false,
-  steps: Array.isArray(chain.steps) ? chain.steps : [],
-  createdAt: chain.createdAt || Date.now(),
-  updatedAt: chain.updatedAt || Date.now(),
-})
+const normalizeChain = (chain: PromptChain): PromptChain => {
+  const showInSelectionPopover =
+    chain.enabled === false ? false : chain.showInSelectionPopover !== false
+
+  return {
+    ...chain,
+    iconSvg: chain.iconSvg ? sanitizeSvgIcon(chain.iconSvg) : "",
+    enabled: true,
+    showInSelectionPopover,
+    steps: Array.isArray(chain.steps) ? chain.steps : [],
+    createdAt: chain.createdAt || Date.now(),
+    updatedAt: chain.updatedAt || Date.now(),
+  }
+}
 
 let _completeHydration: (() => void) | null = null
 

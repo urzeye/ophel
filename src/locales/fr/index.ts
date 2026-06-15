@@ -358,8 +358,6 @@ export const fr = {
   chainMissingPrompt: "Prompt introuvable",
   chainEmpty: "Aucune chain pour le moment",
   chainEmptyDescription: "Créez une chain pour ajouter plusieurs prompts à la file dans l'ordre.",
-  chainEnabled: "Activée",
-  chainDisabled: "Désactivée",
   chainNoSteps: "Aucune étape",
   chainStepCount: "{count} étape(s)",
   chainShownInPopover: "Visible dans le panneau de sélection",
@@ -370,8 +368,6 @@ export const fr = {
   chainNoPromptsDescription:
     "Les chains sont créées à partir de prompts existants et nécessitent au moins un prompt.",
   chainDuplicated: "Chain dupliquée",
-  chainDisable: "Désactiver",
-  chainEnable: "Activer",
   chainDeleteConfirm: "Supprimer cette chain ?",
   chainAdd: "Ajouter une Chain",
   chainEditorEditTitle: "Modifier la Chain",

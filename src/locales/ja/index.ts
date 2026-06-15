@@ -363,8 +363,6 @@ export const ja = {
   chainMissingPrompt: "プロンプトが見つかりません",
   chainEmpty: "Chains はまだありません",
   chainEmptyDescription: "Chain を作成して、複数のプロンプトを順番にキューへ追加します。",
-  chainEnabled: "有効",
-  chainDisabled: "無効",
   chainNoSteps: "手順なし",
   chainStepCount: "{count} 手順",
   chainShownInPopover: "選択ポップオーバーに表示",
@@ -375,8 +373,6 @@ export const ja = {
   chainNoPromptsDescription:
     "Chain は既存のプロンプトから作成されるため、少なくとも 1 つのプロンプトが必要です。",
   chainDuplicated: "Chain を複製しました",
-  chainDisable: "無効化",
-  chainEnable: "有効化",
   chainDeleteConfirm: "この Chain を削除しますか？",
   chainAdd: "Chain を追加",
   chainEditorEditTitle: "Chain を編集",

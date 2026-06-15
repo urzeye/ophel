@@ -128,8 +128,6 @@ const ChainLetterFallback: React.FC<{ title: string }> = ({ title }) => {
   )
 }
 
-const getQuoteContent = (text: string) => formatMarkdownQuote(text) + "\n\n"
-
 const getReplyContent = (text: string) =>
   replaceVariables(t("quickQuoteReplyTemplate"), {
     selection: text,
@@ -365,7 +363,7 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
   const isMouseSelectingRef = useRef(false)
 
   const visibleChains = useMemo(
-    () => chains.filter((chain) => chain.enabled && chain.showInSelectionPopover),
+    () => chains.filter((chain) => chain.showInSelectionPopover),
     [chains],
   )
 
