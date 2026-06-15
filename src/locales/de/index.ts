@@ -931,7 +931,6 @@ export const de = {
   backupValidationSettingsType: "Falsche Einstellungen",
   backupValidationPromptsType: "Falsche Prompts",
   backupValidationPromptChainsType: "Falsche promptChains",
-  backupValidationQuickQuoteReferencesType: "Falsche quickQuoteReferences",
   backupValidationFoldersType: "Falsche Ordner",
   backupValidationConversationsType: "Falsche Chats",
   backupValidationHistoryType: "Falsche Historie",

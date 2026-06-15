@@ -964,7 +964,6 @@ export const ja = {
   backupValidationSettingsType: "settings はオブジェクトである必要があります",
   backupValidationPromptsType: "prompts は配列である必要があります",
   backupValidationPromptChainsType: "promptChains は配列である必要があります",
-  backupValidationQuickQuoteReferencesType: "quickQuoteReferences は配列である必要があります",
   backupValidationFoldersType: "folders は配列である必要があります",
   backupValidationConversationsType: "conversations はオブジェクトである必要があります",
   backupValidationHistoryType: "readingHistory はオブジェクトである必要があります",

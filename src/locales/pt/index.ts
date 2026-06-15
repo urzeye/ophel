@@ -927,7 +927,6 @@ export const pt = {
   backupValidationSettingsType: "Ajustes incorretos",
   backupValidationPromptsType: "Prompts incorretos",
   backupValidationPromptChainsType: "promptChains deve ser uma matriz",
-  backupValidationQuickQuoteReferencesType: "quickQuoteReferences deve ser uma matriz",
   backupValidationFoldersType: "Pastas incorretas",
   backupValidationConversationsType: "Chats incorretos",
   backupValidationHistoryType: "Histórico incorreto",

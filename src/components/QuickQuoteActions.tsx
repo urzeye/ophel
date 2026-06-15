@@ -11,15 +11,18 @@ import {
   resolvePromptChainSteps,
   type PromptChainSelectionContext,
 } from "~core/prompt-chain-runner"
-import type { PromptChain, PromptQuoteReference } from "~core/prompt-action-types"
+import type { PromptChain } from "~core/prompt-action-types"
 import type { PromptManager } from "~core/prompt-manager"
+import {
+  appendQuickQuoteMarker,
+  extractQuickQuoteMarkersFromElement,
+  removeQuickQuoteMarkerNodes,
+} from "~core/quick-quote-marker"
 import { createPromptQuoteReference, scrollToQuoteReference } from "~core/quick-quote-utils"
 import { usePromptChainsStore } from "~stores/prompt-chains-store"
 import { usePromptsStore } from "~stores/prompts-store"
 import { useQueueStore } from "~stores/queue-store"
-import { useQuickQuotesStore } from "~stores/quick-quotes-store"
 import { useSettingsStore } from "~stores/settings-store"
-import { djb2ContentHash, normalizeContentForHash } from "~utils/content-hash"
 import {
   DOMToolkit,
   OPHEL_INTERACTION_LAYER_SELECTOR,
@@ -136,14 +139,6 @@ const getReplyContent = (text: string) =>
     quote: formatMarkdownQuote(text),
   }).trim() + "\n\n"
 
-const addQuoteReferenceForContent = (quoteRef: PromptQuoteReference | null, content: string) => {
-  if (!quoteRef) return
-  useQuickQuotesStore.getState().addReference({
-    ...quoteRef,
-    consumerContentHash: djb2ContentHash(content),
-  })
-}
-
 const injectQuickQuoteHostStyles = (root: Document | ShadowRoot) => {
   if (root.querySelector(`#${QUICK_QUOTE_STYLE_ID}`)) return
 
@@ -227,14 +222,8 @@ const injectQuickQuoteHostStyles = (root: Document | ShadowRoot) => {
 }
 
 export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter }> = ({ adapter }) => {
-  const references = useQuickQuotesStore((state) => state.references)
-  const referencesRef = useRef(references)
   const renderTimeoutRef = useRef<number | null>(null)
   const isRenderingRef = useRef(false)
-
-  useEffect(() => {
-    referencesRef.current = references
-  }, [references])
 
   const renderReferenceChips = useCallback(() => {
     // 防止并发渲染
@@ -247,66 +236,56 @@ export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter }> = ({ adapter
 
       injectQuickQuoteHostStyles(document)
 
-      const referencesForSession = referencesRef.current.filter(
-        (reference) =>
-          reference.anchor.siteId === adapter.getSiteId() &&
-          reference.anchor.sessionId === adapter.getSessionId(),
-      )
-      if (referencesForSession.length === 0) return
-
       const userMessages =
         (DOMToolkit.query(userQuerySelector, { all: true, shadow: true }) as Element[]) || []
 
       userMessages.forEach((message) => {
         if (!(message instanceof HTMLElement)) return
 
-        // 跳过已完全处理的消息
-        if (message.dataset.ghQuickQuoteProcessed === "true") return
-
         const renderedIds = new Set(
           (message.dataset.ghQuickQuoteRefs || "").split(",").filter(Boolean),
         )
-        const messageText = adapter.extractUserQueryText(message)
-        const textHash = djb2ContentHash(messageText)
-        const normalizedText = normalizeContentForHash(messageText)
+        const markerReferences = extractQuickQuoteMarkersFromElement(message).filter(
+          (reference) => reference.anchor.siteId === adapter.getSiteId(),
+        )
+        removeQuickQuoteMarkerNodes(message)
 
-        const reference = referencesForSession.find((candidate) => {
-          if (renderedIds.has(candidate.id)) return false
-          if (candidate.consumerContentHash && candidate.consumerContentHash === textHash)
-            return true
-          return normalizedText.includes(normalizeContentForHash(candidate.selectedText))
-        })
+        const referencesToRender = markerReferences.filter(
+          (reference, index, source) =>
+            !renderedIds.has(reference.id) &&
+            source.findIndex((item) => item.id === reference.id) === index,
+        )
 
-        if (!reference) {
-          // 没有匹配的引用，标记为已处理
-          message.dataset.ghQuickQuoteProcessed = "true"
-          return
-        }
+        if (referencesToRender.length === 0) return
 
         const root = message.getRootNode()
         if (root instanceof Document || root instanceof ShadowRoot) {
           injectQuickQuoteHostStyles(root)
         }
 
-        const chip = document.createElement("button")
-        chip.type = "button"
-        chip.className = "gh-quick-quote-chip"
-        chip.title = t("quickQuoteJumpToSource")
-        const label = document.createElement("span")
-        label.className = "gh-quick-quote-chip-text"
-        label.textContent = truncateText(reference.selectedText)
-        chip.append(label)
-        chip.addEventListener("click", (event) => {
-          event.preventDefault()
-          event.stopPropagation()
-          const ok = scrollToQuoteReference(reference, adapter)
-          if (!ok) showToast(t("quickQuoteSourceNotFound"), 2400)
+        const fragment = document.createDocumentFragment()
+        referencesToRender.forEach((reference) => {
+          const chip = document.createElement("button")
+          chip.type = "button"
+          chip.className = "gh-quick-quote-chip"
+          chip.title = t("quickQuoteJumpToSource")
+          const label = document.createElement("span")
+          label.className = "gh-quick-quote-chip-text"
+          label.textContent = truncateText(reference.selectedText)
+          chip.append(label)
+          chip.addEventListener("click", (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            const ok = scrollToQuoteReference(reference, adapter)
+            if (!ok) showToast(t("quickQuoteSourceNotFound"), 2400)
+          })
+
+          fragment.append(chip)
+          renderedIds.add(reference.id)
         })
 
-        message.prepend(chip)
-        renderedIds.add(reference.id)
+        message.prepend(fragment)
         message.dataset.ghQuickQuoteRefs = Array.from(renderedIds).join(",")
-        // 注意：这里不设置 processed=true，因为可能有多个引用需要渲染
       })
     } finally {
       isRenderingRef.current = false
@@ -467,24 +446,20 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
     }
   }, [refreshSelection])
 
-  const createSelectionContext = useCallback(
-    (content?: string): PromptChainSelectionContext | null => {
-      if (!selectionState) return null
-      const quoteRef = createPromptQuoteReference({
-        selectedText: selectionState.text,
-        adapter,
-        range: selectionState.range,
-        content,
-      })
+  const createSelectionContext = useCallback((): PromptChainSelectionContext | null => {
+    if (!selectionState) return null
+    const quoteRef = createPromptQuoteReference({
+      selectedText: selectionState.text,
+      adapter,
+      range: selectionState.range,
+    })
 
-      return {
-        selectedText: selectionState.text,
-        quoteText: formatMarkdownQuote(selectionState.text),
-        quoteRef: quoteRef || undefined,
-      }
-    },
-    [adapter, selectionState],
-  )
+    return {
+      selectedText: selectionState.text,
+      quoteText: formatMarkdownQuote(selectionState.text),
+      quoteRef: quoteRef || undefined,
+    }
+  }, [adapter, selectionState])
 
   const enablePromptQueue = useCallback(() => {
     updatePromptQueueSetting("features", "prompts", "promptQueue", true)
@@ -505,14 +480,14 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
     if (!selectionState) return
 
     const content = formatMarkdownQuote(selectionState.text) + "\n\n"
-    const selection = createSelectionContext(content)
-    const inserted = await promptManager.insertPrompt(content)
+    const selection = createSelectionContext()
+    const contentWithMarker = appendQuickQuoteMarker(content, selection?.quoteRef)
+    const inserted = await promptManager.insertPrompt(contentWithMarker)
     if (!inserted) {
       showToast(t("insertFailed"))
       return
     }
 
-    addQuoteReferenceForContent(selection?.quoteRef || null, content)
     showToast(t("quickQuoteInserted"), 1800)
     clearSelection()
   }, [clearSelection, createSelectionContext, promptManager, selectionState])
@@ -521,14 +496,14 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
     if (!selectionState) return
 
     const content = getReplyContent(selectionState.text)
-    const selection = createSelectionContext(content)
-    const inserted = await promptManager.insertPrompt(content)
+    const selection = createSelectionContext()
+    const contentWithMarker = appendQuickQuoteMarker(content, selection?.quoteRef)
+    const inserted = await promptManager.insertPrompt(contentWithMarker)
     if (!inserted) {
       showToast(t("insertFailed"))
       return
     }
 
-    addQuoteReferenceForContent(selection?.quoteRef || null, content)
     showToast(t("quickQuoteInserted"), 1800)
     clearSelection()
   }, [clearSelection, createSelectionContext, promptManager, selectionState])
@@ -553,9 +528,6 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
       // 队列已开启：正常入队
       const queueInputs = buildPromptChainQueueInputs(chain, resolvedSteps)
       const items = enqueueMany(queueInputs)
-      resolvedSteps.forEach((step) => {
-        if (step.quoteRef) useQuickQuotesStore.getState().addReference(step.quoteRef)
-      })
       updateChainLastUsed(chain.id)
       showToast(t("quickQuoteChainQueued", { count: String(items.length) }), 2500)
       clearSelection()

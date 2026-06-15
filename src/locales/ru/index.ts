@@ -926,7 +926,6 @@ export const ru = {
   backupValidationSettingsType: "Ошибка настроек",
   backupValidationPromptsType: "Ошибка промптов",
   backupValidationPromptChainsType: "promptChains должен быть массивом",
-  backupValidationQuickQuoteReferencesType: "quickQuoteReferences должен быть массивом",
   backupValidationFoldersType: "Ошибка папок",
   backupValidationConversationsType: "Ошибка чатов",
   backupValidationHistoryType: "Ошибка истории",

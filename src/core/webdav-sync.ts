@@ -641,18 +641,6 @@ export class WebDAVSyncManager {
               } else {
                 state = { chains: [] }
               }
-            } else if (k === "quickQuoteReferences") {
-              if (Array.isArray(v)) {
-                state = { references: v }
-              } else if (
-                typeof v === "object" &&
-                !Array.isArray(v) &&
-                (v as Record<string, unknown>).references !== undefined
-              ) {
-                state = v as Record<string, unknown>
-              } else {
-                state = { references: [] }
-              }
             } else {
               // 单属性 store
               state = { [k]: v }

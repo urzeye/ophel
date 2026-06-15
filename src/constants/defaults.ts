@@ -11,7 +11,6 @@ export const ZUSTAND_KEYS: string[] = [
   "settings",
   "prompts",
   "promptChains",
-  "quickQuoteReferences",
   "folders",
   "tags",
   "conversations",

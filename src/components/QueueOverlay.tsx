@@ -15,6 +15,7 @@ import { DialogOverlay, Tooltip } from "~components/ui"
 import { extractVariables } from "~components/VariableInputDialog"
 import { formatShortcut, normalizeShortcutBinding } from "~constants/shortcuts"
 import type { QueueDispatcher } from "~core/queue-dispatcher"
+import { appendQuickQuoteMarker, stripQuickQuoteMarkers } from "~core/quick-quote-marker"
 import { usePromptsStore } from "~stores/prompts-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { useQueueItems, useQueueStore } from "~stores/queue-store"
@@ -416,13 +417,14 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
   const handleEditClick = useCallback((id: string, content: string) => {
     setEditingItemId(id)
-    setEditValue(content)
+    setEditValue(stripQuickQuoteMarkers(content))
   }, [])
 
   const handleEditSave = useCallback(
     (id: string) => {
       if (editValue.trim()) {
-        store.updateContent(id, editValue.trim())
+        const item = store.items.find((item) => item.id === id)
+        store.updateContent(id, appendQuickQuoteMarker(editValue.trim(), item?.metadata?.quoteRef))
       }
       setEditingItemId(null)
     },
@@ -615,7 +617,9 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
                               })}
                             </span>
                           )}
-                          <span className="gh-queue-item-content">{item.content}</span>
+                          <span className="gh-queue-item-content">
+                            {stripQuickQuoteMarkers(item.content)}
+                          </span>
                         </span>
                         <div className="gh-queue-item-actions">
                           {item.status === "pending" && (

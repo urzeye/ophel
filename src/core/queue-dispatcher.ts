@@ -9,7 +9,6 @@ import type { SiteAdapter } from "~adapters/base"
 import type { PromptManager } from "~core/prompt-manager"
 import { useSettingsStore } from "~stores/settings-store"
 import { useQueueStore } from "~stores/queue-store"
-import { useQuickQuotesStore } from "~stores/quick-quotes-store"
 
 export class QueueDispatcher {
   private adapter: SiteAdapter
@@ -121,9 +120,6 @@ export class QueueDispatcher {
       // "insert" 模式：只插入不发送
       if (runMode === "insert") {
         store.updateStatus(item.id, "sent")
-        if (item.metadata?.quoteRef) {
-          useQuickQuotesStore.getState().addReference(item.metadata.quoteRef)
-        }
         return
       }
 
@@ -145,9 +141,6 @@ export class QueueDispatcher {
 
       // 发送成功
       store.updateStatus(item.id, "sent")
-      if (item.metadata?.quoteRef) {
-        useQuickQuotesStore.getState().addReference(item.metadata.quoteRef)
-      }
     } catch (error) {
       console.error("[QueueDispatcher] 发送失败:", error)
       store.updateStatus(item.id, "failed")

@@ -34,7 +34,6 @@ import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
 import { usePromptChainsStore } from "~stores/prompt-chains-store"
 import { usePromptsStore } from "~stores/prompts-store"
-import { useQuickQuotesStore } from "~stores/quick-quotes-store"
 import { useReadingHistoryStore } from "~stores/reading-history-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { useTagsStore } from "~stores/tags-store"
@@ -673,18 +672,6 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
                   } else {
                     stateContent = { chains: [] }
                   }
-                } else if (k === "quickQuoteReferences") {
-                  if (Array.isArray(v)) {
-                    stateContent = { references: v }
-                  } else if (
-                    typeof v === "object" &&
-                    !Array.isArray(v) &&
-                    (v as Record<string, unknown>).references !== undefined
-                  ) {
-                    stateContent = v
-                  } else {
-                    stateContent = { references: [] }
-                  }
                 } else {
                   // prompts, settings 等通常 state key = store name
                   // 但旧版本可能不同，这里统一假设 state = { [key]: value } 是安全的默认值
@@ -752,7 +739,6 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
     resetSettings()
     usePromptsStore.getState().setPrompts(getDefaultPrompts())
     usePromptChainsStore.getState().setChains([])
-    useQuickQuotesStore.getState().clearAllReferences()
     useFoldersStore.setState({ folders: DEFAULT_FOLDERS })
     useTagsStore.setState({ tags: [] })
     useConversationsStore.setState({ conversations: {}, lastUsedFolderId: "inbox" })

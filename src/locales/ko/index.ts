@@ -926,7 +926,6 @@ export const ko = {
   backupValidationSettingsType: "settings는 객체여야 합니다",
   backupValidationPromptsType: "prompts는 배열이어야 합니다",
   backupValidationPromptChainsType: "promptChains는 배열이어야 합니다",
-  backupValidationQuickQuoteReferencesType: "quickQuoteReferences는 배열이어야 합니다",
   backupValidationFoldersType: "folders는 배열이어야 합니다",
   backupValidationConversationsType: "conversations는 객체여야 합니다",
   backupValidationHistoryType: "readingHistory는 객체여야 합니다",

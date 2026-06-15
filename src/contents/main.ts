@@ -22,7 +22,6 @@ import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
 import { usePromptChainsStore } from "~stores/prompt-chains-store"
 import { usePromptsStore } from "~stores/prompts-store"
-import { useQuickQuotesStore } from "~stores/quick-quotes-store"
 import { useReadingHistoryStore } from "~stores/reading-history-store"
 import { getSettingsState, useSettingsStore } from "~stores/settings-store"
 import { useTagsStore } from "~stores/tags-store"
@@ -38,7 +37,6 @@ const resetAllStores = () => {
   useSettingsStore.getState().resetSettings()
   usePromptsStore.getState().setPrompts(getDefaultPrompts())
   usePromptChainsStore.getState().setChains([])
-  useQuickQuotesStore.getState().clearAllReferences()
   useFoldersStore.setState({ folders: DEFAULT_FOLDERS })
   useTagsStore.setState({ tags: [] })
   useConversationsStore.setState({ conversations: {}, lastUsedFolderId: "inbox" })

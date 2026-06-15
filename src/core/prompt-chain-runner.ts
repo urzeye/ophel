@@ -1,6 +1,6 @@
 import type { PromptActionStep, PromptChain, PromptQuoteReference } from "~core/prompt-action-types"
 import type { QueueEnqueueInput } from "~stores/queue-store"
-import { djb2ContentHash } from "~utils/content-hash"
+import { appendQuickQuoteMarker } from "~core/quick-quote-marker"
 import {
   extractVariables,
   formatMarkdownQuote,
@@ -123,7 +123,6 @@ export const resolvePromptChainSteps = ({
           stepId: step.id,
           stepIndex: index + 1,
           stepTotal,
-          consumerContentHash: djb2ContentHash(content),
         }
       }
 
@@ -148,7 +147,7 @@ export const buildPromptChainQueueInputs = (
   resolvedSteps: ResolvedPromptChainStep[],
 ): QueueEnqueueInput[] =>
   resolvedSteps.map((resolvedStep, index) => ({
-    content: resolvedStep.content,
+    content: appendQuickQuoteMarker(resolvedStep.content, resolvedStep.quoteRef),
     metadata: {
       source: "quick-follow-up",
       promptId: resolvedStep.prompt.id,

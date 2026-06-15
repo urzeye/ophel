@@ -34,6 +34,7 @@ export interface PromptSelectionAnchor {
   rootSelector?: string
   rootIndex?: number
   rootTextSignature?: string
+  selectionIndex?: number
   scrollTop?: number
   createdAt: number
 }
@@ -43,7 +44,6 @@ export interface PromptQuoteReference {
   selectedText: string
   quoteText: string
   anchor: PromptSelectionAnchor
-  consumerContentHash?: string
   chainId?: string
   chainTitle?: string
   stepId?: string

@@ -928,7 +928,6 @@ export const es = {
   backupValidationSettingsType: "Ajustes mal",
   backupValidationPromptsType: "Prompts mal",
   backupValidationPromptChainsType: "promptChains debe ser un array",
-  backupValidationQuickQuoteReferencesType: "quickQuoteReferences debe ser un array",
   backupValidationFoldersType: "Folders mal",
   backupValidationConversationsType: "Chats mal",
   backupValidationHistoryType: "Historial mal",

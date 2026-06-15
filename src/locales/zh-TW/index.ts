@@ -932,7 +932,6 @@ export const zhTW = {
   backupValidationSettingsType: "settings 應為物件類型",
   backupValidationPromptsType: "prompts 應為陣列類型",
   backupValidationPromptChainsType: "promptChains 應為陣列類型",
-  backupValidationQuickQuoteReferencesType: "quickQuoteReferences 應為陣列類型",
   backupValidationFoldersType: "folders 應為陣列類型",
   backupValidationConversationsType: "conversations 應為物件類型",
   backupValidationHistoryType: "readingHistory 應為物件類型",

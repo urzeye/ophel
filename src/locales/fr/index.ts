@@ -929,7 +929,6 @@ export const fr = {
   backupValidationSettingsType: "Réglages erronés",
   backupValidationPromptsType: "Prompts erronés",
   backupValidationPromptChainsType: "promptChains doit être un tableau",
-  backupValidationQuickQuoteReferencesType: "quickQuoteReferences doit être un tableau",
   backupValidationFoldersType: "Dossiers erronés",
   backupValidationConversationsType: "Chats erronés",
   backupValidationHistoryType: "Historique erroné",

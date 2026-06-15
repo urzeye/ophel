@@ -1,8 +1,8 @@
 import type { SiteAdapter } from "~adapters/base"
 import type { PromptManager } from "~core/prompt-manager"
+import { appendQuickQuoteMarker } from "~core/quick-quote-marker"
 import type { QueueItemMetadata } from "~stores/queue-store"
 import { useQueueStore } from "~stores/queue-store"
-import { useQuickQuotesStore } from "~stores/quick-quotes-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { splitQueueLines } from "~utils/queue-batch"
 import type { PromptActionContext, PromptActionSplitMode } from "./prompt-action-types"
@@ -67,16 +67,17 @@ export const sendOrQueuePrompt = async ({
   if (!trimmedContent) {
     return { status: "insert-failed" }
   }
+  const contentToSend = appendQuickQuoteMarker(trimmedContent, context?.variables?.quoteRef)
 
   const promptQueueEnabled =
     useSettingsStore.getState().settings.features?.prompts?.promptQueue ?? false
 
   if (adapter?.isGenerating() && promptQueueEnabled) {
-    useQueueStore.getState().enqueue(trimmedContent, buildQueueMetadata(context))
+    useQueueStore.getState().enqueue(contentToSend, buildQueueMetadata(context))
     return { status: "queued", count: 1 }
   }
 
-  const insertOk = await manager.insertPrompt(trimmedContent)
+  const insertOk = await manager.insertPrompt(contentToSend)
   if (!insertOk) {
     return { status: "insert-failed" }
   }
@@ -84,10 +85,6 @@ export const sendOrQueuePrompt = async ({
   const submitOk = await manager.submitPrompt(submitShortcut)
   if (!submitOk) {
     return { status: "send-failed" }
-  }
-
-  if (context?.variables?.quoteRef) {
-    useQuickQuotesStore.getState().addReference(context.variables.quoteRef)
   }
 
   return { status: "sent" }
@@ -111,9 +108,12 @@ export const enqueuePrompt = ({
   }
 
   const metadata = buildQueueMetadata(_context)
-  const queuedItems = useQueueStore
-    .getState()
-    .enqueueMany(contents.map((content) => ({ content, metadata })))
+  const queuedItems = useQueueStore.getState().enqueueMany(
+    contents.map((content) => ({
+      content: appendQuickQuoteMarker(content, _context?.variables?.quoteRef),
+      metadata,
+    })),
+  )
   if (queuedItems.length === 0) {
     return { status: "empty" }
   }

@@ -1004,7 +1004,6 @@ export const zhCN = {
   backupValidationSettingsType: "settings 应为对象类型",
   backupValidationPromptsType: "prompts 应为数组类型",
   backupValidationPromptChainsType: "promptChains 应为数组类型",
-  backupValidationQuickQuoteReferencesType: "quickQuoteReferences 应为数组类型",
   backupValidationFoldersType: "folders 应为数组类型",
   backupValidationConversationsType: "conversations 应为对象类型",
   backupValidationHistoryType: "readingHistory 应为对象类型",

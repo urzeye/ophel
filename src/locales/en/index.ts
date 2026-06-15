@@ -996,7 +996,6 @@ export const en = {
   backupValidationSettingsType: "settings must be an object",
   backupValidationPromptsType: "prompts must be an array",
   backupValidationPromptChainsType: "promptChains must be an array",
-  backupValidationQuickQuoteReferencesType: "quickQuoteReferences must be an array",
   backupValidationFoldersType: "folders must be an array",
   backupValidationConversationsType: "conversations must be an object",
   backupValidationHistoryType: "readingHistory must be an object",
