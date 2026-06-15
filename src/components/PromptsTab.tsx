@@ -1159,12 +1159,27 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
     const title = draft.title.trim()
     // 验证步骤：prompt 模式需要 promptId，inline 模式需要 inlineContent
-    const steps = draft.steps.filter((step) => {
-      if (step.mode === "inline") {
-        return step.inlineContent?.trim()
-      }
-      return step.promptId
-    })
+    const steps = draft.steps
+      .map((step): PromptChainStep | null => {
+        if (step.mode === "inline") {
+          return step.inlineContent?.trim()
+            ? {
+                ...step,
+                promptId: "",
+                inlineContent: step.inlineContent,
+              }
+            : null
+        }
+
+        return step.promptId
+          ? {
+              ...step,
+              mode: "prompt",
+              inlineContent: "",
+            }
+          : null
+      })
+      .filter((step): step is PromptChainStep => step !== null)
     if (!title) {
       showToast(t("chainTitleRequired"), 2200)
       return
@@ -1197,11 +1212,16 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const getPromptTitle = (promptId: string) =>
     prompts.find((prompt) => prompt.id === promptId)?.title || t("chainMissingPrompt")
 
+  const getChainStepSearchText = (step: PromptChainStep) => {
+    if (step.mode === "inline") return step.inlineContent || ""
+    return getPromptTitle(step.promptId)
+  }
+
   const filteredChains = chains.filter((chain) => {
     const query = searchQuery.trim().toLowerCase()
     if (!query) return true
-    const stepTitles = chain.steps.map((step) => getPromptTitle(step.promptId)).join(" ")
-    return `${chain.title} ${chain.description || ""} ${stepTitles}`.toLowerCase().includes(query)
+    const stepText = chain.steps.map(getChainStepSearchText).join(" ")
+    return `${chain.title} ${chain.description || ""} ${stepText}`.toLowerCase().includes(query)
   })
 
   // 选中提示词并插入
@@ -2255,13 +2275,17 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                             <button
                               type="button"
                               className={`gh-chain-step-mode-btn${step.mode !== "inline" ? " active" : ""}`}
-                              onClick={() => updateChainStep(step.id, { mode: "prompt" })}>
+                              onClick={() =>
+                                updateChainStep(step.id, { mode: "prompt", inlineContent: "" })
+                              }>
                               {t("chainStepModePrompt")}
                             </button>
                             <button
                               type="button"
                               className={`gh-chain-step-mode-btn${step.mode === "inline" ? " active" : ""}`}
-                              onClick={() => updateChainStep(step.id, { mode: "inline" })}>
+                              onClick={() =>
+                                updateChainStep(step.id, { mode: "inline", promptId: "" })
+                              }>
                               {t("chainStepModeInline")}
                             </button>
                           </div>
