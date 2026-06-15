@@ -296,6 +296,13 @@ export const zhTW = {
   chainIconPresetStatistics: "統計",
   chainIconPresetPredict: "預測",
   chainShowInPopover: "顯示在選區懸浮層",
+  chainQueueRequiredTitle: "啟用提示詞佇列",
+  chainQueueRequiredDescription:
+    "Chain 需要提示詞佇列才能按步驟連續執行。你也可以先建立草稿，稍後再啟用。",
+  chainQueueEnable: "啟用佇列",
+  chainQueueEnableAndCreate: "啟用並建立",
+  chainQueueViewSettings: "查看設定",
+  chainQueueEnabledToast: "提示詞佇列已啟用",
   chainSteps: "步驟",
   chainStepsHelp: "每一步選擇一個已有提示詞，執行時按順序入隊。",
   chainAddStep: "新增步驟",

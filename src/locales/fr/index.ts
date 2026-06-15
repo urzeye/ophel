@@ -429,6 +429,13 @@ export const fr = {
   chainIconPresetStatistics: "Statistiques",
   chainIconPresetPredict: "Prédiction",
   chainShowInPopover: "Afficher dans le panneau de sélection",
+  chainQueueRequiredTitle: "Activer la file de prompts",
+  chainQueueRequiredDescription:
+    "Les Chains ont besoin de la file de prompts pour exécuter les étapes dans l'ordre. Vous pouvez aussi créer un brouillon et l'activer plus tard.",
+  chainQueueEnable: "Activer la file",
+  chainQueueEnableAndCreate: "Activer et créer",
+  chainQueueViewSettings: "Voir les paramètres",
+  chainQueueEnabledToast: "File de prompts activée",
   chainSteps: "Étapes",
   chainStepsHelp: "Chaque étape choisit un prompt existant et est ajoutée à la file dans l'ordre.",
   chainAddStep: "Ajouter une étape",

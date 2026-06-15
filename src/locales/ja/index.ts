@@ -433,6 +433,13 @@ export const ja = {
   chainIconPresetStatistics: "統計",
   chainIconPresetPredict: "予測",
   chainShowInPopover: "選択ポップオーバーに表示",
+  chainQueueRequiredTitle: "プロンプトキューを有効化",
+  chainQueueRequiredDescription:
+    "Chain を手順どおり連続実行するにはプロンプトキューが必要です。先に下書きを作成して、後で有効化することもできます。",
+  chainQueueEnable: "キューを有効化",
+  chainQueueEnableAndCreate: "有効化して作成",
+  chainQueueViewSettings: "設定を表示",
+  chainQueueEnabledToast: "プロンプトキューを有効化しました",
   chainSteps: "手順",
   chainStepsHelp: "各手順で既存プロンプトを選び、実行時に順番どおりキューへ追加します。",
   chainAddStep: "手順を追加",

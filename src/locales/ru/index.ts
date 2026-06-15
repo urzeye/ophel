@@ -426,6 +426,13 @@ export const ru = {
   chainIconPresetStatistics: "Статистика",
   chainIconPresetPredict: "Прогноз",
   chainShowInPopover: "Показывать в панели выделения",
+  chainQueueRequiredTitle: "Включите очередь промптов",
+  chainQueueRequiredDescription:
+    "Chains нужна очередь промптов, чтобы выполнять шаги по порядку. Можно сначала создать черновик и включить ее позже.",
+  chainQueueEnable: "Включить очередь",
+  chainQueueEnableAndCreate: "Включить и создать",
+  chainQueueViewSettings: "Открыть настройки",
+  chainQueueEnabledToast: "Очередь промптов включена",
   chainSteps: "Шаги",
   chainStepsHelp: "Каждый шаг выбирает существующий промпт и добавляется в очередь по порядку.",
   chainAddStep: "Добавить шаг",

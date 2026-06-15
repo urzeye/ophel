@@ -428,6 +428,13 @@ export const es = {
   chainIconPresetStatistics: "Estadísticas",
   chainIconPresetPredict: "Predicción",
   chainShowInPopover: "Mostrar en el panel de selección",
+  chainQueueRequiredTitle: "Activar cola de prompts",
+  chainQueueRequiredDescription:
+    "Las Chains necesitan la cola de prompts para ejecutar los pasos en orden. También puedes crear un borrador primero y activarla más tarde.",
+  chainQueueEnable: "Activar cola",
+  chainQueueEnableAndCreate: "Activar y crear",
+  chainQueueViewSettings: "Ver ajustes",
+  chainQueueEnabledToast: "Cola de prompts activada",
   chainSteps: "Pasos",
   chainStepsHelp: "Cada paso elige un prompt existente y se añade a la cola en orden.",
   chainAddStep: "Añadir paso",

@@ -359,10 +359,12 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
   const promptQueueEnabled = useSettingsStore(
     (state) => state.settings.features?.prompts?.promptQueue ?? false,
   )
+  const updatePromptQueueSetting = useSettingsStore((state) => state.updateDeepSetting)
   const enqueueMany = useQueueStore((state) => state.enqueueMany)
   const [selectionState, setSelectionState] = useState<SelectionState | null>(null)
   const [pendingChainRun, setPendingChainRun] = useState<PendingChainRun | null>(null)
   const [chainMenuOpen, setChainMenuOpen] = useState(false)
+  const [queueGateVisible, setQueueGateVisible] = useState(false)
   const isMouseSelectingRef = useRef(false)
 
   const visibleChains = useMemo(
@@ -419,6 +421,12 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
       setChainMenuOpen(false)
     }
   }, [overflowChains.length, selectionState])
+
+  useEffect(() => {
+    if (!selectionState || promptQueueEnabled) {
+      setQueueGateVisible(false)
+    }
+  }, [promptQueueEnabled, selectionState])
 
   useEffect(() => {
     const clearCollapsedSelection = () => {
@@ -478,6 +486,21 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
     [adapter, selectionState],
   )
 
+  const enablePromptQueue = useCallback(() => {
+    updatePromptQueueSetting("features", "prompts", "promptQueue", true)
+    setQueueGateVisible(false)
+    showToast(t("chainQueueEnabledToast"), 1800)
+  }, [updatePromptQueueSetting])
+
+  const openPromptQueueSettings = useCallback(() => {
+    setQueueGateVisible(false)
+    window.dispatchEvent(
+      new CustomEvent("ophel:navigateSettingsPage", {
+        detail: { settingId: "prompt-queue" },
+      }),
+    )
+  }, [])
+
   const handleQuote = useCallback(async () => {
     if (!selectionState) return
 
@@ -522,28 +545,9 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
         return
       }
 
-      // 队列未开启时的 fallback 策略
       if (!promptQueueEnabled) {
-        if (resolvedSteps.length === 1) {
-          // 单步 Chain：直接插入输入框
-          const step = resolvedSteps[0]
-          const inserted = await promptManager.insertPrompt(step.content)
-          if (!inserted) {
-            showToast(t("insertFailed"))
-            return
-          }
-          if (step.quoteRef) {
-            useQuickQuotesStore.getState().addReference(step.quoteRef)
-          }
-          updateChainLastUsed(chain.id)
-          showToast(t("quickQuoteInserted"), 1800)
-          clearSelection()
-          return
-        } else {
-          // 多步 Chain：提示启用队列
-          showToast(t("promptQueueEnableHint"), 3000)
-          return
-        }
+        setQueueGateVisible(true)
+        return
       }
 
       // 队列已开启：正常入队
@@ -556,13 +560,18 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
       showToast(t("quickQuoteChainQueued", { count: String(items.length) }), 2500)
       clearSelection()
     },
-    [clearSelection, enqueueMany, promptManager, promptQueueEnabled, prompts, updateChainLastUsed],
+    [clearSelection, enqueueMany, promptQueueEnabled, prompts, updateChainLastUsed],
   )
 
   const handleRunChain = useCallback(
     (chain: PromptChain) => {
       if (!selectionState) return
       setChainMenuOpen(false)
+
+      if (!promptQueueEnabled) {
+        setQueueGateVisible(true)
+        return
+      }
 
       const selection = createSelectionContext()
       if (!selection) return
@@ -576,7 +585,7 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
 
       runChain(chain, selection, {})
     },
-    [createSelectionContext, prompts, runChain, selectionState],
+    [createSelectionContext, promptQueueEnabled, prompts, runChain, selectionState],
   )
 
   const popoverStyle = useMemo<React.CSSProperties>(() => {
@@ -667,6 +676,26 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
                 </div>
               )}
             </span>
+          )}
+          {queueGateVisible && (
+            <div className="gh-quick-quote-queue-gate">
+              <div className="gh-quick-quote-queue-gate-copy">
+                <div className="gh-quick-quote-queue-gate-title">
+                  {t("chainQueueRequiredTitle")}
+                </div>
+                <div className="gh-quick-quote-queue-gate-description">
+                  {t("chainQueueRequiredDescription")}
+                </div>
+              </div>
+              <div className="gh-quick-quote-queue-gate-actions">
+                <button type="button" onClick={enablePromptQueue}>
+                  {t("chainQueueEnable")}
+                </button>
+                <button type="button" onClick={openPromptQueueSettings}>
+                  {t("chainQueueViewSettings")}
+                </button>
+              </div>
+            </div>
           )}
         </div>
       )}

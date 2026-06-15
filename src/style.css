@@ -154,6 +154,7 @@
 .gh-quick-quote-popover {
   position: fixed;
   z-index: 2147483647;
+  isolation: isolate;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
@@ -316,6 +317,67 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.gh-quick-quote-queue-gate {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 2147483647;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(320px, calc(100vw - 24px));
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 24%, var(--gh-border, #d1d5db));
+  border-radius: 10px;
+  background: var(--gh-bg, #ffffff);
+  box-shadow:
+    0 12px 34px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.gh-quick-quote-queue-gate-title {
+  color: var(--gh-text, #111827);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.gh-quick-quote-queue-gate-description {
+  margin-top: 3px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.gh-quick-quote-queue-gate-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.gh-quick-quote-queue-gate-actions button {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--gh-border, #d1d5db);
+  border-radius: 7px;
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text-secondary, #4b5563);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.gh-quick-quote-queue-gate-actions button:first-child {
+  border-color: var(--gh-primary, #4285f4);
+  background: var(--gh-primary, #4285f4);
+  color: var(--gh-text-on-primary, #ffffff);
+}
+
+.gh-quick-quote-queue-gate-actions button:hover {
+  filter: brightness(0.98);
 }
 
 .gh-quick-quote-svg,
@@ -2597,6 +2659,50 @@
   margin-top: 14px;
   padding-top: 14px;
   border-top: 1px solid var(--gh-border, #e5e7eb);
+}
+
+.gh-chain-queue-gate {
+  display: flex;
+  align-items: stretch;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 22%, var(--gh-border, #e5e7eb));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg, #ffffff));
+}
+
+.gh-chain-queue-gate.editor {
+  margin-bottom: 14px;
+}
+
+.gh-chain-queue-gate-copy {
+  min-width: 0;
+  width: 100%;
+}
+
+.gh-chain-queue-gate-title {
+  color: var(--gh-text, #111827);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.gh-chain-queue-gate-description {
+  margin-top: 3px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.gh-chain-queue-gate-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .gh-chain-section-header {

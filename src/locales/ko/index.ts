@@ -428,6 +428,13 @@ export const ko = {
   chainIconPresetStatistics: "통계",
   chainIconPresetPredict: "예측",
   chainShowInPopover: "선택 팝오버에 표시",
+  chainQueueRequiredTitle: "프롬프트 대기열 활성화",
+  chainQueueRequiredDescription:
+    "Chain이 단계를 순서대로 실행하려면 프롬프트 대기열이 필요합니다. 먼저 초안을 만들고 나중에 활성화할 수도 있습니다.",
+  chainQueueEnable: "대기열 활성화",
+  chainQueueEnableAndCreate: "활성화하고 만들기",
+  chainQueueViewSettings: "설정 보기",
+  chainQueueEnabledToast: "프롬프트 대기열이 활성화되었습니다",
   chainSteps: "단계",
   chainStepsHelp: "각 단계에서 기존 프롬프트를 선택하며 실행 시 순서대로 대기열에 추가됩니다.",
   chainAddStep: "단계 추가",

@@ -455,6 +455,13 @@ export const zhCN = {
   chainIconSvgPlaceholder: '<svg viewBox="0 0 24 24">...</svg>',
   chainIconSvgHelp: "仅保留安全 SVG 节点和属性；留空时使用默认图标。",
   chainShowInPopover: "显示在选区悬浮层",
+  chainQueueRequiredTitle: "启用提示词队列",
+  chainQueueRequiredDescription:
+    "Chain 需要提示词队列才能按步骤连续执行。你也可以先创建草稿，稍后再启用。",
+  chainQueueEnable: "启用队列",
+  chainQueueEnableAndCreate: "启用并创建",
+  chainQueueViewSettings: "查看设置",
+  chainQueueEnabledToast: "提示词队列已启用",
   chainSteps: "步骤",
   chainStepsHelp: "每一步选择一个已有提示词,执行时按顺序入队。",
   chainStepModePrompt: "使用已有提示词",

@@ -436,6 +436,13 @@ export const en = {
   chainIconSvgHelp:
     "Only safe SVG nodes and attributes are kept. Leave empty for the default icon.",
   chainShowInPopover: "Show in selection popover",
+  chainQueueRequiredTitle: "Enable Prompt Queue",
+  chainQueueRequiredDescription:
+    "Chains need Prompt Queue to run steps in sequence. You can still create a draft first and enable it later.",
+  chainQueueEnable: "Enable queue",
+  chainQueueEnableAndCreate: "Enable and create",
+  chainQueueViewSettings: "View settings",
+  chainQueueEnabledToast: "Prompt Queue enabled",
   chainSteps: "Steps",
   chainStepsHelp: "Each step selects an existing prompt and is queued in order.",
   chainStepModePrompt: "Use existing prompt",

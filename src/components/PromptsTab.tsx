@@ -334,6 +334,50 @@ const CHAIN_EDITOR_PORTAL_STYLES = `
   border-top: 1px solid var(--gh-border, #e5e7eb);
 }
 
+.gh-chain-queue-gate {
+  display: flex;
+  align-items: stretch;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--gh-primary, #4285f4) 22%, var(--gh-border, #e5e7eb));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 7%, var(--gh-bg, #ffffff));
+}
+
+.gh-chain-queue-gate.editor {
+  margin-bottom: 14px;
+}
+
+.gh-chain-queue-gate-copy {
+  min-width: 0;
+  width: 100%;
+}
+
+.gh-chain-queue-gate-title {
+  color: var(--gh-text, #111827);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.gh-chain-queue-gate-description {
+  margin-top: 3px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.gh-chain-queue-gate-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .gh-chain-section-header {
   display: flex;
   align-items: center;
@@ -861,6 +905,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const promptQueueEnabled = useSettingsStore(
     (state) => state.settings.features?.prompts?.promptQueue ?? false,
   )
+  const updatePromptQueueSetting = useSettingsStore((state) => state.updateDeepSetting)
 
   const [prompts, setPrompts] = useState<Prompt[]>([])
   const [categories, setCategories] = useState<string[]>([])
@@ -1212,6 +1257,25 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     setChainEditorState((state) =>
       state.draft ? { ...state, draft: { ...state.draft, ...updates } } : state,
     )
+  }
+
+  const enablePromptQueue = useCallback(() => {
+    updatePromptQueueSetting("features", "prompts", "promptQueue", true)
+    showToast(t("chainQueueEnabledToast"), 1800)
+  }, [updatePromptQueueSetting])
+
+  const openPromptQueueSettings = useCallback(() => {
+    window.dispatchEvent(
+      new CustomEvent("ophel:navigateSettingsPage", {
+        detail: { settingId: "prompt-queue" },
+      }),
+    )
+  }, [])
+
+  const enablePromptQueueAndCreateChain = () => {
+    updatePromptQueueSetting("features", "prompts", "promptQueue", true)
+    showToast(t("chainQueueEnabledToast"), 1800)
+    openChainEditor()
   }
 
   const updateChainStep = (stepId: string, updates: Partial<PromptChainStep>) => {
@@ -2222,6 +2286,37 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     })
   }
 
+  const renderChainQueueGate = (
+    placement: "list" | "editor",
+    primaryAction: "enable" | "enableAndCreate" = "enable",
+  ) => {
+    if (promptQueueEnabled) return null
+
+    const shouldCreateAfterEnable = primaryAction === "enableAndCreate"
+
+    return (
+      <div className={`gh-chain-queue-gate ${placement}`}>
+        <div className="gh-chain-queue-gate-copy">
+          <div className="gh-chain-queue-gate-title">{t("chainQueueRequiredTitle")}</div>
+          <div className="gh-chain-queue-gate-description">
+            {t("chainQueueRequiredDescription")}
+          </div>
+        </div>
+        <div className="gh-chain-queue-gate-actions">
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={shouldCreateAfterEnable ? enablePromptQueueAndCreateChain : enablePromptQueue}>
+            {shouldCreateAfterEnable ? t("chainQueueEnableAndCreate") : t("chainQueueEnable")}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={openPromptQueueSettings}>
+            {t("chainQueueViewSettings")}
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   const renderChainsView = () => {
     if (prompts.length === 0) {
       return (
@@ -2234,99 +2329,112 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
     if (filteredChains.length === 0) {
       return (
-        <div className="gh-chain-empty">
-          <div className="gh-chain-empty-title">{t("chainEmpty")}</div>
-          <div className="gh-chain-empty-description">{t("chainEmptyDescription")}</div>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => openChainEditor()}
-            style={{ marginTop: "14px" }}>
-            + {t("chainAdd")}
-          </Button>
-        </div>
+        <>
+          {renderChainQueueGate("list", chains.length === 0 ? "enableAndCreate" : "enable")}
+          <div className="gh-chain-empty">
+            <div className="gh-chain-empty-title">{t("chainEmpty")}</div>
+            <div className="gh-chain-empty-description">{t("chainEmptyDescription")}</div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => openChainEditor()}
+              style={{ marginTop: "14px" }}>
+              + {t("chainAdd")}
+            </Button>
+          </div>
+        </>
       )
     }
 
-    return filteredChains.map((chain) => {
-      const showInSelectionPopover = chain.showInSelectionPopover !== false
-      const stepTitles = getChainStepTitles(chain)
-      const flowText = stepTitles.length > 0 ? stepTitles.join(" → ") : t("chainNoSteps")
+    return (
+      <>
+        {renderChainQueueGate("list")}
+        {filteredChains.map((chain) => {
+          const showInSelectionPopover = chain.showInSelectionPopover !== false
+          const stepTitles = getChainStepTitles(chain)
+          const flowText = stepTitles.length > 0 ? stepTitles.join(" → ") : t("chainNoSteps")
 
-      return (
-        <div
-          key={chain.id}
-          className={`gh-chain-card${draggedChainId === chain.id ? " dragging" : ""}`}
-          data-disabled={!showInSelectionPopover}
-          onClick={() => openChainEditor(chain)}
-          draggable
-          onDragStart={(e) => handleChainDragStart(e, chain.id, e.currentTarget as HTMLDivElement)}
-          onDragOver={(e) => handleChainDragOver(e, chain.id)}
-          onDragEnd={handleChainDragEnd}
-          onDrop={(e) => handleChainDrop(e, chain.id)}>
-          <div className="gh-chain-card-main">
-            <div className="gh-chain-icon" data-enabled={showInSelectionPopover}>
-              {renderChainIcon(chain.iconSvg)}
-              <span className="gh-chain-icon-status-dot" data-enabled={showInSelectionPopover} />
-            </div>
-            <div className="gh-chain-body">
-              <div className="gh-chain-title-row">
-                <span className="gh-chain-title">{chain.title}</span>
-              </div>
-              <Tooltip content={flowText}>
-                <div className="gh-chain-flow">
-                  <span className="gh-chain-meta-badge">{chain.steps.length}</span>
-                  <span className="gh-chain-flow-text">{flowText}</span>
+          return (
+            <div
+              key={chain.id}
+              className={`gh-chain-card${draggedChainId === chain.id ? " dragging" : ""}`}
+              data-disabled={!showInSelectionPopover}
+              onClick={() => openChainEditor(chain)}
+              draggable
+              onDragStart={(e) =>
+                handleChainDragStart(e, chain.id, e.currentTarget as HTMLDivElement)
+              }
+              onDragOver={(e) => handleChainDragOver(e, chain.id)}
+              onDragEnd={handleChainDragEnd}
+              onDrop={(e) => handleChainDrop(e, chain.id)}>
+              <div className="gh-chain-card-main">
+                <div className="gh-chain-icon" data-enabled={showInSelectionPopover}>
+                  {renderChainIcon(chain.iconSvg)}
+                  <span
+                    className="gh-chain-icon-status-dot"
+                    data-enabled={showInSelectionPopover}
+                  />
                 </div>
-              </Tooltip>
-            </div>
-          </div>
+                <div className="gh-chain-body">
+                  <div className="gh-chain-title-row">
+                    <span className="gh-chain-title">{chain.title}</span>
+                  </div>
+                  <Tooltip content={flowText}>
+                    <div className="gh-chain-flow">
+                      <span className="gh-chain-meta-badge">{chain.steps.length}</span>
+                      <span className="gh-chain-flow-text">{flowText}</span>
+                    </div>
+                  </Tooltip>
+                </div>
+              </div>
 
-          <div className="gh-chain-card-actions">
-            <Tooltip
-              content={
-                showInSelectionPopover ? t("chainShownInPopover") : t("chainHiddenInPopover")
-              }>
-              <button
-                className={`prompt-action-btn${showInSelectionPopover ? " active" : ""}`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  updateChain(chain.id, {
-                    enabled: true,
-                    showInSelectionPopover: !showInSelectionPopover,
-                  })
-                }}>
-                <CheckIcon size={15} />
-              </button>
-            </Tooltip>
-            <Tooltip content={t("copy")}>
-              <button
-                className="prompt-action-btn"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  const copy = duplicateChain(chain.id)
-                  if (copy) showToast(t("chainDuplicated"), 1800)
-                }}>
-                <CopyIcon size={15} />
-              </button>
-            </Tooltip>
-            <Tooltip content={t("delete")}>
-              <button
-                className="prompt-action-btn danger"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  showConfirm(t("confirmDelete"), t("chainDeleteConfirm"), () => {
-                    deleteChain(chain.id)
-                    showToast(t("deleted"), 1800)
-                  })
-                }}>
-                <DeleteIcon size={15} />
-              </button>
-            </Tooltip>
-          </div>
-        </div>
-      )
-    })
+              <div className="gh-chain-card-actions">
+                <Tooltip
+                  content={
+                    showInSelectionPopover ? t("chainShownInPopover") : t("chainHiddenInPopover")
+                  }>
+                  <button
+                    className={`prompt-action-btn${showInSelectionPopover ? " active" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      updateChain(chain.id, {
+                        enabled: true,
+                        showInSelectionPopover: !showInSelectionPopover,
+                      })
+                    }}>
+                    <CheckIcon size={15} />
+                  </button>
+                </Tooltip>
+                <Tooltip content={t("copy")}>
+                  <button
+                    className="prompt-action-btn"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      const copy = duplicateChain(chain.id)
+                      if (copy) showToast(t("chainDuplicated"), 1800)
+                    }}>
+                    <CopyIcon size={15} />
+                  </button>
+                </Tooltip>
+                <Tooltip content={t("delete")}>
+                  <button
+                    className="prompt-action-btn danger"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      showConfirm(t("confirmDelete"), t("chainDeleteConfirm"), () => {
+                        deleteChain(chain.id)
+                        showToast(t("deleted"), 1800)
+                      })
+                    }}>
+                    <DeleteIcon size={15} />
+                  </button>
+                </Tooltip>
+              </div>
+            </div>
+          )
+        })}
+      </>
+    )
   }
 
   const renderChainEditorModal = () => {
@@ -2370,6 +2478,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             </div>
 
             <div className="gh-chain-editor-scroll">
+              {renderChainQueueGate("editor")}
+
               <div className="gh-chain-form-grid">
                 <label className="gh-chain-field">
                   <span>{t("chainName")}</span>

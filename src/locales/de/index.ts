@@ -429,6 +429,13 @@ export const de = {
   chainIconPresetStatistics: "Statistik",
   chainIconPresetPredict: "Vorhersage",
   chainShowInPopover: "Im Auswahl-Popover anzeigen",
+  chainQueueRequiredTitle: "Prompt-Warteschlange aktivieren",
+  chainQueueRequiredDescription:
+    "Chains benötigen die Prompt-Warteschlange, um Schritte nacheinander auszuführen. Du kannst zuerst einen Entwurf erstellen und sie später aktivieren.",
+  chainQueueEnable: "Warteschlange aktivieren",
+  chainQueueEnableAndCreate: "Aktivieren und erstellen",
+  chainQueueViewSettings: "Einstellungen anzeigen",
+  chainQueueEnabledToast: "Prompt-Warteschlange aktiviert",
   chainSteps: "Schritte",
   chainStepsHelp:
     "Jeder Schritt wählt einen vorhandenen Prompt und wird der Reihe nach eingereiht.",

@@ -427,6 +427,13 @@ export const pt = {
   chainIconPresetStatistics: "Estatísticas",
   chainIconPresetPredict: "Previsão",
   chainShowInPopover: "Mostrar no painel de seleção",
+  chainQueueRequiredTitle: "Ativar fila de prompts",
+  chainQueueRequiredDescription:
+    "Chains precisam da fila de prompts para executar etapas em sequência. Você também pode criar um rascunho primeiro e ativá-la depois.",
+  chainQueueEnable: "Ativar fila",
+  chainQueueEnableAndCreate: "Ativar e criar",
+  chainQueueViewSettings: "Ver configurações",
+  chainQueueEnabledToast: "Fila de prompts ativada",
   chainSteps: "Etapas",
   chainStepsHelp: "Cada etapa escolhe um prompt existente e é adicionada à fila em ordem.",
   chainAddStep: "Adicionar etapa",
