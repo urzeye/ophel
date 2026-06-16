@@ -427,7 +427,6 @@ export const fr = {
   chainIconPresetData: "Données",
   chainIconPresetCalculate: "Calculer",
   chainIconPresetStatistics: "Statistiques",
-  chainIconPresetPredict: "Prédiction",
   chainShowInPopover: "Afficher dans le panneau de sélection",
   chainQueueRequiredTitle: "Activer la file de prompts",
   chainQueueRequiredDescription:

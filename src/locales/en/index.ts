@@ -429,7 +429,6 @@ export const en = {
   chainIconPresetData: "Data",
   chainIconPresetCalculate: "Calculate",
   chainIconPresetStatistics: "Statistics",
-  chainIconPresetPredict: "Predict",
   chainDescriptionPlaceholder: "Briefly describe what this chain does",
   chainIconSvg: "SVG icon",
   chainIconSvgPlaceholder: '<svg viewBox="0 0 24 24">...</svg>',

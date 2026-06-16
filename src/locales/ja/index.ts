@@ -431,7 +431,6 @@ export const ja = {
   chainIconPresetData: "データ",
   chainIconPresetCalculate: "計算",
   chainIconPresetStatistics: "統計",
-  chainIconPresetPredict: "予測",
   chainShowInPopover: "選択ポップオーバーに表示",
   chainQueueRequiredTitle: "プロンプトキューを有効化",
   chainQueueRequiredDescription:

@@ -280,7 +280,7 @@ export const CHAIN_ICON_PRESETS: ChainIconPreset[] = [
     svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>',
   },
 
-  // ===== 数据分析（5 个）=====
+  // ===== 数据分析（4 个）=====
   {
     id: "chart",
     label: "图表",
@@ -308,13 +308,6 @@ export const CHAIN_ICON_PRESETS: ChainIconPreset[] = [
     labelEn: "Statistics",
     category: "analysis",
     svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>',
-  },
-  {
-    id: "predict",
-    label: "预测",
-    labelEn: "Predict",
-    category: "analysis",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
   },
 ]
 

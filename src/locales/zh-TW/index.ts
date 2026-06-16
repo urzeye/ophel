@@ -294,7 +294,6 @@ export const zhTW = {
   chainIconPresetData: "資料",
   chainIconPresetCalculate: "計算",
   chainIconPresetStatistics: "統計",
-  chainIconPresetPredict: "預測",
   chainShowInPopover: "顯示在選區懸浮層",
   chainQueueRequiredTitle: "啟用提示詞佇列",
   chainQueueRequiredDescription:

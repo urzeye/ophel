@@ -425,7 +425,6 @@ export const pt = {
   chainIconPresetData: "Dados",
   chainIconPresetCalculate: "Calcular",
   chainIconPresetStatistics: "Estatísticas",
-  chainIconPresetPredict: "Previsão",
   chainShowInPopover: "Mostrar no painel de seleção",
   chainQueueRequiredTitle: "Ativar fila de prompts",
   chainQueueRequiredDescription:

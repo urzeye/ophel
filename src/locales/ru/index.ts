@@ -424,7 +424,6 @@ export const ru = {
   chainIconPresetData: "Данные",
   chainIconPresetCalculate: "Расчёт",
   chainIconPresetStatistics: "Статистика",
-  chainIconPresetPredict: "Прогноз",
   chainShowInPopover: "Показывать в панели выделения",
   chainQueueRequiredTitle: "Включите очередь промптов",
   chainQueueRequiredDescription:

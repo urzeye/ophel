@@ -449,7 +449,6 @@ export const zhCN = {
   chainIconPresetData: "数据",
   chainIconPresetCalculate: "计算",
   chainIconPresetStatistics: "统计",
-  chainIconPresetPredict: "预测",
   chainDescriptionPlaceholder: "简短说明这个 Chain 的用途",
   chainIconSvg: "SVG 图标",
   chainIconSvgPlaceholder: '<svg viewBox="0 0 24 24">...</svg>',

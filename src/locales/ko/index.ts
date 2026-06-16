@@ -426,7 +426,6 @@ export const ko = {
   chainIconPresetData: "데이터",
   chainIconPresetCalculate: "계산",
   chainIconPresetStatistics: "통계",
-  chainIconPresetPredict: "예측",
   chainShowInPopover: "선택 팝오버에 표시",
   chainQueueRequiredTitle: "프롬프트 대기열 활성화",
   chainQueueRequiredDescription:

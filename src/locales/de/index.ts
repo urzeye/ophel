@@ -427,7 +427,6 @@ export const de = {
   chainIconPresetData: "Daten",
   chainIconPresetCalculate: "Berechnen",
   chainIconPresetStatistics: "Statistik",
-  chainIconPresetPredict: "Vorhersage",
   chainShowInPopover: "Im Auswahl-Popover anzeigen",
   chainQueueRequiredTitle: "Prompt-Warteschlange aktivieren",
   chainQueueRequiredDescription:
