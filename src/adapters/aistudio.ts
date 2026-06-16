@@ -1720,12 +1720,8 @@ export class AIStudioAdapter extends SiteAdapter {
     return ".chat-turn-container.user"
   }
 
-  getQuickQuoteChipHost(element: Element): HTMLElement | null {
-    return (
-      element.querySelector<HTMLElement>("ms-prompt-chunk.text-chunk") ||
-      element.querySelector<HTMLElement>("ms-prompt-chunk") ||
-      element.querySelector<HTMLElement>(".user-prompt-container .turn-content")
-    )
+  getQuickQuoteSupportMode() {
+    return "disabled" as const
   }
 
   findUserQueryElement(queryIndex: number, text: string): Element | null {
