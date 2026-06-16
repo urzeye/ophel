@@ -1083,6 +1083,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         return false
       }
 
+      setActiveLibraryView("prompts")
       setSelectedCategory(VIRTUAL_CATEGORY.ALL)
       setSearchQuery("")
       onPromptSelect?.(null)
@@ -2226,7 +2227,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       setLocatedPromptId((current) => (current === locatedPromptId ? null : current))
       locateHighlightTimerRef.current = null
     }, 2200)
-  }, [locatedPromptId, prompts, searchQuery, selectedCategory])
+  }, [activeLibraryView, locatedPromptId, prompts, searchQuery, selectedCategory])
 
   const renderChainIcon = (iconSvg?: string) => {
     const safeSvg = sanitizeSvgIcon(iconSvg || "")

@@ -397,7 +397,19 @@ const stripQuickQuoteMarkersPreservingSpacing = (content: string): string => {
 
 interface ResolvePendingQuickQuoteMarkerOptions {
   allowMarkerlessMatch?: boolean
+  currentSessionId?: string
+  currentSiteId?: string
   markerlessScopeKey?: string
+}
+
+const isReferenceInCurrentScope = (
+  reference: PromptQuoteReference,
+  options: ResolvePendingQuickQuoteMarkerOptions,
+): boolean => {
+  const { siteId, sessionId } = reference.anchor
+  if (options.currentSiteId && siteId && siteId !== options.currentSiteId) return false
+  if (options.currentSessionId && sessionId && sessionId !== options.currentSessionId) return false
+  return true
 }
 
 export const resolvePendingQuickQuoteMarkerEntriesFromElement = (
@@ -420,14 +432,20 @@ export const resolvePendingQuickQuoteMarkerEntriesFromElement = (
 
     if (!pending.requireMarkerResidue) {
       if (!options.markerlessScopeKey) return
+      if (!isReferenceInCurrentScope(pending.reference, options)) return
       if (pending.matchedScopeKey && pending.matchedScopeKey !== options.markerlessScopeKey) return
       if (!pending.matchedScopeKey && options.allowMarkerlessMatch === false) return
     }
 
     const exactMatch = pending.contentKey === contentKey
+    const allowMarkerlessLooseMatch =
+      !pending.requireMarkerResidue &&
+      (options.allowMarkerlessMatch !== false ||
+        pending.matchedScopeKey === options.markerlessScopeKey)
+    const looseMatchMinLength = pending.requireMarkerResidue ? 24 : 1
     const looseMatch =
-      hasMarkerResidue &&
-      Math.min(pending.contentKey.length, contentKey.length) >= 24 &&
+      (hasMarkerResidue || allowMarkerlessLooseMatch) &&
+      Math.min(pending.contentKey.length, contentKey.length) >= looseMatchMinLength &&
       (pending.contentKey.includes(contentKey) || contentKey.includes(pending.contentKey))
 
     if (exactMatch) {
