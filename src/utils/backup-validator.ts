@@ -9,16 +9,28 @@ export interface ValidationResult {
   errorKeys: string[]
 }
 
+const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === "object" && !Array.isArray(value)
+
+const isPromptChainsPayload = (value: unknown): boolean => {
+  if (Array.isArray(value)) return true
+  if (!isObjectRecord(value)) return false
+  if (Array.isArray(value.chains)) return true
+
+  const state = value.state
+  return isObjectRecord(state) && Array.isArray(state.chains)
+}
+
 /**
  * 校验备份数据格式
  * @param data 解析后的备份数据对象
  * @returns 校验结果，errorKeys 为国际化 key
  */
-export function validateBackupData(data: any): ValidationResult {
+export function validateBackupData(data: unknown): ValidationResult {
   const errorKeys: string[] = []
 
   // 基础格式校验
-  if (!data || typeof data !== "object") {
+  if (!isObjectRecord(data)) {
     return { valid: false, errorKeys: ["backupValidationInvalidFormat"] }
   }
 
@@ -26,7 +38,7 @@ export function validateBackupData(data: any): ValidationResult {
     errorKeys.push("backupValidationMissingVersion")
   }
 
-  if (!data.data || typeof data.data !== "object") {
+  if (!isObjectRecord(data.data)) {
     errorKeys.push("backupValidationMissingData")
     return { valid: false, errorKeys }
   }
@@ -47,7 +59,7 @@ export function validateBackupData(data: any): ValidationResult {
   }
 
   if (backupData.promptChains !== undefined) {
-    if (!Array.isArray(backupData.promptChains)) {
+    if (!isPromptChainsPayload(backupData.promptChains)) {
       errorKeys.push("backupValidationPromptChainsType")
     }
   }

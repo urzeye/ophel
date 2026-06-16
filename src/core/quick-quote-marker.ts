@@ -68,6 +68,7 @@ interface PendingQuickQuoteReference {
   contentKey: string
   reference: PromptQuoteReference
   createdAt: number
+  requireMarkerResidue: boolean
 }
 
 const pendingQuickQuoteReferences: PendingQuickQuoteReference[] = []
@@ -324,6 +325,7 @@ const prunePendingQuickQuoteReferences = (now = Date.now()): void => {
 const rememberQuickQuoteReference = (
   content: string,
   reference?: PromptQuoteReference | null,
+  options: { requireMarkerResidue?: boolean } = {},
 ): void => {
   if (!reference) return
 
@@ -335,7 +337,10 @@ const rememberQuickQuoteReference = (
   pendingQuickQuoteReferenceById.set(reference.id, reference)
 
   const existing = pendingQuickQuoteReferences.find(
-    (entry) => entry.reference.id === reference.id && entry.contentKey === contentKey,
+    (entry) =>
+      entry.reference.id === reference.id &&
+      entry.contentKey === contentKey &&
+      entry.requireMarkerResidue === (options.requireMarkerResidue ?? true),
   )
   if (existing) {
     existing.createdAt = now
@@ -343,7 +348,19 @@ const rememberQuickQuoteReference = (
     return
   }
 
-  pendingQuickQuoteReferences.push({ contentKey, reference, createdAt: now })
+  pendingQuickQuoteReferences.push({
+    contentKey,
+    reference,
+    createdAt: now,
+    requireMarkerResidue: options.requireMarkerResidue ?? true,
+  })
+}
+
+export const rememberQuickQuoteReferenceForContent = (
+  content: string,
+  reference?: PromptQuoteReference | null,
+): void => {
+  rememberQuickQuoteReference(content, reference, { requireMarkerResidue: false })
 }
 
 export const appendQuickQuoteMarker = (
@@ -408,7 +425,7 @@ export const resolvePendingQuickQuoteMarkerEntriesFromElement = (
   element: Element,
   visibleText?: string,
 ): QuickQuoteMarkerEntry[] => {
-  if (!hasQuickQuoteMarkerResidue(element)) return []
+  const hasMarkerResidue = hasQuickQuoteMarkerResidue(element)
 
   prunePendingQuickQuoteReferences()
   const contentKey = normalizeQuickQuoteMatchText(visibleText || element.textContent || "")
@@ -419,8 +436,11 @@ export const resolvePendingQuickQuoteMarkerEntriesFromElement = (
   const looseMatches: PendingQuickQuoteReference[] = []
 
   pendingQuickQuoteReferences.forEach((pending) => {
+    if (pending.requireMarkerResidue && !hasMarkerResidue) return
+
     const exactMatch = pending.contentKey === contentKey
     const looseMatch =
+      hasMarkerResidue &&
       Math.min(pending.contentKey.length, contentKey.length) >= 24 &&
       (pending.contentKey.includes(contentKey) || contentKey.includes(pending.contentKey))
 

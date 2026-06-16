@@ -7,7 +7,10 @@
 
 import type { SiteAdapter } from "~adapters/base"
 import type { PromptManager } from "~core/prompt-manager"
-import { stripQuickQuoteMarkers } from "~core/quick-quote-marker"
+import {
+  rememberQuickQuoteReferenceForContent,
+  stripQuickQuoteMarkers,
+} from "~core/quick-quote-marker"
 import { useSettingsStore } from "~stores/settings-store"
 import type { QueueItem } from "~stores/queue-store"
 import { useQueueStore } from "~stores/queue-store"
@@ -130,8 +133,11 @@ export class QueueDispatcher {
         return
       }
 
-      // 插入提示词到输入框
-      const insertOk = await this.promptManager.insertPrompt(item.content)
+      // 插入提示词到输入框。QueueItem.content 只允许携带用户可见正文；
+      // 旧版本队列项若含 marker，这里统一剥离，避免把定位元数据发给 AI。
+      const contentToSend = stripQuickQuoteMarkers(item.content)
+      rememberQuickQuoteReferenceForContent(contentToSend, item.metadata?.quoteRef)
+      const insertOk = await this.promptManager.insertPrompt(contentToSend)
       if (!insertOk) {
         store.updateStatus(item.id, "failed")
         return
@@ -221,6 +227,14 @@ export class QueueDispatcher {
     try {
       const submitShortcut =
         useSettingsStore.getState().settings.features?.prompts?.submitShortcut ?? "enter"
+      const rawEditorContent = this.promptManager.getCurrentEditorContent()
+      const editorContent = stripQuickQuoteMarkers(rawEditorContent)
+      rememberQuickQuoteReferenceForContent(editorContent, item.metadata?.quoteRef)
+
+      if (editorContent && editorContent !== rawEditorContent.trim()) {
+        await this.promptManager.insertPrompt(editorContent)
+      }
+
       const submitOk = await this.promptManager.submitPrompt(submitShortcut)
 
       if (!submitOk) return
@@ -292,9 +306,15 @@ export class QueueDispatcher {
    * 立即发送一条提示词（不入队，直接发送）
    * 用于 AI 空闲时的直接发送场景
    */
-  async sendImmediately(content: string, submitShortcut?: "enter" | "ctrlEnter"): Promise<boolean> {
+  async sendImmediately(
+    content: string,
+    submitShortcut?: "enter" | "ctrlEnter",
+    metadata?: QueueItem["metadata"],
+  ): Promise<boolean> {
     try {
-      const insertOk = await this.promptManager.insertPrompt(content)
+      const contentToSend = stripQuickQuoteMarkers(content)
+      rememberQuickQuoteReferenceForContent(contentToSend, metadata?.quoteRef)
+      const insertOk = await this.promptManager.insertPrompt(contentToSend)
       if (!insertOk) return false
 
       const submitOk = await this.promptManager.submitPrompt(submitShortcut)

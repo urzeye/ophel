@@ -1,6 +1,6 @@
 import type { SiteAdapter } from "~adapters/base"
 import type { PromptManager } from "~core/prompt-manager"
-import { appendQuickQuoteMarker } from "~core/quick-quote-marker"
+import { rememberQuickQuoteReferenceForContent } from "~core/quick-quote-marker"
 import type { QueueItemMetadata } from "~stores/queue-store"
 import { useQueueStore } from "~stores/queue-store"
 import { useSettingsStore } from "~stores/settings-store"
@@ -67,17 +67,18 @@ export const sendOrQueuePrompt = async ({
   if (!trimmedContent) {
     return { status: "insert-failed" }
   }
-  const contentToSend = appendQuickQuoteMarker(trimmedContent, context?.variables?.quoteRef)
+  const quoteRef = context?.variables?.quoteRef
+  rememberQuickQuoteReferenceForContent(trimmedContent, quoteRef)
 
   const promptQueueEnabled =
     useSettingsStore.getState().settings.features?.prompts?.promptQueue ?? false
 
   if (adapter?.isGenerating() && promptQueueEnabled) {
-    useQueueStore.getState().enqueue(contentToSend, buildQueueMetadata(context))
+    useQueueStore.getState().enqueue(trimmedContent, buildQueueMetadata(context))
     return { status: "queued", count: 1 }
   }
 
-  const insertOk = await manager.insertPrompt(contentToSend)
+  const insertOk = await manager.insertPrompt(trimmedContent)
   if (!insertOk) {
     return { status: "insert-failed" }
   }
@@ -110,7 +111,7 @@ export const enqueuePrompt = ({
   const metadata = buildQueueMetadata(_context)
   const queuedItems = useQueueStore.getState().enqueueMany(
     contents.map((content) => ({
-      content: appendQuickQuoteMarker(content, _context?.variables?.quoteRef),
+      content,
       metadata,
     })),
   )

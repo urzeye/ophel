@@ -3705,7 +3705,7 @@ export const App = () => {
       {adapter && queueDispatcher && (settings?.features?.prompts?.promptQueue ?? false) && (
         <QueueOverlay adapter={adapter} dispatcher={queueDispatcher} />
       )}
-      {adapter && promptManager && (
+      {adapter && promptManager && (settings?.features?.prompts?.enabled ?? true) && (
         <QuickQuoteActions adapter={adapter} promptManager={promptManager} />
       )}
       <LoadingOverlay

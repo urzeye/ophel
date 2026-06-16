@@ -14,8 +14,8 @@ import {
 import type { PromptChain, PromptQuoteReference } from "~core/prompt-action-types"
 import type { PromptManager } from "~core/prompt-manager"
 import {
-  appendQuickQuoteMarker,
   extractQuickQuoteMarkerEntriesFromElement,
+  rememberQuickQuoteReferenceForContent,
   removeQuickQuoteMarkerNodes,
   resolvePendingQuickQuoteMarkerEntriesFromElement,
 } from "~core/quick-quote-marker"
@@ -617,8 +617,8 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
 
     const content = formatMarkdownQuote(selectionState.text) + "\n\n"
     const selection = createSelectionContext()
-    const contentWithMarker = appendQuickQuoteMarker(content, selection?.quoteRef)
-    const inserted = await promptManager.insertPrompt(contentWithMarker)
+    rememberQuickQuoteReferenceForContent(content, selection?.quoteRef)
+    const inserted = await promptManager.insertPrompt(content)
     if (!inserted) {
       showToast(t("insertFailed"))
       return
@@ -633,8 +633,8 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
 
     const content = getReplyContent(selectionState.text)
     const selection = createSelectionContext()
-    const contentWithMarker = appendQuickQuoteMarker(content, selection?.quoteRef)
-    const inserted = await promptManager.insertPrompt(contentWithMarker)
+    rememberQuickQuoteReferenceForContent(content, selection?.quoteRef)
+    const inserted = await promptManager.insertPrompt(content)
     if (!inserted) {
       showToast(t("insertFailed"))
       return

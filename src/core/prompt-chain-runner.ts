@@ -1,6 +1,5 @@
 import type { PromptActionStep, PromptChain, PromptQuoteReference } from "~core/prompt-action-types"
 import type { QueueEnqueueInput } from "~stores/queue-store"
-import { appendQuickQuoteMarker } from "~core/quick-quote-marker"
 import {
   extractVariables,
   formatMarkdownQuote,
@@ -167,9 +166,7 @@ export const buildPromptChainQueueInputs = (
     }
 
     return {
-      content: appendQuickQuoteMarker(resolvedStep.content, resolvedStep.quoteRef, {
-        kind: quoteMarkerKind,
-      }),
+      content: resolvedStep.content,
       metadata: {
         source: "quick-follow-up",
         promptId: resolvedStep.prompt.id,

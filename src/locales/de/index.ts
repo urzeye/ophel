@@ -438,9 +438,17 @@ export const de = {
   chainSteps: "Schritte",
   chainStepsHelp:
     "Jeder Schritt wählt einen vorhandenen Prompt und wird der Reihe nach eingereiht.",
+  chainStepModePrompt: "Vorhandenen Prompt verwenden",
+  chainStepModeInline: "Direkte Eingabe",
+  chainStepInlinePlaceholder:
+    "Prompt-Inhalt direkt eingeben (unterstützt {{selection}} und {{quote}})",
   chainAddStep: "Schritt hinzufügen",
   chainSelectPrompt: "Prompt auswählen",
   chainVariablesPreview: "Variablenvorschau",
+  chainExecutionPreview: "Ausführungsvorschau",
+  chainStep: "Schritt",
+  chainStepContentEmpty: "Kein Inhalt (Schritt nicht konfiguriert)",
+  expand: "Erweitern",
   quickQuoteReplyTemplate: "Antworte auf Basis des unten zitierten Textes:\n\n{{quote}}",
   quickQuoteJumpToSource: "Zur Quelle springen",
   quickQuoteSourceNotFound: "Quelltext nicht gefunden",
