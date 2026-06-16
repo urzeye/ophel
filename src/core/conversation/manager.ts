@@ -11,6 +11,7 @@ import { getConversationsStore, useConversationsStore } from "~stores/conversati
 import { getFoldersStore, useFoldersStore } from "~stores/folders-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { getTagsStore, useTagsStore } from "~stores/tags-store"
+import { stripQuickQuoteMarkers } from "~core/quick-quote-marker"
 import { sanitizeConversationTitleCandidate } from "~utils/conversation-title"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import {
@@ -1191,8 +1192,9 @@ export class ConversationManager {
       const exportBundle = shouldPackageAssets
         ? await this.siteAdapter.extractExportBundle(exportContext)
         : null
-      const messages =
+      const rawMessages =
         exportBundle?.messages || (await this.extractConversationMessages(exportContext))
+      const messages = this.stripQuickQuoteMarkersFromExportMessages(rawMessages)
       if (messages.length === 0) {
         console.error("[ConversationManager] No messages found")
         return false
@@ -1433,6 +1435,13 @@ export class ConversationManager {
     }
 
     return messages
+  }
+
+  private stripQuickQuoteMarkersFromExportMessages(messages: ExportMessage[]): ExportMessage[] {
+    return messages.map((message) => ({
+      ...message,
+      content: stripQuickQuoteMarkers(message.content),
+    }))
   }
 
   private normalizeExportAssets(bundle: ExportBundle | null): NonNullable<ExportBundle["assets"]> {

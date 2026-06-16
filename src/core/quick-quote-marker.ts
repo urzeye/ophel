@@ -8,6 +8,8 @@ const MAX_MARKER_PAYLOAD_LENGTH = 1600
 
 const MARKER_MARKDOWN_RE =
   /\[\u2063\]\(#ophel-quick-quote\s+"ophel-quick-quote:([A-Za-z0-9_-]+)"\)/g
+const RENDERED_MARKER_MARKDOWN_RE =
+  /\[\u2063\]\((?:[^)\s"]*#ophel-quick-quote|#ophel-quick-quote)(?:\s+"ophel-quick-quote:[A-Za-z0-9_-]+")?\)/g
 const MARKER_LINK_PREFIX_RE = /\[\u2063\]\($/
 const MARKER_LINK_SUFFIX_RE = /^(?:"ophel-quick-quote:[A-Za-z0-9_-]+")?\)/
 
@@ -267,13 +269,16 @@ export const appendQuickQuoteMarker = (
 
 export const stripQuickQuoteMarkers = (content: string): string => {
   MARKER_MARKDOWN_RE.lastIndex = 0
+  RENDERED_MARKER_MARKDOWN_RE.lastIndex = 0
   const stripped = content
     .replace(MARKER_MARKDOWN_RE, "")
+    .replace(RENDERED_MARKER_MARKDOWN_RE, "")
     .replace(new RegExp(QUICK_QUOTE_MARKER_LABEL, "g"), "")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim()
   MARKER_MARKDOWN_RE.lastIndex = 0
+  RENDERED_MARKER_MARKDOWN_RE.lastIndex = 0
   return stripped
 }
 
