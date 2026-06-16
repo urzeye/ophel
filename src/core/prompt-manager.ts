@@ -128,6 +128,19 @@ export class PromptManager {
     return editor.textContent || ""
   }
 
+  getCurrentEditorContent(): string {
+    const editor = this.adapter.getTextareaElement() || this.adapter.findTextarea()
+    return this.getEditorContent(editor)
+  }
+
+  hasEditorContent(): boolean {
+    return (
+      this.getCurrentEditorContent()
+        .replace(/[\u200B\u200C\u200D\uFEFF]/g, "")
+        .trim().length > 0
+    )
+  }
+
   private isElementDisabled(element: HTMLElement | null): boolean {
     if (!element) return true
 

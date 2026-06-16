@@ -29,6 +29,10 @@ export interface PromptSelectionAnchor {
   cid?: string
   selectedText: string
   textSignature: string
+  selectedPrefix?: string
+  selectedSuffix?: string
+  selectedLength?: number
+  selectedHash?: string
   beforeText?: string
   afterText?: string
   rootSelector?: string

@@ -3,185 +3,247 @@ import type { PromptQuoteReference, PromptSelectionAnchor } from "~core/prompt-a
 const QUICK_QUOTE_MARKER_LABEL = "\u2063"
 const QUICK_QUOTE_MARKER_HREF = "#ophel-quick-quote"
 const QUICK_QUOTE_MARKER_TITLE_PREFIX = "ophel-quick-quote:"
-const LEGACY_QUICK_QUOTE_MARKER_URL = "https://ophel.local/quick-quote#"
-const QUICK_QUOTE_MARKER_VERSION = 2
-const MAX_MARKER_PAYLOAD_LENGTH = 20000
-const MAX_MARKER_SELECTED_TEXT_LENGTH = 1200
+const QUICK_QUOTE_MARKER_VERSION = 3
+const MAX_MARKER_PAYLOAD_LENGTH = 1600
 
-const MARKER_MARKDOWN_RE = /\[\u2063\]\(#ophel-quick-quote\s+"ophel-quick-quote:([^"]+)"\)/g
-const LEGACY_MARKER_MARKDOWN_RE = /\[\u2063\]\(https:\/\/ophel\.local\/quick-quote#([^)]+)\)/g
+const MARKER_MARKDOWN_RE =
+  /\[\u2063\]\(#ophel-quick-quote\s+"ophel-quick-quote:([A-Za-z0-9_-]+)"\)/g
 const MARKER_LINK_PREFIX_RE = /\[\u2063\]\($/
-const MARKER_LINK_SUFFIX_RE = /^(?:"ophel-quick-quote:[^"]+")?\)/
+const MARKER_LINK_SUFFIX_RE = /^(?:"ophel-quick-quote:[A-Za-z0-9_-]+")?\)/
 
-/**
- * Compact anchor for URL embedding - only essential fields for relocation.
- */
+type MarkerKind = "full" | "ref"
+
 interface CompactSelectionAnchor {
-  siteId: string
-  sessionId: string
-  selectedText: string
-  textSignature: string
-  beforeText?: string
-  afterText?: string
-  rootSelector?: string // CSS selector for precise message identification
-  rootIndex?: number
-  rootTextSignature?: string
-  selectionIndex?: number
+  /** normalized selected text length */
+  n?: number
+  /** normalized selected text hash */
+  h?: string
+  /** normalized selected text prefix */
+  p?: string
+  /** normalized selected text suffix */
+  s?: string
+  /** preceding context */
+  b?: string
+  /** following context */
+  f?: string
+  /** precise message selector, if available */
+  r?: string
+  /** message root index fallback */
+  x?: number
+  /** message root text signature */
+  g?: string
+  /** normalized selection start offset */
+  o?: number
 }
 
-interface QuickQuoteMarkerPayload {
+interface FullMarkerPayload {
   v: typeof QUICK_QUOTE_MARKER_VERSION
-  ref: {
-    id: string
-    selectedText: string
-    anchor: CompactSelectionAnchor
-    chainId?: string
-    chainTitle?: string
-    stepIndex?: number
-    stepTotal?: number
-  }
+  t: "q"
+  i: string
+  l: string
+  a: CompactSelectionAnchor
 }
 
-/**
- * Legacy v1 payload structure for backward compatibility.
- */
-interface LegacyQuickQuoteMarkerPayload {
-  v: 1
-  ref: PromptQuoteReference
+interface RefMarkerPayload {
+  v: typeof QUICK_QUOTE_MARKER_VERSION
+  t: "r"
+  i: string
+  l?: string
 }
 
-/**
- * Compact the reference for URL embedding - drop unnecessary fields.
- */
-const compactReferenceForMarker = (
+type QuickQuoteMarkerPayload = FullMarkerPayload | RefMarkerPayload
+
+export interface QuickQuoteMarkerEntry {
+  id: string
+  label: string
+  reference?: PromptQuoteReference
+  kind: MarkerKind
+}
+
+const truncateText = (text: string, max: number): string => {
+  const normalized = text.replace(/\s+/g, " ").trim()
+  if (normalized.length <= max) return normalized
+  return normalized.slice(0, max).trimEnd()
+}
+
+const takeStart = (text: string | undefined, max: number): string | undefined => {
+  const normalized = (text || "").replace(/\s+/g, " ").trim()
+  return normalized ? normalized.slice(0, max).trimEnd() : undefined
+}
+
+const takeEnd = (text: string | undefined, max: number): string | undefined => {
+  const normalized = (text || "").replace(/\s+/g, " ").trim()
+  return normalized ? normalized.slice(Math.max(0, normalized.length - max)).trimStart() : undefined
+}
+
+const compactObject = <T extends object>(input: T): T => {
+  const record = input as Record<string, unknown>
+  Object.keys(input).forEach((key) => {
+    const value = record[key]
+    if (value === undefined || value === "" || value === null) {
+      delete record[key]
+    }
+  })
+  return input
+}
+
+const encodeBase64Url = (value: string): string => {
+  const bytes = new TextEncoder().encode(value)
+  let binary = ""
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte)
+  })
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
+}
+
+const decodeBase64Url = (value: string): string => {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/")
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=")
+  const binary = atob(padded)
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0))
+  return new TextDecoder().decode(bytes)
+}
+
+interface PayloadProfile {
+  label: number
+  edge: number
+  context: number
+  rootSignature: number
+  rootSelector: boolean
+}
+
+const PAYLOAD_PROFILES: PayloadProfile[] = [
+  { label: 80, edge: 60, context: 40, rootSignature: 60, rootSelector: true },
+  { label: 64, edge: 48, context: 32, rootSignature: 40, rootSelector: true },
+  { label: 48, edge: 36, context: 24, rootSignature: 0, rootSelector: true },
+  { label: 36, edge: 28, context: 16, rootSignature: 0, rootSelector: false },
+]
+
+const buildFullPayload = (
   reference: PromptQuoteReference,
-): QuickQuoteMarkerPayload["ref"] => {
-  const selectedText =
-    reference.selectedText.length <= MAX_MARKER_SELECTED_TEXT_LENGTH
-      ? reference.selectedText
-      : reference.selectedText.slice(0, MAX_MARKER_SELECTED_TEXT_LENGTH).trimEnd()
-
-  const anchor: CompactSelectionAnchor = {
-    siteId: reference.anchor.siteId,
-    sessionId: reference.anchor.sessionId,
-    selectedText,
-    textSignature: reference.anchor.textSignature,
-    beforeText: reference.anchor.beforeText,
-    afterText: reference.anchor.afterText,
-    rootSelector: reference.anchor.rootSelector,
-    rootIndex: reference.anchor.rootIndex,
-    rootTextSignature: reference.anchor.rootTextSignature,
-    selectionIndex: reference.anchor.selectionIndex,
-  }
+  profile: PayloadProfile,
+): FullMarkerPayload => {
+  const anchor = reference.anchor
+  const compactAnchor = compactObject<CompactSelectionAnchor>({
+    n: anchor.selectedLength,
+    h: anchor.selectedHash,
+    p: takeStart(
+      anchor.selectedPrefix || anchor.textSignature || anchor.selectedText,
+      profile.edge,
+    ),
+    s: takeEnd(anchor.selectedSuffix || anchor.selectedText, profile.edge),
+    b: takeEnd(anchor.beforeText, profile.context),
+    f: takeStart(anchor.afterText, profile.context),
+    r: profile.rootSelector ? anchor.rootSelector : undefined,
+    x: anchor.rootIndex,
+    g:
+      profile.rootSignature > 0
+        ? takeStart(anchor.rootTextSignature, profile.rootSignature)
+        : undefined,
+    o: anchor.selectionIndex,
+  })
 
   return {
-    id: reference.id,
-    selectedText,
-    anchor,
-    chainId: reference.chainId,
-    chainTitle: reference.chainTitle,
-    stepIndex: reference.stepIndex,
-    stepTotal: reference.stepTotal,
+    v: QUICK_QUOTE_MARKER_VERSION,
+    t: "q",
+    i: reference.id,
+    l: truncateText(reference.selectedText, profile.label),
+    a: compactAnchor,
   }
 }
 
-const encodeMarkerPayload = (reference: PromptQuoteReference): string =>
-  encodeURIComponent(
-    JSON.stringify({
-      v: QUICK_QUOTE_MARKER_VERSION,
-      ref: compactReferenceForMarker(reference),
-    } satisfies QuickQuoteMarkerPayload),
-  )
+const buildRefPayload = (reference: PromptQuoteReference): RefMarkerPayload => ({
+  v: QUICK_QUOTE_MARKER_VERSION,
+  t: "r",
+  i: reference.id,
+  l: truncateText(reference.selectedText, 48),
+})
+
+const encodePayload = (payload: QuickQuoteMarkerPayload): string =>
+  encodeBase64Url(JSON.stringify(payload))
+
+const encodeFullPayload = (reference: PromptQuoteReference): string => {
+  for (const profile of PAYLOAD_PROFILES) {
+    const encoded = encodePayload(buildFullPayload(reference, profile))
+    if (encoded.length <= MAX_MARKER_PAYLOAD_LENGTH) return encoded
+  }
+
+  return encodePayload(buildFullPayload(reference, PAYLOAD_PROFILES[PAYLOAD_PROFILES.length - 1]))
+}
+
+const encodeMarkerPayload = (reference: PromptQuoteReference, kind: MarkerKind): string =>
+  kind === "ref" ? encodePayload(buildRefPayload(reference)) : encodeFullPayload(reference)
 
 const hasQuickQuoteMarker = (content: string): boolean => {
   MARKER_MARKDOWN_RE.lastIndex = 0
-  LEGACY_MARKER_MARKDOWN_RE.lastIndex = 0
-  const hasMarker = MARKER_MARKDOWN_RE.test(content) || LEGACY_MARKER_MARKDOWN_RE.test(content)
+  const hasMarker = MARKER_MARKDOWN_RE.test(content)
   MARKER_MARKDOWN_RE.lastIndex = 0
-  LEGACY_MARKER_MARKDOWN_RE.lastIndex = 0
   return hasMarker
 }
 
-/**
- * Reconstruct full PromptQuoteReference from compact payload.
- */
-const expandCompactReference = (compact: QuickQuoteMarkerPayload["ref"]): PromptQuoteReference => {
-  const fullAnchor: PromptSelectionAnchor = {
-    siteId: compact.anchor.siteId,
-    sessionId: compact.anchor.sessionId,
-    cid: undefined,
-    selectedText: compact.anchor.selectedText,
-    textSignature: compact.anchor.textSignature,
-    beforeText: compact.anchor.beforeText,
-    afterText: compact.anchor.afterText,
-    rootSelector: compact.anchor.rootSelector,
-    rootIndex: compact.anchor.rootIndex,
-    rootTextSignature: compact.anchor.rootTextSignature,
-    selectionIndex: compact.anchor.selectionIndex,
-    scrollTop: undefined,
+const expandFullPayload = (payload: FullMarkerPayload): PromptQuoteReference => {
+  const anchor: PromptSelectionAnchor = {
+    siteId: "",
+    sessionId: "",
+    selectedText: payload.l,
+    textSignature: payload.a.p || payload.l,
+    selectedPrefix: payload.a.p,
+    selectedSuffix: payload.a.s,
+    selectedLength: payload.a.n,
+    selectedHash: payload.a.h,
+    beforeText: payload.a.b,
+    afterText: payload.a.f,
+    rootSelector: payload.a.r,
+    rootIndex: payload.a.x,
+    rootTextSignature: payload.a.g,
+    selectionIndex: payload.a.o,
     createdAt: Date.now(),
   }
 
   return {
-    id: compact.id,
-    selectedText: compact.selectedText,
-    quoteText: compact.selectedText
+    id: payload.i,
+    selectedText: payload.l,
+    quoteText: payload.l
       .split("\n")
       .map((line) => `> ${line}`)
       .join("\n"),
-    anchor: fullAnchor,
-    chainId: compact.chainId,
-    chainTitle: compact.chainTitle,
-    stepId: undefined,
-    stepIndex: compact.stepIndex,
-    stepTotal: compact.stepTotal,
+    anchor,
     createdAt: Date.now(),
   }
 }
 
-const decodeMarkerPayload = (encoded: string): PromptQuoteReference | null => {
-  if (!encoded || encoded.length > MAX_MARKER_PAYLOAD_LENGTH) return null
+const decodeMarkerPayload = (encoded: string): QuickQuoteMarkerEntry | null => {
+  if (!encoded || encoded.length > MAX_MARKER_PAYLOAD_LENGTH * 2) return null
 
   try {
-    const payload = JSON.parse(decodeURIComponent(encoded)) as
-      | Partial<QuickQuoteMarkerPayload>
-      | Partial<LegacyQuickQuoteMarkerPayload>
+    const payload = JSON.parse(decodeBase64Url(encoded)) as Partial<QuickQuoteMarkerPayload>
+    if (payload.v !== QUICK_QUOTE_MARKER_VERSION || typeof payload.i !== "string") return null
 
-    // Handle v1 (legacy full payload)
-    if (payload.v === 1) {
-      const legacyPayload = payload as Partial<LegacyQuickQuoteMarkerPayload>
-      const reference = legacyPayload.ref
+    if (payload.t === "q") {
+      const fullPayload = payload as Partial<FullMarkerPayload>
       if (
-        !reference ||
-        typeof reference.id !== "string" ||
-        typeof reference.selectedText !== "string" ||
-        typeof reference.quoteText !== "string" ||
-        !reference.anchor ||
-        typeof reference.anchor.siteId !== "string" ||
-        typeof reference.anchor.sessionId !== "string"
+        typeof fullPayload.l !== "string" ||
+        !fullPayload.a ||
+        typeof fullPayload.a !== "object"
       ) {
         return null
       }
-      return reference
+
+      return {
+        id: payload.i,
+        label: fullPayload.l,
+        reference: expandFullPayload(fullPayload as FullMarkerPayload),
+        kind: "full",
+      }
     }
 
-    // Handle v2 (compact payload)
-    if (payload.v === 2) {
-      const v2Payload = payload as Partial<QuickQuoteMarkerPayload>
-      const ref = v2Payload.ref
-      if (
-        !ref ||
-        typeof ref.id !== "string" ||
-        typeof ref.selectedText !== "string" ||
-        !ref.anchor ||
-        typeof ref.anchor.siteId !== "string" ||
-        typeof ref.anchor.sessionId !== "string" ||
-        typeof ref.anchor.selectedText !== "string" ||
-        typeof ref.anchor.textSignature !== "string"
-      ) {
-        return null
+    if (payload.t === "r") {
+      const refPayload = payload as Partial<RefMarkerPayload>
+      return {
+        id: payload.i,
+        label: typeof refPayload.l === "string" ? refPayload.l : "",
+        kind: "ref",
       }
-      return expandCompactReference(ref)
     }
 
     return null
@@ -193,72 +255,59 @@ const decodeMarkerPayload = (encoded: string): PromptQuoteReference | null => {
 export const appendQuickQuoteMarker = (
   content: string,
   reference?: PromptQuoteReference | null,
+  options: { kind?: MarkerKind } = {},
 ): string => {
   const trimmed = content.trim()
   if (!trimmed || !reference) return trimmed
   if (hasQuickQuoteMarker(trimmed)) return trimmed
 
-  return `${trimmed}\n\n[${QUICK_QUOTE_MARKER_LABEL}](${QUICK_QUOTE_MARKER_HREF} "${QUICK_QUOTE_MARKER_TITLE_PREFIX}${encodeMarkerPayload(reference)}")`
+  const encoded = encodeMarkerPayload(reference, options.kind || "full")
+  return `${trimmed}\n\n[${QUICK_QUOTE_MARKER_LABEL}](${QUICK_QUOTE_MARKER_HREF} "${QUICK_QUOTE_MARKER_TITLE_PREFIX}${encoded}")`
 }
 
 export const stripQuickQuoteMarkers = (content: string): string => {
   MARKER_MARKDOWN_RE.lastIndex = 0
-  LEGACY_MARKER_MARKDOWN_RE.lastIndex = 0
   const stripped = content
     .replace(MARKER_MARKDOWN_RE, "")
-    .replace(LEGACY_MARKER_MARKDOWN_RE, "")
     .replace(new RegExp(QUICK_QUOTE_MARKER_LABEL, "g"), "")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim()
   MARKER_MARKDOWN_RE.lastIndex = 0
-  LEGACY_MARKER_MARKDOWN_RE.lastIndex = 0
   return stripped
 }
 
 const getEncodedMarkerFromAnchor = (anchor: HTMLAnchorElement): string | null => {
-  if (anchor.title.startsWith(QUICK_QUOTE_MARKER_TITLE_PREFIX)) {
-    return anchor.title.slice(QUICK_QUOTE_MARKER_TITLE_PREFIX.length)
-  }
-
-  const legacyIndex = anchor.href.indexOf(LEGACY_QUICK_QUOTE_MARKER_URL)
-  if (legacyIndex >= 0) {
-    return anchor.href.slice(legacyIndex + LEGACY_QUICK_QUOTE_MARKER_URL.length)
-  }
-
-  return null
+  if (!anchor.title.startsWith(QUICK_QUOTE_MARKER_TITLE_PREFIX)) return null
+  return anchor.title.slice(QUICK_QUOTE_MARKER_TITLE_PREFIX.length)
 }
 
-export const extractQuickQuoteMarkersFromElement = (element: Element): PromptQuoteReference[] => {
-  const references: PromptQuoteReference[] = []
+export const extractQuickQuoteMarkerEntriesFromElement = (
+  element: Element,
+): QuickQuoteMarkerEntry[] => {
+  const entries: QuickQuoteMarkerEntry[] = []
   const seen = new Set<string>()
 
-  const addReference = (reference: PromptQuoteReference | null) => {
-    if (!reference || seen.has(reference.id)) return
-    seen.add(reference.id)
-    references.push(reference)
+  const addEntry = (entry: QuickQuoteMarkerEntry | null) => {
+    if (!entry || seen.has(`${entry.kind}:${entry.id}`)) return
+    seen.add(`${entry.kind}:${entry.id}`)
+    entries.push(entry)
   }
 
   element.querySelectorAll<HTMLAnchorElement>("a[href]").forEach((anchor) => {
     const encoded = getEncodedMarkerFromAnchor(anchor)
-    if (encoded) addReference(decodeMarkerPayload(encoded))
+    if (encoded) addEntry(decodeMarkerPayload(encoded))
   })
 
   const text = element.textContent || ""
   let match: RegExpExecArray | null
   MARKER_MARKDOWN_RE.lastIndex = 0
   while ((match = MARKER_MARKDOWN_RE.exec(text))) {
-    addReference(decodeMarkerPayload(match[1]))
+    addEntry(decodeMarkerPayload(match[1]))
   }
   MARKER_MARKDOWN_RE.lastIndex = 0
 
-  LEGACY_MARKER_MARKDOWN_RE.lastIndex = 0
-  while ((match = LEGACY_MARKER_MARKDOWN_RE.exec(text))) {
-    addReference(decodeMarkerPayload(match[1]))
-  }
-  LEGACY_MARKER_MARKDOWN_RE.lastIndex = 0
-
-  return references
+  return entries
 }
 
 export const removeQuickQuoteMarkerNodes = (element: Element): void => {

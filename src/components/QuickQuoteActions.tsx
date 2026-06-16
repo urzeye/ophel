@@ -11,11 +11,11 @@ import {
   resolvePromptChainSteps,
   type PromptChainSelectionContext,
 } from "~core/prompt-chain-runner"
-import type { PromptChain } from "~core/prompt-action-types"
+import type { PromptChain, PromptQuoteReference } from "~core/prompt-action-types"
 import type { PromptManager } from "~core/prompt-manager"
 import {
   appendQuickQuoteMarker,
-  extractQuickQuoteMarkersFromElement,
+  extractQuickQuoteMarkerEntriesFromElement,
   removeQuickQuoteMarkerNodes,
 } from "~core/quick-quote-marker"
 import { createPromptQuoteReference, scrollToQuoteReference } from "~core/quick-quote-utils"
@@ -224,6 +224,7 @@ const injectQuickQuoteHostStyles = (root: Document | ShadowRoot) => {
 export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter }> = ({ adapter }) => {
   const renderTimeoutRef = useRef<number | null>(null)
   const isRenderingRef = useRef(false)
+  const quoteReferenceRegistryRef = useRef(new Map<string, PromptQuoteReference>())
 
   const renderReferenceChips = useCallback(() => {
     // 防止并发渲染
@@ -239,16 +240,40 @@ export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter }> = ({ adapter
       const userMessages =
         (DOMToolkit.query(userQuerySelector, { all: true, shadow: true }) as Element[]) || []
 
+      const markerEntriesByMessage = new Map<
+        HTMLElement,
+        ReturnType<typeof extractQuickQuoteMarkerEntriesFromElement>
+      >()
+      const quoteReferenceRegistry = quoteReferenceRegistryRef.current
+
+      userMessages.forEach((message) => {
+        if (!(message instanceof HTMLElement)) return
+
+        const markerEntries = extractQuickQuoteMarkerEntriesFromElement(message)
+        markerEntriesByMessage.set(message, markerEntries)
+        markerEntries.forEach((entry) => {
+          if (entry.reference) {
+            quoteReferenceRegistry.set(entry.id, entry.reference)
+          }
+        })
+      })
+
       userMessages.forEach((message) => {
         if (!(message instanceof HTMLElement)) return
 
         const renderedIds = new Set(
           (message.dataset.ghQuickQuoteRefs || "").split(",").filter(Boolean),
         )
-        const markerReferences = extractQuickQuoteMarkersFromElement(message).filter(
-          (reference) => reference.anchor.siteId === adapter.getSiteId(),
+        const markerEntries = markerEntriesByMessage.get(message) || []
+        const markerReferences = markerEntries
+          .map((entry) => entry.reference || quoteReferenceRegistry.get(entry.id))
+          .filter((reference): reference is PromptQuoteReference => Boolean(reference))
+        const hasUnresolvedRef = markerEntries.some(
+          (entry) => !entry.reference && !quoteReferenceRegistry.has(entry.id),
         )
-        removeQuickQuoteMarkerNodes(message)
+        if (!hasUnresolvedRef) {
+          removeQuickQuoteMarkerNodes(message)
+        }
 
         const referencesToRender = markerReferences.filter(
           (reference, index, source) =>

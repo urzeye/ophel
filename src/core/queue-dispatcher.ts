@@ -7,7 +7,9 @@
 
 import type { SiteAdapter } from "~adapters/base"
 import type { PromptManager } from "~core/prompt-manager"
+import { stripQuickQuoteMarkers } from "~core/quick-quote-marker"
 import { useSettingsStore } from "~stores/settings-store"
+import type { QueueItem } from "~stores/queue-store"
 import { useQueueStore } from "~stores/queue-store"
 
 export class QueueDispatcher {
@@ -15,8 +17,13 @@ export class QueueDispatcher {
   private promptManager: PromptManager
   private intervalId: ReturnType<typeof setInterval> | null = null
   private idleCount = 0 // 连续空闲计数
+  private isDispatching = false
   private readonly IDLE_THRESHOLD = 2 // 需要连续 N 次检测到空闲才发送
   private readonly POLL_INTERVAL = 1000 // 轮询间隔 (ms)
+  private readonly POST_SUBMIT_MIN_WAIT_MS = 2500
+  private readonly POST_SUBMIT_QUIET_MS = 2500
+  private readonly GENERATION_START_GRACE_MS = 8000
+  private readonly POST_SUBMIT_MAX_WAIT_MS = 10 * 60 * 1000
 
   constructor(adapter: SiteAdapter, promptManager: PromptManager) {
     this.adapter = adapter
@@ -54,18 +61,31 @@ export class QueueDispatcher {
    * 每秒执行的轮询逻辑
    */
   private async tick(): Promise<void> {
+    if (this.isDispatching) return
+
     const state = useQueueStore.getState()
 
-    // 如果队列为空或已暂停，重置计数
-    const pendingItems = state.items.filter((i) => i.status === "pending")
-    if (pendingItems.length === 0 || state.isPaused) {
+    if (state.isPaused) {
       this.idleCount = 0
       return
     }
 
-    // 如果有正在发送的，等待它完成
+    // 如果有正在发送的，优先恢复这条，不允许继续消费后续步骤。
     const sendingItems = state.items.filter((i) => i.status === "sending")
     if (sendingItems.length > 0) {
+      await this.recoverSendingItem(sendingItems[0])
+      return
+    }
+
+    // 如果队列为空，重置计数
+    const pendingItems = state.items.filter((i) => i.status === "pending")
+    if (pendingItems.length === 0) {
+      this.idleCount = 0
+      return
+    }
+
+    // 输入框已有内容时不从队列取下一条，避免覆盖用户输入或上一条未成功发送的内容。
+    if (this.promptManager.hasEditorContent()) {
       this.idleCount = 0
       return
     }
@@ -93,10 +113,13 @@ export class QueueDispatcher {
    * 从队列头部取出一条提示词并发送
    */
   private async dispatchNext(): Promise<void> {
+    if (this.isDispatching) return
+
     const store = useQueueStore.getState()
     const item = store.dequeue()
     if (!item) return
 
+    this.isDispatching = true
     try {
       // 二次确认：插入前再次检查 AI 是否真的空闲
       // 防止从 tick() 到这里的时间差内 AI 开始生成
@@ -131,19 +154,137 @@ export class QueueDispatcher {
       // 提交发送
       const submitOk = await this.promptManager.submitPrompt(submitShortcut)
       if (!submitOk) {
-        store.updateStatus(item.id, "failed")
+        // 插入已经发生但发送未确认：保留当前 sending 项，后续 tick 只重试这一项。
+        // 不能标记 failed 后继续下一条，否则会覆盖输入框并跳过链路步骤。
+        if (!this.isItemContentInEditor(item)) {
+          store.updateStatus(item.id, "pending")
+        }
+        this.idleCount = 0
         return
       }
 
-      // 发送成功后等待一小段时间，确保 AI 开始生成
-      // 这样下次 tick() 时 isGenerating() 会正确返回 true
-      await new Promise((resolve) => setTimeout(resolve, 500))
-
-      // 发送成功
+      // 发送已经确认，先从队列 UI 中移除；调度器内部继续等待回复结束后再释放下一条。
       store.updateStatus(item.id, "sent")
+      await this.waitForConversationIdleAfterSubmit()
     } catch (error) {
       console.error("[QueueDispatcher] 发送失败:", error)
-      store.updateStatus(item.id, "failed")
+      store.updateStatus(item.id, this.isItemContentInEditor(item) ? "sending" : "pending")
+      this.idleCount = 0
+    } finally {
+      this.isDispatching = false
+    }
+  }
+
+  private normalizeContent(content: string): string {
+    return content
+      .replace(/[\u200B\u200C\u200D\uFEFF]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+  }
+
+  private isItemContentInEditor(item: QueueItem): boolean {
+    const editorContent = this.normalizeContent(this.promptManager.getCurrentEditorContent())
+    if (!editorContent) return false
+
+    const itemContent = this.normalizeContent(item.content)
+    const visibleItemContent = this.normalizeContent(stripQuickQuoteMarkers(item.content))
+
+    return [itemContent, visibleItemContent].some(
+      (content) =>
+        content &&
+        (editorContent === content ||
+          editorContent.includes(content) ||
+          content.includes(editorContent)),
+    )
+  }
+
+  private async recoverSendingItem(item: QueueItem): Promise<void> {
+    const store = useQueueStore.getState()
+
+    if (this.adapter.isGenerating()) {
+      this.idleCount = 0
+      return
+    }
+
+    if (!this.isItemContentInEditor(item)) {
+      // 输入框已清空或内容已被用户处理，避免永久卡在 sending。
+      store.updateStatus(item.id, "sent")
+      this.idleCount = 0
+      return
+    }
+
+    this.idleCount++
+    if (this.idleCount < this.IDLE_THRESHOLD) return
+
+    this.idleCount = 0
+    this.isDispatching = true
+    try {
+      const submitShortcut =
+        useSettingsStore.getState().settings.features?.prompts?.submitShortcut ?? "enter"
+      const submitOk = await this.promptManager.submitPrompt(submitShortcut)
+
+      if (!submitOk) return
+
+      store.updateStatus(item.id, "sent")
+      await this.waitForConversationIdleAfterSubmit()
+    } catch (error) {
+      console.error("[QueueDispatcher] 重试发送失败:", error)
+    } finally {
+      this.isDispatching = false
+    }
+  }
+
+  private getConversationActivitySignature(): string {
+    const responseSelector = this.adapter.getResponseContainerSelector()
+    let root: ParentNode | Element | null = this.adapter.getScrollContainer()
+
+    if (!root && responseSelector) {
+      try {
+        root = document.querySelector(responseSelector)
+      } catch {
+        root = null
+      }
+    }
+
+    const element = root instanceof Element ? root : document.body
+    const text = element.textContent || ""
+    return `${text.length}:${text.slice(Math.max(0, text.length - 400))}`
+  }
+
+  private async waitForConversationIdleAfterSubmit(): Promise<void> {
+    const startedAt = Date.now()
+    let lastActivityAt = startedAt
+    let lastSignature = this.getConversationActivitySignature()
+    let sawGenerating = this.adapter.isGenerating()
+
+    while (Date.now() - startedAt < this.POST_SUBMIT_MAX_WAIT_MS) {
+      await new Promise((resolve) => setTimeout(resolve, 500))
+
+      const now = Date.now()
+      const isGenerating = this.adapter.isGenerating()
+      if (isGenerating) {
+        sawGenerating = true
+        lastActivityAt = now
+      }
+
+      const signature = this.getConversationActivitySignature()
+      if (signature !== lastSignature) {
+        lastSignature = signature
+        lastActivityAt = now
+      }
+
+      const waited = now - startedAt
+      const quietFor = now - lastActivityAt
+      const generationWasObservable = sawGenerating || waited >= this.GENERATION_START_GRACE_MS
+
+      if (
+        waited >= this.POST_SUBMIT_MIN_WAIT_MS &&
+        quietFor >= this.POST_SUBMIT_QUIET_MS &&
+        !isGenerating &&
+        generationWasObservable
+      ) {
+        return
+      }
     }
   }
 
@@ -171,7 +312,9 @@ export class QueueDispatcher {
     const state = useQueueStore.getState()
 
     if (state.isPaused) return false
+    if (this.isDispatching) return false
     if (this.adapter.isGenerating()) return false
+    if (this.promptManager.hasEditorContent()) return false
 
     const hasSending = state.items.some((item) => item.status === "sending")
     if (hasSending) return false

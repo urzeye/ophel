@@ -26,6 +26,20 @@ const getTextSignature = (text: string): string => text.replace(/\s+/g, " ").tri
 
 const normalizeText = (text: string): string => text.replace(/\s+/g, " ").trim()
 
+const getTextSuffixSignature = (text: string): string => {
+  const normalized = normalizeText(text)
+  return normalized.slice(Math.max(0, normalized.length - 60))
+}
+
+const getTextHash = (text: string): string => {
+  let hash = 2166136261
+  for (const char of normalizeText(text)) {
+    hash ^= char.codePointAt(0) || 0
+    hash = Math.imul(hash, 16777619)
+  }
+  return (hash >>> 0).toString(36)
+}
+
 const getConversationSearchRoot = (adapter: SiteAdapter): ParentNode => {
   const responseSelector = adapter.getResponseContainerSelector()
   return (
@@ -205,6 +219,10 @@ export const createPromptSelectionAnchor = ({
     cid: adapter.getCurrentCid() || undefined,
     selectedText,
     textSignature: getTextSignature(selectedText),
+    selectedPrefix: getTextSignature(normalizedSelection),
+    selectedSuffix: getTextSuffixSignature(normalizedSelection),
+    selectedLength: normalizedSelection.length,
+    selectedHash: getTextHash(normalizedSelection),
     beforeText: getTextSignature(beforeText),
     afterText: getTextSignature(afterText),
     rootSelector,
@@ -294,7 +312,9 @@ const collectRootCandidates = (
       addCandidate(candidate, 14)
     }
 
-    const selectedText = normalizeText(anchor.selectedText)
+    const selectedText = normalizeText(
+      anchor.selectedPrefix || anchor.textSignature || anchor.selectedText,
+    )
     if (selectedText && rootText.includes(selectedText)) {
       addCandidate(candidate, 8)
     }
@@ -308,7 +328,7 @@ const scoreRootCandidate = (root: Element, anchor: PromptSelectionAnchor, source
   let score = sourceScore
 
   if (rootMatchesSignature(rootText, anchor.rootTextSignature)) score += 10
-  if (rootMatchesSignature(rootText, anchor.textSignature)) score += 4
+  if (rootMatchesSignature(rootText, anchor.selectedPrefix || anchor.textSignature)) score += 4
   if (rootMatchesSignature(rootText, anchor.beforeText)) score += 3
   if (rootMatchesSignature(rootText, anchor.afterText)) score += 3
 
@@ -394,20 +414,72 @@ const scoreMatch = (
 
 const findTextMatchByAnchor = (root: Element, anchor: PromptSelectionAnchor): TextMatch | null => {
   const selectedText = normalizeText(anchor.selectedText)
-  if (!selectedText) return null
+  const selectionLength =
+    anchor.selectedLength && anchor.selectedLength > 0 ? anchor.selectedLength : selectedText.length
+  if (selectionLength <= 0) return null
 
   const index = buildNormalizedTextIndex(root)
-  const matches = findAllMatchIndexes(index.text, selectedText)
+  const exactNeedle = selectedText.length === selectionLength ? selectedText : ""
+  const prefix = normalizeText(anchor.selectedPrefix || anchor.textSignature || exactNeedle)
+  const suffix = normalizeText(anchor.selectedSuffix || "")
+  const candidateIndexes = new Set<number>()
+
+  if (exactNeedle) {
+    findAllMatchIndexes(index.text, exactNeedle).forEach((matchIndex) =>
+      candidateIndexes.add(matchIndex),
+    )
+  } else if (prefix) {
+    findAllMatchIndexes(index.text, prefix).forEach((matchIndex) =>
+      candidateIndexes.add(matchIndex),
+    )
+  }
+
+  if (anchor.selectionIndex !== undefined) {
+    candidateIndexes.add(anchor.selectionIndex)
+  }
+
+  const matches = Array.from(candidateIndexes).filter(
+    (matchIndex) => matchIndex >= 0 && matchIndex + selectionLength <= index.text.length,
+  )
   if (matches.length === 0) return null
 
+  const scoreCandidate = (matchIndex: number): number => {
+    const selectedSlice = index.text.slice(matchIndex, matchIndex + selectionLength)
+    let score = scoreMatch(index.text, matchIndex, selectionLength, anchor)
+
+    if (anchor.selectedHash) {
+      if (getTextHash(selectedSlice) !== anchor.selectedHash) return Number.NEGATIVE_INFINITY
+      score += 12
+    }
+
+    if (exactNeedle && selectedSlice === exactNeedle) {
+      score += 10
+    }
+
+    if (prefix) {
+      if (!selectedSlice.startsWith(prefix)) return Number.NEGATIVE_INFINITY
+      score += 6
+    }
+
+    if (suffix) {
+      if (!selectedSlice.endsWith(suffix)) return Number.NEGATIVE_INFINITY
+      score += 6
+    }
+
+    return score
+  }
+
   const bestMatch = matches.reduce((best, match) => {
-    const bestScore = scoreMatch(index.text, best, selectedText.length, anchor)
-    const matchScore = scoreMatch(index.text, match, selectedText.length, anchor)
+    const bestScore = scoreCandidate(best)
+    const matchScore = scoreCandidate(match)
     return matchScore > bestScore ? match : best
   }, matches[0])
 
+  const bestScore = scoreCandidate(bestMatch)
+  if (!Number.isFinite(bestScore)) return null
+
   const start = index.positions[bestMatch]
-  const end = index.positions[bestMatch + selectedText.length - 1]
+  const end = index.positions[bestMatch + selectionLength - 1]
   if (!start || !end) return null
 
   const range = document.createRange()
@@ -415,7 +487,7 @@ const findTextMatchByAnchor = (root: Element, anchor: PromptSelectionAnchor): Te
   range.setEnd(end.node, end.offset + 1)
   return {
     range,
-    score: scoreMatch(index.text, bestMatch, selectedText.length, anchor),
+    score: bestScore,
     matchIndex: bestMatch,
     matchCount: matches.length,
   }

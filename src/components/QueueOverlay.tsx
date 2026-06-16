@@ -424,7 +424,12 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
     (id: string) => {
       if (editValue.trim()) {
         const item = store.items.find((item) => item.id === id)
-        store.updateContent(id, appendQuickQuoteMarker(editValue.trim(), item?.metadata?.quoteRef))
+        store.updateContent(
+          id,
+          appendQuickQuoteMarker(editValue.trim(), item?.metadata?.quoteRef, {
+            kind: item?.metadata?.quoteMarkerKind,
+          }),
+        )
       }
       setEditingItemId(null)
     },

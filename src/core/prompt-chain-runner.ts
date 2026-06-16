@@ -43,6 +43,13 @@ const uniqueVariables = (variables: ParsedVariable[]): ParsedVariable[] => {
   return result
 }
 
+const usesQuoteContext = (template: string): boolean =>
+  extractVariables(template).some(
+    (variable) =>
+      variable.raw === PROMPT_CHAIN_AUTO_VARIABLES.selection ||
+      variable.raw === PROMPT_CHAIN_AUTO_VARIABLES.quote,
+  )
+
 export const buildPromptChainAutoValues = (
   selection: PromptChainSelectionContext,
 ): Record<string, string> => {
@@ -114,7 +121,7 @@ export const resolvePromptChainSteps = ({
       const content = replaceVariables(template, variableValues).trim()
       if (!content) return null
 
-      let quoteRef = selection.quoteRef
+      let quoteRef = usesQuoteContext(template) ? selection.quoteRef : undefined
       if (quoteRef) {
         quoteRef = {
           ...quoteRef,
@@ -145,19 +152,37 @@ export const resolvePromptChainSteps = ({
 export const buildPromptChainQueueInputs = (
   chain: PromptChain,
   resolvedSteps: ResolvedPromptChainStep[],
-): QueueEnqueueInput[] =>
-  resolvedSteps.map((resolvedStep, index) => ({
-    content: appendQuickQuoteMarker(resolvedStep.content, resolvedStep.quoteRef),
-    metadata: {
-      source: "quick-follow-up",
-      promptId: resolvedStep.prompt.id,
-      promptTitle: resolvedStep.prompt.title,
-      chainId: chain.id,
-      chainTitle: chain.title,
-      stepId: resolvedStep.step.id,
-      stepIndex: index + 1,
-      stepTotal: resolvedSteps.length,
-      quoteRef: resolvedStep.quoteRef,
-      runMode: resolvedStep.step.runMode,
-    },
-  }))
+): QueueEnqueueInput[] => {
+  let hasFullQuoteMarker = false
+
+  return resolvedSteps.map((resolvedStep, index) => {
+    const quoteMarkerKind = resolvedStep.quoteRef
+      ? hasFullQuoteMarker
+        ? "ref"
+        : "full"
+      : undefined
+
+    if (quoteMarkerKind === "full") {
+      hasFullQuoteMarker = true
+    }
+
+    return {
+      content: appendQuickQuoteMarker(resolvedStep.content, resolvedStep.quoteRef, {
+        kind: quoteMarkerKind,
+      }),
+      metadata: {
+        source: "quick-follow-up",
+        promptId: resolvedStep.prompt.id,
+        promptTitle: resolvedStep.prompt.title,
+        chainId: chain.id,
+        chainTitle: chain.title,
+        stepId: resolvedStep.step.id,
+        stepIndex: index + 1,
+        stepTotal: resolvedSteps.length,
+        quoteRef: resolvedStep.quoteRef,
+        quoteMarkerKind,
+        runMode: resolvedStep.step.runMode,
+      },
+    }
+  })
+}

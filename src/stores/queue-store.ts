@@ -31,6 +31,7 @@ export interface QueueItemMetadata {
   stepIndex?: number
   stepTotal?: number
   quoteRef?: PromptQuoteReference
+  quoteMarkerKind?: "full" | "ref"
   runMode?: PromptActionRunMode
 }
 
