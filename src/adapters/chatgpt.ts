@@ -234,7 +234,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   getQuickQuoteSupportMode() {
-    return "enabled" as const
+    return "native" as const
   }
 
   getNewTabUrl(): string {
