@@ -80,25 +80,62 @@
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
-## 🎯 Cas d’usage
-
-- Apprentissage et recherche : raisonnement sur longues conversations, organiser les connaissances, relire les conclusions, extraire des notes
-- Travail au quotidien : découpage des besoins, rédaction de solutions, analyse concurrentielle, comptes rendus de réunion, workflows de conseil et de management
-- Développement et rédaction technique : longues discussions de code, triage de bugs, exploration d’architecture, documentation/blog
-- Création de contenu : itérer scripts/plans/révisions, revenir vite aux passages clés et exporter pour retravailler
-- Utilisateurs intensifs d’IA : besoin de structure, d’ordre et de réutilisation, pas seulement de chats ponctuels
-
 ## ✨ Fonctionnalités Clés
 
-- 🧠 **Smart Outline** — Analyse automatique des requêtes utilisateur et réponses IA en structure navigable
-- 💬 **Conversation Manager** — Dossiers, tags, recherche, opérations par lot
-- ⌨️ **Prompt Library** — Variables, prévisualisation Markdown, catégories, insertion en un clic
-- 🎨 **Personnalisation de Thème** — 20+ thèmes sombres/clairs, CSS personnalisé
-- 🔧 **Optimisation UI** — Mode écran large, contrôle de largeur, mise en page latérale
-- 📖 **Expérience de Lecture** — Verrouillage du défilement, restauration de l'historique, rendu Markdown
-- ⚡ **Outils de Productivité** — Raccourcis, verrouillage de modèle, renommage automatique, notifications
-- 🎭 **Amélioration Claude** — Gestion de clé de session, changement multi-compte
-- 🔒 **Confidentialité d'Abord** — Stockage local, sync WebDAV, aucune collecte de données
+> Idéal pour l’apprentissage, la recherche, l’analyse de besoins, les discussions de code, la création de contenu — toute conversation IA nécessitant structure, ordre et réutilisation.
+
+<table>
+  <thead>
+    <tr>
+      <th width="200">Fonctionnalité</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>🧭 <a href="https://ophel.app/docs/features/outline">Smart Outline</a></td>
+      <td>Analyse automatique de la structure de conversation en sommaire navigable avec repli hiérarchique, recherche, ancres, favoris et compteur de mots</td>
+    </tr>
+    <tr>
+      <td>💬 <a href="https://ophel.app/docs/features/conversations">Conversations</a></td>
+      <td>Dossiers + tags pour une gestion bidimensionnelle, synchronisation automatique, recherche, opérations par lot et export multi-format (Markdown/JSON/TXT)</td>
+    </tr>
+    <tr>
+      <td>💡 <a href="https://ophel.app/docs/features/prompts">Bibliothèque de Prompts</a></td>
+      <td>Templates à variables, catégorisation, insertion en un clic, envoi par double-clic, file d’attente de prompts pour envoi séquentiel automatique</td>
+    </tr>
+    <tr>
+      <td>🔍 <a href="https://ophel.app/docs/features/global-search">Recherche Globale</a></td>
+      <td>Recherche unifiée conversations, outlines, prompts et paramètres avec filtres <code>folder:</code> <code>tag:</code> <code>date:</code> et correspondance floue</td>
+    </tr>
+    <tr>
+      <td>📖 <a href="https://ophel.app/docs/enhancements/content">Lecture</a></td>
+      <td>Rendu de diagrammes Mermaid, support de formules LaTeX, mise en forme Markdown des questions utilisateur, verrouillage du défilement</td>
+    </tr>
+    <tr>
+      <td>⌨️ <a href="https://ophel.app/docs/customization/shortcuts">Productivité</a></td>
+      <td>Restauration de l’historique de lecture, raccourcis personnalisés, verrouillage de modèle, nommage d’onglets amélioré, notifications de complétion IA</td>
+    </tr>
+    <tr>
+      <td>🎨 <a href="https://ophel.app/docs/customization/appearance">Thèmes</a></td>
+      <td>20+ thèmes, CSS personnalisé, mode écran large, mode Zen, <code>Option+D</code> pour basculer sombre/clair</td>
+    </tr>
+    <tr>
+      <td>📊 <a href="https://ophel.app/docs/panel-overview">Statistiques</a></td>
+      <td>Compteur de conversations local, estimations de tokens, graphiques d’historique (par site et par période)</td>
+    </tr>
+    <tr>
+      <td>🎭 <a href="https://ophel.app/docs/customization/site-settings">Claude</a></td>
+      <td>Gestion de Session Key et changement rapide de multi-comptes</td>
+    </tr>
+    <tr>
+      <td>🔒 <a href="https://ophel.app/docs/data/privacy">Confidentialité & Données</a></td>
+      <td>Stockage local par défaut, synchronisation WebDAV multi-appareils, import/export de fichiers, aucune collecte de données</td>
+    </tr>
+  </tbody>
+</table>
+
+<p align="right"><a href="https://ophel.app/docs/introduction">📖 Documentation complète →</a></p>
 
 > [!IMPORTANT]
 >
@@ -201,6 +238,10 @@
     <td align="center" valign="top" width="14.28%">
       <img src="https://api.dicebear.com/7.x/bottts/svg?seed=%20%E7%81%AB%E5%8D%8E%E5%85%B0%E6%A8%B1%7Cwechat%7C2026-05-24%7C%C2%A530&amp;radius=20&amp;backgroundColor=f1f5f9" width="84px;" alt=" 火华兰樱" /><br />
       <sub><b> 火华兰樱</b></sub>
+    </td>
+    <td align="center" valign="top" width="14.28%">
+      <img src="https://storage.ko-fi.com/cdn/useruploads/post/7b7c1170-1d94-45d4-a1b9-8a268e77dedb_e76c8809-8746-4173-88ff-e06a4e3eb939.png" width="84px;" alt="Lewu Gao" /><br />
+      <sub><b>Lewu Gao</b></sub>
     </td>
   </tr>
   </tbody>
@@ -339,6 +380,8 @@ Notre plus profonde gratitude aux personnes remarquables ci-dessous. Vos contrib
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/hugo1120"><img src="https://avatars.githubusercontent.com/u/69150726?v=4&amp;s=80" width="80px;" alt="hugo2233"/><br /><sub><b>hugo2233</b></sub></a><br /><span title="Promotion">📣</span></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/t0ny-peng"><img src="https://avatars.githubusercontent.com/u/4816327?v=4&amp;s=80" width="80px;" alt="t0ny-peng"/><br /><sub><b>t0ny-peng</b></sub></a><br /><span title="Code">💻</span></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/mrpops2ko"><img src="https://avatars.githubusercontent.com/u/34683587?v=4&amp;s=80" width="80px;" alt="mrpops2ko"/><br /><sub><b>mrpops2ko</b></sub></a><br /><span title="Code">💻</span></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/Suxixihuanni"><img src="https://avatars.githubusercontent.com/u/208633969?v=4&amp;s=80" width="80px;" alt="Suxixihuanni"/><br /><sub><b>Suxixihuanni</b></sub></a><br /><span title="Promotion">📣</span></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/Ice-wilderness"><img src="https://avatars.githubusercontent.com/u/65530045?v=4&amp;s=80" width="80px;" alt="Ice-wilderness"/><br /><sub><b>Ice-wilderness</b></sub></a><br /><span title="Code">💻</span> <span title="Bug reports">🐛</span></td>
     </tr>
   </tbody>
 </table>

@@ -1,5 +1,5 @@
 /**
- * SVG 图标组件 - 展开全部 (圆圈加号)
+ * SVG 图标组件 - 展开全部 (列表 + 外扩箭头)
  * 风格：Outline (stroke-based)
  */
 import React from "react"
@@ -21,14 +21,18 @@ export const ExpandAllIcon: React.FC<IconProps> = ({
     height={size}
     fill="none"
     stroke={color}
-    strokeWidth="1.5"
+    strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
     style={{ display: "block" }}>
-    <circle cx="12" cy="12" r="10" />
-    <line x1="12" y1="8" x2="12" y2="16" />
-    <line x1="8" y1="12" x2="16" y2="12" />
+    <path d="M4 6h6" />
+    <path d="M4 10h9" />
+    <path d="M4 14h9" />
+    <path d="M4 18h6" />
+    <path d="M18 5v14" />
+    <path d="m15.5 7.5 2.5-2.5 2.5 2.5" />
+    <path d="m15.5 16.5 2.5 2.5 2.5-2.5" />
   </svg>
 )
 

@@ -21,15 +21,16 @@ export const ConversationIcon: React.FC<IconProps> = ({
     height={size}
     fill="none"
     stroke={color}
-    strokeWidth="1.5"
+    strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
+    xmlns="http://www.w3.org/2000/svg"
     className={className}
-    style={{ display: "block" }}>
-    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    <circle cx="9" cy="11" r="1" fill={color} stroke="none" />
-    <circle cx="12" cy="11" r="1" fill={color} stroke="none" />
-    <circle cx="15" cy="11" r="1" fill={color} stroke="none" />
+    style={{ display: "block", flexShrink: 0 }}>
+    <path d="M6.5 17.5H6a3.5 3.5 0 0 1-3.5-3.5V7a3.5 3.5 0 0 1 3.5-3.5h12A3.5 3.5 0 0 1 21.5 7v7a3.5 3.5 0 0 1-3.5 3.5h-5.2L6.5 20.5v-3Z" />
+    <circle cx="8" cy="10.5" r="1" fill={color} stroke="none" />
+    <circle cx="12" cy="10.5" r="1" fill={color} stroke="none" />
+    <circle cx="16" cy="10.5" r="1" fill={color} stroke="none" />
   </svg>
 )
 

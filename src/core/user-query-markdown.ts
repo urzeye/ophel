@@ -41,14 +41,26 @@ const RESCAN_INTERVAL = 2000 // Shadow DOM 站点重扫描间隔
 const INITIAL_DELAY = 1000 // 首次扫描延迟
 const STYLE_ID = "gh-user-query-markdown-style"
 
-// 用户提问 Markdown 渲染样式（注入到页面 document.head）
-// 如果把 CSS 抽离到单独的 .css 文件：需要使用 data-text: 导入为字符串，然后仍然需要在 JS 中拼接并手动注入
-const USER_QUERY_MARKDOWN_CSS = `
+function isUserscriptPlatform(): boolean {
+  return typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
+}
+
+function getUserscriptUserQueryMarkdownStyles(): string {
+  if (typeof window === "undefined" || !isUserscriptPlatform()) return ""
+  return (
+    (window as typeof window & { __OPHEL_USER_QUERY_MARKDOWN_STYLES__?: string })
+      .__OPHEL_USER_QUERY_MARKDOWN_STYLES__ || ""
+  )
+}
+
+function getInlineUserQueryMarkdownStyles(): string {
+  return `
 /* ============= 用户提问 Markdown 渲染样式 ============= */
 .gh-user-query-markdown {
   font-size: 15px;
   line-height: 1.6;
   color: inherit;
+  white-space: normal !important;
   /* 默认：浅色主题代码块（透明叠加，叠加在气泡背景之上，适配任意站点/主题） */
   --gh-user-query-code-bg: rgba(0, 0, 0, 0.06);
   --gh-user-query-code-border: rgba(0, 0, 0, 0.08);
@@ -66,6 +78,10 @@ const USER_QUERY_MARKDOWN_CSS = `
 
 .gh-user-query-markdown.gh-markdown-preview {
   color: inherit;
+}
+
+.gh-user-query-markdown.gh-user-query-markdown-deepseek {
+  color: var(--dsw-alias-label-primary, var(--dsr-input-label-primary, #111827)) !important;
 }
 
 /* 为无原生气泡背景的站点（DeepSeek、Kimi 等）提供统一气泡底色
@@ -418,6 +434,15 @@ html.dark .gh-user-query-markdown hr {
   border-top-color: #4b5563;
 }
 `
+}
+
+function getUserQueryMarkdownStyles(): string {
+  if (isUserscriptPlatform()) {
+    return getUserscriptUserQueryMarkdownStyles()
+  }
+
+  return getInlineUserQueryMarkdownStyles()
+}
 
 /**
  * 检测文本是否看起来像 Markdown
@@ -504,33 +529,55 @@ export class UserQueryMarkdownRenderer {
    * 注入样式到 document.head
    */
   private injectGlobalStyles() {
-    if (document.getElementById(STYLE_ID)) return
+    const styleText = this.getStyleText()
+    let style = document.getElementById(STYLE_ID)
 
-    const style = document.createElement("style")
-    style.id = STYLE_ID
-    style.textContent = [getHighlightStyles(), getMathStyles(), USER_QUERY_MARKDOWN_CSS]
-      .filter(Boolean)
-      .join("\n")
-    document.head.appendChild(style)
+    if (!style) {
+      style = document.createElement("style")
+      style.id = STYLE_ID
+      document.head.appendChild(style)
+    }
+
+    if (style.textContent !== styleText) {
+      style.textContent = styleText
+    }
   }
 
   /**
    * 注入样式到 Shadow DOM（用于 Gemini Enterprise）
    */
   private injectStyleToShadowRoot(shadowRoot: ShadowRoot) {
-    if (this.injectedShadowRoots.has(shadowRoot)) return
-    if (shadowRoot.querySelector(`#${STYLE_ID}`)) return
+    const styleText = this.getStyleText()
+    const existingStyle = shadowRoot.querySelector(`#${STYLE_ID}`)
+    if (existingStyle) {
+      if (existingStyle.textContent !== styleText) {
+        existingStyle.textContent = styleText
+      }
+      this.injectedShadowRoots.add(shadowRoot)
+      return
+    }
 
     const style = document.createElement("style")
     style.id = STYLE_ID
-    style.textContent = [getHighlightStyles(), getMathStyles(), USER_QUERY_MARKDOWN_CSS]
-      .filter(Boolean)
-      .join("\n")
+    style.textContent = styleText
     shadowRoot.prepend(style)
-    this.injectedShadowRoots.add(shadowRoot)
 
     // Shadow DOM 内的事件监听（因为 document 级别的事件无法穿透 Shadow DOM）
-    shadowRoot.addEventListener("click", (e: Event) => this.handleCodeCopy(e))
+    if (!this.injectedShadowRoots.has(shadowRoot)) {
+      shadowRoot.addEventListener("click", (e: Event) => this.handleCodeCopy(e))
+      this.injectedShadowRoots.add(shadowRoot)
+    }
+  }
+
+  private getStyleText(): string {
+    return [getHighlightStyles(), getMathStyles(), getUserQueryMarkdownStyles()]
+      .filter(Boolean)
+      .join("\n")
+  }
+
+  private normalizeRenderedContainer(container: Element) {
+    if (!(container instanceof HTMLElement)) return
+    container.style.setProperty("white-space", "normal", "important")
   }
 
   /**
@@ -636,6 +683,7 @@ export class UserQueryMarkdownRenderer {
       }
     }
     if (container) {
+      this.normalizeRenderedContainer(container)
       initCopyButtons(container, { size: 14, color: "#6b7280" })
       this.processedElements.set(element, rawMarkdown)
       return

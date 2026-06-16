@@ -480,29 +480,6 @@ export class DoubaoAdapter extends SiteAdapter {
     return true
   }
 
-  async loadAllConversations(): Promise<void> {
-    const container = this.getSidebarScrollContainer() as HTMLElement
-    if (!container) return
-
-    let lastCount = 0
-    let stableRounds = 0
-    const maxStableRounds = 3
-
-    while (stableRounds < maxStableRounds) {
-      container.scrollTop = container.scrollHeight
-      await new Promise((r) => setTimeout(r, 500))
-
-      const links = container.querySelectorAll(CONVERSATION_ROW_SELECTOR)
-      const currentCount = links.length
-      if (currentCount === lastCount) {
-        stableRounds++
-      } else {
-        lastCount = currentCount
-        stableRounds = 0
-      }
-    }
-  }
-
   getSidebarScrollContainer(): Element | null {
     const historyContainer = this.getHistoryContainer()
     return this.findScrollableAncestor(historyContainer) || historyContainer

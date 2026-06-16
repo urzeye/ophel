@@ -18,6 +18,11 @@ import { platform } from "~platform"
 import { geminiNativeThemeCss } from "~styles/native-theme-adapters/gemini"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import {
+  extractConversationTitleFromDocumentTitle,
+  GEMINI_NATIVE_TAB_TITLE_ATTR,
+  GEMINI_NATIVE_TAB_TITLE_PATH_ATTR,
+} from "~utils/conversation-title"
+import {
   buildMarkdownFilename,
   createMarkdownDocumentAssetLink,
   extractMarkdownTitle,
@@ -56,6 +61,7 @@ import {
   GEMINI_CANVAS_CODE_REQUEST_EVENT,
   GEMINI_CANVAS_CODE_RESPONSE_EVENT,
 } from "~core/gemini-canvas-code-bridge"
+import { WatermarkRemover } from "~core/watermark-remover"
 import {
   SiteAdapter,
   type ConversationDeleteTarget,
@@ -2130,7 +2136,23 @@ export class GeminiAdapter extends SiteAdapter {
     if (deepResearchArtifactTitle) {
       return deepResearchArtifactTitle
     }
+    const nativeTitle = this.getGeminiNativeDocumentTitle()
+    if (nativeTitle) {
+      return nativeTitle
+    }
     return super.getSessionName()
+  }
+
+  private getGeminiNativeDocumentTitle(): string | null {
+    const root = document.documentElement
+    const title = root?.getAttribute(GEMINI_NATIVE_TAB_TITLE_ATTR)
+    const path = root?.getAttribute(GEMINI_NATIVE_TAB_TITLE_PATH_ATTR)
+
+    if (!title || path !== window.location.pathname) return null
+
+    return extractConversationTitleFromDocumentTitle(title, {
+      siteName: this.getName(),
+    })
   }
 
   getConversationTitle(): string | null {
@@ -2535,7 +2557,11 @@ export class GeminiAdapter extends SiteAdapter {
 
     const images = Array.from(
       document.querySelectorAll(
-        `model-response ${GEMINI_EXPORT_IMAGE_SCOPE_SELECTOR} img, ${GEMINI_USER_QUERY_IMAGE_SELECTOR}`,
+        [
+          "model-response img",
+          `share-landing-page ${GEMINI_SHARE_ASSISTANT_MARKDOWN_SELECTOR} img`,
+          GEMINI_USER_QUERY_IMAGE_SELECTOR,
+        ].join(", "),
       ),
     ).filter((node): node is HTMLImageElement => node instanceof HTMLImageElement)
 
@@ -3140,6 +3166,9 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private getPreparedExportImageSrc(image: HTMLImageElement): string {
+    const displayedProcessedSource = this.getDisplayedProcessedImageDataUrl(image)
+    if (displayedProcessedSource) return displayedProcessedSource
+
     const directCandidates = [
       image.getAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR) || "",
       image.getAttribute("data-ophel-wm-source") || "",
@@ -3162,6 +3191,11 @@ export class GeminiAdapter extends SiteAdapter {
     image: HTMLImageElement,
     context: ExportLifecycleContext,
   ): Promise<string> {
+    const watermarkRemovedSource = await this.resolveWatermarkRemovedExportImageSrc(image)
+    if (watermarkRemovedSource) {
+      return watermarkRemovedSource
+    }
+
     const directCandidates = [this.getPreparedExportImageSrc(image)]
     const fallbackCandidates = [
       image.getAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR) || "",
@@ -3176,7 +3210,7 @@ export class GeminiAdapter extends SiteAdapter {
       if (!candidate) continue
 
       if (this.shouldInlineUserQueryImageForExport(image, context)) {
-        return this.resolveExportImageDataUrl(candidate)
+        return this.resolveExportImageDataUrl(candidate, image)
       }
 
       if (this.isStablePreparedExportImageUrl(candidate)) {
@@ -3192,7 +3226,61 @@ export class GeminiAdapter extends SiteAdapter {
       return ""
     }
 
-    return this.convertBlobUrlToDataUrl(blobCandidate)
+    return this.convertBlobUrlToDataUrl(blobCandidate, image)
+  }
+
+  private shouldTryWatermarkRemovalForExport(image: HTMLImageElement): boolean {
+    if (image.closest("user-query")) return false
+    if (image.closest("model-response")) {
+      return image.closest(GEMINI_EXPORT_IMAGE_SCOPE_SELECTOR) !== null
+    }
+    return image.closest(`share-landing-page ${GEMINI_SHARE_ASSISTANT_MARKDOWN_SELECTOR}`) !== null
+  }
+
+  private getDisplayedProcessedImageDataUrl(image: HTMLImageElement): string {
+    if (image.getAttribute("data-ophel-wm-processed") !== "1") return ""
+
+    const candidates = [image.currentSrc || "", image.src || "", image.getAttribute("src") || ""]
+    return (
+      candidates
+        .map((candidate) => this.normalizeExportImageUrl(candidate))
+        .find((candidate) => candidate.startsWith("data:image/")) || ""
+    )
+  }
+
+  private async resolveWatermarkRemovedExportImageSrc(image: HTMLImageElement): Promise<string> {
+    if (!this.shouldTryWatermarkRemovalForExport(image)) return ""
+
+    const displayedProcessedSource = this.getDisplayedProcessedImageDataUrl(image)
+    if (displayedProcessedSource) return displayedProcessedSource
+
+    const watermarkRemover = WatermarkRemover.getActiveInstance()
+    if (!watermarkRemover) return ""
+
+    const candidates = [
+      image.getAttribute("data-ophel-wm-source") || "",
+      image.currentSrc || "",
+      image.src || "",
+      image.getAttribute("src") || "",
+      image.getAttribute(GEMINI_EXPORT_IMAGE_SRC_ATTR) || "",
+    ]
+    const seenCandidates = new Set<string>()
+
+    for (const rawCandidate of candidates) {
+      const candidate = this.normalizeExportImageUrl(rawCandidate)
+      if (!candidate || seenCandidates.has(candidate)) continue
+      seenCandidates.add(candidate)
+      if (candidate.startsWith("data:image/")) continue
+
+      const processedDataUrl = await watermarkRemover.resolveProcessedImageDataUrl(candidate, {
+        scene: "export",
+      })
+      if (processedDataUrl?.startsWith("data:image/")) {
+        return processedDataUrl
+      }
+    }
+
+    return ""
   }
 
   private shouldInlineUserQueryImageForExport(
@@ -3206,9 +3294,12 @@ export class GeminiAdapter extends SiteAdapter {
     )
   }
 
-  private async resolveExportImageDataUrl(source: string): Promise<string> {
+  private async resolveExportImageDataUrl(
+    source: string,
+    image?: HTMLImageElement,
+  ): Promise<string> {
     if (source.startsWith("data:image/")) return source
-    if (source.startsWith("blob:")) return this.convertBlobUrlToDataUrl(source)
+    if (source.startsWith("blob:")) return this.convertBlobUrlToDataUrl(source, image)
     if (!/^https?:\/\//i.test(source)) return ""
 
     try {
@@ -3272,7 +3363,41 @@ export class GeminiAdapter extends SiteAdapter {
     return /^https?:\/\//i.test(value)
   }
 
-  private async convertBlobUrlToDataUrl(blobUrl: string): Promise<string> {
+  private async convertImageElementToDataUrl(image: HTMLImageElement): Promise<string> {
+    if (!image.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0) {
+      await image.decode()
+    }
+
+    const width = image.naturalWidth || image.width || image.clientWidth
+    const height = image.naturalHeight || image.height || image.clientHeight
+    if (width <= 0 || height <= 0) {
+      throw new Error("Image has no exportable size")
+    }
+
+    const canvas = document.createElement("canvas")
+    canvas.width = width
+    canvas.height = height
+    const context = canvas.getContext("2d")
+    if (!context) {
+      throw new Error("2D canvas context unavailable")
+    }
+
+    context.drawImage(image, 0, 0, width, height)
+    return canvas.toDataURL("image/png")
+  }
+
+  private async convertBlobUrlToDataUrl(
+    blobUrl: string,
+    image?: HTMLImageElement,
+  ): Promise<string> {
+    if (image) {
+      try {
+        return await this.convertImageElementToDataUrl(image)
+      } catch {
+        // Fall back to fetch for extension pages where blob: fetch is allowed.
+      }
+    }
+
     const response = await fetch(blobUrl)
     const blob = await response.blob()
     return this.convertBlobToDataUrl(blob)

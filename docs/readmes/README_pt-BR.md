@@ -80,25 +80,62 @@
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
-## 🎯 Casos de uso
-
-- Aprendizado e pesquisa: raciocínio em conversas longas, organizar conhecimento, revisar conclusões, extrair notas
-- Trabalho diário: decomposição de requisitos, elaboração de propostas, análise competitiva, atas de reunião, fluxos de consultoria e gestão
-- Desenvolvimento e escrita técnica: discussões longas de código, investigação de bugs, exploração de arquitetura, docs/blog
-- Criação de conteúdo: iterar scripts/esboços/revisões, voltar rápido a trechos-chave e exportar para retrabalhar
-- Usuários intensivos de IA: precisam de estrutura, ordem e reutilização — não apenas chats pontuais
-
 ## ✨ Recursos Principais
 
-- 🧠 **Smart Outline** — Analisa automaticamente consultas e respostas de IA em estrutura navegável
-- 💬 **Conversation Manager** — Pastas, etiquetas, pesquisa, operações em lote
-- ⌨️ **Prompt Library** — Variáveis, pré-visualização Markdown, categorias, inserção com um clique
-- 🎨 **Personalização de Tema** — 20+ temas escuros/claros, CSS personalizado
-- 🔧 **Otimização de UI** — Modo widescreen, controle de largura, layout da barra lateral
-- 📖 **Experiência de Leitura** — Bloqueio de rolagem, restauração de histórico, renderização Markdown
-- ⚡ **Produtividade** — Atalhos, bloqueio de modelo, renomeação automática, notificações
-- 🎭 **Melhoria Claude** — Gestão de chave de sessão, troca multi-conta
-- 🔒 **Privacidade Primeiro** — Armazenamento local, sincronização WebDAV, sem coleta de dados
+> Ideal para aprendizado, pesquisa, análise de requisitos, discussões de código, criação de conteúdo — qualquer conversa com IA que precise de estrutura, ordem e reutilização.
+
+<table>
+  <thead>
+    <tr>
+      <th width="200">Recurso</th>
+      <th>Descrição</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>🧭 <a href="https://ophel.app/docs/features/outline">Smart Outline</a></td>
+      <td>Analisa automaticamente a estrutura da conversa em um sumário navegável com colapso hierárquico, busca, âncoras, favoritos e contagem de palavras</td>
+    </tr>
+    <tr>
+      <td>💬 <a href="https://ophel.app/docs/features/conversations">Conversas</a></td>
+      <td>Pastas + etiquetas para gestão bidimensional, sincronização automática, busca, operações em lote e exportação multi-formato (Markdown/JSON/TXT)</td>
+    </tr>
+    <tr>
+      <td>💡 <a href="https://ophel.app/docs/features/prompts">Biblioteca de Prompts</a></td>
+      <td>Templates com variáveis, categorização, inserção com um clique, envio com duplo clique, fila de prompts para envio sequencial automático</td>
+    </tr>
+    <tr>
+      <td>🔍 <a href="https://ophel.app/docs/features/global-search">Busca Global</a></td>
+      <td>Busca unificada em conversas, outlines, prompts e configurações com filtros <code>folder:</code> <code>tag:</code> <code>date:</code> e correspondência difusa</td>
+    </tr>
+    <tr>
+      <td>📖 <a href="https://ophel.app/docs/enhancements/content">Leitura</a></td>
+      <td>Renderização de diagramas Mermaid, suporte a fórmulas LaTeX, estilização Markdown de perguntas do usuário, bloqueio de rolagem</td>
+    </tr>
+    <tr>
+      <td>⌨️ <a href="https://ophel.app/docs/customization/shortcuts">Produtividade</a></td>
+      <td>Restauração do histórico de leitura, atalhos personalizados, bloqueio de modelo, nomes de aba aprimorados, notificações de conclusão IA</td>
+    </tr>
+    <tr>
+      <td>🎨 <a href="https://ophel.app/docs/customization/appearance">Temas</a></td>
+      <td>20+ temas, CSS personalizado, modo widescreen, modo Zen, <code>Option+D</code> para alternar escuro/claro</td>
+    </tr>
+    <tr>
+      <td>📊 <a href="https://ophel.app/docs/panel-overview">Estatísticas</a></td>
+      <td>Contador local de conversas, estimativas de tokens, gráficos de histórico (por site e tempo)</td>
+    </tr>
+    <tr>
+      <td>🎭 <a href="https://ophel.app/docs/customization/site-settings">Claude</a></td>
+      <td>Gestão de Session Key e troca rápida multi-conta</td>
+    </tr>
+    <tr>
+      <td>🔒 <a href="https://ophel.app/docs/data/privacy">Privacidade e Dados</a></td>
+      <td>Armazenamento local por padrão, sincronização WebDAV multi-dispositivo, importação/exportação de arquivos, sem coleta de dados</td>
+    </tr>
+  </tbody>
+</table>
+
+<p align="right"><a href="https://ophel.app/docs/introduction">📖 Documentação completa →</a></p>
 
 > [!IMPORTANT]
 >
@@ -201,6 +238,10 @@
     <td align="center" valign="top" width="14.28%">
       <img src="https://api.dicebear.com/7.x/bottts/svg?seed=%20%E7%81%AB%E5%8D%8E%E5%85%B0%E6%A8%B1%7Cwechat%7C2026-05-24%7C%C2%A530&amp;radius=20&amp;backgroundColor=f1f5f9" width="84px;" alt=" 火华兰樱" /><br />
       <sub><b> 火华兰樱</b></sub>
+    </td>
+    <td align="center" valign="top" width="14.28%">
+      <img src="https://storage.ko-fi.com/cdn/useruploads/post/7b7c1170-1d94-45d4-a1b9-8a268e77dedb_e76c8809-8746-4173-88ff-e06a4e3eb939.png" width="84px;" alt="Lewu Gao" /><br />
+      <sub><b>Lewu Gao</b></sub>
     </td>
   </tr>
   </tbody>
@@ -322,6 +363,8 @@ Nossa mais profunda gratidão às incríveis pessoas abaixo. Suas contribuiçõe
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/hugo1120"><img src="https://avatars.githubusercontent.com/u/69150726?v=4&amp;s=80" width="80px;" alt="hugo2233"/><br /><sub><b>hugo2233</b></sub></a><br /><span title="Promotion">📣</span></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/t0ny-peng"><img src="https://avatars.githubusercontent.com/u/4816327?v=4&amp;s=80" width="80px;" alt="t0ny-peng"/><br /><sub><b>t0ny-peng</b></sub></a><br /><span title="Code">💻</span></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/mrpops2ko"><img src="https://avatars.githubusercontent.com/u/34683587?v=4&amp;s=80" width="80px;" alt="mrpops2ko"/><br /><sub><b>mrpops2ko</b></sub></a><br /><span title="Code">💻</span></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/Suxixihuanni"><img src="https://avatars.githubusercontent.com/u/208633969?v=4&amp;s=80" width="80px;" alt="Suxixihuanni"/><br /><sub><b>Suxixihuanni</b></sub></a><br /><span title="Promotion">📣</span></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/Ice-wilderness"><img src="https://avatars.githubusercontent.com/u/65530045?v=4&amp;s=80" width="80px;" alt="Ice-wilderness"/><br /><sub><b>Ice-wilderness</b></sub></a><br /><span title="Code">💻</span> <span title="Bug reports">🐛</span></td>
     </tr>
   </tbody>
 </table>

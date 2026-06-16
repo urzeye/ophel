@@ -1,9 +1,12 @@
 import type { PlasmoCSConfig } from "plasmo"
+import {
+  isGeminiGeneratedImageUrl,
+  normalizeGeminiImageUrl,
+} from "~core/watermark/gemini-asset-url"
 
 const OPHEL_WATERMARK_FETCH_TOGGLE = "OPHEL_WATERMARK_FETCH_TOGGLE"
 const OPHEL_WATERMARK_PROCESS_REQUEST = "OPHEL_WATERMARK_PROCESS_REQUEST"
 const OPHEL_WATERMARK_PROCESS_RESPONSE = "OPHEL_WATERMARK_PROCESS_RESPONSE"
-const GEMINI_MAIN_IMAGE_URL_PATTERN = /^https:\/\/lh3\.googleusercontent\.com\//i
 
 export const config: PlasmoCSConfig = {
   matches: ["https://gemini.google.com/*"],
@@ -43,34 +46,6 @@ if (!(window as any).__ophelGeminiWatermarkMainInitialized) {
       if (typeof requestLike.url === "string") return requestLike.url
     }
     return ""
-  }
-
-  const replaceWithNormalSize = (src: string): string => {
-    if (!src) return src
-    const suffixIndex = src.search(/[?#]/)
-    const endIndex = suffixIndex === -1 ? src.length : suffixIndex
-    const lastSlashIndex = src.lastIndexOf("/", endIndex)
-    const optionStartIndex = src.lastIndexOf("=", endIndex)
-
-    if (optionStartIndex === -1 || optionStartIndex < lastSlashIndex) {
-      return src
-    }
-
-    const rawOptions = src.slice(optionStartIndex + 1, endIndex)
-    if (!rawOptions) return src
-
-    const optionTokens = rawOptions.split("-").filter(Boolean)
-    const keptTokens = optionTokens.filter((token) => {
-      const normalized = token.toLowerCase()
-      if (/^s\d+$/.test(normalized)) return false
-      if (/^w\d+$/.test(normalized)) return false
-      if (/^h\d+$/.test(normalized)) return false
-      if (normalized === "rj") return false
-      return true
-    })
-
-    const normalizedOptions = ["s0", ...keptTokens].join("-")
-    return `${src.slice(0, optionStartIndex + 1)}${normalizedOptions}${src.slice(endIndex)}`
   }
 
   const requestProcessedDataUrl = async (payload: {
@@ -119,11 +94,11 @@ if (!(window as any).__ophelGeminiWatermarkMainInitialized) {
     }
 
     const requestUrl = getRequestUrl(args[0])
-    if (!requestUrl || !GEMINI_MAIN_IMAGE_URL_PATTERN.test(requestUrl)) {
+    if (!requestUrl || !isGeminiGeneratedImageUrl(requestUrl)) {
       return originalFetch(...args)
     }
 
-    const normalizedUrl = replaceWithNormalSize(requestUrl)
+    const normalizedUrl = normalizeGeminiImageUrl(requestUrl)
 
     const nextArgs = [...args] as Parameters<typeof fetch>
     if (typeof nextArgs[0] === "string") {
@@ -144,7 +119,7 @@ if (!(window as any).__ophelGeminiWatermarkMainInitialized) {
       originalBlob = await originalResponse.blob()
 
       const processedDataUrl = await requestProcessedDataUrl({
-        url: requestUrl,
+        url: normalizedUrl,
         blob: originalBlob,
       })
 

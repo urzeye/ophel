@@ -152,11 +152,20 @@ export const renderMarkdown = (
 
 export const getMathStyles = (): string => getKatexStylesText()
 
-/**
- * 获取 highlight.js 主题样式
- * 返回 GitHub Dark 风格的样式
- */
-export const getHighlightStyles = (): string => `
+function isUserscriptPlatform(): boolean {
+  return typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
+}
+
+function getUserscriptMarkdownPreviewStyles(): string {
+  if (typeof window === "undefined" || !isUserscriptPlatform()) return ""
+  return (
+    (window as typeof window & { __OPHEL_MARKDOWN_PREVIEW_STYLES__?: string })
+      .__OPHEL_MARKDOWN_PREVIEW_STYLES__ || ""
+  )
+}
+
+function getInlineHighlightStyles(): string {
+  return `
 /* highlight.js GitHub Dark 主题
    面板（Shadow DOM）通过 var() 跟随 Ophel 主题变量；
    主文档注入（用户提问）var() 不可用，fallback 为 #1e1e1e */
@@ -323,3 +332,16 @@ export const getHighlightStyles = (): string => `
   border-color: #f85149;
 }
 `
+}
+
+/**
+ * 获取 highlight.js 主题样式
+ * 返回 GitHub Dark 风格的样式
+ */
+export const getHighlightStyles = (): string => {
+  if (isUserscriptPlatform()) {
+    return getUserscriptMarkdownPreviewStyles()
+  }
+
+  return getInlineHighlightStyles()
+}

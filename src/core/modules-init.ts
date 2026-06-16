@@ -250,7 +250,7 @@ export function initLayoutManager(ctx: ModulesContext): void {
     modules.layoutManager = new LayoutManager(adapter, sitePageWidth)
     if (sitePageWidth?.enabled) modules.layoutManager.apply()
     if (siteUserQueryWidth?.enabled) modules.layoutManager.updateUserQueryConfig(siteUserQueryWidth)
-    if (zenModeEnabled) modules.layoutManager.updateZenMode(true)
+    if (zenModeEnabled) modules.layoutManager.updateZenMode(siteZenMode)
     if (cleanModeEnabled) modules.layoutManager.updateCleanMode(true)
   }
 }
@@ -518,7 +518,7 @@ export function subscribeModuleUpdates(ctx: ModulesContext): void {
     if (modules.layoutManager) {
       modules.layoutManager.updateConfig(newSitePageWidth)
       modules.layoutManager.updateUserQueryConfig(newUserQueryWidth)
-      modules.layoutManager.updateZenMode(newZenModeEnabled)
+      modules.layoutManager.updateZenMode(newSiteZenMode)
       modules.layoutManager.updateCleanMode(newCleanModeEnabled)
     } else if (
       newSitePageWidth?.enabled ||
@@ -529,7 +529,7 @@ export function subscribeModuleUpdates(ctx: ModulesContext): void {
       modules.layoutManager = new LayoutManager(adapter, newSitePageWidth)
       if (newSitePageWidth?.enabled) modules.layoutManager.apply()
       if (newUserQueryWidth?.enabled) modules.layoutManager.updateUserQueryConfig(newUserQueryWidth)
-      if (newZenModeEnabled) modules.layoutManager.updateZenMode(true)
+      if (newZenModeEnabled) modules.layoutManager.updateZenMode(newSiteZenMode)
       if (newCleanModeEnabled) modules.layoutManager.updateCleanMode(true)
     }
 

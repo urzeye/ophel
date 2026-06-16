@@ -470,29 +470,6 @@ export class YuanbaoAdapter extends SiteAdapter {
     return document.querySelector(SIDEBAR_SCROLL_SELECTOR)
   }
 
-  async loadAllConversations(): Promise<void> {
-    const container = this.getSidebarScrollContainer()
-    if (!(container instanceof HTMLElement)) return
-
-    let lastCount = 0
-    let stableRounds = 0
-    const maxStableRounds = 4
-
-    while (stableRounds < maxStableRounds) {
-      container.scrollTop = container.scrollHeight
-      container.dispatchEvent(new Event("scroll", { bubbles: true }))
-      await new Promise((resolve) => window.setTimeout(resolve, 500))
-
-      const currentCount = document.querySelectorAll(CONVERSATION_ITEM_SELECTOR).length
-      if (currentCount === lastCount) {
-        stableRounds += 1
-      } else {
-        lastCount = currentCount
-        stableRounds = 0
-      }
-    }
-  }
-
   navigateToConversation(id: string, url?: string): boolean {
     const beforeState = this.captureConversationNavigationState()
     const row = this.findConversationRowById(id)

@@ -82,78 +82,62 @@
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
-## 🎯 Use Cases
-
-- Learning & research: long-form reasoning, organize knowledge, review conclusions, extract notes
-- Daily work: requirements breakdown, solution drafting, competitive analysis, meeting notes, consulting & management workflows
-- Development & technical writing: long code discussions, bug triage, architecture exploration, docs/blog writing
-- Content creation: iterate on scripts/outlines/polish, jump back to key passages, export for reuse
-- Power users of AI: need structure, order, and reuse — not just ad-hoc chats
-
 ## ✨ Core Features
 
-### 🧭 Smart Navigation
+> Ideal for learning, research, requirements analysis, code discussions, content creation — any AI conversation that needs structure, order, and reuse.
 
-- **Real-time Outline** — Auto-parse conversation structure, generate navigable table of contents with support for hierarchical collapse/expand/search, one-click jump
-- **Anchor System** — One-click navigation to top, bottom, or last jump position
-- **Bookmark System** — Save important information nodes to avoid information overload, click to go directly
-- **Word Count** — Real-time word count for current heading, nested subheadings are automatically summed, supporting separate counts for user questions and AI response headings
+<table>
+  <thead>
+    <tr>
+      <th width="200">Feature</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>🧭 <a href="https://ophel.app/docs/features/outline">Smart Outline</a></td>
+      <td>Auto-parse conversation structure into a navigable TOC with hierarchical collapse, search, anchors, bookmarks, and word counts</td>
+    </tr>
+    <tr>
+      <td>💬 <a href="https://ophel.app/docs/features/conversations">Conversations</a></td>
+      <td>Folders + tags for dual-dimension management, auto-sync from source sites, search, batch ops, and multi-format export (Markdown/JSON/TXT)</td>
+    </tr>
+    <tr>
+      <td>💡 <a href="https://ophel.app/docs/features/prompts">Prompt Library</a></td>
+      <td>Variable templates, categorization, one-click insert, double-click send, prompt queue for automated sequential sending</td>
+    </tr>
+    <tr>
+      <td>🔍 <a href="https://ophel.app/docs/features/global-search">Global Search</a></td>
+      <td>Unified search across conversations, outlines, prompts, and settings with <code>folder:</code> <code>tag:</code> <code>date:</code> syntax filters and fuzzy matching</td>
+    </tr>
+    <tr>
+      <td>📖 <a href="https://ophel.app/docs/enhancements/content">Reading</a></td>
+      <td>Mermaid diagram rendering, LaTeX formula support, user question Markdown styling, scroll lock</td>
+    </tr>
+    <tr>
+      <td>⌨️ <a href="https://ophel.app/docs/customization/shortcuts">Productivity</a></td>
+      <td>Reading history restore, custom shortcuts, model lock, enhanced tab naming, AI completion notifications</td>
+    </tr>
+    <tr>
+      <td>🎨 <a href="https://ophel.app/docs/customization/appearance">Themes</a></td>
+      <td>20+ themes, custom CSS, widescreen mode, Zen mode, <code>Option+D</code> to toggle dark/light</td>
+    </tr>
+    <tr>
+      <td>📊 <a href="https://ophel.app/docs/panel-overview">Statistics</a></td>
+      <td>Local conversation counter, token estimates, history charts (by site and time)</td>
+    </tr>
+    <tr>
+      <td>🎭 <a href="https://ophel.app/docs/customization/site-settings">Claude</a></td>
+      <td>Session Key management and multi-account quick switching</td>
+    </tr>
+    <tr>
+      <td>🔒 <a href="https://ophel.app/docs/data/privacy">Privacy & Data</a></td>
+      <td>Local storage by default, WebDAV multi-device sync, file import/export, zero data collection</td>
+    </tr>
+  </tbody>
+</table>
 
-### 💬 Conversation Management
-
-- **Folder Organization** — Dual-dimension management with folders and tags, automatically sync conversations from source websites, support search, location, and batch operations
-- **Conversation Export** — Support exporting to Markdown, JSON, TXT formats (including thinking chain), persistent storage for peace of mind
-- **Voyager Import** — Support importing folder and conversation hierarchy from Voyager
-
-### 🪄 Prompt Library
-
-- **Prompt Management** — Support variable substitution (default values/options/manual input), Markdown preview, categorization, pinning, sorting
-- **Quick Insert** — One-click filling into input box, double-click send, multi-scenario adaptation
-- **Prompt Queue** — Queue prompts for AI generation (continuously improving)
-
-### 🔍 Global Search
-
-- **Multi-type Search** — Search across conversations, outlines, prompts, and settings, covering all content
-- **Syntax Search** — Support advanced search syntax and fuzzy search, use `folder:`, `tag:`, `is:`, `type:`, `level:`, `date:` filters for precise searching
-- **Quick Search Tips** — Provide search syntax examples and common keywords for quick start
-- **Real-time Preview & Jump** — Support search result preview, quick location of target content, one-click jump to corresponding position
-
-### 📖 Reading Experience Optimization
-
-- **Mermaid Diagram Rendering** — Provide Mermaid diagram rendering for sites without native support, supporting code/diagram switching, zoom, full screen, and PNG download
-- **Mathematical Formula Support** — Support LaTeX mathematical formula recognition and rendering, double-click to copy quickly
-- **User Question Styling** — Enable Markdown formatting and LaTeX formula rendering for user questions
-- **Scroll Lock** — Prevent page scroll to bottom when sending messages while reading, focus on current content
-
-### ⌨️ Productivity Tools
-
-- **Reading History** — Automatically record reading progress, quickly return to last reading position when switching conversations or refreshing pages
-- **Shortcut System** — Rich shortcut support with custom configuration for improved efficiency
-- **Model Lock** — Automatically lock preferred model to avoid frequent switching
-- **Enhanced Tab Management** — Auto-rename tabs with format [generation status - conversation title - used model], double-click panel title to quickly enable privacy mode, hide tab title to protect conversation privacy
-- **Completion Notifications** — Send desktop notifications and sound alerts when AI generation completes, automatically bring to foreground for multi-task efficiency
-
-### 🎨 UI Optimization
-
-- **Theme Customization** — 20+ dark/light themes, support custom CSS, `option + d` one-click theme mode switch
-- **Widescreen Mode** — Support page width adjustment for improved reading experience
-- **Zen Mode** — Control page element display and hiding to avoid unnecessary information distraction
-
-### 📊 Data Statistics
-
-- **Usage Estimates** — Optional local conversation counter, token estimates, and history chart
-- **Usage Statistics** — Provide conversation counts, token estimates, and history charts (support viewing by site and time)
-
-### 🎭 Claude Enhancement
-
-- **Session Key Management** — Support Claude Session Key management
-- **Multi-account Switching** — Support quick switching between multiple Claude accounts
-
-### 🔒 Privacy, Security & Data Management
-
-- **Local Storage** — Settings, prompts, and conversation management data are stored in your browser by default, support file import/export, flexible control
-- **WebDAV Sync** — Support WebDAV sync for multi-device data consistency
-- **No Data Collection** — Privacy-first design, no user data collection
+<p align="right"><a href="https://ophel.app/docs/introduction">📖 Full Documentation →</a></p>
 
 > [!IMPORTANT]
 >
@@ -252,6 +236,10 @@
     <td align="center" valign="top" width="14.28%">
       <img src="https://api.dicebear.com/7.x/bottts/svg?seed=%20%E7%81%AB%E5%8D%8E%E5%85%B0%E6%A8%B1%7Cwechat%7C2026-05-24%7C%C2%A530&amp;radius=20&amp;backgroundColor=f1f5f9" width="84px;" alt=" 火华兰樱" /><br />
       <sub><b> 火华兰樱</b></sub>
+    </td>
+    <td align="center" valign="top" width="14.28%">
+      <img src="https://storage.ko-fi.com/cdn/useruploads/post/7b7c1170-1d94-45d4-a1b9-8a268e77dedb_e76c8809-8746-4173-88ff-e06a4e3eb939.png" width="84px;" alt="Lewu Gao" /><br />
+      <sub><b>Lewu Gao</b></sub>
     </td>
   </tr>
   </tbody>
@@ -389,6 +377,8 @@ Our deepest gratitude to the amazing individuals below. Your contributions make 
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/hugo1120"><img src="https://avatars.githubusercontent.com/u/69150726?v=4&amp;s=80" width="80px;" alt="hugo2233"/><br /><sub><b>hugo2233</b></sub></a><br /><span title="Promotion">📣</span></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/t0ny-peng"><img src="https://avatars.githubusercontent.com/u/4816327?v=4&amp;s=80" width="80px;" alt="t0ny-peng"/><br /><sub><b>t0ny-peng</b></sub></a><br /><span title="Code">💻</span></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/mrpops2ko"><img src="https://avatars.githubusercontent.com/u/34683587?v=4&amp;s=80" width="80px;" alt="mrpops2ko"/><br /><sub><b>mrpops2ko</b></sub></a><br /><span title="Code">💻</span></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/Suxixihuanni"><img src="https://avatars.githubusercontent.com/u/208633969?v=4&amp;s=80" width="80px;" alt="Suxixihuanni"/><br /><sub><b>Suxixihuanni</b></sub></a><br /><span title="Promotion">📣</span></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/Ice-wilderness"><img src="https://avatars.githubusercontent.com/u/65530045?v=4&amp;s=80" width="80px;" alt="Ice-wilderness"/><br /><sub><b>Ice-wilderness</b></sub></a><br /><span title="Code">💻</span> <span title="Bug reports">🐛</span></td>
     </tr>
   </tbody>
 </table>

@@ -80,25 +80,62 @@
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
-## 🎯 Сценарии использования
-
-- Обучение и исследование: длинные диалоги, систематизация знаний, пересмотр выводов, извлечение заметок
-- Повседневная работа: декомпозиция требований, подготовка предложений, конкурентный анализ, протоколы встреч, консультирование и управленческие процессы
-- Разработка и техписьмо: длинные обсуждения кода, разбор багов, проработка архитектуры, документация/блог
-- Создание контента: итерации сценариев/планов/редактур, быстрый возврат к ключевым абзацам и экспорт для доработки
-- Частые пользователи ИИ: нужна «структура, порядок и повторное использование», а не только разовые чаты
-
 ## ✨ Основные Функции
 
-- 🧠 **Smart Outline** — Автоматический анализ запросов и ответов в навигационное оглавление
-- 💬 **Conversation Manager** — Папки, теги, поиск, массовые операции
-- ⌨️ **Prompt Library** — Переменные, превью Markdown, категории, вставка одним кликом
-- 🎨 **Настройка Темы** — 20+ темных/светлых тем, кастомный CSS
-- 🔧 **Оптимизация UI** — Широкоформатный режим, контроль ширины, макет боковой панели
-- 📖 **Опыт Чтения** — Блокировка прокрутки, восстановление позиции, рендеринг Markdown
-- ⚡ **Продуктивность** — Горячие клавиши, блокировка модели, авто-переименование, уведомления
-- 🎭 **Улучшение Claude** — Управление ключом сессии, переключение аккаунтов
-- 🔒 **Приватность** — Локальное хранение, WebDAV синхронизация, без сбора данных
+> Подходит для обучения, исследований, анализа требований, обсуждения кода, создания контента — любой ИИ-беседы, требующей структуры, порядка и повторного использования.
+
+<table>
+  <thead>
+    <tr>
+      <th width="200">Функция</th>
+      <th>Описание</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>🧭 <a href="https://ophel.app/docs/features/outline">Smart Outline</a></td>
+      <td>Автоматический анализ структуры диалога в навигационное оглавление с иерархическим сворачиванием, поиском, якорями, закладками и подсчётом слов</td>
+    </tr>
+    <tr>
+      <td>💬 <a href="https://ophel.app/docs/features/conversations">Диалоги</a></td>
+      <td>Папки + теги для двумерного управления, автосинхронизация, поиск, массовые операции и многоформатный экспорт (Markdown/JSON/TXT)</td>
+    </tr>
+    <tr>
+      <td>💡 <a href="https://ophel.app/docs/features/prompts">Библиотека промптов</a></td>
+      <td>Шаблоны с переменными, категоризация, вставка одним кликом, отправка двойным кликом, очередь промптов для автоматической последовательной отправки</td>
+    </tr>
+    <tr>
+      <td>🔍 <a href="https://ophel.app/docs/features/global-search">Глобальный поиск</a></td>
+      <td>Единый поиск по диалогам, оглавлениям, промптам и настройкам с фильтрами <code>folder:</code> <code>tag:</code> <code>date:</code> и нечётким совпадением</td>
+    </tr>
+    <tr>
+      <td>📖 <a href="https://ophel.app/docs/enhancements/content">Чтение</a></td>
+      <td>Рендеринг диаграмм Mermaid, поддержка формул LaTeX, Markdown-форматирование вопросов пользователя, блокировка прокрутки</td>
+    </tr>
+    <tr>
+      <td>⌨️ <a href="https://ophel.app/docs/customization/shortcuts">Продуктивность</a></td>
+      <td>Восстановление истории чтения, настраиваемые горячие клавиши, блокировка модели, расширенное именование вкладок, уведомления о завершении ИИ</td>
+    </tr>
+    <tr>
+      <td>🎨 <a href="https://ophel.app/docs/customization/appearance">Темы</a></td>
+      <td>20+ тем, пользовательский CSS, широкоформатный режим, Дзен-режим, <code>Option+D</code> для переключения тёмной/светлой темы</td>
+    </tr>
+    <tr>
+      <td>📊 <a href="https://ophel.app/docs/panel-overview">Статистика</a></td>
+      <td>Локальный счётчик диалогов, оценка токенов, исторические графики (по сайтам и времени)</td>
+    </tr>
+    <tr>
+      <td>🎭 <a href="https://ophel.app/docs/customization/site-settings">Claude</a></td>
+      <td>Управление Session Key и быстрое переключение аккаунтов</td>
+    </tr>
+    <tr>
+      <td>🔒 <a href="https://ophel.app/docs/data/privacy">Приватность и данные</a></td>
+      <td>Локальное хранение по умолчанию, WebDAV-синхронизация между устройствами, импорт/экспорт файлов, без сбора данных</td>
+    </tr>
+  </tbody>
+</table>
+
+<p align="right"><a href="https://ophel.app/docs/introduction">📖 Полная документация →</a></p>
 
 > [!IMPORTANT]
 >
@@ -201,6 +238,10 @@
     <td align="center" valign="top" width="14.28%">
       <img src="https://api.dicebear.com/7.x/bottts/svg?seed=%20%E7%81%AB%E5%8D%8E%E5%85%B0%E6%A8%B1%7Cwechat%7C2026-05-24%7C%C2%A530&amp;radius=20&amp;backgroundColor=f1f5f9" width="84px;" alt=" 火华兰樱" /><br />
       <sub><b> 火华兰樱</b></sub>
+    </td>
+    <td align="center" valign="top" width="14.28%">
+      <img src="https://storage.ko-fi.com/cdn/useruploads/post/7b7c1170-1d94-45d4-a1b9-8a268e77dedb_e76c8809-8746-4173-88ff-e06a4e3eb939.png" width="84px;" alt="Lewu Gao" /><br />
+      <sub><b>Lewu Gao</b></sub>
     </td>
   </tr>
   </tbody>
@@ -339,6 +380,8 @@ pnpm serve:userscript:assets   # Запуск сервера для статич
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/hugo1120"><img src="https://avatars.githubusercontent.com/u/69150726?v=4&amp;s=80" width="80px;" alt="hugo2233"/><br /><sub><b>hugo2233</b></sub></a><br /><span title="Promotion">📣</span></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/t0ny-peng"><img src="https://avatars.githubusercontent.com/u/4816327?v=4&amp;s=80" width="80px;" alt="t0ny-peng"/><br /><sub><b>t0ny-peng</b></sub></a><br /><span title="Code">💻</span></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/mrpops2ko"><img src="https://avatars.githubusercontent.com/u/34683587?v=4&amp;s=80" width="80px;" alt="mrpops2ko"/><br /><sub><b>mrpops2ko</b></sub></a><br /><span title="Code">💻</span></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/Suxixihuanni"><img src="https://avatars.githubusercontent.com/u/208633969?v=4&amp;s=80" width="80px;" alt="Suxixihuanni"/><br /><sub><b>Suxixihuanni</b></sub></a><br /><span title="Promotion">📣</span></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/Ice-wilderness"><img src="https://avatars.githubusercontent.com/u/65530045?v=4&amp;s=80" width="80px;" alt="Ice-wilderness"/><br /><sub><b>Ice-wilderness</b></sub></a><br /><span title="Code">💻</span> <span title="Bug reports">🐛</span></td>
     </tr>
   </tbody>
 </table>

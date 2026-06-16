@@ -1,14 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
-import {
-  CopyIcon,
-  ExportIcon,
-  JSONFileIcon,
-  MarkdownIcon,
-  PageContentIcon,
-  TXTFileIcon,
-} from "~components/icons"
+import { ExportIcon, JSONFileIcon, LinkIcon, MarkdownIcon, TXTFileIcon } from "~components/icons"
 import { DeleteIcon } from "~components/icons/DeleteIcon"
 import { FolderMoveIcon } from "~components/icons/FolderMoveIcon"
 import { PinIcon } from "~components/icons/PinIcon"
@@ -64,14 +57,21 @@ const injectMenuStyles = () => {
 
 interface MenuProps {
   anchorEl: HTMLElement | null
+  anchorPoint?: MenuAnchorPoint
   onClose: () => void
   children: React.ReactNode
 }
+
+export interface MenuAnchorPoint {
+  left: number
+  top: number
+}
+
 /**
  * 上下文菜单 - 使用 Portal 渲染到 document.body
  * 这样避免被 MainPanel 的 transform 影响 fixed 定位
  */
-export const ContextMenu: React.FC<MenuProps> = ({ anchorEl, onClose, children }) => {
+export const ContextMenu: React.FC<MenuProps> = ({ anchorEl, anchorPoint, onClose, children }) => {
   const menuRef = useRef<HTMLDivElement>(null)
   const [menuPosition, setMenuPosition] = useState<{ left: number; top: number } | null>(null)
 
@@ -79,13 +79,13 @@ export const ContextMenu: React.FC<MenuProps> = ({ anchorEl, onClose, children }
     // 注入菜单样式
     injectMenuStyles()
 
-    if (!anchorEl) return
+    if (!anchorEl && !anchorPoint) return
 
     const handleClickOutside = (e: MouseEvent) => {
       // 使用 composedPath 获取完整的事件路径（穿透 Shadow DOM）
       const path = e.composedPath()
       const clickedInMenu = menuRef.current && path.includes(menuRef.current)
-      const clickedOnAnchor = path.includes(anchorEl)
+      const clickedOnAnchor = anchorEl ? path.includes(anchorEl) : false
 
       if (!clickedInMenu && !clickedOnAnchor) {
         onClose()
@@ -101,25 +101,35 @@ export const ContextMenu: React.FC<MenuProps> = ({ anchorEl, onClose, children }
       clearTimeout(timer)
       document.removeEventListener("click", handleClickOutside, true)
     }
-  }, [anchorEl, onClose])
+  }, [anchorEl, anchorPoint, onClose])
 
   // 计算菜单位置，确保不超出屏幕边界
   useEffect(() => {
-    if (!anchorEl || !menuRef.current) return
+    if ((!anchorEl && !anchorPoint) || !menuRef.current) return
 
-    const rect = anchorEl.getBoundingClientRect()
     const menuRect = menuRef.current.getBoundingClientRect()
     const viewportWidth = window.innerWidth
     const viewportHeight = window.innerHeight
     const menuWidth = menuRect.width || 150 // 默认菜单宽度
     const menuHeight = menuRect.height || 200 // 默认菜单高度
 
-    let left = rect.left
-    let top = rect.bottom + 4
+    let left = anchorPoint?.left ?? 10
+    let top = anchorPoint?.top ?? 10
+
+    if (!anchorPoint && anchorEl) {
+      const rect = anchorEl.getBoundingClientRect()
+      left = rect.left
+      top = rect.bottom + 4
+    }
 
     // 检测是否超出右边界，如果超出则向左展开
     if (left + menuWidth > viewportWidth - 10) {
-      left = rect.right - menuWidth
+      if (anchorPoint) {
+        left = viewportWidth - menuWidth - 10
+      } else if (anchorEl) {
+        const rect = anchorEl.getBoundingClientRect()
+        left = rect.right - menuWidth
+      }
     }
 
     // 检测是否超出左边界
@@ -129,7 +139,12 @@ export const ContextMenu: React.FC<MenuProps> = ({ anchorEl, onClose, children }
 
     // 检测是否超出下边界，如果超出则向上展开
     if (top + menuHeight > viewportHeight - 10) {
-      top = rect.top - menuHeight - 4
+      if (anchorPoint) {
+        top = viewportHeight - menuHeight - 10
+      } else if (anchorEl) {
+        const rect = anchorEl.getBoundingClientRect()
+        top = rect.top - menuHeight - 4
+      }
     }
 
     // 检测是否超出上边界
@@ -138,9 +153,9 @@ export const ContextMenu: React.FC<MenuProps> = ({ anchorEl, onClose, children }
     }
 
     setMenuPosition({ left, top })
-  }, [anchorEl])
+  }, [anchorEl, anchorPoint])
 
-  if (!anchorEl) return null
+  if (!anchorEl && !anchorPoint) return null
 
   // 使用 Portal 渲染到 document.body，避免 transform 影响 fixed 定位
   const menuContent = (
@@ -239,7 +254,9 @@ export const FolderMenu: React.FC<FolderMenuProps> = ({
 interface ConversationMenuProps {
   conversation: Conversation
   anchorEl: HTMLElement | null
+  anchorPoint?: MenuAnchorPoint
   onClose: () => void
+  onOpenInNewTab: () => void
   onRename: () => void
   onTogglePin: () => void
   onSetTags: () => void
@@ -251,7 +268,9 @@ interface ConversationMenuProps {
 export const ConversationMenu: React.FC<ConversationMenuProps> = ({
   conversation,
   anchorEl,
+  anchorPoint,
   onClose,
+  onOpenInNewTab,
   onRename,
   onTogglePin,
   onSetTags,
@@ -260,7 +279,23 @@ export const ConversationMenu: React.FC<ConversationMenuProps> = ({
   onDelete,
 }) => {
   return (
-    <ContextMenu anchorEl={anchorEl} onClose={onClose}>
+    <ContextMenu anchorEl={anchorEl} anchorPoint={anchorPoint} onClose={onClose}>
+      <MenuButton
+        onClick={() => {
+          onClose()
+          onOpenInNewTab()
+        }}>
+        <span
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "16px",
+          }}>
+          <span>{t("conversationsOpenInNewTab")}</span>
+          <LinkIcon size={13} />
+        </span>
+      </MenuButton>
       <MenuButton
         onClick={() => {
           onClose()
@@ -366,6 +401,7 @@ export const ConversationMenu: React.FC<ConversationMenuProps> = ({
 
 interface ExportMenuProps {
   anchorEl: HTMLElement | null
+  anchorPoint?: MenuAnchorPoint
   onClose: () => void
   onExportMarkdown: () => void
   onExportJSON: () => void
@@ -374,13 +410,14 @@ interface ExportMenuProps {
 
 export const ExportMenu: React.FC<ExportMenuProps> = ({
   anchorEl,
+  anchorPoint,
   onClose,
   onExportMarkdown,
   onExportJSON,
   onExportTXT,
 }) => {
   return (
-    <ContextMenu anchorEl={anchorEl} onClose={onClose}>
+    <ContextMenu anchorEl={anchorEl} anchorPoint={anchorPoint} onClose={onClose}>
       <MenuButton
         onClick={() => {
           onClose()

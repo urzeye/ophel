@@ -1,5 +1,5 @@
 /**
- * SVG 图标组件 - 折叠全部 (圆圈减号)
+ * SVG 图标组件 - 折叠全部 (列表 + 内收箭头)
  * 风格：Outline (stroke-based)
  */
 import React from "react"
@@ -21,13 +21,18 @@ export const CollapseAllIcon: React.FC<IconProps> = ({
     height={size}
     fill="none"
     stroke={color}
-    strokeWidth="1.5"
+    strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
     style={{ display: "block" }}>
-    <circle cx="12" cy="12" r="10" />
-    <line x1="8" y1="12" x2="16" y2="12" />
+    <path d="M4 6h9" />
+    <path d="M4 12h9" />
+    <path d="M4 18h9" />
+    <path d="M18 3v6" />
+    <path d="m15.5 6.5 2.5 2.5 2.5-2.5" />
+    <path d="M18 21v-6" />
+    <path d="m15.5 17.5 2.5-2.5 2.5 2.5" />
   </svg>
 )
 

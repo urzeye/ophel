@@ -88,25 +88,62 @@
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
-## 🎯 활용 시나리오
-
-- 학습·연구: 긴 대화 추론, 지식 정리, 결론 회고, 노트 추출
-- 일상 업무: 요구사항 분해, 제안서 작성, 경쟁 분석, 회의록, 컨설팅/관리 워크플로
-- 개발·기술 문서: 긴 코드 논의, 버그 파악, 아키텍처 검토, 문서/블로그 작성
-- 콘텐츠 제작: 스크립트/아웃라인/다듬기 반복, 핵심 구간으로 빠르게 돌아가 재가공
-- AI 고빈도 사용자: 임시 대화가 아닌 ‘구조·질서·재사용’이 필요
-
 ## ✨ 핵심 기능
 
-- 🧠 **스마트 개요** — 사용자 질문과 AI 답변을 자동으로 분석하여 탐색 가능한 목차 생성
-- 💬 **대화 관리** — 폴더 분류, 태그, 검색, 일괄 작업
-- ⌨️ **프롬프트 라이브러리** — 변수 지원, 마크다운 미리보기, 분류 관리, 원클릭 입력
-- 🎨 **테마 커스터마이징** — 20종 이상의 다크/라이트 테마, 사용자 정의 CSS
-- 🔧 **인터페이스 최적화** — 와이드스크린 모드, 페이지 및 채팅 너비 조정, 사이드바 레이아웃 제어
-- 📖 **읽기 환경** — 스크롤 잠금, 읽기 위치 복구, 마크다운 렌더링 최적화
-- ⚡ **생산성 도구** — 단축키, 모델 잠금, 탭 자동 이름 지정, 완료 알림
-- 🎭 **Claude 확장** — Session Key 관리, 다중 계정 전환
-- 🔒 **개인정보 우선** — 로컬 저장소, WebDAV 동기화, 데이터 수집 없음
+> 학습·연구, 요구사항 분석, 코드 토론, 콘텐츠 제작 등 ‘구조, 질서, 재사용’이 필요한 모든 AI 대화 시나리오에 적합합니다.
+
+<table>
+  <thead>
+    <tr>
+      <th width="200">기능</th>
+      <th>설명</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>🧭 <a href="https://ophel.app/docs/features/outline">스마트 개요</a></td>
+      <td>대화 구조를 실시간 분석하여 탐색 가능한 목차 생성, 계층 접기, 검색 이동, 앵커, 북마크, 글자 수 통계 지원</td>
+    </tr>
+    <tr>
+      <td>💬 <a href="https://ophel.app/docs/features/conversations">대화 관리</a></td>
+      <td>폴더 + 태그 이중 관리, 소스 사이트 자동 동기화, 검색·일괄 작업·다중 형식 내보내기(Markdown/JSON/TXT)</td>
+    </tr>
+    <tr>
+      <td>💡 <a href="https://ophel.app/docs/features/prompts">프롬프트 라이브러리</a></td>
+      <td>변수 템플릿, 분류 관리, 원클릭 입력, 더블클릭 전송, 프롬프트 큐 자동 순차 전송</td>
+    </tr>
+    <tr>
+      <td>🔍 <a href="https://ophel.app/docs/features/global-search">글로벌 검색</a></td>
+      <td>대화/개요/프롬프트/설정 전체 통합 검색, <code>folder:</code> <code>tag:</code> <code>date:</code> 구문 필터 및 퍼지 매칭 지원</td>
+    </tr>
+    <tr>
+      <td>📖 <a href="https://ophel.app/docs/enhancements/content">읽기 향상</a></td>
+      <td>Mermaid 다이어그램 렌더링, LaTeX 수식 지원, 사용자 질문 Markdown 스타일링, 스크롤 잠금</td>
+    </tr>
+    <tr>
+      <td>⌨️ <a href="https://ophel.app/docs/customization/shortcuts">생산성 도구</a></td>
+      <td>읽기 기록 복원, 사용자 정의 단축키, 모델 잠금, 탭 이름 확장, AI 완료 알림</td>
+    </tr>
+    <tr>
+      <td>🎨 <a href="https://ophel.app/docs/customization/appearance">테마</a></td>
+      <td>20+ 테마, 사용자 정의 CSS, 와이드스크린 모드, 젠 모드, <code>Option+D</code>로 다크/라이트 전환</td>
+    </tr>
+    <tr>
+      <td>📊 <a href="https://ophel.app/docs/panel-overview">데이터 통계</a></td>
+      <td>로컬 대화 카운터, 토큰 추정, 히스토리 차트(사이트별/시간별)</td>
+    </tr>
+    <tr>
+      <td>🎭 <a href="https://ophel.app/docs/customization/site-settings">Claude 확장</a></td>
+      <td>Session Key 관리 및 다중 계정 빠른 전환</td>
+    </tr>
+    <tr>
+      <td>🔒 <a href="https://ophel.app/docs/data/privacy">개인정보 및 데이터</a></td>
+      <td>기본 로컬 저장, WebDAV 다중 기기 동기화, 파일 가져오기/내보내기, 데이터 수집 없음</td>
+    </tr>
+  </tbody>
+</table>
+
+<p align="right"><a href="https://ophel.app/docs/introduction">📖 전체 문서 →</a></p>
 
 > [!IMPORTANT]
 >
@@ -207,6 +244,10 @@
     <td align="center" valign="top" width="14.28%">
       <img src="https://api.dicebear.com/7.x/bottts/svg?seed=%20%E7%81%AB%E5%8D%8E%E5%85%B0%E6%A8%B1%7Cwechat%7C2026-05-24%7C%C2%A530&amp;radius=20&amp;backgroundColor=f1f5f9" width="84px;" alt=" 火华兰樱" /><br />
       <sub><b> 火华兰樱</b></sub>
+    </td>
+    <td align="center" valign="top" width="14.28%">
+      <img src="https://storage.ko-fi.com/cdn/useruploads/post/7b7c1170-1d94-45d4-a1b9-8a268e77dedb_e76c8809-8746-4173-88ff-e06a4e3eb939.png" width="84px;" alt="Lewu Gao" /><br />
+      <sub><b>Lewu Gao</b></sub>
     </td>
   </tr>
   </tbody>
@@ -345,6 +386,8 @@ pnpm serve:userscript:assets   # 아이콘/스타일 등 정적 어셋을 로컬
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/hugo1120"><img src="https://avatars.githubusercontent.com/u/69150726?v=4&amp;s=80" width="80px;" alt="hugo2233"/><br /><sub><b>hugo2233</b></sub></a><br /><span title="Promotion">📣</span></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/t0ny-peng"><img src="https://avatars.githubusercontent.com/u/4816327?v=4&amp;s=80" width="80px;" alt="t0ny-peng"/><br /><sub><b>t0ny-peng</b></sub></a><br /><span title="Code">💻</span></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/mrpops2ko"><img src="https://avatars.githubusercontent.com/u/34683587?v=4&amp;s=80" width="80px;" alt="mrpops2ko"/><br /><sub><b>mrpops2ko</b></sub></a><br /><span title="Code">💻</span></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/Suxixihuanni"><img src="https://avatars.githubusercontent.com/u/208633969?v=4&amp;s=80" width="80px;" alt="Suxixihuanni"/><br /><sub><b>Suxixihuanni</b></sub></a><br /><span title="Promotion">📣</span></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/Ice-wilderness"><img src="https://avatars.githubusercontent.com/u/65530045?v=4&amp;s=80" width="80px;" alt="Ice-wilderness"/><br /><sub><b>Ice-wilderness</b></sub></a><br /><span title="Code">💻</span> <span title="Bug reports">🐛</span></td>
     </tr>
   </tbody>
 </table>

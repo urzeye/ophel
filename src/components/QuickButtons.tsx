@@ -25,7 +25,12 @@ import {
   smartScrollTo,
   smartScrollToBottom,
 } from "~utils/scroll-helper"
-import { DEFAULT_SETTINGS, getSiteTheme, type QuickButtonsPosition } from "~utils/storage"
+import {
+  DEFAULT_SETTINGS,
+  getSiteTheme,
+  getSiteZenMode,
+  type QuickButtonsPosition,
+} from "~utils/storage"
 import { showToast } from "~utils/toast"
 
 interface QuickButtonsProps {
@@ -735,15 +740,18 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     zenMode: (e) => {
       e?.stopPropagation()
       const siteId = adapter?.getSiteId() || "_default"
-      const currentZenMode = settings?.layout?.zenMode?.[siteId]?.enabled || false
-      const newZenEnabled = !currentZenMode
+      const currentZenMode = getSiteZenMode(settings || DEFAULT_SETTINGS, siteId)
+      const newZenEnabled = !currentZenMode.enabled
       updateNestedSetting("layout", "zenMode", {
-        [siteId]: { enabled: newZenEnabled },
+        ...(settings?.layout?.zenMode ?? {}),
+        [siteId]: { ...currentZenMode, enabled: newZenEnabled },
       })
       // 开启禅模式时自动开启净化模式，关闭禅模式时不变净化模式
       if (newZenEnabled) {
+        const currentCleanMode = settings?.layout?.cleanMode?.[siteId] ?? { enabled: true }
         updateNestedSetting("layout", "cleanMode", {
-          [siteId]: { enabled: true },
+          ...(settings?.layout?.cleanMode ?? {}),
+          [siteId]: { ...currentCleanMode, enabled: true },
         })
       }
     },

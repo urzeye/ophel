@@ -35,6 +35,7 @@ import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 import { createSafeHTML } from "~utils/trusted-types"
 import { initCopyButtons, showCopySuccess } from "~utils/icons"
 import { hasOphelInteractionLayer } from "~utils/dom-toolkit"
+import { isLikelyMobileDevice } from "~utils/device"
 
 import { ConfirmDialog, FolderSelectDialog, TagManagerDialog } from "./ConversationDialogs"
 import { DisclaimerModal } from "./DisclaimerModal"
@@ -113,6 +114,16 @@ const EXPORT_STAGE_TEXT_KEYS: Record<ConversationExportStage, string> = {
   downloading: "exportOverlayDownloading",
   copying: "exportOverlayCopying",
   restoring: "exportOverlayRestoring",
+}
+
+const OUTLINE_COPY_STAGE_TEXT_KEYS: Record<ConversationExportStage, string> = {
+  "loading-history": "outlineCopyOverlayLoadingHistory",
+  preparing: "outlineCopyOverlayPreparing",
+  extracting: "outlineCopyOverlayExtracting",
+  packaging: "exportOverlayPackaging",
+  downloading: "exportOverlayDownloading",
+  copying: "outlineCopyOverlayCopying",
+  restoring: "outlineCopyOverlayRestoring",
 }
 
 const SETTINGS_PAGE_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinition> = {
@@ -315,6 +326,7 @@ const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "layout-user-query-width-enabled": "enableUserQueryWidth",
   "layout-user-query-width-value": "userQueryWidthValueLabel",
   "layout-zen-mode-enabled": "zenModeTitle",
+  "layout-zen-mode-exit-button-visible": "zenModeExitButtonVisibleLabel",
   "outline-auto-update": "outlineAutoUpdateLabel",
   "outline-follow-mode": "outlineFollowModeLabel",
   "outline-inline-bookmark-mode": "inlineBookmarkModeLabel",
@@ -2653,10 +2665,13 @@ export const App = () => {
       // 避免切换到新对话后大纲面板仍在显示旧对话条目。modules-init.ts 会在
       // popstate / pushState / replaceState 时 dispatch "gh-url-change"。
       const onUrlChange = () => outlineManager.handleUrlChange()
+      const onRefreshOutline = () => outlineManager.refresh()
       window.addEventListener("gh-url-change", onUrlChange)
+      window.addEventListener("ophel:refreshOutline", onRefreshOutline)
       return () => {
         clearInterval(refreshInterval)
         window.removeEventListener("gh-url-change", onUrlChange)
+        window.removeEventListener("ophel:refreshOutline", onRefreshOutline)
         conversationManager?.destroy()
       }
     }
@@ -3022,7 +3037,14 @@ export const App = () => {
     if (!adapter || adapter.getSiteId() !== SITE_IDS.AISTUDIO) return
 
     const handleShortcutSync = (event: Event) => {
-      const detail = (event as CustomEvent<{ submitShortcut?: "enter" | "ctrlEnter" }>).detail
+      const detail = (
+        event as CustomEvent<{
+          submitShortcut?: "enter" | "ctrlEnter"
+          forcedByMobile?: boolean
+        }>
+      ).detail
+      if (detail?.forcedByMobile) return
+
       const submitShortcut = detail?.submitShortcut
       if (submitShortcut === "enter" || submitShortcut === "ctrlEnter") {
         showAiStudioSubmitShortcutSyncToast(submitShortcut)
@@ -3107,6 +3129,13 @@ export const App = () => {
 
       const hasPrimaryModifier = e.ctrlKey || e.metaKey
       const hasAnyModifier = hasPrimaryModifier || e.altKey
+      const isAiStudioMobilePlainEnter =
+        adapter.getSiteId() === SITE_IDS.AISTUDIO &&
+        isLikelyMobileDevice() &&
+        !hasAnyModifier &&
+        !e.shiftKey
+      if (isAiStudioMobilePlainEnter) return
+
       const isSubmitKey =
         promptSubmitShortcut === "ctrlEnter"
           ? hasPrimaryModifier && !e.altKey && !e.shiftKey
@@ -3279,12 +3308,20 @@ export const App = () => {
     fallback: "Reload page",
   })
   const extensionUpdateCloseLabel = t("close")
-  const exportOverlayText = exportProgress ? t(EXPORT_STAGE_TEXT_KEYS[exportProgress.stage]) : ""
-  const exportOverlayHint = t("exportOverlayHint")
+  const exportOverlayText = exportProgress
+    ? t(
+        (exportProgress.operation === "outline-copy"
+          ? OUTLINE_COPY_STAGE_TEXT_KEYS
+          : EXPORT_STAGE_TEXT_KEYS)[exportProgress.stage],
+      )
+    : ""
+  const exportOverlayHint = t(
+    exportProgress?.operation === "outline-copy" ? "outlineCopyOverlayHint" : "exportOverlayHint",
+  )
 
   const outlineRoleLabels = useMemo(
     () => ({
-      query: getLocalizedText({ key: "outlineOnlyUserQueries", fallback: "Query" }),
+      query: getLocalizedText({ key: "outlineUserQueryRoleLabel", fallback: "User queries" }),
       reply: getLocalizedText({ key: "globalSearchOutlineReplies", fallback: "Replies" }),
     }),
     [getLocalizedText],

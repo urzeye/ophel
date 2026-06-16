@@ -2,8 +2,9 @@
 import { createHash } from "crypto"
 import * as fs from "fs"
 import * as path from "path"
+import * as vm from "vm"
 import react from "@vitejs/plugin-react"
-import { defineConfig, type Plugin } from "vite"
+import { build as viteBuild, defineConfig, type Plugin } from "vite"
 import monkey from "vite-plugin-monkey"
 
 import {
@@ -13,6 +14,7 @@ import {
   type UserscriptLocale,
   type UserscriptLocaleResourceMetaName,
   type UserscriptResourceMetaName,
+  getUserscriptAssetBaseUrl,
   getUserscriptLocaleResourceUrls,
   getUserscriptResourceUrls,
 } from "./src/platform/userscript/resource-manifest"
@@ -31,13 +33,22 @@ const reactPkg = JSON.parse(
 const reactDomPkg = JSON.parse(
   fs.readFileSync(path.resolve(__dirname, "node_modules/react-dom/package.json"), "utf-8"),
 )
+const geminiWatermarkRemoverPkg = JSON.parse(
+  fs.readFileSync(
+    path.resolve(__dirname, "node_modules/@pilio/gemini-watermark-remover/package.json"),
+    "utf-8",
+  ),
+)
 const author: string = pkg.author
 const version: string = pkg.version
 const license: string = pkg.license
 const reactVersion: string = reactPkg.version
 const reactDomVersion: string = reactDomPkg.version
+const geminiWatermarkRemoverVersion: string = geminiWatermarkRemoverPkg.version
 const reactCdnUrl = `https://cdn.jsdelivr.net/npm/react@${reactVersion}/umd/react.production.min.js`
 const reactDomCdnUrl = `https://cdn.jsdelivr.net/npm/react-dom@${reactDomVersion}/umd/react-dom.production.min.js`
+const geminiWatermarkRemoverGlobalName = "__OphelGeminiWatermarkRemover"
+const userscriptMetadataCommentPattern = /^!?\s*(==\/?UserScript==|@)/
 
 type UserscriptMetadata = {
   name: Record<string, string>
@@ -94,6 +105,12 @@ const userscriptBuildOutDir = path.resolve(__dirname, "build/userscript")
 const userscriptAssetOutDirName = "userscript-assets"
 const userscriptAssetOutDir = path.join(userscriptBuildOutDir, userscriptAssetOutDirName)
 const userscriptAssetManifestFileName = "manifest.json"
+const userscriptGeminiWatermarkVendorFileName = `ophel-gemini-watermark-remover-${geminiWatermarkRemoverVersion}-ophel-${version}.js`
+const userscriptGeminiWatermarkVendorRelativePath = `${userscriptAssetOutDirName}/${userscriptGeminiWatermarkVendorFileName}`
+const userscriptGeminiWatermarkVendorUrl = `${getUserscriptAssetBaseUrl()}/${userscriptGeminiWatermarkVendorRelativePath}`
+const userscriptMarkdownVendorFileName = `ophel-markdown-vendor-ophel-${version}.js`
+const userscriptMarkdownVendorRelativePath = `${userscriptAssetOutDirName}/${userscriptMarkdownVendorFileName}`
+const userscriptMarkdownVendorUrl = `${getUserscriptAssetBaseUrl()}/${userscriptMarkdownVendorRelativePath}`
 
 const userscriptAssetSources = {
   icon: path.resolve(__dirname, "assets/icon.png"),
@@ -153,6 +170,37 @@ function createHashedFileName(fileName: string, content: string | Buffer): strin
   return `${baseName}.${createContentHash(content)}${ext}`
 }
 
+function extractReturnedTemplateLiteral(sourceFile: string, functionName: string): string {
+  const source = fs.readFileSync(sourceFile, "utf-8")
+  const pattern = new RegExp(
+    `function\\s+${functionName}\\s*\\(\\)\\s*:\\s*string\\s*{\\s*return\\s+\`([\\s\\S]*?)\`\\s*}`,
+  )
+  const match = source.match(pattern)
+
+  if (!match) {
+    throw new Error(`Unable to extract ${functionName} from ${path.relative(__dirname, sourceFile)}`)
+  }
+
+  return match[1]
+}
+
+function buildUserscriptSiteIconsResource(): string {
+  const sourceFile = path.resolve(__dirname, "src/constants/site-icons.ts")
+  const source = fs.readFileSync(sourceFile, "utf-8")
+  const executableSource = source.replace(
+    /export\s+const\s+SITE_ICONS\s*:\s*Record<string,\s*string>\s*=/,
+    "module.exports =",
+  )
+  const sandbox = { module: { exports: {} } }
+
+  vm.runInNewContext(executableSource, sandbox, {
+    filename: sourceFile,
+    timeout: 1000,
+  })
+
+  return JSON.stringify(sandbox.module.exports)
+}
+
 function readUserscriptAssetContent(
   key: keyof typeof USERSCRIPT_RESOURCE_DEFINITIONS,
 ): string | Buffer {
@@ -160,7 +208,86 @@ function readUserscriptAssetContent(
     return buildUserscriptStyleBundle()
   }
 
+  if (key === "markdownPreviewStyles") {
+    return extractReturnedTemplateLiteral(
+      path.resolve(__dirname, "src/utils/markdown.ts"),
+      "getInlineHighlightStyles",
+    )
+  }
+
+  if (key === "userQueryMarkdownStyles") {
+    return extractReturnedTemplateLiteral(
+      path.resolve(__dirname, "src/core/user-query-markdown.ts"),
+      "getInlineUserQueryMarkdownStyles",
+    )
+  }
+
+  if (key === "siteIcons") {
+    return buildUserscriptSiteIconsResource()
+  }
+
   return fs.readFileSync(userscriptAssetSources[key])
+}
+
+async function buildGeminiWatermarkVendor(): Promise<void> {
+  await viteBuild({
+    configFile: false,
+    publicDir: false,
+    define: {
+      __PLATFORM__: JSON.stringify("userscript"),
+    },
+    build: {
+      outDir: userscriptAssetOutDir,
+      emptyOutDir: false,
+      minify: "terser",
+      lib: {
+        entry: path.resolve(
+          __dirname,
+          "src/platform/userscript/gemini-watermark-remover-vendor.ts",
+        ),
+        name: "OphelGeminiWatermarkRemoverVendor",
+        formats: ["iife"],
+        fileName: () => userscriptGeminiWatermarkVendorFileName,
+      },
+      rollupOptions: {
+        output: {
+          inlineDynamicImports: true,
+        },
+      },
+    },
+  })
+}
+
+async function buildMarkdownVendor(): Promise<void> {
+  await viteBuild({
+    configFile: false,
+    publicDir: false,
+    define: {
+      __PLATFORM__: JSON.stringify("userscript"),
+    },
+    resolve: {
+      alias: {
+        "~platform/katex": path.resolve(__dirname, "src/platform/userscript/katex.ts"),
+        "~": path.resolve(__dirname, "src"),
+      },
+    },
+    build: {
+      outDir: userscriptAssetOutDir,
+      emptyOutDir: false,
+      minify: "terser",
+      lib: {
+        entry: path.resolve(__dirname, "src/platform/userscript/markdown-vendor.ts"),
+        name: "OphelMarkdownVendor",
+        formats: ["iife"],
+        fileName: () => userscriptMarkdownVendorFileName,
+      },
+      rollupOptions: {
+        output: {
+          inlineDynamicImports: true,
+        },
+      },
+    },
+  })
 }
 
 const localUserscriptResourceEntries = Object.entries(USERSCRIPT_RESOURCE_DEFINITIONS).filter(
@@ -238,7 +365,7 @@ const userscriptLocaleResourcePaths = Object.fromEntries(
 function emitUserscriptAssets(): Plugin {
   return {
     name: "ophel-userscript-assets",
-    writeBundle() {
+    async writeBundle() {
       fs.mkdirSync(userscriptAssetOutDir, { recursive: true })
 
       for (const { relativePath, content } of Object.values(userscriptResourceFiles)) {
@@ -249,6 +376,9 @@ function emitUserscriptAssets(): Plugin {
         fs.writeFileSync(path.join(userscriptBuildOutDir, relativePath), content)
       }
 
+      await buildGeminiWatermarkVendor()
+      await buildMarkdownVendor()
+
       fs.writeFileSync(
         path.join(userscriptAssetOutDir, userscriptAssetManifestFileName),
         JSON.stringify(
@@ -256,10 +386,29 @@ function emitUserscriptAssets(): Plugin {
             generatedAt: new Date().toISOString(),
             version,
             resources: Object.fromEntries(
-              [...Object.values(userscriptResourceFiles), ...Object.values(userscriptLocaleResourceFiles)].map(
-                ({ metaName, fileName, relativePath }) => [metaName, { fileName, relativePath }],
-              ),
+              [
+                ...Object.values(userscriptResourceFiles),
+                ...Object.values(userscriptLocaleResourceFiles),
+              ].map(({ metaName, fileName, relativePath }) => [
+                metaName,
+                { fileName, relativePath },
+              ]),
             ),
+            requires: {
+              geminiWatermarkRemover: {
+                fileName: userscriptGeminiWatermarkVendorFileName,
+                relativePath: userscriptGeminiWatermarkVendorRelativePath,
+                version: geminiWatermarkRemoverVersion,
+              },
+              markdownVendor: {
+                fileName: userscriptMarkdownVendorFileName,
+                relativePath: userscriptMarkdownVendorRelativePath,
+              },
+            },
+            requireUrls: {
+              geminiWatermarkRemover: userscriptGeminiWatermarkVendorUrl,
+              markdownVendor: userscriptMarkdownVendorUrl,
+            },
           },
           null,
           2,
@@ -348,6 +497,8 @@ export default defineConfig({
           reactDomCdnUrl,
           "https://cdn.jsdelivr.net/npm/fuzzysort@3.1.0/fuzzysort.min.js",
           KATEX_CDN_JS_URL,
+          userscriptMarkdownVendorUrl,
+          userscriptGeminiWatermarkVendorUrl,
         ],
         resource: {
           ...userscriptResourceUrls,
@@ -358,6 +509,9 @@ export default defineConfig({
       build: {
         // CSS 自动注入到 head
         autoGrant: true,
+        externalGlobals: {
+          "@pilio/gemini-watermark-remover": geminiWatermarkRemoverGlobalName,
+        },
       },
     }),
   ],
@@ -374,7 +528,9 @@ export default defineConfig({
       // 替换 @plasmohq/storage 为 GM_* 实现
       "@plasmohq/storage": path.resolve(__dirname, "src/platform/userscript/storage-polyfill.ts"),
       fuzzysort: path.resolve(__dirname, "src/platform/userscript/fuzzysort-global.ts"),
+      "~constants/site-icons": path.resolve(__dirname, "src/platform/userscript/site-icons.ts"),
       "~utils/i18n": path.resolve(__dirname, "src/platform/userscript/i18n.ts"),
+      "~utils/markdown": path.resolve(__dirname, "src/platform/userscript/markdown-global.ts"),
       "~platform/katex": path.resolve(__dirname, "src/platform/userscript/katex.ts"),
       // 注意：chrome-adapter.ts 已内置跨平台支持（通过 __PLATFORM__ 判断），无需 alias 替换
 
@@ -409,7 +565,7 @@ export default defineConfig({
     terserOptions: {
       format: {
         // 保留油猴 meta 注释
-        comments: /==\/?UserScript==|@/,
+        comments: userscriptMetadataCommentPattern,
       },
     },
     rollupOptions: {

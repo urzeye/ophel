@@ -69,6 +69,11 @@
       "gemini": { "enabled": false, "value": "81", "unit": "%" },
       "gemini-enterprise": { "enabled": false, "value": "81", "unit": "%" },
       "_default": { "enabled": false, "value": "81", "unit": "%" }
+    },
+    "zenMode": {
+      "gemini": { "enabled": false, "showExitButton": true },
+      "gemini-enterprise": { "enabled": false, "showExitButton": true },
+      "_default": { "enabled": false, "showExitButton": true }
     }
   },
 

@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { Conversation, ConversationManager, Folder, Tag } from "~core/conversation-manager"
 import { SITE_IDS } from "~constants"
+import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { getCurrentLang, t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
@@ -19,7 +20,7 @@ import {
   TagManagerDialog,
 } from "./ConversationDialogs"
 import { LoadingOverlay } from "./LoadingOverlay"
-import { ConversationMenu, ExportMenu, FolderMenu } from "./ConversationMenus"
+import { ConversationMenu, ExportMenu, FolderMenu, type MenuAnchorPoint } from "./ConversationMenus"
 
 import "~styles/conversations.css"
 
@@ -76,9 +77,19 @@ type DialogType =
 
 type MenuType =
   | { type: "folder"; folder: Folder; anchorEl: HTMLElement }
-  | { type: "conversation"; conv: Conversation; anchorEl: HTMLElement }
+  | {
+      type: "conversation"
+      conv: Conversation
+      anchorEl: HTMLElement | null
+      anchorPoint?: MenuAnchorPoint
+    }
   | { type: "export"; anchorEl: HTMLElement }
-  | { type: "export-conv"; conv: Conversation; anchorEl: HTMLElement }
+  | {
+      type: "export-conv"
+      conv: Conversation
+      anchorEl: HTMLElement | null
+      anchorPoint?: MenuAnchorPoint
+    }
   | null
 
 const getInboxDisplayName = (): string => {
@@ -118,6 +129,19 @@ const highlightText = (text: string, query: string): React.ReactNode => {
       part
     ),
   )
+}
+
+const getSafeConversationOpenUrl = (conv: Conversation): string | null => {
+  const rawUrl = (conv.url || "").trim()
+  if (!rawUrl) return null
+
+  try {
+    const url = new URL(rawUrl, window.location.origin)
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null
+    return url.toString()
+  } catch {
+    return null
+  }
 }
 
 // ==================== 主组件 ====================
@@ -603,6 +627,16 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     },
     [batchMode, manager],
   )
+
+  const handleOpenConversationInNewTab = useCallback((conv: Conversation) => {
+    const url = getSafeConversationOpenUrl(conv)
+    if (!url) {
+      showToast(t("operationFailed"))
+      return
+    }
+
+    platform.openTab(url)
+  }, [])
 
   // 文件夹展开/折叠（手风琴模式）
   const handleFolderClick = (folderId: string) => {
@@ -1366,7 +1400,9 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
         <ConversationMenu
           conversation={menu.conv}
           anchorEl={menu.anchorEl}
+          anchorPoint={menu.anchorPoint}
           onClose={() => setMenu(null)}
+          onOpenInNewTab={() => handleOpenConversationInNewTab(menu.conv)}
           onRename={() => {
             setMenu(null)
             setDialog({ type: "rename", conv: menu.conv })
@@ -1387,7 +1423,8 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           onExport={() => {
             const conv = menu.conv
             const anchorEl = menu.anchorEl
-            setMenu({ type: "export-conv", conv, anchorEl })
+            const anchorPoint = menu.anchorPoint
+            setMenu({ type: "export-conv", conv, anchorEl, anchorPoint })
           }}
           onDelete={() => {
             setMenu(null)
@@ -1446,6 +1483,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
       {menu?.type === "export-conv" && (
         <ExportMenu
           anchorEl={menu.anchorEl}
+          anchorPoint={menu.anchorPoint}
           onClose={() => setMenu(null)}
           onExportMarkdown={async () => {
             setMenu(null)
@@ -1519,7 +1557,18 @@ const ConversationItem = React.memo<ConversationItemProps>(
           e.dataTransfer.setData("text/plain", conv.id)
         }}
         onDragEnd={onDragEnd}
-        onClick={() => onConversationClick(conv)}>
+        onClick={() => onConversationClick(conv)}
+        onContextMenu={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          onInteractionStateChange?.(true)
+          onMenuChange({
+            type: "conversation",
+            conv,
+            anchorEl: null,
+            anchorPoint: { left: e.clientX, top: e.clientY },
+          })
+        }}>
         {batchMode && (
           <input
             type="checkbox"

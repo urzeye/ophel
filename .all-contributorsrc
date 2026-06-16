@@ -95,6 +95,20 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/34683587?v=4",
       "profile": "https://github.com/mrpops2ko",
       "contributions": ["code"]
+    },
+    {
+      "login": "Suxixihuanni",
+      "name": "Suxixihuanni",
+      "avatar_url": "https://avatars.githubusercontent.com/u/208633969?v=4",
+      "profile": "https://github.com/Suxixihuanni",
+      "contributions": ["promotion"]
+    },
+    {
+      "login": "Ice-wilderness",
+      "name": "Ice-wilderness",
+      "avatar_url": "https://avatars.githubusercontent.com/u/65530045?v=4",
+      "profile": "https://github.com/Ice-wilderness",
+      "contributions": ["code", "bug"]
     }
   ],
   "contributorsPerLine": 8,

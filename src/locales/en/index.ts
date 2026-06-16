@@ -702,11 +702,15 @@ export const en = {
   outlineEmptyDescDefault: "Outline items will appear as the conversation grows.",
   outlineEmptyDescUserQueryOnly:
     "Only user queries are shown right now. Send a message to generate outline items.",
+  outlineCopyFull: "Copy outline",
+  outlineCopyFullRunning: "Copying outline...",
+  outlineFullCopySuccess: "Copied {count} outline items",
   outlineRefresh: "Refresh",
   outlineSettings: "Outline Settings",
   outlineSettingsTitle: "Outline Settings",
   outlineEnabledLabel: "Enable Outline View",
   outlineShowUserQueriesLabel: "Show User Queries",
+  outlineUserQueryRoleLabel: "User queries",
   bookmarkSettings: "Bookmark Settings",
 
   bookmarkModeDisableLevel: "Cannot adjust levels in bookmark mode",
@@ -727,8 +731,8 @@ export const en = {
   anchorUpdated: "Anchor updated",
   // Outline advanced toolbar
 
-  outlineScrollBottom: "Scroll to bottom",
-  outlineScrollTop: "Scroll to top",
+  outlineScrollBottom: "Scroll to outline bottom",
+  outlineScrollTop: "Scroll to outline top",
   outlineExpandAll: "Expand all",
   outlineCollapseAll: "Collapse all",
   outlineLocateCurrent: "Locate current position",
@@ -769,7 +773,6 @@ export const en = {
   outlineUpdateIntervalLabel: "Update interval (seconds)",
   outlineShowUserQueries: "Show user queries",
   outlineShowUserQueriesTooltip: "Show user queries",
-  outlineOnlyUserQueries: "Queries",
   globalSearchOutlineReplies: "Replies",
   outlineIntervalUpdated: "Interval set to {val} seconds",
   outlineSyncScrollLabel: "Sync scroll",
@@ -854,6 +857,7 @@ export const en = {
   conversationsSyncing: "Syncing...",
   conversationsSynced: "Synced",
   conversationsAddFolder: "New Folder",
+  conversationsOpenInNewTab: "Open in new tab",
   conversationsRename: "Rename",
   conversationsDelete: "Delete",
   conversationsDeleteConfirm: 'Delete folder "{folder}"? Conversations will be moved to {inbox}.',
@@ -1263,6 +1267,13 @@ Please output the optimized code block directly, followed by a brief summary of 
   exportOverlayCopying: "Copying Markdown...",
   exportOverlayRestoring: "Restoring page...",
   exportOverlayHint: "Keep the page still during export. Do not click, scroll, or type.",
+  outlineCopyOverlayLoadingHistory: "Loading full conversation...",
+  outlineCopyOverlayPreparing: "Preparing outline...",
+  outlineCopyOverlayExtracting: "Extracting outline...",
+  outlineCopyOverlayCopying: "Copying outline...",
+  outlineCopyOverlayRestoring: "Restoring page position...",
+  outlineCopyOverlayHint:
+    "Keep the page still while copying the outline. Do not click, scroll, or type.",
   replyCopied: "Latest reply copied",
   noReplyToCopy: "No reply to copy",
   scrollLockToggled: "Scroll lock toggled",
@@ -1556,6 +1567,9 @@ Please output the optimized code block directly, followed by a brief summary of 
   zenModeDesc:
     "Hide sidebar and navigation elements to focus on the current conversation (configured independently for each site)",
   zenModeExitButton: "Exit Zen Mode",
+  zenModeExitButtonVisibleLabel: "Show exit button",
+  zenModeExitButtonVisibleDesc:
+    "When off, the on-page Exit Zen Mode button is hidden; you can still leave Zen Mode from the quick button or shortcut.",
   cleanModeTitle: "Clean Mode",
   cleanModeLabel: "Enable Clean Mode",
   cleanModeDesc:

@@ -17,6 +17,7 @@ import {
   usePromptsStore,
 } from "~stores/prompts-store"
 import type { Prompt } from "~utils/storage"
+import { isLikelyMobileDevice } from "~utils/device"
 
 export const AI_STUDIO_SHORTCUT_SYNC_EVENT = "ophel:aistudio-submit-shortcut-synced"
 
@@ -257,10 +258,21 @@ export class PromptManager {
     return null
   }
 
+  private getEffectiveSubmitShortcut(
+    submitShortcut?: "enter" | "ctrlEnter",
+  ): "enter" | "ctrlEnter" | undefined {
+    if (this.adapter.getSiteId() === SITE_IDS.AISTUDIO && isLikelyMobileDevice()) {
+      return "ctrlEnter"
+    }
+    return submitShortcut
+  }
+
   syncAiStudioSubmitShortcut(submitShortcut: "enter" | "ctrlEnter" = "enter"): boolean {
     if (this.adapter.getSiteId() !== SITE_IDS.AISTUDIO) return false
 
-    const expectedBehavior = submitShortcut === "ctrlEnter" ? 2 : 1
+    const effectiveShortcut = this.getEffectiveSubmitShortcut(submitShortcut) ?? submitShortcut
+    const forcedByMobile = effectiveShortcut !== submitShortcut
+    const expectedBehavior = effectiveShortcut === "ctrlEnter" ? 2 : 1
     let pref: Record<string, unknown> = {}
 
     const prefRaw = localStorage.getItem("aiStudioUserPreference")
@@ -289,7 +301,8 @@ export class PromptManager {
     window.dispatchEvent(
       new CustomEvent(AI_STUDIO_SHORTCUT_SYNC_EVENT, {
         detail: {
-          submitShortcut: expectedBehavior === 2 ? "ctrlEnter" : "enter",
+          submitShortcut: effectiveShortcut,
+          forcedByMobile,
         },
       }),
     )
@@ -339,9 +352,11 @@ export class PromptManager {
   private resolveSubmitKeyConfig(submitShortcut?: "enter" | "ctrlEnter"): {
     key: "Enter" | "Ctrl+Enter"
   } {
-    return submitShortcut === "ctrlEnter"
+    const effectiveShortcut = this.getEffectiveSubmitShortcut(submitShortcut)
+
+    return effectiveShortcut === "ctrlEnter"
       ? { key: "Ctrl+Enter" as const }
-      : submitShortcut === "enter"
+      : effectiveShortcut === "enter"
         ? { key: "Enter" as const }
         : this.adapter.getSubmitKeyConfig()
   }

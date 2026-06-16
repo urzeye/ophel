@@ -687,11 +687,15 @@ export const ja = {
   outlineEmptyDescDefault: "会話が進むと目次項目が自動で表示されます。",
   outlineEmptyDescUserQueryOnly:
     "現在はユーザーの質問のみ表示中です。メッセージ送信後に目次項目が表示されます。",
+  outlineCopyFull: "目次をコピー",
+  outlineCopyFullRunning: "目次をコピー中...",
+  outlineFullCopySuccess: "{count} 件の目次項目をコピーしました",
   outlineRefresh: "リロード",
   outlineSettings: "目次設定",
   outlineSettingsTitle: "アウトライン設定",
   outlineEnabledLabel: "アウトライン表示を有効化",
   outlineShowUserQueriesLabel: "ユーザーの質問を表示",
+  outlineUserQueryRoleLabel: "ユーザーの質問",
 
   bookmarkSettings: "ブックマーク設定",
   bookmarkModeDisableLevel: "ブックマークモードではレベルを調整できません",
@@ -712,8 +716,8 @@ export const ja = {
   anchorUpdated: "アンカーを更新しました",
 
   // Outline advanced toolbar
-  outlineScrollBottom: "一番下へ",
-  outlineScrollTop: "一番上へ",
+  outlineScrollBottom: "アウトラインの一番下へ",
+  outlineScrollTop: "アウトラインの一番上へ",
   outlineExpandAll: "すべて展開",
   outlineCollapseAll: "すべて折りたたむ",
   outlineLocateCurrent: "現在の位置を特定",
@@ -742,7 +746,6 @@ export const ja = {
   outlineUpdateIntervalLabel: "更新間隔 (秒)",
   outlineShowUserQueries: "ユーザーの発言を含める",
   outlineShowUserQueriesTooltip: "ユーザーの質問を見出しとして表示",
-  outlineOnlyUserQueries: "質問のみ",
   globalSearchOutlineReplies: "回答",
   outlineIntervalUpdated: "間隔を {val} 秒に設定しました",
   outlineSyncScrollLabel: "スクロール同期",
@@ -827,6 +830,7 @@ export const ja = {
   conversationsSyncing: "同期中...",
   conversationsSynced: "同期完了",
   conversationsAddFolder: "新規フォルダ",
+  conversationsOpenInNewTab: "新しいタブで開く",
   conversationsRename: "名前変更",
   conversationsDelete: "削除",
   conversationsDeleteConfirm: "フォルダ「{folder}」を削除しますか？会話は{inbox}に移動されます。",
@@ -1235,6 +1239,13 @@ export const ja = {
   exportOverlayRestoring: "ページ状態を復元しています...",
   exportOverlayHint:
     "エクスポート中はページを動かさず、クリック・スクロール・入力をしないでください。",
+  outlineCopyOverlayLoadingHistory: "会話全体を読み込んでいます...",
+  outlineCopyOverlayPreparing: "目次を準備しています...",
+  outlineCopyOverlayExtracting: "目次を抽出しています...",
+  outlineCopyOverlayCopying: "目次をコピーしています...",
+  outlineCopyOverlayRestoring: "ページ位置を復元しています...",
+  outlineCopyOverlayHint:
+    "目次のコピー中はページを動かさず、クリック・スクロール・入力をしないでください。",
   replyCopied: "最新の回答をコピーしました",
   noReplyToCopy: "コピーできる回答がありません",
   scrollLockToggled: "スクロールロックを切り替えました",
@@ -1547,6 +1558,9 @@ export const ja = {
   zenModeDesc:
     "サイドバーとナビゲーション要素を非表示にして、現在の会話に集中します（各サイトごとに個別に設定）",
   zenModeExitButton: "禅モードを終了",
+  zenModeExitButtonVisibleLabel: "終了ボタンを表示",
+  zenModeExitButtonVisibleDesc:
+    "オフにすると、ページ上の「禅モードを終了」ボタンを非表示にします。クイックボタンまたはショートカットから引き続き禅モードを終了できます。",
   cleanModeTitle: "クリーンモード",
   cleanModeLabel: "クリーンモードを有効にする",
   cleanModeDesc:

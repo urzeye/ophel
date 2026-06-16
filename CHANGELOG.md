@@ -11,6 +11,39 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.60] - 2026-06-10
+
+### ✨ Improvements
+
+- **Userscript bundle size** — Split Markdown rendering code, Markdown styles, user-query Markdown styles, and site icons into external userscript assets so Greasy Fork sync has less inline code to process while preserving the existing rendering injection path.
+- **Zen Mode exit button** — Added a "Show exit button" setting for Zen Mode, so the on-page exit button can be hidden while keeping the quick button and shortcut exit paths available. (#645)
+
+### 🐛 Bug Fixes
+
+- **AI Studio mobile Enter key** — AI Studio on Android and other mobile devices now lets the soft-keyboard Enter key insert a newline instead of triggering an accidental send, while Ophel-driven sends still use the native send button or the safe keyboard fallback. (#646)
+- **AI Studio mobile history sync** — AI Studio conversation sync now recognizes the mobile Library card layout, so mobile pages no longer report that no sidebar conversations were found when history is available.
+- **Conversation sync loading** — Conversation sync now uses each adapter's own conversation source to decide when sidebar history has finished loading, waits longer for slow lazy-loaded sidebars, and disables sync-delete when a complete load cannot be confirmed. Doubao and Yuanbao now share the safer base loader. (#639)
+
+---
+
+## [1.0.59] - 2026-06-10
+
+### 🚀 New Features
+
+- **Outline copy** — The Outline toolbar can now copy the currently selected outline depth as Markdown headings by reusing the export pipeline, so virtual-scroll conversations are loaded and restored safely before headings and user queries are copied. (#539)
+- **Conversations quick open** — Conversation rows can now be opened from the context menu in a new tab, so older sessions can be reopened without replacing the current chat. (#578)
+
+### 🐛 Bug Fixes
+
+- **ChatGPT native TOC outline** — ChatGPT outlines now recover the full user-question list when the native TOC only exposes real prompt text after hover, cache the extracted labels per TOC instance, and avoid userscript crashes from cross-realm pointer events. (#642)
+- **ChatGPT tab status** — ChatGPT tabs no longer show `⏳` while idle when a sidebar conversation title contains "Stop" or "停止". The generation detector now only uses visible stop buttons from the composer area. (#630)
+- **Gemini tab renaming** — Gemini tabs no longer flicker back to the native page title during active replies when automatic tab renaming is enabled.
+- **Gemini watermark removal** — Replaced the legacy Gemini/Nano Banana remover with the SDK-backed implementation and fixed user-uploaded image handling plus generated-image removal regressions. (#593, #625)
+- **Prompt imports** — Prompt Library import now accepts prompt backup files exported from the Backup page, not just the raw prompt-list JSON format.
+- **Rendered user-query spacing** — Rendered Markdown in user questions now ignores native plain-text whitespace classes, preventing large blank gaps between paragraphs and quoted text on DeepSeek, Doubao, Z.ai, ChatGLM, Qwen, and similar sites.
+
+---
+
 ## [1.0.58] - 2026-06-04
 
 ### 🐛 Bug Fixes
@@ -1157,6 +1190,8 @@ This is the first official release of Ophel, providing comprehensive enhancement
 
 ---
 
+[1.0.60]: https://github.com/urzeye/ophel/releases/tag/v1.0.60
+[1.0.59]: https://github.com/urzeye/ophel/releases/tag/v1.0.59
 [1.0.58]: https://github.com/urzeye/ophel/releases/tag/v1.0.58
 [1.0.57]: https://github.com/urzeye/ophel/releases/tag/v1.0.57
 [1.0.56]: https://github.com/urzeye/ophel/releases/tag/v1.0.56

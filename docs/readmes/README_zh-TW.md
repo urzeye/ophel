@@ -88,25 +88,62 @@
 | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------: |
 | <video src="https://github.com/user-attachments/assets/a40eb655-295e-4f9c-b432-9313c9242c9d" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/a249baeb-2e82-4677-847c-2ff584c3f56b" width="280" controls></video> | <video src="https://github.com/user-attachments/assets/6dfca20d-2f88-4844-b3bb-c48321100ff4" width="280" controls></video> |
 
-## 🎯 適用場景
-
-- 學習與研究：長對話推理、整理知識點、回顧結論、提煉筆記
-- 日常工作：需求拆解、方案撰寫、競品分析、會議紀要、諮詢與管理工作流
-- 開發與技術寫作：長程式碼討論、Bug 排查、架構推演、文件/部落格寫作
-- 內容創作：腳本/大綱/潤色反覆迭代，快速回到關鍵段落並匯出再加工
-- 高頻使用 AI 的使用者：需要「結構、秩序、復用能力」，而不只是臨時聊天
-
 ## ✨ 核心功能
 
-- 🧠 **智能大綱** — 自動解析用戶問題與 AI 回覆，生成可導航的目錄結構
-- 💬 **會話管理** — 文件夾分類、標籤、搜索、批量操作
-- ⌨️ **提示詞庫** — 變量支持、Markdown 預覽、分類管理、一鍵填充
-- 🎨 **主題定製** — 20+ 深色/淺色主題，自定義 CSS
-- 🔧 **界面優化** — 寬屏模式、頁面與用戶問題寬度調整、側邊欄佈局控制
-- 📖 **閱讀體驗** — 滾動鎖定、閱讀歷史恢復、Markdown 渲染優化
-- ⚡ **效率工具** — 快捷鍵、模型鎖定、標籤頁自動命名、完成通知
-- 🎭 **Claude 增強** — Session Key 管理、多賬號切換
-- 🔒 **隱私優先** — 本地存儲、WebDAV 同步、無數據收集
+> 適用於學習研究、需求分析、程式碼討論、內容創作等一切需要「結構、秩序與復用」的 AI 對話場景。
+
+<table>
+  <thead>
+    <tr>
+      <th width="200">功能</th>
+      <th>描述</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>🧭 <a href="https://ophel.app/docs/zh/features/outline">智能大綱</a></td>
+      <td>實時解析對話結構生成可導航目錄，支援層級折疊、搜尋跳轉、錨點定位、收藏書籤與字數統計</td>
+    </tr>
+    <tr>
+      <td>💬 <a href="https://ophel.app/docs/zh/features/conversations">會話管理</a></td>
+      <td>文件夾 + 標籤雙維度管理，自動同步源站會話，支援搜尋、批量操作與多格式匯出（Markdown/JSON/TXT）</td>
+    </tr>
+    <tr>
+      <td>💡 <a href="https://ophel.app/docs/zh/features/prompts">提示詞庫</a></td>
+      <td>變數模板、分類管理、一鍵填充、雙擊發送，支援提示詞佇列自動排隊發送</td>
+    </tr>
+    <tr>
+      <td>🔍 <a href="https://ophel.app/docs/zh/features/global-search">全域搜尋</a></td>
+      <td>跨會話/大綱/提示詞/設定統一搜尋，支援 <code>folder:</code> <code>tag:</code> <code>date:</code> 等語法過濾與模糊匹配</td>
+    </tr>
+    <tr>
+      <td>📖 <a href="https://ophel.app/docs/zh/enhancements/content">閱讀增強</a></td>
+      <td>Mermaid 圖表渲染、LaTeX 公式支援、使用者問題 Markdown 排版、捲動鎖定</td>
+    </tr>
+    <tr>
+      <td>⌨️ <a href="https://ophel.app/docs/zh/customization/shortcuts">效率工具</a></td>
+      <td>閱讀歷史恢復、自訂快捷鍵、模型鎖定、標籤頁增強命名、AI 完成通知</td>
+    </tr>
+    <tr>
+      <td>🎨 <a href="https://ophel.app/docs/zh/customization/appearance">介面定製</a></td>
+      <td>20+ 主題、自訂 CSS、寬螢幕模式、禪模式，<code>Option+D</code> 一鍵切換明暗</td>
+    </tr>
+    <tr>
+      <td>📊 <a href="https://ophel.app/docs/zh/panel-overview">資料統計</a></td>
+      <td>本地對話計數、Token 粗估、歷史曲線（按站點/時間維度）</td>
+    </tr>
+    <tr>
+      <td>🎭 <a href="https://ophel.app/docs/zh/customization/site-settings">Claude 增強</a></td>
+      <td>Session Key 管理與多帳號快速切換</td>
+    </tr>
+    <tr>
+      <td>🔒 <a href="https://ophel.app/docs/zh/data/privacy">隱私與資料</a></td>
+      <td>預設本地儲存、WebDAV 多裝置同步、檔案匯入匯出、零資料收集</td>
+    </tr>
+  </tbody>
+</table>
+
+<p align="right"><a href="https://ophel.app/docs/zh/introduction">📖 完整功能文件 →</a></p>
 
 > [!IMPORTANT]
 >
@@ -207,6 +244,10 @@
     <td align="center" valign="top" width="14.28%">
       <img src="https://api.dicebear.com/7.x/bottts/svg?seed=%20%E7%81%AB%E5%8D%8E%E5%85%B0%E6%A8%B1%7Cwechat%7C2026-05-24%7C%C2%A530&amp;radius=20&amp;backgroundColor=f1f5f9" width="84px;" alt=" 火华兰樱" /><br />
       <sub><b> 火华兰樱</b></sub>
+    </td>
+    <td align="center" valign="top" width="14.28%">
+      <img src="https://storage.ko-fi.com/cdn/useruploads/post/7b7c1170-1d94-45d4-a1b9-8a268e77dedb_e76c8809-8746-4173-88ff-e06a4e3eb939.png" width="84px;" alt="Lewu Gao" /><br />
+      <sub><b>Lewu Gao</b></sub>
     </td>
   </tr>
   </tbody>
@@ -346,6 +387,8 @@ pnpm serve:userscript:assets   # 本地啟動伺服器提供圖示/樣式等靜�
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/hugo1120"><img src="https://avatars.githubusercontent.com/u/69150726?v=4&amp;s=80" width="80px;" alt="hugo2233"/><br /><sub><b>hugo2233</b></sub></a><br /><span title="Promotion">📣</span></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/t0ny-peng"><img src="https://avatars.githubusercontent.com/u/4816327?v=4&amp;s=80" width="80px;" alt="t0ny-peng"/><br /><sub><b>t0ny-peng</b></sub></a><br /><span title="Code">💻</span></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/mrpops2ko"><img src="https://avatars.githubusercontent.com/u/34683587?v=4&amp;s=80" width="80px;" alt="mrpops2ko"/><br /><sub><b>mrpops2ko</b></sub></a><br /><span title="Code">💻</span></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/Suxixihuanni"><img src="https://avatars.githubusercontent.com/u/208633969?v=4&amp;s=80" width="80px;" alt="Suxixihuanni"/><br /><sub><b>Suxixihuanni</b></sub></a><br /><span title="Promotion">📣</span></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/Ice-wilderness"><img src="https://avatars.githubusercontent.com/u/65530045?v=4&amp;s=80" width="80px;" alt="Ice-wilderness"/><br /><sub><b>Ice-wilderness</b></sub></a><br /><span title="Code">💻</span> <span title="Bug reports">🐛</span></td>
     </tr>
   </tbody>
 </table>

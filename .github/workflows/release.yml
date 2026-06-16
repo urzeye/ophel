@@ -154,14 +154,6 @@ jobs:
           zip -r ../chrome-mv3-edge.zip .
           cd ../..
 
-      - name: Rename artifacts for release
-        run: |
-          cp build/chrome-mv3-prod.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-chrome.zip
-          cp build/chrome-mv3-edge.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-edge-addons-upload.zip
-          cp build/firefox-mv3-prod.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-firefox.zip
-          cp build/userscript/ophel.user.js build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}.user.js
-          cp build/ophel-atlas-cws-upload.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip
-
       - name: Publish userscript hashed assets
         uses: peaceiris/actions-gh-pages@v4
         with:
@@ -173,6 +165,32 @@ jobs:
           user_name: "github-actions[bot]"
           user_email: "github-actions[bot]@users.noreply.github.com"
           commit_message: "Publish userscript assets ${{ steps.get_version.outputs.VERSION }} [skip ci]"
+
+      - name: Resolve userscript asset commit
+        id: userscript_assets
+        run: |
+          ASSET_COMMIT=$(git ls-remote origin refs/heads/userscript-assets | awk '{print $1}')
+          if ! echo "$ASSET_COMMIT" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "Invalid userscript-assets commit: $ASSET_COMMIT"
+            exit 1
+          fi
+          echo "commit=$ASSET_COMMIT" >> "$GITHUB_OUTPUT"
+          echo "Userscript assets commit: $ASSET_COMMIT"
+
+      - name: Pin userscript asset URLs
+        run: |
+          node scripts/pin-userscript-asset-urls.mjs \
+            ${{ steps.userscript_assets.outputs.commit }} \
+            build/userscript/ophel.user.js \
+            build/userscript/userscript-assets/manifest.json
+
+      - name: Rename artifacts for release
+        run: |
+          cp build/chrome-mv3-prod.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-chrome.zip
+          cp build/chrome-mv3-edge.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-edge-addons-upload.zip
+          cp build/firefox-mv3-prod.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-firefox.zip
+          cp build/userscript/ophel.user.js build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}.user.js
+          cp build/ophel-atlas-cws-upload.zip build/ophel-atlas-${{ steps.get_version.outputs.VERSION }}-cws-upload.zip
 
       - name: Upload CWS zip as workflow artifact
         uses: actions/upload-artifact@v4

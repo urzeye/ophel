@@ -673,6 +673,9 @@ export const ru = {
   outlineEmptyDescDefault: "Пункты содержания появятся автоматически по мере развития диалога.",
   outlineEmptyDescUserQueryOnly:
     "Сейчас отображаются только вопросы пользователя. Отправьте сообщение, чтобы появились пункты содержания.",
+  outlineCopyFull: "Копировать план",
+  outlineCopyFullRunning: "Копирование плана...",
+  outlineFullCopySuccess: "Скопировано пунктов плана: {count}",
   outlineRefresh: "Перезагрузить",
   outlineSettings: "Настройки содержания",
   bookmarkSettings: "Настройки закладок",
@@ -692,8 +695,8 @@ export const ru = {
   refreshSettings: "Обновление",
   jumpToAnchor: "Вернуться назад",
   // Outline advanced toolbar
-  outlineScrollBottom: "В самый низ",
-  outlineScrollTop: "В самый верх",
+  outlineScrollBottom: "В конец структуры",
+  outlineScrollTop: "В начало структуры",
   outlineExpandAll: "Раскрыть всё",
   outlineCollapseAll: "Свернуть всё",
   outlineLocateCurrent: "Найти текущее место",
@@ -723,7 +726,6 @@ export const ru = {
   outlineUpdateIntervalLabel: "Секунды",
   outlineShowUserQueries: "Мои вопросы",
   outlineShowUserQueriesTooltip: "Видеть мои вопросы",
-  outlineOnlyUserQueries: "Вопросы",
   globalSearchOutlineReplies: "Ответы",
   outlineIntervalUpdated: "Сет: {val}с",
   outlineSyncScrollLabel: "Синхро-скролл",
@@ -799,6 +801,7 @@ export const ru = {
   conversationsSyncing: "Процесс...",
   conversationsSynced: "Готово",
   conversationsAddFolder: "Папка",
+  conversationsOpenInNewTab: "Открыть в новой вкладке",
   conversationsRename: "Имя",
   conversationsDelete: "Удалить",
   conversationsDeleteConfirm: 'Удалить папку "{folder}"? Чаты будут перемещены в {inbox}.',
@@ -1187,6 +1190,13 @@ export const ru = {
   exportOverlayCopying: "Копируем Markdown...",
   exportOverlayRestoring: "Восстанавливаем страницу...",
   exportOverlayHint: "Во время экспорта не нажимайте, не прокручивайте и не вводите текст.",
+  outlineCopyOverlayLoadingHistory: "Загружаем весь диалог...",
+  outlineCopyOverlayPreparing: "Готовим план...",
+  outlineCopyOverlayExtracting: "Извлекаем план...",
+  outlineCopyOverlayCopying: "Копируем план...",
+  outlineCopyOverlayRestoring: "Восстанавливаем позицию страницы...",
+  outlineCopyOverlayHint:
+    "Во время копирования плана не нажимайте, не прокручивайте и не вводите текст.",
   replyCopied: "Ответ скопирован",
   noReplyToCopy: "Нечего копить",
   scrollLockToggled: "Скролл изменен",
@@ -1455,6 +1465,7 @@ export const ru = {
   outlineSettingsTitle: "Оглавление",
   outlineEnabledLabel: "Показать оглавление",
   outlineShowUserQueriesLabel: "Показать мои вопросы",
+  outlineUserQueryRoleLabel: "Вопросы пользователя",
   anchorUpdated: "Якорь обновлен",
   loadingHistory: "Загрузка истории...",
   historyLoaded: "История загружена",
@@ -1536,6 +1547,9 @@ export const ru = {
   zenModeDesc:
     "Скрыть боковую панель и элементы навигации для концентрации на текущем разговоре (настраивается индивидуально для каждого сайта)",
   zenModeExitButton: "Выйти из дзен-режима",
+  zenModeExitButtonVisibleLabel: "Показывать кнопку выхода",
+  zenModeExitButtonVisibleDesc:
+    "Если отключено, кнопка выхода из дзен-режима на странице скрывается; выйти из дзен-режима по-прежнему можно через быструю кнопку или сочетание клавиш.",
   cleanModeTitle: "Режим очистки",
   cleanModeLabel: "Включить режим очистки",
   cleanModeDesc:

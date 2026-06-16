@@ -25,9 +25,21 @@ export const USERSCRIPT_RESOURCE_DEFINITIONS = {
     metaName: "ophelStyles",
     fileName: "ophel.user.css",
   },
+  markdownPreviewStyles: {
+    metaName: "ophelMarkdownPreviewStyles",
+    fileName: "ophel.markdown-preview.css",
+  },
+  userQueryMarkdownStyles: {
+    metaName: "ophelUserQueryMarkdownStyles",
+    fileName: "ophel.user-query-markdown.css",
+  },
   icon: {
     metaName: "ophelIcon",
     fileName: "ophel-icon.png",
+  },
+  siteIcons: {
+    metaName: "ophelSiteIcons",
+    fileName: "ophel.site-icons.json",
   },
   notificationDefault: {
     metaName: "ophelNotificationDefault",
