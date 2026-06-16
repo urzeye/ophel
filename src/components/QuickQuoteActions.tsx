@@ -114,6 +114,11 @@ const findQuickQuoteChipHost = (message: HTMLElement, adapter: SiteAdapter): HTM
   return message
 }
 
+const createQuickQuoteMessageScopeKey = (index: number, text: string): string => {
+  const normalized = text.replace(/\s+/g, " ").trim()
+  return `${index}:${normalized.length}:${normalized.slice(0, 120)}:${normalized.slice(-120)}`
+}
+
 const getQuickQuoteChipRow = (message: HTMLElement, host: HTMLElement): HTMLElement => {
   const existing = message.querySelector(QUICK_QUOTE_CHIP_ROW_SELECTOR)
   const row = existing instanceof HTMLElement ? existing : document.createElement("span")
@@ -268,6 +273,10 @@ export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter; enabled: boole
   const renderTimeoutRef = useRef<number | null>(null)
   const isRenderingRef = useRef(false)
   const quoteReferenceRegistryRef = useRef(new Map<string, PromptQuoteReference>())
+  const knownUserMessageElementsRef = useRef(new WeakSet<HTMLElement>())
+  const knownUserMessageKeysRef = useRef(new Set<string>())
+  const hasRenderedOnceRef = useRef(false)
+  const renderedSessionIdRef = useRef<string | null>(null)
 
   const removeRenderedChips = useCallback(() => {
     const userQuerySelector = adapter.getUserQuerySelector()
@@ -292,25 +301,59 @@ export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter; enabled: boole
       const userQuerySelector = adapter.getUserQuerySelector()
       if (!userQuerySelector) return
 
+      const sessionId = adapter.getSessionId()
+      if (renderedSessionIdRef.current !== sessionId) {
+        renderedSessionIdRef.current = sessionId
+        knownUserMessageElementsRef.current = new WeakSet<HTMLElement>()
+        knownUserMessageKeysRef.current = new Set<string>()
+        quoteReferenceRegistryRef.current.clear()
+        hasRenderedOnceRef.current = false
+      }
+
       injectQuickQuoteHostStyles(document)
 
       const userMessages =
         (DOMToolkit.query(userQuerySelector, { all: true, shadow: true }) as Element[]) || []
+      const knownElements = knownUserMessageElementsRef.current
+      const knownKeys = knownUserMessageKeysRef.current
+      const messageSnapshots: Array<{
+        message: HTMLElement
+        visibleText: string
+        scopeKey: string
+        isKnown: boolean
+      }> = []
+
+      userMessages.forEach((message, index) => {
+        if (!(message instanceof HTMLElement)) return
+
+        const visibleText = adapter.extractUserQueryText(message)
+        const scopeKey = createQuickQuoteMessageScopeKey(
+          index,
+          visibleText || message.textContent || "",
+        )
+        messageSnapshots.push({
+          message,
+          visibleText,
+          scopeKey,
+          isKnown: knownElements.has(message) || knownKeys.has(scopeKey),
+        })
+      })
 
       const markerEntriesByMessage = new Map<
         HTMLElement,
         ReturnType<typeof extractQuickQuoteMarkerEntriesFromElement>
       >()
       const quoteReferenceRegistry = quoteReferenceRegistryRef.current
+      const messageSnapshotsInReverse = [...messageSnapshots].reverse()
 
-      userMessages.forEach((message) => {
-        if (!(message instanceof HTMLElement)) return
-
+      messageSnapshotsInReverse.forEach(({ message, visibleText, scopeKey, isKnown }) => {
         const markerEntries = extractQuickQuoteMarkerEntriesFromElement(message)
-        const visibleText = adapter.extractUserQueryText(message)
         const fallbackEntries =
           markerEntries.length === 0
-            ? resolvePendingQuickQuoteMarkerEntriesFromElement(message, visibleText)
+            ? resolvePendingQuickQuoteMarkerEntriesFromElement(message, visibleText, {
+                allowMarkerlessMatch: hasRenderedOnceRef.current && !isKnown,
+                markerlessScopeKey: scopeKey,
+              })
             : []
         const allMarkerEntries = [...markerEntries, ...fallbackEntries]
         markerEntriesByMessage.set(message, allMarkerEntries)
@@ -321,9 +364,7 @@ export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter; enabled: boole
         })
       })
 
-      userMessages.forEach((message) => {
-        if (!(message instanceof HTMLElement)) return
-
+      messageSnapshots.forEach(({ message }) => {
         const renderedIds = new Set(
           Array.from(message.querySelectorAll<HTMLButtonElement>(QUICK_QUOTE_CHIP_SELECTOR))
             .map((chip) => chip.dataset.ghQuickQuoteRefId)
@@ -385,6 +426,12 @@ export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter; enabled: boole
         chipRow.append(fragment)
         message.dataset.ghQuickQuoteRefs = Array.from(renderedIds).join(",")
       })
+
+      messageSnapshots.forEach(({ message, scopeKey }) => {
+        knownElements.add(message)
+        knownKeys.add(scopeKey)
+      })
+      hasRenderedOnceRef.current = true
     } finally {
       isRenderingRef.current = false
     }

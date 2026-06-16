@@ -69,6 +69,7 @@ interface PendingQuickQuoteReference {
   reference: PromptQuoteReference
   createdAt: number
   requireMarkerResidue: boolean
+  matchedScopeKey?: string
 }
 
 const pendingQuickQuoteReferences: PendingQuickQuoteReference[] = []
@@ -345,6 +346,7 @@ const rememberQuickQuoteReference = (
   if (existing) {
     existing.createdAt = now
     existing.reference = reference
+    existing.matchedScopeKey = undefined
     return
   }
 
@@ -378,12 +380,78 @@ export const appendQuickQuoteMarker = (
 }
 
 export const stripQuickQuoteMarkers = (content: string): string => {
-  const stripped = stripQuickQuoteMarkerSyntax(content)
-    .replace(new RegExp(QUICK_QUOTE_MARKER_LABEL, "g"), "")
+  const stripped = stripQuickQuoteMarkerSyntax(content).replace(
+    new RegExp(QUICK_QUOTE_MARKER_LABEL, "g"),
+    "",
+  )
+
+  return stripped
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim()
-  return stripped
+}
+
+const stripQuickQuoteMarkersPreservingSpacing = (content: string): string => {
+  return stripQuickQuoteMarkerSyntax(content).replace(new RegExp(QUICK_QUOTE_MARKER_LABEL, "g"), "")
+}
+
+interface ResolvePendingQuickQuoteMarkerOptions {
+  allowMarkerlessMatch?: boolean
+  markerlessScopeKey?: string
+}
+
+export const resolvePendingQuickQuoteMarkerEntriesFromElement = (
+  element: Element,
+  visibleText?: string,
+  options: ResolvePendingQuickQuoteMarkerOptions = {},
+): QuickQuoteMarkerEntry[] => {
+  const hasMarkerResidue = hasQuickQuoteMarkerResidue(element)
+
+  prunePendingQuickQuoteReferences()
+  const contentKey = normalizeQuickQuoteMatchText(visibleText || element.textContent || "")
+  if (!contentKey) return []
+
+  const entries: QuickQuoteMarkerEntry[] = []
+  const exactMatches: PendingQuickQuoteReference[] = []
+  const looseMatches: PendingQuickQuoteReference[] = []
+
+  pendingQuickQuoteReferences.forEach((pending) => {
+    if (pending.requireMarkerResidue && !hasMarkerResidue) return
+
+    if (!pending.requireMarkerResidue) {
+      if (!options.markerlessScopeKey) return
+      if (pending.matchedScopeKey && pending.matchedScopeKey !== options.markerlessScopeKey) return
+      if (!pending.matchedScopeKey && options.allowMarkerlessMatch === false) return
+    }
+
+    const exactMatch = pending.contentKey === contentKey
+    const looseMatch =
+      hasMarkerResidue &&
+      Math.min(pending.contentKey.length, contentKey.length) >= 24 &&
+      (pending.contentKey.includes(contentKey) || contentKey.includes(pending.contentKey))
+
+    if (exactMatch) {
+      exactMatches.push(pending)
+    } else if (looseMatch) {
+      looseMatches.push(pending)
+    }
+  })
+
+  const matched = exactMatches.at(-1) || looseMatches.at(-1)
+  if (matched) {
+    if (!matched.requireMarkerResidue && options.markerlessScopeKey && !matched.matchedScopeKey) {
+      matched.matchedScopeKey = options.markerlessScopeKey
+    }
+
+    entries.push({
+      id: matched.reference.id,
+      label: matched.reference.selectedText,
+      reference: matched.reference,
+      kind: "full",
+    })
+  }
+
+  return entries
 }
 
 const getEncodedMarkerFromAnchor = (anchor: HTMLAnchorElement): string | null => {
@@ -396,7 +464,7 @@ const isQuickQuoteMarkerAnchor = (anchor: HTMLAnchorElement): boolean => {
   return (anchor.getAttribute("href") || "").includes(QUICK_QUOTE_MARKER_HREF)
 }
 
-const hasQuickQuoteMarkerResidue = (element: Element): boolean => {
+function hasQuickQuoteMarkerResidue(element: Element): boolean {
   if (element.querySelector(`a[href*="${QUICK_QUOTE_MARKER_HREF}"]`)) return true
 
   const text = element.textContent || ""
@@ -419,49 +487,6 @@ export const rememberQuickQuoteReferencesFromContent = (content: string): void =
       pendingQuickQuoteReferenceById.get(entry.id) || entry.reference,
     )
   })
-}
-
-export const resolvePendingQuickQuoteMarkerEntriesFromElement = (
-  element: Element,
-  visibleText?: string,
-): QuickQuoteMarkerEntry[] => {
-  const hasMarkerResidue = hasQuickQuoteMarkerResidue(element)
-
-  prunePendingQuickQuoteReferences()
-  const contentKey = normalizeQuickQuoteMatchText(visibleText || element.textContent || "")
-  if (!contentKey) return []
-
-  const entries: QuickQuoteMarkerEntry[] = []
-  const exactMatches: PendingQuickQuoteReference[] = []
-  const looseMatches: PendingQuickQuoteReference[] = []
-
-  pendingQuickQuoteReferences.forEach((pending) => {
-    if (pending.requireMarkerResidue && !hasMarkerResidue) return
-
-    const exactMatch = pending.contentKey === contentKey
-    const looseMatch =
-      hasMarkerResidue &&
-      Math.min(pending.contentKey.length, contentKey.length) >= 24 &&
-      (pending.contentKey.includes(contentKey) || contentKey.includes(pending.contentKey))
-
-    if (exactMatch) {
-      exactMatches.push(pending)
-    } else if (looseMatch) {
-      looseMatches.push(pending)
-    }
-  })
-
-  const matched = exactMatches.at(-1) || looseMatches.at(-1)
-  if (matched) {
-    entries.push({
-      id: matched.reference.id,
-      label: matched.reference.selectedText,
-      reference: matched.reference,
-      kind: "full",
-    })
-  }
-
-  return entries
 }
 
 export const extractQuickQuoteMarkerEntriesFromElement = (
@@ -523,7 +548,7 @@ export const removeQuickQuoteMarkerNodes = (element: Element): void => {
   }
 
   nodes.forEach((node) => {
-    const cleaned = stripQuickQuoteMarkers(node.data)
+    const cleaned = stripQuickQuoteMarkersPreservingSpacing(node.data)
     if (cleaned !== node.data) {
       node.data = cleaned
     }

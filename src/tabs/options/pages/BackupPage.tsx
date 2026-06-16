@@ -84,6 +84,9 @@ const formatBackupTypeLabel = (type: unknown): string => {
   return String(type || t("unknown"))
 }
 
+const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === "object" && !Array.isArray(value)
+
 // ==================== 远程备份列表模态框 (保持原有逻辑) ====================
 const RemoteBackupModal: React.FC<{
   onClose: () => void
@@ -663,12 +666,15 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
                 } else if (k === "promptChains") {
                   if (Array.isArray(v)) {
                     stateContent = { chains: v }
-                  } else if (
-                    typeof v === "object" &&
-                    !Array.isArray(v) &&
-                    (v as Record<string, unknown>).chains !== undefined
-                  ) {
-                    stateContent = v
+                  } else if (isObjectRecord(v)) {
+                    const state = v.state
+                    if (isObjectRecord(state) && Array.isArray(state.chains)) {
+                      stateContent = state
+                    } else if (v.chains !== undefined) {
+                      stateContent = v
+                    } else {
+                      stateContent = { chains: [] }
+                    }
                   } else {
                     stateContent = { chains: [] }
                   }

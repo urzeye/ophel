@@ -21,6 +21,7 @@ export class QueueDispatcher {
   private intervalId: ReturnType<typeof setInterval> | null = null
   private idleCount = 0 // 连续空闲计数
   private isDispatching = false
+  private postSubmitWaitPromise: Promise<void> | null = null
   private readonly IDLE_THRESHOLD = 2 // 需要连续 N 次检测到空闲才发送
   private readonly POLL_INTERVAL = 1000 // 轮询间隔 (ms)
   private readonly POST_SUBMIT_MIN_WAIT_MS = 2500
@@ -65,6 +66,7 @@ export class QueueDispatcher {
    */
   private async tick(): Promise<void> {
     if (this.isDispatching) return
+    if (this.postSubmitWaitPromise) return
 
     const state = useQueueStore.getState()
 
@@ -160,10 +162,13 @@ export class QueueDispatcher {
       // 提交发送
       const submitOk = await this.promptManager.submitPrompt(submitShortcut)
       if (!submitOk) {
-        // 插入已经发生但发送未确认：保留当前 sending 项，后续 tick 只重试这一项。
-        // 不能标记 failed 后继续下一条，否则会覆盖输入框并跳过链路步骤。
-        if (!this.isItemContentInEditor(item)) {
-          store.updateStatus(item.id, "pending")
+        // 插入后确认超时分两类：内容仍在编辑器中才保留 sending 等待重试；
+        // 编辑器已清空通常表示站点已接收，只是确认窗口太短。
+        if (this.isItemContentInEditor(item)) {
+          store.updateStatus(item.id, "sending")
+        } else {
+          store.updateStatus(item.id, "sent")
+          this.startPostSubmitWait()
         }
         this.idleCount = 0
         return
@@ -171,7 +176,7 @@ export class QueueDispatcher {
 
       // 发送已经确认，先从队列 UI 中移除；调度器内部继续等待回复结束后再释放下一条。
       store.updateStatus(item.id, "sent")
-      await this.waitForConversationIdleAfterSubmit()
+      this.startPostSubmitWait()
     } catch (error) {
       console.error("[QueueDispatcher] 发送失败:", error)
       store.updateStatus(item.id, this.isItemContentInEditor(item) ? "sending" : "pending")
@@ -240,7 +245,7 @@ export class QueueDispatcher {
       if (!submitOk) return
 
       store.updateStatus(item.id, "sent")
-      await this.waitForConversationIdleAfterSubmit()
+      this.startPostSubmitWait()
     } catch (error) {
       console.error("[QueueDispatcher] 重试发送失败:", error)
     } finally {
@@ -302,6 +307,19 @@ export class QueueDispatcher {
     }
   }
 
+  private startPostSubmitWait(): void {
+    if (this.postSubmitWaitPromise) return
+
+    this.postSubmitWaitPromise = this.waitForConversationIdleAfterSubmit()
+      .catch((error) => {
+        console.error("[QueueDispatcher] 等待回复结束失败:", error)
+      })
+      .finally(() => {
+        this.postSubmitWaitPromise = null
+        this.idleCount = 0
+      })
+  }
+
   /**
    * 立即发送一条提示词（不入队，直接发送）
    * 用于 AI 空闲时的直接发送场景
@@ -333,6 +351,7 @@ export class QueueDispatcher {
 
     if (state.isPaused) return false
     if (this.isDispatching) return false
+    if (this.postSubmitWaitPromise) return false
     if (this.adapter.isGenerating()) return false
     if (this.promptManager.hasEditorContent()) return false
 
