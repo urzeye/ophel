@@ -445,6 +445,11 @@ export const ru = {
   quickQuoteQuote: "Цитата",
   quickQuoteReply: "Ответ с цитатой",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
+  quickQuoteSettingsTitle: "Цитата выделения",
+  quickQuoteSettingsDesc: "Управляет показом всплывающего меню цитаты Ophel на совместимых сайтах.",
+  quickQuoteEnabledLabel: "Цитата выделения Ophel",
+  quickQuoteEnabledDesc:
+    "Если включено, совместимые сайты показывают меню цитаты Ophel после выделения текста. Сайты с нативным меню цитаты остаются под управлением сайта.",
   copied: "Скопировано",
   cleared: "Очищено",
   refreshed: "Обновлено",

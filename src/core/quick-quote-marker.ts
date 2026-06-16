@@ -5,6 +5,8 @@ const QUICK_QUOTE_MARKER_HREF = "#ophel-quick-quote"
 const QUICK_QUOTE_MARKER_TITLE_PREFIX = "ophel-quick-quote:"
 const QUICK_QUOTE_MARKER_VERSION = 3
 const MAX_MARKER_PAYLOAD_LENGTH = 1600
+const MAX_PENDING_REFERENCE_COUNT = 120
+const PENDING_REFERENCE_TTL_MS = 2 * 60 * 60 * 1000
 
 const MARKER_MARKDOWN_RE =
   /\[\u2063\]\(#ophel-quick-quote\s+"ophel-quick-quote:([A-Za-z0-9_-]+)"\)/g
@@ -61,6 +63,15 @@ export interface QuickQuoteMarkerEntry {
   reference?: PromptQuoteReference
   kind: MarkerKind
 }
+
+interface PendingQuickQuoteReference {
+  contentKey: string
+  reference: PromptQuoteReference
+  createdAt: number
+}
+
+const pendingQuickQuoteReferences: PendingQuickQuoteReference[] = []
+const pendingQuickQuoteReferenceById = new Map<string, PromptQuoteReference>()
 
 const truncateText = (text: string, max: number): string => {
   const normalized = text.replace(/\s+/g, " ").trim()
@@ -176,6 +187,43 @@ const encodeFullPayload = (reference: PromptQuoteReference): string => {
 const encodeMarkerPayload = (reference: PromptQuoteReference, kind: MarkerKind): string =>
   kind === "ref" ? encodePayload(buildRefPayload(reference)) : encodeFullPayload(reference)
 
+const stripQuickQuoteMarkerSyntax = (content: string): string => {
+  MARKER_MARKDOWN_RE.lastIndex = 0
+  RENDERED_MARKER_MARKDOWN_RE.lastIndex = 0
+  const stripped = content
+    .replace(MARKER_MARKDOWN_RE, "")
+    .replace(RENDERED_MARKER_MARKDOWN_RE, "")
+    .replace(new RegExp(QUICK_QUOTE_MARKER_LABEL, "g"), "")
+  MARKER_MARKDOWN_RE.lastIndex = 0
+  RENDERED_MARKER_MARKDOWN_RE.lastIndex = 0
+  return stripped
+}
+
+const normalizeQuickQuoteMatchText = (content: string): string =>
+  stripQuickQuoteMarkerSyntax(content)
+    .replace(/^[ \t]{0,3}>[ \t]?/gm, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/[*_`~]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+
+const extractQuickQuoteMarkerEntriesFromText = (text: string): QuickQuoteMarkerEntry[] => {
+  const entries: QuickQuoteMarkerEntry[] = []
+  const seen = new Set<string>()
+  let match: RegExpExecArray | null
+
+  MARKER_MARKDOWN_RE.lastIndex = 0
+  while ((match = MARKER_MARKDOWN_RE.exec(text))) {
+    const entry = decodeMarkerPayload(match[1])
+    if (!entry || seen.has(`${entry.kind}:${entry.id}`)) continue
+    seen.add(`${entry.kind}:${entry.id}`)
+    entries.push(entry)
+  }
+  MARKER_MARKDOWN_RE.lastIndex = 0
+
+  return entries
+}
+
 const hasQuickQuoteMarker = (content: string): boolean => {
   MARKER_MARKDOWN_RE.lastIndex = 0
   const hasMarker = MARKER_MARKDOWN_RE.test(content)
@@ -254,6 +302,50 @@ const decodeMarkerPayload = (encoded: string): QuickQuoteMarkerEntry | null => {
   }
 }
 
+const prunePendingQuickQuoteReferences = (now = Date.now()): void => {
+  const cutoff = now - PENDING_REFERENCE_TTL_MS
+
+  for (let index = pendingQuickQuoteReferences.length - 1; index >= 0; index -= 1) {
+    if (pendingQuickQuoteReferences[index].createdAt < cutoff) {
+      pendingQuickQuoteReferences.splice(index, 1)
+    }
+  }
+
+  while (pendingQuickQuoteReferences.length > MAX_PENDING_REFERENCE_COUNT) {
+    pendingQuickQuoteReferences.shift()
+  }
+
+  const liveIds = new Set(pendingQuickQuoteReferences.map((entry) => entry.reference.id))
+  Array.from(pendingQuickQuoteReferenceById.keys()).forEach((id) => {
+    if (!liveIds.has(id)) pendingQuickQuoteReferenceById.delete(id)
+  })
+}
+
+const rememberQuickQuoteReference = (
+  content: string,
+  reference?: PromptQuoteReference | null,
+): void => {
+  if (!reference) return
+
+  const contentKey = normalizeQuickQuoteMatchText(content)
+  if (!contentKey) return
+
+  const now = Date.now()
+  prunePendingQuickQuoteReferences(now)
+  pendingQuickQuoteReferenceById.set(reference.id, reference)
+
+  const existing = pendingQuickQuoteReferences.find(
+    (entry) => entry.reference.id === reference.id && entry.contentKey === contentKey,
+  )
+  if (existing) {
+    existing.createdAt = now
+    existing.reference = reference
+    return
+  }
+
+  pendingQuickQuoteReferences.push({ contentKey, reference, createdAt: now })
+}
+
 export const appendQuickQuoteMarker = (
   content: string,
   reference?: PromptQuoteReference | null,
@@ -261,6 +353,7 @@ export const appendQuickQuoteMarker = (
 ): string => {
   const trimmed = content.trim()
   if (!trimmed || !reference) return trimmed
+  rememberQuickQuoteReference(trimmed, reference)
   if (hasQuickQuoteMarker(trimmed)) return trimmed
 
   const encoded = encodeMarkerPayload(reference, options.kind || "full")
@@ -268,23 +361,87 @@ export const appendQuickQuoteMarker = (
 }
 
 export const stripQuickQuoteMarkers = (content: string): string => {
-  MARKER_MARKDOWN_RE.lastIndex = 0
-  RENDERED_MARKER_MARKDOWN_RE.lastIndex = 0
-  const stripped = content
-    .replace(MARKER_MARKDOWN_RE, "")
-    .replace(RENDERED_MARKER_MARKDOWN_RE, "")
+  const stripped = stripQuickQuoteMarkerSyntax(content)
     .replace(new RegExp(QUICK_QUOTE_MARKER_LABEL, "g"), "")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim()
-  MARKER_MARKDOWN_RE.lastIndex = 0
-  RENDERED_MARKER_MARKDOWN_RE.lastIndex = 0
   return stripped
 }
 
 const getEncodedMarkerFromAnchor = (anchor: HTMLAnchorElement): string | null => {
   if (!anchor.title.startsWith(QUICK_QUOTE_MARKER_TITLE_PREFIX)) return null
   return anchor.title.slice(QUICK_QUOTE_MARKER_TITLE_PREFIX.length)
+}
+
+const isQuickQuoteMarkerAnchor = (anchor: HTMLAnchorElement): boolean => {
+  if (getEncodedMarkerFromAnchor(anchor)) return true
+  return (anchor.getAttribute("href") || "").includes(QUICK_QUOTE_MARKER_HREF)
+}
+
+const hasQuickQuoteMarkerResidue = (element: Element): boolean => {
+  if (element.querySelector(`a[href*="${QUICK_QUOTE_MARKER_HREF}"]`)) return true
+
+  const text = element.textContent || ""
+  MARKER_MARKDOWN_RE.lastIndex = 0
+  RENDERED_MARKER_MARKDOWN_RE.lastIndex = 0
+  const hasResidue =
+    text.includes(QUICK_QUOTE_MARKER_LABEL) ||
+    MARKER_MARKDOWN_RE.test(text) ||
+    RENDERED_MARKER_MARKDOWN_RE.test(text)
+  MARKER_MARKDOWN_RE.lastIndex = 0
+  RENDERED_MARKER_MARKDOWN_RE.lastIndex = 0
+  return hasResidue
+}
+
+export const rememberQuickQuoteReferencesFromContent = (content: string): void => {
+  const visibleContent = stripQuickQuoteMarkers(content)
+  extractQuickQuoteMarkerEntriesFromText(content).forEach((entry) => {
+    rememberQuickQuoteReference(
+      visibleContent,
+      pendingQuickQuoteReferenceById.get(entry.id) || entry.reference,
+    )
+  })
+}
+
+export const resolvePendingQuickQuoteMarkerEntriesFromElement = (
+  element: Element,
+  visibleText?: string,
+): QuickQuoteMarkerEntry[] => {
+  if (!hasQuickQuoteMarkerResidue(element)) return []
+
+  prunePendingQuickQuoteReferences()
+  const contentKey = normalizeQuickQuoteMatchText(visibleText || element.textContent || "")
+  if (!contentKey) return []
+
+  const entries: QuickQuoteMarkerEntry[] = []
+  const exactMatches: PendingQuickQuoteReference[] = []
+  const looseMatches: PendingQuickQuoteReference[] = []
+
+  pendingQuickQuoteReferences.forEach((pending) => {
+    const exactMatch = pending.contentKey === contentKey
+    const looseMatch =
+      Math.min(pending.contentKey.length, contentKey.length) >= 24 &&
+      (pending.contentKey.includes(contentKey) || contentKey.includes(pending.contentKey))
+
+    if (exactMatch) {
+      exactMatches.push(pending)
+    } else if (looseMatch) {
+      looseMatches.push(pending)
+    }
+  })
+
+  const matched = exactMatches.at(-1) || looseMatches.at(-1)
+  if (matched) {
+    entries.push({
+      id: matched.reference.id,
+      label: matched.reference.selectedText,
+      reference: matched.reference,
+      kind: "full",
+    })
+  }
+
+  return entries
 }
 
 export const extractQuickQuoteMarkerEntriesFromElement = (
@@ -305,19 +462,14 @@ export const extractQuickQuoteMarkerEntriesFromElement = (
   })
 
   const text = element.textContent || ""
-  let match: RegExpExecArray | null
-  MARKER_MARKDOWN_RE.lastIndex = 0
-  while ((match = MARKER_MARKDOWN_RE.exec(text))) {
-    addEntry(decodeMarkerPayload(match[1]))
-  }
-  MARKER_MARKDOWN_RE.lastIndex = 0
+  extractQuickQuoteMarkerEntriesFromText(text).forEach(addEntry)
 
   return entries
 }
 
 export const removeQuickQuoteMarkerNodes = (element: Element): void => {
   element.querySelectorAll<HTMLAnchorElement>("a[href]").forEach((anchor) => {
-    if (getEncodedMarkerFromAnchor(anchor)) {
+    if (isQuickQuoteMarkerAnchor(anchor)) {
       const previous = anchor.previousSibling
       if (previous instanceof Text) {
         previous.data = previous.data.replace(MARKER_LINK_PREFIX_RE, "")
@@ -336,7 +488,9 @@ export const removeQuickQuoteMarkerNodes = (element: Element): void => {
 
   const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, {
     acceptNode: (node) =>
-      node.parentElement?.closest(".gh-root, .gh-main-panel, .gh-quick-quote-chip")
+      node.parentElement?.closest(
+        ".gh-root, .gh-main-panel, .gh-quick-quote-chip-row, .gh-quick-quote-chip",
+      )
         ? NodeFilter.FILTER_REJECT
         : NodeFilter.FILTER_ACCEPT,
   })

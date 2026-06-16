@@ -143,6 +143,7 @@ export interface ZenModeConfig {
 }
 
 export type AssistantMermaidSupportMode = "native" | "fallback" | "unsupported"
+export type QuickQuoteSupportMode = "enabled" | "native" | "disabled"
 
 export interface AssistantMermaidBlock {
   element: HTMLElement
@@ -867,6 +868,30 @@ export abstract class SiteAdapter {
   /** 获取用户提问元素的选择器 */
   getUserQuerySelector(): string | null {
     return null
+  }
+
+  /**
+   * 返回当前站点的 Quick Quote 支持模式。
+   * - enabled: 允许 Ophel 显示选区引用浮层并使用 marker/chip/跳转。
+   * - native: 站点已有原生选区引用浮层，Ophel 不介入。
+   * - disabled: 当前站点不支持 Ophel 选区引用。
+   */
+  getQuickQuoteSupportMode(): QuickQuoteSupportMode {
+    return "enabled"
+  }
+
+  /**
+   * 返回 Quick Quote chip 应挂载到的用户消息内容容器。
+   * 默认优先使用我们统一注入的用户提问 Markdown 容器；站点特殊布局由具体 adapter 覆盖。
+   */
+  getQuickQuoteChipHost(element: Element): HTMLElement | null {
+    const containers = Array.from(element.querySelectorAll<HTMLElement>(".gh-user-query-markdown"))
+    return (
+      containers.find((container) => {
+        const style = window.getComputedStyle(container)
+        return style.display !== "none" && style.visibility !== "hidden"
+      }) || null
+    )
   }
 
   /**

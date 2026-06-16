@@ -330,6 +330,7 @@ const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "panel-width": "panelWidthLabel",
   "prompt-double-click-send": "promptDoubleClickSendLabel",
   "prompt-queue": "queueSettingLabel",
+  "prompt-quick-quote-enabled": "quickQuoteEnabledLabel",
   "quick-buttons-hide-when-panel-open": "quickButtonsHideWhenPanelOpenLabel",
   "quick-buttons-opacity": "quickButtonsOpacityLabel",
   "quick-buttons-proximity-radius": "quickButtonsProximityRadiusLabel",

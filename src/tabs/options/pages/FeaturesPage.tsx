@@ -1394,52 +1394,73 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
       )}
       {/* ========== Prompt Tab ========== */}
       {activeTab === FEATURES_TAB_IDS.PROMPTS && (
-        <SettingCard title={t("promptSettingsTitle")} description={t("promptSettingsDesc")}>
-          <ToggleRow
-            label={t("promptDoubleClickSendLabel")}
-            description={t("promptDoubleClickSendDesc")}
-            settingId="prompt-double-click-send"
-            checked={settings.features?.prompts?.doubleClickToSend ?? false}
-            onChange={() =>
-              updateDeepSetting(
-                "features",
-                "prompts",
-                "doubleClickToSend",
-                !settings.features?.prompts?.doubleClickToSend,
-              )
-            }
-          />
+        <>
+          <SettingCard title={t("promptSettingsTitle")} description={t("promptSettingsDesc")}>
+            <ToggleRow
+              label={t("promptDoubleClickSendLabel")}
+              description={t("promptDoubleClickSendDesc")}
+              settingId="prompt-double-click-send"
+              checked={settings.features?.prompts?.doubleClickToSend ?? false}
+              onChange={() =>
+                updateDeepSetting(
+                  "features",
+                  "prompts",
+                  "doubleClickToSend",
+                  !settings.features?.prompts?.doubleClickToSend,
+                )
+              }
+            />
 
-          <SettingRow
-            label={t("promptSubmitShortcutLabel")}
-            description={t("promptSubmitShortcutDesc")}
-            settingId="shortcuts-prompt-submit-shortcut">
-            <select
-              className="settings-select"
-              value={settings.features?.prompts?.submitShortcut ?? "enter"}
-              onChange={(e) =>
-                updateDeepSetting("features", "prompts", "submitShortcut", e.target.value)
-              }>
-              <option value="enter">{t("promptSubmitShortcutEnter")}</option>
-              <option value="ctrlEnter">{t("promptSubmitShortcutCtrlEnter")}</option>
-            </select>
-          </SettingRow>
+            <SettingRow
+              label={t("promptSubmitShortcutLabel")}
+              description={t("promptSubmitShortcutDesc")}
+              settingId="shortcuts-prompt-submit-shortcut">
+              <select
+                className="settings-select"
+                value={settings.features?.prompts?.submitShortcut ?? "enter"}
+                onChange={(e) =>
+                  updateDeepSetting("features", "prompts", "submitShortcut", e.target.value)
+                }>
+                <option value="enter">{t("promptSubmitShortcutEnter")}</option>
+                <option value="ctrlEnter">{t("promptSubmitShortcutCtrlEnter")}</option>
+              </select>
+            </SettingRow>
 
-          <ToggleRow
-            label={t("queueSettingLabel")}
-            description={t("queueSettingDesc")}
-            settingId="prompt-queue"
-            checked={settings.features?.prompts?.promptQueue ?? false}
-            onChange={() =>
-              updateDeepSetting(
-                "features",
-                "prompts",
-                "promptQueue",
-                !(settings.features?.prompts?.promptQueue ?? false),
-              )
-            }
-          />
-        </SettingCard>
+            <ToggleRow
+              label={t("queueSettingLabel")}
+              description={t("queueSettingDesc")}
+              settingId="prompt-queue"
+              checked={settings.features?.prompts?.promptQueue ?? false}
+              onChange={() =>
+                updateDeepSetting(
+                  "features",
+                  "prompts",
+                  "promptQueue",
+                  !(settings.features?.prompts?.promptQueue ?? false),
+                )
+              }
+            />
+          </SettingCard>
+
+          <SettingCard
+            title={t("quickQuoteSettingsTitle")}
+            description={t("quickQuoteSettingsDesc")}>
+            <ToggleRow
+              label={t("quickQuoteEnabledLabel")}
+              description={t("quickQuoteEnabledDesc")}
+              settingId="prompt-quick-quote-enabled"
+              checked={settings.features?.prompts?.quickQuoteEnabled ?? true}
+              onChange={() =>
+                updateDeepSetting(
+                  "features",
+                  "prompts",
+                  "quickQuoteEnabled",
+                  !(settings.features?.prompts?.quickQuoteEnabled ?? true),
+                )
+              }
+            />
+          </SettingCard>
+        </>
       )}
 
       {/* ========== Reading History Tab ========== */}

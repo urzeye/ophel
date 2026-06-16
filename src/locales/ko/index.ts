@@ -447,6 +447,11 @@ export const ko = {
   quickQuoteQuote: "인용",
   quickQuoteReply: "인용 답변",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
+  quickQuoteSettingsTitle: "선택 영역 인용",
+  quickQuoteSettingsDesc: "호환 사이트에서 Ophel 선택 영역 인용 팝오버를 표시할지 제어합니다.",
+  quickQuoteEnabledLabel: "Ophel 선택 영역 인용",
+  quickQuoteEnabledDesc:
+    "켜면 호환 사이트에서 텍스트 선택 후 Ophel 인용 팝오버가 표시됩니다. 기본 인용 팝오버가 있는 사이트는 사이트 자체에 맡깁니다.",
   copied: "클립보드에 복사됨",
   cleared: "내용이 지워짐",
   refreshed: "새로고침됨",

@@ -315,6 +315,11 @@ export const zhTW = {
   quickQuoteQuote: "引用",
   quickQuoteReply: "引用回覆",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
+  quickQuoteSettingsTitle: "選區引用",
+  quickQuoteSettingsDesc: "控制 Ophel 是否在相容網站顯示選區引用浮層。",
+  quickQuoteEnabledLabel: "Ophel 選區引用",
+  quickQuoteEnabledDesc:
+    "開啟後，相容網站選取文字會顯示 Ophel 引用浮層；已有原生引用浮層的網站會自動交由網站處理。",
   copied: "已複製到剪貼簿",
   cleared: "已清除內容",
   refreshed: "已刷新",

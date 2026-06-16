@@ -449,6 +449,12 @@ export const de = {
   quickQuoteQuote: "Zitat",
   quickQuoteReply: "Zitatantwort",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
+  quickQuoteSettingsTitle: "Auswahlzitat",
+  quickQuoteSettingsDesc:
+    "Legt fest, ob Ophel auf kompatiblen Websites ein Auswahlzitat-Popover zeigt.",
+  quickQuoteEnabledLabel: "Ophel-Auswahlzitat",
+  quickQuoteEnabledDesc:
+    "Wenn aktiviert, zeigen kompatible Websites nach der Textauswahl das Ophel-Zitat-Popover. Websites mit nativem Zitat-Popover bleiben der Website überlassen.",
   copied: "In Zwischenablage kopiert",
   cleared: "Geleert",
   refreshed: "Aktualisiert",

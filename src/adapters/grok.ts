@@ -109,6 +109,10 @@ export class GrokAdapter extends SiteAdapter {
     return grokNativeThemeCss
   }
 
+  getQuickQuoteSupportMode() {
+    return "native" as const
+  }
+
   getNewTabUrl(): string {
     return "https://grok.com/"
   }

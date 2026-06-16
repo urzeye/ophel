@@ -447,6 +447,12 @@ export const es = {
   quickQuoteQuote: "Citar",
   quickQuoteReply: "Responder con cita",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
+  quickQuoteSettingsTitle: "Cita de selección",
+  quickQuoteSettingsDesc:
+    "Controla si Ophel muestra su panel de cita de selección en sitios compatibles.",
+  quickQuoteEnabledLabel: "Cita de selección Ophel",
+  quickQuoteEnabledDesc:
+    "Al activarlo, los sitios compatibles muestran el panel de cita de Ophel tras seleccionar texto. Los sitios con panel de cita nativo quedan a cargo del sitio.",
   copied: "Copiado al portapapeles",
   cleared: "Limpio",
   refreshed: "Actualizado",

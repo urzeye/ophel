@@ -62,7 +62,9 @@ interface TextIndex {
 const shouldSkipTextNode = (node: Text): boolean => {
   const parent = node.parentElement
   if (!parent) return true
-  return Boolean(parent.closest(".gh-root, .gh-main-panel, .gh-quick-quote-chip"))
+  return Boolean(
+    parent.closest(".gh-root, .gh-main-panel, .gh-quick-quote-chip-row, .gh-quick-quote-chip"),
+  )
 }
 
 const buildNormalizedTextIndex = (root: Element): TextIndex => {

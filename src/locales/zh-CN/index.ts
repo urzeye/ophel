@@ -481,6 +481,11 @@ export const zhCN = {
   quickQuoteQuote: "引用",
   quickQuoteReply: "引用回复",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
+  quickQuoteSettingsTitle: "选区引用",
+  quickQuoteSettingsDesc: "控制 Ophel 是否在兼容站点显示选区引用浮层。",
+  quickQuoteEnabledLabel: "Ophel 选区引用",
+  quickQuoteEnabledDesc:
+    "开启后，兼容站点选中文本会显示 Ophel 引用浮层；已有原生引用浮层的站点会自动交给站点处理。",
   copied: "已复制到剪贴板",
   cleared: "已清理",
   refreshed: "已刷新",

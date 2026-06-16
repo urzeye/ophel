@@ -448,6 +448,12 @@ export const fr = {
   quickQuoteQuote: "Citer",
   quickQuoteReply: "Répondre avec citation",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
+  quickQuoteSettingsTitle: "Citation de sélection",
+  quickQuoteSettingsDesc:
+    "Contrôle si Ophel affiche son menu de citation de sélection sur les sites compatibles.",
+  quickQuoteEnabledLabel: "Citation de sélection Ophel",
+  quickQuoteEnabledDesc:
+    "Quand cette option est activée, les sites compatibles affichent le menu de citation Ophel après une sélection. Les sites avec un menu de citation natif restent gérés par le site.",
   copied: "Copié dans le presse-papiers",
   cleared: "Effacé",
   refreshed: "Actualisé",

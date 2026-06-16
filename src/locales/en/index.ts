@@ -463,6 +463,12 @@ export const en = {
   quickQuoteQuote: "Quote",
   quickQuoteReply: "Quote Reply",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
+  quickQuoteSettingsTitle: "Selection Quote",
+  quickQuoteSettingsDesc:
+    "Control whether Ophel shows its selection quote popover on compatible sites.",
+  quickQuoteEnabledLabel: "Ophel selection quote",
+  quickQuoteEnabledDesc:
+    "When enabled, compatible sites show the Ophel quote popover after text selection. Sites with native quote popovers are left to the site.",
   copied: "Copied to clipboard",
   cleared: "Content cleared",
   refreshed: "Refreshed",

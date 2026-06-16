@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-import type { SiteAdapter } from "~adapters/base"
+import type { QuickQuoteSupportMode, SiteAdapter } from "~adapters/base"
 import { MoreHorizontalIcon } from "~components/icons"
 import { QuoteIcon, ReplyIcon } from "~components/icons/QuoteIcon"
 import { VariableInputDialog } from "~components/VariableInputDialog"
@@ -17,6 +17,7 @@ import {
   appendQuickQuoteMarker,
   extractQuickQuoteMarkerEntriesFromElement,
   removeQuickQuoteMarkerNodes,
+  resolvePendingQuickQuoteMarkerEntriesFromElement,
 } from "~core/quick-quote-marker"
 import { createPromptQuoteReference, scrollToQuoteReference } from "~core/quick-quote-utils"
 import { usePromptChainsStore } from "~stores/prompt-chains-store"
@@ -54,6 +55,13 @@ const MAX_SELECTION_LENGTH = 8000
 const POPOVER_MARGIN = 10
 const QUICK_QUOTE_STYLE_ID = "gh-quick-quote-host-styles"
 const QUICK_QUOTE_PRIMARY_CHAIN_LIMIT = 3
+const QUICK_QUOTE_CHIP_ROW_SELECTOR = ".gh-quick-quote-chip-row"
+const QUICK_QUOTE_CHIP_SELECTOR = "button.gh-quick-quote-chip"
+
+const canUseOphelQuickQuote = (
+  enabledSetting: boolean,
+  adapterMode: QuickQuoteSupportMode,
+): boolean => enabledSetting && adapterMode === "enabled"
 
 const isInsideOphel = (element: Element | null): boolean =>
   Boolean(element?.closest(".gh-root, .gh-main-panel, " + OPHEL_INTERACTION_LAYER_SELECTOR))
@@ -98,6 +106,25 @@ const getSelectionRect = (range: Range): DOMRect | null => {
 const truncateText = (text: string, max = 72): string => {
   const normalized = text.replace(/\s+/g, " ").trim()
   return normalized.length > max ? `${normalized.slice(0, max)}...` : normalized
+}
+
+const findQuickQuoteChipHost = (message: HTMLElement, adapter: SiteAdapter): HTMLElement => {
+  const host = adapter.getQuickQuoteChipHost(message)
+  if (host instanceof HTMLElement && message.contains(host)) return host
+  return message
+}
+
+const getQuickQuoteChipRow = (message: HTMLElement, host: HTMLElement): HTMLElement => {
+  const existing = message.querySelector(QUICK_QUOTE_CHIP_ROW_SELECTOR)
+  const row = existing instanceof HTMLElement ? existing : document.createElement("span")
+
+  row.className = "gh-quick-quote-chip-row"
+
+  if (row.parentElement !== host || host.firstElementChild !== row) {
+    host.prepend(row)
+  }
+
+  return row
 }
 
 const SafeSvgIcon: React.FC<{ svg?: string; fallback: React.ReactNode }> = ({ svg, fallback }) => {
@@ -145,6 +172,19 @@ const injectQuickQuoteHostStyles = (root: Document | ShadowRoot) => {
   const style = document.createElement("style")
   style.id = QUICK_QUOTE_STYLE_ID
   style.textContent = `
+    .gh-quick-quote-chip-row {
+      box-sizing: border-box !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      flex-wrap: wrap !important;
+      gap: 4px !important;
+      width: fit-content !important;
+      max-width: 100% !important;
+      margin: 0 0 6px !important;
+      padding: 0 !important;
+      pointer-events: auto !important;
+    }
     button.gh-quick-quote-chip {
       all: unset !important;
       box-sizing: border-box !important;
@@ -153,7 +193,7 @@ const injectQuickQuoteHostStyles = (root: Document | ShadowRoot) => {
       gap: 6px !important;
       width: fit-content !important;
       max-width: min(360px, 100%) !important;
-      margin: 0 0 8px !important;
+      margin: 0 !important;
       padding: 4px 8px !important;
       border: 1px solid rgba(66, 133, 244, 0.28) !important;
       border-radius: 8px !important;
@@ -221,12 +261,29 @@ const injectQuickQuoteHostStyles = (root: Document | ShadowRoot) => {
   }
 }
 
-export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter }> = ({ adapter }) => {
+export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter; enabled: boolean }> = ({
+  adapter,
+  enabled,
+}) => {
   const renderTimeoutRef = useRef<number | null>(null)
   const isRenderingRef = useRef(false)
   const quoteReferenceRegistryRef = useRef(new Map<string, PromptQuoteReference>())
 
+  const removeRenderedChips = useCallback(() => {
+    const userQuerySelector = adapter.getUserQuerySelector()
+    if (!userQuerySelector) return
+
+    const userMessages =
+      (DOMToolkit.query(userQuerySelector, { all: true, shadow: true }) as Element[]) || []
+    userMessages.forEach((message) => {
+      if (!(message instanceof HTMLElement)) return
+      message.querySelectorAll(QUICK_QUOTE_CHIP_ROW_SELECTOR).forEach((row) => row.remove())
+      delete message.dataset.ghQuickQuoteRefs
+    })
+  }, [adapter])
+
   const renderReferenceChips = useCallback(() => {
+    if (!enabled) return
     // 防止并发渲染
     if (isRenderingRef.current) return
     isRenderingRef.current = true
@@ -250,8 +307,14 @@ export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter }> = ({ adapter
         if (!(message instanceof HTMLElement)) return
 
         const markerEntries = extractQuickQuoteMarkerEntriesFromElement(message)
-        markerEntriesByMessage.set(message, markerEntries)
-        markerEntries.forEach((entry) => {
+        const visibleText = adapter.extractUserQueryText(message)
+        const fallbackEntries =
+          markerEntries.length === 0
+            ? resolvePendingQuickQuoteMarkerEntriesFromElement(message, visibleText)
+            : []
+        const allMarkerEntries = [...markerEntries, ...fallbackEntries]
+        markerEntriesByMessage.set(message, allMarkerEntries)
+        allMarkerEntries.forEach((entry) => {
           if (entry.reference) {
             quoteReferenceRegistry.set(entry.id, entry.reference)
           }
@@ -262,7 +325,9 @@ export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter }> = ({ adapter
         if (!(message instanceof HTMLElement)) return
 
         const renderedIds = new Set(
-          (message.dataset.ghQuickQuoteRefs || "").split(",").filter(Boolean),
+          Array.from(message.querySelectorAll<HTMLButtonElement>(QUICK_QUOTE_CHIP_SELECTOR))
+            .map((chip) => chip.dataset.ghQuickQuoteRefId)
+            .filter((id): id is string => Boolean(id)),
         )
         const markerEntries = markerEntriesByMessage.get(message) || []
         const markerReferences = markerEntries
@@ -281,7 +346,14 @@ export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter }> = ({ adapter
             source.findIndex((item) => item.id === reference.id) === index,
         )
 
+        const existingChipRow = message.querySelector(QUICK_QUOTE_CHIP_ROW_SELECTOR)
+        if (existingChipRow instanceof HTMLElement && renderedIds.size > 0) {
+          getQuickQuoteChipRow(message, findQuickQuoteChipHost(message, adapter))
+        }
+
         if (referencesToRender.length === 0) return
+
+        const chipRow = getQuickQuoteChipRow(message, findQuickQuoteChipHost(message, adapter))
 
         const root = message.getRootNode()
         if (root instanceof Document || root instanceof ShadowRoot) {
@@ -293,6 +365,7 @@ export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter }> = ({ adapter
           const chip = document.createElement("button")
           chip.type = "button"
           chip.className = "gh-quick-quote-chip"
+          chip.dataset.ghQuickQuoteRefId = reference.id
           chip.title = t("quickQuoteJumpToSource")
           const label = document.createElement("span")
           label.className = "gh-quick-quote-chip-text"
@@ -309,13 +382,13 @@ export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter }> = ({ adapter
           renderedIds.add(reference.id)
         })
 
-        message.prepend(fragment)
+        chipRow.append(fragment)
         message.dataset.ghQuickQuoteRefs = Array.from(renderedIds).join(",")
       })
     } finally {
       isRenderingRef.current = false
     }
-  }, [adapter])
+  }, [adapter, enabled])
 
   // 防抖渲染函数
   const debouncedRender = useCallback(() => {
@@ -329,21 +402,41 @@ export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter }> = ({ adapter
   }, [renderReferenceChips])
 
   useEffect(() => {
+    if (!enabled) {
+      removeRenderedChips()
+      return
+    }
+
     // 初始渲染
     renderReferenceChips()
 
-    const target = document.querySelector(adapter.getResponseContainerSelector()) || document.body
+    const responseSelector = adapter.getResponseContainerSelector()
+    const target =
+      adapter.getObserveTarget() ||
+      (responseSelector ? document.querySelector(responseSelector) : null) ||
+      document.body
 
     // 使用 MutationObserver 监听 DOM 变化
     const observer = new MutationObserver((mutations) => {
-      // 只在有新增节点时触发
-      const hasAddedNodes = mutations.some((mutation) => mutation.addedNodes.length > 0)
-      if (hasAddedNodes) {
+      const shouldRender = mutations.some(
+        (mutation) =>
+          mutation.addedNodes.length > 0 ||
+          mutation.type === "characterData" ||
+          (mutation.type === "attributes" &&
+            ["class", "style", "href", "title"].includes(mutation.attributeName || "")),
+      )
+      if (shouldRender) {
         debouncedRender()
       }
     })
 
-    observer.observe(target, { childList: true, subtree: true })
+    observer.observe(target, {
+      attributes: true,
+      attributeFilter: ["class", "style", "href", "title"],
+      characterData: true,
+      childList: true,
+      subtree: true,
+    })
 
     return () => {
       observer.disconnect()
@@ -351,7 +444,7 @@ export const QuickQuoteRenderer: React.FC<{ adapter: SiteAdapter }> = ({ adapter
         window.clearTimeout(renderTimeoutRef.current)
       }
     }
-  }, [adapter, debouncedRender, renderReferenceChips])
+  }, [adapter, debouncedRender, enabled, removeRenderedChips, renderReferenceChips])
 
   return null
 }
@@ -362,6 +455,9 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
   const prompts = usePromptsStore((state) => state.prompts)
   const promptQueueEnabled = useSettingsStore(
     (state) => state.settings.features?.prompts?.promptQueue ?? false,
+  )
+  const quickQuoteEnabledSetting = useSettingsStore(
+    (state) => state.settings.features?.prompts?.quickQuoteEnabled ?? true,
   )
   const updatePromptQueueSetting = useSettingsStore((state) => state.updateDeepSetting)
   const enqueueMany = useQueueStore((state) => state.enqueueMany)
@@ -385,6 +481,10 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
   )
   const primaryChains = visibleChains.slice(0, QUICK_QUOTE_PRIMARY_CHAIN_LIMIT)
   const overflowChains = visibleChains.slice(QUICK_QUOTE_PRIMARY_CHAIN_LIMIT)
+  const quickQuoteEnabled = useMemo(
+    () => canUseOphelQuickQuote(quickQuoteEnabledSetting, adapter.getQuickQuoteSupportMode()),
+    [adapter, quickQuoteEnabledSetting],
+  )
 
   const clearSelection = useCallback(() => {
     setSelectionState(null)
@@ -393,6 +493,11 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
   }, [])
 
   const refreshSelection = useCallback(() => {
+    if (!quickQuoteEnabled) {
+      setSelectionState(null)
+      return
+    }
+
     const selection = window.getSelection()
     if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
       setSelectionState(null)
@@ -418,7 +523,7 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
     }
 
     setSelectionState({ text, range, rect })
-  }, [adapter])
+  }, [adapter, quickQuoteEnabled])
 
   useEffect(() => {
     if (!selectionState || overflowChains.length === 0) {
@@ -433,6 +538,12 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
   }, [promptQueueEnabled, selectionState])
 
   useEffect(() => {
+    if (!quickQuoteEnabled) {
+      setSelectionState(null)
+      setPendingChainRun(null)
+      return
+    }
+
     const clearCollapsedSelection = () => {
       const selection = window.getSelection()
       if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
@@ -469,7 +580,7 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
       window.removeEventListener("scroll", hidePopover, true)
       window.removeEventListener("resize", hidePopover)
     }
-  }, [refreshSelection])
+  }, [quickQuoteEnabled, refreshSelection])
 
   const createSelectionContext = useCallback((): PromptChainSelectionContext | null => {
     if (!selectionState) return null
@@ -595,11 +706,13 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
     return { left, top }
   }, [selectionState])
 
-  if (!selectionState && !pendingChainRun) return <QuickQuoteRenderer adapter={adapter} />
+  if (!selectionState && !pendingChainRun) {
+    return <QuickQuoteRenderer adapter={adapter} enabled={quickQuoteEnabled} />
+  }
 
   return (
     <>
-      <QuickQuoteRenderer adapter={adapter} />
+      <QuickQuoteRenderer adapter={adapter} enabled={quickQuoteEnabled} />
       {selectionState && (
         <div
           className="gh-quick-quote-popover gh-interactive"

@@ -233,6 +233,7 @@ export interface Settings {
       doubleClickToSend: boolean
       submitShortcut: "enter" | "ctrlEnter"
       promptQueue: boolean
+      quickQuoteEnabled: boolean
     }
     conversations: {
       enabled: boolean
@@ -502,6 +503,7 @@ export const DEFAULT_SETTINGS: Settings = {
       doubleClickToSend: false,
       submitShortcut: "enter",
       promptQueue: false,
+      quickQuoteEnabled: true,
     },
     conversations: {
       enabled: true,

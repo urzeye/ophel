@@ -8,6 +8,7 @@
 import type { SiteAdapter } from "~adapters/base"
 import { VIRTUAL_CATEGORY } from "~constants"
 import { SITE_IDS } from "~constants/defaults"
+import { rememberQuickQuoteReferencesFromContent } from "~core/quick-quote-marker"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import {
   filterPrompts,
@@ -111,6 +112,7 @@ export class PromptManager {
 
       const result = this.adapter.insertPrompt(content)
       if (result) {
+        rememberQuickQuoteReferencesFromContent(content)
         return true
       }
     }

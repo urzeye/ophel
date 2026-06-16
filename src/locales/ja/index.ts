@@ -452,6 +452,12 @@ export const ja = {
   quickQuoteQuote: "引用",
   quickQuoteReply: "引用返信",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
+  quickQuoteSettingsTitle: "選択範囲の引用",
+  quickQuoteSettingsDesc:
+    "対応サイトで Ophel の選択範囲引用ポップオーバーを表示するかを制御します。",
+  quickQuoteEnabledLabel: "Ophel 選択範囲引用",
+  quickQuoteEnabledDesc:
+    "有効にすると、対応サイトでテキスト選択後に Ophel の引用ポップオーバーを表示します。ネイティブ引用ポップオーバーがあるサイトはサイト側に任せます。",
   copied: "クリップボードにコピーしました",
   cleared: "内容を消去しました",
   refreshed: "更新しました",

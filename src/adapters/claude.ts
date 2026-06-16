@@ -192,6 +192,10 @@ export class ClaudeAdapter extends SiteAdapter {
     return { primary: "#d97757", secondary: "#c66045" }
   }
 
+  getQuickQuoteSupportMode() {
+    return "native" as const
+  }
+
   getNewTabUrl(): string {
     return "https://claude.ai/new"
   }

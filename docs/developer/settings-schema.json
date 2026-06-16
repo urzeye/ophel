@@ -87,7 +87,11 @@
   "features": {
     "order": ["prompts", "conversations", "outline"],
     "prompts": {
-      "enabled": true
+      "enabled": true,
+      "doubleClickToSend": false,
+      "submitShortcut": "enter",
+      "promptQueue": false,
+      "quickQuoteEnabled": true
     },
     "conversations": {
       "enabled": true,

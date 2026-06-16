@@ -257,6 +257,7 @@ export const SETTING_ID_ALIASES: Record<string, string> = {
   "features.outline.panelBookmarkMode": "outline-panel-bookmark-mode",
   "features.outline.preventAutoScroll": "outline-prevent-auto-scroll",
   "features.prompts.promptQueue": "prompt-queue",
+  "features.prompts.quickQuoteEnabled": "prompt-quick-quote-enabled",
   "features.export.packaging": "export-packaging",
   "features.export.includeThoughts": "export-include-thoughts",
   "export.packaging": "export-packaging",
@@ -616,6 +617,11 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     settingId: "prompt-queue",
     title: "提示词队列",
     keywords: ["prompt", "queue", "提示词队列", "连续提问"],
+  },
+  {
+    settingId: "prompt-quick-quote-enabled",
+    title: "Ophel 选区引用",
+    keywords: ["prompt", "quote", "quick quote", "selection", "引用", "选区引用", "悬浮条"],
   },
   {
     settingId: "reading-history-persistence",

@@ -446,6 +446,12 @@ export const pt = {
   quickQuoteQuote: "Citar",
   quickQuoteReply: "Responder com citação",
   quickQuoteChainQueueSource: "Chain: {title} · {index}/{total}",
+  quickQuoteSettingsTitle: "Citação da seleção",
+  quickQuoteSettingsDesc:
+    "Controla se o Ophel mostra o popover de citação da seleção em sites compatíveis.",
+  quickQuoteEnabledLabel: "Citação da seleção Ophel",
+  quickQuoteEnabledDesc:
+    "Quando ativado, sites compatíveis mostram o popover de citação do Ophel após selecionar texto. Sites com popover de citação nativo ficam a cargo do próprio site.",
   copied: "Copiado para a área de transferência",
   cleared: "Limpo",
   refreshed: "Atualizado",

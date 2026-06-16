@@ -166,6 +166,10 @@ export class QianwenAdapter extends SiteAdapter {
     return qianwenNativeThemeCss
   }
 
+  getQuickQuoteSupportMode() {
+    return "native" as const
+  }
+
   getSessionId(): string {
     const match = window.location.pathname.match(CHAT_PATH_PATTERN)
     return match?.[1] || super.getSessionId()

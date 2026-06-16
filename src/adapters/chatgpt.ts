@@ -233,6 +233,10 @@ export class ChatGPTAdapter extends SiteAdapter {
     return chatgptNativeThemeCss
   }
 
+  getQuickQuoteSupportMode() {
+    return "native" as const
+  }
+
   getNewTabUrl(): string {
     return "https://chatgpt.com"
   }
