@@ -4,6 +4,7 @@
  */
 
 import React from "react"
+import { SafeSvgMarkup } from "~components/ui"
 import { CHAIN_ICON_PRESETS } from "~constants/chain-icons"
 import { t } from "~utils/i18n"
 
@@ -213,10 +214,7 @@ export function ChainIconPicker({ value, onChange, onClose }: ChainIconPickerPro
               aria-label={title}
               aria-pressed={value === icon.svg}
               title={title}>
-              <div
-                className="gh-chain-icon-picker-icon"
-                dangerouslySetInnerHTML={{ __html: icon.svg }}
-              />
+              <SafeSvgMarkup className="gh-chain-icon-picker-icon" svg={icon.svg} />
             </button>
           )
         })}

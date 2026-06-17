@@ -1,3 +1,5 @@
+const SVG_NS = "http://www.w3.org/2000/svg"
+
 const ALLOWED_SVG_TAGS = new Set([
   "svg",
   "g",
@@ -49,10 +51,19 @@ const ALLOWED_SVG_ATTRS = new Set([
   "y2",
 ])
 
+const TAG_PATTERN = /<[^>]+>/g
+const ATTR_PATTERN = /([A-Za-z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g
 const URL_ATTR_PATTERN = /\b(?:href|src|url|xlink:href)\b/i
 const EVENT_ATTR_PATTERN = /^on/i
 const UNSAFE_STYLE_PATTERN = /url\s*\(|expression\s*\(|javascript:/i
 const UNSAFE_VALUE_PATTERN = /javascript:|data:/i
+
+interface ParsedSvgTag {
+  tagName: string
+  isClosing: boolean
+  isSelfClosing: boolean
+  attrs: Array<{ name: string; value: string }>
+}
 
 const isSafeSvgAttr = (name: string, value: string): boolean => {
   if (EVENT_ATTR_PATTERN.test(name)) return false
@@ -63,55 +74,129 @@ const isSafeSvgAttr = (name: string, value: string): boolean => {
   return true
 }
 
-const sanitizeElement = (element: Element, doc: Document): Element | null => {
-  const tagName = element.tagName
-  if (!ALLOWED_SVG_TAGS.has(tagName)) return null
+const parseSvgAttrs = (source: string): Array<{ name: string; value: string }> | null => {
+  const attrs: Array<{ name: string; value: string }> = []
+  let lastIndex = 0
 
-  const next = doc.createElementNS("http://www.w3.org/2000/svg", tagName)
+  for (const match of source.matchAll(ATTR_PATTERN)) {
+    const index = match.index ?? 0
+    if (source.slice(lastIndex, index).trim()) return null
 
-  Array.from(element.attributes).forEach((attr) => {
-    if (isSafeSvgAttr(attr.name, attr.value)) {
-      next.setAttribute(attr.name, attr.value)
+    attrs.push({
+      name: match[1],
+      value: match[2] ?? match[3] ?? "",
+    })
+    lastIndex = index + match[0].length
+  }
+
+  if (source.slice(lastIndex).trim()) return null
+  return attrs
+}
+
+const parseSvgTag = (token: string): ParsedSvgTag | null => {
+  if (/^<\s*(?:!|\?)/.test(token)) return null
+
+  const closingMatch = token.match(/^<\s*\/\s*([A-Za-z][\w:-]*)\s*>$/)
+  if (closingMatch) {
+    return {
+      tagName: closingMatch[1],
+      isClosing: true,
+      isSelfClosing: false,
+      attrs: [],
     }
-  })
+  }
 
-  Array.from(element.childNodes).forEach((child) => {
-    if (child.nodeType === Node.TEXT_NODE) {
-      if (tagName === "title" || tagName === "desc") {
-        next.appendChild(doc.createTextNode(child.textContent || ""))
+  const isSelfClosing = /\/\s*>$/.test(token)
+  const openingMatch = token.match(/^<\s*([A-Za-z][\w:-]*)([\s\S]*?)\/?\s*>$/)
+  if (!openingMatch) return null
+
+  const attrs = parseSvgAttrs(openingMatch[2].trim())
+  if (!attrs) return null
+
+  return {
+    tagName: openingMatch[1],
+    isClosing: false,
+    isSelfClosing,
+    attrs,
+  }
+}
+
+const appendSvgText = (stack: Element[], text: string, doc: Document): boolean => {
+  if (!text) return true
+
+  const parent = stack[stack.length - 1]
+  if (!parent) return text.trim().length === 0
+
+  if (parent.tagName === "title" || parent.tagName === "desc") {
+    parent.appendChild(doc.createTextNode(text))
+  }
+
+  return true
+}
+
+export const createSanitizedSvgIconElement = (
+  input: string,
+  doc: Document = document,
+): SVGSVGElement | null => {
+  const trimmed = input.trim()
+  if (!trimmed) return null
+
+  let root: Element | null = null
+  const stack: Element[] = []
+  let lastIndex = 0
+
+  for (const match of trimmed.matchAll(TAG_PATTERN)) {
+    const index = match.index ?? 0
+    if (!appendSvgText(stack, trimmed.slice(lastIndex, index), doc)) return null
+
+    const parsed = parseSvgTag(match[0])
+    if (!parsed) return null
+    if (!ALLOWED_SVG_TAGS.has(parsed.tagName)) return null
+
+    if (parsed.isClosing) {
+      const current = stack[stack.length - 1]
+      if (!current || current.tagName !== parsed.tagName) return null
+      stack.pop()
+      lastIndex = index + match[0].length
+      continue
+    }
+
+    const next = doc.createElementNS(SVG_NS, parsed.tagName)
+    parsed.attrs.forEach((attr) => {
+      if (isSafeSvgAttr(attr.name, attr.value)) {
+        next.setAttribute(attr.name, attr.value)
       }
-      return
+    })
+
+    if (!root) {
+      if (parsed.tagName !== "svg") return null
+      root = next
+    } else {
+      const parent = stack[stack.length - 1]
+      if (!parent) return null
+      parent.appendChild(next)
     }
 
-    if (child.nodeType !== Node.ELEMENT_NODE) return
-
-    const sanitizedChild = sanitizeElement(child as Element, doc)
-    if (sanitizedChild) {
-      next.appendChild(sanitizedChild)
+    if (!parsed.isSelfClosing) {
+      stack.push(next)
     }
-  })
 
-  return next
+    lastIndex = index + match[0].length
+  }
+
+  if (!appendSvgText(stack, trimmed.slice(lastIndex), doc)) return null
+  if (!root || stack.length > 0 || root.tagName !== "svg") return null
+
+  if (!root.getAttribute("viewBox")) {
+    root.setAttribute("viewBox", "0 0 24 24")
+  }
+  root.setAttribute("aria-hidden", "true")
+
+  return root as SVGSVGElement
 }
 
 export const sanitizeSvgIcon = (input: string): string => {
-  const trimmed = input.trim()
-  if (!trimmed) return ""
-
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(trimmed, "image/svg+xml")
-  if (doc.querySelector("parsererror")) return ""
-
-  const svg = doc.documentElement
-  if (!svg || svg.tagName !== "svg") return ""
-
-  const sanitized = sanitizeElement(svg, doc)
-  if (!sanitized) return ""
-
-  if (!sanitized.getAttribute("viewBox")) {
-    sanitized.setAttribute("viewBox", "0 0 24 24")
-  }
-  sanitized.setAttribute("aria-hidden", "true")
-
-  return new XMLSerializer().serializeToString(sanitized)
+  const svg = createSanitizedSvgIconElement(input)
+  if (!svg) return ""
+  return new XMLSerializer().serializeToString(svg)
 }

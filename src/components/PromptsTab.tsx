@@ -19,7 +19,7 @@ import {
   TimeIcon,
 } from "~components/icons"
 import { ContextMenu, MenuButton } from "~components/ConversationMenus"
-import { Button, ConfirmDialog, InputDialog, Tooltip } from "~components/ui"
+import { Button, ConfirmDialog, InputDialog, SafeSvgMarkup, Tooltip } from "~components/ui"
 import {
   extractVariables,
   type ParsedVariable,
@@ -39,7 +39,6 @@ import { t } from "~utils/i18n"
 import { initCopyButtons, showCopySuccess } from "~utils/icons"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 import { OPHEL_INTERACTION_LAYER_PROPS } from "~utils/dom-toolkit"
-import { sanitizeSvgIcon } from "~utils/svg-sanitizer"
 import type { Prompt } from "~utils/storage"
 import { showToast } from "~utils/toast"
 import { createSafeHTML } from "~utils/trusted-types"
@@ -2270,17 +2269,13 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }, [activeLibraryView, locatedPromptId, prompts, searchQuery, selectedCategory])
 
   const renderChainIcon = (iconSvg?: string) => {
-    const safeSvg = sanitizeSvgIcon(iconSvg || "")
-    if (safeSvg) {
-      return (
-        <span
-          className="gh-chain-icon-svg"
-          dangerouslySetInnerHTML={{ __html: createSafeHTML(safeSvg) }}
-        />
-      )
-    }
-
-    return <span className="gh-chain-icon-fallback">C</span>
+    return (
+      <SafeSvgMarkup
+        className="gh-chain-icon-svg"
+        svg={iconSvg}
+        fallback={<span className="gh-chain-icon-fallback">C</span>}
+      />
+    )
   }
 
   const getChainVariables = (draft: ChainDraft | PromptChain): ParsedVariable[] => {
@@ -2590,10 +2585,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                   {/* 当前选中的图标预览 */}
                   {draft.iconSvg ? (
                     <div className="gh-chain-icon-preview">
-                      <div
-                        className="gh-chain-icon-preview-svg"
-                        dangerouslySetInnerHTML={{ __html: createSafeHTML(draft.iconSvg) }}
-                      />
+                      <SafeSvgMarkup className="gh-chain-icon-preview-svg" svg={draft.iconSvg} />
                       <span>{t("chainIconSelected")}</span>
                     </div>
                   ) : (

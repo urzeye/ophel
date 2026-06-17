@@ -21,3 +21,4 @@ export {
   type SelectDropdownOption,
 } from "./SelectDropdown"
 export { PlaceholderInput, type PlaceholderInputProps } from "./PlaceholderInput"
+export { SafeSvgMarkup } from "./SafeSvgMarkup"

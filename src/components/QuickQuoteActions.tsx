@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { QuickQuoteSupportMode, SiteAdapter } from "~adapters/base"
 import { MoreHorizontalIcon } from "~components/icons"
 import { QuoteIcon, ReplyIcon } from "~components/icons/QuoteIcon"
+import { SafeSvgMarkup } from "~components/ui"
 import { VariableInputDialog } from "~components/VariableInputDialog"
 import { sendOrQueuePrompt } from "~core/prompt-actions"
 import {
@@ -33,7 +34,6 @@ import {
 } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 import { formatMarkdownQuote, replaceVariables, type ParsedVariable } from "~utils/prompt-variables"
-import { createSafeHTML } from "~utils/trusted-types"
 import { showToast } from "~utils/toast"
 
 interface QuickQuoteActionsProps {
@@ -139,16 +139,6 @@ const getQuickQuoteChipRow = (message: HTMLElement, host: HTMLElement): HTMLElem
   }
 
   return row
-}
-
-const SafeSvgIcon: React.FC<{ svg?: string; fallback: React.ReactNode }> = ({ svg, fallback }) => {
-  if (!svg) return <>{fallback}</>
-  return (
-    <span
-      className="gh-quick-quote-svg"
-      dangerouslySetInnerHTML={{ __html: createSafeHTML(svg) }}
-    />
-  )
 }
 
 const LETTER_COLORS = [
@@ -893,7 +883,8 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
               className="gh-quick-quote-action icon-only"
               title={chain.title}
               onClick={() => handleRunChain(chain)}>
-              <SafeSvgIcon
+              <SafeSvgMarkup
+                className="gh-quick-quote-svg"
                 svg={chain.iconSvg}
                 fallback={<ChainLetterFallback title={chain.title} />}
               />
@@ -924,7 +915,8 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
                       title={chain.title}
                       role="menuitem"
                       onClick={() => handleRunChain(chain)}>
-                      <SafeSvgIcon
+                      <SafeSvgMarkup
+                        className="gh-quick-quote-svg"
                         svg={chain.iconSvg}
                         fallback={<ChainLetterFallback title={chain.title} />}
                       />
