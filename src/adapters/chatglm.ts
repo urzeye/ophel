@@ -216,8 +216,10 @@ export class ChatGLMAdapter extends SiteAdapter {
 
   getNativeQuotePopoverSelectors(): string[] {
     return [
+      // 部分类名匹配（容错，但可能不够精确）
       '[class*="quote-button"]',
       '[class*="reference-button"]',
+      // aria-label 匹配（多语言友好，但依赖站点实现）
       '[aria-label*="引用"]',
       '[aria-label*="quote"]',
     ]

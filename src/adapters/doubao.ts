@@ -153,7 +153,13 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getNativeQuotePopoverSelectors(): string[] {
-    return ['[data-word-selection-toolbar="true"]', ".toolContainer-tlVomx", ".toolItem-C_B5bD"]
+    return [
+      // 根据实际 HTML：data 属性定位工具栏容器
+      '[data-word-selection-toolbar="true"]',
+      // CSS Modules 类名（可能变化，作为后备）
+      ".toolContainer-tlVomx",
+      ".toolItem-C_B5bD",
+    ]
   }
 
   supportsHostThemeSync(): boolean {

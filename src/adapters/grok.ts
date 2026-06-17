@@ -115,9 +115,13 @@ export class GrokAdapter extends SiteAdapter {
 
   getNativeQuotePopoverSelectors(): string[] {
     return [
+      // 根据实际 HTML 结构：圆角悬浮容器
+      ".absolute.bg-surface-l2.p-1.rounded-full.shadow-lg",
       ".absolute.bg-surface-l2.p-1.rounded-full",
-      ".absolute.bg-surface-l2.p-1.rounded-full button",
+      // SVG 图标特征（引用图标）
       "button svg.lucide-text-quote",
+      // 按钮容器
+      ".absolute.bg-surface-l2.p-1.rounded-full button",
     ]
   }
 
