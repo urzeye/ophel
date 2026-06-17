@@ -8,6 +8,7 @@
 import type { SiteAdapter } from "~adapters/base"
 import type { PromptManager } from "~core/prompt-manager"
 import {
+  appendQuickQuoteMarker,
   rememberQuickQuoteReferenceForContent,
   stripQuickQuoteMarkers,
 } from "~core/quick-quote-marker"
@@ -135,10 +136,16 @@ export class QueueDispatcher {
         return
       }
 
-      // 插入提示词到输入框。QueueItem.content 只允许携带用户可见正文；
-      // 旧版本队列项若含 marker，这里统一剥离，避免把定位元数据发给 AI。
-      const contentToSend = stripQuickQuoteMarkers(item.content)
-      rememberQuickQuoteReferenceForContent(contentToSend, item.metadata?.quoteRef)
+      // 发送内容必须携带 quick quote marker，刷新后才能从站点消息自身恢复锚点。
+      // 同时登记纯正文，作为 AI Studio 等站点发送后改写/移除 marker 的当前页 fallback。
+      const visibleContent = stripQuickQuoteMarkers(item.content)
+      rememberQuickQuoteReferenceForContent(visibleContent, item.metadata?.quoteRef)
+      const markerKind = item.metadata?.quoteMarkerKind
+      const contentToSend = appendQuickQuoteMarker(
+        item.content,
+        item.metadata?.quoteRef,
+        markerKind ? { kind: markerKind } : undefined,
+      )
       const insertOk = await this.promptManager.insertPrompt(contentToSend)
       if (!insertOk) {
         store.updateStatus(item.id, "failed")
@@ -233,8 +240,16 @@ export class QueueDispatcher {
       const submitShortcut =
         useSettingsStore.getState().settings.features?.prompts?.submitShortcut ?? "enter"
       const rawEditorContent = this.promptManager.getCurrentEditorContent()
-      const editorContent = stripQuickQuoteMarkers(rawEditorContent)
-      rememberQuickQuoteReferenceForContent(editorContent, item.metadata?.quoteRef)
+      const markerKind = item.metadata?.quoteMarkerKind
+      const editorContent = appendQuickQuoteMarker(
+        rawEditorContent,
+        item.metadata?.quoteRef,
+        markerKind ? { kind: markerKind } : undefined,
+      )
+      rememberQuickQuoteReferenceForContent(
+        stripQuickQuoteMarkers(editorContent),
+        item.metadata?.quoteRef,
+      )
 
       if (editorContent && editorContent !== rawEditorContent.trim()) {
         await this.promptManager.insertPrompt(editorContent)
@@ -330,8 +345,14 @@ export class QueueDispatcher {
     metadata?: QueueItem["metadata"],
   ): Promise<boolean> {
     try {
-      const contentToSend = stripQuickQuoteMarkers(content)
-      rememberQuickQuoteReferenceForContent(contentToSend, metadata?.quoteRef)
+      const visibleContent = stripQuickQuoteMarkers(content)
+      rememberQuickQuoteReferenceForContent(visibleContent, metadata?.quoteRef)
+      const markerKind = metadata?.quoteMarkerKind
+      const contentToSend = appendQuickQuoteMarker(
+        content,
+        metadata?.quoteRef,
+        markerKind ? { kind: markerKind } : undefined,
+      )
       const insertOk = await this.promptManager.insertPrompt(contentToSend)
       if (!insertOk) return false
 

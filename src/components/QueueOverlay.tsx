@@ -15,7 +15,7 @@ import { DialogOverlay, Tooltip } from "~components/ui"
 import { extractVariables } from "~components/VariableInputDialog"
 import { formatShortcut, normalizeShortcutBinding } from "~constants/shortcuts"
 import type { QueueDispatcher } from "~core/queue-dispatcher"
-import { stripQuickQuoteMarkers } from "~core/quick-quote-marker"
+import { appendQuickQuoteMarker, stripQuickQuoteMarkers } from "~core/quick-quote-marker"
 import { usePromptsStore } from "~stores/prompts-store"
 import { useSettingsStore } from "~stores/settings-store"
 import type { QueueItem } from "~stores/queue-store"
@@ -424,7 +424,16 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
   const handleEditSave = useCallback(
     (id: string) => {
       if (editValue.trim()) {
-        store.updateContent(id, editValue.trim())
+        const item = store.items.find((item) => item.id === id)
+        const markerKind = item?.metadata?.quoteMarkerKind
+        store.updateContent(
+          id,
+          appendQuickQuoteMarker(
+            editValue.trim(),
+            item?.metadata?.quoteRef,
+            markerKind ? { kind: markerKind } : undefined,
+          ),
+        )
       }
       setEditingItemId(null)
     },

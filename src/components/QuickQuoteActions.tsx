@@ -15,6 +15,7 @@ import {
 import type { PromptChain, PromptQuoteReference } from "~core/prompt-action-types"
 import type { PromptManager } from "~core/prompt-manager"
 import {
+  appendQuickQuoteMarker,
   extractQuickQuoteMarkerEntriesFromElement,
   rememberQuickQuoteReferenceForContent,
   removeQuickQuoteMarkerNodes,
@@ -698,7 +699,8 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
     const content = formatMarkdownQuote(selectionState.text) + "\n\n"
     const selection = createSelectionContext()
     rememberQuickQuoteReferenceForContent(content, selection?.quoteRef)
-    const inserted = await promptManager.insertPrompt(content)
+    const contentWithMarker = appendQuickQuoteMarker(content, selection?.quoteRef)
+    const inserted = await promptManager.insertPrompt(contentWithMarker)
     if (!inserted) {
       showToast(t("insertFailed"))
       return
@@ -714,7 +716,8 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
     const content = getReplyContent(selectionState.text)
     const selection = createSelectionContext()
     rememberQuickQuoteReferenceForContent(content, selection?.quoteRef)
-    const inserted = await promptManager.insertPrompt(content)
+    const contentWithMarker = appendQuickQuoteMarker(content, selection?.quoteRef)
+    const inserted = await promptManager.insertPrompt(contentWithMarker)
     if (!inserted) {
       showToast(t("insertFailed"))
       return
@@ -751,7 +754,8 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
 
         if (resolvedStep.step.runMode !== "send-or-queue") {
           rememberQuickQuoteReferenceForContent(content, resolvedStep.quoteRef)
-          const inserted = await promptManager.insertPrompt(content)
+          const contentWithMarker = appendQuickQuoteMarker(content, resolvedStep.quoteRef)
+          const inserted = await promptManager.insertPrompt(contentWithMarker)
           if (!inserted) {
             showToast(t("insertFailed"))
             return
