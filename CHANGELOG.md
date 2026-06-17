@@ -15,7 +15,11 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-- **Prompt queue keyboard shortcuts** — Prompt queue input now respects the user's send shortcut setting (Enter vs Ctrl+Enter) instead of hardcoding Enter behavior. The expanded queue panel uses capture-phase event handling to prevent keyboard events from being blocked by the editable guard, so Enter and Ctrl+Enter shortcuts work correctly on all platforms including Mac. (#TBD)
+- **Prompt queue keyboard shortcuts** — Prompt queue input now respects the user's send shortcut setting (Enter vs Ctrl+Enter) instead of hardcoding Enter behavior. The expanded queue panel uses capture-phase event handling to prevent keyboard events from being blocked by the editable guard, so Enter and Ctrl+Enter shortcuts work correctly on all platforms including Mac.
+- **Prompt queue text alignment** — Queue item text now displays left-aligned instead of center-aligned for better readability.
+- **ChatGLM generation detection** — Fixed false-positive generation status detection caused by historical "answer terminated" messages. The `isGenerating()` method now excludes `.stop-answer-default` selector which matches static text from previous responses rather than the current generation state.
+- **ChatGLM stop button** — Alt+K shortcut now correctly stops generation by targeting the inner `.enter-icon-container` element instead of the outer container div.
+- **Qianwen Slate editor sync** — Fixed content insertion from prompt queue where inserted text couldn't be edited or deleted. The editor now properly syncs Slate's virtual DOM by using `selectAll + delete + insertText` with complete event chains (`beforeinput`, `input`, `change`) to ensure both DOM and Slate state update correctly.
 - **Launcher peek retention** — When the mouse moves from the panel logo to other quick buttons (e.g. toolbox), the launcher peek panel now hides instead of staying open and blocking the toolbox menu. (#653)
 
 ---
