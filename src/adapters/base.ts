@@ -886,9 +886,11 @@ export abstract class SiteAdapter {
 
   /**
    * 返回当前站点的 Quick Quote 支持模式。
-   * - enabled: 允许 Ophel 显示选区引用浮层并使用 marker/chip/跳转。
-   * - native: 站点已有原生选区引用浮层，Ophel 不介入。
-   * - disabled: 当前站点不支持 Ophel 选区引用。
+   * - enabled: Ophel 完全接管（选区浮层 + 引用 chip 都显示）
+   * - native: 站点本身有原生引用功能，Ophel 不介入（都不显示，避免冲突）
+   * - disabled: 站点本身不支持，Ophel 技术上也无法支持（都不显示）
+   *
+   * 注意：选区浮层和引用 chip 使用相同的显示逻辑，要么都出现，要么都不出现。
    */
   getQuickQuoteSupportMode(): QuickQuoteSupportMode {
     return "enabled"
