@@ -116,8 +116,8 @@ export class GrokAdapter extends SiteAdapter {
   getNativeQuotePopoverSelectors(): string[] {
     return [
       ".absolute.bg-surface-l2.p-1.rounded-full",
-      "button:has(.lucide-text-quote)",
-      'button:has-text("添加到聊天")',
+      ".absolute.bg-surface-l2.p-1.rounded-full button",
+      "button svg.lucide-text-quote",
     ]
   }
 

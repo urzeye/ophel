@@ -246,11 +246,9 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   getNativeQuotePopoverSelectors(): string[] {
     return [
-      '[class*="aria-live"]',
-      'button:has(.whitespace-nowrap):has-text("询问")',
-      'button:has-text("询问 ChatGPT")',
-      'button:has-text("开始写作")',
-      ".btn-secondary",
+      "div.aria-live\\=polite.start-0.top-0.select-none.absolute",
+      'div[style*="transform: translate3d"] .shadow-long',
+      "button.btn-secondary.rounded-none.border-none",
     ]
   }
 
