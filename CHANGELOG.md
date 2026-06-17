@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Quick Quote Chains** — Prompt chains can now be triggered directly from quick quote actions, with chain icon picker, drag-to-reorder, and embedded quote anchors for reliable reference restoration across page refreshes.
+
 ---
 
 ## [1.0.60] - 2026-06-10
