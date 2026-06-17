@@ -15,6 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Outline copy at level 0** — Fixed issue where copying the outline returned empty results when user queries were hidden and expand level was set to 0, even though AI response headings were visible in the panel. Now copies all heading levels (H1-H6) in this scenario to match what's displayed.
 - **Prompt queue keyboard shortcuts** — Prompt queue input now respects the user's send shortcut setting (Enter vs Ctrl+Enter) instead of hardcoding Enter behavior. The expanded queue panel uses capture-phase event handling to prevent keyboard events from being blocked by the editable guard, so Enter and Ctrl+Enter shortcuts work correctly on all platforms including Mac.
 - **Prompt queue text alignment** — Queue item text now displays left-aligned instead of center-aligned for better readability.
 - **ChatGLM generation detection** — Fixed false-positive generation status detection caused by historical "answer terminated" messages. The `isGenerating()` method now excludes `.stop-answer-default` selector which matches static text from previous responses rather than the current generation state.
