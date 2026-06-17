@@ -63,7 +63,15 @@ const QUICK_QUOTE_CHIP_SELECTOR = "button.gh-quick-quote-chip"
 const canUseOphelQuickQuote = (
   enabledSetting: boolean,
   adapterMode: QuickQuoteSupportMode,
-): boolean => enabledSetting && adapterMode === "enabled"
+): boolean => {
+  if (!enabledSetting) return false
+  // enabled 模式：完全启用 chips 和 popover
+  if (adapterMode === "enabled") return true
+  // native 模式：也启用 chips（用户主动使用 Ophel chain 时需要渲染锚点）
+  // 虽然 native 站点有原生引用，但用户选择 Ophel chain 时，应该渲染 Ophel 的锚点
+  if (adapterMode === "native") return true
+  return false
+}
 
 const canUseQuickQuoteSelectionActions = (
   enabledSetting: boolean,

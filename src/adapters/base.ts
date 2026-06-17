@@ -888,6 +888,9 @@ export abstract class SiteAdapter {
    * 返回当前站点的 Quick Quote 支持模式。
    * - enabled: Ophel 完全接管（选区浮层 + 引用 chip 都显示）
    * - native: 站点有原生引用功能，Ophel 智能避让（悬浮框自动调整位置，避免遮挡原生功能）
+   *   - 用户可以选择使用原生引用或 Ophel 的 chain
+   *   - 使用 Ophel chain 时会渲染 quote chip 锚点
+   *   - 使用原生引用时不会有 Ophel 锚点
    * - disabled: 站点不支持或不兼容 Quick Quote 功能
    *
    * 典型的 disabled 使用场景：
