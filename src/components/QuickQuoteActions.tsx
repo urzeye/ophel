@@ -942,6 +942,41 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
     return { left, top }
   }, [selectionState, adapter])
 
+  // 动态调整位置以避让原生悬浮框（延迟检测）
+  useEffect(() => {
+    if (!selectionState) return
+    const mode = adapter.getQuickQuoteSupportMode()
+    if (mode !== "native") return
+
+    const adjustPosition = () => {
+      const nativeSelectors = adapter.getNativeQuotePopoverSelectors()
+      if (nativeSelectors.length === 0) return
+
+      let nativePopover: Element | null = null
+      for (const selector of nativeSelectors) {
+        const element = document.querySelector(selector)
+        if (element && isVisibleInViewport(element)) {
+          nativePopover = element
+          break
+        }
+      }
+
+      if (nativePopover) {
+        // 检测到原生悬浮框，重新计算位置
+        const popoverElement = document.querySelector(".gh-quick-quote-popover")
+        if (popoverElement instanceof HTMLElement) {
+          const { left, top } = calculatePopoverPosition(selectionState.rect, adapter)
+          popoverElement.style.left = `${left}px`
+          popoverElement.style.top = `${top}px`
+        }
+      }
+    }
+
+    // 延迟检测，给原生悬浮框渲染时间
+    const timer = setTimeout(adjustPosition, 100)
+    return () => clearTimeout(timer)
+  }, [selectionState, adapter])
+
   if (!selectionState && !pendingChainRun) {
     return <QuickQuoteRenderer adapter={adapter} enabled={quickQuoteEnabled} />
   }
