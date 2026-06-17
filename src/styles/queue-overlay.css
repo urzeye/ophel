@@ -247,6 +247,8 @@
   min-width: 0;
   flex-direction: column;
   gap: 3px;
+  align-items: flex-start;
+  text-align: left;
 }
 
 .gh-queue-item-chain {
