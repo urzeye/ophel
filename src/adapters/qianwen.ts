@@ -474,6 +474,11 @@ export class QianwenAdapter extends SiteAdapter {
     return [NEW_CHAT_BUTTON_SELECTOR]
   }
 
+  shouldUseCommandKeyOnMac(): boolean {
+    // 千问在 Mac 上原生使用 Ctrl 键，不需要映射为 Command
+    return false
+  }
+
   // ==================== 滚动与消息 ====================
 
   getScrollContainer(): HTMLElement | null {
