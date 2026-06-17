@@ -1218,7 +1218,7 @@ export const App = () => {
       return false
     }
 
-    const retainedSelectors = [".gh-main-panel", ".quick-btn-group"]
+    const retainedSelectors = [".gh-main-panel", ".quick-prompt-btn.panel-btn"]
     const pointerPosition = lastLauncherPeekPointerPositionRef.current
 
     for (const selector of retainedSelectors) {

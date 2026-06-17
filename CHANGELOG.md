@@ -13,6 +13,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Quick Quote Chains** — Prompt chains can now be triggered directly from quick quote actions, with chain icon picker, drag-to-reorder, and embedded quote anchors for reliable reference restoration across page refreshes.
 
+### 🐛 Bug Fixes
+
+- **Launcher peek retention** — When the mouse moves from the panel logo to other quick buttons (e.g. toolbox), the launcher peek panel now hides instead of staying open and blocking the toolbox menu. (#653)
+
 ---
 
 ## [1.0.60] - 2026-06-10
