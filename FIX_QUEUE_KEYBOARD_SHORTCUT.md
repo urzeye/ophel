@@ -2,7 +2,7 @@
 
 ## 问题描述
 
-用户报告了两个相关的键盘快捷键问题：
+用户报告了队列输入框的键盘快捷键问题：
 
 ### 问题 1：队列输入框硬编码了 Enter 键发送
 
@@ -17,6 +17,14 @@
 
 - 按 `Ctrl+Enter` 仍然是换行（应该发送）
 - 用户测试发现原生网站在 Mac 上也是用 Ctrl 键，不是 Command 键
+
+### 问题 3：展开后的队列面板键盘快捷键完全失效（关键问题）
+
+修复了问题 1 和 2 后，用户发现展开的队列面板中：
+
+- 按 Enter 只是换行，无法发送
+- 按 Ctrl+Enter 完全没反应
+- 所有键盘快捷键都不工作
 
 ## 根本原因分析
 
@@ -49,11 +57,39 @@ const submitShortcut = useSettingsStore(
 
 但这个变量**只用于传递给 dispatcher 发送消息时使用**，并没有用于控制键盘事件的响应逻辑。
 
-### 原因 2：误认为 Mac 需要特殊映射
+### 原因 3：键盘事件被 Guard 拦截（关键原因）
 
-最初误以为 Mac 平台需要将 `Ctrl` 映射为 `Command`，但**用户测试发现原生网站在 Mac 上也是使用 Ctrl 键**，不需要特殊映射。
+在 `src/components/QueueOverlay.tsx:275-283` 中，使用了 `attachEditableKeyboardFocusGuard` 来防止键盘事件干扰：
 
-问题仍然是队列输入框硬编码了 Enter 键，没有检查 `ctrlKey` 状态。
+```typescript
+useEffect(() => {
+  const panel = panelRef.current
+  if (!panel) {
+    return
+  }
+
+  // 队列输入依赖本地 Enter / Escape 逻辑，改为冒泡阶段拦截以避免吞掉自身键盘处理。
+  return attachEditableKeyboardFocusGuard(panel, { capture: false })
+}, [isExpanded, position])
+```
+
+但 `attachEditableKeyboardFocusGuard` 的实现（`src/utils/dom-toolkit.ts:151-175`）会：
+
+1. 检测到 textarea 是可编辑元素
+2. 在**冒泡阶段**调用 `stopPropagation()` 和 `stopImmediatePropagation()`
+3. 阻止事件继续冒泡
+
+**问题**：React 的 `onKeyDown` 也在**冒泡阶段**处理，Guard 先执行并阻止冒泡，导致 React 的处理器永远收不到事件。
+
+**事件处理顺序**：
+
+```
+捕获阶段：window -> 父元素 -> textarea
+目标阶段：textarea
+冒泡阶段：textarea -> 父元素 (Guard 拦截) -> window (React 处理器，已被阻止)
+           ↑
+        stopPropagation()
+```
 
 ## 修复方案
 
@@ -111,6 +147,58 @@ const submitKeyDisplay = React.useMemo(() => {
 1. **输入框 placeholder**：`输入提示词，${submitKeyDisplay} 直接发送...`
 2. **空队列提示**：`队列为空，输入内容后按 ${submitKeyDisplay} 发送或排队`
 3. **发送按钮 title**：显示 `submitKeyDisplay`
+
+### 修复 3：使用捕获阶段处理键盘事件（关键修复）
+
+**问题**：React 的 `onKeyDown` 在冒泡阶段处理，但 Guard 已经阻止了冒泡。
+
+**解决方案**：使用原生 `addEventListener` 在**捕获阶段**处理键盘事件：
+
+```typescript
+useEffect(() => {
+  const textarea = inputRef.current
+  if (!textarea || !isExpanded) return
+
+  const handleKeyDownCapture = (e: KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      const needsModifier = submitShortcut === "ctrlEnter"
+      const hasModifier = e.ctrlKey
+      const shouldSubmit = needsModifier ? hasModifier : !hasModifier
+
+      if (shouldSubmit) {
+        e.preventDefault()
+        e.stopPropagation()
+        handleSubmit()
+      }
+    }
+    if (e.key === "Escape") {
+      e.stopPropagation()
+      setIsExpanded(false)
+    }
+  }
+
+  // 使用捕获阶段，在 Guard 之前处理
+  textarea.addEventListener("keydown", handleKeyDownCapture, true)
+
+  return () => {
+    textarea.removeEventListener("keydown", handleKeyDownCapture, true)
+  }
+}, [isExpanded, submitShortcut, handleSubmit])
+```
+
+**为什么这样能工作**：
+
+```
+事件流程：
+1. 捕获阶段：window -> panel -> textarea
+   └─> 我们的 handleKeyDownCapture 在这里执行 ✅
+2. 目标阶段：textarea
+3. 冒泡阶段：textarea -> panel -> window
+   └─> Guard 在这里拦截 (stopPropagation)
+   └─> React onKeyDown 永远到不了这里 ❌
+```
+
+捕获阶段在 Guard 之前执行，所以不会被拦截。
 
 ## 修复效果
 

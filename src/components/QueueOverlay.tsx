@@ -326,8 +326,12 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
     }
   }, [inputValue, isGenerating, store, dispatcher, submitShortcut])
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  // 队列输入框键盘事件处理（使用捕获阶段，避免被 Guard 拦截）
+  useEffect(() => {
+    const textarea = inputRef.current
+    if (!textarea || !isExpanded) return
+
+    const handleKeyDownCapture = (e: KeyboardEvent) => {
       if (e.key === "Enter" && !e.shiftKey) {
         // 根据 submitShortcut 设置判断是否应该发送
         const needsModifier = submitShortcut === "ctrlEnter"
@@ -348,9 +352,15 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
         e.stopPropagation()
         setIsExpanded(false)
       }
-    },
-    [handleSubmit, submitShortcut],
-  )
+    }
+
+    // 使用捕获阶段，在 Guard 之前处理
+    textarea.addEventListener("keydown", handleKeyDownCapture, true)
+
+    return () => {
+      textarea.removeEventListener("keydown", handleKeyDownCapture, true)
+    }
+  }, [isExpanded, submitShortcut, handleSubmit])
 
   const handleRemoveItem = useCallback(
     (id: string) => {
@@ -722,7 +732,6 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
                 className="gh-queue-input"
                 value={inputValue}
                 onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
                 placeholder={
                   isGenerating
                     ? `AI 生成中，${submitKeyDisplay} 加入队列...`
