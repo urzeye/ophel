@@ -1430,7 +1430,7 @@ export class ChatGLMAdapter extends SiteAdapter {
   isGenerating(): boolean {
     const selectors = [
       ".stop-generate",
-      ".stop-answer-default",
+      // ".stop-answer-default", // 移除：历史消息中的"本次回答已被终止"静态文本会误报
       ".stop-stream-tip",
       ".answer-content-wrap .generating-icon",
       ".enter-icon-container.stop",
@@ -1449,7 +1449,7 @@ export class ChatGLMAdapter extends SiteAdapter {
   getStopButtonSelectors(): string[] {
     return [
       ".stop-generate",
-      ".stop-answer-default",
+      // ".stop-answer-default", // 移除：历史消息中的"本次回答已被终止"静态文本会误报
       ".stop-stream-tip",
       ".answer-content-wrap .generating-icon",
       ".enter-icon-container.stop",
