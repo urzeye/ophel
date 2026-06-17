@@ -69,8 +69,10 @@ const canUseQuickQuoteSelectionActions = (
   enabledSetting: boolean,
   adapterMode: QuickQuoteSupportMode,
   hasVisibleChains: boolean,
-): boolean =>
-  enabledSetting && (adapterMode === "enabled" || (adapterMode === "native" && hasVisibleChains))
+): boolean => {
+  void hasVisibleChains // 保留参数以避免破坏调用方
+  return enabledSetting && adapterMode === "enabled"
+}
 
 const isInsideOphel = (element: Element | null): boolean =>
   Boolean(element?.closest(".gh-root, .gh-main-panel, " + OPHEL_INTERACTION_LAYER_SELECTOR))
