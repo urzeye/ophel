@@ -699,7 +699,23 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
       return
     }
 
-    setSelectionState({ text, range, rect })
+    // Native 模式：延迟显示 Ophel 悬浮框，给原生悬浮框优先渲染的机会
+    const mode = adapter.getQuickQuoteSupportMode()
+    if (mode === "native") {
+      setTimeout(() => {
+        // 再次检查选区是否仍然有效
+        const currentSelection = window.getSelection()
+        if (
+          currentSelection &&
+          !currentSelection.isCollapsed &&
+          currentSelection.toString().trim() === text
+        ) {
+          setSelectionState({ text, range, rect })
+        }
+      }, 200)
+    } else {
+      setSelectionState({ text, range, rect })
+    }
   }, [adapter, selectionActionsEnabled])
 
   useEffect(() => {
