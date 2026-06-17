@@ -1056,6 +1056,8 @@ export const App = () => {
 
   // 选中的提示词状态
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null)
+  const selectedPromptRef = useRef<Prompt | null>(null)
+  selectedPromptRef.current = selectedPrompt
 
   // 设置模态框状态
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -3144,6 +3146,13 @@ export const App = () => {
         promptSubmitShortcut === "ctrlEnter" && !hasAnyModifier && !e.shiftKey
 
       if (isSubmitKey) {
+        // 未选中提示词时，不拦截 Enter 键，让站点原生处理发送。
+        // 避免 submitPrompt 内部的异步等待（waitForEnabledSubmitButton /
+        // waitForSubmitConfirmation）导致 1~2 秒延迟。
+        // 队列调度器和 chain 执行器直接调用 submitPrompt()，不经过此 keydown
+        // 处理器，因此不受此守卫影响。
+        if (!selectedPromptRef.current) return
+
         e.preventDefault()
         e.stopPropagation()
         e.stopImmediatePropagation()

@@ -16,6 +16,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### 🐛 Bug Fixes
 
 - **Launcher peek retention** — When the mouse moves from the panel logo to other quick buttons (e.g. toolbox), the launcher peek panel now hides instead of staying open and blocking the toolbox menu. (#653)
+- **DeepSeek Enter key lag** — Fixed a 1–2 second delay when pressing Enter to send a message on DeepSeek. The keydown handler no longer intercepts plain Enter when no prompt is selected, letting the site handle submission natively.
 
 ---
 
