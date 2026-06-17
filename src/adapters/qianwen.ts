@@ -279,9 +279,20 @@ export class QianwenAdapter extends SiteAdapter {
       return true
     }
 
+    // Slate 编辑器：先全选再插入，确保 Slate 状态正确更新
     try {
-      document.execCommand("selectAll", false)
-      if (document.execCommand("insertText", false, content)) {
+      // 1. 全选现有内容
+      const selection = window.getSelection()
+      if (selection) {
+        selection.selectAllChildren(editor)
+      }
+
+      // 2. 使用 execCommand 删除 + 插入（触发 Slate 的 onChange）
+      document.execCommand("delete", false)
+      const inserted = document.execCommand("insertText", false, content)
+
+      if (inserted) {
+        // 3. 额外触发 input 事件确保 Slate 更新
         editor.dispatchEvent(
           new InputEvent("input", {
             bubbles: true,
@@ -290,12 +301,36 @@ export class QianwenAdapter extends SiteAdapter {
             inputType: "insertText",
           }),
         )
+
+        // 4. 触发 beforeinput 和 change 事件（Slate 可能监听这些）
+        editor.dispatchEvent(
+          new InputEvent("beforeinput", {
+            bubbles: true,
+            composed: true,
+            data: content,
+            inputType: "insertText",
+            cancelable: true,
+          }),
+        )
+        editor.dispatchEvent(new Event("change", { bubbles: true }))
+
+        // 5. 等待一帧后再次聚焦，确保光标位置正确
+        requestAnimationFrame(() => {
+          editor.focus()
+          // 将光标移到末尾
+          const sel = window.getSelection()
+          if (sel) {
+            sel.collapse(editor, editor.childNodes.length)
+          }
+        })
+
         return true
       }
-    } catch {
-      // fallback below
+    } catch (error) {
+      console.warn("[QianwenAdapter] insertPrompt execCommand failed:", error)
     }
 
+    // Fallback: 直接设置 textContent（但可能导致 Slate 状态不同步）
     editor.textContent = content
     editor.dispatchEvent(
       new InputEvent("input", {
@@ -305,7 +340,25 @@ export class QianwenAdapter extends SiteAdapter {
         inputType: "insertText",
       }),
     )
+    editor.dispatchEvent(
+      new InputEvent("beforeinput", {
+        bubbles: true,
+        composed: true,
+        data: content,
+        inputType: "insertText",
+        cancelable: true,
+      }),
+    )
     editor.dispatchEvent(new Event("change", { bubbles: true }))
+
+    requestAnimationFrame(() => {
+      editor.focus()
+      const sel = window.getSelection()
+      if (sel) {
+        sel.collapse(editor, editor.childNodes.length)
+      }
+    })
+
     return true
   }
 
@@ -327,13 +380,42 @@ export class QianwenAdapter extends SiteAdapter {
       return
     }
 
+    // Slate 编辑器：全选 + 删除，确保状态同步
     try {
-      document.execCommand("selectAll", false)
-      document.execCommand("delete", false)
-    } catch {
-      // fallback below
+      const selection = window.getSelection()
+      if (selection) {
+        selection.selectAllChildren(editor)
+      }
+
+      const deleted = document.execCommand("delete", false)
+
+      if (deleted) {
+        // 触发 input 事件
+        editor.dispatchEvent(
+          new InputEvent("input", {
+            bubbles: true,
+            composed: true,
+            data: "",
+            inputType: "deleteContentBackward",
+          }),
+        )
+        editor.dispatchEvent(
+          new InputEvent("beforeinput", {
+            bubbles: true,
+            composed: true,
+            data: "",
+            inputType: "deleteContentBackward",
+            cancelable: true,
+          }),
+        )
+        editor.dispatchEvent(new Event("change", { bubbles: true }))
+        return
+      }
+    } catch (error) {
+      console.warn("[QianwenAdapter] clearTextarea execCommand failed:", error)
     }
 
+    // Fallback
     editor.textContent = ""
     editor.dispatchEvent(
       new InputEvent("input", {
@@ -341,6 +423,15 @@ export class QianwenAdapter extends SiteAdapter {
         composed: true,
         data: "",
         inputType: "deleteContentBackward",
+      }),
+    )
+    editor.dispatchEvent(
+      new InputEvent("beforeinput", {
+        bubbles: true,
+        composed: true,
+        data: "",
+        inputType: "deleteContentBackward",
+        cancelable: true,
       }),
     )
     editor.dispatchEvent(new Event("change", { bubbles: true }))
