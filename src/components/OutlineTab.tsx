@@ -193,8 +193,14 @@ const buildVisibilityMaps = (
   return { parentMap, visibleMap }
 }
 
-const getConversationCopyHeadingLevel = (expandLevel: number, showUserQueries: boolean): number =>
-  showUserQueries ? expandLevel : Math.max(1, expandLevel)
+const getConversationCopyHeadingLevel = (expandLevel: number, showUserQueries: boolean): number => {
+  // When user queries are hidden and expandLevel is 0, we should still copy all visible headings
+  // because the panel shows AI response headings even when expandLevel is 0
+  if (!showUserQueries && expandLevel === 0) {
+    return 6 // Copy all heading levels (H1-H6)
+  }
+  return showUserQueries ? expandLevel : Math.max(1, expandLevel)
+}
 
 // 递归渲染大纲树节点
 // 使用 outline-hidden 类而非条件渲染
