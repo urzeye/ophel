@@ -887,13 +887,26 @@ export abstract class SiteAdapter {
   /**
    * 返回当前站点的 Quick Quote 支持模式。
    * - enabled: Ophel 完全接管（选区浮层 + 引用 chip 都显示）
-   * - native: 站点本身有原生引用功能，Ophel 不介入（都不显示，避免冲突）
-   * - disabled: 站点本身不支持，Ophel 技术上也无法支持（都不显示）
+   * - native: 站点有原生引用功能，Ophel 智能避让（悬浮框自动调整位置，避免遮挡原生功能）
+   * - disabled: 站点不支持或不兼容 Quick Quote 功能
    *
-   * 注意：选区浮层和引用 chip 使用相同的显示逻辑，要么都出现，要么都不出现。
+   * 典型的 disabled 使用场景：
+   * - 页面原生不支持引用，也不支持持久化 Ophel 的锚点（如 AI Studio）
+   * - 页面原生支持引用，但插入 Ophel 的锚点后页面会崩溃（如 Qianwen）
    */
   getQuickQuoteSupportMode(): QuickQuoteSupportMode {
     return "enabled"
+  }
+
+  /**
+   * 返回当前站点原生引用悬浮框的选择器列表。
+   * 用于智能避让：当检测到原生悬浮框时，Ophel 会调整自己的位置避免遮挡。
+   * 仅在 getQuickQuoteSupportMode() 返回 "native" 时生效。
+   *
+   * @returns 原生引用悬浮框的 CSS 选择器数组，如果不需要避让则返回空数组
+   */
+  getNativeQuotePopoverSelectors(): string[] {
+    return []
   }
 
   /**

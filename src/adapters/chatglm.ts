@@ -210,6 +210,19 @@ export class ChatGLMAdapter extends SiteAdapter {
     return { primary: "#2454FF", secondary: "#1F46D6" }
   }
 
+  getQuickQuoteSupportMode() {
+    return "native" as const
+  }
+
+  getNativeQuotePopoverSelectors(): string[] {
+    return [
+      '[class*="quote-button"]',
+      '[class*="reference-button"]',
+      '[aria-label*="引用"]',
+      '[aria-label*="quote"]',
+    ]
+  }
+
   async toggleTheme(targetMode: "light" | "dark" | "system"): Promise<boolean> {
     const nextValue = SKIN_MODE_MAP[targetMode] || SKIN_MODE_MAP.light
     try {

@@ -167,7 +167,7 @@ export class QianwenAdapter extends SiteAdapter {
   }
 
   getQuickQuoteSupportMode() {
-    return "native" as const
+    return "disabled" as const
   }
 
   getSessionId(): string {

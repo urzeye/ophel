@@ -113,6 +113,14 @@ export class GrokAdapter extends SiteAdapter {
     return "native" as const
   }
 
+  getNativeQuotePopoverSelectors(): string[] {
+    return [
+      ".absolute.bg-surface-l2.p-1.rounded-full",
+      "button:has(.lucide-text-quote)",
+      'button:has-text("添加到聊天")',
+    ]
+  }
+
   getNewTabUrl(): string {
     return "https://grok.com/"
   }

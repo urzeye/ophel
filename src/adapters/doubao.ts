@@ -148,6 +148,14 @@ export class DoubaoAdapter extends SiteAdapter {
     return { primary: "#315efb", secondary: "#0f6eff" }
   }
 
+  getQuickQuoteSupportMode() {
+    return "native" as const
+  }
+
+  getNativeQuotePopoverSelectors(): string[] {
+    return ['[data-word-selection-toolbar="true"]', ".toolContainer-tlVomx", ".toolItem-C_B5bD"]
+  }
+
   supportsHostThemeSync(): boolean {
     return false
   }

@@ -244,6 +244,16 @@ export class ChatGPTAdapter extends SiteAdapter {
     return "native" as const
   }
 
+  getNativeQuotePopoverSelectors(): string[] {
+    return [
+      '[class*="aria-live"]',
+      'button:has(.whitespace-nowrap):has-text("询问")',
+      'button:has-text("询问 ChatGPT")',
+      'button:has-text("开始写作")',
+      ".btn-secondary",
+    ]
+  }
+
   getNewTabUrl(): string {
     return "https://chatgpt.com"
   }

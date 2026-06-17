@@ -70,12 +70,110 @@ const canUseQuickQuoteSelectionActions = (
   adapterMode: QuickQuoteSupportMode,
   hasVisibleChains: boolean,
 ): boolean => {
-  void hasVisibleChains // 保留参数以避免破坏调用方
-  return enabledSetting && adapterMode === "enabled"
+  if (!enabledSetting) return false
+  // enabled 模式：完全启用
+  if (adapterMode === "enabled") return true
+  // native 模式：有自定义 chains 时仍然显示（但会智能避让原生悬浮框）
+  if (adapterMode === "native" && hasVisibleChains) return true
+  return false
+}
+
+/**
+ * 检查元素是否在视口中可见
+ */
+const isVisibleInViewport = (element: Element): boolean => {
+  if (!(element instanceof HTMLElement)) return false
+  const style = window.getComputedStyle(element)
+  if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") {
+    return false
+  }
+  const rect = element.getBoundingClientRect()
+  return rect.width > 0 && rect.height > 0
 }
 
 const isInsideOphel = (element: Element | null): boolean =>
   Boolean(element?.closest(".gh-root, .gh-main-panel, " + OPHEL_INTERACTION_LAYER_SELECTOR))
+
+/**
+ * 计算 Ophel 悬浮框位置，智能避让原生悬浮框
+ * @param rect 选区位置
+ * @param adapter 站点适配器
+ * @returns 悬浮框的 left 和 top 位置
+ */
+const calculatePopoverPosition = (
+  rect: DOMRect,
+  adapter: SiteAdapter,
+): { left: number; top: number } => {
+  const margin = POPOVER_MARGIN
+  const defaultLeft = Math.min(
+    window.innerWidth - margin,
+    Math.max(margin, rect.left + rect.width / 2),
+  )
+  const defaultTop = Math.max(margin, rect.top - 48)
+
+  // 仅在 native 模式下检测原生悬浮框
+  const mode = adapter.getQuickQuoteSupportMode()
+  if (mode !== "native") {
+    return { left: defaultLeft, top: defaultTop }
+  }
+
+  // 查找原生悬浮框
+  const nativeSelectors = adapter.getNativeQuotePopoverSelectors()
+  if (nativeSelectors.length === 0) {
+    return { left: defaultLeft, top: defaultTop }
+  }
+
+  let nativePopover: Element | null = null
+  for (const selector of nativeSelectors) {
+    const element = document.querySelector(selector)
+    if (element && isVisibleInViewport(element)) {
+      nativePopover = element
+      break
+    }
+  }
+
+  if (!nativePopover) {
+    return { left: defaultLeft, top: defaultTop }
+  }
+
+  // 原生悬浮框存在，计算避让位置
+  const nativeRect = nativePopover.getBoundingClientRect()
+
+  // 策略 1: 如果原生悬浮框在选区上方，Ophel 放在选区下方
+  if (nativeRect.bottom < rect.top) {
+    return {
+      left: defaultLeft,
+      top: Math.min(window.innerHeight - margin - 48, rect.bottom + margin),
+    }
+  }
+
+  // 策略 2: 如果原生悬浮框在选区下方，Ophel 放在选区上方
+  if (nativeRect.top > rect.bottom) {
+    return { left: defaultLeft, top: defaultTop }
+  }
+
+  // 策略 3: 如果原生悬浮框在选区左侧，Ophel 放在选区右侧
+  if (nativeRect.right < rect.left) {
+    return {
+      left: Math.min(window.innerWidth - margin, rect.right + margin),
+      top: Math.max(margin, rect.top),
+    }
+  }
+
+  // 策略 4: 如果原生悬浮框在选区右侧，Ophel 放在选区左侧
+  if (nativeRect.left > rect.right) {
+    return {
+      left: Math.max(margin, rect.left - 200), // 假设 Ophel 宽度约 200px
+      top: Math.max(margin, rect.top),
+    }
+  }
+
+  // 策略 5: 如果完全重叠，尝试放在右侧
+  return {
+    left: Math.min(window.innerWidth - margin, nativeRect.right + margin),
+    top: Math.max(margin, rect.top),
+  }
+}
 
 const isEditableElement = (element: HTMLElement): boolean => isEditableKeyboardTarget(element)
 
@@ -832,13 +930,9 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
 
   const popoverStyle = useMemo<React.CSSProperties>(() => {
     if (!selectionState) return {}
-    const left = Math.min(
-      window.innerWidth - POPOVER_MARGIN,
-      Math.max(POPOVER_MARGIN, selectionState.rect.left + selectionState.rect.width / 2),
-    )
-    const top = Math.max(POPOVER_MARGIN, selectionState.rect.top - 48)
+    const { left, top } = calculatePopoverPosition(selectionState.rect, adapter)
     return { left, top }
-  }, [selectionState])
+  }, [selectionState, adapter])
 
   if (!selectionState && !pendingChainRun) {
     return <QuickQuoteRenderer adapter={adapter} enabled={quickQuoteEnabled} />
