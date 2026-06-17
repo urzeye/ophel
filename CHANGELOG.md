@@ -15,6 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Prompt queue keyboard shortcuts** — Prompt queue input now respects the user's send shortcut setting (Enter vs Ctrl+Enter) instead of hardcoding Enter behavior. The expanded queue panel uses capture-phase event handling to prevent keyboard events from being blocked by the editable guard, so Enter and Ctrl+Enter shortcuts work correctly on all platforms including Mac. (#TBD)
 - **Launcher peek retention** — When the mouse moves from the panel logo to other quick buttons (e.g. toolbox), the launcher peek panel now hides instead of staying open and blocking the toolbox menu. (#653)
 
 ---
