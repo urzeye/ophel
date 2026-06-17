@@ -660,6 +660,17 @@ export abstract class SiteAdapter {
     return { key: "Enter" }
   }
 
+  /**
+   * 是否需要在 Mac 上将 Ctrl 映射为 Command 键
+   * @returns true 表示在 Mac 上使用 Command 键，false 表示使用 Ctrl 键
+   *
+   * 默认返回 true（保持向后兼容），但某些站点（如千问、ChatGLM）
+   * 在 Mac 上原生就使用 Ctrl 键，这些站点应返回 false
+   */
+  shouldUseCommandKeyOnMac(): boolean {
+    return true
+  }
+
   /** 查找输入框元素 */
   findTextarea(): HTMLElement | null {
     for (const selector of this.getTextareaSelectors()) {

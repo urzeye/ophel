@@ -369,6 +369,7 @@ export class PromptManager {
     const keyConfig = this.resolveSubmitKeyConfig(submitShortcut)
     const needModifier = keyConfig.key === "Ctrl+Enter"
     const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform)
+    const useCommandOnMac = this.adapter.shouldUseCommandKeyOnMac?.() ?? true
     const eventInit: KeyboardEventInit = {
       key: "Enter",
       code: "Enter",
@@ -377,8 +378,8 @@ export class PromptManager {
       bubbles: true,
       cancelable: true,
       composed: true,
-      ctrlKey: needModifier && !isMac,
-      metaKey: needModifier && isMac,
+      ctrlKey: needModifier && !(isMac && useCommandOnMac),
+      metaKey: needModifier && isMac && useCommandOnMac,
       shiftKey: false,
     }
 
