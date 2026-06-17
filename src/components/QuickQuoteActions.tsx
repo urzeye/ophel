@@ -712,7 +712,7 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
         ) {
           setSelectionState({ text, range, rect })
         }
-      }, 200)
+      }, 100)
     } else {
       setSelectionState({ text, range, rect })
     }
