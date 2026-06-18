@@ -431,7 +431,10 @@ export const de = {
   chainQueueRequiredTitle: "Prompt-Warteschlange aktivieren",
   chainQueueRequiredDescription:
     "Chains benötigen die Prompt-Warteschlange, um Schritte nacheinander auszuführen. Du kannst zuerst einen Entwurf erstellen und sie später aktivieren.",
+  chainQueueRunRequiredDescription:
+    "Zum Ausführen eines Chains muss die Prompt-Warteschlange aktiviert sein. Danach wird der ausgewählte Chain fortgesetzt.",
   chainQueueEnable: "Warteschlange aktivieren",
+  chainQueueEnableAndRun: "Aktivieren und ausführen",
   chainQueueEnableAndCreate: "Aktivieren und erstellen",
   chainQueueViewSettings: "Einstellungen anzeigen",
   chainQueueEnabledToast: "Prompt-Warteschlange aktiviert",

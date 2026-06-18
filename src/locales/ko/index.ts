@@ -430,7 +430,10 @@ export const ko = {
   chainQueueRequiredTitle: "프롬프트 대기열 활성화",
   chainQueueRequiredDescription:
     "Chain이 단계를 순서대로 실행하려면 프롬프트 대기열이 필요합니다. 먼저 초안을 만들고 나중에 활성화할 수도 있습니다.",
+  chainQueueRunRequiredDescription:
+    "Chain을 실행하려면 먼저 프롬프트 대기열을 활성화해야 합니다. 활성화 후 선택한 Chain을 계속 실행합니다.",
   chainQueueEnable: "대기열 활성화",
+  chainQueueEnableAndRun: "활성화하고 실행",
   chainQueueEnableAndCreate: "활성화하고 만들기",
   chainQueueViewSettings: "설정 보기",
   chainQueueEnabledToast: "프롬프트 대기열이 활성화되었습니다",

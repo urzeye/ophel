@@ -429,7 +429,10 @@ export const pt = {
   chainQueueRequiredTitle: "Ativar fila de prompts",
   chainQueueRequiredDescription:
     "Chains precisam da fila de prompts para executar etapas em sequência. Você também pode criar um rascunho primeiro e ativá-la depois.",
+  chainQueueRunRequiredDescription:
+    "Executar uma Chain exige a fila de prompts. Depois de ativar, a Chain selecionada continuará.",
   chainQueueEnable: "Ativar fila",
+  chainQueueEnableAndRun: "Ativar e executar",
   chainQueueEnableAndCreate: "Ativar e criar",
   chainQueueViewSettings: "Ver configurações",
   chainQueueEnabledToast: "Fila de prompts ativada",

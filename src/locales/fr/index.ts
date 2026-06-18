@@ -431,7 +431,10 @@ export const fr = {
   chainQueueRequiredTitle: "Activer la file de prompts",
   chainQueueRequiredDescription:
     "Les Chains ont besoin de la file de prompts pour exécuter les étapes dans l'ordre. Vous pouvez aussi créer un brouillon et l'activer plus tard.",
+  chainQueueRunRequiredDescription:
+    "L'exécution d'une Chain nécessite la file de prompts. Après l'activation, la Chain sélectionnée continuera.",
   chainQueueEnable: "Activer la file",
+  chainQueueEnableAndRun: "Activer et lancer",
   chainQueueEnableAndCreate: "Activer et créer",
   chainQueueViewSettings: "Voir les paramètres",
   chainQueueEnabledToast: "File de prompts activée",

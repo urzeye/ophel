@@ -435,7 +435,10 @@ export const ja = {
   chainQueueRequiredTitle: "プロンプトキューを有効化",
   chainQueueRequiredDescription:
     "Chain を手順どおり連続実行するにはプロンプトキューが必要です。先に下書きを作成して、後で有効化することもできます。",
+  chainQueueRunRequiredDescription:
+    "Chain を実行するにはプロンプトキューを有効にする必要があります。有効化後、選択した Chain の実行を続けます。",
   chainQueueEnable: "キューを有効化",
+  chainQueueEnableAndRun: "有効化して実行",
   chainQueueEnableAndCreate: "有効化して作成",
   chainQueueViewSettings: "設定を表示",
   chainQueueEnabledToast: "プロンプトキューを有効化しました",

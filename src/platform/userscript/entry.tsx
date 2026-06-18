@@ -175,6 +175,7 @@ if (typeof chrome === "undefined" || !chrome.storage) {
   const KNOWN_STORAGE_KEYS = [
     "settings",
     "prompts",
+    "promptChains",
     "folders",
     "tags",
     "readingHistory",

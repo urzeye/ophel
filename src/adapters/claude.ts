@@ -196,6 +196,10 @@ export class ClaudeAdapter extends SiteAdapter {
     return "native" as const
   }
 
+  getNativeQuotePopoverSelectors(): string[] {
+    return ['[data-selection-tooltip="true"]']
+  }
+
   getNewTabUrl(): string {
     return "https://claude.ai/new"
   }

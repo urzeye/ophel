@@ -5,7 +5,6 @@ import { MoreHorizontalIcon } from "~components/icons"
 import { QuoteIcon, ReplyIcon } from "~components/icons/QuoteIcon"
 import { SafeSvgMarkup } from "~components/ui"
 import { VariableInputDialog } from "~components/VariableInputDialog"
-import { sendOrQueuePrompt } from "~core/prompt-actions"
 import {
   buildPromptChainQueueInputs,
   buildPromptChainAutoValues,
@@ -51,6 +50,11 @@ interface PendingChainRun {
   chain: PromptChain
   selection: PromptChainSelectionContext
   variables: ParsedVariable[]
+}
+
+interface PendingQueueGateRun {
+  chain: PromptChain
+  selection: PromptChainSelectionContext
 }
 
 const MAX_SELECTION_LENGTH = 8000
@@ -623,13 +627,11 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
   const quickQuoteEnabledSetting = useSettingsStore(
     (state) => state.settings.features?.prompts?.quickQuoteEnabled ?? true,
   )
-  const submitShortcut = useSettingsStore(
-    (state) => state.settings.features?.prompts?.submitShortcut ?? "enter",
-  )
   const updatePromptQueueSetting = useSettingsStore((state) => state.updateDeepSetting)
   const enqueueMany = useQueueStore((state) => state.enqueueMany)
   const [selectionState, setSelectionState] = useState<SelectionState | null>(null)
   const [pendingChainRun, setPendingChainRun] = useState<PendingChainRun | null>(null)
+  const [pendingQueueGateRun, setPendingQueueGateRun] = useState<PendingQueueGateRun | null>(null)
   const [chainMenuOpen, setChainMenuOpen] = useState(false)
   const [queueGateVisible, setQueueGateVisible] = useState(false)
   const isMouseSelectingRef = useRef(false)
@@ -725,8 +727,15 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
   }, [overflowChains.length, selectionState])
 
   useEffect(() => {
-    if (!selectionState || promptQueueEnabled) {
+    if (!selectionState) {
       setQueueGateVisible(false)
+      setPendingQueueGateRun(null)
+      return
+    }
+
+    if (promptQueueEnabled) {
+      setQueueGateVisible(false)
+      setPendingQueueGateRun(null)
     }
   }, [promptQueueEnabled, selectionState])
 
@@ -792,14 +801,9 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
     }
   }, [adapter, quickQuoteEnabled, selectionState])
 
-  const enablePromptQueue = useCallback(() => {
-    updatePromptQueueSetting("features", "prompts", "promptQueue", true)
-    setQueueGateVisible(false)
-    showToast(t("chainQueueEnabledToast"), 1800)
-  }, [updatePromptQueueSetting])
-
   const openPromptQueueSettings = useCallback(() => {
     setQueueGateVisible(false)
+    setPendingQueueGateRun(null)
     window.dispatchEvent(
       new CustomEvent("ophel:navigateSettingsPage", {
         detail: { settingId: "prompt-queue" },
@@ -853,93 +857,25 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
         return
       }
 
-      if (!promptQueueEnabled) {
-        if (resolvedSteps.length !== 1) {
-          setQueueGateVisible(true)
-          return
-        }
-
-        const [resolvedStep] = resolvedSteps
-        const content = resolvedStep.content.trim()
-        if (!content) {
-          showToast(t("promptEnqueueEmpty"), 2500)
-          return
-        }
-
-        if (resolvedStep.step.runMode !== "send-or-queue") {
-          rememberQuickQuoteReferenceForContent(content, resolvedStep.quoteRef)
-          const contentWithMarker = appendQuickQuoteMarker(content, resolvedStep.quoteRef)
-          const inserted = await promptManager.insertPrompt(contentWithMarker)
-          if (!inserted) {
-            showToast(t("insertFailed"))
-            return
-          }
-
-          updateChainLastUsed(chain.id)
-          showToast(t("quickQuoteInserted"), 1800)
-          clearSelection()
-          return
-        }
-
-        const result = await sendOrQueuePrompt({
-          adapter,
-          manager: promptManager,
-          content,
-          submitShortcut,
-          context: {
-            source: "quick-follow-up",
-            prompt: resolvedStep.prompt,
-            variables: {
-              selectedText: selection.selectedText,
-              quoteText: selection.quoteText,
-              quoteRef: resolvedStep.quoteRef,
-            },
-          },
-        })
-
-        if (result.status === "insert-failed") {
-          showToast(t("insertFailed"))
-          return
-        }
-
-        if (result.status === "send-failed") {
-          showToast(t("promptSendFailed"))
-          return
-        }
-
-        updateChainLastUsed(chain.id)
-        showToast(t("promptSent") + ": " + chain.title, 1800)
-        clearSelection()
+      const isPromptQueueEnabled =
+        useSettingsStore.getState().settings.features?.prompts?.promptQueue ?? false
+      if (!isPromptQueueEnabled) {
+        setPendingQueueGateRun({ chain, selection })
+        setQueueGateVisible(true)
         return
       }
 
-      // 队列已开启：正常入队
       const queueInputs = buildPromptChainQueueInputs(chain, resolvedSteps)
       const items = enqueueMany(queueInputs)
       updateChainLastUsed(chain.id)
       showToast(t("quickQuoteChainQueued", { count: String(items.length) }), 2500)
       clearSelection()
     },
-    [
-      adapter,
-      clearSelection,
-      enqueueMany,
-      promptManager,
-      promptQueueEnabled,
-      prompts,
-      submitShortcut,
-      updateChainLastUsed,
-    ],
+    [clearSelection, enqueueMany, prompts, updateChainLastUsed],
   )
 
-  const handleRunChain = useCallback(
-    (chain: PromptChain) => {
-      if (!selectionState) return
-      setChainMenuOpen(false)
-
-      const selection = createSelectionContext()
-      if (!selection) return
-
+  const prepareChainRun = useCallback(
+    (chain: PromptChain, selection: PromptChainSelectionContext) => {
       const autoValues = buildPromptChainAutoValues(selection)
       const variables = extractPromptChainVariables(chain, prompts, autoValues)
       if (variables.length > 0) {
@@ -949,7 +885,39 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
 
       runChain(chain, selection, {})
     },
-    [createSelectionContext, prompts, runChain, selectionState],
+    [prompts, runChain],
+  )
+
+  const enablePromptQueue = useCallback(() => {
+    const pendingRun = pendingQueueGateRun
+    updatePromptQueueSetting("features", "prompts", "promptQueue", true)
+    setQueueGateVisible(false)
+    setPendingQueueGateRun(null)
+    showToast(t("chainQueueEnabledToast"), 1800)
+
+    if (pendingRun) {
+      prepareChainRun(pendingRun.chain, pendingRun.selection)
+    }
+  }, [pendingQueueGateRun, prepareChainRun, updatePromptQueueSetting])
+
+  const handleRunChain = useCallback(
+    (chain: PromptChain) => {
+      if (!selectionState) return
+      setChainMenuOpen(false)
+
+      const selection = createSelectionContext()
+      if (!selection) return
+
+      if (!promptQueueEnabled) {
+        setPendingChainRun(null)
+        setPendingQueueGateRun({ chain, selection })
+        setQueueGateVisible(true)
+        return
+      }
+
+      prepareChainRun(chain, selection)
+    },
+    [createSelectionContext, prepareChainRun, promptQueueEnabled, selectionState],
   )
 
   const popoverStyle = useMemo<React.CSSProperties>(() => {
@@ -1089,12 +1057,12 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
                   {t("chainQueueRequiredTitle")}
                 </div>
                 <div className="gh-quick-quote-queue-gate-description">
-                  {t("chainQueueRequiredDescription")}
+                  {t("chainQueueRunRequiredDescription")}
                 </div>
               </div>
               <div className="gh-quick-quote-queue-gate-actions">
                 <button type="button" onClick={enablePromptQueue}>
-                  {t("chainQueueEnable")}
+                  {t("chainQueueEnableAndRun")}
                 </button>
                 <button type="button" onClick={openPromptQueueSettings}>
                   {t("chainQueueViewSettings")}

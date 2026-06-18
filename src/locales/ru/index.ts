@@ -428,7 +428,10 @@ export const ru = {
   chainQueueRequiredTitle: "Включите очередь промптов",
   chainQueueRequiredDescription:
     "Chains нужна очередь промптов, чтобы выполнять шаги по порядку. Можно сначала создать черновик и включить ее позже.",
+  chainQueueRunRequiredDescription:
+    "Для запуска Chain нужно включить очередь промптов. После включения выбранная Chain продолжит выполнение.",
   chainQueueEnable: "Включить очередь",
+  chainQueueEnableAndRun: "Включить и запустить",
   chainQueueEnableAndCreate: "Включить и создать",
   chainQueueViewSettings: "Открыть настройки",
   chainQueueEnabledToast: "Очередь промптов включена",

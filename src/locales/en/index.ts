@@ -438,7 +438,10 @@ export const en = {
   chainQueueRequiredTitle: "Enable Prompt Queue",
   chainQueueRequiredDescription:
     "Chains need Prompt Queue to run steps in sequence. You can still create a draft first and enable it later.",
+  chainQueueRunRequiredDescription:
+    "Running a Chain requires Prompt Queue. After enabling it, the selected Chain will continue.",
   chainQueueEnable: "Enable queue",
+  chainQueueEnableAndRun: "Enable and run",
   chainQueueEnableAndCreate: "Enable and create",
   chainQueueViewSettings: "View settings",
   chainQueueEnabledToast: "Prompt Queue enabled",

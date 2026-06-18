@@ -430,7 +430,10 @@ export const es = {
   chainQueueRequiredTitle: "Activar cola de prompts",
   chainQueueRequiredDescription:
     "Las Chains necesitan la cola de prompts para ejecutar los pasos en orden. También puedes crear un borrador primero y activarla más tarde.",
+  chainQueueRunRequiredDescription:
+    "Para ejecutar una Chain debes activar la cola de prompts. Después se continuará con la Chain seleccionada.",
   chainQueueEnable: "Activar cola",
+  chainQueueEnableAndRun: "Activar y ejecutar",
   chainQueueEnableAndCreate: "Activar y crear",
   chainQueueViewSettings: "Ver ajustes",
   chainQueueEnabledToast: "Cola de prompts activada",

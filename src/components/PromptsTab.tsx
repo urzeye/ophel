@@ -1291,7 +1291,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     title: "",
     description: "",
     iconSvg: CHAIN_ICON_PRESETS[0]?.svg || "",
-    enabled: true,
     showInSelectionPopover: true,
     steps: prompts[0] ? [createDefaultChainStep()] : [],
     lastUsedAt: undefined,
@@ -1449,7 +1448,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       title,
       description: draft.description?.trim() || "",
       iconSvg: draft.iconSvg?.trim() || "",
-      enabled: true,
       showInSelectionPopover: draft.showInSelectionPopover !== false,
       steps,
       lastUsedAt: draft.lastUsedAt,
@@ -2460,7 +2458,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                     onClick={(e) => {
                       e.stopPropagation()
                       updateChain(chain.id, {
-                        enabled: true,
                         showInSelectionPopover: !showInSelectionPopover,
                       })
                     }}>

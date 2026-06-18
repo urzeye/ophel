@@ -457,7 +457,10 @@ export const zhCN = {
   chainQueueRequiredTitle: "启用提示词队列",
   chainQueueRequiredDescription:
     "Chain 需要提示词队列才能按步骤连续执行。你也可以先创建草稿，稍后再启用。",
+  chainQueueRunRequiredDescription:
+    "运行 Chain 需要先启用提示词队列。启用后会继续执行刚才选择的 Chain。",
   chainQueueEnable: "启用队列",
+  chainQueueEnableAndRun: "启用并运行",
   chainQueueEnableAndCreate: "启用并创建",
   chainQueueViewSettings: "查看设置",
   chainQueueEnabledToast: "提示词队列已启用",

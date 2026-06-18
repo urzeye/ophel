@@ -157,7 +157,7 @@ export class QueueDispatcher {
 
       // "insert" 模式：只插入不发送
       if (runMode === "insert") {
-        store.updateStatus(item.id, "sent")
+        this.completeItem(item.id)
         return
       }
 
@@ -174,7 +174,7 @@ export class QueueDispatcher {
         if (this.isItemContentInEditor(item)) {
           store.updateStatus(item.id, "sending")
         } else {
-          store.updateStatus(item.id, "sent")
+          this.completeItem(item.id)
           this.startPostSubmitWait()
         }
         this.idleCount = 0
@@ -182,7 +182,7 @@ export class QueueDispatcher {
       }
 
       // 发送已经确认，先从队列 UI 中移除；调度器内部继续等待回复结束后再释放下一条。
-      store.updateStatus(item.id, "sent")
+      this.completeItem(item.id)
       this.startPostSubmitWait()
     } catch (error) {
       console.error("[QueueDispatcher] 发送失败:", error)
@@ -216,9 +216,13 @@ export class QueueDispatcher {
     )
   }
 
-  private async recoverSendingItem(item: QueueItem): Promise<void> {
+  private completeItem(itemId: string): void {
     const store = useQueueStore.getState()
+    store.updateStatus(itemId, "sent")
+    store.remove(itemId)
+  }
 
+  private async recoverSendingItem(item: QueueItem): Promise<void> {
     if (this.adapter.isGenerating()) {
       this.idleCount = 0
       return
@@ -226,7 +230,7 @@ export class QueueDispatcher {
 
     if (!this.isItemContentInEditor(item)) {
       // 输入框已清空或内容已被用户处理，避免永久卡在 sending。
-      store.updateStatus(item.id, "sent")
+      this.completeItem(item.id)
       this.idleCount = 0
       return
     }
@@ -259,7 +263,7 @@ export class QueueDispatcher {
 
       if (!submitOk) return
 
-      store.updateStatus(item.id, "sent")
+      this.completeItem(item.id)
       this.startPostSubmitWait()
     } catch (error) {
       console.error("[QueueDispatcher] 重试发送失败:", error)

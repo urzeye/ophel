@@ -90,7 +90,6 @@ export interface PromptActionDefinition {
   title: string
   description?: string
   iconSvg?: string
-  enabled?: boolean
   showInSelectionPopover?: boolean
   source: PromptActionSource
   steps: PromptActionStep[]
@@ -114,7 +113,6 @@ export interface PromptChain {
   title: string
   description?: string
   iconSvg?: string
-  enabled: boolean
   showInSelectionPopover: boolean
   steps: PromptChainStep[]
   createdAt: number
