@@ -493,11 +493,23 @@ body {
   opacity: 1;
 }
 
-.review-btn {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+.popup-action-pill.review-btn {
+  background: rgba(66, 133, 244, 0.08);
+  color: #4285f4;
   width: 32px;
   height: 32px;
-  box-shadow: 0 3px 6px rgba(124, 58, 237, 0.25);
+  box-shadow: 0 3px 6px rgba(66, 133, 244, 0.12);
+}
+
+.popup-action-pill.review-btn > svg {
+  width: 18px;
+  height: 18px;
+}
+
+.popup-action-pill.review-btn:hover {
+  background: rgba(66, 133, 244, 0.12);
+  box-shadow: 0 4px 8px rgba(66, 133, 244, 0.16);
+  filter: none;
 }
 
 .star-btn {

@@ -144,15 +144,15 @@
 
 /* 1. Review (Chrome/Firefox/Greasyfork) */
 .sidebar-social-btn.review-btn {
-  color: #6366f1;
-  --pulse-bg: rgba(99, 102, 241, 0.08); /* 极弱紫紫 */
-  --pulse-bg-hover: rgba(99, 102, 241, 0.15);
+  color: #4285f4;
+  --pulse-bg: rgba(66, 133, 244, 0.08);
+  --pulse-bg-hover: rgba(66, 133, 244, 0.14);
   animation-delay: 0s;
 }
 .sidebar-social-btn.review-btn:hover {
-  color: #ffffff !important;
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
-  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.25);
+  color: #4285f4 !important;
+  background: rgba(66, 133, 244, 0.1) !important;
+  box-shadow: 0 4px 10px rgba(66, 133, 244, 0.16);
   transform: translateY(-2px);
 }
 
