@@ -6,8 +6,6 @@ import { sanitizeSvgIcon } from "~utils/svg-sanitizer"
 
 import { chromeStorageAdapter } from "./chrome-adapter"
 
-type LegacyPromptChain = PromptChain & { enabled?: boolean }
-
 interface PromptChainsState {
   chains: PromptChain[]
   _hasHydrated: boolean
@@ -22,11 +20,8 @@ interface PromptChainsState {
 }
 
 const normalizeChain = (chain: PromptChain): PromptChain => {
-  const normalized = { ...(chain as LegacyPromptChain) }
-  delete normalized.enabled
-
   return {
-    ...normalized,
+    ...chain,
     iconSvg: chain.iconSvg ? sanitizeSvgIcon(chain.iconSvg) : "",
     showInSelectionPopover: chain.showInSelectionPopover !== false,
     steps: Array.isArray(chain.steps) ? chain.steps : [],
