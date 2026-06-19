@@ -406,6 +406,7 @@ interface ExportMenuProps {
   onExportMarkdown: () => void
   onExportJSON: () => void
   onExportTXT: () => void
+  onSegmentedExport?: () => void
 }
 
 export const ExportMenu: React.FC<ExportMenuProps> = ({
@@ -415,6 +416,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
   onExportMarkdown,
   onExportJSON,
   onExportTXT,
+  onSegmentedExport,
 }) => {
   return (
     <ContextMenu anchorEl={anchorEl} anchorPoint={anchorPoint} onClose={onClose}>
@@ -448,6 +450,27 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
           <span>{t("exportToTXT")}</span>
         </div>
       </MenuButton>
+      {onSegmentedExport && (
+        <>
+          <div
+            style={{
+              height: "1px",
+              background: "var(--gh-border, #e5e7eb)",
+              margin: "3px 4px",
+            }}
+          />
+          <MenuButton
+            onClick={() => {
+              onClose()
+              onSegmentedExport()
+            }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <ExportIcon size={14} />
+              <span>{t("segmentedExportMenuItem")}</span>
+            </div>
+          </MenuButton>
+        </>
+      )}
     </ContextMenu>
   )
 }

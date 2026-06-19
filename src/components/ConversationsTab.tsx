@@ -5,7 +5,14 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-import type { Conversation, ConversationManager, Folder, Tag } from "~core/conversation-manager"
+import type {
+  Conversation,
+  ConversationManager,
+  ConversationSegmentedExportDraft,
+  ConversationSegmentedExportMode,
+  Folder,
+  Tag,
+} from "~core/conversation-manager"
 import { SITE_IDS } from "~constants"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
@@ -21,6 +28,7 @@ import {
 } from "./ConversationDialogs"
 import { LoadingOverlay } from "./LoadingOverlay"
 import { ConversationMenu, ExportMenu, FolderMenu, type MenuAnchorPoint } from "./ConversationMenus"
+import { SegmentedExportDialog } from "./SegmentedExportDialog"
 
 import "~styles/conversations.css"
 
@@ -196,6 +204,9 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   // 对话框和菜单
   const [dialog, setDialog] = useState<DialogType>(null)
   const [menu, setMenu] = useState<MenuType>(null)
+  const [segmentedExportDraft, setSegmentedExportDraft] =
+    useState<ConversationSegmentedExportDraft | null>(null)
+  const [isSegmentedExporting, setIsSegmentedExporting] = useState(false)
 
   // 文件夹拖拽排序
   const [draggedFolderId, setDraggedFolderId] = useState<string | null>(null)
@@ -330,12 +341,23 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     const isInteracting = !!(
       menu ||
       dialog ||
+      segmentedExportDraft ||
       showTagFilterMenu ||
       isFolderSelectOpen ||
-      isDeleting
+      isDeleting ||
+      isSegmentedExporting
     )
     onInteractionStateChange?.(isInteracting)
-  }, [menu, dialog, showTagFilterMenu, isFolderSelectOpen, isDeleting, onInteractionStateChange])
+  }, [
+    menu,
+    dialog,
+    segmentedExportDraft,
+    showTagFilterMenu,
+    isFolderSelectOpen,
+    isDeleting,
+    isSegmentedExporting,
+    onInteractionStateChange,
+  ])
 
   // 防抖搜索
   const handleSearchInput = (value: string) => {
@@ -343,6 +365,64 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
     searchTimeoutRef.current = setTimeout(() => handleSearch(value), 150)
   }
+
+  const getCurrentExportConversationId = useCallback(
+    (conv?: Conversation): string | null => {
+      if (conv?.id) return conv.id
+      if (selectedIds.size > 0) return Array.from(selectedIds)[0]
+      return manager.siteAdapter.getSessionId() || null
+    },
+    [manager, selectedIds],
+  )
+
+  const openSegmentedExportDialog = useCallback(
+    async (conv?: Conversation) => {
+      const convId = getCurrentExportConversationId(conv)
+      if (!convId) {
+        showToast(t("exportNeedOpenFirst"))
+        return
+      }
+      if (manager.siteAdapter.getSessionId() !== convId) {
+        showToast(t("exportNeedOpenFirst"))
+        return
+      }
+
+      setIsSegmentedExporting(true)
+      try {
+        const draft = await manager.prepareSegmentedConversationExport(convId)
+        if (!draft || draft.segments.length === 0) {
+          showToast(t("segmentedExportNoSegments"))
+          return
+        }
+
+        setSegmentedExportDraft(draft)
+      } finally {
+        setIsSegmentedExporting(false)
+      }
+    },
+    [getCurrentExportConversationId, manager],
+  )
+
+  const handleSegmentedExport = useCallback(
+    async (segmentIds: string[], mode: ConversationSegmentedExportMode) => {
+      if (!segmentedExportDraft) return
+
+      setIsSegmentedExporting(true)
+      try {
+        const success = await manager.exportSegmentedConversation(
+          segmentedExportDraft,
+          segmentIds,
+          mode,
+        )
+        if (success) {
+          setSegmentedExportDraft(null)
+        }
+      } finally {
+        setIsSegmentedExporting(false)
+      }
+    },
+    [manager, segmentedExportDraft],
+  )
 
   // Tag 查表 Map（O(1) 查找替代 tags.find()）
   const tagMap = useMemo(() => {
@@ -1478,6 +1558,9 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
               selectedIds.size > 0 ? Array.from(selectedIds)[0] : manager.siteAdapter.getSessionId()
             await manager.exportConversation(convId, "txt")
           }}
+          onSegmentedExport={() => {
+            void openSegmentedExportDialog()
+          }}
         />
       )}
       {menu?.type === "export-conv" && (
@@ -1497,6 +1580,21 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
             setMenu(null)
             await manager.exportConversation(menu.conv.id, "txt")
           }}
+          onSegmentedExport={() => {
+            void openSegmentedExportDialog(menu.conv)
+          }}
+        />
+      )}
+      {segmentedExportDraft && (
+        <SegmentedExportDialog
+          draft={segmentedExportDraft}
+          isExporting={isSegmentedExporting}
+          onCancel={() => {
+            if (!isSegmentedExporting) {
+              setSegmentedExportDraft(null)
+            }
+          }}
+          onExport={handleSegmentedExport}
         />
       )}
     </>

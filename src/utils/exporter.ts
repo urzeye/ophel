@@ -51,7 +51,7 @@ export interface ExportMetadata {
 
 export type ExportFormat = "markdown" | "json" | "txt" | "clipboard"
 
-interface ZipFileInput {
+export interface ZipFileInput {
   path: string
   data: string | Blob | ArrayBuffer | Uint8Array
   mimeType?: string
@@ -1042,6 +1042,17 @@ export async function downloadExportPackage(input: ExportPackageInput): Promise<
     return await downloadBlob(zipBlob, input.packageFilename)
   } catch (error) {
     console.error("[Exporter] Package download failed:", error)
+    showToast(t("exportFailed"))
+    return false
+  }
+}
+
+export async function downloadZipFiles(files: ZipFileInput[], filename: string): Promise<boolean> {
+  try {
+    const zipBlob = await createZipBlob(files)
+    return await downloadBlob(zipBlob, filename)
+  } catch (error) {
+    console.error("[Exporter] ZIP download failed:", error)
     showToast(t("exportFailed"))
     return false
   }

@@ -18,16 +18,19 @@ import {
   createExportMetadata,
   downloadExportPackage,
   downloadFile,
+  downloadZipFiles,
   type ExportBundle,
   type ExportFormat,
+  type ExportMetadata,
   type ExportMessage,
+  type ZipFileInput,
   formatToJSON,
   formatToMarkdown,
   formatToTXT,
   htmlToMarkdown,
 } from "~utils/exporter"
 import { getAllLocalizedTexts, t } from "~utils/i18n"
-import { consumeRestoreFlag } from "~utils/storage"
+import { consumeRestoreFlag, type ExportPackaging } from "~utils/storage"
 import { showToast } from "~utils/toast"
 
 import type { Conversation, ConversationData, Tag } from "./types"
@@ -43,7 +46,31 @@ export type ConversationExportStage =
   | "copying"
   | "restoring"
 
-export type ConversationExportOperation = "export" | "outline-copy"
+export type ConversationExportOperation = "export" | "outline-copy" | "segment-export"
+
+export type ConversationSegmentedExportMode = "zip-markdown" | "merged-markdown" | "clipboard"
+
+export interface ConversationExportSegment {
+  id: string
+  index: number
+  title: string
+  preview: string
+  messages: ExportMessage[]
+  userMessageCount: number
+  assistantMessageCount: number
+  characterCount: number
+}
+
+export interface ConversationSegmentedExportDraft {
+  conversationId: string
+  title: string
+  safeTitle: string
+  filenamePrefix: string
+  timestampSuffix: string
+  metadata: ExportMetadata
+  totalMessages: number
+  segments: ConversationExportSegment[]
+}
 
 export interface ConversationExportProgress {
   conversationId: string
@@ -88,6 +115,10 @@ interface ConversationExportData {
   exportBundle: ExportBundle | null
   exportPackaging: ExportLifecycleContext["packaging"]
   notifyProgress: (stage: ConversationExportStage) => void
+}
+
+interface ConversationExportDataOptions {
+  packaging?: ExportPackaging
 }
 
 type GeminiCidMigrationResult = "migrated" | "pending_email" | "noop"
@@ -1044,6 +1075,187 @@ export class ConversationManager {
     return date.toLocaleDateString()
   }
 
+  private sanitizeExportFilename(value: string, fallback: string): string {
+    const sanitized = value
+      .replace(/[<>:"/\\|?*]/g, "_")
+      .replace(/\s+/g, " ")
+      .trim()
+    return sanitized || fallback
+  }
+
+  private buildExportTimestampSuffix(enabled: boolean | undefined): string {
+    if (!enabled) return ""
+
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, "0")
+    const day = String(now.getDate()).padStart(2, "0")
+    const hours = String(now.getHours()).padStart(2, "0")
+    const minutes = String(now.getMinutes()).padStart(2, "0")
+    const seconds = String(now.getSeconds()).padStart(2, "0")
+    return `_${year}-${month}-${day}_${hours}-${minutes}-${seconds}`
+  }
+
+  private createExportMetadataForConversation(
+    conv: Conversation,
+  ): Pick<
+    ConversationSegmentedExportDraft,
+    "title" | "safeTitle" | "filenamePrefix" | "timestampSuffix" | "metadata"
+  > {
+    const settings = useSettingsStore.getState().settings
+    const localizedUntitledConversation = t("untitledConversation")
+    const exportTitle =
+      this.sanitizeConversationTitleForUse(conv.title) || localizedUntitledConversation
+    const siteName = this.siteAdapter.getName()
+
+    return {
+      title: exportTitle,
+      safeTitle: this.sanitizeExportFilename(exportTitle, localizedUntitledConversation).substring(
+        0,
+        50,
+      ),
+      filenamePrefix: `${this.sanitizeExportFilename(siteName, siteName)} - `,
+      timestampSuffix: this.buildExportTimestampSuffix(settings.export?.exportFilenameTimestamp),
+      metadata: createExportMetadata(exportTitle, siteName, conv.id, {
+        customUserName: settings.export?.customUserName,
+        customModelName: settings.export?.customModelName,
+      }),
+    }
+  }
+
+  private normalizeExportSegmentText(content: string, maxLength?: number): string {
+    const normalized = content
+      .replace(/\r\n?/g, "\n")
+      .replace(/```[\s\S]*?```/g, " ")
+      .replace(/~~~[\s\S]*?~~~/g, " ")
+      .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+      .replace(/(^|\n)\s*>+\s?/g, "$1")
+      .replace(/[`*_~]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+
+    if (!maxLength || normalized.length <= maxLength) return normalized
+    return `${normalized.slice(0, maxLength).trim()}...`
+  }
+
+  private countExportSegmentCharacters(messages: ExportMessage[]): number {
+    return messages.reduce((total, message) => {
+      return total + this.normalizeExportSegmentText(message.content).length
+    }, 0)
+  }
+
+  private createFallbackSegmentTitle(index: number, hasUserMessage: boolean): string {
+    if (!hasUserMessage && index === 1) {
+      return t("segmentedExportOpeningSegment")
+    }
+
+    return t("segmentedExportUntitledSegment").replace("{index}", String(index))
+  }
+
+  private createConversationExportSegments(messages: ExportMessage[]): ConversationExportSegment[] {
+    const segments: ConversationExportSegment[] = []
+    let currentMessages: ExportMessage[] = []
+
+    const flushSegment = () => {
+      if (currentMessages.length === 0) return
+
+      const index = segments.length + 1
+      const userMessages = currentMessages.filter(
+        (message) => message.role.toLowerCase() === "user",
+      )
+      const assistantMessages = currentMessages.filter(
+        (message) => message.role.toLowerCase() !== "user",
+      )
+      const titleSource = userMessages[0]?.content || currentMessages[0]?.content || ""
+      const title =
+        this.normalizeExportSegmentText(titleSource, 80) ||
+        this.createFallbackSegmentTitle(index, userMessages.length > 0)
+      const preview =
+        this.normalizeExportSegmentText(
+          currentMessages.map((message) => message.content).join(" "),
+          180,
+        ) || title
+
+      segments.push({
+        id: `segment-${index}`,
+        index,
+        title,
+        preview,
+        messages: currentMessages,
+        userMessageCount: userMessages.length,
+        assistantMessageCount: assistantMessages.length,
+        characterCount: this.countExportSegmentCharacters(currentMessages),
+      })
+
+      currentMessages = []
+    }
+
+    messages.forEach((message) => {
+      if (message.role.toLowerCase() === "user") {
+        flushSegment()
+      }
+      currentMessages.push(message)
+    })
+    flushSegment()
+
+    return segments
+  }
+
+  private getSelectedExportSegments(
+    draft: ConversationSegmentedExportDraft,
+    selectedSegmentIds: string[],
+  ): ConversationExportSegment[] {
+    const selectedIds = new Set(selectedSegmentIds)
+    return draft.segments.filter((segment) => selectedIds.has(segment.id))
+  }
+
+  private createSegmentMetadata(
+    draft: ConversationSegmentedExportDraft,
+    segment: ConversationExportSegment,
+  ): ExportMetadata {
+    return {
+      ...draft.metadata,
+      title: `${draft.title} - ${segment.index}. ${segment.title}`,
+    }
+  }
+
+  private formatSegmentedMarkdown(
+    draft: ConversationSegmentedExportDraft,
+    segments: ConversationExportSegment[],
+  ): string {
+    const lines = [formatToMarkdown(draft.metadata, []).trimEnd()]
+    const userLabel = draft.metadata.customUserName || t("exportUserLabel")
+    const modelLabel = draft.metadata.customModelName || draft.metadata.source
+
+    segments.forEach((segment) => {
+      lines.push("", "---", "", `## ${segment.index}. ${segment.title}`)
+
+      segment.messages.forEach((message) => {
+        const role = message.role.toLowerCase()
+        const label = role === "user" ? userLabel : modelLabel
+        const content = message.content.trim()
+        if (!content) return
+
+        lines.push("", `### ${label}`, "", content)
+      })
+    })
+
+    return (
+      lines
+        .join("\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trimEnd() + "\n"
+    )
+  }
+
+  private createSegmentFilename(segment: ConversationExportSegment): string {
+    const index = String(segment.index).padStart(3, "0")
+    const title = this.sanitizeExportFilename(segment.title, `segment-${index}`).substring(0, 70)
+    return `${index} - ${title}.md`
+  }
+
   private resolveConversationForExport(convId: string): Conversation | null {
     const existing = this.conversations[convId]
     const currentInfo = this.siteAdapter.getCurrentConversationInfo()
@@ -1133,6 +1345,7 @@ export class ConversationManager {
     format: ExportFormat,
     handleExportData: (data: ConversationExportData) => Promise<T> | T,
     operation: ConversationExportOperation = "export",
+    options: ConversationExportDataOptions = {},
   ): Promise<T | null> {
     const currentSessionId = this.siteAdapter.getSessionId()
     if (currentSessionId !== convId) {
@@ -1150,7 +1363,8 @@ export class ConversationManager {
     const initialScrollTop = scrollContainer?.scrollTop ?? null
     const initialWindowScrollY = window.scrollY
     const settings = useSettingsStore.getState().settings
-    const exportPackaging = settings.export?.packaging === "zip" ? "zip" : "markdown"
+    const exportPackaging =
+      options.packaging ?? (settings.export?.packaging === "zip" ? "zip" : "markdown")
 
     const exportContext: ExportLifecycleContext = {
       conversationId: convId,
@@ -1260,6 +1474,105 @@ export class ConversationManager {
       ({ messages }) => messages,
       "outline-copy",
     )
+  }
+
+  async prepareSegmentedConversationExport(
+    convId: string,
+  ): Promise<ConversationSegmentedExportDraft | null> {
+    return this.withConversationExportData(
+      convId,
+      "markdown",
+      ({ conv, messages }) => {
+        const segments = this.createConversationExportSegments(messages)
+        if (segments.length === 0) return null
+
+        const exportInfo = this.createExportMetadataForConversation(conv)
+        return {
+          conversationId: conv.id,
+          ...exportInfo,
+          totalMessages: messages.length,
+          segments,
+        }
+      },
+      "segment-export",
+      { packaging: "markdown" },
+    )
+  }
+
+  async exportSegmentedConversation(
+    draft: ConversationSegmentedExportDraft,
+    selectedSegmentIds: string[],
+    mode: ConversationSegmentedExportMode,
+  ): Promise<boolean> {
+    const segments = this.getSelectedExportSegments(draft, selectedSegmentIds)
+    if (segments.length === 0) {
+      showToast(t("segmentedExportNoSelection"))
+      return false
+    }
+
+    try {
+      if (mode === "clipboard") {
+        const content = this.formatSegmentedMarkdown(draft, segments)
+        await navigator.clipboard.writeText(content)
+        showToast(t("copySuccess"))
+        return true
+      }
+
+      if (mode === "merged-markdown") {
+        const filename = `${draft.filenamePrefix}${draft.safeTitle}${draft.timestampSuffix} - segments.md`
+        const downloaded = await downloadFile(
+          this.formatSegmentedMarkdown(draft, segments),
+          filename,
+          "text/markdown;charset=utf-8",
+        )
+        if (downloaded) showToast(t("exportSuccess"))
+        return downloaded
+      }
+
+      const files: ZipFileInput[] = segments.map((segment) => ({
+        path: this.createSegmentFilename(segment),
+        data: formatToMarkdown(this.createSegmentMetadata(draft, segment), segment.messages),
+        mimeType: "text/markdown;charset=utf-8",
+      }))
+
+      files.push({
+        path: "manifest.json",
+        data: JSON.stringify(
+          {
+            version: 1,
+            metadata: {
+              title: draft.metadata.title,
+              id: draft.metadata.id,
+              url: draft.metadata.url,
+              exportTime: draft.metadata.exportTime,
+              source: draft.metadata.source,
+            },
+            totalMessages: draft.totalMessages,
+            segments: segments.map((segment) => ({
+              id: segment.id,
+              index: segment.index,
+              title: segment.title,
+              file: this.createSegmentFilename(segment),
+              userMessageCount: segment.userMessageCount,
+              assistantMessageCount: segment.assistantMessageCount,
+              characterCount: segment.characterCount,
+            })),
+          },
+          null,
+          2,
+        ),
+        mimeType: "application/json;charset=utf-8",
+      })
+
+      const packageFilename = `${draft.filenamePrefix}${draft.safeTitle}${draft.timestampSuffix} - segments.zip`
+      const downloaded = await downloadZipFiles(files, packageFilename)
+      if (downloaded) showToast(t("exportSuccess"))
+      return downloaded
+    } catch (error) {
+      console.error("[ConversationManager] Segmented export failed:", error)
+      showToast(t("exportFailed"))
+      return false
+    }
   }
 
   /**
