@@ -32,13 +32,16 @@ const normalizeChain = (chain: PromptChain): PromptChain => {
   }
 }
 
-const mergeDefaultChains = (chains: PromptChain[]): PromptChain[] => {
-  const existingIds = new Set(chains.map((chain) => chain.id))
-  const defaultChains = getDefaultPromptChains()
-    .map(normalizeChain)
-    .filter((chain) => !existingIds.has(chain.id))
+const mergeDefaultChains = (chains: PromptChain[], refreshDefaults = false): PromptChain[] => {
+  const defaultChains = getDefaultPromptChains().map(normalizeChain)
+  const defaultIds = new Set(defaultChains.map((chain) => chain.id))
+  const preservedChains = refreshDefaults
+    ? chains.filter((chain) => !defaultIds.has(chain.id))
+    : chains
+  const existingIds = new Set(preservedChains.map((chain) => chain.id))
+  const chainsToInstall = defaultChains.filter((chain) => !existingIds.has(chain.id))
 
-  return [...defaultChains, ...chains]
+  return [...chainsToInstall, ...preservedChains]
 }
 
 let _completeHydration: (() => void) | null = null
@@ -142,7 +145,7 @@ export const usePromptChainsStore = create<PromptChainsState>()(
 
         return {
           ...currentState,
-          chains: shouldInstallDefaults ? mergeDefaultChains(chains) : chains,
+          chains: shouldInstallDefaults ? mergeDefaultChains(chains, true) : chains,
           defaultChainsVersion: DEFAULT_PROMPT_CHAINS_VERSION,
         }
       },

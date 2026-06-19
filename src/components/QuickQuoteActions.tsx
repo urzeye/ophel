@@ -5,11 +5,13 @@ import { CheckIcon, CopyIcon, MoreHorizontalIcon } from "~components/icons"
 import { QuoteIcon } from "~components/icons/QuoteIcon"
 import { SafeSvgMarkup } from "~components/ui"
 import { VariableInputDialog } from "~components/VariableInputDialog"
+import { QUICK_QUOTE_REPLY_CHAIN_ID } from "~constants"
 import {
   buildPromptChainQueueInputs,
   buildPromptChainAutoValues,
   extractPromptChainVariables,
   resolvePromptChainSteps,
+  type ResolvedPromptChainStep,
   type PromptChainSelectionContext,
 } from "~core/prompt-chain-runner"
 import type { PromptChain, PromptQuoteReference } from "~core/prompt-action-types"
@@ -238,6 +240,36 @@ const findQuickQuoteChipHost = (message: HTMLElement, adapter: SiteAdapter): HTM
 const createQuickQuoteMessageScopeKey = (index: number, text: string): string => {
   const normalized = text.replace(/\s+/g, " ").trim()
   return `${index}:${normalized.length}:${normalized.slice(0, 120)}:${normalized.slice(-120)}`
+}
+
+const isDefaultQuickQuoteReplyChain = (chain: PromptChain): boolean =>
+  chain.id === QUICK_QUOTE_REPLY_CHAIN_ID
+
+const canRunChainWithoutPromptQueue = (chain: PromptChain): boolean =>
+  chain.steps.length > 0 && chain.steps.every((step) => step.runMode === "insert")
+
+const buildDirectInsertChainContent = (resolvedSteps: ResolvedPromptChainStep[]): string => {
+  let hasFullQuoteMarker = false
+
+  return resolvedSteps
+    .map((resolvedStep) => {
+      const quoteMarkerKind = resolvedStep.quoteRef
+        ? hasFullQuoteMarker
+          ? "ref"
+          : "full"
+        : undefined
+
+      if (quoteMarkerKind === "full") {
+        hasFullQuoteMarker = true
+      }
+
+      return appendQuickQuoteMarker(
+        resolvedStep.content,
+        resolvedStep.quoteRef,
+        quoteMarkerKind ? { kind: quoteMarkerKind } : undefined,
+      )
+    })
+    .join("\n\n")
 }
 
 const getQuickQuoteChipRow = (message: HTMLElement, host: HTMLElement): HTMLElement => {
@@ -646,6 +678,7 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
   )
   const primaryChains = visibleChains.slice(0, QUICK_QUOTE_PRIMARY_CHAIN_LIMIT)
   const overflowChains = visibleChains.slice(QUICK_QUOTE_PRIMARY_CHAIN_LIMIT)
+  const hasUserVisibleChains = visibleChains.some((chain) => !isDefaultQuickQuoteReplyChain(chain))
   const quickQuoteSupportMode = useMemo(() => adapter.getQuickQuoteSupportMode(), [adapter])
   const quickQuoteEnabled = useMemo(
     () => canUseOphelQuickQuote(quickQuoteEnabledSetting, quickQuoteSupportMode),
@@ -656,9 +689,9 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
       canUseQuickQuoteSelectionActions(
         quickQuoteEnabledSetting,
         quickQuoteSupportMode,
-        visibleChains.length > 0,
+        hasUserVisibleChains,
       ),
-    [quickQuoteEnabledSetting, quickQuoteSupportMode, visibleChains.length],
+    [hasUserVisibleChains, quickQuoteEnabledSetting, quickQuoteSupportMode],
   )
 
   const clearSelection = useCallback(() => {
@@ -873,6 +906,29 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
         return
       }
 
+      const isInsertOnly = resolvedSteps.every(
+        (resolvedStep) => resolvedStep.step.runMode === "insert",
+      )
+      if (isInsertOnly) {
+        const visibleContent = resolvedSteps
+          .map((resolvedStep) => resolvedStep.content)
+          .join("\n\n")
+        const quoteRef = resolvedSteps.find((resolvedStep) => resolvedStep.quoteRef)?.quoteRef
+        rememberQuickQuoteReferenceForContent(visibleContent, quoteRef)
+        const inserted = await promptManager.insertPrompt(
+          buildDirectInsertChainContent(resolvedSteps),
+        )
+        if (!inserted) {
+          showToast(t("insertFailed"))
+          return
+        }
+
+        updateChainLastUsed(chain.id)
+        showToast(t("quickQuoteInserted"), 1800)
+        clearSelection()
+        return
+      }
+
       const isPromptQueueEnabled =
         useSettingsStore.getState().settings.features?.prompts?.promptQueue ?? false
       if (!isPromptQueueEnabled) {
@@ -887,7 +943,7 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
       showToast(t("quickQuoteChainQueued", { count: String(items.length) }), 2500)
       clearSelection()
     },
-    [clearSelection, enqueueMany, prompts, updateChainLastUsed],
+    [clearSelection, enqueueMany, promptManager, prompts, updateChainLastUsed],
   )
 
   const prepareChainRun = useCallback(
@@ -924,7 +980,7 @@ export const QuickQuoteActions: React.FC<QuickQuoteActionsProps> = ({ adapter, p
       const selection = createSelectionContext()
       if (!selection) return
 
-      if (!promptQueueEnabled) {
+      if (!promptQueueEnabled && !canRunChainWithoutPromptQueue(chain)) {
         setPendingChainRun(null)
         setPendingQueueGateRun({ chain, selection })
         setQueueGateVisible(true)

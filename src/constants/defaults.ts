@@ -40,7 +40,7 @@ export const getDefaultPrompts = (): Prompt[] => [
 ]
 
 // ==================== 默认 Chain ====================
-export const DEFAULT_PROMPT_CHAINS_VERSION = 1
+export const DEFAULT_PROMPT_CHAINS_VERSION = 2
 export const QUICK_QUOTE_REPLY_CHAIN_ID = "default_quick_quote_reply"
 
 const QUICK_QUOTE_REPLY_CHAIN_ICON =
@@ -60,7 +60,7 @@ export const getDefaultPromptChains = (): PromptChain[] => [
         mode: "inline",
         promptId: "",
         inlineContent: t("quickQuoteReplyTemplate"),
-        runMode: "enqueue",
+        runMode: "insert",
         splitMode: "none",
       },
     ],
