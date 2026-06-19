@@ -4,6 +4,7 @@
 
 import { t } from "~utils/i18n"
 import type { Prompt } from "~utils/storage"
+import type { PromptChain } from "~core/prompt-action-types"
 
 // ==================== Zustand Store Keys ====================
 // 用于备份导出/导入时识别 Zustand persist 格式的数据
@@ -35,6 +36,36 @@ export const getDefaultPrompts = (): Prompt[] => [
     title: t("defaultPromptTranslateTitle"),
     content: t("defaultPromptTranslateContent"),
     category: t("defaultPromptTranslateCategory"),
+  },
+]
+
+// ==================== 默认 Chain ====================
+export const DEFAULT_PROMPT_CHAINS_VERSION = 1
+export const QUICK_QUOTE_REPLY_CHAIN_ID = "default_quick_quote_reply"
+
+const QUICK_QUOTE_REPLY_CHAIN_ICON =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>'
+
+// 返回国际化后的默认 Chain，语言行为与默认提示词保持一致
+export const getDefaultPromptChains = (): PromptChain[] => [
+  {
+    id: QUICK_QUOTE_REPLY_CHAIN_ID,
+    title: t("quickQuoteReply"),
+    description: "",
+    iconSvg: QUICK_QUOTE_REPLY_CHAIN_ICON,
+    showInSelectionPopover: true,
+    steps: [
+      {
+        id: "default_quick_quote_reply_step",
+        mode: "inline",
+        promptId: "",
+        inlineContent: t("quickQuoteReplyTemplate"),
+        runMode: "enqueue",
+        splitMode: "none",
+      },
+    ],
+    createdAt: 1,
+    updatedAt: 1,
   },
 ]
 

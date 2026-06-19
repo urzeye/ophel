@@ -19,6 +19,7 @@ import {
   DEFAULT_FOLDERS,
   MULTI_PROP_STORES,
   ZUSTAND_KEYS,
+  getDefaultPromptChains,
   getDefaultPrompts,
 } from "~constants/defaults"
 import {
@@ -509,7 +510,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
         )
         // 解析 Zustand 结构
         let promptsData = []
-        let promptChainsData = []
+        let promptChainsData: unknown = []
         try {
           const parsed = typeof raw.prompts === "string" ? JSON.parse(raw.prompts) : raw.prompts
           if (parsed?.state?.prompts) {
@@ -518,8 +519,15 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
 
           const parsedChains =
             typeof raw.promptChains === "string" ? JSON.parse(raw.promptChains) : raw.promptChains
-          if (parsedChains?.state?.chains) {
-            promptChainsData = parsedChains.state.chains
+          const promptChainsState = parsedChains?.state
+          if (isObjectRecord(promptChainsState) && Array.isArray(promptChainsState.chains)) {
+            promptChainsData =
+              typeof promptChainsState.defaultChainsVersion === "number"
+                ? {
+                    chains: promptChainsState.chains,
+                    defaultChainsVersion: promptChainsState.defaultChainsVersion,
+                  }
+                : promptChainsState.chains
           }
         } catch (e) {
           console.error(e)
@@ -744,7 +752,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
   const resetLocalStores = () => {
     resetSettings()
     usePromptsStore.getState().setPrompts(getDefaultPrompts())
-    usePromptChainsStore.getState().setChains([])
+    usePromptChainsStore.getState().setChains(getDefaultPromptChains())
     useFoldersStore.setState({ folders: DEFAULT_FOLDERS })
     useTagsStore.setState({ tags: [] })
     useConversationsStore.setState({ conversations: {}, lastUsedFolderId: "inbox" })

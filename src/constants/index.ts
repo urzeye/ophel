@@ -38,13 +38,16 @@ export {
 
 // 默认值
 export {
+  DEFAULT_PROMPT_CHAINS_VERSION,
   getDefaultPrompts,
+  getDefaultPromptChains,
   DEFAULT_FOLDERS,
   ZUSTAND_KEYS,
   MULTI_PROP_STORES,
   LAYOUT_CONFIG,
   VALIDATION_PATTERNS,
   BATCH_TEST_CONFIG,
+  QUICK_QUOTE_REPLY_CHAIN_ID,
   SITE_IDS,
   type Folder,
 } from "./defaults"

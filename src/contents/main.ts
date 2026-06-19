@@ -8,7 +8,7 @@
 import type { PlasmoCSConfig } from "plasmo"
 
 import { getAdapter } from "~adapters"
-import { DEFAULT_FOLDERS, SITE_IDS, getDefaultPrompts } from "~constants"
+import { DEFAULT_FOLDERS, SITE_IDS, getDefaultPromptChains, getDefaultPrompts } from "~constants"
 import {
   initCoreModules,
   initUrlChangeObserver,
@@ -36,7 +36,7 @@ import {
 const resetAllStores = () => {
   useSettingsStore.getState().resetSettings()
   usePromptsStore.getState().setPrompts(getDefaultPrompts())
-  usePromptChainsStore.getState().setChains([])
+  usePromptChainsStore.getState().setChains(getDefaultPromptChains())
   useFoldersStore.setState({ folders: DEFAULT_FOLDERS })
   useTagsStore.setState({ tags: [] })
   useConversationsStore.setState({ conversations: {}, lastUsedFolderId: "inbox" })

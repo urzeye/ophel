@@ -216,6 +216,13 @@
   color: var(--gh-primary, #4285f4);
 }
 
+.gh-quick-quote-copy-action {
+  width: 30px;
+  min-width: 30px;
+  padding: 0;
+  flex: 0 0 30px;
+}
+
 .gh-quick-quote-action.icon-only {
   flex: 0 1 110px;
   max-width: 120px;
