@@ -8,12 +8,11 @@ import { Storage } from "@plasmohq/storage"
 
 import { DEFAULT_SHORTCUTS_SETTINGS, type ShortcutsSettings } from "~constants/shortcuts"
 import type { WebDAVProvider } from "~core/webdav-sync"
-
-// 构建时注入的平台标识
-declare const __PLATFORM__: "extension" | "userscript" | undefined
+import { platform } from "~platform"
+import { isUserscriptPlatform } from "~platform/utils"
 
 // 油猴脚本环境标识（用于设置默认值）
-const isUserscript = typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
+const isUserscript = isUserscriptPlatform()
 
 // 本地存储 - 用于非 Zustand 管理的数据
 export const localStorage = new Storage({ area: "local" })
@@ -688,7 +687,7 @@ export function getSiteCleanMode(settings: Settings, siteId: string): ZenModeCon
 let clearAllFlagPromise: Promise<boolean> | null = null
 
 /**
- * 消费“清除全部数据”标记（仅首次返回 true）
+ * 消费"清除全部数据"标记（仅首次返回 true）
  * - 用于在清除后首次加载时跳过自动恢复/自动同步
  * - 多处调用将共享结果，避免竞态
  */
@@ -697,35 +696,30 @@ export function consumeClearAllFlag(): Promise<boolean> {
     return clearAllFlagPromise
   }
 
-  clearAllFlagPromise = new Promise((resolve) => {
-    if (typeof chrome === "undefined" || !chrome.storage?.local) {
-      resolve(false)
-      return
-    }
-
-    chrome.storage.local.get(CLEAR_ALL_FLAG_KEY, (result) => {
-      const rawValue = result?.[CLEAR_ALL_FLAG_KEY]
-      const hasFlag = rawValue !== undefined
-      if (!hasFlag) {
-        resolve(false)
-        return
+  clearAllFlagPromise = (async () => {
+    try {
+      const rawValue = await platform.storage.get<number>(CLEAR_ALL_FLAG_KEY)
+      if (rawValue === undefined) {
+        return false
       }
 
       const ts = typeof rawValue === "number" ? rawValue : Number(rawValue)
       if (!Number.isFinite(ts)) {
-        resolve(true)
-        return
+        return true
       }
 
       const age = Date.now() - ts
       if (age <= CLEAR_ALL_FLAG_TTL_MS) {
-        resolve(true)
-        return
+        return true
       }
 
-      chrome.storage.local.remove(CLEAR_ALL_FLAG_KEY, () => resolve(false))
-    })
-  })
+      await platform.storage.remove(CLEAR_ALL_FLAG_KEY)
+      return false
+    } catch (error) {
+      console.warn("[Ophel] Failed to consume clear all flag:", error)
+      return false
+    }
+  })()
 
   return clearAllFlagPromise
 }
@@ -746,37 +740,32 @@ export function consumeRestoreFlag(): Promise<boolean> {
     return restoreFlagPromise
   }
 
-  restoreFlagPromise = new Promise((resolve) => {
-    if (typeof chrome === "undefined" || !chrome.storage?.local) {
-      resolve(false)
-      return
-    }
-
-    chrome.storage.local.get(RESTORE_FLAG_KEY, (result) => {
-      const rawValue = result?.[RESTORE_FLAG_KEY]
-      const hasFlag = rawValue !== undefined
-      if (!hasFlag) {
-        resolve(false)
-        return
+  restoreFlagPromise = (async () => {
+    try {
+      const rawValue = await platform.storage.get<number>(RESTORE_FLAG_KEY)
+      if (rawValue === undefined) {
+        return false
       }
 
       const ts = typeof rawValue === "number" ? rawValue : Number(rawValue)
       if (!Number.isFinite(ts)) {
-        resolve(true)
-        return
+        return true
       }
 
       const age = Date.now() - ts
       if (age <= RESTORE_FLAG_TTL_MS) {
         // 不立即移除，允许多个标签页在 TTL 窗口内都能读取到恢复标记，避免竞态
-        resolve(true)
-        return
+        return true
       }
 
       // 标记过期后清理，防止长期残留
-      chrome.storage.local.remove(RESTORE_FLAG_KEY, () => resolve(false))
-    })
-  })
+      await platform.storage.remove(RESTORE_FLAG_KEY)
+      return false
+    } catch (error) {
+      console.warn("[Ophel] Failed to consume restore flag:", error)
+      return false
+    }
+  })()
 
   return restoreFlagPromise
 }

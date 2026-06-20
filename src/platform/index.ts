@@ -12,19 +12,17 @@
 import { platform as extensionPlatform } from "./extension"
 import type { Platform } from "./types"
 import { platform as userscriptPlatform } from "./userscript"
+import { getPlatformType } from "./utils"
 
-// 构建时注入的平台标识
-declare const __PLATFORM__: "extension" | "userscript"
-
-// 动态导入对应平台实现
+// 根据构建时注入的平台标识选择对应实现
 let platform: Platform
 
-// 默认使用扩展版（Plasmo 构建时不会定义 __PLATFORM__）
-if (typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript") {
+const platformType = getPlatformType()
+if (platformType === "userscript") {
   // 油猴脚本构建
   platform = userscriptPlatform
 } else {
-  // 浏览器扩展构建（默认）
+  // 浏览器扩展构建
   platform = extensionPlatform
 }
 
@@ -37,3 +35,4 @@ export type {
   FetchResponse,
   NotifyOptions,
 } from "./types"
+export { getPlatformType, isUserscriptPlatform, isExtensionPlatform } from "./utils"

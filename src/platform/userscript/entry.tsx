@@ -182,6 +182,8 @@ if (typeof chrome === "undefined" || !chrome.storage) {
     "claudeSessionKeys",
     "conversations",
     "ophel:releaseNotesState",
+    "ophel:clearAllFlag",
+    "ophel:restoreFlag",
   ]
 
   ;(window as any).chrome = {

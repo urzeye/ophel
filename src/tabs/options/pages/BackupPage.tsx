@@ -140,11 +140,7 @@ const RemoteBackupModal: React.FC<{
           if (result.success) {
             try {
               if (platform.type === "extension" && typeof chrome !== "undefined") {
-                await new Promise<void>((resolve, reject) =>
-                  chrome.storage.local.set({ [RESTORE_FLAG_KEY]: Date.now() }, () =>
-                    chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
-                  ),
-                )
+                await platform.storage.set(RESTORE_FLAG_KEY, Date.now())
                 await chrome.runtime.sendMessage({ type: MSG_RESTORE_DATA })
               }
             } catch {
@@ -453,7 +449,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
   const notifyPagesToReload = async () => {
     try {
       if (platform.type === "extension" && typeof chrome !== "undefined") {
-        await writeStorageUpdates({ [RESTORE_FLAG_KEY]: Date.now() })
+        await platform.storage.set(RESTORE_FLAG_KEY, Date.now())
         await chrome.runtime.sendMessage({ type: MSG_RESTORE_DATA })
       }
     } catch {
@@ -789,11 +785,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
               ),
             ),
           ])
-          await new Promise<void>((resolve, reject) =>
-            chrome.storage.local.set({ [CLEAR_ALL_FLAG_KEY]: Date.now() }, () =>
-              chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
-            ),
-          )
+          await platform.storage.set(CLEAR_ALL_FLAG_KEY, Date.now())
           resetLocalStores()
           showDomToast(t("clearSuccess"))
           setTimeout(() => window.location.reload(), 1500)
