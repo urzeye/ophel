@@ -10,7 +10,7 @@ import { t } from "~utils/i18n"
 import { DialogOverlay } from "./ui/Dialog"
 
 const SEGMENTED_EXPORT_DIALOG_STYLES = `
-  .segmented-export-dialog {
+  .gh-segmented-export-dialog {
     width: min(760px, calc(100vw - 28px));
     max-width: 760px;
     height: min(680px, calc(100vh - 36px));
@@ -20,22 +20,22 @@ const SEGMENTED_EXPORT_DIALOG_STYLES = `
     overflow: hidden;
     border-radius: 10px;
   }
-  .segmented-export-header {
+  .gh-segmented-export-header {
     padding: 16px 18px 12px;
     border-bottom: 1px solid var(--gh-border, #e5e7eb);
   }
-  .segmented-export-title-row,
-  .segmented-export-toolbar,
-  .segmented-export-footer {
+  .gh-segmented-export-title-row,
+  .gh-segmented-export-toolbar,
+  .gh-segmented-export-footer {
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .segmented-export-title-row {
+  .gh-segmented-export-title-row {
     justify-content: space-between;
     min-width: 0;
   }
-  .segmented-export-title {
+  .gh-segmented-export-title {
     font-size: 16px;
     font-weight: 650;
     color: var(--gh-text, #1f2937);
@@ -43,17 +43,17 @@ const SEGMENTED_EXPORT_DIALOG_STYLES = `
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .segmented-export-count {
+  .gh-segmented-export-count {
     flex: 0 0 auto;
     font-size: 12px;
     color: var(--gh-text-secondary, #6b7280);
   }
-  .segmented-export-toolbar {
+  .gh-segmented-export-toolbar {
     margin-top: 12px;
     flex-wrap: wrap;
   }
-  .segmented-export-input,
-  .segmented-export-select {
+  .gh-segmented-export-input,
+  .gh-segmented-export-select {
     height: 34px;
     border: 1px solid var(--gh-input-border, #d1d5db);
     border-radius: 7px;
@@ -62,28 +62,28 @@ const SEGMENTED_EXPORT_DIALOG_STYLES = `
     font-size: 13px;
     box-sizing: border-box;
   }
-  .segmented-export-input {
+  .gh-segmented-export-input {
     padding: 0 10px;
   }
-  .segmented-export-search {
+  .gh-segmented-export-search {
     flex: 1 1 220px;
     min-width: 160px;
   }
-  .segmented-export-range {
+  .gh-segmented-export-range {
     flex: 0 1 150px;
     min-width: 120px;
   }
-  .segmented-export-select {
+  .gh-segmented-export-select {
     flex: 0 0 180px;
     padding: 0 8px;
   }
-  .segmented-export-input:focus,
-  .segmented-export-select:focus {
+  .gh-segmented-export-input:focus,
+  .gh-segmented-export-select:focus {
     outline: none;
     border-color: var(--gh-primary, #4285f4);
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
   }
-  .segmented-export-button {
+  .gh-segmented-export-button {
     height: 34px;
     padding: 0 10px;
     border: 1px solid var(--gh-border, #d1d5db);
@@ -94,14 +94,14 @@ const SEGMENTED_EXPORT_DIALOG_STYLES = `
     cursor: pointer;
     white-space: nowrap;
   }
-  .segmented-export-button:hover:not(:disabled) {
+  .gh-segmented-export-button:hover:not(:disabled) {
     background: var(--gh-hover, #f3f4f6);
   }
-  .segmented-export-button:disabled {
+  .gh-segmented-export-button:disabled {
     opacity: 0.55;
     cursor: not-allowed;
   }
-  .segmented-export-list {
+  .gh-segmented-export-list {
     flex: 1 1 auto;
     overflow-x: hidden;
     overflow-y: auto;
@@ -110,26 +110,26 @@ const SEGMENTED_EXPORT_DIALOG_STYLES = `
     scrollbar-color: rgba(107, 114, 128, 0.42) transparent;
     scrollbar-width: thin;
   }
-  .segmented-export-list::-webkit-scrollbar {
+  .gh-segmented-export-list::-webkit-scrollbar {
     width: 8px;
     height: 0;
   }
-  .segmented-export-list::-webkit-scrollbar-track {
+  .gh-segmented-export-list::-webkit-scrollbar-track {
     background: transparent;
   }
-  .segmented-export-list::-webkit-scrollbar-thumb {
+  .gh-segmented-export-list::-webkit-scrollbar-thumb {
     background: rgba(107, 114, 128, 0.34);
     background: color-mix(in srgb, var(--gh-text-tertiary, #9ca3af) 52%, transparent);
     border: 2px solid transparent;
     border-radius: 999px;
     background-clip: content-box;
   }
-  .segmented-export-list::-webkit-scrollbar-thumb:hover {
+  .gh-segmented-export-list::-webkit-scrollbar-thumb:hover {
     background: rgba(107, 114, 128, 0.52);
     background: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 64%, transparent);
     background-clip: content-box;
   }
-  .segmented-export-row {
+  .gh-segmented-export-row {
     box-sizing: border-box;
     width: 100%;
     max-width: 100%;
@@ -146,23 +146,23 @@ const SEGMENTED_EXPORT_DIALOG_STYLES = `
     cursor: pointer;
     overflow: hidden;
   }
-  .segmented-export-row + .segmented-export-row {
+  .gh-segmented-export-row + .gh-segmented-export-row {
     margin-top: 6px;
   }
-  .segmented-export-row:hover {
+  .gh-segmented-export-row:hover {
     border-color: var(--gh-border, #e5e7eb);
   }
-  .segmented-export-row.is-selected {
+  .gh-segmented-export-row.gh-segmented-export-selected {
     border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 45%, var(--gh-border, #e5e7eb));
     background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-bg, #ffffff));
   }
-  .segmented-export-checkbox {
+  .gh-segmented-export-checkbox {
     width: 16px;
     height: 16px;
     margin: 2px 0 0;
     accent-color: var(--gh-primary, #4285f4);
   }
-  .segmented-export-index {
+  .gh-segmented-export-index {
     font-variant-numeric: tabular-nums;
     color: var(--gh-text-secondary, #6b7280);
     font-size: 12px;
@@ -171,11 +171,11 @@ const SEGMENTED_EXPORT_DIALOG_STYLES = `
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .segmented-export-segment-main {
+  .gh-segmented-export-segment-main {
     min-width: 0;
     overflow: hidden;
   }
-  .segmented-export-segment-title {
+  .gh-segmented-export-segment-title {
     display: block;
     min-width: 0;
     font-size: 13px;
@@ -185,20 +185,20 @@ const SEGMENTED_EXPORT_DIALOG_STYLES = `
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .segmented-export-meta,
-  .segmented-export-preview {
+  .gh-segmented-export-meta,
+  .gh-segmented-export-preview {
     display: block;
     font-size: 12px;
     color: var(--gh-text-secondary, #6b7280);
     line-height: 1.45;
   }
-  .segmented-export-meta {
+  .gh-segmented-export-meta {
     margin-top: 3px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .segmented-export-preview {
+  .gh-segmented-export-preview {
     margin-top: 6px;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -206,7 +206,7 @@ const SEGMENTED_EXPORT_DIALOG_STYLES = `
     overflow: hidden;
     overflow-wrap: anywhere;
   }
-  .segmented-export-empty {
+  .gh-segmented-export-empty {
     height: 100%;
     display: flex;
     align-items: center;
@@ -214,25 +214,25 @@ const SEGMENTED_EXPORT_DIALOG_STYLES = `
     color: var(--gh-text-secondary, #6b7280);
     font-size: 13px;
   }
-  .segmented-export-footer {
+  .gh-segmented-export-footer {
     justify-content: space-between;
     flex-wrap: wrap;
     padding: 12px 18px 16px;
     border-top: 1px solid var(--gh-border, #e5e7eb);
   }
-  .segmented-export-footer-actions {
+  .gh-segmented-export-footer-actions {
     display: flex;
     flex: 1 1 280px;
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 8px;
   }
-  .segmented-export-primary {
+  .gh-segmented-export-primary {
     border-color: transparent;
     background: var(--gh-primary, #4285f4);
     color: white;
   }
-  .segmented-export-primary:hover:not(:disabled) {
+  .gh-segmented-export-primary:hover:not(:disabled) {
     background: color-mix(in srgb, var(--gh-primary, #4285f4) 86%, black);
   }
 `
@@ -358,69 +358,69 @@ export const SegmentedExportDialog: React.FC<SegmentedExportDialogProps> = ({
       onClose={onCancel}
       closeOnOverlayClick={!isExporting}
       closeOnEscape={!isExporting}
-      dialogClassName="segmented-export-dialog"
+      dialogClassName="gh-segmented-export-dialog"
       dialogStyle={{ maxWidth: "760px" }}>
-      <div className="segmented-export-header">
-        <div className="segmented-export-title-row">
-          <div className="segmented-export-title">{t("segmentedExportTitle")}</div>
-          <div className="segmented-export-count">
+      <div className="gh-segmented-export-header">
+        <div className="gh-segmented-export-title-row">
+          <div className="gh-segmented-export-title">{t("segmentedExportTitle")}</div>
+          <div className="gh-segmented-export-count">
             {t("segmentedExportDetected").replace("{count}", String(draft.segments.length))}
           </div>
         </div>
-        <div className="segmented-export-toolbar">
+        <div className="gh-segmented-export-toolbar">
           <input
-            className="segmented-export-input segmented-export-search"
+            className="gh-segmented-export-input gh-segmented-export-search"
             value={searchQuery}
             placeholder={t("segmentedExportSearchPlaceholder")}
             onChange={(event) => setSearchQuery(event.target.value)}
           />
           <input
-            className="segmented-export-input segmented-export-range"
+            className="gh-segmented-export-input gh-segmented-export-range"
             value={rangeInput}
             placeholder={t("segmentedExportRangePlaceholder")}
             onChange={(event) => setRangeInput(event.target.value)}
           />
-          <button className="segmented-export-button" onClick={applyRangeSelection}>
+          <button className="gh-segmented-export-button" onClick={applyRangeSelection}>
             {t("segmentedExportApplyRange")}
           </button>
-          <button className="segmented-export-button" onClick={() => setVisibleSelection(true)}>
+          <button className="gh-segmented-export-button" onClick={() => setVisibleSelection(true)}>
             {t("segmentedExportSelectVisible")}
           </button>
-          <button className="segmented-export-button" onClick={() => setVisibleSelection(false)}>
+          <button className="gh-segmented-export-button" onClick={() => setVisibleSelection(false)}>
             {t("segmentedExportClearVisible")}
           </button>
-          <button className="segmented-export-button" onClick={invertVisibleSelection}>
+          <button className="gh-segmented-export-button" onClick={invertVisibleSelection}>
             {t("segmentedExportInvertVisible")}
           </button>
         </div>
       </div>
 
-      <div className="segmented-export-list">
+      <div className="gh-segmented-export-list">
         {filteredSegments.length === 0 ? (
-          <div className="segmented-export-empty">{t("segmentedExportNoMatches")}</div>
+          <div className="gh-segmented-export-empty">{t("segmentedExportNoMatches")}</div>
         ) : (
           filteredSegments.map((segment) => {
             const selected = selectedIds.has(segment.id)
             return (
               <label
                 key={segment.id}
-                className={`segmented-export-row${selected ? " is-selected" : ""}`}>
+                className={`gh-segmented-export-row${selected ? " gh-segmented-export-selected" : ""}`}>
                 <input
-                  className="segmented-export-checkbox"
+                  className="gh-segmented-export-checkbox"
                   type="checkbox"
                   checked={selected}
                   onChange={() => toggleSegment(segment.id)}
                 />
-                <span className="segmented-export-index">{segment.index}</span>
-                <span className="segmented-export-segment-main">
-                  <span className="segmented-export-segment-title">{segment.title}</span>
-                  <span className="segmented-export-meta">
+                <span className="gh-segmented-export-index">{segment.index}</span>
+                <span className="gh-segmented-export-segment-main">
+                  <span className="gh-segmented-export-segment-title">{segment.title}</span>
+                  <span className="gh-segmented-export-meta">
                     {t("segmentedExportSegmentMeta")
                       .replace("{users}", String(segment.userMessageCount))
                       .replace("{assistants}", String(segment.assistantMessageCount))
                       .replace("{chars}", String(segment.characterCount))}
                   </span>
-                  <span className="segmented-export-preview">{segment.preview}</span>
+                  <span className="gh-segmented-export-preview">{segment.preview}</span>
                 </span>
               </label>
             )
@@ -428,26 +428,26 @@ export const SegmentedExportDialog: React.FC<SegmentedExportDialogProps> = ({
         )}
       </div>
 
-      <div className="segmented-export-footer">
-        <div className="segmented-export-count">
+      <div className="gh-segmented-export-footer">
+        <div className="gh-segmented-export-count">
           {t("segmentedExportSelected")
             .replace("{selected}", String(selectedCount))
             .replace("{total}", String(draft.segments.length))}
         </div>
-        <div className="segmented-export-footer-actions">
+        <div className="gh-segmented-export-footer-actions">
           <select
-            className="segmented-export-select"
+            className="gh-segmented-export-select"
             value={mode}
             onChange={(event) => setMode(event.target.value as ConversationSegmentedExportMode)}>
             <option value="zip-markdown">{t("segmentedExportModeZip")}</option>
             <option value="merged-markdown">{t("segmentedExportModeMerged")}</option>
             <option value="clipboard">{t("segmentedExportModeClipboard")}</option>
           </select>
-          <button className="segmented-export-button" disabled={isExporting} onClick={onCancel}>
+          <button className="gh-segmented-export-button" disabled={isExporting} onClick={onCancel}>
             {t("cancel")}
           </button>
           <button
-            className="segmented-export-button segmented-export-primary"
+            className="gh-segmented-export-button gh-segmented-export-primary"
             disabled={isExporting || selectedCount === 0}
             onClick={() => onExport(Array.from(selectedIds), mode)}>
             {isExporting ? t("exportOverlayPreparing") : t("segmentedExportExportSelected")}

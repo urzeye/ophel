@@ -54,6 +54,7 @@ export interface ConversationExportSegment {
   id: string
   index: number
   title: string
+  exportTitle: string
   preview: string
   messages: ExportMessage[]
   userMessageCount: number
@@ -1140,6 +1141,20 @@ export class ConversationManager {
     return `${normalized.slice(0, maxLength).trim()}...`
   }
 
+  private normalizeExportSegmentTitle(content: string): string {
+    return content
+      .replace(/\r\n?/g, "\n")
+      .replace(/```[^\n]*\n?([\s\S]*?)```/g, " $1 ")
+      .replace(/~~~[^\n]*\n?([\s\S]*?)~~~/g, " $1 ")
+      .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+      .replace(/(^|\n)\s*>+\s?/g, "$1")
+      .replace(/[`*_~]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+  }
+
   private countExportSegmentCharacters(messages: ExportMessage[]): number {
     return messages.reduce((total, message) => {
       return total + this.normalizeExportSegmentText(message.content).length
@@ -1172,6 +1187,9 @@ export class ConversationManager {
       const title =
         this.normalizeExportSegmentText(titleSource, 80) ||
         this.createFallbackSegmentTitle(index, userMessages.length > 0)
+      const exportTitle =
+        this.normalizeExportSegmentTitle(titleSource) ||
+        this.createFallbackSegmentTitle(index, userMessages.length > 0)
       const preview =
         this.normalizeExportSegmentText(
           currentMessages.map((message) => message.content).join(" "),
@@ -1182,6 +1200,7 @@ export class ConversationManager {
         id: `segment-${index}`,
         index,
         title,
+        exportTitle,
         preview,
         messages: currentMessages,
         userMessageCount: userMessages.length,
@@ -1217,7 +1236,7 @@ export class ConversationManager {
   ): ExportMetadata {
     return {
       ...draft.metadata,
-      title: `${draft.title} - ${segment.index}. ${segment.title}`,
+      title: `${draft.title} - ${segment.index}. ${segment.exportTitle}`,
     }
   }
 
@@ -1245,7 +1264,7 @@ export class ConversationManager {
     const lines = [
       formatToMarkdown(this.createSegmentMetadata(draft, segment), []).trimEnd(),
       "",
-      `## ${segment.index}. ${segment.title}`,
+      `## ${segment.index}. ${segment.exportTitle}`,
     ]
     const body = this.formatSegmentBody(segment)
 
@@ -1263,7 +1282,7 @@ export class ConversationManager {
     const lines = [formatToMarkdown(draft.metadata, []).trimEnd()]
 
     segments.forEach((segment) => {
-      lines.push("", `## ${segment.index}. ${segment.title}`)
+      lines.push("", `## ${segment.index}. ${segment.exportTitle}`)
       const body = this.formatSegmentBody(segment)
 
       if (body) {
