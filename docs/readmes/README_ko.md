@@ -106,7 +106,7 @@
     </tr>
     <tr>
       <td>💬 <a href="https://ophel.app/docs/features/conversations">대화 관리</a></td>
-      <td>폴더 + 태그 이중 관리, 소스 사이트 자동 동기화, 검색·일괄 작업·다중 형식 내보내기(Markdown/JSON/TXT)</td>
+      <td>폴더 + 태그 이중 관리, 소스 사이트 자동 동기화, 검색·일괄 작업·다중 형식 내보내기(Markdown/JSON/TXT, 세그먼트 내보내기)</td>
     </tr>
     <tr>
       <td>💡 <a href="https://ophel.app/docs/features/prompts">프롬프트 라이브러리</a></td>

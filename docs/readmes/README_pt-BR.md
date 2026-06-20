@@ -98,7 +98,7 @@
     </tr>
     <tr>
       <td>💬 <a href="https://ophel.app/docs/features/conversations">Conversas</a></td>
-      <td>Pastas + etiquetas para gestão bidimensional, sincronização automática, busca, operações em lote e exportação multi-formato (Markdown/JSON/TXT)</td>
+      <td>Pastas + etiquetas para gestão bidimensional, sincronização automática, busca, operações em lote e exportação multi-formato (Markdown/JSON/TXT, exportação segmentada)</td>
     </tr>
     <tr>
       <td>💡 <a href="https://ophel.app/docs/features/prompts">Biblioteca de Prompts</a></td>

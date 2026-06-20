@@ -106,7 +106,7 @@
     </tr>
     <tr>
       <td>💬 <a href="https://ophel.app/docs/features/conversations">会話管理</a></td>
-      <td>フォルダ + タグの二次元管理、ソースサイトとの自動同期、検索・一括操作・複数形式エクスポート（Markdown/JSON/TXT）</td>
+      <td>フォルダ + タグの二次元管理、ソースサイトとの自動同期、検索・一括操作・複数形式エクスポート（Markdown/JSON/TXT、分割エクスポート）</td>
     </tr>
     <tr>
       <td>💡 <a href="https://ophel.app/docs/features/prompts">プロンプトライブラリ</a></td>

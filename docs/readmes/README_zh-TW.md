@@ -106,7 +106,7 @@
     </tr>
     <tr>
       <td>💬 <a href="https://ophel.app/docs/zh/features/conversations">會話管理</a></td>
-      <td>文件夾 + 標籤雙維度管理，自動同步源站會話，支援搜尋、批量操作與多格式匯出（Markdown/JSON/TXT）</td>
+      <td>文件夾 + 標籤雙維度管理，自動同步源站會話，支援搜尋、批量操作與多格式匯出（Markdown/JSON/TXT、分段匯出）</td>
     </tr>
     <tr>
       <td>💡 <a href="https://ophel.app/docs/zh/features/prompts">提示詞庫</a></td>

@@ -98,7 +98,7 @@
     </tr>
     <tr>
       <td>💬 <a href="https://ophel.app/docs/features/conversations">Konversationen</a></td>
-      <td>Ordner + Tags für zweidimensionale Verwaltung, automatische Synchronisierung, Suche, Stapeloperationen und Multi-Format-Export (Markdown/JSON/TXT)</td>
+      <td>Ordner + Tags für zweidimensionale Verwaltung, automatische Synchronisierung, Suche, Stapeloperationen und Multi-Format-Export (Markdown/JSON/TXT, Segment-Export)</td>
     </tr>
     <tr>
       <td>💡 <a href="https://ophel.app/docs/features/prompts">Prompt-Bibliothek</a></td>

@@ -111,7 +111,7 @@
     </tr>
     <tr>
       <td>💬 <a href="https://ophel.app/docs/zh/features/conversations">会话管理</a></td>
-      <td>文件夹 + 标签双维度管理，自动同步源站会话，支持搜索、批量操作与多格式导出（Markdown/JSON/TXT）</td>
+      <td>文件夹 + 标签双维度管理，自动同步源站会话，支持搜索、批量操作与多格式导出（Markdown/JSON/TXT、分段导出）</td>
     </tr>
     <tr>
       <td>💡 <a href="https://ophel.app/docs/zh/features/prompts">提示词库</a></td>

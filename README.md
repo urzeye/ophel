@@ -100,7 +100,7 @@
     </tr>
     <tr>
       <td>💬 <a href="https://ophel.app/docs/features/conversations">Conversations</a></td>
-      <td>Folders + tags for dual-dimension management, auto-sync from source sites, search, batch ops, and multi-format export (Markdown/JSON/TXT)</td>
+      <td>Folders + tags for dual-dimension management, auto-sync from source sites, search, batch ops, and multi-format export (Markdown/JSON/TXT, segmented export)</td>
     </tr>
     <tr>
       <td>💡 <a href="https://ophel.app/docs/features/prompts">Prompt Library</a></td>
