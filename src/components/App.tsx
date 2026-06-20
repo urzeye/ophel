@@ -24,11 +24,19 @@ import { QuickQuoteActions } from "~components/QuickQuoteActions"
 import { ensureGlobalThemeManager, type ThemeTransitionOrigin } from "~core/theme-manager"
 import { useEdgePeekController } from "~hooks/useEdgePeekController"
 import { useShortcuts } from "~hooks/useShortcuts"
+import { platform } from "~platform"
+import {
+  getFullChangelogUrl,
+  getReleaseNotesMarkdown,
+  hasCurrentReleaseNotes,
+} from "~release-notes"
+import { currentReleaseNotes } from "~release-notes/current"
+import { getReleaseNotesState, markReleaseNotesSeen } from "~release-notes/storage"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
 import { usePromptsStore } from "~stores/prompts-store"
-import { APP_DISPLAY_NAME } from "~utils/config"
+import { APP_DISPLAY_NAME, APP_VERSION } from "~utils/config"
 import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
 import { EVENT_EXTENSION_UPDATE_AVAILABLE, MSG_CLEAR_ALL_DATA } from "~utils/messaging"
 import { showToast } from "~utils/toast"
@@ -44,6 +52,7 @@ import { DisclaimerModal } from "./DisclaimerModal"
 import { LoadingOverlay } from "./LoadingOverlay"
 import { MainPanel } from "./MainPanel"
 import { QueueOverlay } from "./QueueOverlay"
+import { ReleaseNotesModal } from "./ReleaseNotesModal"
 import { QuickButtons } from "./QuickButtons"
 import { SelectedPromptBar } from "./SelectedPromptBar"
 import { SegmentedExportDialog } from "./SegmentedExportDialog"
@@ -1062,6 +1071,8 @@ export const App = () => {
 
   // 设置模态框状态
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isReleaseNotesOpen, setIsReleaseNotesOpen] = useState(false)
+  const [releaseNotesAutoSignal, setReleaseNotesAutoSignal] = useState(0)
   const [isGlobalSettingsSearchOpen, setIsGlobalSettingsSearchOpen] = useState(false)
   const [activeGlobalSearchCategory, setActiveGlobalSearchCategory] =
     useState<GlobalSearchCategoryId>("all")
@@ -1098,6 +1109,94 @@ export const App = () => {
   const [outlineSearchVersion, setOutlineSearchVersion] = useState(0)
   const outlineSearchNavigationRequestIdRef = useRef(0)
   const settingsSearchRestoreFocusRef = useRef<HTMLElement | null>(null)
+  const releaseNotesAutoCheckRef = useRef(false)
+  const releaseNotesPendingOpenRef = useRef(false)
+
+  const releaseNotesLanguage = settings?.language ?? DEFAULT_SETTINGS.language
+  const canShowCurrentReleaseNotes = hasCurrentReleaseNotes()
+  const releaseNotesMarkdown = canShowCurrentReleaseNotes
+    ? getReleaseNotesMarkdown(releaseNotesLanguage)
+    : ""
+  const fullChangelogUrl = canShowCurrentReleaseNotes
+    ? getFullChangelogUrl(releaseNotesLanguage)
+    : "https://ophel.app/docs/changelog"
+
+  const markCurrentReleaseNotesSeen = useCallback(() => {
+    void markReleaseNotesSeen(APP_VERSION).catch((error) => {
+      console.warn("[Ophel] Failed to save release notes state:", error)
+    })
+  }, [])
+
+  const openReleaseNotes = useCallback(() => {
+    if (!canShowCurrentReleaseNotes || !releaseNotesMarkdown.trim()) return
+    setIsReleaseNotesOpen(true)
+  }, [canShowCurrentReleaseNotes, releaseNotesMarkdown])
+
+  const closeReleaseNotes = useCallback(() => {
+    setIsReleaseNotesOpen(false)
+    markCurrentReleaseNotesSeen()
+  }, [markCurrentReleaseNotesSeen])
+
+  const openFullChangelog = useCallback(() => {
+    platform.openTab(fullChangelogUrl)
+  }, [fullChangelogUrl])
+
+  useEffect(() => {
+    if (
+      releaseNotesAutoCheckRef.current ||
+      !canShowCurrentReleaseNotes ||
+      !releaseNotesMarkdown.trim() ||
+      !isSettingsHydrated ||
+      !settings?.hasAgreedToTerms
+    ) {
+      return
+    }
+
+    let cancelled = false
+    releaseNotesAutoCheckRef.current = true
+
+    void getReleaseNotesState()
+      .then((state) => {
+        if (cancelled || state.lastSeenVersion === APP_VERSION) return
+        releaseNotesPendingOpenRef.current = true
+        setReleaseNotesAutoSignal((value) => value + 1)
+      })
+      .catch((error) => {
+        console.warn("[Ophel] Failed to read release notes state:", error)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    canShowCurrentReleaseNotes,
+    isSettingsHydrated,
+    releaseNotesMarkdown,
+    settings?.hasAgreedToTerms,
+  ])
+
+  useEffect(() => {
+    if (
+      !releaseNotesPendingOpenRef.current ||
+      isReleaseNotesOpen ||
+      isSettingsOpen ||
+      isGlobalSettingsSearchOpen ||
+      Boolean(exportProgress) ||
+      showExtensionUpdateNotice
+    ) {
+      return
+    }
+
+    releaseNotesPendingOpenRef.current = false
+    setIsReleaseNotesOpen(true)
+  }, [
+    exportProgress,
+    isGlobalSettingsSearchOpen,
+    isReleaseNotesOpen,
+    isSettingsOpen,
+    releaseNotesAutoSignal,
+    showExtensionUpdateNotice,
+  ])
 
   const {
     globalSearchPromptPreview,
@@ -3502,7 +3601,20 @@ export const App = () => {
         isOpen={isSettingsOpen}
         onClose={closeSettingsModal}
         siteId={adapter.getSiteId()}
+        onOpenReleaseNotes={canShowCurrentReleaseNotes ? openReleaseNotes : undefined}
       />
+      {isReleaseNotesOpen && canShowCurrentReleaseNotes && releaseNotesMarkdown.trim() ? (
+        <ReleaseNotesModal
+          version={currentReleaseNotes.version}
+          date={currentReleaseNotes.date}
+          markdown={releaseNotesMarkdown}
+          language={releaseNotesLanguage}
+          media={currentReleaseNotes.media}
+          fullChangelogUrl={fullChangelogUrl}
+          onClose={closeReleaseNotes}
+          onOpenFullChangelog={openFullChangelog}
+        />
+      ) : null}
       {segmentedExportDraft && (
         <SegmentedExportDialog
           draft={segmentedExportDraft}

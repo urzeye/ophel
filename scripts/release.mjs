@@ -4,10 +4,12 @@ import { execFileSync } from "node:child_process"
 import fs from "node:fs"
 import path from "node:path"
 
+import { RELEASE_NOTES_OUTPUT_FILE, buildReleaseNotesModule } from "./release-notes-utils.mjs"
+
 const PROJECT_ROOT = process.cwd()
 const PACKAGE_JSON = path.join(PROJECT_ROOT, "package.json")
 const CHANGELOGS = ["CHANGELOG.md", "CHANGELOG.zh-CN.md"]
-const RELEASE_FILES = ["package.json", ...CHANGELOGS]
+const RELEASE_FILES = ["package.json", ...CHANGELOGS, RELEASE_NOTES_OUTPUT_FILE]
 const RELEASE_BRANCH = "main"
 const REPO_RELEASE_URL = "https://github.com/urzeye/ophel/releases/tag"
 
@@ -329,8 +331,12 @@ function localTagExists(tagName) {
   return Boolean(git(["tag", "--list", tagName]))
 }
 
-function getReleaseFileUpdates(packageJson, changelogs) {
-  const updates = new Map([["package.json", serializePackageJson(packageJson)], ...changelogs])
+function getReleaseFileUpdates(packageJson, changelogs, releaseNotesModule) {
+  const updates = new Map([
+    ["package.json", serializePackageJson(packageJson)],
+    ...changelogs,
+    [RELEASE_NOTES_OUTPUT_FILE, releaseNotesModule],
+  ])
 
   const changedFiles = [...updates].flatMap(([fileName, content]) => {
     const current = fs.readFileSync(path.join(PROJECT_ROOT, fileName), "utf8")
@@ -342,7 +348,9 @@ function getReleaseFileUpdates(packageJson, changelogs) {
 
 function writeReleaseFiles(updates) {
   for (const [fileName, content] of updates) {
-    fs.writeFileSync(path.join(PROJECT_ROOT, fileName), content)
+    const filePath = path.join(PROJECT_ROOT, fileName)
+    fs.mkdirSync(path.dirname(filePath), { recursive: true })
+    fs.writeFileSync(filePath, content)
   }
 }
 
@@ -357,7 +365,16 @@ function runRelease(version, options) {
   const changelogs = new Map(
     CHANGELOGS.map((fileName) => [fileName, updateChangelog(fileName, version, releaseDate)]),
   )
-  const { updates, changedFiles } = getReleaseFileUpdates(packageJson, changelogs)
+  const releaseNotesModule = buildReleaseNotesModule({
+    version,
+    enChangelog: changelogs.get("CHANGELOG.md"),
+    zhChangelog: changelogs.get("CHANGELOG.zh-CN.md"),
+  })
+  const { updates, changedFiles } = getReleaseFileUpdates(
+    packageJson,
+    changelogs,
+    releaseNotesModule,
+  )
 
   console.log(`Release ${previousVersion} -> ${version} (${tagName})`)
   console.log(`Date: ${releaseDate}`)

@@ -35,6 +35,7 @@
     "sync:contributors": "node scripts/sync-contributors.mjs && npx all-contributors-cli generate",
     "sync:all": "pnpm sync:supporters && pnpm sync:contributors",
     "release": "node scripts/release.mjs",
+    "release-notes:sync": "node scripts/sync-release-notes.mjs",
     "release:redo": "node scripts/release.mjs redo",
     "prepare": "husky"
   },
@@ -142,6 +143,7 @@
           "assets/fonts/*",
           "assets/assistant-mermaid-runner.js",
           "assets/assistant-mermaid-vendor.js",
+          "assets/release-notes/*",
           "assets/notification-sounds/*",
           "assets/userscript/*"
         ],

@@ -88,9 +88,15 @@ interface SettingsModalProps {
   isOpen: boolean
   onClose: () => void
   siteId: string
+  onOpenReleaseNotes?: () => void
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, siteId }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({
+  isOpen,
+  onClose,
+  siteId,
+  onOpenReleaseNotes,
+}) => {
   const [activePage, setActivePage] = useState<string>(NAV_IDS.GENERAL)
   const [initialSubTab, setInitialSubTab] = useState<string | undefined>(undefined)
   const [locateRequest, setLocateRequest] = useState<{ settingId: string; token: number } | null>(
@@ -293,7 +299,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
       case NAV_IDS.BACKUP:
         return <BackupPage siteId={siteId} onNavigate={setActivePage} />
       case NAV_IDS.ABOUT:
-        return <AboutPage />
+        return <AboutPage onOpenReleaseNotes={onOpenReleaseNotes} />
       default:
         return <GeneralPage siteId={siteId} initialTab={initialSubTab} />
     }

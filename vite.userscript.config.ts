@@ -152,12 +152,16 @@ function buildUserscriptStyleBundle(): string {
     path.resolve(__dirname, "src/styles/conversations.css"),
     "utf-8",
   )
+  const releaseNotesStyle = fs.readFileSync(
+    path.resolve(__dirname, "src/styles/release-notes.css"),
+    "utf-8",
+  )
   const settingsStyle = fs.readFileSync(
     path.resolve(__dirname, "src/styles/settings.css"),
     "utf-8",
   )
 
-  return [themeVariablesStyle, mainStyle, conversationsStyle, settingsStyle].join("\n")
+  return [themeVariablesStyle, mainStyle, conversationsStyle, releaseNotesStyle, settingsStyle].join("\n")
 }
 
 function createContentHash(content: string | Buffer): string {
@@ -544,6 +548,7 @@ export default defineConfig({
       "~hooks": path.resolve(__dirname, "src/hooks"),
       "~locales": path.resolve(__dirname, "src/locales"),
       "~platform": path.resolve(__dirname, "src/platform"),
+      "~release-notes": path.resolve(__dirname, "src/release-notes"),
       "~stores": path.resolve(__dirname, "src/stores"),
       "~styles": path.resolve(__dirname, "src/styles"),
       "~tabs": path.resolve(__dirname, "src/tabs"),

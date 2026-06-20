@@ -1553,6 +1553,12 @@ export const zhCN = {
   extensionUpdateNoticeWithVersion:
     "Ophel Atlas 已更新至 v{version}。刷新当前页面后即可继续使用最新版本。",
   extensionUpdateNoticeAction: "刷新页面",
+  releaseNotesKicker: "版本更新",
+  releaseNotesTitle: "Ophel Atlas v{version} 更新",
+  releaseNotesPublishedOn: "发布于 {date}",
+  releaseNotesOpen: "查看更新日志",
+  releaseNotesViewFull: "查看完整更新日志",
+  releaseNotesGotIt: "我知道了",
   // 功能技巧：全局搜索 ? 前缀帮助模式
   featureTipSearchPlaceholder: "搜索功能技巧…",
   featureTipShortcutNotConfigured: "快捷键未配置",

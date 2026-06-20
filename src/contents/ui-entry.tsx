@@ -1,5 +1,6 @@
 import cssText from "data-text:~style.css"
 import conversationsCssText from "data-text:~styles/conversations.css"
+import releaseNotesCssText from "data-text:~styles/release-notes.css"
 import settingsCssText from "data-text:~styles/settings.css"
 import type { PlasmoCSConfig, PlasmoMountShadowHost } from "plasmo"
 import React from "react"
@@ -64,6 +65,8 @@ export const getStyle = () => {
     cssText +
     "\n" +
     conversationsCssText +
+    "\n" +
+    releaseNotesCssText +
     "\n" +
     settingsCssText +
     (earlyThemeCSS ? "\n" + earlyThemeCSS : "")

@@ -1594,6 +1594,12 @@ export const ja = {
   extensionUpdateNoticeWithVersion:
     "Ophel Atlas が v{version} に更新されました。最新バージョンを引き続き使うには、このページを再読み込みしてください。",
   extensionUpdateNoticeAction: "ページを再読み込み",
+  releaseNotesKicker: "新着情報",
+  releaseNotesTitle: "Ophel Atlas v{version}",
+  releaseNotesPublishedOn: "{date} リリース",
+  releaseNotesOpen: "新着情報",
+  releaseNotesViewFull: "完全な更新履歴を見る",
+  releaseNotesGotIt: "了解",
   // 機能のヒント
   featureTipSearchPlaceholder: "機能のヒントを検索…",
   featureTipShortcutNotConfigured: "ショートカット未設定",

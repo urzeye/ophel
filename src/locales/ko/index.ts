@@ -1578,6 +1578,12 @@ export const ko = {
   extensionUpdateNoticeWithVersion:
     "Ophel Atlas가 v{version}(으)로 업데이트되었습니다. 최신 버전을 계속 사용하려면 이 페이지를 새로고침하세요.",
   extensionUpdateNoticeAction: "페이지 새로고침",
+  releaseNotesKicker: "새로운 기능",
+  releaseNotesTitle: "Ophel Atlas v{version}",
+  releaseNotesPublishedOn: "{date} 출시",
+  releaseNotesOpen: "새로운 기능",
+  releaseNotesViewFull: "전체 변경 사항 보기",
+  releaseNotesGotIt: "확인",
   // 기능 팁
   featureTipSearchPlaceholder: "기능 팁 검색…",
   featureTipShortcutNotConfigured: "단축키 미설정",

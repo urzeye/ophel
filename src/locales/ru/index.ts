@@ -1583,6 +1583,12 @@ export const ru = {
   extensionUpdateNoticeWithVersion:
     "Ophel Atlas обновлён до версии v{version}. Перезагрузите эту страницу, чтобы продолжить пользоваться последней версией.",
   extensionUpdateNoticeAction: "Перезагрузить страницу",
+  releaseNotesKicker: "Что нового",
+  releaseNotesTitle: "Ophel Atlas v{version}",
+  releaseNotesPublishedOn: "Выпущено {date}",
+  releaseNotesOpen: "Что нового",
+  releaseNotesViewFull: "Полный changelog",
+  releaseNotesGotIt: "Понятно",
   featureTipSearchPlaceholder: "Поиск подсказок по функциям…",
   featureTipShortcutNotConfigured: "Горячая клавиша не настроена",
   featureTipToastTryShortcut: "Попробуйте сочетание: {shortcut}",

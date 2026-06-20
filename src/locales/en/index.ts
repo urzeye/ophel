@@ -1603,6 +1603,12 @@ Please output the optimized code block directly, followed by a brief summary of 
   extensionUpdateNoticeWithVersion:
     "Ophel Atlas has been updated to v{version}. Reload this page to keep using the latest version.",
   extensionUpdateNoticeAction: "Reload page",
+  releaseNotesKicker: "What's new",
+  releaseNotesTitle: "Ophel Atlas v{version}",
+  releaseNotesPublishedOn: "Released on {date}",
+  releaseNotesOpen: "What's New",
+  releaseNotesViewFull: "View full changelog",
+  releaseNotesGotIt: "Got it",
   // Feature tips: global search ? prefix help mode
   featureTipSearchPlaceholder: "Search feature tips…",
   featureTipShortcutNotConfigured: "Shortcut not configured",
