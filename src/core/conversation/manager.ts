@@ -1221,25 +1221,57 @@ export class ConversationManager {
     }
   }
 
+  private getSegmentReplyMessages(segment: ConversationExportSegment): ExportMessage[] {
+    const replyMessages = segment.messages.filter(
+      (message) => message.role.toLowerCase() !== "user",
+    )
+    if (replyMessages.length > 0) return replyMessages
+
+    return segment.messages
+  }
+
+  private formatSegmentBody(segment: ConversationExportSegment): string {
+    return this.getSegmentReplyMessages(segment)
+      .map((message) => message.content.trim())
+      .filter(Boolean)
+      .join("\n\n")
+      .trim()
+  }
+
+  private formatSingleSegmentMarkdown(
+    draft: ConversationSegmentedExportDraft,
+    segment: ConversationExportSegment,
+  ): string {
+    const lines = [
+      formatToMarkdown(this.createSegmentMetadata(draft, segment), []).trimEnd(),
+      "",
+      `## ${segment.index}. ${segment.title}`,
+    ]
+    const body = this.formatSegmentBody(segment)
+
+    if (body) {
+      lines.push("", body)
+    }
+
+    return `${lines
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trimEnd()}\n`
+  }
+
   private formatSegmentedMarkdown(
     draft: ConversationSegmentedExportDraft,
     segments: ConversationExportSegment[],
   ): string {
     const lines = [formatToMarkdown(draft.metadata, []).trimEnd()]
-    const userLabel = draft.metadata.customUserName || t("exportUserLabel")
-    const modelLabel = draft.metadata.customModelName || draft.metadata.source
 
     segments.forEach((segment) => {
-      lines.push("", "---", "", `## ${segment.index}. ${segment.title}`)
+      lines.push("", `## ${segment.index}. ${segment.title}`)
+      const body = this.formatSegmentBody(segment)
 
-      segment.messages.forEach((message) => {
-        const role = message.role.toLowerCase()
-        const label = role === "user" ? userLabel : modelLabel
-        const content = message.content.trim()
-        if (!content) return
-
-        lines.push("", `### ${label}`, "", content)
-      })
+      if (body) {
+        lines.push("", body)
+      }
     })
 
     return (
@@ -1531,7 +1563,7 @@ export class ConversationManager {
 
       const files: ZipFileInput[] = segments.map((segment) => ({
         path: this.createSegmentFilename(segment),
-        data: formatToMarkdown(this.createSegmentMetadata(draft, segment), segment.messages),
+        data: this.formatSingleSegmentMarkdown(draft, segment),
         mimeType: "text/markdown;charset=utf-8",
       }))
 
