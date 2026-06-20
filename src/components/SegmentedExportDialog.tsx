@@ -103,12 +103,37 @@ const SEGMENTED_EXPORT_DIALOG_STYLES = `
   }
   .segmented-export-list {
     flex: 1 1 auto;
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     padding: 8px;
     background: color-mix(in srgb, var(--gh-bg, #ffffff) 92%, var(--gh-hover, #f3f4f6));
+    scrollbar-color: rgba(107, 114, 128, 0.42) transparent;
+    scrollbar-width: thin;
+  }
+  .segmented-export-list::-webkit-scrollbar {
+    width: 8px;
+    height: 0;
+  }
+  .segmented-export-list::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .segmented-export-list::-webkit-scrollbar-thumb {
+    background: rgba(107, 114, 128, 0.34);
+    background: color-mix(in srgb, var(--gh-text-tertiary, #9ca3af) 52%, transparent);
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+  }
+  .segmented-export-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(107, 114, 128, 0.52);
+    background: color-mix(in srgb, var(--gh-text-secondary, #6b7280) 64%, transparent);
+    background-clip: content-box;
   }
   .segmented-export-row {
+    box-sizing: border-box;
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     display: grid;
     grid-template-columns: 28px 42px minmax(0, 1fr);
     gap: 8px;
@@ -119,6 +144,7 @@ const SEGMENTED_EXPORT_DIALOG_STYLES = `
     color: var(--gh-text, #1f2937);
     text-align: left;
     cursor: pointer;
+    overflow: hidden;
   }
   .segmented-export-row + .segmented-export-row {
     margin-top: 6px;
@@ -141,11 +167,17 @@ const SEGMENTED_EXPORT_DIALOG_STYLES = `
     color: var(--gh-text-secondary, #6b7280);
     font-size: 12px;
     line-height: 18px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .segmented-export-segment-main {
     min-width: 0;
+    overflow: hidden;
   }
   .segmented-export-segment-title {
+    display: block;
+    min-width: 0;
     font-size: 13px;
     font-weight: 600;
     line-height: 1.35;
@@ -162,6 +194,9 @@ const SEGMENTED_EXPORT_DIALOG_STYLES = `
   }
   .segmented-export-meta {
     margin-top: 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .segmented-export-preview {
     margin-top: 6px;
@@ -169,6 +204,7 @@ const SEGMENTED_EXPORT_DIALOG_STYLES = `
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    overflow-wrap: anywhere;
   }
   .segmented-export-empty {
     height: 100%;
@@ -260,7 +296,7 @@ export const SegmentedExportDialog: React.FC<SegmentedExportDialogProps> = ({
   )
   const [searchQuery, setSearchQuery] = useState("")
   const [rangeInput, setRangeInput] = useState("")
-  const [mode, setMode] = useState<ConversationSegmentedExportMode>("zip-markdown")
+  const [mode, setMode] = useState<ConversationSegmentedExportMode>("merged-markdown")
 
   useEffect(() => {
     ensureSegmentedExportDialogStyles()
