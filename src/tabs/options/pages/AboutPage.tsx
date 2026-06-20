@@ -60,19 +60,24 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           }}
         />
         <div className="about-hero-content">
-          <div className="about-hero-title">
-            {APP_DISPLAY_NAME}
-            <span className="about-hero-version">v{APP_VERSION}</span>
+          <div className="about-hero-heading">
+            <div className="about-hero-title">
+              {APP_DISPLAY_NAME}
+              <span className="about-hero-version">v{APP_VERSION}</span>
+            </div>
+            {onOpenReleaseNotes ? (
+              <button
+                type="button"
+                className="about-release-notes-btn"
+                onClick={onOpenReleaseNotes}>
+                <SparkleIcon size={14} color="currentColor" />
+                <span>{t("releaseNotesOpen")}</span>
+              </button>
+            ) : null}
           </div>
           <div className="about-hero-desc">
             {t("aboutDescription", { appName: APP_DISPLAY_NAME })}
           </div>
-          {onOpenReleaseNotes ? (
-            <button type="button" className="about-release-notes-btn" onClick={onOpenReleaseNotes}>
-              <SparkleIcon size={14} color="currentColor" />
-              <span>{t("releaseNotesOpen")}</span>
-            </button>
-          ) : null}
         </div>
       </div>
 

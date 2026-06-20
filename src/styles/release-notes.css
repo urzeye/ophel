@@ -3,7 +3,7 @@
 .gh-release-notes-overlay {
   position: fixed;
   inset: 0;
-  z-index: 10020;
+  z-index: 2000010;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -261,7 +261,7 @@
 .gh-release-notes-lightbox {
   position: fixed;
   inset: 0;
-  z-index: 10021;
+  z-index: 2000011;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -279,12 +279,20 @@
   box-shadow: 0 24px 72px rgba(0, 0, 0, 0.42);
 }
 
+.about-hero-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
 .about-release-notes-btn {
   min-height: 32px;
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   gap: 7px;
-  margin-top: 14px;
   padding: 0 12px;
   border: 1px solid rgba(66, 133, 244, 0.24);
   border-radius: 8px;
@@ -334,6 +342,15 @@
 
   .gh-release-notes-footer {
     flex-direction: column-reverse;
+  }
+
+  .about-hero-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .about-release-notes-btn {
+    width: 100%;
   }
 
   .gh-release-notes-primary,
