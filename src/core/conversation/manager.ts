@@ -1253,10 +1253,7 @@ export class ConversationManager {
       lines.push("", body)
     }
 
-    return `${lines
-      .join("\n")
-      .replace(/\n{3,}/g, "\n\n")
-      .trimEnd()}\n`
+    return `${lines.join("\n").trimEnd()}\n`
   }
 
   private formatSegmentedMarkdown(
@@ -1274,12 +1271,7 @@ export class ConversationManager {
       }
     })
 
-    return (
-      lines
-        .join("\n")
-        .replace(/\n{3,}/g, "\n\n")
-        .trimEnd() + "\n"
-    )
+    return `${lines.join("\n").trimEnd()}\n`
   }
 
   private createSegmentFilename(segment: ConversationExportSegment): string {

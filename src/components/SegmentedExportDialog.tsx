@@ -258,6 +258,14 @@ interface SegmentedExportDialogProps {
 function parseSegmentRange(value: string, segments: ConversationExportSegment[]): Set<string> {
   const selected = new Set<string>()
   const byIndex = new Map(segments.map((segment) => [segment.index, segment.id]))
+  const addRange = (start: number, end: number) => {
+    const min = Math.min(start, end)
+    const max = Math.max(start, end)
+    segments.forEach((segment) => {
+      if (segment.index < min || segment.index > max) return
+      selected.add(segment.id)
+    })
+  }
 
   value
     .split(",")
@@ -268,12 +276,7 @@ function parseSegmentRange(value: string, segments: ConversationExportSegment[])
       if (rangeMatch) {
         const start = Number(rangeMatch[1])
         const end = Number(rangeMatch[2])
-        const min = Math.min(start, end)
-        const max = Math.max(start, end)
-        for (let index = min; index <= max; index += 1) {
-          const id = byIndex.get(index)
-          if (id) selected.add(id)
-        }
+        addRange(start, end)
         return
       }
 
