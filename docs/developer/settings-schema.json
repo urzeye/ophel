@@ -148,7 +148,15 @@
       { "id": "scrollBottom", "enabled": true }
     ],
     "opacity": 1,
-    "toolsMenu": ["export", "copyMarkdown", "move", "setTag", "scrollLock", "cleanup"],
+    "toolsMenu": [
+      "export",
+      "segmentedExport",
+      "copyMarkdown",
+      "move",
+      "setTag",
+      "scrollLock",
+      "cleanup"
+    ],
     "floatingToolbar": {
       "open": true
     },

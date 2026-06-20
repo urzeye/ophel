@@ -13,6 +13,8 @@ import {
   ConversationManager,
   type ConversationExportProgress,
   type ConversationExportStage,
+  type ConversationSegmentedExportDraft,
+  type ConversationSegmentedExportMode,
 } from "~core/conversation-manager"
 import { InlineBookmarkManager } from "~core/inline-bookmark-manager"
 import { OutlineManager, type OutlineNode } from "~core/outline-manager"
@@ -44,6 +46,7 @@ import { MainPanel } from "./MainPanel"
 import { QueueOverlay } from "./QueueOverlay"
 import { QuickButtons } from "./QuickButtons"
 import { SelectedPromptBar } from "./SelectedPromptBar"
+import { SegmentedExportDialog } from "./SegmentedExportDialog"
 import { SettingsModal } from "./SettingsModal"
 import { GlobalSearchOverlay } from "./global-search/GlobalSearchOverlay"
 import { GlobalSearchResultItemView } from "./global-search/GlobalSearchResultItemView"
@@ -1119,6 +1122,9 @@ export const App = () => {
     activeFolderId?: string
   } | null>(null)
   const [isFloatingToolbarClearOpen, setIsFloatingToolbarClearOpen] = useState(false)
+  const [segmentedExportDraft, setSegmentedExportDraft] =
+    useState<ConversationSegmentedExportDraft | null>(null)
+  const [isSegmentedExporting, setIsSegmentedExporting] = useState(false)
 
   // 边缘吸附状态
   const [edgeSnapState, setEdgeSnapState] = useState<"left" | "right" | null>(null)
@@ -2804,6 +2810,49 @@ export const App = () => {
     }
   }, [conversationManager, adapter])
 
+  const handleFloatingToolbarSegmentedExport = useCallback(async () => {
+    if (!conversationManager || !adapter) return
+    const sessionId = adapter.getSessionId()
+    if (!sessionId) {
+      showToast(t("exportNeedOpenFirst"))
+      return
+    }
+
+    setIsSegmentedExporting(true)
+    try {
+      const draft = await conversationManager.prepareSegmentedConversationExport(sessionId)
+      if (!draft || draft.segments.length === 0) {
+        showToast(t("segmentedExportNoSegments"))
+        return
+      }
+
+      setSegmentedExportDraft(draft)
+    } finally {
+      setIsSegmentedExporting(false)
+    }
+  }, [conversationManager, adapter])
+
+  const handleSegmentedExport = useCallback(
+    async (segmentIds: string[], mode: ConversationSegmentedExportMode) => {
+      if (!conversationManager || !segmentedExportDraft) return
+
+      setIsSegmentedExporting(true)
+      try {
+        const success = await conversationManager.exportSegmentedConversation(
+          segmentedExportDraft,
+          segmentIds,
+          mode,
+        )
+        if (success) {
+          setSegmentedExportDraft(null)
+        }
+      } finally {
+        setIsSegmentedExporting(false)
+      }
+    },
+    [conversationManager, segmentedExportDraft],
+  )
+
   const handleFloatingToolbarMoveToFolder = useCallback(() => {
     if (!conversationManager || !adapter) return
     const sessionId = adapter.getSessionId()
@@ -3435,6 +3484,7 @@ export const App = () => {
         }}
         onGlobalSearch={openGlobalSettingsSearch}
         onCopyMarkdown={handleCopyMarkdown}
+        onSegmentedExport={handleFloatingToolbarSegmentedExport}
         onModelLockToggle={handleModelLockToggle}
         isModelLocked={isModelLocked}
         onOpenSettings={openSettingsModal}
@@ -3453,6 +3503,18 @@ export const App = () => {
         onClose={closeSettingsModal}
         siteId={adapter.getSiteId()}
       />
+      {segmentedExportDraft && (
+        <SegmentedExportDialog
+          draft={segmentedExportDraft}
+          isExporting={isSegmentedExporting}
+          onCancel={() => {
+            if (!isSegmentedExporting) {
+              setSegmentedExportDraft(null)
+            }
+          }}
+          onExport={handleSegmentedExport}
+        />
+      )}
       <GlobalSearchOverlay
         isOpen={isGlobalSettingsSearchOpen}
         onClose={() => {

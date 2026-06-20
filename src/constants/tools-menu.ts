@@ -13,6 +13,7 @@ import {
   FolderMoveIcon,
   ModelLockIcon,
   ScrollLockIcon,
+  SegmentedExportIcon,
   SettingsIcon,
   TagIcon,
 } from "~components/icons"
@@ -44,6 +45,7 @@ export interface ToolsMenuItem {
  */
 export const TOOLS_MENU_IDS = {
   EXPORT: "export",
+  SEGMENTED_EXPORT: "segmentedExport",
   COPY_MARKDOWN: "copyMarkdown",
   MOVE: "move",
   SET_TAG: "setTag",
@@ -66,6 +68,13 @@ export const TOOLS_MENU_ITEMS: ToolsMenuItem[] = [
     labelKey: "export",
     defaultLabel: "Export",
     IconComponent: ExportIcon,
+    defaultVisible: true,
+  },
+  {
+    id: TOOLS_MENU_IDS.SEGMENTED_EXPORT,
+    labelKey: "segmentedExportMenuItem",
+    defaultLabel: "Export segments",
+    IconComponent: SegmentedExportIcon,
     defaultVisible: true,
   },
   {

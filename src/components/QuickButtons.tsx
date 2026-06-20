@@ -51,6 +51,7 @@ interface QuickButtonsProps {
   scrollLocked?: boolean
   // 新增功能
   onCopyMarkdown?: () => void
+  onSegmentedExport?: () => void
   onModelLockToggle?: () => void
   isModelLocked?: boolean
   onOpenSettings?: () => void
@@ -112,6 +113,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   onGlobalSearch,
   scrollLocked,
   onCopyMarkdown,
+  onSegmentedExport,
   onModelLockToggle,
   isModelLocked,
   onOpenSettings,
@@ -952,6 +954,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   // 工具菜单按钮点击处理器映射
   const toolsMenuActions: Record<string, () => void> = {
     [TOOLS_MENU_IDS.EXPORT]: () => onExport?.(),
+    [TOOLS_MENU_IDS.SEGMENTED_EXPORT]: () => onSegmentedExport?.(),
     [TOOLS_MENU_IDS.COPY_MARKDOWN]: () => onCopyMarkdown?.(),
     [TOOLS_MENU_IDS.MOVE]: () => onMove?.(),
     [TOOLS_MENU_IDS.SET_TAG]: () => onSetTag?.(),

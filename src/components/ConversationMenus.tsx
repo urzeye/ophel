@@ -1,7 +1,14 @@
 import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
-import { ExportIcon, JSONFileIcon, LinkIcon, MarkdownIcon, TXTFileIcon } from "~components/icons"
+import {
+  ExportIcon,
+  JSONFileIcon,
+  LinkIcon,
+  MarkdownIcon,
+  SegmentedExportIcon,
+  TXTFileIcon,
+} from "~components/icons"
 import { DeleteIcon } from "~components/icons/DeleteIcon"
 import { FolderMoveIcon } from "~components/icons/FolderMoveIcon"
 import { PinIcon } from "~components/icons/PinIcon"
@@ -465,7 +472,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
               onSegmentedExport()
             }}>
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <ExportIcon size={14} />
+              <SegmentedExportIcon size={14} />
               <span>{t("segmentedExportMenuItem")}</span>
             </div>
           </MenuButton>
