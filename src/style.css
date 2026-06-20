@@ -462,7 +462,7 @@
   border: 1px solid var(--gh-input-border, #d1d5db);
   border-radius: 6px;
   background: var(--gh-bg, #fff);
-  color: var(--gh-primary, #4285f4);
+  color: var(--gh-text-secondary, #6b7280);
   box-sizing: border-box;
   cursor: pointer;
   display: flex;
@@ -475,7 +475,7 @@
 }
 
 .outline-toolbar-btn:hover {
-  border-color: var(--gh-primary, #4285f4);
+  border-color: var(--gh-input-border, #d1d5db);
   color: var(--gh-primary, #4285f4);
   background: var(--gh-hover, #f3f4f6);
 }
@@ -491,7 +491,7 @@
   opacity: 0.65;
 }
 
-/* 选中状态使用强烈的蓝色背景 + 白色文字 */
+/* 选中状态使用强烈的主题色背景 + 白色文字 */
 .outline-toolbar-btn.active {
   border-color: var(--gh-primary, #4285f4);
   color: white;
@@ -502,9 +502,7 @@
 .outline-toolbar-btn.active-subtle {
   border-color: var(--gh-primary, #4285f4);
   color: var(--gh-primary, #4285f4);
-  /* Use color-mix to create a stronger tint (18%) for better visibility on low-res screens */
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
-  /* Optional: Add a subtle box-shadow for depth */
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
