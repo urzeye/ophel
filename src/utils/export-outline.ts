@@ -48,6 +48,7 @@ function stripInlineMarkdown(value: string): string {
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
     .replace(/\\([\\`*_[\]{}()#+\-.!|>])/g, "$1")
     .replace(/[`*_~]/g, "")
+    .replace(/⁣/g, "") // Remove invisible separator character (used in quick quote markers)
     .replace(/\s+/g, " ")
     .trim()
 }
@@ -126,7 +127,8 @@ export function createOutlineTextFromExportMessages(
       if (!options.includeUserQueries) continue
 
       const text = normalizeOutlineText(message.content, MAX_USER_QUERY_PREVIEW_LENGTH)
-      if (text) {
+      // Skip empty or whitespace-only content (including invisible unicode characters)
+      if (text && text.replace(/[\s⁣]/g, "").length > 0) {
         userQueryCount += 1
         lines.push(formatUserQueryHeading(text, userQueryCount))
       }
