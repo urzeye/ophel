@@ -396,6 +396,15 @@ export class ThemeManager {
       ::view-transition-new(root) {
         clip-path: circle(0px at var(--theme-x, 50%) var(--theme-y, 50%));
       }
+
+      /* 防止浮动元素（toast、弹窗等）在主题切换动画期间被捕获到快照中 */
+      #gh-toast,
+      .gh-magic-codex-popover,
+      .loading-overlay,
+      .gh-disclaimer-overlay,
+      .gh-settings-overlay {
+        view-transition-name: none;
+      }
     `
     document.head.appendChild(style)
   }
@@ -939,12 +948,55 @@ ${cssVars}
   /**
    * ChatGPT 新版页面中裁剪 root 快照不会产生圆形扩散效果。
    * 临时给 body 设置独立的 view-transition-name，改为裁剪这个命名快照。
+   * 同时在动画期间排除可能导致闪现的浮动元素（toast、弹窗、加载遮罩等）。
    */
   private prepareTransitionSnapshotTarget(): { pseudoElement: string; cleanup: () => void } {
+    // 需要在动画期间临时隐藏的选择器（防止被捕获到快照中造成闪现）
+    const transientSelectors = [
+      "#gh-toast", // Toast 提示
+      ".gh-magic-codex-popover", // MagicCodex 弹窗
+      ".loading-overlay", // 加载遮罩
+      ".gh-disclaimer-overlay", // 免责声明弹窗
+      ".gh-settings-overlay", // 设置弹窗
+    ]
+
+    const hiddenElements: Array<{ element: HTMLElement; originalTransitionName: string }> = []
+
+    // 在所有可能的容器中查找需要隐藏的元素
+    const searchRoots: Array<Document | ShadowRoot> = [document]
+    document.querySelectorAll("plasmo-csui, #ophel-userscript-root").forEach((host) => {
+      if (host.shadowRoot) {
+        searchRoots.push(host.shadowRoot)
+      }
+    })
+
+    // 临时从 View Transition 快照中排除这些元素
+    searchRoots.forEach((root) => {
+      transientSelectors.forEach((selector) => {
+        const elements = root.querySelectorAll(selector)
+        elements.forEach((el) => {
+          if (el instanceof HTMLElement) {
+            const originalName = el.style.getPropertyValue("view-transition-name")
+            el.style.setProperty("view-transition-name", "none")
+            hiddenElements.push({ element: el, originalTransitionName: originalName })
+          }
+        })
+      })
+    })
+
     if (this.adapter?.getSiteId() !== SITE_IDS.CHATGPT || !document.body) {
       return {
         pseudoElement: "::view-transition-new(root)",
-        cleanup: () => {},
+        cleanup: () => {
+          // 恢复被排除元素的 view-transition-name
+          hiddenElements.forEach(({ element, originalTransitionName }) => {
+            if (originalTransitionName) {
+              element.style.setProperty("view-transition-name", originalTransitionName)
+            } else {
+              element.style.removeProperty("view-transition-name")
+            }
+          })
+        },
       }
     }
 
@@ -959,6 +1011,14 @@ ${cssVars}
         } else {
           document.body.style.removeProperty("view-transition-name")
         }
+        // 恢复被排除元素的 view-transition-name
+        hiddenElements.forEach(({ element, originalTransitionName }) => {
+          if (originalTransitionName) {
+            element.style.setProperty("view-transition-name", originalTransitionName)
+          } else {
+            element.style.removeProperty("view-transition-name")
+          }
+        })
       },
     }
   }
