@@ -397,12 +397,15 @@ export class ThemeManager {
         clip-path: circle(0px at var(--theme-x, 50%) var(--theme-y, 50%));
       }
 
-      /* 防止浮动元素（toast、弹窗等）在主题切换动画期间被捕获到快照中 */
+      /* 防止浮动元素（toast、弹窗等）和面板在主题切换动画期间被捕获到快照中 */
       #gh-toast,
       .gh-magic-codex-popover,
       .loading-overlay,
       .gh-disclaimer-overlay,
-      .gh-settings-overlay {
+      .gh-settings-overlay,
+      .gh-main-panel,
+      .gh-main-panel::before,
+      .gh-main-panel::after {
         view-transition-name: none;
       }
     `
@@ -958,6 +961,8 @@ ${cssVars}
       ".loading-overlay", // 加载遮罩
       ".gh-disclaimer-overlay", // 免责声明弹窗
       ".gh-settings-overlay", // 设置弹窗
+      ".gh-main-panel", // 主面板（在 edge-snap 模式下可能闪现）
+      ".quick-btn-group", // 快捷按钮组
     ]
 
     const hiddenElements: Array<{ element: HTMLElement; originalTransitionName: string }> = []
