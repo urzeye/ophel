@@ -305,6 +305,12 @@ export const zhTW = {
   chainQueueEnableAndCreate: "啟用並建立",
   chainQueueViewSettings: "查看設定",
   chainQueueEnabledToast: "提示詞佇列已啟用",
+  chainQuickQuoteRequiredTitle: "啟用選區引用",
+  chainQuickQuoteRequiredDescription:
+    "Chain 依賴選區引用來獲取 {{selection}} 和 {{quote}} 變數。啟用後可在選中文字時快速調用 Chain。",
+  chainQuickQuoteEnable: "啟用選區引用",
+  chainQuickQuoteViewSettings: "檢視設定",
+  chainQuickQuoteEnabledToast: "選區引用已啟用",
   chainSteps: "步驟",
   chainStepsHelp: "每一步選擇一個已有提示詞，執行時按順序入隊。",
   chainStepModePrompt: "使用已有提示詞",

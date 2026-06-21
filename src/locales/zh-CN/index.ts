@@ -464,6 +464,12 @@ export const zhCN = {
   chainQueueEnableAndCreate: "启用并创建",
   chainQueueViewSettings: "查看设置",
   chainQueueEnabledToast: "提示词队列已启用",
+  chainQuickQuoteRequiredTitle: "启用选区引用",
+  chainQuickQuoteRequiredDescription:
+    "Chain 依赖选区引用来获取 {{selection}} 和 {{quote}} 变量。启用后可在选中文本时快速调用 Chain。",
+  chainQuickQuoteEnable: "启用选区引用",
+  chainQuickQuoteViewSettings: "查看设置",
+  chainQuickQuoteEnabledToast: "选区引用已启用",
   chainSteps: "步骤",
   chainStepsHelp: "每一步选择一个已有提示词,执行时按顺序入队。",
   chainStepModePrompt: "使用已有提示词",

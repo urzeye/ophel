@@ -438,6 +438,12 @@ export const de = {
   chainQueueEnableAndCreate: "Aktivieren und erstellen",
   chainQueueViewSettings: "Einstellungen anzeigen",
   chainQueueEnabledToast: "Prompt-Warteschlange aktiviert",
+  chainQuickQuoteRequiredTitle: "Auswahlzitat aktivieren",
+  chainQuickQuoteRequiredDescription:
+    "Ketten benötigen Auswahlzitate, um die Variablen {{selection}} und {{quote}} zu erhalten. Wenn aktiviert, können Sie Ketten schnell aufrufen, wenn Text ausgewählt wird.",
+  chainQuickQuoteEnable: "Auswahlzitat aktivieren",
+  chainQuickQuoteViewSettings: "Einstellungen anzeigen",
+  chainQuickQuoteEnabledToast: "Auswahlzitat aktiviert",
   chainSteps: "Schritte",
   chainStepsHelp:
     "Jeder Schritt wählt einen vorhandenen Prompt und wird der Reihe nach eingereiht.",

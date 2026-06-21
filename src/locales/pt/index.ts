@@ -436,6 +436,12 @@ export const pt = {
   chainQueueEnableAndCreate: "Ativar e criar",
   chainQueueViewSettings: "Ver configurações",
   chainQueueEnabledToast: "Fila de prompts ativada",
+  chainQuickQuoteRequiredTitle: "Ativar citação de seleção",
+  chainQuickQuoteRequiredDescription:
+    "As cadeias dependem da citação de seleção para obter as variáveis {{selection}} e {{quote}}. Quando ativado, você pode invocar rapidamente cadeias ao selecionar texto.",
+  chainQuickQuoteEnable: "Ativar citação de seleção",
+  chainQuickQuoteViewSettings: "Ver configurações",
+  chainQuickQuoteEnabledToast: "Citação de seleção ativada",
   chainSteps: "Etapas",
   chainStepsHelp: "Cada etapa escolhe um prompt existente e é adicionada à fila em ordem.",
   chainStepModePrompt: "Usar prompt existente",

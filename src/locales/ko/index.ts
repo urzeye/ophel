@@ -437,6 +437,12 @@ export const ko = {
   chainQueueEnableAndCreate: "활성화하고 만들기",
   chainQueueViewSettings: "설정 보기",
   chainQueueEnabledToast: "프롬프트 대기열이 활성화되었습니다",
+  chainQuickQuoteRequiredTitle: "선택 인용 활성화",
+  chainQuickQuoteRequiredDescription:
+    "Chain은 {{selection}} 및 {{quote}} 변수를 가져오기 위해 선택 인용에 의존합니다. 활성화하면 텍스트를 선택할 때 Chain을 빠르게 호출할 수 있습니다.",
+  chainQuickQuoteEnable: "선택 인용 활성화",
+  chainQuickQuoteViewSettings: "설정 보기",
+  chainQuickQuoteEnabledToast: "선택 인용이 활성화되었습니다",
   chainSteps: "단계",
   chainStepsHelp: "각 단계에서 기존 프롬프트를 선택하며 실행 시 순서대로 대기열에 추가됩니다.",
   chainStepModePrompt: "기존 프롬프트 사용",

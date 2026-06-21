@@ -438,6 +438,12 @@ export const fr = {
   chainQueueEnableAndCreate: "Activer et créer",
   chainQueueViewSettings: "Voir les paramètres",
   chainQueueEnabledToast: "File de prompts activée",
+  chainQuickQuoteRequiredTitle: "Activer la citation de sélection",
+  chainQuickQuoteRequiredDescription:
+    "Les chaînes dépendent de la citation de sélection pour obtenir les variables {{selection}} et {{quote}}. Une fois activé, vous pouvez invoquer rapidement des chaînes lors de la sélection de texte.",
+  chainQuickQuoteEnable: "Activer la citation de sélection",
+  chainQuickQuoteViewSettings: "Voir les paramètres",
+  chainQuickQuoteEnabledToast: "Citation de sélection activée",
   chainSteps: "Étapes",
   chainStepsHelp: "Chaque étape choisit un prompt existant et est ajoutée à la file dans l'ordre.",
   chainStepModePrompt: "Utiliser un prompt existant",

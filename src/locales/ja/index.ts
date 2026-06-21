@@ -442,6 +442,12 @@ export const ja = {
   chainQueueEnableAndCreate: "有効化して作成",
   chainQueueViewSettings: "設定を表示",
   chainQueueEnabledToast: "プロンプトキューを有効化しました",
+  chainQuickQuoteRequiredTitle: "選択引用を有効化",
+  chainQuickQuoteRequiredDescription:
+    "Chainは{{selection}}と{{quote}}変数を取得するために選択引用に依存しています。有効にすると、テキストを選択したときにChainを素早く呼び出すことができます。",
+  chainQuickQuoteEnable: "選択引用を有効化",
+  chainQuickQuoteViewSettings: "設定を表示",
+  chainQuickQuoteEnabledToast: "選択引用を有効化しました",
   chainSteps: "手順",
   chainStepsHelp: "各手順で既存プロンプトを選び、実行時に順番どおりキューへ追加します。",
   chainStepModePrompt: "既存のプロンプトを使用",

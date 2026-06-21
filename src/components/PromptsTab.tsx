@@ -968,6 +968,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   const promptQueueEnabled = useSettingsStore(
     (state) => state.settings.features?.prompts?.promptQueue ?? false,
   )
+  const quickQuoteEnabled = useSettingsStore(
+    (state) => state.settings.features?.prompts?.quickQuoteEnabled ?? true,
+  )
   const updatePromptQueueSetting = useSettingsStore((state) => state.updateDeepSetting)
 
   const [prompts, setPrompts] = useState<Prompt[]>([])
@@ -1327,10 +1330,23 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     showToast(t("chainQueueEnabledToast"), 1800)
   }, [updatePromptQueueSetting])
 
+  const enableQuickQuote = useCallback(() => {
+    updatePromptQueueSetting("features", "prompts", "quickQuoteEnabled", true)
+    showToast(t("chainQuickQuoteEnabledToast"), 1800)
+  }, [updatePromptQueueSetting])
+
   const openPromptQueueSettings = useCallback(() => {
     window.dispatchEvent(
       new CustomEvent("ophel:navigateSettingsPage", {
         detail: { settingId: "prompt-queue" },
+      }),
+    )
+  }, [])
+
+  const openQuickQuoteSettings = useCallback(() => {
+    window.dispatchEvent(
+      new CustomEvent("ophel:navigateSettingsPage", {
+        detail: { settingId: "prompt-quick-quote-enabled" },
       }),
     )
   }, [])
@@ -2377,6 +2393,29 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     )
   }
 
+  const renderChainQuickQuoteGate = (placement: "list" | "editor") => {
+    if (quickQuoteEnabled) return null
+
+    return (
+      <div className={`gh-chain-queue-gate ${placement}`}>
+        <div className="gh-chain-queue-gate-copy">
+          <div className="gh-chain-queue-gate-title">{t("chainQuickQuoteRequiredTitle")}</div>
+          <div className="gh-chain-queue-gate-description">
+            {t("chainQuickQuoteRequiredDescription")}
+          </div>
+        </div>
+        <div className="gh-chain-queue-gate-actions">
+          <Button variant="primary" size="sm" onClick={enableQuickQuote}>
+            {t("chainQuickQuoteEnable")}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={openQuickQuoteSettings}>
+            {t("chainQuickQuoteViewSettings")}
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   const renderChainsView = () => {
     if (prompts.length === 0) {
       return (
@@ -2409,6 +2448,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     return (
       <>
         {renderChainQueueGate("list")}
+        {renderChainQuickQuoteGate("list")}
         {filteredChains.map((chain) => {
           const showInSelectionPopover = chain.showInSelectionPopover !== false
           const stepTitles = getChainStepTitles(chain)
@@ -2538,6 +2578,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
             <div className="gh-chain-editor-scroll">
               {renderChainQueueGate("editor")}
+              {renderChainQuickQuoteGate("editor")}
 
               <div className="gh-chain-form-grid">
                 <label className="gh-chain-field">

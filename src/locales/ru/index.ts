@@ -435,6 +435,12 @@ export const ru = {
   chainQueueEnableAndCreate: "Включить и создать",
   chainQueueViewSettings: "Открыть настройки",
   chainQueueEnabledToast: "Очередь промптов включена",
+  chainQuickQuoteRequiredTitle: "Включить цитирование выделения",
+  chainQuickQuoteRequiredDescription:
+    "Цепочки зависят от цитирования выделения для получения переменных {{selection}} и {{quote}}. После включения вы сможете быстро вызывать цепочки при выделении текста.",
+  chainQuickQuoteEnable: "Включить цитирование выделения",
+  chainQuickQuoteViewSettings: "Просмотреть настройки",
+  chainQuickQuoteEnabledToast: "Цитирование выделения включено",
   chainSteps: "Шаги",
   chainStepsHelp: "Каждый шаг выбирает существующий промпт и добавляется в очередь по порядку.",
   chainStepModePrompt: "Использовать существующий промпт",

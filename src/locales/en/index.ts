@@ -445,6 +445,12 @@ export const en = {
   chainQueueEnableAndCreate: "Enable and create",
   chainQueueViewSettings: "View settings",
   chainQueueEnabledToast: "Prompt Queue enabled",
+  chainQuickQuoteRequiredTitle: "Enable Selection Quote",
+  chainQuickQuoteRequiredDescription:
+    "Chains rely on selection quotes to get {{selection}} and {{quote}} variables. When enabled, you can quickly invoke Chains when text is selected.",
+  chainQuickQuoteEnable: "Enable selection quote",
+  chainQuickQuoteViewSettings: "View settings",
+  chainQuickQuoteEnabledToast: "Selection quote enabled",
   chainSteps: "Steps",
   chainStepsHelp: "Each step selects an existing prompt and is queued in order.",
   chainStepModePrompt: "Use existing prompt",
