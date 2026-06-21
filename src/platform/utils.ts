@@ -5,24 +5,35 @@
  */
 
 // 构建时注入的平台标识
-declare const __PLATFORM__: "extension" | "userscript"
+// 注意：Plasmo 构建不会定义此变量，默认为 undefined (表示 extension)
+declare const __PLATFORM__: "extension" | "userscript" | undefined
 
 /**
  * 获取当前平台类型
  *
- * @throws {Error} 如果 __PLATFORM__ 未定义或值无效
  * @returns 平台类型 "extension" 或 "userscript"
+ * - Vite userscript 构建: __PLATFORM__ = "userscript"
+ * - Plasmo extension 构建: __PLATFORM__ = undefined (默认为 "extension")
  */
 export function getPlatformType(): "extension" | "userscript" {
+  // Plasmo 构建时不定义 __PLATFORM__，默认为 extension
   if (typeof __PLATFORM__ === "undefined") {
-    throw new Error("[Ophel] __PLATFORM__ is not defined. Build configuration error.")
+    return "extension"
   }
 
-  if (__PLATFORM__ !== "extension" && __PLATFORM__ !== "userscript") {
-    throw new Error(`[Ophel] Invalid __PLATFORM__ value: ${__PLATFORM__}`)
+  // Vite userscript 构建时显式定义为 "userscript"
+  if (__PLATFORM__ === "userscript") {
+    return "userscript"
   }
 
-  return __PLATFORM__
+  // 如果未来 Plasmo 也开始注入 "extension"，则返回它
+  if (__PLATFORM__ === "extension") {
+    return "extension"
+  }
+
+  // 不应该到达这里，但为了类型安全，添加断言
+  console.error(`[Ophel] Unexpected __PLATFORM__ value: ${__PLATFORM__}`)
+  return "extension" // 默认降级到 extension
 }
 
 /**
