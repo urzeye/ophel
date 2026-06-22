@@ -757,9 +757,8 @@ export class OutlineManager {
     this.levelCounts = {}
     this.notify()
     // 几次延迟 refresh：覆盖站点从慢到快的 DOM 渲染节奏
-    // 第一次立即执行，避免被防抖合并
-    this.refresh(undefined, true)
-    for (const delay of [250, 600, 1200]) {
+    // 所有 refresh 都延迟执行，避免扫描到旧 DOM
+    for (const delay of [80, 250, 600, 1200]) {
       setTimeout(() => this.refresh(), delay)
     }
   }
