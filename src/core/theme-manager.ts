@@ -384,20 +384,31 @@ export class ThemeManager {
     const style = document.createElement("style")
     style.id = "gh-global-styles"
     style.textContent = `
+      /* 禁用默认的 root 快照动画，避免捕获整个页面内容 */
       ::view-transition-old(root),
-      ::view-transition-new(root),
+      ::view-transition-new(root) {
+        animation: none;
+        mix-blend-mode: normal;
+      }
+
+      /* 仅对 body 元素应用圆形扩散动画（仅在支持的站点） */
       ::view-transition-old(gh-page),
       ::view-transition-new(gh-page) {
         animation: none;
         mix-blend-mode: normal;
       }
 
-      ::view-transition-new(gh-page),
-      ::view-transition-new(root) {
+      ::view-transition-new(gh-page) {
         clip-path: circle(0px at var(--theme-x, 50%) var(--theme-y, 50%));
       }
 
-      /* 防止浮动元素（toast、弹窗等）和面板在主题切换动画期间被捕获到快照中 */
+      /*
+       * 关键修复：排除所有可见内容，只保留颜色过渡
+       * 这样可以避免在动画期间看到旧主题页面内容的快照
+       */
+      html,
+      body,
+      body > *:not(plasmo-csui):not(#ophel-userscript-root),
       #gh-toast,
       .gh-magic-codex-popover,
       .loading-overlay,
@@ -949,25 +960,41 @@ ${cssVars}
   }
 
   /**
-   * ChatGPT 新版页面中裁剪 root 快照不会产生圆形扩散效果。
-   * 临时给 body 设置独立的 view-transition-name，改为裁剪这个命名快照。
-   * 同时在动画期间排除可能导致闪现的浮动元素（toast、弹窗、加载遮罩等）。
+   * 准备 View Transition 快照目标，排除不应该参与动画的元素。
+   *
+   * 核心问题：View Transitions API 默认会捕获整个页面，导致旧主题的页面内容
+   * （如 Gemini 的侧边栏、欢迎文字等）在动画期间短暂可见。
+   *
+   * 解决方案：
+   * 1. 排除所有宿主页面内容（body > *），只保留背景色过渡
+   * 2. 排除 Ophel 的 UI 组件（面板、快捷按钮等）
+   * 3. 这样动画只影响页面背景色，不会出现内容快照闪现
    */
   private prepareTransitionSnapshotTarget(): { pseudoElement: string; cleanup: () => void } {
-    // 需要在动画期间临时隐藏的选择器（防止被捕获到快照中造成闪现）
-    const transientSelectors = [
-      "#gh-toast", // Toast 提示
-      ".gh-magic-codex-popover", // MagicCodex 弹窗
-      ".loading-overlay", // 加载遮罩
-      ".gh-disclaimer-overlay", // 免责声明弹窗
-      ".gh-settings-overlay", // 设置弹窗
-      ".gh-main-panel", // 主面板（在 edge-snap 模式下可能闪现）
-      ".quick-btn-group", // 快捷按钮组
-    ]
-
     const hiddenElements: Array<{ element: HTMLElement; originalTransitionName: string }> = []
 
-    // 在所有可能的容器中查找需要隐藏的元素
+    // 排除所有宿主页面的直接子元素（排除 Ophel 容器）
+    const bodyChildren = Array.from(document.body.children).filter(
+      (el) => el.tagName.toLowerCase() !== "plasmo-csui" && el.id !== "ophel-userscript-root",
+    ) as HTMLElement[]
+
+    bodyChildren.forEach((el) => {
+      const originalName = el.style.getPropertyValue("view-transition-name")
+      el.style.setProperty("view-transition-name", "none", "important")
+      hiddenElements.push({ element: el, originalTransitionName: originalName })
+    })
+
+    // 排除 Ophel 自己的 UI 组件
+    const ophelSelectors = [
+      "#gh-toast",
+      ".gh-magic-codex-popover",
+      ".loading-overlay",
+      ".gh-disclaimer-overlay",
+      ".gh-settings-overlay",
+      ".gh-main-panel",
+      ".quick-btn-group",
+    ]
+
     const searchRoots: Array<Document | ShadowRoot> = [document]
     document.querySelectorAll("plasmo-csui, #ophel-userscript-root").forEach((host) => {
       if (host.shadowRoot) {
@@ -975,56 +1002,33 @@ ${cssVars}
       }
     })
 
-    // 临时从 View Transition 快照中排除这些元素
     searchRoots.forEach((root) => {
-      transientSelectors.forEach((selector) => {
+      ophelSelectors.forEach((selector) => {
         const elements = root.querySelectorAll(selector)
         elements.forEach((el) => {
           if (el instanceof HTMLElement) {
             const originalName = el.style.getPropertyValue("view-transition-name")
-            el.style.setProperty("view-transition-name", "none")
+            el.style.setProperty("view-transition-name", "none", "important")
             hiddenElements.push({ element: el, originalTransitionName: originalName })
           }
         })
       })
     })
 
-    if (this.adapter?.getSiteId() !== SITE_IDS.CHATGPT || !document.body) {
-      return {
-        pseudoElement: "::view-transition-new(root)",
-        cleanup: () => {
-          // 恢复被排除元素的 view-transition-name
-          hiddenElements.forEach(({ element, originalTransitionName }) => {
-            if (originalTransitionName) {
-              element.style.setProperty("view-transition-name", originalTransitionName)
-            } else {
-              element.style.removeProperty("view-transition-name")
-            }
-          })
-        },
-      }
+    const cleanup = () => {
+      hiddenElements.forEach(({ element, originalTransitionName }) => {
+        if (originalTransitionName) {
+          element.style.setProperty("view-transition-name", originalTransitionName)
+        } else {
+          element.style.removeProperty("view-transition-name")
+        }
+      })
     }
 
-    const previousName = document.body.style.getPropertyValue("view-transition-name")
-    document.body.style.setProperty("view-transition-name", "gh-page")
-
+    // 对于所有站点，使用简化的 root 动画（不需要特殊的 gh-page 命名）
     return {
-      pseudoElement: "::view-transition-new(gh-page)",
-      cleanup: () => {
-        if (previousName) {
-          document.body.style.setProperty("view-transition-name", previousName)
-        } else {
-          document.body.style.removeProperty("view-transition-name")
-        }
-        // 恢复被排除元素的 view-transition-name
-        hiddenElements.forEach(({ element, originalTransitionName }) => {
-          if (originalTransitionName) {
-            element.style.setProperty("view-transition-name", originalTransitionName)
-          } else {
-            element.style.removeProperty("view-transition-name")
-          }
-        })
-      },
+      pseudoElement: "::view-transition-new(root)",
+      cleanup,
     }
   }
 
