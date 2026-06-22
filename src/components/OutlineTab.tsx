@@ -204,8 +204,8 @@ const getConversationCopyHeadingLevel = (expandLevel: number, showUserQueries: b
 
 const OUTLINE_ITEM_HEIGHT = 38
 const OUTLINE_ROW_GAP = 2
-const OUTLINE_USER_QUERY_TOP_GAP = 14
-const OUTLINE_USER_QUERY_BOTTOM_GAP = 4
+const OUTLINE_USER_QUERY_TOP_GAP = 2
+const OUTLINE_USER_QUERY_BOTTOM_GAP = 2
 const OUTLINE_VIRTUAL_OVERSCAN = 10
 const OUTLINE_FALLBACK_VIEWPORT_HEIGHT = 420
 

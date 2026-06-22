@@ -529,11 +529,6 @@
   box-sizing: border-box;
 }
 
-.outline-list-virtual .outline-item.user-query-node {
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
 .outline-empty-state {
   min-height: 140px;
   padding: 26px 12px 22px;
@@ -901,6 +896,11 @@
   position: relative;
   overflow: visible;
   transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.outline-list-virtual .outline-item.user-query-node {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
 }
 
 /* 视觉锚点 */
