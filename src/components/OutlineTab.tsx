@@ -202,26 +202,142 @@ const getConversationCopyHeadingLevel = (expandLevel: number, showUserQueries: b
   return showUserQueries ? expandLevel : Math.max(1, expandLevel)
 }
 
-// 递归渲染大纲树节点
-// 不可见节点不进入 DOM，避免长对话下折叠/过滤节点占用渲染成本
+const OUTLINE_ITEM_HEIGHT = 38
+const OUTLINE_ROW_GAP = 2
+const OUTLINE_USER_QUERY_TOP_GAP = 14
+const OUTLINE_USER_QUERY_BOTTOM_GAP = 4
+const OUTLINE_VIRTUAL_OVERSCAN = 10
+const OUTLINE_FALLBACK_VIEWPORT_HEIGHT = 420
+
+type OutlineScrollBlock = "start" | "center" | "end" | "nearest"
+
+interface VisibleOutlineItem {
+  node: OutlineNode
+  depth: number
+}
+
+interface OutlineVirtualMetrics {
+  rowOffsets: number[]
+  rowHeights: number[]
+  totalHeight: number
+  itemIndexByNodeIndex: Map<number, number>
+}
+
+const flattenVisibleOutlineTree = (
+  tree: OutlineNode[],
+  visibleMap: Record<number, boolean>,
+): VisibleOutlineItem[] => {
+  const items: VisibleOutlineItem[] = []
+
+  const traverse = (nodes: OutlineNode[], depth: number) => {
+    for (const node of nodes) {
+      if (!(visibleMap[node.index] ?? true)) continue
+
+      items.push({ node, depth })
+
+      if (node.children.length > 0) {
+        traverse(node.children, depth + 1)
+      }
+    }
+  }
+
+  traverse(tree, 0)
+  return items
+}
+
+const getOutlineVirtualRowSpacing = (item: VisibleOutlineItem, rowIndex: number) => {
+  if (item.node.isUserQuery) {
+    return {
+      top: rowIndex === 0 ? 0 : OUTLINE_USER_QUERY_TOP_GAP,
+      bottom: OUTLINE_USER_QUERY_BOTTOM_GAP,
+    }
+  }
+
+  return { top: 0, bottom: OUTLINE_ROW_GAP }
+}
+
+const buildOutlineVirtualMetrics = (items: VisibleOutlineItem[]): OutlineVirtualMetrics => {
+  const rowOffsets: number[] = []
+  const rowHeights: number[] = []
+  const itemIndexByNodeIndex = new Map<number, number>()
+  let totalHeight = 0
+
+  items.forEach((item, index) => {
+    const spacing = getOutlineVirtualRowSpacing(item, index)
+    const rowHeight = OUTLINE_ITEM_HEIGHT + spacing.top + spacing.bottom
+
+    rowOffsets.push(totalHeight)
+    rowHeights.push(rowHeight)
+    itemIndexByNodeIndex.set(item.node.index, index)
+    totalHeight += rowHeight
+  })
+
+  return {
+    rowOffsets,
+    rowHeights,
+    totalHeight,
+    itemIndexByNodeIndex,
+  }
+}
+
+const findOutlineRowAtOffset = (rowOffsets: number[], offset: number): number => {
+  if (rowOffsets.length === 0) return 0
+
+  let low = 0
+  let high = rowOffsets.length - 1
+  let result = 0
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2)
+    if (rowOffsets[mid] <= offset) {
+      result = mid
+      low = mid + 1
+    } else {
+      high = mid - 1
+    }
+  }
+
+  return result
+}
+
+const getOutlineVirtualRange = (
+  metrics: OutlineVirtualMetrics,
+  scrollTop: number,
+  viewportHeight: number,
+) => {
+  const itemCount = metrics.rowOffsets.length
+  if (itemCount === 0) return { start: 0, end: 0 }
+
+  const effectiveViewportHeight = Math.max(viewportHeight, OUTLINE_FALLBACK_VIEWPORT_HEIGHT)
+  const startIndex = findOutlineRowAtOffset(metrics.rowOffsets, Math.max(0, scrollTop))
+  const viewportBottom = scrollTop + effectiveViewportHeight
+  let endIndex = startIndex
+
+  while (endIndex < itemCount && metrics.rowOffsets[endIndex] < viewportBottom) {
+    endIndex += 1
+  }
+
+  return {
+    start: Math.max(0, startIndex - OUTLINE_VIRTUAL_OVERSCAN),
+    end: Math.min(itemCount, endIndex + OUTLINE_VIRTUAL_OVERSCAN),
+  }
+}
+
+// 单行大纲节点视图。树形可见性由上层 flattenVisibleOutlineTree 统一处理。
 const OutlineNodeView: React.FC<{
   node: OutlineNode
   onToggle: (node: OutlineNode) => void
   onClick: (node: OutlineNode) => void
-  onCopy: (e: React.MouseEvent, node: OutlineNode) => void
   onToggleBookmark: (e: React.MouseEvent, node: OutlineNode) => void
   setItemRef: (index: number, el: HTMLElement | null) => void
-  visibleMap: Record<number, boolean>
   searchQuery: string
   extractUserQueryText?: (element: Element) => string // Used for full text extraction
 }> = ({
   node,
   onToggle,
   onClick,
-  onCopy,
   onToggleBookmark,
   setItemRef,
-  visibleMap,
   searchQuery,
   extractUserQueryText,
 }) => {
@@ -229,8 +345,6 @@ const OutlineNodeView: React.FC<{
   // Legacy: isExpanded 直接看 hasChildren 和 collapsed，不考虑搜索
   // 箭头始终显示（只要有子节点），因为用户可能想手动展开查看不匹配的子节点
   const isExpanded = hasChildren && !node.collapsed
-
-  const shouldShow = visibleMap[node.index] ?? true
 
   // ===== 复制处理 (阻止冒泡) =====
   const [copySuccess, setCopySuccess] = useState(false)
@@ -283,10 +397,6 @@ const OutlineNodeView: React.FC<{
   // ===== 状态控制：鼠标悬停在操作按钮时不显示主 Tooltip =====
   const [isHoveringAction, setIsHoveringAction] = useState(false)
 
-  if (!shouldShow) {
-    return null
-  }
-
   // ===== CSS 类名 (Legacy exact) =====
   const itemClassName = [
     "outline-item",
@@ -332,111 +442,153 @@ const OutlineNodeView: React.FC<{
   }
 
   return (
-    <>
-      <Tooltip
-        content={
-          node.wordCount && node.wordCount > 0 ? (
-            <div>
-              {node.text}
-              <div style={{ fontSize: "12px", opacity: 0.8, marginTop: "2px" }}>
-                ({formatWordCount(node.wordCount, getCurrentLang())} {t("words")})
-              </div>
+    <Tooltip
+      content={
+        node.wordCount && node.wordCount > 0 ? (
+          <div>
+            {node.text}
+            <div style={{ fontSize: "12px", opacity: 0.8, marginTop: "2px" }}>
+              ({formatWordCount(node.wordCount, getCurrentLang())} {t("words")})
             </div>
-          ) : (
-            node.text
-          )
-        }
-        disabled={isHoveringAction}
-        triggerStyle={{ width: "100%", display: "block" }}
-        delay={500}>
-        <div
-          className={itemClassName}
-          data-index={node.index}
-          data-level={node.relativeLevel}
-          ref={(el) => setItemRef(node.index, el)}
-          onClick={() => onClick(node)}>
-          {/* 折叠箭头 (Legacy: ▸) - 使用 hasChildren 显示箭头，允许手动展开 */}
-          <span
-            className={`outline-item-toggle ${hasChildren ? (isExpanded ? "expanded" : "") : "invisible"}`}
-            onClick={(e) => {
-              if (hasChildren) {
-                e.stopPropagation()
-                onToggle(node)
-              }
-            }}>
-            <ChevronDownIcon size={16} style={{ transform: "rotate(-90deg)" }} />
-          </span>
+          </div>
+        ) : (
+          node.text
+        )
+      }
+      disabled={isHoveringAction}
+      triggerStyle={{ width: "100%", display: "block" }}
+      delay={500}>
+      <div
+        className={itemClassName}
+        data-index={node.index}
+        data-level={node.relativeLevel}
+        ref={(el) => setItemRef(node.index, el)}
+        onClick={() => onClick(node)}>
+        {/* 折叠箭头 (Legacy: ▸) - 使用 hasChildren 显示箭头，允许手动展开 */}
+        <span
+          className={`outline-item-toggle ${hasChildren ? (isExpanded ? "expanded" : "") : "invisible"}`}
+          onClick={(e) => {
+            if (hasChildren) {
+              e.stopPropagation()
+              onToggle(node)
+            }
+          }}>
+          <ChevronDownIcon size={16} style={{ transform: "rotate(-90deg)" }} />
+        </span>
 
-          {/* 用户提问: 徽章 (图标+角标数字) */}
-          {node.isUserQuery && (
-            <span className="user-query-badge">
-              <span className="user-query-badge-icon">💬</span>
-              <span className="user-query-badge-number">{node.queryIndex}</span>
+        {/* 用户提问: 徽章 (图标+角标数字) */}
+        {node.isUserQuery && (
+          <span className="user-query-badge">
+            <span className="user-query-badge-icon">💬</span>
+            <span className="user-query-badge-number">{node.queryIndex}</span>
+          </span>
+        )}
+
+        {/* 文字 (带搜索高亮) */}
+        <span className={`outline-item-text ${node.isGhost ? "ghost-text" : ""}`}>
+          {renderTextWithHighlight()}
+        </span>
+
+        {/* Bookmark Button (Hover or Bookmarked) */}
+        <span className={`outline-item-bookmark-wrapper ${node.isBookmarked ? "active" : ""}`}>
+          <Tooltip content={node.isBookmarked ? t("removeBookmark") : t("addBookmark")}>
+            <span
+              className={`outline-item-bookmark-btn ${node.isBookmarked ? "active" : ""}`}
+              onClick={(e) => onToggleBookmark(e, node)}
+              onMouseEnter={() => setIsHoveringAction(true)}
+              onMouseLeave={() => setIsHoveringAction(false)}>
+              <StarIcon
+                size={14}
+                filled={node.isBookmarked}
+                color={node.isBookmarked ? "#f59e0b" : "currentColor"}
+              />
             </span>
-          )}
+          </Tooltip>
+        </span>
 
-          {/* 文字 (带搜索高亮) */}
-          <span className={`outline-item-text ${node.isGhost ? "ghost-text" : ""}`}>
-            {renderTextWithHighlight()}
+        {/* 复制按钮 (所有节点显示) */}
+        <Tooltip content={t("copy")}>
+          <span
+            className="outline-item-copy-btn"
+            onClick={handleCopy}
+            onMouseEnter={() => setIsHoveringAction(true)}
+            onMouseLeave={() => setIsHoveringAction(false)}>
+            {copySuccess ? (
+              // 成功对号图标
+              <CheckIcon size={14} color="#10b981" />
+            ) : (
+              // 复制图标
+              <CopyIcon size={14} />
+            )}
           </span>
+        </Tooltip>
+      </div>
+    </Tooltip>
+  )
+}
 
-          {/* Bookmark Button (Hover or Bookmarked) */}
-          <span className={`outline-item-bookmark-wrapper ${node.isBookmarked ? "active" : ""}`}>
-            <Tooltip content={node.isBookmarked ? t("removeBookmark") : t("addBookmark")}>
-              <span
-                className={`outline-item-bookmark-btn ${node.isBookmarked ? "active" : ""}`}
-                onClick={(e) => onToggleBookmark(e, node)}
-                onMouseEnter={() => setIsHoveringAction(true)}
-                onMouseLeave={() => setIsHoveringAction(false)}>
-                <StarIcon
-                  size={14}
-                  filled={node.isBookmarked}
-                  color={node.isBookmarked ? "#f59e0b" : "currentColor"}
-                />
-              </span>
-            </Tooltip>
-          </span>
+const VirtualizedOutlineTree: React.FC<{
+  items: VisibleOutlineItem[]
+  metrics: OutlineVirtualMetrics
+  scrollTop: number
+  viewportHeight: number
+  onToggle: (node: OutlineNode) => void
+  onClick: (node: OutlineNode) => void
+  onToggleBookmark: (e: React.MouseEvent, node: OutlineNode) => void
+  setItemRef: (index: number, el: HTMLElement | null) => void
+  searchQuery: string
+  extractUserQueryText?: (element: Element) => string
+}> = ({
+  items,
+  metrics,
+  scrollTop,
+  viewportHeight,
+  onToggle,
+  onClick,
+  onToggleBookmark,
+  setItemRef,
+  searchQuery,
+  extractUserQueryText,
+}) => {
+  const range = getOutlineVirtualRange(metrics, scrollTop, viewportHeight)
+  const renderedItems = items.slice(range.start, range.end)
 
-          {/* 复制按钮 (所有节点显示) */}
-          {true && (
-            <Tooltip content={t("copy")}>
-              <span
-                className="outline-item-copy-btn"
-                onClick={handleCopy}
-                onMouseEnter={() => setIsHoveringAction(true)}
-                onMouseLeave={() => setIsHoveringAction(false)}>
-                {copySuccess ? (
-                  // 成功对号图标
-                  <CheckIcon size={14} color="#10b981" />
-                ) : (
-                  // 复制图标
-                  <CopyIcon size={14} />
-                )}
-              </span>
-            </Tooltip>
-          )}
-        </div>
-      </Tooltip>
+  return (
+    <div
+      className="outline-list outline-list-virtual"
+      style={{ height: metrics.totalHeight, position: "relative" }}>
+      {renderedItems.map((item, offset) => {
+        const rowIndex = range.start + offset
+        const spacing = getOutlineVirtualRowSpacing(item, rowIndex)
 
-      {/* 子节点只渲染 visibleMap 判定可见的分支 */}
-      {hasChildren &&
-        node.children
-          .filter((child) => visibleMap[child.index] ?? true)
-          .map((child) => (
+        return (
+          <div
+            key={item.node.index}
+            className="outline-virtual-row"
+            data-depth={item.depth}
+            style={{
+              position: "absolute",
+              top: metrics.rowOffsets[rowIndex],
+              left: 0,
+              right: 0,
+              height: metrics.rowHeights[rowIndex],
+              paddingTop: spacing.top,
+              paddingBottom: spacing.bottom,
+              boxSizing: "border-box",
+            }}>
             <OutlineNodeView
-              key={child.index}
-              node={child}
+              node={item.node}
               onToggle={onToggle}
               onClick={onClick}
-              onCopy={onCopy}
               onToggleBookmark={onToggleBookmark}
               setItemRef={setItemRef}
-              visibleMap={visibleMap}
               searchQuery={searchQuery}
               extractUserQueryText={extractUserQueryText}
             />
-          ))}
-    </>
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
@@ -477,6 +629,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   const [activeSourceId, setActiveSourceId] = useState(initialState.activeSourceId)
   const [isCopyingFullOutline, setIsCopyingFullOutline] = useState(false)
   const [fullOutlineCopySuccess, setFullOutlineCopySuccess] = useState(false)
+  const [outlineScrollTop, setOutlineScrollTop] = useState(0)
+  const [outlineViewportHeight, setOutlineViewportHeight] = useState(0)
 
   // const { bookmarks } = useBookmarkStore() // Removed unused bookmarks
 
@@ -487,10 +641,20 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   const activeIndexRef = useRef<number | null>(null)
   const visibleHighlightRef = useRef<number | null>(null)
   const itemRefMap = useRef<Map<number, HTMLElement>>(new Map())
+  const virtualMetricsRef = useRef<OutlineVirtualMetrics>({
+    rowOffsets: [],
+    rowHeights: [],
+    totalHeight: 0,
+    itemIndexByNodeIndex: new Map(),
+  })
   const jumpRequestIdRef = useRef(0)
   const locateHighlightRef = useRef<{
     element: Element
     timer: ReturnType<typeof setTimeout>
+  } | null>(null)
+  const pendingLocateHighlightRef = useRef<{
+    index: number
+    requestId: number
   } | null>(null)
   const locateHighlightRequestIdRef = useRef(0)
   const userScrollingOutlineRef = useRef(false)
@@ -594,6 +758,63 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     }
   }, [tree]) // 依赖 tree，当 tree 变化（渲染完成）后执行
 
+  const syncOutlineScrollState = useCallback(() => {
+    const el = listRef.current
+    if (!el) return
+
+    const isAtBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 10
+    setScrollState(isAtBottom ? "top" : "bottom")
+    setOutlineScrollTop(el.scrollTop)
+    setOutlineViewportHeight(el.clientHeight)
+  }, [])
+
+  const scrollOutlineNodeIntoView = useCallback(
+    (
+      nodeIndex: number,
+      block: OutlineScrollBlock = "nearest",
+      behavior: ScrollBehavior = "instant" as ScrollBehavior,
+    ): boolean => {
+      const el = listRef.current
+      const metrics = virtualMetricsRef.current
+      const rowIndex = metrics.itemIndexByNodeIndex.get(nodeIndex)
+
+      if (!el || rowIndex === undefined) return false
+
+      const rowTop = metrics.rowOffsets[rowIndex]
+      const rowBottom = rowTop + metrics.rowHeights[rowIndex]
+      const viewportTop = el.scrollTop
+      const viewportBottom = viewportTop + el.clientHeight
+      let nextTop = viewportTop
+
+      if (block === "start") {
+        nextTop = rowTop
+      } else if (block === "center") {
+        nextTop = rowTop - (el.clientHeight - metrics.rowHeights[rowIndex]) / 2
+      } else if (block === "end") {
+        nextTop = rowBottom - el.clientHeight
+      } else if (rowTop < viewportTop) {
+        nextTop = rowTop
+      } else if (rowBottom > viewportBottom) {
+        nextTop = rowBottom - el.clientHeight
+      } else {
+        setOutlineScrollTop(el.scrollTop)
+        setOutlineViewportHeight(el.clientHeight)
+        return true
+      }
+
+      const maxTop = Math.max(0, el.scrollHeight - el.clientHeight)
+      const clampedTop = Math.max(0, Math.min(nextTop, maxTop))
+
+      if (Math.abs(clampedTop - el.scrollTop) > 1) {
+        el.scrollTo({ top: clampedTop, behavior })
+        setOutlineScrollTop(clampedTop)
+      }
+
+      return true
+    },
+    [],
+  )
+
   const removeOutlineItemClasses = useCallback((...classNames: string[]) => {
     if (classNames.length === 0) return
 
@@ -643,6 +864,33 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     [applySingleSyncHighlight],
   )
 
+  const applyPendingLocateHighlight = useCallback(
+    (index: number): boolean => {
+      const pending = pendingLocateHighlightRef.current
+      if (!pending || pending.index !== index || locateHighlightRef.current) {
+        return false
+      }
+
+      const outlineItem = itemRefMap.current.get(index)
+      if (!outlineItem) return false
+
+      outlineItem.classList.add("highlight")
+      const requestId = pending.requestId
+      const timer = setTimeout(() => {
+        outlineItem.classList.remove("highlight")
+        if (pendingLocateHighlightRef.current?.requestId === requestId) {
+          pendingLocateHighlightRef.current = null
+        }
+        manager.clearForceVisible()
+        locateHighlightRef.current = null
+      }, 3000)
+
+      locateHighlightRef.current = { element: outlineItem, timer }
+      return true
+    },
+    [manager],
+  )
+
   const setItemRef = useCallback(
     (index: number, el: HTMLElement | null) => {
       const map = itemRefMap.current
@@ -655,16 +903,18 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         if (index === visibleHighlightRef.current) {
           applySingleSyncHighlight(index)
         }
+        applyPendingLocateHighlight(index)
       } else {
         map.delete(index)
       }
     },
-    [applySingleSyncHighlight],
+    [applyPendingLocateHighlight, applySingleSyncHighlight],
   )
 
   const clearLocateHighlight = useCallback(
     (options?: { clearForceVisible?: boolean }) => {
       locateHighlightRequestIdRef.current += 1
+      pendingLocateHighlightRef.current = null
 
       const current = locateHighlightRef.current
       if (current) {
@@ -707,6 +957,11 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   )
 
   const { parentMap, visibleMap } = visibilityMaps
+  const visibleItems = useMemo(
+    () => flattenVisibleOutlineTree(tree, visibleMap),
+    [tree, visibleMap],
+  )
+  const virtualMetrics = useMemo(() => buildOutlineVirtualMetrics(visibleItems), [visibleItems])
   const outlineSourceOptions = useMemo(
     () => outlineSources.filter((source) => source.available),
     [outlineSources],
@@ -729,6 +984,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   }, [tree, visibleMap])
 
   visibilityMapsRef.current = { parentMap, visibleMap, hasData: tree.length > 0 }
+  virtualMetricsRef.current = virtualMetrics
 
   useEffect(() => {
     const nextVisible = getVisibleHighlightIndex(activeIndexRef.current)
@@ -841,14 +1097,15 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         if (!listContainer) return
 
         const outlineItem = itemRefMap.current.get(visibleIdx) || null
-        if (!outlineItem) return
+        if (!outlineItem) {
+          scrollOutlineNodeIntoView(visibleIdx, "center")
+          return
+        }
 
         const wrapperRect = listContainer.getBoundingClientRect()
         const itemRect = outlineItem.getBoundingClientRect()
         if (itemRect.top < wrapperRect.top || itemRect.bottom > wrapperRect.bottom) {
-          const scrollOffset =
-            itemRect.top - wrapperRect.top - wrapperRect.height / 2 + itemRect.height / 2
-          listContainer.scrollBy({ top: scrollOffset, behavior: "instant" })
+          scrollOutlineNodeIntoView(visibleIdx, "center")
         }
       })
     }
@@ -917,6 +1174,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     tree.length,
     settings?.features?.outline?.followMode,
     getVisibleHighlightIndex,
+    scrollOutlineNodeIntoView,
     updateActiveIndex,
     updateVisibleHighlightIndex,
   ])
@@ -925,15 +1183,34 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   useEffect(() => {
     const el = listRef.current
     if (!el) return
-    const checkScroll = () => {
-      const isAtBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 10
-      setScrollState(isAtBottom ? "top" : "bottom")
+
+    el.addEventListener("scroll", syncOutlineScrollState, { passive: true })
+
+    let resizeObserver: ResizeObserver | null = null
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(syncOutlineScrollState)
+      resizeObserver.observe(el)
     }
-    el.addEventListener("scroll", checkScroll)
+
     // Initial check
-    checkScroll()
-    return () => el.removeEventListener("scroll", checkScroll)
-  }, []) // Empty dependency array as listRef strictly stable
+    syncOutlineScrollState()
+
+    return () => {
+      el.removeEventListener("scroll", syncOutlineScrollState)
+      resizeObserver?.disconnect()
+    }
+  }, [syncOutlineScrollState]) // listRef is stable after mount
+
+  useEffect(() => {
+    const el = listRef.current
+    if (!el) return
+
+    const maxTop = Math.max(0, el.scrollHeight - el.clientHeight)
+    if (el.scrollTop > maxTop) {
+      el.scrollTop = maxTop
+    }
+    syncOutlineScrollState()
+  }, [syncOutlineScrollState, virtualMetrics.totalHeight])
 
   // 用户手动滚动大纲面板时，暂停自动定位（修复 Firefox 滚轮事件传播导致的回弹）
   useEffect(() => {
@@ -1034,12 +1311,6 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       updateVisibleHighlightIndex,
     ],
   )
-
-  const handleCopy = useCallback((e: React.MouseEvent, node: OutlineNode) => {
-    e.stopPropagation()
-    const text = node.text
-    navigator.clipboard.writeText(text)
-  }, [])
 
   const handleCopyFullOutline = useCallback(async () => {
     if (isCopyingFullOutline) return
@@ -1208,31 +1479,40 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     // 3. 展开目标项的所有父级节点
     manager.revealNode(currentItem.index)
     const locateHighlightRequestId = ++locateHighlightRequestIdRef.current
+    pendingLocateHighlightRef.current = {
+      index: currentItem.index,
+      requestId: locateHighlightRequestId,
+    }
 
-    // 4. 延迟滚动和高亮（等待 DOM 更新）
-    setTimeout(() => {
+    // 4. 虚拟列表需要先滚动到目标行，等待该行挂载后再加高亮
+    const tryScrollAndHighlight = (attempt: number) => {
       if (locateHighlightRequestId !== locateHighlightRequestIdRef.current) return
 
-      const listContainer = listRef.current
-      if (!listContainer) return
+      scrollOutlineNodeIntoView(currentItem!.index, "center")
 
-      const outlineItem = listContainer.querySelector(
-        `.outline-item[data-index="${currentItem!.index}"]`,
-      )
-      if (!outlineItem) return
+      requestAnimationFrame(() => {
+        if (locateHighlightRequestId !== locateHighlightRequestIdRef.current) return
 
-      // 滚动大纲面板到该项（居中显示）
-      outlineItem.scrollIntoView({ behavior: "instant", block: "center" })
+        if (applyPendingLocateHighlight(currentItem!.index)) return
 
-      outlineItem.classList.add("highlight")
-      const timer = setTimeout(() => {
-        outlineItem.classList.remove("highlight")
-        manager.clearForceVisible()
-        locateHighlightRef.current = null
-      }, 3000)
-      locateHighlightRef.current = { element: outlineItem, timer }
-    }, 50)
-  }, [tree, searchQuery, manager, clearLocateHighlight])
+        if (attempt < 6) {
+          setTimeout(() => tryScrollAndHighlight(attempt + 1), 50)
+        } else if (pendingLocateHighlightRef.current?.requestId === locateHighlightRequestId) {
+          pendingLocateHighlightRef.current = null
+          manager.clearForceVisible()
+        }
+      })
+    }
+
+    setTimeout(() => tryScrollAndHighlight(0), 50)
+  }, [
+    tree,
+    searchQuery,
+    manager,
+    applyPendingLocateHighlight,
+    clearLocateHighlight,
+    scrollOutlineNodeIntoView,
+  ])
 
   useEffect(
     () => () => {
@@ -1651,24 +1931,18 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
           }
 
           return (
-            <div className="outline-list">
-              {tree
-                .filter((node) => visibleMap[node.index] ?? true)
-                .map((node) => (
-                  <OutlineNodeView
-                    key={node.index}
-                    node={node}
-                    onToggle={handleToggle}
-                    onClick={handleClick}
-                    onCopy={handleCopy}
-                    onToggleBookmark={handleToggleBookmark}
-                    setItemRef={setItemRef}
-                    visibleMap={visibleMap}
-                    searchQuery={searchQuery}
-                    extractUserQueryText={extractUserQueryText}
-                  />
-                ))}
-            </div>
+            <VirtualizedOutlineTree
+              items={visibleItems}
+              metrics={virtualMetrics}
+              scrollTop={outlineScrollTop}
+              viewportHeight={outlineViewportHeight}
+              onToggle={handleToggle}
+              onClick={handleClick}
+              onToggleBookmark={handleToggleBookmark}
+              setItemRef={setItemRef}
+              searchQuery={searchQuery}
+              extractUserQueryText={extractUserQueryText}
+            />
           )
         })()}
       </div>

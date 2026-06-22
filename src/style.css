@@ -513,6 +513,27 @@
   gap: 2px;
 }
 
+.outline-list-virtual {
+  display: block;
+  gap: 0;
+  min-height: 100%;
+}
+
+.outline-virtual-row {
+  width: 100%;
+}
+
+.outline-list-virtual .outline-item {
+  height: var(--gh-outline-item-height, 38px);
+  min-height: var(--gh-outline-item-height, 38px);
+  box-sizing: border-box;
+}
+
+.outline-list-virtual .outline-item.user-query-node {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 .outline-empty-state {
   min-height: 140px;
   padding: 26px 12px 22px;
