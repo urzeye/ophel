@@ -100,6 +100,10 @@ export class OutlineManager {
   // 防止 refresh 期间书签更新触发循环调用
   private isRefreshing: boolean = false
 
+  // Global refresh debounce (防止多处同时触发时的重复执行)
+  private refreshDebounceTimer: ReturnType<typeof setTimeout> | null = null
+  private readonly REFRESH_DEBOUNCE_MS = 300
+
   // Bookmark store subscription
   private unsubscribeBookmarks: (() => void) | null = null
 
@@ -221,7 +225,7 @@ export class OutlineManager {
     this.observer.observe(observeTarget, {
       childList: true,
       subtree: true,
-      characterData: true,
+      characterData: false, // 关闭文本变化监听，只监听 DOM 节点的增删，避免 AI 生成时每个字符都触发
     })
   }
 
@@ -233,6 +237,11 @@ export class OutlineManager {
     if (this.updateDebounceTimer) {
       clearTimeout(this.updateDebounceTimer)
       this.updateDebounceTimer = null
+    }
+    // 清理全局 refresh 防抖 timer
+    if (this.refreshDebounceTimer) {
+      clearTimeout(this.refreshDebounceTimer)
+      this.refreshDebounceTimer = null
     }
     this.isAutoUpdating = false
   }
@@ -692,12 +701,20 @@ export class OutlineManager {
   refresh(overrideLevel?: number) {
     if (!this.settings.enabled || this.isRefreshing) return
 
-    this.isRefreshing = true
-    try {
-      this._doRefresh(overrideLevel)
-    } finally {
-      this.isRefreshing = false
+    // 全局防抖：300ms 内的多次 refresh 调用合并为一次
+    if (this.refreshDebounceTimer) {
+      clearTimeout(this.refreshDebounceTimer)
     }
+
+    this.refreshDebounceTimer = setTimeout(() => {
+      this.refreshDebounceTimer = null
+      this.isRefreshing = true
+      try {
+        this._doRefresh(overrideLevel)
+      } finally {
+        this.isRefreshing = false
+      }
+    }, this.REFRESH_DEBOUNCE_MS)
   }
 
   /**
