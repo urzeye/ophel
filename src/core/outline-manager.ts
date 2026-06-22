@@ -758,8 +758,9 @@ export class OutlineManager {
     this.notify()
     // 几次延迟 refresh：覆盖站点从慢到快的 DOM 渲染节奏
     // 所有 refresh 都延迟执行，避免扫描到旧 DOM
+    // 使用 immediate=true 避免被防抖合并，确保每个探测都能执行
     for (const delay of [80, 250, 600, 1200]) {
-      setTimeout(() => this.refresh(), delay)
+      setTimeout(() => this.refresh(undefined, true), delay)
     }
   }
 
