@@ -238,11 +238,8 @@ export class OutlineManager {
       clearTimeout(this.updateDebounceTimer)
       this.updateDebounceTimer = null
     }
-    // 清理全局 refresh 防抖 timer
-    if (this.refreshDebounceTimer) {
-      clearTimeout(this.refreshDebounceTimer)
-      this.refreshDebounceTimer = null
-    }
+    // 注意：不清理 refreshDebounceTimer，因为它可能是由其他路径触发的
+    // （例如设置更新、书签变化等），清理会导致这些 refresh 丢失
     this.isAutoUpdating = false
   }
 
@@ -321,7 +318,7 @@ export class OutlineManager {
 
     // 记录当前 treeKey 用于检测变化
     const oldTreeKey = this.treeKey
-    this.refresh()
+    this.refresh(undefined, true) // immediate = true，确保 fallback 检测逻辑正常工作
 
     // 兜底方案：检测内容变化
     if (this.treeKey !== oldTreeKey) {
@@ -698,8 +695,25 @@ export class OutlineManager {
   }
 
   // Adjusted refresh signature
-  refresh(overrideLevel?: number) {
+  refresh(overrideLevel?: number, immediate = false) {
     if (!this.settings.enabled || this.isRefreshing) return
+
+    // immediate = true: 立即执行（用于 fallback 检测和路由切换）
+    // immediate = false: 防抖执行（用于书签、设置变更等）
+    if (immediate) {
+      // 取消待执行的防抖 refresh
+      if (this.refreshDebounceTimer) {
+        clearTimeout(this.refreshDebounceTimer)
+        this.refreshDebounceTimer = null
+      }
+      this.isRefreshing = true
+      try {
+        this._doRefresh(overrideLevel)
+      } finally {
+        this.isRefreshing = false
+      }
+      return
+    }
 
     // 全局防抖：300ms 内的多次 refresh 调用合并为一次
     if (this.refreshDebounceTimer) {
@@ -708,6 +722,8 @@ export class OutlineManager {
 
     this.refreshDebounceTimer = setTimeout(() => {
       this.refreshDebounceTimer = null
+      // 再次检查 enabled 状态（可能在等待期间被禁用）
+      if (!this.settings.enabled || this.isRefreshing) return
       this.isRefreshing = true
       try {
         this._doRefresh(overrideLevel)
@@ -724,6 +740,12 @@ export class OutlineManager {
    * 立即 refresh 抓到的还是旧 DOM，所以排几个延迟点）。
    */
   handleUrlChange(): void {
+    // 取消所有待执行的 refresh（包括防抖的），避免旧路由的 refresh 在新路由渲染后触发
+    if (this.refreshDebounceTimer) {
+      clearTimeout(this.refreshDebounceTimer)
+      this.refreshDebounceTimer = null
+    }
+
     this.tree = []
     this.flatItems = []
     this.flatNodes = []
@@ -735,7 +757,9 @@ export class OutlineManager {
     this.levelCounts = {}
     this.notify()
     // 几次延迟 refresh：覆盖站点从慢到快的 DOM 渲染节奏
-    for (const delay of [80, 250, 600, 1200]) {
+    // 第一次立即执行，避免被防抖合并
+    this.refresh(undefined, true)
+    for (const delay of [250, 600, 1200]) {
       setTimeout(() => this.refresh(), delay)
     }
   }
