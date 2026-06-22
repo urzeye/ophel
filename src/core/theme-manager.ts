@@ -384,31 +384,23 @@ export class ThemeManager {
     const style = document.createElement("style")
     style.id = "gh-global-styles"
     style.textContent = `
-      /* 禁用默认的 root 快照动画，避免捕获整个页面内容 */
       ::view-transition-old(root),
-      ::view-transition-new(root) {
-        animation: none;
-        mix-blend-mode: normal;
-      }
-
-      /* 仅对 body 元素应用圆形扩散动画（仅在支持的站点） */
+      ::view-transition-new(root),
       ::view-transition-old(gh-page),
       ::view-transition-new(gh-page) {
         animation: none;
         mix-blend-mode: normal;
       }
 
-      ::view-transition-new(gh-page) {
+      ::view-transition-new(gh-page),
+      ::view-transition-new(root) {
         clip-path: circle(0px at var(--theme-x, 50%) var(--theme-y, 50%));
       }
 
       /*
-       * 关键修复：排除所有可见内容，只保留颜色过渡
-       * 这样可以避免在动画期间看到旧主题页面内容的快照
+       * 防止 Ophel 自己的 UI 组件被捕获到快照中
+       * 不排除宿主页面内容，因为那样会破坏站点自己的 View Transitions
        */
-      html,
-      body,
-      body > *:not(plasmo-csui):not(#ophel-userscript-root),
       #gh-toast,
       .gh-magic-codex-popover,
       .loading-overlay,
@@ -416,7 +408,8 @@ export class ThemeManager {
       .gh-settings-overlay,
       .gh-main-panel,
       .gh-main-panel::before,
-      .gh-main-panel::after {
+      .gh-main-panel::after,
+      .quick-btn-group {
         view-transition-name: none;
       }
     `
@@ -960,72 +953,43 @@ ${cssVars}
   }
 
   /**
-   * 准备 View Transition 快照目标，排除不应该参与动画的元素。
+   * 准备 View Transition 快照目标，在动画期间临时隐藏宿主页面内容。
    *
-   * 核心问题：View Transitions API 默认会捕获整个页面，导致旧主题的页面内容
+   * 核心问题：View Transitions API 会捕获整个页面，导致旧主题的页面内容
    * （如 Gemini 的侧边栏、欢迎文字等）在动画期间短暂可见。
    *
-   * 解决方案：
-   * 1. 排除所有宿主页面内容（body > *），只保留背景色过渡
-   * 2. 排除 Ophel 的 UI 组件（面板、快捷按钮等）
-   * 3. 这样动画只影响页面背景色，不会出现内容快照闪现
+   * 解决方案：在动画期间临时将宿主页面内容设置为 opacity: 0，
+   * 动画完成后立即恢复，这样既保留了动画效果，又避免了内容闪现。
    */
   private prepareTransitionSnapshotTarget(): { pseudoElement: string; cleanup: () => void } {
-    const hiddenElements: Array<{ element: HTMLElement; originalTransitionName: string }> = []
+    const hiddenElements: Array<{
+      element: HTMLElement
+      originalOpacity: string
+      originalTransition: string
+    }> = []
 
-    // 排除所有宿主页面的直接子元素（排除 Ophel 容器）
+    // 临时隐藏所有宿主页面的直接子元素（排除 Ophel 容器）
     const bodyChildren = Array.from(document.body.children).filter(
       (el) => el.tagName.toLowerCase() !== "plasmo-csui" && el.id !== "ophel-userscript-root",
     ) as HTMLElement[]
 
     bodyChildren.forEach((el) => {
-      const originalName = el.style.getPropertyValue("view-transition-name")
-      el.style.setProperty("view-transition-name", "none", "important")
-      hiddenElements.push({ element: el, originalTransitionName: originalName })
-    })
-
-    // 排除 Ophel 自己的 UI 组件
-    const ophelSelectors = [
-      "#gh-toast",
-      ".gh-magic-codex-popover",
-      ".loading-overlay",
-      ".gh-disclaimer-overlay",
-      ".gh-settings-overlay",
-      ".gh-main-panel",
-      ".quick-btn-group",
-    ]
-
-    const searchRoots: Array<Document | ShadowRoot> = [document]
-    document.querySelectorAll("plasmo-csui, #ophel-userscript-root").forEach((host) => {
-      if (host.shadowRoot) {
-        searchRoots.push(host.shadowRoot)
-      }
-    })
-
-    searchRoots.forEach((root) => {
-      ophelSelectors.forEach((selector) => {
-        const elements = root.querySelectorAll(selector)
-        elements.forEach((el) => {
-          if (el instanceof HTMLElement) {
-            const originalName = el.style.getPropertyValue("view-transition-name")
-            el.style.setProperty("view-transition-name", "none", "important")
-            hiddenElements.push({ element: el, originalTransitionName: originalName })
-          }
-        })
-      })
+      const originalOpacity = el.style.opacity
+      const originalTransition = el.style.transition
+      // 立即隐藏，不要过渡动画
+      el.style.transition = "none"
+      el.style.opacity = "0"
+      hiddenElements.push({ element: el, originalOpacity, originalTransition })
     })
 
     const cleanup = () => {
-      hiddenElements.forEach(({ element, originalTransitionName }) => {
-        if (originalTransitionName) {
-          element.style.setProperty("view-transition-name", originalTransitionName)
-        } else {
-          element.style.removeProperty("view-transition-name")
-        }
+      // 恢复原始状态
+      hiddenElements.forEach(({ element, originalOpacity, originalTransition }) => {
+        element.style.transition = originalTransition
+        element.style.opacity = originalOpacity
       })
     }
 
-    // 对于所有站点，使用简化的 root 动画（不需要特殊的 gh-page 命名）
     return {
       pseudoElement: "::view-transition-new(root)",
       cleanup,
