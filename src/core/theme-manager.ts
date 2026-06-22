@@ -396,6 +396,11 @@ export class ThemeManager {
       ::view-transition-new(root) {
         clip-path: circle(0px at var(--theme-x, 50%) var(--theme-y, 50%));
       }
+
+      :root[data-gh-theme-transition="to-dark"]::view-transition-old(root),
+      :root[data-gh-theme-transition="to-dark"]::view-transition-old(gh-page) {
+        filter: brightness(0.18) saturate(0.85);
+      }
     `
     document.head.appendChild(style)
   }
@@ -963,8 +968,28 @@ ${cssVars}
     }
   }
 
+  private prepareTransitionVisualState(targetMode: ThemeMode): () => void {
+    const root = document.documentElement
+    const previousState = root.dataset.ghThemeTransition
+
+    if (targetMode === "dark") {
+      root.dataset.ghThemeTransition = "to-dark"
+    } else {
+      delete root.dataset.ghThemeTransition
+    }
+
+    return () => {
+      if (previousState) {
+        root.dataset.ghThemeTransition = previousState
+      } else {
+        delete root.dataset.ghThemeTransition
+      }
+    }
+  }
+
   private async applyWithTransition(
     action: () => void,
+    targetMode: ThemeMode,
     event?: ThemeTransitionOrigin,
   ): Promise<boolean> {
     const { x, y } = this.getTransitionOrigin(event)
@@ -985,6 +1010,7 @@ ${cssVars}
     }
 
     const transitionTarget = this.prepareTransitionSnapshotTarget()
+    const cleanupVisualState = this.prepareTransitionVisualState(targetMode)
 
     try {
       const transition = document.startViewTransition(() => {
@@ -1019,11 +1045,13 @@ ${cssVars}
       })
     } catch {
       action()
+      cleanupVisualState()
       transitionTarget.cleanup()
       this.startThemeMonitoring()
       return false
     }
 
+    cleanupVisualState()
     transitionTarget.cleanup()
     this.skipNextDetection = true
     this.startThemeMonitoring()
@@ -1095,6 +1123,7 @@ ${cssVars}
     }
 
     const transitionTarget = this.prepareTransitionSnapshotTarget()
+    const cleanupVisualState = this.prepareTransitionVisualState(nextMode)
 
     let transition: ViewTransition
     try {
@@ -1103,6 +1132,7 @@ ${cssVars}
         doToggle()
       })
     } catch {
+      cleanupVisualState()
       transitionTarget.cleanup()
       doToggle()
       this.mode = nextMode
@@ -1145,6 +1175,7 @@ ${cssVars}
       // 忽略动画错误
     })
 
+    cleanupVisualState()
     transitionTarget.cleanup()
 
     // 标记跳过下一次检测，防止 observer 立即根据中间态把结果回写掉
@@ -1195,9 +1226,13 @@ ${cssVars}
       const shouldAnimate = Boolean(event) && modeChanged
       let animated = false
       if (shouldAnimate) {
-        animated = await this.applyWithTransition(() => {
-          this.syncHostTheme(resolved, "system")
-        }, event)
+        animated = await this.applyWithTransition(
+          () => {
+            this.syncHostTheme(resolved, "system")
+          },
+          resolved,
+          event,
+        )
       } else {
         this.syncHostTheme(resolved, "system")
       }
