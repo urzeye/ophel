@@ -1,7 +1,7 @@
 import type { OutlineItem, OutlineSource, SiteAdapter } from "~adapters/base"
 import { SITE_IDS } from "~constants"
 import type { Settings } from "~utils/storage"
-import { useBookmarkStore } from "~stores/bookmarks-store"
+import { useBookmarkStore, type Bookmark } from "~stores/bookmarks-store"
 import { useSettingsStore } from "~stores/settings-store"
 import { showToast } from "~utils/toast"
 import { t } from "~utils/i18n"
@@ -783,16 +783,24 @@ export class OutlineManager {
     this.ghostBookmarkIds = new Set()
 
     if (bookmarks.length > 0) {
-      // 1. Mark matched nodes
-      // Create a map for fast lookup? No, signature might collision if simple.
-      // Signatures are unique enough.
-
+      const bookmarkById = new Map(bookmarks.map((bookmark) => [bookmark.id, bookmark]))
+      const bookmarksBySignature = new Map<string, Map<string, Bookmark>>()
+      bookmarks.forEach((bookmark) => {
+        let bookmarksByTitle = bookmarksBySignature.get(bookmark.signature)
+        if (!bookmarksByTitle) {
+          bookmarksByTitle = new Map()
+          bookmarksBySignature.set(bookmark.signature, bookmarksByTitle)
+        }
+        // Preserve Array.find semantics if duplicate bookmarks share signature + title.
+        if (!bookmarksByTitle.has(bookmark.title)) {
+          bookmarksByTitle.set(bookmark.title, bookmark)
+        }
+      })
       const unmatchedBookmarkIds = new Set(bookmarks.map((b) => b.id))
 
       outlineData.forEach((item) => {
         const signature = this.generateSignature(item)
-        // Find matching bookmark
-        const bookmark = bookmarks.find((b) => b.signature === signature && b.title === item.text)
+        const bookmark = bookmarksBySignature.get(signature)?.get(item.text)
 
         if (bookmark) {
           ;(item as OutlineNode).isBookmarked = true
@@ -812,7 +820,7 @@ export class OutlineManager {
 
       // 收集幽灵
       unmatchedBookmarkIds.forEach((bid) => {
-        const bookmark = bookmarks.find((b) => b.id === bid)
+        const bookmark = bookmarkById.get(bid)
         if (bookmark) {
           if (!ghostCandidates[bookmark.title]) ghostCandidates[bookmark.title] = []
           ghostCandidates[bookmark.title].push(bookmark.id)
@@ -861,7 +869,7 @@ export class OutlineManager {
       // 2. Insert Ghost Nodes
       const ghosts: OutlineItem[] = []
       unmatchedBookmarkIds.forEach((bid) => {
-        const bookmark = bookmarks.find((b) => b.id === bid)
+        const bookmark = bookmarkById.get(bid)
         if (bookmark) {
           // 过滤：如果是 0 级节点（用户提问）且不展示用户提问，跳过
           if (bookmark.level === 0 && !this.settings.showUserQueries) {

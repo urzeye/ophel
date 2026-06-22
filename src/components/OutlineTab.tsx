@@ -203,7 +203,7 @@ const getConversationCopyHeadingLevel = (expandLevel: number, showUserQueries: b
 }
 
 // 递归渲染大纲树节点
-// 使用 outline-hidden 类而非条件渲染
+// 不可见节点不进入 DOM，避免长对话下折叠/过滤节点占用渲染成本
 const OutlineNodeView: React.FC<{
   node: OutlineNode
   onToggle: (node: OutlineNode) => void
@@ -231,51 +231,6 @@ const OutlineNodeView: React.FC<{
   const isExpanded = hasChildren && !node.collapsed
 
   const shouldShow = visibleMap[node.index] ?? true
-
-  // ===== CSS 类名 (Legacy exact) =====
-  const itemClassName = [
-    "outline-item",
-    `outline-level-${node.relativeLevel}`,
-    node.isUserQuery ? "user-query-node" : "",
-    node.isGhost ? "ghost-node" : "", // Add ghost styling class
-    !shouldShow ? "outline-hidden" : "",
-  ]
-    .filter(Boolean)
-    .join(" ")
-
-  // ===== 搜索高亮处理 (Legacy: regex split) =====
-  const renderTextWithHighlight = () => {
-    if (searchQuery && node.isMatch) {
-      try {
-        const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-        const regex = new RegExp(`(${escapedQuery})`, "gi")
-        const parts = node.text.split(regex)
-        return (
-          <>
-            {parts.map((part, i) =>
-              part.toLowerCase() === searchQuery.toLowerCase() ? (
-                <mark
-                  key={i}
-                  style={{
-                    backgroundColor: "var(--gh-search-highlight-bg)",
-                    color: "inherit",
-                    padding: 0,
-                    borderRadius: "2px",
-                  }}>
-                  {part}
-                </mark>
-              ) : (
-                part
-              ),
-            )}
-          </>
-        )
-      } catch {
-        return node.text
-      }
-    }
-    return node.text
-  }
 
   // ===== 复制处理 (阻止冒泡) =====
   const [copySuccess, setCopySuccess] = useState(false)
@@ -328,6 +283,54 @@ const OutlineNodeView: React.FC<{
   // ===== 状态控制：鼠标悬停在操作按钮时不显示主 Tooltip =====
   const [isHoveringAction, setIsHoveringAction] = useState(false)
 
+  if (!shouldShow) {
+    return null
+  }
+
+  // ===== CSS 类名 (Legacy exact) =====
+  const itemClassName = [
+    "outline-item",
+    `outline-level-${node.relativeLevel}`,
+    node.isUserQuery ? "user-query-node" : "",
+    node.isGhost ? "ghost-node" : "", // Add ghost styling class
+  ]
+    .filter(Boolean)
+    .join(" ")
+
+  // ===== 搜索高亮处理 (Legacy: regex split) =====
+  const renderTextWithHighlight = () => {
+    if (searchQuery && node.isMatch) {
+      try {
+        const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+        const regex = new RegExp(`(${escapedQuery})`, "gi")
+        const parts = node.text.split(regex)
+        return (
+          <>
+            {parts.map((part, i) =>
+              part.toLowerCase() === searchQuery.toLowerCase() ? (
+                <mark
+                  key={i}
+                  style={{
+                    backgroundColor: "var(--gh-search-highlight-bg)",
+                    color: "inherit",
+                    padding: 0,
+                    borderRadius: "2px",
+                  }}>
+                  {part}
+                </mark>
+              ) : (
+                part
+              ),
+            )}
+          </>
+        )
+      } catch {
+        return node.text
+      }
+    }
+    return node.text
+  }
+
   return (
     <>
       <Tooltip
@@ -345,7 +348,6 @@ const OutlineNodeView: React.FC<{
         }
         disabled={isHoveringAction}
         triggerStyle={{ width: "100%", display: "block" }}
-        triggerClassName={!shouldShow ? "outline-hidden" : ""}
         delay={500}>
         <div
           className={itemClassName}
@@ -416,22 +418,24 @@ const OutlineNodeView: React.FC<{
         </div>
       </Tooltip>
 
-      {/* 子节点 (始终渲染) */}
+      {/* 子节点只渲染 visibleMap 判定可见的分支 */}
       {hasChildren &&
-        node.children.map((child, idx) => (
-          <OutlineNodeView
-            key={`${child.level}-${child.text}-${idx}`}
-            node={child}
-            onToggle={onToggle}
-            onClick={onClick}
-            onCopy={onCopy}
-            onToggleBookmark={onToggleBookmark}
-            setItemRef={setItemRef}
-            visibleMap={visibleMap}
-            searchQuery={searchQuery}
-            extractUserQueryText={extractUserQueryText}
-          />
-        ))}
+        node.children
+          .filter((child) => visibleMap[child.index] ?? true)
+          .map((child) => (
+            <OutlineNodeView
+              key={child.index}
+              node={child}
+              onToggle={onToggle}
+              onClick={onClick}
+              onCopy={onCopy}
+              onToggleBookmark={onToggleBookmark}
+              setItemRef={setItemRef}
+              visibleMap={visibleMap}
+              searchQuery={searchQuery}
+              extractUserQueryText={extractUserQueryText}
+            />
+          ))}
     </>
   )
 }
@@ -1648,20 +1652,22 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
           return (
             <div className="outline-list">
-              {tree.map((node, idx) => (
-                <OutlineNodeView
-                  key={`${node.level}-${node.text}-${idx}`}
-                  node={node}
-                  onToggle={handleToggle}
-                  onClick={handleClick}
-                  onCopy={handleCopy}
-                  onToggleBookmark={handleToggleBookmark}
-                  setItemRef={setItemRef}
-                  visibleMap={visibleMap}
-                  searchQuery={searchQuery}
-                  extractUserQueryText={extractUserQueryText}
-                />
-              ))}
+              {tree
+                .filter((node) => visibleMap[node.index] ?? true)
+                .map((node) => (
+                  <OutlineNodeView
+                    key={node.index}
+                    node={node}
+                    onToggle={handleToggle}
+                    onClick={handleClick}
+                    onCopy={handleCopy}
+                    onToggleBookmark={handleToggleBookmark}
+                    setItemRef={setItemRef}
+                    visibleMap={visibleMap}
+                    searchQuery={searchQuery}
+                    extractUserQueryText={extractUserQueryText}
+                  />
+                ))}
             </div>
           )
         })()}
