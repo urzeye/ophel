@@ -90,6 +90,7 @@ PR #683 已合并，方向是正确的：大纲面板从“按全部可见节点
 - 生成完成补刷：`executeAutoUpdate()` 通过 `siteAdapter.isGenerating()` 识别 `wasGenerating -> !isGenerating`，延迟 500ms 强制清空 `treeKey` 并刷新，保证最终 DOM 稳定后重建大纲。
 - 切走后的补刷：如果生成完成补刷触发时大纲 Tab 已不 active，当前代码会设置 `pendingPostGenerationRefresh`，下次 `setActive(true)` 再刷新。但这只覆盖“observer 曾经 active 并捕获到生成状态”的场景，不能替代激活刷新。
 - 显式事件：保留 `ophel:refreshOutline`、设置变更、source 切换、书签变化、动态 source signature 变化等直接刷新入口。
+- 页内收藏图标：`InlineBookmarkManager` 自己的 DOM observer 继续工作，候选源由 `adapter.getInlineBookmarkItems()` 直接返回当前 DOM 中 connected 的标题和用户提问，不依赖大纲 Tab 关闭期间可能 stale 的 `outlineManager.getFlatItems()`。
 - 全局搜索：#685 后不应依赖全局搜索 1200ms 轮询来维持大纲新鲜度；搜索只消费 outline manager 的事件或索引版本。
 
 建议：

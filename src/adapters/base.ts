@@ -1116,14 +1116,12 @@ export abstract class SiteAdapter {
   }
 
   /**
-   * 返回只用于页内收藏图标的额外候选项。
-   * 页内收藏需要独立于大纲面板的 showUserQueries 过滤。
-   * 默认复用站点自身的大纲抽取逻辑，以保持用户提问的文本、ID 和签名一致。
+   * 返回只用于页内收藏图标的当前 DOM 候选项。
+   * 页内收藏运行时不依赖大纲 Tab 是否激活，因此这里直接复用站点自身的大纲抽取逻辑，
+   * 为 inline observer 提供新生成的标题和用户提问候选。
    */
   getInlineBookmarkItems(): OutlineItem[] {
-    return this.extractOutline(6, true, false).filter(
-      (item) => item.isUserQuery && item.element?.isConnected,
-    )
+    return this.extractOutline(6, true, false).filter((item) => item.element?.isConnected)
   }
 
   /**
