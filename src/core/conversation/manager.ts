@@ -907,6 +907,9 @@ export class ConversationManager {
     const folderId = targetFolderId || this.lastUsedFolderId || "inbox"
     const store = getConversationsStore()
     const sidebarIds = new Set(sidebarItems.map((item) => item.id))
+    const upserts: Conversation[] = []
+    const updateEntries: Array<{ id: string; updates: Partial<Conversation> }> = []
+    const deleteIds: string[] = []
 
     sidebarItems.forEach((item) => {
       const storageKey = item.id
@@ -938,12 +941,12 @@ export class ConversationManager {
         }
 
         if (needsUpdate) {
-          store.updateConversation(storageKey, updates)
+          updateEntries.push({ id: storageKey, updates })
           updatedCount++
         }
       } else {
         // 新会话
-        store.addConversation({
+        upserts.push({
           id: item.id,
           siteId: this.siteAdapter.getSiteId(),
           cid: item.cid,
@@ -967,15 +970,17 @@ export class ConversationManager {
         if (!this.matchesCid(conv, currentCid)) return
         if (sidebarIds.has(id)) return
 
-        store.deleteConversation(id)
+        deleteIds.push(id)
         deletedCount++
       })
     }
 
-    // 记住用户选择
-    if (targetFolderId) {
-      store.setLastUsedFolderId(targetFolderId)
-    }
+    store.applyConversationChanges({
+      upserts,
+      updates: updateEntries,
+      deleteIds,
+      lastUsedFolderId: targetFolderId || undefined,
+    })
 
     return { newCount, updatedCount, deletedCount }
   }

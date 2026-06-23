@@ -13,6 +13,18 @@ import { chromeStorageAdapter } from "./chrome-adapter"
 
 // ==================== Store 类型定义 ====================
 
+interface ConversationUpdateEntry {
+  id: string
+  updates: Partial<Conversation>
+}
+
+interface ConversationBatchChanges {
+  upserts?: Conversation[]
+  updates?: ConversationUpdateEntry[]
+  deleteIds?: string[]
+  lastUsedFolderId?: string
+}
+
 interface ConversationsState {
   // 状态
   conversations: Record<string, Conversation>
@@ -23,6 +35,7 @@ interface ConversationsState {
   addConversation: (conv: Conversation) => void
   updateConversation: (id: string, updates: Partial<Conversation>) => void
   deleteConversation: (id: string) => void
+  applyConversationChanges: (changes: ConversationBatchChanges) => void
   moveToFolder: (id: string, folderId: string) => void
   togglePin: (id: string) => boolean
   setConversationTags: (id: string, tagIds: string[]) => void
@@ -66,6 +79,51 @@ export const useConversationsStore = create<ConversationsState>()(
           set((state) => {
             const { [id]: _, ...rest } = state.conversations
             return { conversations: rest }
+          }),
+
+        applyConversationChanges: ({ upserts, updates, deleteIds, lastUsedFolderId }) =>
+          set((state) => {
+            let conversations = state.conversations
+            let changed = false
+            const updatedAt = Date.now()
+
+            const ensureWritableConversations = () => {
+              if (conversations === state.conversations) {
+                conversations = { ...state.conversations }
+              }
+              return conversations
+            }
+
+            deleteIds?.forEach((id) => {
+              if (!conversations[id]) return
+              const nextConversations = ensureWritableConversations()
+              delete nextConversations[id]
+              changed = true
+            })
+
+            updates?.forEach(({ id, updates: conversationUpdates }) => {
+              const existing = conversations[id]
+              if (!existing) return
+              const nextConversations = ensureWritableConversations()
+              nextConversations[id] = { ...existing, ...conversationUpdates, updatedAt }
+              changed = true
+            })
+
+            upserts?.forEach((conversation) => {
+              const nextConversations = ensureWritableConversations()
+              nextConversations[conversation.id] = conversation
+              changed = true
+            })
+
+            const nextState: Partial<ConversationsState> = {}
+            if (changed) {
+              nextState.conversations = conversations
+            }
+            if (lastUsedFolderId && lastUsedFolderId !== state.lastUsedFolderId) {
+              nextState.lastUsedFolderId = lastUsedFolderId
+            }
+
+            return Object.keys(nextState).length > 0 ? nextState : state
           }),
 
         moveToFolder: (id, folderId) =>
