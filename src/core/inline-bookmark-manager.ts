@@ -15,6 +15,11 @@ import { createSVGElement } from "~utils/icons"
 // 显示模式
 export type InlineBookmarkDisplayMode = "always" | "hover" | "hidden"
 
+interface InlineBookmarkCandidate {
+  item: OutlineItem
+  sourceId: string
+}
+
 // 图标容器的 class 名
 const ICON_CLASS = "gh-inline-bookmark"
 const ICON_BOOKMARKED_CLASS = "gh-inline-bookmark--bookmarked"
@@ -209,12 +214,11 @@ export class InlineBookmarkManager {
       return
     }
 
-    const flatItems = this.getInlineBookmarkItems()
-    const sessionId = this.adapter.getSessionId()
+    const candidates = this.getInlineBookmarkItems()
     const bookmarkStore = useBookmarkStore.getState()
 
-    for (let idx = 0; idx < flatItems.length; idx++) {
-      const item = flatItems[idx]
+    for (let idx = 0; idx < candidates.length; idx++) {
+      const { item, sourceId } = candidates[idx]
       if (!item.element || !item.element.isConnected) continue
 
       const element = item.element as HTMLElement
@@ -226,7 +230,8 @@ export class InlineBookmarkManager {
       }
 
       // 生成签名和检查是否已收藏
-      const signature = this.outlineManager.getSignature(item)
+      const sessionId = this.outlineManager.getBookmarkSessionId(sourceId)
+      const signature = this.outlineManager.getSignature(item, sourceId)
       const isBookmarked = bookmarkStore.getBookmarkId(sessionId, signature) !== null
 
       // 2. 注入图标。虚拟滚动可能复用 DOM 元素承载不同消息，
@@ -235,7 +240,8 @@ export class InlineBookmarkManager {
       if (
         existingIcon &&
         this.injectedSignatures.get(element) === signature &&
-        existingIcon.dataset.signature === signature
+        existingIcon.dataset.signature === signature &&
+        existingIcon.dataset.sourceId === sourceId
       ) {
         continue
       }
@@ -257,13 +263,14 @@ export class InlineBookmarkManager {
 
       // 数据与事件
       iconWrapper.dataset.signature = signature
+      iconWrapper.dataset.sourceId = sourceId
       iconWrapper.dataset.level = String(item.level)
       iconWrapper.dataset.text = item.text
 
       iconWrapper.addEventListener("click", (e) => {
         e.stopPropagation()
         e.preventDefault()
-        this.handleBookmarkClick(item, signature, iconWrapper)
+        this.handleBookmarkClick(item, sourceId, signature, iconWrapper)
       })
 
       element.insertBefore(iconWrapper, element.firstChild)
@@ -297,22 +304,22 @@ export class InlineBookmarkManager {
     }, 120)
   }
 
-  private getInlineBookmarkItems(): OutlineItem[] {
-    const items: OutlineItem[] = []
+  private getInlineBookmarkItems(): InlineBookmarkCandidate[] {
+    const items: InlineBookmarkCandidate[] = []
     const seenElements = new Set<Element>()
 
-    const pushItems = (candidates: OutlineItem[]) => {
+    const pushItems = (candidates: OutlineItem[], sourceId: string) => {
       candidates.forEach((item) => {
         const element = item.element
         if (!element || seenElements.has(element)) return
 
         seenElements.add(element)
-        items.push(item)
+        items.push({ item, sourceId })
       })
     }
 
-    pushItems(this.adapter.getInlineBookmarkItems())
-    pushItems(this.outlineManager.getFlatItems())
+    pushItems(this.adapter.getInlineBookmarkItems(), "conversation")
+    pushItems(this.outlineManager.getFlatItems(), this.outlineManager.getActiveSourceId())
 
     return items
   }
@@ -352,13 +359,18 @@ export class InlineBookmarkManager {
   /**
    * 处理书签点击
    */
-  private handleBookmarkClick(item: OutlineItem, signature: string, _iconWrapper: HTMLElement) {
+  private handleBookmarkClick(
+    item: OutlineItem,
+    sourceId: string,
+    signature: string,
+    _iconWrapper: HTMLElement,
+  ) {
     const bookmarkStore = useBookmarkStore.getState()
-    const sessionId = this.adapter.getSessionId()
+    const sessionId = this.outlineManager.getBookmarkSessionId(sourceId)
     const siteId = this.adapter.getSiteId()
     const cid = this.adapter.getCurrentCid() || ""
 
-    const scrollContainer = this.outlineManager.getScrollContainer()
+    const scrollContainer = this.adapter.getOutlineScrollContainer(sourceId)
     const scrollTop = (item.element as HTMLElement).offsetTop + (scrollContainer?.scrollTop || 0)
 
     bookmarkStore.toggleBookmark(sessionId, siteId, cid, item, signature, scrollTop)
@@ -374,7 +386,6 @@ export class InlineBookmarkManager {
     }
 
     const bookmarkStore = useBookmarkStore.getState()
-    const sessionId = this.adapter.getSessionId()
 
     const icons = DOMToolkit.query(`.${ICON_CLASS}`, {
       all: true,
@@ -384,8 +395,10 @@ export class InlineBookmarkManager {
     icons.forEach((iconWrapper) => {
       const wrapper = iconWrapper as HTMLElement
       const signature = wrapper.dataset.signature
+      const sourceId = wrapper.dataset.sourceId || "conversation"
       if (!signature) return
 
+      const sessionId = this.outlineManager.getBookmarkSessionId(sourceId)
       const isBookmarked = bookmarkStore.getBookmarkId(sessionId, signature) !== null
       const hasClass = wrapper.classList.contains(ICON_BOOKMARKED_CLASS)
 

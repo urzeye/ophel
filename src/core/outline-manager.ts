@@ -160,7 +160,7 @@ export class OutlineManager {
   // 根据条件启动/停止自动更新
   private updateAutoUpdateState() {
     // 只有当：大纲功能开启 AND 自动更新开启 AND Tab 处于激活状态 时才启用 Observer
-    const shouldEnable = this.settings.enabled && this.settings.autoUpdate && this.isActive
+    const shouldEnable = this.shouldEnableAutoUpdate()
 
     // 避免不必要的 start/stop：只有状态需要变化时才操作
     if (shouldEnable && !this.isAutoUpdating) {
@@ -197,6 +197,7 @@ export class OutlineManager {
   private sourceObserver: MutationObserver | null = null
   private sourceRefreshTimer: ReturnType<typeof setTimeout> | null = null
   private outlineSourcesSignature: string = ""
+  private routeChangeVersion = 0
 
   private handleMessage(event: MessageEvent) {
     if (event.source !== window) return
@@ -215,8 +216,12 @@ export class OutlineManager {
     }
   }
 
+  private shouldEnableAutoUpdate(): boolean {
+    return this.settings.enabled && this.settings.autoUpdate && this.isActive
+  }
+
   private startAutoUpdate() {
-    if (this.observer) return
+    if (this.observer || !this.shouldEnableAutoUpdate()) return
 
     this.isAutoUpdating = true
 
@@ -385,10 +390,10 @@ export class OutlineManager {
     return nextKey !== currentKey
   }
 
-  private getBookmarkSessionId(): string {
+  getBookmarkSessionId(sourceId = this.activeSourceId): string {
     const sessionId = this.siteAdapter.getSessionId()
-    if (this.activeSourceId === "conversation") return sessionId
-    return `${sessionId}::${this.activeSourceId}`
+    if (sourceId === "conversation") return sessionId
+    return `${sessionId}::${sourceId}`
   }
 
   getTree(): OutlineNode[] {
@@ -438,8 +443,8 @@ export class OutlineManager {
    * 获取大纲项的签名（用于书签标识）
    * 供 InlineBookmarkManager 使用
    */
-  getSignature(item: OutlineItem): string {
-    return this.generateSignature(item)
+  getSignature(item: OutlineItem, sourceId = this.activeSourceId): string {
+    return this.generateSignature(item, sourceId)
   }
 
   getSearchQuery() {
@@ -635,10 +640,10 @@ export class OutlineManager {
 
   // --- Bookmark Logic ---
 
-  private generateSignature(item: OutlineItem): string {
+  private generateSignature(item: OutlineItem, sourceId = this.activeSourceId): string {
     // 1. 优先使用稳定 ID (message-id)
     if (item.id) {
-      return this.activeSourceId === "conversation" ? item.id : `${this.activeSourceId}:${item.id}`
+      return sourceId === "conversation" ? item.id : `${sourceId}:${item.id}`
     }
 
     // 2. 回退方案 (text::context)
@@ -659,9 +664,7 @@ export class OutlineManager {
     }
 
     const signature = `${item.text}::${context}`
-    return this.activeSourceId === "conversation"
-      ? signature
-      : `${this.activeSourceId}:${signature}`
+    return sourceId === "conversation" ? signature : `${sourceId}:${signature}`
   }
 
   // Helper public method for UI
@@ -745,10 +748,16 @@ export class OutlineManager {
    * 立即 refresh 抓到的还是旧 DOM，所以排几个延迟点）。
    */
   handleUrlChange(): void {
+    const routeVersion = ++this.routeChangeVersion
+
     // 取消所有待执行的 refresh（包括防抖的），避免旧路由的 refresh 在新路由渲染后触发
     if (this.refreshDebounceTimer) {
       clearTimeout(this.refreshDebounceTimer)
       this.refreshDebounceTimer = null
+    }
+
+    if (this.isAutoUpdating) {
+      this.stopAutoUpdate()
     }
 
     this.tree = []
@@ -764,9 +773,18 @@ export class OutlineManager {
     // 几次延迟 refresh：覆盖站点从慢到快的 DOM 渲染节奏
     // 所有 refresh 都延迟执行，避免扫描到旧 DOM
     // 使用 immediate=true 避免被防抖合并，确保每个探测都能执行
-    for (const delay of [80, 250, 600, 1200]) {
-      setTimeout(() => this.refresh(undefined, true), delay)
-    }
+    const delays = [80, 250, 600, 1200]
+    delays.forEach((delay, index) => {
+      setTimeout(() => {
+        if (routeVersion !== this.routeChangeVersion) return
+
+        this.refresh(undefined, true)
+
+        if (index === delays.length - 1) {
+          this.updateAutoUpdateState()
+        }
+      }, delay)
+    })
   }
 
   private _doRefresh(overrideLevel?: number) {
