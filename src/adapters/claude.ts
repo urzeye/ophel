@@ -19,6 +19,7 @@ import {
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
 import { t } from "~utils/i18n"
 import { renderMarkdown } from "~utils/markdown"
+import { hashTextForCache } from "~utils/text-hash"
 
 import {
   SiteAdapter,
@@ -164,6 +165,11 @@ function shouldEnhanceClaudeParagraph(text: string): boolean {
   )
 }
 
+interface ClaudeOutlineWordCountCacheEntry {
+  signature: string
+  count: number
+}
+
 export class ClaudeAdapter extends SiteAdapter {
   private activeOrganizationId: string | null = null
   private activeOrganizationIdExpiresAt = 0
@@ -171,6 +177,7 @@ export class ClaudeAdapter extends SiteAdapter {
   private exportIncludeThoughtsOverride: boolean | null = null
   private exportThoughtBlocks = new WeakMap<Element, string[]>()
   private exportThoughtBlocksByAssistantIndex = new Map<number, string[]>()
+  private outlineWordCountCache = new WeakMap<Element, ClaudeOutlineWordCountCacheEntry>()
 
   match(): boolean {
     return (
@@ -1393,42 +1400,76 @@ export class ClaudeAdapter extends SiteAdapter {
 
     // 辅助函数：计算用户提问的字数（统计后续AI回复）
     const userQuerySelector = this.getUserQuerySelector()
+    const allUserQueries = showWordCount
+      ? Array.from(outlineRoot.querySelectorAll(userQuerySelector))
+      : []
+    const allResponses = showWordCount
+      ? Array.from(outlineRoot.querySelectorAll(".font-claude-response")).filter(
+          (response) => !response.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR),
+        )
+      : []
+    const textSignatureCache = new WeakMap<Node, string>()
+    const getTextSignature = (element: Node | null): string => {
+      if (!element) return "none"
+      const cached = textSignatureCache.get(element)
+      if (cached) return cached
+      const signature = hashTextForCache(element.textContent || "")
+      textSignatureCache.set(element, signature)
+      return signature
+    }
+    const getCachedWordCount = (
+      element: Element,
+      signature: string,
+      calculate: () => number,
+    ): number => {
+      const cached = this.outlineWordCountCache.get(element)
+      if (cached?.signature === signature) return cached.count
+      const count = calculate()
+      this.outlineWordCountCache.set(element, { signature, count })
+      return count
+    }
+
     const calculateUserQueryWordCount = (startEl: Element): number => {
       // Claude 结构：用户消息和AI回复在同一滚动容器中，不是严格的siblings
       // 需要向下遍历找到下一个用户消息之前的所有AI回复
-      const allUserQueries = Array.from(outlineRoot.querySelectorAll(userQuerySelector))
-      const allResponses = Array.from(outlineRoot.querySelectorAll(".font-claude-response")).filter(
-        (response) => !response.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR),
-      )
-
       const startIndex = allUserQueries.indexOf(startEl)
       if (startIndex === -1) return 0
 
       // 找到下一个用户消息的位置（用于确定边界）
       const nextUserQuery = allUserQueries[startIndex + 1]
+      const signature = [
+        "user",
+        getTextSignature(startEl),
+        getTextSignature(nextUserQuery || null),
+        getTextSignature(outlineRoot),
+      ].join("|")
 
-      let totalLength = 0
-      for (const response of allResponses) {
-        // 检查这个回复是否在当前用户消息之后
-        const pos = startEl.compareDocumentPosition(response)
-        if (!(pos & Node.DOCUMENT_POSITION_FOLLOWING)) continue
+      return getCachedWordCount(startEl, signature, () => {
+        let totalLength = 0
+        for (const response of allResponses) {
+          // 检查这个回复是否在当前用户消息之后
+          const pos = startEl.compareDocumentPosition(response)
+          if (!(pos & Node.DOCUMENT_POSITION_FOLLOWING)) continue
 
-        // 如果有下一个用户消息，检查这个回复是否在它之前
-        if (nextUserQuery) {
-          const posToNext = nextUserQuery.compareDocumentPosition(response)
-          if (posToNext & Node.DOCUMENT_POSITION_FOLLOWING) continue
+          // 如果有下一个用户消息，检查这个回复是否在它之前
+          if (nextUserQuery) {
+            const posToNext = nextUserQuery.compareDocumentPosition(response)
+            if (posToNext & Node.DOCUMENT_POSITION_FOLLOWING) continue
+          }
+
+          // 获取 markdown 内容（排除思维链）
+          const markdownContent = response.querySelector(
+            ".standard-markdown, .progressive-markdown",
+          )
+          if (markdownContent) {
+            const rawText = markdownContent.textContent?.trim() || ""
+            const textWithoutThinking = removeThinkingContent(rawText)
+            totalLength += textWithoutThinking.length
+          }
         }
 
-        // 获取 markdown 内容（排除思维链）
-        const markdownContent = response.querySelector(".standard-markdown, .progressive-markdown")
-        if (markdownContent) {
-          const rawText = markdownContent.textContent?.trim() || ""
-          const textWithoutThinking = removeThinkingContent(rawText)
-          totalLength += textWithoutThinking.length
-        }
-      }
-
-      return totalLength
+        return totalLength
+      })
     }
 
     // Claude 对话大纲只收 AI 回复里的标题；侧边栏、导航等页面标题不应进入对话大纲。
@@ -1475,7 +1516,15 @@ export class ClaudeAdapter extends SiteAdapter {
         // 使用 Range 方法计算字数（排除思维链）
         const responseContainer = h.closest(".font-claude-response")
         if (responseContainer) {
-          const rawCount = this.calculateRangeWordCount(h, nextBoundaryEl, responseContainer)
+          const signature = [
+            "heading",
+            getTextSignature(h),
+            getTextSignature(nextBoundaryEl),
+            getTextSignature(responseContainer),
+          ].join("|")
+          const rawCount = getCachedWordCount(h, signature, () =>
+            this.calculateRangeWordCount(h, nextBoundaryEl, responseContainer),
+          )
           // Range 方法返回的是包含思维链的字数，这里暂时接受
           // 因为思维链不太可能在标题下方的范围内
           item.wordCount = rawCount

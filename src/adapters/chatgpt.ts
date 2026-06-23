@@ -13,6 +13,7 @@ import {
   type ExportAssetCollector,
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle } from "~utils/exporter"
+import { hashTextForCache } from "~utils/text-hash"
 
 import {
   SiteAdapter,
@@ -188,6 +189,11 @@ interface ChatGPTOutlineSortEntry {
   order: number
 }
 
+interface ChatGPTOutlineWordCountCacheEntry {
+  signature: string
+  count: number
+}
+
 export class ChatGPTAdapter extends SiteAdapter {
   private sessionAccessToken: string | null = null
   private sessionAccessTokenExpiresAt = 0
@@ -213,6 +219,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   private nativeTocRefreshScheduled = false
   private nativeTocButtonElementIds = new WeakMap<HTMLElement, number>()
   private nativeTocButtonElementIdCounter = 0
+  private outlineWordCountCache = new WeakMap<Element, ChatGPTOutlineWordCountCacheEntry>()
 
   // 导出快照（参考 deepseek / aistudio 方案）：避免虚拟滚动导致漏抓或重复抓取
   private exportSnapshotRoot: HTMLElement | null = null
@@ -3108,6 +3115,23 @@ export class ChatGPTAdapter extends SiteAdapter {
       return `${msgId}::${key}::${count}`
     }
 
+    const userQuerySelector = this.getUserQuerySelector()
+    const allUserQueries = showWordCount
+      ? Array.from(container.querySelectorAll(userQuerySelector))
+      : []
+    const allAssistants = showWordCount
+      ? Array.from(container.querySelectorAll('[data-message-author-role="assistant"]'))
+      : []
+    const textSignatureCache = new WeakMap<Element, string>()
+    const getTextSignature = (element: Element | null): string => {
+      if (!element) return "none"
+      const cached = textSignatureCache.get(element)
+      if (cached) return cached
+      const signature = hashTextForCache(element.textContent || "")
+      textSignatureCache.set(element, signature)
+      return signature
+    }
+
     // container 参数用于处理最后一个元素（没有 nextEl 时）
     // isUserQuery 参数用于用户提问的特殊处理（直接获取 AI 回复内容，跳过标签）
     const calculateWordCount = (
@@ -3116,15 +3140,28 @@ export class ChatGPTAdapter extends SiteAdapter {
       isUserQueryItem: boolean,
     ): number => {
       if (!startEl) return 0
+      const signatureRoot = isUserQueryItem
+        ? container
+        : startEl.closest('[data-message-author-role="assistant"]') ||
+          startEl.closest("[data-turn-id-container], [data-turn-id]") ||
+          container
+      const signature = [
+        isUserQueryItem ? "user" : "heading",
+        getTextSignature(startEl),
+        getTextSignature(nextEl),
+        getTextSignature(signatureRoot),
+      ].join("|")
+      const cached = this.outlineWordCountCache.get(startEl)
+      if (cached?.signature === signature) return cached.count
+
       try {
         // 对于用户提问，直接获取后续 AI 回复的 markdown 内容
         // 这样可以跳过 "ChatGPT 说：" 等标签
         if (isUserQueryItem) {
           // 查找 startEl 与 nextEl 之间的所有 AI 回复内容容器
-          const allAssistants = container.querySelectorAll('[data-message-author-role="assistant"]')
           let totalText = ""
 
-          for (const assistant of Array.from(allAssistants)) {
+          for (const assistant of allAssistants) {
             // 检查这个 AI 回复是否在 startEl 之后
             const positionToStart = startEl.compareDocumentPosition(assistant)
             const isAfterStart = positionToStart & Node.DOCUMENT_POSITION_FOLLOWING
@@ -3153,22 +3190,25 @@ export class ChatGPTAdapter extends SiteAdapter {
           }
 
           const text = totalText.trim()
-          return text.length
+          const count = text.length
+          this.outlineWordCountCache.set(startEl, { signature, count })
+          return count
         }
 
         // 对于标题（Heading），使用 Range 方式
         // 当 nextEl 存在时，直接使用基类方法
         if (nextEl) {
-          return this.calculateRangeWordCount(startEl, nextEl, container)
+          const count = this.calculateRangeWordCount(startEl, nextEl, container)
+          this.outlineWordCountCache.set(startEl, { signature, count })
+          return count
         }
 
         // 如果没有下一个边界元素，需要找到正确的终点
         // 策略：从 startEl 在 DOM 中向后遍历，找到下一个用户提问元素
-        const allUserQueries = container.querySelectorAll(userQuerySelector)
         let foundCurrent = false
         let nextUserQuery: Element | null = null
 
-        for (const uq of Array.from(allUserQueries)) {
+        for (const uq of allUserQueries) {
           if (foundCurrent) {
             nextUserQuery = uq
             break
@@ -3180,23 +3220,27 @@ export class ChatGPTAdapter extends SiteAdapter {
 
         if (nextUserQuery) {
           // 找到了下一个用户提问，使用它作为边界
-          return this.calculateRangeWordCount(startEl, nextUserQuery, container)
+          const count = this.calculateRangeWordCount(startEl, nextUserQuery, container)
+          this.outlineWordCountCache.set(startEl, { signature, count })
+          return count
         }
 
         // 真正的最后一个用户提问，找对应的 AI 回复容器末尾
-        const allAssistants = container.querySelectorAll('[data-message-author-role="assistant"]')
         if (allAssistants.length > 0) {
           const lastAssistant = allAssistants[allAssistants.length - 1]
-          return this.calculateRangeWordCount(startEl, null, lastAssistant)
+          const count = this.calculateRangeWordCount(startEl, null, lastAssistant)
+          this.outlineWordCountCache.set(startEl, { signature, count })
+          return count
         }
-        return this.calculateRangeWordCount(startEl, null, container)
+        const count = this.calculateRangeWordCount(startEl, null, container)
+        this.outlineWordCountCache.set(startEl, { signature, count })
+        return count
       } catch {
         return 0
       }
     }
 
     // 统一处理逻辑：按照文档顺序收集所有相关元素（UserQuery 和 Headings）
-    const userQuerySelector = this.getUserQuerySelector()
     const headingSelectors: string[] = []
     for (let i = 1; i <= maxLevel; i++) {
       headingSelectors.push(`h${i}`)

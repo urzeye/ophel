@@ -54,6 +54,7 @@ import {
   type GeminiMyStuffRecord,
 } from "~utils/messaging"
 import { SKIP_READING_HISTORY_RESTORE_PARAM } from "~utils/storage"
+import { hashTextForCache } from "~utils/text-hash"
 import { showToast } from "~utils/toast"
 import { setSafeHTML } from "~utils/trusted-types"
 
@@ -917,6 +918,11 @@ class GeminiMyStuffEnhancer {
   }
 }
 
+interface GeminiOutlineWordCountCacheEntry {
+  signature: string
+  count: number
+}
+
 export class GeminiAdapter extends SiteAdapter {
   private cachedAccountEmail: string | null = null
   private accountEmailLastDetectAt = 0
@@ -928,6 +934,7 @@ export class GeminiAdapter extends SiteAdapter {
   private canvasPanelObservers = new WeakMap<Element, () => void>()
   private canvasPanelTooltipBindings = new WeakMap<HTMLElement, DomTooltipBinding>()
   private exportOpenedCanvasPanel = false
+  private outlineWordCountCache = new WeakMap<Element, GeminiOutlineWordCountCacheEntry>()
 
   private getUserPathPrefix(): string {
     // Gemini 多账号路径格式：/u/2/app/...
@@ -5134,6 +5141,16 @@ export class GeminiAdapter extends SiteAdapter {
       return `${msgId}::${key}::${count}`
     }
 
+    const textSignatureCache = new WeakMap<Element, string>()
+    const getTextSignature = (element: Element | null): string => {
+      if (!element) return "none"
+      const cached = textSignatureCache.get(element)
+      if (cached) return cached
+      const signature = hashTextForCache(element.textContent || "")
+      textSignatureCache.set(element, signature)
+      return signature
+    }
+
     // 辅助函数：计算字数
     const userQuerySelector = this.getUserQuerySelector()
     const calculateWordCount = (
@@ -5142,6 +5159,21 @@ export class GeminiAdapter extends SiteAdapter {
       isUserQueryItem: boolean,
     ): number => {
       if (!startEl) return 0
+      const signatureRoot = isUserQueryItem
+        ? container
+        : startEl.closest("model-response") ||
+          startEl.closest("message-content") ||
+          startEl.parentElement ||
+          container
+      const signature = [
+        isUserQueryItem ? "user" : "heading",
+        getTextSignature(startEl),
+        getTextSignature(nextEl),
+        getTextSignature(signatureRoot),
+      ].join("|")
+      const cached = this.outlineWordCountCache.get(startEl)
+      if (cached?.signature === signature) return cached.count
+
       try {
         if (isUserQueryItem) {
           // 对于用户提问，Gemini 的结构是：
@@ -5172,12 +5204,15 @@ export class GeminiAdapter extends SiteAdapter {
 
             current = current.nextElementSibling
           }
+          this.outlineWordCountCache.set(startEl, { signature, count: totalLength })
           return totalLength
         }
 
         // 对于标题（Heading），使用基类的 Range 工具方法
         const messageContent = startEl.closest("message-content")
-        return this.calculateRangeWordCount(startEl, nextEl, messageContent || container)
+        const count = this.calculateRangeWordCount(startEl, nextEl, messageContent || container)
+        this.outlineWordCountCache.set(startEl, { signature, count })
+        return count
       } catch {
         return 0
       }
