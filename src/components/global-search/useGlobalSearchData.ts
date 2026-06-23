@@ -678,6 +678,7 @@ const getGlobalSearchFuzzyCandidates = (
       if (right.rank !== left.rank) return right.rank - left.rank
       return left.entry.index - right.entry.index
     })
+    .slice(0, GLOBAL_SEARCH_FUZZY_CANDIDATE_LIMIT)
     .map(({ entry }) => entry)
 
   return rankedCandidates.length > 0

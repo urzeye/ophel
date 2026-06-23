@@ -37,6 +37,8 @@ interface TreeState {
   hadChildren: boolean
 }
 
+type OutlineActiveConsumer = "outlineTab" | "globalSearch"
+
 /** djb2 hash：将任意长度字符串压缩为 8 位十六进制字符串 */
 function djb2Hash(str: string): string {
   let hash = 5381
@@ -94,8 +96,9 @@ export class OutlineManager {
   private fallbackRefreshTimer: ReturnType<typeof setTimeout> | null = null
   private static readonly FALLBACK_DELAY = 3000 // 3秒无变化后触发强制刷新
 
-  // Tab 激活状态（只有激活时才监听）
+  // 使用方激活状态（只有至少一个入口需要实时大纲时才监听）
   private isActive: boolean = false
+  private activeConsumers = new Set<OutlineActiveConsumer>()
 
   // 防止 refresh 期间书签更新触发循环调用
   private isRefreshing: boolean = false
@@ -142,11 +145,26 @@ export class OutlineManager {
 
   // 设置 Tab 激活状态（由 OutlineTab 调用）
   setActive(active: boolean) {
+    this.setActiveConsumer("outlineTab", active)
+  }
+
+  setGlobalSearchActive(active: boolean) {
+    this.setActiveConsumer("globalSearch", active)
+  }
+
+  private setActiveConsumer(consumer: OutlineActiveConsumer, active: boolean) {
     const wasActive = this.isActive
-    this.isActive = active
+
+    if (active) {
+      this.activeConsumers.add(consumer)
+    } else {
+      this.activeConsumers.delete(consumer)
+    }
+
+    this.isActive = this.activeConsumers.size > 0
     this.updateAutoUpdateState()
 
-    if (!active || wasActive) return
+    if (!this.isActive || wasActive) return
 
     // 切回时如果有待处理的生成完成刷新，立即执行
     if (this.pendingPostGenerationRefresh) {

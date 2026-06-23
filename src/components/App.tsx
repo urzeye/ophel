@@ -1667,6 +1667,7 @@ export const App = () => {
       return
     }
 
+    outlineManager.setGlobalSearchActive(true)
     outlineManager.refresh()
     setOutlineSearchVersion((previousVersion) => previousVersion + 1)
 
@@ -1676,6 +1677,7 @@ export const App = () => {
 
     return () => {
       unsubscribe()
+      outlineManager.setGlobalSearchActive(false)
     }
   }, [isGlobalSettingsSearchOpen, outlineManager])
 
