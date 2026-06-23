@@ -13,6 +13,20 @@ type ExtendedOutlineItem = OutlineItem & {
   scrollTop?: number
 }
 
+type MountedOutlineNode = {
+  node: OutlineNode
+  element: Element
+}
+
+type ScrollViewportRect = {
+  left: number
+  top: number
+  right: number
+  bottom: number
+  width: number
+  height: number
+}
+
 export interface OutlineNode extends OutlineItem {
   children: OutlineNode[]
   relativeLevel: number
@@ -999,11 +1013,7 @@ export class OutlineManager {
       this.flatNodes = this.flattenTree(this.tree)
       this.updateScrollPositions()
     } else {
-      let runtimeDataChanged = false
-      const siteId = this.siteAdapter.getSiteId()
-      if (siteId === SITE_IDS.CHATGPT || siteId === SITE_IDS.DOUBAO) {
-        runtimeDataChanged = this.syncFlatNodeRuntimeData(outlineData)
-      }
+      const runtimeDataChanged = this.syncFlatNodeRuntimeData(outlineData)
       this.scrollPositionsStale = true
       if (runtimeDataChanged) {
         this.notify()
@@ -1661,10 +1671,11 @@ export class OutlineManager {
     if (this.settings.followMode !== "current") return null
     if (this.flatNodes.length === 0) return null
 
-    const containerRect = scrollContainer.getBoundingClientRect()
-    if (containerRect.width <= 0 || containerRect.height <= 0) return null
+    const viewportRect = this.getScrollViewportRect(scrollContainer)
+    if (!viewportRect) return null
 
     const elementIndex = new WeakMap<Element, number>()
+    const mountedNodes: MountedOutlineNode[] = []
     for (const node of this.flatNodes) {
       if (node.isGhost) continue
 
@@ -1672,7 +1683,25 @@ export class OutlineManager {
       if (!element || !element.isConnected) continue
 
       elementIndex.set(element, node.index)
+      mountedNodes.push({ node, element })
     }
+
+    if (mountedNodes.length === 0) return null
+
+    mountedNodes.sort((a, b) =>
+      this.compareMountedElements(a.element, b.element, a.node.index, b.node.index),
+    )
+
+    const mountedNodesByRoot = new Map<Node, MountedOutlineNode[]>()
+    mountedNodes.forEach((mounted) => {
+      const root = mounted.element.getRootNode()
+      const nodes = mountedNodesByRoot.get(root)
+      if (nodes) {
+        nodes.push(mounted)
+      } else {
+        mountedNodesByRoot.set(root, [mounted])
+      }
+    })
 
     const findMappedIndex = (element: Element): number | null => {
       let current: Element | null = element
@@ -1692,37 +1721,170 @@ export class OutlineManager {
       return null
     }
 
-    const roots: Array<Document | ShadowRoot> = [scrollContainer.ownerDocument]
+    const findSectionIndex = (element: Element): number | null => {
+      const directIndex = findMappedIndex(element)
+      if (directIndex !== null) return directIndex
+
+      const elementRoot = element.getRootNode()
+      const sameRootNodes = mountedNodesByRoot.get(elementRoot)
+      if (!sameRootNodes || sameRootNodes.length === 0) return null
+
+      let best: MountedOutlineNode | null = null
+      let lo = 0
+      let hi = sameRootNodes.length - 1
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1
+        const mounted = sameRootNodes[mid]
+        if (mounted.element.contains(element)) {
+          return mounted.node.index
+        }
+
+        const position = mounted.element.compareDocumentPosition(element)
+        if (position & Node.DOCUMENT_POSITION_FOLLOWING) {
+          best = mounted
+          lo = mid + 1
+          continue
+        }
+
+        if (position & Node.DOCUMENT_POSITION_PRECEDING) {
+          hi = mid - 1
+          continue
+        }
+
+        break
+      }
+
+      return best?.node.index ?? null
+    }
+
+    const roots = new Set<Document | ShadowRoot>([scrollContainer.ownerDocument])
     const scrollRoot = scrollContainer.getRootNode()
     if (scrollRoot instanceof ShadowRoot) {
-      roots.push(scrollRoot)
+      roots.add(scrollRoot)
+    }
+    mountedNodes.forEach(({ element }) => {
+      const root = element.getRootNode()
+      if (root instanceof ShadowRoot) {
+        roots.add(root)
+      }
+    })
+
+    const isWithinScrollContainer = (element: Element): boolean => {
+      if (this.isDocumentScrollContainer(scrollContainer)) {
+        return scrollContainer.ownerDocument.documentElement.contains(element)
+      }
+
+      let current: Element | null = element
+      while (current) {
+        if (current === scrollContainer) return true
+
+        if (current.parentElement) {
+          current = current.parentElement
+          continue
+        }
+
+        const rootNode = current.getRootNode()
+        current = rootNode instanceof ShadowRoot ? rootNode.host : null
+      }
+
+      return false
+    }
+
+    const isOphelUiElement = (element: Element): boolean => {
+      let current: Element | null = element
+      while (current) {
+        if (
+          current.classList?.contains("gh-root") ||
+          current.classList?.contains("gh-panel") ||
+          current.id?.startsWith("plasmo")
+        ) {
+          return true
+        }
+
+        if (current.parentElement) {
+          current = current.parentElement
+          continue
+        }
+
+        const rootNode = current.getRootNode()
+        current = rootNode instanceof ShadowRoot ? rootNode.host : null
+      }
+
+      return false
     }
 
     const makePoint = (x: number, y: number) => ({
-      x: Math.min(Math.max(x, containerRect.left + 1), containerRect.right - 1),
-      y: Math.min(Math.max(y, containerRect.top + 1), containerRect.bottom - 1),
+      x: Math.min(Math.max(x, viewportRect.left + 1), viewportRect.right - 1),
+      y: Math.min(Math.max(y, viewportRect.top + 1), viewportRect.bottom - 1),
     })
-    const anchorY =
-      containerRect.top + Math.min(Math.max(scrollContainer.clientHeight * 0.25, 48), 160)
+    const anchorY = viewportRect.top + Math.min(Math.max(viewportRect.height * 0.25, 48), 160)
     const points = [
-      makePoint(containerRect.left + containerRect.width * 0.15, containerRect.top + 24),
-      makePoint(containerRect.left + containerRect.width * 0.5, containerRect.top + 24),
-      makePoint(containerRect.left + containerRect.width * 0.15, anchorY),
-      makePoint(containerRect.left + containerRect.width * 0.5, anchorY),
-      makePoint(containerRect.left + containerRect.width * 0.85, anchorY),
+      makePoint(viewportRect.left + viewportRect.width * 0.15, viewportRect.top + 24),
+      makePoint(viewportRect.left + viewportRect.width * 0.5, viewportRect.top + 24),
+      makePoint(viewportRect.left + viewportRect.width * 0.15, anchorY),
+      makePoint(viewportRect.left + viewportRect.width * 0.5, anchorY),
+      makePoint(viewportRect.left + viewportRect.width * 0.85, anchorY),
     ]
 
     for (const point of points) {
       for (const root of roots) {
         const elements = root.elementsFromPoint(point.x, point.y)
         for (const element of elements) {
-          const index = findMappedIndex(element)
+          if (!isWithinScrollContainer(element) || isOphelUiElement(element)) continue
+
+          const index = findSectionIndex(element)
           if (index !== null) return index
         }
       }
     }
 
     return null
+  }
+
+  private isDocumentScrollContainer(scrollContainer: HTMLElement): boolean {
+    const doc = scrollContainer.ownerDocument
+    return (
+      scrollContainer === doc.scrollingElement ||
+      scrollContainer === doc.documentElement ||
+      scrollContainer === doc.body
+    )
+  }
+
+  private getScrollViewportRect(scrollContainer: HTMLElement): ScrollViewportRect | null {
+    const win = scrollContainer.ownerDocument.defaultView ?? window
+
+    if (this.isDocumentScrollContainer(scrollContainer)) {
+      const width = win.innerWidth
+      const height = win.innerHeight
+      if (width <= 2 || height <= 2) return null
+      return { left: 0, top: 0, right: width, bottom: height, width, height }
+    }
+
+    const rect = scrollContainer.getBoundingClientRect()
+    const left = Math.max(0, rect.left)
+    const top = Math.max(0, rect.top)
+    const right = Math.min(win.innerWidth, rect.right)
+    const bottom = Math.min(win.innerHeight, rect.bottom)
+    const width = right - left
+    const height = bottom - top
+
+    if (width <= 2 || height <= 2) return null
+    return { left, top, right, bottom, width, height }
+  }
+
+  private compareMountedElements(
+    a: Element,
+    b: Element,
+    fallbackA: number,
+    fallbackB: number,
+  ): number {
+    if (a === b) return fallbackA - fallbackB
+    if (a.getRootNode() !== b.getRootNode()) return fallbackA - fallbackB
+
+    const position = a.compareDocumentPosition(b)
+    if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1
+    if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1
+    return fallbackA - fallbackB
   }
 
   private shouldKeepPreviousVisibleItem(): boolean {

@@ -1174,14 +1174,17 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
       const visibleIdx = getVisibleHighlightIndex(idx)
 
-      if (visibleIdx !== visibleHighlightRef.current) {
+      const previousVisibleIdx = visibleHighlightRef.current
+      const visibleIdxChanged = visibleIdx !== previousVisibleIdx
+
+      if (visibleIdxChanged) {
         updateVisibleHighlightIndex(visibleIdx)
       }
 
-      if (visibleIdx !== null) {
-        scheduleOutlineAutoScroll(visibleIdx)
-      } else {
+      if (visibleIdx === null) {
         cancelOutlineAutoScroll()
+      } else if (visibleIdxChanged) {
+        scheduleOutlineAutoScroll(visibleIdx)
       }
     }
 
