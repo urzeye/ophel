@@ -1675,7 +1675,14 @@ export class OutlineManager {
     if (!viewportRect) return null
 
     const elementIndex = new WeakMap<Element, number>()
-    const mountedNodes: MountedOutlineNode[] = []
+    const mountedNodesByRoot = new Map<Node, MountedOutlineNode[]>()
+    const roots = new Set<Document | ShadowRoot>([scrollContainer.ownerDocument])
+    const scrollRoot = scrollContainer.getRootNode()
+    if (scrollRoot instanceof ShadowRoot) {
+      roots.add(scrollRoot)
+    }
+    let mountedNodeCount = 0
+
     for (const node of this.flatNodes) {
       if (node.isGhost) continue
 
@@ -1683,27 +1690,24 @@ export class OutlineManager {
       if (!element || !element.isConnected) continue
 
       elementIndex.set(element, node.index)
-      mountedNodes.push({ node, element })
-    }
+      mountedNodeCount += 1
 
-    const cachedVisibleIndex = this.findCachedActiveItemIndex(scrollContainer, viewportRect)
-
-    if (mountedNodes.length === 0) return cachedVisibleIndex
-
-    mountedNodes.sort((a, b) =>
-      this.compareMountedElements(a.element, b.element, a.node.index, b.node.index),
-    )
-
-    const mountedNodesByRoot = new Map<Node, MountedOutlineNode[]>()
-    mountedNodes.forEach((mounted) => {
-      const root = mounted.element.getRootNode()
+      const root = element.getRootNode()
+      if (root instanceof ShadowRoot) {
+        roots.add(root)
+      }
       const nodes = mountedNodesByRoot.get(root)
+      const mounted = { node, element }
       if (nodes) {
         nodes.push(mounted)
       } else {
         mountedNodesByRoot.set(root, [mounted])
       }
-    })
+    }
+
+    const cachedVisibleIndex = this.findCachedActiveItemIndex(scrollContainer, viewportRect)
+
+    if (mountedNodeCount === 0) return cachedVisibleIndex
 
     const findMappedIndex = (element: Element): number | null => {
       let current: Element | null = element
@@ -1755,18 +1759,6 @@ export class OutlineManager {
 
       return best?.node.index ?? null
     }
-
-    const roots = new Set<Document | ShadowRoot>([scrollContainer.ownerDocument])
-    const scrollRoot = scrollContainer.getRootNode()
-    if (scrollRoot instanceof ShadowRoot) {
-      roots.add(scrollRoot)
-    }
-    mountedNodes.forEach(({ element }) => {
-      const root = element.getRootNode()
-      if (root instanceof ShadowRoot) {
-        roots.add(root)
-      }
-    })
 
     const isWithinScrollContainer = (element: Element): boolean => {
       if (this.isDocumentScrollContainer(scrollContainer)) {
@@ -1848,6 +1840,7 @@ export class OutlineManager {
     viewportRect: ScrollViewportRect,
   ): number | null {
     if (!this.shouldKeepPreviousVisibleItem()) return null
+    if (this.scrollPositionsStale) return null
 
     const viewportScrollTop = this.getViewportScrollTop(scrollContainer, viewportRect)
     if (viewportScrollTop === null) return null
@@ -1904,21 +1897,6 @@ export class OutlineManager {
 
     if (width <= 2 || height <= 2) return null
     return { left, top, right, bottom, width, height }
-  }
-
-  private compareMountedElements(
-    a: Element,
-    b: Element,
-    fallbackA: number,
-    fallbackB: number,
-  ): number {
-    if (a === b) return fallbackA - fallbackB
-    if (a.getRootNode() !== b.getRootNode()) return fallbackA - fallbackB
-
-    const position = a.compareDocumentPosition(b)
-    if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1
-    if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1
-    return fallbackA - fallbackB
   }
 
   private shouldKeepPreviousVisibleItem(): boolean {

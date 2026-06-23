@@ -1098,6 +1098,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     const mutationObservers = new Map<Node, MutationObserver>()
 
     const handleResize = () => {
+      manager.markScrollPositionsStale()
       handleScroll()
     }
 
@@ -1105,6 +1106,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       if (mutationObservers.has(root)) return
 
       const observer = new MutationObserver(() => {
+        manager.markScrollPositionsStale()
         handleScroll()
       })
 
@@ -1206,6 +1208,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         attachMutationObservers(container)
         if (typeof ResizeObserver !== "undefined") {
           resizeObserver = new ResizeObserver(() => {
+            manager.markScrollPositionsStale()
             handleScroll()
           })
           resizeObserver.observe(scrollContainer)
