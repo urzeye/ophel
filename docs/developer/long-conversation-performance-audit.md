@@ -1,360 +1,203 @@
 # 长会话性能审计报告
 
-> 日期：2026-06-23  
-> 背景：issue #675 长会话性能退化；PR #677、#682、#683 已分别处理生成期大纲 observer、隐藏节点渲染/书签匹配、大纲虚拟滚动。
+> 更新日期：2026-06-23
+> 背景：#675 长会话性能退化。已完成 #678/#680；#681 由 PR #683 实现中。本文作为长会话性能优化的 tracking 文档，`docs/developer/outline-performance-plan.md` 保留为早期大纲专项计划，不再承载 #675 的后续拆分。
 
 ## 结论
 
-PR #683 的方向是合理的：它把大纲面板的 React 渲染从“按全部节点渲染”降到“按视口渲染”，对大纲节点很多时的面板打开、折叠、滚动会有直接收益。它不是完整的 #675 解决方案，因为它只降低了 UI 渲染成本，没有降低大纲抽取、周期刷新、滚动高亮测量、会话同步、全局搜索和用量计数器的成本。
+PR #683 的方向是正确的：大纲面板从“按全部可见节点渲染”改为“按视口窗口 + overscan 渲染”，对 500+ 可见大纲项场景有直接收益。它解决的是 #681 的大纲面板 React/DOM 成本，不是 #675 的完整解法。
 
-目前剩余性能风险主要分三类：
+#675 剩余瓶颈仍主要在虚拟列表外：
 
-1. 常驻 timer/observer 触发全量扫描：大纲 2 秒刷新、全局搜索 1.2 秒刷新大纲、Shadow DOM 轮询、Markdown 重扫。
-2. 长 DOM 上的全量提取和测量：`extractOutline()`、`updateScrollPositions()`、用量计数器的全文 token 估算。
-3. 大对象 store 写入和 UI 派发：会话同步逐条更新 Zustand/persist，触发全量对象拷贝、序列化和列表重算。
+1. 常驻 timer/observer 触发全量扫描：大纲固定刷新、全局搜索刷新大纲、Shadow DOM/Markdown/Quick Quote 扫描。
+2. 长 DOM 上的全量提取和测量：`extractOutline()`、`updateScrollPositions()`、adapter 字数统计。
+3. 大对象 store 写入和 UI 派发：会话同步逐条更新 Zustand/persist，放大为多次对象拷贝、序列化和列表重算。
 
-如果继续优化 #675，建议不要再优先做更细的列表渲染微调，而是先拆掉会在后台反复执行的全量工作。
+后续优化不要继续优先做大纲 UI 微调，应先拆掉后台反复执行的全量工作。
 
-## 已完成优化的边界
+## 当前进展
 
-| PR | 已解决 | 仍未覆盖 |
-| --- | --- | --- |
-| #677 | `OutlineManager` 自动更新 observer 不再监听 `characterData`；全局 refresh debounce；URL 变化错峰探测 | `App` 层仍每 2 秒调用 `outlineManager.refresh()`；`OutlineTab` 自己的滚动位置 stale observer 仍监听 `characterData` |
-| #682 | 大纲隐藏节点不再渲染；书签匹配从 O(n*m) 改为 Map | 大纲抽取仍要全量扫 DOM；字数统计仍可能很重 |
-| #683 | 大纲面板虚拟滚动，降低 React 节点数 | 虚拟列表不减少 `extractOutline()`、`updateScrollPositions()`、全局搜索刷新和 adapter 查询成本 |
+| 任务 | 状态 | 实现/Issue | 说明 |
+| --- | --- | --- | --- |
+| 生成期 observer 与 refresh 防抖 | 已完成 | #678 / PR #677 | `OutlineManager` 自动更新 observer 不再监听 `characterData`；refresh 增加全局 debounce；URL 变化错峰探测。 |
+| 隐藏大纲节点渲染与书签匹配 | 已完成 | #680 / PR #682 | 隐藏节点改为条件渲染；书签匹配从 O(n*m) 改为 Map。 |
+| 大纲虚拟滚动 | 实现中 | #681 / PR #683 | `tree + visibleMap` 展平为 `visibleItems`，只渲染 viewport + overscan。 |
+| 虚拟行高硬化 | 已推送到 PR #683 | commit `550216d` | 固定行高拆为可读常量；虚拟列表内 locate highlight 不再用 2px border；禁用 user query hover 位移；增加 debug-only 行高漂移告警。 |
+| 后续性能拆分 | 已建 issue | #684-#690 | 见下方 issue mapping。 |
 
-本地当前分支还已把大纲虚拟行高从“TS 常量 + CSS fallback”改为由 TS 注入 CSS 变量，避免未来主题改 `--gh-outline-item-height` 后滚动定位漂移。
+## PR #683 当前判断
 
-## P0：优先处理
+### 已解决
 
-### 1. 大纲仍有无条件 2 秒全量刷新
+- 大纲面板可见项很多时，不再一次性挂载所有行。
+- 继续复用现有 `visibleMap`，没有引入第二套可见性规则。
+- 搜索、复制完整大纲、全局搜索、source switching、正文滚动同步和正文跳转的数据流保持不依赖已挂载 DOM。
+- `scrollOutlineNodeIntoView()` 基于虚拟 metrics 定位，目标行未挂载时也能滚到对应虚拟行。
+- locate current 改为 `revealNode()` 后滚动虚拟列表，等待行挂载后再高亮。
 
-证据：
+### 已补强的行高约束
 
-- `src/components/App.tsx:2766` 创建 `setInterval(() => outlineManager.refresh(), 2000)`。
-- `OutlineManager.refresh()` 只检查 `settings.enabled` 和 `isRefreshing`，不检查大纲 Tab 是否激活。
-- `_doRefresh()` 每次都会调用 `siteAdapter.extractOutlineForSource()`，随后做书签合并、`treeKey` 构建、必要时 `updateScrollPositions()`。
+固定行高仍是 #683 的关键正确性约束。当前 PR 已做以下硬化：
 
-影响：
+- `OUTLINE_ITEM_HEIGHT` 拆成 `24px line-height + 12px vertical padding + 2px border = 38px`。
+- 虚拟列表通过 `--gh-outline-item-height` 约束真实 `.outline-item` 高度。
+- 用户提问行的额外间距由虚拟 row padding 管理，虚拟列表内清除原 margin。
+- 虚拟列表内 locate highlight 使用 1px border + box-shadow，不再用 2px border 压缩内容盒。
+- 虚拟列表内禁用 user query hover 的 `translateY(-1px)`，避免绝对定位行视觉重叠。
+- 可通过 `document.documentElement.dataset.ophelDebugOutlineVirtualHeights = "true"` 或 `localStorage["ophel.debugOutlineVirtualHeights"] = "1"` 开启行高漂移告警。告警只在 debug 开关开启时抽样已挂载行，不进入生产高频路径。
 
-- 长会话中，即使用户没有打开大纲 Tab，也会每 2 秒扫一次会话 DOM。
-- PR #683 只减少大纲列表渲染，不能减少这个扫描成本。
-- 全局搜索打开时还有额外 1.2 秒大纲刷新，会叠加。
+### 仍需回归
 
-建议方案：
+- 普通 heading、user query、sync-highlight、locate-highlight、bookmark/copy hover 不改变真实行高。
+- 快速滚动 500+ 可见项时无白屏、错位、闪烁。
+- 搜索清空、书签模式、source 切换、定位当前大纲、正文滚动同步高亮。
+- Chrome 扩展构建与油猴构建。
 
-- 去掉 `App.tsx` 的固定 2 秒 refresh，改为事件驱动：路由变化、生成完成、手动刷新、书签变化、设置变化。
-- 如果需要兜底轮询，只在 `OutlineManager.isActive === true`、页面可见、`autoUpdate` 开启时运行，并在 tree 连续稳定后指数退避到 10-30 秒。
-- 把兜底刷新放到 `requestIdleCallback`，超时后再执行，避免抢输入和滚动主线程。
+## 已明确不做
 
-兼容风险：
+以下两项此前作为候选拆分出现过，但当前不建 issue、不进入近期执行：
 
-- 直接删除轮询可能暴露某些站点 observer 漏事件。应先用 feature flag 或按站点灰度，验证 ChatGPT、Claude、Gemini、DeepSeek、Doubao 的生成完成后大纲刷新。
+- 长会话性能基线/benchmark fixtures：暂不做独立 issue。
+- 用量计数器全文 token 估算缓存：仍是潜在风险，但当前不作为 #675 近期拆分项。
 
-### 2. 全局搜索打开时强制刷新大纲并全量评分
+## Issue Mapping
 
-证据：
+| Issue | 优先级 | 状态 | 范围 | 验收重点 |
+| --- | --- | --- | --- | --- |
+| #675 | Epic | Open | 长会话性能退化总任务 | 只做 tracking，不直接承载实现 PR。 |
+| #679 | Tracking | Open | 已完成长对话查看性能 | 汇总 #680/#681 以及后续查看路径优化。 |
+| #681 | P0 | Open，PR #683 实现中 | 大纲面板虚拟滚动 | PR #683 合并后可关闭。 |
+| #684 | P0 | Open | 移除大纲无条件刷新轮询 | 大纲面板关闭且页面 idle 时，不再每 2s 触发 outline extraction。 |
+| #685 | P0 | Open | 全局搜索与大纲轮询解耦 | 打开搜索框但不输入时，不持续 refresh outline；输入延迟下降。 |
+| #686 | P0/P1 | Open | 大纲滚动同步与位置重测量降本 | source scroll 同帧合并；`characterData` stale observer 降噪；`updateScrollPositions()` 惰性/邻近测量。 |
+| #687 | P1 | Open | 会话同步批量写入 Zustand store | 同步 N 条会话时 set/persist 从 O(N) 降到 O(1) 或小常数。 |
+| #688 | P1 | Open | adapter 大纲抽取输入与字数统计缓存 | 同一 DOM version 下重复 refresh 的 adapter 抽取耗时下降。 |
+| #689 | P1 | Open | 虚拟大纲列表自身滚动渲染节流 | 大纲列表快速滚动时减少 React render，无白屏/错位/闪烁。 |
+| #690 | P1 | Open，PR #683 已部分覆盖 | 虚拟行高漂移校验 | 如果 PR #683 的 debug-only 校验足够，合并后可关闭或缩小为后续 CSS 回归守护。 |
 
-- `src/components/App.tsx:1681` 在全局搜索打开时每 1200ms 调用 `outlineManager.refresh()`。
-- `src/components/global-search/useGlobalSearchData.ts` 每次搜索都会扫描会话、提示词、设置、大纲，并对每项构建 normalized fields、执行 fuzzy/typo 评分和排序。
-- 会话结果来自 `conversationManager.getConversations()`，内部 `Object.values(this.conversations).filter(...)`。
+## 待完成优化项
 
-影响：
+### P0：移除大纲无条件刷新轮询（#684）
 
-- 用户打开搜索框后，即使没有输入，也会把大纲刷新变成常驻工作。
-- 输入时，搜索计算和大纲刷新竞争主线程；长会话 + 多会话历史 + fuzzy 开启时更明显。
+当前 `src/components/App.tsx` 仍创建 `setInterval(() => outlineManager.refresh(), 2000)`。长会话中，即使用户没有打开大纲 Tab，也会定期扫描会话 DOM。#683 只减少大纲列表渲染，不能减少这个扫描成本。
 
-建议方案：
+建议：
 
-- 全局搜索打开时只做一次 `outlineManager.refresh()`；后续只订阅 `outlineManager.subscribe()`。
-- 输入查询使用 `useDeferredValue` 或保持已有 debounce，但避免同步触发全量评分。
-- 为 conversations/prompts/settings 建搜索索引：预先保存 normalized title/folder/tags/content，数据变更时增量更新，输入时只评分索引。
-- fuzzy/typo 匹配按类别或数量阈值降级：例如结果候选超过 300 条时先做 includes/prefix 过滤，再对前 N 个做 fuzzy。
+- 去掉固定 2s refresh，改为事件驱动：初始化、URL 变化、生成完成、手动刷新、书签变化、设置/source 变化。
+- 如需兜底轮询，只在 outline enabled、页面可见、autoUpdate enabled、且大纲面板 active 或最近被使用时运行。
+- tree 连续稳定后指数退避到 10-30s。
+- refresh 尽量通过 `requestIdleCallback` 或等价调度避开输入和滚动高峰。
 
-兼容风险：
+风险：
 
-- 搜索结果新鲜度可能从“轮询更新”变为“事件更新”。需要保证大纲 refresh、会话 store 更新、提示词 store 更新都会触发索引版本号变化。
+- 直接删除轮询可能暴露某些站点 observer 漏事件。需要重点回归 ChatGPT、Claude、Gemini、DeepSeek、Doubao 的生成完成刷新。
 
-### 3. 用量计数器会在长 DOM 上反复做全文 token 估算
+### P0：全局搜索与大纲轮询解耦（#685）
 
-证据：
+全局搜索打开后当前会每 1200ms 调 `outlineManager.refresh()`，并对 conversations/prompts/settings/outline 执行 normalized fields 构建、fuzzy/typo 评分和排序。长会话中，打开搜索框会把大纲抽取变成常驻主线程工作。
 
-- `src/core/usage-counter-manager.ts:255` 每秒 mount loop。
-- `src/core/usage-counter-manager.ts:641` schedule render。
-- `src/core/usage-counter-manager.ts:1160` `getUserMessageCount()` 使用 `DOMToolkit.query(..., { all: true, shadow: true })`。
-- `src/core/usage-counter-manager.ts:1184` `getEstimateSnapshot()` 调 `getLoadedConversationStats()`。
-- `src/core/usage-counter-manager.ts:1210` `getLoadedConversationStats()` 查询全部 chat content，提取文本，拼接大字符串并估算 token。
+建议：
 
-影响：
+- 搜索打开时最多 refresh 一次；后续只订阅 `outlineManager.subscribe()`。
+- 输入查询使用现有 debounce 或 `useDeferredValue`，避免每个 keypress 同步全量评分。
+- 为 conversations/prompts/settings/outline 建 normalized index，数据变更时增量更新。
+- 候选数量过大时先 includes/prefix 粗过滤，再对前 N 个做 fuzzy score。
 
-- 开启用量监控后，输入、focus、scroll、resize、发送确认都会触发 render。
-- 每次 render 都可能扫描所有已加载消息并重新 token 估算，长会话中成本随 DOM 和文本长度线性增长。
+风险：
 
-建议方案：
+- 搜索结果新鲜度从“轮询更新”变为“事件更新”。需要保证大纲、会话、提示词、设置变更都会更新索引版本号。
 
-- 把“输入框字符数”与“已加载上下文估算”拆开：输入时只更新 input 部分，全文上下文统计延迟到 idle 或 500-1000ms throttle。
-- 对消息元素做 WeakMap 缓存：按 element + text hash 缓存 token 数，MutationObserver 只失效新增/变更节点。
-- `window.scroll` 不应触发全文统计，只调整挂载位置；统计数据复用上次快照。
-- 发送确认阶段只读用户消息数量和生成态，避免同时触发完整估算；确认成功后再异步补充 usage event 的 token 字段。
+### P0/P1：降低大纲滚动同步与位置重测量成本（#686）
 
-兼容风险：
+#683 保留 `manager.findVisibleItemIndex()` 是正确的，但正文滚动同步仍可能高频触发 DOM 测量。`OutlineTab` 的 source scroll container observer 仍监听 `characterData`，流式生成时会反复标记 scroll positions stale。
 
-- token 估算会从实时变为近实时。UI 上可以接受，因为它本来就是估算值；需要避免显示旧数据时没有状态提示。
+建议：
 
-### 4. 会话同步逐条 store 更新会放大为 O(k*n) 拷贝和持久化
-
-证据：
-
-- `src/core/conversation/manager.ts:896` `syncConversations()` 遍历 sidebar items，逐条调用 `store.updateConversation()` / `store.addConversation()`。
-- `src/stores/conversations-store.ts:49`、`:54`、`:65`、`:71` 单条 action 都复制整个 `conversations` 对象。
-- `src/stores/conversations-store.ts:151` persist 写入完整 `conversations`。
-- `src/components/ConversationsTab.tsx:246` `loadData()` 每次复制 `manager.getAllConversations()` 到本地 state。
-
-影响：
-
-- 同步 100 条新增/更新时，不是一次构建新对象，而是 100 次复制大对象、100 次 persist 调度、100 次 UI data change 风险。
-- 会话 Tab 订阅 `manager.onDataChange()` 后会重新 load 全量 folders/conversations/tags。
-
-建议方案：
-
-- 在 store 增加批量 action，例如 `upsertManyConversations(upserts, deletes, lastUsedFolderId?)`，一次 set 完成。
-- `syncConversations()` 收集 diff 后一次提交，并只 `notifyDataChange()` 一次。
-- 会话 Tab 尽量直接使用 Zustand selector，而不是 manager 事件 + 本地全量镜像；至少给 `loadData()` 做合并和引用稳定。
-- 对 `getAllConversations()` 结果按 siteId/cid 建缓存，cid 或 conversations 引用变化时才重算。
-
-兼容风险：
-
-- 批量 action 要保留现有 `updatedAt`、`syncUnpin`、`syncDeleted` 语义，并检查备份/恢复兼容。
-
-### 5. 会话 Tab 搜索和列表计算仍是全量重算
-
-证据：
-
-- `src/components/ConversationsTab.tsx:284` 搜索遍历 `Object.values(conversations)`。
-- `src/components/ConversationsTab.tsx:329` filter 变化 effect 调用 `handleSearch(searchQuery)`。
-- `src/components/ConversationsTab.tsx:366` 输入处理又设置 150ms timeout 调用 `handleSearch(value)`，同一次输入会重复搜索。
-- `src/components/ConversationsTab.tsx:444` `folderConversationsMap` 每次对全部会话分组并对每个文件夹排序。
-- `shouldShowFolder()` 对每个文件夹执行 `Array.from(searchResult.conversationFolderMap.values()).includes(folder.id)`，搜索模式下是重复扫描。
-
-影响：
-
-- 已有 `PROGRESSIVE_BATCH_SIZE` 限制渲染数量，但搜索、分组、排序仍处理全部数据。
-- 搜索输入重复执行会直接造成卡顿和多余 render。
-
-建议方案：
-
-- 删除 `handleSearchInput()` 内的 timeout，保留 effect；或删除 effect，保留 debounce。不要双路径。
-- 搜索结果中直接维护 `matchedFolderIds: Set<string>`，避免每个文件夹重复 `Array.from(...).includes()`。
-- `folderConversationsMap` 拆成两个阶段：会话数据变更时分组/排序；搜索变化时只过滤 id。
-- 搜索模式如果会展开多个文件夹，考虑对 `conversations-list` 做真正虚拟化，而不是只分批 append。
-
-兼容风险：
-
-- 低。主要是交互节奏变化，需验证标签筛选、置顶筛选、定位当前对话、批量选择。
-
-## P1：第二阶段处理
-
-### 6. 大纲滚动高亮的 stale 频率仍偏高
-
-证据：
-
-- `src/components/OutlineTab.tsx:1049` 对源滚动容器 observe `{ childList: true, subtree: true, characterData: true }`。
-- `src/components/OutlineTab.tsx:1083` 每次源滚动调用 `manager.findVisibleItemIndex()`。
-- `src/core/outline-manager.ts:1568` scroll positions stale 时会调用 `updateScrollPositions()`。
-- `src/core/outline-manager.ts:1118` `updateScrollPositions()` 遍历 flatNodes，对每个真实元素读 `getClientRects()` 和 `getBoundingClientRect()`，并可能重新 find 元素。
-
-影响：
-
-- #677 已避免 OutlineManager 自动更新监听字符流，但 OutlineTab 为滚动高亮又把 `characterData` 加回来了。
-- 这个 observer 只是标记 scroll positions stale，不会直接 refresh；但下一次滚动会触发全量测量。
-
-建议方案：
-
-- 先把 OutlineTab 的 stale observer 改为 `childList: true, subtree: true, characterData: false`；文本流式变化通常不改变标题位置，位置变化可由 `ResizeObserver` 或 `scrollHeight` 变化捕获。
-- 对长列表只测量当前视口附近节点：先用已有 cached top 二分出邻近范围，再补测前后 overscan。
+- `OutlineTab` source scroll handler 用单个 `requestAnimationFrame` 合并同一帧内多次 scroll。
+- 只有 `visibleIdx` 变化时才更新 DOM class 和滚动大纲列表。
+- `observeRoot()` 首版移除 `characterData: true`，只监听 `childList/subtree`；如个别站点需要文本变化更新标题高度，再做站点级或低频 fallback。
+- `updateScrollPositions()` 改为 lazy/viewport-near 测量，避免 stale 后全量读取所有 source 元素 rect。
 - 同一轮测量中只用一次 `getBoundingClientRect()`，不再先 `getClientRects()` 再读 rect。
-- 对支持稳定 message id 的站点，让 adapter 在抽取时直接提供 scrollTop，减少后续 DOM re-resolve。
 
-兼容风险：
+风险：
 
-- 某些站点流式输出会导致标题换行高度变化。应重点验证生成中新增标题、展开 thinking、图片加载、代码块渲染后的高亮是否仍准确。
+- 某些站点流式输出会导致标题换行高度变化。需要验证生成中新增标题、展开 thinking、图片加载、代码块渲染后的同步高亮准确性。
 
-### 7. Adapter 的大纲抽取和字数统计复杂度偏高
+### P1：会话同步批量写 store（#687）
 
-证据：
-
-- 多数 adapter 的 `extractOutline()` 都通过 `querySelectorAll` 扫完整回复容器。
-- `src/adapters/claude.ts:1383` Claude 抽取时查所有 headings；包含用户提问时还查所有 user messages 并排序。
-- `src/adapters/claude.ts:1399` `calculateUserQueryWordCount()` 在每个用户消息内重新查询所有 user queries 和 responses。
-- `src/adapters/chatgpt.ts:3089`、`src/adapters/gemini.ts:5097` 也有按全 DOM 抽取、边界查找和字数统计逻辑。
-
-影响：
-
-- `showWordCount` 开启后，部分站点会从一次全量扫描变成多次嵌套扫描。
-- App/全局搜索/手动刷新都会触发这些 adapter 成本。
-
-建议方案：
-
-- 字数统计默认惰性：只对可见/展开节点计算，或鼠标悬停/复制时计算。
-- 每次 extract 先一次性收集 userQueries/responses/headings，并传给 word count helper，不在每个节点里重新 query。
-- 给 adapter 增加可选增量接口：`extractOutlineDelta(mutations, previous)`，先在 ChatGPT/Gemini/Claude 三个主站试点。
-
-兼容风险：
-
-- 中等。不同站点 DOM 结构差异大，适合先做“缓存和一次性收集”，再考虑 delta 接口。
-
-### 8. 浏览器标签页监控混合了固定轮询和短间隔确认
-
-证据：
-
-- `src/core/tab-manager.ts:143` auto rename 使用设置频率轮询 `updateTabName()`。
-- `src/core/tab-manager.ts:349` title observer 监听 head 的 `characterData`。
-- `src/core/tab-manager.ts:577` 网络生成确认每 200ms poll。
-- `src/core/tab-manager.ts:630` DOM completion 每 150ms poll。
-- `src/core/modules-init.ts:706` SPA URL 变化还有每秒兜底 poll。
-
-影响：
-
-- 标签页监控本身不是长会话主因，但 `adapter.isGenerating()`、`adapter.getConversationTitle()`、`adapter.getModelName()` 往往会查 DOM。
-- 多个 manager 同时 poll 时，长会话页面主线程会有稳定背景噪声。
-
-建议方案：
-
-- auto rename interval 在页面隐藏且没有未读完成状态时退避；生成中/刚完成再恢复高频。
-- 200ms/150ms 短轮询加最长持续时间已经有部分保护，但可以优先用站点按钮/状态节点 MutationObserver。
-- URL 变化兜底 poll 可改为只在 patch pushState/replaceState 失败或特定站点启用。
-
-兼容风险：
-
-- 通知和标题状态是用户可见功能，优化时要验证后台生成完成通知、hideStatusWhenRead、隐私标题格式。
-
-### 9. Shadow DOM 和用户提问 Markdown 有周期全树扫描
-
-证据：
-
-- `src/core/layout-manager.ts:532` 启用相关布局功能后每秒 `injectToAllShadows()`。
-- `src/core/layout-manager.ts:552` 遍历所有 ShadowRoot。
-- `src/core/user-query-markdown.ts:40` `RESCAN_INTERVAL = 2000`。
-- `src/core/user-query-markdown.ts:644` 每轮 `DOMToolkit.query(selector, { all: true, shadow: true })`，再处理所有用户提问元素。
-- `src/utils/dom-toolkit.ts:449` `all + shadow` 查询会递归 shadow root；过程中会 `querySelectorAll("*")`。
-
-影响：
-
-- 这些功能不是默认所有用户都会启用，但一旦启用，成本与页面 DOM/ShadowRoot 数量线性相关。
-- 在 Gemini Enterprise 等 Shadow DOM 站点上更明显。
-
-建议方案：
-
-- 维护 ShadowRoot registry：新增 shadow root 时处理一次，不每秒遍历全部。
-- 用户提问 Markdown 改为 observer 处理 added nodes；周期 rescan 只作为低频 fallback，例如 10-30 秒且页面可见时。
-- `processedElements` 已避免重复渲染，但仍要避免重复扫描所有元素。
-
-兼容风险：
-
-- Shadow DOM 动态挂载复杂，不能一次性移除 fallback；建议先把 interval 降频并加 page visibility gating。
-
-### 10. Quick Quote 引用 chips observer 监听过宽
-
-证据：
-
-- `src/components/QuickQuoteActions.tsx:614` 对 observe target 使用 MutationObserver。
-- 配置包含 `attributes`、`characterData`、`childList`、`subtree`，attributeFilter 包括 `class/style/href/title`。
-- `renderReferenceChips()` 内会查询用户消息、引用 markers，并维护 chips。
-
-影响：
-
-- AI 流式输出时 `characterData` 和 style/class 变化会频繁触发防抖 render。
-- 对长会话，render 即使跳过已处理元素，也仍可能扫描候选消息。
-
-建议方案：
-
-- 引用 chips 只需要在用户消息新增或 marker 出现时处理，优先监听 `childList`。
-- 以 addedNodes 为入口增量处理消息，而不是每次全量 render。
-- `characterData` 仅在 quick quote marker 可能在文本节点中流入的站点开启。
-
-兼容风险：
-
-- 需要验证刷新后从 marker 恢复引用、AI Studio 发送后改写 marker 的 fallback。
-
-## P2：低优先级或按功能开关处理
-
-### 11. Queue Dispatcher 每秒轮询
-
-证据：
-
-- `src/core/queue-dispatcher.ts:44` 队列运行时每秒 `tick()`。
-
-判断：
-
-- 只有队列启动时运行；每轮主要检查队列状态、编辑器内容和 `adapter.isGenerating()`。
-- 相比大纲/搜索/计数器，优先级较低。
+`syncConversations()` 当前逐条调用 `updateConversation()` / `addConversation()` / `deleteConversation()`。同步 100 条会话时，会变成多次复制大对象、多次 persist 调度和多次 UI data change 风险。
 
 建议：
 
-- 保持当前设计即可。若后续优化，可在队列为空时自动 stop，新增 item 时 start。
+- 在 `conversations-store` 增加批量 action，例如 `upsertManyConversations(upserts, deletes, lastUsedFolderId?)`。
+- `syncConversations()` 先收集 diff，再一次提交并只通知一次。
+- 会话 Tab 尽量减少 manager 事件 + 本地全量镜像；至少让 `loadData()` 合并和引用稳定。
 
-### 12. DOMToolkit 的 Shadow DOM 全量查询需要约束调用点
+风险：
 
-证据：
+- 批量 action 要保留 `updatedAt`、`syncUnpin`、`syncDeleted`、`lastUsedFolderId`、站点/team cid 过滤语义，并检查备份/恢复兼容。
 
-- `src/utils/dom-toolkit.ts:449` 支持 `all: true, shadow: true`。
-- `findInShadow()` / `collectInShadow()` 会通过 `querySelectorAll("*")` 遍历 shadow hosts。
+### P1：adapter 大纲抽取和字数统计缓存（#688）
 
-判断：
-
-- 工具本身不是问题，问题是把它放进 1 秒/2 秒轮询或输入事件里。
+大纲虚拟化不减少 adapter 抽取成本。多数 adapter 的 `extractOutline()` 都通过 `querySelectorAll` 扫完整回复容器；`showWordCount` 开启后，部分站点还会重复查询用户问题和回复。
 
 建议：
 
-- 新增开发约束：`all: true, shadow: true` 不应出现在高频 timer、scroll、input、MutationObserver 回调的同步路径。
-- 对确实需要的调用点传入更小 parent，或使用 adapter 提供的稳定 root。
+- 先优化 ChatGPT、Claude、Gemini。
+- 每次 extract 先一次性收集 userQueries/responses/headings，并传给 word count helper，不在每个节点里重复 query。
+- 对 word count 使用 element + text hash 缓存，只有文本变化时重新计算。
+- 暂不把站点特定缓存逻辑上移到 `SiteAdapter` 基类，除非多个站点已经验证共享同一抽象。
 
-## 建议拆分的后续 PR
+风险：
 
-1. `perf(outline): remove unconditional outline refresh interval`
-   - 删除/降级 `App.tsx` 2 秒 refresh。
-   - Outline refresh 只由 active、route、generation、manual、bookmark/settings 触发。
+- 不同站点 DOM 差异大，适合先做缓存和一次性收集，再考虑增量接口。
 
-2. `perf(search): decouple global search from outline polling`
-   - 移除全局搜索 1.2 秒大纲 refresh。
-   - 为 conversations/prompts/settings 建 normalized index。
+### P1：虚拟大纲列表滚动渲染节流（#689）
 
-3. `perf(usage): cache loaded conversation token estimates`
-   - WeakMap 缓存消息 token。
-   - 输入渲染与全文统计拆分。
+#683 的虚拟列表自身 scroll 目前会通过 `outlineScrollTop` / `outlineViewportHeight` state 触发 React render。快速滚动时可能吃掉一部分虚拟化收益。
 
-4. `perf(conversations): batch sync store writes`
-   - conversations-store 增加批量 upsert/delete。
-   - `syncConversations()` 一次提交 diff。
+建议：
 
-5. `perf(outline): reduce scroll-position remeasurement`
-   - OutlineTab stale observer 关闭 `characterData`。
-   - `updateScrollPositions()` 改为惰性/邻近测量。
+- 用单个 `requestAnimationFrame` 合并同一帧内的大纲列表 scroll 事件。
+- 只在虚拟 range 或顶部/底部按钮状态实际变化时 setState。
+- 保留 `userScrollingOutlineRef`，用户手动滚动大纲时继续暂停正文同步自动定位。
 
-6. `perf(adapters): cache outline word-count inputs`
-   - ChatGPT/Claude/Gemini 先做一次性收集和 lazy word count。
+风险：
 
-## 验证计划
+- 需要确保 `scrollOutlineNodeIntoView()`、locate current、正文滚动同步仍能驱动虚拟列表显示目标行。
 
-建议先建立最小性能基线，再拆 PR：
+### P1：虚拟行高漂移校验后续（#690）
 
-- 采样页面：ChatGPT、Claude、Gemini，各准备短会话、中等会话、长会话。
-- 指标：
-  - 打开面板到可交互时间。
-  - 大纲 Tab 首次打开耗时、滚动 FPS、源页面滚动 jank。
-  - `outlineManager.refresh()`、`extractOutlineForSource()`、`updateScrollPositions()` 单次耗时。
-  - 全局搜索输入每字符耗时和 dropped frames。
-  - 用量计数器开启后 input latency。
-  - 会话同步的 store 写入次数、persist 写入次数、同步总耗时。
-- 手段：
-  - 临时加 `performance.mark/measure`，只在开发模式或 debug flag 下输出。
-  - Chrome DevTools Performance 录制长会话滚动、搜索输入、生成中输出。
-  - Memory heap snapshot 对比长时间生成前后 listener/timer/DOM 引用是否释放。
+PR #683 已实现 debug-only 行高漂移告警。#690 后续可以按 PR 验收结果决定：
 
-## 对原有功能的影响判断
+- 如果当前告警足够，#683 合并后关闭 #690。
+- 如果需要更完整覆盖，则保留 #690 跟踪 hover/highlight/bookmark/copy 状态的手动回归流程或开发工具开关文档。
 
-- PR #683 本身方案可靠，主要影响面是大纲列表 UI；行高变量已同步后，滚动定位漂移风险降低。
-- 对 #675 的整体性能收益有限，因为剩余瓶颈大量存在于虚拟列表外部。
-- 最可能继续造成长会话卡顿的是“大纲固定刷新 + 全局搜索大纲刷新 + 用量计数器全文估算”三者叠加。
-- 会话 Tab 的渲染已经有分批加载，但数据计算和 store 写入还没有批处理；当历史会话很多或同步新增很多时仍会卡。
-- 浏览器标签页监控、Shadow DOM 注入、Markdown 重扫、Quick Quote observer 多数是功能开关相关，应按启用条件做 gating，避免全局常驻。
+## 功能开关相关风险（暂不拆 issue）
+
+这些不是当前第一批 issue，但后续遇到对应功能卡顿时应回到这里拆分：
+
+- 浏览器标签页监控：auto rename interval、网络生成确认 200ms poll、DOM completion 150ms poll、SPA URL 变化兜底 poll。
+- Shadow DOM 注入：布局功能启用后周期遍历 ShadowRoot，可考虑 ShadowRoot registry 和 page visibility gating。
+- 用户提问 Markdown：2s rescan 可改为 addedNodes observer + 低频 fallback。
+- Quick Quote 引用 chips：observer 监听 attributes/characterData/childList/subtree 较宽，可改为以 addedNodes 为入口增量处理。
+- `DOMToolkit.query(..., { all: true, shadow: true })`：不应出现在高频 timer、scroll、input、MutationObserver 同步路径。
+
+## 推荐执行顺序
+
+1. 合并并验证 PR #683；它关闭 #681，但不关闭 #675。
+2. 第一批处理 #684、#685、#686，先拆掉后台大纲刷新、搜索轮询和滚动同步测量成本。
+3. 第二批处理 #687、#688，降低会话同步和 adapter 抽取成本。
+4. #689 作为 #683 后续微优化，视真实滚动表现决定是否提前。
+5. #690 在 #683 合并后按行高校验实际覆盖情况关闭或收窄。
+
+## 验证建议
+
+当前不单独做 benchmark fixture issue，但每个性能 PR 仍应记录最小 before/after：
+
+- 大纲面板内 `.outline-item` 挂载数量。
+- `outlineManager.refresh()`、`extractOutlineForSource()`、`updateScrollPositions()` 单次耗时。
+- 长会话正文滚动时 dropped frames 或明显 jank。
+- 全局搜索输入每字符耗时。
+- 会话同步时 Zustand set/persist 次数和同步总耗时。
+- 必要时用 Chrome DevTools Performance/Memory 采样，避免只用“感觉不卡”判断。
