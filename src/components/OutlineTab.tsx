@@ -221,6 +221,14 @@ const OUTLINE_LOCATE_MAX_RETRIES = Math.ceil(
 
 type OutlineScrollBlock = "start" | "center" | "end" | "nearest"
 
+type OutlineScrollSnapshot = {
+  scrollTop: number
+  viewportHeight: number
+  scrollState: "top" | "bottom"
+  rangeStart: number
+  rangeEnd: number
+}
+
 interface VisibleOutlineItem {
   node: OutlineNode
   depth: number
@@ -747,6 +755,14 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   const locateHighlightRequestIdRef = useRef(0)
   const userScrollingOutlineRef = useRef(false)
   const userScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const outlineScrollFrameRef = useRef<number | null>(null)
+  const outlineScrollSnapshotRef = useRef<OutlineScrollSnapshot>({
+    scrollTop: 0,
+    viewportHeight: 0,
+    scrollState: "bottom",
+    rangeStart: 0,
+    rangeEnd: 0,
+  })
   const visibilityMapsRef = useRef<{
     parentMap: Record<number, number | null>
     visibleMap: Record<number, boolean>
@@ -846,15 +862,46 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     }
   }, [tree]) // 依赖 tree，当 tree 变化（渲染完成）后执行
 
-  const syncOutlineScrollState = useCallback(() => {
+  const syncOutlineScrollState = useCallback((force = false) => {
     const el = listRef.current
     if (!el) return
 
+    const scrollTop = el.scrollTop
+    const viewportHeight = el.clientHeight
     const isAtBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 10
-    setScrollState(isAtBottom ? "top" : "bottom")
-    setOutlineScrollTop(el.scrollTop)
-    setOutlineViewportHeight(el.clientHeight)
+    const nextScrollState = isAtBottom ? "top" : "bottom"
+    const nextRange = getOutlineVirtualRange(virtualMetricsRef.current, scrollTop, viewportHeight)
+    const previous = outlineScrollSnapshotRef.current
+    const rangeChanged =
+      nextRange.start !== previous.rangeStart || nextRange.end !== previous.rangeEnd
+    const viewportChanged = viewportHeight !== previous.viewportHeight
+    const scrollStateChanged = nextScrollState !== previous.scrollState
+
+    outlineScrollSnapshotRef.current = {
+      scrollTop,
+      viewportHeight,
+      scrollState: nextScrollState,
+      rangeStart: nextRange.start,
+      rangeEnd: nextRange.end,
+    }
+
+    if (force || scrollStateChanged) {
+      setScrollState(nextScrollState)
+    }
+    if (force || rangeChanged || viewportChanged) {
+      setOutlineScrollTop(scrollTop)
+      setOutlineViewportHeight(viewportHeight)
+    }
   }, [])
+
+  const scheduleOutlineScrollStateSync = useCallback(() => {
+    if (outlineScrollFrameRef.current !== null) return
+
+    outlineScrollFrameRef.current = requestAnimationFrame(() => {
+      outlineScrollFrameRef.current = null
+      syncOutlineScrollState()
+    })
+  }, [syncOutlineScrollState])
 
   const scrollOutlineNodeIntoView = useCallback(
     (
@@ -885,8 +932,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       } else if (rowBottom > viewportBottom) {
         nextTop = rowBottom - el.clientHeight
       } else {
-        setOutlineScrollTop(el.scrollTop)
-        setOutlineViewportHeight(el.clientHeight)
+        syncOutlineScrollState(true)
         return true
       }
 
@@ -895,12 +941,12 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
       if (Math.abs(clampedTop - el.scrollTop) > 1) {
         el.scrollTo({ top: clampedTop, behavior })
-        setOutlineScrollTop(clampedTop)
+        syncOutlineScrollState(true)
       }
 
       return true
     },
-    [],
+    [syncOutlineScrollState],
   )
 
   const removeOutlineItemClasses = useCallback((...classNames: string[]) => {
@@ -1264,22 +1310,26 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     const el = listRef.current
     if (!el) return
 
-    el.addEventListener("scroll", syncOutlineScrollState, { passive: true })
+    el.addEventListener("scroll", scheduleOutlineScrollStateSync, { passive: true })
 
     let resizeObserver: ResizeObserver | null = null
     if (typeof ResizeObserver !== "undefined") {
-      resizeObserver = new ResizeObserver(syncOutlineScrollState)
+      resizeObserver = new ResizeObserver(scheduleOutlineScrollStateSync)
       resizeObserver.observe(el)
     }
 
     // Initial check
-    syncOutlineScrollState()
+    syncOutlineScrollState(true)
 
     return () => {
-      el.removeEventListener("scroll", syncOutlineScrollState)
+      el.removeEventListener("scroll", scheduleOutlineScrollStateSync)
+      if (outlineScrollFrameRef.current !== null) {
+        cancelAnimationFrame(outlineScrollFrameRef.current)
+        outlineScrollFrameRef.current = null
+      }
       resizeObserver?.disconnect()
     }
-  }, [syncOutlineScrollState]) // listRef is stable after mount
+  }, [scheduleOutlineScrollStateSync, syncOutlineScrollState]) // listRef is stable after mount
 
   useEffect(() => {
     const el = listRef.current
@@ -1289,7 +1339,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     if (el.scrollTop > maxTop) {
       el.scrollTop = maxTop
     }
-    syncOutlineScrollState()
+    syncOutlineScrollState(true)
   }, [syncOutlineScrollState, virtualMetrics.totalHeight])
 
   // 用户手动滚动大纲面板时，暂停自动定位（修复 Firefox 滚轮事件传播导致的回弹）
