@@ -1091,6 +1091,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     let resizeObserver: ResizeObserver | null = null
     let staleTimer: ReturnType<typeof setTimeout> | null = null
     let idleHandle: number | null = null
+    let scrollSyncFrame: number | null = null
+    let outlineAutoScrollFrame: number | null = null
     const staleDebounceMs = 300
     const staleIdleTimeoutMs = 500
     const mutationObservers = new Map<Node, MutationObserver>()
@@ -1138,7 +1140,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         scheduleStaleMark()
       })
 
-      observer.observe(root, { childList: true, subtree: true, characterData: true })
+      observer.observe(root, { childList: true, subtree: true })
       mutationObservers.set(root, observer)
     }
 
@@ -1150,31 +1152,20 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       }
     }
 
-    const handleScroll = () => {
-      if (!scrollContainer) return
-
-      const scrollTop = scrollContainer.scrollTop
-      const viewportHeight = scrollContainer.clientHeight
-      const nextScrollHeight = scrollContainer.scrollHeight
-      if (nextScrollHeight !== lastScrollHeight) {
-        lastScrollHeight = nextScrollHeight
-        manager.markScrollPositionsStale()
+    const cancelOutlineAutoScroll = () => {
+      if (outlineAutoScrollFrame !== null) {
+        cancelAnimationFrame(outlineAutoScrollFrame)
+        outlineAutoScrollFrame = null
       }
-      const idx = manager.findVisibleItemIndex(scrollTop, viewportHeight)
+    }
 
-      if (idx === null) {
-        updateActiveIndex(null)
-        updateVisibleHighlightIndex(null)
-        return
+    const scheduleOutlineAutoScroll = (visibleIdx: number) => {
+      if (outlineAutoScrollFrame !== null) {
+        cancelOutlineAutoScroll()
       }
 
-      updateActiveIndex(idx)
-      const visibleIdx = getVisibleHighlightIndex(idx)
-      updateVisibleHighlightIndex(visibleIdx)
-
-      if (visibleIdx === null) return
-
-      requestAnimationFrame(() => {
+      outlineAutoScrollFrame = requestAnimationFrame(() => {
+        outlineAutoScrollFrame = null
         if (userScrollingOutlineRef.current) return
         const listContainer = listRef.current
         if (!listContainer) return
@@ -1190,6 +1181,56 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         if (itemRect.top < wrapperRect.top || itemRect.bottom > wrapperRect.bottom) {
           scrollOutlineNodeIntoView(visibleIdx, "center")
         }
+      })
+    }
+
+    const runScrollSync = () => {
+      if (!scrollContainer) return
+
+      const scrollTop = scrollContainer.scrollTop
+      const viewportHeight = scrollContainer.clientHeight
+      const nextScrollHeight = scrollContainer.scrollHeight
+      if (nextScrollHeight !== lastScrollHeight) {
+        lastScrollHeight = nextScrollHeight
+        manager.markScrollPositionsStale()
+      }
+      const idx = manager.findVisibleItemIndex(scrollTop, viewportHeight)
+
+      if (idx === null) {
+        if (activeIndexRef.current !== null) {
+          updateActiveIndex(null)
+        }
+        if (visibleHighlightRef.current !== null) {
+          updateVisibleHighlightIndex(null)
+        }
+        cancelOutlineAutoScroll()
+        return
+      }
+
+      if (idx !== activeIndexRef.current) {
+        updateActiveIndex(idx)
+      }
+
+      const visibleIdx = getVisibleHighlightIndex(idx)
+
+      if (visibleIdx === visibleHighlightRef.current) {
+        return
+      }
+
+      updateVisibleHighlightIndex(visibleIdx)
+      if (visibleIdx !== null) {
+        scheduleOutlineAutoScroll(visibleIdx)
+      } else {
+        cancelOutlineAutoScroll()
+      }
+    }
+
+    const handleScroll = () => {
+      if (scrollSyncFrame !== null) return
+
+      scrollSyncFrame = requestAnimationFrame(() => {
+        scrollSyncFrame = null
+        runScrollSync()
       })
     }
 
@@ -1209,7 +1250,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
           resizeObserver.observe(scrollContainer)
         }
         // Initial check
-        handleScroll()
+        runScrollSync()
       } else if (retryCount < 20) {
         retryCount++
         retryTimer = setTimeout(initListener, 300)
@@ -1227,6 +1268,13 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         scrollContainer.removeEventListener("scroll", handleScroll)
       }
       window.removeEventListener("resize", handleResize)
+      if (scrollSyncFrame !== null) {
+        cancelAnimationFrame(scrollSyncFrame)
+        scrollSyncFrame = null
+      }
+      if (outlineAutoScrollFrame !== null) {
+        cancelOutlineAutoScroll()
+      }
       if (staleTimer) {
         clearTimeout(staleTimer)
       }
