@@ -213,6 +213,11 @@ const OUTLINE_USER_QUERY_BOTTOM_GAP = 2
 const OUTLINE_VIRTUAL_OVERSCAN = 10
 const OUTLINE_FALLBACK_VIEWPORT_HEIGHT = 420
 const OUTLINE_HEIGHT_DRIFT_TOLERANCE = 1
+const OUTLINE_LOCATE_HIGHLIGHT_MS = 3000
+const OUTLINE_LOCATE_RETRY_DELAY_MS = 50
+const OUTLINE_LOCATE_MAX_RETRIES = Math.ceil(
+  OUTLINE_LOCATE_HIGHLIGHT_MS / OUTLINE_LOCATE_RETRY_DELAY_MS,
+)
 
 type OutlineScrollBlock = "start" | "center" | "end" | "nearest"
 
@@ -966,7 +971,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         }
         manager.clearForceVisible()
         locateHighlightRef.current = null
-      }, 3000)
+      }, OUTLINE_LOCATE_HIGHLIGHT_MS)
 
       locateHighlightRef.current = { element: outlineItem, timer }
       return true
@@ -1087,57 +1092,20 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     let scrollContainer: HTMLElement | null = null
     let retryCount = 0
     let retryTimer: ReturnType<typeof setTimeout>
-    let lastScrollHeight = 0
     let resizeObserver: ResizeObserver | null = null
-    let staleTimer: ReturnType<typeof setTimeout> | null = null
-    let idleHandle: number | null = null
     let scrollSyncFrame: number | null = null
     let outlineAutoScrollFrame: number | null = null
-    const staleDebounceMs = 300
-    const staleIdleTimeoutMs = 500
     const mutationObservers = new Map<Node, MutationObserver>()
 
     const handleResize = () => {
-      manager.markScrollPositionsStale()
-    }
-
-    const scheduleStaleMark = () => {
-      if (staleTimer) return
-      staleTimer = setTimeout(() => {
-        staleTimer = null
-
-        const requestIdle =
-          typeof window !== "undefined"
-            ? (
-                window as Window & {
-                  requestIdleCallback?: (
-                    callback: IdleRequestCallback,
-                    options?: IdleRequestOptions,
-                  ) => number
-                }
-              ).requestIdleCallback?.bind(window)
-            : undefined
-
-        if (requestIdle) {
-          if (idleHandle !== null) return
-          idleHandle = requestIdle(
-            () => {
-              idleHandle = null
-              manager.markScrollPositionsStale()
-            },
-            { timeout: staleIdleTimeoutMs },
-          )
-        } else {
-          manager.markScrollPositionsStale()
-        }
-      }, staleDebounceMs)
+      handleScroll()
     }
 
     const observeRoot = (root: Node) => {
       if (mutationObservers.has(root)) return
 
       const observer = new MutationObserver(() => {
-        scheduleStaleMark()
+        handleScroll()
       })
 
       observer.observe(root, { childList: true, subtree: true })
@@ -1187,14 +1155,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     const runScrollSync = () => {
       if (!scrollContainer) return
 
-      const scrollTop = scrollContainer.scrollTop
-      const viewportHeight = scrollContainer.clientHeight
-      const nextScrollHeight = scrollContainer.scrollHeight
-      if (nextScrollHeight !== lastScrollHeight) {
-        lastScrollHeight = nextScrollHeight
-        manager.markScrollPositionsStale()
-      }
-      const idx = manager.findVisibleItemIndex(scrollTop, viewportHeight)
+      const idx = manager.findMountedActiveItemIndex(scrollContainer)
 
       if (idx === null) {
         if (activeIndexRef.current !== null) {
@@ -1213,11 +1174,10 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
       const visibleIdx = getVisibleHighlightIndex(idx)
 
-      if (visibleIdx === visibleHighlightRef.current) {
-        return
+      if (visibleIdx !== visibleHighlightRef.current) {
+        updateVisibleHighlightIndex(visibleIdx)
       }
 
-      updateVisibleHighlightIndex(visibleIdx)
       if (visibleIdx !== null) {
         scheduleOutlineAutoScroll(visibleIdx)
       } else {
@@ -1238,14 +1198,12 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       const container = manager.getScrollContainer()
       if (container) {
         scrollContainer = container
-        lastScrollHeight = container.scrollHeight
         scrollContainer.addEventListener("scroll", handleScroll, { passive: true })
         window.addEventListener("resize", handleResize, { passive: true })
         attachMutationObservers(container)
         if (typeof ResizeObserver !== "undefined") {
           resizeObserver = new ResizeObserver(() => {
-            lastScrollHeight = scrollContainer?.scrollHeight || 0
-            manager.markScrollPositionsStale()
+            handleScroll()
           })
           resizeObserver.observe(scrollContainer)
         }
@@ -1274,21 +1232,6 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       }
       if (outlineAutoScrollFrame !== null) {
         cancelOutlineAutoScroll()
-      }
-      if (staleTimer) {
-        clearTimeout(staleTimer)
-      }
-      if (idleHandle !== null) {
-        const cancelIdle =
-          typeof window !== "undefined"
-            ? (
-                window as Window & { cancelIdleCallback?: (handle: number) => void }
-              ).cancelIdleCallback?.bind(window)
-            : undefined
-        if (cancelIdle) {
-          cancelIdle(idleHandle)
-        }
-        idleHandle = null
       }
       mutationObservers.forEach((observer) => observer.disconnect())
       mutationObservers.clear()
@@ -1574,18 +1517,25 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     const viewportTop = containerRect.top
     const viewportBottom = containerRect.bottom
 
-    let currentItem: (typeof tree)[0] | null = null
-    for (const item of allItems) {
-      if (!item.element || !item.element.isConnected) continue
+    const mountedActiveIndex = manager.findMountedActiveItemIndex(scrollContainer)
+    let currentItem =
+      mountedActiveIndex !== null
+        ? allItems.find((item) => item.index === mountedActiveIndex) || null
+        : null
 
-      const rect = item.element.getBoundingClientRect()
-      if (rect.top >= viewportTop && rect.top < viewportBottom) {
-        currentItem = item
-        break
-      }
-      if (rect.top < viewportTop && rect.bottom > viewportTop) {
-        currentItem = item
-        break
+    if (!currentItem) {
+      for (const item of allItems) {
+        if (!item.element || !item.element.isConnected) continue
+
+        const rect = item.element.getBoundingClientRect()
+        if (rect.top >= viewportTop && rect.top < viewportBottom) {
+          currentItem = item
+          break
+        }
+        if (rect.top < viewportTop && rect.bottom > viewportTop) {
+          currentItem = item
+          break
+        }
       }
     }
 
@@ -1626,8 +1576,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
         if (applyPendingLocateHighlight(currentItem!.index)) return
 
-        if (attempt < 6) {
-          setTimeout(() => tryScrollAndHighlight(attempt + 1), 50)
+        if (attempt < OUTLINE_LOCATE_MAX_RETRIES) {
+          setTimeout(() => tryScrollAndHighlight(attempt + 1), OUTLINE_LOCATE_RETRY_DELAY_MS)
         } else if (pendingLocateHighlightRef.current?.requestId === locateHighlightRequestId) {
           pendingLocateHighlightRef.current = null
           manager.clearForceVisible()
@@ -1635,7 +1585,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       })
     }
 
-    setTimeout(() => tryScrollAndHighlight(0), 50)
+    setTimeout(() => tryScrollAndHighlight(0), OUTLINE_LOCATE_RETRY_DELAY_MS)
   }, [
     tree,
     searchQuery,

@@ -253,10 +253,7 @@ export function useShortcuts({
       if (currentFlatIndex === -1) {
         const scrollContainer = outlineManager.getScrollContainer()
         if (scrollContainer) {
-          const visibleItemIndex = outlineManager.findVisibleItemIndex(
-            scrollContainer.scrollTop,
-            scrollContainer.clientHeight,
-          )
+          const visibleItemIndex = outlineManager.findMountedActiveItemIndex(scrollContainer)
           if (visibleItemIndex !== null) {
             currentFlatIndex = flatItems.findIndex((item) => item.index === visibleItemIndex)
           }

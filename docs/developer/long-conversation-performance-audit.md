@@ -14,7 +14,7 @@ PR #683 已合并，方向是正确的：大纲面板从“按全部可见节点
 3. 大对象 store 写入和 UI 派发：会话同步逐条更新 Zustand/persist，放大为多次对象拷贝、序列化和列表重算。
 4. 其他功能开关的周期扫描：Shadow DOM/Markdown/Mermaid/表格复制/Quick Quote 等仍需按 profiling 决定是否拆分。
 
-后续优化不要继续优先做大纲 UI 微调；#693 应先处理正文滚动同步的高频触发，再由 #694 处理位置测量成本。
+后续优化不要继续优先做大纲 UI 微调；#693 应先把正文滚动同步从“全量高度/位置缓存推断当前项”改为“真实 mounted DOM/native active 判定”，再由 #694 处理剩余跳转、书签或统计路径里的位置测量成本。
 
 ## 当前进展
 
@@ -26,7 +26,7 @@ PR #683 已合并，方向是正确的：大纲面板从“按全部可见节点
 | 虚拟行高硬化 | 已合并 | commit `550216d` | 固定行高拆为可读常量；虚拟列表内 locate highlight 不再用 2px border；禁用 user query hover 位移；增加 debug-only 行高漂移告警。 |
 | 移除大纲无条件刷新轮询 | 已完成 | #684 / PR #691 | App 级固定 2s 大纲刷新已移除，保留初始化、URL 错峰探测、显式刷新和按需激活刷新。 |
 | 全局搜索与大纲轮询解耦 | 已完成 | #685 / PR #692 | 全局搜索不再靠 1200ms 轮询刷新大纲；改为搜索打开时按需刷新、订阅 outline 事件并使用 normalized index。 |
-| 大纲滚动同步拆分 | 已拆分 | #686 -> #693/#694 | #693 处理 source scroll rAF 合帧和 stale observer 降噪；#694 处理 `updateScrollPositions()` 测量降本。 |
+| 大纲滚动同步拆分 | 已拆分 | #686 -> #693/#694 | #693 处理 source scroll rAF 合帧、stale observer 降噪，并重写当前项判定为 mounted DOM/native active 驱动；#694 处理剩余位置测量降本。 |
 | 后续性能拆分 | 已建 issue | #684-#694 | 见下方 issue mapping。 |
 
 ## PR #683 当前判断
@@ -74,8 +74,8 @@ PR #683 已合并，方向是正确的：大纲面板从“按全部可见节点
 | #684 | P0 | Closed，PR #691 已合并 | 移除大纲无条件刷新轮询 | 大纲面板关闭且页面 idle 时，不再每 2s 触发 outline extraction。 |
 | #685 | P0 | Closed，PR #692 已合并 | 全局搜索与大纲轮询解耦 | 打开搜索框但不输入时，不持续 refresh outline；输入延迟下降。 |
 | #686 | P0/P1 | Open，已拆分 | 大纲滚动同步与位置重测量降本 | 父 issue；执行拆到 #693/#694。 |
-| #693 | P0/P1 | Open，下一步实施 | 大纲正文滚动同步 rAF 合帧与 stale observer 降噪 | source scroll 同帧合并；只在 active/visible index 变化时更新；移除 `characterData` stale observer。 |
-| #694 | P1 | Open，#693 后实施 | 大纲位置缓存测量降本 | `updateScrollPositions()` 减少重复 geometry read；评估 lazy/viewport-near 测量。 |
+| #693 | P0/P1 | Open，下一步实施 | 大纲正文滚动同步 rAF 合帧、stale observer 降噪与当前项判定重写 | source scroll 同帧合并；滚动高亮只接受当前 mounted DOM 或站点 native active 证据；移除 `characterData` stale observer；没有可靠证据时不高亮。 |
+| #694 | P1 | Open，#693 后实施 | 大纲位置缓存测量降本 | `updateScrollPositions()` 不再作为滚动高亮真值，只优化点击跳转、书签、调试或其他仍需位置数据的低频路径；减少重复 geometry read。 |
 | #687 | P1 | Open | 会话同步批量写入 Zustand store | 同步 N 条会话时 set/persist 从 O(N) 降到 O(1) 或小常数。 |
 | #688 | P1 | Open | adapter 大纲抽取输入与字数统计缓存 | 同一 DOM version 下重复 refresh 的 adapter 抽取耗时下降。 |
 | #689 | P1 | Open | 虚拟大纲列表自身滚动渲染节流 | 大纲列表快速滚动时减少 React render，无白屏/错位/闪烁。 |
@@ -91,17 +91,18 @@ PR #683 已合并，方向是正确的：大纲面板从“按全部可见节点
 
 ### P0/P1：降低大纲滚动同步与位置重测量成本（#686 -> #693/#694）
 
-#683 保留 `manager.findVisibleItemIndex()` 是正确的，但正文滚动同步仍可能高频触发 DOM 测量。`OutlineTab` 的 source scroll container observer 仍监听 `characterData`，流式生成时会反复标记 scroll positions stale。
+#683 保留的 `manager.findVisibleItemIndex(scrollTop, viewportHeight)` 不能继续作为正文滚动高亮真值。该方案依赖全量 heading/user query 的高度与位置缓存，但 Gemini 历史懒加载、ChatGPT/DeepSeek/Z.ai 等虚拟滚动会卸载离屏 DOM，缓存高度和旧 rect 很容易过期；在重复标题、同前缀用户问题或 DOM remount 后，还可能把当前正文位置映射到错误大纲项。正文滚动同步需要从“预测离屏节点位置”改为“只相信当前真实挂载 DOM 或站点原生活跃状态”。`OutlineTab` 的 source scroll container observer 仍监听 `characterData`，流式生成时也会反复标记 scroll positions stale。
 
 拆分后执行顺序：
 
-1. #693：`OutlineTab` source scroll handler 用单个 `requestAnimationFrame` 合并同一帧内多次 scroll；只有 active/visible index 变化时更新高亮和大纲自动滚动；`observeRoot()` 首版移除 `characterData: true`，只监听 `childList/subtree`。
-2. #694：`updateScrollPositions()` 减少重复 geometry read；同一轮测量中避免先 `getClientRects()` 再读 `getBoundingClientRect()`；评估 lazy/viewport-near 测量，避免 stale 后总是全量读取所有 source 元素 rect。
+1. #693：`OutlineTab` source scroll handler 用单个 `requestAnimationFrame` 合并同一帧内多次 scroll；当前项判定改为 mounted DOM/native active 驱动，只从当前已挂载的 `OutlineItem.element` 或站点原生 active 状态得到 outline index；没有可靠 mounted 证据时返回 `null`，宁可不高亮也不误高亮；`observeRoot()` 首版移除 `characterData: true`，只监听 `childList/subtree`。
+2. #694：`updateScrollPositions()` 不再服务滚动高亮主路径；只优化仍需要位置数据的低频场景，例如跳转前定位、书签 scrollTop、debug 校验或站点兼容兜底。同一轮测量中避免先 `getClientRects()` 再读 `getBoundingClientRect()`；不要再把 lazy/viewport-near 测量设计成新的高亮真值。
 
 风险：
 
-- 某些站点流式输出会导致标题换行高度变化。需要验证生成中新增标题、展开 thinking、图片加载、代码块渲染后的同步高亮准确性。
-- #693 不改变 `updateScrollPositions()` 的测量模型；#694 不改变 `OutlineTab` 的 scroll event scheduling，避免两个风险面混在同一个 PR。
+- 某些站点没有稳定 native active 状态，只能依赖当前 mounted DOM。虚拟滚动卸载真实内容时，高亮可能短暂清空；这是比错高亮更可接受的行为。
+- `OutlineItem.element` / stable id 只适合作为当前已挂载 DOM 的精确映射，不适合作为离屏节点的预测来源。DOM remount 后必须由下一次 outline refresh 或 adapter stable id 重新绑定。
+- #693 不再扩大 `updateScrollPositions()` 的测量模型；#694 不改变 `OutlineTab` 的 scroll event scheduling，避免两个风险面混在同一个 PR。
 
 ### P1：会话同步批量写 store（#687）
 
@@ -178,8 +179,8 @@ PR #683 已实现 debug-only 行高漂移告警。#690 后续可以按 PR 验收
 
 1. 收尾 #681/#690：PR #683 已合并；关闭 #681，按需确认 #690 是否可关闭或缩小为 CSS 回归守护。
 2. 已完成 #684/#685：PR #691/#692 已合并，后台无条件大纲轮询和全局搜索大纲轮询已移除。
-3. 下一步做 #693：正文 source scroll rAF 合帧、active/visible index 去重、移除 `characterData` stale observer。
-4. 接着做 #694：`updateScrollPositions()` 减少重复 DOM geometry read，并评估 lazy/viewport-near 测量。
+3. 下一步做 #693：正文 source scroll rAF 合帧、mounted DOM/native active 当前项判定、active/visible index 去重、移除 `characterData` stale observer。
+4. 接着做 #694：`updateScrollPositions()` 从滚动高亮主路径退出后，减少剩余低频路径的 DOM geometry read；不再把位置缓存当作当前项真值。
 5. 第二批做 #687：会话同步批量写入 Zustand store，减少长会话列表同步时的多次 persist 和对象拷贝。
 6. 第二批做 #688：优化 ChatGPT/Claude/Gemini 等 adapter 的大纲抽取输入收集和字数统计缓存。
 7. 视 profiling 决定 #689：只有大纲列表自身快速滚动仍有明显 render 压力时，再做 rAF 合帧和 range 变化才 setState。

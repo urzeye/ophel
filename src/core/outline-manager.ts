@@ -1657,6 +1657,74 @@ export class OutlineManager {
     return null
   }
 
+  findMountedActiveItemIndex(scrollContainer: HTMLElement): number | null {
+    if (this.settings.followMode !== "current") return null
+    if (this.flatNodes.length === 0) return null
+
+    const containerRect = scrollContainer.getBoundingClientRect()
+    if (containerRect.width <= 0 || containerRect.height <= 0) return null
+
+    const elementIndex = new WeakMap<Element, number>()
+    for (const node of this.flatNodes) {
+      if (node.isGhost) continue
+
+      const element = node.element
+      if (!element || !element.isConnected) continue
+
+      elementIndex.set(element, node.index)
+    }
+
+    const findMappedIndex = (element: Element): number | null => {
+      let current: Element | null = element
+      while (current) {
+        const index = elementIndex.get(current)
+        if (index !== undefined) return index
+
+        if (current.parentElement) {
+          current = current.parentElement
+          continue
+        }
+
+        const rootNode = current.getRootNode()
+        current = rootNode instanceof ShadowRoot ? rootNode.host : null
+      }
+
+      return null
+    }
+
+    const roots: Array<Document | ShadowRoot> = [scrollContainer.ownerDocument]
+    const scrollRoot = scrollContainer.getRootNode()
+    if (scrollRoot instanceof ShadowRoot) {
+      roots.push(scrollRoot)
+    }
+
+    const makePoint = (x: number, y: number) => ({
+      x: Math.min(Math.max(x, containerRect.left + 1), containerRect.right - 1),
+      y: Math.min(Math.max(y, containerRect.top + 1), containerRect.bottom - 1),
+    })
+    const anchorY =
+      containerRect.top + Math.min(Math.max(scrollContainer.clientHeight * 0.25, 48), 160)
+    const points = [
+      makePoint(containerRect.left + containerRect.width * 0.15, containerRect.top + 24),
+      makePoint(containerRect.left + containerRect.width * 0.5, containerRect.top + 24),
+      makePoint(containerRect.left + containerRect.width * 0.15, anchorY),
+      makePoint(containerRect.left + containerRect.width * 0.5, anchorY),
+      makePoint(containerRect.left + containerRect.width * 0.85, anchorY),
+    ]
+
+    for (const point of points) {
+      for (const root of roots) {
+        const elements = root.elementsFromPoint(point.x, point.y)
+        for (const element of elements) {
+          const index = findMappedIndex(element)
+          if (index !== null) return index
+        }
+      }
+    }
+
+    return null
+  }
+
   private shouldKeepPreviousVisibleItem(): boolean {
     const siteId = this.siteAdapter.getSiteId()
     return siteId === SITE_IDS.DEEPSEEK || siteId === SITE_IDS.ZAI
