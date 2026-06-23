@@ -3140,16 +3140,11 @@ export class ChatGPTAdapter extends SiteAdapter {
       isUserQueryItem: boolean,
     ): number => {
       if (!startEl) return 0
-      const signatureRoot = isUserQueryItem
-        ? container
-        : startEl.closest('[data-message-author-role="assistant"]') ||
-          startEl.closest("[data-turn-id-container], [data-turn-id]") ||
-          container
       const signature = [
         isUserQueryItem ? "user" : "heading",
         getTextSignature(startEl),
         getTextSignature(nextEl),
-        getTextSignature(signatureRoot),
+        getTextSignature(container),
       ].join("|")
       const cached = this.outlineWordCountCache.get(startEl)
       if (cached?.signature === signature) return cached.count

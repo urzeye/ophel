@@ -1413,7 +1413,11 @@ export class ClaudeAdapter extends SiteAdapter {
       if (!element) return "none"
       const cached = textSignatureCache.get(element)
       if (cached) return cached
-      const signature = hashTextForCache(element.textContent || "")
+      const text =
+        element instanceof Document
+          ? element.body?.textContent || element.documentElement?.textContent || ""
+          : element.textContent || ""
+      const signature = hashTextForCache(text)
       textSignatureCache.set(element, signature)
       return signature
     }
@@ -1520,7 +1524,7 @@ export class ClaudeAdapter extends SiteAdapter {
             "heading",
             getTextSignature(h),
             getTextSignature(nextBoundaryEl),
-            getTextSignature(responseContainer),
+            getTextSignature(outlineRoot),
           ].join("|")
           const rawCount = getCachedWordCount(h, signature, () =>
             this.calculateRangeWordCount(h, nextBoundaryEl, responseContainer),

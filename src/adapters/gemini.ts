@@ -5159,17 +5159,11 @@ export class GeminiAdapter extends SiteAdapter {
       isUserQueryItem: boolean,
     ): number => {
       if (!startEl) return 0
-      const signatureRoot = isUserQueryItem
-        ? container
-        : startEl.closest("model-response") ||
-          startEl.closest("message-content") ||
-          startEl.parentElement ||
-          container
       const signature = [
         isUserQueryItem ? "user" : "heading",
         getTextSignature(startEl),
         getTextSignature(nextEl),
-        getTextSignature(signatureRoot),
+        getTextSignature(container),
       ].join("|")
       const cached = this.outlineWordCountCache.get(startEl)
       if (cached?.signature === signature) return cached.count
