@@ -1686,7 +1686,9 @@ export class OutlineManager {
       mountedNodes.push({ node, element })
     }
 
-    if (mountedNodes.length === 0) return null
+    const cachedVisibleIndex = this.findCachedActiveItemIndex(scrollContainer, viewportRect)
+
+    if (mountedNodes.length === 0) return cachedVisibleIndex
 
     mountedNodes.sort((a, b) =>
       this.compareMountedElements(a.element, b.element, a.node.index, b.node.index),
@@ -1722,9 +1724,6 @@ export class OutlineManager {
     }
 
     const findSectionIndex = (element: Element): number | null => {
-      const directIndex = findMappedIndex(element)
-      if (directIndex !== null) return directIndex
-
       const elementRoot = element.getRootNode()
       const sameRootNodes = mountedNodesByRoot.get(elementRoot)
       if (!sameRootNodes || sameRootNodes.length === 0) return null
@@ -1832,13 +1831,48 @@ export class OutlineManager {
         for (const element of elements) {
           if (!isWithinScrollContainer(element) || isOphelUiElement(element)) continue
 
-          const index = findSectionIndex(element)
+          const directIndex = findMappedIndex(element)
+          if (directIndex !== null) return directIndex
+
+          const index = cachedVisibleIndex ?? findSectionIndex(element)
           if (index !== null) return index
         }
       }
     }
 
-    return null
+    return cachedVisibleIndex
+  }
+
+  private findCachedActiveItemIndex(
+    scrollContainer: HTMLElement,
+    viewportRect: ScrollViewportRect,
+  ): number | null {
+    if (!this.shouldKeepPreviousVisibleItem()) return null
+
+    const viewportScrollTop = this.getViewportScrollTop(scrollContainer, viewportRect)
+    if (viewportScrollTop === null) return null
+
+    return this.findVisibleItemIndex(viewportScrollTop, viewportRect.height)
+  }
+
+  private getViewportScrollTop(
+    scrollContainer: HTMLElement,
+    viewportRect: ScrollViewportRect,
+  ): number | null {
+    if (this.isDocumentScrollContainer(scrollContainer)) {
+      const doc = scrollContainer.ownerDocument
+      return (
+        scrollContainer.scrollTop ||
+        doc.documentElement.scrollTop ||
+        doc.body.scrollTop ||
+        doc.defaultView?.scrollY ||
+        0
+      )
+    }
+
+    const containerRect = scrollContainer.getBoundingClientRect()
+    const visibleOffset = Math.max(0, viewportRect.top - containerRect.top)
+    return scrollContainer.scrollTop + visibleOffset
   }
 
   private isDocumentScrollContainer(scrollContainer: HTMLElement): boolean {
