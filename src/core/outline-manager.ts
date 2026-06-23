@@ -1237,7 +1237,7 @@ export class OutlineManager {
 
       let element = node.element
       if (!element || !element.isConnected) {
-        if (pushCachedEntry(node)) return
+        if (this.shouldKeepPreviousVisibleItem() && pushCachedEntry(node)) return
 
         if (this.activeSourceId === "conversation") {
           if (node.isUserQuery && node.level === 0 && node.queryIndex !== undefined) {
@@ -1252,6 +1252,7 @@ export class OutlineManager {
       }
 
       if (!element || !element.isConnected) {
+        pushCachedEntry(node)
         return
       }
 
