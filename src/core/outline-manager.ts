@@ -617,7 +617,10 @@ export class OutlineManager {
   }
 
   async resolveOutlineTarget(
-    item: Pick<OutlineItem, "level" | "text" | "isUserQuery" | "id" | "navigationId">,
+    item: Pick<
+      OutlineItem,
+      "level" | "text" | "isUserQuery" | "id" | "navigationId" | "isTruncated"
+    >,
     queryIndex?: number,
   ): Promise<Element | null> {
     return this.siteAdapter.resolveOutlineTarget(item, queryIndex, this.activeSourceId)

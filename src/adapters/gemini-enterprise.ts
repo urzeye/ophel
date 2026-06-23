@@ -1467,12 +1467,7 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       shadow: true,
     }) as Element[]
 
-    for (const h of headings) {
-      if (h.textContent?.trim() === text) {
-        return h
-      }
-    }
-    return null
+    return this.findUniqueOutlineTextMatch(headings, (heading) => heading.textContent || "", text)
   }
 
   getExportConfig(): ExportConfig {
