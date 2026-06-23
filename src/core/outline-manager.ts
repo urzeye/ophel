@@ -1237,8 +1237,6 @@ export class OutlineManager {
 
       let element = node.element
       if (!element || !element.isConnected) {
-        if (this.shouldKeepPreviousVisibleItem() && pushCachedEntry(node)) return
-
         if (this.activeSourceId === "conversation") {
           if (node.isUserQuery && node.level === 0 && node.queryIndex !== undefined) {
             element = this.findUserQueryElement(node.queryIndex, node.text) as HTMLElement
