@@ -275,7 +275,7 @@ setActive(active: boolean) {
 
 ## Phase 7：OutlineTab 渲染优化
 
-**状态**：已完成（方案 A: DOM classList 直接操作）
+**状态**：已完成（方案 A: DOM classList 直接操作；方案 C: 条件渲染 + 虚拟滚动）
 
 ### 问题描述
 
@@ -301,15 +301,18 @@ setActive(active: boolean) {
 
 因此 `React.memo` 的 `prev.node !== next.node` 引用比较在 mutation 场景下**无法区分变化**。
 
-#### 虚拟列表评估
+#### 虚拟列表评估更新（2026-06-23）
 
-**不建议引入**，原因：
+早期评估不建议引入虚拟列表，主要基于树形结构、动态行高和回归风险。#680/#682 完成后，隐藏节点已改为条件渲染，书签匹配也从 O(n*m) 降为 Map 匹配，因此虚拟列表的适用范围被收窄为“可见大纲项很多”的场景。
 
-1. 树形结构需要先扁平化，react-window 等库原生不支持
-2. 动态行高（缩进、搜索高亮、换行）需 DOM 测量
-3. 搜索+折叠+书签三重过滤叠加，扁平化映射实时同步复杂
-4. 折叠后可见节点仅 50-200，常见场景下瓶颈不在 DOM 数量
-5. 工程量 5-15 天，回归风险高
+PR #683 采用了较低风险的方案：
+
+1. 不重写第二套可见性规则，仍以 `tree + visibleMap` 为唯一输入。
+2. 先将可见树展平为 `visibleItems`，再只渲染 viewport + overscan。
+3. 保留搜索、复制完整大纲、全局搜索、source switching、正文滚动同步和正文跳转的数据流。
+4. 固定虚拟行高，避免首版引入动态高度缓存和持续 DOM 测量。
+
+该方案解决的是大纲面板自身 React/DOM 渲染成本，不解决 `extractOutline()`、`updateScrollPositions()`、全局搜索刷新、adapter 查询和其它后台轮询成本。这些后续拆到 #684-#689 跟踪。
 
 ### 实施方案
 
@@ -343,6 +346,31 @@ setActive(active: boolean) {
 - `useMemo` 依赖项拆分（当前 7 个 → 2-3 个分组）
 - 需 React Profiler 量化瓶颈后决定
 
+#### 方案 C（当前迭代）: 条件渲染 + 虚拟滚动
+
+**已完成内容**：
+
+- #682：不可见大纲节点不再通过 CSS 隐藏，而是直接不渲染；书签匹配使用 Map，避免 O(n*m) 嵌套扫描。
+- #683：大纲面板虚拟滚动。`OutlineTab.tsx` 将 `tree + visibleMap` 展平为 `visibleItems`，再根据 scrollTop、viewportHeight、overscan 计算渲染窗口。
+- `scrollOutlineNodeIntoView()` 基于虚拟 metrics 定位行，不再要求目标 `.outline-item` 已经挂载。
+- locate current 改为 `revealNode()` 后滚动到虚拟行，等待行挂载后再应用定位高亮。
+
+**固定行高约束**：
+
+- 虚拟列表首版使用固定行高，不做动态测量。
+- `OUTLINE_ITEM_HEIGHT` 来自 `24px line-height + 12px vertical padding + 2px border = 38px`。
+- 普通行通过 `OUTLINE_ROW_GAP` 维护 2px 间距。
+- 用户提问行通过虚拟 row 的 top/bottom padding 维护额外间距，`.outline-list-virtual .outline-item.user-query-node` 中清除原 margin。
+- 虚拟列表上下文中的 locate highlight 使用 1px border + box-shadow 表达高亮，不再用 2px border 压缩内容盒。
+- 虚拟列表上下文中禁用 user query hover 的 `transform: translateY(-1px)`，避免绝对定位行之间出现视觉重叠。
+- 开发期可通过 `document.documentElement.dataset.ophelDebugOutlineVirtualHeights = "true"` 或 `localStorage["ophel.debugOutlineVirtualHeights"] = "1"` 开启行高漂移告警；告警只在调试开关开启时抽样已挂载行，不进入生产高频路径。
+
+**后续跟踪**：
+
+- #686：正文滚动同步节流、`characterData` stale observer 降噪、`updateScrollPositions()` 惰性/邻近测量。
+- #689：大纲虚拟列表自身 scroll state 的 rAF 节流。
+- #690：继续跟踪行高漂移校验和后续 CSS 改动风险。
+
 ### 影响范围
 
 - `OutlineTab.tsx` — `OutlineNodeView` 组件
@@ -355,4 +383,5 @@ setActive(active: boolean) {
 2. 每完成一个 Phase，需要用户确认再继续下一个
 3. 每个 Phase 在独立提交中完成
 4. Phase 1-6 分支名：`perf/outline-optimizations`
-5. Phase 7 分支名：`perf/outline-memo`
+5. Phase 7 历史分支名：`perf/outline-memo`
+6. Phase 7 虚拟滚动分支名：`perf/outline-virtual-scroll`

@@ -202,12 +202,17 @@ const getConversationCopyHeadingLevel = (expandLevel: number, showUserQueries: b
   return showUserQueries ? expandLevel : Math.max(1, expandLevel)
 }
 
-const OUTLINE_ITEM_HEIGHT = 38
+const OUTLINE_ITEM_LINE_HEIGHT = 24
+const OUTLINE_ITEM_VERTICAL_PADDING = 12
+const OUTLINE_ITEM_VERTICAL_BORDER = 2
+const OUTLINE_ITEM_HEIGHT =
+  OUTLINE_ITEM_LINE_HEIGHT + OUTLINE_ITEM_VERTICAL_PADDING + OUTLINE_ITEM_VERTICAL_BORDER
 const OUTLINE_ROW_GAP = 2
 const OUTLINE_USER_QUERY_TOP_GAP = 2
 const OUTLINE_USER_QUERY_BOTTOM_GAP = 2
 const OUTLINE_VIRTUAL_OVERSCAN = 10
 const OUTLINE_FALLBACK_VIEWPORT_HEIGHT = 420
+const OUTLINE_HEIGHT_DRIFT_TOLERANCE = 1
 
 type OutlineScrollBlock = "start" | "center" | "end" | "nearest"
 
@@ -320,6 +325,22 @@ const getOutlineVirtualRange = (
   return {
     start: Math.max(0, startIndex - OUTLINE_VIRTUAL_OVERSCAN),
     end: Math.min(itemCount, endIndex + OUTLINE_VIRTUAL_OVERSCAN),
+  }
+}
+
+const isOutlineVirtualHeightDebugEnabled = (): boolean => {
+  if (typeof document !== "undefined") {
+    const value = document.documentElement.dataset.ophelDebugOutlineVirtualHeights
+    if (value === "true" || value === "1") return true
+  }
+
+  try {
+    return (
+      typeof window !== "undefined" &&
+      window.localStorage?.getItem("ophel.debugOutlineVirtualHeights") === "1"
+    )
+  } catch {
+    return false
   }
 }
 
@@ -550,6 +571,8 @@ const VirtualizedOutlineTree: React.FC<{
   searchQuery,
   extractUserQueryText,
 }) => {
+  const virtualListRef = useRef<HTMLDivElement>(null)
+  const warnedHeightDriftKeysRef = useRef<Set<string>>(new Set())
   const range = getOutlineVirtualRange(metrics, scrollTop, viewportHeight)
   const renderedItems = items.slice(range.start, range.end)
   const virtualListStyle = {
@@ -558,8 +581,63 @@ const VirtualizedOutlineTree: React.FC<{
     position: "relative",
   } as React.CSSProperties
 
+  useEffect(() => {
+    if (!isOutlineVirtualHeightDebugEnabled()) return
+
+    const root = virtualListRef.current
+    if (!root) return
+
+    const frame = window.requestAnimationFrame(() => {
+      root.querySelectorAll<HTMLElement>(".outline-virtual-row").forEach((row) => {
+        const item = row.querySelector<HTMLElement>(".outline-item")
+        if (!item) return
+
+        const nodeIndex = item.dataset.index || "unknown"
+        const itemHeight = item.getBoundingClientRect().height
+        const rowHeight = row.getBoundingClientRect().height
+        const expectedRowHeight = Number(row.dataset.expectedRowHeight || OUTLINE_ITEM_HEIGHT)
+        const itemOverflow = item.scrollHeight - item.clientHeight
+        const itemDrift = Math.abs(itemHeight - OUTLINE_ITEM_HEIGHT)
+        const rowDrift = Math.abs(rowHeight - expectedRowHeight)
+
+        if (
+          itemDrift <= OUTLINE_HEIGHT_DRIFT_TOLERANCE &&
+          rowDrift <= OUTLINE_HEIGHT_DRIFT_TOLERANCE &&
+          itemOverflow <= OUTLINE_HEIGHT_DRIFT_TOLERANCE
+        ) {
+          return
+        }
+
+        const warningKey = [
+          nodeIndex,
+          itemHeight.toFixed(2),
+          rowHeight.toFixed(2),
+          expectedRowHeight,
+          itemOverflow,
+        ].join(":")
+        if (warnedHeightDriftKeysRef.current.has(warningKey)) return
+        warnedHeightDriftKeysRef.current.add(warningKey)
+
+        console.warn("[OutlineTab] Virtual outline row height drift", {
+          nodeIndex,
+          nodeKind: row.dataset.nodeKind,
+          itemHeight,
+          expectedItemHeight: OUTLINE_ITEM_HEIGHT,
+          rowHeight,
+          expectedRowHeight,
+          itemOverflow,
+        })
+      })
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [range.start, range.end, metrics.totalHeight])
+
   return (
-    <div className="outline-list outline-list-virtual" style={virtualListStyle}>
+    <div
+      ref={virtualListRef}
+      className="outline-list outline-list-virtual"
+      style={virtualListStyle}>
       {renderedItems.map((item, offset) => {
         const rowIndex = range.start + offset
         const spacing = getOutlineVirtualRowSpacing(item, rowIndex)
@@ -569,6 +647,8 @@ const VirtualizedOutlineTree: React.FC<{
             key={item.node.index}
             className="outline-virtual-row"
             data-depth={item.depth}
+            data-node-kind={item.node.isUserQuery ? "user-query" : "heading"}
+            data-expected-row-height={metrics.rowHeights[rowIndex]}
             style={{
               position: "absolute",
               top: metrics.rowOffsets[rowIndex],

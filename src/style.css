@@ -529,6 +529,13 @@
   box-sizing: border-box;
 }
 
+.outline-list-virtual .outline-item.highlight {
+  border-width: 1px !important;
+  box-shadow:
+    0 0 0 1px var(--gh-outline-locate-border),
+    inset 0 0 8px var(--gh-outline-locate-shadow);
+}
+
 .outline-empty-state {
   min-height: 140px;
   padding: 26px 12px 22px;
@@ -933,6 +940,10 @@
   transform: translateY(-1px);
 }
 
+.outline-list-virtual .outline-item.user-query-node:hover {
+  transform: none;
+}
+
 /* Hover 时指示器 */
 .outline-item.user-query-node:hover::before {
   height: 22px;
@@ -981,7 +992,7 @@
   border-radius: 8px !important;
 
   /* 强烈的定位高亮：双层边框光晕 */
-  border: 2px solid var(--gh-outline-locate-border) !important;
+  border: 1px solid var(--gh-outline-locate-border) !important;
   box-shadow:
     0 0 0 2px var(--gh-outline-locate-shadow),
     var(--gh-shadow-lg) !important;
