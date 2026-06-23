@@ -58,6 +58,7 @@ interface GlobalSearchIndexEntry {
   fields: GlobalSearchScoreField[]
   searchableText: string
   fuzzyWords: string[]
+  fuzzyAcronym: string
   recency?: number
   scoreBoost?: number
   createItem: (
@@ -228,6 +229,12 @@ const toGlobalSearchFuzzyWords = (value: string): string[] => {
     .map((word) => word.trim())
     .filter((word) => word.length > 0)
 }
+
+const toGlobalSearchAcronym = (words: string[]): string =>
+  words
+    .map((word) => word[0] || "")
+    .join("")
+    .trim()
 
 const getBoundedDamerauLevenshteinDistance = (
   source: string,
@@ -553,18 +560,62 @@ const compareGlobalSearchRankedItems = (
 }
 
 const createGlobalSearchIndexEntry = (
-  entry: Omit<GlobalSearchIndexEntry, "searchableText" | "fuzzyWords">,
+  entry: Omit<GlobalSearchIndexEntry, "searchableText" | "fuzzyWords" | "fuzzyAcronym">,
 ): GlobalSearchIndexEntry => {
   const searchableText = entry.fields
     .map((field) => field.value)
     .filter(Boolean)
     .join(" ")
+  const fuzzyWords = toGlobalSearchFuzzyWords(searchableText)
 
   return {
     ...entry,
     searchableText,
-    fuzzyWords: toGlobalSearchFuzzyWords(searchableText),
+    fuzzyWords,
+    fuzzyAcronym: toGlobalSearchAcronym(fuzzyWords),
   }
+}
+
+const isGlobalSearchSubsequence = (query: string, value: string): boolean => {
+  if (!query || query.length > value.length) return false
+
+  let queryIndex = 0
+  for (
+    let valueIndex = 0;
+    valueIndex < value.length && queryIndex < query.length;
+    valueIndex += 1
+  ) {
+    if (value[valueIndex] === query[queryIndex]) {
+      queryIndex += 1
+    }
+  }
+
+  return queryIndex === query.length
+}
+
+const hasGlobalSearchTypoCandidate = (
+  entry: GlobalSearchIndexEntry,
+  normalizedQuery: string,
+): boolean => {
+  if (normalizedQuery.length < GLOBAL_SEARCH_TYPO_MIN_QUERY_LENGTH) {
+    return false
+  }
+
+  const typoMaxDistance =
+    normalizedQuery.length >= 8
+      ? GLOBAL_SEARCH_TYPO_MAX_DISTANCE_LONG
+      : GLOBAL_SEARCH_TYPO_MAX_DISTANCE_SHORT
+
+  return entry.fuzzyWords.some((word) => {
+    if (Math.abs(word.length - normalizedQuery.length) > typoMaxDistance) {
+      return false
+    }
+
+    return (
+      getBoundedDamerauLevenshteinDistance(normalizedQuery, word, typoMaxDistance) <=
+      typoMaxDistance
+    )
+  })
 }
 
 const getGlobalSearchLimitedFuzzyCandidateRank = (
@@ -577,6 +628,10 @@ const getGlobalSearchLimitedFuzzyCandidateRank = (
   if (entry.searchableText === normalizedQuery) return 5
   if (entry.searchableText.startsWith(normalizedQuery)) return 4
   if (entry.searchableText.includes(normalizedQuery)) return 3
+  if (entry.fuzzyAcronym === normalizedQuery || entry.fuzzyAcronym.startsWith(normalizedQuery)) {
+    return 3
+  }
+  if (entry.fuzzyAcronym.includes(normalizedQuery)) return 2
 
   if (tokens.some((token) => entry.searchableText.startsWith(token))) {
     return 2
@@ -586,18 +641,22 @@ const getGlobalSearchLimitedFuzzyCandidateRank = (
     return 1
   }
 
-  const typoMaxDistance =
-    normalizedQuery.length >= 8
-      ? GLOBAL_SEARCH_TYPO_MAX_DISTANCE_LONG
-      : GLOBAL_SEARCH_TYPO_MAX_DISTANCE_SHORT
+  if (
+    normalizedQuery.length >= 2 &&
+    entry.fuzzyAcronym &&
+    isGlobalSearchSubsequence(normalizedQuery, entry.fuzzyAcronym)
+  ) {
+    return 2
+  }
 
-  return entry.fuzzyWords.some(
-    (word) =>
-      Math.abs(word.length - normalizedQuery.length) <= typoMaxDistance &&
-      word[0] === normalizedQuery[0],
-  )
-    ? 0
-    : -1
+  if (
+    normalizedQuery.length >= 3 &&
+    isGlobalSearchSubsequence(normalizedQuery, entry.searchableText)
+  ) {
+    return 1
+  }
+
+  return hasGlobalSearchTypoCandidate(entry, normalizedQuery) ? 1 : -1
 }
 
 const getGlobalSearchFuzzyCandidates = (
@@ -619,7 +678,6 @@ const getGlobalSearchFuzzyCandidates = (
       if (right.rank !== left.rank) return right.rank - left.rank
       return left.entry.index - right.entry.index
     })
-    .slice(0, GLOBAL_SEARCH_FUZZY_CANDIDATE_LIMIT)
     .map(({ entry }) => entry)
 
   return rankedCandidates.length > 0

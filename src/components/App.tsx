@@ -1668,6 +1668,7 @@ export const App = () => {
     }
 
     outlineManager.refresh()
+    setOutlineSearchVersion((previousVersion) => previousVersion + 1)
 
     const unsubscribe = outlineManager.subscribe(() => {
       setOutlineSearchVersion((previousVersion) => previousVersion + 1)
