@@ -18,6 +18,11 @@ type MountedOutlineNode = {
   element: Element
 }
 
+type MeasuredOutlineElement = {
+  top: number
+  height: number
+}
+
 type ScrollViewportRect = {
   left: number
   top: number
@@ -1182,12 +1187,12 @@ export class OutlineManager {
     const containerTop = containerRect.top
     const containerScrollTop = container.scrollTop
     const entries: Array<{ node: OutlineNode; top: number; height: number; order: number }> = []
+    const measuredElements = new WeakMap<Element, MeasuredOutlineElement | null>()
     let order = 0
-    const allowCachedMetrics = this.shouldKeepPreviousVisibleItem()
 
     const pushCachedEntry = (node: OutlineNode): boolean => {
       const cachedTop = node.scrollTop
-      if (!allowCachedMetrics || typeof cachedTop !== "number" || Number.isNaN(cachedTop)) {
+      if (typeof cachedTop !== "number" || Number.isNaN(cachedTop)) {
         return false
       }
 
@@ -1201,11 +1206,39 @@ export class OutlineManager {
       return true
     }
 
+    const measureElement = (element: Element): MeasuredOutlineElement | null => {
+      const cached = measuredElements.get(element)
+      if (cached !== undefined) return cached
+
+      const clientRects = element.getClientRects()
+      if (clientRects.length === 0) {
+        measuredElements.set(element, null)
+        return null
+      }
+
+      let top = clientRects[0].top
+      let bottom = clientRects[0].bottom
+      for (let i = 1; i < clientRects.length; i += 1) {
+        const rect = clientRects[i]
+        top = Math.min(top, rect.top)
+        bottom = Math.max(bottom, rect.bottom)
+      }
+
+      const measured = {
+        top: top - containerTop + containerScrollTop,
+        height: Math.max(0, bottom - top),
+      }
+      measuredElements.set(element, measured)
+      return measured
+    }
+
     this.flatNodes.forEach((node) => {
       if (node.isGhost) return
 
       let element = node.element
       if (!element || !element.isConnected) {
+        if (pushCachedEntry(node)) return
+
         if (this.activeSourceId === "conversation") {
           if (node.isUserQuery && node.level === 0 && node.queryIndex !== undefined) {
             element = this.findUserQueryElement(node.queryIndex, node.text) as HTMLElement
@@ -1219,23 +1252,19 @@ export class OutlineManager {
       }
 
       if (!element || !element.isConnected) {
+        return
+      }
+
+      const measured = measureElement(element)
+      if (!measured) {
         pushCachedEntry(node)
         return
       }
 
-      const clientRects = element.getClientRects()
-      if (clientRects.length === 0) {
-        pushCachedEntry(node)
-        return
-      }
+      node.scrollTop = measured.top
+      node.scrollHeight = measured.height
 
-      const rect = element.getBoundingClientRect()
-      const top = rect.top - containerTop + containerScrollTop
-      const height = rect.height || clientRects[0]?.height || 0
-      node.scrollTop = top
-      node.scrollHeight = height
-
-      entries.push({ node, top, height, order })
+      entries.push({ node, top: measured.top, height: measured.height, order })
       order += 1
     })
 
