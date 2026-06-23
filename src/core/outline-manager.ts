@@ -1834,7 +1834,7 @@ export class OutlineManager {
           const directIndex = findMappedIndex(element)
           if (directIndex !== null) return directIndex
 
-          const index = cachedVisibleIndex ?? findSectionIndex(element)
+          const index = findSectionIndex(element) ?? cachedVisibleIndex
           if (index !== null) return index
         }
       }
