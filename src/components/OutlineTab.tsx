@@ -552,11 +552,14 @@ const VirtualizedOutlineTree: React.FC<{
 }) => {
   const range = getOutlineVirtualRange(metrics, scrollTop, viewportHeight)
   const renderedItems = items.slice(range.start, range.end)
+  const virtualListStyle = {
+    "--gh-outline-item-height": `${OUTLINE_ITEM_HEIGHT}px`,
+    height: metrics.totalHeight,
+    position: "relative",
+  } as React.CSSProperties
 
   return (
-    <div
-      className="outline-list outline-list-virtual"
-      style={{ height: metrics.totalHeight, position: "relative" }}>
+    <div className="outline-list outline-list-virtual" style={virtualListStyle}>
       {renderedItems.map((item, offset) => {
         const rowIndex = range.start + offset
         const spacing = getOutlineVirtualRowSpacing(item, rowIndex)

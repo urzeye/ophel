@@ -524,8 +524,8 @@
 }
 
 .outline-list-virtual .outline-item {
-  height: var(--gh-outline-item-height, 38px);
-  min-height: var(--gh-outline-item-height, 38px);
+  height: var(--gh-outline-item-height);
+  min-height: var(--gh-outline-item-height);
   box-sizing: border-box;
 }
 
