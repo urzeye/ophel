@@ -79,7 +79,7 @@ PR #683 已合并，方向是正确的：大纲面板从“按全部可见节点
 | #687 | P1 | Open | 会话同步批量写入 Zustand store | 同步 N 条会话时 set/persist 从 O(N) 降到 O(1) 或小常数。 |
 | #688 | P1 | Open | adapter 大纲抽取输入与字数统计缓存 | 同一 DOM version 下重复 refresh 的 adapter 抽取耗时下降。 |
 | #689 | P1 | Open | 虚拟大纲列表自身滚动渲染节流 | 大纲列表快速滚动时减少 React render，无白屏/错位/闪烁。 |
-| #690 | P1 | Open，PR #683 已覆盖核心校验 | 虚拟行高漂移校验 | 如果当前 debug-only 校验足够，可关闭或缩小为后续 CSS 回归守护。 |
+| #690 | P1 | 已覆盖，建议关闭 | 虚拟行高漂移校验 | PR #683 已实现 debug-only 行高漂移告警；不再保留独立实现任务。 |
 
 ## 待完成优化项
 
@@ -147,12 +147,13 @@ PR #683 已合并，方向是正确的：大纲面板从“按全部可见节点
 
 - 需要确保 `scrollOutlineNodeIntoView()`、locate current、正文滚动同步仍能驱动虚拟列表显示目标行。
 
-### P1：虚拟行高漂移校验后续（#690）
+### 已完成：虚拟行高漂移校验（#690）
 
-PR #683 已实现 debug-only 行高漂移告警。#690 后续可以按 PR 验收结果决定：
+PR #683 已实现 debug-only 行高漂移告警。可通过
+`document.documentElement.dataset.ophelDebugOutlineVirtualHeights = "true"` 或
+`localStorage["ophel.debugOutlineVirtualHeights"] = "1"` 开启。校验只在 debug 开关启用后抽样已挂载虚拟行，覆盖 `.outline-item` 高度、虚拟 row 高度和内容 overflow，不进入生产高频路径。
 
-- 如果当前告警足够，#683 合并后关闭 #690。
-- 如果需要更完整覆盖，则保留 #690 跟踪 hover/highlight/bookmark/copy 状态的手动回归流程或开发工具开关文档。
+#690 可关闭；后续如果需要把行高漂移检查升级为自动化回归，再另建测试/工具专项。
 
 ## 功能开关相关风险与后续候选（暂不抢优先级）
 
@@ -177,7 +178,7 @@ PR #683 已实现 debug-only 行高漂移告警。#690 后续可以按 PR 验收
 
 ## 推荐执行顺序
 
-1. 收尾 #681/#690：PR #683 已合并；关闭 #681，按需确认 #690 是否可关闭或缩小为 CSS 回归守护。
+1. 收尾 #681/#690：PR #683 已合并；关闭 #681，#690 已由 debug-only 行高漂移告警覆盖。
 2. 已完成 #684/#685：PR #691/#692 已合并，后台无条件大纲轮询和全局搜索大纲轮询已移除。
 3. 下一步做 #693：正文 source scroll rAF 合帧、mounted DOM/native active 当前项判定、active/visible index 去重、移除 `characterData` stale observer。
 4. 接着做 #694：`updateScrollPositions()` 从滚动高亮主路径退出后，减少剩余低频路径的 DOM geometry read；不再把位置缓存当作当前项真值。
