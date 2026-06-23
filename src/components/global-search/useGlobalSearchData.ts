@@ -47,6 +47,25 @@ interface GlobalSearchScoreResult {
   fuzzyMatch?: GlobalSearchFuzzyMatchMeta
 }
 
+interface GlobalSearchQueryContext {
+  normalizedQuery: string
+  tokens: string[]
+  enableFuzzySearch: boolean
+}
+
+interface GlobalSearchIndexEntry {
+  index: number
+  fields: GlobalSearchScoreField[]
+  searchableText: string
+  fuzzyWords: string[]
+  recency?: number
+  scoreBoost?: number
+  createItem: (
+    scoreMeta: GlobalSearchScoreResult,
+    queryContext: GlobalSearchQueryContext,
+  ) => GlobalSearchResultItem
+}
+
 interface LocalizedLabelDefinition {
   key: string
   fallback: string
@@ -188,6 +207,8 @@ const GLOBAL_SEARCH_FUZZY_SCORE_MULTIPLIER = 64
 const GLOBAL_SEARCH_TYPO_MIN_QUERY_LENGTH = 4
 const GLOBAL_SEARCH_TYPO_MAX_DISTANCE_SHORT = 1
 const GLOBAL_SEARCH_TYPO_MAX_DISTANCE_LONG = 2
+const GLOBAL_SEARCH_FUZZY_FULL_SCAN_LIMIT = 800
+const GLOBAL_SEARCH_FUZZY_CANDIDATE_LIMIT = 300
 
 interface GlobalSearchFuzzyMatchResult {
   score: number
@@ -531,6 +552,157 @@ const compareGlobalSearchRankedItems = (
   return left.index - right.index
 }
 
+const createGlobalSearchIndexEntry = (
+  entry: Omit<GlobalSearchIndexEntry, "searchableText" | "fuzzyWords">,
+): GlobalSearchIndexEntry => {
+  const searchableText = entry.fields
+    .map((field) => field.value)
+    .filter(Boolean)
+    .join(" ")
+
+  return {
+    ...entry,
+    searchableText,
+    fuzzyWords: toGlobalSearchFuzzyWords(searchableText),
+  }
+}
+
+const getGlobalSearchLimitedFuzzyCandidateRank = (
+  entry: GlobalSearchIndexEntry,
+  queryContext: GlobalSearchQueryContext,
+): number => {
+  const { normalizedQuery, tokens } = queryContext
+  if (!normalizedQuery) return -1
+
+  if (entry.searchableText === normalizedQuery) return 5
+  if (entry.searchableText.startsWith(normalizedQuery)) return 4
+  if (entry.searchableText.includes(normalizedQuery)) return 3
+
+  if (tokens.some((token) => entry.searchableText.startsWith(token))) {
+    return 2
+  }
+
+  if (tokens.some((token) => entry.searchableText.includes(token))) {
+    return 1
+  }
+
+  const typoMaxDistance =
+    normalizedQuery.length >= 8
+      ? GLOBAL_SEARCH_TYPO_MAX_DISTANCE_LONG
+      : GLOBAL_SEARCH_TYPO_MAX_DISTANCE_SHORT
+
+  return entry.fuzzyWords.some(
+    (word) =>
+      Math.abs(word.length - normalizedQuery.length) <= typoMaxDistance &&
+      word[0] === normalizedQuery[0],
+  )
+    ? 0
+    : -1
+}
+
+const getGlobalSearchFuzzyCandidates = (
+  unmatchedEntries: GlobalSearchIndexEntry[],
+  allEntryCount: number,
+  queryContext: GlobalSearchQueryContext,
+): GlobalSearchIndexEntry[] => {
+  if (allEntryCount <= GLOBAL_SEARCH_FUZZY_FULL_SCAN_LIMIT) {
+    return unmatchedEntries
+  }
+
+  const rankedCandidates = unmatchedEntries
+    .map((entry) => ({
+      entry,
+      rank: getGlobalSearchLimitedFuzzyCandidateRank(entry, queryContext),
+    }))
+    .filter(({ rank }) => rank >= 0)
+    .sort((left, right) => {
+      if (right.rank !== left.rank) return right.rank - left.rank
+      return left.entry.index - right.entry.index
+    })
+    .slice(0, GLOBAL_SEARCH_FUZZY_CANDIDATE_LIMIT)
+    .map(({ entry }) => entry)
+
+  return rankedCandidates.length > 0
+    ? rankedCandidates
+    : unmatchedEntries.slice(0, GLOBAL_SEARCH_FUZZY_CANDIDATE_LIMIT)
+}
+
+const withGlobalSearchScoreBoost = (
+  scoreMeta: GlobalSearchScoreResult,
+  scoreBoost: number | undefined,
+): GlobalSearchScoreResult => {
+  if (!scoreBoost) return scoreMeta
+
+  return {
+    ...scoreMeta,
+    score: scoreMeta.score + scoreBoost,
+  }
+}
+
+const scoreGlobalSearchIndexEntries = (
+  entries: GlobalSearchIndexEntry[],
+  queryContext: GlobalSearchQueryContext,
+): GlobalSearchResultItem[] => {
+  const scoredItems: Array<{
+    item: GlobalSearchResultItem
+    scoreMeta: GlobalSearchScoreResult
+    index: number
+    recency?: number
+  }> = []
+  const fuzzyFallbackCandidates: GlobalSearchIndexEntry[] = []
+
+  entries.forEach((entry) => {
+    const scoreMeta = getGlobalSearchScore({
+      normalizedQuery: queryContext.normalizedQuery,
+      tokens: queryContext.tokens,
+      index: entry.index,
+      enableFuzzySearch: false,
+      fields: entry.fields,
+    })
+
+    if (scoreMeta) {
+      const boostedScoreMeta = withGlobalSearchScoreBoost(scoreMeta, entry.scoreBoost)
+      scoredItems.push({
+        item: entry.createItem(boostedScoreMeta, queryContext),
+        scoreMeta: boostedScoreMeta,
+        index: entry.index,
+        recency: entry.recency,
+      })
+      return
+    }
+
+    if (queryContext.enableFuzzySearch && queryContext.normalizedQuery) {
+      fuzzyFallbackCandidates.push(entry)
+    }
+  })
+
+  if (queryContext.enableFuzzySearch && queryContext.normalizedQuery) {
+    getGlobalSearchFuzzyCandidates(fuzzyFallbackCandidates, entries.length, queryContext).forEach(
+      (entry) => {
+        const scoreMeta = getGlobalSearchScore({
+          normalizedQuery: queryContext.normalizedQuery,
+          tokens: queryContext.tokens,
+          index: entry.index,
+          enableFuzzySearch: true,
+          fields: entry.fields,
+        })
+
+        if (!scoreMeta) return
+
+        const boostedScoreMeta = withGlobalSearchScoreBoost(scoreMeta, entry.scoreBoost)
+        scoredItems.push({
+          item: entry.createItem(boostedScoreMeta, queryContext),
+          scoreMeta: boostedScoreMeta,
+          index: entry.index,
+          recency: entry.recency,
+        })
+      },
+    )
+  }
+
+  return scoredItems.sort(compareGlobalSearchRankedItems).map(({ item }) => item)
+}
+
 export const useGlobalSearchData = ({
   activeGlobalSearchPlainQuery,
   enableFuzzySearch,
@@ -613,7 +785,6 @@ export const useGlobalSearchData = ({
         .some((value) => value.toLowerCase().includes(tipsQuery))
     })
   }, [
-    activeGlobalSearchCategory,
     getLocalizedText,
     isTipsMode,
     passThroughModifierLabel,
@@ -621,103 +792,91 @@ export const useGlobalSearchData = ({
     trimmedGlobalSearchPlainQuery,
   ])
 
-  const settingsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
-    if (isTipsMode) {
-      return []
-    }
-    const normalizedQuery = normalizeGlobalSearchValue(activeGlobalSearchPlainQuery)
-    const tokens = toGlobalSearchTokens(activeGlobalSearchPlainQuery)
+  const globalSearchQueryContext = useMemo<GlobalSearchQueryContext>(
+    () => ({
+      normalizedQuery: normalizeGlobalSearchValue(activeGlobalSearchPlainQuery),
+      tokens: toGlobalSearchTokens(activeGlobalSearchPlainQuery),
+      enableFuzzySearch,
+    }),
+    [activeGlobalSearchPlainQuery, enableFuzzySearch],
+  )
 
-    const scoredItems = settingsSearchResults
-      .map((item, index) => {
+  const settingsGlobalSearchIndex = useMemo<GlobalSearchIndexEntry[]>(
+    () =>
+      settingsSearchResults.map((item, index) => {
         const title = resolveSettingSearchTitle(item)
-        const normalizedTitle = normalizeGlobalSearchValue(title)
-        const normalizedKeywords = normalizeGlobalSearchValue((item.keywords || []).join(" "))
-        const normalizedSettingId = normalizeGlobalSearchValue(item.settingId)
-        const normalizedAliasKeywords = normalizeGlobalSearchValue(
-          (GLOBAL_SEARCH_SETTING_ALIAS_MAP[item.settingId] || []).join(" "),
-        )
-        const scoreMeta = getGlobalSearchScore({
-          normalizedQuery,
-          tokens,
+        const breadcrumb = getSettingsBreadcrumb(item.settingId)
+        const fields: GlobalSearchScoreField[] = [
+          {
+            value: normalizeGlobalSearchValue(title),
+            exact: 220,
+            prefix: 140,
+            includes: 100,
+            tokenPrefix: 24,
+            tokenIncludes: 12,
+            matchReason: "title",
+            highlightField: "title",
+          },
+          {
+            value: normalizeGlobalSearchValue((item.keywords || []).join(" ")),
+            exact: 0,
+            prefix: 0,
+            includes: 68,
+            tokenPrefix: 0,
+            tokenIncludes: 8,
+            matchReason: "keyword",
+          },
+          {
+            value: normalizeGlobalSearchValue(item.settingId),
+            exact: 0,
+            prefix: 0,
+            includes: 48,
+            tokenPrefix: 0,
+            tokenIncludes: 6,
+            matchReason: "id",
+            highlightField: "code",
+          },
+          {
+            value: normalizeGlobalSearchValue(
+              (GLOBAL_SEARCH_SETTING_ALIAS_MAP[item.settingId] || []).join(" "),
+            ),
+            exact: 0,
+            prefix: 0,
+            includes: 44,
+            tokenPrefix: 0,
+            tokenIncludes: 6,
+            matchReason: "alias",
+          },
+        ]
+
+        return createGlobalSearchIndexEntry({
           index,
-          enableFuzzySearch,
-          fields: [
-            {
-              value: normalizedTitle,
-              exact: 220,
-              prefix: 140,
-              includes: 100,
-              tokenPrefix: 24,
-              tokenIncludes: 12,
-              matchReason: "title",
-              highlightField: "title",
-            },
-            {
-              value: normalizedKeywords,
-              exact: 0,
-              prefix: 0,
-              includes: 68,
-              tokenPrefix: 0,
-              tokenIncludes: 8,
-              matchReason: "keyword",
-            },
-            {
-              value: normalizedSettingId,
-              exact: 0,
-              prefix: 0,
-              includes: 48,
-              tokenPrefix: 0,
-              tokenIncludes: 6,
-              matchReason: "id",
-              highlightField: "code",
-            },
-            {
-              value: normalizedAliasKeywords,
-              exact: 0,
-              prefix: 0,
-              includes: 44,
-              tokenPrefix: 0,
-              tokenIncludes: 6,
-              matchReason: "alias",
-            },
-          ],
-        })
-
-        if (scoreMeta === null) {
-          return null
-        }
-
-        return {
-          item: {
+          fields,
+          createItem: (scoreMeta) => ({
             id: `settings:${item.settingId}`,
             title,
-            breadcrumb: getSettingsBreadcrumb(item.settingId),
+            breadcrumb,
             code: item.settingId,
             category: "settings" as const,
             settingId: item.settingId,
             matchReasons: scoreMeta.matchReasons,
             fuzzyMatch: scoreMeta.fuzzyMatch,
-          },
-          scoreMeta,
-          index,
-        }
-      })
-      .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
-      .sort(compareGlobalSearchRankedItems)
+          }),
+        })
+      }),
+    [getSettingsBreadcrumb, resolveSettingSearchTitle, settingsSearchResults],
+  )
 
-    return scoredItems.map(({ item }) => item)
-  }, [
-    activeGlobalSearchPlainQuery,
-    enableFuzzySearch,
-    getSettingsBreadcrumb,
-    isTipsMode,
-    resolveSettingSearchTitle,
-    settingsSearchResults,
-  ])
+  const settingsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
+    if (isTipsMode) {
+      return []
+    }
 
-  const conversationGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
-    if (!conversationManager || isTipsMode) {
+    return scoreGlobalSearchIndexEntries(settingsGlobalSearchIndex, globalSearchQueryContext)
+  }, [globalSearchQueryContext, isTipsMode, settingsGlobalSearchIndex])
+
+  const conversationGlobalSearchIndex = useMemo<GlobalSearchIndexEntry[]>(() => {
+    if (!conversationManager) {
       return []
     }
 
@@ -732,126 +891,94 @@ export const useGlobalSearchData = ({
     const folderMap = new Map(folders.map((folder) => [folder.id, folder]))
     const tagMap = new Map(tags.map((tag) => [tag.id, tag]))
 
-    const normalizedQuery = normalizeGlobalSearchValue(activeGlobalSearchPlainQuery)
-    const tokens = toGlobalSearchTokens(activeGlobalSearchPlainQuery)
     const untitledConversation = getLocalizedText({
       key: "untitledConversation",
       fallback: "Untitled conversation",
     })
 
-    const scoredItems = conversations
-      .map((conversation, index) => {
-        const title = conversation.title?.trim() || untitledConversation
-        const folder = folderMap.get(conversation.folderId)
-        const folderLabel = folder
-          ? `${folder.icon ? `${folder.icon} ` : ""}${getFolderDisplayName(folder)}`.trim()
-          : conversation.folderId
-        const tagBadges = (conversation.tagIds || [])
-          .map((tagId) => {
-            const tag = tagMap.get(tagId)
-            if (!tag) return null
-            return {
-              id: tag.id,
-              name: tag.name,
-              color: tag.color,
-            }
-          })
-          .filter((tag): tag is GlobalSearchTagBadge => Boolean(tag))
-
-        const normalizedTitle = normalizeGlobalSearchValue(title)
-        const normalizedFolder = normalizeGlobalSearchValue(folderLabel)
-        const normalizedTags = normalizeGlobalSearchValue(
-          tagBadges.map((tag) => tag.name).join(" "),
-        )
-        const scoreMeta = getGlobalSearchScore({
-          normalizedQuery,
-          tokens,
-          index,
-          enableFuzzySearch,
-          fields: [
-            {
-              value: normalizedTitle,
-              exact: 220,
-              prefix: 140,
-              includes: 100,
-              tokenPrefix: 24,
-              tokenIncludes: 12,
-              matchReason: "title",
-              highlightField: "title",
-            },
-            {
-              value: normalizedFolder,
-              exact: 0,
-              prefix: 0,
-              includes: 72,
-              tokenPrefix: 0,
-              tokenIncludes: 8,
-              matchReason: "folder",
-              highlightField: "breadcrumb",
-            },
-            {
-              value: normalizedTags,
-              exact: 0,
-              prefix: 0,
-              includes: 64,
-              tokenPrefix: 0,
-              tokenIncludes: 8,
-              matchReason: "tag",
-            },
-          ],
+    return conversations.map((conversation, index) => {
+      const title = conversation.title?.trim() || untitledConversation
+      const folder = folderMap.get(conversation.folderId)
+      const folderLabel = folder
+        ? `${folder.icon ? `${folder.icon} ` : ""}${getFolderDisplayName(folder)}`.trim()
+        : conversation.folderId
+      const tagBadges = (conversation.tagIds || [])
+        .map((tagId) => {
+          const tag = tagMap.get(tagId)
+          if (!tag) return null
+          return {
+            id: tag.id,
+            name: tag.name,
+            color: tag.color,
+          }
         })
+        .filter((tag): tag is GlobalSearchTagBadge => Boolean(tag))
 
-        if (scoreMeta === null) {
-          return null
-        }
+      const fields: GlobalSearchScoreField[] = [
+        {
+          value: normalizeGlobalSearchValue(title),
+          exact: 220,
+          prefix: 140,
+          includes: 100,
+          tokenPrefix: 24,
+          tokenIncludes: 12,
+          matchReason: "title",
+          highlightField: "title",
+        },
+        {
+          value: normalizeGlobalSearchValue(folderLabel),
+          exact: 0,
+          prefix: 0,
+          includes: 72,
+          tokenPrefix: 0,
+          tokenIncludes: 8,
+          matchReason: "folder",
+          highlightField: "breadcrumb",
+        },
+        {
+          value: normalizeGlobalSearchValue(tagBadges.map((tag) => tag.name).join(" ")),
+          exact: 0,
+          prefix: 0,
+          includes: 64,
+          tokenPrefix: 0,
+          tokenIncludes: 8,
+          matchReason: "tag",
+        },
+      ]
 
-        const finalScoreMeta = {
-          ...scoreMeta,
-          score: scoreMeta.score + (conversation.pinned ? 6 : 0),
-        }
-
-        return {
-          item: {
-            id: `conversations:${conversation.id}`,
-            title,
-            breadcrumb: folderLabel,
-            category: "conversations" as const,
-            conversationId: conversation.id,
-            conversationUrl: conversation.url,
-            tagBadges,
-            folderName: folderLabel,
-            tagNames: tagBadges.map((tag) => tag.name),
-            isPinned: Boolean(conversation.pinned),
-            searchTimestamp: conversation.updatedAt || 0,
-            matchReasons: finalScoreMeta.matchReasons,
-            fuzzyMatch: finalScoreMeta.fuzzyMatch,
-          },
-          scoreMeta: finalScoreMeta,
-          index,
-          recency: conversation.updatedAt || 0,
-        }
+      return createGlobalSearchIndexEntry({
+        index,
+        fields,
+        recency: conversation.updatedAt || 0,
+        scoreBoost: conversation.pinned ? 6 : 0,
+        createItem: (scoreMeta) => ({
+          id: `conversations:${conversation.id}`,
+          title,
+          breadcrumb: folderLabel,
+          category: "conversations" as const,
+          conversationId: conversation.id,
+          conversationUrl: conversation.url,
+          tagBadges,
+          folderName: folderLabel,
+          tagNames: tagBadges.map((tag) => tag.name),
+          isPinned: Boolean(conversation.pinned),
+          searchTimestamp: conversation.updatedAt || 0,
+          matchReasons: scoreMeta.matchReasons,
+          fuzzyMatch: scoreMeta.fuzzyMatch,
+        }),
       })
-      .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
-      .sort(compareGlobalSearchRankedItems)
+    })
+  }, [conversationManager, conversationsSnapshot, foldersSnapshot, tagsSnapshot, getLocalizedText])
 
-    return scoredItems.map(({ item }) => item)
-  }, [
-    conversationManager,
-    conversationsSnapshot,
-    foldersSnapshot,
-    tagsSnapshot,
-    getLocalizedText,
-    activeGlobalSearchPlainQuery,
-    enableFuzzySearch,
-    isTipsMode,
-  ])
-
-  const promptsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
+  const conversationGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
     if (isTipsMode) {
       return []
     }
-    const normalizedQuery = normalizeGlobalSearchValue(activeGlobalSearchPlainQuery)
-    const tokens = toGlobalSearchTokens(activeGlobalSearchPlainQuery)
+
+    return scoreGlobalSearchIndexEntries(conversationGlobalSearchIndex, globalSearchQueryContext)
+  }, [conversationGlobalSearchIndex, globalSearchQueryContext, isTipsMode])
+
+  const promptsGlobalSearchIndex = useMemo<GlobalSearchIndexEntry[]>(() => {
     const promptsLabel = getLocalizedText({
       key: "globalSearchCategoryPrompts",
       fallback: "Prompts",
@@ -861,128 +988,103 @@ export const useGlobalSearchData = ({
       fallback: "Uncategorized",
     })
 
-    const scoredItems = promptsSnapshot
-      .map((prompt, index) => {
-        const title =
-          prompt.title?.trim() ||
-          prompt.content?.trim().split("\n")[0] ||
-          `${promptsLabel} #${index + 1}`
-        const content = prompt.content?.trim() || ""
-        const categoryLabel = prompt.category?.trim() || uncategorizedLabel
-        const breadcrumb = `${promptsLabel} / ${categoryLabel}`
+    return promptsSnapshot.map((prompt, index) => {
+      const title =
+        prompt.title?.trim() ||
+        prompt.content?.trim().split("\n")[0] ||
+        `${promptsLabel} #${index + 1}`
+      const content = prompt.content?.trim() || ""
+      const categoryLabel = prompt.category?.trim() || uncategorizedLabel
+      const breadcrumb = `${promptsLabel} / ${categoryLabel}`
 
-        const normalizedTitle = normalizeGlobalSearchValue(title)
-        const normalizedContent = normalizeGlobalSearchValue(content)
-        const normalizedCategory = normalizeGlobalSearchValue(categoryLabel)
-        const normalizedPromptId = normalizeGlobalSearchValue(prompt.id)
-        const scoreMeta = getGlobalSearchScore({
-          normalizedQuery,
-          tokens,
-          index,
-          enableFuzzySearch,
-          fields: [
-            {
-              value: normalizedTitle,
-              exact: 220,
-              prefix: 140,
-              includes: 100,
-              tokenPrefix: 24,
-              tokenIncludes: 12,
-              matchReason: "title",
-              highlightField: "title",
-            },
-            {
-              value: normalizedCategory,
-              exact: 0,
-              prefix: 0,
-              includes: 70,
-              tokenPrefix: 0,
-              tokenIncludes: 8,
-              matchReason: "category",
-              highlightField: "breadcrumb",
-            },
-            {
-              value: normalizedContent,
-              exact: 0,
-              prefix: 0,
-              includes: 60,
-              tokenPrefix: 0,
-              tokenIncludes: 6,
-              matchReason: "content",
-              highlightField: "snippet",
-            },
-            {
-              value: normalizedPromptId,
-              exact: 0,
-              prefix: 0,
-              includes: 20,
-              tokenPrefix: 0,
-              tokenIncludes: 4,
-              matchReason: "id",
-              highlightField: "code",
-            },
-          ],
-        })
+      const fields: GlobalSearchScoreField[] = [
+        {
+          value: normalizeGlobalSearchValue(title),
+          exact: 220,
+          prefix: 140,
+          includes: 100,
+          tokenPrefix: 24,
+          tokenIncludes: 12,
+          matchReason: "title",
+          highlightField: "title",
+        },
+        {
+          value: normalizeGlobalSearchValue(categoryLabel),
+          exact: 0,
+          prefix: 0,
+          includes: 70,
+          tokenPrefix: 0,
+          tokenIncludes: 8,
+          matchReason: "category",
+          highlightField: "breadcrumb",
+        },
+        {
+          value: normalizeGlobalSearchValue(content),
+          exact: 0,
+          prefix: 0,
+          includes: 60,
+          tokenPrefix: 0,
+          tokenIncludes: 6,
+          matchReason: "content",
+          highlightField: "snippet",
+        },
+        {
+          value: normalizeGlobalSearchValue(prompt.id),
+          exact: 0,
+          prefix: 0,
+          includes: 20,
+          tokenPrefix: 0,
+          tokenIncludes: 4,
+          matchReason: "id",
+          highlightField: "code",
+        },
+      ]
 
-        if (scoreMeta === null) {
-          return null
-        }
-
-        const finalScoreMeta = {
-          ...scoreMeta,
-          score: scoreMeta.score + (prompt.pinned ? 6 : 0),
-        }
-
-        const snippet = finalScoreMeta.matchReasons.includes("content")
-          ? buildGlobalSearchSnippet({
-              content,
-              normalizedQuery,
-              tokens,
-            })
-          : ""
-
-        return {
-          item: {
-            id: `prompts:${prompt.id}`,
-            title,
-            breadcrumb,
-            snippet,
-            category: "prompts" as const,
-            promptId: prompt.id,
-            promptContent: prompt.content,
-            folderName: categoryLabel,
-            isPinned: Boolean(prompt.pinned),
-            searchTimestamp: prompt.lastUsedAt || 0,
-            matchReasons: finalScoreMeta.matchReasons,
-            fuzzyMatch: finalScoreMeta.fuzzyMatch,
-          },
-          scoreMeta: finalScoreMeta,
-          index,
-          recency: prompt.lastUsedAt || 0,
-        }
+      return createGlobalSearchIndexEntry({
+        index,
+        fields,
+        recency: prompt.lastUsedAt || 0,
+        scoreBoost: prompt.pinned ? 6 : 0,
+        createItem: (scoreMeta, queryContext) => ({
+          id: `prompts:${prompt.id}`,
+          title,
+          breadcrumb,
+          snippet: scoreMeta.matchReasons.includes("content")
+            ? buildGlobalSearchSnippet({
+                content,
+                normalizedQuery: queryContext.normalizedQuery,
+                tokens: queryContext.tokens,
+              })
+            : "",
+          category: "prompts" as const,
+          promptId: prompt.id,
+          promptContent: prompt.content,
+          folderName: categoryLabel,
+          isPinned: Boolean(prompt.pinned),
+          searchTimestamp: prompt.lastUsedAt || 0,
+          matchReasons: scoreMeta.matchReasons,
+          fuzzyMatch: scoreMeta.fuzzyMatch,
+        }),
       })
-      .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
-      .sort(compareGlobalSearchRankedItems)
+    })
+  }, [getLocalizedText, promptsSnapshot])
 
-    return scoredItems.map(({ item }) => item)
-  }, [
-    activeGlobalSearchPlainQuery,
-    enableFuzzySearch,
-    getLocalizedText,
-    isTipsMode,
-    promptsSnapshot,
-  ])
+  const promptsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
+    if (isTipsMode) {
+      return []
+    }
 
-  const outlineGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
-    if (!outlineManager || isTipsMode) {
+    return scoreGlobalSearchIndexEntries(promptsGlobalSearchIndex, globalSearchQueryContext)
+  }, [globalSearchQueryContext, isTipsMode, promptsGlobalSearchIndex])
+
+  const outlineGlobalSearchIndex = useMemo<GlobalSearchIndexEntry[]>(() => {
+    if (!outlineManager) {
       return []
     }
 
     void outlineSearchVersion
 
     const outlineNodes = flattenOutlineNodes(outlineManager.getTree())
-    const normalizedQuery = normalizeGlobalSearchValue(activeGlobalSearchPlainQuery)
-    const tokens = toGlobalSearchTokens(activeGlobalSearchPlainQuery)
     const outlineLabel = getLocalizedText({
       key: "globalSearchCategoryOutline",
       fallback: "Outline",
@@ -996,8 +1098,8 @@ export const useGlobalSearchData = ({
       fallback: "Replies",
     })
 
-    const scoredItems = outlineNodes
-      .map((node, index) => {
+    return outlineNodes
+      .map((node, index): GlobalSearchIndexEntry | null => {
         const title = node.text?.trim()
         if (!title) {
           return null
@@ -1009,68 +1111,53 @@ export const useGlobalSearchData = ({
           ? `${outlineLabel} / ${roleLabel}`
           : `${outlineLabel} / ${roleLabel} / H${node.level}`
 
-        const normalizedTitle = normalizeGlobalSearchValue(title)
-        const normalizedType = normalizeGlobalSearchValue(
-          node.isUserQuery ? roleLabel : `${roleLabel} h${node.level}`,
-        )
-        const normalizedCode = normalizeGlobalSearchValue(code)
-        const scoreMeta = getGlobalSearchScore({
-          normalizedQuery,
-          tokens,
+        const fields: GlobalSearchScoreField[] = [
+          {
+            value: normalizeGlobalSearchValue(title),
+            exact: 200,
+            prefix: 120,
+            includes: 90,
+            tokenPrefix: 16,
+            tokenIncludes: 10,
+            matchReason: "title",
+            highlightField: "title",
+          },
+          {
+            value: normalizeGlobalSearchValue(
+              node.isUserQuery ? roleLabel : `${roleLabel} h${node.level}`,
+            ),
+            exact: 0,
+            prefix: 0,
+            includes: 48,
+            tokenPrefix: 0,
+            tokenIncludes: 6,
+            matchReason: "type",
+            highlightField: "breadcrumb",
+          },
+          {
+            value: normalizeGlobalSearchValue(code),
+            exact: 0,
+            prefix: 0,
+            includes: 36,
+            tokenPrefix: 0,
+            tokenIncludes: 4,
+            matchReason: "code",
+            highlightField: "code",
+          },
+        ]
+
+        return createGlobalSearchIndexEntry({
           index,
-          enableFuzzySearch,
-          fields: [
-            {
-              value: normalizedTitle,
-              exact: 200,
-              prefix: 120,
-              includes: 90,
-              tokenPrefix: 16,
-              tokenIncludes: 10,
-              matchReason: "title",
-              highlightField: "title",
-            },
-            {
-              value: normalizedType,
-              exact: 0,
-              prefix: 0,
-              includes: 48,
-              tokenPrefix: 0,
-              tokenIncludes: 6,
-              matchReason: "type",
-              highlightField: "breadcrumb",
-            },
-            {
-              value: normalizedCode,
-              exact: 0,
-              prefix: 0,
-              includes: 36,
-              tokenPrefix: 0,
-              tokenIncludes: 4,
-              matchReason: "code",
-              highlightField: "code",
-            },
-          ],
-        })
-
-        if (scoreMeta === null) {
-          return null
-        }
-
-        const finalScoreMeta = {
-          ...scoreMeta,
-          score: scoreMeta.score + (node.isBookmarked ? 4 : 0),
-        }
-
-        return {
-          item: {
+          fields,
+          scoreBoost: node.isBookmarked ? 4 : 0,
+          createItem: (scoreMeta) => ({
             id: `outline:${node.index}`,
             title,
             breadcrumb,
             code,
             category: "outline" as const,
-            matchReasons: finalScoreMeta.matchReasons,
-            fuzzyMatch: finalScoreMeta.fuzzyMatch,
+            matchReasons: scoreMeta.matchReasons,
+            fuzzyMatch: scoreMeta.fuzzyMatch,
             outlineTarget: {
               index: node.index,
               level: node.level,
@@ -1082,23 +1169,19 @@ export const useGlobalSearchData = ({
               isGhost: Boolean(node.isGhost),
               scrollTop: node.scrollTop,
             },
-          },
-          scoreMeta: finalScoreMeta,
-          index,
-        }
+          }),
+        })
       })
       .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
-      .sort(compareGlobalSearchRankedItems)
+  }, [getLocalizedText, outlineManager, outlineSearchVersion])
 
-    return scoredItems.map(({ item }) => item)
-  }, [
-    activeGlobalSearchPlainQuery,
-    enableFuzzySearch,
-    outlineManager,
-    getLocalizedText,
-    outlineSearchVersion,
-    isTipsMode,
-  ])
+  const outlineGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
+    if (isTipsMode) {
+      return []
+    }
+
+    return scoreGlobalSearchIndexEntries(outlineGlobalSearchIndex, globalSearchQueryContext)
+  }, [globalSearchQueryContext, isTipsMode, outlineGlobalSearchIndex])
 
   const normalizedGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(
     () => [

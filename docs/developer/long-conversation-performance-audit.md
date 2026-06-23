@@ -9,7 +9,7 @@ PR #683 已合并，方向是正确的：大纲面板从“按全部可见节点
 
 #675 剩余瓶颈仍主要在虚拟列表外：
 
-1. 常驻 timer/observer 触发全量扫描：大纲固定刷新、全局搜索刷新大纲、Shadow DOM/Markdown/Quick Quote 扫描。
+1. 常驻 timer/observer 触发全量扫描：大纲固定刷新、全局搜索刷新大纲、Shadow DOM/Markdown/Mermaid/表格复制/Quick Quote 扫描。
 2. 长 DOM 上的全量提取和测量：`extractOutline()`、`updateScrollPositions()`、adapter 字数统计。
 3. 大对象 store 写入和 UI 派发：会话同步逐条更新 Zustand/persist，放大为多次对象拷贝、序列化和列表重算。
 
@@ -68,7 +68,7 @@ PR #683 已合并，方向是正确的：大纲面板从“按全部可见节点
 | #679 | Tracking | Open | 已完成长对话查看性能 | 汇总 #680/#681 以及后续查看路径优化。 |
 | #681 | P0 | Open，PR #683 已合并 | 大纲面板虚拟滚动 | 建议关闭。 |
 | #684 | P0 | Open，实现 PR 进行中 | 移除大纲无条件刷新轮询 | 大纲面板关闭且页面 idle 时，不再每 2s 触发 outline extraction。 |
-| #685 | P0 | Open | 全局搜索与大纲轮询解耦 | 打开搜索框但不输入时，不持续 refresh outline；输入延迟下降。 |
+| #685 | P0 | Open，实现 PR 进行中 | 全局搜索与大纲轮询解耦 | 打开搜索框但不输入时，不持续 refresh outline；输入延迟下降。 |
 | #686 | P0/P1 | Open | 大纲滚动同步与位置重测量降本 | source scroll 同帧合并；`characterData` stale observer 降噪；`updateScrollPositions()` 惰性/邻近测量。 |
 | #687 | P1 | Open | 会话同步批量写入 Zustand store | 同步 N 条会话时 set/persist 从 O(N) 降到 O(1) 或小常数。 |
 | #688 | P1 | Open | adapter 大纲抽取输入与字数统计缓存 | 同一 DOM version 下重复 refresh 的 adapter 抽取耗时下降。 |
@@ -112,14 +112,14 @@ PR #683 已合并，方向是正确的：大纲面板从“按全部可见节点
 
 ### P0：全局搜索与大纲轮询解耦（#685）
 
-全局搜索打开后当前会每 1200ms 调 `outlineManager.refresh()`，并对 conversations/prompts/settings/outline 执行 normalized fields 构建、fuzzy/typo 评分和排序。长会话中，打开搜索框会把大纲抽取变成常驻主线程工作。
+本 issue 改造前，全局搜索打开后会每 1200ms 调 `outlineManager.refresh()`，并在输入路径里对 conversations/prompts/settings/outline 重复执行 normalized fields 构建、fuzzy/typo 评分和排序。长会话中，打开搜索框会把大纲抽取变成常驻主线程工作。
 
 建议：
 
 - 搜索打开时最多 refresh 一次；后续只订阅 `outlineManager.subscribe()`。
-- 输入查询使用现有 debounce 或 `useDeferredValue`，避免每个 keypress 同步全量评分。
-- 为 conversations/prompts/settings/outline 建 normalized index，数据变更时增量更新。
-- 候选数量过大时先 includes/prefix 粗过滤，再对前 N 个做 fuzzy score。
+- 输入查询继续使用现有 debounce，避免每个 keypress 同步全量评分。
+- 为 conversations/prompts/settings/outline 建 normalized index，数据变更或 outline version 变化时重建索引。
+- 候选数量过大时先做 includes/prefix/长度兼容粗过滤，再对前 N 个做 fuzzy score。
 
 风险：
 
@@ -191,14 +191,25 @@ PR #683 已实现 debug-only 行高漂移告警。#690 后续可以按 PR 验收
 - 如果当前告警足够，#683 合并后关闭 #690。
 - 如果需要更完整覆盖，则保留 #690 跟踪 hover/highlight/bookmark/copy 状态的手动回归流程或开发工具开关文档。
 
-## 功能开关相关风险（暂不拆 issue）
+## 功能开关相关风险与后续候选（暂不抢优先级）
 
-这些不是当前第一批 issue，但后续遇到对应功能卡顿时应回到这里拆分：
+这些不是当前第一批 issue。原则是先完成 #685/#686/#687/#688；只有 profiling 显示对应功能在长会话中仍有明显主线程成本，才继续拆分。
 
-- 浏览器标签页监控：auto rename interval、网络生成确认 200ms poll、DOM completion 150ms poll、SPA URL 变化兜底 poll。
+### 后续可拆 issue 候选
+
+| 候选项 | 现状 | 建议方向 | 优先级判断 |
+| --- | --- | --- | --- |
+| 渲染增强扫描事件化 | 用户提问 Markdown 2s rescan；Assistant Mermaid 2s rescan；Shadow DOM 表格复制 1s rescan；都可能走 `DOMToolkit.query(..., { all: true, shadow: true })`。 | 用 addedNodes/known root observer 作为主路径；维护 ShadowRoot registry；保留 page hidden/focus gating；兜底轮询指数退避并尽量 idle 调度。 | P2；如果用户开启这些功能后长会话仍卡，可升为 P1。 |
+| 会话列表 DOM 轮询降本 | #687 只解决 store 批量写入；`ConversationManager` 仍有 sidebar DOM 轮询和标题观察路径。 | 先做 #687；之后若 sidebar/list 同步仍耗时，再做 observer 可靠性、可见性 gating、列表容器 version 判断和批量派发。 | P1/P2；取决于 #687 后的 profiling。 |
+| SPA URL 变化轮询统一 | `modules-init.ts` 有 1s URL fallback，`App.tsx` 还有 500ms URL 检查用于清空 prompt/textarea。 | 统一到单一路由变化服务或事件通道；保留低频兼容兜底，避免多个模块各自轮询 URL。 | P2；兼容性风险高，不应早于 #685/#686。 |
+| Usage Counter 触发范围降本 | 已明确不做 token 估算缓存，但 mount loop、pending send 检测和 Shadow DOM 查询仍是启用后成本。 | 只优化触发范围：mounted 后降频/停止 mount loop，pending 检测加超时和 generation 事件优先，减少全 shadow 查询。 | P2；仅在功能启用且 profiling 命中时拆。 |
+| Tab/Queue 生成状态轮询收敛 | Tab auto rename 有网络生成确认 200ms poll、DOM completion 150ms poll；Queue dispatcher 有 1s poll。 | 限定运行窗口、页面可见性 gating、复用 network monitor 事件；不要影响通知和队列可靠性。 | P2；属于主动功能态，不是长会话查看主路径。 |
+
+### 保留为风险观察项
+
 - Shadow DOM 注入：布局功能启用后周期遍历 ShadowRoot，可考虑 ShadowRoot registry 和 page visibility gating。
-- 用户提问 Markdown：2s rescan 可改为 addedNodes observer + 低频 fallback。
-- Quick Quote 引用 chips：observer 监听 attributes/characterData/childList/subtree 较宽，可改为以 addedNodes 为入口增量处理。
+- Quick Quote 引用 chips：observer 监听 attributes/characterData/childList/subtree 较宽，可改为以 addedNodes 为入口增量处理，并和“渲染增强扫描事件化”合并考虑。
+- Inline Bookmark：#691 已补上大纲 Tab 关闭时的候选新鲜度路径；后续只在 inline bookmark mode 为 always 且长会话仍有明显 DOM work 时再单独 profile。
 - `DOMToolkit.query(..., { all: true, shadow: true })`：不应出现在高频 timer、scroll、input、MutationObserver 同步路径。
 
 ## 推荐执行顺序
