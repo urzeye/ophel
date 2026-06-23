@@ -405,11 +405,17 @@ export class DeepSeekAdapter extends SiteAdapter {
     const elements = this.getVisibleUserQueryElements()
     if (elements.length === 0) return null
 
-    return this.findUniqueOutlineTextMatch(
-      elements,
-      (element) => this.extractUserQueryText(element),
-      text,
-      { allowPrefix: this.shouldAllowOutlinePrefixMatch(text) },
+    if (queryIndex > 0 && elements.length >= queryIndex) {
+      const candidate = elements[queryIndex - 1]
+      if (this.isEquivalentUserQueryText(this.extractUserQueryText(candidate), text)) {
+        return candidate
+      }
+    }
+
+    return (
+      elements.find((element) =>
+        this.isEquivalentUserQueryText(this.extractUserQueryText(element), text),
+      ) || null
     )
   }
 
@@ -1547,13 +1553,11 @@ export class DeepSeekAdapter extends SiteAdapter {
       return false
     }
 
-    if (normalizedLeft === normalizedRight) return true
-    if (!this.shouldAllowOutlinePrefixMatch(left) && !this.shouldAllowOutlinePrefixMatch(right)) {
-      return false
-    }
-    if (Math.min(normalizedLeft.length, normalizedRight.length) < 24) return false
-
-    return normalizedLeft.startsWith(normalizedRight) || normalizedRight.startsWith(normalizedLeft)
+    return (
+      normalizedLeft === normalizedRight ||
+      normalizedLeft.startsWith(normalizedRight) ||
+      normalizedRight.startsWith(normalizedLeft)
+    )
   }
 
   private normalizeUserQueryMatchText(text: string): string {
@@ -1624,12 +1628,14 @@ export class DeepSeekAdapter extends SiteAdapter {
 
   private resolveNativeOutlineEntry(
     entries: DeepSeekNativeOutlineEntry[],
-    _queryIndex: number,
+    queryIndex: number,
     text: string,
   ): DeepSeekNativeOutlineEntry | null {
-    return this.findUniqueOutlineTextMatch(entries, (entry) => entry.text, text, {
-      allowPrefix: this.shouldAllowOutlinePrefixMatch(text),
-    })
+    if (queryIndex > 0 && queryIndex <= entries.length) {
+      return entries[queryIndex - 1]
+    }
+
+    return entries.find((entry) => this.isEquivalentUserQueryText(entry.text, text)) || null
   }
 
   private buildNativeOutlineJumpPositions(

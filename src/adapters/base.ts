@@ -29,10 +29,6 @@ export interface OutlineItem {
   wordCount?: number
 }
 
-interface OutlineTextMatchOptions {
-  allowPrefix?: boolean
-}
-
 export type OutlineSourceKind = "conversation" | "document"
 
 export interface OutlineSource {
@@ -1128,54 +1124,6 @@ export abstract class SiteAdapter {
     return this.extractOutline(6, true, false).filter((item) => item.element?.isConnected)
   }
 
-  protected normalizeOutlineMatchText(text: string): string {
-    return text
-      .replace(/\s+/g, " ")
-      .trim()
-      .replace(/(?:\.{3}|…)$/u, "")
-      .trim()
-  }
-
-  protected shouldAllowOutlinePrefixMatch(text: string, isTruncated?: boolean): boolean {
-    return isTruncated === true || /(?:\.{3}|…)$/u.test(text.trim())
-  }
-
-  protected findUniqueOutlineTextMatch<T>(
-    candidates: T[],
-    getText: (candidate: T) => string,
-    text: string,
-    options: OutlineTextMatchOptions = {},
-  ): T | null {
-    const expectedText = this.normalizeOutlineMatchText(text)
-    if (!expectedText) return null
-
-    const exactMatches: T[] = []
-    const prefixMatches: T[] = []
-
-    for (const candidate of candidates) {
-      const candidateText = this.normalizeOutlineMatchText(getText(candidate))
-      if (!candidateText) continue
-
-      if (candidateText === expectedText) {
-        exactMatches.push(candidate)
-        continue
-      }
-
-      if (
-        options.allowPrefix &&
-        Math.min(candidateText.length, expectedText.length) >= 24 &&
-        (candidateText.startsWith(expectedText) || expectedText.startsWith(candidateText))
-      ) {
-        prefixMatches.push(candidate)
-      }
-    }
-
-    if (exactMatches.length === 1) return exactMatches[0]
-    if (exactMatches.length > 1) return null
-
-    return prefixMatches.length === 1 ? prefixMatches[0] : null
-  }
-
   /**
    * 根据标题级别和文本查找元素（支持 Shadow DOM 穿透）
    * 用于大纲跳转时元素失效后的重新查找
@@ -1185,8 +1133,13 @@ export abstract class SiteAdapter {
    */
   findElementByHeading(level: number, text: string): Element | null {
     // 默认实现：使用 document.querySelectorAll（子类可覆盖以支持 Shadow DOM）
-    const headings = Array.from(document.querySelectorAll(`h${level}`))
-    return this.findUniqueOutlineTextMatch(headings, (heading) => heading.textContent || "", text)
+    const headings = document.querySelectorAll(`h${level}`)
+    for (const h of Array.from(headings)) {
+      if (h.textContent?.trim() === text) {
+        return h
+      }
+    }
+    return null
   }
 
   /**
@@ -1196,23 +1149,36 @@ export abstract class SiteAdapter {
    * @param text 用户提问文本（用于验证和回退搜索）
    * @returns 匹配的元素，未找到返回 null
    */
-  findUserQueryElement(
-    _queryIndex: number,
-    text: string,
-    options?: { isTruncated?: boolean },
-  ): Element | null {
+  findUserQueryElement(queryIndex: number, text: string): Element | null {
     const selector = this.getUserQuerySelector()
     if (!selector) return null
 
     const elements = DOMToolkit.query(selector, { all: true, shadow: true }) as Element[]
     if (!elements || elements.length === 0) return null
 
-    return this.findUniqueOutlineTextMatch(
-      elements,
-      (element) => this.extractUserQueryText(element),
-      text,
-      { allowPrefix: this.shouldAllowOutlinePrefixMatch(text, options?.isTruncated) },
-    )
+    // 1. 尝试按索引查找并验证文本
+    if (elements.length >= queryIndex) {
+      const candidate = elements[queryIndex - 1]
+      const candidateText = this.extractUserQueryText(candidate)
+      // 验证：文本匹配或包含关系（大纲可能显示截断的文本）
+      if (
+        candidateText === text ||
+        candidateText.startsWith(text) ||
+        text.startsWith(candidateText)
+      ) {
+        return candidate
+      }
+    }
+
+    // 2. 回退：按文本内容搜索所有用户提问
+    for (const el of elements) {
+      const elText = this.extractUserQueryText(el)
+      if (elText === text || elText.startsWith(text) || text.startsWith(elText)) {
+        return el
+      }
+    }
+
+    return null
   }
 
   /**
@@ -1220,15 +1186,12 @@ export abstract class SiteAdapter {
    * 默认仅做同步 DOM 查找，子类可覆盖以支持虚拟列表/原生导航等异步定位。
    */
   async resolveOutlineTarget(
-    item: Pick<
-      OutlineItem,
-      "level" | "text" | "isUserQuery" | "id" | "navigationId" | "isTruncated"
-    >,
+    item: Pick<OutlineItem, "level" | "text" | "isUserQuery" | "id" | "navigationId">,
     queryIndex?: number,
     _sourceId = "conversation",
   ): Promise<Element | null> {
     if (item.isUserQuery && item.level === 0 && queryIndex !== undefined) {
-      return this.findUserQueryElement(queryIndex, item.text, { isTruncated: item.isTruncated })
+      return this.findUserQueryElement(queryIndex, item.text)
     }
 
     return this.findElementByHeading(item.level, item.text)
