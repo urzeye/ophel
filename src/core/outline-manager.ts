@@ -142,14 +142,19 @@ export class OutlineManager {
 
   // 设置 Tab 激活状态（由 OutlineTab 调用）
   setActive(active: boolean) {
+    const wasActive = this.isActive
     this.isActive = active
     this.updateAutoUpdateState()
+
+    if (!active || wasActive) return
+
     // 切回时如果有待处理的生成完成刷新，立即执行
-    if (active && this.pendingPostGenerationRefresh) {
+    if (this.pendingPostGenerationRefresh) {
       this.pendingPostGenerationRefresh = false
       this.treeKey = ""
-      this.refresh()
     }
+
+    this.refresh()
   }
 
   // 根据条件启动/停止自动更新

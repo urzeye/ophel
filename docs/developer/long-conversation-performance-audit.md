@@ -1,11 +1,11 @@
 # 长会话性能审计报告
 
 > 更新日期：2026-06-23
-> 背景：#675 长会话性能退化。已完成 #678/#680；#681 由 PR #683 实现中。本文作为长会话性能优化的 tracking 文档，`docs/developer/outline-performance-plan.md` 保留为早期大纲专项计划，不再承载 #675 的后续拆分。
+> 背景：#675 长会话性能退化。已完成 #678/#680；#681 已由 PR #683 合并实现。本文作为长会话性能优化的 tracking 文档，`docs/developer/outline-performance-plan.md` 保留为早期大纲专项计划，不再承载 #675 的后续拆分。
 
 ## 结论
 
-PR #683 的方向是正确的：大纲面板从“按全部可见节点渲染”改为“按视口窗口 + overscan 渲染”，对 500+ 可见大纲项场景有直接收益。它解决的是 #681 的大纲面板 React/DOM 成本，不是 #675 的完整解法。
+PR #683 已合并，方向是正确的：大纲面板从“按全部可见节点渲染”改为“按视口窗口 + overscan 渲染”，对 500+ 可见大纲项场景有直接收益。它解决的是 #681 的大纲面板 React/DOM 成本，不是 #675 的完整解法。
 
 #675 剩余瓶颈仍主要在虚拟列表外：
 
@@ -21,8 +21,8 @@ PR #683 的方向是正确的：大纲面板从“按全部可见节点渲染”
 | --- | --- | --- | --- |
 | 生成期 observer 与 refresh 防抖 | 已完成 | #678 / PR #677 | `OutlineManager` 自动更新 observer 不再监听 `characterData`；refresh 增加全局 debounce；URL 变化错峰探测。 |
 | 隐藏大纲节点渲染与书签匹配 | 已完成 | #680 / PR #682 | 隐藏节点改为条件渲染；书签匹配从 O(n*m) 改为 Map。 |
-| 大纲虚拟滚动 | 实现中 | #681 / PR #683 | `tree + visibleMap` 展平为 `visibleItems`，只渲染 viewport + overscan。 |
-| 虚拟行高硬化 | 已推送到 PR #683 | commit `550216d` | 固定行高拆为可读常量；虚拟列表内 locate highlight 不再用 2px border；禁用 user query hover 位移；增加 debug-only 行高漂移告警。 |
+| 大纲虚拟滚动 | 已完成 | #681 / PR #683 | `tree + visibleMap` 展平为 `visibleItems`，只渲染 viewport + overscan；PR #683 已合并，#681 可关闭。 |
+| 虚拟行高硬化 | 已合并 | commit `550216d` | 固定行高拆为可读常量；虚拟列表内 locate highlight 不再用 2px border；禁用 user query hover 位移；增加 debug-only 行高漂移告警。 |
 | 后续性能拆分 | 已建 issue | #684-#690 | 见下方 issue mapping。 |
 
 ## PR #683 当前判断
@@ -66,31 +66,48 @@ PR #683 的方向是正确的：大纲面板从“按全部可见节点渲染”
 | --- | --- | --- | --- | --- |
 | #675 | Epic | Open | 长会话性能退化总任务 | 只做 tracking，不直接承载实现 PR。 |
 | #679 | Tracking | Open | 已完成长对话查看性能 | 汇总 #680/#681 以及后续查看路径优化。 |
-| #681 | P0 | Open，PR #683 实现中 | 大纲面板虚拟滚动 | PR #683 合并后可关闭。 |
-| #684 | P0 | Open | 移除大纲无条件刷新轮询 | 大纲面板关闭且页面 idle 时，不再每 2s 触发 outline extraction。 |
+| #681 | P0 | Open，PR #683 已合并 | 大纲面板虚拟滚动 | 建议关闭。 |
+| #684 | P0 | Open，实现 PR 进行中 | 移除大纲无条件刷新轮询 | 大纲面板关闭且页面 idle 时，不再每 2s 触发 outline extraction。 |
 | #685 | P0 | Open | 全局搜索与大纲轮询解耦 | 打开搜索框但不输入时，不持续 refresh outline；输入延迟下降。 |
 | #686 | P0/P1 | Open | 大纲滚动同步与位置重测量降本 | source scroll 同帧合并；`characterData` stale observer 降噪；`updateScrollPositions()` 惰性/邻近测量。 |
 | #687 | P1 | Open | 会话同步批量写入 Zustand store | 同步 N 条会话时 set/persist 从 O(N) 降到 O(1) 或小常数。 |
 | #688 | P1 | Open | adapter 大纲抽取输入与字数统计缓存 | 同一 DOM version 下重复 refresh 的 adapter 抽取耗时下降。 |
 | #689 | P1 | Open | 虚拟大纲列表自身滚动渲染节流 | 大纲列表快速滚动时减少 React render，无白屏/错位/闪烁。 |
-| #690 | P1 | Open，PR #683 已部分覆盖 | 虚拟行高漂移校验 | 如果 PR #683 的 debug-only 校验足够，合并后可关闭或缩小为后续 CSS 回归守护。 |
+| #690 | P1 | Open，PR #683 已覆盖核心校验 | 虚拟行高漂移校验 | 如果当前 debug-only 校验足够，可关闭或缩小为后续 CSS 回归守护。 |
 
 ## 待完成优化项
 
 ### P0：移除大纲无条件刷新轮询（#684）
 
-当前 `src/components/App.tsx` 仍创建 `setInterval(() => outlineManager.refresh(), 2000)`。长会话中，即使用户没有打开大纲 Tab，也会定期扫描会话 DOM。#683 只减少大纲列表渲染，不能减少这个扫描成本。
+问题来源是 `src/components/App.tsx` 曾创建 `setInterval(() => outlineManager.refresh(), 2000)`。长会话中，即使用户没有打开大纲 Tab，也会定期扫描会话 DOM。#683 只减少大纲列表渲染，不能减少这个扫描成本；#684 的目标是移除这类 App 级无条件刷新。
+
+去掉 App 级固定 2s 轮询后，大纲自动更新应依赖以下路径：
+
+- 初始化：保留 `OutlineManager` 创建后的首次 `refresh()`，用于首屏拿到当前会话大纲。
+- SPA 路由变化：继续由 `gh-url-change` 调用 `handleUrlChange()`，清空旧 tree，并在 80/250/600/1200ms 做错峰探测，覆盖异步渲染新会话 DOM。
+- 大纲 Tab 激活：`OutlineTab` 挂载时调用 `manager.setActive(true)`。#684 实施为每次从 inactive 进入大纲 Tab 都刷新一次；这是用户触发的按需扫描，不是后台轮询，可覆盖“未打开大纲时与 AI 对话”的场景。
+- 生成中更新：当大纲 Tab active 且 `autoUpdate` enabled 时，`OutlineManager` 的 `MutationObserver` 观察 adapter 指定容器或 `document.body` 的 `childList/subtree`，按 `settings.updateInterval` 防抖后执行 `executeAutoUpdate()`。
+- 生成完成补刷：`executeAutoUpdate()` 通过 `siteAdapter.isGenerating()` 识别 `wasGenerating -> !isGenerating`，延迟 500ms 强制清空 `treeKey` 并刷新，保证最终 DOM 稳定后重建大纲。
+- 切走后的补刷：如果生成完成补刷触发时大纲 Tab 已不 active，当前代码会设置 `pendingPostGenerationRefresh`，下次 `setActive(true)` 再刷新。但这只覆盖“observer 曾经 active 并捕获到生成状态”的场景，不能替代激活刷新。
+- 显式事件：保留 `ophel:refreshOutline`、设置变更、source 切换、书签变化、动态 source signature 变化等直接刷新入口。
+- 全局搜索：#685 后不应依赖全局搜索 1200ms 轮询来维持大纲新鲜度；搜索只消费 outline manager 的事件或索引版本。
 
 建议：
 
-- 去掉固定 2s refresh，改为事件驱动：初始化、URL 变化、生成完成、手动刷新、书签变化、设置/source 变化。
+- 移除 App 级无条件 `setInterval`，保留初始化 refresh、URL 错峰探测、`ophel:refreshOutline`。
+- 在 `setActive(true)` 时补一次刷新；避免把大纲关闭期间的增量更新成本重新放回后台，同时保证用户打开大纲时看到当前 DOM 的结果。
+- 保留生成完成 500ms 补刷和 `treeKey` fallback；它们解决的是“已捕获生成状态后的最终一致性”。
 - 如需兜底轮询，只在 outline enabled、页面可见、autoUpdate enabled、且大纲面板 active 或最近被使用时运行。
-- tree 连续稳定后指数退避到 10-30s。
-- refresh 尽量通过 `requestIdleCallback` 或等价调度避开输入和滚动高峰。
+- tree 连续稳定后指数退避到 10-30s，且刷新尽量通过 `requestIdleCallback` 或等价调度避开输入和滚动高峰。
 
 风险：
 
 - 直接删除轮询可能暴露某些站点 observer 漏事件。需要重点回归 ChatGPT、Claude、Gemini、DeepSeek、Doubao 的生成完成刷新。
+- 当前自动更新 observer 不监听 `characterData`。如果站点只改文本节点、不新增/替换 DOM 节点，可能漏掉流式更新或标题文本变化。
+- adapter 的 `getObserveTarget()` 如果选到过窄、过期或被站点重建的容器，事件驱动刷新会漏掉后续生成。
+- 如果生成结束只体现为按钮 attribute/class/text 变化，而 observer 未监听该变化，`wasGenerating -> !isGenerating` 的最终补刷可能不会被触发。
+- 大纲 Tab inactive 时 observer 关闭，后台不再自动维护新鲜 tree。必须靠激活刷新、URL 事件或显式刷新兜底。
+- 事件驱动比轮询更依赖各站点 adapter 的 `isGenerating()`、observe target、source signature 正确性，回归矩阵更大。
 
 ### P0：全局搜索与大纲轮询解耦（#685）
 
@@ -185,11 +202,13 @@ PR #683 已实现 debug-only 行高漂移告警。#690 后续可以按 PR 验收
 
 ## 推荐执行顺序
 
-1. 合并并验证 PR #683；它关闭 #681，但不关闭 #675。
-2. 第一批处理 #684、#685、#686，先拆掉后台大纲刷新、搜索轮询和滚动同步测量成本。
-3. 第二批处理 #687、#688，降低会话同步和 adapter 抽取成本。
-4. #689 作为 #683 后续微优化，视真实滚动表现决定是否提前。
-5. #690 在 #683 合并后按行高校验实际覆盖情况关闭或收窄。
+1. 收尾 #681：PR #683 已合并，关闭 #681；按需确认 #690 是否可关闭或缩小范围。
+2. 优先做 #684：移除 App 级 2s 无条件大纲刷新；同步补上大纲 Tab 激活刷新/stale 刷新，保留 URL 错峰探测和生成完成补刷。
+3. 接着做 #685：全局搜索与大纲轮询解耦，搜索只订阅 outline 版本或索引变更，不再靠 1200ms refresh 维持新鲜度。
+4. 接着做 #686：降低正文滚动同步、source scroll 和 `updateScrollPositions()` 的测量频率。
+5. 第二批做 #687：会话同步批量写入 Zustand store，减少长会话列表同步时的多次 persist 和对象拷贝。
+6. 第二批做 #688：优化 ChatGPT/Claude/Gemini 等 adapter 的大纲抽取输入收集和字数统计缓存。
+7. 视 profiling 决定 #689：只有大纲列表自身快速滚动仍有明显 render 压力时，再做 rAF 合帧和 range 变化才 setState。
 
 ## 验证建议
 
