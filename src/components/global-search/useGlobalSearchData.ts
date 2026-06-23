@@ -649,14 +649,18 @@ const getGlobalSearchLimitedFuzzyCandidateRank = (
     return 2
   }
 
+  if (hasGlobalSearchTypoCandidate(entry, normalizedQuery)) {
+    return 2
+  }
+
   if (
     normalizedQuery.length >= 3 &&
     isGlobalSearchSubsequence(normalizedQuery, entry.searchableText)
   ) {
-    return 1
+    return 0
   }
 
-  return hasGlobalSearchTypoCandidate(entry, normalizedQuery) ? 1 : -1
+  return -1
 }
 
 const getGlobalSearchFuzzyCandidates = (
@@ -860,71 +864,73 @@ export const useGlobalSearchData = ({
     [activeGlobalSearchPlainQuery, enableFuzzySearch],
   )
 
-  const settingsGlobalSearchIndex = useMemo<GlobalSearchIndexEntry[]>(
-    () =>
-      settingsSearchResults.map((item, index) => {
-        const title = resolveSettingSearchTitle(item)
-        const breadcrumb = getSettingsBreadcrumb(item.settingId)
-        const fields: GlobalSearchScoreField[] = [
-          {
-            value: normalizeGlobalSearchValue(title),
-            exact: 220,
-            prefix: 140,
-            includes: 100,
-            tokenPrefix: 24,
-            tokenIncludes: 12,
-            matchReason: "title",
-            highlightField: "title",
-          },
-          {
-            value: normalizeGlobalSearchValue((item.keywords || []).join(" ")),
-            exact: 0,
-            prefix: 0,
-            includes: 68,
-            tokenPrefix: 0,
-            tokenIncludes: 8,
-            matchReason: "keyword",
-          },
-          {
-            value: normalizeGlobalSearchValue(item.settingId),
-            exact: 0,
-            prefix: 0,
-            includes: 48,
-            tokenPrefix: 0,
-            tokenIncludes: 6,
-            matchReason: "id",
-            highlightField: "code",
-          },
-          {
-            value: normalizeGlobalSearchValue(
-              (GLOBAL_SEARCH_SETTING_ALIAS_MAP[item.settingId] || []).join(" "),
-            ),
-            exact: 0,
-            prefix: 0,
-            includes: 44,
-            tokenPrefix: 0,
-            tokenIncludes: 6,
-            matchReason: "alias",
-          },
-        ]
+  const settingsGlobalSearchIndex = useMemo<GlobalSearchIndexEntry[]>(() => {
+    if (isTipsMode) {
+      return []
+    }
 
-        return createGlobalSearchIndexEntry({
-          index,
-          fields,
-          createItem: (scoreMeta) => ({
-            id: `settings:${item.settingId}`,
-            title,
-            breadcrumb,
-            code: item.settingId,
-            category: "settings" as const,
-            settingId: item.settingId,
-            matchReasons: scoreMeta.matchReasons,
-            fuzzyMatch: scoreMeta.fuzzyMatch,
-          }),
-        })
-      }),
-    [getSettingsBreadcrumb, resolveSettingSearchTitle, settingsSearchResults],
-  )
+    return settingsSearchResults.map((item, index) => {
+      const title = resolveSettingSearchTitle(item)
+      const breadcrumb = getSettingsBreadcrumb(item.settingId)
+      const fields: GlobalSearchScoreField[] = [
+        {
+          value: normalizeGlobalSearchValue(title),
+          exact: 220,
+          prefix: 140,
+          includes: 100,
+          tokenPrefix: 24,
+          tokenIncludes: 12,
+          matchReason: "title",
+          highlightField: "title",
+        },
+        {
+          value: normalizeGlobalSearchValue((item.keywords || []).join(" ")),
+          exact: 0,
+          prefix: 0,
+          includes: 68,
+          tokenPrefix: 0,
+          tokenIncludes: 8,
+          matchReason: "keyword",
+        },
+        {
+          value: normalizeGlobalSearchValue(item.settingId),
+          exact: 0,
+          prefix: 0,
+          includes: 48,
+          tokenPrefix: 0,
+          tokenIncludes: 6,
+          matchReason: "id",
+          highlightField: "code",
+        },
+        {
+          value: normalizeGlobalSearchValue(
+            (GLOBAL_SEARCH_SETTING_ALIAS_MAP[item.settingId] || []).join(" "),
+          ),
+          exact: 0,
+          prefix: 0,
+          includes: 44,
+          tokenPrefix: 0,
+          tokenIncludes: 6,
+          matchReason: "alias",
+        },
+      ]
+
+      return createGlobalSearchIndexEntry({
+        index,
+        fields,
+        createItem: (scoreMeta) => ({
+          id: `settings:${item.settingId}`,
+          title,
+          breadcrumb,
+          code: item.settingId,
+          category: "settings" as const,
+          settingId: item.settingId,
+          matchReasons: scoreMeta.matchReasons,
+          fuzzyMatch: scoreMeta.fuzzyMatch,
+        }),
+      })
+    })
+  }, [getSettingsBreadcrumb, isTipsMode, resolveSettingSearchTitle, settingsSearchResults])
 
   const settingsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
     if (isTipsMode) {
@@ -935,7 +941,7 @@ export const useGlobalSearchData = ({
   }, [globalSearchQueryContext, isTipsMode, settingsGlobalSearchIndex])
 
   const conversationGlobalSearchIndex = useMemo<GlobalSearchIndexEntry[]>(() => {
-    if (!conversationManager) {
+    if (isTipsMode || !conversationManager) {
       return []
     }
 
@@ -1027,7 +1033,14 @@ export const useGlobalSearchData = ({
         }),
       })
     })
-  }, [conversationManager, conversationsSnapshot, foldersSnapshot, tagsSnapshot, getLocalizedText])
+  }, [
+    conversationManager,
+    conversationsSnapshot,
+    foldersSnapshot,
+    tagsSnapshot,
+    getLocalizedText,
+    isTipsMode,
+  ])
 
   const conversationGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
     if (isTipsMode) {
@@ -1038,6 +1051,10 @@ export const useGlobalSearchData = ({
   }, [conversationGlobalSearchIndex, globalSearchQueryContext, isTipsMode])
 
   const promptsGlobalSearchIndex = useMemo<GlobalSearchIndexEntry[]>(() => {
+    if (isTipsMode) {
+      return []
+    }
+
     const promptsLabel = getLocalizedText({
       key: "globalSearchCategoryPrompts",
       fallback: "Prompts",
@@ -1126,7 +1143,7 @@ export const useGlobalSearchData = ({
         }),
       })
     })
-  }, [getLocalizedText, promptsSnapshot])
+  }, [getLocalizedText, isTipsMode, promptsSnapshot])
 
   const promptsGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
     if (isTipsMode) {
@@ -1137,7 +1154,7 @@ export const useGlobalSearchData = ({
   }, [globalSearchQueryContext, isTipsMode, promptsGlobalSearchIndex])
 
   const outlineGlobalSearchIndex = useMemo<GlobalSearchIndexEntry[]>(() => {
-    if (!outlineManager) {
+    if (isTipsMode || !outlineManager) {
       return []
     }
 
@@ -1232,7 +1249,7 @@ export const useGlobalSearchData = ({
         })
       })
       .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
-  }, [getLocalizedText, outlineManager, outlineSearchVersion])
+  }, [getLocalizedText, isTipsMode, outlineManager, outlineSearchVersion])
 
   const outlineGlobalSearchResults = useMemo<GlobalSearchResultItem[]>(() => {
     if (isTipsMode) {

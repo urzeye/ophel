@@ -154,6 +154,7 @@ export class OutlineManager {
 
   private setActiveConsumer(consumer: OutlineActiveConsumer, active: boolean) {
     const wasActive = this.isActive
+    const wasConsumerActive = this.activeConsumers.has(consumer)
 
     if (active) {
       this.activeConsumers.add(consumer)
@@ -164,7 +165,10 @@ export class OutlineManager {
     this.isActive = this.activeConsumers.size > 0
     this.updateAutoUpdateState()
 
-    if (!this.isActive || wasActive) return
+    const shouldRefreshOnActivation =
+      !wasActive || (consumer === "outlineTab" && active && !wasConsumerActive)
+
+    if (!this.isActive || !shouldRefreshOnActivation) return
 
     // 切回时如果有待处理的生成完成刷新，立即执行
     if (this.pendingPostGenerationRefresh) {
