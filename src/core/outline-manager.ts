@@ -1711,7 +1711,7 @@ export class OutlineManager {
     if (!viewportRect) return null
 
     const mountedHeadings: Array<MountedOutlineNode & MeasuredOutlineElement> = []
-    const mountedUserQueries: MeasuredOutlineElement[] = []
+    const mountedUserQueries: Array<MountedOutlineNode & MeasuredOutlineElement> = []
 
     const measureElement = (element: Element): MeasuredOutlineElement | null => {
       const clientRects = element.getClientRects()
@@ -1738,7 +1738,7 @@ export class OutlineManager {
       if (!measured) continue
 
       if (node.isUserQuery) {
-        mountedUserQueries.push(measured)
+        mountedUserQueries.push({ node, element, ...measured })
       } else {
         mountedHeadings.push({ node, element, ...measured })
       }
@@ -1748,13 +1748,24 @@ export class OutlineManager {
     const anchorY = viewportRect.top + Math.min(Math.max(viewportRect.height * 0.25, 48), 160)
 
     let latestUserQueryBeforeAnchor: MeasuredOutlineElement | null = null
+    let activeUserQuery: (MountedOutlineNode & MeasuredOutlineElement) | null = null
     for (const query of mountedUserQueries) {
+      const bottom = query.top + query.height
+      if (query.top <= anchorY && bottom > anchorY) {
+        if (!activeUserQuery || query.top > activeUserQuery.top) {
+          activeUserQuery = query
+        }
+      }
       if (
         query.top <= anchorY &&
         (!latestUserQueryBeforeAnchor || query.top > latestUserQueryBeforeAnchor.top)
       ) {
         latestUserQueryBeforeAnchor = query
       }
+    }
+
+    if (activeUserQuery) {
+      return activeUserQuery.node
     }
 
     let activeHeading: (MountedOutlineNode & MeasuredOutlineElement) | null = null
