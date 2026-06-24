@@ -15,7 +15,10 @@ import type {
 } from "~core/conversation-manager"
 import { SITE_IDS } from "~constants"
 import { platform } from "~platform"
+import { useConversationsStore } from "~stores/conversations-store"
+import { useFoldersStore } from "~stores/folders-store"
 import { useSettingsStore } from "~stores/settings-store"
+import { useTagsStore } from "~stores/tags-store"
 import { getCurrentLang, t } from "~utils/i18n"
 import { showToast } from "~utils/toast"
 
@@ -168,6 +171,10 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
   // 设置 - 使用 Zustand store，确保设置变更实时生效
   const { settings } = useSettingsStore()
+  const conversationsStoreSnapshot = useConversationsStore((state) => state.conversations)
+  const lastUsedFolderIdStoreSnapshot = useConversationsStore((state) => state.lastUsedFolderId)
+  const foldersStoreSnapshot = useFoldersStore((state) => state.folders)
+  const tagsStoreSnapshot = useTagsStore((state) => state.tags)
 
   // 数据状态
   const [folders, setFolders] = useState<Folder[]>([])
@@ -252,7 +259,13 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
   useEffect(() => {
     loadData()
-  }, [loadData])
+  }, [
+    loadData,
+    conversationsStoreSnapshot,
+    foldersStoreSnapshot,
+    lastUsedFolderIdStoreSnapshot,
+    tagsStoreSnapshot,
+  ])
 
   // 订阅 ConversationManager 的数据变更事件
   useEffect(() => {

@@ -223,8 +223,6 @@ export class ConversationManager {
     const shouldRunInitialAutoFullSync =
       currentSiteCount === 0 && this.siteAdapter.loadAllConversations && !isRestore
 
-    this.startSidebarObserver()
-
     if (shouldRunInitialAutoFullSync) {
       try {
         await this.runInitialAutoFullSync()
@@ -232,6 +230,8 @@ export class ConversationManager {
         console.warn("[ConversationManager] Initial auto conversation sync failed:", error)
       }
     }
+
+    this.startSidebarObserver()
   }
 
   // Gemini 老数据迁移：数字 cid(0/1/2...) -> 当前邮箱 cid
@@ -426,6 +426,14 @@ export class ConversationManager {
     const loadResult = await this.siteAdapter.loadAllConversations()
     await this.delay(400)
 
+    if (loadResult === false) {
+      return {
+        scannedCount: this.siteAdapter.getConversationList().length,
+        changedCount: 0,
+        loadSucceeded: false,
+      }
+    }
+
     const maxRounds = 10
     const maxStableRounds = 2
     let stableRounds = 0
@@ -469,7 +477,7 @@ export class ConversationManager {
     return {
       scannedCount: this.siteAdapter.getConversationList().length,
       changedCount: totalNewCount + totalUpdatedCount,
-      loadSucceeded: loadResult !== false,
+      loadSucceeded: true,
     }
   }
 
