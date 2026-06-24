@@ -368,7 +368,6 @@ export class PromptManager {
     editor.focus()
     const keyConfig = this.resolveSubmitKeyConfig(submitShortcut)
     const needModifier = keyConfig.key === "Ctrl+Enter"
-    const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform)
     const eventInit: KeyboardEventInit = {
       key: "Enter",
       code: "Enter",
@@ -377,8 +376,8 @@ export class PromptManager {
       bubbles: true,
       cancelable: true,
       composed: true,
-      ctrlKey: needModifier && !isMac,
-      metaKey: needModifier && isMac,
+      ctrlKey: needModifier,
+      metaKey: false,
       shiftKey: false,
     }
 
@@ -386,6 +385,30 @@ export class PromptManager {
     editor.dispatchEvent(new KeyboardEvent("keypress", eventInit))
     editor.dispatchEvent(new KeyboardEvent("keyup", eventInit))
     return true
+  }
+
+  private dispatchNativeSubmitByKeyboard(editor: HTMLElement): boolean {
+    return this.dispatchSubmitByKeyboard(editor)
+  }
+
+  submitCurrentInputImmediately(submitShortcut?: "enter" | "ctrlEnter"): boolean {
+    this.syncAiStudioSubmitShortcut(submitShortcut ?? "enter")
+
+    const submitSelectors = this.adapter.getSubmitButtonSelectors()
+    const editor = this.adapter.getTextareaElement() || this.adapter.findTextarea()
+    const submitButton = this.findBestSubmitButton(submitSelectors, editor)
+
+    if (submitButton && !this.isElementDisabled(submitButton)) {
+      submitButton.click()
+      return true
+    }
+
+    const currentContent = this.getEditorContent(editor)
+      .replace(/[\u200B\u200C\u200D\uFEFF]/g, "")
+      .trim()
+    if (!editor || !currentContent) return false
+
+    return this.dispatchNativeSubmitByKeyboard(editor)
   }
 
   private shouldRetryWithKeyboard(initialContent: string): boolean {
@@ -460,7 +483,7 @@ export class PromptManager {
         editor || this.adapter.getTextareaElement() || this.adapter.findTextarea()
       if (!activeEditor) return false
 
-      triggered = this.dispatchSubmitByKeyboard(activeEditor, submitShortcut)
+      triggered = this.dispatchNativeSubmitByKeyboard(activeEditor)
     }
 
     if (!triggered) return false
@@ -484,7 +507,7 @@ export class PromptManager {
       return false
     }
 
-    const keyboardTriggered = this.dispatchSubmitByKeyboard(retryEditor, submitShortcut)
+    const keyboardTriggered = this.dispatchNativeSubmitByKeyboard(retryEditor)
     if (!keyboardTriggered) {
       return false
     }

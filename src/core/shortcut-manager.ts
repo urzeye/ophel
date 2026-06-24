@@ -167,11 +167,14 @@ export class ShortcutManager {
    * 键盘事件处理器
    */
   private handleKeyDown = (e: KeyboardEvent) => {
-    if (this.processedEvents.has(e)) return
-    this.processedEvents.add(e)
-
     // 忽略脚本合成事件，避免递归触发
     if (e.isTrusted === false) return
+
+    // 输入框里的普通按键不参与全局快捷键，尽早退出捕获阶段热路径。
+    if (this.shouldIgnoreEvent(e)) return
+
+    if (this.processedEvents.has(e)) return
+    this.processedEvents.add(e)
 
     // 检查快捷键是否启用
     if (!this.settings?.enabled) return
@@ -179,9 +182,6 @@ export class ShortcutManager {
     // Windows 国际键盘上的 AltGr 会同时带上 Ctrl+Alt。
     // 这里显式忽略 AltGraph，避免输入本地字符时误触发 Ctrl+Alt 快捷键。
     if (!this.isMac && e.getModifierState("AltGraph")) return
-
-    // 检查是否应该忽略
-    if (this.shouldIgnoreEvent(e)) return
 
     // 合并默认设置和用户设置，确保新添加的快捷键也能生效
     const keybindings = { ...DEFAULT_KEYBINDINGS, ...this.settings.keybindings }

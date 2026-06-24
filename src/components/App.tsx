@@ -3264,39 +3264,34 @@ export const App = () => {
 
       if (!editor) return
 
-      const hasPrimaryModifier = e.ctrlKey || e.metaKey
-      const hasAnyModifier = hasPrimaryModifier || e.altKey
+      const hasAnyModifier = e.ctrlKey || e.metaKey || e.altKey
+      const isPlainEnter = !hasAnyModifier && !e.shiftKey
+      const isCtrlEnterSubmitKey = e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey
       const isAiStudioMobilePlainEnter =
-        adapter.getSiteId() === SITE_IDS.AISTUDIO &&
-        isLikelyMobileDevice() &&
-        !hasAnyModifier &&
-        !e.shiftKey
+        adapter.getSiteId() === SITE_IDS.AISTUDIO && isLikelyMobileDevice() && isPlainEnter
       if (isAiStudioMobilePlainEnter) return
 
-      const isSubmitKey =
-        promptSubmitShortcut === "ctrlEnter"
-          ? hasPrimaryModifier && !e.altKey && !e.shiftKey
-          : !hasAnyModifier && !e.shiftKey
-      const shouldInsertNewlineInCtrlEnterMode =
-        promptSubmitShortcut === "ctrlEnter" && !hasAnyModifier && !e.shiftKey
+      if (promptSubmitShortcut === "enter") {
+        if (isPlainEnter && selectedPrompt) {
+          window.setTimeout(() => setSelectedPrompt(null), 0)
+        }
+        return
+      }
 
-      if (isSubmitKey) {
+      if (isCtrlEnterSubmitKey) {
         e.preventDefault()
         e.stopPropagation()
         e.stopImmediatePropagation()
 
-        void (async () => {
-          promptManager.syncAiStudioSubmitShortcut(promptSubmitShortcut)
-          const success = await promptManager.submitPrompt(promptSubmitShortcut)
-          if (success) {
-            setSelectedPrompt(null)
-          }
-        })()
+        const submitted = promptManager.submitCurrentInputImmediately(promptSubmitShortcut)
+        if (submitted) {
+          setSelectedPrompt(null)
+        }
         return
       }
 
       // In Ctrl+Enter mode, block plain Enter to avoid accidental native submit
-      if (shouldInsertNewlineInCtrlEnterMode) {
+      if (isPlainEnter) {
         e.preventDefault()
         e.stopPropagation()
         e.stopImmediatePropagation()
@@ -3320,7 +3315,7 @@ export const App = () => {
     return () => {
       document.removeEventListener("keydown", handleKeydown, true)
     }
-  }, [adapter, promptManager, promptSubmitShortcut])
+  }, [adapter, promptManager, promptSubmitShortcut, selectedPrompt])
 
   // Clear selected prompt tag after clicking native send button
   useEffect(() => {
