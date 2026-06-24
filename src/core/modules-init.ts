@@ -22,6 +22,7 @@ import { UserQueryMarkdownRenderer } from "~core/user-query-markdown"
 import { WatermarkRemover } from "~core/watermark-remover"
 import { getSettingsState, subscribeSettings } from "~stores/settings-store"
 import { setLanguage, t } from "~utils/i18n"
+import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
 import {
   getSiteModelLock,
   getSitePageWidth,
@@ -632,73 +633,90 @@ export function subscribeModuleUpdates(ctx: ModulesContext): void {
 export function initUrlChangeObserver(ctx: ModulesContext): void {
   const { adapter } = ctx
 
+  let lastHref = window.location.href
   let lastPathname = window.location.pathname
   let readingHistoryRestoreTimeoutId: ReturnType<typeof setTimeout> | null = null
 
   const handleUrlChange = async () => {
+    const currentHref = window.location.href
+    if (currentHref === lastHref) return
+
+    const previousHref = lastHref
+    lastHref = currentHref
+
+    window.dispatchEvent(
+      new CustomEvent(EVENT_PAGE_URL_CHANGE, {
+        detail: {
+          href: currentHref,
+          previousHref,
+        },
+      }),
+    )
+
     const currentPathname = window.location.pathname
-    if (currentPathname !== lastPathname) {
-      lastPathname = currentPathname
-      console.warn("[Ophel] URL changed, reinitializing modules...")
+    if (currentPathname === lastPathname) return
 
-      // 1. 阅读历史：停止录制 → 延迟恢复并重启
-      if (readingHistoryRestoreTimeoutId) {
-        clearTimeout(readingHistoryRestoreTimeoutId)
-        readingHistoryRestoreTimeoutId = null
-      }
+    lastPathname = currentPathname
+    console.warn("[Ophel] URL changed, reinitializing modules...")
 
-      if (modules.readingHistoryManager) {
-        modules.readingHistoryManager.stopRecording()
-        readingHistoryRestoreTimeoutId = setTimeout(async () => {
-          readingHistoryRestoreTimeoutId = null
-          const { showToast } = await import("~utils/toast")
-          const shouldSkipRestore = consumeSkipReadingHistoryRestoreFlag()
-          if (!shouldSkipRestore) {
-            const restored = await modules.readingHistoryManager?.restoreProgress((msg) =>
-              showToast(msg, 3000),
-            )
-            if (restored) {
-              showToast(t("restoredPosition"), 2000)
-            }
-          }
-          modules.readingHistoryManager?.startRecording()
-        }, 1500)
-      }
-
-      // 2. 大纲刷新 - 通过全局事件通知 App.tsx
-      window.dispatchEvent(new Event("gh-url-change"))
-
-      // 3. 标签页标题更新
-      if (modules.tabManager) {
-        modules.tabManager.resetConversationTitleCache()
-        ;[300, 800, 1500].forEach((delay) =>
-          setTimeout(() => modules.tabManager?.updateTabName(true), delay),
-        )
-      }
-
-      // 4. Textarea 重新查找
-      adapter.findTextarea()
-
-      // 5. 本地计数面板重新挂载
-      modules.usageCounterManager?.handleUrlChange()
-
-      // 6. 模型锁定重新触发（新对话/新页面可能重置模型）
-      modules.modelLocker?.relock(300)
+    // 1. 阅读历史：停止录制 → 延迟恢复并重启
+    if (readingHistoryRestoreTimeoutId) {
+      clearTimeout(readingHistoryRestoreTimeoutId)
+      readingHistoryRestoreTimeoutId = null
     }
+
+    if (modules.readingHistoryManager) {
+      modules.readingHistoryManager.stopRecording()
+      readingHistoryRestoreTimeoutId = setTimeout(async () => {
+        readingHistoryRestoreTimeoutId = null
+        const { showToast } = await import("~utils/toast")
+        const shouldSkipRestore = consumeSkipReadingHistoryRestoreFlag()
+        if (!shouldSkipRestore) {
+          const restored = await modules.readingHistoryManager?.restoreProgress((msg) =>
+            showToast(msg, 3000),
+          )
+          if (restored) {
+            showToast(t("restoredPosition"), 2000)
+          }
+        }
+        modules.readingHistoryManager?.startRecording()
+      }, 1500)
+    }
+
+    // 2. 大纲刷新 - 通过全局事件通知 App.tsx
+    window.dispatchEvent(new Event("gh-url-change"))
+
+    // 3. 标签页标题更新
+    if (modules.tabManager) {
+      modules.tabManager.resetConversationTitleCache()
+      ;[300, 800, 1500].forEach((delay) =>
+        setTimeout(() => modules.tabManager?.updateTabName(true), delay),
+      )
+    }
+
+    // 4. Textarea 重新查找
+    adapter.findTextarea()
+
+    // 5. 本地计数面板重新挂载
+    modules.usageCounterManager?.handleUrlChange()
+
+    // 6. 模型锁定重新触发（新对话/新页面可能重置模型）
+    modules.modelLocker?.relock(300)
   }
 
   // 监听 popstate (后退/前进)
   window.addEventListener("popstate", handleUrlChange)
+  window.addEventListener("hashchange", handleUrlChange)
 
   // Monkey-patch pushState / replaceState
   const originalPushState = history.pushState
   const originalReplaceState = history.replaceState
-  history.pushState = function (...args) {
-    originalPushState.apply(this, args as any)
+  history.pushState = function (...args: Parameters<History["pushState"]>) {
+    originalPushState.apply(this, args)
     handleUrlChange()
   }
-  history.replaceState = function (...args) {
-    originalReplaceState.apply(this, args as any)
+  history.replaceState = function (...args: Parameters<History["replaceState"]>) {
+    originalReplaceState.apply(this, args)
     handleUrlChange()
   }
 

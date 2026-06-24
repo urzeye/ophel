@@ -18,6 +18,9 @@ import {
 } from "~utils/messaging"
 import { type Settings } from "~utils/storage"
 
+const BACKGROUND_IDLE_TITLE_UPDATE_INTERVAL_MS = 15_000
+const DEFAULT_RENAME_INTERVAL_SECONDS = 5
+
 export class TabManager {
   private adapter: SiteAdapter
   private settings: Settings["tab"]
@@ -61,6 +64,13 @@ export class TabManager {
   private boundVisibilityHandler: () => void
   private boundFocusHandler: () => void
   private boundBlurHandler: () => void
+  private readonly handleTitleUpdateTimer = () => {
+    this.intervalId = null
+    if (!this.isRunning) return
+
+    this.updateTabName()
+    this.scheduleNextTitleUpdate()
+  }
 
   constructor(adapter: SiteAdapter, settings: Settings["tab"]) {
     this.adapter = adapter
@@ -138,9 +148,8 @@ export class TabManager {
 
     this.updateTabName()
 
-    // 定时更新标签页标题（使用可配置的检测频率）
-    const intervalMs = (this.settings.renameInterval || 5) * 1000
-    this.intervalId = setInterval(() => this.updateTabName(), intervalMs)
+    // 定时更新标签页标题（使用可配置的检测频率，后台空闲时自动降频）
+    this.startTitleUpdateLoop()
 
     // Init Monitor
     const config = this.adapter.getNetworkMonitorConfig
@@ -173,10 +182,7 @@ export class TabManager {
     this.staleConversationTitleAfterRouteChange = null
     forgetManagedTabTitle()
 
-    if (this.intervalId) {
-      clearInterval(this.intervalId)
-      this.intervalId = null
-    }
+    this.clearTitleUpdateTimer()
   }
 
   /**
@@ -199,11 +205,55 @@ export class TabManager {
   setInterval(intervalSeconds: number) {
     if (!this.isRunning) return
 
-    const intervalMs = intervalSeconds * 1000
+    this.settings.renameInterval = intervalSeconds
+    this.scheduleNextTitleUpdate(true)
+  }
+
+  private startTitleUpdateLoop() {
+    if (this.intervalId) return
+    this.scheduleNextTitleUpdate()
+  }
+
+  private scheduleNextTitleUpdate(reset = false) {
+    if (!this.isRunning) return
+
     if (this.intervalId) {
-      clearInterval(this.intervalId)
+      if (!reset) return
+      clearTimeout(this.intervalId)
+      this.intervalId = null
     }
-    this.intervalId = setInterval(() => this.updateTabName(), intervalMs)
+
+    this.intervalId = setTimeout(this.handleTitleUpdateTimer, this.getTitleUpdateDelayMs())
+  }
+
+  private clearTitleUpdateTimer() {
+    if (this.intervalId) {
+      clearTimeout(this.intervalId)
+      this.intervalId = null
+    }
+  }
+
+  private getTitleUpdateDelayMs(): number {
+    const configuredIntervalMs =
+      Math.max(1, this.settings.renameInterval || DEFAULT_RENAME_INTERVAL_SECONDS) * 1000
+
+    if (this.shouldUseBackgroundIdleTitleUpdateInterval()) {
+      return Math.max(configuredIntervalMs, BACKGROUND_IDLE_TITLE_UPDATE_INTERVAL_MS)
+    }
+
+    return configuredIntervalMs
+  }
+
+  private shouldUseBackgroundIdleTitleUpdateInterval(): boolean {
+    if (!this.isUserAway()) return false
+
+    return (
+      this.aiState !== "generating" &&
+      !this.currentNetworkGenerationPending &&
+      !this.currentGenerationUsesDomCompletion &&
+      this.generationConfirmationIntervalId === null &&
+      this.domCompletionIntervalId === null
+    )
   }
 
   /**
@@ -540,6 +590,7 @@ export class TabManager {
 
     this.currentNetworkGenerationPending = true
     this.currentNetworkGenerationConfirmed = false
+    this.scheduleNextTitleUpdate(true)
     this.startGenerationConfirmationPolling()
   }
 
@@ -558,6 +609,7 @@ export class TabManager {
     }
 
     this.updateTabName()
+    this.scheduleNextTitleUpdate(true)
   }
 
   private startGenerationConfirmationPolling() {
@@ -586,6 +638,7 @@ export class TabManager {
     this.completionViewed = false
     this.startDomCompletionPolling()
     this.updateTabName()
+    this.scheduleNextTitleUpdate(true)
   }
 
   private startDomCompletionPolling() {
@@ -616,6 +669,7 @@ export class TabManager {
           this.completionViewed = false
           this.resetDomCompletionState()
           this.updateTabName(true)
+          this.scheduleNextTitleUpdate(true)
         }
         return
       }
@@ -711,10 +765,13 @@ export class TabManager {
 
     // 用户切回已完成的标签页，标记为已查看（隐藏 ✅）
     if (this.aiState === "completed" && !isAway) {
-      if (this.completionViewed) return
-      this.completionViewed = true
-      this.updateTabName(true)
+      if (!this.completionViewed) {
+        this.completionViewed = true
+        this.updateTabName(true)
+      }
     }
+
+    this.scheduleNextTitleUpdate(true)
   }
 
   /**
@@ -734,8 +791,12 @@ export class TabManager {
     if (this.aiState === "completed") {
       if (!this.completionViewed) {
         this.completionViewed = true
-        this.updateTabName(true)
       }
+    }
+
+    if (this.isRunning) {
+      this.updateTabName(true)
+      this.scheduleNextTitleUpdate(true)
     }
   }
 
@@ -743,7 +804,7 @@ export class TabManager {
    * 窗口失去焦点事件处理
    */
   private onWindowBlur() {
-    // blur 事件表明用户离开了页面，不需要额外处理
+    this.scheduleNextTitleUpdate(true)
   }
 
   /**
@@ -766,6 +827,7 @@ export class TabManager {
       this.userSawCompletion = false
       this.completionViewed = false
       this.updateTabName(true)
+      this.scheduleNextTitleUpdate(true)
       return
     }
 
@@ -800,6 +862,7 @@ export class TabManager {
 
     // 强制更新标签页标题（若 completionViewed 已标记，此次更新会隐藏 ✅）
     this.updateTabName(true)
+    this.scheduleNextTitleUpdate(true)
   }
 
   /**

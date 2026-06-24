@@ -11,6 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
+- **Background page work** — Inline bookmark icons now avoid full outline scans for unrelated DOM changes, selected prompts reuse the shared URL-change listener, and tab title checks slow down only while a page is idle in the background while keeping completion notifications available.
 - **Long conversation outline performance** — Large outlines now render only visible rows, skip collapsed or filtered nodes, coalesce automatic refresh and scroll updates, reduce layout measurements, and cache ChatGPT/Claude/Gemini word counts, reducing lag in long chats. (#677, #682, #683, #691, #695, #696, #698, #699)
 - **Global search outline updates** — Global search now refreshes the outline on open and follows outline manager updates instead of polling every 1200ms, reducing background work while search is open. (#692)
 - **Conversation sidebar sync** — Sidebar sync now batches conversation additions, updates, deletes, and target-folder changes into one store write, reducing storage churn during history sync. (#697)

@@ -38,7 +38,11 @@ import { useFoldersStore } from "~stores/folders-store"
 import { usePromptsStore } from "~stores/prompts-store"
 import { APP_DISPLAY_NAME, APP_VERSION } from "~utils/config"
 import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
-import { EVENT_EXTENSION_UPDATE_AVAILABLE, MSG_CLEAR_ALL_DATA } from "~utils/messaging"
+import {
+  EVENT_EXTENSION_UPDATE_AVAILABLE,
+  EVENT_PAGE_URL_CHANGE,
+  MSG_CLEAR_ALL_DATA,
+} from "~utils/messaging"
 import { showToast } from "~utils/toast"
 import { setLanguage, t } from "~utils/i18n"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
@@ -3356,9 +3360,6 @@ export const App = () => {
   useEffect(() => {
     if (!selectedPrompt || !adapter) return
 
-    // 记录当前 URL
-    let currentUrl = window.location.href
-
     // 清空悬浮条和输入框
     const clearPromptAndTextarea = () => {
       setSelectedPrompt(null)
@@ -3366,29 +3367,10 @@ export const App = () => {
       adapter.clearTextarea()
     }
 
-    // 使用 popstate 监听浏览器前进/后退
-    const handlePopState = () => {
-      if (window.location.href !== currentUrl) {
-        clearPromptAndTextarea()
-      }
-    }
-
-    // 使用定时器检测 URL 变化（SPA 路由）
-    // 因为 pushState/replaceState 不会触发 popstate
-    const checkUrlChange = () => {
-      if (window.location.href !== currentUrl) {
-        currentUrl = window.location.href
-        clearPromptAndTextarea()
-      }
-    }
-
-    // 每 500ms 检查一次 URL 变化
-    const intervalId = setInterval(checkUrlChange, 500)
-    window.addEventListener("popstate", handlePopState)
+    window.addEventListener(EVENT_PAGE_URL_CHANGE, clearPromptAndTextarea)
 
     return () => {
-      clearInterval(intervalId)
-      window.removeEventListener("popstate", handlePopState)
+      window.removeEventListener(EVENT_PAGE_URL_CHANGE, clearPromptAndTextarea)
     }
   }, [selectedPrompt, adapter])
 
