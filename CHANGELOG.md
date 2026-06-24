@@ -18,11 +18,11 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### 🐛 Bug Fixes
 
 - **Gemini shared chat continuation** — Fixed issue where Purify Mode could hide Gemini's "Continue this chat" button on shared chat pages. (#703)
-- **Outline scroll highlight stability** — Fixed issue where source scrolling could highlight a user question, previous answer, or hidden child instead of the current visible heading in long conversations. (#704)
+- **Outline scroll highlight stability** — Fixed issue where source scrolling could highlight a user question, previous answer, or hidden child instead of the current visible heading in long conversations. (#704, #708)
 
 ---
 
-## [1.1.0] - 2026-06-22
+## [1.1.0][1.1.0] - 2026-06-22
 
 ### 🚀 New Features
 
@@ -52,7 +52,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.60] - 2026-06-10
+## [1.0.60][1.0.60] - 2026-06-10
 
 ### ✨ Improvements
 
@@ -67,7 +67,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.59] - 2026-06-10
+## [1.0.59][1.0.59] - 2026-06-10
 
 ### 🚀 New Features
 
@@ -85,7 +85,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.58] - 2026-06-04
+## [1.0.58][1.0.58] - 2026-06-04
 
 ### 🐛 Bug Fixes
 
@@ -100,7 +100,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.57] - 2026-06-03
+## [1.0.57][1.0.57] - 2026-06-03
 
 ### 🐛 Bug Fixes
 
@@ -109,7 +109,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.56] - 2026-06-02
+## [1.0.56][1.0.56] - 2026-06-02
 
 ### 🚀 New Features
 
@@ -134,7 +134,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.55] - 2026-05-29
+## [1.0.55][1.0.55] - 2026-05-29
 
 ### 🚀 New Features
 
@@ -154,7 +154,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.54] - 2026-05-26
+## [1.0.54][1.0.54] - 2026-05-26
 
 ### 🚀 New Features
 
@@ -178,7 +178,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.53] - 2026-05-25
+## [1.0.53][1.0.53] - 2026-05-25
 
 ### 🚀 New Features
 
@@ -195,7 +195,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.52] - 2026-05-22
+## [1.0.52][1.0.52] - 2026-05-22
 
 ### 🚀 New Features
 
@@ -214,7 +214,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.51] - 2026-05-20
+## [1.0.51][1.0.51] - 2026-05-20
 
 ### 🚀 New Features
 
@@ -231,7 +231,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.50] - 2026-05-15
+## [1.0.50][1.0.50] - 2026-05-15
 
 ### 🐛 Bug Fixes
 
@@ -247,7 +247,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.49] - 2026-05-13
+## [1.0.49][1.0.49] - 2026-05-13
 
 ### 🐛 Bug Fixes
 
@@ -256,7 +256,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.48]
+## [1.0.48][1.0.48]
 
 ### 🐛 Bug Fixes
 
@@ -272,7 +272,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.47]
+## [1.0.47][1.0.47]
 
 ### ✨ Improvements
 
@@ -287,7 +287,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.46]
+## [1.0.46][1.0.46]
 
 ### 🐛 Bug Fixes
 
@@ -295,7 +295,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.45]
+## [1.0.45][1.0.45]
 
 ### ✨ Improvements
 
@@ -314,7 +314,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.44]
+## [1.0.44][1.0.44]
 
 ### ✨ Improvements
 
@@ -340,7 +340,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.43]
+## [1.0.43][1.0.43]
 
 ### 🚀 New Features
 
@@ -358,7 +358,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.42]
+## [1.0.42][1.0.42]
 
 ### ⚠️ Breaking Changes
 
@@ -382,7 +382,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.41]
+## [1.0.41][1.0.41]
 
 ### ✨ Improvements
 
@@ -397,7 +397,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.40]
+## [1.0.40][1.0.40]
 
 ### ✨ Improvements
 
@@ -418,7 +418,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.39]
+## [1.0.39][1.0.39]
 
 ### ✨ Improvements
 
@@ -444,7 +444,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - Fixed position drift and icon issues after quick button liquid collapse.
 - Fixed slider max value label in settings page being displaced below the "Restore Default" button.
 
-## [1.0.38]
+## [1.0.38][1.0.38]
 
 ### ✨ Improvements
 
@@ -461,14 +461,14 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **User docs fully rewritten**: All user guides rewritten in Chinese and English, covering Quick Start, Panel Overview, Quick Buttons, Smart Outline, Conversation Management, Prompt Library, Enhancement Features, Appearance Themes, Backup & Sync, Shortcuts, and FAQ — more complete and easier to follow.
 
-## [1.0.37]
+## [1.0.37][1.0.37]
 
 ### ✨ Improvements
 
 - **Main panel and quick button style overhaul**: Overall visual refresh of the main panel and quick buttons, further unifying hierarchy, spacing, and hover interactions for a lighter feel.
 - **Quick button ghost pass-through**: Quick buttons enter a low-interference "ghost state" when idle and support mouse event pass-through to the underlying page, reducing obstruction of site content and operations.
 
-## [1.0.36]
+## [1.0.36][1.0.36]
 
 ### ✨ Improvements
 
@@ -490,7 +490,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Userscript Gemini inline image watermark removal positioning fix**: For generated images on Gemini `/app` and `/share` pages that only have `blob:` / `data:` URLs, the watermark removal process now validates both `48px` and `96px` watermark candidates and their adjacent positions, only using a result when confirmed to improve quality.
 - **Userscript inline image result reuse**: Auto-display, preview zoom, copy, and download for the same Gemini inline image now reuse the same watermark-removed result to reduce inconsistency across different entry points.
 
-## [1.0.35]
+## [1.0.35][1.0.35]
 
 ### 🚀 New Features
 
@@ -512,20 +512,20 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Grok user query width alignment fix**: Fixed Grok user query bubbles being incorrectly centered instead of right-aligned after enabling "User Query Width".
 - **Grok content area width abnormal shrinkage**: Fixed `--content-max-width` being applied redundantly on nested containers during Grok page width adjustment, causing the latest conversation content to be noticeably narrower than older messages.
 
-## [1.0.34]
+## [1.0.34][1.0.34]
 
 ### 🐛 Bug Fixes
 
 - **Firefox idle callback compatibility**: Fixed errors in Firefox caused by calling `requestIdleCallback` / `cancelIdleCallback` without the `window` context, preventing `TypeError` during outline scroll sync.
 - **Theme sync hydration race condition**: Delayed theme callback registration and theme listener startup to ensure theme state writes only happen after settings hydration is complete, reducing the risk of disclaimer dialogs reappearing or settings being overwritten by defaults on Firefox after switching to dark or "Follow System" mode. (#333)
 
-## [1.0.33]
+## [1.0.33][1.0.33]
 
 ### 🐛 Bug Fixes
 
 - **Site width toggle not working**: Fixed the "Enable Page Width" and "Enable User Query Width" toggles not opening for ChatGPT, Claude, and other sites in "Site Settings". Width config normalization now preserves already-saved site keys, preventing saved configs for sites not in the default table from being accidentally overwritten. (#330)
 
-## [1.0.32]
+## [1.0.32][1.0.32]
 
 ### 🐛 Bug Fixes
 
@@ -533,7 +533,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Userscript legacy settings format compatibility**: Added compatibility for old userscript versions that stored the raw `settings` object directly in GM storage; upgrades now automatically wrap it in the structure required by Zustand `persist`, reducing settings failures caused by the old data format.
 - **Disclaimer false-positive fix**: Disclaimer dialog now waits for settings hydration to complete before evaluating display conditions, preventing userscript from incorrectly judging "not agreed" before settings are loaded and showing the dialog repeatedly.
 
-## [1.0.31]
+## [1.0.31][1.0.31]
 
 ### ✨ Improvements
 
@@ -550,7 +550,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Quick button group drift on zoom**: Improved positioning logic when the browser window is zoomed or resized; quick buttons now better maintain their relative position, reducing cases where they end up in the center of the page.
 - **Slider preview state lingering**: Fixed temporary preview values persisting when switching pages or closing the panel while dragging a slider in settings; unsubmitted preview states are now cleaned up when the component unmounts.
 
-## [1.0.30]
+## [1.0.30][1.0.30]
 
 ### 🚀 New Features
 
@@ -560,7 +560,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - Improved quick button background effect (glassmorphism transparency)
 
-## [1.0.29]
+## [1.0.29][1.0.29]
 
 ### ✨ Improvements
 
@@ -571,7 +571,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Theme switch animation origin fix**: Fixed theme switch animation in quick buttons always starting from the top-right corner of the page; theme switching in both quick buttons and main panel now consistently radiates from the triggering button's position.
 
-## [1.0.28]
+## [1.0.28][1.0.28]
 
 ### 🚀 New Features
 
@@ -593,7 +593,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Unified focus protection**: Unified input focus protection logic across Settings, Global Search, Prompt Queue, and the main panel, while preserving local keyboard interactions (`Enter`, `Escape`, etc.) inside queue and modal dialogs.
 - **Duplicate update notification**: Fixed an issue where after extension updates, multiple notifications appeared simultaneously (Ophel's own notification, a fallback notice, and Plasmo's default "Context Invalidated, Press to Reload"), consolidated into a single update notification card.
 
-## [1.0.27]
+## [1.0.27][1.0.27]
 
 ### 🚀 New Features
 
@@ -610,7 +610,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **AI Studio export missing content and format issues**: Fixed empty off-screen replies, only exporting thinking without body, truncated user queries, and incomplete extraction of lists, quotes, inline code, code blocks, Markdown, and formulas during virtual scrolling.
 - **Export title polluted by tab renaming**: Fixed AI Studio export document title incorrectly using the browser tab title rewritten by the extension, now prioritizing the original conversation title; also added protection for Grok and the general export pipeline to avoid being overwritten by the current page title.
 
-## [1.0.26]
+## [1.0.26][1.0.26]
 
 ### 🚀 New Features
 
@@ -627,7 +627,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Gemini formula copy losing closing parenthesis**: Fixed double-clicking to copy LaTeX formulas on Gemini incorrectly removing `)` at the end of formulas; export pipeline not affected. (#292)
 - **Markdown export format fix**: Improved general `htmlToMarkdown()` conversion logic, fixing code block language titles being merged with content, code content being flattened to one line, and multi-level list first-level indent being lost when exporting/copying Markdown on ChatGPT and similar sites. (#296)
 
-## [1.0.25]
+## [1.0.25][1.0.25]
 
 ### 🚀 New Features
 
@@ -637,7 +637,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Settings modal input focus protection**: Changed keyboard event capture interception for input controls in the settings modal to apply to all sites universally, fixing focus being stolen by native input boxes on some sites in Firefox environments in settings items like "Page Width Control".
 
-## [1.0.24]
+## [1.0.24][1.0.24]
 
 ### 🚀 New Features
 
@@ -648,7 +648,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **QwenAI international version width control**: Fixed "Page Width" and "User Query Width" settings not taking effect on `chat.qwen.ai`, now correctly overriding conversation container and user bubble width styles.
 - **DeepSeek width control**: Fixed page width control and user query width setting not taking effect on `chat.deepseek.com`, switched to overriding virtual list width variable and stable user message structure. (#281)
 
-## [1.0.23]
+## [1.0.23][1.0.23]
 
 ### 🚀 New Features
 
@@ -659,7 +659,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **New conversation shortcut compatibility**: Fixed new conversation shortcut not working on macOS and some sites, and Doubao falling back to full page refresh.
 - **Advanced model settings search i18n**: Fixed advanced model usage stats related settings titles not being localized in global search results.
 
-## [1.0.22]
+## [1.0.22][1.0.22]
 
 ### ✨ Improvements
 
@@ -683,7 +683,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **DeepSeek share conversation export**: Fixed `chat.deepseek.com/share/*` share page export showing "Please open a conversation to export" error, now directly recognizing share conversations and completing export.
 - **DeepSeek virtual scroll outline out of order**: Fixed AI reply headings occasionally being sorted before their corresponding user queries in DeepSeek long conversation virtual scroll scenarios.
 
-## [1.0.21]
+## [1.0.21][1.0.21]
 
 ### 🚀 New Features
 
@@ -696,7 +696,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - Fixed DeepSeek not refreshing after deletion and Doubao conversation deletion not syncing to the original site
 - Fixed Doubao "Copy Latest Reply" having no content; upgraded multi-site "Copy Latest Reply" to Markdown extraction to preserve headings, bold, tables, formulas, and code blocks; compatible with DeepSeek / AI Studio virtual scroll and Gemini Enterprise Shadow DOM scenarios
 
-## [1.0.20]
+## [1.0.20][1.0.20]
 
 ### 🚀 New Features
 
@@ -710,7 +710,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
   - Fixed some shortcuts on macOS saving as `∂`, `†`, `¬` and other characters due to `Option` participating in special character input, causing display issues or unstable triggering.
   - Added compatibility migration for locally saved old shortcut configs, covering extension startup, settings page hydration, cross-page sync, and full settings replacement scenarios to reduce reconfiguration cost for existing users after upgrading.
 
-## [1.0.19]
+## [1.0.19][1.0.19]
 
 ### 🚀 New Features
 
@@ -730,7 +730,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - Fixed Korean shortcut list missing `shortcutShowShortcuts` text.
 - Fixed Spanish panel title still containing old brand name `Gemini Helper`.
 
-## [1.0.18]
+## [1.0.18][1.0.18]
 
 ### 🚀 New Features
 
@@ -749,7 +749,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - Fixed Grok conversation sync incorrectly treating command panel Actions as conversations
 - Fixed Grok pin recognition logic to prevent all pinned/unpinned anomalies after sync
 
-## [1.0.17]
+## [1.0.17][1.0.17]
 
 ### 🚀 New Features
 
@@ -759,7 +759,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - i18n improvement: "Inbox" internationalization adaptation
 
-## [1.0.16]
+## [1.0.16][1.0.16]
 
 ### 🚀 New Features
 
@@ -769,7 +769,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
-## [1.0.15]
+## [1.0.15][1.0.15]
 
 ### 🚀 New Features
 
@@ -796,7 +796,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **DeepSeek send button misidentification**: Fixed send button selector incorrectly matching the attachment button, with added fallback to simulate `Enter` / `Ctrl+Enter` when using send shortcut for better compatibility.
 - **ChatGPT Projects export failure**: Fixed "Export Markdown / Copy Markdown" failing in Projects conversations with `Conversation not found` error because project conversations weren't synced to local index; now immediately supplements conversation metadata from the current page before exporting.
 
-## [1.0.14]
+## [1.0.14][1.0.14]
 
 ### 🚀 New Features
 
@@ -813,7 +813,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Import failure diagnosis**: Added clear console error logs for import parse and write failures, with actual error message shown in Toast for easier issue identification.
 - **Import confirm dialog and i18n text**: Improved "backup time/type" info display style in the import confirm dialog; added and completed "Type" and "Open AI pages will be refreshed" key values in 10 languages.
 
-## [1.0.13] - 2026-03-02
+## [1.0.13][1.0.13] - 2026-03-02
 
 ### 🚀 New Features
 
@@ -828,7 +828,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
   - Fixed submission confirmation logic timing out and retrying due to editor placeholder "Continue asking" being mistaken for empty content.
 - **WebDAV backup display fix**: Fixed backup list not showing on non-Jianguoyun WebDAV servers (e.g. Nextcloud, Synology, Aliyun Drive WebDAV) due to XML namespace prefix parsing failure.
 
-## [1.0.12] - 2026-02-27
+## [1.0.12][1.0.12] - 2026-02-27
 
 ### 🚀 New Features
 
@@ -841,6 +841,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
   - **Deep infrastructure integration**: Global search (Double Shift) fully covers "Prompt Queue" settings; search and multilingual translation synchronized.
 
 - **Prompt variable advanced usage**: Added default value and dropdown selection syntax support for prompt variables.
+
   - `{{variable:default_value}}`: Variable dialog pre-fills the default value on open for quick confirmation.
   - `{{variable:option1|option2|option3}}`: Variable dialog presents a dropdown selector for precise preset option selection.
   - Fully backward compatible with basic `{{variable}}` syntax; no need to modify existing prompts.
@@ -850,7 +851,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Prompt variables multilingual support**: Fixed prompt variables (`{{variable_name}}`) only supporting English letters and numbers; now fully supports Chinese, Japanese, Korean, Russian, and all languages and special characters.
 - **Gemini Enterprise theme switch**: Fixed "Settings and Help" button not clickable due to Gemini Enterprise page update, which prevented theme-following-system switching.
 
-## [1.0.11] - 2026-02-24
+## [1.0.11][1.0.11] - 2026-02-24
 
 ### New Features
 
@@ -875,7 +876,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - Gemini (standard) export Markdown now cleans `cdk-visually-hidden` nodes before export to prevent auxiliary hidden headings from appearing in exported files.
 - Added 10-language key values for `Include thinking chain in export` related text, fixing missing settings text in non-Chinese/English environments.
 
-## [1.0.10] - 2026-02-15
+## [1.0.10][1.0.10] - 2026-02-15
 
 ### New Features
 
@@ -896,7 +897,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - Fixed Gemini Enterprise cloud delete success not removing local conversation in time.
 - Fixed AI Studio cloud delete API instability causing rollback; switched to stable UI delete path.
 
-## [1.0.9] - 2026-02-11
+## [1.0.9][1.0.9] - 2026-02-11
 
 ### 🚀 New Features
 
@@ -931,7 +932,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - Fixed global search `ArrowUp` navigation being covered by floating group titles.
 - Fixed global search result area showing horizontal scrollbar at certain widths.
 
-## [1.0.8] - 2026-02-11
+## [1.0.8][1.0.8] - 2026-02-11
 
 ### 🚀 New Features
 
@@ -961,7 +962,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - Completed key values for all new global search text in 10 languages, including categories, empty states, prompt behavior, site names, and in-page hints.
 
-## [1.0.7] - 2026-02-08
+## [1.0.7][1.0.7] - 2026-02-08
 
 ### 🚀 New Features
 
@@ -992,7 +993,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Multilingual docs synced**: Main README and multilingual READMEs under `.github/readmes` updated to unified license badge and license description.
 - **Authorization notice cleaned**: Removed "contact for commercial license" text from README to avoid ambiguity with GPL terms.
 
-## [1.0.6] - 2026-02-07
+## [1.0.6][1.0.6] - 2026-02-07
 
 ### 🚀 New Features
 
@@ -1019,7 +1020,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Export text**: Optimized "Export" button text to "Export Markdown" for clearer intent.
 - **Settings improvements**: Improved export settings UI interaction, moved "Convert images to Base64" option to the bottom, improved input box experience.
 
-## [1.0.5] - 2026-02-04
+## [1.0.5][1.0.5] - 2026-02-04
 
 ### 🚀 New Features
 
@@ -1053,7 +1054,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Gemini Enterprise**: Due to Shadow DOM limitations, new replies require page refresh to correctly display word count.
 
-## [1.0.4] - 2026-02-02
+## [1.0.4][1.0.4] - 2026-02-02
 
 ### 🚀 New Features
 
@@ -1093,16 +1094,16 @@ versioning follows [Semantic Versioning](https://semver.org/).
 ### 🔧 Improvements
 
 - **All-language text improvement**: Ambiguous "Toggle Panel" text unified across all 10 languages to the clearer "Expand/Collapse Panel" for more explicit interaction intent.
-
 - **Tooltip performance**: Improved tooltip component measurement and positioning algorithm, supporting `disabled` prop for dynamic disabling.
 - **Text truncation**: Unified outline text truncation to 200 characters across all site adapters, removing hardcoded "..." suffix (handled by CSS).
 - **Full node copy**: Enhanced copy functionality to support full text copy of all outline nodes (including regular headings and user queries) with smart full text extraction.
-
 - **Config experience upgrade**:
+
   - Introduced `NumberInput` component to completely resolve conflicts between settings input boxes and Chinese input methods, and focus loss issues.
   - Adjusted panel default height to 85vh for a more comfortable visual experience.
   - Expanded panel default margin adjustable range to 0–400px.
   - Optimized snap trigger threshold default to 18px to reduce accidental triggering.
+
 - **Panel interaction**: Improved panel behavior when clicking outside in "Edge Snap" mode; now retracts to edge instead of minimizing to floating ball.
 - **Settings text**: "Auto-hide on click outside" description now dynamically updates based on snap state for more accurate interaction feedback.
 - **Anchor state unified**: Refactored anchor management to use global `anchorStore` instead of scattered component states, resolving anchor state desync between panel buttons, shortcuts, and QuickButtons.
@@ -1119,7 +1120,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **AI Studio bookmark fix**:
   - **Side-Channel Hydration**: Resolved AI Studio virtual scroll/lazy load preventing retrieval of user query text, causing empty or missing outline titles; now intelligently backfills text via sidebar (`ms-prompt-scrollbar`).
 
-## [1.0.3] - 2026-01-29
+## [1.0.3][1.0.3] - 2026-01-29
 
 ### 🚀 New Features
 
@@ -1135,7 +1136,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Adapter refactor**: Migrated Markdown fix config to adapter pattern for improved code maintainability. by @urzeye
 
-## [1.0.1] - 2026-01-23
+## [1.0.1][1.0.1] - 2026-01-23
 
 ### 🚀 New Features
 
@@ -1148,7 +1149,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **CI/CD**: Optimized documentation build workflow to avoid triggering unnecessary builds when only updating README files under the `docs` directory.
 - **Documentation**: Fixed missing "Demo", "Local Build", and "Star History" sections in multilingual docs.
 
-## [1.0.0] - 2026-01-18
+## [1.0.0][1.0.0] - 2026-01-18
 
 ### 🎉 Initial Release
 
