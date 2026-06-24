@@ -1111,6 +1111,12 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     return null
   }, [])
 
+  const isCurrentVisibilityNode = useCallback((node: OutlineNode | null): boolean => {
+    if (!node) return false
+    const { parentNodeMap, hasData } = visibilityMapsRef.current
+    return !hasData || parentNodeMap.has(node)
+  }, [])
+
   const visibilityMaps = useMemo(
     () =>
       buildVisibilityMaps(
@@ -1162,14 +1168,16 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
   useEffect(() => {
     const activeNode = activeNodeRef.current
-    const nextVisible = activeNode
-      ? getVisibleHeadingHighlightIndex(activeNode)
-      : getVisibleHighlightIndex(activeIndexRef.current)
+    const nextVisible =
+      activeNode && isCurrentVisibilityNode(activeNode)
+        ? getVisibleHeadingHighlightIndex(activeNode)
+        : getVisibleHighlightIndex(activeIndexRef.current)
     updateVisibleHighlightIndex(nextVisible)
   }, [
     parentMap,
     visibleMap,
     tree.length,
+    isCurrentVisibilityNode,
     getVisibleHeadingHighlightIndex,
     getVisibleHighlightIndex,
     updateVisibleHighlightIndex,

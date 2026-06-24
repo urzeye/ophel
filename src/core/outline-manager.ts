@@ -13,10 +13,9 @@ type ExtendedOutlineItem = OutlineItem & {
   scrollTop?: number
 }
 
-type MountedOutlineNode = {
+type MeasuredOutlineNode = {
   node: OutlineNode
-  element: Element
-}
+} & MeasuredOutlineElement
 
 type MeasuredOutlineElement = {
   top: number
@@ -1710,8 +1709,24 @@ export class OutlineManager {
     const viewportRect = this.getScrollViewportRect(scrollContainer)
     if (!viewportRect) return null
 
-    const mountedHeadings: Array<MountedOutlineNode & MeasuredOutlineElement> = []
-    const mountedUserQueries: Array<MountedOutlineNode & MeasuredOutlineElement> = []
+    const viewportScrollTop = this.getViewportScrollTop(scrollContainer, viewportRect)
+    if (viewportScrollTop === null) return null
+
+    if (this.scrollPositionsStale) {
+      this.updateScrollPositions()
+    }
+
+    const anchorY = viewportRect.top + Math.min(Math.max(viewportRect.height * 0.25, 48), 160)
+    const anchorScrollTop = viewportScrollTop + (anchorY - viewportRect.top)
+    const latestCachedUserQuery = this.findLatestCachedUserQueryBefore(anchorScrollTop)
+    const candidateNodes = this.collectActiveCandidateNodes(
+      anchorScrollTop,
+      viewportScrollTop,
+      viewportRect.height,
+      latestCachedUserQuery,
+    )
+    const mountedHeadings: MeasuredOutlineNode[] = []
+    const mountedUserQueries: MeasuredOutlineNode[] = []
 
     const measureElement = (element: Element): MeasuredOutlineElement | null => {
       const clientRects = element.getClientRects()
@@ -1728,33 +1743,52 @@ export class OutlineManager {
       return { top, height: Math.max(0, bottom - top) }
     }
 
-    for (const node of this.flatNodes) {
-      if (node.isGhost) continue
+    const measureNode = (node: OutlineNode): MeasuredOutlineNode | null => {
+      if (node.isGhost) return null
 
       const element = node.element
-      if (!element || !element.isConnected) continue
+      if (element?.isConnected) {
+        const measured = measureElement(element)
+        if (measured) {
+          node.scrollTop = viewportScrollTop + (measured.top - viewportRect.top)
+          node.scrollHeight = measured.height
+          return { node, ...measured }
+        }
+      }
 
-      const measured = measureElement(element)
+      const cachedTop = node.scrollTop
+      if (typeof cachedTop !== "number" || Number.isNaN(cachedTop)) return null
+
+      const cachedHeight =
+        typeof node.scrollHeight === "number" && !Number.isNaN(node.scrollHeight)
+          ? node.scrollHeight
+          : 0
+
+      return {
+        node,
+        top: cachedTop - viewportScrollTop + viewportRect.top,
+        height: cachedHeight,
+      }
+    }
+
+    for (const node of candidateNodes) {
+      const measured = measureNode(node)
       if (!measured) continue
 
       if (node.isUserQuery) {
-        mountedUserQueries.push({ node, element, ...measured })
+        mountedUserQueries.push(measured)
       } else {
-        mountedHeadings.push({ node, element, ...measured })
+        mountedHeadings.push(measured)
       }
     }
 
     const cachedVisibleNode = this.findCachedActiveNode(scrollContainer, viewportRect)
-    const anchorY = viewportRect.top + Math.min(Math.max(viewportRect.height * 0.25, 48), 160)
 
-    let latestUserQueryBeforeAnchor: (MountedOutlineNode & MeasuredOutlineElement) | null = null
-    let activeUserQuery: (MountedOutlineNode & MeasuredOutlineElement) | null = null
+    let latestUserQueryBeforeAnchor: MeasuredOutlineNode | null = null
     for (const query of mountedUserQueries) {
       const bottom = query.top + query.height
       if (query.top <= anchorY && bottom > anchorY) {
-        if (!activeUserQuery || query.top > activeUserQuery.top) {
-          activeUserQuery = query
-        }
+        latestUserQueryBeforeAnchor = query
       }
       if (
         query.top <= anchorY &&
@@ -1764,12 +1798,8 @@ export class OutlineManager {
       }
     }
 
-    if (activeUserQuery) {
-      return activeUserQuery.node
-    }
-
-    let activeHeading: (MountedOutlineNode & MeasuredOutlineElement) | null = null
-    let nextVisibleHeading: (MountedOutlineNode & MeasuredOutlineElement) | null = null
+    let activeHeading: MeasuredOutlineNode | null = null
+    let nextVisibleHeading: MeasuredOutlineNode | null = null
     for (const heading of mountedHeadings) {
       const bottom = heading.top + heading.height
       if (heading.top <= anchorY) {
@@ -1787,7 +1817,11 @@ export class OutlineManager {
       latestUserQueryBeforeAnchor &&
       (!activeHeading || activeHeading.top < latestUserQueryBeforeAnchor.top)
     if (crossedUserQueryBoundary) {
-      return latestUserQueryBeforeAnchor.node
+      return (
+        this.findFirstHeadingInUserQuerySection(latestUserQueryBeforeAnchor.node) ??
+        nextVisibleHeading?.node ??
+        null
+      )
     }
 
     if (activeHeading) {
@@ -1795,6 +1829,81 @@ export class OutlineManager {
     }
 
     return nextVisibleHeading?.node ?? cachedVisibleNode
+  }
+
+  private collectActiveCandidateNodes(
+    anchorScrollTop: number,
+    viewportScrollTop: number,
+    viewportHeight: number,
+    latestUserQuery: OutlineNode | null,
+  ): OutlineNode[] {
+    const candidates = new Set<OutlineNode>()
+    const addNode = (node: OutlineNode | null | undefined) => {
+      if (node && !node.isGhost) {
+        candidates.add(node)
+      }
+    }
+    const addRange = (center: number, radius: number) => {
+      if (center < 0) return
+
+      const start = Math.max(0, center - radius)
+      const end = Math.min(this.scrollNodes.length - 1, center + radius)
+      for (let i = start; i <= end; i += 1) {
+        addNode(this.scrollNodes[i])
+      }
+    }
+
+    const anchorIndex = this.findScrollNodeIndexAtOrBefore(anchorScrollTop)
+    addRange(anchorIndex, 12)
+    addRange(this.findScrollNodeIndexAtOrBefore(viewportScrollTop), 6)
+    addRange(this.findScrollNodeIndexAtOrBefore(viewportScrollTop + viewportHeight), 6)
+
+    if (latestUserQuery) {
+      addNode(latestUserQuery)
+      addNode(this.findFirstHeadingInUserQuerySection(latestUserQuery))
+    }
+
+    return Array.from(candidates)
+  }
+
+  private findScrollNodeIndexAtOrBefore(scrollTop: number): number {
+    let lo = 0
+    let hi = this.scrollPositions.length - 1
+    let idx = -1
+
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1
+      if (this.scrollPositions[mid] <= scrollTop) {
+        idx = mid
+        lo = mid + 1
+      } else {
+        hi = mid - 1
+      }
+    }
+
+    return idx
+  }
+
+  private findLatestCachedUserQueryBefore(scrollTop: number): OutlineNode | null {
+    const startIndex = this.findScrollNodeIndexAtOrBefore(scrollTop)
+    for (let i = startIndex; i >= 0; i -= 1) {
+      const node = this.scrollNodes[i]
+      if (node?.isUserQuery) return node
+    }
+
+    return null
+  }
+
+  private findFirstHeadingInUserQuerySection(userQueryNode: OutlineNode): OutlineNode | null {
+    const stack = [...userQueryNode.children]
+    while (stack.length > 0) {
+      const node = stack.shift()
+      if (!node) continue
+      if (!node.isGhost && !node.isUserQuery) return node
+      stack.unshift(...node.children)
+    }
+
+    return null
   }
 
   private findCachedActiveNode(
