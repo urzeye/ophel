@@ -17,6 +17,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Gemini shared chat continuation** — Fixed issue where Purify Mode could hide Gemini's "Continue this chat" button on shared chat pages. (#703)
 - **Outline scroll highlight stability** — Fixed issue where source scrolling could highlight a user question, previous answer, or hidden child instead of the current visible heading in long conversations. (#704)
 
 ---

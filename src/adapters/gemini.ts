@@ -2464,7 +2464,6 @@ export class GeminiAdapter extends SiteAdapter {
         "hallucination-disclaimer",
         "g1-dynamic-upsell-button",
         ".share-viewer_footer_disclaimer",
-        ".share-landing-page_footer",
         GEMINI_DEEP_RESEARCH_DOCUMENT_SHARE_FOOTER_SELECTOR,
       ],
     }
