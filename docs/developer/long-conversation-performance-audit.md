@@ -1,7 +1,7 @@
 # 长会话性能审计报告
 
-> 更新日期：2026-06-24
-> 审计对象：`main` @ `032eb10`
+> 更新日期：2026-06-25
+> 审计对象：`main` @ `4af6e3a6` + PR #715
 > 背景：#675 长会话性能退化。#678/#680/#681/#684/#685/#687/#688/#689/#690/#693/#694 已完成；#686 作为父 issue 仍 open；#679/#675 继续作为 tracking。
 
 ## 结论
@@ -15,8 +15,11 @@
 5. 会话 sidebar 同步已从逐条 Zustand set/persist 改成一次批量提交。
 6. ChatGPT/Claude/Gemini 的大纲字数统计已加入 element + 文本签名缓存，并减少重复 query。
 7. 虚拟大纲列表自身 scroll/resize state 已 rAF 合帧，并只在 virtual range、viewport 或按钮状态变化时更新 React state。
+8. Doubao、Qwen Studio 针对虚拟/懒挂载正文增加站点级周期刷新兜底；该兜底只在大纲激活、自动更新开启且 source 为 conversation 时运行，并复用现有“更新检测间隔”设置。
 
 本次静态审计没有发现需要立即回滚的确定性 bug。仍需注意：这些 PR 多数改变的是调度、缓存和 DOM 证据选择，当前仓库没有自动化运行时测试覆盖真实站点长会话，因此结论只能证明“静态上未见明显语义破坏”，不能替代 Chrome 扩展和油猴脚本的手动回归与 profiling。
+
+针对虚拟/懒挂载正文的大纲补齐，当前采用保守方案：不恢复全站点无条件轮询，也不在 `OutlineManager` 增加通用标题回填缓存；core 只提供站点 opt-in 的周期 refresh timer，标题 identity、缓存和排序仍由各站点 adapter 自己负责。DeepSeek、Qianwen 当前未确认存在该问题，ChatGPT、AI Studio 仍待测试，因此暂不启用该兜底。
 
 ## 当前进展
 
@@ -33,6 +36,7 @@
 | adapter 字数统计缓存 | 已完成 | #688 / PR #698 / `c6b1c42` | ChatGPT/Claude/Gemini 使用 WeakMap 缓存 word count；签名包含起点、边界和容器文本 hash，静态上覆盖流式文本变化。 |
 | 虚拟大纲列表滚动渲染节流 | 已完成 | #689 / PR #699 / `5e92621` | outline list scroll/resize 通过 rAF 合帧；programmatic scroll 会 force sync，避免目标虚拟行延迟挂载。 |
 | 虚拟行高漂移校验 | 已完成 | #690 / PR #700 / `032eb10` | #683 的 debug-only 校验覆盖该 follow-up；文档已关闭独立任务。 |
+| 虚拟/懒挂载正文大纲刷新兜底 | 已完成 | PR #715 / 本次变更 | 只为 Doubao、Qwen Studio 开启 active-only 周期 refresh fallback；不引入 core 通用标题缓存，避免跨站点身份推断和缓存污染。 |
 
 ## 静态审计结果
 
@@ -82,6 +86,16 @@
 - `scrollOutlineNodeIntoView()` 和列表高度变化路径仍会 force sync，保证点击、locate current 和正文同步驱动目标行时，虚拟 range 立即更新。
 - 风险：快速滚动时只在 range 变化触发 React render，符合虚拟列表预期；仍需浏览器里看是否有白屏、错位或按钮状态延迟。
 
+### PR #715 站点级周期刷新兜底
+
+审计文件：`src/core/outline-manager.ts`、`src/adapters/base.ts`、`src/adapters/doubao.ts`、`src/adapters/qwen-studio.ts`。
+
+- `SiteAdapter.usesPeriodicOutlineRefreshFallback()` 默认返回 false，避免把周期 refresh 重新扩大到所有站点。
+- `OutlineManager` 的 fallback timer 复用现有 `autoUpdate` 和 `updateInterval` 设置，只在大纲处于 active consumer、当前 source 为 `conversation`、站点显式 opt-in 时运行。
+- source 切换、设置变更、URL 切换和 active 状态变化都会重新同步 timer 生命周期，避免在文档 source 或非激活状态继续刷新。
+- Doubao、Qwen Studio opt-in；DeepSeek、Qianwen、ChatGPT、AI Studio 暂不启用。
+- 风险：该方案解决的是“新正文挂载后需要再次抽取大纲”的调度缺口，不负责保留已卸载标题。Doubao 已有 adapter 级 outline cache；Qwen Studio 仍需手动验证标题滚出可见区域后的保留效果，如仍丢失，应在 Qwen adapter 内补站点级缓存，而不是上移到 core。
+
 ## Issue Mapping
 
 | Issue | 状态 | 范围 | 当前判断 |
@@ -113,11 +127,14 @@
 6. sidebar 同步新增、标题更新、置顶/取消置顶、删除同步、按目标文件夹同步。
 7. `showWordCount` 开启后 ChatGPT/Claude/Gemini 流式生成、会话切换和重复 refresh 时字数会更新，不复用旧值。
 8. 虚拟大纲列表 500+ 可见项快速滚动时无白屏、错位、闪烁，top/bottom 按钮状态正常。
+9. Doubao、Qwen Studio 长会话滚动到新挂载正文后，大纲能按“更新检测间隔”自动补扫；切到非大纲 Tab、关闭自动更新、切换到非 conversation source 后不再周期刷新。
+10. DeepSeek、Qianwen 在未启用周期兜底的情况下保持现有行为，不出现额外 refresh 或大纲重复项。
 
 Profiling 仍应记录：
 
 - `.outline-item` 实际挂载数量。
 - `outlineManager.refresh()`、`extractOutlineForSource()`、`updateScrollPositions()` 单次耗时。
+- Doubao、Qwen Studio 启用周期兜底后，active outline 状态下单位时间 refresh 次数和主线程耗时。
 - 长会话正文滚动 dropped frames 或明显 jank。
 - 全局搜索输入每字符耗时。
 - 会话同步时 Zustand set/persist 次数和同步总耗时。
