@@ -122,6 +122,12 @@ interface ConversationExportDataOptions {
   packaging?: ExportPackaging
 }
 
+interface AutoFullSyncResult {
+  scannedCount: number
+  changedCount: number
+  loadSucceeded: boolean
+}
+
 type GeminiCidMigrationResult = "migrated" | "pending_email" | "noop"
 
 export class ConversationManager {
@@ -135,6 +141,7 @@ export class ConversationManager {
   private pollInterval: ReturnType<typeof setTimeout> | null = null
   private geminiMigrationTimer: ReturnType<typeof setTimeout> | null = null
   private geminiMigrationRetryCount = 0
+  private initialAutoFullSyncPromise: Promise<void> | null = null
 
   // Settings
   private syncUnpin: boolean = false
@@ -213,14 +220,14 @@ export class ConversationManager {
 
     // 首次安装或当前站点数据为空时，自动加载全部会话
     const currentSiteCount = Object.keys(this.getAllConversations()).length
-    if (currentSiteCount === 0 && this.siteAdapter.loadAllConversations && !isRestore) {
+    const shouldRunInitialAutoFullSync =
+      currentSiteCount === 0 && this.siteAdapter.loadAllConversations && !isRestore
+
+    if (shouldRunInitialAutoFullSync) {
       try {
-        const sidebarReady = await this.waitForSidebarReady()
-        if (sidebarReady) {
-          await this.autoFullSync()
-        }
-      } catch {
-        // 静默处理错误
+        await this.runInitialAutoFullSync()
+      } catch (error) {
+        console.warn("[ConversationManager] Initial auto conversation sync failed:", error)
       }
     }
 
@@ -358,19 +365,81 @@ export class ConversationManager {
     const start = Date.now()
     while (Date.now() - start < timeoutMs) {
       if (this.siteAdapter.getSidebarScrollContainer()) return true
-      await new Promise((r) => setTimeout(r, 250))
+      await this.delay(250)
     }
     return false
   }
 
-  private async autoFullSync(): Promise<void> {
-    await this.siteAdapter.loadAllConversations()
-    await new Promise((r) => setTimeout(r, 400))
+  private async runInitialAutoFullSync(): Promise<void> {
+    if (this.initialAutoFullSyncPromise) {
+      return this.initialAutoFullSyncPromise
+    }
+
+    this.initialAutoFullSyncPromise = this.autoFullSyncWithRetry().finally(() => {
+      this.initialAutoFullSyncPromise = null
+    })
+
+    return this.initialAutoFullSyncPromise
+  }
+
+  private async autoFullSyncWithRetry(): Promise<void> {
+    const maxAttempts = 4
+    const retryDelayMs = 2500
+    const requiredStableAttempts = 2
+    let bestScannedCount = 0
+    let stableAttempts = 0
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const sidebarReady = await this.waitForSidebarReady(attempt === 0 ? 10000 : 5000)
+      if (!sidebarReady) {
+        if (attempt < maxAttempts - 1) {
+          await this.delay(retryDelayMs)
+        }
+        continue
+      }
+
+      const result = await this.autoFullSync()
+      const hasGrowth = result.scannedCount > bestScannedCount
+
+      if (hasGrowth) {
+        bestScannedCount = result.scannedCount
+        stableAttempts = 0
+      } else if (result.loadSucceeded && result.scannedCount > 0 && result.changedCount === 0) {
+        stableAttempts++
+      }
+
+      if (
+        result.loadSucceeded &&
+        result.scannedCount > 0 &&
+        stableAttempts >= requiredStableAttempts
+      ) {
+        break
+      }
+
+      if (attempt < maxAttempts - 1) {
+        await this.delay(retryDelayMs)
+      }
+    }
+  }
+
+  private async autoFullSync(): Promise<AutoFullSyncResult> {
+    const loadResult = await this.siteAdapter.loadAllConversations()
+    await this.delay(400)
+
+    if (loadResult === false) {
+      return {
+        scannedCount: this.siteAdapter.getConversationList().length,
+        changedCount: 0,
+        loadSucceeded: false,
+      }
+    }
 
     const maxRounds = 10
     const maxStableRounds = 2
     let stableRounds = 0
     let lastListCount = this.siteAdapter.getConversationList().length
+    let totalNewCount = 0
+    let totalUpdatedCount = 0
 
     for (let i = 0; i < maxRounds; i++) {
       if (i > 0) {
@@ -379,15 +448,19 @@ export class ConversationManager {
 
         const el = container as HTMLElement
         el.scrollTop = el.scrollHeight
-        await new Promise((r) => setTimeout(r, 400))
+        el.dispatchEvent(new Event("scroll", { bubbles: true }))
+        await this.delay(400)
       }
 
       const { newCount, updatedCount } = this.syncConversations(null, true)
+      totalNewCount += newCount
+      totalUpdatedCount += updatedCount
+
       if (newCount > 0 || updatedCount > 0) {
         this.notifyDataChange()
       }
 
-      await new Promise((r) => setTimeout(r, 300))
+      await this.delay(300)
 
       const currentListCount = this.siteAdapter.getConversationList().length
       const hasProgress = newCount > 0 || currentListCount > lastListCount
@@ -400,6 +473,16 @@ export class ConversationManager {
 
       if (stableRounds >= maxStableRounds) break
     }
+
+    return {
+      scannedCount: this.siteAdapter.getConversationList().length,
+      changedCount: totalNewCount + totalUpdatedCount,
+      loadSucceeded: true,
+    }
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 
   destroy() {

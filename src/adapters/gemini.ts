@@ -244,6 +244,7 @@ const GEMINI_MYSTUFF_TOOLTIP_DELAY_MS = 300
 const GEMINI_CHATS_EXPANDABLE_SECTION_SELECTOR =
   'expandable-section[data-test-id="chats-expandable-section"]'
 const GEMINI_CHATS_EXPANDABLE_SECTION_FALLBACK_SELECTOR = 'expandable-section[storagekey="chats"]'
+const GEMINI_CONVERSATION_ITEM_SELECTOR = 'gem-nav-list-item[data-test-id="conversation"]'
 const GEMINI_MARKDOWN_FIXER_SOURCE_ATTRIBUTE_KEYWORDS = [
   "source",
   "sources",
@@ -1557,7 +1558,7 @@ export class GeminiAdapter extends SiteAdapter {
 
   getConversationList(): ConversationInfo[] {
     const items =
-      (DOMToolkit.query('gem-nav-list-item[data-test-id="conversation"]', {
+      (DOMToolkit.query(GEMINI_CONVERSATION_ITEM_SELECTOR, {
         all: true,
       }) as Element[]) || []
     const cid = this.getCurrentCid()
@@ -1586,49 +1587,51 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   getSidebarScrollContainer(): Element | null {
-    return (
-      (DOMToolkit.query('infinite-scroller[scrollable="true"]') as Element) ||
-      (DOMToolkit.query("infinite-scroller") as Element) ||
-      this.getChatsScrollableContainer()
-    )
+    // Gemini 正文聊天也使用 infinite-scroller，必须限定在侧边栏会话区域内查找。
+    return this.getChatsScrollableContainer()
   }
 
   async loadAllConversations(): Promise<boolean> {
     const sectionReady = await this.ensureChatsExpandableSectionOpen()
     if (!sectionReady) return false
 
-    const container = this.getSidebarScrollContainer()
+    let container = this.getSidebarScrollContainer() as HTMLElement | null
     if (!container) return false
 
-    let lastCount = 0
-    let stableRounds = 0
-    let noLoadingRounds = 0
-    const maxStableRounds = 4
-    const maxRounds = 40
-    const selector = 'gem-nav-list-item[data-test-id="conversation"]'
+    let lastCount = this.getLoadedGeminiConversationCount()
+    let lastScrollHeight = container.scrollHeight
+    let lastProgressAt = Date.now()
+    const startedAt = Date.now()
+    const maxDurationMs = 90000
+    const idleAfterProgressMs = 4000
+    const minRounds = 6
+    const waitMs = 900
 
-    for (let round = 0; round < maxRounds; round++) {
-      container.scrollTop = container.scrollHeight
-      await this.sleep(900)
+    for (let round = 0; Date.now() - startedAt < maxDurationMs; round++) {
+      container = this.getSidebarScrollContainer() as HTMLElement | null
+      if (!container) break
 
-      const conversations =
-        (DOMToolkit.query(selector, { all: true, shadow: true }) as Element[]) || []
-      const currentCount = conversations.length
+      this.scrollGeminiConversationHistoryToBottom(container)
+      await this.sleep(waitMs)
 
-      if (currentCount === lastCount) {
-        stableRounds++
-      } else {
+      const currentCount = this.getLoadedGeminiConversationCount()
+      const currentScrollHeight = container.scrollHeight
+      const isLoading = this.isConversationHistoryLoading()
+      const hasProgress =
+        currentCount > lastCount || currentScrollHeight > lastScrollHeight || isLoading
+
+      if (currentCount > lastCount || currentScrollHeight > lastScrollHeight) {
         lastCount = currentCount
-        stableRounds = 0
+        lastScrollHeight = Math.max(lastScrollHeight, currentScrollHeight)
+        lastProgressAt = Date.now()
       }
 
-      if (this.isConversationHistoryLoading()) {
-        noLoadingRounds = 0
-      } else {
-        noLoadingRounds++
+      if (isLoading) {
+        lastProgressAt = Date.now()
       }
 
-      if (stableRounds >= maxStableRounds && noLoadingRounds >= 2) {
+      const isIdle = !hasProgress && Date.now() - lastProgressAt >= idleAfterProgressMs
+      if (round >= minRounds && isIdle) {
         return currentCount > 0
       }
     }
@@ -1679,19 +1682,49 @@ export class GeminiAdapter extends SiteAdapter {
     return loadingSpinner instanceof HTMLElement && this.isVisible(loadingSpinner)
   }
 
+  private getLoadedGeminiConversationCount(): number {
+    const conversations =
+      (DOMToolkit.query(GEMINI_CONVERSATION_ITEM_SELECTOR, {
+        all: true,
+        shadow: true,
+      }) as Element[]) || []
+
+    return conversations.length
+  }
+
+  private scrollGeminiConversationHistoryToBottom(container: HTMLElement): void {
+    const targetTop = Math.max(container.scrollHeight, container.scrollTop + container.clientHeight)
+
+    container.scrollTop = targetTop
+    container.scrollTo?.({ top: targetTop, behavior: "auto" })
+    container.dispatchEvent(new Event("scroll", { bubbles: true, composed: true }))
+    container.dispatchEvent(
+      new WheelEvent("wheel", {
+        bubbles: true,
+        cancelable: true,
+        deltaY: Math.max(600, container.clientHeight * 2),
+      }),
+    )
+  }
+
   private getChatsScrollableContainer(): Element | null {
     const anchor = document.querySelector(
       [
         'conversations-list[data-test-id="all-conversations"]',
         GEMINI_CHATS_EXPANDABLE_SECTION_SELECTOR,
         GEMINI_CHATS_EXPANDABLE_SECTION_FALLBACK_SELECTOR,
-        'gem-nav-list-item[data-test-id="conversation"]',
+        GEMINI_CONVERSATION_ITEM_SELECTOR,
       ].join(","),
     )
     if (!(anchor instanceof HTMLElement)) return null
 
     let current: HTMLElement | null = anchor
+    let closestInfiniteScroller: HTMLElement | null = null
     while (current && current !== document.body) {
+      if (!closestInfiniteScroller && current.tagName.toLowerCase() === "infinite-scroller") {
+        closestInfiniteScroller = current
+      }
+
       const style = window.getComputedStyle(current)
       const canScroll =
         /(auto|scroll|overlay)/i.test(style.overflowY) || current.classList.contains("chat-history")
@@ -1701,7 +1734,7 @@ export class GeminiAdapter extends SiteAdapter {
       current = current.parentElement
     }
 
-    return null
+    return closestInfiniteScroller
   }
 
   getConversationObserverConfig(): ConversationObserverConfig {
