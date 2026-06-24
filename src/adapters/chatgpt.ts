@@ -144,6 +144,8 @@ const CHATGPT_DEEP_RESEARCH_IFRAME_SELECTOR =
 const CHATGPT_NATIVE_TOC_ID_PREFIX = "chatgpt-native-user-query::"
 const CHATGPT_NATIVE_TOC_ID_RE = /^chatgpt-native-user-query::(\d+)::/
 const CHATGPT_NATIVE_TOC_PROMPT_LABEL_RE = /^Prompt\s+\d+$/i
+const CHATGPT_CODEX_TASK_MARKDOWN_SELECTOR = ".markdown.markdown-new-styling"
+const CHATGPT_CODEX_TASK_USER_QUERY_SELECTOR = ".self-end.bg-token-bg-tertiary .whitespace-pre-wrap"
 
 interface ChatGPTExportMessageSnapshot {
   role: "user" | "assistant"
@@ -1155,8 +1157,10 @@ export class ChatGPTAdapter extends SiteAdapter {
   }
 
   getResponseContainerSelector(): string {
-    // ChatGPT 聊天内容区域 - #thread 或 main
-    return "#thread, main#main"
+    // ChatGPT 聊天内容区域 - 常规对话使用 #thread/main#main。
+    // Codex Cloud task 页（/codex/cloud/tasks/task_* 和 /s/cd_*）没有 main/#thread，
+    // 只暴露官方 markdown 容器。
+    return `#thread, main#main, ${CHATGPT_CODEX_TASK_MARKDOWN_SELECTOR}`
   }
 
   getChatContentSelectors(): string[] {
@@ -1170,7 +1174,36 @@ export class ChatGPTAdapter extends SiteAdapter {
   // ==================== 大纲提取 ====================
 
   getUserQuerySelector(): string {
+    if (this.isCodexTaskPage()) {
+      return `[data-message-author-role="user"], ${CHATGPT_CODEX_TASK_USER_QUERY_SELECTOR}`
+    }
+
     return '[data-message-author-role="user"]'
+  }
+
+  private isCodexTaskPage(): boolean {
+    return /^\/(?:s\/cd_[^/]+|codex\/cloud\/tasks\/task_[^/]+)/i.test(window.location.pathname)
+  }
+
+  private getCodexTaskOutlineContainer(): Element | null {
+    if (!this.isCodexTaskPage()) return null
+
+    const markdown = document.querySelector(CHATGPT_CODEX_TASK_MARKDOWN_SELECTOR)
+    if (!markdown) return null
+
+    const parent = markdown.parentElement
+    if (parent?.querySelector(CHATGPT_CODEX_TASK_USER_QUERY_SELECTOR)) {
+      return parent
+    }
+
+    return markdown
+  }
+
+  private getOutlineExtractionContainer(): Element | null {
+    return (
+      this.getCodexTaskOutlineContainer() ||
+      document.querySelector(this.getResponseContainerSelector())
+    )
   }
 
   extractUserQueryText(element: Element): string {
@@ -3100,7 +3133,7 @@ export class ChatGPTAdapter extends SiteAdapter {
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
     let outline: OutlineItem[] = []
-    const container = document.querySelector(this.getResponseContainerSelector())
+    const container = this.getOutlineExtractionContainer()
     if (!container) return outline
 
     this.ensureOutlineCacheSession()
@@ -3187,6 +3220,11 @@ export class ChatGPTAdapter extends SiteAdapter {
               srOnly.forEach((el) => el.remove())
               totalText += clone.textContent || ""
             }
+          }
+
+          if (!totalText && this.isCodexTaskPage()) {
+            totalText =
+              container.querySelector(CHATGPT_CODEX_TASK_MARKDOWN_SELECTOR)?.textContent || ""
           }
 
           const text = totalText.trim()
