@@ -1747,7 +1747,7 @@ export class OutlineManager {
     const cachedVisibleNode = this.findCachedActiveNode(scrollContainer, viewportRect)
     const anchorY = viewportRect.top + Math.min(Math.max(viewportRect.height * 0.25, 48), 160)
 
-    let latestUserQueryBeforeAnchor: MeasuredOutlineElement | null = null
+    let latestUserQueryBeforeAnchor: (MountedOutlineNode & MeasuredOutlineElement) | null = null
     let activeUserQuery: (MountedOutlineNode & MeasuredOutlineElement) | null = null
     for (const query of mountedUserQueries) {
       const bottom = query.top + query.height
@@ -1787,7 +1787,7 @@ export class OutlineManager {
       latestUserQueryBeforeAnchor &&
       (!activeHeading || activeHeading.top < latestUserQueryBeforeAnchor.top)
     if (crossedUserQueryBoundary) {
-      return nextVisibleHeading?.node ?? null
+      return latestUserQueryBeforeAnchor.node
     }
 
     if (activeHeading) {

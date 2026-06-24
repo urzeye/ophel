@@ -1100,10 +1100,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     const { parentNodeMap, visibleNodeSet, hasData } = visibilityMapsRef.current
     if (!hasData) return node.index
 
-    const allowUserQueryHighlight = node.isUserQuery === true
     let current: OutlineNode | null | undefined = node
     while (current) {
-      if (visibleNodeSet.has(current) && (allowUserQueryHighlight || !current.isUserQuery)) {
+      if (visibleNodeSet.has(current)) {
         return current.index
       }
       current = parentNodeMap.get(current)
