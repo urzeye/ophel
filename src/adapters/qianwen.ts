@@ -113,6 +113,11 @@ const CHAT_INPUT_SELECTOR = '[class*="chatInput"]'
 const CHAT_TEXTAREA_SELECTOR = '[class*="chatTextarea"]'
 const MESSAGE_LIST_SELECTOR = ".message-list-scroll-container, #message-list-scroller"
 const MESSAGE_LIST_AREA_SELECTOR = "#qwen-message-list-area"
+const PAGE_SCROLL_CONTAINER_SELECTOR = [
+  '[class*="page-content-"]',
+  '[class*="pageContent"]',
+  '[class*="scrollOutWrapper"]',
+].join(", ")
 const SIDEBAR_SELECTOR = "aside#new-nav-tab-wrapper"
 const NEW_CHAT_BUTTON_SELECTOR = '[class*="newChatButton"]'
 const THINKING_SELECTOR =
@@ -126,6 +131,9 @@ const MODEL_DIALOG_ITEM_SELECTOR = [
   "[data-radix-popper-content-wrapper] .group.rounded-8",
 ].join(", ")
 const FOOTNOTE_SELECTOR = "#ice-container .root-G6nVVr"
+const HISTORY_LOAD_WAIT_MS = 650
+const HISTORY_LOAD_MAX_ROUNDS = 60
+const HISTORY_LOAD_STABLE_ROUNDS = 4
 
 interface QianwenUserAttachment {
   kind: "image" | "file"
@@ -477,22 +485,35 @@ export class QianwenAdapter extends SiteAdapter {
   // ==================== 滚动与消息 ====================
 
   getScrollContainer(): HTMLElement | null {
-    const selectors = [MESSAGE_LIST_SELECTOR, MESSAGE_LIST_AREA_SELECTOR]
+    const messageRoots = [
+      document.querySelector(MESSAGE_LIST_AREA_SELECTOR),
+      document.querySelector(MESSAGE_LIST_SELECTOR),
+    ].filter(Boolean) as Element[]
+
+    for (const root of messageRoots) {
+      const scrollableAncestor = this.findConversationScrollableAncestor(root)
+      if (scrollableAncestor) return scrollableAncestor
+    }
+
+    const selectors = [
+      MESSAGE_LIST_SELECTOR,
+      MESSAGE_LIST_AREA_SELECTOR,
+      PAGE_SCROLL_CONTAINER_SELECTOR,
+    ]
     for (const selector of selectors) {
       const containers = document.querySelectorAll(selector)
       for (const container of Array.from(containers)) {
         const el = container as HTMLElement
-        if (el.scrollHeight > el.clientHeight) return el
+        if (this.isScrollableConversationContainer(el)) return el
       }
     }
 
-    const area = document.querySelector(MESSAGE_LIST_AREA_SELECTOR) as HTMLElement | null
-    if (!area) return null
-
-    let current: HTMLElement | null = area
-    while (current && current !== document.body) {
-      if (current.scrollHeight > current.clientHeight) return current
-      current = current.parentElement
+    const scrollingElement = document.scrollingElement
+    if (
+      scrollingElement instanceof HTMLElement &&
+      this.isScrollableConversationContainer(scrollingElement)
+    ) {
+      return scrollingElement
     }
 
     return null
@@ -576,9 +597,10 @@ export class QianwenAdapter extends SiteAdapter {
     return this.extractAssistantResponseTextWithAssets(element)
   }
 
-  /** 导出前钩子：记录 includeThoughts 设置供 extractAssistantResponseText 使用 */
+  /** 导出前钩子：记录 includeThoughts，并补齐千问懒加载的长会话历史。 */
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
     this.exportIncludeThoughts = context.includeThoughts
+    await this.loadCompleteConversationHistory()
     return null
   }
 
@@ -980,6 +1002,98 @@ export class QianwenAdapter extends SiteAdapter {
   }
 
   // ==================== 内部辅助方法 ====================
+
+  private async loadCompleteConversationHistory(): Promise<void> {
+    let container = this.getScrollContainer()
+    if (!container) return
+
+    let lastSignature = ""
+    let stableRounds = 0
+
+    for (let round = 0; round < HISTORY_LOAD_MAX_ROUNDS; round++) {
+      const refreshedContainer = this.getScrollContainer()
+      if (refreshedContainer) {
+        container = refreshedContainer
+      }
+
+      this.scrollConversationContainerToTop(container)
+      await this.sleep(HISTORY_LOAD_WAIT_MS)
+
+      const signature = this.getConversationLoadSignature(container)
+      if (signature === lastSignature) {
+        stableRounds++
+      } else {
+        lastSignature = signature
+        stableRounds = 0
+      }
+
+      if (stableRounds >= HISTORY_LOAD_STABLE_ROUNDS) {
+        return
+      }
+    }
+  }
+
+  private scrollConversationContainerToTop(container: HTMLElement): void {
+    if (container === document.documentElement || container === document.body) {
+      window.scrollTo({ top: 0, behavior: "auto" })
+    } else {
+      container.scrollTop = 0
+    }
+
+    container.dispatchEvent(new Event("scroll", { bubbles: true }))
+    container.dispatchEvent(new WheelEvent("wheel", { deltaY: -800, bubbles: true }))
+    window.dispatchEvent(new Event("scroll"))
+  }
+
+  private getConversationLoadSignature(container: HTMLElement): string {
+    return [
+      container.scrollHeight,
+      container.clientHeight,
+      container.scrollTop,
+      this.getExportableMessageBlockCount(),
+    ].join(":")
+  }
+
+  private getExportableMessageBlockCount(): number {
+    const root = this.getExportRoot()
+    return this.collectTopLevelBlocks(
+      Array.from(root.querySelectorAll(`${QUESTION_ITEM_SELECTOR}, ${ANSWER_ITEM_SELECTOR}`)),
+    ).filter((element) => !element.closest(".gh-root")).length
+  }
+
+  private findConversationScrollableAncestor(element: Element): HTMLElement | null {
+    let current = element.parentElement
+    while (current && current !== document.body) {
+      if (this.isScrollableConversationContainer(current)) return current
+      current = current.parentElement
+    }
+    return null
+  }
+
+  private isScrollableConversationContainer(element: HTMLElement): boolean {
+    if (!element.isConnected) return false
+
+    const hasConversationContent =
+      element === document.documentElement ||
+      element === document.body ||
+      Boolean(
+        element.querySelector(
+          `${MESSAGE_LIST_AREA_SELECTOR}, ${MESSAGE_LIST_SELECTOR}, ${QUESTION_ITEM_SELECTOR}, ${ANSWER_ITEM_SELECTOR}`,
+        ),
+      )
+
+    if (!hasConversationContent) return false
+
+    const style = window.getComputedStyle(element)
+    if (style.display === "none" || style.visibility === "hidden") return false
+
+    const rect = element.getBoundingClientRect()
+    if (element !== document.documentElement && element !== document.body) {
+      if (rect.width <= 0 || rect.height <= 0) return false
+    }
+
+    return element.scrollHeight > element.clientHeight + 5
+  }
 
   private extractQianwenExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
     const root = this.getExportRoot()
@@ -1579,6 +1693,10 @@ export class QianwenAdapter extends SiteAdapter {
 
   private normalizeText(text: string): string {
     return (text || "").replace(/\s+/g, " ").trim().toLowerCase()
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 
   private isDisabledActionButton(element: HTMLElement): boolean {
