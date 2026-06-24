@@ -405,10 +405,6 @@ export class QwenAiAdapter extends SiteAdapter {
     return QWENAI_MESSAGE_CONTAINER_SELECTOR
   }
 
-  usesPeriodicOutlineRefreshFallback(): boolean {
-    return true
-  }
-
   getAssistantMermaidSupportMode() {
     return "native" as const
   }
