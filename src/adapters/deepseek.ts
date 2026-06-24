@@ -397,6 +397,10 @@ export class DeepSeekAdapter extends SiteAdapter {
     return RESPONSE_CONTAINER_SELECTOR
   }
 
+  supportsVirtualizedOutlineBackfill(): boolean {
+    return true
+  }
+
   getUserQuerySelector(): string {
     return USER_MESSAGE_SELECTOR
   }

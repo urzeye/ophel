@@ -577,6 +577,10 @@ export class AIStudioAdapter extends SiteAdapter {
     return ".chat-container, main"
   }
 
+  supportsVirtualizedOutlineBackfill(): boolean {
+    return true
+  }
+
   getChatContentSelectors(): string[] {
     return [".chat-turn-container", '[class*="message"]', '[class*="response"]']
   }

@@ -405,6 +405,10 @@ export class QwenAiAdapter extends SiteAdapter {
     return QWENAI_MESSAGE_CONTAINER_SELECTOR
   }
 
+  supportsVirtualizedOutlineBackfill(): boolean {
+    return true
+  }
+
   getAssistantMermaidSupportMode() {
     return "native" as const
   }

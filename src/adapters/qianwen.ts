@@ -523,6 +523,10 @@ export class QianwenAdapter extends SiteAdapter {
     return `${MESSAGE_LIST_AREA_SELECTOR}, ${MESSAGE_LIST_SELECTOR}`
   }
 
+  supportsVirtualizedOutlineBackfill(): boolean {
+    return true
+  }
+
   getChatContentSelectors(): string[] {
     return [QUESTION_ITEM_SELECTOR, ANSWER_ITEM_SELECTOR]
   }

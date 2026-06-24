@@ -11,6 +11,7 @@ type ExtendedOutlineItem = OutlineItem & {
   isGhost?: boolean
   bookmarkId?: string
   scrollTop?: number
+  scrollHeight?: number
 }
 
 type MeasuredOutlineNode = {
@@ -20,6 +21,12 @@ type MeasuredOutlineNode = {
 type MeasuredOutlineElement = {
   top: number
   height: number
+}
+
+type VirtualizedOutlineBackfillEntry = {
+  item: ExtendedOutlineItem
+  order: number
+  updatedAt: number
 }
 
 type ScrollViewportRect = {
@@ -124,6 +131,12 @@ export class OutlineManager {
   // Global refresh debounce (防止多处同时触发时的重复执行)
   private refreshDebounceTimer: ReturnType<typeof setTimeout> | null = null
   private readonly REFRESH_DEBOUNCE_MS = 300
+  private virtualizedOutlineBackfillObserver: MutationObserver | null = null
+  private virtualizedOutlineBackfillRefreshTimer: ReturnType<typeof setTimeout> | null = null
+  private virtualizedOutlineBackfillCache = new Map<string, VirtualizedOutlineBackfillEntry>()
+  private virtualizedOutlineBackfillSessionKey = ""
+  private readonly VIRTUALIZED_OUTLINE_BACKFILL_REFRESH_MS = 700
+  private readonly VIRTUALIZED_OUTLINE_BACKFILL_CACHE_LIMIT = 2500
 
   // Bookmark store subscription
   private unsubscribeBookmarks: (() => void) | null = null
@@ -216,6 +229,18 @@ export class OutlineManager {
       this.startSourceObserver()
     } else if (!shouldObserveSources && this.sourceObserver) {
       this.stopSourceObserver()
+    }
+
+    const shouldObserveVirtualizedBackfill =
+      this.settings.enabled &&
+      this.isActive &&
+      this.activeSourceId === "conversation" &&
+      this.siteAdapter.supportsVirtualizedOutlineBackfill()
+
+    if (shouldObserveVirtualizedBackfill && !this.virtualizedOutlineBackfillObserver) {
+      this.startVirtualizedOutlineBackfillObserver()
+    } else if (!shouldObserveVirtualizedBackfill && this.virtualizedOutlineBackfillObserver) {
+      this.stopVirtualizedOutlineBackfillObserver()
     }
     // 否则保持当前状态不变
   }
@@ -324,6 +349,49 @@ export class OutlineManager {
     if (this.sourceRefreshTimer) {
       clearTimeout(this.sourceRefreshTimer)
       this.sourceRefreshTimer = null
+    }
+  }
+
+  private startVirtualizedOutlineBackfillObserver() {
+    if (this.virtualizedOutlineBackfillObserver) return
+
+    const observeTarget = this.siteAdapter.getObserveTarget() ?? document.body
+    if (!observeTarget) return
+
+    this.virtualizedOutlineBackfillObserver = new MutationObserver(() => {
+      this.markScrollPositionsStale()
+      if (this.virtualizedOutlineBackfillRefreshTimer) return
+
+      this.virtualizedOutlineBackfillRefreshTimer = setTimeout(() => {
+        this.virtualizedOutlineBackfillRefreshTimer = null
+        if (
+          !this.settings.enabled ||
+          !this.isActive ||
+          this.activeSourceId !== "conversation" ||
+          !this.siteAdapter.supportsVirtualizedOutlineBackfill()
+        ) {
+          return
+        }
+
+        this.refresh()
+      }, this.VIRTUALIZED_OUTLINE_BACKFILL_REFRESH_MS)
+    })
+
+    this.virtualizedOutlineBackfillObserver.observe(observeTarget, {
+      childList: true,
+      subtree: true,
+      characterData: false,
+    })
+  }
+
+  private stopVirtualizedOutlineBackfillObserver() {
+    if (this.virtualizedOutlineBackfillObserver) {
+      this.virtualizedOutlineBackfillObserver.disconnect()
+      this.virtualizedOutlineBackfillObserver = null
+    }
+    if (this.virtualizedOutlineBackfillRefreshTimer) {
+      clearTimeout(this.virtualizedOutlineBackfillRefreshTimer)
+      this.virtualizedOutlineBackfillRefreshTimer = null
     }
   }
 
@@ -436,6 +504,12 @@ export class OutlineManager {
     return `${sessionId}::${sourceId}`
   }
 
+  private getOutlineSessionScopeKey(sourceId = this.activeSourceId): string {
+    const sessionId = this.siteAdapter.getSessionId() || "no-session"
+    const pathname = typeof window !== "undefined" ? window.location.pathname : ""
+    return `${this.siteAdapter.getSiteId()}:${sessionId}:${pathname}:${sourceId}`
+  }
+
   getTree(): OutlineNode[] {
     return this.tree
   }
@@ -475,6 +549,7 @@ export class OutlineManager {
     this.preSearchExpandLevel = null
     this.searchLevelManual = false
     this.matchCount = 0
+    this.updateAutoUpdateState()
     this.refresh()
     this.notify()
   }
@@ -799,6 +874,7 @@ export class OutlineManager {
     if (this.isAutoUpdating) {
       this.stopAutoUpdate()
     }
+    this.stopVirtualizedOutlineBackfillObserver()
 
     this.tree = []
     this.flatItems = []
@@ -827,17 +903,197 @@ export class OutlineManager {
     })
   }
 
+  private shouldUseVirtualizedOutlineBackfill(): boolean {
+    return (
+      this.activeSourceId === "conversation" &&
+      this.siteAdapter.supportsVirtualizedOutlineBackfill()
+    )
+  }
+
+  private normalizeBackfillText(text: string): string {
+    return text.replace(/\s+/g, " ").trim().toLowerCase()
+  }
+
+  private getBackfillStableIdentity(item: OutlineItem, fallback: string): string {
+    return item.id || item.navigationId || fallback
+  }
+
+  private getBackfillItemMetrics(
+    item: OutlineItem,
+  ): Pick<ExtendedOutlineItem, "scrollTop" | "scrollHeight"> {
+    const extItem = item as ExtendedOutlineItem
+    if (typeof extItem.scrollTop === "number" && !Number.isNaN(extItem.scrollTop)) {
+      return {
+        scrollTop: extItem.scrollTop,
+        scrollHeight: extItem.scrollHeight,
+      }
+    }
+
+    if (!(item.element instanceof Element) || !item.element.isConnected) {
+      return {}
+    }
+
+    const container = this.getScrollContainer()
+    if (!container) return {}
+
+    const rects = item.element.getClientRects()
+    if (rects.length === 0) return {}
+
+    let top = rects[0].top
+    let bottom = rects[0].bottom
+    for (let i = 1; i < rects.length; i += 1) {
+      const rect = rects[i]
+      top = Math.min(top, rect.top)
+      bottom = Math.max(bottom, rect.bottom)
+    }
+
+    const isDocumentContainer = this.isDocumentScrollContainer(container)
+    const doc = container.ownerDocument
+    const containerScrollTop = isDocumentContainer
+      ? container.scrollTop ||
+        doc.documentElement.scrollTop ||
+        doc.body.scrollTop ||
+        doc.defaultView?.scrollY ||
+        0
+      : container.scrollTop
+    const containerTop = isDocumentContainer ? 0 : container.getBoundingClientRect().top
+
+    return {
+      scrollTop: containerScrollTop + (top - containerTop),
+      scrollHeight: Math.max(0, bottom - top),
+    }
+  }
+
+  private trimVirtualizedOutlineBackfillCache(): void {
+    if (
+      this.virtualizedOutlineBackfillCache.size <= this.VIRTUALIZED_OUTLINE_BACKFILL_CACHE_LIMIT
+    ) {
+      return
+    }
+
+    const keep = new Set(
+      Array.from(this.virtualizedOutlineBackfillCache.entries())
+        .sort((left, right) => right[1].updatedAt - left[1].updatedAt)
+        .slice(0, this.VIRTUALIZED_OUTLINE_BACKFILL_CACHE_LIMIT)
+        .map(([key]) => key),
+    )
+
+    for (const key of this.virtualizedOutlineBackfillCache.keys()) {
+      if (!keep.has(key)) {
+        this.virtualizedOutlineBackfillCache.delete(key)
+      }
+    }
+  }
+
+  private mergeVirtualizedOutlineBackfillItems(
+    outlineData: OutlineItem[],
+    sessionScopeKey: string,
+    showWordCount: boolean,
+  ): OutlineItem[] {
+    if (!this.shouldUseVirtualizedOutlineBackfill()) return outlineData
+
+    if (this.virtualizedOutlineBackfillSessionKey !== sessionScopeKey) {
+      this.virtualizedOutlineBackfillSessionKey = sessionScopeKey
+      this.virtualizedOutlineBackfillCache.clear()
+    }
+
+    const currentEntries: Array<{ key: string; item: OutlineItem; order: number }> = []
+    const currentKeys = new Set<string>()
+    const now = Date.now()
+    let userOrder = -1
+    let headingOrderInSection = 0
+    let currentUserIdentity = "root"
+
+    outlineData.forEach((item, index) => {
+      let key: string
+      let order: number
+
+      if (item.isUserQuery) {
+        userOrder += 1
+        headingOrderInSection = 0
+        currentUserIdentity = this.getBackfillStableIdentity(
+          item,
+          `user:${userOrder}:${this.normalizeBackfillText(item.text)}`,
+        )
+        key = `user:${currentUserIdentity}`
+        order = userOrder >= 0 ? userOrder * 100000 : index * 100000
+      } else {
+        headingOrderInSection += 1
+        const fallbackIdentity = [
+          "heading",
+          currentUserIdentity,
+          item.level,
+          this.normalizeBackfillText(item.text),
+          headingOrderInSection,
+        ].join(":")
+        const identity = this.getBackfillStableIdentity(item, fallbackIdentity)
+        key = item.id || item.navigationId ? `id:${identity}` : fallbackIdentity
+        order = userOrder >= 0 ? userOrder * 100000 + 50000 + headingOrderInSection : index * 100000
+      }
+
+      currentKeys.add(key)
+      currentEntries.push({ key, item, order })
+
+      const metrics = this.getBackfillItemMetrics(item)
+      const snapshot: ExtendedOutlineItem = {
+        ...item,
+        element: item.element?.isConnected ? item.element : null,
+        scrollTop: metrics.scrollTop,
+        scrollHeight: metrics.scrollHeight,
+      }
+      this.virtualizedOutlineBackfillCache.set(key, {
+        item: snapshot,
+        order,
+        updatedAt: now,
+      })
+    })
+
+    this.trimVirtualizedOutlineBackfillCache()
+
+    const mergedEntries = [...currentEntries]
+    this.virtualizedOutlineBackfillCache.forEach((entry, key) => {
+      if (currentKeys.has(key)) return
+      if (entry.item.isUserQuery && !this.settings.showUserQueries) return
+      if (!entry.item.isUserQuery && entry.item.level > this.settings.maxLevel) return
+
+      mergedEntries.push({
+        key,
+        item: {
+          ...entry.item,
+          element: entry.item.element?.isConnected ? entry.item.element : null,
+          wordCount: showWordCount ? entry.item.wordCount : undefined,
+        },
+        order: entry.order,
+      })
+    })
+
+    if (mergedEntries.length === outlineData.length) return outlineData
+
+    return mergedEntries
+      .sort((left, right) => {
+        if (left.order !== right.order) return left.order - right.order
+        return left.key.localeCompare(right.key)
+      })
+      .map(({ item }) => item)
+  }
+
   private _doRefresh(overrideLevel?: number) {
     const sourcesChanged = this.updateSources()
 
     // Read showWordCount from live settings store to pick up changes without page refresh
     const liveSettings = useSettingsStore.getState().settings
     const showWordCount = liveSettings?.features?.outline?.showWordCount ?? false
+    const sessionScopeKey = this.getOutlineSessionScopeKey()
 
     let outlineData = this.siteAdapter.extractOutlineForSource(
       this.activeSourceId,
       this.settings.maxLevel,
       this.settings.showUserQueries,
+      showWordCount,
+    )
+    outlineData = this.mergeVirtualizedOutlineBackfillItems(
+      outlineData,
+      sessionScopeKey,
       showWordCount,
     )
     // --- Merge Bookmarks ---
@@ -993,9 +1249,6 @@ export class OutlineManager {
 
     // Check if tree changed
     const showWordCountFlag = showWordCount ? "wc:1" : "wc:0"
-    const sessionIdForKey = this.siteAdapter.getSessionId() || "no-session"
-    const pathname = typeof window !== "undefined" ? window.location.pathname : ""
-    const sessionScopeKey = `${this.siteAdapter.getSiteId()}:${sessionIdForKey}:${pathname}:${this.activeSourceId}`
     const rawKey =
       sessionScopeKey +
       "|" +

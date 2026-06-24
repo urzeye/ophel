@@ -1163,6 +1163,10 @@ export class ChatGPTAdapter extends SiteAdapter {
     return `#thread, main#main, ${CHATGPT_CODEX_TASK_MARKDOWN_SELECTOR}`
   }
 
+  supportsVirtualizedOutlineBackfill(): boolean {
+    return true
+  }
+
   getChatContentSelectors(): string[] {
     return [
       '[data-message-author-role="assistant"]',

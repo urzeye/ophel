@@ -1099,6 +1099,15 @@ export abstract class SiteAdapter {
     return false
   }
 
+  /**
+   * Some sites virtualize the conversation DOM while exposing a complete native
+   * prompt TOC or scrollbar. For those sites, the outline should absorb newly
+   * mounted headings while the user scrolls instead of relying on fixed polling.
+   */
+  supportsVirtualizedOutlineBackfill(): boolean {
+    return false
+  }
+
   getOutlineSourcesSignature(): string {
     return this.getOutlineSources()
       .map((source) => `${source.id}:${source.kind}:${source.available}:${source.count ?? ""}`)

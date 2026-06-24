@@ -16,7 +16,11 @@
 6. ChatGPT/Claude/Gemini 的大纲字数统计已加入 element + 文本签名缓存，并减少重复 query。
 7. 虚拟大纲列表自身 scroll/resize state 已 rAF 合帧，并只在 virtual range、viewport 或按钮状态变化时更新 React state。
 
-本次静态审计没有发现需要立即回滚的确定性 bug。仍需注意：这些 PR 多数改变的是调度、缓存和 DOM 证据选择，当前仓库没有自动化运行时测试覆盖真实站点长会话，因此结论只能证明“静态上未见明显语义破坏”，不能替代 Chrome 扩展和油猴脚本的手动回归与 profiling。
+补充审计结论：移除固定 2s 大纲刷新后，虚拟滚动站点仍存在一个确定性缺口。ChatGPT、DeepSeek、AI Studio、Doubao、Qwen 这类站点可能只在正文 DOM 中挂载当前可见消息，同时通过原生 TOC/时间线提供更完整的用户问题列表；这会让“用户问题完整、AI 回复标题只来自已挂载 DOM/已见缓存”的混合大纲在滚动到新区域后无法自动补齐标题，除非自动更新、手动刷新、导出遍历或其它刷新路径刚好触发。
+
+修复策略是不恢复固定轮询，而是让这些明确 opt-in 的虚拟滚动站点使用 mutation-driven backfill：大纲激活时监听正文容器的 `childList/subtree` 变化，滚动挂载新消息后防抖刷新；`OutlineManager` 同时缓存已见大纲项，并按用户问题分段把当前未挂载但已见过的标题合并回大纲。这样用户滚到之前不可见区域后，新挂载的 AI 标题会进入大纲并保留，原生 TOC 提供的用户问题仍作为完整分段骨架。
+
+除上述虚拟滚动回填缺口外，本次静态审计没有发现需要立即回滚的确定性 bug。仍需注意：这些 PR 多数改变的是调度、缓存和 DOM 证据选择，当前仓库没有自动化运行时测试覆盖真实站点长会话，因此结论只能证明“静态上未见明显语义破坏”，不能替代 Chrome 扩展和油猴脚本的手动回归与 profiling。
 
 ## 当前进展
 
@@ -33,6 +37,7 @@
 | adapter 字数统计缓存 | 已完成 | #688 / PR #698 / `c6b1c42` | ChatGPT/Claude/Gemini 使用 WeakMap 缓存 word count；签名包含起点、边界和容器文本 hash，静态上覆盖流式文本变化。 |
 | 虚拟大纲列表滚动渲染节流 | 已完成 | #689 / PR #699 / `5e92621` | outline list scroll/resize 通过 rAF 合帧；programmatic scroll 会 force sync，避免目标虚拟行延迟挂载。 |
 | 虚拟行高漂移校验 | 已完成 | #690 / PR #700 / `032eb10` | #683 的 debug-only 校验覆盖该 follow-up；文档已关闭独立任务。 |
+| 虚拟滚动正文回填大纲 | 已完成 | 本次修复 | ChatGPT、DeepSeek、AI Studio、Doubao、Qianwen、Qwen Studio opt-in mutation-driven backfill；滚动挂载新消息后补齐并保留已见 AI 标题。 |
 
 ## 静态审计结果
 
