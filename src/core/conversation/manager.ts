@@ -427,9 +427,16 @@ export class ConversationManager {
     await this.delay(400)
 
     if (loadResult === false) {
+      const { newCount, updatedCount } = this.syncConversations(null, true)
+      const changedCount = newCount + updatedCount
+
+      if (changedCount > 0) {
+        this.notifyDataChange()
+      }
+
       return {
         scannedCount: this.siteAdapter.getConversationList().length,
-        changedCount: 0,
+        changedCount,
         loadSucceeded: false,
       }
     }
