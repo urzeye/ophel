@@ -1182,9 +1182,17 @@ export class OutlineManager {
     const container = this.getScrollContainer()
     if (!container || this.flatNodes.length === 0) return
 
-    const containerRect = container.getBoundingClientRect()
-    const containerTop = containerRect.top
-    const containerScrollTop = container.scrollTop
+    const isDocumentContainer = this.isDocumentScrollContainer(container)
+    const containerRect = isDocumentContainer ? null : container.getBoundingClientRect()
+    const containerTop = containerRect?.top ?? 0
+    const doc = container.ownerDocument
+    const containerScrollTop = isDocumentContainer
+      ? container.scrollTop ||
+        doc.documentElement.scrollTop ||
+        doc.body.scrollTop ||
+        doc.defaultView?.scrollY ||
+        0
+      : container.scrollTop
     const entries: Array<{ node: OutlineNode; top: number; height: number; order: number }> = []
     const measuredElements = new WeakMap<Element, MeasuredOutlineElement | null>()
     let order = 0
