@@ -17,6 +17,7 @@
  */
 import { SITE_IDS } from "~constants"
 import {
+  createExportAssetCollector,
   formatExportFileAttachments,
   formatExportImageAttachments,
   formatExportImageMarkdownList,
@@ -87,6 +88,7 @@ const DOUBAO_DELETE_REASON = {
   BATCH_ABORTED_AFTER_UI_FAILURE: "delete_batch_aborted_after_ui_failure",
 } as const
 const DOUBAO_OUTLINE_CACHE_MAX_ITEMS = 1200
+const DOUBAO_EXPORT_ROLE_USER = "user"
 
 interface DoubaoVirtualMessageMeta {
   messageId: string | null
@@ -125,10 +127,19 @@ interface DoubaoAssistantImageFallbackState {
   usedSources: Set<string>
 }
 
+interface DoubaoExportMessageSnapshot {
+  role: "user" | "assistant"
+  content: string
+  key: string
+  order: number
+}
+
 export class DoubaoAdapter extends SiteAdapter {
   private outlineCacheSessionKey = ""
   private outlineCacheTransitionEndAt = 0
   private outlineItemCache = new Map<string, DoubaoOutlineCacheEntry>()
+  private exportMessagesCache: ExportMessage[] | null = null
+  private exportBundleCache: ExportBundle | null = null
 
   // ===== 必选抽象方法 =====
 
@@ -1996,52 +2007,213 @@ export class DoubaoAdapter extends SiteAdapter {
     }
   }
 
+  async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
+    this.clearExportCache()
+
+    const collector =
+      context.format === "markdown" && context.packaging === "zip"
+        ? createExportAssetCollector()
+        : undefined
+
+    const scrollContainer = this.getVirtualScrollContainer()
+    const fallbackRoot = this.getOutlineContentContainer() || document
+    const snapshots = scrollContainer
+      ? await this.collectDoubaoExportSnapshotsByScrollSweep(scrollContainer, collector)
+      : this.readVisibleDoubaoExportSnapshots(
+          fallbackRoot,
+          collector,
+          this.createDoubaoAssistantImageFallbackState(),
+        )
+
+    if (snapshots.length === 0) {
+      return null
+    }
+
+    const messages = snapshots.map(({ role, content }) => ({ role, content }))
+    this.exportMessagesCache = messages
+    if (collector) {
+      this.exportBundleCache = {
+        messages,
+        assets: collector.assets,
+      }
+    }
+
+    return { count: messages.length }
+  }
+
+  async restoreConversationAfterExport(
+    _context: ExportLifecycleContext,
+    _state: unknown,
+  ): Promise<void> {
+    this.clearExportCache()
+  }
+
   async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
+    if (this.exportMessagesCache) {
+      return this.exportMessagesCache
+    }
+
     const messages = this.extractDoubaoExportMessages()
     return messages.length > 0 ? messages : null
   }
 
   async extractExportBundle(_context: ExportLifecycleContext): Promise<ExportBundle | null> {
+    if (this.exportBundleCache) {
+      return this.exportBundleCache
+    }
+
     return this.createExportBundleFromMessages((collector) =>
       this.extractDoubaoExportMessages(collector),
     )
   }
 
-  private extractDoubaoExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
-    const messages: ExportMessage[] = []
+  private clearExportCache(): void {
+    this.exportMessagesCache = null
+    this.exportBundleCache = null
+  }
+
+  private async collectDoubaoExportSnapshotsByScrollSweep(
+    scrollContainer: HTMLElement,
+    collector?: ExportAssetCollector,
+  ): Promise<DoubaoExportMessageSnapshot[]> {
+    const positions = this.buildDoubaoExportSnapshotPositions(scrollContainer)
+    const originalScrollTop = scrollContainer.scrollTop
     const fallbackState = this.createDoubaoAssistantImageFallbackState()
-    const turns = Array.from(document.querySelectorAll(MESSAGE_BLOCK_SELECTOR)).filter(
-      (turn): turn is HTMLElement => turn instanceof HTMLElement,
-    )
+    let collected: DoubaoExportMessageSnapshot[] = []
 
-    if (turns.length > 0) {
-      turns.forEach((turn) => {
-        this.getOrderedDoubaoMessages(turn).forEach(({ role, element }) => {
-          messages.push({
-            role,
-            content:
-              role === "user"
-                ? this.extractUserQueryExportContentWithAssets(element, collector)
-                : this.extractAssistantResponseTextWithAssets(element, collector, fallbackState),
-          })
-        })
-      })
+    try {
+      for (const top of positions) {
+        this.scrollVirtualContainerTo(scrollContainer, top)
+        scrollContainer.getBoundingClientRect()
+        await this.sleep(120)
 
-      return messages
+        const batch = this.readVisibleDoubaoExportSnapshots(
+          scrollContainer,
+          collector,
+          fallbackState,
+        )
+        collected = this.mergeDoubaoExportSnapshotBatch(collected, batch)
+      }
+    } finally {
+      this.scrollVirtualContainerTo(scrollContainer, originalScrollTop)
     }
 
-    const orderedMessages = this.getOrderedDoubaoMessages(document)
-    orderedMessages.forEach(({ role, element }) => {
-      messages.push({
-        role,
-        content:
-          role === "user"
+    return collected
+  }
+
+  private buildDoubaoExportSnapshotPositions(scrollContainer: HTMLElement): number[] {
+    const maxScroll = Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight)
+    const currentScrollTop = scrollContainer.scrollTop
+
+    if (maxScroll <= 0) {
+      return [currentScrollTop]
+    }
+
+    const step = Math.max(160, Math.floor(scrollContainer.clientHeight * 0.75))
+    const positions = new Set<number>([0, currentScrollTop, maxScroll])
+
+    for (let top = 0; top < maxScroll; top += step) {
+      positions.add(top)
+    }
+
+    return Array.from(positions).sort((a, b) => a - b)
+  }
+
+  private readVisibleDoubaoExportSnapshots(
+    root: ParentNode,
+    collector: ExportAssetCollector | undefined,
+    fallbackState: DoubaoAssistantImageFallbackState,
+  ): DoubaoExportMessageSnapshot[] {
+    return this.getOrderedDoubaoMessages(root)
+      .map(({ role, element }) => {
+        const content =
+          role === DOUBAO_EXPORT_ROLE_USER
             ? this.extractUserQueryExportContentWithAssets(element, collector)
-            : this.extractAssistantResponseTextWithAssets(element, collector, fallbackState),
+            : this.extractAssistantResponseTextWithAssets(element, collector, fallbackState)
+        const normalizedContent = this.normalizeDoubaoExportMessageContent(content)
+        if (!normalizedContent) return null
+
+        return {
+          role,
+          content: normalizedContent,
+          key: this.getDoubaoExportMessageKey(element, role, normalizedContent),
+          order: this.getDoubaoExportMessageOrder(root, element),
+        }
+      })
+      .filter((snapshot): snapshot is DoubaoExportMessageSnapshot => snapshot !== null)
+  }
+
+  private normalizeDoubaoExportMessageContent(content: string): string {
+    return content
+      .replace(/\r\n/g, "\n")
+      .replace(/\u00a0/g, " ")
+      .trim()
+  }
+
+  private getDoubaoExportMessageKey(
+    element: Element,
+    role: DoubaoExportMessageSnapshot["role"],
+    content: string,
+  ): string {
+    const messageId =
+      element.getAttribute("data-message-id") ||
+      element.closest("[data-message-id]")?.getAttribute("data-message-id") ||
+      ""
+    if (messageId) return `${role}:${messageId}`
+
+    const order = Math.round(this.getDoubaoExportMessageOrder(document, element))
+    return `${role}:content:${this.hashOutlineText(content)}:${order}`
+  }
+
+  private getDoubaoExportMessageOrder(root: ParentNode, element: Element): number {
+    if (element instanceof HTMLElement && root instanceof HTMLElement) {
+      return this.getElementVirtualScrollTop(root, element)
+    }
+
+    const rect = element.getBoundingClientRect()
+    return window.scrollY + rect.top
+  }
+
+  private mergeDoubaoExportSnapshotContent(previous: string, current: string): string {
+    if (!current) return previous
+    if (!previous) return current
+    if (previous === current || previous.includes(current)) return previous
+    if (current.includes(previous)) return current
+    return current.length > previous.length ? current : previous
+  }
+
+  private mergeDoubaoExportSnapshotBatch(
+    collected: DoubaoExportMessageSnapshot[],
+    batch: DoubaoExportMessageSnapshot[],
+  ): DoubaoExportMessageSnapshot[] {
+    if (batch.length === 0) return collected
+    if (collected.length === 0) return batch.map((item) => ({ ...item }))
+
+    const merged = new Map<string, DoubaoExportMessageSnapshot>()
+    collected.forEach((item) => merged.set(item.key, { ...item }))
+
+    batch.forEach((item) => {
+      const previous = merged.get(item.key)
+      if (!previous) {
+        merged.set(item.key, { ...item })
+        return
+      }
+
+      merged.set(item.key, {
+        ...previous,
+        order: Math.min(previous.order, item.order),
+        content: this.mergeDoubaoExportSnapshotContent(previous.content, item.content),
       })
     })
 
-    return messages
+    return Array.from(merged.values()).sort((a, b) => a.order - b.order)
+  }
+
+  private extractDoubaoExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
+    const fallbackState = this.createDoubaoAssistantImageFallbackState()
+    return this.readVisibleDoubaoExportSnapshots(document, collector, fallbackState).map(
+      ({ role, content }) => ({ role, content }),
+    )
   }
 
   private getOrderedDoubaoMessages(root: ParentNode): Array<{
