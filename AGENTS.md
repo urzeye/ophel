@@ -94,6 +94,29 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 - 设置结构：`docs/developer/settings-schema.json`
 - Options UI：`docs/developer/options-page-ui.md`
 
+## 更新日志写法
+
+- 修改 `CHANGELOG.md` 时，如存在 `CHANGELOG.zh-CN.md`，必须同步更新中英文两份日志；两份含义保持一致，但表达要符合各自语言习惯。
+- 新增更新日志只使用三类标题，不要新增性能、UI、文档、国际化、限制等其它标题，除非用户明确要求。
+  - 英文：`### 🚀 New Features`、`### ✨ Improvements`、`### 🐛 Bug Fixes`
+  - 中文：`### 🚀 新增功能`、`### ✨ 功能优化`、`### 🐛 问题修复`
+- 标题选择按用户可感知变化判断：
+  - 新增能力放 `New Features` / `新增功能`。
+  - 已有能力变得更快、更顺、更好用、更清晰，放 `Improvements` / `功能优化`；性能优化通常归入这里。
+  - 明确错误行为、兼容性问题或回归修复，放 `Bug Fixes` / `问题修复`。
+- 条目沿用现有 1.0.60 附近的格式：`- **功能点标题** — 一句说明。` 标题要具体，说明写“做了什么、用户会感受到什么效果”。
+- 面向普通用户写，不面向开发者；避免类名、函数名、内部模块名、实现细节和纯技术词。可以保留用户知道的功能名、站点名、快捷键名、设置项名和导出格式名。
+- 不要逐条翻译 commit。如果几个commit内容一致或相关联，可以（但非必要）按用户可感知结果合并。同一分类下高价值内容排序在前。
+- 如果变更来自 PR、issue 或外部贡献者，能确认时要在条目末尾保留编号和贡献者；不要遗漏，也不要凭空补。
+  - 单个来源：`(#645)`、`(#547, @urzeye)`
+  - 多个直接相关来源：`(#593, #625)`
+  - 中英文两份日志的编号和贡献者保持一致。
+- 英文说明优先使用现在时或完成时，如 `now supports`、`now recognizes`、`Fixed issue where...`；中文说明优先使用“现在…”“修复…”“减少…”等直接表达。
+- 文案要克制、具体、把具体做了清楚但不宜过长；避免“更丝滑”“更好用”“更轻快”等没有说明实际改善的泛泛表述，不要用一堆“更”来描述具体更新内容。
+- 示例：
+  - 英文：`- **Zen Mode exit button** — Added a "Show exit button" setting for Zen Mode, so the on-page exit button can be hidden while keeping the quick button and shortcut exit paths available. (#645)`
+  - 中文：`- **禅模式退出按钮** — 禅模式设置新增“显示退出按钮”开关，可隐藏页面上的退出按钮，保留快捷按钮和快捷键退出入口，避免遮挡标题或对话内容。(#645)`
+
 ## 提交与 PR
 
 - 提交代码前参考 `.github/workflows/ci.yml`，建议按 CI 顺序运行：`pnpm format:check`、`pnpm lint:check`、`pnpm typecheck`、`pnpm build`。

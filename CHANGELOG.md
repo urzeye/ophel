@@ -9,13 +9,33 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### ✨ Improvements
+
+- **Long conversation outline performance** — Large outlines now render only visible rows, skip collapsed or filtered nodes, coalesce automatic refresh and scroll updates, reduce layout measurements, and cache ChatGPT/Claude/Gemini word counts, reducing lag in long chats. (#677, #682, #683, #691, #695, #696, #698, #699)
+- **Global search outline updates** — Global search now refreshes the outline on open and follows outline manager updates instead of polling every 1200ms, reducing background work while search is open. (#692)
+- **Conversation sidebar sync** — Sidebar sync now batches conversation additions, updates, deletes, and target-folder changes into one store write, reducing storage churn during history sync. (#697)
+
+### 🐛 Bug Fixes
+
+- **Outline scroll highlight stability** — Fixed issue where source scrolling could highlight a user question, previous answer, or hidden child instead of the current visible heading in long conversations. (#704)
+
 ---
 
 ## [1.1.0] - 2026-06-22
 
 ### 🚀 New Features
 
-- **Quick Quote Chains** — Prompt chains can now be triggered directly from quick quote actions, with chain icon picker, drag-to-reorder, and embedded quote anchors for reliable reference restoration across page refreshes.
+- **Quick Quote Chains** — Prompt chains can now be triggered directly from quick quote actions, with chain icon picker, drag-to-reorder, and embedded quote anchors for reliable reference restoration across page refreshes. (#623)
+- **Gemini Canvas Markdown actions** — Gemini Canvas panels now include Ophel Copy Markdown and Download Markdown buttons, exporting Canvas code as fenced Markdown without running a full conversation export. (#663)
+- **Segmented conversation export** — Conversation export now supports choosing message ranges from a searchable picker and saving selected segments as ZIP files, merged Markdown, or clipboard content. (#665)
+- **Update modal** — Ophel now shows release notes once per version and lets users reopen them from About, so update changes are visible in both extension and userscript builds. (#666)
+
+### ✨ Improvements
+
+- **Quick Quote native-site positioning** — Quick Quote actions now detect native selection popovers on supported sites, choose alternate positions to avoid overlap, and disable Ophel anchors where they conflict with native editors. (#658, #660, #661)
+- **Quick Quote default actions** — Quote Reply now lives in the default prompt chain, while the selection popover keeps a fixed copy action and a smaller built-in action set. (#664)
+- **Prompt chain setup and sync** — Chains launched from selected text now consistently ask to enable Prompt Queue when needed, the Chains panel prompts for Selection Quote, and userscript backup/WebDAV sync includes chain data. (#661, #671)
+- **Store and toolbar icon polish** — Updated the Chrome store icon, softened the review icon hover state, and aligned Outline toolbar icon colors with the rest of the panel. (#662, #668)
 
 ### 🐛 Bug Fixes
 
@@ -26,6 +46,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **ChatGLM stop button** — Alt+K shortcut now correctly stops generation by targeting the inner `.enter-icon-container` element instead of the outer container div.
 - **Qianwen Slate editor sync** — Fixed content insertion from prompt queue where inserted text couldn't be edited or deleted. The editor now properly syncs Slate's virtual DOM by using `selectAll + delete + insertText` with complete event chains (`beforeinput`, `input`, `change`) to ensure both DOM and Slate state update correctly.
 - **Launcher peek retention** — When the mouse moves from the panel logo to other quick buttons (e.g. toolbox), the launcher peek panel now hides instead of staying open and blocking the toolbox menu. (#653)
+- **Quick Quote export markers** — Fixed issue where invisible quick quote anchors could leave empty outline entries or filter out messages during conversation export and outline copy. (#669)
+- **Userscript reset and restore state** — Clear All Data, backup restore, and release-note state now use the shared platform storage keys, preventing incomplete reset or restore behavior in the userscript build. (#670)
 
 ---
 
