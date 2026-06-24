@@ -18,6 +18,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Doubao long conversation export** — Fixed issue where Doubao virtual-scroll conversations could export or copy only the currently mounted message window; exports and full-outline copy now scan the conversation before collecting messages.
 - **ChatGPT pinned conversations** — Fixed ChatGPT conversation sync for the new sidebar layout, so pinned conversations under the Pinned section are imported, title updates are tracked, and project folders are not treated as chats.
 - **Prompt send shortcuts** — Fixed issue where sending from the chat input with Ophel's configured shortcut could lag on Claude, DeepSeek, and similar sites. Double-click prompt sending also now respects Ctrl+Enter send mode without leaving the prompt in the input box or adding a newline. (#701, #710)
 - **Gemini conversation sync** — Fixed issue where first-time or empty-library Gemini auto sync could stop after only part of the history, leave the Conversations panel counts empty, or make manual sync wait longer than needed after reaching the bottom. (#712)
