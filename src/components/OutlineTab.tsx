@@ -92,6 +92,8 @@ const buildVisibilityMaps = (
   bookmarkMode: boolean,
 ) => {
   const parentMap: Record<number, number | null> = {}
+  const parentNodeMap = new WeakMap<OutlineNode, OutlineNode | null>()
+  const visibleNodeSet = new WeakSet<OutlineNode>()
   const visibleMap: Record<number, boolean> = {}
   const bookmarkMemo = new Map<number, boolean>()
 
@@ -119,11 +121,13 @@ const buildVisibilityMaps = (
   const traverse = (
     node: OutlineNode,
     parentIndex: number | null,
+    parentNode: OutlineNode | null,
     parentCollapsed: boolean,
     parentForceExpanded: boolean,
     ancestorHasBookmark: boolean,
   ) => {
     parentMap[node.index] = parentIndex
+    parentNodeMap.set(node, parentNode)
 
     const nodeHasBookmark = hasBookmarkInSubtree(node)
     const isBookmarkRelevant = nodeHasBookmark || ancestorHasBookmark
@@ -169,6 +173,9 @@ const buildVisibilityMaps = (
     }
 
     visibleMap[node.index] = shouldShow
+    if (shouldShow) {
+      visibleNodeSet.add(node)
+    }
 
     const childParentCollapsed = node.collapsed || parentCollapsed
     const childParentForceExpanded = node.forceExpanded || parentForceExpanded
@@ -176,21 +183,22 @@ const buildVisibilityMaps = (
       ancestorHasBookmark || (node.isBookmarked && !hasBookmarkInDescendants(node))
 
     if (node.children && node.children.length > 0) {
-      node.children.forEach((child) =>
+      node.children.forEach((child) => {
         traverse(
           child,
           node.index,
+          node,
           childParentCollapsed,
           childParentForceExpanded,
           childAncestorHasBookmark,
-        ),
-      )
+        )
+      })
     }
   }
 
-  tree.forEach((root) => traverse(root, null, false, false, false))
+  tree.forEach((root) => traverse(root, null, null, false, false, false))
 
-  return { parentMap, visibleMap }
+  return { parentMap, parentNodeMap, visibleMap, visibleNodeSet }
 }
 
 const getConversationCopyHeadingLevel = (expandLevel: number, showUserQueries: boolean): number => {
@@ -735,6 +743,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   const prevTreeLengthRef = useRef<number>(0) // 用 ref 追踪上一次树长度
   const shouldScrollToBottomRef = useRef<boolean>(false) // 标记是否需要滚动
   const activeIndexRef = useRef<number | null>(null)
+  const activeNodeRef = useRef<OutlineNode | null>(null)
   const visibleHighlightRef = useRef<number | null>(null)
   const itemRefMap = useRef<Map<number, HTMLElement>>(new Map())
   const virtualMetricsRef = useRef<OutlineVirtualMetrics>({
@@ -765,9 +774,17 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   })
   const visibilityMapsRef = useRef<{
     parentMap: Record<number, number | null>
+    parentNodeMap: WeakMap<OutlineNode, OutlineNode | null>
     visibleMap: Record<number, boolean>
+    visibleNodeSet: WeakSet<OutlineNode>
     hasData: boolean
-  }>({ parentMap: {}, visibleMap: {}, hasData: false })
+  }>({
+    parentMap: {},
+    parentNodeMap: new WeakMap<OutlineNode, OutlineNode | null>(),
+    visibleMap: {},
+    visibleNodeSet: new WeakSet<OutlineNode>(),
+    hasData: false,
+  })
 
   // Tab 激活状态管理：挂载时激活，卸载时取消
   useEffect(() => {
@@ -986,8 +1003,9 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   }, [])
 
   // 滚动同步高亮：直接操作 DOM class，不触发 React re-render
-  const updateActiveIndex = useCallback((idx: number | null) => {
+  const updateActiveIndex = useCallback((idx: number | null, node: OutlineNode | null = null) => {
     activeIndexRef.current = idx
+    activeNodeRef.current = node
   }, [])
 
   const updateVisibleHighlightIndex = useCallback(
@@ -1077,6 +1095,23 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     return null
   }, [])
 
+  const getVisibleHeadingHighlightIndex = useCallback((node: OutlineNode | null): number | null => {
+    if (!node) return null
+    const { parentNodeMap, visibleNodeSet, hasData } = visibilityMapsRef.current
+    if (!hasData) return node.index
+
+    const allowUserQueryHighlight = node.isUserQuery === true
+    let current: OutlineNode | null | undefined = node
+    while (current) {
+      if (visibleNodeSet.has(current) && (allowUserQueryHighlight || !current.isUserQuery)) {
+        return current.index
+      }
+      current = parentNodeMap.get(current)
+    }
+
+    return null
+  }, [])
+
   const visibilityMaps = useMemo(
     () =>
       buildVisibilityMaps(
@@ -1090,7 +1125,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     [tree, displayLevel, minRelativeLevel, searchQuery, searchLevelManual, bookmarkMode],
   )
 
-  const { parentMap, visibleMap } = visibilityMaps
+  const { parentMap, parentNodeMap, visibleMap, visibleNodeSet } = visibilityMaps
   const visibleItems = useMemo(
     () => flattenVisibleOutlineTree(tree, visibleMap),
     [tree, visibleMap],
@@ -1117,13 +1152,29 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     return checkVisible(tree)
   }, [tree, visibleMap])
 
-  visibilityMapsRef.current = { parentMap, visibleMap, hasData: tree.length > 0 }
+  visibilityMapsRef.current = {
+    parentMap,
+    parentNodeMap,
+    visibleMap,
+    visibleNodeSet,
+    hasData: tree.length > 0,
+  }
   virtualMetricsRef.current = virtualMetrics
 
   useEffect(() => {
-    const nextVisible = getVisibleHighlightIndex(activeIndexRef.current)
+    const activeNode = activeNodeRef.current
+    const nextVisible = activeNode
+      ? getVisibleHeadingHighlightIndex(activeNode)
+      : getVisibleHighlightIndex(activeIndexRef.current)
     updateVisibleHighlightIndex(nextVisible)
-  }, [parentMap, visibleMap, tree.length, getVisibleHighlightIndex, updateVisibleHighlightIndex])
+  }, [
+    parentMap,
+    visibleMap,
+    tree.length,
+    getVisibleHeadingHighlightIndex,
+    getVisibleHighlightIndex,
+    updateVisibleHighlightIndex,
+  ])
 
   // Scroll sync highlight (data-driven)
   // Falls back to nearest visible ancestor when the target is hidden
@@ -1203,7 +1254,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     const runScrollSync = () => {
       if (!scrollContainer) return
 
-      const idx = manager.findMountedActiveItemIndex(scrollContainer)
+      const activeNode = manager.findMountedActiveNode(scrollContainer)
+      const idx = activeNode?.index ?? null
 
       if (idx === null) {
         if (activeIndexRef.current !== null) {
@@ -1216,11 +1268,11 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         return
       }
 
-      if (idx !== activeIndexRef.current) {
-        updateActiveIndex(idx)
+      if (idx !== activeIndexRef.current || activeNode !== activeNodeRef.current) {
+        updateActiveIndex(idx, activeNode)
       }
 
-      const visibleIdx = getVisibleHighlightIndex(idx)
+      const visibleIdx = getVisibleHeadingHighlightIndex(activeNode)
 
       const previousVisibleIdx = visibleHighlightRef.current
       const visibleIdxChanged = visibleIdx !== previousVisibleIdx
@@ -1299,7 +1351,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     manager,
     tree.length,
     settings?.features?.outline?.followMode,
-    getVisibleHighlightIndex,
+    getVisibleHeadingHighlightIndex,
     scrollOutlineNodeIntoView,
     updateActiveIndex,
     updateVisibleHighlightIndex,
@@ -1406,7 +1458,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         // 通过 adapter 滚动——避免 scrollIntoView 在 Shadow DOM 场景下
         // 意外滚动外层容器（如 Gemini Enterprise 的 mat-sidenav-content）
         manager.scrollToOutlineTarget(targetElement as HTMLElement)
-        updateActiveIndex(node.index)
+        updateActiveIndex(node.index, node)
         updateVisibleHighlightIndex(getVisibleHighlightIndex(node.index))
 
         // 若阅读历史 Position Keeper 正在锁定位置，同步更新锁目标到新位置
@@ -1426,7 +1478,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         const scrollContainer = manager.getScrollContainer()
         if (scrollContainer) {
           scrollContainer.scrollTo({ top: node.scrollTop, behavior: "smooth" })
-          updateActiveIndex(node.index)
+          updateActiveIndex(node.index, node)
           updateVisibleHighlightIndex(getVisibleHighlightIndex(node.index))
           showToast(t("bookmarkContentMissing"), 3000)
         }
