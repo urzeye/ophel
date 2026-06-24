@@ -1099,6 +1099,15 @@ export abstract class SiteAdapter {
     return false
   }
 
+  /**
+   * Some virtualized/lazy-mounted conversation views do not reliably emit DOM
+   * mutations when distant messages mount. Opt in only for sites that need a
+   * periodic outline refresh fallback while the outline is active.
+   */
+  usesPeriodicOutlineRefreshFallback(): boolean {
+    return false
+  }
+
   getOutlineSourcesSignature(): string {
     return this.getOutlineSources()
       .map((source) => `${source.id}:${source.kind}:${source.available}:${source.count ?? ""}`)

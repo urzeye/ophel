@@ -592,6 +592,10 @@ export class DoubaoAdapter extends SiteAdapter {
     return VIRTUAL_SCROLL_SELECTOR
   }
 
+  usesPeriodicOutlineRefreshFallback(): boolean {
+    return true
+  }
+
   getUserQuerySelector(): string | null {
     return USER_QUERY_SELECTOR
   }

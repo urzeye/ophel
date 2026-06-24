@@ -209,6 +209,13 @@ export class OutlineManager {
       this.stopAutoUpdate()
     }
 
+    const shouldUsePeriodicFallback = this.shouldEnablePeriodicOutlineRefreshFallback()
+    if (shouldUsePeriodicFallback && !this.periodicOutlineRefreshTimer) {
+      this.startPeriodicOutlineRefreshFallback()
+    } else if (!shouldUsePeriodicFallback && this.periodicOutlineRefreshTimer) {
+      this.stopPeriodicOutlineRefreshFallback()
+    }
+
     const shouldObserveSources =
       this.settings.enabled && this.isActive && this.siteAdapter.supportsDynamicOutlineSources()
 
@@ -221,7 +228,11 @@ export class OutlineManager {
   }
 
   updateSettings(newSettings: Settings["features"]["outline"]) {
+    const updateIntervalChanged = this.settings.updateInterval !== newSettings.updateInterval
     this.settings = newSettings
+    if (updateIntervalChanged && this.periodicOutlineRefreshTimer) {
+      this.stopPeriodicOutlineRefreshFallback()
+    }
     // 同步 expandLevel
     if (newSettings.expandLevel !== undefined) {
       this.expandLevel = newSettings.expandLevel
@@ -234,6 +245,7 @@ export class OutlineManager {
   // State for Auto Update
   private observer: MutationObserver | null = null
   private updateDebounceTimer: ReturnType<typeof setTimeout> | null = null
+  private periodicOutlineRefreshTimer: ReturnType<typeof setInterval> | null = null
   private sourceObserver: MutationObserver | null = null
   private sourceRefreshTimer: ReturnType<typeof setTimeout> | null = null
   private outlineSourcesSignature: string = ""
@@ -258,6 +270,18 @@ export class OutlineManager {
 
   private shouldEnableAutoUpdate(): boolean {
     return this.settings.enabled && this.settings.autoUpdate && this.isActive
+  }
+
+  private shouldEnablePeriodicOutlineRefreshFallback(): boolean {
+    return (
+      this.shouldEnableAutoUpdate() &&
+      this.activeSourceId === "conversation" &&
+      this.siteAdapter.usesPeriodicOutlineRefreshFallback()
+    )
+  }
+
+  private getOutlineUpdateIntervalMs(): number {
+    return (this.settings.updateInterval || 2) * 1000
   }
 
   private startAutoUpdate() {
@@ -291,6 +315,24 @@ export class OutlineManager {
     // 注意：不清理 refreshDebounceTimer，因为它可能是由其他路径触发的
     // （例如设置更新、书签变化等），清理会导致这些 refresh 丢失
     this.isAutoUpdating = false
+  }
+
+  private startPeriodicOutlineRefreshFallback() {
+    if (this.periodicOutlineRefreshTimer || !this.shouldEnablePeriodicOutlineRefreshFallback()) {
+      return
+    }
+
+    this.periodicOutlineRefreshTimer = setInterval(() => {
+      if (!this.shouldEnablePeriodicOutlineRefreshFallback()) return
+      this.refresh()
+    }, this.getOutlineUpdateIntervalMs())
+  }
+
+  private stopPeriodicOutlineRefreshFallback() {
+    if (!this.periodicOutlineRefreshTimer) return
+
+    clearInterval(this.periodicOutlineRefreshTimer)
+    this.periodicOutlineRefreshTimer = null
   }
 
   private startSourceObserver() {
@@ -475,6 +517,7 @@ export class OutlineManager {
     this.preSearchExpandLevel = null
     this.searchLevelManual = false
     this.matchCount = 0
+    this.updateAutoUpdateState()
     this.refresh()
     this.notify()
   }
@@ -799,6 +842,7 @@ export class OutlineManager {
     if (this.isAutoUpdating) {
       this.stopAutoUpdate()
     }
+    this.stopPeriodicOutlineRefreshFallback()
 
     this.tree = []
     this.flatItems = []
