@@ -2612,6 +2612,11 @@ export class ChatGPTAdapter extends SiteAdapter {
     return this.getNativeTocButtonIndex(activeButton, fallbackIndex)
   }
 
+  findActiveOutlineItemId(): string | null {
+    const activeIndex = this.getActiveNativeTocIndex()
+    return activeIndex === null ? null : `chatgpt-native-user-query::${activeIndex}::`
+  }
+
   private createNativeTocUserQueryOutlineItem(
     entry: ChatGPTNativeTocEntry,
     wordCount?: number,

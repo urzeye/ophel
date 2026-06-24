@@ -1714,6 +1714,17 @@ export class OutlineManager {
     if (this.settings.followMode !== "current") return null
     if (this.flatNodes.length === 0) return null
 
+    const nativeActiveId = this.siteAdapter.findActiveOutlineItemId()
+    if (nativeActiveId) {
+      const nativeActiveNode = this.flatNodes.find((node) => {
+        const nodeNavigationId = node.navigationId || node.id || ""
+        return nodeNavigationId === nativeActiveId || nodeNavigationId.startsWith(nativeActiveId)
+      })
+      if (nativeActiveNode && !nativeActiveNode.isGhost) {
+        return nativeActiveNode
+      }
+    }
+
     const viewportRect = this.getScrollViewportRect(scrollContainer)
     if (!viewportRect) return null
 

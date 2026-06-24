@@ -1149,6 +1149,10 @@ export abstract class SiteAdapter {
    * @param text 用户提问文本（用于验证和回退搜索）
    * @returns 匹配的元素，未找到返回 null
    */
+  findActiveOutlineItemId(): string | null {
+    return null
+  }
+
   findUserQueryElement(queryIndex: number, text: string): Element | null {
     const selector = this.getUserQuerySelector()
     if (!selector) return null
