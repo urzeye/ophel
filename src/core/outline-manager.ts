@@ -1785,9 +1785,13 @@ export class OutlineManager {
     const cachedVisibleNode = this.findCachedActiveNode(scrollContainer, viewportRect)
 
     let latestUserQueryBeforeAnchor: MeasuredOutlineNode | null = null
+    let activeUserQuery: MeasuredOutlineNode | null = null
     for (const query of mountedUserQueries) {
       const bottom = query.top + query.height
       if (query.top <= anchorY && bottom > anchorY) {
+        if (!activeUserQuery || query.top > activeUserQuery.top) {
+          activeUserQuery = query
+        }
         latestUserQueryBeforeAnchor = query
       }
       if (
@@ -1796,6 +1800,10 @@ export class OutlineManager {
       ) {
         latestUserQueryBeforeAnchor = query
       }
+    }
+
+    if (activeUserQuery) {
+      return activeUserQuery.node
     }
 
     let activeHeading: MeasuredOutlineNode | null = null
@@ -1820,7 +1828,7 @@ export class OutlineManager {
       return (
         this.findFirstHeadingInUserQuerySection(latestUserQueryBeforeAnchor.node) ??
         nextVisibleHeading?.node ??
-        null
+        latestUserQueryBeforeAnchor.node
       )
     }
 
