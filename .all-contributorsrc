@@ -22,7 +22,7 @@
     {
       "login": "urzeye",
       "name": "小 i 同学",
-      "avatar_url": "https://avatars.githubusercontent.com/u/20869204?v=4",
+      "avatar_url": "https://raw.githubusercontent.com/urzeye/ophel/main/docs/media/github/avatar.gif",
       "profile": "https://github.com/urzeye",
       "contributions": ["code", "ideas", "infra"]
     },
@@ -121,6 +121,6 @@
   "contributorsPerLine": 8,
   "imageSize": 80,
   "linkToUsage": false,
-  "contributorTemplate": "<a href=\"<%- contributor.profile %>\"><img src=\"<%- contributor.avatar_url %><%- contributor.avatar_url.includes('?') ? '&' : '?' %>s=<%- options.imageSize %>\" width=\"<%- options.imageSize %>px;\" alt=\"<%- contributor.name %>\"/><br /><sub><b><%- contributor.name %></b></sub></a><br /><%= contributions.replace(/<a href=\\\"[^\\\"]*\\\"/g, '<span').replace(/<\\/a>/g, '</span>') %>",
+  "contributorTemplate": "<a href=\"<%- contributor.profile %>\"><img src=\"<%- contributor.avatar_url %><%= contributor.avatar_url.includes('avatars.githubusercontent.com') ? (contributor.avatar_url.includes('?') ? '&' : '?') + 's=' + options.imageSize : '' %>\" width=\"<%- options.imageSize %>\" height=\"<%- options.imageSize %>\" alt=\"<%- contributor.name %>\"/></a><br /><a href=\"<%- contributor.profile %>\"><sub><b><%- contributor.name %></b></sub></a><br /><%= contributions.replace(/<a href=\\\"[^\\\"]*\\\"/g, '<span').replace(/<\\/a>/g, '</span>') %>",
   "commitType": "docs"
 }
