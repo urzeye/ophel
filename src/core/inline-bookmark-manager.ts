@@ -292,7 +292,6 @@ export class InlineBookmarkManager {
     this.observer.observe(target, {
       childList: true,
       subtree: true,
-      characterData: true,
     })
   }
 
