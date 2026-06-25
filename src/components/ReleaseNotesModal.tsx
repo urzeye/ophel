@@ -1,6 +1,6 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from "react"
 
-import { CheckIcon, ClearIcon, NewTabIcon } from "~components/icons"
+import { CheckIcon, ClearIcon, ExternalLinkIcon } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { getReleaseNotesMediaAlt, getReleaseNotesMediaCaption } from "~release-notes"
 import type { ReleaseNotesMedia } from "~release-notes/types"
@@ -136,7 +136,7 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
             className="gh-release-notes-secondary"
             title={fullChangelogUrl}
             onClick={onOpenFullChangelog}>
-            <NewTabIcon size={14} />
+            <ExternalLinkIcon size={14} />
             <span>{t("releaseNotesViewFull")}</span>
           </button>
           <button type="button" className="gh-release-notes-primary" onClick={onClose}>
