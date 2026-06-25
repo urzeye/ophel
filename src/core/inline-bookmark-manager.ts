@@ -292,6 +292,7 @@ export class InlineBookmarkManager {
     this.observer.observe(target, {
       childList: true,
       subtree: true,
+      characterData: true,
     })
   }
 
@@ -308,11 +309,19 @@ export class InlineBookmarkManager {
   }
 
   private hasRelevantMutation(mutations: MutationRecord[]): boolean {
-    const selector = this.getInlineBookmarkTargetSelector()
+    const subtreeSelector = this.getInlineBookmarkTargetSelector()
+    const contentChangeSelector = this.getInlineBookmarkContentChangeSelector()
 
     return mutations.some((mutation) => {
+      if (this.nodeIsInsideInlineBookmarkContent(mutation.target, contentChangeSelector)) {
+        return true
+      }
+
       for (const node of mutation.addedNodes) {
-        if (this.nodeMatchesInlineBookmarkTarget(node, selector)) {
+        if (
+          this.nodeMatchesInlineBookmarkTarget(node, subtreeSelector) ||
+          this.nodeIsInsideInlineBookmarkContent(node, contentChangeSelector)
+        ) {
           return true
         }
       }
@@ -330,6 +339,14 @@ export class InlineBookmarkManager {
     return Array.from(new Set(selectors)).join(", ")
   }
 
+  private getInlineBookmarkContentChangeSelector(): string {
+    const selectors = [OUTLINE_TARGET_SELECTOR, this.adapter.getUserQuerySelector()].filter(
+      (selector): selector is string => Boolean(selector?.trim()),
+    )
+
+    return Array.from(new Set(selectors)).join(", ")
+  }
+
   private nodeMatchesInlineBookmarkTarget(node: Node, selector: string): boolean {
     if (!(node instanceof Element)) return false
 
@@ -339,6 +356,20 @@ export class InlineBookmarkManager {
       return (
         node.matches(OUTLINE_TARGET_SELECTOR) ||
         node.querySelector(OUTLINE_TARGET_SELECTOR) !== null
+      )
+    }
+  }
+
+  private nodeIsInsideInlineBookmarkContent(node: Node, selector: string): boolean {
+    const element = node instanceof Element ? node : node.parentElement
+    if (!element) return false
+
+    try {
+      return element.matches(selector) || element.closest(selector) !== null
+    } catch {
+      return (
+        element.matches(OUTLINE_TARGET_SELECTOR) ||
+        element.closest(OUTLINE_TARGET_SELECTOR) !== null
       )
     }
   }
