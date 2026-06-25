@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **Theme toggle animation** — Fixed issue where the circular theme animation could briefly show host-page content on high-refresh macOS displays; the animation no longer uses page-level View Transition snapshots. (#674)
+
 ---
 
 ## [1.1.1] - 2026-06-25

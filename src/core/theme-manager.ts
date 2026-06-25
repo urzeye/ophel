@@ -20,20 +20,6 @@ export type ThemeMode = "light" | "dark"
 export type ThemePreference = "light" | "dark" | "system"
 export type ThemeTransitionOrigin = Pick<MouseEvent, "clientX" | "clientY">
 
-// Extend Document interface for View Transitions API
-declare global {
-  interface ViewTransition {
-    readonly finished: Promise<void>
-    readonly ready: Promise<void>
-    readonly updateCallbackDone: Promise<void>
-    skipTransition(): void
-  }
-
-  interface Document {
-    startViewTransition?(callback?: () => void | Promise<void>): ViewTransition
-  }
-}
-
 // 主题变化回调类型
 export type ThemeModeChangeCallback = (mode: ThemeMode, preference: ThemePreference) => void
 
@@ -43,6 +29,8 @@ type Listener = () => void
 const DEFAULT_LIGHT_PRESET_ID = "google-gradient"
 const DEFAULT_DARK_PRESET_ID = "classic-dark"
 const HOST_THEME_OVERRIDE_STYLE_ID = "ophel-native-adaptive-style"
+const THEME_TRANSITION_OVERLAY_ID = "ophel-theme-transition-overlay"
+const THEME_TRANSITION_DURATION_MS = 500
 
 export interface GlobalThemeManagerOptions {
   mode: ThemePreference | string
@@ -98,8 +86,6 @@ export class ThemeManager {
     this.adapter = adapter
     this.nativeThemeOverrideEnabled = syncNativePageTheme
 
-    // 注入全局动画样式 (View Transitions 需要在主文档生效)
-    this.injectGlobalStyles()
     this.ensureSystemListener()
   }
 
@@ -372,32 +358,6 @@ export class ThemeManager {
     } catch {
       return false
     }
-  }
-
-  /**
-   * 注入全局样式到主文档 head
-   * 主要是 View Transitions 相关的样式，因为它们必须在 document context 下才生效
-   */
-  private injectGlobalStyles() {
-    if (document.getElementById("gh-global-styles")) return
-
-    const style = document.createElement("style")
-    style.id = "gh-global-styles"
-    style.textContent = `
-      ::view-transition-old(root),
-      ::view-transition-new(root),
-      ::view-transition-old(gh-page),
-      ::view-transition-new(gh-page) {
-        animation: none;
-        mix-blend-mode: normal;
-      }
-
-      ::view-transition-new(gh-page),
-      ::view-transition-new(root) {
-        clip-path: circle(0px at var(--theme-x, 50%) var(--theme-y, 50%));
-      }
-    `
-    document.head.appendChild(style)
   }
 
   /**
@@ -936,98 +896,127 @@ ${cssVars}
     return { x, y }
   }
 
-  /**
-   * ChatGPT 新版页面中裁剪 root 快照不会产生圆形扩散效果。
-   * 临时给 body 设置独立的 view-transition-name，改为裁剪这个命名快照。
-   */
-  private prepareTransitionSnapshotTarget(): { pseudoElement: string; cleanup: () => void } {
-    if (this.adapter?.getSiteId() !== SITE_IDS.CHATGPT || !document.body) {
-      return {
-        pseudoElement: "::view-transition-new(root)",
-        cleanup: () => {},
-      }
-    }
-
-    const previousName = document.body.style.getPropertyValue("view-transition-name")
-    document.body.style.setProperty("view-transition-name", "gh-page")
-
-    return {
-      pseudoElement: "::view-transition-new(gh-page)",
-      cleanup: () => {
-        if (previousName) {
-          document.body.style.setProperty("view-transition-name", previousName)
-        } else {
-          document.body.style.removeProperty("view-transition-name")
-        }
-      },
-    }
-  }
-
   private async applyWithTransition(
-    action: () => void,
+    action: () => void | Promise<void>,
     event?: ThemeTransitionOrigin,
   ): Promise<boolean> {
     const { x, y } = this.getTransitionOrigin(event)
 
-    document.documentElement.style.setProperty("--theme-x", `${x}%`)
-    document.documentElement.style.setProperty("--theme-y", `${y}%`)
-
     this.stopThemeMonitoring()
 
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    if (!document.startViewTransition || prefersReducedMotion) {
+    const prefersReducedMotion =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
+    if (prefersReducedMotion || typeof document.body?.appendChild !== "function") {
       try {
-        action()
+        await action()
       } finally {
         this.startThemeMonitoring()
       }
       return false
     }
 
-    const transitionTarget = this.prepareTransitionSnapshotTarget()
+    document.getElementById(THEME_TRANSITION_OVERLAY_ID)?.remove()
 
+    let overlay: HTMLDivElement | null = null
+    let animated = false
+    let shouldSkipNextDetection = false
     try {
-      const transition = document.startViewTransition(() => {
-        action()
-      })
+      const centerX = (x / 100) * window.innerWidth
+      const centerY = (y / 100) * window.innerHeight
+      const right = window.innerWidth - centerX
+      const bottom = window.innerHeight - centerY
+      const maxRadius = Math.hypot(Math.max(centerX, right), Math.max(centerY, bottom))
+      const overlayRadius = Math.ceil(maxRadius) + 2
+      const overlayColor = this.getPageBackgroundColor()
 
-      transition.ready.then(() => {
-        const right = window.innerWidth - (x / 100) * window.innerWidth
-        const bottom = window.innerHeight - (y / 100) * window.innerHeight
-        const maxRadius = Math.hypot(
-          Math.max((x / 100) * window.innerWidth, right),
-          Math.max((y / 100) * window.innerHeight, bottom),
-        )
+      overlay = document.createElement("div")
+      overlay.id = THEME_TRANSITION_OVERLAY_ID
+      overlay.setAttribute("aria-hidden", "true")
+      overlay.style.cssText = [
+        "position: fixed",
+        "inset: 0",
+        "z-index: 2147483647",
+        "pointer-events: none",
+        "overflow: hidden",
+        "background: transparent",
+        "contain: strict",
+      ].join(";")
 
-        const clipPath = [`circle(0px at ${x}% ${y}%)`, `circle(${maxRadius}px at ${x}% ${y}%)`]
+      const revealHole = document.createElement("div")
+      revealHole.style.cssText = [
+        "position: fixed",
+        `left: ${centerX}px`,
+        `top: ${centerY}px`,
+        "width: 0px",
+        "height: 0px",
+        "border-radius: 50%",
+        "transform: translate(-50%, -50%)",
+        `box-shadow: 0 0 0 ${overlayRadius}px ${overlayColor}`,
+        "background: transparent",
+        "will-change: width, height",
+      ].join(";")
 
-        document.documentElement.animate(
+      overlay.appendChild(revealHole)
+      document.body.appendChild(overlay)
+
+      await action()
+      shouldSkipNextDetection = true
+      await this.waitForNextFrame()
+
+      if (typeof revealHole.animate === "function") {
+        const animation = revealHole.animate(
+          [
+            { width: "0px", height: "0px" },
+            { width: `${overlayRadius * 2}px`, height: `${overlayRadius * 2}px` },
+          ],
           {
-            clipPath: clipPath,
-          },
-          {
-            duration: 500,
+            duration: THEME_TRANSITION_DURATION_MS,
             easing: "ease-in",
-            pseudoElement: transitionTarget.pseudoElement,
             fill: "forwards",
           },
         )
-      })
 
-      await transition.finished.catch(() => {
-        // 忽略动画错误
-      })
+        await animation.finished.catch(() => {})
+        animated = true
+      }
     } catch {
-      action()
-      transitionTarget.cleanup()
-      this.startThemeMonitoring()
       return false
+    } finally {
+      overlay?.remove()
+      if (shouldSkipNextDetection) {
+        this.skipNextDetection = true
+      }
+      this.startThemeMonitoring()
     }
 
-    transitionTarget.cleanup()
-    this.skipNextDetection = true
-    this.startThemeMonitoring()
-    return true
+    return animated
+  }
+
+  private getPageBackgroundColor(): string {
+    const candidates = [
+      getComputedStyle(document.body).backgroundColor,
+      getComputedStyle(document.documentElement).backgroundColor,
+    ]
+    const solidColor = candidates.find((color) => !this.isTransparentColor(color))
+
+    if (solidColor) return solidColor
+    return this.mode === "dark" ? "#0f0f0f" : "#ffffff"
+  }
+
+  private isTransparentColor(color: string): boolean {
+    const normalized = color.trim().toLowerCase()
+    return (
+      !normalized ||
+      normalized === "transparent" ||
+      /^rgba\([^)]*,\s*0(?:\.0+)?\)$/.test(normalized) ||
+      /^rgb\([^)]*\/\s*0(?:%|(?:\.0+)?)\s*\)$/.test(normalized)
+    )
+  }
+
+  private waitForNextFrame(): Promise<void> {
+    return new Promise((resolve) => {
+      requestAnimationFrame(() => resolve())
+    })
   }
 
   /**
@@ -1043,109 +1032,21 @@ ${cssVars}
     const nextMode: ThemeMode = currentMode === "dark" ? "light" : "dark"
     this.preference = nextMode
 
-    // 计算动画起点坐标（从点击位置或默认右上角）
-    let x = 95
-    let y = 5
-    if (event && event.clientX !== undefined) {
-      x = (event.clientX / window.innerWidth) * 100
-      y = (event.clientY / window.innerHeight) * 100
-    } else {
-      // 尝试从主题按钮位置获取
-      const themeBtn =
-        document.getElementById("theme-toggle-btn") || document.getElementById("quick-theme-btn")
-      if (themeBtn) {
-        const rect = themeBtn.getBoundingClientRect()
-        x = ((rect.left + rect.width / 2) / window.innerWidth) * 100
-        y = ((rect.top + rect.height / 2) / window.innerHeight) * 100
-      }
-    }
-
-    // 设置 CSS 变量
-    document.documentElement.style.setProperty("--theme-x", `${x}%`)
-    document.documentElement.style.setProperty("--theme-y", `${y}%`)
-
-    // 暂停 MutationObserver，防止在 View Transition 期间触发额外的 DOM 修改
-    this.stopThemeMonitoring()
-
     // 执行主题切换的核心逻辑
-    const doToggle = () => {
+    const doToggle = async () => {
       // 优先使用适配器的原生切换逻辑 (针对 Gemini Enterprise)
       if (
         this.isHostThemeSyncActive() &&
         this.adapter &&
         typeof this.adapter.toggleTheme === "function"
       ) {
-        this.adapter.toggleTheme(nextMode).catch(() => {})
+        await this.adapter.toggleTheme(nextMode).catch(() => {})
       }
       // 同步应用主题（包括 Shadow DOM）
       this.applyTheme(nextMode)
     }
 
-    // 检查是否支持 View Transitions API
-    if (
-      !document.startViewTransition ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      doToggle()
-      this.mode = nextMode
-      this.emitChange()
-      // 无条件启动监听（确保网页主题变化能被检测）
-      this.startThemeMonitoring()
-      return nextMode
-    }
-
-    const transitionTarget = this.prepareTransitionSnapshotTarget()
-
-    let transition: ViewTransition
-    try {
-      // 执行动画切换
-      transition = document.startViewTransition(() => {
-        doToggle()
-      })
-    } catch {
-      transitionTarget.cleanup()
-      doToggle()
-      this.mode = nextMode
-      this.emitChange()
-      this.startThemeMonitoring()
-      return nextMode
-    }
-
-    // 等待伪元素创建后，执行自定义动画
-    transition.ready.then(() => {
-      // 获取点击位置距离最远角落的距离（作为圆的半径）
-      const right = window.innerWidth - (x / 100) * window.innerWidth
-      const bottom = window.innerHeight - (y / 100) * window.innerHeight
-      const maxRadius = Math.hypot(
-        Math.max((x / 100) * window.innerWidth, right),
-        Math.max((y / 100) * window.innerHeight, bottom),
-      )
-
-      // 定义圆形扩散动画
-      const clipPath = [`circle(0px at ${x}% ${y}%)`, `circle(${maxRadius}px at ${x}% ${y}%)`]
-
-      // 统一使用扩散动画：新视图从中点扩散覆盖旧视图
-      // 配合 CSS 中 ::view-transition-new(root) 的初始 clip-path: circle(0px) 设置
-      document.documentElement.animate(
-        {
-          clipPath: clipPath,
-        },
-        {
-          duration: 500,
-          easing: "ease-in",
-          pseudoElement: transitionTarget.pseudoElement,
-          fill: "forwards",
-        },
-      )
-    })
-
-    // 使用 finally 确保 MutationObserver 一定会恢复（即使动画失败）
-    // 等待动画完成后再返回，确保调用方等待动画真正完成
-    await transition.finished.catch(() => {
-      // 忽略动画错误
-    })
-
-    transitionTarget.cleanup()
+    await this.applyWithTransition(doToggle, event)
 
     // 标记跳过下一次检测，防止 observer 立即根据中间态把结果回写掉
     this.skipNextDetection = true
