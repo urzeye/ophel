@@ -58,9 +58,92 @@ hljs.registerLanguage("docker", dockerfile)
 
 type RenderMarkdownOptions = {
   enableMath?: boolean
+  linkGithubReferences?: boolean
 }
 
-const createMarkdownIt = (enableMath = false): MarkdownIt => {
+type MarkdownItInlineRule = Parameters<MarkdownIt["inline"]["ruler"]["before"]>[2]
+type MarkdownItInlineState = Parameters<MarkdownItInlineRule>[0]
+
+type GithubReferenceStateInline = MarkdownItInlineState & {
+  linkLevel?: number
+}
+
+const GITHUB_REPOSITORY_URL = "https://github.com/urzeye/ophel"
+const GITHUB_USERNAME_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?/
+
+const isGithubReferenceBoundary = (value: string | undefined): boolean =>
+  !value || !/[A-Za-z0-9_/-]/.test(value)
+
+const pushGithubReferenceLink = (
+  state: MarkdownItInlineState,
+  href: string,
+  label: string,
+  className: string,
+) => {
+  const openToken = state.push("link_open", "a", 1)
+  openToken.attrs = [
+    ["href", href],
+    ["class", className],
+    ["target", "_blank"],
+    ["rel", "noopener noreferrer"],
+  ]
+
+  const textToken = state.push("text", "", 0)
+  textToken.content = label
+
+  state.push("link_close", "a", -1)
+}
+
+const githubReferenceRule: MarkdownItInlineRule = (state, silent) => {
+  const inlineState = state as GithubReferenceStateInline
+  const marker = state.src[state.pos]
+
+  if (inlineState.linkLevel && inlineState.linkLevel > 0) return false
+  if (marker !== "#" && marker !== "@") return false
+  if (!isGithubReferenceBoundary(state.pos > 0 ? state.src[state.pos - 1] : undefined)) {
+    return false
+  }
+
+  if (marker === "#") {
+    const match = state.src.slice(state.pos + 1).match(/^\d+/)
+    if (!match || !isGithubReferenceBoundary(state.src[state.pos + 1 + match[0].length])) {
+      return false
+    }
+
+    if (!silent) {
+      const label = `#${match[0]}`
+      pushGithubReferenceLink(
+        state,
+        `${GITHUB_REPOSITORY_URL}/issues/${match[0]}`,
+        label,
+        "gh-release-notes-reference gh-release-notes-reference-issue",
+      )
+    }
+
+    state.pos += match[0].length + 1
+    return true
+  }
+
+  const match = state.src.slice(state.pos + 1).match(GITHUB_USERNAME_PATTERN)
+  if (!match || !isGithubReferenceBoundary(state.src[state.pos + 1 + match[0].length])) {
+    return false
+  }
+
+  if (!silent) {
+    const label = `@${match[0]}`
+    pushGithubReferenceLink(
+      state,
+      `https://github.com/${match[0]}`,
+      label,
+      "gh-release-notes-reference gh-release-notes-reference-user",
+    )
+  }
+
+  state.pos += match[0].length + 1
+  return true
+}
+
+const createMarkdownIt = (enableMath = false, linkGithubReferences = false): MarkdownIt => {
   const instance = new MarkdownIt({
     html: false, // 禁用 HTML 标签（安全）
     breaks: true, // 换行转 <br>
@@ -104,6 +187,10 @@ const createMarkdownIt = (enableMath = false): MarkdownIt => {
       tokens[idx].nesting === 1 ? '<div class="gh-container gh-container-danger">' : "</div>\n",
   })
 
+  if (linkGithubReferences) {
+    instance.inline.ruler.before("text", "github_reference", githubReferenceRule)
+  }
+
   if (enableMath) {
     instance.use(tex, {
       delimiters: "all",
@@ -117,6 +204,8 @@ const createMarkdownIt = (enableMath = false): MarkdownIt => {
 
 const md = createMarkdownIt()
 const mdWithMath = createMarkdownIt(true)
+const mdWithGithubReferences = createMarkdownIt(false, true)
+const mdWithMathAndGithubReferences = createMarkdownIt(true, true)
 
 /**
  * 渲染 Markdown 内容
@@ -131,7 +220,13 @@ export const renderMarkdown = (
 ): string => {
   if (!content) return ""
 
-  const markdownIt = options.enableMath ? mdWithMath : md
+  const markdownIt = options.linkGithubReferences
+    ? options.enableMath
+      ? mdWithMathAndGithubReferences
+      : mdWithGithubReferences
+    : options.enableMath
+      ? mdWithMath
+      : md
   let html = markdownIt.render(content)
 
   // 高亮变量占位符 {{varName}}

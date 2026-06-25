@@ -47,7 +47,7 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
   const [activeMedia, setActiveMedia] = useState<ReleaseNotesMedia | null>(null)
   const releaseNotesHtml = useMemo(
-    () => createSafeHTML(renderMarkdown(markdown, false)),
+    () => createSafeHTML(renderMarkdown(markdown, false, { linkGithubReferences: true })),
     [markdown],
   )
 

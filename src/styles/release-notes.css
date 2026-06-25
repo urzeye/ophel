@@ -201,6 +201,56 @@
   text-decoration: underline;
 }
 
+.gh-release-notes-markdown a.gh-release-notes-reference {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  margin: 0 2px;
+  padding: 1px 7px;
+  border: 1px solid rgba(66, 133, 244, 0.22);
+  border-radius: 999px;
+  background: rgba(66, 133, 244, 0.09);
+  color: var(--gh-primary, #4285f4);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: nowrap;
+  vertical-align: 0.08em;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.gh-release-notes-markdown a.gh-release-notes-reference-user {
+  border-color: rgba(52, 168, 83, 0.24);
+  background: rgba(52, 168, 83, 0.1);
+  color: var(--gh-success, #2f8f46);
+}
+
+.gh-release-notes-markdown a.gh-release-notes-reference:hover,
+.gh-release-notes-markdown a.gh-release-notes-reference:focus-visible {
+  border-color: rgba(66, 133, 244, 0.46);
+  background: rgba(66, 133, 244, 0.16);
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.16);
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.gh-release-notes-markdown a.gh-release-notes-reference-user:hover,
+.gh-release-notes-markdown a.gh-release-notes-reference-user:focus-visible {
+  border-color: rgba(52, 168, 83, 0.5);
+  background: rgba(52, 168, 83, 0.16);
+  box-shadow: 0 4px 12px rgba(52, 168, 83, 0.16);
+}
+
+.gh-release-notes-markdown a.gh-release-notes-reference:focus-visible {
+  outline: 2px solid var(--gh-input-focus-border, #4285f4);
+  outline-offset: 2px;
+}
+
 .gh-release-notes-footer {
   display: flex;
   justify-content: space-between;
