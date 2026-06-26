@@ -193,6 +193,7 @@ export const zhCN = {
   firefoxAddons: "Firefox 扩展",
   edgeAddons: "Edge 扩展",
   greasyFork: "Greasy Fork",
+  scriptCat: "ScriptCat",
   reviewBtn: "评分",
   starBtn: "Star",
   credits: "版权与致谢",

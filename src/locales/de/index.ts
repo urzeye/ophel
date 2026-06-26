@@ -156,6 +156,7 @@ export const de = {
   firefoxAddons: "Firefox Add-on",
   edgeAddons: "Edge Add-on",
   greasyFork: "Greasy Fork",
+  scriptCat: "ScriptCat",
   reviewBtn: "Bewerten",
   starBtn: "Star",
   credits: "Danksagung",

@@ -50,21 +50,34 @@ export const GreasyForkIcon: React.FC<{ size?: number; className?: string; color
   className,
   color = "currentColor",
 }) => (
-  <svg
+  <svg width={size} height={size} viewBox="0 0 1024 1024" className={className} style={{ color }}>
+    <path
+      d="M28.16 514.56c0 268.8 217.6 486.4 486.4 486.4s486.4-217.6 486.4-486.4-217.6-486.4-486.4-486.4-486.4 217.6-486.4 486.4z"
+      fill={color}
+    />
+    <path
+      d="M440.32 258.048c139.264 140.288 142.336 144.384 135.68 193.024-2.048 16.384 0 28.672 0 29.696 0 40.96 138.752 164.352 218.624 253.952 39.424 44.032 64 78.848 53.248 109.056-5.12 14.336-17.92 27.648-34.304 31.744-32.768 8.192-67.072-26.112-117.76-78.336-145.408-150.016-197.632-204.8-251.392-194.56-13.824 2.56-11.264 7.68-25.6 8.704-35.84 2.56-80.896-34.304-193.024-146.432C121.856 360.448 91.648 322.56 98.304 304.128c7.68-19.456 26.112-5.12 113.152 79.872l105.472 103.424 29.184-28.672 29.184-28.672-103.424-103.424c-68.608-69.632-97.28-106.496-87.04-112.64 10.752-6.656 52.736 27.648 117.248 90.624L401.92 404.48l30.208-28.672 29.184-30.208-99.84-100.352C274.432 157.184 250.88 115.2 287.744 115.2c5.12 0 73.728 64.512 152.576 142.848z"
+      fill="#FFFFFF"
+    />
+  </svg>
+)
+
+const SCRIPT_CAT_ICON_DATA_URL =
+  "data:image/png;base64,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"
+
+export const ScriptCatIcon: React.FC<{ size?: number; className?: string; color?: string }> = ({
+  size = 24,
+  className,
+}) => (
+  <img
+    src={SCRIPT_CAT_ICON_DATA_URL}
     width={size}
     height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
     className={className}
-    style={{ color }}>
-    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-    <polyline points="14 2 14 8 20 8" />
-    <path d="m9 15 2 2 4-4" />
-  </svg>
+    alt=""
+    aria-hidden="true"
+    style={{ display: "block", width: size, height: size }}
+  />
 )
 
 export const EdgeIcon: React.FC<{ size?: number; className?: string }> = ({

@@ -156,7 +156,21 @@
   transform: translateY(-2px);
 }
 
-/* 2. GitHub */
+/* 2. ScriptCat */
+.sidebar-social-btn.scriptcat-btn {
+  color: #1296db;
+  --pulse-bg: rgba(18, 150, 219, 0.08);
+  --pulse-bg-hover: rgba(18, 150, 219, 0.15);
+  animation-delay: 1.5s;
+}
+.sidebar-social-btn.scriptcat-btn:hover {
+  color: #ffffff !important;
+  background: #1296db !important;
+  box-shadow: 0 4px 10px rgba(18, 150, 219, 0.25);
+  transform: translateY(-2px);
+}
+
+/* 3. GitHub */
 .sidebar-social-btn.github-btn {
   color: #24292f;
   --pulse-bg: rgba(36, 41, 47, 0.05);
@@ -180,7 +194,7 @@
   box-shadow: 0 4px 10px rgba(255, 255, 255, 0.25);
 }
 
-/* 3. Ko-fi */
+/* 4. Ko-fi */
 .sidebar-social-btn.kofi-btn {
   color: #ff5e5b;
   --pulse-bg: rgba(255, 94, 91, 0.08);
@@ -194,7 +208,7 @@
   transform: translateY(-2px);
 }
 
-/* 4. Discord */
+/* 5. Discord */
 .sidebar-social-btn.discord-btn {
   color: #5865f2;
   --pulse-bg: rgba(88, 101, 242, 0.08);

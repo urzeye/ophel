@@ -20,6 +20,7 @@ declare module "*.css?inline" {
 declare const __PLATFORM__: "extension" | "userscript"
 
 declare const GM_info: {
+  scriptHandler?: string
   script: {
     version: string
   }

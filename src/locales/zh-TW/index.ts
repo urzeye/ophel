@@ -99,6 +99,7 @@ export const zhTW = {
   firefoxAddons: "Firefox 擴充功能",
   edgeAddons: "Edge 擴充功能",
   greasyFork: "Greasy Fork",
+  scriptCat: "ScriptCat",
   reviewBtn: "評分",
   starBtn: "Star",
   credits: "版權與致謝",

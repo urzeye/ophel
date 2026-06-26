@@ -156,6 +156,7 @@ export const fr = {
   firefoxAddons: "Extension Firefox",
   edgeAddons: "Extension Edge",
   greasyFork: "Greasy Fork",
+  scriptCat: "ScriptCat",
   reviewBtn: "Noter",
   starBtn: "Star",
   credits: "Crédits",

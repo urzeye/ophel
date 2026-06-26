@@ -158,6 +158,7 @@ export const en = {
   firefoxAddons: "Firefox Add-on",
   edgeAddons: "Edge Add-on",
   greasyFork: "Greasy Fork",
+  scriptCat: "ScriptCat",
   reviewBtn: "Review",
   starBtn: "Star",
   githubDesc: "View source code, report issues, or contribute",

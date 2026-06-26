@@ -52,6 +52,28 @@ export function isUserscriptPlatform(): boolean {
 }
 
 /**
+ * 获取当前用户脚本管理器名称。
+ *
+ * 常见返回值包括 "ScriptCat"、"Tampermonkey"、"Violentmonkey"、"Greasemonkey"。
+ */
+export function getUserscriptManagerName(): string | null {
+  if (!isUserscriptPlatform()) return null
+
+  try {
+    if (typeof GM_info === "undefined") return null
+    return typeof GM_info.scriptHandler === "string" ? GM_info.scriptHandler : null
+  } catch {
+    return null
+  }
+}
+
+export function isScriptCatUserscriptManager(): boolean {
+  return (
+    getUserscriptManagerName()?.toLowerCase().replace(/\s+/g, "").includes("scriptcat") ?? false
+  )
+}
+
+/**
  * 检查当前是否为浏览器扩展环境
  *
  * @returns true 表示浏览器扩展环境，false 表示油猴脚本环境

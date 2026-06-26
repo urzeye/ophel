@@ -161,6 +161,7 @@ export const ja = {
   firefoxAddons: "Firefox アドオン",
   edgeAddons: "Edge アドオン",
   greasyFork: "Greasy Fork",
+  scriptCat: "ScriptCat",
   reviewBtn: "レビュー",
   starBtn: "スター",
   credits: "クレジット",

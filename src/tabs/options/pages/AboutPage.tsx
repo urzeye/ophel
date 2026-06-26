@@ -15,12 +15,14 @@ import {
   GreasyForkIcon,
   HeartIcon,
   KofiIcon,
+  ScriptCatIcon,
   ShieldCheckIcon,
   StarIcon,
 } from "~components/icons"
 import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 import { SITE_ICONS } from "~constants/site-icons"
+import { STORE_LINKS } from "~constants/store-links"
 import { APP_DISPLAY_NAME, APP_ICON_URL, APP_VERSION } from "~utils/config"
 import { t } from "~utils/i18n"
 
@@ -87,7 +89,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
         style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
         {/* Chrome Store */}
         <a
-          href="https://chromewebstore.google.com/detail/ai-chat-organizer-outline/lpcohdfbomkgepfladogodgeoppclakd"
+          href={STORE_LINKS.chrome}
           target="_blank"
           rel="noopener noreferrer"
           className="about-link-card"
@@ -101,7 +103,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
 
         {/* Edge Add-ons */}
         <a
-          href="https://microsoftedge.microsoft.com/addons/detail/ophel-atlas-ai-chat-navi/ffpenkdeifijngifjmbbpijfpdhlolga"
+          href={STORE_LINKS.edge}
           target="_blank"
           rel="noopener noreferrer"
           className="about-link-card"
@@ -115,7 +117,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
 
         {/* Firefox Add-on */}
         <a
-          href="https://addons.mozilla.org/firefox/addon/ophel-ai-chat-enhancer/"
+          href={STORE_LINKS.firefox}
           target="_blank"
           rel="noopener noreferrer"
           className="about-link-card"
@@ -129,7 +131,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
 
         {/* GreasyFork */}
         <a
-          href="https://greasyfork.org/scripts/563646-ophel-ai-chat-page-enhancer"
+          href={STORE_LINKS.greasyFork}
           target="_blank"
           rel="noopener noreferrer"
           className="about-link-card"
@@ -137,6 +139,20 @@ const AboutPage: React.FC<AboutPageProps> = ({ onOpenReleaseNotes }) => {
           <div className="about-link-header">
             <GreasyForkIcon size={24} color="currentColor" />
             <span style={{ fontWeight: 600, color: "var(--gh-text)" }}>{t("greasyFork")}</span>
+          </div>
+          <button className="about-link-btn">{t("reviewBtn")}</button>
+        </a>
+
+        {/* ScriptCat */}
+        <a
+          href={STORE_LINKS.scriptCat}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="about-link-card"
+          style={{ "--card-color": "#1296db" } as React.CSSProperties}>
+          <div className="about-link-header">
+            <ScriptCatIcon size={24} color="var(--card-color)" />
+            <span style={{ fontWeight: 600, color: "var(--gh-text)" }}>{t("scriptCat")}</span>
           </div>
           <button className="about-link-btn">{t("reviewBtn")}</button>
         </a>

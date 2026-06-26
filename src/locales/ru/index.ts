@@ -154,6 +154,7 @@ export const ru = {
   firefoxAddons: "Дополнение Firefox",
   edgeAddons: "Дополнение Edge",
   greasyFork: "Greasy Fork",
+  scriptCat: "ScriptCat",
   reviewBtn: "Оценить",
   starBtn: "Star",
   credits: "Благодарности",

@@ -2,12 +2,16 @@ import React, { useMemo } from "react"
 import { DiscordIcon } from "~components/icons/DiscordIcon"
 import { GithubIcon } from "~components/icons/GithubIcon"
 import { KofiIcon } from "~components/icons/KofiIcon"
+import { ScriptCatIcon } from "~components/icons/StoreIcons"
 import { Tooltip } from "~components/ui/Tooltip"
+import { STORE_LINKS } from "~constants/store-links"
+import { isScriptCatUserscriptManager } from "~platform/utils"
 import { getStoreInfo } from "~utils/getStoreInfo"
 import { t } from "~utils/i18n"
 
 export function SidebarCommunityLinks() {
   const storeInfo = useMemo(() => getStoreInfo(), [])
+  const showScriptCat = useMemo(() => isScriptCatUserscriptManager(), [])
 
   return (
     <div className="sidebar-community-links">
@@ -21,6 +25,19 @@ export function SidebarCommunityLinks() {
           {React.cloneElement(storeInfo.icon as React.ReactElement, { size: 18 })}
         </a>
       </Tooltip>
+
+      {showScriptCat && (
+        <Tooltip content={t("scriptCat")}>
+          <a
+            href={STORE_LINKS.scriptCat}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={t("scriptCat")}
+            className="sidebar-social-btn scriptcat-btn">
+            <ScriptCatIcon size={18} />
+          </a>
+        </Tooltip>
+      )}
 
       <Tooltip content={t("giveStar")}>
         <a

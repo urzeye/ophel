@@ -157,6 +157,7 @@ export const ko = {
   firefoxAddons: "Firefox 애드온",
   edgeAddons: "Edge 애드온",
   greasyFork: "Greasy Fork",
+  scriptCat: "ScriptCat",
   reviewBtn: "평가",
   starBtn: "스타",
   credits: "크레딧",
