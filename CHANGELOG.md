@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **AI Studio model lock in userscript** — Fixed issue where the AI Studio model lock feature on the options page couldn't fetch the model list in the userscript build because it tried to use the background script proxy which doesn't exist in userscripts. Now it directly calls the adapter in userscript mode. (#733)
+
 ---
 
 ## [1.1.1] - 2026-06-25
