@@ -136,7 +136,6 @@ export class ConversationManager {
   // Observer state
   private observerConfig: ConversationObserverConfig | null = null
   private sidebarObserverStop: (() => void) | null = null
-  private observerContainer: Node | null = null
   private titleWatcher: any = null // DOMToolkit watcher instance
   private pollInterval: ReturnType<typeof setTimeout> | null = null
   private geminiMigrationTimer: ReturnType<typeof setTimeout> | null = null
@@ -534,9 +533,6 @@ export class ConversationManager {
           return
         }
       }
-
-      this.observerContainer = sidebarContainer
-
       // DOMToolkit.each returns a stop function
       this.sidebarObserverStop = DOMToolkit.each(
         config.selector,
@@ -559,7 +555,6 @@ export class ConversationManager {
       this.sidebarObserverStop()
       this.sidebarObserverStop = null
     }
-    this.observerContainer = null
 
     if (this.titleWatcher) {
       // DOMToolkit Watcher doesnt explicitly expose stop on the object returned by watchMultiple?

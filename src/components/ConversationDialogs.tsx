@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
-import { ArrowDownIcon, ChevronDownIcon, ClearIcon, EditIcon } from "~components/icons"
+import { ChevronDownIcon, ClearIcon, EditIcon } from "~components/icons"
 import { Button, Tooltip } from "~components/ui"
 import { PRESET_EMOJIS, TAG_COLORS } from "~constants"
 import type { Conversation, Folder, Tag } from "~core/conversation-manager"

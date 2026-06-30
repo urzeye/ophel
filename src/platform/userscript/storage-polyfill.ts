@@ -19,11 +19,7 @@ declare function GM_removeValueChangeListener(listenerId: number): void
  * Storage 类 - 兼容 @plasmohq/storage 的 API
  */
 export class Storage {
-  private area: string
-
-  constructor(options?: { area?: string }) {
-    this.area = options?.area || "local"
-  }
+  constructor(_options?: { area?: string }) {}
 
   async get<T>(key: string): Promise<T | undefined> {
     const value = GM_getValue(key)

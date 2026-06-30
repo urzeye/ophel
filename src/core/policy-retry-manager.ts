@@ -11,7 +11,6 @@ export class PolicyRetryManager {
   private adapter: GeminiEnterpriseAdapter
   private settings: NonNullable<Settings["geminiEnterprise"]>["policyRetry"]
   private retryCounts = new Map<string, number>() // promptHash -> count
-  private lastPromptValues = new WeakMap<Element, string>()
   private monitorInitialized = false
 
   constructor(

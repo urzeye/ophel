@@ -12,12 +12,10 @@ import type { SiteAdapter } from "~adapters/base"
 import type { Settings } from "~utils/storage"
 
 export class ScrollLockManager {
-  private adapter: SiteAdapter
   private settings: Settings
   private enabled = false
 
-  constructor(adapter: SiteAdapter, settings: Settings) {
-    this.adapter = adapter
+  constructor(_adapter: SiteAdapter, settings: Settings) {
     this.settings = settings
     this.init()
   }

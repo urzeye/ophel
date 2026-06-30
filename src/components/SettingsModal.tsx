@@ -17,10 +17,6 @@ import {
   PermissionsIcon,
   RestoreIcon,
   SearchIcon,
-  ThemeDarkIcon,
-  ThemeLightIcon,
-  TranslateIcon,
-  GithubIcon,
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
 import { SidebarCommunityLinks } from "~components/SidebarCommunityLinks"

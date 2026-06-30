@@ -451,11 +451,11 @@ export abstract class SiteAdapter {
   /**
    * 导航到指定会话（SPA 导航，不刷新页面）
    * 各站点适配器应覆盖此方法实现站点特定的导航逻辑
-   * @param id 会话 ID
+   * @param _id 会话 ID
    * @param url 会话 URL（用于降级硬刷新）
    * @returns 是否成功导航
    */
-  navigateToConversation(id: string, url?: string): boolean {
+  navigateToConversation(_id: string, url?: string): boolean {
     // 默认实现：直接跳转（刷新页面）
     if (url) {
       window.location.href = url

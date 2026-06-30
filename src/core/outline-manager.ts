@@ -84,7 +84,6 @@ export class OutlineManager {
   private minLevel: number = 1
   private treeKey: string = ""
   private listeners: (() => void)[] = []
-  private updateIntervalId: ReturnType<typeof setTimeout> | null = null
   private isAutoUpdating = false
 
   // UI State
@@ -125,9 +124,6 @@ export class OutlineManager {
   private refreshDebounceTimer: ReturnType<typeof setTimeout> | null = null
   private readonly REFRESH_DEBOUNCE_MS = 300
 
-  // Bookmark store subscription
-  private unsubscribeBookmarks: (() => void) | null = null
-
   // 设置变更回调
   private onExpandLevelChange?: (level: number) => void
   private onShowUserQueriesChange?: (show: boolean) => void
@@ -151,7 +147,7 @@ export class OutlineManager {
     window.addEventListener("message", this.handleMessage.bind(this))
 
     // 订阅 bookmarks-store，当书签变化时刷新大纲
-    this.unsubscribeBookmarks = useBookmarkStore.subscribe(() => {
+    void useBookmarkStore.subscribe(() => {
       // 只有在激活状态下才刷新，避免不必要的计算
       if (this.isActive) {
         this.refresh()

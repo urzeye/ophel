@@ -6,14 +6,9 @@ import {
   GLOBAL_SEARCH_SYNTAX_OPERATORS,
   GLOBAL_SEARCH_TYPE_FILTER_VALUES,
   getGlobalSearchTrailingTokenInfo,
-  type GlobalSearchSyntaxDiagnostic,
   type GlobalSearchSyntaxOperator,
 } from "./syntax"
-import type {
-  GlobalSearchMatchReason,
-  GlobalSearchResultItem,
-  GlobalSearchSyntaxSuggestionItem,
-} from "./types"
+import type { GlobalSearchResultItem, GlobalSearchSyntaxSuggestionItem } from "./types"
 
 interface UseGlobalSearchSyntaxParams {
   getLocalizedText: (definition: { key: string; fallback: string }) => string

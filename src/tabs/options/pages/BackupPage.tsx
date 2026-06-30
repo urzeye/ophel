@@ -587,7 +587,6 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
       // 数据格式验证
       const validation = validateBackupData(data)
       if (!validation.valid) {
-        const _errorMsgs = validation.errorKeys.map((key) => t(key)).join(", ")
         console.error("Backup validation failed:", validation.errorKeys)
         showDomToast(t("invalidBackupFile"))
         return

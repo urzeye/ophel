@@ -428,9 +428,8 @@ export const App = () => {
   const isSettingsHydrated = useSettingsHydrated()
   const promptSubmitShortcut = settings?.features?.prompts?.submitShortcut ?? "enter"
 
-  // 订阅 _syncVersion 以在跨上下文同步时强制触发重渲染
-  // 当 Options 页面更新设置时，_syncVersion 递增，这会使整个组件重渲染
-  const _syncVersion = useSettingsStore((s) => s._syncVersion)
+  // 订阅 _syncVersion 以在跨上下文同步时强制触发重渲染。
+  useSettingsStore((s) => s._syncVersion)
   const [i18nRenderTick, setI18nRenderTick] = useState(0)
 
   const getLocalizedText = useCallback(

@@ -9,12 +9,7 @@ import type { SiteAdapter } from "~adapters/base"
 import { SITE_IDS } from "~constants/defaults"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import type { CustomStyle } from "~utils/storage"
-import {
-  getPreset,
-  themeVariablesToCSS,
-  type ThemePreset,
-  type ThemeVariables,
-} from "~utils/themes"
+import { getPreset, themeVariablesToCSS, type ThemeVariables } from "~utils/themes"
 
 export type ThemeMode = "light" | "dark"
 export type ThemePreference = "light" | "dark" | "system"
@@ -678,14 +673,6 @@ export class ThemeManager {
 
     // 同步插件 UI 主题
     this.syncPluginUiTheme(mode)
-  }
-
-  /**
-   * 获取当前主题预置
-   */
-  private getCurrentPreset(): ThemePreset {
-    const presetId = this.mode === "dark" ? this.darkPresetId : this.lightPresetId
-    return getPreset(presetId, this.mode)
   }
 
   /**

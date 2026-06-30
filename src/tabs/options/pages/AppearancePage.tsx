@@ -187,7 +187,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
   }
 
   // 删除自定义样式
-  const deleteCustomStyle = (styleId: string, styleName: string) => {
+  const deleteCustomStyle = (styleId: string) => {
     if (confirm(t("confirmDeleteStyle"))) {
       const newStyles = (settings?.theme?.customStyles || []).filter((s) => s.id !== styleId)
       setSettings({
@@ -375,7 +375,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
                       </button>
                       <button
                         className="settings-btn settings-btn-danger"
-                        onClick={() => deleteCustomStyle(style.id, style.name)}
+                        onClick={() => deleteCustomStyle(style.id)}
                         style={{ padding: "6px 12px", fontSize: "12px" }}>
                         🗑️
                       </button>

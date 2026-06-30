@@ -182,7 +182,6 @@ export function calculateTooltipPosition(
 class DomTooltipManager {
   private tooltipEl: HTMLDivElement | null = null
   private activeTrigger: HTMLElement | null = null
-  private activeContainer: Element | DocumentFragment | null = null
   private positionOptions: TooltipPositionOptions = {}
 
   private readonly handleWindowChange = () => {
@@ -220,7 +219,6 @@ class DomTooltipManager {
     }
 
     this.activeTrigger = trigger
-    this.activeContainer = container
     this.positionOptions = positionOptions
 
     const tooltipEl = this.ensureTooltipElement(container)

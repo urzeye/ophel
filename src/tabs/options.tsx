@@ -12,7 +12,6 @@ import {
   GeneralIcon,
   PageContentIcon,
   PermissionsIcon,
-  GithubIcon,
 } from "~components/icons"
 import { resolveSettingsNavigateDetail } from "~constants"
 import { platform } from "~platform"

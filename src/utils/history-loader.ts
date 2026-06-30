@@ -6,12 +6,7 @@
  */
 
 import type { SiteAdapter } from "~adapters/base"
-import {
-  getScrollInfo,
-  isFlutterProxy,
-  smartScrollTo,
-  smartScrollToTop,
-} from "~utils/scroll-helper"
+import { getScrollInfo, isFlutterProxy, smartScrollToTop } from "~utils/scroll-helper"
 
 // ==================== 类型定义 ====================
 
@@ -340,34 +335,6 @@ export async function loadCompleteHistoryForExport(
     finalHeight: container.scrollHeight,
     finalSignature,
   }
-}
-
-/**
- * 加载历史并滚动到指定位置（用于阅读恢复）
- *
- * @deprecated 此函数当前未被使用，保留以备将来需要
- * 阅读恢复逻辑已迁移到 reading-history.ts 的 restoreProgress 方法
- *
- * @param options 加载选项
- * @param targetScrollTop 目标滚动位置
- * @returns 是否成功
- */
-export async function loadAndScrollTo(
-  options: Omit<LoadHistoryOptions, "loadAll">,
-  targetScrollTop: number,
-): Promise<boolean> {
-  const result = await loadHistoryUntil({
-    ...options,
-    targetHeight: targetScrollTop,
-  })
-
-  if (!result.success) {
-    return false
-  }
-
-  // 滚动到目标位置
-  await smartScrollTo(options.adapter, targetScrollTop)
-  return true
 }
 
 // ==================== 工具函数 ====================

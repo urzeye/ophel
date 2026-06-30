@@ -90,7 +90,6 @@ const areGroupPositionsEqual = (
 const DRAG_LONG_PRESS_MS = 220
 const DRAG_THRESHOLD_PX = 6
 const DRAG_PADDING_PX = 8
-const POSITION_PERSIST_DEBOUNCE_MS = 220
 const PROXIMITY_RETAIN_MS = 3000
 const ACTIVITY_PROTECT_MS = 4000
 const LEAVE_WINDOW_RETAIN_MS = 1500
@@ -144,10 +143,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
   const siteId = adapter?.getSiteId() || "_default"
   const siteTheme = getSiteTheme(currentSettings, siteId)
   const resolvedThemeMode = themeMode || (siteTheme.mode === "dark" ? "dark" : "light")
-  const currentThemeStyleId =
-    resolvedThemeMode === "light"
-      ? siteTheme.lightStyleId || "google-gradient"
-      : siteTheme.darkStyleId || "classic-dark"
   const panelSparkleColor = resolvedThemeMode === "dark" ? "brand" : "currentColor"
 
   // 工具菜单状态
@@ -385,29 +380,6 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
       updateNestedSetting("quickButtons", "position", nextPosition || undefined)
     },
     [clearPositionPersistTimer, updateNestedSetting],
-  )
-
-  const scheduleGroupPositionPersist = useCallback(
-    (position: GroupPosition) => {
-      if (areGroupPositionsEqual(lastPersistedGroupPositionRef.current, position)) {
-        return
-      }
-
-      clearPositionPersistTimer()
-
-      const queuedPosition = { ...position }
-      positionPersistTimerRef.current = window.setTimeout(() => {
-        positionPersistTimerRef.current = null
-
-        if (areGroupPositionsEqual(lastPersistedGroupPositionRef.current, queuedPosition)) {
-          return
-        }
-
-        lastPersistedGroupPositionRef.current = queuedPosition
-        updateNestedSetting("quickButtons", "position", queuedPosition)
-      }, POSITION_PERSIST_DEBOUNCE_MS)
-    },
-    [POSITION_PERSIST_DEBOUNCE_MS, clearPositionPersistTimer, updateNestedSetting],
   )
 
   useEffect(() => {

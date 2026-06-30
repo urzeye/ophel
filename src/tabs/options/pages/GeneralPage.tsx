@@ -14,7 +14,6 @@ import {
 } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
-import { showToastThrottled } from "~utils/toast"
 
 import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
 
@@ -101,10 +100,6 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
       setActiveTab(initialTab)
     }
   }, [initialTab])
-
-  const prerequisiteToastTemplate = t("enablePrerequisiteToast")
-  const showPrerequisiteToast = (label: string) =>
-    showToastThrottled(prerequisiteToastTemplate.replace("{setting}", label), 2000, {}, 1500, label)
 
   // 拖拽状态
   const [draggedItem, setDraggedItem] = useState<{ type: "tab" | "button"; index: number } | null>(

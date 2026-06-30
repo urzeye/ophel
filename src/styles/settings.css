@@ -1416,11 +1416,6 @@ html[data-theme="dark"] .about-slogan-badge {
   border-color: rgba(167, 139, 250, 0.2);
 }
 
-/* 废弃 .about-slogan */
-.about-slogan {
-  display: none;
-}
-
 /* Hero Card */
 .about-hero-card {
   background: var(--gh-bg-secondary, #f3f4f6);
@@ -1862,8 +1857,6 @@ html[data-theme="dark"] .about-privacy-banner {
   opacity: 0.9;
   line-height: 1.5;
 }
-
-/* 渐变色 Slogan（已废弃，由 .about-slogan-badge 替代） */
 
 @media (max-width: 640px) {
   .about-platforms-header {
