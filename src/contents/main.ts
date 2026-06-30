@@ -528,7 +528,6 @@ if (!window.ophelInitialized) {
 
         // AI Studio 获取模型列表
         if (message.type === "GET_MODEL_LIST") {
-          // 检查是否是 AI Studio 适配器且有 getModelList 方法
           if (siteId === SITE_IDS.AISTUDIO && typeof (adapter as any).getModelList === "function") {
             ;(async () => {
               try {
@@ -539,11 +538,11 @@ if (!window.ophelInitialized) {
                 sendResponse({ success: false, error: (err as Error).message })
               }
             })()
-            return true // 保持消息通道打开
-          } else {
-            sendResponse({ success: false, error: "NOT_AISTUDIO" })
             return true
           }
+
+          sendResponse({ success: false, error: "NOT_AISTUDIO" })
+          return true
         }
 
         return false

@@ -413,6 +413,69 @@ const MODEL_LOCK_SITE_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinition
   zai: { key: "globalSearchSiteZai", fallback: "Z.ai" },
 }
 
+const MODEL_LOCK_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
+  {
+    settingId: "model-lock-gemini",
+    title: "模型锁定：Gemini",
+    keywords: ["model lock", "gemini", "模型锁定"],
+  },
+  {
+    settingId: "model-lock-gemini-enterprise",
+    title: "模型锁定：Gemini Enterprise",
+    keywords: ["model lock", "gemini enterprise", "模型锁定"],
+  },
+  {
+    settingId: "model-lock-aistudio",
+    title: "模型锁定：AI Studio",
+    keywords: ["model lock", "aistudio", "模型锁定"],
+  },
+  {
+    settingId: "model-lock-chatgpt",
+    title: "模型锁定：ChatGPT",
+    keywords: ["model lock", "chatgpt", "模型锁定"],
+  },
+  {
+    settingId: "model-lock-claude",
+    title: "模型锁定：Claude",
+    keywords: ["model lock", "claude", "模型锁定"],
+  },
+  {
+    settingId: "model-lock-grok",
+    title: "模型锁定：Grok",
+    keywords: ["model lock", "grok", "模型锁定"],
+  },
+  {
+    settingId: "model-lock-kimi",
+    title: "模型锁定：Kimi",
+    keywords: ["model lock", "kimi", "模型锁定"],
+  },
+  {
+    settingId: "model-lock-qianwen",
+    title: "模型锁定：Qianwen",
+    keywords: ["model lock", "qianwen", "tongyi", "通义千问", "模型锁定"],
+  },
+  {
+    settingId: "model-lock-qwenai",
+    title: "模型锁定：Qwen Studio",
+    keywords: ["model lock", "qwen studio", "qwenai", "chat.qwen.ai", "国际版千问", "模型锁定"],
+  },
+  {
+    settingId: "model-lock-yuanbao",
+    title: "模型锁定：Yuanbao",
+    keywords: ["model lock", "yuanbao", "腾讯元宝", "模型锁定"],
+  },
+  {
+    settingId: "model-lock-ima",
+    title: "模型锁定：ima",
+    keywords: ["model lock", "ima", "ima.qq.com", "腾讯 ima", "模型锁定"],
+  },
+  {
+    settingId: "model-lock-zai",
+    title: "模型锁定：Z.ai",
+    keywords: ["model lock", "z.ai", "zai", "模型锁定"],
+  },
+]
+
 const toSearchTitleFallback = (settingId: string): string =>
   settingId
     .replace(/[-_]/g, " ")
@@ -1661,7 +1724,7 @@ export const App = () => {
 
   const settingsSearchResults = useMemo(
     // 始终返回完整设置列表，交给后续全局搜索评分流程做多语言匹配
-    () => searchSettingsItems(""),
+    () => [...searchSettingsItems(""), ...MODEL_LOCK_SETTINGS_SEARCH_ITEMS],
     [],
   )
 
@@ -3006,7 +3069,6 @@ export const App = () => {
         })
         showToast(t("modelLockDisabled"))
       } else {
-        // 用户意图是开启 → 自动开启开关 + 跳转设置让用户配置
         showToast(t("modelLockNoKeyword"))
         setSettings({
           modelLock: {

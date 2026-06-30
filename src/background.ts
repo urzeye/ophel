@@ -879,7 +879,6 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
       // 获取 AI Studio 模型列表（从 content script 获取）
       ;(async () => {
         try {
-          // 查找 AI Studio 标签页
           const aistudioTabs = await chrome.tabs.query({
             url: "*://aistudio.google.com/*",
           })
@@ -893,7 +892,6 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
             return
           }
 
-          // 向第一个 AI Studio 标签页发送消息
           const tab = aistudioTabs[0]
           if (!tab.id) {
             sendResponse({ success: false, error: "INVALID_TAB" })

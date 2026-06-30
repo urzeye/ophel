@@ -241,7 +241,6 @@ export const SETTING_ID_ALIASES: Record<string, string> = {
   "siteSettings.layout.userQueryWidth.value": "layout-user-query-width-value",
   "siteSettings.layout.zenMode.enabled": "layout-zen-mode-enabled",
   "siteSettings.layout.zenMode.showExitButton": "layout-zen-mode-exit-button-visible",
-  "siteSettings.modelLock": "model-lock-gemini",
   "globalSearch.promptEnterBehavior": "global-search-prompt-enter-behavior",
   "globalSearch.enableFuzzySearch": "global-search-fuzzy-search",
   "globalSearch.doubleShift": "global-search-double-shift",
@@ -708,61 +707,6 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     settingId: "layout-zen-mode-exit-button-visible",
     title: "布局：显示退出禅模式按钮",
     keywords: ["layout", "zen mode", "exit button", "禅模式", "退出按钮", "隐藏"],
-  },
-  {
-    settingId: "model-lock-gemini",
-    title: "模型锁定：Gemini",
-    keywords: ["model lock", "gemini", "模型锁定"],
-  },
-  {
-    settingId: "model-lock-gemini-enterprise",
-    title: "模型锁定：Gemini Enterprise",
-    keywords: ["model lock", "gemini enterprise", "模型锁定"],
-  },
-  {
-    settingId: "model-lock-aistudio",
-    title: "模型锁定：AI Studio",
-    keywords: ["model lock", "aistudio", "模型锁定"],
-  },
-  {
-    settingId: "model-lock-chatgpt",
-    title: "模型锁定：ChatGPT",
-    keywords: ["model lock", "chatgpt", "模型锁定"],
-  },
-  {
-    settingId: "model-lock-claude",
-    title: "模型锁定：Claude",
-    keywords: ["model lock", "claude", "模型锁定"],
-  },
-  {
-    settingId: "model-lock-grok",
-    title: "模型锁定：Grok",
-    keywords: ["model lock", "grok", "模型锁定"],
-  },
-  {
-    settingId: "model-lock-qianwen",
-    title: "模型锁定：Qianwen",
-    keywords: ["model lock", "qianwen", "tongyi", "通义千问", "模型锁定"],
-  },
-  {
-    settingId: "model-lock-qwenai",
-    title: "模型锁定：Qwen Studio",
-    keywords: ["model lock", "qwen studio", "qwenai", "chat.qwen.ai", "国际版千问", "模型锁定"],
-  },
-  {
-    settingId: "model-lock-yuanbao",
-    title: "模型锁定：Yuanbao",
-    keywords: ["model lock", "yuanbao", "腾讯元宝", "模型锁定"],
-  },
-  {
-    settingId: "model-lock-ima",
-    title: "模型锁定：ima",
-    keywords: ["model lock", "ima", "ima.qq.com", "腾讯 ima", "模型锁定"],
-  },
-  {
-    settingId: "model-lock-zai",
-    title: "模型锁定：Z.ai",
-    keywords: ["model lock", "z.ai", "zai", "模型锁定"],
   },
   {
     settingId: "gemini-markdown-fix",

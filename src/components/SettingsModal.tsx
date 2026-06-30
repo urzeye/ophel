@@ -18,6 +18,7 @@ import {
   RestoreIcon,
   SearchIcon,
 } from "~components/icons"
+import ModelLockSettingsContent from "~components/ModelLockSettingsContent"
 import { Tooltip } from "~components/ui/Tooltip"
 import { SidebarCommunityLinks } from "~components/SidebarCommunityLinks"
 import { NAV_IDS, resolveSettingsNavigateDetail, type SettingsNavigateDetail } from "~constants"
@@ -281,7 +282,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       case NAV_IDS.GENERAL:
         return <GeneralPage siteId={siteId} initialTab={initialSubTab} />
       case NAV_IDS.SITE_SETTINGS:
-        return <SiteSettingsPage siteId={siteId} initialTab={initialSubTab} />
+        return (
+          <SiteSettingsPage
+            siteId={siteId}
+            initialTab={initialSubTab}
+            modelLockContent={<ModelLockSettingsContent />}
+          />
+        )
       case NAV_IDS.APPEARANCE:
         return <AppearancePage siteId={siteId} initialTab={initialSubTab} />
       case NAV_IDS.FEATURES:
