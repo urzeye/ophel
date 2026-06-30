@@ -1,0 +1,17 @@
+id,phase,task,files,acceptance,status
+UI-001,branching,Create modernization branch,"git branch ux/aura-workbench-modernization","Work happens on ux/aura-workbench-modernization instead of main",done
+UI-002,planning,Split Aura Workbench design into implementation tasks,"docs/developer/ui-modernization-theme-design.md;docs/developer/ui-modernization-tasks.csv","CSV lists token, shell, list, settings/search, validation, review, commit and PR tasks",done
+UI-010,tokens,Add Aura Workbench semantic tokens,"src/utils/themes/types.ts;src/styles/theme-variables.css","ThemeVariables and CSS fallbacks include RGB, material, shell, tab, control, list, feedback and motion tokens",done
+UI-011,tokens,Map all built-in themes to material presets,"src/utils/themes/light/index.ts;src/utils/themes/dark/index.ts;src/utils/themes/aura-tokens.ts","All 12 light and 12 dark presets receive material tokens without component-level theme-id checks",done
+UI-012,tokens,Keep custom theme compatibility,"src/utils/themes/helpers.ts;src/tabs/options/pages/AppearancePage.tsx","Custom themes missing new tokens still render through fallback variables",done
+UI-020,shell,Move main panel shell visuals to CSS classes,"src/components/MainPanel.tsx;src/style.css","Main panel, header, tabs, content and footer consume --gh-shell, --gh-tab and --gh-control tokens",done
+UI-021,shell,Apply compact Workbench baseline,"src/style.css","Panel padding, tabs, list density and footer controls follow the documented compact dimensions",done
+UI-022,shell,Modernize floating quick buttons material,"src/components/QuickButtons.tsx;src/style.css","Quick button rail uses semantic control/shell variables and local blur/glow only where readable",done
+UI-030,lists,Unify outline prompt and conversation list states,"src/components/OutlineTab.tsx;src/components/PromptsTab.tsx;src/components/ConversationsTab.tsx;src/styles/conversations.css;src/style.css","Hover, selected, current, locating, dragging and drop states use list semantic tokens",done
+UI-031,motion,Add restrained micro-interactions,"src/style.css;src/styles/conversations.css","Press scale, focus ring, shimmer and tab indicator respect prefers-reduced-motion",done
+UI-040,settings,Upgrade theme preview mini shell,"src/tabs/options/components/ThemePreview.tsx;src/styles/settings.css","Theme cards show shell, tab, selected list item, primary control and material differences from preset variables",done
+UI-041,settings,Align settings and global search surfaces,"src/styles/settings.css;src/components/global-search/*;src/components/SettingsModal.tsx","Settings/search use shell, tab, control, feedback and focus tokens consistently",done
+UI-050,validation,Run static validation,"pnpm format:check;pnpm lint:check;pnpm typecheck","Formatting, lint and type checks pass",done
+UI-051,validation,Build extension and userscript,"pnpm build;pnpm build:userscript","Both build targets pass after theme/style injection changes",done
+UI-060,review,Self-review final diff,"git diff;git status","Review confirms no hardcoded component theme branches, no missing preset tokens, no unrelated generated files",done
+UI-070,delivery,Commit push and create PR,"git commit;git push;gh pr create","GitHub PR exists for ux/aura-workbench-modernization",done

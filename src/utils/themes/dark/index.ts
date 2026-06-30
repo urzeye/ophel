@@ -1,6 +1,11 @@
+import { withAuraTokens, type LegacyThemeVariables } from "../aura-tokens"
 import type { ThemePreset } from "../types"
 
-export const darkPresets: ThemePreset[] = [
+type RawThemePreset = Omit<ThemePreset, "variables"> & {
+  variables: LegacyThemeVariables
+}
+
+const rawDarkPresets: RawThemePreset[] = [
   {
     id: "classic-dark",
     name: "经典深黑",
@@ -897,3 +902,8 @@ export const darkPresets: ThemePreset[] = [
     },
   },
 ]
+
+export const darkPresets: ThemePreset[] = rawDarkPresets.map((preset) => ({
+  ...preset,
+  variables: withAuraTokens(preset.id, preset.variables),
+}))

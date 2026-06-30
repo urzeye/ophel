@@ -1,6 +1,11 @@
+import { withAuraTokens, type LegacyThemeVariables } from "../aura-tokens"
 import type { ThemePreset } from "../types"
 
-export const lightPresets: ThemePreset[] = [
+type RawThemePreset = Omit<ThemePreset, "variables"> & {
+  variables: LegacyThemeVariables
+}
+
+const rawLightPresets: RawThemePreset[] = [
   {
     id: "google-gradient",
     name: "Google 渐变",
@@ -902,3 +907,8 @@ export const lightPresets: ThemePreset[] = [
     },
   },
 ]
+
+export const lightPresets: ThemePreset[] = rawLightPresets.map((preset) => ({
+  ...preset,
+  variables: withAuraTokens(preset.id, preset.variables),
+}))

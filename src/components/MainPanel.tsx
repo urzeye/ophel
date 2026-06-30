@@ -645,16 +645,6 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           // @ts-ignore - 注入 CSS 变量供吸附计算使用
           "--panel-width": `${panelWidth}px`,
           minHeight: "500px",
-          backgroundColor: "var(--gh-bg, #ffffff)",
-          backgroundImage: "var(--gh-bg-image, none)",
-          backgroundBlendMode: "overlay",
-          animation: "var(--gh-bg-animation, none)",
-          borderRadius: "12px",
-          boxShadow: "var(--gh-shadow, 0 10px 40px rgba(0,0,0,0.15))",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          border: "1px solid var(--gh-border, #e5e7eb)",
           zIndex: 9999,
           fontFamily: OPHEL_FONT_FAMILY_CSS_VAR,
           // 位置现在由 useDraggable 通过直接 DOM 操作控制，不再通过 React state
@@ -670,17 +660,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           onPointerLeave={resetHeaderPressHint}
           onPointerCancel={resetHeaderPressHint}
           onDoubleClick={handleHeaderDoubleClick}
-          className="gh-panel-header"
-          style={{
-            position: "relative",
-            padding: "10px 14px",
-            borderRadius: "12px 12px 0 0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            // cursor 由 CSS (.gh-panel-header) 统一控制为 grab/grabbing
-            userSelect: "none",
-          }}>
+          className="gh-panel-header">
           {/* 左侧：图标 + 标题悬停展示高级指南 */}
           <div
             style={{ position: "relative" }}
@@ -890,14 +870,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             {t("tip1", { modifier: isMacOS() ? "⌘ Cmd" : "Ctrl" })}
           </span>
         </div>
-        <div
-          className="gh-panel-tabs"
-          style={{
-            display: "flex",
-            borderBottom: "1px solid var(--gh-border, #e5e7eb)",
-            padding: "0",
-            background: "var(--gh-bg-secondary, #f9fafb)",
-          }}>
+        <div className="gh-panel-tabs" role="tablist">
           {visibleTabs.map((tab) => {
             let IconComp: React.FC<{ size?: number }> | null = null
             if (tab === TAB_IDS.OUTLINE) IconComp = OutlineIcon
@@ -907,6 +880,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             return (
               <button
                 key={tab}
+                className={`gh-panel-tab ${activeTab === tab ? "active" : ""}`}
                 data-tip-target={
                   tab === TAB_IDS.OUTLINE
                     ? "outline-tab"
@@ -917,48 +891,19 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                         : undefined
                 }
                 onClick={() => setActiveTab(tab)}
-                style={{
-                  flex: 1,
-                  padding: "7px 8px",
-                  border: "none",
-                  background: "transparent",
-                  borderBottom:
-                    activeTab === tab
-                      ? "3px solid var(--gh-primary, #4285f4)"
-                      : "3px solid transparent",
-                  color:
-                    activeTab === tab
-                      ? "var(--gh-primary, #4285f4)"
-                      : "var(--gh-text-secondary, #6b7280)",
-                  fontWeight: activeTab === tab ? 600 : 400,
-                  cursor: "pointer",
-                  fontSize: "13px",
-                  whiteSpace: "nowrap",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "4px",
-                  transition: "all 0.2s",
-                }}>
-                <span style={{ display: "flex", alignItems: "center" }}>
-                  {IconComp && <IconComp size={16} />}
+                role="tab"
+                aria-selected={activeTab === tab}>
+                <span className="gh-panel-tab-icon">{IconComp && <IconComp size={16} />}</span>
+                <span className="gh-panel-tab-label">
+                  {t(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`)}
                 </span>
-                <span>{t(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`)}</span>
               </button>
             )
           })}
         </div>
 
         {/* Content - 内容区 */}
-        <div
-          className="gh-panel-content"
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            padding: "0",
-            scrollbarWidth: "none", // Firefox
-            msOverflowStyle: "none", // IE/Edge
-          }}>
+        <div className="gh-panel-content">
           {activeTab === TAB_IDS.PROMPTS && (
             <PromptsTab
               manager={promptManager}
@@ -984,45 +929,10 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         </div>
 
         {/* Footer - 底部固定按钮 */}
-        <div
-          className="gh-panel-footer"
-          style={{
-            display: "flex",
-            justifyContent: "space-around",
-            alignItems: "center",
-            padding: "8px 16px",
-            borderTop: "1px solid var(--gh-border, #e5e7eb)",
-            background: "var(--gh-bg-secondary, #f9fafb)",
-          }}>
+        <div className="gh-panel-footer">
           {/* 顶部按钮 */}
           <Tooltip content={t("scrollTop")} triggerStyle={{ flex: 1, maxWidth: "120px" }}>
-            <button
-              className="gh-interactive scroll-nav-btn"
-              onClick={scrollToTop}
-              style={{
-                width: "100%",
-                height: "32px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "4px",
-                background: "var(--gh-header-bg)",
-                color: "var(--gh-footer-text, var(--gh-text-on-primary, white))",
-                border: "none",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontSize: "14px",
-                transition: "transform 0.2s, box-shadow 0.2s",
-                boxShadow: "var(--gh-btn-shadow)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-1px)"
-                e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)"
-                e.currentTarget.style.boxShadow = "var(--gh-btn-shadow)"
-              }}>
+            <button className="gh-interactive scroll-nav-btn" onClick={scrollToTop}>
               <ScrollTopIcon size={14} />
               <span>{t("scrollTop")}</span>
             </button>
@@ -1035,39 +945,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             <button
               className="gh-interactive scroll-nav-btn anchor-btn"
               onClick={goToAnchor}
-              disabled={!hasAnchor}
-              style={{
-                width: "32px",
-                height: "32px",
-                background: "var(--gh-header-bg)",
-                color: "var(--gh-footer-text, var(--gh-text-on-primary, white))",
-                border: "none",
-                borderRadius: "50%",
-                padding: 0,
-                cursor: hasAnchor ? "pointer" : "default",
-                fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "transform 0.2s, box-shadow 0.2s",
-                boxShadow: "var(--gh-btn-shadow)",
-                opacity: hasAnchor ? 1 : 0.4,
-              }}
-              onMouseEnter={(e) => {
-                if (hasAnchor) {
-                  e.currentTarget.style.transform = "scale(1.1)"
-                  e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
-                  // 旋转特效（作用于内层 div）
-                  const div = e.currentTarget.querySelector("div")
-                  if (div) div.style.transform = "rotate(360deg)"
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "scale(1)"
-                e.currentTarget.style.boxShadow = hasAnchor ? "var(--gh-btn-shadow)" : "none"
-                const div = e.currentTarget.querySelector("div")
-                if (div) div.style.transform = "rotate(0deg)"
-              }}>
+              disabled={!hasAnchor}>
               {/* 动画目标：独立于按钮的 inline transform，key 变化强制重新挂载以重播动画 */}
               <span
                 key={anchorTapId}
@@ -1089,33 +967,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
           {/* 底部按钮 */}
           <Tooltip content={t("scrollBottom")} triggerStyle={{ flex: 1, maxWidth: "120px" }}>
-            <button
-              className="gh-interactive scroll-nav-btn"
-              onClick={scrollToBottom}
-              style={{
-                width: "100%",
-                height: "32px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "4px",
-                background: "var(--gh-header-bg)",
-                color: "var(--gh-footer-text, var(--gh-text-on-primary, white))",
-                border: "none",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontSize: "14px",
-                transition: "transform 0.2s, box-shadow 0.2s",
-                boxShadow: "var(--gh-btn-shadow)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-1px)"
-                e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)"
-                e.currentTarget.style.boxShadow = "var(--gh-btn-shadow)"
-              }}>
+            <button className="gh-interactive scroll-nav-btn" onClick={scrollToBottom}>
               <ScrollBottomIcon size={14} />
               <span>{t("scrollBottom")}</span>
             </button>

@@ -15,6 +15,7 @@ import {
   darkPresets,
   lightPresets,
   parseThemeVariablesFromCSS,
+  withAuraTokens,
   type ThemePreset,
   type ThemeVariables,
 } from "~utils/themes"
@@ -217,11 +218,19 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
       "--gh-bg-secondary": style.mode === "light" ? "#ffffff" : "#1f2937",
     }
 
+    const baseVariables =
+      style.mode === "light" ? lightPresets[0].variables : darkPresets[0].variables
+    const mergedVariables = {
+      ...baseVariables,
+      ...defaults,
+      ...parsedVariables,
+    }
+
     return {
       id: style.id,
       name: style.name,
       variables: {
-        ...defaults,
+        ...withAuraTokens(style.id, mergedVariables),
         ...parsedVariables,
       } as ThemeVariables,
     }

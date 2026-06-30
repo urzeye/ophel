@@ -7,6 +7,7 @@
 
 // 类型导出
 export type { ThemeVariables, ThemePreset } from "./types"
+export { withAuraTokens, type LegacyThemeVariables } from "./aura-tokens"
 
 // 预置主题导出
 export { lightPresets } from "./light"

@@ -8,6 +8,9 @@ export interface ThemeVariables {
   "--gh-bg": string
   "--gh-bg-secondary": string
   "--gh-bg-tertiary": string
+  "--gh-bg-rgb": string
+  "--gh-surface-rgb": string
+  "--gh-primary-rgb": string
 
   // 文字颜色
   "--gh-text": string
@@ -116,6 +119,43 @@ export interface ThemeVariables {
 
   // 代码块背景色
   "--gh-code-bg": string
+
+  // Aura Workbench 材质控制
+  "--gh-glass-blur": string
+  "--gh-glass-opacity": string
+  "--gh-glass-border-opacity": string
+  "--gh-glow-shadow": string
+  "--gh-surface-texture": string
+  "--gh-radius-factor": string
+
+  // Aura Workbench 语义化组件变量
+  "--gh-shell-bg": string
+  "--gh-shell-surface": string
+  "--gh-shell-surface-raised": string
+  "--gh-shell-border": string
+  "--gh-shell-shadow": string
+  "--gh-tab-bg": string
+  "--gh-tab-hover-bg": string
+  "--gh-tab-active-bg": string
+  "--gh-tab-active-text": string
+  "--gh-tab-active-indicator": string
+  "--gh-control-bg": string
+  "--gh-control-hover-bg": string
+  "--gh-control-active-bg": string
+  "--gh-control-border": string
+  "--gh-control-active-border": string
+  "--gh-list-item-hover-bg": string
+  "--gh-list-item-selected-bg": string
+  "--gh-list-item-selected-border": string
+  "--gh-list-item-current-bg": string
+  "--gh-list-item-current-border": string
+  "--gh-focus-ring": string
+  "--gh-success": string
+  "--gh-warning": string
+  "--gh-error": string
+  "--gh-transition-fast": string
+  "--gh-transition-smooth": string
+  "--gh-transition-spring": string
 
   // 背景纹理图 (可选)
   "--gh-bg-image"?: string

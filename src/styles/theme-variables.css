@@ -14,6 +14,9 @@
   --gh-bg: #ffffff;
   --gh-bg-secondary: #f9fafb;
   --gh-bg-tertiary: #f3f4f6;
+  --gh-bg-rgb: 255, 255, 255;
+  --gh-surface-rgb: 255, 255, 255;
+  --gh-primary-rgb: 66, 133, 244;
 
   /* === 文字颜色 === */
   --gh-text: #1f2937;
@@ -141,6 +144,44 @@
   /* === 滑块圆点颜色 === */
   --gh-slider-dot-bg: #d1d5db;
 
+  /* === 代码块背景色 === */
+  --gh-code-bg: rgba(66, 133, 244, 0.08);
+
+  /* === Aura Workbench 材质与组件语义变量 === */
+  --gh-glass-blur: 0px;
+  --gh-glass-opacity: 1;
+  --gh-glass-border-opacity: 0.12;
+  --gh-glow-shadow: none;
+  --gh-surface-texture: none;
+  --gh-radius-factor: 1;
+  --gh-shell-bg: rgba(var(--gh-bg-rgb), var(--gh-glass-opacity));
+  --gh-shell-surface: var(--gh-bg-secondary);
+  --gh-shell-surface-raised: var(--gh-card-bg);
+  --gh-shell-border: var(--gh-border);
+  --gh-shell-shadow: var(--gh-shadow), var(--gh-glow-shadow);
+  --gh-tab-bg: var(--gh-bg-secondary);
+  --gh-tab-hover-bg: var(--gh-hover);
+  --gh-tab-active-bg: var(--gh-bg);
+  --gh-tab-active-text: var(--gh-primary);
+  --gh-tab-active-indicator: var(--gh-primary);
+  --gh-control-bg: var(--gh-bg);
+  --gh-control-hover-bg: var(--gh-hover);
+  --gh-control-active-bg: var(--gh-active-bg);
+  --gh-control-border: var(--gh-input-border);
+  --gh-control-active-border: var(--gh-primary);
+  --gh-list-item-hover-bg: var(--gh-hover);
+  --gh-list-item-selected-bg: var(--gh-selected-gradient);
+  --gh-list-item-selected-border: var(--gh-primary);
+  --gh-list-item-current-bg: var(--gh-outline-sync-bg);
+  --gh-list-item-current-border: var(--gh-outline-sync-border);
+  --gh-focus-ring: 0 0 0 2px rgba(var(--gh-primary-rgb), 0.28);
+  --gh-success: #10b981;
+  --gh-warning: #f59e0b;
+  --gh-error: var(--gh-danger);
+  --gh-transition-fast: 120ms ease-out;
+  --gh-transition-smooth: 180ms ease-out;
+  --gh-transition-spring: 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
   /* === 分类颜色（柔和背景色） === */
   --gh-category-1: #fecaca; /* 红 */
   --gh-category-2: #fed7aa; /* 橙 */
@@ -161,6 +202,9 @@ html[data-theme="dark"] {
   --gh-bg: #1e1e1e;
   --gh-bg-secondary: #0b0b0b;
   --gh-bg-tertiary: #262626;
+  --gh-bg-rgb: 30, 30, 30;
+  --gh-surface-rgb: 11, 11, 11;
+  --gh-primary-rgb: 129, 140, 248;
 
   /* === 文字颜色 === */
   --gh-text: #e3e3e3;
@@ -271,6 +315,44 @@ html[data-theme="dark"] {
   /* === 设置卡片背景（深色模式） === */
   --gh-card-bg: #0b0b0b;
   --gh-card-border: #333333;
+
+  /* === 代码块背景色（深色模式） === */
+  --gh-code-bg: rgba(129, 140, 248, 0.12);
+
+  /* === Aura Workbench 材质与组件语义变量（深色模式） === */
+  --gh-glass-blur: 2px;
+  --gh-glass-opacity: 0.99;
+  --gh-glass-border-opacity: 0.14;
+  --gh-glow-shadow: none;
+  --gh-surface-texture: none;
+  --gh-radius-factor: 1;
+  --gh-shell-bg: rgba(var(--gh-bg-rgb), var(--gh-glass-opacity));
+  --gh-shell-surface: var(--gh-bg-secondary);
+  --gh-shell-surface-raised: var(--gh-card-bg);
+  --gh-shell-border: var(--gh-border);
+  --gh-shell-shadow: var(--gh-shadow), var(--gh-glow-shadow);
+  --gh-tab-bg: var(--gh-bg-secondary);
+  --gh-tab-hover-bg: var(--gh-hover);
+  --gh-tab-active-bg: var(--gh-bg);
+  --gh-tab-active-text: var(--gh-border-active);
+  --gh-tab-active-indicator: var(--gh-border-active);
+  --gh-control-bg: var(--gh-bg);
+  --gh-control-hover-bg: var(--gh-hover);
+  --gh-control-active-bg: var(--gh-active-bg);
+  --gh-control-border: var(--gh-input-border);
+  --gh-control-active-border: var(--gh-border-active);
+  --gh-list-item-hover-bg: var(--gh-hover);
+  --gh-list-item-selected-bg: var(--gh-selected-gradient);
+  --gh-list-item-selected-border: var(--gh-border-active);
+  --gh-list-item-current-bg: var(--gh-outline-sync-bg);
+  --gh-list-item-current-border: var(--gh-outline-sync-border);
+  --gh-focus-ring: 0 0 0 2px rgba(var(--gh-primary-rgb), 0.32);
+  --gh-success: #34d399;
+  --gh-warning: #fbbf24;
+  --gh-error: var(--gh-danger);
+  --gh-transition-fast: 120ms ease-out;
+  --gh-transition-smooth: 180ms ease-out;
+  --gh-transition-spring: 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* === 分类颜色（深色模式 - 半透明） === */
   --gh-category-1: rgba(248, 113, 113, 0.3); /* 红 */
