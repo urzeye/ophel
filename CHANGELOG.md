@@ -13,6 +13,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Gemini Canvas document export** — Gemini Canvas export now supports regular document Canvas panels, so article Canvas content is included in conversation exports and Canvas Markdown copy/download actions. (#736)
 
+### ✨ Improvements
+
+- **Long conversation export loading** — Gemini and Qwen Studio exports now load earlier lazy-loaded history before collecting messages, reducing missed content in long conversation exports. (#739)
+
 ### 🐛 Bug Fixes
 
 - **AI Studio model lock in userscript** — Fixed issue where the AI Studio model lock feature on the options page couldn't fetch the model list in the userscript build because it tried to use the background script proxy which doesn't exist in userscripts. Now it directly calls the adapter in userscript mode. (#733)
