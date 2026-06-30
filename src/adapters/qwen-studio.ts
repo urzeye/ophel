@@ -21,6 +21,7 @@ import {
   type ExportAssetCollector,
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle, type ExportMessage } from "~utils/exporter"
+import { loadCompleteHistoryForExport } from "~utils/history-loader"
 import { t } from "~utils/i18n"
 
 import {
@@ -641,6 +642,7 @@ export class QwenAiAdapter extends SiteAdapter {
   ): Promise<QwenAiExportLifecycleState> {
     this.exportIncludeThoughtsOverride = context.includeThoughts
     this.clearThoughtExportCache()
+    await this.loadCompleteExportHistory()
     await this.prepareMermaidBlocksForExport()
 
     const panelWasOpen = this.getVisibleThoughtPanel() !== null
@@ -659,6 +661,54 @@ export class QwenAiAdapter extends SiteAdapter {
     return {
       shouldCloseThoughtPanel: !panelWasOpen && this.getVisibleThoughtPanel() !== null,
     }
+  }
+
+  private async loadCompleteExportHistory(): Promise<void> {
+    const result = await loadCompleteHistoryForExport({
+      adapter: this,
+      waitMs: 800,
+      maxRounds: 60,
+      stableRounds: 4,
+      wheelDeltaY: -900,
+      getSignature: (container) => this.getExportHistoryLoadSignature(container),
+    })
+
+    if (!result.success) {
+      console.warn("[QwenAiAdapter] Export history load reached max rounds before stabilizing", {
+        rounds: result.rounds,
+        stableRounds: result.stableRounds,
+        finalHeight: result.finalHeight,
+      })
+    }
+  }
+
+  private getExportHistoryLoadSignature(container: HTMLElement): string {
+    const root = this.getQwenExportRoot()
+    const messages = this.getOrderedQwenMessages(root)
+    const firstMessage = messages[0]?.element
+    const lastMessage = messages[messages.length - 1]?.element
+
+    return [
+      container.scrollHeight,
+      container.clientHeight,
+      container.scrollTop,
+      messages.length,
+      firstMessage ? this.getExportHistoryMessageMarker(firstMessage) : "",
+      lastMessage ? this.getExportHistoryMessageMarker(lastMessage) : "",
+    ].join(":")
+  }
+
+  private getExportHistoryMessageMarker(element: Element): string {
+    const source = element.closest(".qwen-chat-message, [data-message-id]") || element
+    const id =
+      source.id ||
+      source.getAttribute("data-message-id") ||
+      source.getAttribute("data-testid") ||
+      source.getAttribute("aria-label")
+
+    if (id) return id
+
+    return (source.textContent || "").replace(/\s+/g, " ").trim().slice(0, 120)
   }
 
   async restoreConversationAfterExport(

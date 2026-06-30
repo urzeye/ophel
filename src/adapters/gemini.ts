@@ -53,6 +53,7 @@ import {
   type GeminiMyStuffKind,
   type GeminiMyStuffRecord,
 } from "~utils/messaging"
+import { loadCompleteHistoryForExport } from "~utils/history-loader"
 import { SKIP_READING_HISTORY_RESTORE_PARAM } from "~utils/storage"
 import { hashTextForCache } from "~utils/text-hash"
 import { showToast } from "~utils/toast"
@@ -2768,6 +2769,8 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   async prepareConversationExport(_context: ExportLifecycleContext): Promise<unknown> {
+    await this.loadCompleteExportHistory()
+
     this.exportOpenedCanvasPanel = false
     await this.prepareImagesForExport(_context)
 
@@ -2780,6 +2783,62 @@ export class GeminiAdapter extends SiteAdapter {
     }
 
     return state
+  }
+
+  private async loadCompleteExportHistory(): Promise<void> {
+    if (!this.isUserConversationPage()) return
+
+    const result = await loadCompleteHistoryForExport({
+      adapter: this,
+      waitMs: 800,
+      maxRounds: 60,
+      stableRounds: 4,
+      wheelDeltaY: -900,
+      getSignature: (container) => this.getExportHistoryLoadSignature(container),
+    })
+
+    if (!result.success) {
+      console.warn("[GeminiAdapter] Export history load reached max rounds before stabilizing", {
+        rounds: result.rounds,
+        stableRounds: result.stableRounds,
+        finalHeight: result.finalHeight,
+      })
+    }
+  }
+
+  private getExportHistoryLoadSignature(container: HTMLElement): string {
+    const root =
+      document.querySelector(this.getResponseContainerSelector()) || this.getScrollContainer()
+    const messages = root
+      ? Array.from(root.querySelectorAll("user-query, model-response")).filter(
+          (element) => !element.closest("immersive-panel"),
+        )
+      : []
+
+    const firstMessage = messages[0]
+    const lastMessage = messages[messages.length - 1]
+
+    return [
+      container.scrollHeight,
+      container.clientHeight,
+      container.scrollTop,
+      messages.length,
+      firstMessage ? this.getExportHistoryMessageMarker(firstMessage) : "",
+      lastMessage ? this.getExportHistoryMessageMarker(lastMessage) : "",
+    ].join(":")
+  }
+
+  private getExportHistoryMessageMarker(element: Element): string {
+    const source = element.closest("message-content, .conversation-turn") || element
+    const id =
+      source.id ||
+      source.getAttribute("data-message-id") ||
+      source.getAttribute("data-test-id") ||
+      source.getAttribute("aria-label")
+
+    if (id) return id
+
+    return (source.textContent || "").replace(/\s+/g, " ").trim().slice(0, 120)
   }
 
   async restoreConversationAfterExport(
