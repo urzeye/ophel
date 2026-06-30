@@ -8,8 +8,11 @@ import { Storage } from "@plasmohq/storage"
 
 import { DEFAULT_SHORTCUTS_SETTINGS, type ShortcutsSettings } from "~constants/shortcuts"
 import type { WebDAVProvider } from "~core/webdav-sync"
-import { platform } from "~platform"
 import { isUserscriptPlatform } from "~platform/utils"
+
+// GM API 类型声明（仅在 userscript 环境使用）
+declare function GM_getValue<T>(key: string, defaultValue?: T): T
+declare function GM_deleteValue(key: string): void
 
 // 油猴脚本环境标识（用于设置默认值）
 const isUserscript = isUserscriptPlatform()
@@ -684,6 +687,32 @@ export function getSiteCleanMode(settings: Settings, siteId: string): ZenModeCon
   return cleanMode?._default ?? DEFAULT_CLEAN_MODE
 }
 
+function getRawStorageValue<T>(key: string): Promise<T | undefined> {
+  if (isUserscript) {
+    const value = GM_getValue<T | undefined>(key, undefined)
+    return Promise.resolve(value ?? undefined)
+  }
+
+  if (typeof chrome === "undefined" || !chrome.storage?.local) {
+    return Promise.resolve(undefined)
+  }
+
+  return chrome.storage.local.get(key).then((result) => result[key] as T | undefined)
+}
+
+function removeRawStorageValue(key: string): Promise<void> {
+  if (isUserscript) {
+    GM_deleteValue(key)
+    return Promise.resolve()
+  }
+
+  if (typeof chrome === "undefined" || !chrome.storage?.local) {
+    return Promise.resolve()
+  }
+
+  return chrome.storage.local.remove(key)
+}
+
 let clearAllFlagPromise: Promise<boolean> | null = null
 
 /**
@@ -698,7 +727,7 @@ export function consumeClearAllFlag(): Promise<boolean> {
 
   clearAllFlagPromise = (async () => {
     try {
-      const rawValue = await platform.storage.get<number>(CLEAR_ALL_FLAG_KEY)
+      const rawValue = await getRawStorageValue<number>(CLEAR_ALL_FLAG_KEY)
       if (rawValue === undefined) {
         return false
       }
@@ -713,7 +742,7 @@ export function consumeClearAllFlag(): Promise<boolean> {
         return true
       }
 
-      await platform.storage.remove(CLEAR_ALL_FLAG_KEY)
+      await removeRawStorageValue(CLEAR_ALL_FLAG_KEY)
       return false
     } catch (error) {
       console.warn("[Ophel] Failed to consume clear all flag:", error)
@@ -742,7 +771,7 @@ export function consumeRestoreFlag(): Promise<boolean> {
 
   restoreFlagPromise = (async () => {
     try {
-      const rawValue = await platform.storage.get<number>(RESTORE_FLAG_KEY)
+      const rawValue = await getRawStorageValue<number>(RESTORE_FLAG_KEY)
       if (rawValue === undefined) {
         return false
       }
@@ -759,7 +788,7 @@ export function consumeRestoreFlag(): Promise<boolean> {
       }
 
       // 标记过期后清理，防止长期残留
-      await platform.storage.remove(RESTORE_FLAG_KEY)
+      await removeRawStorageValue(RESTORE_FLAG_KEY)
       return false
     } catch (error) {
       console.warn("[Ophel] Failed to consume restore flag:", error)
