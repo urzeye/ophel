@@ -22,7 +22,6 @@ import {
 } from "~utils/export-assets"
 import { htmlToMarkdown, type ExportBundle } from "~utils/exporter"
 import { t } from "~utils/i18n"
-import type { AIStudioSettings } from "~utils/storage"
 
 import {
   SiteAdapter,
@@ -35,64 +34,6 @@ import {
   type OutlineItem,
   type SiteDeleteConversationResult,
 } from "./base"
-
-// ==================== AI Studio 可用模型列表 ====================
-// 基于 ListModels API 响应，按类别分组
-
-export interface AIStudioModel {
-  id: string // 模型 ID，如 "models/gemini-3-flash-preview"
-  name: string // 显示名称
-  category: string // 分类
-}
-
-export const AISTUDIO_MODELS: AIStudioModel[] = [
-  // Gemini 3 系列
-  { id: "models/gemini-3-pro-preview", name: "Gemini 3 Pro Preview", category: "Gemini 3" },
-  {
-    id: "models/gemini-3-pro-image-preview",
-    name: "Gemini 3 Pro Image Preview",
-    category: "Gemini 3",
-  },
-  { id: "models/gemini-3-flash-preview", name: "Gemini 3 Flash Preview", category: "Gemini 3" },
-
-  // Gemini 2.5 系列
-  { id: "models/gemini-2.5-pro", name: "Gemini 2.5 Pro", category: "Gemini 2.5" },
-  { id: "models/gemini-2.5-flash", name: "Gemini 2.5 Flash", category: "Gemini 2.5" },
-  { id: "models/gemini-2.5-flash-lite", name: "Gemini 2.5 Flash-Lite", category: "Gemini 2.5" },
-  { id: "models/gemini-2.5-flash-image", name: "Gemini 2.5 Flash Image", category: "Gemini 2.5" },
-
-  // Gemini 2.0 系列
-  { id: "models/gemini-2.0-flash", name: "Gemini 2.0 Flash", category: "Gemini 2.0" },
-  { id: "models/gemini-2.0-flash-lite", name: "Gemini 2.0 Flash-Lite", category: "Gemini 2.0" },
-
-  // Latest 别名
-  { id: "models/gemini-flash-latest", name: "Gemini Flash Latest", category: "Latest" },
-  { id: "models/gemini-flash-lite-latest", name: "Gemini Flash-Lite Latest", category: "Latest" },
-
-  // 特殊模型
-  {
-    id: "models/gemini-robotics-er-1.5-preview",
-    name: "Gemini Robotics-ER 1.5",
-    category: "Special",
-  },
-  {
-    id: "models/gemini-2.5-flash-native-audio-preview-12-2025",
-    name: "Gemini 2.5 Flash Native Audio",
-    category: "Audio",
-  },
-  { id: "models/gemini-2.5-pro-preview-tts", name: "Gemini 2.5 Pro TTS", category: "TTS" },
-  { id: "models/gemini-2.5-flash-preview-tts", name: "Gemini 2.5 Flash TTS", category: "TTS" },
-
-  // Imagen 系列
-  { id: "models/imagen-4.0-generate-001", name: "Imagen 4", category: "Imagen" },
-  { id: "models/imagen-4.0-ultra-generate-001", name: "Imagen 4 Ultra", category: "Imagen" },
-  { id: "models/imagen-4.0-fast-generate-001", name: "Imagen 4 Fast", category: "Imagen" },
-
-  // Veo 系列（视频生成）
-  { id: "models/veo-3.1-generate-preview", name: "Veo 3.1", category: "Veo" },
-  { id: "models/veo-3.1-fast-generate-preview", name: "Veo 3.1 Fast", category: "Veo" },
-  { id: "models/veo-2.0-generate-001", name: "Veo 2", category: "Veo" },
-]
 
 const AISTUDIO_DELETE_REASON = {
   UI_FAILED: "delete_ui_failed",
@@ -3802,86 +3743,6 @@ export class AIStudioAdapter extends SiteAdapter {
     } catch (error) {
       console.error("[AIStudioAdapter] toggleTheme error:", error)
       return false
-    }
-  }
-
-  // ==================== 应用 Ophel 设置到 AI Studio ====================
-
-  /**
-   * 将 Ophel 扩展配置应用到 AI Studio 的 localStorage
-   * 在页面加载时调用，用于设置默认界面状态和模型
-   * @param settings Ophel 的 AI Studio 设置
-   */
-  applySettings(settings: AIStudioSettings): void {
-    try {
-      // 读取现有的 AI Studio 用户偏好
-      const prefStr = localStorage.getItem("aiStudioUserPreference") || "{}"
-      const pref = JSON.parse(prefStr)
-
-      let hasChanges = false
-
-      // 应用侧边栏折叠设置
-      if (settings.collapseNavbar !== undefined) {
-        const shouldExpand = !settings.collapseNavbar
-        if (pref.isNavbarExpanded !== shouldExpand) {
-          pref.isNavbarExpanded = shouldExpand
-          hasChanges = true
-        }
-      }
-
-      // 应用工具面板折叠设置
-      if (settings.collapseTools !== undefined) {
-        const shouldOpen = !settings.collapseTools
-        if (pref.areToolsOpen !== shouldOpen) {
-          pref.areToolsOpen = shouldOpen
-          hasChanges = true
-        }
-      }
-
-      // 应用高级设置折叠
-      if (settings.collapseAdvanced !== undefined) {
-        const shouldOpen = !settings.collapseAdvanced
-        if (pref.isAdvancedOpen !== shouldOpen) {
-          pref.isAdvancedOpen = shouldOpen
-          hasChanges = true
-        }
-      }
-
-      // 应用搜索工具开关
-      if (settings.enableSearch !== undefined) {
-        if (pref.enableSearchAsATool !== settings.enableSearch) {
-          pref.enableSearchAsATool = settings.enableSearch
-          hasChanges = true
-        }
-      }
-
-      // 应用默认模型
-      if (settings.defaultModel && settings.defaultModel.trim() !== "") {
-        const modelId = settings.defaultModel.trim()
-        // 检查是否需要更新（避免覆盖用户本次会话的选择）
-        // 仅当当前模型为空或与默认不同时更新
-        if (pref.promptModel !== modelId) {
-          pref.promptModel = modelId
-          pref._promptModelOverride = modelId
-          hasChanges = true
-        }
-      }
-
-      // 仅当有变化时写入 localStorage
-      if (hasChanges) {
-        localStorage.setItem("aiStudioUserPreference", JSON.stringify(pref))
-
-        // 触发 storage 事件，让 Angular 感知变化
-        window.dispatchEvent(
-          new StorageEvent("storage", {
-            key: "aiStudioUserPreference",
-            newValue: JSON.stringify(pref),
-            storageArea: localStorage,
-          }),
-        )
-      }
-    } catch (error) {
-      console.error("[AIStudioAdapter] applySettings error:", error)
     }
   }
 }

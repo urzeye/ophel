@@ -331,7 +331,6 @@ const GEMINI_MARKDOWN_FIXER_SOURCE_SELECTOR = [
 
 class GeminiMyStuffEnhancer {
   private started = false
-  private mediaWatchStop: (() => void) | null = null
   private tooltipBindings = new WeakMap<HTMLElement, DomTooltipBinding>()
   private pendingRequests = new Map<
     string,
@@ -357,11 +356,9 @@ class GeminiMyStuffEnhancer {
     this.started = true
 
     this.injectStyles()
-    this.mediaWatchStop = DOMToolkit.each(
-      ".library-item-card",
-      (element) => this.enhanceMediaCard(element),
-      { shadow: true },
-    )
+    DOMToolkit.each(".library-item-card", (element) => this.enhanceMediaCard(element), {
+      shadow: true,
+    })
 
     document.addEventListener("click", this.handleDocumentClick, true)
     window.addEventListener("message", this.handleWindowMessage)

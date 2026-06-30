@@ -228,7 +228,6 @@ export class ChatGPTAdapter extends SiteAdapter {
   // 导出快照（参考 deepseek / aistudio 方案）：避免虚拟滚动导致漏抓或重复抓取
   private exportSnapshotRoot: HTMLElement | null = null
   private exportSnapshotActive = false
-  private exportIncludeThoughtsOverride: boolean | null = null
   private exportBundle: ExportBundle | null = null
 
   match(): boolean {
@@ -1422,7 +1421,6 @@ export class ChatGPTAdapter extends SiteAdapter {
   // ==================== 导出生命周期 ====================
 
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
-    this.exportIncludeThoughtsOverride = context.includeThoughts
     this.clearExportSnapshot()
     this.exportBundle = null
 
@@ -1476,7 +1474,6 @@ export class ChatGPTAdapter extends SiteAdapter {
     _state: unknown,
   ): Promise<void> {
     this.clearExportSnapshot()
-    this.exportIncludeThoughtsOverride = null
     this.exportBundle = null
   }
 

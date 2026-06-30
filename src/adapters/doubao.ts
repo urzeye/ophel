@@ -458,10 +458,6 @@ export class DoubaoAdapter extends SiteAdapter {
     return `https://www.doubao.com${prefix}/chat/`
   }
 
-  supportsNewTab(): boolean {
-    return true
-  }
-
   // ===== 会话列表 =====
 
   getConversationList(): ConversationInfo[] {

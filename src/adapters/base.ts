@@ -358,11 +358,6 @@ export abstract class SiteAdapter {
     return parts.length > 0 ? parts[parts.length - 1] : "default"
   }
 
-  /** 是否支持在新标签页打开新对话 */
-  supportsNewTab(): boolean {
-    return true
-  }
-
   /** 获取新标签页打开的 URL */
   getNewTabUrl(): string {
     return window.location.origin
@@ -1042,13 +1037,6 @@ export abstract class SiteAdapter {
   }
 
   /**
-   * @deprecated 使用 extractUserQueryExportContent
-   */
-  extractUserQueryExportText(element: Element): string {
-    return this.extractUserQueryExportContent(element)
-  }
-
-  /**
    * 将渲染后的 HTML 替换到用户提问元素中
    * 子类可重写以处理特殊的 DOM 结构
    * @returns 是否成功替换
@@ -1231,11 +1219,6 @@ export abstract class SiteAdapter {
     this.scrollToOutlineTarget(element)
   }
 
-  /** 是否支持滚动锁定功能 */
-  supportsScrollLock(): boolean {
-    return false
-  }
-
   /** 获取导出配置 */
   getExportConfig(): ExportConfig | null {
     return null
@@ -1372,38 +1355,6 @@ export abstract class SiteAdapter {
 
     this.simulateClick(trigger)
     return true
-  }
-
-  /** 绑定新对话触发事件 */
-  bindNewChatListeners(callback: () => void): void {
-    // 快捷键监听 (Ctrl + Shift + O)
-    document.addEventListener("keydown", (e) => {
-      if (e.ctrlKey && e.shiftKey && (e.key === "o" || e.key === "O")) {
-        setTimeout(callback, 500)
-      }
-    })
-
-    // 按钮点击监听
-    document.addEventListener(
-      "click",
-      (e) => {
-        const selectors = this.getNewChatButtonSelectors()
-        if (selectors.length === 0) return
-
-        const path = e.composedPath()
-        for (const target of path) {
-          if (target === document || target === window) break
-
-          for (const selector of selectors) {
-            if ((target as Element).matches && (target as Element).matches(selector)) {
-              setTimeout(callback, 500)
-              return
-            }
-          }
-        }
-      },
-      true,
-    )
   }
 
   // ==================== 模型锁定 ====================
@@ -1977,14 +1928,6 @@ export abstract class SiteAdapter {
         ".gh-root, .gh-user-query-markdown, .gh-markdown-preview, .gh-assistant-mermaid",
       ) && this.isElementVisible(element)
     )
-  }
-
-  protected isAssistantMermaidCandidate(element: HTMLElement): boolean {
-    return isAssistantMermaidCandidateElement(element)
-  }
-
-  protected extractAssistantMermaidSource(element: HTMLElement): string | null {
-    return extractAssistantMermaidSourceFromElement(element)
   }
 
   protected navigateToNewConversationUrl(): boolean {

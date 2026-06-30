@@ -901,19 +901,6 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
     document.execCommand("insertText", false, "\u200B")
   }
 
-  /** 普通清空（不插入零宽字符）*/
-  clearTextareaNormal(): void {
-    if (!this.textarea) return
-    if (!this.textarea.isConnected) {
-      this.textarea = null
-      return
-    }
-
-    this.textarea.focus()
-    document.execCommand("selectAll", false, undefined)
-    document.execCommand("delete", false, undefined)
-  }
-
   /** 覆盖基类：向输入框插入内容 */
   insertPrompt(content: string): boolean {
     // 重新获取一下，以防切页面后元素失效

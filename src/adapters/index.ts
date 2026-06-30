@@ -52,13 +52,6 @@ export function getAdapter(): SiteAdapter | null {
   return null
 }
 
-/**
- * 获取所有已注册的适配器
- */
-export function getAllAdapters(): SiteAdapter[] {
-  return [...adapters]
-}
-
 // 导出类型和基类
 export { SiteAdapter } from "./base"
 export type {
