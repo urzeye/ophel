@@ -8,6 +8,10 @@
 
 ## [Unreleased]
 
+### 🚀 新增功能
+
+- **Gemini Canvas 文档导出** — Gemini Canvas 导出现在支持普通文档 Canvas 面板，会把文章类 Canvas 正文写入对话导出和 Canvas Markdown 复制/下载结果。
+
 ### 🐛 问题修复
 
 - **AI Studio 油猴脚本模型锁定** — 修复了选项页的 AI Studio 模型锁定功能在油猴脚本中无法获取模型列表的问题。原因是油猴脚本没有后台代理，现在改为在油猴模式下直接调用适配器获取模型列表。(#733)
