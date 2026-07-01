@@ -57,6 +57,14 @@ type UserscriptMetadata = {
 
 const USERSCRIPT_NAME_MAX = 100
 const USERSCRIPT_DESCRIPTION_MAX = 500
+const USERSCRIPT_EXCLUDED_LOCALE_KEYS = new Set([
+  "panelPlacementLabel",
+  "panelPlacementDesc",
+  "panelPlacementInPage",
+  "panelPlacementNativePanel",
+  "popupOpenSidebar",
+  "nativePanelGestureHint",
+])
 
 const userscriptMetadata: UserscriptMetadata = {
   name: {
@@ -330,8 +338,13 @@ const userscriptResourcePaths = Object.fromEntries(
 const userscriptLocaleResourceFiles = Object.fromEntries(
   USERSCRIPT_SUPPORTED_LOCALES.map((locale) => {
     const definition = USERSCRIPT_LOCALE_RESOURCE_DEFINITIONS[locale]
+    const localeResource = Object.fromEntries(
+      Object.entries(localeResources[locale as keyof typeof localeResources]).filter(
+        ([key]) => !USERSCRIPT_EXCLUDED_LOCALE_KEYS.has(key),
+      ),
+    )
     const content = JSON.stringify(
-      localeResources[locale as keyof typeof localeResources],
+      localeResource,
       null,
       0,
     )
@@ -520,43 +533,74 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    alias: {
+    alias: [
       // ========== Userscript Polyfills ==========
-      "react/jsx-runtime": path.resolve(__dirname, "src/platform/userscript/react-jsx-runtime.ts"),
-      "react-dom/client": path.resolve(
-        __dirname,
-        "src/platform/userscript/react-dom-client-global.ts",
-      ),
-      "react-dom": path.resolve(__dirname, "src/platform/userscript/react-dom-global.ts"),
-      react: path.resolve(__dirname, "src/platform/userscript/react-global.ts"),
+      {
+        find: "react/jsx-runtime",
+        replacement: path.resolve(__dirname, "src/platform/userscript/react-jsx-runtime.ts"),
+      },
+      {
+        find: "react-dom/client",
+        replacement: path.resolve(
+          __dirname,
+          "src/platform/userscript/react-dom-client-global.ts",
+        ),
+      },
+      {
+        find: "react-dom",
+        replacement: path.resolve(__dirname, "src/platform/userscript/react-dom-global.ts"),
+      },
+      { find: "react", replacement: path.resolve(__dirname, "src/platform/userscript/react-global.ts") },
       // 替换 @plasmohq/storage 为 GM_* 实现
-      "@plasmohq/storage": path.resolve(__dirname, "src/platform/userscript/storage-polyfill.ts"),
-      fuzzysort: path.resolve(__dirname, "src/platform/userscript/fuzzysort-global.ts"),
-      "~constants/site-icons": path.resolve(__dirname, "src/platform/userscript/site-icons.ts"),
-      "~utils/i18n": path.resolve(__dirname, "src/platform/userscript/i18n.ts"),
-      "~utils/markdown": path.resolve(__dirname, "src/platform/userscript/markdown-global.ts"),
-      "~platform/katex": path.resolve(__dirname, "src/platform/userscript/katex.ts"),
+      {
+        find: "@plasmohq/storage",
+        replacement: path.resolve(__dirname, "src/platform/userscript/storage-polyfill.ts"),
+      },
+      {
+        find: "fuzzysort",
+        replacement: path.resolve(__dirname, "src/platform/userscript/fuzzysort-global.ts"),
+      },
+      {
+        find: "~constants/site-icons",
+        replacement: path.resolve(__dirname, "src/platform/userscript/site-icons.ts"),
+      },
+      {
+        find: "~utils/i18n",
+        replacement: path.resolve(__dirname, "src/platform/userscript/i18n.ts"),
+      },
+      {
+        find: "~utils/markdown",
+        replacement: path.resolve(__dirname, "src/platform/userscript/markdown-global.ts"),
+      },
+      {
+        find: "~platform/katex",
+        replacement: path.resolve(__dirname, "src/platform/userscript/katex.ts"),
+      },
+      {
+        find: /^~platform$/,
+        replacement: path.resolve(__dirname, "src/platform/userscript/index.ts"),
+      },
       // 注意：chrome-adapter.ts 已内置跨平台支持（通过 __PLATFORM__ 判断），无需 alias 替换
 
       // ========== 路径别名（与 Plasmo 的 ~ 别名一致）==========
-      "~adapters": path.resolve(__dirname, "src/adapters"),
-      "~components": path.resolve(__dirname, "src/components"),
-      "~constants": path.resolve(__dirname, "src/constants"),
-      "~contents": path.resolve(__dirname, "src/contents"),
-      "~contexts": path.resolve(__dirname, "src/contexts"),
-      "~core": path.resolve(__dirname, "src/core"),
-      "~hooks": path.resolve(__dirname, "src/hooks"),
-      "~locales": path.resolve(__dirname, "src/locales"),
-      "~platform": path.resolve(__dirname, "src/platform"),
-      "~release-notes": path.resolve(__dirname, "src/release-notes"),
-      "~stores": path.resolve(__dirname, "src/stores"),
-      "~styles": path.resolve(__dirname, "src/styles"),
-      "~tabs": path.resolve(__dirname, "src/tabs"),
-      "~types": path.resolve(__dirname, "src/types"),
-      "~utils": path.resolve(__dirname, "src/utils"),
-      "~style.css": path.resolve(__dirname, "src/style.css"),
-      "~": path.resolve(__dirname, "src"),
-    },
+      { find: "~adapters", replacement: path.resolve(__dirname, "src/adapters") },
+      { find: "~components", replacement: path.resolve(__dirname, "src/components") },
+      { find: "~constants", replacement: path.resolve(__dirname, "src/constants") },
+      { find: "~contents", replacement: path.resolve(__dirname, "src/contents") },
+      { find: "~contexts", replacement: path.resolve(__dirname, "src/contexts") },
+      { find: "~core", replacement: path.resolve(__dirname, "src/core") },
+      { find: "~hooks", replacement: path.resolve(__dirname, "src/hooks") },
+      { find: "~locales", replacement: path.resolve(__dirname, "src/locales") },
+      { find: "~platform", replacement: path.resolve(__dirname, "src/platform") },
+      { find: "~release-notes", replacement: path.resolve(__dirname, "src/release-notes") },
+      { find: "~stores", replacement: path.resolve(__dirname, "src/stores") },
+      { find: "~styles", replacement: path.resolve(__dirname, "src/styles") },
+      { find: "~tabs", replacement: path.resolve(__dirname, "src/tabs") },
+      { find: "~types", replacement: path.resolve(__dirname, "src/types") },
+      { find: "~utils", replacement: path.resolve(__dirname, "src/utils") },
+      { find: "~style.css", replacement: path.resolve(__dirname, "src/style.css") },
+      { find: "~", replacement: path.resolve(__dirname, "src") },
+    ],
   },
   define: {
     // 注入平台标识

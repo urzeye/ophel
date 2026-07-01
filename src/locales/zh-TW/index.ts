@@ -671,6 +671,10 @@ export const zhTW = {
   panelModeDesc: "控制面板的顯示和隱藏行為",
   panelModeEdgeSnap: "自動吸附",
   panelModeFloating: "懸浮",
+  panelPlacementLabel: "面板顯示位置",
+  panelPlacementDesc: "選擇在頁面內顯示面板，或使用瀏覽器原生側邊欄",
+  panelPlacementInPage: "頁內面板",
+  panelPlacementNativePanel: "瀏覽器側邊欄",
 
   // 介面排版開關
   defaultPanelStateLabel: "預設展開面板",
@@ -1378,6 +1382,8 @@ export const zhTW = {
   popupSupported: "已啟用",
   popupUnsupported: "不支援",
   popupNewChat: "新對話",
+  popupOpenSidebar: "開啟側邊欄",
+  nativePanelGestureHint: "請在 Ophel 彈窗中點擊「開啟側邊欄」來開啟原生側邊欄。",
   popupQuickAccess: "快速存取",
   popupRecentUsed: "最近使用",
   popupNoRecentPrompts: "暫無最近使用的提示詞",

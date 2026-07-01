@@ -8,6 +8,10 @@ import {
   MSG_FOCUS_TAB,
   MSG_GET_AISTUDIO_MODELS,
   MSG_GET_CLAUDE_SESSION_KEY,
+  MSG_GET_SIDEBAR_CONTEXT,
+  MSG_GET_SIDEBAR_CONVERSATIONS,
+  MSG_GET_SIDEBAR_OUTLINE,
+  MSG_OPEN_BROWSER_SIDEBAR,
   MSG_OPEN_OPTIONS_PAGE,
   MSG_OPEN_URL,
   MSG_PROXY_FETCH,
@@ -16,6 +20,9 @@ import {
   MSG_REVOKE_PERMISSIONS,
   MSG_SET_CLAUDE_SESSION_KEY,
   MSG_SHOW_NOTIFICATION,
+  MSG_SIDEBAR_CONVERSATION_COMMAND,
+  MSG_SIDEBAR_OUTLINE_COMMAND,
+  MSG_SIDEBAR_PROMPT_COMMAND,
   MSG_SWITCH_NEXT_CLAUDE_KEY,
   MSG_TEST_CLAUDE_TOKEN,
   MSG_WEBDAV_REQUEST,
@@ -75,6 +82,77 @@ async function focusTab(tabId: number) {
   }
 }
 
+interface FirefoxSidebarActionApi {
+  open?: () => Promise<void> | void
+}
+
+interface ChromiumSidePanelApi {
+  open?: (options: { tabId?: number; windowId?: number }) => Promise<void> | void
+}
+
+const BROWSER_SIDEBAR_USER_GESTURE_ERROR = "BROWSER_SIDEBAR_REQUIRES_EXTENSION_ACTION"
+
+const getChromiumSidePanel = (): ChromiumSidePanelApi | undefined => {
+  const sidePanelKey = String.fromCharCode(115, 105, 100, 101, 80, 97, 110, 101, 108)
+  return (chrome as unknown as Record<string, ChromiumSidePanelApi | undefined>)[sidePanelKey]
+}
+
+const isUserGestureSidebarError = (error: unknown): boolean => {
+  const message = error instanceof Error ? error.message : String(error || "")
+  return message.includes("may only be called in response to a user gesture")
+}
+
+async function openBrowserSidebarForTab(
+  tab?: chrome.tabs.Tab,
+): Promise<{ success: boolean; error?: string }> {
+  const tabId = tab?.id
+  const windowId = tab?.windowId
+
+  const sidePanel = getChromiumSidePanel()
+
+  try {
+    if (sidePanel?.open) {
+      if (tabId != null) {
+        await sidePanel.open({ tabId })
+        return { success: true }
+      }
+
+      if (windowId != null) {
+        await sidePanel.open({ windowId })
+        return { success: true }
+      }
+    }
+  } catch (error) {
+    if (isUserGestureSidebarError(error)) {
+      return { success: false, error: BROWSER_SIDEBAR_USER_GESTURE_ERROR }
+    }
+    throw error
+  }
+
+  const chromeWithSidebarAction = chrome as typeof chrome & {
+    sidebarAction?: FirefoxSidebarActionApi
+  }
+  const globalBrowser = globalThis as typeof globalThis & {
+    browser?: {
+      sidebarAction?: FirefoxSidebarActionApi
+    }
+  }
+  const sidebarAction =
+    chromeWithSidebarAction.sidebarAction || globalBrowser.browser?.sidebarAction
+
+  if (sidebarAction?.open) {
+    await sidebarAction.open()
+    return { success: true }
+  }
+
+  return { success: false, error: "Browser sidebar API is not available" }
+}
+
+async function openBrowserSidebarForActiveTab(): Promise<{ success: boolean; error?: string }> {
+  const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  return openBrowserSidebarForTab(activeTab)
+}
+
 // 点击通知时激活对应标签页并聚焦窗口
 // 注意：notifications 是可选权限，需要安全访问以避免 Service Worker 初始化失败
 if (chrome.notifications?.onClicked) {
@@ -108,6 +186,24 @@ async function broadcastToOphelTabs(message: ExtensionMessage) {
   )
 
   return tabs
+}
+
+async function sendToActiveTab(message: ExtensionMessage) {
+  const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  const tabId = activeTab?.id
+
+  if (tabId == null) {
+    return { success: false, error: "NO_ACTIVE_TAB" }
+  }
+
+  try {
+    return await chrome.tabs.sendMessage(tabId, message)
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "ACTIVE_TAB_NOT_SUPPORTED",
+    }
+  }
 }
 
 // 监听扩展安装/更新
@@ -481,6 +577,28 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           console.error("Open URL failed:", err)
           sendResponse({ success: false, error: (err as Error).message })
         }
+      })()
+      break
+
+    case MSG_OPEN_BROWSER_SIDEBAR:
+      ;(async () => {
+        try {
+          sendResponse(await openBrowserSidebarForActiveTab())
+        } catch (err) {
+          console.error("Open browser sidebar failed:", err)
+          sendResponse({ success: false, error: (err as Error).message })
+        }
+      })()
+      break
+
+    case MSG_GET_SIDEBAR_CONTEXT:
+    case MSG_GET_SIDEBAR_OUTLINE:
+    case MSG_GET_SIDEBAR_CONVERSATIONS:
+    case MSG_SIDEBAR_OUTLINE_COMMAND:
+    case MSG_SIDEBAR_PROMPT_COMMAND:
+    case MSG_SIDEBAR_CONVERSATION_COMMAND:
+      ;(async () => {
+        sendResponse(await sendToActiveTab(message))
       })()
       break
 

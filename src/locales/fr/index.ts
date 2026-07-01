@@ -779,6 +779,11 @@ export const fr = {
   panelModeDesc: "Contrôler le comportement d'affichage/masquage du panneau",
   panelModeEdgeSnap: "Accrochage auto",
   panelModeFloating: "Flottant",
+  panelPlacementLabel: "Emplacement du panneau",
+  panelPlacementDesc:
+    "Choisissez le panneau intégré à la page ou la barre latérale native du navigateur.",
+  panelPlacementInPage: "Panneau dans la page",
+  panelPlacementNativePanel: "Barre latérale du navigateur",
   // Panel Settings
   defaultPanelStateLabel: "Ouvert par Défaut",
   defaultPanelStateDesc: "Panneau déployé au chargement",
@@ -1378,6 +1383,9 @@ Donnez le code puis un résumé des améliorations.`,
   popupSupported: "Actif",
   popupUnsupported: "Non supporté",
   popupNewChat: "Nouvelle Conversation",
+  popupOpenSidebar: "Ouvrir la barre latérale",
+  nativePanelGestureHint:
+    'Utilisez "Ouvrir la barre latérale" dans la fenêtre Ophel pour ouvrir le panneau natif.',
   popupQuickAccess: "Accès Rapide",
   popupRecentUsed: "Récents",
   popupNoRecentPrompts: "Aucun prompt récent",

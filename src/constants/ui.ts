@@ -20,6 +20,10 @@ import {
 import { SparkleIcon } from "~components/icons/SparkleIcon"
 import { SHORTCUT_META } from "~constants/shortcuts"
 
+declare const __PLATFORM__: "extension" | "userscript" | undefined
+
+const IS_USERSCRIPT_BUILD = typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
+
 // ==================== Tab ID 常量 ====================
 // 用于 Tab 切换判断，避免字符串字面量拼写错误
 export const TAB_IDS = {
@@ -227,6 +231,7 @@ const SETTING_ID_ROUTE_RULES: SettingRouteRule[] = [
 ]
 
 export const SETTING_ID_ALIASES: Record<string, string> = {
+  ...(IS_USERSCRIPT_BUILD ? {} : { "general.panel.panelPlacement": "panel-placement" }),
   "general.panel.panelMode": "panel-mode",
   "general.panel.defaultPosition": "panel-default-position",
   "general.panel.defaultEdgeDistance": "panel-edge-distance",
@@ -341,6 +346,23 @@ const SHORTCUT_SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = Object.entries(SHOR
 )
 
 export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
+  ...(IS_USERSCRIPT_BUILD
+    ? []
+    : [
+        {
+          settingId: "panel-placement",
+          title: "面板显示位置",
+          keywords: [
+            "panel",
+            "placement",
+            "native panel",
+            "面板位置",
+            "显示位置",
+            "页内",
+            "侧边栏",
+          ],
+        },
+      ]),
   {
     settingId: "panel-mode",
     title: "面板模式",

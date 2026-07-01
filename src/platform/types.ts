@@ -124,6 +124,18 @@ export interface Platform {
   openTab(url: string): void
 
   /**
+   * 当前平台是否可尝试打开浏览器原生侧边栏。
+   * 仅浏览器扩展实现提供，油猴实现必须省略，避免 userscript bundle 混入相关 runtime。
+   */
+  isBrowserSidebarAvailable?(): boolean
+
+  /**
+   * 打开浏览器原生侧边栏。
+   * 仅浏览器扩展实现提供，油猴实现必须省略，避免 userscript bundle 混入相关 runtime。
+   */
+  openBrowserSidebar?(): Promise<{ success: boolean; error?: string }>
+
+  /**
    * 检查是否有某个可选能力
    */
   hasCapability(cap: PlatformCapability): boolean
@@ -159,3 +171,4 @@ export type PlatformCapability =
   | "tabs" // 跨标签页操作
   | "declarativeNetRequest" // 网络请求规则
   | "commands" // 浏览器命令（全局快捷键）
+  | "browserSidebar" // 浏览器原生侧边栏

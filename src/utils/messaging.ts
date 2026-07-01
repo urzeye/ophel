@@ -114,6 +114,146 @@ export interface OpenUrlMessage extends OpenUrlPayload {
   type: typeof MSG_OPEN_URL
 }
 
+// 打开浏览器原生侧边栏（仅浏览器扩展版支持）
+export const MSG_OPEN_BROWSER_SIDEBAR = "OPEN_BROWSER_SIDEBAR"
+
+export interface OpenBrowserSidebarMessage {
+  type: typeof MSG_OPEN_BROWSER_SIDEBAR
+}
+
+// 浏览器原生侧边栏 <-> 当前活动标签页
+export const MSG_GET_SIDEBAR_CONTEXT = "GET_SIDEBAR_CONTEXT"
+export const MSG_GET_SIDEBAR_OUTLINE = "GET_SIDEBAR_OUTLINE"
+export const MSG_GET_SIDEBAR_CONVERSATIONS = "GET_SIDEBAR_CONVERSATIONS"
+export const MSG_SIDEBAR_OUTLINE_COMMAND = "SIDEBAR_OUTLINE_COMMAND"
+export const MSG_SIDEBAR_PROMPT_COMMAND = "SIDEBAR_PROMPT_COMMAND"
+export const MSG_SIDEBAR_CONVERSATION_COMMAND = "SIDEBAR_CONVERSATION_COMMAND"
+
+export interface SidebarBridgeSuccess<T> {
+  success: true
+  data: T
+}
+
+export interface SidebarBridgeFailure {
+  success: false
+  error: string
+}
+
+export type SidebarBridgeResponse<T> = SidebarBridgeSuccess<T> | SidebarBridgeFailure
+
+export interface SidebarPageContext {
+  supported: boolean
+  siteId?: string
+  siteName?: string
+  tabId?: number
+  url?: string
+  title?: string
+  sessionId?: string | null
+  placement: "in-page" | "browser-sidebar"
+  panelMode: "edge-snap" | "floating"
+}
+
+export interface SidebarOutlineNode {
+  id: string
+  text: string
+  level: number
+  relativeLevel: number
+  index: number
+  parentId?: string
+  children: SidebarOutlineNode[]
+  collapsed: boolean
+  isBookmarked?: boolean
+  isGhost?: boolean
+  isMatch?: boolean
+  hasMatchedDescendant?: boolean
+  isUserQuery?: boolean
+  wordCount?: number
+}
+
+export interface SidebarOutlineSnapshot {
+  siteId: string
+  sessionId: string | null
+  activeSourceId: string
+  sources: Array<{ id: string; label: string; available: boolean; count?: number }>
+  nodes: SidebarOutlineNode[]
+  searchQuery: string
+  level: number
+  isLoading: boolean
+  updatedAt: number
+}
+
+export interface SidebarFolderSnapshot {
+  id: string
+  name: string
+  icon?: string
+  color?: string
+}
+
+export interface SidebarConversationSnapshotItem {
+  id: string
+  title: string
+  url?: string
+  folderId: string
+  pinned: boolean
+  updatedAt: number
+  isActive: boolean
+  tagIds?: string[]
+}
+
+export interface SidebarConversationSnapshot {
+  siteId: string
+  currentConversationId: string | null
+  folders: SidebarFolderSnapshot[]
+  conversations: SidebarConversationSnapshotItem[]
+  updatedAt: number
+}
+
+export type SidebarOutlineCommand =
+  | { action: "refresh" }
+  | { action: "locate"; nodeId: string }
+  | { action: "toggleBookmark"; nodeId: string }
+  | { action: "setLevel"; level: number }
+  | { action: "setSearchQuery"; query: string }
+  | { action: "setActiveSource"; sourceId: string }
+
+export type SidebarPromptCommand =
+  | { action: "insert"; promptId: string; submitAfterInsert?: boolean }
+  | { action: "enqueue"; promptId: string }
+
+export type SidebarConversationCommand =
+  | { action: "sync" }
+  | { action: "navigate"; conversationId: string; url?: string }
+  | { action: "export"; conversationId: string; format: "markdown" | "json" | "txt" }
+  | { action: "rename"; conversationId: string; title: string }
+  | { action: "move"; conversationId: string; folderId: string }
+
+export interface GetSidebarContextMessage {
+  type: typeof MSG_GET_SIDEBAR_CONTEXT
+}
+
+export interface GetSidebarOutlineMessage {
+  type: typeof MSG_GET_SIDEBAR_OUTLINE
+}
+
+export interface GetSidebarConversationsMessage {
+  type: typeof MSG_GET_SIDEBAR_CONVERSATIONS
+}
+
+export interface SidebarOutlineCommandMessage {
+  type: typeof MSG_SIDEBAR_OUTLINE_COMMAND
+  command: SidebarOutlineCommand
+}
+
+export interface SidebarPromptCommandMessage {
+  type: typeof MSG_SIDEBAR_PROMPT_COMMAND
+  command: SidebarPromptCommand
+}
+
+export interface SidebarConversationCommandMessage {
+  type: typeof MSG_SIDEBAR_CONVERSATION_COMMAND
+  command: SidebarConversationCommand
+}
+
 // 扩展有新版本可用（通知页面展示刷新提示）
 export const MSG_EXTENSION_UPDATE_AVAILABLE = "EXTENSION_UPDATE_AVAILABLE"
 
@@ -186,6 +326,13 @@ export type ExtensionMessage =
   | RevokePermissionsMessage
   | OpenOptionsPageMessage
   | OpenUrlMessage
+  | OpenBrowserSidebarMessage
+  | GetSidebarContextMessage
+  | GetSidebarOutlineMessage
+  | GetSidebarConversationsMessage
+  | SidebarOutlineCommandMessage
+  | SidebarPromptCommandMessage
+  | SidebarConversationCommandMessage
   | ExtensionUpdateAvailableMessage
   | ClearAllDataMessage
   | RestoreDataMessage

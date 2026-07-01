@@ -18,6 +18,7 @@ import {
 } from "~core/conversation-manager"
 import { InlineBookmarkManager } from "~core/inline-bookmark-manager"
 import { OutlineManager, type OutlineNode } from "~core/outline-manager"
+import { registerSidebarBridge } from "~core/sidebar-bridge"
 import { AI_STUDIO_SHORTCUT_SYNC_EVENT, PromptManager } from "~core/prompt-manager"
 import { QueueDispatcher } from "~core/queue-dispatcher"
 import { QuickQuoteActions } from "~components/QuickQuoteActions"
@@ -99,6 +100,11 @@ import {
   SHORTCUT_META,
   type ShortcutActionId,
 } from "~constants/shortcuts"
+
+declare const __PLATFORM__: "extension" | "userscript" | undefined
+
+const IS_EXTENSION_BUILD = typeof __PLATFORM__ === "undefined" || __PLATFORM__ === "extension"
+const BROWSER_SIDEBAR_USER_GESTURE_ERROR = "BROWSER_SIDEBAR_REQUIRES_EXTENSION_ACTION"
 
 interface LocalizedLabelDefinition {
   key: string
@@ -254,6 +260,14 @@ const GLOBAL_SEARCH_CATEGORY_DEFINITIONS: GlobalSearchCategoryDefinition[] = [
   },
 ]
 
+const getBrowserSidebarOpenErrorText = (error?: string): string => {
+  if (error === BROWSER_SIDEBAR_USER_GESTURE_ERROR) {
+    return t("nativePanelGestureHint")
+  }
+
+  return error || t("operationFailed")
+}
+
 const GLOBAL_SEARCH_RESULT_CATEGORY_LABELS: Record<
   GlobalSearchResultCategory,
   LocalizedLabelDefinition
@@ -355,6 +369,7 @@ const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "panel-edge-snap-threshold": "edgeSnapThresholdLabel",
   "panel-height": "panelHeightLabel",
   "panel-mode": "panelModeLabel",
+  ...(IS_EXTENSION_BUILD ? { "panel-placement": "panelPlacementLabel" } : {}),
   "panel-width": "panelWidthLabel",
   "prompt-double-click-send": "promptDoubleClickSendLabel",
   "prompt-queue": "queueSettingLabel",
@@ -2860,6 +2875,26 @@ export const App = () => {
   }, [conversationManager])
 
   useEffect(() => {
+    if (
+      !IS_EXTENSION_BUILD ||
+      !adapter ||
+      !promptManager ||
+      !conversationManager ||
+      !outlineManager
+    ) {
+      return
+    }
+
+    return registerSidebarBridge({
+      adapter,
+      promptManager,
+      conversationManager,
+      outlineManager,
+      getSettings: () => settingsRef.current,
+    })
+  }, [adapter, conversationManager, outlineManager, promptManager])
+
+  useEffect(() => {
     const handleExtensionUpdateAvailable = (event: Event) => {
       if (window.__OPHEL_EXTENSION_UPDATE_DISMISSED__) return
 
@@ -3112,10 +3147,38 @@ export const App = () => {
     const siteId = adapter.getSiteId()
     return settings.modelLock?.[siteId]?.enabled || false
   }, [adapter, settings])
+  const isBrowserSidebarPlacement =
+    IS_EXTENSION_BUILD &&
+    (settings?.panel?.panelPlacement ?? DEFAULT_SETTINGS.panel.panelPlacement) === "browser-sidebar"
+  const isInPagePanelVisible = !isBrowserSidebarPlacement && isPanelExpanded
+  const isInPagePanelSnapped = !isBrowserSidebarPlacement && !!edgeSnapState && !isEdgePeeking
+  const isQuickButtonPanelExpanded = isBrowserSidebarPlacement ? false : isPanelExpanded
 
   // 面板统一切换：快捷键与快捷按钮组共用，确保 edge-snap 模式下同步进入 peek 状态
   const handlePanelToggle = useCallback(() => {
     hideLauncherPeek()
+    if (isBrowserSidebarPlacement) {
+      hideEdgePeek()
+      if (!platform.openBrowserSidebar) {
+        showToast(t("operationFailed"))
+        return
+      }
+
+      void platform
+        .openBrowserSidebar()
+        .then((result) => {
+          if (!result?.success) {
+            showToast(getBrowserSidebarOpenErrorText(result?.error))
+          }
+        })
+        .catch((error) => {
+          showToast(
+            getBrowserSidebarOpenErrorText(error instanceof Error ? error.message : undefined),
+          )
+        })
+      return
+    }
+
     const expanding = !isPanelExpandedRef.current
     if (expanding && settingsRef.current?.panel?.panelMode === "edge-snap") {
       // 若 edgeSnapState 为 null（拖拽脱吸附后关闭了面板），恢复到默认边缘位置
@@ -3134,6 +3197,7 @@ export const App = () => {
     edgeSnapState,
     hideEdgePeek,
     hideLauncherPeek,
+    isBrowserSidebarPlacement,
     markSyncAfterOpen,
     persistPanelExpanded,
     showEdgePeek,
@@ -3149,11 +3213,17 @@ export const App = () => {
     onThemeToggle: handleThemeToggle,
     onOpenSettings: openSettingsModal,
     onOpenGlobalSearch: openGlobalSearchByShortcut,
-    isPanelVisible: isPanelExpanded,
-    isSnapped: !!edgeSnapState && !isEdgePeeking, // 吸附且未显示
+    isPanelVisible: isInPagePanelVisible,
+    isSnapped: isInPagePanelSnapped, // 吸附且未显示
     onShowSnappedPanel: showEdgePeekFromShortcut,
     onToggleScrollLock: handleToggleScrollLock,
   })
+
+  useEffect(() => {
+    if (!isBrowserSidebarPlacement) return
+    hideLauncherPeek()
+    hideEdgePeek()
+  }, [hideEdgePeek, hideLauncherPeek, isBrowserSidebarPlacement])
 
   // 当面板模式切换时的处理
   const prevPanelModeForSwitchRef = useRef<string | undefined>(undefined)
@@ -3545,43 +3615,45 @@ export const App = () => {
 
   return (
     <div className={`gh-root ${isPassThrough ? "gh-pass-through" : ""}`}>
-      <MainPanel
-        isOpen={isPanelExpanded || isLauncherPeeking}
-        isLauncherPeeking={isLauncherPeeking}
-        launcherPeekAnchorRect={launcherPeekAnchorRect}
-        onClose={() => {
-          hideLauncherPeek()
-          hideEdgePeek()
-          persistPanelExpanded(false)
-        }}
-        promptManager={promptManager}
-        conversationManager={conversationManager}
-        outlineManager={outlineManager}
-        adapter={adapter}
-        onThemeToggle={handleThemeToggle}
-        themeMode={themeMode}
-        selectedPromptId={selectedPrompt?.id}
-        onPromptSelect={handlePromptSelect}
-        edgeSnapState={edgeSnapState}
-        isEdgePeeking={isEdgePeeking}
-        onEdgeSnap={(side) => setEdgeSnapState(side)}
-        onUnsnap={() => {
-          setEdgeSnapState(null)
-          hideEdgePeek()
-        }}
-        onInteractionStateChange={handlePanelInteractionChange}
-        onOpenSettings={() => {
-          openSettingsModal()
-        }}
-        onMouseEnter={handleMainPanelMouseEnter}
-        onMouseLeave={handleMainPanelMouseLeave}
-      />
+      {!isBrowserSidebarPlacement && (
+        <MainPanel
+          isOpen={isPanelExpanded || isLauncherPeeking}
+          isLauncherPeeking={isLauncherPeeking}
+          launcherPeekAnchorRect={launcherPeekAnchorRect}
+          onClose={() => {
+            hideLauncherPeek()
+            hideEdgePeek()
+            persistPanelExpanded(false)
+          }}
+          promptManager={promptManager}
+          conversationManager={conversationManager}
+          outlineManager={outlineManager}
+          adapter={adapter}
+          onThemeToggle={handleThemeToggle}
+          themeMode={themeMode}
+          selectedPromptId={selectedPrompt?.id}
+          onPromptSelect={handlePromptSelect}
+          edgeSnapState={edgeSnapState}
+          isEdgePeeking={isEdgePeeking}
+          onEdgeSnap={(side) => setEdgeSnapState(side)}
+          onUnsnap={() => {
+            setEdgeSnapState(null)
+            hideEdgePeek()
+          }}
+          onInteractionStateChange={handlePanelInteractionChange}
+          onOpenSettings={() => {
+            openSettingsModal()
+          }}
+          onMouseEnter={handleMainPanelMouseEnter}
+          onMouseLeave={handleMainPanelMouseLeave}
+        />
+      )}
 
       <QuickButtons
-        isPanelExpanded={isPanelExpanded}
+        isPanelExpanded={isQuickButtonPanelExpanded}
         onPanelToggle={handlePanelToggle}
-        onPanelLogoHoverStart={handlePanelLogoHoverStart}
-        onPanelLogoHoverEnd={handlePanelLogoHoverEnd}
+        onPanelLogoHoverStart={isBrowserSidebarPlacement ? undefined : handlePanelLogoHoverStart}
+        onPanelLogoHoverEnd={isBrowserSidebarPlacement ? undefined : handlePanelLogoHoverEnd}
         onThemeToggle={handleThemeToggle}
         themeMode={themeMode}
         onExport={handleFloatingToolbarExport}

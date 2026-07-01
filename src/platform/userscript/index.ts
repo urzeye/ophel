@@ -160,16 +160,9 @@ export const platform: Platform = {
     window.open(url, "_blank")
   },
 
-  hasCapability(cap: PlatformCapability): boolean {
-    // 油猴版不支持这些能力
-    const unsupported: PlatformCapability[] = [
-      "cookies",
-      "permissions",
-      "tabs",
-      "declarativeNetRequest",
-      "commands",
-    ]
-    return !unsupported.includes(cap)
+  hasCapability(_cap: PlatformCapability): boolean {
+    // 当前可选能力都依赖浏览器扩展 API，油猴端统一不声明支持。
+    return false
   },
 
   async getClaudeSessionKey() {
@@ -340,3 +333,19 @@ export const platform: Platform = {
     }
   },
 }
+
+export type {
+  FetchOptions,
+  FetchResponse,
+  NotifyOptions,
+  Platform,
+  PlatformCapability,
+  PlatformStorage,
+} from "../types"
+export {
+  getPlatformType,
+  isExtensionPlatform,
+  isUserscriptPlatform,
+  getUserscriptManagerName,
+  isScriptCatUserscriptManager,
+} from "../utils"

@@ -775,6 +775,10 @@ export const ru = {
   panelModeDesc: "Управление отображением и скрытием панели",
   panelModeEdgeSnap: "Авто-прилипание",
   panelModeFloating: "Плавающая",
+  panelPlacementLabel: "Размещение панели",
+  panelPlacementDesc: "Выберите панель внутри страницы или нативную боковую панель браузера.",
+  panelPlacementInPage: "Панель на странице",
+  panelPlacementNativePanel: "Боковая панель браузера",
   // Panel Settings
   defaultPanelStateLabel: "Открыта всегда",
   defaultPanelStateDesc: "Развернута при загрузке",
@@ -1357,6 +1361,9 @@ export const ru = {
   popupSupported: "Активен",
   popupUnsupported: "Не поддерж.",
   popupNewChat: "Новый чат",
+  popupOpenSidebar: "Открыть боковую панель",
+  nativePanelGestureHint:
+    "Используйте «Открыть боковую панель» во всплывающем окне Ophel, чтобы открыть встроенную панель.",
   popupQuickAccess: "Быстрый доступ",
   popupRecentUsed: "Недавние",
   popupNoRecentPrompts: "Нет недавних промптов",

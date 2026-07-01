@@ -289,10 +289,6 @@ body {
   border-color: var(--popup-border);
 }
 
-.popup-actions-single {
-  grid-template-columns: 1fr;
-}
-
 /* Recent Prompts */
 .popup-section-title {
   font-size: 12px;

@@ -12,6 +12,7 @@ import type {
   PlatformCapability,
   PlatformStorage,
 } from "../types"
+import { MSG_OPEN_BROWSER_SIDEBAR } from "~utils/messaging"
 
 const notificationSoundPaths: Record<string, string> = {
   default: "assets/notification-sounds/streaming-complete-v2.mp3",
@@ -115,7 +116,19 @@ export const platform: Platform = {
     chrome.runtime.sendMessage({ type: "OPEN_URL", url })
   },
 
-  hasCapability(_cap: PlatformCapability): boolean {
+  isBrowserSidebarAvailable(): boolean {
+    return true
+  },
+
+  async openBrowserSidebar() {
+    return chrome.runtime.sendMessage({ type: MSG_OPEN_BROWSER_SIDEBAR })
+  },
+
+  hasCapability(cap: PlatformCapability): boolean {
+    if (cap === "browserSidebar") {
+      return this.isBrowserSidebarAvailable?.() ?? false
+    }
+
     // 扩展版支持所有能力
     return true
   },

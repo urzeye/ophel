@@ -795,6 +795,10 @@ export const ja = {
   panelModeDesc: "パネルの表示・非表示の制御方法",
   panelModeEdgeSnap: "自動スナップ",
   panelModeFloating: "フローティング",
+  panelPlacementLabel: "パネル表示位置",
+  panelPlacementDesc: "ページ内パネルまたはブラウザー標準サイドバーを選択します",
+  panelPlacementInPage: "ページ内パネル",
+  panelPlacementNativePanel: "ブラウザーサイドバー",
   // Panel Settings
   defaultPanelStateLabel: "デフォルトで展開",
   defaultPanelStateDesc: "ページ読み込み時にパネルを展開した状態にします",
@@ -1414,6 +1418,9 @@ export const ja = {
   popupSupported: "有効",
   popupUnsupported: "非対応",
   popupNewChat: "新規チャット",
+  popupOpenSidebar: "サイドバーを開く",
+  nativePanelGestureHint:
+    "Ophel のポップアップで「サイドバーを開く」をクリックしてネイティブパネルを開いてください。",
   popupQuickAccess: "クイックアクセス",
   popupRecentUsed: "最近使用",
   popupNoRecentPrompts: "最近使用したプロンプトはありません",

@@ -2,13 +2,14 @@
   "language": "auto",
 
   "panel": {
-    "defaultOpen": true,
-    "autoHide": false,
-    "edgeSnap": true,
+    "panelExpanded": true,
+    "panelPlacement": "in-page",
+    "panelMode": "edge-snap",
     "defaultPosition": "right",
-    "defaultEdgeDistance": 20,
+    "defaultEdgeDistance": 0,
     "edgeSnapThreshold": 30,
-    "height": 80,
+    "height": 85,
+    "width": 320,
     "preventAutoScroll": false
   },
 

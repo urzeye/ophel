@@ -25,6 +25,7 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm build
           cp -r build/chrome-mv3-prod build/chrome-mv3-cws
+          node scripts/patch-sidebar-manifest.mjs build/chrome-mv3-cws chromium
           node scripts/strip-manifest-key.mjs build/chrome-mv3-cws
           cd build/chrome-mv3-cws && zip -r ../ophel-atlas-cws-upload.zip . && cd ../..
 

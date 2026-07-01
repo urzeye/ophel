@@ -24,6 +24,47 @@ import "./popup.css"
 // Inject platform type
 declare const __PLATFORM__: "extension" | "userscript" | undefined
 
+const BROWSER_SIDEBAR_USER_GESTURE_ERROR = "BROWSER_SIDEBAR_REQUIRES_EXTENSION_ACTION"
+
+const getBrowserSidebarOpenErrorText = (error?: string): string => {
+  if (error === BROWSER_SIDEBAR_USER_GESTURE_ERROR) {
+    return t("nativePanelGestureHint")
+  }
+
+  return error || t("operationFailed")
+}
+
+interface FirefoxSidebarActionApi {
+  open?: () => Promise<void> | void
+}
+
+interface ChromiumSidePanelApi {
+  open?: (options: { tabId?: number; windowId?: number }) => Promise<void> | void
+}
+
+interface ActiveTabInfo {
+  id?: number
+  windowId?: number
+}
+
+const getChromiumSidePanel = (): ChromiumSidePanelApi | undefined => {
+  const sidePanelKey = String.fromCharCode(115, 105, 100, 101, 80, 97, 110, 101, 108)
+  return (chrome as unknown as Record<string, ChromiumSidePanelApi | undefined>)[sidePanelKey]
+}
+
+const getFirefoxSidebarAction = (): FirefoxSidebarActionApi | undefined => {
+  const chromeWithSidebarAction = chrome as typeof chrome & {
+    sidebarAction?: FirefoxSidebarActionApi
+  }
+  const globalBrowser = globalThis as typeof globalThis & {
+    browser?: {
+      sidebarAction?: FirefoxSidebarActionApi
+    }
+  }
+
+  return chromeWithSidebarAction.sidebarAction || globalBrowser.browser?.sidebarAction
+}
+
 interface Prompt {
   id: string
   title: string
@@ -43,6 +84,7 @@ function IndexPopup() {
   const [toastVisible, setToastVisible] = useState(false)
   const [toastMessage, setToastMessage] = useState("")
   const [languageReady, setLanguageReady] = useState(false)
+  const [activeTabInfo, setActiveTabInfo] = useState<ActiveTabInfo | null>(null)
 
   useEffect(() => {
     // Load language setting from storage first
@@ -60,7 +102,9 @@ function IndexPopup() {
 
     // Detect current tab's site
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const url = tabs[0]?.url || ""
+      const activeTab = tabs[0]
+      setActiveTabInfo(activeTab ? { id: activeTab.id, windowId: activeTab.windowId } : null)
+      const url = activeTab?.url || ""
       const matchedSite = SUPPORTED_AI_PLATFORMS.find((site) => site.pattern.test(url))
 
       if (matchedSite) {
@@ -161,6 +205,45 @@ function IndexPopup() {
     await openUrlInCurrentTab(currentSite.url)
   }
 
+  const openBrowserSidebar = async () => {
+    try {
+      const sidePanel = getChromiumSidePanel()
+      if (sidePanel?.open) {
+        const options =
+          activeTabInfo?.id != null
+            ? { tabId: activeTabInfo.id }
+            : activeTabInfo?.windowId != null
+              ? { windowId: activeTabInfo.windowId }
+              : null
+
+        if (!options) {
+          showToast(t("operationFailed"))
+          return
+        }
+
+        await sidePanel.open(options)
+        window.close()
+        return
+      }
+
+      const sidebarAction = getFirefoxSidebarAction()
+      if (sidebarAction?.open) {
+        await sidebarAction.open()
+        window.close()
+        return
+      }
+
+      showToast(t("operationFailed"))
+    } catch (error) {
+      console.warn("[Ophel Popup] Failed to open browser sidebar:", error)
+      showToast(
+        getBrowserSidebarOpenErrorText(
+          error instanceof Error && error.message ? error.message : undefined,
+        ),
+      )
+    }
+  }
+
   // Fetch store info
   const storeInfo = getStoreInfo()
 
@@ -211,9 +294,12 @@ function IndexPopup() {
 
         {/* Quick Actions or Site Links */}
         {currentSite?.supported ? (
-          <div className="popup-actions popup-actions-single">
+          <div className="popup-actions">
             <button className="popup-action-btn primary-btn" onClick={startNewChatInCurrentSite}>
               🚀 {t("popupNewChat")}
+            </button>
+            <button className="popup-action-btn" onClick={openBrowserSidebar}>
+              {t("popupOpenSidebar")}
             </button>
           </div>
         ) : (

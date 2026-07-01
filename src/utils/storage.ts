@@ -56,6 +56,7 @@ export type SiteId =
 // 主题模式
 export type ThemeMode = "light" | "dark" | "system"
 export type ExportPackaging = "markdown" | "zip"
+export type PanelPlacement = "in-page" | "browser-sidebar"
 
 // 站点主题配置
 export interface SiteThemeConfig {
@@ -167,6 +168,7 @@ export interface Settings {
   // 面板行为
   panel: {
     panelExpanded: boolean // 面板是否展开（未收进快捷按钮组）
+    panelPlacement: PanelPlacement // 面板显示位置
     panelMode: "edge-snap" | "floating" // 面板模式
     preventAutoScroll: boolean
     defaultPosition: "left" | "right" // 展开时的默认侧边/吸附兜底侧边
@@ -381,6 +383,7 @@ export const DEFAULT_SETTINGS: Settings = {
 
   panel: {
     panelExpanded: true,
+    panelPlacement: "in-page",
     panelMode: "edge-snap",
     preventAutoScroll: false,
     defaultPosition: "right",

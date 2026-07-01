@@ -829,6 +829,10 @@ export const zhCN = {
   panelModeDesc: "控制面板的显示和隐藏行为",
   panelModeEdgeSnap: "自动吸附",
   panelModeFloating: "悬浮",
+  panelPlacementLabel: "面板显示位置",
+  panelPlacementDesc: "选择在页面内显示面板，或使用浏览器原生侧边栏",
+  panelPlacementInPage: "页内面板",
+  panelPlacementNativePanel: "浏览器侧边栏",
 
   // 界面排版开关（旧字段保留兼容）
   defaultPanelStateLabel: "默认展开面板",
@@ -1379,6 +1383,8 @@ export const zhCN = {
   popupSupported: "已激活",
   popupUnsupported: "不支持",
   popupNewChat: "新对话",
+  popupOpenSidebar: "打开侧边栏",
+  nativePanelGestureHint: "请在 Ophel 弹窗中点击“打开侧边栏”来打开原生侧边栏。",
   popupQuickAccess: "快速访问",
   popupRecentUsed: "最近使用",
   popupNoRecentPrompts: "暂无最近使用的提示词",

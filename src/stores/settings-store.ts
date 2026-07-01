@@ -21,6 +21,11 @@ import {
 
 import { chromeStorageAdapter } from "./chrome-adapter"
 
+// 构建时注入的平台标识
+declare const __PLATFORM__: "extension" | "userscript" | undefined
+
+const isUserscriptBuild = typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
+
 let isUpdatingFromStorage = false
 let skippedPersistWrites = 0
 
@@ -221,9 +226,16 @@ const normalizeSiteConfigRecord = <T extends object>(
 
 const normalizePanelSettings = (panel?: Partial<Settings["panel"]>): Settings["panel"] => {
   const defaults = DEFAULT_SETTINGS.panel
+  const panelPlacement =
+    panel?.panelPlacement === "in-page"
+      ? "in-page"
+      : !isUserscriptBuild && panel?.panelPlacement === "browser-sidebar"
+        ? "browser-sidebar"
+        : defaults.panelPlacement
 
   return {
     panelExpanded: panel?.panelExpanded ?? defaults.panelExpanded,
+    panelPlacement,
     panelMode:
       panel?.panelMode === "edge-snap" || panel?.panelMode === "floating"
         ? panel.panelMode
@@ -645,9 +657,6 @@ export const setSettingsState = (settings: Partial<Settings>) =>
  */
 export const subscribeSettings = (listener: (settings: Settings) => void) =>
   useSettingsStore.subscribe((state) => listener(state.settings))
-
-// 构建时注入的平台标识
-declare const __PLATFORM__: "extension" | "userscript"
 
 /**
  * 监听 chrome.storage.onChanged 事件（仅浏览器扩展环境）

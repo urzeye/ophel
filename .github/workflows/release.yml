@@ -130,6 +130,9 @@ jobs:
           # 创建临时目录并复制构建产物
           cp -r build/chrome-mv3-prod build/chrome-mv3-cws
 
+          # 注入 Chrome/Edge 原生侧边栏 manifest 字段
+          node scripts/patch-sidebar-manifest.mjs build/chrome-mv3-cws chromium
+
           # 清理 manifest.json：删除 key 字段，移除引用不存在文件的 web_accessible_resources 条目
           node scripts/strip-manifest-key.mjs build/chrome-mv3-cws
 
@@ -145,6 +148,9 @@ jobs:
 
           # 替换所有语言的 extensionName 为 Edge 商店合规的短标题（各语言独立翻译）
           node scripts/patch-edge-locales.mjs build/chrome-mv3-edge
+
+          # 注入 Chrome/Edge 原生侧边栏 manifest 字段
+          node scripts/patch-sidebar-manifest.mjs build/chrome-mv3-edge chromium
 
           # 清理 manifest.json：删除 key 字段（Edge Add-ons Store 不允许 key 字段）
           node scripts/strip-manifest-key.mjs build/chrome-mv3-edge

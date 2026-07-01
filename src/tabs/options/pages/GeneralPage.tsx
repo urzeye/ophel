@@ -14,6 +14,7 @@ import {
 } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
+import { showToast } from "~utils/toast"
 
 import { PageTitle, SettingCard, SettingRow, TabGroup, ToggleRow } from "../components"
 
@@ -21,6 +22,11 @@ interface GeneralPageProps {
   siteId: string
   initialTab?: string
 }
+
+declare const __PLATFORM__: "extension" | "userscript" | undefined
+
+const IS_EXTENSION_BUILD = typeof __PLATFORM__ === "undefined" || __PLATFORM__ === "extension"
+const NATIVE_PANEL_PLACEMENT = IS_EXTENSION_BUILD ? "browser-sidebar" : "in-page"
 
 // 可排序项目组件
 const SortableItem: React.FC<{
@@ -200,7 +206,18 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
     updateNestedSetting("quickButtons", "collapsed", newButtons)
   }
 
+  const handlePanelPlacementChange = (value: "in-page" | "browser-sidebar") => {
+    updateNestedSetting("panel", "panelPlacement", value)
+    if (IS_EXTENSION_BUILD && value === "browser-sidebar" && panelPlacement !== value) {
+      showToast(t("nativePanelGestureHint"), 4000, { maxWidth: 520 })
+    }
+  }
+
   if (!settings) return null
+
+  const panelPlacement = settings.panel?.panelPlacement ?? "in-page"
+  const isNativePanelPlacement = IS_EXTENSION_BUILD && panelPlacement === NATIVE_PANEL_PLACEMENT
+  const isInPagePanelPlacement = !isNativePanelPlacement
 
   const tabs = [
     { id: "panel", label: t("panelTab") },
@@ -219,199 +236,261 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
       {/* ========== 面板 Tab ========== */}
       {activeTab === "panel" && (
         <SettingCard title={t("panelSettings")}>
-          {/* 面板模式 */}
-          <SettingRow
-            label={t("panelModeLabel")}
-            description={t("panelModeDesc")}
-            settingId="panel-mode">
-            <div
-              style={{
-                display: "inline-flex",
-                borderRadius: "6px",
-                overflow: "hidden",
-                border: "1px solid var(--gh-border, #e5e7eb)",
-              }}>
-              {(
-                [
-                  {
-                    value: "edge-snap",
-                    label: t("panelModeEdgeSnap"),
-                    Icon: SnapToEdgeIcon,
-                  },
-                  {
-                    value: "floating",
-                    label: t("panelModeFloating"),
-                    Icon: FloatingModeIcon,
-                  },
-                ] as const
-              ).map((option, index) => (
-                <button
-                  type="button"
-                  key={option.value}
-                  aria-pressed={(settings.panel?.panelMode ?? "edge-snap") === option.value}
-                  onClick={() => updateNestedSetting("panel", "panelMode", option.value)}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    padding: "4px 12px",
-                    fontSize: "13px",
-                    border: "none",
-                    borderLeft: index > 0 ? "1px solid var(--gh-border, #e5e7eb)" : "none",
-                    cursor: "pointer",
-                    background:
-                      (settings.panel?.panelMode ?? "edge-snap") === option.value
-                        ? "var(--gh-primary, #4285f4)"
-                        : "var(--gh-bg, #fff)",
-                    color:
-                      (settings.panel?.panelMode ?? "edge-snap") === option.value
-                        ? "#fff"
-                        : "var(--gh-text-secondary, #6b7280)",
-                    transition: "all 0.2s",
-                  }}>
-                  <option.Icon size={14} />
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </SettingRow>
-
-          {/* 默认侧边 */}
-          <SettingRow
-            label={t("defaultPositionLabel")}
-            description={t("defaultPositionDesc")}
-            settingId="panel-default-position">
-            <div
-              style={{
-                display: "inline-flex",
-                borderRadius: "6px",
-                overflow: "hidden",
-                border: "1px solid var(--gh-border, #e5e7eb)",
-              }}>
-              <button
-                onClick={() => updateNestedSetting("panel", "defaultPosition", "left")}
-                style={{
-                  padding: "4px 12px",
-                  fontSize: "13px",
-                  border: "none",
-                  cursor: "pointer",
-                  background:
-                    (settings.panel?.defaultPosition || "right") === "left"
-                      ? "var(--gh-primary, #4285f4)"
-                      : "var(--gh-bg, #fff)",
-                  color:
-                    (settings.panel?.defaultPosition || "right") === "left"
-                      ? "#fff"
-                      : "var(--gh-text-secondary, #6b7280)",
-                  transition: "all 0.2s",
-                }}>
-                {t("defaultPositionLeft")}
-              </button>
-              <button
-                onClick={() => updateNestedSetting("panel", "defaultPosition", "right")}
-                style={{
-                  padding: "4px 12px",
-                  fontSize: "13px",
-                  border: "none",
-                  borderLeft: "1px solid var(--gh-border, #e5e7eb)",
-                  cursor: "pointer",
-                  background:
-                    (settings.panel?.defaultPosition || "right") === "right"
-                      ? "var(--gh-primary, #4285f4)"
-                      : "var(--gh-bg, #fff)",
-                  color:
-                    (settings.panel?.defaultPosition || "right") === "right"
-                      ? "#fff"
-                      : "var(--gh-text-secondary, #6b7280)",
-                  transition: "all 0.2s",
-                }}>
-                {t("defaultPositionRight")}
-              </button>
-            </div>
-          </SettingRow>
-
-          {/* 面板宽度 */}
-          <SettingRow
-            label={t("panelWidthLabel")}
-            description={t("panelWidthDesc")}
-            settingId="panel-width">
-            <Slider
-              value={Math.max(settings.panel?.width ?? 320, 240)}
-              onChange={handleWidthChange}
-              onPreviewChange={handleWidthPreview}
-              onCancelPreview={clearPreviewSettings}
-              min={240}
-              max={600}
-              step={10}
-              unit="px"
-              defaultValue={320}
-              formatValue={(value) => `${value}px`}
-              ariaLabel={t("panelWidthLabel")}
-            />
-          </SettingRow>
-
-          {/* 面板高度 */}
-          <SettingRow
-            label={t("panelHeightLabel")}
-            description={t("panelHeightDesc")}
-            settingId="panel-height">
-            <Slider
-              value={settings.panel?.height ?? 85}
-              onChange={handleHeightChange}
-              onPreviewChange={handleHeightPreview}
-              onCancelPreview={clearPreviewSettings}
-              min={50}
-              max={100}
-              step={1}
-              unit="vh"
-              defaultValue={85}
-              formatValue={(value) => `${value}vh`}
-              ariaLabel={t("panelHeightLabel")}
-            />
-          </SettingRow>
-
-          {/* 吸附触发距离 - 仅在自动吸附模式下显示 */}
-          {(settings.panel?.panelMode ?? "edge-snap") === "edge-snap" && (
+          {IS_EXTENSION_BUILD && (
             <SettingRow
-              label={t("edgeSnapThresholdLabel")}
-              description={t("edgeSnapThresholdDesc")}
-              settingId="panel-edge-snap-threshold">
-              <Slider
-                value={settings.panel?.edgeSnapThreshold ?? 30}
-                onChange={handleSnapThresholdChange}
-                onPreviewChange={handleSnapThresholdPreview}
-                onCancelPreview={clearPreviewSettings}
-                min={0}
-                max={400}
-                step={2}
-                unit="px"
-                defaultValue={30}
-                formatValue={(value) => `${value}px`}
-                ariaLabel={t("edgeSnapThresholdLabel")}
-              />
+              label={t("panelPlacementLabel")}
+              description={t("panelPlacementDesc")}
+              settingId="panel-placement">
+              <div
+                style={{
+                  display: "inline-flex",
+                  borderRadius: "6px",
+                  overflow: "hidden",
+                  border: "1px solid var(--gh-border, #e5e7eb)",
+                }}>
+                {(
+                  [
+                    {
+                      value: "in-page",
+                      label: t("panelPlacementInPage"),
+                      Icon: SnapToEdgeIcon,
+                    },
+                    {
+                      value: NATIVE_PANEL_PLACEMENT,
+                      label: t("panelPlacementNativePanel"),
+                      Icon: FloatingModeIcon,
+                    },
+                  ] as const
+                ).map((option, index) => (
+                  <button
+                    type="button"
+                    key={option.value}
+                    aria-pressed={panelPlacement === option.value}
+                    onClick={() => handlePanelPlacementChange(option.value)}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                      padding: "4px 12px",
+                      fontSize: "13px",
+                      border: "none",
+                      borderLeft: index > 0 ? "1px solid var(--gh-border, #e5e7eb)" : "none",
+                      cursor: "pointer",
+                      background:
+                        panelPlacement === option.value
+                          ? "var(--gh-primary, #4285f4)"
+                          : "var(--gh-bg, #fff)",
+                      color:
+                        panelPlacement === option.value
+                          ? "#fff"
+                          : "var(--gh-text-secondary, #6b7280)",
+                      transition: "all 0.2s",
+                    }}>
+                    <option.Icon size={14} />
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </SettingRow>
           )}
 
-          {/* 默认边距 - 仅在悬浮模式下显示 */}
-          {(settings.panel?.panelMode ?? "edge-snap") === "floating" && (
-            <SettingRow
-              label={t("defaultEdgeDistanceLabel")}
-              description={t("defaultEdgeDistanceDesc")}
-              settingId="panel-edge-distance">
-              <Slider
-                value={settings.panel?.defaultEdgeDistance ?? 0}
-                onChange={handleEdgeDistanceChange}
-                onPreviewChange={handleEdgeDistancePreview}
-                onCancelPreview={clearPreviewSettings}
-                min={0}
-                max={400}
-                step={5}
-                unit="px"
-                defaultValue={0}
-                formatValue={(value) => `${value}px`}
-                ariaLabel={t("defaultEdgeDistanceLabel")}
-              />
-            </SettingRow>
+          {isInPagePanelPlacement && (
+            <>
+              {/* 面板模式 */}
+              <SettingRow
+                label={t("panelModeLabel")}
+                description={t("panelModeDesc")}
+                settingId="panel-mode">
+                <div
+                  style={{
+                    display: "inline-flex",
+                    borderRadius: "6px",
+                    overflow: "hidden",
+                    border: "1px solid var(--gh-border, #e5e7eb)",
+                  }}>
+                  {(
+                    [
+                      {
+                        value: "edge-snap",
+                        label: t("panelModeEdgeSnap"),
+                        Icon: SnapToEdgeIcon,
+                      },
+                      {
+                        value: "floating",
+                        label: t("panelModeFloating"),
+                        Icon: FloatingModeIcon,
+                      },
+                    ] as const
+                  ).map((option, index) => (
+                    <button
+                      type="button"
+                      key={option.value}
+                      aria-pressed={(settings.panel?.panelMode ?? "edge-snap") === option.value}
+                      onClick={() => updateNestedSetting("panel", "panelMode", option.value)}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        padding: "4px 12px",
+                        fontSize: "13px",
+                        border: "none",
+                        borderLeft: index > 0 ? "1px solid var(--gh-border, #e5e7eb)" : "none",
+                        cursor: "pointer",
+                        background:
+                          (settings.panel?.panelMode ?? "edge-snap") === option.value
+                            ? "var(--gh-primary, #4285f4)"
+                            : "var(--gh-bg, #fff)",
+                        color:
+                          (settings.panel?.panelMode ?? "edge-snap") === option.value
+                            ? "#fff"
+                            : "var(--gh-text-secondary, #6b7280)",
+                        transition: "all 0.2s",
+                      }}>
+                      <option.Icon size={14} />
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </SettingRow>
+
+              {/* 默认侧边 */}
+              <SettingRow
+                label={t("defaultPositionLabel")}
+                description={t("defaultPositionDesc")}
+                settingId="panel-default-position">
+                <div
+                  style={{
+                    display: "inline-flex",
+                    borderRadius: "6px",
+                    overflow: "hidden",
+                    border: "1px solid var(--gh-border, #e5e7eb)",
+                  }}>
+                  <button
+                    onClick={() => updateNestedSetting("panel", "defaultPosition", "left")}
+                    style={{
+                      padding: "4px 12px",
+                      fontSize: "13px",
+                      border: "none",
+                      cursor: "pointer",
+                      background:
+                        (settings.panel?.defaultPosition || "right") === "left"
+                          ? "var(--gh-primary, #4285f4)"
+                          : "var(--gh-bg, #fff)",
+                      color:
+                        (settings.panel?.defaultPosition || "right") === "left"
+                          ? "#fff"
+                          : "var(--gh-text-secondary, #6b7280)",
+                      transition: "all 0.2s",
+                    }}>
+                    {t("defaultPositionLeft")}
+                  </button>
+                  <button
+                    onClick={() => updateNestedSetting("panel", "defaultPosition", "right")}
+                    style={{
+                      padding: "4px 12px",
+                      fontSize: "13px",
+                      border: "none",
+                      borderLeft: "1px solid var(--gh-border, #e5e7eb)",
+                      cursor: "pointer",
+                      background:
+                        (settings.panel?.defaultPosition || "right") === "right"
+                          ? "var(--gh-primary, #4285f4)"
+                          : "var(--gh-bg, #fff)",
+                      color:
+                        (settings.panel?.defaultPosition || "right") === "right"
+                          ? "#fff"
+                          : "var(--gh-text-secondary, #6b7280)",
+                      transition: "all 0.2s",
+                    }}>
+                    {t("defaultPositionRight")}
+                  </button>
+                </div>
+              </SettingRow>
+
+              {/* 面板宽度 */}
+              <SettingRow
+                label={t("panelWidthLabel")}
+                description={t("panelWidthDesc")}
+                settingId="panel-width">
+                <Slider
+                  value={Math.max(settings.panel?.width ?? 320, 240)}
+                  onChange={handleWidthChange}
+                  onPreviewChange={handleWidthPreview}
+                  onCancelPreview={clearPreviewSettings}
+                  min={240}
+                  max={600}
+                  step={10}
+                  unit="px"
+                  defaultValue={320}
+                  formatValue={(value) => `${value}px`}
+                  ariaLabel={t("panelWidthLabel")}
+                />
+              </SettingRow>
+
+              {/* 面板高度 */}
+              <SettingRow
+                label={t("panelHeightLabel")}
+                description={t("panelHeightDesc")}
+                settingId="panel-height">
+                <Slider
+                  value={settings.panel?.height ?? 85}
+                  onChange={handleHeightChange}
+                  onPreviewChange={handleHeightPreview}
+                  onCancelPreview={clearPreviewSettings}
+                  min={50}
+                  max={100}
+                  step={1}
+                  unit="vh"
+                  defaultValue={85}
+                  formatValue={(value) => `${value}vh`}
+                  ariaLabel={t("panelHeightLabel")}
+                />
+              </SettingRow>
+
+              {/* 吸附触发距离 - 仅在自动吸附模式下显示 */}
+              {(settings.panel?.panelMode ?? "edge-snap") === "edge-snap" && (
+                <SettingRow
+                  label={t("edgeSnapThresholdLabel")}
+                  description={t("edgeSnapThresholdDesc")}
+                  settingId="panel-edge-snap-threshold">
+                  <Slider
+                    value={settings.panel?.edgeSnapThreshold ?? 30}
+                    onChange={handleSnapThresholdChange}
+                    onPreviewChange={handleSnapThresholdPreview}
+                    onCancelPreview={clearPreviewSettings}
+                    min={0}
+                    max={400}
+                    step={2}
+                    unit="px"
+                    defaultValue={30}
+                    formatValue={(value) => `${value}px`}
+                    ariaLabel={t("edgeSnapThresholdLabel")}
+                  />
+                </SettingRow>
+              )}
+
+              {/* 默认边距 - 仅在悬浮模式下显示 */}
+              {(settings.panel?.panelMode ?? "edge-snap") === "floating" && (
+                <SettingRow
+                  label={t("defaultEdgeDistanceLabel")}
+                  description={t("defaultEdgeDistanceDesc")}
+                  settingId="panel-edge-distance">
+                  <Slider
+                    value={settings.panel?.defaultEdgeDistance ?? 0}
+                    onChange={handleEdgeDistanceChange}
+                    onPreviewChange={handleEdgeDistancePreview}
+                    onCancelPreview={clearPreviewSettings}
+                    min={0}
+                    max={400}
+                    step={5}
+                    unit="px"
+                    defaultValue={0}
+                    formatValue={(value) => `${value}px`}
+                    ariaLabel={t("defaultEdgeDistanceLabel")}
+                  />
+                </SettingRow>
+              )}
+            </>
           )}
         </SettingCard>
       )}
