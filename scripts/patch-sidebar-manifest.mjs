@@ -1,7 +1,8 @@
 /**
  * Patch browser-specific sidebar manifest fields.
  *
- * Chromium targets use `side_panel` plus the `sidePanel` permission.
+ * Chromium targets use the `sidePanel` permission and tab-specific
+ * chrome.sidePanel.setOptions() calls, without a global `side_panel.default_path`.
  * Firefox targets use `sidebar_action` and must not keep Chromium-only fields.
  *
  * Usage:
@@ -69,11 +70,9 @@ function resolveDefaultIcon() {
 
 if (target === "chromium") {
   delete manifest.sidebar_action
+  delete manifest.side_panel
   ensurePermission("sidePanel")
-  manifest.side_panel = {
-    default_path: "sidepanel.html",
-  }
-  console.log("[patch-sidebar-manifest] Patched Chromium side_panel.")
+  console.log("[patch-sidebar-manifest] Patched Chromium sidePanel permission.")
 } else {
   delete manifest.side_panel
   removePermission("sidePanel")

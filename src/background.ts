@@ -102,7 +102,7 @@ interface FirefoxSidebarActionApi {
 interface ChromiumSidePanelApi {
   open?: (options: { tabId?: number; windowId?: number }) => Promise<void> | void
   setOptions?: (options: {
-    tabId: number
+    tabId?: number
     path?: string
     enabled?: boolean
   }) => Promise<void> | void
@@ -190,6 +190,9 @@ async function resetGlobalActionBehavior() {
   const sidePanel = getChromiumSidePanel()
   if (sidePanel?.setPanelBehavior) {
     await sidePanel.setPanelBehavior({ openPanelOnActionClick: false })
+  }
+  if (sidePanel?.setOptions) {
+    await sidePanel.setOptions({ enabled: false })
   }
 }
 

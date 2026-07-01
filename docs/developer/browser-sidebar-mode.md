@@ -17,7 +17,7 @@
 - 页内面板保留现有 `edge-snap` 和 `floating` 两种模式。
 - 浏览器侧边栏模式下，页面不再被 `.gh-main-panel` 大面板遮挡。
 - 侧边栏中的大纲、会话、Prompt 操作仍作用于当前活动的受支持 AI 页面。
-- Chrome / Edge 使用 Chromium `side_panel` 能力。
+- Chrome / Edge 使用 Chromium `chrome.sidePanel` API。
 - Firefox 使用 `sidebar_action` 能力。
 - 油猴脚本不展示、不导入、不执行原生 sidebar 相关逻辑。
 - 旧设置和备份数据静默兼容，默认仍使用页内面板。
@@ -110,12 +110,11 @@ Chrome / Edge：
 
 ```json
 {
-  "permissions": ["storage", "declarativeNetRequestWithHostAccess", "sidePanel"],
-  "side_panel": {
-    "default_path": "sidepanel.html"
-  }
+  "permissions": ["storage", "declarativeNetRequestWithHostAccess", "sidePanel"]
 }
 ```
+
+Chromium 产物不声明 `side_panel.default_path`。否则 Chrome 会注册一个全局侧边栏，用户在受支持站点打开后切到其它网站时，侧边栏仍可能停留在窗口右侧。Chrome / Edge 只保留 `sidePanel` 权限，由 background 按 tab 调用 `chrome.sidePanel.setOptions({ tabId, path: "sidepanel.html", enabled: true })` 启用，非支持 tab 调用 `enabled: false`。
 
 Firefox：
 
@@ -133,11 +132,11 @@ Firefox：
 ```
 
 `src/sidepanel.tsx` 存在后，Plasmo 会为扩展构建生成 `sidepanel.html`，Chromium
-构建通常也会自动带上 `side_panel` 和 `sidePanel` 权限。仍需要新增 postbuild 脚本按
+构建可能也会自动带上 `side_panel` 和 `sidePanel` 权限。仍需要新增 postbuild 脚本按
 target 幂等 patch manifest，原因是发布包需要和 `.github/workflows/release.yml` 的
 复制、清理、打包流程对齐，并且 Firefox 需要转换为 `sidebar_action`：
 
-- Chromium 产物保留或补齐 `side_panel`，移除 `sidebar_action`，确保有 `sidePanel` 权限。
+- Chromium 产物移除 `side_panel` 和 `sidebar_action`，确保有 `sidePanel` 权限。
 - Firefox 产物保留或补齐 `sidebar_action`，移除 `side_panel` 和 `sidePanel` 权限。
 - Edge 继续复用 Chrome 构建产物，但在复制、Edge locale patch 后也要执行 Chromium patch。
 - 不把 `side_panel` / `sidebar_action` 写进 `package.json` 的 base manifest，避免浏览器目标互相污染。
@@ -413,7 +412,7 @@ body {
 ## 验收标准
 
 - `DEFAULT_SETTINGS`、settings store normalization、Options UI、设置 schema 都包含 `panelPlacement`。
-- Chrome / Edge 构建产物 manifest 包含 `side_panel.default_path` 和 `sidePanel` 权限。
+- Chrome / Edge 构建产物 manifest 包含 `sidePanel` 权限，不包含 `side_panel.default_path`。
 - Firefox 构建产物 manifest 包含 `sidebar_action.default_panel`，不包含 `side_panel` 和 `sidePanel` 权限。
 - 油猴构建不包含原生 sidebar API 引用。
 - 浏览器侧边栏可以从明确用户操作打开。
