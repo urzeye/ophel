@@ -64,7 +64,7 @@ Page DOM, outline navigation, prompt insertion, conversation actions
 | ------------------------------ | ----------------------------------------------------- |
 | `src/sidepanel.tsx`          | 浏览器 sidebar 页面入口，只存在于扩展构建。           |
 | `src/components/sidebar/*`   | sidebar 专用 UI，不直接访问页面 DOM。                 |
-| `src/background.ts`          | 打开 sidebar、查询活动标签页、转发 sidebar 命令。     |
+| `src/background.ts`          | 按当前标签页和设置动态切换扩展图标行为；打开 sidebar、查询活动标签页、转发 sidebar 命令。 |
 | `src/components/App.tsx`     | 在 content script React app 内注册 sidebar bridge，并按 `panelPlacement` 控制页内面板渲染。 |
 | `src/core/sidebar-bridge.ts` | 把页面态转换为可序列化快照，并执行受控命令。          |
 | `src/utils/messaging.ts`     | 定义 sidebar 消息常量、payload、response 类型。       |
@@ -335,12 +335,19 @@ const panelPlacement =
 当 `panelPlacement === "browser-sidebar"`：
 
 - 快捷按钮中的“面板”按钮改为尝试打开浏览器 sidebar。
-- 打开失败时显示明确 toast，不要静默失败。
+- Chromium 若拒绝 content script 间接调用 `sidePanel.open()`，显示明确 toast，引导用户在受支持站点点击浏览器工具栏里的 Ophel 图标。
 - 不渲染 `.gh-main-panel` 遮挡页面。
 
-### Popup
+### 扩展图标入口
 
-扩展 popup 增加“打开侧边栏”入口，作为最稳定的用户手势来源。若浏览器拒绝 content-script 间接打开 sidebar，则 popup 入口作为主路径。
+扩展图标必须保持条件行为：
+
+- 当前标签页是 Ophel 支持站点，且 `panelPlacement === "browser-sidebar"` 时，点击浏览器工具栏里的 Ophel 图标直接打开原生 sidebar。
+- 当前标签页不是支持站点，或设置仍为页内面板时，Ophel 图标继续打开原 popup。
+- 实现上由 background 提前缓存 `panelPlacement` 并按 tab 调用 `chrome.action.setPopup()`：支持站点 sidebar 模式下清空当前 tab 的 popup，让点击进入 `chrome.action.onClicked`；其他情况恢复 `popup.html`。
+- background 初始化时必须显式恢复全局 `popup.html`，并调用 `sidePanel.setPanelBehavior({ openPanelOnActionClick: false })`，避免 Chrome 保留旧的全局 action 打开 sidebar 行为。
+- 同步按 tab 调用 `sidePanel.setOptions()`：支持站点 sidebar 模式启用 side panel，其他 tab 禁用 side panel。
+- `chrome.action.onClicked` 中必须同步调用 `sidePanel.open()`，不能先异步读设置，否则会丢失 Chrome 认可的扩展用户手势。
 
 ## 样式策略
 
@@ -395,7 +402,7 @@ body {
 
 | 风险                                              | 处理                                                                                   |
 | ------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `chrome.sidePanel.open()` 需要直接用户手势      | popup/action 作为主入口；content script 快捷按钮失败时提示用户从 popup 打开。          |
+| `chrome.sidePanel.open()` 需要直接用户手势      | 支持站点 + sidebar 模式下让扩展图标进入 `action.onClicked` 并同步调用 `sidePanel.open()`；其他页面保留 popup。content script 快捷按钮失败时提示用户点击工具栏 Ophel 图标。 |
 | Firefox sidebar manifest 与 Plasmo 输出路径不匹配 | postbuild 后检查`sidepanel.html` 是否存在并 patch `sidebar_action.default_panel`。 |
 | content script 未注入或未初始化                   | background 返回`{ supported: false }`，sidebar 显示 unsupported / retry。            |
 | 大纲定位目标过期                                  | 执行命令前刷新 snapshot 或根据 index/text/hash 重新解析。                              |
@@ -445,7 +452,9 @@ rg -n "sidePanel|side_panel|sidebarAction|sidebar_action|openBrowserSidebar|brow
 
 ## 后续增强
 
-- 抽取现有 `OutlineTab` / `PromptsTab` / `ConversationsTab` 中可复用的纯 UI 片段。
-- 为 sidebar 增加更完整的导出进度、批量操作、标签管理和设置搜索。
+- 将当前 sidebar MVP UI 收敛为过渡实现，不作为长期独立产品界面继续扩展。
+- 抽取并复用现有 `MainPanel`、`OutlineTab`、`PromptsTab`、`ConversationsTab` 中的纯 UI 和交互组件。
+- 为 sidebar 页面补 proxy/facade 层，把原本依赖 adapter / manager / DOM 的操作转发给 content script，避免维护两套功能不一致的面板。
+- 在复用现有面板能力后，再补导出进度、批量操作、标签管理和设置搜索等完整功能。
 - 增加 Playwright 扩展冒烟测试，覆盖 Chrome sidebar 打开与 content script 命令桥。
 - 根据用户反馈决定是否将 sidebar 作为扩展版默认推荐模式。

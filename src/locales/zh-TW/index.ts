@@ -1382,8 +1382,8 @@ export const zhTW = {
   popupSupported: "已啟用",
   popupUnsupported: "不支援",
   popupNewChat: "新對話",
-  popupOpenSidebar: "開啟側邊欄",
-  nativePanelGestureHint: "請在 Ophel 彈窗中點擊「開啟側邊欄」來開啟原生側邊欄。",
+  nativePanelGestureHint:
+    "在支援的站點上，點擊瀏覽器工具列裡的 Ophel 圖示即可開啟原生側邊欄；其他頁面仍會開啟彈窗。",
   popupQuickAccess: "快速存取",
   popupRecentUsed: "最近使用",
   popupNoRecentPrompts: "暫無最近使用的提示詞",

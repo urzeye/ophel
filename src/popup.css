@@ -190,6 +190,10 @@ body {
   gap: 8px;
 }
 
+.popup-actions-single {
+  grid-template-columns: 1fr;
+}
+
 .popup-action-btn {
   display: flex;
   align-items: center;

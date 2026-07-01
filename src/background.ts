@@ -28,7 +28,7 @@ import {
   MSG_WEBDAV_REQUEST,
   type ExtensionMessage,
 } from "~utils/messaging"
-import { localStorage, type Settings } from "~utils/storage"
+import { DEFAULT_SETTINGS, localStorage, type Settings } from "~utils/storage"
 
 /**
  * Ophel - Background Service Worker
@@ -51,11 +51,24 @@ const OPHEL_TARGET_URLS = [
   "https://www.doubao.com/*",
   "https://ima.qq.com/*",
   "https://chat.deepseek.com/*",
+  "https://www.kimi.com/*",
   "https://chatglm.cn/*",
   "https://chat.qwen.ai/*",
+  "https://www.qianwen.com/*",
+  "https://qianwen.com/*",
   "https://yuanbao.tencent.com/*",
   "https://chat.z.ai/*",
 ]
+
+const OPHEL_TARGET_HOSTS = new Set(
+  OPHEL_TARGET_URLS.map((urlPattern) => {
+    try {
+      return new URL(urlPattern.replace("*", "")).hostname
+    } catch {
+      return ""
+    }
+  }).filter(Boolean),
+)
 
 // 通知 ID 格式："ophel|{tabId}|{windowId}|{uuid}"
 // 将 Tab 信息编码进 notifId，避免 MV3 Service Worker 重启后内存 Map 丢失
@@ -88,9 +101,25 @@ interface FirefoxSidebarActionApi {
 
 interface ChromiumSidePanelApi {
   open?: (options: { tabId?: number; windowId?: number }) => Promise<void> | void
+  setOptions?: (options: {
+    tabId: number
+    path?: string
+    enabled?: boolean
+  }) => Promise<void> | void
+  setPanelBehavior?: (options: { openPanelOnActionClick: boolean }) => Promise<void> | void
 }
 
 const BROWSER_SIDEBAR_USER_GESTURE_ERROR = "BROWSER_SIDEBAR_REQUIRES_EXTENSION_ACTION"
+const ACTION_POPUP_PATH = "popup.html"
+const SIDEPANEL_PATH = "sidepanel.html"
+let actionPanelPlacement: Settings["panel"]["panelPlacement"] =
+  DEFAULT_SETTINGS.panel.panelPlacement
+
+interface PersistedSettingsEnvelope {
+  state?: {
+    settings?: Settings
+  }
+}
 
 const getChromiumSidePanel = (): ChromiumSidePanelApi | undefined => {
   const sidePanelKey = String.fromCharCode(115, 105, 100, 101, 80, 97, 110, 101, 108)
@@ -100,6 +129,134 @@ const getChromiumSidePanel = (): ChromiumSidePanelApi | undefined => {
 const isUserGestureSidebarError = (error: unknown): boolean => {
   const message = error instanceof Error ? error.message : String(error || "")
   return message.includes("may only be called in response to a user gesture")
+}
+
+const parseJson = (value: string): unknown => {
+  try {
+    return JSON.parse(value)
+  } catch {
+    return undefined
+  }
+}
+
+const getPersistedSettingsFromValue = (value: unknown): Settings | undefined => {
+  const parsed = typeof value === "string" ? parseJson(value) : value
+  if (!parsed || typeof parsed !== "object") return undefined
+
+  const envelope = parsed as PersistedSettingsEnvelope
+  if (envelope.state?.settings) {
+    return envelope.state.settings
+  }
+
+  if ("panel" in parsed || "content" in parsed || "shortcuts" in parsed) {
+    return parsed as Settings
+  }
+
+  return undefined
+}
+
+const getPanelPlacementFromValue = (value: unknown): Settings["panel"]["panelPlacement"] => {
+  const settings = getPersistedSettingsFromValue(value)
+  const placement = settings?.panel?.panelPlacement
+  return placement === "browser-sidebar" || placement === "in-page"
+    ? placement
+    : DEFAULT_SETTINGS.panel.panelPlacement
+}
+
+const isSupportedOphelUrl = (url?: string): boolean => {
+  if (!url) return false
+
+  try {
+    const parsedUrl = new URL(url)
+    return OPHEL_TARGET_HOSTS.has(parsedUrl.hostname)
+  } catch {
+    return false
+  }
+}
+
+const shouldActionOpenBrowserSidebar = (tab?: chrome.tabs.Tab): boolean =>
+  actionPanelPlacement === "browser-sidebar" && isSupportedOphelUrl(tab?.url)
+
+async function loadActionPanelPlacement() {
+  const result = await chrome.storage.local.get("settings")
+  actionPanelPlacement = getPanelPlacementFromValue(result.settings)
+}
+
+async function resetGlobalActionBehavior() {
+  if (chrome.action?.setPopup) {
+    await chrome.action.setPopup({ popup: ACTION_POPUP_PATH })
+  }
+
+  const sidePanel = getChromiumSidePanel()
+  if (sidePanel?.setPanelBehavior) {
+    await sidePanel.setPanelBehavior({ openPanelOnActionClick: false })
+  }
+}
+
+async function configureSidePanelForTab(tabId: number, enabled: boolean) {
+  const sidePanel = getChromiumSidePanel()
+  if (!sidePanel?.setOptions) return
+
+  await sidePanel.setOptions(
+    enabled
+      ? {
+          tabId,
+          path: SIDEPANEL_PATH,
+          enabled: true,
+        }
+      : {
+          tabId,
+          enabled: false,
+        },
+  )
+}
+
+async function configureActionForTab(tab: chrome.tabs.Tab | undefined) {
+  if (tab?.id == null) return
+
+  const shouldOpenSidebar = shouldActionOpenBrowserSidebar(tab)
+
+  try {
+    if (chrome.action?.setPopup) {
+      await chrome.action.setPopup({
+        tabId: tab.id,
+        popup: shouldOpenSidebar ? "" : ACTION_POPUP_PATH,
+      })
+    }
+
+    await configureSidePanelForTab(tab.id, shouldOpenSidebar)
+  } catch (error) {
+    console.warn("[Ophel] Failed to configure action popup behavior for tab:", error)
+  }
+}
+
+async function configureActionForTabId(tabId: number) {
+  try {
+    await configureActionForTab(await chrome.tabs.get(tabId))
+  } catch {
+    // Tab may have been closed before we update its action popup.
+  }
+}
+
+async function configureActionForActiveTab() {
+  const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  await configureActionForTab(activeTab)
+}
+
+async function configureActionForAllTabs() {
+  const tabs = await chrome.tabs.query({})
+  await Promise.all(tabs.map((tab) => configureActionForTab(tab)))
+}
+
+async function initializeActionPopupBehavior() {
+  try {
+    await resetGlobalActionBehavior()
+  } catch (error) {
+    console.warn("[Ophel] Failed to reset global action behavior:", error)
+  }
+
+  await loadActionPanelPlacement()
+  await configureActionForAllTabs()
 }
 
 async function openBrowserSidebarForTab(
@@ -209,6 +366,45 @@ async function sendToActiveTab(message: ExtensionMessage) {
 // 监听扩展安装/更新
 chrome.runtime.onInstalled.addListener(() => {
   setupDynamicRules()
+  void initializeActionPopupBehavior()
+})
+
+chrome.runtime.onStartup?.addListener(() => {
+  void initializeActionPopupBehavior()
+})
+
+chrome.action?.onClicked?.addListener((tab) => {
+  if (!shouldActionOpenBrowserSidebar(tab)) return
+
+  void openBrowserSidebarForTab(tab)
+    .then((result) => {
+      if (!result.success) {
+        console.error("[Ophel] Failed to open browser sidebar from action:", result.error)
+      }
+    })
+    .catch((error) => {
+      console.error("[Ophel] Failed to open browser sidebar from action:", error)
+    })
+})
+
+chrome.tabs.onActivated.addListener((activeInfo) => {
+  void configureActionForTabId(activeInfo.tabId)
+})
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (!changeInfo.url && changeInfo.status !== "loading") return
+  void configureActionForTab(tab.id == null ? { ...tab, id: tabId } : tab)
+})
+
+chrome.windows.onFocusChanged.addListener((windowId) => {
+  if (windowId === chrome.windows.WINDOW_ID_NONE) return
+  void configureActionForActiveTab()
+})
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName !== "local" || !changes.settings) return
+  actionPanelPlacement = getPanelPlacementFromValue(changes.settings.newValue)
+  void configureActionForAllTabs()
 })
 
 chrome.runtime.onUpdateAvailable.addListener((details) => {

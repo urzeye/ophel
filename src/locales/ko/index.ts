@@ -1373,8 +1373,8 @@ export const ko = {
   popupSupported: "활성화됨",
   popupUnsupported: "미지원",
   popupNewChat: "새 대화",
-  popupOpenSidebar: "사이드바 열기",
-  nativePanelGestureHint: "Ophel 팝업에서 '사이드바 열기'를 클릭해 기본 패널을 여세요.",
+  nativePanelGestureHint:
+    "지원되는 사이트에서는 브라우저 도구 모음의 Ophel 아이콘을 클릭하면 기본 패널이 열립니다. 다른 페이지에서는 기존처럼 팝업이 열립니다.",
   popupQuickAccess: "빠른 액세스",
   popupRecentUsed: "최근 사용",
   popupNoRecentPrompts: "최근 사용한 프롬프트가 없습니다",

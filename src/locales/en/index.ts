@@ -1426,8 +1426,8 @@ Please output the optimized code block directly, followed by a brief summary of 
   popupSupported: "Active",
   popupUnsupported: "Unsupported",
   popupNewChat: "New Chat",
-  popupOpenSidebar: "Open Sidebar",
-  nativePanelGestureHint: 'Use "Open Sidebar" in the Ophel popup to open the native panel.',
+  nativePanelGestureHint:
+    "On supported sites, click the Ophel icon in the browser toolbar to open the native panel. Other pages still open the popup.",
   popupQuickAccess: "Quick Access",
   popupRecentUsed: "Recent",
   popupNoRecentPrompts: "No recent prompts",

@@ -1418,9 +1418,8 @@ export const ja = {
   popupSupported: "有効",
   popupUnsupported: "非対応",
   popupNewChat: "新規チャット",
-  popupOpenSidebar: "サイドバーを開く",
   nativePanelGestureHint:
-    "Ophel のポップアップで「サイドバーを開く」をクリックしてネイティブパネルを開いてください。",
+    "対応サイトでは、ブラウザのツールバーにある Ophel アイコンをクリックするとネイティブパネルが開きます。その他のページでは従来どおりポップアップが開きます。",
   popupQuickAccess: "クイックアクセス",
   popupRecentUsed: "最近使用",
   popupNoRecentPrompts: "最近使用したプロンプトはありません",

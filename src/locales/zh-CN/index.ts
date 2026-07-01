@@ -1383,8 +1383,8 @@ export const zhCN = {
   popupSupported: "已激活",
   popupUnsupported: "不支持",
   popupNewChat: "新对话",
-  popupOpenSidebar: "打开侧边栏",
-  nativePanelGestureHint: "请在 Ophel 弹窗中点击“打开侧边栏”来打开原生侧边栏。",
+  nativePanelGestureHint:
+    "在支持的站点上，点击浏览器工具栏里的 Ophel 图标即可打开原生侧边栏；其他页面仍会打开弹窗。",
   popupQuickAccess: "快速访问",
   popupRecentUsed: "最近使用",
   popupNoRecentPrompts: "暂无最近使用的提示词",

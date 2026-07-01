@@ -62,7 +62,6 @@ const USERSCRIPT_EXCLUDED_LOCALE_KEYS = new Set([
   "panelPlacementDesc",
   "panelPlacementInPage",
   "panelPlacementNativePanel",
-  "popupOpenSidebar",
   "nativePanelGestureHint",
 ])
 

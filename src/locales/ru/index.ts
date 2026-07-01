@@ -1361,9 +1361,8 @@ export const ru = {
   popupSupported: "Активен",
   popupUnsupported: "Не поддерж.",
   popupNewChat: "Новый чат",
-  popupOpenSidebar: "Открыть боковую панель",
   nativePanelGestureHint:
-    "Используйте «Открыть боковую панель» во всплывающем окне Ophel, чтобы открыть встроенную панель.",
+    "На поддерживаемых сайтах нажмите значок Ophel на панели инструментов браузера, чтобы открыть встроенную панель. На остальных страницах по-прежнему открывается popup.",
   popupQuickAccess: "Быстрый доступ",
   popupRecentUsed: "Недавние",
   popupNoRecentPrompts: "Нет недавних промптов",
