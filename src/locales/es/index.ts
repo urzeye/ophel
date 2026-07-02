@@ -629,6 +629,11 @@ export const es = {
   pageWidthValueLabel: "Valor de Ancho",
   pageWidthDesc: "Ancho del chat (por sitio)",
   enablePageWidth: "Activar Ampliación",
+  panelAvoidanceTitle: "Evitación inteligente",
+  betaBadge: "Beta",
+  panelAvoidanceLabel: "Evitar el panel de Ophel",
+  panelAvoidanceDesc:
+    "Ajusta automáticamente el área de contenido del sitio actual mientras el panel está abierto; se desactiva en pantallas estrechas.",
   widthValue: "Ancho",
   widthUnit: "Unidad",
 

@@ -25,6 +25,7 @@ import { setLanguage, t } from "~utils/i18n"
 import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
 import {
   getSiteModelLock,
+  getSitePanelAvoidance,
   getSitePageWidth,
   getSiteTheme,
   getSiteUserQueryWidth,
@@ -246,10 +247,20 @@ export function initLayoutManager(ctx: ModulesContext): void {
   const siteCleanMode = getSiteCleanMode(settings, siteId)
   const hasCleanConfig = !!adapter.getCleanModeConfig()
   const cleanModeEnabled = hasCleanConfig && siteCleanMode.enabled
+  const hasPanelAvoidanceConfig = !!adapter.getPanelAvoidanceConfig()
+  const panelAvoidanceEnabled =
+    hasPanelAvoidanceConfig && getSitePanelAvoidance(settings, siteId).enabled
 
-  if (sitePageWidth?.enabled || siteUserQueryWidth?.enabled || zenModeEnabled || cleanModeEnabled) {
+  if (
+    sitePageWidth?.enabled ||
+    siteUserQueryWidth?.enabled ||
+    zenModeEnabled ||
+    cleanModeEnabled ||
+    panelAvoidanceEnabled
+  ) {
     modules.layoutManager = new LayoutManager(adapter, sitePageWidth)
     if (sitePageWidth?.enabled) modules.layoutManager.apply()
+    if (panelAvoidanceEnabled) modules.layoutManager.startPanelAvoidance()
     if (siteUserQueryWidth?.enabled) modules.layoutManager.updateUserQueryConfig(siteUserQueryWidth)
     if (zenModeEnabled) modules.layoutManager.updateZenMode(siteZenMode)
     if (cleanModeEnabled) modules.layoutManager.updateCleanMode(true)
@@ -515,9 +526,17 @@ export function subscribeModuleUpdates(ctx: ModulesContext): void {
     const newSiteCleanMode = getSiteCleanMode(newSettings, siteId)
     const hasCleanConfig = !!adapter.getCleanModeConfig()
     const newCleanModeEnabled = hasCleanConfig && newSiteCleanMode.enabled
+    const hasPanelAvoidanceConfig = !!adapter.getPanelAvoidanceConfig()
+    const panelAvoidanceEnabled =
+      hasPanelAvoidanceConfig && getSitePanelAvoidance(newSettings, siteId).enabled
 
     if (modules.layoutManager) {
       modules.layoutManager.updateConfig(newSitePageWidth)
+      if (panelAvoidanceEnabled) {
+        modules.layoutManager.startPanelAvoidance()
+      } else {
+        modules.layoutManager.stopPanelAvoidance()
+      }
       modules.layoutManager.updateUserQueryConfig(newUserQueryWidth)
       modules.layoutManager.updateZenMode(newSiteZenMode)
       modules.layoutManager.updateCleanMode(newCleanModeEnabled)
@@ -525,10 +544,12 @@ export function subscribeModuleUpdates(ctx: ModulesContext): void {
       newSitePageWidth?.enabled ||
       newUserQueryWidth?.enabled ||
       newZenModeEnabled ||
-      newCleanModeEnabled
+      newCleanModeEnabled ||
+      panelAvoidanceEnabled
     ) {
       modules.layoutManager = new LayoutManager(adapter, newSitePageWidth)
       if (newSitePageWidth?.enabled) modules.layoutManager.apply()
+      if (panelAvoidanceEnabled) modules.layoutManager.startPanelAvoidance()
       if (newUserQueryWidth?.enabled) modules.layoutManager.updateUserQueryConfig(newUserQueryWidth)
       if (newZenModeEnabled) modules.layoutManager.updateZenMode(newSiteZenMode)
       if (newCleanModeEnabled) modules.layoutManager.updateCleanMode(true)

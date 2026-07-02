@@ -630,6 +630,11 @@ export const fr = {
   pageWidthValueLabel: "Valeur de Largeur",
   pageWidthDesc: "Largeur du chat (par site)",
   enablePageWidth: "Activer l'Élargissement",
+  panelAvoidanceTitle: "Évitement intelligent",
+  betaBadge: "Beta",
+  panelAvoidanceLabel: "Éviter le panneau Ophel",
+  panelAvoidanceDesc:
+    "Ajuste automatiquement la zone de contenu du site actuel lorsque le panneau est ouvert ; désactivé sur les écrans étroits.",
   widthValue: "Largeur",
   widthUnit: "Unité",
 

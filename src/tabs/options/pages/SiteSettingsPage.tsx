@@ -34,6 +34,8 @@ const normalizeSiteSettingsTab = (
   return tab
 }
 
+const PANEL_AVOIDANCE_SUPPORTED_SITE_IDS = new Set<string>([SITE_IDS.DEEPSEEK, SITE_IDS.DOUBAO])
+
 const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
   siteId,
   initialTab,
@@ -54,6 +56,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
     showToastThrottled(prerequisiteToastTemplate.replace("{setting}", label), 2000, {}, 1500, label)
   const enablePageWidthLabel = t("enablePageWidth")
   const enableUserQueryWidthLabel = t("enableUserQueryWidth")
+  const supportsPanelAvoidance = PANEL_AVOIDANCE_SUPPORTED_SITE_IDS.has(siteId)
 
   // 宽度布局相关状态
   const currentPageWidth =
@@ -64,6 +67,14 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
     settings?.layout?.userQueryWidth?._default
   const currentZenMode = settings?.layout?.zenMode?.[siteId] ||
     settings?.layout?.zenMode?._default || { enabled: false, showExitButton: true }
+  const currentPanelAvoidance = settings?.layout?.panelAvoidance?.[siteId] ||
+    settings?.layout?.panelAvoidance?._default || { enabled: true }
+  const panelAvoidanceTitle = (
+    <span className="settings-card-title-with-badge">
+      <span>{t("panelAvoidanceTitle")}</span>
+      <span className="settings-beta-badge">{t("betaBadge")}</span>
+    </span>
+  )
 
   const parseWidthValue = (value: string | undefined, fallback: string) => {
     const parsed = Number.parseInt(value ?? fallback, 10)
@@ -140,6 +151,31 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
       {/* ========== 页面布局 Tab ========== */}
       {activeTab === SITE_SETTINGS_TAB_IDS.LAYOUT && (
         <>
+          {supportsPanelAvoidance && (
+            <SettingCard title={panelAvoidanceTitle}>
+              <ToggleRow
+                label={t("panelAvoidanceLabel")}
+                description={t("panelAvoidanceDesc")}
+                settingId="layout-panel-avoidance-enabled"
+                checked={currentPanelAvoidance.enabled}
+                onChange={() => {
+                  setSettings({
+                    layout: {
+                      ...settings.layout,
+                      panelAvoidance: {
+                        ...settings.layout?.panelAvoidance,
+                        [siteId]: {
+                          ...currentPanelAvoidance,
+                          enabled: !currentPanelAvoidance.enabled,
+                        },
+                      },
+                    },
+                  })
+                }}
+              />
+            </SettingCard>
+          )}
+
           {/* 页面宽度卡片 */}
           <SettingCard title={t("layoutSettingsTitle")}>
             <ToggleRow

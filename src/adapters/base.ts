@@ -142,6 +142,42 @@ export interface ZenModeConfig {
   styles?: ZenModeStyleRule[]
 }
 
+export interface WidthSelectorConfig {
+  selector: string
+  property: string
+  globalSelector?: string
+  value?: string
+  transformValue?: (value: string) => string
+  extraCss?: string
+  noCenter?: boolean
+}
+
+export interface PanelAvoidanceInsetConfig {
+  selector: string
+  leftProperty?: string
+  rightProperty?: string
+  extraCss?: string
+}
+
+export interface PanelAvoidanceConfig {
+  /** 用于计算安全区的宿主页内容容器；未设置时按整个 viewport 计算。 */
+  scopeSelector?: string
+  /** 需要按扣除 Ophel 面板后的安全区域重算宽度的站点选择器。 */
+  widthSelectors: WidthSelectorConfig[]
+  /** 需要按安全区中心重新分配左右 inset 的站点选择器。 */
+  insetSelectors?: PanelAvoidanceInsetConfig[]
+  /** Page Widening 未开启时用于避免无意加宽宿主页的站点默认宽度。 */
+  defaultWidth?: string
+  /** 面板和内容之间保留的视觉间距，单位 px。 */
+  gap?: number
+  /** 小于该可见宽度时视为 edge-snap 把手或收起态，不触发避让。 */
+  minVisiblePanelWidth?: number
+  /** 安全区过窄时不强行避让，避免把正文压到不可读。 */
+  minSafeWidth?: number
+  /** 小于该视口宽度时禁用避让，避免手机和窄屏设备被进一步压缩。 */
+  minViewportWidth?: number
+}
+
 export type AssistantMermaidSupportMode = "native" | "fallback" | "unsupported"
 export type QuickQuoteSupportMode = "enabled" | "native" | "disabled"
 
@@ -593,13 +629,18 @@ export abstract class SiteAdapter {
   // ==================== 页面宽度控制 ====================
 
   /** 返回需要加宽的 CSS 选择器列表 */
-  getWidthSelectors(): Array<{ selector: string; property: string }> {
+  getWidthSelectors(): WidthSelectorConfig[] {
     return []
   }
 
   /** 返回用户问题宽度调整的 CSS 选择器列表 */
-  getUserQueryWidthSelectors(): Array<{ selector: string; property: string }> {
+  getUserQueryWidthSelectors(): WidthSelectorConfig[] {
     return []
+  }
+
+  /** 返回 Ophel 面板安全区避让配置；默认关闭，由站点逐步 opt-in。 */
+  getPanelAvoidanceConfig(): PanelAvoidanceConfig | null {
+    return null
   }
 
   /** 返回 Zen Mode 配置（隐藏侧边栏/导航栏，专注当前对话） */

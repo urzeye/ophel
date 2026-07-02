@@ -626,6 +626,11 @@ export const ru = {
   pageWidthValueLabel: "Значение",
   pageWidthDesc: "Ширина чата (на сайт)",
   enablePageWidth: "Включить расширение",
+  panelAvoidanceTitle: "Умный обход",
+  betaBadge: "Beta",
+  panelAvoidanceLabel: "Обходить панель Ophel",
+  panelAvoidanceDesc:
+    "Автоматически подстраивает область контента текущего сайта, пока панель открыта; отключается на узких экранах.",
   widthValue: "Ширина",
   widthUnit: "Единица",
 

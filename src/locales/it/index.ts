@@ -673,6 +673,11 @@ export const it = {
   pageWidthValueLabel: "Valore larghezza",
   pageWidthDesc: "Regola la larghezza della pagina della chat (configurata per sito)",
   enablePageWidth: "Abilita l'ampliamento della pagina",
+  panelAvoidanceTitle: "Evitamento intelligente",
+  betaBadge: "Beta",
+  panelAvoidanceLabel: "Evita il pannello Ophel",
+  panelAvoidanceDesc:
+    "Regola automaticamente l'area dei contenuti del sito corrente mentre il pannello è aperto; disattivato sugli schermi stretti.",
   widthValue: "Valore larghezza",
   widthUnit: "Unità",
 

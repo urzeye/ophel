@@ -6,7 +6,7 @@ import React from "react"
 
 export interface SettingCardProps {
   /** 卡片标题 */
-  title?: string
+  title?: React.ReactNode
   /** 卡片描述 */
   description?: string
   /** 子元素 */

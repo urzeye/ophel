@@ -237,6 +237,7 @@ export const SETTING_ID_ALIASES: Record<string, string> = {
   "general.toolsMenu": "tools-menu-scrollTop",
   "siteSettings.layout.pageWidth.enabled": "layout-page-width-enabled",
   "siteSettings.layout.pageWidth.value": "layout-page-width-value",
+  "siteSettings.layout.panelAvoidance.enabled": "layout-panel-avoidance-enabled",
   "siteSettings.layout.userQueryWidth.enabled": "layout-user-query-width-enabled",
   "siteSettings.layout.userQueryWidth.value": "layout-user-query-width-value",
   "siteSettings.layout.zenMode.enabled": "layout-zen-mode-enabled",
@@ -687,6 +688,11 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     settingId: "layout-page-width-value",
     title: "页面宽度值",
     keywords: ["layout", "page width value", "页面宽度值"],
+  },
+  {
+    settingId: "layout-panel-avoidance-enabled",
+    title: "智能避让 Ophel 面板",
+    keywords: ["layout", "panel avoidance", "smart layout", "遮挡", "避让", "面板"],
   },
   {
     settingId: "layout-user-query-width-enabled",

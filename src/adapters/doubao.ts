@@ -37,8 +37,10 @@ import {
   type ExportLifecycleContext,
   type ModelSwitcherConfig,
   type OutlineItem,
+  type PanelAvoidanceConfig,
   type AnchorData,
   type SiteDeleteConversationResult,
+  type WidthSelectorConfig,
   type ZenModeConfig,
 } from "./base"
 
@@ -52,6 +54,11 @@ const NEW_CHAT_BUTTON_SELECTOR = `${SIDEBAR_ROOT_SELECTOR} > div:nth-child(2)`
 const VIRTUAL_SCROLL_SELECTOR = '[class*="v_list_scroller"]'
 const VIRTUAL_ROW_SELECTOR = ".v_list_row"
 const VIRTUAL_SCROLL_HOLDER_SELECTOR = '[data-name="scroll_holder"]'
+const DOUBAO_MAIN_SELECTOR = '[data-container-name="main"]'
+const DOUBAO_CONTENT_WIDTH_ROOT_SELECTOR = "#chat-route-layout"
+const DOUBAO_CONTENT_WIDTH_SELECTOR = `${DOUBAO_MAIN_SELECTOR} .max-w-\\(--content-max-width\\)`
+const DOUBAO_CONTENT_WIDTH_VAR_SELECTOR = `${DOUBAO_MAIN_SELECTOR} .max-w-\\[var\\(--content-max-width\\)\\]`
+const DOUBAO_CONTENT_COLUMN_SELECTOR = `${DOUBAO_MAIN_SELECTOR} .flex.h-full.min-h-0.w-full.flex-1.flex-col:has(${VIRTUAL_SCROLL_SELECTOR}):has([class*="input-content-container"])`
 const SHARE_MESSAGE_LIST_SELECTOR = '[class*="message-list-root-"]'
 const MESSAGE_BLOCK_SELECTOR = '[data-target-id="message-box-target-id"]'
 const USER_QUERY_SELECTOR = "[data-message-id].justify-end"
@@ -2276,9 +2283,9 @@ export class DoubaoAdapter extends SiteAdapter {
     ]
   }
 
-  getWidthSelectors(): Array<{ selector: string; property: string }> {
+  getWidthSelectors(): WidthSelectorConfig[] {
     return [
-      { selector: '[data-container-name="main"]', property: "max-width" },
+      { selector: DOUBAO_MAIN_SELECTOR, property: "max-width" },
       // 兼容豆包不同版本的 Tailwind 转义类名
       { selector: ".max-w-\\(--content-max-width\\)", property: "max-width" },
       { selector: ".max-w-\\[var\\(--content-max-width\\)\\]", property: "max-width" },
@@ -2289,7 +2296,30 @@ export class DoubaoAdapter extends SiteAdapter {
     ]
   }
 
-  getUserQueryWidthSelectors(): Array<{ selector: string; property: string }> {
+  getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    return {
+      scopeSelector: DOUBAO_MAIN_SELECTOR,
+      widthSelectors: [
+        {
+          selector: DOUBAO_CONTENT_WIDTH_ROOT_SELECTOR,
+          property: "--content-max-width",
+          noCenter: true,
+        },
+        { selector: DOUBAO_CONTENT_WIDTH_SELECTOR, property: "max-width" },
+        { selector: DOUBAO_CONTENT_WIDTH_VAR_SELECTOR, property: "max-width" },
+      ],
+      insetSelectors: [
+        {
+          selector: DOUBAO_CONTENT_COLUMN_SELECTOR,
+          extraCss: "box-sizing: border-box;",
+        },
+      ],
+      defaultWidth: "800px",
+      gap: 16,
+    }
+  }
+
+  getUserQueryWidthSelectors(): WidthSelectorConfig[] {
     return [
       // 匹配豆包用户提问气泡本身的 max-width
       // 必须加上 .w-fit 限制，否则 [class*="max-w-"] 会错误匹配到外层的 .max-w-full 导致气泡右对齐布局崩溃

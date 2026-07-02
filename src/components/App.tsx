@@ -339,6 +339,7 @@ const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "gemini-watermark-removal": "watermarkRemovalLabel",
   "layout-page-width-enabled": "enablePageWidth",
   "layout-page-width-value": "pageWidthValueLabel",
+  "layout-panel-avoidance-enabled": "panelAvoidanceLabel",
   "layout-user-query-width-enabled": "enableUserQueryWidth",
   "layout-user-query-width-value": "userQueryWidthValueLabel",
   "layout-zen-mode-enabled": "zenModeTitle",

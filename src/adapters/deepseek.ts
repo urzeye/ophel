@@ -30,6 +30,7 @@ import {
   type ExportLifecycleContext,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type PanelAvoidanceConfig,
   type SiteDeleteConversationResult,
   type ZenModeConfig,
 } from "./base"
@@ -48,7 +49,9 @@ const THOUGHT_CONTAINER_SELECTOR = ".ds-think-content"
 const RESPONSE_CONTAINER_SELECTOR =
   'main .ds-scroll-area:has(.ds-message), [role="main"] .ds-scroll-area:has(.ds-message), .ds-scroll-area:has(.ds-message)'
 const MESSAGE_LAYOUT_WIDTH_SCOPE_SELECTOR = ":root"
-const MESSAGE_LIST_ITEMS_SELECTOR = ".ds-virtual-list-items, .ds-virtual-list-visible-items"
+const MESSAGE_LAYOUT_SCOPE_SELECTOR = ".ds-virtual-list:has(.ds-message)"
+const MESSAGE_LIST_ITEMS_SELECTOR = `${MESSAGE_LAYOUT_SCOPE_SELECTOR} .ds-virtual-list-items`
+const MESSAGE_COMPOSER_SELECTOR = `${MESSAGE_LAYOUT_SCOPE_SELECTOR} > div:has(textarea.ds-scroll-area)`
 const USER_MESSAGE_CONTENT_SELECTOR = [
   `${USER_MESSAGE_SELECTOR} > .gh-inline-bookmark + div`,
   `${USER_MESSAGE_SELECTOR} > div:not(.gh-user-query-raw):not(.gh-user-query-markdown):not(.ds-focus-ring)`,
@@ -834,6 +837,19 @@ export class DeepSeekAdapter extends SiteAdapter {
         noCenter: true,
       },
     ]
+  }
+
+  getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    return {
+      scopeSelector: MESSAGE_LAYOUT_SCOPE_SELECTOR,
+      widthSelectors: this.getWidthSelectors(),
+      insetSelectors: [
+        { selector: MESSAGE_LIST_ITEMS_SELECTOR },
+        { selector: MESSAGE_COMPOSER_SELECTOR },
+      ],
+      defaultWidth: "840px",
+      gap: 16,
+    }
   }
 
   getUserQueryWidthSelectors() {

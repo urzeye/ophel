@@ -1,4 +1,9 @@
-import type { SiteAdapter } from "~adapters/base"
+import type {
+  PanelAvoidanceConfig,
+  PanelAvoidanceInsetConfig,
+  SiteAdapter,
+  WidthSelectorConfig,
+} from "~adapters/base"
 import { useSettingsStore } from "~stores/settings-store"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { createSafeHTML } from "~utils/trusted-types"
@@ -10,6 +15,7 @@ import type { PageWidthConfig, ZenModeConfig } from "~utils/storage"
 const STYLE_IDS = {
   PAGE_WIDTH: "gh-page-width-styles",
   PAGE_WIDTH_SHADOW: "gh-page-width-shadow",
+  PANEL_AVOIDANCE: "gh-panel-avoidance-styles",
   USER_QUERY_WIDTH: "gh-user-query-width-styles",
   USER_QUERY_WIDTH_SHADOW: "gh-user-query-width-shadow",
   ZEN_MODE: "gh-zen-mode-styles",
@@ -26,6 +32,22 @@ const DEFAULT_ZEN_MODE_CONFIG: ZenModeConfig = {
 
 /** 窄屏断点（CSS 逻辑像素），低于此值时内容宽度自动切换为近满屏，避免百分比宽度在手机上过窄 */
 const NARROW_SCREEN_BREAKPOINT = 480
+const DEFAULT_PANEL_AVOIDANCE_GAP = 16
+const DEFAULT_PANEL_AVOIDANCE_MIN_VISIBLE_WIDTH = 120
+const DEFAULT_PANEL_AVOIDANCE_MIN_SAFE_WIDTH = 360
+const DEFAULT_PANEL_AVOIDANCE_MIN_VIEWPORT_WIDTH = 768
+
+interface PanelReservation {
+  targetWidth: number
+  leftInset: number
+  rightInset: number
+}
+
+interface HorizontalRect {
+  left: number
+  right: number
+  width: number
+}
 
 /**
  * 页面布局管理器
@@ -34,9 +56,11 @@ const NARROW_SCREEN_BREAKPOINT = 480
 export class LayoutManager {
   private siteAdapter: SiteAdapter
   private pageWidthConfig: PageWidthConfig
+  private panelAvoidanceConfig: PanelAvoidanceConfig | null = null
   private userQueryWidthConfig: PageWidthConfig | null = null
 
   private pageWidthStyle: HTMLStyleElement | null = null
+  private panelAvoidanceStyle: HTMLStyleElement | null = null
   private userQueryWidthStyle: HTMLStyleElement | null = null
   private zenModeStyle: HTMLStyleElement | null = null
   private zenModeConfig: ZenModeConfig = DEFAULT_ZEN_MODE_CONFIG
@@ -53,10 +77,19 @@ export class LayoutManager {
 
   private processedShadowRoots = new WeakSet<ShadowRoot>()
   private shadowCheckInterval: ReturnType<typeof setTimeout> | null = null
+  private panelAvoidanceStarted = false
+  private panelAvoidanceRaf: number | null = null
+  private panelAvoidanceHostObserver: MutationObserver | null = null
+  private panelAvoidancePanelObserver: MutationObserver | null = null
+  private panelAvoidanceResizeObserver: ResizeObserver | null = null
+  private panelAvoidanceScopeResizeObserver: ResizeObserver | null = null
+  private panelAvoidanceObservedPanel: HTMLElement | null = null
+  private panelAvoidanceObservedScope: HTMLElement | null = null
 
   constructor(siteAdapter: SiteAdapter, pageWidthConfig: PageWidthConfig) {
     this.siteAdapter = siteAdapter
     this.pageWidthConfig = pageWidthConfig
+    this.panelAvoidanceConfig = siteAdapter.getPanelAvoidanceConfig()
   }
 
   // ==================== 页面宽度 ====================
@@ -64,6 +97,7 @@ export class LayoutManager {
   updateConfig(config: PageWidthConfig) {
     this.pageWidthConfig = config
     this.apply()
+    this.schedulePanelAvoidanceUpdate()
   }
 
   apply() {
@@ -78,6 +112,53 @@ export class LayoutManager {
     const css = this.generatePageWidthCSS()
     this.pageWidthStyle = this.injectStyle(STYLE_IDS.PAGE_WIDTH, css)
     this.refreshShadowInjection()
+  }
+
+  // ==================== 面板安全区避让 ====================
+
+  startPanelAvoidance() {
+    if (!this.panelAvoidanceConfig || this.panelAvoidanceStarted) return
+
+    this.panelAvoidanceStarted = true
+    window.addEventListener("resize", this.schedulePanelAvoidanceUpdate)
+    window.visualViewport?.addEventListener("resize", this.schedulePanelAvoidanceUpdate)
+    document.addEventListener("visibilitychange", this.handlePanelAvoidanceVisibilityChange)
+
+    if (document.body) {
+      this.panelAvoidanceHostObserver = new MutationObserver(this.schedulePanelAvoidanceUpdate)
+      this.panelAvoidanceHostObserver.observe(document.body, { childList: true, subtree: true })
+    }
+
+    this.schedulePanelAvoidanceUpdate()
+  }
+
+  stopPanelAvoidance() {
+    if (!this.panelAvoidanceStarted) {
+      this.clearPanelAvoidanceStyle()
+      return
+    }
+
+    this.panelAvoidanceStarted = false
+    window.removeEventListener("resize", this.schedulePanelAvoidanceUpdate)
+    window.visualViewport?.removeEventListener("resize", this.schedulePanelAvoidanceUpdate)
+    document.removeEventListener("visibilitychange", this.handlePanelAvoidanceVisibilityChange)
+
+    if (this.panelAvoidanceRaf !== null) {
+      window.cancelAnimationFrame(this.panelAvoidanceRaf)
+      this.panelAvoidanceRaf = null
+    }
+
+    this.panelAvoidanceHostObserver?.disconnect()
+    this.panelAvoidanceHostObserver = null
+    this.panelAvoidancePanelObserver?.disconnect()
+    this.panelAvoidancePanelObserver = null
+    this.panelAvoidanceResizeObserver?.disconnect()
+    this.panelAvoidanceResizeObserver = null
+    this.panelAvoidanceScopeResizeObserver?.disconnect()
+    this.panelAvoidanceScopeResizeObserver = null
+    this.panelAvoidanceObservedPanel = null
+    this.panelAvoidanceObservedScope = null
+    this.clearPanelAvoidanceStyle()
   }
 
   // ==================== 用户问题宽度 ====================
@@ -120,6 +201,7 @@ export class LayoutManager {
       this.cleanupZenModeRootClass()
       this.unmountZenModeExitButton()
       this.refreshShadowInjection()
+      this.schedulePanelAvoidanceUpdate()
       return
     }
 
@@ -135,6 +217,7 @@ export class LayoutManager {
       this.mountZenModeExitButton()
     }
     this.refreshShadowInjection()
+    this.schedulePanelAvoidanceUpdate()
   }
 
   // ==================== Clean Mode ====================
@@ -150,6 +233,7 @@ export class LayoutManager {
 
     if (!this.cleanModeEnabled) {
       this.refreshShadowInjection()
+      this.schedulePanelAvoidanceUpdate()
       return
     }
 
@@ -158,6 +242,7 @@ export class LayoutManager {
       this.cleanModeStyle = this.injectStyle(STYLE_IDS.CLEAN_MODE, css)
     }
     this.refreshShadowInjection()
+    this.schedulePanelAvoidanceUpdate()
   }
 
   // ==================== CSS 生成 ====================
@@ -217,15 +302,7 @@ export class LayoutManager {
   }
 
   private buildCSSFromSelectors(
-    selectors: Array<{
-      selector: string
-      property: string
-      globalSelector?: string
-      value?: string
-      transformValue?: (value: string) => string
-      extraCss?: string
-      noCenter?: boolean
-    }>,
+    selectors: WidthSelectorConfig[],
     globalWidth: string,
     useGlobalSelector: boolean,
   ): string {
@@ -245,6 +322,295 @@ export class LayoutManager {
       .join("\n")
   }
 
+  private generatePanelAvoidanceCSS(reservation: PanelReservation): string {
+    const config = this.panelAvoidanceConfig
+    if (!config) return ""
+
+    const targetWidth = `${Math.max(0, Math.floor(reservation.targetWidth))}px`
+    const leftInset = `${Math.max(0, Math.floor(reservation.leftInset))}px`
+    const rightInset = `${Math.max(0, Math.floor(reservation.rightInset))}px`
+
+    const widthCss = this.buildCSSFromSelectors(config.widthSelectors, targetWidth, true)
+    const insetCss = (config.insetSelectors || [])
+      .map((insetConfig) => this.buildPanelAvoidanceInsetCSS(insetConfig, leftInset, rightInset))
+      .join("\n")
+
+    return [widthCss, insetCss].filter(Boolean).join("\n")
+  }
+
+  private buildPanelAvoidanceInsetCSS(
+    config: PanelAvoidanceInsetConfig,
+    leftInset: string,
+    rightInset: string,
+  ): string {
+    const leftProperty = config.leftProperty || "padding-left"
+    const rightProperty = config.rightProperty || "padding-right"
+    const extra = config.extraCss || ""
+
+    return `${config.selector} { ${leftProperty}: ${leftInset} !important; ${rightProperty}: ${rightInset} !important; ${extra} }`
+  }
+
+  private getPanelAvoidanceBaseWidth(scopeWidth: number): number {
+    const rawWidth = this.pageWidthConfig?.enabled
+      ? `${this.pageWidthConfig.value}${this.pageWidthConfig.unit}`
+      : this.panelAvoidanceConfig?.defaultWidth
+    const parsedWidth = this.parsePanelAvoidanceWidth(rawWidth, scopeWidth)
+
+    return parsedWidth ?? scopeWidth
+  }
+
+  private parsePanelAvoidanceWidth(
+    rawWidth: string | undefined,
+    scopeWidth: number,
+  ): number | null {
+    if (!rawWidth) return null
+
+    const width = rawWidth.trim()
+    const numericValue = Number.parseFloat(width)
+    if (!Number.isFinite(numericValue) || numericValue <= 0) return null
+
+    if (width.endsWith("%")) {
+      return (scopeWidth * numericValue) / 100
+    }
+    if (width.endsWith("px")) {
+      return numericValue
+    }
+
+    return numericValue
+  }
+
+  private findMainPanel(): HTMLElement | null {
+    let panel: HTMLElement | null = null
+
+    DOMToolkit.walkShadowRoots((shadowRoot) => {
+      if (panel) return
+      const candidate = shadowRoot.querySelector(".gh-main-panel")
+      if (candidate instanceof HTMLElement) {
+        panel = candidate
+      }
+    })
+
+    if (panel) return panel
+
+    const fallback = document.querySelector(".gh-main-panel")
+    return fallback instanceof HTMLElement ? fallback : null
+  }
+
+  private findPanelAvoidanceScope(): HTMLElement | null {
+    const selector = this.panelAvoidanceConfig?.scopeSelector
+    if (!selector) return null
+
+    for (const candidate of Array.from(document.querySelectorAll(selector))) {
+      if (!(candidate instanceof HTMLElement)) continue
+
+      const rect = candidate.getBoundingClientRect()
+      if (rect.width > 0 && rect.height > 0) {
+        return candidate
+      }
+    }
+
+    return null
+  }
+
+  private getPanelAvoidanceScopeRect(scope: HTMLElement | null): HorizontalRect {
+    if (!scope) {
+      return {
+        left: 0,
+        right: window.innerWidth,
+        width: window.innerWidth,
+      }
+    }
+
+    const rect = scope.getBoundingClientRect()
+    const left = Math.max(0, rect.left)
+    const right = Math.min(window.innerWidth, rect.right)
+
+    return {
+      left,
+      right,
+      width: Math.max(0, right - left),
+    }
+  }
+
+  private isPanelAvoidanceViewportTooNarrow(): boolean {
+    const minViewportWidth =
+      this.panelAvoidanceConfig?.minViewportWidth ?? DEFAULT_PANEL_AVOIDANCE_MIN_VIEWPORT_WIDTH
+    const viewportWidth = Math.min(
+      window.innerWidth,
+      window.visualViewport?.width ?? window.innerWidth,
+    )
+
+    return viewportWidth < minViewportWidth
+  }
+
+  private getPanelReservation(
+    panel: HTMLElement,
+    scopeRect: HorizontalRect,
+  ): PanelReservation | null {
+    const config = this.panelAvoidanceConfig
+    if (!config || !panel.isConnected) return null
+
+    const root = panel.closest(".gh-root")
+    if (root?.classList.contains("gh-pass-through")) return null
+    if (this.isPanelAvoidanceSuppressedByPanelState(panel)) return null
+
+    const style = window.getComputedStyle(panel)
+    if (
+      style.display === "none" ||
+      style.visibility === "hidden" ||
+      Number.parseFloat(style.opacity || "1") <= 0.1
+    ) {
+      return null
+    }
+
+    const rect = panel.getBoundingClientRect()
+    const visibleLeft = Math.max(0, rect.left)
+    const visibleRight = Math.min(window.innerWidth, rect.right)
+    const visibleWidth = Math.max(0, visibleRight - visibleLeft)
+    const minVisibleWidth = config.minVisiblePanelWidth ?? DEFAULT_PANEL_AVOIDANCE_MIN_VISIBLE_WIDTH
+
+    if (visibleWidth < minVisibleWidth || rect.height < 120) return null
+
+    if (scopeRect.width <= 0) return null
+
+    const overlapLeft = Math.max(scopeRect.left, visibleLeft)
+    const overlapRight = Math.min(scopeRect.right, visibleRight)
+    const overlapWidth = Math.max(0, overlapRight - overlapLeft)
+    if (overlapWidth <= 0) return null
+
+    const panelCenter = overlapLeft + overlapWidth / 2
+    const scopeCenter = scopeRect.left + scopeRect.width / 2
+    const isLeftPanel = panelCenter < scopeCenter
+    const reservedLeft = isLeftPanel ? Math.max(0, overlapRight - scopeRect.left) : 0
+    const reservedRight = isLeftPanel ? 0 : Math.max(0, scopeRect.right - overlapLeft)
+    const gap = config.gap ?? DEFAULT_PANEL_AVOIDANCE_GAP
+    const minSafeWidth = config.minSafeWidth ?? DEFAULT_PANEL_AVOIDANCE_MIN_SAFE_WIDTH
+    const leftGap = reservedLeft > 0 ? gap : 0
+    const rightGap = reservedRight > 0 ? gap : 0
+    const safeLeft = scopeRect.left + reservedLeft + leftGap
+    const safeRight = scopeRect.right - reservedRight - rightGap
+    const safeWidth = safeRight - safeLeft
+
+    if (safeWidth < minSafeWidth) return null
+
+    const baseWidth = this.getPanelAvoidanceBaseWidth(scopeRect.width)
+    const targetWidth = Math.min(baseWidth, safeWidth)
+    const leftover = Math.max(0, safeWidth - targetWidth) / 2
+    const leftInset = Math.max(0, safeLeft - scopeRect.left + leftover)
+    const rightInset = Math.max(0, scopeRect.right - safeRight + leftover)
+
+    return {
+      targetWidth,
+      leftInset,
+      rightInset,
+    }
+  }
+
+  private isPanelAvoidanceSuppressedByPanelState(panel: HTMLElement): boolean {
+    const panelMode = useSettingsStore.getState().settings?.panel?.panelMode ?? "edge-snap"
+
+    if (panelMode !== "floating") return true
+
+    return (
+      panel.classList.contains("edge-snapped-left") ||
+      panel.classList.contains("edge-snapped-right")
+    )
+  }
+
+  private syncPanelAvoidanceObservers(panel: HTMLElement | null, scope: HTMLElement | null) {
+    if (this.panelAvoidanceObservedPanel !== panel) {
+      this.panelAvoidancePanelObserver?.disconnect()
+      this.panelAvoidancePanelObserver = null
+      this.panelAvoidanceResizeObserver?.disconnect()
+      this.panelAvoidanceResizeObserver = null
+      this.panelAvoidanceObservedPanel = panel
+
+      if (panel) {
+        this.panelAvoidancePanelObserver = new MutationObserver(this.schedulePanelAvoidanceUpdate)
+        this.panelAvoidancePanelObserver.observe(panel, {
+          attributes: true,
+          attributeFilter: ["class", "style", "data-edge-snap-transitioning"],
+        })
+
+        if (typeof ResizeObserver !== "undefined") {
+          this.panelAvoidanceResizeObserver = new ResizeObserver(this.schedulePanelAvoidanceUpdate)
+          this.panelAvoidanceResizeObserver.observe(panel)
+        }
+      }
+    }
+
+    this.syncPanelAvoidanceScopeObserver(scope)
+  }
+
+  private syncPanelAvoidanceScopeObserver(scope: HTMLElement | null) {
+    if (this.panelAvoidanceObservedScope === scope) return
+
+    this.panelAvoidanceScopeResizeObserver?.disconnect()
+    this.panelAvoidanceScopeResizeObserver = null
+    this.panelAvoidanceObservedScope = scope
+
+    if (!scope || typeof ResizeObserver === "undefined") return
+
+    this.panelAvoidanceScopeResizeObserver = new ResizeObserver(this.schedulePanelAvoidanceUpdate)
+    this.panelAvoidanceScopeResizeObserver.observe(scope)
+  }
+
+  private syncPanelAvoidanceStyle() {
+    if (!this.panelAvoidanceConfig) {
+      this.clearPanelAvoidanceStyle()
+      return
+    }
+
+    if (this.isPanelAvoidanceViewportTooNarrow()) {
+      this.clearPanelAvoidanceStyle()
+      return
+    }
+
+    const panel = this.findMainPanel()
+    const scope = this.findPanelAvoidanceScope()
+    const scopeRect = this.getPanelAvoidanceScopeRect(scope)
+    this.syncPanelAvoidanceObservers(panel, scope)
+
+    const reservation = panel ? this.getPanelReservation(panel, scopeRect) : null
+    if (!reservation) {
+      this.clearPanelAvoidanceStyle()
+      return
+    }
+
+    const css = this.generatePanelAvoidanceCSS(reservation)
+    if (!css) {
+      this.clearPanelAvoidanceStyle()
+      return
+    }
+
+    this.panelAvoidanceStyle = this.upsertStyle(
+      STYLE_IDS.PANEL_AVOIDANCE,
+      css,
+      this.panelAvoidanceStyle,
+    )
+  }
+
+  private clearPanelAvoidanceStyle() {
+    this.removeStyle(this.panelAvoidanceStyle)
+    this.panelAvoidanceStyle = null
+  }
+
+  private schedulePanelAvoidanceUpdate = () => {
+    if (!this.panelAvoidanceStarted || !this.panelAvoidanceConfig) return
+    if (this.panelAvoidanceRaf !== null) return
+
+    this.panelAvoidanceRaf = window.requestAnimationFrame(() => {
+      this.panelAvoidanceRaf = null
+      this.syncPanelAvoidanceStyle()
+    })
+  }
+
+  private handlePanelAvoidanceVisibilityChange = () => {
+    if (document.visibilityState !== "hidden") {
+      this.schedulePanelAvoidanceUpdate()
+    }
+  }
+
   // ==================== 工具方法 ====================
 
   private injectStyle(id: string, css: string): HTMLStyleElement {
@@ -252,6 +618,27 @@ export class LayoutManager {
     style.id = id
     style.textContent = css
     document.head.appendChild(style)
+    return style
+  }
+
+  private upsertStyle(
+    id: string,
+    css: string,
+    currentStyle: HTMLStyleElement | null,
+  ): HTMLStyleElement {
+    const existing = currentStyle?.isConnected
+      ? currentStyle
+      : (document.getElementById(id) as HTMLStyleElement | null)
+    const style = existing || document.createElement("style")
+
+    style.id = id
+    if (style.textContent !== css) {
+      style.textContent = css
+    }
+    if (style.parentElement !== document.head || style.nextSibling) {
+      document.head.appendChild(style)
+    }
+
     return style
   }
 

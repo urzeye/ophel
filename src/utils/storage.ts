@@ -91,6 +91,10 @@ export interface ZenModeConfig {
   showExitButton?: boolean
 }
 
+export interface PanelAvoidanceSettings {
+  enabled: boolean
+}
+
 // 导出设置
 export interface ExportSettings {
   customUserName?: string // 自定义用户名称
@@ -213,6 +217,7 @@ export interface Settings {
     userQueryWidth: Record<string, PageWidthConfig>
     zenMode?: Record<string, ZenModeConfig>
     cleanMode?: Record<string, ZenModeConfig>
+    panelAvoidance?: Record<string, PanelAvoidanceSettings>
   }
 
   // 模型锁定（按站点独立）
@@ -346,6 +351,10 @@ const DEFAULT_ZEN_MODE: ZenModeConfig = {
   showExitButton: true,
 }
 
+const DEFAULT_PANEL_AVOIDANCE: PanelAvoidanceSettings = {
+  enabled: true,
+}
+
 // 默认净化模式配置
 const DEFAULT_CLEAN_MODE: ZenModeConfig = {
   enabled: true,
@@ -477,6 +486,17 @@ export const DEFAULT_SETTINGS: Settings = {
       yuanbao: { ...DEFAULT_CLEAN_MODE },
       zai: { ...DEFAULT_CLEAN_MODE },
       _default: { ...DEFAULT_CLEAN_MODE },
+    },
+    panelAvoidance: {
+      gemini: { ...DEFAULT_PANEL_AVOIDANCE },
+      "gemini-enterprise": { ...DEFAULT_PANEL_AVOIDANCE },
+      aistudio: { ...DEFAULT_PANEL_AVOIDANCE },
+      doubao: { ...DEFAULT_PANEL_AVOIDANCE },
+      ima: { ...DEFAULT_PANEL_AVOIDANCE },
+      deepseek: { ...DEFAULT_PANEL_AVOIDANCE },
+      yuanbao: { ...DEFAULT_PANEL_AVOIDANCE },
+      zai: { ...DEFAULT_PANEL_AVOIDANCE },
+      _default: { ...DEFAULT_PANEL_AVOIDANCE },
     },
   },
 
@@ -685,6 +705,14 @@ export function getSiteCleanMode(settings: Settings, siteId: string): ZenModeCon
     return cleanMode[siteId]
   }
   return cleanMode?._default ?? DEFAULT_CLEAN_MODE
+}
+
+export function getSitePanelAvoidance(settings: Settings, siteId: string): PanelAvoidanceSettings {
+  const panelAvoidance = settings.layout?.panelAvoidance
+  if (panelAvoidance && siteId in panelAvoidance) {
+    return panelAvoidance[siteId]
+  }
+  return panelAvoidance?._default ?? DEFAULT_PANEL_AVOIDANCE
 }
 
 function getRawStorageValue<T>(key: string): Promise<T | undefined> {

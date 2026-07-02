@@ -631,6 +631,11 @@ export const de = {
   pageWidthValueLabel: "Breitenwert",
   pageWidthDesc: "Chatbreite (pro Website)",
   enablePageWidth: "Verbreiterung aktivieren",
+  panelAvoidanceTitle: "Intelligentes Ausweichen",
+  betaBadge: "Beta",
+  panelAvoidanceLabel: "Ophel-Panel vermeiden",
+  panelAvoidanceDesc:
+    "Passt den Inhaltsbereich der aktuellen Website automatisch an, solange das Panel geöffnet ist; auf schmalen Bildschirmen deaktiviert.",
   widthValue: "Breite",
   widthUnit: "Einheit",
 

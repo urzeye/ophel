@@ -653,6 +653,11 @@ export const en = {
   pageWidthValueLabel: "Width Value",
   pageWidthDesc: "Adjust chat page width (configured per site)",
   enablePageWidth: "Enable Page Widening",
+  panelAvoidanceTitle: "Smart Avoidance",
+  betaBadge: "Beta",
+  panelAvoidanceLabel: "Avoid Ophel panel",
+  panelAvoidanceDesc:
+    "Automatically adjusts the current site's content area while the panel is open; disabled on narrow screens.",
   widthValue: "Width Value",
   widthUnit: "Unit",
 

@@ -500,6 +500,10 @@ export const zhTW = {
   pageWidthValueLabel: "寬度值",
   pageWidthDesc: "調整聊天頁面的寬度，即時生效（每個站點獨立配置）",
   enablePageWidth: "啟用頁面加寬",
+  panelAvoidanceTitle: "智慧避讓",
+  betaBadge: "Beta",
+  panelAvoidanceLabel: "避讓 Ophel 面板",
+  panelAvoidanceDesc: "面板展開時自動調整目前站點的內容區域，減少遮擋；窄螢幕裝置會自動停用。",
   widthValue: "寬度值",
   widthUnit: "單位",
 

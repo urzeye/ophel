@@ -14,6 +14,7 @@ import {
   DEFAULT_QUICK_BUTTONS_SETTINGS,
   DEFAULT_SETTINGS,
   type PageWidthConfig,
+  type PanelAvoidanceSettings,
   type QuickButtonConfig,
   type QuickButtonsPosition,
   type Settings,
@@ -297,6 +298,10 @@ const normalizeSettings = (settings: SettingsInput): Settings => {
       cleanMode: normalizeSiteConfigRecord(
         settings.layout?.cleanMode,
         DEFAULT_SETTINGS.layout.cleanMode,
+      ),
+      panelAvoidance: normalizeSiteConfigRecord<PanelAvoidanceSettings>(
+        settings.layout?.panelAvoidance,
+        DEFAULT_SETTINGS.layout.panelAvoidance,
       ),
     },
     modelLock: normalizeSiteConfigRecord(settings.modelLock, DEFAULT_SETTINGS.modelLock),

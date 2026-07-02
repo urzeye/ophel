@@ -628,6 +628,11 @@ export const pt = {
   pageWidthValueLabel: "Valor da Largura",
   pageWidthDesc: "Largura do chat (por site)",
   enablePageWidth: "Ativar Alargamento",
+  panelAvoidanceTitle: "Desvio inteligente",
+  betaBadge: "Beta",
+  panelAvoidanceLabel: "Evitar o painel Ophel",
+  panelAvoidanceDesc:
+    "Ajusta automaticamente a área de conteúdo do site atual enquanto o painel está aberto; desativado em telas estreitas.",
   widthValue: "Largura",
   widthUnit: "Unidade",
 
