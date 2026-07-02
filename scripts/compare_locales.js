@@ -26,7 +26,7 @@ const localesDir = path.join("src", "locales")
 const zhPath = path.join(localesDir, "zh-CN", "index.ts")
 const zhKeys = extractKeys(zhPath)
 
-const targetLocales = ["en", "de", "es", "fr", "ja", "ko", "pt", "ru", "zh-TW"]
+const targetLocales = ["en", "de", "es", "fr", "it", "ja", "ko", "pt", "ru", "zh-TW"]
 let output = ""
 
 targetLocales.forEach((lang) => {

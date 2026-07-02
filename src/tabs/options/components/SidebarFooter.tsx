@@ -90,6 +90,7 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
     "zh-TW": "繁",
     ja: "JP",
     ko: "KR",
+    it: "IT",
     fr: "FR",
     de: "DE",
     ru: "RU",

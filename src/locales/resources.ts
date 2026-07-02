@@ -6,6 +6,7 @@ import { de } from "./de"
 import { en } from "./en"
 import { es } from "./es"
 import { fr } from "./fr"
+import { it } from "./it"
 import { ja } from "./ja"
 import { ko } from "./ko"
 import { pt } from "./pt"
@@ -19,6 +20,7 @@ export const resources = {
   en: en,
   ja: ja,
   ko: ko,
+  it: it,
   fr: fr,
   de: de,
   ru: ru,

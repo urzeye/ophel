@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Italian language support** — Ophel Atlas now supports Italian for the interface, extension metadata, and userscript resources, so Italian users can use the panel and settings in their language.
+
 ### ✨ Improvements
 
 - **Prompt preview category tags** — Prompt previews now show the category as a colored tag matching the prompt category color, with a clearer preview header and content layout.

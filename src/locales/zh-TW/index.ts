@@ -397,6 +397,7 @@ export const zhTW = {
   languageZhCN: "简体中文",
   languageZhTW: "繁體中文",
   languageEn: "English",
+  languageIt: "Italiano",
   // 主題設置
   themeLabel: "主題模式",
   themeAuto: "跟隨系統",

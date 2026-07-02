@@ -521,6 +521,7 @@ export const fr = {
   languageZhCN: "简体中文",
   languageZhTW: "繁體中文",
   languageEn: "English",
+  languageIt: "Italiano",
   // Theme settings
   themeLabel: "Thème",
   themeAuto: "Suivre le système",

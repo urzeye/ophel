@@ -22,6 +22,7 @@ const EDGE_NAMES = {
   de: "Ophel Atlas: KI-Chat-Navigator und Organizer",
   es: "Ophel Atlas: Navegador y Organizador de IA",
   fr: "Ophel Atlas: Navigateur et Organisateur IA",
+  it: "Ophel Atlas: Navigatore chat IA",
   ja: "Ophel Atlas: AIチャットナビゲーター＆オーガナイザー",
   ko: "Ophel Atlas: AI 채팅 내비게이터 & 정리 도구",
   pt_BR: "Ophel Atlas: Navegador e Organizador de IA",

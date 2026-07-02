@@ -11,6 +11,7 @@ export const USERSCRIPT_SUPPORTED_LOCALES = [
   "en",
   "ja",
   "ko",
+  "it",
   "fr",
   "de",
   "ru",
@@ -97,6 +98,10 @@ export const USERSCRIPT_LOCALE_RESOURCE_DEFINITIONS = {
   ko: {
     metaName: "ophelLocaleKo",
     fileName: "ophel.locale.ko.json",
+  },
+  it: {
+    metaName: "ophelLocaleIt",
+    fileName: "ophel.locale.it.json",
   },
   fr: {
     metaName: "ophelLocaleFr",

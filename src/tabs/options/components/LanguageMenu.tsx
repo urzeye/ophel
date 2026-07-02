@@ -6,6 +6,7 @@ export const LANG_MAP: Record<string, string> = {
   "zh-TW": "繁體中文",
   en: "English",
   es: "Español",
+  it: "Italiano",
   pt: "Português",
   ru: "Русский",
   ja: "日本語",

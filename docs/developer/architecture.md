@@ -127,10 +127,10 @@ graph TD
 | `src/utils/`      | 工具函数                                                      | `i18n.ts`, `dom-toolkit.ts`, `exporter.ts`, `markdown.ts`, `themes/`, `scroll-helper.ts`                                                                                                                                             |
 | `src/constants/`  | 常量与默认配置                                                | `defaults.ts`（SITE_IDS）, `ui.ts`, `shortcuts.ts`, `tools-menu.ts`                                                                                                                                                                  |
 | `src/hooks/`      | React Hooks                                                   | `useDraggable.ts`, `useShortcuts.ts`, `useEdgePeekController.ts`                                                                                                                                                                     |
-| `src/locales/`    | 应用内 i18n 资源（10 种语言）                                 | `resources.ts`, `zh-CN/`, `en/`, `ja/`, `ko/`, `de/`, `es/`, `fr/`, `pt/`, `ru/`, `zh-TW/`                                                                                                                                           |
+| `src/locales/`    | 应用内 i18n 资源（11 种语言）                                 | `resources.ts`, `zh-CN/`, `en/`, `ja/`, `ko/`, `it/`, `de/`, `es/`, `fr/`, `pt/`, `ru/`, `zh-TW/`                                                                                                                                    |
 | `src/tabs/`       | 独立页面（选项页、权限请求页）                                | `options.tsx`, `options/pages/`, `perm-request.tsx`                                                                                                                                                                                  |
 | `src/styles/`     | 全局样式                                                      | `conversations.css`, `settings.css`, `theme-variables.css`, `queue-overlay.css`                                                                                                                                                      |
-| `locales/`        | Chrome 扩展 manifest 多语言（_locales 等价）                  | `zh_CN/messages.json`, `en/messages.json` 等 10 种语言                                                                                                                                                                               |
+| `locales/`        | Chrome 扩展 manifest 多语言（_locales 等价）                  | `zh_CN/messages.json`, `en/messages.json` 等 11 种语言                                                                                                                                                                               |
 | `docs/`           | VitePress 文档站（中英双语）                                  | `zh/`, `en/`, `.vitepress/config.mts`                                                                                                                                                                                                |
 | `assets/`         | 静态资源（图标、截图、音效）                                  | `icon.png`, `store/`, `demo/`                                                                                                                                                                                                        |
 
@@ -414,9 +414,9 @@ feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, deps, ux
 
 ### 国际化
 
-- 应用内 i18n：`src/locales/` 下 10 种语言，通过 `~utils/i18n` 的 `t()` 函数调用
+- 应用内 i18n：`src/locales/` 下 11 种语言，通过 `~utils/i18n` 的 `t()` 函数调用
 - 扩展 manifest 国际化：`locales/` 下对应 Chrome `_locales` 规范
-- 支持语言：中文简体、中文繁体、英语、日语、韩语、德语、西班牙语、法语、葡萄牙语(巴西)、俄语
+- 支持语言：中文简体、中文繁体、英语、日语、韩语、意大利语、德语、西班牙语、法语、葡萄牙语(巴西)、俄语
 
 ## AI 使用指引
 

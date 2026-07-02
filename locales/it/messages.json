@@ -1,0 +1,10 @@
+{
+  "extensionName": {
+    "message": "Organizzatore chat IA e outline per ChatGPT/Claude/Gemini - Ophel",
+    "description": "Extension name"
+  },
+  "extensionDescription": {
+    "message": "Genera outline e timeline per navigare le chat IA con 1 clic. Organizza con cartelle, esportazioni e prompt.",
+    "description": "Extension description"
+  }
+}

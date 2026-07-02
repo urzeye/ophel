@@ -59,8 +59,8 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 - 不硬编码密钥、令牌、Cookie 或用户私有数据。
 - `any`、`console` 只在确有必要时使用；日志优先 `console.warn/error`。
 - 设置项变更要同步 `DEFAULT_SETTINGS`、store、UI、备份/恢复兼容逻辑和 i18n 文案。
-- 修改或新增任何文案时，必须一次性同步 10 种语言，不准遗漏某种语言的文案。
-- 10 种语言包括：zh-CN、zh-TW、en、ja、ko、de、es、fr、pt-BR/pt、ru。
+- 修改或新增任何文案时，必须一次性同步 11 种语言，不准遗漏某种语言的文案。
+- 11 种语言包括：zh-CN、zh-TW、en、ja、ko、it、de、es、fr、pt-BR/pt、ru。
 - 应用内文案检查 `src/locales/*/index.ts`；扩展 manifest 文案检查 `locales/*/messages.json`；新增 key 时按使用场景同步对应体系。
 - Manifest 权限变更要保持最小授权，优先使用 optional permissions。
 - 依赖管理统一使用 pnpm；不要使用 `npm install` 或 `yarn`；依赖变更必须同步 `pnpm-lock.yaml`。

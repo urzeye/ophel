@@ -517,6 +517,7 @@ export const ru = {
   languageZhCN: "简体中文",
   languageZhTW: "繁體中文",
   languageEn: "English",
+  languageIt: "Italiano",
   // Theme settings
   themeLabel: "Тема",
   themeAuto: "Авто",

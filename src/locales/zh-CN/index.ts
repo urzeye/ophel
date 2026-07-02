@@ -547,6 +547,7 @@ export const zhCN = {
   languageZhCN: "简体中文",
   languageZhTW: "繁體中文",
   languageEn: "English",
+  languageIt: "Italiano",
   // 主题设置
   themeLabel: "主题模式",
   themeAuto: "跟随系统",

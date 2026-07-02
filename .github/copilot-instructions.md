@@ -25,7 +25,7 @@ Ophel is a cross-platform browser extension (Plasmo MV3, Chrome + Firefox) and u
 - Do not duplicate logic already present in the base class default implementations.
 
 ### Internationalization (i18n)
-- Any new user-facing text must be added to `src/locales/resources.ts` for **all 10 languages**: zh-CN, zh-TW, en, ja, ko, de, es, fr, pt-BR, ru.
+- Any new user-facing text must be added to `src/locales/resources.ts` for **all 11 languages**: zh-CN, zh-TW, en, ja, ko, it, de, es, fr, pt-BR, ru.
 - Always use `t('key')` from `~utils/i18n`; never hardcode UI strings.
 
 ### Platform Compatibility

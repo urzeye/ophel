@@ -244,7 +244,7 @@ const shouldHide =
 
 ## H. 国际化（`src/locales/*/index.ts`）
 
-新增 i18n 键（10 种语言）：
+新增 i18n 键（当前 11 种语言）：
 
 | Key                 | zh-CN      | en           | 用途                |
 | ------------------- | ---------- | ------------ | ------------------- |
@@ -269,7 +269,7 @@ const shouldHide =
 | `src/components/icons/FloatingModeIcon.tsx` | 新增            | 悬浮图标 SVG 组件                            |
 | `src/components/icons/index.ts`             | 导出            | 新增两个图标的 barrel export                 |
 | `src/styles/settings.css`                   | 样式修复        | scrollbar-gutter: stable 防闪烁              |
-| `src/locales/*/index.ts` (10 种语言)        | i18n            | 新增 pinPanel、snapToEdge 文案               |
+| `src/locales/*/index.ts` (当前 11 种语言)  | i18n            | 新增 pinPanel、snapToEdge 文案               |
 | `docs/developer/panel-mode-refactor.md`     | 文档            | 本文档（更新至最新实现）                     |
 
 ## J. 风险控制
