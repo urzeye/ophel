@@ -71,19 +71,11 @@
   width: 34px;
   height: 34px;
   border-radius: 11px;
-  box-shadow:
-    0 8px 18px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--gh-border, #e5e7eb) 80%, transparent);
-  transition:
-    transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
-    box-shadow 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .settings-sidebar-logo:hover img {
   transform: translateY(-1px) scale(1.03);
-  box-shadow:
-    0 12px 24px color-mix(in srgb, var(--gh-primary, #4285f4) 22%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--gh-primary, #4285f4) 16%, transparent);
 }
 
 .settings-sidebar-nav {
