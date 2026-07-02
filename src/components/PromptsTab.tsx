@@ -979,10 +979,20 @@ const PROMPT_PREVIEW_MODAL_STYLES = `
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
+}
+
+.gh-prompt-preview-title-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
 }
 
 .gh-prompt-preview-title {
+  min-width: 0;
+  flex: 0 1 auto;
   overflow: hidden;
   color: var(--gh-text, #1f2937);
   font-size: 17px;
@@ -993,18 +1003,13 @@ const PROMPT_PREVIEW_MODAL_STYLES = `
   white-space: nowrap;
 }
 
-.gh-prompt-preview-meta {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
 .gh-prompt-preview-category {
   max-width: min(260px, 100%);
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  min-height: 24px;
-  padding: 3px 10px;
+  min-height: 22px;
+  padding: 2px 8px;
   box-sizing: border-box;
   border: 1px solid
     color-mix(
@@ -1014,11 +1019,11 @@ const PROMPT_PREVIEW_MODAL_STYLES = `
     );
   border-radius: 999px;
   background: var(--gh-prompt-preview-category-bg, var(--gh-hover, #f3f4f6));
-  color: var(--gh-text, #1f2937);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, #ffffff 26%, transparent);
+  color: var(--gh-prompt-preview-category-text, #1f2937);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #ffffff 18%, transparent);
   font-size: 12px;
-  font-weight: 600;
-  line-height: 1.2;
+  font-weight: 500;
+  line-height: 1.15;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1119,6 +1124,12 @@ const PROMPT_PREVIEW_MODAL_STYLES = `
 
   .gh-prompt-preview-title {
     white-space: normal;
+  }
+
+  .gh-prompt-preview-title-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 7px;
   }
 
   .gh-prompt-preview-body.gh-markdown-preview {
@@ -3483,6 +3494,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     const categoryColorIndex = getCategoryColorIndex(categoryLabel)
     const categoryStyle = {
       "--gh-prompt-preview-category-bg": getResolvedCategoryColor(categoryColorIndex),
+      "--gh-prompt-preview-category-text": "#1f2937",
     } as React.CSSProperties
 
     return createPortal(
@@ -3505,8 +3517,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
             {/* 标题栏 */}
             <div className="gh-prompt-preview-header">
               <div className="gh-prompt-preview-title-block">
-                <div className="gh-prompt-preview-title">{prompt.title}</div>
-                <div className="gh-prompt-preview-meta">
+                <div className="gh-prompt-preview-title-row">
+                  <div className="gh-prompt-preview-title">{prompt.title}</div>
                   <span className="gh-prompt-preview-category" style={categoryStyle}>
                     {categoryLabel}
                   </span>
