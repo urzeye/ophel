@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
-- **Main panel toolbars and quick buttons** — Unified Outline, Prompts, and Conversations toolbar/search styling and tuned quick-button feedback, so high-frequency controls are clearer across themes.
+- **Main panel toolbars and quick buttons** — Unified Outline, Prompts, and Conversations toolbar/search styling and removed constant quick-button motion, so high-frequency controls are clearer across themes.
 - **Settings and theme management UI** — Refreshed the settings sidebar, theme preset cards, custom style list, and style editor so navigation reads more clearly and theme choices are easier to scan. (#749)
 - **Panel header and tabs** — Polished the panel header, drag hint, and tab bar styling to reduce visual noise and keep controls aligned with the rest of the interface. (#749)
 

@@ -1757,8 +1757,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
       }}>
       {/* Fixed Toolbar */}
       <div className="outline-fixed-toolbar gh-panel-tool-stack">
-        {/* Row 1: Actions */}
-        <div className="gh-panel-toolbar outline-actions-toolbar">
+        {/* Row 1: Buttons & Search */}
+        <div className="gh-panel-toolbar">
           <div className="gh-panel-toolbar-group">
             {/* Group Mode */}
             <Tooltip content={t("outlineShowUserQueries")}>
@@ -1857,35 +1857,35 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
               </button>
             </Tooltip>
           </div>
+
+          {/* Search Input */}
+          <div className="outline-search-wrapper gh-panel-search">
+            <span className="gh-panel-search-icon" aria-hidden="true">
+              <SearchIcon size={15} />
+            </span>
+            <input
+              ref={inputRef}
+              type="text"
+              className="outline-search-input gh-panel-search-input"
+              placeholder={t("outlineSearch")}
+              aria-label={t("outlineSearch")}
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="outline-search-clear gh-panel-search-action"
+                onClick={handleSearchClear}
+                aria-label={t("clear")}
+                title={t("clear")}>
+                <ClearIcon size={14} />
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Row 2: Search Input */}
-        <div className="outline-search-wrapper gh-panel-search">
-          <span className="gh-panel-search-icon" aria-hidden="true">
-            <SearchIcon size={15} />
-          </span>
-          <input
-            ref={inputRef}
-            type="text"
-            className="outline-search-input gh-panel-search-input"
-            placeholder={t("outlineSearch")}
-            aria-label={t("outlineSearch")}
-            value={searchQuery}
-            onChange={handleSearchChange}
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              className="outline-search-clear gh-panel-search-action"
-              onClick={handleSearchClear}
-              aria-label={t("clear")}
-              title={t("clear")}>
-              <ClearIcon size={14} />
-            </button>
-          )}
-        </div>
-
-        {/* Row 3: Level Slider */}
+        {/* Row 2: Level Slider */}
         <div className="outline-level-slider-container" style={{ padding: "0 4px" }}>
           {/* Level Dots */}
           <div
