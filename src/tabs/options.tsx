@@ -270,7 +270,7 @@ const OptionsPage = () => {
               <span className="settings-nav-item-icon">
                 <item.Icon size={22} />
               </span>
-              <span>{t(item.labelKey)}</span>
+              <span className="settings-nav-item-label">{t(item.labelKey)}</span>
             </button>
           ))}
 

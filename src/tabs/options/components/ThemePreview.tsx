@@ -9,7 +9,6 @@ interface ThemePreviewProps {
 export const ThemePreview: React.FC<ThemePreviewProps> = ({ preset }) => {
   const vars = preset.variables
 
-  // Extract colors with fallbacks
   const bg = vars["--gh-bg"] || "#ffffff"
   const headerBg = vars["--gh-header-bg"] || vars["--gh-primary"] || "#4285f4"
   const borderColor = vars["--gh-border"] || "#e5e7eb"
@@ -17,30 +16,55 @@ export const ThemePreview: React.FC<ThemePreviewProps> = ({ preset }) => {
   const text = vars["--gh-text"] || "#374151"
   const textSecondary = vars["--gh-text-secondary"] || "#9ca3af"
   const sidebarBg = vars["--gh-bg-secondary"] || "#f3f4f6"
+  const tertiaryBg = vars["--gh-bg-tertiary"] || vars["--gh-hover"] || "#f3f4f6"
+  const selectedGradient = vars["--gh-selected-gradient"] || primary
+  const bgTexture = vars["--gh-bg-image"]
+  const textOnPrimary = vars["--gh-text-on-primary"] || "#ffffff"
 
   return (
     <div
       className="theme-preview-layout"
       style={{
-        backgroundColor: bg,
+        background: bg,
         borderColor: borderColor,
       }}>
-      {/* Header */}
-      <div className="theme-preview-header" style={{ backgroundColor: headerBg }}>
-        <div className="theme-preview-dot" />
-        <div className="theme-preview-dot delay-1" />
-        <div className="theme-preview-dot delay-2" />
+      {bgTexture ? (
+        <div className="theme-preview-texture" style={{ backgroundImage: bgTexture }} />
+      ) : null}
+
+      <div
+        className="theme-preview-header"
+        style={{
+          background: headerBg,
+          borderBottomColor: borderColor,
+        }}>
+        <div className="theme-preview-window-chrome">
+          <div className="theme-preview-dot" />
+          <div className="theme-preview-dot delay-1" />
+          <div className="theme-preview-dot delay-2" />
+        </div>
+        <div
+          className="theme-preview-header-pill"
+          style={{
+            backgroundColor: "rgba(255, 255, 255, 0.18)",
+            color: textOnPrimary,
+          }}
+        />
       </div>
 
-      {/* Main Body */}
       <div className="theme-preview-body">
-        {/* Sidebar */}
         <div
           className="theme-preview-sidebar"
           style={{
             backgroundColor: sidebarBg,
             borderColor: borderColor,
           }}>
+          <div
+            className="theme-preview-sidebar-chip"
+            style={{
+              background: selectedGradient,
+            }}
+          />
           <div
             className="theme-preview-line short"
             style={{ backgroundColor: textSecondary, opacity: 0.3 }}
@@ -58,15 +82,34 @@ export const ThemePreview: React.FC<ThemePreviewProps> = ({ preset }) => {
           <div
             className="theme-preview-active-item"
             style={{
-              backgroundColor: primary,
-              opacity: 0.15,
+              background: selectedGradient,
             }}
           />
         </div>
 
-        {/* Content */}
         <div className="theme-preview-content">
-          <div className="theme-preview-hero" style={{ backgroundColor: primary, opacity: 0.1 }} />
+          <div
+            className="theme-preview-hero"
+            style={{
+              background: selectedGradient,
+            }}
+          />
+
+          <div
+            className="theme-preview-card"
+            style={{
+              backgroundColor: tertiaryBg,
+              borderColor: borderColor,
+            }}>
+            <div
+              className="theme-preview-line medium"
+              style={{ backgroundColor: text, opacity: 0.68 }}
+            />
+            <div
+              className="theme-preview-line short"
+              style={{ backgroundColor: textSecondary, opacity: 0.42 }}
+            />
+          </div>
 
           <div className="theme-preview-row">
             <div
@@ -85,7 +128,20 @@ export const ThemePreview: React.FC<ThemePreviewProps> = ({ preset }) => {
             </div>
           </div>
 
-          <div className="theme-preview-button" style={{ backgroundColor: primary }}></div>
+          <div className="theme-preview-row compact">
+            <div
+              className="theme-preview-card compact"
+              style={{
+                backgroundColor: tertiaryBg,
+                borderColor: borderColor,
+              }}>
+              <div
+                className="theme-preview-line short"
+                style={{ backgroundColor: textSecondary, opacity: 0.46 }}
+              />
+            </div>
+            <div className="theme-preview-button" style={{ background: headerBg }}></div>
+          </div>
         </div>
       </div>
     </div>

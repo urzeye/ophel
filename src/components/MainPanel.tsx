@@ -12,6 +12,7 @@ import type { SiteAdapter } from "~adapters/base"
 import {
   AnchorIcon,
   ConversationIcon,
+  DragIcon,
   FloatingModeIcon,
   MinimizeIcon,
   NewTabIcon,
@@ -670,24 +671,14 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           onPointerLeave={resetHeaderPressHint}
           onPointerCancel={resetHeaderPressHint}
           onDoubleClick={handleHeaderDoubleClick}
-          className="gh-panel-header"
-          style={{
-            position: "relative",
-            padding: "10px 14px",
-            borderRadius: "12px 12px 0 0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            // cursor 由 CSS (.gh-panel-header) 统一控制为 grab/grabbing
-            userSelect: "none",
-          }}>
+          className="gh-panel-header">
           {/* 左侧：图标 + 标题悬停展示高级指南 */}
           <div
-            style={{ position: "relative" }}
+            className="gh-panel-brand"
             onMouseEnter={handleLogoMouseEnter}
             onMouseLeave={handleLogoMouseLeave}>
             <div
-              className="gh-interactive"
+              className="gh-interactive gh-panel-brand-trigger"
               role="button"
               tabIndex={0}
               aria-label={t("panelTitle")}
@@ -702,39 +693,12 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                   e.preventDefault()
                   setShowCodex((v) => !v)
                 }
-              }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                cursor: "pointer",
-                position: "relative",
-                border: "none",
-                background: "transparent",
-                padding: 0,
-                color: "inherit",
               }}>
-              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <div className="gh-panel-brand-mark">
                 <SparkleIcon size={18} color={panelSparkleColor} />
-                {!hasSeenCodex && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "-2px",
-                      right: "-2px",
-                      width: "6px",
-                      height: "6px",
-                      backgroundColor: "var(--gh-danger, #ef4444)",
-                      borderRadius: "50%",
-                      boxShadow: "0 0 0 2px var(--gh-bg, #ffffff)",
-                      animation: "pulse-red 2s infinite",
-                    }}
-                  />
-                )}
+                {!hasSeenCodex && <span className="gh-panel-brand-unread" aria-hidden="true" />}
               </div>
-              <span style={{ fontSize: "18px", fontWeight: 600, userSelect: "none" }}>
-                {t("panelTitle")}
-              </span>
+              <span className="gh-panel-brand-title">{t("panelTitle")}</span>
             </div>
 
             <MagicCodex
@@ -747,10 +711,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           </div>
 
           {/* 右侧：按钮组 - 需要 gh-panel-controls 以排除拖拽 */}
-          <div
-            className="gh-panel-controls"
-            data-no-header-press-hint="true"
-            style={{ display: "flex", gap: "1px", alignItems: "center" }}>
+          <div className="gh-panel-controls" data-no-header-press-hint="true">
             {/* 面板模式切换按钮 */}
             <Tooltip
               content={
@@ -790,6 +751,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             {onThemeToggle && (
               <Tooltip content={t("toggleTheme")}>
                 <button
+                  type="button"
                   onClick={(event) => {
                     onThemeToggle?.(getButtonCenter(event.currentTarget))
                   }}
@@ -803,6 +765,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             {currentSettings.tab?.openInNewTab && (
               <Tooltip content={t("newTabTooltip")}>
                 <button
+                  type="button"
                   onClick={() => window.open(window.location.origin, "_blank")}
                   className="gh-header-icon-btn">
                   <NewTabIcon size={14} />
@@ -813,6 +776,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             {/* 设置按钮 - 打开设置模态框 */}
             <Tooltip content={t("tabSettings")}>
               <button
+                type="button"
                 data-tip-target="settings-btn"
                 onClick={() => {
                   onOpenSettings?.()
@@ -850,7 +814,11 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
             {/* 折叠按钮（收起面板） */}
             <Tooltip content={t("collapse")}>
-              <button onClick={onClose} aria-label={t("collapse")} className="gh-header-icon-btn">
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label={t("collapse")}
+                className="gh-header-icon-btn">
                 <MinimizeIcon size={14} />
               </button>
             </Tooltip>
@@ -858,46 +826,15 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         </div>
 
         {/* 拖拽/悬停 即时提示层 (幽灵模式) */}
-        <div
-          style={{
-            position: "absolute",
-            top: "56px",
-            left: "50%",
-            width: "max-content",
-            maxWidth: "85%",
-            transform: `translate(-50%, ${isHeaderPressed ? "8px" : "-4px"})`,
-            opacity: isHeaderPressed ? 1 : 0,
-            pointerEvents: "none",
-            transition: "all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)",
-            background: "var(--gh-bg-secondary, rgba(255, 255, 255, 0.85))",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-            color: "var(--gh-text, #1f2937)",
-            border: "1px solid var(--gh-border, rgba(0,0,0,0.1))",
-            padding: "6px 12px",
-            borderRadius: "12px",
-            fontSize: "12px",
-            fontWeight: 500,
-            display: "flex",
-            textAlign: "left",
-            alignItems: "flex-start",
-            gap: "8px",
-            boxShadow: "var(--gh-shadow-lg, 0 8px 24px rgba(0,0,0,0.12))",
-            zIndex: 10,
-          }}>
-          <span style={{ fontSize: "14px", flexShrink: 0, marginTop: "1px" }}>👻</span>
-          <span style={{ lineHeight: "1.5" }}>
+        <div className={`gh-panel-header-hint ${isHeaderPressed ? "is-visible" : ""}`}>
+          <span className="gh-panel-header-hint-icon" aria-hidden="true">
+            <DragIcon size={14} />
+          </span>
+          <span className="gh-panel-header-hint-text">
             {t("tip1", { modifier: isMacOS() ? "⌘ Cmd" : "Ctrl" })}
           </span>
         </div>
-        <div
-          className="gh-panel-tabs"
-          style={{
-            display: "flex",
-            borderBottom: "1px solid var(--gh-border, #e5e7eb)",
-            padding: "0",
-            background: "var(--gh-bg-secondary, #f9fafb)",
-          }}>
+        <div className="gh-panel-tabs">
           {visibleTabs.map((tab) => {
             let IconComp: React.FC<{ size?: number }> | null = null
             if (tab === TAB_IDS.OUTLINE) IconComp = OutlineIcon
@@ -906,7 +843,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
 
             return (
               <button
+                type="button"
                 key={tab}
+                className={`gh-panel-tab-btn ${activeTab === tab ? "active" : ""}`}
                 data-tip-target={
                   tab === TAB_IDS.OUTLINE
                     ? "outline-tab"
@@ -916,49 +855,18 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                         ? "prompts-tab"
                         : undefined
                 }
-                onClick={() => setActiveTab(tab)}
-                style={{
-                  flex: 1,
-                  padding: "7px 8px",
-                  border: "none",
-                  background: "transparent",
-                  borderBottom:
-                    activeTab === tab
-                      ? "3px solid var(--gh-primary, #4285f4)"
-                      : "3px solid transparent",
-                  color:
-                    activeTab === tab
-                      ? "var(--gh-primary, #4285f4)"
-                      : "var(--gh-text-secondary, #6b7280)",
-                  fontWeight: activeTab === tab ? 600 : 400,
-                  cursor: "pointer",
-                  fontSize: "13px",
-                  whiteSpace: "nowrap",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "4px",
-                  transition: "all 0.2s",
-                }}>
-                <span style={{ display: "flex", alignItems: "center" }}>
-                  {IconComp && <IconComp size={16} />}
+                onClick={() => setActiveTab(tab)}>
+                <span className="gh-panel-tab-btn-icon">{IconComp && <IconComp size={16} />}</span>
+                <span className="gh-panel-tab-btn-label">
+                  {t(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`)}
                 </span>
-                <span>{t(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`)}</span>
               </button>
             )
           })}
         </div>
 
         {/* Content - 内容区 */}
-        <div
-          className="gh-panel-content"
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            padding: "0",
-            scrollbarWidth: "none", // Firefox
-            msOverflowStyle: "none", // IE/Edge
-          }}>
+        <div className="gh-panel-content">
           {activeTab === TAB_IDS.PROMPTS && (
             <PromptsTab
               manager={promptManager}
@@ -984,45 +892,13 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         </div>
 
         {/* Footer - 底部固定按钮 */}
-        <div
-          className="gh-panel-footer"
-          style={{
-            display: "flex",
-            justifyContent: "space-around",
-            alignItems: "center",
-            padding: "8px 16px",
-            borderTop: "1px solid var(--gh-border, #e5e7eb)",
-            background: "var(--gh-bg-secondary, #f9fafb)",
-          }}>
+        <div className="gh-panel-footer">
           {/* 顶部按钮 */}
           <Tooltip content={t("scrollTop")} triggerStyle={{ flex: 1, maxWidth: "120px" }}>
             <button
-              className="gh-interactive scroll-nav-btn"
-              onClick={scrollToTop}
-              style={{
-                width: "100%",
-                height: "32px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "4px",
-                background: "var(--gh-header-bg)",
-                color: "var(--gh-footer-text, var(--gh-text-on-primary, white))",
-                border: "none",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontSize: "14px",
-                transition: "transform 0.2s, box-shadow 0.2s",
-                boxShadow: "var(--gh-btn-shadow)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-1px)"
-                e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)"
-                e.currentTarget.style.boxShadow = "var(--gh-btn-shadow)"
-              }}>
+              type="button"
+              className="gh-interactive scroll-nav-btn gh-panel-footer-action"
+              onClick={scrollToTop}>
               <ScrollTopIcon size={14} />
               <span>{t("scrollTop")}</span>
             </button>
@@ -1033,54 +909,16 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             content={hasAnchor ? t("jumpToAnchor") : t("noAnchor")}
             triggerStyle={{ flex: "0 0 32px" }}>
             <button
-              className="gh-interactive scroll-nav-btn anchor-btn"
+              type="button"
+              className="gh-interactive scroll-nav-btn anchor-btn gh-panel-footer-anchor"
               onClick={goToAnchor}
-              disabled={!hasAnchor}
-              style={{
-                width: "32px",
-                height: "32px",
-                background: "var(--gh-header-bg)",
-                color: "var(--gh-footer-text, var(--gh-text-on-primary, white))",
-                border: "none",
-                borderRadius: "50%",
-                padding: 0,
-                cursor: hasAnchor ? "pointer" : "default",
-                fontSize: "14px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "transform 0.2s, box-shadow 0.2s",
-                boxShadow: "var(--gh-btn-shadow)",
-                opacity: hasAnchor ? 1 : 0.4,
-              }}
-              onMouseEnter={(e) => {
-                if (hasAnchor) {
-                  e.currentTarget.style.transform = "scale(1.1)"
-                  e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
-                  // 旋转特效（作用于内层 div）
-                  const div = e.currentTarget.querySelector("div")
-                  if (div) div.style.transform = "rotate(360deg)"
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "scale(1)"
-                e.currentTarget.style.boxShadow = hasAnchor ? "var(--gh-btn-shadow)" : "none"
-                const div = e.currentTarget.querySelector("div")
-                if (div) div.style.transform = "rotate(0deg)"
-              }}>
+              disabled={!hasAnchor}>
               {/* 动画目标：独立于按钮的 inline transform，key 变化强制重新挂载以重播动画 */}
               <span
                 key={anchorTapId}
                 className={`anchor-tap-wrapper${anchorTapId > 0 ? " is-tapping" : ""}`}
-                onAnimationEnd={() => setAnchorTapId(0)}
-                style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transition: "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                  }}>
+                onAnimationEnd={() => setAnchorTapId(0)}>
+                <div className="gh-panel-footer-anchor-icon">
                   <AnchorIcon size={14} />
                 </div>
               </span>
@@ -1090,32 +928,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
           {/* 底部按钮 */}
           <Tooltip content={t("scrollBottom")} triggerStyle={{ flex: 1, maxWidth: "120px" }}>
             <button
-              className="gh-interactive scroll-nav-btn"
-              onClick={scrollToBottom}
-              style={{
-                width: "100%",
-                height: "32px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "4px",
-                background: "var(--gh-header-bg)",
-                color: "var(--gh-footer-text, var(--gh-text-on-primary, white))",
-                border: "none",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontSize: "14px",
-                transition: "transform 0.2s, box-shadow 0.2s",
-                boxShadow: "var(--gh-btn-shadow)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-1px)"
-                e.currentTarget.style.boxShadow = "var(--gh-btn-shadow-hover)"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)"
-                e.currentTarget.style.boxShadow = "var(--gh-btn-shadow)"
-              }}>
+              type="button"
+              className="gh-interactive scroll-nav-btn gh-panel-footer-action"
+              onClick={scrollToBottom}>
               <ScrollBottomIcon size={14} />
               <span>{t("scrollBottom")}</span>
             </button>

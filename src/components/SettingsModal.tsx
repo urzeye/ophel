@@ -356,7 +356,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <span className="settings-nav-item-icon">
                   <item.Icon size={22} />
                 </span>
-                <span>{getLocalizedLabel(item.labelKey, item.label)}</span>
+                <span className="settings-nav-item-label">
+                  {getLocalizedLabel(item.labelKey, item.label)}
+                </span>
               </button>
             ))}
 

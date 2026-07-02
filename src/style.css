@@ -426,6 +426,14 @@
   color: white;
   /* 整个 header 区域可拖动，按住后切换为抓取手势 */
   cursor: grab;
+  position: relative;
+  padding: 10px 14px;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  overflow: visible;
 }
 
 .gh-panel-header:active,
@@ -433,13 +441,187 @@
   cursor: grabbing;
 }
 
+.gh-panel-brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.gh-panel-brand-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  position: relative;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+.gh-panel-brand-trigger:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.42);
+  outline-offset: 4px;
+  border-radius: 10px;
+}
+
+.gh-panel-brand-mark {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gh-panel-brand-unread {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 6px;
+  height: 6px;
+  background-color: var(--gh-danger, #ef4444);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--gh-bg, #ffffff);
+  animation: pulse-red 2s infinite;
+}
+
+.gh-panel-brand-title {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  user-select: none;
+}
+
 .gh-panel-header .gh-panel-controls {
   cursor: auto;
+  display: flex;
+  gap: 2px;
+  align-items: center;
 }
 
 .gh-panel-header .gh-panel-controls .gh-header-icon-btn,
 .gh-panel-header .gh-panel-controls .gh-header-icon-btn * {
   cursor: pointer;
+}
+
+.gh-panel-header-hint {
+  position: absolute;
+  top: 56px;
+  left: 50%;
+  width: max-content;
+  max-width: 85%;
+  transform: translate(-50%, -4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  background: color-mix(
+    in srgb,
+    var(--gh-bg-secondary, rgba(255, 255, 255, 0.85)) 88%,
+    transparent
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--gh-text, #1f2937);
+  border: 1px solid color-mix(in srgb, var(--gh-border, rgba(0, 0, 0, 0.1)) 90%, transparent);
+  padding: 7px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  text-align: left;
+  align-items: flex-start;
+  gap: 8px;
+  box-shadow: var(--gh-shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.12));
+  z-index: 10;
+}
+
+.gh-panel-header-hint.is-visible {
+  transform: translate(-50%, 8px);
+  opacity: 1;
+}
+
+.gh-panel-header-hint-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.82;
+}
+
+.gh-panel-header-hint-text {
+  line-height: 1.5;
+}
+
+.gh-panel-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px 6px 0;
+  border-bottom: 1px solid var(--gh-border, #e5e7eb);
+  background: color-mix(in srgb, var(--gh-bg-secondary, #f9fafb) 92%, transparent);
+}
+
+.gh-panel-tab-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px 9px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 10px 10px 0 0;
+  background: transparent;
+  color: var(--gh-text-secondary, #6b7280);
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.gh-panel-tab-btn:hover {
+  color: var(--gh-text, #374151);
+  background: color-mix(in srgb, var(--gh-hover, #f3f4f6) 88%, transparent);
+}
+
+.gh-panel-tab-btn.active {
+  color: var(--gh-primary, #4285f4);
+  border-bottom-color: var(--gh-primary, #4285f4);
+  background: color-mix(in srgb, var(--gh-bg, #ffffff) 82%, transparent);
+}
+
+.gh-panel-tab-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 34%, transparent);
+  outline-offset: -2px;
+}
+
+.gh-panel-tab-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gh-panel-tab-btn-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gh-panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.gh-panel-content::-webkit-scrollbar {
+  display: none;
 }
 
 /* Outline Styles */
@@ -1824,10 +2006,41 @@
   --enter-translate-x: -10px;
 }
 
+/* ============= 面板 Footer 样式 ============= */
+.gh-panel-footer {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--gh-border, #e5e7eb);
+  background: color-mix(in srgb, var(--gh-bg-secondary, #f9fafb) 92%, transparent);
+}
+
+.gh-panel-footer-action {
+  width: 100%;
+}
+
+.gh-panel-footer-anchor {
+  color: var(--gh-footer-text, var(--gh-text-on-primary, white));
+}
+
+.gh-panel-footer-anchor .anchor-tap-wrapper,
+.gh-panel-footer-anchor-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gh-panel-footer-anchor-icon {
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 /* ============= 底栏滚动按钮样式 (Footer Scroll Buttons) ============= */
 .scroll-nav-btn {
   flex: 1;
   max-width: 120px;
+  width: 100%;
   height: 32px;
   border-radius: 8px;
   border: none;
@@ -1836,18 +2049,24 @@
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  color: white;
+  color: var(--gh-footer-text, var(--gh-text-on-primary, white));
   gap: 4px;
   background: var(--gh-header-bg);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--gh-btn-shadow, 0 2px 6px rgba(0, 0, 0, 0.15));
   transition:
     transform 0.2s,
-    box-shadow 0.2s;
+    box-shadow 0.2s,
+    opacity 0.2s;
 }
 
 .scroll-nav-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--gh-btn-shadow-hover, 0 4px 12px rgba(0, 0, 0, 0.2));
+}
+
+.scroll-nav-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 34%, transparent);
+  outline-offset: 2px;
 }
 
 /* 锚点按钮特殊样式 - 圆形 */
@@ -1861,14 +2080,8 @@
   font-size: 14px;
 }
 
-/* 锚点按钮 hover 旋转效果 */
-.scroll-nav-btn.anchor-btn span {
-  display: inline-block;
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.scroll-nav-btn.anchor-btn:not(:disabled):hover span {
-  transform: rotate(360deg) scale(1.2);
+.scroll-nav-btn.anchor-btn:not(:disabled):hover .gh-panel-footer-anchor-icon {
+  transform: rotate(360deg) scale(1.15);
 }
 
 /* 禁用状态 */
@@ -1906,6 +2119,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .gh-panel-header-hint,
+  .gh-panel-footer-anchor-icon {
+    transition: none !important;
+  }
+
   .scroll-nav-btn.anchor-btn .anchor-tap-wrapper.is-tapping,
   .quick-prompt-btn .anchor-tap-wrapper.is-tapping {
     animation: none !important;
@@ -3711,6 +3929,11 @@
 
 .gh-header-icon-btn:hover {
   background: var(--gh-glass-bg-hover, rgba(255, 255, 255, 0.2));
+}
+
+.gh-header-icon-btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.38);
+  outline-offset: 2px;
 }
 
 .gh-header-icon-btn:active {

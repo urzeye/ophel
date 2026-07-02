@@ -1,3 +1,5 @@
+改
+
 # AGENTS.md
 
 面向本仓库 AI/Codex 代理的项目级规则。项目级 Agent 规则统一维护在 `AGENTS.md`。优先级：用户当前指令 > 本文件 > 其他项目文档。默认用中文回复，除非用户明确要求其他语言。
@@ -7,7 +9,7 @@
 - 先给结论或结果，再补必要上下文；表达直接、克制、执行优先。
 - 少问多做：能从代码、文档、命令输出确认的信息，不向用户反复确认。
 - 先读任务相关上下文：优先查看相关源码；仅在首次进入仓库、架构不清、跨模块变更时阅读 `docs/developer/architecture.md`；只在触及样式、设置、平台差异或历史疑难问题时阅读对应 `docs/developer/*` 文档。
-- 触及 UI、交互、主题、排版、动效时，先阅读根目录 `DESIGN.md`；无更高优先级指令时，默认按其中规范执行。
+- 触及 UI、交互、主题、排版、动效时，先阅读根目录 `DESIGN.md`；开始实现前先用一句话说明本次 `design read`（界面类型、适用章节、是否涉及主题系统或 Shadow DOM）；无更高优先级指令时，默认按其中规范执行。
 - 多步任务在调用工具前，先用 1 到 2 句说明要做什么和第一步。
 - 调试优先：定位根因，不用静默 fallback、宽泛 try/catch、重复实现来掩盖问题。
 - 让错误显式暴露；不要靠静默兜底、伪成功、吞异常或隐藏默认值掩盖问题。
@@ -81,12 +83,14 @@ Ophel Atlas 是 TypeScript + React 18 + Plasmo 的浏览器扩展，同时支持
 ## UI 与 CSS 规则
 
 - `DESIGN.md` 是本项目 UI 与交互规范入口；做界面改动时先确认适用界面、主题约束和完成标准。
+- 使用 `DESIGN.md` 的最低流程：先看 `0. 使用方式`、`1. 设计定位`、`2. 主题系统规范`、`9. 实现约束`、`11. UI 改动工作流`；只改局部界面也不能跳过主题兼容和完成标准。
 - 面板运行在 Plasmo Shadow DOM 中；普通 CSS import 不会自动作用于面板。
 - 面板样式要通过 `src/contents/ui-entry.tsx` 的 `getStyle()` 注入，新增 CSS 文件需用 `data-text:` 合并。
 - 动态主题变量由 `ThemeManager` 注入到 Shadow Root 末尾，避免被静态变量覆盖。
 - `::view-transition-*` 等文档根伪元素样式必须注入主文档 `document.head`，不能放在 Shadow DOM CSS 里。
 - Gemini Enterprise 等第三方 Shadow DOM 场景，样式要注入目标 shadowRoot，而不是只注入页面或插件 Shadow DOM。
 - CSS 类名延续 `gh-` 前缀，颜色优先使用 `--gh-*` 变量并提供合理 fallback。
+- 交付 UI 任务时，说明本次主要应用了哪些 `DESIGN.md` 章节，并明确验证了哪些主题、状态或样式注入链路。
 
 ## 排查优先读的文档
 

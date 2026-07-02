@@ -6,7 +6,15 @@ import hljs from "highlight.js/lib/core"
 import css from "highlight.js/lib/languages/css"
 import React, { useEffect, useState } from "react"
 
-import { AppearanceIcon } from "~components/icons"
+import {
+  AppearanceIcon,
+  CheckIcon,
+  ClearIcon,
+  DeleteIcon,
+  EditIcon,
+  ThemeDarkIcon,
+  ThemeLightIcon,
+} from "~components/icons"
 import { APPEARANCE_TAB_IDS } from "~constants"
 import { useSettingsStore } from "~stores/settings-store"
 import { t } from "~utils/i18n"
@@ -33,7 +41,7 @@ interface AppearancePageProps {
 }
 
 // CSS 模板
-const CSS_TEMPLATE = `/* 🎨 Custom CSS Cheat Sheet
+const CSS_TEMPLATE = `/* Custom CSS Cheat Sheet
  * 以下是本扩展使用的主要 CSS 类名，您可以自由覆盖。
  */
 
@@ -65,10 +73,22 @@ const ThemeCard: React.FC<{
   const displayName = translation && translation !== key ? translation : preset.name
 
   return (
-    <div className={`settings-theme-card ${isActive ? "active" : ""}`} onClick={onClick}>
-      <ThemePreview preset={preset} />
+    <button
+      type="button"
+      className={`settings-theme-card ${isActive ? "active" : ""}`}
+      onClick={onClick}
+      aria-pressed={isActive}
+      title={displayName}>
+      <div className="settings-theme-card-preview">
+        <ThemePreview preset={preset} />
+        {isActive ? (
+          <span className="settings-theme-card-check" aria-hidden="true">
+            <CheckIcon size={14} />
+          </span>
+        ) : null}
+      </div>
       <div className="settings-theme-name">{displayName}</div>
-    </div>
+    </button>
   )
 }
 
@@ -305,82 +325,69 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
             title={t("customCSS")}
             description={t("customCSSDesc")}
             settingId="appearance-custom-styles">
-            <button
-              className="settings-btn settings-btn-primary"
-              onClick={() => {
-                setEditingStyle({
-                  id: "",
-                  name: "",
-                  css: CSS_TEMPLATE,
-                  mode: "light",
-                })
-                setShowStyleEditor(true)
-              }}
-              style={{ marginBottom: "16px" }}>
-              ➕ {t("addCustomStyle")}
-            </button>
+            <div className="settings-custom-style-toolbar">
+              <button
+                className="settings-btn settings-btn-primary"
+                onClick={() => {
+                  setEditingStyle({
+                    id: "",
+                    name: "",
+                    css: CSS_TEMPLATE,
+                    mode: "light",
+                  })
+                  setShowStyleEditor(true)
+                }}>
+                + {t("addCustomStyle")}
+              </button>
+            </div>
 
             {(settings?.theme?.customStyles || []).length === 0 ? (
-              <div
-                style={{
-                  padding: "20px",
-                  textAlign: "center",
-                  color: "var(--gh-text-secondary, #9ca3af)",
-                  fontSize: "13px",
-                  border: "1px dashed var(--gh-border, #e5e7eb)",
-                  borderRadius: "8px",
-                }}>
-                {t("noCustomStyles")}
-              </div>
+              <div className="settings-custom-style-empty">{t("noCustomStyles")}</div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div className="settings-custom-style-list">
                 {(settings?.theme?.customStyles || []).map((style) => (
-                  <div
-                    key={style.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "12px",
-                      background: "var(--gh-bg-secondary, #f9fafb)",
-                      borderRadius: "8px",
-                    }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <span
-                        style={{
-                          fontSize: "11px",
-                          padding: "2px 8px",
-                          borderRadius: "4px",
-                          backgroundColor:
-                            style.mode === "light"
-                              ? "rgba(251, 191, 36, 0.2)"
-                              : "rgba(99, 102, 241, 0.2)",
-                          color: style.mode === "light" ? "#b45309" : "#4338ca",
-                        }}>
-                        {style.mode === "light" ? "☀️" : "🌙"}
-                      </span>
-                      <span style={{ fontSize: "14px", fontWeight: 500 }}>
-                        {style.name || t("unnamedStyle")}
-                      </span>
+                  <article key={style.id} className="settings-custom-style-item">
+                    <div className="settings-custom-style-item-preview">
+                      <ThemePreview preset={customStyleToPreset(style)} />
                     </div>
-                    <div style={{ display: "flex", gap: "8px" }}>
+                    <div className="settings-custom-style-item-main">
+                      <div className="settings-custom-style-item-head">
+                        <div className="settings-custom-style-item-title">
+                          {style.name || t("unnamedStyle")}
+                        </div>
+                        <span
+                          className={`settings-custom-style-mode-badge ${style.mode}`}
+                          title={style.mode === "light" ? t("lightMode") : t("darkMode")}>
+                          {style.mode === "light" ? (
+                            <ThemeLightIcon size={12} />
+                          ) : (
+                            <ThemeDarkIcon size={12} />
+                          )}
+                          <span>{style.mode === "light" ? t("lightMode") : t("darkMode")}</span>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="settings-custom-style-item-actions">
                       <button
-                        className="settings-btn settings-btn-secondary"
+                        type="button"
+                        className="settings-btn settings-btn-secondary settings-inline-icon-btn"
                         onClick={() => {
                           setEditingStyle(style)
                           setShowStyleEditor(true)
-                        }}
-                        style={{ padding: "6px 12px", fontSize: "12px" }}>
-                        ✏️ {t("edit")}
+                        }}>
+                        <EditIcon size={14} />
+                        <span>{t("edit")}</span>
                       </button>
                       <button
-                        className="settings-btn settings-btn-danger"
+                        type="button"
+                        className="settings-btn settings-btn-danger settings-icon-only-btn"
                         onClick={() => deleteCustomStyle(style.id)}
-                        style={{ padding: "6px 12px", fontSize: "12px" }}>
-                        🗑️
+                        aria-label={t("confirmDeleteStyle")}
+                        title={t("confirmDeleteStyle")}>
+                        <DeleteIcon size={14} />
                       </button>
                     </div>
-                  </div>
+                  </article>
                 ))}
               </div>
             )}
@@ -390,148 +397,65 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
 
       {/* 样式编辑器模态框 */}
       {showStyleEditor && editingStyle && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 10000,
-          }}>
-          <div
-            style={{
-              background: "var(--gh-bg, white)",
-              borderRadius: "12px",
-              width: "800px",
-              maxWidth: "95%",
-              height: "85vh",
-              display: "flex",
-              flexDirection: "column",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
-            }}>
-            {/* 头部 */}
-            <div
-              style={{
-                padding: "16px",
-                borderBottom: "1px solid var(--gh-border, #e5e7eb)",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}>
-              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 600 }}>
-                {editingStyle.id ? t("editStyle") : t("newStyle")}
+        <div className="settings-style-editor-overlay">
+          <div className="settings-style-editor-modal">
+            <div className="settings-style-editor-header">
+              <h3 className="settings-style-editor-title">
+                {editingStyle.id ? t("editStyleTitle") : t("newStyle")}
               </h3>
               <button
+                type="button"
+                className="settings-style-editor-close"
                 onClick={() => setShowStyleEditor(false)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: "18px",
-                  color: "var(--gh-text-secondary, #9ca3af)",
-                }}>
-                ✕
+                aria-label={t("close")}
+                title={t("close")}>
+                <ClearIcon size={16} />
               </button>
             </div>
 
-            {/* 内容 */}
-            <div
-              style={{
-                padding: "16px",
-                overflowY: "auto",
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-              }}>
-              {/* 样式名称 */}
-              <div style={{ marginBottom: "16px" }}>
-                <label
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: 500,
-                    marginBottom: "6px",
-                    display: "block",
-                  }}>
-                  {t("styleNameLabel")}
-                </label>
+            <div className="settings-style-editor-body">
+              <div className="settings-style-editor-field">
+                <label className="settings-style-editor-label">{t("styleNameLabel")}</label>
                 <input
                   type="text"
-                  className="settings-input"
+                  className="settings-input settings-style-editor-input"
                   value={editingStyle.name}
                   onChange={(e) => setEditingStyle({ ...editingStyle, name: e.target.value })}
                   placeholder={t("enterStyleName")}
-                  style={{ width: "100%" }}
                 />
               </div>
 
-              {/* 模式选择 */}
-              <div style={{ marginBottom: "16px" }}>
-                <label
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: 500,
-                    marginBottom: "6px",
-                    display: "block",
-                  }}>
-                  {t("styleModeLabel")}
-                </label>
-                <div style={{ display: "flex", gap: "12px" }}>
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      cursor: "pointer",
-                    }}>
+              <div className="settings-style-editor-field">
+                <label className="settings-style-editor-label">{t("styleModeLabel")}</label>
+                <div className="settings-style-editor-radio-group">
+                  <label className="settings-style-editor-radio">
                     <input
                       type="radio"
                       checked={editingStyle.mode === "light"}
                       onChange={() => setEditingStyle({ ...editingStyle, mode: "light" })}
                     />
-                    <span>☀️ {t("lightMode")}</span>
+                    <span className="settings-style-editor-radio-text">
+                      <ThemeLightIcon size={14} />
+                      <span>{t("lightMode")}</span>
+                    </span>
                   </label>
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      cursor: "pointer",
-                    }}>
+                  <label className="settings-style-editor-radio">
                     <input
                       type="radio"
                       checked={editingStyle.mode === "dark"}
                       onChange={() => setEditingStyle({ ...editingStyle, mode: "dark" })}
                     />
-                    <span>🌙 {t("darkMode")}</span>
+                    <span className="settings-style-editor-radio-text">
+                      <ThemeDarkIcon size={14} />
+                      <span>{t("darkMode")}</span>
+                    </span>
                   </label>
                 </div>
               </div>
 
-              {/* CSS 代码 */}
-              <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                <label
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: 500,
-                    marginBottom: "6px",
-                    display: "block",
-                  }}>
-                  CSS {t("code")}
-                </label>
-                <div
-                  className="settings-textarea"
-                  style={{
-                    flex: 1,
-                    padding: 0,
-                    overflow: "hidden",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}>
+              <div className="settings-style-editor-code-section">
+                <label className="settings-style-editor-label">CSS {t("code")}</label>
+                <div className="settings-textarea settings-style-editor-code-frame">
                   <SafeCodeEditor
                     value={editingStyle.css}
                     onValueChange={(code) => setEditingStyle({ ...editingStyle, css: code })}
@@ -550,21 +474,17 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
               </div>
             </div>
 
-            {/* 底部 */}
-            <div
-              style={{
-                padding: "16px",
-                borderTop: "1px solid var(--gh-border, #e5e7eb)",
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: "8px",
-              }}>
+            <div className="settings-style-editor-footer">
               <button
+                type="button"
                 className="settings-btn settings-btn-secondary"
                 onClick={() => setShowStyleEditor(false)}>
                 {t("cancel")}
               </button>
-              <button className="settings-btn settings-btn-primary" onClick={saveCustomStyle}>
+              <button
+                type="button"
+                className="settings-btn settings-btn-primary"
+                onClick={saveCustomStyle}>
                 {editingStyle.id ? t("save") : t("create")}
               </button>
             </div>
