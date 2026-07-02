@@ -436,6 +436,10 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   position: relative;
 }
 
+.conversations-search-wrapper.gh-panel-search--segmented {
+  overflow: visible;
+}
+
 .conversations-search-input-group {
   flex: 1;
   position: relative;
@@ -572,6 +576,7 @@ html[data-theme="dark"] .conversations-unsupported-icon {
 .conversations-search-clear {
   appearance: none;
   -webkit-appearance: none;
+  border-radius: 0 9px 9px 0;
 }
 
 .conversations-search-clear:hover:not(:disabled) {
