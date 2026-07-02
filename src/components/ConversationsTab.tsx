@@ -50,6 +50,7 @@ import {
   LocateIcon,
   MoreHorizontalIcon,
   PinIcon,
+  SearchIcon,
   SyncIcon,
   TagIcon,
 } from "~components/icons"
@@ -231,7 +232,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   const searchInputRef = useRef<HTMLInputElement>(null)
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const tagFilterMenuRef = useRef<HTMLDivElement>(null)
-  const tagFilterBtnRef = useRef<HTMLDivElement>(null)
+  const tagFilterBtnRef = useRef<HTMLButtonElement>(null)
 
   // 根据面板宽度切换紧凑布局，优先给标题与标签留空间
   useEffect(() => {
@@ -818,7 +819,7 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           </div>
         )}
         {/* 工具栏 */}
-        <div className="conversations-toolbar">
+        <div className="conversations-toolbar gh-panel-toolbar">
           {/* 1. 同步目标选择 */}
           <Tooltip content={t("conversationsSelectFolder")} triggerStyle={{ flex: 1, minWidth: 0 }}>
             <SelectDropdown
@@ -840,8 +841,10 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           {/* 2. 同步按钮 */}
           <Tooltip content={t("conversationsSync")}>
             <button
-              className="conversations-toolbar-btn sync"
+              type="button"
+              className="conversations-toolbar-btn gh-panel-icon-btn sync"
               disabled={syncing || isConversationUnsupported}
+              aria-label={t("conversationsSync")}
               onClick={handleSync}>
               {syncing ? <HourglassIcon size={18} /> : <SyncIcon size={18} />}
             </button>
@@ -849,7 +852,11 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
           {/* 3. 定位按钮 */}
           <Tooltip content={t("conversationsLocate")}>
-            <button className="conversations-toolbar-btn locate" onClick={handleLocate}>
+            <button
+              type="button"
+              className="conversations-toolbar-btn gh-panel-icon-btn locate"
+              aria-label={t("conversationsLocate")}
+              onClick={handleLocate}>
               <LocateIcon size={18} />
             </button>
           </Tooltip>
@@ -857,7 +864,10 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           {/* 4. 批量模式 */}
           <Tooltip content={t("conversationsBatchMode")}>
             <button
-              className={`conversations-toolbar-btn batch-mode ${batchMode ? "active" : ""}`}
+              type="button"
+              className={`conversations-toolbar-btn gh-panel-icon-btn batch-mode ${batchMode ? "active" : ""}`}
+              aria-label={t("conversationsBatchMode")}
+              aria-pressed={batchMode}
               onClick={toggleBatchMode}>
               <BatchIcon size={18} />
             </button>
@@ -866,7 +876,9 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
           {/* 5. 新建文件夹 */}
           <Tooltip content={t("conversationsAddFolder")}>
             <button
-              className="conversations-toolbar-btn add-folder"
+              type="button"
+              className="conversations-toolbar-btn gh-panel-icon-btn add-folder"
+              aria-label={t("conversationsAddFolder")}
               onClick={() => {
                 onInteractionStateChange?.(true)
                 setDialog({ type: "folder" })
@@ -878,13 +890,17 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
         {/* 搜索栏 */}
         <div className="conversations-search-bar">
-          <div className="conversations-search-wrapper" style={{ position: "relative" }}>
+          <div className="conversations-search-wrapper gh-panel-search gh-panel-search--segmented">
+            <span className="gh-panel-search-icon" aria-hidden="true">
+              <SearchIcon size={15} />
+            </span>
             <div className="conversations-search-input-group">
               <input
                 ref={searchInputRef}
                 type="text"
-                className="conversations-search-input"
+                className="conversations-search-input gh-panel-search-input"
                 placeholder={t("conversationsSearchPlaceholder")}
+                aria-label={t("conversationsSearchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => handleSearchInput(e.target.value)}
               />
@@ -892,27 +908,31 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
             {/* 置顶筛选 */}
             <Tooltip content={t("conversationsFilterPinned")}>
-              <div
-                className={`conversations-pin-filter-btn ${filterPinned ? "active" : ""}`}
-                style={{ userSelect: "none" }}
+              <button
+                type="button"
+                className={`conversations-pin-filter-btn gh-panel-search-action ${filterPinned ? "active" : ""}`}
+                aria-label={t("conversationsFilterPinned")}
+                aria-pressed={filterPinned}
                 onClick={() => setFilterPinned(!filterPinned)}>
                 <PinIcon size={16} />
-              </div>
+              </button>
             </Tooltip>
 
             {/* 标签筛选 */}
             <Tooltip content={t("conversationsFilterByTags")}>
-              <div
+              <button
+                type="button"
                 ref={tagFilterBtnRef}
-                className={`conversations-tag-search-btn ${filterTagIds.size > 0 ? "active" : ""}`}
-                style={{ userSelect: "none" }}
+                className={`conversations-tag-search-btn gh-panel-search-action ${filterTagIds.size > 0 ? "active" : ""}`}
+                aria-label={t("conversationsFilterByTags")}
+                aria-pressed={filterTagIds.size > 0}
                 onClick={() => {
                   const newState = !showTagFilterMenu
                   if (newState) onInteractionStateChange?.(true)
                   setShowTagFilterMenu(newState)
                 }}>
                 <TagIcon size={16} />
-              </div>
+              </button>
             </Tooltip>
 
             {/* 标签筛选菜单 */}
@@ -964,11 +984,14 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
 
             {/* 清除按钮 */}
             <Tooltip content={t("conversationsClearAll")}>
-              <div
-                className={`conversations-search-clear ${!hasFilters ? "disabled" : ""}`}
-                onClick={hasFilters ? clearFilters : undefined}>
+              <button
+                type="button"
+                className={`conversations-search-clear gh-panel-search-action ${!hasFilters ? "disabled" : ""}`}
+                onClick={hasFilters ? clearFilters : undefined}
+                disabled={!hasFilters}
+                aria-label={t("conversationsClearAll")}>
                 <ClearIcon size={14} />
-              </div>
+              </button>
             </Tooltip>
           </div>
 

@@ -15,6 +15,7 @@ import {
   OutlineDocumentIcon,
   ScrollBottomIcon,
   ScrollTopIcon,
+  SearchIcon,
   StarIcon,
   UserQueryIcon,
 } from "~components/icons"
@@ -1755,23 +1756,17 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
         height: "100%",
       }}>
       {/* Fixed Toolbar */}
-      <div
-        className="outline-fixed-toolbar"
-        style={{
-          padding: "8px",
-          borderBottom: "1px solid var(--gh-border, #e5e7eb)",
-          display: "flex",
-          flexDirection: "column",
-          gap: "8px",
-          backgroundColor: "var(--gh-bg, #fff)",
-        }}>
+      <div className="outline-fixed-toolbar gh-panel-tool-stack">
         {/* Row 1: Buttons & Search */}
-        <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-          <div style={{ display: "flex", gap: "2px" }}>
+        <div className="gh-panel-toolbar">
+          <div className="gh-panel-toolbar-group">
             {/* Group Mode */}
             <Tooltip content={t("outlineShowUserQueries")}>
               <button
+                type="button"
                 onClick={handleGroupModeToggle}
+                aria-label={t("outlineShowUserQueries")}
+                aria-pressed={showUserQueries}
                 className={`outline-toolbar-btn ${showUserQueries ? "active-subtle" : ""}`}>
                 <UserQueryIcon size={15} />
               </button>
@@ -1780,7 +1775,10 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             {/* Bookmark Mode Toggle */}
             <Tooltip content={t("bookmarkMode")}>
               <button
+                type="button"
                 onClick={handleToggleBookmarkMode}
+                aria-label={t("bookmarkMode")}
+                aria-pressed={bookmarkMode}
                 className={`outline-toolbar-btn ${bookmarkMode ? "active-subtle" : ""}`}>
                 <StarIcon size={16} filled={bookmarkMode} color="currentColor" />
               </button>
@@ -1796,8 +1794,16 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
                     : t("outlineExpandAll")
               }>
               <button
+                type="button"
                 onClick={bookmarkMode ? undefined : handleExpandAll}
                 disabled={bookmarkMode}
+                aria-label={
+                  bookmarkMode
+                    ? t("bookmarkModeDisabled")
+                    : isAllExpanded
+                      ? t("outlineCollapseAll")
+                      : t("outlineExpandAll")
+                }
                 className="outline-toolbar-btn">
                 {isAllExpanded ? <CollapseAllIcon size={18} /> : <ExpandAllIcon size={18} />}
               </button>
@@ -1807,8 +1813,12 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             <Tooltip
               content={isCopyingFullOutline ? t("outlineCopyFullRunning") : t("outlineCopyFull")}>
               <button
+                type="button"
                 onClick={handleCopyFullOutline}
                 disabled={isCopyingFullOutline}
+                aria-label={
+                  isCopyingFullOutline ? t("outlineCopyFullRunning") : t("outlineCopyFull")
+                }
                 className={`outline-toolbar-btn ${isCopyingFullOutline ? "is-busy" : ""}`}>
                 {fullOutlineCopySuccess ? (
                   <CheckIcon size={14} color="#10b981" />
@@ -1820,7 +1830,11 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
             {/* Locate Current */}
             <Tooltip content={t("outlineLocateCurrent")}>
-              <button onClick={handleLocateCurrent} className="outline-toolbar-btn">
+              <button
+                type="button"
+                onClick={handleLocateCurrent}
+                aria-label={t("outlineLocateCurrent")}
+                className="outline-toolbar-btn">
                 <LocateIcon size={16} />
               </button>
             </Tooltip>
@@ -1828,7 +1842,13 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
             {/* Dynamic Scroll (Top/Bottom) */}
             <Tooltip
               content={scrollState === "bottom" ? t("outlineScrollBottom") : t("outlineScrollTop")}>
-              <button onClick={handleDynamicScroll} className="outline-toolbar-btn">
+              <button
+                type="button"
+                onClick={handleDynamicScroll}
+                aria-label={
+                  scrollState === "bottom" ? t("outlineScrollBottom") : t("outlineScrollTop")
+                }
+                className="outline-toolbar-btn">
                 {scrollState === "bottom" ? (
                   <ScrollBottomIcon size={16} />
                 ) : (
@@ -1839,50 +1859,26 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
           </div>
 
           {/* Search Input */}
-          <div
-            className="outline-search-wrapper"
-            style={{
-              flex: 1,
-              position: "relative",
-              display: "flex",
-              alignItems: "center",
-            }}>
+          <div className="outline-search-wrapper gh-panel-search">
+            <span className="gh-panel-search-icon" aria-hidden="true">
+              <SearchIcon size={15} />
+            </span>
             <input
               ref={inputRef}
               type="text"
-              className="outline-search-input"
+              className="outline-search-input gh-panel-search-input"
               placeholder={t("outlineSearch")}
+              aria-label={t("outlineSearch")}
               value={searchQuery}
               onChange={handleSearchChange}
-              style={{
-                width: "100%",
-                padding: "4px 24px 4px 8px",
-                borderRadius: "4px",
-                border: "1px solid var(--gh-input-border, #d1d5db)",
-                fontSize: "12px",
-                boxSizing: "border-box",
-                height: "26px",
-                backgroundColor: "var(--gh-input-bg, #fff)",
-                color: "var(--gh-text, #374151)",
-              }}
             />
             {searchQuery && (
               <button
-                className="outline-search-clear"
+                type="button"
+                className="outline-search-clear gh-panel-search-action"
                 onClick={handleSearchClear}
-                style={{
-                  position: "absolute",
-                  right: "4px",
-                  background: "none",
-                  border: "none",
-                  color: "var(--gh-text-tertiary, #9ca3af)",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  padding: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}>
+                aria-label={t("clear")}
+                title={t("clear")}>
                 <ClearIcon size={14} />
               </button>
             )}

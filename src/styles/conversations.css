@@ -26,42 +26,6 @@
   border-top: none !important;
 }
 
-/* 统一工具栏按钮风格 (Ghost Button - 仿大纲 Tab) */
-.conversations-toolbar-btn {
-  background: transparent !important;
-  border: 1px solid transparent !important;
-  box-shadow: none !important;
-  color: var(--gh-text-secondary, #6b7280) !important;
-  border-radius: 6px !important;
-  transition: all 0.2s ease !important;
-  min-width: 28px !important;
-  height: 28px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.conversations-toolbar-btn:hover {
-  background: rgba(127, 127, 127, 0.15) !important;
-  color: var(--gh-text, #374151) !important;
-}
-
-.conversations-toolbar-btn.active {
-  background: var(--gh-primary, #3b82f6) !important;
-  color: white !important;
-  border-color: var(--gh-primary, #3b82f6) !important;
-}
-
-/* 修复 SVG 颜色 */
-.conversations-toolbar-btn svg {
-  fill: currentColor !important;
-  width: 16px !important;
-  height: 16px !important;
-}
-
 /* ========== 会话面板样式 ========== */
 .conversations-content {
   display: flex;
@@ -89,28 +53,17 @@
 
 .conversations-toolbar {
   display: flex;
-  gap: 6px;
-  padding: 8px 12px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--gh-border, #e5e7eb);
   flex-shrink: 0;
-  background: var(--gh-bg, #ffffff);
+  background: color-mix(in srgb, var(--gh-bg-secondary, #f9fafb) 86%, var(--gh-bg, #ffffff));
 }
 
 .conversations-toolbar-btn {
-  padding: 5px 8px;
-  border: 1px solid var(--gh-input-border, #d1d5db);
-  border-radius: 6px;
-  background: var(--gh-bg-secondary, #f9fafb);
-  font-size: 13px;
-  color: var(--gh-text, #374151);
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  height: 32px;
-  flex-shrink: 0;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .conversations-toolbar-btn svg {
@@ -118,20 +71,15 @@
   height: 16px;
 }
 
-.conversations-toolbar-btn:hover {
-  background: var(--gh-hover, #f3f4f6);
-  border-color: var(--gh-text-secondary, #9ca3af);
-}
-
 .conversations-toolbar-btn.batch-mode.active {
-  background: var(--gh-border-active);
-  color: white;
-  border-color: var(--gh-border-active);
+  background: var(--gh-primary, #4285f4);
+  color: var(--gh-text-on-primary, #ffffff);
+  border-color: var(--gh-primary, #4285f4);
 }
 
 .conversations-toolbar-btn:disabled {
   opacity: 0.6;
-  cursor: wait;
+  cursor: not-allowed;
 }
 
 .conversations-folder-select-dropdown {
@@ -139,10 +87,10 @@
 }
 
 .conversations-folder-select {
-  padding: 4px 8px;
+  padding: 0 10px;
   border: 1px solid var(--gh-input-border, #d1d5db);
-  border-radius: 6px;
-  background: var(--gh-bg-secondary, #f9fafb);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--gh-input-bg, #ffffff) 94%, transparent);
   font-size: 13px;
   color: var(--gh-text, #374151);
   cursor: pointer;
@@ -168,12 +116,13 @@
 }
 
 .conversations-folder-select:hover {
-  background: var(--gh-hover, #f3f4f6);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-bg, #ffffff));
 }
 
 .conversations-folder-select:focus {
   outline: none;
-  border-color: var(--gh-border-active);
+  border-color: var(--gh-primary, #4285f4);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
 }
 
 .conversations-folder-select:disabled {
@@ -474,9 +423,9 @@ html[data-theme="dark"] .conversations-unsupported-icon {
 
 /* 搜索栏样式 */
 .conversations-search-bar {
-  padding: 6px 12px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--gh-border, #e5e7eb);
-  background: var(--gh-bg-secondary, #f9fafb);
+  background: color-mix(in srgb, var(--gh-bg-secondary, #f9fafb) 86%, var(--gh-bg, #ffffff));
   flex-shrink: 0;
 }
 
@@ -487,64 +436,41 @@ html[data-theme="dark"] .conversations-unsupported-icon {
   position: relative;
 }
 
-.conversations-search-wrapper.has-filter .conversations-tag-search-btn {
-  border-radius: 0;
-  border-right: none;
-}
-
 .conversations-search-input-group {
   flex: 1;
   position: relative;
-  height: 32px;
+  height: 100%;
   min-width: 0;
 }
 
 .conversations-search-input {
   width: 100%;
   height: 100%;
-  padding: 0 12px;
-  border: 1px solid var(--gh-input-border, #d1d5db);
-  border-radius: 8px 0 0 8px;
-  font-size: 14px;
+  padding: 0 10px 0 34px;
+  border: 0;
+  border-radius: 0;
+  font-size: 13px;
   box-sizing: border-box;
-  transition: all 0.2s;
-  background: var(--gh-input-bg, #ffffff);
+  background: transparent;
   color: var(--gh-text, #1f2937);
+  box-shadow: none;
 }
 
 .conversations-search-input:focus {
   outline: none;
-  border-color: var(--gh-border-active);
-  z-index: 1;
-  position: relative;
+  box-shadow: none;
 }
 
 /* Pin Button */
 .conversations-pin-filter-btn {
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
-  color: var(--gh-text-tertiary, #9ca3af);
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--gh-input-border, #d1d5db);
-  border-left: none;
-  background: var(--gh-bg, white);
-  box-sizing: border-box;
-  transition: all 0.2s;
-}
-
-.conversations-pin-filter-btn:hover {
-  background: var(--gh-hover, #f3f4f6);
-  color: var(--gh-text, #374151);
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .conversations-pin-filter-btn.active {
-  color: var(--gh-border-active);
-  background: var(--gh-folder-bg-default);
-  box-shadow: inset 0 0 0 1px var(--gh-border-active);
+  color: var(--gh-primary, #4285f4);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, var(--gh-bg, #ffffff));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gh-primary, #4285f4) 20%, transparent);
 }
 
 .conversations-result-bar {
@@ -628,31 +554,14 @@ html[data-theme="dark"] .conversations-unsupported-icon {
 
 /* 标签筛选按钮 */
 .conversations-tag-search-btn {
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
-  color: var(--gh-text-tertiary, #9ca3af);
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--gh-input-border, #d1d5db);
-  border-left: none;
-  border-radius: 0;
-  background: var(--gh-bg, white);
-  box-sizing: border-box;
-  transition: all 0.2s;
-}
-
-.conversations-tag-search-btn:hover {
-  background: var(--gh-hover, #f3f4f6);
-  color: var(--gh-text, #374151);
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .conversations-tag-search-btn.active {
-  color: var(--gh-border-active);
-  background: var(--gh-folder-bg-default);
-  box-shadow: inset 0 0 0 1px var(--gh-border-active);
+  color: var(--gh-primary, #4285f4);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, var(--gh-bg, #ffffff));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gh-primary, #4285f4) 20%, transparent);
 }
 
 .conversations-tag-search-btn.empty {
@@ -661,31 +570,19 @@ html[data-theme="dark"] .conversations-unsupported-icon {
 
 /* Clear Button */
 .conversations-search-clear {
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
-  color: var(--gh-text-tertiary, #9ca3af);
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--gh-input-border, #d1d5db);
-  border-left: none;
-  border-radius: 0 8px 8px 0;
-  background: var(--gh-bg, white);
-  box-sizing: border-box;
-  transition: all 0.2s;
-  user-select: none;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
-.conversations-search-clear:hover {
+.conversations-search-clear:hover:not(:disabled) {
   background: var(--gh-bg-danger, #fef2f2);
   color: var(--gh-text-danger, #ef4444);
 }
 
-.conversations-search-clear.disabled {
-  opacity: 0.3;
-  cursor: default;
+.conversations-search-clear.disabled,
+.conversations-search-clear:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
   background: var(--gh-bg-secondary, #f9fafb);
   pointer-events: none;
 }

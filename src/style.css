@@ -636,14 +636,44 @@
  * 因此不再需要单独的深色模式选择器规则。
  */
 
-/* ============= 工具栏按钮样式 ============= */
+/* ============= 面板工具栏与搜索控件 ============= */
+.gh-panel-tool-stack {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--gh-border, #e5e7eb);
+  background: color-mix(in srgb, var(--gh-bg-secondary, #f9fafb) 86%, var(--gh-bg, #ffffff));
+}
+
+.gh-panel-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.gh-panel-toolbar-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.gh-panel-toolbar-group.is-fluid {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.gh-panel-icon-btn,
 .outline-toolbar-btn {
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   border: 1px solid var(--gh-input-border, #d1d5db);
-  border-radius: 6px;
-  background: var(--gh-bg, #fff);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--gh-bg, #ffffff) 92%, transparent);
   color: var(--gh-text-secondary, #6b7280);
   box-sizing: border-box;
   cursor: pointer;
@@ -652,20 +682,40 @@
   justify-content: center;
   font-size: 14px;
   line-height: 1;
-  transition: all 0.2s;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
   flex-shrink: 0;
 }
 
+.gh-panel-icon-btn:hover,
 .outline-toolbar-btn:hover {
-  border-color: var(--gh-input-border, #d1d5db);
+  border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 36%, var(--gh-input-border, #d1d5db));
   color: var(--gh-primary, #4285f4);
-  background: var(--gh-hover, #f3f4f6);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-bg, #ffffff));
+  transform: translateY(-1px);
 }
 
+.gh-panel-icon-btn:active,
+.outline-toolbar-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.gh-panel-icon-btn:focus-visible,
+.outline-toolbar-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 32%, transparent);
+  outline-offset: 2px;
+}
+
+.gh-panel-icon-btn:disabled,
 .outline-toolbar-btn:disabled {
   color: var(--gh-text-disabled, #9ca3af);
   cursor: not-allowed;
   opacity: 0.5;
+  transform: none;
 }
 
 .outline-toolbar-btn.is-busy:disabled {
@@ -673,19 +723,209 @@
   opacity: 0.65;
 }
 
-/* 选中状态使用强烈的主题色背景 + 白色文字 */
+.gh-panel-icon-btn.active,
 .outline-toolbar-btn.active {
   border-color: var(--gh-primary, #4285f4);
-  color: white;
+  color: var(--gh-text-on-primary, #ffffff);
   background: var(--gh-primary, #4285f4);
 }
 
-/* 微光风格选中状态 (Tinted Style) - Theme Adapted */
+.gh-panel-icon-btn.active-subtle,
 .outline-toolbar-btn.active-subtle {
   border-color: var(--gh-primary, #4285f4);
   color: var(--gh-primary, #4285f4);
-  background: color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 13%, var(--gh-bg, #ffffff));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gh-primary, #4285f4) 8%, transparent);
+}
+
+.gh-panel-search {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.gh-panel-search-icon {
+  position: absolute;
+  left: 10px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gh-text-tertiary, #9ca3af);
+  pointer-events: none;
+}
+
+.gh-panel-search-input {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  padding: 0 34px;
+  border: 1px solid var(--gh-input-border, #d1d5db);
+  border-radius: 9px;
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--gh-input-bg, #ffffff) 94%, transparent);
+  color: var(--gh-text, #1f2937);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.35;
+  outline: none;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.gh-panel-search-input::placeholder {
+  color: var(--gh-text-tertiary, #9ca3af);
+}
+
+.gh-panel-search-input:focus {
+  border-color: var(--gh-primary, #4285f4);
+  background: var(--gh-input-bg, #ffffff);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
+}
+
+.gh-panel-search-action {
+  position: absolute;
+  right: 4px;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--gh-text-tertiary, #9ca3af);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.gh-panel-search-action:hover,
+.gh-panel-search-action:focus-visible {
+  color: var(--gh-text, #374151);
+  background: var(--gh-hover, #f3f4f6);
+}
+
+.gh-panel-search-action:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 32%, transparent);
+  outline-offset: 1px;
+}
+
+.gh-panel-search-action:active {
+  transform: scale(0.96);
+}
+
+.gh-panel-menu-anchor {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.gh-panel-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+}
+
+.gh-panel-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 100;
+  min-width: 144px;
+  overflow: hidden;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 10px;
+  background: var(--gh-bg, #ffffff);
+  box-shadow: var(--gh-shadow-lg, 0 10px 24px rgba(15, 23, 42, 0.14));
+}
+
+.gh-panel-menu-item {
+  width: 100%;
+  min-height: 34px;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--gh-text, #1f2937);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease;
+}
+
+.gh-panel-menu-item:hover,
+.gh-panel-menu-item:focus-visible {
+  color: var(--gh-primary, #4285f4);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 8%, var(--gh-bg, #ffffff));
+}
+
+.gh-panel-menu-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 32%, transparent);
+  outline-offset: -2px;
+}
+
+.gh-panel-search--segmented {
+  height: 34px;
+  overflow: hidden;
+  border: 1px solid var(--gh-input-border, #d1d5db);
+  border-radius: 10px;
+  background: var(--gh-input-bg, #ffffff);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.gh-panel-search--segmented:focus-within {
+  border-color: var(--gh-primary, #4285f4);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 18%, transparent);
+}
+
+.gh-panel-search--segmented .gh-panel-search-action {
+  position: static;
+  width: 34px;
+  height: 100%;
+  border-left: 1px solid var(--gh-input-border, #d1d5db);
+  border-radius: 0;
+  flex-shrink: 0;
+}
+
+.gh-panel-search--segmented .gh-panel-search-input {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.gh-panel-search--segmented .gh-panel-search-input:focus {
+  border-color: transparent !important;
+  background: transparent;
+  box-shadow: none !important;
+}
+
+.gh-panel-search-action.active {
+  color: var(--gh-primary, #4285f4);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, var(--gh-bg, #ffffff));
+}
+
+.gh-panel-search-action:disabled,
+.gh-panel-search-action.disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* 大纲列表 */
@@ -797,9 +1037,7 @@
   }
 }
 
-/* ============= 搜索输入框聚焦样式 ============= */
-.outline-search-input,
-.prompt-search-input,
+/* ============= 对话框输入框聚焦样式 ============= */
 .conversations-dialog-input {
   outline: none;
   transition:
@@ -807,8 +1045,6 @@
     box-shadow 0.2s ease;
 }
 
-.outline-search-input:focus,
-.prompt-search-input:focus,
 .conversations-dialog-input:focus {
   border-color: var(--gh-primary, #4285f4) !important;
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--gh-primary, #4285f4) 20%, transparent);
@@ -1743,14 +1979,27 @@
   color: var(--gh-text-secondary, #6b7280);
   font-size: 18px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
 }
 
 .quick-prompt-btn:hover {
-  transform: scale(1.08); /* More subtle scaling */
+  transform: translateY(-1px) scale(1.04);
   background: color-mix(in srgb, var(--gh-text) 6%, transparent);
   color: var(--gh-text, #111827);
+}
+
+.quick-prompt-btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.quick-prompt-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 34%, transparent);
+  outline-offset: 2px;
 }
 
 .quick-prompt-btn.active {
@@ -1776,7 +2025,7 @@
   background: color-mix(in srgb, var(--gh-primary) 24%, transparent);
   color: var(--gh-primary) !important;
   box-shadow: 0 4px 16px color-mix(in srgb, var(--gh-primary) 35%, transparent);
-  transform: scale(1.05); /* 稍微收敛膨胀比例，显得更精致 */
+  transform: translateY(-1px) scale(1.04);
 }
 
 .quick-prompt-btn.panel-btn:hover svg {
@@ -1791,7 +2040,7 @@
   color: var(--gh-primary);
 }
 
-/* 工具箱悬浮菜单按钮特殊动画 (Rotation + primary state) */
+/* 工具箱悬浮菜单按钮：active 使用静态强调态，避免常驻旋转干扰阅读 */
 .quick-prompt-btn.tools-trigger-btn {
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -1800,36 +2049,12 @@
   background: var(--gh-primary);
   color: var(--gh-text-on-primary, white);
   box-shadow: 0 4px 12px color-mix(in srgb, var(--gh-primary) 40%, transparent);
-  animation: tools-spin 3s linear infinite;
-  transform: scale(1.05);
-}
-
-/* 禅模式按钮特殊动画 (Subtle breathing + primary state) */
-@keyframes zen-breathe {
-  0%,
-  100% {
-    opacity: 0.8;
-    transform: scale(1);
-    filter: drop-shadow(0 0 2px color-mix(in srgb, var(--gh-primary) 30%, transparent));
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--gh-primary) 60%, transparent));
-  }
+  transform: scale(1.03);
 }
 
 .quick-prompt-btn.zen-mode-btn.active svg {
-  animation: zen-breathe 4s ease-in-out infinite;
-}
-
-@keyframes tools-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  transform: scale(1.03);
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--gh-primary) 42%, transparent));
 }
 
 .quick-btn-group.dragging .quick-prompt-btn {
@@ -2119,6 +2344,15 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .gh-panel-icon-btn,
+  .outline-toolbar-btn,
+  .gh-panel-search-input,
+  .gh-panel-search-action,
+  .gh-panel-menu-item,
+  .quick-prompt-btn {
+    transition: none !important;
+  }
+
   .gh-panel-header-hint,
   .gh-panel-footer-anchor-icon {
     transition: none !important;
@@ -2338,23 +2572,26 @@
 .gh-prompt-library-switch {
   display: inline-flex;
   flex: 0 0 auto;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  gap: 4px;
+  align-items: center;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--gh-input-border, #d1d5db);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gh-input-bg, #ffffff) 94%, transparent);
+  gap: 2px;
+  box-sizing: border-box;
 }
 
 .gh-prompt-library-switch-btn {
   min-width: 44px;
-  height: 28px;
+  height: 26px;
   padding: 0 9px;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: 7px;
   background: transparent;
   color: var(--gh-text-secondary, #6b7280);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1;
   cursor: pointer;
   white-space: nowrap;

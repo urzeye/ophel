@@ -14,6 +14,7 @@ import {
   ImportIcon,
   MoreHorizontalIcon,
   PinIcon,
+  SearchIcon,
   SplitLinesToQueueIcon,
   SettingsIcon,
   TimeIcon,
@@ -3401,151 +3402,94 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       className="gh-prompts-tab"
       style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {/* 搜索栏 + 操作按钮 */}
-      <div
-        style={{
-          padding: "8px 12px",
-          borderBottom: "1px solid var(--gh-border, #e5e7eb)",
-          background: "var(--gh-bg-secondary, #f9fafb)",
-          display: "flex",
-          gap: "6px",
-          alignItems: "center",
-        }}>
-        <div className="gh-prompt-library-switch" role="tablist">
-          <button
-            type="button"
-            className="gh-prompt-library-switch-btn"
-            data-active={activeLibraryView === "prompts"}
-            onClick={() => setActiveLibraryView("prompts")}>
-            {t("promptsViewPrompts")}
-          </button>
-          <button
-            type="button"
-            className="gh-prompt-library-switch-btn"
-            data-active={activeLibraryView === "chains"}
-            onClick={() => setActiveLibraryView("chains")}>
-            {t("promptsViewChains")}
-          </button>
-        </div>
-        <input
-          type="text"
-          className="prompt-search-input"
-          placeholder={
-            activeLibraryView === "chains" ? t("chainSearchPlaceholder") : t("searchPlaceholder")
-          }
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={{
-            flex: "1 1 auto",
-            minWidth: "120px",
-            padding: "6px 10px",
-            border: "1px solid var(--gh-border, #d1d5db)",
-            borderRadius: "8px",
-            fontSize: "14px",
-            boxSizing: "border-box",
-            background: "var(--gh-bg, #ffffff)",
-            color: "var(--gh-text, #1f2937)",
-          }}
-        />
-        {activeLibraryView === "prompts" && (
-          <div style={{ position: "relative" }}>
-            <Tooltip content={t("promptImport") + " / " + t("promptExport")}>
-              <button
-                ref={importExportButtonRef}
-                onClick={() => setImportExportMenuOpen(!importExportMenuOpen)}
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  border: "1px solid var(--gh-border, #d1d5db)",
-                  background: "var(--gh-bg, white)",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "16px",
-                  flexShrink: 0,
-                }}>
-                <ImportIcon size={16} />
-              </button>
-            </Tooltip>
-            {importExportMenuOpen && (
-              <>
-                <div
-                  style={{
-                    position: "fixed",
-                    inset: 0,
-                    zIndex: 99,
-                  }}
-                  onClick={() => setImportExportMenuOpen(false)}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "calc(100% + 4px)",
-                    right: 0,
-                    zIndex: 100,
-                    minWidth: "140px",
-                    background: "var(--gh-bg, #ffffff)",
-                    border: "1px solid var(--gh-border, #e5e7eb)",
-                    borderRadius: "8px",
-                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.12)",
-                    overflow: "hidden",
-                  }}>
-                  <button
-                    onClick={() => {
-                      setImportExportMenuOpen(false)
-                      handleImport()
-                    }}
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px",
-                      border: "none",
-                      background: "transparent",
-                      textAlign: "left",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      fontSize: "13px",
-                      color: "var(--gh-text, #1f2937)",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = "var(--gh-hover, #f3f4f6)")
-                    }
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
-                    <ImportIcon size={14} />
-                    {t("promptImport")}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setImportExportMenuOpen(false)
-                      handleExport()
-                    }}
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px",
-                      border: "none",
-                      background: "transparent",
-                      textAlign: "left",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      fontSize: "13px",
-                      color: "var(--gh-text, #1f2937)",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = "var(--gh-hover, #f3f4f6)")
-                    }
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
-                    <ExportIcon size={14} />
-                    {t("promptExport")}
-                  </button>
-                </div>
-              </>
-            )}
+      <div className="gh-panel-tool-stack gh-prompts-tool-stack">
+        <div className="gh-panel-toolbar">
+          <div className="gh-prompt-library-switch" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              className="gh-prompt-library-switch-btn"
+              data-active={activeLibraryView === "prompts"}
+              aria-selected={activeLibraryView === "prompts"}
+              onClick={() => setActiveLibraryView("prompts")}>
+              {t("promptsViewPrompts")}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              className="gh-prompt-library-switch-btn"
+              data-active={activeLibraryView === "chains"}
+              aria-selected={activeLibraryView === "chains"}
+              onClick={() => setActiveLibraryView("chains")}>
+              {t("promptsViewChains")}
+            </button>
           </div>
-        )}
+          <div className="gh-panel-search">
+            <span className="gh-panel-search-icon" aria-hidden="true">
+              <SearchIcon size={15} />
+            </span>
+            <input
+              type="text"
+              className="prompt-search-input gh-panel-search-input"
+              placeholder={
+                activeLibraryView === "chains"
+                  ? t("chainSearchPlaceholder")
+                  : t("searchPlaceholder")
+              }
+              aria-label={
+                activeLibraryView === "chains"
+                  ? t("chainSearchPlaceholder")
+                  : t("searchPlaceholder")
+              }
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          {activeLibraryView === "prompts" && (
+            <div className="gh-panel-menu-anchor">
+              <Tooltip content={t("promptImport") + " / " + t("promptExport")}>
+                <button
+                  type="button"
+                  ref={importExportButtonRef}
+                  onClick={() => setImportExportMenuOpen(!importExportMenuOpen)}
+                  className="gh-panel-icon-btn"
+                  aria-label={t("promptImport") + " / " + t("promptExport")}>
+                  <ImportIcon size={16} />
+                </button>
+              </Tooltip>
+              {importExportMenuOpen && (
+                <>
+                  <div
+                    className="gh-panel-menu-backdrop"
+                    onClick={() => setImportExportMenuOpen(false)}
+                  />
+                  <div className="gh-panel-menu">
+                    <button
+                      type="button"
+                      className="gh-panel-menu-item"
+                      onClick={() => {
+                        setImportExportMenuOpen(false)
+                        handleImport()
+                      }}>
+                      <ImportIcon size={14} />
+                      {t("promptImport")}
+                    </button>
+                    <button
+                      type="button"
+                      className="gh-panel-menu-item"
+                      onClick={() => {
+                        setImportExportMenuOpen(false)
+                        handleExport()
+                      }}>
+                      <ExportIcon size={14} />
+                      {t("promptExport")}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 分类标签栏：左侧可滚动 + 右侧固定 */}
