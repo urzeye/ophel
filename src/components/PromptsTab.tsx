@@ -1185,6 +1185,45 @@ const getCategoryColorIndex = (categoryName: string): number => {
   return (Math.abs(hash) % 7) + 1
 }
 
+const CATEGORY_COLOR_FALLBACKS: Record<number, string> = {
+  1: "#fecaca",
+  2: "#fed7aa",
+  3: "#fef08a",
+  4: "#bbf7d0",
+  5: "#a5f3fc",
+  6: "#c7d2fe",
+  7: "#f5d0fe",
+}
+
+const getResolvedCategoryColor = (colorIndex: number): string => {
+  const variableName = `--gh-category-${colorIndex}`
+
+  if (typeof window !== "undefined" && typeof document !== "undefined") {
+    const targets: HTMLElement[] = []
+    const hosts = document.querySelectorAll<HTMLElement>("plasmo-csui, #ophel-userscript-root")
+
+    hosts.forEach((host) => {
+      targets.push(host)
+
+      const root = host.shadowRoot?.querySelector<HTMLElement>(".gh-root")
+      if (root) {
+        targets.push(root)
+      }
+    })
+
+    targets.push(document.documentElement)
+
+    for (const target of targets) {
+      const color = window.getComputedStyle(target).getPropertyValue(variableName).trim()
+      if (color) {
+        return color
+      }
+    }
+  }
+
+  return CATEGORY_COLOR_FALLBACKS[colorIndex] || "var(--gh-hover, #f3f4f6)"
+}
+
 export const PromptsTab: React.FC<PromptsTabProps> = ({
   manager,
   adapter,
@@ -3443,7 +3482,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     const categoryLabel = prompt.category || t("uncategorized")
     const categoryColorIndex = getCategoryColorIndex(categoryLabel)
     const categoryStyle = {
-      "--gh-prompt-preview-category-bg": `var(--gh-category-${categoryColorIndex}, var(--gh-hover, #f3f4f6))`,
+      "--gh-prompt-preview-category-bg": getResolvedCategoryColor(categoryColorIndex),
     } as React.CSSProperties
 
     return createPortal(
