@@ -41,6 +41,8 @@ interface PanelReservation {
   targetWidth: number
   leftInset: number
   rightInset: number
+  leftEdgeInset: number
+  rightEdgeInset: number
 }
 
 interface HorizontalRect {
@@ -322,20 +324,65 @@ export class LayoutManager {
       .join("\n")
   }
 
-  private generatePanelAvoidanceCSS(reservation: PanelReservation): string {
+  private generatePanelAvoidanceCSS(
+    panel: HTMLElement,
+    reservation: PanelReservation | null,
+  ): string {
     const config = this.panelAvoidanceConfig
     if (!config) return ""
 
-    const targetWidth = `${Math.max(0, Math.floor(reservation.targetWidth))}px`
-    const leftInset = `${Math.max(0, Math.floor(reservation.leftInset))}px`
-    const rightInset = `${Math.max(0, Math.floor(reservation.rightInset))}px`
-
-    const widthCss = this.buildCSSFromSelectors(config.widthSelectors, targetWidth, true)
+    const widthCss = reservation
+      ? this.buildCSSFromSelectors(
+          config.widthSelectors,
+          `${Math.max(0, Math.floor(reservation.targetWidth))}px`,
+          true,
+        )
+      : ""
     const insetCss = (config.insetSelectors || [])
-      .map((insetConfig) => this.buildPanelAvoidanceInsetCSS(insetConfig, leftInset, rightInset))
+      .map((insetConfig) => {
+        const insetReservation = this.getPanelAvoidanceInsetReservation(
+          panel,
+          insetConfig,
+          reservation,
+        )
+        if (!insetReservation) return ""
+
+        return this.buildPanelAvoidanceInsetCSS(
+          insetConfig,
+          `${Math.max(
+            0,
+            Math.floor(
+              insetConfig.insetMode === "edge"
+                ? insetReservation.leftEdgeInset
+                : insetReservation.leftInset,
+            ),
+          )}px`,
+          `${Math.max(
+            0,
+            Math.floor(
+              insetConfig.insetMode === "edge"
+                ? insetReservation.rightEdgeInset
+                : insetReservation.rightInset,
+            ),
+          )}px`,
+        )
+      })
       .join("\n")
 
     return [widthCss, insetCss].filter(Boolean).join("\n")
+  }
+
+  private getPanelAvoidanceInsetReservation(
+    panel: HTMLElement,
+    config: PanelAvoidanceInsetConfig,
+    fallbackReservation: PanelReservation | null,
+  ): PanelReservation | null {
+    if (!config.scopeSelector) return fallbackReservation
+
+    const scope = this.findPanelAvoidanceScope(config.scopeSelector)
+    if (!scope) return null
+
+    return this.getPanelReservation(panel, this.getPanelAvoidanceScopeRect(scope))
   }
 
   private buildPanelAvoidanceInsetCSS(
@@ -343,11 +390,14 @@ export class LayoutManager {
     leftInset: string,
     rightInset: string,
   ): string {
+    const applySide = config.applySide || "both"
     const leftProperty = config.leftProperty || "padding-left"
     const rightProperty = config.rightProperty || "padding-right"
     const extra = config.extraCss || ""
+    const leftCss = applySide === "right" ? "" : `${leftProperty}: ${leftInset} !important;`
+    const rightCss = applySide === "left" ? "" : `${rightProperty}: ${rightInset} !important;`
 
-    return `${config.selector} { ${leftProperty}: ${leftInset} !important; ${rightProperty}: ${rightInset} !important; ${extra} }`
+    return `${config.selector} { ${leftCss} ${rightCss} ${extra} }`
   }
 
   private getPanelAvoidanceBaseWidth(scopeWidth: number): number {
@@ -396,8 +446,9 @@ export class LayoutManager {
     return fallback instanceof HTMLElement ? fallback : null
   }
 
-  private findPanelAvoidanceScope(): HTMLElement | null {
-    const selector = this.panelAvoidanceConfig?.scopeSelector
+  private findPanelAvoidanceScope(
+    selector = this.panelAvoidanceConfig?.scopeSelector,
+  ): HTMLElement | null {
     if (!selector) return null
 
     for (const candidate of Array.from(document.querySelectorAll(selector))) {
@@ -495,14 +546,18 @@ export class LayoutManager {
 
     const baseWidth = this.getPanelAvoidanceBaseWidth(scopeRect.width)
     const targetWidth = Math.min(baseWidth, safeWidth)
+    const leftEdgeInset = Math.max(0, safeLeft - scopeRect.left)
+    const rightEdgeInset = Math.max(0, scopeRect.right - safeRight)
     const leftover = Math.max(0, safeWidth - targetWidth) / 2
-    const leftInset = Math.max(0, safeLeft - scopeRect.left + leftover)
-    const rightInset = Math.max(0, scopeRect.right - safeRight + leftover)
+    const leftInset = leftEdgeInset + leftover
+    const rightInset = rightEdgeInset + leftover
 
     return {
       targetWidth,
       leftInset,
       rightInset,
+      leftEdgeInset,
+      rightEdgeInset,
     }
   }
 
@@ -572,12 +627,12 @@ export class LayoutManager {
     this.syncPanelAvoidanceObservers(panel, scope)
 
     const reservation = panel ? this.getPanelReservation(panel, scopeRect) : null
-    if (!reservation) {
+    if (!panel) {
       this.clearPanelAvoidanceStyle()
       return
     }
 
-    const css = this.generatePanelAvoidanceCSS(reservation)
+    const css = this.generatePanelAvoidanceCSS(panel, reservation)
     if (!css) {
       this.clearPanelAvoidanceStyle()
       return

@@ -37,6 +37,8 @@ interface PanelAvoidanceConfig {
 }
 ```
 
+`PanelAvoidanceInsetConfig` 可选声明自己的 `scopeSelector`、`applySide` 和 `insetMode`。默认复用主 `scopeSelector`、同时应用左右 inset，并使用包含内容居中余量的 `centered` 模式；当站点存在聊天区之外的固定右栏或兄弟面板时，可以为该面板单独声明更大的计算 scope，使用 `edge` 模式只取避让面板所需的边缘余量，避免主聊天区未重叠时整段避让样式被清掉，也避免右栏被内容居中余量额外推开。
+
 执行流程：
 
 1. `SiteAdapter.getPanelAvoidanceConfig()` 默认返回 `null`，站点逐步 opt-in。
@@ -129,6 +131,7 @@ DeepSeek 和 Doubao 之后，智能避让已经扩展到以下站点：
 | Qwen Studio | `.chat-left-panel` | 避让时只重算消息外层宽度 | 消息滚动区和输入安全区加左右安全区 | `800px` |
 | Gemini | `bard-sidenav-content` | 避让时重算消息列和输入框宽度 | 消息滚动区和输入宿主加左右安全区 | `760px` |
 | ChatGPT | `main#main` | 重算消息列和输入框共用的 thread 内容宽度 | 对消息和输入区外层加左右安全区 | `768px` |
+| AI Studio | `.chunk-editor-main` | 重算聊天列、消息 turn 和输入框宽度 | 聊天滚动区和输入区加左右安全区，右侧 Run settings 单独向左避让 | `1000px` |
 
 这些站点都需要同时加入：
 
@@ -216,6 +219,18 @@ ChatGPT 新版对话页的消息列和输入区都使用 `--thread-content-max-w
 - 避让时重算 `#thread` 内消费 `--thread-content-max-width` 的消息列和输入框容器，保证聊天内容和输入区宽度一致。
 - 对 `#thread` 内带 `--thread-content-margin` 的外层节点加左右安全区，让消息 turn 和 composer 一起进入可见区域。
 - 默认宽度使用 `768px`，对应 ChatGPT 桌面默认的 `48rem` 内容列，未开启页面宽度控制时不额外放大到整屏。
+
+### AI Studio
+
+AI Studio 的页面是三栏结构：左侧导航在 `layout-wrapper` 外侧，聊天主区域是 `section.chunk-editor-main`，右侧 Run settings 面板是 `ms-right-side-panel`，与聊天主区域同属 `ms-chunk-editor` 的兄弟节点。智能避让不能把整个 `layout-main` 当作可用区域，否则右侧 Run settings 的 300px 宽度会被误算进聊天安全区。
+
+适配策略：
+
+- 使用 `.chunk-editor-main` 作为主 `scopeSelector`，让右侧 Run settings 面板自然从聊天可用宽度中扣除。
+- 避让时同时重算 `.chat-session-content`、`.chat-turn-container` 和底部 `footer ms-prompt-box` 的 `max-width`，保证消息区和输入框宽度一致。
+- 对 `.chat-container .chat-view-container` 和 `footer` 加左右安全区，避免只移动消息列表而输入框仍停在面板下方。
+- 右侧 `ms-right-side-panel` 使用 `ms-chunk-editor` 作为独立计算 scope，并用 `edge` 模式只应用右侧 `margin-right`，让 Run settings 自身也能从 Ophel 面板下方移开。
+- 表格继续保持 `width: 100%` 和 `min-width: 100%`，避免页面加宽或避让后表格仍按内容宽度收缩。
 
 ## 后续适配建议
 

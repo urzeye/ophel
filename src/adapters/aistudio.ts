@@ -32,6 +32,7 @@ import {
   type ExportLifecycleContext,
   type MarkdownFixerConfig,
   type OutlineItem,
+  type PanelAvoidanceConfig,
   type SiteDeleteConversationResult,
 } from "./base"
 
@@ -102,6 +103,14 @@ const AISTUDIO_LIBRARY_EMPTY_STATE_SELECTOR = [
   'ms-library-table [data-test-id*="empty" i]',
   'ms-library-table [aria-label*="empty" i]',
 ].join(", ")
+const AISTUDIO_LAYOUT_SCOPE_SELECTOR = ".chunk-editor-main"
+const AISTUDIO_EDITOR_SCOPE_SELECTOR = "ms-chunk-editor"
+const AISTUDIO_CHAT_CONTENT_WIDTH_SELECTOR = ".chunk-editor-main .chat-session-content"
+const AISTUDIO_CHAT_TURN_WIDTH_SELECTOR = ".chunk-editor-main .chat-turn-container"
+const AISTUDIO_PROMPT_BOX_WIDTH_SELECTOR = ".chunk-editor-main footer ms-prompt-box"
+const AISTUDIO_CHAT_SAFE_AREA_SELECTOR = ".chunk-editor-main .chat-container .chat-view-container"
+const AISTUDIO_PROMPT_SAFE_AREA_SELECTOR = ".chunk-editor-main footer"
+const AISTUDIO_RUN_SETTINGS_PANEL_SELECTOR = "ms-chunk-editor > ms-right-side-panel"
 
 interface AIStudioExportMessageSnapshot {
   role: "user" | "assistant"
@@ -528,6 +537,12 @@ export class AIStudioAdapter extends SiteAdapter {
       { selector: ".chat-session-content", property: "max-width" },
       // 每个对话轮次容器
       { selector: ".chat-turn-container", property: "max-width" },
+      // 底部输入框；智能避让关闭时也要跟随页面宽度控制
+      {
+        selector: AISTUDIO_PROMPT_BOX_WIDTH_SELECTOR,
+        property: "max-width",
+        extraCss: "width: 100% !important; min-width: 0 !important;",
+      },
       // 表格默认 width:auto，开启页面加宽后仍不会拉伸
       {
         selector: ".table-container > table",
@@ -537,6 +552,60 @@ export class AIStudioAdapter extends SiteAdapter {
         extraCss: "min-width: 100% !important;",
       },
     ]
+  }
+
+  getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    return {
+      // AI Studio 的右侧 Run settings 是 .chunk-editor-main 的兄弟节点；
+      // 用聊天主区域作为 scope，右侧设置面板会自然从可用宽度里扣除。
+      scopeSelector: AISTUDIO_LAYOUT_SCOPE_SELECTOR,
+      widthSelectors: [
+        {
+          selector: AISTUDIO_CHAT_CONTENT_WIDTH_SELECTOR,
+          property: "max-width",
+          extraCss: "width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: AISTUDIO_CHAT_TURN_WIDTH_SELECTOR,
+          property: "max-width",
+          extraCss: "width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: AISTUDIO_PROMPT_BOX_WIDTH_SELECTOR,
+          property: "max-width",
+          extraCss: "width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: ".chunk-editor-main .table-container > table",
+          property: "width",
+          value: "100%",
+          noCenter: true,
+          extraCss: "min-width: 100% !important;",
+        },
+      ],
+      insetSelectors: [
+        {
+          selector: AISTUDIO_CHAT_SAFE_AREA_SELECTOR,
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: AISTUDIO_PROMPT_SAFE_AREA_SELECTOR,
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: AISTUDIO_RUN_SETTINGS_PANEL_SELECTOR,
+          scopeSelector: AISTUDIO_EDITOR_SCOPE_SELECTOR,
+          applySide: "right",
+          insetMode: "edge",
+          rightProperty: "margin-right",
+          extraCss: "flex-shrink: 0 !important;",
+        },
+      ],
+      defaultWidth: "1000px",
+      gap: 16,
+    }
   }
 
   getZenModeConfig() {

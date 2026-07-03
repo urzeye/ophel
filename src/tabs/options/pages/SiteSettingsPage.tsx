@@ -35,6 +35,7 @@ const normalizeSiteSettingsTab = (
 }
 
 const PANEL_AVOIDANCE_SUPPORTED_SITE_IDS = new Set<string>([
+  SITE_IDS.AISTUDIO,
   SITE_IDS.CHATGPT,
   SITE_IDS.CHATGLM,
   SITE_IDS.DEEPSEEK,
