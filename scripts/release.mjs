@@ -4,7 +4,11 @@ import { execFileSync } from "node:child_process"
 import fs from "node:fs"
 import path from "node:path"
 
-import { RELEASE_NOTES_OUTPUT_FILE, buildReleaseNotesModule } from "./release-notes-utils.mjs"
+import {
+  RELEASE_NOTES_OUTPUT_FILE,
+  buildReleaseNotesModule,
+  readReleaseNotesMediaFromFiles,
+} from "./release-notes-utils.mjs"
 
 const PROJECT_ROOT = process.cwd()
 const PACKAGE_JSON = path.join(PROJECT_ROOT, "package.json")
@@ -369,6 +373,7 @@ function runRelease(version, options) {
     version,
     enChangelog: changelogs.get("CHANGELOG.md"),
     zhChangelog: changelogs.get("CHANGELOG.zh-CN.md"),
+    media: readReleaseNotesMediaFromFiles(PROJECT_ROOT, version),
   })
   const { updates, changedFiles } = getReleaseFileUpdates(
     packageJson,

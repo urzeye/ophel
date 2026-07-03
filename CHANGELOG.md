@@ -11,14 +11,18 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
+- **Smart panel-aware layout** — Added beta Smart Avoidance for All Platforms, so supported sites recalculate their chat safe area while the Ophel floating panel is open and keep messages, code blocks, and input boxes out from under the panel when pages are widened or browser windows are narrow. (#744, #752)
+
+<!-- release-note-media: panel-aware-layout-video -->
+
 - **Italian language support** — Ophel Atlas now supports Italian for the interface, extension metadata, and userscript resources, so Italian users can use the panel and settings in their language.
 
 ### ✨ Improvements
 
-- **Prompt preview category tags** — Prompt previews now show the category as a colored tag matching the prompt category color, with a clearer preview header and content layout.
 - **Main panel toolbars and quick buttons** — Unified Outline, Prompts, and Conversations toolbar/search styling and tuned quick-button feedback, so high-frequency controls are clearer across themes.
 - **Settings and theme management UI** — Refreshed the settings sidebar, theme preset cards, custom style list, and style editor so navigation reads more clearly and theme choices are easier to scan. (#749)
 - **Panel header and tabs** — Polished the panel header, drag hint, and tab bar styling to reduce visual noise and keep controls aligned with the rest of the interface. (#749)
+- **Prompt preview category tags** — Prompt previews now show the category as a colored tag matching the prompt category color, with a clearer preview header and content layout.
 
 ### 🐛 Bug Fixes
 
@@ -26,7 +30,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.1.2] - 2026-06-30
+## [1.1.2][1.1.2] - 2026-06-30
 
 ### 🚀 New Features
 

@@ -20,6 +20,20 @@ interface ReleaseNotesModalProps {
   onOpenFullChangelog: () => void
 }
 
+type ReleaseNotesContentBlock =
+  | {
+      key: string
+      type: "markdown"
+      html: string
+    }
+  | {
+      key: string
+      type: "media"
+      item: ReleaseNotesMedia
+    }
+
+const RELEASE_NOTES_MEDIA_MARKER_PATTERN = /<!--\s*release-note-media:\s*([A-Za-z0-9_-]+)\s*-->/g
+
 const isAbsoluteAssetUrl = (value: string): boolean =>
   /^(?:https?:|data:|blob:)/i.test(value.trim())
 
@@ -31,6 +45,57 @@ const resolveReleaseNotesAssetUrl = (source: string): string => {
   }
 
   return source
+}
+
+const renderReleaseNotesMarkdown = (content: string): string =>
+  createSafeHTML(renderMarkdown(content, false, { linkGithubReferences: true }))
+
+const createMarkdownBlock = (key: string, content: string): ReleaseNotesContentBlock => ({
+  key,
+  type: "markdown",
+  html: renderReleaseNotesMarkdown(content),
+})
+
+const createReleaseNotesContentBlocks = (
+  markdown: string,
+  media: readonly ReleaseNotesMedia[],
+): { blocks: ReleaseNotesContentBlock[]; topMedia: readonly ReleaseNotesMedia[] } => {
+  RELEASE_NOTES_MEDIA_MARKER_PATTERN.lastIndex = 0
+
+  const mediaById = new Map(media.map((item) => [item.id, item]))
+  const inlineMediaIds = new Set<string>()
+  const blocks: ReleaseNotesContentBlock[] = []
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = RELEASE_NOTES_MEDIA_MARKER_PATTERN.exec(markdown)) !== null) {
+    const markdownBeforeMarker = markdown.slice(lastIndex, match.index)
+    if (markdownBeforeMarker.trim()) {
+      blocks.push(createMarkdownBlock(`markdown-${blocks.length}`, markdownBeforeMarker))
+    }
+
+    const mediaItem = mediaById.get(match[1])
+    if (mediaItem) {
+      inlineMediaIds.add(mediaItem.id)
+      blocks.push({
+        key: `media-${mediaItem.id}-${blocks.length}`,
+        type: "media",
+        item: mediaItem,
+      })
+    }
+
+    lastIndex = match.index + match[0].length
+  }
+
+  const markdownAfterLastMarker = markdown.slice(lastIndex)
+  if (markdownAfterLastMarker.trim()) {
+    blocks.push(createMarkdownBlock(`markdown-${blocks.length}`, markdownAfterLastMarker))
+  }
+
+  return {
+    blocks,
+    topMedia: media.filter((item) => !inlineMediaIds.has(item.id)),
+  }
 }
 
 export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
@@ -46,9 +111,9 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
   const titleId = useId()
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
   const [activeMedia, setActiveMedia] = useState<ReleaseNotesMedia | null>(null)
-  const releaseNotesHtml = useMemo(
-    () => createSafeHTML(renderMarkdown(markdown, false, { linkGithubReferences: true })),
-    [markdown],
+  const releaseNotesContent = useMemo(
+    () => createReleaseNotesContentBlocks(markdown, media),
+    [markdown, media],
   )
 
   useEffect(() => {
@@ -69,6 +134,40 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
   }, [activeMedia, onClose])
 
   const activeMediaUrl = activeMedia ? resolveReleaseNotesAssetUrl(activeMedia.src) : ""
+
+  const renderMediaItem = (item: ReleaseNotesMedia) => {
+    const mediaUrl = resolveReleaseNotesAssetUrl(item.src)
+    const posterUrl = item.poster ? resolveReleaseNotesAssetUrl(item.poster) : undefined
+    const alt = getReleaseNotesMediaAlt(item.alt, language)
+    const caption = getReleaseNotesMediaCaption(item.caption, language)
+
+    if (item.type === "video") {
+      return (
+        <figure key={item.id} className="gh-release-notes-media gh-release-notes-media-video">
+          <video
+            src={mediaUrl}
+            poster={posterUrl}
+            controls
+            playsInline
+            preload="metadata"
+            aria-label={alt}
+          />
+          {caption ? <figcaption>{caption}</figcaption> : null}
+        </figure>
+      )
+    }
+
+    return (
+      <button
+        key={item.id}
+        type="button"
+        className="gh-release-notes-media gh-release-notes-media-button"
+        onClick={() => setActiveMedia(item)}>
+        <img src={mediaUrl} alt={alt} />
+        {caption ? <span>{caption}</span> : null}
+      </button>
+    )
+  }
 
   return (
     <div
@@ -104,29 +203,25 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
         </header>
 
         <div className="gh-release-notes-body">
-          {media.length > 0 ? (
+          {releaseNotesContent.topMedia.length > 0 ? (
             <div className="gh-release-notes-media-grid">
-              {media.map((item) => {
-                const imageUrl = resolveReleaseNotesAssetUrl(item.src)
-                const caption = getReleaseNotesMediaCaption(item.caption, language)
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className="gh-release-notes-media"
-                    onClick={() => setActiveMedia(item)}>
-                    <img src={imageUrl} alt={getReleaseNotesMediaAlt(item.alt, language)} />
-                    {caption ? <span>{caption}</span> : null}
-                  </button>
-                )
-              })}
+              {releaseNotesContent.topMedia.map(renderMediaItem)}
             </div>
           ) : null}
 
-          <div
-            className="gh-release-notes-markdown"
-            dangerouslySetInnerHTML={{ __html: releaseNotesHtml }}
-          />
+          {releaseNotesContent.blocks.map((block) =>
+            block.type === "media" ? (
+              <div key={block.key} className="gh-release-notes-media-grid">
+                {renderMediaItem(block.item)}
+              </div>
+            ) : (
+              <div
+                key={block.key}
+                className="gh-release-notes-markdown"
+                dangerouslySetInnerHTML={{ __html: block.html }}
+              />
+            ),
+          )}
           <style>{getHighlightStyles()}</style>
         </div>
 

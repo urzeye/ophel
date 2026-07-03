@@ -120,24 +120,35 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin: 0;
   padding: 0;
   border: 1px solid var(--gh-border, #e5e7eb);
   border-radius: 10px;
   overflow: hidden;
   background: var(--gh-bg-secondary, #f8fafc);
   color: var(--gh-text, #111827);
-  cursor: zoom-in;
   text-align: left;
 }
 
-.gh-release-notes-media img {
+.gh-release-notes-media-button {
+  cursor: zoom-in;
+}
+
+.gh-release-notes-media-video {
+  cursor: default;
+}
+
+.gh-release-notes-media img,
+.gh-release-notes-media video {
+  display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: contain;
   background: var(--gh-bg-tertiary, #f3f4f6);
 }
 
-.gh-release-notes-media span {
+.gh-release-notes-media span,
+.gh-release-notes-media figcaption {
   padding: 0 10px 10px;
   color: var(--gh-text-secondary, #6b7280);
   font-size: 12px;
