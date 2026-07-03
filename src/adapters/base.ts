@@ -417,6 +417,7 @@ export abstract class SiteAdapter {
 
   protected getDocumentConversationTitle(siteName = this.getName()): string | null {
     return extractConversationTitleFromDocumentTitle(document.title, {
+      rejectManagedTitle: true,
       siteName,
     })
   }

@@ -1,4 +1,5 @@
 export const MANAGED_TAB_TITLE_ATTR = "data-ophel-managed-tab-title"
+export const STALE_MANAGED_TAB_TITLE_ATTR = "data-ophel-stale-managed-tab-title"
 export const GEMINI_NATIVE_TAB_TITLE_ATTR = "data-ophel-gemini-native-tab-title"
 export const GEMINI_NATIVE_TAB_TITLE_PATH_ATTR = "data-ophel-gemini-native-tab-title-path"
 const MAX_MANAGED_TITLE_STRIP_PASSES = 20
@@ -20,6 +21,7 @@ interface TitleSanitizeOptions {
   expectedManagedTitle?: string | null
   hasManagedTitleSignal?: boolean
   privacyTitle?: string | null
+  rejectManagedTitle?: boolean
   siteName?: string | null
   titleFormat?: string | null
 }
@@ -51,6 +53,21 @@ export function getRememberedManagedTabTitle(): string | null {
   return document.documentElement?.getAttribute(MANAGED_TAB_TITLE_ATTR) || null
 }
 
+export function rememberStaleManagedTabTitle(title: string): void {
+  if (typeof document === "undefined") return
+  document.documentElement?.setAttribute(STALE_MANAGED_TAB_TITLE_ATTR, title)
+}
+
+export function forgetStaleManagedTabTitle(): void {
+  if (typeof document === "undefined") return
+  document.documentElement?.removeAttribute(STALE_MANAGED_TAB_TITLE_ATTR)
+}
+
+function getRememberedStaleManagedTabTitle(): string | null {
+  if (typeof document === "undefined") return null
+  return document.documentElement?.getAttribute(STALE_MANAGED_TAB_TITLE_ATTR) || null
+}
+
 export function formatManagedTabTitle(format: string, parts: ManagedTabTitleParts): string {
   const modelToken = normalizeConversationTitle(parts.modelName)
     ? `[${normalizeConversationTitle(parts.modelName)}]`
@@ -73,14 +90,11 @@ export function sanitizeConversationTitleCandidate(
   const title = normalizeConversationTitle(value)
   if (!title) return null
 
-  const rememberedTitle = getRememberedManagedTabTitle()
   const expectedManagedTitle = normalizeConversationTitle(options.expectedManagedTitle)
   const privacyTitle = normalizeConversationTitle(options.privacyTitle)
   const siteName = normalizeConversationTitle(options.siteName)
 
-  const isExactManagedTitle =
-    Boolean(expectedManagedTitle && title === expectedManagedTitle) ||
-    Boolean(rememberedTitle && title === rememberedTitle)
+  const isExactManagedTitle = isKnownManagedTabTitle(title, expectedManagedTitle)
   const hasManagedTitleSignal = isExactManagedTitle || options.hasManagedTitleSignal === true
 
   if (privacyTitle && title === privacyTitle) {
@@ -104,6 +118,16 @@ export function extractConversationTitleFromDocumentTitle(
   documentTitle: string | null | undefined,
   options: TitleSanitizeOptions = {},
 ): string | null {
+  const normalizedDocumentTitle = normalizeConversationTitle(documentTitle)
+  if (!normalizedDocumentTitle) return null
+
+  if (
+    options.rejectManagedTitle &&
+    isRejectedManagedDocumentTitle(normalizedDocumentTitle, options.expectedManagedTitle)
+  ) {
+    return null
+  }
+
   const title = sanitizeConversationTitleCandidate(documentTitle, options)
   if (!title) return null
 
@@ -113,11 +137,34 @@ export function extractConversationTitleFromDocumentTitle(
   const cleanedSiteSuffix = siteName
     ? title
         .replace(new RegExp(`\\s*[-|]\\s*${escapeRegExp(siteName)}$`, "i"), "")
-        .replace(new RegExp(`^${escapeRegExp(siteName)}\\s*[-|]\\s*`, "i"), "")
+        .replace(new RegExp(`^${escapeRegExp(siteName)}\\s*(?:\\||-(?!\\s*>))\\s*`, "i"), "")
         .trim()
     : title
 
   return normalizeConversationTitle(cleanedSiteSuffix)
+}
+
+function isKnownManagedTabTitle(title: string, expectedManagedTitle?: string | null): boolean {
+  const normalizedExpectedManagedTitle = normalizeConversationTitle(expectedManagedTitle)
+  const rememberedTitle = normalizeConversationTitle(getRememberedManagedTabTitle())
+
+  return (
+    Boolean(normalizedExpectedManagedTitle && title === normalizedExpectedManagedTitle) ||
+    Boolean(rememberedTitle && title === rememberedTitle)
+  )
+}
+
+function isRejectedManagedDocumentTitle(
+  title: string,
+  expectedManagedTitle?: string | null,
+): boolean {
+  const normalizedExpectedManagedTitle = normalizeConversationTitle(expectedManagedTitle)
+  const staleManagedTitle = normalizeConversationTitle(getRememberedStaleManagedTabTitle())
+
+  return (
+    Boolean(normalizedExpectedManagedTitle && title === normalizedExpectedManagedTitle) ||
+    Boolean(staleManagedTitle && title === staleManagedTitle)
+  )
 }
 
 function removeEmptyModelPlaceholderSegment(format: string): string {

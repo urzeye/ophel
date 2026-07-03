@@ -26,6 +26,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Custom tab title formats** — Fixed issue where Qianwen and Z.ai could reuse an already-renamed browser tab title after switching conversations, preventing duplicated title or model fragments when custom tab formats include `{model}`.
 - **Claude userscript export** — Fixed issue where exporting Claude conversations with thinking blocks could fail in userscript mode while preparing the page for export.
 - **Kimi Zen Mode** — Fixed issue where Zen Mode no longer hid Kimi's sidebar after the site updated its page layout.
 

@@ -2,10 +2,12 @@ import { type SiteAdapter } from "~adapters/base"
 import { NOTIFICATION_SOUND_PRESETS } from "~constants"
 import { platform } from "~platform"
 import {
+  forgetStaleManagedTabTitle,
   forgetManagedTabTitle,
   formatManagedTabTitle,
   getRememberedManagedTabTitle,
   normalizeConversationTitle,
+  rememberStaleManagedTabTitle,
   rememberManagedTabTitle,
   sanitizeConversationTitleCandidate,
 } from "~utils/conversation-title"
@@ -181,6 +183,7 @@ export class TabManager {
     this.staleManagedTitleAfterRouteChange = null
     this.staleConversationTitleAfterRouteChange = null
     forgetManagedTabTitle()
+    forgetStaleManagedTabTitle()
 
     this.clearTitleUpdateTimer()
   }
@@ -293,9 +296,11 @@ export class TabManager {
       this.staleManagedTitleAfterRouteChange = currentDocumentTitle
       this.staleConversationTitleAfterRouteChange =
         previousConversationTitle || parsedPreviousConversationTitle
+      rememberStaleManagedTabTitle(currentDocumentTitle)
     } else {
       this.staleManagedTitleAfterRouteChange = null
       this.staleConversationTitleAfterRouteChange = null
+      forgetStaleManagedTabTitle()
     }
   }
 
@@ -382,6 +387,7 @@ export class TabManager {
 
   private applyManagedTitle(title: string, force = false) {
     this.expectedTitle = title
+    forgetStaleManagedTabTitle()
     rememberManagedTabTitle(title)
 
     if (!force && document.title === title) {
@@ -557,6 +563,7 @@ export class TabManager {
   private clearStaleManagedTitleAfterRouteChange() {
     this.staleManagedTitleAfterRouteChange = null
     this.staleConversationTitleAfterRouteChange = null
+    forgetStaleManagedTabTitle()
   }
 
   /**
