@@ -614,7 +614,8 @@ export const zhCN = {
   // 页面宽度设置
   pageWidthLabel: "页面宽度",
   pageWidthValueLabel: "宽度值",
-  pageWidthDesc: "调整聊天页面的宽度，即时生效（每个站点独立配置）",
+  pageWidthDesc:
+    "调整聊天页面的宽度，即时生效（每个站点独立配置）；开启智能避让时，实际宽度可能会受面板安全区限制。",
   enablePageWidth: "启用页面加宽",
   panelAvoidanceTitle: "智能避让",
   betaBadge: "Beta",

@@ -624,7 +624,8 @@ export const ru = {
   // Page width settings
   pageWidthLabel: "Ширина страницы",
   pageWidthValueLabel: "Значение",
-  pageWidthDesc: "Ширина чата (на сайт)",
+  pageWidthDesc:
+    "Настраивает ширину страницы чата в реальном времени (отдельно для каждого сайта). Когда включен умный обход, фактическая ширина может быть ограничена безопасной областью панели.",
   enablePageWidth: "Включить расширение",
   panelAvoidanceTitle: "Умный обход",
   betaBadge: "Beta",

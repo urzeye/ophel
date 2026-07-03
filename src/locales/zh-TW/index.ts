@@ -498,7 +498,8 @@ export const zhTW = {
   markdownFixDesc: "修復 Gemini 回應中未正確渲染的 **加粗** 語法",
   pageWidthLabel: "頁面寬度",
   pageWidthValueLabel: "寬度值",
-  pageWidthDesc: "調整聊天頁面的寬度，即時生效（每個站點獨立配置）",
+  pageWidthDesc:
+    "調整聊天頁面的寬度，即時生效（每個站點獨立配置）；開啟智慧避讓時，實際寬度可能會受面板安全區限制。",
   enablePageWidth: "啟用頁面加寬",
   panelAvoidanceTitle: "智慧避讓",
   betaBadge: "Beta",

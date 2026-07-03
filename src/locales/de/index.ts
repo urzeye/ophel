@@ -629,7 +629,8 @@ export const de = {
   // Page width settings
   pageWidthLabel: "Seitenbreite",
   pageWidthValueLabel: "Breitenwert",
-  pageWidthDesc: "Chatbreite (pro Website)",
+  pageWidthDesc:
+    "Passt die Breite der Chatseite in Echtzeit an (pro Website konfiguriert). Bei aktiviertem intelligentem Ausweichen kann die tatsächliche Breite durch den sicheren Bereich des Panels begrenzt werden.",
   enablePageWidth: "Verbreiterung aktivieren",
   panelAvoidanceTitle: "Intelligentes Ausweichen",
   betaBadge: "Beta",

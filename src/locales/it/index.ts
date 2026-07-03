@@ -671,7 +671,8 @@ export const it = {
   // Page width settings
   pageWidthLabel: "Larghezza della pagina",
   pageWidthValueLabel: "Valore larghezza",
-  pageWidthDesc: "Regola la larghezza della pagina della chat (configurata per sito)",
+  pageWidthDesc:
+    "Regola la larghezza della pagina della chat in tempo reale (configurata per sito). Quando l'evitamento intelligente è attivo, la larghezza effettiva può essere limitata dall'area sicura del pannello.",
   enablePageWidth: "Abilita l'ampliamento della pagina",
   panelAvoidanceTitle: "Evitamento intelligente",
   betaBadge: "Beta",

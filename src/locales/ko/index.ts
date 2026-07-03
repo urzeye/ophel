@@ -626,7 +626,8 @@ export const ko = {
   // Page width settings
   pageWidthLabel: "페이지 너비",
   pageWidthValueLabel: "너비 값",
-  pageWidthDesc: "채팅 페이지 너비 조정 (사이트별 구성)",
+  pageWidthDesc:
+    "채팅 페이지 너비를 실시간으로 조정합니다(사이트별 구성). 스마트 회피가 켜져 있으면 실제 너비가 패널 안전 영역에 의해 제한될 수 있습니다.",
   enablePageWidth: "페이지 너비 확장 활성화",
   panelAvoidanceTitle: "스마트 회피",
   betaBadge: "Beta",

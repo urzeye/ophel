@@ -651,7 +651,8 @@ export const en = {
   // Page width settings
   pageWidthLabel: "Page Width",
   pageWidthValueLabel: "Width Value",
-  pageWidthDesc: "Adjust chat page width (configured per site)",
+  pageWidthDesc:
+    "Adjust the chat page width in real time (configured per site). When Smart Avoidance is enabled, the actual width may be limited by the panel safe area.",
   enablePageWidth: "Enable Page Widening",
   panelAvoidanceTitle: "Smart Avoidance",
   betaBadge: "Beta",
