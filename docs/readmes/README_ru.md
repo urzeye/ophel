@@ -391,6 +391,7 @@ pnpm serve:userscript:assets   # Запуск сервера для статич
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/Suxixihuanni"><img src="https://avatars.githubusercontent.com/u/208633969?v=4&s=80" width="80" height="80" alt="Suxixihuanni"/></a><br /><a href="https://github.com/Suxixihuanni"><sub><b>Suxixihuanni</b></sub></a><br /><span title="Promotion">📣</span></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/Ice-wilderness"><img src="https://avatars.githubusercontent.com/u/65530045?v=4&s=80" width="80" height="80" alt="Ice-wilderness"/></a><br /><a href="https://github.com/Ice-wilderness"><sub><b>Ice-wilderness</b></sub></a><br /><span title="Code">💻</span> <span title="Bug reports">🐛</span></td>
       <td align="center" valign="top" width="12.5%"><a href="https://github.com/Gitoffthelawn/Contact-Gitoffthelawn"><img src="https://avatars.githubusercontent.com/u/7672848?v=4&s=80" width="80" height="80" alt="Gitoffthelawn"/></a><br /><a href="https://github.com/Gitoffthelawn/Contact-Gitoffthelawn"><sub><b>Gitoffthelawn</b></sub></a><br /><span title="Documentation">📖</span></td>
+      <td align="center" valign="top" width="12.5%"><a href="https://github.com/sriharshaguthikonda"><img src="https://avatars.githubusercontent.com/u/16268244?v=4&s=80" width="80" height="80" alt="Dr. Sri Harsha Guthikonda"/></a><br /><a href="https://github.com/sriharshaguthikonda"><sub><b>Dr. Sri Harsha Guthikonda</b></sub></a><br /><span title="Code">💻</span></td>
     </tr>
   </tbody>
 </table>
