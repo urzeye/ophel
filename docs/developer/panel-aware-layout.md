@@ -131,6 +131,7 @@ DeepSeek 和 Doubao 之后，智能避让已经扩展到以下站点：
 | Qwen Studio | `.chat-left-panel` | 避让时只重算消息外层宽度 | 消息滚动区和输入安全区加左右安全区 | `800px` |
 | Gemini | `bard-sidenav-content` | 避让时重算消息列和输入框宽度 | 消息滚动区和输入宿主加左右安全区 | `760px` |
 | ChatGPT | `main#main` | 重算消息列和输入框共用的 thread 内容宽度 | 对消息和输入区外层加左右安全区 | `768px` |
+| Claude | `#main-content` | 重算嵌套 `max-w-3xl` 内容列宽度 | 对聊天滚动容器加左右安全区 | `768px` |
 | AI Studio | `.chunk-editor-main` | 重算聊天列、消息 turn 和输入框宽度 | 聊天滚动区和输入区加左右安全区，右侧 Run settings 单独向左避让 | `1000px` |
 | Grok | `main[data-mcp-app-fullscreen-container]` | 通过 `--content-max-width` 变量统一控制消息区和输入区 | 聊天滚动区和底部输入区加左右安全区 | `768px` |
 
@@ -221,6 +222,18 @@ ChatGPT 新版对话页的消息列和输入区都使用 `--thread-content-max-w
 - 对 `#thread` 内带 `--thread-content-margin` 的外层节点加左右安全区，让消息 turn 和 composer 一起进入可见区域。
 - 默认宽度使用 `768px`，对应 ChatGPT 桌面默认的 `48rem` 内容列，未开启页面宽度控制时不额外放大到整屏。
 
+### Claude
+
+Claude 当前对话页在 `#main-content` 内使用独立滚动容器，消息区和 sticky 输入区同属外层 `max-w-3xl` 内容列；消息 feed 内还有一层 `max-w-3xl` 用于正文和用户消息对齐。
+
+适配策略：
+
+- 使用 `#main-content` 作为 `scopeSelector`，按扣除 Claude 左侧栏后的主内容区计算安全区。
+- 同时覆盖 `#main-content .max-w-3xl` 和旧版兜底的 `.max-w-4xl`，让消息列和输入区共享同一个目标宽度。
+- 百分比页面宽度会转为基于视口的绝对上限，避免外层和内层 `max-w-3xl` 叠加后层层收缩。
+- 只对 `[data-autoscroll-container="true"]` 加左右安全区，让滚动内容、消息列和 sticky 输入区一起进入可见区域，避免单独给输入区再加 padding 造成输入框比消息列更窄。
+- 默认宽度使用 `768px`，对应 Claude 当前 `max-w-3xl` 的桌面内容列。
+
 ### AI Studio
 
 AI Studio 的页面是三栏结构：左侧导航在 `layout-wrapper` 外侧，聊天主区域是 `section.chunk-editor-main`，右侧 Run settings 面板是 `ms-right-side-panel`，与聊天主区域同属 `ms-chunk-editor` 的兄弟节点。智能避让不能把整个 `layout-main` 当作可用区域，否则右侧 Run settings 的 300px 宽度会被误算进聊天安全区。
@@ -248,8 +261,7 @@ Grok 的消息列和底部输入区共享 `--content-max-width`、`--content-bre
 
 优先级建议：
 
-1. Claude：主内容列选择器较集中，适合第二个验证站点。
-2. Gemini Enterprise：需要验证第三方 Shadow DOM 注入。
+1. Gemini Enterprise：需要验证第三方 Shadow DOM 注入。
 
 每个站点适配前先确认：
 

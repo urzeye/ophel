@@ -33,6 +33,7 @@ import {
   type NetworkMonitorConfig,
   type OutlineItem,
   type OutlineSource,
+  type PanelAvoidanceConfig,
   type SiteDeleteConversationResult,
 } from "./base"
 
@@ -91,6 +92,9 @@ const CLAUDE_ARTIFACT_CELL_SELECTOR = ".artifact-block-cell"
 const CLAUDE_USER_FILE_THUMBNAIL_SELECTOR = '[data-testid="file-thumbnail"]'
 const CLAUDE_THOUGHT_TOGGLE_SELECTOR = "button[aria-expanded]"
 const CLAUDE_THOUGHT_STATUS_SELECTOR = 'span[role="status"][aria-live="polite"]'
+const CLAUDE_LAYOUT_SCOPE_SELECTOR = "#main-content"
+const CLAUDE_CONTENT_WIDTH_SELECTORS = ["#main-content .max-w-3xl", "#main-content .max-w-4xl"]
+const CLAUDE_SCROLL_SAFE_AREA_SELECTOR = '#main-content [data-autoscroll-container="true"]'
 
 interface ClaudeExportLifecycleState {
   documentPanelWasOpen: boolean
@@ -2612,12 +2616,44 @@ export class ClaudeAdapter extends SiteAdapter {
 
   // ==================== 页面宽度 ====================
 
+  private normalizeContentMaxWidth(width: string): string {
+    const trimmed = width.trim()
+    if (!trimmed.endsWith("%")) {
+      return trimmed
+    }
+
+    const numeric = Number.parseFloat(trimmed)
+    if (!Number.isFinite(numeric)) {
+      return trimmed
+    }
+
+    // Claude has nested max-width containers. Use an absolute viewport-based
+    // ceiling so percentage width does not shrink at each nested layer.
+    return `min(${numeric}vw, calc(100vw - 32px))`
+  }
+
   getWidthSelectors() {
-    return [
-      // Claude 的主内容区域
-      { selector: "#main-content .max-w-3xl", property: "max-width" },
-      { selector: "#main-content .max-w-4xl", property: "max-width" },
-    ]
+    return CLAUDE_CONTENT_WIDTH_SELECTORS.map((selector) => ({
+      selector,
+      property: "max-width",
+      transformValue: (width: string) => this.normalizeContentMaxWidth(width),
+      extraCss: "width: 100% !important; min-width: 0 !important;",
+    }))
+  }
+
+  getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    return {
+      scopeSelector: CLAUDE_LAYOUT_SCOPE_SELECTOR,
+      widthSelectors: this.getWidthSelectors(),
+      insetSelectors: [
+        {
+          selector: CLAUDE_SCROLL_SAFE_AREA_SELECTOR,
+          extraCss: "box-sizing: border-box; width: 100% !important; min-width: 0 !important;",
+        },
+      ],
+      defaultWidth: "768px",
+      gap: 16,
+    }
   }
 
   getZenModeConfig() {
