@@ -35,6 +35,7 @@ import {
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type PanelAvoidanceConfig,
   type SiteDeleteConversationResult,
 } from "./base"
 
@@ -64,6 +65,11 @@ const DELETE_KEYWORDS = [
 ]
 
 const CONFIRM_KEYWORDS = ["confirm", "ok", "yes", "确定", "確認", "确认", "確定", "check"]
+const GROK_LAYOUT_SCOPE_SELECTOR = "main[data-mcp-app-fullscreen-container]"
+const GROK_CONTENT_WIDTH_SELECTOR = '[class*="[--content-max-width:"]'
+const GROK_INLINE_CONTENT_WIDTH_SELECTOR = '[style*="--content-max-width"]'
+const GROK_CHAT_SAFE_AREA_SELECTOR = `${GROK_LAYOUT_SCOPE_SELECTOR} [class*="overflow-y-auto"][class*="px-gutter"]`
+const GROK_INPUT_SAFE_AREA_SELECTOR = `${GROK_LAYOUT_SCOPE_SELECTOR} .absolute.inset-x-0.bottom-0.mx-auto.max-w-breakout`
 
 interface GrokUserAttachment {
   kind: "image" | "file"
@@ -1226,16 +1232,36 @@ export class GrokAdapter extends SiteAdapter {
     // 不能命中内部的 max-w-[--content-max-width] 消费节点，否则会造成最新消息宽度异常收缩。
     return [
       {
-        selector: '[class*="[--content-max-width:"]',
+        selector: GROK_CONTENT_WIDTH_SELECTOR,
         property: "--content-max-width",
         transformValue: (width) => this.normalizeContentMaxWidth(width),
       },
       {
-        selector: '[style*="--content-max-width"]',
+        selector: GROK_INLINE_CONTENT_WIDTH_SELECTOR,
         property: "--content-max-width",
         transformValue: (width) => this.normalizeContentMaxWidth(width),
       },
     ]
+  }
+
+  getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    return {
+      scopeSelector: GROK_LAYOUT_SCOPE_SELECTOR,
+      widthSelectors: this.getWidthSelectors(),
+      insetSelectors: [
+        {
+          selector: GROK_CHAT_SAFE_AREA_SELECTOR,
+          extraCss: "box-sizing: border-box; width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: GROK_INPUT_SAFE_AREA_SELECTOR,
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+      ],
+      defaultWidth: "768px",
+      gap: 16,
+    }
   }
 
   getUserQueryWidthSelectors() {

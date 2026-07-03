@@ -446,6 +446,7 @@ export const DEFAULT_SETTINGS: Settings = {
     pageWidth: {
       gemini: { ...DEFAULT_PAGE_WIDTH },
       "gemini-enterprise": { ...DEFAULT_PAGE_WIDTH },
+      grok: { ...DEFAULT_PAGE_WIDTH },
       aistudio: { ...DEFAULT_PAGE_WIDTH },
       chatgpt: { ...DEFAULT_PAGE_WIDTH },
       chatglm: { ...DEFAULT_PAGE_WIDTH },
@@ -462,6 +463,7 @@ export const DEFAULT_SETTINGS: Settings = {
     userQueryWidth: {
       gemini: { ...DEFAULT_USER_QUERY_WIDTH },
       "gemini-enterprise": { ...DEFAULT_USER_QUERY_WIDTH },
+      grok: { ...DEFAULT_USER_QUERY_WIDTH },
       aistudio: { ...DEFAULT_USER_QUERY_WIDTH },
       chatgpt: { ...DEFAULT_USER_QUERY_WIDTH },
       chatglm: { ...DEFAULT_USER_QUERY_WIDTH },
@@ -478,6 +480,7 @@ export const DEFAULT_SETTINGS: Settings = {
     zenMode: {
       gemini: { ...DEFAULT_ZEN_MODE },
       "gemini-enterprise": { ...DEFAULT_ZEN_MODE },
+      grok: { ...DEFAULT_ZEN_MODE },
       aistudio: { ...DEFAULT_ZEN_MODE },
       chatgpt: { ...DEFAULT_ZEN_MODE },
       chatglm: { ...DEFAULT_ZEN_MODE },
@@ -510,6 +513,7 @@ export const DEFAULT_SETTINGS: Settings = {
     panelAvoidance: {
       gemini: { ...DEFAULT_PANEL_AVOIDANCE },
       "gemini-enterprise": { ...DEFAULT_PANEL_AVOIDANCE },
+      grok: { ...DEFAULT_PANEL_AVOIDANCE },
       aistudio: { ...DEFAULT_PANEL_AVOIDANCE },
       chatgpt: { ...DEFAULT_PANEL_AVOIDANCE },
       chatglm: { ...DEFAULT_PANEL_AVOIDANCE },

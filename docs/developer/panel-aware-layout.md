@@ -132,6 +132,7 @@ DeepSeek 和 Doubao 之后，智能避让已经扩展到以下站点：
 | Gemini | `bard-sidenav-content` | 避让时重算消息列和输入框宽度 | 消息滚动区和输入宿主加左右安全区 | `760px` |
 | ChatGPT | `main#main` | 重算消息列和输入框共用的 thread 内容宽度 | 对消息和输入区外层加左右安全区 | `768px` |
 | AI Studio | `.chunk-editor-main` | 重算聊天列、消息 turn 和输入框宽度 | 聊天滚动区和输入区加左右安全区，右侧 Run settings 单独向左避让 | `1000px` |
+| Grok | `main[data-mcp-app-fullscreen-container]` | 通过 `--content-max-width` 变量统一控制消息区和输入区 | 聊天滚动区和底部输入区加左右安全区 | `768px` |
 
 这些站点都需要同时加入：
 
@@ -232,13 +233,23 @@ AI Studio 的页面是三栏结构：左侧导航在 `layout-wrapper` 外侧，�
 - 右侧 `ms-right-side-panel` 使用 `ms-chunk-editor` 作为独立计算 scope，并用 `edge` 模式只应用右侧 `margin-right`，让 Run settings 自身也能从 Ophel 面板下方移开。
 - 表格继续保持 `width: 100%` 和 `min-width: 100%`，避免页面加宽或避让后表格仍按内容宽度收缩。
 
+### Grok
+
+Grok 的消息列和底部输入区共享 `--content-max-width`、`--content-breakout-max-width` 这组变量；消息 turn、输入框外层再通过 `max-w-[--content-max-width]` 或 `max-w-breakout` 消费它。适配时不能直接命中内部消费节点，否则百分比宽度会在嵌套 max-width 中反复收缩。
+
+适配策略：
+
+- 使用 `main[data-mcp-app-fullscreen-container]` 作为 `scopeSelector`，按扣除 Grok 左侧栏后的主内容区计算安全区。
+- 避让时只覆盖定义 `--content-max-width` 的外层变量节点，复用页面宽度控制里避免百分比叠缩的转换逻辑。
+- 对聊天滚动区和底部 `max-w-breakout` 输入宿主加左右安全区；输入宿主在避让时放开自身 `max-width`，由内部输入框继续消费 `max-w-breakout`，避免安全区 padding 把输入框压窄。
+- 默认宽度使用 `768px`，对应 Grok 桌面最大内容列 `48rem`，未开启页面宽度控制时不额外放大。
+
 ## 后续适配建议
 
 优先级建议：
 
 1. Claude：主内容列选择器较集中，适合第二个验证站点。
 2. Gemini Enterprise：需要验证第三方 Shadow DOM 注入。
-3. Grok：存在 CSS 变量或嵌套宽度消费，适配时优先只改外层变量，避免层层百分比收缩。
 
 每个站点适配前先确认：
 
