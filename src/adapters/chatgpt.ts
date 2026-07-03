@@ -26,6 +26,7 @@ import {
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type PanelAvoidanceConfig,
   type SiteDeleteConversationResult,
   type ZenModeConfig,
 } from "./base"
@@ -148,6 +149,10 @@ const CHATGPT_NATIVE_TOC_ID_RE = /^chatgpt-native-user-query::(\d+)::/
 const CHATGPT_NATIVE_TOC_PROMPT_LABEL_RE = /^Prompt\s+\d+$/i
 const CHATGPT_CODEX_TASK_MARKDOWN_SELECTOR = ".markdown.markdown-new-styling"
 const CHATGPT_CODEX_TASK_USER_QUERY_SELECTOR = ".self-end.bg-token-bg-tertiary .whitespace-pre-wrap"
+const CHATGPT_LAYOUT_SCOPE_SELECTOR = "main#main"
+const CHATGPT_THREAD_WIDTH_SELECTOR =
+  '#thread [class*="thread-content-max-width"], #thread [style*="--thread-content-max-width"]'
+const CHATGPT_THREAD_SAFE_AREA_SELECTOR = '#thread [class*="thread-content-margin"]'
 
 interface ChatGPTExportMessageSnapshot {
   role: "user" | "assistant"
@@ -1039,6 +1044,28 @@ export class ChatGPTAdapter extends SiteAdapter {
         noCenter: true,
       },
     ]
+  }
+
+  getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    return {
+      scopeSelector: CHATGPT_LAYOUT_SCOPE_SELECTOR,
+      widthSelectors: [
+        {
+          selector: CHATGPT_THREAD_WIDTH_SELECTOR,
+          property: "max-width",
+          extraCss: "width: 100% !important; min-width: 0 !important;",
+        },
+      ],
+      insetSelectors: [
+        {
+          selector: CHATGPT_THREAD_SAFE_AREA_SELECTOR,
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+      ],
+      defaultWidth: "768px",
+      gap: 16,
+    }
   }
 
   getZenModeConfig() {

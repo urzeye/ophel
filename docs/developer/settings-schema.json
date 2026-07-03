@@ -63,6 +63,7 @@
     "pageWidth": {
       "gemini": { "enabled": false, "value": "81", "unit": "%" },
       "gemini-enterprise": { "enabled": false, "value": "81", "unit": "%" },
+      "chatgpt": { "enabled": false, "value": "81", "unit": "%" },
       "chatglm": { "enabled": false, "value": "81", "unit": "%" },
       "ima": { "enabled": false, "value": "81", "unit": "%" },
       "kimi": { "enabled": false, "value": "81", "unit": "%" },
@@ -75,6 +76,7 @@
     "userQueryWidth": {
       "gemini": { "enabled": false, "value": "81", "unit": "%" },
       "gemini-enterprise": { "enabled": false, "value": "81", "unit": "%" },
+      "chatgpt": { "enabled": false, "value": "81", "unit": "%" },
       "chatglm": { "enabled": false, "value": "81", "unit": "%" },
       "ima": { "enabled": false, "value": "81", "unit": "%" },
       "kimi": { "enabled": false, "value": "81", "unit": "%" },
@@ -87,6 +89,7 @@
     "zenMode": {
       "gemini": { "enabled": false, "showExitButton": true },
       "gemini-enterprise": { "enabled": false, "showExitButton": true },
+      "chatgpt": { "enabled": false, "showExitButton": true },
       "chatglm": { "enabled": false, "showExitButton": true },
       "ima": { "enabled": false, "showExitButton": true },
       "kimi": { "enabled": false, "showExitButton": true },
@@ -97,6 +100,7 @@
       "_default": { "enabled": false, "showExitButton": true }
     },
     "panelAvoidance": {
+      "chatgpt": { "enabled": true },
       "chatglm": { "enabled": true },
       "doubao": { "enabled": true },
       "deepseek": { "enabled": true },
