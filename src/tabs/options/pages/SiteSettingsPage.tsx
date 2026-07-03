@@ -35,11 +35,13 @@ const normalizeSiteSettingsTab = (
 }
 
 const PANEL_AVOIDANCE_SUPPORTED_SITE_IDS = new Set<string>([
+  SITE_IDS.CHATGLM,
   SITE_IDS.DEEPSEEK,
   SITE_IDS.DOUBAO,
   SITE_IDS.IMA,
   SITE_IDS.KIMI,
   SITE_IDS.YUANBAO,
+  SITE_IDS.ZAI,
 ])
 
 const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({

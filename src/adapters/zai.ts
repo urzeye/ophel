@@ -24,6 +24,7 @@ import {
   type ExportConfig,
   type ModelSwitcherConfig,
   type OutlineItem,
+  type PanelAvoidanceConfig,
 } from "./base"
 
 const HOSTNAME = "chat.z.ai"
@@ -42,12 +43,25 @@ const MODEL_MENU_ITEM_SELECTOR =
   'button[aria-label="model-item"], button[data-melt-collapsible-trigger]'
 const MODEL_SUB_MENU_SELECTOR = "button[data-melt-collapsible-trigger]"
 const CHAT_CONTAINER_SELECTOR = "#chat-container"
+const CHAT_MESSAGES_CONTAINER_SELECTOR = `${CHAT_CONTAINER_SELECTOR} #messages-container`
 const CHAT_SCROLL_CONTAINER_SELECTOR = [
+  CHAT_MESSAGES_CONTAINER_SELECTOR,
   `${CHAT_CONTAINER_SELECTOR} .flex.overflow-y-scroll.flex-col.w-full.h-full`,
   `${CHAT_CONTAINER_SELECTOR} .scrollbar-none.flex.flex-col`,
   `${CHAT_CONTAINER_SELECTOR} [data-pane-id] .overflow-y-scroll`,
   `${CHAT_CONTAINER_SELECTOR} [data-pane-id] .scrollbar-none`,
 ].join(", ")
+const CHAT_MESSAGE_WIDTH_SELECTOR = [
+  `${CHAT_CONTAINER_SELECTOR} [class*="max-w-[808px]"]`,
+  `${CHAT_CONTAINER_SELECTOR} [class*="max-w-[894px]"]`,
+  `${CHAT_CONTAINER_SELECTOR} [class*="max-w-[1000px]"]`,
+  `${CHAT_CONTAINER_SELECTOR} [class*="max-w-[960px]"]`,
+].join(", ")
+const CHAT_INPUT_WIDTH_SELECTOR = [
+  `${CHAT_CONTAINER_SELECTOR} .messageInputContainer [class*="max-w-[768px]"]`,
+  `${CHAT_CONTAINER_SELECTOR} .messageInputContainer [class*="max-w-[854px]"]`,
+].join(", ")
+const CHAT_INPUT_SAFE_AREA_SELECTOR = `${CHAT_CONTAINER_SELECTOR} .messageInputContainer`
 const USER_QUERY_SELECTOR = [
   '[id^="message-"].user-message',
   ".user-message .chat-user.markdown-prose",
@@ -979,14 +993,40 @@ export class ZaiAdapter extends SiteAdapter {
   getWidthSelectors() {
     return [
       {
-        selector: `${CHAT_CONTAINER_SELECTOR} [class*="max-w-[1000px]"]`,
+        selector: CHAT_MESSAGE_WIDTH_SELECTOR,
         property: "max-width",
       },
       {
-        selector: `${CHAT_CONTAINER_SELECTOR} [class*="max-w-[960px]"]`,
+        selector: CHAT_INPUT_WIDTH_SELECTOR,
         property: "max-width",
       },
     ]
+  }
+
+  getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    return {
+      scopeSelector: CHAT_CONTAINER_SELECTOR,
+      widthSelectors: [
+        {
+          selector: CHAT_MESSAGE_WIDTH_SELECTOR,
+          property: "max-width",
+          extraCss: "width: 100% !important; min-width: 0 !important;",
+        },
+      ],
+      insetSelectors: [
+        {
+          selector: CHAT_MESSAGES_CONTAINER_SELECTOR,
+          extraCss: "box-sizing: border-box;",
+        },
+        {
+          selector: CHAT_INPUT_SAFE_AREA_SELECTOR,
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+      ],
+      defaultWidth: "894px",
+      gap: 16,
+    }
   }
 
   getUserQueryWidthSelectors() {

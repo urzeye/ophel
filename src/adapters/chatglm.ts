@@ -23,6 +23,7 @@ import {
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type PanelAvoidanceConfig,
 } from "./base"
 
 const CHATGLM_HOSTS = new Set(["chatglm.cn"])
@@ -47,6 +48,8 @@ const THEME_POPOVER_SELECTOR = ".theme-popper"
 const THEME_OPTION_SELECTOR = ".selecttheme-list"
 
 const RESPONSE_CONTAINER_SELECTOR = ".conversation-list"
+const CONVERSATION_SCOPE_SELECTOR = ".conversation-container"
+const CONVERSATION_INNER_SELECTOR = ".conversation-inner"
 const CONVERSATION_ITEM_SELECTOR = ".conversation-item"
 const USER_QUERY_SELECTOR = ".conversation.question"
 const USER_TEXT_SELECTOR = ".question-txt"
@@ -103,6 +106,10 @@ const TEXTAREA_SELECTORS = [
 ]
 
 const SUBMIT_BUTTON_SELECTOR = ".enter-icon-container"
+const CONVERSATION_MESSAGE_WIDTH_SELECTOR =
+  ".dialogue .detail .item, .dialogue .detail .item.item, .dialogue .detail .item.item.item"
+const CONVERSATION_MARKDOWN_WIDTH_SELECTOR =
+  ".markdown-body, .markdown-body.markdown-body, .answer-content-wrap .markdown-body"
 
 interface ChatGLMApiAttachment {
   file_name?: string
@@ -1544,13 +1551,11 @@ export class ChatGLMAdapter extends SiteAdapter {
       { selector: ".conversation-inner", property: "max-width" },
       { selector: ".conversation-list", property: "max-width" },
       {
-        selector:
-          ".dialogue .detail .item, .dialogue .detail .item.item, .dialogue .detail .item.item.item",
+        selector: CONVERSATION_MESSAGE_WIDTH_SELECTOR,
         property: "max-width",
       },
       {
-        selector:
-          ".markdown-body, .markdown-body.markdown-body, .answer-content-wrap .markdown-body",
+        selector: CONVERSATION_MARKDOWN_WIDTH_SELECTOR,
         property: "max-width",
       },
       {
@@ -1584,15 +1589,46 @@ export class ChatGLMAdapter extends SiteAdapter {
       },
       { selector: ".conversation-list", property: "width", value: "100%" },
       {
-        selector: ".conversation-bottom[data-v-e5578310]",
+        selector: ".conversation-bottom",
         property: "max-width",
         extraCss: "flex: 1 !important;",
       },
       {
-        selector: ".component-box-new[data-v-fb010f38]",
+        selector: ".component-box-new",
         property: "max-width",
       },
     ]
+  }
+
+  getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    return {
+      scopeSelector: CONVERSATION_SCOPE_SELECTOR,
+      widthSelectors: [
+        {
+          selector: RESPONSE_CONTAINER_SELECTOR,
+          property: "max-width",
+          extraCss: "width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: CONVERSATION_MESSAGE_WIDTH_SELECTOR,
+          property: "max-width",
+          extraCss: "width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: CONVERSATION_MARKDOWN_WIDTH_SELECTOR,
+          property: "max-width",
+          extraCss: "min-width: 0 !important;",
+        },
+      ],
+      insetSelectors: [
+        {
+          selector: CONVERSATION_INNER_SELECTOR,
+          extraCss: "box-sizing: border-box;",
+        },
+      ],
+      defaultWidth: "872px",
+      gap: 16,
+    }
   }
 
   getZenModeConfig() {
