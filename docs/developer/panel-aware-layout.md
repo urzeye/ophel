@@ -114,6 +114,85 @@ getPanelAvoidanceConfig() {
 2. 覆盖 `#chat-route-layout` 的 `--content-max-width`，并同步覆盖消息/输入区消费该变量的 `max-width` 节点。
 3. 对同时包含虚拟列表和输入区的内容列容器增加左右 padding，让消息和输入框一起进入安全区。
 
+## 后续已适配站点
+
+DeepSeek 和 Doubao 之后，智能避让已经扩展到以下站点：
+
+| 站点 | scope | 宽度策略 | inset 策略 | 默认宽度 |
+| --- | --- | --- | --- | --- |
+| Kimi | 聊天布局容器 | 重算内容列、消息列表、操作区和输入框 `max-width` | 对聊天主区域加左右安全区 | `800px` |
+| Yuanbao | 聊天主内容区域 | 通过站点宽度 CSS 变量统一控制消息区和输入区 | 对聊天内容和输入区加左右安全区 | `960px` |
+| IMA | 页面内容容器 | 分别重算回复容器和编辑器容器 `width` | 对主区域和输入容器加左右安全区 | `960px` |
+| Z.ai | 聊天容器 | 避让时只重算消息宽度 | 消息容器和输入安全区加左右安全区 | `894px` |
+| ChatGLM | 对话主区域 | 重算响应容器、消息容器和 Markdown 容器宽度 | 对对话内层容器加左右安全区 | `872px` |
+| Qianwen | 千问左侧聊天面板 | 重算消息中心、消息滚动区变量和回答块宽度 | 对聊天内容区加左右安全区 | `800px` |
+| Qwen Studio | `.chat-left-panel` | 避让时只重算消息外层宽度 | 消息滚动区和输入安全区加左右安全区 | `800px` |
+
+这些站点都需要同时加入：
+
+- `SiteAdapter.getPanelAvoidanceConfig()`
+- `src/utils/storage.ts` 的 `DEFAULT_SETTINGS.layout.panelAvoidance`
+- `docs/developer/settings-schema.json`
+- `src/tabs/options/pages/SiteSettingsPage.tsx` 的 `PANEL_AVOIDANCE_SUPPORTED_SITE_IDS`
+
+### Kimi
+
+Kimi 的页面宽度由聊天布局容器、内容容器、列表容器和输入框共同约束，不能只覆盖单个消息节点。
+
+适配策略：
+
+- 使用聊天布局容器作为 `scopeSelector`，避免按整屏计算时忽略站点自身侧栏。
+- 避让时同步覆盖内容容器、消息列表、操作区和输入框的 `max-width`。
+- 对聊天主区域加 `padding-left/right`，让消息区和输入区一起进入安全区。
+- 列表容器额外清掉左右 padding，避免站点原始居中 padding 和避让 inset 叠加。
+
+### Yuanbao
+
+Yuanbao 的消息区和输入区共享站点宽度变量，是变量型站点，优先改变量而不是逐个节点覆盖。
+
+适配策略：
+
+- 通过 `:root` 上的宽度变量控制最大内容宽度。
+- 用 `min(100%, var(...))` 保证页面宽度控制不会让内容超出父容器。
+- 对聊天内容区和输入区分别加左右安全区，保持两者位置一致。
+
+### IMA
+
+IMA 的回复容器和编辑器容器不是同一个宽度消费节点，需要分别声明。
+
+适配策略：
+
+- 使用页面内容容器作为 `scopeSelector`。
+- 避让时重算回复容器和编辑器容器 `width`，并保留 `max-width: 100%`、`min-width: 0`。
+- 对主区域和输入容器都加左右安全区，避免输入框留在面板下方。
+
+### Z.ai 与 ChatGLM
+
+这两个站点的输入框加宽曾出现“只有变窄有效、加宽被原始最大宽度卡住”的情况。避让配置需要避免把输入框也放进 `widthSelectors` 后再被较小安全宽度二次限制。
+
+适配策略：
+
+- Z.ai 避让时只重算消息内容宽度，输入区通过安全区 padding 跟随位置。
+- ChatGLM 避让时重算响应、消息和 Markdown 容器，输入底部容器继续由页面宽度控制处理。
+- 代码块、表格等宽内容需要继续使用 `width: 100%`、`table-layout: fixed` 等规则，避免避让后横向溢出。
+
+### Qianwen 与 Qwen Studio
+
+Qianwen 和 Qwen Studio 都存在新版 DOM 结构和嵌套宽度消费，不能简单复制旧版 `[class*="auto-center-wrapper"]` 或输入框 `max-width` 规则。
+
+Qianwen 适配要点：
+
+- 新版内容区使用 `#qianwen-left-panel` 作为 `scopeSelector`。
+- 消息区同时覆盖 `#pc-center-wrapper`、`#message-list-scroller` 的 `--message-content-width` 以及回答块宽度。
+- 输入框外层带有 inline `max-width: 800px` 和 `--chat-input-visible-shell-*` 变量。页面宽度控制需要同步覆盖这些变量。
+- 避让配置不直接给输入框容器加左右 inset，避免输入框自身 `calc(100% - gutter)` 与避让 padding 叠加后被压窄。
+
+Qwen Studio 适配要点：
+
+- 使用 `.chat-left-panel` 作为 `scopeSelector`。
+- 消息外层 `.qwen-chat-message` 原始布局带 padding/content-box，宽度控制要同时补 `width: 100%` 和 `box-sizing: border-box`。
+- 避让时只重算消息宽度；输入区使用安全区 padding，避免输入框 `max-width` 被安全宽度二次卡住。
+
 ## 后续适配建议
 
 优先级建议：
@@ -121,7 +200,7 @@ getPanelAvoidanceConfig() {
 1. ChatGPT：复用已有 `getWidthSelectors()`，吸收 PR #722 的可见面板判断，不新增 content script。
 2. Claude：主内容列选择器较集中，适合第二个验证站点。
 3. Gemini / Gemini Enterprise：需要同时验证普通 DOM 与第三方 Shadow DOM 注入。
-4. Grok / Qwen Studio：存在 CSS 变量或嵌套宽度消费，适配时优先只改外层变量，避免层层百分比收缩。
+4. Grok：存在 CSS 变量或嵌套宽度消费，适配时优先只改外层变量，避免层层百分比收缩。
 
 每个站点适配前先确认：
 
