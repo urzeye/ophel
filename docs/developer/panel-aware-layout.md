@@ -127,6 +127,7 @@ DeepSeek 和 Doubao 之后，智能避让已经扩展到以下站点：
 | ChatGLM | 对话主区域 | 重算响应容器、消息容器和 Markdown 容器宽度 | 对对话内层容器加左右安全区 | `872px` |
 | Qianwen | 千问左侧聊天面板 | 重算消息中心、消息滚动区变量和回答块宽度 | 对聊天内容区加左右安全区 | `800px` |
 | Qwen Studio | `.chat-left-panel` | 避让时只重算消息外层宽度 | 消息滚动区和输入安全区加左右安全区 | `800px` |
+| Gemini | `bard-sidenav-content` | 避让时重算消息列和输入框宽度 | 消息滚动区和输入宿主加左右安全区 | `760px` |
 
 这些站点都需要同时加入：
 
@@ -193,13 +194,24 @@ Qwen Studio 适配要点：
 - 消息外层 `.qwen-chat-message` 原始布局带 padding/content-box，宽度控制要同时补 `width: 100%` 和 `box-sizing: border-box`。
 - 避让时只重算消息宽度；输入区使用安全区 padding，避免输入框 `max-width` 被安全宽度二次卡住。
 
+### Gemini
+
+Gemini 标准版的消息滚动区和输入区是兄弟节点：消息列在 `infinite-scroller.chat-history` 内通过 `.conversation-container` 限宽，输入区在 `input-container` 内通过 `.input-area-container` 限宽。左侧栏外层是 `bard-sidenav-content`，适合作为避让 scope。
+
+适配策略：
+
+- 使用 `bard-sidenav-content` 作为 `scopeSelector`，按扣除 Gemini 左侧栏后的主内容区计算安全区。
+- 避让时同时重算 `.conversation-container` 和 `.input-area-container` 的 `max-width`，让消息列和输入框使用同一个安全区目标宽度。
+- 对 `infinite-scroller.chat-history` 和 `input-container` 加左右安全区，让消息区和输入区位置同步。
+- 输入框外层仍保留在安全区容器内，避免只改输入框宽度但位置仍落在面板下方。
+
 ## 后续适配建议
 
 优先级建议：
 
 1. ChatGPT：复用已有 `getWidthSelectors()`，吸收 PR #722 的可见面板判断，不新增 content script。
 2. Claude：主内容列选择器较集中，适合第二个验证站点。
-3. Gemini / Gemini Enterprise：需要同时验证普通 DOM 与第三方 Shadow DOM 注入。
+3. Gemini Enterprise：需要验证第三方 Shadow DOM 注入。
 4. Grok：存在 CSS 变量或嵌套宽度消费，适配时优先只改外层变量，避免层层百分比收缩。
 
 每个站点适配前先确认：

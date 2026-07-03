@@ -76,6 +76,7 @@ import {
   type NetworkMonitorConfig,
   type OutlineItem,
   type OutlineSource,
+  type PanelAvoidanceConfig,
   type SiteDeleteConversationResult,
 } from "./base"
 
@@ -328,6 +329,11 @@ const GEMINI_MARKDOWN_FIXER_SOURCE_SELECTOR = [
     `[data-test-id*='${keyword}' i]`,
   ]),
 ].join(",")
+const GEMINI_LAYOUT_SCOPE_SELECTOR = "bard-sidenav-content"
+const GEMINI_MESSAGE_WIDTH_SELECTOR = ".conversation-container"
+const GEMINI_MESSAGE_SAFE_AREA_SELECTOR = "infinite-scroller.chat-history"
+const GEMINI_INPUT_WIDTH_SELECTOR = ".input-area-container"
+const GEMINI_INPUT_SAFE_AREA_SELECTOR = "input-container"
 
 class GeminiMyStuffEnhancer {
   private started = false
@@ -2444,8 +2450,16 @@ export class GeminiAdapter extends SiteAdapter {
 
   getWidthSelectors() {
     return [
-      { selector: ".conversation-container", property: "max-width" },
-      { selector: ".input-area-container", property: "max-width" },
+      {
+        selector: GEMINI_MESSAGE_WIDTH_SELECTOR,
+        property: "max-width",
+        extraCss: "width: 100% !important; min-width: 0 !important;",
+      },
+      {
+        selector: GEMINI_INPUT_WIDTH_SELECTOR,
+        property: "max-width",
+        extraCss: "width: 100% !important; min-width: 0 !important;",
+      },
       // 表格容器随页面加宽（覆盖 Gemini 的 max-width 限制）
       {
         selector: ".table-block.new-table-style",
@@ -2470,6 +2484,38 @@ export class GeminiAdapter extends SiteAdapter {
         extraCss: "justify-content: flex-end !important;",
       },
     ]
+  }
+
+  getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    return {
+      scopeSelector: GEMINI_LAYOUT_SCOPE_SELECTOR,
+      widthSelectors: [
+        {
+          selector: GEMINI_MESSAGE_WIDTH_SELECTOR,
+          property: "max-width",
+          extraCss: "width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: GEMINI_INPUT_WIDTH_SELECTOR,
+          property: "max-width",
+          extraCss: "width: 100% !important; min-width: 0 !important;",
+        },
+      ],
+      insetSelectors: [
+        {
+          selector: GEMINI_MESSAGE_SAFE_AREA_SELECTOR,
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: GEMINI_INPUT_SAFE_AREA_SELECTOR,
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+      ],
+      defaultWidth: "760px",
+      gap: 16,
+    }
   }
 
   /** 用户问题宽度选择器 */
