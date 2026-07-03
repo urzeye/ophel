@@ -32,6 +32,7 @@ import {
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type PanelAvoidanceConfig,
 } from "./base"
 
 const CHAT_PATH_PATTERN = /\/chat\/([a-f0-9]+)/i
@@ -109,13 +110,23 @@ const ATTACHMENT_SOURCE_ATTRS = [
   "data-image-url",
   "data-image-src",
 ]
-const CHAT_INPUT_SELECTOR = '[class*="chatInput"]'
+const CHAT_INPUT_SELECTOR = [
+  '[class*="chatInput"]',
+  '[data-chat-input-shell="true"]',
+  '[data-qw-chat-input-position="chat"]',
+].join(", ")
 const CHAT_TEXTAREA_SELECTOR = '[class*="chatTextarea"]'
 const MESSAGE_LIST_SELECTOR = ".message-list-scroll-container, #message-list-scroller"
 const MESSAGE_LIST_AREA_SELECTOR = "#qwen-message-list-area"
+const CHAT_LAYOUT_SCOPE_SELECTOR = "#qianwen-left-panel"
+const CHAT_CONTENT_SELECTOR = "#qw-chat-content"
+const CHAT_INPUT_WIDTH_SELECTOR =
+  '[data-text-area-width-container="true"], [class*="inputMotionCarrier"]'
+const MESSAGE_CENTER_SELECTOR = "#pc-center-wrapper, [class*='auto-center-wrapper']"
 const PAGE_SCROLL_CONTAINER_SELECTOR = [
   '[class*="page-content-"]',
   '[class*="pageContent"]',
+  CHAT_CONTENT_SELECTOR,
   '[class*="scrollOutWrapper"]',
 ].join(", ")
 const SIDEBAR_SELECTOR = "aside#new-nav-tab-wrapper"
@@ -894,13 +905,21 @@ export class QianwenAdapter extends SiteAdapter {
   // ==================== 宽度 / Zen / Markdown 修复 ====================
 
   getWidthSelectors() {
-    // 千问整体宽度由 scrollOutWrapper 的 max-width: 896px + width: calc(100%-48px) 控制
-    // 需要同时覆盖 max-width 和 width
+    // 千问新旧结构并存：旧版由 scrollOutWrapper 控制，新版由 #pc-center-wrapper
+    // 及 --message-content-width / --max-message-list-width 共同限宽。
     const messageListWidthVarsCss = [
       "width: 100% !important;",
       "min-width: 0 !important;",
       "--max-message-list-width: 100% !important;",
       "--min-message-list-width: 0px !important;",
+    ].join(" ")
+    const inputWidthCss = [
+      "width: 100% !important;",
+      "min-width: 0 !important;",
+      "box-sizing: border-box !important;",
+      "--chat-input-visible-shell-width: 100% !important;",
+      "--chat-input-visible-shell-max-width: 100% !important;",
+      "--chat-input-visible-shell-side-gutter: 0px !important;",
     ].join(" ")
 
     return [
@@ -917,14 +936,19 @@ export class QianwenAdapter extends SiteAdapter {
         noCenter: true,
       },
       {
-        selector: '[class*="auto-center-wrapper"]',
+        selector: MESSAGE_CENTER_SELECTOR,
         property: "max-width",
         extraCss: messageListWidthVarsCss,
       },
       {
-        selector: '[class*="inputMotionCarrier"]',
+        selector: MESSAGE_LIST_SELECTOR,
+        property: "--message-content-width",
+        noCenter: true,
+      },
+      {
+        selector: CHAT_INPUT_WIDTH_SELECTOR,
         property: "max-width",
-        extraCss: "width: 100% !important;",
+        extraCss: inputWidthCss,
       },
       {
         selector: '[class*="inputOutWrap"]',
@@ -935,6 +959,11 @@ export class QianwenAdapter extends SiteAdapter {
       {
         selector: '[class*="answerItem"] [class*="containerWrap"]',
         property: "max-width",
+      },
+      {
+        selector: ANSWER_ITEM_SELECTOR,
+        property: "max-width",
+        extraCss: "width: 100% !important; min-width: 0 !important;",
       },
       {
         selector: `${QUESTION_LAYOUT_SELECTOR}`,
@@ -949,6 +978,45 @@ export class QianwenAdapter extends SiteAdapter {
         noCenter: true,
       },
     ]
+  }
+
+  getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    const messageListWidthVarsCss = [
+      "width: 100% !important;",
+      "min-width: 0 !important;",
+      "--max-message-list-width: 100% !important;",
+      "--min-message-list-width: 0px !important;",
+    ].join(" ")
+
+    return {
+      scopeSelector: CHAT_LAYOUT_SCOPE_SELECTOR,
+      widthSelectors: [
+        {
+          selector: MESSAGE_CENTER_SELECTOR,
+          property: "max-width",
+          extraCss: messageListWidthVarsCss,
+        },
+        {
+          selector: MESSAGE_LIST_SELECTOR,
+          property: "--message-content-width",
+          noCenter: true,
+        },
+        {
+          selector: ANSWER_ITEM_SELECTOR,
+          property: "max-width",
+          extraCss: "width: 100% !important; min-width: 0 !important;",
+        },
+      ],
+      insetSelectors: [
+        {
+          selector: `${CHAT_CONTENT_SELECTOR}, ${MESSAGE_LIST_AREA_SELECTOR}`,
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+      ],
+      defaultWidth: "800px",
+      gap: 16,
+    }
   }
 
   getUserQueryWidthSelectors(): Array<{

@@ -66,6 +66,8 @@
       "chatglm": { "enabled": false, "value": "81", "unit": "%" },
       "ima": { "enabled": false, "value": "81", "unit": "%" },
       "kimi": { "enabled": false, "value": "81", "unit": "%" },
+      "qianwen": { "enabled": false, "value": "81", "unit": "%" },
+      "qwenai": { "enabled": false, "value": "81", "unit": "%" },
       "yuanbao": { "enabled": false, "value": "81", "unit": "%" },
       "zai": { "enabled": false, "value": "81", "unit": "%" },
       "_default": { "enabled": false, "value": "81", "unit": "%" }
@@ -76,6 +78,8 @@
       "chatglm": { "enabled": false, "value": "81", "unit": "%" },
       "ima": { "enabled": false, "value": "81", "unit": "%" },
       "kimi": { "enabled": false, "value": "81", "unit": "%" },
+      "qianwen": { "enabled": false, "value": "81", "unit": "%" },
+      "qwenai": { "enabled": false, "value": "81", "unit": "%" },
       "yuanbao": { "enabled": false, "value": "81", "unit": "%" },
       "zai": { "enabled": false, "value": "81", "unit": "%" },
       "_default": { "enabled": false, "value": "81", "unit": "%" }
@@ -86,6 +90,8 @@
       "chatglm": { "enabled": false, "showExitButton": true },
       "ima": { "enabled": false, "showExitButton": true },
       "kimi": { "enabled": false, "showExitButton": true },
+      "qianwen": { "enabled": false, "showExitButton": true },
+      "qwenai": { "enabled": false, "showExitButton": true },
       "yuanbao": { "enabled": false, "showExitButton": true },
       "zai": { "enabled": false, "showExitButton": true },
       "_default": { "enabled": false, "showExitButton": true }
@@ -96,6 +102,8 @@
       "deepseek": { "enabled": true },
       "ima": { "enabled": true },
       "kimi": { "enabled": true },
+      "qianwen": { "enabled": true },
+      "qwenai": { "enabled": true },
       "yuanbao": { "enabled": true },
       "zai": { "enabled": true },
       "_default": { "enabled": true }

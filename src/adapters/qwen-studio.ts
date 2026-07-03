@@ -35,6 +35,7 @@ import {
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type PanelAvoidanceConfig,
 } from "./base"
 
 const QWENAI_CHAT_PATH_PATTERN = /\/c\/([a-f0-9-]+)/i
@@ -45,8 +46,12 @@ const QWENAI_SIDEBAR_SCROLL_SELECTOR = ".session-list-wrapper"
 const QWENAI_SIDEBAR_ITEM_SELECTOR = ".chat-item-drag"
 const QWENAI_SIDEBAR_TITLE_SELECTOR = ".chat-item-drag-link-content-tip-text"
 const QWENAI_NEW_CHAT_BUTTON_SELECTOR = ".sidebar-entry-fixed-list-content"
+const QWENAI_LAYOUT_SCOPE_SELECTOR = ".chat-left-panel"
 const QWENAI_MESSAGE_SCROLL_SELECTOR = "#chat-messages-scroll-container"
 const QWENAI_MESSAGE_CONTAINER_SELECTOR = "#chat-message-container"
+const QWENAI_MESSAGE_WIDTH_SELECTOR = ".qwen-chat-message"
+const QWENAI_INPUT_SAFE_AREA_SELECTOR = ".chat-layout-input-container"
+const QWENAI_INPUT_WIDTH_SELECTOR = ".message-input-wrapper"
 const QWENAI_USER_MESSAGE_ROOT_SELECTOR = ".qwen-chat-message-user"
 const QWENAI_USER_MESSAGE_SELECTOR = ".qwen-chat-message-user, .chat-user-message-wrapper"
 const QWENAI_ASSISTANT_MESSAGE_SELECTOR = ".qwen-chat-message-assistant"
@@ -849,15 +854,42 @@ export class QwenAiAdapter extends SiteAdapter {
       {
         // Qwen Studio 对话宽度由消息外层 .qwen-chat-message 的 max-width 控制。
         // 同时覆盖 width 和 box-sizing，避免原始 content-box + padding 让加宽效果不明显。
-        selector: ".qwen-chat-message",
+        selector: QWENAI_MESSAGE_WIDTH_SELECTOR,
         property: "max-width",
         extraCss: "width: 100% !important; box-sizing: border-box !important;",
       },
       {
-        selector: ".message-input-wrapper",
+        selector: QWENAI_INPUT_WIDTH_SELECTOR,
         property: "max-width",
       },
     ]
+  }
+
+  getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    return {
+      scopeSelector: QWENAI_LAYOUT_SCOPE_SELECTOR,
+      widthSelectors: [
+        {
+          selector: QWENAI_MESSAGE_WIDTH_SELECTOR,
+          property: "max-width",
+          extraCss:
+            "width: 100% !important; min-width: 0 !important; box-sizing: border-box !important;",
+        },
+      ],
+      insetSelectors: [
+        {
+          selector: QWENAI_MESSAGE_SCROLL_SELECTOR,
+          extraCss: "box-sizing: border-box; min-width: 0 !important;",
+        },
+        {
+          selector: QWENAI_INPUT_SAFE_AREA_SELECTOR,
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+      ],
+      defaultWidth: "800px",
+      gap: 16,
+    }
   }
 
   getUserQueryWidthSelectors() {
