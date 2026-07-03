@@ -390,7 +390,7 @@ export const DEFAULT_SETTINGS: Settings = {
 
   panel: {
     panelExpanded: true,
-    panelMode: "edge-snap",
+    panelMode: "floating",
     preventAutoScroll: false,
     defaultPosition: "right",
     defaultEdgeDistance: 0,

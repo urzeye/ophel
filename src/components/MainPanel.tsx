@@ -285,7 +285,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   // 计算默认位置样式
   const defaultPosition = currentSettings.panel?.defaultPosition ?? "right"
   const defaultEdgeDistance = currentSettings.panel?.defaultEdgeDistance ?? 40
-  const isEdgeSnapMode = (currentSettings.panel?.panelMode ?? "edge-snap") === "edge-snap"
+  const isEdgeSnapMode = (currentSettings.panel?.panelMode ?? "floating") === "edge-snap"
   const panelWidth = currentSettings.panel?.width ?? 320
   const panelHeightVh = currentSettings.panel?.height ?? 85
 
@@ -395,7 +395,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       const target = e.target
       if (target instanceof Element && target.closest(".gh-panel-controls")) return
 
-      const current = currentSettings.panel?.panelMode ?? "edge-snap"
+      const current = currentSettings.panel?.panelMode ?? "floating"
       if (current === "edge-snap" && panelRef.current) {
         savedPeekingRectRef.current = panelRef.current.getBoundingClientRect()
       }
@@ -715,19 +715,19 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             {/* 面板模式切换按钮 */}
             <Tooltip
               content={
-                (currentSettings.panel?.panelMode ?? "edge-snap") === "edge-snap"
+                (currentSettings.panel?.panelMode ?? "floating") === "edge-snap"
                   ? t("pinPanel")
                   : t("snapToEdge")
               }>
               <button
                 type="button"
                 aria-label={
-                  (currentSettings.panel?.panelMode ?? "edge-snap") === "edge-snap"
+                  (currentSettings.panel?.panelMode ?? "floating") === "edge-snap"
                     ? t("pinPanel")
                     : t("snapToEdge")
                 }
                 onClick={() => {
-                  const current = currentSettings.panel?.panelMode ?? "edge-snap"
+                  const current = currentSettings.panel?.panelMode ?? "floating"
                   // 从吸附切换到悬浮时，保存当前面板位置用于"原地固定"
                   if (current === "edge-snap" && panelRef.current) {
                     savedPeekingRectRef.current = panelRef.current.getBoundingClientRect()
@@ -739,7 +739,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                   )
                 }}
                 className="gh-header-icon-btn">
-                {(currentSettings.panel?.panelMode ?? "edge-snap") === "edge-snap" ? (
+                {(currentSettings.panel?.panelMode ?? "floating") === "edge-snap" ? (
                   <FloatingModeIcon size={14} />
                 ) : (
                   <SnapToEdgeIcon size={14} />

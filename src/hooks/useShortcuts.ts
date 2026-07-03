@@ -503,7 +503,7 @@ export function useShortcuts({
       onTogglePanelMode()
     } else {
       const { settings: liveSettings, updateNestedSetting } = useSettingsStore.getState()
-      const current = liveSettings?.panel?.panelMode ?? "edge-snap"
+      const current = liveSettings?.panel?.panelMode ?? "floating"
       const next = current === "edge-snap" ? "floating" : "edge-snap"
       updateNestedSetting("panel", "panelMode", next)
     }

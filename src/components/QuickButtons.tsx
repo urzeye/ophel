@@ -325,7 +325,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
     // 兜底：当所有按钮均不可见时，自动隐藏空容器
     const isFloatingOpen =
-      isPanelExpanded && (currentSettings.panel?.panelMode ?? "edge-snap") !== "edge-snap"
+      isPanelExpanded && (currentSettings.panel?.panelMode ?? "floating") !== "edge-snap"
 
     for (const btnConfig of collapsedButtonsOrder) {
       // manualAnchor 暂时禁用，跳过
@@ -756,7 +756,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
     // hideWhenPanelOpen 按钮：仅在悬浮模式且面板展开时隐藏（edge-snap 模式下始终显示，因为面板收在边缘不便操作）
     // 禁用的按钮：永远隐藏
     const isFloatingOpen =
-      isPanelExpanded && (settings?.panel?.panelMode ?? "edge-snap") !== "edge-snap"
+      isPanelExpanded && (settings?.panel?.panelMode ?? "floating") !== "edge-snap"
     const shouldHide =
       isDisabled || (isPanelOnly && isPanelExpanded) || (def.hideWhenPanelOpen && isFloatingOpen)
     if (shouldHide) return null
@@ -885,7 +885,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
         if (def.isPanelOnly && isPanelExpanded) return null
         const isFloatingOpen =
-          isPanelExpanded && (settings?.panel?.panelMode ?? "edge-snap") !== "edge-snap"
+          isPanelExpanded && (settings?.panel?.panelMode ?? "floating") !== "edge-snap"
         if (def.hideWhenPanelOpen && isFloatingOpen) return null
 
         return {

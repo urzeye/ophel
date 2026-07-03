@@ -1007,7 +1007,7 @@ export const App = () => {
     // 确保仅在 hydration 完成且 settings 加载后执行一次初始化
     if (isSettingsHydrated && settings && !isInitializedRef.current) {
       isInitializedRef.current = true
-      const panelMode = settings.panel?.panelMode ?? "edge-snap"
+      const panelMode = settings.panel?.panelMode ?? "floating"
       const defaultPosition = settings.panel?.defaultPosition ?? "right"
 
       setPanelExpandedState(settings.panel?.panelExpanded ?? true)
@@ -3159,7 +3159,7 @@ export const App = () => {
   // 当面板模式切换时的处理
   const prevPanelModeForSwitchRef = useRef<string | undefined>(undefined)
   useEffect(() => {
-    const panelMode = settings?.panel?.panelMode ?? "edge-snap"
+    const panelMode = settings?.panel?.panelMode ?? "floating"
 
     // 首次渲染时仅记录模式，不执行切换逻辑（初始化由 init useEffect 处理）
     if (prevPanelModeForSwitchRef.current === undefined) {

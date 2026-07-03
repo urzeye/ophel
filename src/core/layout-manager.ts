@@ -562,7 +562,7 @@ export class LayoutManager {
   }
 
   private isPanelAvoidanceSuppressedByPanelState(panel: HTMLElement): boolean {
-    const panelMode = useSettingsStore.getState().settings?.panel?.panelMode ?? "edge-snap"
+    const panelMode = useSettingsStore.getState().settings?.panel?.panelMode ?? "floating"
 
     if (panelMode !== "floating") return true
 

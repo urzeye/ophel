@@ -248,7 +248,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
                 <button
                   type="button"
                   key={option.value}
-                  aria-pressed={(settings.panel?.panelMode ?? "edge-snap") === option.value}
+                  aria-pressed={(settings.panel?.panelMode ?? "floating") === option.value}
                   onClick={() => updateNestedSetting("panel", "panelMode", option.value)}
                   style={{
                     display: "inline-flex",
@@ -260,11 +260,11 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
                     borderLeft: index > 0 ? "1px solid var(--gh-border, #e5e7eb)" : "none",
                     cursor: "pointer",
                     background:
-                      (settings.panel?.panelMode ?? "edge-snap") === option.value
+                      (settings.panel?.panelMode ?? "floating") === option.value
                         ? "var(--gh-primary, #4285f4)"
                         : "var(--gh-bg, #fff)",
                     color:
-                      (settings.panel?.panelMode ?? "edge-snap") === option.value
+                      (settings.panel?.panelMode ?? "floating") === option.value
                         ? "#fff"
                         : "var(--gh-text-secondary, #6b7280)",
                     transition: "all 0.2s",
@@ -371,7 +371,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
           </SettingRow>
 
           {/* 吸附触发距离 - 仅在自动吸附模式下显示 */}
-          {(settings.panel?.panelMode ?? "edge-snap") === "edge-snap" && (
+          {(settings.panel?.panelMode ?? "floating") === "edge-snap" && (
             <SettingRow
               label={t("edgeSnapThresholdLabel")}
               description={t("edgeSnapThresholdDesc")}
@@ -393,7 +393,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({ siteId: _siteId, initialTab }
           )}
 
           {/* 默认边距 - 仅在悬浮模式下显示 */}
-          {(settings.panel?.panelMode ?? "edge-snap") === "floating" && (
+          {(settings.panel?.panelMode ?? "floating") === "floating" && (
             <SettingRow
               label={t("defaultEdgeDistanceLabel")}
               description={t("defaultEdgeDistanceDesc")}
