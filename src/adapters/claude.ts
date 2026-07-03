@@ -1187,24 +1187,30 @@ export class ClaudeAdapter extends SiteAdapter {
   /**
    * Claude 使用 Radix UI，可能需要模拟 PointerEvent
    */
+  private getElementWindow(element: Element): Window & typeof globalThis {
+    return (element.ownerDocument.defaultView || window) as Window & typeof globalThis
+  }
+
   protected simulateClick(element: HTMLElement): void {
     const rect = element.getBoundingClientRect()
+    const eventWindow = this.getElementWindow(element)
     const clientX = rect.left + Math.max(1, Math.min(rect.width / 2, Math.max(rect.width - 1, 1)))
     const clientY = rect.top + Math.max(1, Math.min(rect.height / 2, Math.max(rect.height - 1, 1)))
     const commonInit = {
       bubbles: true,
       cancelable: true,
       composed: true,
-      view: window,
+      view: eventWindow,
       button: 0,
       buttons: 1,
       clientX,
       clientY,
     }
     const dispatchPointer = (type: string) => {
-      if (typeof PointerEvent !== "function") return
+      const PointerEventCtor = eventWindow.PointerEvent
+      if (!PointerEventCtor) return
       element.dispatchEvent(
-        new PointerEvent(type, {
+        new PointerEventCtor(type, {
           ...commonInit,
           pointerId: 1,
           pointerType: "mouse",
@@ -1216,9 +1222,9 @@ export class ClaudeAdapter extends SiteAdapter {
       dispatchPointer("pointerenter")
       dispatchPointer("pointerover")
       dispatchPointer("pointermove")
-      element.dispatchEvent(new MouseEvent("mouseenter", commonInit))
-      element.dispatchEvent(new MouseEvent("mouseover", commonInit))
-      element.dispatchEvent(new MouseEvent("mousemove", commonInit))
+      element.dispatchEvent(new eventWindow.MouseEvent("mouseenter", commonInit))
+      element.dispatchEvent(new eventWindow.MouseEvent("mouseover", commonInit))
+      element.dispatchEvent(new eventWindow.MouseEvent("mousemove", commonInit))
     }
 
     dispatchHover()
@@ -1233,10 +1239,10 @@ export class ClaudeAdapter extends SiteAdapter {
     if (isSubMenuTrigger) return
 
     dispatchPointer("pointerdown")
-    element.dispatchEvent(new MouseEvent("mousedown", commonInit))
+    element.dispatchEvent(new eventWindow.MouseEvent("mousedown", commonInit))
     dispatchPointer("pointerup")
-    element.dispatchEvent(new MouseEvent("mouseup", commonInit))
-    element.dispatchEvent(new MouseEvent("click", commonInit))
+    element.dispatchEvent(new eventWindow.MouseEvent("mouseup", commonInit))
+    element.dispatchEvent(new eventWindow.MouseEvent("click", commonInit))
   }
 
   // ==================== 杂项 ====================
