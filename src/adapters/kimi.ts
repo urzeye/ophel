@@ -28,6 +28,7 @@ import {
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type PanelAvoidanceConfig,
   type SiteDeleteConversationResult,
 } from "./base"
 
@@ -71,6 +72,13 @@ const HISTORY_TITLE_SELECTOR = ".history-chat .title-wrapper .title"
 const CHAT_LIST_SELECTOR = ".chat-content-list"
 const SHARE_LIST_SELECTOR = ".share-content-list"
 const RESPONSE_LIST_SELECTOR = `${CHAT_LIST_SELECTOR}, ${SHARE_LIST_SELECTOR}`
+const CHAT_LAYOUT_SCOPE_SELECTOR = ".chat-detail-content"
+const CHAT_DETAIL_MAIN_SELECTOR = ".chat-detail-main"
+const CHAT_CONTENT_CONTAINER_SELECTOR = ".chat-content-container"
+const CHAT_ACTION_CONTAINER_SELECTOR = ".chat-action .bottom-action-container"
+const CHAT_EDITOR_SELECTOR = ".chat-editor"
+const KIMI_SIDEBAR_SLOT_SELECTOR = ".sidebar-slot.sidebar-slot--interactive"
+const KIMI_MAIN_SELECTOR = ".app.has-sidebar .main"
 const SHARE_SCROLL_CONTAINER_SELECTOR = ".share-detail"
 const CHAT_LIST_WIDTH_SELECTOR = [
   CHAT_LIST_SELECTOR,
@@ -940,14 +948,14 @@ export class KimiAdapter extends SiteAdapter {
   getWidthSelectors() {
     return [
       {
-        selector: ".chat-detail-content",
+        selector: CHAT_LAYOUT_SCOPE_SELECTOR,
         property: "width",
         value: "100%",
         noCenter: true,
         extraCss: "max-width: 100% !important; min-width: 0 !important;",
       },
       {
-        selector: ".chat-content-container",
+        selector: CHAT_CONTENT_CONTAINER_SELECTOR,
         property: "max-width",
         extraCss: "width: 100% !important; min-width: 0 !important;",
       },
@@ -969,10 +977,46 @@ export class KimiAdapter extends SiteAdapter {
       },
       {
         // 输入框宽度
-        selector: ".chat-editor",
+        selector: CHAT_EDITOR_SELECTOR,
         property: "max-width",
       },
     ]
+  }
+
+  getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    return {
+      scopeSelector: CHAT_LAYOUT_SCOPE_SELECTOR,
+      widthSelectors: [
+        {
+          selector: CHAT_CONTENT_CONTAINER_SELECTOR,
+          property: "max-width",
+          extraCss: "width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: CHAT_LIST_WIDTH_SELECTOR,
+          property: "max-width",
+          extraCss: "width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: CHAT_ACTION_CONTAINER_SELECTOR,
+          property: "max-width",
+          extraCss: "width: 100% !important;",
+        },
+        {
+          selector: CHAT_EDITOR_SELECTOR,
+          property: "max-width",
+          extraCss: "width: 100% !important; min-width: 0 !important;",
+        },
+      ],
+      insetSelectors: [
+        {
+          selector: CHAT_DETAIL_MAIN_SELECTOR,
+          extraCss: "box-sizing: border-box;",
+        },
+      ],
+      defaultWidth: "800px",
+      gap: 16,
+    }
   }
 
   getUserQueryWidthSelectors(): Array<{
@@ -1026,11 +1070,14 @@ export class KimiAdapter extends SiteAdapter {
 
   getZenModeConfig() {
     return {
-      hide: [".sidebar-placeholder"],
-      rootClass: {
-        selector: ".app.has-sidebar",
-        className: "fold",
-      },
+      hide: [KIMI_SIDEBAR_SLOT_SELECTOR],
+      styles: [
+        {
+          selector: KIMI_MAIN_SELECTOR,
+          property: "--kimi-sidebar-main-offset",
+          value: "6px",
+        },
+      ],
     }
   }
 

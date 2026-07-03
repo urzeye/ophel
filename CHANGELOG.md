@@ -20,6 +20,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Settings and theme management UI** — Refreshed the settings sidebar, theme preset cards, custom style list, and style editor so navigation reads more clearly and theme choices are easier to scan. (#749)
 - **Panel header and tabs** — Polished the panel header, drag hint, and tab bar styling to reduce visual noise and keep controls aligned with the rest of the interface. (#749)
 
+### 🐛 Bug Fixes
+
+- **Kimi Zen Mode** — Fixed issue where Zen Mode no longer hid Kimi's sidebar after the site updated its page layout.
+
 ---
 
 ## [1.1.2] - 2026-06-30

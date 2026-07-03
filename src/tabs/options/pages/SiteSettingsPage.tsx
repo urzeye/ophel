@@ -34,7 +34,11 @@ const normalizeSiteSettingsTab = (
   return tab
 }
 
-const PANEL_AVOIDANCE_SUPPORTED_SITE_IDS = new Set<string>([SITE_IDS.DEEPSEEK, SITE_IDS.DOUBAO])
+const PANEL_AVOIDANCE_SUPPORTED_SITE_IDS = new Set<string>([
+  SITE_IDS.DEEPSEEK,
+  SITE_IDS.DOUBAO,
+  SITE_IDS.KIMI,
+])
 
 const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
   siteId,

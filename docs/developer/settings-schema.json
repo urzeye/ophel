@@ -63,21 +63,25 @@
     "pageWidth": {
       "gemini": { "enabled": false, "value": "81", "unit": "%" },
       "gemini-enterprise": { "enabled": false, "value": "81", "unit": "%" },
+      "kimi": { "enabled": false, "value": "81", "unit": "%" },
       "_default": { "enabled": false, "value": "81", "unit": "%" }
     },
     "userQueryWidth": {
       "gemini": { "enabled": false, "value": "81", "unit": "%" },
       "gemini-enterprise": { "enabled": false, "value": "81", "unit": "%" },
+      "kimi": { "enabled": false, "value": "81", "unit": "%" },
       "_default": { "enabled": false, "value": "81", "unit": "%" }
     },
     "zenMode": {
       "gemini": { "enabled": false, "showExitButton": true },
       "gemini-enterprise": { "enabled": false, "showExitButton": true },
+      "kimi": { "enabled": false, "showExitButton": true },
       "_default": { "enabled": false, "showExitButton": true }
     },
     "panelAvoidance": {
       "doubao": { "enabled": true },
       "deepseek": { "enabled": true },
+      "kimi": { "enabled": true },
       "_default": { "enabled": true }
     }
   },
