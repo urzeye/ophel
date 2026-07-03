@@ -623,6 +623,12 @@ export class LayoutManager {
 
     const panel = this.findMainPanel()
     const scope = this.findPanelAvoidanceScope()
+    if (this.panelAvoidanceConfig.scopeSelector && !scope) {
+      this.syncPanelAvoidanceObservers(panel, null)
+      this.clearPanelAvoidanceStyle()
+      return
+    }
+
     const scopeRect = this.getPanelAvoidanceScopeRect(scope)
     this.syncPanelAvoidanceObservers(panel, scope)
 
