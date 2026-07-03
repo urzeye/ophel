@@ -30,6 +30,7 @@ import {
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type PanelAvoidanceConfig,
 } from "./base"
 
 const IMA_HOSTNAME = "ima.qq.com"
@@ -141,6 +142,10 @@ const IMA_MODEL_TEXT_SELECTOR = '[class*="modelSelectionText"]'
 const IMA_MODEL_MENU_ITEM_SELECTOR =
   '.modelDropdown .t-dropdown__item, .modelDropdown [class*="modelOption"], .t-popup .modelDropdown .t-dropdown__item'
 const IMA_FOOT_TIPS_SELECTOR = '[class*="footTips"]'
+const IMA_PAGE_CONTENT_SELECTOR = ".expandable-sidebar-panel-sidebar ~ [class*='_content_']"
+const IMA_MAIN_AREA_SELECTOR = '[class*="mainArea"]'
+const IMA_CHAT_INPUT_CONTAINER_SELECTOR = '[class*="chatInputContainer"]'
+const IMA_EDITOR_CONTAINER_SELECTOR = '[class*="chatInputContainer"] [class*="editorContainer"]'
 
 const MAX_OUTLINE_TEXT_LENGTH = 80
 
@@ -579,6 +584,38 @@ export class ImaAdapter extends SiteAdapter {
         extraCss: "width: 100vw !important; margin: 0 auto;",
       },
     ]
+  }
+
+  getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    return {
+      scopeSelector: IMA_PAGE_CONTENT_SELECTOR,
+      widthSelectors: [
+        {
+          selector: IMA_RESPONSE_CONTAINER_SELECTOR,
+          property: "width",
+          extraCss: "max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: IMA_EDITOR_CONTAINER_SELECTOR,
+          property: "width",
+          extraCss: "max-width: 100% !important; min-width: 0 !important;",
+        },
+      ],
+      insetSelectors: [
+        {
+          selector: IMA_MAIN_AREA_SELECTOR,
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: IMA_CHAT_INPUT_CONTAINER_SELECTOR,
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+      ],
+      defaultWidth: "960px",
+      gap: 16,
+    }
   }
 
   getUserQueryWidthSelectors(): Array<{ selector: string; property: string }> {

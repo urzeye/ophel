@@ -33,6 +33,7 @@ import {
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type PanelAvoidanceConfig,
   type SiteDeleteConversationResult,
 } from "./base"
 
@@ -173,6 +174,9 @@ const DIALOG_BUTTON_SELECTOR =
   '.t-dialog button, .t-dialog [role="button"], [role="dialog"] button, [role="dialog"] [role="button"]'
 const YUANBAO_WIDTH_MAX_VAR = "--hunyuan-chat-list-max-width"
 const YUANBAO_WIDTH_VAR = "--hunyuan-chat-list-width"
+const YUANBAO_LAYOUT_SCOPE_SELECTOR = ".yb-layout__content, .yb-layout__content-skeleton"
+const YUANBAO_CHAT_CONTENT_SELECTOR = ".agent-dialogue__content--common__content"
+const YUANBAO_CHAT_INPUT_SELECTOR = ".agent-dialogue__content--common__input"
 
 const DELETE_TEXT_PATTERN = /删除|delete/i
 const CONFIRM_TEXT_PATTERN = /删除|确认|确定|delete|confirm/i
@@ -767,6 +771,25 @@ export class YuanbaoAdapter extends SiteAdapter {
         noCenter: true,
       },
     ]
+  }
+
+  getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    return {
+      scopeSelector: YUANBAO_LAYOUT_SCOPE_SELECTOR,
+      widthSelectors: this.getWidthSelectors(),
+      insetSelectors: [
+        {
+          selector: YUANBAO_CHAT_CONTENT_SELECTOR,
+          extraCss: "box-sizing: border-box;",
+        },
+        {
+          selector: YUANBAO_CHAT_INPUT_SELECTOR,
+          extraCss: "box-sizing: border-box;",
+        },
+      ],
+      defaultWidth: "960px",
+      gap: 16,
+    }
   }
 
   async toggleTheme(targetMode: "light" | "dark"): Promise<boolean> {

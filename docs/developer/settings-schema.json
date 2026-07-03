@@ -63,25 +63,33 @@
     "pageWidth": {
       "gemini": { "enabled": false, "value": "81", "unit": "%" },
       "gemini-enterprise": { "enabled": false, "value": "81", "unit": "%" },
+      "ima": { "enabled": false, "value": "81", "unit": "%" },
       "kimi": { "enabled": false, "value": "81", "unit": "%" },
+      "yuanbao": { "enabled": false, "value": "81", "unit": "%" },
       "_default": { "enabled": false, "value": "81", "unit": "%" }
     },
     "userQueryWidth": {
       "gemini": { "enabled": false, "value": "81", "unit": "%" },
       "gemini-enterprise": { "enabled": false, "value": "81", "unit": "%" },
+      "ima": { "enabled": false, "value": "81", "unit": "%" },
       "kimi": { "enabled": false, "value": "81", "unit": "%" },
+      "yuanbao": { "enabled": false, "value": "81", "unit": "%" },
       "_default": { "enabled": false, "value": "81", "unit": "%" }
     },
     "zenMode": {
       "gemini": { "enabled": false, "showExitButton": true },
       "gemini-enterprise": { "enabled": false, "showExitButton": true },
+      "ima": { "enabled": false, "showExitButton": true },
       "kimi": { "enabled": false, "showExitButton": true },
+      "yuanbao": { "enabled": false, "showExitButton": true },
       "_default": { "enabled": false, "showExitButton": true }
     },
     "panelAvoidance": {
       "doubao": { "enabled": true },
       "deepseek": { "enabled": true },
+      "ima": { "enabled": true },
       "kimi": { "enabled": true },
+      "yuanbao": { "enabled": true },
       "_default": { "enabled": true }
     }
   },
