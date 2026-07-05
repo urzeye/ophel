@@ -61,13 +61,16 @@ const KIMI_TOKEN_FIELD_KEYS = [
 const JWT_TOKEN_REGEX = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/
 const TOKEN_KEYWORD_REGEX = /(token|auth|jwt|tea)/i
 
-const SIDEBAR_CONVERSATION_SELECTOR = "a.chat-info-item"
+const SIDEBAR_CONVERSATION_SELECTOR = "a.chat-info-item, a.next-sidebar-history-item__link"
 const HISTORY_PAGE_CONVERSATION_SELECTOR = "a.history-link"
 const CONVERSATION_SELECTOR = `${SIDEBAR_CONVERSATION_SELECTOR}, ${HISTORY_PAGE_CONVERSATION_SELECTOR}`
 const HISTORY_CONTAINER_SELECTOR = ".history-part"
 const HISTORY_PAGE_LIST_SELECTOR = ".history .group-list-container"
-const CONVERSATION_TITLE_SELECTOR = "span.chat-name"
+const CONVERSATION_TITLE_SELECTOR = "span.chat-name, .next-sidebar-history-item__title"
 const HISTORY_TITLE_SELECTOR = ".history-chat .title-wrapper .title"
+const NEXT_SIDEBAR_BODY_SELECTOR = ".next-sidebar__body"
+const NEXT_SIDEBAR_HISTORY_LIST_SELECTOR = ".next-sidebar-history-list"
+const NEXT_SIDEBAR_HISTORY_ITEMS_SELECTOR = ".next-sidebar-history-list__items"
 
 const CHAT_LIST_SELECTOR = ".chat-content-list"
 const SHARE_LIST_SELECTOR = ".share-content-list"
@@ -294,6 +297,9 @@ export class KimiAdapter extends SiteAdapter {
       document.querySelector(".history .usage-content"),
       document.querySelector(".history .content"),
       document.querySelector(".history"),
+      document.querySelector(NEXT_SIDEBAR_HISTORY_ITEMS_SELECTOR),
+      document.querySelector(NEXT_SIDEBAR_HISTORY_LIST_SELECTOR),
+      document.querySelector(NEXT_SIDEBAR_BODY_SELECTOR),
     ].filter(Boolean) as Element[]
 
     for (const candidate of candidates) {
@@ -302,6 +308,7 @@ export class KimiAdapter extends SiteAdapter {
       if (candidate instanceof HTMLElement && candidate.scrollHeight > candidate.clientHeight) {
         return candidate
       }
+      if (candidate.matches(NEXT_SIDEBAR_BODY_SELECTOR)) return candidate
     }
 
     return null
@@ -1522,9 +1529,10 @@ export class KimiAdapter extends SiteAdapter {
 
     const title = this.extractConversationTitle(el)
     const isActive =
+      id === this.getSessionId() ||
       el.classList.contains("router-link-active") ||
       el.classList.contains("router-link-exact-active")
-    const isPinned = !!el.querySelector("svg.pinned, .pinned")
+    const isPinned = !!el.querySelector("svg.pinned, .pinned, .next-sidebar-history-item__pinned")
 
     return {
       id,
@@ -1653,7 +1661,11 @@ export class KimiAdapter extends SiteAdapter {
     if (this.isHistoryPath()) return
 
     const moreHistoryLink = document.querySelector(
-      'a.more-history[href*="/chat/history"], a.nav-item.more-history[href*="/chat/history"]',
+      [
+        'a.more-history[href*="/chat/history"]',
+        'a.nav-item.more-history[href*="/chat/history"]',
+        'a.next-sidebar__section-text-action[href*="/chat/history"]',
+      ].join(", "),
     ) as HTMLElement | null
     if (!moreHistoryLink) return
 
