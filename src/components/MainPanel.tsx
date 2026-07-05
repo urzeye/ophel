@@ -91,22 +91,23 @@ const reorderVisiblePanelTabs = (
   sourceTab: string,
   targetTab: string,
 ) => {
-  if (
-    sourceTab === targetTab ||
-    !visibleTabs.includes(sourceTab) ||
-    !visibleTabs.includes(targetTab)
-  ) {
+  const sourceIndex = visibleTabs.indexOf(sourceTab)
+  const targetIndex = visibleTabs.indexOf(targetTab)
+
+  if (sourceTab === targetTab || sourceIndex === -1 || targetIndex === -1) {
     return currentOrder
   }
 
   const nextVisibleTabs = visibleTabs.filter((tab) => tab !== sourceTab)
-  const targetIndex = nextVisibleTabs.indexOf(targetTab)
-  nextVisibleTabs.splice(targetIndex, 0, sourceTab)
+  const nextTargetIndex = nextVisibleTabs.indexOf(targetTab)
+  const insertAfterTarget = sourceIndex < targetIndex
+  const insertIndex = nextTargetIndex + (insertAfterTarget ? 1 : 0)
+  nextVisibleTabs.splice(insertIndex, 0, sourceTab)
 
   const visibleSet = new Set(visibleTabs)
   let visibleIndex = 0
 
-  return currentOrder.map((tab) => {
+  const nextOrder = currentOrder.map((tab) => {
     if (!visibleSet.has(tab)) {
       return tab
     }
@@ -115,6 +116,8 @@ const reorderVisiblePanelTabs = (
     visibleIndex += 1
     return nextTab ?? tab
   })
+
+  return nextOrder.every((tab, index) => tab === currentOrder[index]) ? currentOrder : nextOrder
 }
 
 export const MainPanel: React.FC<MainPanelProps> = ({
