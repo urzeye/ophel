@@ -59,7 +59,9 @@ const DOUBAO_CONTENT_WIDTH_ROOT_SELECTOR = "#chat-route-layout"
 const DOUBAO_CONTENT_WIDTH_SELECTOR = `${DOUBAO_MAIN_SELECTOR} .max-w-\\(--content-max-width\\)`
 const DOUBAO_CONTENT_WIDTH_VAR_SELECTOR = `${DOUBAO_MAIN_SELECTOR} .max-w-\\[var\\(--content-max-width\\)\\]`
 const DOUBAO_CONTENT_COLUMN_SELECTOR = `${DOUBAO_MAIN_SELECTOR} .flex.h-full.min-h-0.w-full.flex-1.flex-col:has(${VIRTUAL_SCROLL_SELECTOR}):has([class*="input-content-container"])`
-const DOUBAO_INPUT_SAFE_AREA_SELECTOR = `${DOUBAO_MAIN_SELECTOR} [class*="input-content-container"]`
+const DOUBAO_NEW_CHAT_SAFE_AREA_SELECTOR = `${DOUBAO_MAIN_SELECTOR} [class*="-mt-[var(--header-height)]"][class*="flex-grow"][class*="items-center"]:has([class*="input-content-container"])`
+const DOUBAO_CANVAS_SCOPE_SELECTOR = "aside:has(.code-canvas)"
+const DOUBAO_CANVAS_SAFE_AREA_SELECTOR = `${DOUBAO_CANVAS_SCOPE_SELECTOR} .code-canvas`
 const SHARE_MESSAGE_LIST_SELECTOR = '[class*="message-list-root-"]'
 const MESSAGE_BLOCK_SELECTOR = '[data-target-id="message-box-target-id"]'
 const USER_QUERY_SELECTOR = "[data-message-id].justify-end"
@@ -2315,8 +2317,16 @@ export class DoubaoAdapter extends SiteAdapter {
           extraCss: "box-sizing: border-box;",
         },
         {
-          selector: DOUBAO_INPUT_SAFE_AREA_SELECTOR,
+          selector: DOUBAO_NEW_CHAT_SAFE_AREA_SELECTOR,
+          insetMode: "edge",
           extraCss: "box-sizing: border-box;",
+        },
+        {
+          selector: DOUBAO_CANVAS_SAFE_AREA_SELECTOR,
+          scopeSelector: DOUBAO_CANVAS_SCOPE_SELECTOR,
+          applySide: "right",
+          insetMode: "edge",
+          extraCss: "box-sizing: border-box; min-width: 0 !important;",
         },
       ],
       defaultWidth: "800px",

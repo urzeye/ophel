@@ -113,6 +113,8 @@ Canvas 打开后，DeepSeek 会形成左侧聊天、右侧 iframe 预览的双�
 - `[data-container-name="main"]` 是扣除左侧栏后的聊天主区域。
 - 消息虚拟列表在 `[class*="v_list_scroller"]` 下，消息行内容节点使用 `max-w-(--content-max-width)`。
 - 输入区与消息列表同属一个内容列，输入框外层使用 `max-w-[var(--content-max-width)]` 和 `max-w-(--content-max-width)`。
+- 新对话页没有消息虚拟列表，问候语和输入框同属一个全高居中容器；输入框边框、阴影和按钮在 `input-content-container` 内部，不能直接给这层加 padding，否则只会移动内部控件而边框仍然遮挡面板。
+- Canvas 页面把右侧预览放在独立 `aside` 里，实际 iframe 位于 `.code-canvas` 下；不能给 `aside` 或绝对定位外层加 `margin-right`，否则整个右栏会左移并压到聊天列。
 - 虚拟列表行依赖 `transform: translate(...)` 做垂直定位，不能对行本身做水平位移。
 
 因此 Doubao 配置不缩放整个 `main` flex 区域，而是：
@@ -120,6 +122,8 @@ Canvas 打开后，DeepSeek 会形成左侧聊天、右侧 iframe 预览的双�
 1. 使用 `[data-container-name="main"]` 作为 scope，天然兼容左侧栏展开/收起。
 2. 覆盖 `#chat-route-layout` 的 `--content-max-width`，并同步覆盖消息/输入区消费该变量的 `max-width` 节点。
 3. 对同时包含虚拟列表和输入区的内容列容器增加左右 padding，让消息和输入框一起进入安全区。
+4. 对新对话页的全高居中容器使用 `edge` inset，只预留 Ophel 面板实际占用的边缘空间，让问候语和输入框外框作为整体避让。
+5. 对 Canvas 右栏使用独立 `aside:has(.code-canvas)` scope，并只给 `.code-canvas` 加右侧 `edge` padding，让 iframe 和顶部工具区缩进到 Ophel 面板左侧。
 
 ## 后续已适配站点
 
