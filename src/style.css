@@ -599,11 +599,15 @@
 
 .gh-panel-tab-btn.is-dragging {
   opacity: 0.48;
+  outline: 1px dashed var(--gh-primary, #4285f4);
+  outline-offset: -3px;
 }
 
 .gh-panel-tab-btn.is-drag-over {
   color: var(--gh-primary, #4285f4);
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, var(--gh-bg, #ffffff));
+  outline: 2px dashed color-mix(in srgb, var(--gh-primary, #4285f4) 70%, transparent);
+  outline-offset: -3px;
   box-shadow: inset 0 -2px 0 var(--gh-primary, #4285f4);
 }
 
