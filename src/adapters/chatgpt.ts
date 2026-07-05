@@ -151,8 +151,13 @@ const CHATGPT_CODEX_TASK_MARKDOWN_SELECTOR = ".markdown.markdown-new-styling"
 const CHATGPT_CODEX_TASK_USER_QUERY_SELECTOR = ".self-end.bg-token-bg-tertiary .whitespace-pre-wrap"
 const CHATGPT_LAYOUT_SCOPE_SELECTOR = "main#main"
 const CHATGPT_THREAD_WIDTH_SELECTOR =
-  '#thread [class*="thread-content-max-width"], #thread [style*="--thread-content-max-width"]'
-const CHATGPT_THREAD_SAFE_AREA_SELECTOR = '#thread [class*="thread-content-margin"]'
+  '#thread [class*="thread-content-max-width"], #thread [style*="--thread-content-max-width"], main#main form[data-type="unified-composer"], main#main #composer-background'
+const CHATGPT_THREAD_SAFE_AREA_SELECTOR =
+  '#thread [class*="thread-content-margin"], main#main form[data-type="unified-composer"]'
+const CHATGPT_PANEL_OBSTACLE_SELECTOR = [
+  CHATGPT_DEEP_RESEARCH_IFRAME_SELECTOR,
+  "#stage-slideover-sidebar",
+].join(", ")
 
 interface ChatGPTExportMessageSnapshot {
   role: "user" | "assistant"
@@ -1049,6 +1054,7 @@ export class ChatGPTAdapter extends SiteAdapter {
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
     return {
       scopeSelector: CHATGPT_LAYOUT_SCOPE_SELECTOR,
+      obstacleSelectors: [CHATGPT_PANEL_OBSTACLE_SELECTOR],
       widthSelectors: [
         {
           selector: CHATGPT_THREAD_WIDTH_SELECTOR,

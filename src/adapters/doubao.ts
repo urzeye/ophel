@@ -59,6 +59,7 @@ const DOUBAO_CONTENT_WIDTH_ROOT_SELECTOR = "#chat-route-layout"
 const DOUBAO_CONTENT_WIDTH_SELECTOR = `${DOUBAO_MAIN_SELECTOR} .max-w-\\(--content-max-width\\)`
 const DOUBAO_CONTENT_WIDTH_VAR_SELECTOR = `${DOUBAO_MAIN_SELECTOR} .max-w-\\[var\\(--content-max-width\\)\\]`
 const DOUBAO_CONTENT_COLUMN_SELECTOR = `${DOUBAO_MAIN_SELECTOR} .flex.h-full.min-h-0.w-full.flex-1.flex-col:has(${VIRTUAL_SCROLL_SELECTOR}):has([class*="input-content-container"])`
+const DOUBAO_INPUT_SAFE_AREA_SELECTOR = `${DOUBAO_MAIN_SELECTOR} [class*="input-content-container"]`
 const SHARE_MESSAGE_LIST_SELECTOR = '[class*="message-list-root-"]'
 const MESSAGE_BLOCK_SELECTOR = '[data-target-id="message-box-target-id"]'
 const USER_QUERY_SELECTOR = "[data-message-id].justify-end"
@@ -2311,6 +2312,10 @@ export class DoubaoAdapter extends SiteAdapter {
       insetSelectors: [
         {
           selector: DOUBAO_CONTENT_COLUMN_SELECTOR,
+          extraCss: "box-sizing: border-box;",
+        },
+        {
+          selector: DOUBAO_INPUT_SAFE_AREA_SELECTOR,
           extraCss: "box-sizing: border-box;",
         },
       ],

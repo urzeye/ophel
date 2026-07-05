@@ -72,8 +72,9 @@ const HISTORY_TITLE_SELECTOR = ".history-chat .title-wrapper .title"
 const CHAT_LIST_SELECTOR = ".chat-content-list"
 const SHARE_LIST_SELECTOR = ".share-content-list"
 const RESPONSE_LIST_SELECTOR = `${CHAT_LIST_SELECTOR}, ${SHARE_LIST_SELECTOR}`
-const CHAT_LAYOUT_SCOPE_SELECTOR = ".chat-detail-content"
-const CHAT_DETAIL_MAIN_SELECTOR = ".chat-detail-main"
+const CHAT_LAYOUT_SCOPE_SELECTOR =
+  ".chat-detail-content, body:not(:has(.chat-detail-content)) #chat-container.layout-content"
+const CHAT_DETAIL_MAIN_SELECTOR = ".chat-detail-main, #chat-container.layout-content"
 const CHAT_CONTENT_CONTAINER_SELECTOR = ".chat-content-container"
 const CHAT_ACTION_CONTAINER_SELECTOR = ".chat-action .bottom-action-container"
 const CHAT_EDITOR_SELECTOR = ".chat-editor"

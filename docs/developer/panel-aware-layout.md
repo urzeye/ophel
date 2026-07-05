@@ -27,6 +27,7 @@ Ophel 主面板是固定定位的 Shadow DOM 浮层。页面默认宽度较窄�
 ```ts
 interface PanelAvoidanceConfig {
   scopeSelector?: string
+  obstacleSelectors?: string[]
   widthSelectors: WidthSelectorConfig[]
   insetSelectors?: PanelAvoidanceInsetConfig[]
   defaultWidth?: string
@@ -37,7 +38,7 @@ interface PanelAvoidanceConfig {
 }
 ```
 
-`PanelAvoidanceInsetConfig` 可选声明自己的 `scopeSelector`、`applySide` 和 `insetMode`。默认复用主 `scopeSelector`、同时应用左右 inset，并使用包含内容居中余量的 `centered` 模式；当站点存在聊天区之外的固定右栏或兄弟面板时，可以为该面板单独声明更大的计算 scope，使用 `edge` 模式只取避让面板所需的边缘余量，避免主聊天区未重叠时整段避让样式被清掉，也避免右栏被内容居中余量额外推开。
+`obstacleSelectors` 用于声明宿主页面自己打开的侧栏、Canvas、文档、深度研究或思考面板；这些原生面板会和 Ophel 面板一起参与安全区计算。`PanelAvoidanceInsetConfig` 可选声明自己的 `scopeSelector`、`applySide` 和 `insetMode`。默认复用主 `scopeSelector`、同时应用左右 inset，并使用包含内容居中余量的 `centered` 模式；当站点存在聊天区之外的固定右栏或兄弟面板时，可以为该面板单独声明更大的计算 scope，使用 `edge` 模式只取避让面板所需的边缘余量，避免主聊天区未重叠时整段避让样式被清掉，也避免右栏被内容居中余量额外推开。
 
 执行流程：
 
@@ -45,13 +46,13 @@ interface PanelAvoidanceConfig {
 2. `LayoutManager.startPanelAvoidance()` 查找 Shadow DOM 内的 `.gh-main-panel`。
 3. 读取 `layout.panelAvoidance[siteId].enabled`；用户关闭时停止监听并移除避让样式。
 4. 视口宽度小于 `minViewportWidth` 时直接移除避让样式，避免手机和窄屏设备被进一步压缩。
-5. 读取站点声明的 `scopeSelector` 作为内容区域；未声明时才退回整个 viewport。
-6. 读取面板 `getBoundingClientRect()`，只计算面板与 scope 相交的左右占用区。
+5. 读取站点声明的 `scopeSelector` 作为内容区域；未声明时才退回整个 viewport。查找会穿透页面 Shadow DOM，以支持 Gemini Enterprise 这类站点。
+6. 读取 Ophel 面板和 `obstacleSelectors` 命中的宿主原生面板 `getBoundingClientRect()`，只计算它们与 scope 相交的左右占用区。
 7. 如果 `panel.panelMode` 不是 `floating`，或面板带有 `edge-snapped-left/right` class，移除避让样式。
 8. 如果面板可见宽度小于阈值，视为收起态，移除避让样式。
 9. 如果 `.gh-root` 处于 `gh-pass-through` 幽灵模式，移除避让样式。
 10. 将 Page Widening 的百分比宽度先换算成 scope 内的 px 宽度，再与安全区宽度取较小值。
-11. 生成 `#gh-panel-avoidance-styles`，注入主文档 `document.head`。
+11. 生成 `#gh-panel-avoidance-styles`，注入主文档 `document.head`；同时生成 Shadow DOM 版本并通过 `#gh-panel-avoidance-shadow` 注入允许的页面 Shadow Root。
 12. 监听面板和 scope 的 resize，面板 `class/style` 变化，以及页面 resize，使用 `requestAnimationFrame` 合并更新。
 
 安全区宽度按 scope 计算，而不是按 `100vw` 计算：
@@ -130,6 +131,7 @@ DeepSeek 和 Doubao 之后，智能避让已经扩展到以下站点：
 | Qianwen | 千问左侧聊天面板 | 重算消息中心、消息滚动区变量和回答块宽度 | 对聊天内容区加左右安全区 | `800px` |
 | Qwen Studio | `.chat-left-panel` | 避让时只重算消息外层宽度 | 消息滚动区和输入安全区加左右安全区 | `800px` |
 | Gemini | `bard-sidenav-content` | 避让时重算消息列和输入框宽度 | 消息滚动区和输入宿主加左右安全区 | `760px` |
+| Gemini Enterprise | `mat-sidenav-content` / `.main.chat-mode` | 复用 Enterprise 宽度选择器并注入页面 Shadow DOM | 主内容区和输入区加左右安全区 | `760px` |
 | ChatGPT | `main#main` | 重算消息列和输入框共用的 thread 内容宽度 | 对消息和输入区外层加左右安全区 | `768px` |
 | Claude | `#main-content` | 重算嵌套 `max-w-3xl` 内容列宽度 | 对聊天滚动容器加左右安全区 | `768px` |
 | AI Studio | `.chunk-editor-main` | 重算聊天列、消息 turn 和输入框宽度 | 聊天滚动区和输入区加左右安全区，右侧 Run settings 单独向左避让 | `1000px` |
@@ -206,10 +208,22 @@ Gemini 标准版的消息滚动区和输入区是兄弟节点：消息列在 `in
 
 适配策略：
 
-- 使用 `bard-sidenav-content` 作为 `scopeSelector`，按扣除 Gemini 左侧栏后的主内容区计算安全区。
+- 使用 `bard-sidenav-content` 作为首选 `scopeSelector`，新对话页没有该节点时回退到 `main.chat-app`。
 - 避让时同时重算 `.conversation-container` 和 `.input-area-container` 的 `max-width`，让消息列和输入框使用同一个安全区目标宽度。
 - 对 `infinite-scroller.chat-history` 和 `input-container` 加左右安全区，让消息区和输入区位置同步。
 - 输入框外层仍保留在安全区容器内，避免只改输入框宽度但位置仍落在面板下方。
+- Deep Research、Canvas 和 Drive 文档查看器使用 `immersive-panel` 内部面板作为 `obstacleSelectors`，打开时会与 Ophel 面板一起扣除右侧安全区。
+
+### Gemini Enterprise
+
+Gemini Enterprise 页面内容在页面自己的 Shadow DOM 中，普通 document 样式和 document 查询不能完整覆盖。
+
+适配策略：
+
+- `LayoutManager` 的 scope 与 obstacle 查找穿透页面 Shadow DOM。
+- 避让样式除注入 `document.head` 外，还通过 `#gh-panel-avoidance-shadow` 注入允许的页面 Shadow Root。
+- 复用 Enterprise 已有页面宽度选择器，避免再维护一套平行宽度规则。
+- 使用 `mat-sidenav-content, .main.chat-mode` 作为 scope，输入区 `.input-area-container` 单独加入 inset。
 
 ### ChatGPT
 
@@ -258,10 +272,6 @@ Grok 的消息列和底部输入区共享 `--content-max-width`、`--content-bre
 - 默认宽度使用 `768px`，对应 Grok 桌面最大内容列 `48rem`，未开启页面宽度控制时不额外放大。
 
 ## 后续适配建议
-
-优先级建议：
-
-1. Gemini Enterprise：需要验证第三方 Shadow DOM 注入。
 
 每个站点适配前先确认：
 

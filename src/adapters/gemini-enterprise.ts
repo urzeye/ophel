@@ -17,6 +17,7 @@ import {
   type ModelSwitcherConfig,
   type NetworkMonitorConfig,
   type OutlineItem,
+  type PanelAvoidanceConfig,
   type SiteDeleteConversationResult,
 } from "./base"
 
@@ -796,6 +797,27 @@ export class GeminiEnterpriseAdapter extends SiteAdapter {
       // 输入框容器：不居中，使用 left/right 定位
       config(".input-area-container", undefined, "left: 0 !important; right: 0 !important;", true),
     ]
+  }
+
+  getPanelAvoidanceConfig(): PanelAvoidanceConfig {
+    return {
+      scopeSelector: "mat-sidenav-content, .main.chat-mode",
+      widthSelectors: this.getWidthSelectors(),
+      insetSelectors: [
+        {
+          selector: "mat-sidenav-content, .main.chat-mode",
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: ".input-area-container",
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+      ],
+      defaultWidth: "760px",
+      gap: 16,
+    }
   }
 
   /** 用户问题宽度选择器（Shadow DOM 内部，需要高优先级覆盖 :host([spk2])）*/

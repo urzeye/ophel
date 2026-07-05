@@ -110,6 +110,8 @@
       "_default": { "enabled": false, "showExitButton": true }
     },
     "panelAvoidance": {
+      "gemini": { "enabled": true },
+      "gemini-enterprise": { "enabled": true },
       "grok": { "enabled": true },
       "aistudio": { "enabled": true },
       "chatgpt": { "enabled": true },

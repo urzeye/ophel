@@ -94,7 +94,13 @@ const CLAUDE_THOUGHT_TOGGLE_SELECTOR = "button[aria-expanded]"
 const CLAUDE_THOUGHT_STATUS_SELECTOR = 'span[role="status"][aria-live="polite"]'
 const CLAUDE_LAYOUT_SCOPE_SELECTOR = "#main-content"
 const CLAUDE_CONTENT_WIDTH_SELECTORS = ["#main-content .max-w-3xl", "#main-content .max-w-4xl"]
-const CLAUDE_SCROLL_SAFE_AREA_SELECTOR = '#main-content [data-autoscroll-container="true"]'
+const CLAUDE_SCROLL_SAFE_AREA_SELECTOR =
+  '#main-content [data-autoscroll-container="true"], #main-content:has(.ProseMirror)'
+const CLAUDE_PANEL_OBSTACLE_SELECTOR = [
+  CLAUDE_DOCUMENT_ROOT_SELECTOR,
+  '[data-testid="artifact-panel"]',
+  '[data-testid="artifact-sidebar"]',
+].join(", ")
 
 interface ClaudeExportLifecycleState {
   documentPanelWasOpen: boolean
@@ -2650,6 +2656,7 @@ export class ClaudeAdapter extends SiteAdapter {
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
     return {
       scopeSelector: CLAUDE_LAYOUT_SCOPE_SELECTOR,
+      obstacleSelectors: [CLAUDE_PANEL_OBSTACLE_SELECTOR],
       widthSelectors: this.getWidthSelectors(),
       insetSelectors: [
         {

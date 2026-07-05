@@ -183,6 +183,11 @@ const GEMINI_CANVAS_DOCUMENT_MARKDOWN_SELECTOR = [
   "immersive-editor .ProseMirror",
   "#extended-response-markdown-content",
 ].join(", ")
+const GEMINI_PANEL_OBSTACLE_SELECTOR = [
+  GEMINI_DEEP_RESEARCH_IMMERSIVE_PANEL_SELECTOR,
+  GEMINI_CANVAS_IMMERSIVE_PANEL_SELECTOR,
+  "immersive-panel .drive-viewer",
+].join(", ")
 const GEMINI_CANVAS_CODE_REQUEST_TIMEOUT_MS = 900
 const GEMINI_PANEL_MARKDOWN_ACTIONS_CLASS = "gh-gemini-panel-markdown-actions"
 const GEMINI_PANEL_MARKDOWN_ACTION_CLASS = "gh-gemini-panel-markdown-action"
@@ -329,7 +334,8 @@ const GEMINI_MARKDOWN_FIXER_SOURCE_SELECTOR = [
     `[data-test-id*='${keyword}' i]`,
   ]),
 ].join(",")
-const GEMINI_LAYOUT_SCOPE_SELECTOR = "bard-sidenav-content"
+const GEMINI_LAYOUT_SCOPE_SELECTOR =
+  "bard-sidenav-content, body:not(:has(bard-sidenav-content)) main.chat-app"
 const GEMINI_MESSAGE_WIDTH_SELECTOR = ".conversation-container"
 const GEMINI_MESSAGE_SAFE_AREA_SELECTOR = "infinite-scroller.chat-history"
 const GEMINI_INPUT_WIDTH_SELECTOR = ".input-area-container"
@@ -2489,6 +2495,7 @@ export class GeminiAdapter extends SiteAdapter {
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
     return {
       scopeSelector: GEMINI_LAYOUT_SCOPE_SELECTOR,
+      obstacleSelectors: [GEMINI_PANEL_OBSTACLE_SELECTOR],
       widthSelectors: [
         {
           selector: GEMINI_MESSAGE_WIDTH_SELECTOR,

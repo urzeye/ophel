@@ -168,6 +168,8 @@ export interface PanelAvoidanceInsetConfig {
 export interface PanelAvoidanceConfig {
   /** 用于计算安全区的宿主页内容容器；未设置时按整个 viewport 计算。 */
   scopeSelector?: string
+  /** 宿主页面自己打开的右侧/左侧面板；存在时和 Ophel 面板一起扣除安全区。 */
+  obstacleSelectors?: string[]
   /** 需要按扣除 Ophel 面板后的安全区域重算宽度的站点选择器。 */
   widthSelectors: WidthSelectorConfig[]
   /** 需要按安全区中心重新分配左右 inset 的站点选择器。 */

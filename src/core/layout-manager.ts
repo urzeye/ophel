@@ -16,6 +16,7 @@ const STYLE_IDS = {
   PAGE_WIDTH: "gh-page-width-styles",
   PAGE_WIDTH_SHADOW: "gh-page-width-shadow",
   PANEL_AVOIDANCE: "gh-panel-avoidance-styles",
+  PANEL_AVOIDANCE_SHADOW: "gh-panel-avoidance-shadow",
   USER_QUERY_WIDTH: "gh-user-query-width-styles",
   USER_QUERY_WIDTH_SHADOW: "gh-user-query-width-shadow",
   ZEN_MODE: "gh-zen-mode-styles",
@@ -51,6 +52,11 @@ interface HorizontalRect {
   width: number
 }
 
+interface PanelAvoidanceObstacle {
+  element: HTMLElement
+  rect: DOMRect
+}
+
 /**
  * 页面布局管理器
  * 负责动态注入页面宽度和用户问题宽度样式，支持 Shadow DOM
@@ -63,6 +69,7 @@ export class LayoutManager {
 
   private pageWidthStyle: HTMLStyleElement | null = null
   private panelAvoidanceStyle: HTMLStyleElement | null = null
+  private panelAvoidanceShadowCss = ""
   private userQueryWidthStyle: HTMLStyleElement | null = null
   private zenModeStyle: HTMLStyleElement | null = null
   private zenModeConfig: ZenModeConfig = DEFAULT_ZEN_MODE_CONFIG
@@ -128,9 +135,15 @@ export class LayoutManager {
 
     if (document.body) {
       this.panelAvoidanceHostObserver = new MutationObserver(this.schedulePanelAvoidanceUpdate)
-      this.panelAvoidanceHostObserver.observe(document.body, { childList: true, subtree: true })
+      this.panelAvoidanceHostObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["class", "style", "hidden", "aria-hidden", "data-state"],
+      })
     }
 
+    this.refreshShadowInjection()
     this.schedulePanelAvoidanceUpdate()
   }
 
@@ -161,6 +174,7 @@ export class LayoutManager {
     this.panelAvoidanceObservedPanel = null
     this.panelAvoidanceObservedScope = null
     this.clearPanelAvoidanceStyle()
+    this.refreshShadowInjection()
   }
 
   // ==================== 用户问题宽度 ====================
@@ -327,6 +341,7 @@ export class LayoutManager {
   private generatePanelAvoidanceCSS(
     panel: HTMLElement,
     reservation: PanelReservation | null,
+    useGlobalSelector = true,
   ): string {
     const config = this.panelAvoidanceConfig
     if (!config) return ""
@@ -335,7 +350,7 @@ export class LayoutManager {
       ? this.buildCSSFromSelectors(
           config.widthSelectors,
           `${Math.max(0, Math.floor(reservation.targetWidth))}px`,
-          true,
+          useGlobalSelector,
         )
       : ""
     const insetCss = (config.insetSelectors || [])
@@ -451,7 +466,12 @@ export class LayoutManager {
   ): HTMLElement | null {
     if (!selector) return null
 
-    for (const candidate of Array.from(document.querySelectorAll(selector))) {
+    const candidates = DOMToolkit.query(selector, {
+      all: true,
+      shadow: true,
+    }) as Element[] | null
+
+    for (const candidate of candidates || []) {
       if (!(candidate instanceof HTMLElement)) continue
 
       const rect = candidate.getBoundingClientRect()
@@ -505,7 +525,51 @@ export class LayoutManager {
     if (root?.classList.contains("gh-pass-through")) return null
     if (this.isPanelAvoidanceSuppressedByPanelState(panel)) return null
 
-    const style = window.getComputedStyle(panel)
+    const obstacles = this.getPanelAvoidanceObstacles(panel)
+    if (obstacles.length === 0) return null
+    return this.getPanelReservationFromObstacles(obstacles, scopeRect)
+  }
+
+  private getPanelAvoidanceObstacles(panel: HTMLElement): PanelAvoidanceObstacle[] {
+    const obstacles: PanelAvoidanceObstacle[] = []
+    const panelRect = this.getVisiblePanelAvoidanceObstacleRect(panel, {
+      minWidth: this.panelAvoidanceConfig?.minVisiblePanelWidth,
+      minHeight: 120,
+    })
+
+    if (!panelRect) return obstacles
+    obstacles.push({ element: panel, rect: panelRect })
+
+    for (const selector of this.panelAvoidanceConfig?.obstacleSelectors || []) {
+      const candidates = DOMToolkit.query(selector, {
+        all: true,
+        shadow: true,
+      }) as Element[] | null
+
+      for (const candidate of candidates || []) {
+        if (!(candidate instanceof HTMLElement)) continue
+        if (candidate === panel || panel.contains(candidate) || candidate.closest(".gh-root")) {
+          continue
+        }
+
+        const rect = this.getVisiblePanelAvoidanceObstacleRect(candidate, {
+          minWidth: 80,
+          minHeight: 120,
+        })
+        if (!rect) continue
+
+        obstacles.push({ element: candidate, rect })
+      }
+    }
+
+    return this.dedupePanelAvoidanceObstacles(obstacles)
+  }
+
+  private getVisiblePanelAvoidanceObstacleRect(
+    element: HTMLElement,
+    options: { minWidth?: number; minHeight?: number },
+  ): DOMRect | null {
+    const style = window.getComputedStyle(element)
     if (
       style.display === "none" ||
       style.visibility === "hidden" ||
@@ -514,26 +578,78 @@ export class LayoutManager {
       return null
     }
 
-    const rect = panel.getBoundingClientRect()
+    const rect = element.getBoundingClientRect()
     const visibleLeft = Math.max(0, rect.left)
     const visibleRight = Math.min(window.innerWidth, rect.right)
     const visibleWidth = Math.max(0, visibleRight - visibleLeft)
-    const minVisibleWidth = config.minVisiblePanelWidth ?? DEFAULT_PANEL_AVOIDANCE_MIN_VISIBLE_WIDTH
+    const minVisibleWidth = options.minWidth ?? DEFAULT_PANEL_AVOIDANCE_MIN_VISIBLE_WIDTH
+    const minVisibleHeight = options.minHeight ?? 0
 
-    if (visibleWidth < minVisibleWidth || rect.height < 120) return null
+    if (visibleWidth < minVisibleWidth || rect.height < minVisibleHeight) return null
+
+    return rect
+  }
+
+  private dedupePanelAvoidanceObstacles(
+    obstacles: PanelAvoidanceObstacle[],
+  ): PanelAvoidanceObstacle[] {
+    const deduped: PanelAvoidanceObstacle[] = []
+
+    for (const obstacle of obstacles) {
+      const duplicate = deduped.some(
+        (existing) =>
+          existing.element === obstacle.element ||
+          (existing.element.contains(obstacle.element) &&
+            this.arePanelAvoidanceRectsSimilar(existing.rect, obstacle.rect)) ||
+          (obstacle.element.contains(existing.element) &&
+            this.arePanelAvoidanceRectsSimilar(existing.rect, obstacle.rect)),
+      )
+      if (!duplicate) deduped.push(obstacle)
+    }
+
+    return deduped
+  }
+
+  private arePanelAvoidanceRectsSimilar(left: DOMRect, right: DOMRect): boolean {
+    return (
+      Math.abs(left.left - right.left) < 2 &&
+      Math.abs(left.right - right.right) < 2 &&
+      Math.abs(left.top - right.top) < 2 &&
+      Math.abs(left.bottom - right.bottom) < 2
+    )
+  }
+
+  private getPanelReservationFromObstacles(
+    obstacles: PanelAvoidanceObstacle[],
+    scopeRect: HorizontalRect,
+  ): PanelReservation | null {
+    const config = this.panelAvoidanceConfig
+    if (!config) return null
 
     if (scopeRect.width <= 0) return null
 
-    const overlapLeft = Math.max(scopeRect.left, visibleLeft)
-    const overlapRight = Math.min(scopeRect.right, visibleRight)
-    const overlapWidth = Math.max(0, overlapRight - overlapLeft)
-    if (overlapWidth <= 0) return null
-
-    const panelCenter = overlapLeft + overlapWidth / 2
+    let reservedLeft = 0
+    let reservedRight = 0
     const scopeCenter = scopeRect.left + scopeRect.width / 2
-    const isLeftPanel = panelCenter < scopeCenter
-    const reservedLeft = isLeftPanel ? Math.max(0, overlapRight - scopeRect.left) : 0
-    const reservedRight = isLeftPanel ? 0 : Math.max(0, scopeRect.right - overlapLeft)
+
+    for (const { rect } of obstacles) {
+      const visibleLeft = Math.max(0, rect.left)
+      const visibleRight = Math.min(window.innerWidth, rect.right)
+      const overlapLeft = Math.max(scopeRect.left, visibleLeft)
+      const overlapRight = Math.min(scopeRect.right, visibleRight)
+      const overlapWidth = Math.max(0, overlapRight - overlapLeft)
+      if (overlapWidth <= 0) continue
+
+      const obstacleCenter = overlapLeft + overlapWidth / 2
+      if (obstacleCenter < scopeCenter) {
+        reservedLeft = Math.max(reservedLeft, overlapRight - scopeRect.left)
+      } else {
+        reservedRight = Math.max(reservedRight, scopeRect.right - overlapLeft)
+      }
+    }
+
+    if (reservedLeft <= 0 && reservedRight <= 0) return null
+
     const gap = config.gap ?? DEFAULT_PANEL_AVOIDANCE_GAP
     const minSafeWidth = config.minSafeWidth ?? DEFAULT_PANEL_AVOIDANCE_MIN_SAFE_WIDTH
     const leftGap = reservedLeft > 0 ? gap : 0
@@ -638,22 +754,30 @@ export class LayoutManager {
       return
     }
 
-    const css = this.generatePanelAvoidanceCSS(panel, reservation)
+    const css = this.generatePanelAvoidanceCSS(panel, reservation, true)
     if (!css) {
       this.clearPanelAvoidanceStyle()
       return
     }
 
+    this.panelAvoidanceShadowCss = this.generatePanelAvoidanceCSS(panel, reservation, false)
     this.panelAvoidanceStyle = this.upsertStyle(
       STYLE_IDS.PANEL_AVOIDANCE,
       css,
       this.panelAvoidanceStyle,
     )
+    this.syncPanelAvoidanceShadowStyles()
   }
 
   private clearPanelAvoidanceStyle() {
+    const hadShadowCss = Boolean(this.panelAvoidanceShadowCss)
+
     this.removeStyle(this.panelAvoidanceStyle)
     this.panelAvoidanceStyle = null
+    this.panelAvoidanceShadowCss = ""
+    if (hadShadowCss) {
+      this.syncPanelAvoidanceShadowStyles()
+    }
   }
 
   private schedulePanelAvoidanceUpdate = () => {
@@ -959,6 +1083,7 @@ export class LayoutManager {
     const hasAnyEnabled =
       this.pageWidthConfig?.enabled ||
       this.userQueryWidthConfig?.enabled ||
+      this.panelAvoidanceStarted ||
       this.zenModeEnabled ||
       this.cleanModeEnabled
 
@@ -1052,7 +1177,37 @@ export class LayoutManager {
         this.removeStyleFromShadow(shadowRoot, STYLE_IDS.CLEAN_MODE_SHADOW)
       }
 
+      // Panel Avoidance
+      if (this.panelAvoidanceShadowCss) {
+        DOMToolkit.cssToShadow(
+          shadowRoot,
+          this.panelAvoidanceShadowCss,
+          STYLE_IDS.PANEL_AVOIDANCE_SHADOW,
+        )
+      } else {
+        this.removeStyleFromShadow(shadowRoot, STYLE_IDS.PANEL_AVOIDANCE_SHADOW)
+      }
+
       this.processedShadowRoots.add(shadowRoot)
+    })
+  }
+
+  private syncPanelAvoidanceShadowStyles() {
+    if (!document.body) return
+
+    const siteAdapter = this.siteAdapter
+    DOMToolkit.walkShadowRoots((shadowRoot, host) => {
+      if (host && !siteAdapter.shouldInjectIntoShadow(host)) return
+
+      if (this.panelAvoidanceShadowCss) {
+        DOMToolkit.cssToShadow(
+          shadowRoot,
+          this.panelAvoidanceShadowCss,
+          STYLE_IDS.PANEL_AVOIDANCE_SHADOW,
+        )
+      } else {
+        this.removeStyleFromShadow(shadowRoot, STYLE_IDS.PANEL_AVOIDANCE_SHADOW)
+      }
     })
   }
 
@@ -1067,6 +1222,7 @@ export class LayoutManager {
     DOMToolkit.walkShadowRoots((shadowRoot) => {
       this.removeStyleFromShadow(shadowRoot, STYLE_IDS.PAGE_WIDTH_SHADOW)
       this.removeStyleFromShadow(shadowRoot, STYLE_IDS.USER_QUERY_WIDTH_SHADOW)
+      this.removeStyleFromShadow(shadowRoot, STYLE_IDS.PANEL_AVOIDANCE_SHADOW)
       this.removeStyleFromShadow(shadowRoot, STYLE_IDS.ZEN_MODE_SHADOW)
       this.removeStyleFromShadow(shadowRoot, STYLE_IDS.CLEAN_MODE_SHADOW)
       this.processedShadowRoots.delete(shadowRoot)

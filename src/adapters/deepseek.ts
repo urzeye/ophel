@@ -49,7 +49,8 @@ const THOUGHT_CONTAINER_SELECTOR = ".ds-think-content"
 const RESPONSE_CONTAINER_SELECTOR =
   'main .ds-scroll-area:has(.ds-message), [role="main"] .ds-scroll-area:has(.ds-message), .ds-scroll-area:has(.ds-message)'
 const MESSAGE_LAYOUT_WIDTH_SCOPE_SELECTOR = ":root"
-const MESSAGE_LAYOUT_SCOPE_SELECTOR = ".ds-virtual-list:has(.ds-message)"
+const MESSAGE_LAYOUT_SCOPE_SELECTOR =
+  ":is(.ds-virtual-list:has(.ds-message), .ds-virtual-list:has(textarea.ds-scroll-area))"
 const MESSAGE_LIST_ITEMS_SELECTOR = `${MESSAGE_LAYOUT_SCOPE_SELECTOR} .ds-virtual-list-items`
 const MESSAGE_COMPOSER_SELECTOR = `${MESSAGE_LAYOUT_SCOPE_SELECTOR} > div:has(textarea.ds-scroll-area)`
 const USER_MESSAGE_CONTENT_SELECTOR = [
