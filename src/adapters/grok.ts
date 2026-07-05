@@ -65,11 +65,14 @@ const DELETE_KEYWORDS = [
 ]
 
 const CONFIRM_KEYWORDS = ["confirm", "ok", "yes", "确定", "確認", "确认", "確定", "check"]
+const GROK_APP_SCOPE_SELECTOR = "#grok-app-root"
 const GROK_LAYOUT_SCOPE_SELECTOR = "main[data-mcp-app-fullscreen-container]"
 const GROK_CONTENT_WIDTH_SELECTOR = '[class*="[--content-max-width:"]'
 const GROK_INLINE_CONTENT_WIDTH_SELECTOR = '[style*="--content-max-width"]'
 const GROK_CHAT_SAFE_AREA_SELECTOR = `${GROK_LAYOUT_SCOPE_SELECTOR} [class*="overflow-y-auto"][class*="px-gutter"]`
+const GROK_NEW_CHAT_LOGO_SAFE_AREA_SELECTOR = `${GROK_LAYOUT_SCOPE_SELECTOR} .flex.flex-col.items-center.justify-center.w-full.max-w-breakout:has(svg[variant="hero"])`
 const GROK_INPUT_SAFE_AREA_SELECTOR = `${GROK_LAYOUT_SCOPE_SELECTOR} .absolute.inset-x-0.bottom-0.mx-auto.max-w-breakout`
+const GROK_CANVAS_SAFE_AREA_SELECTOR = `${GROK_APP_SCOPE_SELECTOR} aside:has(iframe.w-full.flex-1)`
 
 interface GrokUserAttachment {
   kind: "image" | "file"
@@ -1254,9 +1257,22 @@ export class GrokAdapter extends SiteAdapter {
           extraCss: "box-sizing: border-box; width: 100% !important; min-width: 0 !important;",
         },
         {
+          selector: GROK_NEW_CHAT_LOGO_SAFE_AREA_SELECTOR,
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
           selector: GROK_INPUT_SAFE_AREA_SELECTOR,
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: GROK_CANVAS_SAFE_AREA_SELECTOR,
+          scopeSelector: GROK_APP_SCOPE_SELECTOR,
+          applySide: "right",
+          insetMode: "edge",
+          extraCss:
+            "box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
       ],
       defaultWidth: "768px",

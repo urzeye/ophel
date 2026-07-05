@@ -143,7 +143,7 @@ DeepSeek 和 Doubao 之后，智能避让已经扩展到以下站点：
 | ChatGPT | `main#main` | 重算消息列和输入框共用的 thread 内容宽度 | 对消息和输入区外层加左右安全区 | `768px` |
 | Claude | `#main-content` | 重算嵌套 `max-w-3xl` 内容列宽度 | 对聊天滚动容器加左右安全区 | `768px` |
 | AI Studio | `.chunk-editor-main` | 重算聊天列、消息 turn 和输入框宽度 | 聊天滚动区和输入区加左右安全区，右侧 Run settings 单独向左避让 | `1000px` |
-| Grok | `main[data-mcp-app-fullscreen-container]` | 通过 `--content-max-width` 变量统一控制消息区和输入区 | 聊天滚动区和底部输入区加左右安全区 | `768px` |
+| Grok | `main[data-mcp-app-fullscreen-container]` / Canvas 用 `#grok-app-root` | 通过 `--content-max-width` 变量统一控制消息区和输入区 | 聊天滚动区、空态、底部输入区和 Canvas 预览区加安全区 | `768px` |
 
 这些站点都需要同时加入：
 
@@ -290,7 +290,8 @@ Grok 的消息列和底部输入区共享 `--content-max-width`、`--content-bre
 
 - 使用 `main[data-mcp-app-fullscreen-container]` 作为 `scopeSelector`，按扣除 Grok 左侧栏后的主内容区计算安全区。
 - 避让时只覆盖定义 `--content-max-width` 的外层变量节点，复用页面宽度控制里避免百分比叠缩的转换逻辑。
-- 对聊天滚动区和底部 `max-w-breakout` 输入宿主加左右安全区；输入宿主在避让时放开自身 `max-width`，由内部输入框继续消费 `max-w-breakout`，避免安全区 padding 把输入框压窄。
+- 对聊天滚动区、新对话页 Logo 空态和底部 `max-w-breakout` 输入宿主加左右安全区；Logo 空态命中包含 `svg[variant="hero"]` 的 `max-w-breakout` 外层，输入宿主在避让时放开自身 `max-width`，由内部输入框继续消费 `max-w-breakout`，避免安全区 padding 把输入框压窄。
+- Canvas 页面的右侧预览 pane 不在 `main[data-mcp-app-fullscreen-container]` 内，而是 `#grok-app-root` 下的 sibling；对包含 `iframe.w-full.flex-1` 的 `aside` 单独用 `#grok-app-root` 计算右侧 `edge` inset，让 iframe 和顶部预览工具栏一起收进 Ophel 面板左侧，同时不移动左侧聊天/代码区。
 - 默认宽度使用 `768px`，对应 Grok 桌面最大内容列 `48rem`，未开启页面宽度控制时不额外放大。
 
 ## 后续适配建议
