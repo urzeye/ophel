@@ -338,6 +338,8 @@ const GEMINI_MESSAGE_WIDTH_SELECTOR = ".conversation-container"
 const GEMINI_MESSAGE_SAFE_AREA_SELECTOR = "infinite-scroller.chat-history"
 const GEMINI_INPUT_WIDTH_SELECTOR = ".input-area-container"
 const GEMINI_INPUT_SAFE_AREA_SELECTOR = "input-container"
+const GEMINI_NEW_CHAT_INPUT_SAFE_AREA_SELECTOR =
+  "chat-window.center-input-layout .input-area-container.is-zero-state"
 
 class GeminiMyStuffEnhancer {
   private started = false
@@ -2525,6 +2527,14 @@ export class GeminiAdapter extends SiteAdapter {
           scopeSelector: GEMINI_CHAT_COLUMN_SCOPE_SELECTOR,
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: GEMINI_NEW_CHAT_INPUT_SAFE_AREA_SELECTOR,
+          scopeSelector: GEMINI_LAYOUT_SCOPE_SELECTOR,
+          insetMode: "edge",
+          leftProperty: "left",
+          rightProperty: "right",
+          extraCss: "box-sizing: border-box; min-width: 0 !important;",
         },
       ],
       defaultWidth: "760px",

@@ -186,7 +186,9 @@ IMA 的回复容器和编辑器容器不是同一个宽度消费节点，需要�
 适配策略：
 
 - Z.ai 避让时只重算消息内容宽度，输入区通过安全区 padding 跟随位置。
+- Z.ai 新对话页的标题、输入框和推荐入口同属首页内容容器；该页面不再给 `.messageInputContainer` 单独叠加安全区 padding，而是对包含 `.placeholder-input` 的首页内容容器使用 `edge` inset，让整块内容在扣除 Ophel 面板后的安全区内重新居中。
 - ChatGLM 避让时重算响应、消息和 Markdown 容器，输入底部容器继续由页面宽度控制处理。
+- ChatGLM 新对话页的首页引导区 `.main-chat-guide-container` 是绝对定位，不能只依赖 `.conversation-inner` 的安全区 padding；单独对该引导区使用 `edge` inset，让标题、输入框和快捷入口一起进入安全区，同时保留输入框自身宽度。
 - 代码块、表格等宽内容需要继续使用 `width: 100%`、`table-layout: fixed` 等规则，避免避让后横向溢出。
 
 ### Qianwen 与 Qwen Studio
@@ -217,6 +219,7 @@ Gemini 标准版的消息滚动区和输入区是兄弟节点：消息列在 `in
 - 避让时同时重算 `.conversation-container` 和 `.input-area-container` 的 `max-width`，让消息列和输入框使用同一个安全区目标宽度。
 - Deep Research、Canvas 和 Drive 文档查看器打开后，`chat-window.immersives-mode` 只在右侧按 edge inset 收敛可用宽度，并减掉 Gemini 沉浸面板自带的右侧内间距，让聊天列和沉浸面板作为同一个网格重算宽度，避免整体平移出可视边界，也避免左右两块分别避让后留下大块空白。
 - 对 `infinite-scroller.chat-history` 和 `input-container` 以聊天列 `.chat-container` 为 scope 加左右安全区，让消息区和输入区位置同步，避免右侧沉浸面板打开时把左侧对话列二次压窄。
+- 新对话页的零态输入框是绝对定位，不能只依赖 `input-container` 的安全区 padding；单独对 `.input-area-container.is-zero-state` 使用 edge inset 重设左右边界，让输入框在扣除 Ophel 面板后的安全区内居中。
 - 输入框外层仍保留在安全区容器内，避免只改输入框宽度但位置仍落在面板下方。
 - Deep Research、Canvas 和 Drive 文档查看器不作为聊天区 `obstacleSelectors`，避免 Gemini 自己的右侧面板把左侧对话列二次压窄。
 

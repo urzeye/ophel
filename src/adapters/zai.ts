@@ -61,7 +61,8 @@ const CHAT_INPUT_WIDTH_SELECTOR = [
   `${CHAT_CONTAINER_SELECTOR} .messageInputContainer [class*="max-w-[768px]"]`,
   `${CHAT_CONTAINER_SELECTOR} .messageInputContainer [class*="max-w-[854px]"]`,
 ].join(", ")
-const CHAT_INPUT_SAFE_AREA_SELECTOR = `${CHAT_CONTAINER_SELECTOR} .messageInputContainer`
+const CHAT_INPUT_SAFE_AREA_SELECTOR = `${CHAT_CONTAINER_SELECTOR}:not(:has([data-pane-id] .placeholder-input)) .messageInputContainer`
+const NEW_CHAT_CONTENT_SAFE_AREA_SELECTOR = `${CHAT_CONTAINER_SELECTOR} [data-pane-id]:has(.placeholder-input)`
 const USER_QUERY_SELECTOR = [
   '[id^="message-"].user-message',
   ".user-message .chat-user.markdown-prose",
@@ -1020,6 +1021,12 @@ export class ZaiAdapter extends SiteAdapter {
         },
         {
           selector: CHAT_INPUT_SAFE_AREA_SELECTOR,
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: NEW_CHAT_CONTENT_SAFE_AREA_SELECTOR,
+          insetMode: "edge",
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
