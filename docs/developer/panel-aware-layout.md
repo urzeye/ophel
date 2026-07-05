@@ -152,7 +152,8 @@ Kimi 的页面宽度由聊天布局容器、内容容器、列表容器和输入
 
 - 使用聊天布局容器作为 `scopeSelector`，避免按整屏计算时忽略站点自身侧栏。
 - 避让时同步覆盖内容容器、消息列表、操作区和输入框的 `max-width`。
-- 对聊天主区域加 `padding-left/right`，让消息区和输入区一起进入安全区。
+- 历史对话页只对 `.chat-detail-main` 加 `padding-left/right`，避免外层 `#chat-container.layout-content` 和内层主区域重复 inset 导致避让状态闪烁。
+- 新对话页没有 `.chat-detail-content` 时，才对 `#chat-container.layout-content` 使用 `edge` inset，让首页输入区进入安全区，同时不影响历史对话页。
 - 列表容器额外清掉左右 padding，避免站点原始居中 padding 和避让 inset 叠加。
 
 ### Yuanbao
