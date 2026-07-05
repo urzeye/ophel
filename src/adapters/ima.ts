@@ -144,6 +144,9 @@ const IMA_MODEL_MENU_ITEM_SELECTOR =
 const IMA_FOOT_TIPS_SELECTOR = '[class*="footTips"]'
 const IMA_PAGE_CONTENT_SELECTOR = ".expandable-sidebar-panel-sidebar ~ [class*='_content_']"
 const IMA_MAIN_AREA_SELECTOR = '[class*="mainArea"]'
+const IMA_NEW_CHAT_CONTAINER_SELECTOR =
+  '[class*="mainContainer"] > [class*="container"]:has(> [class*="centerContent"])'
+const IMA_NEW_CHAT_CONTENT_SELECTOR = `${IMA_PAGE_CONTENT_SELECTOR} ${IMA_NEW_CHAT_CONTAINER_SELECTOR}`
 const IMA_CHAT_INPUT_CONTAINER_SELECTOR = '[class*="chatInputContainer"]'
 const IMA_EDITOR_CONTAINER_SELECTOR = '[class*="chatInputContainer"] [class*="editorContainer"]'
 
@@ -609,6 +612,12 @@ export class ImaAdapter extends SiteAdapter {
         },
         {
           selector: IMA_CHAT_INPUT_CONTAINER_SELECTOR,
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: IMA_NEW_CHAT_CONTENT_SELECTOR,
+          insetMode: "edge",
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
