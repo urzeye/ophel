@@ -183,11 +183,6 @@ const GEMINI_CANVAS_DOCUMENT_MARKDOWN_SELECTOR = [
   "immersive-editor .ProseMirror",
   "#extended-response-markdown-content",
 ].join(", ")
-const GEMINI_PANEL_OBSTACLE_SELECTOR = [
-  GEMINI_DEEP_RESEARCH_IMMERSIVE_PANEL_SELECTOR,
-  GEMINI_CANVAS_IMMERSIVE_PANEL_SELECTOR,
-  "immersive-panel .drive-viewer",
-].join(", ")
 const GEMINI_CANVAS_CODE_REQUEST_TIMEOUT_MS = 900
 const GEMINI_PANEL_MARKDOWN_ACTIONS_CLASS = "gh-gemini-panel-markdown-actions"
 const GEMINI_PANEL_MARKDOWN_ACTION_CLASS = "gh-gemini-panel-markdown-action"
@@ -336,6 +331,9 @@ const GEMINI_MARKDOWN_FIXER_SOURCE_SELECTOR = [
 ].join(",")
 const GEMINI_LAYOUT_SCOPE_SELECTOR =
   "bard-sidenav-content, body:not(:has(bard-sidenav-content)) main.chat-app"
+const GEMINI_IMMERSIVE_LAYOUT_SELECTOR = "chat-window.immersives-mode:not(.mobile-device)"
+const GEMINI_CHAT_COLUMN_SCOPE_SELECTOR = "chat-window .chat-container"
+const GEMINI_IMMERSIVE_LAYOUT_RIGHT_INSET_VAR = "--ophel-gemini-immersive-right-inset"
 const GEMINI_MESSAGE_WIDTH_SELECTOR = ".conversation-container"
 const GEMINI_MESSAGE_SAFE_AREA_SELECTOR = "infinite-scroller.chat-history"
 const GEMINI_INPUT_WIDTH_SELECTOR = ".input-area-container"
@@ -2495,7 +2493,6 @@ export class GeminiAdapter extends SiteAdapter {
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
     return {
       scopeSelector: GEMINI_LAYOUT_SCOPE_SELECTOR,
-      obstacleSelectors: [GEMINI_PANEL_OBSTACLE_SELECTOR],
       widthSelectors: [
         {
           selector: GEMINI_MESSAGE_WIDTH_SELECTOR,
@@ -2510,12 +2507,22 @@ export class GeminiAdapter extends SiteAdapter {
       ],
       insetSelectors: [
         {
+          selector: GEMINI_IMMERSIVE_LAYOUT_SELECTOR,
+          scopeSelector: GEMINI_LAYOUT_SCOPE_SELECTOR,
+          applySide: "right",
+          insetMode: "edge",
+          rightProperty: GEMINI_IMMERSIVE_LAYOUT_RIGHT_INSET_VAR,
+          extraCss: `margin-right: max(0px, calc(var(${GEMINI_IMMERSIVE_LAYOUT_RIGHT_INSET_VAR}, 0px) - var(--gem-sys-spacing--xxl, 24px))) !important; box-sizing: border-box; min-width: 0 !important;`,
+        },
+        {
           selector: GEMINI_MESSAGE_SAFE_AREA_SELECTOR,
+          scopeSelector: GEMINI_CHAT_COLUMN_SCOPE_SELECTOR,
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
         {
           selector: GEMINI_INPUT_SAFE_AREA_SELECTOR,
+          scopeSelector: GEMINI_CHAT_COLUMN_SCOPE_SELECTOR,
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },

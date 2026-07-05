@@ -212,9 +212,10 @@ Gemini 标准版的消息滚动区和输入区是兄弟节点：消息列在 `in
 
 - 使用 `bard-sidenav-content` 作为首选 `scopeSelector`，新对话页没有该节点时回退到 `main.chat-app`。
 - 避让时同时重算 `.conversation-container` 和 `.input-area-container` 的 `max-width`，让消息列和输入框使用同一个安全区目标宽度。
-- 对 `infinite-scroller.chat-history` 和 `input-container` 加左右安全区，让消息区和输入区位置同步。
+- Deep Research、Canvas 和 Drive 文档查看器打开后，`chat-window.immersives-mode` 只在右侧按 edge inset 收敛可用宽度，并减掉 Gemini 沉浸面板自带的右侧内间距，让聊天列和沉浸面板作为同一个网格重算宽度，避免整体平移出可视边界，也避免左右两块分别避让后留下大块空白。
+- 对 `infinite-scroller.chat-history` 和 `input-container` 以聊天列 `.chat-container` 为 scope 加左右安全区，让消息区和输入区位置同步，避免右侧沉浸面板打开时把左侧对话列二次压窄。
 - 输入框外层仍保留在安全区容器内，避免只改输入框宽度但位置仍落在面板下方。
-- Deep Research、Canvas 和 Drive 文档查看器使用 `immersive-panel` 内部面板作为 `obstacleSelectors`，打开时会与 Ophel 面板一起扣除右侧安全区。
+- Deep Research、Canvas 和 Drive 文档查看器不作为聊天区 `obstacleSelectors`，避免 Gemini 自己的右侧面板把左侧对话列二次压窄。
 
 ### Gemini Enterprise
 
