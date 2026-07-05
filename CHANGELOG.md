@@ -11,11 +11,11 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
-- **Smart panel-aware layout** — Smart Avoidance now covers more new chat, Canvas, side-panel, and file-view layouts, keeping page content, input boxes, and native panels aligned with the available safe area while the Ophel floating panel is open.
+- **Smart panel-aware layout** — Smart Avoidance now covers more new chat, Canvas, side-panel, and file-view layouts, keeping page content, input boxes, and native panels aligned with the available safe area while the Ophel floating panel is open. (#761)
 
 ---
 
-## [1.1.3] - 2026-07-03
+## [1.1.3][1.1.3] - 2026-07-03
 
 ### 🚀 New Features
 
