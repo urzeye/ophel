@@ -119,6 +119,12 @@ const CHAT_TEXTAREA_SELECTOR = '[class*="chatTextarea"]'
 const MESSAGE_LIST_SELECTOR = ".message-list-scroll-container, #message-list-scroller"
 const MESSAGE_LIST_AREA_SELECTOR = "#qwen-message-list-area"
 const CHAT_LAYOUT_SCOPE_SELECTOR = "#qianwen-left-panel"
+const CANVAS_LAYOUT_SCOPE_SELECTOR = ".splitCardContainer:has(#qianwen-left-panel)"
+const CANVAS_PANEL_SELECTOR = [
+  `${CANVAS_LAYOUT_SCOPE_SELECTOR} > div:has([data-log-params*="canvas_panel"])`,
+  `${CANVAS_LAYOUT_SCOPE_SELECTOR} > div:has(.monaco-editor)`,
+  `${CANVAS_LAYOUT_SCOPE_SELECTOR} > div:has([data-preview-list="true"])`,
+].join(", ")
 const CHAT_CONTENT_SELECTOR = "#qw-chat-content"
 const CHAT_INPUT_WIDTH_SELECTOR =
   '[data-text-area-width-container="true"], [class*="inputMotionCarrier"]'
@@ -1012,6 +1018,14 @@ export class QianwenAdapter extends SiteAdapter {
           selector: `${CHAT_CONTENT_SELECTOR}, ${MESSAGE_LIST_AREA_SELECTOR}`,
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: CANVAS_PANEL_SELECTOR,
+          scopeSelector: CANVAS_LAYOUT_SCOPE_SELECTOR,
+          applySide: "right",
+          insetMode: "edge",
+          rightProperty: "margin-right",
+          extraCss: "box-sizing: border-box; min-width: 0 !important;",
         },
       ],
       defaultWidth: "800px",

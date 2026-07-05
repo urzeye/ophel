@@ -164,7 +164,9 @@ Yuanbao 的消息区和输入区共享站点宽度变量，是变量型站点，
 
 - 通过 `:root` 上的宽度变量控制最大内容宽度。
 - 用 `min(100%, var(...))` 保证页面宽度控制不会让内容超出父容器。
-- 对聊天内容区和输入区分别加左右安全区，保持两者位置一致。
+- 对聊天内容区和输入区以左侧聊天 Pane 为 scope 分别加左右安全区，保持两者位置一致，同时避免右侧 Canvas 打开时把左侧聊天区二次压窄。
+- Canvas 画布打开后，使用 `SplitPane` 作为整体 scope，对右侧 `.Pane2` 单独应用右侧 edge inset，让画布从 Ophel 面板下方移开，并保持左侧聊天 Pane 宽度不变。
+- Canvas 内的代码/文档预览由 Monaco Editor 渲染，容器变窄后不能靠普通 CSS 换行；扩展端通过元宝专属 MAIN world 脚本、油猴端通过 `unsafeWindow` 调用同一安装函数，对 Canvas 内 Monaco 实例设置 `wordWrap: "on"` 并在尺寸变化后调用 `layout()`。
 
 ### IMA
 
@@ -197,6 +199,7 @@ Qianwen 适配要点：
 - 消息区同时覆盖 `#pc-center-wrapper`、`#message-list-scroller` 的 `--message-content-width` 以及回答块宽度。
 - 输入框外层带有 inline `max-width: 800px` 和 `--chat-input-visible-shell-*` 变量。页面宽度控制需要同步覆盖这些变量。
 - 避让配置不直接给输入框容器加左右 inset，避免输入框自身 `calc(100% - gutter)` 与避让 padding 叠加后被压窄。
+- Canvas 画布打开后，继续以 `#qianwen-left-panel` 计算聊天区避让，同时对 `.splitCardContainer` 下的右侧 Canvas 面板使用独立右侧 edge inset；千问双栏由 flex-grow 分配，避让时让左右列按剩余空间重排，避免 Canvas 被 Ophel 面板覆盖。
 
 Qwen Studio 适配要点：
 

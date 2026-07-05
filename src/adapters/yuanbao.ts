@@ -174,7 +174,17 @@ const DIALOG_BUTTON_SELECTOR =
   '.t-dialog button, .t-dialog [role="button"], [role="dialog"] button, [role="dialog"] [role="button"]'
 const YUANBAO_WIDTH_MAX_VAR = "--hunyuan-chat-list-max-width"
 const YUANBAO_WIDTH_VAR = "--hunyuan-chat-list-width"
-const YUANBAO_LAYOUT_SCOPE_SELECTOR = ".yb-layout__content, .yb-layout__content-skeleton"
+const YUANBAO_SPLIT_PANE_SELECTOR = ".agent-dialogue__content-split-pane--show"
+const YUANBAO_LAYOUT_SCOPE_SELECTOR = [
+  ".yb-layout__content",
+  ".yb-layout__content-skeleton",
+  YUANBAO_SPLIT_PANE_SELECTOR,
+].join(", ")
+const YUANBAO_CHAT_COLUMN_SCOPE_SELECTOR = [
+  `${YUANBAO_SPLIT_PANE_SELECTOR} > .Pane1`,
+  ".agent-dialogue__content--common",
+].join(", ")
+const YUANBAO_CANVAS_PANE_SELECTOR = `${YUANBAO_SPLIT_PANE_SELECTOR} > .Pane2:has(#yuanbao-canvas-container)`
 const YUANBAO_CHAT_CONTENT_SELECTOR = ".agent-dialogue__content--common__content"
 const YUANBAO_CHAT_INPUT_SELECTOR = ".agent-dialogue__content--common__input"
 
@@ -780,10 +790,20 @@ export class YuanbaoAdapter extends SiteAdapter {
       insetSelectors: [
         {
           selector: YUANBAO_CHAT_CONTENT_SELECTOR,
+          scopeSelector: YUANBAO_CHAT_COLUMN_SCOPE_SELECTOR,
           extraCss: "box-sizing: border-box;",
         },
         {
           selector: YUANBAO_CHAT_INPUT_SELECTOR,
+          scopeSelector: YUANBAO_CHAT_COLUMN_SCOPE_SELECTOR,
+          extraCss: "box-sizing: border-box;",
+        },
+        {
+          selector: YUANBAO_CANVAS_PANE_SELECTOR,
+          scopeSelector: YUANBAO_LAYOUT_SCOPE_SELECTOR,
+          applySide: "right",
+          insetMode: "edge",
+          rightProperty: "margin-right",
           extraCss: "box-sizing: border-box;",
         },
       ],
