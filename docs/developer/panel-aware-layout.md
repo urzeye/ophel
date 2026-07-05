@@ -251,7 +251,10 @@ ChatGPT 新版对话页的消息列和输入区都使用 `--thread-content-max-w
 
 - 使用 `main#main` 作为 `scopeSelector`，按 ChatGPT 左侧栏和主内容区之后的可用区域计算安全区。
 - 避让时重算 `#thread` 内消费 `--thread-content-max-width` 的消息列和输入框容器，保证聊天内容和输入区宽度一致。
-- 对 `#thread` 内带 `--thread-content-margin` 的外层节点加左右安全区，让消息 turn 和 composer 一起进入可见区域。
+- 对 `#thread` 内定义并消费 `--thread-content-margin` 的外层节点使用 `edge` 安全区，让消息 turn 和 composer 一起进入可见区域；新对话页问候标题不在这条外层链路里，单独对标题容器使用同样的 `edge` inset，使标题、输入框和提示入口保持同一安全区中心。
+- 新对话页底部 starter prompt 横向滚动行也会消费 `px-(--thread-content-margin)`，但它只负责卡片列表的内部留白，不能再叠加面板安全区 padding，否则提示卡片会被压缩到很窄。
+- 不对 `form[data-type="unified-composer"]` 本身加 inset；新版新对话页里 form 已在 `thread-content-margin` 容器内，若 form 同时被设置 `max-width` 和大额 padding，会把输入框内部压缩到几乎不可见。
+- Canvas 页面使用 fixed 全屏代码块编辑器 dialog 承载代码栏、顶部工具栏和右侧预览 iframe，不属于普通消息列；对这个 dialog 单独应用右侧 `edge` inset，让隐藏代码和显示代码两种状态下的预览区、顶部工具按钮一起收进 Ophel 面板左侧，同时保留 dialog 原本左侧 padding。
 - 默认宽度使用 `768px`，对应 ChatGPT 桌面默认的 `48rem` 内容列，未开启页面宽度控制时不额外放大到整屏。
 
 ### Claude

@@ -152,8 +152,14 @@ const CHATGPT_CODEX_TASK_USER_QUERY_SELECTOR = ".self-end.bg-token-bg-tertiary .
 const CHATGPT_LAYOUT_SCOPE_SELECTOR = "main#main"
 const CHATGPT_THREAD_WIDTH_SELECTOR =
   '#thread [class*="thread-content-max-width"], #thread [style*="--thread-content-max-width"], main#main form[data-type="unified-composer"], main#main #composer-background'
+// ChatGPT 的新对话提示卡片内层横向滚动行也带 px-(--thread-content-margin)；
+// 这里只命中同时定义该变量的外层节点，避免把卡片行也塞进安全区 padding。
 const CHATGPT_THREAD_SAFE_AREA_SELECTOR =
-  '#thread [class*="thread-content-margin"], main#main form[data-type="unified-composer"]'
+  '#thread [class*="--thread-content-margin:"][class*="px-(--thread-content-margin)"]'
+const CHATGPT_NEW_CHAT_HEADING_SAFE_AREA_SELECTOR =
+  "#thread .relative.basis-auto.flex-col.shrink.flex.justify-end:has(h1)"
+const CHATGPT_CANVAS_DIALOG_SAFE_AREA_SELECTOR =
+  'main#main [role="dialog"][class*="fixed"][class*="inset-0"]:has(.cm-editor)'
 const CHATGPT_PANEL_OBSTACLE_SELECTOR = [
   CHATGPT_DEEP_RESEARCH_IFRAME_SELECTOR,
   "#stage-slideover-sidebar",
@@ -1064,9 +1070,22 @@ export class ChatGPTAdapter extends SiteAdapter {
       ],
       insetSelectors: [
         {
-          selector: CHATGPT_THREAD_SAFE_AREA_SELECTOR,
+          selector: CHATGPT_NEW_CHAT_HEADING_SAFE_AREA_SELECTOR,
+          insetMode: "edge",
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: CHATGPT_THREAD_SAFE_AREA_SELECTOR,
+          insetMode: "edge",
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: CHATGPT_CANVAS_DIALOG_SAFE_AREA_SELECTOR,
+          applySide: "right",
+          insetMode: "edge",
+          extraCss: "box-sizing: border-box !important; min-width: 0 !important;",
         },
       ],
       defaultWidth: "768px",
