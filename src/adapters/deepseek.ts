@@ -51,6 +51,15 @@ const RESPONSE_CONTAINER_SELECTOR =
 const MESSAGE_LAYOUT_WIDTH_SCOPE_SELECTOR = ":root"
 const MESSAGE_LAYOUT_SCOPE_SELECTOR =
   ":is(.ds-virtual-list:has(.ds-message), .ds-virtual-list:has(textarea.ds-scroll-area))"
+const NEW_CHAT_LAYOUT_SCOPE_SELECTOR =
+  "#root > div:has(textarea.ds-scroll-area):not(:has(.ds-message))"
+const CANVAS_LAYOUT_SCOPE_SELECTOR =
+  '#root > div:has(.ds-virtual-list):has(div[aria-hidden="false"] iframe)'
+const CANVAS_PREVIEW_SAFE_AREA_SELECTOR = 'div[aria-hidden="false"]:has(iframe) .ds-scroll-area'
+const PANEL_AVOIDANCE_SCOPE_SELECTOR = [
+  MESSAGE_LAYOUT_SCOPE_SELECTOR,
+  NEW_CHAT_LAYOUT_SCOPE_SELECTOR,
+].join(", ")
 const MESSAGE_LIST_ITEMS_SELECTOR = `${MESSAGE_LAYOUT_SCOPE_SELECTOR} .ds-virtual-list-items`
 const MESSAGE_COMPOSER_SELECTOR = `${MESSAGE_LAYOUT_SCOPE_SELECTOR} > div:has(textarea.ds-scroll-area)`
 const USER_MESSAGE_CONTENT_SELECTOR = [
@@ -842,11 +851,24 @@ export class DeepSeekAdapter extends SiteAdapter {
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
     return {
-      scopeSelector: MESSAGE_LAYOUT_SCOPE_SELECTOR,
+      scopeSelector: PANEL_AVOIDANCE_SCOPE_SELECTOR,
       widthSelectors: this.getWidthSelectors(),
       insetSelectors: [
         { selector: MESSAGE_LIST_ITEMS_SELECTOR },
         { selector: MESSAGE_COMPOSER_SELECTOR },
+        {
+          selector: NEW_CHAT_LAYOUT_SCOPE_SELECTOR,
+          scopeSelector: NEW_CHAT_LAYOUT_SCOPE_SELECTOR,
+          insetMode: "edge",
+          extraCss: "box-sizing: border-box !important; min-width: 0 !important;",
+        },
+        {
+          selector: CANVAS_PREVIEW_SAFE_AREA_SELECTOR,
+          scopeSelector: CANVAS_LAYOUT_SCOPE_SELECTOR,
+          applySide: "right",
+          insetMode: "edge",
+          extraCss: "box-sizing: border-box !important; min-width: 0 !important;",
+        },
       ],
       defaultWidth: "840px",
       gap: 16,

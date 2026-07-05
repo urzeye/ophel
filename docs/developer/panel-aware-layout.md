@@ -80,7 +80,7 @@ right-inset = scope-right - safe-right + (safe-width - target-width) / 2
 - 输入区外层是消息虚拟列表内的 sticky 子节点，CSS 模块类名为 `_871cbca`，同样依赖 `--message-list-max-width` 和左右 padding。
 - `.ds-virtual-list-visible-items` 使用 `transform: translateY(...)` 做虚拟列表定位，不能作为水平避让目标。
 
-因此 DeepSeek 配置使用主消息滚动区作为 scope，并同时覆盖消息列表和输入区的左右 padding：
+因此 DeepSeek 历史对话使用主消息滚动区作为 scope，并同时覆盖消息列表和输入区的左右 padding：
 
 ```ts
 getPanelAvoidanceConfig() {
@@ -98,6 +98,10 @@ getPanelAvoidanceConfig() {
 ```
 
 `minSafeWidth` 和 `minViewportWidth` 使用 `LayoutManager` 的共享默认值。adapter 只有在站点布局确实需要不同阈值时才覆盖这些字段，避免把通用策略误写成站点特化配置。
+
+新对话页没有 `.ds-message`，历史对话 scope 不会命中。页面中的标题、模式切换和输入框同属一个 `max-width: 840px` 的中心内容块，外层全屏容器可用 `#root > div:has(textarea.ds-scroll-area):not(:has(.ds-message))` 命中；避让时只给这个全屏容器加 `edge` inset，让中心内容块在剩余安全区内重新居中，避免直接压缩输入框本体。
+
+Canvas 打开后，DeepSeek 会形成左侧聊天、右侧 iframe 预览的双栏布局。右侧预览栏不是聊天虚拟列表的子节点，左侧 scope 不会与右侧 Ophel 面板相交；需要以包含 `.ds-virtual-list` 和右侧可见 iframe 的根容器作为 scope，单独给右侧预览栏内的 `.ds-scroll-area` 加右侧 `edge` inset，并强制使用 border-box，让 iframe 预览在安全区内收缩，同时保持左侧聊天列宽度不变。
 
 这里不再使用 `translate`。原因是 DeepSeek 的虚拟列表内部已经用 transform 管理垂直位置，水平平移 `.ds-virtual-list-items` 或 `.ds-virtual-list-visible-items` 会导致消息区和输入区不同步，并可能把左侧内容推出可视区域。
 
