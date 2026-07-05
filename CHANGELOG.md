@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Panel tab reordering** — Outline, Conversations, and Prompts tabs can now be reordered directly from the panel, keeping the same order in Settings without opening the options page first.
+
 ### ✨ Improvements
 
 - **Smart panel-aware layout** — Smart Avoidance now covers more new chat, Canvas, side-panel, and file-view layouts, keeping page content, input boxes, and native panels aligned with the available safe area while the Ophel floating panel is open. (#761)

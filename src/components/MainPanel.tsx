@@ -85,6 +85,38 @@ interface LauncherPeekAnchorRect {
   height: number
 }
 
+const reorderVisiblePanelTabs = (
+  currentOrder: string[],
+  visibleTabs: string[],
+  sourceTab: string,
+  targetTab: string,
+) => {
+  if (
+    sourceTab === targetTab ||
+    !visibleTabs.includes(sourceTab) ||
+    !visibleTabs.includes(targetTab)
+  ) {
+    return currentOrder
+  }
+
+  const nextVisibleTabs = visibleTabs.filter((tab) => tab !== sourceTab)
+  const targetIndex = nextVisibleTabs.indexOf(targetTab)
+  nextVisibleTabs.splice(targetIndex, 0, sourceTab)
+
+  const visibleSet = new Set(visibleTabs)
+  let visibleIndex = 0
+
+  return currentOrder.map((tab) => {
+    if (!visibleSet.has(tab)) {
+      return tab
+    }
+
+    const nextTab = nextVisibleTabs[visibleIndex]
+    visibleIndex += 1
+    return nextTab ?? tab
+  })
+}
+
 export const MainPanel: React.FC<MainPanelProps> = ({
   onClose,
   isOpen,
@@ -335,11 +367,14 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const translatedShortcutNotSetLabel = t(shortcutNotSetKey)
   const shortcutNotSetLabel =
     translatedShortcutNotSetLabel === shortcutNotSetKey ? "未设置" : translatedShortcutNotSetLabel
-  const setHasSeenCodex = (val: boolean) => {
-    if (val && !hasSeenCodex && setSettings) {
-      setSettings({ hasSeenOphelAdvancedGuide: true })
-    }
-  }
+  const setHasSeenCodex = useCallback(
+    (val: boolean) => {
+      if (val && !hasSeenCodex && setSettings) {
+        setSettings({ hasSeenOphelAdvancedGuide: true })
+      }
+    },
+    [hasSeenCodex, setSettings],
+  )
 
   const shouldShowHeaderPressHint = useCallback((target: EventTarget | null) => {
     if (!(target instanceof Element)) {
@@ -368,7 +403,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const structuredTips = useMemo(
     () =>
       buildStructuredTips(currentSettings.shortcuts?.keybindings, isMacOS(), shortcutNotSetLabel),
-    [currentSettings.shortcuts?.keybindings, currentSettings.language, shortcutNotSetLabel],
+    [currentSettings.shortcuts?.keybindings, shortcutNotSetLabel],
   )
 
   // Hover logic for MagicCodex trigger instead of click
@@ -401,7 +436,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       }
       updateNestedSetting("panel", "panelMode", current === "edge-snap" ? "floating" : "edge-snap")
     },
-    [currentSettings.panel?.panelMode, updateNestedSetting],
+    [currentSettings.panel?.panelMode, panelRef, updateNestedSetting],
   )
 
   useEffect(() => {
@@ -426,6 +461,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   // 初始化 activeTab（先用默认值，等 settings 加载后更新）
   const [activeTab, setActiveTab] = useState<string>(TAB_IDS.PROMPTS)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [draggedPanelTab, setDraggedPanelTab] = useState<string | null>(null)
+  const [dragOverPanelTab, setDragOverPanelTab] = useState<string | null>(null)
+  const suppressPanelTabClickRef = useRef(false)
 
   // settings 加载完成后，设置为用户设置的首个 tab
   useEffect(() => {
@@ -613,6 +651,66 @@ export const MainPanel: React.FC<MainPanelProps> = ({
       return false
     return true
   })
+  const canDragPanelTabs = visibleTabs.length > 1
+
+  const resetPanelTabDragState = () => {
+    setDraggedPanelTab(null)
+    setDragOverPanelTab(null)
+  }
+
+  const handlePanelTabDragStart = (event: React.DragEvent<HTMLButtonElement>, tab: string) => {
+    if (!canDragPanelTabs) {
+      event.preventDefault()
+      return
+    }
+
+    setDraggedPanelTab(tab)
+    setDragOverPanelTab(null)
+    event.dataTransfer.effectAllowed = "move"
+    event.dataTransfer.setData("text/plain", tab)
+  }
+
+  const handlePanelTabDragOver = (event: React.DragEvent<HTMLButtonElement>, tab: string) => {
+    if (!canDragPanelTabs || !draggedPanelTab || draggedPanelTab === tab) {
+      return
+    }
+
+    event.preventDefault()
+    event.dataTransfer.dropEffect = "move"
+    setDragOverPanelTab(tab)
+  }
+
+  const handlePanelTabDrop = (event: React.DragEvent<HTMLButtonElement>, targetTab: string) => {
+    if (!canDragPanelTabs) {
+      return
+    }
+
+    event.preventDefault()
+    const sourceTab = draggedPanelTab || event.dataTransfer.getData("text/plain")
+    if (!sourceTab || sourceTab === targetTab) {
+      resetPanelTabDragState()
+      return
+    }
+
+    const nextOrder = reorderVisiblePanelTabs(tabOrder, visibleTabs, sourceTab, targetTab)
+    if (nextOrder !== tabOrder) {
+      updateNestedSetting("features", "order", nextOrder)
+    }
+
+    suppressPanelTabClickRef.current = true
+    window.setTimeout(() => {
+      suppressPanelTabClickRef.current = false
+    }, 0)
+    resetPanelTabDragState()
+  }
+
+  const handlePanelTabClick = (tab: string) => {
+    if (suppressPanelTabClickRef.current) {
+      return
+    }
+
+    setActiveTab(tab)
+  }
 
   // 获取主题图标
   const getThemeIcon = () => {
@@ -845,7 +943,9 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               <button
                 type="button"
                 key={tab}
-                className={`gh-panel-tab-btn ${activeTab === tab ? "active" : ""}`}
+                draggable={canDragPanelTabs}
+                aria-grabbed={draggedPanelTab === tab}
+                className={`gh-panel-tab-btn ${activeTab === tab ? "active" : ""} ${canDragPanelTabs ? "is-draggable" : ""} ${draggedPanelTab === tab ? "is-dragging" : ""} ${dragOverPanelTab === tab ? "is-drag-over" : ""}`}
                 data-tip-target={
                   tab === TAB_IDS.OUTLINE
                     ? "outline-tab"
@@ -855,7 +955,17 @@ export const MainPanel: React.FC<MainPanelProps> = ({
                         ? "prompts-tab"
                         : undefined
                 }
-                onClick={() => setActiveTab(tab)}>
+                onClick={() => handlePanelTabClick(tab)}
+                onDragStart={(event) => handlePanelTabDragStart(event, tab)}
+                onDragOver={(event) => handlePanelTabDragOver(event, tab)}
+                onDragEnter={(event) => handlePanelTabDragOver(event, tab)}
+                onDragLeave={() => {
+                  if (dragOverPanelTab === tab) {
+                    setDragOverPanelTab(null)
+                  }
+                }}
+                onDrop={(event) => handlePanelTabDrop(event, tab)}
+                onDragEnd={resetPanelTabDragState}>
                 <span className="gh-panel-tab-btn-icon">{IconComp && <IconComp size={16} />}</span>
                 <span className="gh-panel-tab-btn-label">
                   {t(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`)}

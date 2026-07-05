@@ -589,6 +589,24 @@
   background: color-mix(in srgb, var(--gh-hover, #f3f4f6) 88%, transparent);
 }
 
+.gh-panel-tab-btn.is-draggable {
+  cursor: grab;
+}
+
+.gh-panel-tab-btn.is-draggable:active {
+  cursor: grabbing;
+}
+
+.gh-panel-tab-btn.is-dragging {
+  opacity: 0.48;
+}
+
+.gh-panel-tab-btn.is-drag-over {
+  color: var(--gh-primary, #4285f4);
+  background: color-mix(in srgb, var(--gh-primary, #4285f4) 10%, var(--gh-bg, #ffffff));
+  box-shadow: inset 0 -2px 0 var(--gh-primary, #4285f4);
+}
+
 .gh-panel-tab-btn.active {
   color: var(--gh-primary, #4285f4);
   border-bottom-color: var(--gh-primary, #4285f4);
