@@ -51,7 +51,11 @@ const QWENAI_LAYOUT_SCOPE_SELECTOR =
 const QWENAI_MESSAGE_SCROLL_SELECTOR = "#chat-messages-scroll-container"
 const QWENAI_MESSAGE_CONTAINER_SELECTOR = "#chat-message-container"
 const QWENAI_MESSAGE_WIDTH_SELECTOR = ".qwen-chat-message"
-const QWENAI_INPUT_SAFE_AREA_SELECTOR = ".chat-layout-input-container, .message-input-wrapper"
+const QWENAI_INPUT_SAFE_AREA_SELECTOR = ".chat-layout-input-container"
+const QWENAI_NEW_CHAT_INPUT_SAFE_AREA_SELECTOR =
+  "body:not(:has(.chat-left-panel)) .message-input-wrapper"
+const QWENAI_NEW_CHAT_PLACEHOLDER_SELECTOR =
+  "body:not(:has(.chat-left-panel)) .placeholder-logo-text"
 const QWENAI_INPUT_WIDTH_SELECTOR = ".message-input-wrapper"
 const QWENAI_USER_MESSAGE_ROOT_SELECTOR = ".qwen-chat-message-user"
 const QWENAI_USER_MESSAGE_SELECTOR = ".qwen-chat-message-user, .chat-user-message-wrapper"
@@ -885,6 +889,18 @@ export class QwenAiAdapter extends SiteAdapter {
         },
         {
           selector: QWENAI_INPUT_SAFE_AREA_SELECTOR,
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: QWENAI_NEW_CHAT_INPUT_SAFE_AREA_SELECTOR,
+          insetMode: "edge",
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: QWENAI_NEW_CHAT_PLACEHOLDER_SELECTOR,
+          insetMode: "edge",
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },

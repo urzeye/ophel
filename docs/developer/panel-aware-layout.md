@@ -202,7 +202,7 @@ Qwen Studio 适配要点：
 
 - 使用 `.chat-left-panel` 作为 `scopeSelector`。
 - 消息外层 `.qwen-chat-message` 原始布局带 padding/content-box，宽度控制要同时补 `width: 100%` 和 `box-sizing: border-box`。
-- 避让时只重算消息宽度；输入区使用安全区 padding，避免输入框 `max-width` 被安全宽度二次卡住。
+- 避让时只重算消息宽度；历史对话页输入区只对外层 `.chat-layout-input-container` 使用安全区 padding，`.message-input-wrapper` 只保留页面宽度控制，避免输入框自身被安全区 padding 二次压窄；新对话页没有 `.chat-left-panel` 时，再单独对 `.message-input-wrapper` 使用 `edge` inset，恢复首页输入框避让。
 
 ### Gemini
 
