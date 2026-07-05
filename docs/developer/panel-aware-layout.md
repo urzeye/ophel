@@ -276,10 +276,10 @@ AI Studio 的页面是三栏结构：左侧导航在 `layout-wrapper` 外侧，�
 
 适配策略：
 
-- 使用 `.chunk-editor-main` 作为主 `scopeSelector`，让右侧 Run settings 面板自然从聊天可用宽度中扣除。
+- 使用 `.chunk-editor-main` 作为主 `scopeSelector`，让右侧 Run settings 面板自然从聊天可用宽度中扣除；Run settings 不参与主内容的 `obstacleSelectors`，否则新对话 zero-state 会在设置栏左移前后反复重算。
 - 避让时同时重算 `.chat-session-content`、`.chat-turn-container` 和底部 `footer ms-prompt-box` 的 `max-width`，保证消息区和输入框宽度一致。
-- 对 `.chat-container .chat-view-container` 和 `footer` 加左右安全区，避免只移动消息列表而输入框仍停在面板下方。
-- 右侧 `ms-right-side-panel` 使用 `ms-chunk-editor` 作为独立计算 scope，并用 `edge` 模式只应用右侧 `margin-right`，让 Run settings 自身也能从 Ophel 面板下方移开。
+- 对 `.chat-container .chat-view-container` 和 `footer` 加 `edge` 安全区，避免 centered 模式把新对话的模型卡片和输入框压窄。
+- 右侧 `ms-right-side-panel` 使用 `ms-chunk-editor` 作为独立计算 scope，并用 `edge` 模式写入 CSS 变量后通过 `translate` 视觉左移，让 Run settings 自身从 Ophel 面板下方移开，同时不改变 `ms-chunk-editor` 的 flex 宽度，避免新对话页在两个布局间闪烁。
 - 表格继续保持 `width: 100%` 和 `min-width: 100%`，避免页面加宽或避让后表格仍按内容宽度收缩。
 
 ### Grok

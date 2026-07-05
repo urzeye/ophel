@@ -112,7 +112,6 @@ const AISTUDIO_CHAT_SAFE_AREA_SELECTOR = ".chunk-editor-main .chat-container .ch
 const AISTUDIO_PROMPT_SAFE_AREA_SELECTOR = ".chunk-editor-main footer"
 const AISTUDIO_RUN_SETTINGS_PANEL_SELECTOR = "ms-chunk-editor > ms-right-side-panel"
 const AISTUDIO_PANEL_OBSTACLE_SELECTOR = [
-  AISTUDIO_RUN_SETTINGS_PANEL_SELECTOR,
   ".ms-sliding-right-panel-dialog",
   "mat-dialog-container.mat-mdc-dialog-container",
 ].join(", ")
@@ -592,11 +591,13 @@ export class AIStudioAdapter extends SiteAdapter {
       insetSelectors: [
         {
           selector: AISTUDIO_CHAT_SAFE_AREA_SELECTOR,
+          insetMode: "edge",
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
         {
           selector: AISTUDIO_PROMPT_SAFE_AREA_SELECTOR,
+          insetMode: "edge",
           extraCss:
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
@@ -605,8 +606,9 @@ export class AIStudioAdapter extends SiteAdapter {
           scopeSelector: AISTUDIO_EDITOR_SCOPE_SELECTOR,
           applySide: "right",
           insetMode: "edge",
-          rightProperty: "margin-right",
-          extraCss: "flex-shrink: 0 !important;",
+          rightProperty: "--gh-aistudio-run-settings-inset",
+          extraCss:
+            "flex-shrink: 0 !important; translate: calc(-1 * var(--gh-aistudio-run-settings-inset, 0px)) 0 !important;",
         },
       ],
       defaultWidth: "1000px",
