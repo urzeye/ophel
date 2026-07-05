@@ -189,6 +189,7 @@ IMA 的回复容器和编辑器容器不是同一个宽度消费节点，需要�
 - Z.ai 新对话页的标题、输入框和推荐入口同属首页内容容器；该页面不再给 `.messageInputContainer` 单独叠加安全区 padding，而是对包含 `.placeholder-input` 的首页内容容器使用 `edge` inset，让整块内容在扣除 Ophel 面板后的安全区内重新居中。
 - ChatGLM 避让时重算响应、消息和 Markdown 容器，输入底部容器继续由页面宽度控制处理。
 - ChatGLM 新对话页的首页引导区 `.main-chat-guide-container` 是绝对定位，不能只依赖 `.conversation-inner` 的安全区 padding；单独对该引导区使用 `edge` inset，让标题、输入框和快捷入口一起进入安全区，同时保留输入框自身宽度。
+- ChatGLM Canvas 打开后，右侧 `.code-preview-tabs` 与左侧聊天区同属外层 `section.el-container` 的兄弟节点；左侧聊天 scope 不会与右侧 Ophel 面板相交，需要以整个双栏容器为 scope 单独给 Canvas 预览区加右侧 edge inset，让 iframe 预览跟随安全区收缩。
 - 代码块、表格等宽内容需要继续使用 `width: 100%`、`table-layout: fixed` 等规则，避免避让后横向溢出。
 
 ### Qianwen 与 Qwen Studio
