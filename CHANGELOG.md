@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
-- **Panel tab reordering** — Outline, Conversations, and Prompts tabs can now be reordered directly from the panel, keeping the same order in Settings without opening the options page first.
+- **Panel tab reordering** — Outline, Conversations, and Prompts tabs can now be reordered directly from the panel, keeping the same order in Settings without opening the options page first. (#764)
 
 ### ✨ Improvements
 
