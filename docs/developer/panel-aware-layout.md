@@ -255,6 +255,7 @@ ChatGPT 新版对话页的消息列和输入区都使用 `--thread-content-max-w
 - 新对话页底部 starter prompt 横向滚动行也会消费 `px-(--thread-content-margin)`，但它只负责卡片列表的内部留白，不能再叠加面板安全区 padding，否则提示卡片会被压缩到很窄。
 - 不对 `form[data-type="unified-composer"]` 本身加 inset；新版新对话页里 form 已在 `thread-content-margin` 容器内，若 form 同时被设置 `max-width` 和大额 padding，会把输入框内部压缩到几乎不可见。
 - Canvas 页面使用 fixed 全屏代码块编辑器 dialog 承载代码栏、顶部工具栏和右侧预览 iframe，不属于普通消息列；对这个 dialog 单独应用右侧 `edge` inset，让隐藏代码和显示代码两种状态下的预览区、顶部工具按钮一起收进 Ophel 面板左侧，同时保留 dialog 原本左侧 padding。
+- 库文件查看页使用 writing-block fullscreen shell：正文编辑器在 `fullscreen-shell-body` 内，底部“描述修改内容”输入框是同一 dialog 下的 fixed sibling。页面宽度控制需要同时覆盖正文编辑器和 fixed 输入框外层；智能避让时对 shell 应用 `edge` inset，并把 fixed 输入框外层从 `start-1/2 + translate` 改成安全区左右定位，再让内部 form 按页面宽度居中。
 - 默认宽度使用 `768px`，对应 ChatGPT 桌面默认的 `48rem` 内容列，未开启页面宽度控制时不额外放大到整屏。
 
 ### Claude
