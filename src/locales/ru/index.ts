@@ -256,7 +256,7 @@ export const ru = {
   tip1: "Удерживайте {modifier} для режима прозрачности — взаимодействие с контентом под панелью",
 
   tip3: "{shortcut} показывает все горячие клавиши",
-  tip4: "{shortcut} — глобальный поиск (folder: tag: site:)",
+  tip4: "{shortcut} — глобальный поиск (folder: tag: level:)",
   tip5: "{shortcut} копирует последний ответ ИИ",
   tip6: "{shortcut} переход между заголовками оглавления",
   edit: "Изм.",
@@ -598,8 +598,6 @@ export const ru = {
   contentExportSettingsTitle: "Настройки контента",
   markdownFixLabel: "Исправить жирный текст",
   markdownFixDesc: "Фикс разметки жирного текста в Gemini",
-  exportImagesToBase64Label: "Картинки в Base64",
-  exportImagesToBase64Desc: "Перевод фото в текст для офлайн просмотра",
   assistantMermaidLabel: "Рендер Mermaid в ответах ИИ",
   assistantMermaidDesc:
     "Автоматически отображает диаграммы Mermaid в ответах ИИ на сайтах без нативной поддержки Mermaid",
@@ -1630,9 +1628,9 @@ export const ru = {
   "featureTip-shortcuts-path": "{shortcut} — открыть обзор горячих клавиш",
   "featureTip-global-search-title": "Синтаксис глобального поиска",
   "featureTip-global-search-desc":
-    "Поддерживаются фильтры folder:, tag:, site:, level: для точного поиска контента",
+    "Поддерживаются фильтры folder:, tag:, level: для точного поиска контента",
   "featureTip-global-search-path":
-    "{shortcut} — открыть поиск, поддерживаются folder:, tag:, site:",
+    "{shortcut} — открыть поиск, поддерживаются folder:, tag:, level:",
   "featureTip-copy-reply-title": "Копировать последний ответ ИИ",
   "featureTip-copy-reply-desc": "Быстро копирует последний ответ ИИ в буфер обмена",
   "featureTip-copy-reply-path": "Горячая клавиша: {shortcut}",
@@ -1640,7 +1638,7 @@ export const ru = {
   "featureTip-prev-next-heading-desc": "Перемещайтесь вверх и вниз между заголовками в плане",
   "featureTip-prev-next-heading-path": "Горячая клавиша: {shortcut}",
   "featureTip-export-conv-title": "Экспорт бесед",
-  "featureTip-export-conv-desc": "Экспортируйте выбранные беседы в Markdown / JSON / CSV",
+  "featureTip-export-conv-desc": "Экспортируйте выбранные беседы в Markdown / JSON / TXT",
   "featureTip-export-conv-path":
     "Вкладка бесед → справа сверху Правка паком → Экспорт в нижней панели",
   "featureTip-batch-select-title": "Пакетная работа с беседами",

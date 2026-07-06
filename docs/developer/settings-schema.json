@@ -1,30 +1,37 @@
 {
   "language": "auto",
+  "hasAgreedToTerms": false,
+  "hasSeenOphelAdvancedGuide": false,
 
   "panel": {
+    "panelExpanded": true,
     "panelMode": "floating",
-    "defaultOpen": true,
-    "autoHide": false,
-    "edgeSnap": false,
+    "preventAutoScroll": false,
     "defaultPosition": "right",
-    "defaultEdgeDistance": 20,
+    "defaultEdgeDistance": 0,
     "edgeSnapThreshold": 30,
-    "height": 80,
+    "height": 85,
     "width": 320,
     "resizeOnHover": false,
-    "hoverWidth": 520,
-    "preventAutoScroll": false
+    "hoverWidth": 520
+  },
+
+  "geminiEnterprise": {
+    "policyRetry": {
+      "enabled": false,
+      "maxRetries": 3
+    }
   },
 
   "content": {
-    "markdownFix": true,
-    "watermarkRemoval": true,
+    "assistantMermaid": true,
+    "markdownFix": false,
+    "watermarkRemoval": false,
     "formulaCopy": true,
     "formulaCopyFormat": "latex",
     "formulaDelimiter": true,
     "tableCopy": true,
-    "exportImagesToBase64": false,
-    "userQueryMarkdown": false
+    "userQueryMarkdown": true
   },
 
   "export": {
@@ -36,6 +43,7 @@
   },
 
   "theme": {
+    "syncNativePageTheme": true,
     "sites": {
       "gemini": {
         "mode": "light",
@@ -43,7 +51,32 @@
         "darkStyleId": "classic-dark"
       },
       "gemini-enterprise": {
-        "mode": "dark",
+        "mode": "light",
+        "lightStyleId": "google-gradient",
+        "darkStyleId": "classic-dark"
+      },
+      "doubao": {
+        "mode": "light",
+        "lightStyleId": "google-gradient",
+        "darkStyleId": "classic-dark"
+      },
+      "ima": {
+        "mode": "light",
+        "lightStyleId": "google-gradient",
+        "darkStyleId": "classic-dark"
+      },
+      "deepseek": {
+        "mode": "light",
+        "lightStyleId": "google-gradient",
+        "darkStyleId": "classic-dark"
+      },
+      "yuanbao": {
+        "mode": "light",
+        "lightStyleId": "google-gradient",
+        "darkStyleId": "classic-dark"
+      },
+      "zai": {
+        "mode": "light",
         "lightStyleId": "google-gradient",
         "darkStyleId": "classic-dark"
       },
@@ -53,14 +86,7 @@
         "darkStyleId": "classic-dark"
       }
     },
-    "customStyles": [
-      {
-        "id": "example-custom-style",
-        "name": "示例自定义样式",
-        "css": "/* 用户自定义 CSS */",
-        "mode": "light"
-      }
-    ]
+    "customStyles": []
   },
 
   "layout": {
@@ -72,7 +98,9 @@
       "chatgpt": { "enabled": false, "value": "81", "unit": "%" },
       "claude": { "enabled": false, "value": "81", "unit": "%" },
       "chatglm": { "enabled": false, "value": "81", "unit": "%" },
+      "doubao": { "enabled": false, "value": "81", "unit": "%" },
       "ima": { "enabled": false, "value": "81", "unit": "%" },
+      "deepseek": { "enabled": false, "value": "81", "unit": "%" },
       "kimi": { "enabled": false, "value": "81", "unit": "%" },
       "qianwen": { "enabled": false, "value": "81", "unit": "%" },
       "qwenai": { "enabled": false, "value": "81", "unit": "%" },
@@ -88,7 +116,9 @@
       "chatgpt": { "enabled": false, "value": "81", "unit": "%" },
       "claude": { "enabled": false, "value": "81", "unit": "%" },
       "chatglm": { "enabled": false, "value": "81", "unit": "%" },
+      "doubao": { "enabled": false, "value": "81", "unit": "%" },
       "ima": { "enabled": false, "value": "81", "unit": "%" },
+      "deepseek": { "enabled": false, "value": "81", "unit": "%" },
       "kimi": { "enabled": false, "value": "81", "unit": "%" },
       "qianwen": { "enabled": false, "value": "81", "unit": "%" },
       "qwenai": { "enabled": false, "value": "81", "unit": "%" },
@@ -104,13 +134,32 @@
       "chatgpt": { "enabled": false, "showExitButton": true },
       "claude": { "enabled": false, "showExitButton": true },
       "chatglm": { "enabled": false, "showExitButton": true },
+      "doubao": { "enabled": false, "showExitButton": true },
       "ima": { "enabled": false, "showExitButton": true },
+      "deepseek": { "enabled": false, "showExitButton": true },
       "kimi": { "enabled": false, "showExitButton": true },
       "qianwen": { "enabled": false, "showExitButton": true },
       "qwenai": { "enabled": false, "showExitButton": true },
       "yuanbao": { "enabled": false, "showExitButton": true },
       "zai": { "enabled": false, "showExitButton": true },
       "_default": { "enabled": false, "showExitButton": true }
+    },
+    "cleanMode": {
+      "gemini": { "enabled": true },
+      "gemini-enterprise": { "enabled": true },
+      "aistudio": { "enabled": true },
+      "chatgpt": { "enabled": true },
+      "claude": { "enabled": true },
+      "chatglm": { "enabled": true },
+      "doubao": { "enabled": true },
+      "ima": { "enabled": true },
+      "deepseek": { "enabled": true },
+      "kimi": { "enabled": true },
+      "qianwen": { "enabled": true },
+      "qwenai": { "enabled": true },
+      "yuanbao": { "enabled": true },
+      "zai": { "enabled": true },
+      "_default": { "enabled": true }
     },
     "panelAvoidance": {
       "gemini": { "enabled": true },
@@ -121,8 +170,8 @@
       "claude": { "enabled": true },
       "chatglm": { "enabled": true },
       "doubao": { "enabled": true },
-      "deepseek": { "enabled": true },
       "ima": { "enabled": true },
+      "deepseek": { "enabled": true },
       "kimi": { "enabled": true },
       "qianwen": { "enabled": true },
       "qwenai": { "enabled": true },
@@ -132,20 +181,28 @@
     }
   },
 
-  "appearance": {
-    "codeBlock": { "beautify": false, "collapsible": false, "maxHeight": 300 },
-    "blockquote": { "beautify": false },
-    "typography": { "fontReplace": false, "fontFamily": "system" },
-    "shadow": { "enabled": false, "intensity": "medium" }
-  },
-
   "modelLock": {
     "gemini": { "enabled": false, "keyword": "" },
-    "gemini-enterprise": { "enabled": false, "keyword": "" }
+    "gemini-enterprise": { "enabled": false, "keyword": "" },
+    "ima": { "enabled": false, "keyword": "" },
+    "qwenai": { "enabled": false, "keyword": "" },
+    "yuanbao": { "enabled": false, "keyword": "" }
+  },
+
+  "globalSearch": {
+    "promptEnterBehavior": "smart",
+    "enableFuzzySearch": false,
+    "doubleShift": false
+  },
+
+  "usageMonitor": {
+    "enabled": false,
+    "dailyLimit": 100,
+    "autoResetEnabled": false
   },
 
   "features": {
-    "order": ["prompts", "conversations", "outline"],
+    "order": ["outline", "conversations", "prompts"],
     "prompts": {
       "enabled": true,
       "doubleClickToSend": false,
@@ -156,6 +213,7 @@
     "conversations": {
       "enabled": true,
       "syncUnpin": false,
+      "syncDelete": true,
       "folderRainbow": true
     },
     "outline": {
@@ -165,21 +223,28 @@
       "updateInterval": 2,
       "showUserQueries": true,
       "followMode": "current",
-      "expandLevel": 6
+      "expandLevel": 6,
+      "inlineBookmarkMode": "always",
+      "panelBookmarkMode": "always",
+      "showWordCount": false
     }
   },
 
   "tab": {
-    "openInNewTab": true,
+    "openInNewTab": false,
     "autoRename": true,
     "renameInterval": 3,
     "showStatus": true,
+    "hideStatusWhenRead": false,
     "titleFormat": "{status}{title}->{model}",
-    "showNotification": true,
+    "showNotification": false,
     "notificationSound": true,
-    "notificationVolume": 0.6,
+    "notificationSoundPreset": "softChime",
+    "notificationVolume": 0.5,
+    "notificationRepeatCount": 3,
+    "notificationRepeatInterval": 2,
     "notifyWhenFocused": false,
-    "autoFocus": true,
+    "autoFocus": false,
     "privacyMode": false,
     "privacyTitle": "Google",
     "customIcon": "default"
@@ -188,69 +253,32 @@
   "readingHistory": {
     "persistence": true,
     "autoRestore": true,
-    "cleanupDays": 30
+    "cleanupDays": 3
   },
 
   "quickButtons": {
     "collapsed": [
-      { "id": "scrollTop", "enabled": true },
       { "id": "panel", "enabled": true },
       { "id": "floatingToolbar", "enabled": true },
       { "id": "globalSearch", "enabled": true },
-      { "id": "anchor", "enabled": true },
       { "id": "theme", "enabled": true },
-      { "id": "manualAnchor", "enabled": true },
+      { "id": "zenMode", "enabled": true },
+      { "id": "settings", "enabled": true },
+      { "id": "scrollTop", "enabled": true },
+      { "id": "manualAnchor", "enabled": false },
+      { "id": "anchor", "enabled": true },
       { "id": "scrollBottom", "enabled": true }
     ],
     "opacity": 1,
-    "toolsMenu": [
-      "export",
-      "segmentedExport",
-      "copyMarkdown",
-      "move",
-      "setTag",
-      "scrollLock",
-      "cleanup"
-    ],
     "floatingToolbar": {
       "open": true
     },
-    "position": {
-      "xRatio": 0.82,
-      "yRatio": 0.48
-    }
+    "hideWhenPanelOpen": false,
+    "proximityRadius": 150
   },
 
-  "shortcuts": {
-    "enabled": true,
-    "globalUrl": "https://gemini.google.com",
-    "keybindings": {
-      "scrollTop": { "key": "t", "alt": true },
-      "scrollBottom": { "key": "b", "alt": true },
-      "goToAnchor": { "key": "z", "alt": true },
-      "togglePanel": { "key": "p", "alt": true },
-      "toggleTheme": { "key": "d", "alt": true },
-      "openSettings": { "key": ",", "alt": true },
-      "switchTab1": { "key": "1", "alt": true },
-      "switchTab2": { "key": "2", "alt": true },
-      "switchTab3": { "key": "3", "alt": true },
-      "refreshOutline": { "key": "r", "alt": true },
-      "toggleOutlineExpand": { "key": "e", "alt": true },
-      "expandLevel1": { "key": "1", "alt": true, "shift": true },
-      "expandLevel2": { "key": "2", "alt": true, "shift": true },
-      "expandLevel3": { "key": "3", "alt": true, "shift": true },
-      "toggleUserQueries": { "key": "q", "alt": true },
-      "prevHeading": { "key": "ArrowUp", "alt": true },
-      "nextHeading": { "key": "ArrowDown", "alt": true },
-      "locateOutline": { "key": "l", "alt": true },
-      "searchOutline": { "key": "f", "alt": true },
-      "newConversation": { "key": "o", "ctrl": true, "shift": true },
-      "refreshConversations": { "key": "r", "alt": true, "shift": true },
-      "locateConversation": { "key": "l", "alt": true, "shift": true },
-      "exportConversation": { "key": "e", "ctrl": true, "shift": true },
-      "copyLatestReply": { "key": "c", "ctrl": true, "shift": true },
-      "toggleScrollLock": { "key": "s", "alt": true }
-    }
+  "claude": {
+    "currentKeyId": ""
   },
 
   "webdav": {
@@ -261,21 +289,73 @@
     "syncMode": "manual",
     "syncInterval": 30,
     "remoteDir": "ophel",
-    "lastSyncTime": null,
-    "lastSyncStatus": null
+    "dataSources": ["settings", "conversations", "prompts", "claudeSessionKeys"]
   },
 
-  "bookmarks": [
-    {
-      "id": "example-bookmark-id",
-      "sessionId": "conversation-id",
-      "siteId": "gemini",
-      "cid": "account-or-team-id",
-      "title": "标题示例",
-      "level": 2,
-      "signature": "标题示例::后续内容的前50字符",
-      "scrollTop": 1000,
-      "timestamp": 1700000000000
+  "shortcuts": {
+    "enabled": true,
+    "globalUrl": "https://gemini.google.com",
+    "keybindings": {
+      "scrollTop": { "key": "t", "alt": true },
+      "scrollBottom": { "key": "b", "alt": true },
+      "goToAnchor": { "key": "z", "alt": true },
+      "togglePanel": { "key": "p", "alt": true },
+      "togglePanelMode": { "key": "m", "alt": true },
+      "toggleTheme": { "key": "d", "alt": true },
+      "switchTab1": { "key": "1", "alt": true },
+      "switchTab2": { "key": "2", "alt": true },
+      "switchTab3": { "key": "3", "alt": true },
+      "refreshOutline": { "key": "r", "alt": true },
+      "toggleOutlineExpand": { "key": "e", "alt": true },
+      "expandLevel1": { "key": "1", "alt": true, "shift": true },
+      "expandLevel2": { "key": "2", "alt": true, "shift": true },
+      "expandLevel3": { "key": "3", "alt": true, "shift": true },
+      "expandLevel4": { "key": "4", "alt": true, "shift": true },
+      "expandLevel5": { "key": "5", "alt": true, "shift": true },
+      "expandLevel6": { "key": "6", "alt": true, "shift": true },
+      "toggleUserQueries": { "key": "q", "alt": true },
+      "toggleBookmarks": { "key": "c", "alt": true },
+      "onlyUserQueries": { "key": "q", "alt": true, "shift": true },
+      "prevHeading": { "key": "ArrowUp", "alt": true },
+      "nextHeading": { "key": "ArrowDown", "alt": true },
+      "locateOutline": { "key": "l", "alt": true },
+      "searchOutline": { "key": "f", "alt": true },
+      "newConversation": { "key": "o", "ctrl": true, "shift": true },
+      "refreshConversations": { "key": "r", "alt": true, "shift": true },
+      "locateConversation": { "key": "l", "alt": true, "shift": true },
+      "prevConversation": { "key": "[", "alt": true },
+      "nextConversation": { "key": "]", "alt": true },
+      "exportConversation": { "key": "e", "ctrl": true, "shift": true },
+      "copyLatestReply": { "key": "c", "ctrl": true, "shift": true },
+      "copyLastCodeBlock": { "key": ";", "alt": true },
+      "toggleScrollLock": { "key": "s", "alt": true },
+      "toggleZenMode": { "key": "z", "ctrl": true, "shift": true },
+      "focusInput": { "key": "i", "alt": true },
+      "openGlobalSearch": { "key": "k", "ctrl": true },
+      "stopGeneration": { "key": "k", "alt": true },
+      "togglePromptQueue": { "key": "j", "alt": true },
+      "showModelSelector": { "key": "/", "alt": true },
+      "showShortcuts": { "key": "\\", "alt": true },
+      "openSettings": { "key": ",", "alt": true },
+      "openClaudeSettings": { "key": "c", "ctrl": true, "alt": true },
+      "switchClaudeKey": { "key": "s", "ctrl": true, "alt": true },
+      "openGeminiSettings": { "key": "g", "ctrl": true, "alt": true },
+      "openThemeSettings": { "key": "t", "ctrl": true, "alt": true },
+      "openModelLockSettings": { "key": "l", "ctrl": true, "alt": true }
     }
-  ]
+  },
+
+  "aistudio": {
+    "collapseNavbar": false,
+    "collapseTools": false,
+    "collapseAdvanced": false,
+    "enableSearch": true,
+    "defaultModel": "",
+    "markdownFix": false,
+    "removeWatermark": false
+  },
+
+  "chatgpt": {
+    "markdownFix": false
+  }
 }

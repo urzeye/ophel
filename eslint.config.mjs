@@ -9,6 +9,7 @@ export default [
     ignores: [
       "eslint.config.mjs",
       "build/**",
+      "**/build/**",
       ".plasmo/**",
       "node_modules/**",
       "docs/site/.vitepress/.temp/**",

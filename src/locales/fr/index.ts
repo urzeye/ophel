@@ -259,7 +259,7 @@ export const fr = {
   tip1: "Maintenez {modifier} pour le mode transparent et interagir avec le contenu en dessous",
 
   tip3: "{shortcut} affiche tous les raccourcis clavier",
-  tip4: "{shortcut} ouvre la recherche globale (syntaxe folder: tag: site:)",
+  tip4: "{shortcut} ouvre la recherche globale (syntaxe folder: tag: level:)",
   tip5: "{shortcut} copie la dernière réponse IA",
   tip6: "{shortcut} navigue entre les titres du plan",
   edit: "Modifier",
@@ -602,8 +602,6 @@ export const fr = {
   contentExportSettingsTitle: "Réglages de Contenu",
   markdownFixLabel: "Correction du Gras",
   markdownFixDesc: "Corriger la syntaxe du gras sur Gemini",
-  exportImagesToBase64Label: "Images en Base64",
-  exportImagesToBase64Desc: "Convertir les photos en texte pour voir hors ligne",
   assistantMermaidLabel: "Rendu Mermaid des reponses IA",
   assistantMermaidDesc:
     "Affiche automatiquement les diagrammes Mermaid dans les reponses IA sur les sites sans prise en charge native de Mermaid",
@@ -1646,9 +1644,9 @@ Donnez le code puis un résumé des améliorations.`,
   "featureTip-shortcuts-path": "{shortcut} pour ouvrir les raccourcis",
   "featureTip-global-search-title": "Syntaxe de recherche globale",
   "featureTip-global-search-desc":
-    "Utilisez les filtres folder: tag: site: level: pour cibler le contenu",
+    "Utilisez les filtres folder: tag: level: pour cibler le contenu",
   "featureTip-global-search-path":
-    "{shortcut} pour ouvrir la recherche — prend en charge folder: tag: site:",
+    "{shortcut} pour ouvrir la recherche — prend en charge folder: tag: level:",
   "featureTip-copy-reply-title": "Copier la dernière réponse",
   "featureTip-copy-reply-desc":
     "Copier la dernière réponse IA dans le presse-papiers en une touche",
@@ -1658,7 +1656,7 @@ Donnez le code puis un résumé des améliorations.`,
   "featureTip-prev-next-heading-path": "Raccourci : {shortcut}",
   "featureTip-export-conv-title": "Exporter des conversations",
   "featureTip-export-conv-desc":
-    "Exporter les conversations sélectionnées en Markdown / JSON / CSV",
+    "Exporter les conversations sélectionnées en Markdown / JSON / TXT",
   "featureTip-export-conv-path":
     "Onglet Conversations → en haut à droite Mode lot → Exporter dans la barre inférieure",
   "featureTip-batch-select-title": "Gérer les conversations en lot",

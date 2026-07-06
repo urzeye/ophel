@@ -199,7 +199,6 @@ export interface Settings {
     formulaCopyFormat: FormulaCopyFormat
     formulaDelimiter: boolean
     tableCopy: boolean
-    exportImagesToBase64: boolean
     userQueryMarkdown: boolean // 用户提问 Markdown 渲染
   }
 
@@ -419,7 +418,6 @@ export const DEFAULT_SETTINGS: Settings = {
     formulaCopyFormat: "latex",
     formulaDelimiter: true,
     tableCopy: true,
-    exportImagesToBase64: false,
     userQueryMarkdown: true, // 默认开启
   },
 

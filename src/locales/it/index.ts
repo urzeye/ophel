@@ -273,7 +273,7 @@ export const it = {
   tip1: "Premi a lungo {modifier} per accedere alla modalità passthrough e interagire con i contenuti sotto il pannello",
 
   tip3: "Premi {shortcut} per visualizzare tutte le scorciatoie da tastiera",
-  tip4: "{shortcut} apre la ricerca globale con la sintassi folder: tag: site:",
+  tip4: "{shortcut} apre la ricerca globale con la sintassi folder: tag: level:",
   tip5: "{shortcut} per copiare rapidamente l'ultima risposta AI",
   tip6: "{shortcut} per passare da un titolo all'altro",
   edit: "Modifica",
@@ -618,9 +618,6 @@ export const it = {
   contentExportSettingsTitle: "Impostazioni del contenuto",
   markdownFixLabel: "Markdown Correzione audace",
   markdownFixDesc: "Corretta la sintassi **grassetto** non visualizzata nelle risposte Gemini",
-  exportImagesToBase64Label: "Esporta immagini in Base64",
-  exportImagesToBase64Desc:
-    "Converti immagini in Base64 durante l'esportazione delle conversazioni per la visualizzazione offline",
   assistantMermaidLabel: "Assistente Mermaid Rendering",
   assistantMermaidDesc:
     "Visualizza automaticamente i diagrammi Mermaid nelle risposte AI sui siti senza supporto Mermaid nativo",
@@ -1709,9 +1706,9 @@ export const it = {
   "featureTip-shortcuts-path": "{shortcut} per aprire la panoramica delle scorciatoie",
   "featureTip-global-search-title": "Sintassi della ricerca globale",
   "featureTip-global-search-desc":
-    "Utilizza la sintassi del filtro folder: tag: site: level: per individuare il contenuto",
+    "Utilizza la sintassi del filtro folder: tag: level: per individuare il contenuto",
   "featureTip-global-search-path":
-    "{shortcut} per aprire la ricerca: supporta la sintassi folder: tag: site:",
+    "{shortcut} per aprire la ricerca: supporta la sintassi folder: tag: level:",
   "featureTip-copy-reply-title": "Copia l'ultima risposta AI",
   "featureTip-copy-reply-desc":
     "Copia la risposta AI più recente negli appunti con la semplice pressione di un tasto",
@@ -1720,7 +1717,7 @@ export const it = {
   "featureTip-prev-next-heading-desc": "Naviga su/giù tra le intestazioni della struttura",
   "featureTip-prev-next-heading-path": "Scorciatoia: {shortcut}",
   "featureTip-export-conv-title": "Esporta conversazioni",
-  "featureTip-export-conv-desc": "Esporta le conversazioni selezionate come Markdown / JSON / CSV",
+  "featureTip-export-conv-desc": "Esporta le conversazioni selezionate come Markdown / JSON / TXT",
   "featureTip-export-conv-path":
     "Scheda Conversazioni → Modalità batch in alto a destra → Esporta nella barra in basso",
   "featureTip-batch-select-title": "Gestisci in batch le conversazioni",

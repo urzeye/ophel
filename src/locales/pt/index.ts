@@ -258,7 +258,7 @@ export const pt = {
   tip1: "Segure {modifier} para modo transparente e interagir com o conteúdo abaixo",
 
   tip3: "{shortcut} mostra todos os atalhos de teclado",
-  tip4: "{shortcut} abre a busca global (sintaxe folder: tag: site:)",
+  tip4: "{shortcut} abre a busca global (sintaxe folder: tag: level:)",
   tip5: "{shortcut} copia a resposta mais recente da IA",
   tip6: "{shortcut} navega entre os títulos do esquema",
   edit: "Editar",
@@ -600,8 +600,6 @@ export const pt = {
   contentExportSettingsTitle: "Ajustes de Conteúdo",
   markdownFixLabel: "Correção de Negrito",
   markdownFixDesc: "Corrigir sintaxe de negrito no Gemini",
-  exportImagesToBase64Label: "Imagens em Base64",
-  exportImagesToBase64Desc: "Converter fotos em texto para ver offline",
   assistantMermaidLabel: "Render Mermaid nas respostas",
   assistantMermaidDesc:
     "Renderiza automaticamente diagramas Mermaid nas respostas da IA em sites sem suporte nativo ao Mermaid",
@@ -1628,9 +1626,9 @@ Dê o código e depois um resumo de melhorias.`,
   "featureTip-shortcuts-path": "{shortcut} para abrir a visão geral dos atalhos",
   "featureTip-global-search-title": "Sintaxe de Busca Global",
   "featureTip-global-search-desc":
-    "Use filtros como folder: tag: site: level: para localizar conteúdo com precisão",
+    "Use filtros como folder: tag: level: para localizar conteúdo com precisão",
   "featureTip-global-search-path":
-    "{shortcut} para abrir a busca — suporta sintaxe folder: tag: site:",
+    "{shortcut} para abrir a busca — suporta sintaxe folder: tag: level:",
   "featureTip-copy-reply-title": "Copiar Última Resposta da IA",
   "featureTip-copy-reply-desc": "Copie a resposta mais recente da IA para a área de transferência",
   "featureTip-copy-reply-path": "Atalho: {shortcut}",
@@ -1638,7 +1636,7 @@ Dê o código e depois um resumo de melhorias.`,
   "featureTip-prev-next-heading-desc": "Navegue para cima/baixo entre os títulos do esboço",
   "featureTip-prev-next-heading-path": "Atalho: {shortcut}",
   "featureTip-export-conv-title": "Exportar Conversas",
-  "featureTip-export-conv-desc": "Exporte conversas selecionadas em Markdown / JSON / CSV",
+  "featureTip-export-conv-desc": "Exporte conversas selecionadas em Markdown / JSON / TXT",
   "featureTip-export-conv-path":
     "Aba Conversas → canto superior direito Modo lote → Exportar na barra inferior",
   "featureTip-batch-select-title": "Gerenciar Conversas em Lote",

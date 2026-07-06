@@ -1373,22 +1373,6 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ siteId, initialTab }) => {
                 style={{ width: "180px" }}
               />
             </SettingRow>
-
-            {/* TODO: exportImagesToBase64 is not yet implemented in the exporter.
-            <ToggleRow
-              label={t("exportImagesToBase64Label") || "导出时图片转 Base64"}
-              description={t("exportImagesToBase64Desc") || "导出会话时将图片转为 Base64 嵌入"}
-              settingId="export-images-base64"
-              checked={settings.content?.exportImagesToBase64 ?? false}
-              onChange={() =>
-                updateNestedSetting(
-                  "content",
-                  "exportImagesToBase64",
-                  !settings.content?.exportImagesToBase64,
-                )
-              }
-            />
-            */}
           </SettingCard>
         </>
       )}

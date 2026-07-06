@@ -267,7 +267,7 @@ export const en = {
   tip1: "Long press {modifier} to enter passthrough mode and interact with content beneath the panel",
 
   tip3: "Press {shortcut} to view all keyboard shortcuts",
-  tip4: "{shortcut} opens global search with folder: tag: site: syntax",
+  tip4: "{shortcut} opens global search with folder: tag: level: syntax",
   tip5: "{shortcut} to quickly copy the latest AI response",
   tip6: "{shortcut} to jump between outline headings",
   edit: "Edit",
@@ -603,9 +603,6 @@ export const en = {
   contentExportSettingsTitle: "Content Settings",
   markdownFixLabel: "Markdown Bold Fix",
   markdownFixDesc: "Fix unrendered **bold** syntax in Gemini responses",
-  exportImagesToBase64Label: "Export Images to Base64",
-  exportImagesToBase64Desc:
-    "Convert images to Base64 when exporting conversations for offline viewing",
   assistantMermaidLabel: "Assistant Mermaid Render",
   assistantMermaidDesc:
     "Automatically render Mermaid diagrams in AI responses on sites without native Mermaid support",
@@ -1649,9 +1646,9 @@ Please output the optimized code block directly, followed by a brief summary of 
   "featureTip-shortcuts-desc": "View and customize all keyboard shortcuts",
   "featureTip-shortcuts-path": "{shortcut} to open shortcuts overview",
   "featureTip-global-search-title": "Global Search Syntax",
-  "featureTip-global-search-desc":
-    "Use folder: tag: site: level: filter syntax to pinpoint content",
-  "featureTip-global-search-path": "{shortcut} to open search — supports folder: tag: site: syntax",
+  "featureTip-global-search-desc": "Use folder: tag: level: filter syntax to pinpoint content",
+  "featureTip-global-search-path":
+    "{shortcut} to open search — supports folder: tag: level: syntax",
   "featureTip-copy-reply-title": "Copy Latest AI Reply",
   "featureTip-copy-reply-desc": "Copy the most recent AI response to clipboard in one keystroke",
   "featureTip-copy-reply-path": "Shortcut: {shortcut}",
@@ -1659,7 +1656,7 @@ Please output the optimized code block directly, followed by a brief summary of 
   "featureTip-prev-next-heading-desc": "Navigate up/down between outline headings",
   "featureTip-prev-next-heading-path": "Shortcut: {shortcut}",
   "featureTip-export-conv-title": "Export Conversations",
-  "featureTip-export-conv-desc": "Export selected conversations as Markdown / JSON / CSV",
+  "featureTip-export-conv-desc": "Export selected conversations as Markdown / JSON / TXT",
   "featureTip-export-conv-path": "Conversations Tab → top-right Batch Mode → Export in bottom bar",
   "featureTip-batch-select-title": "Batch Manage Conversations",
   "featureTip-batch-select-desc": "Bulk delete, export, archive, or move conversations",

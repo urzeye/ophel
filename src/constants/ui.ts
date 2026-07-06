@@ -636,11 +636,6 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
     keywords: ["export", "thoughts", "reasoning", "thinking", "思维链", "思路", "推理"],
   },
   {
-    settingId: "export-images-base64",
-    title: "导出时将图片转 Base64",
-    keywords: ["export", "image", "base64", "图片"],
-  },
-  {
     settingId: "prompt-double-click-send",
     title: "提示词双击发送",
     keywords: ["prompt", "double click", "send", "双击发送"],

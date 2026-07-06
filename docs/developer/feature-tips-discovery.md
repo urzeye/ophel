@@ -106,7 +106,7 @@ export function t(key: string, params?: Record<string, string>): string {
 | passthrough       | 穿透模式         | 长按 {modifier}，面板变透明，可操作下层页面内容 |
 | privacy-mode      | 隐私模式         | 双击面板标题栏开启/关闭                         |
 | shortcuts         | 快捷键总览       | 按 {shortcut} 查看全部快捷键                    |
-| global-search     | 全局搜索语法     | 支持 folder: tag: site: level: 过滤语法         |
+| global-search     | 全局搜索语法     | 支持 type: folder: tag: level: 过滤语法         |
 | copy-reply        | 复制最新 AI 回复 | {shortcut} 一键复制最近一条回复                 |
 | prev-next-heading | 标题间快速跳转   | {shortcut} 在大纲标题间跳转                     |
 | export-conv       | 导出会话         | 会话 Tab → 长按进入多选 → 底部导出按钮          |

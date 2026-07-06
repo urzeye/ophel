@@ -258,7 +258,7 @@ export const de = {
   tip1: "{modifier} gedrückt halten für Durchreichmodus – Inhalte unter dem Panel bedienen",
 
   tip3: "{shortcut} zeigt alle Tastaturkürzel",
-  tip4: "{shortcut} öffnet die globale Suche (folder: tag: site: Syntax)",
+  tip4: "{shortcut} öffnet die globale Suche (folder: tag: level: Syntax)",
   tip5: "{shortcut} kopiert die neueste KI-Antwort",
   tip6: "{shortcut} springt zwischen Gliederungsüberschriften",
   edit: "Bearbeiten",
@@ -603,8 +603,6 @@ export const de = {
   contentExportSettingsTitle: "Inhaltseinstellungen",
   markdownFixLabel: "Fettschrift-Fix",
   markdownFixDesc: "Fettschrift-Syntax bei Gemini korrigieren",
-  exportImagesToBase64Label: "Bilder als Base64",
-  exportImagesToBase64Desc: "Bilder für Offline-Ansicht in Text wandeln",
   assistantMermaidLabel: "Mermaid-Rendering fur KI-Antworten",
   assistantMermaidDesc:
     "Rendert Mermaid-Diagramme in KI-Antworten automatisch auf Websites ohne native Mermaid-Unterstutzung",
@@ -1637,9 +1635,9 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
   "featureTip-shortcuts-path": "{shortcut} zum Öffnen der Tastaturkürzel-Übersicht",
   "featureTip-global-search-title": "Globale Suchsyntax",
   "featureTip-global-search-desc":
-    "Filtersyntax wie folder: tag: site: level: verwenden, um Inhalte gezielt zu finden",
+    "Filtersyntax wie folder: tag: level: verwenden, um Inhalte gezielt zu finden",
   "featureTip-global-search-path":
-    "{shortcut} zum Öffnen der Suche — unterstützt folder: tag: site: Syntax",
+    "{shortcut} zum Öffnen der Suche — unterstützt folder: tag: level: Syntax",
   "featureTip-copy-reply-title": "Letzte KI-Antwort kopieren",
   "featureTip-copy-reply-desc":
     "Die neueste KI-Antwort mit einem Tastendruck in die Zwischenablage kopieren",
@@ -1649,7 +1647,7 @@ Gib den Code und eine Zusammenfassung der Verbesserungen aus.`,
     "Aufwärts/abwärts zwischen Gliederungsüberschriften navigieren",
   "featureTip-prev-next-heading-path": "Tastenkürzel: {shortcut}",
   "featureTip-export-conv-title": "Gespräche exportieren",
-  "featureTip-export-conv-desc": "Ausgewählte Gespräche als Markdown / JSON / CSV exportieren",
+  "featureTip-export-conv-desc": "Ausgewählte Gespräche als Markdown / JSON / TXT exportieren",
   "featureTip-export-conv-path":
     "Gespräche-Tab → oben rechts Stapelmodus → Exportieren in der unteren Leiste",
   "featureTip-batch-select-title": "Gespräche in Stapeln verwalten",

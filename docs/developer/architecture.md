@@ -257,7 +257,7 @@ import { useSettingsStore } from "~stores/settings-store"
 
 支持语法化搜索的全局搜索功能：
 
-- `syntax.ts` - 搜索语法解析器（支持 `folder:`, `tag:`, `site:` 等过滤器）
+- `syntax.ts` - 搜索语法解析器（支持 `type:`, `folder:`, `tag:`, `is:`, `level:`, `date:` 过滤器）
 - `useGlobalSearchData.ts` - 数据源聚合
 - `useGlobalSearchKeyboard.ts` - 键盘导航
 - `useGlobalSearchPreview.ts` - 预览面板
