@@ -93,9 +93,16 @@ const CLAUDE_USER_FILE_THUMBNAIL_SELECTOR = '[data-testid="file-thumbnail"]'
 const CLAUDE_THOUGHT_TOGGLE_SELECTOR = "button[aria-expanded]"
 const CLAUDE_THOUGHT_STATUS_SELECTOR = 'span[role="status"][aria-live="polite"]'
 const CLAUDE_LAYOUT_SCOPE_SELECTOR = "#main-content"
+const CLAUDE_CHAT_COLUMN_SCOPE_SELECTOR = `${CLAUDE_LAYOUT_SCOPE_SELECTOR} div:has(> [data-testid="page-header"]):has(> [data-autoscroll-container="true"])`
+const CLAUDE_PANEL_AVOIDANCE_SCOPE_SELECTOR = [
+  CLAUDE_CHAT_COLUMN_SCOPE_SELECTOR,
+  `${CLAUDE_LAYOUT_SCOPE_SELECTOR}:not(:has([data-autoscroll-container="true"]))`,
+].join(", ")
 const CLAUDE_CONTENT_WIDTH_SELECTORS = ["#main-content .max-w-3xl", "#main-content .max-w-4xl"]
-const CLAUDE_SCROLL_SAFE_AREA_SELECTOR =
-  '#main-content [data-autoscroll-container="true"], #main-content:has(.ProseMirror)'
+const CLAUDE_SCROLL_SAFE_AREA_SELECTOR = '#main-content [data-autoscroll-container="true"]'
+const CLAUDE_NEW_CHAT_SAFE_AREA_SELECTOR =
+  '#main-content:has(.ProseMirror):not(:has([data-autoscroll-container="true"]))'
+const CLAUDE_CANVAS_PANEL_SCOPE_SELECTOR = `${CLAUDE_LAYOUT_SCOPE_SELECTOR} [data-testid="chat-stale-nav-inert"] > div > div:not([aria-hidden="true"]):has([data-skill-file-viewer="true"])`
 const CLAUDE_PANEL_OBSTACLE_SELECTOR = [
   CLAUDE_DOCUMENT_ROOT_SELECTOR,
   '[data-testid="artifact-panel"]',
@@ -2655,13 +2662,27 @@ export class ClaudeAdapter extends SiteAdapter {
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
     return {
-      scopeSelector: CLAUDE_LAYOUT_SCOPE_SELECTOR,
+      scopeSelector: CLAUDE_PANEL_AVOIDANCE_SCOPE_SELECTOR,
       obstacleSelectors: [CLAUDE_PANEL_OBSTACLE_SELECTOR],
       widthSelectors: this.getWidthSelectors(),
       insetSelectors: [
         {
           selector: CLAUDE_SCROLL_SAFE_AREA_SELECTOR,
           extraCss: "box-sizing: border-box; width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: CLAUDE_NEW_CHAT_SAFE_AREA_SELECTOR,
+          scopeSelector: CLAUDE_LAYOUT_SCOPE_SELECTOR,
+          insetMode: "edge",
+          extraCss: "box-sizing: border-box; width: 100% !important; min-width: 0 !important;",
+        },
+        {
+          selector: CLAUDE_CANVAS_PANEL_SCOPE_SELECTOR,
+          scopeSelector: CLAUDE_CANVAS_PANEL_SCOPE_SELECTOR,
+          applySide: "right",
+          insetMode: "edge",
+          extraCss:
+            "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
       ],
       defaultWidth: "768px",
