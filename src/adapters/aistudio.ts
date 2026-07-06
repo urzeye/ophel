@@ -110,7 +110,6 @@ const AISTUDIO_CHAT_TURN_WIDTH_SELECTOR = ".chunk-editor-main .chat-turn-contain
 const AISTUDIO_PROMPT_BOX_WIDTH_SELECTOR = ".chunk-editor-main footer ms-prompt-box"
 const AISTUDIO_CHAT_SAFE_AREA_SELECTOR = ".chunk-editor-main .chat-container .chat-view-container"
 const AISTUDIO_PROMPT_SAFE_AREA_SELECTOR = ".chunk-editor-main footer"
-const AISTUDIO_RUN_SETTINGS_PANEL_SELECTOR = "ms-chunk-editor > ms-right-side-panel"
 const AISTUDIO_PANEL_OBSTACLE_SELECTOR = [
   ".ms-sliding-right-panel-dialog",
   "mat-dialog-container.mat-mdc-dialog-container",
@@ -560,8 +559,8 @@ export class AIStudioAdapter extends SiteAdapter {
 
   getPanelAvoidanceConfig(): PanelAvoidanceConfig {
     return {
-      // AI Studio 的右侧 Run settings 是 .chunk-editor-main 的兄弟节点；
-      // 用聊天主区域作为 scope，右侧设置面板会自然从可用宽度里扣除。
+      // AI Studio 的右侧 Run settings 是 ms-chunk-editor 的 flex 子节点。
+      // 聊天主区域独立计算正文避让，父级 editor 单独预留右侧空间，避免把透明设置栏叠到聊天区。
       scopeSelector: AISTUDIO_LAYOUT_SCOPE_SELECTOR,
       obstacleSelectors: [AISTUDIO_PANEL_OBSTACLE_SELECTOR],
       widthSelectors: [
@@ -602,13 +601,11 @@ export class AIStudioAdapter extends SiteAdapter {
             "box-sizing: border-box; width: 100% !important; max-width: 100% !important; min-width: 0 !important;",
         },
         {
-          selector: AISTUDIO_RUN_SETTINGS_PANEL_SELECTOR,
+          selector: AISTUDIO_EDITOR_SCOPE_SELECTOR,
           scopeSelector: AISTUDIO_EDITOR_SCOPE_SELECTOR,
           applySide: "right",
           insetMode: "edge",
-          rightProperty: "--gh-aistudio-run-settings-inset",
-          extraCss:
-            "flex-shrink: 0 !important; translate: calc(-1 * var(--gh-aistudio-run-settings-inset, 0px)) 0 !important;",
+          extraCss: "box-sizing: border-box !important; min-width: 0 !important;",
         },
       ],
       defaultWidth: "1000px",
