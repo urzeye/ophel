@@ -437,22 +437,17 @@
   position: absolute;
   top: 56px;
   bottom: 64px;
-  width: 16px;
+  width: 18px;
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--gh-text-tertiary, rgba(107, 114, 128, 0.72));
   cursor: ew-resize;
   z-index: 30;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
+  opacity: 1;
   touch-action: none;
   transition:
-    opacity 0.16s ease,
-    color 0.16s ease,
-    transform 0.16s ease;
+    background 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
 .gh-panel-resize-handle-left {
@@ -463,57 +458,28 @@
   right: 0;
 }
 
-.gh-panel-resize-grip {
-  position: relative;
-  width: 3px;
-  height: 48px;
-  border-radius: 999px;
-  background: currentColor;
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--gh-bg, #ffffff) 70%, transparent);
-}
-
-.gh-panel-resize-grip::before,
-.gh-panel-resize-grip::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0.65;
-  transform: translateX(-50%);
-}
-
-.gh-panel-resize-grip::before {
-  top: 14px;
-}
-
-.gh-panel-resize-grip::after {
-  bottom: 14px;
-}
-
-.gh-main-panel:hover .gh-panel-resize-handle,
-.gh-panel-resize-handle:hover,
-.gh-panel-resize-handle:focus-visible,
-.gh-main-panel.is-resizing .gh-panel-resize-handle {
-  color: var(--gh-primary, #4285f4);
-  opacity: 0.72;
-}
-
-.gh-panel-resize-handle-left:hover,
-.gh-panel-resize-handle-left:focus-visible {
-  transform: translateX(-2px);
-}
-
-.gh-panel-resize-handle-right:hover,
-.gh-panel-resize-handle-right:focus-visible {
-  transform: translateX(2px);
-}
-
 .gh-panel-resize-handle:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--gh-primary, #4285f4) 34%, transparent);
-  outline-offset: 1px;
+  outline: none;
+}
+
+.gh-panel-resize-handle-left:focus-visible,
+.gh-main-panel.is-resizing .gh-panel-resize-handle-left {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--gh-primary, #4285f4) 10%, transparent),
+    transparent
+  );
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--gh-primary, #4285f4) 52%, transparent);
+}
+
+.gh-panel-resize-handle-right:focus-visible,
+.gh-main-panel.is-resizing .gh-panel-resize-handle-right {
+  background: linear-gradient(
+    270deg,
+    color-mix(in srgb, var(--gh-primary, #4285f4) 10%, transparent),
+    transparent
+  );
+  box-shadow: inset -2px 0 0 color-mix(in srgb, var(--gh-primary, #4285f4) 52%, transparent);
 }
 
 /* ============= 面板 Header 样式 ============= */

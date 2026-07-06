@@ -1263,9 +1263,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             onPointerMove={handleResizePointerMove}
             onPointerUp={finishResize}
             onPointerCancel={finishResize}
-            onLostPointerCapture={finishResize}>
-            <span className="gh-panel-resize-grip" aria-hidden="true" />
-          </button>
+            onLostPointerCapture={finishResize}
+          />
         )}
 
         {/* Header - 拖拽区域 */}
