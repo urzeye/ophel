@@ -3451,7 +3451,10 @@
   border-radius: 10px;
   background: var(--gh-bg, #ffffff);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  transition: all 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .gh-chain-step-row.dragging {
@@ -3517,7 +3520,11 @@
   background: transparent;
   color: var(--gh-text-tertiary, #d1d5db);
   opacity: 0 !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    background 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3564,7 +3571,11 @@
   line-height: 1.55;
   resize: vertical;
   outline: none;
-  transition: all 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s,
+    color 0.15s;
 }
 
 .gh-chain-step-inline-input:focus {
@@ -3587,7 +3598,11 @@
   color: var(--gh-text, #1f2937);
   font-size: 13px;
   outline: none;
-  transition: all 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s,
+    color 0.15s;
   cursor: pointer;
 }
 
@@ -3616,7 +3631,10 @@
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease;
   white-space: nowrap;
   line-height: 1.4;
 }
@@ -3695,7 +3713,9 @@
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .gh-chain-preview-toggle:hover {
@@ -3744,7 +3764,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
   gap: 4px;
   max-width: 140px;
   overflow: hidden;
