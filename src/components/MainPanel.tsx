@@ -1189,9 +1189,14 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     resetPanelTabDragState()
   }
 
-  const focusPanelTab = (tab: string) => {
+  const focusPanelTab = (tabListElement: HTMLElement | null, tab: string) => {
     window.requestAnimationFrame(() => {
-      document.getElementById(`gh-panel-tab-${tab}`)?.focus()
+      const nextTabId = `gh-panel-tab-${tab}`
+      const nextTabButton = Array.from(
+        tabListElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [],
+      ).find((button) => button.id === nextTabId)
+
+      nextTabButton?.focus()
     })
   }
 
@@ -1231,7 +1236,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
     event.preventDefault()
     event.stopPropagation()
     setActiveTab(nextTab)
-    focusPanelTab(nextTab)
+    focusPanelTab(event.currentTarget.parentElement, nextTab)
   }
 
   // 获取主题图标
