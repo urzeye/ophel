@@ -31,6 +31,7 @@ import { ChainIconPicker } from "~components/ChainIconPicker"
 import { ImportDialog } from "~components/prompts/ImportDialog"
 import { PromptEditorDialog } from "~components/prompts/PromptEditorDialog"
 import { PromptPreviewModal } from "~components/prompts/PromptPreviewModal"
+import { usePromptDragSort } from "~components/prompts/usePromptDragSort"
 import { VIRTUAL_CATEGORY } from "~constants"
 import { CHAIN_ICON_PRESETS } from "~constants/chain-icons"
 import type { PromptChain, PromptChainStep } from "~core/prompt-action-types"
@@ -1051,14 +1052,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     defaultValue: "",
     onConfirm: () => {},
   })
-  // 拖拽状态
-  const [draggedId, setDraggedId] = useState<string | null>(null)
-  const dragNodeRef = useRef<HTMLDivElement | null>(null)
-  const dropIndicatorRootRef = useRef<ParentNode | null>(null)
-  const [draggedChainId, setDraggedChainId] = useState<string | null>(null)
-  const chainDragNodeRef = useRef<HTMLDivElement | null>(null)
-  const chainDropIndicatorRootRef = useRef<ParentNode | null>(null)
-
   // 变量输入弹窗状态
   const [variableDialogState, setVariableDialogState] = useState<{
     show: boolean
@@ -1125,6 +1118,25 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       return prev
     })
   }, [manager])
+
+  const {
+    draggedId,
+    draggedChainId,
+    handleDragStart,
+    handleDragOver,
+    handleDragEnd,
+    handleDrop,
+    handleChainDragStart,
+    handleChainDragOver,
+    handleChainDragEnd,
+    handleChainDrop,
+  } = usePromptDragSort({
+    manager,
+    loadData,
+    chains,
+    updateChainOrder,
+    onOrderUpdated: () => showToast(t("orderUpdated")),
+  })
 
   const openVariableDialogByPromptId = useCallback(
     (promptId: string, submitAfterInsert = false) => {
@@ -1971,219 +1983,6 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         loadData()
       },
     )
-  }
-
-  // === 拖拽排序 ===
-  const clearPromptDropIndicators = useCallback(() => {
-    const roots = [
-      dropIndicatorRootRef.current,
-      dragNodeRef.current?.getRootNode() as ParentNode | undefined,
-      document,
-    ]
-    const seenRoots = new Set<ParentNode>()
-
-    roots.forEach((root) => {
-      if (!root || seenRoots.has(root)) return
-      seenRoots.add(root)
-      root.querySelectorAll(".drop-above, .drop-below").forEach((el) => {
-        el.classList.remove("drop-above", "drop-below")
-      })
-    })
-
-    dropIndicatorRootRef.current = null
-  }, [])
-
-  const handleDragStart = (e: React.DragEvent, id: string, node: HTMLDivElement) => {
-    const target = e.target as HTMLElement
-    if (
-      target.closest('button, input, textarea, select, [role="button"], [data-no-row-drag="true"]')
-    ) {
-      e.preventDefault()
-      return
-    }
-
-    setDraggedId(id)
-    dragNodeRef.current = node
-    dropIndicatorRootRef.current = node.getRootNode() as ParentNode
-    e.dataTransfer.effectAllowed = "move"
-    // 必须调用 setData，部分站点在拖拽冒泡（bubbling）阶段会检测 dataTransfer 为空并取消拖拽
-    e.dataTransfer.setData("text/plain", id)
-    node.classList.add("dragging")
-  }
-
-  const handleDragOver = (e: React.DragEvent, targetId: string) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = "move"
-
-    if (!draggedId || draggedId === targetId) return
-
-    const target = e.currentTarget as HTMLElement
-    const rect = target.getBoundingClientRect()
-    const midpoint = rect.top + rect.height / 2
-    const targetRoot = target.getRootNode() as ParentNode
-
-    dropIndicatorRootRef.current = targetRoot
-    clearPromptDropIndicators()
-
-    if (e.clientY < midpoint) {
-      target.classList.add("drop-above")
-    } else {
-      target.classList.add("drop-below")
-    }
-    dropIndicatorRootRef.current = targetRoot
-  }
-
-  const handleDragEnd = () => {
-    if (dragNodeRef.current) {
-      dragNodeRef.current.classList.remove("dragging")
-    }
-    clearPromptDropIndicators()
-    setDraggedId(null)
-    dragNodeRef.current = null
-  }
-
-  const handleDrop = async (e: React.DragEvent, targetId: string) => {
-    e.preventDefault()
-
-    if (!draggedId || draggedId === targetId) {
-      handleDragEnd()
-      return
-    }
-
-    const allPrompts = manager.getPrompts()
-    const draggedIndex = allPrompts.findIndex((p) => p.id === draggedId)
-    const targetIndex = allPrompts.findIndex((p) => p.id === targetId)
-
-    if (draggedIndex === -1 || targetIndex === -1) {
-      handleDragEnd()
-      return
-    }
-
-    const newOrder = [...allPrompts]
-    const [removed] = newOrder.splice(draggedIndex, 1)
-
-    const target = e.currentTarget as HTMLElement
-    const rect = target.getBoundingClientRect()
-    const insertBefore = e.clientY < rect.top + rect.height / 2
-
-    let insertIndex = allPrompts.findIndex((p) => p.id === targetId)
-    if (draggedIndex < insertIndex) {
-      insertIndex--
-    }
-    if (!insertBefore) {
-      insertIndex++
-    }
-
-    newOrder.splice(insertIndex, 0, removed)
-
-    await manager.updateOrder(newOrder.map((p) => p.id))
-    showToast(t("orderUpdated"))
-    loadData()
-    handleDragEnd()
-  }
-
-  const clearChainDropIndicators = useCallback(() => {
-    const roots = [
-      chainDropIndicatorRootRef.current,
-      chainDragNodeRef.current?.getRootNode() as ParentNode | undefined,
-      document,
-    ]
-    const seenRoots = new Set<ParentNode>()
-
-    roots.forEach((root) => {
-      if (!root || seenRoots.has(root)) return
-      seenRoots.add(root)
-      root.querySelectorAll(".drop-above, .drop-below").forEach((el) => {
-        el.classList.remove("drop-above", "drop-below")
-      })
-    })
-
-    chainDropIndicatorRootRef.current = null
-  }, [])
-
-  const handleChainDragStart = (e: React.DragEvent, id: string, node: HTMLDivElement) => {
-    const target = e.target as HTMLElement
-    if (
-      target.closest('button, input, textarea, select, [role="button"], [data-no-row-drag="true"]')
-    ) {
-      e.preventDefault()
-      return
-    }
-
-    setDraggedChainId(id)
-    chainDragNodeRef.current = node
-    chainDropIndicatorRootRef.current = node.getRootNode() as ParentNode
-    e.dataTransfer.effectAllowed = "move"
-    e.dataTransfer.setData("text/plain", id)
-    node.classList.add("dragging")
-  }
-
-  const handleChainDragOver = (e: React.DragEvent, targetId: string) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = "move"
-
-    if (!draggedChainId || draggedChainId === targetId) return
-
-    const target = e.currentTarget as HTMLElement
-    const rect = target.getBoundingClientRect()
-    const midpoint = rect.top + rect.height / 2
-    const targetRoot = target.getRootNode() as ParentNode
-
-    chainDropIndicatorRootRef.current = targetRoot
-    clearChainDropIndicators()
-
-    if (e.clientY < midpoint) {
-      target.classList.add("drop-above")
-    } else {
-      target.classList.add("drop-below")
-    }
-    chainDropIndicatorRootRef.current = targetRoot
-  }
-
-  const handleChainDragEnd = () => {
-    if (chainDragNodeRef.current) {
-      chainDragNodeRef.current.classList.remove("dragging")
-    }
-    clearChainDropIndicators()
-    setDraggedChainId(null)
-    chainDragNodeRef.current = null
-  }
-
-  const handleChainDrop = (e: React.DragEvent, targetId: string) => {
-    e.preventDefault()
-
-    if (!draggedChainId || draggedChainId === targetId) {
-      handleChainDragEnd()
-      return
-    }
-
-    const draggedIndex = chains.findIndex((chain) => chain.id === draggedChainId)
-    const targetIndex = chains.findIndex((chain) => chain.id === targetId)
-
-    if (draggedIndex === -1 || targetIndex === -1) {
-      handleChainDragEnd()
-      return
-    }
-
-    const newOrder = [...chains]
-    const [removed] = newOrder.splice(draggedIndex, 1)
-
-    const target = e.currentTarget as HTMLElement
-    const rect = target.getBoundingClientRect()
-    const insertBefore = e.clientY < rect.top + rect.height / 2
-
-    let insertIndex = chains.findIndex((chain) => chain.id === targetId)
-    if (draggedIndex < insertIndex) {
-      insertIndex--
-    }
-    if (!insertBefore) {
-      insertIndex++
-    }
-
-    newOrder.splice(insertIndex, 0, removed)
-    updateChainOrder(newOrder.map((chain) => chain.id))
-    showToast(t("orderUpdated"))
-    handleChainDragEnd()
   }
 
   const filtered = getFilteredPrompts()
