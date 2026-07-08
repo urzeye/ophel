@@ -106,6 +106,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const isHydrated = useSettingsHydrated()
   const contentRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null) // 容器引用
+  const titleId = "ophel-settings-modal-title"
   const highlightTimerRef = useRef<number | undefined>(undefined)
   const highlightedElementRef = useRef<HTMLElement | null>(null)
 
@@ -328,18 +329,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       <div
         ref={containerRef}
         className={`settings-modal-container ${isMaximized ? "maximized" : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         onClick={(e) => e.stopPropagation()}>
         {/* 关闭按钮 */}
         <div className="settings-modal-actions">
           <Tooltip content={isMaximized ? t("restore") : t("maximize")}>
             <button
+              type="button"
               className="settings-modal-action-btn"
+              aria-label={isMaximized ? t("restore") : t("maximize")}
               onClick={() => setIsMaximized(!isMaximized)}>
               {isMaximized ? <RestoreIcon size={16} /> : <MaximizeIcon size={16} />}
             </button>
           </Tooltip>
           <Tooltip content={t("close")}>
-            <button className="settings-modal-action-btn close" onClick={onClose}>
+            <button
+              type="button"
+              className="settings-modal-action-btn close"
+              aria-label={t("close")}
+              onClick={onClose}>
               <ClearIcon size={16} />
             </button>
           </Tooltip>
@@ -350,7 +360,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="settings-sidebar-header">
             <div className="settings-sidebar-logo">
               <img src={APP_ICON_URL} alt={APP_DISPLAY_NAME} />
-              <span>{APP_DISPLAY_NAME}</span>
+              <span id={titleId}>{APP_DISPLAY_NAME}</span>
             </div>
           </div>
           <nav className="settings-sidebar-nav">
