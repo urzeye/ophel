@@ -313,6 +313,8 @@ export const ru = {
   deleted: "Удалено",
   promptPin: "Закрепить",
   promptUnpin: "Открепить",
+  promptMoveUp: "Переместить вверх",
+  promptMoveDown: "Переместить вниз",
   promptVariableTitle: "Переменные",
   promptVariablePlaceholder: "Введите...",
   promptImport: "Импорт",

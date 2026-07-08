@@ -345,6 +345,8 @@ export const zhCN = {
   deleted: "已删除",
   promptPin: "置顶",
   promptUnpin: "取消置顶",
+  promptMoveUp: "上移",
+  promptMoveDown: "下移",
   promptVariableTitle: "填写变量",
   promptVariablePlaceholder: "请输入",
   promptImport: "导入",

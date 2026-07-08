@@ -316,6 +316,8 @@ export const fr = {
   deleted: "Supprimé",
   promptPin: "Épingler",
   promptUnpin: "Désépingler",
+  promptMoveUp: "Monter",
+  promptMoveDown: "Descendre",
   promptVariableTitle: "Variables",
   promptVariablePlaceholder: "Saisir...",
   promptImport: "Importer",

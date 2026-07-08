@@ -314,6 +314,8 @@ export const pt = {
   deleted: "Excluído",
   promptPin: "Fixar",
   promptUnpin: "Desafixar",
+  promptMoveUp: "Mover para cima",
+  promptMoveDown: "Mover para baixo",
   promptVariableTitle: "Variáveis",
   promptVariablePlaceholder: "Digite...",
   promptImport: "Importar",

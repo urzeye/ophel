@@ -186,6 +186,8 @@ export const zhTW = {
   deleted: "已刪除",
   promptPin: "置頂",
   promptUnpin: "取消置頂",
+  promptMoveUp: "上移",
+  promptMoveDown: "下移",
   promptVariableTitle: "填寫變數",
   promptVariablePlaceholder: "請輸入",
   promptImport: "匯入",

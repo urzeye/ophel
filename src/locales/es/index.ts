@@ -315,6 +315,8 @@ export const es = {
   deleted: "Borrado",
   promptPin: "Fijar",
   promptUnpin: "Desfijar",
+  promptMoveUp: "Mover arriba",
+  promptMoveDown: "Mover abajo",
   promptVariableTitle: "Variables",
   promptVariablePlaceholder: "Escribre...",
   promptImport: "Importar",

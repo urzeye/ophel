@@ -321,6 +321,8 @@ export const ja = {
   deleted: "削除しました",
   promptPin: "ピン留め",
   promptUnpin: "ピン留め解除",
+  promptMoveUp: "上へ移動",
+  promptMoveDown: "下へ移動",
   promptVariableTitle: "変数の入力",
   promptVariablePlaceholder: "入力",
   promptImport: "インポート",

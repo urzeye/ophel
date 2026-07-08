@@ -316,6 +316,8 @@ export const ko = {
   deleted: "삭제됨",
   promptPin: "고정",
   promptUnpin: "고정 해제",
+  promptMoveUp: "위로 이동",
+  promptMoveDown: "아래로 이동",
   promptVariableTitle: "변수 채우기",
   promptVariablePlaceholder: "입력",
   promptImport: "가져오기",

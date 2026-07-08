@@ -332,6 +332,8 @@ export const it = {
   deleted: "Eliminato",
   promptPin: "Perno",
   promptUnpin: "Sblocca",
+  promptMoveUp: "Sposta su",
+  promptMoveDown: "Sposta giù",
   promptVariableTitle: "Riempi le variabili",
   promptVariablePlaceholder: "Enter",
   promptImport: "Importa",

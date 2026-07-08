@@ -4,6 +4,8 @@ import { createPortal } from "react-dom"
 import type { SiteAdapter } from "~adapters/base"
 import {
   AddToQueueIcon,
+  ArrowDownIcon,
+  ArrowUpIcon,
   CheckIcon,
   ClearIcon,
   CopyIcon,
@@ -1723,6 +1725,37 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     loadData()
   }
 
+  const movePromptRelativeToVisibleNeighbor = (
+    promptId: string,
+    neighborId: string,
+    placement: "before" | "after",
+  ) => {
+    const allPrompts = manager.getPrompts()
+    const fromIndex = allPrompts.findIndex((prompt) => prompt.id === promptId)
+    const neighborIndex = allPrompts.findIndex((prompt) => prompt.id === neighborId)
+
+    if (fromIndex === -1 || neighborIndex === -1) {
+      return
+    }
+
+    const nextOrder = [...allPrompts]
+    const [movedPrompt] = nextOrder.splice(fromIndex, 1)
+    let insertIndex = nextOrder.findIndex((prompt) => prompt.id === neighborId)
+
+    if (insertIndex === -1) {
+      return
+    }
+
+    if (placement === "after") {
+      insertIndex += 1
+    }
+
+    nextOrder.splice(insertIndex, 0, movedPrompt)
+    manager.updateOrder(nextOrder.map((prompt) => prompt.id))
+    showToast(t("orderUpdated"))
+    loadData()
+  }
+
   // 导出提示词为 JSON 文件
   const handleExport = () => {
     const allPrompts = manager.getPrompts()
@@ -1986,6 +2019,35 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }
 
   const filtered = getFilteredPrompts()
+
+  const getPromptMoveTargets = (promptId: string) => {
+    if (
+      activeLibraryView !== "prompts" ||
+      selectedCategory === VIRTUAL_CATEGORY.RECENT ||
+      searchQuery.trim()
+    ) {
+      return { previous: null, next: null }
+    }
+
+    const currentIndex = filtered.findIndex((prompt) => prompt.id === promptId)
+    const currentPrompt = currentIndex >= 0 ? filtered[currentIndex] : null
+
+    if (!currentPrompt) {
+      return { previous: null, next: null }
+    }
+
+    const previous = filtered[currentIndex - 1]
+    const next = filtered[currentIndex + 1]
+
+    return {
+      previous: previous?.pinned === currentPrompt.pinned ? previous : null,
+      next: next?.pinned === currentPrompt.pinned ? next : null,
+    }
+  }
+
+  const promptMoveTargets = promptActionMenu
+    ? getPromptMoveTargets(promptActionMenu.prompt.id)
+    : { previous: null, next: null }
 
   useEffect(() => {
     const hasPromptDialogs =
@@ -3186,7 +3248,9 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
                         e.preventDefault()
                         setPromptActionMenu({ prompt: p, anchorEl: e.currentTarget })
                       }}
-                      className="prompt-action-btn">
+                      className="prompt-action-btn"
+                      aria-label={t("more")}
+                      title={t("more")}>
                       <MoreHorizontalIcon size={16} />
                     </button>
                   </Tooltip>
@@ -3319,6 +3383,38 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               <span>{t("promptSplitLinesToQueue")}</span>
             </span>
           </MenuButton>
+          {promptMoveTargets.previous && (
+            <MenuButton
+              onClick={() => {
+                movePromptRelativeToVisibleNeighbor(
+                  promptActionMenu.prompt.id,
+                  promptMoveTargets.previous.id,
+                  "before",
+                )
+                closePromptActionMenu()
+              }}>
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <ArrowUpIcon size={14} />
+                <span>{t("promptMoveUp")}</span>
+              </span>
+            </MenuButton>
+          )}
+          {promptMoveTargets.next && (
+            <MenuButton
+              onClick={() => {
+                movePromptRelativeToVisibleNeighbor(
+                  promptActionMenu.prompt.id,
+                  promptMoveTargets.next.id,
+                  "after",
+                )
+                closePromptActionMenu()
+              }}>
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <ArrowDownIcon size={14} />
+                <span>{t("promptMoveDown")}</span>
+              </span>
+            </MenuButton>
+          )}
         </ContextMenu>
       )}
 

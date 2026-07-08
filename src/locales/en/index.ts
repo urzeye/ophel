@@ -324,6 +324,8 @@ export const en = {
   deleted: "Deleted",
   promptPin: "Pin",
   promptUnpin: "Unpin",
+  promptMoveUp: "Move up",
+  promptMoveDown: "Move down",
   promptVariableTitle: "Fill Variables",
   promptVariablePlaceholder: "Enter",
   promptImport: "Import",
