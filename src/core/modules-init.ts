@@ -470,11 +470,11 @@ export function initPolicyRetryManager(ctx: ModulesContext): void {
 /**
  * 订阅设置变化，动态更新模块
  */
-export function subscribeModuleUpdates(ctx: ModulesContext): void {
+export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
   const { adapter, siteId } = ctx
   let lastLanguage = getSettingsState().language
 
-  subscribeSettings((newSettings: Settings) => {
+  return subscribeSettings((newSettings: Settings) => {
     if (newSettings.language && newSettings.language !== lastLanguage) {
       lastLanguage = newSettings.language
       setLanguage(newSettings.language)

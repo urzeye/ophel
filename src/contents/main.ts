@@ -487,7 +487,8 @@ if (!window.ophelInitialized) {
       await initCoreModules(ctx)
 
       // 订阅设置变化
-      subscribeModuleUpdates(ctx)
+      const unsubscribeModuleUpdates = subscribeModuleUpdates(ctx)
+      window.addEventListener("unload", unsubscribeModuleUpdates, { once: true })
 
       // 初始化 URL 变化监听
       initUrlChangeObserver(ctx)
