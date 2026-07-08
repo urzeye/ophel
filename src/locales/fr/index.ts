@@ -784,6 +784,11 @@ export const fr = {
   panelModeDesc: "Contrôler le comportement d'affichage/masquage du panneau",
   panelModeEdgeSnap: "Accrochage auto",
   panelModeFloating: "Flottant",
+  edgeTriggerModeLabel: "Déclencheur de bord",
+  edgeTriggerModeDesc:
+    "Choisissez si l’accrochage auto garde une poignée visible après le repli ; en mode masqué, placez la souris au bord de l’écran pour afficher temporairement le panneau.",
+  edgeTriggerModeHandle: "Afficher la poignée",
+  edgeTriggerModeHidden: "Masquer entièrement",
   // Panel Settings
   defaultPanelStateLabel: "Ouvert par Défaut",
   defaultPanelStateDesc: "Panneau déployé au chargement",

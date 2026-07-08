@@ -784,6 +784,11 @@ export const es = {
   panelModeDesc: "Controlar el comportamiento de mostrar/ocultar el panel",
   panelModeEdgeSnap: "Auto-ajuste",
   panelModeFloating: "Flotante",
+  edgeTriggerModeLabel: "Activador de borde",
+  edgeTriggerModeDesc:
+    "Elige si el auto-ajuste mantiene un tirador visible al contraerse; en modo oculto, mueve el cursor al borde de la pantalla para mostrar temporalmente el panel.",
+  edgeTriggerModeHandle: "Mostrar tirador",
+  edgeTriggerModeHidden: "Ocultar por completo",
   // Panel Settings
   defaultPanelStateLabel: "Abierto por Defecto",
   defaultPanelStateDesc: "Panel desplegado al cargar",

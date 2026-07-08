@@ -229,6 +229,10 @@ const normalizePanelSettings = (panel?: Partial<Settings["panel"]>): Settings["p
       panel?.panelMode === "edge-snap" || panel?.panelMode === "floating"
         ? panel.panelMode
         : defaults.panelMode,
+    edgeTriggerMode:
+      panel?.edgeTriggerMode === "hidden" || panel?.edgeTriggerMode === "handle"
+        ? panel.edgeTriggerMode
+        : defaults.edgeTriggerMode,
     preventAutoScroll: panel?.preventAutoScroll ?? defaults.preventAutoScroll,
     defaultPosition:
       panel?.defaultPosition === "left" || panel?.defaultPosition === "right"

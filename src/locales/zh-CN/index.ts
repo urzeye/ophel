@@ -833,6 +833,11 @@ export const zhCN = {
   panelModeDesc: "控制面板的显示和隐藏行为",
   panelModeEdgeSnap: "自动吸附",
   panelModeFloating: "悬浮",
+  edgeTriggerModeLabel: "边缘触发方式",
+  edgeTriggerModeDesc:
+    "控制自动吸附收起后是否保留可见把手；完全隐藏时，将鼠标移到屏幕边缘可临时呼出面板",
+  edgeTriggerModeHandle: "显示把手",
+  edgeTriggerModeHidden: "完全隐藏",
 
   // 界面排版开关（旧字段保留兼容）
   defaultPanelStateLabel: "默认展开面板",

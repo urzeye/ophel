@@ -780,6 +780,11 @@ export const ru = {
   panelModeDesc: "Управление отображением и скрытием панели",
   panelModeEdgeSnap: "Авто-прилипание",
   panelModeFloating: "Плавающая",
+  edgeTriggerModeLabel: "Триггер у края",
+  edgeTriggerModeDesc:
+    "Выберите, оставлять ли видимый маркер после сворачивания в режиме авто-прилипания; в скрытом режиме наведите мышь на край экрана, чтобы временно показать панель.",
+  edgeTriggerModeHandle: "Показывать маркер",
+  edgeTriggerModeHidden: "Полностью скрыть",
   // Panel Settings
   defaultPanelStateLabel: "Открыта всегда",
   defaultPanelStateDesc: "Развернута при загрузке",

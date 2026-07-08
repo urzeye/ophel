@@ -6,6 +6,7 @@
   "panel": {
     "panelExpanded": true,
     "panelMode": "floating",
+    "edgeTriggerMode": "handle",
     "preventAutoScroll": false,
     "defaultPosition": "right",
     "defaultEdgeDistance": 0,

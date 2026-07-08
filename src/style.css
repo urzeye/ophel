@@ -1850,6 +1850,46 @@
   opacity: 1;
 }
 
+.gh-edge-hover-zone {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  display: none;
+  background: transparent;
+  pointer-events: auto;
+  z-index: 9997;
+}
+
+.gh-edge-hover-zone.left {
+  left: 0;
+}
+
+.gh-edge-hover-zone.right {
+  right: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .gh-edge-hover-zone {
+    display: block;
+  }
+
+  .gh-main-panel.edge-trigger-hidden.edge-snapped-left:not(.edge-peek) {
+    left: calc(0px - var(--panel-width, 320px) - 24px) !important;
+    box-shadow: none !important;
+  }
+
+  .gh-main-panel.edge-trigger-hidden.edge-snapped-right:not(.edge-peek) {
+    right: calc(0px - var(--panel-width, 320px) - 24px) !important;
+    box-shadow: none !important;
+  }
+
+  .gh-main-panel.edge-trigger-hidden.edge-snapped-left::after,
+  .gh-main-panel.edge-trigger-hidden.edge-snapped-right::after {
+    opacity: 0;
+  }
+}
+
 @keyframes gh-popover-enter {
   from {
     opacity: 0;

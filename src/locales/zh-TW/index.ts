@@ -677,6 +677,11 @@ export const zhTW = {
   panelModeDesc: "控制面板的顯示和隱藏行為",
   panelModeEdgeSnap: "自動吸附",
   panelModeFloating: "懸浮",
+  edgeTriggerModeLabel: "邊緣觸發方式",
+  edgeTriggerModeDesc:
+    "控制自動吸附收起後是否保留可見把手；完全隱藏時，將滑鼠移到螢幕邊緣可暫時呼出面板",
+  edgeTriggerModeHandle: "顯示把手",
+  edgeTriggerModeHidden: "完全隱藏",
 
   // 介面排版開關
   defaultPanelStateLabel: "預設展開面板",

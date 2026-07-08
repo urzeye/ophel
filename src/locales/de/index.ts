@@ -786,6 +786,11 @@ export const de = {
   panelModeDesc: "Steuerung des Ein-/Ausblendeverhaltens",
   panelModeEdgeSnap: "Auto-Snap",
   panelModeFloating: "Schwebend",
+  edgeTriggerModeLabel: "Kantenauslöser",
+  edgeTriggerModeDesc:
+    "Legt fest, ob Auto-Snap nach dem Einklappen einen sichtbaren Griff behält; im ausgeblendeten Modus zeigt ein Mauszeiger am Bildschirmrand das Panel kurz an.",
+  edgeTriggerModeHandle: "Griff anzeigen",
+  edgeTriggerModeHidden: "Voll ausblenden",
   // Panel Settings
   defaultPanelStateLabel: "Standardmäßig offen",
   defaultPanelStateDesc: "Panel beim Laden ausgeklappt",

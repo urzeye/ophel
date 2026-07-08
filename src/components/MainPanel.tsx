@@ -571,6 +571,8 @@ export const MainPanel: React.FC<MainPanelProps> = ({
   const defaultPosition = currentSettings.panel?.defaultPosition ?? "right"
   const defaultEdgeDistance = currentSettings.panel?.defaultEdgeDistance ?? 40
   const isEdgeSnapMode = (currentSettings.panel?.panelMode ?? "floating") === "edge-snap"
+  const isEdgeTriggerHidden =
+    (currentSettings.panel?.edgeTriggerMode ?? DEFAULT_SETTINGS.panel.edgeTriggerMode) === "hidden"
   const supportsHoverResize =
     typeof window !== "undefined" && window.matchMedia?.(HOVER_WIDTH_POINTER_QUERY).matches
   const basePanelWidth = clampPanelWidth(
@@ -1216,7 +1218,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         onPointerDownCapture={handlePanelPointerDownCapture}
         onFocus={handlePanelFocus}
         onBlur={handlePanelBlur}
-        className={`gh-main-panel gh-interactive ${!isLauncherPeeking && edgeSnapState ? `edge-snapped-${edgeSnapState}` : ""} ${isLauncherPeeking ? "launcher-peek" : ""} ${isEdgePeeking ? "edge-peek" : ""} ${isScrolling ? "scroll-hidden" : ""} ${isPanelResizing ? "is-resizing" : ""} ${isHoverWidthActive && !isPanelResizing ? "hover-width-active" : ""}`}
+        className={`gh-main-panel gh-interactive ${!isLauncherPeeking && edgeSnapState ? `edge-snapped-${edgeSnapState}` : ""} ${isEdgeTriggerHidden ? "edge-trigger-hidden" : ""} ${isLauncherPeeking ? "launcher-peek" : ""} ${isEdgePeeking ? "edge-peek" : ""} ${isScrolling ? "scroll-hidden" : ""} ${isPanelResizing ? "is-resizing" : ""} ${isHoverWidthActive && !isPanelResizing ? "hover-width-active" : ""}`}
         data-panel-hover-width-active={isHoverWidthPreviewActive ? "true" : undefined}
         data-panel-base-width={basePanelWidth}
         data-panel-anchor-side={panelAnchorSide}

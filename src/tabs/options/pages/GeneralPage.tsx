@@ -362,6 +362,52 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
             </div>
           </SettingRow>
 
+          {(settings.panel?.panelMode ?? "floating") === "edge-snap" && (
+            <SettingRow
+              label={t("edgeTriggerModeLabel")}
+              description={t("edgeTriggerModeDesc")}
+              settingId="panel-edge-trigger-mode">
+              <div
+                style={{
+                  display: "inline-flex",
+                  borderRadius: "6px",
+                  overflow: "hidden",
+                  border: "1px solid var(--gh-border, #e5e7eb)",
+                }}>
+                {(
+                  [
+                    { value: "handle", label: t("edgeTriggerModeHandle") },
+                    { value: "hidden", label: t("edgeTriggerModeHidden") },
+                  ] as const
+                ).map((option, index) => (
+                  <button
+                    type="button"
+                    key={option.value}
+                    aria-pressed={(settings.panel?.edgeTriggerMode ?? "handle") === option.value}
+                    onClick={() => updateNestedSetting("panel", "edgeTriggerMode", option.value)}
+                    style={{
+                      padding: "4px 12px",
+                      fontSize: "13px",
+                      border: "none",
+                      borderLeft: index > 0 ? "1px solid var(--gh-border, #e5e7eb)" : "none",
+                      cursor: "pointer",
+                      background:
+                        (settings.panel?.edgeTriggerMode ?? "handle") === option.value
+                          ? "var(--gh-primary, #4285f4)"
+                          : "var(--gh-bg, #fff)",
+                      color:
+                        (settings.panel?.edgeTriggerMode ?? "handle") === option.value
+                          ? "#fff"
+                          : "var(--gh-text-secondary, #6b7280)",
+                      transition: "all 0.2s",
+                    }}>
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </SettingRow>
+          )}
+
           {/* 默认侧边 */}
           <SettingRow
             label={t("defaultPositionLabel")}

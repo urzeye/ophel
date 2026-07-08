@@ -121,6 +121,7 @@ interface PointerPosition {
 
 const LAUNCHER_PEEK_DWELL_MS = 300
 const LAUNCHER_PEEK_HIDE_DELAY_MS = 250
+const EDGE_HOVER_ZONE_DWELL_MS = 150
 
 const EXPORT_STAGE_TEXT_KEYS: Record<ConversationExportStage, string> = {
   "loading-history": "exportOverlayLoadingHistory",
@@ -353,6 +354,7 @@ const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
   "panel-default-position": "defaultPositionLabel",
   "panel-edge-distance": "defaultEdgeDistanceLabel",
   "panel-edge-snap-threshold": "edgeSnapThresholdLabel",
+  "panel-edge-trigger-mode": "edgeTriggerModeLabel",
   "panel-height": "panelHeightLabel",
   "panel-hover-width": "panelHoverWidthLabel",
   "panel-mode": "panelModeLabel",
@@ -1297,6 +1299,7 @@ export const App = () => {
 
   // 边缘吸附状态
   const [edgeSnapState, setEdgeSnapState] = useState<"left" | "right" | null>(null)
+  const edgeHoverZoneDwellTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // 使用 ref 跟踪设置模态框状态，避免闭包捕获过期值
   const isSettingsOpenRef = useRef(false)
   // 标记全局搜索是否由设置页切换而来（用于 Esc 返回）
@@ -1354,6 +1357,37 @@ export const App = () => {
     getQueryRoots: getEdgePeekQueryRoots,
     isSettingsOpenRef,
   })
+
+  const clearEdgeHoverZoneDwellTimer = useCallback(() => {
+    if (edgeHoverZoneDwellTimerRef.current) {
+      clearTimeout(edgeHoverZoneDwellTimerRef.current)
+      edgeHoverZoneDwellTimerRef.current = null
+    }
+  }, [])
+
+  const handleEdgeHoverZoneMouseEnter = useCallback(() => {
+    clearEdgeHoverZoneDwellTimer()
+
+    if (!edgeSnapState || settingsRef.current?.panel?.panelMode !== "edge-snap") {
+      return
+    }
+
+    edgeHoverZoneDwellTimerRef.current = setTimeout(() => {
+      edgeHoverZoneDwellTimerRef.current = null
+      handlePanelMouseEnter()
+    }, EDGE_HOVER_ZONE_DWELL_MS)
+  }, [clearEdgeHoverZoneDwellTimer, edgeSnapState, handlePanelMouseEnter])
+
+  const handleEdgeHoverZoneMouseLeave = useCallback(() => {
+    clearEdgeHoverZoneDwellTimer()
+    handlePanelMouseLeave()
+  }, [clearEdgeHoverZoneDwellTimer, handlePanelMouseLeave])
+
+  useEffect(() => {
+    return () => {
+      clearEdgeHoverZoneDwellTimer()
+    }
+  }, [clearEdgeHoverZoneDwellTimer])
 
   const [isLauncherPeeking, setIsLauncherPeeking] = useState(false)
   const [launcherPeekAnchorRect, setLauncherPeekAnchorRect] =
@@ -3568,8 +3602,26 @@ export const App = () => {
     return null
   }
 
+  const edgeTriggerMode = settings?.panel?.edgeTriggerMode ?? DEFAULT_SETTINGS.panel.edgeTriggerMode
+  const shouldRenderEdgeHoverZone =
+    isPanelExpanded &&
+    Boolean(edgeSnapState) &&
+    (settings?.panel?.panelMode ?? "floating") === "edge-snap" &&
+    edgeTriggerMode === "hidden" &&
+    !isLauncherPeeking &&
+    !isSettingsOpen
+
   return (
     <div className={`gh-root ${isPassThrough ? "gh-pass-through" : ""}`}>
+      {shouldRenderEdgeHoverZone && edgeSnapState && (
+        <div
+          aria-hidden="true"
+          className={`gh-edge-hover-zone gh-interactive ${edgeSnapState}`}
+          onMouseEnter={handleEdgeHoverZoneMouseEnter}
+          onMouseLeave={handleEdgeHoverZoneMouseLeave}
+        />
+      )}
+
       <MainPanel
         isOpen={isPanelExpanded || isLauncherPeeking}
         isLauncherPeeking={isLauncherPeeking}

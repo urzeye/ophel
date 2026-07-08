@@ -800,6 +800,11 @@ export const ja = {
   panelModeDesc: "パネルの表示・非表示の制御方法",
   panelModeEdgeSnap: "自動スナップ",
   panelModeFloating: "フローティング",
+  edgeTriggerModeLabel: "端のトリガー",
+  edgeTriggerModeDesc:
+    "自動スナップで収納した後に見えるハンドルを残すかを選びます。完全に隠す場合は、画面端にマウスを移動すると一時的にパネルを表示できます。",
+  edgeTriggerModeHandle: "ハンドルを表示",
+  edgeTriggerModeHidden: "完全に隠す",
   // Panel Settings
   defaultPanelStateLabel: "デフォルトで展開",
   defaultPanelStateDesc: "ページ読み込み時にパネルを展開した状態にします",

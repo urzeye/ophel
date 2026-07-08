@@ -861,6 +861,11 @@ export const it = {
   panelModeDesc: "Il pannello di controllo mostra e nasconde il comportamento",
   panelModeEdgeSnap: "Scatto automatico",
   panelModeFloating: "Galleggiante",
+  edgeTriggerModeLabel: "Attivatore bordo",
+  edgeTriggerModeDesc:
+    "Scegli se l'aggancio automatico mantiene una maniglia visibile dopo la chiusura; in modalità nascosta sposta il mouse sul bordo dello schermo per mostrare temporaneamente il pannello.",
+  edgeTriggerModeHandle: "Mostra maniglia",
+  edgeTriggerModeHidden: "Nascondi tutto",
   // Panel Settings (legacy)
   defaultPanelStateLabel: "Pannello di espansione predefinito",
   defaultPanelStateDesc: "Mantieni il riquadro espanso dopo l'aggiornamento della pagina",

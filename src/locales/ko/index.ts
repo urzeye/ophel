@@ -782,6 +782,11 @@ export const ko = {
   panelModeDesc: "패널 표시 및 숨기기 동작 제어",
   panelModeEdgeSnap: "자동 스냅",
   panelModeFloating: "플로팅",
+  edgeTriggerModeLabel: "가장자리 트리거",
+  edgeTriggerModeDesc:
+    "자동 스냅으로 접힌 뒤 보이는 핸들을 유지할지 선택합니다. 숨김 모드에서는 마우스를 화면 가장자리로 옮기면 패널을 잠시 표시합니다.",
+  edgeTriggerModeHandle: "핸들 표시",
+  edgeTriggerModeHidden: "완전히 숨김",
   // Panel Settings
   defaultPanelStateLabel: "기본으로 패널 표시",
   defaultPanelStateDesc: "페이지 새로고침 후 패널 펼침 상태 유지",

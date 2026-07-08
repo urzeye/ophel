@@ -782,6 +782,11 @@ export const pt = {
   panelModeDesc: "Controlar o comportamento de exibição/ocultação do painel",
   panelModeEdgeSnap: "Ajuste automático",
   panelModeFloating: "Flutuante",
+  edgeTriggerModeLabel: "Acionador de borda",
+  edgeTriggerModeDesc:
+    "Escolha se o ajuste automático mantém uma alça visível após recolher; no modo oculto, mova o mouse até a borda da tela para mostrar temporariamente o painel.",
+  edgeTriggerModeHandle: "Mostrar alça",
+  edgeTriggerModeHidden: "Ocultar totalmente",
   // Panel Settings
   defaultPanelStateLabel: "Aberto por Padrão",
   defaultPanelStateDesc: "Painel expandido ao carregar",

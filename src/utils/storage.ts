@@ -172,6 +172,7 @@ export interface Settings {
   panel: {
     panelExpanded: boolean // 面板是否展开（未收进快捷按钮组）
     panelMode: "edge-snap" | "floating" // 面板模式
+    edgeTriggerMode: "handle" | "hidden" // 自动吸附收起时的边缘触发方式
     preventAutoScroll: boolean
     defaultPosition: "left" | "right" // 展开时的默认侧边/吸附兜底侧边
     defaultEdgeDistance: number // 悬浮模式展开时距离屏幕边缘的默认边距
@@ -392,6 +393,7 @@ export const DEFAULT_SETTINGS: Settings = {
   panel: {
     panelExpanded: true,
     panelMode: "floating",
+    edgeTriggerMode: "handle",
     preventAutoScroll: false,
     defaultPosition: "right",
     defaultEdgeDistance: 0,

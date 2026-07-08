@@ -827,6 +827,11 @@ export const en = {
   panelModeDesc: "Control panel display and hide behavior",
   panelModeEdgeSnap: "Auto Snap",
   panelModeFloating: "Floating",
+  edgeTriggerModeLabel: "Edge Trigger",
+  edgeTriggerModeDesc:
+    "Choose whether Auto Snap keeps a visible handle after collapsing; hidden mode lets you move the mouse to the screen edge to peek the panel.",
+  edgeTriggerModeHandle: "Visible handle",
+  edgeTriggerModeHidden: "Hidden",
   // Panel Settings (legacy)
   defaultPanelStateLabel: "Default Expand Panel",
   defaultPanelStateDesc: "Keep panel expanded after page refresh",
