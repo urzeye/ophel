@@ -897,12 +897,28 @@
   .settings-panel-width-disclosure,
   .settings-panel-mode-icon,
   .settings-panel-width-trigger,
-  .settings-panel-width-icon {
+  .settings-panel-width-icon,
+  .settings-sidebar-logo img,
+  .sidebar-social-btn,
+  .settings-theme-segment,
+  .settings-theme-card,
+  .theme-preview-layout,
+  .settings-modal-container,
+  .settings-modal-action-btn,
+  .about-hero-logo,
+  .about-platform-chip,
+  .about-link-card,
+  .about-link-btn,
+  .about-star-btn,
+  .settings-search-category {
     transition: none !important;
   }
 
   .settings-panel-mode-body,
-  .settings-panel-width-body {
+  .settings-panel-width-body,
+  [data-setting-id].setting-locate-highlight,
+  .settings-modal-overlay,
+  .settings-modal-container {
     animation: none !important;
   }
 }
