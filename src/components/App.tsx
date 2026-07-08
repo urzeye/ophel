@@ -78,11 +78,10 @@ import {
   GLOBAL_SEARCH_RESULT_CATEGORY_LABELS,
   GLOBAL_SEARCH_SYNTAX_SUGGESTION_LIMIT,
 } from "./global-search/constants"
-import { useGlobalSearchInputState } from "./global-search/useGlobalSearchInputState"
-import { useGlobalSearchKeyboard } from "./global-search/useGlobalSearchKeyboard"
-import { useGlobalSearchNavigationState } from "./global-search/useGlobalSearchNavigationState"
-import { useGlobalSearchPreview } from "./global-search/useGlobalSearchPreview"
-import { useGlobalSearchShortcutNudge } from "./global-search/useGlobalSearchShortcutNudge"
+import {
+  useGlobalSearchController,
+  useGlobalSearchControllerKeyboard,
+} from "./global-search/useGlobalSearchController"
 import { useGlobalSearchSyntax } from "./global-search/useGlobalSearchSyntax"
 import type {
   GlobalSearchCategoryId,
@@ -285,38 +284,6 @@ export const App = () => {
     )
   }, [formatLocalizedText, globalSearchShortcutHintLabel])
 
-  const {
-    showGlobalSearchShortcutNudge,
-    globalSearchShortcutNudgeMessage,
-    hideGlobalSearchShortcutNudge,
-    dismissGlobalSearchShortcutNudgeForever,
-    markGlobalSearchShortcutUsed,
-    tryShowGlobalSearchShortcutNudge,
-  } = useGlobalSearchShortcutNudge(globalSearchShortcutNudgeText)
-
-  const {
-    settingsSearchInputValue,
-    setSettingsSearchInputValue,
-    settingsSearchQuery,
-    setSettingsSearchQuery,
-    clearSettingsSearchInputDebounceTimer,
-    syncSettingsSearchInputAndQuery,
-    commitSettingsSearchInputValue,
-  } = useGlobalSearchInputState()
-
-  const {
-    activeGlobalSearchCategory,
-    setActiveGlobalSearchCategory,
-    settingsSearchActiveIndex,
-    setSettingsSearchActiveIndex,
-    settingsSearchHoverLocked,
-    setSettingsSearchHoverLocked,
-    settingsSearchNavigationMode,
-    setSettingsSearchNavigationMode,
-    expandedGlobalSearchCategories,
-    setExpandedGlobalSearchCategories,
-  } = useGlobalSearchNavigationState()
-
   const handleGlobalSearchPromptPreviewClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       event.stopPropagation()
@@ -347,23 +314,6 @@ export const App = () => {
         })
     },
     [getLocalizedText],
-  )
-
-  const syncGlobalSearchValueAndCategory = useCallback(
-    (nextValue: string) => {
-      const normalizedValue = nextValue.trimStart()
-
-      syncSettingsSearchInputAndQuery(nextValue)
-
-      setActiveGlobalSearchCategory((previousCategory) => {
-        if (normalizedValue.startsWith("tip:")) {
-          return previousCategory === "tips" ? previousCategory : "tips"
-        }
-
-        return previousCategory === "tips" ? "all" : previousCategory
-      })
-    },
-    [setActiveGlobalSearchCategory, syncSettingsSearchInputAndQuery],
   )
 
   const toggleGlobalSearchFuzzySearch = useCallback(() => {
@@ -675,9 +625,6 @@ export const App = () => {
   const [hoverWidthReleaseToken, setHoverWidthReleaseToken] = useState(0)
   const [isReleaseNotesOpen, setIsReleaseNotesOpen] = useState(false)
   const [releaseNotesAutoSignal, setReleaseNotesAutoSignal] = useState(0)
-  const [isGlobalSettingsSearchOpen, setIsGlobalSettingsSearchOpen] = useState(false)
-  const [showGlobalSearchSyntaxHelp, setShowGlobalSearchSyntaxHelp] = useState(false)
-  const [activeSearchSyntaxSuggestionIndex, setActiveSearchSyntaxSuggestionIndex] = useState(-1)
   const [showExtensionUpdateNotice, setShowExtensionUpdateNotice] = useState(
     () => typeof window !== "undefined" && Boolean(window.__OPHEL_EXTENSION_UPDATE_AVAILABLE__),
   )
@@ -689,6 +636,70 @@ export const App = () => {
   const globalSearchSyntaxHelpPopoverRef = useRef<HTMLDivElement | null>(null)
   const settingsSearchResultsRef = useRef<HTMLDivElement | null>(null)
   const promptPreviewContainerRef = useRef<HTMLDivElement | null>(null)
+  const globalSearchController = useGlobalSearchController({
+    shortcutNudgeText: globalSearchShortcutNudgeText,
+    settingsSearchResultsRef,
+    promptPreviewPointerDelayMs: GLOBAL_SEARCH_PROMPT_PREVIEW_POINTER_DELAY_MS,
+    promptPreviewHideDelayMs: GLOBAL_SEARCH_PROMPT_PREVIEW_HIDE_DELAY_MS,
+  })
+  const {
+    isGlobalSettingsSearchOpen,
+    setIsGlobalSettingsSearchOpen,
+    showGlobalSearchSyntaxHelp,
+    setShowGlobalSearchSyntaxHelp,
+    activeSearchSyntaxSuggestionIndex,
+    setActiveSearchSyntaxSuggestionIndex,
+    showGlobalSearchShortcutNudge,
+    globalSearchShortcutNudgeMessage,
+    hideGlobalSearchShortcutNudge,
+    dismissGlobalSearchShortcutNudgeForever,
+    markGlobalSearchShortcutUsed,
+    tryShowGlobalSearchShortcutNudge,
+    settingsSearchInputValue,
+    setSettingsSearchInputValue,
+    settingsSearchQuery,
+    setSettingsSearchQuery,
+    clearSettingsSearchInputDebounceTimer,
+    syncSettingsSearchInputAndQuery,
+    commitSettingsSearchInputValue,
+    activeGlobalSearchCategory,
+    setActiveGlobalSearchCategory,
+    settingsSearchActiveIndex,
+    setSettingsSearchActiveIndex,
+    settingsSearchHoverLocked,
+    setSettingsSearchHoverLocked,
+    settingsSearchNavigationMode,
+    setSettingsSearchNavigationMode,
+    expandedGlobalSearchCategories,
+    setExpandedGlobalSearchCategories,
+    globalSearchPromptPreview,
+    globalSearchPromptPreviewPosition,
+    clearPromptPreviewTimer,
+    clearPromptPreviewHideTimer,
+    hideGlobalSearchPromptPreview,
+    scheduleHideGlobalSearchPromptPreview,
+    scheduleGlobalSearchPromptPreview,
+    scheduleGlobalSearchPointerPreview,
+    refreshGlobalSearchPromptPreviewAnchorRect,
+  } = globalSearchController
+
+  const syncGlobalSearchValueAndCategory = useCallback(
+    (nextValue: string) => {
+      const normalizedValue = nextValue.trimStart()
+
+      syncSettingsSearchInputAndQuery(nextValue)
+
+      setActiveGlobalSearchCategory((previousCategory) => {
+        if (normalizedValue.startsWith("tip:")) {
+          return previousCategory === "tips" ? previousCategory : "tips"
+        }
+
+        return previousCategory === "tips" ? "all" : previousCategory
+      })
+    },
+    [setActiveGlobalSearchCategory, syncSettingsSearchInputAndQuery],
+  )
+
   const settingsSearchWheelFreezeUntilRef = useRef(0)
   const globalSearchOpenSourceRef = useRef<GlobalSearchOpenSource>("ui")
   const lastShiftPressedAtRef = useRef(0)
@@ -783,22 +794,6 @@ export const App = () => {
     releaseNotesAutoSignal,
     showExtensionUpdateNotice,
   ])
-
-  const {
-    globalSearchPromptPreview,
-    globalSearchPromptPreviewPosition,
-    clearPromptPreviewTimer,
-    clearPromptPreviewHideTimer,
-    hideGlobalSearchPromptPreview,
-    scheduleHideGlobalSearchPromptPreview,
-    scheduleGlobalSearchPromptPreview,
-    scheduleGlobalSearchPointerPreview,
-    refreshGlobalSearchPromptPreviewAnchorRect,
-  } = useGlobalSearchPreview({
-    settingsSearchResultsRef,
-    pointerDelayMs: GLOBAL_SEARCH_PROMPT_PREVIEW_POINTER_DELAY_MS,
-    hideDelayMs: GLOBAL_SEARCH_PROMPT_PREVIEW_HIDE_DELAY_MS,
-  })
 
   // 浮动工具栏
 
@@ -1247,12 +1242,14 @@ export const App = () => {
     edgeSnapState,
     isGlobalSettingsSearchOpen,
     setActiveGlobalSearchCategory,
+    setActiveSearchSyntaxSuggestionIndex,
     setExpandedGlobalSearchCategories,
     setSettingsSearchActiveIndex,
     setSettingsSearchHoverLocked,
     setSettingsSearchInputValue,
     setSettingsSearchNavigationMode,
     setSettingsSearchQuery,
+    setIsGlobalSettingsSearchOpen,
     showEdgePeek,
   ])
 
@@ -1479,7 +1476,12 @@ export const App = () => {
         inputElement.setSelectionRange(cursorPosition, cursorPosition)
       })
     },
-    [settingsSearchInputValue, setSettingsSearchActiveIndex, syncGlobalSearchValueAndCategory],
+    [
+      settingsSearchInputValue,
+      setActiveSearchSyntaxSuggestionIndex,
+      setSettingsSearchActiveIndex,
+      syncGlobalSearchValueAndCategory,
+    ],
   )
 
   const applyGlobalSearchSyntaxHelpItem = useCallback(
@@ -1487,7 +1489,7 @@ export const App = () => {
       applyGlobalSearchSyntaxSuggestion(item)
       setShowGlobalSearchSyntaxHelp(false)
     },
-    [applyGlobalSearchSyntaxSuggestion],
+    [applyGlobalSearchSyntaxSuggestion, setShowGlobalSearchSyntaxHelp],
   )
 
   const handleRemoveGlobalSearchFilterChip = useCallback(
@@ -1505,6 +1507,7 @@ export const App = () => {
     [
       activeGlobalSearchPlainQuery,
       activeGlobalSearchSyntaxFilters,
+      setActiveSearchSyntaxSuggestionIndex,
       setSettingsSearchActiveIndex,
       syncSettingsSearchInputAndQuery,
     ],
@@ -1514,7 +1517,12 @@ export const App = () => {
     syncSettingsSearchInputAndQuery(activeGlobalSearchPlainQuery)
     setActiveSearchSyntaxSuggestionIndex(-1)
     setSettingsSearchActiveIndex(0)
-  }, [activeGlobalSearchPlainQuery, setSettingsSearchActiveIndex, syncSettingsSearchInputAndQuery])
+  }, [
+    activeGlobalSearchPlainQuery,
+    setActiveSearchSyntaxSuggestionIndex,
+    setSettingsSearchActiveIndex,
+    syncSettingsSearchInputAndQuery,
+  ])
 
   const activeGlobalSearchContext = useMemo(() => {
     if (activeVisibleGlobalSearchIndex < 0) {
@@ -1671,12 +1679,15 @@ export const App = () => {
       edgeSnapState,
       releaseMainPanelHoverWidth,
       setActiveGlobalSearchCategory,
+      setActiveSearchSyntaxSuggestionIndex,
       setExpandedGlobalSearchCategories,
       setSettingsSearchActiveIndex,
       setSettingsSearchHoverLocked,
       setSettingsSearchInputValue,
       setSettingsSearchNavigationMode,
       setSettingsSearchQuery,
+      setIsGlobalSettingsSearchOpen,
+      setShowGlobalSearchSyntaxHelp,
       showEdgePeek,
     ],
   )
@@ -1736,12 +1747,15 @@ export const App = () => {
       edgeSnapState,
       scheduleEdgePeekSync,
       setActiveGlobalSearchCategory,
+      setActiveSearchSyntaxSuggestionIndex,
       setExpandedGlobalSearchCategories,
       setSettingsSearchActiveIndex,
       setSettingsSearchHoverLocked,
       setSettingsSearchInputValue,
       setSettingsSearchNavigationMode,
       setSettingsSearchQuery,
+      setIsGlobalSettingsSearchOpen,
+      setShowGlobalSearchSyntaxHelp,
       showEdgePeek,
     ],
   )
@@ -2074,7 +2088,7 @@ export const App = () => {
     return () => {
       document.removeEventListener("mousedown", handleOutsidePress, true)
     }
-  }, [isGlobalSettingsSearchOpen, showGlobalSearchSyntaxHelp])
+  }, [isGlobalSettingsSearchOpen, setShowGlobalSearchSyntaxHelp, showGlobalSearchSyntaxHelp])
 
   useEffect(() => {
     if (!isGlobalSettingsSearchOpen) {
@@ -2183,28 +2197,15 @@ export const App = () => {
     }
   }, [clearPromptPreviewHideTimer, clearPromptPreviewTimer])
 
-  useGlobalSearchKeyboard({
-    isGlobalSettingsSearchOpen,
-    showGlobalSearchSyntaxHelp,
-    setShowGlobalSearchSyntaxHelp,
-    activeGlobalSearchCategory,
+  useGlobalSearchControllerKeyboard(globalSearchController, {
     categoryIds: GLOBAL_SEARCH_CATEGORY_DEFINITIONS.map((category) => category.id),
-    setActiveGlobalSearchCategory,
-    settingsSearchActiveIndex,
-    setSettingsSearchActiveIndex,
-    settingsSearchNavigationMode,
-    setSettingsSearchNavigationMode,
-    setSettingsSearchHoverLocked,
     shouldShowGlobalSearchSyntaxSuggestions,
     globalSearchSyntaxSuggestions,
-    activeSearchSyntaxSuggestionIndex,
-    setActiveSearchSyntaxSuggestionIndex,
     applyGlobalSearchSyntaxSuggestion,
     visibleGlobalSearchResults,
     navigateToSearchResult,
     closeGlobalSettingsSearch,
     getShouldReturnToSettingsOnEscape: () => searchOpenedFromSettingsRef.current,
-    settingsSearchResultsRef,
     keyboardSafeTop: GLOBAL_SEARCH_KEYBOARD_SAFE_TOP,
     keyboardSafeBottom: GLOBAL_SEARCH_KEYBOARD_SAFE_BOTTOM,
   })
