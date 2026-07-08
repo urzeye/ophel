@@ -9,6 +9,20 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🚀 New Features
+
+- **Prompt ordering controls** — Prompt menus now include Move up and Move down actions, so prompt order can be adjusted without drag-and-drop. (#774)
+
+### ✨ Improvements
+
+- **Keyboard-friendly panel and settings** — Panel tabs now support tab semantics and arrow-key navigation, while the Settings dialog keeps focus inside the modal and restores focus after closing. (#774)
+- **Reduced-motion interface polish** — Panel, settings, conversations, prompt chains, quick buttons, and queue overlays now avoid broad transitions and better respect reduced-motion preferences. (#774)
+- **Settings and search reliability** — Settings defaults, saved-setting normalization, Search Everywhere state, prompt dialogs, and userscript startup paths were tightened so existing settings are preserved more consistently across extension and userscript builds. (#774)
+
+### 🐛 Bug Fixes
+
+- **Panel tab focus containment** — Fixed issue where keyboard focus could escape the panel Shadow DOM while navigating panel tabs. (#774)
+
 ---
 
 ## [1.1.4] - 2026-07-06
