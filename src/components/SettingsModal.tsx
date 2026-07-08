@@ -43,6 +43,36 @@ const getLocalizedLabel = (labelKey: string, fallback: string): string => {
   return localized === labelKey ? fallback : localized
 }
 
+const FOCUSABLE_SETTINGS_MODAL_SELECTOR = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  '[tabindex]:not([tabindex="-1"])',
+  '[contenteditable="true"]',
+].join(",")
+
+const getDeepActiveElement = (): HTMLElement | null => {
+  let activeElement: Element | null = document.activeElement
+
+  while (activeElement?.shadowRoot?.activeElement) {
+    activeElement = activeElement.shadowRoot.activeElement
+  }
+
+  return activeElement instanceof HTMLElement ? activeElement : null
+}
+
+const isFocusableElementVisible = (element: HTMLElement): boolean =>
+  !element.hasAttribute("disabled") &&
+  element.getAttribute("aria-hidden") !== "true" &&
+  (element.offsetWidth > 0 || element.offsetHeight > 0 || element.getClientRects().length > 0)
+
+const getFocusableElements = (container: HTMLElement): HTMLElement[] =>
+  Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SETTINGS_MODAL_SELECTOR)).filter(
+    isFocusableElementVisible,
+  )
+
 // 导航菜单定义
 const NAV_ITEMS = [
   {
@@ -106,6 +136,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const isHydrated = useSettingsHydrated()
   const contentRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null) // 容器引用
+  const restoreFocusRef = useRef<HTMLElement | null>(null)
   const titleId = "ophel-settings-modal-title"
   const highlightTimerRef = useRef<number | undefined>(undefined)
   const highlightedElementRef = useRef<HTMLElement | null>(null)
@@ -124,18 +155,80 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   }, [activePage])
 
-  // 按 ESC 关闭模态框
+  // 打开时聚焦弹窗标题，关闭时恢复到触发元素
   useEffect(() => {
     if (!isOpen) return
+
+    restoreFocusRef.current = getDeepActiveElement()
+    const focusTimer = window.setTimeout(() => {
+      const container = containerRef.current
+      if (!container) return
+
+      const titleElement = container.querySelector<HTMLElement>(`#${titleId}`)
+      ;(titleElement || getFocusableElements(container)[0] || container).focus({
+        preventScroll: true,
+      })
+    }, 0)
+
+    return () => {
+      window.clearTimeout(focusTimer)
+      const restoreElement = restoreFocusRef.current
+      restoreFocusRef.current = null
+
+      if (!restoreElement?.isConnected) {
+        return
+      }
+
+      try {
+        restoreElement.focus({ preventScroll: true })
+      } catch (error) {
+        console.warn("[Ophel] Failed to restore settings modal focus:", error)
+      }
+    }
+  }, [isOpen, titleId])
+
+  // 按 ESC 关闭模态框，并将 Tab 焦点限制在弹窗内。
+  // 使用容器 capture 监听，确保输入框事件被 editable guard 截断前先完成焦点边界判断。
+  useEffect(() => {
+    if (!isOpen) return
+
+    const container = containerRef.current
+    if (!container) {
+      return
+    }
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose()
+        return
+      }
+
+      if (e.key !== "Tab") {
+        return
+      }
+
+      const focusableElements = getFocusableElements(container)
+      if (focusableElements.length === 0) {
+        e.preventDefault()
+        container.focus({ preventScroll: true })
+        return
+      }
+
+      const activeElement = getDeepActiveElement()
+      const firstElement = focusableElements[0]
+      const lastElement = focusableElements[focusableElements.length - 1]
+
+      if (e.shiftKey && (!activeElement || activeElement === firstElement)) {
+        e.preventDefault()
+        lastElement.focus({ preventScroll: true })
+      } else if (!e.shiftKey && activeElement === lastElement) {
+        e.preventDefault()
+        firstElement.focus({ preventScroll: true })
       }
     }
 
-    document.addEventListener("keydown", handleKeyDown)
-    return () => document.removeEventListener("keydown", handleKeyDown)
+    container.addEventListener("keydown", handleKeyDown, true)
+    return () => container.removeEventListener("keydown", handleKeyDown, true)
   }, [isOpen, onClose])
 
   // 监听外部导航请求
@@ -332,6 +425,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}>
         {/* 关闭按钮 */}
         <div className="settings-modal-actions">
@@ -360,7 +454,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="settings-sidebar-header">
             <div className="settings-sidebar-logo">
               <img src={APP_ICON_URL} alt={APP_DISPLAY_NAME} />
-              <span id={titleId}>{APP_DISPLAY_NAME}</span>
+              <span id={titleId} tabIndex={-1}>
+                {APP_DISPLAY_NAME}
+              </span>
             </div>
           </div>
           <nav className="settings-sidebar-nav">
