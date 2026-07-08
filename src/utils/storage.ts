@@ -7,7 +7,7 @@
 import { Storage } from "@plasmohq/storage"
 
 import { DEFAULT_SHORTCUTS_SETTINGS, type ShortcutsSettings } from "~constants/shortcuts"
-import type { WebDAVProvider } from "~core/webdav-sync"
+import type { WebDAVProvider } from "~types/webdav"
 import { isUserscriptPlatform } from "~platform/utils"
 
 // GM API 类型声明（仅在 userscript 环境使用）

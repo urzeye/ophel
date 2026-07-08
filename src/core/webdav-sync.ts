@@ -4,6 +4,7 @@
  */
 
 import { MULTI_PROP_STORES, ZUSTAND_KEYS } from "~constants/defaults"
+import type { WebDAVProvider } from "~types/webdav"
 import { validateBackupData } from "~utils/backup-validator"
 import { APP_NAME } from "~utils/config"
 import { MSG_WEBDAV_REQUEST } from "~utils/messaging"
@@ -111,15 +112,7 @@ function parseBackupFilesFromWebDAVXml(xmlText: string): BackupFile[] {
   return parseBackupFilesWithDomParser(xmlText) ?? parseBackupFilesWithRegex(xmlText)
 }
 
-// WebDAV 服务商标识
-export type WebDAVProvider =
-  | "jianguoyun"
-  | "nextcloud"
-  | "synology"
-  | "seafile"
-  | "infinicloud"
-  | "pcloud"
-  | "custom"
+export type { WebDAVProvider } from "~types/webdav"
 
 // 服务商预设信息
 export interface WebDAVProviderPreset {
