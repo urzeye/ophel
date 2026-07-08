@@ -1299,7 +1299,11 @@
   border-radius: 14px;
   border: 1px solid var(--gh-card-border, var(--gh-border, #e5e7eb));
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    background 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
   background: var(--gh-card-bg, #fff);
   display: flex;
@@ -1387,7 +1391,9 @@
   flex-direction: column;
   border: 1px solid #e5e7eb;
   position: relative;
-  transition: all 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
   isolation: isolate;
 }
 
