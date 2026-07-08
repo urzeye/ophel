@@ -80,6 +80,7 @@ import {
 } from "./global-search/constants"
 import { useGlobalSearchInputState } from "./global-search/useGlobalSearchInputState"
 import { useGlobalSearchKeyboard } from "./global-search/useGlobalSearchKeyboard"
+import { useGlobalSearchNavigationState } from "./global-search/useGlobalSearchNavigationState"
 import { useGlobalSearchPreview } from "./global-search/useGlobalSearchPreview"
 import { useGlobalSearchShortcutNudge } from "./global-search/useGlobalSearchShortcutNudge"
 import { useGlobalSearchSyntax } from "./global-search/useGlobalSearchSyntax"
@@ -303,6 +304,19 @@ export const App = () => {
     commitSettingsSearchInputValue,
   } = useGlobalSearchInputState()
 
+  const {
+    activeGlobalSearchCategory,
+    setActiveGlobalSearchCategory,
+    settingsSearchActiveIndex,
+    setSettingsSearchActiveIndex,
+    settingsSearchHoverLocked,
+    setSettingsSearchHoverLocked,
+    settingsSearchNavigationMode,
+    setSettingsSearchNavigationMode,
+    expandedGlobalSearchCategories,
+    setExpandedGlobalSearchCategories,
+  } = useGlobalSearchNavigationState()
+
   const handleGlobalSearchPromptPreviewClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       event.stopPropagation()
@@ -349,7 +363,7 @@ export const App = () => {
         return previousCategory === "tips" ? "all" : previousCategory
       })
     },
-    [syncSettingsSearchInputAndQuery],
+    [setActiveGlobalSearchCategory, syncSettingsSearchInputAndQuery],
   )
 
   const toggleGlobalSearchFuzzySearch = useCallback(() => {
@@ -662,16 +676,6 @@ export const App = () => {
   const [isReleaseNotesOpen, setIsReleaseNotesOpen] = useState(false)
   const [releaseNotesAutoSignal, setReleaseNotesAutoSignal] = useState(0)
   const [isGlobalSettingsSearchOpen, setIsGlobalSettingsSearchOpen] = useState(false)
-  const [activeGlobalSearchCategory, setActiveGlobalSearchCategory] =
-    useState<GlobalSearchCategoryId>("all")
-  const [settingsSearchActiveIndex, setSettingsSearchActiveIndex] = useState(0)
-  const [settingsSearchHoverLocked, setSettingsSearchHoverLocked] = useState(false)
-  const [settingsSearchNavigationMode, setSettingsSearchNavigationMode] = useState<
-    "keyboard" | "pointer"
-  >("pointer")
-  const [expandedGlobalSearchCategories, setExpandedGlobalSearchCategories] = useState<
-    Partial<Record<GlobalSearchResultCategory, boolean>>
-  >({})
   const [showGlobalSearchSyntaxHelp, setShowGlobalSearchSyntaxHelp] = useState(false)
   const [activeSearchSyntaxSuggestionIndex, setActiveSearchSyntaxSuggestionIndex] = useState(-1)
   const [showExtensionUpdateNotice, setShowExtensionUpdateNotice] = useState(
@@ -1242,7 +1246,12 @@ export const App = () => {
     clearSettingsSearchInputDebounceTimer,
     edgeSnapState,
     isGlobalSettingsSearchOpen,
+    setActiveGlobalSearchCategory,
+    setExpandedGlobalSearchCategories,
+    setSettingsSearchActiveIndex,
+    setSettingsSearchHoverLocked,
     setSettingsSearchInputValue,
+    setSettingsSearchNavigationMode,
     setSettingsSearchQuery,
     showEdgePeek,
   ])
@@ -1470,7 +1479,7 @@ export const App = () => {
         inputElement.setSelectionRange(cursorPosition, cursorPosition)
       })
     },
-    [settingsSearchInputValue, syncGlobalSearchValueAndCategory],
+    [settingsSearchInputValue, setSettingsSearchActiveIndex, syncGlobalSearchValueAndCategory],
   )
 
   const applyGlobalSearchSyntaxHelpItem = useCallback(
@@ -1496,6 +1505,7 @@ export const App = () => {
     [
       activeGlobalSearchPlainQuery,
       activeGlobalSearchSyntaxFilters,
+      setSettingsSearchActiveIndex,
       syncSettingsSearchInputAndQuery,
     ],
   )
@@ -1504,7 +1514,7 @@ export const App = () => {
     syncSettingsSearchInputAndQuery(activeGlobalSearchPlainQuery)
     setActiveSearchSyntaxSuggestionIndex(-1)
     setSettingsSearchActiveIndex(0)
-  }, [activeGlobalSearchPlainQuery, syncSettingsSearchInputAndQuery])
+  }, [activeGlobalSearchPlainQuery, setSettingsSearchActiveIndex, syncSettingsSearchInputAndQuery])
 
   const activeGlobalSearchContext = useMemo(() => {
     if (activeVisibleGlobalSearchIndex < 0) {
@@ -1660,7 +1670,12 @@ export const App = () => {
       closeSettingsModal,
       edgeSnapState,
       releaseMainPanelHoverWidth,
+      setActiveGlobalSearchCategory,
+      setExpandedGlobalSearchCategories,
+      setSettingsSearchActiveIndex,
+      setSettingsSearchHoverLocked,
       setSettingsSearchInputValue,
+      setSettingsSearchNavigationMode,
       setSettingsSearchQuery,
       showEdgePeek,
     ],
@@ -1720,7 +1735,12 @@ export const App = () => {
       clearSettingsSearchInputDebounceTimer,
       edgeSnapState,
       scheduleEdgePeekSync,
+      setActiveGlobalSearchCategory,
+      setExpandedGlobalSearchCategories,
+      setSettingsSearchActiveIndex,
+      setSettingsSearchHoverLocked,
       setSettingsSearchInputValue,
+      setSettingsSearchNavigationMode,
       setSettingsSearchQuery,
       showEdgePeek,
     ],
@@ -2107,7 +2127,15 @@ export const App = () => {
     setExpandedGlobalSearchCategories({})
     settingsSearchWheelFreezeUntilRef.current = 0
     hideGlobalSearchPromptPreview()
-  }, [activeGlobalSearchCategory, hideGlobalSearchPromptPreview, settingsSearchQuery])
+  }, [
+    activeGlobalSearchCategory,
+    hideGlobalSearchPromptPreview,
+    setExpandedGlobalSearchCategories,
+    setSettingsSearchActiveIndex,
+    setSettingsSearchHoverLocked,
+    setSettingsSearchNavigationMode,
+    settingsSearchQuery,
+  ])
 
   useEffect(() => {
     if (!isGlobalSettingsSearchOpen) {
@@ -3015,13 +3043,16 @@ export const App = () => {
 
   const { tags, addTag, updateTag, deleteTag } = useTagsStore()
 
-  const handleToggleGlobalSearchGroup = useCallback((category: GlobalSearchResultCategory) => {
-    setSettingsSearchNavigationMode("pointer")
-    setExpandedGlobalSearchCategories((prev) => ({
-      ...prev,
-      [category]: !prev[category],
-    }))
-  }, [])
+  const handleToggleGlobalSearchGroup = useCallback(
+    (category: GlobalSearchResultCategory) => {
+      setSettingsSearchNavigationMode("pointer")
+      setExpandedGlobalSearchCategories((prev) => ({
+        ...prev,
+        [category]: !prev[category],
+      }))
+    },
+    [setExpandedGlobalSearchCategories, setSettingsSearchNavigationMode],
+  )
 
   const extensionUpdateKickerText = getLocalizedText({
     key: "extensionUpdateNoticeKicker",
