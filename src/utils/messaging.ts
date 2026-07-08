@@ -60,6 +60,12 @@ export interface CheckPermissionMessage extends CheckPermissionPayload {
   type: typeof MSG_CHECK_PERMISSION
 }
 
+export interface PermissionCheckResponse {
+  success: boolean
+  hasPermission: boolean
+  error?: string
+}
+
 // 检查多个权限（用于权限管理页面）
 export const MSG_CHECK_PERMISSIONS = "CHECK_PERMISSIONS"
 
@@ -78,10 +84,16 @@ export const MSG_REQUEST_PERMISSIONS = "REQUEST_PERMISSIONS"
 export interface RequestPermissionsPayload {
   origins?: string[]
   permissions?: string[]
+  permType?: string
 }
 
 export interface RequestPermissionsMessage extends RequestPermissionsPayload {
   type: typeof MSG_REQUEST_PERMISSIONS
+}
+
+export interface BasicBackgroundResponse {
+  success: boolean
+  error?: string
 }
 
 // 撤销权限
@@ -221,10 +233,21 @@ export interface AIStudioModelInfo {
   name: string
 }
 
+interface BackgroundResponseMap {
+  [MSG_CHECK_PERMISSION]: PermissionCheckResponse
+  [MSG_CHECK_PERMISSIONS]: PermissionCheckResponse
+  [MSG_REQUEST_PERMISSIONS]: BasicBackgroundResponse
+}
+
+type BackgroundResponseFor<T extends ExtensionMessage> =
+  T["type"] extends keyof BackgroundResponseMap ? BackgroundResponseMap[T["type"]] : any
+
 /**
  * Send a message to the background service worker with type safety
  */
-export function sendToBackground<T extends ExtensionMessage>(message: T): Promise<any> {
+export function sendToBackground<T extends ExtensionMessage>(
+  message: T,
+): Promise<BackgroundResponseFor<T>> {
   return chrome.runtime.sendMessage(message)
 }
 
