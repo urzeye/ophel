@@ -753,3 +753,26 @@
   font-size: 12px;
   color: var(--gh-text-tertiary, #9ca3af);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .gh-queue-capsule,
+  .gh-queue-panel,
+  .gh-queue-header-btn,
+  .gh-queue-item,
+  .gh-queue-item-actions,
+  .gh-queue-item-remove,
+  .gh-queue-item-force-send,
+  .gh-queue-item-edit,
+  .gh-queue-item-edit-btn-save,
+  .gh-queue-item-edit-btn-cancel,
+  .gh-queue-input,
+  .gh-queue-send-btn,
+  .gh-queue-batch-dialog,
+  .gh-queue-batch-mode-btn {
+    transition: none !important;
+  }
+
+  .gh-queue-status-dot[data-generating="true"] {
+    animation: none !important;
+  }
+}
