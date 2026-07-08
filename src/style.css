@@ -2022,7 +2022,16 @@
   border-color: color-mix(in srgb, var(--gh-primary) 20%, transparent);
   box-shadow: 0 4px 16px color-mix(in srgb, var(--gh-primary) 15%, transparent);
   box-sizing: border-box;
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition:
+    background 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-color 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-radius 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    gap 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    padding 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .quick-btn-group.liquid-collapsed:hover {
@@ -2194,7 +2203,11 @@
 
 /* 工具箱悬浮菜单按钮：打开时保留旋转反馈，表示工具箱处于展开状态 */
 .quick-prompt-btn.tools-trigger-btn {
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition:
+    background 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    color 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .quick-prompt-btn.tools-trigger-btn.active {
@@ -2316,7 +2329,10 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
   position: relative;
 }
 
