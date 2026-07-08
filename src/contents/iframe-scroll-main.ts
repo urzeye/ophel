@@ -18,8 +18,8 @@ export const config: PlasmoCSConfig = {
 }
 
 // 防止重复初始化
-if (!(window as any).__ophelIframeScrollInitialized) {
-  ;(window as any).__ophelIframeScrollInitialized = true
+if (!window.__ophelIframeScrollInitialized) {
+  window.__ophelIframeScrollInitialized = true
 
   /**
    * 查找 iframe 内的 Flutter 滚动容器（图文并茂模式）

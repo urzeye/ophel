@@ -14,8 +14,8 @@ export const config: PlasmoCSConfig = {
   run_at: "document_start",
 }
 
-if (!(window as any).__ophelGeminiWatermarkMainInitialized) {
-  ;(window as any).__ophelGeminiWatermarkMainInitialized = true
+if (!window.__ophelGeminiWatermarkMainInitialized) {
+  window.__ophelGeminiWatermarkMainInitialized = true
   document.documentElement.setAttribute("data-ophel-wm-main", "1")
   document.documentElement.setAttribute("data-ophel-wm-main-fetch-enabled", "0")
 

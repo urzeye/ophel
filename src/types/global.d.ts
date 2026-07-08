@@ -22,6 +22,8 @@ declare global {
       scrollIntoView: typeof Element.prototype.scrollIntoView
       scrollTo: typeof window.scrollTo
     }
+    /** Gemini 水印主世界 fetch 劫持初始化标记 */
+    __ophelGeminiWatermarkMainInitialized?: boolean
     /** iframe 滚动初始化标记 */
     __ophelIframeScrollInitialized?: boolean
     /** 待提示的扩展更新版本 */
