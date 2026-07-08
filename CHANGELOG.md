@@ -9,6 +9,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+
+- **Doubao user questions** — Fixed issue where Doubao's updated chat bubble markup could prevent newer user questions from being recognized in the outline, Markdown rendering, export, and related features while keeping older conversations compatible. (#771)
+
 ---
 
 ## [1.1.4] - 2026-07-06
