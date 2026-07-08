@@ -63,6 +63,27 @@ import { SegmentedExportDialog } from "./SegmentedExportDialog"
 import { SettingsModal } from "./SettingsModal"
 import { GlobalSearchOverlay } from "./global-search/GlobalSearchOverlay"
 import { GlobalSearchResultItemView } from "./global-search/GlobalSearchResultItemView"
+import {
+  GLOBAL_SEARCH_ALL_CATEGORY_ITEM_LIMIT,
+  GLOBAL_SEARCH_CATEGORY_DEFINITIONS,
+  GLOBAL_SEARCH_FILTER_CHIP_MAX_COUNT,
+  GLOBAL_SEARCH_INPUT_DEBOUNCE_MS,
+  GLOBAL_SEARCH_KEYBOARD_SAFE_BOTTOM,
+  GLOBAL_SEARCH_KEYBOARD_SAFE_TOP,
+  GLOBAL_SEARCH_MATCH_REASON_LABEL_DEFINITIONS,
+  GLOBAL_SEARCH_OPTION_ID_PREFIX,
+  GLOBAL_SEARCH_PROMPT_PREVIEW_HIDE_DELAY_MS,
+  GLOBAL_SEARCH_PROMPT_PREVIEW_KEYBOARD_DELAY_MS,
+  GLOBAL_SEARCH_PROMPT_PREVIEW_POINTER_DELAY_MS,
+  GLOBAL_SEARCH_RESULTS_LISTBOX_ID,
+  GLOBAL_SEARCH_RESULT_CATEGORY_LABELS,
+  GLOBAL_SEARCH_SHORTCUT_NUDGE_AUTO_DISMISS_SHORTCUT_COUNT,
+  GLOBAL_SEARCH_SHORTCUT_NUDGE_AUTO_HIDE_MS,
+  GLOBAL_SEARCH_SHORTCUT_NUDGE_MAX_SHOWS,
+  GLOBAL_SEARCH_SHORTCUT_NUDGE_MIN_INTERVAL,
+  GLOBAL_SEARCH_SHORTCUT_NUDGE_STORAGE_KEY,
+  GLOBAL_SEARCH_SYNTAX_SUGGESTION_LIMIT,
+} from "./global-search/constants"
 import { useGlobalSearchKeyboard } from "./global-search/useGlobalSearchKeyboard"
 import { useGlobalSearchPreview } from "./global-search/useGlobalSearchPreview"
 import { useGlobalSearchSyntax } from "./global-search/useGlobalSearchSyntax"
@@ -190,13 +211,6 @@ const SETTINGS_SUB_TAB_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinitio
   [APPEARANCE_TAB_IDS.CUSTOM]: { key: "customStylesTab", fallback: "Custom Styles" },
 }
 
-interface GlobalSearchCategoryDefinition {
-  id: GlobalSearchCategoryId
-  label: LocalizedLabelDefinition
-  placeholder: LocalizedLabelDefinition
-  emptyText: LocalizedLabelDefinition
-}
-
 type GlobalSearchOpenSource = "shortcut" | "ui" | "event"
 
 interface GlobalSearchShortcutNudgeState {
@@ -215,97 +229,6 @@ const isLikelyMacPlatform = () => {
 
 const PASS_THROUGH_META_KEY_ALIASES = new Set(["Meta", "OS", "Command", "Cmd"])
 const PASS_THROUGH_CONTROL_KEY_ALIASES = new Set(["Control", "Ctrl"])
-
-const GLOBAL_SEARCH_CATEGORY_DEFINITIONS: GlobalSearchCategoryDefinition[] = [
-  {
-    id: "all",
-    label: { key: "globalSearchCategoryAll", fallback: "All" },
-    placeholder: { key: "globalSearchPlaceholderAll", fallback: "Search all" },
-    emptyText: { key: "globalSearchEmptyAll", fallback: "No matching results" },
-  },
-  {
-    id: "outline",
-    label: { key: "globalSearchCategoryOutline", fallback: "Outline" },
-    placeholder: { key: "globalSearchPlaceholderOutline", fallback: "Search outline" },
-    emptyText: { key: "globalSearchEmptyOutline", fallback: "No outline results" },
-  },
-  {
-    id: "conversations",
-    label: { key: "globalSearchCategoryConversations", fallback: "Conversations" },
-    placeholder: {
-      key: "globalSearchPlaceholderConversations",
-      fallback: "Search conversations on current site",
-    },
-    emptyText: {
-      key: "globalSearchEmptyConversations",
-      fallback: "No conversation results",
-    },
-  },
-  {
-    id: "prompts",
-    label: { key: "globalSearchCategoryPrompts", fallback: "Prompts" },
-    placeholder: { key: "globalSearchPlaceholderPrompts", fallback: "Search prompts" },
-    emptyText: { key: "globalSearchEmptyPrompts", fallback: "No prompt results" },
-  },
-  {
-    id: "settings",
-    label: { key: "globalSearchCategorySettings", fallback: "Settings" },
-    placeholder: { key: "globalSearchPlaceholderSettings", fallback: "Search settings" },
-    emptyText: { key: "globalSearchEmptySettings", fallback: "No matching settings" },
-  },
-  {
-    id: "tips",
-    label: { key: "featureTipsCategory", fallback: "Tips" },
-    placeholder: { key: "featureTipSearchPlaceholder", fallback: "Search feature tips…" },
-    emptyText: { key: "globalSearchEmptyTips", fallback: "No matching tips" },
-  },
-]
-
-const GLOBAL_SEARCH_RESULT_CATEGORY_LABELS: Record<
-  GlobalSearchResultCategory,
-  LocalizedLabelDefinition
-> = {
-  outline: { key: "globalSearchCategoryOutline", fallback: "Outline" },
-  settings: { key: "globalSearchCategorySettings", fallback: "Settings" },
-  conversations: { key: "globalSearchCategoryConversations", fallback: "Conversations" },
-  prompts: { key: "globalSearchCategoryPrompts", fallback: "Prompts" },
-  tips: { key: "featureTipsCategory", fallback: "Tips" },
-}
-
-const GLOBAL_SEARCH_MATCH_REASON_LABEL_DEFINITIONS: Record<
-  GlobalSearchMatchReason,
-  LocalizedLabelDefinition
-> = {
-  title: { key: "globalSearchMatchReasonTitle", fallback: "Title match" },
-  folder: { key: "globalSearchMatchReasonFolder", fallback: "Folder match" },
-  tag: { key: "globalSearchMatchReasonTag", fallback: "Tag match" },
-  type: { key: "globalSearchMatchReasonType", fallback: "Type match" },
-  code: { key: "globalSearchMatchReasonCode", fallback: "Code match" },
-  category: { key: "globalSearchMatchReasonCategory", fallback: "Category match" },
-  content: { key: "globalSearchMatchReasonContent", fallback: "Content match" },
-  id: { key: "globalSearchMatchReasonId", fallback: "ID match" },
-  keyword: { key: "globalSearchMatchReasonKeyword", fallback: "Keyword match" },
-  alias: { key: "globalSearchMatchReasonAlias", fallback: "Alias match" },
-  fuzzy: { key: "globalSearchMatchReasonFuzzy", fallback: "Fuzzy match" },
-}
-
-const GLOBAL_SEARCH_ALL_CATEGORY_ITEM_LIMIT = 12
-
-const GLOBAL_SEARCH_RESULTS_LISTBOX_ID = "settings-search-results-listbox"
-const GLOBAL_SEARCH_OPTION_ID_PREFIX = "settings-search-option"
-const GLOBAL_SEARCH_KEYBOARD_SAFE_TOP = 8
-const GLOBAL_SEARCH_KEYBOARD_SAFE_BOTTOM = 12
-const GLOBAL_SEARCH_SHORTCUT_NUDGE_STORAGE_KEY = "ophel:global-search-shortcut-nudge:v1"
-const GLOBAL_SEARCH_SHORTCUT_NUDGE_MAX_SHOWS = 3
-const GLOBAL_SEARCH_SHORTCUT_NUDGE_MIN_INTERVAL = 24 * 60 * 60 * 1000
-const GLOBAL_SEARCH_SHORTCUT_NUDGE_AUTO_HIDE_MS = 6000
-const GLOBAL_SEARCH_SHORTCUT_NUDGE_AUTO_DISMISS_SHORTCUT_COUNT = 2
-const GLOBAL_SEARCH_PROMPT_PREVIEW_POINTER_DELAY_MS = 450
-const GLOBAL_SEARCH_PROMPT_PREVIEW_KEYBOARD_DELAY_MS = 700
-const GLOBAL_SEARCH_PROMPT_PREVIEW_HIDE_DELAY_MS = 220
-const GLOBAL_SEARCH_INPUT_DEBOUNCE_MS = 140
-const GLOBAL_SEARCH_SYNTAX_SUGGESTION_LIMIT = 8
-const GLOBAL_SEARCH_FILTER_CHIP_MAX_COUNT = 4
 
 const hasPromptVariables = (content: string): boolean => /\{\{([^\s{}]+)\}\}/.test(content)
 
