@@ -279,7 +279,11 @@
   color: var(--gh-text-secondary, #6b7280);
   font-size: 13px;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    background 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
 
@@ -597,7 +601,10 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease;
   border: none;
   background: transparent;
   color: var(--gh-text-secondary, #6b7280);
@@ -1217,7 +1224,11 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    filter 0.15s ease;
   border: none;
 }
 
@@ -2007,7 +2018,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .settings-modal-action-btn:hover {
@@ -2964,7 +2977,10 @@ html[data-theme="dark"] .about-privacy-banner {
   font-size: 12px;
   line-height: 1.4;
   cursor: pointer;
-  transition: all 0.16s ease;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
   white-space: nowrap;
 }
 
