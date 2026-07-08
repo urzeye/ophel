@@ -108,16 +108,8 @@ if (!window.__ophelScrollLockInitialized) {
     return originalApis.scrollIntoView.call(this, options as any)
   }
 
-  const callOriginalScrollTo = (x?: ScrollToOptions | number, y?: number) => {
-    if (typeof x === "object" && x !== null) {
-      return originalApis.scrollTo.call(window, x)
-    }
-
-    if (typeof x === "number") {
-      return originalApis.scrollTo.apply(window, [x, y] as [number, number])
-    }
-
-    return originalApis.scrollTo.call(window)
+  const callOriginalScrollTo = (args: IArguments) => {
+    return Reflect.apply(originalApis.scrollTo, window, args)
   }
 
   // 2. 劫持 window.scrollTo
@@ -128,7 +120,7 @@ if (!window.__ophelScrollLockInitialized) {
     }
     // 如果劫持未启用，直接调用原始 API
     if (!window.__ophelScrollLockEnabled) {
-      return callOriginalScrollTo(x, y)
+      return callOriginalScrollTo(arguments)
     }
 
     // 解析目标 Y 位置
@@ -144,7 +136,7 @@ if (!window.__ophelScrollLockInitialized) {
       return
     }
 
-    return callOriginalScrollTo(x, y)
+    return callOriginalScrollTo(arguments)
   }
 
   // 3. 劫持 scrollTop setter
