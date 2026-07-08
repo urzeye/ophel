@@ -807,8 +807,8 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
     window.addEventListener("ophel:searchOutline", handleSearchOutline)
 
     // 检查是否有待处理的搜索请求
-    if ((window as any).__ophelPendingSearchOutline) {
-      delete (window as any).__ophelPendingSearchOutline
+    if (window.__ophelPendingSearchOutline) {
+      delete window.__ophelPendingSearchOutline
       // 延迟确保渲染完成
       setTimeout(handleSearchOutline, 100)
     }
@@ -1729,12 +1729,12 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
   useEffect(() => {
     const handleLocateEvent = () => {
       // 清除全局标记
-      ;(window as any).__ophelPendingLocateOutline = false
+      window.__ophelPendingLocateOutline = false
       handleLocateCurrent()
     }
 
     // 检查挂载时是否有待处理的定位请求
-    if ((window as any).__ophelPendingLocateOutline) {
+    if (window.__ophelPendingLocateOutline) {
       // 延迟执行，确保组件完全渲染
       setTimeout(() => {
         handleLocateEvent()

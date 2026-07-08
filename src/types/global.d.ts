@@ -38,6 +38,12 @@ declare global {
     __ophelExtensionUpdatePromptObserver?: MutationObserver | null
     /** 用户是否已主动关闭过更新提示（关闭后不再重复弹出） */
     __OPHEL_EXTENSION_UPDATE_DISMISSED__?: boolean
+    /** 待处理的大纲当前定位请求 */
+    __ophelPendingLocateOutline?: boolean
+    /** 待处理的大纲搜索聚焦请求 */
+    __ophelPendingSearchOutline?: boolean
+    /** 待处理的会话定位请求 */
+    __ophelPendingLocateConversation?: boolean
     /** Tooltip：window.focus 监听器是否已注册（防 HMR 重复注册） */
     __ophelTooltipWindowFocusListenerRegistered__?: boolean
     /** Tooltip：当前是否处于"标签/窗口切回焦点恢复"抑制期 */

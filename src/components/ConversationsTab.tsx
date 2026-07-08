@@ -585,12 +585,12 @@ export const ConversationsTab: React.FC<ConversationsTabProps> = ({
   useEffect(() => {
     const handleLocateEvent = () => {
       // 清除全局标记
-      ;(window as any).__ophelPendingLocateConversation = false
+      window.__ophelPendingLocateConversation = false
       handleLocate()
     }
 
     // 检查挂载时是否有待处理的定位请求
-    if ((window as any).__ophelPendingLocateConversation) {
+    if (window.__ophelPendingLocateConversation) {
       // 延迟执行，确保组件完全渲染
       setTimeout(() => {
         handleLocateEvent()

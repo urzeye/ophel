@@ -366,7 +366,7 @@ export function useShortcuts({
 
     // 设置全局标记，OutlineTab 挂载时会检查这个标记
     // 同时触发事件，如果组件已挂载则立即处理
-    ;(window as any).__ophelPendingLocateOutline = true
+    window.__ophelPendingLocateOutline = true
     window.dispatchEvent(new CustomEvent("ophel:locateOutline"))
 
     showToast(t("locatingOutline"))
@@ -390,7 +390,7 @@ export function useShortcuts({
     }
 
     // 设置全局标记，确保 OutlineTab 挂载后能检测到
-    ;(window as any).__ophelPendingSearchOutline = true
+    window.__ophelPendingSearchOutline = true
 
     // 触发事件通知 MainPanel 切换 Tab，以及 OutlineTab 聚焦输入框
     setTimeout(() => {
@@ -422,7 +422,7 @@ export function useShortcuts({
     }
 
     // 设置全局标记，ConversationsTab 挂载时会检查这个标记
-    ;(window as any).__ophelPendingLocateConversation = true
+    window.__ophelPendingLocateConversation = true
     window.dispatchEvent(new CustomEvent("ophel:locateConversation"))
 
     showToast(t("locatingConversation"))
