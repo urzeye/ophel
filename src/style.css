@@ -1212,7 +1212,12 @@
   border: 1px solid transparent;
   font-size: 13px;
   color: var(--gh-text, #374151);
-  transition: all 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s,
+    color 0.15s,
+    transform 0.15s;
   display: flex;
   align-items: center;
   position: relative;
@@ -1324,7 +1329,11 @@
   justify-content: center;
   color: #9ca3af;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.2s ease;
   font-size: 16px;
   flex-shrink: 0;
   margin-right: 2px;
@@ -1412,7 +1421,11 @@
 
   position: relative;
   overflow: visible;
-  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition:
+    background 0.2s cubic-bezier(0.25, 0.8, 0.25, 1),
+    border-color 0.2s cubic-bezier(0.25, 0.8, 0.25, 1),
+    box-shadow 0.2s cubic-bezier(0.25, 0.8, 0.25, 1),
+    transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .outline-list-virtual .outline-item.user-query-node {
@@ -1433,7 +1446,10 @@
   background-color: var(--gh-primary, #4285f4);
   /* 使用透明度阴影，适应深色背景 */
   box-shadow: 0 1px 4px color-mix(in srgb, var(--gh-primary, #4285f4) 40%, transparent);
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    height 0.2s ease;
 }
 
 .outline-item.user-query-node:first-child {
@@ -1579,7 +1595,11 @@
   cursor: pointer;
   border-radius: 4px;
   opacity: 0;
-  transition: all 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.2s ease;
   z-index: 5;
 }
 
