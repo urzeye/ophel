@@ -6,6 +6,7 @@
  */
 
 import type { SiteAdapter } from "~adapters/base"
+import { PollingTaskRegistry } from "~core/polling-task-registry"
 import type { PromptManager } from "~core/prompt-manager"
 import {
   appendQuickQuoteMarker,
@@ -19,11 +20,12 @@ import { useQueueStore } from "~stores/queue-store"
 export class QueueDispatcher {
   private adapter: SiteAdapter
   private promptManager: PromptManager
-  private intervalId: ReturnType<typeof setInterval> | null = null
+  private readonly pollingTasks = new PollingTaskRegistry()
   private idleCount = 0 // 连续空闲计数
   private isDispatching = false
   private postSubmitWaitPromise: Promise<void> | null = null
   private readonly IDLE_THRESHOLD = 2 // 需要连续 N 次检测到空闲才发送
+  private readonly POLL_TASK_NAME = "queue-dispatcher"
   private readonly POLL_INTERVAL = 1000 // 轮询间隔 (ms)
   private readonly POST_SUBMIT_MIN_WAIT_MS = 2500
   private readonly POST_SUBMIT_QUIET_MS = 2500
@@ -39,19 +41,21 @@ export class QueueDispatcher {
    * 启动调度循环
    */
   start(): void {
-    if (this.intervalId) return // 已在运行
+    if (this.isRunning()) return // 已在运行
     this.idleCount = 0
-    this.intervalId = setInterval(() => this.tick(), this.POLL_INTERVAL)
+    this.pollingTasks.start({
+      name: this.POLL_TASK_NAME,
+      intervalMs: this.POLL_INTERVAL,
+      runWhenHidden: true,
+      run: () => this.tick(),
+    })
   }
 
   /**
    * 停止调度循环
    */
   stop(): void {
-    if (this.intervalId) {
-      clearInterval(this.intervalId)
-      this.intervalId = null
-    }
+    this.pollingTasks.stop(this.POLL_TASK_NAME)
     this.idleCount = 0
   }
 
@@ -59,7 +63,7 @@ export class QueueDispatcher {
    * 检查是否正在运行
    */
   isRunning(): boolean {
-    return this.intervalId !== null
+    return this.pollingTasks.isRunning(this.POLL_TASK_NAME)
   }
 
   /**
