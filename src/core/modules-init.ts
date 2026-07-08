@@ -651,7 +651,7 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
 /**
  * 初始化 URL 变化监听 (SPA 导航)
  */
-export function initUrlChangeObserver(ctx: ModulesContext): void {
+export function initUrlChangeObserver(ctx: ModulesContext): () => void {
   const { adapter } = ctx
 
   let lastHref = window.location.href
@@ -732,17 +732,40 @@ export function initUrlChangeObserver(ctx: ModulesContext): void {
   // Monkey-patch pushState / replaceState
   const originalPushState = history.pushState
   const originalReplaceState = history.replaceState
-  history.pushState = function (...args: Parameters<History["pushState"]>) {
+  const patchedPushState = function (this: History, ...args: Parameters<History["pushState"]>) {
     originalPushState.apply(this, args)
-    handleUrlChange()
+    void handleUrlChange()
   }
-  history.replaceState = function (...args: Parameters<History["replaceState"]>) {
+  const patchedReplaceState = function (
+    this: History,
+    ...args: Parameters<History["replaceState"]>
+  ) {
     originalReplaceState.apply(this, args)
-    handleUrlChange()
+    void handleUrlChange()
   }
+  history.pushState = patchedPushState
+  history.replaceState = patchedReplaceState
 
   // 兜底定时器
-  setInterval(handleUrlChange, 1000)
+  const fallbackIntervalId = window.setInterval(handleUrlChange, 1000)
+
+  return () => {
+    window.removeEventListener("popstate", handleUrlChange)
+    window.removeEventListener("hashchange", handleUrlChange)
+    window.clearInterval(fallbackIntervalId)
+
+    if (readingHistoryRestoreTimeoutId) {
+      clearTimeout(readingHistoryRestoreTimeoutId)
+      readingHistoryRestoreTimeoutId = null
+    }
+
+    if (history.pushState === patchedPushState) {
+      history.pushState = originalPushState
+    }
+    if (history.replaceState === patchedReplaceState) {
+      history.replaceState = originalReplaceState
+    }
+  }
 }
 
 declare const __PLATFORM__: "extension" | "userscript" | undefined

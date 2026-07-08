@@ -542,7 +542,8 @@ async function init() {
   window.addEventListener("unload", unsubscribeModuleUpdates, { once: true })
 
   // 初始化 URL 变化监听 (SPA 导航)
-  initUrlChangeObserver(ctx)
+  const cleanupUrlChangeObserver = initUrlChangeObserver(ctx)
+  window.addEventListener("unload", cleanupUrlChangeObserver, { once: true })
 
   window.addEventListener("unload", cleanupMountWatchers)
   window.addEventListener("unload", cleanupUserscriptObjectUrls)

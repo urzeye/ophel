@@ -491,7 +491,8 @@ if (!window.ophelInitialized) {
       window.addEventListener("unload", unsubscribeModuleUpdates, { once: true })
 
       // 初始化 URL 变化监听
-      initUrlChangeObserver(ctx)
+      const cleanupUrlChangeObserver = initUrlChangeObserver(ctx)
+      window.addEventListener("unload", cleanupUrlChangeObserver, { once: true })
 
       // 监听来自 background 的消息（用于跨页面检测生成状态）
       chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
