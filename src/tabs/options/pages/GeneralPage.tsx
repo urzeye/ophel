@@ -202,6 +202,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
 
   const isFloatingPanelMode = (settings?.panel?.panelMode ?? "floating") === "floating"
   const isEdgeSnapPanelMode = (settings?.panel?.panelMode ?? "floating") === "edge-snap"
+  const isPanelModeAdvancedVisible = isEdgeSnapPanelMode && isPanelModeAdvancedOpen
   const isHoverResizeEnabled = settings?.panel?.resizeOnHover ?? false
 
   useEffect(() => {
@@ -211,7 +212,11 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
 
     if (PANEL_MODE_ADVANCED_SETTING_IDS.has(locateSettingId)) {
       setActiveTab("panel")
-      setIsPanelModeAdvancedOpen(true)
+
+      if (isEdgeSnapPanelMode) {
+        setIsPanelModeAdvancedOpen(true)
+      }
+
       return
     }
 
@@ -224,7 +229,13 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
     if (isFloatingPanelMode) {
       setIsPanelWidthAdvancedOpen(true)
     }
-  }, [isFloatingPanelMode, locateSettingId])
+  }, [isEdgeSnapPanelMode, isFloatingPanelMode, locateSettingId])
+
+  useEffect(() => {
+    if (!isEdgeSnapPanelMode) {
+      setIsPanelModeAdvancedOpen(false)
+    }
+  }, [isEdgeSnapPanelMode])
 
   useEffect(() => {
     if (
@@ -320,23 +331,36 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
         <SettingCard title={t("panelSettings")}>
           {/* 面板模式 */}
           <div
-            className={`settings-panel-mode-accordion ${isPanelModeAdvancedOpen ? "open" : ""}`}
+            className={`settings-panel-mode-accordion ${isPanelModeAdvancedVisible ? "open" : ""}`}
             data-setting-id="panel-mode">
             <div className="settings-row settings-panel-mode-main">
-              <button
-                type="button"
-                className="settings-panel-mode-trigger"
-                aria-expanded={isPanelModeAdvancedOpen}
-                aria-controls="settings-panel-mode-advanced"
-                onClick={() => setIsPanelModeAdvancedOpen((value) => !value)}>
-                <div className="settings-row-info">
-                  <div className="settings-row-label settings-panel-mode-label">
-                    <span>{t("panelModeLabel")}</span>
-                    <ChevronDownIcon size={14} className="settings-panel-mode-icon" />
+              {isEdgeSnapPanelMode ? (
+                <button
+                  type="button"
+                  className="settings-panel-mode-trigger"
+                  aria-expanded={isPanelModeAdvancedVisible}
+                  aria-controls="settings-panel-mode-advanced"
+                  onClick={() => setIsPanelModeAdvancedOpen((value) => !value)}>
+                  <div className="settings-row-info">
+                    <div className="settings-row-label settings-panel-mode-label">
+                      <span>{t("panelModeLabel")}</span>
+                      <span className="settings-panel-mode-disclosure" aria-hidden="true">
+                        <ChevronDownIcon size={14} className="settings-panel-mode-icon" />
+                      </span>
+                    </div>
+                    <div className="settings-row-desc">{t("panelModeDesc")}</div>
                   </div>
-                  <div className="settings-row-desc">{t("panelModeDesc")}</div>
+                </button>
+              ) : (
+                <div className="settings-panel-mode-trigger settings-panel-mode-trigger-static">
+                  <div className="settings-row-info">
+                    <div className="settings-row-label settings-panel-mode-label">
+                      <span>{t("panelModeLabel")}</span>
+                    </div>
+                    <div className="settings-row-desc">{t("panelModeDesc")}</div>
+                  </div>
                 </div>
-              </button>
+              )}
               <div
                 style={{
                   display: "inline-flex",
@@ -389,12 +413,11 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
               </div>
             </div>
 
-            {isPanelModeAdvancedOpen && (
+            {isPanelModeAdvancedVisible && (
               <div id="settings-panel-mode-advanced" className="settings-panel-mode-body">
                 <div
-                  className={`settings-panel-mode-subrow ${isEdgeSnapPanelMode ? "" : "disabled"}`.trim()}
-                  data-setting-id="panel-edge-trigger-mode"
-                  aria-disabled={!isEdgeSnapPanelMode}>
+                  className="settings-panel-mode-subrow"
+                  data-setting-id="panel-edge-trigger-mode">
                   <div className="settings-row-info">
                     <div className="settings-row-label">{t("edgeTriggerModeLabel")}</div>
                     <div className="settings-row-desc">{t("edgeTriggerModeDesc")}</div>
@@ -415,7 +438,6 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
                       <button
                         type="button"
                         key={option.value}
-                        disabled={!isEdgeSnapPanelMode}
                         aria-pressed={
                           (settings.panel?.edgeTriggerMode ?? "handle") === option.value
                         }
@@ -427,7 +449,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
                           fontSize: "13px",
                           border: "none",
                           borderLeft: index > 0 ? "1px solid var(--gh-border, #e5e7eb)" : "none",
-                          cursor: isEdgeSnapPanelMode ? "pointer" : "not-allowed",
+                          cursor: "pointer",
                           background:
                             (settings.panel?.edgeTriggerMode ?? "handle") === option.value
                               ? "var(--gh-primary, #4285f4)"
@@ -436,7 +458,6 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
                             (settings.panel?.edgeTriggerMode ?? "handle") === option.value
                               ? "#fff"
                               : "var(--gh-text-secondary, #6b7280)",
-                          opacity: isEdgeSnapPanelMode ? 1 : 0.65,
                           transition: "all 0.2s",
                         }}>
                         {option.label}
