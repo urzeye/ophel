@@ -8,7 +8,6 @@ import {
   TranslateIcon,
 } from "~components/icons"
 import { Tooltip } from "~components/ui/Tooltip"
-import type { ThemeManager } from "~core/theme-manager"
 import { useSettingsStore } from "~stores/settings-store"
 import { getEffectiveLanguage, setLanguage, t } from "~utils/i18n"
 
@@ -19,10 +18,10 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
 
   // 检测是否在独立 Options 页面（非 content script 环境）
   // 如果是独立页面，不显示主题切换（因为主题是按站点配置的）
-  const isStandalonePage = !(window as any).__ophelThemeManager
+  const isStandalonePage = !window.__ophelThemeManager
 
   // 从全局 ThemeManager 订阅当前主题模式（Single Source of Truth）
-  const themeManager = (window as any).__ophelThemeManager as ThemeManager | undefined
+  const themeManager = window.__ophelThemeManager
   const currentThemeMode = useSyncExternalStore(
     themeManager?.subscribe ?? (() => () => {}),
     themeManager?.getSnapshot ?? (() => "light" as const),
@@ -41,7 +40,7 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
   ) => {
     if (currentThemePreference === mode) return
 
-    const themeManager = (window as any).__ophelThemeManager
+    const themeManager = window.__ophelThemeManager
     if (themeManager?.setMode) {
       await themeManager.setMode(mode, event?.nativeEvent)
     } else {

@@ -249,7 +249,7 @@ const OptionsPage = () => {
 
   // 检测是否在独立 Options 页面（非 content script 环境）
   // 如果是独立页面，不显示外观主题菜单（因为主题是按站点配置的）
-  const isStandalonePage = !(window as any).__ophelThemeManager
+  const isStandalonePage = !window.__ophelThemeManager
 
   // 在独立页面中过滤掉 appearance 导航项
   // 在油猴脚本环境中过滤掉 permissions 导航项（因为没有权限 API）

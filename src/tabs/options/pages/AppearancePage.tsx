@@ -120,7 +120,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
 
   // 选择浅色主题预置
   const selectLightPreset = async (presetId: string) => {
-    const themeManager = (window as any).__ophelThemeManager
+    const themeManager = window.__ophelThemeManager
     const isSystemMode = currentTheme?.mode === "system"
     if (!isSystemMode && themeManager?.setMode) {
       // setMode 会等待动画完成后才返回
@@ -147,7 +147,7 @@ const AppearancePage: React.FC<AppearancePageProps> = ({ siteId, initialTab }) =
 
   // 选择深色主题预置
   const selectDarkPreset = async (presetId: string) => {
-    const themeManager = (window as any).__ophelThemeManager
+    const themeManager = window.__ophelThemeManager
     const isSystemMode = currentTheme?.mode === "system"
     if (!isSystemMode && themeManager?.setMode) {
       // setMode 会等待动画完成后才返回
