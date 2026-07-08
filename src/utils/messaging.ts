@@ -187,6 +187,12 @@ export interface CheckClaudeGeneratingMessage {
   type: typeof MSG_CHECK_CLAUDE_GENERATING
 }
 
+export interface CheckClaudeGeneratingResponse {
+  success: boolean
+  isGenerating: boolean
+  error?: string
+}
+
 export type ExtensionMessage =
   | ShowNotificationMessage
   | FocusTabMessage
@@ -233,10 +239,19 @@ export interface AIStudioModelInfo {
   name: string
 }
 
+export interface AIStudioModelsResponse {
+  success: boolean
+  models?: AIStudioModelInfo[]
+  error?: string
+  message?: string
+}
+
 interface BackgroundResponseMap {
   [MSG_CHECK_PERMISSION]: PermissionCheckResponse
   [MSG_CHECK_PERMISSIONS]: PermissionCheckResponse
   [MSG_REQUEST_PERMISSIONS]: BasicBackgroundResponse
+  [MSG_CHECK_CLAUDE_GENERATING]: CheckClaudeGeneratingResponse
+  [MSG_GET_AISTUDIO_MODELS]: AIStudioModelsResponse
 }
 
 type BackgroundResponseFor<T extends ExtensionMessage> =

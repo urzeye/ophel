@@ -7,15 +7,14 @@ import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { SettingCard } from "~tabs/options/components"
 import { t } from "~utils/i18n"
-import { MSG_GET_AISTUDIO_MODELS, sendToBackground, type AIStudioModelInfo } from "~utils/messaging"
+import {
+  MSG_GET_AISTUDIO_MODELS,
+  sendToBackground,
+  type AIStudioModelInfo,
+  type AIStudioModelsResponse,
+} from "~utils/messaging"
 import type { Settings } from "~utils/storage"
 import { showToast, showToastThrottled } from "~utils/toast"
-
-type AIStudioModelsResponse = {
-  success: boolean
-  models?: AIStudioModelInfo[]
-  error?: string
-}
 
 type AIStudioModelListAdapter = {
   getSiteId(): string
