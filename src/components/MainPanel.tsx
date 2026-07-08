@@ -1441,7 +1441,7 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             {t("tip1", { modifier: isMacOS() ? "⌘ Cmd" : "Ctrl" })}
           </span>
         </div>
-        <div className="gh-panel-tabs">
+        <div className="gh-panel-tabs" role="tablist" aria-label={t("panelTitle")}>
           {visibleTabs.map((tab) => {
             let IconComp: React.FC<{ size?: number }> | null = null
             if (tab === TAB_IDS.OUTLINE) IconComp = OutlineIcon
@@ -1452,7 +1452,11 @@ export const MainPanel: React.FC<MainPanelProps> = ({
               <button
                 type="button"
                 key={tab}
+                id={`gh-panel-tab-${tab}`}
+                role="tab"
                 draggable={canDragPanelTabs}
+                aria-selected={activeTab === tab}
+                aria-controls={`gh-panel-tabpanel-${tab}`}
                 aria-grabbed={draggedPanelTab === tab}
                 className={`gh-panel-tab-btn ${activeTab === tab ? "active" : ""} ${canDragPanelTabs ? "is-draggable" : ""} ${draggedPanelTab === tab ? "is-dragging" : ""} ${dragOverPanelTab === tab ? "is-drag-over" : ""}`}
                 data-tip-target={
@@ -1485,7 +1489,11 @@ export const MainPanel: React.FC<MainPanelProps> = ({
         </div>
 
         {/* Content - 内容区 */}
-        <div className="gh-panel-content">
+        <div
+          id={`gh-panel-tabpanel-${activeTab}`}
+          className="gh-panel-content"
+          role="tabpanel"
+          aria-labelledby={`gh-panel-tab-${activeTab}`}>
           {activeTab === TAB_IDS.PROMPTS && (
             <PromptsTab
               manager={promptManager}
