@@ -2045,10 +2045,7 @@ export const App = () => {
           const pendingDetail = {
             promptId: targetPrompt.id,
           }
-          const ophelWindow = window as Window & {
-            __ophelPendingLocatePrompt?: typeof pendingDetail | null
-          }
-          ophelWindow.__ophelPendingLocatePrompt = pendingDetail
+          window.__ophelPendingLocatePrompt = pendingDetail
 
           window.dispatchEvent(
             new CustomEvent("ophel:locatePrompt", {
@@ -2076,10 +2073,7 @@ export const App = () => {
             promptId: targetPrompt.id,
             submitAfterInsert: false,
           }
-          const ophelWindow = window as Window & {
-            __ophelPendingPromptVariableDialog?: typeof pendingDetail | null
-          }
-          ophelWindow.__ophelPendingPromptVariableDialog = pendingDetail
+          window.__ophelPendingPromptVariableDialog = pendingDetail
 
           window.dispatchEvent(
             new CustomEvent("ophel:openPromptVariableDialog", {

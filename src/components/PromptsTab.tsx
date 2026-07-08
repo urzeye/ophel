@@ -67,15 +67,6 @@ interface PromptInputState {
   onConfirm: (value: string) => void
 }
 
-interface OpenPromptVariableDialogDetail {
-  promptId?: string
-  submitAfterInsert?: boolean
-}
-
-interface LocatePromptDetail {
-  promptId?: string
-}
-
 type PromptLibraryView = "prompts" | "chains"
 
 type ChainDraft = Omit<PromptChain, "id" | "createdAt" | "updatedAt"> & {
@@ -1418,12 +1409,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   )
 
   useEffect(() => {
-    const ophelWindow = window as Window & {
-      __ophelPendingPromptVariableDialog?: OpenPromptVariableDialogDetail | null
-    }
-
     const handleOpenPromptVariableDialog = (event: Event) => {
-      const detail = (event as CustomEvent<OpenPromptVariableDialogDetail>).detail
+      const detail = (event as CustomEvent<OphelPendingPromptVariableDialogDetail>).detail
       const promptId = detail?.promptId
       if (!promptId) {
         return
@@ -1432,13 +1419,13 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       const opened = openVariableDialogByPromptId(promptId, Boolean(detail?.submitAfterInsert))
       if (opened) {
         onPromptSelect?.(null)
-        ophelWindow.__ophelPendingPromptVariableDialog = null
+        window.__ophelPendingPromptVariableDialog = null
       }
     }
 
     window.addEventListener("ophel:openPromptVariableDialog", handleOpenPromptVariableDialog)
 
-    const pending = ophelWindow.__ophelPendingPromptVariableDialog
+    const pending = window.__ophelPendingPromptVariableDialog
     if (pending?.promptId) {
       const opened = openVariableDialogByPromptId(
         pending.promptId,
@@ -1446,7 +1433,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       )
       if (opened) {
         onPromptSelect?.(null)
-        ophelWindow.__ophelPendingPromptVariableDialog = null
+        window.__ophelPendingPromptVariableDialog = null
       }
     }
 
@@ -1456,12 +1443,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }, [onPromptSelect, openVariableDialogByPromptId])
 
   useEffect(() => {
-    const ophelWindow = window as Window & {
-      __ophelPendingLocatePrompt?: LocatePromptDetail | null
-    }
-
     const handleLocatePrompt = (event: Event) => {
-      const detail = (event as CustomEvent<LocatePromptDetail>).detail
+      const detail = (event as CustomEvent<OphelPendingLocatePromptDetail>).detail
       const promptId = detail?.promptId
       if (!promptId) {
         return
@@ -1469,17 +1452,17 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
       const located = locatePromptById(promptId)
       if (located) {
-        ophelWindow.__ophelPendingLocatePrompt = null
+        window.__ophelPendingLocatePrompt = null
       }
     }
 
     window.addEventListener("ophel:locatePrompt", handleLocatePrompt)
 
-    const pending = ophelWindow.__ophelPendingLocatePrompt
+    const pending = window.__ophelPendingLocatePrompt
     if (pending?.promptId) {
       const located = locatePromptById(pending.promptId)
       if (located) {
-        ophelWindow.__ophelPendingLocatePrompt = null
+        window.__ophelPendingLocatePrompt = null
       }
     }
 

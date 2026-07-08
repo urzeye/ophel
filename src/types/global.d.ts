@@ -6,6 +6,15 @@
 import type { ThemeManager } from "~core/theme-manager"
 
 declare global {
+  interface OphelPendingPromptVariableDialogDetail {
+    promptId?: string
+    submitAfterInsert?: boolean
+  }
+
+  interface OphelPendingLocatePromptDetail {
+    promptId?: string
+  }
+
   interface Window {
     /** Ophel 初始化标记 */
     ophelInitialized?: boolean
@@ -40,6 +49,10 @@ declare global {
     __ophelExtensionUpdatePromptObserver?: MutationObserver | null
     /** 用户是否已主动关闭过更新提示（关闭后不再重复弹出） */
     __OPHEL_EXTENSION_UPDATE_DISMISSED__?: boolean
+    /** 待处理的 Prompt 变量对话框打开请求 */
+    __ophelPendingPromptVariableDialog?: OphelPendingPromptVariableDialogDetail | null
+    /** 待处理的 Prompt 定位请求 */
+    __ophelPendingLocatePrompt?: OphelPendingLocatePromptDetail | null
     /** 待处理的大纲当前定位请求 */
     __ophelPendingLocateOutline?: boolean
     /** 待处理的大纲搜索聚焦请求 */
