@@ -67,7 +67,6 @@ import {
   GLOBAL_SEARCH_ALL_CATEGORY_ITEM_LIMIT,
   GLOBAL_SEARCH_CATEGORY_DEFINITIONS,
   GLOBAL_SEARCH_FILTER_CHIP_MAX_COUNT,
-  GLOBAL_SEARCH_INPUT_DEBOUNCE_MS,
   GLOBAL_SEARCH_KEYBOARD_SAFE_BOTTOM,
   GLOBAL_SEARCH_KEYBOARD_SAFE_TOP,
   GLOBAL_SEARCH_MATCH_REASON_LABEL_DEFINITIONS,
@@ -79,6 +78,7 @@ import {
   GLOBAL_SEARCH_RESULT_CATEGORY_LABELS,
   GLOBAL_SEARCH_SYNTAX_SUGGESTION_LIMIT,
 } from "./global-search/constants"
+import { useGlobalSearchInputState } from "./global-search/useGlobalSearchInputState"
 import { useGlobalSearchKeyboard } from "./global-search/useGlobalSearchKeyboard"
 import { useGlobalSearchPreview } from "./global-search/useGlobalSearchPreview"
 import { useGlobalSearchShortcutNudge } from "./global-search/useGlobalSearchShortcutNudge"
@@ -293,6 +293,16 @@ export const App = () => {
     tryShowGlobalSearchShortcutNudge,
   } = useGlobalSearchShortcutNudge(globalSearchShortcutNudgeText)
 
+  const {
+    settingsSearchInputValue,
+    setSettingsSearchInputValue,
+    settingsSearchQuery,
+    setSettingsSearchQuery,
+    clearSettingsSearchInputDebounceTimer,
+    syncSettingsSearchInputAndQuery,
+    commitSettingsSearchInputValue,
+  } = useGlobalSearchInputState()
+
   const handleGlobalSearchPromptPreviewClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       event.stopPropagation()
@@ -325,24 +335,6 @@ export const App = () => {
     [getLocalizedText],
   )
 
-  const clearSettingsSearchInputDebounceTimer = useCallback(() => {
-    if (!searchInputDebounceTimerRef.current) {
-      return
-    }
-
-    clearTimeout(searchInputDebounceTimerRef.current)
-    searchInputDebounceTimerRef.current = null
-  }, [])
-
-  const syncSettingsSearchInputAndQuery = useCallback(
-    (nextValue: string) => {
-      clearSettingsSearchInputDebounceTimer()
-      setSettingsSearchInputValue(nextValue)
-      setSettingsSearchQuery(nextValue)
-    },
-    [clearSettingsSearchInputDebounceTimer],
-  )
-
   const syncGlobalSearchValueAndCategory = useCallback(
     (nextValue: string) => {
       const normalizedValue = nextValue.trimStart()
@@ -369,19 +361,6 @@ export const App = () => {
       },
     })
   }, [isGlobalSearchFuzzySearchEnabled, setSettings, settings?.globalSearch])
-
-  const commitSettingsSearchInputValue = useCallback(
-    (nextValue: string) => {
-      setSettingsSearchInputValue(nextValue)
-      clearSettingsSearchInputDebounceTimer()
-
-      searchInputDebounceTimerRef.current = setTimeout(() => {
-        setSettingsSearchQuery(nextValue)
-        searchInputDebounceTimerRef.current = null
-      }, GLOBAL_SEARCH_INPUT_DEBOUNCE_MS)
-    },
-    [clearSettingsSearchInputDebounceTimer],
-  )
 
   const getPageLabel = useCallback(
     (page: string) => {
@@ -685,8 +664,6 @@ export const App = () => {
   const [isGlobalSettingsSearchOpen, setIsGlobalSettingsSearchOpen] = useState(false)
   const [activeGlobalSearchCategory, setActiveGlobalSearchCategory] =
     useState<GlobalSearchCategoryId>("all")
-  const [settingsSearchInputValue, setSettingsSearchInputValue] = useState("")
-  const [settingsSearchQuery, setSettingsSearchQuery] = useState("")
   const [settingsSearchActiveIndex, setSettingsSearchActiveIndex] = useState(0)
   const [settingsSearchHoverLocked, setSettingsSearchHoverLocked] = useState(false)
   const [settingsSearchNavigationMode, setSettingsSearchNavigationMode] = useState<
@@ -708,7 +685,6 @@ export const App = () => {
   const globalSearchSyntaxHelpPopoverRef = useRef<HTMLDivElement | null>(null)
   const settingsSearchResultsRef = useRef<HTMLDivElement | null>(null)
   const promptPreviewContainerRef = useRef<HTMLDivElement | null>(null)
-  const searchInputDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const settingsSearchWheelFreezeUntilRef = useRef(0)
   const globalSearchOpenSourceRef = useRef<GlobalSearchOpenSource>("ui")
   const lastShiftPressedAtRef = useRef(0)
@@ -1266,6 +1242,8 @@ export const App = () => {
     clearSettingsSearchInputDebounceTimer,
     edgeSnapState,
     isGlobalSettingsSearchOpen,
+    setSettingsSearchInputValue,
+    setSettingsSearchQuery,
     showEdgePeek,
   ])
 
@@ -1682,6 +1660,8 @@ export const App = () => {
       closeSettingsModal,
       edgeSnapState,
       releaseMainPanelHoverWidth,
+      setSettingsSearchInputValue,
+      setSettingsSearchQuery,
       showEdgePeek,
     ],
   )
@@ -1736,7 +1716,14 @@ export const App = () => {
         }
       })
     },
-    [clearSettingsSearchInputDebounceTimer, edgeSnapState, scheduleEdgePeekSync, showEdgePeek],
+    [
+      clearSettingsSearchInputDebounceTimer,
+      edgeSnapState,
+      scheduleEdgePeekSync,
+      setSettingsSearchInputValue,
+      setSettingsSearchQuery,
+      showEdgePeek,
+    ],
   )
 
   const openSettingsModal = useCallback(() => {
@@ -2036,13 +2023,6 @@ export const App = () => {
       window.removeEventListener("ophel:openSettingsSearch", handleOpenSearchEvent)
     }
   }, [openGlobalSettingsSearch])
-
-  useEffect(
-    () => () => {
-      clearSettingsSearchInputDebounceTimer()
-    },
-    [clearSettingsSearchInputDebounceTimer],
-  )
 
   useEffect(() => {
     if (!isGlobalSettingsSearchOpen || !showGlobalSearchSyntaxHelp) {
