@@ -33,8 +33,5 @@ export const getMathStyles = (): string => getKatexStylesText()
 
 export const getHighlightStyles = (): string => {
   if (typeof window === "undefined") return ""
-  return (
-    (window as typeof window & { __OPHEL_MARKDOWN_PREVIEW_STYLES__?: string })
-      .__OPHEL_MARKDOWN_PREVIEW_STYLES__ || ""
-  )
+  return window.__OPHEL_MARKDOWN_PREVIEW_STYLES__ || ""
 }

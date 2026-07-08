@@ -253,10 +253,7 @@ function isUserscriptPlatform(): boolean {
 
 function getUserscriptMarkdownPreviewStyles(): string {
   if (typeof window === "undefined" || !isUserscriptPlatform()) return ""
-  return (
-    (window as typeof window & { __OPHEL_MARKDOWN_PREVIEW_STYLES__?: string })
-      .__OPHEL_MARKDOWN_PREVIEW_STYLES__ || ""
-  )
+  return window.__OPHEL_MARKDOWN_PREVIEW_STYLES__ || ""
 }
 
 function getInlineHighlightStyles(): string {

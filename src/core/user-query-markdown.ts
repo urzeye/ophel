@@ -47,10 +47,7 @@ function isUserscriptPlatform(): boolean {
 
 function getUserscriptUserQueryMarkdownStyles(): string {
   if (typeof window === "undefined" || !isUserscriptPlatform()) return ""
-  return (
-    (window as typeof window & { __OPHEL_USER_QUERY_MARKDOWN_STYLES__?: string })
-      .__OPHEL_USER_QUERY_MARKDOWN_STYLES__ || ""
-  )
+  return window.__OPHEL_USER_QUERY_MARKDOWN_STYLES__ || ""
 }
 
 function getInlineUserQueryMarkdownStyles(): string {

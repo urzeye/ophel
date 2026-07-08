@@ -10,6 +10,34 @@ import { applyOphelPlatformFontClass } from "~utils/font"
 
 const USERSCRIPT_OBJECT_URLS = new Set<string>()
 
+type ChromeStorageAreaPolyfill = {
+  get: (keys: string | string[] | null, callback: (items: Record<string, unknown>) => void) => void
+  set: (items: Record<string, unknown>, callback?: () => void) => void
+  remove: (keys: string | string[], callback?: () => void) => void
+  clear: (callback?: () => void) => void
+}
+
+type ChromeEventPolyfill = {
+  addListener: () => void
+  removeListener: () => void
+}
+
+type ChromePolyfill = {
+  storage?: {
+    local: ChromeStorageAreaPolyfill
+    sync: ChromeStorageAreaPolyfill
+    onChanged?: ChromeEventPolyfill
+  }
+  runtime?: {
+    getManifest: () => { version: string }
+    getURL: (path: string) => string
+    sendMessage: () => Promise<Record<string, unknown>>
+    onMessage?: ChromeEventPolyfill
+  }
+}
+
+const userscriptWindow = window as unknown as { chrome?: ChromePolyfill }
+
 const USERSCRIPT_AUDIO_RESOURCE_NAMES = new Set<string>(
   Object.values(USERSCRIPT_RESOURCE_DEFINITIONS)
     .filter(({ fileName }) => /\.(mp3|ogg)$/i.test(fileName))
@@ -187,7 +215,7 @@ if (typeof chrome === "undefined" || !chrome.storage) {
     "ophel:restoreFlag",
   ]
 
-  ;(window as any).chrome = {
+  userscriptWindow.chrome = {
     storage: {
       local: {
         get: (
@@ -297,7 +325,7 @@ if (typeof chrome === "undefined" || !chrome.storage) {
   }
 }
 
-const chromeStorage = (window as any).chrome?.storage
+const chromeStorage = userscriptWindow.chrome?.storage
 if (chromeStorage && !chromeStorage.onChanged) {
   chromeStorage.onChanged = {
     addListener: () => {},
@@ -305,7 +333,7 @@ if (chromeStorage && !chromeStorage.onChanged) {
   }
 }
 
-const chromeRuntime = (window as any).chrome?.runtime
+const chromeRuntime = userscriptWindow.chrome?.runtime
 if (chromeRuntime && !chromeRuntime.onMessage) {
   chromeRuntime.onMessage = {
     addListener: () => {},
@@ -319,10 +347,10 @@ if (window.top !== window.self) {
 }
 
 // 防止重复初始化
-if ((window as any).ophelUserscriptInitialized) {
+if (window.ophelUserscriptInitialized) {
   throw new Error("Ophel: Already initialized")
 }
-;(window as any).ophelUserscriptInitialized = true
+window.ophelUserscriptInitialized = true
 
 // 注入滚动锁定 API 劫持到页面主世界
 // 等效于浏览器扩展中的 scroll-lock-main.ts (MAIN World content script)

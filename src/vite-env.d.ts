@@ -28,11 +28,3 @@ declare const GM_info: {
 
 declare function GM_getResourceText(name: string): string
 declare function GM_getResourceURL(name: string): string
-
-interface Window {
-  __OPHEL_MARKDOWN_PREVIEW_STYLES__?: string
-  __OPHEL_NOTIFICATION_SOUND_URLS__?: Record<string, string>
-  __OPHEL_SITE_ICONS__?: Record<string, string>
-  __OPHEL_USER_QUERY_MARKDOWN_STYLES__?: string
-  __OPHEL_USERSCRIPT_ASSET_URLS__?: Record<string, string>
-}

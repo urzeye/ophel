@@ -54,8 +54,8 @@ function getBottomScrollPosition(container: HTMLElement, isReverse: boolean): nu
  * 浏览器插件：使用普通 window
  */
 function getMainWindow(): Window {
-  if (isUserscript && (window as any).unsafeWindow) {
-    return (window as any).unsafeWindow
+  if (isUserscript && window.unsafeWindow) {
+    return window.unsafeWindow
   }
   return window
 }

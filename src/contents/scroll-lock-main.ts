@@ -108,15 +108,27 @@ if (!window.__ophelScrollLockInitialized) {
     return originalApis.scrollIntoView.call(this, options as any)
   }
 
+  const callOriginalScrollTo = (x?: ScrollToOptions | number, y?: number) => {
+    if (typeof x === "object" && x !== null) {
+      return originalApis.scrollTo.call(window, x)
+    }
+
+    if (typeof x === "number") {
+      return originalApis.scrollTo.apply(window, [x, y] as [number, number])
+    }
+
+    return originalApis.scrollTo.call(window)
+  }
+
   // 2. 劫持 window.scrollTo
-  ;(window as any).scrollTo = function (x?: ScrollToOptions | number, y?: number) {
+  window.scrollTo = function (x?: ScrollToOptions | number, y?: number) {
     if (getPositionLockTarget() !== null) {
       recordPositionLockBlock()
       return
     }
     // 如果劫持未启用，直接调用原始 API
     if (!window.__ophelScrollLockEnabled) {
-      return originalApis.scrollTo.apply(window, arguments as any)
+      return callOriginalScrollTo(x, y)
     }
 
     // 解析目标 Y 位置
@@ -132,7 +144,7 @@ if (!window.__ophelScrollLockInitialized) {
       return
     }
 
-    return originalApis.scrollTo.apply(window, arguments as any)
+    return callOriginalScrollTo(x, y)
   }
 
   // 3. 劫持 scrollTop setter
