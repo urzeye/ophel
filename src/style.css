@@ -2531,11 +2531,46 @@
   .gh-panel-search-input,
   .gh-panel-search-action,
   .gh-panel-menu-item,
-  .quick-prompt-btn {
+  .quick-prompt-btn,
+  .quick-btn-group,
+  .quick-btn-group .quick-btn-drag-handle,
+  .quick-menu-btn,
+  .quick-menu-popover,
+  .outline-item,
+  .outline-item-toggle,
+  .outline-item-copy-btn,
+  .gh-chain-editor,
+  .gh-chain-step-row,
+  .gh-chain-step-delete-btn,
+  .gh-chain-step-inline-input,
+  .gh-chain-step-prompt-select,
+  .gh-chain-step-mode-btn,
+  .gh-chain-preview-toggle,
+  .gh-chain-preview-nav-btn,
+  .gh-theme-card,
+  .gh-theme-check,
+  .gh-update-notice,
+  .gh-update-notice-button,
+  .gh-update-notice-close,
+  .selected-prompt-bar,
+  .ophel-tooltip {
     transition: none !important;
   }
 
-  .quick-prompt-btn.tools-trigger-btn.active {
+  .quick-prompt-btn.tools-trigger-btn.active,
+  .quick-btn-group.pressing .quick-btn-drag-handle::after,
+  .quick-menu-popover,
+  .outline-item.highlight,
+  .outline-item.user-query-node.highlight,
+  .feature-highlight,
+  .outline-highlight,
+  .gh-chain-editor,
+  .gh-loading-spinner,
+  .gh-update-notice,
+  .gh-update-notice-icon,
+  .gh-panel-brand-unread,
+  .selected-prompt-bar,
+  .ophel-tooltip {
     animation: none !important;
   }
 
