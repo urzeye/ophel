@@ -4222,7 +4222,11 @@
   font-size: 13px;
   font-weight: 600;
   padding: 10px 18px;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    background 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
 }
@@ -4276,7 +4280,10 @@
   font-size: 18px;
   line-height: 1;
   padding: 0;
-  transition: all 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    transform 0.2s;
 }
 
 .gh-update-notice-close:hover {
