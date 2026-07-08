@@ -77,15 +77,11 @@ import {
   GLOBAL_SEARCH_PROMPT_PREVIEW_POINTER_DELAY_MS,
   GLOBAL_SEARCH_RESULTS_LISTBOX_ID,
   GLOBAL_SEARCH_RESULT_CATEGORY_LABELS,
-  GLOBAL_SEARCH_SHORTCUT_NUDGE_AUTO_DISMISS_SHORTCUT_COUNT,
-  GLOBAL_SEARCH_SHORTCUT_NUDGE_AUTO_HIDE_MS,
-  GLOBAL_SEARCH_SHORTCUT_NUDGE_MAX_SHOWS,
-  GLOBAL_SEARCH_SHORTCUT_NUDGE_MIN_INTERVAL,
-  GLOBAL_SEARCH_SHORTCUT_NUDGE_STORAGE_KEY,
   GLOBAL_SEARCH_SYNTAX_SUGGESTION_LIMIT,
 } from "./global-search/constants"
 import { useGlobalSearchKeyboard } from "./global-search/useGlobalSearchKeyboard"
 import { useGlobalSearchPreview } from "./global-search/useGlobalSearchPreview"
+import { useGlobalSearchShortcutNudge } from "./global-search/useGlobalSearchShortcutNudge"
 import { useGlobalSearchSyntax } from "./global-search/useGlobalSearchSyntax"
 import type {
   GlobalSearchCategoryId,
@@ -169,13 +165,6 @@ const OUTLINE_COPY_STAGE_TEXT_KEYS: Record<ConversationExportStage, string> = {
 }
 
 type GlobalSearchOpenSource = "shortcut" | "ui" | "event"
-
-interface GlobalSearchShortcutNudgeState {
-  shownCount: number
-  lastShownAt: number
-  dismissed: boolean
-  shortcutUsedCount: number
-}
 
 const isLikelyMacPlatform = () => {
   if (typeof navigator === "undefined") return false
@@ -295,75 +284,14 @@ export const App = () => {
     )
   }, [formatLocalizedText, globalSearchShortcutHintLabel])
 
-  const getGlobalSearchShortcutNudgeState = useCallback((): GlobalSearchShortcutNudgeState => {
-    if (typeof window === "undefined") {
-      return {
-        shownCount: 0,
-        lastShownAt: 0,
-        dismissed: false,
-        shortcutUsedCount: 0,
-      }
-    }
-
-    try {
-      const rawValue = window.localStorage.getItem(GLOBAL_SEARCH_SHORTCUT_NUDGE_STORAGE_KEY)
-      if (!rawValue) {
-        return {
-          shownCount: 0,
-          lastShownAt: 0,
-          dismissed: false,
-          shortcutUsedCount: 0,
-        }
-      }
-
-      const parsedValue = JSON.parse(rawValue) as Partial<GlobalSearchShortcutNudgeState>
-
-      return {
-        shownCount: Number.isFinite(parsedValue.shownCount)
-          ? Math.max(0, Number(parsedValue.shownCount))
-          : 0,
-        lastShownAt: Number.isFinite(parsedValue.lastShownAt)
-          ? Math.max(0, Number(parsedValue.lastShownAt))
-          : 0,
-        dismissed: Boolean(parsedValue.dismissed),
-        shortcutUsedCount: Number.isFinite(parsedValue.shortcutUsedCount)
-          ? Math.max(0, Number(parsedValue.shortcutUsedCount))
-          : 0,
-      }
-    } catch {
-      return {
-        shownCount: 0,
-        lastShownAt: 0,
-        dismissed: false,
-        shortcutUsedCount: 0,
-      }
-    }
-  }, [])
-
-  const saveGlobalSearchShortcutNudgeState = useCallback(
-    (nextState: GlobalSearchShortcutNudgeState) => {
-      if (typeof window === "undefined") {
-        return
-      }
-
-      try {
-        window.localStorage.setItem(
-          GLOBAL_SEARCH_SHORTCUT_NUDGE_STORAGE_KEY,
-          JSON.stringify(nextState),
-        )
-      } catch {
-        // ignore storage errors
-      }
-    },
-    [],
-  )
-
-  const clearGlobalSearchNudgeHideTimer = useCallback(() => {
-    if (globalSearchNudgeHideTimerRef.current) {
-      clearTimeout(globalSearchNudgeHideTimerRef.current)
-      globalSearchNudgeHideTimerRef.current = null
-    }
-  }, [])
+  const {
+    showGlobalSearchShortcutNudge,
+    globalSearchShortcutNudgeMessage,
+    hideGlobalSearchShortcutNudge,
+    dismissGlobalSearchShortcutNudgeForever,
+    markGlobalSearchShortcutUsed,
+    tryShowGlobalSearchShortcutNudge,
+  } = useGlobalSearchShortcutNudge(globalSearchShortcutNudgeText)
 
   const handleGlobalSearchPromptPreviewClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -454,97 +382,6 @@ export const App = () => {
     },
     [clearSettingsSearchInputDebounceTimer],
   )
-
-  const hideGlobalSearchShortcutNudge = useCallback(() => {
-    clearGlobalSearchNudgeHideTimer()
-    setShowGlobalSearchShortcutNudge(false)
-    setGlobalSearchShortcutNudgeMessage("")
-  }, [clearGlobalSearchNudgeHideTimer])
-
-  const dismissGlobalSearchShortcutNudgeForever = useCallback(() => {
-    const currentState = getGlobalSearchShortcutNudgeState()
-    saveGlobalSearchShortcutNudgeState({
-      ...currentState,
-      dismissed: true,
-    })
-    hideGlobalSearchShortcutNudge()
-  }, [
-    getGlobalSearchShortcutNudgeState,
-    hideGlobalSearchShortcutNudge,
-    saveGlobalSearchShortcutNudgeState,
-  ])
-
-  const markGlobalSearchShortcutUsed = useCallback(() => {
-    const currentState = getGlobalSearchShortcutNudgeState()
-    const nextShortcutUsedCount = currentState.shortcutUsedCount + 1
-
-    saveGlobalSearchShortcutNudgeState({
-      ...currentState,
-      shortcutUsedCount: nextShortcutUsedCount,
-      dismissed:
-        currentState.dismissed ||
-        nextShortcutUsedCount >= GLOBAL_SEARCH_SHORTCUT_NUDGE_AUTO_DISMISS_SHORTCUT_COUNT,
-    })
-
-    hideGlobalSearchShortcutNudge()
-  }, [
-    getGlobalSearchShortcutNudgeState,
-    hideGlobalSearchShortcutNudge,
-    saveGlobalSearchShortcutNudgeState,
-  ])
-
-  const tryShowGlobalSearchShortcutNudge = useCallback(() => {
-    if (!globalSearchShortcutNudgeText) {
-      return
-    }
-
-    const currentState = getGlobalSearchShortcutNudgeState()
-    if (currentState.dismissed) {
-      return
-    }
-
-    if (
-      currentState.shortcutUsedCount >= GLOBAL_SEARCH_SHORTCUT_NUDGE_AUTO_DISMISS_SHORTCUT_COUNT
-    ) {
-      saveGlobalSearchShortcutNudgeState({
-        ...currentState,
-        dismissed: true,
-      })
-      return
-    }
-
-    if (currentState.shownCount >= GLOBAL_SEARCH_SHORTCUT_NUDGE_MAX_SHOWS) {
-      return
-    }
-
-    const now = Date.now()
-    if (
-      currentState.lastShownAt > 0 &&
-      now - currentState.lastShownAt < GLOBAL_SEARCH_SHORTCUT_NUDGE_MIN_INTERVAL
-    ) {
-      return
-    }
-
-    saveGlobalSearchShortcutNudgeState({
-      ...currentState,
-      shownCount: currentState.shownCount + 1,
-      lastShownAt: now,
-    })
-
-    setGlobalSearchShortcutNudgeMessage(globalSearchShortcutNudgeText)
-    setShowGlobalSearchShortcutNudge(true)
-    clearGlobalSearchNudgeHideTimer()
-    globalSearchNudgeHideTimerRef.current = setTimeout(() => {
-      setShowGlobalSearchShortcutNudge(false)
-      setGlobalSearchShortcutNudgeMessage("")
-      globalSearchNudgeHideTimerRef.current = null
-    }, GLOBAL_SEARCH_SHORTCUT_NUDGE_AUTO_HIDE_MS)
-  }, [
-    clearGlobalSearchNudgeHideTimer,
-    getGlobalSearchShortcutNudgeState,
-    globalSearchShortcutNudgeText,
-    saveGlobalSearchShortcutNudgeState,
-  ])
 
   const getPageLabel = useCallback(
     (page: string) => {
@@ -858,8 +695,6 @@ export const App = () => {
   const [expandedGlobalSearchCategories, setExpandedGlobalSearchCategories] = useState<
     Partial<Record<GlobalSearchResultCategory, boolean>>
   >({})
-  const [showGlobalSearchShortcutNudge, setShowGlobalSearchShortcutNudge] = useState(false)
-  const [globalSearchShortcutNudgeMessage, setGlobalSearchShortcutNudgeMessage] = useState("")
   const [showGlobalSearchSyntaxHelp, setShowGlobalSearchSyntaxHelp] = useState(false)
   const [activeSearchSyntaxSuggestionIndex, setActiveSearchSyntaxSuggestionIndex] = useState(-1)
   const [showExtensionUpdateNotice, setShowExtensionUpdateNotice] = useState(
@@ -875,7 +710,6 @@ export const App = () => {
   const promptPreviewContainerRef = useRef<HTMLDivElement | null>(null)
   const searchInputDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const settingsSearchWheelFreezeUntilRef = useRef(0)
-  const globalSearchNudgeHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const globalSearchOpenSourceRef = useRef<GlobalSearchOpenSource>("ui")
   const lastShiftPressedAtRef = useRef(0)
   const [outlineSearchVersion, setOutlineSearchVersion] = useState(0)
@@ -2135,12 +1969,6 @@ export const App = () => {
 
     tryShowGlobalSearchShortcutNudge()
   }, [isGlobalSettingsSearchOpen, tryShowGlobalSearchShortcutNudge])
-
-  useEffect(() => {
-    return () => {
-      clearGlobalSearchNudgeHideTimer()
-    }
-  }, [clearGlobalSearchNudgeHideTimer])
 
   // Create a ref for isGlobalSettingsSearchOpen to access it in the event listener without re-binding
   const isGlobalSettingsSearchOpenRef = useRef(isGlobalSettingsSearchOpen)
