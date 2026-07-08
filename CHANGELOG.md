@@ -11,6 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🚀 New Features
 
+- **Edge-snap trigger style** — Automatic edge-snap mode now lets you choose between the visible edge handle and a hidden edge hot zone, keeping the collapsed panel cleaner while still opening it from the screen edge. (#770)
 - **Prompt order shortcuts** — Prompt menus now include Move up and Move down, making it easier to organize prompts when drag-and-drop is inconvenient. (#774)
 
 ---
