@@ -186,6 +186,16 @@ export interface PanelAvoidanceConfig {
   minViewportWidth?: number
 }
 
+export interface LayoutCapability {
+  getWidthSelectors?: () => WidthSelectorConfig[]
+  getUserQueryWidthSelectors?: () => WidthSelectorConfig[]
+  getPanelAvoidanceConfig?: () => PanelAvoidanceConfig | null
+}
+
+export interface AdapterCapabilities {
+  layout?: LayoutCapability
+}
+
 export type AssistantMermaidSupportMode = "native" | "fallback" | "unsupported"
 export type QuickQuoteSupportMode = "enabled" | "native" | "disabled"
 
@@ -633,6 +643,13 @@ export abstract class SiteAdapter {
    */
   getNativeThemeCss(): string | null {
     return null
+  }
+
+  // ==================== Capability opt-in ====================
+
+  /** 返回站点声明式能力；默认空对象，未迁移站点继续使用旧方法。 */
+  getCapabilities(): AdapterCapabilities {
+    return {}
   }
 
   // ==================== 页面宽度控制 ====================

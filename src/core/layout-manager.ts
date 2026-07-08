@@ -1,4 +1,5 @@
 import type {
+  LayoutCapability,
   PanelAvoidanceConfig,
   PanelAvoidanceInsetConfig,
   SiteAdapter,
@@ -103,7 +104,29 @@ export class LayoutManager {
   constructor(siteAdapter: SiteAdapter, pageWidthConfig: PageWidthConfig) {
     this.siteAdapter = siteAdapter
     this.pageWidthConfig = pageWidthConfig
-    this.panelAvoidanceConfig = siteAdapter.getPanelAvoidanceConfig()
+    this.panelAvoidanceConfig = this.getPanelAvoidanceConfig()
+  }
+
+  private getLayoutCapability(): LayoutCapability | undefined {
+    return this.siteAdapter.getCapabilities().layout
+  }
+
+  private getWidthSelectors(): WidthSelectorConfig[] {
+    return this.getLayoutCapability()?.getWidthSelectors?.() ?? this.siteAdapter.getWidthSelectors()
+  }
+
+  private getUserQueryWidthSelectors(): WidthSelectorConfig[] {
+    return (
+      this.getLayoutCapability()?.getUserQueryWidthSelectors?.() ??
+      this.siteAdapter.getUserQueryWidthSelectors()
+    )
+  }
+
+  private getPanelAvoidanceConfig(): PanelAvoidanceConfig | null {
+    return (
+      this.getLayoutCapability()?.getPanelAvoidanceConfig?.() ??
+      this.siteAdapter.getPanelAvoidanceConfig()
+    )
   }
 
   // ==================== 页面宽度 ====================
@@ -271,7 +294,7 @@ export class LayoutManager {
 
   private generatePageWidthCSS(): string {
     const width = `${this.pageWidthConfig.value}${this.pageWidthConfig.unit}`
-    const selectors = this.siteAdapter.getWidthSelectors()
+    const selectors = this.getWidthSelectors()
     const mainCss = this.buildCSSFromSelectors(selectors, width, true)
 
     // 当配置单位为 "%" 时，追加窄屏兜底媒体查询
@@ -290,7 +313,7 @@ export class LayoutManager {
     const value = this.userQueryWidthConfig.value || "81"
     const unit = this.userQueryWidthConfig.unit || "%"
     const width = `${value}${unit}`
-    const selectors = this.siteAdapter.getUserQueryWidthSelectors()
+    const selectors = this.getUserQueryWidthSelectors()
     return this.buildCSSFromSelectors(selectors, width, false)
   }
 
@@ -1208,7 +1231,7 @@ export class LayoutManager {
       // 页面宽度
       if (this.pageWidthConfig?.enabled) {
         const width = `${this.pageWidthConfig.value}${this.pageWidthConfig.unit}`
-        const selectors = siteAdapter.getWidthSelectors()
+        const selectors = this.getWidthSelectors()
         let css = this.buildCSSFromSelectors(selectors, width, false)
         if (this.pageWidthConfig.unit === "%") {
           const narrowCss = this.buildCSSFromSelectors(selectors, "95%", false)
@@ -1224,7 +1247,7 @@ export class LayoutManager {
         const value = this.userQueryWidthConfig.value || "81"
         const unit = this.userQueryWidthConfig.unit || "%"
         const css = this.buildCSSFromSelectors(
-          siteAdapter.getUserQueryWidthSelectors(),
+          this.getUserQueryWidthSelectors(),
           `${value}${unit}`,
           false,
         )

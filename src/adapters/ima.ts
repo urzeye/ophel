@@ -25,6 +25,7 @@ import { t } from "~utils/i18n"
 
 import {
   SiteAdapter,
+  type AdapterCapabilities,
   type ExportConfig,
   type ExportLifecycleContext,
   type ModelSwitcherConfig,
@@ -565,6 +566,17 @@ export class ImaAdapter extends SiteAdapter {
       menuRenderDelay: 200,
       checkInterval: 1000,
       maxAttempts: 10,
+    }
+  }
+
+  getCapabilities(): AdapterCapabilities {
+    return {
+      ...super.getCapabilities(),
+      layout: {
+        getWidthSelectors: () => this.getWidthSelectors(),
+        getUserQueryWidthSelectors: () => this.getUserQueryWidthSelectors(),
+        getPanelAvoidanceConfig: () => this.getPanelAvoidanceConfig(),
+      },
     }
   }
 
