@@ -13,16 +13,6 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Prompt order shortcuts** — Prompt menus now include Move up and Move down, making it easier to organize prompts when drag-and-drop is inconvenient. (#774)
 
-### ✨ Improvements
-
-- **Keyboard navigation** — Panel tabs can now be switched with arrow keys, and the Settings window keeps keyboard focus inside it until it is closed. (#774)
-- **Calmer animations** — More panel, settings, conversation, prompt-chain, quick-button, and queue animations now follow the system Reduce Motion preference. (#774)
-- **Settings stability** — Existing settings are preserved more reliably after updates across both the extension and userscript versions. (#774)
-
-### 🐛 Bug Fixes
-
-- **Panel keyboard focus** — Fixed issue where keyboard focus could jump back to the webpage while switching panel tabs. (#774)
-
 ---
 
 ## [1.1.4] - 2026-07-06
