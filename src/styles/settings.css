@@ -784,14 +784,11 @@
 }
 
 .settings-panel-mode-trigger:not(.settings-panel-mode-trigger-static):hover
-  .settings-panel-mode-disclosure {
+  .settings-panel-mode-disclosure,
+.settings-panel-width-trigger:hover .settings-panel-width-disclosure {
   color: var(--gh-primary, #4285f4);
   background: color-mix(in srgb, var(--gh-primary, #4285f4) 12%, transparent);
   border-color: color-mix(in srgb, var(--gh-primary, #4285f4) 24%, transparent);
-}
-
-.settings-panel-width-trigger:hover .settings-panel-width-icon {
-  color: var(--gh-primary, #4285f4);
 }
 
 .settings-panel-mode-trigger-static {
@@ -812,7 +809,8 @@
   gap: 6px;
 }
 
-.settings-panel-mode-disclosure {
+.settings-panel-mode-disclosure,
+.settings-panel-width-disclosure {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -837,7 +835,8 @@
   transition: transform 0.18s ease;
 }
 
-.settings-panel-mode-icon {
+.settings-panel-mode-icon,
+.settings-panel-width-icon {
   width: 12px;
   height: 12px;
   color: currentColor;
@@ -888,6 +887,7 @@
 @media (prefers-reduced-motion: reduce) {
   .settings-panel-mode-trigger:not(.settings-panel-mode-trigger-static),
   .settings-panel-mode-disclosure,
+  .settings-panel-width-disclosure,
   .settings-panel-mode-icon,
   .settings-panel-width-trigger,
   .settings-panel-width-icon {

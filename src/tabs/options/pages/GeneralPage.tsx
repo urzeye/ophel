@@ -538,7 +538,9 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
                   <div className="settings-row-info">
                     <div className="settings-row-label settings-panel-width-label">
                       <span>{t("panelWidthLabel")}</span>
-                      <ChevronDownIcon size={14} className="settings-panel-width-icon" />
+                      <span className="settings-panel-width-disclosure" aria-hidden="true">
+                        <ChevronDownIcon size={14} className="settings-panel-width-icon" />
+                      </span>
                     </div>
                     <div className="settings-row-desc">{t("panelWidthDesc")}</div>
                   </div>
