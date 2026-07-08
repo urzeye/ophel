@@ -30,6 +30,7 @@ interface GeneralPageProps {
   onPanelHoverWidthPreviewChange?: (isActive: boolean) => void
 }
 
+const PANEL_MODE_ADVANCED_SETTING_IDS = new Set(["panel-edge-trigger-mode"])
 const PANEL_WIDTH_ADVANCED_SETTING_IDS = new Set(["panel-resize-on-hover", "panel-hover-width"])
 
 // 可排序项目组件
@@ -101,6 +102,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
   onPanelHoverWidthPreviewChange,
 }) => {
   const [activeTab, setActiveTab] = useState(initialTab || "panel")
+  const [isPanelModeAdvancedOpen, setIsPanelModeAdvancedOpen] = useState(false)
   const [isPanelWidthAdvancedOpen, setIsPanelWidthAdvancedOpen] = useState(false)
   const {
     settings,
@@ -199,10 +201,21 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
   }
 
   const isFloatingPanelMode = (settings?.panel?.panelMode ?? "floating") === "floating"
+  const isEdgeSnapPanelMode = (settings?.panel?.panelMode ?? "floating") === "edge-snap"
   const isHoverResizeEnabled = settings?.panel?.resizeOnHover ?? false
 
   useEffect(() => {
-    if (!locateSettingId || !PANEL_WIDTH_ADVANCED_SETTING_IDS.has(locateSettingId)) {
+    if (!locateSettingId) {
+      return
+    }
+
+    if (PANEL_MODE_ADVANCED_SETTING_IDS.has(locateSettingId)) {
+      setActiveTab("panel")
+      setIsPanelModeAdvancedOpen(true)
+      return
+    }
+
+    if (!PANEL_WIDTH_ADVANCED_SETTING_IDS.has(locateSettingId)) {
       return
     }
 
@@ -306,67 +319,24 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
       {activeTab === "panel" && (
         <SettingCard title={t("panelSettings")}>
           {/* 面板模式 */}
-          <SettingRow
-            label={t("panelModeLabel")}
-            description={t("panelModeDesc")}
-            settingId="panel-mode">
-            <div
-              style={{
-                display: "inline-flex",
-                borderRadius: "6px",
-                overflow: "hidden",
-                border: "1px solid var(--gh-border, #e5e7eb)",
-              }}>
-              {(
-                [
-                  {
-                    value: "edge-snap",
-                    label: t("panelModeEdgeSnap"),
-                    Icon: SnapToEdgeIcon,
-                  },
-                  {
-                    value: "floating",
-                    label: t("panelModeFloating"),
-                    Icon: FloatingModeIcon,
-                  },
-                ] as const
-              ).map((option, index) => (
-                <button
-                  type="button"
-                  key={option.value}
-                  aria-pressed={(settings.panel?.panelMode ?? "floating") === option.value}
-                  onClick={() => updateNestedSetting("panel", "panelMode", option.value)}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    padding: "4px 12px",
-                    fontSize: "13px",
-                    border: "none",
-                    borderLeft: index > 0 ? "1px solid var(--gh-border, #e5e7eb)" : "none",
-                    cursor: "pointer",
-                    background:
-                      (settings.panel?.panelMode ?? "floating") === option.value
-                        ? "var(--gh-primary, #4285f4)"
-                        : "var(--gh-bg, #fff)",
-                    color:
-                      (settings.panel?.panelMode ?? "floating") === option.value
-                        ? "#fff"
-                        : "var(--gh-text-secondary, #6b7280)",
-                    transition: "all 0.2s",
-                  }}>
-                  <option.Icon size={14} />
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </SettingRow>
-
-          {(settings.panel?.panelMode ?? "floating") === "edge-snap" && (
-            <SettingRow
-              label={t("edgeTriggerModeLabel")}
-              description={t("edgeTriggerModeDesc")}
-              settingId="panel-edge-trigger-mode">
+          <div
+            className={`settings-panel-mode-accordion ${isPanelModeAdvancedOpen ? "open" : ""}`}
+            data-setting-id="panel-mode">
+            <div className="settings-row settings-panel-mode-main">
+              <button
+                type="button"
+                className="settings-panel-mode-trigger"
+                aria-expanded={isPanelModeAdvancedOpen}
+                aria-controls="settings-panel-mode-advanced"
+                onClick={() => setIsPanelModeAdvancedOpen((value) => !value)}>
+                <div className="settings-row-info">
+                  <div className="settings-row-label settings-panel-mode-label">
+                    <span>{t("panelModeLabel")}</span>
+                    <ChevronDownIcon size={14} className="settings-panel-mode-icon" />
+                  </div>
+                  <div className="settings-row-desc">{t("panelModeDesc")}</div>
+                </div>
+              </button>
               <div
                 style={{
                   display: "inline-flex",
@@ -376,37 +346,107 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
                 }}>
                 {(
                   [
-                    { value: "handle", label: t("edgeTriggerModeHandle") },
-                    { value: "hidden", label: t("edgeTriggerModeHidden") },
+                    {
+                      value: "edge-snap",
+                      label: t("panelModeEdgeSnap"),
+                      Icon: SnapToEdgeIcon,
+                    },
+                    {
+                      value: "floating",
+                      label: t("panelModeFloating"),
+                      Icon: FloatingModeIcon,
+                    },
                   ] as const
                 ).map((option, index) => (
                   <button
                     type="button"
                     key={option.value}
-                    aria-pressed={(settings.panel?.edgeTriggerMode ?? "handle") === option.value}
-                    onClick={() => updateNestedSetting("panel", "edgeTriggerMode", option.value)}
+                    aria-pressed={(settings.panel?.panelMode ?? "floating") === option.value}
+                    onClick={() => updateNestedSetting("panel", "panelMode", option.value)}
                     style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
                       padding: "4px 12px",
                       fontSize: "13px",
                       border: "none",
                       borderLeft: index > 0 ? "1px solid var(--gh-border, #e5e7eb)" : "none",
                       cursor: "pointer",
                       background:
-                        (settings.panel?.edgeTriggerMode ?? "handle") === option.value
+                        (settings.panel?.panelMode ?? "floating") === option.value
                           ? "var(--gh-primary, #4285f4)"
                           : "var(--gh-bg, #fff)",
                       color:
-                        (settings.panel?.edgeTriggerMode ?? "handle") === option.value
+                        (settings.panel?.panelMode ?? "floating") === option.value
                           ? "#fff"
                           : "var(--gh-text-secondary, #6b7280)",
                       transition: "all 0.2s",
                     }}>
+                    <option.Icon size={14} />
                     {option.label}
                   </button>
                 ))}
               </div>
-            </SettingRow>
-          )}
+            </div>
+
+            {isPanelModeAdvancedOpen && (
+              <div id="settings-panel-mode-advanced" className="settings-panel-mode-body">
+                <div
+                  className={`settings-panel-mode-subrow ${isEdgeSnapPanelMode ? "" : "disabled"}`.trim()}
+                  data-setting-id="panel-edge-trigger-mode"
+                  aria-disabled={!isEdgeSnapPanelMode}>
+                  <div className="settings-row-info">
+                    <div className="settings-row-label">{t("edgeTriggerModeLabel")}</div>
+                    <div className="settings-row-desc">{t("edgeTriggerModeDesc")}</div>
+                  </div>
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      borderRadius: "6px",
+                      overflow: "hidden",
+                      border: "1px solid var(--gh-border, #e5e7eb)",
+                    }}>
+                    {(
+                      [
+                        { value: "handle", label: t("edgeTriggerModeHandle") },
+                        { value: "hidden", label: t("edgeTriggerModeHidden") },
+                      ] as const
+                    ).map((option, index) => (
+                      <button
+                        type="button"
+                        key={option.value}
+                        disabled={!isEdgeSnapPanelMode}
+                        aria-pressed={
+                          (settings.panel?.edgeTriggerMode ?? "handle") === option.value
+                        }
+                        onClick={() =>
+                          updateNestedSetting("panel", "edgeTriggerMode", option.value)
+                        }
+                        style={{
+                          padding: "4px 12px",
+                          fontSize: "13px",
+                          border: "none",
+                          borderLeft: index > 0 ? "1px solid var(--gh-border, #e5e7eb)" : "none",
+                          cursor: isEdgeSnapPanelMode ? "pointer" : "not-allowed",
+                          background:
+                            (settings.panel?.edgeTriggerMode ?? "handle") === option.value
+                              ? "var(--gh-primary, #4285f4)"
+                              : "var(--gh-bg, #fff)",
+                          color:
+                            (settings.panel?.edgeTriggerMode ?? "handle") === option.value
+                              ? "#fff"
+                              : "var(--gh-text-secondary, #6b7280)",
+                          opacity: isEdgeSnapPanelMode ? 1 : 0.65,
+                          transition: "all 0.2s",
+                        }}>
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* 默认侧边 */}
           <SettingRow

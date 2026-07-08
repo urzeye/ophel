@@ -228,6 +228,7 @@ const SETTING_ID_ROUTE_RULES: SettingRouteRule[] = [
 
 export const SETTING_ID_ALIASES: Record<string, string> = {
   "general.panel.panelMode": "panel-mode",
+  "general.panel.edgeTriggerMode": "panel-edge-trigger-mode",
   "general.panel.defaultPosition": "panel-default-position",
   "general.panel.defaultEdgeDistance": "panel-edge-distance",
   "general.panel.width": "panel-width",
@@ -357,6 +358,21 @@ export const SETTINGS_SEARCH_ITEMS: SettingsSearchItem[] = [
       "悬浮",
       "默认打开",
       "自动隐藏",
+    ],
+  },
+  {
+    settingId: "panel-edge-trigger-mode",
+    title: "边缘触发方式",
+    keywords: [
+      "panel",
+      "edge trigger",
+      "hidden edge",
+      "visible handle",
+      "hover edge",
+      "边缘触发",
+      "完全隐藏",
+      "显示把手",
+      "悬停边缘",
     ],
   },
   {
