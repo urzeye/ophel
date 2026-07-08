@@ -1,8 +1,55 @@
-import type { SettingsSearchItem } from "~constants"
+import {
+  APPEARANCE_TAB_IDS,
+  FEATURES_TAB_IDS,
+  NAV_IDS,
+  SITE_SETTINGS_TAB_IDS,
+  type SettingsSearchItem,
+} from "~constants"
 
 interface LocalizedLabelDefinition {
   key: string
   fallback: string
+}
+
+export const SETTING_SEARCH_PAGE_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinition> = {
+  [NAV_IDS.GENERAL]: { key: "navGeneral", fallback: "General" },
+  [NAV_IDS.FEATURES]: { key: "navFeatures", fallback: "Features" },
+  [NAV_IDS.SITE_SETTINGS]: { key: "navSiteSettings", fallback: "Site Config" },
+  [NAV_IDS.GLOBAL_SEARCH]: { key: "navGlobalSearch", fallback: "Global Search" },
+  [NAV_IDS.APPEARANCE]: { key: "navAppearance", fallback: "Appearance" },
+  [NAV_IDS.SHORTCUTS]: { key: "navShortcuts", fallback: "Keyboard Shortcuts" },
+  [NAV_IDS.BACKUP]: { key: "navBackup", fallback: "Data Management" },
+  [NAV_IDS.PERMISSIONS]: { key: "navPermissions", fallback: "Permissions" },
+  [NAV_IDS.ABOUT]: { key: "navAbout", fallback: "About" },
+}
+
+export const SETTING_SEARCH_SUB_TAB_LABEL_DEFINITIONS: Record<string, LocalizedLabelDefinition> = {
+  panel: { key: "panelTab", fallback: "Panel" },
+  tabOrder: { key: "tabOrderTab", fallback: "Tab Order" },
+  shortcuts: { key: "shortcutsTab", fallback: "Quick Buttons" },
+  toolsMenu: { key: "toolboxMenu", fallback: "Toolbox" },
+  [FEATURES_TAB_IDS.TAB_SETTINGS]: { key: "tabSettingsTab", fallback: "Tab Settings" },
+  [FEATURES_TAB_IDS.REMINDER]: { key: "reminderTab", fallback: "Alerts" },
+  [FEATURES_TAB_IDS.OUTLINE]: { key: "outlineSettingsTitle", fallback: "Outline" },
+  [FEATURES_TAB_IDS.CONVERSATIONS]: {
+    key: "conversationsSettingsTitle",
+    fallback: "Conversations",
+  },
+  [FEATURES_TAB_IDS.PROMPTS]: { key: "promptSettingsTitle", fallback: "Prompts" },
+  [FEATURES_TAB_IDS.READING_HISTORY]: {
+    key: "readingHistorySettings",
+    fallback: "Reading History",
+  },
+  [FEATURES_TAB_IDS.CONTENT]: { key: "contentProcessing", fallback: "Content" },
+  [FEATURES_TAB_IDS.TOOLBOX]: { key: "toolboxMenu", fallback: "Toolbox" },
+  [SITE_SETTINGS_TAB_IDS.LAYOUT]: { key: "layoutTab", fallback: "Layout" },
+  [SITE_SETTINGS_TAB_IDS.MODEL_LOCK]: { key: "tabModelLock", fallback: "Model Lock" },
+  gemini: { key: "geminiSettingsTab", fallback: "Gemini" },
+  aistudio: { key: "aistudioSettingsTitle", fallback: "AI Studio" },
+  chatgpt: { key: "chatgptSettingsTitle", fallback: "ChatGPT" },
+  claude: { key: "claudeSettingsTab", fallback: "Claude" },
+  [APPEARANCE_TAB_IDS.PRESETS]: { key: "themePresetsTab", fallback: "Theme Presets" },
+  [APPEARANCE_TAB_IDS.CUSTOM]: { key: "customStylesTab", fallback: "Custom Styles" },
 }
 
 export const SETTING_SEARCH_TITLE_KEY_MAP: Record<string, string> = {
