@@ -8,6 +8,7 @@
 import type { SiteAdapter } from "~adapters/base"
 import { SITE_IDS } from "~constants"
 import { AssistantMermaidRenderer } from "~core/assistant-mermaid-renderer"
+import type { CoreModule } from "~core/core-module"
 import { CopyManager } from "~core/copy-manager"
 import { LayoutManager } from "~core/layout-manager"
 import { MarkdownFixer } from "~core/markdown-fixer"
@@ -84,6 +85,18 @@ let modules: ModuleInstances = {
 
 let readingHistoryAutoStartTimer: ReturnType<typeof setTimeout> | null = null
 let assistantMermaidInitPromise: Promise<void> | null = null
+
+const startCoreModule = (module: Pick<CoreModule, "start">): void => {
+  module.start()
+}
+
+const updateCoreModule = <TUpdate>(module: CoreModule<TUpdate>, payload: TUpdate): void => {
+  module.update(payload)
+}
+
+const stopCoreModule = (module: Pick<CoreModule, "stop">): void => {
+  module.stop()
+}
 
 function isAssistantMermaidEnabled(settings: Settings): boolean {
   return settings.content?.assistantMermaid ?? true
@@ -391,7 +404,11 @@ export function initModelLocker(ctx: ModulesContext): void {
  */
 export function initScrollLockManager(ctx: ModulesContext): void {
   const { adapter, settings } = ctx
+  if (modules.scrollLockManager) {
+    stopCoreModule(modules.scrollLockManager)
+  }
   modules.scrollLockManager = new ScrollLockManager(adapter, settings)
+  startCoreModule(modules.scrollLockManager)
 }
 
 /**
@@ -502,7 +519,7 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
 
     // 3. Scroll Lock update
     if (newSettings && modules.scrollLockManager) {
-      modules.scrollLockManager.updateSettings(newSettings)
+      updateCoreModule(modules.scrollLockManager, newSettings)
     }
 
     // 4. Markdown Fix update

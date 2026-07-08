@@ -9,18 +9,26 @@
  */
 
 import type { SiteAdapter } from "~adapters/base"
+import type { CoreModule } from "~core/core-module"
 import type { Settings } from "~utils/storage"
 
-export class ScrollLockManager {
+export class ScrollLockManager implements CoreModule<Settings> {
   private settings: Settings
   private enabled = false
 
   constructor(_adapter: SiteAdapter, settings: Settings) {
     this.settings = settings
-    this.init()
   }
 
-  updateSettings(settings: Settings) {
+  start() {
+    if (!this.settings.panel?.preventAutoScroll) {
+      return
+    }
+
+    this.enable()
+  }
+
+  update(settings: Settings) {
     const wasEnabled = this.settings.panel?.preventAutoScroll
     this.settings = settings
 
@@ -32,12 +40,8 @@ export class ScrollLockManager {
     }
   }
 
-  private init() {
-    if (!this.settings.panel?.preventAutoScroll) {
-      return
-    }
-
-    this.enable()
+  updateSettings(settings: Settings) {
+    this.update(settings)
   }
 
   private enable() {
