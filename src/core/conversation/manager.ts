@@ -217,7 +217,6 @@ export class ConversationManager {
     // 检查是否刚恢复了备份数据，如果是则跳过自动同步以保持备份的干净状态
     const isRestore = await consumeRestoreFlag()
 
-    // 首次安装或当前站点数据为空时，自动加载全部会话
     const currentSiteCount = Object.keys(this.getAllConversations()).length
     const shouldRunInitialAutoFullSync =
       currentSiteCount === 0 && this.siteAdapter.loadAllConversations && !isRestore
@@ -227,6 +226,17 @@ export class ConversationManager {
         await this.runInitialAutoFullSync()
       } catch (error) {
         console.warn("[ConversationManager] Initial auto conversation sync failed:", error)
+      }
+    } else if (this.siteAdapter.loadAllConversations) {
+      try {
+        await this.siteAdapter.loadAllConversations()
+        await this.delay(400)
+        const { newCount, updatedCount } = this.syncConversations(null, true)
+        if (newCount > 0 || updatedCount > 0) {
+          this.notifyDataChange()
+        }
+      } catch (error) {
+        console.warn("[ConversationManager] Preload conversations failed:", error)
       }
     }
 

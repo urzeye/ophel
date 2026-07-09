@@ -516,6 +516,47 @@ export class DoubaoAdapter extends SiteAdapter {
     return this.findScrollableAncestor(historyContainer) || historyContainer
   }
 
+  async loadAllConversations(): Promise<boolean | void> {
+    const container = this.getSidebarScrollContainer()
+    if (!container) return false
+
+    let lastCount = this.getLoadedConversationCount()
+    let lastScrollHeight = container.scrollHeight
+    let stableRounds = 0
+    const maxStableRounds = 4
+    const maxRounds = 40
+    const waitMs = 800
+
+    for (let round = 0; round < maxRounds; round++) {
+      const maxTop = Math.max(0, container.scrollHeight - container.clientHeight)
+      ;(container as HTMLElement).scrollTo({
+        top: maxTop,
+        behavior: "instant",
+        __bypassLock: true,
+      } as ScrollToOptions & { __bypassLock: true })
+      container.dispatchEvent(new Event("scroll", { bubbles: true }))
+      await new Promise((r) => setTimeout(r, waitMs))
+
+      const currentCount = this.getLoadedConversationCount()
+      const currentScrollHeight = container.scrollHeight
+      const hasProgress = currentCount > lastCount || currentScrollHeight > lastScrollHeight
+
+      if (hasProgress) {
+        lastCount = Math.max(lastCount, currentCount)
+        lastScrollHeight = Math.max(lastScrollHeight, currentScrollHeight)
+        stableRounds = 0
+      } else {
+        stableRounds++
+      }
+
+      if (stableRounds >= maxStableRounds) {
+        return true
+      }
+    }
+
+    return false
+  }
+
   getZenModeConfig() {
     return {
       hide: ["nav", ".container-qOgFQp"],
@@ -641,6 +682,12 @@ export class DoubaoAdapter extends SiteAdapter {
       )
       .forEach((node) => node.remove())
 
+    target.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((heading) => {
+      const strong = document.createElement("strong")
+      strong.innerHTML = heading.innerHTML
+      heading.replaceWith(strong)
+    })
+
     const content = htmlToMarkdown(target).trim()
     if (content) {
       return content
@@ -682,23 +729,51 @@ export class DoubaoAdapter extends SiteAdapter {
     }
 
     if (element.matches(USER_QUERY_SELECTOR)) {
-      return element.querySelector(RAW_USER_QUERY_TEXT_SELECTOR) as HTMLElement | null
+      return (
+        (element.querySelector(RAW_USER_QUERY_TEXT_SELECTOR) as HTMLElement | null) ||
+        this.findUserQueryTextFallback(element)
+      )
     }
 
     return (
       (element.querySelector(USER_QUERY_TEXT_SELECTOR) as HTMLElement | null) ||
-      (element.querySelector(RAW_USER_QUERY_TEXT_SELECTOR) as HTMLElement | null)
+      (element.querySelector(RAW_USER_QUERY_TEXT_SELECTOR) as HTMLElement | null) ||
+      this.findUserQueryTextFallback(element)
     )
+  }
+
+  private findUserQueryTextFallback(element: Element): HTMLElement | null {
+    const candidate = element.querySelector(
+      ".whitespace-pre-wrap.wrap-anywhere",
+    ) as HTMLElement | null
+    if (candidate) return candidate
+
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_ELEMENT, {
+      acceptNode(node) {
+        const el = node as HTMLElement
+        if (el.children.length > 0) return NodeFilter.FILTER_SKIP
+        const text = el.textContent?.trim()
+        if (text && text.length > 0) return NodeFilter.FILTER_ACCEPT
+        return NodeFilter.FILTER_SKIP
+      },
+    })
+    return walker.nextNode() as HTMLElement | null
   }
 
   extractUserQueryText(element: Element): string {
     const textContainer = this.getUserMessageTextContainer(element)
-    return textContainer ? this.extractTextWithLineBreaks(textContainer).trim() : ""
+    if (textContainer) {
+      return this.extractTextWithLineBreaks(textContainer).trim()
+    }
+    return this.extractUserQueryTextFallback(element)
   }
 
   extractUserQueryMarkdown(element: Element): string {
     const textContainer = this.getUserMessageTextContainer(element)
-    return textContainer ? this.extractTextWithLineBreaks(textContainer).trim() : ""
+    if (textContainer) {
+      return this.extractTextWithLineBreaks(textContainer).trim()
+    }
+    return this.extractUserQueryTextFallback(element)
   }
 
   extractUserQueryExportContent(element: Element): string {
@@ -710,14 +785,12 @@ export class DoubaoAdapter extends SiteAdapter {
     collector?: ExportAssetCollector,
   ): string {
     const textContainer = this.getUserMessageTextContainer(element)
-    // 豆包会保留一份隐藏的原始用户输入文本，导出时直接读取这份源文本，
-    // 避免从我们注入的渲染结果反推 Markdown，减少回归风险。
     const rawText = textContainer?.textContent?.trim() || ""
     const body = rawText || (textContainer ? this.extractUserQueryText(textContainer) : "")
     const attachments = this.extractDoubaoUserAttachments(element)
 
     if (attachments.length === 0) {
-      return body || this.extractUserQueryText(element)
+      return body || this.extractUserQueryText(element) || this.extractUserQueryTextFallback(element)
     }
 
     const imageMarkdown = this.formatDoubaoUserImageAttachments(attachments, collector)
@@ -726,6 +799,26 @@ export class DoubaoAdapter extends SiteAdapter {
       fileMarkdown.length > 0 ? `${t("exportAttachmentsLabel")}:\n${fileMarkdown.join("\n")}` : ""
 
     return [imageMarkdown.join("\n\n"), fileBlock, body].filter(Boolean).join("\n\n")
+  }
+
+  private extractUserQueryTextFallback(element: Element): string {
+    const clone = element.cloneNode(true) as HTMLElement
+    clone
+      .querySelectorAll(
+        [
+          "button",
+          "[role='button']",
+          "svg",
+          "[aria-hidden='true']",
+          "picture",
+          "img",
+          DOUBAO_GENERATED_IMAGE_BLOCK_SELECTOR,
+          DOUBAO_IMAGE_WRAPPER_SELECTOR,
+          DOUBAO_USER_ATTACHMENT_BLOCK_SELECTOR,
+        ].join(", "),
+      )
+      .forEach((node) => node.remove())
+    return this.extractTextWithLineBreaks(clone).trim()
   }
 
   private extractDoubaoUserAttachments(element: Element): DoubaoUserAttachment[] {
