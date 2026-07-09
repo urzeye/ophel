@@ -65,9 +65,19 @@ const DOUBAO_CANVAS_SAFE_AREA_SELECTOR = `${DOUBAO_CANVAS_SCOPE_SELECTOR} .code-
 const SHARE_MESSAGE_LIST_SELECTOR = '[class*="message-list-root-"]'
 const MESSAGE_BLOCK_SELECTOR = '[data-target-id="message-box-target-id"]'
 const USER_QUERY_SELECTOR = "[data-message-id].justify-end"
-const RAW_USER_QUERY_TEXT_SELECTOR =
+const LEGACY_USER_QUERY_TEXT_SELECTOR =
   ".whitespace-pre-wrap.wrap-anywhere:not(.gh-user-query-markdown)"
-const USER_QUERY_TEXT_SELECTOR = `${USER_QUERY_SELECTOR} ${RAW_USER_QUERY_TEXT_SELECTOR}`
+const RENDERED_USER_QUERY_MARKDOWN_SELECTOR = ".md-box-root:not(.gh-user-query-markdown)"
+const USER_QUERY_TEXT_CONTAINER_SELECTORS = [
+  // 旧版豆包用户气泡保留原始输入文本，历史会话依赖这个结构。
+  LEGACY_USER_QUERY_TEXT_SELECTOR,
+  // 新版豆包用户气泡改用 md-box 渲染正文，外层 data-message-id/justify-end 仍稳定。
+  RENDERED_USER_QUERY_MARKDOWN_SELECTOR,
+] as const
+const USER_QUERY_TEXT_CONTAINER_SELECTOR = USER_QUERY_TEXT_CONTAINER_SELECTORS.join(", ")
+const USER_QUERY_TEXT_SELECTOR = USER_QUERY_TEXT_CONTAINER_SELECTORS.map(
+  (selector) => `${USER_QUERY_SELECTOR} ${selector}`,
+).join(", ")
 const ASSISTANT_MESSAGE_SELECTOR = "[data-message-id]:not(.justify-end)"
 const ASSISTANT_MARKDOWN_SELECTORS = [".flow-markdown-body", ".md-box-root"] as const
 const ASSISTANT_MARKDOWN_SELECTOR = ASSISTANT_MARKDOWN_SELECTORS.join(", ")
@@ -618,7 +628,7 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   getChatContentSelectors(): string[] {
-    return [ASSISTANT_CONTENT_SELECTOR, USER_QUERY_TEXT_SELECTOR]
+    return [ASSISTANT_CONTENT_SELECTOR, USER_QUERY_SELECTOR]
   }
 
   private extractAssistantMarkdown(element: Element): string {
@@ -677,17 +687,17 @@ export class DoubaoAdapter extends SiteAdapter {
   }
 
   private getUserMessageTextContainer(element: Element): HTMLElement | null {
-    if (element.matches(RAW_USER_QUERY_TEXT_SELECTOR)) {
+    if (element.matches(USER_QUERY_TEXT_CONTAINER_SELECTOR)) {
       return element as HTMLElement
     }
 
     if (element.matches(USER_QUERY_SELECTOR)) {
-      return element.querySelector(RAW_USER_QUERY_TEXT_SELECTOR) as HTMLElement | null
+      return element.querySelector(USER_QUERY_TEXT_CONTAINER_SELECTOR) as HTMLElement | null
     }
 
     return (
       (element.querySelector(USER_QUERY_TEXT_SELECTOR) as HTMLElement | null) ||
-      (element.querySelector(RAW_USER_QUERY_TEXT_SELECTOR) as HTMLElement | null)
+      (element.querySelector(USER_QUERY_TEXT_CONTAINER_SELECTOR) as HTMLElement | null)
     )
   }
 
@@ -698,7 +708,21 @@ export class DoubaoAdapter extends SiteAdapter {
 
   extractUserQueryMarkdown(element: Element): string {
     const textContainer = this.getUserMessageTextContainer(element)
-    return textContainer ? this.extractTextWithLineBreaks(textContainer).trim() : ""
+    if (!textContainer) return ""
+
+    if (textContainer.matches(RENDERED_USER_QUERY_MARKDOWN_SELECTOR)) {
+      const clone = textContainer.cloneNode(true) as HTMLElement
+      clone
+        .querySelectorAll(
+          ".gh-user-query-markdown, button, [role='button'], svg, [aria-hidden='true']",
+        )
+        .forEach((node) => node.remove())
+
+      const markdown = htmlToMarkdown(clone).trim()
+      if (markdown) return markdown
+    }
+
+    return this.extractTextWithLineBreaks(textContainer).trim()
   }
 
   extractUserQueryExportContent(element: Element): string {
@@ -709,11 +733,7 @@ export class DoubaoAdapter extends SiteAdapter {
     element: Element,
     collector?: ExportAssetCollector,
   ): string {
-    const textContainer = this.getUserMessageTextContainer(element)
-    // 豆包会保留一份隐藏的原始用户输入文本，导出时直接读取这份源文本，
-    // 避免从我们注入的渲染结果反推 Markdown，减少回归风险。
-    const rawText = textContainer?.textContent?.trim() || ""
-    const body = rawText || (textContainer ? this.extractUserQueryText(textContainer) : "")
+    const body = this.extractUserQueryMarkdown(element) || this.extractUserQueryText(element)
     const attachments = this.extractDoubaoUserAttachments(element)
 
     if (attachments.length === 0) {
@@ -2340,6 +2360,11 @@ export class DoubaoAdapter extends SiteAdapter {
       // 必须加上 .w-fit 限制，否则 [class*="max-w-"] 会错误匹配到外层的 .max-w-full 导致气泡右对齐布局崩溃
       {
         selector: `${USER_QUERY_SELECTOR} .w-fit[class*="max-w-"]`,
+        property: "max-width",
+      },
+      // 新版用户气泡不再带 .w-fit/max-w-*，宽度要落在发送气泡本体，避免命中外层 .max-w-full。
+      {
+        selector: `${USER_QUERY_SELECTOR} [data-plugin-identifier="block_type:10000"] > .bg-g-send-msg-bubble-bg`,
         property: "max-width",
       },
     ]
