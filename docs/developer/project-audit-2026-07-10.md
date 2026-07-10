@@ -57,9 +57,9 @@
 | 产物 | 原始大小 | gzip |
 | --- | ---: | ---: |
 | `main.*.js` | 1,507,680 B | — |
-| `ui-entry.*.js` | 2,257,230 B | — |
-| 两个扩展内容脚本合计 | 3,764,910 B | 约 975.4 KiB |
-| `ophel.user.js` | 1,854,752 B | 约 472.0 KiB |
+| `ui-entry.*.js` | 2,257,103 B | — |
+| 两个扩展内容脚本合计 | 3,764,783 B | 约 975.4 KiB |
+| `ophel.user.js` | 1,830,738 B | 约 467.8 KiB |
 
 扩展内容脚本 raw 合计相对审计基线下降约 **49.8%**，超过 40% 完成指标。`scripts/check-bundle-budget.mjs` 对扩展内容入口与 userscript 同时设置 raw/gzip 上限，生产构建后可运行 `pnpm check:bundle-budget`。
 

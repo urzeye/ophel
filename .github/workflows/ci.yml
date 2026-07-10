@@ -57,5 +57,20 @@ jobs:
       - name: 📐 Type Check (TypeScript)
         run: pnpm typecheck
 
-      - name: 🏗️ Verify Build
+      - name: 🧪 Run Tests (Vitest)
+        run: pnpm test:run
+
+      - name: 🎨 Validate Theme Tokens
+        run: pnpm check:theme-tokens
+
+      - name: 🏗️ Verify Chrome Build
         run: pnpm build
+
+      - name: 🦊 Verify Firefox Build
+        run: pnpm build:firefox
+
+      - name: 🐒 Verify Userscript Build
+        run: pnpm build:userscript
+
+      - name: 📦 Enforce Bundle Budgets
+        run: pnpm check:bundle-budget
