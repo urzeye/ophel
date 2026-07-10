@@ -34,11 +34,28 @@ export interface ThemeVariables {
   "--gh-shadow-sm": string
   "--gh-shadow-lg": string
   "--gh-shadow-brand": string
+  "--gh-shadow-md"?: string
 
   // 品牌色
   "--gh-primary": string
   "--gh-secondary": string
   "--gh-danger": string
+  "--gh-accent"?: string
+  "--gh-accent-hover"?: string
+  "--gh-bg-accent"?: string
+  "--gh-border-light"?: string
+  "--gh-border-hover"?: string
+  "--gh-primary-hover"?: string
+  "--gh-primary-light"?: string
+  "--gh-success"?: string
+  "--gh-error"?: string
+  "--gh-text-disabled"?: string
+  "--gh-warning"?: string
+  "--gh-text-warning"?: string
+  "--gh-bg-warning-light"?: string
+  "--gh-warning-gradient"?: string
+  "--gh-border-danger"?: string
+  "--gh-icon-left"?: string
 
   // 语义化组件变量
   "--gh-header-bg": string

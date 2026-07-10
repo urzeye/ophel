@@ -1392,7 +1392,7 @@
 .settings-theme-name {
   font-size: 12.5px;
   font-weight: 500;
-  color: color-mix(in srgb, var(--gh-text, #374151) 84%, var(--gh-secondary-text, #6b7280) 16%);
+  color: color-mix(in srgb, var(--gh-text, #374151) 84%, var(--gh-text-secondary, #6b7280) 16%);
   line-height: 1.4;
   letter-spacing: -0.01em;
   min-height: 34px;

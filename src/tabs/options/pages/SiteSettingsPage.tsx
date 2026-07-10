@@ -430,7 +430,7 @@ const SiteSettingsPage: React.FC<SiteSettingsPageProps> = ({
             style={{
               marginTop: "24px",
               paddingTop: "16px",
-              borderTop: "1px solid var(--gh-border-color)",
+              borderTop: "1px solid var(--gh-border)",
             }}>
             <h3 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px" }}>
               Gemini Enterprise

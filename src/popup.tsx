@@ -13,6 +13,7 @@ import { StarIcon } from "~components/icons/StarIcon"
 import { TimeIcon } from "~components/icons/TimeIcon"
 import { SUPPORTED_AI_PLATFORMS } from "~constants/defaults"
 import { Tooltip } from "~components/ui/Tooltip"
+import { OverlayPortalProvider } from "~components/ui/OverlayPortal"
 import { SITE_ICONS } from "~constants/site-icons"
 import { getStoreInfo } from "~utils/getStoreInfo"
 import { setLanguage, t } from "~utils/i18n"
@@ -20,6 +21,7 @@ import { MSG_START_NEW_CONVERSATION } from "~utils/messaging"
 import { version } from "../package.json"
 
 import "./popup.css"
+import "~styles/overlays.css"
 
 // Inject platform type
 declare const __PLATFORM__: "extension" | "userscript" | undefined
@@ -320,4 +322,10 @@ function IndexPopup() {
   )
 }
 
-export default IndexPopup
+const PopupApp = () => (
+  <OverlayPortalProvider>
+    <IndexPopup />
+  </OverlayPortalProvider>
+)
+
+export default PopupApp

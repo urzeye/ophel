@@ -2,6 +2,7 @@ import React from "react"
 import { createPortal } from "react-dom"
 
 import { Button } from "~components/ui"
+import { useOverlayPortalTarget } from "~components/ui/OverlayPortal"
 import { OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS } from "~utils/dom-toolkit"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 import { showCopySuccess } from "~utils/icons"
@@ -32,7 +33,8 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
   onClose,
   onSave,
 }) => {
-  if (!isOpen) return null
+  const portalTarget = useOverlayPortalTarget()
+  if (!isOpen || !portalTarget) return null
 
   return createPortal(
     <div
@@ -274,6 +276,6 @@ export const PromptEditorDialog: React.FC<PromptEditorDialogProps> = ({
         </div>
       </div>
     </div>,
-    document.body,
+    portalTarget,
   )
 }

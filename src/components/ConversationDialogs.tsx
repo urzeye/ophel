@@ -1,106 +1,11 @@
 import React, { useEffect, useRef, useState } from "react"
-import { createPortal } from "react-dom"
 
 import { ChevronDownIcon, ClearIcon, EditIcon } from "~components/icons"
 import { Button, Tooltip } from "~components/ui"
+import { DialogOverlay as BaseDialogOverlay } from "~components/ui/Dialog"
 import { PRESET_EMOJIS, TAG_COLORS } from "~constants"
 import type { Conversation, Folder, Tag } from "~core/conversation-manager"
-import { OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
-
-// ==================== 对话框样式 (从油猴脚本迁移) ====================
-
-const DIALOG_STYLES = `
-  .conversations-dialog-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--gh-overlay-bg, rgba(0,0,0,0.5));
-    z-index: 1000003;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .conversations-dialog {
-    background: var(--gh-bg, white);
-    border-radius: 12px;
-    padding: 20px;
-    min-width: 320px;
-    max-width: min(480px, calc(100vw - 40px));
-    box-shadow: var(--gh-shadow-lg, 0 10px 40px rgba(0,0,0,0.2));
-  }
-  .conversations-dialog-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--gh-text, #1f2937);
-    margin-bottom: 16px;
-  }
-  .conversations-dialog-message {
-    font-size: 14px;
-    color: var(--gh-text-secondary, #4b5563);
-    margin-bottom: 20px;
-    line-height: 1.5;
-    white-space: pre-line;
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
-  .conversations-dialog-section {
-    margin-bottom: 16px;
-  }
-  .conversations-dialog-section label {
-    display: block;
-    font-size: 13px;
-    color: var(--gh-text-secondary, #6b7280);
-    margin-bottom: 8px;
-  }
-  .conversations-dialog-input {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--gh-input-border, #d1d5db);
-    border-radius: 8px;
-    font-size: 14px;
-    box-sizing: border-box;
-    background: var(--gh-input-bg, #ffffff);
-    color: var(--gh-text, #1f2937);
-  }
-  .conversations-dialog-input:focus {
-    outline: none;
-    border-color: var(--gh-input-focus-border, #4285f4);
-    box-shadow: var(--gh-input-focus-shadow, 0 0 0 2px rgba(66,133,244,0.1));
-  }
-  .conversations-dialog-buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 20px;
-  }
-  .emoji-grid-hidden-scrollbar::-webkit-scrollbar {
-    display: none;
-    width: 0;
-    height: 0;
-  }
-  @keyframes gh-highlight-fade {
-    0% { background-color: var(--gh-highlight-pulse, rgba(59, 130, 246, 0.3)); }
-    100% { background-color: transparent; }
-  }
-  .conversations-folder-select-highlight {
-    animation: gh-highlight-fade 2s ease-out;
-  }
-`
-
-// 样式注入状态
-let dialogStyleInjected = false
-
-const injectDialogStyles = () => {
-  if (dialogStyleInjected) return
-  const style = document.createElement("style")
-  style.id = "gh-dialog-styles"
-  style.textContent = DIALOG_STYLES
-  document.head.appendChild(style)
-  dialogStyleInjected = true
-}
 
 const getInboxDisplayName = (): string => {
   const translated = t("conversationsInbox")
@@ -138,31 +43,14 @@ interface DialogOverlayProps {
  * 这样对话框会出现在面板外面，覆盖整个页面
  */
 export const DialogOverlay: React.FC<DialogOverlayProps> = ({ children, onClose }) => {
-  useEffect(() => {
-    // 注入对话框样式
-    injectDialogStyles()
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose()
-    }
-    document.addEventListener("keydown", handleKeyDown)
-    return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [onClose])
-
-  // 对话框内容
-  const dialogContent = (
-    <div
-      className="conversations-dialog-overlay"
-      {...OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS}
-      onClick={onClose}>
-      <div className="conversations-dialog" onClick={(e) => e.stopPropagation()}>
-        {children}
-      </div>
-    </div>
+  return (
+    <BaseDialogOverlay
+      onClose={onClose}
+      overlayClassName="conversations-dialog-overlay"
+      dialogClassName="conversations-dialog">
+      {children}
+    </BaseDialogOverlay>
   )
-
-  // 使用 Portal 渲染到 document.body
-  return createPortal(dialogContent, document.body)
 }
 
 // ==================== 确认对话框 ====================

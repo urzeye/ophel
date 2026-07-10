@@ -1,0 +1,264 @@
+.gh-overlay-root {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483645;
+  width: 100vw;
+  height: 100vh;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.gh-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gh-overlay-bg, rgba(0, 0, 0, 0.5));
+  pointer-events: auto;
+}
+
+.gh-dialog {
+  min-width: 280px;
+  max-width: min(400px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 12px;
+  background: var(--gh-bg, #ffffff);
+  box-shadow: var(--gh-shadow-lg, 0 20px 50px rgba(0, 0, 0, 0.3));
+  color: var(--gh-text, #1f2937);
+  outline: none;
+}
+
+.gh-dialog-title {
+  margin-bottom: 12px;
+  color: var(--gh-text, #1f2937);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.gh-dialog-message {
+  margin-bottom: 20px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.gh-dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.gh-dialog-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.gh-dialog-btn:active {
+  transform: translateY(1px);
+}
+
+.gh-dialog-btn:focus-visible {
+  outline: 2px solid var(--gh-primary, #4285f4);
+  outline-offset: 2px;
+}
+
+.gh-dialog-btn-secondary {
+  border: 1px solid var(--gh-border, #d1d5db);
+  background: var(--gh-bg, #ffffff);
+  color: var(--gh-text, #374151);
+}
+
+.gh-dialog-btn-secondary:hover {
+  background: var(--gh-hover, #f3f4f6);
+}
+
+.gh-dialog-btn-primary {
+  background: var(
+    --gh-brand-gradient,
+    linear-gradient(135deg, var(--gh-primary, #4285f4), var(--gh-secondary, #34a853))
+  );
+  color: #ffffff;
+}
+
+.gh-dialog-btn-danger {
+  background: var(--gh-text-danger, #ef4444);
+  color: #ffffff;
+}
+
+.gh-dialog-input {
+  box-sizing: border-box;
+  width: 100%;
+  margin-bottom: 20px;
+  padding: 10px 12px;
+  border: 1px solid var(--gh-input-border, var(--gh-border, #d1d5db));
+  border-radius: 8px;
+  background: var(--gh-input-bg, var(--gh-bg, #ffffff));
+  color: var(--gh-text, #1f2937);
+  font-size: 14px;
+}
+
+.gh-dialog-input:focus-visible {
+  border-color: var(--gh-input-focus-border, var(--gh-primary, #4285f4));
+  outline: none;
+  box-shadow: var(--gh-input-focus-shadow, 0 0 0 3px rgba(66, 133, 244, 0.18));
+}
+
+.conversations-dialog-overlay {
+  z-index: 2147483647;
+}
+
+.conversations-dialog {
+  min-width: 320px;
+  max-width: min(480px, calc(100vw - 40px));
+}
+
+.conversations-dialog-title {
+  margin-bottom: 16px;
+  color: var(--gh-text, #1f2937);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.conversations-dialog-message {
+  margin-bottom: 20px;
+  color: var(--gh-text-secondary, #4b5563);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+  white-space: pre-line;
+  word-break: break-word;
+}
+
+.conversations-dialog-section {
+  margin-bottom: 16px;
+}
+
+.conversations-dialog-section label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--gh-text-secondary, #6b7280);
+  font-size: 13px;
+}
+
+.conversations-dialog-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--gh-input-border, #d1d5db);
+  border-radius: 8px;
+  background: var(--gh-input-bg, #ffffff);
+  color: var(--gh-text, #1f2937);
+  font-size: 14px;
+}
+
+.conversations-dialog-input:focus-visible {
+  border-color: var(--gh-input-focus-border, #4285f4);
+  outline: none;
+  box-shadow: var(--gh-input-focus-shadow, 0 0 0 2px rgba(66, 133, 244, 0.1));
+}
+
+.conversations-dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.emoji-grid-hidden-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+@keyframes gh-highlight-fade {
+  from {
+    background-color: var(--gh-highlight-pulse, rgba(59, 130, 246, 0.3));
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+.conversations-folder-select-highlight {
+  animation: gh-highlight-fade 2s ease-out;
+}
+
+.conversations-folder-menu {
+  z-index: 2147483647;
+  min-width: 80px;
+  padding: 3px;
+  border: 1px solid var(--gh-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--gh-bg, #ffffff);
+  box-shadow: var(--gh-shadow, 0 4px 12px rgba(0, 0, 0, 0.15));
+  pointer-events: auto;
+}
+
+.conversations-folder-menu button {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--gh-text, #374151);
+  font-size: 12px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.conversations-folder-menu button:hover {
+  background: var(--gh-hover, #f3f4f6);
+}
+
+.conversations-folder-menu button:focus-visible {
+  outline: 2px solid var(--gh-primary, #4285f4);
+  outline-offset: -2px;
+}
+
+.ophel-tooltip {
+  z-index: 2147483647;
+  padding: 6px 12px;
+  border: 1px solid color-mix(in srgb, var(--gh-text, #ffffff) 12%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--gh-text, #1e1e23) 94%, transparent);
+  box-shadow: var(--gh-shadow, 0 4px 12px rgba(0, 0, 0, 0.2));
+  color: var(--gh-bg, #ffffff);
+  font-size: 13px;
+  line-height: 1.5;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+  animation: tooltip-fade-in 0.15s ease-out;
+}
+
+@keyframes tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ophel-tooltip,
+  .conversations-folder-select-highlight {
+    animation: none;
+  }
+}

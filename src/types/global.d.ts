@@ -25,6 +25,8 @@ declare global {
     __ophelThemeManager?: ThemeManager
     /** 当前页面已加载的站点适配器 */
     __ophelAdapterRuntime?: SiteAdapter
+    /** Shadow DOM 内的统一覆盖层 Portal 根节点 */
+    __ophelOverlayRoot?: HTMLElement
     /** 滚动锁定初始化标记 */
     __ophelScrollLockInitialized?: boolean
     /** 滚动锁定是否启用 */

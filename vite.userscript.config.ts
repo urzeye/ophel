@@ -162,8 +162,19 @@ function buildUserscriptStyleBundle(): string {
     path.resolve(__dirname, "src/styles/settings.css"),
     "utf-8",
   )
+  const overlaysStyle = fs.readFileSync(
+    path.resolve(__dirname, "src/styles/overlays.css"),
+    "utf-8",
+  )
 
-  return [themeVariablesStyle, mainStyle, conversationsStyle, releaseNotesStyle, settingsStyle].join("\n")
+  return [
+    themeVariablesStyle,
+    mainStyle,
+    conversationsStyle,
+    releaseNotesStyle,
+    settingsStyle,
+    overlaysStyle,
+  ].join("\n")
 }
 
 function createContentHash(content: string | Buffer): string {

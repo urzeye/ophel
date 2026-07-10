@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useMemo, useState } from "react"
 
 import type {
   ConversationExportSegment,
@@ -237,17 +237,6 @@ const SEGMENTED_EXPORT_DIALOG_STYLES = `
   }
 `
 
-let segmentedExportDialogStylesInjected = false
-
-function ensureSegmentedExportDialogStyles(): void {
-  if (segmentedExportDialogStylesInjected) return
-  const style = document.createElement("style")
-  style.id = "gh-segmented-export-dialog-styles"
-  style.textContent = SEGMENTED_EXPORT_DIALOG_STYLES
-  document.head.appendChild(style)
-  segmentedExportDialogStylesInjected = true
-}
-
 interface SegmentedExportDialogProps {
   draft: ConversationSegmentedExportDraft
   isExporting?: boolean
@@ -300,10 +289,6 @@ export const SegmentedExportDialog: React.FC<SegmentedExportDialogProps> = ({
   const [searchQuery, setSearchQuery] = useState("")
   const [rangeInput, setRangeInput] = useState("")
   const [mode, setMode] = useState<ConversationSegmentedExportMode>("merged-markdown")
-
-  useEffect(() => {
-    ensureSegmentedExportDialogStyles()
-  }, [])
 
   const filteredSegments = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
@@ -360,6 +345,7 @@ export const SegmentedExportDialog: React.FC<SegmentedExportDialogProps> = ({
       closeOnEscape={!isExporting}
       dialogClassName="gh-segmented-export-dialog"
       dialogStyle={{ maxWidth: "760px" }}>
+      <style>{SEGMENTED_EXPORT_DIALOG_STYLES}</style>
       <div className="gh-segmented-export-header">
         <div className="gh-segmented-export-title-row">
           <div className="gh-segmented-export-title">{t("segmentedExportTitle")}</div>

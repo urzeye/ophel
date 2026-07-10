@@ -2,6 +2,7 @@ import React from "react"
 import { createPortal } from "react-dom"
 
 import { Button } from "~components/ui"
+import { useOverlayPortalTarget } from "~components/ui/OverlayPortal"
 import { OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
 
@@ -20,7 +21,8 @@ export const ImportDialog = ({
   onMerge,
   onOverwrite,
 }: ImportDialogProps) => {
-  if (!isOpen) return null
+  const portalTarget = useOverlayPortalTarget()
+  if (!isOpen || !portalTarget) return null
 
   return createPortal(
     <div
@@ -96,6 +98,6 @@ export const ImportDialog = ({
         </div>
       </div>
     </div>,
-    document.body,
+    portalTarget,
   )
 }

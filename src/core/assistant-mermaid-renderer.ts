@@ -64,7 +64,7 @@ const ASSISTANT_MERMAID_CSS = `
   gap: 10px;
   padding: 8px 10px;
   border-bottom: 1px solid var(--gh-border, rgba(148, 163, 184, 0.2));
-  background: var(--gh-bg-primary, rgba(248, 250, 252, 0.96));
+  background: var(--gh-bg, rgba(248, 250, 252, 0.96));
 }
 
 .gh-assistant-mermaid-actions {
@@ -133,7 +133,7 @@ const ASSISTANT_MERMAID_CSS = `
 .gh-assistant-mermaid-preview {
   padding: 12px;
   overflow-x: auto;
-  background: var(--gh-bg-primary, rgba(255, 255, 255, 0.96));
+  background: var(--gh-bg, rgba(255, 255, 255, 0.96));
 }
 
 .gh-assistant-mermaid-preview:fullscreen,
@@ -146,7 +146,7 @@ const ASSISTANT_MERMAID_CSS = `
   padding: ${FULLSCREEN_PREVIEW_PADDING}px;
   box-sizing: border-box;
   overflow: auto;
-  background: var(--gh-bg-primary, rgba(255, 255, 255, 0.98));
+  background: var(--gh-bg, rgba(255, 255, 255, 0.98));
 }
 
 .gh-assistant-mermaid-preview[hidden] {

@@ -2,6 +2,7 @@ import React from "react"
 import { createPortal } from "react-dom"
 
 import { ClearIcon } from "~components/icons"
+import { useOverlayPortalTarget } from "~components/ui/OverlayPortal"
 import { OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS } from "~utils/dom-toolkit"
 import { showCopySuccess } from "~utils/icons"
 import { t } from "~utils/i18n"
@@ -270,7 +271,8 @@ export const PromptPreviewModal = ({
   getCategoryColorIndex,
   getResolvedCategoryColor,
 }: PromptPreviewModalProps) => {
-  if (!isOpen || !prompt) return null
+  const portalTarget = useOverlayPortalTarget()
+  if (!isOpen || !prompt || !portalTarget) return null
 
   const categoryLabel = prompt.category || t("uncategorized")
   const categoryColorIndex = getCategoryColorIndex(categoryLabel)
@@ -338,6 +340,6 @@ export const PromptPreviewModal = ({
         </div>
       </div>
     </>,
-    document.body,
+    portalTarget,
   )
 }

@@ -2,10 +2,12 @@ import cssText from "data-text:~style.css"
 import conversationsCssText from "data-text:~styles/conversations.css"
 import releaseNotesCssText from "data-text:~styles/release-notes.css"
 import settingsCssText from "data-text:~styles/settings.css"
+import overlaysCssText from "data-text:~styles/overlays.css"
 import type { PlasmoCSConfig, PlasmoMountShadowHost } from "plasmo"
 import React from "react"
 
 import { App } from "~components/App"
+import { OverlayPortalProvider } from "~components/ui/OverlayPortal"
 import { getAdapterRuntime, subscribeAdapterRuntime } from "~core/adapter-runtime"
 import { applyOphelPlatformFontClass } from "~utils/font"
 
@@ -70,6 +72,8 @@ export const getStyle = () => {
     releaseNotesCssText +
     "\n" +
     settingsCssText +
+    "\n" +
+    overlaysCssText +
     (earlyThemeCSS ? "\n" + earlyThemeCSS : "")
   return style
 }
@@ -134,7 +138,11 @@ const PlasmoApp = () => {
     getAdapterRuntime,
   )
 
-  return adapter ? <App adapter={adapter} /> : null
+  return adapter ? (
+    <OverlayPortalProvider>
+      <App adapter={adapter} />
+    </OverlayPortalProvider>
+  ) : null
 }
 
 export default PlasmoApp

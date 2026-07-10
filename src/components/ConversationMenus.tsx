@@ -17,48 +17,7 @@ import { TagIcon } from "~components/icons/TagIcon"
 import type { Conversation, Folder } from "~core/conversation-manager"
 import { OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
-
-// ==================== 菜单样式  ====================
-
-const MENU_STYLES = `
-  .conversations-folder-menu {
-    background: var(--gh-bg, white);
-    border: 1px solid var(--gh-border, #e5e7eb);
-    border-radius: 6px;
-    box-shadow: var(--gh-shadow, 0 4px 12px rgba(0,0,0,0.15));
-    z-index: 10000000;
-    padding: 3px;
-    min-width: 80px;
-  }
-  .conversations-folder-menu button {
-    display: block;
-    width: 100%;
-    padding: 6px 10px;
-    border: none;
-    background: none;
-    text-align: left;
-    font-size: 12px;
-    color: var(--gh-text, #374151);
-    cursor: pointer;
-    border-radius: 4px;
-    white-space: nowrap;
-  }
-  .conversations-folder-menu button:hover {
-    background: var(--gh-hover, #f3f4f6);
-  }
-`
-
-// 样式注入状态
-let menuStyleInjected = false
-
-const injectMenuStyles = () => {
-  if (menuStyleInjected) return
-  const style = document.createElement("style")
-  style.id = "gh-menu-styles"
-  style.textContent = MENU_STYLES
-  document.head.appendChild(style)
-  menuStyleInjected = true
-}
+import { useOverlayPortalTarget } from "~components/ui/OverlayPortal"
 
 // ==================== 通用菜单容器 ====================
 
@@ -79,13 +38,11 @@ export interface MenuAnchorPoint {
  * 这样避免被 MainPanel 的 transform 影响 fixed 定位
  */
 export const ContextMenu: React.FC<MenuProps> = ({ anchorEl, anchorPoint, onClose, children }) => {
+  const portalTarget = useOverlayPortalTarget()
   const menuRef = useRef<HTMLDivElement>(null)
   const [menuPosition, setMenuPosition] = useState<{ left: number; top: number } | null>(null)
 
   useEffect(() => {
-    // 注入菜单样式
-    injectMenuStyles()
-
     if (!anchorEl && !anchorPoint) return
 
     const handleClickOutside = (e: MouseEvent) => {
@@ -162,7 +119,7 @@ export const ContextMenu: React.FC<MenuProps> = ({ anchorEl, anchorPoint, onClos
     setMenuPosition({ left, top })
   }, [anchorEl, anchorPoint])
 
-  if (!anchorEl && !anchorPoint) return null
+  if ((!anchorEl && !anchorPoint) || !portalTarget) return null
 
   // 使用 Portal 渲染到 document.body，避免 transform 影响 fixed 定位
   const menuContent = (
@@ -181,7 +138,7 @@ export const ContextMenu: React.FC<MenuProps> = ({ anchorEl, anchorPoint, onClos
     </div>
   )
 
-  return createPortal(menuContent, document.body)
+  return createPortal(menuContent, portalTarget)
 }
 
 // ==================== 菜单按钮 ====================

@@ -18,6 +18,7 @@ import { platform } from "~platform"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { APP_DISPLAY_NAME, APP_ICON_URL } from "~utils/config"
 import { SidebarCommunityLinks } from "~components/SidebarCommunityLinks"
+import { OverlayPortalProvider } from "~components/ui/OverlayPortal"
 import { getOphelPlatformFontClassName } from "~utils/font"
 import { setLanguage, t } from "~utils/i18n"
 
@@ -31,6 +32,7 @@ import PermissionsPage from "./options/pages/PermissionsPage"
 import SiteSettingsPage from "./options/pages/SiteSettingsPage"
 // 样式
 import "./options.css"
+import "~styles/overlays.css"
 
 import { SidebarFooter } from "./options/components/SidebarFooter"
 
@@ -302,4 +304,10 @@ const OptionsPage = () => {
   )
 }
 
-export default OptionsPage
+const OptionsApp = () => (
+  <OverlayPortalProvider>
+    <OptionsPage />
+  </OverlayPortalProvider>
+)
+
+export default OptionsApp

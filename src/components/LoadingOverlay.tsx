@@ -2,6 +2,7 @@ import React, { useEffect } from "react"
 import { createPortal } from "react-dom"
 
 import { t } from "~utils/i18n"
+import { useOverlayPortalTarget } from "~components/ui/OverlayPortal"
 
 interface LoadingOverlayProps {
   isVisible: boolean
@@ -24,6 +25,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
   blockPageInteraction = false,
   onStop,
 }) => {
+  const portalTarget = useOverlayPortalTarget()
   useEffect(() => {
     if (!isVisible || !blockPageInteraction) return
 
@@ -174,9 +176,5 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
     </div>
   )
 
-  if (!document?.body) {
-    return overlay
-  }
-
-  return createPortal(overlay, document.body)
+  return portalTarget ? createPortal(overlay, portalTarget) : null
 }

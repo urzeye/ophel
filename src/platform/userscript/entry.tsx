@@ -371,12 +371,14 @@ async function init() {
   const [
     { loadAdapter },
     { App },
+    { OverlayPortalProvider },
     { setAdapterRuntime },
     { initNetworkMonitor },
     { initGeminiTitleGuard },
   ] = await Promise.all([
     import("~adapters"),
     import("~components/App"),
+    import("~components/ui/OverlayPortal"),
     import("~core/adapter-runtime"),
     import("~core/network-monitor"),
     import("~core/gemini-title-guard"),
@@ -486,7 +488,11 @@ async function init() {
           [],
         )
 
-        return React.createElement(App, { adapter })
+        return React.createElement(
+          OverlayPortalProvider,
+          null,
+          React.createElement(App, { adapter }),
+        )
       }
 
       const root = ReactDOM.createRoot(container)

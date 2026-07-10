@@ -1162,8 +1162,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ onNavigate: _onNavigate }) => {
           return (
             <div
               style={{
-                background: "var(--gh-primary-light-bg, rgba(66, 133, 244, 0.05))",
-                border: "1px solid var(--gh-primary-border, rgba(66, 133, 244, 0.2))",
+                background: "var(--gh-primary-light, rgba(66, 133, 244, 0.05))",
+                border: "1px solid var(--gh-border-hover, rgba(66, 133, 244, 0.2))",
                 borderRadius: "8px",
                 padding: "10px 12px",
                 marginBottom: "4px",

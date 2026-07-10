@@ -565,7 +565,7 @@ const ClaudeSettings: React.FC<ClaudeSettingsProps> = ({ siteId }) => {
               padding: "8px 12px",
               flex: "1 1 auto",
               opacity: keys.length === 0 || isBatchTesting ? 0.6 : 1,
-              backgroundColor: isBatchTesting ? "rgba(var(--gh-primary-rgb), 0.1)" : undefined,
+              backgroundColor: isBatchTesting ? "var(--gh-primary-light)" : undefined,
               color: isBatchTesting ? "var(--gh-primary)" : undefined,
               borderColor: isBatchTesting ? "var(--gh-primary)" : undefined,
               whiteSpace: "nowrap",

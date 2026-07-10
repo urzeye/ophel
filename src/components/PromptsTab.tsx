@@ -23,6 +23,7 @@ import {
 } from "~components/icons"
 import { ContextMenu, MenuButton } from "~components/ConversationMenus"
 import { Button, ConfirmDialog, InputDialog, SafeSvgMarkup, Tooltip } from "~components/ui"
+import { useOverlayPortalTarget } from "~components/ui/OverlayPortal"
 import {
   extractVariables,
   type ParsedVariable,
@@ -996,6 +997,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   selectedPromptId,
 }) => {
   const DOUBLE_CLICK_DELAY_MS = 340
+  const overlayPortalTarget = useOverlayPortalTarget()
 
   const doubleClickToSend = useSettingsStore(
     (state) => state.settings.features?.prompts?.doubleClickToSend ?? false,
@@ -2425,7 +2427,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
   }
 
   const renderChainEditorModal = () => {
-    if (!chainEditorState.show || !chainEditorState.draft) return null
+    if (!chainEditorState.show || !chainEditorState.draft || !overlayPortalTarget) return null
 
     const draft = chainEditorState.draft
     const variables = getChainVariables(draft)
@@ -2724,7 +2726,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           </div>
         </div>
       </>,
-      document.body,
+      overlayPortalTarget,
     )
   }
 
@@ -2745,7 +2747,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
 
   // 分类管理弹窗
   const renderCategoryModal = () => {
-    if (!isCategoryModalOpen) return null
+    if (!isCategoryModalOpen || !overlayPortalTarget) return null
 
     return createPortal(
       <div
@@ -2852,7 +2854,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
           </div>
         </div>
       </div>,
-      document.body,
+      overlayPortalTarget,
     )
   }
 
@@ -3421,6 +3423,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       {/* 图标选择器弹窗 */}
       {showChainIconPicker &&
         chainEditorState.draft &&
+        overlayPortalTarget &&
         createPortal(
           <div
             className="prompt-modal gh-interactive"
@@ -3449,7 +3452,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
               />
             </div>
           </div>,
-          document.body,
+          overlayPortalTarget,
         )}
 
       <style>{`

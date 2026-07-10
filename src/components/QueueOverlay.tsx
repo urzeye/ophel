@@ -12,6 +12,7 @@ import { createPortal } from "react-dom"
 import type { SiteAdapter } from "~adapters/base"
 import { CleanupIcon, ImportIcon, PromptQueueIcon } from "~components/icons"
 import { DialogOverlay, Tooltip } from "~components/ui"
+import { useOverlayPortalTarget } from "~components/ui/OverlayPortal"
 import { extractVariables } from "~components/VariableInputDialog"
 import { formatShortcut, normalizeShortcutBinding } from "~constants/shortcuts"
 import type { QueueDispatcher } from "~core/queue-dispatcher"
@@ -38,6 +39,7 @@ type QueueBatchSource = "text" | "library"
 type QueueLibraryMode = "single" | "line"
 
 export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher }) => {
+  const portalTarget = useOverlayPortalTarget()
   const [isExpanded, setIsExpanded] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [inputValue, setInputValue] = useState("")
@@ -490,14 +492,10 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
   // ==================== 渲染 ====================
 
-  if (!position) return null
+  if (!position || !portalTarget) return null
 
   // 因为定位点(top, left)标志着组件要显示的右下角（紧贴输入框上方右侧）
   // 所以需要用 translate(-100%, -100%) 把组件从锚定点推上去靠左
-  // 为了保证能读取到 CSS 主题变量，我们需要找到含有主题类名的容器
-  // App 组件渲染内容在 .gh-root 下
-  const targetContainer = document.querySelector(".gh-root") || document.body
-
   const capsuleStyle: React.CSSProperties = {
     bottom: position.bottom,
     right: position.right,
@@ -524,7 +522,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
           </span>
         </div>
       </Tooltip>,
-      targetContainer,
+      portalTarget,
     )
   }
 
@@ -773,7 +771,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
             {shortcutText && <span className="gh-queue-shortcut-hint">{shortcutText}</span>}
           </div>
         </div>,
-        targetContainer,
+        portalTarget,
       )}
 
       {isBatchDialogOpen && (

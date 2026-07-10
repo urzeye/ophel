@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import type { ReactNode } from "react"
 
-const GLOBAL_TOOLTIP_STYLE_ID = "ophel-global-tooltip-styles"
+import { useOverlayPortalTarget } from "./OverlayPortal"
+
 const DEFAULT_TOOLTIP_DELAY_MS = 300
 const DEFAULT_TOOLTIP_MAX_WIDTH = 260
 const DEFAULT_TOOLTIP_GAP = 8
@@ -31,36 +32,6 @@ function isFocusFromWindowRestoration(): boolean {
     })
   })
 })()
-
-export const GLOBAL_TOOLTIP_STYLE_TEXT = `
-  .ophel-tooltip {
-    background-color: rgba(30, 30, 35, 0.95);
-    color: #ffffff;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 13px;
-    line-height: 1.5;
-    z-index: 2147483647;
-    pointer-events: none;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(4px);
-    animation: tooltip-fade-in 0.15s ease-out;
-  }
-
-  @keyframes tooltip-fade-in {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-`
 
 export type TooltipPlacement = "top" | "bottom"
 
@@ -103,33 +74,13 @@ function resolveDisabled(disabled: DomTooltipOptions["disabled"]): boolean {
 }
 
 export function resolveTooltipPortalContainer(
-  triggerNode: Node | null,
+  _triggerNode: Node | null,
 ): Element | DocumentFragment | null {
-  if (!triggerNode || typeof document === "undefined") {
+  if (typeof window === "undefined") {
     return null
   }
 
-  const root = triggerNode.getRootNode?.()
-  if (root instanceof ShadowRoot) {
-    return root
-  }
-
-  return document.body
-}
-
-export function ensureGlobalTooltipStyles(container: Element | DocumentFragment | null): void {
-  if (typeof document === "undefined" || !container || container instanceof ShadowRoot) {
-    return
-  }
-
-  if (document.getElementById(GLOBAL_TOOLTIP_STYLE_ID)) {
-    return
-  }
-
-  const style = document.createElement("style")
-  style.id = GLOBAL_TOOLTIP_STYLE_ID
-  style.textContent = GLOBAL_TOOLTIP_STYLE_TEXT
-  document.head.appendChild(style)
+  return window.__ophelOverlayRoot?.isConnected ? window.__ophelOverlayRoot : null
 }
 
 export function calculateTooltipPosition(
@@ -211,8 +162,6 @@ class DomTooltipManager {
 
     const container = resolveTooltipPortalContainer(trigger)
     if (!container) return
-
-    ensureGlobalTooltipStyles(container)
 
     if (this.activeTrigger && this.activeTrigger !== trigger) {
       this.activeTrigger.removeAttribute("aria-describedby")
@@ -365,11 +314,11 @@ export const Tooltip: React.FC<TooltipProps> = ({
   triggerStyle = {},
   disabled = false,
 }) => {
+  const portalContainer = useOverlayPortalTarget()
   const [isVisible, setIsVisible] = useState(false)
   const [position, setPosition] = useState<TooltipCoordinates>({ top: 0, left: 0 })
   const [isMeasuring, setIsMeasuring] = useState(false)
   const [hasPendingTimer, setHasPendingTimer] = useState(false)
-  const [portalContainer, setPortalContainer] = useState<Element | DocumentFragment | null>(null)
 
   const triggerRef = useRef<HTMLDivElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
@@ -420,14 +369,6 @@ export const Tooltip: React.FC<TooltipProps> = ({
     setPosition(
       calculateTooltipPosition(triggerRect, tooltipRect, { preferredPlacement: "bottom" }),
     )
-  }, [])
-
-  useEffect(() => {
-    if (triggerRef.current) {
-      const container = resolveTooltipPortalContainer(triggerRef.current)
-      setPortalContainer(container)
-      ensureGlobalTooltipStyles(container)
-    }
   }, [])
 
   useEffect(() => {
