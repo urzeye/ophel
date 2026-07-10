@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { RefreshIcon } from "~components/icons"
 import { Switch, Tooltip } from "~components/ui"
 import { SITE_IDS } from "~constants"
+import { getAdapterRuntime } from "~core/adapter-runtime"
 import { platform } from "~platform"
 import { useSettingsStore } from "~stores/settings-store"
 import { SettingCard } from "~tabs/options/components"
@@ -39,8 +40,7 @@ async function fetchAIStudioModels(): Promise<AIStudioModelsResponse> {
     return { success: false, error: "NO_AISTUDIO_TAB" }
   }
 
-  const { getAdapter } = await import("~adapters")
-  const adapter = getAdapter()
+  const adapter = getAdapterRuntime()
 
   if (!hasAIStudioModelList(adapter) || adapter.getSiteId() !== SITE_IDS.AISTUDIO) {
     return { success: false, error: "NOT_AISTUDIO" }

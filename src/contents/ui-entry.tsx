@@ -6,6 +6,7 @@ import type { PlasmoCSConfig, PlasmoMountShadowHost } from "plasmo"
 import React from "react"
 
 import { App } from "~components/App"
+import { getAdapterRuntime, subscribeAdapterRuntime } from "~core/adapter-runtime"
 import { applyOphelPlatformFontClass } from "~utils/font"
 
 export const config: PlasmoCSConfig = {
@@ -127,7 +128,13 @@ export const mountShadowHost: PlasmoMountShadowHost = ({
 }
 
 const PlasmoApp = () => {
-  return <App />
+  const adapter = React.useSyncExternalStore(
+    subscribeAdapterRuntime,
+    getAdapterRuntime,
+    getAdapterRuntime,
+  )
+
+  return adapter ? <App adapter={adapter} /> : null
 }
 
 export default PlasmoApp

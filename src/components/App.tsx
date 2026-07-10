@@ -7,7 +7,7 @@ import React, {
   useSyncExternalStore,
 } from "react"
 
-import { getAdapter } from "~adapters/index"
+import type { SiteAdapter } from "~adapters/base"
 import { SITE_IDS } from "~constants/defaults"
 import {
   ConversationManager,
@@ -44,7 +44,7 @@ import {
   MSG_CLEAR_ALL_DATA,
 } from "~utils/messaging"
 import { showToast } from "~utils/toast"
-import { setLanguage, t } from "~utils/i18n"
+import { setLanguage, subscribeI18nChanges, t } from "~utils/i18n"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
 import { createSafeHTML } from "~utils/trusted-types"
 import { initCopyButtons, showCopySuccess } from "~utils/icons"
@@ -178,7 +178,11 @@ const PASS_THROUGH_CONTROL_KEY_ALIASES = new Set(["Control", "Ctrl"])
 
 const hasPromptVariables = (content: string): boolean => /\{\{([^\s{}]+)\}\}/.test(content)
 
-export const App = () => {
+interface AppProps {
+  adapter: SiteAdapter
+}
+
+export const App: React.FC<AppProps> = ({ adapter }) => {
   // 读取设置 - 使用 Zustand Store
   const { settings, setSettings, updateDeepSetting, updateNestedSetting } = useSettingsStore()
   const isSettingsHydrated = useSettingsHydrated()
@@ -187,6 +191,8 @@ export const App = () => {
   // 订阅 _syncVersion 以在跨上下文同步时强制触发重渲染。
   useSettingsStore((s) => s._syncVersion)
   const [i18nRenderTick, setI18nRenderTick] = useState(0)
+
+  useEffect(() => subscribeI18nChanges(() => setI18nRenderTick((version) => version + 1)), [])
 
   const getLocalizedText = useCallback(
     (definition: LocalizedLabelDefinition) => {
@@ -402,9 +408,6 @@ export const App = () => {
     },
     [getLocalizedText, getPageLabel, getSubTabLabel],
   )
-
-  // 单例实例
-  const adapter = useMemo(() => getAdapter(), [])
 
   const promptManager = useMemo(() => {
     return adapter ? new PromptManager(adapter) : null
@@ -2213,8 +2216,7 @@ export const App = () => {
   // 当设置中的语言变化时，同步更新 i18n
   useEffect(() => {
     if (isSettingsHydrated && settings?.language) {
-      setLanguage(settings.language)
-      setI18nRenderTick((prev) => prev + 1)
+      void setLanguage(settings.language)
     }
   }, [settings?.language, isSettingsHydrated])
 
@@ -2251,8 +2253,7 @@ export const App = () => {
   // 从 window 获取 main.ts 创建的全局 ThemeManager 实例
   // userscript 场景下 App 可能先于核心模块渲染，这里统一复用全局单例
   const themeManager = useMemo(() => {
-    const currentAdapter = getAdapter()
-    const siteId = currentAdapter?.getSiteId() || "_default"
+    const siteId = adapter.getSiteId()
     const fallbackTheme =
       settings?.theme?.sites?.[siteId as keyof typeof settings.theme.sites] ||
       settings?.theme?.sites?._default
@@ -2292,8 +2293,7 @@ export const App = () => {
       const sites = currentSettings?.theme?.sites || {}
 
       // 获取当前站点 ID
-      const currentAdapter = getAdapter()
-      const siteId = currentAdapter?.getSiteId() || "_default"
+      const siteId = adapter.getSiteId()
 
       // 确保站点配置有完整的默认值，但优先使用已有配置
       const existingSite = sites[siteId as keyof typeof sites] || sites._default
@@ -2324,7 +2324,7 @@ export const App = () => {
     return () => {
       themeManager.setOnModeChange(undefined)
     }
-  }, [themeManager, setSettings, isSettingsHydrated]) // 移除 settings?.theme 依赖，通过 ref 访问最新值
+  }, [adapter, themeManager, setSettings, isSettingsHydrated]) // 移除 settings?.theme 依赖，通过 ref 访问最新值
 
   const themeSites = settings?.theme?.sites
   const syncUnpin = settings?.features?.conversations?.syncUnpin
@@ -2353,8 +2353,7 @@ export const App = () => {
     if (!isSettingsHydrated) return // 等待 hydration 完成
 
     // 使用当前站点的配置而非 _default
-    const currentAdapter = getAdapter()
-    const siteId = currentAdapter?.getSiteId() || "_default"
+    const siteId = adapter.getSiteId()
     const siteTheme = themeSites?.[siteId as keyof typeof themeSites] || themeSites?._default
     const lightId = siteTheme?.lightStyleId
     const darkId = siteTheme?.darkStyleId
@@ -2362,7 +2361,7 @@ export const App = () => {
     if (lightId && darkId) {
       themeManager.setPresets(lightId, darkId)
     }
-  }, [themeSites, themeManager, isSettingsHydrated])
+  }, [adapter, themeSites, themeManager, isSettingsHydrated])
 
   // 监听自定义样式变化，同步到 ThemeManager
   useEffect(() => {
@@ -3191,6 +3190,7 @@ export const App = () => {
       />
 
       <QuickButtons
+        adapter={adapter}
         isPanelExpanded={isPanelExpanded}
         onPanelToggle={handlePanelToggle}
         onPanelLogoHoverStart={handlePanelLogoHoverStart}

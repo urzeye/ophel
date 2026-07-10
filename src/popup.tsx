@@ -50,12 +50,11 @@ function IndexPopup() {
       try {
         const parsed = typeof data.settings === "string" ? JSON.parse(data.settings) : data.settings
         const lang = parsed?.state?.global?.language || "auto"
-        setLanguage(lang)
+        void setLanguage(lang).finally(() => setLanguageReady(true))
       } catch (e) {
         console.error("Failed to load language setting:", e)
-        setLanguage("auto")
+        void setLanguage("auto").finally(() => setLanguageReady(true))
       }
-      setLanguageReady(true)
     })
 
     // Detect current tab's site

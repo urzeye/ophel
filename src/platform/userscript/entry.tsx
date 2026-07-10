@@ -368,21 +368,29 @@ injectYuanbaoMonacoWrap()
  * document-start 时 DOM 尚未就绪，需等待 document.readyState 变化
  */
 async function init() {
-  const [{ getAdapter }, { App }, { initNetworkMonitor }, { initGeminiTitleGuard }] =
-    await Promise.all([
-      import("~adapters"),
-      import("~components/App"),
-      import("~core/network-monitor"),
-      import("~core/gemini-title-guard"),
-    ])
+  const [
+    { loadAdapter },
+    { App },
+    { setAdapterRuntime },
+    { initNetworkMonitor },
+    { initGeminiTitleGuard },
+  ] = await Promise.all([
+    import("~adapters"),
+    import("~components/App"),
+    import("~core/adapter-runtime"),
+    import("~core/network-monitor"),
+    import("~core/gemini-title-guard"),
+  ])
 
   initGeminiTitleGuard()
 
-  const adapter = getAdapter()
+  const adapter = await loadAdapter()
 
   if (!adapter) {
     return
   }
+
+  setAdapterRuntime(adapter)
 
   // 初始化适配器
   adapter.afterPropertiesSet({})
@@ -478,7 +486,7 @@ async function init() {
           [],
         )
 
-        return React.createElement(App)
+        return React.createElement(App, { adapter })
       }
 
       const root = ReactDOM.createRoot(container)

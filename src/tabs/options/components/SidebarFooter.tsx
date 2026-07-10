@@ -68,7 +68,7 @@ export const SidebarFooter = ({ siteId = "_default" }: { siteId?: string }) => {
   // 切换语言
   const handleLanguageChange = (lang: string) => {
     setSettings({ language: lang })
-    setLanguage(lang)
+    void setLanguage(lang)
   }
 
   // 获取设置中的语言值和实际生效的语言

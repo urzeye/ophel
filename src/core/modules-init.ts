@@ -494,9 +494,10 @@ export function subscribeModuleUpdates(ctx: ModulesContext): () => void {
   return subscribeSettings((newSettings: Settings) => {
     if (newSettings.language && newSettings.language !== lastLanguage) {
       lastLanguage = newSettings.language
-      setLanguage(newSettings.language)
-      modules.assistantMermaidRenderer?.refreshLocalizedTexts()
-      modules.layoutManager?.refreshLocalizedTexts()
+      void setLanguage(newSettings.language).then(() => {
+        modules.assistantMermaidRenderer?.refreshLocalizedTexts()
+        modules.layoutManager?.refreshLocalizedTexts()
+      })
     }
 
     // 1. Theme Manager - 只更新主题预置

@@ -4,6 +4,7 @@
  */
 
 import type { ThemeManager } from "~core/theme-manager"
+import type { SiteAdapter } from "~adapters/base"
 
 declare global {
   interface OphelPendingPromptVariableDialogDetail {
@@ -22,6 +23,8 @@ declare global {
     ophelUserscriptInitialized?: boolean
     /** 全局 ThemeManager 实例 */
     __ophelThemeManager?: ThemeManager
+    /** 当前页面已加载的站点适配器 */
+    __ophelAdapterRuntime?: SiteAdapter
     /** 滚动锁定初始化标记 */
     __ophelScrollLockInitialized?: boolean
     /** 滚动锁定是否启用 */

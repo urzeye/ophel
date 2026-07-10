@@ -196,8 +196,8 @@ const OptionsPage = () => {
   // 当 settings 加载完成后，根据 settings.language 设置界面语言
   useEffect(() => {
     if (isHydrated && settings?.language) {
-      setLanguage(settings.language)
-      setLanguageReady(true)
+      setLanguageReady(false)
+      void setLanguage(settings.language).then(() => setLanguageReady(true))
     }
   }, [isHydrated, settings?.language])
 

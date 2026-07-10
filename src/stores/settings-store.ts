@@ -390,7 +390,7 @@ if (isExtension) {
           ) {
             import("~utils/i18n")
               .then(({ setLanguage }) => {
-                setLanguage(normalizedIncomingSettings.language)
+                void setLanguage(normalizedIncomingSettings.language)
               })
               .catch(() => {
                 // ignore

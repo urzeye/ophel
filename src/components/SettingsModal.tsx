@@ -144,7 +144,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   // 初始化语言
   useEffect(() => {
     if (isHydrated && settings?.language) {
-      setLanguage(settings.language)
+      void setLanguage(settings.language)
     }
   }, [isHydrated, settings?.language])
 
