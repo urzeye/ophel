@@ -397,16 +397,17 @@ async function init() {
   // 初始化适配器
   adapter.afterPropertiesSet({})
 
-  let mountObserver: MutationObserver | null = null
-  let mountInterval: number | null = null
+  let mountParentObserver: MutationObserver | null = null
+  let documentRootObserver: MutationObserver | null = null
+  const mountRetryTimers: number[] = []
 
   const cleanupMountWatchers = () => {
-    mountObserver?.disconnect()
-    mountObserver = null
-    if (mountInterval !== null) {
-      window.clearInterval(mountInterval)
-      mountInterval = null
-    }
+    mountParentObserver?.disconnect()
+    mountParentObserver = null
+    documentRootObserver?.disconnect()
+    documentRootObserver = null
+    mountRetryTimers.forEach((timer) => window.clearTimeout(timer))
+    mountRetryTimers.length = 0
   }
 
   const mountUserscriptApp = async () => {
@@ -428,8 +429,18 @@ async function init() {
               resolve()
             }
           })
-          observer.observe(document.documentElement, { childList: true, subtree: true })
+          observer.observe(document.documentElement, { childList: true, subtree: false })
         })
+      }
+
+      const observeMountParent = (parent: HTMLElement) => {
+        mountParentObserver?.disconnect()
+        mountParentObserver = new MutationObserver(() => {
+          if (!shadowHost.isConnected) {
+            doMount()
+          }
+        })
+        mountParentObserver.observe(parent, { childList: true, subtree: false })
       }
 
       const doMount = () => {
@@ -438,24 +449,21 @@ async function init() {
         if (shadowHost.parentElement !== parent) {
           parent.appendChild(shadowHost)
         }
+        observeMountParent(parent)
       }
 
       await waitForMountParent()
       doMount()
-      ;[250, 600, 1200, 2000, 3500, 5000].forEach((delay) => setTimeout(doMount, delay))
+      ;[250, 600, 1200, 2000, 3500, 5000].forEach((delay) => {
+        mountRetryTimers.push(window.setTimeout(doMount, delay))
+      })
 
-      mountObserver = new MutationObserver(() => {
-        if (!shadowHost.isConnected) {
+      documentRootObserver = new MutationObserver(() => {
+        if (shadowHost.parentElement !== getMountParent()) {
           doMount()
         }
       })
-      mountObserver.observe(document.documentElement, { childList: true, subtree: true })
-
-      mountInterval = window.setInterval(() => {
-        if (!shadowHost.isConnected) {
-          doMount()
-        }
-      }, 2000)
+      documentRootObserver.observe(document.documentElement, { childList: true, subtree: false })
 
       if (window.location.hostname.includes("chatglm.cn")) {
         shadowHost.classList.add("gh-site-chatglm")

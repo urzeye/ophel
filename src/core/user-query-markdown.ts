@@ -7,6 +7,7 @@
 
 import type { SiteAdapter } from "~adapters/base"
 import { SITE_IDS } from "~constants"
+import { PollingTaskRegistry } from "~core/polling-task-registry"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { initCopyButtons, showCopySuccess } from "~utils/icons"
 import { getHighlightStyles, getMathStyles, renderMarkdown } from "~utils/markdown"
@@ -474,7 +475,9 @@ export class UserQueryMarkdownRenderer {
   private enabled: boolean
   private processedElements = new WeakMap<Element, string>()
   private stopWatch: (() => void) | null = null
-  private rescanTimer: number | null = null
+  private readonly pollingTasks = new PollingTaskRegistry()
+  private readonly rescanTaskName = "user-query-markdown-rescan"
+  private initialRescanTimer: number | null = null
   private injectedShadowRoots = new WeakSet<ShadowRoot>()
   private codeCopyHandler: ((e: MouseEvent) => void) | null = null
 
@@ -614,18 +617,22 @@ export class UserQueryMarkdownRenderer {
    * 启动定时重扫描（用于 Shadow DOM 站点）
    */
   private startRescanTimer() {
-    if (this.rescanTimer) return
+    if (this.pollingTasks.isRunning(this.rescanTaskName)) return
 
     // 初始延迟后执行首次扫描
-    setTimeout(() => {
+    this.initialRescanTimer = window.setTimeout(() => {
+      this.initialRescanTimer = null
       if (this.enabled) this.rescan()
     }, INITIAL_DELAY)
 
-    // 定时重扫描
-    this.rescanTimer = window.setInterval(() => {
-      if (!this.enabled) return
-      this.rescan()
-    }, RESCAN_INTERVAL)
+    this.pollingTasks.start({
+      name: this.rescanTaskName,
+      intervalMs: RESCAN_INTERVAL,
+      runWhenHidden: false,
+      run: () => {
+        if (this.enabled) this.rescan()
+      },
+    })
   }
 
   /**
@@ -715,9 +722,10 @@ export class UserQueryMarkdownRenderer {
       this.stopWatch()
       this.stopWatch = null
     }
-    if (this.rescanTimer) {
-      clearInterval(this.rescanTimer)
-      this.rescanTimer = null
+    this.pollingTasks.stop(this.rescanTaskName)
+    if (this.initialRescanTimer !== null) {
+      window.clearTimeout(this.initialRescanTimer)
+      this.initialRescanTimer = null
     }
   }
 

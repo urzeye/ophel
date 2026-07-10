@@ -764,13 +764,16 @@ export function initUrlChangeObserver(ctx: ModulesContext): () => void {
   history.pushState = patchedPushState
   history.replaceState = patchedReplaceState
 
-  // 兜底定时器
-  const fallbackIntervalId = window.setInterval(handleUrlChange, 1000)
+  const fallbackIntervalId = adapter.usesUrlPollingFallback()
+    ? window.setInterval(handleUrlChange, 1000)
+    : null
 
   return () => {
     window.removeEventListener("popstate", handleUrlChange)
     window.removeEventListener("hashchange", handleUrlChange)
-    window.clearInterval(fallbackIntervalId)
+    if (fallbackIntervalId !== null) {
+      window.clearInterval(fallbackIntervalId)
+    }
 
     if (readingHistoryRestoreTimeoutId) {
       clearTimeout(readingHistoryRestoreTimeoutId)

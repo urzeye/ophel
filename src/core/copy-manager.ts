@@ -1,4 +1,5 @@
 import type { FormulaCopySource, SiteAdapter } from "~adapters/base"
+import { PollingTaskRegistry } from "~core/polling-task-registry"
 import { renderKatexToString } from "~platform/katex"
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { t } from "~utils/i18n"
@@ -34,7 +35,8 @@ export class CopyManager {
   private tableCopyInitialized = false
   private formulaDblClickHandler: ((e: MouseEvent) => void) | null = null
   private stopTableWatch: (() => void) | null = null
-  private rescanTimer: ReturnType<typeof setInterval> | null = null
+  private readonly pollingTasks = new PollingTaskRegistry()
+  private readonly tableRescanTaskName = "copy-manager-table-rescan"
 
   private static readonly FORMULA_HOST_SELECTOR = [
     ".math-block",
@@ -436,10 +438,12 @@ export class CopyManager {
     // 先做一次初始扫描
     this.rescanTables()
 
-    // 启动定时器
-    this.rescanTimer = setInterval(() => {
-      this.rescanTables()
-    }, TABLE_RESCAN_INTERVAL)
+    this.pollingTasks.start({
+      name: this.tableRescanTaskName,
+      intervalMs: TABLE_RESCAN_INTERVAL,
+      runWhenHidden: false,
+      run: () => this.rescanTables(),
+    })
   }
 
   /**
@@ -655,10 +659,7 @@ export class CopyManager {
     }
 
     // 停止定时扫描
-    if (this.rescanTimer) {
-      clearInterval(this.rescanTimer)
-      this.rescanTimer = null
-    }
+    this.pollingTasks.stop(this.tableRescanTaskName)
 
     const style = document.getElementById("gh-table-copy-style")
     if (style)

@@ -198,57 +198,116 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
   // ResizeObserver 精准监听输入框位置/大小变化
   useEffect(() => {
-    updatePosition()
-
     let observer: ResizeObserver | null = null
-    let targetEl: HTMLElement | null = null
+    let retryTimer: number | null = null
+    let scheduledFrame: number | null = null
 
-    const initObserver = () => {
-      targetEl = adapter.getTextareaElement()
+    const schedulePositionUpdate = () => {
+      if (scheduledFrame !== null) return
+      scheduledFrame = window.requestAnimationFrame(() => {
+        scheduledFrame = null
+        updatePosition()
+      })
+    }
+
+    const initObserver = (): boolean => {
+      const targetEl = adapter.getTextareaElement()
 
       if (targetEl) {
         const inputContainer = findInputContainer(targetEl)
-        observer = new ResizeObserver(() => {
-          updatePosition()
-        })
+        observer?.disconnect()
+        observer = new ResizeObserver(schedulePositionUpdate)
         observer.observe(targetEl)
         observer.observe(inputContainer)
         if (targetEl.parentElement) {
           observer.observe(targetEl.parentElement) // 监听父级尺寸变化
         }
+        schedulePositionUpdate()
+        return true
       }
+
+      return false
     }
 
-    // 初次尝试初始化
-    initObserver()
+    const scheduleObserverRetry = () => {
+      if (retryTimer !== null || document.hidden || observer) return
+      retryTimer = window.setTimeout(() => {
+        retryTimer = null
+        if (!initObserver()) scheduleObserverRetry()
+      }, 2000)
+    }
 
-    // 兜底轮询（防止页面动态加载输入框）
-    const intervalId = setInterval(() => {
-      updatePosition()
-      if (!observer && !targetEl) {
-        initObserver()
+    const resetObserver = () => {
+      observer?.disconnect()
+      observer = null
+      if (retryTimer !== null) {
+        window.clearTimeout(retryTimer)
+        retryTimer = null
       }
-    }, 2000)
+      if (!initObserver()) scheduleObserverRetry()
+    }
 
-    window.addEventListener("resize", updatePosition)
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (retryTimer !== null) {
+          window.clearTimeout(retryTimer)
+          retryTimer = null
+        }
+        return
+      }
+      if (!observer && !initObserver()) scheduleObserverRetry()
+      schedulePositionUpdate()
+    }
+
+    if (!initObserver()) scheduleObserverRetry()
+    window.addEventListener("resize", schedulePositionUpdate)
+    window.addEventListener("scroll", schedulePositionUpdate, true)
+    window.addEventListener("gh-url-change", resetObserver)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
 
     return () => {
-      clearInterval(intervalId)
-      window.removeEventListener("resize", updatePosition)
-      if (observer) {
-        observer.disconnect()
-      }
+      if (retryTimer !== null) window.clearTimeout(retryTimer)
+      if (scheduledFrame !== null) window.cancelAnimationFrame(scheduledFrame)
+      window.removeEventListener("resize", schedulePositionUpdate)
+      window.removeEventListener("scroll", schedulePositionUpdate, true)
+      window.removeEventListener("gh-url-change", resetObserver)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      observer?.disconnect()
     }
   }, [updatePosition, adapter, findInputContainer])
 
   // ==================== 生成状态监控 ====================
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setIsGenerating(adapter.isGenerating())
-    }, 1000)
-    return () => clearInterval(intervalId)
-  }, [adapter])
+    if (!isExpanded) {
+      setIsGenerating(false)
+      return
+    }
+
+    let intervalId: number | null = null
+    const updateGeneratingState = () => setIsGenerating(adapter.isGenerating())
+    const stopPolling = () => {
+      if (intervalId === null) return
+      window.clearInterval(intervalId)
+      intervalId = null
+    }
+    const startPolling = () => {
+      if (document.hidden || intervalId !== null) return
+      updateGeneratingState()
+      intervalId = window.setInterval(updateGeneratingState, 1000)
+    }
+    const handleVisibilityChange = () => {
+      if (document.hidden) stopPolling()
+      else startPolling()
+    }
+
+    startPolling()
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => {
+      stopPolling()
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [adapter, isExpanded])
 
   // ==================== 自定义快捷键 ====================
 

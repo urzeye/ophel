@@ -375,6 +375,11 @@ export abstract class SiteAdapter {
   /** 检测当前页面是否匹配该站点 */
   abstract match(): boolean
 
+  /** 仅当站点会绕过 history/hash/popstate 修改 URL 时启用轮询兜底 */
+  usesUrlPollingFallback(): boolean {
+    return false
+  }
+
   /** 返回站点标识符（用于配置存储） */
   abstract getSiteId(): string
 

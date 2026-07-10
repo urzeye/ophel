@@ -2421,6 +2421,7 @@ export const App: React.FC<AppProps> = ({ adapter }) => {
       return () => {
         window.removeEventListener("gh-url-change", onUrlChange)
         window.removeEventListener("ophel:refreshOutline", onRefreshOutline)
+        outlineManager.destroy()
         conversationManager?.destroy()
       }
     }

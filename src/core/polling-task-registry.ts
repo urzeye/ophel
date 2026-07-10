@@ -5,7 +5,7 @@ export interface PollingTaskOptions {
   intervalMs: number
   /** Called on each interval tick. Async work is intentionally fire-and-forget, matching setInterval semantics. */
   run: () => void | Promise<void>
-  /** When false, ticks are skipped while document.hidden is true. Defaults to true for behavior parity. */
+  /** When false, ticks are skipped while document.hidden is true. Defaults to false. */
   runWhenHidden?: boolean
 }
 
@@ -22,7 +22,7 @@ export class PollingTaskRegistry {
 
     const task: RegisteredPollingTask = {
       ...options,
-      runWhenHidden: options.runWhenHidden ?? true,
+      runWhenHidden: options.runWhenHidden ?? false,
       intervalId: setInterval(() => {
         if (!task.runWhenHidden && typeof document !== "undefined" && document.hidden) {
           return

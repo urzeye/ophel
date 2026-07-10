@@ -25,12 +25,12 @@ describe("PollingTaskRegistry", () => {
     expect(run).toHaveBeenCalledTimes(2)
   })
 
-  it("skips hidden document ticks when requested", () => {
+  it("skips hidden document ticks by default", () => {
     const registry = new PollingTaskRegistry()
     const run = vi.fn()
     const hiddenSpy = vi.spyOn(document, "hidden", "get").mockReturnValue(true)
 
-    registry.start({ name: "visible-only", intervalMs: 100, runWhenHidden: false, run })
+    registry.start({ name: "visible-only", intervalMs: 100, run })
     vi.advanceTimersByTime(250)
 
     expect(run).not.toHaveBeenCalled()
