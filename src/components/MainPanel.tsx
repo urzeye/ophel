@@ -11,13 +11,10 @@ import React, {
 import type { SiteAdapter } from "~adapters/base"
 import {
   AnchorIcon,
-  ConversationIcon,
   DragIcon,
   FloatingModeIcon,
   MinimizeIcon,
   NewTabIcon,
-  OutlineIcon,
-  PromptIcon,
   // RefreshIcon, (刷新按钮已注释掉)
   ScrollBottomIcon,
   ScrollTopIcon,
@@ -46,10 +43,8 @@ import { showToast } from "~utils/toast"
 import { OPHEL_FONT_FAMILY_CSS_VAR } from "~utils/font"
 import { anchorStore } from "~stores/anchor-store"
 
-import { ConversationsTab } from "./ConversationsTab"
 import { LoadingOverlay } from "./LoadingOverlay"
-import { OutlineTab } from "./OutlineTab"
-import { PromptsTab } from "./PromptsTab"
+import { PanelWorkspace } from "./panel/PanelWorkspace"
 import { Tooltip } from "~components/ui/Tooltip"
 
 interface MainPanelProps {
@@ -1483,83 +1478,33 @@ export const MainPanel: React.FC<MainPanelProps> = ({
             {t("tip1", { modifier: isMacOS() ? "⌘ Cmd" : "Ctrl" })}
           </span>
         </div>
-        <div className="gh-panel-tabs" role="tablist" aria-label={t("panelTitle")}>
-          {visibleTabs.map((tab) => {
-            let IconComp: React.FC<{ size?: number }> | null = null
-            if (tab === TAB_IDS.OUTLINE) IconComp = OutlineIcon
-            else if (tab === TAB_IDS.PROMPTS) IconComp = PromptIcon
-            else if (tab === TAB_IDS.CONVERSATIONS) IconComp = ConversationIcon
-
-            return (
-              <button
-                type="button"
-                key={tab}
-                id={`gh-panel-tab-${tab}`}
-                role="tab"
-                draggable={canDragPanelTabs}
-                aria-selected={activeTab === tab}
-                aria-controls={`gh-panel-tabpanel-${tab}`}
-                aria-grabbed={draggedPanelTab === tab}
-                className={`gh-panel-tab-btn ${activeTab === tab ? "active" : ""} ${canDragPanelTabs ? "is-draggable" : ""} ${draggedPanelTab === tab ? "is-dragging" : ""} ${dragOverPanelTab === tab ? "is-drag-over" : ""}`}
-                data-tip-target={
-                  tab === TAB_IDS.OUTLINE
-                    ? "outline-tab"
-                    : tab === TAB_IDS.CONVERSATIONS
-                      ? "conversations-tab"
-                      : tab === TAB_IDS.PROMPTS
-                        ? "prompts-tab"
-                        : undefined
-                }
-                onClick={() => handlePanelTabClick(tab)}
-                onKeyDown={(event) => handlePanelTabKeyDown(event, tab)}
-                onDragStart={(event) => handlePanelTabDragStart(event, tab)}
-                onDragOver={(event) => handlePanelTabDragOver(event, tab)}
-                onDragEnter={(event) => handlePanelTabDragOver(event, tab)}
-                onDragLeave={() => {
-                  if (dragOverPanelTab === tab) {
-                    setDragOverPanelTab(null)
-                  }
-                }}
-                onDrop={(event) => handlePanelTabDrop(event, tab)}
-                onDragEnd={resetPanelTabDragState}>
-                <span className="gh-panel-tab-btn-icon">{IconComp && <IconComp size={16} />}</span>
-                <span className="gh-panel-tab-btn-label">
-                  {t(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`)}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Content - 内容区 */}
-        <div
-          id={`gh-panel-tabpanel-${activeTab}`}
-          className="gh-panel-content"
-          role="tabpanel"
-          aria-labelledby={`gh-panel-tab-${activeTab}`}>
-          {activeTab === TAB_IDS.PROMPTS && (
-            <PromptsTab
-              manager={promptManager}
-              adapter={adapter}
-              selectedPromptId={selectedPromptId}
-              onPromptSelect={onPromptSelect}
-            />
-          )}
-          {activeTab === TAB_IDS.CONVERSATIONS && (
-            <ConversationsTab
-              manager={conversationManager}
-              onInteractionStateChange={onInteractionStateChange}
-            />
-          )}
-          {activeTab === TAB_IDS.OUTLINE && (
-            <OutlineTab
-              manager={outlineManager}
-              conversationManager={conversationManager}
-              onJumpBefore={saveAnchor}
-              isCodexOpen={showCodex}
-            />
-          )}
-        </div>
+        <PanelWorkspace
+          visibleTabs={visibleTabs}
+          activeTab={activeTab}
+          canDragTabs={canDragPanelTabs}
+          draggedTab={draggedPanelTab}
+          dragOverTab={dragOverPanelTab}
+          promptManager={promptManager}
+          conversationManager={conversationManager}
+          outlineManager={outlineManager}
+          adapter={adapter}
+          selectedPromptId={selectedPromptId}
+          onPromptSelect={onPromptSelect}
+          onInteractionStateChange={onInteractionStateChange}
+          onJumpBefore={saveAnchor}
+          isCodexOpen={showCodex}
+          onTabClick={handlePanelTabClick}
+          onTabKeyDown={handlePanelTabKeyDown}
+          onTabDragStart={handlePanelTabDragStart}
+          onTabDragOver={handlePanelTabDragOver}
+          onTabDragLeave={(tab) => {
+            if (dragOverPanelTab === tab) {
+              setDragOverPanelTab(null)
+            }
+          }}
+          onTabDrop={handlePanelTabDrop}
+          onTabDragEnd={resetPanelTabDragState}
+        />
 
         {/* Footer - 底部固定按钮 */}
         <div className="gh-panel-footer">

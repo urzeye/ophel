@@ -10,16 +10,13 @@ import React, {
 import type { SiteAdapter } from "~adapters/base"
 import { SITE_IDS } from "~constants/defaults"
 import {
-  ConversationManager,
-  type ConversationExportProgress,
   type ConversationExportStage,
   type ConversationSegmentedExportDraft,
   type ConversationSegmentedExportMode,
 } from "~core/conversation-manager"
 import { InlineBookmarkManager } from "~core/inline-bookmark-manager"
-import { OutlineManager, type OutlineNode } from "~core/outline-manager"
-import { AI_STUDIO_SHORTCUT_SYNC_EVENT, PromptManager } from "~core/prompt-manager"
-import { QueueDispatcher } from "~core/queue-dispatcher"
+import type { OutlineNode } from "~core/outline-manager"
+import { AI_STUDIO_SHORTCUT_SYNC_EVENT } from "~core/prompt-manager"
 import { QuickQuoteActions } from "~components/QuickQuoteActions"
 import { ensureGlobalThemeManager, type ThemeTransitionOrigin } from "~core/theme-manager"
 import { useEdgePeekController } from "~hooks/useEdgePeekController"
@@ -61,6 +58,8 @@ import { QuickButtons } from "./QuickButtons"
 import { SelectedPromptBar } from "./SelectedPromptBar"
 import { SegmentedExportDialog } from "./SegmentedExportDialog"
 import { SettingsModal } from "./SettingsModal"
+import { ExtensionUpdateNotice } from "./app/ExtensionUpdateNotice"
+import { useAppRuntimeManagers } from "./app/useAppRuntimeManagers"
 import { GlobalSearchOverlay } from "./global-search/GlobalSearchOverlay"
 import { GlobalSearchResultItemView } from "./global-search/GlobalSearchResultItemView"
 import {
@@ -409,61 +408,8 @@ export const App: React.FC<AppProps> = ({ adapter }) => {
     [getLocalizedText, getPageLabel, getSubTabLabel],
   )
 
-  const promptManager = useMemo(() => {
-    return adapter ? new PromptManager(adapter) : null
-  }, [adapter])
-
-  const queueDispatcher = useMemo(() => {
-    return adapter && promptManager ? new QueueDispatcher(adapter, promptManager) : null
-  }, [adapter, promptManager])
-
-  // QueueDispatcher lifecycle
-  useEffect(() => {
-    if (!queueDispatcher) return
-    const isQueueEnabled = settings?.features?.prompts?.promptQueue ?? false
-    if (isQueueEnabled) {
-      queueDispatcher.start()
-    } else {
-      queueDispatcher.stop()
-    }
-    return () => queueDispatcher.stop()
-  }, [queueDispatcher, settings?.features?.prompts?.promptQueue])
-
-  const conversationManager = useMemo(() => {
-    return adapter ? new ConversationManager(adapter) : null
-  }, [adapter])
-  const [exportProgress, setExportProgress] = useState<ConversationExportProgress | null>(null)
-
-  useEffect(() => {
-    if (!conversationManager) {
-      setExportProgress(null)
-      return
-    }
-
-    setExportProgress(null)
-    return conversationManager.onExportProgress(setExportProgress)
-  }, [conversationManager])
-
-  const outlineManager = useMemo(() => {
-    if (!adapter) return null
-
-    // 使用 Zustand 的 updateDeepSetting
-    const handleExpandLevelChange = (level: number) => {
-      updateDeepSetting("features", "outline", "expandLevel", level)
-    }
-
-    const handleShowUserQueriesChange = (show: boolean) => {
-      updateDeepSetting("features", "outline", "showUserQueries", show)
-    }
-
-    return new OutlineManager(
-      adapter,
-      settings?.features?.outline ?? DEFAULT_SETTINGS.features.outline,
-      handleExpandLevelChange,
-      handleShowUserQueriesChange,
-    )
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在 adapter 变化时重新创建
-  }, [adapter, updateDeepSetting])
+  const { promptManager, queueDispatcher, conversationManager, outlineManager, exportProgress } =
+    useAppRuntimeManagers({ adapter, settings, updateDeepSetting })
 
   // 面板展开状态：true 表示面板没有收进快捷按钮组，和悬浮/吸附模式无关
   const [isPanelExpanded, setIsPanelExpandedState] = useState(false)
@@ -3132,10 +3078,6 @@ export const App: React.FC<AppProps> = ({ adapter }) => {
     />
   )
 
-  if (!adapter || !promptManager || !conversationManager || !outlineManager) {
-    return null
-  }
-
   const edgeTriggerMode = settings?.panel?.edgeTriggerMode ?? DEFAULT_SETTINGS.panel.edgeTriggerMode
   const shouldRenderEdgeHoverZone =
     isPanelExpanded &&
@@ -3569,48 +3511,14 @@ export const App: React.FC<AppProps> = ({ adapter }) => {
         blockPageInteraction
       />
       {showExtensionUpdateNotice && (
-        <section className="gh-update-notice gh-interactive" role="status" aria-live="polite">
-          <button
-            type="button"
-            className="gh-update-notice-close"
-            aria-label={extensionUpdateCloseLabel}
-            onClick={handleDismissExtensionUpdateNotice}>
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round">
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
-          </button>
-          <div className="gh-update-notice-kicker">
-            <svg
-              className="gh-update-notice-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round">
-              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-            </svg>
-            {extensionUpdateKickerText}
-          </div>
-          <p className="gh-update-notice-message">{extensionUpdateDescription}</p>
-          <div className="gh-update-notice-actions">
-            <button
-              type="button"
-              className="gh-update-notice-button gh-update-notice-button--primary"
-              onClick={handleReloadAfterExtensionUpdate}>
-              {extensionUpdateActionLabel}
-            </button>
-          </div>
-        </section>
+        <ExtensionUpdateNotice
+          kicker={extensionUpdateKickerText}
+          description={extensionUpdateDescription}
+          actionLabel={extensionUpdateActionLabel}
+          closeLabel={extensionUpdateCloseLabel}
+          onReload={handleReloadAfterExtensionUpdate}
+          onDismiss={handleDismissExtensionUpdateNotice}
+        />
       )}
       <DisclaimerModal />
     </div>
