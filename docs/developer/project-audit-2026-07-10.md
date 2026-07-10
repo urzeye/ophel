@@ -22,6 +22,47 @@
 | P2 | 10 | 中期必须修复，存在竞态、泄漏、长期维护或一致性风险 |
 | P3 | 5 | 清理和治理项，可随相关模块修改一起完成 |
 
+### 1.1 Remediation 状态（2026-07-10）
+
+下表记录本审计对应修复分支的最终状态。后续章节中的体积、代码位置和建议保留为“修复前证据”，不再代表当前实现。
+
+| ID | 状态 | 修复结果 |
+| --- | --- | --- |
+| P1-01 | 已完成 | 适配器改为 hostname/path 轻量路由与动态 import；main/UI 共享 adapter runtime；应用语言按需加载。 |
+| P1-02 | 已完成 | 建立 Shadow Root 内唯一 overlay root；Dialog、Menu、Tooltip、Loading、Queue、Prompt 覆盖层统一使用该目标。 |
+| P1-03 | 已完成 | userscript 移除全树永久 observer + 2 秒 interval，改为直接父级 observer 和有界重挂载。 |
+| P1-04 | 已完成 | SelectedPromptBar 改为事件触发和最长 700 ms 有界几何跟踪，不再永久 rAF。 |
+| P1-05 | 已完成 | Options 增加 900/720/640 px 整体断点；600 px 浏览器冒烟无横向溢出。 |
+| P1-06 | 已完成 | Switch/ToggleRow 建立 label、ARIA、整行点击和 `focus-visible`，并有键盘测试。 |
+| P2-01 | 已完成 | 100 ms 全局禁写窗口替换为精确 persist write gate，并有竞态回归测试。 |
+| P2-02 | 已完成 | OutlineManager 增加幂等 destroy，释放事件、store subscription、timer 和 observer。 |
+| P2-03 | 已完成 | ModelLocker 跟踪并取消启动/防抖/验证任务，覆盖关闭和重启场景。 |
+| P2-04 | 已完成 | URL 轮询默认关闭，仅允许 adapter 显式 opt-in fallback。 |
+| P2-05 | 已完成 | Copy、Mermaid、User Query Markdown、Usage、Layout 等周期任务迁移到 PollingTaskRegistry，隐藏页默认暂停。 |
+| P2-06 | 已完成 | 抽出 App runtime managers、MainPanel workspace、Outline 虚拟树和 Prompt chain 样式模块；四个入口分别降至 3526/1557/1677/2642 行。 |
+| P2-07 | 已完成 | SettingsModal 与 Options 共享九项导航，独立 Options 展示外观、全局搜索和快捷键。 |
+| P2-08 | 已完成 | 已确认的硬编码 UI/ARIA 文案全部 i18n 化，并由 11 语 key 一致性测试保护。 |
+| P2-09 | 已完成 | 新增主题 token 校验；101 个引用和 85 个全局 token 默认值通过，24 套预置有测试。 |
+| P2-10 | 已完成 | 引入 Vitest；当前 17 个测试文件、41 项测试覆盖路由、迁移、生命周期、搜索、备份、主题和关键 UI。 |
+| P3-01 | 已完成 | 删除无引用 userscript Chrome polyfill 和不完整 Options barrel。 |
+| P3-02 | 已完成 | scroll-lock 业务逻辑集中到 `src/core/scroll-lock-runtime.ts`，两平台只保留入口桥接。 |
+| P3-03 | 已完成 | Conversation Dialog 复用通用 Dialog primitive，统一焦点、ESC、ARIA 和 Shadow overlay。 |
+| P3-04 | 已完成 | 110 条 warning 清零，`lint:check` 启用 `--max-warnings=0`。 |
+| P3-05 | 已完成 | 更新 architecture、CSS、Options 文档，删除被本审计或最终性能审计完全取代的历史计划。 |
+
+### 1.2 最终体积与门禁
+
+修复后生产构建：
+
+| 产物 | 原始大小 | gzip |
+| --- | ---: | ---: |
+| `main.*.js` | 1,507,680 B | — |
+| `ui-entry.*.js` | 2,257,230 B | — |
+| 两个扩展内容脚本合计 | 3,764,910 B | 约 975.4 KiB |
+| `ophel.user.js` | 1,854,752 B | 约 472.0 KiB |
+
+扩展内容脚本 raw 合计相对审计基线下降约 **49.8%**，超过 40% 完成指标。`scripts/check-bundle-budget.mjs` 对扩展内容入口与 userscript 同时设置 raw/gzip 上限，生产构建后可运行 `pnpm check:bundle-budget`。
+
 ## 2. 审查方法与证据
 
 ### 2.1 静态与构建检查
@@ -440,4 +481,3 @@
 - 24 套主题和自定义主题下，所有 overlay/portal 组件颜色一致。
 - 核心 manager 均具备可验证的 start/update/stop 或 destroy 生命周期。
 - 新增测试覆盖设置迁移、主题 token 和关键生命周期。
-

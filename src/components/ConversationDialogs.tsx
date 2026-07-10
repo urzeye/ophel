@@ -38,10 +38,7 @@ interface DialogOverlayProps {
   onClose: () => void
 }
 
-/**
- * 对话框覆盖层 - 使用 Portal 渲染到 document.body
- * 这样对话框会出现在面板外面，覆盖整个页面
- */
+/** 会话业务样式包装；焦点、ESC、ARIA 与 Shadow Portal 由通用 DialogOverlay 负责。 */
 export const DialogOverlay: React.FC<DialogOverlayProps> = ({ children, onClose }) => {
   return (
     <BaseDialogOverlay
