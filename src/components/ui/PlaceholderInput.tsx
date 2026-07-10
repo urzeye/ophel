@@ -6,6 +6,8 @@
  */
 import React, { useCallback, useEffect, useRef } from "react"
 
+import { t } from "~utils/i18n"
+
 export interface PlaceholderInputProps {
   value: string
   onChange: (value: string) => void
@@ -173,7 +175,7 @@ export const PlaceholderInput: React.FC<PlaceholderInputProps> = ({
         />
       </div>
 
-      <div className="placeholder-input-list" aria-label="Title format placeholders">
+      <div className="placeholder-input-list" aria-label={t("titleFormatPlaceholders")}>
         {placeholders.map((token) => (
           <button
             key={token}

@@ -138,7 +138,7 @@ const ModelLockRow: React.FC<{
           }}
         />
       </div>
-      <Switch checked={currentConfig.enabled} onChange={toggleEnabled} />
+      <Switch checked={currentConfig.enabled} onChange={toggleEnabled} ariaLabel={label} />
     </div>
   )
 }
@@ -232,6 +232,7 @@ const AIStudioModelLockRow: React.FC<{
       <Tooltip content={t("aistudioRefreshModelListTooltip")}>
         <button
           className="icon-button"
+          aria-label={t("aistudioRefreshModelListTooltip")}
           onClick={handleRefresh}
           disabled={isLoading}
           style={{
@@ -273,7 +274,7 @@ const AIStudioModelLockRow: React.FC<{
           ))}
         </select>
       </div>
-      <Switch checked={currentConfig.enabled} onChange={toggleEnabled} />
+      <Switch checked={currentConfig.enabled} onChange={toggleEnabled} ariaLabel="AI Studio" />
     </div>
   )
 }

@@ -1744,8 +1744,8 @@ const ConversationItem = React.memo<ConversationItemProps>(
                   />
                 )}
                 {searchQuery && searchResult?.conversationMatches.has(conv.id)
-                  ? highlightText(conv.title || "无标题", searchQuery)
-                  : conv.title || "无标题"}
+                  ? highlightText(conv.title || t("untitledConversation"), searchQuery)
+                  : conv.title || t("untitledConversation")}
               </span>
             </Tooltip>
 

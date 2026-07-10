@@ -90,7 +90,9 @@ const SortableItem: React.FC<{
     {iconNode && <span className="settings-sortable-item-icon">{iconNode}</span>}
     <span className="settings-sortable-item-label">{label}</span>
     <div className="settings-sortable-item-actions">
-      {showToggle && <Switch checked={enabled} onChange={() => onToggle?.()} size="sm" />}
+      {showToggle && (
+        <Switch checked={enabled} onChange={() => onToggle?.()} size="sm" ariaLabel={label} />
+      )}
     </div>
   </div>
 )
@@ -576,6 +578,7 @@ const GeneralPage: React.FC<GeneralPageProps> = ({
                     </div>
                     <Switch
                       checked={isHoverResizeEnabled}
+                      ariaLabel={t("panelResizeOnHoverLabel")}
                       onChange={() =>
                         updateNestedSetting("panel", "resizeOnHover", !isHoverResizeEnabled)
                       }

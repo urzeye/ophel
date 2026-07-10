@@ -63,3 +63,5 @@ export {
   type ToolsMenuItem,
   type ToolsMenuId,
 } from "./tools-menu"
+
+export { SETTINGS_NAV_ITEMS, getSettingsNavigationItems } from "./settings-navigation"

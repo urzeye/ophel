@@ -4,16 +4,7 @@
  */
 import React, { useEffect, useRef, useState } from "react"
 
-import {
-  AboutIcon,
-  AppearanceIcon,
-  BackupIcon,
-  FeaturesIcon,
-  GeneralIcon,
-  PageContentIcon,
-  PermissionsIcon,
-} from "~components/icons"
-import { resolveSettingsNavigateDetail } from "~constants"
+import { getSettingsNavigationItems, NAV_IDS, resolveSettingsNavigateDetail } from "~constants"
 import { platform } from "~platform"
 import { useSettingsHydrated, useSettingsStore } from "~stores/settings-store"
 import { APP_DISPLAY_NAME, APP_ICON_URL } from "~utils/config"
@@ -26,9 +17,11 @@ import AboutPage from "./options/pages/AboutPage"
 import AppearancePage from "./options/pages/AppearancePage"
 import BackupPage from "./options/pages/BackupPage"
 import FeaturesPage from "./options/pages/FeaturesPage"
+import GlobalSearchPage from "./options/pages/GlobalSearchPage"
 // 页面组件
 import GeneralPage from "./options/pages/GeneralPage"
 import PermissionsPage from "./options/pages/PermissionsPage"
+import ShortcutsPage from "./options/pages/ShortcutsPage"
 import SiteSettingsPage from "./options/pages/SiteSettingsPage"
 // 样式
 import "./options.css"
@@ -36,42 +29,8 @@ import "~styles/overlays.css"
 
 import { SidebarFooter } from "./options/components/SidebarFooter"
 
-// 图标组件
-
-// 导航菜单定义
-const NAV_ITEMS = [
-  // 导航项定义
-  {
-    id: "general",
-    Icon: GeneralIcon,
-    labelKey: "navGeneral",
-    label: "基本设置",
-  },
-  { id: "features", Icon: FeaturesIcon, labelKey: "navFeatures", label: "功能模块" },
-  {
-    id: "siteSettings",
-    Icon: PageContentIcon,
-    labelKey: "navSiteSettings",
-    label: "站点设置",
-  },
-  {
-    id: "appearance",
-    Icon: AppearanceIcon,
-    labelKey: "navAppearance",
-    label: "外观主题",
-  },
-  { id: "backup", Icon: BackupIcon, labelKey: "navBackup", label: "备份与同步" },
-  {
-    id: "permissions",
-    Icon: PermissionsIcon,
-    labelKey: "navPermissions",
-    label: "权限管理",
-  },
-  { id: "about", Icon: AboutIcon, labelKey: "navAbout", label: "关于" },
-]
-
 const OptionsPage = () => {
-  const [activePage, setActivePage] = useState("general")
+  const [activePage, setActivePage] = useState<string>(NAV_IDS.GENERAL)
   const [initialSubTab, setInitialSubTab] = useState<string | undefined>(undefined)
   const [locateRequest, setLocateRequest] = useState<{ settingId: string; token: number } | null>(
     null,
@@ -90,7 +49,12 @@ const OptionsPage = () => {
         settingId: params.get("settingId") || undefined,
       })
 
-      if (resolved.page && NAV_ITEMS.some((item) => item.id === resolved.page)) {
+      if (
+        resolved.page &&
+        getSettingsNavigationItems(platform.hasCapability("permissions")).some(
+          (item) => item.id === resolved.page,
+        )
+      ) {
         setActivePage(resolved.page)
       }
 
@@ -232,6 +196,10 @@ const OptionsPage = () => {
         return <SiteSettingsPage siteId={siteId} initialTab={initialSubTab} />
       case "features":
         return <FeaturesPage siteId={siteId} initialTab={initialSubTab} />
+      case "globalSearch":
+        return <GlobalSearchPage siteId={siteId} />
+      case "shortcuts":
+        return <ShortcutsPage siteId={siteId} />
       case "permissions":
         return <PermissionsPage siteId={siteId} />
       case "backup":
@@ -249,17 +217,7 @@ const OptionsPage = () => {
     }
   }
 
-  // 检测是否在独立 Options 页面（非 content script 环境）
-  // 如果是独立页面，不显示外观主题菜单（因为主题是按站点配置的）
-  const isStandalonePage = !window.__ophelThemeManager
-
-  // 在独立页面中过滤掉 appearance 导航项
-  // 在油猴脚本环境中过滤掉 permissions 导航项（因为没有权限 API）
-  const filteredNavItems = NAV_ITEMS.filter((item) => {
-    if (isStandalonePage && item.id === "appearance") return false
-    if (!platform.hasCapability("permissions") && item.id === "permissions") return false
-    return true
-  })
+  const filteredNavItems = getSettingsNavigationItems(platform.hasCapability("permissions"))
 
   return (
     <div className={`settings-layout ${platformFontClassName}`}>

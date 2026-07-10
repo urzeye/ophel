@@ -1625,6 +1625,11 @@ export const it = {
   queueQuickAsk: "Coda di richiesta",
   queueInQueue: "In coda ({count})",
   queueEmpty: "La coda è vuota. Digita e premi Enter per inviare o accodare.",
+  queueEmptyShortcut:
+    "La coda è vuota. Digita il contenuto e premi {shortcut} per inviare o accodare.",
+  activeSearchFilters: "Filtri di ricerca attivi",
+  titleFormatPlaceholders: "Segnaposto del formato del titolo",
+  noOptions: "Nessuna opzione",
   queueClearAll: "Cancella coda",
   queueRemove: "Rimuovi",
   queuePlaceholderIdle: "Digita un messaggio, Enter per inviare...",

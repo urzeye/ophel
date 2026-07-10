@@ -1548,6 +1548,11 @@ export const ru = {
   queueQuickAsk: "Очередь промптов",
   queueInQueue: "В очереди ({count})",
   queueEmpty: "Очередь пуста. Введите и нажмите Enter для отправки или добавления",
+  queueEmptyShortcut:
+    "Очередь пуста. Введите текст и нажмите {shortcut}, чтобы отправить или добавить в очередь.",
+  activeSearchFilters: "Активные фильтры поиска",
+  titleFormatPlaceholders: "Заполнители формата заголовка",
+  noOptions: "Нет доступных вариантов",
   queueClearAll: "Очистить всё",
   queueRemove: "Удалить",
   queuePlaceholderIdle: "Введите промпт, Enter для отправки...",

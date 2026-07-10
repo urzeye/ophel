@@ -2,6 +2,7 @@ import React from "react"
 
 import { SearchIcon } from "~components/icons"
 import { attachEditableKeyboardFocusGuard } from "~utils/dom-toolkit"
+import { t } from "~utils/i18n"
 
 import type { GlobalSearchSyntaxSuggestionItem } from "./types"
 
@@ -283,7 +284,7 @@ export const GlobalSearchOverlay = <TItem, TCategoryId extends string>(
         </div>
 
         {activeFilterChips.length > 0 ? (
-          <div className="settings-search-filter-chips" aria-label="active search filters">
+          <div className="settings-search-filter-chips" aria-label={t("activeSearchFilters")}>
             {activeFilterChips.map((chip) => (
               <button
                 key={chip.id}

@@ -82,6 +82,7 @@
   flex: 1;
   padding: 12px 10px;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -3552,4 +3553,175 @@ html[data-theme="dark"] .about-privacy-banner {
   color: var(--gh-text-secondary, #6b7280);
   font-size: 12px;
   background: var(--gh-bg-secondary, #f9fafb);
+}
+
+/* ==================== 整体响应式布局 ==================== */
+
+@media (max-width: 900px) {
+  .settings-sidebar {
+    width: 188px;
+  }
+
+  .settings-content {
+    min-width: 0;
+    padding: 20px 22px;
+  }
+
+  .settings-modal-container .settings-content {
+    padding-right: 44px;
+  }
+}
+
+@media (max-width: 720px) {
+  .settings-layout,
+  .settings-modal-container {
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .settings-modal-container,
+  .settings-modal-container.maximized {
+    width: calc(100vw - 20px);
+    height: calc(100vh - 20px);
+    max-width: none;
+    max-height: none;
+    border-radius: 14px;
+  }
+
+  .settings-sidebar,
+  .settings-modal-container .settings-sidebar {
+    width: 100%;
+    height: auto;
+    flex: 0 0 auto;
+    border-right: none;
+    border-bottom: 1px solid var(--gh-border, #e5e7eb);
+    border-radius: 0;
+  }
+
+  .settings-sidebar-header {
+    padding: 10px 14px 8px;
+  }
+
+  .settings-sidebar-logo {
+    gap: 9px;
+    font-size: 15px;
+  }
+
+  .settings-sidebar-logo img {
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+  }
+
+  .settings-sidebar-nav {
+    flex: 0 0 auto;
+    flex-direction: row;
+    gap: 6px;
+    padding: 8px 12px 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+  }
+
+  .settings-nav-item {
+    width: auto;
+    flex: 0 0 auto;
+    gap: 7px;
+    margin: 0;
+    padding: 9px 11px;
+    white-space: nowrap;
+  }
+
+  .settings-nav-item:hover {
+    transform: none;
+  }
+
+  .settings-nav-item.active::before {
+    top: auto;
+    right: 10px;
+    bottom: 0;
+    left: 10px;
+    width: auto;
+    height: 3px;
+    transform: none;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .settings-nav-item-icon {
+    width: 20px;
+  }
+
+  .settings-nav-item-label {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+
+  .settings-sidebar-nav .sidebar-community-links,
+  .settings-sidebar-footer {
+    display: none;
+  }
+
+  .settings-content,
+  .settings-modal-container .settings-content {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 auto;
+    padding: 18px;
+    overflow-x: hidden;
+  }
+
+  .settings-tab-group {
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+  }
+
+  .settings-tab-item {
+    flex: 0 0 auto;
+    min-width: max-content;
+    padding-inline: 14px;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 640px) {
+  .settings-content,
+  .settings-modal-container .settings-content {
+    padding: 14px 12px;
+  }
+
+  .settings-card {
+    padding: 16px;
+  }
+
+  .settings-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .settings-row-control {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .settings-row-control > .gh-switch {
+    margin-left: auto;
+  }
+
+  .settings-row-control .settings-input,
+  .settings-row-control select,
+  .settings-row-control textarea {
+    max-width: 100%;
+  }
+
+  .settings-page-title {
+    font-size: 21px;
+  }
+
+  .settings-page-desc {
+    margin-bottom: 18px;
+  }
 }
