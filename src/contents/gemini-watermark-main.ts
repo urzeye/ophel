@@ -100,18 +100,19 @@ if (!window.__ophelGeminiWatermarkMainInitialized) {
 
     const normalizedUrl = normalizeGeminiImageUrl(requestUrl)
 
-    const nextArgs = [...args] as Parameters<typeof fetch>
-    if (typeof nextArgs[0] === "string") {
-      nextArgs[0] = normalizedUrl as any
-    } else if (nextArgs[0] instanceof Request) {
-      nextArgs[0] = new Request(normalizedUrl, nextArgs[0]) as any
-    }
+    const [input, init] = args
+    const normalizedInput =
+      typeof input === "string"
+        ? normalizedUrl
+        : input instanceof Request
+          ? new Request(normalizedUrl, input)
+          : input
 
     let originalResponse: Response | null = null
     let originalBlob: Blob | null = null
 
     try {
-      originalResponse = await originalFetch(...nextArgs)
+      originalResponse = await originalFetch(normalizedInput, init)
       if (!originalResponse.ok) {
         return originalResponse
       }

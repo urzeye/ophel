@@ -921,22 +921,25 @@ class DOMToolkitClass {
   /**
    * 创建 DOM 元素
    */
-  create(tag: string, attributes: Record<string, any> = {}, textContent = ""): HTMLElement {
+  create(tag: string, attributes: Record<string, unknown> = {}, textContent = ""): HTMLElement {
     const element = this.doc.createElement(tag)
 
     for (const [key, value] of Object.entries(attributes)) {
       if (key === "className") {
-        element.className = value
-      } else if (key === "style" && typeof value === "object") {
+        element.className = String(value)
+      } else if (key === "style" && typeof value === "object" && value !== null) {
         Object.assign(element.style, value)
       } else if (key === "style") {
-        element.setAttribute("style", value)
-      } else if (key === "dataset" && typeof value === "object") {
+        element.setAttribute("style", String(value))
+      } else if (key === "dataset" && typeof value === "object" && value !== null) {
         Object.assign(element.dataset, value)
       } else if (key.startsWith("on") && typeof value === "function") {
-        element.addEventListener(key.slice(2).toLowerCase(), value)
+        element.addEventListener(
+          key.slice(2).toLowerCase(),
+          value as EventListenerOrEventListenerObject,
+        )
       } else {
-        element.setAttribute(key, value)
+        element.setAttribute(key, String(value))
       }
     }
 

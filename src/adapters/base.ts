@@ -1275,11 +1275,12 @@ export abstract class SiteAdapter {
    * 默认使用 scrollIntoView；子类可覆盖以避免外层容器被意外滚动（如 Shadow DOM 场景）。
    */
   scrollToOutlineTarget(element: HTMLElement): void {
-    element.scrollIntoView({
+    const options: ScrollIntoViewOptions & { __bypassLock: boolean } = {
       behavior: "instant",
       block: "start",
       __bypassLock: true,
-    } as any)
+    }
+    element.scrollIntoView(options)
   }
 
   getOutlineScrollContainer(_sourceId = "conversation"): HTMLElement | null {

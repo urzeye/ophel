@@ -21,7 +21,17 @@ import {
   MSG_WEBDAV_REQUEST,
   type ExtensionMessage,
 } from "~utils/messaging"
-import { localStorage, type Settings } from "~utils/storage"
+import {
+  localStorage,
+  type ClaudeSessionKey,
+  type ClaudeSessionKeysState,
+  type Settings,
+} from "~utils/storage"
+
+interface PersistedClaudeSessionKeys {
+  state: ClaudeSessionKeysState
+  version?: number
+}
 
 /**
  * Ophel - Background Service Worker
@@ -315,7 +325,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
     case MSG_WEBDAV_REQUEST:
       ;(async () => {
         try {
-          const { method, url, body, headers, auth } = message as any
+          const { method, url, body, headers, auth } = message
           const fetchHeaders: Record<string, string> = { ...headers }
 
           // 添加 Basic Auth
@@ -350,7 +360,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
     case MSG_CHECK_PERMISSION:
       ;(async () => {
         try {
-          const { origin } = message as any
+          const { origin } = message
           const hasPermission = await chrome.permissions.contains({
             origins: [origin],
           })
@@ -366,7 +376,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
     case MSG_CHECK_PERMISSIONS:
       ;(async () => {
         try {
-          const { origins, permissions } = message as any
+          const { origins, permissions } = message
           const hasPermission = await chrome.permissions.contains({
             origins,
             permissions,
@@ -383,7 +393,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
     case MSG_REVOKE_PERMISSIONS:
       ;(async () => {
         try {
-          const { origins, permissions } = message as any
+          const { origins, permissions } = message
           const removed = await chrome.permissions.remove({
             origins,
             permissions,
@@ -404,9 +414,9 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
         try {
           // 支持 permType 或从 origins/permissions 推断类型
           const VALID_PERM_TYPES = ["allUrls", "notifications", "cookies"] as const
-          let permType: string = (message as any).permType
+          let permType: string = message.permType || ""
           if (!permType) {
-            const { origins, permissions } = message as any
+            const { origins, permissions } = message
             if (origins?.includes("<all_urls>")) {
               permType = "allUrls"
             } else if (permissions?.includes("notifications")) {
@@ -418,7 +428,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
             }
           }
           // 白名单校验，防止非法值
-          if (!VALID_PERM_TYPES.includes(permType as any)) {
+          if (!VALID_PERM_TYPES.some((validType) => validType === permType)) {
             permType = "allUrls"
           }
           const url = chrome.runtime.getURL(
@@ -471,7 +481,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
     case MSG_OPEN_URL:
       ;(async () => {
         try {
-          const { url } = message as any
+          const { url } = message
           await chrome.tabs.create({
             url,
             active: true,
@@ -511,7 +521,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
     case MSG_SET_CLAUDE_SESSION_KEY:
       ;(async () => {
         try {
-          const { key } = message as any
+          const { key } = message
 
           if (key) {
             // 设置cookie
@@ -553,7 +563,8 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
         try {
           // 1. 获取所有 keys 和当前 ID
           // Zustand persist 存储结构: { state: { keys: [], currentKeyId: "" }, version: 0 }
-          const storageData = await localStorage.get<any>("claudeSessionKeys")
+          const storageData =
+            await localStorage.get<PersistedClaudeSessionKeys>("claudeSessionKeys")
           const rawKeys = storageData?.state?.keys || []
 
           if (rawKeys.length === 0) {
@@ -565,7 +576,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
 
           // 2. 筛选可用 Keys 并排序 (Pro 优先)
           // 规则: isValid !== false (undefined 也视为可用)，优先Pro，其次按名称排序
-          let availableKeys = rawKeys.filter((k: any) => k.isValid !== false)
+          let availableKeys: ClaudeSessionKey[] = rawKeys.filter((key) => key.isValid !== false)
 
           // 如果没有可用 Key，尝试使用所有 Key (防止死循环或无法切换)
           if (availableKeys.length === 0) {
@@ -573,7 +584,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           }
 
           // 排序: Pro 优先，然后是名称
-          availableKeys.sort((a: any, b: any) => {
+          availableKeys.sort((a, b) => {
             const isAPro = a.accountType?.toLowerCase()?.includes("pro")
             const isBPro = b.accountType?.toLowerCase()?.includes("pro")
             if (isAPro && !isBPro) return -1
@@ -583,7 +594,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
 
           // 3. 找到下一个 Key
           // 在排序后的列表里找当前 Key 的位置
-          const currentIndex = availableKeys.findIndex((k: any) => k.id === currentId)
+          const currentIndex = availableKeys.findIndex((key) => key.id === currentId)
 
           // 如果只有一个 Key 且当前正在使用它，则不执行切换
           if (availableKeys.length === 1 && currentIndex !== -1) {
@@ -645,7 +656,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
         let originalCookie: chrome.cookies.Cookie | null = null
 
         try {
-          const { sessionKey } = message as any
+          const { sessionKey } = message
 
           // 1. 备份当前的 sessionKey cookie
           const existingCookies = await chrome.cookies.getAll({

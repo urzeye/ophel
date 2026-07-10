@@ -287,13 +287,6 @@ async function fetchKind(kind: GeminiMyStuffKind, force: boolean): Promise<Gemin
       const parsed = parseResponse(text, kind)
       parsed.items.forEach((item) => fetched.set(getRecordKey(item), item))
 
-      console.info(`${LOG_PREFIX} fetched page`, {
-        kind,
-        page,
-        itemCount: parsed.items.length,
-        nextPageToken: parsed.nextPageToken,
-      })
-
       if (!parsed.nextPageToken) {
         break
       }
@@ -390,6 +383,4 @@ export function initGeminiMyStuffBridge(): void {
     const payload = (event as CustomEvent<GeminiMyStuffSyncRequestPayload>).detail
     void handleSyncRequest(payload)
   })
-
-  console.info(`${LOG_PREFIX} initialized`)
 }

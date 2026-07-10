@@ -711,7 +711,7 @@ export const OutlineTab: React.FC<OutlineTabProps> = ({
 
   const structuredTips = React.useMemo(
     () => buildStructuredTips(currentSettings.shortcuts?.keybindings, isMac, shortcutNotSetLabel),
-    [currentSettings.shortcuts?.keybindings, currentSettings.language, isMac, shortcutNotSetLabel],
+    [currentSettings.shortcuts?.keybindings, isMac, shortcutNotSetLabel],
   )
 
   // Initialize state from manager to prevent flicker

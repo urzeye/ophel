@@ -136,7 +136,7 @@ export class ConversationManager {
   // Observer state
   private observerConfig: ConversationObserverConfig | null = null
   private sidebarObserverStop: (() => void) | null = null
-  private titleWatcher: any = null // DOMToolkit watcher instance
+  private titleWatcher: ReturnType<typeof DOMToolkit.watchMultiple> | null = null
   private pollInterval: ReturnType<typeof setTimeout> | null = null
   private geminiMigrationTimer: ReturnType<typeof setTimeout> | null = null
   private geminiMigrationRetryCount = 0

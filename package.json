@@ -17,7 +17,7 @@
     "prepare:mermaid-assets": "node scripts/prepare-mermaid-assets.mjs",
     "dev": "pnpm prepare:mermaid-assets && plasmo dev",
     "lint": "eslint . --fix",
-    "lint:check": "eslint .",
+    "lint:check": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",

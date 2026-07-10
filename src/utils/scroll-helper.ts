@@ -10,6 +10,9 @@
 
 import type { SiteAdapter } from "~adapters/base"
 
+type ScrollToOptionsWithBypass = ScrollToOptions & { __bypassLock: boolean }
+type FlutterScrollProxy = HTMLElement & { __isFlutterProxy?: boolean }
+
 // 平台检测
 declare const __PLATFORM__: "extension" | "userscript" | undefined
 const isUserscript = typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
@@ -202,11 +205,12 @@ export async function smartScrollToTop(adapter: SiteAdapter | null): Promise<{
     const scrollHeight = container.scrollHeight
 
     const isReverse = isColumnReverseScrollContainer(adapter, container)
-    container.scrollTo({
+    const options: ScrollToOptionsWithBypass = {
       top: getTopScrollPosition(container, isReverse),
       behavior: "instant",
-      ...{ __bypassLock: true },
-    } as any)
+      __bypassLock: true,
+    }
+    container.scrollTo(options)
 
     return { container, previousScrollTop, scrollHeight }
   }
@@ -243,11 +247,12 @@ export async function smartScrollToBottom(adapter: SiteAdapter | null): Promise<
     const previousScrollTop = container.scrollTop
 
     const isReverse = isColumnReverseScrollContainer(adapter, container)
-    container.scrollTo({
+    const options: ScrollToOptionsWithBypass = {
       top: getBottomScrollPosition(container, isReverse),
       behavior: "instant",
-      ...{ __bypassLock: true },
-    } as any)
+      __bypassLock: true,
+    }
+    container.scrollTo(options)
 
     return { container, previousScrollTop }
   }
@@ -276,17 +281,23 @@ export async function smartScrollTo(
   const container = adapter?.getScrollContainer()
 
   if (container && container.scrollHeight > container.clientHeight) {
-    container.scrollTo({ top: position, behavior: "instant", ...{ __bypassLock: true } } as any)
+    const options: ScrollToOptionsWithBypass = {
+      top: position,
+      behavior: "instant",
+      __bypassLock: true,
+    }
+    container.scrollTo(options)
     syncPositionLock(container.scrollTop)
     return { success: true, currentScrollTop: container.scrollTop }
   }
 
   // 最终回退
-  document.documentElement.scrollTo({
+  const fallbackOptions: ScrollToOptionsWithBypass = {
     top: position,
     behavior: "instant",
-    ...{ __bypassLock: true },
-  } as any)
+    __bypassLock: true,
+  }
+  document.documentElement.scrollTo(fallbackOptions)
   syncPositionLock(document.documentElement.scrollTop)
   return { success: true, currentScrollTop: document.documentElement.scrollTop }
 }
@@ -359,5 +370,5 @@ function createFlutterScrollProxy(): HTMLElement {
  * 检查容器是否是 Flutter 代理
  */
 export function isFlutterProxy(container: HTMLElement): boolean {
-  return (container as any).__isFlutterProxy === true
+  return (container as FlutterScrollProxy).__isFlutterProxy === true
 }

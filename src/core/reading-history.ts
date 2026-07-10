@@ -5,7 +5,7 @@
  * 数据存储已迁移到 reading-history-store.ts
  */
 
-import type { SiteAdapter } from "~adapters/base"
+import type { AnchorData, SiteAdapter } from "~adapters/base"
 import {
   getReadingHistoryStore,
   useReadingHistoryStore,
@@ -341,7 +341,14 @@ export class ReadingHistoryManager {
       // 1. 精确恢复：尝试通过内容锚点定位
       if (data.type && this.adapter.restoreScroll) {
         try {
-          const contentRestored = await this.adapter.restoreScroll(data as any)
+          const anchorData: AnchorData = {
+            type: data.type,
+            selector: data.selector,
+            index: data.index,
+            offset: data.offset ?? 0,
+            textSignature: data.textSignature,
+          }
+          const contentRestored = await this.adapter.restoreScroll(anchorData)
           if (contentRestored) {
             const scrollContainer = this.adapter.getScrollContainer() || document.documentElement
             this.restoredTop = (scrollContainer as HTMLElement).scrollTop || window.scrollY

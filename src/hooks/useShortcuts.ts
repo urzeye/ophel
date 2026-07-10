@@ -711,7 +711,7 @@ export function useShortcuts({
           showToast(t("noClaudeKeys"), 2000)
         } else {
           // 尝试翻译错误信息，如果没有翻译则显示原始错误
-          const translatedError = t(result.error as any)
+          const translatedError = t(result.error || "operationFailed")
           showToast(
             translatedError !== result.error
               ? translatedError

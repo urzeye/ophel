@@ -9,6 +9,16 @@ import type { PlasmoCSConfig } from "plasmo"
 
 import { WATERMARK_BLOCKER_CODE } from "~constants/scripts"
 
+type UnknownRecord = Record<string, unknown>
+
+function isRecord(value: unknown): value is UnknownRecord {
+  return typeof value === "object" && value !== null
+}
+
+function getRecord(value: unknown): UnknownRecord | null {
+  return isRecord(value) ? value : null
+}
+
 // 配置：仅匹配 AI Studio，在 document_start 阶段执行
 export const config: PlasmoCSConfig = {
   matches: ["https://aistudio.google.com/*"],
@@ -20,12 +30,12 @@ export const config: PlasmoCSConfig = {
   try {
     // Zustand 使用 chrome.storage.local，key 为 "settings"
     const result = await chrome.storage.local.get("settings")
-    const allData = result as Record<string, any>
+    const allData = result as Record<string, unknown>
 
     // 读取 aistudio 设置
     // Zustand persist 格式: { state: { settings: { aistudio: {...} } }, version: 0 }
     // chrome.storage 存储的是 JSON 字符串
-    let settingsObj = allData.settings
+    let settingsObj: unknown = allData.settings
     if (typeof settingsObj === "string") {
       try {
         settingsObj = JSON.parse(settingsObj)
@@ -36,7 +46,11 @@ export const config: PlasmoCSConfig = {
     }
 
     // 从 Zustand persist 格式中提取 aistudio 设置
-    const aistudioSettings = settingsObj?.state?.settings?.aistudio || settingsObj?.aistudio
+    const settingsRecord = getRecord(settingsObj)
+    const stateRecord = getRecord(settingsRecord?.state)
+    const persistedSettings = getRecord(stateRecord?.settings)
+    const aistudioSettings =
+      getRecord(persistedSettings?.aistudio) || getRecord(settingsRecord?.aistudio)
 
     // 如果没有 AI Studio 设置，直接返回
     if (!aistudioSettings) {
@@ -59,13 +73,13 @@ export const config: PlasmoCSConfig = {
 
     // 读取现有的 AI Studio 用户偏好
     const prefStr = localStorage.getItem("aiStudioUserPreference") || "{}"
-    const pref = JSON.parse(prefStr)
+    const pref = getRecord(JSON.parse(prefStr)) || {}
 
     let hasChanges = false
 
     // 应用侧边栏折叠设置
     // collapseNavbar: true 表示用户希望折叠侧边栏，对应 isNavbarExpanded: false
-    if (aistudioSettings.collapseNavbar !== undefined) {
+    if (typeof aistudioSettings.collapseNavbar === "boolean") {
       const shouldExpand = !aistudioSettings.collapseNavbar
       if (pref.isNavbarExpanded !== shouldExpand) {
         pref.isNavbarExpanded = shouldExpand
@@ -74,7 +88,7 @@ export const config: PlasmoCSConfig = {
     }
 
     // 应用工具面板折叠设置
-    if (aistudioSettings.collapseTools !== undefined) {
+    if (typeof aistudioSettings.collapseTools === "boolean") {
       const shouldOpen = !aistudioSettings.collapseTools
       if (pref.areToolsOpen !== shouldOpen) {
         pref.areToolsOpen = shouldOpen
@@ -83,7 +97,7 @@ export const config: PlasmoCSConfig = {
     }
 
     // 应用高级设置折叠
-    if (aistudioSettings.collapseAdvanced !== undefined) {
+    if (typeof aistudioSettings.collapseAdvanced === "boolean") {
       const shouldOpen = !aistudioSettings.collapseAdvanced
       if (pref.isAdvancedOpen !== shouldOpen) {
         pref.isAdvancedOpen = shouldOpen
@@ -92,7 +106,7 @@ export const config: PlasmoCSConfig = {
     }
 
     // 应用搜索工具开关
-    if (aistudioSettings.enableSearch !== undefined) {
+    if (typeof aistudioSettings.enableSearch === "boolean") {
       if (pref.enableSearchAsATool !== aistudioSettings.enableSearch) {
         pref.enableSearchAsATool = aistudioSettings.enableSearch
         hasChanges = true
@@ -100,7 +114,10 @@ export const config: PlasmoCSConfig = {
     }
 
     // 应用默认模型
-    if (aistudioSettings.defaultModel && aistudioSettings.defaultModel.trim() !== "") {
+    if (
+      typeof aistudioSettings.defaultModel === "string" &&
+      aistudioSettings.defaultModel.trim() !== ""
+    ) {
       const modelId = aistudioSettings.defaultModel.trim()
       if (pref.promptModel !== modelId) {
         pref.promptModel = modelId
@@ -117,13 +134,14 @@ export const config: PlasmoCSConfig = {
     // 检查是否开启了模型锁定
     // 如果开启了模型锁定，则暂不收起运行设置面板（因为锁定模型需要操作面板）
     // 同时也暂不操作工具栏（collapseTools），以免影响面板展开
-    const modelLockSettings = settingsObj?.state?.settings?.modelLock || settingsObj?.modelLock
-    const isModelLockEnabled =
-      modelLockSettings && modelLockSettings["ai-studio"] && modelLockSettings["ai-studio"].enabled
+    const modelLockSettings =
+      getRecord(persistedSettings?.modelLock) || getRecord(settingsRecord?.modelLock)
+    const aiStudioModelLock = getRecord(modelLockSettings?.["ai-studio"])
+    const isModelLockEnabled = aiStudioModelLock !== null && aiStudioModelLock.enabled === true
 
     // 如果需要收起运行设置面板，且未开启模型锁定，则执行收起
     // (如果开启了模型锁定，收起操作将由 AIStudioAdapter 在锁定完成后执行)
-    if (aistudioSettings.collapseRunSettings && !isModelLockEnabled) {
+    if (aistudioSettings.collapseRunSettings === true && !isModelLockEnabled) {
       waitForButtonAndClick('button[aria-label="Close run settings panel"]')
     }
   } catch (error) {

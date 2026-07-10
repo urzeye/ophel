@@ -35,6 +35,19 @@ import {
   MSG_START_NEW_CONVERSATION,
 } from "~utils/messaging"
 
+interface AIStudioModelAdapter {
+  getModelList(): Promise<Array<{ id: string; name: string }>>
+}
+
+function hasAIStudioModelList(adapter: unknown): adapter is AIStudioModelAdapter {
+  return (
+    typeof adapter === "object" &&
+    adapter !== null &&
+    "getModelList" in adapter &&
+    typeof adapter.getModelList === "function"
+  )
+}
+
 const resetAllStores = () => {
   useSettingsStore.getState().resetSettings()
   usePromptsStore.getState().setPrompts(getDefaultPrompts())
@@ -534,10 +547,10 @@ async function initializeContentScript(): Promise<void> {
 
     // AI Studio 获取模型列表
     if (message.type === "GET_MODEL_LIST") {
-      if (siteId === SITE_IDS.AISTUDIO && typeof (adapter as any).getModelList === "function") {
+      if (siteId === SITE_IDS.AISTUDIO && hasAIStudioModelList(adapter)) {
         ;(async () => {
           try {
-            const models = await (adapter as any).getModelList()
+            const models = await adapter.getModelList()
             sendResponse({ success: true, models })
           } catch (err) {
             console.error("[Ophel] getModelList failed:", err)

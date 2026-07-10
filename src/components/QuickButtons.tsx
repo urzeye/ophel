@@ -422,7 +422,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
       return { width, height, maxX, maxY }
     },
-    [DRAG_PADDING_PX],
+    [],
   )
 
   const clampPixelGroupPosition = useCallback(
@@ -443,7 +443,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         maxY,
       }
     },
-    [DRAG_PADDING_PX, getGroupBounds],
+    [getGroupBounds],
   )
 
   const toLogicalGroupPosition = useCallback(
@@ -461,7 +461,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
 
       return { xRatio, yRatio }
     },
-    [DRAG_PADDING_PX, clampPixelGroupPosition],
+    [clampPixelGroupPosition],
   )
 
   const resolveLogicalGroupPosition = useCallback(
@@ -483,7 +483,7 @@ export const QuickButtons: React.FC<QuickButtonsProps> = ({
         y: Math.min(Math.max(rawY, DRAG_PADDING_PX), maxY),
       }
     },
-    [DRAG_PADDING_PX, getGroupBounds],
+    [getGroupBounds],
   )
 
   useLayoutEffect(() => {

@@ -247,15 +247,19 @@ export interface AIStudioModelsResponse {
 }
 
 interface BackgroundResponseMap {
+  [MSG_PROXY_FETCH]: BasicBackgroundResponse & { data?: string | ArrayBuffer | null }
   [MSG_CHECK_PERMISSION]: PermissionCheckResponse
   [MSG_CHECK_PERMISSIONS]: PermissionCheckResponse
   [MSG_REQUEST_PERMISSIONS]: BasicBackgroundResponse
+  [MSG_REVOKE_PERMISSIONS]: BasicBackgroundResponse & { removed?: boolean }
   [MSG_CHECK_CLAUDE_GENERATING]: CheckClaudeGeneratingResponse
   [MSG_GET_AISTUDIO_MODELS]: AIStudioModelsResponse
 }
 
 type BackgroundResponseFor<T extends ExtensionMessage> =
-  T["type"] extends keyof BackgroundResponseMap ? BackgroundResponseMap[T["type"]] : any
+  T["type"] extends keyof BackgroundResponseMap
+    ? BackgroundResponseMap[T["type"]]
+    : BasicBackgroundResponse
 
 /**
  * Send a message to the background service worker with type safety
@@ -324,5 +328,5 @@ export interface GeminiMyStuffCachePayload {
 
 export interface WindowMessage {
   type: string
-  payload?: any
+  payload?: unknown
 }
