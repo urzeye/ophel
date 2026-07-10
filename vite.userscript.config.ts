@@ -166,6 +166,10 @@ function buildUserscriptStyleBundle(): string {
     path.resolve(__dirname, "src/styles/overlays.css"),
     "utf-8",
   )
+  const queueOverlayStyle = fs.readFileSync(
+    path.resolve(__dirname, "src/styles/queue-overlay.css"),
+    "utf-8",
+  )
 
   return [
     themeVariablesStyle,
@@ -174,6 +178,7 @@ function buildUserscriptStyleBundle(): string {
     releaseNotesStyle,
     settingsStyle,
     overlaysStyle,
+    queueOverlayStyle,
   ].join("\n")
 }
 

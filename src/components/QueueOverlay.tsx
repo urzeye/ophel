@@ -26,8 +26,6 @@ import { t } from "~utils/i18n"
 import { parseQueueBatchInput, splitQueueLines, type QueueBatchSplitMode } from "~utils/queue-batch"
 import { showToast } from "~utils/toast"
 
-import "~styles/queue-overlay.css"
-
 interface QueueOverlayProps {
   adapter: SiteAdapter
   dispatcher: QueueDispatcher

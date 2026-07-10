@@ -3,6 +3,7 @@ import conversationsCssText from "data-text:~styles/conversations.css"
 import releaseNotesCssText from "data-text:~styles/release-notes.css"
 import settingsCssText from "data-text:~styles/settings.css"
 import overlaysCssText from "data-text:~styles/overlays.css"
+import queueOverlayCssText from "data-text:~styles/queue-overlay.css"
 import type { PlasmoCSConfig, PlasmoMountShadowHost } from "plasmo"
 import React from "react"
 
@@ -74,6 +75,8 @@ export const getStyle = () => {
     settingsCssText +
     "\n" +
     overlaysCssText +
+    "\n" +
+    queueOverlayCssText +
     (earlyThemeCSS ? "\n" + earlyThemeCSS : "")
   return style
 }
