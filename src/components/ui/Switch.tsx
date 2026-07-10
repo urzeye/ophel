@@ -4,9 +4,12 @@
 import React from "react"
 
 export interface SwitchProps {
+  id?: string
   checked: boolean
   onChange: (checked: boolean) => void
   disabled?: boolean
+  ariaLabel?: string
+  ariaLabelledBy?: string
   /** 尺寸: sm=32x18, md=36x20 */
   size?: "sm" | "md"
 }
@@ -16,16 +19,20 @@ export interface SwitchProps {
  * 使用 CSS 变量支持主题跟随
  */
 export const Switch: React.FC<SwitchProps> = ({
+  id,
   checked,
   onChange,
   disabled = false,
   size = "md",
+  ariaLabel,
+  ariaLabelledBy,
 }) => {
   // 尺寸配置
   const dimensions = size === "sm" ? { w: 32, h: 18, thumb: 14 } : { w: 36, h: 20, thumb: 16 }
 
   return (
     <label
+      className="gh-switch"
       style={{
         position: "relative",
         display: "inline-block",
@@ -34,13 +41,17 @@ export const Switch: React.FC<SwitchProps> = ({
         flexShrink: 0,
       }}>
       <input
+        id={id}
+        className="gh-switch-input"
         type="checkbox"
         checked={checked}
         onChange={() => onChange(!checked)}
         disabled={disabled}
-        style={{ opacity: 0, width: 0, height: 0, position: "absolute" }}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
       />
       <span
+        className="gh-switch-track"
         style={{
           position: "absolute",
           cursor: disabled ? "not-allowed" : "pointer",
@@ -55,6 +66,7 @@ export const Switch: React.FC<SwitchProps> = ({
           transition: "background-color 0.3s",
         }}>
         <span
+          className="gh-switch-thumb"
           style={{
             position: "absolute",
             height: `${dimensions.thumb}px`,
