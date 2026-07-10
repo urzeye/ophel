@@ -34,7 +34,7 @@ export interface MenuAnchorPoint {
 }
 
 /**
- * 上下文菜单 - 使用 Portal 渲染到 document.body
+ * 上下文菜单 - 使用 Portal 渲染到 Ophel Shadow overlay root
  * 这样避免被 MainPanel 的 transform 影响 fixed 定位
  */
 export const ContextMenu: React.FC<MenuProps> = ({ anchorEl, anchorPoint, onClose, children }) => {
@@ -121,7 +121,7 @@ export const ContextMenu: React.FC<MenuProps> = ({ anchorEl, anchorPoint, onClos
 
   if ((!anchorEl && !anchorPoint) || !portalTarget) return null
 
-  // 使用 Portal 渲染到 document.body，避免 transform 影响 fixed 定位
+  // 使用 Shadow overlay root，避开面板 overflow，同时继承同一主题变量。
   const menuContent = (
     <div
       ref={menuRef}

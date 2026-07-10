@@ -33,8 +33,6 @@ import { LoadingOverlay } from "./LoadingOverlay"
 import { ConversationMenu, ExportMenu, FolderMenu, type MenuAnchorPoint } from "./ConversationMenus"
 import { SegmentedExportDialog } from "./SegmentedExportDialog"
 
-import "~styles/conversations.css"
-
 // 渐进式加载：每次渲染的会话批次大小
 const PROGRESSIVE_BATCH_SIZE = 30
 

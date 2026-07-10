@@ -39,8 +39,8 @@ export const LanguageMenu: React.FC<LanguageMenuProps> = ({
   useEffect(() => {
     if (!triggerRef.current) return
     const rect = triggerRef.current.getBoundingClientRect()
-    // Position: Bottom-Right aligned with trigger, appearing ABOVE it
-    // Note: Since we are in Portal (Light DOM), coordinates are relative to viewport, which matches rect.
+    // Position: Bottom-Right aligned with trigger, appearing ABOVE it.
+    // fixed 坐标按 viewport 计算；独立 Options 与面板设置都由各自 overlay root 承载。
     setPosition({
       top: rect.top - 10, // Slight offset
       left: rect.right, // Align to right edge
@@ -49,7 +49,7 @@ export const LanguageMenu: React.FC<LanguageMenuProps> = ({
 
   if (!portalTarget) return null
 
-  // Use createPortal to render outside of any overflow:hidden containers
+  // Render outside overflow:hidden containers while staying in the current overlay root.
   return createPortal(
     <div className="lang-menu-portal" style={{ position: "relative", zIndex: 2147483647 }}>
       {/* Backdrop */}
