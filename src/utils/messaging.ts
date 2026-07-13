@@ -10,6 +10,7 @@ import type { NetworkMonitorRequestBodyRule } from "~adapters/base"
 
 export const MSG_SHOW_NOTIFICATION = "SHOW_NOTIFICATION"
 export const MSG_FOCUS_TAB = "FOCUS_TAB"
+export const MSG_GET_LOCALE_MESSAGES = "GET_LOCALE_MESSAGES"
 
 export interface ShowNotificationPayload {
   title: string
@@ -22,6 +23,30 @@ export interface ShowNotificationMessage extends ShowNotificationPayload {
 
 export interface FocusTabMessage {
   type: typeof MSG_FOCUS_TAB
+}
+
+export type AppLocale =
+  | "zh-CN"
+  | "zh-TW"
+  | "en"
+  | "ja"
+  | "ko"
+  | "it"
+  | "fr"
+  | "de"
+  | "ru"
+  | "es"
+  | "pt"
+
+export interface GetLocaleMessagesMessage {
+  type: typeof MSG_GET_LOCALE_MESSAGES
+  locale: AppLocale
+}
+
+export interface GetLocaleMessagesResponse {
+  success: boolean
+  messages?: Record<string, string>
+  error?: string
 }
 
 export const MSG_PROXY_FETCH = "PROXY_FETCH"
@@ -196,6 +221,7 @@ export interface CheckClaudeGeneratingResponse {
 export type ExtensionMessage =
   | ShowNotificationMessage
   | FocusTabMessage
+  | GetLocaleMessagesMessage
   | ProxyFetchMessage
   | WebDAVRequestMessage
   | CheckPermissionMessage
@@ -247,6 +273,7 @@ export interface AIStudioModelsResponse {
 }
 
 interface BackgroundResponseMap {
+  [MSG_GET_LOCALE_MESSAGES]: GetLocaleMessagesResponse
   [MSG_PROXY_FETCH]: BasicBackgroundResponse & { data?: string | ArrayBuffer | null }
   [MSG_CHECK_PERMISSION]: PermissionCheckResponse
   [MSG_CHECK_PERMISSIONS]: PermissionCheckResponse

@@ -11,6 +11,7 @@ const AUDIT_CONTENT_ENTRY_BASELINE_RAW = 7_494_836
 const MINIMUM_CONTENT_ENTRY_REDUCTION = 0.4
 const budgets = {
   contentEntries: { raw: 4_100_000, gzip: 1_150_000 },
+  siteEntry: { raw: 1_100_000, gzip: 300_000 },
   userscript: { raw: 2_100_000, gzip: 550_000 },
 }
 
@@ -37,6 +38,18 @@ function findSingleFile(directory, pattern, label) {
   return path.join(directory, matches[0])
 }
 
+function findFiles(directory, pattern, label) {
+  if (!fs.existsSync(directory)) {
+    throw new Error(`Missing build directory: ${path.relative(rootDir, directory)}`)
+  }
+
+  const matches = fs.readdirSync(directory).filter((fileName) => pattern.test(fileName))
+  if (matches.length === 0) {
+    throw new Error(`Expected at least one ${label} artifact, found none`)
+  }
+  return matches.map((fileName) => path.join(directory, fileName))
+}
+
 function measure(filePath) {
   const content = readRequiredFile(filePath)
   return {
@@ -61,16 +74,56 @@ function assertBudget(label, measurement, budget) {
 
 try {
   const main = measure(findSingleFile(chromeBuildDir, /^main\.[^.]+\.js$/, "main content entry"))
+  const siteEntries = findFiles(
+    chromeBuildDir,
+    /^site-[^.]+\.[^.]+\.js$/,
+    "site content entry",
+  ).map(measure)
   const uiEntry = measure(
     findSingleFile(chromeBuildDir, /^ui-entry\.[^.]+\.js$/, "UI content entry"),
   )
   const userscript = measure(userscriptFile)
+  const largestSiteEntry = siteEntries.reduce((largest, entry) =>
+    entry.raw > largest.raw ? entry : largest,
+  )
   const contentEntries = {
     raw: main.raw + uiEntry.raw,
     gzip: main.gzip + uiEntry.gzip,
   }
 
+  const manifest = JSON.parse(
+    readRequiredFile(path.join(chromeBuildDir, "manifest.json")).toString("utf8"),
+  )
+  const runtimeBusinessScripts = (manifest.web_accessible_resources || [])
+    .flatMap((entry) => entry.resources || [])
+    .filter((resource) => resource.endsWith(".js") && !resource.startsWith("assets/"))
+
+  if (runtimeBusinessScripts.length > 0) {
+    throw new Error(
+      `Content scripts expose runtime-loaded JS chunks: ${runtimeBusinessScripts.join(", ")}`,
+    )
+  }
+
+  for (const entry of [main, ...siteEntries, uiEntry]) {
+    const source = readRequiredFile(entry.filePath).toString("utf8")
+    if (source.includes(".bundle.root(")) {
+      throw new Error(
+        `${path.basename(entry.filePath)} contains a runtime JS chunk lookup from a content script`,
+      )
+    }
+
+    if (
+      path.basename(entry.filePath).startsWith("site-") &&
+      !source.includes("ophel:adapter-runtime-change")
+    ) {
+      throw new Error(
+        `${path.basename(entry.filePath)} does not register its site adapter in the shared runtime`,
+      )
+    }
+  }
+
   assertBudget("Extension content entries", contentEntries, budgets.contentEntries)
+  assertBudget("Largest site adapter entry", largestSiteEntry, budgets.siteEntry)
   assertBudget("Userscript", userscript, budgets.userscript)
 
   const reduction = 1 - contentEntries.raw / AUDIT_CONTENT_ENTRY_BASELINE_RAW
@@ -82,6 +135,9 @@ try {
 
   console.log(
     `[bundle-budget] content entries ${formatBytes(contentEntries.raw)} raw / ${formatBytes(contentEntries.gzip)} gzip (${(reduction * 100).toFixed(1)}% below audit baseline)`,
+  )
+  console.log(
+    `[bundle-budget] largest site entry ${path.basename(largestSiteEntry.filePath)} ${formatBytes(largestSiteEntry.raw)} raw / ${formatBytes(largestSiteEntry.gzip)} gzip`,
   )
   console.log(
     `[bundle-budget] userscript ${formatBytes(userscript.raw)} raw / ${formatBytes(userscript.gzip)} gzip`,

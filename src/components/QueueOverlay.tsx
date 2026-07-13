@@ -12,7 +12,7 @@ import { createPortal } from "react-dom"
 import type { SiteAdapter } from "~adapters/base"
 import { CleanupIcon, ImportIcon, PromptQueueIcon } from "~components/icons"
 import { DialogOverlay, Tooltip } from "~components/ui"
-import { useOverlayPortalTarget } from "~components/ui/OverlayPortal"
+import { resolveAmbientPortalTarget, useOverlayPortalTarget } from "~components/ui/OverlayPortal"
 import { extractVariables } from "~components/VariableInputDialog"
 import { formatShortcut, normalizeShortcutBinding } from "~constants/shortcuts"
 import type { QueueDispatcher } from "~core/queue-dispatcher"
@@ -37,7 +37,8 @@ type QueueBatchSource = "text" | "library"
 type QueueLibraryMode = "single" | "line"
 
 export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher }) => {
-  const portalTarget = useOverlayPortalTarget()
+  const overlayPortalTarget = useOverlayPortalTarget()
+  const queuePortalTarget = resolveAmbientPortalTarget(overlayPortalTarget)
   const [isExpanded, setIsExpanded] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [inputValue, setInputValue] = useState("")
@@ -549,7 +550,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
 
   // ==================== 渲染 ====================
 
-  if (!position || !portalTarget) return null
+  if (!position || !queuePortalTarget) return null
 
   // 因为定位点(top, left)标志着组件要显示的右下角（紧贴输入框上方右侧）
   // 所以需要用 translate(-100%, -100%) 把组件从锚定点推上去靠左
@@ -579,7 +580,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
           </span>
         </div>
       </Tooltip>,
-      portalTarget,
+      queuePortalTarget,
     )
   }
 
@@ -828,7 +829,7 @@ export const QueueOverlay: React.FC<QueueOverlayProps> = ({ adapter, dispatcher 
             {shortcutText && <span className="gh-queue-shortcut-hint">{shortcutText}</span>}
           </div>
         </div>,
-        portalTarget,
+        queuePortalTarget,
       )}
 
       {isBatchDialogOpen && (

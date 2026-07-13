@@ -33,3 +33,17 @@ export const OverlayPortalProvider: React.FC<OverlayPortalProviderProps> = ({ ch
 export function useOverlayPortalTarget(): HTMLElement | null {
   return useContext(OverlayPortalContext)
 }
+
+/**
+ * Resolve the Shadow Root ambient layer for persistent controls that should stay below page dialogs.
+ */
+export function resolveAmbientPortalTarget(
+  overlayPortalTarget: HTMLElement | null,
+): Element | DocumentFragment | null {
+  if (!overlayPortalTarget) return null
+
+  const rootNode = overlayPortalTarget.getRootNode()
+  return typeof ShadowRoot !== "undefined" && rootNode instanceof ShadowRoot
+    ? rootNode
+    : overlayPortalTarget
+}

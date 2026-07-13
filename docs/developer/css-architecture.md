@@ -352,7 +352,7 @@ src/
 | 会话列表         | `conversations.css`                     | Plasmo Shadow DOM          | `getStyle()`            |
 | 提示词 Tab       | `style.css`                             | Plasmo Shadow DOM          | `getStyle()`            |
 | 通用覆盖层       | `overlays.css`                          | Shadow overlay root        | `getStyle()`            |
-| Prompt Queue     | `queue-overlay.css`                     | Shadow overlay root        | `getStyle()`            |
+| Prompt Queue     | `queue-overlay.css`                     | Shadow Root ambient layer  | `getStyle()`            |
 | CSS 变量默认值   | `theme-variables.css`                   | Plasmo Shadow DOM          | `@import` by style.css  |
 | 主题预置变量     | `themes/light/*.ts`, `themes/dark/*.ts` | Plasmo Shadow DOM          | `ThemeManager` 动态注入 |
 | 代码高亮         | `markdown.ts`                           | 多个上下文                 | 函数返回字符串          |
@@ -430,7 +430,8 @@ export const getStyle = () => {
 
 **Portal 渲染规则**：
 
-- 面板内 Dialog、Menu、Tooltip、Loading、Queue、Prompt 编辑/预览默认通过 `OverlayPortalProvider` 渲染到 Shadow Root 内的唯一 overlay root。
+- 面板内 Dialog、Menu、Tooltip、Loading、Prompt 编辑/预览默认通过 `OverlayPortalProvider` 渲染到 Shadow Root 内的唯一 overlay root。
+- Prompt Queue 的常驻胶囊和面板渲染到 Shadow Root 环境层，使用低层级避免覆盖站点弹窗；Queue 发起的 Dialog 仍进入统一 overlay root。
 - `useOverlayPortalTarget()` 在 overlay root 尚未注册时返回 `null`；调用方应等待或不渲染，不得静默回退 `document.body`。
 - 只有必须影响宿主文档根的能力（例如 `::view-transition-*`）或页面增强样式，才写入 `document.head`；这类节点不属于面板 overlay。
 - 不要把面板组件 Portal 到 `document.body`，否则会丢失 `ThemeManager` 只注入 Shadow Root 的动态变量，并污染宿主页 DOM/CSS。

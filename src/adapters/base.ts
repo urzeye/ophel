@@ -10,7 +10,9 @@ import { extractConversationTitleFromDocumentTitle } from "~utils/conversation-t
 import { DOMToolkit } from "~utils/dom-toolkit"
 import { createExportAssetCollector, type ExportAssetCollector } from "~utils/export-assets"
 import type { ExportBundle, ExportFormat, ExportMessage } from "~utils/exporter"
+import { t } from "~utils/i18n"
 import type { ExportPackaging } from "~utils/storage"
+import { showToast } from "~utils/toast"
 
 // ==================== 类型定义 ====================
 
@@ -1822,9 +1824,6 @@ export abstract class SiteAdapter {
     reason: "button_not_found" | "menu_empty" | "not_found",
   ): Promise<void> {
     try {
-      const { showToast } = await import("~utils/toast")
-      const { t } = await import("~utils/i18n")
-
       let message: string
       switch (reason) {
         case "button_not_found":

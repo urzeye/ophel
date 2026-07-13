@@ -1,24 +1,17 @@
 import { en } from "~locales/en"
+import { MSG_GET_LOCALE_MESSAGES, sendToBackground, type AppLocale } from "~utils/messaging"
 
 type LocaleMessages = Record<string, string>
 type I18nChangeListener = () => void
-type SupportedLocale =
-  | "zh-CN"
-  | "zh-TW"
-  | "en"
-  | "ja"
-  | "ko"
-  | "it"
-  | "fr"
-  | "de"
-  | "ru"
-  | "es"
-  | "pt"
+type SupportedLocale = AppLocale
 
 const DEFAULT_LOCALE: SupportedLocale = "en"
+export const I18N_LANGUAGE_CHANGE_EVENT = "ophel:i18n-language-change"
+
 const localeCache: Partial<Record<SupportedLocale, LocaleMessages>> = { en }
 const localeLoads = new Map<SupportedLocale, Promise<LocaleMessages>>()
 const listeners = new Set<I18nChangeListener>()
+const reportedLocaleLoadFailures = new Set<SupportedLocale>()
 
 const ALL_LOCALIZED_TEXTS: Record<string, string[]> = {
   untitledConversation: [
@@ -55,6 +48,10 @@ const getBrowserLang = (): SupportedLocale => {
 function resolveLocale(lang: string | undefined | null): SupportedLocale {
   if (!lang || lang === "auto") return getBrowserLang()
 
+  return isSupportedLocale(lang) ? lang : DEFAULT_LOCALE
+}
+
+function isSupportedLocale(lang: unknown): lang is SupportedLocale {
   switch (lang) {
     case "zh-CN":
     case "zh-TW":
@@ -67,37 +64,21 @@ function resolveLocale(lang: string | undefined | null): SupportedLocale {
     case "ru":
     case "es":
     case "pt":
-      return lang
+      return true
     default:
-      return DEFAULT_LOCALE
+      return false
   }
 }
 
 async function importLocale(locale: SupportedLocale): Promise<LocaleMessages> {
-  switch (locale) {
-    case "zh-CN":
-      return (await import("~locales/zh-CN")).zhCN
-    case "zh-TW":
-      return (await import("~locales/zh-TW")).zhTW
-    case "ja":
-      return (await import("~locales/ja")).ja
-    case "ko":
-      return (await import("~locales/ko")).ko
-    case "it":
-      return (await import("~locales/it")).it
-    case "fr":
-      return (await import("~locales/fr")).fr
-    case "de":
-      return (await import("~locales/de")).de
-    case "ru":
-      return (await import("~locales/ru")).ru
-    case "es":
-      return (await import("~locales/es")).es
-    case "pt":
-      return (await import("~locales/pt")).pt
-    case "en":
-      return en
+  if (locale === DEFAULT_LOCALE) return en
+
+  const response = await sendToBackground({ type: MSG_GET_LOCALE_MESSAGES, locale })
+  if (!response.success || !response.messages) {
+    throw new Error(response.error || `Failed to load locale messages: ${locale}`)
   }
+
+  return response.messages
 }
 
 async function loadLocale(locale: SupportedLocale): Promise<LocaleMessages> {
@@ -107,11 +88,17 @@ async function loadLocale(locale: SupportedLocale): Promise<LocaleMessages> {
   const pending = localeLoads.get(locale)
   if (pending) return pending
 
-  const load = importLocale(locale).then((messages) => {
-    localeCache[locale] = messages
-    localeLoads.delete(locale)
-    return messages
-  })
+  const load = importLocale(locale).then(
+    (messages) => {
+      localeCache[locale] = messages
+      localeLoads.delete(locale)
+      return messages
+    },
+    (error: unknown) => {
+      localeLoads.delete(locale)
+      throw error
+    },
+  )
   localeLoads.set(locale, load)
   return load
 }
@@ -120,17 +107,72 @@ function notifyI18nChange(): void {
   listeners.forEach((listener) => listener())
 }
 
-let currentLang: SupportedLocale = getBrowserLang()
+function getSharedLanguage(): SupportedLocale | null {
+  if (typeof window === "undefined") return null
+  return isSupportedLocale(window.__ophelLanguageRuntime) ? window.__ophelLanguageRuntime : null
+}
 
-export async function setLanguage(lang: string): Promise<void> {
-  const nextLang = resolveLocale(lang)
+let currentLang: SupportedLocale = getSharedLanguage() ?? getBrowserLang()
+let languageRequestVersion = 0
+let observedSharedLanguageVersion =
+  typeof window === "undefined" ? 0 : window.__ophelLanguageRuntimeVersion ?? 0
+
+async function applyLanguage(nextLang: SupportedLocale, broadcast: boolean): Promise<void> {
+  const requestVersion = ++languageRequestVersion
+  let effectiveLang = nextLang
+
+  try {
+    await loadLocale(nextLang)
+  } catch (error) {
+    effectiveLang = DEFAULT_LOCALE
+    if (!reportedLocaleLoadFailures.has(nextLang)) {
+      reportedLocaleLoadFailures.add(nextLang)
+      console.error(`[Ophel] Failed to load locale "${nextLang}"; using English instead.`, error)
+    }
+  }
+
+  // A slower locale request must not overwrite a newer language selection.
+  if (requestVersion !== languageRequestVersion) return
+
   const previousLang = currentLang
-  currentLang = nextLang
+  currentLang = effectiveLang
 
-  await loadLocale(nextLang)
-  if (currentLang === nextLang && (previousLang !== nextLang || nextLang !== DEFAULT_LOCALE)) {
+  if (broadcast && typeof window !== "undefined") {
+    window.__ophelLanguageRuntime = nextLang
+    observedSharedLanguageVersion = (window.__ophelLanguageRuntimeVersion ?? 0) + 1
+    window.__ophelLanguageRuntimeVersion = observedSharedLanguageVersion
+    window.dispatchEvent(new Event(I18N_LANGUAGE_CHANGE_EVENT))
+  }
+
+  if (previousLang !== effectiveLang || nextLang !== DEFAULT_LOCALE) {
     notifyI18nChange()
   }
+}
+
+function handleSharedLanguageChange(): void {
+  const sharedVersion = window.__ophelLanguageRuntimeVersion ?? 0
+  const sharedLanguage = getSharedLanguage()
+  if (sharedVersion <= observedSharedLanguageVersion || !sharedLanguage) return
+
+  observedSharedLanguageVersion = sharedVersion
+  void applyLanguage(sharedLanguage, false).catch((error: unknown) => {
+    console.error("[Ophel] Failed to synchronize i18n language:", error)
+  })
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener(I18N_LANGUAGE_CHANGE_EVENT, handleSharedLanguageChange)
+
+  const sharedLanguage = getSharedLanguage()
+  if (sharedLanguage && sharedLanguage !== DEFAULT_LOCALE) {
+    void applyLanguage(sharedLanguage, false).catch((error: unknown) => {
+      console.error("[Ophel] Failed to initialize shared i18n language:", error)
+    })
+  }
+}
+
+export async function setLanguage(lang: string): Promise<void> {
+  await applyLanguage(resolveLocale(lang), true)
 }
 
 export function subscribeI18nChanges(listener: I18nChangeListener): () => void {

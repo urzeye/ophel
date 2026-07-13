@@ -31,10 +31,11 @@ Ophel 是一款跨平台浏览器扩展（同时支持油猴脚本），将 AI �
 本项目采用 **适配器模式 (Adapter Pattern)** 实现多站点支持：
 
 ```
-Content Script (main.ts / userscript entry)
+Content Script (site-*.ts + main.ts / userscript entry)
     |
     v
-loadAdapter(location) --> hostname/path 轻量路由 --> 动态 import 当前 SiteAdapter
+扩展：site-*.ts 静态注册唯一 SiteAdapter --> main.ts 启动公共模块
+油猴：loadAdapter(location) --> hostname/path 轻量路由 --> 动态 import 当前 SiteAdapter
     |
     v
 adapter-runtime.ts --> main、UI 与 userscript 共享当前 adapter 实例
@@ -127,7 +128,7 @@ graph TD
 | `src/core/`       | 核心业务模块（多个管理器），由 `modules-init.ts` 统一编排     | `modules-init.ts`, `outline-manager.ts`, `theme-manager.ts`, `layout-manager.ts`, `conversation/`, `webdav-sync.ts`, `assistant-mermaid-renderer.ts`, `gemini-mystuff-bridge.ts`, `usage-counter-manager.ts`                         |
 | `src/components/` | React UI 层，运行在 Shadow DOM 中                             | `App.tsx`, `MainPanel.tsx`, `OutlineTab.tsx`, `ConversationsTab.tsx`, `SettingsModal.tsx`, `global-search/`                                                                                                                          |
 | `src/stores/`     | Zustand 状态管理，persist 到 chrome.storage.local             | `settings-store.ts`, `conversations-store.ts`, `prompts-store.ts`, `folders-store.ts`, `tags-store.ts`                                                                                                                               |
-| `src/contents/`   | Plasmo Content Script 入口                                    | `main.ts`（逻辑入口）, `ui-entry.tsx`（UI/Shadow DOM）, `monitor-entry.ts`（网络监控）, `aistudio-preload.ts`, `gemini-watermark-main.ts`, `iframe-scroll-main.ts`, `scroll-lock-main.ts`                                            |
+| `src/contents/`   | Plasmo Content Script 入口                                    | `site-*.ts`（站点适配器静态注册）, `main.ts`（公共逻辑入口）, `ui-entry.tsx`（UI/Shadow DOM）, `monitor-entry.ts`（网络监控）, `aistudio-preload.ts`, `gemini-watermark-main.ts`, `iframe-scroll-main.ts`, `scroll-lock-main.ts`                                            |
 | `src/platform/`   | 平台抽象层（浏览器扩展 vs 油猴脚本）                          | `types.ts`, `index.ts`, `extension/`, `userscript/`                                                                                                                                                                                  |
 | `src/utils/`      | 工具函数                                                      | `i18n.ts`, `dom-toolkit.ts`, `exporter.ts`, `markdown.ts`, `themes/`, `scroll-helper.ts`                                                                                                                                             |
 | `src/constants/`  | 常量与默认配置                                                | `defaults.ts`（SITE_IDS）, `ui.ts`, `shortcuts.ts`, `tools-menu.ts`                                                                                                                                                                  |
@@ -190,7 +191,8 @@ pnpm docs:build    # 构建文档
 
 | 入口                      | 路径                                | 说明                                  |
 | ------------------------- | ----------------------------------- | ------------------------------------- |
-| Content Script 逻辑入口   | `src/contents/main.ts`              | 初始化适配器和核心模块                |
+| Content Script 适配器入口 | `src/contents/site-*.ts`            | 按站点静态注册唯一适配器              |
+| Content Script 逻辑入口   | `src/contents/main.ts`              | 使用已注册适配器初始化核心模块        |
 | Content Script UI 入口    | `src/contents/ui-entry.tsx`         | Shadow DOM 内挂载 React App           |
 | Background Service Worker | `src/background.ts`                 | 消息处理、通知、代理请求、Cookie 管理 |
 | Popup 页面                | `src/popup.tsx`                     | 扩展弹出窗口                          |
@@ -446,7 +448,7 @@ feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, deps, ux
 
 ### 关键路径
 
-- 用户操作流程：`popup.tsx` -> 支持站点检测 -> Content Script 注入 -> `main.ts` 初始化适配器 -> `modules-init.ts` 初始化模块 -> `ui-entry.tsx` 挂载 Shadow DOM -> `App.tsx` 渲染面板
+- 用户操作流程：`popup.tsx` -> 支持站点检测 -> `site-*.ts` 静态注册当前站点适配器 -> `main.ts` 启动公共逻辑 -> `modules-init.ts` 初始化模块 -> `ui-entry.tsx` 挂载 Shadow DOM -> `App.tsx` 渲染面板
 - 设置同步流程：UI 操作 -> `useSettingsStore.updateNestedSetting()` -> Zustand persist -> `chrome.storage.local` -> `subscribeModuleUpdates()` 热更新模块
 - 会话管理流程：`ConversationObserverConfig` 观察 DOM -> `ConversationManager` 聚合数据 -> `conversations-store` 持久化
 - WebDAV 同步流程：`WebDAVSyncManager` -> `MSG_WEBDAV_REQUEST` -> Background SW 代理 -> WebDAV 服务器

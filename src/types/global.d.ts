@@ -5,6 +5,7 @@
 
 import type { ThemeManager } from "~core/theme-manager"
 import type { SiteAdapter } from "~adapters/base"
+import type { AppLocale } from "~utils/messaging"
 
 declare global {
   interface OphelPendingPromptVariableDialogDetail {
@@ -25,6 +26,10 @@ declare global {
     __ophelThemeManager?: ThemeManager
     /** 当前页面已加载的站点适配器 */
     __ophelAdapterRuntime?: SiteAdapter
+    /** 当前隔离世界内跨 bundle 共享的界面语言 */
+    __ophelLanguageRuntime?: AppLocale
+    /** 当前隔离世界内共享界面语言的变更版本 */
+    __ophelLanguageRuntimeVersion?: number
     /** Shadow DOM 内的统一覆盖层 Portal 根节点 */
     __ophelOverlayRoot?: HTMLElement
     /** 滚动锁定初始化标记 */

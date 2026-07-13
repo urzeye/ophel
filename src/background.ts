@@ -1,4 +1,5 @@
 import { APP_DISPLAY_NAME } from "~utils/config"
+import { loadLocaleMessages } from "~locales/loader"
 import {
   MSG_CLEAR_ALL_DATA,
   MSG_CHECK_CLAUDE_GENERATING,
@@ -8,6 +9,7 @@ import {
   MSG_FOCUS_TAB,
   MSG_GET_AISTUDIO_MODELS,
   MSG_GET_CLAUDE_SESSION_KEY,
+  MSG_GET_LOCALE_MESSAGES,
   MSG_OPEN_OPTIONS_PAGE,
   MSG_OPEN_URL,
   MSG_PROXY_FETCH,
@@ -250,6 +252,18 @@ async function setupDynamicRules() {
 // 消息监听 - 与 Content Script 通信
 chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendResponse) => {
   switch (message.type) {
+    case MSG_GET_LOCALE_MESSAGES: {
+      try {
+        sendResponse({ success: true, messages: loadLocaleMessages(message.locale) })
+      } catch (error) {
+        sendResponse({
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
+      break
+    }
+
     case MSG_SHOW_NOTIFICATION: {
       // 将 tabId/windowId 编码进 notifId，SW 重启后点击通知仍可正确跳转
       const tabId = sender.tab?.id

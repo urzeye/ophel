@@ -24,6 +24,7 @@ import { WatermarkRemover } from "~core/watermark-remover"
 import { getSettingsState, subscribeSettings } from "~stores/settings-store"
 import { setLanguage, t } from "~utils/i18n"
 import { EVENT_PAGE_URL_CHANGE } from "~utils/messaging"
+import { showToast } from "~utils/toast"
 import {
   getSiteModelLock,
   getSitePanelAvoidance,
@@ -372,7 +373,6 @@ export async function initReadingHistoryManager(ctx: ModulesContext): Promise<vo
     startRecording(settings)
 
     if (settings.readingHistory.autoRestore) {
-      const { showToast } = await import("~utils/toast")
       modules.readingHistoryManager
         .restoreProgress((msg) => showToast(msg, 3000))
         .then((restored) => {
@@ -708,7 +708,6 @@ export function initUrlChangeObserver(ctx: ModulesContext): () => void {
       modules.readingHistoryManager.stopRecording()
       readingHistoryRestoreTimeoutId = setTimeout(async () => {
         readingHistoryRestoreTimeoutId = null
-        const { showToast } = await import("~utils/toast")
         const shouldSkipRestore = consumeSkipReadingHistoryRestoreFlag()
         if (!shouldSkipRestore) {
           const restored = await modules.readingHistoryManager?.restoreProgress((msg) =>
