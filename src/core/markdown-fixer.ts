@@ -33,6 +33,7 @@ export class MarkdownFixer {
   private stopObserver: (() => void) | null = null
   private enabled = false
   private config: MarkdownFixerConfig
+  private pendingTimers = new Set<number>()
 
   constructor(config: MarkdownFixerConfig) {
     this.config = config
@@ -52,7 +53,7 @@ export class MarkdownFixer {
     this.stopObserver = DOMToolkit.each(this.config.selector, (p, isNew) => {
       if (isNew) {
         // 延迟处理，避免和流式输出冲突
-        setTimeout(() => this.fixParagraph(p as HTMLElement), 100)
+        this.scheduleFix(p as HTMLElement, 100)
       }
     })
   }
@@ -67,6 +68,10 @@ export class MarkdownFixer {
       this.stopObserver()
       this.stopObserver = null
     }
+    for (const timer of this.pendingTimers) {
+      window.clearTimeout(timer)
+    }
+    this.pendingTimers.clear()
   }
 
   /**
@@ -83,7 +88,7 @@ export class MarkdownFixer {
    * 修复单个段落
    */
   fixParagraph(p: HTMLElement) {
-    if (!p.isConnected) return
+    if (!this.enabled || !p.isConnected) return
 
     if (this.config.shouldIgnore?.(p)) {
       delete p.dataset.mdFixerHash
@@ -93,7 +98,7 @@ export class MarkdownFixer {
     // 检查是否应跳过（例如正在流式生成）
     if (this.config.shouldSkip?.(p)) {
       // 延迟重试
-      setTimeout(() => this.fixParagraph(p), 500)
+      this.scheduleFix(p, 500)
       return
     }
 
@@ -150,5 +155,13 @@ export class MarkdownFixer {
 
     // 更新 hash 标记
     p.dataset.mdFixerHash = String(p.innerHTML.length)
+  }
+
+  private scheduleFix(element: HTMLElement, delay: number) {
+    const timer = window.setTimeout(() => {
+      this.pendingTimers.delete(timer)
+      this.fixParagraph(element)
+    }, delay)
+    this.pendingTimers.add(timer)
   }
 }

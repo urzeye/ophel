@@ -1,4 +1,5 @@
 import { platform } from "~platform"
+import { runTrackedPersistenceWrite } from "~stores/chrome-adapter"
 
 export interface UsageCounterRecord {
   count: number
@@ -136,7 +137,9 @@ export async function readUsageCounterState(): Promise<UsageCounterState> {
 }
 
 export async function writeUsageCounterState(state: UsageCounterState): Promise<void> {
-  await platform.storage.set(USAGE_MONITOR_STORAGE_KEY, normalizeState(state))
+  await runTrackedPersistenceWrite(() =>
+    platform.storage.set(USAGE_MONITOR_STORAGE_KEY, normalizeState(state)),
+  )
 }
 
 export async function getUsageCounterRecord(recordKey: string): Promise<UsageCounterRecord> {

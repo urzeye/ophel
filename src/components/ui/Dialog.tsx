@@ -18,6 +18,19 @@ const getDeepActiveElement = (): HTMLElement | null => {
   return activeElement instanceof HTMLElement ? activeElement : null
 }
 
+const dialogStack: symbol[] = []
+
+const registerDialog = (token: symbol): void => {
+  dialogStack.push(token)
+}
+
+const unregisterDialog = (token: symbol): void => {
+  const index = dialogStack.lastIndexOf(token)
+  if (index !== -1) dialogStack.splice(index, 1)
+}
+
+const isTopDialog = (token: symbol): boolean => dialogStack.at(-1) === token
+
 // ==================== DialogOverlay ====================
 
 export interface DialogOverlayProps {
@@ -48,16 +61,26 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
   const overlayRef = useRef<HTMLDivElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
   const restoreFocusRef = useRef<HTMLElement | null>(null)
+  const dialogTokenRef = useRef(Symbol("dialog"))
+  const onCloseRef = useRef(onClose)
+  const closeOnEscapeRef = useRef(closeOnEscape)
   const titleId = `gh-dialog-title-${useId().replace(/:/g, "")}`
   const [resolvedTitleId, setResolvedTitleId] = useState<string | undefined>(undefined)
 
+  onCloseRef.current = onClose
+  closeOnEscapeRef.current = closeOnEscape
+
   useEffect(() => {
+    const token = dialogTokenRef.current
     restoreFocusRef.current = getDeepActiveElement()
+    registerDialog(token)
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (closeOnEscape && e.key === "Escape") {
+      if (!isTopDialog(token)) return
+
+      if (closeOnEscapeRef.current && e.key === "Escape") {
         e.preventDefault()
-        onClose()
+        onCloseRef.current()
         return
       }
 
@@ -91,9 +114,10 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
     document.addEventListener("keydown", handleKeyDown)
     return () => {
       document.removeEventListener("keydown", handleKeyDown)
+      unregisterDialog(token)
       restoreFocusRef.current?.focus()
     }
-  }, [closeOnEscape, onClose])
+  }, [])
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -131,7 +155,9 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
       onClick={
         closeOnOverlayClick
           ? (event) => {
-              if (event.target === event.currentTarget) onClose()
+              if (event.target === event.currentTarget && isTopDialog(dialogTokenRef.current)) {
+                onClose()
+              }
             }
           : undefined
       }>

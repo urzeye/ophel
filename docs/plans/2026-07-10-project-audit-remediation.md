@@ -16,7 +16,7 @@
 - Modify: `package.json`
 - Modify: `pnpm-lock.yaml`
 - Create: `vitest.config.ts`
-- Create: `src/**/*.test.ts`
+- Create: `tests/**/*.test.ts`
 - Create: `scripts/check-theme-tokens.mjs`
 - Create: `scripts/check-bundle-budget.mjs`
 
@@ -195,4 +195,3 @@
 4. 第二轮 review：检查 diff、重复数据源、cleanup、主题、i18n、双平台和安全退化。
 5. 使用 Conventional Commits 提交。
 6. 推送分支并使用英文标题/正文创建 GitHub PR。
-

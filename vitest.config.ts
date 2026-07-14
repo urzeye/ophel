@@ -10,9 +10,10 @@ export default defineConfig({
     alias: [{ find: /^~/, replacement: `${path.resolve(__dirname, "src")}/` }],
   },
   test: {
+    include: ["tests/**/*.test.{ts,tsx}"],
     environment: "jsdom",
     globals: true,
-    setupFiles: ["./src/test/setup.ts"],
+    setupFiles: ["./tests/setup.ts"],
     restoreMocks: true,
     clearMocks: true,
   },

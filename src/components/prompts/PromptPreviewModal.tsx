@@ -1,9 +1,7 @@
 import React from "react"
-import { createPortal } from "react-dom"
 
 import { ClearIcon } from "~components/icons"
-import { useOverlayPortalTarget } from "~components/ui/OverlayPortal"
-import { OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS } from "~utils/dom-toolkit"
+import { DialogOverlay } from "~components/ui"
 import { showCopySuccess } from "~utils/icons"
 import { t } from "~utils/i18n"
 import { getHighlightStyles, renderMarkdown } from "~utils/markdown"
@@ -271,8 +269,7 @@ export const PromptPreviewModal = ({
   getCategoryColorIndex,
   getResolvedCategoryColor,
 }: PromptPreviewModalProps) => {
-  const portalTarget = useOverlayPortalTarget()
-  if (!isOpen || !prompt || !portalTarget) return null
+  if (!isOpen || !prompt) return null
 
   const categoryLabel = prompt.category || t("uncategorized")
   const categoryColorIndex = getCategoryColorIndex(categoryLabel)
@@ -281,65 +278,49 @@ export const PromptPreviewModal = ({
     "--gh-prompt-preview-category-text": "#1f2937",
   } as React.CSSProperties
 
-  return createPortal(
-    <>
+  return (
+    <DialogOverlay
+      onClose={onClose}
+      overlayClassName="gh-prompt-preview-overlay"
+      dialogClassName="gh-prompt-preview-dialog"
+      dialogStyle={{ maxWidth: "min(640px, calc(100vw - 40px))", padding: 0 }}
+      ariaLabel={prompt.title}>
       <style>{PROMPT_PREVIEW_MODAL_STYLES}</style>
-      <div
-        className="gh-prompt-preview-overlay gh-interactive"
-        {...OPHEL_HOVER_WIDTH_RETAIN_LAYER_PROPS}
-        onClick={(e) => {
-          if (e.target === e.currentTarget) {
-            onClose()
-          }
-        }}>
-        <div
-          className="gh-prompt-preview-dialog"
-          role="dialog"
-          aria-modal="true"
-          aria-label={prompt.title}
-          onClick={(e) => e.stopPropagation()}>
-          {/* 标题栏 */}
-          <div className="gh-prompt-preview-header">
-            <div className="gh-prompt-preview-title-block">
-              <div className="gh-prompt-preview-title-row">
-                <div className="gh-prompt-preview-title">{prompt.title}</div>
-                <span className="gh-prompt-preview-category" style={categoryStyle}>
-                  {categoryLabel}
-                </span>
-              </div>
-            </div>
-            <button
-              type="button"
-              className="gh-prompt-preview-close"
-              aria-label={t("close")}
-              onClick={onClose}>
-              <ClearIcon size={16} />
-            </button>
+      <div className="gh-prompt-preview-header">
+        <div className="gh-prompt-preview-title-block">
+          <div className="gh-prompt-preview-title-row">
+            <div className="gh-prompt-preview-title">{prompt.title}</div>
+            <span className="gh-prompt-preview-category" style={categoryStyle}>
+              {categoryLabel}
+            </span>
           </div>
-          {/* 内容区域 */}
-          <div
-            className="gh-prompt-preview-body gh-markdown-preview"
-            ref={previewRef}
-            onClick={(e) => {
-              // 事件委托处理复制按钮（支持点击 SVG 内部）
-              const target = e.target as HTMLElement
-              const btn = target.closest(".gh-code-copy-btn") as HTMLElement
-              if (btn) {
-                const code = btn.nextElementSibling?.textContent || ""
-                navigator.clipboard.writeText(code).then(() => {
-                  showCopySuccess(btn, { size: 14 })
-                })
-              }
-            }}
-            dangerouslySetInnerHTML={{
-              __html: createSafeHTML(renderMarkdown(prompt.content)),
-            }}
-          />
-          {/* highlight.js 样式 */}
-          <style>{getHighlightStyles()}</style>
         </div>
+        <button
+          type="button"
+          className="gh-prompt-preview-close"
+          aria-label={t("close")}
+          onClick={onClose}>
+          <ClearIcon size={16} />
+        </button>
       </div>
-    </>,
-    portalTarget,
+      <div
+        className="gh-prompt-preview-body gh-markdown-preview"
+        ref={previewRef}
+        onClick={(e) => {
+          const target = e.target as HTMLElement
+          const btn = target.closest(".gh-code-copy-btn") as HTMLElement
+          if (btn) {
+            const code = btn.nextElementSibling?.textContent || ""
+            navigator.clipboard.writeText(code).then(() => {
+              showCopySuccess(btn, { size: 14 })
+            })
+          }
+        }}
+        dangerouslySetInnerHTML={{
+          __html: createSafeHTML(renderMarkdown(prompt.content)),
+        }}
+      />
+      <style>{getHighlightStyles()}</style>
+    </DialogOverlay>
   )
 }

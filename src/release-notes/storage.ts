@@ -1,4 +1,5 @@
 import { platform } from "~platform"
+import { runTrackedPersistenceWrite } from "~stores/chrome-adapter"
 
 export interface ReleaseNotesState {
   lastSeenVersion?: string
@@ -19,7 +20,9 @@ export const getReleaseNotesState = async (): Promise<ReleaseNotesState> => {
 }
 
 export const markReleaseNotesSeen = async (version: string): Promise<void> => {
-  await platform.storage.set<ReleaseNotesState>(RELEASE_NOTES_STATE_KEY, {
-    lastSeenVersion: version,
-  })
+  await runTrackedPersistenceWrite(() =>
+    platform.storage.set<ReleaseNotesState>(RELEASE_NOTES_STATE_KEY, {
+      lastSeenVersion: version,
+    }),
+  )
 }

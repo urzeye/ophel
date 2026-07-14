@@ -3,6 +3,8 @@
 > 审查日期：2026-07-10  
 > 审查范围：全站共享架构、浏览器扩展与油猴双平台、核心生命周期、状态与存储、Shadow DOM/主题、通用 UI/UX、可访问性、构建体积、死代码与兼容层。  
 > 不在范围：仅影响单个站点选择器或单个站点 DOM 适配的兼容问题。
+>
+> 2026-07-14 对 bundle split、动态 MAIN-world 注册、生命周期、hydration 和 clear-all 事务进行了第二轮复审。新增发现、修复和最终证据见 [project-audit-follow-up-2026-07-14.md](./project-audit-follow-up-2026-07-14.md)。
 
 ## 1. 结论
 
@@ -43,7 +45,7 @@
 | P2-07 | 已完成 | SettingsModal 与 Options 共享九项导航，独立 Options 展示外观、全局搜索和快捷键。 |
 | P2-08 | 已完成 | 已确认的硬编码 UI/ARIA 文案全部 i18n 化，并由 11 语 key 一致性测试保护。 |
 | P2-09 | 已完成 | 新增主题 token 校验；101 个引用和 85 个全局 token 默认值通过，24 套预置有测试。 |
-| P2-10 | 已完成 | 引入 Vitest；当前 17 个测试文件、41 项测试覆盖路由、迁移、生命周期、搜索、备份、主题和关键 UI。 |
+| P2-10 | 已完成 | 引入 Vitest；2026-07-14 最终工作树有 35 个测试文件、101 项测试，覆盖路由、迁移、生命周期、搜索、备份、主题、Dialog 和 clear-all 事务。 |
 | P3-01 | 已完成 | 删除无引用 userscript Chrome polyfill 和不完整 Options barrel。 |
 | P3-02 | 已完成 | scroll-lock 业务逻辑集中到 `src/core/scroll-lock-runtime.ts`，两平台只保留入口桥接。 |
 | P3-03 | 已完成 | Conversation Dialog 复用通用 Dialog primitive，统一焦点、ESC、ARIA 和 Shadow overlay。 |
@@ -56,12 +58,12 @@
 
 | 产物 | 原始大小 | gzip |
 | --- | ---: | ---: |
-| `main.*.js` | 1,507,680 B | — |
-| `ui-entry.*.js` | 2,257,103 B | — |
-| 两个扩展内容脚本合计 | 3,764,783 B | 约 975.4 KiB |
-| `ophel.user.js` | 1,830,738 B | 约 467.8 KiB |
+| `main.*.js` | 1,500,213 B | 394,129 B |
+| `ui-entry.*.js` | 2,266,175 B | 604,312 B |
+| 两个扩展内容脚本合计 | 3,766,388 B | 998,441 B |
+| `ophel.user.js` | 1,848,311 B | 484,011 B |
 
-扩展内容脚本 raw 合计相对审计基线下降约 **49.8%**，超过 40% 完成指标。`scripts/check-bundle-budget.mjs` 对扩展内容入口与 userscript 同时设置 raw/gzip 上限，生产构建后可运行 `pnpm check:bundle-budget`。
+扩展内容脚本 raw 合计相对审计基线下降约 **49.7%**，超过 40% 完成指标。`scripts/check-bundle-budget.mjs` 对扩展内容入口、最大单站点入口与 userscript 同时设置 raw/gzip 上限，生产构建后可运行 `pnpm check:bundle-budget`。
 
 ## 2. 审查方法与证据
 
@@ -75,7 +77,7 @@
 - `pnpm build`：通过。
 - `pnpm build:userscript`：通过。
 
-当前没有正式测试体系，因此“构建通过”不能证明运行时生命周期、主题、键盘操作或窄屏布局正确。
+审计当时没有正式测试体系，因此“构建通过”不能证明运行时生命周期、主题、键盘操作或窄屏布局正确。修复分支现已引入 Vitest 和静态审计门禁；最终覆盖与结果见 2026-07-14 follow-up。
 
 ### 2.2 视觉与键盘冒烟
 
@@ -365,9 +367,9 @@
 
 建议：建立 token 校验脚本，区分“全局主题 token”和“组件局部动态变量”；全局 token 必须同时存在于类型、默认 CSS 和主题预置生成链路。
 
-### P2-10 没有正式测试体系，关键纯逻辑与迁移无回归保护
+### P2-10 审计时没有正式测试体系，关键纯逻辑与迁移无回归保护
 
-目前没有 test/spec 文件、测试命令或测试依赖。以下全局逻辑尤其需要测试：
+审计基线没有 test/spec 文件、测试命令或测试依赖。以下全局逻辑尤其需要测试：
 
 - `settings-normalize.ts` 的旧数据迁移和默认值合并；
 - 备份/恢复 schema、WebDAV 合并；

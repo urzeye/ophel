@@ -1,4 +1,4 @@
-import { initGeminiMyStuffBridge } from "~core/gemini-mystuff-bridge"
+import { destroyGeminiMyStuffBridge, initGeminiMyStuffBridge } from "~core/gemini-mystuff-bridge"
 import type { NetworkMonitorRequestBodyRule } from "~adapters/base"
 import {
   EVENT_MONITOR_COMPLETE,
@@ -81,6 +81,8 @@ class NetworkMonitor {
   private _originalFetch: typeof fetch | null = null
   private _originalXhrOpen: XhrOpen | null = null
   private _originalXhrSend: XhrSend | null = null
+  private _hookedXhrOpen: XhrOpen | null = null
+  private _hookedXhrSend: XhrSend | null = null
   private _lastUrl = ""
   private _hasTriggeredStart = false
   private _boundHookedFetch: typeof fetch
@@ -100,18 +102,24 @@ class NetworkMonitor {
     if (this._isMonitoring) return
 
     const pageWindow = getPageWindow()
-    this._originalFetch = pageWindow.fetch
-    pageWindow.fetch = this._boundHookedFetch as typeof fetch
-
-    this._hookXHR()
     this._isMonitoring = true
+
+    try {
+      this._originalFetch = pageWindow.fetch
+      pageWindow.fetch = this._boundHookedFetch as typeof fetch
+      this._hookXHR()
+    } catch (error) {
+      this.stop()
+      throw error
+    }
   }
 
   stop() {
     if (!this._isMonitoring) return
 
     const pageWindow = getPageWindow()
-    if (this._originalFetch) {
+    this._isMonitoring = false
+    if (this._originalFetch && pageWindow.fetch === this._boundHookedFetch) {
       pageWindow.fetch = this._originalFetch
       this._originalFetch = null
     }
@@ -123,7 +131,6 @@ class NetworkMonitor {
       this._silenceTimer = null
     }
 
-    this._isMonitoring = false
     this._activeCount = 0
     this._hasTriggeredStart = false
   }
@@ -177,11 +184,19 @@ class NetworkMonitor {
   private async _hookedFetch(...args: FetchArguments): Promise<Response> {
     // 获取正确的页面上下文（油猴脚本环境使用 unsafeWindow）
     const pageWindow = getPageWindow()
+    const originalFetch = this._originalFetch
+    if (!originalFetch) {
+      throw new Error("NetworkMonitor original fetch is unavailable")
+    }
+    if (!this._isMonitoring) {
+      return this._callOriginalFetch(originalFetch, pageWindow, args)
+    }
+
     const url = this._extractFetchUrl(args)
     const isTarget = this._isTargetUrl(url)
 
     if (!isTarget) {
-      return this._callOriginalFetch(pageWindow, args)
+      return this._callOriginalFetch(originalFetch, pageWindow, args)
     }
 
     this._activeCount++
@@ -196,12 +211,14 @@ class NetworkMonitor {
       this._hasTriggeredStart = true
       try {
         const requestMetadata = await this._extractFetchRequestMetadata(args)
-        this.onStart({ url, timestamp: Date.now(), type: "fetch", ...requestMetadata })
+        if (this._isMonitoring) {
+          this.onStart({ url, timestamp: Date.now(), type: "fetch", ...requestMetadata })
+        }
       } catch {}
     }
 
     try {
-      const response = await this._callOriginalFetch(pageWindow, args)
+      const response = await this._callOriginalFetch(originalFetch, pageWindow, args)
       const clone = response.clone()
       this._readStream(clone).catch(() => {})
       return response
@@ -212,13 +229,11 @@ class NetworkMonitor {
   }
 
   private _callOriginalFetch(
+    originalFetch: typeof fetch,
     pageWindow: Window & typeof globalThis,
     args: FetchArguments,
   ): Promise<Response> {
-    if (!this._originalFetch) {
-      throw new Error("NetworkMonitor original fetch is unavailable")
-    }
-    return Reflect.apply(this._originalFetch, pageWindow, args) as Promise<Response>
+    return Reflect.apply(originalFetch, pageWindow, args) as Promise<Response>
   }
 
   private async _readStream(response: Response) {
@@ -237,6 +252,8 @@ class NetworkMonitor {
 
   private _decrementAndSchedule() {
     this._activeCount = Math.max(0, this._activeCount - 1)
+    if (!this._isMonitoring) return
+
     if (this._silenceTimer) {
       clearTimeout(this._silenceTimer)
     }
@@ -251,7 +268,7 @@ class NetworkMonitor {
     this._originalXhrOpen = PageXHR.prototype.open
     this._originalXhrSend = PageXHR.prototype.send
 
-    PageXHR.prototype.open = function (
+    const hookedXhrOpen = function (
       this: MonitoredXMLHttpRequest,
       method: string,
       url: string | URL,
@@ -259,24 +276,32 @@ class NetworkMonitor {
       username: string | null = null,
       password: string | null = null,
     ) {
-      this.__ophelNetworkMonitorUrl = url ? url.toString() : ""
-      if (!self._originalXhrOpen) {
+      const originalXhrOpen = self._originalXhrOpen
+      if (!originalXhrOpen) {
         throw new Error("NetworkMonitor original XMLHttpRequest.open is unavailable")
       }
-      return self._originalXhrOpen.call(this, method, url, async, username, password)
-    } as typeof XMLHttpRequest.prototype.open
+      if (self._isMonitoring) {
+        this.__ophelNetworkMonitorUrl = url ? url.toString() : ""
+      }
+      return originalXhrOpen.call(this, method, url, async, username, password)
+    } as XhrOpen
 
-    PageXHR.prototype.send = function (
+    const hookedXhrSend = function (
       this: MonitoredXMLHttpRequest,
       body?: Document | XMLHttpRequestBodyInit | null,
     ) {
+      const originalXhrSend = self._originalXhrSend
+      if (!originalXhrSend) {
+        throw new Error("NetworkMonitor original XMLHttpRequest.send is unavailable")
+      }
+      if (!self._isMonitoring) {
+        return originalXhrSend.call(this, body)
+      }
+
       const url = this.__ophelNetworkMonitorUrl || ""
 
       if (!self._isTargetUrl(url)) {
-        if (!self._originalXhrSend) {
-          throw new Error("NetworkMonitor original XMLHttpRequest.send is unavailable")
-        }
-        return self._originalXhrSend.call(this, body)
+        return originalXhrSend.call(this, body)
       }
 
       self._activeCount++
@@ -304,25 +329,29 @@ class NetworkMonitor {
       this.addEventListener("abort", onComplete)
       this.addEventListener("timeout", onComplete)
 
-      if (!self._originalXhrSend) {
-        throw new Error("NetworkMonitor original XMLHttpRequest.send is unavailable")
-      }
-      return self._originalXhrSend.call(this, body)
-    } as typeof XMLHttpRequest.prototype.send
+      return originalXhrSend.call(this, body)
+    } as XhrSend
+
+    this._hookedXhrOpen = hookedXhrOpen
+    this._hookedXhrSend = hookedXhrSend
+    PageXHR.prototype.open = hookedXhrOpen as typeof XMLHttpRequest.prototype.open
+    PageXHR.prototype.send = hookedXhrSend as typeof XMLHttpRequest.prototype.send
   }
 
   private _unhookXHR() {
     const pageWindow = getPageWindow()
     const PageXHR = pageWindow.XMLHttpRequest
 
-    if (this._originalXhrOpen) {
+    if (this._originalXhrOpen && PageXHR.prototype.open === this._hookedXhrOpen) {
       PageXHR.prototype.open = this._originalXhrOpen
       this._originalXhrOpen = null
     }
-    if (this._originalXhrSend) {
+    if (this._originalXhrSend && PageXHR.prototype.send === this._hookedXhrSend) {
       PageXHR.prototype.send = this._originalXhrSend
       this._originalXhrSend = null
     }
+    this._hookedXhrOpen = null
+    this._hookedXhrSend = null
   }
 
   private _extractFetchUrl(args: FetchArguments): string {
@@ -440,6 +469,40 @@ class NetworkMonitor {
 let monitor: NetworkMonitor | null = null
 let isInitialized = false
 
+const handleMonitorMessage = (event: MessageEvent): void => {
+  const message = event.data as WindowMessage | null
+  const type = message?.type
+  const payload = message?.payload as MonitorConfigPayload | undefined
+
+  // 在油猴脚本中，event.source 可能与 window 或 unsafeWindow 不完全相等
+  // 或者由于沙箱机制，window.postMessage 发送的消息 source 可能是 proxy
+  // 主要依赖消息类型进行验证
+  if (event.source !== window) {
+    // 放宽检查：如果是我们关心的消息类型，则允许通过
+    if (
+      type !== EVENT_MONITOR_INIT &&
+      type !== EVENT_MONITOR_COMPLETE &&
+      type !== EVENT_MONITOR_START
+    ) {
+      return
+    }
+  }
+
+  if (type === EVENT_MONITOR_INIT) {
+    if (monitor) monitor.stop()
+    monitor = new NetworkMonitor({
+      urlPatterns: payload?.urlPatterns,
+      urlPathEndsWith: payload?.urlPathEndsWith,
+      silenceThreshold: payload?.silenceThreshold,
+      requestBodyRules: payload?.requestBodyRules,
+      onStart: (info) => window.postMessage({ type: EVENT_MONITOR_START, payload: info }, "*"),
+      onComplete: (info) =>
+        window.postMessage({ type: EVENT_MONITOR_COMPLETE, payload: info }, "*"),
+    })
+    monitor.start()
+  }
+}
+
 /**
  * 初始化 NetworkMonitor 消息监听器
  * 需要显式调用此函数以避免被 tree-shaking 移除
@@ -451,38 +514,15 @@ export function initNetworkMonitor(): void {
   isInitialized = true
 
   initGeminiMyStuffBridge()
+  window.addEventListener("message", handleMonitorMessage)
+}
 
-  window.addEventListener("message", (event) => {
-    const message = event.data as WindowMessage | null
-    const type = message?.type
-    const payload = message?.payload as MonitorConfigPayload | undefined
+export function destroyNetworkMonitor(): void {
+  monitor?.stop()
+  monitor = null
+  destroyGeminiMyStuffBridge()
 
-    // 在油猴脚本中，event.source 可能与 window 或 unsafeWindow 不完全相等
-    // 或者由于沙箱机制，window.postMessage 发送的消息 source 可能是 proxy
-    // 主要依赖消息类型进行验证
-    if (event.source !== window) {
-      // 放宽检查：如果是我们关心的消息类型，则允许通过
-      if (
-        type !== EVENT_MONITOR_INIT &&
-        type !== EVENT_MONITOR_COMPLETE &&
-        type !== EVENT_MONITOR_START
-      ) {
-        return
-      }
-    }
-
-    if (type === EVENT_MONITOR_INIT) {
-      if (monitor) monitor.stop()
-      monitor = new NetworkMonitor({
-        urlPatterns: payload?.urlPatterns,
-        urlPathEndsWith: payload?.urlPathEndsWith,
-        silenceThreshold: payload?.silenceThreshold,
-        requestBodyRules: payload?.requestBodyRules,
-        onStart: (info) => window.postMessage({ type: EVENT_MONITOR_START, payload: info }, "*"),
-        onComplete: (info) =>
-          window.postMessage({ type: EVENT_MONITOR_COMPLETE, payload: info }, "*"),
-      })
-      monitor.start()
-    }
-  })
+  if (!isInitialized) return
+  isInitialized = false
+  window.removeEventListener("message", handleMonitorMessage)
 }

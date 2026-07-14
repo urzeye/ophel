@@ -1866,6 +1866,9 @@ export abstract class SiteAdapter {
     }
   }
 
+  /** 释放 afterPropertiesSet() 创建的站点级持久资源。 */
+  dispose(): void {}
+
   /** 判断是否应该将样式注入到指定的 Shadow Host 中 */
   shouldInjectIntoShadow(_host: Element): boolean {
     return true

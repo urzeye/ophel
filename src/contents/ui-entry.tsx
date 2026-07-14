@@ -10,7 +10,19 @@ import React from "react"
 import { App } from "~components/App"
 import { OverlayPortalProvider } from "~components/ui/OverlayPortal"
 import { getAdapterRuntime, subscribeAdapterRuntime } from "~core/adapter-runtime"
+import { drainPersistenceWrites, suspendPersistenceWrites } from "~stores/chrome-adapter"
+import { registerClearAllDataTask } from "~utils/clear-all-event"
 import { applyOphelPlatformFontClass } from "~utils/font"
+import { EVENT_CLEAR_ALL_DATA } from "~utils/messaging"
+
+window.addEventListener(
+  EVENT_CLEAR_ALL_DATA,
+  (event) => {
+    suspendPersistenceWrites()
+    registerClearAllDataTask(event, drainPersistenceWrites())
+  },
+  { once: true },
+)
 
 export const config: PlasmoCSConfig = {
   matches: [
@@ -18,7 +30,6 @@ export const config: PlasmoCSConfig = {
     "https://business.gemini.google/*",
     "https://aistudio.google.com/*",
     "https://grok.com/*",
-    "https://chat.openai.com/*",
     "https://chatgpt.com/*",
     "https://claude.ai/*",
     "https://www.doubao.com/*",
@@ -28,7 +39,6 @@ export const config: PlasmoCSConfig = {
     "https://chatglm.cn/*",
     "https://chat.qwen.ai/*",
     "https://www.qianwen.com/*",
-    "https://qianwen.com/*",
     "https://yuanbao.tencent.com/*",
     "https://chat.z.ai/*",
   ],
@@ -101,7 +111,6 @@ export const mountShadowHost: PlasmoMountShadowHost = ({
   // ChatGPT、Claude 和 Grok 都是 Next.js 应用，需要延迟挂载
   const needsDelayedMount =
     hostname.includes("chatgpt.com") ||
-    hostname.includes("chat.openai.com") ||
     hostname.includes("grok.com") ||
     hostname.includes("claude.ai") ||
     hostname.includes("deepseek.com") ||

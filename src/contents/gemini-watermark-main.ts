@@ -1,17 +1,18 @@
-import type { PlasmoCSConfig } from "plasmo"
 import {
   isGeminiGeneratedImageUrl,
   normalizeGeminiImageUrl,
 } from "~core/watermark/gemini-asset-url"
+import type { MainWorldCSConfig } from "~types/plasmo-content-script"
 
 const OPHEL_WATERMARK_FETCH_TOGGLE = "OPHEL_WATERMARK_FETCH_TOGGLE"
 const OPHEL_WATERMARK_PROCESS_REQUEST = "OPHEL_WATERMARK_PROCESS_REQUEST"
 const OPHEL_WATERMARK_PROCESS_RESPONSE = "OPHEL_WATERMARK_PROCESS_RESPONSE"
 
-export const config: PlasmoCSConfig = {
+export const config: MainWorldCSConfig = {
   matches: ["https://gemini.google.com/*"],
   world: "MAIN",
   run_at: "document_start",
+  persist_across_sessions: false,
 }
 
 if (!window.__ophelGeminiWatermarkMainInitialized) {

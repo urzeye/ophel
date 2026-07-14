@@ -63,6 +63,9 @@ jobs:
       - name: 🎨 Validate Theme Tokens
         run: pnpm check:theme-tokens
 
+      - name: 🌐 Validate Supported Sites
+        run: pnpm check:site-support
+
       - name: 🏗️ Verify Chrome Build
         run: pnpm build
 

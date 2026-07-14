@@ -7,6 +7,12 @@
 import { t } from "~utils/i18n"
 import type { ClaudeSessionKey, ClaudeSessionKeysState } from "~utils/storage"
 
+import {
+  abortUserscriptClearAll,
+  completeUserscriptClearAll,
+  prepareUserscriptClearAll,
+} from "./clear-all-coordinator"
+
 import type {
   FetchOptions,
   FetchResponse,
@@ -15,6 +21,7 @@ import type {
   PlatformCapability,
   PlatformStorage,
 } from "../types"
+import { runTrackedPersistenceWrite } from "~stores/chrome-adapter"
 
 declare global {
   interface Window {
@@ -97,6 +104,18 @@ export const platform: Platform = {
   type: "userscript",
 
   storage: userscriptStorage,
+
+  async prepareClearAllData(): Promise<void> {
+    await prepareUserscriptClearAll()
+  },
+
+  async completeClearAllData(): Promise<void> {
+    completeUserscriptClearAll()
+  },
+
+  async abortClearAllData(): Promise<void> {
+    abortUserscriptClearAll()
+  },
 
   async fetch(url: string, options?: FetchOptions): Promise<FetchResponse> {
     return new Promise((resolve, reject) => {
@@ -334,7 +353,9 @@ export const platform: Platform = {
       // 5. 更新存储中的当前 Key ID
       if (storageData?.state) {
         storageData.state.currentKeyId = nextKey.id
-        GM_setValue("claudeSessionKeys", storageData)
+        await runTrackedPersistenceWrite(async () => {
+          GM_setValue("claudeSessionKeys", storageData)
+        })
       }
 
       // 6. 跳转到首页

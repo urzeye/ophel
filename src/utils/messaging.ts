@@ -121,6 +121,26 @@ export interface BasicBackgroundResponse {
   error?: string
 }
 
+export function requireSuccessfulMessageAcknowledgement(response: unknown): void {
+  if (
+    typeof response === "object" &&
+    response !== null &&
+    "success" in response &&
+    response.success === true
+  ) {
+    return
+  }
+
+  const error =
+    typeof response === "object" &&
+    response !== null &&
+    "error" in response &&
+    typeof response.error === "string"
+      ? response.error
+      : "Content script did not acknowledge the message"
+  throw new Error(error)
+}
+
 // 撤销权限
 export const MSG_REVOKE_PERMISSIONS = "REVOKE_PERMISSIONS"
 
@@ -164,9 +184,23 @@ export interface ExtensionUpdateAvailableMessage extends ExtensionUpdateAvailabl
 
 // 清除全部数据（通知各上下文重置内存态）
 export const MSG_CLEAR_ALL_DATA = "CLEAR_ALL_DATA"
+export const MSG_COMPLETE_CLEAR_ALL_DATA = "COMPLETE_CLEAR_ALL_DATA"
+export const MSG_ABORT_CLEAR_ALL_DATA = "ABORT_CLEAR_ALL_DATA"
+export const EVENT_CLEAR_ALL_DATA = "ophel:clear-all-data"
 
 export interface ClearAllDataMessage {
   type: typeof MSG_CLEAR_ALL_DATA
+  transactionId?: string
+}
+
+export interface CompleteClearAllDataMessage {
+  type: typeof MSG_COMPLETE_CLEAR_ALL_DATA
+  transactionId: string
+}
+
+export interface AbortClearAllDataMessage {
+  type: typeof MSG_ABORT_CLEAR_ALL_DATA
+  transactionId: string
 }
 
 // 恢复备份数据（通知各上下文重载页面以加载最新数据）
@@ -232,6 +266,8 @@ export type ExtensionMessage =
   | OpenUrlMessage
   | ExtensionUpdateAvailableMessage
   | ClearAllDataMessage
+  | CompleteClearAllDataMessage
+  | AbortClearAllDataMessage
   | RestoreDataMessage
   | SetClaudeSessionKeyMessage
   | TestClaudeTokenMessage
@@ -259,6 +295,28 @@ export const MSG_START_NEW_CONVERSATION = "START_NEW_CONVERSATION"
 export interface StartNewConversationMessage {
   type: typeof MSG_START_NEW_CONVERSATION
 }
+
+// Background -> Content Script: 查询当前页面生成状态
+export const MSG_CHECK_IS_GENERATING = "CHECK_IS_GENERATING"
+
+export interface CheckIsGeneratingMessage {
+  type: typeof MSG_CHECK_IS_GENERATING
+}
+
+// Background -> AI Studio Content Script: 获取当前可选模型
+export const MSG_GET_MODEL_LIST = "GET_MODEL_LIST"
+
+export interface GetModelListMessage {
+  type: typeof MSG_GET_MODEL_LIST
+}
+
+export type ContentScriptMessage =
+  | ClearAllDataMessage
+  | RestoreDataMessage
+  | ExtensionUpdateAvailableMessage
+  | StartNewConversationMessage
+  | CheckIsGeneratingMessage
+  | GetModelListMessage
 
 export interface AIStudioModelInfo {
   id: string

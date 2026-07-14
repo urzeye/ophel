@@ -8,6 +8,8 @@
 
 import type { StateStorage } from "zustand/middleware"
 
+import { CLEAR_ALL_GENERATION_KEY, CLEAR_ALL_PREPARE_KEY } from "~utils/storage"
+
 // 构建时注入的平台标识
 declare const __PLATFORM__: "extension" | "userscript"
 
@@ -15,6 +17,91 @@ declare const __PLATFORM__: "extension" | "userscript"
 declare function GM_getValue<T>(key: string, defaultValue?: T): T
 declare function GM_setValue(key: string, value: unknown): void
 declare function GM_deleteValue(key: string): void
+
+export class PersistenceEpochGuard {
+  private warned = false
+
+  constructor(
+    private readonly readGeneration: () => unknown,
+    private readonly readPrepareSignal: () => unknown,
+    private readonly initialGeneration = readGeneration(),
+  ) {}
+
+  shouldSuspend(): boolean {
+    const prepareSignal = this.readPrepareSignal()
+    return (
+      (prepareSignal !== undefined && prepareSignal !== null) ||
+      !Object.is(this.readGeneration(), this.initialGeneration)
+    )
+  }
+
+  warnOnce(): void {
+    if (this.warned) return
+    this.warned = true
+    console.warn("[Ophel] Persistence writes suspended by a clear-all transaction")
+  }
+}
+
+export class PersistenceWriteBarrier {
+  private suspended = false
+  private pendingWrites = new Set<Promise<unknown>>()
+
+  suspend(): void {
+    this.suspended = true
+  }
+
+  resume(): void {
+    this.suspended = false
+  }
+
+  isSuspended(): boolean {
+    return this.suspended
+  }
+
+  track(write: unknown): unknown {
+    if (
+      typeof write !== "object" ||
+      write === null ||
+      !("then" in write) ||
+      typeof write.then !== "function"
+    ) {
+      return write
+    }
+
+    const pendingWrite = Promise.resolve(write)
+    this.pendingWrites.add(pendingWrite)
+    const release = () => this.pendingWrites.delete(pendingWrite)
+    void pendingWrite.then(release, release)
+    return pendingWrite
+  }
+
+  async drain(): Promise<void> {
+    const results = await Promise.allSettled([...this.pendingWrites])
+    const failures = results.flatMap((result) =>
+      result.status === "rejected" ? [result.reason] : [],
+    )
+    if (failures.length > 0) {
+      throw new AggregateError(failures, "Pending persistence writes failed")
+    }
+  }
+}
+
+export function guardPersistenceWrites(
+  storage: StateStorage,
+  barrier: PersistenceWriteBarrier,
+): StateStorage {
+  return {
+    getItem: (name) => storage.getItem(name),
+    setItem: (name, value) => {
+      if (barrier.isSuspended()) return
+      return barrier.track(storage.setItem(name, value))
+    },
+    removeItem: (name) => {
+      if (barrier.isSuspended()) return
+      return barrier.track(storage.removeItem(name))
+    },
+  }
+}
 
 const tryParseJSON = (value: string): unknown => {
   try {
@@ -59,6 +146,14 @@ const normalizeUserscriptPersistValue = (name: string, value: unknown): string |
   return typeof value === "string" ? value : JSON.stringify(value)
 }
 
+const isUserscriptBuild = typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
+const userscriptPersistenceEpoch = isUserscriptBuild
+  ? new PersistenceEpochGuard(
+      () => GM_getValue(CLEAR_ALL_GENERATION_KEY),
+      () => GM_getValue(CLEAR_ALL_PREPARE_KEY),
+    )
+  : null
+
 /**
  * 油猴脚本存储适配器
  *
@@ -80,10 +175,18 @@ const userscriptStorageAdapter: StateStorage = {
   },
 
   setItem: (name: string, value: string): void => {
+    if (userscriptPersistenceEpoch?.shouldSuspend()) {
+      userscriptPersistenceEpoch.warnOnce()
+      return
+    }
     GM_setValue(name, value)
   },
 
   removeItem: (name: string): void => {
+    if (userscriptPersistenceEpoch?.shouldSuspend()) {
+      userscriptPersistenceEpoch.warnOnce()
+      return
+    }
     GM_deleteValue(name)
   },
 }
@@ -95,8 +198,12 @@ const userscriptStorageAdapter: StateStorage = {
  */
 const extensionStorageAdapter: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       chrome.storage.local.get(name, (result) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message || `Failed to read ${name}`))
+          return
+        }
         const value = result[name]
         if (value === undefined) {
           resolve(null)
@@ -115,17 +222,25 @@ const extensionStorageAdapter: StateStorage = {
   },
 
   setItem: async (name: string, value: string): Promise<void> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       // 存储 JSON 字符串
       chrome.storage.local.set({ [name]: value }, () => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message || `Failed to write ${name}`))
+          return
+        }
         resolve()
       })
     })
   },
 
   removeItem: async (name: string): Promise<void> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       chrome.storage.local.remove(name, () => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message || `Failed to remove ${name}`))
+          return
+        }
         resolve()
       })
     })
@@ -136,7 +251,23 @@ const extensionStorageAdapter: StateStorage = {
  * 导出的跨平台存储适配器
  * 根据 __PLATFORM__ 在编译时选择正确的实现
  */
-export const chromeStorageAdapter: StateStorage =
-  typeof __PLATFORM__ !== "undefined" && __PLATFORM__ === "userscript"
-    ? userscriptStorageAdapter
-    : extensionStorageAdapter
+const persistenceWriteBarrier = new PersistenceWriteBarrier()
+const platformStorageAdapter = isUserscriptBuild
+  ? userscriptStorageAdapter
+  : extensionStorageAdapter
+
+export const suspendPersistenceWrites = (): void => persistenceWriteBarrier.suspend()
+export const drainPersistenceWrites = (): Promise<void> => persistenceWriteBarrier.drain()
+
+export async function runTrackedPersistenceWrite(write: () => Promise<void>): Promise<void> {
+  if (persistenceWriteBarrier.isSuspended() || userscriptPersistenceEpoch?.shouldSuspend()) {
+    userscriptPersistenceEpoch?.warnOnce()
+    throw new Error("Persistence writes are suspended by a clear-all transaction")
+  }
+  await Promise.resolve(persistenceWriteBarrier.track(write()))
+}
+
+export const chromeStorageAdapter: StateStorage = guardPersistenceWrites(
+  platformStorageAdapter,
+  persistenceWriteBarrier,
+)

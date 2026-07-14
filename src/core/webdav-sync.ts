@@ -4,6 +4,7 @@
  */
 
 import { MULTI_PROP_STORES, ZUSTAND_KEYS } from "~constants/defaults"
+import { runTrackedPersistenceWrite } from "~stores/chrome-adapter"
 import type { WebDAVProvider } from "~types/webdav"
 import { validateBackupData } from "~utils/backup-validator"
 import { APP_NAME } from "~utils/config"
@@ -675,44 +676,50 @@ export class WebDAVSyncManager {
         }),
       )
 
-      await new Promise<void>((resolve, reject) =>
-        chrome.storage.local.set(dehydratedData, () =>
-          chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
-        ),
+      await runTrackedPersistenceWrite(
+        () =>
+          new Promise<void>((resolve, reject) =>
+            chrome.storage.local.set(dehydratedData, () =>
+              chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
+            ),
+          ),
       )
 
       // 3. 恢复当前 WebDAV 配置（保持用户当前的 WebDAV 设置）
       // 直接操作 storage 而非 setSettings()，避免触发 Zustand persist
-      await new Promise<void>((resolve, reject) => {
-        chrome.storage.local.get("settings", (result) => {
-          if (chrome.runtime.lastError) {
-            reject(chrome.runtime.lastError)
-            return
-          }
+      await runTrackedPersistenceWrite(
+        () =>
+          new Promise<void>((resolve, reject) => {
+            chrome.storage.local.get("settings", (result) => {
+              if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError)
+                return
+              }
 
-          // 解析当前 storage 中的 settings（刚写入的备份数据）
-          let settingsWrapper = result.settings
-          if (typeof settingsWrapper === "string") {
-            try {
-              settingsWrapper = JSON.parse(settingsWrapper)
-            } catch {
-              // 解析失败，跳过 WebDAV 配置恢复
-              resolve()
-              return
-            }
-          }
+              // 解析当前 storage 中的 settings（刚写入的备份数据）
+              let settingsWrapper = result.settings
+              if (typeof settingsWrapper === "string") {
+                try {
+                  settingsWrapper = JSON.parse(settingsWrapper)
+                } catch {
+                  // 解析失败，跳过 WebDAV 配置恢复
+                  resolve()
+                  return
+                }
+              }
 
-          // 更新 webdav 配置
-          if (settingsWrapper?.state?.settings) {
-            settingsWrapper.state.settings.webdav = currentWebdavConfig
-          }
+              // 更新 webdav 配置
+              if (settingsWrapper?.state?.settings) {
+                settingsWrapper.state.settings.webdav = currentWebdavConfig
+              }
 
-          // 写回 storage
-          chrome.storage.local.set({ settings: JSON.stringify(settingsWrapper) }, () =>
-            chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
-          )
-        })
-      })
+              // 写回 storage
+              chrome.storage.local.set({ settings: JSON.stringify(settingsWrapper) }, () =>
+                chrome.runtime.lastError ? reject(chrome.runtime.lastError) : resolve(),
+              )
+            })
+          }),
+      )
 
       const now = Date.now()
       await this.saveConfig({ lastSyncTime: now, lastSyncStatus: "success" })

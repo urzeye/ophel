@@ -12,6 +12,7 @@ export class PolicyRetryManager {
   private settings: NonNullable<Settings["geminiEnterprise"]>["policyRetry"]
   private retryCounts = new Map<string, number>() // promptHash -> count
   private monitorInitialized = false
+  private destroyed = false
 
   constructor(
     adapter: SiteAdapter,
@@ -19,7 +20,7 @@ export class PolicyRetryManager {
   ) {
     this.adapter = adapter as GeminiEnterpriseAdapter
     this.settings = settings
-    window.addEventListener("message", this.handleMessage.bind(this))
+    window.addEventListener("message", this.handleMessage)
 
     // 如果功能已启用，立即初始化网络监控
     if (this.settings.enabled) {
@@ -60,7 +61,7 @@ export class PolicyRetryManager {
     }
   }
 
-  private handleMessage(event: MessageEvent) {
+  private handleMessage = (event: MessageEvent) => {
     // 只有 Gemini Enterprise 才启用
     if (this.adapter.getSiteId() !== SITE_IDS.GEMINI_ENTERPRISE) {
       return
@@ -78,6 +79,7 @@ export class PolicyRetryManager {
   private async checkAndRetry() {
     // 延迟一点，确保渲染完成
     await new Promise((resolve) => setTimeout(resolve, 500))
+    if (this.destroyed || !this.settings.enabled) return
 
     // 1. 查找 ucs-conversation 的 Shadow Root
     const ucsConv = DOMToolkit.query("ucs-conversation", { shadow: true }) as Element | null
@@ -121,6 +123,7 @@ export class PolicyRetryManager {
 
     // 5. 计算 Hash 并重试
     const hash = await this.sha256(questionText)
+    if (this.destroyed || !this.settings.enabled) return
     const count = this.retryCounts.get(hash) || 0
 
     if (count < this.settings.maxRetries) {
@@ -179,10 +182,13 @@ export class PolicyRetryManager {
   }
 
   private async performRetry(text: string) {
+    if (this.destroyed || !this.settings.enabled) return
+
     // 1. 填入文本
     // 需要确保清空
     this.adapter.clearTextarea()
     await new Promise((r) => setTimeout(r, 100))
+    if (this.destroyed || !this.settings.enabled) return
 
     const inserted = this.adapter.insertPrompt(text)
     if (!inserted) {
@@ -191,6 +197,7 @@ export class PolicyRetryManager {
     }
 
     await new Promise((r) => setTimeout(r, 300))
+    if (this.destroyed || !this.settings.enabled) return
 
     // 2. 点击提交
     // 使用 adapter 的 helper 或者自己查找
@@ -228,5 +235,13 @@ export class PolicyRetryManager {
     const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer)
     const hashArray = Array.from(new Uint8Array(hashBuffer))
     return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("")
+  }
+
+  destroy() {
+    if (this.destroyed) return
+    this.destroyed = true
+    this.settings = { ...this.settings, enabled: false }
+    this.retryCounts.clear()
+    window.removeEventListener("message", this.handleMessage)
   }
 }

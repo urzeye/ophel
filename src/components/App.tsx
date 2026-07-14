@@ -34,11 +34,12 @@ import { useConversationsStore } from "~stores/conversations-store"
 import { useFoldersStore } from "~stores/folders-store"
 import { usePromptsStore } from "~stores/prompts-store"
 import { APP_DISPLAY_NAME, APP_VERSION } from "~utils/config"
+import { registerClearAllDataTask } from "~utils/clear-all-event"
 import { DEFAULT_SETTINGS, type Prompt } from "~utils/storage"
 import {
+  EVENT_CLEAR_ALL_DATA,
   EVENT_EXTENSION_UPDATE_AVAILABLE,
   EVENT_PAGE_URL_CHANGE,
-  MSG_CLEAR_ALL_DATA,
 } from "~utils/messaging"
 import { showToast } from "~utils/toast"
 import { setLanguage, subscribeI18nChanges, t } from "~utils/i18n"
@@ -59,6 +60,7 @@ import { SelectedPromptBar } from "./SelectedPromptBar"
 import { SegmentedExportDialog } from "./SegmentedExportDialog"
 import { SettingsModal } from "./SettingsModal"
 import { ExtensionUpdateNotice } from "./app/ExtensionUpdateNotice"
+import { stopAppRuntimeWriters } from "./app/runtime-lifecycle"
 import { useAppRuntimeManagers } from "./app/useAppRuntimeManagers"
 import { GlobalSearchOverlay } from "./global-search/GlobalSearchOverlay"
 import { GlobalSearchResultItemView } from "./global-search/GlobalSearchResultItemView"
@@ -2362,38 +2364,27 @@ export const App: React.FC<AppProps> = ({ adapter }) => {
       // popstate / pushState / replaceState 时 dispatch "gh-url-change"。
       const onUrlChange = () => outlineManager.handleUrlChange()
       const onRefreshOutline = () => outlineManager.refresh()
+      const stopRuntimeWriters = (event?: Event) => {
+        const task = stopAppRuntimeWriters({ conversationManager, outlineManager, queueDispatcher })
+        if (event) {
+          registerClearAllDataTask(event, task)
+        } else {
+          void task.catch((error) => {
+            console.error("[Ophel] Failed to stop app runtime writers:", error)
+          })
+        }
+      }
       window.addEventListener("gh-url-change", onUrlChange)
       window.addEventListener("ophel:refreshOutline", onRefreshOutline)
+      window.addEventListener(EVENT_CLEAR_ALL_DATA, stopRuntimeWriters, { once: true })
       return () => {
         window.removeEventListener("gh-url-change", onUrlChange)
         window.removeEventListener("ophel:refreshOutline", onRefreshOutline)
-        outlineManager.destroy()
-        conversationManager?.destroy()
+        window.removeEventListener(EVENT_CLEAR_ALL_DATA, stopRuntimeWriters)
+        stopRuntimeWriters()
       }
     }
-  }, [promptManager, conversationManager, outlineManager])
-
-  useEffect(() => {
-    if (!conversationManager || typeof chrome === "undefined") return
-
-    const handler = (
-      message: { type?: string } | undefined,
-      _sender: chrome.runtime.MessageSender,
-      sendResponse: (response: { success: boolean }) => void,
-    ) => {
-      if (message?.type === MSG_CLEAR_ALL_DATA) {
-        conversationManager.destroy()
-        sendResponse({ success: true })
-        return true
-      }
-      return false
-    }
-
-    chrome.runtime.onMessage.addListener(handler)
-    return () => {
-      chrome.runtime.onMessage.removeListener(handler)
-    }
-  }, [conversationManager])
+  }, [promptManager, queueDispatcher, conversationManager, outlineManager])
 
   useEffect(() => {
     const handleExtensionUpdateAvailable = (event: Event) => {

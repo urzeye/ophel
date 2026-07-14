@@ -1,14 +1,24 @@
 import { APP_DISPLAY_NAME } from "~utils/config"
+import {
+  MAIN_WORLD_CONTENT_SCRIPT_IDS,
+  MAIN_WORLD_CONTENT_SCRIPTS,
+} from "~constants/main-world-scripts"
+import { SUPPORTED_SITE_MATCHES } from "~constants/supported-sites"
+import { BackgroundClearAllCoordinator } from "~core/background-clear-all-coordinator"
 import { loadLocaleMessages } from "~locales/loader"
 import {
+  MSG_ABORT_CLEAR_ALL_DATA,
   MSG_CLEAR_ALL_DATA,
   MSG_CHECK_CLAUDE_GENERATING,
+  MSG_CHECK_IS_GENERATING,
   MSG_CHECK_PERMISSION,
   MSG_CHECK_PERMISSIONS,
+  MSG_COMPLETE_CLEAR_ALL_DATA,
   MSG_EXTENSION_UPDATE_AVAILABLE,
   MSG_FOCUS_TAB,
   MSG_GET_AISTUDIO_MODELS,
   MSG_GET_CLAUDE_SESSION_KEY,
+  MSG_GET_MODEL_LIST,
   MSG_GET_LOCALE_MESSAGES,
   MSG_OPEN_OPTIONS_PAGE,
   MSG_OPEN_URL,
@@ -22,6 +32,7 @@ import {
   MSG_TEST_CLAUDE_TOKEN,
   MSG_WEBDAV_REQUEST,
   type ExtensionMessage,
+  requireSuccessfulMessageAcknowledgement,
 } from "~utils/messaging"
 import {
   localStorage,
@@ -45,22 +56,76 @@ interface PersistedClaudeSessionKeys {
  * - 代理请求（图片 Base64 转换等）
  */
 
-const OPHEL_TARGET_URLS = [
-  "https://gemini.google.com/*",
-  "https://business.gemini.google/*",
-  "https://aistudio.google.com/*",
-  "https://grok.com/*",
-  "https://chat.openai.com/*",
-  "https://chatgpt.com/*",
-  "https://claude.ai/*",
-  "https://www.doubao.com/*",
-  "https://ima.qq.com/*",
-  "https://chat.deepseek.com/*",
-  "https://chatglm.cn/*",
-  "https://chat.qwen.ai/*",
-  "https://yuanbao.tencent.com/*",
-  "https://chat.z.ai/*",
-]
+const OPHEL_TARGET_URLS = SUPPORTED_SITE_MATCHES
+const MAIN_WORLD_REGISTRATION_CHECK_RETRIES = 4
+const MAIN_WORLD_REGISTRATION_CHECK_DELAY_MS = 100
+const backgroundClearAllCoordinator = new BackgroundClearAllCoordinator(chrome.storage.session)
+
+const sortedStrings = (values: string[] | undefined): string[] => [...(values || [])].sort()
+
+function isExpectedMainWorldRegistration(
+  actual: chrome.scripting.RegisteredContentScript,
+  expected: chrome.scripting.RegisteredContentScript,
+): boolean {
+  return (
+    actual.id === expected.id &&
+    actual.world === expected.world &&
+    actual.runAt === expected.runAt &&
+    actual.persistAcrossSessions === expected.persistAcrossSessions &&
+    JSON.stringify(sortedStrings(actual.js)) === JSON.stringify(sortedStrings(expected.js)) &&
+    JSON.stringify(sortedStrings(actual.matches)) ===
+      JSON.stringify(sortedStrings(expected.matches))
+  )
+}
+
+async function getMainWorldRegistrationDrift(): Promise<string[]> {
+  const registrations = await chrome.scripting.getRegisteredContentScripts({
+    ids: MAIN_WORLD_CONTENT_SCRIPT_IDS,
+  })
+  const byId = new Map(registrations.map((registration) => [registration.id, registration]))
+
+  return MAIN_WORLD_CONTENT_SCRIPTS.flatMap((expected) => {
+    const actual = byId.get(expected.id)
+    return actual && isExpectedMainWorldRegistration(actual, expected) ? [] : [expected.id]
+  })
+}
+
+async function verifyMainWorldContentScriptRegistration(): Promise<void> {
+  for (let attempt = 1; attempt <= MAIN_WORLD_REGISTRATION_CHECK_RETRIES; attempt += 1) {
+    try {
+      const driftedIds = await getMainWorldRegistrationDrift()
+      if (driftedIds.length === 0) return
+
+      if (attempt === MAIN_WORLD_REGISTRATION_CHECK_RETRIES) {
+        console.warn("[Ophel] Repairing MAIN-world content script registrations:", driftedIds)
+        const currentRegistrations = await chrome.scripting.getRegisteredContentScripts({
+          ids: MAIN_WORLD_CONTENT_SCRIPT_IDS,
+        })
+        if (currentRegistrations.length > 0) {
+          await chrome.scripting.unregisterContentScripts({
+            ids: currentRegistrations.map(({ id }) => id),
+          })
+        }
+        await chrome.scripting.registerContentScripts(MAIN_WORLD_CONTENT_SCRIPTS)
+        const remainingDrift = await getMainWorldRegistrationDrift()
+        if (remainingDrift.length > 0) {
+          throw new Error(`Registration drift remains: ${remainingDrift.join(", ")}`)
+        }
+        await reloadOphelTabs()
+        return
+      }
+    } catch (error) {
+      if (attempt === MAIN_WORLD_REGISTRATION_CHECK_RETRIES) {
+        console.error("[Ophel] Failed to verify MAIN-world content script registration:", error)
+        return
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, MAIN_WORLD_REGISTRATION_CHECK_DELAY_MS))
+  }
+}
+
+void verifyMainWorldContentScriptRegistration()
 
 // 通知 ID 格式："ophel|{tabId}|{windowId}|{uuid}"
 // 将 Tab 信息编码进 notifId，避免 MV3 Service Worker 重启后内存 Map 丢失
@@ -106,20 +171,90 @@ async function queryOphelTabs() {
   return chrome.tabs.query({ url: OPHEL_TARGET_URLS })
 }
 
-async function broadcastToOphelTabs(message: ExtensionMessage) {
-  const tabs = await queryOphelTabs()
+interface TabOperationResult {
+  tabs: chrome.tabs.Tab[]
+  completed: number
+  failures: Array<{ tabId: number; error: string }>
+}
 
-  await Promise.all(
-    tabs
-      .filter((tab) => tab.id)
-      .map((tab) =>
-        chrome.tabs.sendMessage(tab.id as number, message).catch(() => {
-          // 忽略未注入内容脚本的页面
-        }),
-      ),
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error)
+
+async function sendTabMessageWithRetry(
+  tabId: number,
+  message: ExtensionMessage,
+  requireAcknowledgement: boolean,
+  maxAttempts = 5,
+): Promise<void> {
+  let lastError: unknown
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    let response: unknown
+    try {
+      response = await chrome.tabs.sendMessage(tabId, message)
+    } catch (error) {
+      lastError = error
+      if (attempt < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 250))
+        continue
+      }
+      throw lastError
+    }
+
+    if (requireAcknowledgement) {
+      requireSuccessfulMessageAcknowledgement(response)
+    }
+    return
+  }
+
+  throw lastError
+}
+
+async function broadcastToOphelTabs(
+  message: ExtensionMessage,
+  { requireDelivery = false }: { requireDelivery?: boolean } = {},
+): Promise<TabOperationResult> {
+  const tabs = await queryOphelTabs()
+  const targetTabs = tabs.filter((tab): tab is chrome.tabs.Tab & { id: number } =>
+    Boolean(tab.id && !tab.discarded),
+  )
+  const results = await Promise.allSettled(
+    targetTabs.map((tab) => sendTabMessageWithRetry(tab.id, message, requireDelivery)),
+  )
+  const failures = results.flatMap((result, index) =>
+    result.status === "rejected"
+      ? [{ tabId: targetTabs[index].id, error: getErrorMessage(result.reason) }]
+      : [],
   )
 
-  return tabs
+  if (failures.length > 0) {
+    const label = requireDelivery ? "Required tab broadcast failed" : "Tab broadcast was partial"
+    console.warn(`[Ophel] ${label}:`, failures)
+  }
+  if (requireDelivery && failures.length > 0) {
+    throw new Error(`Failed to stop ${failures.length} active Ophel tab(s)`)
+  }
+
+  return { tabs, completed: targetTabs.length - failures.length, failures }
+}
+
+async function reloadOphelTabs(excludedTabId?: number): Promise<TabOperationResult> {
+  const tabs = await queryOphelTabs()
+  const targetTabs = tabs.filter((tab): tab is chrome.tabs.Tab & { id: number } =>
+    Boolean(tab.id && tab.id !== excludedTabId),
+  )
+  const results = await Promise.allSettled(targetTabs.map((tab) => chrome.tabs.reload(tab.id)))
+  const failures = results.flatMap((result, index) =>
+    result.status === "rejected"
+      ? [{ tabId: targetTabs[index].id, error: getErrorMessage(result.reason) }]
+      : [],
+  )
+
+  if (failures.length > 0) {
+    console.error("[Ophel] Failed to reload some Ophel tabs:", failures)
+  }
+
+  return { tabs, completed: targetTabs.length - failures.length, failures }
 }
 
 // 监听扩展安装/更新
@@ -148,7 +283,9 @@ chrome.permissions.onRemoved.addListener(async (removed) => {
     if (settings && settings.content?.watermarkRemoval) {
       // 关闭去水印
       settings.content.watermarkRemoval = false
-      await localStorage.set("settings", settings)
+      await backgroundClearAllCoordinator.runPersistenceWrite(() =>
+        localStorage.set("settings", settings),
+      )
     }
   }
 })
@@ -510,11 +647,48 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
 
     case MSG_CLEAR_ALL_DATA:
       ;(async () => {
+        const transactionId = message.transactionId
         try {
-          const tabs = await broadcastToOphelTabs({ type: MSG_CLEAR_ALL_DATA })
-          sendResponse({ success: true, tabs: tabs.length })
+          if (!transactionId) {
+            throw new Error("Missing clear-all transaction ID")
+          }
+          await backgroundClearAllCoordinator.begin(transactionId)
+          const result = await broadcastToOphelTabs(
+            { type: MSG_CLEAR_ALL_DATA },
+            { requireDelivery: true },
+          )
+          sendResponse({ success: true, tabs: result.completed })
         } catch (err) {
+          if (transactionId) {
+            try {
+              await backgroundClearAllCoordinator.release(transactionId)
+            } catch (releaseError) {
+              console.error("Failed to release background clear-all transaction:", releaseError)
+            }
+          }
           console.error("Broadcast clear all data failed:", err)
+          sendResponse({ success: false, error: (err as Error).message })
+        }
+      })()
+      break
+
+    case MSG_COMPLETE_CLEAR_ALL_DATA:
+    case MSG_ABORT_CLEAR_ALL_DATA:
+      ;(async () => {
+        try {
+          await backgroundClearAllCoordinator.release(message.transactionId)
+          const result = await reloadOphelTabs(sender.tab?.id)
+          sendResponse({
+            success: result.failures.length === 0,
+            tabs: result.completed,
+            failedTabs: result.failures.length,
+            error:
+              result.failures.length > 0
+                ? `Failed to reload ${result.failures.length} Ophel tab(s)`
+                : undefined,
+          })
+        } catch (err) {
+          console.error("Finalize clear all data failed:", err)
           sendResponse({ success: false, error: (err as Error).message })
         }
       })()
@@ -523,8 +697,16 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
     case MSG_RESTORE_DATA:
       ;(async () => {
         try {
-          const tabs = await broadcastToOphelTabs({ type: MSG_RESTORE_DATA })
-          sendResponse({ success: true, tabs: tabs.length })
+          const result = await reloadOphelTabs(sender.tab?.id)
+          sendResponse({
+            success: result.failures.length === 0,
+            tabs: result.completed,
+            failedTabs: result.failures.length,
+            error:
+              result.failures.length > 0
+                ? `Failed to reload ${result.failures.length} Ophel tab(s)`
+                : undefined,
+          })
         } catch (err) {
           console.error("Broadcast restore data failed:", err)
           sendResponse({ success: false, error: (err as Error).message })
@@ -644,7 +826,9 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
           // 5. 更新存储中的当前 Key ID (以保持状态一致)
           if (storageData?.state) {
             storageData.state.currentKeyId = nextKey.id
-            await localStorage.set("claudeSessionKeys", storageData)
+            await backgroundClearAllCoordinator.runPersistenceWrite(() =>
+              localStorage.set("claudeSessionKeys", storageData),
+            )
           }
 
           // 6. 跳转到首页 (而非刷新)
@@ -880,7 +1064,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
             if (!tab.id) continue
             try {
               const result = await chrome.tabs.sendMessage(tab.id, {
-                type: "CHECK_IS_GENERATING",
+                type: MSG_CHECK_IS_GENERATING,
               })
               if (result?.isGenerating) {
                 isGenerating = true
@@ -925,7 +1109,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
 
           try {
             const result = await chrome.tabs.sendMessage(tab.id, {
-              type: "GET_MODEL_LIST",
+              type: MSG_GET_MODEL_LIST,
             })
             sendResponse(result)
           } catch (err) {

@@ -691,7 +691,7 @@ export function useShortcuts({
   const switchClaudeKey = useCallback(async () => {
     // 仅在 Claude 站点生效 (简单判断)
     // 仅在 Claude 站点生效
-    if (!location.hostname.includes("claude.ai") && !location.hostname.includes("claude.com")) {
+    if (location.hostname !== "claude.ai") {
       showToast(t("claudeShortcutOnlyOnSite"), 2000)
       return
     }

@@ -1333,4 +1333,29 @@ export class LayoutManager {
       this.processedShadowRoots.delete(shadowRoot)
     })
   }
+
+  /** 释放所有布局样式、观察器和轮询任务。 */
+  destroy() {
+    this.stopPanelAvoidance()
+    this.stopShadowInjection()
+
+    this.pageWidthConfig = { ...this.pageWidthConfig, enabled: false }
+    this.userQueryWidthConfig = null
+    this.zenModeEnabled = false
+    this.cleanModeEnabled = false
+
+    this.removeStyle(this.pageWidthStyle)
+    this.removeStyle(this.userQueryWidthStyle)
+    this.removeStyle(this.zenModeStyle)
+    this.removeStyle(this.cleanModeStyle)
+    this.pageWidthStyle = null
+    this.userQueryWidthStyle = null
+    this.zenModeStyle = null
+    this.cleanModeStyle = null
+
+    this.cleanupZenModeRootClass()
+    this.unmountZenModeExitButton()
+    this.clearAllShadowStyles()
+    this.pollingTasks.stopAll()
+  }
 }

@@ -343,7 +343,10 @@ const GEMINI_NEW_CHAT_INPUT_SAFE_AREA_SELECTOR =
 
 class GeminiMyStuffEnhancer {
   private started = false
-  private tooltipBindings = new WeakMap<HTMLElement, DomTooltipBinding>()
+  private cardWatchStop: (() => void) | null = null
+  private refreshTimers = new Set<ReturnType<typeof setTimeout>>()
+  private releaseCleanups = new Set<() => void>()
+  private tooltipBindings = new Map<HTMLElement, DomTooltipBinding>()
   private pendingRequests = new Map<
     string,
     {
@@ -368,17 +371,69 @@ class GeminiMyStuffEnhancer {
     this.started = true
 
     this.injectStyles()
-    DOMToolkit.each(".library-item-card", (element) => this.enhanceMediaCard(element), {
-      shadow: true,
-    })
+    this.cardWatchStop = DOMToolkit.each(
+      ".library-item-card",
+      (element) => this.enhanceMediaCard(element),
+      {
+        shadow: true,
+      },
+    )
 
     document.addEventListener("click", this.handleDocumentClick, true)
     window.addEventListener("message", this.handleWindowMessage)
     window.addEventListener(GEMINI_MYSTUFF_ROUTE_EVENT, this.handleRouteChange)
 
     this.refreshForCurrentRoute(false)
-    setTimeout(() => this.refreshForCurrentRoute(false), 600)
-    setTimeout(() => this.refreshForCurrentRoute(false), 1500)
+    this.scheduleRefresh(600)
+    this.scheduleRefresh(1500)
+  }
+
+  stop(): void {
+    if (!this.started) return
+    this.started = false
+
+    this.cardWatchStop?.()
+    this.cardWatchStop = null
+    for (const timer of this.refreshTimers) {
+      clearTimeout(timer)
+    }
+    this.refreshTimers.clear()
+
+    document.removeEventListener("click", this.handleDocumentClick, true)
+    window.removeEventListener("message", this.handleWindowMessage)
+    window.removeEventListener(GEMINI_MYSTUFF_ROUTE_EVENT, this.handleRouteChange)
+    document.documentElement.classList.remove(GEMINI_MYSTUFF_ACTIVE_CLASS)
+
+    for (const release of this.releaseCleanups) {
+      release()
+    }
+    this.releaseCleanups.clear()
+
+    for (const [button, binding] of this.tooltipBindings) {
+      binding.destroy()
+      button.remove()
+    }
+    this.tooltipBindings.clear()
+
+    for (const request of this.pendingRequests.values()) {
+      clearTimeout(request.timeoutId)
+      request.reject(new Error("mystuff-enhancer-stopped"))
+    }
+    this.pendingRequests.clear()
+    this.recordsByKind.media.clear()
+    this.recordsByKind.document.clear()
+    this.rebuildIndexes()
+    document.getElementById(GEMINI_MYSTUFF_STYLE_ID)?.remove()
+  }
+
+  private scheduleRefresh(delay: number): void {
+    const timer = setTimeout(() => {
+      this.refreshTimers.delete(timer)
+      if (this.started) {
+        this.refreshForCurrentRoute(false)
+      }
+    }, delay)
+    this.refreshTimers.add(timer)
   }
 
   private readonly handleRouteChange = () => {
@@ -537,9 +592,18 @@ class GeminiMyStuffEnhancer {
   }
 
   private enhanceExistingMediaCards(): void {
+    this.cleanupDisconnectedMediaButtons()
     document
       .querySelectorAll(".library-item-card")
       .forEach((element) => this.enhanceMediaCard(element))
+  }
+
+  private cleanupDisconnectedMediaButtons(): void {
+    for (const [button, binding] of this.tooltipBindings) {
+      if (button.isConnected) continue
+      binding.destroy()
+      this.tooltipBindings.delete(button)
+    }
   }
 
   private enhanceMediaCard(element: Element): void {
@@ -926,7 +990,10 @@ class GeminiMyStuffEnhancer {
     button.blur()
     button.setAttribute(GEMINI_MYSTUFF_OPEN_BUTTON_SUPPRESS_ATTR, "1")
 
+    let released = false
     const release = () => {
+      if (released) return
+      released = true
       button.removeAttribute(GEMINI_MYSTUFF_OPEN_BUTTON_SUPPRESS_ATTR)
       window.removeEventListener("pointermove", release, true)
       window.removeEventListener("pointerdown", release, true)
@@ -934,8 +1001,10 @@ class GeminiMyStuffEnhancer {
       window.removeEventListener("wheel", release, true)
       window.removeEventListener("touchstart", release, true)
       button.removeEventListener("focus", release, true)
+      this.releaseCleanups.delete(release)
     }
 
+    this.releaseCleanups.add(release)
     window.addEventListener("pointermove", release, true)
     window.addEventListener("pointerdown", release, true)
     window.addEventListener("keydown", release, true)
@@ -955,11 +1024,11 @@ export class GeminiAdapter extends SiteAdapter {
   private accountEmailLastDetectAt = 0
   private myStuffEnhancer: GeminiMyStuffEnhancer | null = null
   private deepResearchPanelWatchStop: (() => void) | null = null
-  private deepResearchPanelObservers = new WeakMap<Element, () => void>()
-  private deepResearchPanelTooltipBindings = new WeakMap<HTMLElement, DomTooltipBinding>()
+  private deepResearchPanelObservers = new Map<Element, () => void>()
+  private deepResearchPanelTooltipBindings = new Map<HTMLElement, DomTooltipBinding>()
   private canvasPanelWatchStop: (() => void) | null = null
-  private canvasPanelObservers = new WeakMap<Element, () => void>()
-  private canvasPanelTooltipBindings = new WeakMap<HTMLElement, DomTooltipBinding>()
+  private canvasPanelObservers = new Map<Element, () => void>()
+  private canvasPanelTooltipBindings = new Map<HTMLElement, DomTooltipBinding>()
   private exportOpenedCanvasPanel = false
   private outlineWordCountCache = new WeakMap<Element, GeminiOutlineWordCountCacheEntry>()
 
@@ -1041,6 +1110,7 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private watchDeepResearchPanel(panel: Element): void {
+    this.cleanupDisconnectedDeepResearchPanels()
     this.syncDeepResearchPanelActions(panel)
     if (this.deepResearchPanelObservers.has(panel)) return
 
@@ -1050,6 +1120,7 @@ export class GeminiAdapter extends SiteAdapter {
       () => {
         if (!panel.isConnected) {
           stop?.()
+          this.removeDeepResearchPanelActions(panel)
           this.deepResearchPanelObservers.delete(panel)
           return
         }
@@ -1067,6 +1138,7 @@ export class GeminiAdapter extends SiteAdapter {
   }
 
   private watchGeminiCanvasPanel(panel: Element): void {
+    this.cleanupDisconnectedCanvasPanels()
     this.syncGeminiCanvasPanelActions(panel)
     if (this.canvasPanelObservers.has(panel)) return
 
@@ -1076,6 +1148,7 @@ export class GeminiAdapter extends SiteAdapter {
       () => {
         if (!panel.isConnected) {
           stop?.()
+          this.removeGeminiCanvasPanelActions(panel)
           this.canvasPanelObservers.delete(panel)
           return
         }
@@ -1090,6 +1163,24 @@ export class GeminiAdapter extends SiteAdapter {
       },
     )
     this.canvasPanelObservers.set(panel, stop)
+  }
+
+  private cleanupDisconnectedDeepResearchPanels(): void {
+    for (const [panel, stop] of this.deepResearchPanelObservers) {
+      if (panel.isConnected) continue
+      stop()
+      this.removeDeepResearchPanelActions(panel)
+      this.deepResearchPanelObservers.delete(panel)
+    }
+  }
+
+  private cleanupDisconnectedCanvasPanels(): void {
+    for (const [panel, stop] of this.canvasPanelObservers) {
+      if (panel.isConnected) continue
+      stop()
+      this.removeGeminiCanvasPanelActions(panel)
+      this.canvasPanelObservers.delete(panel)
+    }
   }
 
   private injectGeminiPanelMarkdownActionStyles(): void {
@@ -1219,6 +1310,7 @@ export class GeminiAdapter extends SiteAdapter {
       node.querySelectorAll(`.${GEMINI_PANEL_MARKDOWN_ACTION_CLASS}`).forEach((button) => {
         if (button instanceof HTMLElement) {
           this.deepResearchPanelTooltipBindings.get(button)?.destroy()
+          this.deepResearchPanelTooltipBindings.delete(button)
         }
       })
       node.remove()
@@ -1230,6 +1322,7 @@ export class GeminiAdapter extends SiteAdapter {
       node.querySelectorAll(`.${GEMINI_PANEL_MARKDOWN_ACTION_CLASS}`).forEach((button) => {
         if (button instanceof HTMLElement) {
           this.canvasPanelTooltipBindings.get(button)?.destroy()
+          this.canvasPanelTooltipBindings.delete(button)
         }
       })
       node.remove()
@@ -5649,6 +5742,38 @@ export class GeminiAdapter extends SiteAdapter {
 
     this.startDeepResearchPanelActions()
     this.startGeminiCanvasPanelActions()
+  }
+
+  dispose(): void {
+    this.myStuffEnhancer?.stop()
+    this.myStuffEnhancer = null
+
+    this.deepResearchPanelWatchStop?.()
+    this.deepResearchPanelWatchStop = null
+    for (const [panel, stop] of this.deepResearchPanelObservers) {
+      stop()
+      this.removeDeepResearchPanelActions(panel)
+    }
+    this.deepResearchPanelObservers.clear()
+    for (const binding of this.deepResearchPanelTooltipBindings.values()) {
+      binding.destroy()
+    }
+    this.deepResearchPanelTooltipBindings.clear()
+
+    this.canvasPanelWatchStop?.()
+    this.canvasPanelWatchStop = null
+    for (const [panel, stop] of this.canvasPanelObservers) {
+      stop()
+      this.removeGeminiCanvasPanelActions(panel)
+    }
+    this.canvasPanelObservers.clear()
+    for (const binding of this.canvasPanelTooltipBindings.values()) {
+      binding.destroy()
+    }
+    this.canvasPanelTooltipBindings.clear()
+
+    document.getElementById(GEMINI_PANEL_MARKDOWN_ACTIONS_STYLE_ID)?.remove()
+    super.dispose()
   }
 
   // ==================== 模型锁定 ====================

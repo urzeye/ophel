@@ -6,36 +6,40 @@
  */
 
 import type { SiteAdapter } from "~adapters/base"
-import { DEFAULT_FOLDERS, SITE_IDS, getDefaultPromptChains, getDefaultPrompts } from "~constants"
+import { SITE_IDS } from "~constants"
 import {
   initCoreModules,
+  destroyCoreModules,
   initUrlChangeObserver,
   handleClearAllData,
   subscribeModuleUpdates,
   type ModulesContext,
 } from "~core/modules-init"
-import { setAdapterRuntime } from "~core/adapter-runtime"
+import { clearAdapterRuntime, setAdapterRuntime } from "~core/adapter-runtime"
 import { APP_DISPLAY_NAME } from "~utils/config"
+import { dispatchClearAllDataEvent, registerClearAllDataTask } from "~utils/clear-all-event"
+import { drainCleanupStack } from "~utils/cleanup-stack"
 import { INTER_LOCAL_FONT_FACE, getPlatformFontFamily } from "~utils/font"
 import { setLanguage } from "~utils/i18n"
-import { useConversationsStore } from "~stores/conversations-store"
-import { useFoldersStore } from "~stores/folders-store"
-import { usePromptChainsStore } from "~stores/prompt-chains-store"
-import { usePromptsStore } from "~stores/prompts-store"
-import { useReadingHistoryStore } from "~stores/reading-history-store"
 import { getSettingsState, useSettingsStore } from "~stores/settings-store"
-import { useTagsStore } from "~stores/tags-store"
+import { drainPersistenceWrites, suspendPersistenceWrites } from "~stores/chrome-adapter"
 import {
+  EVENT_CLEAR_ALL_DATA,
   EVENT_EXTENSION_UPDATE_AVAILABLE,
+  MSG_CHECK_IS_GENERATING,
   MSG_CLEAR_ALL_DATA,
   MSG_EXTENSION_UPDATE_AVAILABLE,
+  MSG_GET_MODEL_LIST,
   MSG_RESTORE_DATA,
   MSG_START_NEW_CONVERSATION,
+  type ContentScriptMessage,
 } from "~utils/messaging"
 
 interface AIStudioModelAdapter {
   getModelList(): Promise<Array<{ id: string; name: string }>>
 }
+
+const SETTINGS_HYDRATION_TIMEOUT_MS = 5000
 
 function hasAIStudioModelList(adapter: unknown): adapter is AIStudioModelAdapter {
   return (
@@ -44,16 +48,6 @@ function hasAIStudioModelList(adapter: unknown): adapter is AIStudioModelAdapter
     "getModelList" in adapter &&
     typeof adapter.getModelList === "function"
   )
-}
-
-const resetAllStores = () => {
-  useSettingsStore.getState().resetSettings()
-  usePromptsStore.getState().setPrompts(getDefaultPrompts())
-  usePromptChainsStore.getState().setChains(getDefaultPromptChains())
-  useFoldersStore.setState({ folders: DEFAULT_FOLDERS })
-  useTagsStore.setState({ tags: [] })
-  useConversationsStore.setState({ conversations: {}, lastUsedFolderId: "inbox" })
-  useReadingHistoryStore.setState({ history: {}, lastCleanupRun: 0 })
 }
 
 const OPHEL_EXTENSION_UPDATE_FALLBACK_ID = "ophel-extension-update-fallback"
@@ -426,118 +420,179 @@ if (!window.__ophelExtensionUpdateMessageListenerInstalled && typeof chrome !== 
   window.__ophelExtensionUpdateMessageListenerInstalled = true
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    if (message?.type !== MSG_EXTENSION_UPDATE_AVAILABLE) {
-      return false
+    if (message?.type === MSG_CLEAR_ALL_DATA) {
+      suspendPersistenceWrites()
+      void Promise.all([drainPersistenceWrites(), dispatchClearAllDataEvent()]).then(
+        () => window.setTimeout(() => sendResponse({ success: true }), 0),
+        (error) => sendResponse({ success: false, error: String(error) }),
+      )
+      return true
     }
 
-    dispatchExtensionUpdateNotice(message.version)
-    startSuppressingDefaultReloadPrompt()
-    sendResponse({ success: true })
-    return true
+    if (message?.type === MSG_RESTORE_DATA) {
+      sendResponse({ success: true })
+      window.location.reload()
+      return true
+    }
+
+    if (message?.type === MSG_EXTENSION_UPDATE_AVAILABLE) {
+      dispatchExtensionUpdateNotice(message.version)
+      startSuppressingDefaultReloadPrompt()
+      sendResponse({ success: true })
+      return true
+    }
+
+    return false
   })
 }
 
 // 防止重复初始化
 async function initializeContentScript(adapter: SiteAdapter): Promise<void> {
   if (!adapter.match()) {
+    clearAdapterRuntime(adapter)
+    window.ophelInitialized = false
     console.warn("[Ophel] No adapter found for:", window.location.hostname)
     return
   }
 
-  setAdapterRuntime(adapter)
-  console.warn(`[Ophel] Loaded ${adapter.getName()} adapter on:`, window.location.hostname)
+  const cleanupTasks: Array<() => void> = []
+  let cleanedUp = false
+  const cleanup = () => {
+    if (cleanedUp) return
+    cleanedUp = true
+    drainCleanupStack(cleanupTasks, "content script")
+    window.ophelInitialized = false
+  }
+  window.addEventListener("unload", cleanup, { once: true })
+  cleanupTasks.push(() => window.removeEventListener("unload", cleanup))
+  const clearDataAndCleanup = (event: Event) => {
+    suspendPersistenceWrites()
+    handleClearAllData()
+    cleanup()
+    registerClearAllDataTask(event, drainPersistenceWrites())
+  }
+  window.addEventListener(EVENT_CLEAR_ALL_DATA, clearDataAndCleanup, { once: true })
+  cleanupTasks.push(() => window.removeEventListener(EVENT_CLEAR_ALL_DATA, clearDataAndCleanup))
 
-  // 初始化适配器
-  adapter.afterPropertiesSet({})
+  try {
+    setAdapterRuntime(adapter)
+    cleanupTasks.push(() => clearAdapterRuntime(adapter))
+    console.warn(`[Ophel] Loaded ${adapter.getName()} adapter on:`, window.location.hostname)
 
-  // 等待 Zustand hydration 完成
-  await new Promise<void>((resolve) => {
-    if (useSettingsStore.getState()._hasHydrated) {
-      resolve()
-      return
-    }
-    const unsub = useSettingsStore.subscribe((state) => {
-      if (state._hasHydrated) {
+    cleanupTasks.push(() => adapter.dispose())
+    adapter.afterPropertiesSet({})
+
+    const hydrated = await new Promise<boolean>((resolve) => {
+      if (useSettingsStore.getState()._hasHydrated) {
+        resolve(true)
+        return
+      }
+
+      let settled = false
+      let timeoutId: number | null = null
+      let unsub = () => undefined
+      const finish = (result: boolean) => {
+        if (settled) return
+        settled = true
+        if (timeoutId !== null) {
+          window.clearTimeout(timeoutId)
+        }
         unsub()
-        resolve()
+        resolve(result)
       }
+      unsub = useSettingsStore.subscribe((state) => {
+        if (state._hasHydrated) {
+          finish(true)
+        }
+      })
+
+      if (useSettingsStore.getState()._hasHydrated) {
+        finish(true)
+        return
+      }
+
+      timeoutId = window.setTimeout(() => finish(false), SETTINGS_HYDRATION_TIMEOUT_MS)
+      cleanupTasks.push(() => finish(false))
     })
-  })
-
-  // 获取用户设置
-  const settings = getSettingsState()
-  await setLanguage(settings.language)
-  const siteId = adapter.getSiteId()
-
-  // 创建模块上下文
-  const ctx: ModulesContext = { adapter, settings, siteId }
-
-  // 初始化所有核心模块
-  await initCoreModules(ctx)
-
-  // 订阅设置变化
-  const unsubscribeModuleUpdates = subscribeModuleUpdates(ctx)
-  window.addEventListener("unload", unsubscribeModuleUpdates, { once: true })
-
-  // 初始化 URL 变化监听
-  const cleanupUrlChangeObserver = initUrlChangeObserver(ctx)
-  window.addEventListener("unload", cleanupUrlChangeObserver, { once: true })
-
-  // 监听来自 background 的消息（用于跨页面检测生成状态）
-  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    if (message.type === MSG_CLEAR_ALL_DATA) {
-      handleClearAllData()
-      resetAllStores()
-      sendResponse({ success: true })
-      return true
+    if (cleanedUp) return
+    if (!hydrated) {
+      throw new Error(`Settings hydration timed out after ${SETTINGS_HYDRATION_TIMEOUT_MS}ms`)
     }
 
-    if (message.type === MSG_RESTORE_DATA) {
-      // 收到恢复数据的广播时，刷新页面使得数据从 Storage 重新读取并保证 Zustand hydration 最新的内容
-      window.location.reload()
-      sendResponse({ success: true })
-      return true
-    }
+    // 获取用户设置
+    const settings = getSettingsState()
+    await setLanguage(settings.language)
+    if (cleanedUp) return
+    const siteId = adapter.getSiteId()
 
-    if (message.type === "CHECK_IS_GENERATING") {
-      // 使用 adapter 的 isGenerating 方法检测当前页面是否正在生成
-      const isGenerating = adapter.isGenerating?.() ?? false
-      sendResponse({ isGenerating })
-      return true // 保持消息通道打开
-    }
+    // 创建模块上下文
+    const ctx: ModulesContext = { adapter, settings, siteId }
 
-    if (message.type === MSG_START_NEW_CONVERSATION) {
-      try {
-        const success = adapter.startNewConversation()
-        sendResponse({ success })
-      } catch (err) {
-        console.error("[Ophel] startNewConversation failed:", err)
-        sendResponse({ success: false, error: (err as Error).message })
+    // 初始化所有核心模块
+    cleanupTasks.push(destroyCoreModules)
+    await initCoreModules(ctx)
+    if (cleanedUp) return
+
+    // 订阅设置变化
+    const unsubscribeModuleUpdates = subscribeModuleUpdates(ctx)
+    cleanupTasks.push(unsubscribeModuleUpdates)
+
+    // 初始化 URL 变化监听
+    const cleanupUrlChangeObserver = initUrlChangeObserver(ctx)
+    cleanupTasks.push(cleanupUrlChangeObserver)
+
+    // 监听来自 background 的消息（用于跨页面检测生成状态）
+    const handleRuntimeMessage = (
+      message: ContentScriptMessage,
+      _sender: chrome.runtime.MessageSender,
+      sendResponse: (response?: unknown) => void,
+    ) => {
+      if (message.type === MSG_CHECK_IS_GENERATING) {
+        // 使用 adapter 的 isGenerating 方法检测当前页面是否正在生成
+        const isGenerating = adapter.isGenerating?.() ?? false
+        sendResponse({ isGenerating })
+        return true // 保持消息通道打开
       }
-      return true
-    }
 
-    // AI Studio 获取模型列表
-    if (message.type === "GET_MODEL_LIST") {
-      if (siteId === SITE_IDS.AISTUDIO && hasAIStudioModelList(adapter)) {
-        ;(async () => {
-          try {
-            const models = await adapter.getModelList()
-            sendResponse({ success: true, models })
-          } catch (err) {
-            console.error("[Ophel] getModelList failed:", err)
-            sendResponse({ success: false, error: (err as Error).message })
-          }
-        })()
+      if (message.type === MSG_START_NEW_CONVERSATION) {
+        try {
+          const success = adapter.startNewConversation()
+          sendResponse({ success })
+        } catch (err) {
+          console.error("[Ophel] startNewConversation failed:", err)
+          sendResponse({ success: false, error: (err as Error).message })
+        }
         return true
       }
 
-      sendResponse({ success: false, error: "NOT_AISTUDIO" })
-      return true
+      // AI Studio 获取模型列表
+      if (message.type === MSG_GET_MODEL_LIST) {
+        if (siteId === SITE_IDS.AISTUDIO && hasAIStudioModelList(adapter)) {
+          ;(async () => {
+            try {
+              const models = await adapter.getModelList()
+              sendResponse({ success: true, models })
+            } catch (err) {
+              console.error("[Ophel] getModelList failed:", err)
+              sendResponse({ success: false, error: (err as Error).message })
+            }
+          })()
+          return true
+        }
+
+        sendResponse({ success: false, error: "NOT_AISTUDIO" })
+        return true
+      }
+
+      return false
     }
 
-    return false
-  })
+    chrome.runtime.onMessage.addListener(handleRuntimeMessage)
+    cleanupTasks.push(() => chrome.runtime.onMessage.removeListener(handleRuntimeMessage))
+  } catch (error) {
+    cleanup()
+    throw error
+  }
 }
 
 export function startContentScript(adapter: SiteAdapter): void {

@@ -1,0 +1,77 @@
+[
+  {
+    "entry": "gemini",
+    "module": "gemini",
+    "matches": ["https://gemini.google.com/*"]
+  },
+  {
+    "entry": "gemini-enterprise",
+    "module": "gemini-enterprise",
+    "matches": ["https://business.gemini.google/*"]
+  },
+  {
+    "entry": "aistudio",
+    "module": "aistudio",
+    "matches": ["https://aistudio.google.com/*"]
+  },
+  {
+    "entry": "grok",
+    "module": "grok",
+    "matches": ["https://grok.com/*"]
+  },
+  {
+    "entry": "chatgpt",
+    "module": "chatgpt",
+    "matches": ["https://chatgpt.com/*"]
+  },
+  {
+    "entry": "claude",
+    "module": "claude",
+    "matches": ["https://claude.ai/*"]
+  },
+  {
+    "entry": "doubao",
+    "module": "doubao",
+    "matches": ["https://www.doubao.com/*"]
+  },
+  {
+    "entry": "ima",
+    "module": "ima",
+    "matches": ["https://ima.qq.com/*"]
+  },
+  {
+    "entry": "deepseek",
+    "module": "deepseek",
+    "matches": ["https://chat.deepseek.com/*"]
+  },
+  {
+    "entry": "kimi",
+    "module": "kimi",
+    "matches": ["https://www.kimi.com/*"]
+  },
+  {
+    "entry": "chatglm",
+    "module": "chatglm",
+    "matches": ["https://chatglm.cn/*"]
+  },
+  {
+    "entry": "qwen-studio",
+    "module": "qwen-studio",
+    "matches": ["https://chat.qwen.ai/*"]
+  },
+  {
+    "entry": "qianwen",
+    "module": "qianwen",
+    "matches": ["https://www.qianwen.com/*"]
+  },
+  {
+    "entry": "yuanbao",
+    "module": "yuanbao",
+    "matches": ["https://yuanbao.tencent.com/*"]
+  },
+  {
+    "entry": "zai",
+    "module": "zai",
+    "matches": ["https://chat.z.ai/*"]
+  }
+]

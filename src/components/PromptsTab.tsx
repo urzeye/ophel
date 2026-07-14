@@ -1234,10 +1234,7 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
       promptInputState.show ||
       confirmState.show ||
       isCategoryModalOpen ||
-      isModalOpen ||
       chainEditorState.show ||
-      previewModal.show ||
-      importDialogState.show ||
       variableDialogState.show
 
     if (!hasPromptDialogs) {
@@ -1273,23 +1270,8 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
         return
       }
 
-      if (isModalOpen) {
-        closeEditModal()
-        return
-      }
-
       if (chainEditorState.show) {
         closeChainEditor()
-        return
-      }
-
-      if (previewModal.show) {
-        closePreviewModal()
-        return
-      }
-
-      if (importDialogState.show) {
-        closeImportDialog()
       }
     }
 
@@ -1301,17 +1283,11 @@ export const PromptsTab: React.FC<PromptsTabProps> = ({
     closeCategoryModal,
     closeConfirmDialog,
     closeChainEditor,
-    closeEditModal,
-    closeImportDialog,
-    closePreviewModal,
     closePromptInputDialog,
     closeVariableDialog,
     chainEditorState.show,
     confirmState.show,
-    importDialogState.show,
     isCategoryModalOpen,
-    isModalOpen,
-    previewModal.show,
     promptInputState.show,
     variableDialogState.show,
   ])

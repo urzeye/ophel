@@ -12,6 +12,11 @@ import type {
   PlatformCapability,
   PlatformStorage,
 } from "../types"
+import {
+  MSG_ABORT_CLEAR_ALL_DATA,
+  MSG_CLEAR_ALL_DATA,
+  MSG_COMPLETE_CLEAR_ALL_DATA,
+} from "~utils/messaging"
 
 const notificationSoundPaths: Record<string, string> = {
   default: "assets/notification-sounds/streaming-complete-v2.mp3",
@@ -51,6 +56,12 @@ const extensionStorage: PlatformStorage = {
   },
 }
 
+let activeClearTransactionId: string | null = null
+
+async function sendClearTransactionMessage(type: string, transactionId: string) {
+  return chrome.runtime.sendMessage({ type, transactionId })
+}
+
 /**
  * 浏览器扩展平台实现
  */
@@ -58,6 +69,44 @@ export const platform: Platform = {
   type: "extension",
 
   storage: extensionStorage,
+
+  async prepareClearAllData(): Promise<void> {
+    if (activeClearTransactionId) {
+      throw new Error("A clear-all transaction is already active")
+    }
+
+    const transactionId = crypto.randomUUID()
+    activeClearTransactionId = transactionId
+    const response = await sendClearTransactionMessage(MSG_CLEAR_ALL_DATA, transactionId)
+    if (!response?.success) {
+      activeClearTransactionId = null
+      throw new Error(response?.error || "Failed to stop extension runtimes")
+    }
+  },
+
+  async completeClearAllData(): Promise<void> {
+    const transactionId = activeClearTransactionId
+    if (!transactionId) {
+      throw new Error("No clear-all transaction is active")
+    }
+
+    const response = await sendClearTransactionMessage(MSG_COMPLETE_CLEAR_ALL_DATA, transactionId)
+    if (!response?.success) {
+      throw new Error(response?.error || "Failed to reload extension runtimes")
+    }
+    activeClearTransactionId = null
+  },
+
+  async abortClearAllData(): Promise<void> {
+    const transactionId = activeClearTransactionId
+    if (!transactionId) return
+
+    const response = await sendClearTransactionMessage(MSG_ABORT_CLEAR_ALL_DATA, transactionId)
+    if (!response?.success) {
+      throw new Error(response?.error || "Failed to abort the clear-all transaction")
+    }
+    activeClearTransactionId = null
+  },
 
   async fetch(url: string, options?: FetchOptions): Promise<FetchResponse> {
     // 通过 background 代理请求

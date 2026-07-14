@@ -33,8 +33,12 @@ interface GeminiMyStuffParsedResponse {
 }
 
 let initialized = false
+let lifecycleGeneration = 0
 const recordCache = new Map<GeminiMyStuffKind, Map<string, GeminiMyStuffRecord>>()
 const fetchPromises = new Map<GeminiMyStuffKind, Promise<GeminiMyStuffRecord[]>>()
+
+const isActiveGeneration = (generation: number): boolean =>
+  initialized && generation === lifecycleGeneration
 
 function getPageWindow(): typeof globalThis {
   if (typeof unsafeWindow !== "undefined" && unsafeWindow !== window) {
@@ -242,7 +246,13 @@ function parseResponse(responseText: string, kind: GeminiMyStuffKind): GeminiMyS
   }
 }
 
-async function fetchKind(kind: GeminiMyStuffKind, force: boolean): Promise<GeminiMyStuffRecord[]> {
+async function fetchKind(
+  kind: GeminiMyStuffKind,
+  force: boolean,
+  generation: number,
+): Promise<GeminiMyStuffRecord[]> {
+  if (!isActiveGeneration(generation)) return []
+
   const cache = getCache(kind)
   if (!force && cache.size > 0) {
     return Array.from(cache.values())
@@ -258,6 +268,8 @@ async function fetchKind(kind: GeminiMyStuffKind, force: boolean): Promise<Gemin
     let nextPageToken: string | undefined
 
     for (let page = 0; page < MAX_PAGES; page += 1) {
+      if (!isActiveGeneration(generation)) return []
+
       const tokens = resolveRuntimeTokens()
       if (!tokens) {
         throw new Error("mystuff-runtime-tokens-missing")
@@ -274,6 +286,8 @@ async function fetchKind(kind: GeminiMyStuffKind, force: boolean): Promise<Gemin
       })
 
       const text = await response.text()
+      if (!isActiveGeneration(generation)) return []
+
       if (!response.ok) {
         console.warn(`${LOG_PREFIX} fetch failed`, {
           kind,
@@ -294,6 +308,8 @@ async function fetchKind(kind: GeminiMyStuffKind, force: boolean): Promise<Gemin
       nextPageToken = parsed.nextPageToken
     }
 
+    if (!isActiveGeneration(generation)) return []
+
     cache.clear()
     fetched.forEach((value, key) => cache.set(key, value))
     return Array.from(cache.values())
@@ -304,7 +320,9 @@ async function fetchKind(kind: GeminiMyStuffKind, force: boolean): Promise<Gemin
   try {
     return await promise
   } finally {
-    fetchPromises.delete(kind)
+    if (fetchPromises.get(kind) === promise) {
+      fetchPromises.delete(kind)
+    }
   }
 }
 
@@ -335,16 +353,19 @@ function emitCacheSync(payload: GeminiMyStuffCachePayload): void {
 
 async function handleSyncRequest(
   payload: GeminiMyStuffSyncRequestPayload | undefined,
+  generation: number,
 ): Promise<void> {
-  if (!payload?.requestId || !isMyStuffOrLibraryPath()) return
+  if (!isActiveGeneration(generation) || !payload?.requestId || !isMyStuffOrLibraryPath()) return
 
   const kinds = normalizeKinds(payload.kinds)
   const shouldSync = payload.force || kinds.some((kind) => getCache(kind).size === 0)
 
   try {
     if (shouldSync) {
-      await Promise.all(kinds.map((kind) => fetchKind(kind, Boolean(payload.force))))
+      await Promise.all(kinds.map((kind) => fetchKind(kind, Boolean(payload.force), generation)))
     }
+
+    if (!isActiveGeneration(generation)) return
 
     const items = getCachedItems(kinds)
     emitCacheSync({
@@ -355,6 +376,8 @@ async function handleSyncRequest(
       timestamp: Date.now(),
     })
   } catch (error) {
+    if (!isActiveGeneration(generation)) return
+
     console.warn(`${LOG_PREFIX} sync request failed`, {
       requestId: payload.requestId,
       kinds,
@@ -370,17 +393,35 @@ async function handleSyncRequest(
   }
 }
 
+const handleWindowSyncRequest = (event: MessageEvent): void => {
+  if (event.data?.type !== EVENT_GEMINI_MYSTUFF_SYNC_REQUEST) return
+  void handleSyncRequest(
+    event.data.payload as GeminiMyStuffSyncRequestPayload | undefined,
+    lifecycleGeneration,
+  )
+}
+
+const handleCustomSyncRequest = (event: Event): void => {
+  const payload = (event as CustomEvent<GeminiMyStuffSyncRequestPayload>).detail
+  void handleSyncRequest(payload, lifecycleGeneration)
+}
+
 export function initGeminiMyStuffBridge(): void {
   if (initialized || !isGeminiHost()) return
   initialized = true
+  lifecycleGeneration += 1
 
-  window.addEventListener("message", (event) => {
-    if (event.data?.type !== EVENT_GEMINI_MYSTUFF_SYNC_REQUEST) return
-    void handleSyncRequest(event.data.payload as GeminiMyStuffSyncRequestPayload | undefined)
-  })
+  window.addEventListener("message", handleWindowSyncRequest)
+  window.addEventListener(EVENT_GEMINI_MYSTUFF_SYNC_REQUEST, handleCustomSyncRequest)
+}
 
-  window.addEventListener(EVENT_GEMINI_MYSTUFF_SYNC_REQUEST, (event) => {
-    const payload = (event as CustomEvent<GeminiMyStuffSyncRequestPayload>).detail
-    void handleSyncRequest(payload)
-  })
+export function destroyGeminiMyStuffBridge(): void {
+  lifecycleGeneration += 1
+  fetchPromises.clear()
+  recordCache.clear()
+
+  if (!initialized) return
+  initialized = false
+  window.removeEventListener("message", handleWindowSyncRequest)
+  window.removeEventListener(EVENT_GEMINI_MYSTUFF_SYNC_REQUEST, handleCustomSyncRequest)
 }

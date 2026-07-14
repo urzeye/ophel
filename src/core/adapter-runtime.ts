@@ -13,6 +13,14 @@ export function setAdapterRuntime(adapter: SiteAdapter): void {
   window.dispatchEvent(new Event(ADAPTER_RUNTIME_CHANGE_EVENT))
 }
 
+export function clearAdapterRuntime(expectedAdapter?: SiteAdapter): void {
+  if (!window.__ophelAdapterRuntime) return
+  if (expectedAdapter && window.__ophelAdapterRuntime !== expectedAdapter) return
+
+  window.__ophelAdapterRuntime = undefined
+  window.dispatchEvent(new Event(ADAPTER_RUNTIME_CHANGE_EVENT))
+}
+
 export function subscribeAdapterRuntime(listener: () => void): () => void {
   window.addEventListener(ADAPTER_RUNTIME_CHANGE_EVENT, listener)
   return () => window.removeEventListener(ADAPTER_RUNTIME_CHANGE_EVENT, listener)

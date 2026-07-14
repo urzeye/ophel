@@ -36,6 +36,9 @@ export class ReadingHistoryManager {
   private lastSaveTime = 0
   private ignoreScrollUntil = 0 // 初始化冷却期
   private positionKeeperRaF = 0 // 位置保持器的动画帧 ID
+  private restoreResetTimer: number | null = null
+  private hydrationWaitCancels = new Set<() => void>()
+  private destroyed = false
 
   public restoredTop: number | undefined
 
@@ -48,30 +51,45 @@ export class ReadingHistoryManager {
    * 等待 store hydration 完成
    */
   async waitForHydration(timeoutMs = ReadingHistoryManager.HYDRATION_TIMEOUT_MS): Promise<boolean> {
+    if (this.destroyed) {
+      return false
+    }
     if (useReadingHistoryStore.getState()._hasHydrated) {
       return true
     }
 
     return new Promise<boolean>((resolve) => {
       let resolved = false
-      let timeoutId = 0
+      let timeoutId: number | null = null
+      let unsubscribe = () => undefined
 
       const finish = (value: boolean) => {
         if (resolved) return
         resolved = true
-        window.clearTimeout(timeoutId)
+        if (timeoutId !== null) {
+          window.clearTimeout(timeoutId)
+        }
         unsubscribe()
+        this.hydrationWaitCancels.delete(cancel)
         resolve(value)
       }
 
-      const unsubscribe = useReadingHistoryStore.subscribe((state) => {
+      const cancel = () => finish(false)
+      this.hydrationWaitCancels.add(cancel)
+
+      unsubscribe = useReadingHistoryStore.subscribe((state) => {
         if (state._hasHydrated) {
           finish(true)
         }
       })
 
+      // Avoid missing hydration if it completed between the initial read and subscription.
+      if (useReadingHistoryStore.getState()._hasHydrated) {
+        finish(true)
+        return
+      }
+
       timeoutId = window.setTimeout(() => {
-        useReadingHistoryStore.setState({ _hasHydrated: true })
         finish(false)
       }, timeoutMs)
     })
@@ -87,7 +105,7 @@ export class ReadingHistoryManager {
   }
 
   startRecording() {
-    if (this.isRecording) return
+    if (this.destroyed || this.isRecording) return
     this.isRecording = true
     this.currentSessionId = null
 
@@ -236,6 +254,7 @@ export class ReadingHistoryManager {
     const deadline = Date.now() + timeoutMs
 
     while (Date.now() <= deadline) {
+      if (this.destroyed) return ""
       const sessionId = this.getSessionId()
       if (this.canUseCurrentSession(sessionId)) {
         return sessionId
@@ -246,6 +265,7 @@ export class ReadingHistoryManager {
       )
     }
 
+    if (this.destroyed) return ""
     const sessionId = this.getSessionId()
     if (this.canUseCurrentSession(sessionId)) {
       return sessionId
@@ -310,15 +330,16 @@ export class ReadingHistoryManager {
   }
 
   async restoreProgress(onProgress?: (msg: string) => void): Promise<boolean> {
-    if (!this.settings.autoRestore) {
+    if (this.destroyed || !this.settings.autoRestore) {
       return false
     }
 
     // 确保 store 已 hydrated
-    await this.waitForHydration()
+    const hydrated = await this.waitForHydration()
+    if (this.destroyed || !hydrated) return false
 
     const sessionId = await this.waitForReadySessionId()
-    if (!sessionId) {
+    if (this.destroyed || !sessionId) {
       return false
     }
 
@@ -349,6 +370,7 @@ export class ReadingHistoryManager {
             textSignature: data.textSignature,
           }
           const contentRestored = await this.adapter.restoreScroll(anchorData)
+          if (this.destroyed) return false
           if (contentRestored) {
             const scrollContainer = this.adapter.getScrollContainer() || document.documentElement
             this.restoredTop = (scrollContainer as HTMLElement).scrollTop || window.scrollY
@@ -376,7 +398,7 @@ export class ReadingHistoryManager {
             },
           })
 
-          if (!result.success) {
+          if (this.destroyed || !result.success) {
             return false
           }
 
@@ -390,6 +412,7 @@ export class ReadingHistoryManager {
 
           // 滚动到目标位置（content script 的 scrollTo 走原始原型链，不受主世界劫持影响）
           await smartScrollTo(this.adapter, newScrollTop)
+          if (this.destroyed) return false
           this.restoredTop = newScrollTop
           restoredSuccessfully = true
         } catch {
@@ -402,13 +425,21 @@ export class ReadingHistoryManager {
       return restoredSuccessfully
     } finally {
       // 立即启动位置保持器（无延迟），对抗平台自动滚动
-      if (restoredSuccessfully && this.restoredTop !== undefined) {
+      if (!this.destroyed && restoredSuccessfully && this.restoredTop !== undefined) {
         this.startPositionKeeper(this.restoredTop)
       }
-      // 延迟重置恢复标志，防止恢复过程中的滚动事件触发保存
-      setTimeout(() => {
+      if (this.destroyed) {
         this.isRestoring = false
-      }, 1000)
+      } else {
+        // 延迟重置恢复标志，防止恢复过程中的滚动事件触发保存
+        if (this.restoreResetTimer !== null) {
+          window.clearTimeout(this.restoreResetTimer)
+        }
+        this.restoreResetTimer = window.setTimeout(() => {
+          this.restoreResetTimer = null
+          this.isRestoring = false
+        }, 1000)
+      }
     }
   }
 
@@ -432,6 +463,7 @@ export class ReadingHistoryManager {
    * - 最长不超过 maxHoldMs（15秒）
    */
   private startPositionKeeper(targetTop: number) {
+    if (this.destroyed) return
     this.stopPositionKeeper()
 
     const startTime = Date.now()
@@ -491,9 +523,26 @@ export class ReadingHistoryManager {
     if (this.positionKeeperRaF) {
       cancelAnimationFrame(this.positionKeeperRaF)
       this.positionKeeperRaF = 0
-      // 释放精确位置锁及清理拦截时间戳
-      delete document.documentElement.dataset.ophelPositionLock
-      delete document.documentElement.dataset.ophelPositionLockLastBlock
     }
+
+    // 释放精确位置锁及清理拦截时间戳
+    delete document.documentElement.dataset.ophelPositionLock
+    delete document.documentElement.dataset.ophelPositionLockLastBlock
+  }
+
+  destroy() {
+    if (this.destroyed) return
+    this.destroyed = true
+    for (const cancel of [...this.hydrationWaitCancels]) {
+      cancel()
+    }
+    this.hydrationWaitCancels.clear()
+    this.stopRecording()
+    this.stopPositionKeeper()
+    if (this.restoreResetTimer !== null) {
+      window.clearTimeout(this.restoreResetTimer)
+      this.restoreResetTimer = null
+    }
+    this.isRestoring = false
   }
 }

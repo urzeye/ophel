@@ -3,6 +3,8 @@ import path from "node:path"
 import process from "node:process"
 import { gzipSync } from "node:zlib"
 
+import { validateSiteSupport } from "./site-support-audit.mjs"
+
 const rootDir = process.cwd()
 const chromeBuildDir = path.join(rootDir, "build", "chrome-mv3-prod")
 const userscriptFile = path.join(rootDir, "build", "userscript", "ophel.user.js")
@@ -94,6 +96,7 @@ try {
   const manifest = JSON.parse(
     readRequiredFile(path.join(chromeBuildDir, "manifest.json")).toString("utf8"),
   )
+  validateSiteSupport({ chromeManifest: manifest, chromeBuildDir })
   const runtimeBusinessScripts = (manifest.web_accessible_resources || [])
     .flatMap((entry) => entry.resources || [])
     .filter((resource) => resource.endsWith(".js") && !resource.startsWith("assets/"))

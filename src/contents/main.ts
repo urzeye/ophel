@@ -18,7 +18,6 @@ export const config: PlasmoCSConfig = {
     "https://chatglm.cn/*",
     "https://chat.qwen.ai/*",
     "https://www.qianwen.com/*",
-    "https://qianwen.com/*",
     "https://yuanbao.tencent.com/*",
     "https://chat.z.ai/*",
   ],

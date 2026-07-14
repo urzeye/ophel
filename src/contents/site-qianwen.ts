@@ -4,7 +4,7 @@ import { QianwenAdapter } from "~adapters/qianwen"
 import { setAdapterRuntime } from "~core/adapter-runtime"
 
 export const config: PlasmoCSConfig = {
-  matches: ["https://www.qianwen.com/*", "https://qianwen.com/*"],
+  matches: ["https://www.qianwen.com/*"],
   run_at: "document_start",
 }
 

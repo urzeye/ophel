@@ -9,6 +9,11 @@ declare const unsafeWindow: Window | undefined
 let installed = false
 let titleObserver: MutationObserver | null = null
 let isApplyingManagedTitle = false
+let titleDescriptorOwner: object | null = null
+let originalTitleDescriptor: PropertyDescriptor | null = null
+let installedTitleGetter: (() => string) | null = null
+let installedTitleSetter: ((value: string | null | undefined) => void) | null = null
+let pendingObserveHead: (() => void) | null = null
 
 function getPageWindow(): typeof globalThis {
   if (typeof unsafeWindow !== "undefined" && unsafeWindow !== window) {
@@ -66,29 +71,37 @@ function installDocumentTitleSetterGuard(): void {
     return
   }
 
+  const guardedGetter = function (this: Document): string {
+    return descriptor.get?.call(this) ?? ""
+  }
+  const guardedSetter = function (this: Document, value: string | null | undefined): void {
+    const nextTitle = String(value ?? "")
+
+    if (this === pageWindow.document) {
+      const managedTitle = getManagedTitle()
+      if (managedTitle && nextTitle !== managedTitle) {
+        rememberNativeTitle(nextTitle)
+        descriptor.set?.call(this, managedTitle)
+        return
+      }
+    }
+
+    if (this === pageWindow.document && nextTitle !== getManagedTitle()) {
+      rememberNativeTitle(nextTitle)
+    }
+    descriptor.set?.call(this, nextTitle)
+  }
+
+  titleDescriptorOwner = descriptorOwner
+  originalTitleDescriptor = descriptor
+  installedTitleGetter = guardedGetter
+  installedTitleSetter = guardedSetter
+
   Object.defineProperty(descriptorOwner, "title", {
     configurable: true,
     enumerable: descriptor.enumerable,
-    get() {
-      return descriptor.get?.call(this) ?? ""
-    },
-    set(value: string | null | undefined) {
-      const nextTitle = String(value ?? "")
-
-      if (this === pageWindow.document) {
-        const managedTitle = getManagedTitle()
-        if (managedTitle && nextTitle !== managedTitle) {
-          rememberNativeTitle(nextTitle)
-          descriptor.set?.call(this, managedTitle)
-          return
-        }
-      }
-
-      if (this === pageWindow.document && nextTitle !== getManagedTitle()) {
-        rememberNativeTitle(nextTitle)
-      }
-      descriptor.set?.call(this, nextTitle)
-    },
+    get: guardedGetter,
+    set: guardedSetter,
   })
 }
 
@@ -114,7 +127,8 @@ function startTitleMutationGuard(): void {
 
   observeHead()
   if (!pageDocument.head) {
-    pageDocument.addEventListener("DOMContentLoaded", observeHead, { once: true })
+    pendingObserveHead = observeHead
+    pageDocument.addEventListener("DOMContentLoaded", pendingObserveHead, { once: true })
   }
 
   if (pageDocument.documentElement) {
@@ -132,4 +146,33 @@ export function initGeminiTitleGuard(): void {
   installDocumentTitleSetterGuard()
   startTitleMutationGuard()
   applyManagedTitle()
+}
+
+export function destroyGeminiTitleGuard(): void {
+  const pageWindow = getPageWindow()
+  const pageDocument = pageWindow.document
+
+  titleObserver?.disconnect()
+  titleObserver = null
+  if (pendingObserveHead) {
+    pageDocument.removeEventListener("DOMContentLoaded", pendingObserveHead)
+    pendingObserveHead = null
+  }
+
+  if (titleDescriptorOwner && originalTitleDescriptor) {
+    const currentDescriptor = Object.getOwnPropertyDescriptor(titleDescriptorOwner, "title")
+    if (
+      currentDescriptor?.get === installedTitleGetter &&
+      currentDescriptor?.set === installedTitleSetter
+    ) {
+      Object.defineProperty(titleDescriptorOwner, "title", originalTitleDescriptor)
+    }
+  }
+
+  titleDescriptorOwner = null
+  originalTitleDescriptor = null
+  installedTitleGetter = null
+  installedTitleSetter = null
+  isApplyingManagedTitle = false
+  installed = false
 }
