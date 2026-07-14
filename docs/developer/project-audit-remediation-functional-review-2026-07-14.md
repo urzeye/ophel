@@ -1,5 +1,11 @@
 # 大规模重构功能审计（2026-07-14）
 
+> **历史快照：** 本文审计到 `632a6e8a`，其中两个缺陷随后在 `e81bbdf8`
+> 修复。当前 HEAD 的权威结论请查看
+> [project-audit-remediation-regression-audit-2026-07-14.md](./project-audit-remediation-regression-audit-2026-07-14.md)；
+> 新审计发现了新的回归与协议缺口，并在该报告中继续跟踪修复状态，因此本文的
+> “可以合并”结论已失效。
+
 ## 结论
 
 审计范围为 `origin/main`（`4692bf09`）到

@@ -7,7 +7,6 @@ import { getInitialUserscriptLanguage, primeUserscriptLocales, subscribeI18nChan
 import { injectScrollLock } from "./scroll-lock-inject"
 import { injectYuanbaoMonacoWrap } from "./yuanbao-monaco-wrap-inject"
 import { applyOphelPlatformFontClass } from "~utils/font"
-import { dispatchClearAllDataEvent } from "~utils/clear-all-event"
 import { drainCleanupStack } from "~utils/cleanup-stack"
 import { suspendPersistenceWrites } from "~stores/chrome-adapter"
 import { EVENT_CLEAR_ALL_DATA } from "~utils/messaging"
@@ -16,6 +15,7 @@ import {
   initUserscriptClearAllCoordinator,
   isUserscriptClearRuntimeKey,
 } from "./clear-all-coordinator"
+import { prepareUserscriptRuntimeForClearAll } from "./runtime-lifecycle"
 
 const USERSCRIPT_OBJECT_URLS = new Set<string>()
 let activeUserscriptRuntimeCleanup: (() => void) | null = null
@@ -360,10 +360,7 @@ const clearUserscriptRuntimeCaches = () => {
 window.addEventListener(EVENT_CLEAR_ALL_DATA, clearUserscriptRuntimeCaches)
 
 const userscriptClearCoordinator = initUserscriptClearAllCoordinator({
-  prepareCurrentRuntime: async () => {
-    suspendPersistenceWrites()
-    await dispatchClearAllDataEvent()
-  },
+  prepareCurrentRuntime: prepareUserscriptRuntimeForClearAll,
   reloadCurrentRuntime: () => window.location.reload(),
 })
 window.addEventListener(
