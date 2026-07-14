@@ -60,7 +60,7 @@ import { SelectedPromptBar } from "./SelectedPromptBar"
 import { SegmentedExportDialog } from "./SegmentedExportDialog"
 import { SettingsModal } from "./SettingsModal"
 import { ExtensionUpdateNotice } from "./app/ExtensionUpdateNotice"
-import { stopAppRuntimeWriters } from "./app/runtime-lifecycle"
+import { prepareAppRuntimeForClearAll, stopAppRuntimeWriters } from "./app/runtime-lifecycle"
 import { useAppRuntimeManagers } from "./app/useAppRuntimeManagers"
 import { GlobalSearchOverlay } from "./global-search/GlobalSearchOverlay"
 import { GlobalSearchResultItemView } from "./global-search/GlobalSearchResultItemView"
@@ -2364,24 +2364,18 @@ export const App: React.FC<AppProps> = ({ adapter }) => {
       // popstate / pushState / replaceState 时 dispatch "gh-url-change"。
       const onUrlChange = () => outlineManager.handleUrlChange()
       const onRefreshOutline = () => outlineManager.refresh()
-      const stopRuntimeWriters = (event?: Event) => {
-        const task = stopAppRuntimeWriters({ conversationManager, outlineManager, queueDispatcher })
-        if (event) {
-          registerClearAllDataTask(event, task)
-        } else {
-          void task.catch((error) => {
-            console.error("[Ophel] Failed to stop app runtime writers:", error)
-          })
-        }
+      const runtimeWriters = { conversationManager, outlineManager, queueDispatcher }
+      const prepareForClearAll = (event: Event) => {
+        registerClearAllDataTask(event, prepareAppRuntimeForClearAll(runtimeWriters))
       }
       window.addEventListener("gh-url-change", onUrlChange)
       window.addEventListener("ophel:refreshOutline", onRefreshOutline)
-      window.addEventListener(EVENT_CLEAR_ALL_DATA, stopRuntimeWriters, { once: true })
+      window.addEventListener(EVENT_CLEAR_ALL_DATA, prepareForClearAll, { once: true })
       return () => {
         window.removeEventListener("gh-url-change", onUrlChange)
         window.removeEventListener("ophel:refreshOutline", onRefreshOutline)
-        window.removeEventListener(EVENT_CLEAR_ALL_DATA, stopRuntimeWriters)
-        stopRuntimeWriters()
+        window.removeEventListener(EVENT_CLEAR_ALL_DATA, prepareForClearAll)
+        stopAppRuntimeWriters(runtimeWriters)
       }
     }
   }, [promptManager, queueDispatcher, conversationManager, outlineManager])

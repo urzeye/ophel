@@ -27,6 +27,17 @@ const DialogHarness = ({ onClose }: { onClose: () => void }) => {
   )
 }
 
+const InitiallyOpenDialogHarness = ({ onClose }: { onClose: () => void }) => (
+  <OverlayPortalProvider>
+    <button>Background action</button>
+    <DialogOverlay onClose={onClose}>
+      <div className="gh-dialog-title">Initial dialog</div>
+      <button>Initial cancel</button>
+      <button>Initial confirm</button>
+    </DialogOverlay>
+  </OverlayPortalProvider>
+)
+
 const NestedDialogHarness = ({
   onParentClose,
   onChildClose,
@@ -67,6 +78,16 @@ const NestedDialogHarness = ({
 }
 
 describe("DialogOverlay", () => {
+  it("initializes focus and accessible name when open during provider mount", async () => {
+    render(<InitiallyOpenDialogHarness onClose={vi.fn()} />)
+
+    const dialog = await screen.findByRole("dialog", { name: "Initial dialog" })
+    expect(dialog.closest("#ophel-overlay-root")).not.toBeNull()
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Initial cancel" })).toHaveFocus(),
+    )
+  })
+
   it("renders in the shared overlay root, traps focus, and restores the trigger", async () => {
     const user = userEvent.setup()
     const onClose = vi.fn()

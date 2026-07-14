@@ -71,6 +71,8 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
   closeOnEscapeRef.current = closeOnEscape
 
   useEffect(() => {
+    if (!portalTarget) return
+
     const token = dialogTokenRef.current
     restoreFocusRef.current = getDeepActiveElement()
     registerDialog(token)
@@ -117,9 +119,11 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
       unregisterDialog(token)
       restoreFocusRef.current?.focus()
     }
-  }, [])
+  }, [portalTarget])
 
   useEffect(() => {
+    if (!portalTarget) return
+
     const dialog = dialogRef.current
     if (!dialog) return
 
@@ -135,9 +139,11 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
       '[autofocus], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])',
     )
     ;(initialFocus || dialog).focus()
-  }, [titleId])
+  }, [portalTarget, titleId])
 
   useEffect(() => {
+    if (!portalTarget) return
+
     const overlay = overlayRef.current
     if (!overlay) {
       return
@@ -145,7 +151,7 @@ export const DialogOverlay: React.FC<DialogOverlayProps> = ({
 
     // 通用弹窗内部广泛依赖本地 onKeyDown 逻辑，这里使用冒泡阶段拦截，避免吞掉确认/关闭等键盘行为。
     return attachEditableKeyboardFocusGuard(overlay, { capture: false })
-  }, [])
+  }, [portalTarget])
 
   const dialogContent = (
     <div

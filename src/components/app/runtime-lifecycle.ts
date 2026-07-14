@@ -14,8 +14,7 @@ export function stopAppRuntimeWriters({
   conversationManager,
   outlineManager,
   queueDispatcher,
-}: AppRuntimeWriters): Promise<void> {
-  suspendPersistenceWrites()
+}: AppRuntimeWriters): void {
   drainCleanupStack(
     [
       () => outlineManager.destroy(),
@@ -24,5 +23,10 @@ export function stopAppRuntimeWriters({
     ],
     "app runtime",
   )
+}
+
+export function prepareAppRuntimeForClearAll(writers: AppRuntimeWriters): Promise<void> {
+  suspendPersistenceWrites()
+  stopAppRuntimeWriters(writers)
   return drainPersistenceWrites()
 }
