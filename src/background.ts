@@ -1,3 +1,4 @@
+import { DEFAULT_SHORTCUTS_SETTINGS } from "~constants/shortcuts"
 import { APP_DISPLAY_NAME } from "~utils/config"
 import {
   MSG_CLEAR_ALL_DATA,
@@ -141,11 +142,30 @@ chrome.permissions.onRemoved.addListener(async (removed) => {
   }
 })
 
+interface PersistedSettingsEnvelope {
+  state: {
+    settings: Settings
+  }
+}
+
+function isPersistedSettingsEnvelope(value: unknown): value is PersistedSettingsEnvelope {
+  if (typeof value !== "object" || value === null) return false
+
+  const state = Reflect.get(value, "state")
+  if (typeof state !== "object" || state === null) return false
+
+  const settings = Reflect.get(state, "settings")
+  return typeof settings === "object" && settings !== null
+}
+
 // 监听全局快捷键命令
 chrome.commands.onCommand.addListener(async (command) => {
   if (command === "open-global-url") {
-    const settings = await localStorage.get<Settings>("settings")
-    const url = settings?.shortcuts?.globalUrl || "https://gemini.google.com"
+    const storedSettings = await localStorage.get<Settings | PersistedSettingsEnvelope>("settings")
+    const settings = isPersistedSettingsEnvelope(storedSettings)
+      ? storedSettings.state.settings
+      : storedSettings
+    const url = settings?.shortcuts?.globalUrl || DEFAULT_SHORTCUTS_SETTINGS.globalUrl
     chrome.tabs.create({ url, active: true })
   }
 })
