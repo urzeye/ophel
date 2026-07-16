@@ -14,6 +14,7 @@
 
 ### 🐛 问题修复
 
+- **Claude Canvas 文档导出** — 修复 Markdown 和剪贴板导出可能遗漏 Claude Canvas 文档正文的问题；现在会收集会话中的 Canvas 文档（包括虚拟列表中的文档），并在导出后恢复原先打开的 Canvas。
 - **Claude Canvas 智能避让** — 修复打开 Claude Canvas 文档后，智能避让可能无法继续为 Ophel 面板预留空间，导致文档内容被遮挡的问题。
 - **全局快捷键打开网址** — 修复自定义全局快捷键打开 URL 后，快捷键仍会打开 Gemini 默认地址的问题。(#778)
 
