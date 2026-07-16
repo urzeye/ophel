@@ -108,6 +108,9 @@ const CLAUDE_PANEL_OBSTACLE_SELECTOR = [
   '[data-testid="artifact-panel"]',
   '[data-testid="artifact-sidebar"]',
 ].join(", ")
+const CLAUDE_VIRTUAL_SIZER_SELECTOR = "[data-rocksteady-sizer]"
+const CLAUDE_VIRTUAL_ROW_SELECTOR = "[data-rs-index][data-index]"
+const CLAUDE_EXPORT_ROOT_ATTR = "data-gh-claude-export-root"
 
 interface ClaudeExportLifecycleState {
   documentPanelWasOpen: boolean
@@ -187,6 +190,17 @@ interface ClaudeOutlineWordCountCacheEntry {
   count: number
 }
 
+interface ClaudeOutlineCacheEntry {
+  id: string
+  messageIndex: number
+  orderInMessage: number
+  level: number
+  text: string
+  isUserQuery: boolean
+  isTruncated?: boolean
+  wordCount?: number
+}
+
 export class ClaudeAdapter extends SiteAdapter {
   private activeOrganizationId: string | null = null
   private activeOrganizationIdExpiresAt = 0
@@ -194,6 +208,12 @@ export class ClaudeAdapter extends SiteAdapter {
   private exportIncludeThoughtsOverride: boolean | null = null
   private exportThoughtBlocks = new WeakMap<Element, string[]>()
   private exportThoughtBlocksByAssistantIndex = new Map<number, string[]>()
+  private exportSnapshotRoot: HTMLElement | null = null
+  private outlineCacheSessionKey = ""
+  private outlineItemCache = new Map<string, ClaudeOutlineCacheEntry>()
+  private outlineScannedMessageIndexes = new Set<number>()
+  private outlineScanPromise: Promise<void> | null = null
+  private isCollectingVirtualOutline = false
   private outlineWordCountCache = new WeakMap<Element, ClaudeOutlineWordCountCacheEntry>()
 
   match(): boolean {
@@ -1284,6 +1304,223 @@ export class ClaudeAdapter extends SiteAdapter {
     return this.getScrollContainer() || this.findClaudeScrollContainer() || document
   }
 
+  private getClaudeVirtualRows(root: ParentNode = document): HTMLElement[] {
+    return Array.from(root.querySelectorAll(CLAUDE_VIRTUAL_ROW_SELECTOR)).filter(
+      (element): element is HTMLElement =>
+        element instanceof HTMLElement &&
+        element.closest(`[${CLAUDE_EXPORT_ROOT_ATTR}]`) === null &&
+        element.closest(CLAUDE_VIRTUAL_SIZER_SELECTOR) !== null,
+    )
+  }
+
+  private getClaudeVirtualMessageIndex(element: Element | null): number | null {
+    const row = element?.closest(CLAUDE_VIRTUAL_ROW_SELECTOR)
+    if (!row || row.closest(`[${CLAUDE_EXPORT_ROOT_ATTR}]`)) return null
+
+    const rawIndex = row.getAttribute("data-rs-index") || row.getAttribute("data-index")
+    if (!rawIndex || !/^\d+$/.test(rawIndex)) return null
+
+    const index = Number.parseInt(rawIndex, 10)
+    return Number.isSafeInteger(index) ? index : null
+  }
+
+  private getClaudeVirtualMessageCount(): number | null {
+    for (const row of this.getClaudeVirtualRows()) {
+      const article = row.querySelector('[role="article"][aria-setsize]')
+      const rawSize = article?.getAttribute("aria-setsize")
+      if (!rawSize || !/^\d+$/.test(rawSize)) continue
+
+      const size = Number.parseInt(rawSize, 10)
+      if (Number.isSafeInteger(size) && size > 0) return size
+    }
+
+    return null
+  }
+
+  private isClaudeVirtualConversation(): boolean {
+    return (
+      document.querySelector(CLAUDE_VIRTUAL_SIZER_SELECTOR) !== null &&
+      this.getClaudeVirtualRows().length > 0
+    )
+  }
+
+  private ensureClaudeOutlineCacheSession(): void {
+    const sessionKey = `${this.getSessionId()}:${window.location.pathname}`
+    if (sessionKey === this.outlineCacheSessionKey) return
+
+    this.outlineCacheSessionKey = sessionKey
+    this.outlineItemCache.clear()
+    this.outlineScannedMessageIndexes.clear()
+  }
+
+  private createClaudeOutlineItemId(
+    element: Element,
+    isUserQuery: boolean,
+    orderInMessage: number,
+  ): string | null {
+    const messageIndex = this.getClaudeVirtualMessageIndex(element)
+    if (messageIndex === null) return null
+
+    return isUserQuery
+      ? `claude-message:${messageIndex}:user`
+      : `claude-message:${messageIndex}:heading:${orderInMessage}`
+  }
+
+  private updateClaudeOutlineCache(items: OutlineItem[]): void {
+    this.ensureClaudeOutlineCacheSession()
+    const headingOrderByMessage = new Map<number, number>()
+
+    for (const item of items) {
+      const messageIndex = this.getClaudeVirtualMessageIndex(item.element)
+      if (messageIndex === null || !item.text.trim()) continue
+
+      this.outlineScannedMessageIndexes.add(messageIndex)
+      const isUserQuery = Boolean(item.isUserQuery)
+      const headingOrder = headingOrderByMessage.get(messageIndex) || 0
+      const orderInMessage = isUserQuery ? 0 : headingOrder + 1
+      if (!isUserQuery) {
+        headingOrderByMessage.set(messageIndex, headingOrder + 1)
+      }
+      const id =
+        item.id ||
+        this.createClaudeOutlineItemId(item.element as Element, isUserQuery, headingOrder)
+      if (!id) continue
+
+      item.id = id
+      item.navigationId = id
+      this.outlineItemCache.set(id, {
+        id,
+        messageIndex,
+        orderInMessage,
+        level: item.level,
+        text: item.text,
+        isUserQuery,
+        isTruncated: item.isTruncated,
+        wordCount: item.wordCount,
+      })
+    }
+  }
+
+  private mergeCachedClaudeOutlineItems(
+    currentItems: OutlineItem[],
+    maxLevel: number,
+    includeUserQueries: boolean,
+    showWordCount: boolean,
+  ): OutlineItem[] {
+    if (this.outlineItemCache.size === 0) return currentItems
+
+    const currentIds = new Set(
+      currentItems.map((item) => item.id).filter((id): id is string => Boolean(id)),
+    )
+    const merged = [...currentItems]
+
+    for (const entry of this.outlineItemCache.values()) {
+      if (currentIds.has(entry.id)) continue
+      if (entry.isUserQuery && !includeUserQueries) continue
+      if (!entry.isUserQuery && entry.level > maxLevel) continue
+
+      merged.push({
+        id: entry.id,
+        navigationId: entry.id,
+        level: entry.level,
+        text: entry.text,
+        element: null,
+        isUserQuery: entry.isUserQuery,
+        isTruncated: entry.isTruncated,
+        wordCount: showWordCount ? entry.wordCount : undefined,
+      })
+    }
+
+    return merged.sort((a, b) => {
+      const aEntry = a.id ? this.outlineItemCache.get(a.id) : undefined
+      const bEntry = b.id ? this.outlineItemCache.get(b.id) : undefined
+      if (!aEntry || !bEntry) return 0
+      if (aEntry.messageIndex !== bEntry.messageIndex) {
+        return aEntry.messageIndex - bEntry.messageIndex
+      }
+      return aEntry.orderInMessage - bEntry.orderInMessage
+    })
+  }
+
+  private scheduleClaudeVirtualOutlineScan(): void {
+    if (
+      this.isCollectingVirtualOutline ||
+      this.outlineScanPromise ||
+      this.isGenerating() ||
+      !this.isClaudeVirtualConversation()
+    ) {
+      return
+    }
+
+    const totalMessages = this.getClaudeVirtualMessageCount()
+    if (totalMessages !== null && this.outlineScannedMessageIndexes.size >= totalMessages) {
+      return
+    }
+
+    this.outlineScanPromise = this.collectClaudeVirtualOutline(this.outlineCacheSessionKey)
+      .catch((error) => {
+        console.warn("[ClaudeAdapter] Failed to collect virtual outline:", error)
+      })
+      .finally(() => {
+        this.outlineScanPromise = null
+      })
+  }
+
+  private async collectClaudeVirtualOutline(expectedSessionKey: string): Promise<void> {
+    const scrollContainer = this.getScrollContainer()
+    if (!scrollContainer) return
+
+    const originalScrollTop = scrollContainer.scrollTop
+    const positions = this.buildClaudeVirtualScrollPositions(scrollContainer)
+    this.isCollectingVirtualOutline = true
+
+    try {
+      for (const top of positions) {
+        if (this.outlineCacheSessionKey !== expectedSessionKey) return
+        await this.scrollClaudeVirtualContainer(scrollContainer, top)
+        if (this.outlineCacheSessionKey !== expectedSessionKey) return
+        this.recordMountedClaudeVirtualMessageIndexes(scrollContainer)
+        this.extractOutline(6, true, false)
+      }
+    } finally {
+      if (this.outlineCacheSessionKey === expectedSessionKey) {
+        await this.scrollClaudeVirtualContainer(scrollContainer, originalScrollTop)
+      }
+      this.isCollectingVirtualOutline = false
+    }
+  }
+
+  private recordMountedClaudeVirtualMessageIndexes(root: ParentNode): void {
+    for (const row of this.getClaudeVirtualRows(root)) {
+      const messageIndex = this.getClaudeVirtualMessageIndex(row)
+      if (messageIndex !== null) {
+        this.outlineScannedMessageIndexes.add(messageIndex)
+      }
+    }
+  }
+
+  private buildClaudeVirtualScrollPositions(scrollContainer: HTMLElement): number[] {
+    const maxScroll = Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight)
+    if (maxScroll === 0) return [scrollContainer.scrollTop]
+
+    const step = Math.max(160, Math.floor(scrollContainer.clientHeight * 0.65))
+    const positions = new Set<number>([0, scrollContainer.scrollTop, maxScroll])
+    for (let top = 0; top < maxScroll; top += step) {
+      positions.add(top)
+    }
+
+    return Array.from(positions).sort((a, b) => a - b)
+  }
+
+  private async scrollClaudeVirtualContainer(
+    scrollContainer: HTMLElement,
+    top: number,
+  ): Promise<void> {
+    scrollContainer.scrollTop = top
+    scrollContainer.dispatchEvent(new Event("scroll", { bubbles: true }))
+    await this.sleep(100)
+  }
+
   getVisibleAnchorElement(): AnchorData | null {
     const container = this.getScrollContainer()
     if (!container) return null
@@ -1411,6 +1648,7 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   extractOutline(maxLevel = 6, includeUserQueries = false, showWordCount = false): OutlineItem[] {
+    this.ensureClaudeOutlineCacheSession()
     const outline: OutlineItem[] = []
     const outlineRoot = this.getOutlineRoot()
 
@@ -1591,7 +1829,18 @@ export class ClaudeAdapter extends SiteAdapter {
       })
     }
 
-    return outline
+    this.updateClaudeOutlineCache(outline)
+    const merged = this.mergeCachedClaudeOutlineItems(
+      outline,
+      maxLevel,
+      includeUserQueries,
+      showWordCount,
+    )
+    if (!this.isCollectingVirtualOutline) {
+      this.scheduleClaudeVirtualOutlineScan()
+    }
+
+    return merged
   }
 
   private extractClaudeDocumentOutline(maxLevel = 6, showWordCount = false): OutlineItem[] {
@@ -1631,7 +1880,7 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   async resolveOutlineTarget(
-    item: Pick<OutlineItem, "level" | "text" | "isUserQuery">,
+    item: Pick<OutlineItem, "level" | "text" | "isUserQuery" | "id" | "navigationId">,
     queryIndex?: number,
     sourceId = "conversation",
   ): Promise<Element | null> {
@@ -1639,7 +1888,66 @@ export class ClaudeAdapter extends SiteAdapter {
       return this.findClaudeDocumentHeading(item.level, item.text)
     }
 
+    const cachedId = item.navigationId || item.id
+    if (cachedId && this.outlineItemCache.has(cachedId)) {
+      const target = await this.resolveCachedClaudeOutlineTarget(cachedId)
+      if (target) return target
+    }
+
     return super.resolveOutlineTarget(item, queryIndex, sourceId)
+  }
+
+  private async resolveCachedClaudeOutlineTarget(id: string): Promise<Element | null> {
+    this.ensureClaudeOutlineCacheSession()
+    const entry = this.outlineItemCache.get(id)
+    if (!entry) return null
+
+    const mountedTarget = this.findClaudeOutlineTargetInMountedRow(entry)
+    if (mountedTarget) return mountedTarget
+
+    const scrollContainer = this.getScrollContainer()
+    if (!scrollContainer) return null
+
+    const totalMessages = this.getClaudeVirtualMessageCount()
+    const maxScroll = Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight)
+    const estimatedTop =
+      totalMessages && totalMessages > 1
+        ? (maxScroll * entry.messageIndex) / (totalMessages - 1)
+        : scrollContainer.scrollTop
+    const positions = this.buildClaudeVirtualScrollPositions(scrollContainer)
+    positions.sort((a, b) => Math.abs(a - estimatedTop) - Math.abs(b - estimatedTop))
+
+    for (const top of [estimatedTop, ...positions]) {
+      await this.scrollClaudeVirtualContainer(scrollContainer, top)
+      this.extractOutline(6, true, false)
+      const target = this.findClaudeOutlineTargetInMountedRow(entry)
+      if (target) return target
+    }
+
+    return null
+  }
+
+  private findClaudeOutlineTargetInMountedRow(entry: ClaudeOutlineCacheEntry): Element | null {
+    const row = this.getClaudeVirtualRows().find(
+      (candidate) => this.getClaudeVirtualMessageIndex(candidate) === entry.messageIndex,
+    )
+    if (!row) return null
+
+    if (entry.isUserQuery) {
+      return row.querySelector(this.getUserQuerySelector())
+    }
+
+    const headings = Array.from(row.querySelectorAll("h1, h2, h3, h4, h5, h6")).filter(
+      (heading) =>
+        !heading.classList.contains("sr-only") &&
+        !heading.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR) &&
+        heading.closest(".font-claude-response") !== null,
+    )
+    return headings[entry.orderInMessage - 1] || null
+  }
+
+  usesPeriodicOutlineRefreshFallback(): boolean {
+    return this.isClaudeVirtualConversation()
   }
 
   scrollToOutlineSourceTarget(element: HTMLElement, sourceId = "conversation"): void {
@@ -1722,15 +2030,24 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   async prepareConversationExport(context: ExportLifecycleContext): Promise<unknown> {
+    this.ensureClaudeOutlineCacheSession()
     this.exportIncludeThoughtsOverride = context.includeThoughts
     this.exportDocumentCache = []
     this.exportThoughtBlocks = new WeakMap<Element, string[]>()
     this.exportThoughtBlocksByAssistantIndex = new Map<number, string[]>()
+    this.removeClaudeExportSnapshot()
 
-    const thoughtContainersExpandedForExport = context.includeThoughts
-      ? await this.expandClaudeThoughtBlocksForExport()
-      : []
-    if (context.includeThoughts) {
+    let pendingSnapshotRoot: HTMLElement | null = null
+    let thoughtContainersExpandedForExport: HTMLElement[] = []
+    if (this.isClaudeVirtualConversation()) {
+      if (this.outlineScanPromise) {
+        await this.outlineScanPromise
+      }
+      const snapshot = await this.collectClaudeVirtualExportSnapshot(context.includeThoughts)
+      pendingSnapshotRoot = snapshot.root
+      thoughtContainersExpandedForExport = snapshot.expandedThoughtContainers
+    } else if (context.includeThoughts) {
+      thoughtContainersExpandedForExport = await this.expandClaudeThoughtBlocksForExport()
       this.captureClaudeThoughtBlocksForExport()
     }
 
@@ -1743,6 +2060,7 @@ export class ClaudeAdapter extends SiteAdapter {
     }
 
     if (!this.shouldCollectClaudeDocumentsForExport(context)) {
+      this.mountClaudeExportSnapshot(pendingSnapshotRoot)
       return state
     }
 
@@ -1753,6 +2071,7 @@ export class ClaudeAdapter extends SiteAdapter {
       state.documentArtifactIndex = originalDocument?.index ?? null
     }
 
+    this.mountClaudeExportSnapshot(pendingSnapshotRoot)
     return state
   }
 
@@ -1777,6 +2096,7 @@ export class ClaudeAdapter extends SiteAdapter {
       this.exportIncludeThoughtsOverride = null
       this.exportThoughtBlocks = new WeakMap<Element, string[]>()
       this.exportThoughtBlocksByAssistantIndex = new Map<number, string[]>()
+      this.removeClaudeExportSnapshot()
     }
   }
 
@@ -1848,6 +2168,7 @@ export class ClaudeAdapter extends SiteAdapter {
 
   async extractExportMessages(_context: ExportLifecycleContext): Promise<ExportMessage[] | null> {
     if (
+      !this.exportSnapshotRoot &&
       this.exportDocumentCache.length === 0 &&
       !this.isClaudeDocumentPanelOpen() &&
       !this.hasClaudeUserAttachments() &&
@@ -1886,7 +2207,7 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private hasClaudeUserAttachments(): boolean {
-    const root = this.getOutlineRoot()
+    const root = this.exportSnapshotRoot || this.getOutlineRoot()
     const userMessages = Array.from(root.querySelectorAll(this.getUserQuerySelector()))
     return userMessages.some((message) => this.extractClaudeUserAttachments(message).length > 0)
   }
@@ -2218,7 +2539,83 @@ export class ClaudeAdapter extends SiteAdapter {
     return this.exportDocumentCache.length === 1 ? this.exportDocumentCache[0] : null
   }
 
+  private async collectClaudeVirtualExportSnapshot(
+    includeThoughts: boolean,
+  ): Promise<{ root: HTMLElement; expandedThoughtContainers: HTMLElement[] }> {
+    const root = document.createElement("div")
+    root.setAttribute(CLAUDE_EXPORT_ROOT_ATTR, "1")
+    const rows = new Map<number, HTMLElement>()
+    const expandedThoughtContainers: HTMLElement[] = []
+    const scrollContainer = this.getScrollContainer()
+    if (!scrollContainer) return { root, expandedThoughtContainers }
+
+    const originalScrollTop = scrollContainer.scrollTop
+    const totalMessages = this.getClaudeVirtualMessageCount()
+    this.isCollectingVirtualOutline = true
+
+    try {
+      for (let pass = 0; pass < 2; pass += 1) {
+        const positions = this.buildClaudeVirtualScrollPositions(scrollContainer)
+        for (const top of positions) {
+          await this.scrollClaudeVirtualContainer(scrollContainer, top)
+
+          for (const row of this.getClaudeVirtualRows(scrollContainer)) {
+            const messageIndex = this.getClaudeVirtualMessageIndex(row)
+            if (messageIndex === null) continue
+
+            if (includeThoughts) {
+              const expanded = await this.expandClaudeThoughtBlocksForExport(row)
+              expandedThoughtContainers.push(...expanded)
+            }
+
+            rows.set(messageIndex, row.cloneNode(true) as HTMLElement)
+          }
+
+          this.recordMountedClaudeVirtualMessageIndexes(scrollContainer)
+          this.extractOutline(6, true, false)
+        }
+
+        if (totalMessages === null || rows.size >= totalMessages) break
+      }
+    } finally {
+      await this.scrollClaudeVirtualContainer(scrollContainer, originalScrollTop)
+      this.isCollectingVirtualOutline = false
+    }
+
+    if (totalMessages !== null && rows.size < totalMessages) {
+      this.restoreClaudeThoughtBlocksAfterExport({
+        documentPanelWasOpen: false,
+        thoughtContainersExpandedForExport: expandedThoughtContainers,
+      })
+      throw new Error(`Claude virtual export collected ${rows.size} of ${totalMessages} messages`)
+    }
+
+    Array.from(rows.entries())
+      .sort(([a], [b]) => a - b)
+      .forEach(([, row]) => root.appendChild(row))
+
+    return { root, expandedThoughtContainers }
+  }
+
+  private mountClaudeExportSnapshot(root: HTMLElement | null): void {
+    if (!root || root.childElementCount === 0) return
+
+    root.style.display = "none"
+    document.body.appendChild(root)
+    this.exportSnapshotRoot = root
+  }
+
+  private removeClaudeExportSnapshot(): void {
+    this.exportSnapshotRoot?.remove()
+    this.exportSnapshotRoot = null
+    document.querySelectorAll(`[${CLAUDE_EXPORT_ROOT_ATTR}]`).forEach((node) => node.remove())
+  }
+
   private extractClaudeExportMessages(collector?: ExportAssetCollector): ExportMessage[] {
+    if (this.exportSnapshotRoot) {
+      return this.extractClaudeVirtualExportMessages(this.exportSnapshotRoot, collector)
+    }
+
     const messages: ExportMessage[] = []
     const root = this.getOutlineRoot()
     const userMessages = Array.from(root.querySelectorAll(this.getUserQuerySelector()))
@@ -2245,6 +2642,38 @@ export class ClaudeAdapter extends SiteAdapter {
         if (content) messages.push({ role: "assistant", content })
       }
     }
+
+    return messages
+  }
+
+  private extractClaudeVirtualExportMessages(
+    root: ParentNode,
+    collector?: ExportAssetCollector,
+  ): ExportMessage[] {
+    const messages: ExportMessage[] = []
+    const rows = Array.from(root.children).filter(
+      (element): element is HTMLElement => element instanceof HTMLElement,
+    )
+    let assistantIndex = 0
+
+    rows.forEach((row) => {
+      const userMessage = row.querySelector(this.getUserQuerySelector())
+      if (userMessage) {
+        const content = this.extractClaudeUserQueryExportContent(userMessage, collector).trim()
+        if (content) messages.push({ role: "user", content })
+      }
+
+      const assistantMessage = row.querySelector(".font-claude-response")
+      if (assistantMessage && !assistantMessage.closest(CLAUDE_DOCUMENT_ROOT_SELECTOR)) {
+        const content = this.extractClaudeAssistantResponseTextWithDocuments(
+          assistantMessage,
+          collector,
+          assistantIndex,
+        ).trim()
+        assistantIndex += 1
+        if (content) messages.push({ role: "assistant", content })
+      }
+    })
 
     return messages
   }
@@ -2328,8 +2757,10 @@ export class ClaudeAdapter extends SiteAdapter {
     return false
   }
 
-  private async expandClaudeThoughtBlocksForExport(): Promise<HTMLElement[]> {
-    const buttons = this.getClaudeThoughtToggleButtons(document)
+  private async expandClaudeThoughtBlocksForExport(
+    root: ParentNode = document,
+  ): Promise<HTMLElement[]> {
+    const buttons = this.getClaudeThoughtToggleButtons(root)
     const expandedContainers: HTMLElement[] = []
 
     for (const button of buttons) {
@@ -2463,6 +2894,10 @@ export class ClaudeAdapter extends SiteAdapter {
   }
 
   private getClaudeThoughtBlocksForElement(element: Element, assistantIndex?: number): string[] {
+    if (element.closest(`[${CLAUDE_EXPORT_ROOT_ATTR}]`)) {
+      return this.extractClaudeThoughtBlockquotes(element)
+    }
+
     if (assistantIndex !== undefined) {
       const byIndex = this.exportThoughtBlocksByAssistantIndex.get(assistantIndex)
       if (byIndex) return byIndex
