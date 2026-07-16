@@ -426,7 +426,11 @@ export class LayoutManager {
     const scope = this.findPanelAvoidanceScope(config.scopeSelector)
     if (!scope) return null
 
-    return this.getPanelReservation(panel, this.getPanelAvoidanceScopeRect(scope))
+    return this.getPanelReservation(
+      panel,
+      this.getPanelAvoidanceScopeRect(scope),
+      config.obstacleSelectors,
+    )
   }
 
   private buildPanelAvoidanceInsetCSS(
@@ -546,6 +550,7 @@ export class LayoutManager {
   private getPanelReservation(
     panel: HTMLElement,
     scopeRect: HorizontalRect,
+    obstacleSelectors = this.panelAvoidanceConfig?.obstacleSelectors,
   ): PanelReservation | null {
     const config = this.panelAvoidanceConfig
     if (!config || !panel.isConnected) return null
@@ -554,12 +559,15 @@ export class LayoutManager {
     if (root?.classList.contains("gh-pass-through")) return null
     if (this.isPanelAvoidanceSuppressedByPanelState(panel)) return null
 
-    const obstacles = this.getPanelAvoidanceObstacles(panel)
+    const obstacles = this.getPanelAvoidanceObstacles(panel, obstacleSelectors)
     if (obstacles.length === 0) return null
     return this.getPanelReservationFromObstacles(obstacles, scopeRect)
   }
 
-  private getPanelAvoidanceObstacles(panel: HTMLElement): PanelAvoidanceObstacle[] {
+  private getPanelAvoidanceObstacles(
+    panel: HTMLElement,
+    obstacleSelectors = this.panelAvoidanceConfig?.obstacleSelectors,
+  ): PanelAvoidanceObstacle[] {
     const obstacles: PanelAvoidanceObstacle[] = []
     const panelRect = this.getVisiblePanelAvoidanceObstacleRect(panel, {
       minWidth: this.panelAvoidanceConfig?.minVisiblePanelWidth,
@@ -569,7 +577,7 @@ export class LayoutManager {
     if (!panelRect) return obstacles
     obstacles.push({ element: panel, rect: panelRect })
 
-    for (const selector of this.panelAvoidanceConfig?.obstacleSelectors || []) {
+    for (const selector of obstacleSelectors || []) {
       const candidates = DOMToolkit.query(selector, {
         all: true,
         shadow: true,

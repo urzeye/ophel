@@ -156,6 +156,8 @@ export interface PanelAvoidanceInsetConfig {
   selector: string
   /** 可选：该 inset 目标使用独立 scope 计算避让量；未设置时复用主 scope。 */
   scopeSelector?: string
+  /** 可选：覆盖主配置的宿主障碍物；空数组表示该 inset 只避让 Ophel 面板。 */
+  obstacleSelectors?: string[]
   /** 只应用某一侧 inset；默认同时应用左右两侧。 */
   applySide?: "both" | "left" | "right"
   /** centered 会包含内容居中余量；edge 只使用避让面板所需的边缘余量。 */

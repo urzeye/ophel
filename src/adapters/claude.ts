@@ -3114,6 +3114,7 @@ export class ClaudeAdapter extends SiteAdapter {
         {
           selector: CLAUDE_CANVAS_PANEL_SCOPE_SELECTOR,
           scopeSelector: CLAUDE_CANVAS_PANEL_SCOPE_SELECTOR,
+          obstacleSelectors: [],
           applySide: "right",
           insetMode: "edge",
           extraCss:

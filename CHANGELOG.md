@@ -15,6 +15,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### 🐛 Bug Fixes
 
+- **Claude Canvas Smart Avoidance** — Fixed issue where opening a Claude Canvas document could stop Smart Avoidance from reserving space for the Ophel panel, causing the document content to be covered.
 - **Global shortcut URL** — Fixed issue where the global shortcut continued to open Gemini after setting a custom URL. (#778)
 
 ---
