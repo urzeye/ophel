@@ -11,7 +11,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### ✨ Improvements
 
-- **Claude windowed conversation layout** — Adapted to Claude's new windowed conversation structure, so the outline continues to aggregate entries across the virtualized list and exports collect the complete conversation. (#781)
+- **Claude page structure adaptation** — Adapted to Claude's updated conversation page DOM, ensuring the outline can read all messages and conversation exports remain complete. (#781)
 
 ### 🐛 Bug Fixes
 
